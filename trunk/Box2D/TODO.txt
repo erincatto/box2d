@@ -1,0 +1,172 @@
+Version 1.0.0
+- Clamp large rotations. DONE
+- Restitution. DONE
+- Prismatic joint. DONE
+- Limits and motors. DONE
+- Handle equal limits. DONE
+- Fast broadphase. DONE
+- Collide connected. DONE
+- Island sleeping. DONE
+- Custom allocators. DONE
+- Convex polygons. DONE
+- Compound shapes. DONE
+- Constraint graph. DONE
+- Contact solver. DONE
+- Joint solver. DONE
+- Improved stability. DONE
+- Improve contact matching. DONE
+- Contact solver. DONE
+- Joint solver. DONE
+- Mouse picking. DONE
+- SAP AABB query. DONE
+- Distance joint. DONE
+
+Version 1.0.1
+- Joint limit bug fix. DONE
+
+Version 1.1.0
+- Handle dangling joint pointers. DONE
+- Collision filters. DONE
+- User data. DONE
+- Improved API. DONE
+- Orphaned mouse joint. DONE
+
+Version 1.2.0
+- Rename engine.lib to box2d.lib. DONE
+- Code layout. DONE
+- Circles. DONE
+
+Version 1.2.1
+- Handle proxies hitting the world boundary. DONE
+- Freeze out of bounds bodies, notify user. DONE
+- Handle running out of pairs. DONE
+
+Version 1.3.0
+- Documentation phase 1. DONE
+- Add "no rotation" option to body def. DONE
+- b2Settings configuration for pixel coordinates. DONE
+- Slider-crank test. DONE
+- Notify client when a body is frozen. DONE
+- Fix collide-connected. DONE
+- Fix compound polygons. DONE
+- Check degenerate containment resolution. DONE (no problem found)
+- Access to contacts and joints. DONE
+
+Version 1.4.0
+- Gear joint. DONE
+- Pulley joint. DONE
+- Personalize the phpbb header. DONE
+- Document contacts and new joint types. DONE
+
+Version 1.4.1
+- Fix contact list. DONE
+- Damping. DONE
+- Poly-circle ids. DONE
+- Improve mouse joint. DONE
+
+Version 1.4.2
+- Improve joint stability. DONE.
+
+Version 1.4.3
+- Fix thin polygon collision. DONE
+- Simplify broad-phase internally. DONE
+- OSX patch. DONE
+- Fix compound body freezing. DONE
+- Collision filter callback. DONE
+
+Version 2.0.0
+- Collision doesn't include any files from Dynamics. DONE
+- User created shapes. DONE
+- Shape ray casts. DONE
+- Verify polygon convex and CCW. DONE
+- Deferred body destruction is gone. DONE
+- Deferred contact destruction is gone. DONE
+- JointDefs in local coordinates so that save/load works with limits. DONE
+- Wake up bonies on apply force/torque/impulse. DONE
+- Improve polygon collision performance. DONE
+- Optimal OBBs for polygons. DONE
+- Debug display interface. DONE
+- Access version number. DONE
+- Improved TestBed camera. DONE
+- Continuous physics with TOI islands. DONE
+- Max velocities. DONE
+- Body add/remove shape. DONE
+- Damping now works better with a variable time step. DONE
+- Time of Impact (TOI) callbacks. DONE
+- Contact solver tweak callbacks. DONE
+- Contact callbacks with impulses. DONE
+- Safe contact callback example. DONE
+- Draw world AABB in TestBed. DONE
+- Use forces instead of impulses to handle variable time step. DONE
+- Ragdoll contribution. DONE
+- Car example. DONE
+- Constraint graph and shapes support changes in center of mass. DONE
+- Sensors with overlap report. DONE
+- Doxygen. DONE
+- Update manual. DONE
+
+Version 2.1.0
+- Convex hull tool. DONE
+- Convex decomposition tool. DONE
+- Wiki. DONE
+- User refilter. DONE
+- Soft distance constraint. DONE
+- Contact block solver. DONE
+- Block solve for prismatic joint. DONE
+- Add separate iteration count for positions. DONE
+- Use impulses instead of forces to support fixed-point. DONE
+- Look at mouse joints for multi-touch. DONE
+- Line joint for vehicle wheels + suspension. DONE
+- Wake joint bodies when the motor state is modified. DONE
+- Ray casts. DONE
+- Fix polytope + prevent rotation bug. DONE
+- Fix polytope ray cast for edges parallel to ray. DONE
+- Allow friction and damping to be modified on the fly. DONE
+- Manual debug draw call.
+- Make solver more cache friendly.
+- Enable TOI joints. Just wipe the impulses.
+- Enable SVN mailing list. DONE : box2d-svn@lists.sourceforge.net
+- Allow joints be attached to static bodies.
+- Better documentation of how to install listeners & filters.
+
+Version 2.2.0
+- Sensors should generate Boolean events.
+- Merge add/persist/remove with results.
+- Accessors for friction, density, damping.
+- Friction/motor joint for top down games.
+- CMake.
+- Kequalized crash. Check for NaN/Inf input.
+- Pairs and proxies use small block allocator?
+- Bounds use growable array?
+- Don't sleep until position error is low?
+- Handle orphaned gear joint.
+- Rolling resistance for circles.
+- Add comments to examples and testbed.
+
+Version 2.3.0
+
+- Angle joint.
+- Weld joint.
+
+Version 2.4.0
+- Spline joints.
+
+Version 2.5.0
+- Kinematic bodies.
+
+Version 2.6.0
+- Ropes and particles.
+- Growable vertex arrays.
+
+Version 3+
+- Performance.
+- Meshes (segment soup).
+- Characters.
+- Vehicles.
+- Tree constraints.
+- Buoyancy.
+- Heightfields.
+- Static point-grids.
+- Revolute 3x3 effective mass.
+- Use velocity lambda to control NGS clamping.
+- No globals or statics.
