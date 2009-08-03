@@ -54,7 +54,7 @@ void b2PolygonShape::SetAsBox(float32 hx, float32 hy, const b2Vec2& center, floa
 	m_normals[3].Set(-1.0f, 0.0f);
 	m_centroid = center;
 
-	b2XForm xf;
+	b2Transform xf;
 	xf.position = center;
 	xf.R.Set(angle);
 
@@ -182,7 +182,7 @@ void b2PolygonShape::Set(const b2Vec2* vertices, int32 count)
 	m_centroid = ComputeCentroid(m_vertices, m_vertexCount);
 }
 
-bool b2PolygonShape::TestPoint(const b2XForm& xf, const b2Vec2& p) const
+bool b2PolygonShape::TestPoint(const b2Transform& xf, const b2Vec2& p) const
 {
 	b2Vec2 pLocal = b2MulT(xf.R, p - xf.position);
 
@@ -199,7 +199,7 @@ bool b2PolygonShape::TestPoint(const b2XForm& xf, const b2Vec2& p) const
 }
 
 b2SegmentCollide b2PolygonShape::TestSegment(
-	const b2XForm& xf,
+	const b2Transform& xf,
 	float32* lambda,
 	b2Vec2* normal,
 	const b2Segment& segment,
@@ -267,7 +267,7 @@ b2SegmentCollide b2PolygonShape::TestSegment(
 	return b2_startsInsideCollide;
 }
 
-void b2PolygonShape::ComputeAABB(b2AABB* aabb, const b2XForm& xf) const
+void b2PolygonShape::ComputeAABB(b2AABB* aabb, const b2Transform& xf) const
 {
 	b2Vec2 lower = b2Mul(xf, m_vertices[0]);
 	b2Vec2 upper = lower;
@@ -310,7 +310,16 @@ void b2PolygonShape::ComputeMass(b2MassData* massData, float32 density) const
 	//
 	// The rest of the derivation is handled by computer algebra.
 
-	b2Assert(m_vertexCount >= 3);
+	b2Assert(m_vertexCount >= 2);
+
+	// A line segment has zero mass.
+	if (m_vertexCount == 2)
+	{
+		massData->center = 0.5f * (m_vertices[0] + m_vertices[1]);
+		massData->mass = 0.0f;
+		massData->I = 0.0f;
+		return;
+	}
 
 	b2Vec2 center; center.Set(0.0f, 0.0f);
 	float32 area = 0.0f;

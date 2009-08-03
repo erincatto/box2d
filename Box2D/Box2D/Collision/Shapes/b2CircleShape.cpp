@@ -27,7 +27,7 @@ b2Shape* b2CircleShape::Clone(b2BlockAllocator* allocator) const
 	return clone;
 }
 
-bool b2CircleShape::TestPoint(const b2XForm& transform, const b2Vec2& p) const
+bool b2CircleShape::TestPoint(const b2Transform& transform, const b2Vec2& p) const
 {
 	b2Vec2 center = transform.position + b2Mul(transform.R, m_p);
 	b2Vec2 d = p - center;
@@ -38,7 +38,7 @@ bool b2CircleShape::TestPoint(const b2XForm& transform, const b2Vec2& p) const
 // From Section 3.1.2
 // x = s + a * r
 // norm(x) = radius
-b2SegmentCollide b2CircleShape::TestSegment(const b2XForm& transform,
+b2SegmentCollide b2CircleShape::TestSegment(const b2Transform& transform,
 								float32* lambda,
 								b2Vec2* normal,
 								const b2Segment& segment,
@@ -83,7 +83,7 @@ b2SegmentCollide b2CircleShape::TestSegment(const b2XForm& transform,
 	return b2_missCollide;
 }
 
-void b2CircleShape::ComputeAABB(b2AABB* aabb, const b2XForm& transform) const
+void b2CircleShape::ComputeAABB(b2AABB* aabb, const b2Transform& transform) const
 {
 	b2Vec2 p = transform.position + b2Mul(transform.R, m_p);
 	aabb->lowerBound.Set(p.x - m_radius, p.y - m_radius);

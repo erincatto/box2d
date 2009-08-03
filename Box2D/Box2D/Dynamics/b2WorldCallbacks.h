@@ -22,7 +22,7 @@
 #include <Box2D/Common/b2Settings.h>
 
 struct b2Vec2;
-struct b2XForm;
+struct b2Transform;
 class b2Fixture;
 class b2Body;
 class b2Joint;
@@ -188,7 +188,7 @@ public:
 
 	/// Draw a transform. Choose your own length scale.
 	/// @param xf a transform.
-	virtual void DrawXForm(const b2XForm& xf) = 0;
+	virtual void DrawXForm(const b2Transform& xf) = 0;
 
 protected:
 	uint32 m_drawFlags;

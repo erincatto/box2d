@@ -220,24 +220,25 @@ void b2BroadPhase::UpdatePairs(T* callback)
 	}
 }
 
+/// This wrapper converts tree proxy user data to broad-phase proxy user data.
+template <typename T>
+struct b2BroadPhaseQueryWrapper
+{
+	void QueryCallback(int32 userData)
+	{
+		b2Assert(0 <= userData && userData < proxyCapacity);
+		callback->QueryCallback(proxyPool[userData].userData);
+	}
+
+	b2Proxy* proxyPool;
+	int32 proxyCapacity;
+	T* callback;
+};
+
 template <typename T>
 void b2BroadPhase::Query(T* callback, const b2AABB& aabb) const
 {
-	/// This wrapper converts tree proxy user data to broad-phase proxy user data.
-	struct Wrapper
-	{
-		void QueryCallback(int32 userData)
-		{
-			b2Assert(0 <= userData && userData < proxyCapacity);
-			callback->QueryCallback(proxyPool[userData].userData);
-		}
-
-		b2Proxy* proxyPool;
-		int32 proxyCapacity;
-		T* callback;
-	};
-
-	Wrapper wrapper;
+	b2BroadPhaseQueryWrapper<T> wrapper;
 	wrapper.proxyPool = m_proxyPool;
 	wrapper.proxyCapacity = m_proxyCapacity;
 	wrapper.callback = callback;
