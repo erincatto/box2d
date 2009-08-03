@@ -153,7 +153,7 @@ public:
 
 	/// Get the body transform for the body's origin.
 	/// @return the world transform of the body's origin.
-	const b2XForm& GetXForm() const;
+	const b2Transform& GetXForm() const;
 
 	/// Get the world body origin position.
 	/// @return the world position of the body's origin.
@@ -370,7 +370,7 @@ private:
 
 	int32 m_islandIndex;
 
-	b2XForm m_xf;		// the body origin transform
+	b2Transform m_xf;		// the body origin transform
 	b2Sweep m_sweep;	// the swept motion for CCD
 
 	b2Vec2 m_linearVelocity;
@@ -400,7 +400,7 @@ private:
 	void* m_userData;
 };
 
-inline const b2XForm& b2Body::GetXForm() const
+inline const b2Transform& b2Body::GetXForm() const
 {
 	return m_xf;
 }

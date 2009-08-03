@@ -104,8 +104,8 @@ struct b2WorldManifold
 	/// point count, impulses, etc. The radii must come from the shapes
 	/// that generated the manifold.
 	void Initialize(const b2Manifold* manifold,
-					const b2XForm& xfA, float32 radiusA,
-					const b2XForm& xfB, float32 radiusB);
+					const b2Transform& xfA, float32 radiusA,
+					const b2Transform& xfB, float32 radiusB);
 
 	b2Vec2 m_normal;						///< world vector pointing from A to B
 	b2Vec2 m_points[b2_maxManifoldPoints];	///< world contact point (point of intersection)
@@ -201,18 +201,18 @@ struct b2AABB
 
 /// Compute the collision manifold between two circles.
 void b2CollideCircles(b2Manifold* manifold,
-					  const b2CircleShape* circle1, const b2XForm& xf1,
-					  const b2CircleShape* circle2, const b2XForm& xf2);
+					  const b2CircleShape* circle1, const b2Transform& xf1,
+					  const b2CircleShape* circle2, const b2Transform& xf2);
 
 /// Compute the collision manifold between a polygon and a circle.
 void b2CollidePolygonAndCircle(b2Manifold* manifold,
-							   const b2PolygonShape* polygon, const b2XForm& xf1,
-							   const b2CircleShape* circle, const b2XForm& xf2);
+							   const b2PolygonShape* polygon, const b2Transform& xf1,
+							   const b2CircleShape* circle, const b2Transform& xf2);
 
 /// Compute the collision manifold between two polygons.
 void b2CollidePolygons(b2Manifold* manifold,
-					   const b2PolygonShape* polygon1, const b2XForm& xf1,
-					   const b2PolygonShape* polygon2, const b2XForm& xf2);
+					   const b2PolygonShape* polygon1, const b2Transform& xf1,
+					   const b2PolygonShape* polygon2, const b2Transform& xf2);
 
 /// Clipping for contact manifolds.
 int32 b2ClipSegmentToLine(b2ClipVertex vOut[2], const b2ClipVertex vIn[2],

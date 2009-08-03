@@ -79,7 +79,7 @@ public:
 		}
 
 		{
-			b2XForm xf1;
+			b2Transform xf1;
 			xf1.R.Set(0.3524f * b2_pi);
 			xf1.position = b2Mul(xf1.R, b2Vec2(1.0f, 0.0f));
 
@@ -91,7 +91,7 @@ public:
 			vertices[2] = b2Mul(xf1, b2Vec2(0.0f, 0.5f));
 			triangle1.Set(vertices, 3);
 
-			b2XForm xf2;
+			b2Transform xf2;
 			xf2.R.Set(-0.3524f * b2_pi);
 			xf2.position = b2Mul(xf2.R, b2Vec2(-1.0f, 0.0f));
 

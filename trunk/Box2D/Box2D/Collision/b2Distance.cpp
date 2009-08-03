@@ -37,8 +37,8 @@ struct b2Simplex
 {
 	template <typename TA, typename TB>
 	void ReadCache(	const b2SimplexCache* cache,
-					const TA* shapeA, const b2XForm& transformA,
-					const TB* shapeB, const b2XForm& transformB)
+					const TA* shapeA, const b2Transform& transformA,
+					const TB* shapeB, const b2Transform& transformB)
 	{
 		b2Assert(0 <= cache->count && cache->count <= 3);
 		
@@ -390,8 +390,8 @@ void b2Distance(b2DistanceOutput* output,
 {
 	++b2_gjkCalls;
 
-	b2XForm transformA = input->transformA;
-	b2XForm transformB = input->transformB;
+	b2Transform transformA = input->transformA;
+	b2Transform transformB = input->transformB;
 
 	// Initialize the simplex.
 	b2Simplex simplex;

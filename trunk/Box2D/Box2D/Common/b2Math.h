@@ -321,13 +321,13 @@ struct b2Mat33
 
 /// A transform contains translation and rotation. It is used to represent
 /// the position and orientation of rigid frames.
-struct b2XForm
+struct b2Transform
 {
 	/// The default constructor does nothing (for performance).
-	b2XForm() {}
+	b2Transform() {}
 
 	/// Initialize using a position vector and a rotation matrix.
-	b2XForm(const b2Vec2& position, const b2Mat22& R) : position(position), R(R) {}
+	b2Transform(const b2Vec2& position, const b2Mat22& R) : position(position), R(R) {}
 
 	/// Set this to the identity transform.
 	void SetIdentity()
@@ -361,7 +361,7 @@ struct b2Sweep
 {
 	/// Get the interpolated transform at a specific time.
 	/// @param alpha is a factor in [0,1], where 0 indicates t0.
-	void GetTransform(b2XForm* xf, float32 alpha) const;
+	void GetTransform(b2Transform* xf, float32 alpha) const;
 
 	/// Advance the sweep forward, yielding a new initial state.
 	/// @param t the new initial time.
@@ -376,7 +376,7 @@ struct b2Sweep
 
 extern const b2Vec2 b2Vec2_zero;
 extern const b2Mat22 b2Mat22_identity;
-extern const b2XForm b2XForm_identity;
+extern const b2Transform b2XForm_identity;
 
 /// Perform the dot product on two vectors.
 inline float32 b2Dot(const b2Vec2& a, const b2Vec2& b)
@@ -506,12 +506,12 @@ inline b2Vec3 b2Mul(const b2Mat33& A, const b2Vec3& v)
 	return v.x * A.col1 + v.y * A.col2 + v.z * A.col3;
 }
 
-inline b2Vec2 b2Mul(const b2XForm& T, const b2Vec2& v)
+inline b2Vec2 b2Mul(const b2Transform& T, const b2Vec2& v)
 {
 	return T.position + b2Mul(T.R, v);
 }
 
-inline b2Vec2 b2MulT(const b2XForm& T, const b2Vec2& v)
+inline b2Vec2 b2MulT(const b2Transform& T, const b2Vec2& v)
 {
 	return b2MulT(T.R, v - T.position);
 }
@@ -587,7 +587,7 @@ inline bool b2IsPowerOfTwo(uint32 x)
 	return result;
 }
 
-inline void b2Sweep::GetTransform(b2XForm* xf, float32 alpha) const
+inline void b2Sweep::GetTransform(b2Transform* xf, float32 alpha) const
 {
 	xf->position = (1.0f - alpha) * c0 + alpha * c;
 	float32 angle = (1.0f - alpha) * a0 + alpha * a;

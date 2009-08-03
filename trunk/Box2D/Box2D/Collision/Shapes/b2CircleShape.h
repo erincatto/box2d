@@ -31,17 +31,17 @@ public:
 	b2Shape* Clone(b2BlockAllocator* allocator) const;
 
 	/// @see b2Shape::TestPoint
-	bool TestPoint(const b2XForm& transform, const b2Vec2& p) const;
+	bool TestPoint(const b2Transform& transform, const b2Vec2& p) const;
 
 	/// @see b2Shape::TestSegment
-	b2SegmentCollide TestSegment(	const b2XForm& transform,
+	b2SegmentCollide TestSegment(	const b2Transform& transform,
 						float32* lambda,
 						b2Vec2* normal,
 						const b2Segment& segment,
 						float32 maxLambda) const;
 
 	/// @see b2Shape::ComputeAABB
-	void ComputeAABB(b2AABB* aabb, const b2XForm& transform) const;
+	void ComputeAABB(b2AABB* aabb, const b2Transform& transform) const;
 
 	/// @see b2Shape::ComputeMass
 	void ComputeMass(b2MassData* massData, float32 density) const;

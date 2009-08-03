@@ -153,7 +153,7 @@ protected:
 	// This returns true if the position errors are within tolerance.
 	virtual bool SolvePositionConstraints(float32 baumgarte) = 0;
 
-	void ComputeXForm(b2XForm* xf, const b2Vec2& center, const b2Vec2& localCenter, float32 angle) const;
+	void ComputeXForm(b2Transform* xf, const b2Vec2& center, const b2Vec2& localCenter, float32 angle) const;
 
 	b2JointType m_type;
 	b2Joint* m_prev;
@@ -221,7 +221,7 @@ inline void b2Joint::SetUserData(void* data)
 	m_userData = data;
 }
 
-inline void b2Joint::ComputeXForm(b2XForm* xf, const b2Vec2& center, const b2Vec2& localCenter, float32 angle) const
+inline void b2Joint::ComputeXForm(b2Transform* xf, const b2Vec2& center, const b2Vec2& localCenter, float32 angle) const
 {
 	xf->R.Set(angle);
 	xf->position = center - b2Mul(xf->R, localCenter);

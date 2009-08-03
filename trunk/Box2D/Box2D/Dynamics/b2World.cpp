@@ -865,24 +865,24 @@ void b2World::Step(float32 dt, int32 velocityIterations, int32 positionIteration
 	m_flags &= ~e_locked;
 }
 
+struct b2WorldQueryWrapper
+{
+	void QueryCallback(void* userData)
+	{
+		callback->ReportFixture((b2Fixture*)userData);
+	}
+
+	b2QueryCallback* callback;
+};
+
 void b2World::Query(b2QueryCallback* callback, const b2AABB& aabb)
 {
-	struct Wrapper
-	{
-		void QueryCallback(void* userData)
-		{
-			callback->ReportFixture((b2Fixture*)userData);
-		}
-
-		b2QueryCallback* callback;
-	};
-
-	Wrapper wrapper;
+	b2WorldQueryWrapper wrapper;
 	wrapper.callback = callback;
 	m_contactManager.m_broadPhase.Query(&wrapper, aabb);
 }
 
-void b2World::DrawShape(b2Fixture* fixture, const b2XForm& xf, const b2Color& color)
+void b2World::DrawShape(b2Fixture* fixture, const b2Transform& xf, const b2Color& color)
 {
 	b2Color coreColor(0.9f, 0.6f, 0.6f);
 
@@ -922,8 +922,8 @@ void b2World::DrawJoint(b2Joint* joint)
 {
 	b2Body* b1 = joint->GetBody1();
 	b2Body* b2 = joint->GetBody2();
-	const b2XForm& xf1 = b1->GetXForm();
-	const b2XForm& xf2 = b2->GetXForm();
+	const b2Transform& xf1 = b1->GetXForm();
+	const b2Transform& xf2 = b2->GetXForm();
 	b2Vec2 x1 = xf1.position;
 	b2Vec2 x2 = xf2.position;
 	b2Vec2 p1 = joint->GetAnchor1();
@@ -972,7 +972,7 @@ void b2World::DrawDebugData()
 	{
 		for (b2Body* b = m_bodyList; b; b = b->GetNext())
 		{
-			const b2XForm& xf = b->GetXForm();
+			const b2Transform& xf = b->GetXForm();
 			for (b2Fixture* f = b->GetFixtureList(); f; f = f->GetNext())
 			{
 				if (b->IsStatic())
@@ -1032,7 +1032,7 @@ void b2World::DrawDebugData()
 	{
 		for (b2Body* b = m_bodyList; b; b = b->GetNext())
 		{
-			b2XForm xf = b->GetXForm();
+			b2Transform xf = b->GetXForm();
 			xf.position = b->GetWorldCenter();
 			m_debugDraw->DrawXForm(xf);
 		}

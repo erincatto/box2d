@@ -161,7 +161,7 @@ private:
 	void SolveTOI(const b2TimeStep& step);
 
 	void DrawJoint(b2Joint* joint);
-	void DrawShape(b2Fixture* shape, const b2XForm& xf, const b2Color& color);
+	void DrawShape(b2Fixture* shape, const b2Transform& xf, const b2Color& color);
 
 	b2BlockAllocator m_blockAllocator;
 	b2StackAllocator m_stackAllocator;

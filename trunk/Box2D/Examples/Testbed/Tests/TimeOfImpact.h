@@ -74,7 +74,7 @@ public:
 
 		b2Vec2 vertices[b2_maxPolygonVertices];
 
-		b2XForm transformA;
+		b2Transform transformA;
 		sweepA.GetTransform(&transformA, 0.0f);
 		for (int32 i = 0; i < m_shapeA.m_vertexCount; ++i)
 		{
@@ -82,7 +82,7 @@ public:
 		}
 		m_debugDraw.DrawPolygon(vertices, m_shapeA.m_vertexCount, b2Color(0.9f, 0.9f, 0.9f));
 
-		b2XForm transformB;
+		b2Transform transformB;
 		sweepB.GetTransform(&transformB, 0.0f);
 		for (int32 i = 0; i < m_shapeB.m_vertexCount; ++i)
 		{

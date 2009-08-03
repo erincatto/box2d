@@ -38,8 +38,8 @@ struct b2SeparationFunction
 	};
 
 	void Initialize(const b2SimplexCache* cache,
-		const TA* shapeA, const b2XForm& transformA,
-		const TB* shapeB, const b2XForm& transformB)
+		const TA* shapeA, const b2Transform& transformA,
+		const TB* shapeB, const b2Transform& transformB)
 	{
 		m_shapeA = shapeA;
 		m_shapeB = shapeB;
@@ -182,7 +182,7 @@ struct b2SeparationFunction
 		}
 	}
 
-	float32 Evaluate(const b2XForm& transformA, const b2XForm& transformB)
+	float32 Evaluate(const b2Transform& transformA, const b2Transform& transformB)
 	{
 		switch (m_type)
 		{
@@ -268,7 +268,7 @@ float32 b2TimeOfImpact(const b2TOIInput* input, const TA* shapeA, const TB* shap
 
 	for(;;)
 	{
-		b2XForm xfA, xfB;
+		b2Transform xfA, xfB;
 		sweepA.GetTransform(&xfA, alpha);
 		sweepB.GetTransform(&xfB, alpha);
 
