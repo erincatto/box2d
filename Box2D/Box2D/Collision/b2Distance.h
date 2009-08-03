@@ -38,8 +38,8 @@ struct b2SimplexCache
 /// in the computation. Even 
 struct b2DistanceInput
 {
-	b2XForm transformA;
-	b2XForm transformB;
+	b2Transform transformA;
+	b2Transform transformB;
 	bool useRadii;
 };
 

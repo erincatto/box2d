@@ -20,8 +20,8 @@
 #include <Box2D/Collision/Shapes/b2PolygonShape.h>
 
 // Find the separation between poly1 and poly2 for a give edge normal on poly1.
-static float32 b2EdgeSeparation(const b2PolygonShape* poly1, const b2XForm& xf1, int32 edge1,
-							  const b2PolygonShape* poly2, const b2XForm& xf2)
+static float32 b2EdgeSeparation(const b2PolygonShape* poly1, const b2Transform& xf1, int32 edge1,
+							  const b2PolygonShape* poly2, const b2Transform& xf2)
 {
 	int32 count1 = poly1->m_vertexCount;
 	const b2Vec2* vertices1 = poly1->m_vertices;
@@ -58,8 +58,8 @@ static float32 b2EdgeSeparation(const b2PolygonShape* poly1, const b2XForm& xf1,
 
 // Find the max separation between poly1 and poly2 using edge normals from poly1.
 static float32 b2FindMaxSeparation(int32* edgeIndex,
-								 const b2PolygonShape* poly1, const b2XForm& xf1,
-								 const b2PolygonShape* poly2, const b2XForm& xf2)
+								 const b2PolygonShape* poly1, const b2Transform& xf1,
+								 const b2PolygonShape* poly2, const b2Transform& xf2)
 {
 	int32 count1 = poly1->m_vertexCount;
 	const b2Vec2* normals1 = poly1->m_normals;
@@ -140,8 +140,8 @@ static float32 b2FindMaxSeparation(int32* edgeIndex,
 }
 
 static void b2FindIncidentEdge(b2ClipVertex c[2],
-							 const b2PolygonShape* poly1, const b2XForm& xf1, int32 edge1,
-							 const b2PolygonShape* poly2, const b2XForm& xf2)
+							 const b2PolygonShape* poly1, const b2Transform& xf1, int32 edge1,
+							 const b2PolygonShape* poly2, const b2Transform& xf2)
 {
 	int32 count1 = poly1->m_vertexCount;
 	const b2Vec2* normals1 = poly1->m_normals;
@@ -191,8 +191,8 @@ static void b2FindIncidentEdge(b2ClipVertex c[2],
 
 // The normal points from 1 to 2
 void b2CollidePolygons(b2Manifold* manifold,
-					  const b2PolygonShape* polyA, const b2XForm& xfA,
-					  const b2PolygonShape* polyB, const b2XForm& xfB)
+					  const b2PolygonShape* polyA, const b2Transform& xfA,
+					  const b2PolygonShape* polyB, const b2Transform& xfB)
 {
 	manifold->m_pointCount = 0;
 	float32 totalRadius = polyA->m_radius + polyB->m_radius;
@@ -209,7 +209,7 @@ void b2CollidePolygons(b2Manifold* manifold,
 
 	const b2PolygonShape* poly1;	// reference polygon
 	const b2PolygonShape* poly2;	// incident polygon
-	b2XForm xf1, xf2;
+	b2Transform xf1, xf2;
 	int32 edge1;		// reference edge
 	uint8 flip;
 	const float32 k_relativeTol = 0.98f;

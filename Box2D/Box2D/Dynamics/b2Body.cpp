@@ -385,7 +385,7 @@ void b2Body::SetXForm(const b2Vec2& position, float32 angle)
 
 void b2Body::SynchronizeFixtures()
 {
-	b2XForm xf1;
+	b2Transform xf1;
 	xf1.R.Set(m_sweep.a0);
 	xf1.position = m_sweep.c0 - b2Mul(xf1.R, m_sweep.localCenter);
 

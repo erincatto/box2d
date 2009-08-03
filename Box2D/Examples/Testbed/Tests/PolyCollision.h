@@ -117,8 +117,8 @@ public:
 	b2PolygonShape m_polygonA;
 	b2PolygonShape m_polygonB;
 
-	b2XForm m_transformA;
-	b2XForm m_transformB;
+	b2Transform m_transformA;
+	b2Transform m_transformB;
 
 	b2Vec2 m_positionB;
 	float32 m_angleB;

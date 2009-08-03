@@ -19,8 +19,8 @@
 #include <Box2D/Collision/b2Collision.h>
 
 void b2WorldManifold::Initialize(const b2Manifold* manifold,
-						  const b2XForm& xfA, float32 radiusA,
-						  const b2XForm& xfB, float32 radiusB)
+						  const b2Transform& xfA, float32 radiusA,
+						  const b2Transform& xfB, float32 radiusB)
 {
 	if (manifold->m_pointCount == 0)
 	{

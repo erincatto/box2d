@@ -40,7 +40,7 @@ b2Fixture::~b2Fixture()
 	b2Assert(m_proxyId == b2BroadPhase::e_nullProxy);
 }
 
-void b2Fixture::Create(b2BlockAllocator* allocator, b2BroadPhase* broadPhase, b2Body* body, const b2XForm& xf, const b2FixtureDef* def)
+void b2Fixture::Create(b2BlockAllocator* allocator, b2BroadPhase* broadPhase, b2Body* body, const b2Transform& xf, const b2FixtureDef* def)
 {
 	m_userData = def->userData;
 	m_friction = def->friction;
@@ -99,7 +99,7 @@ void b2Fixture::Destroy(b2BlockAllocator* allocator, b2BroadPhase* broadPhase)
 	m_shape = NULL;
 }
 
-void b2Fixture::Synchronize(b2BroadPhase* broadPhase, const b2XForm& transform1, const b2XForm& transform2)
+void b2Fixture::Synchronize(b2BroadPhase* broadPhase, const b2Transform& transform1, const b2Transform& transform2)
 {
 	if (m_proxyId == b2BroadPhase::e_nullProxy)
 	{	

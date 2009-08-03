@@ -185,10 +185,10 @@ protected:
 
 	// We need separation create/destroy functions from the constructor/destructor because
 	// the destructor cannot access the allocator or broad-phase (no destructor arguments allowed by C++).
-	void Create(b2BlockAllocator* allocator, b2BroadPhase* broadPhase, b2Body* body, const b2XForm& xf, const b2FixtureDef* def);
+	void Create(b2BlockAllocator* allocator, b2BroadPhase* broadPhase, b2Body* body, const b2Transform& xf, const b2FixtureDef* def);
 	void Destroy(b2BlockAllocator* allocator, b2BroadPhase* broadPhase);
 
-	void Synchronize(b2BroadPhase* broadPhase, const b2XForm& xf1, const b2XForm& xf2);
+	void Synchronize(b2BroadPhase* broadPhase, const b2Transform& xf1, const b2Transform& xf2);
 
 	b2Fixture* m_next;
 	b2Body* m_body;

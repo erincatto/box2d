@@ -72,7 +72,7 @@ public:
 	/// Test a point for containment in this shape. This only works for convex shapes.
 	/// @param xf the shape world transform.
 	/// @param p a point in world coordinates.
-	virtual bool TestPoint(const b2XForm& xf, const b2Vec2& p) const = 0;
+	virtual bool TestPoint(const b2Transform& xf, const b2Vec2& p) const = 0;
 
 	/// Perform a ray cast against this shape.
 	/// @param xf the shape world transform.
@@ -82,7 +82,7 @@ public:
 	/// is not set.
 	/// @param segment defines the begin and end point of the ray cast.
 	/// @param maxLambda a number typically in the range [0,1].
-	virtual b2SegmentCollide TestSegment(	const b2XForm& xf,
+	virtual b2SegmentCollide TestSegment(	const b2Transform& xf,
 											float32* lambda,
 											b2Vec2* normal,
 											const b2Segment& segment,
@@ -91,7 +91,7 @@ public:
 	/// Given a transform, compute the associated axis aligned bounding box for this shape.
 	/// @param aabb returns the axis aligned box.
 	/// @param xf the world transform of the shape.
-	virtual void ComputeAABB(b2AABB* aabb, const b2XForm& xf) const = 0;
+	virtual void ComputeAABB(b2AABB* aabb, const b2Transform& xf) const = 0;
 
 	/// Compute the mass properties of this shape using its dimensions and density.
 	/// The inertia tensor is computed about the local origin, not the centroid.
