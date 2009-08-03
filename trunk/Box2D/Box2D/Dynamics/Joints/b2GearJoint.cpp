@@ -118,8 +118,8 @@ void b2GearJoint::InitVelocityConstraints(const b2TimeStep& step)
 	}
 	else
 	{
-		b2Vec2 ug = b2Mul(g1->GetXForm().R, m_prismatic1->m_localXAxis1);
-		b2Vec2 r = b2Mul(b1->GetXForm().R, m_localAnchor1 - b1->GetLocalCenter());
+		b2Vec2 ug = b2Mul(g1->GetTransform().R, m_prismatic1->m_localXAxis1);
+		b2Vec2 r = b2Mul(b1->GetTransform().R, m_localAnchor1 - b1->GetLocalCenter());
 		float32 crug = b2Cross(r, ug);
 		m_J.linear1 = -ug;
 		m_J.angular1 = -crug;
@@ -133,8 +133,8 @@ void b2GearJoint::InitVelocityConstraints(const b2TimeStep& step)
 	}
 	else
 	{
-		b2Vec2 ug = b2Mul(g2->GetXForm().R, m_prismatic2->m_localXAxis1);
-		b2Vec2 r = b2Mul(b2->GetXForm().R, m_localAnchor2 - b2->GetLocalCenter());
+		b2Vec2 ug = b2Mul(g2->GetTransform().R, m_prismatic2->m_localXAxis1);
+		b2Vec2 r = b2Mul(b2->GetTransform().R, m_localAnchor2 - b2->GetLocalCenter());
 		float32 crug = b2Cross(r, ug);
 		m_J.linear2 = -m_ratio * ug;
 		m_J.angular2 = -m_ratio * crug;
@@ -242,7 +242,7 @@ b2Vec2 b2GearJoint::GetReactionForce(float32 inv_dt) const
 float32 b2GearJoint::GetReactionTorque(float32 inv_dt) const
 {
 	// TODO_ERIN not tested
-	b2Vec2 r = b2Mul(m_bodyB->GetXForm().R, m_localAnchor2 - m_bodyB->GetLocalCenter());
+	b2Vec2 r = b2Mul(m_bodyB->GetTransform().R, m_localAnchor2 - m_bodyB->GetLocalCenter());
 	b2Vec2 P = m_impulse * m_J.linear2;
 	float32 L = m_impulse * m_J.angular2 - b2Cross(r, P);
 	return inv_dt * L;

@@ -121,8 +121,8 @@ void b2LineJoint::InitVelocityConstraints(const b2TimeStep& step)
 	m_localCenter1 = b1->GetLocalCenter();
 	m_localCenter2 = b2->GetLocalCenter();
 
-	b2Transform xf1 = b1->GetXForm();
-	b2Transform xf2 = b2->GetXForm();
+	b2Transform xf1 = b1->GetTransform();
+	b2Transform xf2 = b2->GetTransform();
 
 	// Compute the effective masses.
 	b2Vec2 r1 = b2Mul(xf1.R, m_localAnchor1 - m_localCenter1);
@@ -475,8 +475,8 @@ float32 b2LineJoint::GetJointSpeed() const
 	b2Body* b1 = m_bodyA;
 	b2Body* b2 = m_bodyB;
 
-	b2Vec2 r1 = b2Mul(b1->GetXForm().R, m_localAnchor1 - b1->GetLocalCenter());
-	b2Vec2 r2 = b2Mul(b2->GetXForm().R, m_localAnchor2 - b2->GetLocalCenter());
+	b2Vec2 r1 = b2Mul(b1->GetTransform().R, m_localAnchor1 - b1->GetLocalCenter());
+	b2Vec2 r2 = b2Mul(b2->GetTransform().R, m_localAnchor2 - b2->GetLocalCenter());
 	b2Vec2 p1 = b1->m_sweep.c + r1;
 	b2Vec2 p2 = b2->m_sweep.c + r2;
 	b2Vec2 d = p2 - p1;

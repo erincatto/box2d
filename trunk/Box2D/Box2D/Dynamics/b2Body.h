@@ -153,7 +153,7 @@ public:
 
 	/// Get the body transform for the body's origin.
 	/// @return the world transform of the body's origin.
-	const b2Transform& GetXForm() const;
+	const b2Transform& GetTransform() const;
 
 	/// Get the world body origin position.
 	/// @return the world position of the body's origin.
@@ -400,7 +400,7 @@ private:
 	void* m_userData;
 };
 
-inline const b2Transform& b2Body::GetXForm() const
+inline const b2Transform& b2Body::GetTransform() const
 {
 	return m_xf;
 }

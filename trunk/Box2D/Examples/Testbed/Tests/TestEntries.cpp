@@ -33,6 +33,7 @@
 #include "DynamicTreeTest.h"
 #include "Gears.h"
 #include "LineJoint.h"
+#include "OneSidedPlatform.h"
 #include "PolyCollision.h"
 #include "PolyShapes.h"
 #include "Prismatic.h"
@@ -52,6 +53,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Apply Force", ApplyForce::Create},
 	{"Bridge", Bridge::Create},
 	{"CCD Test", CCDTest::Create},
