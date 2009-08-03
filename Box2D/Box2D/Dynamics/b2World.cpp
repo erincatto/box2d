@@ -922,8 +922,8 @@ void b2World::DrawJoint(b2Joint* joint)
 {
 	b2Body* b1 = joint->GetBody1();
 	b2Body* b2 = joint->GetBody2();
-	const b2Transform& xf1 = b1->GetXForm();
-	const b2Transform& xf2 = b2->GetXForm();
+	const b2Transform& xf1 = b1->GetTransform();
+	const b2Transform& xf2 = b2->GetTransform();
 	b2Vec2 x1 = xf1.position;
 	b2Vec2 x2 = xf2.position;
 	b2Vec2 p1 = joint->GetAnchor1();
@@ -972,7 +972,7 @@ void b2World::DrawDebugData()
 	{
 		for (b2Body* b = m_bodyList; b; b = b->GetNext())
 		{
-			const b2Transform& xf = b->GetXForm();
+			const b2Transform& xf = b->GetTransform();
 			for (b2Fixture* f = b->GetFixtureList(); f; f = f->GetNext())
 			{
 				if (b->IsStatic())
@@ -1032,7 +1032,7 @@ void b2World::DrawDebugData()
 	{
 		for (b2Body* b = m_bodyList; b; b = b->GetNext())
 		{
-			b2Transform xf = b->GetXForm();
+			b2Transform xf = b->GetTransform();
 			xf.position = b->GetWorldCenter();
 			m_debugDraw->DrawXForm(xf);
 		}

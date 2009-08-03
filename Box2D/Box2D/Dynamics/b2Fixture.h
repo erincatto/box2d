@@ -289,7 +289,7 @@ inline void b2Fixture::ComputeMass(b2MassData* massData) const
 
 inline bool b2Fixture::TestPoint(const b2Vec2& p) const
 {
-	return m_shape->TestPoint(m_body->GetXForm(), p);
+	return m_shape->TestPoint(m_body->GetTransform(), p);
 }
 
 inline b2SegmentCollide
@@ -298,7 +298,7 @@ b2Fixture::TestSegment(	float32* lambda,
 						 const b2Segment& segment,
 						 float32 maxLambda) const
 {
-	return m_shape->TestSegment(m_body->GetXForm(), lambda, normal, segment, maxLambda);
+	return m_shape->TestSegment(m_body->GetTransform(), lambda, normal, segment, maxLambda);
 }
 
 #endif

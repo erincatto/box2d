@@ -87,8 +87,8 @@ void b2PulleyJoint::InitVelocityConstraints(const b2TimeStep& step)
 	b2Body* b1 = m_bodyA;
 	b2Body* b2 = m_bodyB;
 
-	b2Vec2 r1 = b2Mul(b1->GetXForm().R, m_localAnchor1 - b1->GetLocalCenter());
-	b2Vec2 r2 = b2Mul(b2->GetXForm().R, m_localAnchor2 - b2->GetLocalCenter());
+	b2Vec2 r1 = b2Mul(b1->GetTransform().R, m_localAnchor1 - b1->GetLocalCenter());
+	b2Vec2 r2 = b2Mul(b2->GetTransform().R, m_localAnchor2 - b2->GetLocalCenter());
 
 	b2Vec2 p1 = b1->m_sweep.c + r1;
 	b2Vec2 p2 = b2->m_sweep.c + r2;
@@ -196,8 +196,8 @@ void b2PulleyJoint::SolveVelocityConstraints(const b2TimeStep& step)
 	b2Body* b1 = m_bodyA;
 	b2Body* b2 = m_bodyB;
 
-	b2Vec2 r1 = b2Mul(b1->GetXForm().R, m_localAnchor1 - b1->GetLocalCenter());
-	b2Vec2 r2 = b2Mul(b2->GetXForm().R, m_localAnchor2 - b2->GetLocalCenter());
+	b2Vec2 r1 = b2Mul(b1->GetTransform().R, m_localAnchor1 - b1->GetLocalCenter());
+	b2Vec2 r2 = b2Mul(b2->GetTransform().R, m_localAnchor2 - b2->GetLocalCenter());
 
 	if (m_state == e_atUpperLimit)
 	{
@@ -263,8 +263,8 @@ bool b2PulleyJoint::SolvePositionConstraints(float32 baumgarte)
 
 	if (m_state == e_atUpperLimit)
 	{
-		b2Vec2 r1 = b2Mul(b1->GetXForm().R, m_localAnchor1 - b1->GetLocalCenter());
-		b2Vec2 r2 = b2Mul(b2->GetXForm().R, m_localAnchor2 - b2->GetLocalCenter());
+		b2Vec2 r1 = b2Mul(b1->GetTransform().R, m_localAnchor1 - b1->GetLocalCenter());
+		b2Vec2 r2 = b2Mul(b2->GetTransform().R, m_localAnchor2 - b2->GetLocalCenter());
 
 		b2Vec2 p1 = b1->m_sweep.c + r1;
 		b2Vec2 p2 = b2->m_sweep.c + r2;
@@ -314,7 +314,7 @@ bool b2PulleyJoint::SolvePositionConstraints(float32 baumgarte)
 
 	if (m_limitState1 == e_atUpperLimit)
 	{
-		b2Vec2 r1 = b2Mul(b1->GetXForm().R, m_localAnchor1 - b1->GetLocalCenter());
+		b2Vec2 r1 = b2Mul(b1->GetTransform().R, m_localAnchor1 - b1->GetLocalCenter());
 		b2Vec2 p1 = b1->m_sweep.c + r1;
 
 		m_u1 = p1 - s1;
@@ -343,7 +343,7 @@ bool b2PulleyJoint::SolvePositionConstraints(float32 baumgarte)
 
 	if (m_limitState2 == e_atUpperLimit)
 	{
-		b2Vec2 r2 = b2Mul(b2->GetXForm().R, m_localAnchor2 - b2->GetLocalCenter());
+		b2Vec2 r2 = b2Mul(b2->GetTransform().R, m_localAnchor2 - b2->GetLocalCenter());
 		b2Vec2 p2 = b2->m_sweep.c + r2;
 
 		m_u2 = p2 - s2;

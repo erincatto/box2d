@@ -173,7 +173,7 @@ inline void b2Contact::GetWorldManifold(b2WorldManifold* worldManifold) const
 	const b2Shape* shapeA = m_fixtureA->GetShape();
 	const b2Shape* shapeB = m_fixtureB->GetShape();
 
-	worldManifold->Initialize(&m_manifold, bodyA->GetXForm(), shapeA->m_radius, bodyB->GetXForm(), shapeB->m_radius);
+	worldManifold->Initialize(&m_manifold, bodyA->GetTransform(), shapeA->m_radius, bodyB->GetTransform(), shapeB->m_radius);
 }
 
 inline bool b2Contact::IsSolid() const

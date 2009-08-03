@@ -50,8 +50,8 @@ void b2PolygonContact::Evaluate()
 	b2Body* bodyB = m_fixtureB->GetBody();
 
 	b2CollidePolygons(	&m_manifold,
-						(b2PolygonShape*)m_fixtureA->GetShape(), bodyA->GetXForm(),
-						(b2PolygonShape*)m_fixtureB->GetShape(), bodyB->GetXForm());
+						(b2PolygonShape*)m_fixtureA->GetShape(), bodyA->GetTransform(),
+						(b2PolygonShape*)m_fixtureB->GetShape(), bodyB->GetTransform());
 }
 
 float32 b2PolygonContact::ComputeTOI(const b2Sweep& sweepA, const b2Sweep& sweepB) const
