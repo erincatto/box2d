@@ -50,8 +50,8 @@ void b2CircleContact::Evaluate()
 	b2Body* bodyB = m_fixtureB->GetBody();
 
 	b2CollideCircles(	&m_manifold,
-						(b2CircleShape*)m_fixtureA->GetShape(), bodyA->GetXForm(),
-						(b2CircleShape*)m_fixtureB->GetShape(), bodyB->GetXForm());
+						(b2CircleShape*)m_fixtureA->GetShape(), bodyA->GetTransform(),
+						(b2CircleShape*)m_fixtureB->GetShape(), bodyB->GetTransform());
 }
 
 float32 b2CircleContact::ComputeTOI(const b2Sweep& sweepA, const b2Sweep& sweepB) const
