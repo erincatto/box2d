@@ -1,0 +1,13 @@
+//
+// Prefix header for all source files of the 'Box2D' target in the 'Box2D' project.
+//
+
+// By default, don't export symbols
+#pragma GCC visibility push(hidden)
+
+#include <iostream>
+
+// Export symbols declared in public header:
+#pragma GCC visibility push(default)
+#include "Box2D.h"
+#pragma GCC visibility pop
