@@ -53,6 +53,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Pyramid", Pyramid::Create},
 	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Apply Force", ApplyForce::Create},
 	{"Bridge", Bridge::Create},
@@ -70,7 +71,6 @@ TestEntry g_testEntries[] =
 	{"Polygon Shapes", PolyShapes::Create},
 	{"Prismatic", Prismatic::Create},
 	{"Pulleys", Pulleys::Create},
-	{"Pyramid", Pyramid::Create},
 	{"Revolute", Revolute::Create},
 	{"Sensor Test", SensorTest::Create},
 	{"Shape Editing", ShapeEditing::Create},

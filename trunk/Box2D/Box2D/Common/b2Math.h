@@ -508,7 +508,10 @@ inline b2Vec3 b2Mul(const b2Mat33& A, const b2Vec3& v)
 
 inline b2Vec2 b2Mul(const b2Transform& T, const b2Vec2& v)
 {
-	return T.position + b2Mul(T.R, v);
+	float32 x = T.position.x + T.R.col1.x * v.x + T.R.col2.x * v.y;
+	float32 y = T.position.y + T.R.col1.y * v.x + T.R.col2.y * v.y;
+
+	return b2Vec2(x, y);
 }
 
 inline b2Vec2 b2MulT(const b2Transform& T, const b2Vec2& v)

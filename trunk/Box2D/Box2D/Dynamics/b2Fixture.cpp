@@ -57,10 +57,9 @@ void b2Fixture::Create(b2BlockAllocator* allocator, b2BroadPhase* broadPhase, b2
 	m_shape = def->shape->Clone(allocator);
 
 	// Create proxy in the broad-phase.
-	b2AABB aabb;
-	m_shape->ComputeAABB(&aabb, xf);
+	m_shape->ComputeAABB(&m_aabb, xf);
 
-	m_proxyId = broadPhase->CreateProxy(aabb, this);
+	m_proxyId = broadPhase->CreateProxy(m_aabb, this);
 }
 
 void b2Fixture::Destroy(b2BlockAllocator* allocator, b2BroadPhase* broadPhase)
@@ -111,9 +110,8 @@ void b2Fixture::Synchronize(b2BroadPhase* broadPhase, const b2Transform& transfo
 	m_shape->ComputeAABB(&aabb1, transform1);
 	m_shape->ComputeAABB(&aabb2, transform2);
 	
-	b2AABB aabb;
-	aabb.Combine(aabb1, aabb2);
-	broadPhase->MoveProxy(m_proxyId, aabb);
+	m_aabb.Combine(aabb1, aabb2);
+	broadPhase->MoveProxy(m_proxyId, m_aabb);
 }
 
 void b2Fixture::SetFilterData(const b2Filter& filter)
@@ -162,7 +160,7 @@ void b2Fixture::SetSensor(bool sensor)
 		b2Fixture* fixtureB = contact->GetFixtureB();
 		if (fixtureA == this || fixtureB == this)
 		{
-			contact->SetSolid(!m_isSensor);
+			contact->SetAsSensor(m_isSensor);
 		}
 	}
 }

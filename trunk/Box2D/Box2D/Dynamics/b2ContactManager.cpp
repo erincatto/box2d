@@ -155,11 +155,10 @@ void b2ContactManager::Collide()
 
 		int32 proxyIdA = fixtureA->m_proxyId;
 		int32 proxyIdB = fixtureB->m_proxyId;
-		const b2AABB& aabbA = m_broadPhase.GetAABB(proxyIdA);
-		const b2AABB& aabbB = m_broadPhase.GetAABB(proxyIdB);
+		bool overlap = m_broadPhase.TestOverlap(proxyIdA, proxyIdB);
 
-		// Here we cull out contacts that cease to overlap.
-		if (b2TestOverlap(aabbA, aabbB) == false)
+		// Here we destroy contacts that cease to overlap in the broad-phase.
+		if (overlap == false)
 		{
 			b2Contact* cNuke = c;
 			c = cNuke->GetNext();

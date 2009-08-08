@@ -31,8 +31,11 @@ struct b2DynamicTreeNode
 		return child1 == b2_nullNode;
 	}
 
+	/// This is the fattened AABB.
 	b2AABB aabb;
-	int32 userData;
+
+	//int32 userData;
+	void* userData;
 
 	union
 	{
@@ -62,7 +65,7 @@ public:
 	~b2DynamicTree();
 
 	/// Create a proxy. Provide a tight fitting AABB and a userData pointer.
-	int32 CreateProxy(const b2AABB& aabb, int32 userData);
+	int32 CreateProxy(const b2AABB& aabb, void* userData);
 
 	/// Destroy a proxy. This asserts if the id is invalid.
 	void DestroyProxy(int32 proxyId);
@@ -70,14 +73,18 @@ public:
 	/// Move a proxy. If the proxy has moved outside of its fattened AABB,
 	/// then the proxy is removed from the tree and re-inserted. Otherwise
 	/// the function returns immediately.
-	void MoveProxy(int32 proxyId, const b2AABB& aabb);
+	/// @return true if the proxy was re-inserted.
+	bool MoveProxy(int32 proxyId, const b2AABB& aabb);
 
 	/// Perform some iterations to re-balance the tree.
 	void Rebalance(int32 iterations);
 
 	/// Get proxy user data.
 	/// @return the proxy user data or 0 if the id is invalid.
-	int32 GetUserData(int32 proxyId);
+	void* GetUserData(int32 proxyId) const;
+
+	/// Get the fat AABB for a proxy.
+	const b2AABB& GetFatAABB(int32 proxyId) const;
 
 	/// Compute the height of the tree.
 	int32 ComputeHeight() const;
@@ -119,6 +126,18 @@ private:
 	uint32 m_path;
 };
 
+inline void* b2DynamicTree::GetUserData(int32 proxyId) const
+{
+	b2Assert(0 <= proxyId && proxyId < m_nodeCapacity);
+	return m_nodes[proxyId].userData;
+}
+
+inline const b2AABB& b2DynamicTree::GetFatAABB(int32 proxyId) const
+{
+	b2Assert(0 <= proxyId && proxyId < m_nodeCapacity);
+	return m_nodes[proxyId].aabb;
+}
+
 template <typename T>
 inline void b2DynamicTree::Query(T* callback, const b2AABB& aabb) const
 {
@@ -142,7 +161,7 @@ inline void b2DynamicTree::Query(T* callback, const b2AABB& aabb) const
 		{
 			if (node->IsLeaf())
 			{
-				callback->QueryCallback(node->userData);
+				callback->QueryCallback(nodeId);
 			}
 			else
 			{
@@ -220,7 +239,7 @@ inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) con
 
 			b2RayCastOutput output;
 
-			callback->RayCastCallback(&output, subInput, node->userData);
+			callback->RayCastCallback(&output, subInput, nodeId);
 
 			if (output.hit)
 			{

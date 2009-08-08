@@ -55,7 +55,7 @@ struct Settings
 	Settings() :
 		hz(60.0f),
 		velocityIterations(10),
-		positionIterations(8),
+		positionIterations(4),
 		drawStats(0),
 		drawShapes(1),
 		drawJoints(1),

@@ -360,7 +360,7 @@ bool b2Body::IsConnected(const b2Body* other) const
 	return false;
 }
 
-void b2Body::SetXForm(const b2Vec2& position, float32 angle)
+void b2Body::SetTransform(const b2Vec2& position, float32 angle)
 {
 	b2Assert(m_world->IsLocked() == false);
 	if (m_world->IsLocked() == true)

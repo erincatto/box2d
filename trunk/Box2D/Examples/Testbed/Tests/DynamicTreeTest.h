@@ -39,7 +39,7 @@ public:
 		{
 			Actor* actor = m_actors + i;
 			GetRandomAABB(&actor->aabb);
-			actor->proxyId = m_tree.CreateProxy(actor->aabb, i);
+			actor->proxyId = m_tree.CreateProxy(actor->aabb, actor);
 		}
 
 		m_stepCount = 0;
@@ -151,18 +151,15 @@ public:
 		}
 	}
 
-	void QueryCallback(int32 actorIndex)
+	void QueryCallback(int32 proxyId)
 	{
-		b2Assert(0 <= actorIndex && actorIndex < e_actorCount);
-		Actor* actor = m_actors + actorIndex;
+		Actor* actor = (Actor*)m_tree.GetUserData(proxyId);
 		actor->overlap = b2TestOverlap(m_queryAABB, actor->aabb);
 	}
 
-	void RayCastCallback(b2RayCastOutput* pOutput, const b2RayCastInput& input, int32 actorIndex)
+	void RayCastCallback(b2RayCastOutput* pOutput, const b2RayCastInput& input, int32 proxyId)
 	{
-		b2Assert(0 <= actorIndex && actorIndex < e_actorCount);
-		Actor* actor = m_actors + actorIndex;
-
+		Actor* actor = (Actor*)m_tree.GetUserData(proxyId);
 		actor->aabb.RayCast(pOutput, input);
 
 		if (pOutput->hit)
@@ -221,7 +218,7 @@ private:
 			if (actor->proxyId == b2_nullNode)
 			{
 				GetRandomAABB(&actor->aabb);
-				actor->proxyId = m_tree.CreateProxy(actor->aabb, j);
+				actor->proxyId = m_tree.CreateProxy(actor->aabb, actor);
 				return;
 			}
 		}

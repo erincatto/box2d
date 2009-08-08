@@ -21,17 +21,7 @@
 
 b2BroadPhase::b2BroadPhase()
 {
-	// Build initial proxy pool and free list.
-	m_proxyCapacity = 16;
 	m_proxyCount = 0;
-	m_proxyPool = (b2Proxy*)b2Alloc(m_proxyCapacity * sizeof(b2Proxy));
-	
-	m_freeProxy = 0;
-	for (int32 i = 0; i < m_proxyCapacity - 1; ++i)
-	{
-		m_proxyPool[i].next = i + 1;
-	}
-	m_proxyPool[m_proxyCapacity-1].next = e_nullProxy;
 
 	m_pairCapacity = 16;
 	m_pairCount = 0;
@@ -45,80 +35,35 @@ b2BroadPhase::b2BroadPhase()
 b2BroadPhase::~b2BroadPhase()
 {
 	b2Free(m_moveBuffer);
-	b2Free(m_proxyPool);
 	b2Free(m_pairBuffer);
-}
-
-int32 b2BroadPhase::AllocateProxy()
-{
-	if (m_freeProxy == e_nullProxy)
-	{
-		b2Assert(m_proxyCount == m_proxyCapacity);
-		b2Proxy* oldPool = m_proxyPool;
-
-		m_proxyCapacity *= 2;
-		m_proxyPool = (b2Proxy*)b2Alloc(m_proxyCapacity * sizeof(b2Proxy));
-
-		memcpy(m_proxyPool, oldPool, m_proxyCount * sizeof(b2Proxy));
-		b2Free(oldPool);
-
-		m_freeProxy = m_proxyCount;
-		for (int32 i = m_proxyCount; i < m_proxyCapacity - 1; ++i)
-		{
-			m_proxyPool[i].next = i + 1;
-		}
-		m_proxyPool[m_proxyCapacity-1].next = e_nullProxy;
-	}
-
-	int32 proxyId = m_freeProxy;
-	m_freeProxy = m_proxyPool[proxyId].next;
-	m_proxyPool[proxyId].next = e_nullProxy;
-	++m_proxyCount;
-	return proxyId;
-}
-
-void b2BroadPhase::FreeProxy(int32 proxyId)
-{
-	b2Assert(0 < m_proxyCount);
-	b2Assert(0 <= proxyId && proxyId < m_proxyCapacity);
-	m_proxyPool[proxyId].next = m_freeProxy;
-	m_freeProxy = proxyId;
-	--m_proxyCount;
 }
 
 int32 b2BroadPhase::CreateProxy(const b2AABB& aabb, void* userData)
 {
-	int32 proxyId = AllocateProxy();
-	b2Proxy* proxy = m_proxyPool + proxyId;
-	proxy->aabb = aabb;
-	proxy->treeProxyId = m_tree.CreateProxy(aabb, proxyId);
-	proxy->userData = userData;
+	int32 proxyId = m_tree.CreateProxy(aabb, userData);
+	++m_proxyCount;
 	BufferMove(proxyId);
 	return proxyId;
 }
 
 void b2BroadPhase::DestroyProxy(int32 proxyId)
 {
-	b2Assert(0 <= proxyId && proxyId < m_proxyCapacity);
-	b2Proxy* proxy = m_proxyPool + proxyId;
 	UnBufferMove(proxyId);
-	m_tree.DestroyProxy(proxy->treeProxyId);
-	FreeProxy(proxyId);
+	--m_proxyCount;
+	m_tree.DestroyProxy(proxyId);
 }
 
 void b2BroadPhase::MoveProxy(int32 proxyId, const b2AABB& aabb)
 {
-	b2Assert(0 <= proxyId && proxyId < m_proxyCapacity);
-	b2Proxy* proxy = m_proxyPool + proxyId;
-	proxy->aabb = aabb;
-	m_tree.MoveProxy(proxy->treeProxyId, aabb);
-	BufferMove(proxyId);
+	bool buffer = m_tree.MoveProxy(proxyId, aabb);
+	if (buffer)
+	{
+		BufferMove(proxyId);
+	}
 }
 
 void b2BroadPhase::BufferMove(int32 proxyId)
 {
-	b2Assert(0 <= proxyId && proxyId < m_proxyCapacity);
-
 	if (m_moveCount == m_moveCapacity)
 	{
 		int32* oldBuffer = m_moveBuffer;
@@ -147,16 +92,8 @@ void b2BroadPhase::UnBufferMove(int32 proxyId)
 // This is called from b2DynamicTree::Query when we are gathering pairs.
 void b2BroadPhase::QueryCallback(int32 proxyId)
 {
-	b2Assert(0 <= proxyId && proxyId < m_proxyCapacity);
-
 	// A proxy cannot form a pair with itself.
 	if (proxyId == m_queryProxyId)
-	{
-		return;
-	}
-
-	// Check the tight fitting AABBs for overlap.
-	if (b2TestOverlap(m_proxyPool[proxyId].aabb, m_proxyPool[m_queryProxyId].aabb) == false)
 	{
 		return;
 	}

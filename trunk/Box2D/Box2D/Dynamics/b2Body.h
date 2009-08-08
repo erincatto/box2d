@@ -149,7 +149,7 @@ public:
 	/// This breaks any contacts and wakes the other bodies.
 	/// @param position the world position of the body's local origin.
 	/// @param angle the world rotation in radians.
-	void SetXForm(const b2Vec2& position, float32 angle);
+	void SetTransform(const b2Vec2& position, float32 angle);
 
 	/// Get the body transform for the body's origin.
 	/// @return the world transform of the body's origin.
@@ -271,9 +271,6 @@ public:
 	/// Is this body dynamic (movable)?
 	bool IsDynamic() const;
 
-	/// Is this body frozen?
-	bool IsFrozen() const;
-
 	/// Is this body sleeping (not simulating).
 	bool IsSleeping() const;
 
@@ -337,12 +334,11 @@ private:
 	// m_flags
 	enum
 	{
-		e_frozenFlag		= 0x0002,
-		e_islandFlag		= 0x0004,
-		e_sleepFlag			= 0x0008,
-		e_allowSleepFlag	= 0x0010,
-		e_bulletFlag		= 0x0020,
-		e_fixedRotationFlag	= 0x0040,
+		e_islandFlag		= 0x0001,
+		e_sleepFlag			= 0x0002,
+		e_allowSleepFlag	= 0x0004,
+		e_bulletFlag		= 0x0008,
+		e_fixedRotationFlag	= 0x0010,
 	};
 
 	// m_type
@@ -539,11 +535,6 @@ inline bool b2Body::IsStatic() const
 inline bool b2Body::IsDynamic() const
 {
 	return m_type == e_dynamicType;
-}
-
-inline bool b2Body::IsFrozen() const
-{
-	return (m_flags & e_frozenFlag) == e_frozenFlag;
 }
 
 inline bool b2Body::IsSleeping() const
