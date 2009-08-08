@@ -68,6 +68,8 @@ public:
 			m_character = body->CreateFixture(&shape, 1.0f);
 			body->SetMassFromShapes();
 
+			body->SetLinearVelocity(b2Vec2(0.0f, -50.0f));
+
 			m_state = e_unknown;
 		}
 	}
@@ -91,9 +93,9 @@ public:
 
 		b2Vec2 position = m_character->GetBody()->GetPosition();
 
-		if (position.y > m_bottom)
+		if (position.y < m_top)
 		{
-			contact->GetManifold()->m_pointCount = 0;
+			contact->Disable();
 		}
 	}
 

@@ -178,6 +178,7 @@ protected:
 
 	friend class b2Body;
 	friend class b2World;
+	friend class b2Contact;
 	friend class b2ContactManager;
 
 	b2Fixture();
@@ -189,6 +190,8 @@ protected:
 	void Destroy(b2BlockAllocator* allocator, b2BroadPhase* broadPhase);
 
 	void Synchronize(b2BroadPhase* broadPhase, const b2Transform& xf1, const b2Transform& xf2);
+
+	b2AABB m_aabb;
 
 	b2Fixture* m_next;
 	b2Body* m_body;

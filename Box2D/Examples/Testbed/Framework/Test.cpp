@@ -311,12 +311,6 @@ void Test::Step(Settings* settings)
 		++m_stepCount;
 	}
 
-	if (m_bomb != NULL && m_bomb->IsFrozen())
-	{
-		m_world->DestroyBody(m_bomb);
-		m_bomb = NULL;
-	}
-
 	if (settings->drawStats)
 	{
 		m_debugDraw.DrawString(5, m_textLine, "bodies/contacts/joints/proxies = %d/%d/%d",

@@ -370,7 +370,7 @@ void b2World::Solve(const b2TimeStep& step)
 	b2Body** stack = (b2Body**)m_stackAllocator.Allocate(stackSize * sizeof(b2Body*));
 	for (b2Body* seed = m_bodyList; seed; seed = seed->m_next)
 	{
-		if (seed->m_flags & (b2Body::e_islandFlag | b2Body::e_sleepFlag | b2Body::e_frozenFlag))
+		if (seed->m_flags & (b2Body::e_islandFlag | b2Body::e_sleepFlag))
 		{
 			continue;
 		}
@@ -407,14 +407,13 @@ void b2World::Solve(const b2TimeStep& step)
 			for (b2ContactEdge* ce = b->m_contactList; ce; ce = ce->next)
 			{
 				// Has this contact already been added to an island?
-				// Is this contact non-solid (involves a sensor).
-				if (ce->contact->m_flags & (b2Contact::e_islandFlag | b2Contact::e_nonSolidFlag))
+				if (ce->contact->m_flags & b2Contact::e_islandFlag)
 				{
 					continue;
 				}
 
-				// Is this contact touching?
-				if ((ce->contact->m_flags & b2Contact::e_touchFlag) == 0)
+				// Is this contact solid and touching?
+				if (ce->contact->IsSolid() == false || ce->contact->IsTouching() == false)
 				{
 					continue;
 				}
@@ -477,7 +476,7 @@ void b2World::Solve(const b2TimeStep& step)
 	// Synchronize fixtures, check for out of range bodies.
 	for (b2Body* b = m_bodyList; b; b = b->GetNext())
 	{
-		if (b->m_flags & (b2Body::e_sleepFlag | b2Body::e_frozenFlag))
+		if (b->m_flags & b2Body::e_sleepFlag)
 		{
 			continue;
 		}
@@ -542,7 +541,8 @@ void b2World::SolveTOI(const b2TimeStep& step)
 
 		for (b2Contact* c = m_contactManager.m_contactList; c; c = c->m_next)
 		{
-			if (c->m_flags & (b2Contact::e_slowFlag | b2Contact::e_nonSolidFlag))
+			// Can this contact generate a solid TOI contact?
+			if (c->IsSolid() == false || c->IsContinuous() == false)
 			{
 				continue;
 			}
@@ -586,7 +586,6 @@ void b2World::SolveTOI(const b2TimeStep& step)
 
 				// Compute the time of impact.
 				toi = c->ComputeTOI(b1->m_sweep, b2->m_sweep);
-				//b2TimeOfImpact(c->m_fixtureA->GetShape(), b1->m_sweep, c->m_fixtureB->GetShape(), b2->m_sweep);
 
 				b2Assert(0.0f <= toi && toi <= 1.0f);
 
@@ -621,6 +620,10 @@ void b2World::SolveTOI(const b2TimeStep& step)
 		b2Fixture* s2 = minContact->GetFixtureB();
 		b2Body* b1 = s1->GetBody();
 		b2Body* b2 = s2->GetBody();
+
+		b2Sweep backup1 = b1->m_sweep;
+		b2Sweep backup2 = b2->m_sweep;
+
 		b1->Advance(minTOI);
 		b2->Advance(minTOI);
 
@@ -628,10 +631,14 @@ void b2World::SolveTOI(const b2TimeStep& step)
 		minContact->Update(m_contactManager.m_contactListener);
 		minContact->m_flags &= ~b2Contact::e_toiFlag;
 
-		if ((minContact->m_flags & b2Contact::e_touchFlag) == 0)
+		// Is the contact solid?
+		if (minContact->IsSolid() == false || minContact->IsTouching() == false)
 		{
-			// This shouldn't happen. Numerical error?
-			//b2Assert(false);
+			// Restore the sweeps.
+			b1->m_sweep = backup1;
+			b2->m_sweep = backup2;
+			b1->SynchronizeTransform();
+			b2->SynchronizeTransform();
 			continue;
 		}
 
@@ -678,14 +685,14 @@ void b2World::SolveTOI(const b2TimeStep& step)
 					continue;
 				}
 
-				// Has this contact already been added to an island? Skip slow or non-solid contacts.
-				if (cEdge->contact->m_flags & (b2Contact::e_islandFlag | b2Contact::e_slowFlag | b2Contact::e_nonSolidFlag))
+				// Has this contact already been added to an island?
+				if (cEdge->contact->m_flags & b2Contact::e_islandFlag)
 				{
 					continue;
 				}
 
-				// Is this contact touching? For performance we are not updating this contact.
-				if ((cEdge->contact->m_flags & b2Contact::e_touchFlag) == 0)
+				// Skip separate, sensor, or disabled contacts.
+				if (cEdge->contact->IsSolid() == false || cEdge->contact->IsTouching() == false)
 				{
 					continue;
 				}
@@ -768,7 +775,7 @@ void b2World::SolveTOI(const b2TimeStep& step)
 			b2Body* b = island.m_bodies[i];
 			b->m_flags &= ~b2Body::e_islandFlag;
 
-			if (b->m_flags & (b2Body::e_sleepFlag | b2Body::e_frozenFlag))
+			if (b->m_flags & b2Body::e_sleepFlag)
 			{
 				continue;
 			}
@@ -1016,7 +1023,7 @@ void b2World::DrawDebugData()
 		{
 			for (b2Fixture* f = b->GetFixtureList(); f; f = f->GetNext())
 			{
-				b2AABB aabb = bp->GetAABB(f->m_proxyId);
+				b2AABB aabb = bp->GetFatAABB(f->m_proxyId);
 				b2Vec2 vs[4];
 				vs[0].Set(aabb.lowerBound.x, aabb.lowerBound.y);
 				vs[1].Set(aabb.upperBound.x, aabb.lowerBound.y);

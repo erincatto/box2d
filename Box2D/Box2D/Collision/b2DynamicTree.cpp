@@ -94,7 +94,7 @@ void b2DynamicTree::FreeNode(int32 nodeId)
 // Create a proxy in the tree as a leaf node. We return the index
 // of the node instead of a pointer so that we can grow
 // the node pool.
-int32 b2DynamicTree::CreateProxy(const b2AABB& aabb, int32 userData)
+int32 b2DynamicTree::CreateProxy(const b2AABB& aabb, void* userData)
 {
 	int32 proxyId = AllocateNode();
 
@@ -118,7 +118,7 @@ void b2DynamicTree::DestroyProxy(int32 proxyId)
 	FreeNode(proxyId);
 }
 
-void b2DynamicTree::MoveProxy(int32 proxyId, const b2AABB& aabb)
+bool b2DynamicTree::MoveProxy(int32 proxyId, const b2AABB& aabb)
 {
 	b2Assert(0 <= proxyId && proxyId < m_nodeCapacity);
 
@@ -126,7 +126,7 @@ void b2DynamicTree::MoveProxy(int32 proxyId, const b2AABB& aabb)
 
 	if (m_nodes[proxyId].aabb.Contains(aabb))
 	{
-		return;
+		return false;
 	}
 
 	RemoveLeaf(proxyId);
@@ -136,18 +136,7 @@ void b2DynamicTree::MoveProxy(int32 proxyId, const b2AABB& aabb)
 	m_nodes[proxyId].aabb.upperBound = aabb.upperBound + r;
 
 	InsertLeaf(proxyId);
-}
-
-int32 b2DynamicTree::GetUserData(int32 proxyId)
-{
-	if (proxyId < m_nodeCapacity)
-	{
-		return m_nodes[proxyId].userData;
-	}
-	else
-	{
-		return NULL;
-	}
+	return true;
 }
 
 void b2DynamicTree::InsertLeaf(int32 leaf)
