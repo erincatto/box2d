@@ -24,17 +24,6 @@
 #include <Box2D/Collision/b2DynamicTree.h>
 #include <algorithm>
 
-/// A proxy for the broadphase. This is used to represent geometry as an AABB.
-/// Note: We can't filter at this level because we still need to filter back
-/// in the client to confirm existing pairs.
-struct b2Proxy
-{
-	b2AABB aabb;
-	void* userData;
-	int32 treeProxyId;
-	int32 next;
-};
-
 struct b2Pair
 {
 	int32 proxyIdA;
@@ -68,11 +57,14 @@ public:
 	/// call UpdatePairs to finalized the proxy pairs (for your time step).
 	void MoveProxy(int32 proxyId, const b2AABB& aabb);
 
-	/// Get the AABB for a proxy.
-	const b2AABB& GetAABB(int32 proxyId) const;
+	/// Get the fat AABB for a proxy.
+	const b2AABB& GetFatAABB(int32 proxyId) const;
 
 	/// Get user data from a proxy. Returns NULL if the id is invalid.
 	void* GetUserData(int32 proxyId);
+
+	/// Test overlap of fat AABBs.
+	bool TestOverlap(int32 proxyIdA, int32 proxyIdB) const;
 
 	/// Get the number of proxies.
 	int32 GetProxyCount() const;
@@ -103,24 +95,18 @@ private:
 
 	friend class b2DynamicTree;
 
-	int32 AllocateProxy();
-	void FreeProxy(int32 proxyId);
-
 	void BufferMove(int32 proxyId);
 	void UnBufferMove(int32 proxyId);
 
-	void QueryCallback(int32 userData);
+	void QueryCallback(int32 proxyId);
 
 	b2DynamicTree m_tree;
+
+	int32 m_proxyCount;
 
 	int32* m_moveBuffer;
 	int32 m_moveCapacity;
 	int32 m_moveCount;
-
-	b2Proxy* m_proxyPool;
-	int32 m_proxyCapacity;
-	int32 m_proxyCount;
-	int32 m_freeProxy;
 
 	b2Pair* m_pairBuffer;
 	int32 m_pairCapacity;
@@ -147,16 +133,19 @@ inline bool b2PairLessThan(const b2Pair& pair1, const b2Pair& pair2)
 
 inline void* b2BroadPhase::GetUserData(int32 proxyId)
 {
-	b2Assert(0 <= proxyId && proxyId < m_proxyCapacity);
-	b2Proxy* proxy = m_proxyPool + proxyId;
-	return proxy->userData;
+	return m_tree.GetUserData(proxyId);
 }
 
-inline const b2AABB& b2BroadPhase::GetAABB(int32 proxyId) const
+inline bool b2BroadPhase::TestOverlap(int32 proxyIdA, int32 proxyIdB) const
 {
-	b2Assert(0 <= proxyId && proxyId < m_proxyCapacity);
-	b2Proxy* proxy = m_proxyPool + proxyId;
-	return proxy->aabb;
+	const b2AABB& aabbA = m_tree.GetFatAABB(proxyIdA);
+	const b2AABB& aabbB = m_tree.GetFatAABB(proxyIdB);
+	return b2TestOverlap(aabbA, aabbB);
+}
+
+inline const b2AABB& b2BroadPhase::GetFatAABB(int32 proxyId) const
+{
+	return m_tree.GetFatAABB(proxyId);
 }
 
 inline int32 b2BroadPhase::GetProxyCount() const
@@ -184,10 +173,12 @@ void b2BroadPhase::UpdatePairs(T* callback)
 			continue;
 		}
 
-		b2Proxy* proxy = m_proxyPool + m_queryProxyId;
+		// We have to query the tree with the fat AABB so that
+		// we don't fail to create a pair that may touch later.
+		const b2AABB& fatAABB = m_tree.GetFatAABB(m_queryProxyId);
 
-		// query tree, create pairs and add them pair buffer.
-		m_tree.Query(this, proxy->aabb);
+		// Query tree, create pairs and add them pair buffer.
+		m_tree.Query(this, fatAABB);
 	}
 
 	// Reset move buffer
@@ -201,10 +192,10 @@ void b2BroadPhase::UpdatePairs(T* callback)
 	while (i < m_pairCount)
 	{
 		b2Pair* primaryPair = m_pairBuffer + i;
-		b2Proxy* proxyA = m_proxyPool + primaryPair->proxyIdA;
-		b2Proxy* proxyB = m_proxyPool + primaryPair->proxyIdB;
+		void* userDataA = m_tree.GetUserData(primaryPair->proxyIdA);
+		void* userDataB = m_tree.GetUserData(primaryPair->proxyIdB);
 
-		callback->AddPair(proxyA->userData, proxyB->userData);
+		callback->AddPair(userDataA, userDataB);
 		++i;
 
 		// Skip any duplicate pairs.
@@ -224,14 +215,12 @@ void b2BroadPhase::UpdatePairs(T* callback)
 template <typename T>
 struct b2BroadPhaseQueryWrapper
 {
-	void QueryCallback(int32 userData)
+	void QueryCallback(int32 proxyId)
 	{
-		b2Assert(0 <= userData && userData < proxyCapacity);
-		callback->QueryCallback(proxyPool[userData].userData);
+		callback->QueryCallback(tree->GetUserData(proxyId));
 	}
 
-	b2Proxy* proxyPool;
-	int32 proxyCapacity;
+	const b2DynamicTree* tree;
 	T* callback;
 };
 
@@ -239,8 +228,7 @@ template <typename T>
 void b2BroadPhase::Query(T* callback, const b2AABB& aabb) const
 {
 	b2BroadPhaseQueryWrapper<T> wrapper;
-	wrapper.proxyPool = m_proxyPool;
-	wrapper.proxyCapacity = m_proxyCapacity;
+	wrapper.tree = &m_tree;
 	wrapper.callback = callback;
 
 	m_tree.Query(&wrapper, aabb);

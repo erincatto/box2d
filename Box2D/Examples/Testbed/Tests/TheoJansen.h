@@ -202,11 +202,11 @@ public:
 		CreateLeg(-1.0f, wheelAnchor);
 		CreateLeg(1.0f, wheelAnchor);
 
-		m_wheel->SetXForm(m_wheel->GetPosition(), 120.0f * b2_pi / 180.0f);
+		m_wheel->SetTransform(m_wheel->GetPosition(), 120.0f * b2_pi / 180.0f);
 		CreateLeg(-1.0f, wheelAnchor);
 		CreateLeg(1.0f, wheelAnchor);
 
-		m_wheel->SetXForm(m_wheel->GetPosition(), -120.0f * b2_pi / 180.0f);
+		m_wheel->SetTransform(m_wheel->GetPosition(), -120.0f * b2_pi / 180.0f);
 		CreateLeg(-1.0f, wheelAnchor);
 		CreateLeg(1.0f, wheelAnchor);
 	}

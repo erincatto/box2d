@@ -115,7 +115,19 @@ b2Contact::b2Contact(b2Fixture* fA, b2Fixture* fB)
 
 	if (fA->IsSensor() || fB->IsSensor())
 	{
-		m_flags |= e_nonSolidFlag;
+		m_flags |= e_sensorFlag;
+	}
+
+	b2Body* bodyA = fA->GetBody();
+	b2Body* bodyB = fB->GetBody();
+
+	if (bodyA->IsStatic() || bodyA->IsBullet() || bodyB->IsStatic() || bodyB->IsBullet())
+	{
+		m_flags |= e_continuousFlag;
+	}
+	else
+	{
+		m_flags &= ~e_continuousFlag;
 	}
 
 	m_fixtureA = fA;
@@ -141,7 +153,17 @@ void b2Contact::Update(b2ContactListener* listener)
 {
 	b2Manifold oldManifold = m_manifold;
 
-	Evaluate();
+	// Re-enable this contact.
+	m_flags &= ~e_disabledFlag;
+
+	if (b2TestOverlap(m_fixtureA->m_aabb, m_fixtureB->m_aabb))
+	{
+		Evaluate();
+	}
+	else
+	{
+		m_manifold.m_pointCount = 0;
+	}
 
 	b2Body* bodyA = m_fixtureA->GetBody();
 	b2Body* bodyB = m_fixtureB->GetBody();
@@ -158,11 +180,11 @@ void b2Contact::Update(b2ContactListener* listener)
 	// Slow contacts don't generate TOI events.
 	if (bodyA->IsStatic() || bodyA->IsBullet() || bodyB->IsStatic() || bodyB->IsBullet())
 	{
-		m_flags &= ~e_slowFlag;
+		m_flags |= e_continuousFlag;
 	}
 	else
 	{
-		m_flags |= e_slowFlag;
+		m_flags &= ~e_continuousFlag;
 	}
 
 	// Match old contact ids to new contact ids and copy the
@@ -187,26 +209,27 @@ void b2Contact::Update(b2ContactListener* listener)
 		}
 	}
 
+	if (newCount > 0)
+	{
+		m_flags |= e_touchingFlag;
+	}
+	else
+	{
+		m_flags &= ~e_touchingFlag;
+	}
+
 	if (oldCount == 0 && newCount > 0)
 	{
-		m_flags |= e_touchFlag;
 		listener->BeginContact(this);
 	}
 
 	if (oldCount > 0 && newCount == 0)
 	{
-		m_flags &= ~e_touchFlag;
 		listener->EndContact(this);
 	}
 
-	if ((m_flags & e_nonSolidFlag) == 0)
+	if ((m_flags & e_sensorFlag) == 0)
 	{
 		listener->PreSolve(this, &oldManifold);
-
-		// The user may have disabled contact.
-		if (m_manifold.m_pointCount == 0)
-		{
-			m_flags &= ~e_touchFlag;
-		}
 	}
 }
