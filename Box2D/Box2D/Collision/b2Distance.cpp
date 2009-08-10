@@ -23,10 +23,38 @@
 // GJK using Voronoi regions (Christer Ericson) and Barycentric coordinates.
 int32 b2_gjkCalls, b2_gjkIters, b2_gjkMaxIters;
 
+void b2DistanceProxy::Set(const b2Shape* shape)
+{
+	switch (shape->GetType())
+	{
+	case b2Shape::e_circle:
+		{
+			const b2CircleShape* circle = (b2CircleShape*)shape;
+			m_vertices = &circle->m_p;
+			m_count = 1;
+			m_radius = circle->m_radius;
+		}
+		break;
+
+	case b2Shape::e_polygon:
+		{
+			const b2PolygonShape* polygon = (b2PolygonShape*)shape;
+			m_vertices = polygon->m_vertices;
+			m_count = polygon->m_vertexCount;
+			m_radius = polygon->m_radius;
+		}
+		break;
+
+	default:
+		b2Assert(false);
+	}
+}
+
+
 struct b2SimplexVertex
 {
-	b2Vec2 wA;		// support point in shapeA
-	b2Vec2 wB;		// support point in shapeB
+	b2Vec2 wA;		// support point in proxyA
+	b2Vec2 wB;		// support point in proxyB
 	b2Vec2 w;		// wB - wA
 	float32 a;		// barycentric coordinate for closest point
 	int32 indexA;	// wA index
@@ -35,10 +63,9 @@ struct b2SimplexVertex
 
 struct b2Simplex
 {
-	template <typename TA, typename TB>
 	void ReadCache(	const b2SimplexCache* cache,
-					const TA* shapeA, const b2Transform& transformA,
-					const TB* shapeB, const b2Transform& transformB)
+					const b2DistanceProxy* proxyA, const b2Transform& transformA,
+					const b2DistanceProxy* proxyB, const b2Transform& transformB)
 	{
 		b2Assert(0 <= cache->count && cache->count <= 3);
 		
@@ -50,8 +77,8 @@ struct b2Simplex
 			b2SimplexVertex* v = vertices + i;
 			v->indexA = cache->indexA[i];
 			v->indexB = cache->indexB[i];
-			b2Vec2 wALocal = shapeA->GetVertex(v->indexA);
-			b2Vec2 wBLocal = shapeB->GetVertex(v->indexB);
+			b2Vec2 wALocal = proxyA->GetVertex(v->indexA);
+			b2Vec2 wBLocal = proxyB->GetVertex(v->indexB);
 			v->wA = b2Mul(transformA, wALocal);
 			v->wB = b2Mul(transformB, wBLocal);
 			v->w = v->wB - v->wA;
@@ -77,8 +104,8 @@ struct b2Simplex
 			b2SimplexVertex* v = vertices + 0;
 			v->indexA = 0;
 			v->indexB = 0;
-			b2Vec2 wALocal = shapeA->GetVertex(0);
-			b2Vec2 wBLocal = shapeB->GetVertex(0);
+			b2Vec2 wALocal = proxyA->GetVertex(0);
+			b2Vec2 wBLocal = proxyB->GetVertex(0);
 			v->wA = b2Mul(transformA, wALocal);
 			v->wB = b2Mul(transformB, wBLocal);
 			v->w = v->wB - v->wA;
@@ -381,21 +408,21 @@ void b2Simplex::Solve3()
 	m_count = 3;
 }
 
-template <typename TA, typename TB>
 void b2Distance(b2DistanceOutput* output,
 				b2SimplexCache* cache,
-				const b2DistanceInput* input,
-				const TA* shapeA,
-				const TB* shapeB)
+				const b2DistanceInput* input)
 {
 	++b2_gjkCalls;
+
+	const b2DistanceProxy* proxyA = &input->proxyA;
+	const b2DistanceProxy* proxyB = &input->proxyB;
 
 	b2Transform transformA = input->transformA;
 	b2Transform transformB = input->transformB;
 
 	// Initialize the simplex.
 	b2Simplex simplex;
-	simplex.ReadCache(cache, shapeA, transformA, shapeB, transformB);
+	simplex.ReadCache(cache, proxyA, transformA, proxyB, transformB);
 
 	// Get simplex vertices as an array.
 	b2SimplexVertex* vertices = &simplex.m_v1;
@@ -473,11 +500,11 @@ void b2Distance(b2DistanceOutput* output,
 
 		// Compute a tentative new simplex vertex using support points.
 		b2SimplexVertex* vertex = vertices + simplex.m_count;
-		vertex->indexA = shapeA->GetSupport(b2MulT(transformA.R, -d));
-		vertex->wA = b2Mul(transformA, shapeA->GetVertex(vertex->indexA));
+		vertex->indexA = proxyA->GetSupport(b2MulT(transformA.R, -d));
+		vertex->wA = b2Mul(transformA, proxyA->GetVertex(vertex->indexA));
 		b2Vec2 wBLocal;
-		vertex->indexB = shapeB->GetSupport(b2MulT(transformB.R, d));
-		vertex->wB = b2Mul(transformB, shapeB->GetVertex(vertex->indexB));
+		vertex->indexB = proxyB->GetSupport(b2MulT(transformB.R, d));
+		vertex->wB = b2Mul(transformB, proxyB->GetVertex(vertex->indexB));
 		vertex->w = vertex->wB - vertex->wA;
 
 		// Iteration count is equated to the number of support point calls.
@@ -518,8 +545,8 @@ void b2Distance(b2DistanceOutput* output,
 	// Apply radii if requested.
 	if (input->useRadii)
 	{
-		float32 rA = shapeA->m_radius;
-		float32 rB = shapeB->m_radius;
+		float32 rA = proxyA->m_radius;
+		float32 rB = proxyB->m_radius;
 
 		if (output->distance > rA + rB && output->distance > B2_FLT_EPSILON)
 		{
@@ -542,32 +569,3 @@ void b2Distance(b2DistanceOutput* output,
 		}
 	}
 }
-
-template void 
-b2Distance(	b2DistanceOutput* output,
-			b2SimplexCache* cache,
-			const b2DistanceInput* input,
-			const b2CircleShape* shapeA,
-			const b2CircleShape* shapeB);
-
-template void 
-b2Distance(	b2DistanceOutput* output,
-		   b2SimplexCache* cache,
-		   const b2DistanceInput* input,
-		   const b2CircleShape* shapeA,
-		   const b2PolygonShape* shapeB);
-
-template void 
-b2Distance(	b2DistanceOutput* output,
-		   b2SimplexCache* cache,
-		   const b2DistanceInput* input,
-		   const b2PolygonShape* shapeA,
-		   const b2CircleShape* shapeB);
-
-template void 
-b2Distance(	b2DistanceOutput* output,
-		   b2SimplexCache* cache,
-		   const b2DistanceInput* input,
-		   const b2PolygonShape* shapeA,
-		   const b2PolygonShape* shapeB);
-

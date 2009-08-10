@@ -20,11 +20,14 @@
 #define B2_TIME_OF_IMPACT_H
 
 #include <Box2D/Common/b2Math.h>
+#include <Box2D/Collision/b2Distance.h>
 #include <climits>
 
-/// Inpute parameters for b2TimeOfImpact
+/// Input parameters for b2TimeOfImpact
 struct b2TOIInput
 {
+	b2DistanceProxy proxyA;
+	b2DistanceProxy proxyB;
 	b2Sweep sweepA;
 	b2Sweep sweepB;
 	float32 tolerance;
@@ -37,7 +40,6 @@ struct b2TOIInput
 /// @warning the sweeps must have the same time interval.
 /// @return the fraction between [0,1] in which the shapes first touch.
 /// fraction=0 means the shapes begin touching/overlapped, and fraction=1 means the shapes don't touch.
-template <typename TA, typename TB>
-float32 b2TimeOfImpact(const b2TOIInput* input, const TA* shapeA, const TB* shapeB);
+float32 b2TimeOfImpact(const b2TOIInput* input);
 
 #endif

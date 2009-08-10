@@ -27,7 +27,6 @@
 int32 b2_toiCalls, b2_toiIters, b2_toiMaxIters;
 int32 b2_toiRootIters, b2_toiMaxRootIters;
 
-template <typename TA, typename TB>
 struct b2SeparationFunction
 {
 	enum Type
@@ -38,19 +37,19 @@ struct b2SeparationFunction
 	};
 
 	void Initialize(const b2SimplexCache* cache,
-		const TA* shapeA, const b2Transform& transformA,
-		const TB* shapeB, const b2Transform& transformB)
+		const b2DistanceProxy* proxyA, const b2Transform& transformA,
+		const b2DistanceProxy* proxyB, const b2Transform& transformB)
 	{
-		m_shapeA = shapeA;
-		m_shapeB = shapeB;
+		m_proxyA = proxyA;
+		m_proxyB = proxyB;
 		int32 count = cache->count;
 		b2Assert(0 < count && count < 3);
 
 		if (count == 1)
 		{
 			m_type = e_points;
-			b2Vec2 localPointA = m_shapeA->GetVertex(cache->indexA[0]);
-			b2Vec2 localPointB = m_shapeB->GetVertex(cache->indexB[0]);
+			b2Vec2 localPointA = m_proxyA->GetVertex(cache->indexA[0]);
+			b2Vec2 localPointB = m_proxyB->GetVertex(cache->indexB[0]);
 			b2Vec2 pointA = b2Mul(transformA, localPointA);
 			b2Vec2 pointB = b2Mul(transformB, localPointB);
 			m_axis = pointB - pointA;
@@ -60,9 +59,9 @@ struct b2SeparationFunction
 		{
 			// Two points on A and one on B
 			m_type = e_faceA;
-			b2Vec2 localPointA1 = m_shapeA->GetVertex(cache->indexA[0]);
-			b2Vec2 localPointA2 = m_shapeA->GetVertex(cache->indexA[1]);
-			b2Vec2 localPointB = m_shapeB->GetVertex(cache->indexB[0]);
+			b2Vec2 localPointA1 = m_proxyA->GetVertex(cache->indexA[0]);
+			b2Vec2 localPointA2 = m_proxyA->GetVertex(cache->indexA[1]);
+			b2Vec2 localPointB = m_proxyB->GetVertex(cache->indexB[0]);
 			m_localPoint = 0.5f * (localPointA1 + localPointA2);
 			m_axis = b2Cross(localPointA2 - localPointA1, 1.0f);
 			m_axis.Normalize();
@@ -81,9 +80,9 @@ struct b2SeparationFunction
 		{
 			// Two points on B and one on A.
 			m_type = e_faceB;
-			b2Vec2 localPointA = shapeA->GetVertex(cache->indexA[0]);
-			b2Vec2 localPointB1 = shapeB->GetVertex(cache->indexB[0]);
-			b2Vec2 localPointB2 = shapeB->GetVertex(cache->indexB[1]);
+			b2Vec2 localPointA = proxyA->GetVertex(cache->indexA[0]);
+			b2Vec2 localPointB1 = proxyB->GetVertex(cache->indexB[0]);
+			b2Vec2 localPointB2 = proxyB->GetVertex(cache->indexB[1]);
 			m_localPoint = 0.5f * (localPointB1 + localPointB2);
 			m_axis = b2Cross(localPointB2 - localPointB1, 1.0f);
 			m_axis.Normalize();
@@ -102,10 +101,10 @@ struct b2SeparationFunction
 		{
 			// Two points on B and two points on A.
 			// The faces are parallel.
-			b2Vec2 localPointA1 = m_shapeA->GetVertex(cache->indexA[0]);
-			b2Vec2 localPointA2 = m_shapeA->GetVertex(cache->indexA[1]);
-			b2Vec2 localPointB1 = m_shapeB->GetVertex(cache->indexB[0]);
-			b2Vec2 localPointB2 = m_shapeB->GetVertex(cache->indexB[1]);
+			b2Vec2 localPointA1 = m_proxyA->GetVertex(cache->indexA[0]);
+			b2Vec2 localPointA2 = m_proxyA->GetVertex(cache->indexA[1]);
+			b2Vec2 localPointB1 = m_proxyB->GetVertex(cache->indexB[0]);
+			b2Vec2 localPointB2 = m_proxyB->GetVertex(cache->indexB[1]);
 
 			b2Vec2 pA = b2Mul(transformA, localPointA1);
 			b2Vec2 dA = b2Mul(transformA.R, localPointA2 - localPointA1);
@@ -190,8 +189,8 @@ struct b2SeparationFunction
 			{
 				b2Vec2 axisA = b2MulT(transformA.R,  m_axis);
 				b2Vec2 axisB = b2MulT(transformB.R, -m_axis);
-				b2Vec2 localPointA = m_shapeA->GetSupportVertex(axisA);
-				b2Vec2 localPointB = m_shapeB->GetSupportVertex(axisB);
+				b2Vec2 localPointA = m_proxyA->GetSupportVertex(axisA);
+				b2Vec2 localPointB = m_proxyB->GetSupportVertex(axisB);
 				b2Vec2 pointA = b2Mul(transformA, localPointA);
 				b2Vec2 pointB = b2Mul(transformB, localPointB);
 				float32 separation = b2Dot(pointB - pointA, m_axis);
@@ -205,7 +204,7 @@ struct b2SeparationFunction
 
 				b2Vec2 axisB = b2MulT(transformB.R, -normal);
 
-				b2Vec2 localPointB = m_shapeB->GetSupportVertex(axisB);
+				b2Vec2 localPointB = m_proxyB->GetSupportVertex(axisB);
 				b2Vec2 pointB = b2Mul(transformB, localPointB);
 
 				float32 separation = b2Dot(pointB - pointA, normal);
@@ -219,7 +218,7 @@ struct b2SeparationFunction
 
 				b2Vec2 axisA = b2MulT(transformA.R, -normal);
 
-				b2Vec2 localPointA = m_shapeA->GetSupportVertex(axisA);
+				b2Vec2 localPointA = m_proxyA->GetSupportVertex(axisA);
 				b2Vec2 pointA = b2Mul(transformA, localPointA);
 
 				float32 separation = b2Dot(pointA - pointB, normal);
@@ -232,18 +231,20 @@ struct b2SeparationFunction
 		}
 	}
 
-	const TA* m_shapeA;
-	const TB* m_shapeB;
+	const b2DistanceProxy* m_proxyA;
+	const b2DistanceProxy* m_proxyB;
 	Type m_type;
 	b2Vec2 m_localPoint;
 	b2Vec2 m_axis;
 };
 
 // CCD via the secant method.
-template <typename TA, typename TB>
-float32 b2TimeOfImpact(const b2TOIInput* input, const TA* shapeA, const TB* shapeB)
+float32 b2TimeOfImpact(const b2TOIInput* input)
 {
 	++b2_toiCalls;
+
+	const b2DistanceProxy* proxyA = &input->proxyA;
+	const b2DistanceProxy* proxyB = &input->proxyB;
 
 	b2Sweep sweepA = input->sweepA;
 	b2Sweep sweepB = input->sweepB;
@@ -251,7 +252,7 @@ float32 b2TimeOfImpact(const b2TOIInput* input, const TA* shapeA, const TB* shap
 	b2Assert(sweepA.t0 == sweepB.t0);
 	b2Assert(1.0f - sweepA.t0 > B2_FLT_EPSILON);
 
-	float32 radius = shapeA->m_radius + shapeB->m_radius;
+	float32 radius = proxyA->m_radius + proxyB->m_radius;
 	float32 tolerance = input->tolerance;
 
 	float32 alpha = 0.0f;
@@ -264,6 +265,8 @@ float32 b2TimeOfImpact(const b2TOIInput* input, const TA* shapeA, const TB* shap
 	b2SimplexCache cache;
 	cache.count = 0;
 	b2DistanceInput distanceInput;
+	distanceInput.proxyA = input->proxyA;
+	distanceInput.proxyB = input->proxyB;
 	distanceInput.useRadii = false;
 
 	for(;;)
@@ -276,7 +279,7 @@ float32 b2TimeOfImpact(const b2TOIInput* input, const TA* shapeA, const TB* shap
 		distanceInput.transformA = xfA;
 		distanceInput.transformB = xfB;
 		b2DistanceOutput distanceOutput;
-		b2Distance(&distanceOutput, &cache, &distanceInput, shapeA, shapeB);
+		b2Distance(&distanceOutput, &cache, &distanceInput);
 
 		if (distanceOutput.distance <= 0.0f)
 		{
@@ -284,8 +287,8 @@ float32 b2TimeOfImpact(const b2TOIInput* input, const TA* shapeA, const TB* shap
 			break;
 		}
 
-		b2SeparationFunction<TA, TB> fcn;
-		fcn.Initialize(&cache, shapeA, xfA, shapeB, xfB);
+		b2SeparationFunction fcn;
+		fcn.Initialize(&cache, proxyA, xfA, proxyB, xfB);
 
 		float32 separation = fcn.Evaluate(xfA, xfB);
 		if (separation <= 0.0f)
@@ -437,16 +440,3 @@ float32 b2TimeOfImpact(const b2TOIInput* input, const TA* shapeA, const TB* shap
 
 	return alpha;
 }
-
-template float32
-b2TimeOfImpact(const b2TOIInput* input, const b2CircleShape* shapeA, const b2CircleShape* shapeB);
-
-template float32
-b2TimeOfImpact(const b2TOIInput* input, const b2CircleShape* shapeA, const b2PolygonShape* shapeB);
-
-template float32
-b2TimeOfImpact(const b2TOIInput* input,	const b2PolygonShape* shapeA, const b2CircleShape* shapeB);
-
-template float32
-b2TimeOfImpact(const b2TOIInput* input,	const b2PolygonShape* shapeA, const b2PolygonShape* shapeB);
-
