@@ -456,7 +456,7 @@ inline b2MassData b2Body::GetMassData() const
 	b2MassData massData;
 	massData.mass = m_mass;
 	massData.I = m_I;
-	massData.center = GetWorldCenter();
+	massData.center = m_sweep.localCenter;
 	return massData;
 }
 

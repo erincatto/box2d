@@ -141,7 +141,7 @@ protected:
 	void Update(b2ContactListener* listener);
 	virtual void Evaluate() = 0;
 
-	virtual float32 ComputeTOI(const b2Sweep& sweepA, const b2Sweep& sweepB) const = 0;
+	float32 ComputeTOI(const b2Sweep& sweepA, const b2Sweep& sweepB) const;
 
 	static b2ContactRegister s_registers[b2Shape::e_typeCount][b2Shape::e_typeCount];
 	static bool s_initialized;

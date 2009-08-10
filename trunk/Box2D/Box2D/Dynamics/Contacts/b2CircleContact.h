@@ -33,8 +33,6 @@ public:
 	~b2CircleContact() {}
 
 	void Evaluate();
-
-	float32 ComputeTOI(const b2Sweep& sweepA, const b2Sweep& sweepB) const;
 };
 
 #endif

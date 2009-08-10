@@ -23,6 +23,7 @@
 #include <Box2D/Dynamics/Contacts/b2ContactSolver.h>
 
 #include <Box2D/Collision/b2Collision.h>
+#include <Box2D/Collision/b2TimeOfImpact.h>
 #include <Box2D/Collision/Shapes/b2Shape.h>
 #include <Box2D/Common/b2BlockAllocator.h>
 #include <Box2D/Dynamics/b2Body.h>
@@ -232,4 +233,16 @@ void b2Contact::Update(b2ContactListener* listener)
 	{
 		listener->PreSolve(this, &oldManifold);
 	}
+}
+
+float32 b2Contact::ComputeTOI(const b2Sweep& sweepA, const b2Sweep& sweepB) const
+{
+	b2TOIInput input;
+	input.proxyA.Set(m_fixtureA->GetShape());
+	input.proxyB.Set(m_fixtureB->GetShape());
+	input.sweepA = sweepA;
+	input.sweepB = sweepB;
+	input.tolerance = b2_linearSlop;
+
+	return b2TimeOfImpact(&input);
 }

@@ -49,13 +49,15 @@ public:
 		Test::Step(settings);
 
 		b2DistanceInput input;
+		input.proxyA.Set(&m_polygonA);
+		input.proxyB.Set(&m_polygonB);
 		input.transformA = m_transformA;
 		input.transformB = m_transformB;
 		input.useRadii = true;
 		b2SimplexCache cache;
 		cache.count = 0;
 		b2DistanceOutput output;
-		b2Distance(&output, &cache, &input, &m_polygonA, &m_polygonB);
+		b2Distance(&output, &cache, &input);
 
 		m_debugDraw.DrawString(5, m_textLine, "distance = %g", output.distance);
 		m_textLine += 15;

@@ -90,15 +90,21 @@ public:
 		if (fixtureA == m_sensor)
 		{
 			void* userData = fixtureB->GetBody()->GetUserData();
-			bool* touching = (bool*)userData;
-			*touching = true;
+			if (userData)
+			{
+				bool* touching = (bool*)userData;
+				*touching = true;
+			}
 		}
 
 		if (fixtureB == m_sensor)
 		{
 			void* userData = fixtureA->GetBody()->GetUserData();
-			bool* touching = (bool*)userData;
-			*touching = true;
+			if (userData)
+			{
+				bool* touching = (bool*)userData;
+				*touching = true;
+			}
 		}
 	}
 
@@ -111,15 +117,21 @@ public:
 		if (fixtureA == m_sensor)
 		{
 			void* userData = fixtureB->GetBody()->GetUserData();
-			bool* touching = (bool*)userData;
-			*touching = false;
+			if (userData)
+			{
+				bool* touching = (bool*)userData;
+				*touching = false;
+			}
 		}
 
 		if (fixtureB == m_sensor)
 		{
 			void* userData = fixtureA->GetBody()->GetUserData();
-			bool* touching = (bool*)userData;
-			*touching = false;
+			if (userData)
+			{
+				bool* touching = (bool*)userData;
+				*touching = false;
+			}
 		}
 	}
 
