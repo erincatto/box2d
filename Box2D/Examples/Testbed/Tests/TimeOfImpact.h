@@ -59,11 +59,13 @@ public:
 		sweepB.localCenter.SetZero();
 
 		b2TOIInput input;
+		input.proxyA.Set(&m_shapeA);
+		input.proxyB.Set(&m_shapeB);
 		input.sweepA = sweepA;
 		input.sweepB = sweepB;
 		input.tolerance = b2_linearSlop;
 
-		float32 toi = b2TimeOfImpact(&input, &m_shapeA, &m_shapeB);
+		float32 toi = b2TimeOfImpact(&input);
 
 		m_debugDraw.DrawString(5, m_textLine, "toi = %g", (float) toi);
 		m_textLine += 15;

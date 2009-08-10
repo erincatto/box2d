@@ -53,13 +53,3 @@ void b2PolygonContact::Evaluate()
 						(b2PolygonShape*)m_fixtureA->GetShape(), bodyA->GetTransform(),
 						(b2PolygonShape*)m_fixtureB->GetShape(), bodyB->GetTransform());
 }
-
-float32 b2PolygonContact::ComputeTOI(const b2Sweep& sweepA, const b2Sweep& sweepB) const
-{
-	b2TOIInput input;
-	input.sweepA = sweepA;
-	input.sweepB = sweepB;
-	input.tolerance = b2_linearSlop;
-
-	return b2TimeOfImpact(&input, (const b2PolygonShape*)m_fixtureA->GetShape(), (const b2PolygonShape*)m_fixtureB->GetShape());
-}
