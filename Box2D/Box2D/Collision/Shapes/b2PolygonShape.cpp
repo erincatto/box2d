@@ -198,19 +198,17 @@ bool b2PolygonShape::TestPoint(const b2Transform& xf, const b2Vec2& p) const
 	return true;
 }
 
-b2SegmentCollide b2PolygonShape::TestSegment(
-	const b2Transform& xf,
-	float32* lambda,
-	b2Vec2* normal,
-	const b2Segment& segment,
-	float32 maxLambda) const
+void b2PolygonShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input, const b2Transform& xf) const
 {
-	float32 lower = 0.0f, upper = maxLambda;
+	float32 lower = 0.0f, upper = input.maxFraction;
 
-	b2Vec2 p1 = b2MulT(xf.R, segment.p1 - xf.position);
-	b2Vec2 p2 = b2MulT(xf.R, segment.p2 - xf.position);
+	// Put the ray into the polygon's frame of reference.
+	b2Vec2 p1 = b2MulT(xf.R, input.p1 - xf.position);
+	b2Vec2 p2 = b2MulT(xf.R, input.p2 - xf.position);
 	b2Vec2 d = p2 - p1;
 	int32 index = -1;
+
+	output->hit = false;
 
 	for (int32 i = 0; i < m_vertexCount; ++i)
 	{
@@ -224,7 +222,7 @@ b2SegmentCollide b2PolygonShape::TestSegment(
 		{	
 			if (numerator < 0.0f)
 			{
-				return b2_missCollide;
+				return;
 			}
 		}
 		else
@@ -250,21 +248,19 @@ b2SegmentCollide b2PolygonShape::TestSegment(
 
 		if (upper < lower)
 		{
-			return b2_missCollide;
+			return;
 		}
 	}
 
-	b2Assert(0.0f <= lower && lower <= maxLambda);
+	b2Assert(0.0f <= lower && lower <= input.maxFraction);
 
 	if (index >= 0)
 	{
-		*lambda = lower;
-		*normal = b2Mul(xf.R, m_normals[index]);
-		return b2_hitCollide;
+		output->hit = true;
+		output->fraction = lower;
+		output->normal = b2Mul(xf.R, m_normals[index]);
+		return;
 	}
-
-	*lambda = 0;
-	return b2_startsInsideCollide;
 }
 
 void b2PolygonShape::ComputeAABB(b2AABB* aabb, const b2Transform& xf) const

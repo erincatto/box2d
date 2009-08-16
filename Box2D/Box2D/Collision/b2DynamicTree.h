@@ -237,26 +237,18 @@ inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) con
 			subInput.p2 = input.p2;
 			subInput.maxFraction = maxFraction;
 
-			b2RayCastOutput output;
+			maxFraction = callback->RayCastCallback(subInput, nodeId);
 
-			callback->RayCastCallback(&output, subInput, nodeId);
-
-			if (output.hit)
+			if (maxFraction == 0.0f)
 			{
-				// Early exit.
-				if (output.fraction == 0.0f)
-				{
-					return;
-				}
+				return;
+			}
 
-				maxFraction = output.fraction;
-
-				// Update segment bounding box.
-				{
-					b2Vec2 t = p1 + maxFraction * (p2 - p1);
-					segmentAABB.lowerBound = b2Min(p1, t);
-					segmentAABB.upperBound = b2Max(p1, t);
-				}
+			// Update segment bounding box.
+			{
+				b2Vec2 t = p1 + maxFraction * (p2 - p1);
+				segmentAABB.lowerBound = b2Min(p1, t);
+				segmentAABB.upperBound = b2Max(p1, t);
 			}
 		}
 		else

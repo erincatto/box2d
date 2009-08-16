@@ -140,15 +140,10 @@ public:
 	/// @param p a point in world coordinates.
 	bool TestPoint(const b2Vec2& p) const;
 
-	/// Perform a ray cast against this shape.
-	/// @param xf the shape world transform.
-	/// @param lambda returns the hit fraction. You can use this to compute the contact point
-	/// p = (1 - lambda) * segment.p1 + lambda * segment.p2.
-	/// @param normal returns the normal at the contact point. If there is no intersection, the normal
-	/// is not set.
-	/// @param segment defines the begin and end point of the ray cast.
-	/// @param maxLambda a number typically in the range [0,1].
-	b2SegmentCollide TestSegment(float32* lambda, b2Vec2* normal, const b2Segment& segment, float32 maxLambda) const;
+	/// Cast a ray against this shape.
+	/// @param output the ray-cast results.
+	/// @param input the ray-cast input parameters.
+	void RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const;
 
 	/// Compute the mass properties of this shape using its dimensions and density.
 	/// The inertia tensor is computed about the local origin, not the centroid.
@@ -295,13 +290,9 @@ inline bool b2Fixture::TestPoint(const b2Vec2& p) const
 	return m_shape->TestPoint(m_body->GetTransform(), p);
 }
 
-inline b2SegmentCollide
-b2Fixture::TestSegment(	float32* lambda,
-						 b2Vec2* normal,
-						 const b2Segment& segment,
-						 float32 maxLambda) const
+inline void b2Fixture::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
 {
-	return m_shape->TestSegment(m_body->GetTransform(), lambda, normal, segment, maxLambda);
+	m_shape->RayCast(output, input, m_body->GetTransform());
 }
 
 #endif

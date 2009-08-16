@@ -157,17 +157,22 @@ public:
 		actor->overlap = b2TestOverlap(m_queryAABB, actor->aabb);
 	}
 
-	void RayCastCallback(b2RayCastOutput* pOutput, const b2RayCastInput& input, int32 proxyId)
+	float32 RayCastCallback(const b2RayCastInput& input, int32 proxyId)
 	{
 		Actor* actor = (Actor*)m_tree.GetUserData(proxyId);
-		actor->aabb.RayCast(pOutput, input);
 
-		if (pOutput->hit)
+		b2RayCastOutput output;
+		actor->aabb.RayCast(&output, input);
+
+		if (output.hit)
 		{
-			m_rayCastOutput = *pOutput;
+			m_rayCastOutput = output;
 			m_rayActor = actor;
-			m_rayActor->fraction = pOutput->fraction;
+			m_rayActor->fraction = output.fraction;
+			return output.fraction;
 		}
+
+		return input.maxFraction;
 	}
 
 private:
