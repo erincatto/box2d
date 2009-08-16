@@ -211,27 +211,16 @@ void b2BroadPhase::UpdatePairs(T* callback)
 	}
 }
 
-/// This wrapper converts tree proxy user data to broad-phase proxy user data.
 template <typename T>
-struct b2BroadPhaseQueryWrapper
+inline void b2BroadPhase::Query(T* callback, const b2AABB& aabb) const
 {
-	void QueryCallback(int32 proxyId)
-	{
-		callback->QueryCallback(tree->GetUserData(proxyId));
-	}
-
-	const b2DynamicTree* tree;
-	T* callback;
-};
+	m_tree.Query(callback, aabb);
+}
 
 template <typename T>
-void b2BroadPhase::Query(T* callback, const b2AABB& aabb) const
+inline void b2BroadPhase::RayCast(T* callback, const b2RayCastInput& input) const
 {
-	b2BroadPhaseQueryWrapper<T> wrapper;
-	wrapper.tree = &m_tree;
-	wrapper.callback = callback;
-
-	m_tree.Query(&wrapper, aabb);
+	m_tree.RayCast(callback, input);
 }
 
 #endif

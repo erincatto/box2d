@@ -53,12 +53,8 @@ public:
 	/// @see b2Shape::TestPoint
 	bool TestPoint(const b2Transform& transform, const b2Vec2& p) const;
 
-	/// @see b2Shape::TestSegment
-	b2SegmentCollide TestSegment(	const b2Transform& transform,
-		float32* lambda,
-		b2Vec2* normal,
-		const b2Segment& segment,
-		float32 maxLambda) const;
+	/// Implement b2Shape.
+	void RayCast(b2RayCastOutput* output, const b2RayCastInput& input, const b2Transform& transform) const;
 
 	/// @see b2Shape::ComputeAABB
 	void ComputeAABB(b2AABB* aabb, const b2Transform& transform) const;

@@ -96,7 +96,15 @@ public:
 	/// provided AABB.
 	/// @param callback a user implemented callback class.
 	/// @param aabb the query box.
-	void Query(b2QueryCallback* callback, const b2AABB& aabb);
+	void QueryAABB(b2QueryCallback* callback, const b2AABB& aabb);
+
+	/// Ray-cast the world for all fixtures in the path of the ray. Your callback
+	/// controls whether you get the closest point, any point, or n-points.
+	/// The ray-cast ignores shapes that contain the starting point.
+	/// @param callback a user implemented callback class.
+	/// @param point1 the ray starting point
+	/// @param point2 the ray ending point
+	void RayCast(b2RayCastCallback* callback, const b2Vec2& point1, const b2Vec2& point2);
 
 	/// Get the world body list. With the returned body, use b2Body::GetNext to get
 	/// the next body in the world list. A NULL body indicates the end of the list.

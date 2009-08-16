@@ -874,19 +874,57 @@ void b2World::Step(float32 dt, int32 velocityIterations, int32 positionIteration
 
 struct b2WorldQueryWrapper
 {
-	void QueryCallback(void* userData)
+	void QueryCallback(int32 proxyId)
 	{
-		callback->ReportFixture((b2Fixture*)userData);
+		b2Fixture* fixture = (b2Fixture*)broadPhase->GetUserData(proxyId);
+		callback->ReportFixture(fixture);
 	}
 
+	b2BroadPhase* broadPhase;
 	b2QueryCallback* callback;
 };
 
-void b2World::Query(b2QueryCallback* callback, const b2AABB& aabb)
+void b2World::QueryAABB(b2QueryCallback* callback, const b2AABB& aabb)
 {
 	b2WorldQueryWrapper wrapper;
+	wrapper.broadPhase = &m_contactManager.m_broadPhase;
 	wrapper.callback = callback;
 	m_contactManager.m_broadPhase.Query(&wrapper, aabb);
+}
+
+struct b2WorldRayCastWrapper
+{
+	float32 RayCastCallback(const b2RayCastInput& input, int32 proxyId)
+	{
+		void* userData = broadPhase->GetUserData(proxyId);
+		b2Fixture* fixture = (b2Fixture*)userData;
+		b2RayCastOutput output;
+		fixture->RayCast(&output, input);
+
+		if (output.hit)
+		{
+			float32 fraction = output.fraction;
+			b2Vec2 point = (1.0f - fraction) * input.p1 + fraction * input.p2;
+			return callback->ReportFixture(fixture, point, output.normal, fraction);
+		}
+
+		return input.maxFraction;
+	}
+
+	b2BroadPhase* broadPhase;
+	b2RayCastCallback* callback;
+};
+
+void b2World::RayCast(b2RayCastCallback* callback, const b2Vec2& point1, const b2Vec2& point2)
+{
+	b2WorldRayCastWrapper wrapper;
+	wrapper.broadPhase = &m_contactManager.m_broadPhase;
+	wrapper.callback = callback;
+	b2RayCastInput input;
+	input.maxFraction = 1.0f;
+	input.p1 = point1;
+	input.p2 = point2;
+	m_contactManager.m_broadPhase.RayCast(&wrapper, input);
 }
 
 void b2World::DrawShape(b2Fixture* fixture, const b2Transform& xf, const b2Color& color)
