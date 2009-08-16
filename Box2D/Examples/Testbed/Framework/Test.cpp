@@ -151,7 +151,7 @@ void Test::MouseDown(const b2Vec2& p)
 
 	// Query the world for overlapping shapes.
 	QueryCallback callback(p);
-	m_world->Query(&callback, aabb);
+	m_world->QueryAABB(&callback, aabb);
 
 	if (callback.m_fixture)
 	{

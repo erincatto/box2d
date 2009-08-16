@@ -36,14 +36,6 @@ struct b2MassData
 	float32 I;
 };
 
-/// Return codes from TestSegment
-enum b2SegmentCollide
-{
-	b2_startsInsideCollide = -1,
-	b2_missCollide = 0,
-	b2_hitCollide = 1
-};
-
 /// A shape is used for collision detection. You can create a shape however you like.
 /// Shapes used for simulation in b2World are created automatically when a b2Fixture
 /// is created.
@@ -74,19 +66,11 @@ public:
 	/// @param p a point in world coordinates.
 	virtual bool TestPoint(const b2Transform& xf, const b2Vec2& p) const = 0;
 
-	/// Perform a ray cast against this shape.
-	/// @param xf the shape world transform.
-	/// @param lambda returns the hit fraction. You can use this to compute the contact point
-	/// p = (1 - lambda) * segment.p1 + lambda * segment.p2.
-	/// @param normal returns the normal at the contact point. If there is no intersection, the normal
-	/// is not set.
-	/// @param segment defines the begin and end point of the ray cast.
-	/// @param maxLambda a number typically in the range [0,1].
-	virtual b2SegmentCollide TestSegment(	const b2Transform& xf,
-											float32* lambda,
-											b2Vec2* normal,
-											const b2Segment& segment,
-											float32 maxLambda) const = 0;
+	/// Cast a ray against this shape.
+	/// @param output the ray-cast results.
+	/// @param input the ray-cast input parameters.
+	/// @param transform the transform to be applied to the shape.
+	virtual void RayCast(b2RayCastOutput* output, const b2RayCastInput& input, const b2Transform& transform) const = 0;
 
 	/// Given a transform, compute the associated axis aligned bounding box for this shape.
 	/// @param aabb returns the axis aligned box.

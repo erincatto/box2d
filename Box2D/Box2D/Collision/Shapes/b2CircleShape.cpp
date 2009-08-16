@@ -38,25 +38,14 @@ bool b2CircleShape::TestPoint(const b2Transform& transform, const b2Vec2& p) con
 // From Section 3.1.2
 // x = s + a * r
 // norm(x) = radius
-b2SegmentCollide b2CircleShape::TestSegment(const b2Transform& transform,
-								float32* lambda,
-								b2Vec2* normal,
-								const b2Segment& segment,
-								float32 maxLambda) const
+void b2CircleShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input, const b2Transform& transform) const
 {
 	b2Vec2 position = transform.position + b2Mul(transform.R, m_p);
-	b2Vec2 s = segment.p1 - position;
+	b2Vec2 s = input.p1 - position;
 	float32 b = b2Dot(s, s) - m_radius * m_radius;
 
-	// Does the segment start inside the circle?
-	if (b < 0.0f)
-	{
-		*lambda = 0;
-		return b2_startsInsideCollide;
-	}
-
 	// Solve quadratic equation.
-	b2Vec2 r = segment.p2 - segment.p1;
+	b2Vec2 r = input.p2 - input.p1;
 	float32 c =  b2Dot(s, r);
 	float32 rr = b2Dot(r, r);
 	float32 sigma = c * c - rr * b;
@@ -64,23 +53,26 @@ b2SegmentCollide b2CircleShape::TestSegment(const b2Transform& transform,
 	// Check for negative discriminant and short segment.
 	if (sigma < 0.0f || rr < B2_FLT_EPSILON)
 	{
-		return b2_missCollide;
+		output->hit = false;
+		return;
 	}
 
 	// Find the point of intersection of the line with the circle.
 	float32 a = -(c + b2Sqrt(sigma));
 
 	// Is the intersection point on the segment?
-	if (0.0f <= a && a <= maxLambda * rr)
+	if (0.0f <= a && a <= input.maxFraction * rr)
 	{
 		a /= rr;
-		*lambda = a;
-		*normal = s + a * r;
-		normal->Normalize();
-		return b2_hitCollide;
+		output->hit = true;
+		output->fraction = a;
+		output->normal = s + a * r;
+		output->normal.Normalize();
+		return;
 	}
 
-	return b2_missCollide;
+	output->hit = false;
+	return;
 }
 
 void b2CircleShape::ComputeAABB(b2AABB* aabb, const b2Transform& transform) const

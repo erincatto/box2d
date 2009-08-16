@@ -121,15 +121,37 @@ public:
 	}
 };
 
-/// Callback class for queries.
+/// Callback class for AABB queries.
+/// See b2World::Query
 class b2QueryCallback
 {
 public:
 	virtual ~b2QueryCallback() {}
 
-	/// Called for each fixture found in the query.
+	/// Called for each fixture found in the query AABB.
 	/// @return false to terminate the query.
 	virtual bool ReportFixture(b2Fixture* fixture) = 0;
+};
+
+/// Callback class for ray casts.
+/// See b2World::RayCast
+class b2RayCastCallback
+{
+public:
+	virtual ~b2RayCastCallback() {}
+
+	/// Called for each fixture found in the query. You control how the ray proceeds
+	/// by returning a float that indicates the fractional length of the ray. By returning
+	/// 0, you set the ray length to zero. By returning the current fraction, you proceed
+	/// to find the closest point. By returning 1, you continue with the original ray
+	/// clipping.
+	/// @param fixture the fixture hit by the ray
+	/// @param point the point of initial intersection
+	/// @param normal the normal vector at the point of intersection
+	/// @return 0 to terminate, fraction to clip the ray for
+	/// closest hit, 1 to continue
+	virtual float32 ReportFixture(	b2Fixture* fixture, const b2Vec2& point,
+									const b2Vec2& normal, float32 fraction) = 0;
 };
 
 /// Color for debug drawing. Each value has the range [0,1].
