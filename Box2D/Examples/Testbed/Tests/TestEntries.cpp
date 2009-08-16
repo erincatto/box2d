@@ -53,6 +53,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"PolyCollision", PolyCollision::Create},
 	{"Pyramid", Pyramid::Create},
 	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Apply Force", ApplyForce::Create},
@@ -67,7 +68,6 @@ TestEntry g_testEntries[] =
 	{"Dynamic Tree", DynamicTreeTest::Create},
 	{"Gears", Gears::Create},
 	{"Line Joint", LineJoint::Create},
-	{"PolyCollision", PolyCollision::Create},
 	{"Polygon Shapes", PolyShapes::Create},
 	{"Prismatic", Prismatic::Create},
 	{"Pulleys", Pulleys::Create},
