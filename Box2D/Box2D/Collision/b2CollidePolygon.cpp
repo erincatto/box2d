@@ -245,22 +245,24 @@ void b2CollidePolygons(b2Manifold* manifold,
 	b2Vec2 v11 = vertices1[edge1];
 	b2Vec2 v12 = edge1 + 1 < count1 ? vertices1[edge1+1] : vertices1[0];
 
-	b2Vec2 dv = v12 - v11;
-
-	b2Vec2 localNormal = b2Cross(dv, 1.0f);
-	localNormal.Normalize();
+	b2Vec2 localTangent = v12 - v11;
+	localTangent.Normalize();
+	
+	b2Vec2 localNormal = b2Cross(localTangent, 1.0f);
 	b2Vec2 planePoint = 0.5f * (v11 + v12);
 
-	b2Vec2 sideNormal = b2Mul(xf1.R, v12 - v11);
-	sideNormal.Normalize();
-	b2Vec2 frontNormal = b2Cross(sideNormal, 1.0f);
+	b2Vec2 tangent = b2Mul(xf1.R, localTangent);
+	b2Vec2 normal = b2Cross(tangent, 1.0f);
 	
 	v11 = b2Mul(xf1, v11);
 	v12 = b2Mul(xf1, v12);
 
-	float32 frontOffset = b2Dot(frontNormal, v11);
-	float32 sideOffset1 = -b2Dot(sideNormal, v11);
-	float32 sideOffset2 = b2Dot(sideNormal, v12);
+	// Face offset.
+	float32 frontOffset = b2Dot(normal, v11);
+
+	// Side offsets, extended by polytope skin thickness.
+	float32 sideOffset1 = -b2Dot(tangent, v11) + totalRadius;
+	float32 sideOffset2 = b2Dot(tangent, v12) + totalRadius;
 
 	// Clip incident edge against extruded edge1 side edges.
 	b2ClipVertex clipPoints1[2];
@@ -268,13 +270,13 @@ void b2CollidePolygons(b2Manifold* manifold,
 	int np;
 
 	// Clip to box side 1
-	np = b2ClipSegmentToLine(clipPoints1, incidentEdge, -sideNormal, sideOffset1);
+	np = b2ClipSegmentToLine(clipPoints1, incidentEdge, -tangent, sideOffset1);
 
 	if (np < 2)
 		return;
 
 	// Clip to negative box side 1
-	np = b2ClipSegmentToLine(clipPoints2, clipPoints1,  sideNormal, sideOffset2);
+	np = b2ClipSegmentToLine(clipPoints2, clipPoints1,  tangent, sideOffset2);
 
 	if (np < 2)
 	{
@@ -288,7 +290,7 @@ void b2CollidePolygons(b2Manifold* manifold,
 	int32 pointCount = 0;
 	for (int32 i = 0; i < b2_maxManifoldPoints; ++i)
 	{
-		float32 separation = b2Dot(frontNormal, clipPoints2[i].v) - frontOffset;
+		float32 separation = b2Dot(normal, clipPoints2[i].v) - frontOffset;
 
 		if (separation <= totalRadius)
 		{

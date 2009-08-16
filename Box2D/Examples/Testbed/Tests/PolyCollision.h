@@ -25,19 +25,14 @@ public:
 	PolyCollision()
 	{
 		{
-			b2Vec2 vertices[4];
-			vertices[0].Set(-9.0f, -1.1f);
-			vertices[1].Set(7.0f, -1.1f);
-			vertices[2].Set(5.0f, -0.9f);
-			vertices[3].Set(-11.0f, -0.9f);
-			m_polygonA.Set(vertices, 4);
-			m_transformA.Set(b2Vec2(0.0f, 10.0f), 0.0f);
+			m_polygonA.SetAsBox(1.0f, 1.0f, b2Vec2(0.0f, 0.0f), b2_pi * 0.25f);
+			m_transformA.Set(b2Vec2(0.0f, 5.0f), 0.0f);
 		}
 
 		{
-			m_polygonB.SetAsBox(0.5f, 0.5f);
-			m_positionB.SetZero();
-			m_angleB = 0.0f;
+			m_polygonB.SetAsBox(0.25f, 0.25f);
+			m_positionB.Set(-1.7793884f, 5.0326509f);
+			m_angleB = 2.2886343f;
 			m_transformB.Set(m_positionB, m_angleB);
 		}
 	}
