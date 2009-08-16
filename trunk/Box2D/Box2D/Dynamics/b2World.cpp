@@ -632,13 +632,20 @@ void b2World::SolveTOI(const b2TimeStep& step)
 		minContact->m_flags &= ~b2Contact::e_toiFlag;
 
 		// Is the contact solid?
-		if (minContact->IsSolid() == false || minContact->IsTouching() == false)
+		if (minContact->IsSolid() == false)
 		{
 			// Restore the sweeps.
 			b1->m_sweep = backup1;
 			b2->m_sweep = backup2;
 			b1->SynchronizeTransform();
 			b2->SynchronizeTransform();
+			continue;
+		}
+
+		// Did numerical issues prevent a contact point from being generated?
+		if (minContact->IsTouching() == false)
+		{
+			// Give up on this TOI.
 			continue;
 		}
 
