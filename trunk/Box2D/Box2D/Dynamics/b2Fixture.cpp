@@ -111,7 +111,10 @@ void b2Fixture::Synchronize(b2BroadPhase* broadPhase, const b2Transform& transfo
 	m_shape->ComputeAABB(&aabb2, transform2);
 	
 	m_aabb.Combine(aabb1, aabb2);
-	broadPhase->MoveProxy(m_proxyId, m_aabb);
+
+	b2Vec2 displacement = transform2.position - transform1.position;
+
+	broadPhase->MoveProxy(m_proxyId, m_aabb, displacement);
 }
 
 void b2Fixture::SetFilterData(const b2Filter& filter)
