@@ -19,7 +19,7 @@
 #include <Box2D/Common/b2Settings.h>
 #include <cstdlib>
 
-b2Version b2_version = {2, 0, 2};
+b2Version b2_version = {2, 1, 0};
 
 int32 b2_byteCount = 0;
 

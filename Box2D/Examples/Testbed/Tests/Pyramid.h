@@ -24,7 +24,7 @@ class Pyramid : public Test
 public:
 	enum
 	{
-		e_count = 25,
+		e_count = 20,
 	};
 
 	Pyramid()
@@ -43,7 +43,7 @@ public:
 			b2PolygonShape shape;
 			shape.SetAsBox(a, a);
 
-			b2Vec2 x(-10.0f, 0.75f);
+			b2Vec2 x(-7.0f, 0.75f);
 			b2Vec2 y;
 			b2Vec2 deltaX(0.5625f, 1.25f);
 			b2Vec2 deltaY(1.125f, 0.0f);

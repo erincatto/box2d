@@ -53,8 +53,8 @@
 
 TestEntry g_testEntries[] =
 {
-	{"PolyCollision", PolyCollision::Create},
 	{"Pyramid", Pyramid::Create},
+	{"PolyCollision", PolyCollision::Create},
 	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Apply Force", ApplyForce::Create},
 	{"Bridge", Bridge::Create},
