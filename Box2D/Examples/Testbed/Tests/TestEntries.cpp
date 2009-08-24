@@ -39,6 +39,7 @@
 #include "Prismatic.h"
 #include "Pulleys.h"
 #include "Pyramid.h"
+#include "RayCast.h"
 #include "Revolute.h"
 #include "SensorTest.h"
 #include "ShapeEditing.h"
@@ -53,6 +54,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Ray-Cast", RayCast::Create},
 	{"Pyramid", Pyramid::Create},
 	{"PolyCollision", PolyCollision::Create},
 	{"One-Sided Platform", OneSidedPlatform::Create},
