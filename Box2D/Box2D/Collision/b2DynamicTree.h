@@ -70,11 +70,11 @@ public:
 	/// Destroy a proxy. This asserts if the id is invalid.
 	void DestroyProxy(int32 proxyId);
 
-	/// Move a proxy. If the proxy has moved outside of its fattened AABB,
+	/// Move a proxy with a swepted AABB. If the proxy has moved outside of its fattened AABB,
 	/// then the proxy is removed from the tree and re-inserted. Otherwise
 	/// the function returns immediately.
 	/// @return true if the proxy was re-inserted.
-	bool MoveProxy(int32 proxyId, const b2AABB& aabb);
+	bool MoveProxy(int32 proxyId, const b2AABB& aabb1, const b2Vec2& displacement);
 
 	/// Perform some iterations to re-balance the tree.
 	void Rebalance(int32 iterations);
@@ -124,6 +124,8 @@ private:
 
 	/// This is used incrementally traverse the tree for re-balancing.
 	uint32 m_path;
+
+	int32 m_insertionCount;
 };
 
 inline void* b2DynamicTree::GetUserData(int32 proxyId) const

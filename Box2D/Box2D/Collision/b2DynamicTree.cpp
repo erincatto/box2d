@@ -38,6 +38,8 @@ b2DynamicTree::b2DynamicTree()
 	m_freeList = 0;
 
 	m_path = 0;
+
+	m_insertionCount = 0;
 }
 
 b2DynamicTree::~b2DynamicTree()
@@ -118,7 +120,7 @@ void b2DynamicTree::DestroyProxy(int32 proxyId)
 	FreeNode(proxyId);
 }
 
-bool b2DynamicTree::MoveProxy(int32 proxyId, const b2AABB& aabb)
+bool b2DynamicTree::MoveProxy(int32 proxyId, const b2AABB& aabb, const b2Vec2& displacement)
 {
 	b2Assert(0 <= proxyId && proxyId < m_nodeCapacity);
 
@@ -131,9 +133,34 @@ bool b2DynamicTree::MoveProxy(int32 proxyId, const b2AABB& aabb)
 
 	RemoveLeaf(proxyId);
 
+	// Extend AABB.
+	b2AABB b = aabb;
 	b2Vec2 r(b2_aabbExtension, b2_aabbExtension);
-	m_nodes[proxyId].aabb.lowerBound = aabb.lowerBound - r;
-	m_nodes[proxyId].aabb.upperBound = aabb.upperBound + r;
+	b.lowerBound = b.lowerBound - r;
+	b.upperBound = b.upperBound + r;
+
+	// Predict AABB displacement.
+	b2Vec2 d = b2_aabbMultiplier * displacement;
+
+	if (d.x < 0.0f)
+	{
+		b.lowerBound.x += d.x;
+	}
+	else
+	{
+		b.upperBound.x += d.x;
+	}
+
+	if (d.y < 0.0f)
+	{
+		b.lowerBound.y += d.y;
+	}
+	else
+	{
+		b.upperBound.y += d.y;
+	}
+
+	m_nodes[proxyId].aabb = b;
 
 	InsertLeaf(proxyId);
 	return true;
@@ -141,6 +168,8 @@ bool b2DynamicTree::MoveProxy(int32 proxyId, const b2AABB& aabb)
 
 void b2DynamicTree::InsertLeaf(int32 leaf)
 {
+	++m_insertionCount;
+
 	if (m_root == b2_nullNode)
 	{
 		m_root = leaf;
