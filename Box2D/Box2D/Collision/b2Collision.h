@@ -183,7 +183,7 @@ struct b2AABB
 	}
 
 	/// Does this aabb contain the provided AABB.
-	bool Contains(const b2AABB& aabb)
+	bool Contains(const b2AABB& aabb) const
 	{
 		bool result = true;
 		result = result && lowerBound.x <= aabb.lowerBound.x;
@@ -193,7 +193,7 @@ struct b2AABB
 		return result;
 	}
 
-	void RayCast(b2RayCastOutput* output, const b2RayCastInput& input);
+	void RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const;
 
 	b2Vec2 lowerBound;	///< the lower vertex
 	b2Vec2 upperBound;	///< the upper vertex

@@ -182,7 +182,7 @@ bool b2Segment::TestSegment(float32* lambda, b2Vec2* normal, const b2Segment& se
 }
 
 // From Real-time Collision Detection, p179.
-void b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input)
+void b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
 {
 	float32 tmin = -B2_FLT_MAX;
 	float32 tmax = B2_FLT_MAX;
