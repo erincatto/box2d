@@ -50,7 +50,7 @@
   #ifdef __APPLE__
   #include <GLUT/glut.h>
   #else
-	#include "../../freeglut/gl/glut.h"
+	#include "../../freeglut/GL/glut.h"
   //#include <GL/glut.h>
   #endif
 
