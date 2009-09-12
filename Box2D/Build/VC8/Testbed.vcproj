@@ -210,6 +210,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Examples\Testbed\Tests\Breakable.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Examples\TestBed\Tests\Bridge.h"
 				>
 			</File>

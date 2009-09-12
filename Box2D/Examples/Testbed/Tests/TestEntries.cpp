@@ -22,6 +22,7 @@
 #include <cstring>
 
 #include "ApplyForce.h"
+#include "Breakable.h"
 #include "Bridge.h"
 #include "CCDTest.h"
 #include "Chain.h"
@@ -54,6 +55,8 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Breakable", Breakable::Create},
+	{"Varying Restitution", VaryingRestitution::Create},
 	{"Ray-Cast", RayCast::Create},
 	{"Pyramid", Pyramid::Create},
 	{"PolyCollision", PolyCollision::Create},
@@ -81,7 +84,6 @@ TestEntry g_testEntries[] =
 	{"Theo Jansen's Walker", TheoJansen::Create},
 	{"Time of Impact", TimeOfImpact::Create},
 	{"Varying Friction", VaryingFriction::Create},
-	{"Varying Restitution", VaryingRestitution::Create},
 	{"Vertical Stack", VerticalStack::Create},
 	{"Web", Web::Create},
 	{NULL, NULL}

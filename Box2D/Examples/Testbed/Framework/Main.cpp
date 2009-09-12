@@ -41,7 +41,6 @@ namespace
 	int tx, ty, tw, th;
 	bool rMouseDown;
 	b2Vec2 lastp;
-
 }
 
 void Resize(int32 w, int32 h)
@@ -157,6 +156,9 @@ void Keyboard(unsigned char key, int x, int y)
 		}
 		break;
  
+	case 'p':
+		settings.pause = !settings.pause;
+		break;
 
 		// Press [ to prev test.
 	case '[':
