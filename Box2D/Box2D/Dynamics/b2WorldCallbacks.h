@@ -114,7 +114,7 @@ public:
 	/// arbitrarily large if the sub-step is small. Hence the impulse is provided explicitly
 	/// in a separate data structure.
 	/// Note: this is only called for contacts that are touching, solid, and awake.
-	virtual void PostSolve(const b2Contact* contact, const b2ContactImpulse* impulse)
+	virtual void PostSolve(b2Contact* contact, const b2ContactImpulse* impulse)
 	{
 		B2_NOT_USED(contact);
 		B2_NOT_USED(impulse);
