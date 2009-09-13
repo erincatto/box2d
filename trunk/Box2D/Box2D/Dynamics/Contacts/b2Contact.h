@@ -66,7 +66,6 @@ public:
 	/// Get the contact manifold. Do not set the point count to zero. Instead
 	/// call Disable.
 	b2Manifold* GetManifold();
-	const b2Manifold* GetManifold() const;
 
 	/// Get the world manifold.
 	void GetWorldManifold(b2WorldManifold* worldManifold) const;
@@ -166,11 +165,6 @@ protected:
 };
 
 inline b2Manifold* b2Contact::GetManifold()
-{
-	return &m_manifold;
-}
-
-inline const b2Manifold* b2Contact::GetManifold() const
 {
 	return &m_manifold;
 }
