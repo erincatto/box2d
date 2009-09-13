@@ -59,7 +59,7 @@ public:
 		m_broke = false;
 	}
 
-	void PostSolve(const b2Contact* contact, const b2ContactImpulse* impulse)
+	void PostSolve(b2Contact* contact, const b2ContactImpulse* impulse)
 	{
 		if (m_broke)
 		{
