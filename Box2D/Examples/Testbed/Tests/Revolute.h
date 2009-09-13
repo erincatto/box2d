@@ -45,7 +45,6 @@ public:
 			bd.position.Set(0.0f, 20.0f);
 			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&shape, 5.0f);
-			body->SetMassFromShapes();
 
 			float32 w = 100.0f;
 			body->SetAngularVelocity(w);

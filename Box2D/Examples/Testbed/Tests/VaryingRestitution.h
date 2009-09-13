@@ -53,7 +53,6 @@ public:
 
 				fd.restitution = restitution[i];
 				body->CreateFixture(&fd);
-				body->SetMassFromShapes();
 			}
 		}
 	}

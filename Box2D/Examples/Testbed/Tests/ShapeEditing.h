@@ -41,7 +41,6 @@ public:
 		b2PolygonShape shape;
 		shape.SetAsBox(4.0f, 4.0f, b2Vec2(0.0f, 0.0f), 0.0f);
 		m_fixture1 = m_body->CreateFixture(&shape, 10.0f);
-		m_body->SetMassFromShapes();
 
 		m_fixture2 = NULL;
 	}
@@ -57,7 +56,6 @@ public:
 				shape.m_radius = 3.0f;
 				shape.m_p.Set(0.5f, -4.0f);
 				m_fixture2 = m_body->CreateFixture(&shape, 10.0f);
-				m_body->SetMassFromShapes();
 				m_body->WakeUp();
 			}
 			break;
@@ -67,7 +65,6 @@ public:
 			{
 				m_body->DestroyFixture(m_fixture2);
 				m_fixture2 = NULL;
-				m_body->SetMassFromShapes();
 				m_body->WakeUp();
 			}
 			break;

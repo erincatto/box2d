@@ -66,7 +66,6 @@ public:
 			b2CircleShape shape;
 			shape.m_radius = m_radius;
 			m_character = body->CreateFixture(&shape, 1.0f);
-			body->SetMassFromShapes();
 
 			body->SetLinearVelocity(b2Vec2(0.0f, -50.0f));
 

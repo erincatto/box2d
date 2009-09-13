@@ -51,7 +51,6 @@ public:
 				m_bodies[i] = m_world->CreateBody(&bd);
 
 				m_bodies[i]->CreateFixture(&shape, 1.0f);
-				m_bodies[i]->SetMassFromShapes();
 
 				//m_bodies[i]->SetLinearVelocity(b2Vec2(0.0f, -100.0f));
 			}

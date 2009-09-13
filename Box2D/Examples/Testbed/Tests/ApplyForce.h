@@ -98,7 +98,6 @@ public:
 			m_body = m_world->CreateBody(&bd);
 			m_body->CreateFixture(&sd1);
 			m_body->CreateFixture(&sd2);
-			m_body->SetMassFromShapes();
 		}
 	}
 

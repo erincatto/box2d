@@ -45,7 +45,6 @@ void b2Fixture::Create(b2BlockAllocator* allocator, b2BroadPhase* broadPhase, b2
 	m_userData = def->userData;
 	m_friction = def->friction;
 	m_restitution = def->restitution;
-	m_density = def->density;
 
 	m_body = body;
 	m_next = NULL;
@@ -55,6 +54,8 @@ void b2Fixture::Create(b2BlockAllocator* allocator, b2BroadPhase* broadPhase, b2
 	m_isSensor = def->isSensor;
 
 	m_shape = def->shape->Clone(allocator);
+
+	m_shape->ComputeMass(&m_massData, def->density);
 
 	// Create proxy in the broad-phase.
 	m_shape->ComputeAABB(&m_aabb, xf);

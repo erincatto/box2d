@@ -154,8 +154,10 @@ void b2PrismaticJoint::InitVelocityConstraints(const b2TimeStep& step)
 		m_a2 = b2Cross(r2, m_axis);
 
 		m_motorMass = m_invMass1 + m_invMass2 + m_invI1 * m_a1 * m_a1 + m_invI2 * m_a2 * m_a2;
-		b2Assert(m_motorMass > B2_FLT_EPSILON);
-		m_motorMass = 1.0f / m_motorMass;
+		if (m_motorMass > B2_FLT_EPSILON)
+		{
+			m_motorMass = 1.0f / m_motorMass;
+		}
 	}
 
 	// Prismatic constraint.

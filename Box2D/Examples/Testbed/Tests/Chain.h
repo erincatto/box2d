@@ -54,7 +54,6 @@ public:
 				bd.position.Set(0.5f + i, y);
 				b2Body* body = m_world->CreateBody(&bd);
 				body->CreateFixture(&fd);
-				body->SetMassFromShapes();
 
 				b2Vec2 anchor(float32(i), y);
 				jd.Initialize(prevBody, body, anchor);

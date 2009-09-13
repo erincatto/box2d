@@ -68,7 +68,6 @@ public:
 				b2Body* body = m_world->CreateBody(&bd);
 
 				body->CreateFixture(&fd);
-				body->SetMassFromShapes();
 			}
 		}
 
@@ -101,7 +100,6 @@ public:
 
 				m_bullet = m_world->CreateBody(&bd);
 				m_bullet->CreateFixture(&fd);
-				m_bullet->SetMassFromShapes();
 
 				m_bullet->SetLinearVelocity(b2Vec2(400.0f, 0.0f));
 			}

@@ -141,8 +141,14 @@ void b2LineJoint::InitVelocityConstraints(const b2TimeStep& step)
 		m_a2 = b2Cross(r2, m_axis);
 
 		m_motorMass = m_invMass1 + m_invMass2 + m_invI1 * m_a1 * m_a1 + m_invI2 * m_a2 * m_a2;
-		b2Assert(m_motorMass > B2_FLT_EPSILON);
-		m_motorMass = 1.0f / m_motorMass;
+		if (m_motorMass > B2_FLT_EPSILON)
+		{
+			m_motorMass = 1.0f / m_motorMass;
+		}
+		else
+		{
+			m_motorMass = 0.0f;
+		}
 	}
 
 	// Prismatic constraint.
@@ -280,7 +286,16 @@ void b2LineJoint::SolveVelocityConstraints(const b2TimeStep& step)
 
 		// f2(1) = invK(1,1) * (-Cdot(1) - K(1,2) * (f2(2) - f1(2))) + f1(1)
 		float32 b = -Cdot1 - (m_impulse.y - f1.y) * m_K.col2.x;
-		float32 f2r = b / m_K.col1.x + f1.x;
+		float32 f2r;
+		if (m_K.col1.x != 0.0f)
+		{
+			f2r = b / m_K.col1.x + f1.x;
+		}
+		else
+		{
+			f2r = f1.x;	
+		}
+
 		m_impulse.x = f2r;
 
 		df = m_impulse - f1;
@@ -298,7 +313,15 @@ void b2LineJoint::SolveVelocityConstraints(const b2TimeStep& step)
 	else
 	{
 		// Limit is inactive, just solve the prismatic constraint in block form.
-		float32 df = (-Cdot1) / m_K.col1.x;
+		float32 df;
+		if (m_K.col1.x != 0.0f)
+		{
+			df = - Cdot1 / m_K.col1.x;
+		}
+		else
+		{
+			df = 0.0f;
+		}
 		m_impulse.x += df;
 
 		b2Vec2 P = df * m_perp;
@@ -410,7 +433,16 @@ bool b2LineJoint::SolvePositionConstraints(float32 baumgarte)
 
 		float32 k11 = m1 + m2 + i1 * m_s1 * m_s1 + i2 * m_s2 * m_s2;
 
-		float32 impulse1 = (-C1) / k11;
+		float32 impulse1;
+		if (k11 != 0.0f)
+		{
+			impulse1 = - C1 / k11;
+		}
+		else
+		{
+			impulse1 = 0.0f;
+		}
+
 		impulse.x = impulse1;
 		impulse.y = 0.0f;
 	}

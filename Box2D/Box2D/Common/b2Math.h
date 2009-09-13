@@ -261,8 +261,10 @@ struct b2Mat22
 		float32 a = col1.x, b = col2.x, c = col1.y, d = col2.y;
 		b2Mat22 B;
 		float32 det = a * d - b * c;
-		b2Assert(det != 0.0f);
-		det = float32(1.0f) / det;
+		if (det != 0.0f)
+		{
+			det = 1.0f / det;
+		}
 		B.col1.x =  det * d;	B.col2.x = -det * b;
 		B.col1.y = -det * c;	B.col2.y =  det * a;
 		return B;
@@ -274,8 +276,10 @@ struct b2Mat22
 	{
 		float32 a11 = col1.x, a12 = col2.x, a21 = col1.y, a22 = col2.y;
 		float32 det = a11 * a22 - a12 * a21;
-		b2Assert(det != 0.0f);
-		det = 1.0f / det;
+		if (det != 0.0f)
+		{
+			det = 1.0f / det;
+		}
 		b2Vec2 x;
 		x.x = det * (a22 * b.x - a12 * b.y);
 		x.y = det * (a11 * b.y - a21 * b.x);

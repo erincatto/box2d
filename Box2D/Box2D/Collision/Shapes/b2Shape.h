@@ -32,7 +32,8 @@ struct b2MassData
 	/// The position of the shape's centroid relative to the shape's origin.
 	b2Vec2 center;
 
-	/// The rotational inertia of the shape.
+	/// The rotational inertia of the shape. This may be about the center or local
+	/// origin, depending on usage.
 	float32 I;
 };
 

@@ -48,7 +48,7 @@ b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 	m_xf.position = bd->position;
 	m_xf.R.Set(bd->angle);
 
-	m_sweep.localCenter = bd->massData.center;
+	m_sweep.localCenter.SetZero();
 	m_sweep.t0 = 1.0f;
 	m_sweep.a0 = m_sweep.a = bd->angle;
 	m_sweep.c0 = m_sweep.c = b2Mul(m_xf, m_sweep.localCenter);
@@ -72,32 +72,12 @@ b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 
 	m_sleepTime = 0.0f;
 
+	m_mass = 0.0f;
 	m_invMass = 0.0f;
 	m_I = 0.0f;
 	m_invI = 0.0f;
 
-	m_mass = bd->massData.mass;
-
-	if (m_mass > 0.0f)
-	{
-		m_invMass = 1.0f / m_mass;
-	}
-
-	m_I = bd->massData.I;
-	
-	if (m_I > 0.0f && (m_flags & b2Body::e_fixedRotationFlag) == 0)
-	{
-		m_invI = 1.0f / m_I;
-	}
-
-	if (m_invMass == 0.0f && m_invI == 0.0f)
-	{
-		m_type = e_staticType;
-	}
-	else
-	{
-		m_type = e_dynamicType;
-	}
+	m_type = e_staticType;
 
 	m_userData = bd->userData;
 
@@ -131,7 +111,16 @@ b2Fixture* b2Body::CreateFixture(const b2FixtureDef* def)
 
 	fixture->m_body = this;
 
-	// Let the world know we have a new fixture.
+	bool needMassUpdate = fixture->m_massData.mass > 0.0f || fixture->m_massData.I > 0.0f;
+
+	// Adjust mass properties if needed.
+	if (needMassUpdate)
+	{
+		ResetMass();
+	}
+
+	// Let the world know we have a new fixture. This will cause new contacts
+	// to be created at the beginning of the next time step.
 	m_world->m_flags |= b2World::e_newFixture;
 
 	return fixture;
@@ -139,33 +128,11 @@ b2Fixture* b2Body::CreateFixture(const b2FixtureDef* def)
 
 b2Fixture* b2Body::CreateFixture(const b2Shape* shape, float32 density)
 {
-	b2Assert(m_world->IsLocked() == false);
-	if (m_world->IsLocked() == true)
-	{
-		return NULL;
-	}
-
-	b2BlockAllocator* allocator = &m_world->m_blockAllocator;
-	b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
-
 	b2FixtureDef def;
 	def.shape = shape;
 	def.density = density;
 
-	void* mem = allocator->Allocate(sizeof(b2Fixture));
-	b2Fixture* fixture = new (mem) b2Fixture;
-	fixture->Create(allocator, broadPhase, this, m_xf, &def);
-
-	fixture->m_next = m_fixtureList;
-	m_fixtureList = fixture;
-	++m_fixtureCount;
-
-	fixture->m_body = this;
-
-	// Let the world know we have a new fixture.
-	m_world->m_flags |= b2World::e_newFixture;
-
-	return fixture;
+	return CreateFixture(&def);
 }
 
 void b2Body::DestroyFixture(b2Fixture* fixture)
@@ -215,6 +182,8 @@ void b2Body::DestroyFixture(b2Fixture* fixture)
 		}
 	}
 
+	bool needMassUpdate = fixture->m_massData.mass > 0.0f || fixture->m_massData.I > 0.0f;
+
 	b2BlockAllocator* allocator = &m_world->m_blockAllocator;
 	b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
 
@@ -225,6 +194,78 @@ void b2Body::DestroyFixture(b2Fixture* fixture)
 	allocator->Free(fixture, sizeof(b2Fixture));
 
 	--m_fixtureCount;
+
+	// Adjust mass properties if needed.
+	if (needMassUpdate)
+	{
+		ResetMass();
+	}
+}
+
+void b2Body::ResetMass()
+{
+	// Compute mass data from shapes. Each shape has its own density.
+	m_mass = 0.0f;
+	m_invMass = 0.0f;
+	m_I = 0.0f;
+	m_invI = 0.0f;
+
+	b2Vec2 center = b2Vec2_zero;
+	for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
+	{
+		const b2MassData& massData = f->GetMassData();
+		m_mass += massData.mass;
+		center += massData.mass * massData.center;
+		m_I += massData.I;
+	}
+
+	// Compute center of mass.
+	if (m_mass > 0.0f)
+	{
+		m_invMass = 1.0f / m_mass;
+		center *= m_invMass;
+	}
+
+	if (m_I > 0.0f && (m_flags & e_fixedRotationFlag) == 0)
+	{
+		// Center the inertia about the center of mass.
+		m_I -= m_mass * b2Dot(center, center);
+		b2Assert(m_I > 0.0f);
+		m_invI = 1.0f / m_I;
+	}
+	else
+	{
+		m_I = 0.0f;
+		m_invI = 0.0f;
+	}
+
+	// Move center of mass.
+	b2Vec2 oldCenter = m_sweep.c;
+	m_sweep.localCenter = center;
+	m_sweep.c0 = m_sweep.c = b2Mul(m_xf, m_sweep.localCenter);
+
+	// Update center of mass velocity.
+	m_linearVelocity += b2Cross(m_angularVelocity, m_sweep.c - oldCenter);
+
+	// Determine the new body type.
+	int16 oldType = m_type;
+	if (m_invMass == 0.0f && m_invI == 0.0f)
+	{
+		m_type = e_staticType;
+	}
+	else
+	{
+		m_type = e_dynamicType;
+	}
+
+	// If the body type changed, we need to flag contacts for filtering.
+	if (oldType != m_type)
+	{
+		for (b2ContactEdge* ce = m_contactList; ce; ce = ce->next)
+		{
+			ce->contact->FlagForFiltering();
+		}
+	}
 }
 
 // TODO_ERIN adjust linear velocity and torque to account for movement of center.
@@ -247,85 +288,19 @@ void b2Body::SetMassData(const b2MassData* massData)
 		m_invMass = 1.0f / m_mass;
 	}
 
-	m_I = massData->I;
-
-	if (m_I > 0.0f && (m_flags & b2Body::e_fixedRotationFlag) == 0)
+	if (massData->I > 0.0f && (m_flags & b2Body::e_fixedRotationFlag) == 0)
 	{
+		m_I = massData->I - m_mass * b2Dot(massData->center, massData->center);
 		m_invI = 1.0f / m_I;
 	}
 
 	// Move center of mass.
+	b2Vec2 oldCenter = m_sweep.c;
 	m_sweep.localCenter = massData->center;
 	m_sweep.c0 = m_sweep.c = b2Mul(m_xf, m_sweep.localCenter);
 
-	int16 oldType = m_type;
-	if (m_invMass == 0.0f && m_invI == 0.0f)
-	{
-		m_type = e_staticType;
-	}
-	else
-	{
-		m_type = e_dynamicType;
-	}
-
-	// If the body type changed, we need to flag contacts for filtering.
-	if (oldType != m_type)
-	{
-		for (b2ContactEdge* ce = m_contactList; ce; ce = ce->next)
-		{
-			ce->contact->FlagForFiltering();
-		}
-	}
-}
-
-// TODO_ERIN adjust linear velocity and torque to account for movement of center.
-void b2Body::SetMassFromShapes()
-{
-	b2Assert(m_world->IsLocked() == false);
-	if (m_world->IsLocked() == true)
-	{
-		return;
-	}
-
-	// Compute mass data from shapes. Each shape has its own density.
-	m_mass = 0.0f;
-	m_invMass = 0.0f;
-	m_I = 0.0f;
-	m_invI = 0.0f;
-
-	b2Vec2 center = b2Vec2_zero;
-	for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
-	{
-		b2MassData massData;
-		f->ComputeMass(&massData);
-		m_mass += massData.mass;
-		center += massData.mass * massData.center;
-		m_I += massData.I;
-	}
-
-	// Compute center of mass, and shift the origin to the COM.
-	if (m_mass > 0.0f)
-	{
-		m_invMass = 1.0f / m_mass;
-		center *= m_invMass;
-	}
-
-	if (m_I > 0.0f && (m_flags & e_fixedRotationFlag) == 0)
-	{
-		// Center the inertia about the center of mass.
-		m_I -= m_mass * b2Dot(center, center);
-		b2Assert(m_I > 0.0f);
-		m_invI = 1.0f / m_I;
-	}
-	else
-	{
-		m_I = 0.0f;
-		m_invI = 0.0f;
-	}
-
-	// Move center of mass.
-	m_sweep.localCenter = center;
-	m_sweep.c0 = m_sweep.c = b2Mul(m_xf, m_sweep.localCenter);
+	// Update center of mass velocity.
+	m_linearVelocity += b2Cross(m_angularVelocity, m_sweep.c - oldCenter);
 
 	int16 oldType = m_type;
 	if (m_invMass == 0.0f && m_invI == 0.0f)

@@ -44,22 +44,18 @@ public:
 			bd.position.Set(-5.0f, 5.0f);
 			m_bodies[0] = m_world->CreateBody(&bd);
 			m_bodies[0]->CreateFixture(&shape, 5.0f);
-			m_bodies[0]->SetMassFromShapes();
 
 			bd.position.Set(5.0f, 5.0f);
 			m_bodies[1] = m_world->CreateBody(&bd);
 			m_bodies[1]->CreateFixture(&shape, 5.0f);
-			m_bodies[1]->SetMassFromShapes();
 
 			bd.position.Set(5.0f, 15.0f);
 			m_bodies[2] = m_world->CreateBody(&bd);
 			m_bodies[2]->CreateFixture(&shape, 5.0f);
-			m_bodies[2]->SetMassFromShapes();
 
 			bd.position.Set(-5.0f, 15.0f);
 			m_bodies[3] = m_world->CreateBody(&bd);
 			m_bodies[3]->CreateFixture(&shape, 5.0f);
-			m_bodies[3]->SetMassFromShapes();
 
 			b2DistanceJointDef jd;
 			b2Vec2 p1, p2, d;

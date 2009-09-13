@@ -58,7 +58,6 @@ public:
 					bd.position = y;
 					b2Body* body = m_world->CreateBody(&bd);
 					body->CreateFixture(&shape, 5.0f);
-					body->SetMassFromShapes();
 
 					y += deltaY;
 				}

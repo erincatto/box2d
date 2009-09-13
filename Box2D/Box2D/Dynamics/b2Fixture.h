@@ -145,10 +145,9 @@ public:
 	/// @param input the ray-cast input parameters.
 	void RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const;
 
-	/// Compute the mass properties of this shape using its dimensions and density.
-	/// The inertia tensor is computed about the local origin, not the centroid.
-	/// @param massData returns the mass data for this shape.
-	void ComputeMass(b2MassData* massData) const;
+	/// Get the mass data for this fixture. The mass data is based on the density and
+	/// the shape. The rotational inertia is about the shape's origin.
+	const b2MassData& GetMassData() const;
 
 	/// Get the coefficient of friction.
 	float32 GetFriction() const;
@@ -161,13 +160,6 @@ public:
 
 	/// Set the coefficient of restitution.
 	void SetRestitution(float32 restitution);
-
-	/// Get the density.
-	float32 GetDensity() const;
-
-	/// Set the density.
-	/// @warning this does not automatically update the mass of the parent body.
-	void SetDensity(float32 density);
 
 protected:
 
@@ -188,12 +180,13 @@ protected:
 
 	b2AABB m_aabb;
 
+	b2MassData m_massData;
+
 	b2Fixture* m_next;
 	b2Body* m_body;
 
 	b2Shape* m_shape;
 
-	float32 m_density;
 	float32 m_friction;
 	float32 m_restitution;
 
@@ -270,21 +263,6 @@ inline void b2Fixture::SetRestitution(float32 restitution)
 	m_restitution = restitution;
 }
 
-inline float32 b2Fixture::GetDensity() const
-{
-	return m_density;
-}
-
-inline void b2Fixture::SetDensity(float32 density)
-{
-	m_density = density;
-}
-
-inline void b2Fixture::ComputeMass(b2MassData* massData) const
-{
-	m_shape->ComputeMass(massData, m_density);
-}
-
 inline bool b2Fixture::TestPoint(const b2Vec2& p) const
 {
 	return m_shape->TestPoint(m_body->GetTransform(), p);
@@ -293,6 +271,11 @@ inline bool b2Fixture::TestPoint(const b2Vec2& p) const
 inline void b2Fixture::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
 {
 	m_shape->RayCast(output, input, m_body->GetTransform());
+}
+
+inline const b2MassData& b2Fixture::GetMassData() const
+{
+	return m_massData;
 }
 
 #endif
