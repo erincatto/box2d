@@ -44,7 +44,7 @@ public:
 		// Breakable dynamic body
 		{
 			b2BodyDef bd;
-			bd.position.Set(0.0f, 5.0f);
+			bd.position.Set(0.0f, 40.0f);
 			bd.angle = 0.25f * b2_pi;
 			m_body1 = m_world->CreateBody(&bd);
 
@@ -53,8 +53,6 @@ public:
 
 			m_shape2.SetAsBox(0.5f, 0.5f, b2Vec2(0.5f, 0.0f), 0.0f);
 			m_piece2 = m_body1->CreateFixture(&m_shape2, 1.0f);
-
-			m_body1->SetMassFromShapes();
 		}
 
 		m_break = false;
@@ -78,7 +76,7 @@ public:
 			maxImpulse = b2Max(maxImpulse, impulse->normalImpulses[i]);
 		}
 
-		if (maxImpulse > 50.0f)
+		if (maxImpulse > 40.0f)
 		{
 			// Flag the body for breaking.
 			m_break = true;
@@ -93,7 +91,6 @@ public:
 
 		body1->DestroyFixture(m_piece2);
 		m_piece2 = NULL;
-		body1->SetMassFromShapes();
 
 		b2BodyDef bd;
 		bd.position = body1->GetPosition();
@@ -101,7 +98,6 @@ public:
 
 		b2Body* body2 = m_world->CreateBody(&bd);
 		m_piece2 = body2->CreateFixture(&m_shape2, 1.0f);
-		body2->SetMassFromShapes();
 
 		// Compute consistent velocities for new bodies based on
 		// cached velocity.

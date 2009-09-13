@@ -48,7 +48,6 @@ public:
 			bd1.position.Set(-3.0f, 12.0f);
 			b2Body* body1 = m_world->CreateBody(&bd1);
 			body1->CreateFixture(&circle1, 5.0f);
-			body1->SetMassFromShapes();
 
 			b2RevoluteJointDef jd1;
 			jd1.body1 = ground;
@@ -62,7 +61,6 @@ public:
 			bd2.position.Set(0.0f, 12.0f);
 			b2Body* body2 = m_world->CreateBody(&bd2);
 			body2->CreateFixture(&circle2, 5.0f);
-			body2->SetMassFromShapes();
 
 			b2RevoluteJointDef jd2;
 			jd2.Initialize(ground, body2, bd2.position);
@@ -72,7 +70,6 @@ public:
 			bd3.position.Set(2.5f, 12.0f);
 			b2Body* body3 = m_world->CreateBody(&bd3);
 			body3->CreateFixture(&box, 5.0f);
-			body3->SetMassFromShapes();
 
 			b2PrismaticJointDef jd3;
 			jd3.Initialize(ground, body3, bd3.position, b2Vec2(0.0f, 1.0f));

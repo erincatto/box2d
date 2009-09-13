@@ -84,8 +84,8 @@ void b2DistanceJoint::InitVelocityConstraints(const b2TimeStep& step)
 	float32 cr1u = b2Cross(r1, m_u);
 	float32 cr2u = b2Cross(r2, m_u);
 	float32 invMass = b1->m_invMass + b1->m_invI * cr1u * cr1u + b2->m_invMass + b2->m_invI * cr2u * cr2u;
-	b2Assert(invMass > B2_FLT_EPSILON);
-	m_mass = 1.0f / invMass;
+
+	m_mass = invMass != 0.0f ? 1.0f / invMass : 0.0f;
 
 	if (m_frequencyHz > 0.0f)
 	{
@@ -101,10 +101,12 @@ void b2DistanceJoint::InitVelocityConstraints(const b2TimeStep& step)
 		float32 k = m_mass * omega * omega;
 
 		// magic formulas
-		m_gamma = 1.0f / (step.dt * (d + step.dt * k));
+		m_gamma = step.dt * (d + step.dt * k);
+		m_gamma = m_gamma != 0.0f ? 1.0f / m_gamma : 0.0f;
 		m_bias = C * step.dt * k * m_gamma;
 
-		m_mass = 1.0f / (invMass + m_gamma);
+		m_mass = invMass + m_gamma;
+		m_mass = m_mass != 0.0f ? 1.0f / m_mass : 0.0f;
 	}
 
 	if (step.warmStarting)

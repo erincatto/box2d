@@ -122,12 +122,11 @@ Version 2.1.0
 - Fix polytope + prevent rotation bug. DONE
 - Fix polytope ray cast for edges parallel to ray. DONE
 - Allow friction and damping to be modified on the fly. DONE
-- Manual debug draw call.
-- Make solver more cache friendly.
-- Enable TOI joints. Just wipe the impulses.
-- Enable SVN mailing list. DONE : box2d-svn@lists.sourceforge.net
-- Allow joints be attached to static bodies.
+- Manual debug draw call. DONE
+- Enable TOI joints. Just wipe the impulses. DONE
+- Allow joints be attached to static bodies. DONE
 - Better documentation of how to install listeners & filters.
+- Redesigned contact callback. DONE
 
 Version 2.2.0
 - Sensors should generate Boolean events.
@@ -135,6 +134,7 @@ Version 2.2.0
 - Accessors for friction, density, damping.
 - Friction/motor joint for top down games.
 - CMake.
+- Make solver more cache friendly.
 - Kequalized crash. Check for NaN/Inf input.
 - Pairs and proxies use small block allocator?
 - Bounds use growable array?

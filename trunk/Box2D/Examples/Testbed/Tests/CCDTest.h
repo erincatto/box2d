@@ -59,7 +59,6 @@ public:
 			bd.position.Set(0.0f, 20.0f);
 			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&fd);
-			body->SetMassFromShapes();
 			body->SetLinearVelocity(b2Vec2(0.0f, -100.0f));
 			body->SetAngularVelocity(m_angularVelocity);
 		}
@@ -89,7 +88,6 @@ public:
 			bd1.position.Set(0.0f, 20.0f);
 			b2Body* b1 = m_world->Create(&bd1);
 			b1->CreateFixture(&fd);
-			b1->SetMassFromShapes();
 			b1->SetLinearVelocity(b2Vec2(0.0f, -100.0f));
 
 			fd.SetAsBox(1.0f, 0.1f);
@@ -100,7 +98,6 @@ public:
 			bd2.position.Set(0.0f, 20.2f);
 			b2Body* b2 = m_world->Create(&bd2);
 			b2->CreateFixture(&fd);
-			b2->SetMassFromShapes();
 			b2->SetLinearVelocity(b2Vec2(0.0f, -100.0f));
 
 			fd.SetAsBox(0.25f, 0.25f);
@@ -112,7 +109,6 @@ public:
 			bd3.position.Set(0.0f, 100.0f);
 			b2Body* b3 = m_world->Create(&bd3);
 			b3->CreateFixture(&fd);
-			b3->SetMassFromShapes();
 			b3->SetLinearVelocity(b2Vec2(0.0f, -150.0f));
 		}
 #else
@@ -166,7 +162,6 @@ public:
 			body->CreateFixture(&sd_top);
 			body->CreateFixture(&sd_left);
 			body->CreateFixture(&sd_right);
-			body->SetMassFromShapes();
 		}
 #elif 0
 		{
@@ -188,7 +183,6 @@ public:
 			body->CreateFixture(&sd_bottom);
 			body->CreateFixture(&sd_left);
 			body->CreateFixture(&sd_right);
-			body->SetMassFromShapes();
 		}
 #else
 		{
@@ -203,7 +197,6 @@ public:
 			fd.density = 1.0f;
 			fd.restitution = 0.0f;
 			body->CreateFixture(&fd);
-			body->SetMassFromShapes();
 		}
 #endif
 
@@ -220,7 +213,6 @@ public:
 			fd.density = 1.0f;
 			fd.restitution = 0.0f;
 			body->CreateFixture(&fd);
-			body->SetMassFromShapes();
 		}
 #endif
 	}

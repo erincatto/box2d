@@ -53,7 +53,6 @@ public:
 				bd.position.Set(-14.5f + 1.0f * i, 5.0f);
 				b2Body* body = m_world->CreateBody(&bd);
 				body->CreateFixture(&fd);
-				body->SetMassFromShapes();
 
 				b2Vec2 anchor(-15.0f + 1.0f * i, 5.0f);
 				jd.Initialize(prevBody, body, anchor);
@@ -85,7 +84,6 @@ public:
 			bd.position.Set(-8.0f + 8.0f * i, 12.0f);
 			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&fd);
-			body->SetMassFromShapes();
 		}
 
 		for (int32 i = 0; i < 3; ++i)
@@ -101,7 +99,6 @@ public:
 			bd.position.Set(-6.0f + 6.0f * i, 10.0f);
 			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&fd);
-			body->SetMassFromShapes();
 		}
 	}
 

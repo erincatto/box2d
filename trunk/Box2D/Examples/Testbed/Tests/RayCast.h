@@ -149,8 +149,6 @@ public:
 			m_bodies[m_bodyIndex]->CreateFixture(&fd);
 		}
 
-		m_bodies[m_bodyIndex]->SetMassFromShapes();
-
 		m_bodyIndex = (m_bodyIndex + 1) % e_maxBodies;
 	}
 

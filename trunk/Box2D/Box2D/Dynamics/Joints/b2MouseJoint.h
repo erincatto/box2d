@@ -54,6 +54,9 @@ struct b2MouseJointDef : public b2JointDef
 /// specified world point. This a soft constraint with a maximum
 /// force. This allows the constraint to stretch and without
 /// applying huge forces.
+/// NOTE: this joint is not documented in the manual because it was
+/// developed to be used in the testbed. If you want to learn how to
+/// use the mouse joint, look at the testbed.
 class b2MouseJoint : public b2Joint
 {
 public:

@@ -72,7 +72,11 @@ void b2MouseJoint::InitVelocityConstraints(const b2TimeStep& step)
 	// gamma has units of inverse mass.
 	// beta has units of inverse time.
 	b2Assert(d + step.dt * k > B2_FLT_EPSILON);
-	m_gamma = 1.0f / (step.dt * (d + step.dt * k));
+	m_gamma = step.dt * (d + step.dt * k);
+	if (m_gamma != 0.0f)
+	{
+		m_gamma = 1.0f / m_gamma;
+	}
 	m_beta = step.dt * k * m_gamma;
 
 	// Compute the effective mass matrix.

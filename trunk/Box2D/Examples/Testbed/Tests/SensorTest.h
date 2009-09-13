@@ -76,7 +76,6 @@ public:
 				m_bodies[i] = m_world->CreateBody(&bd);
 
 				m_bodies[i]->CreateFixture(&shape, 1.0f);
-				m_bodies[i]->SetMassFromShapes();
 			}
 		}
 	}

@@ -142,8 +142,7 @@ void b2GearJoint::InitVelocityConstraints(const b2TimeStep& step)
 	}
 
 	// Compute effective mass.
-	b2Assert(K > 0.0f);
-	m_mass = 1.0f / K;
+	m_mass = K > 0.0f ? 1.0f / K : 0.0f;
 
 	if (step.warmStarting)
 	{

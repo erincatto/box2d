@@ -43,7 +43,6 @@ public:
 			bd.angle = 0.5f * b2_pi;
 			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&shape, 5.0f);
-			body->SetMassFromShapes();
 
 			b2PrismaticJointDef pjd;
 

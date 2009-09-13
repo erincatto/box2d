@@ -40,9 +40,6 @@ struct b2BodyDef
 	/// This constructor sets the body definition default values.
 	b2BodyDef()
 	{
-		massData.center.SetZero();
-		massData.mass = 0.0f;
-		massData.I = 0.0f;
 		userData = NULL;
 		position.Set(0.0f, 0.0f);
 		angle = 0.0f;
@@ -55,14 +52,6 @@ struct b2BodyDef
 		fixedRotation = false;
 		isBullet = false;
 	}
-
-	/// You can use this to initialized the mass properties of the body.
-	/// If you prefer, you can set the mass properties after the shapes
-	/// have been added using b2Body::SetMassFromShapes.
-	/// By default the mass data is set to zero, meaning the body is seen
-	/// as static. If you intend the body to be dynamic, a small performance
-	/// gain can be had by setting the mass to some positive value.
-	b2MassData massData;
 
 	/// Use this to store application specific body data.
 	void* userData;
@@ -114,6 +103,7 @@ public:
 	/// Creates a fixture and attach it to this body. Use this function if you need
 	/// to set some fixture parameters, like friction. Otherwise you can create the
 	/// fixture directly from a shape.
+	/// This function automatically updates the mass of the body.
 	/// @param def the fixture definition.
 	/// @warning This function is locked during callbacks.
 	b2Fixture* CreateFixture(const b2FixtureDef* def);
@@ -121,6 +111,7 @@ public:
 	/// Creates a fixture from a shape and attach it to this body.
 	/// This is a convenience function. Use b2FixtureDef if you need to set parameters
 	/// like friction, restitution, user data, or filtering.
+	/// This function automatically updates the mass of the body.
 	/// @param shape the shape to be cloned.
 	/// @param density the shape density (set to zero for static bodies).
 	/// @warning This function is locked during callbacks.
@@ -132,18 +123,6 @@ public:
 	/// @param fixture the fixture to be removed.
 	/// @warning This function is locked during callbacks.
 	void DestroyFixture(b2Fixture* fixture);
-
-	/// Set the mass properties. Note that this changes the center of mass position.
-	/// If you are not sure how to compute mass properties, use SetMassFromShapes.
-	/// The inertia tensor is assumed to be relative to the center of mass.
-	/// You can make the body static by using a zero mass.
-	/// @param massData the mass properties.
-	void SetMassData(const b2MassData* data);
-
-	/// Compute the mass properties from the attached fixture. You typically call this
-	/// after adding all the fixtures. If you add or remove fixtures later, you may want
-	/// to call this again. Note that this changes the center of mass position.
-	void SetMassFromShapes();
 
 	/// Set the position of the body's origin and rotation.
 	/// This breaks any contacts and wakes the other bodies.
@@ -213,9 +192,23 @@ public:
 	/// @return the rotational inertia, usually in kg-m^2.
 	float32 GetInertia() const;
 
-	/// Get the mass data of the body.
+	/// Get the mass data of the body. The rotational inertia is relative
+	/// to the center of mass.
 	/// @return a struct containing the mass, inertia and center of the body.
-	b2MassData GetMassData() const;
+	void GetMassData(b2MassData* data) const;
+
+	/// Set the mass properties to override the mass properties of the fixtures.
+	/// Note that this changes the center of mass position. You can make the body
+	/// static by using zero mass.
+	/// Note that creating or destroying fixtures can also alter the mass.
+	/// @warning The supplied rotational inertia is assumed to be relative to the center of mass.
+	/// @param massData the mass properties.
+	void SetMassData(const b2MassData* data);
+
+	/// This resets the mass properties to the sum of the mass properties of the fixtures.
+	/// This normally does not need to be called unless you called SetMassData to override
+	/// the mass and you later want to reset the mass.
+	void ResetMass();
 
 	/// Get the world coordinates of a point given the local coordinates.
 	/// @param localPoint a point on the body measured relative the the body's origin.
@@ -451,13 +444,11 @@ inline float32 b2Body::GetInertia() const
 	return m_I;
 }
 
-inline b2MassData b2Body::GetMassData() const
+inline void b2Body::GetMassData(b2MassData* data) const
 {
-	b2MassData massData;
-	massData.mass = m_mass;
-	massData.I = m_I;
-	massData.center = m_sweep.localCenter;
-	return massData;
+	data->mass = m_mass;
+	data->I = m_I;
+	data->center = m_sweep.localCenter;
 }
 
 inline b2Vec2 b2Body::GetWorldPoint(const b2Vec2& localPoint) const
