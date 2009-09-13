@@ -110,7 +110,6 @@ public:
 
 				fd.friction = friction[i];
 				body->CreateFixture(&fd);
-				body->SetMassFromShapes();
 			}
 		}
 	}

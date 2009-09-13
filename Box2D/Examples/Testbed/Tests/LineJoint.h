@@ -43,7 +43,6 @@ public:
 			bd.position.Set(0.0f, 7.0f);
 			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&shape, 1.0f);
-			body->SetMassFromShapes();
 
 			b2LineJointDef jd;
 			b2Vec2 axis(2.0f, 1.0f);

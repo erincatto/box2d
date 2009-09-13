@@ -243,7 +243,6 @@ void Test::LaunchBomb(const b2Vec2& position, const b2Vec2& velocity)
 	}
 
 	b2BodyDef bd;
-	bd.massData.mass = 1.0;
 	bd.allowSleep = true;
 	bd.position = position;
 	
@@ -267,7 +266,6 @@ void Test::LaunchBomb(const b2Vec2& position, const b2Vec2& velocity)
 	aabb.upperBound = maxV;
 
 	m_bomb->CreateFixture(&fd);
-	m_bomb->SetMassFromShapes();
 }
 
 void Test::Step(Settings* settings)

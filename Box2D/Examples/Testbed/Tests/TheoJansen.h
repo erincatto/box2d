@@ -88,9 +88,6 @@ public:
 		body1->CreateFixture(&fd1);
 		body2->CreateFixture(&fd2);
 
-		body1->SetMassFromShapes();
-		body2->SetMassFromShapes();
-
 		b2DistanceJointDef djd;
 
 		// Using a soft distance constraint can reduce some jitter.
@@ -151,7 +148,6 @@ public:
 
 			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&shape, 1.0f);
-			body->SetMassFromShapes();
 		}
 
 		// Chassis
@@ -167,7 +163,6 @@ public:
 			bd.position = pivot + m_offset;
 			m_chassis = m_world->CreateBody(&bd);
 			m_chassis->CreateFixture(&sd);
-			m_chassis->SetMassFromShapes();
 		}
 
 		{
@@ -182,7 +177,6 @@ public:
 			bd.position = pivot + m_offset;
 			m_wheel = m_world->CreateBody(&bd);
 			m_wheel->CreateFixture(&sd);
-			m_wheel->SetMassFromShapes();
 		}
 
 		{
