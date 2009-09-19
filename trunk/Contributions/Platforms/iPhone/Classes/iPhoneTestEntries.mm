@@ -17,40 +17,31 @@
 */
 
 #include "iPhoneTest.h"
-#include "GLES-Render.h"
+//#include "GLES-Render.h"
 
 #include "ApplyForce.h"
-#include "BipedTest.h"
-#include "BreakableBody.h"
 #include "Bridge.h"
-//#include "BroadPhaseTest.h"
-#include "Buoyancy.h"
-#include "Car.h"
 #include "CCDTest.h"
 #include "Chain.h"
-#include "ContactCallbackTest.h"
 #include "CollisionFiltering.h"
 #include "CollisionProcessing.h"
 #include "CompoundShapes.h"
 //#include "DistanceTest.h"
 #include "Dominos.h"
-#include "DynamicEdges.h"
-#include "ElasticBody.h"
+#include "DynamicTreeTest.h"
 #include "Gears.h"
 #include "LineJoint.h"
+#include "OneSidedPlatform.h"
 #include "PolyCollision.h"
 #include "PolyShapes.h"
 #include "Prismatic.h"
 #include "Pulleys.h"
 #include "Pyramid.h"
-#include "PyramidStaticEdges.h"
-#include "RaycastTest.h"
 #include "Revolute.h"
 #include "SensorTest.h"
 #include "ShapeEditing.h"
 #include "SliderCrank.h"
 #include "SphereStack.h"
-#include "StaticEdges.h"
 #include "TheoJansen.h"
 #include "TimeOfImpact.h"
 #include "VaryingFriction.h"
@@ -58,46 +49,37 @@
 #include "VerticalStack.h"
 #include "Web.h"
 
-
 TestEntry g_testEntries[] =
 {
-	{"Static Edges", StaticEdges::Create},
-	{"Pyramid And Static Edges", PyramidStaticEdges::Create},
-	{"Dynamic Edges", DynamicEdges::Create},
-	{"Line Joint", LineJoint::Create},
-	{"SphereStack", SphereStack::Create},
-	{"Pyramid", Pyramid::Create},
-	{"Prismatic", Prismatic::Create},
-	{"Revolute", Revolute::Create},
-	{"Bridge", Bridge::Create},
-	{"Sensor Test", SensorTest::Create},
-	{"Breakable Body", BreakableBody::Create},
-	{"Vertical Stack", VerticalStack::Create},
-	{"Polygon Shapes", PolyShapes::Create},
-	{"Theo Jansen's Walker", TheoJansen::Create},
-	{"Contact Callback Test", ContactCB::Create},
-	{"Web", Web::Create},
-	{"Varying Friction", VaryingFriction::Create},
-	{"Varying Restitution", VaryingRestitution::Create},
-	{"Dominos", Dominos::Create},
-	{"CCD Test", CCDTest::Create},
-	{"Biped Test", BipedTest::Create},
-	{"Car", Car::Create},
-	{"Gears", Gears::Create},
-	{"Slider Crank", SliderCrank::Create},
-	{"Compound Shapes", CompoundShapes::Create},
-	{"Chain", Chain::Create},
-	{"Collision Processing", CollisionProcessing::Create},
-	{"Collision Filtering", CollisionFiltering::Create},
-	{"Apply Force", ApplyForce::Create},
-	{"Pulleys", Pulleys::Create},
-	{"Shape Editing", ShapeEditing::Create},
-	{"Time of Impact", TimeOfImpact::Create},
-//	{"Distance Test", DistanceTest::Create},
-//	{"Broad Phase", BroadPhaseTest::Create},
-	{"PolyCollision", PolyCollision::Create},
-	{"Elastic Body", ElasticBody::Create},
-	{"Raycast Test", RaycastTest::Create},
-	{"Buoyancy", Buoyancy::Create},
-	{NULL, NULL}
+{"Pyramid", Pyramid::Create},
+{"One-Sided Platform", OneSidedPlatform::Create},
+{"Apply Force", ApplyForce::Create},
+{"Bridge", Bridge::Create},
+{"CCD Test", CCDTest::Create},
+{"Chain", Chain::Create},
+{"Collision Filtering", CollisionFiltering::Create},
+{"Collision Processing", CollisionProcessing::Create},
+{"Compound Shapes", CompoundShapes::Create},
+//{"Distance Test", DistanceTest::Create},
+{"Dominos", Dominos::Create},
+{"Dynamic Tree", DynamicTreeTest::Create},
+{"Gears", Gears::Create},
+{"Line Joint", LineJoint::Create},
+{"PolyCollision", PolyCollision::Create},
+{"Polygon Shapes", PolyShapes::Create},
+{"Prismatic", Prismatic::Create},
+{"Pulleys", Pulleys::Create},
+{"Revolute", Revolute::Create},
+{"Sensor Test", SensorTest::Create},
+{"Shape Editing", ShapeEditing::Create},
+{"Slider Crank", SliderCrank::Create},
+{"SphereStack", SphereStack::Create},
+{"Theo Jansen's Walker", TheoJansen::Create},
+{"Time of Impact", TimeOfImpact::Create},
+{"Varying Friction", VaryingFriction::Create},
+{"Varying Restitution", VaryingRestitution::Create},
+{"Vertical Stack", VerticalStack::Create},
+{"Web", Web::Create},
+{NULL, NULL}
 };
+
