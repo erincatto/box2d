@@ -689,7 +689,7 @@ void b2World::SolveTOI(const b2TimeStep& step)
 				// Does the TOI island still have space for contacts?
 				if (island.m_contactCount == island.m_contactCapacity)
 				{
-					continue;
+					break;
 				}
 
 				// Has this contact already been added to an island?
