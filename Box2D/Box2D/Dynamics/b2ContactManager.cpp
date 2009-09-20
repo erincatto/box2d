@@ -198,7 +198,7 @@ void b2ContactManager::AddPair(void* proxyUserDataA, void* proxyUserDataB)
 	}
 
 	// Does a contact already exist?
-	b2ContactEdge* edge = bodyB->GetConactList();
+	b2ContactEdge* edge = bodyB->GetContactList();
 	while (edge)
 	{
 		if (edge->other == bodyA)

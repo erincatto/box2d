@@ -227,7 +227,7 @@ b2Joint* b2World::CreateJoint(const b2JointDef* def)
 			b2Swap(bodyA, bodyB);
 		}
 
-		b2ContactEdge* edge = bodyB->GetConactList();
+		b2ContactEdge* edge = bodyB->GetContactList();
 		while (edge)
 		{
 			if (edge->other == bodyA)
@@ -326,7 +326,7 @@ void b2World::DestroyJoint(b2Joint* j)
 	// If the joint prevents collisions, then flag any contacts for filtering.
 	if (collideConnected == false)
 	{
-		b2ContactEdge* edge = bodyB->GetConactList();
+		b2ContactEdge* edge = bodyB->GetContactList();
 		while (edge)
 		{
 			if (edge->other == bodyA)
