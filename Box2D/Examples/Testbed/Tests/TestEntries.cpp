@@ -55,6 +55,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Bridge", Bridge::Create},
 	{"Breakable", Breakable::Create},
 	{"Varying Restitution", VaryingRestitution::Create},
 	{"Ray-Cast", RayCast::Create},
@@ -62,7 +63,6 @@ TestEntry g_testEntries[] =
 	{"PolyCollision", PolyCollision::Create},
 	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Apply Force", ApplyForce::Create},
-	{"Bridge", Bridge::Create},
 	{"CCD Test", CCDTest::Create},
 	{"Chain", Chain::Create},
 	{"Collision Filtering", CollisionFiltering::Create},

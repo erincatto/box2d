@@ -22,6 +22,12 @@
 class Bridge : public Test
 {
 public:
+
+	enum
+	{
+		e_count = 30,
+	};
+
 	Bridge()
 	{
 		b2Body* ground = NULL;
@@ -44,10 +50,9 @@ public:
 			fd.friction = 0.2f;
 
 			b2RevoluteJointDef jd;
-			const int32 numPlanks = 30;
 
 			b2Body* prevBody = ground;
-			for (int32 i = 0; i < numPlanks; ++i)
+			for (int32 i = 0; i < e_count; ++i)
 			{
 				b2BodyDef bd;
 				bd.position.Set(-14.5f + 1.0f * i, 5.0f);
@@ -58,10 +63,14 @@ public:
 				jd.Initialize(prevBody, body, anchor);
 				m_world->CreateJoint(&jd);
 
+				if (i == (e_count >> 1))
+				{
+					m_middle = body;
+				}
 				prevBody = body;
 			}
 
-			b2Vec2 anchor(-15.0f + 1.0f * numPlanks, 5.0f);
+			b2Vec2 anchor(-15.0f + 1.0f * e_count, 5.0f);
 			jd.Initialize(prevBody, ground, anchor);
 			m_world->CreateJoint(&jd);
 		}
@@ -102,10 +111,35 @@ public:
 		}
 	}
 
+	void Keyboard(unsigned char key)
+	{
+		switch (key)
+		{
+		case 's':
+			{
+				b2MassData data;
+				data.center.SetZero();
+				data.I = 0.0f;
+				data.mass = 0.0f;
+				m_middle->SetMassData(&data);
+			}
+			break;
+		}
+	}
+
+	void Step(Settings* settings)
+	{
+		Test::Step(settings);
+		m_debugDraw.DrawString(5, m_textLine, "Press (s) to make a body static");
+		m_textLine += 15;
+	}
+
 	static Test* Create()
 	{
 		return new Bridge;
 	}
+
+	b2Body* m_middle;
 };
 
 #endif
