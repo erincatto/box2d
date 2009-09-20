@@ -90,12 +90,12 @@ void b2BroadPhase::UnBufferMove(int32 proxyId)
 }
 
 // This is called from b2DynamicTree::Query when we are gathering pairs.
-void b2BroadPhase::QueryCallback(int32 proxyId)
+bool b2BroadPhase::QueryCallback(int32 proxyId)
 {
 	// A proxy cannot form a pair with itself.
 	if (proxyId == m_queryProxyId)
 	{
-		return;
+		return true;
 	}
 
 	// Grow the pair buffer as needed.
@@ -111,4 +111,6 @@ void b2BroadPhase::QueryCallback(int32 proxyId)
 	m_pairBuffer[m_pairCount].proxyIdA = b2Min(proxyId, m_queryProxyId);
 	m_pairBuffer[m_pairCount].proxyIdB = b2Max(proxyId, m_queryProxyId);
 	++m_pairCount;
+
+	return true;
 }
