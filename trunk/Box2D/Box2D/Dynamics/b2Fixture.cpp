@@ -128,7 +128,7 @@ void b2Fixture::SetFilterData(const b2Filter& filter)
 	}
 
 	// Flag associated contacts for filtering.
-	b2ContactEdge* edge = m_body->GetConactList();
+	b2ContactEdge* edge = m_body->GetContactList();
 	while (edge)
 	{
 		b2Contact* contact = edge->contact;
@@ -156,7 +156,7 @@ void b2Fixture::SetSensor(bool sensor)
 	}
 
 	// Flag associated contacts for filtering.
-	b2ContactEdge* edge = m_body->GetConactList();
+	b2ContactEdge* edge = m_body->GetContactList();
 	while (edge)
 	{
 		b2Contact* contact = edge->contact;

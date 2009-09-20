@@ -292,7 +292,7 @@ public:
 	/// Get the list of all contacts attached to this body.
 	/// @warning this list changes during the time step and you may
 	/// miss some collisions if you don't use b2ContactListener.
-	b2ContactEdge* GetConactList();
+	b2ContactEdge* GetContactList();
 
 	/// Get the next body in the world's body list.
 	b2Body* GetNext();
@@ -582,7 +582,7 @@ inline b2JointEdge* b2Body::GetJointList()
 	return m_jointList;
 }
 
-inline 	b2ContactEdge* b2Body::GetConactList()
+inline 	b2ContactEdge* b2Body::GetContactList()
 {
 	return m_contactList;
 }
