@@ -98,7 +98,7 @@ private:
 	void BufferMove(int32 proxyId);
 	void UnBufferMove(int32 proxyId);
 
-	void QueryCallback(int32 proxyId);
+	bool QueryCallback(int32 proxyId);
 
 	b2DynamicTree m_tree;
 
