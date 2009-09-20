@@ -151,10 +151,11 @@ public:
 		}
 	}
 
-	void QueryCallback(int32 proxyId)
+	bool QueryCallback(int32 proxyId)
 	{
 		Actor* actor = (Actor*)m_tree.GetUserData(proxyId);
 		actor->overlap = b2TestOverlap(m_queryAABB, actor->aabb);
+		return true;
 	}
 
 	float32 RayCastCallback(const b2RayCastInput& input, int32 proxyId)

@@ -881,10 +881,10 @@ void b2World::Step(float32 dt, int32 velocityIterations, int32 positionIteration
 
 struct b2WorldQueryWrapper
 {
-	void QueryCallback(int32 proxyId)
+	bool QueryCallback(int32 proxyId)
 	{
 		b2Fixture* fixture = (b2Fixture*)broadPhase->GetUserData(proxyId);
-		callback->ReportFixture(fixture);
+		return callback->ReportFixture(fixture);
 	}
 
 	b2BroadPhase* broadPhase;
