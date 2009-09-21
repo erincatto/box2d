@@ -29,6 +29,7 @@
 #include "CollisionFiltering.h"
 #include "CollisionProcessing.h"
 #include "CompoundShapes.h"
+#include "Confined.h"
 #include "DistanceTest.h"
 #include "Dominos.h"
 #include "DynamicTreeTest.h"
@@ -55,6 +56,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Confined", Confined::Create},
 	{"Bridge", Bridge::Create},
 	{"Breakable", Breakable::Create},
 	{"Varying Restitution", VaryingRestitution::Create},
