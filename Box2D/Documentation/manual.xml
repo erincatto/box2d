@@ -26,6 +26,11 @@
   </sect1>
   
   <sect1>
+    <title>About this Manual</title>
+    <para>This manual covers the majority of the Box2D API. However, not every aspect is covered. You are encouraged to look at the testbed included with Box2D to learn more. Also, the Box2D code base has comments formatted for Doxygen, so it is easy to create a hyper-linked API document.</para>
+  </sect1>
+  
+  <sect1>
     <title>Core Concepts</title>
     <para>Box2D works with several fundamental objects. We briefly define these objects here and more details are given later in this document.</para>
     <glosslist>
@@ -38,26 +43,31 @@
       <glossentry>
         <glossterm>shape</glossterm>
         <glossdef>
-          <para>A 2D piece of collision geometry that is rigidly attached to a body. Shapes have
-          material properties of friction and restitution.</para>
+          <para>A 2D geometrical object, such as a circle or polygon.</para>
+        </glossdef>
+      </glossentry>
+      <glossentry>
+        <glossterm>fixture</glossterm>
+        <glossdef>
+          <para>A fixture binds a shape to a body and adds material properties such as density, friction, and restitution.</para>
         </glossdef>
       </glossentry>
       <glossentry>
         <glossterm>constraint</glossterm>
         <glossdef>
-          <para>A constraint is a physical connection that removes degrees of freedom from bodies. In 2D a body has 3 degrees of freedom. If we take a body and pin it to the wall (like a pendulum) we have <emphasis>constrained</emphasis> the body to the wall. At this point the body can only rotate about the pin, so the constraint has removed 2 degrees of freedom.</para>
+          <para>A constraint is a physical connection that removes degrees of freedom from bodies. In 2D a body has 3 degrees of freedom (two translation coordinates and one rotation coordinate). If we take a body and pin it to the wall (like a pendulum) we have <emphasis>constrained</emphasis> the body to the wall. At this point the body can only rotate about the pin, so the constraint has removed 2 degrees of freedom.</para>
         </glossdef>
       </glossentry>
       <glossentry>
         <glossterm>contact constraint</glossterm>
         <glossdef>
-          <para>A special constraint designed to prevent penetration of rigid bodies and to simulate friction and restitution. You will never create a contact constraint, they are created automatically by Box2D.</para>
+          <para>A special constraint designed to prevent penetration of rigid bodies and to simulate friction and restitution. You do not create a contact constraints, they are created automatically by Box2D.</para>
         </glossdef>
       </glossentry>
       <glossentry>
         <glossterm>joint</glossterm>
         <glossdef>
-          <para>This is a contraint used to hold two or more bodies together. Box2D supports these joint types: revolute, prismatic, distance, and more. Joints may support <emphasis>limits</emphasis> and <emphasis>motors</emphasis>.</para>
+          <para>This is a contraint used to hold two or more bodies together. Box2D supports several joint types: revolute, prismatic, distance, and more. Some joints may have <emphasis>limits</emphasis> and <emphasis>motors</emphasis>.</para>
         </glossdef>
       </glossentry>
       <glossentry>
@@ -84,28 +94,20 @@
   
 <chapter>
     <title>Hello Box2D</title>
-    <para>In the distribution of Box2D is a <emphasis>Hello World</emphasis> project. The program creates a large ground box and a small dynamic box. This code does not contain any graphics, so prepare to be underwelmed. :)</para>
+    <para>In the distribution of Box2D is a <emphasis>Hello World</emphasis> project. The program creates a large ground box and a small dynamic box. This code does not contain any graphics, so prepare to be underwelmed. All you will see is text output in the console of the box's position over time.</para>
+    <para>This is a good example of how to get up and running with Box2D, more than the testbed.</para>
 
     <sect1>
       <title>Creating a World</title>
-      <para>Every Box2D program begins with the creation of a world object. This is the physics hub that manages memory, objects, and simulation.</para>
-      <para>To create a world object, first we need to define a bounding box for the world. Box2D uses the bounding box to accelerate collision detection. The size isn&apos;t critical, but a better fit will improve performance. It is better to make the box too big than to make it too small.</para>
-      <programlisting>
-b2AABB worldAABB;
-worldAABB.lowerBound.Set(-100.0f, -100.0f);
-worldAABB.upperBound.Set(100.0f, 100.0f);
-</programlisting>
-      <caution>
-        <para>The <emphasis>world AABB</emphasis> should always be bigger then the region where your bodies are located. It is better to make the world AABB too big than too small. If a body reaches the boundary of the world AABB it will be frozen and will stop simulating.</para>
-      </caution>
-      <para>Next we define the gravity vector. Yes, you can make gravity go sideways (or you could just rotate your monitor). Also we tell the world to allow bodies to sleep when they come to rest. A sleeping body doesn&apos;t require any simulation.</para>
+      <para>Every Box2D program begins with the creation of a world object. This is the physics hub that manages memory, objects, and simulation. You can allocate the physics world on the stack, heap, or data section. The decision is up to you.</para>
+      <para>It is easy to create a Box2D world. First, we define the gravity vector. Yes, you can make gravity go sideways (or you could just rotate your monitor). Also we tell the world to allow bodies to sleep when they come to rest. A sleeping body doesn&apos;t require any simulation.</para>
       <programlisting>
 b2Vec2 gravity(0.0f, -10.0f);
 bool doSleep = true;
 </programlisting>
-      <para>Now we create the world object. Normally you would create the world on the heap and store the pointer in one of your game structures. However, creating the world on the stack works fine in this example.</para>
+      <para>Now we create the world object. Note that we are creating the world on the stack, so the world must remain in scope.</para>
       <programlisting>
-b2World world(worldAABB, gravity, doSleep);
+b2World world(gravity, doSleep);
 </programlisting>
       <para>So now we have our physics world, let&apos;s start adding some stuff to it.</para>
     </sect1>
@@ -121,13 +123,10 @@ b2World world(worldAABB, gravity, doSleep);
           <para> Use the world object to create the body.</para>
         </listitem>
         <listitem>
-          <para> Define shapes with geometry, friction, density, etc.</para>
+          <para> Define fixtures with geometry, friction, density, etc.</para>
         </listitem>
         <listitem>
-          <para> Create shapes on the body.</para>
-        </listitem>
-        <listitem>
-          <para> Optionally adjust the body&apos;s mass to match the attached shapes.</para>
+          <para> Create fixtures on the body.</para>
         </listitem>
       </orderedlist>
       <para>For step 1 we create the ground body. For this we need a <emphasis>body definition</emphasis>. With the body definition we specify the initial position of the ground body.</para>
@@ -139,17 +138,17 @@ groundBodyDef.position.Set(0.0f, -10.0f);
       <programlisting>
 b2Body* groundBody = world.CreateBody(&amp;groundBodyDef);
 </programlisting>
-      <para>For step 3 we create a ground polygon definition. We use the <literal>SetAsBox</literal> shortcut to form the ground polygon into a box shape, with the box centered on the origin of the parent body.</para>
+      <para>For step 3 we create a ground polygon. We use the <literal>SetAsBox</literal> shortcut to form the ground polygon into a box shape, with the box centered on the origin of the parent body.</para>
       <programlisting>
-b2PolygonDef groundShapeDef;
-groundShapeDef.SetAsBox(50.0f, 10.0f);
+b2PolygonShape groundBox;
+groundBox.SetAsBox(50.0f, 10.0f);
 </programlisting>
-      <para>The <function>SetAsBox</function> function takes the half-width and half-height. So in this case the ground box is 100 units wide (x-axis) and 20 units tall (y-axis). Box2D is tuned for meters, kilograms, and seconds. So you can consider the extents to be in meters. However, it is possible to change unit systems, as discussed later in this document</para>
-      <para>We finish the ground body in step 4 by creating the ground polygon shape on the ground body.</para>
+      <para>The <function>SetAsBox</function> function takes the half-width and half-height. So in this case the ground box is 100 units wide (x-axis) and 20 units tall (y-axis). Box2D is tuned for meters, kilograms, and seconds. So you can consider the extents to be in meters. Box2D generally works best when objects are the size of typical real world objects. For example, a barrel is about 1 meter tall. Using Box2D to model the movement of glaciers or dust particles is not a good idea.</para>
+      <para>We finish the ground body in step 4 by creating the shape fixture. For this step we have a shortcut. We do not have a need to alter the default fixture material properties, so can feed the shape directly to the body without creating a fixture definition. Later we will see how to use a fixture definition for customized material properties.</para>
       <programlisting>
-groundBody-&gt;CreateShape(&amp;groundShapeDef);
+groundBody-&gt;CreateFixture(&amp;groundBox);
 </programlisting>
-      <para>Again, Box2D does not keep a reference to the shape or body definitions. It copies the data into the <classname>b2Body</classname> structure.</para>
+      <para>Box2D does not keep a reference to the shape. It copies the data into the <classname>b2Body</classname> structure.</para>
       <para>Note that every shape must have a parent body, even shapes that are static. However, you can attach all static shapes to a single static body. This need for static bodies is done to make the Box2D code more uniform internally, reducing the number of potential bugs.</para>
       <para>You might notice a pattern here. Most Box2D types are prefixed with <literal>b2</literal>. This is done to reduce the chance for naming conflicts with your code.</para>
     </sect1>
@@ -162,14 +161,21 @@ b2BodyDef bodyDef;
 bodyDef.position.Set(0.0f, 4.0f);
 b2Body* body = world.CreateBody(&amp;bodyDef);
 </programlisting>
-      <para>Next we create and attach a polygon shape. Notice that we set density to 1. The default density is zero. Also, the friction on the shape is set to 0.3. Once the shape is attached, we instruct the body to compute it&apos;s mass properties from the attached shapes using the method <function>SetMassFromShapes</function>. This gives you a hint that you can attach more than one shape per body. If the computed mass is zero, then the body becomes truly static. Bodies have a mass of zero by default, that&apos;s why we didn&apos;t need to call <function>SetMassFromShapes</function> for the ground body.</para>
-      <programlisting>
-b2PolygonDef shapeDef;
-shapeDef.SetAsBox(1.0f, 1.0f);
-shapeDef.density = 1.0f;
-shapeDef.friction = 0.3f;
-body-&gt;CreateShape(&amp;shapeDef);
-body-&gt;SetMassFromShapes();
+      <para>Next we create and attach a polygon shape using a fixture definition. Notice that we set density to 1. The default density is zero. Also, the friction on the shape is set to 0.3. First we create a box shape:</para>
+<programlisting>
+	b2PolygonShape dynamicBox;
+	dynamicBox.SetAsBox(1.0f, 1.0f);
+</programlisting>
+    <para>Next we create a fixture definition using the box:</para>
+<programlisting>
+	b2FixtureDef fixtureDef;
+	fixtureDef.shape = &dynamicBox;
+	fixtureDef.density = 1.0f;
+	fixtureDef.friction = 0.3f;
+</programlisting>
+    <para>Using the fixture definition we can now create the fixture. This automatically updates the mass of the body.</para>
+<programlisting>
+body-&gt;CreateFixture(&amp;fixtureDef);
 </programlisting>
       <para>That&apos;s it for initialization. We are now ready to begin simulating.</para>
     </sect1>
