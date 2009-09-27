@@ -54,13 +54,8 @@ int main(int argc, char** argv)
 	// The extents are the half-widths of the box.
 	groundBox.SetAsBox(50.0f, 10.0f);
 
-	// Define the ground fixture. This binds a shape (geometry) to a
-	// body (dynamics).
-	b2FixtureDef groundFixtureDef;
-	groundFixtureDef.shape = &groundBox;
-
 	// Add the ground fixture to the ground body.
-	groundBody->CreateFixture(&groundFixtureDef);
+	groundBody->CreateFixture(&groundBox);
 
 	// Define the dynamic body. We set its position and call the body factory.
 	b2BodyDef bodyDef;

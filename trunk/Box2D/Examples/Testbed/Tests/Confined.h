@@ -25,8 +25,8 @@ public:
 
 	enum
 	{
-		e_columnCount = 15,
-		e_rowCount = 20
+		e_columnCount = 0,
+		e_rowCount = 0
 	};
 
 	Confined()
@@ -38,7 +38,7 @@ public:
 			b2PolygonShape shape;
 
 			// Floor
-			shape.SetAsEdge(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
+			shape.SetAsEdge(b2Vec2(-10.0f, 0.0f), b2Vec2(10.0f, 0.0f));
 			ground->CreateFixture(&shape);
 
 			// Left wall
@@ -48,12 +48,21 @@ public:
 			// Right wall
 			shape.SetAsEdge(b2Vec2(10.0f, 0.0f), b2Vec2(10.0f, 20.0f));
 			ground->CreateFixture(&shape);
+
+			// Roof
+			shape.SetAsEdge(b2Vec2(-10.0f, 20.0f), b2Vec2(10.0f, 20.0f));
+			ground->CreateFixture(&shape);
 		}
 
 		float32 radius = 0.5f;
 		b2CircleShape shape;
 		shape.m_p.SetZero();
 		shape.m_radius = radius;
+
+		b2FixtureDef fd;
+		fd.shape = &shape;
+		fd.density = 1.0f;
+		fd.friction = 0.1f;
 
 		for (int32 j = 0; j < e_columnCount; ++j)
 		{
@@ -63,10 +72,50 @@ public:
 				bd.position.Set(-10.0f + (2.1f * j + 1.0f + 0.01f * i) * radius, (2.0f * i + 1.0f) * radius);
 				b2Body* body = m_world->CreateBody(&bd);
 
-				body->CreateFixture(&shape, 1.0f);
+				body->CreateFixture(&fd);
 			}
 		}
+
+		m_world->SetGravity(b2Vec2(0.0f, 0.0f));
 	}
+
+	void CreateCircle()
+	{
+		float32 radius = 0.5f;
+		b2CircleShape shape;
+		shape.m_p.SetZero();
+		shape.m_radius = radius;
+
+		b2FixtureDef fd;
+		fd.shape = &shape;
+		fd.density = 1.0f;
+		fd.friction = 0.0f;
+
+		b2BodyDef bd;
+		bd.position.Set(RandomFloat(), (2.0f + RandomFloat()) * radius);
+		b2Body* body = m_world->CreateBody(&bd);
+
+		body->CreateFixture(&fd);
+	}
+
+	void Keyboard(unsigned char key)
+	{
+		switch (key)
+		{
+		case 'c':
+			CreateCircle();
+			break;
+		}
+	}
+
+	void Step(Settings* settings)
+	{
+		Test::Step(settings);
+		m_debugDraw.DrawString(5, m_textLine, "Press 'c' to create a circle.");
+		m_textLine += 15;
+	}
+
+
 	static Test* Create()
 	{
 		return new Confined;
