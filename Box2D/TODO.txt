@@ -125,19 +125,14 @@ Version 2.1.0
 - Manual debug draw call. DONE
 - Enable TOI joints. Just wipe the impulses. DONE
 - Allow joints be attached to static bodies. DONE
-- Better documentation of how to install listeners & filters.
 - Redesigned contact callback. DONE
+- Better documentation of how to install listeners & filters.
 
 Version 2.2.0
 - Sensors should generate Boolean events.
-- Merge add/persist/remove with results.
-- Accessors for friction, density, damping.
 - Friction/motor joint for top down games.
 - CMake.
 - Make solver more cache friendly.
-- Kequalized crash. Check for NaN/Inf input.
-- Pairs and proxies use small block allocator?
-- Bounds use growable array?
 - Don't sleep until position error is low?
 - Handle orphaned gear joint.
 - Rolling resistance for circles.
