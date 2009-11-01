@@ -164,8 +164,10 @@ void b2Fixture::SetSensor(bool sensor)
 		b2Fixture* fixtureB = contact->GetFixtureB();
 		if (fixtureA == this || fixtureB == this)
 		{
-			contact->SetAsSensor(m_isSensor);
+			contact->SetAsSensor(fixtureA->IsSensor()||fixtureB->IsSensor());
 		}
+
+		edge = edge->next;
 	}
 }
 
