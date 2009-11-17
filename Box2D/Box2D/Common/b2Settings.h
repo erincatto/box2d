@@ -33,9 +33,9 @@ typedef unsigned short uint16;
 typedef unsigned int uint32;
 typedef float float32;
 
-#define	B2_FLT_MAX	FLT_MAX
-#define	B2_FLT_EPSILON	FLT_EPSILON
-#define b2_pi						3.14159265359f
+#define	b2_maxFloat		FLT_MAX
+#define	b2_epsilon		FLT_EPSILON
+#define b2_pi			3.14159265359f
 
 /// @file
 /// Global tuning constants based on meters-kilograms-seconds (MKS) units.
@@ -44,10 +44,10 @@ typedef float float32;
 // Collision
 
 /// The maximum number of contact points between two convex shapes.
-#define b2_maxManifoldPoints		2
+#define b2_maxManifoldPoints	2
 
 /// The maximum number of vertices on a convex polygon.
-#define b2_maxPolygonVertices		8
+#define b2_maxPolygonVertices	8
 
 /// This is used to fatten AABBs in the dynamic tree. This allows proxies
 /// to move by a small amount without triggering a tree adjustment.
@@ -61,16 +61,16 @@ typedef float float32;
 
 /// A small length used as a collision and constraint tolerance. Usually it is
 /// chosen to be numerically significant, but visually insignificant.
-#define b2_linearSlop				0.005f
+#define b2_linearSlop			0.005f
 
 /// A small angle used as a collision and constraint tolerance. Usually it is
 /// chosen to be numerically significant, but visually insignificant.
-#define b2_angularSlop				(2.0f / 180.0f * b2_pi)
+#define b2_angularSlop			(2.0f / 180.0f * b2_pi)
 
 /// The radius of the polygon/edge shape skin. This should not be modified. Making
 /// this smaller means polygons will have and insufficient for continuous collision.
 /// Making it larger may create artifacts for vertex collision.
-#define b2_polygonRadius			(2.0f * b2_linearSlop)
+#define b2_polygonRadius		(2.0f * b2_linearSlop)
 
 
 // Dynamics

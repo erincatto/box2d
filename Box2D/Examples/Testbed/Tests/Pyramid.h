@@ -55,6 +55,7 @@ public:
 				for (int32 j = i; j < e_count; ++j)
 				{
 					b2BodyDef bd;
+					bd.type = b2_dynamicBody;
 					bd.position = y;
 					b2Body* body = m_world->CreateBody(&bd);
 					body->CreateFixture(&shape, 5.0f);

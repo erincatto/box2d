@@ -46,9 +46,9 @@ b2MouseJoint::b2MouseJoint(const b2MouseJointDef* def)
 
 void b2MouseJoint::SetTarget(const b2Vec2& target)
 {
-	if (m_bodyB->IsSleeping())
+	if (m_bodyB->IsAwake() == false)
 	{
-		m_bodyB->WakeUp();
+		m_bodyB->SetAwake(true);
 	}
 	m_target = target;
 }
@@ -71,7 +71,7 @@ void b2MouseJoint::InitVelocityConstraints(const b2TimeStep& step)
 	// magic formulas
 	// gamma has units of inverse mass.
 	// beta has units of inverse time.
-	b2Assert(d + step.dt * k > B2_FLT_EPSILON);
+	b2Assert(d + step.dt * k > b2_epsilon);
 	m_gamma = step.dt * (d + step.dt * k);
 	if (m_gamma != 0.0f)
 	{
@@ -136,12 +136,12 @@ void b2MouseJoint::SolveVelocityConstraints(const b2TimeStep& step)
 	b->m_angularVelocity += b->m_invI * b2Cross(r, impulse);
 }
 
-b2Vec2 b2MouseJoint::GetAnchor1() const
+b2Vec2 b2MouseJoint::GetAnchorA() const
 {
 	return m_target;
 }
 
-b2Vec2 b2MouseJoint::GetAnchor2() const
+b2Vec2 b2MouseJoint::GetAnchorB() const
 {
 	return m_bodyB->GetWorldPoint(m_localAnchor);
 }

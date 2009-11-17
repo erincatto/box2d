@@ -38,7 +38,7 @@ static float32 b2EdgeSeparation(const b2PolygonShape* poly1, const b2Transform& 
 
 	// Find support vertex on poly2 for -normal.
 	int32 index = 0;
-	float32 minDot = B2_FLT_MAX;
+	float32 minDot = b2_maxFloat;
 
 	for (int32 i = 0; i < count2; ++i)
 	{
@@ -70,7 +70,7 @@ static float32 b2FindMaxSeparation(int32* edgeIndex,
 
 	// Find edge normal on poly1 that has the largest projection onto d.
 	int32 edge = 0;
-	float32 maxDot = -B2_FLT_MAX;
+	float32 maxDot = -b2_maxFloat;
 	for (int32 i = 0; i < count1; ++i)
 	{
 		float32 dot = b2Dot(normals1[i], dLocal1);
@@ -157,7 +157,7 @@ static void b2FindIncidentEdge(b2ClipVertex c[2],
 
 	// Find the incident edge on poly2.
 	int32 index = 0;
-	float32 minDot = B2_FLT_MAX;
+	float32 minDot = b2_maxFloat;
 	for (int32 i = 0; i < count2; ++i)
 	{
 		float32 dot = b2Dot(normal1, normals2[i]);

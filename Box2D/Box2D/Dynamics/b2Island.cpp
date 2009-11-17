@@ -185,8 +185,10 @@ void b2Island::Solve(const b2TimeStep& step, const b2Vec2& gravity, bool allowSl
 	{
 		b2Body* b = m_bodies[i];
 
-		if (b->IsStatic())
+		if (b->GetType() != b2_dynamicBody)
+		{
 			continue;
+		}
 
 		// Integrate velocities.
 		b->m_linearVelocity += step.dt * (gravity + b->m_invMass * b->m_force);
@@ -236,8 +238,10 @@ void b2Island::Solve(const b2TimeStep& step, const b2Vec2& gravity, bool allowSl
 	{
 		b2Body* b = m_bodies[i];
 
-		if (b->IsStatic())
+		if (b->GetType() == b2_staticBody)
+		{
 			continue;
+		}
 
 		// Check for large velocities.
 		b2Vec2 translation = step.dt * b->m_linearVelocity;
@@ -297,7 +301,7 @@ void b2Island::Solve(const b2TimeStep& step, const b2Vec2& gravity, bool allowSl
 
 	if (allowSleep)
 	{
-		float32 minSleepTime = B2_FLT_MAX;
+		float32 minSleepTime = b2_maxFloat;
 
 #ifndef TARGET_FLOAT32_IS_FIXED
 		const float32 linTolSqr = b2_linearSleepTolerance * b2_linearSleepTolerance;
@@ -307,18 +311,18 @@ void b2Island::Solve(const b2TimeStep& step, const b2Vec2& gravity, bool allowSl
 		for (int32 i = 0; i < m_bodyCount; ++i)
 		{
 			b2Body* b = m_bodies[i];
-			if (b->m_invMass == 0.0f)
+			if (b->GetType() != b2_dynamicBody)
 			{
 				continue;
 			}
 
-			if ((b->m_flags & b2Body::e_allowSleepFlag) == 0)
+			if ((b->m_flags & b2Body::e_autoSleepFlag) == 0)
 			{
 				b->m_sleepTime = 0.0f;
 				minSleepTime = 0.0f;
 			}
 
-			if ((b->m_flags & b2Body::e_allowSleepFlag) == 0 ||
+			if ((b->m_flags & b2Body::e_autoSleepFlag) == 0 ||
 #ifdef TARGET_FLOAT32_IS_FIXED
 				b2Abs(b->m_angularVelocity) > b2_angularSleepTolerance ||
 				b2Abs(b->m_linearVelocity.x) > b2_linearSleepTolerance ||
@@ -343,9 +347,7 @@ void b2Island::Solve(const b2TimeStep& step, const b2Vec2& gravity, bool allowSl
 			for (int32 i = 0; i < m_bodyCount; ++i)
 			{
 				b2Body* b = m_bodies[i];
-				b->m_flags |= b2Body::e_sleepFlag;
-				b->m_linearVelocity = b2Vec2_zero;
-				b->m_angularVelocity = 0.0f;
+				b->SetAwake(false);
 			}
 		}
 	}
@@ -383,8 +385,10 @@ void b2Island::SolveTOI(b2TimeStep& subStep)
 	{
 		b2Body* b = m_bodies[i];
 
-		if (b->IsStatic())
+		if (b->GetType() == b2_staticBody)
+		{
 			continue;
+		}
 
 		// Check for large velocities.
 		b2Vec2 translation = subStep.dt * b->m_linearVelocity;

@@ -124,7 +124,7 @@ static b2Vec2 ComputeCentroid(const b2Vec2* vs, int32 count)
 	}
 
 	// Centroid
-	b2Assert(area > B2_FLT_EPSILON);
+	b2Assert(area > b2_epsilon);
 	c *= 1.0f / area;
 	return c;
 }
@@ -146,7 +146,7 @@ void b2PolygonShape::Set(const b2Vec2* vertices, int32 count)
 		int32 i1 = i;
 		int32 i2 = i + 1 < m_vertexCount ? i + 1 : 0;
 		b2Vec2 edge = m_vertices[i2] - m_vertices[i1];
-		b2Assert(edge.LengthSquared() > B2_FLT_EPSILON * B2_FLT_EPSILON);
+		b2Assert(edge.LengthSquared() > b2_epsilon * b2_epsilon);
 		m_normals[i] = b2Cross(edge, 1.0f);
 		m_normals[i].Normalize();
 	}
@@ -198,7 +198,7 @@ bool b2PolygonShape::TestPoint(const b2Transform& xf, const b2Vec2& p) const
 	return true;
 }
 
-void b2PolygonShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input, const b2Transform& xf) const
+bool b2PolygonShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input, const b2Transform& xf) const
 {
 	float32 lower = 0.0f, upper = input.maxFraction;
 
@@ -207,8 +207,6 @@ void b2PolygonShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& inpu
 	b2Vec2 p2 = b2MulT(xf.R, input.p2 - xf.position);
 	b2Vec2 d = p2 - p1;
 	int32 index = -1;
-
-	output->hit = false;
 
 	for (int32 i = 0; i < m_vertexCount; ++i)
 	{
@@ -222,7 +220,7 @@ void b2PolygonShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& inpu
 		{	
 			if (numerator < 0.0f)
 			{
-				return;
+				return false;
 			}
 		}
 		else
@@ -248,7 +246,7 @@ void b2PolygonShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& inpu
 
 		if (upper < lower)
 		{
-			return;
+			return false;
 		}
 	}
 
@@ -256,11 +254,12 @@ void b2PolygonShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& inpu
 
 	if (index >= 0)
 	{
-		output->hit = true;
 		output->fraction = lower;
 		output->normal = b2Mul(xf.R, m_normals[index]);
-		return;
+		return true;
 	}
+
+	return false;
 }
 
 void b2PolygonShape::ComputeAABB(b2AABB* aabb, const b2Transform& xf) const
@@ -367,7 +366,7 @@ void b2PolygonShape::ComputeMass(b2MassData* massData, float32 density) const
 	massData->mass = density * area;
 
 	// Center of mass
-	b2Assert(area > B2_FLT_EPSILON);
+	b2Assert(area > b2_epsilon);
 	center *= 1.0f / area;
 	massData->center = center;
 

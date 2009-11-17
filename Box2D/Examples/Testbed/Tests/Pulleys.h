@@ -44,6 +44,7 @@ public:
 			shape.SetAsBox(a, b);
 
 			b2BodyDef bd;
+			bd.type = b2_dynamicBody;
 
 			bd.position.Set(-10.0f, y);
 			b2Body* body1 = m_world->CreateBody(&bd);

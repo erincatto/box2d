@@ -163,9 +163,9 @@ public:
 		Actor* actor = (Actor*)m_tree.GetUserData(proxyId);
 
 		b2RayCastOutput output;
-		actor->aabb.RayCast(&output, input);
+		bool hit = actor->aabb.RayCast(&output, input);
 
-		if (output.hit)
+		if (hit)
 		{
 			m_rayCastOutput = output;
 			m_rayActor = actor;
@@ -320,8 +320,8 @@ private:
 			}
 
 			b2RayCastOutput output;
-			m_actors[i].aabb.RayCast(&output, input);
-			if (output.hit)
+			bool hit = m_actors[i].aabb.RayCast(&output, input);
+			if (hit)
 			{
 				bruteActor = m_actors + i;
 				bruteOutput = output;

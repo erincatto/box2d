@@ -38,10 +38,10 @@
 void b2DistanceJointDef::Initialize(b2Body* b1, b2Body* b2,
 									const b2Vec2& anchor1, const b2Vec2& anchor2)
 {
-	body1 = b1;
-	body2 = b2;
-	localAnchor1 = body1->GetLocalPoint(anchor1);
-	localAnchor2 = body2->GetLocalPoint(anchor2);
+	bodyA = b1;
+	bodyB = b2;
+	localAnchor1 = bodyA->GetLocalPoint(anchor1);
+	localAnchor2 = bodyB->GetLocalPoint(anchor2);
 	b2Vec2 d = anchor2 - anchor1;
 	length = d.Length();
 }
@@ -188,12 +188,12 @@ bool b2DistanceJoint::SolvePositionConstraints(float32 baumgarte)
 	return b2Abs(C) < b2_linearSlop;
 }
 
-b2Vec2 b2DistanceJoint::GetAnchor1() const
+b2Vec2 b2DistanceJoint::GetAnchorA() const
 {
 	return m_bodyA->GetWorldPoint(m_localAnchor1);
 }
 
-b2Vec2 b2DistanceJoint::GetAnchor2() const
+b2Vec2 b2DistanceJoint::GetAnchorB() const
 {
 	return m_bodyB->GetWorldPoint(m_localAnchor2);
 }

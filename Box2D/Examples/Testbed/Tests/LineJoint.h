@@ -40,6 +40,7 @@ public:
 			shape.SetAsBox(0.5f, 2.0f);
 
 			b2BodyDef bd;
+			bd.type = b2_dynamicBody;
 			bd.position.Set(0.0f, 7.0f);
 			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&shape, 1.0f);

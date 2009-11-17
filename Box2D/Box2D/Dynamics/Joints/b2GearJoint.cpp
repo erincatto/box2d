@@ -50,8 +50,8 @@ b2GearJoint::b2GearJoint(const b2GearJointDef* def)
 
 	b2Assert(type1 == e_revoluteJoint || type1 == e_prismaticJoint);
 	b2Assert(type2 == e_revoluteJoint || type2 == e_prismaticJoint);
-	b2Assert(def->joint1->GetBody1()->IsStatic());
-	b2Assert(def->joint2->GetBody1()->IsStatic());
+	b2Assert(def->joint1->GetBodyA()->GetType() == b2_staticBody);
+	b2Assert(def->joint2->GetBodyA()->GetType() == b2_staticBody);
 
 	m_revolute1 = NULL;
 	m_prismatic1 = NULL;
@@ -60,8 +60,8 @@ b2GearJoint::b2GearJoint(const b2GearJointDef* def)
 
 	float32 coordinate1, coordinate2;
 
-	m_ground1 = def->joint1->GetBody1();
-	m_bodyA = def->joint1->GetBody2();
+	m_ground1 = def->joint1->GetBodyA();
+	m_bodyA = def->joint1->GetBodyB();
 	if (type1 == e_revoluteJoint)
 	{
 		m_revolute1 = (b2RevoluteJoint*)def->joint1;
@@ -77,8 +77,8 @@ b2GearJoint::b2GearJoint(const b2GearJointDef* def)
 		coordinate1 = m_prismatic1->GetJointTranslation();
 	}
 
-	m_ground2 = def->joint2->GetBody1();
-	m_bodyB = def->joint2->GetBody2();
+	m_ground2 = def->joint2->GetBodyA();
+	m_bodyB = def->joint2->GetBodyB();
 	if (type2 == e_revoluteJoint)
 	{
 		m_revolute2 = (b2RevoluteJoint*)def->joint2;
@@ -113,7 +113,7 @@ void b2GearJoint::InitVelocityConstraints(const b2TimeStep& step)
 
 	if (m_revolute1)
 	{
-		m_J.angular1 = -1.0f;
+		m_J.angularA = -1.0f;
 		K += b1->m_invI;
 	}
 	else
@@ -121,14 +121,14 @@ void b2GearJoint::InitVelocityConstraints(const b2TimeStep& step)
 		b2Vec2 ug = b2Mul(g1->GetTransform().R, m_prismatic1->m_localXAxis1);
 		b2Vec2 r = b2Mul(b1->GetTransform().R, m_localAnchor1 - b1->GetLocalCenter());
 		float32 crug = b2Cross(r, ug);
-		m_J.linear1 = -ug;
-		m_J.angular1 = -crug;
+		m_J.linearA = -ug;
+		m_J.angularA = -crug;
 		K += b1->m_invMass + b1->m_invI * crug * crug;
 	}
 
 	if (m_revolute2)
 	{
-		m_J.angular2 = -m_ratio;
+		m_J.angularB = -m_ratio;
 		K += m_ratio * m_ratio * b2->m_invI;
 	}
 	else
@@ -136,8 +136,8 @@ void b2GearJoint::InitVelocityConstraints(const b2TimeStep& step)
 		b2Vec2 ug = b2Mul(g2->GetTransform().R, m_prismatic2->m_localXAxis1);
 		b2Vec2 r = b2Mul(b2->GetTransform().R, m_localAnchor2 - b2->GetLocalCenter());
 		float32 crug = b2Cross(r, ug);
-		m_J.linear2 = -m_ratio * ug;
-		m_J.angular2 = -m_ratio * crug;
+		m_J.linearB = -m_ratio * ug;
+		m_J.angularB = -m_ratio * crug;
 		K += m_ratio * m_ratio * (b2->m_invMass + b2->m_invI * crug * crug);
 	}
 
@@ -147,10 +147,10 @@ void b2GearJoint::InitVelocityConstraints(const b2TimeStep& step)
 	if (step.warmStarting)
 	{
 		// Warm starting.
-		b1->m_linearVelocity += b1->m_invMass * m_impulse * m_J.linear1;
-		b1->m_angularVelocity += b1->m_invI * m_impulse * m_J.angular1;
-		b2->m_linearVelocity += b2->m_invMass * m_impulse * m_J.linear2;
-		b2->m_angularVelocity += b2->m_invI * m_impulse * m_J.angular2;
+		b1->m_linearVelocity += b1->m_invMass * m_impulse * m_J.linearA;
+		b1->m_angularVelocity += b1->m_invI * m_impulse * m_J.angularA;
+		b2->m_linearVelocity += b2->m_invMass * m_impulse * m_J.linearB;
+		b2->m_angularVelocity += b2->m_invI * m_impulse * m_J.angularB;
 	}
 	else
 	{
@@ -171,10 +171,10 @@ void b2GearJoint::SolveVelocityConstraints(const b2TimeStep& step)
 	float32 impulse = m_mass * (-Cdot);
 	m_impulse += impulse;
 
-	b1->m_linearVelocity += b1->m_invMass * impulse * m_J.linear1;
-	b1->m_angularVelocity += b1->m_invI * impulse * m_J.angular1;
-	b2->m_linearVelocity += b2->m_invMass * impulse * m_J.linear2;
-	b2->m_angularVelocity += b2->m_invI * impulse * m_J.angular2;
+	b1->m_linearVelocity += b1->m_invMass * impulse * m_J.linearA;
+	b1->m_angularVelocity += b1->m_invI * impulse * m_J.angularA;
+	b2->m_linearVelocity += b2->m_invMass * impulse * m_J.linearB;
+	b2->m_angularVelocity += b2->m_invI * impulse * m_J.angularB;
 }
 
 bool b2GearJoint::SolvePositionConstraints(float32 baumgarte)
@@ -209,10 +209,10 @@ bool b2GearJoint::SolvePositionConstraints(float32 baumgarte)
 
 	float32 impulse = m_mass * (-C);
 
-	b1->m_sweep.c += b1->m_invMass * impulse * m_J.linear1;
-	b1->m_sweep.a += b1->m_invI * impulse * m_J.angular1;
-	b2->m_sweep.c += b2->m_invMass * impulse * m_J.linear2;
-	b2->m_sweep.a += b2->m_invI * impulse * m_J.angular2;
+	b1->m_sweep.c += b1->m_invMass * impulse * m_J.linearA;
+	b1->m_sweep.a += b1->m_invI * impulse * m_J.angularA;
+	b2->m_sweep.c += b2->m_invMass * impulse * m_J.linearB;
+	b2->m_sweep.a += b2->m_invI * impulse * m_J.angularB;
 
 	b1->SynchronizeTransform();
 	b2->SynchronizeTransform();
@@ -221,12 +221,12 @@ bool b2GearJoint::SolvePositionConstraints(float32 baumgarte)
 	return linearError < b2_linearSlop;
 }
 
-b2Vec2 b2GearJoint::GetAnchor1() const
+b2Vec2 b2GearJoint::GetAnchorA() const
 {
 	return m_bodyA->GetWorldPoint(m_localAnchor1);
 }
 
-b2Vec2 b2GearJoint::GetAnchor2() const
+b2Vec2 b2GearJoint::GetAnchorB() const
 {
 	return m_bodyB->GetWorldPoint(m_localAnchor2);
 }
@@ -234,7 +234,7 @@ b2Vec2 b2GearJoint::GetAnchor2() const
 b2Vec2 b2GearJoint::GetReactionForce(float32 inv_dt) const
 {
 	// TODO_ERIN not tested
-	b2Vec2 P = m_impulse * m_J.linear2;
+	b2Vec2 P = m_impulse * m_J.linearB;
 	return inv_dt * P;
 }
 
@@ -242,8 +242,8 @@ float32 b2GearJoint::GetReactionTorque(float32 inv_dt) const
 {
 	// TODO_ERIN not tested
 	b2Vec2 r = b2Mul(m_bodyB->GetTransform().R, m_localAnchor2 - m_bodyB->GetLocalCenter());
-	b2Vec2 P = m_impulse * m_J.linear2;
-	float32 L = m_impulse * m_J.angular2 - b2Cross(r, P);
+	b2Vec2 P = m_impulse * m_J.linearB;
+	float32 L = m_impulse * m_J.angularB - b2Cross(r, P);
 	return inv_dt * L;
 }
 
