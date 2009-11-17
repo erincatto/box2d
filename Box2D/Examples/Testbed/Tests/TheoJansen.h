@@ -76,6 +76,8 @@ public:
 		fd2.shape = &poly2;
 
 		b2BodyDef bd1, bd2;
+		bd1.type = b2_dynamicBody;
+		bd2.type = b2_dynamicBody;
 		bd1.position = m_offset;
 		bd2.position = p4 + m_offset;
 
@@ -144,6 +146,7 @@ public:
 			shape.m_radius = 0.25f;
 
 			b2BodyDef bd;
+			bd.type = b2_dynamicBody;
 			bd.position.Set(-40.0f + 2.0f * i, 0.5f);
 
 			b2Body* body = m_world->CreateBody(&bd);
@@ -160,6 +163,7 @@ public:
 			sd.shape = &shape;
 			sd.filter.groupIndex = -1;
 			b2BodyDef bd;
+			bd.type = b2_dynamicBody;
 			bd.position = pivot + m_offset;
 			m_chassis = m_world->CreateBody(&bd);
 			m_chassis->CreateFixture(&sd);
@@ -174,6 +178,7 @@ public:
 			sd.shape = &shape;
 			sd.filter.groupIndex = -1;
 			b2BodyDef bd;
+			bd.type = b2_dynamicBody;
 			bd.position = pivot + m_offset;
 			m_wheel = m_world->CreateBody(&bd);
 			m_wheel->CreateFixture(&sd);
@@ -218,22 +223,18 @@ public:
 		switch (key)
 		{
 		case 'a':
-			m_chassis->WakeUp();
 			m_motorJoint->SetMotorSpeed(-m_motorSpeed);
 			break;
 
 		case 's':
-			m_chassis->WakeUp();
 			m_motorJoint->SetMotorSpeed(0.0f);
 			break;
 
 		case 'd':
-			m_chassis->WakeUp();
 			m_motorJoint->SetMotorSpeed(m_motorSpeed);
 			break;
 
 		case 'm':
-			m_chassis->WakeUp();
 			m_motorJoint->EnableMotor(!m_motorJoint->IsMotorEnabled());
 			break;
 		}

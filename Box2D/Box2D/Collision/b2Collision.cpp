@@ -34,7 +34,7 @@ void b2WorldManifold::Initialize(const b2Manifold* manifold,
 			b2Vec2 pointA = b2Mul(xfA, manifold->m_localPoint);
 			b2Vec2 pointB = b2Mul(xfB, manifold->m_points[0].m_localPoint);
 			b2Vec2 normal(1.0f, 0.0f);
-			if (b2DistanceSquared(pointA, pointB) > B2_FLT_EPSILON * B2_FLT_EPSILON)
+			if (b2DistanceSquared(pointA, pointB) > b2_epsilon * b2_epsilon)
 			{
 				normal = pointB - pointA;
 				normal.Normalize();
@@ -152,7 +152,7 @@ bool b2Segment::TestSegment(float32* lambda, b2Vec2* normal, const b2Segment& se
 	b2Vec2 d = p2 - p1;
 	b2Vec2 n = b2Cross(d, 1.0f);
 
-	const float32 k_slop = 100.0f * B2_FLT_EPSILON;
+	const float32 k_slop = 100.0f * b2_epsilon;
 	float32 denom = -b2Dot(r, n);
 
 	// Cull back facing collision and ignore parallel segments.
@@ -182,12 +182,10 @@ bool b2Segment::TestSegment(float32* lambda, b2Vec2* normal, const b2Segment& se
 }
 
 // From Real-time Collision Detection, p179.
-void b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
+bool b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
 {
-	float32 tmin = -B2_FLT_MAX;
-	float32 tmax = B2_FLT_MAX;
-
-	output->hit = false;
+	float32 tmin = -b2_maxFloat;
+	float32 tmax = b2_maxFloat;
 
 	b2Vec2 p = input.p1;
 	b2Vec2 d = input.p2 - input.p1;
@@ -197,12 +195,12 @@ void b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
 
 	for (int32 i = 0; i < 2; ++i)
 	{
-		if (absD(i) < B2_FLT_EPSILON)
+		if (absD(i) < b2_epsilon)
 		{
 			// Parallel.
 			if (p(i) < lowerBound(i) || upperBound(i) < p(i))
 			{
-				return;
+				return false;
 			}
 		}
 		else
@@ -233,7 +231,7 @@ void b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
 
 			if (tmin > tmax)
 			{
-				return;
+				return false;
 			}
 		}
 	}
@@ -242,13 +240,13 @@ void b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
 	// Does the ray intersect beyond the max fraction?
 	if (tmin < 0.0f || input.maxFraction < tmin)
 	{
-		return;
+		return false;
 	}
 
 	// Intersection.
 	output->fraction = tmin;
 	output->normal = normal;
-	output->hit = true;
+	return true;
 }
 
 // Sutherland-Hodgman clipping.

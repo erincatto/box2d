@@ -113,7 +113,7 @@ public:
 	bool ReportFixture(b2Fixture* fixture)
 	{
 		b2Body* body = fixture->GetBody();
-		if (body->IsStatic() == false)
+		if (body->GetType() == b2_dynamicBody)
 		{
 			bool inside = fixture->TestPoint(m_point);
 			if (inside)
@@ -157,8 +157,8 @@ void Test::MouseDown(const b2Vec2& p)
 	{
 		b2Body* body = callback.m_fixture->GetBody();
 		b2MouseJointDef md;
-		md.body1 = m_groundBody;
-		md.body2 = body;
+		md.bodyA = m_groundBody;
+		md.bodyB = body;
 		md.target = p;
 #ifdef TARGET_FLOAT32_IS_FIXED
 		md.maxForce = (body->GetMass() < 16.0)? 
@@ -167,7 +167,7 @@ void Test::MouseDown(const b2Vec2& p)
 		md.maxForce = 1000.0f * body->GetMass();
 #endif
 		m_mouseJoint = (b2MouseJoint*)m_world->CreateJoint(&md);
-		body->WakeUp();
+		body->SetAwake(true);
 	}
 }
 
@@ -243,10 +243,9 @@ void Test::LaunchBomb(const b2Vec2& position, const b2Vec2& velocity)
 	}
 
 	b2BodyDef bd;
-	bd.allowSleep = true;
+	bd.type = b2_dynamicBody;
 	bd.position = position;
-	
-	bd.isBullet = true;
+	bd.bullet = true;
 	m_bomb = m_world->CreateBody(&bd);
 	m_bomb->SetLinearVelocity(velocity);
 	
@@ -321,7 +320,7 @@ void Test::Step(Settings* settings)
 
 	if (m_mouseJoint)
 	{
-		b2Body* body = m_mouseJoint->GetBody2();
+		b2Body* body = m_mouseJoint->GetBodyB();
 		b2Vec2 p1 = body->GetWorldPoint(m_mouseJoint->m_localAnchor);
 		b2Vec2 p2 = m_mouseJoint->m_target;
 

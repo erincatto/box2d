@@ -59,6 +59,7 @@ public:
 		// Actor
 		{
 			b2BodyDef bd;
+			bd.type = b2_dynamicBody;
 			bd.position.Set(0.0f, 12.0f);
 			b2Body* body = m_world->CreateBody(&bd);
 
@@ -94,7 +95,7 @@ public:
 
 		if (position.y < m_top)
 		{
-			contact->Disable();
+			contact->SetEnabled(false);
 		}
 	}
 

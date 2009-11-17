@@ -40,6 +40,7 @@ public:
 			shape.SetAsBox(0.5f, 0.5f);
 
 			b2BodyDef bd;
+			bd.type = b2_dynamicBody;
 
 			bd.position.Set(-5.0f, 5.0f);
 			m_bodies[0] = m_world->CreateBody(&bd);
@@ -63,82 +64,82 @@ public:
 			jd.frequencyHz = 4.0f;
 			jd.dampingRatio = 0.5f;
 
-			jd.body1 = ground;
-			jd.body2 = m_bodies[0];
+			jd.bodyA = ground;
+			jd.bodyB = m_bodies[0];
 			jd.localAnchor1.Set(-10.0f, 0.0f);
 			jd.localAnchor2.Set(-0.5f, -0.5f);
-			p1 = jd.body1->GetWorldPoint(jd.localAnchor1);
-			p2 = jd.body2->GetWorldPoint(jd.localAnchor2);
+			p1 = jd.bodyA->GetWorldPoint(jd.localAnchor1);
+			p2 = jd.bodyB->GetWorldPoint(jd.localAnchor2);
 			d = p2 - p1;
 			jd.length = d.Length();
 			m_joints[0] = m_world->CreateJoint(&jd);
 
-			jd.body1 = ground;
-			jd.body2 = m_bodies[1];
+			jd.bodyA = ground;
+			jd.bodyB = m_bodies[1];
 			jd.localAnchor1.Set(10.0f, 0.0f);
 			jd.localAnchor2.Set(0.5f, -0.5f);
-			p1 = jd.body1->GetWorldPoint(jd.localAnchor1);
-			p2 = jd.body2->GetWorldPoint(jd.localAnchor2);
+			p1 = jd.bodyA->GetWorldPoint(jd.localAnchor1);
+			p2 = jd.bodyB->GetWorldPoint(jd.localAnchor2);
 			d = p2 - p1;
 			jd.length = d.Length();
 			m_joints[1] = m_world->CreateJoint(&jd);
 
-			jd.body1 = ground;
-			jd.body2 = m_bodies[2];
+			jd.bodyA = ground;
+			jd.bodyB = m_bodies[2];
 			jd.localAnchor1.Set(10.0f, 20.0f);
 			jd.localAnchor2.Set(0.5f, 0.5f);
-			p1 = jd.body1->GetWorldPoint(jd.localAnchor1);
-			p2 = jd.body2->GetWorldPoint(jd.localAnchor2);
+			p1 = jd.bodyA->GetWorldPoint(jd.localAnchor1);
+			p2 = jd.bodyB->GetWorldPoint(jd.localAnchor2);
 			d = p2 - p1;
 			jd.length = d.Length();
 			m_joints[2] = m_world->CreateJoint(&jd);
 
-			jd.body1 = ground;
-			jd.body2 = m_bodies[3];
+			jd.bodyA = ground;
+			jd.bodyB = m_bodies[3];
 			jd.localAnchor1.Set(-10.0f, 20.0f);
 			jd.localAnchor2.Set(-0.5f, 0.5f);
-			p1 = jd.body1->GetWorldPoint(jd.localAnchor1);
-			p2 = jd.body2->GetWorldPoint(jd.localAnchor2);
+			p1 = jd.bodyA->GetWorldPoint(jd.localAnchor1);
+			p2 = jd.bodyB->GetWorldPoint(jd.localAnchor2);
 			d = p2 - p1;
 			jd.length = d.Length();
 			m_joints[3] = m_world->CreateJoint(&jd);
 
-			jd.body1 = m_bodies[0];
-			jd.body2 = m_bodies[1];
+			jd.bodyA = m_bodies[0];
+			jd.bodyB = m_bodies[1];
 			jd.localAnchor1.Set(0.5f, 0.0f);
 			jd.localAnchor2.Set(-0.5f, 0.0f);;
-			p1 = jd.body1->GetWorldPoint(jd.localAnchor1);
-			p2 = jd.body2->GetWorldPoint(jd.localAnchor2);
+			p1 = jd.bodyA->GetWorldPoint(jd.localAnchor1);
+			p2 = jd.bodyB->GetWorldPoint(jd.localAnchor2);
 			d = p2 - p1;
 			jd.length = d.Length();
 			m_joints[4] = m_world->CreateJoint(&jd);
 
-			jd.body1 = m_bodies[1];
-			jd.body2 = m_bodies[2];
+			jd.bodyA = m_bodies[1];
+			jd.bodyB = m_bodies[2];
 			jd.localAnchor1.Set(0.0f, 0.5f);
 			jd.localAnchor2.Set(0.0f, -0.5f);
-			p1 = jd.body1->GetWorldPoint(jd.localAnchor1);
-			p2 = jd.body2->GetWorldPoint(jd.localAnchor2);
+			p1 = jd.bodyA->GetWorldPoint(jd.localAnchor1);
+			p2 = jd.bodyB->GetWorldPoint(jd.localAnchor2);
 			d = p2 - p1;
 			jd.length = d.Length();
 			m_joints[5] = m_world->CreateJoint(&jd);
 
-			jd.body1 = m_bodies[2];
-			jd.body2 = m_bodies[3];
+			jd.bodyA = m_bodies[2];
+			jd.bodyB = m_bodies[3];
 			jd.localAnchor1.Set(-0.5f, 0.0f);
 			jd.localAnchor2.Set(0.5f, 0.0f);
-			p1 = jd.body1->GetWorldPoint(jd.localAnchor1);
-			p2 = jd.body2->GetWorldPoint(jd.localAnchor2);
+			p1 = jd.bodyA->GetWorldPoint(jd.localAnchor1);
+			p2 = jd.bodyB->GetWorldPoint(jd.localAnchor2);
 			d = p2 - p1;
 			jd.length = d.Length();
 			m_joints[6] = m_world->CreateJoint(&jd);
 
-			jd.body1 = m_bodies[3];
-			jd.body2 = m_bodies[0];
+			jd.bodyA = m_bodies[3];
+			jd.bodyB = m_bodies[0];
 			jd.localAnchor1.Set(0.0f, -0.5f);
 			jd.localAnchor2.Set(0.0f, 0.5f);
-			p1 = jd.body1->GetWorldPoint(jd.localAnchor1);
-			p2 = jd.body2->GetWorldPoint(jd.localAnchor2);
+			p1 = jd.bodyA->GetWorldPoint(jd.localAnchor1);
+			p2 = jd.bodyB->GetWorldPoint(jd.localAnchor2);
 			d = p2 - p1;
 			jd.length = d.Length();
 			m_joints[7] = m_world->CreateJoint(&jd);

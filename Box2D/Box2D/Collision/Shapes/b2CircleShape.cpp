@@ -38,7 +38,7 @@ bool b2CircleShape::TestPoint(const b2Transform& transform, const b2Vec2& p) con
 // From Section 3.1.2
 // x = s + a * r
 // norm(x) = radius
-void b2CircleShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input, const b2Transform& transform) const
+bool b2CircleShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input, const b2Transform& transform) const
 {
 	b2Vec2 position = transform.position + b2Mul(transform.R, m_p);
 	b2Vec2 s = input.p1 - position;
@@ -51,10 +51,9 @@ void b2CircleShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input
 	float32 sigma = c * c - rr * b;
 
 	// Check for negative discriminant and short segment.
-	if (sigma < 0.0f || rr < B2_FLT_EPSILON)
+	if (sigma < 0.0f || rr < b2_epsilon)
 	{
-		output->hit = false;
-		return;
+		return false;
 	}
 
 	// Find the point of intersection of the line with the circle.
@@ -64,15 +63,13 @@ void b2CircleShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input
 	if (0.0f <= a && a <= input.maxFraction * rr)
 	{
 		a /= rr;
-		output->hit = true;
 		output->fraction = a;
 		output->normal = s + a * r;
 		output->normal.Normalize();
-		return;
+		return true;
 	}
 
-	output->hit = false;
-	return;
+	return false;
 }
 
 void b2CircleShape::ComputeAABB(b2AABB* aabb, const b2Transform& transform) const
