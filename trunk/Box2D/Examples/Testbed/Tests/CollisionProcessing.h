@@ -58,6 +58,7 @@ public:
 		triangleShapeDef.density = 1.0f;
 
 		b2BodyDef triangleBodyDef;
+		triangleBodyDef.type = b2_dynamicBody;
 		triangleBodyDef.position.Set(RandomFloat(xLo, xHi), RandomFloat(yLo, yHi));
 
 		b2Body* body1 = m_world->CreateBody(&triangleBodyDef);
@@ -82,6 +83,7 @@ public:
 		boxShapeDef.density = 1.0f;
 
 		b2BodyDef boxBodyDef;
+		boxBodyDef.type = b2_dynamicBody;
 		boxBodyDef.position.Set(RandomFloat(xLo, xHi), RandomFloat(yLo, yHi));
 
 		b2Body* body3 = m_world->CreateBody(&boxBodyDef);
@@ -103,6 +105,7 @@ public:
 		circleShapeDef.density = 1.0f;
 
 		b2BodyDef circleBodyDef;
+		circleBodyDef.type = b2_dynamicBody;
 		circleBodyDef.position.Set(RandomFloat(xLo, xHi), RandomFloat(yLo, yHi));
 
 		b2Body* body5 = m_world->CreateBody(&circleBodyDef);

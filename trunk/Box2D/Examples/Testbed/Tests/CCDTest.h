@@ -25,8 +25,11 @@ public:
 
 	CCDTest()
 	{
-#if 1
 		{
+			b2BodyDef bd;
+			bd.position.Set(0.0f, -0.2f);
+
+			b2Body* body = m_world->CreateBody(&bd);
 			b2PolygonShape shape;
 			shape.SetAsBox(10.0f, 0.2f);
 
@@ -34,9 +37,6 @@ public:
 			fd.shape = &shape;
 			fd.density = 0.0f;
 
-			b2BodyDef bd;
-			bd.position.Set(0.0f, -0.2f);
-			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&fd);
 
 			shape.SetAsBox(0.2f, 1.0f, b2Vec2(0.5f, 1.2f), 0.0f);
@@ -56,13 +56,14 @@ public:
 			m_angularVelocity = -30.669577f;
 
 			b2BodyDef bd;
+			bd.type = b2_dynamicBody;
 			bd.position.Set(0.0f, 20.0f);
 			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&fd);
 			body->SetLinearVelocity(b2Vec2(0.0f, -100.0f));
 			body->SetAngularVelocity(m_angularVelocity);
 		}
-#elif 0
+#if 0
 		{
 			b2FixtureDef fd;
 			fd.SetAsBox(10.0f, 0.1f);
@@ -83,8 +84,8 @@ public:
 
 			b2BodyDef bd1;
 			bd1.type = b2BodyDef::e_dynamic;
-			bd1.isBullet = true;
-			bd1.allowSleep = false;
+			bd1.bullet = true;
+			bd1.autoSleep = false;
 			bd1.position.Set(0.0f, 20.0f);
 			b2Body* b1 = m_world->Create(&bd1);
 			b1->CreateFixture(&fd);
@@ -93,8 +94,8 @@ public:
 			fd.SetAsBox(1.0f, 0.1f);
 			b2BodyDef bd2;
 			bd2.type = b2BodyDef::e_dynamic;
-			bd2.isBullet = true;
-			bd2.allowSleep = false;
+			bd2.bullet = true;
+			bd2.autoSleep = false;
 			bd2.position.Set(0.0f, 20.2f);
 			b2Body* b2 = m_world->Create(&bd2);
 			b2->CreateFixture(&fd);
@@ -104,14 +105,14 @@ public:
 			fd.density = 10.0f;
 			b2BodyDef bd3;
 			bd3.type = b2BodyDef::e_dynamic;
-			bd3.isBullet = true;
-			bd3.allowSleep = false;
+			bd3.bullet = true;
+			bd3.autoSleep = false;
 			bd3.position.Set(0.0f, 100.0f);
 			b2Body* b3 = m_world->Create(&bd3);
 			b3->CreateFixture(&fd);
 			b3->SetLinearVelocity(b2Vec2(0.0f, -150.0f));
 		}
-#else
+#elif 0
 		const float32 k_restitution = 1.4f;
 
 		{
@@ -188,7 +189,7 @@ public:
 		{
 			b2BodyDef bd;
 			bd.position.Set(-5.0f, 20.0f);
-			bd.isBullet = true;
+			bd.bullet = true;
 			b2Body* body = m_world->CreateBody(&bd);
 			body->SetAngularVelocity(RandomFloat(-50.0f, 50.0f));
 
@@ -204,7 +205,7 @@ public:
 		{
 			b2BodyDef bd;
 			bd.position.Set(0.0f, 15.0f + i);
-			bd.isBullet = true;
+			bd.bullet = true;
 			b2Body* body = m_world->CreateBody(&bd);
 			body->SetAngularVelocity(RandomFloat(-50.0f, 50.0f));
 

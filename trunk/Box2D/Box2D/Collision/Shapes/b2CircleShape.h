@@ -34,7 +34,7 @@ public:
 	bool TestPoint(const b2Transform& transform, const b2Vec2& p) const;
 
 	/// Implement b2Shape.
-	void RayCast(b2RayCastOutput* output, const b2RayCastInput& input, const b2Transform& transform) const;
+	bool RayCast(b2RayCastOutput* output, const b2RayCastInput& input, const b2Transform& transform) const;
 
 	/// @see b2Shape::ComputeAABB
 	void ComputeAABB(b2AABB* aabb, const b2Transform& transform) const;

@@ -32,6 +32,7 @@ b2Fixture::b2Fixture()
 	m_next = NULL;
 	m_proxyId = b2BroadPhase::e_nullProxy;
 	m_shape = NULL;
+	m_density = 0.0f;
 }
 
 b2Fixture::~b2Fixture()
@@ -40,7 +41,7 @@ b2Fixture::~b2Fixture()
 	b2Assert(m_proxyId == b2BroadPhase::e_nullProxy);
 }
 
-void b2Fixture::Create(b2BlockAllocator* allocator, b2BroadPhase* broadPhase, b2Body* body, const b2Transform& xf, const b2FixtureDef* def)
+void b2Fixture::Create(b2BlockAllocator* allocator, b2Body* body, const b2FixtureDef* def)
 {
 	m_userData = def->userData;
 	m_friction = def->friction;
@@ -55,22 +56,13 @@ void b2Fixture::Create(b2BlockAllocator* allocator, b2BroadPhase* broadPhase, b2
 
 	m_shape = def->shape->Clone(allocator);
 
-	m_shape->ComputeMass(&m_massData, def->density);
-
-	// Create proxy in the broad-phase.
-	m_shape->ComputeAABB(&m_aabb, xf);
-
-	m_proxyId = broadPhase->CreateProxy(m_aabb, this);
+	m_density = def->density;
 }
 
-void b2Fixture::Destroy(b2BlockAllocator* allocator, b2BroadPhase* broadPhase)
+void b2Fixture::Destroy(b2BlockAllocator* allocator)
 {
-	// Remove proxy from the broad-phase.
-	if (m_proxyId != b2BroadPhase::e_nullProxy)
-	{
-		broadPhase->DestroyProxy(m_proxyId);
-		m_proxyId = b2BroadPhase::e_nullProxy;
-	}
+	// The proxy must be destroyed before calling this.
+	b2Assert(m_proxyId == b2BroadPhase::e_nullProxy);
 
 	// Free the child shape.
 	switch (m_shape->m_type)
@@ -97,6 +89,27 @@ void b2Fixture::Destroy(b2BlockAllocator* allocator, b2BroadPhase* broadPhase)
 	}
 
 	m_shape = NULL;
+}
+
+void b2Fixture::CreateProxy(b2BroadPhase* broadPhase, const b2Transform& xf)
+{
+	b2Assert(m_proxyId == b2BroadPhase::e_nullProxy);
+
+	// Create proxy in the broad-phase.
+	m_shape->ComputeAABB(&m_aabb, xf);
+	m_proxyId = broadPhase->CreateProxy(m_aabb, this);
+}
+
+void b2Fixture::DestroyProxy(b2BroadPhase* broadPhase)
+{
+	if (m_proxyId == b2BroadPhase::e_nullProxy)
+	{
+		return;
+	}
+
+	// Destroy proxy in the broad-phase.
+	broadPhase->DestroyProxy(m_proxyId);
+	m_proxyId = b2BroadPhase::e_nullProxy;
 }
 
 void b2Fixture::Synchronize(b2BroadPhase* broadPhase, const b2Transform& transform1, const b2Transform& transform2)
@@ -138,6 +151,8 @@ void b2Fixture::SetFilterData(const b2Filter& filter)
 		{
 			contact->FlagForFiltering();
 		}
+
+		edge = edge->next;
 	}
 }
 
@@ -155,7 +170,6 @@ void b2Fixture::SetSensor(bool sensor)
 		return;
 	}
 
-	// Flag associated contacts for filtering.
 	b2ContactEdge* edge = m_body->GetContactList();
 	while (edge)
 	{
@@ -164,7 +178,7 @@ void b2Fixture::SetSensor(bool sensor)
 		b2Fixture* fixtureB = contact->GetFixtureB();
 		if (fixtureA == this || fixtureB == this)
 		{
-			contact->SetAsSensor(fixtureA->IsSensor()||fixtureB->IsSensor());
+			contact->SetSensor(m_isSensor);
 		}
 
 		edge = edge->next;

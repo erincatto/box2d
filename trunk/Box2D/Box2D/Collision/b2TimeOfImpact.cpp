@@ -250,7 +250,7 @@ float32 b2TimeOfImpact(const b2TOIInput* input)
 	b2Sweep sweepB = input->sweepB;
 
 	b2Assert(sweepA.t0 == sweepB.t0);
-	b2Assert(1.0f - sweepA.t0 > B2_FLT_EPSILON);
+	b2Assert(1.0f - sweepA.t0 > b2_epsilon);
 
 	float32 radius = proxyA->m_radius + proxyB->m_radius;
 	float32 tolerance = input->tolerance;
@@ -420,7 +420,7 @@ float32 b2TimeOfImpact(const b2TOIInput* input)
 		}
 
 		// Ensure significant advancement.
-		if (newAlpha < (1.0f + 100.0f * B2_FLT_EPSILON) * alpha)
+		if (newAlpha < (1.0f + 100.0f * b2_epsilon) * alpha)
 		{
 			break;
 		}

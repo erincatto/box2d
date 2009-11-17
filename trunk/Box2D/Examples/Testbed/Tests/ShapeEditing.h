@@ -34,9 +34,10 @@ public:
 			ground->CreateFixture(&shape);
 		}
 
-		b2BodyDef bodydef;
-		bodydef.position.Set(0.0f, 10.0f);
-		m_body = m_world->CreateBody(&bodydef);
+		b2BodyDef bd;
+		bd.type = b2_dynamicBody;
+		bd.position.Set(0.0f, 10.0f);
+		m_body = m_world->CreateBody(&bd);
 
 		b2PolygonShape shape;
 		shape.SetAsBox(4.0f, 4.0f, b2Vec2(0.0f, 0.0f), 0.0f);
@@ -56,7 +57,7 @@ public:
 				shape.m_radius = 3.0f;
 				shape.m_p.Set(0.5f, -4.0f);
 				m_fixture2 = m_body->CreateFixture(&shape, 10.0f);
-				m_body->WakeUp();
+				m_body->SetAwake(true);
 			}
 			break;
 
@@ -65,7 +66,7 @@ public:
 			{
 				m_body->DestroyFixture(m_fixture2);
 				m_fixture2 = NULL;
-				m_body->WakeUp();
+				m_body->SetAwake(true);
 			}
 			break;
 		}

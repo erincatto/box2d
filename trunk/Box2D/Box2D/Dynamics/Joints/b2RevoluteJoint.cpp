@@ -35,11 +35,11 @@
 
 void b2RevoluteJointDef::Initialize(b2Body* b1, b2Body* b2, const b2Vec2& anchor)
 {
-	body1 = b1;
-	body2 = b2;
-	localAnchor1 = body1->GetLocalPoint(anchor);
-	localAnchor2 = body2->GetLocalPoint(anchor);
-	referenceAngle = body2->GetAngle() - body1->GetAngle();
+	bodyA = b1;
+	bodyB = b2;
+	localAnchor1 = bodyA->GetLocalPoint(anchor);
+	localAnchor2 = bodyB->GetLocalPoint(anchor);
+	referenceAngle = bodyB->GetAngle() - bodyA->GetAngle();
 }
 
 b2RevoluteJoint::b2RevoluteJoint(const b2RevoluteJointDef* def)
@@ -336,7 +336,7 @@ bool b2RevoluteJoint::SolvePositionConstraints(float32 baumgarte)
 			// Use a particle solution (no rotation).
 			b2Vec2 u = C; u.Normalize();
 			float32 k = invMass1 + invMass2;
-			b2Assert(k > B2_FLT_EPSILON);
+			b2Assert(k > b2_epsilon);
 			float32 m = 1.0f / k;
 			b2Vec2 impulse = m * (-C);
 			const float32 k_beta = 0.5f;
@@ -374,12 +374,12 @@ bool b2RevoluteJoint::SolvePositionConstraints(float32 baumgarte)
 	return positionError <= b2_linearSlop && angularError <= b2_angularSlop;
 }
 
-b2Vec2 b2RevoluteJoint::GetAnchor1() const
+b2Vec2 b2RevoluteJoint::GetAnchorA() const
 {
 	return m_bodyA->GetWorldPoint(m_localAnchor1);
 }
 
-b2Vec2 b2RevoluteJoint::GetAnchor2() const
+b2Vec2 b2RevoluteJoint::GetAnchorB() const
 {
 	return m_bodyB->GetWorldPoint(m_localAnchor2);
 }
@@ -416,8 +416,8 @@ bool b2RevoluteJoint::IsMotorEnabled() const
 
 void b2RevoluteJoint::EnableMotor(bool flag)
 {
-	m_bodyA->WakeUp();
-	m_bodyB->WakeUp();
+	m_bodyA->SetAwake(true);
+	m_bodyB->SetAwake(true);
 	m_enableMotor = flag;
 }
 
@@ -428,15 +428,15 @@ float32 b2RevoluteJoint::GetMotorTorque() const
 
 void b2RevoluteJoint::SetMotorSpeed(float32 speed)
 {
-	m_bodyA->WakeUp();
-	m_bodyB->WakeUp();
+	m_bodyA->SetAwake(true);
+	m_bodyB->SetAwake(true);
 	m_motorSpeed = speed;
 }
 
 void b2RevoluteJoint::SetMaxMotorTorque(float32 torque)
 {
-	m_bodyA->WakeUp();
-	m_bodyB->WakeUp();
+	m_bodyA->SetAwake(true);
+	m_bodyB->SetAwake(true);
 	m_maxMotorTorque = torque;
 }
 
@@ -447,8 +447,8 @@ bool b2RevoluteJoint::IsLimitEnabled() const
 
 void b2RevoluteJoint::EnableLimit(bool flag)
 {
-	m_bodyA->WakeUp();
-	m_bodyB->WakeUp();
+	m_bodyA->SetAwake(true);
+	m_bodyB->SetAwake(true);
 	m_enableLimit = flag;
 }
 
@@ -465,8 +465,8 @@ float32 b2RevoluteJoint::GetUpperLimit() const
 void b2RevoluteJoint::SetLimits(float32 lower, float32 upper)
 {
 	b2Assert(lower <= upper);
-	m_bodyA->WakeUp();
-	m_bodyB->WakeUp();
+	m_bodyA->SetAwake(true);
+	m_bodyB->SetAwake(true);
 	m_lowerAngle = lower;
 	m_upperAngle = upper;
 }
