@@ -55,6 +55,7 @@ public:
 			for (int32 i = 0; i < e_count; ++i)
 			{
 				b2BodyDef bd;
+				bd.type = b2_dynamicBody;
 				bd.position.Set(-14.5f + 1.0f * i, 5.0f);
 				b2Body* body = m_world->CreateBody(&bd);
 				body->CreateFixture(&fd);
@@ -90,6 +91,7 @@ public:
 			fd.density = 1.0f;
 
 			b2BodyDef bd;
+			bd.type = b2_dynamicBody;
 			bd.position.Set(-8.0f + 8.0f * i, 12.0f);
 			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&fd);
@@ -105,33 +107,11 @@ public:
 			fd.density = 1.0f;
 
 			b2BodyDef bd;
+			bd.type = b2_dynamicBody;
 			bd.position.Set(-6.0f + 6.0f * i, 10.0f);
 			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&fd);
 		}
-	}
-
-	void Keyboard(unsigned char key)
-	{
-		switch (key)
-		{
-		case 's':
-			{
-				b2MassData data;
-				data.center.SetZero();
-				data.I = 0.0f;
-				data.mass = 0.0f;
-				m_middle->SetMassData(&data);
-			}
-			break;
-		}
-	}
-
-	void Step(Settings* settings)
-	{
-		Test::Step(settings);
-		m_debugDraw.DrawString(5, m_textLine, "Press (s) to make a body static");
-		m_textLine += 15;
 	}
 
 	static Test* Create()

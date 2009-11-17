@@ -137,8 +137,8 @@ b2Joint::b2Joint(const b2JointDef* def)
 	m_type = def->type;
 	m_prev = NULL;
 	m_next = NULL;
-	m_bodyA = def->body1;
-	m_bodyB = def->body2;
+	m_bodyA = def->bodyA;
+	m_bodyB = def->bodyB;
 	m_collideConnected = def->collideConnected;
 	m_islandFlag = false;
 	m_userData = def->userData;
@@ -152,4 +152,9 @@ b2Joint::b2Joint(const b2JointDef* def)
 	m_edgeB.other = NULL;
 	m_edgeB.prev = NULL;
 	m_edgeB.next = NULL;
+}
+
+bool b2Joint::IsActive() const
+{
+	return m_bodyA->IsActive() && m_bodyB->IsActive();
 }

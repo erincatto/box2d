@@ -39,6 +39,7 @@ public:
 			shape.m_radius = 0.5f;
 
 			b2BodyDef bd;
+			bd.type = b2_dynamicBody;
 
 			b2RevoluteJointDef rjd;
 

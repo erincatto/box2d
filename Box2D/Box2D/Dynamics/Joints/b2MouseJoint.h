@@ -62,10 +62,10 @@ class b2MouseJoint : public b2Joint
 public:
 
 	/// Implements b2Joint.
-	b2Vec2 GetAnchor1() const;
+	b2Vec2 GetAnchorA() const;
 
 	/// Implements b2Joint.
-	b2Vec2 GetAnchor2() const;
+	b2Vec2 GetAnchorB() const;
 
 	/// Implements b2Joint.
 	b2Vec2 GetReactionForce(float32 inv_dt) const;

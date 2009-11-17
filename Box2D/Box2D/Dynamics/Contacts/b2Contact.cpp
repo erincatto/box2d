@@ -96,8 +96,8 @@ void b2Contact::Destroy(b2Contact* contact, b2BlockAllocator* allocator)
 
 	if (contact->m_manifold.m_pointCount > 0)
 	{
-		contact->GetFixtureA()->GetBody()->WakeUp();
-		contact->GetFixtureB()->GetBody()->WakeUp();
+		contact->GetFixtureA()->GetBody()->SetAwake(true);
+		contact->GetFixtureB()->GetBody()->SetAwake(true);
 	}
 
 	b2Shape::Type typeA = contact->GetFixtureA()->GetType();
@@ -112,7 +112,7 @@ void b2Contact::Destroy(b2Contact* contact, b2BlockAllocator* allocator)
 
 b2Contact::b2Contact(b2Fixture* fA, b2Fixture* fB)
 {
-	m_flags = 0;
+	m_flags = e_enabledFlag;
 
 	if (fA->IsSensor() || fB->IsSensor())
 	{
@@ -122,13 +122,9 @@ b2Contact::b2Contact(b2Fixture* fA, b2Fixture* fB)
 	b2Body* bodyA = fA->GetBody();
 	b2Body* bodyB = fB->GetBody();
 
-	if (bodyA->IsStatic() || bodyA->IsBullet() || bodyB->IsStatic() || bodyB->IsBullet())
+	if (bodyA->GetType() != b2_dynamicBody || bodyA->IsBullet() || bodyB->GetType() != b2_dynamicBody || bodyB->IsBullet())
 	{
 		m_flags |= e_continuousFlag;
-	}
-	else
-	{
-		m_flags &= ~e_continuousFlag;
 	}
 
 	m_fixtureA = fA;
@@ -155,7 +151,7 @@ void b2Contact::Update(b2ContactListener* listener)
 	b2Manifold oldManifold = m_manifold;
 
 	// Re-enable this contact.
-	m_flags &= ~e_disabledFlag;
+	m_flags |= e_enabledFlag;
 
 	if (b2TestOverlap(m_fixtureA->m_aabb, m_fixtureB->m_aabb))
 	{
@@ -174,12 +170,12 @@ void b2Contact::Update(b2ContactListener* listener)
 
 	if (newCount == 0 && oldCount > 0)
 	{
-		bodyA->WakeUp();
-		bodyB->WakeUp();
+		bodyA->SetAwake(true);
+		bodyB->SetAwake(true);
 	}
 
 	// Slow contacts don't generate TOI events.
-	if (bodyA->IsStatic() || bodyA->IsBullet() || bodyB->IsStatic() || bodyB->IsBullet())
+	if (bodyA->GetType() != b2_dynamicBody || bodyA->IsBullet() || bodyB->GetType() != b2_dynamicBody || bodyB->IsBullet())
 	{
 		m_flags |= e_continuousFlag;
 	}

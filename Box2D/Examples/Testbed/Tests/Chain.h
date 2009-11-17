@@ -51,6 +51,7 @@ public:
 			for (int32 i = 0; i < 30; ++i)
 			{
 				b2BodyDef bd;
+				bd.type = b2_dynamicBody;
 				bd.position.Set(0.5f + i, y);
 				b2Body* body = m_world->CreateBody(&bd);
 				body->CreateFixture(&fd);
