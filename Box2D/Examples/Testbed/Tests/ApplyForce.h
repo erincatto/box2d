@@ -90,6 +90,7 @@ public:
 			sd2.density = 2.0f;
 
 			b2BodyDef bd;
+			bd.type = b2_dynamicBody;
 			bd.angularDamping = 2.0f;
 			bd.linearDamping = 0.1f;
 

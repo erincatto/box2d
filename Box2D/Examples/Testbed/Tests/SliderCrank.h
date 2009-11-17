@@ -45,6 +45,7 @@ public:
 				shape.SetAsBox(0.5f, 2.0f);
 
 				b2BodyDef bd;
+				bd.type = b2_dynamicBody;
 				bd.position.Set(0.0f, 7.0f);
 				b2Body* body = m_world->CreateBody(&bd);
 				body->CreateFixture(&shape, 2.0f);
@@ -65,6 +66,7 @@ public:
 				shape.SetAsBox(0.5f, 4.0f);
 
 				b2BodyDef bd;
+				bd.type = b2_dynamicBody;
 				bd.position.Set(0.0f, 13.0f);
 				b2Body* body = m_world->CreateBody(&bd);
 				body->CreateFixture(&shape, 2.0f);
@@ -83,6 +85,7 @@ public:
 				shape.SetAsBox(1.5f, 1.5f);
 
 				b2BodyDef bd;
+				bd.type = b2_dynamicBody;
 				bd.position.Set(0.0f, 17.0f);
 				b2Body* body = m_world->CreateBody(&bd);
 				body->CreateFixture(&shape, 2.0f);
@@ -106,6 +109,7 @@ public:
 				shape.SetAsBox(1.5f, 1.5f);
 
 				b2BodyDef bd;
+				bd.type = b2_dynamicBody;
 				bd.position.Set(0.0f, 23.0f);
 				b2Body* body = m_world->CreateBody(&bd);
 				body->CreateFixture(&shape, 2.0f);
@@ -119,12 +123,12 @@ public:
 		{
 		case 'f':
 			m_joint2->m_enableMotor = !m_joint2->m_enableMotor;
-			m_joint2->GetBody2()->WakeUp();
+			m_joint2->GetBodyB()->SetAwake(true);
 			break;
 
 		case 'm':
 			m_joint1->m_enableMotor = !m_joint1->m_enableMotor;
-			m_joint1->GetBody2()->WakeUp();
+			m_joint1->GetBodyB()->SetAwake(true);
 			break;
 		}
 	}

@@ -69,6 +69,7 @@ public:
 			for (int i = 0; i < e_rowCount; ++i)
 			{
 				b2BodyDef bd;
+				bd.type = b2_dynamicBody;
 				bd.position.Set(-10.0f + (2.1f * j + 1.0f + 0.01f * i) * radius, (2.0f * i + 1.0f) * radius);
 				b2Body* body = m_world->CreateBody(&bd);
 
@@ -92,6 +93,7 @@ public:
 		fd.friction = 0.0f;
 
 		b2BodyDef bd;
+		bd.type = b2_dynamicBody;
 		bd.position.Set(RandomFloat(), (2.0f + RandomFloat()) * radius);
 		b2Body* body = m_world->CreateBody(&bd);
 
@@ -110,11 +112,13 @@ public:
 
 	void Step(Settings* settings)
 	{
+		int32 flag = settings->enableContinuous;
+		settings->enableContinuous = 0;
 		Test::Step(settings);
 		m_debugDraw.DrawString(5, m_textLine, "Press 'c' to create a circle.");
 		m_textLine += 15;
+		settings->enableContinuous = flag;
 	}
-
 
 	static Test* Create()
 	{

@@ -144,7 +144,6 @@ struct b2RayCastOutput
 {
 	b2Vec2 normal;
 	float32 fraction;
-	bool hit;
 };
 
 /// A line segment.
@@ -193,7 +192,7 @@ struct b2AABB
 		return result;
 	}
 
-	void RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const;
+	bool RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const;
 
 	b2Vec2 lowerBound;	///< the lower vertex
 	b2Vec2 upperBound;	///< the upper vertex

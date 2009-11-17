@@ -130,7 +130,7 @@ struct b2Vec2
 	float32 Normalize()
 	{
 		float32 length = Length();
-		if (length < B2_FLT_EPSILON)
+		if (length < b2_epsilon)
 		{
 			return 0.0f;
 		}
@@ -606,7 +606,7 @@ inline void b2Sweep::GetTransform(b2Transform* xf, float32 alpha) const
 
 inline void b2Sweep::Advance(float32 t)
 {
-	if (t0 < t && 1.0f - t0 > B2_FLT_EPSILON)
+	if (t0 < t && 1.0f - t0 > b2_epsilon)
 	{
 		float32 alpha = (t - t0) / (1.0f - t0);
 		c0 = (1.0f - alpha) * c0 + alpha * c;

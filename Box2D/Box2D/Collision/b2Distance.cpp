@@ -91,7 +91,7 @@ struct b2Simplex
 		{
 			float32 metric1 = cache->metric;
 			float32 metric2 = GetMetric();
-			if (metric2 < 0.5f * metric1 || 2.0f * metric1 < metric2 || metric2 < B2_FLT_EPSILON)
+			if (metric2 < 0.5f * metric1 || 2.0f * metric1 < metric2 || metric2 < b2_epsilon)
 			{
 				// Reset the simplex.
 				m_count = 0;
@@ -487,7 +487,7 @@ void b2Distance(b2DistanceOutput* output,
 		b2Vec2 d = simplex.GetSearchDirection();
 
 		// Ensure the search direction is numerically fit.
-		if (d.LengthSquared() < B2_FLT_EPSILON * B2_FLT_EPSILON)
+		if (d.LengthSquared() < b2_epsilon * b2_epsilon)
 		{
 			// The origin is probably contained by a line segment
 			// or triangle. Thus the shapes are overlapped.
@@ -548,7 +548,7 @@ void b2Distance(b2DistanceOutput* output,
 		float32 rA = proxyA->m_radius;
 		float32 rB = proxyB->m_radius;
 
-		if (output->distance > rA + rB && output->distance > B2_FLT_EPSILON)
+		if (output->distance > rA + rB && output->distance > b2_epsilon)
 		{
 			// Shapes are still no overlapped.
 			// Move the witness points to the outer surface.

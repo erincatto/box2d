@@ -194,7 +194,6 @@ public:
 		b2Vec2 d(L * cosf(m_angle), L * sinf(m_angle));
 		b2Vec2 point2 = point1 + d;
 
-
 		RayCastCallback callback;
 
 		m_world->RayCast(&callback, point1, point2);

@@ -71,7 +71,7 @@ public:
 	/// @param output the ray-cast results.
 	/// @param input the ray-cast input parameters.
 	/// @param transform the transform to be applied to the shape.
-	virtual void RayCast(b2RayCastOutput* output, const b2RayCastInput& input, const b2Transform& transform) const = 0;
+	virtual bool RayCast(b2RayCastOutput* output, const b2RayCastInput& input, const b2Transform& transform) const = 0;
 
 	/// Given a transform, compute the associated axis aligned bounding box for this shape.
 	/// @param aabb returns the axis aligned box.

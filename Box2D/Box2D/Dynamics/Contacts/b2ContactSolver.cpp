@@ -94,13 +94,13 @@ b2ContactSolver::b2ContactSolver(const b2TimeStep& step, b2Contact** contacts, i
 
 			float32 kNormal = bodyA->m_invMass + bodyB->m_invMass + bodyA->m_invI * rnA + bodyB->m_invI * rnB;
 
-			b2Assert(kNormal > B2_FLT_EPSILON);
+			b2Assert(kNormal > b2_epsilon);
 			ccp->normalMass = 1.0f / kNormal;
 
 			float32 kEqualized = bodyA->m_mass * bodyA->m_invMass + bodyB->m_mass * bodyB->m_invMass;
 			kEqualized += bodyA->m_mass * bodyA->m_invI * rnA + bodyB->m_mass * bodyB->m_invI * rnB;
 
-			b2Assert(kEqualized > B2_FLT_EPSILON);
+			b2Assert(kEqualized > b2_epsilon);
 			ccp->equalizedMass = 1.0f / kEqualized;
 
 			b2Vec2 tangent = b2Cross(cc->normal, 1.0f);
@@ -112,7 +112,7 @@ b2ContactSolver::b2ContactSolver(const b2TimeStep& step, b2Contact** contacts, i
 
 			float32 kTangent = bodyA->m_invMass + bodyB->m_invMass + bodyA->m_invI * rtA + bodyB->m_invI * rtB;
 
-			b2Assert(kTangent > B2_FLT_EPSILON);
+			b2Assert(kTangent > b2_epsilon);
 			ccp->tangentMass = 1.0f /  kTangent;
 
 			// Setup a velocity bias for restitution.
@@ -597,7 +597,7 @@ struct b2PositionSolverManifold
 			{
 				b2Vec2 pointA = cc->bodyA->GetWorldPoint(cc->localPoint);
 				b2Vec2 pointB = cc->bodyB->GetWorldPoint(cc->points[0].localPoint);
-				if (b2DistanceSquared(pointA, pointB) > B2_FLT_EPSILON * B2_FLT_EPSILON)
+				if (b2DistanceSquared(pointA, pointB) > b2_epsilon * b2_epsilon)
 				{
 					m_normal = pointB - pointA;
 					m_normal.Normalize();

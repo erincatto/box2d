@@ -60,6 +60,7 @@ public:
 			for (int i = 0; i < e_rowCount; ++i)
 			{
 				b2BodyDef bd;
+				bd.type = b2_dynamicBody;
 
 				float32 x = 0.0f;
 				//float32 x = RandomFloat(-0.02f, 0.02f);
@@ -95,7 +96,8 @@ public:
 				fd.restitution = 0.05f;
 
 				b2BodyDef bd;
-				bd.isBullet = true;
+				bd.type = b2_dynamicBody;
+				bd.bullet = true;
 				bd.position.Set(-31.0f, 5.0f);
 
 				m_bullet = m_world->CreateBody(&bd);

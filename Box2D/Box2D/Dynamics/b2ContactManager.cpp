@@ -113,7 +113,7 @@ void b2ContactManager::Collide()
 		b2Body* bodyA = fixtureA->GetBody();
 		b2Body* bodyB = fixtureB->GetBody();
 
-		if (bodyA->IsSleeping() && bodyB->IsSleeping())
+		if (bodyA->IsAwake() == false && bodyB->IsAwake() == false)
 		{
 			c = c->GetNext();
 			continue;
@@ -122,17 +122,8 @@ void b2ContactManager::Collide()
 		// Is this contact flagged for filtering?
 		if (c->m_flags & b2Contact::e_filterFlag)
 		{
-			// Are both bodies static?
-			if (bodyA->IsStatic() && bodyB->IsStatic())
-			{
-				b2Contact* cNuke = c;
-				c = cNuke->GetNext();
-				Destroy(cNuke);
-				continue;
-			}
-
-			// Does a joint override collision?
-			if (bodyB->IsConnected(bodyA))
+			// Should these bodies collide?
+			if (bodyB->ShouldCollide(bodyA) == false)
 			{
 				b2Contact* cNuke = c;
 				c = cNuke->GetNext();
@@ -191,12 +182,6 @@ void b2ContactManager::AddPair(void* proxyUserDataA, void* proxyUserDataB)
 		return;
 	}
 
-	// Are both bodies static?
-	if (bodyA->IsStatic() && bodyB->IsStatic())
-	{
-		return;
-	}
-
 	// Does a contact already exist?
 	b2ContactEdge* edge = bodyB->GetContactList();
 	while (edge)
@@ -221,8 +206,8 @@ void b2ContactManager::AddPair(void* proxyUserDataA, void* proxyUserDataB)
 		edge = edge->next;
 	}
 
-	// Does a joint override collision?
-	if (bodyB->IsConnected(bodyA))
+	// Does a joint override collision? Is at least one body dynamic?
+	if (bodyB->ShouldCollide(bodyA) == false)
 	{
 		return;
 	}

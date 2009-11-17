@@ -63,17 +63,13 @@ class b2Contact
 {
 public:
 
-	/// Get the contact manifold. Do not set the point count to zero. Instead
-	/// call Disable.
+	/// Get the contact manifold. Do not modify the manifold unless you understand the
+	/// internals of Box2D.
 	b2Manifold* GetManifold();
+	const b2Manifold* GetManifold() const;
 
 	/// Get the world manifold.
 	void GetWorldManifold(b2WorldManifold* worldManifold) const;
-
-	/// Is this contact solid? Returns false if the shapes are separate,
-	/// sensors, or the contact has been disabled.
-	/// @return true if this contact should generate a response.
-	bool IsSolid() const;
 
 	/// Is this contact touching.
 	bool IsTouching() const;
@@ -82,21 +78,30 @@ public:
 	bool IsContinuous() const;
 
     /// Change this to be a sensor or non-sensor contact.
-	void SetAsSensor(bool sensor);
+	void SetSensor(bool sensor);
 
-	/// Disable this contact. This can be used inside the pre-solve
+	/// Is this contact a sensor?
+	bool IsSensor() const;
+
+	/// Enable/disable this contact. This can be used inside the pre-solve
 	/// contact listener. The contact is only disabled for the current
 	/// time step (or sub-step in continuous collisions).
-	void Disable();
+	void SetEnabled(bool flag);
+
+	/// Has this contact been disabled?
+	bool IsEnabled() const;
 
 	/// Get the next contact in the world's contact list.
 	b2Contact* GetNext();
+	const b2Contact* GetNext() const;
 
 	/// Get the first fixture in this contact.
 	b2Fixture* GetFixtureA();
+	const b2Fixture* GetFixtureA() const;
 
 	/// Get the second fixture in this contact.
 	b2Fixture* GetFixtureB();
+	const b2Fixture* GetFixtureB() const;
 
 	/// Flag this contact for filtering. Filtering will occur the next time step.
 	void FlagForFiltering();
@@ -121,8 +126,8 @@ protected:
 		e_toiFlag			= 0x0008,
         // Set when the shapes are touching.
 		e_touchingFlag		= 0x0010,
-		// Disabled (by user)
-		e_disabledFlag		= 0x0020,
+		// This contact can be disabled (by user)
+		e_enabledFlag		= 0x0020,
 		// This contact needs filtering because a fixture filter was changed.
 		e_filterFlag		= 0x0040,
 	};
@@ -169,6 +174,11 @@ inline b2Manifold* b2Contact::GetManifold()
 	return &m_manifold;
 }
 
+inline const b2Manifold* b2Contact::GetManifold() const
+{
+	return &m_manifold;
+}
+
 inline void b2Contact::GetWorldManifold(b2WorldManifold* worldManifold) const
 {
 	const b2Body* bodyA = m_fixtureA->GetBody();
@@ -179,13 +189,7 @@ inline void b2Contact::GetWorldManifold(b2WorldManifold* worldManifold) const
 	worldManifold->Initialize(&m_manifold, bodyA->GetTransform(), shapeA->m_radius, bodyB->GetTransform(), shapeB->m_radius);
 }
 
-inline bool b2Contact::IsSolid() const
-{
-	uint32 nonSolid = e_sensorFlag | e_disabledFlag;
-	return (m_flags & nonSolid) == 0;
-}
-
-inline void b2Contact::SetAsSensor(bool sensor)
+inline void b2Contact::SetSensor(bool sensor)
 {
 	if (sensor)
 	{
@@ -197,22 +201,44 @@ inline void b2Contact::SetAsSensor(bool sensor)
 	}
 }
 
-inline void b2Contact::Disable()
+inline bool b2Contact::IsSensor() const
 {
-	m_flags |= e_disabledFlag;
+	return (m_flags & e_sensorFlag) == e_sensorFlag;
+}
+
+inline void b2Contact::SetEnabled(bool flag)
+{
+	if (flag)
+	{
+		m_flags |= e_enabledFlag;
+	}
+	else
+	{
+		m_flags &= ~e_enabledFlag;
+	}
+}
+
+inline bool b2Contact::IsEnabled() const
+{
+	return (m_flags & e_enabledFlag) == e_enabledFlag;
 }
 
 inline bool b2Contact::IsTouching() const
 {
-	return (m_flags & e_touchingFlag) != 0;
+	return (m_flags & e_touchingFlag) == e_touchingFlag;
 }
 
 inline bool b2Contact::IsContinuous() const
 {
-	return (m_flags & e_continuousFlag) != 0;
+	return (m_flags & e_continuousFlag) == e_continuousFlag;
 }
 
 inline b2Contact* b2Contact::GetNext()
+{
+	return m_next;
+}
+
+inline const b2Contact* b2Contact::GetNext() const
 {
 	return m_next;
 }
@@ -222,7 +248,17 @@ inline b2Fixture* b2Contact::GetFixtureA()
 	return m_fixtureA;
 }
 
+inline const b2Fixture* b2Contact::GetFixtureA() const
+{
+	return m_fixtureA;
+}
+
 inline b2Fixture* b2Contact::GetFixtureB()
+{
+	return m_fixtureB;
+}
+
+inline const b2Fixture* b2Contact::GetFixtureB() const
 {
 	return m_fixtureB;
 }
