@@ -244,7 +244,7 @@ bool b2PolygonShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& inpu
 			}
 		}
 
-		if (upper < lower)
+		if (upper < lower - b2_epsilon)
 		{
 			return false;
 		}
