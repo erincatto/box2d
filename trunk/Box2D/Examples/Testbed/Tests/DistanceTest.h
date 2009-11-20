@@ -84,19 +84,11 @@ public:
 		b2Vec2 x1 = output.pointA;
 		b2Vec2 x2 = output.pointB;
 
-		glPointSize(4.0f);
-		glColor4f(1.0f, 0.0f, 0.0f,1);
-		glBegin(GL_POINTS);
-		glVertex2f(x1.x, x1.y);
-		glVertex2f(x2.x, x2.y);
-		glEnd();
-		glPointSize(1.0f);
+		b2Color c1(1.0f, 0.0f, 0.0f);
+		m_debugDraw.DrawPoint(x1, 4.0f, c1);
 
-		glColor4f(1.0f, 1.0f, 0.0f,1);
-		glBegin(GL_LINES);
-		glVertex2f(x1.x, x1.y);
-		glVertex2f(x2.x, x2.y);
-		glEnd();
+		b2Color c2(1.0f, 1.0f, 0.0f);
+		m_debugDraw.DrawPoint(x2, 4.0f, c2);
 	}
 
 	void Keyboard(unsigned char key)

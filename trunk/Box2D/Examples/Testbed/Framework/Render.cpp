@@ -119,7 +119,7 @@ void DebugDraw::DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b2Color& c
 	glEnd();
 }
 
-void DebugDraw::DrawXForm(const b2Transform& xf)
+void DebugDraw::DrawTransform(const b2Transform& xf)
 {
 	b2Vec2 p1 = xf.position, p2;
 	const float32 k_axisScale = 0.4f;

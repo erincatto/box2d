@@ -62,7 +62,7 @@ public:
 
 			b2FixtureDef fd;
 			fd.shape = &shape;
-			fd.friction = 0.5f;
+			fd.friction = 0.6f;
 			fd.density = 2.0f;
 			m_platform->CreateFixture(&fd);
 
@@ -98,7 +98,7 @@ public:
 
 			b2FixtureDef fd;
 			fd.shape = &shape;
-			fd.friction = 0.5f;
+			fd.friction = 0.6f;
 			fd.density = 2.0f;
 
 			body->CreateFixture(&fd);
