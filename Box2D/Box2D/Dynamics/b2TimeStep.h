@@ -30,6 +30,7 @@ struct b2TimeStep
 	int32 velocityIterations;
 	int32 positionIterations;
 	bool warmStarting;
+	bool resetForces;
 };
 
 #endif

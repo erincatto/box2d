@@ -20,7 +20,7 @@
 
 const b2Vec2 b2Vec2_zero(0.0f, 0.0f);
 const b2Mat22 b2Mat22_identity(1.0f, 0.0f, 0.0f, 1.0f);
-const b2Transform b2XForm_identity(b2Vec2_zero, b2Mat22_identity);
+const b2Transform b2Transform_identity(b2Vec2_zero, b2Mat22_identity);
 
 /// Solve A * x = b, where b is a column vector. This is more efficient
 /// than computing the inverse in one-shot cases.

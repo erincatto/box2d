@@ -380,7 +380,7 @@ struct b2Sweep
 
 extern const b2Vec2 b2Vec2_zero;
 extern const b2Mat22 b2Mat22_identity;
-extern const b2Transform b2XForm_identity;
+extern const b2Transform b2Transform_identity;
 
 /// Perform the dot product on two vectors.
 inline float32 b2Dot(const b2Vec2& a, const b2Vec2& b)
