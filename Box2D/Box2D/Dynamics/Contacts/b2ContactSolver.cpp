@@ -547,8 +547,8 @@ bool b2ContactSolver::SolvePositionConstraints(float32 baumgarte)
 		{
 			b2ContactConstraintPoint* ccp = c->points + j;
 
-			b2Vec2 r1 = b2Mul(bodyA->GetXForm().R, ccp->localAnchorA - bodyA->GetLocalCenter());
-			b2Vec2 r2 = b2Mul(bodyB->GetXForm().R, ccp->localAnchorB - bodyB->GetLocalCenter());
+			b2Vec2 r1 = b2Mul(bodyA->GetTransform().R, ccp->localAnchorA - bodyA->GetLocalCenter());
+			b2Vec2 r2 = b2Mul(bodyB->GetTransform().R, ccp->localAnchorB - bodyB->GetLocalCenter());
 
 			b2Vec2 p1 = bodyA->m_sweep.c + r1;
 			b2Vec2 p2 = bodyB->m_sweep.c + r2;

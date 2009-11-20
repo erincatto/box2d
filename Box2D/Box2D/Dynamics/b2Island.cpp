@@ -195,8 +195,11 @@ void b2Island::Solve(const b2TimeStep& step, const b2Vec2& gravity, bool allowSl
 		b->m_angularVelocity += step.dt * b->m_invI * b->m_torque;
 
 		// Reset forces.
-		b->m_force.Set(0.0f, 0.0f);
-		b->m_torque = 0.0f;
+		if (step.resetForces)
+		{
+			b->m_force.SetZero();
+			b->m_torque = 0.0f;
+		}
 
 		// Apply damping.
 		// ODE: dv/dt + c * v = 0

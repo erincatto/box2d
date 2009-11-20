@@ -68,7 +68,7 @@ b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 	m_linearDamping = bd->linearDamping;
 	m_angularDamping = bd->angularDamping;
 
-	m_force.Set(0.0f, 0.0f);
+	m_force.SetZero();
 	m_torque = 0.0f;
 
 	m_sleepTime = 0.0f;
@@ -384,12 +384,6 @@ void b2Body::SetTransform(const b2Vec2& position, float32 angle)
 {
 	b2Assert(m_world->IsLocked() == false);
 	if (m_world->IsLocked() == true)
-	{
-		return;
-	}
-
-	// Static bodies are not allowed to move.
-	if (m_type == b2_staticBody)
 	{
 		return;
 	}
