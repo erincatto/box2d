@@ -1013,8 +1013,8 @@ void b2World::DrawJoint(b2Joint* joint)
 	case e_pulleyJoint:
 		{
 			b2PulleyJoint* pulley = (b2PulleyJoint*)joint;
-			b2Vec2 s1 = pulley->GetGroundAnchor1();
-			b2Vec2 s2 = pulley->GetGroundAnchor2();
+			b2Vec2 s1 = pulley->GetGroundAnchorA();
+			b2Vec2 s2 = pulley->GetGroundAnchorB();
 			m_debugDraw->DrawSegment(s1, p1, color);
 			m_debugDraw->DrawSegment(s2, p2, color);
 			m_debugDraw->DrawSegment(s1, s2, color);

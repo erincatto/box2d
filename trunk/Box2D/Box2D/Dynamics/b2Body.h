@@ -63,6 +63,7 @@ struct b2BodyDef
 		bullet = false;
 		type = b2_staticBody;
 		active = true;
+		inertiaScale = 1.0f;
 	}
 
 	/// Use this to store application specific body data.
@@ -113,6 +114,9 @@ struct b2BodyDef
 	/// The body type: static, kinematic, or dynamic.
 	/// Note: if a dynamic body would have zero mass, the mass is set to one.
 	b2BodyType type;
+
+	/// Experimental: scales the inertia tensor.
+	float32 inertiaScale;
 };
 
 /// A rigid body. These are created via b2World::CreateBody.
@@ -369,6 +373,8 @@ private:
 	friend class b2PrismaticJoint;
 	friend class b2PulleyJoint;
 	friend class b2RevoluteJoint;
+	friend class b2WeldJoint;
+	friend class b2FrictionJoint;
 
 	// m_flags
 	enum
@@ -420,6 +426,8 @@ private:
 
 	float32 m_mass, m_invMass;
 	float32 m_I, m_invI;
+
+	float32 m_inertiaScale;
 
 	float32 m_linearDamping;
 	float32 m_angularDamping;

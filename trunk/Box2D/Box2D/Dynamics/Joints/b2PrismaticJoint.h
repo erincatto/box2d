@@ -32,8 +32,8 @@ struct b2PrismaticJointDef : public b2JointDef
 	b2PrismaticJointDef()
 	{
 		type = e_prismaticJoint;
-		localAnchor1.SetZero();
-		localAnchor2.SetZero();
+		localAnchorA.SetZero();
+		localAnchorB.SetZero();
 		localAxis1.Set(1.0f, 0.0f);
 		referenceAngle = 0.0f;
 		enableLimit = false;
@@ -46,13 +46,13 @@ struct b2PrismaticJointDef : public b2JointDef
 
 	/// Initialize the bodies, anchors, axis, and reference angle using the world
 	/// anchor and world axis.
-	void Initialize(b2Body* body1, b2Body* body2, const b2Vec2& anchor, const b2Vec2& axis);
+	void Initialize(b2Body* bodyA, b2Body* bodyB, const b2Vec2& anchor, const b2Vec2& axis);
 
 	/// The local anchor point relative to body1's origin.
-	b2Vec2 localAnchor1;
+	b2Vec2 localAnchorA;
 
 	/// The local anchor point relative to body2's origin.
-	b2Vec2 localAnchor2;
+	b2Vec2 localAnchorB;
 
 	/// The local translation axis in body1.
 	b2Vec2 localAxis1;

@@ -378,6 +378,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Box2D\Dynamics\Joints\b2FrictionJoint.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Box2D\Dynamics\Joints\b2FrictionJoint.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Box2D\Dynamics\Joints\b2GearJoint.cpp"
 					>
 				</File>
@@ -431,6 +439,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Box2D\Dynamics\Joints\b2RevoluteJoint.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Box2D\Dynamics\Joints\b2WeldJoint.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Box2D\Dynamics\Joints\b2WeldJoint.h"
 					>
 				</File>
 			</Filter>

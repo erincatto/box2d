@@ -234,6 +234,11 @@ void b2Island::Solve(const b2TimeStep& step, const b2Vec2& gravity, bool allowSl
 	}
 
 	// Post-solve (store impulses for warm starting).
+	for (int32 i = 0; i < m_jointCount; ++i)
+	{
+		m_joints[i]->FinalizeVelocityConstraints();
+	}
+
 	contactSolver.FinalizeVelocityConstraints();
 
 	// Integrate positions.
