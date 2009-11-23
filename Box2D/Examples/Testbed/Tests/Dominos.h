@@ -183,9 +183,9 @@ public:
 		b2DistanceJointDef djd;
 		djd.bodyA = b3;
 		djd.bodyB = b7;
-		djd.localAnchor1.Set(6.0f, 0.0f);
-		djd.localAnchor2.Set(0.0f, -1.0f);
-		b2Vec2 d = djd.bodyB->GetWorldPoint(djd.localAnchor2) - djd.bodyA->GetWorldPoint(djd.localAnchor1);
+		djd.localAnchorA.Set(6.0f, 0.0f);
+		djd.localAnchorB.Set(0.0f, -1.0f);
+		b2Vec2 d = djd.bodyB->GetWorldPoint(djd.localAnchorB) - djd.bodyA->GetWorldPoint(djd.localAnchorA);
 		djd.length = d.Length();
 		m_world->CreateJoint(&djd);
 

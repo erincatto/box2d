@@ -91,8 +91,8 @@ void b2PrismaticJointDef::Initialize(b2Body* b1, b2Body* b2, const b2Vec2& ancho
 {
 	bodyA = b1;
 	bodyB = b2;
-	localAnchor1 = bodyA->GetLocalPoint(anchor);
-	localAnchor2 = bodyB->GetLocalPoint(anchor);
+	localAnchorA = bodyA->GetLocalPoint(anchor);
+	localAnchorB = bodyB->GetLocalPoint(anchor);
 	localAxis1 = bodyA->GetLocalVector(axis);
 	referenceAngle = bodyB->GetAngle() - bodyA->GetAngle();
 }
@@ -100,8 +100,8 @@ void b2PrismaticJointDef::Initialize(b2Body* b1, b2Body* b2, const b2Vec2& ancho
 b2PrismaticJoint::b2PrismaticJoint(const b2PrismaticJointDef* def)
 : b2Joint(def)
 {
-	m_localAnchor1 = def->localAnchor1;
-	m_localAnchor2 = def->localAnchor2;
+	m_localAnchor1 = def->localAnchorA;
+	m_localAnchor2 = def->localAnchorB;
 	m_localXAxis1 = def->localAxis1;
 	m_localYAxis1 = b2Cross(1.0f, m_localXAxis1);
 	m_refAngle = def->referenceAngle;

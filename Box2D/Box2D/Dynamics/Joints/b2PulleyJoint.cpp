@@ -46,36 +46,36 @@ void b2PulleyJointDef::Initialize(b2Body* b1, b2Body* b2,
 {
 	bodyA = b1;
 	bodyB = b2;
-	groundAnchor1 = ga1;
-	groundAnchor2 = ga2;
-	localAnchor1 = bodyA->GetLocalPoint(anchor1);
-	localAnchor2 = bodyB->GetLocalPoint(anchor2);
+	groundAnchorA = ga1;
+	groundAnchorB = ga2;
+	localAnchorA = bodyA->GetLocalPoint(anchor1);
+	localAnchorB = bodyB->GetLocalPoint(anchor2);
 	b2Vec2 d1 = anchor1 - ga1;
-	length1 = d1.Length();
+	lengthA = d1.Length();
 	b2Vec2 d2 = anchor2 - ga2;
-	length2 = d2.Length();
+	lengthB = d2.Length();
 	ratio = r;
 	b2Assert(ratio > b2_epsilon);
-	float32 C = length1 + ratio * length2;
-	maxLength1 = C - ratio * b2_minPulleyLength;
-	maxLength2 = (C - b2_minPulleyLength) / ratio;
+	float32 C = lengthA + ratio * lengthB;
+	maxLengthA = C - ratio * b2_minPulleyLength;
+	maxLengthB = (C - b2_minPulleyLength) / ratio;
 }
 
 b2PulleyJoint::b2PulleyJoint(const b2PulleyJointDef* def)
 : b2Joint(def)
 {
-	m_groundAnchor1 = def->groundAnchor1;
-	m_groundAnchor2 = def->groundAnchor2;
-	m_localAnchor1 = def->localAnchor1;
-	m_localAnchor2 = def->localAnchor2;
+	m_groundAnchor1 = def->groundAnchorA;
+	m_groundAnchor2 = def->groundAnchorB;
+	m_localAnchor1 = def->localAnchorA;
+	m_localAnchor2 = def->localAnchorB;
 
 	b2Assert(def->ratio != 0.0f);
 	m_ratio = def->ratio;
 
-	m_constant = def->length1 + m_ratio * def->length2;
+	m_constant = def->lengthA + m_ratio * def->lengthB;
 
-	m_maxLength1 = b2Min(def->maxLength1, m_constant - m_ratio * b2_minPulleyLength);
-	m_maxLength2 = b2Min(def->maxLength2, (m_constant - b2_minPulleyLength) / m_ratio);
+	m_maxLength1 = b2Min(def->maxLengthA, m_constant - m_ratio * b2_minPulleyLength);
+	m_maxLength2 = b2Min(def->maxLengthB, (m_constant - b2_minPulleyLength) / m_ratio);
 
 	m_impulse = 0.0f;
 	m_limitImpulse1 = 0.0f;
@@ -395,12 +395,12 @@ float32 b2PulleyJoint::GetReactionTorque(float32 inv_dt) const
 	return 0.0f;
 }
 
-b2Vec2 b2PulleyJoint::GetGroundAnchor1() const
+b2Vec2 b2PulleyJoint::GetGroundAnchorA() const
 {
 	return m_groundAnchor1;
 }
 
-b2Vec2 b2PulleyJoint::GetGroundAnchor2() const
+b2Vec2 b2PulleyJoint::GetGroundAnchorB() const
 {
 	return m_groundAnchor2;
 }

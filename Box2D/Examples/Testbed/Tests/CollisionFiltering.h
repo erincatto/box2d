@@ -105,8 +105,8 @@ public:
 			jd.bodyA = body2;
 			jd.bodyB = body;
 			jd.enableLimit = true;
-			jd.localAnchor1.Set(0.0f, 4.0f);
-			jd.localAnchor2.SetZero();
+			jd.localAnchorA.Set(0.0f, 4.0f);
+			jd.localAnchorB.SetZero();
 			jd.localAxis1.Set(0.0f, 1.0f);
 			jd.lowerTranslation = -1.0f;
 			jd.upperTranslation = 1.0f;

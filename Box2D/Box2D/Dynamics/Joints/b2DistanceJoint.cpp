@@ -40,8 +40,8 @@ void b2DistanceJointDef::Initialize(b2Body* b1, b2Body* b2,
 {
 	bodyA = b1;
 	bodyB = b2;
-	localAnchor1 = bodyA->GetLocalPoint(anchor1);
-	localAnchor2 = bodyB->GetLocalPoint(anchor2);
+	localAnchorA = bodyA->GetLocalPoint(anchor1);
+	localAnchorB = bodyB->GetLocalPoint(anchor2);
 	b2Vec2 d = anchor2 - anchor1;
 	length = d.Length();
 }
@@ -50,8 +50,8 @@ void b2DistanceJointDef::Initialize(b2Body* b1, b2Body* b2,
 b2DistanceJoint::b2DistanceJoint(const b2DistanceJointDef* def)
 : b2Joint(def)
 {
-	m_localAnchor1 = def->localAnchor1;
-	m_localAnchor2 = def->localAnchor2;
+	m_localAnchor1 = def->localAnchorA;
+	m_localAnchor2 = def->localAnchorB;
 	m_length = def->length;
 	m_frequencyHz = def->frequencyHz;
 	m_dampingRatio = def->dampingRatio;
