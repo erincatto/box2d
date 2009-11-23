@@ -36,7 +36,8 @@ enum b2JointType
 	e_mouseJoint,
 	e_gearJoint,
 	e_lineJoint,
-    e_fixedJoint
+    e_weldJoint,
+	e_frictionJoint,
 };
 
 enum b2LimitState
@@ -152,6 +153,7 @@ protected:
 
 	virtual void InitVelocityConstraints(const b2TimeStep& step) = 0;
 	virtual void SolveVelocityConstraints(const b2TimeStep& step) = 0;
+	virtual void FinalizeVelocityConstraints() {}
 
 	// This returns true if the position errors are within tolerance.
 	virtual bool SolvePositionConstraints(float32 baumgarte) = 0;

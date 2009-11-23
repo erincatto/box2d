@@ -25,6 +25,7 @@
 #include "BodyTypes.h"
 #include "Breakable.h"
 #include "Bridge.h"
+#include "Cantilever.h"
 #include "CCDTest.h"
 #include "Chain.h"
 #include "CollisionFiltering.h"
@@ -57,6 +58,8 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Apply Force", ApplyForce::Create},
+	{"Cantilever", Cantilever::Create},
 	{"Body Types", BodyTypes::Create},
 	{"CCD Test", CCDTest::Create},
 	{"SphereStack", SphereStack::Create},
@@ -69,7 +72,6 @@ TestEntry g_testEntries[] =
 	{"Pyramid", Pyramid::Create},
 	{"PolyCollision", PolyCollision::Create},
 	{"One-Sided Platform", OneSidedPlatform::Create},
-	{"Apply Force", ApplyForce::Create},
 	{"Chain", Chain::Create},
 	{"Collision Filtering", CollisionFiltering::Create},
 	{"Collision Processing", CollisionProcessing::Create},
