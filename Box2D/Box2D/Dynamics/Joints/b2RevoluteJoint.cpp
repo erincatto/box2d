@@ -37,16 +37,16 @@ void b2RevoluteJointDef::Initialize(b2Body* b1, b2Body* b2, const b2Vec2& anchor
 {
 	bodyA = b1;
 	bodyB = b2;
-	localAnchor1 = bodyA->GetLocalPoint(anchor);
-	localAnchor2 = bodyB->GetLocalPoint(anchor);
+	localAnchorA = bodyA->GetLocalPoint(anchor);
+	localAnchorB = bodyB->GetLocalPoint(anchor);
 	referenceAngle = bodyB->GetAngle() - bodyA->GetAngle();
 }
 
 b2RevoluteJoint::b2RevoluteJoint(const b2RevoluteJointDef* def)
 : b2Joint(def)
 {
-	m_localAnchor1 = def->localAnchor1;
-	m_localAnchor2 = def->localAnchor2;
+	m_localAnchor1 = def->localAnchorA;
+	m_localAnchor2 = def->localAnchorB;
 	m_referenceAngle = def->referenceAngle;
 
 	m_impulse.SetZero();

@@ -53,8 +53,8 @@ public:
 			b2RevoluteJointDef jd1;
 			jd1.bodyA = ground;
 			jd1.bodyB = body1;
-			jd1.localAnchor1 = ground->GetLocalPoint(bd1.position);
-			jd1.localAnchor2 = body1->GetLocalPoint(bd1.position);
+			jd1.localAnchorA = ground->GetLocalPoint(bd1.position);
+			jd1.localAnchorB = body1->GetLocalPoint(bd1.position);
 			jd1.referenceAngle = body1->GetAngle() - ground->GetAngle();
 			m_joint1 = (b2RevoluteJoint*)m_world->CreateJoint(&jd1);
 
