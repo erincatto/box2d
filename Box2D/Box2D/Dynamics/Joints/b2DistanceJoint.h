@@ -32,8 +32,8 @@ struct b2DistanceJointDef : public b2JointDef
 	b2DistanceJointDef()
 	{
 		type = e_distanceJoint;
-		localAnchor1.Set(0.0f, 0.0f);
-		localAnchor2.Set(0.0f, 0.0f);
+		localAnchorA.Set(0.0f, 0.0f);
+		localAnchorB.Set(0.0f, 0.0f);
 		length = 1.0f;
 		frequencyHz = 0.0f;
 		dampingRatio = 0.0f;
@@ -41,14 +41,14 @@ struct b2DistanceJointDef : public b2JointDef
 
 	/// Initialize the bodies, anchors, and length using the world
 	/// anchors.
-	void Initialize(b2Body* body1, b2Body* body2,
-					const b2Vec2& anchor1, const b2Vec2& anchor2);
+	void Initialize(b2Body* bodyA, b2Body* bodyB,
+					const b2Vec2& anchorA, const b2Vec2& anchorB);
 
 	/// The local anchor point relative to body1's origin.
-	b2Vec2 localAnchor1;
+	b2Vec2 localAnchorA;
 
 	/// The local anchor point relative to body2's origin.
-	b2Vec2 localAnchor2;
+	b2Vec2 localAnchorB;
 
 	/// The equilibrium length between the anchor points.
 	float32 length;

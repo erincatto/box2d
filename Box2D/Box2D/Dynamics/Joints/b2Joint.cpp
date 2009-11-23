@@ -24,6 +24,8 @@
 #include <Box2D/Dynamics/Joints/b2PrismaticJoint.h>
 #include <Box2D/Dynamics/Joints/b2PulleyJoint.h>
 #include <Box2D/Dynamics/Joints/b2GearJoint.h>
+#include <Box2D/Dynamics/Joints/b2WeldJoint.h>
+#include <Box2D/Dynamics/Joints/b2FrictionJoint.h>
 #include <Box2D/Dynamics/b2Body.h>
 #include <Box2D/Dynamics/b2World.h>
 #include <Box2D/Common/b2BlockAllocator.h>
@@ -84,7 +86,21 @@ b2Joint* b2Joint::Create(const b2JointDef* def, b2BlockAllocator* allocator)
 			joint = new (mem) b2LineJoint((b2LineJointDef*)def);
 		}
 		break;
+
+	case e_weldJoint:
+		{
+			void* mem = allocator->Allocate(sizeof(b2WeldJoint));
+			joint = new (mem) b2WeldJoint((b2WeldJointDef*)def);
+		}
+		break;
         
+	case e_frictionJoint:
+		{
+			void* mem = allocator->Allocate(sizeof(b2FrictionJoint));
+			joint = new (mem) b2FrictionJoint((b2FrictionJointDef*)def);
+		}
+		break;
+
 	default:
 		b2Assert(false);
 		break;
@@ -126,6 +142,10 @@ void b2Joint::Destroy(b2Joint* joint, b2BlockAllocator* allocator)
 		allocator->Free(joint, sizeof(b2LineJoint));
 		break;
     
+	case e_weldJoint:
+		allocator->Free(joint, sizeof(b2WeldJoint));
+		break;
+
 	default:
 		b2Assert(false);
 		break;

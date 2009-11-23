@@ -37,8 +37,8 @@ struct b2RevoluteJointDef : public b2JointDef
 	b2RevoluteJointDef()
 	{
 		type = e_revoluteJoint;
-		localAnchor1.Set(0.0f, 0.0f);
-		localAnchor2.Set(0.0f, 0.0f);
+		localAnchorA.Set(0.0f, 0.0f);
+		localAnchorB.Set(0.0f, 0.0f);
 		referenceAngle = 0.0f;
 		lowerAngle = 0.0f;
 		upperAngle = 0.0f;
@@ -48,15 +48,15 @@ struct b2RevoluteJointDef : public b2JointDef
 		enableMotor = false;
 	}
 
-	/// Initialize the bodies, anchors, and reference angle using the world
-	/// anchor.
-	void Initialize(b2Body* body1, b2Body* body2, const b2Vec2& anchor);
+	/// Initialize the bodies, anchors, and reference angle using a world
+	/// anchor point.
+	void Initialize(b2Body* bodyA, b2Body* bodyB, const b2Vec2& anchor);
 
 	/// The local anchor point relative to body1's origin.
-	b2Vec2 localAnchor1;
+	b2Vec2 localAnchorA;
 
 	/// The local anchor point relative to body2's origin.
-	b2Vec2 localAnchor2;
+	b2Vec2 localAnchorB;
 
 	/// The body2 angle minus body1 angle in the reference state (radians).
 	float32 referenceAngle;
@@ -81,7 +81,7 @@ struct b2RevoluteJointDef : public b2JointDef
 	float32 maxMotorTorque;
 };
 
-/// A revolute joint constrains to bodies to share a common point while they
+/// A revolute joint constrains two bodies to share a common point while they
 /// are free to rotate about the point. The relative rotation about the shared
 /// point is the joint angle. You can limit the relative rotation with
 /// a joint limit that specifies a lower and upper angle. You can use a motor
