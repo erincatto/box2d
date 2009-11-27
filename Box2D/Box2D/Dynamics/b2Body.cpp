@@ -24,6 +24,14 @@
 
 b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 {
+	b2Assert(bd->position.IsValid());
+	b2Assert(bd->linearVelocity.IsValid());
+	b2Assert(b2IsValid(bd->angle));
+	b2Assert(b2IsValid(bd->angularVelocity));
+	b2Assert(b2IsValid(bd->inertiaScale) && bd->inertiaScale >= 0.0f);
+	b2Assert(b2IsValid(bd->angularDamping) && bd->angularDamping >= 0.0f);
+	b2Assert(b2IsValid(bd->linearDamping) && bd->linearDamping >= 0.0f);
+
 	m_flags = 0;
 
 	if (bd->bullet)

@@ -66,11 +66,13 @@ public:
 	b2Vec2 GetReactionForce(float32 inv_dt) const;
 	float32 GetReactionTorque(float32 inv_dt) const;
 
-	/// Get the gear ratio.
+	/// Set/Get the gear ratio.
+	void SetRatio(float32 ratio);
 	float32 GetRatio() const;
 
-	//--------------- Internals Below -------------------
+protected:
 
+	friend class b2Joint;
 	b2GearJoint(const b2GearJointDef* data);
 
 	void InitVelocityConstraints(const b2TimeStep& step);

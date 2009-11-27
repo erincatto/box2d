@@ -122,10 +122,10 @@ public:
 	/// Get the anchor point on bodyB in world coordinates.
 	virtual b2Vec2 GetAnchorB() const = 0;
 
-	/// Get the reaction force on body2 at the joint anchor.
+	/// Get the reaction force on body2 at the joint anchor in Newtons.
 	virtual b2Vec2 GetReactionForce(float32 inv_dt) const = 0;
 
-	/// Get the reaction torque on body2.
+	/// Get the reaction torque on body2 in N*m.
 	virtual float32 GetReactionTorque(float32 inv_dt) const = 0;
 
 	/// Get the next joint the world joint list.

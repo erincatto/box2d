@@ -135,7 +135,11 @@ public:
 	/// Get the current motor torque, usually in N-m.
 	float32 GetMotorTorque() const;
 
-	//--------------- Internals Below -------------------
+protected:
+	
+	friend class b2Joint;
+	friend class b2GearJoint;
+
 	b2RevoluteJoint(const b2RevoluteJointDef* def);
 
 	void InitVelocityConstraints(const b2TimeStep& step);
