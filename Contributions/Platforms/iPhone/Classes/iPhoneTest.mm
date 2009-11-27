@@ -123,7 +123,7 @@ class QueryCallback : public b2QueryCallback
 		bool ReportFixture(b2Fixture* fixture)
 		{
 			b2Body* body = fixture->GetBody();
-			if (body->IsStatic() == false)
+			if (body->GetType() == b2_dynamicBody)
 			{
 				bool inside = fixture->TestPoint(m_point);
 				if (inside)
@@ -143,6 +143,7 @@ class QueryCallback : public b2QueryCallback
 		b2Fixture* m_fixture;
 	};
 
+
 void Test::MouseDown(const b2Vec2& p)
 {
 	m_mouseWorld = p;
@@ -161,14 +162,14 @@ void Test::MouseDown(const b2Vec2& p)
 	
 	// Query the world for overlapping shapes.
 	QueryCallback callback(p);
-	m_world->Query(&callback, aabb);
+	m_world->QueryAABB(&callback, aabb);
 	
 	if (callback.m_fixture)
 	{
 		b2Body* body = callback.m_fixture->GetBody();
 		b2MouseJointDef md;
-		md.body1 = m_groundBody;
-		md.body2 = body;
+		md.bodyA = m_groundBody;
+		md.bodyB = body;
 		md.target = p;
 #ifdef TARGET_FLOAT32_IS_FIXED
 		md.maxForce = (body->GetMass() < 16.0)? 
@@ -177,7 +178,7 @@ void Test::MouseDown(const b2Vec2& p)
 		md.maxForce = 1000.0f * body->GetMass();
 #endif
 		m_mouseJoint = (b2MouseJoint*)m_world->CreateJoint(&md);
-		body->WakeUp();
+		body->SetAwake(true);
 	}
 }
 
@@ -253,11 +254,9 @@ void Test::LaunchBomb(const b2Vec2& position, const b2Vec2& velocity)
 	}
 	
 	b2BodyDef bd;
-	bd.massData.mass = 1.0;
-	bd.allowSleep = true;
+	bd.type = b2_dynamicBody;
 	bd.position = position;
-	
-	bd.isBullet = true;
+	bd.bullet = true;
 	m_bomb = m_world->CreateBody(&bd);
 	m_bomb->SetLinearVelocity(velocity);
 	
@@ -277,7 +276,6 @@ void Test::LaunchBomb(const b2Vec2& position, const b2Vec2& velocity)
 	aabb.upperBound = maxV;
 	
 	m_bomb->CreateFixture(&fd);
-	m_bomb->SetMassFromShapes();
 }
 
 void Test::Step(Settings* settings)
@@ -312,7 +310,7 @@ void Test::Step(Settings* settings)
 	
 	m_pointCount = 0;
 	
-	m_world->Step(timeStep, settings->velocityIterations, settings->positionIterations);
+	m_world->Step(timeStep, settings->velocityIterations, settings->positionIterations, true);
 	
 	m_world->DrawDebugData();
 	
@@ -333,10 +331,10 @@ void Test::Step(Settings* settings)
 	
 	if (m_mouseJoint)
 	{
-		b2Body* body = m_mouseJoint->GetBody2();
-		b2Vec2 p1 = body->GetWorldPoint(m_mouseJoint->m_localAnchor);
-		b2Vec2 p2 = m_mouseJoint->m_target;
-		
+//		b2Body* body = m_mouseJoint->GetBodyB();
+//		b2Vec2 p1 = body->GetWorldPoint(m_mouseJoint->m_localAnchor);
+//		b2Vec2 p2 = m_mouseJoint->m_target;
+//		
 //		glPointSize(4.0f);
 //		glColor3f(0.0f, 1.0f, 0.0f);
 //		glBegin(GL_POINTS);
