@@ -247,10 +247,13 @@ float32 b2GearJoint::GetReactionTorque(float32 inv_dt) const
 	return inv_dt * L;
 }
 
+void b2GearJoint::SetRatio(float32 ratio)
+{
+	b2Assert(b2IsValid(ratio));
+	m_ratio = ratio;
+}
+
 float32 b2GearJoint::GetRatio() const
 {
 	return m_ratio;
 }
-
-
-

@@ -107,8 +107,9 @@ public:
 	/// Get the pulley ratio.
 	float32 GetRatio() const;
 
-	//--------------- Internals Below -------------------
+protected:
 
+	friend class b2Joint;
 	b2PulleyJoint(const b2PulleyJointDef* data);
 
 	void InitVelocityConstraints(const b2TimeStep& step);

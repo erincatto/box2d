@@ -50,7 +50,7 @@ struct b2DistanceJointDef : public b2JointDef
 	/// The local anchor point relative to body2's origin.
 	b2Vec2 localAnchorB;
 
-	/// The equilibrium length between the anchor points.
+	/// The natural length between the anchor points.
 	float32 length;
 
 	/// The response speed.
@@ -73,8 +73,21 @@ public:
 	b2Vec2 GetReactionForce(float32 inv_dt) const;
 	float32 GetReactionTorque(float32 inv_dt) const;
 
-	//--------------- Internals Below -------------------
+	// Set/get the natural length.
+	void SetLength(float32 length);
+	float32 GetLength() const;
 
+	// Set/get frequency in Hz.
+	void SetFrequency(float32 hz);
+	float32 GetFrequency() const;
+
+	// Set/get damping ratio.
+	void SetDampingRatio(float32 ratio);
+	float32 GetDampingRatio() const;
+
+protected:
+
+	friend class b2Joint;
 	b2DistanceJoint(const b2DistanceJointDef* data);
 
 	void InitVelocityConstraints(const b2TimeStep& step);
@@ -89,8 +102,38 @@ public:
 	float32 m_gamma;
 	float32 m_bias;
 	float32 m_impulse;
-	float32 m_mass;		// effective mass for the constraint.
+	float32 m_mass;
 	float32 m_length;
 };
+
+inline void b2DistanceJoint::SetLength(float32 length)
+{
+	m_length = length;
+}
+
+inline float32 b2DistanceJoint::GetLength() const
+{
+	return m_length;
+}
+
+inline void b2DistanceJoint::SetFrequency(float32 hz)
+{
+	m_frequencyHz = hz;
+}
+
+inline float32 b2DistanceJoint::GetFrequency() const
+{
+	return m_frequencyHz;
+}
+
+inline void b2DistanceJoint::SetDampingRatio(float32 ratio)
+{
+	m_dampingRatio = ratio;
+}
+
+inline float32 b2DistanceJoint::GetDampingRatio() const
+{
+	return m_dampingRatio;
+}
 
 #endif

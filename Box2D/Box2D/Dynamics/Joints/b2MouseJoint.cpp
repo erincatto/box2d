@@ -31,6 +31,11 @@
 b2MouseJoint::b2MouseJoint(const b2MouseJointDef* def)
 : b2Joint(def)
 {
+	b2Assert(def->target.IsValid());
+	b2Assert(b2IsValid(def->maxForce) && def->maxForce >= 0.0f);
+	b2Assert(b2IsValid(def->frequencyHz) && def->frequencyHz >= 0.0f);
+	b2Assert(b2IsValid(def->dampingRatio) && def->dampingRatio >= 0.0f);
+
 	m_target = def->target;
 	m_localAnchor = b2MulT(m_bodyB->GetTransform(), m_target);
 
@@ -51,6 +56,41 @@ void b2MouseJoint::SetTarget(const b2Vec2& target)
 		m_bodyB->SetAwake(true);
 	}
 	m_target = target;
+}
+
+const b2Vec2& b2MouseJoint::GetTarget() const
+{
+	return m_target;
+}
+
+void b2MouseJoint::SetMaxForce(float32 force)
+{
+	m_maxForce = force;
+}
+
+float32 b2MouseJoint::GetMaxForce() const
+{
+	return m_maxForce;
+}
+
+void b2MouseJoint::SetFrequency(float32 hz)
+{
+	m_frequencyHz = hz;
+}
+
+float32 b2MouseJoint::GetFrequency() const
+{
+	return m_frequencyHz;
+}
+
+void b2MouseJoint::SetDampingRatio(float32 ratio)
+{
+	m_dampingRatio = ratio;
+}
+
+float32 b2MouseJoint::GetDampingRatio() const
+{
+	return m_dampingRatio;
 }
 
 void b2MouseJoint::InitVelocityConstraints(const b2TimeStep& step)

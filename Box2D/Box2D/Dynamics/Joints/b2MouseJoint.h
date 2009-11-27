@@ -75,8 +75,22 @@ public:
 
 	/// Use this to update the target point.
 	void SetTarget(const b2Vec2& target);
+	const b2Vec2& GetTarget() const;
 
-	//--------------- Internals Below -------------------
+	/// Set/get the maximum force in Newtons.
+	void SetMaxForce(float32 force);
+	float32 GetMaxForce() const;
+
+	/// Set/get the frequency in Hertz.
+	void SetFrequency(float32 hz);
+	float32 GetFrequency() const;
+
+	/// Set/get the damping ratio (dimensionless).
+	void SetDampingRatio(float32 ratio);
+	float32 GetDampingRatio() const;
+
+protected:
+	friend class b2Joint;
 
 	b2MouseJoint(const b2MouseJointDef* def);
 
