@@ -121,14 +121,16 @@ public:
 	/// Get the motor speed, usually in meters per second.
 	float32 GetMotorSpeed() const;
 
-	/// Set the maximum motor force, usually in N.
+	/// Set/Get the maximum motor force, usually in N.
 	void SetMaxMotorForce(float32 force);
+	float32 GetMaxMotorForce() const;
 
 	/// Get the current motor force, usually in N.
 	float32 GetMotorForce() const;
 
-	//--------------- Internals Below -------------------
+protected:
 
+	friend class b2Joint;
 	b2LineJoint(const b2LineJointDef* def);
 
 	void InitVelocityConstraints(const b2TimeStep& step);

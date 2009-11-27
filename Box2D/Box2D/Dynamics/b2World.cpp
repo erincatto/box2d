@@ -957,8 +957,6 @@ void b2World::RayCast(b2RayCastCallback* callback, const b2Vec2& point1, const b
 
 void b2World::DrawShape(b2Fixture* fixture, const b2Transform& xf, const b2Color& color)
 {
-	b2Color coreColor(0.9f, 0.6f, 0.6f);
-
 	switch (fixture->GetType())
 	{
 	case b2Shape::e_circle:

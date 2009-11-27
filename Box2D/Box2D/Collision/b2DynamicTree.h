@@ -21,6 +21,8 @@
 
 #include <Box2D/Collision/b2Collision.h>
 
+/// A dynamic AABB tree broad-phase, inspired by Nathanael Presson's btDbvt.
+
 #define b2_nullNode (-1)
 
 /// A node in the dynamic tree. The client does not interact with this directly.
@@ -171,9 +173,15 @@ inline void b2DynamicTree::Query(T* callback, const b2AABB& aabb) const
 			}
 			else
 			{
-				b2Assert(count + 1 < k_stackSize);
-				stack[count++] = node->child1;
-				stack[count++] = node->child2;
+				if (count < k_stackSize)
+				{
+					stack[count++] = node->child1;
+				}
+
+				if (count < k_stackSize)
+				{
+					stack[count++] = node->child2;
+				}
 			}
 		}
 	}
@@ -259,9 +267,15 @@ inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) con
 		}
 		else
 		{
-			b2Assert(count + 1 < k_stackSize);
-			stack[count++] = node->child1;
-			stack[count++] = node->child2;
+			if (count < k_stackSize)
+			{
+				stack[count++] = node->child1;
+			}
+
+			if (count < k_stackSize)
+			{
+				stack[count++] = node->child2;
+			}
 		}
 	}
 }
