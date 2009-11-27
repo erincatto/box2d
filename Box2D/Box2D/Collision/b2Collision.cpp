@@ -17,6 +17,7 @@
 */
 
 #include <Box2D/Collision/b2Collision.h>
+#include <Box2D/Collision/b2Distance.h>
 
 void b2WorldManifold::Initialize(const b2Manifold* manifold,
 						  const b2Transform& xfA, float32 radiusA,
@@ -282,4 +283,24 @@ int32 b2ClipSegmentToLine(b2ClipVertex vOut[2], const b2ClipVertex vIn[2],
 	}
 
 	return numOut;
+}
+
+bool b2TestOverlap(const b2Shape* shapeA, const b2Shape* shapeB,
+				   const b2Transform& xfA, const b2Transform& xfB)
+{
+	b2DistanceInput input;
+	input.proxyA.Set(shapeA);
+	input.proxyB.Set(shapeB);
+	input.transformA = xfA;
+	input.transformB = xfB;
+	input.useRadii = true;
+
+	b2SimplexCache cache;
+	cache.count = 0;
+
+	b2DistanceOutput output;
+
+	b2Distance(&output, &cache, &input);
+
+	return output.distance < 10.0f * b2_epsilon;
 }

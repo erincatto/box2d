@@ -19,6 +19,8 @@
 #ifndef RAY_CAST_H
 #define RAY_CAST_H
 
+// This test demonstrates how to use the world ray-cast feature.
+
 class RayCastCallback : public b2RayCastCallback
 {
 public:

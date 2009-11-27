@@ -320,9 +320,8 @@ void Test::Step(Settings* settings)
 
 	if (m_mouseJoint)
 	{
-		b2Body* body = m_mouseJoint->GetBodyB();
-		b2Vec2 p1 = body->GetWorldPoint(m_mouseJoint->m_localAnchor);
-		b2Vec2 p2 = m_mouseJoint->m_target;
+		b2Vec2 p1 = m_mouseJoint->GetAnchorB();
+		b2Vec2 p2 = m_mouseJoint->GetTarget();
 
 		glPointSize(4.0f);
 		glColor3f(0.0f, 1.0f, 0.0f);

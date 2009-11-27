@@ -61,6 +61,7 @@ struct b2ManifoldPoint
 	b2Vec2 m_localPoint;		///< usage depends on manifold type
 	float32 m_normalImpulse;	///< the non-penetration impulse
 	float32 m_tangentImpulse;	///< the friction impulse
+	float32 m_approachVelocity; ///< approach velocity (pre-solve)
 	b2ContactID m_id;			///< uniquely identifies a contact point between two shapes
 };
 
@@ -217,6 +218,9 @@ void b2CollidePolygons(b2Manifold* manifold,
 int32 b2ClipSegmentToLine(b2ClipVertex vOut[2], const b2ClipVertex vIn[2],
 							const b2Vec2& normal, float32 offset);
 
+/// Determine if two generic shapes overlap.
+bool b2TestOverlap(const b2Shape* shapeA, const b2Shape* shapeB,
+				   const b2Transform& xfA, const b2Transform& xfB);
 
 // ---------------- Inline Functions ------------------------------------------
 

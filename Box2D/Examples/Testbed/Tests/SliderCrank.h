@@ -122,12 +122,12 @@ public:
 		switch (key)
 		{
 		case 'f':
-			m_joint2->m_enableMotor = !m_joint2->m_enableMotor;
+			m_joint2->EnableMotor(!m_joint2->IsMotorEnabled());
 			m_joint2->GetBodyB()->SetAwake(true);
 			break;
 
 		case 'm':
-			m_joint1->m_enableMotor = !m_joint1->m_enableMotor;
+			m_joint1->EnableMotor(!m_joint1->IsMotorEnabled());
 			m_joint1->GetBodyB()->SetAwake(true);
 			break;
 		}
