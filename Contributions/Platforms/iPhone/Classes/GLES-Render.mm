@@ -102,7 +102,7 @@ void GLESDebugDraw::DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b2Colo
 	glDrawArrays(GL_LINES, 0, 2);
 }
 
-void GLESDebugDraw::DrawXForm(const b2Transform& xf)
+void GLESDebugDraw::DrawTransform(const b2Transform& xf)
 {
 	b2Vec2 p1 = xf.position, p2;
 	const float32 k_axisScale = 0.4f;
