@@ -131,8 +131,9 @@ public:
 	/// Get the current motor force, usually in N.
 	float32 GetMotorForce() const;
 
-	//--------------- Internals Below -------------------
-
+protected:
+	friend class b2Joint;
+	friend class b2GearJoint;
 	b2PrismaticJoint(const b2PrismaticJointDef* def);
 
 	void InitVelocityConstraints(const b2TimeStep& step);

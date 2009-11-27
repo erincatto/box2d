@@ -74,6 +74,7 @@ public:
 	float32 GetMaxTorque() const;
 
 protected:
+
 	friend class b2Joint;
 
 	b2FrictionJoint(const b2FrictionJointDef* def);
