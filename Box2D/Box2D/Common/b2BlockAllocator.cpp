@@ -164,14 +164,13 @@ void b2BlockAllocator::Free(void* p, int32 size)
 	// Verify the memory address and size is valid.
 	int32 blockSize = s_blockSizes[index];
 	bool found = false;
-	int32 gap = (int32)((int8*)&m_chunks->blocks - (int8*)m_chunks);
 	for (int32 i = 0; i < m_chunkCount; ++i)
 	{
 		b2Chunk* chunk = m_chunks + i;
 		if (chunk->blockSize != blockSize)
 		{
 			b2Assert(	(int8*)p + blockSize <= (int8*)chunk->blocks ||
-						(int8*)chunk->blocks + b2_chunkSize + gap <= (int8*)p);
+						(int8*)chunk->blocks + b2_chunkSize <= (int8*)p);
 		}
 		else
 		{

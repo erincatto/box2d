@@ -87,11 +87,13 @@ public:
 	/// @param timeStep the amount of time to simulate, this should not vary.
 	/// @param velocityIterations for the velocity constraint solver.
 	/// @param positionIterations for the position constraint solver.
-	/// @param resetForces forces will be reset at the end of the step (normally true).
 	void Step(	float32 timeStep,
 				int32 velocityIterations,
-				int32 positionIterations,
-				bool resetForces);
+				int32 positionIterations);
+
+	/// Call this after you are done with time steps to clear the forces. You normally
+	/// call this after each call to Step, unless you are performing sub-steps.
+	void ClearForces();
 
 	/// Call this to draw shapes and other debug draw data.
 	void DrawDebugData();
