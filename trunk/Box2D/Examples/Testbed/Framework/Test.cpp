@@ -160,12 +160,7 @@ void Test::MouseDown(const b2Vec2& p)
 		md.bodyA = m_groundBody;
 		md.bodyB = body;
 		md.target = p;
-#ifdef TARGET_FLOAT32_IS_FIXED
-		md.maxForce = (body->GetMass() < 16.0)? 
-			(1000.0f * body->GetMass()) : float32(16000.0);
-#else
 		md.maxForce = 1000.0f * body->GetMass();
-#endif
 		m_mouseJoint = (b2MouseJoint*)m_world->CreateJoint(&md);
 		body->SetAwake(true);
 	}
@@ -299,7 +294,8 @@ void Test::Step(Settings* settings)
 
 	m_pointCount = 0;
 
-	m_world->Step(timeStep, settings->velocityIterations, settings->positionIterations, true);
+	m_world->Step(timeStep, settings->velocityIterations, settings->positionIterations);
+	m_world->ClearForces();
 
 	m_world->DrawDebugData();
 
