@@ -42,7 +42,7 @@ b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 	{
 		m_flags |= e_fixedRotationFlag;
 	}
-	if (bd->autoSleep)
+	if (bd->allowSleep)
 	{
 		m_flags |= e_autoSleepFlag;
 	}

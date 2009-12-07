@@ -205,3 +205,25 @@ float32 b2FrictionJoint::GetReactionTorque(float32 inv_dt) const
 {
 	return inv_dt * m_angularImpulse;
 }
+
+void b2FrictionJoint::SetMaxForce(float32 force)
+{
+	b2Assert(b2IsValid(force) && force >= 0.0f);
+	m_maxForce = force;
+}
+
+float32 b2FrictionJoint::GetMaxForce() const
+{
+	return m_maxForce;
+}
+
+void b2FrictionJoint::SetMaxTorque(float32 torque)
+{
+	b2Assert(b2IsValid(torque) && torque >= 0.0f);
+	m_maxTorque = torque;
+}
+
+float32 b2FrictionJoint::GetMaxTorque() const
+{
+	return m_maxTorque;
+}
