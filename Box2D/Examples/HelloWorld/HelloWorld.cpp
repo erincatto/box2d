@@ -84,16 +84,19 @@ int main(int argc, char** argv)
 	// second (60Hz) and 10 iterations. This provides a high quality simulation
 	// in most game scenarios.
 	float32 timeStep = 1.0f / 60.0f;
-	int32 velocityIterations = 8;
-	int32 positionIterations = 1;
-	bool resetForces = true;
+	int32 velocityIterations = 6;
+	int32 positionIterations = 2;
 
 	// This is our little game loop.
 	for (int32 i = 0; i < 60; ++i)
 	{
-		// Instruct the world to perform a single step of simulation and reset the forces.
+		// Instruct the world to perform a single step of simulation.
 		// It is generally best to keep the time step and iterations fixed.
-		world.Step(timeStep, velocityIterations, positionIterations, resetForces);
+		world.Step(timeStep, velocityIterations, positionIterations);
+
+		// Clear applied body forces. We didn't apply any forces, but you
+		// should know about this function.
+		world.ClearForces();
 
 		// Now print the position and angle of the body.
 		b2Vec2 position = body->GetPosition();

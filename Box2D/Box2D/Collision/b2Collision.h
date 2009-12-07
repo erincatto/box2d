@@ -61,7 +61,6 @@ struct b2ManifoldPoint
 	b2Vec2 m_localPoint;		///< usage depends on manifold type
 	float32 m_normalImpulse;	///< the non-penetration impulse
 	float32 m_tangentImpulse;	///< the friction impulse
-	float32 m_approachVelocity; ///< approach velocity (pre-solve)
 	b2ContactID m_id;			///< uniquely identifies a contact point between two shapes
 };
 

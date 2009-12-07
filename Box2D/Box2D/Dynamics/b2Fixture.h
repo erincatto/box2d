@@ -271,6 +271,17 @@ inline const b2Fixture* b2Fixture::GetNext() const
 	return m_next;
 }
 
+inline void b2Fixture::SetDensity(float32 density)
+{
+	b2Assert(b2IsValid(density) && density >= 0.0f);
+	m_density = density;
+}
+
+inline float32 b2Fixture::GetDensity() const
+{
+	return m_density;
+}
+
 inline float32 b2Fixture::GetFriction() const
 {
 	return m_friction;
