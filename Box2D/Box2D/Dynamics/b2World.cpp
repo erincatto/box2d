@@ -848,7 +848,7 @@ void b2World::SolveTOI(const b2TimeStep& step)
 	m_stackAllocator.Free(queue);
 }
 
-void b2World::Step(float32 dt, int32 velocityIterations, int32 positionIterations, bool resetForces)
+void b2World::Step(float32 dt, int32 velocityIterations, int32 positionIterations)
 {
 	// If new fixtures were added, we need to find the new contacts.
 	if (m_flags & e_newFixture)
@@ -863,7 +863,6 @@ void b2World::Step(float32 dt, int32 velocityIterations, int32 positionIteration
 	step.dt = dt;
 	step.velocityIterations	= velocityIterations;
 	step.positionIterations = positionIterations;
-	step.resetForces = resetForces;
 	if (dt > 0.0f)
 	{
 		step.inv_dt = 1.0f / dt;
@@ -898,6 +897,15 @@ void b2World::Step(float32 dt, int32 velocityIterations, int32 positionIteration
 	}
 
 	m_flags &= ~e_locked;
+}
+
+void b2World::ClearForces()
+{
+	for (b2Body* body = m_bodyList; body; body = body->GetNext())
+	{
+		body->m_force.SetZero();
+		body->m_torque = 0.0f;
+	}
 }
 
 struct b2WorldQueryWrapper
