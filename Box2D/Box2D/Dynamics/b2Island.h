@@ -60,8 +60,6 @@ public:
 
 	void Solve(const b2TimeStep& step, const b2Vec2& gravity, bool allowSleep);
 
-	void SolveTOI(b2TimeStep& subStep);
-
 	void Add(b2Body* body)
 	{
 		b2Assert(m_bodyCount < m_bodyCapacity);

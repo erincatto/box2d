@@ -71,17 +71,8 @@ public:
 	/// Get the world manifold.
 	void GetWorldManifold(b2WorldManifold* worldManifold) const;
 
-	/// Is this contact touching.
+	/// Is this contact touching?
 	bool IsTouching() const;
-
-	/// Does this contact generate TOI events for continuous simulation?
-	bool IsContinuous() const;
-
-    /// Change this to be a sensor or non-sensor contact.
-	void SetSensor(bool sensor);
-
-	/// Is this contact a sensor?
-	bool IsSensor() const;
 
 	/// Enable/disable this contact. This can be used inside the pre-solve
 	/// contact listener. The contact is only disabled for the current
@@ -106,30 +97,28 @@ public:
 	/// Flag this contact for filtering. Filtering will occur the next time step.
 	void FlagForFiltering();
 
-	//--------------- Internals Below -------------------
+	/// Evaluate this contact with your own manifold and transforms.
+	virtual void Evaluate(b2Manifold* manifold, const b2Transform& xfA, const b2Transform& xfB) = 0;
+
 protected:
 	friend class b2ContactManager;
 	friend class b2World;
 	friend class b2ContactSolver;
 
-	// m_flags
+	// Flags stored in m_flags
 	enum
 	{
-		// This contact should not participate in Solve
-		// The contact equivalent of sensors
-		e_sensorFlag		= 0x0001,
-		// Generate TOI events
-		e_continuousFlag	= 0x0002,
 		// Used when crawling contact graph when forming islands.
-		e_islandFlag		= 0x0004,
-		// Used in SolveTOI to indicate the cached toi value is still valid.
-		e_toiFlag			= 0x0008,
+		e_islandFlag		= 0x0001,
+
         // Set when the shapes are touching.
-		e_touchingFlag		= 0x0010,
+		e_touchingFlag		= 0x0002,
+
 		// This contact can be disabled (by user)
-		e_enabledFlag		= 0x0020,
+		e_enabledFlag		= 0x0004,
+
 		// This contact needs filtering because a fixture filter was changed.
-		e_filterFlag		= 0x0040,
+		e_filterFlag		= 0x0008,
 	};
 
 	static void AddType(b2ContactCreateFcn* createFcn, b2ContactDestroyFcn* destroyFcn,
@@ -144,9 +133,6 @@ protected:
 	virtual ~b2Contact() {}
 
 	void Update(b2ContactListener* listener);
-	virtual void Evaluate() = 0;
-
-	float32 ComputeTOI(const b2Sweep& sweepA, const b2Sweep& sweepB) const;
 
 	static b2ContactRegister s_registers[b2Shape::e_typeCount][b2Shape::e_typeCount];
 	static bool s_initialized;
@@ -166,7 +152,8 @@ protected:
 
 	b2Manifold m_manifold;
 
-	float32 m_toi;
+	int32 m_toiCount;
+//	float32 m_toi;
 };
 
 inline b2Manifold* b2Contact::GetManifold()
@@ -189,23 +176,6 @@ inline void b2Contact::GetWorldManifold(b2WorldManifold* worldManifold) const
 	worldManifold->Initialize(&m_manifold, bodyA->GetTransform(), shapeA->m_radius, bodyB->GetTransform(), shapeB->m_radius);
 }
 
-inline void b2Contact::SetSensor(bool sensor)
-{
-	if (sensor)
-	{
-		m_flags |= e_sensorFlag;
-	}
-	else
-	{
-		m_flags &= ~e_sensorFlag;
-	}
-}
-
-inline bool b2Contact::IsSensor() const
-{
-	return (m_flags & e_sensorFlag) == e_sensorFlag;
-}
-
 inline void b2Contact::SetEnabled(bool flag)
 {
 	if (flag)
@@ -226,11 +196,6 @@ inline bool b2Contact::IsEnabled() const
 inline bool b2Contact::IsTouching() const
 {
 	return (m_flags & e_touchingFlag) == e_touchingFlag;
-}
-
-inline bool b2Contact::IsContinuous() const
-{
-	return (m_flags & e_continuousFlag) == e_continuousFlag;
 }
 
 inline b2Contact* b2Contact::GetNext()

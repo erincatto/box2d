@@ -61,7 +61,7 @@ public:
 	const b2AABB& GetFatAABB(int32 proxyId) const;
 
 	/// Get user data from a proxy. Returns NULL if the id is invalid.
-	void* GetUserData(int32 proxyId);
+	void* GetUserData(int32 proxyId) const;
 
 	/// Test overlap of fat AABBs.
 	bool TestOverlap(int32 proxyIdA, int32 proxyIdB) const;
@@ -131,7 +131,7 @@ inline bool b2PairLessThan(const b2Pair& pair1, const b2Pair& pair2)
 	return false;
 }
 
-inline void* b2BroadPhase::GetUserData(int32 proxyId)
+inline void* b2BroadPhase::GetUserData(int32 proxyId) const
 {
 	return m_tree.GetUserData(proxyId);
 }

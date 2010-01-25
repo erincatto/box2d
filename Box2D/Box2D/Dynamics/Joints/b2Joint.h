@@ -153,7 +153,6 @@ protected:
 
 	virtual void InitVelocityConstraints(const b2TimeStep& step) = 0;
 	virtual void SolveVelocityConstraints(const b2TimeStep& step) = 0;
-	virtual void FinalizeVelocityConstraints() {}
 
 	// This returns true if the position errors are within tolerance.
 	virtual bool SolvePositionConstraints(float32 baumgarte) = 0;
