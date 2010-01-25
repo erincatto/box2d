@@ -158,30 +158,6 @@ void b2Fixture::SetFilterData(const b2Filter& filter)
 
 void b2Fixture::SetSensor(bool sensor)
 {
-	if (m_isSensor == sensor)
-	{
-		return;
-	}
-
 	m_isSensor = sensor;
-
-	if (m_body == NULL)
-	{
-		return;
-	}
-
-	b2ContactEdge* edge = m_body->GetContactList();
-	while (edge)
-	{
-		b2Contact* contact = edge->contact;
-		b2Fixture* fixtureA = contact->GetFixtureA();
-		b2Fixture* fixtureB = contact->GetFixtureB();
-		if (fixtureA == this || fixtureB == this)
-		{
-			contact->SetSensor(fixtureA->IsSensor() || fixtureB->IsSensor());
-		}
-
-		edge = edge->next;
-	}
 }
 

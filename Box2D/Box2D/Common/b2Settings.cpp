@@ -21,29 +21,13 @@
 
 b2Version b2_version = {2, 1, 0};
 
-int32 b2_byteCount = 0;
-
 // Memory allocators. Modify these to use your own allocator.
 void* b2Alloc(int32 size)
 {
-	size += 4;
-	b2_byteCount += size;
-	char* bytes = (char*)malloc(size);
-	*(int32*)bytes = size;
-	return bytes + 4;
+	return malloc(size);
 }
 
 void b2Free(void* mem)
 {
-	if (mem == NULL)
-	{
-		return;
-	}
-
-	char* bytes = (char*)mem;
-	bytes -= 4;
-	int32 size = *(int32*)bytes;
-	b2Assert(b2_byteCount >= size);
-	b2_byteCount -= size;
-	free(bytes);
+	free(mem);
 }

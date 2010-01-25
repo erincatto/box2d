@@ -25,14 +25,14 @@ public:
 	PolyCollision()
 	{
 		{
-			m_polygonA.SetAsBox(1.0f, 1.0f, b2Vec2(0.0f, 0.0f), b2_pi * 0.25f);
-			m_transformA.Set(b2Vec2(0.0f, 5.0f), 0.0f);
+			m_polygonA.SetAsEdge(b2Vec2(20.0f, 0.0f), b2Vec2(20.0f, 20.0f));
+			m_transformA.Set(b2Vec2(0.0f, 0.0f), 0.0f);
 		}
 
 		{
-			m_polygonB.SetAsBox(0.25f, 0.25f);
-			m_positionB.Set(-1.7793884f, 5.0326509f);
-			m_angleB = 2.2886343f;
+			m_polygonB.SetAsBox(0.5f, 0.5f);
+			m_positionB.Set(19.345284f, 1.5632932f);
+			m_angleB = 1.9160721f;
 			m_transformB.Set(m_positionB, m_angleB);
 		}
 	}
@@ -52,7 +52,7 @@ public:
 		b2WorldManifold worldManifold;
 		worldManifold.Initialize(&manifold, m_transformA, m_polygonA.m_radius, m_transformB, m_polygonB.m_radius);
 
-		m_debugDraw.DrawString(5, m_textLine, "point count = %d", manifold.m_pointCount);
+		m_debugDraw.DrawString(5, m_textLine, "point count = %d", manifold.pointCount);
 		m_textLine += 15;
 
 		{
@@ -71,9 +71,9 @@ public:
 			m_debugDraw.DrawPolygon(v, m_polygonB.m_vertexCount, color);
 		}
 
-		for (int32 i = 0; i < manifold.m_pointCount; ++i)
+		for (int32 i = 0; i < manifold.pointCount; ++i)
 		{
-			m_debugDraw.DrawPoint(worldManifold.m_points[i], 4.0f, b2Color(0.9f, 0.3f, 0.3f));
+			m_debugDraw.DrawPoint(worldManifold.points[i], 4.0f, b2Color(0.9f, 0.3f, 0.3f));
 		}
 	}
 

@@ -69,7 +69,7 @@ public:
 		}
 
 		// Should the body break?
-		int32 count = contact->GetManifold()->m_pointCount;
+		int32 count = contact->GetManifold()->pointCount;
 
 		float32 maxImpulse = 0.0f;
 		for (int32 i = 0; i < count; ++i)

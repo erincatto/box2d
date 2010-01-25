@@ -23,10 +23,12 @@
 #include <Box2D/Dynamics/Joints/b2PulleyJoint.h>
 #include <Box2D/Dynamics/Contacts/b2Contact.h>
 #include <Box2D/Dynamics/Contacts/b2ContactSolver.h>
+#include <Box2D/Dynamics/Contacts/b2TOISolver.h>
 #include <Box2D/Collision/b2Collision.h>
 #include <Box2D/Collision/b2BroadPhase.h>
 #include <Box2D/Collision/Shapes/b2CircleShape.h>
 #include <Box2D/Collision/Shapes/b2PolygonShape.h>
+#include <Box2D/Collision/b2TimeOfImpact.h>
 #include <new>
 
 b2World::b2World(const b2Vec2& gravity, bool doSleep)
@@ -392,10 +394,7 @@ void b2World::Solve(const b2TimeStep& step)
 			island.Add(b);
 
 			// Make sure the body is awake.
-			if (b->IsAwake() == false)
-			{
-				b->SetAwake(true);
-			}
+			b->SetAwake(true);
 
 			// To keep islands as small as possible, we don't
 			// propagate islands across static bodies.
@@ -407,22 +406,31 @@ void b2World::Solve(const b2TimeStep& step)
 			// Search all contacts connected to this body.
 			for (b2ContactEdge* ce = b->m_contactList; ce; ce = ce->next)
 			{
+				b2Contact* contact = ce->contact;
+
 				// Has this contact already been added to an island?
-				if (ce->contact->m_flags & b2Contact::e_islandFlag)
+				if (contact->m_flags & b2Contact::e_islandFlag)
 				{
 					continue;
 				}
 
 				// Is this contact solid and touching?
-				if (ce->contact->IsSensor() == true ||
-					ce->contact->IsEnabled() == false ||
-					ce->contact->IsTouching() == false)
+				if (contact->IsEnabled() == false ||
+					contact->IsTouching() == false)
 				{
 					continue;
 				}
 
-				island.Add(ce->contact);
-				ce->contact->m_flags |= b2Contact::e_islandFlag;
+				// Skip sensors.
+				bool sensorA = contact->m_fixtureA->m_isSensor;
+				bool sensorB = contact->m_fixtureB->m_isSensor;
+				if (sensorA || sensorB)
+				{
+					continue;
+				}
+
+				island.Add(contact);
+				contact->m_flags |= b2Contact::e_islandFlag;
 
 				b2Body* other = ce->other;
 
@@ -504,348 +512,255 @@ void b2World::Solve(const b2TimeStep& step)
 	m_contactManager.FindNewContacts();
 }
 
-// Find TOI contacts and solve them.
-void b2World::SolveTOI(const b2TimeStep& step)
+// Advance a dynamic body to its first time of contact
+// and adjust the position to ensure clearance.
+void b2World::SolveTOI(b2Body* body)
 {
-	// Reserve an island and a queue for TOI island solution.
-	b2Island island(m_bodyCount,
-					b2_maxTOIContactsPerIsland,
-					b2_maxTOIJointsPerIsland,
-					&m_stackAllocator,
-					m_contactManager.m_contactListener);
+	// Find the minimum contact.
+	b2Contact* toiContact = NULL;
+	float32 toi = 1.0f;
+	bool found;
+	int32 count;
+	int32 iter = 0;
 
-	//Simple one pass queue
-	//Relies on the fact that we're only making one pass
-	//through and each body can only be pushed/popped once.
-	//To push: 
-	//  queue[queueStart+queueSize++] = newElement;
-	//To pop: 
-	//	poppedElement = queue[queueStart++];
-	//  --queueSize;
-	int32 queueCapacity = m_bodyCount;
-	b2Body** queue = (b2Body**)m_stackAllocator.Allocate(queueCapacity* sizeof(b2Body*));
+	bool bullet = body->IsBullet();
 
-	for (b2Body* b = m_bodyList; b; b = b->m_next)
+	// Iterate until all contacts agree on the minimum TOI. We have
+	// to iterate because the TOI algorithm may skip some intermediate
+	// collisions when objects rotate through each other.
+	do
 	{
-		b->m_flags &= ~b2Body::e_islandFlag;
-		b->m_sweep.t0 = 0.0f;
-	}
-
-	for (b2Contact* c = m_contactManager.m_contactList; c; c = c->m_next)
-	{
-		// Invalidate TOI
-		c->m_flags &= ~(b2Contact::e_toiFlag | b2Contact::e_islandFlag);
-	}
-
-	for (b2Joint* j = m_jointList; j; j = j->m_next)
-	{
-		j->m_islandFlag = false;
-	}
-
-	// Find TOI events and solve them.
-	for (;;)
-	{
-		// Find the first TOI.
-		b2Contact* minContact = NULL;
-		float32 minTOI = 1.0f;
-
-		for (b2Contact* c = m_contactManager.m_contactList; c; c = c->m_next)
+		count = 0;
+		found = false;
+		for (b2ContactEdge* ce = body->m_contactList; ce; ce = ce->next)
 		{
-			// Can this contact generate a solid TOI contact?
-			if (c->IsSensor() == true ||
-				c->IsEnabled() == false ||
-				c->IsContinuous() == false)
+			b2Body* other = ce->other;
+			b2BodyType type = other->GetType();
+
+			// Only bullets perform TOI with dynamic bodies.
+			if (bullet == true)
+			{
+				// Bullets only perform TOI with bodies that have their TOI resolved.
+				if ((other->m_flags & b2Body::e_toiFlag) == 0)
+				{
+					continue;
+				}
+			}
+			else if (type == b2_dynamicBody)
 			{
 				continue;
 			}
 
-			// TODO_ERIN keep a counter on the contact, only respond to M TOIs per contact.
-
-			float32 toi = 1.0f;
-			if (c->m_flags & b2Contact::e_toiFlag)
+			// Check for a disabled contact.
+			b2Contact* contact = ce->contact;
+			if (contact->IsEnabled() == false)
 			{
-				// This contact has a valid cached TOI.
-				toi = c->m_toi;
-			}
-			else
-			{
-				// Compute the TOI for this contact.
-				b2Fixture* s1 = c->GetFixtureA();
-				b2Fixture* s2 = c->GetFixtureB();
-				b2Body* b1 = s1->GetBody();
-				b2Body* b2 = s2->GetBody();
-
-				if ((b1->GetType() != b2_dynamicBody || b1->IsAwake() == false) &&
-					(b2->GetType() != b2_dynamicBody || b2->IsAwake() == false))
-				{
-					continue;
-				}
-
-				// Put the sweeps onto the same time interval.
-				float32 t0 = b1->m_sweep.t0;
-
-				if (b1->m_sweep.t0 < b2->m_sweep.t0)
-				{
-					t0 = b2->m_sweep.t0;
-					b1->m_sweep.Advance(t0);
-				}
-				else if (b2->m_sweep.t0 < b1->m_sweep.t0)
-				{
-					t0 = b1->m_sweep.t0;
-					b2->m_sweep.Advance(t0);
-				}
-
-				b2Assert(t0 < 1.0f);
-
-				// Compute the time of impact.
-				toi = c->ComputeTOI(b1->m_sweep, b2->m_sweep);
-
-				b2Assert(0.0f <= toi && toi <= 1.0f);
-
-				// If the TOI is in range ...
-				if (0.0f < toi && toi < 1.0f)
-				{
-					// Interpolate on the actual range.
-					toi = b2Min((1.0f - toi) * t0 + toi, 1.0f);
-				}
-
-
-				c->m_toi = toi;
-				c->m_flags |= b2Contact::e_toiFlag;
+				continue;
 			}
 
-			if (b2_epsilon < toi && toi < minTOI)
+			// Prevent infinite looping.
+			if (contact->m_toiCount > 10)
 			{
-				// This is the minimum TOI found so far.
-				minContact = c;
-				minTOI = toi;
+				continue;
 			}
+
+			b2Fixture* fixtureA = contact->m_fixtureA;
+			b2Fixture* fixtureB = contact->m_fixtureB;
+
+			// Cull sensors.
+			if (fixtureA->IsSensor() || fixtureB->IsSensor())
+			{
+				continue;
+			}
+
+			b2Body* bodyA = fixtureA->m_body;
+			b2Body* bodyB = fixtureB->m_body;
+
+			// Compute the time of impact in interval [0, minTOI]
+			b2TOIInput input;
+			input.proxyA.Set(fixtureA->GetShape());
+			input.proxyB.Set(fixtureB->GetShape());
+			input.sweepA = bodyA->m_sweep;
+			input.sweepB = bodyB->m_sweep;
+			input.tMax = toi;
+
+			b2TOIOutput output;
+			b2TimeOfImpact(&output, &input);
+
+			if (output.state == b2TOIOutput::e_touching && output.t < toi)
+			{
+				toiContact = contact;
+				toi = output.t;
+				found = true;
+			}
+
+			++count;
 		}
 
-		if (minContact == NULL || 1.0f - 100.0f * b2_epsilon < minTOI)
+		++iter;
+	} while (found && count > 1 && iter < 50);
+
+	if (toiContact == NULL)
+	{
+		return;
+	}
+
+	// Advance the body to its safe time.
+	b2Sweep backup = body->m_sweep;
+	body->Advance(toi);
+
+	++toiContact->m_toiCount;
+
+	// Update all the valid contacts on this body and build a contact island.
+	b2Contact* contacts[b2_maxTOIContactsPerIsland];
+	count = 0;
+	for (b2ContactEdge* ce = body->m_contactList; ce && count < b2_maxTOIContactsPerIsland; ce = ce->next)
+	{
+		b2Body* other = ce->other;
+		b2BodyType type = other->GetType();
+
+		// Only bullets perform TOI with dynamic bodies.
+		if (bullet == true)
 		{
-			// No more TOI events. Done!
+			// Bullets only perform TOI with bodies that have their TOI resolved.
+			if ((other->m_flags & b2Body::e_toiFlag) == 0)
+			{
+				continue;
+			}
+		}
+		else if (type == b2_dynamicBody)
+		{
+			continue;
+		}
+
+		// Check for a disabled contact.
+		b2Contact* contact = ce->contact;
+		if (contact->IsEnabled() == false)
+		{
+			continue;
+		}
+
+		b2Fixture* fixtureA = contact->m_fixtureA;
+		b2Fixture* fixtureB = contact->m_fixtureB;
+
+		// Cull sensors.
+		if (fixtureA->IsSensor() || fixtureB->IsSensor())
+		{
+			continue;
+		}
+
+		// The contact likely has some new contact points. The listener
+		// gives the user a chance to disable the contact;
+		contact->Update(m_contactManager.m_contactListener);
+
+		// Did the user disable the contact?
+		if (contact->IsEnabled() == false)
+		{
+			if (contact == toiContact)
+			{
+				// Restore the body's sweep.
+				body->m_sweep = backup;
+				body->SynchronizeTransform();
+
+				// Recurse because the TOI has been invalidated.
+				SolveTOI(body);
+				return;
+			}
+
+			// Skip this contact.
+			continue;
+		}
+
+		if (contact->IsTouching() == false)
+		{
+			continue;
+		}
+
+		contacts[count] = contact;
+		++count;
+	}
+
+	// Reduce the TOI body's overlap with the contact island.
+	b2TOISolver solver(&m_stackAllocator);
+	solver.Initialize(contacts, count, body);
+
+	const float32 k_toiBaumgarte = 0.75f;
+	bool solved = false;
+	for (int32 i = 0; i < 20; ++i)
+	{
+		bool contactsOkay = solver.Solve(k_toiBaumgarte);
+		if (contactsOkay)
+		{
+			solved = true;
 			break;
 		}
+	}
+}
 
-		// Advance the bodies to the TOI.
-		b2Fixture* s1 = minContact->GetFixtureA();
-		b2Fixture* s2 = minContact->GetFixtureB();
-		b2Body* b1 = s1->GetBody();
-		b2Body* b2 = s2->GetBody();
+// Sequentially solve TOIs for each body. We bring each
+// body to the time of contact and perform some position correction.
+// Time is not conserved.
+void b2World::SolveTOI()
+{
+	// Prepare all contacts.
+	for (b2Contact* c = m_contactManager.m_contactList; c; c = c->m_next)
+	{
+		// Enable the contact
+		c->m_flags |= b2Contact::e_enabledFlag;
 
-		b2Sweep backup1 = b1->m_sweep;
-		b2Sweep backup2 = b2->m_sweep;
-
-		b1->Advance(minTOI);
-		b2->Advance(minTOI);
-
-		// The TOI contact likely has some new contact points.
-		minContact->Update(m_contactManager.m_contactListener);
-		minContact->m_flags &= ~b2Contact::e_toiFlag;
-
-		// Is the contact solid?
-		if (minContact->IsSensor() == true || minContact->IsEnabled() == false)
-		{
-			// Restore the sweeps.
-			b1->m_sweep = backup1;
-			b2->m_sweep = backup2;
-			b1->SynchronizeTransform();
-			b2->SynchronizeTransform();
-			continue;
-		}
-
-		// Did numerical issues prevent a contact point from being generated?
-		if (minContact->IsTouching() == false)
-		{
-			// Give up on this TOI.
-			continue;
-		}
-
-		// Build the TOI island. We need a dynamic seed.
-		b2Body* seed = b1;
-		if (seed->GetType() != b2_dynamicBody)
-		{
-			seed = b2;
-		}
-
-		// Reset island and queue.
-		island.Clear();
-
-		int32 queueStart = 0; // starting index for queue
-		int32 queueSize = 0;  // elements in queue
-		queue[queueStart + queueSize++] = seed;
-		seed->m_flags |= b2Body::e_islandFlag;
-
-		// Perform a breadth first search (BFS) on the contact/joint graph.
-		while (queueSize > 0)
-		{
-			// Grab the next body off the stack and add it to the island.
-			b2Body* b = queue[queueStart++];
-			--queueSize;
-
-			island.Add(b);
-
-			// Make sure the body is awake.
-			if (b->IsAwake() == false)
-			{
-				b->SetAwake(true);
-			}
-
-			// To keep islands as small as possible, we don't
-			// propagate islands across static or kinematic bodies.
-			if (b->GetType() != b2_dynamicBody)
-			{
-				continue;
-			}
-
-			// Search all contacts connected to this body.
-			for (b2ContactEdge* cEdge = b->m_contactList; cEdge; cEdge = cEdge->next)
-			{
-				// Does the TOI island still have space for contacts?
-				if (island.m_contactCount == island.m_contactCapacity)
-				{
-					break;
-				}
-
-				// Has this contact already been added to an island?
-				if (cEdge->contact->m_flags & b2Contact::e_islandFlag)
-				{
-					continue;
-				}
-
-				// Skip separate, sensor, or disabled contacts.
-				if (cEdge->contact->IsSensor() == true ||
-					cEdge->contact->IsEnabled() == false ||
-					cEdge->contact->IsTouching() == false)
-				{
-					continue;
-				}
-
-				island.Add(cEdge->contact);
-				cEdge->contact->m_flags |= b2Contact::e_islandFlag;
-
-				// Update other body.
-				b2Body* other = cEdge->other;
-
-				// Was the other body already added to this island?
-				if (other->m_flags & b2Body::e_islandFlag)
-				{
-					continue;
-				}
-
-				// Synchronize the connected body.
-				if (other->GetType() != b2_staticBody)
-				{
-					other->Advance(minTOI);
-					other->SetAwake(true);
-				}
-
-				b2Assert(queueStart + queueSize < queueCapacity);
-				queue[queueStart + queueSize] = other;
-				++queueSize;
-				other->m_flags |= b2Body::e_islandFlag;
-			}
-
-			for (b2JointEdge* jEdge = b->m_jointList; jEdge; jEdge = jEdge->next)
-			{
-				if (island.m_jointCount == island.m_jointCapacity)
-				{
-					continue;
-				}
-
-				if (jEdge->joint->m_islandFlag == true)
-				{
-					continue;
-				}
-
-				b2Body* other = jEdge->other;
-				if (other->IsActive() == false)
-				{
-					continue;
-				}
-
-				island.Add(jEdge->joint);
-
-				jEdge->joint->m_islandFlag = true;
-
-				if (other->m_flags & b2Body::e_islandFlag)
-				{
-					continue;
-				}
-
-				// Synchronize the connected body.
-				if (other->GetType() != b2_staticBody)
-				{
-					other->Advance(minTOI);
-					other->SetAwake(true);
-				}
-
-				b2Assert(queueStart + queueSize < queueCapacity);
-				queue[queueStart + queueSize] = other;
-				++queueSize;
-				other->m_flags |= b2Body::e_islandFlag;
-			}
-		}
-
-		b2TimeStep subStep;
-		subStep.warmStarting = false;
-		subStep.dt = (1.0f - minTOI) * step.dt;
-		subStep.inv_dt = 1.0f / subStep.dt;
-		subStep.dtRatio = 0.0f;
-		subStep.velocityIterations = step.velocityIterations;
-		subStep.positionIterations = step.positionIterations;
-
-		island.SolveTOI(subStep);
-
-		// Post solve cleanup.
-		for (int32 i = 0; i < island.m_bodyCount; ++i)
-		{
-			// Allow bodies to participate in future TOI islands.
-			b2Body* b = island.m_bodies[i];
-			b->m_flags &= ~b2Body::e_islandFlag;
-
-			if (b->IsAwake() == false)
-			{
-				continue;
-			}
-
-			if (b->GetType() == b2_staticBody)
-			{
-				continue;
-			}
-
-			// Update fixtures (for broad-phase).
-			b->SynchronizeFixtures();
-
-			// Invalidate all contact TOIs associated with this body. Some of these
-			// may not be in the island because they were not touching.
-			for (b2ContactEdge* ce = b->m_contactList; ce; ce = ce->next)
-			{
-				ce->contact->m_flags &= ~b2Contact::e_toiFlag;
-			}
-		}
-
-		for (int32 i = 0; i < island.m_contactCount; ++i)
-		{
-			// Allow contacts to participate in future TOI islands.
-			b2Contact* c = island.m_contacts[i];
-			c->m_flags &= ~(b2Contact::e_toiFlag | b2Contact::e_islandFlag);
-		}
-
-		for (int32 i = 0; i < island.m_jointCount; ++i)
-		{
-			// Allow joints to participate in future TOI islands.
-			b2Joint* j = island.m_joints[i];
-			j->m_islandFlag = false;
-		}
-
-		// Commit fixture proxy movements to the broad-phase so that new contacts are created.
-		// Also, some contacts can be destroyed.
-		m_contactManager.FindNewContacts();
+		// Set the number of TOI events for this contact to zero.
+		c->m_toiCount = 0;
 	}
 
-	m_stackAllocator.Free(queue);
+	// Initialize the TOI flag.
+	for (b2Body* body = m_bodyList; body; body = body->m_next)
+	{
+		// Sleeping, kinematic, and static bodies will not be affected by the TOI event.
+		if (body->IsAwake() == false || body->GetType() == b2_kinematicBody || body->GetType() == b2_staticBody)
+		{
+			body->m_flags |= b2Body::e_toiFlag;
+		}
+		else
+		{
+			body->m_flags &= ~b2Body::e_toiFlag;
+		}
+	}
+
+	// Collide non-bullets.
+	for (b2Body* body = m_bodyList; body; body = body->m_next)
+	{
+		if (body->GetType() != b2_dynamicBody || body->IsAwake() == false)
+		{
+			continue;
+		}
+
+		if (body->IsBullet() == true)
+		{
+			continue;
+		}
+
+		SolveTOI(body);
+
+		body->m_flags |= b2Body::e_toiFlag;
+	}
+
+	// Collide bullets.
+	for (b2Body* body = m_bodyList; body; body = body->m_next)
+	{
+		if (body->GetType() != b2_dynamicBody || body->IsAwake() == false)
+		{
+			continue;
+		}
+
+		if (body->IsBullet() == false)
+		{
+			continue;
+		}
+
+		SolveTOI(body);
+
+		body->m_flags |= b2Body::e_toiFlag;
+	}
 }
 
 void b2World::Step(float32 dt, int32 velocityIterations, int32 positionIterations)
@@ -888,7 +803,7 @@ void b2World::Step(float32 dt, int32 velocityIterations, int32 positionIteration
 	// Handle TOI events.
 	if (m_continuousPhysics && step.dt > 0.0f)
 	{
-		SolveTOI(step);
+		SolveTOI();
 	}
 
 	if (step.dt > 0.0f)
@@ -916,11 +831,11 @@ struct b2WorldQueryWrapper
 		return callback->ReportFixture(fixture);
 	}
 
-	b2BroadPhase* broadPhase;
+	const b2BroadPhase* broadPhase;
 	b2QueryCallback* callback;
 };
 
-void b2World::QueryAABB(b2QueryCallback* callback, const b2AABB& aabb)
+void b2World::QueryAABB(b2QueryCallback* callback, const b2AABB& aabb) const
 {
 	b2WorldQueryWrapper wrapper;
 	wrapper.broadPhase = &m_contactManager.m_broadPhase;
@@ -947,11 +862,11 @@ struct b2WorldRayCastWrapper
 		return input.maxFraction;
 	}
 
-	b2BroadPhase* broadPhase;
+	const b2BroadPhase* broadPhase;
 	b2RayCastCallback* callback;
 };
 
-void b2World::RayCast(b2RayCastCallback* callback, const b2Vec2& point1, const b2Vec2& point2)
+void b2World::RayCast(b2RayCastCallback* callback, const b2Vec2& point1, const b2Vec2& point2) const
 {
 	b2WorldRayCastWrapper wrapper;
 	wrapper.broadPhase = &m_contactManager.m_broadPhase;
@@ -999,10 +914,10 @@ void b2World::DrawShape(b2Fixture* fixture, const b2Transform& xf, const b2Color
 
 void b2World::DrawJoint(b2Joint* joint)
 {
-	b2Body* b1 = joint->GetBodyA();
-	b2Body* b2 = joint->GetBodyB();
-	const b2Transform& xf1 = b1->GetTransform();
-	const b2Transform& xf2 = b2->GetTransform();
+	b2Body* bodyA = joint->GetBodyA();
+	b2Body* bodyB = joint->GetBodyB();
+	const b2Transform& xf1 = bodyA->GetTransform();
+	const b2Transform& xf2 = bodyB->GetTransform();
 	b2Vec2 x1 = xf1.position;
 	b2Vec2 x2 = xf2.position;
 	b2Vec2 p1 = joint->GetAnchorA();

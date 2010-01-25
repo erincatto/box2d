@@ -105,7 +105,7 @@ struct b2BodyDef
 
 	/// Is this a fast moving body that should be prevented from tunneling through
 	/// other moving bodies? Note that all bodies are prevented from tunneling through
-	/// static bodies.
+	/// kinematic and static bodies. This setting is only considered on dynamic bodies.
 	/// @warning You should use this flag sparingly since it increases processing time.
 	bool bullet;
 
@@ -365,6 +365,7 @@ private:
 	friend class b2Island;
 	friend class b2ContactManager;
 	friend class b2ContactSolver;
+	friend class b2TOISolver;
 	
 	friend class b2DistanceJoint;
 	friend class b2GearJoint;
@@ -385,6 +386,7 @@ private:
 		e_bulletFlag		= 0x0008,
 		e_fixedRotationFlag	= 0x0010,
 		e_activeFlag		= 0x0020,
+		e_toiFlag			= 0x0040,
 	};
 
 	b2Body(const b2BodyDef* bd, b2World* world);
@@ -474,6 +476,11 @@ inline void b2Body::SetLinearVelocity(const b2Vec2& v)
 		return;
 	}
 
+	if (b2Dot(v,v) > 0.0f)
+	{
+		SetAwake(true);
+	}
+
 	m_linearVelocity = v;
 }
 
@@ -487,6 +494,11 @@ inline void b2Body::SetAngularVelocity(float32 w)
 	if (m_type == b2_staticBody)
 	{
 		return;
+	}
+
+	if (w * w > 0.0f)
+	{
+		SetAwake(true);
 	}
 
 	m_angularVelocity = w;
@@ -585,8 +597,11 @@ inline void b2Body::SetAwake(bool flag)
 {
 	if (flag)
 	{
-		m_flags |= e_awakeFlag;
-		m_sleepTime = 0.0f;
+		if ((m_flags & e_awakeFlag) == 0)
+		{
+			m_flags |= e_awakeFlag;
+			m_sleepTime = 0.0f;
+		}
 	}
 	else
 	{

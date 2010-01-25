@@ -26,7 +26,7 @@
 #include "Breakable.h"
 #include "Bridge.h"
 #include "Cantilever.h"
-#include "CCDTest.h"
+#include "ContinuousTest.h"
 #include "Chain.h"
 #include "CollisionFiltering.h"
 #include "CollisionProcessing.h"
@@ -58,20 +58,21 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Continuous Test", ContinuousTest::Create},
+	{"Time of Impact", TimeOfImpact::Create},
+	{"Vertical Stack", VerticalStack::Create},
+	{"PolyCollision", PolyCollision::Create},
 	{"Polygon Shapes", PolyShapes::Create},
 	{"Apply Force", ApplyForce::Create},
 	{"Cantilever", Cantilever::Create},
 	{"Body Types", BodyTypes::Create},
-	{"CCD Test", CCDTest::Create},
 	{"SphereStack", SphereStack::Create},
-	{"Vertical Stack", VerticalStack::Create},
 	{"Confined", Confined::Create},
 	{"Bridge", Bridge::Create},
 	{"Breakable", Breakable::Create},
 	{"Varying Restitution", VaryingRestitution::Create},
 	{"Ray-Cast", RayCast::Create},
 	{"Pyramid", Pyramid::Create},
-	{"PolyCollision", PolyCollision::Create},
 	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Chain", Chain::Create},
 	{"Collision Filtering", CollisionFiltering::Create},
@@ -89,7 +90,6 @@ TestEntry g_testEntries[] =
 	{"Shape Editing", ShapeEditing::Create},
 	{"Slider Crank", SliderCrank::Create},
 	{"Theo Jansen's Walker", TheoJansen::Create},
-	{"Time of Impact", TimeOfImpact::Create},
 	{"Varying Friction", VaryingFriction::Create},
 	{"Web", Web::Create},
 	{NULL, NULL}
