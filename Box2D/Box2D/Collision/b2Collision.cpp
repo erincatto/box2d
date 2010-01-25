@@ -23,65 +23,60 @@ void b2WorldManifold::Initialize(const b2Manifold* manifold,
 						  const b2Transform& xfA, float32 radiusA,
 						  const b2Transform& xfB, float32 radiusB)
 {
-	if (manifold->m_pointCount == 0)
+	if (manifold->pointCount == 0)
 	{
 		return;
 	}
 
-	switch (manifold->m_type)
+	switch (manifold->type)
 	{
 	case b2Manifold::e_circles:
 		{
-			b2Vec2 pointA = b2Mul(xfA, manifold->m_localPoint);
-			b2Vec2 pointB = b2Mul(xfB, manifold->m_points[0].m_localPoint);
-			b2Vec2 normal(1.0f, 0.0f);
+			normal.Set(1.0f, 0.0f);
+			b2Vec2 pointA = b2Mul(xfA, manifold->localPoint);
+			b2Vec2 pointB = b2Mul(xfB, manifold->points[0].localPoint);
 			if (b2DistanceSquared(pointA, pointB) > b2_epsilon * b2_epsilon)
 			{
 				normal = pointB - pointA;
 				normal.Normalize();
 			}
 
-			m_normal = normal;
-
 			b2Vec2 cA = pointA + radiusA * normal;
 			b2Vec2 cB = pointB - radiusB * normal;
-			m_points[0] = 0.5f * (cA + cB);
+			points[0] = 0.5f * (cA + cB);
 		}
 		break;
 
 	case b2Manifold::e_faceA:
 		{
-			b2Vec2 normal = b2Mul(xfA.R, manifold->m_localPlaneNormal);
-			b2Vec2 planePoint = b2Mul(xfA, manifold->m_localPoint);
-
-			// Ensure normal points from A to B.
-			m_normal = normal;
+			normal = b2Mul(xfA.R, manifold->localNormal);
+			b2Vec2 planePoint = b2Mul(xfA, manifold->localPoint);
 			
-			for (int32 i = 0; i < manifold->m_pointCount; ++i)
+			for (int32 i = 0; i < manifold->pointCount; ++i)
 			{
-				b2Vec2 clipPoint = b2Mul(xfB, manifold->m_points[i].m_localPoint);
+				b2Vec2 clipPoint = b2Mul(xfB, manifold->points[i].localPoint);
 				b2Vec2 cA = clipPoint + (radiusA - b2Dot(clipPoint - planePoint, normal)) * normal;
 				b2Vec2 cB = clipPoint - radiusB * normal;
-				m_points[i] = 0.5f * (cA + cB);
+				points[i] = 0.5f * (cA + cB);
 			}
 		}
 		break;
 
 	case b2Manifold::e_faceB:
 		{
-			b2Vec2 normal = b2Mul(xfB.R, manifold->m_localPlaneNormal);
-			b2Vec2 planePoint = b2Mul(xfB, manifold->m_localPoint);
+			normal = b2Mul(xfB.R, manifold->localNormal);
+			b2Vec2 planePoint = b2Mul(xfB, manifold->localPoint);
+
+			for (int32 i = 0; i < manifold->pointCount; ++i)
+			{
+				b2Vec2 clipPoint = b2Mul(xfA, manifold->points[i].localPoint);
+				b2Vec2 cB = clipPoint + (radiusB - b2Dot(clipPoint - planePoint, normal)) * normal;
+				b2Vec2 cA = clipPoint - radiusA * normal;
+				points[i] = 0.5f * (cA + cB);
+			}
 
 			// Ensure normal points from A to B.
-			m_normal = -normal;
-
-			for (int32 i = 0; i < manifold->m_pointCount; ++i)
-			{
-				b2Vec2 clipPoint = b2Mul(xfA, manifold->m_points[i].m_localPoint);
-				b2Vec2 cA = clipPoint - radiusA * normal;
-				b2Vec2 cB = clipPoint + (radiusB - b2Dot(clipPoint - planePoint, normal)) * normal;
-				m_points[i] = 0.5f * (cA + cB);
-			}
+			normal = -normal;
 		}
 		break;
 	}
@@ -97,15 +92,15 @@ void b2GetPointStates(b2PointState state1[b2_maxManifoldPoints], b2PointState st
 	}
 
 	// Detect persists and removes.
-	for (int32 i = 0; i < manifold1->m_pointCount; ++i)
+	for (int32 i = 0; i < manifold1->pointCount; ++i)
 	{
-		b2ContactID id = manifold1->m_points[i].m_id;
+		b2ContactID id = manifold1->points[i].id;
 
 		state1[i] = b2_removeState;
 
-		for (int32 j = 0; j < manifold2->m_pointCount; ++j)
+		for (int32 j = 0; j < manifold2->pointCount; ++j)
 		{
-			if (manifold2->m_points[j].m_id.key == id.key)
+			if (manifold2->points[j].id.key == id.key)
 			{
 				state1[i] = b2_persistState;
 				break;
@@ -114,15 +109,15 @@ void b2GetPointStates(b2PointState state1[b2_maxManifoldPoints], b2PointState st
 	}
 
 	// Detect persists and adds.
-	for (int32 i = 0; i < manifold2->m_pointCount; ++i)
+	for (int32 i = 0; i < manifold2->pointCount; ++i)
 	{
-		b2ContactID id = manifold2->m_points[i].m_id;
+		b2ContactID id = manifold2->points[i].id;
 
 		state2[i] = b2_addState;
 
-		for (int32 j = 0; j < manifold1->m_pointCount; ++j)
+		for (int32 j = 0; j < manifold1->pointCount; ++j)
 		{
-			if (manifold1->m_points[j].m_id.key == id.key)
+			if (manifold1->points[j].id.key == id.key)
 			{
 				state2[i] = b2_persistState;
 				break;

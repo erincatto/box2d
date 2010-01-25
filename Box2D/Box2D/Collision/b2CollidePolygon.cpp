@@ -194,7 +194,7 @@ void b2CollidePolygons(b2Manifold* manifold,
 					  const b2PolygonShape* polyA, const b2Transform& xfA,
 					  const b2PolygonShape* polyB, const b2Transform& xfB)
 {
-	manifold->m_pointCount = 0;
+	manifold->pointCount = 0;
 	float32 totalRadius = polyA->m_radius + polyB->m_radius;
 
 	int32 edgeA = 0;
@@ -222,7 +222,7 @@ void b2CollidePolygons(b2Manifold* manifold,
 		xf1 = xfB;
 		xf2 = xfA;
 		edge1 = edgeB;
-		manifold->m_type = b2Manifold::e_faceB;
+		manifold->type = b2Manifold::e_faceB;
 		flip = 1;
 	}
 	else
@@ -232,7 +232,7 @@ void b2CollidePolygons(b2Manifold* manifold,
 		xf1 = xfA;
 		xf2 = xfB;
 		edge1 = edgeA;
-		manifold->m_type = b2Manifold::e_faceA;
+		manifold->type = b2Manifold::e_faceA;
 		flip = 0;
 	}
 
@@ -284,8 +284,8 @@ void b2CollidePolygons(b2Manifold* manifold,
 	}
 
 	// Now clipPoints2 contains the clipped points.
-	manifold->m_localPlaneNormal = localNormal;
-	manifold->m_localPoint = planePoint;
+	manifold->localNormal = localNormal;
+	manifold->localPoint = planePoint;
 
 	int32 pointCount = 0;
 	for (int32 i = 0; i < b2_maxManifoldPoints; ++i)
@@ -294,13 +294,13 @@ void b2CollidePolygons(b2Manifold* manifold,
 
 		if (separation <= totalRadius)
 		{
-			b2ManifoldPoint* cp = manifold->m_points + pointCount;
-			cp->m_localPoint = b2MulT(xf2, clipPoints2[i].v);
-			cp->m_id = clipPoints2[i].id;
-			cp->m_id.features.flip = flip;
+			b2ManifoldPoint* cp = manifold->points + pointCount;
+			cp->localPoint = b2MulT(xf2, clipPoints2[i].v);
+			cp->id = clipPoints2[i].id;
+			cp->id.features.flip = flip;
 			++pointCount;
 		}
 	}
 
-	manifold->m_pointCount = pointCount;
+	manifold->pointCount = pointCount;
 }

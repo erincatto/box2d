@@ -374,7 +374,6 @@ struct b2Sweep
 	b2Vec2 localCenter;	///< local center of mass position
 	b2Vec2 c0, c;		///< center world positions
 	float32 a0, a;		///< world angles
-	float32 t0;			///< time interval = [t0,1], where t0 is in [0,1]
 };
 
 
@@ -606,13 +605,8 @@ inline void b2Sweep::GetTransform(b2Transform* xf, float32 alpha) const
 
 inline void b2Sweep::Advance(float32 t)
 {
-	if (t0 < t && 1.0f - t0 > b2_epsilon)
-	{
-		float32 alpha = (t - t0) / (1.0f - t0);
-		c0 = (1.0f - alpha) * c0 + alpha * c;
-		a0 = (1.0f - alpha) * a0 + alpha * a;
-		t0 = t;
-	}
+	c0 = (1.0f - t) * c0 + t * c;
+	a0 = (1.0f - t) * a0 + t * a;
 }
 
 #endif

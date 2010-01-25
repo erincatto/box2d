@@ -27,6 +27,8 @@
 int32 b2_toiCalls, b2_toiIters, b2_toiMaxIters;
 int32 b2_toiRootIters, b2_toiMaxRootIters;
 
+int32 b2_toiMaxOptIters;
+
 struct b2SeparationFunction
 {
 	enum Type
@@ -36,176 +38,125 @@ struct b2SeparationFunction
 		e_faceB
 	};
 
-	void Initialize(const b2SimplexCache* cache,
-		const b2DistanceProxy* proxyA, const b2Transform& transformA,
-		const b2DistanceProxy* proxyB, const b2Transform& transformB)
+	// TODO_ERIN might not need to return the separation
+
+	float32 Initialize(const b2SimplexCache* cache,
+		const b2DistanceProxy* proxyA, const b2Sweep& sweepA,
+		const b2DistanceProxy* proxyB, const b2Sweep& sweepB)
 	{
 		m_proxyA = proxyA;
 		m_proxyB = proxyB;
 		int32 count = cache->count;
 		b2Assert(0 < count && count < 3);
 
+		m_sweepA = sweepA;
+		m_sweepB = sweepB;
+
+		b2Transform xfA, xfB;
+		m_sweepA.GetTransform(&xfA, 0.0f);
+		m_sweepB.GetTransform(&xfB, 0.0f);
+
 		if (count == 1)
 		{
 			m_type = e_points;
 			b2Vec2 localPointA = m_proxyA->GetVertex(cache->indexA[0]);
 			b2Vec2 localPointB = m_proxyB->GetVertex(cache->indexB[0]);
-			b2Vec2 pointA = b2Mul(transformA, localPointA);
-			b2Vec2 pointB = b2Mul(transformB, localPointB);
+			b2Vec2 pointA = b2Mul(xfA, localPointA);
+			b2Vec2 pointB = b2Mul(xfB, localPointB);
 			m_axis = pointB - pointA;
-			m_axis.Normalize();
-		}
-		else if (cache->indexB[0] == cache->indexB[1])
-		{
-			// Two points on A and one on B
-			m_type = e_faceA;
-			b2Vec2 localPointA1 = m_proxyA->GetVertex(cache->indexA[0]);
-			b2Vec2 localPointA2 = m_proxyA->GetVertex(cache->indexA[1]);
-			b2Vec2 localPointB = m_proxyB->GetVertex(cache->indexB[0]);
-			m_localPoint = 0.5f * (localPointA1 + localPointA2);
-			m_axis = b2Cross(localPointA2 - localPointA1, 1.0f);
-			m_axis.Normalize();
-
-			b2Vec2 normal = b2Mul(transformA.R, m_axis);
-			b2Vec2 pointA = b2Mul(transformA, m_localPoint);
-			b2Vec2 pointB = b2Mul(transformB, localPointB);
-
-			float32 s = b2Dot(pointB - pointA, normal);
-			if (s < 0.0f)
-			{
-				m_axis = -m_axis;
-			}
+			float32 s = m_axis.Normalize();
+			return s;
 		}
 		else if (cache->indexA[0] == cache->indexA[1])
 		{
 			// Two points on B and one on A.
 			m_type = e_faceB;
-			b2Vec2 localPointA = proxyA->GetVertex(cache->indexA[0]);
 			b2Vec2 localPointB1 = proxyB->GetVertex(cache->indexB[0]);
 			b2Vec2 localPointB2 = proxyB->GetVertex(cache->indexB[1]);
-			m_localPoint = 0.5f * (localPointB1 + localPointB2);
+
 			m_axis = b2Cross(localPointB2 - localPointB1, 1.0f);
 			m_axis.Normalize();
+			b2Vec2 normal = b2Mul(xfB.R, m_axis);
 
-			b2Vec2 normal = b2Mul(transformB.R, m_axis);
-			b2Vec2 pointB = b2Mul(transformB, m_localPoint);
-			b2Vec2 pointA = b2Mul(transformA, localPointA);
+			m_localPoint = 0.5f * (localPointB1 + localPointB2);
+			b2Vec2 pointB = b2Mul(xfB, m_localPoint);
+
+			b2Vec2 localPointA = proxyA->GetVertex(cache->indexA[0]);
+			b2Vec2 pointA = b2Mul(xfA, localPointA);
 
 			float32 s = b2Dot(pointA - pointB, normal);
 			if (s < 0.0f)
 			{
 				m_axis = -m_axis;
+				s = -s;
 			}
+			return s;
 		}
 		else
 		{
-			// Two points on B and two points on A.
-			// The faces are parallel.
+			// Two points on A and one or two points on B.
+			m_type = e_faceA;
 			b2Vec2 localPointA1 = m_proxyA->GetVertex(cache->indexA[0]);
 			b2Vec2 localPointA2 = m_proxyA->GetVertex(cache->indexA[1]);
-			b2Vec2 localPointB1 = m_proxyB->GetVertex(cache->indexB[0]);
-			b2Vec2 localPointB2 = m_proxyB->GetVertex(cache->indexB[1]);
+			
+			m_axis = b2Cross(localPointA2 - localPointA1, 1.0f);
+			m_axis.Normalize();
+			b2Vec2 normal = b2Mul(xfA.R, m_axis);
 
-			b2Vec2 pA = b2Mul(transformA, localPointA1);
-			b2Vec2 dA = b2Mul(transformA.R, localPointA2 - localPointA1);
-			b2Vec2 pB = b2Mul(transformB, localPointB1);
-			b2Vec2 dB = b2Mul(transformB.R, localPointB2 - localPointB1);
+			m_localPoint = 0.5f * (localPointA1 + localPointA2);
+			b2Vec2 pointA = b2Mul(xfA, m_localPoint);
 
-			float32 a = b2Dot(dA, dA);
-			float32 e = b2Dot(dB, dB);
-			b2Vec2 r = pA - pB;
-			float32 c = b2Dot(dA, r);
-			float32 f = b2Dot(dB, r);
+			b2Vec2 localPointB = m_proxyB->GetVertex(cache->indexB[0]);
+			b2Vec2 pointB = b2Mul(xfB, localPointB);
 
-			float32 b = b2Dot(dA, dB);
-			float32 denom = a * e - b * b;
-
-			float32 s = 0.0f;
-			if (denom != 0.0f)
+			float32 s = b2Dot(pointB - pointA, normal);
+			if (s < 0.0f)
 			{
-				s = b2Clamp((b * f - c * e) / denom, 0.0f, 1.0f);
+				m_axis = -m_axis;
+				s = -s;
 			}
-
-			float32 t = (b * s + f) / e;
-
-			if (t < 0.0f)
-			{
-				t = 0.0f;
-				s = b2Clamp(-c / a, 0.0f, 1.0f);
-			}
-			else if (t > 1.0f)
-			{
-				t = 1.0f;
-				s = b2Clamp((b - c) / a, 0.0f, 1.0f);
-			}
-
-			b2Vec2 localPointA = localPointA1 + s * (localPointA2 - localPointA1);
-			b2Vec2 localPointB = localPointB1 + t * (localPointB2 - localPointB1);
-
-			if (s == 0.0f || s == 1.0f)
-			{
-				m_type = e_faceB;
-				m_axis = b2Cross(localPointB2 - localPointB1, 1.0f);
-				m_axis.Normalize();
-
-				m_localPoint = localPointB;
-
-				b2Vec2 normal = b2Mul(transformB.R, m_axis);
-				b2Vec2 pointA = b2Mul(transformA, localPointA);
-				b2Vec2 pointB = b2Mul(transformB, localPointB);
-
-				float32 sgn = b2Dot(pointA - pointB, normal);
-				if (sgn < 0.0f)
-				{
-					m_axis = -m_axis;
-				}
-			}
-			else
-			{
-				m_type = e_faceA;
-				m_axis = b2Cross(localPointA2 - localPointA1, 1.0f);
-				m_axis.Normalize();
-
-				m_localPoint = localPointA;
-
-				b2Vec2 normal = b2Mul(transformA.R, m_axis);
-				b2Vec2 pointA = b2Mul(transformA, localPointA);
-				b2Vec2 pointB = b2Mul(transformB, localPointB);
-
-				float32 sgn = b2Dot(pointB - pointA, normal);
-				if (sgn < 0.0f)
-				{
-					m_axis = -m_axis;
-				}
-			}
+			return s;
 		}
 	}
 
-	float32 Evaluate(const b2Transform& transformA, const b2Transform& transformB)
+	float32 FindMinSeparation(int32* indexA, int32* indexB, float32 t) const
 	{
+		b2Transform xfA, xfB;
+		m_sweepA.GetTransform(&xfA, t);
+		m_sweepB.GetTransform(&xfB, t);
+
 		switch (m_type)
 		{
 		case e_points:
 			{
-				b2Vec2 axisA = b2MulT(transformA.R,  m_axis);
-				b2Vec2 axisB = b2MulT(transformB.R, -m_axis);
-				b2Vec2 localPointA = m_proxyA->GetSupportVertex(axisA);
-				b2Vec2 localPointB = m_proxyB->GetSupportVertex(axisB);
-				b2Vec2 pointA = b2Mul(transformA, localPointA);
-				b2Vec2 pointB = b2Mul(transformB, localPointB);
+				b2Vec2 axisA = b2MulT(xfA.R,  m_axis);
+				b2Vec2 axisB = b2MulT(xfB.R, -m_axis);
+
+				*indexA = m_proxyA->GetSupport(axisA);
+				*indexB = m_proxyB->GetSupport(axisB);
+
+				b2Vec2 localPointA = m_proxyA->GetVertex(*indexA);
+				b2Vec2 localPointB = m_proxyB->GetVertex(*indexB);
+				
+				b2Vec2 pointA = b2Mul(xfA, localPointA);
+				b2Vec2 pointB = b2Mul(xfB, localPointB);
+
 				float32 separation = b2Dot(pointB - pointA, m_axis);
 				return separation;
 			}
 
 		case e_faceA:
 			{
-				b2Vec2 normal = b2Mul(transformA.R, m_axis);
-				b2Vec2 pointA = b2Mul(transformA, m_localPoint);
+				b2Vec2 normal = b2Mul(xfA.R, m_axis);
+				b2Vec2 pointA = b2Mul(xfA, m_localPoint);
 
-				b2Vec2 axisB = b2MulT(transformB.R, -normal);
+				b2Vec2 axisB = b2MulT(xfB.R, -normal);
+				
+				*indexA = -1;
+				*indexB = m_proxyB->GetSupport(axisB);
 
-				b2Vec2 localPointB = m_proxyB->GetSupportVertex(axisB);
-				b2Vec2 pointB = b2Mul(transformB, localPointB);
+				b2Vec2 localPointB = m_proxyB->GetVertex(*indexB);
+				b2Vec2 pointB = b2Mul(xfB, localPointB);
 
 				float32 separation = b2Dot(pointB - pointA, normal);
 				return separation;
@@ -213,13 +164,75 @@ struct b2SeparationFunction
 
 		case e_faceB:
 			{
-				b2Vec2 normal = b2Mul(transformB.R, m_axis);
-				b2Vec2 pointB = b2Mul(transformB, m_localPoint);
+				b2Vec2 normal = b2Mul(xfB.R, m_axis);
+				b2Vec2 pointB = b2Mul(xfB, m_localPoint);
 
-				b2Vec2 axisA = b2MulT(transformA.R, -normal);
+				b2Vec2 axisA = b2MulT(xfA.R, -normal);
 
-				b2Vec2 localPointA = m_proxyA->GetSupportVertex(axisA);
-				b2Vec2 pointA = b2Mul(transformA, localPointA);
+				*indexB = -1;
+				*indexA = m_proxyA->GetSupport(axisA);
+
+				b2Vec2 localPointA = m_proxyA->GetVertex(*indexA);
+				b2Vec2 pointA = b2Mul(xfA, localPointA);
+
+				float32 separation = b2Dot(pointA - pointB, normal);
+				return separation;
+			}
+
+		default:
+			b2Assert(false);
+			*indexA = -1;
+			*indexB = -1;
+			return 0.0f;
+		}
+	}
+
+	float32 Evaluate(int32 indexA, int32 indexB, float32 t) const
+	{
+		b2Transform xfA, xfB;
+		m_sweepA.GetTransform(&xfA, t);
+		m_sweepB.GetTransform(&xfB, t);
+
+		switch (m_type)
+		{
+		case e_points:
+			{
+				b2Vec2 axisA = b2MulT(xfA.R,  m_axis);
+				b2Vec2 axisB = b2MulT(xfB.R, -m_axis);
+
+				b2Vec2 localPointA = m_proxyA->GetVertex(indexA);
+				b2Vec2 localPointB = m_proxyB->GetVertex(indexB);
+
+				b2Vec2 pointA = b2Mul(xfA, localPointA);
+				b2Vec2 pointB = b2Mul(xfB, localPointB);
+				float32 separation = b2Dot(pointB - pointA, m_axis);
+
+				return separation;
+			}
+
+		case e_faceA:
+			{
+				b2Vec2 normal = b2Mul(xfA.R, m_axis);
+				b2Vec2 pointA = b2Mul(xfA, m_localPoint);
+
+				b2Vec2 axisB = b2MulT(xfB.R, -normal);
+
+				b2Vec2 localPointB = m_proxyB->GetVertex(indexB);
+				b2Vec2 pointB = b2Mul(xfB, localPointB);
+
+				float32 separation = b2Dot(pointB - pointA, normal);
+				return separation;
+			}
+
+		case e_faceB:
+			{
+				b2Vec2 normal = b2Mul(xfB.R, m_axis);
+				b2Vec2 pointB = b2Mul(xfB, m_localPoint);
+
+				b2Vec2 axisA = b2MulT(xfA.R, -normal);
+
+				b2Vec2 localPointA = m_proxyA->GetVertex(indexA);
+				b2Vec2 pointA = b2Mul(xfA, localPointA);
 
 				float32 separation = b2Dot(pointA - pointB, normal);
 				return separation;
@@ -233,33 +246,35 @@ struct b2SeparationFunction
 
 	const b2DistanceProxy* m_proxyA;
 	const b2DistanceProxy* m_proxyB;
+	b2Sweep m_sweepA, m_sweepB;
 	Type m_type;
 	b2Vec2 m_localPoint;
 	b2Vec2 m_axis;
 };
 
-// CCD via the secant method.
-float32 b2TimeOfImpact(const b2TOIInput* input)
+// CCD via the local separating axis method. This seeks progression
+// by computing the largest time at which separation is maintained.
+void b2TimeOfImpact(b2TOIOutput* output, const b2TOIInput* input)
 {
 	++b2_toiCalls;
+
+	output->state = b2TOIOutput::e_unknown;
+	output->t = input->tMax;
 
 	const b2DistanceProxy* proxyA = &input->proxyA;
 	const b2DistanceProxy* proxyB = &input->proxyB;
 
 	b2Sweep sweepA = input->sweepA;
 	b2Sweep sweepB = input->sweepB;
+	float32 tMax = input->tMax;
 
-	b2Assert(sweepA.t0 == sweepB.t0);
-	b2Assert(1.0f - sweepA.t0 > b2_epsilon);
+	float32 target = b2_linearSlop;
+	float32 tolerance = 0.25f * b2_linearSlop;
+	b2Assert(target > tolerance);
 
-	float32 radius = proxyA->m_radius + proxyB->m_radius;
-	float32 tolerance = input->tolerance;
-
-	float32 alpha = 0.0f;
-
+	float32 t1 = 0.0f;
 	const int32 k_maxIterations = 1000;	// TODO_ERIN b2Settings
 	int32 iter = 0;
-	float32 target = 0.0f;
 
 	// Prepare input for distance query.
 	b2SimplexCache cache;
@@ -269,59 +284,33 @@ float32 b2TimeOfImpact(const b2TOIInput* input)
 	distanceInput.proxyB = input->proxyB;
 	distanceInput.useRadii = false;
 
+	// The outer loop progressively attempts to compute new separating axes.
+	// This loop terminates when an axis is repeated (no progress is made).
 	for(;;)
 	{
 		b2Transform xfA, xfB;
-		sweepA.GetTransform(&xfA, alpha);
-		sweepB.GetTransform(&xfB, alpha);
+		sweepA.GetTransform(&xfA, t1);
+		sweepB.GetTransform(&xfB, t1);
 
-		// Get the distance between shapes.
+		// Get the distance between shapes. We can also use the results
+		// to get a separating axis.
 		distanceInput.transformA = xfA;
 		distanceInput.transformB = xfB;
 		b2DistanceOutput distanceOutput;
 		b2Distance(&distanceOutput, &cache, &distanceInput);
 
+		// If the shapes are overlapped, we give up on continuous collision.
 		if (distanceOutput.distance <= 0.0f)
 		{
-			alpha = 1.0f;
+			// Failure!
+			output->state = b2TOIOutput::e_overlapped;
+			output->t = 0.0f;
 			break;
 		}
 
+		// Initialize the separating axis.
 		b2SeparationFunction fcn;
-		fcn.Initialize(&cache, proxyA, xfA, proxyB, xfB);
-
-		float32 separation = fcn.Evaluate(xfA, xfB);
-		if (separation <= 0.0f)
-		{
-			alpha = 1.0f;
-			break;
-		}
-
-		if (iter == 0)
-		{
-			// Compute a reasonable target distance to give some breathing room
-			// for conservative advancement. We take advantage of the shape radii
-			// to create additional clearance.
-			if (separation > radius)
-			{
-				target = b2Max(radius - tolerance, 0.75f * radius);
-			}
-			else
-			{
-				target = b2Max(separation - tolerance, 0.02f * radius);
-			}
-		}
-
-		if (separation - target < 0.5f * tolerance)
-		{
-			if (iter == 0)
-			{
-				alpha = 1.0f;
-				break;
-			}
-
-			break;
-		}
+		fcn.Initialize(&cache, proxyA, sweepA, proxyB, sweepB);
 
 #if 0
 		// Dump the curve seen by the root finder
@@ -349,62 +338,96 @@ float32 b2TimeOfImpact(const b2TOIInput* input)
 		}
 #endif
 
-		// Compute 1D root of: f(x) - target = 0
-		float32 newAlpha = alpha;
+		// Compute the TOI on the separating axis. We do this by successively
+		// resolving the deepest point. This loop is bounded by the number of vertices.
+		bool done = false;
+		float32 t2 = tMax;
+		for (;;)
 		{
-			float32 x1 = alpha, x2 = 1.0f;
+			// Find the deepest point at t2. Store the witness point indices.
+			int32 indexA, indexB;
+			float32 s2 = fcn.FindMinSeparation(&indexA, &indexB, t2);
 
-			float32 f1 = separation;
-
-			sweepA.GetTransform(&xfA, x2);
-			sweepB.GetTransform(&xfB, x2);
-			float32 f2 = fcn.Evaluate(xfA, xfB);
-
-			// If intervals don't overlap at t2, then we are done.
-			if (f2 >= target)
+			// Is the final configuration separated?
+			if (s2 > target + tolerance)
 			{
-				alpha = 1.0f;
+				// Victory!
+				output->state = b2TOIOutput::e_separated;
+				output->t = tMax;
+				done = true;
 				break;
 			}
 
-			// Determine when intervals intersect.
+			// Is the final configuration touching?
+			if (s2 > target - tolerance)
+			{
+				// Victory!
+				output->state = b2TOIOutput::e_touching;
+				output->t = t2;
+				done = true;
+				break;
+			}
+
+			// Compute the initial separation of the witness points.
+			float32 s1 = fcn.Evaluate(indexA, indexB, t1);
+
+			// Check for initial overlap. This might happen if the root finder
+			// runs out of iterations.
+			if (s1 < target - tolerance)
+			{
+				output->state = b2TOIOutput::e_failed;
+				output->t = t1;
+				done = true;
+				break;
+			}
+
+			// Check for touching
+			if (s1 <= target + tolerance)
+			{
+				// Victory! t1 should hold the TOI (could be 0.0).
+				output->state = b2TOIOutput::e_touching;
+				output->t = t1;
+				done = true;
+				break;
+			}
+
+			// Compute 1D root of: f(x) - target = 0
 			int32 rootIterCount = 0;
+			float32 a1 = t1, a2 = t2;
 			for (;;)
 			{
 				// Use a mix of the secant rule and bisection.
-				float32 x;
+				float32 t;
 				if (rootIterCount & 1)
 				{
 					// Secant rule to improve convergence.
-					x = x1 + (target - f1) * (x2 - x1) / (f2 - f1);
+					t = a1 + (target - s1) * (a2 - a1) / (s2 - s1);
 				}
 				else
 				{
 					// Bisection to guarantee progress.
-					x = 0.5f * (x1 + x2);
+					t = 0.5f * (a1 + a2);
 				}
 
-				sweepA.GetTransform(&xfA, x);
-				sweepB.GetTransform(&xfB, x);
+				float32 s = fcn.Evaluate(indexA, indexB, t);
 
-				float32 f = fcn.Evaluate(xfA, xfB);
-
-				if (b2Abs(f - target) < 0.025f * tolerance)
+				if (b2Abs(s - target) < tolerance)
 				{
-					newAlpha = x;
+					// t2 holds a tentative value for t1
+					t2 = t;
 					break;
 				}
 
 				// Ensure we continue to bracket the root.
-				if (f > target)
+				if (s > target)
 				{
-					x1 = x;
-					f1 = f;
+					a1 = t;
+					s1 = s;
 				}
 				else
 				{
-					x2 = x;
-					f2 = f;
+					a2 = t;
+					s2 = s;
 				}
 
 				++rootIterCount;
@@ -419,24 +442,22 @@ float32 b2TimeOfImpact(const b2TOIInput* input)
 			b2_toiMaxRootIters = b2Max(b2_toiMaxRootIters, rootIterCount);
 		}
 
-		// Ensure significant advancement.
-		if (newAlpha < (1.0f + 100.0f * b2_epsilon) * alpha)
+		++iter;
+		++b2_toiIters;
+
+		if (done)
 		{
 			break;
 		}
 
-		alpha = newAlpha;
-
-		++iter;
-		++b2_toiIters;
-
 		if (iter == k_maxIterations)
 		{
+			// Root finder got stuck. Semi-victory.
+			output->state = b2TOIOutput::e_failed;
+			output->t = t1;
 			break;
 		}
 	}
 
 	b2_toiMaxIters = b2Max(b2_toiMaxIters, iter);
-
-	return alpha;
 }

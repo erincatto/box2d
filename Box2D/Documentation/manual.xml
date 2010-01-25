@@ -958,69 +958,35 @@ for (b2Fixture* f = body-&gt;GetFixtureList(); f; f = f-&gt;GetNext())
 </sect1>
 </chapter>
   
-<chapter>
-<title>Shapes</title>
-
-<sect1>
-<title>About</title>
-<para>Shapes describe collision geometry and are normally attached to bodies using fixtures. However, you may also create shapes independent of bodies and the world object. You have access to all the low level collision algorithms that Box2D uses internally.</para>
-</sect1>
-
-<sect1>
-<title>Abstract Shapes</title>
-
-<para>Box2D shapes implement the b2Shape base class. The base class has defines functions to:</para>
-
-<itemizedlist>
-<listitem>
-<para>Test a point for overlap with the shape.</para>
-</listitem>
-<listitem>
-<para>Perform a ray cast against the shape.</para>
-</listitem>
-<listitem>
-<para>Compute the shape&apos;s AABB.</para>
-</listitem>
-<listitem>
-<para>Compute the mass properties of the shape.</para>
-</listitem>
-</itemizedlist>
-
-<para>In addition, each shape has a type member and a radius. The radius even applies to polygons, as discussed below.</para>
-</sect1>
-
-<sect1>
-<title>Circle Shapes</title>
-</sect1>
-
-<sect1>
-<title>Polygon Shapes</title>
-</sect1>
-
-<sect1>
-<title>Collision Functions</title>
-</sect1>
-</chapter>
-
-
 <chapter id="fixtures">
 <title>Fixtures</title>
 
 <sect1>
 <title>About</title>
 
-<para>Fixtures attach collision geometry (shapes) to bodies. Fixtures are also used to define the mass of a body. This lets you specify the density and let Box2D do the work of computing the mass properties.</para>
+<para>Fixtures attach collision shapes to bodies. Fixtures are also used to define the mass of a body. You just specify the density and let Box2D do the work of computing the mass properties.</para>
 
-<para>Fixtures have properties of friction and restitution. Fixtures carry collision filtering information to let you prevent collisions between certain game objects.</para>
+<para>Fixtures have friction and restitution. Fixtures carry collision filtering information to let you prevent collisions between certain game objects.</para>
 
-<para>Shapes are always owned by a body. You can attach multiple shapes to a single body. Shapes are abstract classes so that many types of shapes can be implemented in Box2D. If you are brave, you can implement your own shape type (and collision algorithms).</para>
+<para>Fixtures are always owned by a body. You can attach multiple fixtures to a single body. These are called compound bodies.</para>
 </sect1>
 
 <sect1>
-<title>The Shape Definition</title>
+<title>Fixture Definition</title>
 
-<para>Shape definitions are used to create shapes. There is common shape data held by <classname>b2ShapeDef</classname> and specific shape data held by derived classes.</para>
+<para>Fixture definitions are used to create fixtures. There is only one type of fixture in Box2D, so there is only one type of fixture definition. We will discuss some of the important fields of <classname>b2FixtureDef</classname> in the following sections.</para>
 
+<sect2>
+<title>Shape</title>
+
+<para>Each fixture definition must hold a pointer to a shape. The shape is abstract and can be of any concrete type: circle, polygon, ect. See the <xref linkend="shapes"/> for details on how to create shapes. The fixture makes a deep copy of the shape, so you may destroy your copy of the shape after the fixture has been created.</para>
+
+<programlisting>
+b2FixtureDef fixtureDef;
+fixtureDef.shape = &amp;myShape;
+</programlisting>
+
+</sect2>
 <sect2>
 <title>Friction and Restitution</title>
 
@@ -1158,6 +1124,49 @@ myBody-&gt;DestroyShape(myShape);
     </sect1>
 </chapter>
 
+<chapter id="shapes">
+<title>Shapes</title>
+
+<sect1>
+<title>About</title>
+<para>Shapes describe collision geometry and are normally attached to bodies using fixtures. However, you may also create shapes independent of bodies and the world object. You have access to all the low level collision algorithms that Box2D uses internally.</para>
+</sect1>
+
+<sect1>
+<title>Abstract Shapes</title>
+
+<para>Box2D shapes implement the b2Shape base class. The base class has defines functions to:</para>
+
+<itemizedlist>
+<listitem>
+<para>Test a point for overlap with the shape.</para>
+</listitem>
+<listitem>
+<para>Perform a ray cast against the shape.</para>
+</listitem>
+<listitem>
+<para>Compute the shape&apos;s AABB.</para>
+</listitem>
+<listitem>
+<para>Compute the mass properties of the shape.</para>
+</listitem>
+</itemizedlist>
+
+<para>In addition, each shape has a type member and a radius. The radius even applies to polygons, as discussed below.</para>
+</sect1>
+
+<sect1>
+<title>Circle Shapes</title>
+</sect1>
+
+<sect1>
+<title>Polygon Shapes</title>
+</sect1>
+
+<sect1>
+<title>Collision Functions</title>
+</sect1>
+</chapter>
 
 <chapter>
     <title>Joints</title>

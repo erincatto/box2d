@@ -32,7 +32,7 @@ public:
 	b2CircleContact(b2Fixture* fixtureA, b2Fixture* fixtureB);
 	~b2CircleContact() {}
 
-	void Evaluate();
+	void Evaluate(b2Manifold* manifold, const b2Transform& xfA, const b2Transform& xfB);
 };
 
 #endif
