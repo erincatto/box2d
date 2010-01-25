@@ -144,7 +144,6 @@ void Keyboard(unsigned char key, int x, int y)
 		// Press 'r' to reset.
 	case 'r':
 		delete test;
-		b2Assert(b2_byteCount == 0);
 		test = entry->createFcn();
 		break;
 

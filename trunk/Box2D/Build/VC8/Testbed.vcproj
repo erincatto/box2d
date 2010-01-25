@@ -222,10 +222,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Examples\TestBed\Tests\CCDTest.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Examples\TestBed\Tests\Chain.h"
 				>
 			</File>
@@ -243,6 +239,10 @@
 			</File>
 			<File
 				RelativePath="..\..\Examples\Testbed\Tests\Confined.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Examples\Testbed\Tests\ContinuousTest.h"
 				>
 			</File>
 			<File
