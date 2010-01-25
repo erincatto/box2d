@@ -58,10 +58,10 @@ union b2ContactID
 /// provide reliable contact forces, especially for high speed collisions.
 struct b2ManifoldPoint
 {
-	b2Vec2 m_localPoint;		///< usage depends on manifold type
-	float32 m_normalImpulse;	///< the non-penetration impulse
-	float32 m_tangentImpulse;	///< the friction impulse
-	b2ContactID m_id;			///< uniquely identifies a contact point between two shapes
+	b2Vec2 localPoint;		///< usage depends on manifold type
+	float32 normalImpulse;	///< the non-penetration impulse
+	float32 tangentImpulse;	///< the friction impulse
+	b2ContactID id;			///< uniquely identifies a contact point between two shapes
 };
 
 /// A manifold for two touching convex shapes.
@@ -89,11 +89,11 @@ struct b2Manifold
 		e_faceB
 	};
 
-	b2ManifoldPoint m_points[b2_maxManifoldPoints];	///< the points of contact
-	b2Vec2 m_localPlaneNormal;						///< not use for Type::e_points
-	b2Vec2 m_localPoint;							///< usage depends on manifold type
-	Type m_type;
-	int32 m_pointCount;								///< the number of manifold points
+	b2ManifoldPoint points[b2_maxManifoldPoints];	///< the points of contact
+	b2Vec2 localNormal;								///< not use for Type::e_points
+	b2Vec2 localPoint;								///< usage depends on manifold type
+	Type type;
+	int32 pointCount;								///< the number of manifold points
 };
 
 /// This is used to compute the current state of a contact manifold.
@@ -107,8 +107,8 @@ struct b2WorldManifold
 					const b2Transform& xfA, float32 radiusA,
 					const b2Transform& xfB, float32 radiusB);
 
-	b2Vec2 m_normal;						///< world vector pointing from A to B
-	b2Vec2 m_points[b2_maxManifoldPoints];	///< world contact point (point of intersection)
+	b2Vec2 normal;						///< world vector pointing from A to B
+	b2Vec2 points[b2_maxManifoldPoints];	///< world contact point (point of intersection)
 };
 
 /// This is used for determining the state of contact points.

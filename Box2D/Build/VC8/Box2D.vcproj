@@ -365,6 +365,14 @@
 					RelativePath="..\..\Box2D\Dynamics\Contacts\b2PolygonContact.h"
 					>
 				</File>
+				<File
+					RelativePath="..\..\Box2D\Dynamics\Contacts\b2TOISolver.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Box2D\Dynamics\Contacts\b2TOISolver.h"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="Joints"

@@ -44,12 +44,9 @@ b2CircleContact::b2CircleContact(b2Fixture* fixtureA, b2Fixture* fixtureB)
 	b2Assert(m_fixtureB->GetType() == b2Shape::e_circle);
 }
 
-void b2CircleContact::Evaluate()
+void b2CircleContact::Evaluate(b2Manifold* manifold, const b2Transform& xfA, const b2Transform& xfB)
 {
-	b2Body* bodyA = m_fixtureA->GetBody();
-	b2Body* bodyB = m_fixtureB->GetBody();
-
-	b2CollideCircles(	&m_manifold,
-						(b2CircleShape*)m_fixtureA->GetShape(), bodyA->GetTransform(),
-						(b2CircleShape*)m_fixtureB->GetShape(), bodyB->GetTransform());
+	b2CollideCircles(manifold,
+					(b2CircleShape*)m_fixtureA->GetShape(), xfA,
+					(b2CircleShape*)m_fixtureB->GetShape(), xfB);
 }
