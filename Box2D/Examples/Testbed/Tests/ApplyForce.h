@@ -97,6 +97,7 @@ public:
 
 			bd.position.Set(0.0f, 2.0);
 			bd.angle = b2_pi;
+			bd.allowSleep = false;
 			m_body = m_world->CreateBody(&bd);
 			m_body->CreateFixture(&sd1);
 			m_body->CreateFixture(&sd2);
