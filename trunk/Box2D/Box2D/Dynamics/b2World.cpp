@@ -48,7 +48,7 @@ b2World::b2World(const b2Vec2& gravity, bool doSleep)
 	m_allowSleep = doSleep;
 	m_gravity = gravity;
 
-	m_flags = 0;
+	m_flags = e_clearForces;
 
 	m_inv_dt0 = 0.0f;
 
@@ -809,6 +809,11 @@ void b2World::Step(float32 dt, int32 velocityIterations, int32 positionIteration
 	if (step.dt > 0.0f)
 	{
 		m_inv_dt0 = step.inv_dt;
+	}
+
+	if (m_flags & e_clearForces)
+	{
+		ClearForces();
 	}
 
 	m_flags &= ~e_locked;
