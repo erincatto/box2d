@@ -200,63 +200,111 @@ bool b2PolygonShape::TestPoint(const b2Transform& xf, const b2Vec2& p) const
 
 bool b2PolygonShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input, const b2Transform& xf) const
 {
-	float32 lower = 0.0f, upper = input.maxFraction;
-
 	// Put the ray into the polygon's frame of reference.
 	b2Vec2 p1 = b2MulT(xf.R, input.p1 - xf.position);
 	b2Vec2 p2 = b2MulT(xf.R, input.p2 - xf.position);
 	b2Vec2 d = p2 - p1;
-	int32 index = -1;
 
-	for (int32 i = 0; i < m_vertexCount; ++i)
+	if (m_vertexCount == 2)
 	{
-		// p = p1 + a * d
-		// dot(normal, p - v) = 0
-		// dot(normal, p1 - v) + a * dot(normal, d) = 0
-		float32 numerator = b2Dot(m_normals[i], m_vertices[i] - p1);
-		float32 denominator = b2Dot(m_normals[i], d);
+		b2Vec2 v1 = m_vertices[0];
+		b2Vec2 v2 = m_vertices[1];
+		b2Vec2 normal = m_normals[0];
+
+		// q = p1 + t * d
+		// dot(normal, q - v1) = 0
+		// dot(normal, p1 - v1) + t * dot(normal, d) = 0
+		float32 numerator = b2Dot(normal, v1 - p1);
+		float32 denominator = b2Dot(normal, d);
 
 		if (denominator == 0.0f)
-		{	
-			if (numerator < 0.0f)
+		{
+			return false;
+		}
+	
+		float32 t = numerator / denominator;
+		if (t < 0.0f || 1.0f < t)
+		{
+			return false;
+		}
+
+		b2Vec2 q = p1 + t * d;
+
+		// q = v1 + s * r
+		// s = dot(q - v1, r) / dot(r, r)
+		b2Vec2 r = v2 - v1;
+		float32 rr = b2Dot(r, r);
+		if (rr == 0.0f)
+		{
+			return false;
+		}
+
+		float32 s = b2Dot(q - v1, r) / rr;
+		if (s < 0.0f || 1.0f < s)
+		{
+			return false;
+		}
+
+		output->fraction = t;
+		output->normal = normal;
+		return true;
+	}
+	else
+	{
+		float32 lower = 0.0f, upper = input.maxFraction;
+
+		int32 index = -1;
+
+		for (int32 i = 0; i < m_vertexCount; ++i)
+		{
+			// p = p1 + a * d
+			// dot(normal, p - v) = 0
+			// dot(normal, p1 - v) + a * dot(normal, d) = 0
+			float32 numerator = b2Dot(m_normals[i], m_vertices[i] - p1);
+			float32 denominator = b2Dot(m_normals[i], d);
+
+			if (denominator == 0.0f)
+			{	
+				if (numerator < 0.0f)
+				{
+					return false;
+				}
+			}
+			else
+			{
+				// Note: we want this predicate without division:
+				// lower < numerator / denominator, where denominator < 0
+				// Since denominator < 0, we have to flip the inequality:
+				// lower < numerator / denominator <==> denominator * lower > numerator.
+				if (denominator < 0.0f && numerator < lower * denominator)
+				{
+					// Increase lower.
+					// The segment enters this half-space.
+					lower = numerator / denominator;
+					index = i;
+				}
+				else if (denominator > 0.0f && numerator < upper * denominator)
+				{
+					// Decrease upper.
+					// The segment exits this half-space.
+					upper = numerator / denominator;
+				}
+			}
+
+			if (upper < lower - b2_epsilon)
 			{
 				return false;
 			}
 		}
-		else
+
+		b2Assert(0.0f <= lower && lower <= input.maxFraction);
+
+		if (index >= 0)
 		{
-			// Note: we want this predicate without division:
-			// lower < numerator / denominator, where denominator < 0
-			// Since denominator < 0, we have to flip the inequality:
-			// lower < numerator / denominator <==> denominator * lower > numerator.
-			if (denominator < 0.0f && numerator < lower * denominator)
-			{
-				// Increase lower.
-				// The segment enters this half-space.
-				lower = numerator / denominator;
-				index = i;
-			}
-			else if (denominator > 0.0f && numerator < upper * denominator)
-			{
-				// Decrease upper.
-				// The segment exits this half-space.
-				upper = numerator / denominator;
-			}
+			output->fraction = lower;
+			output->normal = b2Mul(xf.R, m_normals[index]);
+			return true;
 		}
-
-		if (upper < lower - b2_epsilon)
-		{
-			return false;
-		}
-	}
-
-	b2Assert(0.0f <= lower && lower <= input.maxFraction);
-
-	if (index >= 0)
-	{
-		output->fraction = lower;
-		output->normal = b2Mul(xf.R, m_normals[index]);
-		return true;
 	}
 
 	return false;
