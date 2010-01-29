@@ -56,8 +56,11 @@
 #include "VerticalStack.h"
 #include "Web.h"
 
+#include "RayCastBug.h"
+
 TestEntry g_testEntries[] =
 {
+	{"RayCastBug", RayCastBug::Create},
 	{"Continuous Test", ContinuousTest::Create},
 	{"Time of Impact", TimeOfImpact::Create},
 	{"Vertical Stack", VerticalStack::Create},
