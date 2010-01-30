@@ -35,6 +35,7 @@
 #include "DistanceTest.h"
 #include "Dominos.h"
 #include "DynamicTreeTest.h"
+#include "EdgeShapes.h"
 #include "Gears.h"
 #include "LineJoint.h"
 #include "OneSidedPlatform.h"
@@ -58,6 +59,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Edge Shapes", EdgeShapes::Create},
 	{"Continuous Test", ContinuousTest::Create},
 	{"Time of Impact", TimeOfImpact::Create},
 	{"Vertical Stack", VerticalStack::Create},
