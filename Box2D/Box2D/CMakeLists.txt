@@ -85,7 +85,6 @@ set(Joints
 	Dynamics/Joints/b2WeldJoint.cpp
 	Dynamics/Joints/b2WeldJoint.h
 )
-
 include_directories( ../ )
 
 add_library(Box2D
@@ -97,3 +96,13 @@ add_library(Box2D
 	${Shapes}
 	${Collision}
 )
+
+# These are used to create visual studio folders.
+source_group(Collision FILES ${Collision})
+source_group(Collision\\Shapes FILES ${Shapes})
+source_group(Common FILES ${Common})
+source_group(Dynamics FILES ${Dynamics})
+source_group(Dynamics\\Contacts FILES ${Contacts})
+source_group(Dynamics\\Joints FILES ${Joints})
+source_group(Include Box2D.h)
+
