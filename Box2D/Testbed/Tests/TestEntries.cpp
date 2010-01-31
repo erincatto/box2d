@@ -18,7 +18,7 @@
 
 #include "../Framework/Test.h"
 #include "../Framework/Render.h"
-#include "../Framework/freeglut/GL/glut.h"
+#include "../../freeglut/GL/glut.h"
 #include <cstring>
 
 #include "ApplyForce.h"
