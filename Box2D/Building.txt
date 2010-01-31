@@ -1,0 +1,14 @@
+Box2D uses CMake to describe the build in a platform independent manner.
+
+First download and install cmake from cmake.org
+
+For Microsoft Visual Studio:
+- Run the cmake-gui
+- Set the source directory to the path of Box2D on your PC (the folder that contains this file).
+- Set the build directory to be the path of Box2D/Build on your PC.
+- Press the Configure button and select your version of Visual Studio.
+- You may have to press the Configure button again.
+- Press the Generate button.
+- Open Box2D/Build/Box2D.sln.
+- Set the Testbed or HelloWorld as your startup project.
+- Press F5 or Ctrl-F5 to run.
