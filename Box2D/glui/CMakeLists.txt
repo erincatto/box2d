@@ -1,5 +1,9 @@
 add_definitions( -DFREEGLUT_STATIC -D_CRT_SECURE_NO_WARNINGS )
 
+if(MSVC)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W1")
+endif(MSVC)
+
 set(glui
 	algebra3.cpp
 	arcball.cpp
