@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
+* Copyright (c) 2006-2010 Erin Catto http://www.gphysics.com
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -133,7 +133,7 @@ public:
 		b2BodyDef bd;
 
 		float32 x = RandomFloat(-10.0f, 10.0f);
-		float32 y = RandomFloat(0.0f, 20.0f);
+		float32 y = RandomFloat(10.0f, 20.0f);
 		bd.position.Set(x, y);
 		bd.angle = RandomFloat(-b2_pi, b2_pi);
 		bd.type = b2_dynamicBody;
