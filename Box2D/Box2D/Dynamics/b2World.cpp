@@ -619,16 +619,9 @@ void b2World::SolveTOI(b2Body* body)
 		b2Body* other = ce->other;
 		b2BodyType type = other->GetType();
 
-		// Only bullets perform TOI with dynamic bodies.
-		if (bullet == true)
-		{
-			// Bullets only perform TOI with bodies that have their TOI resolved.
-			if ((other->m_flags & b2Body::e_toiFlag) == 0)
-			{
-				continue;
-			}
-		}
-		else if (type == b2_dynamicBody)
+		// Only perform correction with static bodies, so the
+		// body won't get pushed out of the world.
+		if (type != b2_staticBody)
 		{
 			continue;
 		}
