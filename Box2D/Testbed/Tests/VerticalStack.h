@@ -118,16 +118,6 @@ public:
 
 	void Step(Settings* settings)
 	{
-		if (m_stepCount >= 420 && m_stepCount < 450)
-		{
-			m_stepCount += 0;
-			
-			b2Body* body = m_bodies[5];
-			b2Vec2 p = body->GetPosition();
-			float32 a = body->GetAngle();
-			printf("%g %g %g\n", p.x, p.y, a);
-		}
-
 		Test::Step(settings);
 		m_debugDraw.DrawString(5, m_textLine, "Press: (,) to launch a bullet.");
 
