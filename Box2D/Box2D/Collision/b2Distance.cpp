@@ -67,7 +67,7 @@ struct b2Simplex
 					const b2DistanceProxy* proxyA, const b2Transform& transformA,
 					const b2DistanceProxy* proxyB, const b2Transform& transformB)
 	{
-		b2Assert(0 <= cache->count && cache->count <= 3);
+		b2Assert(cache->count <= 3);
 		
 		// Copy data from cache.
 		m_count = cache->count;
