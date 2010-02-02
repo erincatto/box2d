@@ -99,7 +99,11 @@ void b2RevoluteJoint::InitVelocityConstraints(const b2TimeStep& step)
 	m_mass.col2.z = m_mass.col3.y;
 	m_mass.col3.z = i1 + i2;
 
-	m_motorMass = 1.0f / (i1 + i2);
+	m_motorMass = i1 + i2;
+	if (m_motorMass > 0.0f)
+	{
+		m_motorMass = 1.0f / m_motorMass;
+	}
 
 	if (m_enableMotor == false)
 	{
@@ -335,9 +339,11 @@ bool b2RevoluteJoint::SolvePositionConstraints(float32 baumgarte)
 		{
 			// Use a particle solution (no rotation).
 			b2Vec2 u = C; u.Normalize();
-			float32 k = invMass1 + invMass2;
-			b2Assert(k > b2_epsilon);
-			float32 m = 1.0f / k;
+			float32 m = invMass1 + invMass2;
+			if (m > 0.0f)
+			{
+				m = 1.0f / m;
+			}
 			b2Vec2 impulse = m * (-C);
 			const float32 k_beta = 0.5f;
 			b1->m_sweep.c -= k_beta * invMass1 * impulse;
