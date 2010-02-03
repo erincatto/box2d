@@ -25,6 +25,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#define FREEGLUT_BUILDING_LIB
 #include <GL/freeglut.h>
 #include "freeglut_internal.h"
 
@@ -52,7 +53,7 @@
  * that that wasn't the original intent...if not, perhaps we need another
  * symbolic constant, FREEGLUT_MENU_ITEM_BORDER, or such.)
  */
-#if TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+#if TARGET_HOST_MS_WINDOWS
 #define  FREEGLUT_MENU_FONT    GLUT_BITMAP_8_BY_13
 #else
 #define  FREEGLUT_MENU_FONT    GLUT_BITMAP_HELVETICA_18
@@ -71,7 +72,7 @@
  * too.  These variables should be stuffed into global state and initialized
  * via the glutInit*() system.
  */
-#if TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+#if TARGET_HOST_MS_WINDOWS
 static float menu_pen_fore  [4] = {0.0f,  0.0f,  0.0f,  1.0f};
 static float menu_pen_back  [4] = {0.85f, 0.85f, 0.85f, 1.0f};
 static float menu_pen_hfore [4] = {1.0f,  1.0f,  1.0f,  1.0f};
@@ -140,9 +141,9 @@ static void fghDeactivateSubMenu( SFG_MenuEntry *menuEntry )
  */
 static GLvoid fghGetVMaxExtent( SFG_Window* window, int* x, int* y )
 {
-    if( fgStructure.GameMode )
+    if( fgStructure.GameModeWindow )
     {
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
         int wx, wy;
         Window w;
 
@@ -167,14 +168,14 @@ static GLvoid fghGetVMaxExtent( SFG_Window* window, int* x, int* y )
 }
 
 /*
- * Private function to b2Assert for the current menu/sub menu activity state
+ * Private function to check for the current menu/sub menu activity state
  */
 static GLboolean fghCheckMenuStatus( SFG_Menu* menu )
 {
     SFG_MenuEntry* menuEntry;
     int x, y;
 
-    /* First of all b2Assert any of the active sub menus... */
+    /* First of all check any of the active sub menus... */
     for( menuEntry = (SFG_MenuEntry *)menu->Entries.First;
          menuEntry;
          menuEntry = (SFG_MenuEntry *)menuEntry->Node.Next )
@@ -211,7 +212,7 @@ static GLboolean fghCheckMenuStatus( SFG_Menu* menu )
     {
         int menuID = ( y - FREEGLUT_MENU_BORDER ) / FREEGLUT_MENU_HEIGHT;
 
-        /* The mouse cursor is somewhere over our box, b2Assert it out. */
+        /* The mouse cursor is somewhere over our box, check it out. */
         menuEntry = fghFindMenuEntry( menu, menuID + 1 );
         FREEGLUT_INTERNAL_ERROR_EXIT( menuEntry, "Cannot find menu entry",
                                       "fghCheckMenuStatus" );
@@ -241,7 +242,7 @@ static GLboolean fghCheckMenuStatus( SFG_Menu* menu )
         /*
          * OKi, we have marked that entry as active, but it would be also
          * nice to have its contents updated, in case it's a sub menu.
-         * Also, ignore the return value of the b2Assert function:
+         * Also, ignore the return value of the check function:
          */
         if( menuEntry->SubMenu )
         {
@@ -263,9 +264,13 @@ static GLboolean fghCheckMenuStatus( SFG_Menu* menu )
                     menuEntry->SubMenu->X = menu->X - menuEntry->SubMenu->Width;
 
                 if( menuEntry->SubMenu->Y + menuEntry->SubMenu->Height > max_y )
+                {
                     menuEntry->SubMenu->Y -= ( menuEntry->SubMenu->Height -
                                                FREEGLUT_MENU_HEIGHT -
                                                2 * FREEGLUT_MENU_BORDER );
+                    if( menuEntry->SubMenu->Y < 0 )
+                        menuEntry->SubMenu->Y = 0;
+                }
 
                 fgSetWindow( menuEntry->SubMenu->Window );
                 glutPositionWindow( menuEntry->SubMenu->X,
@@ -358,7 +363,7 @@ static void fghDisplayMenuBox( SFG_Menu* menu )
             /*
              * That's truly right, and we need to have it highlighted.
              * There is an assumption that mouse cursor didn't move
-             * since the last b2Assert of menu activity state:
+             * since the last check of menu activity state:
              */
             int menuID = menuEntry->Ordinal;
 
@@ -439,13 +444,13 @@ static void fghSetMenuParentWindow( SFG_Window *window, SFG_Menu *menu )
 }
 
 /*
- * Function to b2Assert for menu entry selection on menu deactivation
+ * Function to check for menu entry selection on menu deactivation
  */
 static void fghExecuteMenuCallback( SFG_Menu* menu )
 {
     SFG_MenuEntry *menuEntry;
 
-    /* First of all b2Assert any of the active sub menus... */
+    /* First of all check any of the active sub menus... */
     for( menuEntry = (SFG_MenuEntry *)menu->Entries.First;
          menuEntry;
          menuEntry = (SFG_MenuEntry *)menuEntry->Node.Next)
@@ -552,7 +557,11 @@ static void fghActivateMenu( SFG_Window* window, int button )
         menu->X -=menu->Width;
 
     if( menu->Y + menu->Height > max_y )
+    {
         menu->Y -=menu->Height;
+        if( menu->Y < 0 )
+            menu->Y = 0;
+    }
 
     menu->Window->State.MouseX =
         window->State.MouseX + glutGet( GLUT_WINDOW_X ) - menu->X;
@@ -599,7 +608,7 @@ GLboolean fgCheckActiveMenu ( SFG_Window *window, int button, GLboolean pressed,
      *    nothing happens
      *  - Up-click the menu button inside the menu, menu active:
      *    select the menu entry and deactivate the menu
-     * Since menus can have submenus, we need to b2Assert this recursively.
+     * Since menus can have submenus, we need to check this recursively.
      */
     if( window->ActiveMenu )
     {
@@ -654,7 +663,7 @@ GLboolean fgCheckActiveMenu ( SFG_Window *window, int button, GLboolean pressed,
         return GL_TRUE;
     }
 
-    /* No active menu, let's b2Assert whether we need to activate one. */
+    /* No active menu, let's check whether we need to activate one. */
     if( ( 0 <= button ) &&
         ( FREEGLUT_MAX_MENUS > button ) &&
         ( window->Menu[ button ] ) &&
@@ -769,6 +778,14 @@ int FGAPIENTRY glutCreateMenu( void(* callback)( int ) )
     FREEGLUT_EXIT_IF_NOT_INITIALISED ( "glutCreateMenu" );
     return fgCreateMenu( callback )->ID;
 }
+
+#if TARGET_HOST_MS_WINDOWS
+int FGAPIENTRY __glutCreateMenuWithExit( void(* callback)( int ), void (__cdecl *exit_function)(int) )
+{
+  __glutExitFunc = exit_function;
+  return glutCreateMenu( callback );
+}
+#endif
 
 /*
  * Destroys a menu object, removing all references to it

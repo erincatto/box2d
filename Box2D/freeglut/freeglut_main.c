@@ -27,21 +27,19 @@
 
 #include <GL/freeglut.h>
 #include "freeglut_internal.h"
-#include <errno.h>
+#if HAVE_ERRNO
+#    include <errno.h>
+#endif
 #include <stdarg.h>
-#if TARGET_HOST_WIN32
+#if  HAVE_VPRINTF
 #    define VFPRINTF(s,f,a) vfprintf((s),(f),(a))
+#elif HAVE_DOPRNT
+#    define VFPRINTF(s,f,a) _doprnt((f),(a),(s))
 #else
-#    if HAVE_VPRINTF
-#        define VFPRINTF(s,f,a) vfprintf((s),(f),(a))
-#    elif HAVE_DOPRNT
-#        define VFPRINTF(s,f,a) _doprnt((f),(a),(s))
-#    else
-#        define VFPRINTF(s,f,a)
-#    endif
+#    define VFPRINTF(s,f,a)
 #endif
 
-#if TARGET_HOST_WINCE
+#ifdef _WIN32_WCE
 
 typedef struct GXDisplayProperties GXDisplayProperties;
 typedef struct GXKeyList GXKeyList;
@@ -55,7 +53,7 @@ GXOPENINPUT GXOpenInput_ = NULL;
 
 struct GXKeyList gxKeyList;
 
-#endif
+#endif /* _WIN32_WCE */
 
 /*
  * Try to get the maximum value allowed for ints, falling back to the minimum
@@ -69,7 +67,7 @@ struct GXKeyList gxKeyList;
 #endif
 
 #ifndef MIN
-#define MIN(a,b) (((a)<(b)) ? (a) : (b))
+#    define MIN(a,b) (((a)<(b)) ? (a) : (b))
 #endif
 
 
@@ -98,13 +96,13 @@ static void fghReshapeWindow ( SFG_Window *window, int width, int height )
     freeglut_return_if_fail( window != NULL );
 
 
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 
     XResizeWindow( fgDisplay.Display, window->Window.Handle,
                    width, height );
     XFlush( fgDisplay.Display ); /* XXX Shouldn't need this */
 
-#elif TARGET_HOST_WIN32
+#elif TARGET_HOST_MS_WINDOWS && !defined(_WIN32_WCE)
     {
         RECT winRect;
         int x, y, w, h;
@@ -124,7 +122,7 @@ static void fghReshapeWindow ( SFG_Window *window, int width, int height )
 
         if ( window->Parent == NULL )
         {
-            if ( ! window->IsMenu && !window->State.IsGameMode )
+            if ( ! window->IsMenu && (window != fgStructure.GameModeWindow) )
             {
                 w += GetSystemMetrics( SM_CXSIZEFRAME ) * 2;
                 h += GetSystemMetrics( SM_CYSIZEFRAME ) * 2 +
@@ -158,7 +156,7 @@ static void fghReshapeWindow ( SFG_Window *window, int width, int height )
 
     /*
      * XXX Should update {window->State.OldWidth, window->State.OldHeight}
-     * XXX to keep in lockstep with UNIX_X11 code.
+     * XXX to keep in lockstep with POSIX_X11 code.
      */
     if( FETCH_WCB( *window, Reshape ) )
         INVOKE_WCB( *window, Reshape, ( width, height ) );
@@ -225,9 +223,9 @@ static void fghcbDisplayWindow( SFG_Window *window,
     {
         window->State.Redisplay = GL_FALSE;
 
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
         fghRedrawWindow ( window ) ;
-#elif TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+#elif TARGET_HOST_MS_WINDOWS
         RedrawWindow(
             window->Window.Handle, NULL, NULL,
             RDW_NOERASE | RDW_INTERNALPAINT | RDW_INVALIDATE | RDW_UPDATENOW
@@ -252,7 +250,7 @@ static void fghDisplayAll( void )
 }
 
 /*
- * Window enumerator callback to b2Assert for the joystick polling code
+ * Window enumerator callback to check for the joystick polling code
  */
 static void fghcbCheckJoystickPolls( SFG_Window *window,
                                      SFG_Enumerator *enumerator )
@@ -262,9 +260,9 @@ static void fghcbCheckJoystickPolls( SFG_Window *window,
     if( window->State.JoystickLastPoll + window->State.JoystickPollRate <=
         checkTime )
     {
-#if !TARGET_HOST_WINCE
+#if !defined(_WIN32_WCE)
         fgJoystickPollWindow( window );
-#endif /* !TARGET_HOST_WINCE */
+#endif /* !defined(_WIN32_WCE) */
         window->State.JoystickLastPoll = checkTime;
     }
 
@@ -305,42 +303,32 @@ static void fghCheckTimers( void )
     }
 }
 
+ 
+/* Platform-dependent time in milliseconds, as an unsigned 32-bit integer.
+ * This value wraps every 49.7 days, but integer overflows cancel
+ * when subtracting an initial start time, unless the total time exceeds
+ * 32-bit, where the GLUT API return value is also overflowed.
+ */  
+unsigned long fgSystemTime(void) {
+#if TARGET_HOST_SOLARIS || HAVE_GETTIMEOFDAY
+    struct timeval now;
+    gettimeofday( &now, NULL );
+    return now.tv_usec/1000 + now.tv_sec*1000;
+#elif TARGET_HOST_MS_WINDOWS
+#    if defined(_WIN32_WCE)
+    return GetTickCount();
+#    else
+    return timeGetTime();
+#    endif
+#endif
+}
+  
 /*
  * Elapsed Time
  */
 long fgElapsedTime( void )
 {
-    if ( fgState.Time.Set )
-    {
-#if TARGET_HOST_UNIX_X11
-        struct timeval now;
-        long elapsed;
-
-        gettimeofday( &now, NULL );
-
-        elapsed = (now.tv_usec - fgState.Time.Value.tv_usec) / 1000;
-        elapsed += (now.tv_sec - fgState.Time.Value.tv_sec) * 1000;
-
-        return elapsed;
-#elif TARGET_HOST_WIN32
-        return timeGetTime() - fgState.Time.Value;
-#elif TARGET_HOST_WINCE
-        return GetTickCount() - fgState.Time.Value;
-#endif
-    }
-    else
-    {
-#if TARGET_HOST_UNIX_X11
-        gettimeofday( &fgState.Time.Value, NULL );
-#elif TARGET_HOST_WIN32
-        fgState.Time.Value = timeGetTime ();
-#elif TARGET_HOST_WINCE
-        fgState.Time.Value = GetTickCount();
-#endif
-        fgState.Time.Set = GL_TRUE ;
-
-        return 0 ;
-    }
+    return (long) (fgSystemTime() - fgState.Time);
 }
 
 /*
@@ -413,7 +401,7 @@ static int fghHaveJoystick( void )
 }
 static void fghHavePendingRedisplaysCallback( SFG_Window* w, SFG_Enumerator* e)
 {
-    if( w->State.Redisplay )
+    if( w->State.Redisplay && w->State.Visible )
     {
         e->found = GL_TRUE;
         e->data = w;
@@ -461,7 +449,7 @@ static void fghSleepForEvents( void )
     if( fghHaveJoystick( ) && ( msec > 10 ) )     
         msec = 10;
 
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
     /*
      * Possibly due to aggressive use of XFlush() and friends,
      * it is possible to have our socket drained but still have
@@ -485,33 +473,479 @@ static void fghSleepForEvents( void )
         wait.tv_usec = (msec % 1000) * 1000;
         err = select( socket+1, &fdset, NULL, NULL, &wait );
 
+#if HAVE_ERRNO
         if( ( -1 == err ) && ( errno != EINTR ) )
             fgWarning ( "freeglut select() error: %d", errno );
+#endif
     }
-#elif TARGET_HOST_WIN32 || TARGET_HOST_WINCE
-    MsgWaitForMultipleObjects( 0, NULL, FALSE, msec, QS_ALLEVENTS );
+#elif TARGET_HOST_MS_WINDOWS
+    MsgWaitForMultipleObjects( 0, NULL, FALSE, msec, QS_ALLINPUT );
 #endif
 }
 
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 /*
- * Returns GLUT modifier mask for an XEvent.
+ * Returns GLUT modifier mask for the state field of an X11 event.
  */
-static int fghGetXModifiers( XEvent *event )
+static int fghGetXModifiers( int state )
 {
     int ret = 0;
 
-    if( event->xkey.state & ( ShiftMask | LockMask ) )
+    if( state & ( ShiftMask | LockMask ) )
         ret |= GLUT_ACTIVE_SHIFT;
-    if( event->xkey.state & ControlMask )
+    if( state & ControlMask )
         ret |= GLUT_ACTIVE_CTRL;
-    if( event->xkey.state & Mod1Mask )
+    if( state & Mod1Mask )
         ret |= GLUT_ACTIVE_ALT;
 
     return ret;
 }
 #endif
 
+
+#if TARGET_HOST_POSIX_X11 && _DEBUG
+
+static const char* fghTypeToString( int type )
+{
+    switch( type ) {
+    case KeyPress: return "KeyPress";
+    case KeyRelease: return "KeyRelease";
+    case ButtonPress: return "ButtonPress";
+    case ButtonRelease: return "ButtonRelease";
+    case MotionNotify: return "MotionNotify";
+    case EnterNotify: return "EnterNotify";
+    case LeaveNotify: return "LeaveNotify";
+    case FocusIn: return "FocusIn";
+    case FocusOut: return "FocusOut";
+    case KeymapNotify: return "KeymapNotify";
+    case Expose: return "Expose";
+    case GraphicsExpose: return "GraphicsExpose";
+    case NoExpose: return "NoExpose";
+    case VisibilityNotify: return "VisibilityNotify";
+    case CreateNotify: return "CreateNotify";
+    case DestroyNotify: return "DestroyNotify";
+    case UnmapNotify: return "UnmapNotify";
+    case MapNotify: return "MapNotify";
+    case MapRequest: return "MapRequest";
+    case ReparentNotify: return "ReparentNotify";
+    case ConfigureNotify: return "ConfigureNotify";
+    case ConfigureRequest: return "ConfigureRequest";
+    case GravityNotify: return "GravityNotify";
+    case ResizeRequest: return "ResizeRequest";
+    case CirculateNotify: return "CirculateNotify";
+    case CirculateRequest: return "CirculateRequest";
+    case PropertyNotify: return "PropertyNotify";
+    case SelectionClear: return "SelectionClear";
+    case SelectionRequest: return "SelectionRequest";
+    case SelectionNotify: return "SelectionNotify";
+    case ColormapNotify: return "ColormapNotify";
+    case ClientMessage: return "ClientMessage";
+    case MappingNotify: return "MappingNotify";
+    default: return "UNKNOWN";
+    }
+}
+
+static const char* fghBoolToString( Bool b )
+{
+    return b == False ? "False" : "True";
+}
+
+static const char* fghNotifyHintToString( char is_hint )
+{
+    switch( is_hint ) {
+    case NotifyNormal: return "NotifyNormal";
+    case NotifyHint: return "NotifyHint";
+    default: return "UNKNOWN";
+    }
+}
+
+static const char* fghNotifyModeToString( int mode )
+{
+    switch( mode ) {
+    case NotifyNormal: return "NotifyNormal";
+    case NotifyGrab: return "NotifyGrab";
+    case NotifyUngrab: return "NotifyUngrab";
+    case NotifyWhileGrabbed: return "NotifyWhileGrabbed";
+    default: return "UNKNOWN";
+    }
+}
+
+static const char* fghNotifyDetailToString( int detail )
+{
+    switch( detail ) {
+    case NotifyAncestor: return "NotifyAncestor";
+    case NotifyVirtual: return "NotifyVirtual";
+    case NotifyInferior: return "NotifyInferior";
+    case NotifyNonlinear: return "NotifyNonlinear";
+    case NotifyNonlinearVirtual: return "NotifyNonlinearVirtual";
+    case NotifyPointer: return "NotifyPointer";
+    case NotifyPointerRoot: return "NotifyPointerRoot";
+    case NotifyDetailNone: return "NotifyDetailNone";
+    default: return "UNKNOWN";
+    }
+}
+
+static const char* fghVisibilityToString( int state ) {
+    switch( state ) {
+    case VisibilityUnobscured: return "VisibilityUnobscured";
+    case VisibilityPartiallyObscured: return "VisibilityPartiallyObscured";
+    case VisibilityFullyObscured: return "VisibilityFullyObscured";
+    default: return "UNKNOWN";
+    }
+}
+
+static const char* fghConfigureDetailToString( int detail )
+{
+    switch( detail ) {
+    case Above: return "Above";
+    case Below: return "Below";
+    case TopIf: return "TopIf";
+    case BottomIf: return "BottomIf";
+    case Opposite: return "Opposite";
+    default: return "UNKNOWN";
+    }
+}
+
+static const char* fghPlaceToString( int place )
+{
+    switch( place ) {
+    case PlaceOnTop: return "PlaceOnTop";
+    case PlaceOnBottom: return "PlaceOnBottom";
+    default: return "UNKNOWN";
+    }
+}
+
+static const char* fghMappingRequestToString( int request )
+{
+    switch( request ) {
+    case MappingModifier: return "MappingModifier";
+    case MappingKeyboard: return "MappingKeyboard";
+    case MappingPointer: return "MappingPointer";
+    default: return "UNKNOWN";
+    }
+}
+
+static const char* fghPropertyStateToString( int state )
+{
+    switch( state ) {
+    case PropertyNewValue: return "PropertyNewValue";
+    case PropertyDelete: return "PropertyDelete";
+    default: return "UNKNOWN";
+    }
+}
+
+static const char* fghColormapStateToString( int state )
+{
+    switch( state ) {
+    case ColormapUninstalled: return "ColormapUninstalled";
+    case ColormapInstalled: return "ColormapInstalled";
+    default: return "UNKNOWN";
+    }
+}
+
+static void fghPrintEvent( XEvent *event )
+{
+    switch( event->type ) {
+
+    case KeyPress:
+    case KeyRelease: {
+        XKeyEvent *e = &event->xkey;
+        fgWarning( "%s: window=0x%x, root=0x%x, subwindow=0x%x, time=%lu, "
+                   "(x,y)=(%d,%d), (x_root,y_root)=(%d,%d), state=0x%x, "
+                   "keycode=%u, same_screen=%s", fghTypeToString( e->type ),
+                   e->window, e->root, e->subwindow, (unsigned long)e->time,
+                   e->x, e->y, e->x_root, e->y_root, e->state, e->keycode,
+                   fghBoolToString( e->same_screen ) );
+        break;
+    }
+
+    case ButtonPress:
+    case ButtonRelease: {
+        XButtonEvent *e = &event->xbutton;
+        fgWarning( "%s: window=0x%x, root=0x%x, subwindow=0x%x, time=%lu, "
+                   "(x,y)=(%d,%d), (x_root,y_root)=(%d,%d), state=0x%x, "
+                   "button=%u, same_screen=%d", fghTypeToString( e->type ),
+                   e->window, e->root, e->subwindow, (unsigned long)e->time,
+                   e->x, e->y, e->x_root, e->y_root, e->state, e->button,
+                   fghBoolToString( e->same_screen ) );
+        break;
+    }
+
+    case MotionNotify: {
+        XMotionEvent *e = &event->xmotion;
+        fgWarning( "%s: window=0x%x, root=0x%x, subwindow=0x%x, time=%lu, "
+                   "(x,y)=(%d,%d), (x_root,y_root)=(%d,%d), state=0x%x, "
+                   "is_hint=%s, same_screen=%d", fghTypeToString( e->type ),
+                   e->window, e->root, e->subwindow, (unsigned long)e->time,
+                   e->x, e->y, e->x_root, e->y_root, e->state,
+                   fghNotifyHintToString( e->is_hint ),
+                   fghBoolToString( e->same_screen ) );
+        break;
+    }
+
+    case EnterNotify:
+    case LeaveNotify: {
+        XCrossingEvent *e = &event->xcrossing;
+        fgWarning( "%s: window=0x%x, root=0x%x, subwindow=0x%x, time=%lu, "
+                   "(x,y)=(%d,%d), mode=%s, detail=%s, same_screen=%d, "
+                   "focus=%d, state=0x%x", fghTypeToString( e->type ),
+                   e->window, e->root, e->subwindow, (unsigned long)e->time,
+                   e->x, e->y, fghNotifyModeToString( e->mode ),
+                   fghNotifyDetailToString( e->detail ), (int)e->same_screen,
+                   (int)e->focus, e->state );
+        break;
+    }
+
+    case FocusIn:
+    case FocusOut: {
+        XFocusChangeEvent *e = &event->xfocus;
+        fgWarning( "%s: window=0x%x, mode=%s, detail=%s",
+                   fghTypeToString( e->type ), e->window,
+                   fghNotifyModeToString( e->mode ),
+                   fghNotifyDetailToString( e->detail ) );
+        break;
+    }
+
+    case KeymapNotify: {
+        XKeymapEvent *e = &event->xkeymap;
+        char buf[32 * 2 + 1];
+        int i;
+        for ( i = 0; i < 32; i++ ) {
+            snprintf( &buf[ i * 2 ], sizeof( buf ) - i * 2,
+                      "%02x", e->key_vector[ i ] );
+        }
+        buf[ i ] = '\0';
+        fgWarning( "%s: window=0x%x, %s", fghTypeToString( e->type ), e->window,
+                   buf );
+        break;
+    }
+
+    case Expose: {
+        XExposeEvent *e = &event->xexpose;
+        fgWarning( "%s: window=0x%x, (x,y)=(%d,%d), (width,height)=(%d,%d), "
+                   "count=%d", fghTypeToString( e->type ), e->window, e->x,
+                   e->y, e->width, e->height, e->count );
+        break;
+    }
+
+    case GraphicsExpose: {
+        XGraphicsExposeEvent *e = &event->xgraphicsexpose;
+        fgWarning( "%s: drawable=0x%x, (x,y)=(%d,%d), (width,height)=(%d,%d), "
+                   "count=%d, (major_code,minor_code)=(%d,%d)",
+                   fghTypeToString( e->type ), e->drawable, e->x, e->y,
+                   e->width, e->height, e->count, e->major_code,
+                   e->minor_code );
+        break;
+    }
+
+    case NoExpose: {
+        XNoExposeEvent *e = &event->xnoexpose;
+        fgWarning( "%s: drawable=0x%x, (major_code,minor_code)=(%d,%d)",
+                   fghTypeToString( e->type ), e->drawable, e->major_code,
+                   e->minor_code );
+        break;
+    }
+
+    case VisibilityNotify: {
+        XVisibilityEvent *e = &event->xvisibility;
+        fgWarning( "%s: window=0x%x, state=%s", fghTypeToString( e->type ),
+                   e->window, fghVisibilityToString( e->state) );
+        break;
+    }
+
+    case CreateNotify: {
+        XCreateWindowEvent *e = &event->xcreatewindow;
+        fgWarning( "%s: (x,y)=(%d,%d), (width,height)=(%d,%d), border_width=%d, "
+                   "window=0x%x, override_redirect=%s",
+                   fghTypeToString( e->type ), e->x, e->y, e->width, e->height,
+                   e->border_width, e->window,
+                   fghBoolToString( e->override_redirect ) );
+        break;
+    }
+
+    case DestroyNotify: {
+        XDestroyWindowEvent *e = &event->xdestroywindow;
+        fgWarning( "%s: event=0x%x, window=0x%x",
+                   fghTypeToString( e->type ), e->event, e->window );
+        break;
+    }
+
+    case UnmapNotify: {
+        XUnmapEvent *e = &event->xunmap;
+        fgWarning( "%s: event=0x%x, window=0x%x, from_configure=%s",
+                   fghTypeToString( e->type ), e->event, e->window,
+                   fghBoolToString( e->from_configure ) );
+        break;
+    }
+
+    case MapNotify: {
+        XMapEvent *e = &event->xmap;
+        fgWarning( "%s: event=0x%x, window=0x%x, override_redirect=%s",
+                   fghTypeToString( e->type ), e->event, e->window,
+                   fghBoolToString( e->override_redirect ) );
+        break;
+    }
+
+    case MapRequest: {
+        XMapRequestEvent *e = &event->xmaprequest;
+        fgWarning( "%s: parent=0x%x, window=0x%x",
+                   fghTypeToString( event->type ), e->parent, e->window );
+        break;
+    }
+
+    case ReparentNotify: {
+        XReparentEvent *e = &event->xreparent;
+        fgWarning( "%s: event=0x%x, window=0x%x, parent=0x%x, (x,y)=(%d,%d), "
+                   "override_redirect=%s", fghTypeToString( e->type ),
+                   e->event, e->window, e->parent, e->x, e->y,
+                   fghBoolToString( e->override_redirect ) );
+        break;
+    }
+
+    case ConfigureNotify: {
+        XConfigureEvent *e = &event->xconfigure;
+        fgWarning( "%s: event=0x%x, window=0x%x, (x,y)=(%d,%d), "
+                   "(width,height)=(%d,%d), border_width=%d, above=0x%x, "
+                   "override_redirect=%s", fghTypeToString( e->type ), e->event,
+                   e->window, e->x, e->y, e->width, e->height, e->border_width,
+                   e->above, fghBoolToString( e->override_redirect ) );
+        break;
+    }
+
+    case ConfigureRequest: {
+        XConfigureRequestEvent *e = &event->xconfigurerequest;
+        fgWarning( "%s: parent=0x%x, window=0x%x, (x,y)=(%d,%d), "
+                   "(width,height)=(%d,%d), border_width=%d, above=0x%x, "
+                   "detail=%s, value_mask=%lx", fghTypeToString( e->type ),
+                   e->parent, e->window, e->x, e->y, e->width, e->height,
+                   e->border_width, e->above,
+                   fghConfigureDetailToString( e->detail ), e->value_mask );
+        break;
+    }
+
+    case GravityNotify: {
+        XGravityEvent *e = &event->xgravity;
+        fgWarning( "%s: event=0x%x, window=0x%x, (x,y)=(%d,%d)",
+                   fghTypeToString( e->type ), e->event, e->window, e->x, e->y );
+        break;
+    }
+
+    case ResizeRequest: {
+        XResizeRequestEvent *e = &event->xresizerequest;
+        fgWarning( "%s: window=0x%x, (width,height)=(%d,%d)",
+                   fghTypeToString( e->type ), e->window, e->width, e->height );
+        break;
+    }
+
+    case CirculateNotify: {
+        XCirculateEvent *e = &event->xcirculate;
+        fgWarning( "%s: event=0x%x, window=0x%x, place=%s",
+                   fghTypeToString( e->type ), e->event, e->window,
+                   fghPlaceToString( e->place ) );
+        break;
+    }
+
+    case CirculateRequest: {
+        XCirculateRequestEvent *e = &event->xcirculaterequest;
+        fgWarning( "%s: parent=0x%x, window=0x%x, place=%s",
+                   fghTypeToString( e->type ), e->parent, e->window,
+                   fghPlaceToString( e->place ) );
+        break;
+    }
+
+    case PropertyNotify: {
+        XPropertyEvent *e = &event->xproperty;
+        fgWarning( "%s: window=0x%x, atom=%lu, time=%lu, state=%s",
+                   fghTypeToString( e->type ), e->window,
+                   (unsigned long)e->atom, (unsigned long)e->time,
+                   fghPropertyStateToString( e->state ) );
+        break;
+    }
+
+    case SelectionClear: {
+        XSelectionClearEvent *e = &event->xselectionclear;
+        fgWarning( "%s: window=0x%x, selection=%lu, time=%lu",
+                   fghTypeToString( e->type ), e->window,
+                   (unsigned long)e->selection, (unsigned long)e->time );
+        break;
+    }
+
+    case SelectionRequest: {
+        XSelectionRequestEvent *e = &event->xselectionrequest;
+        fgWarning( "%s: owner=0x%x, requestor=0x%x, selection=0x%x, "
+                   "target=0x%x, property=%lu, time=%lu",
+                   fghTypeToString( e->type ), e->owner, e->requestor,
+                   (unsigned long)e->selection, (unsigned long)e->target,
+                   (unsigned long)e->property, (unsigned long)e->time );
+        break;
+    }
+
+    case SelectionNotify: {
+        XSelectionEvent *e = &event->xselection;
+        fgWarning( "%s: requestor=0x%x, selection=0x%x, target=0x%x, "
+                   "property=%lu, time=%lu", fghTypeToString( e->type ),
+                   e->requestor, (unsigned long)e->selection,
+                   (unsigned long)e->target, (unsigned long)e->property,
+                   (unsigned long)e->time );
+        break;
+    }
+
+    case ColormapNotify: {
+        XColormapEvent *e = &event->xcolormap;
+        fgWarning( "%s: window=0x%x, colormap=%lu, new=%s, state=%s",
+                   fghTypeToString( e->type ), e->window,
+                   (unsigned long)e->colormap, fghBoolToString( e->new ),
+                   fghColormapStateToString( e->state ) );
+        break;
+    }
+
+    case ClientMessage: {
+        XClientMessageEvent *e = &event->xclient;
+        char buf[ 61 ];
+        char* p = buf;
+        char* end = buf + sizeof( buf );
+        int i;
+        switch( e->format ) {
+        case 8:
+          for ( i = 0; i < 20; i++, p += 3 ) {
+                snprintf( p, end - p, " %02x", e->data.b[ i ] );
+            }
+            break;
+        case 16:
+            for ( i = 0; i < 10; i++, p += 5 ) {
+                snprintf( p, end - p, " %04x", e->data.s[ i ] );
+            }
+            break;
+        case 32:
+            for ( i = 0; i < 5; i++, p += 9 ) {
+                snprintf( p, end - p, " %08lx", e->data.l[ i ] );
+            }
+            break;
+        }
+        *p = '\0';
+        fgWarning( "%s: window=0x%x, message_type=%lu, format=%d, data=(%s )",
+                   fghTypeToString( e->type ), e->window,
+                   (unsigned long)e->message_type, e->format, buf );
+        break;
+    }
+
+    case MappingNotify: {
+        XMappingEvent *e = &event->xmapping;
+        fgWarning( "%s: window=0x%x, request=%s, first_keycode=%d, count=%d",
+                   fghTypeToString( e->type ), e->window,
+                   fghMappingRequestToString( e->request ), e->first_keycode,
+                   e->count );
+        break;
+    }
+
+    default: {
+        fgWarning( "%s", fghTypeToString( event->type ) );
+        break;
+    }
+    }
+}
+
+#endif
 
 /* -- INTERFACE FUNCTIONS -------------------------------------------------- */
 
@@ -520,7 +954,7 @@ static int fghGetXModifiers( XEvent *event )
  */
 void FGAPIENTRY glutMainLoopEvent( void )
 {
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
     SFG_Window* window;
     XEvent event;
 
@@ -539,10 +973,17 @@ void FGAPIENTRY glutMainLoopEvent( void )
     while( XPending( fgDisplay.Display ) )
     {
         XNextEvent( fgDisplay.Display, &event );
+#if _DEBUG
+        fghPrintEvent( &event );
+#endif
 
         switch( event.type )
         {
         case ClientMessage:
+            if(fgIsSpaceballXEvent(&event)) {
+                fgSpaceballHandleXEvent(&event);
+                break;
+            }
             /* Destroy the window when the WM_DELETE_WINDOW message arrives */
             if( (Atom) event.xclient.data.l[ 0 ] == fgDisplay.DeleteWindow )
             {
@@ -570,20 +1011,20 @@ void FGAPIENTRY glutMainLoopEvent( void )
              *
              * GLUT presumably does this because it generally tries to treat
              * sub-windows the same as windows.
-             *
-             * XXX Technically, GETWINDOW( xconfigure ) and
-             * XXX {event.xconfigure} may not be legit ways to get at
-             * XXX data for CreateNotify events.  In practice, the data
-             * XXX is in a union which is laid out much the same either
-             * XXX way.  But if you want to split hairs, this isn't legit,
-             * XXX and we should instead duplicate some code.
              */
         case CreateNotify:
         case ConfigureNotify:
-            GETWINDOW( xconfigure );
             {
-                int width = event.xconfigure.width;
-                int height = event.xconfigure.height;
+                int width, height;
+                if( event.type == CreateNotify ) {
+                    GETWINDOW( xcreatewindow );
+                    width = event.xcreatewindow.width;
+                    height = event.xcreatewindow.height;
+                } else {
+                    GETWINDOW( xconfigure );
+                    width = event.xconfigure.width;
+                    height = event.xconfigure.height;
+                }
 
                 if( ( width != window->State.OldWidth ) ||
                     ( height != window->State.OldHeight ) )
@@ -633,11 +1074,13 @@ void FGAPIENTRY glutMainLoopEvent( void )
             break;
 
         case MapNotify:
+            break;
+
         case UnmapNotify:
-            /*
-             * If we never do anything with this, can we just not ask to
-             * get these messages?
-             */
+            /* We get this when iconifying a window. */ 
+            GETWINDOW( xunmap );
+            INVOKE_WCB( *window, WindowStatus, ( GLUT_HIDDEN ) );
+            window->State.Visible = GL_FALSE;
             break;
 
         case MappingNotify:
@@ -650,20 +1093,15 @@ void FGAPIENTRY glutMainLoopEvent( void )
 
         case VisibilityNotify:
         {
-            GETWINDOW( xvisibility );
-            /*
-             * XXX INVOKE_WCB() does this b2Assert for us.
-             */
-            if( ! FETCH_WCB( *window, WindowStatus ) )
-                break;
-            fgSetWindow( window );
-
             /*
              * Sending this event, the X server can notify us that the window
              * has just acquired one of the three possible visibility states:
              * VisibilityUnobscured, VisibilityPartiallyObscured or
-             * VisibilityFullyObscured
+             * VisibilityFullyObscured. Note that we DO NOT receive a
+             * VisibilityNotify event when iconifying a window, we only get an
+             * UnmapNotify then.
              */
+            GETWINDOW( xvisibility );
             switch( event.xvisibility.state )
             {
             case VisibilityUnobscured:
@@ -724,19 +1162,20 @@ void FGAPIENTRY glutMainLoopEvent( void )
             }
 
             /*
-             * XXX For more than 5 buttons, just b2Assert {event.xmotion.state},
+             * XXX For more than 5 buttons, just check {event.xmotion.state},
              * XXX rather than a host of bit-masks?  Or maybe we need to
              * XXX track ButtonPress/ButtonRelease events in our own
              * XXX bit-mask?
              */
-#define BUTTON_MASK \
-  ( Button1Mask | Button2Mask | Button3Mask | Button4Mask | Button5Mask )
-            if ( event.xmotion.state & BUTTON_MASK )
+            fgState.Modifiers = fghGetXModifiers( event.xmotion.state );
+            if ( event.xmotion.state & ( Button1Mask | Button2Mask | Button3Mask | Button4Mask | Button5Mask ) ) {
                 INVOKE_WCB( *window, Motion, ( event.xmotion.x,
                                                event.xmotion.y ) );
-            else
+            } else {
                 INVOKE_WCB( *window, Passive, ( event.xmotion.x,
                                                 event.xmotion.y ) );
+            }
+            fgState.Modifiers = INVALID_MODIFIERS;
         }
         break;
 
@@ -782,7 +1221,7 @@ void FGAPIENTRY glutMainLoopEvent( void )
                 ! FETCH_WCB( *window, MouseWheel ) )
                 break;
 
-            fgState.Modifiers = fghGetXModifiers( &event );
+            fgState.Modifiers = fghGetXModifiers( event.xbutton.state );
 
             /* Finally execute the mouse or mouse wheel callback */
             if( ( button < glutDeviceGet ( GLUT_NUM_MOUSE_BUTTONS ) ) || ( ! FETCH_WCB( *window, MouseWheel ) ) )
@@ -817,9 +1256,7 @@ void FGAPIENTRY glutMainLoopEvent( void )
                                                        event.xbutton.y )
                     );
             }
-
-            /* Trash the modifiers state */
-            fgState.Modifiers = 0xffffffff;
+            fgState.Modifiers = INVALID_MODIFIERS;
         }
         break;
 
@@ -861,7 +1298,10 @@ void FGAPIENTRY glutMainLoopEvent( void )
             /* Cease processing this event if it is auto repeated */
 
             if (window->State.KeyRepeating)
+            {
+                if (event.type == KeyPress) window->State.KeyRepeating = GL_FALSE;
                 break;
+            }
 
             if( event.type == KeyPress )
             {
@@ -894,11 +1334,11 @@ void FGAPIENTRY glutMainLoopEvent( void )
                     if( keyboard_cb )
                     {
                         fgSetWindow( window );
-                        fgState.Modifiers = fghGetXModifiers( &event );
+                        fgState.Modifiers = fghGetXModifiers( event.xkey.state );
                         keyboard_cb( asciiCode[ 0 ],
                                      event.xkey.x, event.xkey.y
                         );
-                        fgState.Modifiers = 0xffffffff;
+                        fgState.Modifiers = INVALID_MODIFIERS;
                     }
                 }
                 else
@@ -924,9 +1364,13 @@ void FGAPIENTRY glutMainLoopEvent( void )
                     case XK_F11:    special = GLUT_KEY_F11;    break;
                     case XK_F12:    special = GLUT_KEY_F12;    break;
 
+                    case XK_KP_Left:
                     case XK_Left:   special = GLUT_KEY_LEFT;   break;
+                    case XK_KP_Right:
                     case XK_Right:  special = GLUT_KEY_RIGHT;  break;
+                    case XK_KP_Up:
                     case XK_Up:     special = GLUT_KEY_UP;     break;
+                    case XK_KP_Down:
                     case XK_Down:   special = GLUT_KEY_DOWN;   break;
 
                     case XK_KP_Prior:
@@ -939,6 +1383,10 @@ void FGAPIENTRY glutMainLoopEvent( void )
                     case XK_End:    special = GLUT_KEY_END;    break;
                     case XK_KP_Insert:
                     case XK_Insert: special = GLUT_KEY_INSERT; break;
+
+                    case XK_Num_Lock :  special = GLUT_KEY_NUM_LOCK;  break;
+                    case XK_KP_Begin :  special = GLUT_KEY_BEGIN;     break;
+                    case XK_KP_Delete:  special = GLUT_KEY_DELETE;    break;
                     }
 
                     /*
@@ -948,9 +1396,9 @@ void FGAPIENTRY glutMainLoopEvent( void )
                     if( special_cb && (special != -1) )
                     {
                         fgSetWindow( window );
-                        fgState.Modifiers = fghGetXModifiers( &event );
+                        fgState.Modifiers = fghGetXModifiers( event.xkey.state );
                         special_cb( special, event.xkey.x, event.xkey.y );
-                        fgState.Modifiers = 0xffffffff;
+                        fgState.Modifiers = INVALID_MODIFIERS;
                     }
                 }
             }
@@ -960,13 +1408,17 @@ void FGAPIENTRY glutMainLoopEvent( void )
         case ReparentNotify:
             break; /* XXX Should disable this event */
 
+        /* Not handled */
+        case GravityNotify:
+            break;
+
         default:
-            fgWarning ("Unknown X event type: %d", event.type);
+            fgWarning ("Unknown X event type: %d\n", event.type);
             break;
         }
     }
 
-#elif TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+#elif TARGET_HOST_MS_WINDOWS
 
     MSG stMsg;
 
@@ -1008,13 +1460,13 @@ void FGAPIENTRY glutMainLoop( void )
 {
     int action;
 
-#if TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+#if TARGET_HOST_MS_WINDOWS
     SFG_Window *window = (SFG_Window *)fgStructure.Windows.First ;
 #endif
 
     FREEGLUT_EXIT_IF_NOT_INITIALISED ( "glutMainLoop" );
 
-#if TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+#if TARGET_HOST_MS_WINDOWS
     /*
      * Processing before the main loop:  If there is a window which is open and
      * which has a visibility callback, call it.  I know this is an ugly hack,
@@ -1093,7 +1545,7 @@ void FGAPIENTRY glutLeaveMainLoop( void )
 }
 
 
-#if TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+#if TARGET_HOST_MS_WINDOWS
 /*
  * Determine a GLUT modifer mask based on MS-WINDOWS system info.
  */
@@ -1116,7 +1568,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
 {
     SFG_Window* window;
     PAINTSTRUCT ps;
-    LONG lRet = 1;
+    LRESULT lRet = 1;
 
     FREEGLUT_INTERNAL_ERROR_EXIT_IF_NOT_INITIALISED ( "Event Handler" ) ;
 
@@ -1141,20 +1593,20 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
         {
             unsigned int current_DisplayMode = fgState.DisplayMode;
             fgState.DisplayMode = GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH;
-#if !TARGET_HOST_WINCE
+#if !defined(_WIN32_WCE)
             fgSetupPixelFormat( window, GL_FALSE, PFD_MAIN_PLANE );
 #endif
             fgState.DisplayMode = current_DisplayMode;
 
             if( fgStructure.MenuContext )
                 wglMakeCurrent( window->Window.Device,
-                                fgStructure.MenuContext->Context
+                                fgStructure.MenuContext->MContext
                 );
             else
             {
                 fgStructure.MenuContext =
                     (SFG_MenuContext *)malloc( sizeof(SFG_MenuContext) );
-                fgStructure.MenuContext->Context =
+                fgStructure.MenuContext->MContext =
                     wglCreateContext( window->Window.Device );
             }
 
@@ -1163,7 +1615,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
         }
         else
         {
-#if !TARGET_HOST_WINCE
+#if !defined(_WIN32_WCE)
             fgSetupPixelFormat( window, GL_FALSE, PFD_MAIN_PLANE );
 #endif
 
@@ -1177,15 +1629,26 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
                     window->Window.Context =
                         wglCreateContext( window->Window.Device );
             }
+
+#if !defined(_WIN32_WCE)
+            fgNewWGLCreateContext( window );
+#endif
         }
 
         window->State.NeedToResize = GL_TRUE;
-        window->State.Width  = fgState.Size.X;
-        window->State.Height = fgState.Size.Y;
+        if( ( window->State.Width < 0 ) || ( window->State.Height < 0 ) )
+        {
+            SFG_Window *current_window = fgStructure.CurrentWindow;
+
+            fgSetWindow( window );
+            window->State.Width = glutGet( GLUT_WINDOW_WIDTH );
+            window->State.Height = glutGet( GLUT_WINDOW_HEIGHT );
+            fgSetWindow( current_window );
+        }
 
         ReleaseDC( window->Window.Handle, window->Window.Device );
 
-#if TARGET_HOST_WINCE
+#if defined(_WIN32_WCE)
         /* Take over button handling */
         {
             HINSTANCE dxDllLib=LoadLibrary(_T("gx.dll"));
@@ -1201,7 +1664,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
                 gxKeyList = (*GXGetDefaultKeys_)(GX_LANDSCAPEKEYS);
         }
 
-#endif /* TARGET_HOST_WINCE */
+#endif /* defined(_WIN32_WCE) */
         break;
 
     case WM_SIZE:
@@ -1213,22 +1676,35 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
         if( window->State.Visible )
         {
             window->State.NeedToResize = GL_TRUE;
-#if TARGET_HOST_WINCE
+#if defined(_WIN32_WCE)
             window->State.Width  = HIWORD(lParam);
             window->State.Height = LOWORD(lParam);
 #else
             window->State.Width  = LOWORD(lParam);
             window->State.Height = HIWORD(lParam);
-#endif /* TARGET_HOST_WINCE */
+#endif /* defined(_WIN32_WCE) */
         }
 
         break;
-#if 0
+
     case WM_SETFOCUS:
 /*        printf("WM_SETFOCUS: %p\n", window ); */
         lRet = DefWindowProc( hWnd, uMsg, wParam, lParam );
+        INVOKE_WCB( *window, Entry, ( GLUT_ENTERED ) );
         break;
 
+    case WM_KILLFOCUS:
+/*        printf("WM_KILLFOCUS: %p\n", window ); */
+        lRet = DefWindowProc( hWnd, uMsg, wParam, lParam );
+        INVOKE_WCB( *window, Entry, ( GLUT_LEFT ) );
+
+        if( window->IsMenu &&
+            window->ActiveMenu && window->ActiveMenu->IsActive )
+            fgUpdateMenuHighlight( window->ActiveMenu );
+
+        break;
+
+#if 0
     case WM_ACTIVATE:
         if (LOWORD(wParam) != WA_INACTIVE)
         {
@@ -1274,29 +1750,15 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
          */
         return 0;
 
-    /* XXX For a future patch:  we need a mouse entry event.  Unfortunately Windows
-     * XXX doesn't give us one, so we will probably need a "MouseInWindow" flag in
-     * XXX the SFG_Window structure.  Set it to true to begin with and then have the
-     * XXX WM_MOUSELEAVE code set it to false.  Then when we get a WM_MOUSEMOVE event,
-     * XXX if the flag is false we invoke the Entry callback and set the flag to true.
-     */
-    case 0x02a2:  /* This is the message we get when the mouse is leaving the window */
-        if( window->IsMenu &&
-            window->ActiveMenu && window->ActiveMenu->IsActive )
-            fgUpdateMenuHighlight( window->ActiveMenu );
-
-        INVOKE_WCB( *window, Entry, ( GLUT_LEFT ) );
-        break ;
-
     case WM_MOUSEMOVE:
     {
-#if TARGET_HOST_WINCE
+#if defined(_WIN32_WCE)
         window->State.MouseX = 320-HIWORD( lParam );
         window->State.MouseY = LOWORD( lParam );
 #else
         window->State.MouseX = LOWORD( lParam );
         window->State.MouseY = HIWORD( lParam );
-#endif /* TARGET_HOST_WINCE */
+#endif /* defined(_WIN32_WCE) */
         /* Restrict to [-32768, 32767] to match X11 behaviour       */
         /* See comment in "freeglut_developer" mailing list 10/4/04 */
         if ( window->State.MouseX > 32767 ) window->State.MouseX -= 65536;
@@ -1319,7 +1781,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
             INVOKE_WCB( *window, Passive, ( window->State.MouseX,
                                             window->State.MouseY ) );
 
-        fgState.Modifiers = 0xffffffff;
+        fgState.Modifiers = INVALID_MODIFIERS;
     }
     break;
 
@@ -1333,13 +1795,13 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
         GLboolean pressed = GL_TRUE;
         int button;
 
-#if TARGET_HOST_WINCE
+#if defined(_WIN32_WCE)
         window->State.MouseX = 320-HIWORD( lParam );
         window->State.MouseY = LOWORD( lParam );
 #else
         window->State.MouseX = LOWORD( lParam );
         window->State.MouseY = HIWORD( lParam );
-#endif /* TARGET_HOST_WINCE */
+#endif /* defined(_WIN32_WCE) */
 
         /* Restrict to [-32768, 32767] to match X11 behaviour       */
         /* See comment in "freeglut_developer" mailing list 10/4/04 */
@@ -1378,7 +1840,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
             break;
         }
 
-#if !TARGET_HOST_WINCE
+#if !defined(_WIN32_WCE)
         if( GetSystemMetrics( SM_SWAPBUTTON ) )
         {
             if( button == GLUT_LEFT_BUTTON )
@@ -1387,7 +1849,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
                 if( button == GLUT_RIGHT_BUTTON )
                     button = GLUT_LEFT_BUTTON;
         }
-#endif /* !TARGET_HOST_WINCE */
+#endif /* !defined(_WIN32_WCE) */
 
         if( button == -1 )
             return DefWindowProc( hWnd, uMsg, lParam, wParam );
@@ -1429,7 +1891,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
             )
         );
 
-        fgState.Modifiers = 0xffffffff;
+        fgState.Modifiers = INVALID_MODIFIERS;
     }
     break;
 
@@ -1496,7 +1958,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
                 );
             }
 
-        fgState.Modifiers = 0xffffffff;
+        fgState.Modifiers = INVALID_MODIFIERS;
     }
     break ;
 
@@ -1555,7 +2017,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
             );
         }
 
-#if TARGET_HOST_WINCE
+#if defined(_WIN32_WCE)
         if(!(lParam & 0x40000000)) /* Prevent auto-repeat */
         {
             if(wParam==(unsigned)gxKeyList.vkRight)
@@ -1583,7 +2045,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
                           window->State.MouseX, window->State.MouseY )
             );
 
-        fgState.Modifiers = 0xffffffff;
+        fgState.Modifiers = INVALID_MODIFIERS;
     }
     break;
 
@@ -1643,20 +2105,20 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
 
         default:
         {
-#if !TARGET_HOST_WINCE
+#if !defined(_WIN32_WCE)
             BYTE state[ 256 ];
             WORD code[ 2 ];
 
             GetKeyboardState( state );
 
-            if( ToAscii( wParam, 0, state, code, 0 ) == 1 )
+            if( ToAscii( (UINT)wParam, 0, state, code, 0 ) == 1 )
                 wParam=code[ 0 ];
 
             INVOKE_WCB( *window, KeyboardUp,
                         ( (char)wParam,
                           window->State.MouseX, window->State.MouseY )
             );
-#endif /* !TARGET_HOST_WINCE */
+#endif /* !defined(_WIN32_WCE) */
         }
         }
 
@@ -1666,7 +2128,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
                           window->State.MouseX, window->State.MouseY )
             );
 
-        fgState.Modifiers = 0xffffffff;
+        fgState.Modifiers = INVALID_MODIFIERS;
     }
     break;
 
@@ -1681,7 +2143,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
                     ( (char)wParam,
                       window->State.MouseX, window->State.MouseY )
         );
-        fgState.Modifiers = 0xffffffff;
+        fgState.Modifiers = INVALID_MODIFIERS;
     }
     break;
 
@@ -1716,7 +2178,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
         lRet = DefWindowProc( hWnd, uMsg, wParam, lParam );
         break;
 
-#if !TARGET_HOST_WINCE
+#if !defined(_WIN32_WCE)
     case WM_SYNCPAINT:  /* 0x0088 */
         /* Another window has moved, need to update this one */
         window->State.Redisplay = GL_TRUE;
@@ -1797,6 +2259,17 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
             case SC_HOTKEY     :
                 break ;
 
+#if(WINVER >= 0x0400)
+            case SC_DEFAULT    :
+                break ;
+
+            case SC_MONITORPOWER    :
+                break ;
+
+            case SC_CONTEXTHELP    :
+                break ;
+#endif /* WINVER >= 0x0400 */
+
             default:
 #if _DEBUG
                 fgWarning( "Unknown wParam type 0x%x", wParam );
@@ -1804,7 +2277,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
                 break;
             }
         }
-#endif /* !TARGET_HOST_WINCE */
+#endif /* !defined(_WIN32_WCE) */
 
         /* We need to pass the message on to the operating system as well */
         lRet = DefWindowProc( hWnd, uMsg, wParam, lParam );

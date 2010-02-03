@@ -25,8 +25,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#define FREEGLUT_BUILDING_LIB
 #include <GL/freeglut.h>
 #include "freeglut_internal.h"
+
+#if TARGET_HOST_POSIX_X11
+#include <limits.h>  /* LONG_MAX */
+#endif
 
 /*
  * TODO BEFORE THE STABLE RELEASE:
@@ -61,15 +66,11 @@ SFG_State fgState = { { -1, -1, GL_FALSE },  /* Position */
                       GL_FALSE,              /* GLDebugSwitch */
                       GL_FALSE,              /* XSyncSwitch */
                       GLUT_KEY_REPEAT_ON,    /* KeyRepeat */
-                      0xffffffff,            /* Modifiers */
+                      INVALID_MODIFIERS,     /* Modifiers */
                       0,                     /* FPSInterval */
                       0,                     /* SwapCount */
                       0,                     /* SwapTime */
-#if TARGET_HOST_WIN32 || TARGET_HOST_WINCE
-                      { 0, GL_FALSE },       /* Time */
-#else
-                      { { 0, 0 }, GL_FALSE },
-#endif
+                      0,                     /* Time */
                       { NULL, NULL },         /* Timers */
                       { NULL, NULL },         /* FreeTimers */
                       NULL,                   /* IdleCallback */
@@ -82,18 +83,163 @@ SFG_State fgState = { { -1, -1, GL_FALSE },  /* Position */
                       GLUT_ACTION_EXIT,       /* ActionOnWindowClose */
                       GLUT_EXEC_STATE_INIT,   /* ExecState */
                       NULL,                   /* ProgramName */
-                      GL_FALSE                /* JoysticksInitialised */
+                      GL_FALSE,               /* JoysticksInitialised */
+                      GL_FALSE,               /* InputDevsInitialised */
+                      1,                      /* AuxiliaryBufferNumber */
+                      4,                      /* SampleNumber */
+                      1,                      /* MajorVersion */
+                      0,                      /* MajorVersion */
+                      0,                      /* ContextFlags */
+                      0                       /* ContextProfile */
 };
 
 
 /* -- PRIVATE FUNCTIONS ---------------------------------------------------- */
+
+#if TARGET_HOST_POSIX_X11
+
+/* Return the atom associated with "name". */
+static Atom fghGetAtom(const char * name)
+{
+  return XInternAtom(fgDisplay.Display, name, False);
+}
+
+/*
+ * Check if "property" is set on "window".  The property's values are returned
+ * through "data".  If the property is set and is of type "type", return the
+ * number of elements in "data".  Return zero otherwise.  In both cases, use
+ * "Xfree()" to free "data".
+ */
+static int fghGetWindowProperty(Window window,
+				Atom property,
+				Atom type,
+				unsigned char ** data)
+{
+  /*
+   * Caller always has to use "Xfree()" to free "data", since
+   * "XGetWindowProperty() always allocates one extra byte in prop_return
+   * [i.e. "data"] (even if the property is zero length) [..]".
+   */
+
+  int status;  /*  Returned by "XGetWindowProperty". */
+
+  Atom          type_returned;
+  int           temp_format;             /*  Not used. */
+  unsigned long number_of_elements;
+  unsigned long temp_bytes_after;        /*  Not used. */
+
+
+  status = XGetWindowProperty(fgDisplay.Display,
+			      window,
+			      property,
+			      0,
+			      LONG_MAX,
+			      False,
+			      type,
+			      &type_returned,
+			      &temp_format,
+			      &number_of_elements,
+			      &temp_bytes_after,
+			      data);
+
+  FREEGLUT_INTERNAL_ERROR_EXIT(status == Success,
+			       "XGetWindowProperty failled",
+			       "fghGetWindowProperty");
+
+  if (type_returned != type)
+    {
+      number_of_elements = 0;
+    }
+
+  return number_of_elements;
+}
+
+/*  Check if the window manager is NET WM compliant. */
+static int fghNetWMSupported(void)
+{
+  Atom wm_check;
+  Window ** window_ptr_1;
+
+  int number_of_windows;
+  int net_wm_supported;
+
+
+  net_wm_supported = 0;
+
+  wm_check = fghGetAtom("_NET_SUPPORTING_WM_CHECK");
+  window_ptr_1 = malloc(sizeof(Window *));
+
+  /*
+   * Check that the window manager has set this property on the root window.
+   * The property must be the ID of a child window.
+   */
+  number_of_windows = fghGetWindowProperty(fgDisplay.RootWindow,
+                                           wm_check,
+                                           XA_WINDOW,
+                                           (unsigned char **) window_ptr_1);
+  if (number_of_windows == 1)
+    {
+      Window ** window_ptr_2;
+
+      window_ptr_2 = malloc(sizeof(Window *));
+
+      /* Check that the window has the same property set to the same value. */
+      number_of_windows = fghGetWindowProperty(**window_ptr_1,
+                                               wm_check,
+                                               XA_WINDOW,
+                                               (unsigned char **) window_ptr_2);
+      if ((number_of_windows == 1) && (**window_ptr_1 == **window_ptr_2))
+      {
+        /* NET WM compliant */
+        net_wm_supported = 1;
+      }
+
+      XFree(*window_ptr_2);
+      free(window_ptr_2);
+    }
+
+        XFree(*window_ptr_1);
+        free(window_ptr_1);
+
+        return net_wm_supported;
+}
+
+/*  Check if "hint" is present in "property" for "window". */
+int fgHintPresent(Window window, Atom property, Atom hint)
+{
+  Atom ** atoms_ptr;
+  int number_of_atoms;
+  int supported;
+  int i;
+
+  supported = 0;
+
+  atoms_ptr = malloc(sizeof(Atom *));
+  number_of_atoms = fghGetWindowProperty(window,
+					 property,
+					 XA_ATOM,
+					 (unsigned char **) atoms_ptr);
+  for (i = 0; i < number_of_atoms; i++)
+    {
+      if ((*atoms_ptr)[i] == hint)
+      {
+          supported = 1;
+          break;
+      }
+    }
+
+  return supported;
+}
+
+#endif /*  TARGET_HOST_POSIX_X11  */
+
 
 /*
  * A call to this function should initialize all the display stuff...
  */
 static void fghInitialize( const char* displayName )
 {
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
     fgDisplay.Display = XOpenDisplay( displayName );
 
     if( fgDisplay.Display == NULL )
@@ -130,13 +276,34 @@ static void fghInitialize( const char* displayName )
     fgDisplay.Connection = ConnectionNumber( fgDisplay.Display );
 
     /* Create the window deletion atom */
-    fgDisplay.DeleteWindow = XInternAtom(
-        fgDisplay.Display,
-        "WM_DELETE_WINDOW",
-        FALSE
-    );
+    fgDisplay.DeleteWindow = fghGetAtom("WM_DELETE_WINDOW");
 
-#elif TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+    /* Create the state and full screen atoms */
+    fgDisplay.State           = None;
+    fgDisplay.StateFullScreen = None;
+
+    if (fghNetWMSupported())
+    {
+      const Atom supported = fghGetAtom("_NET_SUPPORTED");
+      const Atom state     = fghGetAtom("_NET_WM_STATE");
+      
+      /* Check if the state hint is supported. */
+      if (fgHintPresent(fgDisplay.RootWindow, supported, state))
+      {
+        const Atom full_screen = fghGetAtom("_NET_WM_STATE_FULLSCREEN");
+        
+        fgDisplay.State = state;
+        
+        /* Check if the window manager supports full screen. */
+        /**  Check "_NET_WM_ALLOWED_ACTIONS" on our window instead? **/
+        if (fgHintPresent(fgDisplay.RootWindow, supported, full_screen))
+        {
+          fgDisplay.StateFullScreen = full_screen;
+        }
+      }
+    }
+
+#elif TARGET_HOST_MS_WINDOWS
 
     WNDCLASS wc;
     ATOM atom;
@@ -164,12 +331,12 @@ static void fghInitialize( const char* displayName )
         wc.hInstance      = fgDisplay.Instance;
         wc.hIcon          = LoadIcon( fgDisplay.Instance, _T("GLUT_ICON") );
 
-#if TARGET_HOST_WIN32
+#if defined(_WIN32_WCE)
+        wc.style          = CS_HREDRAW | CS_VREDRAW;
+#else
         wc.style          = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
         if (!wc.hIcon)
           wc.hIcon        = LoadIcon( NULL, IDI_WINLOGO );
-#else /* TARGET_HOST_WINCE */
-        wc.style          = CS_HREDRAW | CS_VREDRAW;
 #endif
 
         wc.hCursor        = LoadCursor( NULL, IDC_ARROW );
@@ -202,6 +369,9 @@ static void fghInitialize( const char* displayName )
 #endif
 
     fgState.Initialised = GL_TRUE;
+
+    /* InputDevice uses GlutTimerFunc(), so fgState.Initialised must be TRUE */
+    fgInitialiseInputDevices();
 }
 
 /*
@@ -221,6 +391,10 @@ void fgDeinitialize( void )
     /* If there was a menu created, destroy the rendering context */
     if( fgStructure.MenuContext )
     {
+#if TARGET_HOST_POSIX_X11
+        /* Note that the MVisualInfo is not owned by the MenuContext! */
+        glXDestroyContext( fgDisplay.Display, fgStructure.MenuContext->MContext );
+#endif
         free( fgStructure.MenuContext );
         fgStructure.MenuContext = NULL;
     }
@@ -239,11 +413,20 @@ void fgDeinitialize( void )
         free( timer );
     }
 
-#if !TARGET_HOST_WINCE
+#if !defined(_WIN32_WCE)
     if ( fgState.JoysticksInitialised )
         fgJoystickClose( );
-#endif /* !TARGET_HOST_WINCE */
+
+    if ( fgState.InputDevsInitialised )
+        fgInputDeviceClose( );
+#endif /* !defined(_WIN32_WCE) */
     fgState.JoysticksInitialised = GL_FALSE;
+    fgState.InputDevsInitialised = GL_FALSE;
+
+    fgState.MajorVersion = 1;
+    fgState.MinorVersion = 0;
+    fgState.ContextFlags = 0;
+    fgState.ContextProfile = 0;
 
     fgState.Initialised = GL_FALSE;
 
@@ -266,14 +449,12 @@ void fgDeinitialize( void )
     fgState.ExecState           = GLUT_EXEC_STATE_INIT;
 
     fgState.KeyRepeat       = GLUT_KEY_REPEAT_ON;
-    fgState.Modifiers       = 0xffffffff;
+    fgState.Modifiers       = INVALID_MODIFIERS;
 
     fgState.GameModeSize.X  = 640;
     fgState.GameModeSize.Y  = 480;
     fgState.GameModeDepth   =  16;
     fgState.GameModeRefresh =  72;
-
-    fgState.Time.Set = GL_FALSE;
 
     fgListInit( &fgState.Timers );
     fgListInit( &fgState.FreeTimers );
@@ -292,7 +473,7 @@ void fgDeinitialize( void )
         fgState.ProgramName = NULL;
     }
 
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 
     /*
      * Make sure all X-client data we have created will be destroyed on
@@ -306,7 +487,7 @@ void fgDeinitialize( void )
      */
     XCloseDisplay( fgDisplay.Display );
 
-#elif TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+#elif TARGET_HOST_MS_WINDOWS
 
     /* Reset the timer granularity */
     timeEndPeriod ( 1 );
@@ -320,7 +501,7 @@ void fgDeinitialize( void )
  * Everything inside the following #ifndef is copied from the X sources.
  */
 
-#if TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+#if TARGET_HOST_MS_WINDOWS
 
 /*
 
@@ -499,6 +680,14 @@ void FGAPIENTRY glutInit( int* pargc, char** argv )
     char* geometry = NULL;
     int i, j, argc = *pargc;
 
+    /* will return true for VC8 (VC2005) and higher */
+#if TARGET_HOST_MS_WINDOWS && ( _MSC_VER >= 1400 )
+    size_t sLen;
+#if HAVE_ERRNO
+    errno_t err;
+#endif
+#endif
+
     if( fgState.Initialised )
         fgError( "illegal glutInit() reinitialization attempt" );
 
@@ -512,12 +701,21 @@ void FGAPIENTRY glutInit( int* pargc, char** argv )
 
     fgCreateStructure( );
 
-    fgElapsedTime( );
+    /* Get start time */
+    fgState.Time = fgSystemTime();
 
-    /* b2Assert if GLUT_FPS env var is set */
-#if !TARGET_HOST_WINCE
+    /* check if GLUT_FPS env var is set */
+#ifndef _WIN32_WCE
     {
+    /* will return true for VC8 (VC2005) and higher */
+#if TARGET_HOST_MS_WINDOWS && ( _MSC_VER >= 1400 ) && HAVE_ERRNO
+        char* fps = NULL;
+        err = _dupenv_s( &fps, &sLen, "GLUT_FPS" );
+        if (err)
+            fgError("Error getting GLUT_FPS environment variable"); 
+#else
         const char *fps = getenv( "GLUT_FPS" );
+#endif
         if( fps )
         {
             int interval;
@@ -528,9 +726,20 @@ void FGAPIENTRY glutInit( int* pargc, char** argv )
             else
                 fgState.FPSInterval = interval;
         }
+    /* will return true for VC8 (VC2005) and higher */
+#if TARGET_HOST_MS_WINDOWS && ( _MSC_VER >= 1400 ) && HAVE_ERRNO
+        free ( fps );  fps = NULL;  /* dupenv_s allocates a string that we must free */
+#endif
     }
 
-    displayName = getenv( "DISPLAY");
+    /* will return true for VC8 (VC2005) and higher */
+#if TARGET_HOST_MS_WINDOWS && ( _MSC_VER >= 1400 ) && HAVE_ERRNO
+    err = _dupenv_s( &displayName, &sLen, "DISPLAY" );
+    if (err)
+        fgError("Error getting DISPLAY environment variable");
+#else
+    displayName = getenv( "DISPLAY" );
+#endif
 
     for( i = 1; i < argc; i++ )
     {
@@ -607,7 +816,7 @@ void FGAPIENTRY glutInit( int* pargc, char** argv )
             argv[ i ] = argv[ j ];
     }
 
-#endif /* TARGET_HOST_WINCE */
+#endif /* _WIN32_WCE */
 
     /*
      * Have the display created now. If there wasn't a "-display"
@@ -615,6 +824,10 @@ void FGAPIENTRY glutInit( int* pargc, char** argv )
      * variable for opening the X display (see code above):
      */
     fghInitialize( displayName );
+    /* will return true for VC8 (VC2005) and higher */
+#if TARGET_HOST_MS_WINDOWS && ( _MSC_VER >= 1400 ) && HAVE_ERRNO
+    free ( displayName );  displayName = NULL;  /* dupenv_s allocates a string that we must free */
+#endif
 
     /*
      * Geometry parsing deffered until here because we may need the screen
@@ -643,6 +856,24 @@ void FGAPIENTRY glutInit( int* pargc, char** argv )
         if( (mask & (XValue|YValue)) == (XValue|YValue) )
             fgState.Position.Use = GL_TRUE;
     }
+}
+
+#if TARGET_HOST_MS_WINDOWS
+void (__cdecl *__glutExitFunc)( int return_value ) = NULL;
+
+void FGAPIENTRY __glutInitWithExit( int *pargc, char **argv, void (__cdecl *exit_function)(int) )
+{
+  __glutExitFunc = exit_function;
+  glutInit(pargc, argv);
+}
+#endif
+
+/*
+ * Undoes all the "glutInit" stuff
+ */
+void FGAPIENTRY glutExit ( void )
+{
+  fgDeinitialize ();
 }
 
 /*
@@ -705,19 +936,35 @@ void FGAPIENTRY glutInitDisplayString( const char* displayMode )
      * delimited by blanks or tabs.
      */
     char *token ;
-    int len = strlen ( displayMode );
+    /* will return true for VC8 (VC2005) and higher */
+#if TARGET_HOST_MS_WINDOWS && ( _MSC_VER >= 1400 )
+    char *next_token = NULL;
+#endif
+    size_t len = strlen ( displayMode );
     char *buffer = (char *)malloc ( (len+1) * sizeof(char) );
     memcpy ( buffer, displayMode, len );
     buffer[len] = '\0';
 
+    /* will return true for VC8 (VC2005) and higher */
+#if TARGET_HOST_MS_WINDOWS && ( _MSC_VER >= 1400 )
+    token = strtok_s ( buffer, " \t", &next_token );
+#else
     token = strtok ( buffer, " \t" );
+#endif
     while ( token )
     {
         /* Process this token */
         int i ;
+
+        /* Temporary fix:  Ignore any length specifications and at least
+         * process the basic token
+         * TODO:  Fix this permanently
+         */
+        size_t cleanlength = strcspn ( token, "=<>~!" );
+
         for ( i = 0; i < NUM_TOKENS; i++ )
         {
-            if ( strcmp ( token, Tokens[i] ) == 0 ) break ;
+            if ( strncmp ( token, Tokens[i], cleanlength ) == 0 ) break ;
         }
 
         switch ( i )
@@ -814,64 +1061,64 @@ void FGAPIENTRY glutInitDisplayString( const char* displayMode )
         case 20 :  /* "win32pdf": (incorrect spelling but was there before */
         case 21 :  /* "win32pfd":  matches the Win32 Pixel Format Descriptor by
                       number */
-#if TARGET_HOST_WIN32
+#if TARGET_HOST_MS_WINDOWS
 #endif
             break ;
 
         case 22 :  /* "xvisual":  matches the X visual ID by number */
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 #endif
             break ;
 
         case 23 :  /* "xstaticgray": */
         case 29 :  /* "xstaticgrey":  boolean indicating if the frame buffer
                       configuration's X visual is of type StaticGray */
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 #endif
             break ;
 
         case 24 :  /* "xgrayscale": */
         case 30 :  /* "xgreyscale":  boolean indicating if the frame buffer
                       configuration's X visual is of type GrayScale */
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 #endif
             break ;
 
         case 25 :  /* "xstaticcolor": */
         case 31 :  /* "xstaticcolour":  boolean indicating if the frame buffer
                       configuration's X visual is of type StaticColor */
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 #endif
             break ;
 
         case 26 :  /* "xpseudocolor": */
         case 32 :  /* "xpseudocolour":  boolean indicating if the frame buffer
                       configuration's X visual is of type PseudoColor */
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 #endif
             break ;
 
         case 27 :  /* "xtruecolor": */
         case 33 :  /* "xtruecolour":  boolean indicating if the frame buffer
                       configuration's X visual is of type TrueColor */
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 #endif
             break ;
 
         case 28 :  /* "xdirectcolor": */
         case 34 :  /* "xdirectcolour":  boolean indicating if the frame buffer
                       configuration's X visual is of type DirectColor */
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 #endif
             break ;
 
         case 35 :  /* "borderless":  windows should not have borders */
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 #endif
             break ;
 
         case 36 :  /* "aux":  some number of aux buffers */
-            glut_state_flag |= GLUT_AUX1;
+            glut_state_flag |= GLUT_AUX;
             break ;
 
         case 37 :  /* Unrecognized */
@@ -880,13 +1127,40 @@ void FGAPIENTRY glutInitDisplayString( const char* displayMode )
             break ;
         }
 
+    /* will return true for VC8 (VC2005) and higher */
+#if TARGET_HOST_MS_WINDOWS && ( _MSC_VER >= 1400 )
+        token = strtok_s ( NULL, " \t", &next_token );
+#else
         token = strtok ( NULL, " \t" );
+#endif
     }
 
     free ( buffer );
 
     /* We will make use of this value when creating a new OpenGL context... */
     fgState.DisplayMode = glut_state_flag;
+}
+
+/* -- SETTING OPENGL 3.0 CONTEXT CREATION PARAMETERS ---------------------- */
+
+void FGAPIENTRY glutInitContextVersion( int majorVersion, int minorVersion )
+{
+    /* We will make use of these valuse when creating a new OpenGL context... */
+    fgState.MajorVersion = majorVersion;
+    fgState.MinorVersion = minorVersion;
+}
+
+
+void FGAPIENTRY glutInitContextFlags( int flags )
+{
+    /* We will make use of this value when creating a new OpenGL context... */
+    fgState.ContextFlags = flags;
+}
+
+void FGAPIENTRY glutInitContextProfile( int profile )
+{
+    /* We will make use of this value when creating a new OpenGL context... */
+    fgState.ContextProfile = profile;
 }
 
 /*** END OF FILE ***/

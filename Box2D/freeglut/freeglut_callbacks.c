@@ -301,6 +301,8 @@ void FGAPIENTRY glutWindowStatusFunc( void (* callback)( int ) )
 void FGAPIENTRY glutSpaceballMotionFunc( void (* callback)( int, int, int ) )
 {
     FREEGLUT_EXIT_IF_NOT_INITIALISED ( "glutSpaceballMotionFunc" );
+    fgInitialiseSpaceball();
+
     SET_CALLBACK( SpaceMotion );
 }
 
@@ -310,6 +312,8 @@ void FGAPIENTRY glutSpaceballMotionFunc( void (* callback)( int, int, int ) )
 void FGAPIENTRY glutSpaceballRotateFunc( void (* callback)( int, int, int ) )
 {
     FREEGLUT_EXIT_IF_NOT_INITIALISED ( "glutSpaceballRotateFunc" );
+    fgInitialiseSpaceball();
+
     SET_CALLBACK( SpaceRotation );
 }
 
@@ -319,6 +323,8 @@ void FGAPIENTRY glutSpaceballRotateFunc( void (* callback)( int, int, int ) )
 void FGAPIENTRY glutSpaceballButtonFunc( void (* callback)( int, int ) )
 {
     FREEGLUT_EXIT_IF_NOT_INITIALISED ( "glutSpaceballButtonFunc" );
+    fgInitialiseSpaceball();
+
     SET_CALLBACK( SpaceButton );
 }
 

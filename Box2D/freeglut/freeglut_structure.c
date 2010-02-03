@@ -65,12 +65,16 @@ static void fghClearCallBacks( SFG_Window *window )
  * If parent is set to NULL, the window created will be a topmost one.
  */
 SFG_Window* fgCreateWindow( SFG_Window* parent, const char* title,
-                            int x, int y, int w, int h,
+                            GLboolean positionUse, int x, int y,
+                            GLboolean sizeUse, int w, int h,
                             GLboolean gameMode, GLboolean isMenu )
 {
     /* Have the window object created */
     SFG_Window *window = (SFG_Window *)calloc( sizeof(SFG_Window), 1 );
 
+#if TARGET_HOST_UNIX_X11
+    window->Window.FBConfig = NULL;
+#endif
     fghClearCallBacks( window );
 
     /* Initialize the object properties */
@@ -93,12 +97,13 @@ SFG_Window* fgCreateWindow( SFG_Window* parent, const char* title,
 
     window->State.IgnoreKeyRepeat = GL_FALSE;
     window->State.KeyRepeating    = GL_FALSE;
+    window->State.IsFullscreen    = GL_FALSE;
 
     /*
      * Open the window now. The fgOpenWindow() function is system
      * dependant, and resides in freeglut_window.c. Uses fgState.
      */
-    fgOpenWindow( window, title, x, y, w, h, gameMode,
+    fgOpenWindow( window, title, positionUse, x, y, sizeUse, w, h, gameMode,
                   (GLboolean)(parent ? GL_TRUE : GL_FALSE) );
 
     return window;
@@ -119,7 +124,8 @@ SFG_Menu* fgCreateMenu( FGCBMenu menuCallback )
 
     /* Create a window for the menu to reside in. */
 
-    fgCreateWindow( NULL, "freeglut menu", x, y, w, h, GL_FALSE, GL_TRUE );
+    fgCreateWindow( NULL, "freeglut menu", GL_TRUE, x, y, GL_TRUE, w, h,
+                    GL_FALSE, GL_TRUE );
     menu->Window = fgStructure.CurrentWindow;
     glutDisplayFunc( fgDisplayMenu );
 
@@ -346,7 +352,7 @@ void fgCreateStructure( void )
     fgStructure.CurrentWindow = NULL;
     fgStructure.CurrentMenu = NULL;
     fgStructure.MenuContext = NULL;
-    fgStructure.GameMode = NULL;
+    fgStructure.GameModeWindow = NULL;
     fgStructure.WindowID = 0;
     fgStructure.MenuID = 0;
 }
@@ -433,7 +439,7 @@ static void fghcbWindowByHandle( SFG_Window *window,
         return;
     }
 
-    /* Otherwise, b2Assert this window's children */
+    /* Otherwise, check this window's children */
     fgEnumSubWindows( window, fghcbWindowByHandle, enumerator );
 }
 
@@ -474,7 +480,7 @@ static void fghcbWindowByID( SFG_Window *window, SFG_Enumerator *enumerator )
         return;
     }
 
-    /* Otherwise, b2Assert this window's children */
+    /* Otherwise, check this window's children */
     fgEnumSubWindows( window, fghcbWindowByID, enumerator );
 }
 
@@ -504,7 +510,7 @@ SFG_Menu* fgMenuByID( int menuID )
 {
     SFG_Menu *menu = NULL;
 
-    /* It's enough to b2Assert all entries in fgStructure.Menus... */
+    /* It's enough to check all entries in fgStructure.Menus... */
     for( menu = (SFG_Menu *)fgStructure.Menus.First;
          menu;
          menu = (SFG_Menu *)menu->Node.Next )

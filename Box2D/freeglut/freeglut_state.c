@@ -31,9 +31,9 @@
 /*
  * TODO BEFORE THE STABLE RELEASE:
  *
- *  glutGet()               -- X11 tests passed, but b2Assert if all enums
+ *  glutGet()               -- X11 tests passed, but check if all enums
  *                             handled (what about Win32?)
- *  glutDeviceGet()         -- X11 tests passed, but b2Assert if all enums
+ *  glutDeviceGet()         -- X11 tests passed, but check if all enums
  *                             handled (what about Win32?)
  *  glutGetModifiers()      -- OK, but could also remove the limitation
  *  glutLayerGet()          -- what about GLUT_NORMAL_DAMAGED?
@@ -45,21 +45,34 @@
 
 /* -- PRIVATE FUNCTIONS ---------------------------------------------------- */
 
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 /*
  * Queries the GL context about some attributes
  */
 static int fghGetConfig( int attribute )
 {
   int returnValue = 0;
+  int result;  /*  Not checked  */
 
   if( fgStructure.CurrentWindow )
-      glXGetConfig( fgDisplay.Display, fgStructure.CurrentWindow->Window.VisualInfo,
-                    attribute, &returnValue );
+      result = glXGetFBConfigAttrib( fgDisplay.Display,
+                                     *(fgStructure.CurrentWindow->Window.FBConfig),
+                                     attribute,
+                                     &returnValue );
 
   return returnValue;
 }
 #endif
+
+/* Check if the window is in full screen state. */
+static int fghCheckFullScreen(void)
+{
+#if TARGET_HOST_POSIX_X11
+    return fgStructure.CurrentWindow->State.IsFullscreen;
+#else
+    return 0;
+#endif
+}
 
 /* -- INTERFACE FUNCTIONS -------------------------------------------------- */
 
@@ -113,21 +126,40 @@ void FGAPIENTRY glutSetOption( GLenum eWhat, int value )
             fgStructure.CurrentWindow->State.Cursor = value;
         break;
 
+    case GLUT_AUX:
+      fgState.AuxiliaryBufferNumber = value;
+      break;
+
+    case GLUT_MULTISAMPLE:
+      fgState.SampleNumber = value;
+      break;
+
     default:
         fgWarning( "glutSetOption(): missing enum handle %d", eWhat );
         break;
     }
 }
 
+#if TARGET_HOST_MS_WINDOWS
+/* The following include file is available from SGI but is not standard:
+ *   #include <GL/wglext.h>
+ * So we copy the necessary parts out of it to support the multisampling query
+ */
+#define WGL_SAMPLES_ARB                0x2042
+#endif
+
+
 /*
  * General settings query method
  */
 int FGAPIENTRY glutGet( GLenum eWhat )
 {
-#if TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+#if TARGET_HOST_MS_WINDOWS
     int returnValue ;
     GLboolean boolValue ;
 #endif
+
+    int nsamples = 0;
 
     switch (eWhat)
     {
@@ -148,24 +180,34 @@ int FGAPIENTRY glutGet( GLenum eWhat )
     case GLUT_SCREEN_HEIGHT:        return fgDisplay.ScreenHeight  ;
     case GLUT_SCREEN_WIDTH_MM:      return fgDisplay.ScreenWidthMM ;
     case GLUT_SCREEN_HEIGHT_MM:     return fgDisplay.ScreenHeightMM;
-    case GLUT_INIT_WINDOW_X:        return fgState.Position.X      ;
-    case GLUT_INIT_WINDOW_Y:        return fgState.Position.Y      ;
-    case GLUT_INIT_WINDOW_WIDTH:    return fgState.Size.X          ;
-    case GLUT_INIT_WINDOW_HEIGHT:   return fgState.Size.Y          ;
+    case GLUT_INIT_WINDOW_X:        return fgState.Position.Use ?
+                                           fgState.Position.X : -1 ;
+    case GLUT_INIT_WINDOW_Y:        return fgState.Position.Use ?
+                                           fgState.Position.Y : -1 ;
+    case GLUT_INIT_WINDOW_WIDTH:    return fgState.Size.Use ?
+                                           fgState.Size.X : -1     ;
+    case GLUT_INIT_WINDOW_HEIGHT:   return fgState.Size.Use ?
+                                           fgState.Size.Y : -1     ;
     case GLUT_INIT_DISPLAY_MODE:    return fgState.DisplayMode     ;
+    case GLUT_INIT_MAJOR_VERSION:   return fgState.MajorVersion    ;
+    case GLUT_INIT_MINOR_VERSION:   return fgState.MinorVersion    ;
+    case GLUT_INIT_FLAGS:           return fgState.ContextFlags    ;
+    case GLUT_INIT_PROFILE:         return fgState.ContextProfile  ;
 
+#if TARGET_HOST_POSIX_X11
     /*
      * The window/context specific queries are handled mostly by
      * fghGetConfig().
      */
     case GLUT_WINDOW_NUM_SAMPLES:
-        /* XXX Multisampling. Return what I know about multisampling. */
-        return 0;
+#ifdef GLX_VERSION_1_3
+        glGetIntegerv(GL_SAMPLES, &nsamples);
+#endif
+        return nsamples;
 
-#if TARGET_HOST_UNIX_X11
     /*
      * The rest of GLX queries under X are general enough to use a macro to
-     * b2Assert them
+     * check them
      */
 #   define GLX_QUERY(a,b) case a: return fghGetConfig( b );
 
@@ -196,7 +238,20 @@ int FGAPIENTRY glutGet( GLenum eWhat )
              */
             return 0;
         }
-        return fgStructure.CurrentWindow->Window.VisualInfo->visual->map_entries;
+        else
+        {
+          const GLXFBConfig * fbconfig =
+                fgStructure.CurrentWindow->Window.FBConfig;
+
+          XVisualInfo * visualInfo =
+                glXGetVisualFromFBConfig( fgDisplay.Display, *fbconfig );
+
+          const int result = visualInfo->visual->map_entries;
+
+          XFree(visualInfo);
+
+          return result;
+        }
 
     /*
      * Those calls are somewhat similiar, as they use XGetWindowAttributes()
@@ -260,29 +315,63 @@ int FGAPIENTRY glutGet( GLenum eWhat )
 
     /* I do not know yet if there will be a fgChooseVisual() function for Win32 */
     case GLUT_DISPLAY_MODE_POSSIBLE:
-        return( fgChooseVisual() == NULL ? 0 : 1 );
+    {
+        /*  We should not have to call fgChooseFBConfig again here.  */
+        GLXFBConfig * fbconfig;
+        int isPossible;
+
+        fbconfig = fgChooseFBConfig();
+
+        if (fbconfig == NULL)
+        {
+            isPossible = 0;
+        }
+        else
+        {
+            isPossible = 1;
+            XFree(fbconfig);
+        }
+
+        return isPossible;
+    }
 
     /* This is system-dependant */
     case GLUT_WINDOW_FORMAT_ID:
         if( fgStructure.CurrentWindow == NULL )
             return 0;
 
-        return fgStructure.CurrentWindow->Window.VisualInfo->visualid;
+        return fghGetConfig( GLX_VISUAL_ID );
 
-#elif TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+#elif TARGET_HOST_MS_WINDOWS
+
+    case GLUT_WINDOW_NUM_SAMPLES:
+      glGetIntegerv(WGL_SAMPLES_ARB, &nsamples);
+      return nsamples;
 
     /* Handle the OpenGL inquiries */
     case GLUT_WINDOW_RGBA:
+#if defined(_WIN32_WCE)
+      boolValue = (GLboolean)0;  /* WinCE doesn't support this feature */
+#else
       glGetBooleanv ( GL_RGBA_MODE, &boolValue );
       returnValue = boolValue ? 1 : 0;
+#endif
       return returnValue;
     case GLUT_WINDOW_DOUBLEBUFFER:
+#if defined(_WIN32_WCE)
+      boolValue = (GLboolean)0;  /* WinCE doesn't support this feature */
+#else
       glGetBooleanv ( GL_DOUBLEBUFFER, &boolValue );
       returnValue = boolValue ? 1 : 0;
+#endif
       return returnValue;
     case GLUT_WINDOW_STEREO:
+#if defined(_WIN32_WCE)
+      boolValue = (GLboolean)0;  /* WinCE doesn't support this feature */
+#else
       glGetBooleanv ( GL_STEREO, &boolValue );
       returnValue = boolValue ? 1 : 0;
+#endif
       return returnValue;
 
     case GLUT_WINDOW_RED_SIZE:
@@ -298,16 +387,32 @@ int FGAPIENTRY glutGet( GLenum eWhat )
       glGetIntegerv ( GL_ALPHA_BITS, &returnValue );
       return returnValue;
     case GLUT_WINDOW_ACCUM_RED_SIZE:
+#if defined(_WIN32_WCE)
+      returnValue = 0;  /* WinCE doesn't support this feature */
+#else
       glGetIntegerv ( GL_ACCUM_RED_BITS, &returnValue );
+#endif
       return returnValue;
     case GLUT_WINDOW_ACCUM_GREEN_SIZE:
+#if defined(_WIN32_WCE)
+      returnValue = 0;  /* WinCE doesn't support this feature */
+#else
       glGetIntegerv ( GL_ACCUM_GREEN_BITS, &returnValue );
+#endif
       return returnValue;
     case GLUT_WINDOW_ACCUM_BLUE_SIZE:
+#if defined(_WIN32_WCE)
+      returnValue = 0;  /* WinCE doesn't support this feature */
+#else
       glGetIntegerv ( GL_ACCUM_BLUE_BITS, &returnValue );
+#endif
       return returnValue;
     case GLUT_WINDOW_ACCUM_ALPHA_SIZE:
+#if defined(_WIN32_WCE)
+      returnValue = 0;  /* WinCE doesn't support this feature */
+#else
       glGetIntegerv ( GL_ACCUM_ALPHA_BITS, &returnValue );
+#endif
       return returnValue;
     case GLUT_WINDOW_DEPTH_SIZE:
       glGetIntegerv ( GL_DEPTH_BITS, &returnValue );
@@ -361,8 +466,8 @@ int FGAPIENTRY glutGet( GLenum eWhat )
 
         /* ...then we've got to correct the results we've just received... */
 
-#if !TARGET_HOST_WINCE
-        if ( ( fgStructure.GameMode != fgStructure.CurrentWindow ) && ( fgStructure.CurrentWindow->Parent == NULL ) &&
+#if !defined(_WIN32_WCE)
+        if ( ( fgStructure.GameModeWindow != fgStructure.CurrentWindow ) && ( fgStructure.CurrentWindow->Parent == NULL ) &&
              ( ! fgStructure.CurrentWindow->IsMenu ) )
         {
           winRect.left   += GetSystemMetrics( SM_CXSIZEFRAME );
@@ -370,7 +475,7 @@ int FGAPIENTRY glutGet( GLenum eWhat )
           winRect.top    += GetSystemMetrics( SM_CYSIZEFRAME ) + GetSystemMetrics( SM_CYCAPTION );
           winRect.bottom -= GetSystemMetrics( SM_CYSIZEFRAME );
         }
-#endif /* !TARGET_HOST_WINCE */
+#endif /* !defined(_WIN32_WCE) */
 
         switch( eWhat )
         {
@@ -383,33 +488,33 @@ int FGAPIENTRY glutGet( GLenum eWhat )
     break;
 
     case GLUT_WINDOW_BORDER_WIDTH :
-#if TARGET_HOST_WINCE
+#if defined(_WIN32_WCE)
         return 0;
 #else
         return GetSystemMetrics( SM_CXSIZEFRAME );
-#endif /* !TARGET_HOST_WINCE */
+#endif /* !defined(_WIN32_WCE) */
 
     case GLUT_WINDOW_HEADER_HEIGHT :
-#if TARGET_HOST_WINCE
+#if defined(_WIN32_WCE)
         return 0;
 #else
         return GetSystemMetrics( SM_CYCAPTION );
-#endif /* TARGET_HOST_WINCE */
+#endif /* defined(_WIN32_WCE) */
 
     case GLUT_DISPLAY_MODE_POSSIBLE:
-#if TARGET_HOST_WINCE
-        return GL_FALSE;
+#if defined(_WIN32_WCE)
+        return 0;
 #else
         return fgSetupPixelFormat( fgStructure.CurrentWindow, GL_TRUE,
                                     PFD_MAIN_PLANE );
-#endif /* TARGET_HOST_WINCE */
+#endif /* defined(_WIN32_WCE) */
 
 
     case GLUT_WINDOW_FORMAT_ID:
-#if !TARGET_HOST_WINCE
+#if !defined(_WIN32_WCE)
         if( fgStructure.CurrentWindow != NULL )
             return GetPixelFormat( fgStructure.CurrentWindow->Window.Device );
-#endif /* TARGET_HOST_WINCE */
+#endif /* defined(_WIN32_WCE) */
         return 0;
 
 #endif
@@ -447,7 +552,15 @@ int FGAPIENTRY glutGet( GLenum eWhat )
 
     case GLUT_DIRECT_RENDERING:
         return fgState.DirectContext;
-        break;
+
+    case GLUT_FULL_SCREEN:
+        return fghCheckFullScreen();
+
+    case GLUT_AUX:
+      return fgState.AuxiliaryBufferNumber;
+
+    case GLUT_MULTISAMPLE:
+      return fgState.SampleNumber;
 
     default:
         fgWarning( "glutGet(): missing enum handle %d", eWhat );
@@ -468,60 +581,57 @@ int FGAPIENTRY glutDeviceGet( GLenum eWhat )
     {
     case GLUT_HAS_KEYBOARD:
         /*
-         * We always have a keyboard present on PC machines...
+         * Win32 is assumed a keyboard, and this cannot be queried,
+         * except for WindowsCE.
          *
-         * XXX I think that some of my PCs will boot without a keyboard.
-         * XXX Also, who says that we are running on a PC?  UNIX/X11
-         * XXX is much more generic, and X11 can go over a network.
-         * XXX Though in actuality, we can probably assume BOTH a
-         * XXX mouse and keyboard for most/all of our users.
+         * X11 has a core keyboard by definition, although it can
+         * be present as a virtual/dummy keyboard. For now, there
+         * is no reliable way to tell if a real keyboard is present.
          */
-        return TRUE ;
+#if defined(_WIN32_CE)
+        return ( GetKeyboardStatus() & KBDI_KEYBOARD_PRESENT ) ? 1 : 0;
+#   if FREEGLUT_LIB_PRAGMAS
+#       pragma comment (lib,"Kbdui.lib")
+#   endif
 
-#if TARGET_HOST_UNIX_X11
+#else
+        return 1;
+#endif
 
+#if TARGET_HOST_POSIX_X11
+
+    /* X11 has a mouse by definition */
     case GLUT_HAS_MOUSE:
-        return TRUE ;
+        return 1 ;
 
     case GLUT_NUM_MOUSE_BUTTONS:
-        /*
-         * Return the number of mouse buttons available. This is a big guess.
+        /* We should be able to pass NULL when the last argument is zero,
+         * but at least one X server has a bug where this causes a segfault.
          *
-         * XXX We can probe /var/run/dmesg.boot which is world-readable.
-         * XXX This would be somewhat system-dependant, but is doable.
-         * XXX E.g., on NetBSD, my USB mouse registers:
-         * XXX   ums0 at uhidev0: 3 buttons and Z dir.
-         * XXX We can also probe /var/log/XFree86\..*\.log to get
-         * XXX lines such as:
-         * XXX   (**) Option "Buttons" "5"
-         * XXX   (**) Option "ZAxisMapping" "4 5"
-         * XXX   (**) Mouse0: ZAxisMapping: buttons 4 and 5
-         * XXX   (**) Mouse0: Buttons: 5
-         * XXX ...which tells us even more, and is a bit less
-         * XXX system-dependant.  (Other than MS-WINDOWS, all
-         * XXX target hosts with actual users are probably running
-         * XXX XFree86...)  It is at least worth taking a look at
-         * XXX this file.
+         * In XFree86/Xorg servers, a mouse wheel is seen as two buttons
+         * rather than an Axis; "freeglut_main.c" expects this when
+         * checking for a wheel event.
          */
-        return 3 ;
+        {
+            unsigned char map;
+            int nbuttons = XGetPointerMapping(fgDisplay.Display, &map,0);
+            return nbuttons;
+        }
 
-#elif TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+#elif TARGET_HOST_MS_WINDOWS
 
     case GLUT_HAS_MOUSE:
         /*
-         * The Windows can be booted without a mouse.
-         * It would be nice to have this reported.
+         * MS Windows can be booted without a mouse.
          */
         return GetSystemMetrics( SM_MOUSEPRESENT );
 
     case GLUT_NUM_MOUSE_BUTTONS:
-        /* We are much more fortunate under Win32 about this... */
-#if TARGET_HOST_WINCE
+#  if defined(_WIN32_WCE)
         return 1;
-#else
+#  else
         return GetSystemMetrics( SM_CMOUSEBUTTONS );
-#endif /* TARGET_HOST_WINCE */
-
+#  endif
 #endif
 
     case GLUT_HAS_JOYSTICK:
@@ -540,14 +650,25 @@ int FGAPIENTRY glutDeviceGet( GLenum eWhat )
     case GLUT_JOYSTICK_AXES:
         return glutJoystickGetNumAxes ( 0 );
 
-    case GLUT_HAS_SPACEBALL:
     case GLUT_HAS_DIAL_AND_BUTTON_BOX:
+        return fgInputDeviceDetect ();
+
+    case GLUT_NUM_DIALS:
+        if ( fgState.InputDevsInitialised ) return 8;
+        return 0;
+ 
+    case GLUT_NUM_BUTTON_BOX_BUTTONS:
+        return 0;
+
+    case GLUT_HAS_SPACEBALL:
+        return fgHasSpaceball();
+
     case GLUT_HAS_TABLET:
-        return FALSE;
+        return 0;
 
     case GLUT_NUM_SPACEBALL_BUTTONS:
-    case GLUT_NUM_BUTTON_BOX_BUTTONS:
-    case GLUT_NUM_DIALS:
+        return fgSpaceballNumButtons();
+
     case GLUT_NUM_TABLET_BUTTONS:
         return 0;
 
@@ -572,7 +693,7 @@ int FGAPIENTRY glutDeviceGet( GLenum eWhat )
 int FGAPIENTRY glutGetModifiers( void )
 {
     FREEGLUT_EXIT_IF_NOT_INITIALISED ( "glutGetModifiers" );
-    if( fgState.Modifiers == 0xffffffff )
+    if( fgState.Modifiers == INVALID_MODIFIERS )
     {
         fgWarning( "glutGetModifiers() called outside an input callback" );
         return 0;
@@ -597,16 +718,16 @@ int FGAPIENTRY glutLayerGet( GLenum eWhat )
     switch( eWhat )
     {
 
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 
     case GLUT_OVERLAY_POSSIBLE:
-        return FALSE;
+        return 0;
 
     case GLUT_LAYER_IN_USE:
         return GLUT_NORMAL;
 
     case GLUT_HAS_OVERLAY:
-        return FALSE;
+        return 0;
 
     case GLUT_TRANSPARENT_INDEX:
         /*
@@ -618,23 +739,23 @@ int FGAPIENTRY glutLayerGet( GLenum eWhat )
 
     case GLUT_NORMAL_DAMAGED:
         /* XXX Actually I do not know. Maybe. */
-        return FALSE;
+        return 0;
 
     case GLUT_OVERLAY_DAMAGED:
         return -1;
 
-#elif TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+#elif TARGET_HOST_MS_WINDOWS
 
     case GLUT_OVERLAY_POSSIBLE:
 /*      return fgSetupPixelFormat( fgStructure.CurrentWindow, GL_TRUE,
                                    PFD_OVERLAY_PLANE ); */
-      return FALSE ;
+      return 0 ;
 
     case GLUT_LAYER_IN_USE:
         return GLUT_NORMAL;
 
     case GLUT_HAS_OVERLAY:
-        return FALSE;
+        return 0;
 
     case GLUT_TRANSPARENT_INDEX:
         /*
@@ -646,7 +767,7 @@ int FGAPIENTRY glutLayerGet( GLenum eWhat )
 
     case GLUT_NORMAL_DAMAGED:
         /* XXX Actually I do not know. Maybe. */
-        return FALSE;
+        return 0;
 
     case GLUT_OVERLAY_DAMAGED:
         return -1;
@@ -659,6 +780,116 @@ int FGAPIENTRY glutLayerGet( GLenum eWhat )
 
     /* And fail. That's good. Programs do love failing. */
     return -1;
+}
+
+int * FGAPIENTRY glutGetModeValues(GLenum eWhat, int * size)
+{
+  int * array;
+
+#if TARGET_HOST_POSIX_X11
+  int attributes[9];
+  GLXFBConfig * fbconfigArray;  /*  Array of FBConfigs  */
+  int fbconfigArraySize;        /*  Number of FBConfigs in the array  */
+  int attribute_name = 0;
+#endif
+
+  FREEGLUT_EXIT_IF_NOT_INITIALISED("glutGetModeValues");
+
+  array = NULL;
+  *size = 0;
+
+  switch (eWhat)
+    {
+#if TARGET_HOST_POSIX_X11
+    case GLUT_AUX:
+    case GLUT_MULTISAMPLE:
+
+      attributes[0] = GLX_BUFFER_SIZE;
+      attributes[1] = GLX_DONT_CARE;
+
+      switch (eWhat)
+        {
+        case GLUT_AUX:
+          /*
+            FBConfigs are now sorted by increasing number of auxiliary
+            buffers.  We want at least one buffer.
+          */
+          attributes[2] = GLX_AUX_BUFFERS;
+          attributes[3] = 1;
+          attributes[4] = None;
+
+          attribute_name = GLX_AUX_BUFFERS;
+
+          break;
+
+
+        case GLUT_MULTISAMPLE:
+          attributes[2] = GLX_AUX_BUFFERS;
+          attributes[3] = GLX_DONT_CARE;
+          attributes[4] = GLX_SAMPLE_BUFFERS;
+          attributes[5] = 1;
+          /*
+            FBConfigs are now sorted by increasing number of samples per
+            pixel.  We want at least one sample.
+          */
+          attributes[6] = GLX_SAMPLES;
+          attributes[7] = 1;
+          attributes[8] = None;
+
+          attribute_name = GLX_SAMPLES;
+
+          break;
+        }
+
+      fbconfigArray = glXChooseFBConfig(fgDisplay.Display,
+                                        fgDisplay.Screen,
+                                        attributes,
+                                        &fbconfigArraySize);
+
+      if (fbconfigArray != NULL)
+        {
+          int * temp_array;
+          int result;   /*  Returned by glXGetFBConfigAttrib. Not checked.  */
+          int previous_value;
+          int i;
+
+          temp_array = malloc(sizeof(int) * fbconfigArraySize);
+          previous_value = 0;
+
+          for (i = 0; i < fbconfigArraySize; i++)
+            {
+              int value;
+
+              result = glXGetFBConfigAttrib(fgDisplay.Display,
+                                            fbconfigArray[i],
+                                            attribute_name,
+                                            &value);
+              if (value > previous_value)
+                {
+                  temp_array[*size] = value;
+                  previous_value = value;
+                  (*size)++;
+                }
+            }
+
+          array = malloc(sizeof(int) * (*size));
+          for (i = 0; i < *size; i++)
+            {
+              array[i] = temp_array[i];
+            }
+
+          free(temp_array);
+          XFree(fbconfigArray);
+        }
+
+      break;
+#endif      
+
+    default:
+      break;
+    }
+
+  return array;
 }
 
 /*** END OF FILE ***/
