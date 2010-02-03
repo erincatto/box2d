@@ -47,7 +47,7 @@
 int FGAPIENTRY glutExtensionSupported( const char* extension )
 {
   const char *extensions, *start;
-  const int len = strlen( extension );
+  const size_t len = strlen( extension );
 
   /* Make sure there is a current window, and thus a current context available */
   FREEGLUT_EXIT_IF_NOT_INITIALISED ( "glutExtensionSupported" );
@@ -66,7 +66,7 @@ int FGAPIENTRY glutExtensionSupported( const char* extension )
      const char *p = strstr(extensions, extension);
      if (!p)
         return 0;  /* not found */
-     /* b2Assert that the match isn't a super string */
+     /* check that the match isn't a super string */
      if ((p == start || p[-1] == ' ') && (p[len] == ' ' || p[len] == 0))
         return 1;
      /* skip the false match and continue */
@@ -74,6 +74,49 @@ int FGAPIENTRY glutExtensionSupported( const char* extension )
   }
 
   return 0 ;
+}
+
+#ifndef GL_INVALID_FRAMEBUFFER_OPERATION
+#ifdef GL_INVALID_FRAMEBUFFER_OPERATION_EXT
+#define GL_INVALID_FRAMEBUFFER_OPERATION GL_INVALID_FRAMEBUFFER_OPERATION_EXT
+#else
+#define GL_INVALID_FRAMEBUFFER_OPERATION 0x0506
+#endif
+#endif
+
+#ifndef GL_TABLE_TOO_LARGE
+#ifdef GL_TABLE_TOO_LARGE_EXT
+#define GL_TABLE_TOO_LARGE GL_TABLE_TOO_LARGE_EXT
+#else
+#define GL_TABLE_TOO_LARGE 0x8031
+#endif
+#endif
+
+#ifndef GL_TEXTURE_TOO_LARGE
+#ifdef GL_TEXTURE_TOO_LARGE_EXT
+#define GL_TEXTURE_TOO_LARGE GL_TEXTURE_TOO_LARGE_EXT
+#else
+#define GL_TEXTURE_TOO_LARGE 0x8065
+#endif
+#endif
+
+/*
+ * A cut-down local version of gluErrorString to avoid depending on GLU.
+ */
+static const char* fghErrorString( GLenum error )
+{
+  switch ( error ) {
+  case GL_INVALID_ENUM: return "invalid enumerant";
+  case GL_INVALID_VALUE: return "invalid value";
+  case GL_INVALID_OPERATION: return "invalid operation";
+  case GL_STACK_OVERFLOW: return "stack overflow";
+  case GL_STACK_UNDERFLOW: return "stack underflow";
+  case GL_OUT_OF_MEMORY: return "out of memory";
+  case GL_TABLE_TOO_LARGE: return "table too large";
+  case GL_INVALID_FRAMEBUFFER_OPERATION: return "invalid framebuffer operation";
+  case GL_TEXTURE_TOO_LARGE: return "texture too large";
+  default: return "unknown GL error";
+  }
 }
 
 /*
@@ -84,7 +127,7 @@ void FGAPIENTRY glutReportErrors( void )
     GLenum error;
     FREEGLUT_EXIT_IF_NOT_INITIALISED ( "glutReportErrors" );
     while( ( error = glGetError() ) != GL_NO_ERROR )
-        fgWarning( "GL error: %s", gluErrorString( error ) );
+        fgWarning( "GL error: %s", fghErrorString( error ) );
 }
 
 /*
@@ -133,11 +176,11 @@ void FGAPIENTRY glutSetKeyRepeat( int repeatMode )
 void FGAPIENTRY glutForceJoystickFunc( void )
 {
     FREEGLUT_EXIT_IF_NOT_INITIALISED ( "glutForceJoystickFunc" );
-#if !TARGET_HOST_WINCE
+#if !defined(_WIN32_WCE)
     freeglut_return_if_fail( fgStructure.CurrentWindow != NULL );
     freeglut_return_if_fail( FETCH_WCB( *( fgStructure.CurrentWindow ), Joystick ) );
     fgJoystickPollWindow( fgStructure.CurrentWindow );
-#endif /* !TARGET_HOST_WINCE */
+#endif /* !defined(_WIN32_WCE) */
 }
 
 /*
