@@ -59,7 +59,7 @@
 #    include <IOKit/hid/IOHIDLib.h>
 #endif
 
-#if TARGET_HOST_WIN32
+#if TARGET_HOST_MS_WINDOWS && !defined(_WIN32_WCE)
 #    define _JS_MAX_AXES  8
 #    include <windows.h>
 #    include <mmsystem.h>
@@ -67,7 +67,7 @@
 
 #endif
 
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 #    define _JS_MAX_AXES 16
 #    if HAVE_SYS_IOCTL_H
 #        include <sys/ioctl.h>
@@ -75,12 +75,14 @@
 #    if HAVE_FCNTL_H
 #        include <fcntl.h>
 #    endif
-#    include <errno.h>
+#    if HAVE_ERRNO
+#        include <errno.h>
+#    endif
 #    if defined(__FreeBSD__) || defined(__NetBSD__)
 /* XXX The below hack is done until freeglut's autoconf is updated. */
 #        define HAVE_USB_JS    1
 
-#        if defined(__FreeBSD__) && __FreeBSD_version >= 500000
+#        if defined(__FreeBSD__)
 #            include <sys/joystick.h>
 #        else
 /*
@@ -99,7 +101,7 @@
 #    if defined(__linux__)
 #        include <linux/joystick.h>
 
-/* b2Assert the joystick driver version */
+/* check the joystick driver version */
 #        if defined(JS_VERSION) && JS_VERSION >= 0x010000
 #            define JS_NEW
 #        endif
@@ -230,19 +232,22 @@ static int fghJoystickFindUSBdev(char *name, char *out, int outlen)
   static int protection_warned = 0;
 
   for (i = 0; i < 16; i++) {
-    sprintf(buf, "%s%d", USBDEV, i);
+    snprintf(buf, sizeof(buf), "%s%d", USBDEV, i);
     f = open(buf, O_RDONLY);
     if (f >= 0) {
       cp = fghJoystickWalkUSBdev(f, name, out, outlen);
       close(f);
       if (cp)
         return 1;
-    } else if (errno == EACCES) {
+    }
+#if HAVE_ERRNO
+    else if (errno == EACCES) {
       if (!protection_warned) {
         fgWarning ( "Can't open %s for read!", buf );
         protection_warned = 1;
       }
     }
+#endif
   }
   return 0;
 }
@@ -260,7 +265,11 @@ static int fghJoystickInitializeHID(struct os_specific_s *os,
 
     if ( ( rd = hid_get_report_desc( os->fd ) ) == 0 )
     {
+#if HAVE_ERRNO
         fgWarning ( "error: %s: %s", os->fname, strerror( errno ) );
+#else
+        fgWarning ( "error: %s", os->fname );
+#endif
         return FALSE;
     }
 
@@ -270,7 +279,11 @@ static int fghJoystickInitializeHID(struct os_specific_s *os,
         if( ioctl( os->fd, USB_GET_REPORT_ID, &report_id ) < 0)
         {
             /*** XXX {report_id} may not be the right variable? ***/
+#if HAVE_ERRNO
             fgWarning ( "error: %s%d: %s", UHIDDEV, report_id, strerror( errno ) );
+#else
+            fgWarning ( "error: %s%d", UHIDDEV, report_id );
+#endif
             return FALSE;
         }
 
@@ -385,14 +398,14 @@ struct tagSFG_Joystick
          maxReport[_JS_MAX_AXES];
 #endif
 
-#if TARGET_HOST_WIN32
+#if TARGET_HOST_MS_WINDOWS && !defined(_WIN32_WCE)
     JOYCAPS     jsCaps;
     JOYINFOEX   js;
     UINT        js_id;
 #endif
 
 
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 #   if defined(__FreeBSD__) || defined(__NetBSD__)
        struct os_specific_s *os;
 #   endif
@@ -455,7 +468,7 @@ static SFG_Joystick *fgJoystick [ MAX_NUM_JOYSTICKS ];
  */
 static void fghJoystickRawRead( SFG_Joystick* joy, int* buttons, float* axes )
 {
-#if TARGET_HOST_WIN32
+#if TARGET_HOST_MS_WINDOWS && !defined(_WIN32_WCE)
     MMRESULT status;
 #else
     int status;
@@ -531,7 +544,7 @@ static void fghJoystickRawRead( SFG_Joystick* joy, int* buttons, float* axes )
     }
 #endif
 
-#if TARGET_HOST_WIN32
+#if TARGET_HOST_MS_WINDOWS && !defined(_WIN32_WCE)
     status = joyGetPosEx( joy->js_id, &joy->js );
 
     if ( status != JOYERR_NOERROR )
@@ -597,7 +610,7 @@ static void fghJoystickRawRead( SFG_Joystick* joy, int* buttons, float* axes )
     }
 #endif
 
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 #    if defined(__FreeBSD__) || defined(__NetBSD__)
     if ( joy->os->is_analog )
     {
@@ -656,14 +669,18 @@ static void fghJoystickRawRead( SFG_Joystick* joy, int* buttons, float* axes )
                if (usage > 0 && usage < _JS_MAX_BUTTONS + 1)
                {
                    if (d)
-                       joy->os->cache_buttons |= (1 << usage - 1);
+                       joy->os->cache_buttons |=  (1 << ( usage - 1 ));
                    else
-                       joy->os->cache_buttons &= ~(1 << usage - 1);
+                       joy->os->cache_buttons &= ~(1 << ( usage - 1 ));
                }
             }
         }
     }
+#if HAVE_ERRNO
     if ( len < 0 && errno != EAGAIN )
+#else
+    if ( len < 0 )
+#endif
     {
         perror( joy->os->fname );
         joy->error = 1;
@@ -682,6 +699,7 @@ static void fghJoystickRawRead( SFG_Joystick* joy, int* buttons, float* axes )
 
         if ( status != sizeof( struct js_event ) )
         {
+#if HAVE_ERRNO
             if ( errno == EAGAIN )
             {
                 /* Use the old values */
@@ -692,6 +710,7 @@ static void fghJoystickRawRead( SFG_Joystick* joy, int* buttons, float* axes )
                             sizeof( float ) * joy->num_axes );
                 return;
             }
+#endif
 
             fgWarning ( "%s", joy->fname );
             joy->error = GL_TRUE;
@@ -975,11 +994,11 @@ static void fghJoystickAddHatElement ( SFG_Joystick *joy, CFDictionaryRef button
 }
 #endif
 
-#if TARGET_HOST_WIN32
+#if TARGET_HOST_MS_WINDOWS && !defined(_WIN32_WCE)
 /* Inspired by
    http://msdn.microsoft.com/archive/en-us/dnargame/html/msdn_sidewind3d.asp
  */
-#    if defined(_MSC_VER)
+#    if FREEGLUT_LIB_PRAGMAS
 #        pragma comment (lib, "advapi32.lib")
 #    endif
 
@@ -997,9 +1016,9 @@ static int fghJoystickGetOEMProductName ( SFG_Joystick* joy, char *buf, int buf_
         return 0;
 
     /* Open .. MediaResources\CurrentJoystickSettings */
-    sprintf ( buffer, "%s\\%s\\%s",
-              REGSTR_PATH_JOYCONFIG, joy->jsCaps.szRegKey,
-              REGSTR_KEY_JOYCURR );
+    _snprintf ( buffer, sizeof(buffer), "%s\\%s\\%s",
+                REGSTR_PATH_JOYCONFIG, joy->jsCaps.szRegKey,
+                REGSTR_KEY_JOYCURR );
 
     lr = RegOpenKeyEx ( HKEY_LOCAL_MACHINE, buffer, 0, KEY_QUERY_VALUE, &hKey);
 
@@ -1009,7 +1028,7 @@ static int fghJoystickGetOEMProductName ( SFG_Joystick* joy, char *buf, int buf_
     dwcb = sizeof(OEMKey);
 
     /* JOYSTICKID1-16 is zero-based; registry entries for VJOYD are 1-based. */
-    sprintf ( buffer, "Joystick%d%s", joy->js_id + 1, REGSTR_VAL_JOYOEMNAME );
+    _snprintf ( buffer, sizeof(buffer), "Joystick%d%s", joy->js_id + 1, REGSTR_VAL_JOYOEMNAME );
 
     lr = RegQueryValueEx ( hKey, buffer, 0, 0, (LPBYTE) OEMKey, &dwcb);
     RegCloseKey ( hKey );
@@ -1017,7 +1036,7 @@ static int fghJoystickGetOEMProductName ( SFG_Joystick* joy, char *buf, int buf_
     if ( lr != ERROR_SUCCESS ) return 0;
 
     /* Open OEM Key from ...MediaProperties */
-    sprintf ( buffer, "%s\\%s", REGSTR_PATH_JOYOEM, OEMKey );
+    _snprintf ( buffer, sizeof(buffer), "%s\\%s", REGSTR_PATH_JOYOEM, OEMKey );
 
     lr = RegOpenKeyEx ( HKEY_LOCAL_MACHINE, buffer, 0, KEY_QUERY_VALUE, &hKey );
 
@@ -1039,7 +1058,7 @@ static int fghJoystickGetOEMProductName ( SFG_Joystick* joy, char *buf, int buf_
 
 static void fghJoystickOpen( SFG_Joystick* joy )
 {
-    int i;
+    int i = 0;
 #if TARGET_HOST_MACINTOSH
     OSStatus err;
 #endif
@@ -1053,16 +1072,21 @@ static void fghJoystickOpen( SFG_Joystick* joy )
         CFDictionaryRef props;
     CFTypeRef topLevelElement;
 #endif
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 #    if defined( __FreeBSD__ ) || defined( __NetBSD__ )
        char *cp;
 #    endif
 #    ifdef JS_NEW
        unsigned char u;
 #    else
-       int counter;
+#      if defined( __linux__ ) || TARGET_HOST_SOLARIS
+         int counter = 0;
+#      endif
 #    endif
 #endif
+
+    /* Silence gcc, the correct #ifdefs would be too fragile... */
+    (void)i;
 
     /*
      * Default values (for no joystick -- each conditional will reset the
@@ -1222,7 +1246,7 @@ static void fghJoystickOpen( SFG_Joystick* joy )
     CFRelease( props );
 #endif
 
-#if TARGET_HOST_WIN32
+#if TARGET_HOST_MS_WINDOWS && !defined(_WIN32_WCE)
     joy->js.dwFlags = JOY_RETURNALL;
     joy->js.dwSize  = sizeof( joy->js );
 
@@ -1284,7 +1308,7 @@ static void fghJoystickOpen( SFG_Joystick* joy )
     }
 #endif
 
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 #if defined( __FreeBSD__ ) || defined( __NetBSD__ )
     for( i = 0; i < _JS_MAX_AXES; i++ )
         joy->os->cache_axes[ i ] = 0.0f;
@@ -1293,8 +1317,10 @@ static void fghJoystickOpen( SFG_Joystick* joy )
 
     joy->os->fd = open( joy->os->fname, O_RDONLY | O_NONBLOCK);
 
+#if HAVE_ERRNO
     if( joy->os->fd < 0 && errno == EACCES )
         fgWarning ( "%s exists but is not readable by you", joy->os->fname );
+#endif
 
     joy->error =( joy->os->fd < 0 );
 
@@ -1320,7 +1346,7 @@ static void fghJoystickOpen( SFG_Joystick* joy )
         if( joy->error )
             return;
 
-        sprintf( joyfname, "%s/.joy%drc", getenv( "HOME" ), joy->id );
+        snprintf( joyfname, sizeof(joyfname), "%s/.joy%drc", getenv( "HOME" ), joy->id );
 
         joyfile = fopen( joyfname, "r" );
         joy->error =( joyfile == NULL );
@@ -1389,7 +1415,7 @@ static void fghJoystickOpen( SFG_Joystick* joy )
 #    endif
 #endif
 
-#if defined( __linux__ )
+#if defined( __linux__ ) || TARGET_HOST_SOLARIS
     /* Default for older Linux systems. */
     joy->num_axes    =  2;
     joy->num_buttons = 32;
@@ -1483,7 +1509,7 @@ static void fghJoystickInit( int ident )
 
 #if TARGET_HOST_MACINTOSH
     fgJoystick[ ident ]->id = ident;
-    sprintf( fgJoystick[ ident ]->fname, "/dev/js%d", ident ); /* FIXME */
+    snprintf( fgJoystick[ ident ]->fname, sizeof(fgJoystick[ ident ]->fname), "/dev/js%d", ident ); /* FIXME */
     fgJoystick[ ident ]->error = GL_FALSE;
 #endif
 
@@ -1530,7 +1556,7 @@ static void fghJoystickInit( int ident )
     }
 #endif
 
-#if TARGET_HOST_WIN32
+#if TARGET_HOST_MS_WINDOWS && !defined(_WIN32_WCE)
     switch( ident )
     {
     case 0:
@@ -1548,7 +1574,7 @@ static void fghJoystickInit( int ident )
     }
 #endif
 
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 #    if defined( __FreeBSD__ ) || defined( __NetBSD__ )
     fgJoystick[ ident ]->id = ident;
     fgJoystick[ ident ]->error = GL_FALSE;
@@ -1558,18 +1584,18 @@ static void fghJoystickInit( int ident )
     if( ident < USB_IDENT_OFFSET )
         fgJoystick[ ident ]->os->is_analog = 1;
     if( fgJoystick[ ident ]->os->is_analog )
-        sprintf( fgJoystick[ ident ]->os->fname, "%s%d", AJSDEV, ident );
+        snprintf( fgJoystick[ ident ]->os->fname, sizeof(fgJoystick[ ident ]->os->fname), "%s%d", AJSDEV, ident );
     else
-        sprintf( fgJoystick[ ident ]->os->fname, "%s%d", UHIDDEV,
+        snprintf( fgJoystick[ ident ]->os->fname, sizeof(fgJoystick[ ident ]->os->fname), "%s%d", UHIDDEV,
                  ident - USB_IDENT_OFFSET );
 #    elif defined( __linux__ )
     fgJoystick[ ident ]->id = ident;
     fgJoystick[ ident ]->error = GL_FALSE;
 
-    sprintf( fgJoystick[ident]->fname, "/dev/input/js%d", ident );
+    snprintf( fgJoystick[ident]->fname, sizeof(fgJoystick[ident]->fname), "/dev/input/js%d", ident );
 
     if( access( fgJoystick[ ident ]->fname, F_OK ) != 0 )
-        sprintf( fgJoystick[ ident ]->fname, "/dev/js%d", ident );
+        snprintf( fgJoystick[ ident ]->fname, sizeof(fgJoystick[ ident ]->fname), "/dev/js%d", ident );
 #    endif
 #endif
 
@@ -1581,15 +1607,14 @@ static void fghJoystickInit( int ident )
  */
 void fgInitialiseJoysticks ( void )
 {
-  /* Initialization courtesy of OpenGLUT -- do we want it? */
-  if( !fgState.JoysticksInitialised )
-  {
-    int ident ;
-    for ( ident = 0; ident < MAX_NUM_JOYSTICKS; ident++ )
-      fghJoystickInit( ident );
+    if( !fgState.JoysticksInitialised )
+    {
+        int ident ;
+        for ( ident = 0; ident < MAX_NUM_JOYSTICKS; ident++ )
+            fghJoystickInit( ident );
 
-    fgState.JoysticksInitialised = GL_TRUE;
-  }
+        fgState.JoysticksInitialised = GL_TRUE;
+    }
 }
 
 /*
@@ -1614,11 +1639,11 @@ void fgJoystickClose( void )
                 close( fgJoystick[ ident ]->hidDev );
 #endif
 
-#if TARGET_HOST_WIN32
+#if TARGET_HOST_MS_WINDOWS && !defined(_WIN32_WCE)
             /* Do nothing special */
 #endif
 
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 #if defined( __FreeBSD__ ) || defined( __NetBSD__ )
             if( fgJoystick[ident]->os )
             {
@@ -1680,21 +1705,18 @@ void fgJoystickPollWindow( SFG_Window* window )
  */
 int fgJoystickDetect( void )
 {
-  int ident;
+    int ident;
 
-  fgInitialiseJoysticks ();
+    fgInitialiseJoysticks ();
 
-  if ( !fgJoystick )
+    if ( !fgState.JoysticksInitialised )
+        return 0;
+
+    for( ident=0; ident<MAX_NUM_JOYSTICKS; ident++ )
+        if( fgJoystick[ident] && !fgJoystick[ident]->error )
+            return 1;
+
     return 0;
-
-  if ( !fgState.JoysticksInitialised )
-    return 0;
-
-  for( ident=0; ident<MAX_NUM_JOYSTICKS; ident++ )
-    if( fgJoystick[ident] && !fgJoystick[ident]->error )
-      return 1;
-
-  return 0;
 }
 
 /*

@@ -81,7 +81,7 @@
 
 static void fghTeapot( GLint grid, GLdouble scale, GLenum type )
 {
-#if TARGET_HOST_WINCE
+#if defined(_WIN32_WCE)
 		int i, numV=sizeof(strip_vertices)/4, numI=sizeof(strip_normals)/4;
 #else
     double p[4][4][3], q[4][4][3], r[4][4][3], s[4][4][3];
@@ -99,7 +99,7 @@ static void fghTeapot( GLint grid, GLdouble scale, GLenum type )
     glScaled( 0.5 * scale, 0.5 * scale, 0.5 * scale );
     glTranslated( 0.0, 0.0, -1.5 );
 
-#if TARGET_HOST_WINCE
+#if defined(_WIN32_WCE)
     glRotated( 90.0, 1.0, 0.0, 0.0 );
     glBegin( GL_TRIANGLE_STRIP );
 
@@ -163,7 +163,7 @@ static void fghTeapot( GLint grid, GLdouble scale, GLenum type )
         glEvalMesh2(type, 0, grid, 0, grid);
       }
     }
-#endif  /* TARGET_HOST_WINCE */
+#endif  /* defined(_WIN32_WCE) */
 
     glPopMatrix();
     glPopAttrib();

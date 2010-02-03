@@ -12,12 +12,14 @@ set(freeglut
 	freeglut_geometry.c
 	freeglut_glutfont_definitions.c
 	freeglut_init.c
+	freeglut_input_devices.c
 	freeglut_internal.h
 	freeglut_joystick.c
 	freeglut_main.c
 	freeglut_menu.c
 	freeglut_misc.c
 	freeglut_overlay.c
+	freeglut_spaceball.c
 	freeglut_state.c
 	freeglut_stroke_mono_roman.c
 	freeglut_stroke_roman.c
@@ -26,6 +28,10 @@ set(freeglut
 	freeglut_teapot.c
 	freeglut_videoresize.c
 	freeglut_window.c
+	GL/freeglut.h
+	GL/freeglut_ext.h
+	GL/freeglut_std.h
+	GL/glut.h
 )
 
 include_directories (
@@ -33,6 +39,6 @@ include_directories (
 	.
 )
 
-add_library(freeglut
+add_library(freeglut_static
 	${freeglut}
 )
