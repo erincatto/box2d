@@ -29,9 +29,9 @@
 #include <GL/freeglut.h>
 #include "freeglut_internal.h"
 
-static GLUTproc fghGetProcAddress( const char* procName )
+static GLUTproc fghGetGLUTProcAddress( const char* procName )
 {
-    /* optimization: quick initial b2Assert */
+    /* optimization: quick initial check */
     if( strncmp( procName, "glut", 4 ) != 0 )
         return NULL;
 
@@ -42,6 +42,7 @@ static GLUTproc fghGetProcAddress( const char* procName )
     CHECK_NAME(glutInitWindowPosition);
     CHECK_NAME(glutInitWindowSize);
     CHECK_NAME(glutMainLoop);
+    CHECK_NAME(glutExit);
     CHECK_NAME(glutCreateWindow);
     CHECK_NAME(glutCreateSubWindow);
     CHECK_NAME(glutDestroyWindow);
@@ -104,9 +105,9 @@ static GLUTproc fghGetProcAddress( const char* procName )
     CHECK_NAME(glutWindowStatusFunc);
     CHECK_NAME(glutKeyboardUpFunc);
     CHECK_NAME(glutSpecialUpFunc);
-#if !TARGET_HOST_WINCE
+#if !defined(_WIN32_WCE)
     CHECK_NAME(glutJoystickFunc);
-#endif /* !TARGET_HOST_WINCE */
+#endif /* !defined(_WIN32_WCE) */
     CHECK_NAME(glutSetColor);
     CHECK_NAME(glutGetColor);
     CHECK_NAME(glutCopyColormap);
@@ -147,20 +148,22 @@ static GLUTproc fghGetProcAddress( const char* procName )
     CHECK_NAME(glutReportErrors);
     CHECK_NAME(glutIgnoreKeyRepeat);
     CHECK_NAME(glutSetKeyRepeat);
-#if !TARGET_HOST_WINCE
+#if !defined(_WIN32_WCE)
     CHECK_NAME(glutForceJoystickFunc);
     CHECK_NAME(glutGameModeString);
     CHECK_NAME(glutEnterGameMode);
     CHECK_NAME(glutLeaveGameMode);
     CHECK_NAME(glutGameModeGet);
-#endif /* !TARGET_HOST_WINCE */
+#endif /* !defined(_WIN32_WCE) */
     /* freeglut extensions */
     CHECK_NAME(glutMainLoopEvent);
     CHECK_NAME(glutLeaveMainLoop);
     CHECK_NAME(glutCloseFunc);
     CHECK_NAME(glutWMCloseFunc);
     CHECK_NAME(glutMenuDestroyFunc);
+    CHECK_NAME(glutFullScreenToggle);
     CHECK_NAME(glutSetOption);
+    CHECK_NAME(glutGetModeValues);
     CHECK_NAME(glutSetWindowData);
     CHECK_NAME(glutGetWindowData);
     CHECK_NAME(glutSetMenuData);
@@ -177,9 +180,37 @@ static GLUTproc fghGetProcAddress( const char* procName )
     CHECK_NAME(glutSolidCylinder);
     CHECK_NAME(glutGetProcAddress);
     CHECK_NAME(glutMouseWheelFunc);
+    CHECK_NAME(glutJoystickGetNumAxes);
+    CHECK_NAME(glutJoystickGetNumButtons);
+    CHECK_NAME(glutJoystickNotWorking);
+    CHECK_NAME(glutJoystickGetDeadBand);
+    CHECK_NAME(glutJoystickSetDeadBand);
+    CHECK_NAME(glutJoystickGetSaturation);
+    CHECK_NAME(glutJoystickSetSaturation);
+    CHECK_NAME(glutJoystickSetMinRange);
+    CHECK_NAME(glutJoystickSetMaxRange);
+    CHECK_NAME(glutJoystickSetCenter);
+    CHECK_NAME(glutJoystickGetMinRange);
+    CHECK_NAME(glutJoystickGetMaxRange);
+    CHECK_NAME(glutJoystickGetCenter);
+    CHECK_NAME(glutInitContextVersion);
+    CHECK_NAME(glutInitContextFlags);
+    CHECK_NAME(glutInitContextProfile);
 #undef CHECK_NAME
 
     return NULL;
+}
+
+
+SFG_Proc fghGetProcAddress( const char *procName )
+{
+#if TARGET_HOST_MS_WINDOWS
+    return (SFG_Proc)wglGetProcAddress( ( LPCSTR )procName );
+#elif TARGET_HOST_POSIX_X11 && defined( GLX_ARB_get_proc_address )
+    return (SFG_Proc)glXGetProcAddressARB( ( const GLubyte * )procName );
+#else
+    return NULL;
+#endif
 }
 
 
@@ -189,17 +220,7 @@ glutGetProcAddress( const char *procName )
     GLUTproc p;
     FREEGLUT_EXIT_IF_NOT_INITIALISED ( "glutGetProcAddress" );
 
-    /* Try GLUT functions first */
-    p = fghGetProcAddress( procName );
-    if( p != NULL )
-        return p;
-
-    /* Try core GL functions */
-#if TARGET_HOST_WIN32 || TARGET_HOST_WINCE
-    return(GLUTproc)wglGetProcAddress( ( LPCSTR )procName );
-#elif TARGET_HOST_UNIX_X11 && defined( GLX_ARB_get_proc_address )
-    return(GLUTproc)glXGetProcAddressARB( ( const GLubyte * )procName );
-#else
-    return NULL;
-#endif
+    /* Try GLUT functions first, then core GL functions */
+    p = fghGetGLUTProcAddress( procName );
+    return ( p != NULL ) ? p : fghGetProcAddress( procName );
 }

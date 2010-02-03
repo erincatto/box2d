@@ -72,7 +72,7 @@ add_executable(Testbed
 target_link_libraries (
 	Testbed
 	Box2D
-	freeglut
+	freeglut_static
 	glui
 	${OPENGL_LIBRARIES}
 ) 
