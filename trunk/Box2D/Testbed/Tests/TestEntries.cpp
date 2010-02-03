@@ -59,6 +59,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Prismatic", Prismatic::Create},
 	{"Edge Shapes", EdgeShapes::Create},
 	{"Continuous Test", ContinuousTest::Create},
 	{"Time of Impact", TimeOfImpact::Create},
@@ -85,7 +86,6 @@ TestEntry g_testEntries[] =
 	{"Dynamic Tree", DynamicTreeTest::Create},
 	{"Gears", Gears::Create},
 	{"Line Joint", LineJoint::Create},
-	{"Prismatic", Prismatic::Create},
 	{"Pulleys", Pulleys::Create},
 	{"Revolute", Revolute::Create},
 	{"Sensor Test", SensorTest::Create},

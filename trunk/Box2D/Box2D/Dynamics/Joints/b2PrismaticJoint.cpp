@@ -211,6 +211,7 @@ void b2PrismaticJoint::InitVelocityConstraints(const b2TimeStep& step)
 	else
 	{
 		m_limitState = e_inactiveLimit;
+		m_impulse.z = 0.0f;
 	}
 
 	if (m_enableMotor == false)

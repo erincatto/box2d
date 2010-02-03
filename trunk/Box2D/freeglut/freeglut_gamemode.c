@@ -46,7 +46,7 @@
  */
 static void fghRememberState( void )
 {
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 
     /*
      * This highly depends on the XFree86 extensions,
@@ -101,7 +101,7 @@ static void fghRememberState( void )
      */
 #   endif
 
-#elif TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+#elif TARGET_HOST_MS_WINDOWS
 
 /*    DEVMODE devMode; */
 
@@ -125,7 +125,7 @@ static void fghRememberState( void )
  */
 static void fghRestoreState( void )
 {
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 
 #   ifdef X_XF86VidModeGetAllModeLines
     /* Restore the remembered pointer position: */
@@ -202,7 +202,7 @@ static void fghRestoreState( void )
      */
 #   endif
 
-#elif TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+#elif TARGET_HOST_MS_WINDOWS
 
     /* Restore the previously rememebered desktop display settings */
     ChangeDisplaySettings( &fgDisplay.DisplayMode, 0 );
@@ -210,7 +210,7 @@ static void fghRestoreState( void )
 #endif
 }
 
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 #ifdef X_XF86VidModeGetAllModeLines
 
 /*
@@ -257,7 +257,7 @@ static int fghCheckDisplayModes( GLboolean exactMatch, int displayModesCount, XF
 static GLboolean fghChangeDisplayMode( GLboolean haveToTest )
 {
     GLboolean success = GL_FALSE;
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 
     /*
      * This highly depends on the XFree86 extensions,
@@ -266,8 +266,8 @@ static GLboolean fghChangeDisplayMode( GLboolean haveToTest )
 #   ifdef X_XF86VidModeGetAllModeLines
 
     /*
-     * This is also used by applcations which b2Assert modes by calling
-     * glutGameModeGet(GLUT_GAME_MODE_POSSIBLE), so allow the b2Assert:
+     * This is also used by applcations which check modes by calling
+     * glutGameModeGet(GLUT_GAME_MODE_POSSIBLE), so allow the check:
      */
     if( haveToTest || fgDisplay.DisplayModeValid )
     {
@@ -316,7 +316,7 @@ static GLboolean fghChangeDisplayMode( GLboolean haveToTest )
 
 #   endif
 
-#elif TARGET_HOST_WIN32 || TARGET_HOST_WINCE
+#elif TARGET_HOST_MS_WINDOWS
 
     DEVMODE  devMode;
     char *fggmstr = NULL;
@@ -417,8 +417,8 @@ int FGAPIENTRY glutEnterGameMode( void )
 {
     FREEGLUT_EXIT_IF_NOT_INITIALISED ( "glutEnterGameMode" );
 
-    if( fgStructure.GameMode )
-        fgAddToWindowDestroyList( fgStructure.GameMode );
+    if( fgStructure.GameModeWindow )
+        fgAddToWindowDestroyList( fgStructure.GameModeWindow );
     else
         fghRememberState( );
 
@@ -428,18 +428,17 @@ int FGAPIENTRY glutEnterGameMode( void )
         return 0;
     }
 
-    fgStructure.GameMode = fgCreateWindow(
-        NULL, "FREEGLUT", 0, 0,
-        fgState.GameModeSize.X, fgState.GameModeSize.Y, GL_TRUE, GL_FALSE
+    fgStructure.GameModeWindow = fgCreateWindow(
+        NULL, "FREEGLUT", GL_TRUE, 0, 0,
+        GL_TRUE, fgState.GameModeSize.X, fgState.GameModeSize.Y,
+        GL_TRUE, GL_FALSE
     );
 
-    fgStructure.GameMode->State.Width  = fgState.GameModeSize.X;
-    fgStructure.GameMode->State.Height = fgState.GameModeSize.Y;
-    fgStructure.GameMode->State.NeedToResize = GL_TRUE;
+    fgStructure.GameModeWindow->State.Width  = fgState.GameModeSize.X;
+    fgStructure.GameModeWindow->State.Height = fgState.GameModeSize.Y;
+    fgStructure.GameModeWindow->State.NeedToResize = GL_TRUE;
 
-    fgStructure.GameMode->State.IsGameMode = GL_TRUE;
-
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 
     /*
      * Sync needed to avoid a real race, the Xserver must have really created
@@ -457,12 +456,12 @@ int FGAPIENTRY glutEnterGameMode( void )
      * the application which we have to aviod, so wait until it's viewable:
      */
     while( GrabSuccess != XGrabPointer(
-               fgDisplay.Display, fgStructure.GameMode->Window.Handle,
+               fgDisplay.Display, fgStructure.GameModeWindow->Window.Handle,
                TRUE,
                ButtonPressMask | ButtonReleaseMask | ButtonMotionMask
                | PointerMotionMask,
                GrabModeAsync, GrabModeAsync,
-               fgStructure.GameMode->Window.Handle, None, CurrentTime) )
+               fgStructure.GameModeWindow->Window.Handle, None, CurrentTime) )
         usleep( 100 );
 
     /*
@@ -471,7 +470,7 @@ int FGAPIENTRY glutEnterGameMode( void )
      */
     XSetInputFocus(
         fgDisplay.Display,
-        fgStructure.GameMode->Window.Handle,
+        fgStructure.GameModeWindow->Window.Handle,
         RevertToNone,
         CurrentTime
     );
@@ -521,7 +520,7 @@ int FGAPIENTRY glutEnterGameMode( void )
     /* Grab the keyboard, too */
     XGrabKeyboard(
         fgDisplay.Display,
-        fgStructure.GameMode->Window.Handle,
+        fgStructure.GameModeWindow->Window.Handle,
         FALSE,
         GrabModeAsync, GrabModeAsync,
         CurrentTime
@@ -529,7 +528,7 @@ int FGAPIENTRY glutEnterGameMode( void )
 
 #endif
 
-    return fgStructure.GameMode->ID;
+    return fgStructure.GameModeWindow->ID;
 }
 
 /*
@@ -539,14 +538,12 @@ void FGAPIENTRY glutLeaveGameMode( void )
 {
     FREEGLUT_EXIT_IF_NOT_INITIALISED ( "glutLeaveGameMode" );
 
-    freeglut_return_if_fail( fgStructure.GameMode );
+    freeglut_return_if_fail( fgStructure.GameModeWindow );
 
-    fgStructure.GameMode->State.IsGameMode = GL_FALSE;
+    fgAddToWindowDestroyList( fgStructure.GameModeWindow );
+    fgStructure.GameModeWindow = NULL;
 
-    fgAddToWindowDestroyList( fgStructure.GameMode );
-    fgStructure.GameMode = NULL;
-
-#if TARGET_HOST_UNIX_X11
+#if TARGET_HOST_POSIX_X11
 
     XUngrabPointer( fgDisplay.Display, CurrentTime );
     XUngrabKeyboard( fgDisplay.Display, CurrentTime );
@@ -566,7 +563,7 @@ int FGAPIENTRY glutGameModeGet( GLenum eWhat )
     switch( eWhat )
     {
     case GLUT_GAME_MODE_ACTIVE:
-        return !!fgStructure.GameMode;
+        return !!fgStructure.GameModeWindow;
 
     case GLUT_GAME_MODE_POSSIBLE:
         return fghChangeDisplayMode( GL_TRUE );
@@ -587,7 +584,7 @@ int FGAPIENTRY glutGameModeGet( GLenum eWhat )
         /*
          * This is true if the game mode has been activated successfully..
          */
-        return !!fgStructure.GameMode;
+        return !!fgStructure.GameModeWindow;
     }
 
     fgWarning( "Unknown gamemode get: %d", eWhat );

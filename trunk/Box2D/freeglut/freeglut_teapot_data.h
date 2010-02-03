@@ -24,7 +24,7 @@
 #ifndef  FREEGLUT_TEAPOT_DATA_H
 #define  FREEGLUT_TEAPOT_DATA_H
 
-#if TARGET_HOST_WINCE
+#if defined(_WIN32_WCE)
 /*
  * Submitted through the kind offices of Daniel Wagner (daniel@ims.tuwien.ac.at)
  */
@@ -2305,7 +2305,7 @@ const int strip_normals[] = {
 31, 31, 118, 237, 205, 449, 186, 470, 496, 494, 176, 155, 429, 112, 185, 89, 185, 421, 94, 300, 379, 170, -1
 };
 
-#else  /* TARGET_HOST_WINCE */
+#else  /* defined(_WIN32_WCE) */
 
 /*
  * Original teapot code copyright follows:
@@ -2422,7 +2422,7 @@ static double tex[2][2][2] =
     { {0.0, 0.0}, {1.0, 0.0} },
     { {0.0, 1.0}, {1.0, 1.0} }
 };
-#endif  /* TARGET_HOST_WINCE */
+#endif  /* defined(_WIN32_WCE) */
 
 
 #endif  /* FREEGLUT_TEAPOT_DATA_H */

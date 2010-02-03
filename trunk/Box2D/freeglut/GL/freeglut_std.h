@@ -35,62 +35,67 @@
 /*
  * Under windows, we have to differentiate between static and dynamic libraries
  */
-#if defined(_MSC_VER) || defined(__CYGWIN__) || defined(__MINGW32__)
-
+#ifdef _WIN32
 /* #pragma may not be supported by some compilers.
  * Discussion by FreeGLUT developers suggests that
  * Visual C++ specific code involving pragmas may
  * need to move to a separate header.  24th Dec 2003
- */ 
+ */
 
-#   define WIN32_LEAN_AND_MEAN
-#   define NO_MIN_MAX
-#    include <windows.h>
-#   undef min
-#   undef max
+/* Define FREEGLUT_LIB_PRAGMAS to 1 to include library
+ * pragmas or to 1 to exclude library pragmas.
+ * The default behavior depends on the compiler/platform.
+ */
+#   ifndef FREEGLUT_LIB_PRAGMAS
+#       if ( defined(_MSC_VER) || defined(__WATCOMC__) ) && !defined(_WIN32_WCE)
+#           define FREEGLUT_LIB_PRAGMAS 1
+#       else
+#           define FREEGLUT_LIB_PRAGMAS 0
+#       endif
+#   endif
+
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN 1
+#  endif
+#   define NOMINMAX
+#   include <Windows.h>
 
 /* Windows static library */
-//#define FREEGLUT_STATIC
 #   ifdef FREEGLUT_STATIC
 
-#    define FGAPI
-#    define FGAPIENTRY
+#       define FGAPI
+#       define FGAPIENTRY
 
         /* Link with Win32 static freeglut lib */
-#       if defined(_MSC_VER)
-//#           pragma comment (lib, "freeglut_static.lib")
+#       if FREEGLUT_LIB_PRAGMAS
+#           pragma comment (lib, "freeglut_static.lib")
 #       endif
 
 /* Windows shared library (DLL) */
 #   else
 
-#        if defined(FREEGLUT_EXPORTS)
-#                define FGAPI __declspec(dllexport)
-#        else
-#                define FGAPI __declspec(dllimport)
+#       define FGAPIENTRY __stdcall
+#       if defined(FREEGLUT_EXPORTS)
+#           define FGAPI __declspec(dllexport)
+#       else
+#           define FGAPI __declspec(dllimport)
 
-            /* link with Win32 shared freeglut lib */
-#           if defined(_MSC_VER)
-#               ifndef _WIN32_WCE
-#                   pragma comment (lib, "freeglut.lib")
-#               endif
-#			endif
+            /* Link with Win32 shared freeglut lib */
+#           if FREEGLUT_LIB_PRAGMAS
+#               pragma comment (lib, "freeglut.lib")
+#           endif
 
 #       endif
-
-#       define FGAPIENTRY __stdcall
 
 #   endif
 
 /* Drag in other Windows libraries as required by FreeGLUT */
-#   if defined(_MSC_VER)
-#       ifndef _WIN32_WCE
-#           pragma comment (lib, "winmm.lib")    /* link Windows MultiMedia lib */
-#           pragma comment (lib, "user32.lib")   /* link Windows user lib       */
-#           pragma comment (lib, "gdi32.lib")    /* link Windows GDI lib        */
-#           pragma comment (lib, "opengl32.lib") /* link Microsoft OpenGL lib   */
-#           pragma comment (lib, "glu32.lib")    /* link OpenGL Utility lib     */
-#       endif /* _WIN32_WCE */
+#   if FREEGLUT_LIB_PRAGMAS
+#       pragma comment (lib, "glu32.lib")    /* link OpenGL Utility lib     */
+#       pragma comment (lib, "opengl32.lib") /* link Microsoft OpenGL lib   */
+#       pragma comment (lib, "gdi32.lib")    /* link Windows GDI lib        */
+#       pragma comment (lib, "winmm.lib")    /* link Windows MultiMedia lib */
+#       pragma comment (lib, "user32.lib")   /* link Windows user lib       */
 #   endif
 
 #else
@@ -184,7 +189,7 @@
  *
  * Steve Baker suggested to make it binary compatible with GLUT:
  */
-#if defined(_MSC_VER) || defined(__CYGWIN__) || defined(__MINGW32__)
+#if defined(_MSC_VER) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(__WATCOMC__)
 #   define  GLUT_STROKE_ROMAN               ((void *)0x0000)
 #   define  GLUT_STROKE_MONO_ROMAN          ((void *)0x0001)
 #   define  GLUT_BITMAP_9_BY_15             ((void *)0x0002)
@@ -262,7 +267,6 @@
 #define  GLUT_INIT_DISPLAY_MODE             0x01F8
 #define  GLUT_ELAPSED_TIME                  0x02BC
 #define  GLUT_WINDOW_FORMAT_ID              0x007B
-#define  GLUT_INIT_STATE                    0x007C
 
 /*
  * GLUT API macro definitions -- the glutDeviceGet parameters
@@ -567,6 +571,50 @@ FGAPI void    FGAPIENTRY glutForceJoystickFunc( void );
  */
 FGAPI int     FGAPIENTRY glutExtensionSupported( const char* extension );
 FGAPI void    FGAPIENTRY glutReportErrors( void );
+
+/* Comment from glut.h of classic GLUT:
+
+   Win32 has an annoying issue where there are multiple C run-time
+   libraries (CRTs).  If the executable is linked with a different CRT
+   from the GLUT DLL, the GLUT DLL will not share the same CRT static
+   data seen by the executable.  In particular, atexit callbacks registered
+   in the executable will not be called if GLUT calls its (different)
+   exit routine).  GLUT is typically built with the
+   "/MD" option (the CRT with multithreading DLL support), but the Visual
+   C++ linker default is "/ML" (the single threaded CRT).
+
+   One workaround to this issue is requiring users to always link with
+   the same CRT as GLUT is compiled with.  That requires users supply a
+   non-standard option.  GLUT 3.7 has its own built-in workaround where
+   the executable's "exit" function pointer is covertly passed to GLUT.
+   GLUT then calls the executable's exit function pointer to ensure that
+   any "atexit" calls registered by the application are called if GLUT
+   needs to exit.
+
+   Note that the __glut*WithExit routines should NEVER be called directly.
+   To avoid the atexit workaround, #define GLUT_DISABLE_ATEXIT_HACK. */
+
+/* to get the prototype for exit() */
+#include <stdlib.h>
+
+#if defined(_WIN32) && !defined(GLUT_DISABLE_ATEXIT_HACK) && !defined(__WATCOMC__)
+FGAPI void FGAPIENTRY __glutInitWithExit(int *argcp, char **argv, void (__cdecl *exitfunc)(int));
+FGAPI int FGAPIENTRY __glutCreateWindowWithExit(const char *title, void (__cdecl *exitfunc)(int));
+FGAPI int FGAPIENTRY __glutCreateMenuWithExit(void (* func)(int), void (__cdecl *exitfunc)(int));
+#ifndef FREEGLUT_BUILDING_LIB
+#if defined(__GNUC__)
+#define FGUNUSED __attribute__((unused))
+#else
+#define FGUNUSED
+#endif
+static void FGAPIENTRY FGUNUSED glutInit_ATEXIT_HACK(int *argcp, char **argv) { __glutInitWithExit(argcp, argv, exit); }
+#define glutInit glutInit_ATEXIT_HACK
+static int FGAPIENTRY FGUNUSED glutCreateWindow_ATEXIT_HACK(const char *title) { return __glutCreateWindowWithExit(title, exit); }
+#define glutCreateWindow glutCreateWindow_ATEXIT_HACK
+static int FGAPIENTRY FGUNUSED glutCreateMenu_ATEXIT_HACK(void (* func)(int)) { return __glutCreateMenuWithExit(func, exit); }
+#define glutCreateMenu glutCreateMenu_ATEXIT_HACK
+#endif
+#endif
 
 #ifdef __cplusplus
     }
