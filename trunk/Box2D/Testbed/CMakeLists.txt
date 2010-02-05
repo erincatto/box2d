@@ -64,6 +64,13 @@ link_directories (
 	${Box2D_BINARY_DIR}
 ) 
 
+if(APPLE)
+	# We are not using the Apple's framework version, but X11's
+	include_directories( /usr/X11/include )
+	link_directories( /usr/X11/lib )
+	set (OPENGL_LIBRARIES GL GLU GLUT X11)
+endif(APPLE)
+
 add_executable(Testbed
 	${Framework}
 	${Tests}
