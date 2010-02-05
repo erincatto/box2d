@@ -1,5 +1,13 @@
 add_definitions( -DFREEGLUT_EXPORTS -DFREEGLUT_STATIC -D_CRT_SECURE_NO_WARNINGS )
 
+if(APPLE)
+	include_directories( /usr/X11/include )
+endif(APPLE)
+
+if(UNIX)
+	add_definitions( -D__unix__ -DHAVE_FCNTL_H )
+endif(UNIX)
+
 set(freeglut
 	freeglut_callbacks.c
 	freeglut_callbacks.c
