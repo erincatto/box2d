@@ -87,22 +87,56 @@ set(Joints
 )
 include_directories( ../ )
 
-add_library(Box2D
-	Box2D.h
-	${Joints}
-	${Contacts}
-	${Dynamics}
-	${Common}
-	${Shapes}
-	${Collision}
-)
+if(BOX2D_BUILD_SHARED)
+	add_library(Box2D_shared SHARED 
+		Box2D.h
+		${Joints}
+		${Contacts}
+		${Dynamics}
+		${Common}
+		${Shapes}
+		${Collision}
+	)
+	set_target_properties(Box2D_shared PROPERTIES OUTPUT_NAME "Box2D")
+	set_target_properties(Box2D_shared PROPERTIES CLEAN_DIRECT_OUTPUT 1 VERSION ${BOX2D_VERSION})
+endif()
 
-# These are used to create visual studio folders.
-source_group(Collision FILES ${Collision})
-source_group(Collision\\Shapes FILES ${Shapes})
-source_group(Common FILES ${Common})
-source_group(Dynamics FILES ${Dynamics})
-source_group(Dynamics\\Contacts FILES ${Contacts})
-source_group(Dynamics\\Joints FILES ${Joints})
-source_group(Include Box2D.h)
+if(BOX2D_BUILD_STATIC)
+	add_library(Box2D STATIC 
+		Box2D.h
+		${Joints}
+		${Contacts}
+		${Dynamics}
+		${Common}
+		${Shapes}
+		${Collision}
+	)
+	set_target_properties(Box2D PROPERTIES CLEAN_DIRECT_OUTPUT 1 VERSION ${BOX2D_VERSION})
+endif()
 
+
+if(MSVC)
+	# These are used to create visual studio folders.
+	source_group(Collision FILES ${Collision})
+	source_group(Collision\\Shapes FILES ${Shapes})
+	source_group(Common FILES ${Common})
+	source_group(Dynamics FILES ${Dynamics})
+	source_group(Dynamics\\Contacts FILES ${Contacts})
+	source_group(Dynamics\\Joints FILES ${Joints})
+	source_group(Include Box2D.h)
+endif()
+
+if(UNIX)
+	# install time stuff
+	install(DIRECTORY ./ DESTINATION include/Box2D
+			FILES_MATCHING PATTERN "*.h"
+			PATTERN ".svn" EXCLUDE)
+			
+	if(BOX2D_BUILD_SHARED)
+		install(TARGETS Box2D_shared LIBRARY DESTINATION usr/lib)
+	endif()
+
+	if(BOX2D_BUILD_STATIC)
+		install(TARGETS Box2D ARCHIVE DESTINATION usr/lib)
+	endif()
+endif()
