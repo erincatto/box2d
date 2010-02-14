@@ -19,6 +19,7 @@ set(Tests
 	Tests/Bridge.h
 	Tests/Cantilever.h
 	Tests/Chain.h
+	Tests/CharacterCollision.h
 	Tests/CollisionFiltering.h
 	Tests/CollisionProcessing.h
 	Tests/CompoundShapes.h
