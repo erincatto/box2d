@@ -2,7 +2,7 @@
 add_definitions( -DFREEGLUT_EXPORTS -DFREEGLUT_STATIC -D_CRT_SECURE_NO_WARNINGS )
 
 # Define the framework files.
-set(Framework
+set(Testbed_Framework_SRCS
 	Framework/Main.cpp
 	Framework/Render.cpp
 	Framework/Render.h
@@ -11,7 +11,7 @@ set(Framework
 )
 
 #define the test files.
-set(Tests
+set(Testbed_Tests_SRCS
 	Tests/TestEntries.cpp
 	Tests/ApplyForce.h
 	Tests/BodyTypes.h
@@ -53,17 +53,13 @@ set(Tests
 )
 
 # These are used to create visual studio folders.
-source_group(Framework FILES ${Framework})
-source_group(Tests FILES ${Tests})
+source_group(Framework FILES ${Testbed_Framework_SRCS})
+source_group(Tests FILES ${Testbed_Tests_SRCS})
 
 include_directories (
 	${OPENGL_INCLUDE_DIR}
 	${Box2D_SOURCE_DIR}
 )
-
-link_directories (
-	${Box2D_BINARY_DIR}
-) 
 
 if(APPLE)
 	# We are not using the Apple's framework version, but X11's
@@ -73,8 +69,8 @@ if(APPLE)
 endif(APPLE)
 
 add_executable(Testbed
-	${Framework}
-	${Tests}
+	${Testbed_Framework_SRCS}
+	${Testbed_Tests_SRCS}
 )
 
 target_link_libraries (
