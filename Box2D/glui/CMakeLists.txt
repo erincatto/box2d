@@ -4,7 +4,7 @@ if(MSVC)
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W1")
 endif(MSVC)
 
-set(glui
+set(glui_SRCS
 	algebra3.cpp
 	arcball.cpp
 	glui_add_controls.cpp
@@ -45,6 +45,5 @@ include_directories (
 )
 
 add_library(glui
-	${glui}
+	${glui_SRCS}
 )
-

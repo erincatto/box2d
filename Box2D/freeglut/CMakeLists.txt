@@ -8,7 +8,7 @@ if(UNIX)
 	add_definitions( -D__unix__ -DHAVE_FCNTL_H )
 endif(UNIX)
 
-set(freeglut
+set(freeglut_SRCS
 	freeglut_callbacks.c
 	freeglut_callbacks.c
 	freeglut_cursor.c
@@ -48,5 +48,5 @@ include_directories (
 )
 
 add_library(freeglut_static
-	${freeglut}
+	${freeglut_SRCS}
 )
