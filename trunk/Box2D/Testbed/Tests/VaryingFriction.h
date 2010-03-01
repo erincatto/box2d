@@ -31,7 +31,7 @@ public:
 
 			b2PolygonShape shape;
 			shape.SetAsEdge(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		{
@@ -43,7 +43,7 @@ public:
 			bd.angle = -0.25f;
 
 			b2Body* ground = m_world->CreateBody(&bd);
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		{
@@ -54,7 +54,7 @@ public:
 			bd.position.Set(10.5f, 19.0f);
 
 			b2Body* ground = m_world->CreateBody(&bd);
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		{
@@ -66,7 +66,7 @@ public:
 			bd.angle = 0.25f;
 
 			b2Body* ground = m_world->CreateBody(&bd);
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		{
@@ -77,7 +77,7 @@ public:
 			bd.position.Set(-10.5f, 11.0f);
 
 			b2Body* ground = m_world->CreateBody(&bd);
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		{
@@ -89,7 +89,7 @@ public:
 			bd.angle = -0.25f;
 
 			b2Body* ground = m_world->CreateBody(&bd);
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		{
