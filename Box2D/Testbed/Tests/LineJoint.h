@@ -32,7 +32,7 @@ public:
 
 			b2BodyDef bd;
 			ground = m_world->CreateBody(&bd);
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		{

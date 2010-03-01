@@ -33,7 +33,7 @@ public:
 			b2PolygonShape shape;
 			shape.SetAsEdge(b2Vec2(50.0f, 0.0f), b2Vec2(-50.0f, 0.0f));
 
-			body->CreateFixture(&shape);
+			body->CreateFixture(&shape, 0.0f);
 		}
 
 		{
@@ -54,7 +54,7 @@ public:
 				bd.angle = RandomFloat(-b2_pi, b2_pi);
 				b2Body* body = m_world->CreateBody(&bd);
 				body->CreateFixture(&circle1, 2.0f);
-				body->CreateFixture(&circle2);
+				body->CreateFixture(&circle2, 0.0f);
 			}
 		}
 

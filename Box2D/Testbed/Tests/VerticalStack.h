@@ -39,10 +39,10 @@ public:
 
 			b2PolygonShape shape;
 			shape.SetAsEdge(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 
 			shape.SetAsEdge(b2Vec2(20.0f, 0.0f), b2Vec2(20.0f, 20.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		float32 xs[5] = {0.0f, -10.0f, -5.0f, 5.0f, 10.0f};
