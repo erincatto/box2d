@@ -34,7 +34,7 @@ public:
 
 			b2PolygonShape shape;
 			shape.SetAsEdge(b2Vec2(-20.0f, 0.0f), b2Vec2(20.0f, 0.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		// Collinear edges
@@ -45,11 +45,11 @@ public:
 			b2PolygonShape shape;
 			shape.m_radius = 0.0f;
 			shape.SetAsEdge(b2Vec2(-8.0f, 1.0f), b2Vec2(-6.0f, 1.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 			shape.SetAsEdge(b2Vec2(-6.0f, 1.0f), b2Vec2(-4.0f, 1.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 			shape.SetAsEdge(b2Vec2(-4.0f, 1.0f), b2Vec2(-2.0f, 1.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		// Square tiles
@@ -59,11 +59,11 @@ public:
 
 			b2PolygonShape shape;
 			shape.SetAsBox(1.0f, 1.0f, b2Vec2(4.0f, 3.0f), 0.0f);
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 			shape.SetAsBox(1.0f, 1.0f, b2Vec2(6.0f, 3.0f), 0.0f);
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 			shape.SetAsBox(1.0f, 1.0f, b2Vec2(8.0f, 3.0f), 0.0f);
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		// Square made from edges notice how the edges are shrunk to account
@@ -76,13 +76,13 @@ public:
 			b2PolygonShape shape;
 			float32 d = 2.0f * b2_polygonRadius;
 			shape.SetAsEdge(b2Vec2(-1.0f + d, 3.0f), b2Vec2(1.0f - d, 3.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 			shape.SetAsEdge(b2Vec2(1.0f, 3.0f + d), b2Vec2(1.0f, 5.0f - d));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 			shape.SetAsEdge(b2Vec2(1.0f - d, 5.0f), b2Vec2(-1.0f + d, 5.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 			shape.SetAsEdge(b2Vec2(-1.0f, 5.0f - d), b2Vec2(-1.0f, 3.0f + d));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		// Square character

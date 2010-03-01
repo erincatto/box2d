@@ -39,7 +39,7 @@ public:
 
 			b2PolygonShape shape;
 			shape.SetAsEdge(b2Vec2(-20.0f, 0.0f), b2Vec2(20.0f, 0.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		// Platform
@@ -50,7 +50,7 @@ public:
 
 			b2PolygonShape shape;
 			shape.SetAsBox(3.0f, 0.5f);
-			m_platform = body->CreateFixture(&shape);
+			m_platform = body->CreateFixture(&shape, 0.0f);
 
 			m_bottom = 10.0f - 0.5f;
 			m_top = 10.0f + 0.5f;

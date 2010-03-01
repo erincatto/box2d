@@ -67,7 +67,7 @@ public:
 
 				b2PolygonShape shape;
 				shape.SetAsEdge(b2Vec2(x1, y1), b2Vec2(x2, y2));
-				ground->CreateFixture(&shape);
+				ground->CreateFixture(&shape, 0.0f);
 
 				x1 = x2;
 				y1 = y2;

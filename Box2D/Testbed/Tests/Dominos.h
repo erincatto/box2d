@@ -32,7 +32,7 @@ public:
 
 			b2BodyDef bd;
 			b1 = m_world->CreateBody(&bd);
-			b1->CreateFixture(&shape);
+			b1->CreateFixture(&shape, 0.0f);
 		}
 
 		{
@@ -42,7 +42,7 @@ public:
 			b2BodyDef bd;
 			bd.position.Set(-1.5f, 10.0f);
 			b2Body* ground = m_world->CreateBody(&bd);
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		{
@@ -71,7 +71,7 @@ public:
 			b2BodyDef bd;
 			bd.position.Set(1.0f, 6.0f);
 			b2Body* ground = m_world->CreateBody(&bd);
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		b2Body* b2;
@@ -82,7 +82,7 @@ public:
 			b2BodyDef bd;
 			bd.position.Set(-7.0f, 4.0f);
 			b2 = m_world->CreateBody(&bd);
-			b2->CreateFixture(&shape);
+			b2->CreateFixture(&shape, 0.0f);
 		}
 
 		b2Body* b3;

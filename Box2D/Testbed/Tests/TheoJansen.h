@@ -130,13 +130,13 @@ public:
 
 			b2PolygonShape shape;
 			shape.SetAsEdge(b2Vec2(-50.0f, 0.0f), b2Vec2(50.0f, 0.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 
 			shape.SetAsEdge(b2Vec2(-50.0f, 0.0f), b2Vec2(-50.0f, 10.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 
 			shape.SetAsEdge(b2Vec2(50.0f, 0.0f), b2Vec2(50.0f, 10.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		// Balls
