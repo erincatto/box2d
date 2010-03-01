@@ -33,10 +33,10 @@ public:
 			b2PolygonShape shape;
 
 			shape.SetAsEdge(b2Vec2(-10.0f, 0.0f), b2Vec2(10.0f, 0.0f));
-			body->CreateFixture(&shape);
+			body->CreateFixture(&shape, 0.0f);
 
 			shape.SetAsBox(0.2f, 1.0f, b2Vec2(0.5f, 1.0f), 0.0f);
-			body->CreateFixture(&shape);
+			body->CreateFixture(&shape, 0.0f);
 		}
 
 #if 1

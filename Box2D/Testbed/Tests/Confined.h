@@ -39,19 +39,19 @@ public:
 
 			// Floor
 			shape.SetAsEdge(b2Vec2(-10.0f, 0.0f), b2Vec2(10.0f, 0.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 
 			// Left wall
 			shape.SetAsEdge(b2Vec2(-10.0f, 0.0f), b2Vec2(-10.0f, 20.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 
 			// Right wall
 			shape.SetAsEdge(b2Vec2(10.0f, 0.0f), b2Vec2(10.0f, 20.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 
 			// Roof
 			shape.SetAsEdge(b2Vec2(-10.0f, 20.0f), b2Vec2(10.0f, 20.0f));
-			ground->CreateFixture(&shape);
+			ground->CreateFixture(&shape, 0.0f);
 		}
 
 		float32 radius = 0.5f;
