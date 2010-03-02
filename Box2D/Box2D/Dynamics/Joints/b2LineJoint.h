@@ -75,10 +75,10 @@ struct b2LineJointDef : public b2JointDef
 	float32 motorSpeed;
 };
 
-/// A line joint. This joint provides one degree of freedom: translation
-/// along an axis fixed in body1. You can use a joint limit to restrict
-/// the range of motion and a joint motor to drive the motion or to
-/// model joint friction.
+/// A line joint. This joint provides two degrees of freedom: translation
+/// along an axis fixed in body1 and rotation in the plane. You can use a
+/// joint limit to restrict the range of motion and a joint motor to drive
+/// the motion or to model joint friction.
 class b2LineJoint : public b2Joint
 {
 public:
