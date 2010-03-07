@@ -208,7 +208,11 @@ public:
 	/// is not at the center of mass. This wakes up the body.
 	/// @param impulse the world impulse vector, usually in N-seconds or kg-m/s.
 	/// @param point the world position of the point of application.
-	void ApplyImpulse(const b2Vec2& impulse, const b2Vec2& point);
+	void ApplyLinearImpulse(const b2Vec2& impulse, const b2Vec2& point);
+
+	/// Apply an angular impulse.
+	/// @param impulse the angular impulse in units of kg*m*m/s
+	void ApplyAngularImpulse(float32 impulse);
 
 	/// Get the total mass of the body.
 	/// @return the mass, usually in kilograms (kg).
@@ -742,7 +746,7 @@ inline void b2Body::ApplyTorque(float32 torque)
 	m_torque += torque;
 }
 
-inline void b2Body::ApplyImpulse(const b2Vec2& impulse, const b2Vec2& point)
+inline void b2Body::ApplyLinearImpulse(const b2Vec2& impulse, const b2Vec2& point)
 {
 	if (m_type != b2_dynamicBody)
 	{
@@ -755,6 +759,20 @@ inline void b2Body::ApplyImpulse(const b2Vec2& impulse, const b2Vec2& point)
 	}
 	m_linearVelocity += m_invMass * impulse;
 	m_angularVelocity += m_invI * b2Cross(point - m_sweep.c, impulse);
+}
+
+inline void b2Body::ApplyAngularImpulse(float32 impulse)
+{
+	if (m_type != b2_dynamicBody)
+	{
+		return;
+	}
+
+	if (IsAwake() == false)
+	{
+		SetAwake(true);
+	}
+	m_angularVelocity += m_invI * impulse;
 }
 
 inline void b2Body::SynchronizeTransform()
