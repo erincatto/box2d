@@ -60,6 +60,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Ray-Cast", RayCast::Create},
 	{"Character Collision", CharacterCollision::Create},
 	{"Prismatic", Prismatic::Create},
 	{"Edge Shapes", EdgeShapes::Create},
@@ -76,7 +77,6 @@ TestEntry g_testEntries[] =
 	{"Bridge", Bridge::Create},
 	{"Breakable", Breakable::Create},
 	{"Varying Restitution", VaryingRestitution::Create},
-	{"Ray-Cast", RayCast::Create},
 	{"Pyramid", Pyramid::Create},
 	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Chain", Chain::Create},
