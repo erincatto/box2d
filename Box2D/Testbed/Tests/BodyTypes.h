@@ -54,11 +54,11 @@ public:
 		{
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
-			bd.position.Set(0.0f, 5.0f);
+			bd.position.Set(-4.0f, 5.0f);
 			m_platform = m_world->CreateBody(&bd);
 
 			b2PolygonShape shape;
-			shape.SetAsBox(4.0f, 0.5f);
+			shape.SetAsBox(0.5f, 4.0f, b2Vec2(4.0f, 0.0f), 0.5f * b2_pi);
 
 			b2FixtureDef fd;
 			fd.shape = &shape;

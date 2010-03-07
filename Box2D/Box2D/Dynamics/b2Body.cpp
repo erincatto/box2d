@@ -270,6 +270,7 @@ void b2Body::ResetMassData()
 	// Static and kinematic bodies have zero mass.
 	if (m_type == b2_staticBody || m_type == b2_kinematicBody)
 	{
+		m_sweep.c0 = m_sweep.c = m_xf.position;
 		return;
 	}
 
