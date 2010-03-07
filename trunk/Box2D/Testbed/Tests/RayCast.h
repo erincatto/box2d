@@ -21,28 +21,125 @@
 
 // This test demonstrates how to use the world ray-cast feature.
 
-class RayCastCallback : public b2RayCastCallback
+// This callback finds the closest hit. Polygon 0 is filtered.
+class RayCastClosestCallback : public b2RayCastCallback
 {
 public:
-	RayCastCallback()
+	RayCastClosestCallback()
 	{
-		m_fixture = NULL;
+		m_hit = false;
 	}
 
 	float32 ReportFixture(	b2Fixture* fixture, const b2Vec2& point,
 		const b2Vec2& normal, float32 fraction)
 	{
-		m_fixture = fixture;
+		b2Body* body = fixture->GetBody();
+		void* userData = body->GetUserData();
+		if (userData)
+		{
+			int32 index = *(int32*)userData;
+			if (index == 0)
+			{
+				// filter
+				return -1.0f;
+			}
+		}
+
+		m_hit = true;
 		m_point = point;
 		m_normal = normal;
-
 		return fraction;
 	}
-
-	b2Fixture* m_fixture;
+	
+	bool m_hit;
 	b2Vec2 m_point;
 	b2Vec2 m_normal;
 };
+
+// This callback finds any hit. Polygon 0 is filtered.
+class RayCastAnyCallback : public b2RayCastCallback
+{
+public:
+	RayCastAnyCallback()
+	{
+		m_hit = false;
+	}
+
+	float32 ReportFixture(	b2Fixture* fixture, const b2Vec2& point,
+		const b2Vec2& normal, float32 fraction)
+	{
+		b2Body* body = fixture->GetBody();
+		void* userData = body->GetUserData();
+		if (userData)
+		{
+			int32 index = *(int32*)userData;
+			if (index == 0)
+			{
+				// filter
+				return -1.0f;
+			}
+		}
+
+		m_hit = true;
+		m_point = point;
+		m_normal = normal;
+		return 0.0f;
+	}
+
+	bool m_hit;
+	b2Vec2 m_point;
+	b2Vec2 m_normal;
+};
+
+// This ray cast collects multiple hits along the ray. Polygon 0 is filtered.
+class RayCastMultipleCallback : public b2RayCastCallback
+{
+public:
+	enum
+	{
+		e_maxCount = 3
+	};
+
+	RayCastMultipleCallback()
+	{
+		m_count = 0;
+	}
+
+	float32 ReportFixture(	b2Fixture* fixture, const b2Vec2& point,
+		const b2Vec2& normal, float32 fraction)
+	{
+		b2Body* body = fixture->GetBody();
+		int32 index = 0;
+		void* userData = body->GetUserData();
+		if (userData)
+		{
+			int32 index = *(int32*)userData;
+			if (index == 0)
+			{
+				// filter
+				return -1.0f;
+			}
+		}
+
+		b2Assert(m_count < e_maxCount);
+
+		m_points[m_count] = point;
+		m_normals[m_count] = normal;
+		++m_count;
+
+		if (m_count == e_maxCount)
+		{
+			return 0.0f;
+		}
+
+		return 1.0f;
+	}
+
+	b2Vec2 m_points[e_maxCount];
+	b2Vec2 m_normals[e_maxCount];
+	int32 m_count;
+};
+
 
 class RayCast : public Test
 {
@@ -51,6 +148,13 @@ public:
 	enum
 	{
 		e_maxBodies = 256,
+	};
+
+	enum Mode
+	{
+		e_closest,
+		e_any,
+		e_multiple
 	};
 
 	RayCast()
@@ -111,6 +215,8 @@ public:
 		memset(m_bodies, 0, sizeof(m_bodies));
 
 		m_angle = 0.0f;
+
+		m_mode = e_closest;
 	}
 
 	void Create(int32 index)
@@ -127,6 +233,9 @@ public:
 		float32 y = RandomFloat(0.0f, 20.0f);
 		bd.position.Set(x, y);
 		bd.angle = RandomFloat(-b2_pi, b2_pi);
+
+		m_userData[m_bodyIndex] = index;
+		bd.userData = m_userData + m_bodyIndex;
 
 		if (index == 4)
 		{
@@ -182,13 +291,29 @@ public:
 		case 'd':
 			DestroyBody();
 			break;
+
+		case 'm':
+			if (m_mode == e_closest)
+			{
+				m_mode = e_any;
+			}
+			else if (m_mode == e_any)
+			{
+				m_mode = e_multiple;
+			}
+			else if (m_mode = e_multiple)
+			{
+				m_mode = e_closest;
+			}
 		}
 	}
 
 	void Step(Settings* settings)
 	{
 		Test::Step(settings);
-		m_debugDraw.DrawString(5, m_textLine, "Press 1-5 to drop stuff");
+		m_debugDraw.DrawString(5, m_textLine, "Press 1-5 to drop stuff, m to change the mode");
+		m_textLine += 15;
+		m_debugDraw.DrawString(5, m_textLine, "Mode = %d", m_mode);
 		m_textLine += 15;
 
 		float32 L = 11.0f;
@@ -196,22 +321,55 @@ public:
 		b2Vec2 d(L * cosf(m_angle), L * sinf(m_angle));
 		b2Vec2 point2 = point1 + d;
 
-		RayCastCallback callback;
-
-		m_world->RayCast(&callback, point1, point2);
-
-		if (callback.m_fixture)
+		if (m_mode == e_closest)
 		{
-			m_debugDraw.DrawPoint(callback.m_point, 5.0f, b2Color(0.4f, 0.9f, 0.4f));
+			RayCastClosestCallback callback;
+			m_world->RayCast(&callback, point1, point2);
 
-			m_debugDraw.DrawSegment(point1, callback.m_point, b2Color(0.8f, 0.8f, 0.8f));
-
-			b2Vec2 head = callback.m_point + 0.5f * callback.m_normal;
-			m_debugDraw.DrawSegment(callback.m_point, head, b2Color(0.9f, 0.9f, 0.4f));
+			if (callback.m_hit)
+			{
+				m_debugDraw.DrawPoint(callback.m_point, 5.0f, b2Color(0.4f, 0.9f, 0.4f));
+				m_debugDraw.DrawSegment(point1, callback.m_point, b2Color(0.8f, 0.8f, 0.8f));
+				b2Vec2 head = callback.m_point + 0.5f * callback.m_normal;
+				m_debugDraw.DrawSegment(callback.m_point, head, b2Color(0.9f, 0.9f, 0.4f));
+			}
+			else
+			{
+				m_debugDraw.DrawSegment(point1, point2, b2Color(0.8f, 0.8f, 0.8f));
+			}
 		}
-		else
+		else if (m_mode == e_any)
 		{
+			RayCastAnyCallback callback;
+			m_world->RayCast(&callback, point1, point2);
+
+			if (callback.m_hit)
+			{
+				m_debugDraw.DrawPoint(callback.m_point, 5.0f, b2Color(0.4f, 0.9f, 0.4f));
+				m_debugDraw.DrawSegment(point1, callback.m_point, b2Color(0.8f, 0.8f, 0.8f));
+				b2Vec2 head = callback.m_point + 0.5f * callback.m_normal;
+				m_debugDraw.DrawSegment(callback.m_point, head, b2Color(0.9f, 0.9f, 0.4f));
+			}
+			else
+			{
+				m_debugDraw.DrawSegment(point1, point2, b2Color(0.8f, 0.8f, 0.8f));
+			}
+		}
+		else if (m_mode == e_multiple)
+		{
+			RayCastMultipleCallback callback;
+			m_world->RayCast(&callback, point1, point2);
 			m_debugDraw.DrawSegment(point1, point2, b2Color(0.8f, 0.8f, 0.8f));
+
+			for (int32 i = 0; i < callback.m_count; ++i)
+			{
+				b2Vec2 p = callback.m_points[i];
+				b2Vec2 n = callback.m_normals[i];
+				m_debugDraw.DrawPoint(p, 5.0f, b2Color(0.4f, 0.9f, 0.4f));
+				m_debugDraw.DrawSegment(point1, p, b2Color(0.8f, 0.8f, 0.8f));
+				b2Vec2 head = p + 0.5f * n;
+				m_debugDraw.DrawSegment(p, head, b2Color(0.9f, 0.9f, 0.4f));
+			}
 		}
 
 		m_angle += 0.25f * b2_pi / 180.0f;
@@ -224,10 +382,13 @@ public:
 
 	int32 m_bodyIndex;
 	b2Body* m_bodies[e_maxBodies];
+	int32 m_userData[e_maxBodies];
 	b2PolygonShape m_polygons[4];
 	b2CircleShape m_circle;
 
 	float32 m_angle;
+
+	Mode m_mode;
 };
 
 #endif
