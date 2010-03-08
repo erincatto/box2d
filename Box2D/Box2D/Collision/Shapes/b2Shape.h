@@ -32,8 +32,7 @@ struct b2MassData
 	/// The position of the shape's centroid relative to the shape's origin.
 	b2Vec2 center;
 
-	/// The rotational inertia of the shape. This may be about the center or local
-	/// origin, depending on usage.
+	/// The rotational inertia of the shape about the local origin.
 	float32 I;
 };
 
@@ -79,7 +78,7 @@ public:
 	virtual void ComputeAABB(b2AABB* aabb, const b2Transform& xf) const = 0;
 
 	/// Compute the mass properties of this shape using its dimensions and density.
-	/// The inertia tensor is computed about the local origin, not the centroid.
+	/// The inertia tensor is computed about the local origin.
 	/// @param massData returns the mass data for this shape.
 	/// @param density the density in kilograms per meter squared.
 	virtual void ComputeMass(b2MassData* massData, float32 density) const = 0;
