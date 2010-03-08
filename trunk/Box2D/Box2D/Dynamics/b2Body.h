@@ -218,12 +218,11 @@ public:
 	/// @return the mass, usually in kilograms (kg).
 	float32 GetMass() const;
 
-	/// Get the central rotational inertia of the body.
+	/// Get the rotational inertia of the body about the local origin.
 	/// @return the rotational inertia, usually in kg-m^2.
 	float32 GetInertia() const;
 
-	/// Get the mass data of the body. The rotational inertia is relative
-	/// to the center of mass.
+	/// Get the mass data of the body.
 	/// @return a struct containing the mass, inertia and center of the body.
 	void GetMassData(b2MassData* data) const;
 
@@ -231,7 +230,6 @@ public:
 	/// Note that this changes the center of mass position.
 	/// Note that creating or destroying fixtures can also alter the mass.
 	/// This function has no effect if the body isn't dynamic.
-	/// @warning The supplied rotational inertia is assumed to be relative to the center of mass.
 	/// @param massData the mass properties.
 	void SetMassData(const b2MassData* data);
 
@@ -431,9 +429,9 @@ private:
 	b2ContactEdge* m_contactList;
 
 	float32 m_mass, m_invMass;
-	float32 m_I, m_invI;
 
-	float32 m_inertiaScale;
+	// Rotational inertia about the center of mass.
+	float32 m_I, m_invI;
 
 	float32 m_linearDamping;
 	float32 m_angularDamping;
@@ -520,13 +518,13 @@ inline float32 b2Body::GetMass() const
 
 inline float32 b2Body::GetInertia() const
 {
-	return m_I;
+	return m_I + m_mass * b2Dot(m_sweep.localCenter, m_sweep.localCenter);
 }
 
 inline void b2Body::GetMassData(b2MassData* data) const
 {
 	data->mass = m_mass;
-	data->I = m_I;
+	data->I = m_I + m_mass * b2Dot(m_sweep.localCenter, m_sweep.localCenter);
 	data->center = m_sweep.localCenter;
 }
 
