@@ -246,7 +246,14 @@ bool b2PolygonShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& inpu
 		}
 
 		output->fraction = t;
-		output->normal = normal;
+		if (numerator > 0.0f)
+		{
+			output->normal = -normal;
+		}
+		else
+		{
+			output->normal = normal;
+		}
 		return true;
 	}
 	else
