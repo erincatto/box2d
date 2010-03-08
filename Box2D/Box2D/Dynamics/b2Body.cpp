@@ -96,8 +96,6 @@ b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 	m_I = 0.0f;
 	m_invI = 0.0f;
 
-	m_inertiaScale = bd->inertiaScale;
-
 	m_userData = bd->userData;
 
 	m_fixtureList = NULL;
@@ -309,7 +307,6 @@ void b2Body::ResetMassData()
 	{
 		// Center the inertia about the center of mass.
 		m_I -= m_mass * b2Dot(center, center);
-		m_I *= m_inertiaScale;
 		b2Assert(m_I > 0.0f);
 		m_invI = 1.0f / m_I;
 
@@ -357,6 +354,7 @@ void b2Body::SetMassData(const b2MassData* massData)
 	if (massData->I > 0.0f && (m_flags & b2Body::e_fixedRotationFlag) == 0)
 	{
 		m_I = massData->I - m_mass * b2Dot(massData->center, massData->center);
+		b2Assert(m_I > 0.0f);
 		m_invI = 1.0f / m_I;
 	}
 
