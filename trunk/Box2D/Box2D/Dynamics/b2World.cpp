@@ -612,9 +612,9 @@ void b2World::SolveTOI(b2Body* body)
 	++toiContact->m_toiCount;
 
 	// Update all the valid contacts on this body and build a contact island.
-	b2Contact* contacts[b2_maxTOIContactsPerIsland];
+	b2Contact* contacts[b2_maxTOIContacts];
 	count = 0;
-	for (b2ContactEdge* ce = body->m_contactList; ce && count < b2_maxTOIContactsPerIsland; ce = ce->next)
+	for (b2ContactEdge* ce = body->m_contactList; ce && count < b2_maxTOIContacts; ce = ce->next)
 	{
 		b2Body* other = ce->other;
 		b2BodyType type = other->GetType();

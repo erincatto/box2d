@@ -132,28 +132,19 @@ struct b2ClipVertex
 	b2ContactID id;
 };
 
-/// Ray-cast input data.
+/// Ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
 struct b2RayCastInput
 {
 	b2Vec2 p1, p2;
 	float32 maxFraction;
 };
 
-/// Ray-cast output data.
+/// Ray-cast output data. The ray hits at p1 + fraction * (p2 - p1), where p1 and p2
+/// come from b2RayCastInput.
 struct b2RayCastOutput
 {
 	b2Vec2 normal;
 	float32 fraction;
-};
-
-/// A line segment.
-struct b2Segment
-{
-	/// Ray cast against this segment with another segment.
-	bool TestSegment(float32* lambda, b2Vec2* normal, const b2Segment& segment, float32 maxLambda) const;
-
-	b2Vec2 p1;	///< the starting point
-	b2Vec2 p2;	///< the ending point
 };
 
 /// An axis aligned bounding box.
