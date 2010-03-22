@@ -75,8 +75,8 @@ typedef float float32;
 
 // Dynamics
 
-/// Maximum number of contacts to be handled to solve a TOI island.
-#define b2_maxTOIContactsPerIsland	32
+/// Maximum number of contacts to be handled to solve a TOI impact.
+#define b2_maxTOIContacts			32
 
 /// A velocity threshold for elastic collisions. Any collision with a relative linear
 /// velocity below this threshold will be treated as inelastic.
