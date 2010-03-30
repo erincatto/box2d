@@ -41,7 +41,7 @@ void b2ContactManager::Destroy(b2Contact* c)
 	b2Body* bodyA = fixtureA->GetBody();
 	b2Body* bodyB = fixtureB->GetBody();
 
-	if (c->IsTouching())
+	if (m_contactListener && c->IsTouching())
 	{
 		m_contactListener->EndContact(c);
 	}
@@ -132,7 +132,7 @@ void b2ContactManager::Collide()
 			}
 
 			// Check user filtering.
-			if (m_contactFilter->ShouldCollide(fixtureA, fixtureB) == false)
+			if (m_contactFilter && m_contactFilter->ShouldCollide(fixtureA, fixtureB) == false)
 			{
 				b2Contact* cNuke = c;
 				c = cNuke->GetNext();
@@ -213,7 +213,7 @@ void b2ContactManager::AddPair(void* proxyUserDataA, void* proxyUserDataB)
 	}
 
 	// Check user filtering.
-	if (m_contactFilter->ShouldCollide(fixtureA, fixtureB) == false)
+	if (m_contactFilter && m_contactFilter->ShouldCollide(fixtureA, fixtureB) == false)
 	{
 		return;
 	}
