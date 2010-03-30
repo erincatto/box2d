@@ -47,19 +47,22 @@ public:
 	/// Destruct the world. All physics entities are destroyed and all heap memory is released.
 	~b2World();
 
-	/// Register a destruction listener.
+	/// Register a destruction listener. The listener is owned by you and must
+	/// remain in scope.
 	void SetDestructionListener(b2DestructionListener* listener);
 
 	/// Register a contact filter to provide specific control over collision.
-	/// Otherwise the default filter is used (b2_defaultFilter).
+	/// Otherwise the default filter is used (b2_defaultFilter). The listener is
+	/// owned by you and must remain in scope. 
 	void SetContactFilter(b2ContactFilter* filter);
 
-	/// Register a contact event listener
+	/// Register a contact event listener. The listener is owned by you and must
+	/// remain in scope.
 	void SetContactListener(b2ContactListener* listener);
 
 	/// Register a routine for debug drawing. The debug draw functions are called
-	/// inside the b2World::Step method, so make sure your renderer is ready to
-	/// consume draw commands when you call Step().
+	/// inside with b2World::DrawDebugData method. The debug draw object is owned
+	/// by you and must remain in scope.
 	void SetDebugDraw(b2DebugDraw* debugDraw);
 
 	/// Create a rigid body given a definition. No reference to the definition
