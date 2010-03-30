@@ -209,17 +209,17 @@ void b2Contact::Update(b2ContactListener* listener)
 		m_flags &= ~e_touchingFlag;
 	}
 
-	if (wasTouching == false && touching == true)
+	if (wasTouching == false && touching == true && listener)
 	{
 		listener->BeginContact(this);
 	}
 
-	if (wasTouching == true && touching == false)
+	if (wasTouching == true && touching == false && listener)
 	{
 		listener->EndContact(this);
 	}
 
-	if (sensor == false)
+	if (sensor == false && listener)
 	{
 		listener->PreSolve(this, &oldManifold);
 	}

@@ -35,17 +35,6 @@ bool b2ContactFilter::ShouldCollide(b2Fixture* fixtureA, b2Fixture* fixtureB)
 	return collide;
 }
 
-bool b2ContactFilter::RayCollide(void* userData, b2Fixture* fixture)
-{
-	// By default, cast userData as a fixture, and then collide if the shapes would collide
-	if (userData == NULL)
-	{
-		return true;
-	}
-
-	return ShouldCollide((b2Fixture*)userData,fixture);
-}
-
 b2DebugDraw::b2DebugDraw()
 {
 	m_drawFlags = 0;
