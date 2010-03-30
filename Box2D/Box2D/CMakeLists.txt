@@ -64,7 +64,6 @@ set(BOX2D_Contacts_HDRS
 	Dynamics/Contacts/b2CircleContact.h
 	Dynamics/Contacts/b2Contact.h
 	Dynamics/Contacts/b2ContactSolver.h
-	Dynamics/Contacts/b2NullContact.h
 	Dynamics/Contacts/b2PolygonAndCircleContact.h
 	Dynamics/Contacts/b2PolygonContact.h
 	Dynamics/Contacts/b2TOISolver.h

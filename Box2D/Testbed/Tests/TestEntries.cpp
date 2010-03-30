@@ -60,6 +60,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Theo Jansen's Walker", TheoJansen::Create},
 	{"Body Types", BodyTypes::Create},
 	{"Ray-Cast", RayCast::Create},
 	{"Character Collision", CharacterCollision::Create},
@@ -93,7 +94,6 @@ TestEntry g_testEntries[] =
 	{"Sensor Test", SensorTest::Create},
 	{"Shape Editing", ShapeEditing::Create},
 	{"Slider Crank", SliderCrank::Create},
-	{"Theo Jansen's Walker", TheoJansen::Create},
 	{"Varying Friction", VaryingFriction::Create},
 	{"Web", Web::Create},
 	{NULL, NULL}
