@@ -94,9 +94,6 @@ public:
 	b2Fixture* GetFixtureB();
 	const b2Fixture* GetFixtureB() const;
 
-	/// Flag this contact for filtering. Filtering will occur the next time step.
-	void FlagForFiltering();
-
 	/// Evaluate this contact with your own manifold and transforms.
 	virtual void Evaluate(b2Manifold* manifold, const b2Transform& xfA, const b2Transform& xfB) = 0;
 
@@ -104,6 +101,8 @@ protected:
 	friend class b2ContactManager;
 	friend class b2World;
 	friend class b2ContactSolver;
+	friend class b2Body;
+	friend class b2Fixture;
 
 	// Flags stored in m_flags
 	enum
@@ -120,6 +119,9 @@ protected:
 		// This contact needs filtering because a fixture filter was changed.
 		e_filterFlag		= 0x0008,
 	};
+
+	/// Flag this contact for filtering. Filtering will occur the next time step.
+	void FlagForFiltering();
 
 	static void AddType(b2ContactCreateFcn* createFcn, b2ContactDestroyFcn* destroyFcn,
 						b2Shape::Type typeA, b2Shape::Type typeB);

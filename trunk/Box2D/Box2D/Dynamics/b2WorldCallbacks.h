@@ -58,9 +58,6 @@ public:
 	/// Return true if contact calculations should be performed between these two shapes.
 	/// @warning for performance reasons this is only called when the AABBs begin to overlap.
 	virtual bool ShouldCollide(b2Fixture* fixtureA, b2Fixture* fixtureB);
-
-	/// Return true if the given shape should be considered for ray intersection
-	virtual bool RayCollide(void* userData, b2Fixture* fixture);
 };
 
 /// Contact impulses for reporting. Impulses are used instead of forces because
