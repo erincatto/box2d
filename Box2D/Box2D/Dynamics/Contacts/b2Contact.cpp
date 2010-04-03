@@ -219,7 +219,7 @@ void b2Contact::Update(b2ContactListener* listener)
 		listener->EndContact(this);
 	}
 
-	if (sensor == false && listener)
+	if (sensor == false && touching && listener)
 	{
 		listener->PreSolve(this, &oldManifold);
 	}
