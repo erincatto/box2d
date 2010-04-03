@@ -18,10 +18,6 @@
 
 // This utility works with Box2d version 2.0 (or higher), and not with 1.4.3
 
-#include "../../Source/Common/b2Math.h"
-#include "../../Source/Common/b2Settings.h"
-#include "../../Source/Collision/Shapes/b2Shape.h"
-#include "../../Source/Dynamics/b2Body.h"
 #include "b2Triangle.h"
 #include "b2Polygon.h"
 
@@ -31,7 +27,7 @@
 static bool B2_POLYGON_REPORT_ERRORS = false;
 
 //If you're using 1.4.3, b2_toiSlop won't exist, so set this equal to 0
-static const float32 toiSlop = b2_toiSlop;//0.0f;
+static const float32 toiSlop = 0.0f;
 
 /*
  * Check if the lines a0->a1 and b0->b1 cross.
@@ -517,27 +513,38 @@ b2Polygon* b2Polygon::Add(b2Triangle& t) {
     /**
      * Adds this polygon to a PolyDef.
      */
-void b2Polygon::AddTo(b2PolygonDef& pd) {
+void b2Polygon::AddTo(b2FixtureDef& pd) {
 	if (nVertices < 3) return;
 	
-    b2Vec2* vecs = GetVertexVecs();
 	b2Assert(nVertices <= b2_maxPolygonVertices);
-//	printf("Adding...\n");
+	
+	b2Vec2* vecs = GetVertexVecs();
+	b2Vec2* vecsToAdd = new b2Vec2[nVertices];
+
 	int32 offset = 0;
+	
+	b2PolygonShape *polyShape = new b2PolygonShape;
+	int32 ind;
+	
     for (int32 i = 0; i < nVertices; ++i) {
+		
 		//Omit identical neighbors (including wraparound)
-		int32 ind = i - offset;
+		ind = i - offset;
 		if (vecs[i].x==vecs[remainder(i+1,nVertices)].x &&
 			vecs[i].y==vecs[remainder(i+1,nVertices)].y){
 				offset++;
 				continue;
 		}
-		pd.vertices[ind] = vecs[i];
-//		printf("%f, %f\n",vecs[i].x,vecs[i].y);
+		
+		vecsToAdd[ind] = vecs[i];
+		
     }
-//	print();
-	pd.vertexCount = nVertices-offset;
+	
+	polyShape->Set((const b2Vec2*)vecsToAdd, ind+1);
+	pd.shape = polyShape;
+	
     delete[] vecs;
+	delete[] vecsToAdd;
 }
 
 	/**
@@ -979,17 +986,16 @@ int32 DecomposeConvex(b2Polygon* p, b2Polygon* results, int32 maxPolys) {
 	 * a heap-allocated array of b2PolyDefs, which must be deleted by the user
 	 * after the b2BodyDef is added to the world.
      */
-void DecomposeConvexAndAddTo(b2Polygon* p, b2Body* bd,
-								   b2PolygonDef* prototype) {
+void DecomposeConvexAndAddTo(b2Polygon* p, b2Body* bd, b2FixtureDef* prototype) {
 
         if (p->nVertices < 3) return;
         b2Polygon* decomposed = new b2Polygon[p->nVertices - 2]; //maximum number of polys
         int32 nPolys = DecomposeConvex(p, decomposed, p->nVertices - 2);
 //		printf("npolys: %d",nPolys);
-		b2PolygonDef* pdarray = new b2PolygonDef[2*p->nVertices];//extra space in case of splits
+		b2FixtureDef* pdarray = new b2FixtureDef[2*p->nVertices];//extra space in case of splits
 		int32 extra = 0;
         for (int32 i = 0; i < nPolys; ++i) {
-            b2PolygonDef* toAdd = &pdarray[i+extra];
+            b2FixtureDef* toAdd = &pdarray[i+extra];
 			 *toAdd = *prototype;
 			 //Hmm, shouldn't have to do all this...
 			 /*
@@ -1013,7 +1019,7 @@ void DecomposeConvexAndAddTo(b2Polygon* p, b2Body* bd,
 						int32 middle = j;
 						int32 upper = (j == curr.nVertices - 1) ? (0) : (j + 1);
 						float32 dx0 = curr.x[middle] - curr.x[lower]; float32 dy0 = curr.y[middle] - curr.y[lower];
-						float32 dx1 = curr.x[upper] - curr.x[middle];	float32 dy1 = curr.y[upper] - curr.y[middle];
+						float32 dx1 = curr.x[upper] - curr.x[middle]; float32 dy1 = curr.y[upper] - curr.y[middle];
 						float32 norm0 = sqrtf(dx0*dx0+dy0*dy0);	float32 norm1 = sqrtf(dx1*dx1+dy1*dy1);
 						if ( !(norm0 > 0.0f && norm1 > 0.0f) ) {
 							//Identical points, don't do anything!
@@ -1047,7 +1053,9 @@ void DecomposeConvexAndAddTo(b2Polygon* p, b2Body* bd,
 							b2Polygon p2(newX2,newY2,3);
 							if (p1.IsUsable()){
 								p1.AddTo(*toAdd);
-								bd->CreateShape(toAdd);
+								
+								
+								bd->CreateFixture(toAdd);
 								++extra;
 							} else if (B2_POLYGON_REPORT_ERRORS){
 								printf("Didn't add unusable polygon.  Dumping vertices:\n");
@@ -1055,7 +1063,8 @@ void DecomposeConvexAndAddTo(b2Polygon* p, b2Body* bd,
 							}
 							if (p2.IsUsable()){
 								p2.AddTo(pdarray[i+extra]);
-								bd->CreateShape(&pdarray[i+extra]);
+								
+								bd->CreateFixture(toAdd);
 							} else if (B2_POLYGON_REPORT_ERRORS){
 								printf("Didn't add unusable polygon.  Dumping vertices:\n");
 								p2.print();
@@ -1067,7 +1076,8 @@ void DecomposeConvexAndAddTo(b2Polygon* p, b2Body* bd,
 			}
 			if (decomposed[i].IsUsable()){
 				decomposed[i].AddTo(*toAdd);
-				bd->CreateShape(toAdd);
+				
+				bd->CreateFixture((const b2FixtureDef*)toAdd);
 			} else if (B2_POLYGON_REPORT_ERRORS){
 				printf("Didn't add unusable polygon.  Dumping vertices:\n");
 				decomposed[i].print();
@@ -1552,7 +1562,7 @@ b2PolyNode* b2PolyNode::GetRightestConnection(b2PolyNode* incoming){
 	if (B2_POLYGON_REPORT_ERRORS && !result) {
 		printf("nConnected = %d\n",nConnected);
 		for (int32 i=0; i<nConnected; ++i) {
-			printf("connected[%d] @ %d\n",i,(int)connected[i]);
+			printf("connected[%d] @ %d\n",i,0);//(int)connected[i]);
 		}
 	}
 	b2Assert(result);
