@@ -5,7 +5,7 @@ if(APPLE)
 endif(APPLE)
 
 if(UNIX)
-	add_definitions( -D__unix__ -DHAVE_FCNTL_H )
+	add_definitions( -D__unix__ -DHAVE_FCNTL_H -DHAVE_GETTIMEOFDAY )
 endif(UNIX)
 
 set(freeglut_SRCS
