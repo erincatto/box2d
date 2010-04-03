@@ -60,6 +60,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Confined", Confined::Create},
 	{"Ray-Cast", RayCast::Create},
 	{"Varying Restitution", VaryingRestitution::Create},
 	{"Theo Jansen's Walker", TheoJansen::Create},
@@ -75,7 +76,6 @@ TestEntry g_testEntries[] =
 	{"Apply Force", ApplyForce::Create},
 	{"Cantilever", Cantilever::Create},
 	{"SphereStack", SphereStack::Create},
-	{"Confined", Confined::Create},
 	{"Bridge", Bridge::Create},
 	{"Breakable", Breakable::Create},
 	{"Pyramid", Pyramid::Create},
