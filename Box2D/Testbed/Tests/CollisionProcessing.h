@@ -172,7 +172,10 @@ public:
 				++i;
 			}
 
-			m_world->DestroyBody(b);
+			if (b != m_bomb)
+			{
+				m_world->DestroyBody(b);
+			}
 		}
 	}
 
