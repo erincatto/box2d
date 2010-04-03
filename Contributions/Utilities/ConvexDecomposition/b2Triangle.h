@@ -19,7 +19,7 @@
 #ifndef B2_TRIANGLE_H
 #define B2_TRIANGLE_H
 
-#include "../../Source/Common/b2Math.h"
+#include "b2Math.h"
 
 class b2Triangle{
 public:
