@@ -494,7 +494,8 @@ void b2World::Solve(const b2TimeStep& step)
 	// Synchronize fixtures, check for out of range bodies.
 	for (b2Body* b = m_bodyList; b; b = b->GetNext())
 	{
-		if (b->IsAwake() == false || b->IsActive() == false)
+		// If a body was not in an island then it did not move.
+		if ((b->m_flags & b2Body::e_islandFlag) == 0)
 		{
 			continue;
 		}
@@ -708,8 +709,9 @@ void b2World::SolveTOI()
 	// Initialize the TOI flag.
 	for (b2Body* body = m_bodyList; body; body = body->m_next)
 	{
-		// Sleeping, kinematic, and static bodies will not be affected by the TOI event.
-		if (body->IsAwake() == false || body->GetType() == b2_kinematicBody || body->GetType() == b2_staticBody)
+		// Kinematic, and static bodies will not be affected by the TOI event.
+		// If a body was not in an island then it did not move.
+		if ((body->m_flags & b2Body::e_islandFlag) == 0 || body->GetType() == b2_kinematicBody || body->GetType() == b2_staticBody)
 		{
 			body->m_flags |= b2Body::e_toiFlag;
 		}
@@ -722,7 +724,7 @@ void b2World::SolveTOI()
 	// Collide non-bullets.
 	for (b2Body* body = m_bodyList; body; body = body->m_next)
 	{
-		if (body->GetType() != b2_dynamicBody || body->IsAwake() == false)
+		if (body->m_flags & b2Body::e_toiFlag)
 		{
 			continue;
 		}
@@ -740,7 +742,7 @@ void b2World::SolveTOI()
 	// Collide bullets.
 	for (b2Body* body = m_bodyList; body; body = body->m_next)
 	{
-		if (body->GetType() != b2_dynamicBody || body->IsAwake() == false)
+		if (body->m_flags & b2Body::e_toiFlag)
 		{
 			continue;
 		}
