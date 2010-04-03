@@ -310,6 +310,8 @@ public:
 
 	void Step(Settings* settings)
 	{
+		bool advanceRay = settings->pause == 0 || settings->singleStep;
+
 		Test::Step(settings);
 		m_debugDraw.DrawString(5, m_textLine, "Press 1-5 to drop stuff, m to change the mode");
 		m_textLine += 15;
@@ -372,7 +374,10 @@ public:
 			}
 		}
 
-		m_angle += 0.25f * b2_pi / 180.0f;
+		if (advanceRay)
+		{
+			m_angle += 0.25f * b2_pi / 180.0f;
+		}
 	}
 
 	static Test* Create()
