@@ -60,10 +60,10 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Ray-Cast", RayCast::Create},
 	{"Varying Restitution", VaryingRestitution::Create},
 	{"Theo Jansen's Walker", TheoJansen::Create},
 	{"Body Types", BodyTypes::Create},
-	{"Ray-Cast", RayCast::Create},
 	{"Character Collision", CharacterCollision::Create},
 	{"Prismatic", Prismatic::Create},
 	{"Edge Shapes", EdgeShapes::Create},
