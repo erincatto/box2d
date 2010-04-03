@@ -198,6 +198,8 @@ public:
 
 	void Step(Settings* settings)
 	{
+		bool advanceRay = settings->pause == 0 || settings->singleStep;
+
 		Test::Step(settings);
 		m_debugDraw.DrawString(5, m_textLine, "Press 1-5 to drop stuff");
 		m_textLine += 15;
@@ -225,7 +227,10 @@ public:
 			m_debugDraw.DrawSegment(point1, point2, b2Color(0.8f, 0.8f, 0.8f));
 		}
 
-		m_angle += 0.25f * b2_pi / 180.0f;
+		if (advanceRay)
+		{
+			m_angle += 0.25f * b2_pi / 180.0f;
+		}
 	}
 
 	static Test* Create()
