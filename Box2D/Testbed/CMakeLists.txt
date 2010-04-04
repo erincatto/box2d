@@ -29,7 +29,6 @@ set(Testbed_Tests_SRCS
 	Tests/Dominos.h
 	Tests/DynamicTreeTest.h
 	Tests/EdgeShapes.h
-	Tests/ElasticBody.h
 	Tests/Gears.h
 	Tests/LineJoint.h
 	Tests/OneSidedPlatform.h
