@@ -82,7 +82,7 @@ public:
 
 	void CreateCircle()
 	{
-		float32 radius = 8.0f;
+		float32 radius = 2.0f;
 		b2CircleShape shape;
 		shape.m_p.SetZero();
 		shape.m_radius = radius;
@@ -92,7 +92,7 @@ public:
 		fd.density = 1.0f;
 		fd.friction = 0.0f;
 
-		b2Vec2 p(RandomFloat(), 1.0f + RandomFloat());
+		b2Vec2 p(RandomFloat(), 3.0f + RandomFloat());
 		b2BodyDef bd;
 		bd.type = b2_dynamicBody;
 		bd.position = p;
