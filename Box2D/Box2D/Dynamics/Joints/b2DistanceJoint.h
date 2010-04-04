@@ -73,7 +73,8 @@ public:
 	b2Vec2 GetReactionForce(float32 inv_dt) const;
 	float32 GetReactionTorque(float32 inv_dt) const;
 
-	// Set/get the natural length.
+	/// Set/get the natural length.
+	/// Manipulating the length can lead to non-physical behavior when the frequency is zero.
 	void SetLength(float32 length);
 	float32 GetLength() const;
 
