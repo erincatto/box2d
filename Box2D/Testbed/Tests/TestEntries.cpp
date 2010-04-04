@@ -60,7 +60,10 @@
 
 TestEntry g_testEntries[] =
 {
+	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Confined", Confined::Create},
+	{"Vertical Stack", VerticalStack::Create},
+	{"Pyramid", Pyramid::Create},
 	{"Ray-Cast", RayCast::Create},
 	{"Varying Restitution", VaryingRestitution::Create},
 	{"Theo Jansen's Walker", TheoJansen::Create},
@@ -70,7 +73,6 @@ TestEntry g_testEntries[] =
 	{"Edge Shapes", EdgeShapes::Create},
 	{"Continuous Test", ContinuousTest::Create},
 	{"Time of Impact", TimeOfImpact::Create},
-	{"Vertical Stack", VerticalStack::Create},
 	{"PolyCollision", PolyCollision::Create},
 	{"Polygon Shapes", PolyShapes::Create},
 	{"Apply Force", ApplyForce::Create},
@@ -78,8 +80,6 @@ TestEntry g_testEntries[] =
 	{"SphereStack", SphereStack::Create},
 	{"Bridge", Bridge::Create},
 	{"Breakable", Breakable::Create},
-	{"Pyramid", Pyramid::Create},
-	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Chain", Chain::Create},
 	{"Collision Filtering", CollisionFiltering::Create},
 	{"Collision Processing", CollisionProcessing::Create},
