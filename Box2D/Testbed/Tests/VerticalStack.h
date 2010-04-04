@@ -120,37 +120,36 @@ public:
 	{
 		Test::Step(settings);
 		m_debugDraw.DrawString(5, m_textLine, "Press: (,) to launch a bullet.");
-
-		if (m_stepCount == 300)
-		{
-			if (m_bullet != NULL)
-			{
-				m_world->DestroyBody(m_bullet);
-				m_bullet = NULL;
-			}
-
-			{
-				b2CircleShape shape;
-				shape.m_radius = 0.25f;
-
-				b2FixtureDef fd;
-				fd.shape = &shape;
-				fd.density = 20.0f;
-				fd.restitution = 0.05f;
-
-				b2BodyDef bd;
-				bd.type = b2_dynamicBody;
-				bd.bullet = true;
-				bd.position.Set(-31.0f, 5.0f);
-
-				m_bullet = m_world->CreateBody(&bd);
-				m_bullet->CreateFixture(&fd);
-
-				m_bullet->SetLinearVelocity(b2Vec2(400.0f, 0.0f));
-			}
-		}
-
 		m_textLine += 15;
+
+		//if (m_stepCount == 300)
+		//{
+		//	if (m_bullet != NULL)
+		//	{
+		//		m_world->DestroyBody(m_bullet);
+		//		m_bullet = NULL;
+		//	}
+
+		//	{
+		//		b2CircleShape shape;
+		//		shape.m_radius = 0.25f;
+
+		//		b2FixtureDef fd;
+		//		fd.shape = &shape;
+		//		fd.density = 20.0f;
+		//		fd.restitution = 0.05f;
+
+		//		b2BodyDef bd;
+		//		bd.type = b2_dynamicBody;
+		//		bd.bullet = true;
+		//		bd.position.Set(-31.0f, 5.0f);
+
+		//		m_bullet = m_world->CreateBody(&bd);
+		//		m_bullet->CreateFixture(&fd);
+
+		//		m_bullet->SetLinearVelocity(b2Vec2(400.0f, 0.0f));
+		//	}
+		//}
 	}
 
 	static Test* Create()

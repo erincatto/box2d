@@ -535,6 +535,11 @@ void b2World::SolveTOI(b2Body* body)
 		found = false;
 		for (b2ContactEdge* ce = body->m_contactList; ce; ce = ce->next)
 		{
+			if (ce->contact == toiContact)
+			{
+				continue;
+			}
+
 			b2Body* other = ce->other;
 			b2BodyType type = other->GetType();
 
@@ -601,14 +606,14 @@ void b2World::SolveTOI(b2Body* body)
 		++iter;
 	} while (found && count > 1 && iter < 50);
 
+	// Advance the body to its safe time.
+	b2Sweep backup = body->m_sweep;
+	body->Advance(toi);
+
 	if (toiContact == NULL)
 	{
 		return;
 	}
-
-	// Advance the body to its safe time.
-	b2Sweep backup = body->m_sweep;
-	body->Advance(toi);
 
 	++toiContact->m_toiCount;
 
