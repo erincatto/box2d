@@ -102,6 +102,7 @@ public:
 
 	/// Get the child shape. You can modify the child shape, however you should not change the
 	/// number of vertices because this will crash some collision caching mechanisms.
+	/// Manipulating the shape may lead to non-physical behavior.
 	b2Shape* GetShape();
 	const b2Shape* GetShape() const;
 
