@@ -20,6 +20,8 @@
 #define RAY_CAST_H
 
 // This test demonstrates how to use the world ray-cast feature.
+// NOTE: we are intentionally filtering one of the polygons, therefore
+// the ray will always miss one type of polygon.
 
 // This callback finds the closest hit. Polygon 0 is filtered.
 class RayCastClosestCallback : public b2RayCastCallback
@@ -378,6 +380,46 @@ public:
 		{
 			m_angle += 0.25f * b2_pi / 180.0f;
 		}
+
+#if 0
+		// This case was failing.
+		{
+			b2Vec2 vertices[4];
+			//vertices[0].Set(-22.875f, -3.0f);
+			//vertices[1].Set(22.875f, -3.0f);
+			//vertices[2].Set(22.875f, 3.0f);
+			//vertices[3].Set(-22.875f, 3.0f);
+
+			b2PolygonShape shape;
+			//shape.Set(vertices, 4);
+			shape.SetAsBox(22.875f, 3.0f);
+
+			b2RayCastInput input;
+			input.p1.Set(10.2725f,1.71372f);
+			input.p2.Set(10.2353f,2.21807f);
+			//input.maxFraction = 0.567623f;
+			input.maxFraction = 0.56762173f;
+
+			b2Transform xf;
+			xf.SetIdentity();
+			xf.position.Set(23.0f, 5.0f);
+
+			b2RayCastOutput output;
+			bool hit;
+			hit = shape.RayCast(&output, input, xf);
+			hit = false;
+
+			b2Color color(1.0f, 1.0f, 1.0f);
+			b2Vec2 vs[4];
+			for (int32 i = 0; i < 4; ++i)
+			{
+				vs[i] = b2Mul(xf, shape.m_vertices[i]);
+			}
+
+			m_debugDraw.DrawPolygon(vs, 4, color);
+			m_debugDraw.DrawSegment(input.p1, input.p2, color);
+		}
+#endif
 	}
 
 	static Test* Create()
