@@ -298,7 +298,11 @@ bool b2PolygonShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& inpu
 				}
 			}
 
-			if (upper < lower - b2_epsilon)
+			// The use of epsilon here causes the assert on lower to trip
+			// in some cases. Apparently the use of epsilon was to make edge
+			// shapes work, but now those are handled separately.
+			//if (upper < lower - b2_epsilon)
+			if (upper < lower)
 			{
 				return false;
 			}
