@@ -24,14 +24,8 @@ class TimeOfImpact : public Test
 public:
 	TimeOfImpact()
 	{
-		{
-			//m_shapeA.SetAsEdge(b2Vec2(-10.0f, 0.0f), b2Vec2(10.0f, 0.0f));
-			m_shapeA.SetAsBox(0.2f, 1.0f, b2Vec2(0.5f, 1.0f), 0.0f);
-		}
-
-		{
-			m_shapeB.SetAsBox(2.0f, 0.1f);
-		}
+		m_shapeA.SetAsBox(25.0f, 5.0f);
+		m_shapeB.SetAsBox(2.5f, 2.5f);
 	}
 
 	static Test* Create()
@@ -44,18 +38,21 @@ public:
 		Test::Step(settings);
 
 		b2Sweep sweepA;
-		sweepA.c0.SetZero();
-		sweepA.a0 = 0.0f;
+		sweepA.c0.Set(24.0f, -60.0f);
+		sweepA.a0 = 2.95f;
 		sweepA.c = sweepA.c0;
 		sweepA.a = sweepA.a0;
 		sweepA.localCenter.SetZero();
 
 		b2Sweep sweepB;
-		sweepB.c0.Set(-0.20382018f, 2.1368704f);
-		sweepB.a0 = -3.1664171f;
-		sweepB.c.Set(-0.26699525f, 2.3552670f);
-		sweepB.a = -3.3926492f;
+		sweepB.c0.Set(53.474274f, -50.252514f);
+		sweepB.a0 = 513.36676f; // - 162.0f * b2_pi;
+		sweepB.c.Set(54.595478f, -51.083473f);
+		sweepB.a = 513.62781f; //  - 162.0f * b2_pi;
 		sweepB.localCenter.SetZero();
+
+		//sweepB.a0 -= 300.0f * b2_pi;
+		//sweepB.a -= 300.0f * b2_pi;
 
 		b2TOIInput input;
 		input.proxyA.Set(&m_shapeA);

@@ -371,6 +371,9 @@ struct b2Sweep
 	/// @param t the new initial time.
 	void Advance(float32 t);
 
+	/// Normalize the angles.
+	void Normalize();
+
 	b2Vec2 localCenter;	///< local center of mass position
 	b2Vec2 c0, c;		///< center world positions
 	float32 a0, a;		///< world angles
@@ -607,6 +610,15 @@ inline void b2Sweep::Advance(float32 t)
 {
 	c0 = (1.0f - t) * c0 + t * c;
 	a0 = (1.0f - t) * a0 + t * a;
+}
+
+/// Normalize an angle in radians to be between -pi and pi
+inline void b2Sweep::Normalize()
+{
+	float32 twoPi = 2.0f * b2_pi;
+	float32 d =  twoPi * floorf(a0 / twoPi);
+	a0 -= d;
+	a -= d;
 }
 
 #endif
