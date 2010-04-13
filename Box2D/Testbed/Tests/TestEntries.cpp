@@ -60,6 +60,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Time of Impact", TimeOfImpact::Create},
 	{"Ray-Cast", RayCast::Create},
 	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Confined", Confined::Create},
@@ -72,7 +73,6 @@ TestEntry g_testEntries[] =
 	{"Prismatic", Prismatic::Create},
 	{"Edge Shapes", EdgeShapes::Create},
 	{"Continuous Test", ContinuousTest::Create},
-	{"Time of Impact", TimeOfImpact::Create},
 	{"PolyCollision", PolyCollision::Create},
 	{"Polygon Shapes", PolyShapes::Create},
 	{"Apply Force", ApplyForce::Create},
