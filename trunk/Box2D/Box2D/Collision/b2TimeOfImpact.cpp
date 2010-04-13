@@ -266,6 +266,12 @@ void b2TimeOfImpact(b2TOIOutput* output, const b2TOIInput* input)
 
 	b2Sweep sweepA = input->sweepA;
 	b2Sweep sweepB = input->sweepB;
+
+	// Large rotations can make the root finder fail, so we normalize the
+	// sweep angles.
+	sweepA.Normalize();
+	sweepB.Normalize();
+
 	float32 tMax = input->tMax;
 
 	float32 totalRadius = proxyA->m_radius + proxyB->m_radius;
@@ -274,7 +280,7 @@ void b2TimeOfImpact(b2TOIOutput* output, const b2TOIInput* input)
 	b2Assert(target > tolerance);
 
 	float32 t1 = 0.0f;
-	const int32 k_maxIterations = 1000;	// TODO_ERIN b2Settings
+	const int32 k_maxIterations = 20;	// TODO_ERIN b2Settings
 	int32 iter = 0;
 
 	// Prepare input for distance query.
@@ -309,10 +315,17 @@ void b2TimeOfImpact(b2TOIOutput* output, const b2TOIInput* input)
 			break;
 		}
 
+		if (distanceOutput.distance < target + tolerance)
+		{
+			// Victory!
+			output->state = b2TOIOutput::e_touching;
+			output->t = t1;
+			break;
+		}
+
 		// Initialize the separating axis.
 		b2SeparationFunction fcn;
 		fcn.Initialize(&cache, proxyA, sweepA, proxyB, sweepB);
-
 #if 0
 		// Dump the curve seen by the root finder
 		{
@@ -343,6 +356,7 @@ void b2TimeOfImpact(b2TOIOutput* output, const b2TOIInput* input)
 		// resolving the deepest point. This loop is bounded by the number of vertices.
 		bool done = false;
 		float32 t2 = tMax;
+		int32 pushBackIter = 0;
 		for (;;)
 		{
 			// Find the deepest point at t2. Store the witness point indices.
@@ -359,13 +373,11 @@ void b2TimeOfImpact(b2TOIOutput* output, const b2TOIInput* input)
 				break;
 			}
 
-			// Is the final configuration touching?
+			// Has the separation reached tolerance?
 			if (s2 > target - tolerance)
 			{
-				// Victory!
-				output->state = b2TOIOutput::e_touching;
-				output->t = t2;
-				done = true;
+				// Advance the sweeps
+				t1 = t2;
 				break;
 			}
 
@@ -441,6 +453,13 @@ void b2TimeOfImpact(b2TOIOutput* output, const b2TOIInput* input)
 			}
 
 			b2_toiMaxRootIters = b2Max(b2_toiMaxRootIters, rootIterCount);
+
+			++pushBackIter;
+
+			if (pushBackIter == b2_maxPolygonVertices)
+			{
+				break;
+			}
 		}
 
 		++iter;
