@@ -118,6 +118,10 @@ protected:
 
 		// This contact needs filtering because a fixture filter was changed.
 		e_filterFlag		= 0x0008,
+
+		// This bullet contact had a TOI event
+		e_bulletHitFlag		= 0x0010,
+
 	};
 
 	/// Flag this contact for filtering. Filtering will occur the next time step.
