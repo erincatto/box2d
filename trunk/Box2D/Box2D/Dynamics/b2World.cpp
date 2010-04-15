@@ -520,6 +520,7 @@ void b2World::SolveTOI(b2Body* body)
 	// Find the minimum contact.
 	b2Contact* toiContact = NULL;
 	float32 toi = 1.0f;
+	b2Body* toiOther = NULL;
 	bool found;
 	int32 count;
 	int32 iter = 0;
@@ -550,6 +551,12 @@ void b2World::SolveTOI(b2Body* body)
 				if ((other->m_flags & b2Body::e_toiFlag) == 0)
 				{
 					continue;
+				}
+
+				// No repeated hits on non-static bodies
+				if (type != b2_staticBody && (ce->contact->m_flags & b2Contact::e_bulletHitFlag) != 0)
+				{
+						continue;
 				}
 			}
 			else if (type == b2_dynamicBody)
@@ -597,6 +604,7 @@ void b2World::SolveTOI(b2Body* body)
 			{
 				toiContact = contact;
 				toi = output.t;
+				toiOther = other;
 				found = true;
 			}
 
@@ -606,8 +614,8 @@ void b2World::SolveTOI(b2Body* body)
 		++iter;
 	} while (found && count > 1 && iter < 50);
 
-	// Advance the body to its safe time.
-	b2Sweep backup = body->m_sweep;
+	// Advance the body to its safe time. We have to do this even for bodies without a
+	// TOI so that later TOIs see the correct state.
 	body->Advance(toi);
 
 	if (toiContact == NULL)
@@ -618,6 +626,7 @@ void b2World::SolveTOI(b2Body* body)
 	++toiContact->m_toiCount;
 
 	// Update all the valid contacts on this body and build a contact island.
+	b2Sweep backup = body->m_sweep;
 	b2Contact* contacts[b2_maxTOIContacts];
 	count = 0;
 	for (b2ContactEdge* ce = body->m_contactList; ce && count < b2_maxTOIContacts; ce = ce->next)
@@ -693,6 +702,11 @@ void b2World::SolveTOI(b2Body* body)
 			solved = true;
 			break;
 		}
+	}
+
+	if (toiOther->GetType() != b2_staticBody)
+	{
+			toiContact->m_flags |= b2Contact::e_bulletHitFlag;
 	}
 }
 
