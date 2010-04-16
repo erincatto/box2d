@@ -35,9 +35,9 @@ Now the only tricky part is choosing a scaling factor. This really depends on yo
 
 There are many reasons why a build can go bad. Here are a few that have come up:
 
-* Using old Box2D headers with new code.
-* Not linking the Box2D library with your application.
-* Using old project files that don't include some new source files.
+ * Using old Box2D headers with new code
+ * Not linking the Box2D library with your application
+ * Using old project files that don't include some new source files
 
 =Rendering=
 ==What are Box2D's rendering capabilities?==
@@ -50,3 +50,16 @@ Visualization is very important for debugging collision and physics. I wrote the
 ==How do I draw shapes?==
 
 Drawing shapes is not supported and shape internal data is likely to change. Instead you should implement the b2DebugDraw interface.
+
+=Accuracy=
+
+Box2D uses approximate methods for a few reasons.
+
+ * Performance
+ * Some differential equations don't have known solutions
+ * Some constraints cannot be determined uniquely
+
+What this means is that constraints are not perfectly rigid and sometimes you will see some bounce even when the restitution is zero.
+Box2D uses Gauss-Seidel to approximately solve constraints.
+Box2D also uses Semi-implicit Euler to approximately solve the differential equations.
+Box2D also does not have exact collision. Polygons are covered with a thin skin (around 0.5cm thick) to avoid numerical problems. This can sometimes lead to unexpected contact normals. Also, some shapes may begin to overlap and then be pushed apart by the solver.
