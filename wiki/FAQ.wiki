@@ -21,6 +21,14 @@ You should have a working knowledge of C++ before you use Box2D. You should unde
 ==Math and Physics==
 You should have a basic knowledge of rigid bodies, force, torque, and impulses. If you come across a math or physics concept you don't understand, please read about it on Wikipedia. Visit this page if you want a deeper knowledge of the algorithms used in Box2D.
 
+=API=
+==What units does Box2D use?==
+Box2D is tuned for meters-kilograms-seconds (MKS). Your moving objects should be between 0.1 - 10 meters. Do not use pixels as units! You will get a jittery simulation.
+
+==How do I convert pixels to meters?==
+Suppose you have a sprite for a character that is 100x100 pixels. You decide to use a scaling factor that is 0.01. This will make the character physics box 1m x 1m. So go make a physics box that is 1x1. Now suppose the character starts out at pixel coordinate (345,679). So position the physics box at (3.45,6.79). Now simulate the physics world. Suppose the character physics box moves to (2.31,4.98), so move your character sprite to pixel coordinates (231,498).
+Now the only tricky part is choosing a scaling factor. This really depends on your game. You should try to get your moving objects in the range 0.1 - 10 meters, with 1 meter being the sweet spot.
+
 =Build Issues=
 ==Why doesn't my code compile and/or link?==
 
