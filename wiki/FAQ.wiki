@@ -1,4 +1,5 @@
 #summary Frequently asked Questions
+#labels Featured
 
 =What is Box2D=
 Box2D is a feature rich 2d rigid body physics engine, written in C++ by Erin Catto. It has been used in many games, including Crayon Physics Deluxe, winner of the 2008 Independant Game Festival Grand Prize.
@@ -49,9 +50,3 @@ Visualization is very important for debugging collision and physics. I wrote the
 ==How do I draw shapes?==
 
 Drawing shapes is not supported and shape internal data is likely to change. Instead you should implement the b2DebugDraw interface.
-
-==How do I convert pixels to meters?==
-
-Suppose you have a sprite for a character that is 100x100 pixels. You decide to use a scaling factor that is 0.01. This will make the character physics box 1m x 1m. So go make a physics box that is 1x1. Now suppose the character starts out at pixel coordinate (345,679). So position the physics box at (3.45,6.79). Now simulate the physics world. Suppose the character physics box moves to (2.31,4.98), so move your character sprite to pixel coordinates (231,498).
-
-Now the only tricky part is choosing a scaling factor. This really depends on your game. You should try to get your moving objects in the range 0.1 - 10 meters, with 1 meter being the sweet spot.
