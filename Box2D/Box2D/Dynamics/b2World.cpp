@@ -636,7 +636,7 @@ void b2World::SolveTOI(b2Body* body)
 
 		// Only perform correction with static bodies, so the
 		// body won't get pushed out of the world.
-		if (type != b2_staticBody)
+		if (type == b2_dynamicBody)
 		{
 			continue;
 		}
