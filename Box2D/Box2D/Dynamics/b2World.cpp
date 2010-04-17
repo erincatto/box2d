@@ -614,19 +614,25 @@ void b2World::SolveTOI(b2Body* body)
 		++iter;
 	} while (found && count > 1 && iter < 50);
 
-	// Advance the body to its safe time. We have to do this even for bodies without a
-	// TOI so that later TOIs see the correct state.
-	body->Advance(toi);
-
 	if (toiContact == NULL)
 	{
+		body->Advance(1.0f);
 		return;
+	}
+
+	b2Sweep backup = body->m_sweep;
+	body->Advance(toi);
+	toiContact->Update(m_contactManager.m_contactListener);
+	if (toiContact->IsEnabled() == false)
+	{
+		// Contact disabled. Backup and recurse.
+		body->m_sweep = backup;
+		SolveTOI(body);
 	}
 
 	++toiContact->m_toiCount;
 
 	// Update all the valid contacts on this body and build a contact island.
-	b2Sweep backup = body->m_sweep;
 	b2Contact* contacts[b2_maxTOIContacts];
 	count = 0;
 	for (b2ContactEdge* ce = body->m_contactList; ce && count < b2_maxTOIContacts; ce = ce->next)
@@ -658,23 +664,15 @@ void b2World::SolveTOI(b2Body* body)
 		}
 
 		// The contact likely has some new contact points. The listener
-		// gives the user a chance to disable the contact;
-		contact->Update(m_contactManager.m_contactListener);
+		// gives the user a chance to disable the contact.
+		if (contact != toiContact)
+		{
+			contact->Update(m_contactManager.m_contactListener);
+		}
 
 		// Did the user disable the contact?
 		if (contact->IsEnabled() == false)
 		{
-			if (contact == toiContact)
-			{
-				// Restore the body's sweep.
-				body->m_sweep = backup;
-				body->SynchronizeTransform();
-
-				// Recurse because the TOI has been invalidated.
-				SolveTOI(body);
-				return;
-			}
-
 			// Skip this contact.
 			continue;
 		}
