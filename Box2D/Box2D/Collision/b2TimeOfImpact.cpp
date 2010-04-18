@@ -42,7 +42,8 @@ struct b2SeparationFunction
 
 	float32 Initialize(const b2SimplexCache* cache,
 		const b2DistanceProxy* proxyA, const b2Sweep& sweepA,
-		const b2DistanceProxy* proxyB, const b2Sweep& sweepB)
+		const b2DistanceProxy* proxyB, const b2Sweep& sweepB,
+		float32 t1)
 	{
 		m_proxyA = proxyA;
 		m_proxyB = proxyB;
@@ -53,8 +54,8 @@ struct b2SeparationFunction
 		m_sweepB = sweepB;
 
 		b2Transform xfA, xfB;
-		m_sweepA.GetTransform(&xfA, 0.0f);
-		m_sweepB.GetTransform(&xfB, 0.0f);
+		m_sweepA.GetTransform(&xfA, t1);
+		m_sweepB.GetTransform(&xfB, t1);
 
 		if (count == 1)
 		{
@@ -325,7 +326,7 @@ void b2TimeOfImpact(b2TOIOutput* output, const b2TOIInput* input)
 
 		// Initialize the separating axis.
 		b2SeparationFunction fcn;
-		fcn.Initialize(&cache, proxyA, sweepA, proxyB, sweepB);
+		fcn.Initialize(&cache, proxyA, sweepA, proxyB, sweepB, t1);
 #if 0
 		// Dump the curve seen by the root finder
 		{
