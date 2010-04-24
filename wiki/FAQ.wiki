@@ -63,3 +63,14 @@ What this means is that constraints are not perfectly rigid and sometimes you wi
 Box2D uses Gauss-Seidel to approximately solve constraints.
 Box2D also uses Semi-implicit Euler to approximately solve the differential equations.
 Box2D also does not have exact collision. Polygons are covered with a thin skin (around 0.5cm thick) to avoid numerical problems. This can sometimes lead to unexpected contact normals. Also, some shapes may begin to overlap and then be pushed apart by the solver.
+
+=Making Games=
+
+==Worms Clones==
+Making a worms clone requires arbitrarily destructible terrain. This is beyond the scope of Box2D, so you will have to figure out how to do this on your own.
+
+==Tile Based Environment==
+Using many boxes for your terrain may not work well because box-like characters can get snagged on internal corners. A future update to Box2D should allow for smooth motion over edge chains.
+
+==Asteroid Type Coordinate Systems==
+Box2D does not have any support for coordinate frame wrapping. You would likely need to customize Box2D for this purpose. You may need to use a different broad-phase for this to work.
