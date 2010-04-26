@@ -79,6 +79,7 @@ int32 b2DynamicTree::AllocateNode()
 	m_nodes[nodeId].parent = b2_nullNode;
 	m_nodes[nodeId].child1 = b2_nullNode;
 	m_nodes[nodeId].child2 = b2_nullNode;
+	m_nodes[nodeId].leafCount = 0;
 	++m_nodeCount;
 	return nodeId;
 }
@@ -105,19 +106,9 @@ int32 b2DynamicTree::CreateProxy(const b2AABB& aabb, void* userData)
 	m_nodes[proxyId].aabb.lowerBound = aabb.lowerBound - r;
 	m_nodes[proxyId].aabb.upperBound = aabb.upperBound + r;
 	m_nodes[proxyId].userData = userData;
+	m_nodes[proxyId].leafCount = 1;
 
 	InsertLeaf(proxyId);
-
-	// Rebalance if necessary.
-	int32 iterationCount = m_nodeCount >> 4;
-	int32 tryCount = 0;
-	int32 height = ComputeHeight();
-	while (height > 64 && tryCount < 10)
-	{
-		Rebalance(iterationCount);
-		height = ComputeHeight();
-		++tryCount;
-	}
 
 	return proxyId;
 }
@@ -188,78 +179,78 @@ void b2DynamicTree::InsertLeaf(int32 leaf)
 		return;
 	}
 
-	// Find the best sibling for this node.
-	b2Vec2 center = m_nodes[leaf].aabb.GetCenter();
+	// Find the best sibling for this node
+	b2AABB leafAABB = m_nodes[leaf].aabb;
+	b2Vec2 leafCenter = leafAABB.GetCenter();
 	int32 sibling = m_root;
-	if (m_nodes[sibling].IsLeaf() == false)
+	while (m_nodes[sibling].IsLeaf() == false)
 	{
-		do 
+		// Expand the node's AABB.
+		m_nodes[sibling].aabb.Combine(leafAABB);
+		m_nodes[sibling].leafCount += 1;
+
+		int32 child1 = m_nodes[sibling].child1;
+		int32 child2 = m_nodes[sibling].child2;
+
+#if 0
+		// This seems to create imbalanced trees
+		b2Vec2 delta1 = b2Abs(m_nodes[child1].aabb.GetCenter() - leafCenter);
+		b2Vec2 delta2 = b2Abs(m_nodes[child2].aabb.GetCenter() - leafCenter);
+
+		float32 norm1 = delta1.x + delta1.y;
+		float32 norm2 = delta2.x + delta2.y;
+#else
+		// Surface area heuristic
+		b2AABB aabb1, aabb2;
+		aabb1.Combine(leafAABB, m_nodes[child1].aabb);
+		aabb2.Combine(leafAABB, m_nodes[child2].aabb);
+		float32 norm1 = (m_nodes[child1].leafCount + 1) * aabb1.GetPerimeter();
+		float32 norm2 = (m_nodes[child2].leafCount + 1) * aabb2.GetPerimeter();
+#endif
+
+		if (norm1 < norm2)
 		{
-			int32 child1 = m_nodes[sibling].child1;
-			int32 child2 = m_nodes[sibling].child2;
-
-			b2Vec2 delta1 = b2Abs(m_nodes[child1].aabb.GetCenter() - center);
-			b2Vec2 delta2 = b2Abs(m_nodes[child2].aabb.GetCenter() - center);
-
-			float32 norm1 = delta1.x + delta1.y;
-			float32 norm2 = delta2.x + delta2.y;
-
-			if (norm1 < norm2)
-			{
-				sibling = child1;
-			}
-			else
-			{
-				sibling = child2;
-			}
-
-		}
-		while(m_nodes[sibling].IsLeaf() == false);
-	}
-
-	// Create a parent for the siblings.
-	int32 node1 = m_nodes[sibling].parent;
-	int32 node2 = AllocateNode();
-	m_nodes[node2].parent = node1;
-	m_nodes[node2].userData = NULL;
-	m_nodes[node2].aabb.Combine(m_nodes[leaf].aabb, m_nodes[sibling].aabb);
-
-	if (node1 != b2_nullNode)
-	{
-		if (m_nodes[m_nodes[sibling].parent].child1 == sibling)
-		{
-			m_nodes[node1].child1 = node2;
+			sibling = child1;
 		}
 		else
 		{
-			m_nodes[node1].child2 = node2;
+			sibling = child2;
 		}
+	}
 
-		m_nodes[node2].child1 = sibling;
-		m_nodes[node2].child2 = leaf;
-		m_nodes[sibling].parent = node2;
-		m_nodes[leaf].parent = node2;
+	// Create a new parent for the siblings.
+	int32 oldParent = m_nodes[sibling].parent;
+	int32 newParent = AllocateNode();
+	m_nodes[newParent].parent = oldParent;
+	m_nodes[newParent].userData = NULL;
+	m_nodes[newParent].aabb.Combine(leafAABB, m_nodes[sibling].aabb);
+	m_nodes[newParent].leafCount = m_nodes[sibling].leafCount + 1;
 
-		do 
+	if (oldParent != b2_nullNode)
+	{
+		// The sibling was not the root.
+		if (m_nodes[oldParent].child1 == sibling)
 		{
-			if (m_nodes[node1].aabb.Contains(m_nodes[node2].aabb))
-			{
-				break;
-			}
-
-			m_nodes[node1].aabb.Combine(m_nodes[m_nodes[node1].child1].aabb, m_nodes[m_nodes[node1].child2].aabb);
-			node2 = node1;
-			node1 = m_nodes[node1].parent;
+			m_nodes[oldParent].child1 = newParent;
 		}
-		while(node1 != b2_nullNode);
+		else
+		{
+			m_nodes[oldParent].child2 = newParent;
+		}
+
+		m_nodes[newParent].child1 = sibling;
+		m_nodes[newParent].child2 = leaf;
+		m_nodes[sibling].parent = newParent;
+		m_nodes[leaf].parent = newParent;
 	}
 	else
 	{
-		m_nodes[node2].child1 = sibling;
-		m_nodes[node2].child2 = leaf;
-		m_nodes[sibling].parent = node2;
-		m_nodes[leaf].parent = node2;
-		m_root = node2;
+		// The sibling was the root.
+		m_nodes[newParent].child1 = sibling;
+		m_nodes[newParent].child2 = leaf;
+		m_nodes[sibling].parent = newParent;
+		m_nodes[leaf].parent = newParent;
+		m_root = newParent;
 	}
 }
 
@@ -271,51 +262,50 @@ void b2DynamicTree::RemoveLeaf(int32 leaf)
 		return;
 	}
 
-	int32 node2 = m_nodes[leaf].parent;
-	int32 node1 = m_nodes[node2].parent;
+	int32 parent = m_nodes[leaf].parent;
+	int32 grandParent = m_nodes[parent].parent;
 	int32 sibling;
-	if (m_nodes[node2].child1 == leaf)
+	if (m_nodes[parent].child1 == leaf)
 	{
-		sibling = m_nodes[node2].child2;
+		sibling = m_nodes[parent].child2;
 	}
 	else
 	{
-		sibling = m_nodes[node2].child1;
+		sibling = m_nodes[parent].child1;
 	}
 
-	if (node1 != b2_nullNode)
+	if (grandParent != b2_nullNode)
 	{
-		// Destroy node2 and connect node1 to sibling.
-		if (m_nodes[node1].child1 == node2)
+		// Destroy parent and connect sibling to grandParent.
+		if (m_nodes[grandParent].child1 == parent)
 		{
-			m_nodes[node1].child1 = sibling;
+			m_nodes[grandParent].child1 = sibling;
 		}
 		else
 		{
-			m_nodes[node1].child2 = sibling;
+			m_nodes[grandParent].child2 = sibling;
 		}
-		m_nodes[sibling].parent = node1;
-		FreeNode(node2);
+		m_nodes[sibling].parent = grandParent;
+		FreeNode(parent);
 
 		// Adjust ancestor bounds.
-		while (node1 != b2_nullNode)
+		parent = grandParent;
+		while (parent != b2_nullNode)
 		{
-			b2AABB oldAABB = m_nodes[node1].aabb;
-			m_nodes[node1].aabb.Combine(m_nodes[m_nodes[node1].child1].aabb, m_nodes[m_nodes[node1].child2].aabb);
+			b2AABB oldAABB = m_nodes[parent].aabb;
+			m_nodes[parent].aabb.Combine(m_nodes[m_nodes[parent].child1].aabb, m_nodes[m_nodes[parent].child2].aabb);
 
-			if (oldAABB.Contains(m_nodes[node1].aabb))
-			{
-				break;
-			}
+			b2Assert(m_nodes[parent].leafCount > 0);
+			m_nodes[parent].leafCount -= 1;
 
-			node1 = m_nodes[node1].parent;
+			parent = m_nodes[parent].parent;
 		}
 	}
 	else
 	{
 		m_root = sibling;
 		m_nodes[sibling].parent = b2_nullNode;
-		FreeNode(node2);
+		FreeNode(parent);
 	}
 }
 
@@ -326,6 +316,7 @@ void b2DynamicTree::Rebalance(int32 iterations)
 		return;
 	}
 
+	// Rebalance the tree by removing and re-inserting leaves.
 	for (int32 i = 0; i < iterations; ++i)
 	{
 		int32 node = m_root;
@@ -334,8 +325,16 @@ void b2DynamicTree::Rebalance(int32 iterations)
 		while (m_nodes[node].IsLeaf() == false)
 		{
 			int32* children = &m_nodes[node].child1;
-			node = children[(m_path >> bit) & 1];
-			bit = (bit + 1) & (8* sizeof(uint32) - 1);
+			
+			// Child selector based on a bit in the path
+			int32 selector = (m_path >> bit) & 1;
+
+			// Select the child nod
+			node = children[selector];
+
+			// Keep bit between 0 and 31 because m_path has 32 bits
+			// bit = (bit + 1) % 31
+			bit = (bit + 1) & 0x1F;
 		}
 		++m_path;
 
@@ -362,4 +361,32 @@ int32 b2DynamicTree::ComputeHeight(int32 nodeId) const
 int32 b2DynamicTree::ComputeHeight() const
 {
 	return ComputeHeight(m_root);
+}
+
+int32 b2DynamicTree::CountLeaves(int32 nodeId) const
+{
+	if (nodeId == b2_nullNode)
+	{
+		return 0;
+	}
+
+	b2Assert(0 <= nodeId && nodeId < m_nodeCapacity);
+	b2DynamicTreeNode* node = m_nodes + nodeId;
+
+	if (node->IsLeaf())
+	{
+		b2Assert(node->leafCount == 1);
+		return 1;
+	}
+
+	int32 count1 = CountLeaves(node->child1);
+	int32 count2 = CountLeaves(node->child2);
+	int32 count = count1 + count2;
+	b2Assert(count == node->leafCount);
+	return count;
+}
+
+void b2DynamicTree::Validate() const
+{
+	CountLeaves(m_root);	
 }

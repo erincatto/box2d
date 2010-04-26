@@ -31,6 +31,7 @@ set(BOX2D_Common_SRCS
 )
 set(BOX2D_Common_HDRS
 	Common/b2BlockAllocator.h
+	Common/b2GrowableStack.h
 	Common/b2Math.h
 	Common/b2Settings.h
 	Common/b2StackAllocator.h

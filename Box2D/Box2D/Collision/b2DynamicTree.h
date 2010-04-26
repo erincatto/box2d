@@ -20,6 +20,7 @@
 #define B2_DYNAMIC_TREE_H
 
 #include <Box2D/Collision/b2Collision.h>
+#include <Box2D/Common/b2GrowableStack.h>
 
 /// A dynamic AABB tree broad-phase, inspired by Nathanael Presson's btDbvt.
 
@@ -36,7 +37,6 @@ struct b2DynamicTreeNode
 	/// This is the fattened AABB.
 	b2AABB aabb;
 
-	//int32 userData;
 	void* userData;
 
 	union
@@ -47,6 +47,7 @@ struct b2DynamicTreeNode
 
 	int32 child1;
 	int32 child2;
+	int32 leafCount;
 };
 
 /// A dynamic tree arranges data in a binary tree to accelerate
@@ -88,7 +89,8 @@ public:
 	/// Get the fat AABB for a proxy.
 	const b2AABB& GetFatAABB(int32 proxyId) const;
 
-	/// Compute the height of the tree.
+	/// Compute the height of the binary tree in O(N) time. Should not be
+	/// called often.
 	int32 ComputeHeight() const;
 
 	/// Query an AABB for overlapping proxies. The callback class
@@ -106,6 +108,8 @@ public:
 	template <typename T>
 	void RayCast(T* callback, const b2RayCastInput& input) const;
 
+	void Validate() const;
+
 private:
 
 	int32 AllocateNode();
@@ -115,6 +119,8 @@ private:
 	void RemoveLeaf(int32 node);
 
 	int32 ComputeHeight(int32 nodeId) const;
+	
+	int32 CountLeaves(int32 nodeId) const;
 
 	int32 m_root;
 
@@ -145,15 +151,12 @@ inline const b2AABB& b2DynamicTree::GetFatAABB(int32 proxyId) const
 template <typename T>
 inline void b2DynamicTree::Query(T* callback, const b2AABB& aabb) const
 {
-	const int32 k_stackSize = 128;
-	int32 stack[k_stackSize];
+	b2GrowableStack<int32, 256> stack;
+	stack.Push(m_root);
 
-	int32 count = 0;
-	stack[count++] = m_root;
-
-	while (count > 0)
+	while (stack.GetCount() > 0)
 	{
-		int32 nodeId = stack[--count];
+		int32 nodeId = stack.Pop();
 		if (nodeId == b2_nullNode)
 		{
 			continue;
@@ -173,15 +176,8 @@ inline void b2DynamicTree::Query(T* callback, const b2AABB& aabb) const
 			}
 			else
 			{
-				if (count < k_stackSize)
-				{
-					stack[count++] = node->child1;
-				}
-
-				if (count < k_stackSize)
-				{
-					stack[count++] = node->child2;
-				}
+				stack.Push(node->child1);
+				stack.Push(node->child2);
 			}
 		}
 	}
@@ -213,15 +209,12 @@ inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) con
 		segmentAABB.upperBound = b2Max(p1, t);
 	}
 
-	const int32 k_stackSize = 128;
-	int32 stack[k_stackSize];
+	b2GrowableStack<int32, 256> stack;
+	stack.Push(m_root);
 
-	int32 count = 0;
-	stack[count++] = m_root;
-
-	while (count > 0)
+	while (stack.GetCount() > 0)
 	{
-		int32 nodeId = stack[--count];
+		int32 nodeId = stack.Pop();
 		if (nodeId == b2_nullNode)
 		{
 			continue;
@@ -270,15 +263,8 @@ inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) con
 		}
 		else
 		{
-			if (count < k_stackSize)
-			{
-				stack[count++] = node->child1;
-			}
-
-			if (count < k_stackSize)
-			{
-				stack[count++] = node->child2;
-			}
+			stack.Push(node->child1);
+			stack.Push(node->child2);
 		}
 	}
 }

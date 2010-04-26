@@ -43,7 +43,6 @@ public:
 			b2Body* ground = m_world->CreateBody(&bd);
 
 			b2PolygonShape shape;
-			shape.m_radius = 0.0f;
 			shape.SetAsEdge(b2Vec2(-8.0f, 1.0f), b2Vec2(-6.0f, 1.0f));
 			ground->CreateFixture(&shape, 0.0f);
 			shape.SetAsEdge(b2Vec2(-6.0f, 1.0f), b2Vec2(-4.0f, 1.0f));
