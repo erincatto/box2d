@@ -166,6 +166,9 @@ public:
 	/// Get the flag that controls automatic clearing of forces after each time step.
 	bool GetAutoClearForces() const;
 
+	/// Get the contact manager for testing.
+	const b2ContactManager& GetContactManager() const;
+
 private:
 
 	// m_flags
@@ -280,6 +283,11 @@ inline void b2World::SetAutoClearForces(bool flag)
 inline bool b2World::GetAutoClearForces() const
 {
 	return (m_flags & e_clearForces) == e_clearForces;
+}
+
+inline const b2ContactManager& b2World::GetContactManager() const
+{
+	return m_contactManager;
 }
 
 #endif
