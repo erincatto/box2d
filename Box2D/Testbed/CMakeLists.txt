@@ -44,6 +44,7 @@ set(Testbed_Tests_SRCS
 	Tests/SliderCrank.h
 	Tests/SphereStack.h
 	Tests/TheoJansen.h
+	Tests/Tiles.h
 	Tests/TimeOfImpact.h
 	Tests/VaryingFriction.h
 	Tests/VaryingRestitution.h

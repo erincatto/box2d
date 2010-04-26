@@ -126,6 +126,12 @@ public:
 			m_debugDraw.DrawPoint(p, 6.0f, cr);
 		}
 
+		{
+			int32 height = m_tree.ComputeHeight();
+			m_debugDraw.DrawString(5, m_textLine, "dynamic tree height = %d", height);
+			m_textLine += 15;
+		}
+
 		++m_stepCount;
 	}
 
