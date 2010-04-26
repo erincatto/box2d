@@ -52,6 +52,7 @@
 #include "SliderCrank.h"
 #include "SphereStack.h"
 #include "TheoJansen.h"
+#include "Tiles.h"
 #include "TimeOfImpact.h"
 #include "VaryingFriction.h"
 #include "VaryingRestitution.h"
@@ -60,19 +61,21 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Tiles", Tiles::Create},
+	{"Character Collision", CharacterCollision::Create},
+	{"Web", Web::Create},
+	{"Continuous Test", ContinuousTest::Create},
+	{"Vertical Stack", VerticalStack::Create},
 	{"Time of Impact", TimeOfImpact::Create},
 	{"Ray-Cast", RayCast::Create},
 	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Confined", Confined::Create},
-	{"Vertical Stack", VerticalStack::Create},
 	{"Pyramid", Pyramid::Create},
 	{"Varying Restitution", VaryingRestitution::Create},
 	{"Theo Jansen's Walker", TheoJansen::Create},
 	{"Body Types", BodyTypes::Create},
-	{"Character Collision", CharacterCollision::Create},
 	{"Prismatic", Prismatic::Create},
 	{"Edge Shapes", EdgeShapes::Create},
-	{"Continuous Test", ContinuousTest::Create},
 	{"PolyCollision", PolyCollision::Create},
 	{"Polygon Shapes", PolyShapes::Create},
 	{"Apply Force", ApplyForce::Create},
@@ -95,6 +98,5 @@ TestEntry g_testEntries[] =
 	{"Shape Editing", ShapeEditing::Create},
 	{"Slider Crank", SliderCrank::Create},
 	{"Varying Friction", VaryingFriction::Create},
-	{"Web", Web::Create},
 	{NULL, NULL}
 };
