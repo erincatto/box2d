@@ -18,6 +18,7 @@
 
 #include <Box2D/Collision/b2Distance.h>
 #include <Box2D/Collision/Shapes/b2CircleShape.h>
+#include <Box2D/Collision/Shapes/b2EdgeShape.h>
 #include <Box2D/Collision/Shapes/b2PolygonShape.h>
 
 // GJK using Voronoi regions (Christer Ericson) and Barycentric coordinates.
@@ -42,6 +43,15 @@ void b2DistanceProxy::Set(const b2Shape* shape)
 			m_vertices = polygon->m_vertices;
 			m_count = polygon->m_vertexCount;
 			m_radius = polygon->m_radius;
+		}
+		break;
+
+	case b2Shape::e_edge:
+		{
+			const b2EdgeShape* edge = (b2EdgeShape*)shape;
+			m_vertices = &edge->m_vertex1;
+			m_count = 2;
+			m_radius = edge->m_radius;
 		}
 		break;
 

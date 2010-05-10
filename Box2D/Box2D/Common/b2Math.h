@@ -525,6 +525,15 @@ inline b2Vec2 b2MulT(const b2Transform& T, const b2Vec2& v)
 	return b2MulT(T.R, v - T.position);
 }
 
+// v2 = A.R' * (B.R * v1 + B.p - A.p) = (A.R' * B.R) * v1 + (B.p - A.p)
+inline b2Transform b2MulT(const b2Transform& A, const b2Transform& B)
+{
+	b2Transform C;
+	C.R = b2MulT(A.R, B.R);
+	C.position = B.position - A.position;
+	return C;
+}
+
 inline b2Vec2 b2Abs(const b2Vec2& a)
 {
 	return b2Vec2(b2Abs(a.x), b2Abs(a.y));
