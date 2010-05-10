@@ -74,3 +74,10 @@ Using many boxes for your terrain may not work well because box-like characters 
 
 ==Asteroid Type Coordinate Systems==
 Box2D does not have any support for coordinate frame wrapping. You would likely need to customize Box2D for this purpose. You may need to use a different broad-phase for this to work.
+
+=Is Box2D Deterministic?=
+For the same input, and same binary, Box2D will reproduce any simulation. Box2D does not use any random numbers nor base any computation on random events (such as timers, etc).
+
+However, people often mean a different, more stringent, thing when they ask this question. People often want to know how if Box2D can produce identical results on different binaries on different platforms. The answer is no. The reason for this answer has to do with how floating point math is implemented in many compilers and processors. I recommend reading this article if you are curious: http://www.yosefk.com/blog/consistency-how-to-defeat-the-purpose-of-ieee-floating-point.html
+
+This naturally leads to the question of fixed-point math. Box2D does not support fixed-point math. In the past Box2D was ported to the NDS in fixed-point and apparently it worked okay. Fixed-point math is slower and more tedious to develop, so I have chosen not to use fixed-point for the development of Box2D.
