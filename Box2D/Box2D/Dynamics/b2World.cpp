@@ -704,7 +704,7 @@ void b2World::SolveTOI(b2Body* body)
 
 	if (toiOther->GetType() != b2_staticBody)
 	{
-			toiContact->m_flags |= b2Contact::e_bulletHitFlag;
+		toiContact->m_flags |= b2Contact::e_bulletHitFlag;
 	}
 }
 

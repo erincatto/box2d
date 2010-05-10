@@ -47,8 +47,9 @@ public:
 	{
 		e_unknown= -1,
 		e_circle = 0,
-		e_polygon = 1,
-		e_typeCount = 2,
+		e_edge = 1,
+		e_polygon = 2,
+		e_typeCount = 3,
 	};
 
 	b2Shape() { m_type = e_unknown; }

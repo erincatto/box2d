@@ -1,6 +1,7 @@
 set(BOX2D_Collision_SRCS
 	Collision/b2BroadPhase.cpp
 	Collision/b2CollideCircle.cpp
+	Collision/b2CollideEdge.cpp
 	Collision/b2CollidePolygon.cpp
 	Collision/b2Collision.cpp
 	Collision/b2Distance.cpp
@@ -16,10 +17,12 @@ set(BOX2D_Collision_HDRS
 )
 set(BOX2D_Shapes_SRCS
 	Collision/Shapes/b2CircleShape.cpp
+	Collision/Shapes/b2EdgeShape.cpp
 	Collision/Shapes/b2PolygonShape.cpp
 )
 set(BOX2D_Shapes_HDRS
 	Collision/Shapes/b2CircleShape.h
+	Collision/Shapes/b2EdgeShape.h
 	Collision/Shapes/b2PolygonShape.h
 	Collision/Shapes/b2Shape.h
 )
