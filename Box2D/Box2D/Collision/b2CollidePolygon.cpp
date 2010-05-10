@@ -173,14 +173,16 @@ static void b2FindIncidentEdge(b2ClipVertex c[2],
 	int32 i2 = i1 + 1 < count2 ? i1 + 1 : 0;
 
 	c[0].v = b2Mul(xf2, vertices2[i1]);
-	c[0].id.features.referenceEdge = (uint8)edge1;
-	c[0].id.features.incidentEdge = (uint8)i1;
-	c[0].id.features.incidentVertex = 0;
+	c[0].id.cf.indexA = (uint8)edge1;
+	c[0].id.cf.indexB = (uint8)i1;
+	c[0].id.cf.typeA = b2ContactFeature::e_edge;
+	c[0].id.cf.typeB = b2ContactFeature::e_vertex;
 
 	c[1].v = b2Mul(xf2, vertices2[i2]);
-	c[1].id.features.referenceEdge = (uint8)edge1;
-	c[1].id.features.incidentEdge = (uint8)i2;
-	c[1].id.features.incidentVertex = 1;
+	c[1].id.cf.indexA = (uint8)edge1;
+	c[1].id.cf.indexB = (uint8)i2;
+	c[1].id.cf.typeA = b2ContactFeature::e_edge;
+	c[1].id.cf.typeB = b2ContactFeature::e_vertex;
 }
 
 // Find edge normal of max separation on A - return if separating axis is found
@@ -242,8 +244,11 @@ void b2CollidePolygons(b2Manifold* manifold,
 	int32 count1 = poly1->m_vertexCount;
 	const b2Vec2* vertices1 = poly1->m_vertices;
 
-	b2Vec2 v11 = vertices1[edge1];
-	b2Vec2 v12 = edge1 + 1 < count1 ? vertices1[edge1+1] : vertices1[0];
+	int32 iv1 = edge1;
+	int32 iv2 = edge1 + 1 < count1 ? edge1 + 1 : 0;
+
+	b2Vec2 v11 = vertices1[iv1];
+	b2Vec2 v12 = vertices1[iv2];
 
 	b2Vec2 localTangent = v12 - v11;
 	localTangent.Normalize();
@@ -270,13 +275,13 @@ void b2CollidePolygons(b2Manifold* manifold,
 	int np;
 
 	// Clip to box side 1
-	np = b2ClipSegmentToLine(clipPoints1, incidentEdge, -tangent, sideOffset1);
+	np = b2ClipSegmentToLine(clipPoints1, incidentEdge, -tangent, sideOffset1, iv1);
 
 	if (np < 2)
 		return;
 
 	// Clip to negative box side 1
-	np = b2ClipSegmentToLine(clipPoints2, clipPoints1,  tangent, sideOffset2);
+	np = b2ClipSegmentToLine(clipPoints2, clipPoints1,  tangent, sideOffset2, iv2);
 
 	if (np < 2)
 	{
@@ -297,7 +302,15 @@ void b2CollidePolygons(b2Manifold* manifold,
 			b2ManifoldPoint* cp = manifold->points + pointCount;
 			cp->localPoint = b2MulT(xf2, clipPoints2[i].v);
 			cp->id = clipPoints2[i].id;
-			cp->id.features.flip = flip;
+			if (flip)
+			{
+				// Swap features
+				b2ContactFeature cf = cp->id.cf;
+				cp->id.cf.indexA = cf.indexB;
+				cp->id.cf.indexB = cf.indexA;
+				cp->id.cf.typeA = cf.typeB;
+				cp->id.cf.typeB = cf.typeA;
+			}
 			++pointCount;
 		}
 	}
