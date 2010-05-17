@@ -81,3 +81,12 @@ For the same input, and same binary, Box2D will reproduce any simulation. Box2D 
 However, people often mean a different, more stringent, thing when they ask this question. People often want to know if Box2D can produce identical results on different binaries on different platforms. The answer is no. The reason for this answer has to do with how floating point math is implemented in many compilers and processors. I recommend reading this article if you are curious: http://www.yosefk.com/blog/consistency-how-to-defeat-the-purpose-of-ieee-floating-point.html
 
 This naturally leads to the question of fixed-point math. Box2D does not support fixed-point math. In the past Box2D was ported to the NDS in fixed-point and apparently it worked okay. Fixed-point math is slower and more tedious to develop, so I have chosen not to use fixed-point for the development of Box2D.
+
+=Why is the Restitution/Friction mixing inaccurate?=
+A physically correct restitution value must be measured in experiments. But as soon as you change the geometry from the experiment then the value is wrong. Next, adding simultaneous collision makes the answer worse. We've been down this road before.
+
+So the question of accuracy has been answered: failure.
+
+The only remaining question is how do we make it convenient. On this opinions may vary.
+
+b2Settings is just that. Settings you can adjust if you know what you are doing.
