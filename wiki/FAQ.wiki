@@ -82,7 +82,7 @@ However, people often mean a different, more stringent, thing when they ask this
 
 This naturally leads to the question of fixed-point math. Box2D does not support fixed-point math. In the past Box2D was ported to the NDS in fixed-point and apparently it worked okay. Fixed-point math is slower and more tedious to develop, so I have chosen not to use fixed-point for the development of Box2D.
 
-=Why is the Restitution/Friction mixing inaccurate?=
+=Why is the restitution/friction mixing inaccurate?=
 A physically correct restitution value must be measured in experiments. But as soon as you change the geometry from the experiment then the value is wrong. Next, adding simultaneous collision makes the answer worse. We've been down this road before.
 
 So the question of accuracy has been answered: failure.
