@@ -16,18 +16,21 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef B2_EDGE_SHAPE_H
-#define B2_EDGE_SHAPE_H
+#ifndef B2_LOOP_SHAPE_H
+#define B2_LOOP_SHAPE_H
 
 #include <Box2D/Collision/Shapes/b2Shape.h>
 
-/// A line segment (edge) shape. These can be connected in chains or loops
-/// to other edge shapes. The connectivity information is used to ensure
-/// correct contact normals.
-class b2EdgeShape : public b2Shape
+class b2EdgeShape;
+
+/// A loop shape is a free form sequence of line segments that form a circular list.
+/// The loop may cross upon itself, but this is not recommended for smooth collision.
+/// The loop has double sided collision, so you can use inside and outside collision.
+/// Therefore, you may use any winding order.
+class b2LoopShape : public b2Shape
 {
 public:
-	b2EdgeShape();
+	b2LoopShape();
 
 	/// Implement b2Shape.
 	b2Shape* Clone(b2BlockAllocator* allocator) const;
@@ -35,38 +38,34 @@ public:
 	/// @see b2Shape::GetChildCount
 	int32 GetChildCount() const;
 
+	/// Get a child edge.
+	void GetChildEdge(b2EdgeShape* edge, int32 index) const;
+
+	/// This always return false.
 	/// @see b2Shape::TestPoint
 	bool TestPoint(const b2Transform& transform, const b2Vec2& p) const;
 
 	/// Implement b2Shape.
 	bool RayCast(b2RayCastOutput* output, const b2RayCastInput& input,
-				const b2Transform& transform, int32 childIndex) const;
+					const b2Transform& transform, int32 childIndex) const;
 
 	/// @see b2Shape::ComputeAABB
 	void ComputeAABB(b2AABB* aabb, const b2Transform& transform, int32 childIndex) const;
 
+	/// Chains have zero mass.
 	/// @see b2Shape::ComputeMass
 	void ComputeMass(b2MassData* massData, float32 density) const;
-	
-	/// These are the edge vertices
-	b2Vec2 m_vertex1, m_vertex2;
 
-	/// Optional adjacent vertices. These are used for smooth collision.
-	b2Vec2 m_vertex0, m_vertex3;
-	bool m_hasVertex0, m_hasVertex3;
-	
-	/// Indices of vertices for feature caching.
-	int32 m_index1, m_index2;
+	b2Vec2* m_vertices;
+	int32 m_count;
 };
 
-inline b2EdgeShape::b2EdgeShape()
+inline b2LoopShape::b2LoopShape()
 {
-	m_type = e_edge;
+	m_type = e_loop;
 	m_radius = b2_polygonRadius;
-	m_hasVertex0 = false;
-	m_hasVertex3 = false;
-	m_index1 = 0;
-	m_index2 = 1;
+	m_vertices = 0;
+	m_count = 0;
 }
 
 #endif
