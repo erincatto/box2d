@@ -110,6 +110,8 @@ void b2ContactManager::Collide()
 	{
 		b2Fixture* fixtureA = c->GetFixtureA();
 		b2Fixture* fixtureB = c->GetFixtureB();
+		int32 indexA = c->GetChildIndexA();
+		int32 indexB = c->GetChildIndexB();
 		b2Body* bodyA = fixtureA->GetBody();
 		b2Body* bodyB = fixtureB->GetBody();
 
@@ -144,8 +146,8 @@ void b2ContactManager::Collide()
 			c->m_flags &= ~b2Contact::e_filterFlag;
 		}
 
-		int32 proxyIdA = fixtureA->m_proxyId;
-		int32 proxyIdB = fixtureB->m_proxyId;
+		int32 proxyIdA = fixtureA->m_proxies[indexA].proxyId;
+		int32 proxyIdB = fixtureB->m_proxies[indexB].proxyId;
 		bool overlap = m_broadPhase.TestOverlap(proxyIdA, proxyIdB);
 
 		// Here we destroy contacts that cease to overlap in the broad-phase.
@@ -170,8 +172,14 @@ void b2ContactManager::FindNewContacts()
 
 void b2ContactManager::AddPair(void* proxyUserDataA, void* proxyUserDataB)
 {
-	b2Fixture* fixtureA = (b2Fixture*)proxyUserDataA;
-	b2Fixture* fixtureB = (b2Fixture*)proxyUserDataB;
+	b2FixtureProxy* proxyA = (b2FixtureProxy*)proxyUserDataA;
+	b2FixtureProxy* proxyB = (b2FixtureProxy*)proxyUserDataB;
+
+	b2Fixture* fixtureA = proxyA->fixture;
+	b2Fixture* fixtureB = proxyB->fixture;
+
+	int32 indexA = proxyA->childIndex;
+	int32 indexB = proxyB->childIndex;
 
 	b2Body* bodyA = fixtureA->GetBody();
 	b2Body* bodyB = fixtureB->GetBody();
@@ -190,13 +198,16 @@ void b2ContactManager::AddPair(void* proxyUserDataA, void* proxyUserDataB)
 		{
 			b2Fixture* fA = edge->contact->GetFixtureA();
 			b2Fixture* fB = edge->contact->GetFixtureB();
-			if (fA == fixtureA && fB == fixtureB)
+			int32 iA = edge->contact->GetChildIndexA();
+			int32 iB = edge->contact->GetChildIndexB();
+
+			if (fA == fixtureA && fB == fixtureB && iA == indexA && iB == indexB)
 			{
 				// A contact already exists.
 				return;
 			}
 
-			if (fA == fixtureB && fB == fixtureA)
+			if (fA == fixtureB && fB == fixtureA && iA == indexB && iB == indexA)
 			{
 				// A contact already exists.
 				return;
@@ -219,11 +230,13 @@ void b2ContactManager::AddPair(void* proxyUserDataA, void* proxyUserDataB)
 	}
 
 	// Call the factory.
-	b2Contact* c = b2Contact::Create(fixtureA, fixtureB, m_allocator);
+	b2Contact* c = b2Contact::Create(fixtureA, indexA, fixtureB, indexB, m_allocator);
 
 	// Contact creation may swap fixtures.
 	fixtureA = c->GetFixtureA();
 	fixtureB = c->GetFixtureB();
+	indexA = c->GetChildIndexA();
+	indexB = c->GetChildIndexB();
 	bodyA = fixtureA->GetBody();
 	bodyB = fixtureB->GetBody();
 

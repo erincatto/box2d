@@ -27,7 +27,6 @@ class b2Fixture;
 class b2Body;
 class b2Joint;
 class b2Contact;
-struct b2ContactPoint;
 struct b2ContactResult;
 struct b2Manifold;
 

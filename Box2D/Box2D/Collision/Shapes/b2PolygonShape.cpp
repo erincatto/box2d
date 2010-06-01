@@ -77,6 +77,11 @@ void b2PolygonShape::SetAsEdge(const b2Vec2& v1, const b2Vec2& v2)
 	m_normals[1] = -m_normals[0];
 }
 
+int32 b2PolygonShape::GetChildCount() const
+{
+	return 1;
+}
+
 static b2Vec2 ComputeCentroid(const b2Vec2* vs, int32 count)
 {
 	b2Assert(count >= 2);
@@ -198,8 +203,11 @@ bool b2PolygonShape::TestPoint(const b2Transform& xf, const b2Vec2& p) const
 	return true;
 }
 
-bool b2PolygonShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input, const b2Transform& xf) const
+bool b2PolygonShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input,
+								const b2Transform& xf, int32 childIndex) const
 {
+	B2_NOT_USED(childIndex);
+
 	// Put the ray into the polygon's frame of reference.
 	b2Vec2 p1 = b2MulT(xf.R, input.p1 - xf.position);
 	b2Vec2 p2 = b2MulT(xf.R, input.p2 - xf.position);
@@ -321,8 +329,10 @@ bool b2PolygonShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& inpu
 	return false;
 }
 
-void b2PolygonShape::ComputeAABB(b2AABB* aabb, const b2Transform& xf) const
+void b2PolygonShape::ComputeAABB(b2AABB* aabb, const b2Transform& xf, int32 childIndex) const
 {
+	B2_NOT_USED(childIndex);
+
 	b2Vec2 lower = b2Mul(xf, m_vertices[0]);
 	b2Vec2 upper = lower;
 
