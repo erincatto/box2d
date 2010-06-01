@@ -20,6 +20,10 @@
 #include <Box2D/Dynamics/Contacts/b2CircleContact.h>
 #include <Box2D/Dynamics/Contacts/b2PolygonAndCircleContact.h>
 #include <Box2D/Dynamics/Contacts/b2PolygonContact.h>
+#include <Box2D/Dynamics/Contacts/b2EdgeAndCircleContact.h>
+#include <Box2D/Dynamics/Contacts/b2EdgeAndPolygonContact.h>
+#include <Box2D/Dynamics/Contacts/b2LoopAndCircleContact.h>
+#include <Box2D/Dynamics/Contacts/b2LoopAndPolygonContact.h>
 #include <Box2D/Dynamics/Contacts/b2ContactSolver.h>
 
 #include <Box2D/Collision/b2Collision.h>
@@ -38,6 +42,10 @@ void b2Contact::InitializeRegisters()
 	AddType(b2CircleContact::Create, b2CircleContact::Destroy, b2Shape::e_circle, b2Shape::e_circle);
 	AddType(b2PolygonAndCircleContact::Create, b2PolygonAndCircleContact::Destroy, b2Shape::e_polygon, b2Shape::e_circle);
 	AddType(b2PolygonContact::Create, b2PolygonContact::Destroy, b2Shape::e_polygon, b2Shape::e_polygon);
+	AddType(b2PolygonContact::Create, b2EdgeAndCircleContact::Destroy, b2Shape::e_polygon, b2Shape::e_polygon);
+	AddType(b2PolygonContact::Create, b2EdgeAndPolygonContact::Destroy, b2Shape::e_polygon, b2Shape::e_polygon);
+	AddType(b2PolygonContact::Create, b2LoopAndCircleContact::Destroy, b2Shape::e_polygon, b2Shape::e_polygon);
+	AddType(b2PolygonContact::Create, b2LoopAndPolygonContact::Destroy, b2Shape::e_polygon, b2Shape::e_polygon);
 }
 
 void b2Contact::AddType(b2ContactCreateFcn* createFcn, b2ContactDestroyFcn* destoryFcn,
@@ -58,7 +66,7 @@ void b2Contact::AddType(b2ContactCreateFcn* createFcn, b2ContactDestroyFcn* dest
 	}
 }
 
-b2Contact* b2Contact::Create(b2Fixture* fixtureA, b2Fixture* fixtureB, b2BlockAllocator* allocator)
+b2Contact* b2Contact::Create(b2Fixture* fixtureA, int32 indexA, b2Fixture* fixtureB, int32 indexB, b2BlockAllocator* allocator)
 {
 	if (s_initialized == false)
 	{
@@ -77,11 +85,11 @@ b2Contact* b2Contact::Create(b2Fixture* fixtureA, b2Fixture* fixtureB, b2BlockAl
 	{
 		if (s_registers[type1][type2].primary)
 		{
-			return createFcn(fixtureA, fixtureB, allocator);
+			return createFcn(fixtureA, indexA, fixtureB, indexB, allocator);
 		}
 		else
 		{
-			return createFcn(fixtureB, fixtureA, allocator);
+			return createFcn(fixtureB, indexB, fixtureA, indexA, allocator);
 		}
 	}
 	else
@@ -110,12 +118,15 @@ void b2Contact::Destroy(b2Contact* contact, b2BlockAllocator* allocator)
 	destroyFcn(contact, allocator);
 }
 
-b2Contact::b2Contact(b2Fixture* fA, b2Fixture* fB)
+b2Contact::b2Contact(b2Fixture* fA, int32 indexA, b2Fixture* fB, int32 indexB)
 {
 	m_flags = e_enabledFlag;
 
 	m_fixtureA = fA;
 	m_fixtureB = fB;
+
+	m_indexA = indexA;
+	m_indexB = indexB;
 
 	m_manifold.pointCount = 0;
 

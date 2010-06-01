@@ -30,14 +30,18 @@ public:
 	/// Implement b2Shape.
 	b2Shape* Clone(b2BlockAllocator* allocator) const;
 
+	/// @see b2Shape::GetChildCount
+	int32 GetChildCount() const;
+
 	/// Implement b2Shape.
 	bool TestPoint(const b2Transform& transform, const b2Vec2& p) const;
 
 	/// Implement b2Shape.
-	bool RayCast(b2RayCastOutput* output, const b2RayCastInput& input, const b2Transform& transform) const;
+	bool RayCast(b2RayCastOutput* output, const b2RayCastInput& input,
+				const b2Transform& transform, int32 childIndex) const;
 
 	/// @see b2Shape::ComputeAABB
-	void ComputeAABB(b2AABB* aabb, const b2Transform& transform) const;
+	void ComputeAABB(b2AABB* aabb, const b2Transform& transform, int32 childIndex) const;
 
 	/// @see b2Shape::ComputeMass
 	void ComputeMass(b2MassData* massData, float32 density) const;
