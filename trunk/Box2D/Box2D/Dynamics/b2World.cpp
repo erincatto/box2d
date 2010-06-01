@@ -150,7 +150,7 @@ void b2World::DestroyBody(b2Body* b)
 			m_destructionListener->SayGoodbye(f0);
 		}
 
-		f0->DestroyProxy(&m_contactManager.m_broadPhase);
+		f0->DestroyProxies(&m_contactManager.m_broadPhase);
 		f0->Destroy(&m_blockAllocator);
 		f0->~b2Fixture();
 		m_blockAllocator.Free(f0, sizeof(b2Fixture));
@@ -844,8 +844,8 @@ struct b2WorldQueryWrapper
 {
 	bool QueryCallback(int32 proxyId)
 	{
-		b2Fixture* fixture = (b2Fixture*)broadPhase->GetUserData(proxyId);
-		return callback->ReportFixture(fixture);
+		b2FixtureProxy* proxy = (b2FixtureProxy*)broadPhase->GetUserData(proxyId);
+		return callback->ReportFixture(proxy->fixture);
 	}
 
 	const b2BroadPhase* broadPhase;
@@ -865,9 +865,11 @@ struct b2WorldRayCastWrapper
 	float32 RayCastCallback(const b2RayCastInput& input, int32 proxyId)
 	{
 		void* userData = broadPhase->GetUserData(proxyId);
-		b2Fixture* fixture = (b2Fixture*)userData;
+		b2FixtureProxy* proxy = (b2FixtureProxy*)userData;
+		b2Fixture* fixture = proxy->fixture;
+		int32 index = proxy->childIndex;
 		b2RayCastOutput output;
-		bool hit = fixture->RayCast(&output, input);
+		bool hit = fixture->RayCast(&output, input, index);
 
 		if (hit)
 		{
@@ -1023,13 +1025,13 @@ void b2World::DrawDebugData()
 		b2Color color(0.3f, 0.9f, 0.9f);
 		for (b2Contact* c = m_contactManager.m_contactList; c; c = c->GetNext())
 		{
-			b2Fixture* fixtureA = c->GetFixtureA();
-			b2Fixture* fixtureB = c->GetFixtureB();
+			//b2Fixture* fixtureA = c->GetFixtureA();
+			//b2Fixture* fixtureB = c->GetFixtureB();
 
-			b2Vec2 cA = fixtureA->GetAABB().GetCenter();
-			b2Vec2 cB = fixtureB->GetAABB().GetCenter();
+			//b2Vec2 cA = fixtureA->GetAABB().GetCenter();
+			//b2Vec2 cB = fixtureB->GetAABB().GetCenter();
 
-			m_debugDraw->DrawSegment(cA, cB, color);
+			//m_debugDraw->DrawSegment(cA, cB, color);
 		}
 	}
 
@@ -1047,14 +1049,18 @@ void b2World::DrawDebugData()
 
 			for (b2Fixture* f = b->GetFixtureList(); f; f = f->GetNext())
 			{
-				b2AABB aabb = bp->GetFatAABB(f->m_proxyId);
-				b2Vec2 vs[4];
-				vs[0].Set(aabb.lowerBound.x, aabb.lowerBound.y);
-				vs[1].Set(aabb.upperBound.x, aabb.lowerBound.y);
-				vs[2].Set(aabb.upperBound.x, aabb.upperBound.y);
-				vs[3].Set(aabb.lowerBound.x, aabb.upperBound.y);
+				for (int32 i = 0; i < f->m_proxyCount; ++i)
+				{
+					b2FixtureProxy* proxy = f->m_proxies + i;
+					b2AABB aabb = bp->GetFatAABB(proxy->proxyId);
+					b2Vec2 vs[4];
+					vs[0].Set(aabb.lowerBound.x, aabb.lowerBound.y);
+					vs[1].Set(aabb.upperBound.x, aabb.lowerBound.y);
+					vs[2].Set(aabb.upperBound.x, aabb.upperBound.y);
+					vs[3].Set(aabb.lowerBound.x, aabb.upperBound.y);
 
-				m_debugDraw->DrawPolygon(vs, 4, color);
+					m_debugDraw->DrawPolygon(vs, 4, color);
+				}
 			}
 		}
 	}
