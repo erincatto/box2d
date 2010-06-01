@@ -263,7 +263,7 @@ public:
 		callback.m_debugDraw = &m_debugDraw;
 
 		b2AABB aabb;
-		callback.m_circle.ComputeAABB(&aabb, callback.m_transform);
+		callback.m_circle.ComputeAABB(&aabb, callback.m_transform, 0);
 
 		m_world->QueryAABB(&callback, aabb);
 

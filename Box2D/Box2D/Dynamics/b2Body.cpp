@@ -153,7 +153,7 @@ b2Fixture* b2Body::CreateFixture(const b2FixtureDef* def)
 	if (m_flags & e_activeFlag)
 	{
 		b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
-		fixture->CreateProxy(broadPhase, m_xf);
+		fixture->CreateProxies(broadPhase, m_xf);
 	}
 
 	fixture->m_next = m_fixtureList;
@@ -235,13 +235,8 @@ void b2Body::DestroyFixture(b2Fixture* fixture)
 
 	if (m_flags & e_activeFlag)
 	{
-		b2Assert(fixture->m_proxyId != b2BroadPhase::e_nullProxy);
 		b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
-		fixture->DestroyProxy(broadPhase);
-	}
-	else
-	{
-		b2Assert(fixture->m_proxyId == b2BroadPhase::e_nullProxy);
+		fixture->DestroyProxies(broadPhase);
 	}
 
 	fixture->Destroy(allocator);
@@ -441,7 +436,7 @@ void b2Body::SetActive(bool flag)
 		b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
 		for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
 		{
-			f->CreateProxy(broadPhase, m_xf);
+			f->CreateProxies(broadPhase, m_xf);
 		}
 
 		// Contacts are created the next time step.
@@ -454,7 +449,7 @@ void b2Body::SetActive(bool flag)
 		b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
 		for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
 		{
-			f->DestroyProxy(broadPhase);
+			f->DestroyProxies(broadPhase);
 		}
 
 		// Destroy the attached contacts.
