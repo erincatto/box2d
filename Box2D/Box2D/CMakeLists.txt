@@ -18,11 +18,13 @@ set(BOX2D_Collision_HDRS
 set(BOX2D_Shapes_SRCS
 	Collision/Shapes/b2CircleShape.cpp
 	Collision/Shapes/b2EdgeShape.cpp
+	Collision/Shapes/b2LoopShape.cpp
 	Collision/Shapes/b2PolygonShape.cpp
 )
 set(BOX2D_Shapes_HDRS
 	Collision/Shapes/b2CircleShape.h
 	Collision/Shapes/b2EdgeShape.h
+	Collision/Shapes/b2LoopShape.h
 	Collision/Shapes/b2PolygonShape.h
 	Collision/Shapes/b2Shape.h
 )
@@ -61,6 +63,10 @@ set(BOX2D_Contacts_SRCS
 	Dynamics/Contacts/b2Contact.cpp
 	Dynamics/Contacts/b2ContactSolver.cpp
 	Dynamics/Contacts/b2PolygonAndCircleContact.cpp
+	Dynamics/Contacts/b2EdgeAndCircleContact.cpp
+	Dynamics/Contacts/b2EdgeAndPolygonContact.cpp
+	Dynamics/Contacts/b2LoopAndCircleContact.cpp
+	Dynamics/Contacts/b2LoopAndPolygonContact.cpp
 	Dynamics/Contacts/b2PolygonContact.cpp
 	Dynamics/Contacts/b2TOISolver.cpp
 )
@@ -69,6 +75,10 @@ set(BOX2D_Contacts_HDRS
 	Dynamics/Contacts/b2Contact.h
 	Dynamics/Contacts/b2ContactSolver.h
 	Dynamics/Contacts/b2PolygonAndCircleContact.h
+	Dynamics/Contacts/b2EdgeAndCircleContact.h
+	Dynamics/Contacts/b2EdgeAndPolygonContact.h
+	Dynamics/Contacts/b2LoopAndCircleContact.h
+	Dynamics/Contacts/b2LoopAndPolygonContact.h
 	Dynamics/Contacts/b2PolygonContact.h
 	Dynamics/Contacts/b2TOISolver.h
 )

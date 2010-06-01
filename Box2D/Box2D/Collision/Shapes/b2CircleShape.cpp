@@ -27,6 +27,11 @@ b2Shape* b2CircleShape::Clone(b2BlockAllocator* allocator) const
 	return clone;
 }
 
+int32 b2CircleShape::GetChildCount() const
+{
+	return 1;
+}
+
 bool b2CircleShape::TestPoint(const b2Transform& transform, const b2Vec2& p) const
 {
 	b2Vec2 center = transform.position + b2Mul(transform.R, m_p);
@@ -38,8 +43,11 @@ bool b2CircleShape::TestPoint(const b2Transform& transform, const b2Vec2& p) con
 // From Section 3.1.2
 // x = s + a * r
 // norm(x) = radius
-bool b2CircleShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input, const b2Transform& transform) const
+bool b2CircleShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input,
+							const b2Transform& transform, int32 childIndex) const
 {
+	B2_NOT_USED(childIndex);
+
 	b2Vec2 position = transform.position + b2Mul(transform.R, m_p);
 	b2Vec2 s = input.p1 - position;
 	float32 b = b2Dot(s, s) - m_radius * m_radius;
@@ -72,8 +80,10 @@ bool b2CircleShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input
 	return false;
 }
 
-void b2CircleShape::ComputeAABB(b2AABB* aabb, const b2Transform& transform) const
+void b2CircleShape::ComputeAABB(b2AABB* aabb, const b2Transform& transform, int32 childIndex) const
 {
+	B2_NOT_USED(childIndex);
+
 	b2Vec2 p = transform.position + b2Mul(transform.R, m_p);
 	aabb->lowerBound.Set(p.x - m_radius, p.y - m_radius);
 	aabb->upperBound.Set(p.x + m_radius, p.y + m_radius);

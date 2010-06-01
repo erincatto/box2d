@@ -21,6 +21,14 @@
 #include <Box2D/Collision/Shapes/b2EdgeShape.h>
 #include <Box2D/Collision/Shapes/b2PolygonShape.h>
 
+enum b2EdgeType
+{
+	e_isolated,
+	e_concave,
+	e_flat,
+	e_convex
+};
+
 // Compute contact points for edge versus circle.
 // This accounts for edge connectivity.
 void b2CollideEdgeAndCircle(b2Manifold* manifold,
@@ -57,9 +65,9 @@ void b2CollideEdgeAndCircle(b2Manifold* manifold,
 		}
 
 		// Is there an edge connected to A?
-		if (edgeA->m_side1)
+		if (edgeA->m_hasVertex0)
 		{
-			b2Vec2 A1 = edgeA->m_side1->m_vertex1;
+			b2Vec2 A1 = edgeA->m_vertex0;
 			b2Vec2 B1 = A;
 			b2Vec2 e1 = B1 - A1;
 			float32 u1 = b2Dot(e1, B1 - Q);
@@ -95,9 +103,9 @@ void b2CollideEdgeAndCircle(b2Manifold* manifold,
 		}
 
 		// Is there an edge connected to B?
-		if (edgeA->m_side2)
+		if (edgeA->m_hasVertex3)
 		{
-			b2Vec2 B2 = edgeA->m_side2->m_vertex2;
+			b2Vec2 B2 = edgeA->m_vertex3;
 			b2Vec2 A2 = B;
 			b2Vec2 e2 = B2 - A2;
 			float32 v2 = b2Dot(e2, Q - A2);
@@ -150,8 +158,6 @@ void b2CollideEdgeAndCircle(b2Manifold* manifold,
 	manifold->points[0].localPoint = circleB->m_p;
 }
 
-#if 0
-
 struct b2EPAxis
 {
 	enum Type
@@ -166,16 +172,78 @@ struct b2EPAxis
 	float32 separation;
 };
 
-static b2EPAxis b2EPSeparation(const b2EdgeShape* edgeA, const b2PolygonShape* polygonB)
+static b2EPAxis b2EPSeparation(const b2Vec2& v1, const b2Vec2& v2, const b2Vec2& n, const b2PolygonShape* polygonB)
 {
-	// Assume polygonB centroid is right of edgeA.
-	b2Vec2 e = edgeA->m_vertex2 - edgeA->m_vertex1;
-	b2Vec2 normalA(e.y, -e.x);
-	normalA.Normalize();
+	// EdgeA separation
+	b2EPAxis axisA;
+	axisA.type = b2EPAxis::e_edgeA;
+	axisA.index = 0;
+	axisA.separation = b2Dot(n, polygonB->m_vertices[0] - v1);
+	for (int32 i = 1; i < polygonB->m_vertexCount; ++i)
+	{
+		float32 s = b2Dot(n, polygonB->m_vertices[i] - v1);
+		if (s > axisA.separation)
+		{
+			axisA.separation = s;
+			if (s > 0.0f)
+			{
+				return axisA;
+			}
+		}
+	}
 
+	// PolygonB separation
+	b2EPAxis axisB;
+	axisB.type = b2EPAxis::e_edgeB;
+	axisB.index = 0;
+	axisB.separation = -FLT_MAX;
+	for (int32 i = 0; i < polygonB->m_vertexCount; ++i)
+	{
+		float32 s1 = b2Dot(polygonB->m_normals[i], v1 - polygonB->m_vertices[i]);	
+		float32 s2 = b2Dot(polygonB->m_normals[i], v2 - polygonB->m_vertices[i]);
+		float32 s = b2Min(s1, s2);
+		if (s > axisB.separation)
+		{
+			axisB.index = i;
+			axisB.separation = s;
+
+			if (s > 0.0f)
+			{
+				return axisB;
+			}
+		}
+	}
+
+	// Return the best axis, using hysteresis for jitter reduction.
+	const float32 k_relativeTol = 0.98f;
+	const float32 k_absoluteTol = 0.001f;
+
+	if (axisB.separation > k_relativeTol * axisA.separation + k_absoluteTol)
+	{
+		return axisB;
+	}
+	else
+	{
+		return axisA;
+	}
 
 }
 
+// Collide and edge and polygon. This uses the SAT and clipping to produce up to 2 contact points.
+// Edge adjacency is handle to produce locally valid contact points and normals. This is intended
+// to allow the polygon to slide smoothly over an edge chain.
+//
+// Algorithm
+// 1. Classify front-side or back-side collision with edge.
+// 2. Compute separation
+// 3. Process adjacent edges
+// 4. Classify adjacent edge as convex, flat, null, or concave
+// 5. Skip null or concave edges. Concave edges get a separate manifold.
+// 6. If the edge is flat, compute contact points as normal. Discard boundary points.
+// 7. If the edge is convex, compute it's separation.
+// 8. Use the minimum separation of up to three edges. If the minimum separation
+//    is not the primary edge, return.
+// 9. If the minimum separation is the primary edge, compute the contact points and return.
 void b2CollideEdgeAndPolygon(	b2Manifold* manifold,
 								const b2EdgeShape* edgeA, const b2Transform& xfA,
 								const b2PolygonShape* polygonB_in, const b2Transform& xfB)
@@ -194,100 +262,109 @@ void b2CollideEdgeAndPolygon(	b2Manifold* manifold,
 		polygonB.m_normals[i] = b2Mul(xf.R, polygonB_in->m_normals[i]);
 	}
 
+	// Edge geometry
+	b2Vec2 v1 = edgeA->m_vertex1;
+	b2Vec2 v2 = edgeA->m_vertex2;
+	b2Vec2 e = v2 - v1;
+	b2Vec2 n(e.y, -e.x);
+	n.Normalize();
 
-
-	// Find the min separating edge.
-	int32 normalIndex = 0;
-	float32 separation = -b2_maxFloat;
-	float32 radius = polygonA->m_radius + circleB->m_radius;
-	int32 vertexCount = polygonA->m_vertexCount;
-	const b2Vec2* vertices = polygonA->m_vertices;
-	const b2Vec2* normals = polygonA->m_normals;
-
-	for (int32 i = 0; i < vertexCount; ++i)
+	// Determine side
+	bool isFrontSide = b2Dot(n, polygonB.m_centroid - v1) >= 0.0f;
+	if (isFrontSide == false)
 	{
-		float32 s = b2Dot(normals[i], cLocal - vertices[i]);
-
-		if (s > radius)
-		{
-			// Early out.
-			return;
-		}
-
-		if (s > separation)
-		{
-			separation = s;
-			normalIndex = i;
-		}
+		// flip normal for backside collision
+		n = -n;
 	}
 
-	// Vertices that subtend the incident face.
-	int32 vertIndex1 = normalIndex;
-	int32 vertIndex2 = vertIndex1 + 1 < vertexCount ? vertIndex1 + 1 : 0;
-	b2Vec2 v1 = vertices[vertIndex1];
-	b2Vec2 v2 = vertices[vertIndex2];
-
-	// If the center is inside the polygon ...
-	if (separation < b2_epsilon)
+	// Compute primary separating axis
+	b2EPAxis primaryAxis = b2EPSeparation(v1, v2, n, &polygonB);
+	if (primaryAxis.separation > 0.0f)
 	{
-		manifold->pointCount = 1;
-		manifold->type = b2Manifold::e_faceA;
-		manifold->localNormal = normals[normalIndex];
-		manifold->localPoint = 0.5f * (v1 + v2);
-		manifold->points[0].localPoint = circleB->m_p;
-		manifold->points[0].id.key = 0;
+		// Shapes are separated
 		return;
 	}
 
-	// Compute barycentric coordinates
-	float32 u1 = b2Dot(cLocal - v1, v2 - v1);
-	float32 u2 = b2Dot(cLocal - v2, v1 - v2);
-	if (u1 <= 0.0f)
+	// Classify adjacent edges
+	b2EdgeType type1 = e_isolated, type2 = e_isolated;
+	if (edgeA->m_hasVertex0)
 	{
-		if (b2DistanceSquared(cLocal, v1) > radius * radius)
+		b2Vec2 v0 = edgeA->m_vertex0;
+		float32 s = b2Dot(n, v0 - v1);
+		if (s > 0.1f * b2_linearSlop)
+		{
+			type1 = e_concave;
+		}
+		else if (s >= -0.1f * b2_linearSlop)
+		{
+			type1 = e_flat;
+		}
+		else
+		{
+			type1 = e_convex;
+		}
+	}
+
+	if (edgeA->m_hasVertex3)
+	{
+		b2Vec2 v3 = edgeA->m_vertex3;
+		float32 s = b2Dot(n, v3 - v2);
+		if (s > 0.1f * b2_linearSlop)
+		{
+			type2 = e_concave;
+		}
+		else if (s >= -0.1f * b2_linearSlop)
+		{
+			type2 = e_flat;
+		}
+		else
+		{
+			type2 = e_convex;
+		}
+	}
+
+	if (type1 == e_convex)
+	{
+		// Check separation on previous edge.
+		b2Vec2 v0 = edgeA->m_vertex0;
+		b2Vec2 e0 = v1 - v0;
+
+		b2Vec2 n0(e0.y, -e0.x);
+		n0.Normalize();
+		if (isFrontSide == false)
+		{
+			n0 = -n0;
+		}
+
+		b2EPAxis axis1 = b2EPSeparation(v0, v1, n0, &polygonB);
+		if (axis1.separation > primaryAxis.separation)
 		{
 			return;
 		}
-
-		manifold->pointCount = 1;
-		manifold->type = b2Manifold::e_faceA;
-		manifold->localNormal = cLocal - v1;
-		manifold->localNormal.Normalize();
-		manifold->localPoint = v1;
-		manifold->points[0].localPoint = circleB->m_p;
-		manifold->points[0].id.key = 0;
 	}
-	else if (u2 <= 0.0f)
+
+	if (type2 == e_convex)
 	{
-		if (b2DistanceSquared(cLocal, v2) > radius * radius)
+		// Check separation on next edge.
+		b2Vec2 v3 = edgeA->m_vertex3;
+		b2Vec2 e2 = v3 - v2;
+
+		b2Vec2 n2(e2.y, -e2.x);
+		n2.Normalize();
+		if (isFrontSide == false)
+		{
+			n2 = -n2;
+		}
+
+		b2EPAxis axis2 = b2EPSeparation(v2, v3, n2, &polygonB);
+		if (axis2.separation > primaryAxis.separation)
 		{
 			return;
 		}
-
-		manifold->pointCount = 1;
-		manifold->type = b2Manifold::e_faceA;
-		manifold->localNormal = cLocal - v2;
-		manifold->localNormal.Normalize();
-		manifold->localPoint = v2;
-		manifold->points[0].localPoint = circleB->m_p;
-		manifold->points[0].id.key = 0;
 	}
-	else
-	{
-		b2Vec2 faceCenter = 0.5f * (v1 + v2);
-		float32 separation = b2Dot(cLocal - faceCenter, normals[vertIndex1]);
-		if (separation > radius)
-		{
-			return;
-		}
 
-		manifold->pointCount = 1;
-		manifold->type = b2Manifold::e_faceA;
-		manifold->localNormal = normals[vertIndex1];
-		manifold->localPoint = faceCenter;
-		manifold->points[0].localPoint = circleB->m_p;
-		manifold->points[0].id.key = 0;
-	}
+	//if (primaryAxis.type == b2EPAxis::e_edgeA)
+	//{
+
+	//}
 }
-
-#endif
