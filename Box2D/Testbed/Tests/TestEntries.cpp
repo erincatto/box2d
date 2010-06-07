@@ -37,6 +37,7 @@
 #include "Dominos.h"
 #include "DynamicTreeTest.h"
 #include "EdgeShapes.h"
+#include "EdgeTest.h"
 #include "Gears.h"
 #include "LineJoint.h"
 #include "OneSidedPlatform.h"
@@ -61,6 +62,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Edge Test", EdgeTest::Create},
 	{"Tiles", Tiles::Create},
 	{"Character Collision", CharacterCollision::Create},
 	{"Web", Web::Create},
