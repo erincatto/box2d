@@ -172,7 +172,7 @@ struct b2EPAxis
 	float32 separation;
 };
 
-static b2EPAxis b2EPSeparation(const b2Vec2& v1, const b2Vec2& v2, const b2Vec2& n, const b2PolygonShape* polygonB)
+static b2EPAxis b2EPSeparation(const b2Vec2& v1, const b2Vec2& v2, const b2Vec2& n, const b2PolygonShape* polygonB, float32 radius)
 {
 	// EdgeA separation
 	b2EPAxis axisA;
@@ -182,14 +182,15 @@ static b2EPAxis b2EPSeparation(const b2Vec2& v1, const b2Vec2& v2, const b2Vec2&
 	for (int32 i = 1; i < polygonB->m_vertexCount; ++i)
 	{
 		float32 s = b2Dot(n, polygonB->m_vertices[i] - v1);
-		if (s > axisA.separation)
+		if (s < axisA.separation)
 		{
 			axisA.separation = s;
-			if (s > 0.0f)
-			{
-				return axisA;
-			}
 		}
+	}
+
+	if (axisA.separation > radius)
+	{
+		return axisA;
 	}
 
 	// PolygonB separation
@@ -207,7 +208,7 @@ static b2EPAxis b2EPSeparation(const b2Vec2& v1, const b2Vec2& v2, const b2Vec2&
 			axisB.index = i;
 			axisB.separation = s;
 
-			if (s > 0.0f)
+			if (s > radius)
 			{
 				return axisB;
 			}
@@ -226,7 +227,50 @@ static b2EPAxis b2EPSeparation(const b2Vec2& v1, const b2Vec2& v2, const b2Vec2&
 	{
 		return axisA;
 	}
+}
 
+static void b2FindIncidentEdge(b2ClipVertex c[2], const b2PolygonShape* poly1, int32 edge1, const b2PolygonShape* poly2)
+{
+	int32 count1 = poly1->m_vertexCount;
+	const b2Vec2* normals1 = poly1->m_normals;
+
+	int32 count2 = poly2->m_vertexCount;
+	const b2Vec2* vertices2 = poly2->m_vertices;
+	const b2Vec2* normals2 = poly2->m_normals;
+
+	b2Assert(0 <= edge1 && edge1 < count1);
+
+	// Get the normal of the reference edge in poly2's frame.
+	b2Vec2 normal1 = normals1[edge1];
+
+	// Find the incident edge on poly2.
+	int32 index = 0;
+	float32 minDot = b2_maxFloat;
+	for (int32 i = 0; i < count2; ++i)
+	{
+		float32 dot = b2Dot(normal1, normals2[i]);
+		if (dot < minDot)
+		{
+			minDot = dot;
+			index = i;
+		}
+	}
+
+	// Build the clip vertices for the incident edge.
+	int32 i1 = index;
+	int32 i2 = i1 + 1 < count2 ? i1 + 1 : 0;
+
+	c[0].v = vertices2[i1];
+	c[0].id.cf.indexA = (uint8)edge1;
+	c[0].id.cf.indexB = (uint8)i1;
+	c[0].id.cf.typeA = b2ContactFeature::e_edge;
+	c[0].id.cf.typeB = b2ContactFeature::e_vertex;
+
+	c[1].v = vertices2[i2];
+	c[1].id.cf.indexA = (uint8)edge1;
+	c[1].id.cf.indexB = (uint8)i2;
+	c[1].id.cf.typeA = b2ContactFeature::e_edge;
+	c[1].id.cf.typeB = b2ContactFeature::e_vertex;
 }
 
 // Collide and edge and polygon. This uses the SAT and clipping to produce up to 2 contact points.
@@ -252,8 +296,13 @@ void b2CollideEdgeAndPolygon(	b2Manifold* manifold,
 
 	b2Transform xf = b2MulT(xfA, xfB);
 
-	// Compute polygon in frame A
+	// Create a polygon for edge shape A
+	b2PolygonShape polygonA;
+	polygonA.SetAsEdge(edgeA->m_vertex1, edgeA->m_vertex2);
+
+	// Build polygonB in frame A
 	b2PolygonShape polygonB;
+	polygonB.m_radius = polygonB_in->m_radius;
 	polygonB.m_vertexCount = polygonB_in->m_vertexCount;
 	polygonB.m_centroid = b2Mul(xf, polygonB_in->m_centroid);
 	for (int32 i = 0; i < polygonB.m_vertexCount; ++i)
@@ -262,24 +311,25 @@ void b2CollideEdgeAndPolygon(	b2Manifold* manifold,
 		polygonB.m_normals[i] = b2Mul(xf.R, polygonB_in->m_normals[i]);
 	}
 
+	float32 totalRadius = polygonA.m_radius + polygonB.m_radius;
+
 	// Edge geometry
 	b2Vec2 v1 = edgeA->m_vertex1;
 	b2Vec2 v2 = edgeA->m_vertex2;
 	b2Vec2 e = v2 - v1;
-	b2Vec2 n(e.y, -e.x);
-	n.Normalize();
+	b2Vec2 edgeNormal(e.y, -e.x);
+	edgeNormal.Normalize();
 
 	// Determine side
-	bool isFrontSide = b2Dot(n, polygonB.m_centroid - v1) >= 0.0f;
+	bool isFrontSide = b2Dot(edgeNormal, polygonB.m_centroid - v1) >= 0.0f;
 	if (isFrontSide == false)
 	{
-		// flip normal for backside collision
-		n = -n;
+		edgeNormal = -edgeNormal;
 	}
 
 	// Compute primary separating axis
-	b2EPAxis primaryAxis = b2EPSeparation(v1, v2, n, &polygonB);
-	if (primaryAxis.separation > 0.0f)
+	b2EPAxis primaryAxis = b2EPSeparation(v1, v2, edgeNormal, &polygonB, totalRadius);
+	if (primaryAxis.separation > totalRadius)
 	{
 		// Shapes are separated
 		return;
@@ -290,7 +340,8 @@ void b2CollideEdgeAndPolygon(	b2Manifold* manifold,
 	if (edgeA->m_hasVertex0)
 	{
 		b2Vec2 v0 = edgeA->m_vertex0;
-		float32 s = b2Dot(n, v0 - v1);
+		float32 s = b2Dot(edgeNormal, v0 - v1);
+
 		if (s > 0.1f * b2_linearSlop)
 		{
 			type1 = e_concave;
@@ -308,7 +359,7 @@ void b2CollideEdgeAndPolygon(	b2Manifold* manifold,
 	if (edgeA->m_hasVertex3)
 	{
 		b2Vec2 v3 = edgeA->m_vertex3;
-		float32 s = b2Dot(n, v3 - v2);
+		float32 s = b2Dot(edgeNormal, v3 - v2);
 		if (s > 0.1f * b2_linearSlop)
 		{
 			type2 = e_concave;
@@ -336,7 +387,7 @@ void b2CollideEdgeAndPolygon(	b2Manifold* manifold,
 			n0 = -n0;
 		}
 
-		b2EPAxis axis1 = b2EPSeparation(v0, v1, n0, &polygonB);
+		b2EPAxis axis1 = b2EPSeparation(v0, v1, n0, &polygonB, totalRadius);
 		if (axis1.separation > primaryAxis.separation)
 		{
 			return;
@@ -356,15 +407,119 @@ void b2CollideEdgeAndPolygon(	b2Manifold* manifold,
 			n2 = -n2;
 		}
 
-		b2EPAxis axis2 = b2EPSeparation(v2, v3, n2, &polygonB);
+		b2EPAxis axis2 = b2EPSeparation(v2, v3, n2, &polygonB, totalRadius);
 		if (axis2.separation > primaryAxis.separation)
 		{
 			return;
 		}
 	}
 
-	//if (primaryAxis.type == b2EPAxis::e_edgeA)
-	//{
+	b2PolygonShape* poly1;
+	b2PolygonShape* poly2;
+	b2ClipVertex incidentEdge[2];
+	if (primaryAxis.type == b2EPAxis::e_edgeA)
+	{
+		poly1 = &polygonA;
+		poly2 = &polygonB;
+		if (isFrontSide == false)
+		{
+			primaryAxis.index = 1;
+		}
+		manifold->type = b2Manifold::e_faceA;
+	}
+	else
+	{
+		poly1 = &polygonB;
+		poly2 = &polygonA;
+		manifold->type = b2Manifold::e_faceB;
+	}
 
-	//}
+	int32 edge1 = primaryAxis.index;
+
+	b2FindIncidentEdge(incidentEdge, poly1, primaryAxis.index, poly2);
+	int32 count1 = poly1->m_vertexCount;
+	const b2Vec2* vertices1 = poly1->m_vertices;
+
+	int32 iv1 = edge1;
+	int32 iv2 = edge1 + 1 < count1 ? edge1 + 1 : 0;
+
+	b2Vec2 v11 = vertices1[iv1];
+	b2Vec2 v12 = vertices1[iv2];
+
+	b2Vec2 tangent = v12 - v11;
+	tangent.Normalize();
+	
+	b2Vec2 normal = b2Cross(tangent, 1.0f);
+	b2Vec2 planePoint = 0.5f * (v11 + v12);
+
+	// Face offset.
+	float32 frontOffset = b2Dot(normal, v11);
+
+	// Side offsets, extended by polytope skin thickness.
+	float32 sideOffset1 = -b2Dot(tangent, v11) + totalRadius;
+	float32 sideOffset2 = b2Dot(tangent, v12) + totalRadius;
+
+	// Clip incident edge against extruded edge1 side edges.
+	b2ClipVertex clipPoints1[2];
+	b2ClipVertex clipPoints2[2];
+	int np;
+
+	// Clip to box side 1
+	np = b2ClipSegmentToLine(clipPoints1, incidentEdge, -tangent, sideOffset1, iv1);
+
+	if (np < b2_maxManifoldPoints)
+	{
+		return;
+	}
+
+	// Clip to negative box side 1
+	np = b2ClipSegmentToLine(clipPoints2, clipPoints1,  tangent, sideOffset2, iv2);
+
+	if (np < b2_maxManifoldPoints)
+	{
+		return;
+	}
+
+	// Now clipPoints2 contains the clipped points.
+	if (primaryAxis.type == b2EPAxis::e_edgeA)
+	{
+		manifold->localNormal = normal;
+		manifold->localPoint = planePoint;
+	}
+	else
+	{
+		manifold->localNormal = b2MulT(xf.R, normal);
+		manifold->localPoint = b2MulT(xf, planePoint);
+	}
+
+	int32 pointCount = 0;
+	for (int32 i = 0; i < b2_maxManifoldPoints; ++i)
+	{
+		float32 separation;
+		
+		separation = b2Dot(normal, clipPoints2[i].v) - frontOffset;
+
+		if (separation <= totalRadius)
+		{
+			b2ManifoldPoint* cp = manifold->points + pointCount;
+
+			if (primaryAxis.type == b2EPAxis::e_edgeA)
+			{
+				cp->localPoint = b2MulT(xf, clipPoints2[i].v);
+				cp->id = clipPoints2[i].id;
+			}
+			else
+			{
+				cp->localPoint = clipPoints2[i].v;
+				cp->id.cf.typeA = clipPoints2[i].id.cf.typeB;
+				cp->id.cf.typeB = clipPoints2[i].id.cf.typeA;
+				cp->id.cf.indexA = clipPoints2[i].id.cf.indexB;
+				cp->id.cf.indexB = clipPoints2[i].id.cf.indexA;
+			}
+
+			++pointCount;
+		}
+	}
+
+	manifold->pointCount = pointCount;
 }
