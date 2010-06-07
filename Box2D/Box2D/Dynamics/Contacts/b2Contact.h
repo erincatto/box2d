@@ -22,7 +22,6 @@
 #include <Box2D/Common/b2Math.h>
 #include <Box2D/Collision/b2Collision.h>
 #include <Box2D/Collision/Shapes/b2Shape.h>
-#include <Box2D/Dynamics/Contacts/b2Contact.h>
 #include <Box2D/Dynamics/b2Fixture.h>
 
 class b2Body;
