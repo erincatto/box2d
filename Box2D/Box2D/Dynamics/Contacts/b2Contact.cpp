@@ -42,10 +42,10 @@ void b2Contact::InitializeRegisters()
 	AddType(b2CircleContact::Create, b2CircleContact::Destroy, b2Shape::e_circle, b2Shape::e_circle);
 	AddType(b2PolygonAndCircleContact::Create, b2PolygonAndCircleContact::Destroy, b2Shape::e_polygon, b2Shape::e_circle);
 	AddType(b2PolygonContact::Create, b2PolygonContact::Destroy, b2Shape::e_polygon, b2Shape::e_polygon);
-	AddType(b2PolygonContact::Create, b2EdgeAndCircleContact::Destroy, b2Shape::e_polygon, b2Shape::e_polygon);
-	AddType(b2PolygonContact::Create, b2EdgeAndPolygonContact::Destroy, b2Shape::e_polygon, b2Shape::e_polygon);
-	AddType(b2PolygonContact::Create, b2LoopAndCircleContact::Destroy, b2Shape::e_polygon, b2Shape::e_polygon);
-	AddType(b2PolygonContact::Create, b2LoopAndPolygonContact::Destroy, b2Shape::e_polygon, b2Shape::e_polygon);
+	AddType(b2EdgeAndCircleContact::Create, b2EdgeAndCircleContact::Destroy, b2Shape::e_edge, b2Shape::e_circle);
+	AddType(b2EdgeAndPolygonContact::Create, b2EdgeAndPolygonContact::Destroy, b2Shape::e_edge, b2Shape::e_polygon);
+	AddType(b2LoopAndCircleContact::Create, b2LoopAndCircleContact::Destroy, b2Shape::e_loop, b2Shape::e_circle);
+	AddType(b2LoopAndPolygonContact::Create, b2LoopAndPolygonContact::Destroy, b2Shape::e_loop, b2Shape::e_polygon);
 }
 
 void b2Contact::AddType(b2ContactCreateFcn* createFcn, b2ContactDestroyFcn* destoryFcn,
