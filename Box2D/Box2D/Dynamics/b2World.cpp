@@ -27,6 +27,8 @@
 #include <Box2D/Collision/b2Collision.h>
 #include <Box2D/Collision/b2BroadPhase.h>
 #include <Box2D/Collision/Shapes/b2CircleShape.h>
+#include <Box2D/Collision/Shapes/b2EdgeShape.h>
+#include <Box2D/Collision/Shapes/b2LoopShape.h>
 #include <Box2D/Collision/Shapes/b2PolygonShape.h>
 #include <Box2D/Collision/b2TimeOfImpact.h>
 #include <new>
@@ -912,6 +914,14 @@ void b2World::DrawShape(b2Fixture* fixture, const b2Transform& xf, const b2Color
 			m_debugDraw->DrawSolidCircle(center, radius, axis, color);
 		}
 		break;
+
+	case b2Shape::e_edge:
+		{
+			b2EdgeShape* edge = (b2EdgeShape*)fixture->GetShape();
+			b2Vec2 v1 = b2Mul(xf, edge->m_vertex1);
+			b2Vec2 v2 = b2Mul(xf, edge->m_vertex2);
+			m_debugDraw->DrawSegment(v1, v2, color);
+		}
 
 	case b2Shape::e_polygon:
 		{
