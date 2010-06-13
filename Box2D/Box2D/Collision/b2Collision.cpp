@@ -220,7 +220,7 @@ int32 b2ClipSegmentToLine(b2ClipVertex vOut[2], const b2ClipVertex vIn[2],
 		vOut[numOut].id.cf.indexA = vertexIndexA;
 		vOut[numOut].id.cf.indexB = vIn[0].id.cf.indexB;
 		vOut[numOut].id.cf.typeA = b2ContactFeature::e_vertex;
-		vOut[numOut].id.cf.typeB = b2ContactFeature::e_edge;
+		vOut[numOut].id.cf.typeB = b2ContactFeature::e_face;
 		++numOut;
 	}
 

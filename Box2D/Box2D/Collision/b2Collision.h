@@ -40,7 +40,7 @@ struct b2ContactFeature
 	enum Type
 	{
 		e_vertex = 0,
-		e_edge = 1,
+		e_face = 1,
 	};
 
 	uint8 indexA;		///< Feature index on shapeA
