@@ -175,13 +175,13 @@ static void b2FindIncidentEdge(b2ClipVertex c[2],
 	c[0].v = b2Mul(xf2, vertices2[i1]);
 	c[0].id.cf.indexA = (uint8)edge1;
 	c[0].id.cf.indexB = (uint8)i1;
-	c[0].id.cf.typeA = b2ContactFeature::e_edge;
+	c[0].id.cf.typeA = b2ContactFeature::e_face;
 	c[0].id.cf.typeB = b2ContactFeature::e_vertex;
 
 	c[1].v = b2Mul(xf2, vertices2[i2]);
 	c[1].id.cf.indexA = (uint8)edge1;
 	c[1].id.cf.indexB = (uint8)i2;
-	c[1].id.cf.typeA = b2ContactFeature::e_edge;
+	c[1].id.cf.typeA = b2ContactFeature::e_face;
 	c[1].id.cf.typeB = b2ContactFeature::e_vertex;
 }
 
