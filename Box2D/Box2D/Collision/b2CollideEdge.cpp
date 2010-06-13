@@ -23,10 +23,10 @@
 
 enum b2EdgeType
 {
-	e_isolated,
-	e_concave,
-	e_flat,
-	e_convex
+	b2_isolated,
+	b2_concave,
+	b2_flat,
+	b2_convex
 };
 
 // Compute contact points for edge versus circle.
@@ -148,7 +148,7 @@ void b2CollideEdgeAndCircle(b2Manifold* manifold,
 	n.Normalize();
 
 	cf.indexA = 0;
-	cf.typeA = b2ContactFeature::e_edge;
+	cf.typeA = b2ContactFeature::e_face;
 	manifold->pointCount = 1;
 	manifold->type = b2Manifold::e_faceA;
 	manifold->localNormal = n;
@@ -172,61 +172,49 @@ struct b2EPAxis
 	float32 separation;
 };
 
-static b2EPAxis b2EPSeparation(const b2Vec2& v1, const b2Vec2& v2, const b2Vec2& n, const b2PolygonShape* polygonB, float32 radius)
+static b2EPAxis b2EPEdgeSeparation(const b2Vec2& v1, const b2Vec2& v2, const b2Vec2& n, const b2PolygonShape* polygonB, float32 radius)
 {
 	// EdgeA separation
-	b2EPAxis axisA;
-	axisA.type = b2EPAxis::e_edgeA;
-	axisA.index = 0;
-	axisA.separation = b2Dot(n, polygonB->m_vertices[0] - v1);
+	b2EPAxis axis;
+	axis.type = b2EPAxis::e_edgeA;
+	axis.index = 0;
+	axis.separation = b2Dot(n, polygonB->m_vertices[0] - v1);
 	for (int32 i = 1; i < polygonB->m_vertexCount; ++i)
 	{
 		float32 s = b2Dot(n, polygonB->m_vertices[i] - v1);
-		if (s < axisA.separation)
+		if (s < axis.separation)
 		{
-			axisA.separation = s;
+			axis.separation = s;
 		}
 	}
 
-	if (axisA.separation > radius)
-	{
-		return axisA;
-	}
+	return axis;
+}
 
+static b2EPAxis b2EPPolygonSeparation(const b2Vec2& v1, const b2Vec2& v2, const b2Vec2& n, const b2PolygonShape* polygonB, float32 radius)
+{
 	// PolygonB separation
-	b2EPAxis axisB;
-	axisB.type = b2EPAxis::e_edgeB;
-	axisB.index = 0;
-	axisB.separation = -FLT_MAX;
+	b2EPAxis axis;
+	axis.type = b2EPAxis::e_edgeB;
+	axis.index = 0;
+	axis.separation = -FLT_MAX;
 	for (int32 i = 0; i < polygonB->m_vertexCount; ++i)
 	{
 		float32 s1 = b2Dot(polygonB->m_normals[i], v1 - polygonB->m_vertices[i]);	
 		float32 s2 = b2Dot(polygonB->m_normals[i], v2 - polygonB->m_vertices[i]);
 		float32 s = b2Min(s1, s2);
-		if (s > axisB.separation)
+		if (s > axis.separation)
 		{
-			axisB.index = i;
-			axisB.separation = s;
-
+			axis.index = i;
+			axis.separation = s;
 			if (s > radius)
 			{
-				return axisB;
+				return axis;
 			}
 		}
 	}
 
-	// Return the best axis, using hysteresis for jitter reduction.
-	const float32 k_relativeTol = 0.98f;
-	const float32 k_absoluteTol = 0.001f;
-
-	if (axisB.separation > k_relativeTol * axisA.separation + k_absoluteTol)
-	{
-		return axisB;
-	}
-	else
-	{
-		return axisA;
-	}
+	return axis;
 }
 
 static void b2FindIncidentEdge(b2ClipVertex c[2], const b2PolygonShape* poly1, int32 edge1, const b2PolygonShape* poly2)
@@ -263,13 +251,13 @@ static void b2FindIncidentEdge(b2ClipVertex c[2], const b2PolygonShape* poly1, i
 	c[0].v = vertices2[i1];
 	c[0].id.cf.indexA = (uint8)edge1;
 	c[0].id.cf.indexB = (uint8)i1;
-	c[0].id.cf.typeA = b2ContactFeature::e_edge;
+	c[0].id.cf.typeA = b2ContactFeature::e_face;
 	c[0].id.cf.typeB = b2ContactFeature::e_vertex;
 
 	c[1].v = vertices2[i2];
 	c[1].id.cf.indexA = (uint8)edge1;
 	c[1].id.cf.indexB = (uint8)i2;
-	c[1].id.cf.typeA = b2ContactFeature::e_edge;
+	c[1].id.cf.typeA = b2ContactFeature::e_face;
 	c[1].id.cf.typeB = b2ContactFeature::e_vertex;
 }
 
@@ -328,15 +316,15 @@ void b2CollideEdgeAndPolygon(	b2Manifold* manifold,
 	}
 
 	// Compute primary separating axis
-	b2EPAxis primaryAxis = b2EPSeparation(v1, v2, edgeNormal, &polygonB, totalRadius);
-	if (primaryAxis.separation > totalRadius)
+	b2EPAxis edgeAxis = b2EPEdgeSeparation(v1, v2, edgeNormal, &polygonB, totalRadius);
+	if (edgeAxis.separation > totalRadius)
 	{
 		// Shapes are separated
 		return;
 	}
 
 	// Classify adjacent edges
-	b2EdgeType type1 = e_isolated, type2 = e_isolated;
+	b2EdgeType types[2] = {b2_isolated, b2_isolated};
 	if (edgeA->m_hasVertex0)
 	{
 		b2Vec2 v0 = edgeA->m_vertex0;
@@ -344,15 +332,15 @@ void b2CollideEdgeAndPolygon(	b2Manifold* manifold,
 
 		if (s > 0.1f * b2_linearSlop)
 		{
-			type1 = e_concave;
+			types[0] = b2_concave;
 		}
 		else if (s >= -0.1f * b2_linearSlop)
 		{
-			type1 = e_flat;
+			types[0] = b2_flat;
 		}
 		else
 		{
-			type1 = e_convex;
+			types[0] = b2_convex;
 		}
 	}
 
@@ -362,19 +350,19 @@ void b2CollideEdgeAndPolygon(	b2Manifold* manifold,
 		float32 s = b2Dot(edgeNormal, v3 - v2);
 		if (s > 0.1f * b2_linearSlop)
 		{
-			type2 = e_concave;
+			types[1] = b2_concave;
 		}
 		else if (s >= -0.1f * b2_linearSlop)
 		{
-			type2 = e_flat;
+			types[1] = b2_flat;
 		}
 		else
 		{
-			type2 = e_convex;
+			types[1] = b2_convex;
 		}
 	}
 
-	if (type1 == e_convex)
+	if (types[0] == b2_convex)
 	{
 		// Check separation on previous edge.
 		b2Vec2 v0 = edgeA->m_vertex0;
@@ -387,14 +375,15 @@ void b2CollideEdgeAndPolygon(	b2Manifold* manifold,
 			n0 = -n0;
 		}
 
-		b2EPAxis axis1 = b2EPSeparation(v0, v1, n0, &polygonB, totalRadius);
-		if (axis1.separation > primaryAxis.separation)
+		b2EPAxis axis1 = b2EPEdgeSeparation(v0, v1, n0, &polygonB, totalRadius);
+		if (axis1.separation > edgeAxis.separation)
 		{
+			// The polygon should collide with previous edge
 			return;
 		}
 	}
 
-	if (type2 == e_convex)
+	if (types[1] == b2_convex)
 	{
 		// Check separation on next edge.
 		b2Vec2 v3 = edgeA->m_vertex3;
@@ -407,11 +396,32 @@ void b2CollideEdgeAndPolygon(	b2Manifold* manifold,
 			n2 = -n2;
 		}
 
-		b2EPAxis axis2 = b2EPSeparation(v2, v3, n2, &polygonB, totalRadius);
-		if (axis2.separation > primaryAxis.separation)
+		b2EPAxis axis2 = b2EPEdgeSeparation(v2, v3, n2, &polygonB, totalRadius);
+		if (axis2.separation > edgeAxis.separation)
 		{
+			// The polygon should collide with the next edge
 			return;
 		}
+	}
+
+	b2EPAxis polygonAxis = b2EPPolygonSeparation(v1, v2, edgeNormal, &polygonB, totalRadius);
+	if (polygonAxis.separation > totalRadius)
+	{
+		return;
+	}
+
+	// Use hysteresis for jitter reduction.
+	const float32 k_relativeTol = 0.98f;
+	const float32 k_absoluteTol = 0.001f;
+
+	b2EPAxis primaryAxis;
+	if (polygonAxis.separation > k_relativeTol * edgeAxis.separation + k_absoluteTol)
+	{
+		primaryAxis = polygonAxis;
+	}
+	else
+	{
+		primaryAxis = edgeAxis;
 	}
 
 	b2PolygonShape* poly1;
@@ -515,6 +525,11 @@ void b2CollideEdgeAndPolygon(	b2Manifold* manifold,
 				cp->id.cf.typeB = clipPoints2[i].id.cf.typeA;
 				cp->id.cf.indexA = clipPoints2[i].id.cf.indexB;
 				cp->id.cf.indexB = clipPoints2[i].id.cf.indexA;
+			}
+
+			if (cp->id.cf.typeA == b2ContactFeature::e_vertex && types[cp->id.cf.indexA] == b2_flat)
+			{
+				continue;
 			}
 
 			++pointCount;
