@@ -89,7 +89,7 @@ public:
 		b2Body* body = fixture->GetBody();
 		b2Shape* shape = fixture->GetShape();
 
-		bool overlap = b2TestOverlap(shape, &m_circle, body->GetTransform(), m_transform);
+		bool overlap = b2TestOverlap(shape, 0, &m_circle, 0, body->GetTransform(), m_transform);
 
 		if (overlap)
 		{
