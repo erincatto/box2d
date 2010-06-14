@@ -57,9 +57,6 @@ public:
 	/// Optional adjacent vertices. These are used for smooth collision.
 	b2Vec2 m_vertex0, m_vertex3;
 	bool m_hasVertex0, m_hasVertex3;
-	
-	/// Indices of vertices for feature caching.
-	int32 m_index1, m_index2;
 };
 
 inline b2EdgeShape::b2EdgeShape()
@@ -68,8 +65,6 @@ inline b2EdgeShape::b2EdgeShape()
 	m_radius = b2_polygonRadius;
 	m_hasVertex0 = false;
 	m_hasVertex3 = false;
-	m_index1 = 0;
-	m_index2 = 1;
 }
 
 #endif
