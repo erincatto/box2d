@@ -49,8 +49,8 @@ public:
 		Test::Step(settings);
 
 		b2DistanceInput input;
-		input.proxyA.Set(&m_polygonA);
-		input.proxyB.Set(&m_polygonB);
+		input.proxyA.Set(&m_polygonA, 0);
+		input.proxyB.Set(&m_polygonB, 0);
 		input.transformA = m_transformA;
 		input.transformB = m_transformB;
 		input.useRadii = true;
