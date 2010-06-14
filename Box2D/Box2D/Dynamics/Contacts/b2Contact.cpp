@@ -172,7 +172,7 @@ void b2Contact::Update(b2ContactListener* listener)
 	{
 		const b2Shape* shapeA = m_fixtureA->GetShape();
 		const b2Shape* shapeB = m_fixtureB->GetShape();
-		touching = b2TestOverlap(shapeA, shapeB, xfA, xfB);
+		touching = b2TestOverlap(shapeA, m_indexA, shapeB, m_indexB, xfA, xfB);
 
 		// Sensors don't generate manifolds.
 		m_manifold.pointCount = 0;
@@ -190,6 +190,7 @@ void b2Contact::Update(b2ContactListener* listener)
 			mp2->normalImpulse = 0.0f;
 			mp2->tangentImpulse = 0.0f;
 			b2ContactID id2 = mp2->id;
+			bool found = false;
 
 			for (int32 j = 0; j < oldManifold.pointCount; ++j)
 			{
@@ -199,8 +200,15 @@ void b2Contact::Update(b2ContactListener* listener)
 				{
 					mp2->normalImpulse = mp1->normalImpulse;
 					mp2->tangentImpulse = mp1->tangentImpulse;
+					found = true;
 					break;
 				}
+			}
+
+			if (found == false)
+			{
+				mp2->normalImpulse = 0.0f;
+				mp2->tangentImpulse = 0.0f;
 			}
 		}
 

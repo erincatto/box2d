@@ -35,11 +35,15 @@ public:
 			b2EdgeShape shape;
 
 			shape.Set(v1, v2);
+			//shape.m_index1 = 0;
+			//shape.m_index2 = 1;
 			shape.m_hasVertex3 = true;
 			shape.m_vertex3 = v3;
 			ground->CreateFixture(&shape, 0.0f);
 
 			shape.Set(v2, v3);
+			//shape.m_index1 = 1;
+			//shape.m_index2 = 2;
 			shape.m_hasVertex0 = true;
 			shape.m_hasVertex3 = true;
 			shape.m_vertex0 = v1;
@@ -47,6 +51,8 @@ public:
 			ground->CreateFixture(&shape, 0.0f);
 
 			shape.Set(v3, v4);
+			//shape.m_index1 = 2;
+			//shape.m_index2 = 3;
 			shape.m_hasVertex0 = true;
 			shape.m_hasVertex3 = true;
 			shape.m_vertex0 = v2;
@@ -54,6 +60,8 @@ public:
 			ground->CreateFixture(&shape, 0.0f);
 
 			shape.Set(v4, v5);
+			//shape.m_index1 = 3;
+			//shape.m_index2 = 4;
 			shape.m_hasVertex0 = true;
 			shape.m_hasVertex3 = true;
 			shape.m_vertex0 = v3;
@@ -61,6 +69,8 @@ public:
 			ground->CreateFixture(&shape, 0.0f);
 
 			shape.Set(v5, v6);
+			//shape.m_index1 = 4;
+			//shape.m_index2 = 5;
 			shape.m_hasVertex0 = true;
 			shape.m_hasVertex3 = true;
 			shape.m_vertex0 = v4;
@@ -68,6 +78,8 @@ public:
 			ground->CreateFixture(&shape, 0.0f);
 
 			shape.Set(v6, v7);
+			//shape.m_index1 = 5;
+			//shape.m_index2 = 6;
 			shape.m_hasVertex0 = true;
 			shape.m_vertex0 = v5;
 			ground->CreateFixture(&shape, 0.0f);
