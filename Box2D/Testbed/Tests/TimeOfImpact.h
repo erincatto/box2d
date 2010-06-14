@@ -55,8 +55,8 @@ public:
 		//sweepB.a -= 300.0f * b2_pi;
 
 		b2TOIInput input;
-		input.proxyA.Set(&m_shapeA);
-		input.proxyB.Set(&m_shapeB);
+		input.proxyA.Set(&m_shapeA, 0);
+		input.proxyB.Set(&m_shapeB, 0);
 		input.sweepA = sweepA;
 		input.sweepB = sweepB;
 		input.tMax = 1.0f;

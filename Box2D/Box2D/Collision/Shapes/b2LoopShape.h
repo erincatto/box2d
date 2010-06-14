@@ -56,7 +56,10 @@ public:
 	/// @see b2Shape::ComputeMass
 	void ComputeMass(b2MassData* massData, float32 density) const;
 
+	/// The vertices. These are not owned/freed by the loop shape.
 	b2Vec2* m_vertices;
+
+	/// The vertex count.
 	int32 m_count;
 };
 
@@ -64,7 +67,7 @@ inline b2LoopShape::b2LoopShape()
 {
 	m_type = e_loop;
 	m_radius = b2_polygonRadius;
-	m_vertices = 0;
+	m_vertices = NULL;
 	m_count = 0;
 }
 

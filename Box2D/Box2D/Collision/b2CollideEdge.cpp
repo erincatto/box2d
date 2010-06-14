@@ -79,7 +79,7 @@ void b2CollideEdgeAndCircle(b2Manifold* manifold,
 			}
 		}
 
-		cf.indexA = edgeA->m_index1;
+		cf.indexA = 0;
 		cf.typeA = b2ContactFeature::e_vertex;
 		manifold->pointCount = 1;
 		manifold->type = b2Manifold::e_circles;
@@ -117,7 +117,7 @@ void b2CollideEdgeAndCircle(b2Manifold* manifold,
 			}
 		}
 
-		cf.indexA = edgeA->m_index2;
+		cf.indexA = 1;
 		cf.typeA = b2ContactFeature::e_vertex;
 		manifold->pointCount = 1;
 		manifold->type = b2Manifold::e_circles;
