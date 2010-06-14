@@ -227,12 +227,13 @@ int32 b2ClipSegmentToLine(b2ClipVertex vOut[2], const b2ClipVertex vIn[2],
 	return numOut;
 }
 
-bool b2TestOverlap(const b2Shape* shapeA, const b2Shape* shapeB,
-				   const b2Transform& xfA, const b2Transform& xfB)
+bool b2TestOverlap(	const b2Shape* shapeA, int32 indexA,
+					const b2Shape* shapeB, int32 indexB,
+					const b2Transform& xfA, const b2Transform& xfB)
 {
 	b2DistanceInput input;
-	input.proxyA.Set(shapeA);
-	input.proxyB.Set(shapeB);
+	input.proxyA.Set(shapeA, indexA);
+	input.proxyB.Set(shapeB, indexB);
 	input.transformA = xfA;
 	input.transformB = xfB;
 	input.useRadii = true;

@@ -581,6 +581,8 @@ void b2World::SolveTOI(b2Body* body)
 
 			b2Fixture* fixtureA = contact->m_fixtureA;
 			b2Fixture* fixtureB = contact->m_fixtureB;
+			int32 indexA = contact->m_indexA;
+			int32 indexB = contact->m_indexB;
 
 			// Cull sensors.
 			if (fixtureA->IsSensor() || fixtureB->IsSensor())
@@ -593,8 +595,8 @@ void b2World::SolveTOI(b2Body* body)
 
 			// Compute the time of impact in interval [0, minTOI]
 			b2TOIInput input;
-			input.proxyA.Set(fixtureA->GetShape());
-			input.proxyB.Set(fixtureB->GetShape());
+			input.proxyA.Set(fixtureA->GetShape(), indexA);
+			input.proxyB.Set(fixtureB->GetShape(), indexB);
 			input.sweepA = bodyA->m_sweep;
 			input.sweepB = bodyB->m_sweep;
 			input.tMax = toi;
@@ -921,6 +923,21 @@ void b2World::DrawShape(b2Fixture* fixture, const b2Transform& xf, const b2Color
 			b2Vec2 v1 = b2Mul(xf, edge->m_vertex1);
 			b2Vec2 v2 = b2Mul(xf, edge->m_vertex2);
 			m_debugDraw->DrawSegment(v1, v2, color);
+		}
+		break;
+
+	case b2Shape::e_loop:
+		{
+			b2LoopShape* loop = (b2LoopShape*)fixture->GetShape();
+			int32 count = loop->m_count;
+
+			b2Vec2 v1 = b2Mul(xf, loop->m_vertices[count - 1]);
+			for (int32 i = 0; i < count; ++i)
+			{
+				b2Vec2 v2 = b2Mul(xf, loop->m_vertices[i]);
+				m_debugDraw->DrawSegment(v1, v2, color);
+				v1 = v2;
+			}
 		}
 		break;
 

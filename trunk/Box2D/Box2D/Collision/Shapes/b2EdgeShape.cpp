@@ -26,8 +26,6 @@ void b2EdgeShape::Set(const b2Vec2& v1, const b2Vec2& v2)
 	m_vertex2 = v2;
 	m_hasVertex0 = false;
 	m_hasVertex3 = false;
-	m_index1 = 0;
-	m_index2 = 0;
 }
 
 b2Shape* b2EdgeShape::Clone(b2BlockAllocator* allocator) const
