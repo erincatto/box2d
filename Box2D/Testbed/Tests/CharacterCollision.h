@@ -72,16 +72,26 @@ public:
 			b2BodyDef bd;
 			b2Body* ground = m_world->CreateBody(&bd);
 
-			b2PolygonShape shape;
-			float32 d = 2.0f * b2_polygonRadius;
-			shape.SetAsEdge(b2Vec2(-1.0f + d, 3.0f), b2Vec2(1.0f - d, 3.0f));
+			b2Vec2 vs[4];
+			vs[0].Set(-1.0f, 3.0f);
+			vs[1].Set(1.0f, 3.0f);
+			vs[2].Set(1.0f, 5.0f);
+			vs[3].Set(-1.0f, 5.0f);
+			b2LoopShape shape;
+			shape.m_count = 4;
+			shape.m_vertices = vs;
 			ground->CreateFixture(&shape, 0.0f);
-			shape.SetAsEdge(b2Vec2(1.0f, 3.0f + d), b2Vec2(1.0f, 5.0f - d));
-			ground->CreateFixture(&shape, 0.0f);
-			shape.SetAsEdge(b2Vec2(1.0f - d, 5.0f), b2Vec2(-1.0f + d, 5.0f));
-			ground->CreateFixture(&shape, 0.0f);
-			shape.SetAsEdge(b2Vec2(-1.0f, 5.0f - d), b2Vec2(-1.0f, 3.0f + d));
-			ground->CreateFixture(&shape, 0.0f);
+
+			//b2PolygonShape shape;
+			//float32 d = 2.0f * b2_polygonRadius;
+			//shape.SetAsEdge(b2Vec2(-1.0f + d, 3.0f), b2Vec2(1.0f - d, 3.0f));
+			//ground->CreateFixture(&shape, 0.0f);
+			//shape.SetAsEdge(b2Vec2(1.0f, 3.0f + d), b2Vec2(1.0f, 5.0f - d));
+			//ground->CreateFixture(&shape, 0.0f);
+			//shape.SetAsEdge(b2Vec2(1.0f - d, 5.0f), b2Vec2(-1.0f + d, 5.0f));
+			//ground->CreateFixture(&shape, 0.0f);
+			//shape.SetAsEdge(b2Vec2(-1.0f, 5.0f - d), b2Vec2(-1.0f, 3.0f + d));
+			//ground->CreateFixture(&shape, 0.0f);
 		}
 
 		// Square character
@@ -103,6 +113,7 @@ public:
 			body->CreateFixture(&fd);
 		}
 
+#if 0
 		// Hexagon character
 		{
 			b2BodyDef bd;
@@ -149,6 +160,7 @@ public:
 			fd.density = 20.0f;
 			body->CreateFixture(&fd);
 		}
+#endif
 	}
 
 	void Step(Settings* settings)

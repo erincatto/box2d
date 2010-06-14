@@ -19,6 +19,7 @@
 #include <Box2D/Collision/Shapes/b2LoopShape.h>
 #include <Box2D/Collision/Shapes/b2EdgeShape.h>
 #include <new>
+using namespace std;
 
 b2Shape* b2LoopShape::Clone(b2BlockAllocator* allocator) const
 {
@@ -26,6 +27,7 @@ b2Shape* b2LoopShape::Clone(b2BlockAllocator* allocator) const
 	b2LoopShape* clone = new (mem) b2LoopShape;
 	*clone = *this;
 	clone->m_vertices = (b2Vec2*)allocator->Allocate(m_count * sizeof(b2Vec2));
+	memcpy(clone->m_vertices, m_vertices, m_count * sizeof(b2Vec2));
 	return clone;
 }
 
@@ -56,9 +58,6 @@ void b2LoopShape::GetChildEdge(b2EdgeShape* edge, int32 index) const
 	edge->m_vertex1 = m_vertices[i1];
 	edge->m_vertex2 = m_vertices[i2];
 	edge->m_vertex3 = m_vertices[i3];
-
-	edge->m_index1 = i1;
-	edge->m_index2 = i2;
 }
 
 bool b2LoopShape::TestPoint(const b2Transform& xf, const b2Vec2& p) const
