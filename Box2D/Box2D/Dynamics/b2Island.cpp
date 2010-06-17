@@ -223,7 +223,10 @@ void b2Island::Solve(const b2TimeStep& step, const b2Vec2& gravity, bool allowSl
 
 	// Initialize velocity constraints.
 	b2ContactSolver contactSolver(m_contacts, m_contactCount, m_allocator, step.dtRatio);
+
+	contactSolver.InitializeVelocityConstraints();
 	contactSolver.WarmStart();
+	
 	for (int32 i = 0; i < m_jointCount; ++i)
 	{
 		m_joints[i]->InitVelocityConstraints(step);
@@ -347,6 +350,85 @@ void b2Island::Solve(const b2TimeStep& step, const b2Vec2& gravity, bool allowSl
 			}
 		}
 	}
+}
+
+void b2Island::SolveTOI(const b2TimeStep& subStep, const b2Body* bodyA, const b2Body* bodyB)
+{
+	b2ContactSolver contactSolver(m_contacts, m_contactCount, m_allocator, subStep.dtRatio);
+
+	// Solve position constraints.
+	const float32 k_toiBaumgarte = 0.75f;
+	for (int32 i = 0; i < subStep.positionIterations; ++i)
+	{
+		bool contactsOkay = contactSolver.SolvePositionConstraintsTOI(k_toiBaumgarte, bodyA, bodyB);
+		if (contactsOkay)
+		{
+			break;
+		}
+	}
+
+	// Advance bodies to new safe spot
+	for (int32 i = 0; i < m_bodyCount; ++i)
+	{
+		m_bodies[i]->m_sweep.a0 = m_bodies[i]->m_sweep.a;
+		m_bodies[i]->m_sweep.c0 = m_bodies[i]->m_sweep.c;
+	}
+
+	// No warm starting is needed for TOI events because warm
+	// starting impulses were applied in the discrete solver.
+	contactSolver.InitializeVelocityConstraints();
+
+	// Solve velocity constraints.
+	for (int32 i = 0; i < subStep.velocityIterations; ++i)
+	{
+		contactSolver.SolveVelocityConstraints();
+	}
+
+	// Don't store the TOI contact forces for warm starting
+	// because they can be quite large.
+
+	// Integrate positions.
+	for (int32 i = 0; i < m_bodyCount; ++i)
+	{
+		b2Body* b = m_bodies[i];
+
+		if (b->GetType() == b2_staticBody)
+		{
+			continue;
+		}
+
+		// Check for large velocities.
+		b2Vec2 translation = subStep.dt * b->m_linearVelocity;
+		if (b2Dot(translation, translation) > b2_maxTranslationSquared)
+		{
+			translation.Normalize();
+			b->m_linearVelocity = (b2_maxTranslation * subStep.inv_dt) * translation;
+		}
+
+		float32 rotation = subStep.dt * b->m_angularVelocity;
+		if (rotation * rotation > b2_maxRotationSquared)
+		{
+			if (rotation < 0.0)
+			{
+				b->m_angularVelocity = -subStep.inv_dt * b2_maxRotation;
+			}
+			else
+			{
+				b->m_angularVelocity = subStep.inv_dt * b2_maxRotation;
+			}
+		}
+
+		// Integrate
+		b->m_sweep.c += subStep.dt * b->m_linearVelocity;
+		b->m_sweep.a += subStep.dt * b->m_angularVelocity;
+
+		// Compute new transform
+		b->SynchronizeTransform();
+
+		// Note: shapes are synchronized later.
+	}
+
+	Report(contactSolver.m_constraints);
 }
 
 void b2Island::Report(const b2ContactConstraint* constraints)

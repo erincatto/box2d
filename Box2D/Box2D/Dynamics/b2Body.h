@@ -41,6 +41,9 @@ enum b2BodyType
 	b2_staticBody = 0,
 	b2_kinematicBody,
 	b2_dynamicBody,
+
+	// TODO_ERIN
+	//b2_bulletBody,
 };
 
 /// A body definition holds all the data needed to construct a rigid body.
@@ -780,10 +783,10 @@ inline void b2Body::SynchronizeTransform()
 	m_xf.position = m_sweep.c - b2Mul(m_xf.R, m_sweep.localCenter);
 }
 
-inline void b2Body::Advance(float32 t)
+inline void b2Body::Advance(float32 alpha)
 {
 	// Advance to the new safe time.
-	m_sweep.Advance(t);
+	m_sweep.Advance(alpha);
 	m_sweep.c = m_sweep.c0;
 	m_sweep.a = m_sweep.a0;
 	SynchronizeTransform();
