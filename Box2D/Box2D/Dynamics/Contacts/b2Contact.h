@@ -129,6 +129,8 @@ protected:
 		// This bullet contact had a TOI event
 		e_bulletHitFlag		= 0x0010,
 
+		// This contact has a valid TOI in m_toi
+		e_toiFlag			= 0x0020,
 	};
 
 	/// Flag this contact for filtering. Filtering will occur the next time step.
@@ -169,6 +171,7 @@ protected:
 	b2Manifold m_manifold;
 
 	int32 m_toiCount;
+	float32 m_toi;
 };
 
 inline b2Manifold* b2Contact::GetManifold()
