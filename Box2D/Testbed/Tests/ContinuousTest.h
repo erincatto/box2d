@@ -53,7 +53,7 @@ public:
 			m_body->CreateFixture(&shape, 1.0f);
 
 			m_angularVelocity = RandomFloat(-50.0f, 50.0f);
-			m_angularVelocity = 33.468121f;
+			m_angularVelocity = -30.669577f;
 			m_body->SetLinearVelocity(b2Vec2(0.0f, -100.0f));
 			m_body->SetAngularVelocity(m_angularVelocity);
 		}
@@ -61,7 +61,7 @@ public:
 		{
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
-			bd.position.Set(0.0f, 0.5f);
+			bd.position.Set(0.0f, 2.0f);
 			b2Body* body = m_world->CreateBody(&bd);
 
 			b2CircleShape shape;
@@ -70,10 +70,10 @@ public:
 			body->CreateFixture(&shape, 1.0f);
 
 			//bd.bullet = true;
-			bd.position.Set(0.0f, 10.0f);
-			body = m_world->CreateBody(&bd);
-			body->CreateFixture(&shape, 1.0f);
-			body->SetLinearVelocity(b2Vec2(0.0f, -100.0f));
+			//bd.position.Set(0.0f, 10.0f);
+			//body = m_world->CreateBody(&bd);
+			//body->CreateFixture(&shape, 1.0f);
+			//body->SetLinearVelocity(b2Vec2(0.0f, -100.0f));
 		}
 #endif
 	}
@@ -124,7 +124,7 @@ public:
 
 		if (m_stepCount % 60 == 0)
 		{
-			Launch();
+			//Launch();
 		}
 	}
 
