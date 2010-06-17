@@ -364,12 +364,12 @@ struct b2Transform
 struct b2Sweep
 {
 	/// Get the interpolated transform at a specific time.
-	/// @param alpha is a factor in [0,1], where 0 indicates t0.
-	void GetTransform(b2Transform* xf, float32 alpha) const;
+	/// @param beta is a factor in [0,1], where 0 indicates alpha0.
+	void GetTransform(b2Transform* xf, float32 beta) const;
 
 	/// Advance the sweep forward, yielding a new initial state.
-	/// @param t the new initial time.
-	void Advance(float32 t);
+	/// @param alpha the new initial time.
+	void Advance(float32 alpha);
 
 	/// Normalize the angles.
 	void Normalize();
@@ -377,6 +377,10 @@ struct b2Sweep
 	b2Vec2 localCenter;	///< local center of mass position
 	b2Vec2 c0, c;		///< center world positions
 	float32 a0, a;		///< world angles
+
+	/// Fraction of the current time step in the range [0,1]
+	/// c0 and a0 are the positions at alpha0.
+	float32 alpha0;
 };
 
 
@@ -605,20 +609,23 @@ inline bool b2IsPowerOfTwo(uint32 x)
 	return result;
 }
 
-inline void b2Sweep::GetTransform(b2Transform* xf, float32 alpha) const
+inline void b2Sweep::GetTransform(b2Transform* xf, float32 beta) const
 {
-	xf->position = (1.0f - alpha) * c0 + alpha * c;
-	float32 angle = (1.0f - alpha) * a0 + alpha * a;
+	xf->position = (1.0f - beta) * c0 + beta * c;
+	float32 angle = (1.0f - beta) * a0 + beta * a;
 	xf->R.Set(angle);
 
 	// Shift to origin
 	xf->position -= b2Mul(xf->R, localCenter);
 }
 
-inline void b2Sweep::Advance(float32 t)
+inline void b2Sweep::Advance(float32 alpha)
 {
-	c0 = (1.0f - t) * c0 + t * c;
-	a0 = (1.0f - t) * a0 + t * a;
+	b2Assert(alpha0 < 1.0f);
+	float32 beta = (alpha - alpha0) / (1.0f - alpha0);
+	c0 = (1.0f - beta) * c0 + beta * c;
+	a0 = (1.0f - beta) * a0 + beta * a;
+	alpha0 = alpha;
 }
 
 /// Normalize an angle in radians to be between -pi and pi

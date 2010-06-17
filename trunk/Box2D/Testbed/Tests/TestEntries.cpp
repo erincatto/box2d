@@ -62,11 +62,11 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Continuous Test", ContinuousTest::Create},
 	{"Character Collision", CharacterCollision::Create},
 	{"Edge Test", EdgeTest::Create},
 	{"Tiles", Tiles::Create},
 	{"Web", Web::Create},
-	{"Continuous Test", ContinuousTest::Create},
 	{"Vertical Stack", VerticalStack::Create},
 	{"Time of Impact", TimeOfImpact::Create},
 	{"Ray-Cast", RayCast::Create},

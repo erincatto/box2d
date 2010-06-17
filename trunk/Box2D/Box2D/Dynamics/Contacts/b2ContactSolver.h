@@ -50,8 +50,9 @@ struct b2ContactConstraint
 	b2Body* bodyA;
 	b2Body* bodyB;
 	b2Manifold::Type type;
-	float32 radius;
+	float32 radiusA, radiusB;
 	float32 friction;
+	float32 restitution;
 	int32 pointCount;
 	b2Manifold* manifold;
 };
@@ -64,11 +65,14 @@ public:
 
 	~b2ContactSolver();
 
+	void InitializeVelocityConstraints();
+
 	void WarmStart();
 	void SolveVelocityConstraints();
 	void StoreImpulses();
 
 	bool SolvePositionConstraints(float32 baumgarte);
+	bool SolvePositionConstraintsTOI(float32 baumgarte, const b2Body* toiBodyA, const b2Body* toiBodyB);
 
 	b2StackAllocator* m_allocator;
 	b2ContactConstraint* m_constraints;
