@@ -181,34 +181,67 @@ void b2DynamicTree::InsertLeaf(int32 leaf)
 
 	// Find the best sibling for this node
 	b2AABB leafAABB = m_nodes[leaf].aabb;
-	b2Vec2 leafCenter = leafAABB.GetCenter();
 	int32 sibling = m_root;
 	while (m_nodes[sibling].IsLeaf() == false)
 	{
+		int32 child1 = m_nodes[sibling].child1;
+		int32 child2 = m_nodes[sibling].child2;
+
 		// Expand the node's AABB.
 		m_nodes[sibling].aabb.Combine(leafAABB);
 		m_nodes[sibling].leafCount += 1;
 
-		int32 child1 = m_nodes[sibling].child1;
-		int32 child2 = m_nodes[sibling].child2;
+		float32 siblingArea = m_nodes[sibling].aabb.GetPerimeter();
+		b2AABB parentAABB;
+		parentAABB.Combine(m_nodes[sibling].aabb, leafAABB);
+		float32 parentArea = parentAABB.GetPerimeter();
+		float32 cost1 = 2.0f * parentArea;
 
-#if 0
-		// This seems to create imbalanced trees
-		b2Vec2 delta1 = b2Abs(m_nodes[child1].aabb.GetCenter() - leafCenter);
-		b2Vec2 delta2 = b2Abs(m_nodes[child2].aabb.GetCenter() - leafCenter);
+		float32 inheritanceCost = 2.0f * (parentArea - siblingArea);
 
-		float32 norm1 = delta1.x + delta1.y;
-		float32 norm2 = delta2.x + delta2.y;
-#else
-		// Surface area heuristic
-		b2AABB aabb1, aabb2;
-		aabb1.Combine(leafAABB, m_nodes[child1].aabb);
-		aabb2.Combine(leafAABB, m_nodes[child2].aabb);
-		float32 norm1 = (m_nodes[child1].leafCount + 1) * aabb1.GetPerimeter();
-		float32 norm2 = (m_nodes[child2].leafCount + 1) * aabb2.GetPerimeter();
-#endif
+		float32 cost2;
+		if (m_nodes[child1].IsLeaf())
+		{
+			b2AABB aabb;
+			aabb.Combine(leafAABB, m_nodes[child1].aabb);
+			cost2 = aabb.GetPerimeter() + inheritanceCost;
+		}
+		else
+		{
+			b2AABB aabb;
+			aabb.Combine(leafAABB, m_nodes[child1].aabb);
+			float32 oldArea = m_nodes[child1].aabb.GetPerimeter();
+			float32 newArea = aabb.GetPerimeter();
+			cost2 = (newArea - oldArea) + inheritanceCost;
+		}
 
-		if (norm1 < norm2)
+		float32 cost3;
+		if (m_nodes[child2].IsLeaf())
+		{
+			b2AABB aabb;
+			aabb.Combine(leafAABB, m_nodes[child2].aabb);
+			cost3 = aabb.GetPerimeter() + inheritanceCost;
+		}
+		else
+		{
+			b2AABB aabb;
+			aabb.Combine(leafAABB, m_nodes[child2].aabb);
+			float32 oldArea = m_nodes[child2].aabb.GetPerimeter();
+			float32 newArea = aabb.GetPerimeter();
+			cost3 = newArea - oldArea + inheritanceCost;
+		}
+
+		// Descend according to the minimum cost.
+		if (cost1 < cost2 && cost1 < cost3)
+		{
+			break;
+		}
+
+		// Expand the node's AABB to account for the new leaf.
+		m_nodes[sibling].aabb.Combine(leafAABB);
+
+		// Descend
+		if (cost2 < cost3)
 		{
 			sibling = child1;
 		}
