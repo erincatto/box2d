@@ -68,7 +68,6 @@ set(BOX2D_Contacts_SRCS
 	Dynamics/Contacts/b2LoopAndCircleContact.cpp
 	Dynamics/Contacts/b2LoopAndPolygonContact.cpp
 	Dynamics/Contacts/b2PolygonContact.cpp
-	Dynamics/Contacts/b2TOISolver.cpp
 )
 set(BOX2D_Contacts_HDRS
 	Dynamics/Contacts/b2CircleContact.h
@@ -80,7 +79,6 @@ set(BOX2D_Contacts_HDRS
 	Dynamics/Contacts/b2LoopAndCircleContact.h
 	Dynamics/Contacts/b2LoopAndPolygonContact.h
 	Dynamics/Contacts/b2PolygonContact.h
-	Dynamics/Contacts/b2TOISolver.h
 )
 set(BOX2D_Joints_SRCS
 	Dynamics/Joints/b2DistanceJoint.cpp
