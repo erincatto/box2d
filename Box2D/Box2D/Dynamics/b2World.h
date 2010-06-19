@@ -139,6 +139,9 @@ public:
 	/// Enable/disable continuous physics. For testing.
 	void SetContinuousPhysics(bool flag) { m_continuousPhysics = flag; }
 
+	/// Enable/disable single stepped continuous physics. For testing.
+	void SetSubStepping(bool flag) { m_subStepping = flag; }
+
 	/// Get the number of broad-phase proxies.
 	int32 GetProxyCount() const;
 
@@ -184,8 +187,6 @@ private:
 	friend class b2Controller;
 
 	void Solve(const b2TimeStep& step);
-	void SolveTOI();
-	void SolveTOI(b2Body* body);
 	void SolveTOI(const b2TimeStep& step);
 
 	void DrawJoint(b2Joint* joint);
@@ -216,11 +217,12 @@ private:
 	// support a variable time step.
 	float32 m_inv_dt0;
 
-	// This is for debugging the solver.
+	// These are for debugging the solver.
 	bool m_warmStarting;
-
-	// This is for debugging the solver.
 	bool m_continuousPhysics;
+	bool m_subStepping;
+
+	bool m_stepComplete;
 };
 
 inline b2Body* b2World::GetBodyList()
