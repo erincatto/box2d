@@ -16,6 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
+#include <Box2D/Collision/b2Distance.h>
 #include <Box2D/Dynamics/b2Island.h>
 #include <Box2D/Dynamics/b2Body.h>
 #include <Box2D/Dynamics/b2Fixture.h>
@@ -365,9 +366,47 @@ void b2Island::SolveTOI(const b2TimeStep& subStep, const b2Body* bodyA, const b2
 		{
 			break;
 		}
+
+		if (i == subStep.positionIterations - 1)
+		{
+			i += 0;
+		}
 	}
 
-	// Advance bodies to new safe spot
+#if 0
+	// Is the new position really safe?
+	for (int32 i = 0; i < m_contactCount; ++i)
+	{
+		b2Contact* c = m_contacts[i];
+		b2Fixture* fA = c->GetFixtureA();
+		b2Fixture* fB = c->GetFixtureB();
+
+		b2Body* bA = fA->GetBody();
+		b2Body* bB = fB->GetBody();
+
+		int32 indexA = c->GetChildIndexA();
+		int32 indexB = c->GetChildIndexB();
+
+		b2DistanceInput input;
+		input.proxyA.Set(fA->GetShape(), indexA);
+		input.proxyB.Set(fB->GetShape(), indexB);
+		input.transformA = bA->GetTransform();
+		input.transformB = bB->GetTransform();
+		input.useRadii = false;
+
+		b2DistanceOutput output;
+		b2SimplexCache cache;
+		cache.count = 0;
+		b2Distance(&output, &cache, &input);
+
+		if (output.distance == 0 || cache.count == 3)
+		{
+			cache.count += 0;
+		}
+	}
+#endif
+
+	// Leap of faith to new safe state.
 	for (int32 i = 0; i < m_bodyCount; ++i)
 	{
 		m_bodies[i]->m_sweep.a0 = m_bodies[i]->m_sweep.a;

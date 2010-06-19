@@ -68,6 +68,7 @@ struct Settings
 		drawCOMs(0),
 		enableWarmStarting(1),
 		enableContinuous(1),
+		enableSubStepping(0),
 		pause(0),
 		singleStep(0)
 		{}
@@ -87,6 +88,7 @@ struct Settings
 	int32 drawStats;
 	int32 enableWarmStarting;
 	int32 enableContinuous;
+	int32 enableSubStepping;
 	int32 pause;
 	int32 singleStep;
 };

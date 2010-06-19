@@ -291,6 +291,7 @@ void Test::Step(Settings* settings)
 
 	m_world->SetWarmStarting(settings->enableWarmStarting > 0);
 	m_world->SetContinuousPhysics(settings->enableContinuous > 0);
+	m_world->SetSubStepping(settings->enableSubStepping > 0);
 
 	m_pointCount = 0;
 
