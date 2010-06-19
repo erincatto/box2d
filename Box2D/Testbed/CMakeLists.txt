@@ -17,6 +17,7 @@ set(Testbed_Tests_SRCS
 	Tests/BodyTypes.h
 	Tests/Breakable.h
 	Tests/Bridge.h
+	Tests/BulletTest.h
 	Tests/Cantilever.h
 	Tests/Chain.h
 	Tests/CharacterCollision.h

@@ -374,6 +374,7 @@ int main(int argc, char** argv)
 
 	glui->add_checkbox("Warm Starting", &settings.enableWarmStarting);
 	glui->add_checkbox("Time of Impact", &settings.enableContinuous);
+	glui->add_checkbox("Sub-Stepping", &settings.enableSubStepping);
 
 	//glui->add_separator();
 

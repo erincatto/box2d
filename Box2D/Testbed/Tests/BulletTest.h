@@ -16,14 +16,14 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef CONTINUOUS_TEST_H
-#define CONTINUOUS_TEST_H
+#ifndef BULLET_TEST_H
+#define BULLET_TEST_H
 
-class ContinuousTest : public Test
+class BulletTest : public Test
 {
 public:
 
-	ContinuousTest()
+	BulletTest()
 	{
 		{
 			b2BodyDef bd;
@@ -39,63 +39,64 @@ public:
 			body->CreateFixture(&shape, 0.0f);
 		}
 
-#if 1
 		{
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
-			bd.position.Set(0.0f, 20.0f);
-			//bd.angle = 0.1f;
+			bd.position.Set(0.0f, 4.0f);
 
-			b2PolygonShape shape;
-			shape.SetAsBox(2.0f, 0.1f);
+			b2PolygonShape box;
+			box.SetAsBox(2.0f, 0.1f);
 
 			m_body = m_world->CreateBody(&bd);
-			m_body->CreateFixture(&shape, 1.0f);
+			m_body->CreateFixture(&box, 1.0f);
 
-			m_angularVelocity = RandomFloat(-50.0f, 50.0f);
-			//m_angularVelocity = 46.661274f;
-			m_body->SetLinearVelocity(b2Vec2(0.0f, -100.0f));
-			m_body->SetAngularVelocity(m_angularVelocity);
-		}
-#else
-		{
-			b2BodyDef bd;
-			bd.type = b2_dynamicBody;
-			bd.position.Set(0.0f, 2.0f);
-			b2Body* body = m_world->CreateBody(&bd);
+			box.SetAsBox(0.25f, 0.25f);
 
-			b2CircleShape shape;
-			shape.m_p.SetZero();
-			shape.m_radius = 0.5f;
-			body->CreateFixture(&shape, 1.0f);
-
+			//m_x = RandomFloat(-1.0f, 1.0f);
+			m_x = 0.20352793f;
+			bd.position.Set(m_x, 10.0f);
 			bd.bullet = true;
-			bd.position.Set(0.0f, 10.0f);
-			body = m_world->CreateBody(&bd);
-			body->CreateFixture(&shape, 1.0f);
-			body->SetLinearVelocity(b2Vec2(0.0f, -100.0f));
+
+			m_bullet = m_world->CreateBody(&bd);
+			m_bullet->CreateFixture(&box, 100.0f);
+
+			m_bullet->SetLinearVelocity(b2Vec2(0.0f, -50.0f));
 		}
-#endif
 	}
 
 	void Launch()
 	{
-		m_body->SetTransform(b2Vec2(0.0f, 20.0f), 0.0f);
-		m_angularVelocity = RandomFloat(-50.0f, 50.0f);
-		m_body->SetLinearVelocity(b2Vec2(0.0f, -100.0f));
-		m_body->SetAngularVelocity(m_angularVelocity);
+		m_body->SetTransform(b2Vec2(0.0f, 4.0f), 0.0f);
+		m_body->SetLinearVelocity(b2Vec2_zero);
+		m_body->SetAngularVelocity(0.0f);
+
+		m_x = RandomFloat(-1.0f, 1.0f);
+		m_bullet->SetTransform(b2Vec2(m_x, 10.0f), 0.0f);
+		m_bullet->SetLinearVelocity(b2Vec2(0.0f, -50.0f));
+		m_bullet->SetAngularVelocity(0.0f);
+
+		extern int32 b2_gjkCalls, b2_gjkIters, b2_gjkMaxIters;
+		extern int32 b2_toiCalls, b2_toiIters, b2_toiMaxIters;
+		extern int32 b2_toiRootIters, b2_toiMaxRootIters;
+
+		b2_gjkCalls = 0;
+		b2_gjkIters = 0;
+		b2_gjkMaxIters = 0;
+
+		b2_toiCalls = 0;
+		b2_toiIters = 0;
+		b2_toiMaxIters = 0;
+		b2_toiRootIters = 0;
+		b2_toiMaxRootIters = 0;
 	}
 
 	void Step(Settings* settings)
 	{
-		if (m_stepCount	== 12)
-		{
-			m_stepCount += 0;
-		}
-
 		Test::Step(settings);
 
 		extern int32 b2_gjkCalls, b2_gjkIters, b2_gjkMaxIters;
+		extern int32 b2_toiCalls, b2_toiIters, b2_toiMaxIters;
+		extern int32 b2_toiRootIters, b2_toiMaxRootIters;
 
 		if (b2_gjkCalls > 0)
 		{
@@ -104,15 +105,12 @@ public:
 			m_textLine += 15;
 		}
 
-		extern int32 b2_toiCalls, b2_toiIters, b2_toiMaxIters;
-		extern int32 b2_toiRootIters, b2_toiMaxRootIters;
-
 		if (b2_toiCalls > 0)
 		{
 			m_debugDraw.DrawString(5, m_textLine, "toi calls = %d, ave toi iters = %3.1f, max toi iters = %d",
-								b2_toiCalls, b2_toiIters / float32(b2_toiCalls), b2_toiMaxRootIters);
+				b2_toiCalls, b2_toiIters / float32(b2_toiCalls), b2_toiMaxRootIters);
 			m_textLine += 15;
-			
+
 			m_debugDraw.DrawString(5, m_textLine, "ave toi root iters = %3.1f, max toi root iters = %d",
 				b2_toiRootIters / float32(b2_toiCalls), b2_toiMaxRootIters);
 			m_textLine += 15;
@@ -120,17 +118,18 @@ public:
 
 		if (m_stepCount % 60 == 0)
 		{
-			//Launch();
+			Launch();
 		}
 	}
 
 	static Test* Create()
 	{
-		return new ContinuousTest;
+		return new BulletTest;
 	}
 
 	b2Body* m_body;
-	float32 m_angularVelocity;
+	b2Body* m_bullet;
+	float32 m_x;
 };
 
 #endif
