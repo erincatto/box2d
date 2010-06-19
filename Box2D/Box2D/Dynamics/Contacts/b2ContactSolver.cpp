@@ -666,13 +666,13 @@ bool b2ContactSolver::SolvePositionConstraintsTOI(float32 baumgarte, const b2Bod
 		b2Body* bodyB = c->bodyB;
 
 		float32 massA = 0.0f;
-		if (bodyA == toiBodyA)
+		if (bodyA == toiBodyA || bodyA == toiBodyB || bodyA->IsBullet())
 		{
 			massA = bodyA->m_mass;
 		}
 
 		float32 massB = 0.0f;
-		if (bodyB == toiBodyB)
+		if (bodyB == toiBodyA || bodyB == toiBodyB || bodyB->IsBullet())
 		{
 			massB = bodyB->m_mass;
 		}

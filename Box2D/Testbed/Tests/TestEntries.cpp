@@ -25,6 +25,7 @@
 #include "BodyTypes.h"
 #include "Breakable.h"
 #include "Bridge.h"
+#include "BulletTest.h"
 #include "Cantilever.h"
 #include "ContinuousTest.h"
 #include "Chain.h"
@@ -62,9 +63,10 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Bullet Test", BulletTest::Create},
 	{"Continuous Test", ContinuousTest::Create},
-	{"Character Collision", CharacterCollision::Create},
 	{"Edge Test", EdgeTest::Create},
+	{"Character Collision", CharacterCollision::Create},
 	{"Tiles", Tiles::Create},
 	{"Web", Web::Create},
 	{"Vertical Stack", VerticalStack::Create},

@@ -27,8 +27,6 @@
 int32 b2_toiCalls, b2_toiIters, b2_toiMaxIters;
 int32 b2_toiRootIters, b2_toiMaxRootIters;
 
-int32 b2_toiMaxOptIters;
-
 struct b2SeparationFunction
 {
 	enum Type
