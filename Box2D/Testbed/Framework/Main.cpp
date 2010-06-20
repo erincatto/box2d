@@ -228,6 +228,17 @@ void KeyboardSpecial(int key, int x, int y)
 	}
 }
 
+void KeyboardUp(unsigned char key, int x, int y)
+{
+	B2_NOT_USED(x);
+	B2_NOT_USED(y);
+
+	if (test)
+	{
+		test->KeyboardUp(key);
+	}
+}
+
 void Mouse(int32 button, int32 state, int32 x, int32 y)
 {
 	// Use the mouse to move things around.
@@ -349,6 +360,8 @@ int main(int argc, char** argv)
 	glutMouseWheelFunc(MouseWheel);
 #endif
 	glutMotionFunc(MouseMotion);
+
+	glutKeyboardUpFunc(KeyboardUp);
 
 	glui = GLUI_Master.create_glui_subwindow( mainWindow, 
 		GLUI_SUBWINDOW_RIGHT );
