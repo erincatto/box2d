@@ -134,6 +134,7 @@ public:
     void DrawTitle(int x, int y, const char *string);
 	virtual void Step(Settings* settings);
 	virtual void Keyboard(unsigned char key) { B2_NOT_USED(key); }
+	virtual void KeyboardUp(unsigned char key) { B2_NOT_USED(key); }
 	void ShiftMouseDown(const b2Vec2& p);
 	virtual void MouseDown(const b2Vec2& p);
 	virtual void MouseUp(const b2Vec2& p);

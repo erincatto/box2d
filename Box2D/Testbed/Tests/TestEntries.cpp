@@ -42,6 +42,7 @@
 #include "Gears.h"
 #include "LineJoint.h"
 #include "OneSidedPlatform.h"
+#include "Pinball.h"
 #include "PolyCollision.h"
 #include "PolyShapes.h"
 #include "Prismatic.h"
@@ -63,6 +64,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Pinball", Pinball::Create},
 	{"Bullet Test", BulletTest::Create},
 	{"Continuous Test", ContinuousTest::Create},
 	{"Edge Test", EdgeTest::Create},
