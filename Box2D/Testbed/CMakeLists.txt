@@ -34,6 +34,7 @@ set(Testbed_Tests_SRCS
 	Tests/Gears.h
 	Tests/LineJoint.h
 	Tests/OneSidedPlatform.h
+	Tests/Pinball.h
 	Tests/PolyCollision.h
 	Tests/PolyShapes.h
 	Tests/Prismatic.h
