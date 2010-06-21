@@ -57,12 +57,19 @@ struct b2ContactConstraint
 	b2Manifold* manifold;
 };
 
+struct b2ContactSolverDef
+{
+	b2Contact** contacts;
+	int32 count;
+	b2StackAllocator* allocator;
+	float32 impulseRatio;
+	bool warmStarting;
+};
+
 class b2ContactSolver
 {
 public:
-	b2ContactSolver(b2Contact** contacts, int32 contactCount,
-					b2StackAllocator* allocator, float32 impulseRatio);
-
+	b2ContactSolver(b2ContactSolverDef* def);
 	~b2ContactSolver();
 
 	void InitializeVelocityConstraints();
@@ -72,11 +79,12 @@ public:
 	void StoreImpulses();
 
 	bool SolvePositionConstraints(float32 baumgarte);
-	bool SolvePositionConstraintsTOI(float32 baumgarte, const b2Body* toiBodyA, const b2Body* toiBodyB);
+	bool SolveTOIPositionConstraints(float32 baumgarte, const b2Body* toiBodyA, const b2Body* toiBodyB);
 
 	b2StackAllocator* m_allocator;
 	b2ContactConstraint* m_constraints;
-	int m_constraintCount;
+	int m_count;
 };
 
 #endif
+
