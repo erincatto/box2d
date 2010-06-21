@@ -139,6 +139,7 @@ public:
 		switch (key)
 		{
 		case 'a':
+		case 'A':
 			m_button = true;
 			break;
 		}
@@ -149,6 +150,7 @@ public:
 		switch (key)
 		{
 		case 'a':
+		case 'A':
 			m_button = false;
 			break;
 		}
