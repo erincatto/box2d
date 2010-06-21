@@ -697,14 +697,13 @@ void b2World::SolveTOI(const b2TimeStep& step)
 		minContact->m_flags |= b2Contact::e_islandFlag;
 
 		// Get contacts on bodyA and bodyB.
-		int32 count = 0;
 		b2Body* bodies[2] = {bA, bB};
 		for (int32 i = 0; i < 2; ++i)
 		{
 			b2Body* body = bodies[i];
 			if (body->m_type == b2_dynamicBody)
 			{
-				for (b2ContactEdge* ce = body->m_contactList; ce && count < b2_maxTOIContacts; ce = ce->next)
+				for (b2ContactEdge* ce = body->m_contactList; ce && island.m_bodyCount < b2_maxTOIContacts; ce = ce->next)
 				{
 					b2Contact* contact = ce->contact;
 
@@ -732,7 +731,7 @@ void b2World::SolveTOI(const b2TimeStep& step)
 
 					// Tentatively advance the body to the TOI.
 					b2Sweep backup = other->m_sweep;
-					if ((other->m_flags < b2Body::e_islandFlag) == 0)
+					if ((other->m_flags & b2Body::e_islandFlag) == 0)
 					{
 						other->Advance(minAlpha);
 					}

@@ -17,6 +17,8 @@
 */
 
 #include <Box2D/Dynamics/Contacts/b2ContactSolver.h>
+
+
 #include <Box2D/Dynamics/Contacts/b2Contact.h>
 #include <Box2D/Dynamics/b2Body.h>
 #include <Box2D/Dynamics/b2Fixture.h>
@@ -25,18 +27,17 @@
 
 #define B2_DEBUG_SOLVER 0
 
-b2ContactSolver::b2ContactSolver(b2Contact** contacts, int32 contactCount,
-								b2StackAllocator* allocator, float32 impulseRatio)
+b2ContactSolver::b2ContactSolver(b2ContactSolverDef* def)
 {
-	m_allocator = allocator;
+	m_allocator = def->allocator;
 
-	m_constraintCount = contactCount;
-	m_constraints = (b2ContactConstraint*)m_allocator->Allocate(m_constraintCount * sizeof(b2ContactConstraint));
+	m_count = def->count;
+	m_constraints = (b2ContactConstraint*)m_allocator->Allocate(m_count * sizeof(b2ContactConstraint));
 
 	// Initialize position independent portions of the constraints.
-	for (int32 i = 0; i < m_constraintCount; ++i)
+	for (int32 i = 0; i < m_count; ++i)
 	{
-		b2Contact* contact = contacts[i];
+		b2Contact* contact = def->contacts[i];
 
 		b2Fixture* fixtureA = contact->m_fixtureA;
 		b2Fixture* fixtureB = contact->m_fixtureB;
@@ -70,8 +71,17 @@ b2ContactSolver::b2ContactSolver(b2Contact** contacts, int32 contactCount,
 			b2ManifoldPoint* cp = manifold->points + j;
 			b2ContactConstraintPoint* ccp = cc->points + j;
 
-			ccp->normalImpulse = impulseRatio * cp->normalImpulse;
-			ccp->tangentImpulse = impulseRatio * cp->tangentImpulse;
+			if (def->warmStarting)
+			{
+				ccp->normalImpulse = def->impulseRatio * cp->normalImpulse;
+				ccp->tangentImpulse = def->impulseRatio * cp->tangentImpulse;
+			}
+			else
+			{
+				ccp->normalImpulse = 0.0f;
+				ccp->tangentImpulse = 0.0f;
+			}
+
 			ccp->localPoint = cp->localPoint;
 			ccp->rA.SetZero();
 			ccp->rB.SetZero();
@@ -93,7 +103,7 @@ b2ContactSolver::~b2ContactSolver()
 // Initialize position dependent portions of the velocity constraints.
 void b2ContactSolver::InitializeVelocityConstraints()
 {
-	for (int32 i = 0; i < m_constraintCount; ++i)
+	for (int32 i = 0; i < m_count; ++i)
 	{
 		b2ContactConstraint* cc = m_constraints + i;
 
@@ -196,7 +206,7 @@ void b2ContactSolver::InitializeVelocityConstraints()
 void b2ContactSolver::WarmStart()
 {
 	// Warm start.
-	for (int32 i = 0; i < m_constraintCount; ++i)
+	for (int32 i = 0; i < m_count; ++i)
 	{
 		b2ContactConstraint* c = m_constraints + i;
 
@@ -223,7 +233,7 @@ void b2ContactSolver::WarmStart()
 
 void b2ContactSolver::SolveVelocityConstraints()
 {
-	for (int32 i = 0; i < m_constraintCount; ++i)
+	for (int32 i = 0; i < m_count; ++i)
 	{
 		b2ContactConstraint* c = m_constraints + i;
 		b2Body* bodyA = c->bodyA;
@@ -522,7 +532,7 @@ void b2ContactSolver::SolveVelocityConstraints()
 
 void b2ContactSolver::StoreImpulses()
 {
-	for (int32 i = 0; i < m_constraintCount; ++i)
+	for (int32 i = 0; i < m_count; ++i)
 	{
 		b2ContactConstraint* c = m_constraints + i;
 		b2Manifold* m = c->manifold;
@@ -599,7 +609,7 @@ bool b2ContactSolver::SolvePositionConstraints(float32 baumgarte)
 {
 	float32 minSeparation = 0.0f;
 
-	for (int32 i = 0; i < m_constraintCount; ++i)
+	for (int32 i = 0; i < m_count; ++i)
 	{
 		b2ContactConstraint* c = m_constraints + i;
 		b2Body* bodyA = c->bodyA;
@@ -655,24 +665,24 @@ bool b2ContactSolver::SolvePositionConstraints(float32 baumgarte)
 }
 
 // Sequential position solver for position constraints.
-bool b2ContactSolver::SolvePositionConstraintsTOI(float32 baumgarte, const b2Body* toiBodyA, const b2Body* toiBodyB)
+bool b2ContactSolver::SolveTOIPositionConstraints(float32 baumgarte, const b2Body* toiBodyA, const b2Body* toiBodyB)
 {
 	float32 minSeparation = 0.0f;
 
-	for (int32 i = 0; i < m_constraintCount; ++i)
+	for (int32 i = 0; i < m_count; ++i)
 	{
 		b2ContactConstraint* c = m_constraints + i;
 		b2Body* bodyA = c->bodyA;
 		b2Body* bodyB = c->bodyB;
 
 		float32 massA = 0.0f;
-		if (bodyA == toiBodyA || bodyA == toiBodyB || bodyA->IsBullet())
+		if (bodyA == toiBodyA || bodyA == toiBodyB)
 		{
 			massA = bodyA->m_mass;
 		}
 
 		float32 massB = 0.0f;
-		if (bodyB == toiBodyA || bodyB == toiBodyB || bodyB->IsBullet())
+		if (bodyB == toiBodyA || bodyB == toiBodyB)
 		{
 			massB = bodyB->m_mass;
 		}
