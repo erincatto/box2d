@@ -223,10 +223,21 @@ void b2Island::Solve(const b2TimeStep& step, const b2Vec2& gravity, bool allowSl
 	}
 
 	// Initialize velocity constraints.
-	b2ContactSolver contactSolver(m_contacts, m_contactCount, m_allocator, step.dtRatio);
+	b2ContactSolverDef solverDef;
+	solverDef.contacts = m_contacts;
+	solverDef.count = m_contactCount;
+	solverDef.allocator = m_allocator;
+	solverDef.impulseRatio = step.dtRatio;
+	solverDef.warmStarting = step.warmStarting;
+
+	b2ContactSolver contactSolver(&solverDef);
 
 	contactSolver.InitializeVelocityConstraints();
-	contactSolver.WarmStart();
+
+	if (step.warmStarting)
+	{
+		contactSolver.WarmStart();
+	}
 	
 	for (int32 i = 0; i < m_jointCount; ++i)
 	{
@@ -355,13 +366,19 @@ void b2Island::Solve(const b2TimeStep& step, const b2Vec2& gravity, bool allowSl
 
 void b2Island::SolveTOI(const b2TimeStep& subStep, const b2Body* bodyA, const b2Body* bodyB)
 {
-	b2ContactSolver contactSolver(m_contacts, m_contactCount, m_allocator, subStep.dtRatio);
+	b2ContactSolverDef solverDef;
+	solverDef.contacts = m_contacts;
+	solverDef.count = m_contactCount;
+	solverDef.allocator = m_allocator;
+	solverDef.impulseRatio = subStep.dtRatio;
+	solverDef.warmStarting = subStep.warmStarting;
+	b2ContactSolver contactSolver(&solverDef);
 
 	// Solve position constraints.
 	const float32 k_toiBaumgarte = 0.75f;
 	for (int32 i = 0; i < subStep.positionIterations; ++i)
 	{
-		bool contactsOkay = contactSolver.SolvePositionConstraintsTOI(k_toiBaumgarte, bodyA, bodyB);
+		bool contactsOkay = contactSolver.SolveTOIPositionConstraints(k_toiBaumgarte, bodyA, bodyB);
 		if (contactsOkay)
 		{
 			break;
