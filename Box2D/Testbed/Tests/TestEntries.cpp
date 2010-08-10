@@ -64,17 +64,17 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Edge Test", EdgeTest::Create},
+	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Pinball", Pinball::Create},
 	{"Bullet Test", BulletTest::Create},
 	{"Continuous Test", ContinuousTest::Create},
-	{"Edge Test", EdgeTest::Create},
 	{"Character Collision", CharacterCollision::Create},
 	{"Tiles", Tiles::Create},
 	{"Web", Web::Create},
 	{"Vertical Stack", VerticalStack::Create},
 	{"Time of Impact", TimeOfImpact::Create},
 	{"Ray-Cast", RayCast::Create},
-	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Confined", Confined::Create},
 	{"Pyramid", Pyramid::Create},
 	{"Varying Restitution", VaryingRestitution::Create},
