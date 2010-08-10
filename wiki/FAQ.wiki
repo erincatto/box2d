@@ -72,6 +72,8 @@ Making a worms clone requires arbitrarily destructible terrain. This is beyond t
 ==Tile Based Environment==
 Using many boxes for your terrain may not work well because box-like characters can get snagged on internal corners. A future update to Box2D should allow for smooth motion over edge chains. In general you should avoid using a rectangular character because collision tolerances will still lead to undesirable snagging.
 
+For more information see this post: http://box2d.org/forum/viewtopic.php?f=3&t=3048
+
 ==Asteroid Type Coordinate Systems==
 Box2D does not have any support for coordinate frame wrapping. You would likely need to customize Box2D for this purpose. You may need to use a different broad-phase for this to work.
 
