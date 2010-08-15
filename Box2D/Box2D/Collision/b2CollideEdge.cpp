@@ -158,7 +158,6 @@ void b2CollideEdgeAndCircle(b2Manifold* manifold,
 	manifold->points[0].localPoint = circleB->m_p;
 }
 
-
 struct b2EPAxis
 {
 	enum Type
@@ -265,13 +264,21 @@ void b2EPCollider::Collide(b2Manifold* manifold)
 	ComputeAdjacency();
 
 	b2EPAxis edgeAxis = ComputeEdgeSeparation();
+
+	// If no valid normal can be found than this edge should not collide.
+	// This can happen on the middle edge of a 3-edge zig-zag chain.
+	if (edgeAxis.type == b2EPAxis::e_unknown)
+	{
+		return;
+	}
+
 	if (edgeAxis.separation > m_radius)
 	{
 		return;
 	}
 
 	b2EPAxis polygonAxis = ComputePolygonSeparation();
-	if (polygonAxis.separation > m_radius)
+	if (polygonAxis.type != b2EPAxis::e_unknown && polygonAxis.separation > m_radius)
 	{
 		return;
 	}
@@ -281,7 +288,11 @@ void b2EPCollider::Collide(b2Manifold* manifold)
 	const float32 k_absoluteTol = 0.001f;
 
 	b2EPAxis primaryAxis;
-	if (polygonAxis.separation > k_relativeTol * edgeAxis.separation + k_absoluteTol)
+	if (polygonAxis.type == b2EPAxis::e_unknown)
+	{
+		primaryAxis = edgeAxis;
+	}
+	else if (polygonAxis.separation > k_relativeTol * edgeAxis.separation + k_absoluteTol)
 	{
 		primaryAxis = polygonAxis;
 	}
@@ -427,19 +438,6 @@ void b2EPCollider::ComputeAdjacency()
 		{
 			if (front0 || front1)
 			{
-				m_limit11 = n0;
-				m_limit12 = n1;
-			}
-			else
-			{
-				m_limit11 = -n0;
-				m_limit12 = -n1;
-			}
-		}
-		else
-		{
-			if (front0 && front1)
-			{
 				m_limit11 = n1;
 				m_limit12 = n0;
 			}
@@ -447,6 +445,19 @@ void b2EPCollider::ComputeAdjacency()
 			{
 				m_limit11 = -n1;
 				m_limit12 = -n0;
+			}
+		}
+		else
+		{
+			if (front0 && front1)
+			{
+				m_limit11 = n0;
+				m_limit12 = n1;
+			}
+			else
+			{
+				m_limit11 = -n0;
+				m_limit12 = -n1;
 			}
 		}
 	}
@@ -473,8 +484,8 @@ void b2EPCollider::ComputeAdjacency()
 		{
 			if (front1 || front2)
 			{
-				m_limit21 = n1;
-				m_limit22 = n2;
+				m_limit21 = n2;
+				m_limit22 = n1;
 			}
 			else
 			{
@@ -486,13 +497,13 @@ void b2EPCollider::ComputeAdjacency()
 		{
 			if (front1 && front2)
 			{
-				m_limit21 = n2;
-				m_limit22 = n1;
+				m_limit21 = n1;
+				m_limit22 = n2;
 			}
 			else
 			{
-				m_limit21 = -n2;
-				m_limit22 = -n1;
+				m_limit21 = -n1;
+				m_limit22 = -n2;
 			}
 		}
 	}
