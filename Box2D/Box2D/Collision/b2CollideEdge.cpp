@@ -172,7 +172,7 @@ struct b2EPAxis
 	float32 separation;
 };
 
-#if 0
+#if 1
 struct b2FatEdge
 {
 	b2Vec2 v0, v1, v2, v3;
@@ -578,7 +578,7 @@ b2EPAxis b2EPCollider::ComputePolygonSeparation()
 		bool valid1 = b2Cross(n, m_limit11) >= -b2_angularSlop && b2Cross(m_limit12, n) >= -b2_angularSlop;
 		bool valid2 = b2Cross(n, m_limit21) >= -b2_angularSlop && b2Cross(m_limit22, n) >= -b2_angularSlop;
 
-		if (valid1 == false || valid2 == false)
+		if (valid1 == false && valid2 == false)
 		{
 			continue;
 		}
