@@ -129,6 +129,8 @@ void b2World::DestroyBody(b2Body* b)
 		}
 
 		DestroyJoint(je0->joint);
+
+		b->m_jointList = je;
 	}
 	b->m_jointList = NULL;
 
@@ -158,6 +160,9 @@ void b2World::DestroyBody(b2Body* b)
 		f0->Destroy(&m_blockAllocator);
 		f0->~b2Fixture();
 		m_blockAllocator.Free(f0, sizeof(b2Fixture));
+
+		b->m_fixtureList = f;
+		b->m_fixtureCount -= 1;
 	}
 	b->m_fixtureList = NULL;
 	b->m_fixtureCount = 0;
