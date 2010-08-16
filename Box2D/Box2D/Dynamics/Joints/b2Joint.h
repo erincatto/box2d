@@ -130,6 +130,7 @@ public:
 
 	/// Get the next joint the world joint list.
 	b2Joint* GetNext();
+	const b2Joint* GetNext() const;
 
 	/// Get the user data pointer.
 	void* GetUserData() const;
@@ -209,6 +210,11 @@ inline b2Body* b2Joint::GetBodyB()
 }
 
 inline b2Joint* b2Joint::GetNext()
+{
+	return m_next;
+}
+
+inline const b2Joint* b2Joint::GetNext() const
 {
 	return m_next;
 }
