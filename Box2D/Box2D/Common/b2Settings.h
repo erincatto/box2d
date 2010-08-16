@@ -139,7 +139,7 @@ extern b2Version b2_version;
 /// Friction mixing law. Feel free to customize this.
 inline float32 b2MixFriction(float32 friction1, float32 friction2)
 {
-	return sqrtf(friction1 * friction2);
+	return std::sqrtf(friction1 * friction2);
 }
 
 /// Restitution mixing law. Feel free to customize this.

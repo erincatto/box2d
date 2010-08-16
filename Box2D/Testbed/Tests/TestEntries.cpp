@@ -20,6 +20,7 @@
 #include "../Framework/Render.h"
 #include "../../freeglut/GL/glut.h"
 #include <cstring>
+using namespace std;
 
 #include "ApplyForce.h"
 #include "BodyTypes.h"
