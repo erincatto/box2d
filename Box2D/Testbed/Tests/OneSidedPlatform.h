@@ -86,7 +86,7 @@ public:
 			return;
 		}
 
-		if (fixtureB != m_character && fixtureB != m_character)
+		if (fixtureB != m_platform && fixtureB != m_character)
 		{
 			return;
 		}
