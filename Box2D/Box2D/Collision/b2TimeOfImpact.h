@@ -21,7 +21,6 @@
 
 #include <Box2D/Common/b2Math.h>
 #include <Box2D/Collision/b2Distance.h>
-#include <climits>
 
 /// Input parameters for b2TimeOfImpact
 struct b2TOIInput

@@ -21,6 +21,7 @@
 #include "glui/GL/glui.h"
 
 #include <cstdio>
+using namespace std;
 
 namespace
 {

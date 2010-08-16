@@ -22,6 +22,7 @@
 #include "freeglut/GL/glut.h"
 
 #include <cstdio>
+using namespace std;
 
 void DestructionListener::SayGoodbye(b2Joint* joint)
 {

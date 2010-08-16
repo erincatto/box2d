@@ -18,6 +18,7 @@
 
 #include <Box2D/Collision/Shapes/b2CircleShape.h>
 #include <new>
+using namespace std;
 
 b2Shape* b2CircleShape::Clone(b2BlockAllocator* allocator) const
 {
