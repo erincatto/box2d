@@ -121,17 +121,20 @@ public:
 	/// the next body in the world list. A NULL body indicates the end of the list.
 	/// @return the head of the world body list.
 	b2Body* GetBodyList();
+	const b2Body* GetBodyList() const;
 
 	/// Get the world joint list. With the returned joint, use b2Joint::GetNext to get
 	/// the next joint in the world list. A NULL joint indicates the end of the list.
 	/// @return the head of the world joint list.
 	b2Joint* GetJointList();
+	const b2Joint* GetJointList() const;
 
 	/// Get the world contact list. With the returned contact, use b2Contact::GetNext to get
 	/// the next contact in the world list. A NULL contact indicates the end of the list.
 	/// @return the head of the world contact list.
 	/// @warning contacts are 
 	b2Contact* GetContactList();
+	const b2Contact* GetContactList() const;
 
 	/// Enable/disable warm starting. For testing.
 	void SetWarmStarting(bool flag) { m_warmStarting = flag; }
@@ -230,12 +233,27 @@ inline b2Body* b2World::GetBodyList()
 	return m_bodyList;
 }
 
+inline const b2Body* b2World::GetBodyList() const
+{
+	return m_bodyList;
+}
+
 inline b2Joint* b2World::GetJointList()
 {
 	return m_jointList;
 }
 
+inline const b2Joint* b2World::GetJointList() const
+{
+	return m_jointList;
+}
+
 inline b2Contact* b2World::GetContactList()
+{
+	return m_contactManager.m_contactList;
+}
+
+inline const b2Contact* b2World::GetContactList() const
 {
 	return m_contactManager.m_contactList;
 }
