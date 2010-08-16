@@ -65,9 +65,7 @@ public:
 			ground->CreateFixture(&shape, 0.0f);
 		}
 
-		// Square made from edges notice how the edges are shrunk to account
-		// for the polygon radius. This makes it so the square character does
-		// not get snagged. However, ray casts can now go through the cracks.
+		// Square made from an edge loop.
 		{
 			b2BodyDef bd;
 			b2Body* ground = m_world->CreateBody(&bd);
@@ -81,23 +79,35 @@ public:
 			shape.m_count = 4;
 			shape.m_vertices = vs;
 			ground->CreateFixture(&shape, 0.0f);
-
-			//b2PolygonShape shape;
-			//float32 d = 2.0f * b2_polygonRadius;
-			//shape.SetAsEdge(b2Vec2(-1.0f + d, 3.0f), b2Vec2(1.0f - d, 3.0f));
-			//ground->CreateFixture(&shape, 0.0f);
-			//shape.SetAsEdge(b2Vec2(1.0f, 3.0f + d), b2Vec2(1.0f, 5.0f - d));
-			//ground->CreateFixture(&shape, 0.0f);
-			//shape.SetAsEdge(b2Vec2(1.0f - d, 5.0f), b2Vec2(-1.0f + d, 5.0f));
-			//ground->CreateFixture(&shape, 0.0f);
-			//shape.SetAsEdge(b2Vec2(-1.0f, 5.0f - d), b2Vec2(-1.0f, 3.0f + d));
-			//ground->CreateFixture(&shape, 0.0f);
 		}
 
-		// Square character
+		// Edge loop.
 		{
 			b2BodyDef bd;
-			bd.position.Set(-3.0f, 5.0f);
+			bd.position.Set(-10.0f, 4.0f);
+			b2Body* ground = m_world->CreateBody(&bd);
+
+			b2Vec2 vs[10];
+			vs[0].Set(0.0f, 0.0f);
+			vs[1].Set(6.0f, 0.0f);
+			vs[2].Set(6.0f, 2.0f);
+			vs[3].Set(4.0f, 1.0f);
+			vs[4].Set(2.0f, 2.0f);
+			vs[5].Set(0.0f, 2.0f);
+			vs[6].Set(-2.0f, 2.0f);
+			vs[7].Set(-4.0f, 3.0f);
+			vs[8].Set(-6.0f, 2.0f);
+			vs[9].Set(-6.0f, 0.0f);
+			b2LoopShape shape;
+			shape.m_count = 10;
+			shape.m_vertices = vs;
+			ground->CreateFixture(&shape, 0.0f);
+		}
+
+		// Square character 1
+		{
+			b2BodyDef bd;
+			bd.position.Set(-3.0f, 8.0f);
 			bd.type = b2_dynamicBody;
 			bd.fixedRotation = true;
 			bd.allowSleep = false;
@@ -113,11 +123,29 @@ public:
 			body->CreateFixture(&fd);
 		}
 
-#if 0
-		// Hexagon character
+		// Square character 2
 		{
 			b2BodyDef bd;
 			bd.position.Set(-5.0f, 5.0f);
+			bd.type = b2_dynamicBody;
+			bd.fixedRotation = true;
+			bd.allowSleep = false;
+
+			b2Body* body = m_world->CreateBody(&bd);
+
+			b2PolygonShape shape;
+			shape.SetAsBox(0.25f, 0.25f);
+
+			b2FixtureDef fd;
+			fd.shape = &shape;
+			fd.density = 20.0f;
+			body->CreateFixture(&fd);
+		}
+
+		// Hexagon character
+		{
+			b2BodyDef bd;
+			bd.position.Set(-5.0f, 8.0f);
 			bd.type = b2_dynamicBody;
 			bd.fixedRotation = true;
 			bd.allowSleep = false;
@@ -160,13 +188,16 @@ public:
 			fd.density = 20.0f;
 			body->CreateFixture(&fd);
 		}
-#endif
 	}
 
 	void Step(Settings* settings)
 	{
 		Test::Step(settings);
-		m_debugDraw.DrawString(5, m_textLine, "This tests various character collision shapes");
+		m_debugDraw.DrawString(5, m_textLine, "This tests various character collision shapes.");
+		m_textLine += 15;
+		m_debugDraw.DrawString(5, m_textLine, "Limitation: square and hexagon can snag on aligned boxes.");
+		m_textLine += 15;
+		m_debugDraw.DrawString(5, m_textLine, "Feature: loops have smooth collision inside and out.");
 		m_textLine += 15;
 	}
 
