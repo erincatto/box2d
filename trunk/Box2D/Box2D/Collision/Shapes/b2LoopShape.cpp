@@ -19,6 +19,7 @@
 #include <Box2D/Collision/Shapes/b2LoopShape.h>
 #include <Box2D/Collision/Shapes/b2EdgeShape.h>
 #include <new>
+#include <cstring>
 using namespace std;
 
 b2Shape* b2LoopShape::Clone(b2BlockAllocator* allocator) const
