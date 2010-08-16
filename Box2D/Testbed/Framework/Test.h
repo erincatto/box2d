@@ -34,7 +34,7 @@ typedef Test* TestCreateFcn();
 /// Random number in range [-1,1]
 inline float32 RandomFloat()
 {
-	float32 r = (float32)(rand() & (RAND_LIMIT));
+	float32 r = (float32)(std::rand() & (RAND_LIMIT));
 	r /= RAND_LIMIT;
 	r = 2.0f * r - 1.0f;
 	return r;
@@ -43,7 +43,7 @@ inline float32 RandomFloat()
 /// Random floating point number in range [lo, hi]
 inline float32 RandomFloat(float32 lo, float32 hi)
 {
-	float32 r = (float32)(rand() & (RAND_LIMIT));
+	float32 r = (float32)(std::rand() & (RAND_LIMIT));
 	r /= RAND_LIMIT;
 	r = (hi - lo) * r + lo;
 	return r;

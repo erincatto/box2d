@@ -23,6 +23,7 @@
 #include <Box2D/Collision/Shapes/b2PolygonShape.h>
 
 #include <cstdio>
+using namespace std;
 
 int32 b2_toiCalls, b2_toiIters, b2_toiMaxIters;
 int32 b2_toiRootIters, b2_toiMaxRootIters;
