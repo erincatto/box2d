@@ -170,6 +170,10 @@ void b2PrismaticJoint::InitVelocityConstraints(const b2TimeStep& step)
 		float32 k12 = i1 * m_s1 + i2 * m_s2;
 		float32 k13 = i1 * m_s1 * m_a1 + i2 * m_s2 * m_a2;
 		float32 k22 = i1 + i2;
+		if (k22 == 0.0f)
+		{
+			k22 = 1.0f;
+		}
 		float32 k23 = i1 * m_a1 + i2 * m_a2;
 		float32 k33 = m1 + m2 + i1 * m_a1 * m_a1 + i2 * m_a2 * m_a2;
 
@@ -416,6 +420,10 @@ bool b2PrismaticJoint::SolvePositionConstraints(float32 baumgarte)
 		float32 k12 = i1 * m_s1 + i2 * m_s2;
 		float32 k13 = i1 * m_s1 * m_a1 + i2 * m_s2 * m_a2;
 		float32 k22 = i1 + i2;
+		if (k22 == 0.0f)
+		{
+			k22 = 1.0f;
+		}
 		float32 k23 = i1 * m_a1 + i2 * m_a2;
 		float32 k33 = m1 + m2 + i1 * m_a1 * m_a1 + i2 * m_a2 * m_a2;
 
@@ -438,6 +446,10 @@ bool b2PrismaticJoint::SolvePositionConstraints(float32 baumgarte)
 		float32 k11 = m1 + m2 + i1 * m_s1 * m_s1 + i2 * m_s2 * m_s2;
 		float32 k12 = i1 * m_s1 + i2 * m_s2;
 		float32 k22 = i1 + i2;
+		if (k22 == 0.0f)
+		{
+			k22 = 1.0f;
+		}
 
 		m_K.col1.Set(k11, k12, 0.0f);
 		m_K.col2.Set(k12, k22, 0.0f);
