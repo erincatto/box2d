@@ -139,8 +139,8 @@ public:
 
 		{
 			float32 w = 1.0f;
-			float32 b = w / (2.0f + sqrtf(2.0f));
-			float32 s = sqrtf(2.0f) * b;
+			float32 b = w / (2.0f + b2Sqrt(2.0f));
+			float32 s = b2Sqrt(2.0f) * b;
 
 			b2Vec2 vertices[8];
 			vertices[0].Set(0.5f * s, 0.0f);
