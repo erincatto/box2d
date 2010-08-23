@@ -57,8 +57,8 @@ inline float32 b2InvSqrt(float32 x)
 	return x;
 }
 
-#define	b2Sqrt(x)	std::sqrtf(x)
-#define	b2Atan2(y, x)	std::atan2f(y, x)
+#define	b2Sqrt(x)	std::sqrt(x)
+#define	b2Atan2(y, x)	std::atan2(y, x)
 
 inline float32 b2Abs(float32 a)
 {
