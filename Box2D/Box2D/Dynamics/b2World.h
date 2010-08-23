@@ -94,9 +94,12 @@ public:
 				int32 velocityIterations,
 				int32 positionIterations);
 
-	/// Call this after you are done with time steps to clear the forces. You normally
-	/// call this after each call to Step, unless you are performing sub-steps. By default,
-	/// forces will be automatically cleared, so you don't need to call this function.
+	/// Manually clear the force buffer on all bodies. By default, forces are cleared automatically
+	/// after each call to Step. The default behavior is modified by calling SetAutoClearForces.
+	/// The purpose of this function is to support sub-stepping. Sub-stepping is often used to maintain
+	/// a fixed sized time step under a variable frame-rate.
+	/// When you perform sub-stepping you will disable auto clearing of forces and instead call
+	/// ClearForces after all sub-steps are complete in one pass of your game loop.
 	/// @see SetAutoClearForces
 	void ClearForces();
 
