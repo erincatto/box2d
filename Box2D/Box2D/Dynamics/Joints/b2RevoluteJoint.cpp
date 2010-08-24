@@ -427,9 +427,9 @@ void b2RevoluteJoint::EnableMotor(bool flag)
 	m_enableMotor = flag;
 }
 
-float32 b2RevoluteJoint::GetMotorTorque() const
+float32 b2RevoluteJoint::GetMotorTorque(float32 inv_dt) const
 {
-	return m_motorImpulse;
+	return inv_dt * m_motorImpulse;
 }
 
 void b2RevoluteJoint::SetMotorSpeed(float32 speed)
