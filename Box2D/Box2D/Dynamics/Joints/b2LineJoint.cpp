@@ -580,9 +580,9 @@ void b2LineJoint::SetMaxMotorForce(float32 force)
 	m_maxMotorForce = force;
 }
 
-float32 b2LineJoint::GetMotorForce() const
+float32 b2LineJoint::GetMotorForce(float32 inv_dt) const
 {
-	return m_motorImpulse;
+	return inv_dt * m_motorImpulse;
 }
 
 
