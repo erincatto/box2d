@@ -93,9 +93,6 @@ public:
 	b2Vec2 GetAnchorA() const;
 	b2Vec2 GetAnchorB() const;
 
-	b2Vec2 GetReactionForce(float32 inv_dt) const;
-	float32 GetReactionTorque(float32 inv_dt) const;
-
 	/// Get the current joint angle in radians.
 	float32 GetJointAngle() const;
 
@@ -132,8 +129,17 @@ public:
 	/// Set the maximum motor torque, usually in N-m.
 	void SetMaxMotorTorque(float32 torque);
 
-	/// Get the current motor torque, usually in N-m.
-	float32 GetMotorTorque() const;
+	/// Get the reaction force given the inverse time step.
+	/// Unit is N.
+	b2Vec2 GetReactionForce(float32 inv_dt) const;
+
+	/// Get the reaction torque due to the joint limit given the inverse time step.
+	/// Unit is N*m.
+	float32 GetReactionTorque(float32 inv_dt) const;
+
+	/// Get the current motor torque given the inverse time step.
+	/// Unit is N*m.
+	float32 GetMotorTorque(float32 inv_dt) const;
 
 protected:
 	
