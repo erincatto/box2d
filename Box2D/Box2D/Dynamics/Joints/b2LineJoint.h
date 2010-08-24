@@ -125,8 +125,8 @@ public:
 	void SetMaxMotorForce(float32 force);
 	float32 GetMaxMotorForce() const;
 
-	/// Get the current motor force, usually in N.
-	float32 GetMotorForce() const;
+	/// Get the current motor force given the inverse time step, usually in N.
+	float32 GetMotorForce(float32 inv_dt) const;
 
 protected:
 
@@ -165,6 +165,11 @@ protected:
 inline float32 b2LineJoint::GetMotorSpeed() const
 {
 	return m_motorSpeed;
+}
+
+inline float32 b2LineJoint::GetMaxMotorForce() const
+{
+	return m_maxMotorForce;
 }
 
 #endif

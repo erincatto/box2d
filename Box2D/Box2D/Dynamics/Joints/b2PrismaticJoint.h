@@ -129,8 +129,8 @@ public:
 	/// Set the maximum motor force, usually in N.
 	void SetMaxMotorForce(float32 force);
 
-	/// Get the current motor force, usually in N.
-	float32 GetMotorForce() const;
+	/// Get the current motor force given the inverse time step, usually in N.
+	float32 GetMotorForce(float32 inv_dt) const;
 
 protected:
 	friend class b2Joint;
