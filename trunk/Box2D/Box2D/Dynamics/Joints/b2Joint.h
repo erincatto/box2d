@@ -172,6 +172,7 @@ protected:
 	void* m_userData;
 
 	// Cache here per time step to reduce cache misses.
+	// TODO_ERIN will be wrong if the mass changes.
 	b2Vec2 m_localCenterA, m_localCenterB;
 	float32 m_invMassA, m_invIA;
 	float32 m_invMassB, m_invIB;

@@ -592,7 +592,7 @@ void b2PrismaticJoint::SetMaxMotorForce(float32 force)
 	m_maxMotorForce = force;
 }
 
-float32 b2PrismaticJoint::GetMotorForce() const
+float32 b2PrismaticJoint::GetMotorForce(float32 inv_dt) const
 {
-	return m_motorImpulse;
+	return inv_dt * m_motorImpulse;
 }
