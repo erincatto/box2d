@@ -72,6 +72,9 @@ typedef float float32;
 /// Making it larger may create artifacts for vertex collision.
 #define b2_polygonRadius		(2.0f * b2_linearSlop)
 
+/// Maximum number of sub-steps per contact in continuous physics simulation.
+#define b2_maxSubSteps			8
+
 
 // Dynamics
 
@@ -104,6 +107,7 @@ typedef float float32;
 /// that overlap is removed in one time step. However using values close to 1 often lead
 /// to overshoot.
 #define b2_contactBaumgarte			0.2f
+
 
 // Sleep
 
