@@ -539,6 +539,8 @@ void b2World::SolveTOI(const b2TimeStep& step)
 		{
 			// Invalidate TOI
 			c->m_flags &= ~(b2Contact::e_toiFlag | b2Contact::e_islandFlag);
+			c->m_toiCount = 0;
+			c->m_toi = 1.0f;
 		}
 	}
 
@@ -553,6 +555,12 @@ void b2World::SolveTOI(const b2TimeStep& step)
 		{
 			// Is this contact disabled?
 			if (c->IsEnabled() == false)
+			{
+				continue;
+			}
+
+			// Prevent excessive sub-stepping.
+			if (c->m_toiCount > b2_maxSubSteps)
 			{
 				continue;
 			}
@@ -675,6 +683,7 @@ void b2World::SolveTOI(const b2TimeStep& step)
 		// The TOI contact likely has some new contact points.
 		minContact->Update(m_contactManager.m_contactListener);
 		minContact->m_flags &= ~b2Contact::e_toiFlag;
+		++minContact->m_toiCount;
 
 		// Is the contact solid?
 		if (minContact->IsEnabled() == false || minContact->IsTouching() == false)
