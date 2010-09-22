@@ -25,7 +25,7 @@ public:
 	PolyCollision()
 	{
 		{
-			m_polygonA.SetAsEdge(b2Vec2(20.0f, 0.0f), b2Vec2(20.0f, 20.0f));
+			m_polygonA.SetAsBox(0.2f, 0.4f);
 			m_transformA.Set(b2Vec2(0.0f, 0.0f), 0.0f);
 		}
 

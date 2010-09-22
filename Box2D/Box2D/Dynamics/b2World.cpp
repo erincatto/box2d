@@ -983,12 +983,13 @@ void b2World::DrawShape(b2Fixture* fixture, const b2Transform& xf, const b2Color
 	case b2Shape::e_loop:
 		{
 			b2LoopShape* loop = (b2LoopShape*)fixture->GetShape();
-			int32 count = loop->m_count;
+			int32 count = loop->GetCount();
+			const b2Vec2* vertices = loop->GetVertices();
 
-			b2Vec2 v1 = b2Mul(xf, loop->m_vertices[count - 1]);
+			b2Vec2 v1 = b2Mul(xf, vertices[count - 1]);
 			for (int32 i = 0; i < count; ++i)
 			{
-				b2Vec2 v2 = b2Mul(xf, loop->m_vertices[i]);
+				b2Vec2 v2 = b2Mul(xf, vertices[i]);
 				m_debugDraw->DrawSegment(v1, v2, color);
 				v1 = v2;
 			}
