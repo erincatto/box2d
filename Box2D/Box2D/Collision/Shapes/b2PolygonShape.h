@@ -23,6 +23,8 @@
 
 /// A convex polygon. It is assumed that the interior of the polygon is to
 /// the left of each edge.
+/// Polygons have a maximum number of vertices equal to b2_maxPolygonVertices.
+/// In most cases you should not need many vertices for a convex polygon.
 class b2PolygonShape : public b2Shape
 {
 public:
@@ -36,6 +38,7 @@ public:
 
 	/// Copy vertices. This assumes the vertices define a convex polygon.
 	/// It is assumed that the exterior is the the right of each edge.
+	/// The count must be in the range [3, b2_maxPolygonVertices].
 	void Set(const b2Vec2* vertices, int32 vertexCount);
 
 	/// Build vertices to represent an axis-aligned box.
@@ -50,9 +53,6 @@ public:
 	/// @param angle the rotation of the box in local coordinates.
 	void SetAsBox(float32 hx, float32 hy, const b2Vec2& center, float32 angle);
 
-	/// Set this as a single edge.
-	void SetAsEdge(const b2Vec2& v1, const b2Vec2& v2);
-
 	/// @see b2Shape::TestPoint
 	bool TestPoint(const b2Transform& transform, const b2Vec2& p) const;
 
@@ -65,12 +65,6 @@ public:
 
 	/// @see b2Shape::ComputeMass
 	void ComputeMass(b2MassData* massData, float32 density) const;
-
-	/// Get the supporting vertex index in the given direction.
-	//int32 GetSupport(const b2Vec2& d) const;
-
-	/// Get the supporting vertex in the given direction.
-	//const b2Vec2& GetSupportVertex(const b2Vec2& d) const;
 
 	/// Get the vertex count.
 	int32 GetVertexCount() const { return m_vertexCount; }
@@ -91,42 +85,6 @@ inline b2PolygonShape::b2PolygonShape()
 	m_vertexCount = 0;
 	m_centroid.SetZero();
 }
-
-#if 0
-inline int32 b2PolygonShape::GetSupport(const b2Vec2& d) const
-{
-	int32 bestIndex = 0;
-	float32 bestValue = b2Dot(m_vertices[0], d);
-	for (int32 i = 1; i < m_vertexCount; ++i)
-	{
-		float32 value = b2Dot(m_vertices[i], d);
-		if (value > bestValue)
-		{
-			bestIndex = i;
-			bestValue = value;
-		}
-	}
-
-	return bestIndex;
-}
-
-inline const b2Vec2& b2PolygonShape::GetSupportVertex(const b2Vec2& d) const
-{
-	int32 bestIndex = 0;
-	float32 bestValue = b2Dot(m_vertices[0], d);
-	for (int32 i = 1; i < m_vertexCount; ++i)
-	{
-		float32 value = b2Dot(m_vertices[i], d);
-		if (value > bestValue)
-		{
-			bestIndex = i;
-			bestValue = value;
-		}
-	}
-
-	return m_vertices[bestIndex];
-}
-#endif
 
 inline const b2Vec2& b2PolygonShape::GetVertex(int32 index) const
 {

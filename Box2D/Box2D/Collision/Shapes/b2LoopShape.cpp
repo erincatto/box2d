@@ -22,13 +22,27 @@
 #include <cstring>
 using namespace std;
 
+b2LoopShape::~b2LoopShape()
+{
+	b2Free(m_vertices);
+	m_vertices = NULL;
+	m_count = 0;
+}
+
+void b2LoopShape::Create(const b2Vec2* vertices, int32 count)
+{
+	b2Assert(m_vertices == NULL && m_count == 0);
+	b2Assert(count >= 2);
+	m_count = count;
+	m_vertices = (b2Vec2*)b2Alloc(count * sizeof(b2Vec2));
+	memcpy(m_vertices, vertices, m_count * sizeof(b2Vec2));
+}
+
 b2Shape* b2LoopShape::Clone(b2BlockAllocator* allocator) const
 {
 	void* mem = allocator->Allocate(sizeof(b2LoopShape));
 	b2LoopShape* clone = new (mem) b2LoopShape;
-	*clone = *this;
-	clone->m_vertices = (b2Vec2*)allocator->Allocate(m_count * sizeof(b2Vec2));
-	memcpy(clone->m_vertices, m_vertices, m_count * sizeof(b2Vec2));
+	clone->Create(m_vertices, m_count);
 	return clone;
 }
 
