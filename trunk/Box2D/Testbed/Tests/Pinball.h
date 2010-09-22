@@ -40,8 +40,7 @@ public:
 			vs[4].Set(-8.0f, 6.0f);
 
 			b2LoopShape loop;
-			loop.m_count = 5;
-			loop.m_vertices = vs;
+			loop.Create(vs, 5);
 			b2FixtureDef fd;
 			fd.shape = &loop;
 			fd.density = 0.0f;
