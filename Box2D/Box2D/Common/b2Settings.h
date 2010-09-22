@@ -46,7 +46,8 @@ typedef float float32;
 /// The maximum number of contact points between two convex shapes.
 #define b2_maxManifoldPoints	2
 
-/// The maximum number of vertices on a convex polygon.
+/// The maximum number of vertices on a convex polygon. You cannot increase
+/// this too much because b2BlockAllocator has a maximum object size.
 #define b2_maxPolygonVertices	8
 
 /// This is used to fatten AABBs in the dynamic tree. This allows proxies

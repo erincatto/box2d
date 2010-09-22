@@ -30,8 +30,8 @@ public:
 			bd.position.Set(0.0f, 0.0f);
 			b2Body* body = m_world->CreateBody(&bd);
 
-			b2PolygonShape shape;
-			shape.SetAsEdge(b2Vec2(50.0f, 0.0f), b2Vec2(-50.0f, 0.0f));
+			b2EdgeShape shape;
+			shape.Set(b2Vec2(50.0f, 0.0f), b2Vec2(-50.0f, 0.0f));
 
 			body->CreateFixture(&shape, 0.0f);
 		}
