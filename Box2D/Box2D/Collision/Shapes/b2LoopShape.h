@@ -27,12 +27,19 @@ class b2EdgeShape;
 /// The loop may cross upon itself, but this is not recommended for smooth collision.
 /// The loop has double sided collision, so you can use inside and outside collision.
 /// Therefore, you may use any winding order.
+/// Since there may be many vertices, they are allocated using b2Alloc.
 class b2LoopShape : public b2Shape
 {
 public:
 	b2LoopShape();
 
-	/// Implement b2Shape.
+	/// The destructor frees the vertices using b2Free.
+	~b2LoopShape();
+
+	/// Create the loop shape, copy all vertices.
+	void Create(const b2Vec2* vertices, int32 count);
+
+	/// Implement b2Shape. Vertices are cloned using b2Alloc.
 	b2Shape* Clone(b2BlockAllocator* allocator) const;
 
 	/// @see b2Shape::GetChildCount
@@ -56,7 +63,22 @@ public:
 	/// @see b2Shape::ComputeMass
 	void ComputeMass(b2MassData* massData, float32 density) const;
 
-	/// The vertices. These are not owned/freed by the loop shape.
+	/// Get the number of vertices.
+	int32 GetCount() const { return m_count; }
+
+	/// Get the vertices (read-only).
+	const b2Vec2& GetVertex(int32 index) const
+	{
+		b2Assert(0 <= index && index < m_count);
+		return m_vertices[index];
+	}
+
+	/// Get the vertices (read-only).
+	const b2Vec2* GetVertices() const { return m_vertices; }
+
+protected:
+
+	/// The vertices. Owned by this class.
 	b2Vec2* m_vertices;
 
 	/// The vertex count.

@@ -52,8 +52,6 @@ bool b2EdgeShape::TestPoint(const b2Transform& xf, const b2Vec2& p) const
 // v = v1 + s * e
 // p1 + t * d = v1 + s * e
 // s * e - t * d = p1 - v1
-// 
-
 bool b2EdgeShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input,
 							const b2Transform& xf, int32 childIndex) const
 {

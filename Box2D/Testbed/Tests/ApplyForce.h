@@ -34,7 +34,7 @@ public:
 			bd.position.Set(0.0f, 20.0f);
 			ground = m_world->CreateBody(&bd);
 
-			b2PolygonShape shape;
+			b2EdgeShape shape;
 
 			b2FixtureDef sd;
 			sd.shape = &shape;
@@ -42,19 +42,19 @@ public:
 			sd.restitution = k_restitution;
 
 			// Left vertical
-			shape.SetAsEdge(b2Vec2(-20.0f, -20.0f), b2Vec2(-20.0f, 20.0f));
+			shape.Set(b2Vec2(-20.0f, -20.0f), b2Vec2(-20.0f, 20.0f));
 			ground->CreateFixture(&sd);
 
 			// Right vertical
-			shape.SetAsEdge(b2Vec2(20.0f, -20.0f), b2Vec2(20.0f, 20.0f));
+			shape.Set(b2Vec2(20.0f, -20.0f), b2Vec2(20.0f, 20.0f));
 			ground->CreateFixture(&sd);
 
 			// Top horizontal
-			shape.SetAsEdge(b2Vec2(-20.0f, 20.0f), b2Vec2(20.0f, 20.0f));
+			shape.Set(b2Vec2(-20.0f, 20.0f), b2Vec2(20.0f, 20.0f));
 			ground->CreateFixture(&sd);
 
 			// Bottom horizontal
-			shape.SetAsEdge(b2Vec2(-20.0f, -20.0f), b2Vec2(20.0f, -20.0f));
+			shape.Set(b2Vec2(-20.0f, -20.0f), b2Vec2(20.0f, -20.0f));
 			ground->CreateFixture(&sd);
 		}
 

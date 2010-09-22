@@ -112,9 +112,6 @@ void b2Fixture::Destroy(b2BlockAllocator* allocator)
 	case b2Shape::e_loop:
 		{
 			b2LoopShape* s = (b2LoopShape*)m_shape;
-			allocator->Free(s->m_vertices, s->m_count * sizeof(b2Vec2));
-			s->m_vertices = NULL;
-			s->m_count = 0;
 			s->~b2LoopShape();
 			allocator->Free(s, sizeof(b2LoopShape));
 		}
