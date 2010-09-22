@@ -65,8 +65,8 @@ public:
 				float32 x2 = x1 + 0.5f;
 				float32 y2 = 2.0f * cosf(x2 / 10.0f * b2_pi);
 
-				b2PolygonShape shape;
-				shape.SetAsEdge(b2Vec2(x1, y1), b2Vec2(x2, y2));
+				b2EdgeShape shape;
+				shape.Set(b2Vec2(x1, y1), b2Vec2(x2, y2));
 				ground->CreateFixture(&shape, 0.0f);
 
 				x1 = x2;

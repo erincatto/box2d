@@ -32,26 +32,30 @@ public:
 			b2BodyDef bd;
 			b2Body* ground = m_world->CreateBody(&bd);
 
-			b2PolygonShape shape;
-			shape.SetAsEdge(b2Vec2(-20.0f, 0.0f), b2Vec2(20.0f, 0.0f));
+			b2EdgeShape shape;
+			shape.Set(b2Vec2(-20.0f, 0.0f), b2Vec2(20.0f, 0.0f));
 			ground->CreateFixture(&shape, 0.0f);
 		}
 
-		// Collinear edges
+		// Collinear edges with no adjacency information.
+		// This shows the problematic case where a box shape can hit
+		// an internal vertex.
 		{
 			b2BodyDef bd;
 			b2Body* ground = m_world->CreateBody(&bd);
 
-			b2PolygonShape shape;
-			shape.SetAsEdge(b2Vec2(-8.0f, 1.0f), b2Vec2(-6.0f, 1.0f));
+			b2EdgeShape shape;
+			shape.Set(b2Vec2(-8.0f, 1.0f), b2Vec2(-6.0f, 1.0f));
 			ground->CreateFixture(&shape, 0.0f);
-			shape.SetAsEdge(b2Vec2(-6.0f, 1.0f), b2Vec2(-4.0f, 1.0f));
+			shape.Set(b2Vec2(-6.0f, 1.0f), b2Vec2(-4.0f, 1.0f));
 			ground->CreateFixture(&shape, 0.0f);
-			shape.SetAsEdge(b2Vec2(-4.0f, 1.0f), b2Vec2(-2.0f, 1.0f));
+			shape.Set(b2Vec2(-4.0f, 1.0f), b2Vec2(-2.0f, 1.0f));
 			ground->CreateFixture(&shape, 0.0f);
 		}
 
-		// Square tiles
+		// Square tiles. This shows that adjacency shapes may
+		// have non-smooth collision. There is no solution
+		// to this problem.
 		{
 			b2BodyDef bd;
 			b2Body* ground = m_world->CreateBody(&bd);
@@ -65,7 +69,7 @@ public:
 			ground->CreateFixture(&shape, 0.0f);
 		}
 
-		// Square made from an edge loop.
+		// Square made from an edge loop. Collision should be smooth.
 		{
 			b2BodyDef bd;
 			b2Body* ground = m_world->CreateBody(&bd);
@@ -76,12 +80,11 @@ public:
 			vs[2].Set(1.0f, 5.0f);
 			vs[3].Set(-1.0f, 5.0f);
 			b2LoopShape shape;
-			shape.m_count = 4;
-			shape.m_vertices = vs;
+			shape.Create(vs, 4);
 			ground->CreateFixture(&shape, 0.0f);
 		}
 
-		// Edge loop.
+		// Edge loop. Collision should be smooth.
 		{
 			b2BodyDef bd;
 			bd.position.Set(-10.0f, 4.0f);
@@ -99,8 +102,7 @@ public:
 			vs[8].Set(-6.0f, 2.0f);
 			vs[9].Set(-6.0f, 0.0f);
 			b2LoopShape shape;
-			shape.m_count = 10;
-			shape.m_vertices = vs;
+			shape.Create(vs, 10);
 			ground->CreateFixture(&shape, 0.0f);
 		}
 

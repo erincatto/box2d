@@ -31,8 +31,8 @@ public:
 			b2BodyDef bd;
 			ground = m_world->CreateBody(&bd);
 
-			b2PolygonShape shape;
-			shape.SetAsEdge(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
+			b2EdgeShape shape;
+			shape.Set(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
 			ground->CreateFixture(&shape, 0.0f);
 		}
 

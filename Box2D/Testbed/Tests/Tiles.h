@@ -111,6 +111,10 @@ public:
 		int32 leafCount = cm.m_broadPhase.GetProxyCount();
 		int32 minimumNodeCount = 2 * leafCount - 1;
 		float32 minimumHeight = ceilf(logf(float32(minimumNodeCount)) / logf(2.0f));
+		m_debugDraw.DrawString(5, m_textLine, "Test of dynamic tree performance in worse case scenario.");
+		m_textLine += 15;
+		m_debugDraw.DrawString(5, m_textLine, "I know this is slow. I hope to address this in a future update.");
+		m_textLine += 15;
 		m_debugDraw.DrawString(5, m_textLine, "dynamic tree height = %d, min = %d", height, int32(minimumHeight));
 		m_textLine += 15;
 
