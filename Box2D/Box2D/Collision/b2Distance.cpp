@@ -50,16 +50,16 @@ void b2DistanceProxy::Set(const b2Shape* shape, int32 index)
 	case b2Shape::e_loop:
 		{
 			const b2LoopShape* loop = (b2LoopShape*)shape;
-			b2Assert(0 <= index && index < loop->m_count);
+			b2Assert(0 <= index && index < loop->GetCount());
 
-			m_buffer[0] = loop->m_vertices[index];
-			if (index + 1 < loop->m_count)
+			m_buffer[0] = loop->GetVertex(index);
+			if (index + 1 < loop->GetCount())
 			{
-				m_buffer[1] = loop->m_vertices[index + 1];
+				m_buffer[1] = loop->GetVertex(index + 1);
 			}
 			else
 			{
-				m_buffer[1] = loop->m_vertices[0];
+				m_buffer[1] = loop->GetVertex(0);
 			}
 
 			m_vertices = m_buffer;
