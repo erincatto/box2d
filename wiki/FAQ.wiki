@@ -1,7 +1,7 @@
 #summary Frequently asked Questions
 #labels Featured
 
-=What is Box2D=
+=What is Box2D?=
 Box2D is a feature rich 2d rigid body physics engine, written in C++ by Erin Catto. It has been used in many games, including Crayon Physics Deluxe, winner of the 2008 Independant Game Festival Grand Prize.
 
 =What platforms does Box2D support?=
@@ -9,11 +9,11 @@ Box2D is developed on Windows using Visual C++. Ports are also available for Fla
 
 Erin Catto provides support for the C++ version, but no support for other languages. Other languages are supported by the community and possibly by the authors of those ports.
 
-=Who makes it=
+=Who makes it?=
 Erin Catto is the driving force behind Box2D, with various others supporting the ports. Box2D is an open source project, and accepts community feedback.
 
 =Documentation=
-==Where is official Documentation==
+==Where is the official documentation?==
 The manual is the best source of information, but many sources of documentation are available. The manual is included with the distribution and online here: http://box2d.org/documentation.html
 
 ==Why isn't feature Foo Documented?==
@@ -48,11 +48,9 @@ There are many reasons why a build can go bad. Here are a few that have come up:
 Box2D is only a physics engine. How you draw stuff is up to you.
 
 ==But the Testbed draws stuff==
-
 Visualization is very important for debugging collision and physics. I wrote the test bed to help me test Box2D and give you examples of how to use Box2D. The TestBed is not part of the Box2D library.
 
 ==How do I draw shapes?==
-
 Drawing shapes is not supported and shape internal data is likely to change. Instead you should implement the b2DebugDraw interface.
 
 =Accuracy=
