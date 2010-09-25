@@ -15,6 +15,9 @@ Erin Catto is the driving force behind Box2D, with various others supporting the
 =Where is official Documentation=
 The manual is the best source of information, but many sources of documentation are available. The manual is included with the distribution and online here: http://box2d.org/documentation.html
 
+=Why isn't feature Foo Documented?=
+If you grab the latest code from the SVN trunk you will likely find features that are not documented in the manual. New features are added to the manual after they are mature and a new point release is imminent. However, all major features added to Box2D are accompanied by example code in the testbed to test the feature and show the intended usage.
+
 =Prerequisites=
 ==Programming==
 You should have a working knowledge of C++ before you use Box2D. You should understand classes, inheritance, and pointers. There are plenty of resources on the web for learning C++. You should also understand your development environment: compilation, linking, and debugging.
