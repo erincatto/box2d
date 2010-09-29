@@ -26,7 +26,6 @@
 #include <Box2D/Collision/b2Collision.h>
 #include <Box2D/Common/b2BlockAllocator.h>
 
-
 b2Fixture::b2Fixture()
 {
 	m_userData = NULL;
@@ -36,12 +35,6 @@ b2Fixture::b2Fixture()
 	m_proxyCount = 0;
 	m_shape = NULL;
 	m_density = 0.0f;
-}
-
-b2Fixture::~b2Fixture()
-{
-	b2Assert(m_shape == NULL);
-	b2Assert(m_proxies == NULL);
 }
 
 void b2Fixture::Create(b2BlockAllocator* allocator, b2Body* body, const b2FixtureDef* def)
