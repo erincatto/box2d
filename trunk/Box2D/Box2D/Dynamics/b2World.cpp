@@ -61,6 +61,23 @@ b2World::b2World(const b2Vec2& gravity, bool doSleep)
 
 b2World::~b2World()
 {
+	// Some shapes allocate using b2Alloc.
+	b2Body* b = m_bodyList;
+	while (b)
+	{
+		b2Body* bNext = b->m_next;
+
+		b2Fixture* f = b->m_fixtureList;
+		while (f)
+		{
+			b2Fixture* fNext = f->m_next;
+			f->m_proxyCount = 0;
+			f->Destroy(&m_blockAllocator);
+			f = fNext;
+		}
+
+		b = bNext;
+	}
 }
 
 void b2World::SetDestructionListener(b2DestructionListener* listener)

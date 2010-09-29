@@ -29,16 +29,19 @@ const int32 b2_chunkArrayIncrement = 128;
 struct b2Block;
 struct b2Chunk;
 
-// This is a small object allocator used for allocating small
-// objects that persist for more than one time step.
-// See: http://www.codeproject.com/useritems/Small_Block_Allocator.asp
+/// This is a small object allocator used for allocating small
+/// objects that persist for more than one time step.
+/// See: http://www.codeproject.com/useritems/Small_Block_Allocator.asp
 class b2BlockAllocator
 {
 public:
 	b2BlockAllocator();
 	~b2BlockAllocator();
 
+	/// Allocate memory. This will use b2Alloc if the size is larger than b2_maxBlockSize.
 	void* Allocate(int32 size);
+
+	/// Free memory. This will use b2Free if the size is larger than b2_maxBlockSize.
 	void Free(void* p, int32 size);
 
 	void Clear();
