@@ -214,8 +214,6 @@ private:
 	b2Vec2 m_gravity;
 	bool m_allowSleep;
 
-	b2Body* m_groundBody;
-
 	b2DestructionListener* m_destructionListener;
 	b2DebugDraw* m_debugDraw;
 
