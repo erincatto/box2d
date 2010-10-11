@@ -42,6 +42,7 @@ set(Testbed_Tests_SRCS
 	Tests/Pyramid.h
 	Tests/RayCast.h
 	Tests/Revolute.h
+	Tests/Rope.h
 	Tests/SensorTest.h
 	Tests/ShapeEditing.h
 	Tests/SliderCrank.h
