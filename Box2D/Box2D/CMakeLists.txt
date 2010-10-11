@@ -90,6 +90,7 @@ set(BOX2D_Joints_SRCS
 	Dynamics/Joints/b2PrismaticJoint.cpp
 	Dynamics/Joints/b2PulleyJoint.cpp
 	Dynamics/Joints/b2RevoluteJoint.cpp
+	Dynamics/Joints/b2RopeJoint.cpp
 	Dynamics/Joints/b2WeldJoint.cpp
 )
 set(BOX2D_Joints_HDRS
@@ -102,6 +103,7 @@ set(BOX2D_Joints_HDRS
 	Dynamics/Joints/b2PrismaticJoint.h
 	Dynamics/Joints/b2PulleyJoint.h
 	Dynamics/Joints/b2RevoluteJoint.h
+	Dynamics/Joints/b2RopeJoint.h
 	Dynamics/Joints/b2WeldJoint.h
 )
 set(BOX2D_General_HDRS
