@@ -38,6 +38,7 @@ enum b2JointType
 	e_lineJoint,
     e_weldJoint,
 	e_frictionJoint,
+	e_ropeJoint
 };
 
 enum b2LimitState
