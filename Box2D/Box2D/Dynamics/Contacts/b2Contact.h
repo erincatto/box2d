@@ -101,6 +101,26 @@ public:
 	/// Get the child primitive index for fixture B.
 	int32 GetChildIndexB() const;
 
+	/// Override the default friction mixture. You can call this in b2ContactListener::PreSolve.
+	/// This value persists until set or reset.
+	void SetFriction(float32 friction);
+
+	/// Get the friction.
+	float32 GetFriction() const;
+
+	/// Reset the friction mixture to the default value.
+	void ResetFriction();
+
+	/// Override the default restitution mixture. You can call this in b2ContactListener::PreSolve.
+	/// The value persists until you set or reset.
+	void SetRestitution(float32 restitution);
+
+	/// Get the restitution.
+	float32 GetRestitution() const;
+
+	/// Reset the restitution to the default value.
+	void ResetRestitution();
+
 	/// Evaluate this contact with your own manifold and transforms.
 	virtual void Evaluate(b2Manifold* manifold, const b2Transform& xfA, const b2Transform& xfB) = 0;
 

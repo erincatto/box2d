@@ -62,8 +62,6 @@ struct b2FixtureDef
 		isSensor = false;
 	}
 
-	virtual ~b2FixtureDef() {}
-
 	/// The shape, this must be set. The shape will be cloned, so you
 	/// can create the shape on the stack.
 	const b2Shape* shape;
@@ -124,10 +122,14 @@ public:
 
 	/// Set the contact filtering data. This will not update contacts until the next time
 	/// step when either parent body is active and awake.
+	/// This automatically calls Refilter.
 	void SetFilterData(const b2Filter& filter);
 
 	/// Get the contact filtering data.
 	const b2Filter& GetFilterData() const;
+
+	/// Call this if you want to establish collision that was previously disabled by b2ContactFilter::ShouldCollide.
+	void Refilter();
 
 	/// Get the parent body of this fixture. This is NULL if the fixture is not attached.
 	/// @return the parent body.
