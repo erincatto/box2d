@@ -28,6 +28,7 @@ using namespace std;
 #include "Bridge.h"
 #include "BulletTest.h"
 #include "Cantilever.h"
+#include "Car.h"
 #include "ContinuousTest.h"
 #include "Chain.h"
 #include "CharacterCollision.h"
@@ -66,6 +67,10 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
+	{"Line Joint", LineJoint::Create},
+	{"Car", Car::Create},
+	{"Web", Web::Create},
+	{"Vertical Stack", VerticalStack::Create},
 	{"Rope", Rope::Create},
 	{"Character Collision", CharacterCollision::Create},
 	{"Edge Test", EdgeTest::Create},
@@ -74,8 +79,6 @@ TestEntry g_testEntries[] =
 	{"Bullet Test", BulletTest::Create},
 	{"Continuous Test", ContinuousTest::Create},
 	{"Tiles", Tiles::Create},
-	{"Web", Web::Create},
-	{"Vertical Stack", VerticalStack::Create},
 	{"Time of Impact", TimeOfImpact::Create},
 	{"Ray-Cast", RayCast::Create},
 	{"Confined", Confined::Create},
@@ -100,7 +103,6 @@ TestEntry g_testEntries[] =
 	{"Dominos", Dominos::Create},
 	{"Dynamic Tree", DynamicTreeTest::Create},
 	{"Gears", Gears::Create},
-	{"Line Joint", LineJoint::Create},
 	{"Pulleys", Pulleys::Create},
 	{"Revolute", Revolute::Create},
 	{"Sensor Test", SensorTest::Create},

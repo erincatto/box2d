@@ -1008,6 +1008,7 @@ void b2World::DrawShape(b2Fixture* fixture, const b2Transform& xf, const b2Color
 			{
 				b2Vec2 v2 = b2Mul(xf, vertices[i]);
 				m_debugDraw->DrawSegment(v1, v2, color);
+				m_debugDraw->DrawCircle(v1, 0.05f, color);
 				v1 = v2;
 			}
 		}
