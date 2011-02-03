@@ -63,6 +63,11 @@ void b2BroadPhase::MoveProxy(int32 proxyId, const b2AABB& aabb, const b2Vec2& di
 	}
 }
 
+void b2BroadPhase::TouchProxy(int32 proxyId)
+{
+	BufferMove(proxyId);
+}
+
 void b2BroadPhase::BufferMove(int32 proxyId)
 {
 	if (m_moveCount == m_moveCapacity)

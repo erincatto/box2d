@@ -19,6 +19,7 @@ set(Testbed_Tests_SRCS
 	Tests/Bridge.h
 	Tests/BulletTest.h
 	Tests/Cantilever.h
+	Tests/Car.h
 	Tests/Chain.h
 	Tests/CharacterCollision.h
 	Tests/CollisionFiltering.h
