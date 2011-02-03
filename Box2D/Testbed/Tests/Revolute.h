@@ -72,7 +72,7 @@ public:
 			m_joint->EnableLimit(m_joint->IsLimitEnabled());
 			break;
 
-		case 's':
+		case 'm':
 			m_joint->EnableMotor(false);
 			break;
 		}
@@ -81,7 +81,7 @@ public:
 	void Step(Settings* settings)
 	{
 		Test::Step(settings);
-		m_debugDraw.DrawString(5, m_textLine, "Keys: (l) limits, (a) left, (s) off, (d) right");
+		m_debugDraw.DrawString(5, m_textLine, "Keys: (l) limits, (m) motor");
 		m_textLine += 15;
 		//float32 torque1 = m_joint1->GetMotorTorque();
 		//m_debugDraw.DrawString(5, m_textLine, "Motor Torque = %4.0f, %4.0f : Motor Force = %4.0f", (float) torque1, (float) torque2, (float) force3);
