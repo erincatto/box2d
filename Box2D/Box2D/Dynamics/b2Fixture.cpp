@@ -18,6 +18,7 @@
 
 #include <Box2D/Dynamics/b2Fixture.h>
 #include <Box2D/Dynamics/Contacts/b2Contact.h>
+#include <Box2D/Dynamics/b2World.h>
 #include <Box2D/Collision/Shapes/b2CircleShape.h>
 #include <Box2D/Collision/Shapes/b2EdgeShape.h>
 #include <Box2D/Collision/Shapes/b2PolygonShape.h>
@@ -176,6 +177,11 @@ void b2Fixture::SetFilterData(const b2Filter& filter)
 {
 	m_filter = filter;
 
+	Refilter();
+}
+
+void b2Fixture::Refilter()
+{
 	if (m_body == NULL)
 	{
 		return;
@@ -194,6 +200,20 @@ void b2Fixture::SetFilterData(const b2Filter& filter)
 		}
 
 		edge = edge->next;
+	}
+
+	b2World* world = m_body->GetWorld();
+
+	if (world == NULL)
+	{
+		return;
+	}
+
+	// Touch each proxy so that new pairs may be created
+	b2BroadPhase* broadPhase = &world->m_contactManager.m_broadPhase;
+	for (int32 i = 0; i < m_proxyCount; ++i)
+	{
+		broadPhase->TouchProxy(m_proxies[i].proxyId);
 	}
 }
 

@@ -49,12 +49,11 @@ public:
 			b2Vec2 axis(2.0f, 1.0f);
 			axis.Normalize();
 			jd.Initialize(ground, body, b2Vec2(0.0f, 8.5f), axis);
-			jd.motorSpeed = 0.0f;
-			jd.maxMotorForce = 100.0f;
+			jd.motorSpeed = 1.0f;
+			jd.maxMotorTorque = 1000.0f;
 			jd.enableMotor = true;
-			jd.lowerTranslation = -4.0f;
-			jd.upperTranslation = 4.0f;
-			jd.enableLimit = true;
+			jd.frequencyHz = 1.0f;
+			jd.dampingRatio = 0.2f;
 			m_world->CreateJoint(&jd);
 		}
 	}
