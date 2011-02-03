@@ -130,9 +130,9 @@ void b2Body::SetType(b2BodyType type)
 	m_torque = 0.0f;
 
 	// Since the body type changed, we need to flag contacts for filtering.
-	for (b2ContactEdge* ce = m_contactList; ce; ce = ce->next)
+	for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
 	{
-		ce->contact->FlagForFiltering();
+		f->Refilter();
 	}
 }
 
