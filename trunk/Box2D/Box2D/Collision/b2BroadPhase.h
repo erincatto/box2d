@@ -57,6 +57,9 @@ public:
 	/// call UpdatePairs to finalized the proxy pairs (for your time step).
 	void MoveProxy(int32 proxyId, const b2AABB& aabb, const b2Vec2& displacement);
 
+	/// Call to trigger a re-processing of it's pairs on the next call to UpdatePairs.
+	void TouchProxy(int32 proxyId);
+
 	/// Get the fat AABB for a proxy.
 	const b2AABB& GetFatAABB(int32 proxyId) const;
 
