@@ -354,23 +354,9 @@ float32 b2LineJoint::GetJointTranslation() const
 
 float32 b2LineJoint::GetJointSpeed() const
 {
-	b2Body* bA = m_bodyA;
-	b2Body* bB = m_bodyB;
-
-	b2Vec2 rA = b2Mul(bA->m_xf.R, m_localAnchorA - m_localCenterA);
-	b2Vec2 rB = b2Mul(bB->m_xf.R, m_localAnchorB - m_localCenterB);
-	b2Vec2 pA = bA->m_sweep.c + rA;
-	b2Vec2 pB = bB->m_sweep.c + rB;
-	b2Vec2 d = pB - pA;
-	b2Vec2 axis = bA->GetWorldVector(m_localXAxisA);
-
-	b2Vec2 vA = bA->m_linearVelocity;
-	b2Vec2 vB = bB->m_linearVelocity;
-	float32 wA = bA->m_angularVelocity;
-	float32 wB = bB->m_angularVelocity;
-
-	float32 speed = b2Dot(d, b2Cross(wA, axis)) + b2Dot(axis, vB + b2Cross(wB, rB) - vA - b2Cross(wA, rA));
-	return speed;
+	float32 wA = m_bodyA->m_angularVelocity;
+	float32 wB = m_bodyB->m_angularVelocity;
+	return wB - wA;
 }
 
 bool b2LineJoint::IsMotorEnabled() const
