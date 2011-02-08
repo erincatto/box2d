@@ -27,7 +27,7 @@ public:
 	{		
 		m_hz = 4.0f;
 		m_zeta = 0.7f;
-		m_speed = 20.0f;
+		m_speed = 50.0f;
 
 		b2Body* ground = NULL;
 		{
@@ -44,7 +44,7 @@ public:
 			shape.Set(b2Vec2(-20.0f, 0.0f), b2Vec2(20.0f, 0.0f));
 			ground->CreateFixture(&fd);
 
-			float32 hs[10] = {0.25f, 0.5f, 2.0f, 0.0f, 0.0f, -1.0f, -2.0f, -2.0f, -1.25f, 0.0f};
+			float32 hs[10] = {0.25f, 1.0f, 4.0f, 0.0f, 0.0f, -1.0f, -2.0f, -2.0f, -1.25f, 0.0f};
 
 			float32 x = 20.0f, y1 = 0.0f, dx = 5.0f;
 
@@ -71,6 +71,18 @@ public:
 
 			x += 80.0f;
 			shape.Set(b2Vec2(x, 0.0f), b2Vec2(x + 40.0f, 0.0f));
+			ground->CreateFixture(&fd);
+
+			x += 40.0f;
+			shape.Set(b2Vec2(x, 0.0f), b2Vec2(x + 10.0f, 5.0f));
+			ground->CreateFixture(&fd);
+
+			x += 20.0f;
+			shape.Set(b2Vec2(x, 0.0f), b2Vec2(x + 40.0f, 0.0f));
+			ground->CreateFixture(&fd);
+
+			x += 40.0f;
+			shape.Set(b2Vec2(x, 0.0f), b2Vec2(x, 20.0f));
 			ground->CreateFixture(&fd);
 		}
 
@@ -245,6 +257,7 @@ public:
 		//m_debugDraw.DrawString(5, m_textLine, "actual speed = %g rad/sec", m_spring1->GetJointSpeed());
 		//m_textLine += 15;
 
+		settings->viewCenter.x = m_car->GetPosition().x;
 		Test::Step(settings);
 	}
 
