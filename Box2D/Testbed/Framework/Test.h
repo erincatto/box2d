@@ -53,6 +53,7 @@ inline float32 RandomFloat(float32 lo, float32 hi)
 struct Settings
 {
 	Settings() :
+		viewCenter(0.0f, 20.0f),
 		hz(60.0f),
 		velocityIterations(8),
 		positionIterations(3),
@@ -73,6 +74,7 @@ struct Settings
 		singleStep(0)
 		{}
 
+	b2Vec2 viewCenter;
 	float32 hz;
 	int32 velocityIterations;
 	int32 positionIterations;
