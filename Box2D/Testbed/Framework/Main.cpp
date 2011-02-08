@@ -38,7 +38,6 @@ namespace
 	float settingsHz = 60.0;
 	GLUI *glui;
 	float32 viewZoom = 1.0f;
-	b2Vec2 viewCenter(0.0f, 20.0f);
 	int tx, ty, tw, th;
 	bool rMouseDown;
 	b2Vec2 lastp;
@@ -59,8 +58,8 @@ void Resize(int32 w, int32 h)
 	b2Vec2 extents(ratio * 25.0f, 25.0f);
 	extents *= viewZoom;
 
-	b2Vec2 lower = viewCenter - extents;
-	b2Vec2 upper = viewCenter + extents;
+	b2Vec2 lower = settings.viewCenter - extents;
+	b2Vec2 upper = settings.viewCenter + extents;
 
 	// L/R/B/T
 	gluOrtho2D(lower.x, upper.x, lower.y, upper.y);
@@ -75,8 +74,8 @@ b2Vec2 ConvertScreenToWorld(int32 x, int32 y)
 	b2Vec2 extents(ratio * 25.0f, 25.0f);
 	extents *= viewZoom;
 
-	b2Vec2 lower = viewCenter - extents;
-	b2Vec2 upper = viewCenter + extents;
+	b2Vec2 lower = settings.viewCenter - extents;
+	b2Vec2 upper = settings.viewCenter + extents;
 
 	b2Vec2 p;
 	p.x = (1.0f - u) * lower.x + u * upper.x;
@@ -100,8 +99,13 @@ void SimulationLoop()
 	glLoadIdentity();
 
 	test->SetTextLine(30);
+	b2Vec2 oldCenter = settings.viewCenter;
 	settings.hz = settingsHz;
 	test->Step(&settings);
+	if (oldCenter.x != settings.viewCenter.x || oldCenter.y != settings.viewCenter.y)
+	{
+		Resize(width, height);
+	}
 
 	test->DrawTitle(5, 15, entry->name);
 
@@ -114,7 +118,7 @@ void SimulationLoop()
 		entry = g_testEntries + testIndex;
 		test = entry->createFcn();
 		viewZoom = 1.0f;
-		viewCenter.Set(0.0f, 20.0f);
+		settings.viewCenter.Set(0.0f, 20.0f);
 		Resize(width, height);
 	}
 }
@@ -198,32 +202,32 @@ void KeyboardSpecial(int key, int x, int y)
 	case GLUT_ACTIVE_SHIFT:
 		// Press left to pan left.
 	case GLUT_KEY_LEFT:
-		viewCenter.x -= 0.5f;
+		settings.viewCenter.x -= 0.5f;
 		Resize(width, height);
 		break;
 
 		// Press right to pan right.
 	case GLUT_KEY_RIGHT:
-		viewCenter.x += 0.5f;
+		settings.viewCenter.x += 0.5f;
 		Resize(width, height);
 		break;
 
 		// Press down to pan down.
 	case GLUT_KEY_DOWN:
-		viewCenter.y -= 0.5f;
+		settings.viewCenter.y -= 0.5f;
 		Resize(width, height);
 		break;
 
 		// Press up to pan up.
 	case GLUT_KEY_UP:
-		viewCenter.y += 0.5f;
+		settings.viewCenter.y += 0.5f;
 		Resize(width, height);
 		break;
 
 		// Press home to reset the view.
 	case GLUT_KEY_HOME:
 		viewZoom = 1.0f;
-		viewCenter.Set(0.0f, 20.0f);
+		settings.viewCenter.Set(0.0f, 20.0f);
 		Resize(width, height);
 		break;
 	}
@@ -288,8 +292,8 @@ void MouseMotion(int32 x, int32 y)
 	if (rMouseDown)
 	{
 		b2Vec2 diff = p - lastp;
-		viewCenter.x -= diff.x;
-		viewCenter.y -= diff.y;
+		settings.viewCenter.x -= diff.x;
+		settings.viewCenter.y -= diff.y;
 		Resize(width, height);
 		lastp = ConvertScreenToWorld(x, y);
 	}
