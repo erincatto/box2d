@@ -67,8 +67,8 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
-	{"Car", Car::Create},
 	{"Web", Web::Create},
+	{"Car", Car::Create},
 	{"Line Joint", LineJoint::Create},
 	{"Vertical Stack", VerticalStack::Create},
 	{"Rope", Rope::Create},
