@@ -150,17 +150,17 @@ public:
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
 
-			bd.position.Set(220.0f, 0.5f);
+			bd.position.Set(230.0f, 0.5f);
 			body = m_world->CreateBody(&bd);
-			body->CreateFixture(&box, 1.0f);
+			body->CreateFixture(&box, 0.5f);
 
-			bd.position.Set(220.0f, 1.5f);
+			bd.position.Set(230.0f, 1.5f);
 			body = m_world->CreateBody(&bd);
-			body->CreateFixture(&box, 1.0f);
+			body->CreateFixture(&box, 0.5f);
 
-			bd.position.Set(220.0f, 2.5f);
+			bd.position.Set(230.0f, 2.5f);
 			body = m_world->CreateBody(&bd);
-			body->CreateFixture(&box, 1.0f);
+			body->CreateFixture(&box, 0.5f);
 		}
 
 		// Car
@@ -253,8 +253,6 @@ public:
 		m_debugDraw.DrawString(5, m_textLine, "Keys: left = a, brake = s, right = d, hz down = q, hz up = e");
 		m_textLine += 15;
 		m_debugDraw.DrawString(5, m_textLine, "frequency = %g hz, damping ratio = %g", m_hz, m_zeta);
-		m_textLine += 15;
-		m_debugDraw.DrawString(5, m_textLine, "actual speed = %g rad/sec", m_spring1->GetJointSpeed());
 		m_textLine += 15;
 
 		settings->viewCenter.x = m_car->GetPosition().x;
