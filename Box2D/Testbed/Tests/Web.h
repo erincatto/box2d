@@ -61,8 +61,8 @@ public:
 			b2DistanceJointDef jd;
 			b2Vec2 p1, p2, d;
 
-			jd.frequencyHz = 4.0f;
-			jd.dampingRatio = 0.5f;
+			jd.frequencyHz = 2.0f;
+			jd.dampingRatio = 0.0f;
 
 			jd.bodyA = ground;
 			jd.bodyB = m_bodies[0];
