@@ -102,7 +102,7 @@ public:
 
 	b2CircleShape m_circle;
 	b2Transform m_transform;
-	b2DebugDraw* m_debugDraw;
+	b2Draw* m_debugDraw;
 	int32 m_count;
 };
 

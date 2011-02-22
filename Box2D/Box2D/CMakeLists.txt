@@ -30,12 +30,14 @@ set(BOX2D_Shapes_HDRS
 )
 set(BOX2D_Common_SRCS
 	Common/b2BlockAllocator.cpp
+	Common/b2Draw.cpp
 	Common/b2Math.cpp
 	Common/b2Settings.cpp
 	Common/b2StackAllocator.cpp
 )
 set(BOX2D_Common_HDRS
 	Common/b2BlockAllocator.h
+	Common/b2Draw.h
 	Common/b2GrowableStack.h
 	Common/b2Math.h
 	Common/b2Settings.h
@@ -106,6 +108,12 @@ set(BOX2D_Joints_HDRS
 	Dynamics/Joints/b2RopeJoint.h
 	Dynamics/Joints/b2WeldJoint.h
 )
+set(BOX2D_Rope_SRCS
+	Rope/b2Rope.cpp
+)
+set(BOX2D_Rope_HDRS
+	Rope/b2Rope.h
+)
 set(BOX2D_General_HDRS
 	Box2D.h
 )
@@ -126,6 +134,8 @@ if(BOX2D_BUILD_SHARED)
 		${BOX2D_Shapes_HDRS}
 		${BOX2D_Collision_SRCS}
 		${BOX2D_Collision_HDRS}
+		${BOX2D_Rope_SRCS}
+		${BOX2D_Rope_HDRS}
 	)
 	set_target_properties(Box2D_shared PROPERTIES
 		OUTPUT_NAME "Box2D"
@@ -149,6 +159,8 @@ if(BOX2D_BUILD_STATIC)
 		${BOX2D_Shapes_HDRS}
 		${BOX2D_Collision_SRCS}
 		${BOX2D_Collision_HDRS}
+		${BOX2D_Rope_SRCS}
+		${BOX2D_Rope_HDRS}
 	)
 	set_target_properties(Box2D PROPERTIES
 		CLEAN_DIRECT_OUTPUT 1
@@ -165,6 +177,7 @@ if(MSVC)
 	source_group(Dynamics\\Contacts FILES ${BOX2D_Contacts_SRCS} ${BOX2D_Contacts_HDRS})
 	source_group(Dynamics\\Joints FILES ${BOX2D_Joints_SRCS} ${BOX2D_Joints_HDRS})
 	source_group(Include FILES ${BOX2D_General_HDRS})
+	source_group(Rope FILES ${BOX2D_Rope_SRCS} ${BOX2D_Rope_HDRS})
 endif()
 
 if(BOX2D_INSTALL)
@@ -176,6 +189,7 @@ if(BOX2D_INSTALL)
 	install(FILES ${BOX2D_Dynamics_HDRS} DESTINATION include/Box2D/Dynamics)
 	install(FILES ${BOX2D_Contacts_HDRS} DESTINATION include/Box2D/Dynamics/Contacts)
 	install(FILES ${BOX2D_Joints_HDRS} DESTINATION include/Box2D/Dynamics/Joints)
+	install(FILES ${BOX2D_Rope_HDRS} DESTINATION include/Box2D/Rope)
 
 	# install libraries
 	if(BOX2D_BUILD_SHARED)
