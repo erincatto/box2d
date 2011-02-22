@@ -283,11 +283,11 @@ void Test::Step(Settings* settings)
 	}
 
 	uint32 flags = 0;
-	flags += settings->drawShapes			* b2DebugDraw::e_shapeBit;
-	flags += settings->drawJoints			* b2DebugDraw::e_jointBit;
-	flags += settings->drawAABBs			* b2DebugDraw::e_aabbBit;
-	flags += settings->drawPairs			* b2DebugDraw::e_pairBit;
-	flags += settings->drawCOMs				* b2DebugDraw::e_centerOfMassBit;
+	flags += settings->drawShapes			* b2Draw::e_shapeBit;
+	flags += settings->drawJoints			* b2Draw::e_jointBit;
+	flags += settings->drawAABBs			* b2Draw::e_aabbBit;
+	flags += settings->drawPairs			* b2Draw::e_pairBit;
+	flags += settings->drawCOMs				* b2Draw::e_centerOfMassBit;
 	m_debugDraw.SetFlags(flags);
 
 	m_world->SetWarmStarting(settings->enableWarmStarting > 0);

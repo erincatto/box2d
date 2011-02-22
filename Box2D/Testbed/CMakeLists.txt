@@ -44,6 +44,7 @@ set(Testbed_Tests_SRCS
 	Tests/RayCast.h
 	Tests/Revolute.h
 	Tests/Rope.h
+	Tests/RopeJoint.h
 	Tests/SensorTest.h
 	Tests/ShapeEditing.h
 	Tests/SliderCrank.h
