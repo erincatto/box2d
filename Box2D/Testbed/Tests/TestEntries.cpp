@@ -53,6 +53,7 @@ using namespace std;
 #include "RayCast.h"
 #include "Revolute.h"
 #include "Rope.h"
+#include "RopeJoint.h"
 #include "SensorTest.h"
 #include "ShapeEditing.h"
 #include "SliderCrank.h"
@@ -67,11 +68,12 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
+	{"Rope", Rope::Create},
 	{"Web", Web::Create},
 	{"Car", Car::Create},
 	{"Line Joint", LineJoint::Create},
 	{"Vertical Stack", VerticalStack::Create},
-	{"Rope", Rope::Create},
+	{"RopeJoint", RopeJoint::Create},
 	{"Character Collision", CharacterCollision::Create},
 	{"Edge Test", EdgeTest::Create},
 	{"One-Sided Platform", OneSidedPlatform::Create},
