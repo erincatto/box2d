@@ -27,9 +27,11 @@
 
 struct b2AABB;
 struct b2BodyDef;
+struct b2Color;
 struct b2JointDef;
 struct b2TimeStep;
 class b2Body;
+class b2Draw;
 class b2Fixture;
 class b2Joint;
 
@@ -63,7 +65,7 @@ public:
 	/// Register a routine for debug drawing. The debug draw functions are called
 	/// inside with b2World::DrawDebugData method. The debug draw object is owned
 	/// by you and must remain in scope.
-	void SetDebugDraw(b2DebugDraw* debugDraw);
+	void SetDebugDraw(b2Draw* debugDraw);
 
 	/// Create a rigid body given a definition. No reference to the definition
 	/// is retained.
@@ -216,7 +218,7 @@ private:
 	bool m_allowSleep;
 
 	b2DestructionListener* m_destructionListener;
-	b2DebugDraw* m_debugDraw;
+	b2Draw* m_debugDraw;
 
 	// This is used to compute the time step ratio to
 	// support a variable time step.

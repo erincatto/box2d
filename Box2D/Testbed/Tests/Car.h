@@ -161,6 +161,14 @@ public:
 			bd.position.Set(230.0f, 2.5f);
 			body = m_world->CreateBody(&bd);
 			body->CreateFixture(&box, 0.5f);
+
+			bd.position.Set(230.0f, 3.5f);
+			body = m_world->CreateBody(&bd);
+			body->CreateFixture(&box, 0.5f);
+
+			bd.position.Set(230.0f, 4.5f);
+			body = m_world->CreateBody(&bd);
+			body->CreateFixture(&box, 0.5f);
 		}
 
 		// Car
