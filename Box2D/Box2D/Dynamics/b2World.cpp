@@ -30,6 +30,7 @@
 #include <Box2D/Collision/Shapes/b2LoopShape.h>
 #include <Box2D/Collision/Shapes/b2PolygonShape.h>
 #include <Box2D/Collision/b2TimeOfImpact.h>
+#include <Box2D/Common/b2Draw.h>
 #include <new>
 
 b2World::b2World(const b2Vec2& gravity, bool doSleep)
@@ -95,7 +96,7 @@ void b2World::SetContactListener(b2ContactListener* listener)
 	m_contactManager.m_contactListener = listener;
 }
 
-void b2World::SetDebugDraw(b2DebugDraw* debugDraw)
+void b2World::SetDebugDraw(b2Draw* debugDraw)
 {
 	m_debugDraw = debugDraw;
 }
@@ -1082,7 +1083,7 @@ void b2World::DrawDebugData()
 
 	uint32 flags = m_debugDraw->GetFlags();
 
-	if (flags & b2DebugDraw::e_shapeBit)
+	if (flags & b2Draw::e_shapeBit)
 	{
 		for (b2Body* b = m_bodyList; b; b = b->GetNext())
 		{
@@ -1113,7 +1114,7 @@ void b2World::DrawDebugData()
 		}
 	}
 
-	if (flags & b2DebugDraw::e_jointBit)
+	if (flags & b2Draw::e_jointBit)
 	{
 		for (b2Joint* j = m_jointList; j; j = j->GetNext())
 		{
@@ -1121,7 +1122,7 @@ void b2World::DrawDebugData()
 		}
 	}
 
-	if (flags & b2DebugDraw::e_pairBit)
+	if (flags & b2Draw::e_pairBit)
 	{
 		b2Color color(0.3f, 0.9f, 0.9f);
 		for (b2Contact* c = m_contactManager.m_contactList; c; c = c->GetNext())
@@ -1136,7 +1137,7 @@ void b2World::DrawDebugData()
 		}
 	}
 
-	if (flags & b2DebugDraw::e_aabbBit)
+	if (flags & b2Draw::e_aabbBit)
 	{
 		b2Color color(0.9f, 0.3f, 0.9f);
 		b2BroadPhase* bp = &m_contactManager.m_broadPhase;
@@ -1166,7 +1167,7 @@ void b2World::DrawDebugData()
 		}
 	}
 
-	if (flags & b2DebugDraw::e_centerOfMassBit)
+	if (flags & b2Draw::e_centerOfMassBit)
 	{
 		for (b2Body* b = m_bodyList; b; b = b->GetNext())
 		{
