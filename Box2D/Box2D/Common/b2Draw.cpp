@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
+* Copyright (c) 2011 Erin Catto http://box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -16,21 +16,29 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include <Box2D/Dynamics/b2WorldCallbacks.h>
-#include <Box2D/Dynamics/b2Fixture.h>
+#include <Box2D/Common/b2Draw.h>
 
-// Return true if contact calculations should be performed between these two shapes.
-// If you implement your own collision filter you may want to build from this implementation.
-bool b2ContactFilter::ShouldCollide(b2Fixture* fixtureA, b2Fixture* fixtureB)
+b2Draw::b2Draw()
 {
-	const b2Filter& filterA = fixtureA->GetFilterData();
-	const b2Filter& filterB = fixtureB->GetFilterData();
+	m_drawFlags = 0;
+}
 
-	if (filterA.groupIndex == filterB.groupIndex && filterA.groupIndex != 0)
-	{
-		return filterA.groupIndex > 0;
-	}
+void b2Draw::SetFlags(uint32 flags)
+{
+	m_drawFlags = flags;
+}
 
-	bool collide = (filterA.maskBits & filterB.categoryBits) != 0 && (filterA.categoryBits & filterB.maskBits) != 0;
-	return collide;
+uint32 b2Draw::GetFlags() const
+{
+	return m_drawFlags;
+}
+
+void b2Draw::AppendFlags(uint32 flags)
+{
+	m_drawFlags |= flags;
+}
+
+void b2Draw::ClearFlags(uint32 flags)
+{
+	m_drawFlags &= ~flags;
 }

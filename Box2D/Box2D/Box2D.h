@@ -32,6 +32,7 @@ For discussion please visit http://box2d.org/forum
 // These include files constitute the main Box2D API
 
 #include <Box2D/Common/b2Settings.h>
+#include <Box2D/Common/b2Draw.h>
 
 #include <Box2D/Collision/Shapes/b2CircleShape.h>
 #include <Box2D/Collision/Shapes/b2EdgeShape.h>
@@ -61,5 +62,7 @@ For discussion please visit http://box2d.org/forum
 #include <Box2D/Dynamics/Joints/b2RevoluteJoint.h>
 #include <Box2D/Dynamics/Joints/b2RopeJoint.h>
 #include <Box2D/Dynamics/Joints/b2WeldJoint.h>
+
+#include <Box2D/Rope/b2Rope.h>
 
 #endif
