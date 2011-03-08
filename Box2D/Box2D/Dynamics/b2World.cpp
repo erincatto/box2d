@@ -31,6 +31,7 @@
 #include <Box2D/Collision/Shapes/b2PolygonShape.h>
 #include <Box2D/Collision/b2TimeOfImpact.h>
 #include <Box2D/Common/b2Draw.h>
+#include <Box2D/Common/b2Timer.h>
 #include <new>
 
 b2World::b2World(const b2Vec2& gravity, bool doSleep)
@@ -58,6 +59,8 @@ b2World::b2World(const b2Vec2& gravity, bool doSleep)
 	m_inv_dt0 = 0.0f;
 
 	m_contactManager.m_allocator = &m_blockAllocator;
+
+	memset(&m_profile, 0, sizeof(b2Profile));
 }
 
 b2World::~b2World()
@@ -853,6 +856,8 @@ void b2World::SolveTOI(const b2TimeStep& step)
 
 void b2World::Step(float32 dt, int32 velocityIterations, int32 positionIterations)
 {
+	b2Timer stepTimer;
+
 	// If new fixtures were added, we need to find the new contacts.
 	if (m_flags & e_newFixture)
 	{
@@ -878,20 +883,28 @@ void b2World::Step(float32 dt, int32 velocityIterations, int32 positionIteration
 	step.dtRatio = m_inv_dt0 * dt;
 
 	step.warmStarting = m_warmStarting;
-
+	
 	// Update contacts. This is where some contacts are destroyed.
-	m_contactManager.Collide();
+	{
+		b2Timer timer;
+		m_contactManager.Collide();
+		m_profile.collide = timer.GetMilliseconds();
+	}
 
 	// Integrate velocities, solve velocity constraints, and integrate positions.
 	if (m_stepComplete && step.dt > 0.0f)
 	{
+		b2Timer timer;
 		Solve(step);
+		m_profile.solve = timer.GetMilliseconds();
 	}
 
 	// Handle TOI events.
 	if (m_continuousPhysics && step.dt > 0.0f)
 	{
+		b2Timer timer;
 		SolveTOI(step);
+		m_profile.solveTOI = timer.GetMilliseconds();
 	}
 
 	if (step.dt > 0.0f)
@@ -905,6 +918,8 @@ void b2World::Step(float32 dt, int32 velocityIterations, int32 positionIteration
 	}
 
 	m_flags &= ~e_locked;
+
+	m_profile.step = stepTimer.GetMilliseconds();
 }
 
 void b2World::ClearForces()
