@@ -35,6 +35,15 @@ class b2Draw;
 class b2Fixture;
 class b2Joint;
 
+/// Profiling data. Times are in milliseconds.
+struct b2Profile
+{
+	float32 step;
+	float32 collide;
+	float32 solve;
+	float32 solveTOI;
+};
+
 /// The world class manages all physics entities, dynamic simulation,
 /// and asynchronous queries. The world also contains efficient memory
 /// management facilities.
@@ -180,6 +189,9 @@ public:
 	/// Get the contact manager for testing.
 	const b2ContactManager& GetContactManager() const;
 
+	/// Get the current profile.
+	const b2Profile& GetProfile() const;
+
 private:
 
 	// m_flags
@@ -230,6 +242,8 @@ private:
 	bool m_subStepping;
 
 	bool m_stepComplete;
+
+	b2Profile m_profile;
 };
 
 inline b2Body* b2World::GetBodyList()
@@ -313,6 +327,11 @@ inline bool b2World::GetAutoClearForces() const
 inline const b2ContactManager& b2World::GetContactManager() const
 {
 	return m_contactManager;
+}
+
+inline const b2Profile& b2World::GetProfile() const
+{
+	return m_profile;
 }
 
 #endif

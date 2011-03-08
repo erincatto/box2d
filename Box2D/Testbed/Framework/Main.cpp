@@ -407,6 +407,7 @@ int main(int argc, char** argv)
 	glui->add_checkbox_to_panel(drawPanel, "Friction Forces", &settings.drawFrictionForces);
 	glui->add_checkbox_to_panel(drawPanel, "Center of Masses", &settings.drawCOMs);
 	glui->add_checkbox_to_panel(drawPanel, "Statistics", &settings.drawStats);
+	glui->add_checkbox_to_panel(drawPanel, "Profile", &settings.drawProfile);
 
 	int32 testCount = 0;
 	TestEntry* e = g_testEntries;

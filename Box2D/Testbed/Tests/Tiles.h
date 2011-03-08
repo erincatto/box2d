@@ -31,6 +31,9 @@ public:
 
 	Tiles()
 	{
+		m_fixtureCount = 0;
+		b2Timer timer;
+
 		{
 			float32 a = 0.5f;
 			b2BodyDef bd;
@@ -50,6 +53,7 @@ public:
 					b2PolygonShape shape;
 					shape.SetAsBox(a, a, position, 0.0f);
 					ground->CreateFixture(&shape, 0.0f);
+					++m_fixtureCount;
 					position.x += 2.0f * a;
 				}
 				position.y -= 2.0f * a;
@@ -95,13 +99,15 @@ public:
 					bd.position = y;
 					b2Body* body = m_world->CreateBody(&bd);
 					body->CreateFixture(&shape, 5.0f);
-
+					++m_fixtureCount;
 					y += deltaY;
 				}
 
 				x += deltaX;
 			}
 		}
+
+		m_createTime = timer.GetMilliseconds();
 	}
 
 	void Step(Settings* settings)
@@ -119,12 +125,19 @@ public:
 		m_textLine += 15;
 
 		Test::Step(settings);
+
+		m_debugDraw.DrawString(5, m_textLine, "create time = %6.2f ms, fixture count = %d",
+			m_createTime, m_fixtureCount);
+		m_textLine += 15;
 	}
 
 	static Test* Create()
 	{
 		return new Tiles;
 	}
+
+	int32 m_fixtureCount;
+	float32 m_createTime;
 };
 
 #endif

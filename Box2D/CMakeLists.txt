@@ -19,7 +19,6 @@ set(BOX2D_VERSION 2.1.0)
 # The Box2D library.
 add_subdirectory(Box2D)
 
-
 if(BOX2D_BUILD_EXAMPLES)
   # HelloWorld console example.
   add_subdirectory(HelloWorld)
