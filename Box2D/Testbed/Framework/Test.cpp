@@ -58,6 +58,8 @@ Test::Test()
 
 	b2BodyDef bodyDef;
 	m_groundBody = m_world->CreateBody(&bodyDef);
+
+	memset(&m_maxProfile, 0, sizeof(b2Profile));
 }
 
 Test::~Test()
@@ -307,8 +309,30 @@ void Test::Step(Settings* settings)
 
 	if (settings->drawStats)
 	{
-		m_debugDraw.DrawString(5, m_textLine, "bodies/contacts/joints/proxies = %d/%d/%d",
+		m_debugDraw.DrawString(5, m_textLine, "bodies/contacts/joints/proxies = %d/%d/%d/%d",
 			m_world->GetBodyCount(), m_world->GetContactCount(), m_world->GetJointCount(), m_world->GetProxyCount());
+		m_textLine += 15;
+	}
+
+	// Track maximum profile times
+	{
+		const b2Profile& p = m_world->GetProfile();
+		m_maxProfile.step = b2Max(m_maxProfile.step, p.step);
+		m_maxProfile.collide = b2Max(m_maxProfile.collide, p.collide);
+		m_maxProfile.solve = b2Max(m_maxProfile.solve, p.solve);
+		m_maxProfile.solveTOI = b2Max(m_maxProfile.solveTOI, p.solveTOI);
+	}
+
+	if (settings->drawProfile)
+	{
+		const b2Profile& p = m_world->GetProfile();
+		m_debugDraw.DrawString(5, m_textLine, "step (max) = %5.2f (%6.2f)", p.step, m_maxProfile.step);
+		m_textLine += 15;
+		m_debugDraw.DrawString(5, m_textLine, "collide (max) = %5.2f (%6.2f)", p.collide, m_maxProfile.collide);
+		m_textLine += 15;
+		m_debugDraw.DrawString(5, m_textLine, "solve (max) = %5.2f (%6.2f)", p.solve, m_maxProfile.solve);
+		m_textLine += 15;
+		m_debugDraw.DrawString(5, m_textLine, "solveTOI (max) = %5.2f (%6.2f)", p.solveTOI, m_maxProfile.solveTOI);
 		m_textLine += 15;
 	}
 
