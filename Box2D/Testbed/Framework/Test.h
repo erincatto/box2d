@@ -67,6 +67,7 @@ struct Settings
 		drawContactForces(0),
 		drawFrictionForces(0),
 		drawCOMs(0),
+		drawProfile(0),
 		enableWarmStarting(1),
 		enableContinuous(1),
 		enableSubStepping(0),
@@ -88,6 +89,7 @@ struct Settings
 	int32 drawFrictionForces;
 	int32 drawCOMs;
 	int32 drawStats;
+	int32 drawProfile;
 	int32 enableWarmStarting;
 	int32 enableContinuous;
 	int32 enableSubStepping;
@@ -179,6 +181,8 @@ protected:
 	bool m_bombSpawning;
 	b2Vec2 m_mouseWorld;
 	int32 m_stepCount;
+
+	b2Profile m_maxProfile;
 };
 
 #endif
