@@ -183,6 +183,7 @@ protected:
 	int32 m_stepCount;
 
 	b2Profile m_maxProfile;
+	b2Profile m_totalProfile;
 };
 
 #endif
