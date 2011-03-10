@@ -21,6 +21,9 @@
 #include <cfloat>
 using namespace std;
 
+
+#if B2_USE_DYNAMIC_TREE
+
 b2DynamicTree::b2DynamicTree()
 {
 	m_root = b2_nullNode;
@@ -424,3 +427,166 @@ void b2DynamicTree::Validate() const
 {
 	CountLeaves(m_root);	
 }
+
+#else
+
+b2DynamicTree::b2DynamicTree()
+{
+	m_proxyCapacity = 128;
+	m_proxyCount = 0;
+
+	m_proxyMap = (int32*)b2Alloc(m_proxyCapacity * sizeof(int32));
+	m_proxies = (b2Proxy*)b2Alloc(m_proxyCapacity * sizeof(b2Proxy));
+
+	// Build the free list
+	m_freeId = 0;
+	int32 last = m_proxyCapacity - 1;
+	for (int32 i = m_freeId; i < last; ++i)
+	{
+		m_proxyMap[i] = i + 1;
+	}
+
+	m_proxyMap[last] = b2_nullNode;
+}
+
+b2DynamicTree::~b2DynamicTree()
+{
+	b2Free(m_proxyMap);
+	b2Free(m_proxies);
+}
+
+int32 b2DynamicTree::CreateProxy(const b2AABB& aabb, void* userData)
+{
+	if (m_proxyCount == m_proxyCapacity)
+	{
+		m_proxyCapacity *= 2;
+		int32* proxyMap = (int32*)b2Alloc(m_proxyCapacity * sizeof(int32));
+		b2Proxy* proxies = (b2Proxy*)b2Alloc(m_proxyCapacity * sizeof(b2Proxy));
+
+		memcpy(proxyMap, m_proxyMap, m_proxyCount * sizeof(int32));
+		memcpy(proxies, m_proxies, m_proxyCount * sizeof(b2Proxy));
+
+		b2Free(m_proxyMap);
+		b2Free(m_proxies);
+		m_proxyMap = proxyMap;
+		m_proxies = proxies;
+		proxyMap = NULL;
+		proxies = NULL;
+
+		m_freeId = m_proxyCount;
+		int32 last = m_proxyCapacity - 1;
+		for (int32 i = m_freeId; i < last; ++i)
+		{
+			m_proxyMap[i] = i + 1;
+		}
+
+		m_proxyMap[last] = b2_nullNode;
+	}
+
+	b2Assert(0 <= m_freeId && m_freeId < m_proxyCapacity);
+	int32 id = m_freeId;
+	m_freeId = m_proxyMap[id];
+	int32 index = m_proxyCount;
+
+	m_proxies[index].aabb = aabb;
+	m_proxies[index].userData = userData;
+	m_proxies[index].id = id;
+	m_proxyMap[id] = index;
+	++m_proxyCount;
+
+	return id;
+}
+
+void b2DynamicTree::DestroyProxy(int32 proxyId)
+{
+	b2Assert(0 < m_proxyCount && 0 <= proxyId && proxyId < m_proxyCapacity);
+	int32 index = m_proxyMap[proxyId];
+
+	// Add to free list
+	m_proxyMap[proxyId] = m_freeId;
+	m_freeId = proxyId;
+
+	// Keep proxy array contiguous
+	if (index < m_proxyCount - 1)
+	{
+		m_proxies[index] = m_proxies[m_proxyCount-1];
+		int32 id = m_proxies[index].id;
+		m_proxyMap[id] = index;
+	}
+
+	--m_proxyCount;
+
+	Validate();
+}
+
+bool b2DynamicTree::MoveProxy(int32 proxyId, const b2AABB& aabb, const b2Vec2& displacement)
+{
+	b2Assert(0 < m_proxyCount && 0 <= proxyId && proxyId < m_proxyCapacity);
+	B2_NOT_USED(displacement);
+
+	int32 index = m_proxyMap[proxyId];
+
+	if (m_proxies[index].aabb.Contains(aabb))
+	{
+		return false;
+	}
+
+	// Extend AABB.
+	b2AABB b = aabb;
+	b2Vec2 r(b2_aabbExtension, b2_aabbExtension);
+	b.lowerBound = b.lowerBound - r;
+	b.upperBound = b.upperBound + r;
+
+	// Predict AABB displacement.
+	b2Vec2 d = b2_aabbMultiplier * displacement;
+
+	if (d.x < 0.0f)
+	{
+		b.lowerBound.x += d.x;
+	}
+	else
+	{
+		b.upperBound.x += d.x;
+	}
+
+	if (d.y < 0.0f)
+	{
+		b.lowerBound.y += d.y;
+	}
+	else
+	{
+		b.upperBound.y += d.y;
+	}
+
+	m_proxies[index].aabb = b;
+
+	return true;
+}
+
+void b2DynamicTree::Validate() const
+{
+	b2Assert(m_proxyCount > 0 || m_freeId == b2_nullNode);
+	b2Assert(m_freeId == b2_nullNode || m_freeId < m_proxyCapacity);
+
+	int32 id = m_freeId;
+	int32 freeCount = 0;
+	while (id != b2_nullNode)
+	{
+		++freeCount;
+		b2Assert(freeCount <= m_proxyCapacity);
+		id = m_proxyMap[id];
+	}
+
+	b2Assert(freeCount + m_proxyCount == m_proxyCapacity);
+
+	b2Assert(m_proxyCount <= m_proxyCapacity);
+
+	for (int32 i = 0; i < m_proxyCount; ++i)
+	{
+		int32 id = m_proxies[i].id;
+
+		b2Assert(m_proxyMap[id] == i);
+	}
+}
+
+#endif

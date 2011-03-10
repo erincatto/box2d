@@ -40,7 +40,7 @@ Test::Test()
 {
 	b2Vec2 gravity;
 	gravity.Set(0.0f, -10.0f);
-	bool doSleep = true;
+	bool doSleep = false;
 	m_world = new b2World(gravity, doSleep);
 	m_bomb = NULL;
 	m_textLine = 30;
@@ -60,6 +60,7 @@ Test::Test()
 	m_groundBody = m_world->CreateBody(&bodyDef);
 
 	memset(&m_maxProfile, 0, sizeof(b2Profile));
+	memset(&m_totalProfile, 0, sizeof(b2Profile));
 }
 
 Test::~Test()
@@ -321,18 +322,35 @@ void Test::Step(Settings* settings)
 		m_maxProfile.collide = b2Max(m_maxProfile.collide, p.collide);
 		m_maxProfile.solve = b2Max(m_maxProfile.solve, p.solve);
 		m_maxProfile.solveTOI = b2Max(m_maxProfile.solveTOI, p.solveTOI);
+
+		m_totalProfile.step += p.step;
+		m_totalProfile.collide += p.collide;
+		m_totalProfile.solve += p.solve;
+		m_totalProfile.solveTOI += p.solveTOI;
 	}
 
 	if (settings->drawProfile)
 	{
 		const b2Profile& p = m_world->GetProfile();
-		m_debugDraw.DrawString(5, m_textLine, "step (max) = %5.2f (%6.2f)", p.step, m_maxProfile.step);
+
+		b2Profile aveProfile;
+		memset(&aveProfile, 0, sizeof(b2Profile));
+		if (m_stepCount > 0)
+		{
+			float32 scale = 1.0f / m_stepCount;
+			aveProfile.step = scale * m_totalProfile.step;
+			aveProfile.collide = scale * m_totalProfile.collide;
+			aveProfile.solve = scale * m_totalProfile.solve;
+			aveProfile.solveTOI = scale * m_totalProfile.solveTOI;
+		}
+
+		m_debugDraw.DrawString(5, m_textLine, "step [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.step, aveProfile.step, m_maxProfile.step);
 		m_textLine += 15;
-		m_debugDraw.DrawString(5, m_textLine, "collide (max) = %5.2f (%6.2f)", p.collide, m_maxProfile.collide);
+		m_debugDraw.DrawString(5, m_textLine, "collide [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.collide, aveProfile.collide, m_maxProfile.collide);
 		m_textLine += 15;
-		m_debugDraw.DrawString(5, m_textLine, "solve (max) = %5.2f (%6.2f)", p.solve, m_maxProfile.solve);
+		m_debugDraw.DrawString(5, m_textLine, "solve [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solve, aveProfile.solve, m_maxProfile.solve);
 		m_textLine += 15;
-		m_debugDraw.DrawString(5, m_textLine, "solveTOI (max) = %5.2f (%6.2f)", p.solveTOI, m_maxProfile.solveTOI);
+		m_debugDraw.DrawString(5, m_textLine, "solveTOI [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveTOI, aveProfile.solveTOI, m_maxProfile.solveTOI);
 		m_textLine += 15;
 	}
 
