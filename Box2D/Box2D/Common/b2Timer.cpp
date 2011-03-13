@@ -18,11 +18,11 @@
 
 #include <Box2D/Common/b2Timer.h>
 
+float64 b2Timer::s_invFrequency = 0.0f;
+
 #if defined(WIN32)
 
 #include <Windows.h>
-
-float64 b2Timer::s_invFrequency = 0.0f;
 
 b2Timer::b2Timer()
 {
@@ -68,8 +68,9 @@ void b2Timer::Reset()
 {
 }
 
-float32 b2Timer::GetSeconds() const
+float32 b2Timer::GetMilliseconds() const
 {
 	return 0.0f;
 }
+
 #endif
