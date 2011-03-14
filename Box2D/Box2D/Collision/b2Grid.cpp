@@ -589,4 +589,7 @@ void b2DynamicTree::Validate() const
 	}
 }
 
+#elif B2_USE_GRID
+
+
 #endif
