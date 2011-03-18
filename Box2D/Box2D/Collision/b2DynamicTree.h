@@ -50,7 +50,7 @@ struct b2DynamicTreeNode
 
 	int32 child1;
 	int32 child2;
-	int32 leafCount;
+	int32 height;
 };
 
 /// A dynamic AABB tree broad-phase, inspired by Nathanael Presson's btDbvt.
@@ -96,6 +96,7 @@ public:
 	/// Compute the height of the binary tree in O(N) time. Should not be
 	/// called often.
 	int32 ComputeHeight() const;
+	int32 GetHeight() const;
 
 	/// Query an AABB for overlapping proxies. The callback class
 	/// is called for each proxy that overlaps the supplied AABB.
@@ -123,8 +124,8 @@ private:
 	void RemoveLeaf(int32 node);
 
 	int32 ComputeHeight(int32 nodeId) const;
-	
-	int32 CountLeaves(int32 nodeId) const;
+
+	void ValidateHeight(int32 nodeId) const;
 
 	int32 m_root;
 
