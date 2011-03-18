@@ -171,6 +171,9 @@ public:
 	/// Get the number of contacts (each may have 0 or more contact points).
 	int32 GetContactCount() const;
 
+	/// Get the height of the dynamic tree.
+	int32 GetTreeHeight() const;
+
 	/// Change the global gravity vector.
 	void SetGravity(const b2Vec2& gravity);
 	

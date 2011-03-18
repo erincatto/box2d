@@ -20,26 +20,31 @@
 #define B2_GRID_H
 
 #include <Box2D/Collision/b2Collision.h>
-#include <Box2D/Common/b2GrowableStack.h>
+#include <Box2D/Common/b2BlockAllocator.h>
 
-#define b2_nullNode (-1)
-
-// This must be a power of 2
-#define b2_blockCount	(1 << 4)
+#define b2_nullProxy (-1)
 
 struct b2Proxy
 {
-	/// This is the fattened AABB.
+	/// Enlarge AABB.
 	b2AABB aabb;
 	void* userData;
-	int32 id;
+	int32 timeStamp;
+	bool large;
 };
 
-struct b2Block
+struct b2ProxyNode
 {
-	int16 x, y, z;
-	b2Proxy proxies[b2_blockCount];
-	b2Block* next;
+	/// Duplicate of b2Proxy::aabb to reduce cache misses.
+	b2AABB aabb;
+	int32 index;
+};
+
+struct b2Cell
+{
+	b2ProxyNode* nodes;
+	int32 nodeCapacity;
+	int32 nodeCount;
 };
 
 /// This implementation is not a tree at all. It is just a cache friendly array of AABBs.
@@ -47,10 +52,10 @@ class b2Grid
 {
 public:
 
-	/// Constructing the grid. Provide the expected world AABB, object size, and proxy count.
-	b2Grid(const b2Vec2& worldAABB, float32 objectSize, int32 proxyCount);
+	/// Constructing the grid. Provide the expected object size and count.
+	b2Grid(float32 objectSize, int32 proxyCount);
 
-	/// Destroy the tree, freeing the node pool.
+	/// Destroy the grid. Frees all allocated memory.
 	~b2Grid();
 
 	/// Create a proxy. Provide a tight fitting AABB and a userData pointer.
@@ -92,37 +97,27 @@ public:
 
 private:
 
-	enum
-	{
-		// Number of proxies per block
-		e_blockSize = 16
-	};
+	b2Proxy* m_proxies;
+	int32 m_proxyCapacity;
+	int32 m_proxyCount;
+	int32 m_freeProxy;
 
-	// Map of ids to proxies indices. This may have holes (which contain a free list).
-	int32* m_proxyMap;
-	int32 m_mapCapacity;
-	int32 m_freeId;
-
-	b2Block* m_pool;
-	int32 m_poolCapacity;
-	b2Bloc* m_freeBlock;
-
-	// Array of proxies that don't fit within a single cell.
-	b2Block* m_looseProxies;
-	int32 m_looseCount;
-	int32 m_looseCapacity;
-
-	b2Block** m_table;
+	b2Cell* m_table;
 	int32 m_tableCount;
 
-	int32 m_proxyCount;
+	// Array of proxies that don't fit within a single cell.
+	b2Proxy* m_largeProxies;
+	int32 m_largeCount;
+	int32 m_largeCapacity;
+
+	b2BlockAllocator m_allocator;
+	int32 m_timeStamp;
 };
 
 inline void* b2DynamicTree::GetUserData(int32 proxyId) const
 {
 	b2Assert(0 <= proxyId && proxyId < m_proxyCapacity);
-	int32 index = m_proxyMap[proxyId];
-	return m_proxies[index].userData;
+	return m_proxies[proxyId].userData;
 }
 
 inline const b2AABB& b2DynamicTree::GetFatAABB(int32 proxyId) const
