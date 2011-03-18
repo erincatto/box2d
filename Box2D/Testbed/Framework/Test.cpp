@@ -310,8 +310,10 @@ void Test::Step(Settings* settings)
 
 	if (settings->drawStats)
 	{
-		m_debugDraw.DrawString(5, m_textLine, "bodies/contacts/joints/proxies = %d/%d/%d/%d",
-			m_world->GetBodyCount(), m_world->GetContactCount(), m_world->GetJointCount(), m_world->GetProxyCount());
+		m_debugDraw.DrawString(5, m_textLine, "bodies/contacts/joints/proxies/height = %d/%d/%d/%d/%d",
+			m_world->GetBodyCount(), m_world->GetContactCount(),
+			m_world->GetJointCount(), m_world->GetProxyCount(),
+			m_world->GetTreeHeight());
 		m_textLine += 15;
 	}
 
