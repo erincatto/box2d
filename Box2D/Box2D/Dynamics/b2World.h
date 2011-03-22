@@ -174,6 +174,9 @@ public:
 	/// Get the height of the dynamic tree.
 	int32 GetTreeHeight() const;
 
+	/// Get the balance of the dynamic tree.
+	int32 GetTreeBalance() const;
+
 	/// Change the global gravity vector.
 	void SetGravity(const b2Vec2& gravity);
 	
