@@ -113,7 +113,7 @@ public:
 	void Step(Settings* settings)
 	{
 		const b2ContactManager& cm = m_world->GetContactManager();
-		int32 height = cm.m_broadPhase.ComputeHeight();
+		int32 height = cm.m_broadPhase.GetTreeHeight();
 		int32 leafCount = cm.m_broadPhase.GetProxyCount();
 		int32 minimumNodeCount = 2 * leafCount - 1;
 		float32 minimumHeight = ceilf(logf(float32(minimumNodeCount)) / logf(2.0f));
