@@ -91,8 +91,11 @@ public:
 	template <typename T>
 	void RayCast(T* callback, const b2RayCastInput& input) const;
 
-	/// Compute the height of the embedded tree.
-	int32 ComputeHeight() const;
+	/// Get the height of the embedded tree.
+	int32 GetTreeHeight() const;
+
+	/// Get the balance of the embedded tree.
+	int32 GetTreeBalance() const;
 
 private:
 
@@ -156,9 +159,14 @@ inline int32 b2BroadPhase::GetProxyCount() const
 	return m_proxyCount;
 }
 
-inline int32 b2BroadPhase::ComputeHeight() const
+inline int32 b2BroadPhase::GetTreeHeight() const
 {
 	return m_tree.ComputeHeight();
+}
+
+inline int32 b2BroadPhase::GetTreeBalance() const
+{
+	return m_tree.GetMaxBalance();
 }
 
 template <typename T>
