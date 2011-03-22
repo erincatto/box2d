@@ -310,10 +310,16 @@ void Test::Step(Settings* settings)
 
 	if (settings->drawStats)
 	{
-		m_debugDraw.DrawString(5, m_textLine, "bodies/contacts/joints/proxies/height = %d/%d/%d/%d/%d",
-			m_world->GetBodyCount(), m_world->GetContactCount(),
-			m_world->GetJointCount(), m_world->GetProxyCount(),
-			m_world->GetTreeHeight());
+		int32 bodyCount = m_world->GetBodyCount();
+		int32 contactCount = m_world->GetContactCount();
+		int32 jointCount = m_world->GetJointCount();
+		m_debugDraw.DrawString(5, m_textLine, "bodies/contacts/joints = %d/%d/%d", bodyCount, contactCount, jointCount);
+		m_textLine += 15;
+
+		int32 proxyCount = m_world->GetProxyCount();
+		int32 height = m_world->GetTreeHeight();
+		int32 balance = m_world->GetTreeBalance();
+		m_debugDraw.DrawString(5, m_textLine, "proxies/height/balance = %d/%d/%d", proxyCount, height, balance);
 		m_textLine += 15;
 	}
 
