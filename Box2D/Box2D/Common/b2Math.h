@@ -60,11 +60,6 @@ inline float32 b2InvSqrt(float32 x)
 #define	b2Sqrt(x)	std::sqrt(x)
 #define	b2Atan2(y, x)	std::atan2(y, x)
 
-inline float32 b2Abs(float32 a)
-{
-	return a > 0.0f ? a : -a;
-}
-
 /// A 2D column vector.
 struct b2Vec2
 {
@@ -542,6 +537,12 @@ inline b2Transform b2MulT(const b2Transform& A, const b2Transform& B)
 	C.R = b2MulT(A.R, B.R);
 	C.position = B.position - A.position;
 	return C;
+}
+
+template <typename T>
+inline T b2Abs(T a)
+{
+	return a > T(0) ? a : -a;
 }
 
 inline b2Vec2 b2Abs(const b2Vec2& a)

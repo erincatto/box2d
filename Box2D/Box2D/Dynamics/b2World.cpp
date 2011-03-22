@@ -1200,5 +1200,10 @@ int32 b2World::GetProxyCount() const
 
 int32 b2World::GetTreeHeight() const
 {
-	return m_contactManager.m_broadPhase.ComputeHeight();
+	return m_contactManager.m_broadPhase.GetTreeHeight();
+}
+
+int32 b2World::GetTreeBalance() const
+{
+	return m_contactManager.m_broadPhase.GetTreeBalance();
 }

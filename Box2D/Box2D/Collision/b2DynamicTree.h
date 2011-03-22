@@ -115,6 +115,8 @@ public:
 
 	void Validate() const;
 
+	int32 GetMaxBalance() const;
+
 private:
 
 	int32 AllocateNode();
@@ -123,9 +125,14 @@ private:
 	void InsertLeaf(int32 node);
 	void RemoveLeaf(int32 node);
 
+	int32 Balance(int32 index);
+
 	int32 ComputeHeight(int32 nodeId) const;
 
-	void ValidateHeight(int32 nodeId) const;
+	void ValidateStructure(int32 index) const;
+	void ValidateMetrics(int32 index) const;
+
+	int32 GetMaxBalance(int32 index) const;
 
 	int32 m_root;
 
