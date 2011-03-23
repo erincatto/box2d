@@ -350,18 +350,18 @@ void b2DynamicTree::RemoveLeaf(int32 leaf)
 		FreeNode(parent);
 
 		// Adjust ancestor bounds.
-		parent = grandParent;
-		while (parent != b2_nullNode)
+		int32 index = grandParent;
+		while (index != b2_nullNode)
 		{
-			b2AABB oldAABB = m_nodes[parent].aabb;
+			index = Balance(index);
 
-			int32 child1 = m_nodes[parent].child1;
-			int32 child2 = m_nodes[parent].child2;
+			int32 child1 = m_nodes[index].child1;
+			int32 child2 = m_nodes[index].child2;
 
-			m_nodes[parent].aabb.Combine(m_nodes[child1].aabb, m_nodes[child2].aabb);
-			m_nodes[parent].height = 1 + b2Max(m_nodes[child1].height, m_nodes[child2].height);
+			m_nodes[index].aabb.Combine(m_nodes[child1].aabb, m_nodes[child2].aabb);
+			m_nodes[index].height = 1 + b2Max(m_nodes[child1].height, m_nodes[child2].height);
 
-			parent = m_nodes[parent].parent;
+			index = m_nodes[index].parent;
 		}
 	}
 	else
@@ -374,6 +374,8 @@ void b2DynamicTree::RemoveLeaf(int32 leaf)
 	//Validate();
 }
 
+// Perform a left or right rotation if node A is imbalanced.
+// Returns the new root index.
 int32 b2DynamicTree::Balance(int32 iA)
 {
 	b2Assert(iA != b2_nullNode);
@@ -393,6 +395,8 @@ int32 b2DynamicTree::Balance(int32 iA)
 	b2DynamicTreeNode* C = m_nodes + iC;
 
 	int32 balance = C->height - B->height;
+
+	// Rotate C up
 	if (balance > 1)
 	{
 		int32 iF = C->child1;
@@ -403,7 +407,6 @@ int32 b2DynamicTree::Balance(int32 iA)
 		b2Assert(0 <= iG && iG < m_nodeCapacity);
 
 		// Swap A and C
-		// TODO swap in place to avoid parent fixup
 		C->child1 = iA;
 		C->parent = A->parent;
 		A->parent = iC;
@@ -453,6 +456,7 @@ int32 b2DynamicTree::Balance(int32 iA)
 		return iC;
 	}
 	
+	// Rotate B up
 	if (balance < -1)
 	{
 		int32 iD = B->child1;
