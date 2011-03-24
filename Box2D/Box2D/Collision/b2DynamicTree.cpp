@@ -37,8 +37,10 @@ b2DynamicTree::b2DynamicTree()
 	for (int32 i = 0; i < m_nodeCapacity - 1; ++i)
 	{
 		m_nodes[i].next = i + 1;
+		m_nodes[i].active = 0;
 	}
 	m_nodes[m_nodeCapacity-1].next = b2_nullNode;
+	m_nodes[m_nodeCapacity-1].active = 0;
 	m_freeList = 0;
 
 	m_path = 0;
@@ -72,8 +74,10 @@ int32 b2DynamicTree::AllocateNode()
 		for (int32 i = m_nodeCount; i < m_nodeCapacity - 1; ++i)
 		{
 			m_nodes[i].next = i + 1;
+			m_nodes[i].active = 0;
 		}
 		m_nodes[m_nodeCapacity-1].next = b2_nullNode;
+		m_nodes[m_nodeCapacity-1].active = 0;
 		m_freeList = m_nodeCount;
 	}
 
@@ -83,7 +87,7 @@ int32 b2DynamicTree::AllocateNode()
 	m_nodes[nodeId].parent = b2_nullNode;
 	m_nodes[nodeId].child1 = b2_nullNode;
 	m_nodes[nodeId].child2 = b2_nullNode;
-	m_nodes[nodeId].height = 0;
+	m_nodes[nodeId].active = 1;
 	++m_nodeCount;
 	return nodeId;
 }
@@ -94,6 +98,7 @@ void b2DynamicTree::FreeNode(int32 nodeId)
 	b2Assert(0 <= nodeId && nodeId < m_nodeCapacity);
 	b2Assert(0 < m_nodeCount);
 	m_nodes[nodeId].next = m_freeList;
+	m_nodes[nodeId].active = 0;
 	m_freeList = nodeId;
 	--m_nodeCount;
 }
@@ -238,13 +243,10 @@ void b2DynamicTree::InsertLeaf(int32 leaf)
 		}
 
 		// Descend according to the minimum cost.
-		//if (cost < cost1 && cost < cost2)
-		//{
-		//	break;
-		//}
-
-		// Expand the node's AABB to account for the new leaf.
-		//m_nodes[index].aabb.Combine(leafAABB);
+		if (cost < cost1 && cost < cost2)
+		{
+			break;
+		}
 
 		// Descend
 		if (cost1 < cost2)
@@ -526,31 +528,151 @@ void b2DynamicTree::Rebalance(int32 iterations)
 		return;
 	}
 
-	// Rebalance the tree by removing and re-inserting leaves.
+	// Rebalance the tree by shuffling.
 	for (int32 i = 0; i < iterations; ++i)
 	{
-		int32 node = m_root;
-
-		uint32 bit = 0;
-		while (m_nodes[node].IsLeaf() == false)
+		while (m_nodes[m_path].active == 0)
 		{
-			int32* children = &m_nodes[node].child1;
-			
-			// Child selector based on a bit in the path
-			int32 selector = (m_path >> bit) & 1;
-
-			// Select the child nod
-			node = children[selector];
-
-			// Keep bit between 0 and 31 because m_path has 32 bits
-			// bit = (bit + 1) % 31
-			bit = (bit + 1) & 0x1F;
+			++m_path;
+			if (m_path == m_nodeCapacity)
+			{
+				m_path = 0;
+			}
 		}
-		++m_path;
 
-		//RemoveLeaf(node);
-		//InsertLeaf(node);
+		Shuffle(m_path);
+
+		++m_path;
+		if (m_path == m_nodeCapacity)
+		{
+			m_path = 0;
+		}
 	}
+}
+
+// Shuffle grandchildren to improve quality. This cannot increase the tree height,
+// but it can cause slight imbalance.
+// Balanced Hierarchies for Collision Detection between Fracturing Objects
+// http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.125.7818&rep=rep1&type=pdf
+void b2DynamicTree::Shuffle(int32 index)
+{
+	if (index == b2_nullNode)
+	{
+		return;
+	}
+
+	b2DynamicTreeNode* node = m_nodes + index;
+	if (node->height < 3)
+	{
+		return;
+	}
+
+	int32 i1 = node->child1;
+	int32 i2 = node->child2;
+
+	b2Assert(0 <= i1 && i1 < m_nodeCapacity);
+	b2Assert(0 <= i2 && i2 < m_nodeCapacity);
+
+	b2DynamicTreeNode* node1 = m_nodes + i1;
+	b2DynamicTreeNode* node2 = m_nodes + i2;
+
+	if (node1->height < 2 || node2->height < 2)
+	{
+		return;
+	}
+
+	int32 i11 = node1->child1;
+	int32 i12 = node1->child2;
+	int32 i21 = node2->child1;
+	int32 i22 = node2->child2;
+
+	b2DynamicTreeNode* node11 = m_nodes + i11;
+	b2DynamicTreeNode* node12 = m_nodes + i12;
+	b2DynamicTreeNode* node21 = m_nodes + i21;
+	b2DynamicTreeNode* node22 = m_nodes + i22;
+
+	b2AABB b11 = node11->aabb;
+	b2AABB b12 = node12->aabb;
+	b2AABB b21 = node21->aabb;
+	b2AABB b22 = node22->aabb;
+
+	// Metrics
+	float32 m1, m2, m3;
+
+	{
+		b2AABB b1, b2;
+		b1.Combine(b11, b12);
+		b2.Combine(b21, b22);
+		m1 = b1.GetPerimeter() + b2.GetPerimeter();
+	}
+
+	{
+		b2AABB b1, b2;
+		b1.Combine(b11, b22);
+		b2.Combine(b12, b21);
+		m2 = b1.GetPerimeter() + b2.GetPerimeter();
+	}
+
+	{
+		b2AABB b1, b2;
+		b1.Combine(b11, b21);
+		b2.Combine(b12, b22);
+		m3 = b1.GetPerimeter() + b2.GetPerimeter();
+	}
+
+	if (m1 <= m2 && m1 <= m3)
+	{
+		return;
+	}
+
+	if (m2 <= m3)
+	{
+		// (node11, node22), (node21, node12)
+		node1->child2 = i22;
+		node22->parent = i1;
+		node1->aabb.Combine(node11->aabb, node22->aabb);
+		node1->height = 1 + b2Max(node11->height, node22->height);
+
+		node2->child2 = i12;
+		node12->parent = i2;
+		node2->aabb.Combine(node21->aabb, node12->aabb);
+		node2->height = 1 + b2Max(node21->height, node12->height);
+	}
+	else
+	{
+		// (node11, node21), (node12, node22)
+		node1->child2 = i21;
+		node21->parent = i1;
+		node1->aabb.Combine(node11->aabb, node21->aabb);
+		node1->height = 1 + b2Max(node11->height, node21->height);
+
+		node2->child1 = i12;
+		node12->parent = i2;
+		node2->aabb.Combine(node12->aabb, node22->aabb);
+		node2->height = 1 + b2Max(node12->height, node22->height);
+	}
+
+	node->aabb.Combine(node1->aabb, node2->aabb);
+	node->height = 1 + b2Max(node1->height, node2->height);
+
+	int32 i = node->parent;
+	while (i != b2_nullNode)
+	{
+		b2DynamicTreeNode* n = m_nodes + i;
+		
+		int32 i1 = n->child1;
+		int32 i2 = n->child2;
+
+		b2DynamicTreeNode* n1 = m_nodes + i1;
+		b2DynamicTreeNode* n2 = m_nodes + i2;
+
+		n->aabb.Combine(n1->aabb, n2->aabb);
+		n->height = 1 + b2Max(n1->height, n2->height);
+
+		i = n->parent;
+	}
+
+	//Validate();
 }
 
 int32 b2DynamicTree::GetHeight() const
@@ -561,6 +683,37 @@ int32 b2DynamicTree::GetHeight() const
 	}
 
 	return m_nodes[m_root].height;
+}
+
+// Compute the total surface area of a sub-tree (perimeter)
+float32 b2DynamicTree::GetTotalArea(int32 index) const
+{
+	if (index == b2_nullNode)
+	{
+		return 0.0f;
+	}
+
+	b2Assert(0 <= index && index < m_nodeCapacity);
+	const b2DynamicTreeNode* node = m_nodes + index;
+	float32 area = node->aabb.GetPerimeter();
+	float32 area1 = GetTotalArea(node->child1);
+	float32 area2 = GetTotalArea(node->child2);
+	return area + area1 + area2;
+}
+
+//
+float32 b2DynamicTree::GetAreaRatio() const
+{
+	if (m_root == b2_nullNode)
+	{
+		return 0.0f;
+	}
+
+	float32 totalArea = GetTotalArea(m_root);
+	const b2DynamicTreeNode* root = m_nodes + m_root;
+	float32 rootArea = root->aabb.GetPerimeter();
+
+	return totalArea / rootArea;
 }
 
 // Compute the height of a sub-tree.

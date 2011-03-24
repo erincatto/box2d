@@ -1207,3 +1207,8 @@ int32 b2World::GetTreeBalance() const
 {
 	return m_contactManager.m_broadPhase.GetTreeBalance();
 }
+
+float32 b2World::GetTreeQuality() const
+{
+	return m_contactManager.m_broadPhase.GetTreeQuality();
+}
