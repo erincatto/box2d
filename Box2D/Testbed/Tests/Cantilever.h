@@ -83,7 +83,6 @@ public:
 				b2BodyDef bd;
 				bd.type = b2_dynamicBody;
 				bd.position.Set(-14.5f + 1.0f * i, 15.0f);
-				bd.inertiaScale = 10.0f;
 				b2Body* body = m_world->CreateBody(&bd);
 				body->CreateFixture(&fd);
 
@@ -141,7 +140,6 @@ public:
 				b2BodyDef bd;
 				bd.type = b2_dynamicBody;
 				bd.position.Set(5.5f + 1.0f * i, 10.0f);
-				bd.inertiaScale = 10.0f;
 				b2Body* body = m_world->CreateBody(&bd);
 				body->CreateFixture(&fd);
 
