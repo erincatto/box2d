@@ -190,7 +190,6 @@ void b2Contact::Update(b2ContactListener* listener)
 			mp2->normalImpulse = 0.0f;
 			mp2->tangentImpulse = 0.0f;
 			b2ContactID id2 = mp2->id;
-			bool found = false;
 
 			for (int32 j = 0; j < oldManifold.pointCount; ++j)
 			{
@@ -200,15 +199,8 @@ void b2Contact::Update(b2ContactListener* listener)
 				{
 					mp2->normalImpulse = mp1->normalImpulse;
 					mp2->tangentImpulse = mp1->tangentImpulse;
-					found = true;
 					break;
 				}
-			}
-
-			if (found == false)
-			{
-				mp2->normalImpulse = 0.0f;
-				mp2->tangentImpulse = 0.0f;
 			}
 		}
 
