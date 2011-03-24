@@ -50,7 +50,14 @@ struct b2DynamicTreeNode
 
 	int32 child1;
 	int32 child2;
-	int32 height;
+
+	union
+	{
+		int32 height;
+
+		// Node is in use if active > 0
+		int32 active;
+	};
 };
 
 /// A dynamic AABB tree broad-phase, inspired by Nathanael Presson's btDbvt.
@@ -129,6 +136,7 @@ private:
 	void RemoveLeaf(int32 node);
 
 	int32 Balance(int32 index);
+	void Shuffle(int32 index);
 
 	int32 ComputeHeight() const;
 	int32 ComputeHeight(int32 nodeId) const;
@@ -148,7 +156,7 @@ private:
 
 	int32 m_freeList;
 
-	/// This is used incrementally traverse the tree for re-balancing.
+	/// This is used to incrementally traverse the tree for re-balancing.
 	uint32 m_path;
 
 	int32 m_insertionCount;
