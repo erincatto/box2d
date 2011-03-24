@@ -319,7 +319,8 @@ void Test::Step(Settings* settings)
 		int32 proxyCount = m_world->GetProxyCount();
 		int32 height = m_world->GetTreeHeight();
 		int32 balance = m_world->GetTreeBalance();
-		m_debugDraw.DrawString(5, m_textLine, "proxies/height/balance = %d/%d/%d", proxyCount, height, balance);
+		float32 quality = m_world->GetTreeQuality();
+		m_debugDraw.DrawString(5, m_textLine, "proxies/height/balance/quality = %d/%d/%d/%g", proxyCount, height, balance, quality);
 		m_textLine += 15;
 	}
 
