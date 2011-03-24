@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
+* Copyright (c) 2006-2009 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -374,7 +374,7 @@ private:
 	
 	friend class b2DistanceJoint;
 	friend class b2GearJoint;
-	friend class b2LineJoint;
+	friend class b2WheelJoint;
 	friend class b2MouseJoint;
 	friend class b2PrismaticJoint;
 	friend class b2PulleyJoint;
