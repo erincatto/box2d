@@ -177,6 +177,10 @@ public:
 	/// Get the balance of the dynamic tree.
 	int32 GetTreeBalance() const;
 
+	/// Get the quality metric of the dynamic tree. The smaller the better.
+	/// The minimum is 1.
+	float32 GetTreeQuality() const;
+
 	/// Change the global gravity vector.
 	void SetGravity(const b2Vec2& gravity);
 	
