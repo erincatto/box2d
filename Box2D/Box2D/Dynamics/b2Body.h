@@ -66,7 +66,7 @@ struct b2BodyDef
 		bullet = false;
 		type = b2_staticBody;
 		active = true;
-		inertiaScale = 1.0f;
+		gravityScale = 1.0f;
 	}
 
 	/// The body type: static, kinematic, or dynamic.
@@ -118,8 +118,8 @@ struct b2BodyDef
 	/// Use this to store application specific body data.
 	void* userData;
 
-	/// Experimental: scales the inertia tensor.
-	float32 inertiaScale;
+	/// Scale the gravity applied to this body.
+	float32 gravityScale;
 };
 
 /// A rigid body. These are created via b2World::CreateBody.
@@ -284,6 +284,12 @@ public:
 	/// Set the angular damping of the body.
 	void SetAngularDamping(float32 angularDamping);
 
+	/// Get the gravity scale of the body.
+	float32 GetGravityScale() const;
+
+	/// Set the angular damping of the body.
+	void SetGravityScale(float32 scale);
+
 	/// Set the type of this body. This may alter the mass and velocity.
 	void SetType(b2BodyType type);
 
@@ -439,6 +445,7 @@ private:
 
 	float32 m_linearDamping;
 	float32 m_angularDamping;
+	float32 m_gravityScale;
 
 	float32 m_sleepTime;
 
@@ -580,6 +587,16 @@ inline float32 b2Body::GetAngularDamping() const
 inline void b2Body::SetAngularDamping(float32 angularDamping)
 {
 	m_angularDamping = angularDamping;
+}
+
+inline float32 b2Body::GetGravityScale() const
+{
+	return m_gravityScale;
+}
+
+inline void b2Body::SetGravityScale(float32 scale)
+{
+	m_gravityScale = scale;
 }
 
 inline void b2Body::SetBullet(bool flag)
