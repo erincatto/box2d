@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+* Copyright (c) 2006-2007 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -35,7 +35,7 @@ enum b2JointType
 	e_pulleyJoint,
 	e_mouseJoint,
 	e_gearJoint,
-	e_lineJoint,
+	e_wheelJoint,
     e_weldJoint,
 	e_frictionJoint,
 	e_ropeJoint

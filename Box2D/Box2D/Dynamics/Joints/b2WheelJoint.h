@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+* Copyright (c) 2006-2011 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -16,22 +16,22 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef B2_LINE_JOINT_H
-#define B2_LINE_JOINT_H
+#ifndef B2_WHEEL_JOINT_H
+#define B2_WHEEL_JOINT_H
 
 #include <Box2D/Dynamics/Joints/b2Joint.h>
 
-/// Line joint definition. This requires defining a line of
+/// Wheel joint definition. This requires defining a line of
 /// motion using an axis and an anchor point. The definition uses local
 /// anchor points and a local axis so that the initial configuration
 /// can violate the constraint slightly. The joint translation is zero
 /// when the local anchor points coincide in world space. Using local
 /// anchors and a local axis helps when saving and loading a game.
-struct b2LineJointDef : public b2JointDef
+struct b2WheelJointDef : public b2JointDef
 {
-	b2LineJointDef()
+	b2WheelJointDef()
 	{
-		type = e_lineJoint;
+		type = e_wheelJoint;
 		localAnchorA.SetZero();
 		localAnchorB.SetZero();
 		localAxisA.Set(1.0f, 0.0f);
@@ -71,12 +71,12 @@ struct b2LineJointDef : public b2JointDef
 	float32 dampingRatio;
 };
 
-/// A line joint. This joint provides two degrees of freedom: translation
+/// A wheel joint. This joint provides two degrees of freedom: translation
 /// along an axis fixed in body1 and rotation in the plane. You can use a
 /// joint limit to restrict the range of motion and a joint motor to drive
 /// the rotation or to model rotational friction.
 /// This joint is designed for vehicle suspensions.
-class b2LineJoint : public b2Joint
+class b2WheelJoint : public b2Joint
 {
 public:
 	b2Vec2 GetAnchorA() const;
@@ -121,7 +121,7 @@ public:
 protected:
 
 	friend class b2Joint;
-	b2LineJoint(const b2LineJointDef* def);
+	b2WheelJoint(const b2WheelJointDef* def);
 
 	void InitVelocityConstraints(const b2TimeStep& step);
 	void SolveVelocityConstraints(const b2TimeStep& step);
@@ -153,32 +153,32 @@ protected:
 	bool m_enableMotor;
 };
 
-inline float32 b2LineJoint::GetMotorSpeed() const
+inline float32 b2WheelJoint::GetMotorSpeed() const
 {
 	return m_motorSpeed;
 }
 
-inline float32 b2LineJoint::GetMaxMotorTorque() const
+inline float32 b2WheelJoint::GetMaxMotorTorque() const
 {
 	return m_maxMotorTorque;
 }
 
-inline void b2LineJoint::SetSpringFrequencyHz(float32 hz)
+inline void b2WheelJoint::SetSpringFrequencyHz(float32 hz)
 {
 	m_frequencyHz = hz;
 }
 
-inline float32 b2LineJoint::GetSpringFrequencyHz() const
+inline float32 b2WheelJoint::GetSpringFrequencyHz() const
 {
 	return m_frequencyHz;
 }
 
-inline void b2LineJoint::SetSpringDampingRatio(float32 ratio)
+inline void b2WheelJoint::SetSpringDampingRatio(float32 ratio)
 {
 	m_dampingRatio = ratio;
 }
 
-inline float32 b2LineJoint::GetSpringDampingRatio() const
+inline float32 b2WheelJoint::GetSpringDampingRatio() const
 {
 	return m_dampingRatio;
 }
