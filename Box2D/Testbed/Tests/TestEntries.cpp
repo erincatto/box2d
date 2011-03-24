@@ -68,8 +68,8 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
-	{"Polygon Shapes", PolyShapes::Create},
 	{"Tiles", Tiles::Create},
+	{"Polygon Shapes", PolyShapes::Create},
 	{"Rope", Rope::Create},
 	{"Web", Web::Create},
 	{"Car", Car::Create},
