@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+* Copyright (c) 2006-2007 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -18,7 +18,7 @@
 
 #include <Box2D/Dynamics/Joints/b2Joint.h>
 #include <Box2D/Dynamics/Joints/b2DistanceJoint.h>
-#include <Box2D/Dynamics/Joints/b2LineJoint.h>
+#include <Box2D/Dynamics/Joints/b2WheelJoint.h>
 #include <Box2D/Dynamics/Joints/b2MouseJoint.h>
 #include <Box2D/Dynamics/Joints/b2RevoluteJoint.h>
 #include <Box2D/Dynamics/Joints/b2PrismaticJoint.h>
@@ -81,10 +81,10 @@ b2Joint* b2Joint::Create(const b2JointDef* def, b2BlockAllocator* allocator)
 		}
 		break;
 
-	case e_lineJoint:
+	case e_wheelJoint:
 		{
-			void* mem = allocator->Allocate(sizeof(b2LineJoint));
-			joint = new (mem) b2LineJoint((b2LineJointDef*)def);
+			void* mem = allocator->Allocate(sizeof(b2WheelJoint));
+			joint = new (mem) b2WheelJoint((b2WheelJointDef*)def);
 		}
 		break;
 
@@ -146,8 +146,8 @@ void b2Joint::Destroy(b2Joint* joint, b2BlockAllocator* allocator)
 		allocator->Free(joint, sizeof(b2GearJoint));
 		break;
 
-	case e_lineJoint:
-		allocator->Free(joint, sizeof(b2LineJoint));
+	case e_wheelJoint:
+		allocator->Free(joint, sizeof(b2WheelJoint));
 		break;
     
 	case e_weldJoint:

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
+* Copyright (c) 2006-2009 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -40,7 +40,7 @@ Test::Test()
 {
 	b2Vec2 gravity;
 	gravity.Set(0.0f, -10.0f);
-	bool doSleep = false;
+	bool doSleep = true;
 	m_world = new b2World(gravity, doSleep);
 	m_bomb = NULL;
 	m_textLine = 30;
