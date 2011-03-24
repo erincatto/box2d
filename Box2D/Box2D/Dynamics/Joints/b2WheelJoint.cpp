@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2007 Erin Catto http://www.gphysics.com
+* Copyright (c) 2006-2007 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -16,7 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include <Box2D/Dynamics/Joints/b2LineJoint.h>
+#include <Box2D/Dynamics/Joints/b2WheelJoint.h>
 #include <Box2D/Dynamics/b2Body.h>
 #include <Box2D/Dynamics/b2TimeStep.h>
 
@@ -36,7 +36,7 @@
 // Cdot = wB - wA
 // J = [0 0 -1 0 0 1]
 
-void b2LineJointDef::Initialize(b2Body* bA, b2Body* bB, const b2Vec2& anchor, const b2Vec2& axis)
+void b2WheelJointDef::Initialize(b2Body* bA, b2Body* bB, const b2Vec2& anchor, const b2Vec2& axis)
 {
 	bodyA = bA;
 	bodyB = bB;
@@ -45,7 +45,7 @@ void b2LineJointDef::Initialize(b2Body* bA, b2Body* bB, const b2Vec2& anchor, co
 	localAxisA = bodyA->GetLocalVector(axis);
 }
 
-b2LineJoint::b2LineJoint(const b2LineJointDef* def)
+b2WheelJoint::b2WheelJoint(const b2WheelJointDef* def)
 : b2Joint(def)
 {
 	m_localAnchorA = def->localAnchorA;
@@ -74,7 +74,7 @@ b2LineJoint::b2LineJoint(const b2LineJointDef* def)
 	m_ay.SetZero();
 }
 
-void b2LineJoint::InitVelocityConstraints(const b2TimeStep& step)
+void b2WheelJoint::InitVelocityConstraints(const b2TimeStep& step)
 {
 	b2Body* bA = m_bodyA;
 	b2Body* bB = m_bodyB;
@@ -196,7 +196,7 @@ void b2LineJoint::InitVelocityConstraints(const b2TimeStep& step)
 	}
 }
 
-void b2LineJoint::SolveVelocityConstraints(const b2TimeStep& step)
+void b2WheelJoint::SolveVelocityConstraints(const b2TimeStep& step)
 {
 	b2Body* bA = m_bodyA;
 	b2Body* bB = m_bodyB;
@@ -260,7 +260,7 @@ void b2LineJoint::SolveVelocityConstraints(const b2TimeStep& step)
 	bB->m_angularVelocity = wB;
 }
 
-bool b2LineJoint::SolvePositionConstraints(float32 baumgarte)
+bool b2WheelJoint::SolvePositionConstraints(float32 baumgarte)
 {
 	B2_NOT_USED(baumgarte);
 
@@ -318,27 +318,27 @@ bool b2LineJoint::SolvePositionConstraints(float32 baumgarte)
 	return b2Abs(C) <= b2_linearSlop;
 }
 
-b2Vec2 b2LineJoint::GetAnchorA() const
+b2Vec2 b2WheelJoint::GetAnchorA() const
 {
 	return m_bodyA->GetWorldPoint(m_localAnchorA);
 }
 
-b2Vec2 b2LineJoint::GetAnchorB() const
+b2Vec2 b2WheelJoint::GetAnchorB() const
 {
 	return m_bodyB->GetWorldPoint(m_localAnchorB);
 }
 
-b2Vec2 b2LineJoint::GetReactionForce(float32 inv_dt) const
+b2Vec2 b2WheelJoint::GetReactionForce(float32 inv_dt) const
 {
 	return inv_dt * (m_impulse * m_ay + m_springImpulse * m_ax);
 }
 
-float32 b2LineJoint::GetReactionTorque(float32 inv_dt) const
+float32 b2WheelJoint::GetReactionTorque(float32 inv_dt) const
 {
 	return inv_dt * m_motorImpulse;
 }
 
-float32 b2LineJoint::GetJointTranslation() const
+float32 b2WheelJoint::GetJointTranslation() const
 {
 	b2Body* bA = m_bodyA;
 	b2Body* bB = m_bodyB;
@@ -352,40 +352,40 @@ float32 b2LineJoint::GetJointTranslation() const
 	return translation;
 }
 
-float32 b2LineJoint::GetJointSpeed() const
+float32 b2WheelJoint::GetJointSpeed() const
 {
 	float32 wA = m_bodyA->m_angularVelocity;
 	float32 wB = m_bodyB->m_angularVelocity;
 	return wB - wA;
 }
 
-bool b2LineJoint::IsMotorEnabled() const
+bool b2WheelJoint::IsMotorEnabled() const
 {
 	return m_enableMotor;
 }
 
-void b2LineJoint::EnableMotor(bool flag)
+void b2WheelJoint::EnableMotor(bool flag)
 {
 	m_bodyA->SetAwake(true);
 	m_bodyB->SetAwake(true);
 	m_enableMotor = flag;
 }
 
-void b2LineJoint::SetMotorSpeed(float32 speed)
+void b2WheelJoint::SetMotorSpeed(float32 speed)
 {
 	m_bodyA->SetAwake(true);
 	m_bodyB->SetAwake(true);
 	m_motorSpeed = speed;
 }
 
-void b2LineJoint::SetMaxMotorTorque(float32 torque)
+void b2WheelJoint::SetMaxMotorTorque(float32 torque)
 {
 	m_bodyA->SetAwake(true);
 	m_bodyB->SetAwake(true);
 	m_maxMotorTorque = torque;
 }
 
-float32 b2LineJoint::GetMotorTorque(float32 inv_dt) const
+float32 b2WheelJoint::GetMotorTorque(float32 inv_dt) const
 {
 	return inv_dt * m_motorImpulse;
 }
