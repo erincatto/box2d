@@ -30,7 +30,7 @@
 #if B2_USE_DYNAMIC_TREE
 
 /// A node in the dynamic tree. The client does not interact with this directly.
-struct b2DynamicTreeNode
+struct b2TreeNode
 {
 	bool IsLeaf() const
 	{
@@ -51,13 +51,8 @@ struct b2DynamicTreeNode
 	int32 child1;
 	int32 child2;
 
-	union
-	{
-		int32 height;
-
-		// Node is in use if active > 0
-		int32 active;
-	};
+	// leaf = 0, free node = -1
+	int32 height;
 };
 
 /// A dynamic AABB tree broad-phase, inspired by Nathanael Presson's btDbvt.
@@ -150,7 +145,7 @@ private:
 
 	int32 m_root;
 
-	b2DynamicTreeNode* m_nodes;
+	b2TreeNode* m_nodes;
 	int32 m_nodeCount;
 	int32 m_nodeCapacity;
 
@@ -188,7 +183,7 @@ inline void b2DynamicTree::Query(T* callback, const b2AABB& aabb) const
 			continue;
 		}
 
-		const b2DynamicTreeNode* node = m_nodes + nodeId;
+		const b2TreeNode* node = m_nodes + nodeId;
 
 		if (b2TestOverlap(node->aabb, aabb))
 		{
@@ -246,7 +241,7 @@ inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) con
 			continue;
 		}
 
-		const b2DynamicTreeNode* node = m_nodes + nodeId;
+		const b2TreeNode* node = m_nodes + nodeId;
 
 		if (b2TestOverlap(node->aabb, segmentAABB) == false)
 		{

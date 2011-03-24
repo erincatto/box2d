@@ -72,7 +72,6 @@ struct b2ManifoldPoint
 	float32 normalImpulse;	///< the non-penetration impulse
 	float32 tangentImpulse;	///< the friction impulse
 	b2ContactID id;			///< uniquely identifies a contact point between two shapes
-	bool isNew;
 };
 
 /// A manifold for two touching convex shapes.
