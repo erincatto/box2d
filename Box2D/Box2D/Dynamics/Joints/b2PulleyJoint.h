@@ -24,8 +24,7 @@
 const float32 b2_minPulleyLength = 2.0f;
 
 /// Pulley joint definition. This requires two ground anchors,
-/// two dynamic body anchor points, max lengths for each side,
-/// and a pulley ratio.
+/// two dynamic body anchor points, and a pulley ratio.
 struct b2PulleyJointDef : public b2JointDef
 {
 	b2PulleyJointDef()
@@ -36,9 +35,7 @@ struct b2PulleyJointDef : public b2JointDef
 		localAnchorA.Set(-1.0f, 0.0f);
 		localAnchorB.Set(1.0f, 0.0f);
 		lengthA = 0.0f;
-		maxLengthA = 0.0f;
 		lengthB = 0.0f;
-		maxLengthB = 0.0f;
 		ratio = 1.0f;
 		collideConnected = true;
 	}
@@ -64,14 +61,8 @@ struct b2PulleyJointDef : public b2JointDef
 	/// The a reference length for the segment attached to bodyA.
 	float32 lengthA;
 
-	/// The maximum length of the segment attached to bodyA.
-	float32 maxLengthA;
-
 	/// The a reference length for the segment attached to bodyB.
 	float32 lengthB;
-
-	/// The maximum length of the segment attached to bodyB.
-	float32 maxLengthB;
 
 	/// The pulley ratio, used to simulate a block-and-tackle.
 	float32 ratio;
@@ -81,8 +72,8 @@ struct b2PulleyJointDef : public b2JointDef
 /// The pulley supports a ratio such that:
 /// length1 + ratio * length2 <= constant
 /// Yes, the force transmitted is scaled by the ratio.
-/// The pulley also enforces a maximum length limit on both sides. This is
-/// useful to prevent one side of the pulley hitting the top.
+/// Warning: the pulley joint can get a bit squirrelly by itself. They often
+/// work better when combined with prismatic joints with limits.
 class b2PulleyJoint : public b2Joint
 {
 public:
@@ -127,22 +118,11 @@ protected:
 	float32 m_constant;
 	float32 m_ratio;
 	
-	float32 m_maxLength1;
-	float32 m_maxLength2;
-
 	// Effective masses
 	float32 m_pulleyMass;
-	float32 m_limitMass1;
-	float32 m_limitMass2;
 
 	// Impulses for accumulation/warm starting.
 	float32 m_impulse;
-	float32 m_limitImpulse1;
-	float32 m_limitImpulse2;
-
-	b2LimitState m_state;
-	b2LimitState m_limitState1;
-	b2LimitState m_limitState2;
 };
 
 #endif

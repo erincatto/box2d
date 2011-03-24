@@ -31,12 +31,12 @@ public:
 
 			b2EdgeShape shape;
 			shape.Set(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
-			ground->CreateFixture(&shape, 0.0f);
+			//ground->CreateFixture(&shape, 0.0f);
 		}
 
 		{
-			float32 a = 2.0f;
-			float32 b = 4.0f;
+			float32 a = 1.0f;
+			float32 b = 2.0f;
 			float32 y = 16.0f;
 			float32 L = 12.0f;
 
@@ -46,6 +46,7 @@ public:
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
 
+			//bd.fixedRotation = true;
 			bd.position.Set(-10.0f, y);
 			b2Body* body1 = m_world->CreateBody(&bd);
 			body1->CreateFixture(&shape, 5.0f);
@@ -59,7 +60,7 @@ public:
 			b2Vec2 anchor2(10.0f, y + b);
 			b2Vec2 groundAnchor1(-10.0f, y + b + L);
 			b2Vec2 groundAnchor2(10.0f, y + b + L);
-			pulleyDef.Initialize(body1, body2, groundAnchor1, groundAnchor2, anchor1, anchor2, 2.0f);
+			pulleyDef.Initialize(body1, body2, groundAnchor1, groundAnchor2, anchor1, anchor2, 1.5f);
 
 			m_joint1 = (b2PulleyJoint*)m_world->CreateJoint(&pulleyDef);
 		}
