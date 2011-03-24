@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2009 Erin Catto http://www.gphysics.com
+* Copyright (c) 2006-2009 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -42,7 +42,6 @@ using namespace std;
 #include "EdgeShapes.h"
 #include "EdgeTest.h"
 #include "Gears.h"
-#include "LineJoint.h"
 #include "OneSidedPlatform.h"
 #include "Pinball.h"
 #include "PolyCollision.h"
@@ -73,7 +72,6 @@ TestEntry g_testEntries[] =
 	{"Rope", Rope::Create},
 	{"Web", Web::Create},
 	{"Car", Car::Create},
-	{"Line Joint", LineJoint::Create},
 	{"Vertical Stack", VerticalStack::Create},
 	{"RopeJoint", RopeJoint::Create},
 	{"Character Collision", CharacterCollision::Create},
