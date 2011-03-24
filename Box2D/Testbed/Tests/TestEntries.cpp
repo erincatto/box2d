@@ -67,6 +67,7 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
+	{"SphereStack", SphereStack::Create},
 	{"Tiles", Tiles::Create},
 	{"Polygon Shapes", PolyShapes::Create},
 	{"Rope", Rope::Create},
@@ -92,7 +93,6 @@ TestEntry g_testEntries[] =
 	{"PolyCollision", PolyCollision::Create},
 	{"Apply Force", ApplyForce::Create},
 	{"Cantilever", Cantilever::Create},
-	{"SphereStack", SphereStack::Create},
 	{"Bridge", Bridge::Create},
 	{"Breakable", Breakable::Create},
 	{"Chain", Chain::Create},

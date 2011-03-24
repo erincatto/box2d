@@ -53,7 +53,7 @@ public:
 
 				m_bodies[i]->CreateFixture(&shape, 1.0f);
 
-				//m_bodies[i]->SetLinearVelocity(b2Vec2(0.0f, -100.0f));
+				m_bodies[i]->SetLinearVelocity(b2Vec2(0.0f, -50.0f));
 			}
 		}
 	}
