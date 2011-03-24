@@ -89,26 +89,26 @@ set(BOX2D_Joints_SRCS
 	Dynamics/Joints/b2FrictionJoint.cpp
 	Dynamics/Joints/b2GearJoint.cpp
 	Dynamics/Joints/b2Joint.cpp
-	Dynamics/Joints/b2LineJoint.cpp
 	Dynamics/Joints/b2MouseJoint.cpp
 	Dynamics/Joints/b2PrismaticJoint.cpp
 	Dynamics/Joints/b2PulleyJoint.cpp
 	Dynamics/Joints/b2RevoluteJoint.cpp
 	Dynamics/Joints/b2RopeJoint.cpp
 	Dynamics/Joints/b2WeldJoint.cpp
+	Dynamics/Joints/b2WheelJoint.cpp
 )
 set(BOX2D_Joints_HDRS
 	Dynamics/Joints/b2DistanceJoint.h
 	Dynamics/Joints/b2FrictionJoint.h
 	Dynamics/Joints/b2GearJoint.h
 	Dynamics/Joints/b2Joint.h
-	Dynamics/Joints/b2LineJoint.h
 	Dynamics/Joints/b2MouseJoint.h
 	Dynamics/Joints/b2PrismaticJoint.h
 	Dynamics/Joints/b2PulleyJoint.h
 	Dynamics/Joints/b2RevoluteJoint.h
 	Dynamics/Joints/b2RopeJoint.h
 	Dynamics/Joints/b2WeldJoint.h
+	Dynamics/Joints/b2WheelJoint.h
 )
 set(BOX2D_Rope_SRCS
 	Rope/b2Rope.cpp
