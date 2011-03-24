@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2011 Erin Catto http://www.gphysics.com
+* Copyright (c) 2006-2011 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -19,7 +19,7 @@
 #ifndef CAR_H
 #define CAR_H
 
-// A line joint with a limit and friction.
+// This is a fun demo that shows off the wheel joint
 class Car : public Test
 {
 public:
@@ -205,7 +205,7 @@ public:
 			m_wheel2 = m_world->CreateBody(&bd);
 			m_wheel2->CreateFixture(&fd);
 
-			b2LineJointDef jd;
+			b2WheelJointDef jd;
 			b2Vec2 axis(0.0f, 1.0f);
 
 			jd.Initialize(m_car, m_wheel1, m_wheel1->GetPosition(), axis);
@@ -214,7 +214,7 @@ public:
 			jd.enableMotor = true;
 			jd.frequencyHz = m_hz;
 			jd.dampingRatio = m_zeta;
-			m_spring1 = (b2LineJoint*)m_world->CreateJoint(&jd);
+			m_spring1 = (b2WheelJoint*)m_world->CreateJoint(&jd);
 
 			jd.Initialize(m_car, m_wheel2, m_wheel2->GetPosition(), axis);
 			jd.motorSpeed = 0.0f;
@@ -222,7 +222,7 @@ public:
 			jd.enableMotor = false;
 			jd.frequencyHz = m_hz;
 			jd.dampingRatio = m_zeta;
-			m_spring2 = (b2LineJoint*)m_world->CreateJoint(&jd);
+			m_spring2 = (b2WheelJoint*)m_world->CreateJoint(&jd);
 		}
 	}
 
@@ -279,8 +279,8 @@ public:
 	float32 m_hz;
 	float32 m_zeta;
 	float32 m_speed;
-	b2LineJoint* m_spring1;
-	b2LineJoint* m_spring2;
+	b2WheelJoint* m_spring1;
+	b2WheelJoint* m_spring2;
 };
 
 #endif
