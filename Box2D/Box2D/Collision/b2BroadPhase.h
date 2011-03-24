@@ -97,6 +97,9 @@ public:
 	/// Get the balance of the embedded tree.
 	int32 GetTreeBalance() const;
 
+	/// Get the quality metric of the embedded tree.
+	float32 GetTreeQuality() const;
+
 private:
 
 	friend class b2DynamicTree;
@@ -161,12 +164,17 @@ inline int32 b2BroadPhase::GetProxyCount() const
 
 inline int32 b2BroadPhase::GetTreeHeight() const
 {
-	return m_tree.ComputeHeight();
+	return m_tree.GetHeight();
 }
 
 inline int32 b2BroadPhase::GetTreeBalance() const
 {
 	return m_tree.GetMaxBalance();
+}
+
+inline float32 b2BroadPhase::GetTreeQuality() const
+{
+	return m_tree.GetAreaRatio();
 }
 
 template <typename T>
