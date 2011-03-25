@@ -24,21 +24,31 @@ class Pulleys : public Test
 public:
 	Pulleys()
 	{
+		float32 y = 16.0f;
+		float32 L = 12.0f;
+		float32 a = 1.0f;
+		float32 b = 2.0f;
+
 		b2Body* ground = NULL;
 		{
 			b2BodyDef bd;
 			ground = m_world->CreateBody(&bd);
 
-			b2EdgeShape shape;
-			shape.Set(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
+			b2EdgeShape edge;
+			edge.Set(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
 			//ground->CreateFixture(&shape, 0.0f);
+
+			b2CircleShape circle;
+			circle.m_radius = 2.0f;
+
+			circle.m_p.Set(-10.0f, y + b + L);
+			ground->CreateFixture(&circle, 0.0f);
+
+			circle.m_p.Set(10.0f, y + b + L);
+			ground->CreateFixture(&circle, 0.0f);
 		}
 
 		{
-			float32 a = 1.0f;
-			float32 b = 2.0f;
-			float32 y = 16.0f;
-			float32 L = 12.0f;
 
 			b2PolygonShape shape;
 			shape.SetAsBox(a, b);
