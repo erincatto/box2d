@@ -46,7 +46,6 @@ void b2DistanceJointDef::Initialize(b2Body* b1, b2Body* b2,
 	length = d.Length();
 }
 
-
 b2DistanceJoint::b2DistanceJoint(const b2DistanceJointDef* def)
 : b2Joint(def)
 {
