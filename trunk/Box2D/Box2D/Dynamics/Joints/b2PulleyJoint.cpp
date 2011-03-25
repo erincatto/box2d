@@ -32,7 +32,6 @@
 // K = J * invM * JT
 //   = invMass1 + invI1 * cross(r1, u1)^2 + ratio^2 * (invMass2 + invI2 * cross(r2, u2)^2)
 
-
 void b2PulleyJointDef::Initialize(b2Body* b1, b2Body* b2,
 				const b2Vec2& ga1, const b2Vec2& ga2,
 				const b2Vec2& anchor1, const b2Vec2& anchor2,
@@ -178,45 +177,58 @@ bool b2PulleyJoint::SolvePositionConstraints(float32 baumgarte)
 	b2Vec2 s1 = m_groundAnchor1;
 	b2Vec2 s2 = m_groundAnchor2;
 
-	b2Vec2 r1 = b2Mul(b1->GetTransform().R, m_localAnchor1 - b1->GetLocalCenter());
-	b2Vec2 r2 = b2Mul(b2->GetTransform().R, m_localAnchor2 - b2->GetLocalCenter());
+	b2Vec2 r1 = b2Mul(b1->m_xf.R, m_localAnchor1 - b1->GetLocalCenter());
+	b2Vec2 r2 = b2Mul(b2->m_xf.R, m_localAnchor2 - b2->GetLocalCenter());
 
 	b2Vec2 p1 = b1->m_sweep.c + r1;
 	b2Vec2 p2 = b2->m_sweep.c + r2;
 
 	// Get the pulley axes.
-	m_u1 = p1 - s1;
-	m_u2 = p2 - s2;
+	b2Vec2 u1 = p1 - s1;
+	b2Vec2 u2 = p2 - s2;
 
-	float32 length1 = m_u1.Length();
-	float32 length2 = m_u2.Length();
+	float32 length1 = u1.Length();
+	float32 length2 = u2.Length();
 
-	if (length1 > b2_linearSlop)
+	if (length1 > 10.0f * b2_linearSlop)
 	{
-		m_u1 *= 1.0f / length1;
+		u1 *= 1.0f / length1;
 	}
 	else
 	{
-		m_u1.SetZero();
+		u1.SetZero();
 	}
 
-	if (length2 > b2_linearSlop)
+	if (length2 > 10.0f * b2_linearSlop)
 	{
-		m_u2 *= 1.0f / length2;
+		u2 *= 1.0f / length2;
 	}
 	else
 	{
-		m_u2.SetZero();
+		u2.SetZero();
+	}
+
+	// Compute effective mass.
+	float32 cr1u1 = b2Cross(r1, u1);
+	float32 cr2u2 = b2Cross(r2, u2);
+
+	float32 m1 = b1->m_invMass + b1->m_invI * cr1u1 * cr1u1;
+	float32 m2 = b2->m_invMass + b2->m_invI * cr2u2 * cr2u2;
+
+	float32 mass = m1 + m_ratio * m_ratio * m2;
+
+	if (mass > 0.0f)
+	{
+		mass = 1.0f / mass;
 	}
 
 	float32 C = m_constant - length1 - m_ratio * length2;
 	float32 linearError = b2Abs(C);
 
-	C = b2Clamp(C + b2_linearSlop, -b2_maxLinearCorrection, b2_maxLinearCorrection);
-	float32 impulse = -m_pulleyMass * C;
+	float32 impulse = -mass * C;
 
-	b2Vec2 P1 = -impulse * m_u1;
-	b2Vec2 P2 = -m_ratio * impulse * m_u2;
+	b2Vec2 P1 = -impulse * u1;
+	b2Vec2 P2 = -m_ratio * impulse * u2;
 
 	b1->m_sweep.c += b1->m_invMass * P1;
 	b1->m_sweep.a += b1->m_invI * b2Cross(r1, P1);
