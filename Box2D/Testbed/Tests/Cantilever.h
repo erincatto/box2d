@@ -25,7 +25,7 @@ public:
 
 	enum
 	{
-		e_count = 8,
+		e_count = 8
 	};
 
 	Cantilever()

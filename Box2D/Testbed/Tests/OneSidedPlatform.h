@@ -27,7 +27,7 @@ public:
 	{
 		e_unknown,
 		e_above,
-		e_below,
+		e_below
 	};
 
 	OneSidedPlatform()

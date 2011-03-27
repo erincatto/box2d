@@ -209,7 +209,7 @@ private:
 	{
 		e_newFixture	= 0x0001,
 		e_locked		= 0x0002,
-		e_clearForces	= 0x0004,
+		e_clearForces	= 0x0004
 	};
 
 	friend class b2Body;
