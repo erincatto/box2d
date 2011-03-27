@@ -40,7 +40,7 @@ public:
 
 	enum
 	{
-		e_nullProxy = -1,
+		e_nullProxy = -1
 	};
 
 	b2BroadPhase();
