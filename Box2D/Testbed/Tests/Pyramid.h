@@ -24,7 +24,7 @@ class Pyramid : public Test
 public:
 	enum
 	{
-		e_count = 20,
+		e_count = 20
 	};
 
 	Pyramid()

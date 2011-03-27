@@ -149,7 +149,7 @@ public:
 
 	enum
 	{
-		e_maxBodies = 256,
+		e_maxBodies = 256
 	};
 
 	enum Mode
