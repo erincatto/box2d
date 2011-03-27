@@ -142,16 +142,4 @@ struct b2Version
 /// Current version.
 extern b2Version b2_version;
 
-/// Friction mixing law. Feel free to customize this.
-inline float32 b2MixFriction(float32 friction1, float32 friction2)
-{
-	return std::sqrt(friction1 * friction2);
-}
-
-/// Restitution mixing law. Feel free to customize this.
-inline float32 b2MixRestitution(float32 restitution1, float32 restitution2)
-{
-	return restitution1 > restitution2 ? restitution1 : restitution2;
-}
-
 #endif
