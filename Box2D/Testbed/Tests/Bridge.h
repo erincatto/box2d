@@ -25,7 +25,7 @@ public:
 
 	enum
 	{
-		e_count = 30,
+		e_count = 30
 	};
 
 	Bridge()

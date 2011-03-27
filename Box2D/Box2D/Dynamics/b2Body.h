@@ -40,7 +40,7 @@ enum b2BodyType
 {
 	b2_staticBody = 0,
 	b2_kinematicBody,
-	b2_dynamicBody,
+	b2_dynamicBody
 
 	// TODO_ERIN
 	//b2_bulletBody,
@@ -398,7 +398,7 @@ private:
 		e_bulletFlag		= 0x0008,
 		e_fixedRotationFlag	= 0x0010,
 		e_activeFlag		= 0x0020,
-		e_toiFlag			= 0x0040,
+		e_toiFlag			= 0x0040
 	};
 
 	b2Body(const b2BodyDef* bd, b2World* world);

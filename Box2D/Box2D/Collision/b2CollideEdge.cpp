@@ -164,7 +164,7 @@ struct b2EPAxis
 	{
 		e_unknown,
 		e_edgeA,
-		e_edgeB,
+		e_edgeB
 	};
 
 	Type type;
