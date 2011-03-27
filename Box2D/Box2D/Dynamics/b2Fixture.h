@@ -172,15 +172,15 @@ public:
 	/// Get the coefficient of friction.
 	float32 GetFriction() const;
 
-	/// Set the coefficient of friction. This will immediately update the mixed friction
-	/// on all associated contacts.
+	/// Set the coefficient of friction. This will _not_ change the friction of
+	/// existing contacts.
 	void SetFriction(float32 friction);
 
 	/// Get the coefficient of restitution.
 	float32 GetRestitution() const;
 
-	/// Set the coefficient of restitution. This will immediately update the mixed restitution
-	/// on all associated contacts.
+	/// Set the coefficient of restitution. This will _not_ change the restitution of
+	/// existing contacts.
 	void SetRestitution(float32 restitution);
 
 	/// Get the fixture's AABB. This AABB may be enlarge and/or stale.
