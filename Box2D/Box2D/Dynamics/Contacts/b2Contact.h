@@ -164,7 +164,7 @@ protected:
 		e_bulletHitFlag		= 0x0010,
 
 		// This contact has a valid TOI in m_toi
-		e_toiFlag			= 0x0020,
+		e_toiFlag			= 0x0020
 	};
 
 	/// Flag this contact for filtering. Filtering will occur the next time step.

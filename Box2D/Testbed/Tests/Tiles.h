@@ -26,7 +26,7 @@ class Tiles : public Test
 public:
 	enum
 	{
-		e_count = 20,
+		e_count = 20
 	};
 
 	Tiles()
