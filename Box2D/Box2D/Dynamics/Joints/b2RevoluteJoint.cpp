@@ -453,9 +453,13 @@ bool b2RevoluteJoint::IsLimitEnabled() const
 
 void b2RevoluteJoint::EnableLimit(bool flag)
 {
-	m_bodyA->SetAwake(true);
-	m_bodyB->SetAwake(true);
-	m_enableLimit = flag;
+	if (flag != m_enableLimit)
+	{
+		m_bodyA->SetAwake(true);
+		m_bodyB->SetAwake(true);
+		m_enableLimit = flag;
+		m_impulse.z = 0.0f;
+	}
 }
 
 float32 b2RevoluteJoint::GetLowerLimit() const
@@ -471,8 +475,13 @@ float32 b2RevoluteJoint::GetUpperLimit() const
 void b2RevoluteJoint::SetLimits(float32 lower, float32 upper)
 {
 	b2Assert(lower <= upper);
-	m_bodyA->SetAwake(true);
-	m_bodyB->SetAwake(true);
-	m_lowerAngle = lower;
-	m_upperAngle = upper;
+	
+	if (lower != m_lowerAngle || upper != m_upperAngle)
+	{
+		m_bodyA->SetAwake(true);
+		m_bodyB->SetAwake(true);
+		m_impulse.z = 0.0f;
+		m_lowerAngle = lower;
+		m_upperAngle = upper;
+	}
 }
