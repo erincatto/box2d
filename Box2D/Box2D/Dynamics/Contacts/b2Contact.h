@@ -32,6 +32,20 @@ class b2BlockAllocator;
 class b2StackAllocator;
 class b2ContactListener;
 
+/// Friction mixing law. The idea is to allow either fixture to drive the restitution to zero.
+/// For example, anything slides on ice.
+inline float32 b2MixFriction(float32 friction1, float32 friction2)
+{
+	return std::sqrt(friction1 * friction2);
+}
+
+/// Restitution mixing law. The idea is allow for anything to bounce off an inelastic surface.
+/// For example, a superball bounces on anything.
+inline float32 b2MixRestitution(float32 restitution1, float32 restitution2)
+{
+	return restitution1 > restitution2 ? restitution1 : restitution2;
+}
+
 typedef b2Contact* b2ContactCreateFcn(	b2Fixture* fixtureA, int32 indexA,
 										b2Fixture* fixtureB, int32 indexB,
 										b2BlockAllocator* allocator);
@@ -192,6 +206,9 @@ protected:
 
 	int32 m_toiCount;
 	float32 m_toi;
+
+	float32 m_friction;
+	float32 m_restitution;
 };
 
 inline b2Manifold* b2Contact::GetManifold()
@@ -279,6 +296,36 @@ inline int32 b2Contact::GetChildIndexB() const
 inline void b2Contact::FlagForFiltering()
 {
 	m_flags |= e_filterFlag;
+}
+
+inline void b2Contact::SetFriction(float32 friction)
+{
+	m_friction = friction;
+}
+
+inline float32 b2Contact::GetFriction() const
+{
+	return m_friction;
+}
+
+inline void b2Contact::ResetFriction()
+{
+	m_friction = b2MixFriction(m_fixtureA->m_friction, m_fixtureB->m_friction);
+}
+
+inline void b2Contact::SetRestitution(float32 restitution)
+{
+	m_restitution = restitution;
+}
+
+inline float32 b2Contact::GetRestitution() const
+{
+	return m_restitution;
+}
+
+inline void b2Contact::ResetRestitution()
+{
+	m_restitution = b2MixRestitution(m_fixtureA->m_restitution, m_fixtureB->m_restitution);
 }
 
 #endif

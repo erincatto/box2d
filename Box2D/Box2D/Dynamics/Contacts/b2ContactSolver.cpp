@@ -52,8 +52,8 @@ b2ContactSolver::b2ContactSolver(b2ContactSolverDef* def)
 		b2Assert(manifold->pointCount > 0);
 
 		b2ContactConstraint* cc = m_constraints + i;
-		cc->friction = b2MixFriction(fixtureA->GetFriction(), fixtureB->GetFriction());
-		cc->restitution = b2MixRestitution(fixtureA->GetRestitution(), fixtureB->GetRestitution());
+		cc->friction = contact->m_friction;
+		cc->restitution = contact->m_restitution;
 		cc->bodyA = bodyA;
 		cc->bodyB = bodyB;
 		cc->manifold = manifold;
