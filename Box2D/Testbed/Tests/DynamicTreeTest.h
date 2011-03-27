@@ -25,7 +25,7 @@ public:
 
 	enum
 	{
-		e_actorCount = 128,
+		e_actorCount = 128
 	};
 
 	DynamicTreeTest()
