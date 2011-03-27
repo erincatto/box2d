@@ -17,10 +17,6 @@
 */
 
 #include "Test.h"
-#include "Render.h"
-
-#include "freeglut/GL/glut.h"
-
 #include <cstdio>
 using namespace std;
 
@@ -368,35 +364,23 @@ void Test::Step(Settings* settings)
 		b2Vec2 p1 = m_mouseJoint->GetAnchorB();
 		b2Vec2 p2 = m_mouseJoint->GetTarget();
 
-		glPointSize(4.0f);
-		glColor3f(0.0f, 1.0f, 0.0f);
-		glBegin(GL_POINTS);
-		glVertex2f(p1.x, p1.y);
-		glVertex2f(p2.x, p2.y);
-		glEnd();
-		glPointSize(1.0f);
+		b2Color c;
+		c.Set(0.0f, 1.0f, 0.0f);
+		m_debugDraw.DrawPoint(p1, 4.0f, c);
+		m_debugDraw.DrawPoint(p2, 4.0f, c);
 
-		glColor3f(0.8f, 0.8f, 0.8f);
-		glBegin(GL_LINES);
-		glVertex2f(p1.x, p1.y);
-		glVertex2f(p2.x, p2.y);
-		glEnd();
+		c.Set(0.8f, 0.8f, 0.8f);
+		m_debugDraw.DrawSegment(p1, p2, c);
 	}
 	
 	if (m_bombSpawning)
 	{
-		glPointSize(4.0f);
-		glColor3f(0.0f, 0.0f, 1.0f);
-		glBegin(GL_POINTS);
-		glColor3f(0.0f, 0.0f, 1.0f);
-		glVertex2f(m_bombSpawnPoint.x, m_bombSpawnPoint.y);
-		glEnd();
-		
-		glColor3f(0.8f, 0.8f, 0.8f);
-		glBegin(GL_LINES);
-		glVertex2f(m_mouseWorld.x, m_mouseWorld.y);
-		glVertex2f(m_bombSpawnPoint.x, m_bombSpawnPoint.y);
-		glEnd();
+		b2Color c;
+		c.Set(0.0f, 0.0f, 1.0f);
+		m_debugDraw.DrawPoint(m_bombSpawnPoint, 4.0f, c);
+
+		c.Set(0.8f, 0.8f, 0.8f);
+		m_debugDraw.DrawSegment(m_mouseWorld, m_bombSpawnPoint, c);
 	}
 
 	if (settings->drawContactPoints)
