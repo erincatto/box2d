@@ -43,7 +43,7 @@ public:
 
 			b2RevoluteJointDef rjd;
 
-			bd.position.Set(0.0f, 20.0f);
+			bd.position.Set(-10.0f, 20.0f);
 			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&shape, 5.0f);
 
@@ -51,7 +51,7 @@ public:
 			body->SetAngularVelocity(w);
 			body->SetLinearVelocity(b2Vec2(-8.0f * w, 0.0f));
 
-			rjd.Initialize(ground, body, b2Vec2(0.0f, 12.0f));
+			rjd.Initialize(ground, body, b2Vec2(-10.0f, 12.0f));
 			rjd.motorSpeed = 1.0f * b2_pi;
 			rjd.maxMotorTorque = 10000.0f;
 			rjd.enableMotor = false;
@@ -62,6 +62,35 @@ public:
 
 			m_joint = (b2RevoluteJoint*)m_world->CreateJoint(&rjd);
 		}
+
+		{
+			b2CircleShape circle_shape;
+			circle_shape.m_radius = 3.0f;
+
+			b2BodyDef circle_bd;
+			circle_bd.type = b2_dynamicBody;
+			circle_bd.position.Set(5.0f, 30.0f);
+
+			b2Body* circle_body = m_world->CreateBody(&circle_bd);
+			circle_body->CreateFixture(&circle_shape, 5.0f);
+
+			b2PolygonShape polygon_shape;
+			polygon_shape.SetAsBox(10.0f, 0.2f, b2Vec2 (-10.0f, 0.0f), 0.0f);
+
+			b2BodyDef polygon_bd;
+			polygon_bd.position.Set(20.0f, 10.0f);
+			polygon_bd.type = b2_dynamicBody;
+			polygon_bd.bullet = true;
+			b2Body* polygon_body = m_world->CreateBody(&polygon_bd);
+			polygon_body->CreateFixture(&polygon_shape, 2.0f);
+
+			b2RevoluteJointDef rjd;
+			rjd.Initialize(ground, polygon_body, b2Vec2(20.0f, 10.0f));
+			rjd.lowerAngle = -0.25f * b2_pi;
+			rjd.upperAngle = 0.0f * b2_pi;
+			rjd.enableLimit = true;
+			m_world->CreateJoint(&rjd);
+		}
 	}
 
 	void Keyboard(unsigned char key)
@@ -69,11 +98,11 @@ public:
 		switch (key)
 		{
 		case 'l':
-			m_joint->EnableLimit(m_joint->IsLimitEnabled());
+			m_joint->EnableLimit(!m_joint->IsLimitEnabled());
 			break;
 
 		case 'm':
-			m_joint->EnableMotor(false);
+			m_joint->EnableMotor(!m_joint->IsMotorEnabled());
 			break;
 		}
 	}
