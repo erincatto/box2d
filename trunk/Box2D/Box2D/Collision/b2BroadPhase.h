@@ -230,7 +230,7 @@ void b2BroadPhase::UpdatePairs(T* callback)
 	}
 
 	// Try to keep the tree balanced.
-	m_tree.Rebalance(4);
+	//m_tree.Rebalance(4);
 }
 
 template <typename T>
