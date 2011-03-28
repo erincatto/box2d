@@ -84,9 +84,6 @@ public:
 	/// @return true if the proxy was re-inserted.
 	bool MoveProxy(int32 proxyId, const b2AABB& aabb1, const b2Vec2& displacement);
 
-	/// Perform some iterations to re-balance the tree.
-	void Rebalance(int32 iterations);
-
 	/// Get proxy user data.
 	/// @return the proxy user data or 0 if the id is invalid.
 	void* GetUserData(int32 proxyId) const;
@@ -131,7 +128,6 @@ private:
 	void RemoveLeaf(int32 node);
 
 	int32 Balance(int32 index);
-	void Shuffle(int32 index);
 
 	int32 ComputeHeight() const;
 	int32 ComputeHeight(int32 nodeId) const;
