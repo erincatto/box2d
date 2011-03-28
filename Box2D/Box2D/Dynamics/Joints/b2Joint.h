@@ -142,6 +142,11 @@ public:
 	/// Short-cut function to determine if either body is inactive.
 	bool IsActive() const;
 
+	/// Get collide connected.
+	/// Note: modifying the collide connect flag won't work correctly because
+	/// the flag is only checked when fixture AABBs begin to overlap.
+	bool GetCollideConnected() const;
+
 protected:
 	friend class b2World;
 	friend class b2Body;
@@ -229,6 +234,11 @@ inline void* b2Joint::GetUserData() const
 inline void b2Joint::SetUserData(void* data)
 {
 	m_userData = data;
+}
+
+inline bool b2Joint::GetCollideConnected() const
+{
+	return m_collideConnected;
 }
 
 #endif
