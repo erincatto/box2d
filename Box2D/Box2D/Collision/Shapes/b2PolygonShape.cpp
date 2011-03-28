@@ -309,29 +309,24 @@ void b2PolygonShape::ComputeMass(b2MassData* massData, float32 density) const
 	float32 area = 0.0f;
 	float32 I = 0.0f;
 
-	// pRef is the reference point for forming triangles.
+	// s is the reference point for forming triangles.
 	// It's location doesn't change the result (except for rounding error).
-	b2Vec2 pRef(0.0f, 0.0f);
-#if 0
+	b2Vec2 s(0.0f, 0.0f);
+
 	// This code would put the reference point inside the polygon.
 	for (int32 i = 0; i < m_vertexCount; ++i)
 	{
-		pRef += m_vertices[i];
+		s += m_vertices[i];
 	}
-	pRef *= 1.0f / count;
-#endif
+	s *= 1.0f / m_vertexCount;
 
 	const float32 k_inv3 = 1.0f / 3.0f;
 
 	for (int32 i = 0; i < m_vertexCount; ++i)
 	{
 		// Triangle vertices.
-		b2Vec2 p1 = pRef;
-		b2Vec2 p2 = m_vertices[i];
-		b2Vec2 p3 = i + 1 < m_vertexCount ? m_vertices[i+1] : m_vertices[0];
-
-		b2Vec2 e1 = p2 - p1;
-		b2Vec2 e2 = p3 - p1;
+		b2Vec2 e1 = m_vertices[i] - s;
+		b2Vec2 e2 = i + 1 < m_vertexCount ? m_vertices[i+1] - s : m_vertices[0] - s;
 
 		float32 D = b2Cross(e1, e2);
 
@@ -339,16 +334,15 @@ void b2PolygonShape::ComputeMass(b2MassData* massData, float32 density) const
 		area += triangleArea;
 
 		// Area weighted centroid
-		center += triangleArea * k_inv3 * (p1 + p2 + p3);
+		center += triangleArea * k_inv3 * (e1 + e2);
 
-		float32 px = p1.x, py = p1.y;
 		float32 ex1 = e1.x, ey1 = e1.y;
 		float32 ex2 = e2.x, ey2 = e2.y;
 
-		float32 intx2 = k_inv3 * (0.25f * (ex1*ex1 + ex2*ex1 + ex2*ex2) + (px*ex1 + px*ex2)) + 0.5f*px*px;
-		float32 inty2 = k_inv3 * (0.25f * (ey1*ey1 + ey2*ey1 + ey2*ey2) + (py*ey1 + py*ey2)) + 0.5f*py*py;
+		float32 intx2 = ex1*ex1 + ex2*ex1 + ex2*ex2;
+		float32 inty2 = ey1*ey1 + ey2*ey1 + ey2*ey2;
 
-		I += D * (intx2 + inty2);
+		I += (0.25f * k_inv3 * D) * (intx2 + inty2);
 	}
 
 	// Total mass
@@ -357,8 +351,8 @@ void b2PolygonShape::ComputeMass(b2MassData* massData, float32 density) const
 	// Center of mass
 	b2Assert(area > b2_epsilon);
 	center *= 1.0f / area;
-	massData->center = center;
+	massData->center = center + s;
 
 	// Inertia tensor relative to the local origin.
-	massData->I = density * I;
+	massData->I = density * I + massData->mass * b2Dot(s, s);
 }
