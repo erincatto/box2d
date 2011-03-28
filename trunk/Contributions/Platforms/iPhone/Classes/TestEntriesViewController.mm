@@ -57,7 +57,7 @@
 	TestEntry* e = g_testEntries;
 	e+=indexPath.row;
 
-	[cell setText:[NSString stringWithCString:e->name]];
+	cell.textLabel.text = [NSString stringWithUTF8String:e->name];
     return cell;
 }
 
