@@ -32,7 +32,7 @@ struct b2AABB;
 
 // This class implements debug drawing callbacks that are invoked
 // inside b2World::Step.
-class GLESDebugDraw : public b2DebugDraw
+class GLESDebugDraw : public b2Draw
 {
 public:
 	void DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color);
