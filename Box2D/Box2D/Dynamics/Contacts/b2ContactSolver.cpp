@@ -127,7 +127,6 @@ void b2ContactSolver::InitializeVelocityConstraints()
 
 		for (int32 j = 0; j < cc->pointCount; ++j)
 		{
-			b2ManifoldPoint* cp = manifold->points + j;
 			b2ContactConstraintPoint* ccp = cc->points + j;
 
 			ccp->rA = worldManifold.points[j] - bodyA->m_sweep.c;
