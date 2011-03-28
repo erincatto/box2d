@@ -214,7 +214,8 @@ void b2RevoluteJoint::SolveVelocityConstraints(const b2TimeStep& step)
 			float32 newImpulse = m_impulse.z + impulse.z;
 			if (newImpulse < 0.0f)
 			{
-				b2Vec2 reduced = m_mass.Solve22(-Cdot1);
+				b2Vec2 rhs = -Cdot1 + m_impulse.z * b2Vec2(m_mass.col3.x, m_mass.col3.y);
+				b2Vec2 reduced = m_mass.Solve22(rhs);
 				impulse.x = reduced.x;
 				impulse.y = reduced.y;
 				impulse.z = -m_impulse.z;
@@ -222,19 +223,28 @@ void b2RevoluteJoint::SolveVelocityConstraints(const b2TimeStep& step)
 				m_impulse.y += reduced.y;
 				m_impulse.z = 0.0f;
 			}
+			else
+			{
+				m_impulse += impulse;
+			}
 		}
 		else if (m_limitState == e_atUpperLimit)
 		{
 			float32 newImpulse = m_impulse.z + impulse.z;
 			if (newImpulse > 0.0f)
 			{
-				b2Vec2 reduced = m_mass.Solve22(-Cdot1);
+				b2Vec2 rhs = -Cdot1 + m_impulse.z * b2Vec2(m_mass.col3.x, m_mass.col3.y);
+				b2Vec2 reduced = m_mass.Solve22(rhs);
 				impulse.x = reduced.x;
 				impulse.y = reduced.y;
 				impulse.z = -m_impulse.z;
 				m_impulse.x += reduced.x;
 				m_impulse.y += reduced.y;
 				m_impulse.z = 0.0f;
+			}
+			else
+			{
+				m_impulse += impulse;
 			}
 		}
 

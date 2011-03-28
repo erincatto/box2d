@@ -67,6 +67,7 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
+	{"Revolute", Revolute::Create},
 	{"Pulleys", Pulleys::Create},
 	{"SphereStack", SphereStack::Create},
 	{"Tiles", Tiles::Create},
@@ -104,7 +105,6 @@ TestEntry g_testEntries[] =
 	{"Dominos", Dominos::Create},
 	{"Dynamic Tree", DynamicTreeTest::Create},
 	{"Gears", Gears::Create},
-	{"Revolute", Revolute::Create},
 	{"Sensor Test", SensorTest::Create},
 	{"Shape Editing", ShapeEditing::Create},
 	{"Slider Crank", SliderCrank::Create},
