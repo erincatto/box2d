@@ -31,7 +31,12 @@ public:
 
 			b2EdgeShape shape;
 			shape.Set(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
-			ground->CreateFixture(&shape, 0.0f);
+
+			b2FixtureDef fd;
+			fd.shape = &shape;
+			//fd.filter.categoryBits = 2;
+
+			ground->CreateFixture(&fd);
 		}
 
 		{
@@ -71,8 +76,13 @@ public:
 			circle_bd.type = b2_dynamicBody;
 			circle_bd.position.Set(5.0f, 30.0f);
 
-			b2Body* circle_body = m_world->CreateBody(&circle_bd);
-			circle_body->CreateFixture(&circle_shape, 5.0f);
+			b2FixtureDef fd;
+			fd.density = 5.0f;
+			fd.filter.maskBits = 1;
+			fd.shape = &circle_shape;
+
+			m_ball = m_world->CreateBody(&circle_bd);
+			m_ball->CreateFixture(&fd);
 
 			b2PolygonShape polygon_shape;
 			polygon_shape.SetAsBox(10.0f, 0.2f, b2Vec2 (-10.0f, 0.0f), 0.0f);
@@ -91,6 +101,27 @@ public:
 			rjd.enableLimit = true;
 			m_world->CreateJoint(&rjd);
 		}
+
+		// Tests mass computation of a small object far from the origin
+		{
+			b2BodyDef bodyDef;
+			bodyDef.type = b2_dynamicBody;
+			b2Body* body = m_world->CreateBody(&bodyDef);
+		
+			b2PolygonShape polyShape;		
+			b2Vec2 verts[3];
+			verts[0].Set( 17.63f, 36.31f );
+			verts[1].Set( 17.52f, 36.69f );
+			verts[2].Set( 17.19f, 36.36f );
+			polyShape.Set(verts, 3);
+		
+			b2FixtureDef polyFixtureDef;
+			polyFixtureDef.shape = &polyShape;
+			polyFixtureDef.density = 1;
+
+			body->CreateFixture(&polyFixtureDef);	//assertion hits inside here
+		}
+
 	}
 
 	void Keyboard(unsigned char key)
@@ -112,6 +143,12 @@ public:
 		Test::Step(settings);
 		m_debugDraw.DrawString(5, m_textLine, "Keys: (l) limits, (m) motor");
 		m_textLine += 15;
+
+		//if (m_stepCount == 360)
+		//{
+		//	m_ball->SetTransform(b2Vec2(0.0f, 0.5f), 0.0f);
+		//}
+
 		//float32 torque1 = m_joint1->GetMotorTorque();
 		//m_debugDraw.DrawString(5, m_textLine, "Motor Torque = %4.0f, %4.0f : Motor Force = %4.0f", (float) torque1, (float) torque2, (float) force3);
 		//m_textLine += 15;
@@ -122,6 +159,7 @@ public:
 		return new Revolute;
 	}
 
+	b2Body* m_ball;
 	b2RevoluteJoint* m_joint;
 };
 
