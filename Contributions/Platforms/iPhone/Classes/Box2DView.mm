@@ -66,6 +66,8 @@ Settings settings;
 		
 		[[UIAccelerometer sharedAccelerometer] setUpdateInterval:(1.0 / kAccelerometerFrequency)];
 		[[UIAccelerometer sharedAccelerometer] setDelegate:self];
+
+		//[self setMultipleTouchEnabled:YES];
     }
 	
 	
@@ -246,7 +248,9 @@ Settings settings;
 		//printf("Screen touched %f,%f -> %f,%f\n",touchLocation.x,touchLocation.y,worldPosition.x,worldPosition.y);
 		lastScreenTouch=touchLocation;
 		lastWorldTouch=worldPosition;
-		test->MouseDown(b2Vec2(lastWorldTouch.x,lastWorldTouch.y));
+		b2Vec2 p = b2Vec2(lastWorldTouch.x,lastWorldTouch.y);
+		test->MouseDown(p);
+		//test->ShiftMouseDown(p);
 		
 		if (!test->m_mouseJoint) panning=true;
 	}
