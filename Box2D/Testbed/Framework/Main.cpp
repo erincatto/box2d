@@ -131,6 +131,7 @@ void Keyboard(unsigned char key, int x, int y)
 	switch (key)
 	{
 	case 27:
+		glutLeaveMainLoop();
 		exit(0);
 		break;
 
@@ -328,6 +329,12 @@ void Pause(int)
 	settings.pause = !settings.pause;
 }
 
+void Exit(int code)
+{
+	glutLeaveMainLoop();
+	exit(code);
+}
+
 void SingleStep(int)
 {
 	settings.pause = 1;
@@ -422,7 +429,7 @@ int main(int argc, char** argv)
 	glui->add_button("Single Step", 0, SingleStep);
 	glui->add_button("Restart", 0, Restart);
 
-	glui->add_button("Quit", 0,(GLUI_Update_CB)exit);
+	glui->add_button("Quit", 0,(GLUI_Update_CB)Exit);
 	glui->set_main_gfx_window( mainWindow );
 
 	// Use a timer to control the frame rate.
