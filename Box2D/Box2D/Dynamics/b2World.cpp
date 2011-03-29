@@ -738,8 +738,18 @@ void b2World::SolveTOI(const b2TimeStep& step)
 			b2Body* body = bodies[i];
 			if (body->m_type == b2_dynamicBody)
 			{
-				for (b2ContactEdge* ce = body->m_contactList; ce && island.m_bodyCount < b2_maxTOIContacts; ce = ce->next)
+				for (b2ContactEdge* ce = body->m_contactList; ce; ce = ce->next)
 				{
+					if (island.m_bodyCount == island.m_bodyCapacity)
+					{
+						break;
+					}
+
+					if (island.m_contactCount == island.m_contactCapacity)
+					{
+						break;
+					}
+
 					b2Contact* contact = ce->contact;
 
 					// Has this contact already been added to the island?
