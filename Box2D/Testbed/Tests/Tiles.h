@@ -125,6 +125,13 @@ public:
 		m_debugDraw.DrawString(5, m_textLine, "create time = %6.2f ms, fixture count = %d",
 			m_createTime, m_fixtureCount);
 		m_textLine += 15;
+
+		//b2DynamicTree* tree = &m_world->m_contactManager.m_broadPhase.m_tree;
+
+		//if (m_stepCount == 400)
+		//{
+		//	tree->RebuildBottomUp();
+		//}
 	}
 
 	static Test* Create()

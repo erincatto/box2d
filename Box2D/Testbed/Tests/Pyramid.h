@@ -68,17 +68,17 @@ public:
 		}
 	}
 
-	//void Step(Settings* settings)
-	//{
-	//	// We need higher accuracy for the pyramid.
-	//	int32 velocityIterations = settings->velocityIterations;
-	//	int32 positionIterations = settings->positionIterations;
-	//	settings->velocityIterations = b2Max(8, velocityIterations);
-	//	settings->positionIterations = b2Max(1, positionIterations);
-	//	Test::Step(settings);
-	//	settings->velocityIterations = velocityIterations;
-	//	settings->positionIterations = positionIterations;
-	//}
+	void Step(Settings* settings)
+	{
+		Test::Step(settings);
+
+		//b2DynamicTree* tree = &m_world->m_contactManager.m_broadPhase.m_tree;
+
+		//if (m_stepCount == 400)
+		//{
+		//	tree->RebuildBottomUp();
+		//}
+	}
 
 	static Test* Create()
 	{
