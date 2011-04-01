@@ -106,6 +106,7 @@ public:
 	template <typename T>
 	void RayCast(T* callback, const b2RayCastInput& input) const;
 
+	/// Validate this tree. For testing.
 	void Validate() const;
 
 	/// Compute the height of the binary tree in O(N) time. Should not be
@@ -118,6 +119,9 @@ public:
 
 	/// Get the ratio of the sum of the node areas to the root area.
 	float32 GetAreaRatio() const;
+
+	/// Build an optimal tree. Very expensive. For testing.
+	void RebuildBottomUp();
 
 private:
 
@@ -134,10 +138,6 @@ private:
 
 	void ValidateStructure(int32 index) const;
 	void ValidateMetrics(int32 index) const;
-
-	int32 GetMaxBalance(int32 index) const;
-
-	float32 GetTotalArea(int32 index) const;
 
 	int32 m_root;
 
