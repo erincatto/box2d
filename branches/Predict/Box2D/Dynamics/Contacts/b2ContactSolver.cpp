@@ -155,12 +155,7 @@ void b2ContactSolver::InitializeVelocityConstraints()
 			ccp->tangentMass = 1.0f /  kTangent;
 
 			// Setup a velocity bias for restitution.
-			ccp->velocityBias =;
-			float32 vRel = b2Dot(cc->normal, vB + b2Cross(wB, ccp->rB) - vA - b2Cross(wA, ccp->rA));
-			if (vRel < -b2_velocityThreshold)
-			{
-				ccp->velocityBias = -cc->restitution * vRel;
-			}
+			ccp->velocityBias = worldManifold.separation[j] * 60.0f;
 		}
 
 		// If we have two points, then prepare the block solver.

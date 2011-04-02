@@ -469,12 +469,12 @@ inline const b2Vec2& b2Body::GetPosition() const
 
 inline float32 b2Body::GetAngle() const
 {
-	return m_sweep.a;
+	return m_sweep.a1;
 }
 
 inline const b2Vec2& b2Body::GetWorldCenter() const
 {
-	return m_sweep.c;
+	return m_sweep.c1;
 }
 
 inline const b2Vec2& b2Body::GetLocalCenter() const

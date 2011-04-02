@@ -25,14 +25,25 @@ public:
 
 	enum
 	{
-		e_columnCount = 5,
-		e_rowCount = 16
-		//e_columnCount = 1,
-		//e_rowCount = 1
+		//e_columnCount = 5,
+		//e_rowCount = 16
+		e_columnCount = 1,
+		e_rowCount = 1
 	};
 
 	VerticalStack()
 	{
+#if 1
+		{
+			b2BodyDef bd;
+			bd.position.Set(0.0f, -1.0f);
+			b2Body* ground = m_world->CreateBody(&bd);
+
+			b2PolygonShape shape;
+			shape.SetAsBox(10.0f, 1.0f);
+			ground->CreateFixture(&shape, 0.0f);
+		}
+#else
 		{
 			b2BodyDef bd;
 			b2Body* ground = m_world->CreateBody(&bd);
@@ -44,6 +55,7 @@ public:
 			shape.Set(b2Vec2(20.0f, 0.0f), b2Vec2(20.0f, 20.0f));
 			ground->CreateFixture(&shape, 0.0f);
 		}
+#endif
 
 		float32 xs[5] = {0.0f, -10.0f, -5.0f, 5.0f, 10.0f};
 

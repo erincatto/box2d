@@ -119,6 +119,7 @@ struct b2WorldManifold
 
 	b2Vec2 normal;						///< world vector pointing from A to B
 	b2Vec2 points[b2_maxManifoldPoints];	///< world contact point (point of intersection)
+	float32 separation[b2_maxManifoldPoints];
 };
 
 /// This is used for determining the state of contact points.
