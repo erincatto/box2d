@@ -60,8 +60,8 @@ b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 	m_xf.R.Set(bd->angle);
 
 	m_sweep.localCenter.SetZero();
-	m_sweep.a0 = m_sweep.a = bd->angle;
-	m_sweep.c0 = m_sweep.c = b2Mul(m_xf, m_sweep.localCenter);
+	m_sweep.a1 = m_sweep.a2 = bd->angle;
+	m_sweep.c1 = m_sweep.c2 = b2Mul(m_xf, m_sweep.localCenter);
 
 	m_jointList = NULL;
 	m_contactList = NULL;

@@ -272,7 +272,7 @@ void b2PolygonShape::ComputeAABB(b2AABB* aabb, const b2Transform& xf, int32 chil
 		upper = b2Max(upper, v);
 	}
 
-	b2Vec2 r(m_radius, m_radius);
+	b2Vec2 r(10.0f * b2_linearSlop, 10.0f * b2_linearSlop);
 	aabb->lowerBound = lower - r;
 	aabb->upperBound = upper + r;
 }

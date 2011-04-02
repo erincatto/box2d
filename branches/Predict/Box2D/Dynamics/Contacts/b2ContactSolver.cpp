@@ -129,8 +129,8 @@ void b2ContactSolver::InitializeVelocityConstraints()
 		{
 			b2ContactConstraintPoint* ccp = cc->points + j;
 
-			ccp->rA = worldManifold.points[j] - bodyA->m_sweep.c;
-			ccp->rB = worldManifold.points[j] - bodyB->m_sweep.c;
+			ccp->rA = worldManifold.points[j] - bodyA->m_sweep.c1;
+			ccp->rB = worldManifold.points[j] - bodyB->m_sweep.c1;
 
 			float32 rnA = b2Cross(ccp->rA, cc->normal);
 			float32 rnB = b2Cross(ccp->rB, cc->normal);
@@ -155,7 +155,7 @@ void b2ContactSolver::InitializeVelocityConstraints()
 			ccp->tangentMass = 1.0f /  kTangent;
 
 			// Setup a velocity bias for restitution.
-			ccp->velocityBias = 0.0f;
+			ccp->velocityBias =;
 			float32 vRel = b2Dot(cc->normal, vB + b2Cross(wB, ccp->rB) - vA - b2Cross(wA, ccp->rA));
 			if (vRel < -b2_velocityThreshold)
 			{

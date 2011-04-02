@@ -201,13 +201,13 @@ void b2CollidePolygons(b2Manifold* manifold,
 
 	int32 edgeA = 0;
 	float32 separationA = b2FindMaxSeparation(&edgeA, polyA, xfA, polyB, xfB);
-	if (separationA > totalRadius)
-		return;
+	//if (separationA > totalRadius)
+	//	return;
 
 	int32 edgeB = 0;
 	float32 separationB = b2FindMaxSeparation(&edgeB, polyB, xfB, polyA, xfA);
-	if (separationB > totalRadius)
-		return;
+	//if (separationB > totalRadius)
+	//	return;
 
 	const b2PolygonShape* poly1;	// reference polygon
 	const b2PolygonShape* poly2;	// incident polygon
@@ -297,7 +297,7 @@ void b2CollidePolygons(b2Manifold* manifold,
 	{
 		float32 separation = b2Dot(normal, clipPoints2[i].v) - frontOffset;
 
-		if (separation <= totalRadius)
+		//if (separation <= totalRadius)
 		{
 			b2ManifoldPoint* cp = manifold->points + pointCount;
 			cp->localPoint = b2MulT(xf2, clipPoints2[i].v);

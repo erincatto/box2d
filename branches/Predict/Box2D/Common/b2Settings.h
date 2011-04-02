@@ -72,7 +72,8 @@ typedef double float64;
 /// The radius of the polygon/edge shape skin. This should not be modified. Making
 /// this smaller means polygons will have an insufficient buffer for continuous collision.
 /// Making it larger may create artifacts for vertex collision.
-#define b2_polygonRadius		(2.0f * b2_linearSlop)
+//#define b2_polygonRadius		(2.0f * b2_linearSlop)
+#define b2_polygonRadius		0.0f
 
 /// Maximum number of sub-steps per contact in continuous physics simulation.
 #define b2_maxSubSteps			8
