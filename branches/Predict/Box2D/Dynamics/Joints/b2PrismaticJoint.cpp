@@ -136,7 +136,7 @@ void b2PrismaticJoint::InitVelocityConstraints(const b2TimeStep& step)
 	// Compute the effective masses.
 	b2Vec2 r1 = b2Mul(xf1.R, m_localAnchor1 - m_localCenterA);
 	b2Vec2 r2 = b2Mul(xf2.R, m_localAnchor2 - m_localCenterB);
-	b2Vec2 d = b2->m_sweep.c + r2 - b1->m_sweep.c - r1;
+	b2Vec2 d = b2->m_sweep.c1 + r2 - b1->m_sweep.c1 - r1;
 
 	m_invMassA = b1->m_invMass;
 	m_invIA = b1->m_invI;
@@ -350,11 +350,11 @@ bool b2PrismaticJoint::SolvePositionConstraints(float32 baumgarte)
 	b2Body* b1 = m_bodyA;
 	b2Body* b2 = m_bodyB;
 
-	b2Vec2 c1 = b1->m_sweep.c;
-	float32 a1 = b1->m_sweep.a;
+	b2Vec2 c1 = b1->m_sweep.c1;
+	float32 a1 = b1->m_sweep.a1;
 
-	b2Vec2 c2 = b2->m_sweep.c;
-	float32 a2 = b2->m_sweep.a;
+	b2Vec2 c2 = b2->m_sweep.c1;
+	float32 a2 = b2->m_sweep.a1;
 
 	// Solve linear limit constraint.
 	float32 linearError = 0.0f, angularError = 0.0f;
@@ -470,10 +470,10 @@ bool b2PrismaticJoint::SolvePositionConstraints(float32 baumgarte)
 	a2 += m_invIB * L2;
 
 	// TODO_ERIN remove need for this.
-	b1->m_sweep.c = c1;
-	b1->m_sweep.a = a1;
-	b2->m_sweep.c = c2;
-	b2->m_sweep.a = a2;
+	b1->m_sweep.c1 = c1;
+	b1->m_sweep.a1 = a1;
+	b2->m_sweep.c1 = c2;
+	b2->m_sweep.a1 = a2;
 	b1->SynchronizeTransform();
 	b2->SynchronizeTransform();
 	
@@ -521,8 +521,8 @@ float32 b2PrismaticJoint::GetJointSpeed() const
 
 	b2Vec2 r1 = b2Mul(b1->GetTransform().R, m_localAnchor1 - b1->GetLocalCenter());
 	b2Vec2 r2 = b2Mul(b2->GetTransform().R, m_localAnchor2 - b2->GetLocalCenter());
-	b2Vec2 p1 = b1->m_sweep.c + r1;
-	b2Vec2 p2 = b2->m_sweep.c + r2;
+	b2Vec2 p1 = b1->m_sweep.c1 + r1;
+	b2Vec2 p2 = b2->m_sweep.c1 + r2;
 	b2Vec2 d = p2 - p1;
 	b2Vec2 axis = b1->GetWorldVector(m_localXAxis1);
 

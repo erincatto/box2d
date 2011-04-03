@@ -76,8 +76,8 @@ void b2PulleyJoint::InitVelocityConstraints(const b2TimeStep& step)
 	b2Vec2 r1 = b2Mul(b1->GetTransform().R, m_localAnchor1 - b1->GetLocalCenter());
 	b2Vec2 r2 = b2Mul(b2->GetTransform().R, m_localAnchor2 - b2->GetLocalCenter());
 
-	b2Vec2 p1 = b1->m_sweep.c + r1;
-	b2Vec2 p2 = b2->m_sweep.c + r2;
+	b2Vec2 p1 = b1->m_sweep.c1 + r1;
+	b2Vec2 p2 = b2->m_sweep.c1 + r2;
 
 	b2Vec2 s1 = m_groundAnchor1;
 	b2Vec2 s2 = m_groundAnchor2;
@@ -180,8 +180,8 @@ bool b2PulleyJoint::SolvePositionConstraints(float32 baumgarte)
 	b2Vec2 r1 = b2Mul(b1->m_xf.R, m_localAnchor1 - b1->GetLocalCenter());
 	b2Vec2 r2 = b2Mul(b2->m_xf.R, m_localAnchor2 - b2->GetLocalCenter());
 
-	b2Vec2 p1 = b1->m_sweep.c + r1;
-	b2Vec2 p2 = b2->m_sweep.c + r2;
+	b2Vec2 p1 = b1->m_sweep.c1 + r1;
+	b2Vec2 p2 = b2->m_sweep.c1 + r2;
 
 	// Get the pulley axes.
 	b2Vec2 u1 = p1 - s1;
@@ -230,10 +230,10 @@ bool b2PulleyJoint::SolvePositionConstraints(float32 baumgarte)
 	b2Vec2 P1 = -impulse * u1;
 	b2Vec2 P2 = -m_ratio * impulse * u2;
 
-	b1->m_sweep.c += b1->m_invMass * P1;
-	b1->m_sweep.a += b1->m_invI * b2Cross(r1, P1);
-	b2->m_sweep.c += b2->m_invMass * P2;
-	b2->m_sweep.a += b2->m_invI * b2Cross(r2, P2);
+	b1->m_sweep.c1 += b1->m_invMass * P1;
+	b1->m_sweep.a1 += b1->m_invI * b2Cross(r1, P1);
+	b2->m_sweep.c1 += b2->m_invMass * P2;
+	b2->m_sweep.a1 += b2->m_invI * b2Cross(r2, P2);
 
 	b1->SynchronizeTransform();
 	b2->SynchronizeTransform();

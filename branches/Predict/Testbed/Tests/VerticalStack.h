@@ -28,7 +28,7 @@ public:
 		//e_columnCount = 5,
 		//e_rowCount = 16
 		e_columnCount = 1,
-		e_rowCount = 1
+		e_rowCount = 16
 	};
 
 	VerticalStack()

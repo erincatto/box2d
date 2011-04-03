@@ -67,7 +67,7 @@ void b2DistanceJoint::InitVelocityConstraints(const b2TimeStep& step)
 	// Compute the effective mass matrix.
 	b2Vec2 r1 = b2Mul(b1->GetTransform().R, m_localAnchor1 - b1->GetLocalCenter());
 	b2Vec2 r2 = b2Mul(b2->GetTransform().R, m_localAnchor2 - b2->GetLocalCenter());
-	m_u = b2->m_sweep.c + r2 - b1->m_sweep.c - r1;
+	m_u = b2->m_sweep.c1 + r2 - b1->m_sweep.c1 - r1;
 
 	// Handle singularity.
 	float32 length = m_u.Length();
@@ -166,7 +166,7 @@ bool b2DistanceJoint::SolvePositionConstraints(float32 baumgarte)
 	b2Vec2 r1 = b2Mul(b1->GetTransform().R, m_localAnchor1 - b1->GetLocalCenter());
 	b2Vec2 r2 = b2Mul(b2->GetTransform().R, m_localAnchor2 - b2->GetLocalCenter());
 
-	b2Vec2 d = b2->m_sweep.c + r2 - b1->m_sweep.c - r1;
+	b2Vec2 d = b2->m_sweep.c1 + r2 - b1->m_sweep.c1 - r1;
 
 	float32 length = d.Normalize();
 	float32 C = length - m_length;
@@ -176,10 +176,10 @@ bool b2DistanceJoint::SolvePositionConstraints(float32 baumgarte)
 	m_u = d;
 	b2Vec2 P = impulse * m_u;
 
-	b1->m_sweep.c -= b1->m_invMass * P;
-	b1->m_sweep.a -= b1->m_invI * b2Cross(r1, P);
-	b2->m_sweep.c += b2->m_invMass * P;
-	b2->m_sweep.a += b2->m_invI * b2Cross(r2, P);
+	b1->m_sweep.c1 -= b1->m_invMass * P;
+	b1->m_sweep.a1 -= b1->m_invI * b2Cross(r1, P);
+	b2->m_sweep.c1 += b2->m_invMass * P;
+	b2->m_sweep.a1 += b2->m_invI * b2Cross(r2, P);
 
 	b1->SynchronizeTransform();
 	b2->SynchronizeTransform();

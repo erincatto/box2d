@@ -52,7 +52,7 @@ void b2RopeJoint::InitVelocityConstraints(const b2TimeStep& step)
 	m_rB = b2Mul(bB->GetTransform().R, m_localAnchorB - bB->GetLocalCenter());
 
 	// Rope axis
-	m_u = bB->m_sweep.c + m_rB - bA->m_sweep.c - m_rA;
+	m_u = bB->m_sweep.c1 + m_rB - bA->m_sweep.c1 - m_rA;
 
 	m_length = m_u.Length();
 
@@ -143,7 +143,7 @@ bool b2RopeJoint::SolvePositionConstraints(float32 baumgarte)
 	b2Vec2 rA = b2Mul(bA->GetTransform().R, m_localAnchorA - bA->GetLocalCenter());
 	b2Vec2 rB = b2Mul(bB->GetTransform().R, m_localAnchorB - bB->GetLocalCenter());
 
-	b2Vec2 u = bB->m_sweep.c + rB - bA->m_sweep.c - rA;
+	b2Vec2 u = bB->m_sweep.c1 + rB - bA->m_sweep.c1 - rA;
 
 	float32 length = u.Normalize();
 	float32 C = length - m_maxLength;
@@ -153,10 +153,10 @@ bool b2RopeJoint::SolvePositionConstraints(float32 baumgarte)
 	float32 impulse = -m_mass * C;
 	b2Vec2 P = impulse * u;
 
-	bA->m_sweep.c -= bA->m_invMass * P;
-	bA->m_sweep.a -= bA->m_invI * b2Cross(rA, P);
-	bB->m_sweep.c += bB->m_invMass * P;
-	bB->m_sweep.a += bB->m_invI * b2Cross(rB, P);
+	bA->m_sweep.c1 -= bA->m_invMass * P;
+	bA->m_sweep.a1 -= bA->m_invI * b2Cross(rA, P);
+	bB->m_sweep.c1 += bB->m_invMass * P;
+	bB->m_sweep.a1 += bB->m_invI * b2Cross(rB, P);
 
 	bA->SynchronizeTransform();
 	bB->SynchronizeTransform();

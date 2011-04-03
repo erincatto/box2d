@@ -155,7 +155,10 @@ void b2ContactSolver::InitializeVelocityConstraints()
 			ccp->tangentMass = 1.0f /  kTangent;
 
 			// Setup a velocity bias for restitution.
-			ccp->velocityBias = worldManifold.separation[j] * 60.0f;
+			if (worldManifold.separation[j] > 0.0f)
+			{
+				ccp->velocityBias = -60.0f * worldManifold.separation[j];
+			}
 		}
 
 		// If we have two points, then prepare the block solver.
@@ -624,8 +627,8 @@ bool b2ContactSolver::SolvePositionConstraints(float32 baumgarte)
 			b2Vec2 point = psm.point;
 			float32 separation = psm.separation;
 
-			b2Vec2 rA = point - bodyA->m_sweep.c;
-			b2Vec2 rB = point - bodyB->m_sweep.c;
+			b2Vec2 rA = point - bodyA->m_sweep.c1;
+			b2Vec2 rB = point - bodyB->m_sweep.c1;
 
 			// Track max constraint error.
 			minSeparation = b2Min(minSeparation, separation);
@@ -643,84 +646,12 @@ bool b2ContactSolver::SolvePositionConstraints(float32 baumgarte)
 
 			b2Vec2 P = impulse * normal;
 
-			bodyA->m_sweep.c -= invMassA * P;
-			bodyA->m_sweep.a -= invIA * b2Cross(rA, P);
+			bodyA->m_sweep.c1 -= invMassA * P;
+			bodyA->m_sweep.a1 -= invIA * b2Cross(rA, P);
 			bodyA->SynchronizeTransform();
 
-			bodyB->m_sweep.c += invMassB * P;
-			bodyB->m_sweep.a += invIB * b2Cross(rB, P);
-			bodyB->SynchronizeTransform();
-		}
-	}
-
-	// We can't expect minSpeparation >= -b2_linearSlop because we don't
-	// push the separation above -b2_linearSlop.
-	return minSeparation >= -1.5f * b2_linearSlop;
-}
-
-// Sequential position solver for position constraints.
-bool b2ContactSolver::SolveTOIPositionConstraints(float32 baumgarte, const b2Body* toiBodyA, const b2Body* toiBodyB)
-{
-	float32 minSeparation = 0.0f;
-
-	for (int32 i = 0; i < m_count; ++i)
-	{
-		b2ContactConstraint* c = m_constraints + i;
-		b2Body* bodyA = c->bodyA;
-		b2Body* bodyB = c->bodyB;
-
-		float32 massA = 0.0f;
-		if (bodyA == toiBodyA || bodyA == toiBodyB)
-		{
-			massA = bodyA->m_mass;
-		}
-
-		float32 massB = 0.0f;
-		if (bodyB == toiBodyA || bodyB == toiBodyB)
-		{
-			massB = bodyB->m_mass;
-		}
-
-		float32 invMassA = bodyA->m_mass * bodyA->m_invMass;
-		float32 invIA = bodyA->m_mass * bodyA->m_invI;
-		float32 invMassB = bodyB->m_mass * bodyB->m_invMass;
-		float32 invIB = bodyB->m_mass * bodyB->m_invI;
-
-		// Solve normal constraints
-		for (int32 j = 0; j < c->pointCount; ++j)
-		{
-			b2PositionSolverManifold psm;
-			psm.Initialize(c, j);
-			b2Vec2 normal = psm.normal;
-
-			b2Vec2 point = psm.point;
-			float32 separation = psm.separation;
-
-			b2Vec2 rA = point - bodyA->m_sweep.c;
-			b2Vec2 rB = point - bodyB->m_sweep.c;
-
-			// Track max constraint error.
-			minSeparation = b2Min(minSeparation, separation);
-
-			// Prevent large corrections and allow slop.
-			float32 C = b2Clamp(baumgarte * (separation + b2_linearSlop), -b2_maxLinearCorrection, 0.0f);
-
-			// Compute the effective mass.
-			float32 rnA = b2Cross(rA, normal);
-			float32 rnB = b2Cross(rB, normal);
-			float32 K = invMassA + invMassB + invIA * rnA * rnA + invIB * rnB * rnB;
-
-			// Compute normal impulse
-			float32 impulse = K > 0.0f ? - C / K : 0.0f;
-
-			b2Vec2 P = impulse * normal;
-
-			bodyA->m_sweep.c -= invMassA * P;
-			bodyA->m_sweep.a -= invIA * b2Cross(rA, P);
-			bodyA->SynchronizeTransform();
-
-			bodyB->m_sweep.c += invMassB * P;
-			bodyB->m_sweep.a += invIB * b2Cross(rB, P);
+			bodyB->m_sweep.c1 += invMassB * P;
+			bodyB->m_sweep.a1 += invIB * b2Cross(rB, P);
 			bodyB->SynchronizeTransform();
 		}
 	}

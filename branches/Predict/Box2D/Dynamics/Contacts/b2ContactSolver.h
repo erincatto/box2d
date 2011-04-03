@@ -79,7 +79,6 @@ public:
 	void StoreImpulses();
 
 	bool SolvePositionConstraints(float32 baumgarte);
-	bool SolveTOIPositionConstraints(float32 baumgarte, const b2Body* toiBodyA, const b2Body* toiBodyB);
 
 	b2StackAllocator* m_allocator;
 	b2ContactConstraint* m_constraints;

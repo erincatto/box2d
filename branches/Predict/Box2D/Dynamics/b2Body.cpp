@@ -263,7 +263,7 @@ void b2Body::ResetMassData()
 	// Static and kinematic bodies have zero mass.
 	if (m_type == b2_staticBody || m_type == b2_kinematicBody)
 	{
-		m_sweep.c0 = m_sweep.c = m_xf.position;
+		m_sweep.c1 = m_sweep.c2 = m_xf.position;
 		return;
 	}
 
@@ -313,12 +313,12 @@ void b2Body::ResetMassData()
 	}
 
 	// Move center of mass.
-	b2Vec2 oldCenter = m_sweep.c;
+	b2Vec2 oldCenter = m_sweep.c1;
 	m_sweep.localCenter = center;
-	m_sweep.c0 = m_sweep.c = b2Mul(m_xf, m_sweep.localCenter);
+	m_sweep.c1 = m_sweep.c2 = b2Mul(m_xf, m_sweep.localCenter);
 
 	// Update center of mass velocity.
-	m_linearVelocity += b2Cross(m_angularVelocity, m_sweep.c - oldCenter);
+	m_linearVelocity += b2Cross(m_angularVelocity, m_sweep.c1 - oldCenter);
 }
 
 void b2Body::SetMassData(const b2MassData* massData)
@@ -354,12 +354,12 @@ void b2Body::SetMassData(const b2MassData* massData)
 	}
 
 	// Move center of mass.
-	b2Vec2 oldCenter = m_sweep.c;
+	b2Vec2 oldCenter = m_sweep.c1;
 	m_sweep.localCenter = massData->center;
-	m_sweep.c0 = m_sweep.c = b2Mul(m_xf, m_sweep.localCenter);
+	m_sweep.c1 = m_sweep.c2 = b2Mul(m_xf, m_sweep.localCenter);
 
 	// Update center of mass velocity.
-	m_linearVelocity += b2Cross(m_angularVelocity, m_sweep.c - oldCenter);
+	m_linearVelocity += b2Cross(m_angularVelocity, m_sweep.c1 - oldCenter);
 }
 
 bool b2Body::ShouldCollide(const b2Body* other) const
@@ -396,8 +396,8 @@ void b2Body::SetTransform(const b2Vec2& position, float32 angle)
 	m_xf.R.Set(angle);
 	m_xf.position = position;
 
-	m_sweep.c0 = m_sweep.c = b2Mul(m_xf, m_sweep.localCenter);
-	m_sweep.a0 = m_sweep.a = angle;
+	m_sweep.c1 = m_sweep.c2 = b2Mul(m_xf, m_sweep.localCenter);
+	m_sweep.a1 = m_sweep.a2 = angle;
 
 	b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
 	for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
@@ -410,14 +410,14 @@ void b2Body::SetTransform(const b2Vec2& position, float32 angle)
 
 void b2Body::SynchronizeFixtures()
 {
-	b2Transform xf1;
-	xf1.R.Set(m_sweep.a0);
-	xf1.position = m_sweep.c0 - b2Mul(xf1.R, m_sweep.localCenter);
+	//b2Transform xf2;
+	//xf2.R.Set(m_sweep.a2);
+	//xf2.position = m_sweep.c2 - b2Mul(xf2.R, m_sweep.localCenter);
 
 	b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
 	for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
 	{
-		f->Synchronize(broadPhase, xf1, m_xf);
+		f->Synchronize(broadPhase, m_xf, m_xf);
 	}
 }
 

@@ -156,8 +156,8 @@ bool b2WeldJoint::SolvePositionConstraints(float32 baumgarte)
 	b2Vec2 rA = b2Mul(bA->GetTransform().R, m_localAnchorA - bA->GetLocalCenter());
 	b2Vec2 rB = b2Mul(bB->GetTransform().R, m_localAnchorB - bB->GetLocalCenter());
 
-	b2Vec2 C1 =  bB->m_sweep.c + rB - bA->m_sweep.c - rA;
-	float32 C2 = bB->m_sweep.a - bA->m_sweep.a - m_referenceAngle;
+	b2Vec2 C1 =  bB->m_sweep.c1 + rB - bA->m_sweep.c1 - rA;
+	float32 C2 = bB->m_sweep.a1 - bA->m_sweep.a1 - m_referenceAngle;
 
 	// Handle large detachment.
 	const float32 k_allowedStretch = 10.0f * b2_linearSlop;
@@ -185,11 +185,11 @@ bool b2WeldJoint::SolvePositionConstraints(float32 baumgarte)
 
 	b2Vec2 P(impulse.x, impulse.y);
 
-	bA->m_sweep.c -= mA * P;
-	bA->m_sweep.a -= iA * (b2Cross(rA, P) + impulse.z);
+	bA->m_sweep.c1 -= mA * P;
+	bA->m_sweep.a1 -= iA * (b2Cross(rA, P) + impulse.z);
 
-	bB->m_sweep.c += mB * P;
-	bB->m_sweep.a += iB * (b2Cross(rB, P) + impulse.z);
+	bB->m_sweep.c1 += mB * P;
+	bB->m_sweep.a1 += iB * (b2Cross(rB, P) + impulse.z);
 
 	bA->SynchronizeTransform();
 	bB->SynchronizeTransform();

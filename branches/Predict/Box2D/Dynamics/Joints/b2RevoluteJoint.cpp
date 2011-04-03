@@ -112,7 +112,7 @@ void b2RevoluteJoint::InitVelocityConstraints(const b2TimeStep& step)
 
 	if (m_enableLimit)
 	{
-		float32 jointAngle = b2->m_sweep.a - b1->m_sweep.a - m_referenceAngle;
+		float32 jointAngle = b2->m_sweep.a1 - b1->m_sweep.a1 - m_referenceAngle;
 		if (b2Abs(m_upperAngle - m_lowerAngle) < 2.0f * b2_angularSlop)
 		{
 			m_limitState = e_equalLimits;
@@ -296,7 +296,7 @@ bool b2RevoluteJoint::SolvePositionConstraints(float32 baumgarte)
 	// Solve angular limit constraint.
 	if (m_enableLimit && m_limitState != e_inactiveLimit)
 	{
-		float32 angle = b2->m_sweep.a - b1->m_sweep.a - m_referenceAngle;
+		float32 angle = b2->m_sweep.a1 - b1->m_sweep.a1 - m_referenceAngle;
 		float32 limitImpulse = 0.0f;
 
 		if (m_limitState == e_equalLimits)
@@ -325,8 +325,8 @@ bool b2RevoluteJoint::SolvePositionConstraints(float32 baumgarte)
 			limitImpulse = -m_motorMass * C;
 		}
 
-		b1->m_sweep.a -= b1->m_invI * limitImpulse;
-		b2->m_sweep.a += b2->m_invI * limitImpulse;
+		b1->m_sweep.a1 -= b1->m_invI * limitImpulse;
+		b2->m_sweep.a1 += b2->m_invI * limitImpulse;
 
 		b1->SynchronizeTransform();
 		b2->SynchronizeTransform();
@@ -337,7 +337,7 @@ bool b2RevoluteJoint::SolvePositionConstraints(float32 baumgarte)
 		b2Vec2 r1 = b2Mul(b1->GetTransform().R, m_localAnchor1 - b1->GetLocalCenter());
 		b2Vec2 r2 = b2Mul(b2->GetTransform().R, m_localAnchor2 - b2->GetLocalCenter());
 
-		b2Vec2 C = b2->m_sweep.c + r2 - b1->m_sweep.c - r1;
+		b2Vec2 C = b2->m_sweep.c1 + r2 - b1->m_sweep.c1 - r1;
 		positionError = C.Length();
 
 		float32 invMass1 = b1->m_invMass, invMass2 = b2->m_invMass;
@@ -356,10 +356,10 @@ bool b2RevoluteJoint::SolvePositionConstraints(float32 baumgarte)
 			}
 			b2Vec2 impulse = m * (-C);
 			const float32 k_beta = 0.5f;
-			b1->m_sweep.c -= k_beta * invMass1 * impulse;
-			b2->m_sweep.c += k_beta * invMass2 * impulse;
+			b1->m_sweep.c1 -= k_beta * invMass1 * impulse;
+			b2->m_sweep.c1 += k_beta * invMass2 * impulse;
 
-			C = b2->m_sweep.c + r2 - b1->m_sweep.c - r1;
+			C = b2->m_sweep.c1 + r2 - b1->m_sweep.c1 - r1;
 		}
 
 		b2Mat22 K1;
@@ -377,11 +377,11 @@ bool b2RevoluteJoint::SolvePositionConstraints(float32 baumgarte)
 		b2Mat22 K = K1 + K2 + K3;
 		b2Vec2 impulse = K.Solve(-C);
 
-		b1->m_sweep.c -= b1->m_invMass * impulse;
-		b1->m_sweep.a -= b1->m_invI * b2Cross(r1, impulse);
+		b1->m_sweep.c1 -= b1->m_invMass * impulse;
+		b1->m_sweep.a1 -= b1->m_invI * b2Cross(r1, impulse);
 
-		b2->m_sweep.c += b2->m_invMass * impulse;
-		b2->m_sweep.a += b2->m_invI * b2Cross(r2, impulse);
+		b2->m_sweep.c1 += b2->m_invMass * impulse;
+		b2->m_sweep.a1 += b2->m_invI * b2Cross(r2, impulse);
 
 		b1->SynchronizeTransform();
 		b2->SynchronizeTransform();
@@ -415,7 +415,7 @@ float32 b2RevoluteJoint::GetJointAngle() const
 {
 	b2Body* b1 = m_bodyA;
 	b2Body* b2 = m_bodyB;
-	return b2->m_sweep.a - b1->m_sweep.a - m_referenceAngle;
+	return b2->m_sweep.a1 - b1->m_sweep.a1 - m_referenceAngle;
 }
 
 float32 b2RevoluteJoint::GetJointSpeed() const

@@ -88,7 +88,7 @@ void b2WheelJoint::InitVelocityConstraints(const b2TimeStep& step)
 	// Compute the effective masses.
 	b2Vec2 rA = b2Mul(xfA.R, m_localAnchorA - m_localCenterA);
 	b2Vec2 rB = b2Mul(xfB.R, m_localAnchorB - m_localCenterB);
-	b2Vec2 d = bB->m_sweep.c + rB - bA->m_sweep.c - rA;
+	b2Vec2 d = bB->m_sweep.c1 + rB - bA->m_sweep.c1 - rA;
 
 	m_invMassA = bA->m_invMass;
 	m_invIA = bA->m_invI;
@@ -267,11 +267,11 @@ bool b2WheelJoint::SolvePositionConstraints(float32 baumgarte)
 	b2Body* bA = m_bodyA;
 	b2Body* bB = m_bodyB;
 
-	b2Vec2 xA = bA->m_sweep.c;
-	float32 angleA = bA->m_sweep.a;
+	b2Vec2 xA = bA->m_sweep.c1;
+	float32 angleA = bA->m_sweep.a1;
 
-	b2Vec2 xB = bB->m_sweep.c;
-	float32 angleB = bB->m_sweep.a;
+	b2Vec2 xB = bB->m_sweep.c1;
+	float32 angleB = bB->m_sweep.a1;
 
 	b2Mat22 RA(angleA), RB(angleB);
 
@@ -308,10 +308,10 @@ bool b2WheelJoint::SolvePositionConstraints(float32 baumgarte)
 	angleB += m_invIB * LB;
 
 	// TODO_ERIN remove need for this.
-	bA->m_sweep.c = xA;
-	bA->m_sweep.a = angleA;
-	bB->m_sweep.c = xB;
-	bB->m_sweep.a = angleB;
+	bA->m_sweep.c1 = xA;
+	bA->m_sweep.a1 = angleA;
+	bB->m_sweep.c1 = xB;
+	bB->m_sweep.a1 = angleB;
 	bA->SynchronizeTransform();
 	bB->SynchronizeTransform();
 

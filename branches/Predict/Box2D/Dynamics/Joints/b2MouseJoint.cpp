@@ -142,7 +142,7 @@ void b2MouseJoint::InitVelocityConstraints(const b2TimeStep& step)
 
 	m_mass = K.GetInverse();
 
-	m_C = b->m_sweep.c + r - m_target;
+	m_C = b->m_sweep.c1 + r - m_target;
 
 	// Cheat with some damping
 	b->m_angularVelocity *= 0.98f;

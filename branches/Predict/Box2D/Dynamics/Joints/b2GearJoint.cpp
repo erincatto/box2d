@@ -209,10 +209,10 @@ bool b2GearJoint::SolvePositionConstraints(float32 baumgarte)
 
 	float32 impulse = m_mass * (-C);
 
-	b1->m_sweep.c += b1->m_invMass * impulse * m_J.linearA;
-	b1->m_sweep.a += b1->m_invI * impulse * m_J.angularA;
-	b2->m_sweep.c += b2->m_invMass * impulse * m_J.linearB;
-	b2->m_sweep.a += b2->m_invI * impulse * m_J.angularB;
+	b1->m_sweep.c1 += b1->m_invMass * impulse * m_J.linearA;
+	b1->m_sweep.a1 += b1->m_invI * impulse * m_J.angularA;
+	b2->m_sweep.c1 += b2->m_invMass * impulse * m_J.linearB;
+	b2->m_sweep.a1 += b2->m_invI * impulse * m_J.angularB;
 
 	b1->SynchronizeTransform();
 	b2->SynchronizeTransform();
