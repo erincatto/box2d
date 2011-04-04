@@ -18,6 +18,7 @@
 
 #include "Render.h"
 #include "Test.h"
+#include "freeglut/GL/freeglut.h"
 #include "glui/GL/glui.h"
 
 #include <cstdio>
