@@ -187,6 +187,7 @@ void b2Contact::Update(b2ContactListener* listener)
 
 		// Match old contact ids to new contact ids and copy the
 		// stored impulses to warm start the solver.
+		bool found = false;
 		for (int32 i = 0; i < m_manifold.pointCount; ++i)
 		{
 			b2ManifoldPoint* mp2 = m_manifold.points + i;
@@ -202,9 +203,15 @@ void b2Contact::Update(b2ContactListener* listener)
 				{
 					mp2->normalImpulse = mp1->normalImpulse;
 					mp2->tangentImpulse = mp1->tangentImpulse;
+					found = true;
 					break;
 				}
 			}
+		}
+
+		if (found == false)
+		{
+			found = false;
 		}
 
 		if (touching != wasTouching)
