@@ -219,12 +219,16 @@ int32 b2ClipSegmentToLine(b2ClipVertex vOut[2], const b2ClipVertex vIn[2],
 		float32 interp = distance0 / (distance0 - distance1);
 		vOut[numOut].v = vIn[0].v + interp * (vIn[1].v - vIn[0].v);
 
+#if 0
 		// VertexA is hitting edgeB.
 		vOut[numOut].id.cf.indexA = vertexIndexA;
 		vOut[numOut].id.cf.indexB = vIn[0].id.cf.indexB;
 		vOut[numOut].id.cf.typeA = b2ContactFeature::e_vertex;
 		vOut[numOut].id.cf.typeB = b2ContactFeature::e_face;
+#else
+		vOut[numOut].id = distance0 > 0.0f ? vIn[0].id : vIn[1].id;
 		++numOut;
+#endif
 	}
 
 	return numOut;
