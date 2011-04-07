@@ -63,6 +63,7 @@ struct b2ContactSolverDef
 	int32 count;
 	b2StackAllocator* allocator;
 	float32 impulseRatio;
+	float32 inv_dt;
 	bool warmStarting;
 };
 
@@ -82,7 +83,8 @@ public:
 
 	b2StackAllocator* m_allocator;
 	b2ContactConstraint* m_constraints;
-	int m_count;
+	float32 m_inv_dt;
+	int32 m_count;
 };
 
 #endif

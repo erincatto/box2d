@@ -31,6 +31,7 @@ b2ContactSolver::b2ContactSolver(b2ContactSolverDef* def)
 {
 	m_allocator = def->allocator;
 
+	m_inv_dt = def->inv_dt;
 	m_count = def->count;
 	m_constraints = (b2ContactConstraint*)m_allocator->Allocate(m_count * sizeof(b2ContactConstraint));
 
@@ -154,10 +155,10 @@ void b2ContactSolver::InitializeVelocityConstraints()
 			b2Assert(kTangent > b2_epsilon);
 			ccp->tangentMass = 1.0f /  kTangent;
 
-			// Setup a velocity bias for restitution.
+			// Velocity bias for predictive contact.
 			if (worldManifold.separation[j] > 0.0f)
 			{
-				ccp->velocityBias = -60.0f * worldManifold.separation[j];
+				ccp->velocityBias = -m_inv_dt * worldManifold.separation[j];
 			}
 		}
 
@@ -634,7 +635,8 @@ bool b2ContactSolver::SolvePositionConstraints(float32 baumgarte)
 			minSeparation = b2Min(minSeparation, separation);
 
 			// Prevent large corrections and allow slop.
-			float32 C = b2Clamp(baumgarte * (separation + b2_linearSlop), -b2_maxLinearCorrection, 0.0f);
+			//float32 C = b2Clamp(baumgarte * (separation + b2_linearSlop), -b2_maxLinearCorrection, 0.0f);
+			float32 C = b2Min(baumgarte * (separation + b2_linearSlop), 0.0f);
 
 			// Compute the effective mass.
 			float32 rnA = b2Cross(rA, normal);

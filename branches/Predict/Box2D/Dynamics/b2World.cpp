@@ -536,6 +536,12 @@ void b2World::Solve(const b2TimeStep& step)
 		}
 
 		// Update fixtures (for broad-phase).
+		/* Position estimation
+		x2 = x1 + h * v1 + 0.5 * h * h * a1
+		a1 = (v1 - v0) / h
+		x2 = x1 + h * v1 + 0.5 * h * (v1 - v0)
+		   = x1 + h * (1.5 * v1 - 0.5 * v0)
+		*/
 		b->SynchronizeFixtures();
 	}
 

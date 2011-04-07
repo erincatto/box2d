@@ -229,6 +229,7 @@ void b2Island::Solve(const b2TimeStep& step, const b2Vec2& gravity, bool allowSl
 	solverDef.allocator = m_allocator;
 	solverDef.impulseRatio = step.dtRatio;
 	solverDef.warmStarting = step.warmStarting;
+	solverDef.inv_dt = step.inv_dt;
 
 	b2ContactSolver contactSolver(&solverDef);
 
