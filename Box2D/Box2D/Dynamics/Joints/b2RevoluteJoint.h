@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2007 Erin Catto http://www.box2d.org
+* Copyright (c) 2006-2011 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -148,19 +148,16 @@ protected:
 
 	b2RevoluteJoint(const b2RevoluteJointDef* def);
 
-	void InitVelocityConstraints(const b2TimeStep& step);
-	void SolveVelocityConstraints(const b2TimeStep& step);
+	void InitVelocityConstraints(const b2SolverData& data);
+	void SolveVelocityConstraints(const b2SolverData& data);
+	bool SolvePositionConstraints(const b2SolverData& data);
 
-	bool SolvePositionConstraints(float32 baumgarte);
-
-	b2Vec2 m_localAnchor1;	// relative
-	b2Vec2 m_localAnchor2;
+	// Solver shared
+	b2Vec2 m_localAnchorA;
+	b2Vec2 m_localAnchorB;
 	b2Vec3 m_impulse;
 	float32 m_motorImpulse;
 
-	b2Mat33 m_mass;			// effective mass for point-to-point constraint.
-	float32 m_motorMass;	// effective mass for motor/limit angular constraint.
-	
 	bool m_enableMotor;
 	float32 m_maxMotorTorque;
 	float32 m_motorSpeed;
@@ -169,6 +166,20 @@ protected:
 	float32 m_referenceAngle;
 	float32 m_lowerAngle;
 	float32 m_upperAngle;
+
+	// Solver temp
+	int32 m_indexA;
+	int32 m_indexB;
+	b2Vec2 m_rA;
+	b2Vec2 m_rB;
+	b2Vec2 m_localCenterA;
+	b2Vec2 m_localCenterB;
+	float32 m_invMassA;
+	float32 m_invMassB;
+	float32 m_invIA;
+	float32 m_invIB;
+	b2Mat33 m_mass;			// effective mass for point-to-point constraint.
+	float32 m_motorMass;	// effective mass for motor/limit angular constraint.
 	b2LimitState m_limitState;
 };
 

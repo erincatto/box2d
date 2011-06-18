@@ -80,8 +80,8 @@ public:
 
 		{
 			b2Transform xf1;
-			xf1.R.Set(0.3524f * b2_pi);
-			xf1.position = b2Mul(xf1.R, b2Vec2(1.0f, 0.0f));
+			xf1.q.Set(0.3524f * b2_pi);
+			xf1.p = xf1.q.GetXAxis();
 
 			b2Vec2 vertices[3];
 
@@ -92,8 +92,8 @@ public:
 			triangle1.Set(vertices, 3);
 
 			b2Transform xf2;
-			xf2.R.Set(-0.3524f * b2_pi);
-			xf2.position = b2Mul(xf2.R, b2Vec2(-1.0f, 0.0f));
+			xf2.q.Set(-0.3524f * b2_pi);
+			xf2.p = -xf2.q.GetXAxis();
 
 			b2PolygonShape triangle2;
 			vertices[0] = b2Mul(xf2, b2Vec2(-1.0f, 0.0f));

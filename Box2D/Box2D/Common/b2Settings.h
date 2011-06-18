@@ -108,7 +108,8 @@ typedef double float64;
 /// This scale factor controls how fast overlap is resolved. Ideally this would be 1 so
 /// that overlap is removed in one time step. However using values close to 1 often lead
 /// to overshoot.
-#define b2_contactBaumgarte			0.2f
+#define b2_baumgarte				0.2f
+#define b2_toiBaugarte				0.75f
 
 
 // Sleep

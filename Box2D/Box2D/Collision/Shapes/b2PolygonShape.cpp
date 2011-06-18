@@ -55,14 +55,14 @@ void b2PolygonShape::SetAsBox(float32 hx, float32 hy, const b2Vec2& center, floa
 	m_centroid = center;
 
 	b2Transform xf;
-	xf.position = center;
-	xf.R.Set(angle);
+	xf.p = center;
+	xf.q.Set(angle);
 
 	// Transform vertices and normals.
 	for (int32 i = 0; i < m_vertexCount; ++i)
 	{
 		m_vertices[i] = b2Mul(xf, m_vertices[i]);
-		m_normals[i] = b2Mul(xf.R, m_normals[i]);
+		m_normals[i] = b2Mul(xf.q, m_normals[i]);
 	}
 }
 
@@ -172,7 +172,7 @@ void b2PolygonShape::Set(const b2Vec2* vertices, int32 count)
 
 bool b2PolygonShape::TestPoint(const b2Transform& xf, const b2Vec2& p) const
 {
-	b2Vec2 pLocal = b2MulT(xf.R, p - xf.position);
+	b2Vec2 pLocal = b2MulT(xf.q, p - xf.p);
 
 	for (int32 i = 0; i < m_vertexCount; ++i)
 	{
@@ -192,8 +192,8 @@ bool b2PolygonShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& inpu
 	B2_NOT_USED(childIndex);
 
 	// Put the ray into the polygon's frame of reference.
-	b2Vec2 p1 = b2MulT(xf.R, input.p1 - xf.position);
-	b2Vec2 p2 = b2MulT(xf.R, input.p2 - xf.position);
+	b2Vec2 p1 = b2MulT(xf.q, input.p1 - xf.p);
+	b2Vec2 p2 = b2MulT(xf.q, input.p2 - xf.p);
 	b2Vec2 d = p2 - p1;
 
 	float32 lower = 0.0f, upper = input.maxFraction;
@@ -251,7 +251,7 @@ bool b2PolygonShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& inpu
 	if (index >= 0)
 	{
 		output->fraction = lower;
-		output->normal = b2Mul(xf.R, m_normals[index]);
+		output->normal = b2Mul(xf.q, m_normals[index]);
 		return true;
 	}
 

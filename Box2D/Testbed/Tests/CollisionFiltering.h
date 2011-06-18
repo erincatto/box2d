@@ -107,7 +107,7 @@ public:
 			jd.enableLimit = true;
 			jd.localAnchorA.Set(0.0f, 4.0f);
 			jd.localAnchorB.SetZero();
-			jd.localAxis1.Set(0.0f, 1.0f);
+			jd.localAxisA.Set(0.0f, 1.0f);
 			jd.lowerTranslation = -1.0f;
 			jd.upperTranslation = 1.0f;
 

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2007 Erin Catto http://www.box2d.org
+* Copyright (c) 2006-2011 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -105,26 +105,34 @@ protected:
 	friend class b2Joint;
 	b2PulleyJoint(const b2PulleyJointDef* data);
 
-	void InitVelocityConstraints(const b2TimeStep& step);
-	void SolveVelocityConstraints(const b2TimeStep& step);
-	bool SolvePositionConstraints(float32 baumgarte);
+	void InitVelocityConstraints(const b2SolverData& data);
+	void SolveVelocityConstraints(const b2SolverData& data);
+	bool SolvePositionConstraints(const b2SolverData& data);
 
-	b2Vec2 m_groundAnchor1;
-	b2Vec2 m_groundAnchor2;
-	b2Vec2 m_localAnchor1;
-	b2Vec2 m_localAnchor2;
-
-	b2Vec2 m_u1;
-	b2Vec2 m_u2;
+	b2Vec2 m_groundAnchorA;
+	b2Vec2 m_groundAnchorB;
 	
+	// Solver shared
+	b2Vec2 m_localAnchorA;
+	b2Vec2 m_localAnchorB;
 	float32 m_constant;
 	float32 m_ratio;
-	
-	// Effective masses
-	float32 m_pulleyMass;
-
-	// Impulses for accumulation/warm starting.
 	float32 m_impulse;
+
+	// Solver temp
+	int32 m_indexA;
+	int32 m_indexB;
+	b2Vec2 m_uA;
+	b2Vec2 m_uB;
+	b2Vec2 m_rA;
+	b2Vec2 m_rB;
+	b2Vec2 m_localCenterA;
+	b2Vec2 m_localCenterB;
+	float32 m_invMassA;
+	float32 m_invMassB;
+	float32 m_invIA;
+	float32 m_invIB;
+	float32 m_mass;
 };
 
 #endif

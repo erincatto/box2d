@@ -26,7 +26,7 @@ public:
 	{
 		{
 			m_transformA.SetIdentity();
-			m_transformA.position.Set(0.0f, -0.2f);
+			m_transformA.p.Set(0.0f, -0.2f);
 			m_polygonA.SetAsBox(10.0f, 0.2f);
 		}
 
