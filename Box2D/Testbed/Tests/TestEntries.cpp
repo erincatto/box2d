@@ -51,7 +51,7 @@ using namespace std;
 #include "Pyramid.h"
 #include "RayCast.h"
 #include "Revolute.h"
-#include "Rope.h"
+//#include "Rope.h"
 #include "RopeJoint.h"
 #include "SensorTest.h"
 #include "ShapeEditing.h"
@@ -67,15 +67,18 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
+	{"Tiles", Tiles::Create},
+	{"Gears", Gears::Create},
+	{"Car", Car::Create},
+	{"Apply Force", ApplyForce::Create},
+	{"Prismatic", Prismatic::Create},
+	{"Vertical Stack", VerticalStack::Create},
+	{"SphereStack", SphereStack::Create},
 	{"Revolute", Revolute::Create},
 	{"Pulleys", Pulleys::Create},
-	{"SphereStack", SphereStack::Create},
-	{"Tiles", Tiles::Create},
 	{"Polygon Shapes", PolyShapes::Create},
-	{"Rope", Rope::Create},
+	//{"Rope", Rope::Create},
 	{"Web", Web::Create},
-	{"Car", Car::Create},
-	{"Vertical Stack", VerticalStack::Create},
 	{"RopeJoint", RopeJoint::Create},
 	{"Character Collision", CharacterCollision::Create},
 	{"Edge Test", EdgeTest::Create},
@@ -90,10 +93,8 @@ TestEntry g_testEntries[] =
 	{"Varying Restitution", VaryingRestitution::Create},
 	{"Theo Jansen's Walker", TheoJansen::Create},
 	{"Body Types", BodyTypes::Create},
-	{"Prismatic", Prismatic::Create},
 	{"Edge Shapes", EdgeShapes::Create},
 	{"PolyCollision", PolyCollision::Create},
-	{"Apply Force", ApplyForce::Create},
 	{"Cantilever", Cantilever::Create},
 	{"Bridge", Bridge::Create},
 	{"Breakable", Breakable::Create},
@@ -104,7 +105,6 @@ TestEntry g_testEntries[] =
 	{"Distance Test", DistanceTest::Create},
 	{"Dominos", Dominos::Create},
 	{"Dynamic Tree", DynamicTreeTest::Create},
-	{"Gears", Gears::Create},
 	{"Sensor Test", SensorTest::Create},
 	{"Shape Editing", ShapeEditing::Create},
 	{"Slider Crank", SliderCrank::Create},

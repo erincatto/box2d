@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2009 Erin Catto http://www.box2d.org
+* Copyright (c) 2006-2011 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -24,25 +24,16 @@
 #include <Box2D/Common/b2StackAllocator.h>
 #include <Box2D/Dynamics/b2ContactManager.h>
 #include <Box2D/Dynamics/b2WorldCallbacks.h>
+#include <Box2D/Dynamics/b2TimeStep.h>
 
 struct b2AABB;
 struct b2BodyDef;
 struct b2Color;
 struct b2JointDef;
-struct b2TimeStep;
 class b2Body;
 class b2Draw;
 class b2Fixture;
 class b2Joint;
-
-/// Profiling data. Times are in milliseconds.
-struct b2Profile
-{
-	float32 step;
-	float32 collide;
-	float32 solve;
-	float32 solveTOI;
-};
 
 /// The world class manages all physics entities, dynamic simulation,
 /// and asynchronous queries. The world also contains efficient memory
