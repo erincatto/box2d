@@ -130,7 +130,7 @@ public:
 		// Drive the kinematic body.
 		if (m_platform->GetType() == b2_kinematicBody)
 		{
-			b2Vec2 p = m_platform->GetTransform().position;
+			b2Vec2 p = m_platform->GetTransform().p;
 			b2Vec2 v = m_platform->GetLinearVelocity();
 
 			if ((p.x < -10.0f && v.x < 0.0f) ||

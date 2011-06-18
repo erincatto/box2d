@@ -96,20 +96,34 @@ protected:
 	friend class b2Joint;
 	b2DistanceJoint(const b2DistanceJointDef* data);
 
-	void InitVelocityConstraints(const b2TimeStep& step);
-	void SolveVelocityConstraints(const b2TimeStep& step);
-	bool SolvePositionConstraints(float32 baumgarte);
+	void InitVelocityConstraints(const b2SolverData& data);
+	void SolveVelocityConstraints(const b2SolverData& data);
+	bool SolvePositionConstraints(const b2SolverData& data);
 
-	b2Vec2 m_localAnchor1;
-	b2Vec2 m_localAnchor2;
-	b2Vec2 m_u;
 	float32 m_frequencyHz;
 	float32 m_dampingRatio;
-	float32 m_gamma;
 	float32 m_bias;
+
+	// Solver shared
+	b2Vec2 m_localAnchorA;
+	b2Vec2 m_localAnchorB;
+	float32 m_gamma;
 	float32 m_impulse;
-	float32 m_mass;
 	float32 m_length;
+
+	// Solver temp
+	int32 m_indexA;
+	int32 m_indexB;
+	b2Vec2 m_u;
+	b2Vec2 m_rA;
+	b2Vec2 m_rB;
+	b2Vec2 m_localCenterA;
+	b2Vec2 m_localCenterB;
+	float32 m_invMassA;
+	float32 m_invMassB;
+	float32 m_invIA;
+	float32 m_invIB;
+	float32 m_mass;
 };
 
 inline void b2DistanceJoint::SetLength(float32 length)
