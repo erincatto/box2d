@@ -58,8 +58,8 @@ bool b2EdgeShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input,
 	B2_NOT_USED(childIndex);
 
 	// Put the ray into the edge's frame of reference.
-	b2Vec2 p1 = b2MulT(xf.R, input.p1 - xf.position);
-	b2Vec2 p2 = b2MulT(xf.R, input.p2 - xf.position);
+	b2Vec2 p1 = b2MulT(xf.q, input.p1 - xf.p);
+	b2Vec2 p2 = b2MulT(xf.q, input.p2 - xf.p);
 	b2Vec2 d = p2 - p1;
 
 	b2Vec2 v1 = m_vertex1;

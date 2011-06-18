@@ -123,34 +123,47 @@ protected:
 	friend class b2Joint;
 	b2WheelJoint(const b2WheelJointDef* def);
 
-	void InitVelocityConstraints(const b2TimeStep& step);
-	void SolveVelocityConstraints(const b2TimeStep& step);
-	bool SolvePositionConstraints(float32 baumgarte);
+	void InitVelocityConstraints(const b2SolverData& data);
+	void SolveVelocityConstraints(const b2SolverData& data);
+	bool SolvePositionConstraints(const b2SolverData& data);
 
+	float32 m_frequencyHz;
+	float32 m_dampingRatio;
+
+	// Solver shared
 	b2Vec2 m_localAnchorA;
 	b2Vec2 m_localAnchorB;
 	b2Vec2 m_localXAxisA;
 	b2Vec2 m_localYAxisA;
+
+	float32 m_impulse;
+	float32 m_motorImpulse;
+	float32 m_springImpulse;
+
+	float32 m_maxMotorTorque;
+	float32 m_motorSpeed;
+	bool m_enableMotor;
+
+	// Solver temp
+	int32 m_indexA;
+	int32 m_indexB;
+	b2Vec2 m_localCenterA;
+	b2Vec2 m_localCenterB;
+	float32 m_invMassA;
+	float32 m_invMassB;
+	float32 m_invIA;
+	float32 m_invIB;
 
 	b2Vec2 m_ax, m_ay;
 	float32 m_sAx, m_sBx;
 	float32 m_sAy, m_sBy;
 
 	float32 m_mass;
-	float32 m_impulse;
 	float32 m_motorMass;
-	float32 m_motorImpulse;
 	float32 m_springMass;
-	float32 m_springImpulse;
 
-	float32 m_maxMotorTorque;
-	float32 m_motorSpeed;
-	float32 m_frequencyHz;
-	float32 m_dampingRatio;
 	float32 m_bias;
 	float32 m_gamma;
-
-	bool m_enableMotor;
 };
 
 inline float32 b2WheelJoint::GetMotorSpeed() const

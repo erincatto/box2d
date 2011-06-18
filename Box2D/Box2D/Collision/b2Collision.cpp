@@ -49,7 +49,7 @@ void b2WorldManifold::Initialize(const b2Manifold* manifold,
 
 	case b2Manifold::e_faceA:
 		{
-			normal = b2Mul(xfA.R, manifold->localNormal);
+			normal = b2Mul(xfA.q, manifold->localNormal);
 			b2Vec2 planePoint = b2Mul(xfA, manifold->localPoint);
 			
 			for (int32 i = 0; i < manifold->pointCount; ++i)
@@ -64,7 +64,7 @@ void b2WorldManifold::Initialize(const b2Manifold* manifold,
 
 	case b2Manifold::e_faceB:
 		{
-			normal = b2Mul(xfB.R, manifold->localNormal);
+			normal = b2Mul(xfB.q, manifold->localNormal);
 			b2Vec2 planePoint = b2Mul(xfB, manifold->localPoint);
 
 			for (int32 i = 0; i < manifold->pointCount; ++i)

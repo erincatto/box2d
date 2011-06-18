@@ -117,7 +117,7 @@ struct b2WorldManifold
 					const b2Transform& xfA, float32 radiusA,
 					const b2Transform& xfB, float32 radiusB);
 
-	b2Vec2 normal;						///< world vector pointing from A to B
+	b2Vec2 normal;							///< world vector pointing from A to B
 	b2Vec2 points[b2_maxManifoldPoints];	///< world contact point (point of intersection)
 };
 

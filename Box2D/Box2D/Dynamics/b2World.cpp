@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2009 Erin Catto http://www.box2d.org
+* Copyright (c) 2006-2011 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -367,6 +367,10 @@ void b2World::DestroyJoint(b2Joint* j)
 // Find islands, integrate and solve constraints, solve position constraints
 void b2World::Solve(const b2TimeStep& step)
 {
+	m_profile.solveInit = 0.0f;
+	m_profile.solveVelocity = 0.0f;
+	m_profile.solvePosition = 0.0f;
+
 	// Size the island for the worst case.
 	b2Island island(m_bodyCount,
 					m_contactManager.m_contactCount,
@@ -505,7 +509,11 @@ void b2World::Solve(const b2TimeStep& step)
 			}
 		}
 
-		island.Solve(step, m_gravity, m_allowSleep);
+		b2Profile profile;
+		island.Solve(&profile, step, m_gravity, m_allowSleep);
+		m_profile.solveInit += profile.solveInit;
+		m_profile.solveVelocity += profile.solveVelocity;
+		m_profile.solvePosition += profile.solvePosition;
 
 		// Post solve cleanup.
 		for (int32 i = 0; i < island.m_bodyCount; ++i)
@@ -521,26 +529,30 @@ void b2World::Solve(const b2TimeStep& step)
 
 	m_stackAllocator.Free(stack);
 
-	// Synchronize fixtures, check for out of range bodies.
-	for (b2Body* b = m_bodyList; b; b = b->GetNext())
 	{
-		// If a body was not in an island then it did not move.
-		if ((b->m_flags & b2Body::e_islandFlag) == 0)
+		b2Timer timer;
+		// Synchronize fixtures, check for out of range bodies.
+		for (b2Body* b = m_bodyList; b; b = b->GetNext())
 		{
-			continue;
+			// If a body was not in an island then it did not move.
+			if ((b->m_flags & b2Body::e_islandFlag) == 0)
+			{
+				continue;
+			}
+
+			if (b->GetType() == b2_staticBody)
+			{
+				continue;
+			}
+
+			// Update fixtures (for broad-phase).
+			b->SynchronizeFixtures();
 		}
 
-		if (b->GetType() == b2_staticBody)
-		{
-			continue;
-		}
-
-		// Update fixtures (for broad-phase).
-		b->SynchronizeFixtures();
+		// Look for new contacts.
+		m_contactManager.FindNewContacts();
+		m_profile.broadphase = timer.GetMilliseconds();
 	}
-
-	// Look for new contacts.
-	m_contactManager.FindNewContacts();
 }
 
 // Find TOI contacts and solve them.
@@ -830,7 +842,7 @@ void b2World::SolveTOI(const b2TimeStep& step)
 		subStep.positionIterations = 20;
 		subStep.velocityIterations = step.velocityIterations;
 		subStep.warmStarting = false;
-		island.SolveTOI(subStep, bA, bB);
+		island.SolveTOI(subStep, bA->m_islandIndex, bB->m_islandIndex);
 
 		// Reset island flags and synchronize broad-phase proxies.
 		for (int32 i = 0; i < island.m_bodyCount; ++i)
@@ -1008,7 +1020,7 @@ void b2World::DrawShape(b2Fixture* fixture, const b2Transform& xf, const b2Color
 
 			b2Vec2 center = b2Mul(xf, circle->m_p);
 			float32 radius = circle->m_radius;
-			b2Vec2 axis = xf.R.col1;
+			b2Vec2 axis = b2Mul(xf.q, b2Vec2(1.0f, 0.0f));
 
 			m_debugDraw->DrawSolidCircle(center, radius, axis, color);
 		}
@@ -1064,8 +1076,8 @@ void b2World::DrawJoint(b2Joint* joint)
 	b2Body* bodyB = joint->GetBodyB();
 	const b2Transform& xf1 = bodyA->GetTransform();
 	const b2Transform& xf2 = bodyB->GetTransform();
-	b2Vec2 x1 = xf1.position;
-	b2Vec2 x2 = xf2.position;
+	b2Vec2 x1 = xf1.p;
+	b2Vec2 x2 = xf2.p;
 	b2Vec2 p1 = joint->GetAnchorA();
 	b2Vec2 p2 = joint->GetAnchorB();
 
@@ -1197,7 +1209,7 @@ void b2World::DrawDebugData()
 		for (b2Body* b = m_bodyList; b; b = b->GetNext())
 		{
 			b2Transform xf = b->GetTransform();
-			xf.position = b->GetWorldCenter();
+			xf.p = b->GetWorldCenter();
 			m_debugDraw->DrawTransform(xf);
 		}
 	}

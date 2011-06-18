@@ -246,7 +246,7 @@ b2EPCollider::b2EPCollider(const b2EdgeShape* edgeA, const b2Transform& xfA,
 	for (int32 i = 0; i < polygonB->m_vertexCount; ++i)
 	{
 		m_proxyB.vertices[i] = b2Mul(m_xf, polygonB->m_vertices[i]);
-		m_proxyB.normals[i] = b2Mul(m_xf.R, polygonB->m_normals[i]);
+		m_proxyB.normals[i] = b2Mul(m_xf.q, polygonB->m_normals[i]);
 	}
 
 	m_radius = 2.0f * b2_polygonRadius;
@@ -386,7 +386,7 @@ void b2EPCollider::Collide(b2Manifold* manifold)
 	}
 	else
 	{
-		manifold->localNormal = b2MulT(m_xf.R, normal);
+		manifold->localNormal = b2MulT(m_xf.q, normal);
 		manifold->localPoint = b2MulT(m_xf, planePoint);
 	}
 
