@@ -532,10 +532,10 @@ void b2Distance(b2DistanceOutput* output,
 
 		// Compute a tentative new simplex vertex using support points.
 		b2SimplexVertex* vertex = vertices + simplex.m_count;
-		vertex->indexA = proxyA->GetSupport(b2MulT(transformA.R, -d));
+		vertex->indexA = proxyA->GetSupport(b2MulT(transformA.q, -d));
 		vertex->wA = b2Mul(transformA, proxyA->GetVertex(vertex->indexA));
 		b2Vec2 wBLocal;
-		vertex->indexB = proxyB->GetSupport(b2MulT(transformB.R, d));
+		vertex->indexB = proxyB->GetSupport(b2MulT(transformB.q, d));
 		vertex->wB = b2Mul(transformB, proxyB->GetVertex(vertex->indexB));
 		vertex->w = vertex->wB - vertex->wA;
 

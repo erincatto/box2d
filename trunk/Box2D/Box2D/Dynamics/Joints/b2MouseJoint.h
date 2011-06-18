@@ -94,21 +94,30 @@ protected:
 
 	b2MouseJoint(const b2MouseJointDef* def);
 
-	void InitVelocityConstraints(const b2TimeStep& step);
-	void SolveVelocityConstraints(const b2TimeStep& step);
-	bool SolvePositionConstraints(float32 baumgarte) { B2_NOT_USED(baumgarte); return true; }
+	void InitVelocityConstraints(const b2SolverData& data);
+	void SolveVelocityConstraints(const b2SolverData& data);
+	bool SolvePositionConstraints(const b2SolverData& data);
 
-	b2Vec2 m_localAnchor;
-	b2Vec2 m_target;
-	b2Vec2 m_impulse;
-
-	b2Mat22 m_mass;		// effective mass for point-to-point constraint.
-	b2Vec2 m_C;				// position error
-	float32 m_maxForce;
+	b2Vec2 m_localAnchorB;
+	b2Vec2 m_targetA;
 	float32 m_frequencyHz;
 	float32 m_dampingRatio;
 	float32 m_beta;
+	
+	// Solver shared
+	b2Vec2 m_impulse;
+	float32 m_maxForce;
 	float32 m_gamma;
+
+	// Solver temp
+	int32 m_indexA;
+	int32 m_indexB;
+	b2Vec2 m_rB;
+	b2Vec2 m_localCenterB;
+	float32 m_invMassB;
+	float32 m_invIB;
+	b2Mat22 m_mass;
+	b2Vec2 m_C;
 };
 
 #endif
