@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2007-2010 Erin Catto http://www.box2d.org
+* Copyright (c) 2007-2011 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -43,16 +43,32 @@ b2RopeJoint::b2RopeJoint(const b2RopeJointDef* def)
 	m_length = 0.0f;
 }
 
-void b2RopeJoint::InitVelocityConstraints(const b2TimeStep& step)
+void b2RopeJoint::InitVelocityConstraints(const b2SolverData& data)
 {
-	b2Body* bA = m_bodyA;
-	b2Body* bB = m_bodyB;
+	m_indexA = m_bodyA->m_islandIndex;
+	m_indexB = m_bodyB->m_islandIndex;
+	m_localCenterA = m_bodyA->m_sweep.localCenter;
+	m_localCenterB = m_bodyB->m_sweep.localCenter;
+	m_invMassA = m_bodyA->m_invMass;
+	m_invMassB = m_bodyB->m_invMass;
+	m_invIA = m_bodyA->m_invI;
+	m_invIB = m_bodyB->m_invI;
 
-	m_rA = b2Mul(bA->GetTransform().R, m_localAnchorA - bA->GetLocalCenter());
-	m_rB = b2Mul(bB->GetTransform().R, m_localAnchorB - bB->GetLocalCenter());
+	b2Vec2 cA = data.positions[m_indexA].c;
+	float32 aA = data.positions[m_indexA].a;
+	b2Vec2 vA = data.velocities[m_indexA].v;
+	float32 wA = data.velocities[m_indexA].w;
 
-	// Rope axis
-	m_u = bB->m_sweep.c + m_rB - bA->m_sweep.c - m_rA;
+	b2Vec2 cB = data.positions[m_indexB].c;
+	float32 aB = data.positions[m_indexB].a;
+	b2Vec2 vB = data.velocities[m_indexB].v;
+	float32 wB = data.velocities[m_indexB].w;
+
+	b2Rot qA(aA), qB(aB);
+
+	m_rA = b2Mul(qA, m_localAnchorA - m_localCenterA);
+	m_rB = b2Mul(qB, m_localAnchorB - m_localCenterB);
+	m_u = cB + m_rB - cA - m_rA;
 
 	m_length = m_u.Length();
 
@@ -81,44 +97,49 @@ void b2RopeJoint::InitVelocityConstraints(const b2TimeStep& step)
 	// Compute effective mass.
 	float32 crA = b2Cross(m_rA, m_u);
 	float32 crB = b2Cross(m_rB, m_u);
-	float32 invMass = bA->m_invMass + bA->m_invI * crA * crA + bB->m_invMass + bB->m_invI * crB * crB;
+	float32 invMass = m_invMassA + m_invIA * crA * crA + m_invMassB + m_invIB * crB * crB;
 
 	m_mass = invMass != 0.0f ? 1.0f / invMass : 0.0f;
 
-	if (step.warmStarting)
+	if (data.step.warmStarting)
 	{
 		// Scale the impulse to support a variable time step.
-		m_impulse *= step.dtRatio;
+		m_impulse *= data.step.dtRatio;
 
 		b2Vec2 P = m_impulse * m_u;
-		bA->m_linearVelocity -= bA->m_invMass * P;
-		bA->m_angularVelocity -= bA->m_invI * b2Cross(m_rA, P);
-		bB->m_linearVelocity += bB->m_invMass * P;
-		bB->m_angularVelocity += bB->m_invI * b2Cross(m_rB, P);
+		vA -= m_invMassA * P;
+		wA -= m_invIA * b2Cross(m_rA, P);
+		vB += m_invMassB * P;
+		wB += m_invIB * b2Cross(m_rB, P);
 	}
 	else
 	{
 		m_impulse = 0.0f;
 	}
+
+	data.velocities[m_indexA].v = vA;
+	data.velocities[m_indexA].w = wA;
+	data.velocities[m_indexB].v = vB;
+	data.velocities[m_indexB].w = wB;
 }
 
-void b2RopeJoint::SolveVelocityConstraints(const b2TimeStep& step)
+void b2RopeJoint::SolveVelocityConstraints(const b2SolverData& data)
 {
-	B2_NOT_USED(step);
-
-	b2Body* bA = m_bodyA;
-	b2Body* bB = m_bodyB;
+	b2Vec2 vA = data.velocities[m_indexA].v;
+	float32 wA = data.velocities[m_indexA].w;
+	b2Vec2 vB = data.velocities[m_indexB].v;
+	float32 wB = data.velocities[m_indexB].w;
 
 	// Cdot = dot(u, v + cross(w, r))
-	b2Vec2 vA = bA->m_linearVelocity + b2Cross(bA->m_angularVelocity, m_rA);
-	b2Vec2 vB = bB->m_linearVelocity + b2Cross(bB->m_angularVelocity, m_rB);
+	b2Vec2 vpA = vA + b2Cross(wA, m_rA);
+	b2Vec2 vpB = vB + b2Cross(wB, m_rB);
 	float32 C = m_length - m_maxLength;
-	float32 Cdot = b2Dot(m_u, vB - vA);
+	float32 Cdot = b2Dot(m_u, vpB - vpA);
 
 	// Predictive constraint.
 	if (C < 0.0f)
 	{
-		Cdot += step.inv_dt * C;
+		Cdot += data.step.inv_dt * C;
 	}
 
 	float32 impulse = -m_mass * Cdot;
@@ -127,23 +148,29 @@ void b2RopeJoint::SolveVelocityConstraints(const b2TimeStep& step)
 	impulse = m_impulse - oldImpulse;
 
 	b2Vec2 P = impulse * m_u;
-	bA->m_linearVelocity -= bA->m_invMass * P;
-	bA->m_angularVelocity -= bA->m_invI * b2Cross(m_rA, P);
-	bB->m_linearVelocity += bB->m_invMass * P;
-	bB->m_angularVelocity += bB->m_invI * b2Cross(m_rB, P);
+	vA -= m_invMassA * P;
+	wA -= m_invIA * b2Cross(m_rA, P);
+	vB += m_invMassB * P;
+	wB += m_invIB * b2Cross(m_rB, P);
+
+	data.velocities[m_indexA].v = vA;
+	data.velocities[m_indexA].w = wA;
+	data.velocities[m_indexB].v = vB;
+	data.velocities[m_indexB].w = wB;
 }
 
-bool b2RopeJoint::SolvePositionConstraints(float32 baumgarte)
+bool b2RopeJoint::SolvePositionConstraints(const b2SolverData& data)
 {
-	B2_NOT_USED(baumgarte);
+	b2Vec2 cA = data.positions[m_indexA].c;
+	float32 aA = data.positions[m_indexA].a;
+	b2Vec2 cB = data.positions[m_indexB].c;
+	float32 aB = data.positions[m_indexB].a;
 
-	b2Body* bA = m_bodyA;
-	b2Body* bB = m_bodyB;
+	b2Rot qA(aA), qB(aB);
 
-	b2Vec2 rA = b2Mul(bA->GetTransform().R, m_localAnchorA - bA->GetLocalCenter());
-	b2Vec2 rB = b2Mul(bB->GetTransform().R, m_localAnchorB - bB->GetLocalCenter());
-
-	b2Vec2 u = bB->m_sweep.c + rB - bA->m_sweep.c - rA;
+	b2Vec2 rA = b2Mul(qA, m_localAnchorA - m_localCenterA);
+	b2Vec2 rB = b2Mul(qB, m_localAnchorB - m_localCenterB);
+	b2Vec2 u = cB + rB - cA - rA;
 
 	float32 length = u.Normalize();
 	float32 C = length - m_maxLength;
@@ -153,13 +180,15 @@ bool b2RopeJoint::SolvePositionConstraints(float32 baumgarte)
 	float32 impulse = -m_mass * C;
 	b2Vec2 P = impulse * u;
 
-	bA->m_sweep.c -= bA->m_invMass * P;
-	bA->m_sweep.a -= bA->m_invI * b2Cross(rA, P);
-	bB->m_sweep.c += bB->m_invMass * P;
-	bB->m_sweep.a += bB->m_invI * b2Cross(rB, P);
+	cA -= m_invMassA * P;
+	aA -= m_invIA * b2Cross(rA, P);
+	cB += m_invMassB * P;
+	aB += m_invIB * b2Cross(rB, P);
 
-	bA->SynchronizeTransform();
-	bB->SynchronizeTransform();
+	data.positions[m_indexA].c = cA;
+	data.positions[m_indexA].a = aA;
+	data.positions[m_indexB].c = cB;
+	data.positions[m_indexB].a = aB;
 
 	return length - m_maxLength < b2_linearSlop;
 }

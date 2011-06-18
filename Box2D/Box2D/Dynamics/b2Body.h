@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2009 Erin Catto http://www.box2d.org
+* Copyright (c) 2006-2011 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -377,6 +377,7 @@ private:
 	friend class b2Island;
 	friend class b2ContactManager;
 	friend class b2ContactSolver;
+	friend class b2Contact;
 	
 	friend class b2DistanceJoint;
 	friend class b2GearJoint;
@@ -464,12 +465,12 @@ inline const b2Transform& b2Body::GetTransform() const
 
 inline const b2Vec2& b2Body::GetPosition() const
 {
-	return m_xf.position;
+	return m_xf.p;
 }
 
 inline float32 b2Body::GetAngle() const
 {
-	return m_sweep.a;
+	return m_xf.q.GetAngle();
 }
 
 inline const b2Vec2& b2Body::GetWorldCenter() const
@@ -546,7 +547,7 @@ inline b2Vec2 b2Body::GetWorldPoint(const b2Vec2& localPoint) const
 
 inline b2Vec2 b2Body::GetWorldVector(const b2Vec2& localVector) const
 {
-	return b2Mul(m_xf.R, localVector);
+	return b2Mul(m_xf.q, localVector);
 }
 
 inline b2Vec2 b2Body::GetLocalPoint(const b2Vec2& worldPoint) const
@@ -556,7 +557,7 @@ inline b2Vec2 b2Body::GetLocalPoint(const b2Vec2& worldPoint) const
 
 inline b2Vec2 b2Body::GetLocalVector(const b2Vec2& worldVector) const
 {
-	return b2MulT(m_xf.R, worldVector);
+	return b2MulT(m_xf.q, worldVector);
 }
 
 inline b2Vec2 b2Body::GetLinearVelocityFromWorldPoint(const b2Vec2& worldPoint) const
@@ -796,17 +797,18 @@ inline void b2Body::ApplyAngularImpulse(float32 impulse)
 
 inline void b2Body::SynchronizeTransform()
 {
-	m_xf.R.Set(m_sweep.a);
-	m_xf.position = m_sweep.c - b2Mul(m_xf.R, m_sweep.localCenter);
+	m_xf.q.Set(m_sweep.a);
+	m_xf.p = m_sweep.c - b2Mul(m_xf.q, m_sweep.localCenter);
 }
 
 inline void b2Body::Advance(float32 alpha)
 {
-	// Advance to the new safe time.
+	// Advance to the new safe time. This doesn't sync the broad-phase.
 	m_sweep.Advance(alpha);
 	m_sweep.c = m_sweep.c0;
 	m_sweep.a = m_sweep.a0;
-	SynchronizeTransform();
+	m_xf.q.Set(m_sweep.a);
+	m_xf.p = m_sweep.c - b2Mul(m_xf.q, m_sweep.localCenter);
 }
 
 inline b2World* b2Body::GetWorld()

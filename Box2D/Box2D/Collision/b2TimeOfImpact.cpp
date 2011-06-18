@@ -76,7 +76,7 @@ struct b2SeparationFunction
 
 			m_axis = b2Cross(localPointB2 - localPointB1, 1.0f);
 			m_axis.Normalize();
-			b2Vec2 normal = b2Mul(xfB.R, m_axis);
+			b2Vec2 normal = b2Mul(xfB.q, m_axis);
 
 			m_localPoint = 0.5f * (localPointB1 + localPointB2);
 			b2Vec2 pointB = b2Mul(xfB, m_localPoint);
@@ -101,7 +101,7 @@ struct b2SeparationFunction
 			
 			m_axis = b2Cross(localPointA2 - localPointA1, 1.0f);
 			m_axis.Normalize();
-			b2Vec2 normal = b2Mul(xfA.R, m_axis);
+			b2Vec2 normal = b2Mul(xfA.q, m_axis);
 
 			m_localPoint = 0.5f * (localPointA1 + localPointA2);
 			b2Vec2 pointA = b2Mul(xfA, m_localPoint);
@@ -129,8 +129,8 @@ struct b2SeparationFunction
 		{
 		case e_points:
 			{
-				b2Vec2 axisA = b2MulT(xfA.R,  m_axis);
-				b2Vec2 axisB = b2MulT(xfB.R, -m_axis);
+				b2Vec2 axisA = b2MulT(xfA.q,  m_axis);
+				b2Vec2 axisB = b2MulT(xfB.q, -m_axis);
 
 				*indexA = m_proxyA->GetSupport(axisA);
 				*indexB = m_proxyB->GetSupport(axisB);
@@ -147,10 +147,10 @@ struct b2SeparationFunction
 
 		case e_faceA:
 			{
-				b2Vec2 normal = b2Mul(xfA.R, m_axis);
+				b2Vec2 normal = b2Mul(xfA.q, m_axis);
 				b2Vec2 pointA = b2Mul(xfA, m_localPoint);
 
-				b2Vec2 axisB = b2MulT(xfB.R, -normal);
+				b2Vec2 axisB = b2MulT(xfB.q, -normal);
 				
 				*indexA = -1;
 				*indexB = m_proxyB->GetSupport(axisB);
@@ -164,10 +164,10 @@ struct b2SeparationFunction
 
 		case e_faceB:
 			{
-				b2Vec2 normal = b2Mul(xfB.R, m_axis);
+				b2Vec2 normal = b2Mul(xfB.q, m_axis);
 				b2Vec2 pointB = b2Mul(xfB, m_localPoint);
 
-				b2Vec2 axisA = b2MulT(xfA.R, -normal);
+				b2Vec2 axisA = b2MulT(xfA.q, -normal);
 
 				*indexB = -1;
 				*indexA = m_proxyA->GetSupport(axisA);
@@ -197,8 +197,8 @@ struct b2SeparationFunction
 		{
 		case e_points:
 			{
-				b2Vec2 axisA = b2MulT(xfA.R,  m_axis);
-				b2Vec2 axisB = b2MulT(xfB.R, -m_axis);
+				b2Vec2 axisA = b2MulT(xfA.q,  m_axis);
+				b2Vec2 axisB = b2MulT(xfB.q, -m_axis);
 
 				b2Vec2 localPointA = m_proxyA->GetVertex(indexA);
 				b2Vec2 localPointB = m_proxyB->GetVertex(indexB);
@@ -212,10 +212,10 @@ struct b2SeparationFunction
 
 		case e_faceA:
 			{
-				b2Vec2 normal = b2Mul(xfA.R, m_axis);
+				b2Vec2 normal = b2Mul(xfA.q, m_axis);
 				b2Vec2 pointA = b2Mul(xfA, m_localPoint);
 
-				b2Vec2 axisB = b2MulT(xfB.R, -normal);
+				b2Vec2 axisB = b2MulT(xfB.q, -normal);
 
 				b2Vec2 localPointB = m_proxyB->GetVertex(indexB);
 				b2Vec2 pointB = b2Mul(xfB, localPointB);
@@ -226,10 +226,10 @@ struct b2SeparationFunction
 
 		case e_faceB:
 			{
-				b2Vec2 normal = b2Mul(xfB.R, m_axis);
+				b2Vec2 normal = b2Mul(xfB.q, m_axis);
 				b2Vec2 pointB = b2Mul(xfB, m_localPoint);
 
-				b2Vec2 axisA = b2MulT(xfA.R, -normal);
+				b2Vec2 axisA = b2MulT(xfA.q, -normal);
 
 				b2Vec2 localPointA = m_proxyA->GetVertex(indexA);
 				b2Vec2 pointA = b2Mul(xfA, localPointA);

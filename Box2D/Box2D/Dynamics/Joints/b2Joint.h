@@ -23,7 +23,7 @@
 
 class b2Body;
 class b2Joint;
-struct b2TimeStep;
+struct b2SolverData;
 class b2BlockAllocator;
 
 enum b2JointType
@@ -51,14 +51,9 @@ enum b2LimitState
 
 struct b2Jacobian
 {
-	b2Vec2 linearA;
+	b2Vec2 linear;
 	float32 angularA;
-	b2Vec2 linearB;
 	float32 angularB;
-
-	void SetZero();
-	void Set(const b2Vec2& x1, float32 a1, const b2Vec2& x2, float32 a2);
-	float32 Compute(const b2Vec2& x1, float32 a1, const b2Vec2& x2, float32 a2);
 };
 
 /// A joint edge is used to connect bodies and joints together
@@ -158,11 +153,11 @@ protected:
 	b2Joint(const b2JointDef* def);
 	virtual ~b2Joint() {}
 
-	virtual void InitVelocityConstraints(const b2TimeStep& step) = 0;
-	virtual void SolveVelocityConstraints(const b2TimeStep& step) = 0;
+	virtual void InitVelocityConstraints(const b2SolverData& data) = 0;
+	virtual void SolveVelocityConstraints(const b2SolverData& data) = 0;
 
 	// This returns true if the position errors are within tolerance.
-	virtual bool SolvePositionConstraints(float32 baumgarte) = 0;
+	virtual bool SolvePositionConstraints(const b2SolverData& data) = 0;
 
 	b2JointType m_type;
 	b2Joint* m_prev;
@@ -176,30 +171,7 @@ protected:
 	bool m_collideConnected;
 
 	void* m_userData;
-
-	// Cache here per time step to reduce cache misses.
-	// TODO_ERIN nuke
-	b2Vec2 m_localCenterA, m_localCenterB;
-	float32 m_invMassA, m_invIA;
-	float32 m_invMassB, m_invIB;
 };
-
-inline void b2Jacobian::SetZero()
-{
-	linearA.SetZero(); angularA = 0.0f;
-	linearB.SetZero(); angularB = 0.0f;
-}
-
-inline void b2Jacobian::Set(const b2Vec2& x1, float32 a1, const b2Vec2& x2, float32 a2)
-{
-	linearA = x1; angularA = a1;
-	linearB = x2; angularB = a2;
-}
-
-inline float32 b2Jacobian::Compute(const b2Vec2& x1, float32 a1, const b2Vec2& x2, float32 a2)
-{
-	return b2Dot(linearA, x1) + angularA * a1 + b2Dot(linearB, x2) + angularB * a2;
-}
 
 inline b2JointType b2Joint::GetType() const
 {
