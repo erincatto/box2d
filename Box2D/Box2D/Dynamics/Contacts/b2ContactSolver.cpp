@@ -50,11 +50,12 @@ b2ContactSolver::b2ContactSolver(b2ContactSolverDef* def)
 	m_velocityConstraints = (b2ContactVelocityConstraint*)m_allocator->Allocate(m_count * sizeof(b2ContactVelocityConstraint));
 	m_positions = def->positions;
 	m_velocities = def->velocities;
+	m_contacts = def->contacts;
 
 	// Initialize position independent portions of the constraints.
 	for (int32 i = 0; i < m_count; ++i)
 	{
-		b2Contact* contact = def->contacts[i];
+		b2Contact* contact = m_contacts[i];
 
 		b2Fixture* fixtureA = contact->m_fixtureA;
 		b2Fixture* fixtureB = contact->m_fixtureB;
@@ -76,15 +77,10 @@ b2ContactSolver::b2ContactSolver(b2ContactSolverDef* def)
 		vc->indexB = bodyB->m_islandIndex;
 		vc->invMassA = bodyA->m_invMass;
 		vc->invMassB = bodyB->m_invMass;
-		vc->localCenterA = bodyA->m_sweep.localCenter;
-		vc->localCenterB = bodyB->m_sweep.localCenter;
 		vc->invIA = bodyA->m_invI;
 		vc->invIB = bodyB->m_invI;
-		vc->manifold = manifold;
+		vc->contactIndex = i;
 		vc->pointCount = pointCount;
-		vc->radiusA = radiusA;
-		vc->radiusB = radiusB;
-		vc->type = manifold->type;
 		vc->K.SetZero();
 		vc->normalMass.SetZero();
 
@@ -143,10 +139,11 @@ void b2ContactSolver::InitializeVelocityConstraints()
 	for (int32 i = 0; i < m_count; ++i)
 	{
 		b2ContactVelocityConstraint* vc = m_velocityConstraints + i;
+		b2ContactPositionConstraint* pc = m_positionConstraints + i;
 
-		float32 radiusA = vc->radiusA;
-		float32 radiusB = vc->radiusB;
-		b2Manifold* manifold = vc->manifold;
+		float32 radiusA = pc->radiusA;
+		float32 radiusB = pc->radiusB;
+		b2Manifold* manifold = m_contacts[vc->contactIndex]->GetManifold();
 
 		int32 indexA = vc->indexA;
 		int32 indexB = vc->indexB;
@@ -155,8 +152,8 @@ void b2ContactSolver::InitializeVelocityConstraints()
 		float32 mB = vc->invMassB;
 		float32 iA = vc->invIA;
 		float32 iB = vc->invIB;
-		b2Vec2 localCenterA = vc->localCenterA;
-		b2Vec2 localCenterB = vc->localCenterB;
+		b2Vec2 localCenterA = pc->localCenterA;
+		b2Vec2 localCenterB = pc->localCenterB;
 
 		b2Vec2 cA = m_positions[indexA].c;
 		float32 aA = m_positions[indexA].a;
@@ -375,7 +372,7 @@ void b2ContactSolver::SolveVelocityConstraints()
 			// vn = A * x + b, vn >= 0, , vn >= 0, x >= 0 and vn_i * x_i = 0 with i = 1..2
 			//
 			// A = J * W * JT and J = ( -n, -r1 x n, n, r2 x n )
-			// b = vn_0 - velocityBias
+			// b = vn0 - velocityBias
 			//
 			// The system is solved using the "Total enumeration method" (s. Murty). The complementary constraint vn_i * x_i
 			// implies that we must have in any solution either vn_i = 0 or x_i = 0. So for the 2D contact problem the cases
@@ -387,14 +384,19 @@ void b2ContactSolver::SolveVelocityConstraints()
 			//
 			// Substitute:
 			// 
-			// x = x' - a
+			// x = a + d
 			// 
-			// Plug into above equation:
+			// a := old total impulse
+			// x := new total impulse
+			// d := incremental impulse 
 			//
-			// vn = A * x + b
-			//    = A * (x' - a) + b
-			//    = A * x' + b - A * a
-			//    = A * x' + b'
+			// For the current iteration we extend the formula for the incremental impulse
+			// to compute the new total impulse:
+			//
+			// vn = A * d + b
+			//    = A * (x - a) + b
+			//    = A * x + b - A * a
+			//    = A * x + b'
 			// b' = b - A * a;
 
 			b2VelocityConstraintPoint* cp1 = vc->points + 0;
@@ -414,6 +416,8 @@ void b2ContactSolver::SolveVelocityConstraints()
 			b2Vec2 b;
 			b.x = vn1 - cp1->velocityBias;
 			b.y = vn2 - cp2->velocityBias;
+
+			// Compute b'
 			b -= b2Mul(vc->K, a);
 
 			const float32 k_errorTol = 1e-3f;
@@ -424,17 +428,17 @@ void b2ContactSolver::SolveVelocityConstraints()
 				//
 				// Case 1: vn = 0
 				//
-				// 0 = A * x' + b'
+				// 0 = A * x + b'
 				//
-				// Solve for x':
+				// Solve for x:
 				//
-				// x' = - inv(A) * b'
+				// x = - inv(A) * b'
 				//
 				b2Vec2 x = - b2Mul(vc->normalMass, b);
 
 				if (x.x >= 0.0f && x.y >= 0.0f)
 				{
-					// Resubstitute for the incremental impulse
+					// Get the incremental impulse
 					b2Vec2 d = x - a;
 
 					// Apply incremental impulse
@@ -468,8 +472,8 @@ void b2ContactSolver::SolveVelocityConstraints()
 				//
 				// Case 2: vn1 = 0 and x2 = 0
 				//
-				//   0 = a11 * x1' + a12 * 0 + b1' 
-				// vn2 = a21 * x1' + a22 * 0 + b2'
+				//   0 = a11 * x1 + a12 * 0 + b1' 
+				// vn2 = a21 * x1 + a22 * 0 + b2'
 				//
 				x.x = - cp1->normalMass * b.x;
 				x.y = 0.0f;
@@ -478,7 +482,7 @@ void b2ContactSolver::SolveVelocityConstraints()
 
 				if (x.x >= 0.0f && vn2 >= 0.0f)
 				{
-					// Resubstitute for the incremental impulse
+					// Get the incremental impulse
 					b2Vec2 d = x - a;
 
 					// Apply incremental impulse
@@ -510,8 +514,8 @@ void b2ContactSolver::SolveVelocityConstraints()
 				//
 				// Case 3: vn2 = 0 and x1 = 0
 				//
-				// vn1 = a11 * 0 + a12 * x2' + b1' 
-				//   0 = a21 * 0 + a22 * x2' + b2'
+				// vn1 = a11 * 0 + a12 * x2 + b1' 
+				//   0 = a21 * 0 + a22 * x2 + b2'
 				//
 				x.x = 0.0f;
 				x.y = - cp2->normalMass * b.y;
@@ -596,12 +600,12 @@ void b2ContactSolver::StoreImpulses()
 	for (int32 i = 0; i < m_count; ++i)
 	{
 		b2ContactVelocityConstraint* vc = m_velocityConstraints + i;
-		b2Manifold* m = vc->manifold;
+		b2Manifold* manifold = m_contacts[vc->contactIndex]->GetManifold();
 
 		for (int32 j = 0; j < vc->pointCount; ++j)
 		{
-			m->points[j].normalImpulse = vc->points[j].normalImpulse;
-			m->points[j].tangentImpulse = vc->points[j].tangentImpulse;
+			manifold->points[j].normalImpulse = vc->points[j].normalImpulse;
+			manifold->points[j].tangentImpulse = vc->points[j].tangentImpulse;
 		}
 	}
 }
