@@ -48,14 +48,11 @@ struct b2ContactVelocityConstraint
 	int32 indexA;
 	int32 indexB;
 	float32 invMassA, invMassB;
-	b2Vec2 localCenterA, localCenterB;
 	float32 invIA, invIB;
-	b2Manifold::Type type;
-	float32 radiusA, radiusB;
 	float32 friction;
 	float32 restitution;
 	int32 pointCount;
-	b2Manifold* manifold;
+	int32 contactIndex;
 };
 
 struct b2ContactSolverDef
@@ -89,6 +86,7 @@ public:
 	b2StackAllocator* m_allocator;
 	b2ContactPositionConstraint* m_positionConstraints;
 	b2ContactVelocityConstraint* m_velocityConstraints;
+	b2Contact** m_contacts;
 	int m_count;
 };
 
