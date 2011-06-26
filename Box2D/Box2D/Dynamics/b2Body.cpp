@@ -125,6 +125,9 @@ void b2Body::SetType(b2BodyType type)
 	{
 		m_linearVelocity.SetZero();
 		m_angularVelocity = 0.0f;
+		m_sweep.a0 = m_sweep.a;
+		m_sweep.c0 = m_sweep.c;
+		SynchronizeFixtures();
 	}
 
 	SetAwake(true);
