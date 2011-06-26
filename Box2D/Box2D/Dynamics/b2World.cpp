@@ -618,15 +618,15 @@ void b2World::SolveTOI(const b2TimeStep& step)
 				b2Body* bA = fA->GetBody();
 				b2Body* bB = fB->GetBody();
 
-				b2BodyType typeA = bA->GetType();
-				b2BodyType typeB = bB->GetType();
+				b2BodyType typeA = bA->m_type;
+				b2BodyType typeB = bB->m_type;
 				b2Assert(typeA == b2_dynamicBody || typeB == b2_dynamicBody);
 
-				bool awakeA = bA->IsAwake() && typeA != b2_staticBody;
-				bool awakeB = bB->IsAwake() && typeB != b2_staticBody;
+				bool activeA = bA->IsAwake() && typeA != b2_staticBody;
+				bool activeB = bB->IsAwake() && typeB != b2_staticBody;
 
-				// Is at least one body awake?
-				if (awakeA == false && awakeB == false)
+				// Is at least one body active (awake and dynamic or kinematic)?
+				if (activeA == false && activeB == false)
 				{
 					continue;
 				}
