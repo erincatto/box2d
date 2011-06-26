@@ -219,6 +219,10 @@ void b2Fixture::Refilter()
 
 void b2Fixture::SetSensor(bool sensor)
 {
-	m_isSensor = sensor;
+	if (sensor != m_isSensor)
+	{
+		m_body->SetAwake(true);
+		m_isSensor = sensor;
+	}
 }
 
