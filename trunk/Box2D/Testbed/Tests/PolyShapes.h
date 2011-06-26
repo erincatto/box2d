@@ -123,9 +123,9 @@ public:
 
 		{
 			b2Vec2 vertices[3];
-			vertices[2].Set(-0.5f, 0.0f);
+			vertices[0].Set(-0.5f, 0.0f);
 			vertices[1].Set(0.5f, 0.0f);
-			vertices[0].Set(0.0f, 1.5f);
+			vertices[2].Set(0.0f, 1.5f);
 			m_polygons[0].Set(vertices, 3);
 		}
 		
