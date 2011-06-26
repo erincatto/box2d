@@ -44,6 +44,8 @@ public:
 		m_fixture1 = m_body->CreateFixture(&shape, 10.0f);
 
 		m_fixture2 = NULL;
+
+		m_sensor = false;
 	}
 
 	void Keyboard(unsigned char key)
@@ -69,14 +71,23 @@ public:
 				m_body->SetAwake(true);
 			}
 			break;
+
+		case 's':
+			if (m_fixture2 != NULL)
+			{
+				m_sensor = !m_sensor;
+				m_fixture2->SetSensor(m_sensor);
+			}
+			break;
 		}
 	}
-
 
 	void Step(Settings* settings)
 	{
 		Test::Step(settings);
 		m_debugDraw.DrawString(5, m_textLine, "Press: (c) create a shape, (d) destroy a shape.");
+		m_textLine += 15;
+		m_debugDraw.DrawString(5, m_textLine, "sensor = %d", m_sensor);
 		m_textLine += 15;
 	}
 
@@ -88,6 +99,7 @@ public:
 	b2Body* m_body;
 	b2Fixture* m_fixture1;
 	b2Fixture* m_fixture2;
+	bool m_sensor;
 };
 
 #endif
