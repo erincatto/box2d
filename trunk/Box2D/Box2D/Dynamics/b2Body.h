@@ -201,6 +201,10 @@ public:
 	/// @param point the world position of the point of application.
 	void ApplyForce(const b2Vec2& force, const b2Vec2& point);
 
+	/// Apply a force to the center of mass. This wakes up the body.
+	/// @param force the world force vector, usually in Newtons (N).
+	void ApplyForceToCenter(const b2Vec2& force);
+
 	/// Apply a torque. This affects the angular velocity
 	/// without affecting the linear velocity of the center of mass.
 	/// This wakes up the body.
@@ -749,6 +753,21 @@ inline void b2Body::ApplyForce(const b2Vec2& force, const b2Vec2& point)
 
 	m_force += force;
 	m_torque += b2Cross(point - m_sweep.c, force);
+}
+
+inline void b2Body::ApplyForceToCenter(const b2Vec2& force)
+{
+	if (m_type != b2_dynamicBody)
+	{
+		return;
+	}
+
+	if (IsAwake() == false)
+	{
+		SetAwake(true);
+	}
+
+	m_force += force;
 }
 
 inline void b2Body::ApplyTorque(float32 torque)
