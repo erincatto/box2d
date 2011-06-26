@@ -353,6 +353,9 @@ void b2PolygonShape::ComputeMass(b2MassData* massData, float32 density) const
 	center *= 1.0f / area;
 	massData->center = center + s;
 
-	// Inertia tensor relative to the local origin.
-	massData->I = density * I + massData->mass * b2Dot(s, s);
+	// Inertia tensor relative to the local origin (point s).
+	massData->I = density * I;
+	
+	// Shift to center of mass then to original body origin.
+	massData->I += massData->mass * (b2Dot(massData->center, massData->center) - b2Dot(center, center));
 }
