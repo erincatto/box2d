@@ -98,7 +98,7 @@ void b2MouseJoint::InitVelocityConstraints(const b2SolverData& data)
 	m_indexB = m_bodyB->m_islandIndex;
 	m_localCenterB = m_bodyB->m_sweep.localCenter;
 	m_invMassB = m_bodyB->m_invMass;
-	m_invIB = m_bodyB->m_invMass;
+	m_invIB = m_bodyB->m_invI;
 
 	b2Vec2 cB = data.positions[m_indexB].c;
 	float32 aB = data.positions[m_indexB].a;

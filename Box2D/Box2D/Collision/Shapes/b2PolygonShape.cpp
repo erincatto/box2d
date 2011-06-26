@@ -158,10 +158,10 @@ void b2PolygonShape::Set(const b2Vec2* vertices, int32 count)
 			
 			b2Vec2 r = m_vertices[j] - m_vertices[i1];
 
-			// Your polygon is non-convex (it has an indentation) or
-			// has colinear edges.
+			// If this crashes, your polygon is non-convex, has colinear edges,
+			// or the winding order is wrong.
 			float32 s = b2Cross(edge, r);
-			b2Assert(s > 0.0f);
+			b2Assert(s > 0.0f && "ERROR: Please ensure your polygon is convex and has a CCW winding order");
 		}
 	}
 #endif
