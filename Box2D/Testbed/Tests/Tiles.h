@@ -98,14 +98,14 @@ public:
 					bd.type = b2_dynamicBody;
 					bd.position = y;
 
-					if (i == 0 && j == 0)
-					{
-						bd.allowSleep = false;
-					}
-					else
-					{
-						bd.allowSleep = true;
-					}
+					//if (i == 0 && j == 0)
+					//{
+					//	bd.allowSleep = false;
+					//}
+					//else
+					//{
+					//	bd.allowSleep = true;
+					//}
 
 					b2Body* body = m_world->CreateBody(&bd);
 					body->CreateFixture(&shape, 5.0f);
