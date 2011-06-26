@@ -737,7 +737,7 @@ bool b2ContactSolver::SolvePositionConstraints()
 
 	// We can't expect minSpeparation >= -b2_linearSlop because we don't
 	// push the separation above -b2_linearSlop.
-	return minSeparation >= -1.5f * b2_linearSlop;
+	return minSeparation >= -3.0f * b2_linearSlop;
 }
 
 // Sequential position solver for position constraints.
