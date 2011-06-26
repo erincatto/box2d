@@ -306,6 +306,7 @@ void b2Island::Solve(b2Profile* profile, const b2TimeStep& step, const b2Vec2& g
 
 	// Solve position constraints
 	timer.Reset();
+	bool positionSolved = false;
 	for (int32 i = 0; i < step.positionIterations; ++i)
 	{
 		bool contactsOkay = contactSolver.SolvePositionConstraints();
@@ -320,6 +321,7 @@ void b2Island::Solve(b2Profile* profile, const b2TimeStep& step, const b2Vec2& g
 		if (contactsOkay && jointsOkay)
 		{
 			// Exit early if the position errors are small.
+			positionSolved = true;
 			break;
 		}
 	}
@@ -368,7 +370,7 @@ void b2Island::Solve(b2Profile* profile, const b2TimeStep& step, const b2Vec2& g
 			}
 		}
 
-		if (minSleepTime >= b2_timeToSleep)
+		if (minSleepTime >= b2_timeToSleep && positionSolved)
 		{
 			for (int32 i = 0; i < m_bodyCount; ++i)
 			{
