@@ -16,28 +16,44 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef B2_LOOP_SHAPE_H
-#define B2_LOOP_SHAPE_H
+#ifndef B2_CHAIN_SHAPE_H
+#define B2_CHAIN_SHAPE_H
 
 #include <Box2D/Collision/Shapes/b2Shape.h>
 
 class b2EdgeShape;
 
-/// A loop shape is a free form sequence of line segments that form a circular list.
-/// The loop may cross upon itself, but this is not recommended for smooth collision.
-/// The loop has double sided collision, so you can use inside and outside collision.
+/// A chain shape is a free form sequence of line segments.
+/// The chain has two-sided collision, so you can use inside and outside collision.
 /// Therefore, you may use any winding order.
 /// Since there may be many vertices, they are allocated using b2Alloc.
-class b2LoopShape : public b2Shape
+/// Connectivity information is used to create smooth collisions.
+/// WARNING: The chain will not collide properly if there are self-intersections.
+class b2ChainShape : public b2Shape
 {
 public:
-	b2LoopShape();
+	b2ChainShape();
 
 	/// The destructor frees the vertices using b2Free.
-	~b2LoopShape();
+	~b2ChainShape();
 
-	/// Create the loop shape, copy all vertices.
-	void Create(const b2Vec2* vertices, int32 count);
+	/// Create a loop. This automatically adjusts connectivity.
+	/// @param vertices an array of vertices, these are copied
+	/// @param count the vertex count
+	void CreateLoop(const b2Vec2* vertices, int32 count);
+
+	/// Create a chain with isolated end vertices.
+	/// @param vertices an array of vertices, these are copied
+	/// @param count the vertex count
+	void CreateChain(const b2Vec2* vertices, int32 count);
+
+	/// Establish connectivity to a vertex that precedes the first vertex.
+	/// Don't call this for loops.
+	void SetPrevVertex(const b2Vec2& prevVertex);
+
+	/// Establish connectivity to a vertex that follows the last vertex.
+	/// Don't call this for loops.
+	void SetNextVertex(const b2Vec2& nextVertex);
 
 	/// Implement b2Shape. Vertices are cloned using b2Alloc.
 	b2Shape* Clone(b2BlockAllocator* allocator) const;
@@ -64,7 +80,7 @@ public:
 	void ComputeMass(b2MassData* massData, float32 density) const;
 
 	/// Get the number of vertices.
-	int32 GetCount() const { return m_count; }
+	int32 GetVertexCount() const { return m_count; }
 
 	/// Get the vertices (read-only).
 	const b2Vec2& GetVertex(int32 index) const
@@ -83,14 +99,19 @@ protected:
 
 	/// The vertex count.
 	int32 m_count;
+
+	b2Vec2 m_prevVertex, m_nextVertex;
+	bool m_hasPrevVertex, m_hasNextVertex;
 };
 
-inline b2LoopShape::b2LoopShape()
+inline b2ChainShape::b2ChainShape()
 {
-	m_type = e_loop;
+	m_type = e_chain;
 	m_radius = b2_polygonRadius;
 	m_vertices = NULL;
 	m_count = 0;
+	m_hasPrevVertex = NULL;
+	m_hasNextVertex = NULL;
 }
 
 #endif

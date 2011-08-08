@@ -16,39 +16,39 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include <Box2D/Dynamics/Contacts/b2LoopAndCircleContact.h>
+#include <Box2D/Dynamics/Contacts/b2ChainAndCircleContact.h>
 #include <Box2D/Common/b2BlockAllocator.h>
 #include <Box2D/Dynamics/b2Fixture.h>
-#include <Box2D/Collision/Shapes/b2LoopShape.h>
+#include <Box2D/Collision/Shapes/b2ChainShape.h>
 #include <Box2D/Collision/Shapes/b2EdgeShape.h>
 
 #include <new>
 using namespace std;
 
-b2Contact* b2LoopAndCircleContact::Create(b2Fixture* fixtureA, int32 indexA, b2Fixture* fixtureB, int32 indexB, b2BlockAllocator* allocator)
+b2Contact* b2ChainAndCircleContact::Create(b2Fixture* fixtureA, int32 indexA, b2Fixture* fixtureB, int32 indexB, b2BlockAllocator* allocator)
 {
-	void* mem = allocator->Allocate(sizeof(b2LoopAndCircleContact));
-	return new (mem) b2LoopAndCircleContact(fixtureA, indexA, fixtureB, indexB);
+	void* mem = allocator->Allocate(sizeof(b2ChainAndCircleContact));
+	return new (mem) b2ChainAndCircleContact(fixtureA, indexA, fixtureB, indexB);
 }
 
-void b2LoopAndCircleContact::Destroy(b2Contact* contact, b2BlockAllocator* allocator)
+void b2ChainAndCircleContact::Destroy(b2Contact* contact, b2BlockAllocator* allocator)
 {
-	((b2LoopAndCircleContact*)contact)->~b2LoopAndCircleContact();
-	allocator->Free(contact, sizeof(b2LoopAndCircleContact));
+	((b2ChainAndCircleContact*)contact)->~b2ChainAndCircleContact();
+	allocator->Free(contact, sizeof(b2ChainAndCircleContact));
 }
 
-b2LoopAndCircleContact::b2LoopAndCircleContact(b2Fixture* fixtureA, int32 indexA, b2Fixture* fixtureB, int32 indexB)
+b2ChainAndCircleContact::b2ChainAndCircleContact(b2Fixture* fixtureA, int32 indexA, b2Fixture* fixtureB, int32 indexB)
 : b2Contact(fixtureA, indexA, fixtureB, indexB)
 {
-	b2Assert(m_fixtureA->GetType() == b2Shape::e_loop);
+	b2Assert(m_fixtureA->GetType() == b2Shape::e_chain);
 	b2Assert(m_fixtureB->GetType() == b2Shape::e_circle);
 }
 
-void b2LoopAndCircleContact::Evaluate(b2Manifold* manifold, const b2Transform& xfA, const b2Transform& xfB)
+void b2ChainAndCircleContact::Evaluate(b2Manifold* manifold, const b2Transform& xfA, const b2Transform& xfB)
 {
-	b2LoopShape* loop = (b2LoopShape*)m_fixtureA->GetShape();
+	b2ChainShape* chain = (b2ChainShape*)m_fixtureA->GetShape();
 	b2EdgeShape edge;
-	loop->GetChildEdge(&edge, m_indexA);
+	chain->GetChildEdge(&edge, m_indexA);
 	b2CollideEdgeAndCircle(	manifold, &edge, xfA,
 							(b2CircleShape*)m_fixtureB->GetShape(), xfB);
 }
