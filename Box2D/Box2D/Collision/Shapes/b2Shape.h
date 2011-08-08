@@ -49,7 +49,7 @@ public:
 		e_circle = 0,
 		e_edge = 1,
 		e_polygon = 2,
-		e_loop = 3,
+		e_chain = 3,
 		e_typeCount = 4
 	};
 

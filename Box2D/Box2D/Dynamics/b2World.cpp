@@ -27,7 +27,7 @@
 #include <Box2D/Collision/b2BroadPhase.h>
 #include <Box2D/Collision/Shapes/b2CircleShape.h>
 #include <Box2D/Collision/Shapes/b2EdgeShape.h>
-#include <Box2D/Collision/Shapes/b2LoopShape.h>
+#include <Box2D/Collision/Shapes/b2ChainShape.h>
 #include <Box2D/Collision/Shapes/b2PolygonShape.h>
 #include <Box2D/Collision/b2TimeOfImpact.h>
 #include <Box2D/Common/b2Draw.h>
@@ -1035,14 +1035,14 @@ void b2World::DrawShape(b2Fixture* fixture, const b2Transform& xf, const b2Color
 		}
 		break;
 
-	case b2Shape::e_loop:
+	case b2Shape::e_chain:
 		{
-			b2LoopShape* loop = (b2LoopShape*)fixture->GetShape();
-			int32 count = loop->GetCount();
-			const b2Vec2* vertices = loop->GetVertices();
+			b2ChainShape* chain = (b2ChainShape*)fixture->GetShape();
+			int32 count = chain->GetVertexCount();
+			const b2Vec2* vertices = chain->GetVertices();
 
-			b2Vec2 v1 = b2Mul(xf, vertices[count - 1]);
-			for (int32 i = 0; i < count; ++i)
+			b2Vec2 v1 = b2Mul(xf, vertices[0]);
+			for (int32 i = 1; i < count; ++i)
 			{
 				b2Vec2 v2 = b2Mul(xf, vertices[i]);
 				m_debugDraw->DrawSegment(v1, v2, color);
