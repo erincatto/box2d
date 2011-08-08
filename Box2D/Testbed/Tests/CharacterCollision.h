@@ -53,6 +53,21 @@ public:
 			ground->CreateFixture(&shape, 0.0f);
 		}
 
+		// Chain shape
+		{
+			b2BodyDef bd;
+			b2Body* ground = m_world->CreateBody(&bd);
+
+			b2Vec2 vs[4];
+			vs[0].Set(5.0f, 7.0f);
+			vs[1].Set(6.0f, 8.0f);
+			vs[2].Set(7.0f, 8.0f);
+			vs[3].Set(8.0f, 7.0f);
+			b2ChainShape shape;
+			shape.CreateChain(vs, 4);
+			ground->CreateFixture(&shape, 0.0f);
+		}
+
 		// Square tiles. This shows that adjacency shapes may
 		// have non-smooth collision. There is no solution
 		// to this problem.
@@ -79,8 +94,8 @@ public:
 			vs[1].Set(1.0f, 3.0f);
 			vs[2].Set(1.0f, 5.0f);
 			vs[3].Set(-1.0f, 5.0f);
-			b2LoopShape shape;
-			shape.Create(vs, 4);
+			b2ChainShape shape;
+			shape.CreateLoop(vs, 4);
 			ground->CreateFixture(&shape, 0.0f);
 		}
 
@@ -101,8 +116,8 @@ public:
 			vs[7].Set(-4.0f, 3.0f);
 			vs[8].Set(-6.0f, 2.0f);
 			vs[9].Set(-6.0f, 0.0f);
-			b2LoopShape shape;
-			shape.Create(vs, 10);
+			b2ChainShape shape;
+			shape.CreateLoop(vs, 10);
 			ground->CreateFixture(&shape, 0.0f);
 		}
 

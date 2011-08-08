@@ -16,39 +16,39 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include <Box2D/Dynamics/Contacts/b2LoopAndPolygonContact.h>
+#include <Box2D/Dynamics/Contacts/b2ChainAndPolygonContact.h>
 #include <Box2D/Common/b2BlockAllocator.h>
 #include <Box2D/Dynamics/b2Fixture.h>
-#include <Box2D/Collision/Shapes/b2LoopShape.h>
+#include <Box2D/Collision/Shapes/b2ChainShape.h>
 #include <Box2D/Collision/Shapes/b2EdgeShape.h>
 
 #include <new>
 using namespace std;
 
-b2Contact* b2LoopAndPolygonContact::Create(b2Fixture* fixtureA, int32 indexA, b2Fixture* fixtureB, int32 indexB, b2BlockAllocator* allocator)
+b2Contact* b2ChainAndPolygonContact::Create(b2Fixture* fixtureA, int32 indexA, b2Fixture* fixtureB, int32 indexB, b2BlockAllocator* allocator)
 {
-	void* mem = allocator->Allocate(sizeof(b2LoopAndPolygonContact));
-	return new (mem) b2LoopAndPolygonContact(fixtureA, indexA, fixtureB, indexB);
+	void* mem = allocator->Allocate(sizeof(b2ChainAndPolygonContact));
+	return new (mem) b2ChainAndPolygonContact(fixtureA, indexA, fixtureB, indexB);
 }
 
-void b2LoopAndPolygonContact::Destroy(b2Contact* contact, b2BlockAllocator* allocator)
+void b2ChainAndPolygonContact::Destroy(b2Contact* contact, b2BlockAllocator* allocator)
 {
-	((b2LoopAndPolygonContact*)contact)->~b2LoopAndPolygonContact();
-	allocator->Free(contact, sizeof(b2LoopAndPolygonContact));
+	((b2ChainAndPolygonContact*)contact)->~b2ChainAndPolygonContact();
+	allocator->Free(contact, sizeof(b2ChainAndPolygonContact));
 }
 
-b2LoopAndPolygonContact::b2LoopAndPolygonContact(b2Fixture* fixtureA, int32 indexA, b2Fixture* fixtureB, int32 indexB)
+b2ChainAndPolygonContact::b2ChainAndPolygonContact(b2Fixture* fixtureA, int32 indexA, b2Fixture* fixtureB, int32 indexB)
 : b2Contact(fixtureA, indexA, fixtureB, indexB)
 {
-	b2Assert(m_fixtureA->GetType() == b2Shape::e_loop);
+	b2Assert(m_fixtureA->GetType() == b2Shape::e_chain);
 	b2Assert(m_fixtureB->GetType() == b2Shape::e_polygon);
 }
 
-void b2LoopAndPolygonContact::Evaluate(b2Manifold* manifold, const b2Transform& xfA, const b2Transform& xfB)
+void b2ChainAndPolygonContact::Evaluate(b2Manifold* manifold, const b2Transform& xfA, const b2Transform& xfB)
 {
-	b2LoopShape* loop = (b2LoopShape*)m_fixtureA->GetShape();
+	b2ChainShape* chain = (b2ChainShape*)m_fixtureA->GetShape();
 	b2EdgeShape edge;
-	loop->GetChildEdge(&edge, m_indexA);
+	chain->GetChildEdge(&edge, m_indexA);
 	b2CollideEdgeAndPolygon(	manifold, &edge, xfA,
 								(b2PolygonShape*)m_fixtureB->GetShape(), xfB);
 }

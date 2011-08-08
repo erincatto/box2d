@@ -67,6 +67,7 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
+	{"Character Collision", CharacterCollision::Create},
 	{"Body Types", BodyTypes::Create},
 	{"Shape Editing", ShapeEditing::Create},
 	{"Tiles", Tiles::Create},
@@ -82,7 +83,6 @@ TestEntry g_testEntries[] =
 	//{"Rope", Rope::Create},
 	{"Web", Web::Create},
 	{"RopeJoint", RopeJoint::Create},
-	{"Character Collision", CharacterCollision::Create},
 	{"Edge Test", EdgeTest::Create},
 	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Pinball", Pinball::Create},
