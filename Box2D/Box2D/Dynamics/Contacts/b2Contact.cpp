@@ -22,8 +22,8 @@
 #include <Box2D/Dynamics/Contacts/b2PolygonContact.h>
 #include <Box2D/Dynamics/Contacts/b2EdgeAndCircleContact.h>
 #include <Box2D/Dynamics/Contacts/b2EdgeAndPolygonContact.h>
-#include <Box2D/Dynamics/Contacts/b2LoopAndCircleContact.h>
-#include <Box2D/Dynamics/Contacts/b2LoopAndPolygonContact.h>
+#include <Box2D/Dynamics/Contacts/b2ChainAndCircleContact.h>
+#include <Box2D/Dynamics/Contacts/b2ChainAndPolygonContact.h>
 #include <Box2D/Dynamics/Contacts/b2ContactSolver.h>
 
 #include <Box2D/Collision/b2Collision.h>
@@ -44,8 +44,8 @@ void b2Contact::InitializeRegisters()
 	AddType(b2PolygonContact::Create, b2PolygonContact::Destroy, b2Shape::e_polygon, b2Shape::e_polygon);
 	AddType(b2EdgeAndCircleContact::Create, b2EdgeAndCircleContact::Destroy, b2Shape::e_edge, b2Shape::e_circle);
 	AddType(b2EdgeAndPolygonContact::Create, b2EdgeAndPolygonContact::Destroy, b2Shape::e_edge, b2Shape::e_polygon);
-	AddType(b2LoopAndCircleContact::Create, b2LoopAndCircleContact::Destroy, b2Shape::e_loop, b2Shape::e_circle);
-	AddType(b2LoopAndPolygonContact::Create, b2LoopAndPolygonContact::Destroy, b2Shape::e_loop, b2Shape::e_polygon);
+	AddType(b2ChainAndCircleContact::Create, b2ChainAndCircleContact::Destroy, b2Shape::e_chain, b2Shape::e_circle);
+	AddType(b2ChainAndPolygonContact::Create, b2ChainAndPolygonContact::Destroy, b2Shape::e_chain, b2Shape::e_polygon);
 }
 
 void b2Contact::AddType(b2ContactCreateFcn* createFcn, b2ContactDestroyFcn* destoryFcn,
