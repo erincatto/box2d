@@ -687,7 +687,7 @@ bool b2ContactSolver::SolvePositionConstraints()
 		float32 aB = m_positions[indexB].a;
 
 		// Solve normal constraints
-		for (int32 j = 0; j < pc->pointCount; ++j)
+		for (int32 j = 0; j < pointCount; ++j)
 		{
 			b2Transform xfA, xfB;
 			xfA.q.Set(aA);
@@ -778,7 +778,7 @@ bool b2ContactSolver::SolveTOIPositionConstraints(int32 toiIndexA, int32 toiInde
 		float32 aB = m_positions[indexB].a;
 
 		// Solve normal constraints
-		for (int32 j = 0; j < pc->pointCount; ++j)
+		for (int32 j = 0; j < pointCount; ++j)
 		{
 			b2Transform xfA, xfB;
 			xfA.q.Set(aA);

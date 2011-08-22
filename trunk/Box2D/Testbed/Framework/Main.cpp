@@ -131,7 +131,10 @@ void Keyboard(unsigned char key, int x, int y)
 	switch (key)
 	{
 	case 27:
+		// TODO: freeglut is not compiling on OSX.
+#ifndef __APPLE__
 		glutLeaveMainLoop();
+#endif
 		exit(0);
 		break;
 
@@ -331,7 +334,10 @@ void Pause(int)
 
 void Exit(int code)
 {
+	// TODO: freeglut is not building on OSX
+#ifndef __APPLE__
 	glutLeaveMainLoop();
+#endif
 	exit(code);
 }
 
