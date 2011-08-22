@@ -93,22 +93,26 @@ void b2ChainShape::GetChildEdge(b2EdgeShape* edge, int32 index) const
 	edge->m_vertex1 = m_vertices[index + 0];
 	edge->m_vertex2 = m_vertices[index + 1];
 
-	if (index == 0)
+	if (index > 0)
+	{
+		edge->m_vertex0 = m_vertices[index - 1];
+		edge->m_hasVertex0 = true;
+	}
+	else
 	{
 		edge->m_vertex0 = m_prevVertex;
 		edge->m_hasVertex0 = m_hasPrevVertex;
 	}
-	else if (index == m_count - 1)
+
+	if (index < m_count - 2)
 	{
-		edge->m_vertex3 = m_nextVertex;
+		edge->m_vertex3 = m_vertices[index + 2];
 		edge->m_hasVertex3 = true;
 	}
 	else
 	{
-		edge->m_vertex0 = m_vertices[index - 1];
-		edge->m_vertex3 = m_vertices[index + 2];
-		edge->m_hasVertex0 = true;
-		edge->m_hasVertex3 = true;
+		edge->m_vertex3 = m_nextVertex;
+		edge->m_hasVertex3 = m_hasNextVertex;
 	}
 }
 

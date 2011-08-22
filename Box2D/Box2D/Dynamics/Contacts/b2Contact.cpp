@@ -51,8 +51,8 @@ void b2Contact::InitializeRegisters()
 void b2Contact::AddType(b2ContactCreateFcn* createFcn, b2ContactDestroyFcn* destoryFcn,
 						b2Shape::Type type1, b2Shape::Type type2)
 {
-	b2Assert(b2Shape::e_unknown < type1 && type1 < b2Shape::e_typeCount);
-	b2Assert(b2Shape::e_unknown < type2 && type2 < b2Shape::e_typeCount);
+	b2Assert(0 <= type1 && type1 < b2Shape::e_typeCount);
+	b2Assert(0 <= type2 && type2 < b2Shape::e_typeCount);
 	
 	s_registers[type1][type2].createFcn = createFcn;
 	s_registers[type1][type2].destroyFcn = destoryFcn;
@@ -77,8 +77,8 @@ b2Contact* b2Contact::Create(b2Fixture* fixtureA, int32 indexA, b2Fixture* fixtu
 	b2Shape::Type type1 = fixtureA->GetType();
 	b2Shape::Type type2 = fixtureB->GetType();
 
-	b2Assert(b2Shape::e_unknown < type1 && type1 < b2Shape::e_typeCount);
-	b2Assert(b2Shape::e_unknown < type2 && type2 < b2Shape::e_typeCount);
+	b2Assert(0 <= type1 && type1 < b2Shape::e_typeCount);
+	b2Assert(0 <= type2 && type2 < b2Shape::e_typeCount);
 	
 	b2ContactCreateFcn* createFcn = s_registers[type1][type2].createFcn;
 	if (createFcn)
@@ -111,8 +111,8 @@ void b2Contact::Destroy(b2Contact* contact, b2BlockAllocator* allocator)
 	b2Shape::Type typeA = contact->GetFixtureA()->GetType();
 	b2Shape::Type typeB = contact->GetFixtureB()->GetType();
 
-	b2Assert(b2Shape::e_unknown < typeA && typeB < b2Shape::e_typeCount);
-	b2Assert(b2Shape::e_unknown < typeA && typeB < b2Shape::e_typeCount);
+	b2Assert(0 <= typeA && typeB < b2Shape::e_typeCount);
+	b2Assert(0 <= typeA && typeB < b2Shape::e_typeCount);
 
 	b2ContactDestroyFcn* destroyFcn = s_registers[typeA][typeB].destroyFcn;
 	destroyFcn(contact, allocator);
