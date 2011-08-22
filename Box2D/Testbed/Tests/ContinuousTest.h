@@ -105,7 +105,7 @@ public:
 			m_textLine += 15;
 		}
 
-		extern int32 b2_toiCalls, b2_toiIters, b2_toiMaxIters;
+		extern int32 b2_toiCalls, b2_toiIters;
 		extern int32 b2_toiRootIters, b2_toiMaxRootIters;
 
 		if (b2_toiCalls > 0)
