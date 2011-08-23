@@ -114,8 +114,6 @@ void b2ContactManager::Collide()
 		int32 indexB = c->GetChildIndexB();
 		b2Body* bodyA = fixtureA->GetBody();
 		b2Body* bodyB = fixtureB->GetBody();
-
-		b2Assert(bodyA->m_type == b2_dynamicBody || bodyB->m_type == b2_dynamicBody);
 		 
 		bool activeA = bodyA->IsAwake() && bodyA->m_type != b2_staticBody;
 		bool activeB = bodyB->IsAwake() && bodyB->m_type != b2_staticBody;
