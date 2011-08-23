@@ -56,6 +56,7 @@ public:
 		// Chain shape
 		{
 			b2BodyDef bd;
+			bd.angle = 0.25f * b2_pi;
 			b2Body* ground = m_world->CreateBody(&bd);
 
 			b2Vec2 vs[4];

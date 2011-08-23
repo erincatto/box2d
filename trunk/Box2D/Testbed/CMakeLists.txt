@@ -13,6 +13,7 @@ set(Testbed_Framework_SRCS
 #define the test files.
 set(Testbed_Tests_SRCS
 	Tests/TestEntries.cpp
+	Tests/AddPair.h
 	Tests/ApplyForce.h
 	Tests/BodyTypes.h
 	Tests/Breakable.h
