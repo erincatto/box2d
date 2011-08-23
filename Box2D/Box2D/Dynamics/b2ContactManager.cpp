@@ -196,6 +196,8 @@ void b2ContactManager::AddPair(void* proxyUserDataA, void* proxyUserDataB)
 		return;
 	}
 
+	// TODO_ERIN use a hash table to remove a potential bottleneck when both
+	// bodies have a lot of contacts.
 	// Does a contact already exist?
 	b2ContactEdge* edge = bodyB->GetContactList();
 	while (edge)
