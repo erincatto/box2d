@@ -22,6 +22,7 @@
 #include <cstring>
 using namespace std;
 
+#include "AddPair.h"
 #include "ApplyForce.h"
 #include "BodyTypes.h"
 #include "Breakable.h"
@@ -67,8 +68,8 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
-	{"Edge Test", EdgeTest::Create},
 	{"Character Collision", CharacterCollision::Create},
+	{"Edge Test", EdgeTest::Create},
 	{"Body Types", BodyTypes::Create},
 	{"Shape Editing", ShapeEditing::Create},
 	{"Tiles", Tiles::Create},
@@ -109,5 +110,6 @@ TestEntry g_testEntries[] =
 	{"Sensor Test", SensorTest::Create},
 	{"Slider Crank", SliderCrank::Create},
 	{"Varying Friction", VaryingFriction::Create},
+	{"Add Pair Stress Test", AddPair::Create},
 	{NULL, NULL}
 };
