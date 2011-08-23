@@ -527,6 +527,7 @@ void b2Island::Report(const b2ContactVelocityConstraint* constraints)
 		const b2ContactVelocityConstraint* vc = constraints + i;
 		
 		b2ContactImpulse impulse;
+		impulse.count = vc->pointCount;
 		for (int32 j = 0; j < vc->pointCount; ++j)
 		{
 			impulse.normalImpulses[j] = vc->points[j].normalImpulse;

@@ -66,6 +66,7 @@ struct b2ContactImpulse
 {
 	float32 normalImpulses[b2_maxManifoldPoints];
 	float32 tangentImpulses[b2_maxManifoldPoints];
+	int32 count;
 };
 
 /// Implement this class to get contact information. You can use these results for
