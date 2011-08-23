@@ -649,6 +649,19 @@ b2EPAxis b2EPCollider::ComputePolygonSeparation()
 	{
 		b2Vec2 n = -m_polygonB.normals[i];
 		
+		float32 s1 = b2Dot(n, m_polygonB.vertices[i] - m_v1);
+		float32 s2 = b2Dot(n, m_polygonB.vertices[i] - m_v2);
+		float32 s = b2Min(s1, s2);
+		
+		if (s > m_radius)
+		{
+			// No collision
+			axis.type = b2EPAxis::e_edgeB;
+			axis.index = i;
+			axis.separation = s;
+			return axis;
+		}
+		
 		// Adjacency
 		if (b2Dot(n, perp) >= 0.0f)
 		{
@@ -663,18 +676,6 @@ b2EPAxis b2EPCollider::ComputePolygonSeparation()
 			{
 				continue;
 			}
-		}
-		
-		float32 s1 = b2Dot(n, m_polygonB.vertices[i] - m_v1);
-		float32 s2 = b2Dot(n, m_polygonB.vertices[i] - m_v2);
-		float32 s = b2Min(s1, s2);
-		
-		if (s > m_radius)
-		{
-			axis.type = b2EPAxis::e_edgeB;
-			axis.index = i;
-			axis.separation = s;
-			return axis;
 		}
 		
 		if (s > axis.separation)
