@@ -291,7 +291,7 @@ public:
 	/// Get the gravity scale of the body.
 	float32 GetGravityScale() const;
 
-	/// Set the angular damping of the body.
+	/// Set the gravity scale of the body.
 	void SetGravityScale(float32 scale);
 
 	/// Set the type of this body. This may alter the mass and velocity.
