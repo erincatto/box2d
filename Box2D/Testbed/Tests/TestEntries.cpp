@@ -68,12 +68,12 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
+	{"Gears", Gears::Create},
 	{"Character Collision", CharacterCollision::Create},
 	{"Edge Test", EdgeTest::Create},
 	{"Body Types", BodyTypes::Create},
 	{"Shape Editing", ShapeEditing::Create},
 	{"Tiles", Tiles::Create},
-	{"Gears", Gears::Create},
 	{"Car", Car::Create},
 	{"Apply Force", ApplyForce::Create},
 	{"Prismatic", Prismatic::Create},
