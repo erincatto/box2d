@@ -137,7 +137,8 @@ public:
 	/// Get the world contact list. With the returned contact, use b2Contact::GetNext to get
 	/// the next contact in the world list. A NULL contact indicates the end of the list.
 	/// @return the head of the world contact list.
-	/// @warning contacts are 
+	/// @warning contacts are created and destroyed in the middle of a time step.
+	/// Use b2ContactListener to avoid missing contacts.
 	b2Contact* GetContactList();
 	const b2Contact* GetContactList() const;
 
