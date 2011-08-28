@@ -44,7 +44,8 @@ typedef double float64;
 
 // Collision
 
-/// The maximum number of contact points between two convex shapes.
+/// The maximum number of contact points between two convex shapes. Do
+/// not change this value.
 #define b2_maxManifoldPoints	2
 
 /// The maximum number of vertices on a convex polygon. You cannot increase
