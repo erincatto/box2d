@@ -95,10 +95,6 @@ int main(int argc, char** argv)
 		// It is generally best to keep the time step and iterations fixed.
 		world.Step(timeStep, velocityIterations, positionIterations);
 
-		// Clear applied body forces. We didn't apply any forces, but you
-		// should know about this function.
-		world.ClearForces();
-
 		// Now print the position and angle of the body.
 		b2Vec2 position = body->GetPosition();
 		float32 angle = body->GetAngle();

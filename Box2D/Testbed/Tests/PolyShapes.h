@@ -261,7 +261,7 @@ public:
 
 		PolyShapesCallback callback;
 		callback.m_circle.m_radius = 2.0f;
-		callback.m_circle.m_p.Set(0.0f, 2.1f);
+		callback.m_circle.m_p.Set(0.0f, 1.1f);
 		callback.m_transform.SetIdentity();
 		callback.m_debugDraw = &m_debugDraw;
 

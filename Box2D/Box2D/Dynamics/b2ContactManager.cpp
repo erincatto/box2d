@@ -237,6 +237,10 @@ void b2ContactManager::AddPair(void* proxyUserDataA, void* proxyUserDataB)
 
 	// Call the factory.
 	b2Contact* c = b2Contact::Create(fixtureA, indexA, fixtureB, indexB, m_allocator);
+	if (c == NULL)
+	{
+		return;
+	}
 
 	// Contact creation may swap fixtures.
 	fixtureA = c->GetFixtureA();

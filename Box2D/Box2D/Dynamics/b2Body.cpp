@@ -112,6 +112,12 @@ b2Body::~b2Body()
 
 void b2Body::SetType(b2BodyType type)
 {
+	b2Assert(m_world->IsLocked() == false);
+	if (m_world->IsLocked() == true)
+	{
+		return;
+	}
+
 	if (m_type == type)
 	{
 		return;
