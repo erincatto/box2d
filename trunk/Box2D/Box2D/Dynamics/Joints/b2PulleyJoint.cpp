@@ -288,7 +288,7 @@ b2Vec2 b2PulleyJoint::GetGroundAnchorB() const
 	return m_groundAnchorB;
 }
 
-float32 b2PulleyJoint::GetLength1() const
+float32 b2PulleyJoint::GetLengthA() const
 {
 	b2Vec2 p = m_bodyA->GetWorldPoint(m_localAnchorA);
 	b2Vec2 s = m_groundAnchorA;
@@ -296,7 +296,7 @@ float32 b2PulleyJoint::GetLength1() const
 	return d.Length();
 }
 
-float32 b2PulleyJoint::GetLength2() const
+float32 b2PulleyJoint::GetLengthB() const
 {
 	b2Vec2 p = m_bodyB->GetWorldPoint(m_localAnchorB);
 	b2Vec2 s = m_groundAnchorB;
