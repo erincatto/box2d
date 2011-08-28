@@ -91,11 +91,11 @@ public:
 	/// Get the second ground anchor.
 	b2Vec2 GetGroundAnchorB() const;
 
-	/// Get the current length of the segment attached to body1.
-	float32 GetLength1() const;
+	/// Get the current length of the segment attached to bodyA.
+	float32 GetLengthA() const;
 
-	/// Get the current length of the segment attached to body2.
-	float32 GetLength2() const;
+	/// Get the current length of the segment attached to bodyB.
+	float32 GetLengthB() const;
 
 	/// Get the pulley ratio.
 	float32 GetRatio() const;

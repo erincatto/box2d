@@ -96,11 +96,11 @@
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1920"
-     inkscape:window-height="1148"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
-     inkscape:window-maximized="1" />
+     inkscape:window-width="1359"
+     inkscape:window-height="1041"
+     inkscape:window-x="150"
+     inkscape:window-y="60"
+     inkscape:window-maximized="0" />
   <metadata
      id="metadata5133">
     <rdf:RDF>
@@ -109,7 +109,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -124,7 +124,7 @@
        height="42.426407"
        x="314.03363"
        y="471.8606"
-       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\SkinCollision.png"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\WheelJoint.png"
        inkscape:export-xdpi="179.94545"
        inkscape:export-ydpi="179.94545" />
     <text
@@ -134,7 +134,7 @@
        y="614.28577"
        id="text5770"
        sodipodi:linespacing="125%"
-       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\SkinCollision.png"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\WheelJoint.png"
        inkscape:export-xdpi="179.94545"
        inkscape:export-ydpi="179.94545"><tspan
          sodipodi:role="line"
@@ -150,12 +150,18 @@
        sodipodi:rx="16.964285"
        sodipodi:ry="16.964285"
        d="m 368.21428,560.75507 a 16.964285,16.964285 0 1 1 -33.92856,0 16.964285,16.964285 0 1 1 33.92856,0 z"
-       transform="translate(-8.5714286,-2.8571429)" />
+       transform="translate(-8.5714286,-2.8571429)"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\WheelJoint.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 341.78571,492.36218 1.42858,98.92857"
        id="path3767"
-       inkscape:connector-curvature="0" />
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\WheelJoint.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
     <path
        transform="translate(134.22402,67.175144)"
        d="m 210.71428,490.93362 a 2.1428571,2.1428571 0 1 1 -4.28571,0 2.1428571,2.1428571 0 1 1 4.28571,0 z"
@@ -165,12 +171,18 @@
        sodipodi:cx="208.57143"
        id="path3779"
        style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
-       sodipodi:type="arc" />
+       sodipodi:type="arc"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\WheelJoint.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow2Lstart);marker-mid:none;marker-end:url(#Arrow2Lend)"
        d="m 377.85714,506.46933 0.53571,45"
        id="path3781"
-       inkscape:connector-curvature="0" />
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\WheelJoint.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
     <path
        sodipodi:type="arc"
        style="fill:none;stroke:#767676;stroke-opacity:1;marker-start:url(#Arrow2Lstart);marker-end:url(#Arrow2Lend)"
@@ -183,6 +195,9 @@
        sodipodi:start="1.7975952"
        sodipodi:end="4.1763713"
        sodipodi:open="true"
-       transform="translate(23.392857,2.5)" />
+       transform="translate(23.392857,2.5)"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\WheelJoint.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
   </g>
 </svg>
