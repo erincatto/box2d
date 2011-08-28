@@ -96,3 +96,11 @@ So the question of accuracy has been answered: failure.
 The only remaining question is how do we make it convenient. On this opinions may vary.
 
 b2Settings is just that. Settings you can adjust if you know what you are doing.
+
+=What are the biggest mistakes made by new users?=
+  # Using pixels for length instead of meters.
+  # Expecting Box2D to give pixel perfect results.
+  # Using b2Polygon to create concave polygons.
+  # Testing their code in release mode.
+  # Not learning C++ before using Box2D.
+  # Not reading this FAQ. :)
