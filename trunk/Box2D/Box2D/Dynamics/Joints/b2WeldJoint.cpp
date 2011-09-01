@@ -227,3 +227,18 @@ float32 b2WeldJoint::GetReactionTorque(float32 inv_dt) const
 {
 	return inv_dt * m_impulse.z;
 }
+
+void b2WeldJoint::Dump()
+{
+	int32 indexA = m_bodyA->m_islandIndex;
+	int32 indexB = m_bodyB->m_islandIndex;
+
+	b2Log("  b2WeldJoint jd;\n");
+	b2Log("  jd.bodyA = bodies[%d];\n", indexA);
+	b2Log("  jd.bodyB = bodies[%d];\n", indexB);
+	b2Log("  jd.collideConnected = bool(%d);\n", m_collideConnected);
+	b2Log("  jd.localAnchorA.Set(%.15lef, %.15lef);\n", m_localAnchorA.x, m_localAnchorA.y);
+	b2Log("  jd.localAnchorB.Set(%.15lef, %.15lef);\n", m_localAnchorB.x, m_localAnchorB.y);
+	b2Log("  jd.referenceAngle = %.15lef;\n", m_referenceAngle);
+	b2Log("  m_world->CreateJoint(&jd);\n");
+}

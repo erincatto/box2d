@@ -76,7 +76,7 @@ b2GearJoint::b2GearJoint(const b2GearJointDef* def)
 		b2PrismaticJoint* prismatic = (b2PrismaticJoint*)def->joint1;
 		m_localAnchorC = prismatic->m_localAnchorA;
 		m_localAnchorA = prismatic->m_localAnchorB;
-		m_referenceAngleA = prismatic->m_refAngle;
+		m_referenceAngleA = prismatic->m_referenceAngle;
 		m_localAxisC = prismatic->m_localXAxisA;
 
 		b2Vec2 pC = m_localAnchorC;
@@ -108,7 +108,7 @@ b2GearJoint::b2GearJoint(const b2GearJointDef* def)
 		b2PrismaticJoint* prismatic = (b2PrismaticJoint*)def->joint2;
 		m_localAnchorD = prismatic->m_localAnchorA;
 		m_localAnchorB = prismatic->m_localAnchorB;
-		m_referenceAngleB = prismatic->m_refAngle;
+		m_referenceAngleB = prismatic->m_referenceAngle;
 		m_localAxisD = prismatic->m_localXAxisA;
 
 		b2Vec2 pD = m_localAnchorD;

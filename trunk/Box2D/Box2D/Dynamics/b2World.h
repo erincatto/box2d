@@ -194,6 +194,9 @@ public:
 	/// Get the current profile.
 	const b2Profile& GetProfile() const;
 
+	/// Dump the world into the log file.
+	void Dump();
+
 private:
 
 	// m_flags
