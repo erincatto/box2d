@@ -131,6 +131,9 @@ public:
 	/// Get the current motor force given the inverse time step, usually in N.
 	float32 GetMotorForce(float32 inv_dt) const;
 
+	/// Dump to b2Log
+	void Dump();
+
 protected:
 	friend class b2Joint;
 	friend class b2GearJoint;
@@ -145,7 +148,7 @@ protected:
 	b2Vec2 m_localAnchorB;
 	b2Vec2 m_localXAxisA;
 	b2Vec2 m_localYAxisA;
-	float32 m_refAngle;
+	float32 m_referenceAngle;
 	b2Vec3 m_impulse;
 	float32 m_motorImpulse;
 	float32 m_lowerTranslation;
