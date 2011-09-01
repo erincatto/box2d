@@ -59,6 +59,9 @@ public:
 	b2Vec2 GetReactionForce(float32 inv_dt) const;
 	float32 GetReactionTorque(float32 inv_dt) const;
 
+	/// Dump to b2Log
+	void Dump();
+
 protected:
 
 	friend class b2Joint;

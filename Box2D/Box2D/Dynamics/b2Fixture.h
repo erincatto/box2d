@@ -188,6 +188,9 @@ public:
 	/// the body transform.
 	const b2AABB& GetAABB(int32 childIndex) const;
 
+	/// Dump this fixture to the log file.
+	void Dump(int32 bodyIndex);
+
 protected:
 
 	friend class b2Body;
