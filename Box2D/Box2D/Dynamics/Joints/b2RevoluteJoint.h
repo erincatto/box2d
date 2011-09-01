@@ -141,6 +141,9 @@ public:
 	/// Unit is N*m.
 	float32 GetMotorTorque(float32 inv_dt) const;
 
+	/// Dump to b2Log.
+	void Dump();
+
 protected:
 	
 	friend class b2Joint;

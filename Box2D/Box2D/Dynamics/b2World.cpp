@@ -1038,8 +1038,8 @@ void b2World::DrawShape(b2Fixture* fixture, const b2Transform& xf, const b2Color
 	case b2Shape::e_chain:
 		{
 			b2ChainShape* chain = (b2ChainShape*)fixture->GetShape();
-			int32 count = chain->GetVertexCount();
-			const b2Vec2* vertices = chain->GetVertices();
+			int32 count = chain->m_count;
+			const b2Vec2* vertices = chain->m_vertices;
 
 			b2Vec2 v1 = b2Mul(xf, vertices[0]);
 			for (int32 i = 1; i < count; ++i)
@@ -1236,4 +1236,26 @@ int32 b2World::GetTreeBalance() const
 float32 b2World::GetTreeQuality() const
 {
 	return m_contactManager.m_broadPhase.GetTreeQuality();
+}
+
+void b2World::Dump()
+{
+	b2Log("b2Vec2 g(%.15lef, %.15lef);\n", m_gravity.x, m_gravity.y);
+	b2Log("m_world->SetGravity(g);\n");
+
+	b2Log("b2Body** bodies = (b2Body**)b2Alloc(%d * sizeof(b2Body*));\n", m_bodyCount);
+	int32 i = 0;
+	for (b2Body* b = m_bodyList; b; b = b->m_next)
+	{
+		b->m_islandIndex = i;
+		b->Dump();
+		++i;
+	}
+
+	for (b2Joint* j = m_jointList; j; j = j->m_next)
+	{
+		b2Log("{\n");
+		j->Dump();
+		b2Log("}\n");
+	}
 }

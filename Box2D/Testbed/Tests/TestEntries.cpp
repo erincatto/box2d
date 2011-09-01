@@ -39,6 +39,7 @@ using namespace std;
 #include "Confined.h"
 #include "DistanceTest.h"
 #include "Dominos.h"
+#include "DumpShell.h"
 #include "DynamicTreeTest.h"
 #include "EdgeShapes.h"
 #include "EdgeTest.h"
@@ -68,6 +69,8 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
+	{"Dump Shell", DumpShell::Create},
+	{"Varying Restitution", VaryingRestitution::Create},
 	{"Gears", Gears::Create},
 	{"Character Collision", CharacterCollision::Create},
 	{"Edge Test", EdgeTest::Create},
@@ -93,7 +96,6 @@ TestEntry g_testEntries[] =
 	{"Ray-Cast", RayCast::Create},
 	{"Confined", Confined::Create},
 	{"Pyramid", Pyramid::Create},
-	{"Varying Restitution", VaryingRestitution::Create},
 	{"Theo Jansen's Walker", TheoJansen::Create},
 	{"Edge Shapes", EdgeShapes::Create},
 	{"PolyCollision", PolyCollision::Create},
