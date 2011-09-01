@@ -142,6 +142,9 @@ public:
 	/// the flag is only checked when fixture AABBs begin to overlap.
 	bool GetCollideConnected() const;
 
+	/// Dump this joint to the log file.
+	virtual void Dump() {}
+
 protected:
 	friend class b2World;
 	friend class b2Body;
