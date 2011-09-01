@@ -83,13 +83,16 @@ public:
 	void SetLength(float32 length);
 	float32 GetLength() const;
 
-	// Set/get frequency in Hz.
+	/// Set/get frequency in Hz.
 	void SetFrequency(float32 hz);
 	float32 GetFrequency() const;
 
-	// Set/get damping ratio.
+	/// Set/get damping ratio.
 	void SetDampingRatio(float32 ratio);
 	float32 GetDampingRatio() const;
+
+	/// Dump joint to dmLog
+	void Dump();
 
 protected:
 

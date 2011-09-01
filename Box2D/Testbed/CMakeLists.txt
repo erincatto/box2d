@@ -30,6 +30,7 @@ set(Testbed_Tests_SRCS
 	Tests/ContinuousTest.h
 	Tests/DistanceTest.h
 	Tests/Dominos.h
+	Tests/DumpShell.h
 	Tests/DynamicTreeTest.h
 	Tests/EdgeShapes.h
 	Tests/EdgeTest.h
