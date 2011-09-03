@@ -143,7 +143,7 @@ public:
 	bool GetCollideConnected() const;
 
 	/// Dump this joint to the log file.
-	virtual void Dump() {}
+	virtual void Dump() { b2Log("// TODO_NOT_IMPLEMENTED\n"); }
 
 protected:
 	friend class b2World;
