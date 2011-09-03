@@ -419,43 +419,45 @@ bool b2PrismaticJoint::SolvePositionConstraints(const b2SolverData& data)
 
 	if (active)
 	{
-		float32 k11 = mA + mB + iA * m_s1 * m_s1 + iB * m_s2 * m_s2;
-		float32 k12 = iA * m_s1 + iB * m_s2;
-		float32 k13 = iA * m_s1 * m_a1 + iB * m_s2 * m_a2;
+		float32 k11 = mA + mB + iA * s1 * s1 + iB * s2 * s2;
+		float32 k12 = iA * s1 + iB * s2;
+		float32 k13 = iA * s1 * a1 + iB * s2 * a2;
 		float32 k22 = iA + iB;
 		if (k22 == 0.0f)
 		{
 			// For fixed rotation
 			k22 = 1.0f;
 		}
-		float32 k23 = iA * m_a1 + iB * m_a2;
-		float32 k33 = mA + mB + iA * m_a1 * m_a1 + iB * m_a2 * m_a2;
+		float32 k23 = iA * a1 + iB * a2;
+		float32 k33 = mA + mB + iA * a1 * a1 + iB * a2 * a2;
 
-		m_K.ex.Set(k11, k12, k13);
-		m_K.ey.Set(k12, k22, k23);
-		m_K.ez.Set(k13, k23, k33);
+		b2Mat33 K;
+		K.ex.Set(k11, k12, k13);
+		K.ey.Set(k12, k22, k23);
+		K.ez.Set(k13, k23, k33);
 
 		b2Vec3 C;
 		C.x = C1.x;
 		C.y = C1.y;
 		C.z = C2;
 
-		impulse = m_K.Solve33(-C);
+		impulse = K.Solve33(-C);
 	}
 	else
 	{
-		float32 k11 = mA + mB + iA * m_s1 * m_s1 + iB * m_s2 * m_s2;
-		float32 k12 = iA * m_s1 + iB * m_s2;
+		float32 k11 = mA + mB + iA * s1 * s1 + iB * s2 * s2;
+		float32 k12 = iA * s1 + iB * s2;
 		float32 k22 = iA + iB;
 		if (k22 == 0.0f)
 		{
 			k22 = 1.0f;
 		}
 
-		m_K.ex.Set(k11, k12, 0.0f);
-		m_K.ey.Set(k12, k22, 0.0f);
+		b2Mat22 K;
+		K.ex.Set(k11, k12);
+		K.ey.Set(k12, k22);
 
-		b2Vec2 impulse1 = m_K.Solve22(-C1);
+		b2Vec2 impulse1 = K.Solve(-C1);
 		impulse.x = impulse1.x;
 		impulse.y = impulse1.y;
 		impulse.z = 0.0f;
