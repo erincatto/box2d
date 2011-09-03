@@ -34,6 +34,11 @@ Box2D is tuned for meters-kilograms-seconds (MKS). Your moving objects should be
 Suppose you have a sprite for a character that is 100x100 pixels. You decide to use a scaling factor that is 0.01. This will make the character physics box 1m x 1m. So go make a physics box that is 1x1. Now suppose the character starts out at pixel coordinate (345,679). So position the physics box at (3.45,6.79). Now simulate the physics world. Suppose the character physics box moves to (2.31,4.98), so move your character sprite to pixel coordinates (231,498).
 Now the only tricky part is choosing a scaling factor. This really depends on your game. You should try to get your moving objects in the range 0.1 - 10 meters, with 1 meter being the sweet spot.
 
+==Why don't you use this awesome C++ feature?==
+Box2D is designed to be portable, so I try to keep the C++ usage simple. Also, I don't use the STL (except sort) or other libraries to keep the dependencies low. I keep template usage low and don't use name spaces. Remember, just because a C++ feature exists, that doesn't mean you need to use it.
+
+The many ports of Box2D to other languages platforms shows that this strategy has been successful.
+
 =Build Issues=
 ==Why doesn't my code compile and/or link?==
 
