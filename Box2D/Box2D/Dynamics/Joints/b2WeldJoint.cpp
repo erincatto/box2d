@@ -233,7 +233,7 @@ void b2WeldJoint::Dump()
 	int32 indexA = m_bodyA->m_islandIndex;
 	int32 indexB = m_bodyB->m_islandIndex;
 
-	b2Log("  b2WeldJoint jd;\n");
+	b2Log("  b2WeldJointDef jd;\n");
 	b2Log("  jd.bodyA = bodies[%d];\n", indexA);
 	b2Log("  jd.bodyB = bodies[%d];\n", indexB);
 	b2Log("  jd.collideConnected = bool(%d);\n", m_collideConnected);
