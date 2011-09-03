@@ -1258,4 +1258,7 @@ void b2World::Dump()
 		j->Dump();
 		b2Log("}\n");
 	}
+
+	b2Log("b2Free(bodies);\n");
+	b2Log("bodies = NULL;\n");
 }
