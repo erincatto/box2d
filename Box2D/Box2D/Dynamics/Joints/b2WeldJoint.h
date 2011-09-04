@@ -38,15 +38,15 @@ struct b2WeldJointDef : public b2JointDef
 
 	/// Initialize the bodies, anchors, and reference angle using a world
 	/// anchor point.
-	void Initialize(b2Body* body1, b2Body* body2, const b2Vec2& anchor);
+	void Initialize(b2Body* bodyA, b2Body* bodyB, const b2Vec2& anchor);
 
-	/// The local anchor point relative to body1's origin.
+	/// The local anchor point relative to bodyA's origin.
 	b2Vec2 localAnchorA;
 
-	/// The local anchor point relative to body2's origin.
+	/// The local anchor point relative to bodyB's origin.
 	b2Vec2 localAnchorB;
 
-	/// The body2 angle minus body1 angle in the reference state (radians).
+	/// The bodyB angle minus bodyA angle in the reference state (radians).
 	float32 referenceAngle;
 	
 	/// The mass-spring-damper frequency in Hertz. Rotation only.
@@ -67,6 +67,23 @@ public:
 
 	b2Vec2 GetReactionForce(float32 inv_dt) const;
 	float32 GetReactionTorque(float32 inv_dt) const;
+
+	/// The local anchor point relative to bodyA's origin.
+	const b2Vec2& GetLocalAnchorA() const { return m_localAnchorA; }
+
+	/// The local anchor point relative to bodyB's origin.
+	const b2Vec2& GetLocalAnchorB() const  { return m_localAnchorB; }
+
+	/// Get the reference angle.
+	float32 GetReferenceAngle() const { return m_referenceAngle; }
+
+	/// Set/get frequency in Hz.
+	void SetFrequency(float32 hz) { m_frequencyHz = hz; }
+	float32 GetFrequency() const { return m_frequencyHz; }
+
+	/// Set/get damping ratio.
+	void SetDampingRatio(float32 ratio) { m_dampingRatio = ratio; }
+	float32 GetDampingRatio() const { return m_dampingRatio; }
 
 	/// Dump to b2Log
 	void Dump();
