@@ -238,12 +238,12 @@ bool b2WeldJoint::SolvePositionConstraints(const b2SolverData& data)
 	float32 positionError, angularError;
 
 	b2Mat33 K;
-	K.ex.x = mA + mB + m_rA.y * m_rA.y * iA + m_rB.y * m_rB.y * iB;
-	K.ey.x = -m_rA.y * m_rA.x * iA - m_rB.y * m_rB.x * iB;
-	K.ez.x = -m_rA.y * iA - m_rB.y * iB;
+	K.ex.x = mA + mB + rA.y * rA.y * iA + rB.y * rB.y * iB;
+	K.ey.x = -rA.y * rA.x * iA - rB.y * rB.x * iB;
+	K.ez.x = -rA.y * iA - rB.y * iB;
 	K.ex.y = K.ey.x;
-	K.ey.y = mA + mB + m_rA.x * m_rA.x * iA + m_rB.x * m_rB.x * iB;
-	K.ez.y = m_rA.x * iA + m_rB.x * iB;
+	K.ey.y = mA + mB + rA.x * rA.x * iA + rB.x * rB.x * iB;
+	K.ez.y = rA.x * iA + rB.x * iB;
 	K.ex.z = K.ez.x;
 	K.ey.z = K.ez.y;
 	K.ez.z = iA + iB;
