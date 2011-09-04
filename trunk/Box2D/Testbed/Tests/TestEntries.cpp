@@ -69,10 +69,11 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
-	{"Dump Shell", DumpShell::Create},
+	{"Cantilever", Cantilever::Create},
 	{"Varying Restitution", VaryingRestitution::Create},
-	{"Gears", Gears::Create},
 	{"Character Collision", CharacterCollision::Create},
+	{"Dump Shell", DumpShell::Create},
+	{"Gears", Gears::Create},
 	{"Edge Test", EdgeTest::Create},
 	{"Body Types", BodyTypes::Create},
 	{"Shape Editing", ShapeEditing::Create},
@@ -99,7 +100,6 @@ TestEntry g_testEntries[] =
 	{"Theo Jansen's Walker", TheoJansen::Create},
 	{"Edge Shapes", EdgeShapes::Create},
 	{"PolyCollision", PolyCollision::Create},
-	{"Cantilever", Cantilever::Create},
 	{"Bridge", Bridge::Create},
 	{"Breakable", Breakable::Create},
 	{"Chain", Chain::Create},

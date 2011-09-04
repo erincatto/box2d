@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2009 Erin Catto http://www.box2d.org
+* Copyright (c) 2006-2011 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -19,6 +19,10 @@
 #ifndef CANTILEVER_H
 #define CANTILEVER_H
 
+// It is difficult to make a cantilever made of links completely rigid with weld joints.
+// You will have to use a high number of iterations to make them stiff.
+// So why not go ahead and use soft weld joints? They behave like a revolute
+// joint with a rotational spring.
 class Cantilever : public Test
 {
 public:
@@ -76,6 +80,8 @@ public:
 			fd.density = 20.0f;
 
 			b2WeldJointDef jd;
+			jd.frequencyHz = 15.0f;
+			jd.dampingRatio = 0.7f;
 
 			b2Body* prevBody = ground;
 			for (int32 i = 0; i < e_count; ++i)
@@ -133,6 +139,8 @@ public:
 			fd.density = 20.0f;
 
 			b2WeldJointDef jd;
+			jd.frequencyHz = 8.0f;
+			jd.dampingRatio = 0.7f;
 
 			b2Body* prevBody = ground;
 			for (int32 i = 0; i < e_count; ++i)

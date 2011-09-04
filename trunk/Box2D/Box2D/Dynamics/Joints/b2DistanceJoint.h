@@ -53,7 +53,8 @@ struct b2DistanceJointDef : public b2JointDef
 	/// The natural length between the anchor points.
 	float32 length;
 
-	/// The mass-spring-damper frequency in Hertz.
+	/// The mass-spring-damper frequency in Hertz. A value of 0
+	/// disables softness.
 	float32 frequencyHz;
 
 	/// The damping ratio. 0 = no damping, 1 = critical damping.
