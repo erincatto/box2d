@@ -36,8 +36,7 @@ Test::Test()
 {
 	b2Vec2 gravity;
 	gravity.Set(0.0f, -10.0f);
-	bool doSleep = true;
-	m_world = new b2World(gravity, doSleep);
+	m_world = new b2World(gravity);
 	m_bomb = NULL;
 	m_textLine = 30;
 	m_mouseJoint = NULL;
