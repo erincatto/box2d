@@ -326,5 +326,5 @@ void b2WeldJoint::Dump()
 	b2Log("  jd.referenceAngle = %.15lef;\n", m_referenceAngle);
 	b2Log("  jd.frequencyHz = %.15lef;\n", m_frequencyHz);
 	b2Log("  jd.dampingRatio = %.15lef;\n", m_dampingRatio);
-	b2Log("  m_world->CreateJoint(&jd);\n");
+	b2Log("  joints[%d] = m_world->CreateJoint(&jd);\n", m_index);
 }
