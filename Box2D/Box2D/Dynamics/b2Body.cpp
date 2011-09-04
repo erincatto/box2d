@@ -502,9 +502,7 @@ void b2Body::Dump()
 	b2Log("  bd.bullet = bool(%d);\n", m_flags & e_bulletFlag);
 	b2Log("  bd.active = bool(%d);\n", m_flags & e_activeFlag);
 	b2Log("  bd.gravityScale = %.15lef;\n", m_gravityScale);
-	b2Log("\n");
-	b2Log("  b2Body* b = m_world->CreateBody(&bd);\n");
-	b2Log("  bodies[%d] = b;\n", m_islandIndex);
+	b2Log("  bodies[%d] = m_world->CreateBody(&bd);\n", m_islandIndex);
 	b2Log("\n");
 	for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
 	{

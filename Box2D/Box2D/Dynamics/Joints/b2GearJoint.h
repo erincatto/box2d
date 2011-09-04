@@ -72,6 +72,9 @@ public:
 	void SetRatio(float32 ratio);
 	float32 GetRatio() const;
 
+	/// Dump joint to dmLog
+	void Dump();
+
 protected:
 
 	friend class b2Joint;
