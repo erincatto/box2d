@@ -32,6 +32,8 @@ struct b2WeldJointDef : public b2JointDef
 		localAnchorA.Set(0.0f, 0.0f);
 		localAnchorB.Set(0.0f, 0.0f);
 		referenceAngle = 0.0f;
+		frequencyHz = 0.0f;
+		dampingRatio = 0.0f;
 	}
 
 	/// Initialize the bodies, anchors, and reference angle using a world
@@ -46,6 +48,13 @@ struct b2WeldJointDef : public b2JointDef
 
 	/// The body2 angle minus body1 angle in the reference state (radians).
 	float32 referenceAngle;
+	
+	/// The mass-spring-damper frequency in Hertz. Rotation only.
+	/// Disable softness with a value of 0.
+	float32 frequencyHz;
+
+	/// The damping ratio. 0 = no damping, 1 = critical damping.
+	float32 dampingRatio;
 };
 
 /// A weld joint essentially glues two bodies together. A weld joint may
@@ -72,10 +81,15 @@ protected:
 	void SolveVelocityConstraints(const b2SolverData& data);
 	bool SolvePositionConstraints(const b2SolverData& data);
 
+	float32 m_frequencyHz;
+	float32 m_dampingRatio;
+	float32 m_bias;
+
 	// Solver shared
 	b2Vec2 m_localAnchorA;
 	b2Vec2 m_localAnchorB;
 	float32 m_referenceAngle;
+	float32 m_gamma;
 	b2Vec3 m_impulse;
 
 	// Solver temp

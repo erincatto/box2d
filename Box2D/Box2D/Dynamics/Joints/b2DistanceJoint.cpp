@@ -123,8 +123,13 @@ void b2DistanceJoint::InitVelocityConstraints(const b2SolverData& data)
 		m_gamma = m_gamma != 0.0f ? 1.0f / m_gamma : 0.0f;
 		m_bias = C * h * k * m_gamma;
 
-		m_mass = invMass + m_gamma;
-		m_mass = m_mass != 0.0f ? 1.0f / m_mass : 0.0f;
+		invMass += m_gamma;
+		m_mass = invMass != 0.0f ? 1.0f / invMass : 0.0f;
+	}
+	else
+	{
+		m_gamma = 0.0f;
+		m_bias = 0.0f;
 	}
 
 	if (data.step.warmStarting)
