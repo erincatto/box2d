@@ -69,11 +69,11 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
+	{"Dump Shell", DumpShell::Create},
+	{"Gears", Gears::Create},
 	{"Cantilever", Cantilever::Create},
 	{"Varying Restitution", VaryingRestitution::Create},
 	{"Character Collision", CharacterCollision::Create},
-	{"Dump Shell", DumpShell::Create},
-	{"Gears", Gears::Create},
 	{"Edge Test", EdgeTest::Create},
 	{"Body Types", BodyTypes::Create},
 	{"Shape Editing", ShapeEditing::Create},

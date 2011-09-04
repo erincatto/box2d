@@ -201,6 +201,7 @@ public:
 	const b2Profile& GetProfile() const;
 
 	/// Dump the world into the log file.
+	/// @warning this should be called outside of a time step.
 	void Dump();
 
 private:
