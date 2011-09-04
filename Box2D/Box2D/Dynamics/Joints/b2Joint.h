@@ -143,12 +143,13 @@ public:
 	bool GetCollideConnected() const;
 
 	/// Dump this joint to the log file.
-	virtual void Dump() { b2Log("// TODO_NOT_IMPLEMENTED\n"); }
+	virtual void Dump() { b2Log("// Dump is not supported for this joint type.\n"); }
 
 protected:
 	friend class b2World;
 	friend class b2Body;
 	friend class b2Island;
+	friend class b2GearJoint;
 
 	static b2Joint* Create(const b2JointDef* def, b2BlockAllocator* allocator);
 	static void Destroy(b2Joint* joint, b2BlockAllocator* allocator);
@@ -169,6 +170,8 @@ protected:
 	b2JointEdge m_edgeB;
 	b2Body* m_bodyA;
 	b2Body* m_bodyB;
+
+	int32 m_index;
 
 	bool m_islandFlag;
 	bool m_collideConnected;
