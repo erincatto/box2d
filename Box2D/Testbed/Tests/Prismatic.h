@@ -19,6 +19,7 @@
 #ifndef PRISMATIC_H
 #define PRISMATIC_H
 
+// The motor in this test gets smoother with higher velocity iterations.
 class Prismatic : public Test
 {
 public:
