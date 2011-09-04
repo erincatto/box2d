@@ -129,6 +129,9 @@ public:
 	void SetSpringDampingRatio(float32 ratio);
 	float32 GetSpringDampingRatio() const;
 
+	/// Dump to b2Log
+	void Dump();
+
 protected:
 
 	friend class b2Joint;
