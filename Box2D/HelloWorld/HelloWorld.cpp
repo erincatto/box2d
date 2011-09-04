@@ -34,11 +34,8 @@ int main(int argc, char** argv)
 	// Define the gravity vector.
 	b2Vec2 gravity(0.0f, -10.0f);
 
-	// Do we want to let bodies sleep?
-	bool doSleep = true;
-
 	// Construct a world object, which will hold and simulate the rigid bodies.
-	b2World world(gravity, doSleep);
+	b2World world(gravity);
 
 	// Define the ground body.
 	b2BodyDef groundBodyDef;

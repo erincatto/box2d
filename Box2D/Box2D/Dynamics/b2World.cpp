@@ -34,7 +34,7 @@
 #include <Box2D/Common/b2Timer.h>
 #include <new>
 
-b2World::b2World(const b2Vec2& gravity, bool doSleep)
+b2World::b2World(const b2Vec2& gravity)
 {
 	m_destructionListener = NULL;
 	m_debugDraw = NULL;
@@ -51,7 +51,7 @@ b2World::b2World(const b2Vec2& gravity, bool doSleep)
 
 	m_stepComplete = true;
 
-	m_allowSleep = doSleep;
+	m_allowSleep = true;
 	m_gravity = gravity;
 
 	m_flags = e_clearForces;
@@ -360,6 +360,24 @@ void b2World::DestroyJoint(b2Joint* j)
 			}
 
 			edge = edge->next;
+		}
+	}
+}
+
+//
+void b2World::SetAllowSleeping(bool flag)
+{
+	if (flag == m_allowSleep)
+	{
+		return;
+	}
+
+	m_allowSleep = flag;
+	if (m_allowSleep == false)
+	{
+		for (b2Body* b = m_bodyList; b; b = b->m_next)
+		{
+			b->SetAwake(true);
 		}
 	}
 }
