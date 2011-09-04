@@ -621,5 +621,5 @@ void b2PrismaticJoint::Dump()
 	b2Log("  jd.enableMotor = bool(%d);\n", m_enableMotor);
 	b2Log("  jd.motorSpeed = %.15lef;\n", m_motorSpeed);
 	b2Log("  jd.maxMotorForce = %.15lef;\n", m_maxMotorForce);
-	b2Log("  m_world->CreateJoint(&jd);\n");
+	b2Log("  joints[%d] = m_world->CreateJoint(&jd);\n", m_index);
 }

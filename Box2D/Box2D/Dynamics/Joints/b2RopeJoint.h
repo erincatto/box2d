@@ -75,6 +75,9 @@ public:
 
 	b2LimitState GetLimitState() const;
 
+	/// Dump joint to dmLog
+	void Dump();
+
 protected:
 
 	friend class b2Joint;

@@ -1258,10 +1258,16 @@ float32 b2World::GetTreeQuality() const
 
 void b2World::Dump()
 {
+	if ((m_flags & e_locked) == e_locked)
+	{
+		return;
+	}
+
 	b2Log("b2Vec2 g(%.15lef, %.15lef);\n", m_gravity.x, m_gravity.y);
 	b2Log("m_world->SetGravity(g);\n");
 
 	b2Log("b2Body** bodies = (b2Body**)b2Alloc(%d * sizeof(b2Body*));\n", m_bodyCount);
+	b2Log("b2Joint** joints = (b2Joint**)b2Alloc(%d * sizeof(b2Joint*));\n", m_jointCount);
 	int32 i = 0;
 	for (b2Body* b = m_bodyList; b; b = b->m_next)
 	{
@@ -1270,13 +1276,41 @@ void b2World::Dump()
 		++i;
 	}
 
+	i = 0;
 	for (b2Joint* j = m_jointList; j; j = j->m_next)
 	{
+		j->m_index = i;
+		++i;
+	}
+
+	// First pass on joints, skip gear joints.
+	for (b2Joint* j = m_jointList; j; j = j->m_next)
+	{
+		if (j->m_type == e_gearJoint)
+		{
+			continue;
+		}
+
 		b2Log("{\n");
 		j->Dump();
 		b2Log("}\n");
 	}
 
+	// Second pass on joints, only gear joints.
+	for (b2Joint* j = m_jointList; j; j = j->m_next)
+	{
+		if (j->m_type != e_gearJoint)
+		{
+			continue;
+		}
+
+		b2Log("{\n");
+		j->Dump();
+		b2Log("}\n");
+	}
+
+	b2Log("b2Free(joints);\n");
 	b2Log("b2Free(bodies);\n");
+	b2Log("joints = NULL;\n");
 	b2Log("bodies = NULL;\n");
 }
