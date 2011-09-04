@@ -73,26 +73,26 @@ public:
 
 		{
 			b2PolygonShape shape;
-			shape.SetAsBox(0.5f, 0.125f);
+			shape.SetAsBox(1.0f, 0.125f);
 
 			b2FixtureDef fd;
 			fd.shape = &shape;
 			fd.density = 20.0f;
 
 			b2WeldJointDef jd;
-			jd.frequencyHz = 15.0f;
+			jd.frequencyHz = 5.0f;
 			jd.dampingRatio = 0.7f;
 
 			b2Body* prevBody = ground;
-			for (int32 i = 0; i < e_count; ++i)
+			for (int32 i = 0; i < 3; ++i)
 			{
 				b2BodyDef bd;
 				bd.type = b2_dynamicBody;
-				bd.position.Set(-14.5f + 1.0f * i, 15.0f);
+				bd.position.Set(-14.0f + 2.0f * i, 15.0f);
 				b2Body* body = m_world->CreateBody(&bd);
 				body->CreateFixture(&fd);
 
-				b2Vec2 anchor(-15.0f + 1.0f * i, 15.0f);
+				b2Vec2 anchor(-15.0f + 2.0f * i, 15.0f);
 				jd.Initialize(prevBody, body, anchor);
 				m_world->CreateJoint(&jd);
 

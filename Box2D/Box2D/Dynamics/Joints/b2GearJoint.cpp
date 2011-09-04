@@ -44,16 +44,19 @@
 b2GearJoint::b2GearJoint(const b2GearJointDef* def)
 : b2Joint(def)
 {
-	m_typeA = def->joint1->GetType();
-	m_typeB = def->joint2->GetType();
+	m_joint1 = def->joint1;
+	m_joint2 = def->joint2;
+
+	m_typeA = m_joint1->GetType();
+	m_typeB = m_joint2->GetType();
 
 	b2Assert(m_typeA == e_revoluteJoint || m_typeA == e_prismaticJoint);
 	b2Assert(m_typeB == e_revoluteJoint || m_typeB == e_prismaticJoint);
 
 	float32 coordinateA, coordinateB;
 
-	m_bodyC = def->joint1->GetBodyA();
-	m_bodyA = def->joint1->GetBodyB();
+	m_bodyC = m_joint1->GetBodyA();
+	m_bodyA = m_joint1->GetBodyB();
 
 	// Get geometry of joint1
 	b2Transform xfA = m_bodyA->m_xf;
@@ -84,8 +87,8 @@ b2GearJoint::b2GearJoint(const b2GearJointDef* def)
 		coordinateA = b2Dot(pA - pC, m_localAxisC);
 	}
 
-	m_bodyD = def->joint2->GetBodyA();
-	m_bodyB = def->joint2->GetBodyB();
+	m_bodyD = m_joint2->GetBodyA();
+	m_bodyB = m_joint2->GetBodyB();
 
 	// Get geometry of joint2
 	b2Transform xfB = m_bodyB->m_xf;
