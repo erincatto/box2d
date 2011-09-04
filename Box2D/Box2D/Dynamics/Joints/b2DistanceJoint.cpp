@@ -256,4 +256,5 @@ void b2DistanceJoint::Dump()
 	b2Log("  jd.length = %.15lef;\n", m_length);
 	b2Log("  jd.frequencyHz = %.15lef;\n", m_frequencyHz);
 	b2Log("  jd.dampingRatio = %.15lef;\n", m_dampingRatio);
+	b2Log("  joints[%d] = m_world->CreateJoint(&jd);\n", m_index);
 }

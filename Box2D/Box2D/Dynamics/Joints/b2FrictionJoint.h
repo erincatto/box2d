@@ -79,6 +79,9 @@ public:
 	/// Get the maximum friction torque in N*m.
 	float32 GetMaxTorque() const;
 
+	/// Dump joint to dmLog
+	void Dump();
+
 protected:
 
 	friend class b2Joint;
