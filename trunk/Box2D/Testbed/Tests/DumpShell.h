@@ -26,42 +26,43 @@ public:
 
 	DumpShell()
 	{
-b2Vec2 g(0.000000000000000e+000f, -1.000000000000000e+001f);
+
+b2Vec2 g(0.000000000000000e+00f, 0.000000000000000e+00f);
 m_world->SetGravity(g);
-b2Body** bodies = (b2Body**)b2Alloc(8 * sizeof(b2Body*));
-b2Joint** joints = (b2Joint**)b2Alloc(8 * sizeof(b2Joint*));
+b2Body** bodies = (b2Body**)b2Alloc(3 * sizeof(b2Body*));
+b2Joint** joints = (b2Joint**)b2Alloc(2 * sizeof(b2Joint*));
 {
   b2BodyDef bd;
   bd.type = b2BodyType(2);
-  bd.position.Set(2.500000000000000e+000f, 6.995135784149170e+000f);
-  bd.angle = 0.000000000000000e+000f;
-  bd.linearVelocity.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-  bd.angularVelocity = 0.000000000000000e+000f;
-  bd.linearDamping = 0.000000000000000e+000f;
-  bd.angularDamping = 0.000000000000000e+000f;
+  bd.position.Set(1.304347801208496e+01f, 2.500000000000000e+00f);
+  bd.angle = 0.000000000000000e+00f;
+  bd.linearVelocity.Set(0.000000000000000e+00f, 0.000000000000000e+00f);
+  bd.angularVelocity = 0.000000000000000e+00f;
+  bd.linearDamping = 5.000000000000000e-01f;
+  bd.angularDamping = 5.000000000000000e-01f;
   bd.allowSleep = bool(4);
-  bd.awake = bool(0);
+  bd.awake = bool(2);
   bd.fixedRotation = bool(0);
   bd.bullet = bool(0);
   bd.active = bool(32);
-  bd.gravityScale = 1.000000000000000e+000f;
+  bd.gravityScale = 1.000000000000000e+00f;
   bodies[0] = m_world->CreateBody(&bd);
 
   {
     b2FixtureDef fd;
-    fd.friction = 2.000000029802322e-001f;
-    fd.restitution = 0.000000000000000e+000f;
-    fd.density = 5.000000000000000e+000f;
+    fd.friction = 1.000000000000000e+00f;
+    fd.restitution = 5.000000000000000e-01f;
+    fd.density = 1.000000000000000e+01f;
     fd.isSensor = bool(0);
     fd.filter.categoryBits = uint16(1);
     fd.filter.maskBits = uint16(65535);
     fd.filter.groupIndex = int16(0);
     b2PolygonShape shape;
     b2Vec2 vs[8];
-    vs[0].Set(-5.000000000000000e-001f, -5.000000000000000e+000f);
-    vs[1].Set(5.000000000000000e-001f, -5.000000000000000e+000f);
-    vs[2].Set(5.000000000000000e-001f, 5.000000000000000e+000f);
-    vs[3].Set(-5.000000000000000e-001f, 5.000000000000000e+000f);
+    vs[0].Set(-6.900000095367432e+00f, -3.000000119209290e-01f);
+    vs[1].Set(2.000000029802322e-01f, -3.000000119209290e-01f);
+    vs[2].Set(2.000000029802322e-01f, 2.000000029802322e-01f);
+    vs[3].Set(-6.900000095367432e+00f, 2.000000029802322e-01f);
     shape.Set(vs, 4);
 
     fd.shape = &shape;
@@ -72,355 +73,188 @@ b2Joint** joints = (b2Joint**)b2Alloc(8 * sizeof(b2Joint*));
 {
   b2BodyDef bd;
   bd.type = b2BodyType(2);
-  bd.position.Set(0.000000000000000e+000f, 1.200000000000000e+001f);
-  bd.angle = -2.502432107925415e+000f;
-  bd.linearVelocity.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-  bd.angularVelocity = 0.000000000000000e+000f;
-  bd.linearDamping = 0.000000000000000e+000f;
-  bd.angularDamping = 0.000000000000000e+000f;
+  bd.position.Set(8.478260636329651e-01f, 2.500000000000000e+00f);
+  bd.angle = 0.000000000000000e+00f;
+  bd.linearVelocity.Set(0.000000000000000e+00f, 0.000000000000000e+00f);
+  bd.angularVelocity = 0.000000000000000e+00f;
+  bd.linearDamping = 5.000000000000000e-01f;
+  bd.angularDamping = 5.000000000000000e-01f;
   bd.allowSleep = bool(4);
-  bd.awake = bool(0);
+  bd.awake = bool(2);
   bd.fixedRotation = bool(0);
   bd.bullet = bool(0);
   bd.active = bool(32);
-  bd.gravityScale = 1.000000000000000e+000f;
+  bd.gravityScale = 1.000000000000000e+00f;
   bodies[1] = m_world->CreateBody(&bd);
 
   {
     b2FixtureDef fd;
-    fd.friction = 2.000000029802322e-001f;
-    fd.restitution = 0.000000000000000e+000f;
-    fd.density = 5.000000000000000e+000f;
-    fd.isSensor = bool(0);
-    fd.filter.categoryBits = uint16(1);
-    fd.filter.maskBits = uint16(65535);
-    fd.filter.groupIndex = int16(0);
-    b2CircleShape shape;
-    shape.m_radius = 2.000000000000000e+000f;
-    shape.m_p.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-
-    fd.shape = &shape;
-
-    bodies[1]->CreateFixture(&fd);
-  }
-}
-{
-  b2BodyDef bd;
-  bd.type = b2BodyType(2);
-  bd.position.Set(-3.000000000000000e+000f, 1.200000000000000e+001f);
-  bd.angle = 5.004864215850830e+000f;
-  bd.linearVelocity.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-  bd.angularVelocity = 0.000000000000000e+000f;
-  bd.linearDamping = 0.000000000000000e+000f;
-  bd.angularDamping = 0.000000000000000e+000f;
-  bd.allowSleep = bool(4);
-  bd.awake = bool(0);
-  bd.fixedRotation = bool(0);
-  bd.bullet = bool(0);
-  bd.active = bool(32);
-  bd.gravityScale = 1.000000000000000e+000f;
-  bodies[2] = m_world->CreateBody(&bd);
-
-  {
-    b2FixtureDef fd;
-    fd.friction = 2.000000029802322e-001f;
-    fd.restitution = 0.000000000000000e+000f;
-    fd.density = 5.000000000000000e+000f;
-    fd.isSensor = bool(0);
-    fd.filter.categoryBits = uint16(1);
-    fd.filter.maskBits = uint16(65535);
-    fd.filter.groupIndex = int16(0);
-    b2CircleShape shape;
-    shape.m_radius = 1.000000000000000e+000f;
-    shape.m_p.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-
-    fd.shape = &shape;
-
-    bodies[2]->CreateFixture(&fd);
-  }
-}
-{
-  b2BodyDef bd;
-  bd.type = b2BodyType(2);
-  bd.position.Set(1.000000000000000e+001f, 5.999999523162842e+000f);
-  bd.angle = 0.000000000000000e+000f;
-  bd.linearVelocity.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-  bd.angularVelocity = 0.000000000000000e+000f;
-  bd.linearDamping = 0.000000000000000e+000f;
-  bd.angularDamping = 0.000000000000000e+000f;
-  bd.allowSleep = bool(4);
-  bd.awake = bool(0);
-  bd.fixedRotation = bool(0);
-  bd.bullet = bool(0);
-  bd.active = bool(32);
-  bd.gravityScale = 1.000000000000000e+000f;
-  bodies[3] = m_world->CreateBody(&bd);
-
-  {
-    b2FixtureDef fd;
-    fd.friction = 2.000000029802322e-001f;
-    fd.restitution = 0.000000000000000e+000f;
-    fd.density = 5.000000000000000e+000f;
-    fd.isSensor = bool(0);
-    fd.filter.categoryBits = uint16(1);
-    fd.filter.maskBits = uint16(65535);
-    fd.filter.groupIndex = int16(0);
-    b2CircleShape shape;
-    shape.m_radius = 2.000000000000000e+000f;
-    shape.m_p.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-
-    fd.shape = &shape;
-
-    bodies[3]->CreateFixture(&fd);
-  }
-}
-{
-  b2BodyDef bd;
-  bd.type = b2BodyType(2);
-  bd.position.Set(1.000000000000000e+001f, 8.000000000000000e+000f);
-  bd.angle = 0.000000000000000e+000f;
-  bd.linearVelocity.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-  bd.angularVelocity = 0.000000000000000e+000f;
-  bd.linearDamping = 0.000000000000000e+000f;
-  bd.angularDamping = 0.000000000000000e+000f;
-  bd.allowSleep = bool(4);
-  bd.awake = bool(0);
-  bd.fixedRotation = bool(0);
-  bd.bullet = bool(0);
-  bd.active = bool(32);
-  bd.gravityScale = 1.000000000000000e+000f;
-  bodies[4] = m_world->CreateBody(&bd);
-
-  {
-    b2FixtureDef fd;
-    fd.friction = 2.000000029802322e-001f;
-    fd.restitution = 0.000000000000000e+000f;
-    fd.density = 5.000000000000000e+000f;
+    fd.friction = 1.000000000000000e+00f;
+    fd.restitution = 5.000000000000000e-01f;
+    fd.density = 1.000000000000000e+01f;
     fd.isSensor = bool(0);
     fd.filter.categoryBits = uint16(1);
     fd.filter.maskBits = uint16(65535);
     fd.filter.groupIndex = int16(0);
     b2PolygonShape shape;
     b2Vec2 vs[8];
-    vs[0].Set(-5.000000000000000e-001f, -5.000000000000000e+000f);
-    vs[1].Set(5.000000000000000e-001f, -5.000000000000000e+000f);
-    vs[2].Set(5.000000000000000e-001f, 5.000000000000000e+000f);
-    vs[3].Set(-5.000000000000000e-001f, 5.000000000000000e+000f);
+    vs[0].Set(-3.228000104427338e-01f, -2.957000136375427e-01f);
+    vs[1].Set(6.885900020599365e+00f, -3.641000092029572e-01f);
+    vs[2].Set(6.907599925994873e+00f, 3.271999955177307e-01f);
+    vs[3].Set(-3.228000104427338e-01f, 2.825999855995178e-01f);
     shape.Set(vs, 4);
 
     fd.shape = &shape;
 
-    bodies[4]->CreateFixture(&fd);
+    bodies[1]->CreateFixture(&fd);
   }
 }
+
 {
   b2BodyDef bd;
   bd.type = b2BodyType(0);
-  bd.position.Set(1.000000000000000e+001f, 9.000000000000000e+000f);
-  bd.angle = 0.000000000000000e+000f;
-  bd.linearVelocity.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-  bd.angularVelocity = 0.000000000000000e+000f;
-  bd.linearDamping = 0.000000000000000e+000f;
-  bd.angularDamping = 0.000000000000000e+000f;
-  bd.allowSleep = bool(4);
-  bd.awake = bool(0);
-  bd.fixedRotation = bool(0);
-  bd.bullet = bool(0);
-  bd.active = bool(32);
-  bd.gravityScale = 1.000000000000000e+000f;
-  bodies[5] = m_world->CreateBody(&bd);
-
-  {
-    b2FixtureDef fd;
-    fd.friction = 2.000000029802322e-001f;
-    fd.restitution = 0.000000000000000e+000f;
-    fd.density = 0.000000000000000e+000f;
-    fd.isSensor = bool(0);
-    fd.filter.categoryBits = uint16(1);
-    fd.filter.maskBits = uint16(65535);
-    fd.filter.groupIndex = int16(0);
-    b2CircleShape shape;
-    shape.m_radius = 1.000000000000000e+000f;
-    shape.m_p.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-
-    fd.shape = &shape;
-
-    bodies[5]->CreateFixture(&fd);
-  }
-}
-{
-  b2BodyDef bd;
-  bd.type = b2BodyType(0);
-  bd.position.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-  bd.angle = 0.000000000000000e+000f;
-  bd.linearVelocity.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-  bd.angularVelocity = 0.000000000000000e+000f;
-  bd.linearDamping = 0.000000000000000e+000f;
-  bd.angularDamping = 0.000000000000000e+000f;
-  bd.allowSleep = bool(4);
-  bd.awake = bool(0);
-  bd.fixedRotation = bool(0);
-  bd.bullet = bool(0);
-  bd.active = bool(32);
-  bd.gravityScale = 1.000000000000000e+000f;
-  bodies[6] = m_world->CreateBody(&bd);
-
-  {
-    b2FixtureDef fd;
-    fd.friction = 2.000000029802322e-001f;
-    fd.restitution = 0.000000000000000e+000f;
-    fd.density = 0.000000000000000e+000f;
-    fd.isSensor = bool(0);
-    fd.filter.categoryBits = uint16(1);
-    fd.filter.maskBits = uint16(65535);
-    fd.filter.groupIndex = int16(0);
-    b2EdgeShape shape;
-    shape.m_radius = 9.999999776482582e-003f;
-    shape.m_vertex0.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-    shape.m_vertex1.Set(5.000000000000000e+001f, 0.000000000000000e+000f);
-    shape.m_vertex2.Set(-5.000000000000000e+001f, 0.000000000000000e+000f);
-    shape.m_vertex3.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-    shape.m_hasVertex0 = bool(0);
-    shape.m_hasVertex3 = bool(0);
-
-    fd.shape = &shape;
-
-    bodies[6]->CreateFixture(&fd);
-  }
-}
-{
-  b2BodyDef bd;
-  bd.type = b2BodyType(0);
-  bd.position.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-  bd.angle = 0.000000000000000e+000f;
-  bd.linearVelocity.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-  bd.angularVelocity = 0.000000000000000e+000f;
-  bd.linearDamping = 0.000000000000000e+000f;
-  bd.angularDamping = 0.000000000000000e+000f;
+  bd.position.Set(0.000000000000000e+00f, 0.000000000000000e+00f);
+  bd.angle = 0.000000000000000e+00f;
+  bd.linearVelocity.Set(0.000000000000000e+00f, 0.000000000000000e+00f);
+  bd.angularVelocity = 0.000000000000000e+00f;
+  bd.linearDamping = 0.000000000000000e+00f;
+  bd.angularDamping = 0.000000000000000e+00f;
   bd.allowSleep = bool(4);
   bd.awake = bool(2);
   bd.fixedRotation = bool(0);
   bd.bullet = bool(0);
   bd.active = bool(32);
-  bd.gravityScale = 1.000000000000000e+000f;
-  bodies[7] = m_world->CreateBody(&bd);
+  bd.gravityScale = 1.000000000000000e+00f;
+  bodies[2] = m_world->CreateBody(&bd);
 
+  {
+    b2FixtureDef fd;
+    fd.friction = 1.000000000000000e+01f;
+    fd.restitution = 0.000000000000000e+00f;
+    fd.density = 0.000000000000000e+00f;
+    fd.isSensor = bool(0);
+    fd.filter.categoryBits = uint16(1);
+    fd.filter.maskBits = uint16(65535);
+    fd.filter.groupIndex = int16(0);
+    b2EdgeShape shape;
+    shape.m_radius = 9.999999776482582e-03f;
+    shape.m_vertex0.Set(0.000000000000000e+00f, 0.000000000000000e+00f);
+    shape.m_vertex1.Set(4.452173995971680e+01f, 1.669565200805664e+01f);
+    shape.m_vertex2.Set(4.452173995971680e+01f, 0.000000000000000e+00f);
+    shape.m_vertex3.Set(0.000000000000000e+00f, 0.000000000000000e+00f);
+    shape.m_hasVertex0 = bool(0);
+    shape.m_hasVertex3 = bool(0);
+
+    fd.shape = &shape;
+
+    bodies[2]->CreateFixture(&fd);
+  }
+  {
+    b2FixtureDef fd;
+    fd.friction = 1.000000000000000e+01f;
+    fd.restitution = 0.000000000000000e+00f;
+    fd.density = 0.000000000000000e+00f;
+    fd.isSensor = bool(0);
+    fd.filter.categoryBits = uint16(1);
+    fd.filter.maskBits = uint16(65535);
+    fd.filter.groupIndex = int16(0);
+    b2EdgeShape shape;
+    shape.m_radius = 9.999999776482582e-03f;
+    shape.m_vertex0.Set(0.000000000000000e+00f, 0.000000000000000e+00f);
+    shape.m_vertex1.Set(0.000000000000000e+00f, 1.669565200805664e+01f);
+    shape.m_vertex2.Set(0.000000000000000e+00f, 0.000000000000000e+00f);
+    shape.m_vertex3.Set(0.000000000000000e+00f, 0.000000000000000e+00f);
+    shape.m_hasVertex0 = bool(0);
+    shape.m_hasVertex3 = bool(0);
+
+    fd.shape = &shape;
+
+    bodies[2]->CreateFixture(&fd);
+  }
+  {
+    b2FixtureDef fd;
+    fd.friction = 1.000000000000000e+01f;
+    fd.restitution = 0.000000000000000e+00f;
+    fd.density = 0.000000000000000e+00f;
+    fd.isSensor = bool(0);
+    fd.filter.categoryBits = uint16(1);
+    fd.filter.maskBits = uint16(65535);
+    fd.filter.groupIndex = int16(0);
+    b2EdgeShape shape;
+    shape.m_radius = 9.999999776482582e-03f;
+    shape.m_vertex0.Set(0.000000000000000e+00f, 0.000000000000000e+00f);
+    shape.m_vertex1.Set(0.000000000000000e+00f, 1.669565200805664e+01f);
+    shape.m_vertex2.Set(4.452173995971680e+01f, 1.669565200805664e+01f);
+    shape.m_vertex3.Set(0.000000000000000e+00f, 0.000000000000000e+00f);
+    shape.m_hasVertex0 = bool(0);
+    shape.m_hasVertex3 = bool(0);
+
+    fd.shape = &shape;
+
+    bodies[2]->CreateFixture(&fd);
+  }
+  {
+    b2FixtureDef fd;
+    fd.friction = 1.000000000000000e+01f;
+    fd.restitution = 0.000000000000000e+00f;
+    fd.density = 0.000000000000000e+00f;
+    fd.isSensor = bool(0);
+    fd.filter.categoryBits = uint16(1);
+    fd.filter.maskBits = uint16(65535);
+    fd.filter.groupIndex = int16(0);
+    b2EdgeShape shape;
+    shape.m_radius = 9.999999776482582e-03f;
+    shape.m_vertex0.Set(0.000000000000000e+00f, 0.000000000000000e+00f);
+    shape.m_vertex1.Set(0.000000000000000e+00f, 0.000000000000000e+00f);
+    shape.m_vertex2.Set(4.452173995971680e+01f, 0.000000000000000e+00f);
+    shape.m_vertex3.Set(0.000000000000000e+00f, 0.000000000000000e+00f);
+    shape.m_hasVertex0 = bool(0);
+    shape.m_hasVertex3 = bool(0);
+
+    fd.shape = &shape;
+
+    bodies[2]->CreateFixture(&fd);
+  }
 }
+
 {
   b2PrismaticJointDef jd;
-  jd.bodyA = bodies[6];
-  jd.bodyB = bodies[0];
-  jd.collideConnected = bool(0);
-  jd.localAnchorA.Set(2.500000000000000e+000f, 1.200000000000000e+001f);
-  jd.localAnchorB.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-  jd.localAxisA.Set(0.000000000000000e+000f, 1.000000000000000e+000f);
-  jd.referenceAngle = 0.000000000000000e+000f;
-  jd.enableLimit = bool(1);
-  jd.lowerTranslation = -5.000000000000000e+000f;
-  jd.upperTranslation = 5.000000000000000e+000f;
-  jd.enableMotor = bool(0);
-  jd.motorSpeed = 0.000000000000000e+000f;
-  jd.maxMotorForce = 0.000000000000000e+000f;
-  joints[2] = m_world->CreateJoint(&jd);
-}
-{
-  b2RevoluteJointDef jd;
-  jd.bodyA = bodies[6];
-  jd.bodyB = bodies[1];
-  jd.collideConnected = bool(0);
-  jd.localAnchorA.Set(0.000000000000000e+000f, 1.200000000000000e+001f);
-  jd.localAnchorB.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-  jd.referenceAngle = 0.000000000000000e+000f;
-  jd.enableLimit = bool(0);
-  jd.lowerAngle = 0.000000000000000e+000f;
-  jd.upperAngle = 0.000000000000000e+000f;
-  jd.enableMotor = bool(0);
-  jd.motorSpeed = 0.000000000000000e+000f;
-  jd.maxMotorTorque = 0.000000000000000e+000f;
-  joints[3] = m_world->CreateJoint(&jd);
-}
-{
-  b2RevoluteJointDef jd;
-  jd.bodyA = bodies[6];
-  jd.bodyB = bodies[2];
-  jd.collideConnected = bool(0);
-  jd.localAnchorA.Set(-3.000000000000000e+000f, 1.200000000000000e+001f);
-  jd.localAnchorB.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-  jd.referenceAngle = 0.000000000000000e+000f;
-  jd.enableLimit = bool(0);
-  jd.lowerAngle = 0.000000000000000e+000f;
-  jd.upperAngle = 0.000000000000000e+000f;
-  jd.enableMotor = bool(0);
-  jd.motorSpeed = 0.000000000000000e+000f;
-  jd.maxMotorTorque = 0.000000000000000e+000f;
-  joints[4] = m_world->CreateJoint(&jd);
-}
-{
-  b2RevoluteJointDef jd;
-  jd.bodyA = bodies[4];
-  jd.bodyB = bodies[3];
-  jd.collideConnected = bool(0);
-  jd.localAnchorA.Set(0.000000000000000e+000f, -2.000000000000000e+000f);
-  jd.localAnchorB.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-  jd.referenceAngle = 0.000000000000000e+000f;
-  jd.enableLimit = bool(0);
-  jd.lowerAngle = 0.000000000000000e+000f;
-  jd.upperAngle = 0.000000000000000e+000f;
-  jd.enableMotor = bool(0);
-  jd.motorSpeed = 0.000000000000000e+000f;
-  jd.maxMotorTorque = 0.000000000000000e+000f;
-  joints[6] = m_world->CreateJoint(&jd);
-}
-{
-  b2RevoluteJointDef jd;
-  jd.bodyA = bodies[4];
-  jd.bodyB = bodies[5];
-  jd.collideConnected = bool(0);
-  jd.localAnchorA.Set(0.000000000000000e+000f, 1.000000000000000e+000f);
-  jd.localAnchorB.Set(0.000000000000000e+000f, 0.000000000000000e+000f);
-  jd.referenceAngle = 0.000000000000000e+000f;
-  jd.enableLimit = bool(0);
-  jd.lowerAngle = 0.000000000000000e+000f;
-  jd.upperAngle = 0.000000000000000e+000f;
-  jd.enableMotor = bool(0);
-  jd.motorSpeed = 0.000000000000000e+000f;
-  jd.maxMotorTorque = 0.000000000000000e+000f;
-  joints[7] = m_world->CreateJoint(&jd);
-}
-{
-  b2GearJointDef jd;
   jd.bodyA = bodies[1];
   jd.bodyB = bodies[0];
   jd.collideConnected = bool(0);
-  jd.joint1 = joints[3];
-  jd.joint2 = joints[2];
-  jd.ratio = -5.000000000000000e-001f;
+  jd.localAnchorA.Set(0.000000000000000e+00f, 0.000000000000000e+00f);
+  jd.localAnchorB.Set(-1.219565200805664e+01f, 0.000000000000000e+00f);
+  jd.localAxisA.Set(-1.219565200805664e+01f, 0.000000000000000e+00f);
+  jd.referenceAngle = 0.000000000000000e+00f;
+  jd.enableLimit = bool(1);
+  jd.lowerTranslation = -2.000000000000000e+01f;
+  jd.upperTranslation = 0.000000000000000e+00f;
+  jd.enableMotor = bool(1);
+  jd.motorSpeed = 0.000000000000000e+00f;
+  jd.maxMotorForce = 1.000000000000000e+01f;
   joints[0] = m_world->CreateJoint(&jd);
 }
 {
-  b2GearJointDef jd;
-  jd.bodyA = bodies[2];
-  jd.bodyB = bodies[1];
+  b2RevoluteJointDef jd;
+  jd.bodyA = bodies[1];
+  jd.bodyB = bodies[2];
   jd.collideConnected = bool(0);
-  jd.joint1 = joints[4];
-  jd.joint2 = joints[3];
-  jd.ratio = 2.000000000000000e+000f;
+  jd.localAnchorA.Set(0.000000000000000e+00f, 0.000000000000000e+00f);
+  jd.localAnchorB.Set(8.478260636329651e-01f, 2.500000000000000e+00f);
+  jd.referenceAngle = 0.000000000000000e+00f;
+  jd.enableLimit = bool(0);
+  jd.lowerAngle = 0.000000000000000e+00f;
+  jd.upperAngle = 0.000000000000000e+00f;
+  jd.enableMotor = bool(0);
+  jd.motorSpeed = 0.000000000000000e+00f;
+  jd.maxMotorTorque = 0.000000000000000e+00f;
   joints[1] = m_world->CreateJoint(&jd);
-}
-{
-  b2GearJointDef jd;
-  jd.bodyA = bodies[5];
-  jd.bodyB = bodies[3];
-  jd.collideConnected = bool(0);
-  jd.joint1 = joints[7];
-  jd.joint2 = joints[6];
-  jd.ratio = 2.000000000000000e+000f;
-  joints[5] = m_world->CreateJoint(&jd);
 }
 b2Free(joints);
 b2Free(bodies);
 joints = NULL;
 bodies = NULL;
+
 
 	}
 

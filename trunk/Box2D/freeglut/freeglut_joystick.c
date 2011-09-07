@@ -31,7 +31,7 @@
  *  Many thanks for Steve Baker for permission to pull from that library.
  */
 
-#include <GL/freeglut.h>
+#include "freeglut.h"
 #include "freeglut_internal.h"
 #if HAVE_SYS_PARAM_H
 #    include <sys/param.h>

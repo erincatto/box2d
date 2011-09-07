@@ -26,7 +26,7 @@
  */
 
 #define FREEGLUT_BUILDING_LIB
-#include <GL/freeglut.h>
+#include "freeglut.h"
 #include "freeglut_internal.h"
 
 /* -- DEFINITIONS ---------------------------------------------------------- */
