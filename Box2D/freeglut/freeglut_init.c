@@ -26,7 +26,7 @@
  */
 
 #define FREEGLUT_BUILDING_LIB
-#include <GL/freeglut.h>
+#include "freeglut.h"
 #include "freeglut_internal.h"
 
 #if TARGET_HOST_POSIX_X11
@@ -682,8 +682,8 @@ void FGAPIENTRY glutInit( int* pargc, char** argv )
 
     /* will return true for VC8 (VC2005) and higher */
 #if TARGET_HOST_MS_WINDOWS && ( _MSC_VER >= 1400 )
-    size_t sLen;
 #if HAVE_ERRNO
+    size_t sLen;
     errno_t err;
 #endif
 #endif

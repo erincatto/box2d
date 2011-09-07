@@ -1,0 +1,558 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0D1B5CF8256665BF52BE50D2 /* Main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1B9207E979AB614310563C3C /* Main.cpp */; };
+		0EF27332463C346E3FD237EA /* Render.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 59CE7DDB3AA217B45BBC7D9F /* Render.cpp */; };
+		321D340220747CEC5988275B /* Test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 03E824634D2D6FCE3DE04AFD /* Test.cpp */; };
+		1E994E2D3AD75BDC7835479D /* TestEntries.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20D83E721A1E6E606DBE2566 /* TestEntries.cpp */; };
+		53F0311211EF3DBB699B48DF /* libBox2D.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 48DF04350BD75AB344CA2AAF /* libBox2D.a */; };
+		447C4AA0564845C539DD6818 /* libFreeGLUT.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D5249071A7C0C92365F5E7E /* libFreeGLUT.a */; };
+		372609690536684071465F77 /* libGLUI.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D7F225219C5735741D233FA /* libGLUI.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		344D06B77AE85AB64A1B43AD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 72ED094A50F373E60EB51F01 /* Box2D.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 1AAC08B642F9503D58B7412A;
+			remoteInfo = "libBox2D.a";
+		};
+		632275F768CD51784A66237E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 72ED094A50F373E60EB51F01 /* Box2D.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 0A1E508C60D06F090A421E1C;
+			remoteInfo = "libBox2D.a";
+		};
+		6D3226E4634D4A4576B06BAA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 705A20417AF2535E59937DBD /* FreeGLUT.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 4C7174755152323306944C10;
+			remoteInfo = "libFreeGLUT.a";
+		};
+		037B67784A2203704C140B2F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 705A20417AF2535E59937DBD /* FreeGLUT.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 7CB54CAE477625B3332F1650;
+			remoteInfo = "libFreeGLUT.a";
+		};
+		3A2C24A73572050A784800B0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 074D0FB15973548F167E419A /* GLUI.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 7D9B3B6376063D5A48127280;
+			remoteInfo = "libGLUI.a";
+		};
+		688077AA59481E4B0C1F5CBE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 074D0FB15973548F167E419A /* GLUI.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 0D64405C65FA1D4013FD5B4A;
+			remoteInfo = "libGLUI.a";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		1B9207E979AB614310563C3C /* Main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "Main.cpp"; path = "../../Testbed/Framework/Main.cpp"; sourceTree = "<group>"; };
+		59CE7DDB3AA217B45BBC7D9F /* Render.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "Render.cpp"; path = "../../Testbed/Framework/Render.cpp"; sourceTree = "<group>"; };
+		6C4776F5268B141754FC3A60 /* Render.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Render.h"; path = "../../Testbed/Framework/Render.h"; sourceTree = "<group>"; };
+		03E824634D2D6FCE3DE04AFD /* Test.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "Test.cpp"; path = "../../Testbed/Framework/Test.cpp"; sourceTree = "<group>"; };
+		25DB79A33AE4020609DD20D5 /* Test.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Test.h"; path = "../../Testbed/Framework/Test.h"; sourceTree = "<group>"; };
+		07DA457334CB640D3D571F7A /* AddPair.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "AddPair.h"; path = "../../Testbed/Tests/AddPair.h"; sourceTree = "<group>"; };
+		05786AF97DFA1C9E132B6BC9 /* ApplyForce.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "ApplyForce.h"; path = "../../Testbed/Tests/ApplyForce.h"; sourceTree = "<group>"; };
+		52121FFE00515BC3041D0B33 /* BodyTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "BodyTypes.h"; path = "../../Testbed/Tests/BodyTypes.h"; sourceTree = "<group>"; };
+		24F07C6732E817E351E921A6 /* Breakable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Breakable.h"; path = "../../Testbed/Tests/Breakable.h"; sourceTree = "<group>"; };
+		4EF86F93597A284F072975BD /* Bridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Bridge.h"; path = "../../Testbed/Tests/Bridge.h"; sourceTree = "<group>"; };
+		010630CA6895782340197208 /* BulletTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "BulletTest.h"; path = "../../Testbed/Tests/BulletTest.h"; sourceTree = "<group>"; };
+		35B7396270A738BA38D109CA /* Cantilever.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Cantilever.h"; path = "../../Testbed/Tests/Cantilever.h"; sourceTree = "<group>"; };
+		549466C1158A626D147906E6 /* Car.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Car.h"; path = "../../Testbed/Tests/Car.h"; sourceTree = "<group>"; };
+		5DDC36761BA648CC6E2D6EBD /* Chain.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Chain.h"; path = "../../Testbed/Tests/Chain.h"; sourceTree = "<group>"; };
+		7563792254BC43980F7C4A1D /* CharacterCollision.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CharacterCollision.h"; path = "../../Testbed/Tests/CharacterCollision.h"; sourceTree = "<group>"; };
+		483F68F305FC002671CB40A3 /* CollisionFiltering.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CollisionFiltering.h"; path = "../../Testbed/Tests/CollisionFiltering.h"; sourceTree = "<group>"; };
+		5C3856D00DF306F7470F320C /* CollisionProcessing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CollisionProcessing.h"; path = "../../Testbed/Tests/CollisionProcessing.h"; sourceTree = "<group>"; };
+		29342D906C716FA07B915873 /* CompoundShapes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CompoundShapes.h"; path = "../../Testbed/Tests/CompoundShapes.h"; sourceTree = "<group>"; };
+		3C1E6CD5277A315D45B01470 /* Confined.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Confined.h"; path = "../../Testbed/Tests/Confined.h"; sourceTree = "<group>"; };
+		5FF205572FDC08E439F16089 /* ContinuousTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "ContinuousTest.h"; path = "../../Testbed/Tests/ContinuousTest.h"; sourceTree = "<group>"; };
+		34F53EC62D071C5348B11B81 /* Cord.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Cord.h"; path = "../../Testbed/Tests/Cord.h"; sourceTree = "<group>"; };
+		0743139A4B306C4B58537160 /* DistanceTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "DistanceTest.h"; path = "../../Testbed/Tests/DistanceTest.h"; sourceTree = "<group>"; };
+		6D3A495817EC4D9829C9394D /* Dominos.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Dominos.h"; path = "../../Testbed/Tests/Dominos.h"; sourceTree = "<group>"; };
+		0B6D0C3878C728F72EBF328F /* DumpShell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "DumpShell.h"; path = "../../Testbed/Tests/DumpShell.h"; sourceTree = "<group>"; };
+		1F180B3D247F26D93FDB3553 /* DynamicTreeTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "DynamicTreeTest.h"; path = "../../Testbed/Tests/DynamicTreeTest.h"; sourceTree = "<group>"; };
+		715F0E1112ED4B3106C93C06 /* EdgeShapes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "EdgeShapes.h"; path = "../../Testbed/Tests/EdgeShapes.h"; sourceTree = "<group>"; };
+		64AF504460C669B1430A3063 /* EdgeTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "EdgeTest.h"; path = "../../Testbed/Tests/EdgeTest.h"; sourceTree = "<group>"; };
+		3B1F25C67BB0550421C23389 /* Gears.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Gears.h"; path = "../../Testbed/Tests/Gears.h"; sourceTree = "<group>"; };
+		4FA41AB060664BE37FFC3AB4 /* OneSidedPlatform.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "OneSidedPlatform.h"; path = "../../Testbed/Tests/OneSidedPlatform.h"; sourceTree = "<group>"; };
+		157274B517E67D1A6C1B626C /* Pinball.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Pinball.h"; path = "../../Testbed/Tests/Pinball.h"; sourceTree = "<group>"; };
+		17E946D741CD17D6666D5846 /* PolyCollision.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "PolyCollision.h"; path = "../../Testbed/Tests/PolyCollision.h"; sourceTree = "<group>"; };
+		3ACD3834297E4FD50A1C3F90 /* PolyShapes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "PolyShapes.h"; path = "../../Testbed/Tests/PolyShapes.h"; sourceTree = "<group>"; };
+		6DCD44FF709E15503EF70F7A /* Prismatic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Prismatic.h"; path = "../../Testbed/Tests/Prismatic.h"; sourceTree = "<group>"; };
+		377B2D0C150A0EB129C6299D /* Pulleys.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Pulleys.h"; path = "../../Testbed/Tests/Pulleys.h"; sourceTree = "<group>"; };
+		3B460574515D367614205DEE /* Pyramid.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Pyramid.h"; path = "../../Testbed/Tests/Pyramid.h"; sourceTree = "<group>"; };
+		7B100B385E8D69D846054D80 /* RayCast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "RayCast.h"; path = "../../Testbed/Tests/RayCast.h"; sourceTree = "<group>"; };
+		607C72ED425A45031AA42F9E /* Revolute.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Revolute.h"; path = "../../Testbed/Tests/Revolute.h"; sourceTree = "<group>"; };
+		630D15DE6981700647197527 /* Rope.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Rope.h"; path = "../../Testbed/Tests/Rope.h"; sourceTree = "<group>"; };
+		379917201DE20BC825043438 /* RopeJoint.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "RopeJoint.h"; path = "../../Testbed/Tests/RopeJoint.h"; sourceTree = "<group>"; };
+		2AD37B8D482B509F2C463A7B /* SensorTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "SensorTest.h"; path = "../../Testbed/Tests/SensorTest.h"; sourceTree = "<group>"; };
+		6BD045A329A438646E4F2EBE /* ShapeEditing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "ShapeEditing.h"; path = "../../Testbed/Tests/ShapeEditing.h"; sourceTree = "<group>"; };
+		6CCD02B826234C0E2ABA5A9E /* SliderCrank.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "SliderCrank.h"; path = "../../Testbed/Tests/SliderCrank.h"; sourceTree = "<group>"; };
+		6FAB69051F617143482E1B62 /* SphereStack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "SphereStack.h"; path = "../../Testbed/Tests/SphereStack.h"; sourceTree = "<group>"; };
+		20D83E721A1E6E606DBE2566 /* TestEntries.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "TestEntries.cpp"; path = "../../Testbed/Tests/TestEntries.cpp"; sourceTree = "<group>"; };
+		43F6476C6AFD702064204518 /* TheoJansen.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "TheoJansen.h"; path = "../../Testbed/Tests/TheoJansen.h"; sourceTree = "<group>"; };
+		55B709F278EE0F2650693891 /* Tiles.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Tiles.h"; path = "../../Testbed/Tests/Tiles.h"; sourceTree = "<group>"; };
+		1533352B141B597446DF5A69 /* TimeOfImpact.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "TimeOfImpact.h"; path = "../../Testbed/Tests/TimeOfImpact.h"; sourceTree = "<group>"; };
+		0FDD54FA74232E5A4F0C7BA1 /* VaryingFriction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "VaryingFriction.h"; path = "../../Testbed/Tests/VaryingFriction.h"; sourceTree = "<group>"; };
+		13D6538D14D24378451828B1 /* VaryingRestitution.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "VaryingRestitution.h"; path = "../../Testbed/Tests/VaryingRestitution.h"; sourceTree = "<group>"; };
+		50EC79D70A3527F051B03D4D /* VerticalStack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "VerticalStack.h"; path = "../../Testbed/Tests/VerticalStack.h"; sourceTree = "<group>"; };
+		2ACC507E574E53DA01304E71 /* Web.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Web.h"; path = "../../Testbed/Tests/Web.h"; sourceTree = "<group>"; };
+		6E5F1FC4525A03767DF56BB2 /* Testbed */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = "Testbed"; path = "Testbed"; sourceTree = BUILT_PRODUCTS_DIR; };
+		72ED094A50F373E60EB51F01 /* Box2D.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "Box2D.xcodeproj"; path = "Box2D.xcodeproj"; sourceTree = SOURCE_ROOT; };
+		705A20417AF2535E59937DBD /* FreeGLUT.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "FreeGLUT.xcodeproj"; path = "FreeGLUT.xcodeproj"; sourceTree = SOURCE_ROOT; };
+		074D0FB15973548F167E419A /* GLUI.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "GLUI.xcodeproj"; path = "GLUI.xcodeproj"; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		126969F5521A65813F375004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				53F0311211EF3DBB699B48DF /* libBox2D.a in Frameworks */,
+				447C4AA0564845C539DD6818 /* libFreeGLUT.a in Frameworks */,
+				372609690536684071465F77 /* libGLUI.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5D58609F54B562E10C8418DA /* Testbed */ = {
+			isa = PBXGroup;
+			children = (
+				070A361062AA7C8929D36372 /* Framework */,
+				3DE738722C7D5A8A52494404 /* Tests */,
+				6C56315E370E54D3277A4252 /* Products */,
+				35505DF53A964EB64B424607 /* Projects */,
+			);
+			name = "Testbed";
+			sourceTree = "<group>";
+		};
+		070A361062AA7C8929D36372 /* Framework */ = {
+			isa = PBXGroup;
+			children = (
+				1B9207E979AB614310563C3C /* Main.cpp */,
+				59CE7DDB3AA217B45BBC7D9F /* Render.cpp */,
+				6C4776F5268B141754FC3A60 /* Render.h */,
+				03E824634D2D6FCE3DE04AFD /* Test.cpp */,
+				25DB79A33AE4020609DD20D5 /* Test.h */,
+			);
+			name = "Framework";
+			sourceTree = "<group>";
+		};
+		3DE738722C7D5A8A52494404 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				07DA457334CB640D3D571F7A /* AddPair.h */,
+				05786AF97DFA1C9E132B6BC9 /* ApplyForce.h */,
+				52121FFE00515BC3041D0B33 /* BodyTypes.h */,
+				24F07C6732E817E351E921A6 /* Breakable.h */,
+				4EF86F93597A284F072975BD /* Bridge.h */,
+				010630CA6895782340197208 /* BulletTest.h */,
+				35B7396270A738BA38D109CA /* Cantilever.h */,
+				549466C1158A626D147906E6 /* Car.h */,
+				5DDC36761BA648CC6E2D6EBD /* Chain.h */,
+				7563792254BC43980F7C4A1D /* CharacterCollision.h */,
+				483F68F305FC002671CB40A3 /* CollisionFiltering.h */,
+				5C3856D00DF306F7470F320C /* CollisionProcessing.h */,
+				29342D906C716FA07B915873 /* CompoundShapes.h */,
+				3C1E6CD5277A315D45B01470 /* Confined.h */,
+				5FF205572FDC08E439F16089 /* ContinuousTest.h */,
+				34F53EC62D071C5348B11B81 /* Cord.h */,
+				0743139A4B306C4B58537160 /* DistanceTest.h */,
+				6D3A495817EC4D9829C9394D /* Dominos.h */,
+				0B6D0C3878C728F72EBF328F /* DumpShell.h */,
+				1F180B3D247F26D93FDB3553 /* DynamicTreeTest.h */,
+				715F0E1112ED4B3106C93C06 /* EdgeShapes.h */,
+				64AF504460C669B1430A3063 /* EdgeTest.h */,
+				3B1F25C67BB0550421C23389 /* Gears.h */,
+				4FA41AB060664BE37FFC3AB4 /* OneSidedPlatform.h */,
+				157274B517E67D1A6C1B626C /* Pinball.h */,
+				17E946D741CD17D6666D5846 /* PolyCollision.h */,
+				3ACD3834297E4FD50A1C3F90 /* PolyShapes.h */,
+				6DCD44FF709E15503EF70F7A /* Prismatic.h */,
+				377B2D0C150A0EB129C6299D /* Pulleys.h */,
+				3B460574515D367614205DEE /* Pyramid.h */,
+				7B100B385E8D69D846054D80 /* RayCast.h */,
+				607C72ED425A45031AA42F9E /* Revolute.h */,
+				630D15DE6981700647197527 /* Rope.h */,
+				379917201DE20BC825043438 /* RopeJoint.h */,
+				2AD37B8D482B509F2C463A7B /* SensorTest.h */,
+				6BD045A329A438646E4F2EBE /* ShapeEditing.h */,
+				6CCD02B826234C0E2ABA5A9E /* SliderCrank.h */,
+				6FAB69051F617143482E1B62 /* SphereStack.h */,
+				20D83E721A1E6E606DBE2566 /* TestEntries.cpp */,
+				43F6476C6AFD702064204518 /* TheoJansen.h */,
+				55B709F278EE0F2650693891 /* Tiles.h */,
+				1533352B141B597446DF5A69 /* TimeOfImpact.h */,
+				0FDD54FA74232E5A4F0C7BA1 /* VaryingFriction.h */,
+				13D6538D14D24378451828B1 /* VaryingRestitution.h */,
+				50EC79D70A3527F051B03D4D /* VerticalStack.h */,
+				2ACC507E574E53DA01304E71 /* Web.h */,
+			);
+			name = "Tests";
+			sourceTree = "<group>";
+		};
+		6C56315E370E54D3277A4252 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6E5F1FC4525A03767DF56BB2 /* Testbed */,
+			);
+			name = "Products";
+			sourceTree = "<group>";
+		};
+		35505DF53A964EB64B424607 /* Projects */ = {
+			isa = PBXGroup;
+			children = (
+				72ED094A50F373E60EB51F01 /* Box2D.xcodeproj */,
+				705A20417AF2535E59937DBD /* FreeGLUT.xcodeproj */,
+				074D0FB15973548F167E419A /* GLUI.xcodeproj */,
+			);
+			name = "Projects";
+			sourceTree = "<group>";
+		};
+		24D2560A10685D720F564654 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				48DF04350BD75AB344CA2AAF /* libBox2D.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		6FEB03026434416B76D04136 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7D5249071A7C0C92365F5E7E /* libFreeGLUT.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		65FB6B0B22F320220B536D33 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0D7F225219C5735741D233FA /* libGLUI.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		36BD55070755669A4D34175B /* Testbed */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5A0938121D2A76FB7A2B7AE6 /* Build configuration list for PBXNativeTarget "Testbed" */;
+			buildPhases = (
+				65427E3A121B454E7DA64379 /* Resources */,
+				375C15CC6D9F686E1E1E43E8 /* Sources */,
+				126969F5521A65813F375004 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				767F24CC1D677CC2481B1B02 /* PBXTargetDependency */,
+				5EBB5DAF2F7A5BD3088E683E /* PBXTargetDependency */,
+				6A81188845F01EEF19415F8C /* PBXTargetDependency */,
+			);
+			name = "Testbed";
+			productInstallPath = "$(HOME)/bin";
+			productName = "Testbed";
+			productReference = 6E5F1FC4525A03767DF56BB2 /* Testbed */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		08FB7793FE84155DC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "Testbed" */;
+			compatibilityVersion = "Xcode 3.1";
+			hasScannedForEncodings = 1;
+			mainGroup = 5D58609F54B562E10C8418DA /* Testbed */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 24D2560A10685D720F564654 /* Products */;
+					ProjectRef = 72ED094A50F373E60EB51F01 /* Box2D.xcodeproj */;
+				},
+				{
+					ProductGroup = 6FEB03026434416B76D04136 /* Products */;
+					ProjectRef = 705A20417AF2535E59937DBD /* FreeGLUT.xcodeproj */;
+				},
+				{
+					ProductGroup = 65FB6B0B22F320220B536D33 /* Products */;
+					ProjectRef = 074D0FB15973548F167E419A /* GLUI.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				36BD55070755669A4D34175B /* Testbed */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		48DF04350BD75AB344CA2AAF /* libBox2D.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "bin/Debug/libBox2D.a";
+			remoteRef = 344D06B77AE85AB64A1B43AD /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		7D5249071A7C0C92365F5E7E /* libFreeGLUT.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "bin/Debug/libFreeGLUT.a";
+			remoteRef = 6D3226E4634D4A4576B06BAA /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		0D7F225219C5735741D233FA /* libGLUI.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "bin/Debug/libGLUI.a";
+			remoteRef = 3A2C24A73572050A784800B0 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXResourcesBuildPhase section */
+		65427E3A121B454E7DA64379 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		375C15CC6D9F686E1E1E43E8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0D1B5CF8256665BF52BE50D2 /* Main.cpp in Sources */,
+				0EF27332463C346E3FD237EA /* Render.cpp in Sources */,
+				321D340220747CEC5988275B /* Test.cpp in Sources */,
+				1E994E2D3AD75BDC7835479D /* TestEntries.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+/* End PBXVariantGroup section */
+
+/* Begin PBXTargetDependency section */
+		767F24CC1D677CC2481B1B02 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "libBox2D.a";
+			targetProxy = 632275F768CD51784A66237E /* PBXContainerItemProxy */;
+		};
+		5EBB5DAF2F7A5BD3088E683E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "libFreeGLUT.a";
+			targetProxy = 037B67784A2203704C140B2F /* PBXContainerItemProxy */;
+		};
+		6A81188845F01EEF19415F8C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "libGLUI.a";
+			targetProxy = 688077AA59481E4B0C1F5CBE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		686A5C976DBF436C70694314 /* Debug Native 32-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CONFIGURATION_BUILD_DIR = bin/Debug;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = "Testbed";
+			};
+			name = "Debug Native 32-bit";
+		};
+		08F03F8E700650D74A2673A3 /* Debug Native 64-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CONFIGURATION_BUILD_DIR = bin/Debug;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = "Testbed";
+			};
+			name = "Debug Native 64-bit";
+		};
+		064C59CC570F343329724160 /* Release Native 32-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				CONFIGURATION_BUILD_DIR = bin/Release;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = "Testbed";
+			};
+			name = "Release Native 32-bit";
+		};
+		46C637B0002F0E2B42390EBE /* Release Native 64-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				CONFIGURATION_BUILD_DIR = bin/Release;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = "Testbed";
+			};
+			name = "Release Native 64-bit";
+		};
+		53220BFB62D264D46B29134C /* Debug Native 32-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "i386";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"_DEBUG",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"../..",
+				);
+				OBJROOT = "obj/x32/Debug/Testbed";
+				ONLY_ACTIVE_ARCH = YES;
+				PREBINDING = NO;
+				SYMROOT = "bin/Debug";
+			};
+			name = "Debug Native 32-bit";
+		};
+		3CE13E3758784E9A7E795539 /* Debug Native 64-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "x86_64";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"_DEBUG",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"../..",
+				);
+				OBJROOT = "obj/x64/Debug/Testbed";
+				ONLY_ACTIVE_ARCH = YES;
+				PREBINDING = NO;
+				SYMROOT = "bin/Debug";
+			};
+			name = "Debug Native 64-bit";
+		};
+		79805C972F63277A7FB13FC7 /* Release Native 32-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "i386";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NDEBUG",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"../..",
+				);
+				OBJROOT = "obj/x32/Release/Testbed";
+				ONLY_ACTIVE_ARCH = NO;
+				PREBINDING = NO;
+				SYMROOT = "bin/Release";
+			};
+			name = "Release Native 32-bit";
+		};
+		27177C82184D4A7A56347375 /* Release Native 64-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "x86_64";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NDEBUG",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"../..",
+				);
+				OBJROOT = "obj/x64/Release/Testbed";
+				ONLY_ACTIVE_ARCH = NO;
+				PREBINDING = NO;
+				SYMROOT = "bin/Release";
+			};
+			name = "Release Native 64-bit";
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5A0938121D2A76FB7A2B7AE6 /* Build configuration list for PBXNativeTarget "Testbed" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				686A5C976DBF436C70694314 /* Debug Native 32-bit */,
+				08F03F8E700650D74A2673A3 /* Debug Native 64-bit */,
+				064C59CC570F343329724160 /* Release Native 32-bit */,
+				46C637B0002F0E2B42390EBE /* Release Native 64-bit */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Debug Native 32-bit";
+		};
+		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "Testbed" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				53220BFB62D264D46B29134C /* Debug Native 32-bit */,
+				3CE13E3758784E9A7E795539 /* Debug Native 64-bit */,
+				79805C972F63277A7FB13FC7 /* Release Native 32-bit */,
+				27177C82184D4A7A56347375 /* Release Native 64-bit */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Debug Native 32-bit";
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = 08FB7793FE84155DC02AAC07 /* Project object */;
+}

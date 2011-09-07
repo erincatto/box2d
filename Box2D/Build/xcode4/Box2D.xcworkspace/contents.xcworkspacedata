@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+	version = "1.0">
+	<FileRef
+		location = "group:Box2D.xcodeproj">
+	</FileRef>
+	<FileRef
+		location = "group:FreeGLUT.xcodeproj">
+	</FileRef>
+	<FileRef
+		location = "group:GLUI.xcodeproj">
+	</FileRef>
+	<FileRef
+		location = "group:HelloWorld.xcodeproj">
+	</FileRef>
+	<FileRef
+		location = "group:Testbed.xcodeproj">
+	</FileRef>
+</Workspace>

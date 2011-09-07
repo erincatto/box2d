@@ -45,7 +45,7 @@ struct b2PrismaticJointDef : public b2JointDef
 	}
 
 	/// Initialize the bodies, anchors, axis, and reference angle using the world
-	/// anchor and world axis.
+	/// anchor and unit world axis.
 	void Initialize(b2Body* bodyA, b2Body* bodyB, const b2Vec2& anchor, const b2Vec2& axis);
 
 	/// The local anchor point relative to bodyA's origin.
@@ -54,7 +54,7 @@ struct b2PrismaticJointDef : public b2JointDef
 	/// The local anchor point relative to bodyB's origin.
 	b2Vec2 localAnchorB;
 
-	/// The local translation axis in bodyA.
+	/// The local translation unit axis in bodyA.
 	b2Vec2 localAxisA;
 
 	/// The constrained angle between the bodies: bodyB_angle - bodyA_angle.

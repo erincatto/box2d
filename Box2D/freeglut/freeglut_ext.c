@@ -26,7 +26,7 @@
  */
 
 #define GLX_GLXEXT_PROTOTYPES
-#include <GL/freeglut.h>
+#include "freeglut.h"
 #include "freeglut_internal.h"
 
 static GLUTproc fghGetGLUTProcAddress( const char* procName )
