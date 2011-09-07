@@ -73,8 +73,7 @@ if(APPLE)
 	include_directories( /usr/X11/include )
 	link_directories( /usr/X11/lib )
 	set (OPENGL_LIBRARIES GL GLU GLUT X11)
-#Maybe this should be WIN32 instead of just MINGW?
-elseif(MINGW)
+elseif(WIN32)
 	set (ADDITIONAL_LIBRARIES winmm)
 endif(APPLE)
 

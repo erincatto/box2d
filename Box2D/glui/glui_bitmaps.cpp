@@ -35,7 +35,7 @@ FIXME: upload the images to a texture.  This will allow them to be:
 
 *****************************************************************************/
 
-#include "GL/glui.h"
+#include "glui.h"
 #include "glui_internal.h"
 #include <cassert>
 
