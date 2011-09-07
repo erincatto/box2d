@@ -18,7 +18,7 @@
 
 #include "../Framework/Test.h"
 #include "../Framework/Render.h"
-#include "../../freeglut/GL/glut.h"
+#include "freeglut/freeglut.h"
 #include <cstring>
 using namespace std;
 

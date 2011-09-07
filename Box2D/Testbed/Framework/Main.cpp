@@ -18,7 +18,7 @@
 
 #include "Render.h"
 #include "Test.h"
-#include "glui/GL/glui.h"
+#include "glui/glui.h"
 
 #include <cstdio>
 using namespace std;
