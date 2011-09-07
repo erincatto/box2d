@@ -18,7 +18,7 @@
 
 #include "Render.h"
 
-#include "freeglut/GL/glut.h"
+#include "freeglut/freeglut.h"
 
 #include <cstdio>
 #include <cstdarg>
