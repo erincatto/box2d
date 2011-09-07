@@ -1,0 +1,397 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		133F1C074EE323E41C924A27 /* freeglut_callbacks.c in Sources */ = {isa = PBXBuildFile; fileRef = 04910F4E1C774D8B4E9474DF /* freeglut_callbacks.c */; };
+		5305140F457E15C070BC5035 /* freeglut_cursor.c in Sources */ = {isa = PBXBuildFile; fileRef = 3E795E856AC91672210D1BA8 /* freeglut_cursor.c */; };
+		43C27DD00D15062B48A850A5 /* freeglut_display.c in Sources */ = {isa = PBXBuildFile; fileRef = 25743BE522716BE26845392A /* freeglut_display.c */; };
+		7334423E743E2D165177054B /* freeglut_ext.c in Sources */ = {isa = PBXBuildFile; fileRef = 004238E51DFB51691FFF06CB /* freeglut_ext.c */; };
+		14BE76636E4B593964EE4F08 /* freeglut_font.c in Sources */ = {isa = PBXBuildFile; fileRef = 1DD4335C23D113FA40D73C64 /* freeglut_font.c */; };
+		4E3024FB267866911605401E /* freeglut_font_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 50FE127D1F484EC221B11C00 /* freeglut_font_data.c */; };
+		47D74E5170561D1C04B650D6 /* freeglut_gamemode.c in Sources */ = {isa = PBXBuildFile; fileRef = 4164041458EE724C525E11D5 /* freeglut_gamemode.c */; };
+		4BC73A58417773D305041A54 /* freeglut_geometry.c in Sources */ = {isa = PBXBuildFile; fileRef = 3D9E36023A1329D75B902482 /* freeglut_geometry.c */; };
+		0067790D205A73E8654933B9 /* freeglut_glutfont_definitions.c in Sources */ = {isa = PBXBuildFile; fileRef = 7AAD47F567953AF71000318B /* freeglut_glutfont_definitions.c */; };
+		0A3E2D0B349938415FC40D7A /* freeglut_init.c in Sources */ = {isa = PBXBuildFile; fileRef = 6CA2716C3FF03B6A5ADD3211 /* freeglut_init.c */; };
+		20FC7C6F64504534036166FF /* freeglut_input_devices.c in Sources */ = {isa = PBXBuildFile; fileRef = 248B17EB0885393C377703D5 /* freeglut_input_devices.c */; };
+		63CC43ED2ACF34831FCA3A7F /* freeglut_joystick.c in Sources */ = {isa = PBXBuildFile; fileRef = 5FA1517A5629311D3E2B726F /* freeglut_joystick.c */; };
+		78D768331484719900AF3B1B /* freeglut_main.c in Sources */ = {isa = PBXBuildFile; fileRef = 33AF0F627CF06F0172917CCA /* freeglut_main.c */; };
+		441B617D0C22020604514138 /* freeglut_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 04C56D2B133A34F93EE312E2 /* freeglut_menu.c */; };
+		416E5D796515163859544120 /* freeglut_misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 301D5FD053FF445148B047C1 /* freeglut_misc.c */; };
+		4DCD135C4F2A5E7C6FC627DC /* freeglut_overlay.c in Sources */ = {isa = PBXBuildFile; fileRef = 184D41446C5724E90AC233B7 /* freeglut_overlay.c */; };
+		6BE926451F7A6034696A3A4B /* freeglut_spaceball.c in Sources */ = {isa = PBXBuildFile; fileRef = 7EAE742A004C46D8604C02D8 /* freeglut_spaceball.c */; };
+		4FF331D11A97475815495286 /* freeglut_state.c in Sources */ = {isa = PBXBuildFile; fileRef = 560C1BCF72E35A3E6D576BBB /* freeglut_state.c */; };
+		3EA65CFE2BF97032427B1778 /* freeglut_stroke_mono_roman.c in Sources */ = {isa = PBXBuildFile; fileRef = 7A8E246B3D677969106E0A70 /* freeglut_stroke_mono_roman.c */; };
+		0B960F4436AA255476310AB8 /* freeglut_stroke_roman.c in Sources */ = {isa = PBXBuildFile; fileRef = 7AE7179861F8012B49885BC2 /* freeglut_stroke_roman.c */; };
+		42B723F16B304DDD510608A9 /* freeglut_structure.c in Sources */ = {isa = PBXBuildFile; fileRef = 5EBD79124554337A423554AE /* freeglut_structure.c */; };
+		493037C54EBB07EE2F8716D4 /* freeglut_teapot.c in Sources */ = {isa = PBXBuildFile; fileRef = 165927B07BE40049630C5222 /* freeglut_teapot.c */; };
+		01616CCD5F8F6B6652001C85 /* freeglut_videoresize.c in Sources */ = {isa = PBXBuildFile; fileRef = 7F907EA3560A10A522535CF9 /* freeglut_videoresize.c */; };
+		3E31408402B270E4178861A3 /* freeglut_window.c in Sources */ = {isa = PBXBuildFile; fileRef = 2BF032ED37A8701277F07E37 /* freeglut_window.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		5AED17EF3F36102B63DD0442 /* freeglut.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "freeglut.h"; path = "../../freeglut/freeglut.h"; sourceTree = "<group>"; };
+		43150F4716A66AD664CB330F /* freeglut_ext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "freeglut_ext.h"; path = "../../freeglut/freeglut_ext.h"; sourceTree = "<group>"; };
+		74CA47377181149F7146457D /* freeglut_internal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "freeglut_internal.h"; path = "../../freeglut/freeglut_internal.h"; sourceTree = "<group>"; };
+		15C45BDD4BBA40D931CD52AD /* freeglut_std.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "freeglut_std.h"; path = "../../freeglut/freeglut_std.h"; sourceTree = "<group>"; };
+		26C9106D430538645DC31661 /* freeglut_teapot_data.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "freeglut_teapot_data.h"; path = "../../freeglut/freeglut_teapot_data.h"; sourceTree = "<group>"; };
+		04910F4E1C774D8B4E9474DF /* freeglut_callbacks.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_callbacks.c"; path = "../../freeglut/freeglut_callbacks.c"; sourceTree = "<group>"; };
+		3E795E856AC91672210D1BA8 /* freeglut_cursor.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_cursor.c"; path = "../../freeglut/freeglut_cursor.c"; sourceTree = "<group>"; };
+		25743BE522716BE26845392A /* freeglut_display.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_display.c"; path = "../../freeglut/freeglut_display.c"; sourceTree = "<group>"; };
+		004238E51DFB51691FFF06CB /* freeglut_ext.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_ext.c"; path = "../../freeglut/freeglut_ext.c"; sourceTree = "<group>"; };
+		1DD4335C23D113FA40D73C64 /* freeglut_font.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_font.c"; path = "../../freeglut/freeglut_font.c"; sourceTree = "<group>"; };
+		50FE127D1F484EC221B11C00 /* freeglut_font_data.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_font_data.c"; path = "../../freeglut/freeglut_font_data.c"; sourceTree = "<group>"; };
+		4164041458EE724C525E11D5 /* freeglut_gamemode.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_gamemode.c"; path = "../../freeglut/freeglut_gamemode.c"; sourceTree = "<group>"; };
+		3D9E36023A1329D75B902482 /* freeglut_geometry.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_geometry.c"; path = "../../freeglut/freeglut_geometry.c"; sourceTree = "<group>"; };
+		7AAD47F567953AF71000318B /* freeglut_glutfont_definitions.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_glutfont_definitions.c"; path = "../../freeglut/freeglut_glutfont_definitions.c"; sourceTree = "<group>"; };
+		6CA2716C3FF03B6A5ADD3211 /* freeglut_init.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_init.c"; path = "../../freeglut/freeglut_init.c"; sourceTree = "<group>"; };
+		248B17EB0885393C377703D5 /* freeglut_input_devices.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_input_devices.c"; path = "../../freeglut/freeglut_input_devices.c"; sourceTree = "<group>"; };
+		5FA1517A5629311D3E2B726F /* freeglut_joystick.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_joystick.c"; path = "../../freeglut/freeglut_joystick.c"; sourceTree = "<group>"; };
+		33AF0F627CF06F0172917CCA /* freeglut_main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_main.c"; path = "../../freeglut/freeglut_main.c"; sourceTree = "<group>"; };
+		04C56D2B133A34F93EE312E2 /* freeglut_menu.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_menu.c"; path = "../../freeglut/freeglut_menu.c"; sourceTree = "<group>"; };
+		301D5FD053FF445148B047C1 /* freeglut_misc.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_misc.c"; path = "../../freeglut/freeglut_misc.c"; sourceTree = "<group>"; };
+		184D41446C5724E90AC233B7 /* freeglut_overlay.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_overlay.c"; path = "../../freeglut/freeglut_overlay.c"; sourceTree = "<group>"; };
+		7EAE742A004C46D8604C02D8 /* freeglut_spaceball.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_spaceball.c"; path = "../../freeglut/freeglut_spaceball.c"; sourceTree = "<group>"; };
+		560C1BCF72E35A3E6D576BBB /* freeglut_state.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_state.c"; path = "../../freeglut/freeglut_state.c"; sourceTree = "<group>"; };
+		7A8E246B3D677969106E0A70 /* freeglut_stroke_mono_roman.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_stroke_mono_roman.c"; path = "../../freeglut/freeglut_stroke_mono_roman.c"; sourceTree = "<group>"; };
+		7AE7179861F8012B49885BC2 /* freeglut_stroke_roman.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_stroke_roman.c"; path = "../../freeglut/freeglut_stroke_roman.c"; sourceTree = "<group>"; };
+		5EBD79124554337A423554AE /* freeglut_structure.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_structure.c"; path = "../../freeglut/freeglut_structure.c"; sourceTree = "<group>"; };
+		165927B07BE40049630C5222 /* freeglut_teapot.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_teapot.c"; path = "../../freeglut/freeglut_teapot.c"; sourceTree = "<group>"; };
+		7F907EA3560A10A522535CF9 /* freeglut_videoresize.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_videoresize.c"; path = "../../freeglut/freeglut_videoresize.c"; sourceTree = "<group>"; };
+		2BF032ED37A8701277F07E37 /* freeglut_window.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "freeglut_window.c"; path = "../../freeglut/freeglut_window.c"; sourceTree = "<group>"; };
+		4C7174755152323306944C10 /* libFreeGLUT.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; name = "libFreeGLUT.a"; path = "libFreeGLUT.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5015479E6E7104624B4324B4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		039251C6139E356C13F17EC4 /* FreeGLUT */ = {
+			isa = PBXGroup;
+			children = (
+				7491540A07EF7683486C0478 /* Headers */,
+				06C869805D8145333A692F96 /* Sources */,
+				542E292306F47027228F1F80 /* Products */,
+			);
+			name = "FreeGLUT";
+			sourceTree = "<group>";
+		};
+		7491540A07EF7683486C0478 /* Headers */ = {
+			isa = PBXGroup;
+			children = (
+				5AED17EF3F36102B63DD0442 /* freeglut.h */,
+				43150F4716A66AD664CB330F /* freeglut_ext.h */,
+				74CA47377181149F7146457D /* freeglut_internal.h */,
+				15C45BDD4BBA40D931CD52AD /* freeglut_std.h */,
+				26C9106D430538645DC31661 /* freeglut_teapot_data.h */,
+			);
+			name = "Headers";
+			sourceTree = "<group>";
+		};
+		06C869805D8145333A692F96 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				04910F4E1C774D8B4E9474DF /* freeglut_callbacks.c */,
+				3E795E856AC91672210D1BA8 /* freeglut_cursor.c */,
+				25743BE522716BE26845392A /* freeglut_display.c */,
+				004238E51DFB51691FFF06CB /* freeglut_ext.c */,
+				1DD4335C23D113FA40D73C64 /* freeglut_font.c */,
+				50FE127D1F484EC221B11C00 /* freeglut_font_data.c */,
+				4164041458EE724C525E11D5 /* freeglut_gamemode.c */,
+				3D9E36023A1329D75B902482 /* freeglut_geometry.c */,
+				7AAD47F567953AF71000318B /* freeglut_glutfont_definitions.c */,
+				6CA2716C3FF03B6A5ADD3211 /* freeglut_init.c */,
+				248B17EB0885393C377703D5 /* freeglut_input_devices.c */,
+				5FA1517A5629311D3E2B726F /* freeglut_joystick.c */,
+				33AF0F627CF06F0172917CCA /* freeglut_main.c */,
+				04C56D2B133A34F93EE312E2 /* freeglut_menu.c */,
+				301D5FD053FF445148B047C1 /* freeglut_misc.c */,
+				184D41446C5724E90AC233B7 /* freeglut_overlay.c */,
+				7EAE742A004C46D8604C02D8 /* freeglut_spaceball.c */,
+				560C1BCF72E35A3E6D576BBB /* freeglut_state.c */,
+				7A8E246B3D677969106E0A70 /* freeglut_stroke_mono_roman.c */,
+				7AE7179861F8012B49885BC2 /* freeglut_stroke_roman.c */,
+				5EBD79124554337A423554AE /* freeglut_structure.c */,
+				165927B07BE40049630C5222 /* freeglut_teapot.c */,
+				7F907EA3560A10A522535CF9 /* freeglut_videoresize.c */,
+				2BF032ED37A8701277F07E37 /* freeglut_window.c */,
+			);
+			name = "Sources";
+			sourceTree = "<group>";
+		};
+		542E292306F47027228F1F80 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4C7174755152323306944C10 /* libFreeGLUT.a */,
+			);
+			name = "Products";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		7CB54CAE477625B3332F1650 /* FreeGLUT */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 119D502726D938FE184E6FD4 /* Build configuration list for PBXNativeTarget "FreeGLUT" */;
+			buildPhases = (
+				24CF3F663E7A22672A1433DE /* Resources */,
+				427D275848902FBD2B2531D1 /* Sources */,
+				5015479E6E7104624B4324B4 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "FreeGLUT";
+			productName = "FreeGLUT";
+			productReference = 4C7174755152323306944C10 /* libFreeGLUT.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		08FB7793FE84155DC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "FreeGLUT" */;
+			compatibilityVersion = "Xcode 3.1";
+			hasScannedForEncodings = 1;
+			mainGroup = 039251C6139E356C13F17EC4 /* FreeGLUT */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				7CB54CAE477625B3332F1650 /* libFreeGLUT.a */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		24CF3F663E7A22672A1433DE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		427D275848902FBD2B2531D1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				133F1C074EE323E41C924A27 /* freeglut_callbacks.c in Sources */,
+				5305140F457E15C070BC5035 /* freeglut_cursor.c in Sources */,
+				43C27DD00D15062B48A850A5 /* freeglut_display.c in Sources */,
+				7334423E743E2D165177054B /* freeglut_ext.c in Sources */,
+				14BE76636E4B593964EE4F08 /* freeglut_font.c in Sources */,
+				4E3024FB267866911605401E /* freeglut_font_data.c in Sources */,
+				47D74E5170561D1C04B650D6 /* freeglut_gamemode.c in Sources */,
+				4BC73A58417773D305041A54 /* freeglut_geometry.c in Sources */,
+				0067790D205A73E8654933B9 /* freeglut_glutfont_definitions.c in Sources */,
+				0A3E2D0B349938415FC40D7A /* freeglut_init.c in Sources */,
+				20FC7C6F64504534036166FF /* freeglut_input_devices.c in Sources */,
+				63CC43ED2ACF34831FCA3A7F /* freeglut_joystick.c in Sources */,
+				78D768331484719900AF3B1B /* freeglut_main.c in Sources */,
+				441B617D0C22020604514138 /* freeglut_menu.c in Sources */,
+				416E5D796515163859544120 /* freeglut_misc.c in Sources */,
+				4DCD135C4F2A5E7C6FC627DC /* freeglut_overlay.c in Sources */,
+				6BE926451F7A6034696A3A4B /* freeglut_spaceball.c in Sources */,
+				4FF331D11A97475815495286 /* freeglut_state.c in Sources */,
+				3EA65CFE2BF97032427B1778 /* freeglut_stroke_mono_roman.c in Sources */,
+				0B960F4436AA255476310AB8 /* freeglut_stroke_roman.c in Sources */,
+				42B723F16B304DDD510608A9 /* freeglut_structure.c in Sources */,
+				493037C54EBB07EE2F8716D4 /* freeglut_teapot.c in Sources */,
+				01616CCD5F8F6B6652001C85 /* freeglut_videoresize.c in Sources */,
+				3E31408402B270E4178861A3 /* freeglut_window.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		2CC438FC729A239D4CEE5A1D /* Debug Native 32-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CONFIGURATION_BUILD_DIR = bin/Debug;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/lib;
+				PRODUCT_NAME = "FreeGLUT";
+			};
+			name = "Debug Native 32-bit";
+		};
+		357945636C951FDF424F4148 /* Debug Native 64-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CONFIGURATION_BUILD_DIR = bin/Debug;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/lib;
+				PRODUCT_NAME = "FreeGLUT";
+			};
+			name = "Debug Native 64-bit";
+		};
+		28B22E2351D45D645EC016B7 /* Release Native 32-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				CONFIGURATION_BUILD_DIR = bin/Release;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/lib;
+				PRODUCT_NAME = "FreeGLUT";
+			};
+			name = "Release Native 32-bit";
+		};
+		31B26F2375974D984C6A209E /* Release Native 64-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				CONFIGURATION_BUILD_DIR = bin/Release;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/lib;
+				PRODUCT_NAME = "FreeGLUT";
+			};
+			name = "Release Native 64-bit";
+		};
+		1C9946BC247D23EF13EF0F9C /* Debug Native 32-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "i386";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"_DEBUG",
+					"_CRT_SECURE_NO_WARNINGS",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				OBJROOT = "obj/x32/Debug/FreeGLUT";
+				ONLY_ACTIVE_ARCH = YES;
+				PREBINDING = NO;
+				SYMROOT = "bin/Debug";
+			};
+			name = "Debug Native 32-bit";
+		};
+		7FF205E4102E371D62596C3D /* Debug Native 64-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "x86_64";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"_DEBUG",
+					"_CRT_SECURE_NO_WARNINGS",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				OBJROOT = "obj/x64/Debug/FreeGLUT";
+				ONLY_ACTIVE_ARCH = YES;
+				PREBINDING = NO;
+				SYMROOT = "bin/Debug";
+			};
+			name = "Debug Native 64-bit";
+		};
+		02206FA91AB175DF69F86D6F /* Release Native 32-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "i386";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NDEBUG",
+					"_CRT_SECURE_NO_WARNINGS",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				OBJROOT = "obj/x32/Release/FreeGLUT";
+				ONLY_ACTIVE_ARCH = NO;
+				PREBINDING = NO;
+				SYMROOT = "bin/Release";
+			};
+			name = "Release Native 32-bit";
+		};
+		4278103E20DE0554486053A4 /* Release Native 64-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "x86_64";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NDEBUG",
+					"_CRT_SECURE_NO_WARNINGS",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				OBJROOT = "obj/x64/Release/FreeGLUT";
+				ONLY_ACTIVE_ARCH = NO;
+				PREBINDING = NO;
+				SYMROOT = "bin/Release";
+			};
+			name = "Release Native 64-bit";
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		119D502726D938FE184E6FD4 /* Build configuration list for PBXNativeTarget "libFreeGLUT.a" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2CC438FC729A239D4CEE5A1D /* Debug Native 32-bit */,
+				357945636C951FDF424F4148 /* Debug Native 64-bit */,
+				28B22E2351D45D645EC016B7 /* Release Native 32-bit */,
+				31B26F2375974D984C6A209E /* Release Native 64-bit */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Debug Native 32-bit";
+		};
+		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "FreeGLUT" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1C9946BC247D23EF13EF0F9C /* Debug Native 32-bit */,
+				7FF205E4102E371D62596C3D /* Debug Native 64-bit */,
+				02206FA91AB175DF69F86D6F /* Release Native 32-bit */,
+				4278103E20DE0554486053A4 /* Release Native 64-bit */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Debug Native 32-bit";
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = 08FB7793FE84155DC02AAC07 /* Project object */;
+}

@@ -26,7 +26,7 @@
  */
 
 #define FREEGLUT_BUILDING_LIB
-#include <GL/freeglut.h>
+#include "freeglut.h"
 #include "freeglut_internal.h"
 
 #if TARGET_HOST_POSIX_X11
@@ -442,9 +442,9 @@ static void fghFillPFD( PIXELFORMATDESCRIPTOR *ppfd, HDC hdc, unsigned char laye
     flags |= PFD_STEREO;
   }
 
-#if defined(_MSC_VER)
-#pragma message( "fgSetupPixelFormat(): there is still some work to do here!" )
-#endif
+//#if defined(_MSC_VER)
+//#pragma message( "fgSetupPixelFormat(): there is still some work to do here!" )
+//#endif
 
   /* Specify which pixel format do we opt for... */
   ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);

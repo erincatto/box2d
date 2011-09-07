@@ -1,3 +1,5 @@
+WARNING: Box2D is switching from cmake to premake very soon.
+
 Box2D uses CMake to describe the build in a platform independent manner.
 
 First download and install cmake from cmake.org
