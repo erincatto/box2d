@@ -25,7 +25,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <GL/freeglut.h>
+#include "freeglut.h"
 #include "freeglut_internal.h"
 #if HAVE_ERRNO
 #    include <errno.h>

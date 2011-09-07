@@ -1,0 +1,350 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2C58139D708032EF6CCB5673 /* Helloworld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B7F71BE2878649559526213 /* Helloworld.cpp */; };
+		43E206137747680545AA664A /* libBox2D.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 39F0085E572157E27CF40C6E /* libBox2D.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		005C4BC247195F2A50A70750 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 31B8574C28A605057A8E4634 /* Box2D.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 1AAC08B642F9503D58B7412A;
+			remoteInfo = "libBox2D.a";
+		};
+		59677A9A238A4A515BA6175E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 31B8574C28A605057A8E4634 /* Box2D.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 0A1E508C60D06F090A421E1C;
+			remoteInfo = "libBox2D.a";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		2B7F71BE2878649559526213 /* Helloworld.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "Helloworld.cpp"; path = "Helloworld.cpp"; sourceTree = "<group>"; };
+		3F45705C65F14AD26ABC0109 /* HelloWorld */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = "HelloWorld"; path = "HelloWorld"; sourceTree = BUILT_PRODUCTS_DIR; };
+		31B8574C28A605057A8E4634 /* Box2D.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "Box2D.xcodeproj"; path = "Box2D.xcodeproj"; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		19CD529878653C25205E3872 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				43E206137747680545AA664A /* libBox2D.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		7C8C3A59358A3A614C0D6C23 /* HelloWorld */ = {
+			isa = PBXGroup;
+			children = (
+				2B7F71BE2878649559526213 /* Helloworld.cpp */,
+				43B96D5B0B85518608F9456D /* Products */,
+				2A1726B606F5221A22715BC3 /* Projects */,
+			);
+			name = "HelloWorld";
+			sourceTree = "<group>";
+		};
+		43B96D5B0B85518608F9456D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3F45705C65F14AD26ABC0109 /* HelloWorld */,
+			);
+			name = "Products";
+			sourceTree = "<group>";
+		};
+		2A1726B606F5221A22715BC3 /* Projects */ = {
+			isa = PBXGroup;
+			children = (
+				31B8574C28A605057A8E4634 /* Box2D.xcodeproj */,
+			);
+			name = "Projects";
+			sourceTree = "<group>";
+		};
+		5A6F76A5594635C5549556F3 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				39F0085E572157E27CF40C6E /* libBox2D.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		76F459ED55435F2A53AC6DB5 /* HelloWorld */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3C3025DE2EA16B2278B0708A /* Build configuration list for PBXNativeTarget "HelloWorld" */;
+			buildPhases = (
+				2A604FE200BF7AAA55526252 /* Resources */,
+				41D9376163601ECD3EB97709 /* Sources */,
+				19CD529878653C25205E3872 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				530059E845393AD74C3A368D /* PBXTargetDependency */,
+			);
+			name = "HelloWorld";
+			productInstallPath = "$(HOME)/bin";
+			productName = "HelloWorld";
+			productReference = 3F45705C65F14AD26ABC0109 /* HelloWorld */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		08FB7793FE84155DC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "HelloWorld" */;
+			compatibilityVersion = "Xcode 3.1";
+			hasScannedForEncodings = 1;
+			mainGroup = 7C8C3A59358A3A614C0D6C23 /* HelloWorld */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 5A6F76A5594635C5549556F3 /* Products */;
+					ProjectRef = 31B8574C28A605057A8E4634 /* Box2D.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				76F459ED55435F2A53AC6DB5 /* HelloWorld */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		39F0085E572157E27CF40C6E /* libBox2D.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "bin/Debug/libBox2D.a";
+			remoteRef = 005C4BC247195F2A50A70750 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2A604FE200BF7AAA55526252 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		41D9376163601ECD3EB97709 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2C58139D708032EF6CCB5673 /* Helloworld.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+/* End PBXVariantGroup section */
+
+/* Begin PBXTargetDependency section */
+		530059E845393AD74C3A368D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "libBox2D.a";
+			targetProxy = 59677A9A238A4A515BA6175E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		314538E7633136F441375975 /* Debug Native 32-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CONFIGURATION_BUILD_DIR = bin/Debug;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = "HelloWorld";
+			};
+			name = "Debug Native 32-bit";
+		};
+		1DDA46B247EF441D364F3836 /* Debug Native 64-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CONFIGURATION_BUILD_DIR = bin/Debug;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = "HelloWorld";
+			};
+			name = "Debug Native 64-bit";
+		};
+		51940C9D4FA42A596E4F27DE /* Release Native 32-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				CONFIGURATION_BUILD_DIR = bin/Release;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = "HelloWorld";
+			};
+			name = "Release Native 32-bit";
+		};
+		692977B5299E386926E2319B /* Release Native 64-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				CONFIGURATION_BUILD_DIR = bin/Release;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = "HelloWorld";
+			};
+			name = "Release Native 64-bit";
+		};
+		549C1CB8482069644F1265C8 /* Debug Native 32-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "i386";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"_DEBUG",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"../..",
+				);
+				OBJROOT = "obj/x32/Debug/HelloWorld";
+				ONLY_ACTIVE_ARCH = YES;
+				PREBINDING = NO;
+				SYMROOT = "bin/Debug";
+			};
+			name = "Debug Native 32-bit";
+		};
+		42F8638028F4671F35F64E9D /* Debug Native 64-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "x86_64";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"_DEBUG",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"../..",
+				);
+				OBJROOT = "obj/x64/Debug/HelloWorld";
+				ONLY_ACTIVE_ARCH = YES;
+				PREBINDING = NO;
+				SYMROOT = "bin/Debug";
+			};
+			name = "Debug Native 64-bit";
+		};
+		25CB3B655EE2503C0EAC6A13 /* Release Native 32-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "i386";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NDEBUG",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"../..",
+				);
+				OBJROOT = "obj/x32/Release/HelloWorld";
+				ONLY_ACTIVE_ARCH = NO;
+				PREBINDING = NO;
+				SYMROOT = "bin/Release";
+			};
+			name = "Release Native 32-bit";
+		};
+		5AF85E7500B3518C3F3100DF /* Release Native 64-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "x86_64";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NDEBUG",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"../..",
+				);
+				OBJROOT = "obj/x64/Release/HelloWorld";
+				ONLY_ACTIVE_ARCH = NO;
+				PREBINDING = NO;
+				SYMROOT = "bin/Release";
+			};
+			name = "Release Native 64-bit";
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3C3025DE2EA16B2278B0708A /* Build configuration list for PBXNativeTarget "HelloWorld" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				314538E7633136F441375975 /* Debug Native 32-bit */,
+				1DDA46B247EF441D364F3836 /* Debug Native 64-bit */,
+				51940C9D4FA42A596E4F27DE /* Release Native 32-bit */,
+				692977B5299E386926E2319B /* Release Native 64-bit */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Debug Native 32-bit";
+		};
+		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "HelloWorld" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				549C1CB8482069644F1265C8 /* Debug Native 32-bit */,
+				42F8638028F4671F35F64E9D /* Debug Native 64-bit */,
+				25CB3B655EE2503C0EAC6A13 /* Release Native 32-bit */,
+				5AF85E7500B3518C3F3100DF /* Release Native 64-bit */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Debug Native 32-bit";
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = 08FB7793FE84155DC02AAC07 /* Project object */;
+}
