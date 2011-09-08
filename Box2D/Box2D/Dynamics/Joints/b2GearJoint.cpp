@@ -55,6 +55,8 @@ b2GearJoint::b2GearJoint(const b2GearJointDef* def)
 
 	float32 coordinateA, coordinateB;
 
+	// TODO_ERIN there might be some problem with the joint edges in b2Joint.
+
 	m_bodyC = m_joint1->GetBodyA();
 	m_bodyA = m_joint1->GetBodyB();
 
@@ -318,9 +320,9 @@ bool b2GearJoint::SolvePositionConstraints(const b2SolverData& data)
 	if (m_typeB == e_revoluteJoint)
 	{
 		JvBD.SetZero();
-		JwB = 1.0f;
-		JwD = 1.0f;
-		mass += m_iB + m_iD;
+		JwB = m_ratio;
+		JwD = m_ratio;
+		mass += m_ratio * m_ratio * (m_iB + m_iD);
 
 		coordinateB = aB - aD - m_referenceAngleB;
 	}
