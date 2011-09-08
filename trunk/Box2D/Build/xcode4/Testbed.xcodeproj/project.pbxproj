@@ -7,246 +7,246 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0D1B5CF8256665BF52BE50D2 /* Main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1B9207E979AB614310563C3C /* Main.cpp */; };
-		0EF27332463C346E3FD237EA /* Render.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 59CE7DDB3AA217B45BBC7D9F /* Render.cpp */; };
-		321D340220747CEC5988275B /* Test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 03E824634D2D6FCE3DE04AFD /* Test.cpp */; };
-		1E994E2D3AD75BDC7835479D /* TestEntries.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20D83E721A1E6E606DBE2566 /* TestEntries.cpp */; };
-		53F0311211EF3DBB699B48DF /* libBox2D.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 48DF04350BD75AB344CA2AAF /* libBox2D.a */; };
-		447C4AA0564845C539DD6818 /* libFreeGLUT.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D5249071A7C0C92365F5E7E /* libFreeGLUT.a */; };
-		372609690536684071465F77 /* libGLUI.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D7F225219C5735741D233FA /* libGLUI.a */; };
+		76926A142ECA0FA67A08062E /* Main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 16CF523515FF0CDF34F45C46 /* Main.cpp */; };
+		57B725FE3FBE66705174024A /* Render.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 69492D024FAC3F5B45BA5D0C /* Render.cpp */; };
+		5BF84A9D3360063324D50851 /* Test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A1A5CD537FD032857B21428 /* Test.cpp */; };
+		22B823DB62EC7A7E20EC63E6 /* TestEntries.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2AF926900F86412127CE7E7E /* TestEntries.cpp */; };
+		60453ABE40254BAD074C6579 /* libBox2D.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 414679EF171657F0435E524E /* libBox2D.a */; };
+		77F749C82D4A5F933B3F75D3 /* libFreeGLUT.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 21F978B215DA51963F384484 /* libFreeGLUT.a */; };
+		34D55D535DD72F813D545614 /* libGLUI.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B26113E529A104C0BD50D8F /* libGLUI.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		344D06B77AE85AB64A1B43AD /* PBXContainerItemProxy */ = {
+		10D3462916C26CD905E25007 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 72ED094A50F373E60EB51F01 /* Box2D.xcodeproj */;
+			containerPortal = 009C71C86E1D76C15C5A03AE /* Box2D.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = 1AAC08B642F9503D58B7412A;
+			remoteGlobalIDString = 205F36B80AE354F23E831842;
 			remoteInfo = "libBox2D.a";
 		};
-		632275F768CD51784A66237E /* PBXContainerItemProxy */ = {
+		3C4A381E60B738E007F86BA8 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 72ED094A50F373E60EB51F01 /* Box2D.xcodeproj */;
+			containerPortal = 009C71C86E1D76C15C5A03AE /* Box2D.xcodeproj */;
 			proxyType = 1;
-			remoteGlobalIDString = 0A1E508C60D06F090A421E1C;
+			remoteGlobalIDString = 3EA10BDD11906CF637351D55;
 			remoteInfo = "libBox2D.a";
 		};
-		6D3226E4634D4A4576B06BAA /* PBXContainerItemProxy */ = {
+		52E936E960FA74440AE106CB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 705A20417AF2535E59937DBD /* FreeGLUT.xcodeproj */;
+			containerPortal = 54C4729F7A43126904B365D0 /* FreeGLUT.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = 4C7174755152323306944C10;
+			remoteGlobalIDString = 4DCB3F951DA7724F4C2C09C8;
 			remoteInfo = "libFreeGLUT.a";
 		};
-		037B67784A2203704C140B2F /* PBXContainerItemProxy */ = {
+		003C070B29262F72662676F1 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 705A20417AF2535E59937DBD /* FreeGLUT.xcodeproj */;
+			containerPortal = 54C4729F7A43126904B365D0 /* FreeGLUT.xcodeproj */;
 			proxyType = 1;
-			remoteGlobalIDString = 7CB54CAE477625B3332F1650;
+			remoteGlobalIDString = 374F63D54661101121F5169E;
 			remoteInfo = "libFreeGLUT.a";
 		};
-		3A2C24A73572050A784800B0 /* PBXContainerItemProxy */ = {
+		292F362E6E6875C326887AEA /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 074D0FB15973548F167E419A /* GLUI.xcodeproj */;
+			containerPortal = 2DBB1DC75A48430A21612234 /* GLUI.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = 7D9B3B6376063D5A48127280;
+			remoteGlobalIDString = 14163A021B3634E24D743AAD;
 			remoteInfo = "libGLUI.a";
 		};
-		688077AA59481E4B0C1F5CBE /* PBXContainerItemProxy */ = {
+		582146156D625E2F69183C20 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 074D0FB15973548F167E419A /* GLUI.xcodeproj */;
+			containerPortal = 2DBB1DC75A48430A21612234 /* GLUI.xcodeproj */;
 			proxyType = 1;
-			remoteGlobalIDString = 0D64405C65FA1D4013FD5B4A;
+			remoteGlobalIDString = 57297A6C76E71D5B2A4346F1;
 			remoteInfo = "libGLUI.a";
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		1B9207E979AB614310563C3C /* Main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "Main.cpp"; path = "../../Testbed/Framework/Main.cpp"; sourceTree = "<group>"; };
-		59CE7DDB3AA217B45BBC7D9F /* Render.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "Render.cpp"; path = "../../Testbed/Framework/Render.cpp"; sourceTree = "<group>"; };
-		6C4776F5268B141754FC3A60 /* Render.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Render.h"; path = "../../Testbed/Framework/Render.h"; sourceTree = "<group>"; };
-		03E824634D2D6FCE3DE04AFD /* Test.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "Test.cpp"; path = "../../Testbed/Framework/Test.cpp"; sourceTree = "<group>"; };
-		25DB79A33AE4020609DD20D5 /* Test.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Test.h"; path = "../../Testbed/Framework/Test.h"; sourceTree = "<group>"; };
-		07DA457334CB640D3D571F7A /* AddPair.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "AddPair.h"; path = "../../Testbed/Tests/AddPair.h"; sourceTree = "<group>"; };
-		05786AF97DFA1C9E132B6BC9 /* ApplyForce.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "ApplyForce.h"; path = "../../Testbed/Tests/ApplyForce.h"; sourceTree = "<group>"; };
-		52121FFE00515BC3041D0B33 /* BodyTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "BodyTypes.h"; path = "../../Testbed/Tests/BodyTypes.h"; sourceTree = "<group>"; };
-		24F07C6732E817E351E921A6 /* Breakable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Breakable.h"; path = "../../Testbed/Tests/Breakable.h"; sourceTree = "<group>"; };
-		4EF86F93597A284F072975BD /* Bridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Bridge.h"; path = "../../Testbed/Tests/Bridge.h"; sourceTree = "<group>"; };
-		010630CA6895782340197208 /* BulletTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "BulletTest.h"; path = "../../Testbed/Tests/BulletTest.h"; sourceTree = "<group>"; };
-		35B7396270A738BA38D109CA /* Cantilever.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Cantilever.h"; path = "../../Testbed/Tests/Cantilever.h"; sourceTree = "<group>"; };
-		549466C1158A626D147906E6 /* Car.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Car.h"; path = "../../Testbed/Tests/Car.h"; sourceTree = "<group>"; };
-		5DDC36761BA648CC6E2D6EBD /* Chain.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Chain.h"; path = "../../Testbed/Tests/Chain.h"; sourceTree = "<group>"; };
-		7563792254BC43980F7C4A1D /* CharacterCollision.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CharacterCollision.h"; path = "../../Testbed/Tests/CharacterCollision.h"; sourceTree = "<group>"; };
-		483F68F305FC002671CB40A3 /* CollisionFiltering.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CollisionFiltering.h"; path = "../../Testbed/Tests/CollisionFiltering.h"; sourceTree = "<group>"; };
-		5C3856D00DF306F7470F320C /* CollisionProcessing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CollisionProcessing.h"; path = "../../Testbed/Tests/CollisionProcessing.h"; sourceTree = "<group>"; };
-		29342D906C716FA07B915873 /* CompoundShapes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CompoundShapes.h"; path = "../../Testbed/Tests/CompoundShapes.h"; sourceTree = "<group>"; };
-		3C1E6CD5277A315D45B01470 /* Confined.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Confined.h"; path = "../../Testbed/Tests/Confined.h"; sourceTree = "<group>"; };
-		5FF205572FDC08E439F16089 /* ContinuousTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "ContinuousTest.h"; path = "../../Testbed/Tests/ContinuousTest.h"; sourceTree = "<group>"; };
-		34F53EC62D071C5348B11B81 /* Cord.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Cord.h"; path = "../../Testbed/Tests/Cord.h"; sourceTree = "<group>"; };
-		0743139A4B306C4B58537160 /* DistanceTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "DistanceTest.h"; path = "../../Testbed/Tests/DistanceTest.h"; sourceTree = "<group>"; };
-		6D3A495817EC4D9829C9394D /* Dominos.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Dominos.h"; path = "../../Testbed/Tests/Dominos.h"; sourceTree = "<group>"; };
-		0B6D0C3878C728F72EBF328F /* DumpShell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "DumpShell.h"; path = "../../Testbed/Tests/DumpShell.h"; sourceTree = "<group>"; };
-		1F180B3D247F26D93FDB3553 /* DynamicTreeTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "DynamicTreeTest.h"; path = "../../Testbed/Tests/DynamicTreeTest.h"; sourceTree = "<group>"; };
-		715F0E1112ED4B3106C93C06 /* EdgeShapes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "EdgeShapes.h"; path = "../../Testbed/Tests/EdgeShapes.h"; sourceTree = "<group>"; };
-		64AF504460C669B1430A3063 /* EdgeTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "EdgeTest.h"; path = "../../Testbed/Tests/EdgeTest.h"; sourceTree = "<group>"; };
-		3B1F25C67BB0550421C23389 /* Gears.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Gears.h"; path = "../../Testbed/Tests/Gears.h"; sourceTree = "<group>"; };
-		4FA41AB060664BE37FFC3AB4 /* OneSidedPlatform.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "OneSidedPlatform.h"; path = "../../Testbed/Tests/OneSidedPlatform.h"; sourceTree = "<group>"; };
-		157274B517E67D1A6C1B626C /* Pinball.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Pinball.h"; path = "../../Testbed/Tests/Pinball.h"; sourceTree = "<group>"; };
-		17E946D741CD17D6666D5846 /* PolyCollision.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "PolyCollision.h"; path = "../../Testbed/Tests/PolyCollision.h"; sourceTree = "<group>"; };
-		3ACD3834297E4FD50A1C3F90 /* PolyShapes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "PolyShapes.h"; path = "../../Testbed/Tests/PolyShapes.h"; sourceTree = "<group>"; };
-		6DCD44FF709E15503EF70F7A /* Prismatic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Prismatic.h"; path = "../../Testbed/Tests/Prismatic.h"; sourceTree = "<group>"; };
-		377B2D0C150A0EB129C6299D /* Pulleys.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Pulleys.h"; path = "../../Testbed/Tests/Pulleys.h"; sourceTree = "<group>"; };
-		3B460574515D367614205DEE /* Pyramid.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Pyramid.h"; path = "../../Testbed/Tests/Pyramid.h"; sourceTree = "<group>"; };
-		7B100B385E8D69D846054D80 /* RayCast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "RayCast.h"; path = "../../Testbed/Tests/RayCast.h"; sourceTree = "<group>"; };
-		607C72ED425A45031AA42F9E /* Revolute.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Revolute.h"; path = "../../Testbed/Tests/Revolute.h"; sourceTree = "<group>"; };
-		630D15DE6981700647197527 /* Rope.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Rope.h"; path = "../../Testbed/Tests/Rope.h"; sourceTree = "<group>"; };
-		379917201DE20BC825043438 /* RopeJoint.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "RopeJoint.h"; path = "../../Testbed/Tests/RopeJoint.h"; sourceTree = "<group>"; };
-		2AD37B8D482B509F2C463A7B /* SensorTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "SensorTest.h"; path = "../../Testbed/Tests/SensorTest.h"; sourceTree = "<group>"; };
-		6BD045A329A438646E4F2EBE /* ShapeEditing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "ShapeEditing.h"; path = "../../Testbed/Tests/ShapeEditing.h"; sourceTree = "<group>"; };
-		6CCD02B826234C0E2ABA5A9E /* SliderCrank.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "SliderCrank.h"; path = "../../Testbed/Tests/SliderCrank.h"; sourceTree = "<group>"; };
-		6FAB69051F617143482E1B62 /* SphereStack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "SphereStack.h"; path = "../../Testbed/Tests/SphereStack.h"; sourceTree = "<group>"; };
-		20D83E721A1E6E606DBE2566 /* TestEntries.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "TestEntries.cpp"; path = "../../Testbed/Tests/TestEntries.cpp"; sourceTree = "<group>"; };
-		43F6476C6AFD702064204518 /* TheoJansen.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "TheoJansen.h"; path = "../../Testbed/Tests/TheoJansen.h"; sourceTree = "<group>"; };
-		55B709F278EE0F2650693891 /* Tiles.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Tiles.h"; path = "../../Testbed/Tests/Tiles.h"; sourceTree = "<group>"; };
-		1533352B141B597446DF5A69 /* TimeOfImpact.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "TimeOfImpact.h"; path = "../../Testbed/Tests/TimeOfImpact.h"; sourceTree = "<group>"; };
-		0FDD54FA74232E5A4F0C7BA1 /* VaryingFriction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "VaryingFriction.h"; path = "../../Testbed/Tests/VaryingFriction.h"; sourceTree = "<group>"; };
-		13D6538D14D24378451828B1 /* VaryingRestitution.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "VaryingRestitution.h"; path = "../../Testbed/Tests/VaryingRestitution.h"; sourceTree = "<group>"; };
-		50EC79D70A3527F051B03D4D /* VerticalStack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "VerticalStack.h"; path = "../../Testbed/Tests/VerticalStack.h"; sourceTree = "<group>"; };
-		2ACC507E574E53DA01304E71 /* Web.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Web.h"; path = "../../Testbed/Tests/Web.h"; sourceTree = "<group>"; };
-		6E5F1FC4525A03767DF56BB2 /* Testbed */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = "Testbed"; path = "Testbed"; sourceTree = BUILT_PRODUCTS_DIR; };
-		72ED094A50F373E60EB51F01 /* Box2D.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "Box2D.xcodeproj"; path = "Box2D.xcodeproj"; sourceTree = SOURCE_ROOT; };
-		705A20417AF2535E59937DBD /* FreeGLUT.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "FreeGLUT.xcodeproj"; path = "FreeGLUT.xcodeproj"; sourceTree = SOURCE_ROOT; };
-		074D0FB15973548F167E419A /* GLUI.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "GLUI.xcodeproj"; path = "GLUI.xcodeproj"; sourceTree = SOURCE_ROOT; };
+		16CF523515FF0CDF34F45C46 /* Main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "Main.cpp"; path = "../../Testbed/Framework/Main.cpp"; sourceTree = "<group>"; };
+		69492D024FAC3F5B45BA5D0C /* Render.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "Render.cpp"; path = "../../Testbed/Framework/Render.cpp"; sourceTree = "<group>"; };
+		2C93000A34A258107F931356 /* Render.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Render.h"; path = "../../Testbed/Framework/Render.h"; sourceTree = "<group>"; };
+		3A1A5CD537FD032857B21428 /* Test.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "Test.cpp"; path = "../../Testbed/Framework/Test.cpp"; sourceTree = "<group>"; };
+		51A3448F409549D2031E315D /* Test.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Test.h"; path = "../../Testbed/Framework/Test.h"; sourceTree = "<group>"; };
+		0BBF0B922A42746861423F01 /* AddPair.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "AddPair.h"; path = "../../Testbed/Tests/AddPair.h"; sourceTree = "<group>"; };
+		665066741CC24AD52E145AA1 /* ApplyForce.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "ApplyForce.h"; path = "../../Testbed/Tests/ApplyForce.h"; sourceTree = "<group>"; };
+		360F14B0297E0EB0133A4C6E /* BodyTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "BodyTypes.h"; path = "../../Testbed/Tests/BodyTypes.h"; sourceTree = "<group>"; };
+		62CB567D20FA32F942043978 /* Breakable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Breakable.h"; path = "../../Testbed/Tests/Breakable.h"; sourceTree = "<group>"; };
+		4A4E436561C8045913647239 /* Bridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Bridge.h"; path = "../../Testbed/Tests/Bridge.h"; sourceTree = "<group>"; };
+		214C23105BBA770A17A056FB /* BulletTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "BulletTest.h"; path = "../../Testbed/Tests/BulletTest.h"; sourceTree = "<group>"; };
+		0B83544F4C341D5C304C1170 /* Cantilever.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Cantilever.h"; path = "../../Testbed/Tests/Cantilever.h"; sourceTree = "<group>"; };
+		589A5A0A4CDF5B20578D1A67 /* Car.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Car.h"; path = "../../Testbed/Tests/Car.h"; sourceTree = "<group>"; };
+		60687DED4533049168D66F15 /* Chain.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Chain.h"; path = "../../Testbed/Tests/Chain.h"; sourceTree = "<group>"; };
+		349F46DD6484579C7E9A1B81 /* CharacterCollision.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CharacterCollision.h"; path = "../../Testbed/Tests/CharacterCollision.h"; sourceTree = "<group>"; };
+		1719559B4DA3349015AD67DB /* CollisionFiltering.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CollisionFiltering.h"; path = "../../Testbed/Tests/CollisionFiltering.h"; sourceTree = "<group>"; };
+		2B34242C5E2D37A2724714F7 /* CollisionProcessing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CollisionProcessing.h"; path = "../../Testbed/Tests/CollisionProcessing.h"; sourceTree = "<group>"; };
+		7E0034CD4B1966CA0BEA381F /* CompoundShapes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CompoundShapes.h"; path = "../../Testbed/Tests/CompoundShapes.h"; sourceTree = "<group>"; };
+		142E03AA79311FD95C9500F7 /* Confined.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Confined.h"; path = "../../Testbed/Tests/Confined.h"; sourceTree = "<group>"; };
+		7DFF1A8B536D60E725081429 /* ContinuousTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "ContinuousTest.h"; path = "../../Testbed/Tests/ContinuousTest.h"; sourceTree = "<group>"; };
+		50A808333A6C79615B0F3C10 /* Cord.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Cord.h"; path = "../../Testbed/Tests/Cord.h"; sourceTree = "<group>"; };
+		21DF452C4F863C6158070CA4 /* DistanceTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "DistanceTest.h"; path = "../../Testbed/Tests/DistanceTest.h"; sourceTree = "<group>"; };
+		0D924E2B23257D154D184A49 /* Dominos.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Dominos.h"; path = "../../Testbed/Tests/Dominos.h"; sourceTree = "<group>"; };
+		36F80056016804614FDF7B5A /* DumpShell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "DumpShell.h"; path = "../../Testbed/Tests/DumpShell.h"; sourceTree = "<group>"; };
+		6D791E16093D5B024D761A7F /* DynamicTreeTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "DynamicTreeTest.h"; path = "../../Testbed/Tests/DynamicTreeTest.h"; sourceTree = "<group>"; };
+		73216335397A45D82B277433 /* EdgeShapes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "EdgeShapes.h"; path = "../../Testbed/Tests/EdgeShapes.h"; sourceTree = "<group>"; };
+		259945787C993A26231F6403 /* EdgeTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "EdgeTest.h"; path = "../../Testbed/Tests/EdgeTest.h"; sourceTree = "<group>"; };
+		4BDA7AFB471C6DE15105766F /* Gears.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Gears.h"; path = "../../Testbed/Tests/Gears.h"; sourceTree = "<group>"; };
+		5A2031EF65D10C6D35437A74 /* OneSidedPlatform.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "OneSidedPlatform.h"; path = "../../Testbed/Tests/OneSidedPlatform.h"; sourceTree = "<group>"; };
+		6AB81D977068125607585A23 /* Pinball.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Pinball.h"; path = "../../Testbed/Tests/Pinball.h"; sourceTree = "<group>"; };
+		45C32A8E4A1972E84E9933D9 /* PolyCollision.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "PolyCollision.h"; path = "../../Testbed/Tests/PolyCollision.h"; sourceTree = "<group>"; };
+		6B1060B87D4700B0362335F1 /* PolyShapes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "PolyShapes.h"; path = "../../Testbed/Tests/PolyShapes.h"; sourceTree = "<group>"; };
+		7886437B606E2E4F3BED3D02 /* Prismatic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Prismatic.h"; path = "../../Testbed/Tests/Prismatic.h"; sourceTree = "<group>"; };
+		4CE6710421B82F24043C390B /* Pulleys.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Pulleys.h"; path = "../../Testbed/Tests/Pulleys.h"; sourceTree = "<group>"; };
+		39C767CB640557B911EA781F /* Pyramid.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Pyramid.h"; path = "../../Testbed/Tests/Pyramid.h"; sourceTree = "<group>"; };
+		49174595535B6BFA39363569 /* RayCast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "RayCast.h"; path = "../../Testbed/Tests/RayCast.h"; sourceTree = "<group>"; };
+		598C159C4FF05D99262341A1 /* Revolute.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Revolute.h"; path = "../../Testbed/Tests/Revolute.h"; sourceTree = "<group>"; };
+		72C56BB456436730108B5649 /* Rope.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Rope.h"; path = "../../Testbed/Tests/Rope.h"; sourceTree = "<group>"; };
+		7D0E2874701100FC07683750 /* RopeJoint.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "RopeJoint.h"; path = "../../Testbed/Tests/RopeJoint.h"; sourceTree = "<group>"; };
+		520366D80CFD724E6A0D3EE7 /* SensorTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "SensorTest.h"; path = "../../Testbed/Tests/SensorTest.h"; sourceTree = "<group>"; };
+		32854DD973434F0001475DAD /* ShapeEditing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "ShapeEditing.h"; path = "../../Testbed/Tests/ShapeEditing.h"; sourceTree = "<group>"; };
+		63C160E157DB128B038E0D7E /* SliderCrank.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "SliderCrank.h"; path = "../../Testbed/Tests/SliderCrank.h"; sourceTree = "<group>"; };
+		583500316AC7529876DF3F89 /* SphereStack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "SphereStack.h"; path = "../../Testbed/Tests/SphereStack.h"; sourceTree = "<group>"; };
+		2AF926900F86412127CE7E7E /* TestEntries.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "TestEntries.cpp"; path = "../../Testbed/Tests/TestEntries.cpp"; sourceTree = "<group>"; };
+		3F1A2C4A66C375EC7EA42C0E /* TheoJansen.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "TheoJansen.h"; path = "../../Testbed/Tests/TheoJansen.h"; sourceTree = "<group>"; };
+		4E8D228D01016F777B0F360D /* Tiles.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Tiles.h"; path = "../../Testbed/Tests/Tiles.h"; sourceTree = "<group>"; };
+		03B4170D3F8458496A7025C4 /* TimeOfImpact.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "TimeOfImpact.h"; path = "../../Testbed/Tests/TimeOfImpact.h"; sourceTree = "<group>"; };
+		48E120F0527F56CD6C5D3BEF /* VaryingFriction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "VaryingFriction.h"; path = "../../Testbed/Tests/VaryingFriction.h"; sourceTree = "<group>"; };
+		756505B23F31322D1EC05CA2 /* VaryingRestitution.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "VaryingRestitution.h"; path = "../../Testbed/Tests/VaryingRestitution.h"; sourceTree = "<group>"; };
+		5B9C2A7939723D0A772B36C1 /* VerticalStack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "VerticalStack.h"; path = "../../Testbed/Tests/VerticalStack.h"; sourceTree = "<group>"; };
+		380216652E3701845C401F54 /* Web.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Web.h"; path = "../../Testbed/Tests/Web.h"; sourceTree = "<group>"; };
+		5F2339BE7ED850FB55AF77ED /* Testbed */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = "Testbed"; path = "Testbed"; sourceTree = BUILT_PRODUCTS_DIR; };
+		009C71C86E1D76C15C5A03AE /* Box2D.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "Box2D.xcodeproj"; path = "Box2D.xcodeproj"; sourceTree = SOURCE_ROOT; };
+		54C4729F7A43126904B365D0 /* FreeGLUT.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "FreeGLUT.xcodeproj"; path = "FreeGLUT.xcodeproj"; sourceTree = SOURCE_ROOT; };
+		2DBB1DC75A48430A21612234 /* GLUI.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "GLUI.xcodeproj"; path = "GLUI.xcodeproj"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		126969F5521A65813F375004 /* Frameworks */ = {
+		3C85632C1312630332B129D4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				53F0311211EF3DBB699B48DF /* libBox2D.a in Frameworks */,
-				447C4AA0564845C539DD6818 /* libFreeGLUT.a in Frameworks */,
-				372609690536684071465F77 /* libGLUI.a in Frameworks */,
+				60453ABE40254BAD074C6579 /* libBox2D.a in Frameworks */,
+				77F749C82D4A5F933B3F75D3 /* libFreeGLUT.a in Frameworks */,
+				34D55D535DD72F813D545614 /* libGLUI.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		5D58609F54B562E10C8418DA /* Testbed */ = {
+		167757816C917C0B1C0A6179 /* Testbed */ = {
 			isa = PBXGroup;
 			children = (
-				070A361062AA7C8929D36372 /* Framework */,
-				3DE738722C7D5A8A52494404 /* Tests */,
-				6C56315E370E54D3277A4252 /* Products */,
-				35505DF53A964EB64B424607 /* Projects */,
+				2EDB03D54AF56B1A130C0748 /* Framework */,
+				4CAB2B5555863C926E031FA8 /* Tests */,
+				28AF6F89222824F17C1809D2 /* Products */,
+				520964606ED143CC7DE722A8 /* Projects */,
 			);
 			name = "Testbed";
 			sourceTree = "<group>";
 		};
-		070A361062AA7C8929D36372 /* Framework */ = {
+		2EDB03D54AF56B1A130C0748 /* Framework */ = {
 			isa = PBXGroup;
 			children = (
-				1B9207E979AB614310563C3C /* Main.cpp */,
-				59CE7DDB3AA217B45BBC7D9F /* Render.cpp */,
-				6C4776F5268B141754FC3A60 /* Render.h */,
-				03E824634D2D6FCE3DE04AFD /* Test.cpp */,
-				25DB79A33AE4020609DD20D5 /* Test.h */,
+				16CF523515FF0CDF34F45C46 /* Main.cpp */,
+				69492D024FAC3F5B45BA5D0C /* Render.cpp */,
+				2C93000A34A258107F931356 /* Render.h */,
+				3A1A5CD537FD032857B21428 /* Test.cpp */,
+				51A3448F409549D2031E315D /* Test.h */,
 			);
 			name = "Framework";
 			sourceTree = "<group>";
 		};
-		3DE738722C7D5A8A52494404 /* Tests */ = {
+		4CAB2B5555863C926E031FA8 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				07DA457334CB640D3D571F7A /* AddPair.h */,
-				05786AF97DFA1C9E132B6BC9 /* ApplyForce.h */,
-				52121FFE00515BC3041D0B33 /* BodyTypes.h */,
-				24F07C6732E817E351E921A6 /* Breakable.h */,
-				4EF86F93597A284F072975BD /* Bridge.h */,
-				010630CA6895782340197208 /* BulletTest.h */,
-				35B7396270A738BA38D109CA /* Cantilever.h */,
-				549466C1158A626D147906E6 /* Car.h */,
-				5DDC36761BA648CC6E2D6EBD /* Chain.h */,
-				7563792254BC43980F7C4A1D /* CharacterCollision.h */,
-				483F68F305FC002671CB40A3 /* CollisionFiltering.h */,
-				5C3856D00DF306F7470F320C /* CollisionProcessing.h */,
-				29342D906C716FA07B915873 /* CompoundShapes.h */,
-				3C1E6CD5277A315D45B01470 /* Confined.h */,
-				5FF205572FDC08E439F16089 /* ContinuousTest.h */,
-				34F53EC62D071C5348B11B81 /* Cord.h */,
-				0743139A4B306C4B58537160 /* DistanceTest.h */,
-				6D3A495817EC4D9829C9394D /* Dominos.h */,
-				0B6D0C3878C728F72EBF328F /* DumpShell.h */,
-				1F180B3D247F26D93FDB3553 /* DynamicTreeTest.h */,
-				715F0E1112ED4B3106C93C06 /* EdgeShapes.h */,
-				64AF504460C669B1430A3063 /* EdgeTest.h */,
-				3B1F25C67BB0550421C23389 /* Gears.h */,
-				4FA41AB060664BE37FFC3AB4 /* OneSidedPlatform.h */,
-				157274B517E67D1A6C1B626C /* Pinball.h */,
-				17E946D741CD17D6666D5846 /* PolyCollision.h */,
-				3ACD3834297E4FD50A1C3F90 /* PolyShapes.h */,
-				6DCD44FF709E15503EF70F7A /* Prismatic.h */,
-				377B2D0C150A0EB129C6299D /* Pulleys.h */,
-				3B460574515D367614205DEE /* Pyramid.h */,
-				7B100B385E8D69D846054D80 /* RayCast.h */,
-				607C72ED425A45031AA42F9E /* Revolute.h */,
-				630D15DE6981700647197527 /* Rope.h */,
-				379917201DE20BC825043438 /* RopeJoint.h */,
-				2AD37B8D482B509F2C463A7B /* SensorTest.h */,
-				6BD045A329A438646E4F2EBE /* ShapeEditing.h */,
-				6CCD02B826234C0E2ABA5A9E /* SliderCrank.h */,
-				6FAB69051F617143482E1B62 /* SphereStack.h */,
-				20D83E721A1E6E606DBE2566 /* TestEntries.cpp */,
-				43F6476C6AFD702064204518 /* TheoJansen.h */,
-				55B709F278EE0F2650693891 /* Tiles.h */,
-				1533352B141B597446DF5A69 /* TimeOfImpact.h */,
-				0FDD54FA74232E5A4F0C7BA1 /* VaryingFriction.h */,
-				13D6538D14D24378451828B1 /* VaryingRestitution.h */,
-				50EC79D70A3527F051B03D4D /* VerticalStack.h */,
-				2ACC507E574E53DA01304E71 /* Web.h */,
+				0BBF0B922A42746861423F01 /* AddPair.h */,
+				665066741CC24AD52E145AA1 /* ApplyForce.h */,
+				360F14B0297E0EB0133A4C6E /* BodyTypes.h */,
+				62CB567D20FA32F942043978 /* Breakable.h */,
+				4A4E436561C8045913647239 /* Bridge.h */,
+				214C23105BBA770A17A056FB /* BulletTest.h */,
+				0B83544F4C341D5C304C1170 /* Cantilever.h */,
+				589A5A0A4CDF5B20578D1A67 /* Car.h */,
+				60687DED4533049168D66F15 /* Chain.h */,
+				349F46DD6484579C7E9A1B81 /* CharacterCollision.h */,
+				1719559B4DA3349015AD67DB /* CollisionFiltering.h */,
+				2B34242C5E2D37A2724714F7 /* CollisionProcessing.h */,
+				7E0034CD4B1966CA0BEA381F /* CompoundShapes.h */,
+				142E03AA79311FD95C9500F7 /* Confined.h */,
+				7DFF1A8B536D60E725081429 /* ContinuousTest.h */,
+				50A808333A6C79615B0F3C10 /* Cord.h */,
+				21DF452C4F863C6158070CA4 /* DistanceTest.h */,
+				0D924E2B23257D154D184A49 /* Dominos.h */,
+				36F80056016804614FDF7B5A /* DumpShell.h */,
+				6D791E16093D5B024D761A7F /* DynamicTreeTest.h */,
+				73216335397A45D82B277433 /* EdgeShapes.h */,
+				259945787C993A26231F6403 /* EdgeTest.h */,
+				4BDA7AFB471C6DE15105766F /* Gears.h */,
+				5A2031EF65D10C6D35437A74 /* OneSidedPlatform.h */,
+				6AB81D977068125607585A23 /* Pinball.h */,
+				45C32A8E4A1972E84E9933D9 /* PolyCollision.h */,
+				6B1060B87D4700B0362335F1 /* PolyShapes.h */,
+				7886437B606E2E4F3BED3D02 /* Prismatic.h */,
+				4CE6710421B82F24043C390B /* Pulleys.h */,
+				39C767CB640557B911EA781F /* Pyramid.h */,
+				49174595535B6BFA39363569 /* RayCast.h */,
+				598C159C4FF05D99262341A1 /* Revolute.h */,
+				72C56BB456436730108B5649 /* Rope.h */,
+				7D0E2874701100FC07683750 /* RopeJoint.h */,
+				520366D80CFD724E6A0D3EE7 /* SensorTest.h */,
+				32854DD973434F0001475DAD /* ShapeEditing.h */,
+				63C160E157DB128B038E0D7E /* SliderCrank.h */,
+				583500316AC7529876DF3F89 /* SphereStack.h */,
+				2AF926900F86412127CE7E7E /* TestEntries.cpp */,
+				3F1A2C4A66C375EC7EA42C0E /* TheoJansen.h */,
+				4E8D228D01016F777B0F360D /* Tiles.h */,
+				03B4170D3F8458496A7025C4 /* TimeOfImpact.h */,
+				48E120F0527F56CD6C5D3BEF /* VaryingFriction.h */,
+				756505B23F31322D1EC05CA2 /* VaryingRestitution.h */,
+				5B9C2A7939723D0A772B36C1 /* VerticalStack.h */,
+				380216652E3701845C401F54 /* Web.h */,
 			);
 			name = "Tests";
 			sourceTree = "<group>";
 		};
-		6C56315E370E54D3277A4252 /* Products */ = {
+		28AF6F89222824F17C1809D2 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6E5F1FC4525A03767DF56BB2 /* Testbed */,
+				5F2339BE7ED850FB55AF77ED /* Testbed */,
 			);
 			name = "Products";
 			sourceTree = "<group>";
 		};
-		35505DF53A964EB64B424607 /* Projects */ = {
+		520964606ED143CC7DE722A8 /* Projects */ = {
 			isa = PBXGroup;
 			children = (
-				72ED094A50F373E60EB51F01 /* Box2D.xcodeproj */,
-				705A20417AF2535E59937DBD /* FreeGLUT.xcodeproj */,
-				074D0FB15973548F167E419A /* GLUI.xcodeproj */,
+				009C71C86E1D76C15C5A03AE /* Box2D.xcodeproj */,
+				54C4729F7A43126904B365D0 /* FreeGLUT.xcodeproj */,
+				2DBB1DC75A48430A21612234 /* GLUI.xcodeproj */,
 			);
 			name = "Projects";
 			sourceTree = "<group>";
 		};
-		24D2560A10685D720F564654 /* Products */ = {
+		65E876865EF84FED52A00C83 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				48DF04350BD75AB344CA2AAF /* libBox2D.a */,
+				414679EF171657F0435E524E /* libBox2D.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		6FEB03026434416B76D04136 /* Products */ = {
+		364F6D2C20FA7F8D2C526934 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				7D5249071A7C0C92365F5E7E /* libFreeGLUT.a */,
+				21F978B215DA51963F384484 /* libFreeGLUT.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		65FB6B0B22F320220B536D33 /* Products */ = {
+		6F6F58D8464F4E051F022A62 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				0D7F225219C5735741D233FA /* libGLUI.a */,
+				5B26113E529A104C0BD50D8F /* libGLUI.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -254,25 +254,25 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		36BD55070755669A4D34175B /* Testbed */ = {
+		5B15032748C2672B04363273 /* Testbed */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5A0938121D2A76FB7A2B7AE6 /* Build configuration list for PBXNativeTarget "Testbed" */;
+			buildConfigurationList = 251D0C5339302CD33E2B748C /* Build configuration list for PBXNativeTarget "Testbed" */;
 			buildPhases = (
-				65427E3A121B454E7DA64379 /* Resources */,
-				375C15CC6D9F686E1E1E43E8 /* Sources */,
-				126969F5521A65813F375004 /* Frameworks */,
+				449D23825F780FD6476F2638 /* Resources */,
+				1A136B0F1ADD69DE4D8C2C9E /* Sources */,
+				3C85632C1312630332B129D4 /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				767F24CC1D677CC2481B1B02 /* PBXTargetDependency */,
-				5EBB5DAF2F7A5BD3088E683E /* PBXTargetDependency */,
-				6A81188845F01EEF19415F8C /* PBXTargetDependency */,
+				069C78E4590C52451D7A4B6D /* PBXTargetDependency */,
+				30CE5DAD2A1F644D4D252AA8 /* PBXTargetDependency */,
+				04B04F38076D4A16682F23D6 /* PBXTargetDependency */,
 			);
 			name = "Testbed";
 			productInstallPath = "$(HOME)/bin";
 			productName = "Testbed";
-			productReference = 6E5F1FC4525A03767DF56BB2 /* Testbed */;
+			productReference = 5F2339BE7ED850FB55AF77ED /* Testbed */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -283,55 +283,55 @@
 			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "Testbed" */;
 			compatibilityVersion = "Xcode 3.1";
 			hasScannedForEncodings = 1;
-			mainGroup = 5D58609F54B562E10C8418DA /* Testbed */;
+			mainGroup = 167757816C917C0B1C0A6179 /* Testbed */;
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = 24D2560A10685D720F564654 /* Products */;
-					ProjectRef = 72ED094A50F373E60EB51F01 /* Box2D.xcodeproj */;
+					ProductGroup = 65E876865EF84FED52A00C83 /* Products */;
+					ProjectRef = 009C71C86E1D76C15C5A03AE /* Box2D.xcodeproj */;
 				},
 				{
-					ProductGroup = 6FEB03026434416B76D04136 /* Products */;
-					ProjectRef = 705A20417AF2535E59937DBD /* FreeGLUT.xcodeproj */;
+					ProductGroup = 364F6D2C20FA7F8D2C526934 /* Products */;
+					ProjectRef = 54C4729F7A43126904B365D0 /* FreeGLUT.xcodeproj */;
 				},
 				{
-					ProductGroup = 65FB6B0B22F320220B536D33 /* Products */;
-					ProjectRef = 074D0FB15973548F167E419A /* GLUI.xcodeproj */;
+					ProductGroup = 6F6F58D8464F4E051F022A62 /* Products */;
+					ProjectRef = 2DBB1DC75A48430A21612234 /* GLUI.xcodeproj */;
 				},
 			);
 			projectRoot = "";
 			targets = (
-				36BD55070755669A4D34175B /* Testbed */,
+				5B15032748C2672B04363273 /* Testbed */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		48DF04350BD75AB344CA2AAF /* libBox2D.a */ = {
+		414679EF171657F0435E524E /* libBox2D.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
 			path = "bin/Debug/libBox2D.a";
-			remoteRef = 344D06B77AE85AB64A1B43AD /* PBXContainerItemProxy */;
+			remoteRef = 10D3462916C26CD905E25007 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		7D5249071A7C0C92365F5E7E /* libFreeGLUT.a */ = {
+		21F978B215DA51963F384484 /* libFreeGLUT.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
 			path = "bin/Debug/libFreeGLUT.a";
-			remoteRef = 6D3226E4634D4A4576B06BAA /* PBXContainerItemProxy */;
+			remoteRef = 52E936E960FA74440AE106CB /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		0D7F225219C5735741D233FA /* libGLUI.a */ = {
+		5B26113E529A104C0BD50D8F /* libGLUI.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
 			path = "bin/Debug/libGLUI.a";
-			remoteRef = 3A2C24A73572050A784800B0 /* PBXContainerItemProxy */;
+			remoteRef = 292F362E6E6875C326887AEA /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
-		65427E3A121B454E7DA64379 /* Resources */ = {
+		449D23825F780FD6476F2638 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -341,14 +341,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		375C15CC6D9F686E1E1E43E8 /* Sources */ = {
+		1A136B0F1ADD69DE4D8C2C9E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0D1B5CF8256665BF52BE50D2 /* Main.cpp in Sources */,
-				0EF27332463C346E3FD237EA /* Render.cpp in Sources */,
-				321D340220747CEC5988275B /* Test.cpp in Sources */,
-				1E994E2D3AD75BDC7835479D /* TestEntries.cpp in Sources */,
+				76926A142ECA0FA67A08062E /* Main.cpp in Sources */,
+				57B725FE3FBE66705174024A /* Render.cpp in Sources */,
+				5BF84A9D3360063324D50851 /* Test.cpp in Sources */,
+				22B823DB62EC7A7E20EC63E6 /* TestEntries.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -358,25 +358,25 @@
 /* End PBXVariantGroup section */
 
 /* Begin PBXTargetDependency section */
-		767F24CC1D677CC2481B1B02 /* PBXTargetDependency */ = {
+		069C78E4590C52451D7A4B6D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = "libBox2D.a";
-			targetProxy = 632275F768CD51784A66237E /* PBXContainerItemProxy */;
+			targetProxy = 3C4A381E60B738E007F86BA8 /* PBXContainerItemProxy */;
 		};
-		5EBB5DAF2F7A5BD3088E683E /* PBXTargetDependency */ = {
+		30CE5DAD2A1F644D4D252AA8 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = "libFreeGLUT.a";
-			targetProxy = 037B67784A2203704C140B2F /* PBXContainerItemProxy */;
+			targetProxy = 003C070B29262F72662676F1 /* PBXContainerItemProxy */;
 		};
-		6A81188845F01EEF19415F8C /* PBXTargetDependency */ = {
+		04B04F38076D4A16682F23D6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = "libGLUI.a";
-			targetProxy = 688077AA59481E4B0C1F5CBE /* PBXContainerItemProxy */;
+			targetProxy = 582146156D625E2F69183C20 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		686A5C976DBF436C70694314 /* Debug Native 32-bit */ = {
+		451970DE5D346E6B088B1F91 /* Debug Native 32-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -388,7 +388,7 @@
 			};
 			name = "Debug Native 32-bit";
 		};
-		08F03F8E700650D74A2673A3 /* Debug Native 64-bit */ = {
+		07245FE6355E27EB00D907FE /* Debug Native 64-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -400,7 +400,7 @@
 			};
 			name = "Debug Native 64-bit";
 		};
-		064C59CC570F343329724160 /* Release Native 32-bit */ = {
+		0443055267873FF16C047084 /* Release Native 32-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -413,7 +413,7 @@
 			};
 			name = "Release Native 32-bit";
 		};
-		46C637B0002F0E2B42390EBE /* Release Native 64-bit */ = {
+		0167747853180BF32E9E3C9A /* Release Native 64-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -426,7 +426,7 @@
 			};
 			name = "Release Native 64-bit";
 		};
-		53220BFB62D264D46B29134C /* Debug Native 32-bit */ = {
+		7E413B186D4F022350305398 /* Debug Native 32-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "i386";
@@ -452,7 +452,7 @@
 			};
 			name = "Debug Native 32-bit";
 		};
-		3CE13E3758784E9A7E795539 /* Debug Native 64-bit */ = {
+		11AD587555103716696F6954 /* Debug Native 64-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "x86_64";
@@ -478,7 +478,7 @@
 			};
 			name = "Debug Native 64-bit";
 		};
-		79805C972F63277A7FB13FC7 /* Release Native 32-bit */ = {
+		0ECA1ED5238956A21AAC13BF /* Release Native 32-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "i386";
@@ -502,7 +502,7 @@
 			};
 			name = "Release Native 32-bit";
 		};
-		27177C82184D4A7A56347375 /* Release Native 64-bit */ = {
+		579F02D46AD61A9D25D57EB5 /* Release Native 64-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "x86_64";
@@ -529,13 +529,13 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5A0938121D2A76FB7A2B7AE6 /* Build configuration list for PBXNativeTarget "Testbed" */ = {
+		251D0C5339302CD33E2B748C /* Build configuration list for PBXNativeTarget "Testbed" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				686A5C976DBF436C70694314 /* Debug Native 32-bit */,
-				08F03F8E700650D74A2673A3 /* Debug Native 64-bit */,
-				064C59CC570F343329724160 /* Release Native 32-bit */,
-				46C637B0002F0E2B42390EBE /* Release Native 64-bit */,
+				451970DE5D346E6B088B1F91 /* Debug Native 32-bit */,
+				07245FE6355E27EB00D907FE /* Debug Native 64-bit */,
+				0443055267873FF16C047084 /* Release Native 32-bit */,
+				0167747853180BF32E9E3C9A /* Release Native 64-bit */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = "Debug Native 32-bit";
@@ -543,10 +543,10 @@
 		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "Testbed" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				53220BFB62D264D46B29134C /* Debug Native 32-bit */,
-				3CE13E3758784E9A7E795539 /* Debug Native 64-bit */,
-				79805C972F63277A7FB13FC7 /* Release Native 32-bit */,
-				27177C82184D4A7A56347375 /* Release Native 64-bit */,
+				7E413B186D4F022350305398 /* Debug Native 32-bit */,
+				11AD587555103716696F6954 /* Debug Native 64-bit */,
+				0ECA1ED5238956A21AAC13BF /* Release Native 32-bit */,
+				579F02D46AD61A9D25D57EB5 /* Release Native 64-bit */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = "Debug Native 32-bit";
