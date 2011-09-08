@@ -8,6 +8,12 @@ solution "Box2D"
 	configurations { "Debug", "Release" }
 	platforms { "x32", "x64" }
 	
+	configuration "windows"
+		defines { "WIN32" }
+
+	configuration "vs*"
+		defines { "_CRT_SECURE_NO_WARNINGS" }	
+		
 	configuration "Debug"
 		targetdir ( "Build/" .. action .. "/bin/Debug" )
 		defines { "_DEBUG" }
@@ -30,7 +36,6 @@ solution "Box2D"
 		language "C"
 		files { "freeglut/*.h", "freeglut/*.c" }
 		vpaths { ["Headers"] = "**.h",  ["Sources"] = "**.c" }
-		defines { "_CRT_SECURE_NO_WARNINGS" }
 		
 	project "GLUI"
 		kind "StaticLib"
@@ -38,7 +43,6 @@ solution "Box2D"
 		files { "glui/*.h", "glui/*.cpp" }
 		vpaths { ["Headers"] = "**.h",  ["Sources"] = "**.cpp" }
 		includedirs { "." }
-		defines { "_CRT_SECURE_NO_WARNINGS" }	
 		configuration { "windows" }
 			 buildoptions { "/W1" }
 			 

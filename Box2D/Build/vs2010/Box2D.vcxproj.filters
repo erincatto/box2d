@@ -2,25 +2,25 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Collision">
-      <UniqueIdentifier>{95976559-B971-A74E-BB85-86CA5E907EAF}</UniqueIdentifier>
+      <UniqueIdentifier>{EE06093C-52B3-9A42-A586-8CCC65597D57}</UniqueIdentifier>
     </Filter>
     <Filter Include="Collision\Shapes">
-      <UniqueIdentifier>{CE575B58-7BFB-C94C-B5B5-955F26BC716E}</UniqueIdentifier>
+      <UniqueIdentifier>{4A368771-7ADC-A143-B42F-58CB8448EA17}</UniqueIdentifier>
     </Filter>
     <Filter Include="Common">
-      <UniqueIdentifier>{E5AA0026-CAD7-0942-B641-35521248C95C}</UniqueIdentifier>
+      <UniqueIdentifier>{17132958-D902-9D46-A032-A2DD9E3FAED5}</UniqueIdentifier>
     </Filter>
     <Filter Include="Dynamics">
-      <UniqueIdentifier>{E598CD40-3CDC-554B-AC19-11138D5C38D0}</UniqueIdentifier>
+      <UniqueIdentifier>{C815CFE9-147A-D443-8BB0-31FC775E62F4}</UniqueIdentifier>
     </Filter>
     <Filter Include="Dynamics\Contacts">
-      <UniqueIdentifier>{D88406F2-1747-4946-A4FE-5602130A0590}</UniqueIdentifier>
+      <UniqueIdentifier>{BE9A720A-8AF8-9C4C-A4FE-3F2BACAF8A59}</UniqueIdentifier>
     </Filter>
     <Filter Include="Dynamics\Joints">
-      <UniqueIdentifier>{8DE8F347-31DA-A345-88F4-FB9BA35BD1B2}</UniqueIdentifier>
+      <UniqueIdentifier>{CFBD1F37-CEEA-CA41-9715-5C0ACDD84298}</UniqueIdentifier>
     </Filter>
     <Filter Include="Rope">
-      <UniqueIdentifier>{31D85210-0CD8-4B48-B491-68FF4A22DA36}</UniqueIdentifier>
+      <UniqueIdentifier>{064F8909-BE63-9844-86F5-4B9354A16847}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
