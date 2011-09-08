@@ -2,10 +2,10 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Framework">
-      <UniqueIdentifier>{F2A7CAF0-4895-1448-ABBA-66EA604808E7}</UniqueIdentifier>
+      <UniqueIdentifier>{F5D5D9E8-9CBD-914E-B539-B995BEA73920}</UniqueIdentifier>
     </Filter>
     <Filter Include="Tests">
-      <UniqueIdentifier>{FBE874F6-386D-CD46-BD36-E59BD63D3D50}</UniqueIdentifier>
+      <UniqueIdentifier>{CF6BC554-9DC6-4547-9F18-A1BA2F3345BF}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
