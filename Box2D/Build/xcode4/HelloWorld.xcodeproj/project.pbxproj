@@ -7,75 +7,75 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2C58139D708032EF6CCB5673 /* Helloworld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B7F71BE2878649559526213 /* Helloworld.cpp */; };
-		43E206137747680545AA664A /* libBox2D.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 39F0085E572157E27CF40C6E /* libBox2D.a */; };
+		790A3EDA2A1206A259B41BEA /* Helloworld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18397E986A16437D3C94769D /* Helloworld.cpp */; };
+		3CEF1CC312EE462A272C2036 /* libBox2D.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0E03516F7353475963A03575 /* libBox2D.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		005C4BC247195F2A50A70750 /* PBXContainerItemProxy */ = {
+		372B3DB7775960582A9B273F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 31B8574C28A605057A8E4634 /* Box2D.xcodeproj */;
+			containerPortal = 3A546E6549D50253235F1FD8 /* Box2D.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = 1AAC08B642F9503D58B7412A;
+			remoteGlobalIDString = 205F36B80AE354F23E831842;
 			remoteInfo = "libBox2D.a";
 		};
-		59677A9A238A4A515BA6175E /* PBXContainerItemProxy */ = {
+		1D7C3AFA53D51F757B70669B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 31B8574C28A605057A8E4634 /* Box2D.xcodeproj */;
+			containerPortal = 3A546E6549D50253235F1FD8 /* Box2D.xcodeproj */;
 			proxyType = 1;
-			remoteGlobalIDString = 0A1E508C60D06F090A421E1C;
+			remoteGlobalIDString = 3EA10BDD11906CF637351D55;
 			remoteInfo = "libBox2D.a";
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		2B7F71BE2878649559526213 /* Helloworld.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "Helloworld.cpp"; path = "Helloworld.cpp"; sourceTree = "<group>"; };
-		3F45705C65F14AD26ABC0109 /* HelloWorld */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = "HelloWorld"; path = "HelloWorld"; sourceTree = BUILT_PRODUCTS_DIR; };
-		31B8574C28A605057A8E4634 /* Box2D.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "Box2D.xcodeproj"; path = "Box2D.xcodeproj"; sourceTree = SOURCE_ROOT; };
+		18397E986A16437D3C94769D /* Helloworld.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "Helloworld.cpp"; path = "Helloworld.cpp"; sourceTree = "<group>"; };
+		1A250A810A782AA0706C58EF /* HelloWorld */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = "HelloWorld"; path = "HelloWorld"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3A546E6549D50253235F1FD8 /* Box2D.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "Box2D.xcodeproj"; path = "Box2D.xcodeproj"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		19CD529878653C25205E3872 /* Frameworks */ = {
+		65735E4406C40517509750E1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				43E206137747680545AA664A /* libBox2D.a in Frameworks */,
+				3CEF1CC312EE462A272C2036 /* libBox2D.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		7C8C3A59358A3A614C0D6C23 /* HelloWorld */ = {
+		1DD6330B59023D8437371525 /* HelloWorld */ = {
 			isa = PBXGroup;
 			children = (
-				2B7F71BE2878649559526213 /* Helloworld.cpp */,
-				43B96D5B0B85518608F9456D /* Products */,
-				2A1726B606F5221A22715BC3 /* Projects */,
+				18397E986A16437D3C94769D /* Helloworld.cpp */,
+				01F66CF62AFF307D6B267BF2 /* Products */,
+				60A520F139D1331A47F661ED /* Projects */,
 			);
 			name = "HelloWorld";
 			sourceTree = "<group>";
 		};
-		43B96D5B0B85518608F9456D /* Products */ = {
+		01F66CF62AFF307D6B267BF2 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				3F45705C65F14AD26ABC0109 /* HelloWorld */,
+				1A250A810A782AA0706C58EF /* HelloWorld */,
 			);
 			name = "Products";
 			sourceTree = "<group>";
 		};
-		2A1726B606F5221A22715BC3 /* Projects */ = {
+		60A520F139D1331A47F661ED /* Projects */ = {
 			isa = PBXGroup;
 			children = (
-				31B8574C28A605057A8E4634 /* Box2D.xcodeproj */,
+				3A546E6549D50253235F1FD8 /* Box2D.xcodeproj */,
 			);
 			name = "Projects";
 			sourceTree = "<group>";
 		};
-		5A6F76A5594635C5549556F3 /* Products */ = {
+		37745E0F72DA17D147564438 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				39F0085E572157E27CF40C6E /* libBox2D.a */,
+				0E03516F7353475963A03575 /* libBox2D.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -83,23 +83,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		76F459ED55435F2A53AC6DB5 /* HelloWorld */ = {
+		2BA320FA020A3F4B3B286DE4 /* HelloWorld */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 3C3025DE2EA16B2278B0708A /* Build configuration list for PBXNativeTarget "HelloWorld" */;
+			buildConfigurationList = 7C597FE1246504B128B422A9 /* Build configuration list for PBXNativeTarget "HelloWorld" */;
 			buildPhases = (
-				2A604FE200BF7AAA55526252 /* Resources */,
-				41D9376163601ECD3EB97709 /* Sources */,
-				19CD529878653C25205E3872 /* Frameworks */,
+				24BB28E22EC611C547B8123C /* Resources */,
+				1205475C51331E4B7EA13072 /* Sources */,
+				65735E4406C40517509750E1 /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				530059E845393AD74C3A368D /* PBXTargetDependency */,
+				34AF34E6695B0F626B0D66FA /* PBXTargetDependency */,
 			);
 			name = "HelloWorld";
 			productInstallPath = "$(HOME)/bin";
 			productName = "HelloWorld";
-			productReference = 3F45705C65F14AD26ABC0109 /* HelloWorld */;
+			productReference = 1A250A810A782AA0706C58EF /* HelloWorld */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -110,33 +110,33 @@
 			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "HelloWorld" */;
 			compatibilityVersion = "Xcode 3.1";
 			hasScannedForEncodings = 1;
-			mainGroup = 7C8C3A59358A3A614C0D6C23 /* HelloWorld */;
+			mainGroup = 1DD6330B59023D8437371525 /* HelloWorld */;
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = 5A6F76A5594635C5549556F3 /* Products */;
-					ProjectRef = 31B8574C28A605057A8E4634 /* Box2D.xcodeproj */;
+					ProductGroup = 37745E0F72DA17D147564438 /* Products */;
+					ProjectRef = 3A546E6549D50253235F1FD8 /* Box2D.xcodeproj */;
 				},
 			);
 			projectRoot = "";
 			targets = (
-				76F459ED55435F2A53AC6DB5 /* HelloWorld */,
+				2BA320FA020A3F4B3B286DE4 /* HelloWorld */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		39F0085E572157E27CF40C6E /* libBox2D.a */ = {
+		0E03516F7353475963A03575 /* libBox2D.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
 			path = "bin/Debug/libBox2D.a";
-			remoteRef = 005C4BC247195F2A50A70750 /* PBXContainerItemProxy */;
+			remoteRef = 372B3DB7775960582A9B273F /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
-		2A604FE200BF7AAA55526252 /* Resources */ = {
+		24BB28E22EC611C547B8123C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -146,11 +146,11 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		41D9376163601ECD3EB97709 /* Sources */ = {
+		1205475C51331E4B7EA13072 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2C58139D708032EF6CCB5673 /* Helloworld.cpp in Sources */,
+				790A3EDA2A1206A259B41BEA /* Helloworld.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -160,15 +160,15 @@
 /* End PBXVariantGroup section */
 
 /* Begin PBXTargetDependency section */
-		530059E845393AD74C3A368D /* PBXTargetDependency */ = {
+		34AF34E6695B0F626B0D66FA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = "libBox2D.a";
-			targetProxy = 59677A9A238A4A515BA6175E /* PBXContainerItemProxy */;
+			targetProxy = 1D7C3AFA53D51F757B70669B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		314538E7633136F441375975 /* Debug Native 32-bit */ = {
+		43A80DCA5B9E16AA3C623953 /* Debug Native 32-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -180,7 +180,7 @@
 			};
 			name = "Debug Native 32-bit";
 		};
-		1DDA46B247EF441D364F3836 /* Debug Native 64-bit */ = {
+		49647506115F34C51EB16C44 /* Debug Native 64-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -192,7 +192,7 @@
 			};
 			name = "Debug Native 64-bit";
 		};
-		51940C9D4FA42A596E4F27DE /* Release Native 32-bit */ = {
+		3B3E7B42740B126543A357B7 /* Release Native 32-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -205,7 +205,7 @@
 			};
 			name = "Release Native 32-bit";
 		};
-		692977B5299E386926E2319B /* Release Native 64-bit */ = {
+		1CAC3C517D941963269C1EB4 /* Release Native 64-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -218,7 +218,7 @@
 			};
 			name = "Release Native 64-bit";
 		};
-		549C1CB8482069644F1265C8 /* Debug Native 32-bit */ = {
+		60231AF8041F45646E514486 /* Debug Native 32-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "i386";
@@ -244,7 +244,7 @@
 			};
 			name = "Debug Native 32-bit";
 		};
-		42F8638028F4671F35F64E9D /* Debug Native 64-bit */ = {
+		0A7A60383E4B74DE52AF18CB /* Debug Native 64-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "x86_64";
@@ -270,7 +270,7 @@
 			};
 			name = "Debug Native 64-bit";
 		};
-		25CB3B655EE2503C0EAC6A13 /* Release Native 32-bit */ = {
+		7E0115C0581F37DC190B5579 /* Release Native 32-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "i386";
@@ -294,7 +294,7 @@
 			};
 			name = "Release Native 32-bit";
 		};
-		5AF85E7500B3518C3F3100DF /* Release Native 64-bit */ = {
+		521634216BDB73CF348076F4 /* Release Native 64-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "x86_64";
@@ -321,13 +321,13 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		3C3025DE2EA16B2278B0708A /* Build configuration list for PBXNativeTarget "HelloWorld" */ = {
+		7C597FE1246504B128B422A9 /* Build configuration list for PBXNativeTarget "HelloWorld" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				314538E7633136F441375975 /* Debug Native 32-bit */,
-				1DDA46B247EF441D364F3836 /* Debug Native 64-bit */,
-				51940C9D4FA42A596E4F27DE /* Release Native 32-bit */,
-				692977B5299E386926E2319B /* Release Native 64-bit */,
+				43A80DCA5B9E16AA3C623953 /* Debug Native 32-bit */,
+				49647506115F34C51EB16C44 /* Debug Native 64-bit */,
+				3B3E7B42740B126543A357B7 /* Release Native 32-bit */,
+				1CAC3C517D941963269C1EB4 /* Release Native 64-bit */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = "Debug Native 32-bit";
@@ -335,10 +335,10 @@
 		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "HelloWorld" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				549C1CB8482069644F1265C8 /* Debug Native 32-bit */,
-				42F8638028F4671F35F64E9D /* Debug Native 64-bit */,
-				25CB3B655EE2503C0EAC6A13 /* Release Native 32-bit */,
-				5AF85E7500B3518C3F3100DF /* Release Native 64-bit */,
+				60231AF8041F45646E514486 /* Debug Native 32-bit */,
+				0A7A60383E4B74DE52AF18CB /* Debug Native 64-bit */,
+				7E0115C0581F37DC190B5579 /* Release Native 32-bit */,
+				521634216BDB73CF348076F4 /* Release Native 64-bit */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = "Debug Native 32-bit";
