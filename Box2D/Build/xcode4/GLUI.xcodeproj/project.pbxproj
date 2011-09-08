@@ -7,84 +7,84 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		22231EC97A9B3E044A9B4E17 /* algebra3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75897B5407DD383856321C55 /* algebra3.cpp */; };
-		1328571910461EEF28DA7C19 /* arcball.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7ED0564D014B60A103A071D0 /* arcball.cpp */; };
-		563431856B1A51F240103575 /* glui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 37490F2432C0301202A06298 /* glui.cpp */; };
-		53BA0DDD60103AD47CDC2C7A /* glui_add_controls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5EFD2A6D0070641C1BED502E /* glui_add_controls.cpp */; };
-		73777B1E2FA30FD5156B73D5 /* glui_bitmap_img_data.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3670205014D5048762A141F7 /* glui_bitmap_img_data.cpp */; };
-		7EF93FCC5CBA04F077BF63AD /* glui_bitmaps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2609164523754AED6D5B69BF /* glui_bitmaps.cpp */; };
-		6B702C8B24D51352633E7D02 /* glui_button.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7EC24D100EF360970CB53070 /* glui_button.cpp */; };
-		16B31500057B191A797D6742 /* glui_checkbox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 40117EFE3E580E972AE44712 /* glui_checkbox.cpp */; };
-		43950AE67AE24D51524D642D /* glui_column.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0F162A602DA23C2540B07806 /* glui_column.cpp */; };
-		6169377363DF442C5F0655EA /* glui_commandline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4B050448058E573E0B97347E /* glui_commandline.cpp */; };
-		6AD36EED37117F8029133369 /* glui_control.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6AD40F8246A1037B713C1A3F /* glui_control.cpp */; };
-		67D15A877549478537BE06FA /* glui_edittext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 102813D5537C2B2E3C156D9A /* glui_edittext.cpp */; };
-		5F085481053B47CE293C532E /* glui_filebrowser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7B7D717B66604EC31D5443A8 /* glui_filebrowser.cpp */; };
-		4253527E646A2C884AFB79ED /* glui_list.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D940CDD3DFF2E54201558C5 /* glui_list.cpp */; };
-		22887A2859503BF23D2B01D8 /* glui_listbox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 42224E930D85298D79C84F4E /* glui_listbox.cpp */; };
-		368D3C0112CD281C6D8A55E1 /* glui_mouse_iaction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4FB6739B7BE671C263E1529E /* glui_mouse_iaction.cpp */; };
-		019B108C60D214E375735B28 /* glui_node.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58E929D73E696A4E6ABE5A45 /* glui_node.cpp */; };
-		24D0339C724D0E2C27297917 /* glui_panel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5ACC34CC1A75532E5DD8098A /* glui_panel.cpp */; };
-		27FB79FB44576A5F56606FC0 /* glui_radio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 448E16985A9A19DD4D2E6723 /* glui_radio.cpp */; };
-		45A31D3E2E9B5526280C1875 /* glui_rollout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 646C793402E26C713FED6933 /* glui_rollout.cpp */; };
-		065819E739097E67756D6CA8 /* glui_rotation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 15DD53EC50596AF610631184 /* glui_rotation.cpp */; };
-		373D7BBB26BB297F0E5A6F05 /* glui_scrollbar.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1CFE091B4FDA130919251605 /* glui_scrollbar.cpp */; };
-		07D53465622718BF66CD52CD /* glui_separator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3B782A181B41B81F7E5185 /* glui_separator.cpp */; };
-		5B0E584C3686112B7BB07D75 /* glui_spinner.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 493E3FCA72FB6799271B78B1 /* glui_spinner.cpp */; };
-		178B5DB0028372717AE53E7F /* glui_statictext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 621C2C70020A4B291AF54F4B /* glui_statictext.cpp */; };
-		03353A0B50271F277A9B5997 /* glui_string.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6BBD0F112A597566777D59AC /* glui_string.cpp */; };
-		760379A67E0431494BCF3EF1 /* glui_textbox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 488C781F538324AF620E467C /* glui_textbox.cpp */; };
-		70092D7A65A036F1341F0DE1 /* glui_translation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3E6012C345FC61DB598F0CAF /* glui_translation.cpp */; };
-		5EBF4B482B2473581AD63DBB /* glui_tree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5EA91C5B349813976C6679C3 /* glui_tree.cpp */; };
-		1D925BFB2244600C753508EC /* glui_treepanel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7BDD34363D5E2C041FA52C37 /* glui_treepanel.cpp */; };
-		7DB0143C74716A737DFE7659 /* glui_window.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58257F8D6D8D4C90736F364E /* glui_window.cpp */; };
-		610F3356743D298004461CF7 /* quaternion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 79435DC514EF7C1430AA6505 /* quaternion.cpp */; };
+		64E252E32C8473DF23843C23 /* algebra3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D3235705B8C376169503368 /* algebra3.cpp */; };
+		01D21FB507E2160D32EB73E1 /* arcball.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1190319B35F36B3175914554 /* arcball.cpp */; };
+		498F2421487C48692617475F /* glui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 613C63A42B731BA416221FA7 /* glui.cpp */; };
+		4CA10ABA1A06458954375C3A /* glui_add_controls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7C827A553099284234DB2B83 /* glui_add_controls.cpp */; };
+		128C1623690A6A827DFE2891 /* glui_bitmap_img_data.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 30FA119423AA206C65092AB7 /* glui_bitmap_img_data.cpp */; };
+		711D4B28549211E62CA605E0 /* glui_bitmaps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33B703D7482E00BA1B543FF9 /* glui_bitmaps.cpp */; };
+		7EF3491D15140EFE30416621 /* glui_button.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58B273E719BC6A9676ED4365 /* glui_button.cpp */; };
+		6D4B6C7604A2454849470720 /* glui_checkbox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63740AD80206321807FC1F35 /* glui_checkbox.cpp */; };
+		551017A734511833495D401F /* glui_column.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D0226483E285E243F4830C2 /* glui_column.cpp */; };
+		43213E3D3AE92F19376245AA /* glui_commandline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1B0D72D67F2D76C2732869BB /* glui_commandline.cpp */; };
+		0FE50E3D28CE497D42BF7FBB /* glui_control.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 645A2EE511E23DBC25A92DA3 /* glui_control.cpp */; };
+		4E0C53BD4D2E1F8511EF4E11 /* glui_edittext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5E6E119219DF2D7E77FF2790 /* glui_edittext.cpp */; };
+		5CA772C0386B0AB9384C56CC /* glui_filebrowser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 307D11F22BD25A2977311422 /* glui_filebrowser.cpp */; };
+		686B135527CA72FD5F1B3B4C /* glui_list.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 07950A90530D10F82DFF3BC0 /* glui_list.cpp */; };
+		68405BF2465D3BCC6DDA4F4C /* glui_listbox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 680675264E5251D828171919 /* glui_listbox.cpp */; };
+		6110560C6F2D2DB63DC92E39 /* glui_mouse_iaction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 78143A9A0FDD7F41527867DA /* glui_mouse_iaction.cpp */; };
+		7CCD58FB5CAC181C24B64AD8 /* glui_node.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2FDF533B4CB2605A652617AC /* glui_node.cpp */; };
+		40C3170D71592729630D5517 /* glui_panel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A91333B2729514D420E5F71 /* glui_panel.cpp */; };
+		6F2028E805B42A13411F1232 /* glui_radio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 14C93F7040B63DE6753B6CBE /* glui_radio.cpp */; };
+		5FC133256764459367B0030A /* glui_rollout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 344846463EFD4272423A6B9A /* glui_rollout.cpp */; };
+		5C3E022975A64EA23FC774C1 /* glui_rotation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 44D9390810150ED66ACA6278 /* glui_rotation.cpp */; };
+		4B37384506F8497465B15799 /* glui_scrollbar.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0685214F7A1B67EE1AC71E73 /* glui_scrollbar.cpp */; };
+		36E06A11040648B97B56780E /* glui_separator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18F70ECA41F9632725582BC8 /* glui_separator.cpp */; };
+		7ACA450563D5291265C07631 /* glui_spinner.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 402D792F7578385F7F571698 /* glui_spinner.cpp */; };
+		24F31C58752D64D241E81746 /* glui_statictext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E605281248445FC23006FDE /* glui_statictext.cpp */; };
+		5610781C214B7BF61CC34DA1 /* glui_string.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F34458315BE234A48DD52AE /* glui_string.cpp */; };
+		2D19029A13C72C653A8D12BD /* glui_textbox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50235C7B42475D1921F165AF /* glui_textbox.cpp */; };
+		0A166FEB73C2766B79546F9D /* glui_translation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 22270C2B24CA38977F2214DA /* glui_translation.cpp */; };
+		34283BD71A5429731AC64F67 /* glui_tree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 70A65F0C27CA186A11EC7F73 /* glui_tree.cpp */; };
+		2EDA59F172347504013F783E /* glui_treepanel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 29A13CCD3F2E601132435648 /* glui_treepanel.cpp */; };
+		4AA933F36CA839FE2C0D465F /* glui_window.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 73200A0B790A717C55C82629 /* glui_window.cpp */; };
+		3CD0125637AF18147F05057F /* quaternion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 69D71C5111AE20E924304AA7 /* quaternion.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		424D31C76C285AC54D213524 /* algebra3.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "algebra3.h"; path = "../../glui/algebra3.h"; sourceTree = "<group>"; };
-		12C500190FE459DB4DE2023A /* arcball.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "arcball.h"; path = "../../glui/arcball.h"; sourceTree = "<group>"; };
-		615A072C65115280554D0A4D /* glui.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "glui.h"; path = "../../glui/glui.h"; sourceTree = "<group>"; };
-		170401E9118C275D36AB79B2 /* glui_internal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "glui_internal.h"; path = "../../glui/glui_internal.h"; sourceTree = "<group>"; };
-		74343699239D22296F2E21D2 /* glui_internal_control.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "glui_internal_control.h"; path = "../../glui/glui_internal_control.h"; sourceTree = "<group>"; };
-		21B96BBD3CF9561F540D6E57 /* quaternion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "quaternion.h"; path = "../../glui/quaternion.h"; sourceTree = "<group>"; };
-		75897B5407DD383856321C55 /* algebra3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "algebra3.cpp"; path = "../../glui/algebra3.cpp"; sourceTree = "<group>"; };
-		7ED0564D014B60A103A071D0 /* arcball.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "arcball.cpp"; path = "../../glui/arcball.cpp"; sourceTree = "<group>"; };
-		37490F2432C0301202A06298 /* glui.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui.cpp"; path = "../../glui/glui.cpp"; sourceTree = "<group>"; };
-		5EFD2A6D0070641C1BED502E /* glui_add_controls.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_add_controls.cpp"; path = "../../glui/glui_add_controls.cpp"; sourceTree = "<group>"; };
-		3670205014D5048762A141F7 /* glui_bitmap_img_data.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_bitmap_img_data.cpp"; path = "../../glui/glui_bitmap_img_data.cpp"; sourceTree = "<group>"; };
-		2609164523754AED6D5B69BF /* glui_bitmaps.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_bitmaps.cpp"; path = "../../glui/glui_bitmaps.cpp"; sourceTree = "<group>"; };
-		7EC24D100EF360970CB53070 /* glui_button.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_button.cpp"; path = "../../glui/glui_button.cpp"; sourceTree = "<group>"; };
-		40117EFE3E580E972AE44712 /* glui_checkbox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_checkbox.cpp"; path = "../../glui/glui_checkbox.cpp"; sourceTree = "<group>"; };
-		0F162A602DA23C2540B07806 /* glui_column.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_column.cpp"; path = "../../glui/glui_column.cpp"; sourceTree = "<group>"; };
-		4B050448058E573E0B97347E /* glui_commandline.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_commandline.cpp"; path = "../../glui/glui_commandline.cpp"; sourceTree = "<group>"; };
-		6AD40F8246A1037B713C1A3F /* glui_control.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_control.cpp"; path = "../../glui/glui_control.cpp"; sourceTree = "<group>"; };
-		102813D5537C2B2E3C156D9A /* glui_edittext.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_edittext.cpp"; path = "../../glui/glui_edittext.cpp"; sourceTree = "<group>"; };
-		7B7D717B66604EC31D5443A8 /* glui_filebrowser.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_filebrowser.cpp"; path = "../../glui/glui_filebrowser.cpp"; sourceTree = "<group>"; };
-		4D940CDD3DFF2E54201558C5 /* glui_list.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_list.cpp"; path = "../../glui/glui_list.cpp"; sourceTree = "<group>"; };
-		42224E930D85298D79C84F4E /* glui_listbox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_listbox.cpp"; path = "../../glui/glui_listbox.cpp"; sourceTree = "<group>"; };
-		4FB6739B7BE671C263E1529E /* glui_mouse_iaction.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_mouse_iaction.cpp"; path = "../../glui/glui_mouse_iaction.cpp"; sourceTree = "<group>"; };
-		58E929D73E696A4E6ABE5A45 /* glui_node.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_node.cpp"; path = "../../glui/glui_node.cpp"; sourceTree = "<group>"; };
-		5ACC34CC1A75532E5DD8098A /* glui_panel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_panel.cpp"; path = "../../glui/glui_panel.cpp"; sourceTree = "<group>"; };
-		448E16985A9A19DD4D2E6723 /* glui_radio.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_radio.cpp"; path = "../../glui/glui_radio.cpp"; sourceTree = "<group>"; };
-		646C793402E26C713FED6933 /* glui_rollout.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_rollout.cpp"; path = "../../glui/glui_rollout.cpp"; sourceTree = "<group>"; };
-		15DD53EC50596AF610631184 /* glui_rotation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_rotation.cpp"; path = "../../glui/glui_rotation.cpp"; sourceTree = "<group>"; };
-		1CFE091B4FDA130919251605 /* glui_scrollbar.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_scrollbar.cpp"; path = "../../glui/glui_scrollbar.cpp"; sourceTree = "<group>"; };
-		5B3B782A181B41B81F7E5185 /* glui_separator.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_separator.cpp"; path = "../../glui/glui_separator.cpp"; sourceTree = "<group>"; };
-		493E3FCA72FB6799271B78B1 /* glui_spinner.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_spinner.cpp"; path = "../../glui/glui_spinner.cpp"; sourceTree = "<group>"; };
-		621C2C70020A4B291AF54F4B /* glui_statictext.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_statictext.cpp"; path = "../../glui/glui_statictext.cpp"; sourceTree = "<group>"; };
-		6BBD0F112A597566777D59AC /* glui_string.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_string.cpp"; path = "../../glui/glui_string.cpp"; sourceTree = "<group>"; };
-		488C781F538324AF620E467C /* glui_textbox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_textbox.cpp"; path = "../../glui/glui_textbox.cpp"; sourceTree = "<group>"; };
-		3E6012C345FC61DB598F0CAF /* glui_translation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_translation.cpp"; path = "../../glui/glui_translation.cpp"; sourceTree = "<group>"; };
-		5EA91C5B349813976C6679C3 /* glui_tree.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_tree.cpp"; path = "../../glui/glui_tree.cpp"; sourceTree = "<group>"; };
-		7BDD34363D5E2C041FA52C37 /* glui_treepanel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_treepanel.cpp"; path = "../../glui/glui_treepanel.cpp"; sourceTree = "<group>"; };
-		58257F8D6D8D4C90736F364E /* glui_window.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_window.cpp"; path = "../../glui/glui_window.cpp"; sourceTree = "<group>"; };
-		79435DC514EF7C1430AA6505 /* quaternion.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "quaternion.cpp"; path = "../../glui/quaternion.cpp"; sourceTree = "<group>"; };
-		7D9B3B6376063D5A48127280 /* libGLUI.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; name = "libGLUI.a"; path = "libGLUI.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		0F1558DA61EC7EC47E854117 /* algebra3.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "algebra3.h"; path = "../../glui/algebra3.h"; sourceTree = "<group>"; };
+		25D55C6B0BA440B9662D40E5 /* arcball.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "arcball.h"; path = "../../glui/arcball.h"; sourceTree = "<group>"; };
+		43F663C721360A7741787DDD /* glui.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "glui.h"; path = "../../glui/glui.h"; sourceTree = "<group>"; };
+		376545D513DE7E693EC343F2 /* glui_internal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "glui_internal.h"; path = "../../glui/glui_internal.h"; sourceTree = "<group>"; };
+		4F1F551A2593421763337A96 /* glui_internal_control.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "glui_internal_control.h"; path = "../../glui/glui_internal_control.h"; sourceTree = "<group>"; };
+		68355833211B716C5E4A2172 /* quaternion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "quaternion.h"; path = "../../glui/quaternion.h"; sourceTree = "<group>"; };
+		5D3235705B8C376169503368 /* algebra3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "algebra3.cpp"; path = "../../glui/algebra3.cpp"; sourceTree = "<group>"; };
+		1190319B35F36B3175914554 /* arcball.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "arcball.cpp"; path = "../../glui/arcball.cpp"; sourceTree = "<group>"; };
+		613C63A42B731BA416221FA7 /* glui.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui.cpp"; path = "../../glui/glui.cpp"; sourceTree = "<group>"; };
+		7C827A553099284234DB2B83 /* glui_add_controls.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_add_controls.cpp"; path = "../../glui/glui_add_controls.cpp"; sourceTree = "<group>"; };
+		30FA119423AA206C65092AB7 /* glui_bitmap_img_data.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_bitmap_img_data.cpp"; path = "../../glui/glui_bitmap_img_data.cpp"; sourceTree = "<group>"; };
+		33B703D7482E00BA1B543FF9 /* glui_bitmaps.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_bitmaps.cpp"; path = "../../glui/glui_bitmaps.cpp"; sourceTree = "<group>"; };
+		58B273E719BC6A9676ED4365 /* glui_button.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_button.cpp"; path = "../../glui/glui_button.cpp"; sourceTree = "<group>"; };
+		63740AD80206321807FC1F35 /* glui_checkbox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_checkbox.cpp"; path = "../../glui/glui_checkbox.cpp"; sourceTree = "<group>"; };
+		5D0226483E285E243F4830C2 /* glui_column.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_column.cpp"; path = "../../glui/glui_column.cpp"; sourceTree = "<group>"; };
+		1B0D72D67F2D76C2732869BB /* glui_commandline.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_commandline.cpp"; path = "../../glui/glui_commandline.cpp"; sourceTree = "<group>"; };
+		645A2EE511E23DBC25A92DA3 /* glui_control.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_control.cpp"; path = "../../glui/glui_control.cpp"; sourceTree = "<group>"; };
+		5E6E119219DF2D7E77FF2790 /* glui_edittext.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_edittext.cpp"; path = "../../glui/glui_edittext.cpp"; sourceTree = "<group>"; };
+		307D11F22BD25A2977311422 /* glui_filebrowser.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_filebrowser.cpp"; path = "../../glui/glui_filebrowser.cpp"; sourceTree = "<group>"; };
+		07950A90530D10F82DFF3BC0 /* glui_list.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_list.cpp"; path = "../../glui/glui_list.cpp"; sourceTree = "<group>"; };
+		680675264E5251D828171919 /* glui_listbox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_listbox.cpp"; path = "../../glui/glui_listbox.cpp"; sourceTree = "<group>"; };
+		78143A9A0FDD7F41527867DA /* glui_mouse_iaction.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_mouse_iaction.cpp"; path = "../../glui/glui_mouse_iaction.cpp"; sourceTree = "<group>"; };
+		2FDF533B4CB2605A652617AC /* glui_node.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_node.cpp"; path = "../../glui/glui_node.cpp"; sourceTree = "<group>"; };
+		1A91333B2729514D420E5F71 /* glui_panel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_panel.cpp"; path = "../../glui/glui_panel.cpp"; sourceTree = "<group>"; };
+		14C93F7040B63DE6753B6CBE /* glui_radio.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_radio.cpp"; path = "../../glui/glui_radio.cpp"; sourceTree = "<group>"; };
+		344846463EFD4272423A6B9A /* glui_rollout.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_rollout.cpp"; path = "../../glui/glui_rollout.cpp"; sourceTree = "<group>"; };
+		44D9390810150ED66ACA6278 /* glui_rotation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_rotation.cpp"; path = "../../glui/glui_rotation.cpp"; sourceTree = "<group>"; };
+		0685214F7A1B67EE1AC71E73 /* glui_scrollbar.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_scrollbar.cpp"; path = "../../glui/glui_scrollbar.cpp"; sourceTree = "<group>"; };
+		18F70ECA41F9632725582BC8 /* glui_separator.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_separator.cpp"; path = "../../glui/glui_separator.cpp"; sourceTree = "<group>"; };
+		402D792F7578385F7F571698 /* glui_spinner.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_spinner.cpp"; path = "../../glui/glui_spinner.cpp"; sourceTree = "<group>"; };
+		6E605281248445FC23006FDE /* glui_statictext.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_statictext.cpp"; path = "../../glui/glui_statictext.cpp"; sourceTree = "<group>"; };
+		3F34458315BE234A48DD52AE /* glui_string.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_string.cpp"; path = "../../glui/glui_string.cpp"; sourceTree = "<group>"; };
+		50235C7B42475D1921F165AF /* glui_textbox.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_textbox.cpp"; path = "../../glui/glui_textbox.cpp"; sourceTree = "<group>"; };
+		22270C2B24CA38977F2214DA /* glui_translation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_translation.cpp"; path = "../../glui/glui_translation.cpp"; sourceTree = "<group>"; };
+		70A65F0C27CA186A11EC7F73 /* glui_tree.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_tree.cpp"; path = "../../glui/glui_tree.cpp"; sourceTree = "<group>"; };
+		29A13CCD3F2E601132435648 /* glui_treepanel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_treepanel.cpp"; path = "../../glui/glui_treepanel.cpp"; sourceTree = "<group>"; };
+		73200A0B790A717C55C82629 /* glui_window.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "glui_window.cpp"; path = "../../glui/glui_window.cpp"; sourceTree = "<group>"; };
+		69D71C5111AE20E924304AA7 /* quaternion.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "quaternion.cpp"; path = "../../glui/quaternion.cpp"; sourceTree = "<group>"; };
+		14163A021B3634E24D743AAD /* libGLUI.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; name = "libGLUI.a"; path = "libGLUI.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		0EE84BCD4A34396A4F743982 /* Frameworks */ = {
+		4800514014EC004E5CE1652E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -94,72 +94,72 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		3A8843C7695A5FDC050F7FFA /* GLUI */ = {
+		4726352556D73CE73EB21D0E /* GLUI */ = {
 			isa = PBXGroup;
 			children = (
-				019F4FB32DE035C903B24239 /* Headers */,
-				52AA7DCF5EF712ED333116A1 /* Sources */,
-				4DC628E3745D4B2F6BEB6751 /* Products */,
+				17B663B414452BA6763B0080 /* Headers */,
+				11235349631953107E643E6E /* Sources */,
+				051D3E5256F43B0154F00510 /* Products */,
 			);
 			name = "GLUI";
 			sourceTree = "<group>";
 		};
-		019F4FB32DE035C903B24239 /* Headers */ = {
+		17B663B414452BA6763B0080 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
-				424D31C76C285AC54D213524 /* algebra3.h */,
-				12C500190FE459DB4DE2023A /* arcball.h */,
-				615A072C65115280554D0A4D /* glui.h */,
-				170401E9118C275D36AB79B2 /* glui_internal.h */,
-				74343699239D22296F2E21D2 /* glui_internal_control.h */,
-				21B96BBD3CF9561F540D6E57 /* quaternion.h */,
+				0F1558DA61EC7EC47E854117 /* algebra3.h */,
+				25D55C6B0BA440B9662D40E5 /* arcball.h */,
+				43F663C721360A7741787DDD /* glui.h */,
+				376545D513DE7E693EC343F2 /* glui_internal.h */,
+				4F1F551A2593421763337A96 /* glui_internal_control.h */,
+				68355833211B716C5E4A2172 /* quaternion.h */,
 			);
 			name = "Headers";
 			sourceTree = "<group>";
 		};
-		52AA7DCF5EF712ED333116A1 /* Sources */ = {
+		11235349631953107E643E6E /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				75897B5407DD383856321C55 /* algebra3.cpp */,
-				7ED0564D014B60A103A071D0 /* arcball.cpp */,
-				37490F2432C0301202A06298 /* glui.cpp */,
-				5EFD2A6D0070641C1BED502E /* glui_add_controls.cpp */,
-				3670205014D5048762A141F7 /* glui_bitmap_img_data.cpp */,
-				2609164523754AED6D5B69BF /* glui_bitmaps.cpp */,
-				7EC24D100EF360970CB53070 /* glui_button.cpp */,
-				40117EFE3E580E972AE44712 /* glui_checkbox.cpp */,
-				0F162A602DA23C2540B07806 /* glui_column.cpp */,
-				4B050448058E573E0B97347E /* glui_commandline.cpp */,
-				6AD40F8246A1037B713C1A3F /* glui_control.cpp */,
-				102813D5537C2B2E3C156D9A /* glui_edittext.cpp */,
-				7B7D717B66604EC31D5443A8 /* glui_filebrowser.cpp */,
-				4D940CDD3DFF2E54201558C5 /* glui_list.cpp */,
-				42224E930D85298D79C84F4E /* glui_listbox.cpp */,
-				4FB6739B7BE671C263E1529E /* glui_mouse_iaction.cpp */,
-				58E929D73E696A4E6ABE5A45 /* glui_node.cpp */,
-				5ACC34CC1A75532E5DD8098A /* glui_panel.cpp */,
-				448E16985A9A19DD4D2E6723 /* glui_radio.cpp */,
-				646C793402E26C713FED6933 /* glui_rollout.cpp */,
-				15DD53EC50596AF610631184 /* glui_rotation.cpp */,
-				1CFE091B4FDA130919251605 /* glui_scrollbar.cpp */,
-				5B3B782A181B41B81F7E5185 /* glui_separator.cpp */,
-				493E3FCA72FB6799271B78B1 /* glui_spinner.cpp */,
-				621C2C70020A4B291AF54F4B /* glui_statictext.cpp */,
-				6BBD0F112A597566777D59AC /* glui_string.cpp */,
-				488C781F538324AF620E467C /* glui_textbox.cpp */,
-				3E6012C345FC61DB598F0CAF /* glui_translation.cpp */,
-				5EA91C5B349813976C6679C3 /* glui_tree.cpp */,
-				7BDD34363D5E2C041FA52C37 /* glui_treepanel.cpp */,
-				58257F8D6D8D4C90736F364E /* glui_window.cpp */,
-				79435DC514EF7C1430AA6505 /* quaternion.cpp */,
+				5D3235705B8C376169503368 /* algebra3.cpp */,
+				1190319B35F36B3175914554 /* arcball.cpp */,
+				613C63A42B731BA416221FA7 /* glui.cpp */,
+				7C827A553099284234DB2B83 /* glui_add_controls.cpp */,
+				30FA119423AA206C65092AB7 /* glui_bitmap_img_data.cpp */,
+				33B703D7482E00BA1B543FF9 /* glui_bitmaps.cpp */,
+				58B273E719BC6A9676ED4365 /* glui_button.cpp */,
+				63740AD80206321807FC1F35 /* glui_checkbox.cpp */,
+				5D0226483E285E243F4830C2 /* glui_column.cpp */,
+				1B0D72D67F2D76C2732869BB /* glui_commandline.cpp */,
+				645A2EE511E23DBC25A92DA3 /* glui_control.cpp */,
+				5E6E119219DF2D7E77FF2790 /* glui_edittext.cpp */,
+				307D11F22BD25A2977311422 /* glui_filebrowser.cpp */,
+				07950A90530D10F82DFF3BC0 /* glui_list.cpp */,
+				680675264E5251D828171919 /* glui_listbox.cpp */,
+				78143A9A0FDD7F41527867DA /* glui_mouse_iaction.cpp */,
+				2FDF533B4CB2605A652617AC /* glui_node.cpp */,
+				1A91333B2729514D420E5F71 /* glui_panel.cpp */,
+				14C93F7040B63DE6753B6CBE /* glui_radio.cpp */,
+				344846463EFD4272423A6B9A /* glui_rollout.cpp */,
+				44D9390810150ED66ACA6278 /* glui_rotation.cpp */,
+				0685214F7A1B67EE1AC71E73 /* glui_scrollbar.cpp */,
+				18F70ECA41F9632725582BC8 /* glui_separator.cpp */,
+				402D792F7578385F7F571698 /* glui_spinner.cpp */,
+				6E605281248445FC23006FDE /* glui_statictext.cpp */,
+				3F34458315BE234A48DD52AE /* glui_string.cpp */,
+				50235C7B42475D1921F165AF /* glui_textbox.cpp */,
+				22270C2B24CA38977F2214DA /* glui_translation.cpp */,
+				70A65F0C27CA186A11EC7F73 /* glui_tree.cpp */,
+				29A13CCD3F2E601132435648 /* glui_treepanel.cpp */,
+				73200A0B790A717C55C82629 /* glui_window.cpp */,
+				69D71C5111AE20E924304AA7 /* quaternion.cpp */,
 			);
 			name = "Sources";
 			sourceTree = "<group>";
 		};
-		4DC628E3745D4B2F6BEB6751 /* Products */ = {
+		051D3E5256F43B0154F00510 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				7D9B3B6376063D5A48127280 /* libGLUI.a */,
+				14163A021B3634E24D743AAD /* libGLUI.a */,
 			);
 			name = "Products";
 			sourceTree = "<group>";
@@ -167,13 +167,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		0D64405C65FA1D4013FD5B4A /* GLUI */ = {
+		57297A6C76E71D5B2A4346F1 /* GLUI */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 34BE444D4A0E07B35D7B7DAB /* Build configuration list for PBXNativeTarget "GLUI" */;
+			buildConfigurationList = 4A584B35216D738C214C0463 /* Build configuration list for PBXNativeTarget "GLUI" */;
 			buildPhases = (
-				0F713E4F139202E1699E519D /* Resources */,
-				56701D3966061D5546B30F63 /* Sources */,
-				0EE84BCD4A34396A4F743982 /* Frameworks */,
+				4C0F406466C57932422C73AA /* Resources */,
+				5260536354D66F367F5E3EBF /* Sources */,
+				4800514014EC004E5CE1652E /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -181,7 +181,7 @@
 			);
 			name = "GLUI";
 			productName = "GLUI";
-			productReference = 7D9B3B6376063D5A48127280 /* libGLUI.a */;
+			productReference = 14163A021B3634E24D743AAD /* libGLUI.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
@@ -192,17 +192,17 @@
 			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "GLUI" */;
 			compatibilityVersion = "Xcode 3.1";
 			hasScannedForEncodings = 1;
-			mainGroup = 3A8843C7695A5FDC050F7FFA /* GLUI */;
+			mainGroup = 4726352556D73CE73EB21D0E /* GLUI */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				0D64405C65FA1D4013FD5B4A /* libGLUI.a */,
+				57297A6C76E71D5B2A4346F1 /* libGLUI.a */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		0F713E4F139202E1699E519D /* Resources */ = {
+		4C0F406466C57932422C73AA /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -212,42 +212,42 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		56701D3966061D5546B30F63 /* Sources */ = {
+		5260536354D66F367F5E3EBF /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				22231EC97A9B3E044A9B4E17 /* algebra3.cpp in Sources */,
-				1328571910461EEF28DA7C19 /* arcball.cpp in Sources */,
-				563431856B1A51F240103575 /* glui.cpp in Sources */,
-				53BA0DDD60103AD47CDC2C7A /* glui_add_controls.cpp in Sources */,
-				73777B1E2FA30FD5156B73D5 /* glui_bitmap_img_data.cpp in Sources */,
-				7EF93FCC5CBA04F077BF63AD /* glui_bitmaps.cpp in Sources */,
-				6B702C8B24D51352633E7D02 /* glui_button.cpp in Sources */,
-				16B31500057B191A797D6742 /* glui_checkbox.cpp in Sources */,
-				43950AE67AE24D51524D642D /* glui_column.cpp in Sources */,
-				6169377363DF442C5F0655EA /* glui_commandline.cpp in Sources */,
-				6AD36EED37117F8029133369 /* glui_control.cpp in Sources */,
-				67D15A877549478537BE06FA /* glui_edittext.cpp in Sources */,
-				5F085481053B47CE293C532E /* glui_filebrowser.cpp in Sources */,
-				4253527E646A2C884AFB79ED /* glui_list.cpp in Sources */,
-				22887A2859503BF23D2B01D8 /* glui_listbox.cpp in Sources */,
-				368D3C0112CD281C6D8A55E1 /* glui_mouse_iaction.cpp in Sources */,
-				019B108C60D214E375735B28 /* glui_node.cpp in Sources */,
-				24D0339C724D0E2C27297917 /* glui_panel.cpp in Sources */,
-				27FB79FB44576A5F56606FC0 /* glui_radio.cpp in Sources */,
-				45A31D3E2E9B5526280C1875 /* glui_rollout.cpp in Sources */,
-				065819E739097E67756D6CA8 /* glui_rotation.cpp in Sources */,
-				373D7BBB26BB297F0E5A6F05 /* glui_scrollbar.cpp in Sources */,
-				07D53465622718BF66CD52CD /* glui_separator.cpp in Sources */,
-				5B0E584C3686112B7BB07D75 /* glui_spinner.cpp in Sources */,
-				178B5DB0028372717AE53E7F /* glui_statictext.cpp in Sources */,
-				03353A0B50271F277A9B5997 /* glui_string.cpp in Sources */,
-				760379A67E0431494BCF3EF1 /* glui_textbox.cpp in Sources */,
-				70092D7A65A036F1341F0DE1 /* glui_translation.cpp in Sources */,
-				5EBF4B482B2473581AD63DBB /* glui_tree.cpp in Sources */,
-				1D925BFB2244600C753508EC /* glui_treepanel.cpp in Sources */,
-				7DB0143C74716A737DFE7659 /* glui_window.cpp in Sources */,
-				610F3356743D298004461CF7 /* quaternion.cpp in Sources */,
+				64E252E32C8473DF23843C23 /* algebra3.cpp in Sources */,
+				01D21FB507E2160D32EB73E1 /* arcball.cpp in Sources */,
+				498F2421487C48692617475F /* glui.cpp in Sources */,
+				4CA10ABA1A06458954375C3A /* glui_add_controls.cpp in Sources */,
+				128C1623690A6A827DFE2891 /* glui_bitmap_img_data.cpp in Sources */,
+				711D4B28549211E62CA605E0 /* glui_bitmaps.cpp in Sources */,
+				7EF3491D15140EFE30416621 /* glui_button.cpp in Sources */,
+				6D4B6C7604A2454849470720 /* glui_checkbox.cpp in Sources */,
+				551017A734511833495D401F /* glui_column.cpp in Sources */,
+				43213E3D3AE92F19376245AA /* glui_commandline.cpp in Sources */,
+				0FE50E3D28CE497D42BF7FBB /* glui_control.cpp in Sources */,
+				4E0C53BD4D2E1F8511EF4E11 /* glui_edittext.cpp in Sources */,
+				5CA772C0386B0AB9384C56CC /* glui_filebrowser.cpp in Sources */,
+				686B135527CA72FD5F1B3B4C /* glui_list.cpp in Sources */,
+				68405BF2465D3BCC6DDA4F4C /* glui_listbox.cpp in Sources */,
+				6110560C6F2D2DB63DC92E39 /* glui_mouse_iaction.cpp in Sources */,
+				7CCD58FB5CAC181C24B64AD8 /* glui_node.cpp in Sources */,
+				40C3170D71592729630D5517 /* glui_panel.cpp in Sources */,
+				6F2028E805B42A13411F1232 /* glui_radio.cpp in Sources */,
+				5FC133256764459367B0030A /* glui_rollout.cpp in Sources */,
+				5C3E022975A64EA23FC774C1 /* glui_rotation.cpp in Sources */,
+				4B37384506F8497465B15799 /* glui_scrollbar.cpp in Sources */,
+				36E06A11040648B97B56780E /* glui_separator.cpp in Sources */,
+				7ACA450563D5291265C07631 /* glui_spinner.cpp in Sources */,
+				24F31C58752D64D241E81746 /* glui_statictext.cpp in Sources */,
+				5610781C214B7BF61CC34DA1 /* glui_string.cpp in Sources */,
+				2D19029A13C72C653A8D12BD /* glui_textbox.cpp in Sources */,
+				0A166FEB73C2766B79546F9D /* glui_translation.cpp in Sources */,
+				34283BD71A5429731AC64F67 /* glui_tree.cpp in Sources */,
+				2EDA59F172347504013F783E /* glui_treepanel.cpp in Sources */,
+				4AA933F36CA839FE2C0D465F /* glui_window.cpp in Sources */,
+				3CD0125637AF18147F05057F /* quaternion.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -257,7 +257,7 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		759874F643A9485D224D6D06 /* Debug Native 32-bit */ = {
+		323F798E5D7C7E56074675AA /* Debug Native 32-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -269,7 +269,7 @@
 			};
 			name = "Debug Native 32-bit";
 		};
-		55EB423B1DE64D424B84716D /* Debug Native 64-bit */ = {
+		176B693849AE3DE91AD427ED /* Debug Native 64-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -281,7 +281,7 @@
 			};
 			name = "Debug Native 64-bit";
 		};
-		4835081636E9003C7F4D1BAB /* Release Native 32-bit */ = {
+		157E117D762C224D22D01845 /* Release Native 32-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -294,7 +294,7 @@
 			};
 			name = "Release Native 32-bit";
 		};
-		75C63ECA095B06FF4B7E056B /* Release Native 64-bit */ = {
+		0A47401B042668A045CD7927 /* Release Native 64-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -307,7 +307,7 @@
 			};
 			name = "Release Native 64-bit";
 		};
-		112C2DF939423A0C38AD3EFC /* Debug Native 32-bit */ = {
+		6BD56E7B7B87081A2F265BE6 /* Debug Native 32-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "i386";
@@ -319,7 +319,6 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"_DEBUG",
-					"_CRT_SECURE_NO_WARNINGS",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -334,7 +333,7 @@
 			};
 			name = "Debug Native 32-bit";
 		};
-		0C9507A31755725D5CDD1CC8 /* Debug Native 64-bit */ = {
+		630360D217A46A2336B44A04 /* Debug Native 64-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "x86_64";
@@ -346,7 +345,6 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"_DEBUG",
-					"_CRT_SECURE_NO_WARNINGS",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -361,7 +359,7 @@
 			};
 			name = "Debug Native 64-bit";
 		};
-		39D205C66E1E522909C346F7 /* Release Native 32-bit */ = {
+		01D91A7377113AA63D8E7E10 /* Release Native 32-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "i386";
@@ -371,7 +369,6 @@
 				GCC_OPTIMIZATION_LEVEL = s;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"NDEBUG",
-					"_CRT_SECURE_NO_WARNINGS",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -386,7 +383,7 @@
 			};
 			name = "Release Native 32-bit";
 		};
-		425208C54668014041600B36 /* Release Native 64-bit */ = {
+		7E6B50D93253454761365E3B /* Release Native 64-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "x86_64";
@@ -396,7 +393,6 @@
 				GCC_OPTIMIZATION_LEVEL = s;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"NDEBUG",
-					"_CRT_SECURE_NO_WARNINGS",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -414,13 +410,13 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		34BE444D4A0E07B35D7B7DAB /* Build configuration list for PBXNativeTarget "libGLUI.a" */ = {
+		4A584B35216D738C214C0463 /* Build configuration list for PBXNativeTarget "libGLUI.a" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				759874F643A9485D224D6D06 /* Debug Native 32-bit */,
-				55EB423B1DE64D424B84716D /* Debug Native 64-bit */,
-				4835081636E9003C7F4D1BAB /* Release Native 32-bit */,
-				75C63ECA095B06FF4B7E056B /* Release Native 64-bit */,
+				323F798E5D7C7E56074675AA /* Debug Native 32-bit */,
+				176B693849AE3DE91AD427ED /* Debug Native 64-bit */,
+				157E117D762C224D22D01845 /* Release Native 32-bit */,
+				0A47401B042668A045CD7927 /* Release Native 64-bit */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = "Debug Native 32-bit";
@@ -428,10 +424,10 @@
 		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "GLUI" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				112C2DF939423A0C38AD3EFC /* Debug Native 32-bit */,
-				0C9507A31755725D5CDD1CC8 /* Debug Native 64-bit */,
-				39D205C66E1E522909C346F7 /* Release Native 32-bit */,
-				425208C54668014041600B36 /* Release Native 64-bit */,
+				6BD56E7B7B87081A2F265BE6 /* Debug Native 32-bit */,
+				630360D217A46A2336B44A04 /* Debug Native 64-bit */,
+				01D91A7377113AA63D8E7E10 /* Release Native 32-bit */,
+				7E6B50D93253454761365E3B /* Release Native 64-bit */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = "Debug Native 32-bit";
