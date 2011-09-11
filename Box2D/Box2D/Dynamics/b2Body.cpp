@@ -507,7 +507,7 @@ void b2Body::Dump()
 	for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
 	{
 		b2Log("  {\n");
-		f->Dump(m_islandIndex);
+		f->Dump(bodyIndex);
 		b2Log("  }\n");
 	}
 	b2Log("}\n");

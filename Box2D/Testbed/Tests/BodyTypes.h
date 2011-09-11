@@ -81,7 +81,7 @@ public:
 			pjd.upperTranslation = 10.0f;
 			pjd.enableLimit = true;
 
-			(b2PrismaticJoint*)m_world->CreateJoint(&pjd);
+			m_world->CreateJoint(&pjd);
 
 			m_speed = 3.0f;
 		}

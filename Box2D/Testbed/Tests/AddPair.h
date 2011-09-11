@@ -10,8 +10,6 @@ public:
 	{
 		m_world->SetGravity(b2Vec2(0.0f,0.0f));
 		{
-			float32 a = 0.1f;
-
 			b2CircleShape shape;
 			shape.m_p.SetZero();
 			shape.m_radius = 0.1f;
