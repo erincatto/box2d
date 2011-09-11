@@ -803,7 +803,7 @@ public:
     virtual float  get_float_val( void )              { return float_val; }
     virtual int    get_int_val( void )                { return int_val; }
     virtual void   get_float_array_val( float *array_ptr );
-    virtual int    get_id( void ) const { return user_id; }
+    virtual int    get_id( void ) const { return int(user_id); }
     virtual void   set_id( int id ) { user_id=id; }
 
     virtual int mouse_down_handler( int local_x, int local_y )                 { local_x; local_y; return false; }

@@ -302,7 +302,7 @@ public:
 			{
 				m_mode = e_multiple;
 			}
-			else if (m_mode = e_multiple)
+			else if (m_mode == e_multiple)
 			{
 				m_mode = e_closest;
 			}
