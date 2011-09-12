@@ -131,8 +131,8 @@ static void Keyboard(unsigned char key, int x, int y)
 	switch (key)
 	{
 	case 27:
-		// TODO: freeglut is not compiling on OSX.
 #ifndef __APPLE__
+		// freeglut specific function
 		glutLeaveMainLoop();
 #endif
 		exit(0);
