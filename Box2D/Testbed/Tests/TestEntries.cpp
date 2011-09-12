@@ -68,6 +68,7 @@ using namespace std;
 #include "TheoJansen.h"
 #include "Tiles.h"
 #include "TimeOfImpact.h"
+#include "Tumbler.h"
 #include "VaryingFriction.h"
 #include "VaryingRestitution.h"
 #include "VerticalStack.h"
@@ -75,6 +76,7 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
+	{"Tumbler", Tumbler::Create},
 	{"Tiles", Tiles::Create},
 	{"Dump Shell", DumpShell::Create},
 	{"Gears", Gears::Create},
