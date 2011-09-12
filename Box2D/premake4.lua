@@ -8,15 +8,11 @@ solution "Box2D"
 	configurations { "Debug", "Release" }
 	platforms { "x32", "x64" }
 	
-	configuration "windows"
-		defines { "WIN32" }
-
 	configuration "vs*"
 		defines { "_CRT_SECURE_NO_WARNINGS" }	
 		
 	configuration "Debug"
 		targetdir ( "Build/" .. action .. "/bin/Debug" )
-		defines { "_DEBUG" }
 		flags { "Symbols" }
 
    configuration "Release"
