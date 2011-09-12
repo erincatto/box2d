@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Framework">
@@ -148,6 +148,9 @@
       <Filter>Tests</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Testbed\Tests\Web.h">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Testbed\Tests\Tumbler.h">
       <Filter>Tests</Filter>
     </ClInclude>
   </ItemGroup>
