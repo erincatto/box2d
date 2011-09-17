@@ -6,7 +6,6 @@ local action = _ACTION or ""
 solution "Box2D"
 	location ( "Build/" .. action )
 	configurations { "Debug", "Release" }
-	platforms { "x32", "x64" }
 	
 	configuration "vs*"
 		defines { "_CRT_SECURE_NO_WARNINGS" }	
@@ -27,12 +26,14 @@ solution "Box2D"
 		vpaths { [""] = "Box2D" }
 		includedirs { "." }
 		
-	project "FreeGLUT"
-		kind "StaticLib"
-		language "C"
-		files { "freeglut/*.h", "freeglut/*.c" }
-		vpaths { ["Headers"] = "**.h",  ["Sources"] = "**.c" }
-		
+	if os.get == "windows" then
+		project "FreeGLUT"
+			kind "StaticLib"
+			language "C"
+			files { "freeglut/*.h", "freeglut/*.c" }
+			vpaths { ["Headers"] = "**.h",  ["Sources"] = "**.c" }
+	end
+	
 	project "GLUI"
 		kind "StaticLib"
 		language "C++"
@@ -56,10 +57,11 @@ solution "Box2D"
 		files { "Testbed/**.h", "Testbed/**.cpp" }
 		vpaths { [""] = "Testbed" }
 		includedirs { "." }
-		links { "Box2D", "FreeGLUT", "GLUI" }
-		configuration "windows"
-			links { "glu32", "opengl32", "winmm" }
+		links { "Box2D", "GLUI" }
+		configuration { "windows" }
+			links { "FreeGLUT", "glu32", "opengl32", "winmm" }
+		configuration { "macosx" }
+			linkoptions { "-framework OpenGL -framework GLUT" }
+		configuration { "not windows", "not macosx" }
+			links { "X11", "GL", "GLU", "GLUT" }
 
-if action == "clean" then
-	os.rmdir("PreBuild")
-end
