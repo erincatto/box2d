@@ -194,6 +194,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		80154ACD141DED6B00C8251F /* Tumbler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Tumbler.h; sourceTree = "<group>"; };
 		80BB8901141C3E1800F1753A /* libGLUI.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libGLUI.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		80BB890A141C3E2700F1753A /* HelloWorld */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = HelloWorld; sourceTree = BUILT_PRODUCTS_DIR; };
 		80BB8918141C3E3600F1753A /* Testbed */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Testbed; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -707,6 +708,7 @@
 				80BB8A64141C3E8600F1753A /* TheoJansen.h */,
 				80BB8A65141C3E8600F1753A /* Tiles.h */,
 				80BB8A66141C3E8600F1753A /* TimeOfImpact.h */,
+				80154ACD141DED6B00C8251F /* Tumbler.h */,
 				80BB8A67141C3E8600F1753A /* VaryingFriction.h */,
 				80BB8A68141C3E8600F1753A /* VaryingRestitution.h */,
 				80BB8A69141C3E8600F1753A /* VerticalStack.h */,
@@ -1164,6 +1166,7 @@
 				80BB8903141C3E1800F1753A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		80BB8911141C3E2700F1753A /* Build configuration list for PBXNativeTarget "HelloWorld" */ = {
 			isa = XCConfigurationList;
@@ -1172,6 +1175,7 @@
 				80BB8913141C3E2700F1753A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		80BB891F141C3E3600F1753A /* Build configuration list for PBXNativeTarget "Testbed" */ = {
 			isa = XCConfigurationList;
@@ -1180,6 +1184,7 @@
 				80BB8921141C3E3600F1753A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		80FF01CC141C3D980059E59D /* Build configuration list for PBXProject "Box2D" */ = {
 			isa = XCConfigurationList;
