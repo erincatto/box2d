@@ -1,4 +1,18 @@
-WARNING: Box2D is switching from cmake to premake very soon.
+The Build folder contains custom made project files for Visual Studio 2010 and XCode4.
+
+For other platforms you need to run premake in this directory. You can get premake here:
+http://industriousone.com/premake
+
+For example, on Linux, you would type:
+premake4 gmake
+
+This will create a gmake folder in the Build directory. From there you can run:
+make config="debug"
+
+If you have build problems, you can post a question here:
+http://box2d.org/forum/viewforum.php?f=7
+
+=============== OLD METHOD ====================
 
 Box2D uses CMake to describe the build in a platform independent manner.
 
