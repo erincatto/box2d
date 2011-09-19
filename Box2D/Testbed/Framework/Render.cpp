@@ -185,6 +185,27 @@ void DebugDraw::DrawString(int x, int y, const char *string, ...)
 	glMatrixMode(GL_MODELVIEW);
 }
 
+void DebugDraw::DrawString(const b2Vec2& p, const char *string, ...)
+{
+	char buffer[128];
+
+	va_list arg;
+	va_start(arg, string);
+	vsprintf(buffer, string, arg);
+	va_end(arg);
+
+	glColor3f(0.5f, 0.9f, 0.5f);
+	glRasterPos2f(p.x, p.y);
+
+	int32 length = (int32)strlen(buffer);
+	for (int32 i = 0; i < length; ++i)
+	{
+		glutBitmapCharacter(GLUT_BITMAP_8_BY_13, buffer[i]);
+	}
+
+	glPopMatrix();
+}
+
 void DebugDraw::DrawAABB(b2AABB* aabb, const b2Color& c)
 {
 	glColor3f(c.r, c.g, c.b);
