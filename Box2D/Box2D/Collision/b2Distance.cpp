@@ -42,7 +42,7 @@ void b2DistanceProxy::Set(const b2Shape* shape, int32 index)
 		{
 			const b2PolygonShape* polygon = (b2PolygonShape*)shape;
 			m_vertices = polygon->m_vertices;
-			m_count = polygon->m_vertexCount;
+			m_count = polygon->m_count;
 			m_radius = polygon->m_radius;
 		}
 		break;
