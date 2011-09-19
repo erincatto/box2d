@@ -43,6 +43,7 @@ using namespace std;
 #include "CollisionProcessing.h"
 #include "CompoundShapes.h"
 #include "Confined.h"
+#include "ConvexHull.h"
 #include "DistanceTest.h"
 #include "Dominos.h"
 #include "DumpShell.h"
@@ -76,12 +77,13 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
+	{"Convex Hull", ConvexHull::Create},
+	{"Varying Restitution", VaryingRestitution::Create},
 	{"Tumbler", Tumbler::Create},
 	{"Tiles", Tiles::Create},
 	{"Dump Shell", DumpShell::Create},
 	{"Gears", Gears::Create},
 	{"Cantilever", Cantilever::Create},
-	{"Varying Restitution", VaryingRestitution::Create},
 	{"Character Collision", CharacterCollision::Create},
 	{"Edge Test", EdgeTest::Create},
 	{"Body Types", BodyTypes::Create},
