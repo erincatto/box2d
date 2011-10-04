@@ -386,6 +386,7 @@
 		80BB8A6A141C3E8600F1753A /* Web.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Web.h; sourceTree = "<group>"; };
 		80BB8A78141C3F9C00F1753A /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
 		80BB8A7A141C3FA700F1753A /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		80CD7722143AF3230086DB87 /* ConvexHull.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ConvexHull.h; sourceTree = "<group>"; };
 		80FF01D2141C3D980059E59D /* libBox2D.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libBox2D.a; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -682,6 +683,7 @@
 				80BB8A4A141C3E8500F1753A /* CompoundShapes.h */,
 				80BB8A4B141C3E8600F1753A /* Confined.h */,
 				80BB8A4C141C3E8600F1753A /* ContinuousTest.h */,
+				80CD7722143AF3230086DB87 /* ConvexHull.h */,
 				80BB8A4D141C3E8600F1753A /* DistanceTest.h */,
 				80BB8A4E141C3E8600F1753A /* Dominos.h */,
 				80BB8A4F141C3E8600F1753A /* DumpShell.h */,
