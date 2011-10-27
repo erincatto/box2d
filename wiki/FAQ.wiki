@@ -31,7 +31,7 @@ If you grab the latest code from the SVN trunk you will likely find features tha
 You should have a working knowledge of C++ before you use Box2D. You should understand classes, inheritance, and pointers. There are plenty of resources on the web for learning C++. You should also understand your development environment: compilation, linking, and debugging.
 
 ==Math and Physics==
-You should have a basic knowledge of rigid bodies, force, torque, and impulses. If you come across a math or physics concept you don't understand, please read about it on Wikipedia. Visit this page if you want a deeper knowledge of the algorithms used in Box2D.
+You should have a basic knowledge of rigid bodies, force, torque, and impulses. If you come across a math or physics concept you don't understand, please read about it on Wikipedia. Visit this [http://code.google.com/p/box2d/downloads/list page] if you want a deeper knowledge of the algorithms used in Box2D.
 
 =API=
 ==What units does Box2D use?==
