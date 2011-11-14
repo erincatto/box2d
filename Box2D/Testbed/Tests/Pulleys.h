@@ -90,7 +90,7 @@ public:
 		Test::Step(settings);
 
 		float32 ratio = m_joint1->GetRatio();
-		float32 L = m_joint1->GetLengthA() + ratio * m_joint1->GetLengthB();
+		float32 L = m_joint1->GetCurrentLengthA() + ratio * m_joint1->GetCurrentLengthB();
 		m_debugDraw.DrawString(5, m_textLine, "L1 + %4.2f * L2 = %4.2f", (float) ratio, (float) L);
 		m_textLine += 15;
 	}
