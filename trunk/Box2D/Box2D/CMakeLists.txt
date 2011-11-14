@@ -193,13 +193,13 @@ if(BOX2D_INSTALL)
 
 	# install libraries
 	if(BOX2D_BUILD_SHARED)
-		install(TARGETS Box2D_shared EXPORT Box2D-targets DESTINATION lib)
+		install(TARGETS Box2D_shared EXPORT Box2D-targets DESTINATION ${LIB_INSTALL_DIR})
 	endif()
 	if(BOX2D_BUILD_STATIC)
-		install(TARGETS Box2D EXPORT Box2D-targets DESTINATION lib)
+		install(TARGETS Box2D EXPORT Box2D-targets DESTINATION ${LIB_INSTALL_DIR})
 	endif()
 
 	# install build system hooks for third-party apps
-	install(EXPORT Box2D-targets DESTINATION lib/Box2D)
-	install(FILES Box2DConfig.cmake DESTINATION lib/Box2D)
+	install(EXPORT Box2D-targets DESTINATION ${LIB_INSTALL_DIR}/Box2D)
+	install(FILES Box2DConfig.cmake DESTINATION ${LIB_INSTALL_DIR}/Box2D)
 endif(BOX2D_INSTALL)
