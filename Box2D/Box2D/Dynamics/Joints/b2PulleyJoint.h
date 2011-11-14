@@ -100,6 +100,12 @@ public:
 	/// Get the pulley ratio.
 	float32 GetRatio() const;
 
+	/// Get the current length of the segment attached to bodyA.
+	float32 GetCurrentLengthA() const;
+
+	/// Get the current length of the segment attached to bodyB.
+	float32 GetCurrentLengthB() const;
+
 	/// Dump joint to dmLog
 	void Dump();
 

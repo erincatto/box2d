@@ -34,7 +34,6 @@ public:
 			ground->CreateFixture(&shape, 0.0f);
 		}
 
-		// Gears co
 		{
 			b2CircleShape circle1;
 			circle1.m_radius = 1.0f;
@@ -49,7 +48,7 @@ public:
 			bd1.type = b2_staticBody;
 			bd1.position.Set(10.0f, 9.0f);
 			b2Body* body1 = m_world->CreateBody(&bd1);
-			body1->CreateFixture(&circle1, 0.0f);
+			body1->CreateFixture(&circle1, 5.0f);
 
 			b2BodyDef bd2;
 			bd2.type = b2_dynamicBody;

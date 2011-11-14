@@ -153,6 +153,9 @@
     <ClInclude Include="..\..\Testbed\Tests\Tumbler.h">
       <Filter>Tests</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Testbed\Tests\ConveyorBelt.h">
+      <Filter>Tests</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Testbed\Framework\Main.cpp">
