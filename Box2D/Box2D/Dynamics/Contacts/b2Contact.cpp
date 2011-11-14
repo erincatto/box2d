@@ -147,6 +147,8 @@ b2Contact::b2Contact(b2Fixture* fA, int32 indexA, b2Fixture* fB, int32 indexB)
 
 	m_friction = b2MixFriction(m_fixtureA->m_friction, m_fixtureB->m_friction);
 	m_restitution = b2MixRestitution(m_fixtureA->m_restitution, m_fixtureB->m_restitution);
+
+	m_tangentSpeed = 0.0f;
 }
 
 // Update the contact manifold and touching status.
