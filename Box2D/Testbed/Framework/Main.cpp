@@ -403,6 +403,7 @@ int main(int argc, char** argv)
 
 	hertzSpinner->set_float_limits(5.0f, 200.0f);
 
+	glui->add_checkbox("Sleep", &settings.enableSleep);
 	glui->add_checkbox("Warm Starting", &settings.enableWarmStarting);
 	glui->add_checkbox("Time of Impact", &settings.enableContinuous);
 	glui->add_checkbox("Sub-Stepping", &settings.enableSubStepping);
@@ -413,11 +414,10 @@ int main(int argc, char** argv)
 	glui->add_checkbox_to_panel(drawPanel, "Shapes", &settings.drawShapes);
 	glui->add_checkbox_to_panel(drawPanel, "Joints", &settings.drawJoints);
 	glui->add_checkbox_to_panel(drawPanel, "AABBs", &settings.drawAABBs);
-	glui->add_checkbox_to_panel(drawPanel, "Pairs", &settings.drawPairs);
 	glui->add_checkbox_to_panel(drawPanel, "Contact Points", &settings.drawContactPoints);
 	glui->add_checkbox_to_panel(drawPanel, "Contact Normals", &settings.drawContactNormals);
-	glui->add_checkbox_to_panel(drawPanel, "Contact Forces", &settings.drawContactForces);
-	glui->add_checkbox_to_panel(drawPanel, "Friction Forces", &settings.drawFrictionForces);
+	glui->add_checkbox_to_panel(drawPanel, "Contact Impulses", &settings.drawContactImpulse);
+	glui->add_checkbox_to_panel(drawPanel, "Friction Impulses", &settings.drawFrictionImpulse);
 	glui->add_checkbox_to_panel(drawPanel, "Center of Masses", &settings.drawCOMs);
 	glui->add_checkbox_to_panel(drawPanel, "Statistics", &settings.drawStats);
 	glui->add_checkbox_to_panel(drawPanel, "Profile", &settings.drawProfile);

@@ -91,6 +91,8 @@ void Test::PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
 		cp->position = worldManifold.points[i];
 		cp->normal = worldManifold.normal;
 		cp->state = state2[i];
+		cp->normalImpulse = manifold->points[i].normalImpulse;
+		cp->tangentImpulse = manifold->points[i].tangentImpulse;
 		++m_pointCount;
 	}
 }
@@ -284,10 +286,10 @@ void Test::Step(Settings* settings)
 	flags += settings->drawShapes			* b2Draw::e_shapeBit;
 	flags += settings->drawJoints			* b2Draw::e_jointBit;
 	flags += settings->drawAABBs			* b2Draw::e_aabbBit;
-	flags += settings->drawPairs			* b2Draw::e_pairBit;
 	flags += settings->drawCOMs				* b2Draw::e_centerOfMassBit;
 	m_debugDraw.SetFlags(flags);
 
+	m_world->SetAllowSleeping(settings->enableSleep > 0);
 	m_world->SetWarmStarting(settings->enableWarmStarting > 0);
 	m_world->SetContinuousPhysics(settings->enableContinuous > 0);
 	m_world->SetSubStepping(settings->enableSubStepping > 0);
@@ -404,7 +406,7 @@ void Test::Step(Settings* settings)
 
 	if (settings->drawContactPoints)
 	{
-		//const float32 k_impulseScale = 0.1f;
+		const float32 k_impulseScale = 0.1f;
 		const float32 k_axisScale = 0.3f;
 
 		for (int32 i = 0; i < m_pointCount; ++i)
@@ -428,19 +430,19 @@ void Test::Step(Settings* settings)
 				b2Vec2 p2 = p1 + k_axisScale * point->normal;
 				m_debugDraw.DrawSegment(p1, p2, b2Color(0.9f, 0.9f, 0.9f));
 			}
-			else if (settings->drawContactForces == 1)
+			else if (settings->drawContactImpulse == 1)
 			{
-				//b2Vec2 p1 = point->position;
-				//b2Vec2 p2 = p1 + k_forceScale * point->normalForce * point->normal;
-				//DrawSegment(p1, p2, b2Color(0.9f, 0.9f, 0.3f));
+				b2Vec2 p1 = point->position;
+				b2Vec2 p2 = p1 + k_impulseScale * point->normalImpulse * point->normal;
+				m_debugDraw.DrawSegment(p1, p2, b2Color(0.9f, 0.9f, 0.3f));
 			}
 
-			if (settings->drawFrictionForces == 1)
+			if (settings->drawFrictionImpulse == 1)
 			{
-				//b2Vec2 tangent = b2Cross(point->normal, 1.0f);
-				//b2Vec2 p1 = point->position;
-				//b2Vec2 p2 = p1 + k_forceScale * point->tangentForce * tangent;
-				//DrawSegment(p1, p2, b2Color(0.9f, 0.9f, 0.3f));
+				b2Vec2 tangent = b2Cross(point->normal, 1.0f);
+				b2Vec2 p1 = point->position;
+				b2Vec2 p2 = p1 + k_impulseScale * point->tangentImpulse * tangent;
+				m_debugDraw.DrawSegment(p1, p2, b2Color(0.9f, 0.9f, 0.3f));
 			}
 		}
 	}
