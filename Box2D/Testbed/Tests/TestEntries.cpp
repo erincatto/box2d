@@ -77,6 +77,7 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
+	{"Ray-Cast", RayCast::Create},
 	{"Conveyor Belt", ConveyorBelt::Create},
 	{"Gears", Gears::Create},
 	{"Convex Hull", ConvexHull::Create},
@@ -104,7 +105,6 @@ TestEntry g_testEntries[] =
 	{"Bullet Test", BulletTest::Create},
 	{"Continuous Test", ContinuousTest::Create},
 	{"Time of Impact", TimeOfImpact::Create},
-	{"Ray-Cast", RayCast::Create},
 	{"Confined", Confined::Create},
 	{"Pyramid", Pyramid::Create},
 	{"Theo Jansen's Walker", TheoJansen::Create},
