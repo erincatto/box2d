@@ -16,6 +16,9 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
+#ifndef B2_TIMER_H
+#define B2_TIMER_H
+
 #include <Box2D/Common/b2Settings.h>
 
 /// Timer for profiling. This has platform specific code and may
@@ -43,3 +46,5 @@ private:
 	unsigned long m_start_msec;
 #endif
 };
+
+#endif
