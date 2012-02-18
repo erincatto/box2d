@@ -180,8 +180,7 @@
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <DebugInformationFormat>
-      </DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -192,7 +191,7 @@
       <OutputFile>$(OutDir)Testbed.exe</OutputFile>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
@@ -226,6 +225,8 @@
     <ClInclude Include="..\..\Testbed\Tests\EdgeShapes.h" />
     <ClInclude Include="..\..\Testbed\Tests\EdgeTest.h" />
     <ClInclude Include="..\..\Testbed\Tests\Gears.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Mobile.h" />
+    <ClInclude Include="..\..\Testbed\Tests\MobileBalanced.h" />
     <ClInclude Include="..\..\Testbed\Tests\OneSidedPlatform.h" />
     <ClInclude Include="..\..\Testbed\Tests\Pinball.h" />
     <ClInclude Include="..\..\Testbed\Tests\PolyCollision.h" />
