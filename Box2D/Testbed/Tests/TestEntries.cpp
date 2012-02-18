@@ -52,6 +52,8 @@ using namespace std;
 #include "EdgeShapes.h"
 #include "EdgeTest.h"
 #include "Gears.h"
+#include "Mobile.h"
+#include "MobileBalanced.h"
 #include "OneSidedPlatform.h"
 #include "Pinball.h"
 #include "PolyCollision.h"
@@ -77,6 +79,8 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
+	{"Mobile", Mobile::Create},
+	{"MobileBalanced", MobileBalanced::Create},
 	{"Ray-Cast", RayCast::Create},
 	{"Conveyor Belt", ConveyorBelt::Create},
 	{"Gears", Gears::Create},
