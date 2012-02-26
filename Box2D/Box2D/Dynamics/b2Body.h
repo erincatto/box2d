@@ -184,7 +184,7 @@ public:
 
 	/// Get the linear velocity of the center of mass.
 	/// @return the linear velocity of the center of mass.
-	b2Vec2 GetLinearVelocity() const;
+	const b2Vec2& GetLinearVelocity() const;
 
 	/// Set the angular velocity.
 	/// @param omega the new angular velocity in radians/second.
@@ -315,7 +315,7 @@ public:
 
 	/// Set the sleep state of the body. A sleeping body has very
 	/// low CPU cost.
-	/// @param flag set to true to put body to sleep, false to wake it.
+	/// @param flag set to true to wake the body, false to put it to sleep.
 	void SetAwake(bool flag);
 
 	/// Get the sleeping state of this body.
@@ -505,7 +505,7 @@ inline void b2Body::SetLinearVelocity(const b2Vec2& v)
 	m_linearVelocity = v;
 }
 
-inline b2Vec2 b2Body::GetLinearVelocity() const
+inline const b2Vec2& b2Body::GetLinearVelocity() const
 {
 	return m_linearVelocity;
 }
@@ -653,20 +653,6 @@ inline bool b2Body::IsAwake() const
 inline bool b2Body::IsActive() const
 {
 	return (m_flags & e_activeFlag) == e_activeFlag;
-}
-
-inline void b2Body::SetFixedRotation(bool flag)
-{
-	if (flag)
-	{
-		m_flags |= e_fixedRotationFlag;
-	}
-	else
-	{
-		m_flags &= ~e_fixedRotationFlag;
-	}
-
-	ResetMassData();
 }
 
 inline bool b2Body::IsFixedRotation() const
