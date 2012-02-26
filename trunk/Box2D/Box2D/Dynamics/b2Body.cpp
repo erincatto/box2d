@@ -498,6 +498,28 @@ void b2Body::SetActive(bool flag)
 	}
 }
 
+void b2Body::SetFixedRotation(bool flag)
+{
+	bool status = (m_flags & e_fixedRotationFlag) == e_fixedRotationFlag;
+	if (status == flag)
+	{
+		return;
+	}
+
+	if (flag)
+	{
+		m_flags |= e_fixedRotationFlag;
+	}
+	else
+	{
+		m_flags &= ~e_fixedRotationFlag;
+	}
+
+	m_angularVelocity = 0.0f;
+
+	ResetMassData();
+}
+
 void b2Body::Dump()
 {
 	int32 bodyIndex = m_islandIndex;
