@@ -167,6 +167,7 @@ public:
 		b2Body* body6 = m_world->CreateBody(&circleBodyDef);
 		body6->CreateFixture(&circleShapeDef);
 	}
+
 	static Test* Create()
 	{
 		return new CollisionFiltering;
