@@ -79,6 +79,7 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
+	{"Dump Shell", DumpShell::Create},
 	{"Mobile", Mobile::Create},
 	{"MobileBalanced", MobileBalanced::Create},
 	{"Ray-Cast", RayCast::Create},
@@ -88,7 +89,6 @@ TestEntry g_testEntries[] =
 	{"Varying Restitution", VaryingRestitution::Create},
 	{"Tumbler", Tumbler::Create},
 	{"Tiles", Tiles::Create},
-	{"Dump Shell", DumpShell::Create},
 	{"Cantilever", Cantilever::Create},
 	{"Character Collision", CharacterCollision::Create},
 	{"Edge Test", EdgeTest::Create},
