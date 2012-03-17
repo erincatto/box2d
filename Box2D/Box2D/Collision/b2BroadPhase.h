@@ -28,7 +28,6 @@ struct b2Pair
 {
 	int32 proxyIdA;
 	int32 proxyIdB;
-	int32 next;
 };
 
 /// The broad-phase is used for computing pairs and performing volume queries and ray casts.

@@ -764,8 +764,8 @@ bool b2ContactSolver::SolveTOIPositionConstraints(int32 toiIndexA, int32 toiInde
 			iA = pc->invIA;
 		}
 
-		float32 mB = pc->invMassB;
-		float32 iB = pc->invIB;
+		float32 mB = 0.0f;
+		float32 iB = 0.;
 		if (indexB == toiIndexA || indexB == toiIndexB)
 		{
 			mB = pc->invMassB;
