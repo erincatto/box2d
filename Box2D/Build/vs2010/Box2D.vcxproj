@@ -239,7 +239,6 @@
     <ClInclude Include="..\..\Box2D\Dynamics\Joints\b2RopeJoint.h" />
     <ClInclude Include="..\..\Box2D\Dynamics\Joints\b2WeldJoint.h" />
     <ClInclude Include="..\..\Box2D\Dynamics\Joints\b2WheelJoint.h" />
-    <ClInclude Include="..\..\Box2D\Rope\b2Rope.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Box2D\Collision\b2BroadPhase.cpp">
@@ -329,8 +328,6 @@
     <ClCompile Include="..\..\Box2D\Dynamics\Joints\b2WeldJoint.cpp">
     </ClCompile>
     <ClCompile Include="..\..\Box2D\Dynamics\Joints\b2WheelJoint.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\Box2D\Rope\b2Rope.cpp">
     </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

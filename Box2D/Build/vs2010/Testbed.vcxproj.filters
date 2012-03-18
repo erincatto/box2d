@@ -111,9 +111,6 @@
     <ClInclude Include="..\..\Testbed\Tests\Revolute.h">
       <Filter>Tests</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Testbed\Tests\Rope.h">
-      <Filter>Tests</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Testbed\Tests\RopeJoint.h">
       <Filter>Tests</Filter>
     </ClInclude>
