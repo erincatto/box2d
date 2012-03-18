@@ -201,31 +201,64 @@ static void KeyboardSpecial(int key, int x, int y)
 	B2_NOT_USED(x);
 	B2_NOT_USED(y);
 
+	int mod = glutGetModifiers();
+
 	switch (key)
 	{
-	case GLUT_ACTIVE_SHIFT:
 		// Press left to pan left.
 	case GLUT_KEY_LEFT:
-		settings.viewCenter.x -= 0.5f;
-		Resize(width, height);
+		if (mod == GLUT_ACTIVE_CTRL)
+		{
+			b2Vec2 newOrigin(2.0f, 0.0f);
+			test->ShiftOrigin(newOrigin);
+		}
+		else
+		{
+			settings.viewCenter.x -= 0.5f;
+			Resize(width, height);
+		}
 		break;
 
 		// Press right to pan right.
 	case GLUT_KEY_RIGHT:
-		settings.viewCenter.x += 0.5f;
-		Resize(width, height);
+		if (mod == GLUT_ACTIVE_CTRL)
+		{
+			b2Vec2 newOrigin(-2.0f, 0.0f);
+			test->ShiftOrigin(newOrigin);
+		}
+		else
+		{
+			settings.viewCenter.x += 0.5f;
+			Resize(width, height);
+		}
 		break;
 
 		// Press down to pan down.
 	case GLUT_KEY_DOWN:
-		settings.viewCenter.y -= 0.5f;
-		Resize(width, height);
+		if (mod == GLUT_ACTIVE_CTRL)
+		{
+			b2Vec2 newOrigin(0.0f, 2.0f);
+			test->ShiftOrigin(newOrigin);
+		}
+		else
+		{
+			settings.viewCenter.y -= 0.5f;
+			Resize(width, height);
+		}
 		break;
 
 		// Press up to pan up.
 	case GLUT_KEY_UP:
-		settings.viewCenter.y += 0.5f;
-		Resize(width, height);
+		if (mod == GLUT_ACTIVE_CTRL)
+		{
+			b2Vec2 newOrigin(0.0f, -2.0f);
+			test->ShiftOrigin(newOrigin);
+		}
+		else
+		{
+			settings.viewCenter.y += 0.5f;
+			Resize(width, height);
+		}
 		break;
 
 		// Press home to reset the view.
