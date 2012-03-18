@@ -447,3 +447,8 @@ void Test::Step(Settings* settings)
 		}
 	}
 }
+
+void Test::ShiftOrigin(const b2Vec2& newOrigin)
+{
+	m_world->ShiftOrigin(newOrigin);
+}
