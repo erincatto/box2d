@@ -1256,6 +1256,29 @@ float32 b2World::GetTreeQuality() const
 	return m_contactManager.m_broadPhase.GetTreeQuality();
 }
 
+void b2World::ShiftOrigin(const b2Vec2& newOrigin)
+{
+	b2Assert((m_flags & e_locked) == 0);
+	if ((m_flags & e_locked) == e_locked)
+	{
+		return;
+	}
+
+	for (b2Body* b = m_bodyList; b; b = b->m_next)
+	{
+		b->m_xf.p -= newOrigin;
+		b->m_sweep.c0 -= newOrigin;
+		b->m_sweep.c -= newOrigin;
+	}
+
+	for (b2Joint* j = m_jointList; j; j = j->m_next)
+	{
+		j->ShiftOrigin(newOrigin);
+	}
+
+	m_contactManager.m_broadPhase.ShiftOrigin(newOrigin);
+}
+
 void b2World::Dump()
 {
 	if ((m_flags & e_locked) == e_locked)
