@@ -165,6 +165,8 @@ public:
 		B2_NOT_USED(impulse);
 	}
 
+	void ShiftOrigin(const b2Vec2& newOrigin);
+
 protected:
 	friend class DestructionListener;
 	friend class BoundaryListener;

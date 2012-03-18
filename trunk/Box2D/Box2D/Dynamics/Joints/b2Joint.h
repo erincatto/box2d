@@ -145,6 +145,9 @@ public:
 	/// Dump this joint to the log file.
 	virtual void Dump() { b2Log("// Dump is not supported for this joint type.\n"); }
 
+	/// Shift the origin for any points stored in world coordinates.
+	virtual void ShiftOrigin(const b2Vec2& newOrigin) { B2_NOT_USED(newOrigin);  }
+
 protected:
 	friend class b2World;
 	friend class b2Body;
