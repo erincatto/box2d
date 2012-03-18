@@ -340,3 +340,9 @@ void b2PulleyJoint::Dump()
 	b2Log("  jd.ratio = %.15lef;\n", m_ratio);
 	b2Log("  joints[%d] = m_world->CreateJoint(&jd);\n", m_index);
 }
+
+void b2PulleyJoint::ShiftOrigin(const b2Vec2& newOrigin)
+{
+	m_groundAnchorA -= newOrigin;
+	m_groundAnchorB -= newOrigin;
+}
