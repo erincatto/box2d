@@ -154,6 +154,9 @@
     <ClInclude Include="..\..\Box2D\Dynamics\Joints\b2WheelJoint.h">
       <Filter>Dynamics\Joints</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Box2D\Dynamics\Joints\b2MotorJoint.h">
+      <Filter>Dynamics\Joints</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Box2D\Collision\b2BroadPhase.cpp">
@@ -286,6 +289,9 @@
       <Filter>Dynamics\Joints</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Box2D\Dynamics\Joints\b2WheelJoint.cpp">
+      <Filter>Dynamics\Joints</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Box2D\Dynamics\Joints\b2MotorJoint.cpp">
       <Filter>Dynamics\Joints</Filter>
     </ClCompile>
   </ItemGroup>
