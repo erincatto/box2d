@@ -54,6 +54,7 @@ using namespace std;
 #include "Gears.h"
 #include "Mobile.h"
 #include "MobileBalanced.h"
+#include "MotorJoint.h"
 #include "OneSidedPlatform.h"
 #include "Pinball.h"
 #include "PolyCollision.h"
@@ -79,6 +80,8 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
+	{"Motor Joint", MotorJoint::Create},
+	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Dump Shell", DumpShell::Create},
 	{"Mobile", Mobile::Create},
 	{"MobileBalanced", MobileBalanced::Create},
@@ -104,7 +107,6 @@ TestEntry g_testEntries[] =
 	{"Polygon Shapes", PolyShapes::Create},
 	{"Web", Web::Create},
 	{"RopeJoint", RopeJoint::Create},
-	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Pinball", Pinball::Create},
 	{"Bullet Test", BulletTest::Create},
 	{"Continuous Test", ContinuousTest::Create},
