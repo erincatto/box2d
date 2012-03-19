@@ -227,6 +227,7 @@
     <ClInclude Include="..\..\Testbed\Tests\Gears.h" />
     <ClInclude Include="..\..\Testbed\Tests\Mobile.h" />
     <ClInclude Include="..\..\Testbed\Tests\MobileBalanced.h" />
+    <ClInclude Include="..\..\Testbed\Tests\MotorJoint.h" />
     <ClInclude Include="..\..\Testbed\Tests\OneSidedPlatform.h" />
     <ClInclude Include="..\..\Testbed\Tests\Pinball.h" />
     <ClInclude Include="..\..\Testbed\Tests\PolyCollision.h" />
