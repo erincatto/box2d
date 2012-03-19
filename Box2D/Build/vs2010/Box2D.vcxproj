@@ -232,6 +232,7 @@
     <ClInclude Include="..\..\Box2D\Dynamics\Joints\b2FrictionJoint.h" />
     <ClInclude Include="..\..\Box2D\Dynamics\Joints\b2GearJoint.h" />
     <ClInclude Include="..\..\Box2D\Dynamics\Joints\b2Joint.h" />
+    <ClInclude Include="..\..\Box2D\Dynamics\Joints\b2MotorJoint.h" />
     <ClInclude Include="..\..\Box2D\Dynamics\Joints\b2MouseJoint.h" />
     <ClInclude Include="..\..\Box2D\Dynamics\Joints\b2PrismaticJoint.h" />
     <ClInclude Include="..\..\Box2D\Dynamics\Joints\b2PulleyJoint.h" />
@@ -315,6 +316,7 @@
     </ClCompile>
     <ClCompile Include="..\..\Box2D\Dynamics\Joints\b2Joint.cpp">
     </ClCompile>
+    <ClCompile Include="..\..\Box2D\Dynamics\Joints\b2MotorJoint.cpp" />
     <ClCompile Include="..\..\Box2D\Dynamics\Joints\b2MouseJoint.cpp">
     </ClCompile>
     <ClCompile Include="..\..\Box2D\Dynamics\Joints\b2PrismaticJoint.cpp">
