@@ -164,7 +164,7 @@ public:
 
 			d.Normalize();
 			b2Vec2 F = 100.0f * d;
-			body->ApplyForce(F, position);
+			body->ApplyForce(F, position, false);
 		}
 	}
 
