@@ -104,7 +104,7 @@ public:
 			jd.enableLimit = true;
 			m_world->CreateJoint(&jd);
 
-			body->ApplyAngularImpulse(100.0f);
+			body->ApplyAngularImpulse(100.0f, true);
 		}
 
 		// Bridge
