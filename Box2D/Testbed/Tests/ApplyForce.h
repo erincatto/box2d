@@ -151,19 +151,19 @@ public:
 			{
 				b2Vec2 f = m_body->GetWorldVector(b2Vec2(0.0f, -200.0f));
 				b2Vec2 p = m_body->GetWorldPoint(b2Vec2(0.0f, 2.0f));
-				m_body->ApplyForce(f, p);
+				m_body->ApplyForce(f, p, true);
 			}
 			break;
 
 		case 'a':
 			{
-				m_body->ApplyTorque(50.0f);
+				m_body->ApplyTorque(50.0f, true);
 			}
 			break;
 
 		case 'd':
 			{
-				m_body->ApplyTorque(-50.0f);
+				m_body->ApplyTorque(-50.0f, true);
 			}
 			break;
 		}
