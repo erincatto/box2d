@@ -141,6 +141,7 @@ struct b2Simplex
 			v->wA = b2Mul(transformA, wALocal);
 			v->wB = b2Mul(transformB, wBLocal);
 			v->w = v->wB - v->wA;
+			v->a = 1.0f;
 			m_count = 1;
 		}
 	}
@@ -465,8 +466,7 @@ void b2Distance(b2DistanceOutput* output,
 	int32 saveA[3], saveB[3];
 	int32 saveCount = 0;
 
-	b2Vec2 closestPoint = simplex.GetClosestPoint();
-	float32 distanceSqr1 = closestPoint.LengthSquared();
+	float32 distanceSqr1 = b2_maxFloat;
 	float32 distanceSqr2 = distanceSqr1;
 
 	// Main iteration loop.
