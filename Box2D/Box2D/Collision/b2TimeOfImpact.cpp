@@ -21,13 +21,16 @@
 #include <Box2D/Collision/b2TimeOfImpact.h>
 #include <Box2D/Collision/Shapes/b2CircleShape.h>
 #include <Box2D/Collision/Shapes/b2PolygonShape.h>
+#include <Box2D/Common/b2Timer.h>
 
 #include <cstdio>
 using namespace std;
 
+float32 b2_toiTime, b2_toiMaxTime;
 int32 b2_toiCalls, b2_toiIters, b2_toiMaxIters;
 int32 b2_toiRootIters, b2_toiMaxRootIters;
 
+//
 struct b2SeparationFunction
 {
 	enum Type
@@ -119,6 +122,7 @@ struct b2SeparationFunction
 		}
 	}
 
+	//
 	float32 FindMinSeparation(int32* indexA, int32* indexB, float32 t) const
 	{
 		b2Transform xfA, xfB;
@@ -187,6 +191,7 @@ struct b2SeparationFunction
 		}
 	}
 
+	//
 	float32 Evaluate(int32 indexA, int32 indexB, float32 t) const
 	{
 		b2Transform xfA, xfB;
@@ -249,6 +254,8 @@ struct b2SeparationFunction
 // by computing the largest time at which separation is maintained.
 void b2TimeOfImpact(b2TOIOutput* output, const b2TOIInput* input)
 {
+	b2Timer timer;
+
 	++b2_toiCalls;
 
 	output->state = b2TOIOutput::e_unknown;
@@ -415,6 +422,9 @@ void b2TimeOfImpact(b2TOIOutput* output, const b2TOIInput* input)
 					t = 0.5f * (a1 + a2);
 				}
 
+				++rootIterCount;
+				++b2_toiRootIters;
+
 				float32 s = fcn.Evaluate(indexA, indexB, t);
 
 				if (b2Abs(s - target) < tolerance)
@@ -435,10 +445,7 @@ void b2TimeOfImpact(b2TOIOutput* output, const b2TOIInput* input)
 					a2 = t;
 					s2 = s;
 				}
-
-				++rootIterCount;
-				++b2_toiRootIters;
-
+				
 				if (rootIterCount == 50)
 				{
 					break;
@@ -473,4 +480,8 @@ void b2TimeOfImpact(b2TOIOutput* output, const b2TOIInput* input)
 	}
 
 	b2_toiMaxIters = b2Max(b2_toiMaxIters, iter);
+
+	float32 time = timer.GetMilliseconds();
+	b2_toiMaxTime = b2Max(b2_toiMaxTime, time);
+	b2_toiTime += time;
 }
