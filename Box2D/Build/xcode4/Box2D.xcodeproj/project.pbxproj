@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		80620F8F168B934600D46C8D /* b2MotorJoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 80620F8D168B934600D46C8D /* b2MotorJoint.cpp */; };
+		80620F90168B934600D46C8D /* b2MotorJoint.h in Headers */ = {isa = PBXBuildFile; fileRef = 80620F8E168B934600D46C8D /* b2MotorJoint.h */; };
 		80BB8987141C3E5900F1753A /* Box2D.h in Headers */ = {isa = PBXBuildFile; fileRef = 80BB8923141C3E5900F1753A /* Box2D.h */; };
 		80BB8988141C3E5900F1753A /* b2BroadPhase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 80BB8927141C3E5900F1753A /* b2BroadPhase.cpp */; };
 		80BB8989141C3E5900F1753A /* b2BroadPhase.h in Headers */ = {isa = PBXBuildFile; fileRef = 80BB8928141C3E5900F1753A /* b2BroadPhase.h */; };
@@ -195,6 +197,8 @@
 
 /* Begin PBXFileReference section */
 		80154ACD141DED6B00C8251F /* Tumbler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Tumbler.h; sourceTree = "<group>"; };
+		80620F8D168B934600D46C8D /* b2MotorJoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = b2MotorJoint.cpp; sourceTree = "<group>"; };
+		80620F8E168B934600D46C8D /* b2MotorJoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = b2MotorJoint.h; sourceTree = "<group>"; };
 		80BB8901141C3E1800F1753A /* libGLUI.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libGLUI.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		80BB890A141C3E2700F1753A /* HelloWorld */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = HelloWorld; sourceTree = BUILT_PRODUCTS_DIR; };
 		80BB8918141C3E3600F1753A /* Testbed */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Testbed; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -549,6 +553,8 @@
 		80BB896D141C3E5900F1753A /* Joints */ = {
 			isa = PBXGroup;
 			children = (
+				80620F8D168B934600D46C8D /* b2MotorJoint.cpp */,
+				80620F8E168B934600D46C8D /* b2MotorJoint.h */,
 				80BB896E141C3E5900F1753A /* b2DistanceJoint.cpp */,
 				80BB896F141C3E5900F1753A /* b2DistanceJoint.h */,
 				80BB8970141C3E5900F1753A /* b2FrictionJoint.cpp */,
@@ -809,6 +815,7 @@
 				80BB89DD141C3E5900F1753A /* b2WeldJoint.h in Headers */,
 				80BB89DF141C3E5900F1753A /* b2WheelJoint.h in Headers */,
 				80BB89E1141C3E5900F1753A /* b2Rope.h in Headers */,
+				80620F90168B934600D46C8D /* b2MotorJoint.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -891,6 +898,9 @@
 /* Begin PBXProject section */
 		80FF01C9141C3D980059E59D /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0450;
+			};
 			buildConfigurationList = 80FF01CC141C3D980059E59D /* Build configuration list for PBXProject "Box2D" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
@@ -1019,6 +1029,7 @@
 				80BB89DC141C3E5900F1753A /* b2WeldJoint.cpp in Sources */,
 				80BB89DE141C3E5900F1753A /* b2WheelJoint.cpp in Sources */,
 				80BB89E0141C3E5900F1753A /* b2Rope.cpp in Sources */,
+				80620F8F168B934600D46C8D /* b2MotorJoint.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1046,6 +1057,7 @@
 		80BB8902141C3E1800F1753A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				EXECUTABLE_PREFIX = lib;
 				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
 				GCC_WARN_UNUSED_VALUE = NO;
@@ -1057,6 +1069,7 @@
 		80BB8903141C3E1800F1753A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				EXECUTABLE_PREFIX = lib;
 				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
 				GCC_WARN_UNUSED_VALUE = NO;
@@ -1145,6 +1158,7 @@
 		80FF01D7141C3D980059E59D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				EXECUTABLE_PREFIX = lib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1153,6 +1167,7 @@
 		80FF01D8141C3D980059E59D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				EXECUTABLE_PREFIX = lib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
