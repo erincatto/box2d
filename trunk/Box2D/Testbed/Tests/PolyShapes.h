@@ -274,11 +274,11 @@ public:
 		m_debugDraw.DrawCircle(callback.m_circle.m_p, callback.m_circle.m_radius, color);
 
 		m_debugDraw.DrawString(5, m_textLine, "Press 1-5 to drop stuff");
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 		m_debugDraw.DrawString(5, m_textLine, "Press 'a' to (de)activate some bodies");
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 		m_debugDraw.DrawString(5, m_textLine, "Press 'd' to destroy a body");
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
 	static Test* Create()

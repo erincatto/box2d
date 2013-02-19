@@ -43,7 +43,7 @@ private:
 	static float64 s_invFrequency;
 #elif defined(__linux__) || defined (__APPLE__)
 	unsigned long m_start_sec;
-	unsigned long m_start_msec;
+	unsigned long m_start_usec;
 #endif
 };
 

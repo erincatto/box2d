@@ -30,6 +30,7 @@ struct Settings;
 typedef Test* TestCreateFcn();
 
 #define	RAND_LIMIT	32767
+#define DRAW_STRING_NEW_LINE 25
 
 /// Random number in range [-1,1]
 inline float32 RandomFloat()
@@ -137,8 +138,7 @@ public:
 	Test();
 	virtual ~Test();
 
-	void SetTextLine(int32 line) { m_textLine = line; }
-    void DrawTitle(int x, int y, const char *string);
+    void DrawTitle(const char *string);
 	virtual void Step(Settings* settings);
 	virtual void Keyboard(unsigned char key) { B2_NOT_USED(key); }
 	virtual void KeyboardUp(unsigned char key) { B2_NOT_USED(key); }
