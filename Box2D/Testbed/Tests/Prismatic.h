@@ -90,10 +90,10 @@ public:
 	{
 		Test::Step(settings);
 		m_debugDraw.DrawString(5, m_textLine, "Keys: (l) limits, (m) motors, (s) speed");
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 		float32 force = m_joint->GetMotorForce(settings->hz);
 		m_debugDraw.DrawString(5, m_textLine, "Motor Force = %4.0f", (float) force);
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
 	static Test* Create()
