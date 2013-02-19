@@ -97,9 +97,10 @@ void Test::PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
 	}
 }
 
-void Test::DrawTitle(int x, int y, const char *string)
+void Test::DrawTitle(const char *string)
 {
-    m_debugDraw.DrawString(x, y, string);
+    m_debugDraw.DrawString(5, DRAW_STRING_NEW_LINE, string);
+    m_textLine = 2 * DRAW_STRING_NEW_LINE;
 }
 
 class QueryCallback : public b2QueryCallback
@@ -279,7 +280,7 @@ void Test::Step(Settings* settings)
 		}
 
 		m_debugDraw.DrawString(5, m_textLine, "****PAUSED****");
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
 	uint32 flags = 0;
@@ -311,14 +312,14 @@ void Test::Step(Settings* settings)
 		int32 contactCount = m_world->GetContactCount();
 		int32 jointCount = m_world->GetJointCount();
 		m_debugDraw.DrawString(5, m_textLine, "bodies/contacts/joints = %d/%d/%d", bodyCount, contactCount, jointCount);
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 
 		int32 proxyCount = m_world->GetProxyCount();
 		int32 height = m_world->GetTreeHeight();
 		int32 balance = m_world->GetTreeBalance();
 		float32 quality = m_world->GetTreeQuality();
 		m_debugDraw.DrawString(5, m_textLine, "proxies/height/balance/quality = %d/%d/%d/%g", proxyCount, height, balance, quality);
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
 	// Track maximum profile times
@@ -363,21 +364,21 @@ void Test::Step(Settings* settings)
 		}
 
 		m_debugDraw.DrawString(5, m_textLine, "step [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.step, aveProfile.step, m_maxProfile.step);
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 		m_debugDraw.DrawString(5, m_textLine, "collide [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.collide, aveProfile.collide, m_maxProfile.collide);
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 		m_debugDraw.DrawString(5, m_textLine, "solve [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solve, aveProfile.solve, m_maxProfile.solve);
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 		m_debugDraw.DrawString(5, m_textLine, "solve init [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveInit, aveProfile.solveInit, m_maxProfile.solveInit);
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 		m_debugDraw.DrawString(5, m_textLine, "solve velocity [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveVelocity, aveProfile.solveVelocity, m_maxProfile.solveVelocity);
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 		m_debugDraw.DrawString(5, m_textLine, "solve position [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solvePosition, aveProfile.solvePosition, m_maxProfile.solvePosition);
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 		m_debugDraw.DrawString(5, m_textLine, "solveTOI [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveTOI, aveProfile.solveTOI, m_maxProfile.solveTOI);
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 		m_debugDraw.DrawString(5, m_textLine, "broad-phase [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.broadphase, aveProfile.broadphase, m_maxProfile.broadphase);
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
 	if (m_mouseJoint)
