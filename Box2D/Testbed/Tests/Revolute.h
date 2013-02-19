@@ -142,7 +142,7 @@ public:
 	{
 		Test::Step(settings);
 		m_debugDraw.DrawString(5, m_textLine, "Keys: (l) limits, (m) motor");
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 
 		//if (m_stepCount == 360)
 		//{
@@ -151,7 +151,7 @@ public:
 
 		//float32 torque1 = m_joint1->GetMotorTorque();
 		//m_debugDraw.DrawString(5, m_textLine, "Motor Torque = %4.0f, %4.0f : Motor Force = %4.0f", (float) torque1, (float) torque2, (float) force3);
-		//m_textLine += 15;
+		//m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
 	static Test* Create()

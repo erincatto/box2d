@@ -328,7 +328,7 @@ public:
 
 		Test::Step(settings);
 		m_debugDraw.DrawString(5, m_textLine, "Press 1-5 to drop stuff, m to change the mode");
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 		switch (m_mode)
 		{
 		case e_closest:
@@ -344,7 +344,7 @@ public:
 			break;
 		}
 
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 
 		float32 L = 11.0f;
 		b2Vec2 point1(0.0f, 10.0f);

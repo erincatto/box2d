@@ -84,9 +84,9 @@ public:
 		m_rope.Draw(&m_debugDraw);
 
 		m_debugDraw.DrawString(5, m_textLine, "Press (q,e) to adjust target angle");
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 		m_debugDraw.DrawString(5, m_textLine, "Target angle = %g degrees", m_angle * 180.0f / b2_pi);
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
 	static Test* Create()

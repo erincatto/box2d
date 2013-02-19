@@ -202,7 +202,7 @@ public:
 
 		Test::Step(settings);
 		m_debugDraw.DrawString(5, m_textLine, "Press 1-5 to drop stuff");
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 
 		float32 L = 25.0f;
 		b2Vec2 point1(0.0f, 10.0f);
