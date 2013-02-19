@@ -66,11 +66,11 @@ public:
 		b2TimeOfImpact(&output, &input);
 
 		m_debugDraw.DrawString(5, m_textLine, "toi = %g", output.t);
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 
 		extern int32 b2_toiMaxIters, b2_toiMaxRootIters;
 		m_debugDraw.DrawString(5, m_textLine, "max toi iters = %d, max root iters = %d", b2_toiMaxIters, b2_toiMaxRootIters);
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 
 		b2Vec2 vertices[b2_maxPolygonVertices];
 

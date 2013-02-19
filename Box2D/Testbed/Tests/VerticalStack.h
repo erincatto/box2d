@@ -120,7 +120,7 @@ public:
 	{
 		Test::Step(settings);
 		m_debugDraw.DrawString(5, m_textLine, "Press: (,) to launch a bullet.");
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 
 		//if (m_stepCount == 300)
 		//{
