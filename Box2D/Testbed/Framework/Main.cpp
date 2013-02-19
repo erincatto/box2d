@@ -98,7 +98,6 @@ static void SimulationLoop()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	test->SetTextLine(30);
 	b2Vec2 oldCenter = settings.viewCenter;
 	settings.hz = settingsHz;
 	test->Step(&settings);
@@ -107,7 +106,7 @@ static void SimulationLoop()
 		Resize(width, height);
 	}
 
-	test->DrawTitle(5, 15, entry->name);
+	test->DrawTitle(entry->name);
 
 	glutSwapBuffers();
 

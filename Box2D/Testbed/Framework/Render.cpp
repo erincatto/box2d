@@ -176,7 +176,8 @@ void DebugDraw::DrawString(int x, int y, const char *string, ...)
 	int32 length = (int32)strlen(buffer);
 	for (int32 i = 0; i < length; ++i)
 	{
-		glutBitmapCharacter(GLUT_BITMAP_8_BY_13, buffer[i]);
+		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, buffer[i]);
+		//glutBitmapCharacter(GLUT_BITMAP_9_BY_15, buffer[i]);
 	}
 
 	glPopMatrix();

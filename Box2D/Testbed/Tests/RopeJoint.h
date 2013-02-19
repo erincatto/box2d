@@ -121,7 +121,7 @@ public:
 	{
 		Test::Step(settings);
 		m_debugDraw.DrawString(5, m_textLine, "Press (j) to toggle the rope joint.");
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 		if (m_rope)
 		{
 			m_debugDraw.DrawString(5, m_textLine, "Rope ON");
@@ -130,7 +130,7 @@ public:
 		{
 			m_debugDraw.DrawString(5, m_textLine, "Rope OFF");
 		}
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
 	static Test* Create()

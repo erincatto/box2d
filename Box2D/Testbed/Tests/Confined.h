@@ -155,7 +155,7 @@ public:
 		}
 
 		m_debugDraw.DrawString(5, m_textLine, "Press 'c' to create a circle.");
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
 	static Test* Create()
