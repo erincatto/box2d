@@ -128,13 +128,13 @@ public:
 		int32 minimumNodeCount = 2 * leafCount - 1;
 		float32 minimumHeight = ceilf(logf(float32(minimumNodeCount)) / logf(2.0f));
 		m_debugDraw.DrawString(5, m_textLine, "dynamic tree height = %d, min = %d", height, int32(minimumHeight));
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 
 		Test::Step(settings);
 
 		m_debugDraw.DrawString(5, m_textLine, "create time = %6.2f ms, fixture count = %d",
 			m_createTime, m_fixtureCount);
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 
 		//b2DynamicTree* tree = &m_world->m_contactManager.m_broadPhase.m_tree;
 

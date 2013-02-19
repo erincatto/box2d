@@ -103,18 +103,18 @@ public:
 		{
 			m_debugDraw.DrawString(5, m_textLine, "gjk calls = %d, ave gjk iters = %3.1f, max gjk iters = %d",
 				b2_gjkCalls, b2_gjkIters / float32(b2_gjkCalls), b2_gjkMaxIters);
-			m_textLine += 15;
+			m_textLine += DRAW_STRING_NEW_LINE;
 		}
 
 		if (b2_toiCalls > 0)
 		{
 			m_debugDraw.DrawString(5, m_textLine, "toi calls = %d, ave toi iters = %3.1f, max toi iters = %d",
 				b2_toiCalls, b2_toiIters / float32(b2_toiCalls), b2_toiMaxRootIters);
-			m_textLine += 15;
+			m_textLine += DRAW_STRING_NEW_LINE;
 
 			m_debugDraw.DrawString(5, m_textLine, "ave toi root iters = %3.1f, max toi root iters = %d",
 				b2_toiRootIters / float32(b2_toiCalls), b2_toiMaxRootIters);
-			m_textLine += 15;
+			m_textLine += DRAW_STRING_NEW_LINE;
 		}
 
 		if (m_stepCount % 60 == 0)

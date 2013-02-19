@@ -129,7 +129,7 @@ public:
 		{
 			int32 height = m_tree.GetHeight();
 			m_debugDraw.DrawString(5, m_textLine, "dynamic tree height = %d", height);
-			m_textLine += 15;
+			m_textLine += DRAW_STRING_NEW_LINE;
 		}
 
 		++m_stepCount;

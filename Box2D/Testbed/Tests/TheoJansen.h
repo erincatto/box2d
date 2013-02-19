@@ -213,7 +213,7 @@ public:
 	void Step(Settings* settings)
 	{
 		m_debugDraw.DrawString(5, m_textLine, "Keys: left = a, brake = s, right = d, toggle motor = m");
-		m_textLine += 15;
+		m_textLine += DRAW_STRING_NEW_LINE;
 
 		Test::Step(settings);
 	}
