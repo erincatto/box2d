@@ -714,8 +714,8 @@ inline void b2Sweep::Advance(float32 alpha)
 {
 	b2Assert(alpha0 < 1.0f);
 	float32 beta = (alpha - alpha0) / (1.0f - alpha0);
-	c0 = (1.0f - beta) * c0 + beta * c;
-	a0 = (1.0f - beta) * a0 + beta * a;
+	c0 += beta * (c - c0);
+	a0 += beta * (a - a0);
 	alpha0 = alpha;
 }
 
