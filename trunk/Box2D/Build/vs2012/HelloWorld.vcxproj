@@ -19,30 +19,34 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6F01DB00-32F0-A842-9B60-3ABA75A2D458}</ProjectGuid>
-    <RootNamespace>GLUI</RootNamespace>
+    <ProjectGuid>{259F29FB-40F1-F04D-940B-BCEA3ED16B75}</ProjectGuid>
+    <RootNamespace>HelloWorld</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -63,21 +67,24 @@
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">bin\Debug\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj\x32\Debug\GLUI\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">GLUI</TargetName>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj\x32\Debug\HelloWorld\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">HelloWorld</TargetName>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">bin\Debug\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">obj\x64\Debug\GLUI\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GLUI</TargetName>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">obj\x64\Debug\HelloWorld\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">HelloWorld</TargetName>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">bin\Release\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj\x32\Release\GLUI\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">GLUI</TargetName>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj\x32\Release\HelloWorld\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">HelloWorld</TargetName>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">bin\Release\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">obj\x64\Release\GLUI\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GLUI</TargetName>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">obj\x64\Release\HelloWorld\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">HelloWorld</TargetName>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <AdditionalOptions>/W1 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -89,24 +96,24 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <ProgramDataBaseFileName>$(OutDir)GLUI.pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(OutDir)HelloWorld.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
-    <Lib>
-      <OutputFile>$(OutDir)GLUI.lib</OutputFile>
-      <TargetMachine>MachineX86</TargetMachine>
-    </Lib>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>bin\Debug\Box2D.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)HelloWorld.exe</OutputFile>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+      <TargetMachine>MachineX86</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalOptions>/W1 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -118,24 +125,24 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <ProgramDataBaseFileName>$(OutDir)GLUI.pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(OutDir)HelloWorld.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
-    <Lib>
-      <OutputFile>$(OutDir)GLUI.lib</OutputFile>
-      <TargetMachine>MachineX64</TargetMachine>
-    </Lib>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>bin\Debug\Box2D.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)HelloWorld.exe</OutputFile>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+      <TargetMachine>MachineX64</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalOptions>/W1 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Full</Optimization>
       <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -153,20 +160,20 @@
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
-    <Lib>
-      <OutputFile>$(OutDir)GLUI.lib</OutputFile>
-      <TargetMachine>MachineX86</TargetMachine>
-    </Lib>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>bin\Release\Box2D.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)HelloWorld.exe</OutputFile>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+      <TargetMachine>MachineX86</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalOptions>/W1 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Full</Optimization>
       <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -184,89 +191,20 @@
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
-    <Lib>
-      <OutputFile>$(OutDir)GLUI.lib</OutputFile>
-      <TargetMachine>MachineX64</TargetMachine>
-    </Lib>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>bin\Release\Box2D.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)HelloWorld.exe</OutputFile>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+      <TargetMachine>MachineX64</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\glui\algebra3.h" />
-    <ClInclude Include="..\..\glui\arcball.h" />
-    <ClInclude Include="..\..\glui\glui.h" />
-    <ClInclude Include="..\..\glui\glui_internal.h" />
-    <ClInclude Include="..\..\glui\glui_internal_control.h" />
-    <ClInclude Include="..\..\glui\quaternion.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\glui\algebra3.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\arcball.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_add_controls.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_bitmaps.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_bitmap_img_data.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_button.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_checkbox.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_column.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_commandline.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_control.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_edittext.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_filebrowser.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_list.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_listbox.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_mouse_iaction.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_node.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_panel.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_radio.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_rollout.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_rotation.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_scrollbar.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_separator.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_spinner.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_statictext.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_string.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_textbox.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_translation.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_tree.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_treepanel.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\glui_window.cpp">
-    </ClCompile>
-    <ClCompile Include="..\..\glui\quaternion.cpp">
+    <ClCompile Include="..\..\HelloWorld\Helloworld.cpp">
     </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

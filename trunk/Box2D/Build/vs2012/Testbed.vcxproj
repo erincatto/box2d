@@ -19,8 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{259F29FB-40F1-F04D-940B-BCEA3ED16B75}</ProjectGuid>
-    <RootNamespace>HelloWorld</RootNamespace>
+    <ProjectGuid>{3FC8974C-9179-4D4E-A5E0-79E3C836548F}</ProjectGuid>
+    <RootNamespace>Testbed</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -28,21 +28,25 @@
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -63,20 +67,20 @@
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">bin\Debug\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj\x32\Debug\HelloWorld\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">HelloWorld</TargetName>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj\x32\Debug\Testbed\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Testbed</TargetName>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">bin\Debug\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">obj\x64\Debug\HelloWorld\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">HelloWorld</TargetName>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">obj\x64\Debug\Testbed\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Testbed</TargetName>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">bin\Release\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj\x32\Release\HelloWorld\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">HelloWorld</TargetName>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj\x32\Release\Testbed\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Testbed</TargetName>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">bin\Release\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">obj\x64\Release\HelloWorld\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">HelloWorld</TargetName>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">obj\x64\Release\Testbed\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Testbed</TargetName>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -92,15 +96,15 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <ProgramDataBaseFileName>$(OutDir)HelloWorld.pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(OutDir)Testbed.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>bin\Debug\Box2D.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)HelloWorld.exe</OutputFile>
+      <AdditionalDependencies>bin\Debug\Box2D.lib;bin\Debug\FreeGLUT.lib;bin\Debug\GLUI.lib;glu32.lib;opengl32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)Testbed.exe</OutputFile>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -121,15 +125,15 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <ProgramDataBaseFileName>$(OutDir)HelloWorld.pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(OutDir)Testbed.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>bin\Debug\Box2D.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)HelloWorld.exe</OutputFile>
+      <AdditionalDependencies>bin\Debug\Box2D.lib;bin\Debug\FreeGLUT.lib;bin\Debug\GLUI.lib;glu32.lib;opengl32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)Testbed.exe</OutputFile>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -157,8 +161,8 @@
       <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>bin\Release\Box2D.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)HelloWorld.exe</OutputFile>
+      <AdditionalDependencies>bin\Release\Box2D.lib;bin\Release\FreeGLUT.lib;bin\Release\GLUI.lib;glu32.lib;opengl32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)Testbed.exe</OutputFile>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -180,19 +184,18 @@
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <DebugInformationFormat>
-      </DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>bin\Release\Box2D.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)HelloWorld.exe</OutputFile>
+      <AdditionalDependencies>bin\Release\Box2D.lib;bin\Release\FreeGLUT.lib;bin\Release\GLUI.lib;glu32.lib;opengl32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)Testbed.exe</OutputFile>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
@@ -200,7 +203,66 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\HelloWorld\Helloworld.cpp">
+    <ClInclude Include="..\..\Testbed\Framework\Render.h" />
+    <ClInclude Include="..\..\Testbed\Framework\Test.h" />
+    <ClInclude Include="..\..\Testbed\Tests\AddPair.h" />
+    <ClInclude Include="..\..\Testbed\Tests\ApplyForce.h" />
+    <ClInclude Include="..\..\Testbed\Tests\BodyTypes.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Breakable.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Bridge.h" />
+    <ClInclude Include="..\..\Testbed\Tests\BulletTest.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Cantilever.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Car.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Chain.h" />
+    <ClInclude Include="..\..\Testbed\Tests\CharacterCollision.h" />
+    <ClInclude Include="..\..\Testbed\Tests\CollisionFiltering.h" />
+    <ClInclude Include="..\..\Testbed\Tests\CollisionProcessing.h" />
+    <ClInclude Include="..\..\Testbed\Tests\CompoundShapes.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Confined.h" />
+    <ClInclude Include="..\..\Testbed\Tests\ContinuousTest.h" />
+    <ClInclude Include="..\..\Testbed\Tests\ConveyorBelt.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Cord.h" />
+    <ClInclude Include="..\..\Testbed\Tests\DistanceTest.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Dominos.h" />
+    <ClInclude Include="..\..\Testbed\Tests\DumpShell.h" />
+    <ClInclude Include="..\..\Testbed\Tests\DynamicTreeTest.h" />
+    <ClInclude Include="..\..\Testbed\Tests\EdgeShapes.h" />
+    <ClInclude Include="..\..\Testbed\Tests\EdgeTest.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Gears.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Mobile.h" />
+    <ClInclude Include="..\..\Testbed\Tests\MobileBalanced.h" />
+    <ClInclude Include="..\..\Testbed\Tests\MotorJoint.h" />
+    <ClInclude Include="..\..\Testbed\Tests\OneSidedPlatform.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Pinball.h" />
+    <ClInclude Include="..\..\Testbed\Tests\PolyCollision.h" />
+    <ClInclude Include="..\..\Testbed\Tests\PolyShapes.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Prismatic.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Pulleys.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Pyramid.h" />
+    <ClInclude Include="..\..\Testbed\Tests\RayCast.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Revolute.h" />
+    <ClInclude Include="..\..\Testbed\Tests\RopeJoint.h" />
+    <ClInclude Include="..\..\Testbed\Tests\SensorTest.h" />
+    <ClInclude Include="..\..\Testbed\Tests\ShapeEditing.h" />
+    <ClInclude Include="..\..\Testbed\Tests\SliderCrank.h" />
+    <ClInclude Include="..\..\Testbed\Tests\SphereStack.h" />
+    <ClInclude Include="..\..\Testbed\Tests\TheoJansen.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Tiles.h" />
+    <ClInclude Include="..\..\Testbed\Tests\TimeOfImpact.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Tumbler.h" />
+    <ClInclude Include="..\..\Testbed\Tests\VaryingFriction.h" />
+    <ClInclude Include="..\..\Testbed\Tests\VaryingRestitution.h" />
+    <ClInclude Include="..\..\Testbed\Tests\VerticalStack.h" />
+    <ClInclude Include="..\..\Testbed\Tests\Web.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Testbed\Framework\Main.cpp">
+    </ClCompile>
+    <ClCompile Include="..\..\Testbed\Framework\Render.cpp">
+    </ClCompile>
+    <ClCompile Include="..\..\Testbed\Framework\Test.cpp">
+    </ClCompile>
+    <ClCompile Include="..\..\Testbed\Tests\TestEntries.cpp">
     </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
