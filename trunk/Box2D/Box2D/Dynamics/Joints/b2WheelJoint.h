@@ -79,8 +79,6 @@ struct b2WheelJointDef : public b2JointDef
 class b2WheelJoint : public b2Joint
 {
 public:
-	void GetDefinition(b2WheelJointDef* def) const;
-
 	b2Vec2 GetAnchorA() const;
 	b2Vec2 GetAnchorB() const;
 
