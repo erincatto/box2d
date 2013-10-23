@@ -44,6 +44,7 @@ void b2WorldManifold::Initialize(const b2Manifold* manifold,
 			b2Vec2 cA = pointA + radiusA * normal;
 			b2Vec2 cB = pointB - radiusB * normal;
 			points[0] = 0.5f * (cA + cB);
+			separations[0] = b2Dot(cB - cA, normal);
 		}
 		break;
 
@@ -58,6 +59,7 @@ void b2WorldManifold::Initialize(const b2Manifold* manifold,
 				b2Vec2 cA = clipPoint + (radiusA - b2Dot(clipPoint - planePoint, normal)) * normal;
 				b2Vec2 cB = clipPoint - radiusB * normal;
 				points[i] = 0.5f * (cA + cB);
+				separations[i] = b2Dot(cB - cA, normal);
 			}
 		}
 		break;
@@ -73,6 +75,7 @@ void b2WorldManifold::Initialize(const b2Manifold* manifold,
 				b2Vec2 cB = clipPoint + (radiusB - b2Dot(clipPoint - planePoint, normal)) * normal;
 				b2Vec2 cA = clipPoint - radiusA * normal;
 				points[i] = 0.5f * (cA + cB);
+				separations[i] = b2Dot(cA - cB, normal);
 			}
 
 			// Ensure normal points from A to B.
