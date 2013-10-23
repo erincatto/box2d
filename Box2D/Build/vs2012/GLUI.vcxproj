@@ -19,8 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{BCA4569B-A486-E443-9EE2-07D4CB3CFBA8}</ProjectGuid>
-    <RootNamespace>FreeGLUT</RootNamespace>
+    <ProjectGuid>{6F01DB00-32F0-A842-9B60-3ABA75A2D458}</ProjectGuid>
+    <RootNamespace>GLUI</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -28,21 +28,25 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -63,21 +67,23 @@
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">bin\Debug\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj\x32\Debug\FreeGLUT\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">FreeGLUT</TargetName>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj\x32\Debug\GLUI\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">GLUI</TargetName>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">bin\Debug\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">obj\x64\Debug\FreeGLUT\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">FreeGLUT</TargetName>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">obj\x64\Debug\GLUI\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GLUI</TargetName>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">bin\Release\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj\x32\Release\FreeGLUT\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">FreeGLUT</TargetName>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj\x32\Release\GLUI\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">GLUI</TargetName>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">bin\Release\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">obj\x64\Release\FreeGLUT\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">FreeGLUT</TargetName>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">obj\x64\Release\GLUI\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GLUI</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
+      <AdditionalOptions>/W1 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -87,14 +93,14 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <ProgramDataBaseFileName>$(OutDir)FreeGLUT.pdb</ProgramDataBaseFileName>
-      <CompileAs>CompileAsC</CompileAs>
+      <ProgramDataBaseFileName>$(OutDir)GLUI.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Lib>
-      <OutputFile>$(OutDir)FreeGLUT.lib</OutputFile>
+      <OutputFile>$(OutDir)GLUI.lib</OutputFile>
       <TargetMachine>MachineX86</TargetMachine>
     </Lib>
     <Link>
@@ -104,7 +110,9 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
+      <AdditionalOptions>/W1 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -114,14 +122,14 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <ProgramDataBaseFileName>$(OutDir)FreeGLUT.pdb</ProgramDataBaseFileName>
-      <CompileAs>CompileAsC</CompileAs>
+      <ProgramDataBaseFileName>$(OutDir)GLUI.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Lib>
-      <OutputFile>$(OutDir)FreeGLUT.lib</OutputFile>
+      <OutputFile>$(OutDir)GLUI.lib</OutputFile>
       <TargetMachine>MachineX64</TargetMachine>
     </Lib>
     <Link>
@@ -131,7 +139,9 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
+      <AdditionalOptions>/W1 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Full</Optimization>
+      <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
@@ -142,13 +152,13 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>
       </DebugInformationFormat>
-      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Lib>
-      <OutputFile>$(OutDir)FreeGLUT.lib</OutputFile>
+      <OutputFile>$(OutDir)GLUI.lib</OutputFile>
       <TargetMachine>MachineX86</TargetMachine>
     </Lib>
     <Link>
@@ -160,7 +170,9 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
+      <AdditionalOptions>/W1 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Full</Optimization>
+      <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
@@ -171,13 +183,13 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>
       </DebugInformationFormat>
-      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Lib>
-      <OutputFile>$(OutDir)FreeGLUT.lib</OutputFile>
+      <OutputFile>$(OutDir)GLUI.lib</OutputFile>
       <TargetMachine>MachineX64</TargetMachine>
     </Lib>
     <Link>
@@ -188,60 +200,77 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\freeglut\freeglut.h" />
-    <ClInclude Include="..\..\freeglut\freeglut_ext.h" />
-    <ClInclude Include="..\..\freeglut\freeglut_internal.h" />
-    <ClInclude Include="..\..\freeglut\freeglut_std.h" />
-    <ClInclude Include="..\..\freeglut\freeglut_teapot_data.h" />
+    <ClInclude Include="..\..\glui\algebra3.h" />
+    <ClInclude Include="..\..\glui\arcball.h" />
+    <ClInclude Include="..\..\glui\glui.h" />
+    <ClInclude Include="..\..\glui\glui_internal.h" />
+    <ClInclude Include="..\..\glui\glui_internal_control.h" />
+    <ClInclude Include="..\..\glui\quaternion.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\freeglut\freeglut_callbacks.c">
+    <ClCompile Include="..\..\glui\algebra3.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_cursor.c">
+    <ClCompile Include="..\..\glui\arcball.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_display.c">
+    <ClCompile Include="..\..\glui\glui.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_ext.c">
+    <ClCompile Include="..\..\glui\glui_add_controls.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_font.c">
+    <ClCompile Include="..\..\glui\glui_bitmaps.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_font_data.c">
+    <ClCompile Include="..\..\glui\glui_bitmap_img_data.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_gamemode.c">
+    <ClCompile Include="..\..\glui\glui_button.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_geometry.c">
+    <ClCompile Include="..\..\glui\glui_checkbox.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_glutfont_definitions.c">
+    <ClCompile Include="..\..\glui\glui_column.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_init.c">
+    <ClCompile Include="..\..\glui\glui_commandline.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_input_devices.c">
+    <ClCompile Include="..\..\glui\glui_control.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_joystick.c">
+    <ClCompile Include="..\..\glui\glui_edittext.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_main.c">
+    <ClCompile Include="..\..\glui\glui_filebrowser.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_menu.c">
+    <ClCompile Include="..\..\glui\glui_list.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_misc.c">
+    <ClCompile Include="..\..\glui\glui_listbox.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_overlay.c">
+    <ClCompile Include="..\..\glui\glui_mouse_iaction.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_spaceball.c">
+    <ClCompile Include="..\..\glui\glui_node.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_state.c">
+    <ClCompile Include="..\..\glui\glui_panel.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_stroke_mono_roman.c">
+    <ClCompile Include="..\..\glui\glui_radio.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_stroke_roman.c">
+    <ClCompile Include="..\..\glui\glui_rollout.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_structure.c">
+    <ClCompile Include="..\..\glui\glui_rotation.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_teapot.c">
+    <ClCompile Include="..\..\glui\glui_scrollbar.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_videoresize.c">
+    <ClCompile Include="..\..\glui\glui_separator.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\freeglut\freeglut_window.c">
+    <ClCompile Include="..\..\glui\glui_spinner.cpp">
+    </ClCompile>
+    <ClCompile Include="..\..\glui\glui_statictext.cpp">
+    </ClCompile>
+    <ClCompile Include="..\..\glui\glui_string.cpp">
+    </ClCompile>
+    <ClCompile Include="..\..\glui\glui_textbox.cpp">
+    </ClCompile>
+    <ClCompile Include="..\..\glui\glui_translation.cpp">
+    </ClCompile>
+    <ClCompile Include="..\..\glui\glui_tree.cpp">
+    </ClCompile>
+    <ClCompile Include="..\..\glui\glui_treepanel.cpp">
+    </ClCompile>
+    <ClCompile Include="..\..\glui\glui_window.cpp">
+    </ClCompile>
+    <ClCompile Include="..\..\glui\quaternion.cpp">
     </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
