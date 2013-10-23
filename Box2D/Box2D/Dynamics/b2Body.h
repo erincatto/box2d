@@ -154,8 +154,8 @@ public:
 	void DestroyFixture(b2Fixture* fixture);
 
 	/// Set the position of the body's origin and rotation.
-	/// This breaks any contacts and wakes the other bodies.
 	/// Manipulating a body's transform may cause non-physical behavior.
+	/// Note: contacts are updated on the next call to b2World::Step.
 	/// @param position the world position of the body's local origin.
 	/// @param angle the world rotation in radians.
 	void SetTransform(const b2Vec2& position, float32 angle);
