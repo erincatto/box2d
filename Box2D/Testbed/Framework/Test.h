@@ -129,6 +129,7 @@ struct ContactPoint
 	b2PointState state;
 	float32 normalImpulse;
 	float32 tangentImpulse;
+	float32 separation;
 };
 
 class Test : public b2ContactListener
