@@ -324,7 +324,7 @@ public:
 	void SetAwake(bool flag);
 
 	/// Get the sleeping state of this body.
-	/// @return true if the body is sleeping.
+	/// @return true if the body is awake.
 	bool IsAwake() const;
 
 	/// Set the active state of the body. An inactive body is not
