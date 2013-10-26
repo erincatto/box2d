@@ -92,8 +92,8 @@ public:
 
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
-			bd.angularDamping = 5.0f;
-			bd.linearDamping = 0.1f;
+			bd.angularDamping = 2.0f;
+			bd.linearDamping = 0.5f;
 
 			bd.position.Set(0.0f, 2.0);
 			bd.angle = b2_pi;
