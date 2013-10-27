@@ -25,9 +25,6 @@
 	#include "freeglut/freeglut.h"
 #endif
 
-#include <cstring>
-using namespace std;
-
 #include "AddPair.h"
 #include "ApplyForce.h"
 #include "BodyTypes.h"
@@ -80,6 +77,8 @@ using namespace std;
 
 TestEntry g_testEntries[] =
 {
+	{"Convex Hull", ConvexHull::Create},
+	{"Apply Force", ApplyForce::Create},
 	{"Continuous Test", ContinuousTest::Create},
 	{"Time of Impact", TimeOfImpact::Create},
 	{"Motor Joint", MotorJoint::Create},
@@ -90,7 +89,6 @@ TestEntry g_testEntries[] =
 	{"Ray-Cast", RayCast::Create},
 	{"Conveyor Belt", ConveyorBelt::Create},
 	{"Gears", Gears::Create},
-	{"Convex Hull", ConvexHull::Create},
 	{"Varying Restitution", VaryingRestitution::Create},
 	{"Tumbler", Tumbler::Create},
 	{"Tiles", Tiles::Create},
@@ -100,7 +98,6 @@ TestEntry g_testEntries[] =
 	{"Body Types", BodyTypes::Create},
 	{"Shape Editing", ShapeEditing::Create},
 	{"Car", Car::Create},
-	{"Apply Force", ApplyForce::Create},
 	{"Prismatic", Prismatic::Create},
 	{"Vertical Stack", VerticalStack::Create},
 	{"SphereStack", SphereStack::Create},

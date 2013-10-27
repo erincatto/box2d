@@ -17,8 +17,7 @@
 */
 
 #include "Test.h"
-#include <cstdio>
-using namespace std;
+#include <stdio.h>
 
 void DestructionListener::SayGoodbye(b2Joint* joint)
 {

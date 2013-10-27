@@ -18,8 +18,7 @@
 
 #include <Box2D/Box2D.h>
 
-#include <cstdio>
-using namespace std;
+#include <stdio.h>
 
 // This is a simple example of building and running a simulation
 // using Box2D. Here we create a large ground box and a small dynamic
