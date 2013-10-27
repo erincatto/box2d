@@ -24,10 +24,8 @@
 	#include "freeglut/freeglut.h"
 #endif
 
-#include <cstdio>
-#include <cstdarg>
-#include <cstring>
-using namespace std;
+#include <stdio.h>
+#include <stdarg.h>
 
 void DebugDraw::DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color)
 {

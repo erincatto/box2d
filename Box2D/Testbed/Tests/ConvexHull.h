@@ -49,6 +49,15 @@ public:
 			v = b2Clamp(v, lowerBound, upperBound);
 			m_points[i] = v;
 		}
+
+		m_count = e_count;
+
+		m_points[0].Set( -1.70082211f,  -1.43221712f );
+		m_points[1].Set(  0.5f,         -0.5f );
+		m_points[2].Set(  0.104992867f,  0.97400856f );
+		m_points[3].Set( -0.658002853f,  0.926608086f );
+		m_points[4].Set( -0.994554818f,  0.165337861f );
+		m_count = 5;
 	}
 
 	static Test* Create()
@@ -75,14 +84,14 @@ public:
 		Test::Step(settings);
 
 		b2PolygonShape shape;
-		shape.Set(m_points, e_count);
+		shape.Set(m_points, m_count);
 
 		m_debugDraw.DrawString(5, m_textLine, "Press g to generate a new random convex hull");
 		m_textLine += DRAW_STRING_NEW_LINE;
 
 		m_debugDraw.DrawPolygon(shape.m_vertices, shape.m_count, b2Color(0.9f, 0.9f, 0.9f));
 
-		for (int32 i = 0; i < e_count; ++i)
+		for (int32 i = 0; i < m_count; ++i)
 		{
 			m_debugDraw.DrawPoint(m_points[i], 2.0f, b2Color(0.9f, 0.5f, 0.5f));
 			m_debugDraw.DrawString(m_points[i] + b2Vec2(0.05f, 0.05f), "%d", i);
@@ -100,6 +109,7 @@ public:
 	}
 
 	b2Vec2 m_points[b2_maxPolygonVertices];
+	int32 m_count;
 	bool m_auto;
 };
 

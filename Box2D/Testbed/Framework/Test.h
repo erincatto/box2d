@@ -22,7 +22,7 @@
 #include <Box2D/Box2D.h>
 #include "Render.h"
 
-#include <cstdlib>
+#include <stdlib.h>
 
 class Test;
 struct Settings;
