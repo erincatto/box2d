@@ -20,8 +20,7 @@
 #include "Test.h"
 #include "glui/glui.h"
 
-#include <cstdio>
-using namespace std;
+#include <stdio.h>
 
 namespace
 {
