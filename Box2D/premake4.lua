@@ -46,7 +46,7 @@ solution "Box2D"
 	project "HelloWorld"
 		kind "ConsoleApp"
 		language "C++"
-		files { "HelloWorld/Helloworld.cpp" }
+		files { "HelloWorld/HelloWorld.cpp" }
 		vpaths { [""] = "HelloWorld" }
 		includedirs { "." }
 		links { "Box2D" }
@@ -63,5 +63,5 @@ solution "Box2D"
 		configuration { "macosx" }
 			linkoptions { "-framework OpenGL -framework GLUT" }
 		configuration { "not windows", "not macosx" }
-			links { "X11", "GL", "GLU", "GLUT" }
+			links { "X11", "GL", "GLU", "glut" }
 
