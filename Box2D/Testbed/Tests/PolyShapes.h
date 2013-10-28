@@ -22,8 +22,6 @@
 /// This tests stacking. It also shows how to use b2World::Query
 /// and b2TestOverlap.
 
-const int32 k_maxBodies = 256;
-
 /// This callback is called by b2World::QueryAABB. We find all the fixtures
 /// that overlap an AABB. Of those, we use b2TestOverlap to determine which fixtures
 /// overlap a circle. Up to 4 overlapped fixtures will be highlighted with a yellow border.
@@ -112,6 +110,12 @@ public:
 class PolyShapes : public Test
 {
 public:
+
+	enum
+	{
+		e_maxBodies = 256
+	};
+
 	PolyShapes()
 	{
 		// Ground body
@@ -210,12 +214,12 @@ public:
 			m_bodies[m_bodyIndex]->CreateFixture(&fd);
 		}
 
-		m_bodyIndex = (m_bodyIndex + 1) % k_maxBodies;
+		m_bodyIndex = (m_bodyIndex + 1) % e_maxBodies;
 	}
 
 	void DestroyBody()
 	{
-		for (int32 i = 0; i < k_maxBodies; ++i)
+		for (int32 i = 0; i < e_maxBodies; ++i)
 		{
 			if (m_bodies[i] != NULL)
 			{
@@ -239,7 +243,7 @@ public:
 			break;
 
 		case 'a':
-			for (int32 i = 0; i < k_maxBodies; i += 2)
+			for (int32 i = 0; i < e_maxBodies; i += 2)
 			{
 				if (m_bodies[i])
 				{
@@ -287,7 +291,7 @@ public:
 	}
 
 	int32 m_bodyIndex;
-	b2Body* m_bodies[k_maxBodies];
+	b2Body* m_bodies[e_maxBodies];
 	b2PolygonShape m_polygons[4];
 	b2CircleShape m_circle;
 };

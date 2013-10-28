@@ -77,13 +77,13 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Dump Shell", DumpShell::Create},
 	{"Convex Hull", ConvexHull::Create},
 	{"Apply Force", ApplyForce::Create},
 	{"Continuous Test", ContinuousTest::Create},
 	{"Time of Impact", TimeOfImpact::Create},
 	{"Motor Joint", MotorJoint::Create},
 	{"One-Sided Platform", OneSidedPlatform::Create},
-	{"Dump Shell", DumpShell::Create},
 	{"Mobile", Mobile::Create},
 	{"MobileBalanced", MobileBalanced::Create},
 	{"Ray-Cast", RayCast::Create},
