@@ -23,7 +23,7 @@
 #include <Box2D/Common/b2BlockAllocator.h>
 #include <Box2D/Collision/b2TimeOfImpact.h>
 
-#include <new.h>
+#include <new>
 
 b2Contact* b2CircleContact::Create(b2Fixture* fixtureA, int32, b2Fixture* fixtureB, int32, b2BlockAllocator* allocator)
 {
