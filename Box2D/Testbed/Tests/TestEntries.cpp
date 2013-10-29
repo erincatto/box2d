@@ -77,6 +77,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Ray-Cast", RayCast::Create},
 	{"Dump Shell", DumpShell::Create},
 	{"Convex Hull", ConvexHull::Create},
 	{"Apply Force", ApplyForce::Create},
@@ -86,7 +87,6 @@ TestEntry g_testEntries[] =
 	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Mobile", Mobile::Create},
 	{"MobileBalanced", MobileBalanced::Create},
-	{"Ray-Cast", RayCast::Create},
 	{"Conveyor Belt", ConveyorBelt::Create},
 	{"Gears", Gears::Create},
 	{"Varying Restitution", VaryingRestitution::Create},

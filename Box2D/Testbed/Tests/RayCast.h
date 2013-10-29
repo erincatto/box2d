@@ -225,6 +225,10 @@ public:
 			m_circle.m_radius = 0.5f;
 		}
 
+		{
+			m_edge.Set(b2Vec2(-1.0f, 0.0f), b2Vec2(1.0f, 0.0f));
+		}
+
 		m_bodyIndex = 0;
 		memset(m_bodies, 0, sizeof(m_bodies));
 
@@ -265,10 +269,18 @@ public:
 			fd.friction = 0.3f;
 			m_bodies[m_bodyIndex]->CreateFixture(&fd);
 		}
-		else
+		else if (index < 5)
 		{
 			b2FixtureDef fd;
 			fd.shape = &m_circle;
+			fd.friction = 0.3f;
+
+			m_bodies[m_bodyIndex]->CreateFixture(&fd);
+		}
+		else
+		{
+			b2FixtureDef fd;
+			fd.shape = &m_edge;
 			fd.friction = 0.3f;
 
 			m_bodies[m_bodyIndex]->CreateFixture(&fd);
@@ -299,6 +311,7 @@ public:
 		case '3':
 		case '4':
 		case '5':
+		case '6':
 			Create(key - '1');
 			break;
 
@@ -327,7 +340,7 @@ public:
 		bool advanceRay = settings->pause == 0 || settings->singleStep;
 
 		Test::Step(settings);
-		m_debugDraw.DrawString(5, m_textLine, "Press 1-5 to drop stuff, m to change the mode");
+		m_debugDraw.DrawString(5, m_textLine, "Press 1-6 to drop stuff, m to change the mode");
 		m_textLine += DRAW_STRING_NEW_LINE;
 		switch (m_mode)
 		{
@@ -458,6 +471,7 @@ public:
 	int32 m_userData[e_maxBodies];
 	b2PolygonShape m_polygons[4];
 	b2CircleShape m_circle;
+	b2EdgeShape m_edge;
 
 	float32 m_angle;
 
