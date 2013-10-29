@@ -334,6 +334,7 @@ static void MouseMotion(int32 x, int32 y)
 	}
 }
 
+#ifdef FREEGLUT
 static void MouseWheel(int wheel, int direction, int x, int y)
 {
 	B2_NOT_USED(wheel);
@@ -349,6 +350,7 @@ static void MouseWheel(int wheel, int direction, int x, int y)
 	}
 	Resize(width, height);
 }
+#endif
 
 static void Restart(int)
 {
