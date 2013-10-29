@@ -104,7 +104,7 @@ public:
 	/// @see SetAutoClearForces
 	void ClearForces();
 
-	/// Call this to draw shapes and other debug draw data.
+	/// Call this to draw shapes and other debug draw data. This is intentionally non-const.
 	void DrawDebugData();
 
 	/// Query the world for all fixtures that potentially overlap the
