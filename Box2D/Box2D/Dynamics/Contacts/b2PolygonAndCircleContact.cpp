@@ -20,7 +20,7 @@
 #include <Box2D/Common/b2BlockAllocator.h>
 #include <Box2D/Dynamics/b2Fixture.h>
 
-#include <new.h>
+#include <new>
 
 b2Contact* b2PolygonAndCircleContact::Create(b2Fixture* fixtureA, int32, b2Fixture* fixtureB, int32, b2BlockAllocator* allocator)
 {
