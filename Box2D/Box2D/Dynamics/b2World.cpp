@@ -32,7 +32,7 @@
 #include <Box2D/Collision/b2TimeOfImpact.h>
 #include <Box2D/Common/b2Draw.h>
 #include <Box2D/Common/b2Timer.h>
-#include <new.h>
+#include <new>
 
 b2World::b2World(const b2Vec2& gravity)
 {
