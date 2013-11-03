@@ -1,4 +1,4 @@
-The Build folder contains custom made project files for Visual Studio 2010 and XCode4.
+The Build folder contains custom made project files for Visual Studio and XCode.
 
 For other platforms you need to run premake in this directory. You can get premake here:
 http://industriousone.com/premake

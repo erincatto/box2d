@@ -1,5 +1,3 @@
-Box2D Version 2.1
-
 Welcome to Box2D!
 
 Box2D is a 2D physics engine for games.
