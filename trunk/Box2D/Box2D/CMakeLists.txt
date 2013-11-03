@@ -195,7 +195,10 @@ if(BOX2D_INSTALL)
 
 	# install libraries
 	if(BOX2D_BUILD_SHARED)
-		install(TARGETS Box2D_shared EXPORT Box2D-targets DESTINATION ${LIB_INSTALL_DIR})
+		install(TARGETS Box2D_shared EXPORT Box2D-targets 
+                  LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+                  ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
+                  RUNTIME DESTINATION bin)
 	endif()
 	if(BOX2D_BUILD_STATIC)
 		install(TARGETS Box2D EXPORT Box2D-targets DESTINATION ${LIB_INSTALL_DIR})
