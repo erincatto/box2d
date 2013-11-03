@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg5128"
+   version="1.1"
+   inkscape:version="0.48.1 "
+   sodipodi:docname="WheelJoint.svg">
+  <defs
+     id="defs5130">
+    <marker
+       inkscape:stockid="Arrow2Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow2Lend"
+       style="overflow:visible;">
+      <path
+         id="path3807"
+         style="font-size:12.0;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round;"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(1.1) rotate(180) translate(1,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow1Lend"
+       style="overflow:visible;">
+      <path
+         id="path3789"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;marker-start:none;"
+         transform="scale(0.8) rotate(180) translate(12.5,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Lstart"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow2Lstart"
+       style="overflow:visible">
+      <path
+         id="path3804"
+         style="font-size:12.0;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(1.1) translate(1,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Mstart"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow1Mstart"
+       style="overflow:visible">
+      <path
+         id="path3792"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;marker-start:none"
+         transform="scale(0.4) translate(10,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lstart"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow1Lstart"
+       style="overflow:visible">
+      <path
+         id="path3786"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;marker-start:none"
+         transform="scale(0.8) translate(12.5,0)" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.979899"
+     inkscape:cx="388.18876"
+     inkscape:cy="447.11167"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1359"
+     inkscape:window-height="1041"
+     inkscape:window-x="150"
+     inkscape:window-y="60"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata5133">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#d7e3f4;stroke:#767676;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;fill-opacity:1"
+       id="rect5140"
+       width="56.568542"
+       height="42.426407"
+       x="314.03363"
+       y="471.8606"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\WheelJoint.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Calibri;-inkscape-font-specification:Calibri"
+       x="304.31665"
+       y="614.28577"
+       id="text5770"
+       sodipodi:linespacing="125%"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\WheelJoint.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545"><tspan
+         sodipodi:role="line"
+         x="304.31665"
+         y="614.28577"
+         id="tspan2993">Wheel Joint</tspan></text>
+    <path
+       sodipodi:type="arc"
+       style="fill:#d7e3f4;fill-opacity:1;stroke:#767676;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       id="path2997"
+       sodipodi:cx="351.25"
+       sodipodi:cy="560.75507"
+       sodipodi:rx="16.964285"
+       sodipodi:ry="16.964285"
+       d="m 368.21428,560.75507 a 16.964285,16.964285 0 1 1 -33.92856,0 16.964285,16.964285 0 1 1 33.92856,0 z"
+       transform="translate(-8.5714286,-2.8571429)"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\WheelJoint.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 341.78571,492.36218 1.42858,98.92857"
+       id="path3767"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\WheelJoint.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
+    <path
+       transform="translate(134.22402,67.175144)"
+       d="m 210.71428,490.93362 a 2.1428571,2.1428571 0 1 1 -4.28571,0 2.1428571,2.1428571 0 1 1 4.28571,0 z"
+       sodipodi:ry="2.1428571"
+       sodipodi:rx="2.1428571"
+       sodipodi:cy="490.93362"
+       sodipodi:cx="208.57143"
+       id="path3779"
+       style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+       sodipodi:type="arc"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\WheelJoint.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow2Lstart);marker-mid:none;marker-end:url(#Arrow2Lend)"
+       d="m 377.85714,506.46933 0.53571,45"
+       id="path3781"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\WheelJoint.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
+    <path
+       sodipodi:type="arc"
+       style="fill:none;stroke:#767676;stroke-opacity:1;marker-start:url(#Arrow2Lstart);marker-end:url(#Arrow2Lend)"
+       id="path5547"
+       sodipodi:cx="313.57144"
+       sodipodi:cy="555.39789"
+       sodipodi:rx="23.392857"
+       sodipodi:ry="23.392857"
+       d="m 308.31133,578.19168 a 23.392857,23.392857 0 0 1 -6.687,-42.90578"
+       sodipodi:start="1.7975952"
+       sodipodi:end="4.1763713"
+       sodipodi:open="true"
+       transform="translate(23.392857,2.5)"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\WheelJoint.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
+  </g>
+</svg>
