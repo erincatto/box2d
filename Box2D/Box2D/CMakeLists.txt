@@ -203,5 +203,13 @@ if(BOX2D_INSTALL)
 
 	# install build system hooks for third-party apps
 	install(EXPORT Box2D-targets DESTINATION ${LIB_INSTALL_DIR}/Box2D)
-	install(FILES Box2DConfig.cmake DESTINATION ${LIB_INSTALL_DIR}/Box2D)
+
+        set (BOX2D_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include)
+        set (BOX2D_INCLUDE_DIRS ${BOX2D_INCLUDE_DIR} )
+        set (BOX2D_LIBRARY_DIRS ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR})
+        set (BOX2D_LIBRARY Box2D)
+        set (BOX2D_LIBRARIES ${BOX2D_LIBRARY})
+        set (BOX2D_USE_FILE ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}/cmake/Box2D/UseBox2D.cmake)
+        configure_file(Box2DConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/Box2DConfig.cmake @ONLY ESCAPE_QUOTES)
+        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Box2DConfig.cmake UseBox2D.cmake DESTINATION ${LIB_INSTALL_DIR}/cmake/Box2D)
 endif(BOX2D_INSTALL)
