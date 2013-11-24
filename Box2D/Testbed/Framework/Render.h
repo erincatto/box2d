@@ -22,6 +22,7 @@
 #include <Box2D/Box2D.h>
 
 struct b2AABB;
+struct GLFWwindow;
 
 // This class implements debug drawing callbacks that are invoked
 // inside b2World::Step.
@@ -47,6 +48,8 @@ public:
     void DrawString(const b2Vec2& p, const char* string, ...);
 
     void DrawAABB(b2AABB* aabb, const b2Color& color);
+
+	GLFWwindow* m_window;
 };
 
 

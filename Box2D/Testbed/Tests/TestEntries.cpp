@@ -19,12 +19,6 @@
 #include "../Framework/Test.h"
 #include "../Framework/Render.h"
 
-#ifdef __APPLE__
-	#include <GLUT/glut.h>
-#else
-	#include "freeglut/freeglut.h"
-#endif
-
 #include "AddPair.h"
 #include "ApplyForce.h"
 #include "BodyTypes.h"
@@ -77,6 +71,8 @@
 
 TestEntry g_testEntries[] =
 {
+	{"SphereStack", SphereStack::Create},
+	{ "Tumbler", Tumbler::Create },
 	{"Ray-Cast", RayCast::Create},
 	{"Dump Shell", DumpShell::Create},
 	{"Convex Hull", ConvexHull::Create},
@@ -90,7 +86,6 @@ TestEntry g_testEntries[] =
 	{"Conveyor Belt", ConveyorBelt::Create},
 	{"Gears", Gears::Create},
 	{"Varying Restitution", VaryingRestitution::Create},
-	{"Tumbler", Tumbler::Create},
 	{"Tiles", Tiles::Create},
 	{"Cantilever", Cantilever::Create},
 	{"Character Collision", CharacterCollision::Create},
@@ -100,7 +95,6 @@ TestEntry g_testEntries[] =
 	{"Car", Car::Create},
 	{"Prismatic", Prismatic::Create},
 	{"Vertical Stack", VerticalStack::Create},
-	{"SphereStack", SphereStack::Create},
 	{"Revolute", Revolute::Create},
 	{"Pulleys", Pulleys::Create},
 	{"Polygon Shapes", PolyShapes::Create},

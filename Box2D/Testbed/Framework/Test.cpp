@@ -290,10 +290,10 @@ void Test::Step(Settings* settings)
 	flags += settings->drawCOMs				* b2Draw::e_centerOfMassBit;
 	m_debugDraw.SetFlags(flags);
 
-	m_world->SetAllowSleeping(settings->enableSleep > 0);
-	m_world->SetWarmStarting(settings->enableWarmStarting > 0);
-	m_world->SetContinuousPhysics(settings->enableContinuous > 0);
-	m_world->SetSubStepping(settings->enableSubStepping > 0);
+	m_world->SetAllowSleeping(settings->enableSleep);
+	m_world->SetWarmStarting(settings->enableWarmStarting);
+	m_world->SetContinuousPhysics(settings->enableContinuous);
+	m_world->SetSubStepping(settings->enableSubStepping);
 
 	m_pointCount = 0;
 
