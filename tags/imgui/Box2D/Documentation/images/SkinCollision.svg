@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg5128"
+   version="1.1"
+   inkscape:version="0.48.1 "
+   sodipodi:docname="SkinCollision.svg">
+  <defs
+     id="defs5130" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="2.8"
+     inkscape:cx="381.27563"
+     inkscape:cy="514.51559"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1148"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata5133">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#d7e3f4;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;fill-opacity:1"
+       id="rect5140"
+       width="56.568542"
+       height="42.426407"
+       x="314.03363"
+       y="471.8606"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\SkinCollision.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
+    <path
+       sodipodi:type="inkscape:offset"
+       inkscape:radius="3.2142856"
+       inkscape:original="M 329.9375 406.5 L 329.9375 448.9375 L 386.5 448.9375 L 386.5 406.5 L 329.9375 406.5 z "
+       style="fill:none;stroke:#7d7d7d;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1, 3;stroke-dashoffset:0"
+       id="path5700"
+       d="M 329.9375,403.28125 A 3.214607,3.214607 0 0 0 326.71875,406.5 l 0,42.4375 a 3.214607,3.214607 0 0 0 3.21875,3.21875 l 56.5625,0 a 3.214607,3.214607 0 0 0 3.21875,-3.21875 l 0,-42.4375 A 3.214607,3.214607 0 0 0 386.5,403.28125 l -56.5625,0 z"
+       transform="translate(-15.980776,64.888322)"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\SkinCollision.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
+    <rect
+       style="fill:#d7e3f4;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;fill-opacity:1"
+       id="rect5138"
+       width="53.538086"
+       height="47.477169"
+       x="319.46075"
+       y="520.26434"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\SkinCollision.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
+    <path
+       sodipodi:type="inkscape:offset"
+       inkscape:radius="3.2926946"
+       inkscape:original="M 319.75 426.21875 L 319.75 473.6875 L 373.28125 473.6875 L 373.28125 426.21875 L 319.75 426.21875 z "
+       style="fill:none;stroke:#7d7d7d;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1, 3;stroke-dashoffset:0"
+       id="path5720"
+       d="m 319.40625,422.9375 a 3.2930238,3.2930238 0 0 0 -2.9375,3.28125 l 0,47.46875 a 3.2930238,3.2930238 0 0 0 3.28125,3.28125 l 53.53125,0 a 3.2930238,3.2930238 0 0 0 3.28125,-3.28125 l 0,-47.46875 a 3.2930238,3.2930238 0 0 0 -3.28125,-3.28125 l -53.53125,0 a 3.2930238,3.2930238 0 0 0 -0.34375,0 z"
+       transform="translate(-0.59098611,95.046407)"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\SkinCollision.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 181.82746,572.53972 313.14729,0"
+       id="path5136"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\SkinCollision.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
+    <rect
+       style="fill:none;stroke:#7d7d7d;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1,3;stroke-dashoffset:0"
+       id="rect5750"
+       width="321.26855"
+       height="6.0714283"
+       x="178.57143"
+       y="569.86218"
+       ry="3.0357141"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\SkinCollision.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Calibri;-inkscape-font-specification:Calibri"
+       x="393.9595"
+       y="501.07144"
+       id="text5770"
+       sodipodi:linespacing="125%"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\SkinCollision.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545"><tspan
+         sodipodi:role="line"
+         id="tspan5772"
+         x="393.9595"
+         y="501.07144">Polygons collide</tspan><tspan
+         sodipodi:role="line"
+         x="393.9595"
+         y="518.57141"
+         id="tspan5774">with their skin</tspan></text>
+  </g>
+</svg>
