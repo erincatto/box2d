@@ -27,8 +27,8 @@ public:
 		m_fixture = NULL;
 	}
 
-	float32 ReportFixture(	b2Fixture* fixture, const b2Vec2& point,
-		const b2Vec2& normal, float32 fraction)
+	float32 ReportFixture(b2Fixture* fixture, const b2Vec2& point,
+						  const b2Vec2& normal, float32 fraction)
 	{
 		m_fixture = fixture;
 		m_point = point;
@@ -75,12 +75,12 @@ public:
 		}
 
 		{
-			b2Vec2 vertices[3];
-			vertices[0].Set(-0.5f, 0.0f);
-			vertices[1].Set(0.5f, 0.0f);
-			vertices[2].Set(0.0f, 1.5f);
-			m_polygons[0].Set(vertices, 3);
-		}
+		b2Vec2 vertices[3];
+		vertices[0].Set(-0.5f, 0.0f);
+		vertices[1].Set(0.5f, 0.0f);
+		vertices[2].Set(0.0f, 1.5f);
+		m_polygons[0].Set(vertices, 3);
+	}
 
 		{
 			b2Vec2 vertices[3];
@@ -178,19 +178,19 @@ public:
 		}
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-			Create(key - '1');
+		case GLFW_KEY_1:
+		case GLFW_KEY_2:
+		case GLFW_KEY_3:
+		case GLFW_KEY_4:
+		case GLFW_KEY_5:
+			Create(key - GLFW_KEY_1);
 			break;
 
-		case 'd':
+		case GLFW_KEY_D:
 			DestroyBody();
 			break;
 		}

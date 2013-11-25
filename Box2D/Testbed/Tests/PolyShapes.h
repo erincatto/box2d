@@ -230,19 +230,19 @@ public:
 		}
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-			Create(key - '1');
+		case GLFW_KEY_1:
+		case GLFW_KEY_2:
+		case GLFW_KEY_3:
+		case GLFW_KEY_4:
+		case GLFW_KEY_5:
+			Create(key - GLFW_KEY_1);
 			break;
 
-		case 'a':
+		case GLFW_KEY_A:
 			for (int32 i = 0; i < e_maxBodies; i += 2)
 			{
 				if (m_bodies[i])
@@ -253,7 +253,7 @@ public:
 			}
 			break;
 
-		case 'd':
+		case GLFW_KEY_D:
 			DestroyBody();
 			break;
 		}

@@ -124,15 +124,15 @@ public:
 
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case 'l':
+		case GLFW_KEY_L:
 			m_joint->EnableLimit(!m_joint->IsLimitEnabled());
 			break;
 
-		case 'm':
+		case GLFW_KEY_M:
 			m_joint->EnableMotor(!m_joint->IsMotorEnabled());
 			break;
 		}

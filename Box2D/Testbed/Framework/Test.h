@@ -21,6 +21,8 @@
 
 #include <Box2D/Box2D.h>
 #include "Render.h"
+#include <glew/glew.h>
+#include <glfw/glfw3.h>
 
 #include <stdlib.h>
 
@@ -30,7 +32,7 @@ struct Settings;
 typedef Test* TestCreateFcn();
 
 #define	RAND_LIMIT	32767
-#define DRAW_STRING_NEW_LINE 25
+#define DRAW_STRING_NEW_LINE 16
 
 /// Random number in range [-1,1]
 inline float32 RandomFloat()
@@ -139,10 +141,11 @@ public:
 	Test();
 	virtual ~Test();
 
-    void DrawTitle(const char *string);
+	void SetWindow(GLFWwindow* window) { m_debugDraw.m_window = window; }
+	void DrawTitle(const char *string);
 	virtual void Step(Settings* settings);
-	virtual void Keyboard(unsigned char key) { B2_NOT_USED(key); }
-	virtual void KeyboardUp(unsigned char key) { B2_NOT_USED(key); }
+	virtual void Keyboard(int key) { B2_NOT_USED(key); }
+	virtual void KeyboardUp(int key) { B2_NOT_USED(key); }
 	void ShiftMouseDown(const b2Vec2& p);
 	virtual void MouseDown(const b2Vec2& p);
 	virtual void MouseUp(const b2Vec2& p);
