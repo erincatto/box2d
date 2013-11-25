@@ -118,16 +118,16 @@ public:
 		}
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case 'f':
+		case GLFW_KEY_F:
 			m_joint2->EnableMotor(!m_joint2->IsMotorEnabled());
 			m_joint2->GetBodyB()->SetAwake(true);
 			break;
 
-		case 'm':
+		case GLFW_KEY_M:
 			m_joint1->EnableMotor(!m_joint1->IsMotorEnabled());
 			m_joint1->GetBodyB()->SetAwake(true);
 			break;

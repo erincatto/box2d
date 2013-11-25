@@ -99,11 +99,11 @@ public:
 		}
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case 'j':
+		case GLFW_KEY_J:
 			if (m_rope)
 			{
 				m_world->DestroyJoint(m_rope);

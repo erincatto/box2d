@@ -17,7 +17,6 @@
 */
 
 #include "../Framework/Test.h"
-#include "../Framework/Render.h"
 
 #include "AddPair.h"
 #include "ApplyForce.h"
@@ -71,7 +70,7 @@
 
 TestEntry g_testEntries[] =
 {
-	{"SphereStack", SphereStack::Create},
+	{"Sphere Stack", SphereStack::Create},
 	{ "Tumbler", Tumbler::Create },
 	{"Ray-Cast", RayCast::Create},
 	{"Dump Shell", DumpShell::Create},

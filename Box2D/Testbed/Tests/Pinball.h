@@ -133,23 +133,21 @@ public:
 
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case 'a':
-		case 'A':
+		case GLFW_KEY_A:
 			m_button = true;
 			break;
 		}
 	}
 
-	void KeyboardUp(unsigned char key)
+	void KeyboardUp(int key)
 	{
 		switch (key)
 		{
-		case 'a':
-		case 'A':
+		case GLFW_KEY_A:
 			m_button = false;
 			break;
 		}
