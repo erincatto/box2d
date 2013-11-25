@@ -150,6 +150,9 @@ void DebugDraw::DrawPoint(const b2Vec2& p, float32 size, const b2Color& color)
 
 void DebugDraw::DrawString(int x, int y, const char *string, ...)
 {
+	int w, h;
+	glfwGetWindowSize(m_window, &w, &h);
+
 	char buffer[128];
 
 	va_list arg;
@@ -157,11 +160,14 @@ void DebugDraw::DrawString(int x, int y, const char *string, ...)
 	vsprintf(buffer, string, arg);
 	va_end(arg);
 
-	imguiDrawText(x, y, IMGUI_ALIGN_LEFT, buffer, imguiRGBA(32, 192, 32, 192));
+	imguiDrawText(x, h - y, IMGUI_ALIGN_LEFT, buffer, imguiRGBA(230, 153, 153, 255));
 }
 
 void DebugDraw::DrawString(const b2Vec2& p, const char *string, ...)
 {
+	int w, h;
+	glfwGetWindowSize(m_window, &w, &h);
+
 	char buffer[128];
 
 	va_list arg;
@@ -169,7 +175,7 @@ void DebugDraw::DrawString(const b2Vec2& p, const char *string, ...)
 	vsprintf(buffer, string, arg);
 	va_end(arg);
 
-	imguiDrawText((int)p.x, (int)p.y, IMGUI_ALIGN_LEFT, buffer, imguiRGBA(32, 192, 32, 192));
+	imguiDrawText((int)p.x, h - (int)p.y, IMGUI_ALIGN_LEFT, buffer, imguiRGBA(230, 153, 153, 255));
 }
 
 void DebugDraw::DrawAABB(b2AABB* aabb, const b2Color& c)

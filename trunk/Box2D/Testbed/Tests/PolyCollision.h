@@ -77,31 +77,31 @@ public:
 		}
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case 'a':
+		case GLFW_KEY_A:
 			m_positionB.x -= 0.1f;
 			break;
 
-		case 'd':
+		case GLFW_KEY_D:
 			m_positionB.x += 0.1f;
 			break;
 
-		case 's':
+		case GLFW_KEY_S:
 			m_positionB.y -= 0.1f;
 			break;
 
-		case 'w':
+		case GLFW_KEY_W:
 			m_positionB.y += 0.1f;
 			break;
 
-		case 'q':
+		case GLFW_KEY_Q:
 			m_angleB += 0.1f * b2_pi;
 			break;
 
-		case 'e':
+		case GLFW_KEY_E:
 			m_angleB -= 0.1f * b2_pi;
 			break;
 		}

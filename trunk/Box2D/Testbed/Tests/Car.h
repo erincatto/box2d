@@ -226,29 +226,29 @@ public:
 		}
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case 'a':
+		case GLFW_KEY_A:
 			m_spring1->SetMotorSpeed(m_speed);
 			break;
 
-		case 's':
+		case GLFW_KEY_S:
 			m_spring1->SetMotorSpeed(0.0f);
 			break;
 
-		case 'd':
+		case GLFW_KEY_D:
 			m_spring1->SetMotorSpeed(-m_speed);
 			break;
 
-		case 'q':
+		case GLFW_KEY_Q:
 			m_hz = b2Max(0.0f, m_hz - 1.0f);
 			m_spring1->SetSpringFrequencyHz(m_hz);
 			m_spring2->SetSpringFrequencyHz(m_hz);
 			break;
 
-		case 'e':
+		case GLFW_KEY_E:
 			m_hz += 1.0f;
 			m_spring1->SetSpringFrequencyHz(m_hz);
 			m_spring2->SetSpringFrequencyHz(m_hz);
