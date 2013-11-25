@@ -29,7 +29,7 @@
 struct UIState
 {
 	bool showMenu;
-	double scroll;
+	int scroll;
 	int scrollarea1;
 	bool mouseOverMenu;
 	bool chooseTest;
@@ -58,7 +58,7 @@ namespace
 static void sCreateUI()
 {
 	ui.showMenu = true;
-	ui.scroll = 0.0;
+	ui.scroll = 0;
 	ui.scrollarea1 = 0;
 	ui.chooseTest = false;
 	ui.mouseOverMenu = false;
@@ -189,6 +189,7 @@ static void sKeyCallback(GLFWwindow*, int key, int scancode, int action, int mod
 			// Reset test
 			delete test;
 			test = entry->createFcn();
+			test->SetWindow(mainWindow);
 			break;
 
 		case GLFW_KEY_SPACE:
@@ -307,7 +308,7 @@ static void sScrollCallback(GLFWwindow*, double, double dy)
 {
 	if (ui.mouseOverMenu)
 	{
-		ui.scroll = -dy;
+		ui.scroll = -int(dy);
 	}
 	else
 	{
@@ -328,6 +329,7 @@ static void sRestart()
 	delete test;
 	entry = g_testEntries + testIndex;
 	test = entry->createFcn();
+	test->SetWindow(mainWindow);
 	sResizeWindow(mainWindow, windowWidth, windowHeight);
 }
 
@@ -366,7 +368,7 @@ static void sSimulate()
 
 	test->Step(&settings);
 
-	//test->DrawTitle(entry->name);
+	test->DrawTitle(entry->name);
 
 	if (testSelection != testIndex)
 	{
@@ -374,6 +376,7 @@ static void sSimulate()
 		delete test;
 		entry = g_testEntries + testIndex;
 		test = entry->createFcn();
+		test->SetWindow(mainWindow);
 		viewZoom = 1.0f;
 		settings.viewCenter.Set(0.0f, 20.0f);
 	}
@@ -382,34 +385,8 @@ static void sSimulate()
 //
 static void sInterface()
 {
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_DEPTH_TEST);
-
-	unsigned char mousebutton = 0;
-	int mscroll = int(ui.scroll);
-	ui.scroll = 0;
-	int mousex; int mousey;
-
-	{
-		double xd, yd;
-		glfwGetCursorPos(mainWindow, &xd, &yd);
-		mousex = int(xd);
-		mousey = int(yd);
-	}
-
-	mousey = windowHeight - mousey;
-	int leftButton = glfwGetMouseButton(mainWindow, GLFW_MOUSE_BUTTON_LEFT);
-	int toggle = 0;
-	if (leftButton == GLFW_PRESS)
-		mousebutton |= IMGUI_MBUT_LEFT;
-
 	int menuWidth = 200;
-
 	ui.mouseOverMenu = false;
-
-	imguiBeginFrame(mousex, mousey, mousebutton, mscroll);
-
 	if (ui.showMenu)
 	{
 		bool over = imguiBeginScrollArea("Testbed Controls", windowWidth - menuWidth - 10, 10, menuWidth, windowHeight - 20, &ui.scrollarea1);
@@ -490,6 +467,7 @@ static void sInterface()
 				delete test;
 				entry = g_testEntries + i;
 				test = entry->createFcn();
+				test->SetWindow(mainWindow);
 				ui.chooseTest = false;
 			}
 		}
@@ -498,7 +476,7 @@ static void sInterface()
 	}
 
 	imguiEndFrame();
-	imguiRenderGLDraw(windowWidth, windowHeight);
+
 }
 
 //
@@ -548,6 +526,7 @@ int main(int argc, char** argv)
 
 	entry = g_testEntries + testIndex;
 	test = entry->createFcn();
+	test->SetWindow(mainWindow);
 
 	// Control the frame rate. One draw per monitor refresh.
 	glfwSwapInterval(1);
@@ -562,8 +541,29 @@ int main(int argc, char** argv)
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		unsigned char mousebutton = 0;
+		int mscroll = ui.scroll;
+		ui.scroll = 0;
+
+		double xd, yd;
+		glfwGetCursorPos(mainWindow, &xd, &yd);
+		int mousex = int(xd);
+		int mousey = int(yd);
+
+		mousey = windowHeight - mousey;
+		int leftButton = glfwGetMouseButton(mainWindow, GLFW_MOUSE_BUTTON_LEFT);
+		if (leftButton == GLFW_PRESS)
+			mousebutton |= IMGUI_MBUT_LEFT;
+
+		imguiBeginFrame(mousex, mousey, mousebutton, mscroll);
+
 		sSimulate();
 		sInterface();
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glDisable(GL_DEPTH_TEST);
+		imguiRenderGLDraw(windowWidth, windowHeight);
 
 		glfwSwapBuffers(mainWindow);
 

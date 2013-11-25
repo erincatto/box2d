@@ -48,11 +48,11 @@ public:
 		m_sensor = false;
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case 'c':
+		case GLFW_KEY_C:
 			if (m_fixture2 == NULL)
 			{
 				b2CircleShape shape;
@@ -63,7 +63,7 @@ public:
 			}
 			break;
 
-		case 'd':
+		case GLFW_KEY_D:
 			if (m_fixture2 != NULL)
 			{
 				m_body->DestroyFixture(m_fixture2);
@@ -72,7 +72,7 @@ public:
 			}
 			break;
 
-		case 's':
+		case GLFW_KEY_S:
 			if (m_fixture2 != NULL)
 			{
 				m_sensor = !m_sensor;

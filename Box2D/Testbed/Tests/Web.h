@@ -146,11 +146,11 @@ public:
 		}
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case 'b':
+		case GLFW_KEY_B:
 			for (int32 i = 0; i < 4; ++i)
 			{
 				if (m_bodies[i])
@@ -162,7 +162,7 @@ public:
 			}
 			break;
 
-		case 'j':
+		case GLFW_KEY_J:
 			for (int32 i = 0; i < 8; ++i)
 			{
 				if (m_joints[i])

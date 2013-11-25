@@ -102,11 +102,11 @@ public:
 		body->CreateFixture(&fd);
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case 'c':
+		case GLFW_KEY_C:
 			CreateCircle();
 			break;
 		}

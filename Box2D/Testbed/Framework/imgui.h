@@ -24,20 +24,20 @@
 
 enum imguiMouseButton
 {
-        IMGUI_MBUT_LEFT = 0x01, 
-        IMGUI_MBUT_RIGHT = 0x02, 
+	IMGUI_MBUT_LEFT = 0x01,
+	IMGUI_MBUT_RIGHT = 0x02,
 };
 
 enum imguiTextAlign
 {
-        IMGUI_ALIGN_LEFT,
-        IMGUI_ALIGN_CENTER,
-        IMGUI_ALIGN_RIGHT,
+	IMGUI_ALIGN_LEFT,
+	IMGUI_ALIGN_CENTER,
+	IMGUI_ALIGN_RIGHT,
 };
 
-inline unsigned int imguiRGBA(unsigned char r, unsigned char g, unsigned char b, unsigned char a=255)
+inline unsigned int imguiRGBA(unsigned char r, unsigned char g, unsigned char b, unsigned char a = 255)
 {
-        return (r) | (g << 8) | (b << 16) | (a << 24);
+	return (r) | (g << 8) | (b << 16) | (a << 24);
 }
 
 void imguiBeginFrame(int mx, int my, unsigned char mbut, int scroll);
@@ -68,41 +68,41 @@ void imguiDrawRect(float x, float y, float w, float h, unsigned int color);
 // Pull render interface.
 enum imguiGfxCmdType
 {
-        IMGUI_GFXCMD_RECT,
-        IMGUI_GFXCMD_TRIANGLE,
-        IMGUI_GFXCMD_LINE,
-        IMGUI_GFXCMD_TEXT,
-        IMGUI_GFXCMD_SCISSOR,
+	IMGUI_GFXCMD_RECT,
+	IMGUI_GFXCMD_TRIANGLE,
+	IMGUI_GFXCMD_LINE,
+	IMGUI_GFXCMD_TEXT,
+	IMGUI_GFXCMD_SCISSOR,
 };
 
 struct imguiGfxRect
 {
-        short x,y,w,h,r;
+	short x, y, w, h, r;
 };
 
 struct imguiGfxText
 {
-        short x,y,align;
-        const char* text;
+	short x, y, align;
+	const char* text;
 };
 
 struct imguiGfxLine
 {
-        short x0,y0,x1,y1,r;
+	short x0, y0, x1, y1, r;
 };
 
 struct imguiGfxCmd
 {
-        char type;
-        char flags;
-        char pad[2];
-        unsigned int col;
-        union
-        {
-                imguiGfxLine line;
-                imguiGfxRect rect;
-                imguiGfxText text;
-        };
+	char type;
+	char flags;
+	char pad[2];
+	unsigned int col;
+	union
+	{
+		imguiGfxLine line;
+		imguiGfxRect rect;
+		imguiGfxText text;
+	};
 };
 
 const imguiGfxCmd* imguiGetRenderQueue();
