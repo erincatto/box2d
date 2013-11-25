@@ -82,11 +82,11 @@ public:
 		m_bullet = NULL;
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case ',':
+		case GLFW_KEY_COMMA:
 			if (m_bullet != NULL)
 			{
 				m_world->DestroyBody(m_bullet);

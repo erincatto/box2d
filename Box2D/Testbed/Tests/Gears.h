@@ -145,15 +145,6 @@ public:
 		}
 	}
 
-	void Keyboard(unsigned char key)
-	{
-		switch (key)
-		{
-		case 0:
-			break;
-		}
-	}
-
 	void Step(Settings* settings)
 	{
 		Test::Step(settings);

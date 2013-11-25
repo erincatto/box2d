@@ -68,11 +68,11 @@ public:
 		m_time = 0.0f;
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case 's':
+		case GLFW_KEY_S:
 			m_go = !m_go;
 			break;
 		}

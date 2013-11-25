@@ -143,11 +143,11 @@ public:
 		}
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case 'w':
+		case GLFW_KEY_W:
 			{
 				b2Vec2 f = m_body->GetWorldVector(b2Vec2(0.0f, -200.0f));
 				b2Vec2 p = m_body->GetWorldPoint(b2Vec2(0.0f, 2.0f));
@@ -155,13 +155,13 @@ public:
 			}
 			break;
 
-		case 'a':
+		case GLFW_KEY_A:
 			{
 				m_body->ApplyTorque(50.0f, true);
 			}
 			break;
 
-		case 'd':
+		case GLFW_KEY_D:
 			{
 				m_body->ApplyTorque(-50.0f, true);
 			}

@@ -218,23 +218,23 @@ public:
 		Test::Step(settings);
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case 'a':
+		case GLFW_KEY_A:
 			m_motorJoint->SetMotorSpeed(-m_motorSpeed);
 			break;
 
-		case 's':
+		case GLFW_KEY_S:
 			m_motorJoint->SetMotorSpeed(0.0f);
 			break;
 
-		case 'd':
+		case GLFW_KEY_D:
 			m_motorJoint->SetMotorSpeed(m_motorSpeed);
 			break;
 
-		case 'm':
+		case GLFW_KEY_M:
 			m_motorJoint->EnableMotor(!m_motorJoint->IsMotorEnabled());
 			break;
 		}
