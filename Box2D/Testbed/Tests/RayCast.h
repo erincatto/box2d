@@ -302,24 +302,24 @@ public:
 		}
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-			Create(key - '1');
+		case GLFW_KEY_1:
+		case GLFW_KEY_2:
+		case GLFW_KEY_3:
+		case GLFW_KEY_4:
+		case GLFW_KEY_5:
+		case GLFW_KEY_6:
+			Create(key - GLFW_KEY_1);
 			break;
 
-		case 'd':
+		case GLFW_KEY_D:
 			DestroyBody();
 			break;
 
-		case 'm':
+		case GLFW_KEY_M:
 			if (m_mode == e_closest)
 			{
 				m_mode = e_any;

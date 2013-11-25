@@ -135,23 +135,23 @@ public:
 		++m_stepCount;
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case 'a':
+		case GLFW_KEY_A:
 			m_automated = !m_automated;
 			break;
 
-		case 'c':
+		case GLFW_KEY_C:
 			CreateProxy();
 			break;
 
-		case 'd':
+		case GLFW_KEY_D:
 			DestroyProxy();
 			break;
 
-		case 'm':
+		case GLFW_KEY_M:
 			MoveProxy();
 			break;
 		}
