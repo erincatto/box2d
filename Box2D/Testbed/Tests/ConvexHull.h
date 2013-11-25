@@ -51,13 +51,6 @@ public:
 		}
 
 		m_count = e_count;
-
-		m_points[0].Set( -1.70082211f,  -1.43221712f );
-		m_points[1].Set(  0.5f,         -0.5f );
-		m_points[2].Set(  0.104992867f,  0.97400856f );
-		m_points[3].Set( -0.658002853f,  0.926608086f );
-		m_points[4].Set( -0.994554818f,  0.165337861f );
-		m_count = 5;
 	}
 
 	static Test* Create()
@@ -65,15 +58,15 @@ public:
 		return new ConvexHull;
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key)
 	{
 		switch (key)
 		{
-		case 'a':
+		case GLFW_KEY_A:
 			m_auto = !m_auto;
 			break;
 
-		case 'g':
+		case GLFW_KEY_G:
 			Generate();
 			break;
 		}

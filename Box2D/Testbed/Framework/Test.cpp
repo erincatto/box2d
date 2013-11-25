@@ -100,7 +100,7 @@ void Test::PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
 void Test::DrawTitle(const char *string)
 {
     m_debugDraw.DrawString(5, DRAW_STRING_NEW_LINE, string);
-    m_textLine = 2 * DRAW_STRING_NEW_LINE;
+    m_textLine = 3 * DRAW_STRING_NEW_LINE;
 }
 
 class QueryCallback : public b2QueryCallback
