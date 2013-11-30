@@ -16,14 +16,14 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "Render.h"
+#include "DebugDraw.h"
 
 #include <glew/glew.h>
 #include <glfw/glfw3.h>
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "imguiRenderGL3.h"
+#include "RenderGL3.h"
 
 void DebugDraw::DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color)
 {
