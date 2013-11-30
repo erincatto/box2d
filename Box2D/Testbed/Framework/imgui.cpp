@@ -23,7 +23,7 @@
 //#define _USE_MATH_DEFINES
 #include <math.h>
 #include "imgui.h"
-#include "imguiRenderGL3.h"
+#include "RenderGL3.h"
 
 #ifdef _MSC_VER
 #define snprintf _snprintf

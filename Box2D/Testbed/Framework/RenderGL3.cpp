@@ -30,7 +30,7 @@
 #include <GL/gl.h>
 #endif
 
-#include "imguiRenderGL3.h"
+#include "RenderGL3.h"
 
 // Some math headers don't have PI defined.
 static const float PI = 3.14159265f;
