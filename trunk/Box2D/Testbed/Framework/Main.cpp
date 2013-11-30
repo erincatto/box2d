@@ -17,8 +17,8 @@
 */
 
 #include "imgui.h"
-#include "imguiRenderGL3.h"
-#include "Render.h"
+#include "RenderGL3.h"
+#include "DebugDraw.h"
 #include "Test.h"
 
 #include <glew/glew.h>

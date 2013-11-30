@@ -9,9 +9,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Testbed\Framework\Render.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Testbed\Framework\Test.h">
       <Filter>Framework</Filter>
     </ClInclude>
@@ -168,18 +165,18 @@
     <ClInclude Include="..\..\Testbed\Framework\imgui.h">
       <Filter>Framework</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Testbed\Framework\imguiRenderGL3.h">
+    <ClInclude Include="..\..\Testbed\Framework\stb_truetype.h">
       <Filter>Framework</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Testbed\Framework\stb_truetype.h">
+    <ClInclude Include="..\..\Testbed\Framework\RenderGL3.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Testbed\Framework\DebugDraw.h">
       <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Testbed\Framework\Main.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Testbed\Framework\Render.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Testbed\Framework\Test.cpp">
@@ -191,7 +188,10 @@
     <ClCompile Include="..\..\Testbed\Framework\imgui.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Testbed\Framework\imguiRenderGL3.cpp">
+    <ClCompile Include="..\..\Testbed\Framework\RenderGL3.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Testbed\Framework\DebugDraw.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
   </ItemGroup>
