@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "imgui.h"
+#include "imguiRenderGL3.h"
 
 void DebugDraw::DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color)
 {
@@ -160,7 +160,7 @@ void DebugDraw::DrawString(int x, int y, const char *string, ...)
 	vsprintf(buffer, string, arg);
 	va_end(arg);
 
-	imguiDrawText(x, h - y, IMGUI_ALIGN_LEFT, buffer, imguiRGBA(230, 153, 153, 255));
+	addGfxCmdText(float(x), float(h - y), IMGUI_ALIGN_LEFT, buffer, SetRGBA(230, 153, 153, 255));
 }
 
 void DebugDraw::DrawString(const b2Vec2& p, const char *string, ...)
@@ -175,7 +175,7 @@ void DebugDraw::DrawString(const b2Vec2& p, const char *string, ...)
 	vsprintf(buffer, string, arg);
 	va_end(arg);
 
-	imguiDrawText((int)p.x, h - (int)p.y, IMGUI_ALIGN_LEFT, buffer, imguiRGBA(230, 153, 153, 255));
+	addGfxCmdText(p.x, h - p.y, IMGUI_ALIGN_LEFT, buffer, SetRGBA(230, 153, 153, 255));
 }
 
 void DebugDraw::DrawAABB(b2AABB* aabb, const b2Color& c)
