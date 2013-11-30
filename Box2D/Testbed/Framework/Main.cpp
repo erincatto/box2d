@@ -64,7 +64,7 @@ static void sCreateUI()
 	ui.mouseOverMenu = false;
 
 	// Init UI
-	if (!imguiRenderGLInit("DroidSans.ttf"))
+	if (!RenderGLInit("DroidSans.ttf"))
 	{
 		fprintf(stderr, "Could not init GUI renderer.\n");
 		assert(false);
@@ -96,6 +96,29 @@ static b2Vec2 sConvertScreenToWorld(int32 x, int32 y)
 	p.x = (1.0f - u) * lower.x + u * upper.x;
 	p.y = (1.0f - v) * lower.y + v * upper.y;
 	return p;
+}
+
+//
+static inline int32 FloatToInt(float32 x)
+{
+	return x >= 0.0f ? (int32)(x + 0.5f) : (int32)(x + 0.5f);
+}
+
+//
+static void sConvertWorldToScreen(int32* x, int32* y, const b2Vec2& p)
+{
+	float32 ratio = float32(windowWidth) / float32(windowHeight);
+	b2Vec2 extents(ratio * 25.0f, 25.0f);
+	extents *= viewZoom;
+
+	b2Vec2 lower = settings.viewCenter - extents;
+	b2Vec2 upper = settings.viewCenter + extents;
+
+	float32 u = (p.x - lower.x) / (upper.x - lower.x);
+	float32 v = (p.y - lower.y) / (upper.y - lower.y);
+
+	*x = FloatToInt(u * windowWidth);
+	*y = windowHeight - FloatToInt(v * windowHeight);
 }
 
 //
@@ -563,14 +586,14 @@ int main(int argc, char** argv)
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_DEPTH_TEST);
-		imguiRenderGLDraw(windowWidth, windowHeight);
+		RenderGLFlush(windowWidth, windowHeight);
 
 		glfwSwapBuffers(mainWindow);
 
 		glfwPollEvents();
 	}
 
-	imguiRenderGLDestroy();
+	RenderGLDestroy();
 	glfwTerminate();
 
 	return 0;
