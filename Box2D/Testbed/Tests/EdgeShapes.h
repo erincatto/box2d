@@ -201,7 +201,7 @@ public:
 		bool advanceRay = settings->pause == 0 || settings->singleStep;
 
 		Test::Step(settings);
-		m_debugDraw.DrawString(5, m_textLine, "Press 1-5 to drop stuff");
+		g_debugDraw.DrawString(5, m_textLine, "Press 1-5 to drop stuff");
 		m_textLine += DRAW_STRING_NEW_LINE;
 
 		float32 L = 25.0f;
@@ -215,16 +215,16 @@ public:
 
 		if (callback.m_fixture)
 		{
-			m_debugDraw.DrawPoint(callback.m_point, 5.0f, b2Color(0.4f, 0.9f, 0.4f));
+			g_debugDraw.DrawPoint(callback.m_point, 5.0f, b2Color(0.4f, 0.9f, 0.4f));
 
-			m_debugDraw.DrawSegment(point1, callback.m_point, b2Color(0.8f, 0.8f, 0.8f));
+			g_debugDraw.DrawSegment(point1, callback.m_point, b2Color(0.8f, 0.8f, 0.8f));
 
 			b2Vec2 head = callback.m_point + 0.5f * callback.m_normal;
-			m_debugDraw.DrawSegment(callback.m_point, head, b2Color(0.9f, 0.9f, 0.4f));
+			g_debugDraw.DrawSegment(callback.m_point, head, b2Color(0.9f, 0.9f, 0.4f));
 		}
 		else
 		{
-			m_debugDraw.DrawSegment(point1, point2, b2Color(0.8f, 0.8f, 0.8f));
+			g_debugDraw.DrawSegment(point1, point2, b2Color(0.8f, 0.8f, 0.8f));
 		}
 
 		if (advanceRay)

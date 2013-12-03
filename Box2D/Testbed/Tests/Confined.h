@@ -154,7 +154,7 @@ public:
 			}
 		}
 
-		m_debugDraw.DrawString(5, m_textLine, "Press 'c' to create a circle.");
+		g_debugDraw.DrawString(5, m_textLine, "Press 'c' to create a circle.");
 		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 

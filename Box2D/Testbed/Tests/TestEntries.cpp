@@ -70,11 +70,11 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Convex Hull", ConvexHull::Create},
 	{"Sphere Stack", SphereStack::Create},
-	{ "Tumbler", Tumbler::Create },
+	{"Tumbler", Tumbler::Create},
 	{"Ray-Cast", RayCast::Create},
 	{"Dump Shell", DumpShell::Create},
-	{"Convex Hull", ConvexHull::Create},
 	{"Apply Force", ApplyForce::Create},
 	{"Continuous Test", ContinuousTest::Create},
 	{"Time of Impact", TimeOfImpact::Create},

@@ -65,11 +65,11 @@ public:
 
 		b2TimeOfImpact(&output, &input);
 
-		m_debugDraw.DrawString(5, m_textLine, "toi = %g", output.t);
+		g_debugDraw.DrawString(5, m_textLine, "toi = %g", output.t);
 		m_textLine += DRAW_STRING_NEW_LINE;
 
 		extern int32 b2_toiMaxIters, b2_toiMaxRootIters;
-		m_debugDraw.DrawString(5, m_textLine, "max toi iters = %d, max root iters = %d", b2_toiMaxIters, b2_toiMaxRootIters);
+		g_debugDraw.DrawString(5, m_textLine, "max toi iters = %d, max root iters = %d", b2_toiMaxIters, b2_toiMaxRootIters);
 		m_textLine += DRAW_STRING_NEW_LINE;
 
 		b2Vec2 vertices[b2_maxPolygonVertices];
@@ -80,7 +80,7 @@ public:
 		{
 			vertices[i] = b2Mul(transformA, m_shapeA.m_vertices[i]);
 		}
-		m_debugDraw.DrawPolygon(vertices, m_shapeA.m_count, b2Color(0.9f, 0.9f, 0.9f));
+		g_debugDraw.DrawPolygon(vertices, m_shapeA.m_count, b2Color(0.9f, 0.9f, 0.9f));
 
 		b2Transform transformB;
 		sweepB.GetTransform(&transformB, 0.0f);
@@ -91,21 +91,21 @@ public:
 		{
 			vertices[i] = b2Mul(transformB, m_shapeB.m_vertices[i]);
 		}
-		m_debugDraw.DrawPolygon(vertices, m_shapeB.m_count, b2Color(0.5f, 0.9f, 0.5f));
+		g_debugDraw.DrawPolygon(vertices, m_shapeB.m_count, b2Color(0.5f, 0.9f, 0.5f));
 
 		sweepB.GetTransform(&transformB, output.t);
 		for (int32 i = 0; i < m_shapeB.m_count; ++i)
 		{
 			vertices[i] = b2Mul(transformB, m_shapeB.m_vertices[i]);
 		}
-		m_debugDraw.DrawPolygon(vertices, m_shapeB.m_count, b2Color(0.5f, 0.7f, 0.9f));
+		g_debugDraw.DrawPolygon(vertices, m_shapeB.m_count, b2Color(0.5f, 0.7f, 0.9f));
 
 		sweepB.GetTransform(&transformB, 1.0f);
 		for (int32 i = 0; i < m_shapeB.m_count; ++i)
 		{
 			vertices[i] = b2Mul(transformB, m_shapeB.m_vertices[i]);
 		}
-		m_debugDraw.DrawPolygon(vertices, m_shapeB.m_count, b2Color(0.9f, 0.5f, 0.5f));
+		g_debugDraw.DrawPolygon(vertices, m_shapeB.m_count, b2Color(0.9f, 0.5f, 0.5f));
 
 #if 0
 		for (float32 t = 0.0f; t < 1.0f; t += 0.1f)
@@ -115,7 +115,7 @@ public:
 			{
 				vertices[i] = b2Mul(transformB, m_shapeB.m_vertices[i]);
 			}
-			m_debugDraw.DrawPolygon(vertices, m_shapeB.m_count, b2Color(0.9f, 0.5f, 0.5f));
+			g_debugDraw.DrawPolygon(vertices, m_shapeB.m_count, b2Color(0.9f, 0.5f, 0.5f));
 		}
 #endif
 	}

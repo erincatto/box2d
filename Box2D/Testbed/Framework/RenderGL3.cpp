@@ -35,32 +35,17 @@
 // Some math headers don't have PI defined.
 static const float PI = 3.14159265f;
 
-void imguifree(void* ptr, void* userptr);
-void* imguimalloc(size_t size, void* userptr);
-
-#define STBTT_malloc(x,y)    imguimalloc(x,y)
-#define STBTT_free(x,y)      imguifree(x,y)
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
-
-void imguifree(void* ptr, void* /*userptr*/)
-{
-	free(ptr);
-}
-
-void* imguimalloc(size_t size, void* /*userptr*/)
-{
-	return malloc(size);
-}
 
 // Pull render interface.
 enum GfxCmdType
 {
-	IMGUI_GFXCMD_RECT,
-	IMGUI_GFXCMD_TRIANGLE,
-	IMGUI_GFXCMD_LINE,
-	IMGUI_GFXCMD_TEXT,
-	IMGUI_GFXCMD_SCISSOR,
+	GFXCMD_RECT,
+	GFXCMD_TRIANGLE,
+	GFXCMD_LINE,
+	GFXCMD_TEXT,
+	GFXCMD_SCISSOR,
 };
 
 struct GfxRect
@@ -113,10 +98,10 @@ static GLuint g_program = 0;
 static GLuint g_programViewportLocation = 0;
 static GLuint g_programTextureLocation = 0;
 
-inline unsigned int RGBA(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
-{
-	return (r) | (g << 8) | (b << 16) | (a << 24);
-}
+//inline unsigned int RGBA(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+//{
+//	return (r) | (g << 8) | (b << 16) | (a << 24);
+//}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -144,12 +129,12 @@ static void resetGfxCmdQueue()
 	g_textPoolSize = 0;
 }
 
-void addGfxCmdScissor(int x, int y, int w, int h)
+void AddGfxCmdScissor(int x, int y, int w, int h)
 {
 	if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
 		return;
 	GfxCmd& cmd = g_gfxCmdQueue[g_gfxCmdQueueSize++];
-	cmd.type = IMGUI_GFXCMD_SCISSOR;
+	cmd.type = GFXCMD_SCISSOR;
 	cmd.flags = x < 0 ? 0 : 1;      // on/off flag.
 	cmd.col = 0;
 	cmd.rect.x = (short)x;
@@ -158,12 +143,12 @@ void addGfxCmdScissor(int x, int y, int w, int h)
 	cmd.rect.h = (short)h;
 }
 
-void addGfxCmdRect(float x, float y, float w, float h, unsigned int color)
+void AddGfxCmdRect(float x, float y, float w, float h, unsigned int color)
 {
 	if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
 		return;
 	GfxCmd& cmd = g_gfxCmdQueue[g_gfxCmdQueueSize++];
-	cmd.type = IMGUI_GFXCMD_RECT;
+	cmd.type = GFXCMD_RECT;
 	cmd.flags = 0;
 	cmd.col = color;
 	cmd.rect.x = (short)(x*8.0f);
@@ -173,12 +158,12 @@ void addGfxCmdRect(float x, float y, float w, float h, unsigned int color)
 	cmd.rect.r = 0;
 }
 
-void addGfxCmdLine(float x0, float y0, float x1, float y1, float r, unsigned int color)
+void AddGfxCmdLine(float x0, float y0, float x1, float y1, float r, unsigned int color)
 {
 	if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
 		return;
 	GfxCmd& cmd = g_gfxCmdQueue[g_gfxCmdQueueSize++];
-	cmd.type = IMGUI_GFXCMD_LINE;
+	cmd.type = GFXCMD_LINE;
 	cmd.flags = 0;
 	cmd.col = color;
 	cmd.line.x0 = (short)(x0*8.0f);
@@ -188,12 +173,12 @@ void addGfxCmdLine(float x0, float y0, float x1, float y1, float r, unsigned int
 	cmd.line.r = (short)(r*8.0f);
 }
 
-void addGfxCmdRoundedRect(float x, float y, float w, float h, float r, unsigned int color)
+void AddGfxCmdRoundedRect(float x, float y, float w, float h, float r, unsigned int color)
 {
 	if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
 		return;
 	GfxCmd& cmd = g_gfxCmdQueue[g_gfxCmdQueueSize++];
-	cmd.type = IMGUI_GFXCMD_RECT;
+	cmd.type = GFXCMD_RECT;
 	cmd.flags = 0;
 	cmd.col = color;
 	cmd.rect.x = (short)(x*8.0f);
@@ -203,12 +188,12 @@ void addGfxCmdRoundedRect(float x, float y, float w, float h, float r, unsigned 
 	cmd.rect.r = (short)(r*8.0f);
 }
 
-void addGfxCmdTriangle(int x, int y, int w, int h, int flags, unsigned int color)
+void AddGfxCmdTriangle(int x, int y, int w, int h, int flags, unsigned int color)
 {
 	if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
 		return;
 	GfxCmd& cmd = g_gfxCmdQueue[g_gfxCmdQueueSize++];
-	cmd.type = IMGUI_GFXCMD_TRIANGLE;
+	cmd.type = GFXCMD_TRIANGLE;
 	cmd.flags = (char)flags;
 	cmd.col = color;
 	cmd.rect.x = (short)(x*8.0f);
@@ -218,12 +203,12 @@ void addGfxCmdTriangle(int x, int y, int w, int h, int flags, unsigned int color
 }
 
 //
-void addGfxCmdText(float x, float y, TextAlign align, const char* text, unsigned int color)
+void AddGfxCmdText(float x, float y, TextAlign align, const char* text, unsigned int color)
 {
 	if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
 		return;
 	GfxCmd& cmd = g_gfxCmdQueue[g_gfxCmdQueueSize++];
-	cmd.type = IMGUI_GFXCMD_TEXT;
+	cmd.type = GFXCMD_TEXT;
 	cmd.flags = 0;
 	cmd.col = color;
 	cmd.text.x = x;
@@ -233,9 +218,9 @@ void addGfxCmdText(float x, float y, TextAlign align, const char* text, unsigned
 }
 
 //
-void addGfxCmdText(int x, int y, TextAlign align, const char* text, unsigned int color)
+void AddGfxCmdText(int x, int y, TextAlign align, const char* text, unsigned int color)
 {
-	addGfxCmdText(float(x), float(y), align, text, color);
+	AddGfxCmdText(float(x), float(y), align, text, color);
 }
 
 //
@@ -700,9 +685,9 @@ void sRenderString(float x, float y, const char *text, TextAlign align, unsigned
 	if (!g_ftex) return;
 	if (!text) return;
 
-	if (align == IMGUI_ALIGN_CENTER)
+	if (align == TEXT_ALIGN_CENTER)
 		x -= getTextLength(g_cdata, text) / 2;
-	else if (align == IMGUI_ALIGN_RIGHT)
+	else if (align == TEXT_ALIGN_RIGHT)
 		x -= getTextLength(g_cdata, text);
 
 	float r = (float)(col & 0xff) / 255.f;
@@ -792,7 +777,7 @@ void RenderGLFlush(int width, int height)
 	for (int i = 0; i < nq; ++i)
 	{
 		const GfxCmd& cmd = q[i];
-		if (cmd.type == IMGUI_GFXCMD_RECT)
+		if (cmd.type == GFXCMD_RECT)
 		{
 			if (cmd.rect.r == 0)
 			{
@@ -807,11 +792,11 @@ void RenderGLFlush(int width, int height)
 								(float)cmd.rect.r*s, 1.0f, cmd.col);
 			}
 		}
-		else if (cmd.type == IMGUI_GFXCMD_LINE)
+		else if (cmd.type == GFXCMD_LINE)
 		{
 			sRenderLine(cmd.line.x0*s, cmd.line.y0*s, cmd.line.x1*s, cmd.line.y1*s, cmd.line.r*s, 1.0f, cmd.col);
 		}
-		else if (cmd.type == IMGUI_GFXCMD_TRIANGLE)
+		else if (cmd.type == GFXCMD_TRIANGLE)
 		{
 			if (cmd.flags == 1)
 			{
@@ -834,11 +819,11 @@ void RenderGLFlush(int width, int height)
 				sDrawPolygon(verts, 3, 1.0f, cmd.col);
 			}
 		}
-		else if (cmd.type == IMGUI_GFXCMD_TEXT)
+		else if (cmd.type == GFXCMD_TEXT)
 		{
 			sRenderString(cmd.text.x, cmd.text.y, cmd.text.text, cmd.text.align, cmd.col);
 		}
-		else if (cmd.type == IMGUI_GFXCMD_SCISSOR)
+		else if (cmd.type == GFXCMD_SCISSOR)
 		{
 			if (cmd.flags)
 			{
@@ -857,40 +842,3 @@ void RenderGLFlush(int width, int height)
 	resetGfxCmdQueue();
 }
 
-//
-b2Vec2 Camera::ConvertScreenToWorld(const b2Vec2& ps)
-{
-	float32 u = ps.x / m_width;
-	float32 v = (m_height - ps.y) / m_height;
-
-	float32 ratio = m_width / m_height;
-	b2Vec2 extents(ratio * 25.0f, 25.0f);
-	extents *= m_zoom;
-
-	b2Vec2 lower = m_center - extents;
-	b2Vec2 upper = m_center + extents;
-
-	b2Vec2 pw;
-	pw.x = (1.0f - u) * lower.x + u * upper.x;
-	pw.y = (1.0f - v) * lower.y + v * upper.y;
-	return pw;
-}
-
-//
-b2Vec2 Camera::ConvertWorldToScreen(const b2Vec2& pw)
-{
-	float32 ratio = m_width / m_height;
-	b2Vec2 extents(ratio * 25.0f, 25.0f);
-	extents *= m_zoom;
-
-	b2Vec2 lower = m_center - extents;
-	b2Vec2 upper = m_center + extents;
-
-	float32 u = (pw.x - lower.x) / (upper.x - lower.x);
-	float32 v = (pw.y - lower.y) / (upper.y - lower.y);
-
-	b2Vec2 ps;
-	ps.x = u * m_width;
-	ps.y = (1.0f - v) * m_height;
-	return ps;
-}
