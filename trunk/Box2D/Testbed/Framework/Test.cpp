@@ -44,7 +44,7 @@ Test::Test()
 	m_destructionListener.test = this;
 	m_world->SetDestructionListener(&m_destructionListener);
 	m_world->SetContactListener(this);
-	m_world->SetDebugDraw(&m_debugDraw);
+	m_world->SetDebugDraw(&g_debugDraw);
 	
 	m_bombSpawning = false;
 
@@ -99,7 +99,7 @@ void Test::PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
 
 void Test::DrawTitle(const char *string)
 {
-    m_debugDraw.DrawString(5, DRAW_STRING_NEW_LINE, string);
+    g_debugDraw.DrawString(5, DRAW_STRING_NEW_LINE, string);
     m_textLine = 3 * DRAW_STRING_NEW_LINE;
 }
 
@@ -279,7 +279,7 @@ void Test::Step(Settings* settings)
 			timeStep = 0.0f;
 		}
 
-		m_debugDraw.DrawString(5, m_textLine, "****PAUSED****");
+		g_debugDraw.DrawString(5, m_textLine, "****PAUSED****");
 		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
@@ -288,7 +288,7 @@ void Test::Step(Settings* settings)
 	flags += settings->drawJoints			* b2Draw::e_jointBit;
 	flags += settings->drawAABBs			* b2Draw::e_aabbBit;
 	flags += settings->drawCOMs				* b2Draw::e_centerOfMassBit;
-	m_debugDraw.SetFlags(flags);
+	g_debugDraw.SetFlags(flags);
 
 	m_world->SetAllowSleeping(settings->enableSleep);
 	m_world->SetWarmStarting(settings->enableWarmStarting);
@@ -311,14 +311,14 @@ void Test::Step(Settings* settings)
 		int32 bodyCount = m_world->GetBodyCount();
 		int32 contactCount = m_world->GetContactCount();
 		int32 jointCount = m_world->GetJointCount();
-		m_debugDraw.DrawString(5, m_textLine, "bodies/contacts/joints = %d/%d/%d", bodyCount, contactCount, jointCount);
+		g_debugDraw.DrawString(5, m_textLine, "bodies/contacts/joints = %d/%d/%d", bodyCount, contactCount, jointCount);
 		m_textLine += DRAW_STRING_NEW_LINE;
 
 		int32 proxyCount = m_world->GetProxyCount();
 		int32 height = m_world->GetTreeHeight();
 		int32 balance = m_world->GetTreeBalance();
 		float32 quality = m_world->GetTreeQuality();
-		m_debugDraw.DrawString(5, m_textLine, "proxies/height/balance/quality = %d/%d/%d/%g", proxyCount, height, balance, quality);
+		g_debugDraw.DrawString(5, m_textLine, "proxies/height/balance/quality = %d/%d/%d/%g", proxyCount, height, balance, quality);
 		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
@@ -363,21 +363,21 @@ void Test::Step(Settings* settings)
 			aveProfile.broadphase = scale * m_totalProfile.broadphase;
 		}
 
-		m_debugDraw.DrawString(5, m_textLine, "step [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.step, aveProfile.step, m_maxProfile.step);
+		g_debugDraw.DrawString(5, m_textLine, "step [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.step, aveProfile.step, m_maxProfile.step);
 		m_textLine += DRAW_STRING_NEW_LINE;
-		m_debugDraw.DrawString(5, m_textLine, "collide [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.collide, aveProfile.collide, m_maxProfile.collide);
+		g_debugDraw.DrawString(5, m_textLine, "collide [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.collide, aveProfile.collide, m_maxProfile.collide);
 		m_textLine += DRAW_STRING_NEW_LINE;
-		m_debugDraw.DrawString(5, m_textLine, "solve [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solve, aveProfile.solve, m_maxProfile.solve);
+		g_debugDraw.DrawString(5, m_textLine, "solve [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solve, aveProfile.solve, m_maxProfile.solve);
 		m_textLine += DRAW_STRING_NEW_LINE;
-		m_debugDraw.DrawString(5, m_textLine, "solve init [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveInit, aveProfile.solveInit, m_maxProfile.solveInit);
+		g_debugDraw.DrawString(5, m_textLine, "solve init [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveInit, aveProfile.solveInit, m_maxProfile.solveInit);
 		m_textLine += DRAW_STRING_NEW_LINE;
-		m_debugDraw.DrawString(5, m_textLine, "solve velocity [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveVelocity, aveProfile.solveVelocity, m_maxProfile.solveVelocity);
+		g_debugDraw.DrawString(5, m_textLine, "solve velocity [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveVelocity, aveProfile.solveVelocity, m_maxProfile.solveVelocity);
 		m_textLine += DRAW_STRING_NEW_LINE;
-		m_debugDraw.DrawString(5, m_textLine, "solve position [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solvePosition, aveProfile.solvePosition, m_maxProfile.solvePosition);
+		g_debugDraw.DrawString(5, m_textLine, "solve position [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solvePosition, aveProfile.solvePosition, m_maxProfile.solvePosition);
 		m_textLine += DRAW_STRING_NEW_LINE;
-		m_debugDraw.DrawString(5, m_textLine, "solveTOI [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveTOI, aveProfile.solveTOI, m_maxProfile.solveTOI);
+		g_debugDraw.DrawString(5, m_textLine, "solveTOI [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveTOI, aveProfile.solveTOI, m_maxProfile.solveTOI);
 		m_textLine += DRAW_STRING_NEW_LINE;
-		m_debugDraw.DrawString(5, m_textLine, "broad-phase [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.broadphase, aveProfile.broadphase, m_maxProfile.broadphase);
+		g_debugDraw.DrawString(5, m_textLine, "broad-phase [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.broadphase, aveProfile.broadphase, m_maxProfile.broadphase);
 		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
@@ -388,21 +388,21 @@ void Test::Step(Settings* settings)
 
 		b2Color c;
 		c.Set(0.0f, 1.0f, 0.0f);
-		m_debugDraw.DrawPoint(p1, 4.0f, c);
-		m_debugDraw.DrawPoint(p2, 4.0f, c);
+		g_debugDraw.DrawPoint(p1, 4.0f, c);
+		g_debugDraw.DrawPoint(p2, 4.0f, c);
 
 		c.Set(0.8f, 0.8f, 0.8f);
-		m_debugDraw.DrawSegment(p1, p2, c);
+		g_debugDraw.DrawSegment(p1, p2, c);
 	}
 	
 	if (m_bombSpawning)
 	{
 		b2Color c;
 		c.Set(0.0f, 0.0f, 1.0f);
-		m_debugDraw.DrawPoint(m_bombSpawnPoint, 4.0f, c);
+		g_debugDraw.DrawPoint(m_bombSpawnPoint, 4.0f, c);
 
 		c.Set(0.8f, 0.8f, 0.8f);
-		m_debugDraw.DrawSegment(m_mouseWorld, m_bombSpawnPoint, c);
+		g_debugDraw.DrawSegment(m_mouseWorld, m_bombSpawnPoint, c);
 	}
 
 	if (settings->drawContactPoints)
@@ -417,25 +417,25 @@ void Test::Step(Settings* settings)
 			if (point->state == b2_addState)
 			{
 				// Add
-				m_debugDraw.DrawPoint(point->position, 10.0f, b2Color(0.3f, 0.95f, 0.3f));
+				g_debugDraw.DrawPoint(point->position, 10.0f, b2Color(0.3f, 0.95f, 0.3f));
 			}
 			else if (point->state == b2_persistState)
 			{
 				// Persist
-				m_debugDraw.DrawPoint(point->position, 5.0f, b2Color(0.3f, 0.3f, 0.95f));
+				g_debugDraw.DrawPoint(point->position, 5.0f, b2Color(0.3f, 0.3f, 0.95f));
 			}
 
 			if (settings->drawContactNormals == 1)
 			{
 				b2Vec2 p1 = point->position;
 				b2Vec2 p2 = p1 + k_axisScale * point->normal;
-				m_debugDraw.DrawSegment(p1, p2, b2Color(0.9f, 0.9f, 0.9f));
+				g_debugDraw.DrawSegment(p1, p2, b2Color(0.9f, 0.9f, 0.9f));
 			}
 			else if (settings->drawContactImpulse == 1)
 			{
 				b2Vec2 p1 = point->position;
 				b2Vec2 p2 = p1 + k_impulseScale * point->normalImpulse * point->normal;
-				m_debugDraw.DrawSegment(p1, p2, b2Color(0.9f, 0.9f, 0.3f));
+				g_debugDraw.DrawSegment(p1, p2, b2Color(0.9f, 0.9f, 0.3f));
 			}
 
 			if (settings->drawFrictionImpulse == 1)
@@ -443,7 +443,7 @@ void Test::Step(Settings* settings)
 				b2Vec2 tangent = b2Cross(point->normal, 1.0f);
 				b2Vec2 p1 = point->position;
 				b2Vec2 p2 = p1 + k_impulseScale * point->tangentImpulse * tangent;
-				m_debugDraw.DrawSegment(p1, p2, b2Color(0.9f, 0.9f, 0.3f));
+				g_debugDraw.DrawSegment(p1, p2, b2Color(0.9f, 0.9f, 0.3f));
 			}
 		}
 	}

@@ -142,7 +142,7 @@ public:
 		}
 
 		Test::Step(settings);
-		m_debugDraw.DrawString(5, m_textLine, "Keys: (d) dynamic, (s) static, (k) kinematic");
+		g_debugDraw.DrawString(5, m_textLine, "Keys: (d) dynamic, (s) static, (k) kinematic");
 		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 

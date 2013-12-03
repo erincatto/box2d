@@ -258,12 +258,12 @@ public:
 
 	void Step(Settings* settings)
 	{
-		m_debugDraw.DrawString(5, m_textLine, "Keys: left = a, brake = s, right = d, hz down = q, hz up = e");
+		g_debugDraw.DrawString(5, m_textLine, "Keys: left = a, brake = s, right = d, hz down = q, hz up = e");
 		m_textLine += DRAW_STRING_NEW_LINE;
-		m_debugDraw.DrawString(5, m_textLine, "frequency = %g hz, damping ratio = %g", m_hz, m_zeta);
+		g_debugDraw.DrawString(5, m_textLine, "frequency = %g hz, damping ratio = %g", m_hz, m_zeta);
 		m_textLine += DRAW_STRING_NEW_LINE;
 
-		settings->viewCenter.x = m_car->GetPosition().x;
+		g_camera.m_center.x = m_car->GetPosition().x;
 		Test::Step(settings);
 	}
 
