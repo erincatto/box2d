@@ -52,7 +52,7 @@ public:
 		b2WorldManifold worldManifold;
 		worldManifold.Initialize(&manifold, m_transformA, m_polygonA.m_radius, m_transformB, m_polygonB.m_radius);
 
-		m_debugDraw.DrawString(5, m_textLine, "point count = %d", manifold.pointCount);
+		g_debugDraw.DrawString(5, m_textLine, "point count = %d", manifold.pointCount);
 		m_textLine += DRAW_STRING_NEW_LINE;
 
 		{
@@ -62,18 +62,18 @@ public:
 			{
 				v[i] = b2Mul(m_transformA, m_polygonA.m_vertices[i]);
 			}
-			m_debugDraw.DrawPolygon(v, m_polygonA.m_count, color);
+			g_debugDraw.DrawPolygon(v, m_polygonA.m_count, color);
 
 			for (int32 i = 0; i < m_polygonB.m_count; ++i)
 			{
 				v[i] = b2Mul(m_transformB, m_polygonB.m_vertices[i]);
 			}
-			m_debugDraw.DrawPolygon(v, m_polygonB.m_count, color);
+			g_debugDraw.DrawPolygon(v, m_polygonB.m_count, color);
 		}
 
 		for (int32 i = 0; i < manifold.pointCount; ++i)
 		{
-			m_debugDraw.DrawPoint(worldManifold.points[i], 4.0f, b2Color(0.9f, 0.3f, 0.3f));
+			g_debugDraw.DrawPoint(worldManifold.points[i], 4.0f, b2Color(0.9f, 0.3f, 0.3f));
 		}
 	}
 

@@ -85,9 +85,9 @@ public:
 	void Step(Settings* settings)
 	{
 		Test::Step(settings);
-		m_debugDraw.DrawString(5, m_textLine, "Press: (c) create a shape, (d) destroy a shape.");
+		g_debugDraw.DrawString(5, m_textLine, "Press: (c) create a shape, (d) destroy a shape.");
 		m_textLine += DRAW_STRING_NEW_LINE;
-		m_debugDraw.DrawString(5, m_textLine, "sensor = %d", m_sensor);
+		g_debugDraw.DrawString(5, m_textLine, "sensor = %d", m_sensor);
 		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 

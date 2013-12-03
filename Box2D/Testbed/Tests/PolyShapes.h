@@ -53,7 +53,7 @@ public:
 				b2Vec2 center = b2Mul(xf, circle->m_p);
 				float32 radius = circle->m_radius;
 
-				m_debugDraw->DrawCircle(center, radius, color);
+				g_debugDraw->DrawCircle(center, radius, color);
 			}
 			break;
 
@@ -69,7 +69,7 @@ public:
 					vertices[i] = b2Mul(xf, poly->m_vertices[i]);
 				}
 
-				m_debugDraw->DrawPolygon(vertices, vertexCount, color);
+				g_debugDraw->DrawPolygon(vertices, vertexCount, color);
 			}
 			break;
 				
@@ -103,7 +103,7 @@ public:
 
 	b2CircleShape m_circle;
 	b2Transform m_transform;
-	b2Draw* m_debugDraw;
+	b2Draw* g_debugDraw;
 	int32 m_count;
 };
 
@@ -267,7 +267,7 @@ public:
 		callback.m_circle.m_radius = 2.0f;
 		callback.m_circle.m_p.Set(0.0f, 1.1f);
 		callback.m_transform.SetIdentity();
-		callback.m_debugDraw = &m_debugDraw;
+		callback.g_debugDraw = &g_debugDraw;
 
 		b2AABB aabb;
 		callback.m_circle.ComputeAABB(&aabb, callback.m_transform, 0);
@@ -275,13 +275,13 @@ public:
 		m_world->QueryAABB(&callback, aabb);
 
 		b2Color color(0.4f, 0.7f, 0.8f);
-		m_debugDraw.DrawCircle(callback.m_circle.m_p, callback.m_circle.m_radius, color);
+		g_debugDraw.DrawCircle(callback.m_circle.m_p, callback.m_circle.m_radius, color);
 
-		m_debugDraw.DrawString(5, m_textLine, "Press 1-5 to drop stuff");
+		g_debugDraw.DrawString(5, m_textLine, "Press 1-5 to drop stuff");
 		m_textLine += DRAW_STRING_NEW_LINE;
-		m_debugDraw.DrawString(5, m_textLine, "Press 'a' to (de)activate some bodies");
+		g_debugDraw.DrawString(5, m_textLine, "Press 'a' to (de)activate some bodies");
 		m_textLine += DRAW_STRING_NEW_LINE;
-		m_debugDraw.DrawString(5, m_textLine, "Press 'd' to destroy a body");
+		g_debugDraw.DrawString(5, m_textLine, "Press 'd' to destroy a body");
 		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
