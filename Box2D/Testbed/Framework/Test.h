@@ -57,7 +57,6 @@ struct Settings
 {
 	Settings()
 	{
-		viewCenter.Set(0.0f, 20.0f);
 		hz = 60.0f;
 		velocityIterations = 8;
 		positionIterations = 3;
@@ -79,7 +78,6 @@ struct Settings
 		singleStep = false;
 	}
 
-	b2Vec2 viewCenter;
 	float32 hz;
 	int32 velocityIterations;
 	int32 positionIterations;
@@ -141,7 +139,6 @@ public:
 	Test();
 	virtual ~Test();
 
-	void SetWindow(GLFWwindow* window) { m_debugDraw.m_window = window; }
 	void DrawTitle(const char *string);
 	virtual void Step(Settings* settings);
 	virtual void Keyboard(int key) { B2_NOT_USED(key); }
@@ -181,7 +178,6 @@ protected:
 	ContactPoint m_points[k_maxContactPoints];
 	int32 m_pointCount;
 	DestructionListener m_destructionListener;
-	DebugDraw m_debugDraw;
 	int32 m_textLine;
 	b2World* m_world;
 	b2Body* m_bomb;

@@ -49,7 +49,6 @@ namespace
 	Test* test;
 	Settings settings;
 	int32 framePeriod = 16;
-	float32 viewZoom = 1.0f;
 	bool rightMouseDown;
 	b2Vec2 lastp;
 }
@@ -77,48 +76,14 @@ static void sResizeWindow(GLFWwindow*, int width, int height)
 {
 	windowWidth = width;
 	windowHeight = height;
-}
-
-//
-static b2Vec2 sConvertScreenToWorld(int32 x, int32 y)
-{
-	float32 u = x / float32(windowWidth);
-	float32 v = (windowHeight - y) / float32(windowHeight);
-
-	float32 ratio = float32(windowWidth) / float32(windowHeight);
-	b2Vec2 extents(ratio * 25.0f, 25.0f);
-	extents *= viewZoom;
-
-	b2Vec2 lower = settings.viewCenter - extents;
-	b2Vec2 upper = settings.viewCenter + extents;
-
-	b2Vec2 p;
-	p.x = (1.0f - u) * lower.x + u * upper.x;
-	p.y = (1.0f - v) * lower.y + v * upper.y;
-	return p;
+	g_camera.m_width = float(width);
+	g_camera.m_height = float(height);
 }
 
 //
 static inline int32 FloatToInt(float32 x)
 {
 	return x >= 0.0f ? (int32)(x + 0.5f) : (int32)(x + 0.5f);
-}
-
-//
-static void sConvertWorldToScreen(int32* x, int32* y, const b2Vec2& p)
-{
-	float32 ratio = float32(windowWidth) / float32(windowHeight);
-	b2Vec2 extents(ratio * 25.0f, 25.0f);
-	extents *= viewZoom;
-
-	b2Vec2 lower = settings.viewCenter - extents;
-	b2Vec2 upper = settings.viewCenter + extents;
-
-	float32 u = (p.x - lower.x) / (upper.x - lower.x);
-	float32 v = (p.y - lower.y) / (upper.y - lower.y);
-
-	*x = FloatToInt(u * windowWidth);
-	*y = windowHeight - FloatToInt(v * windowHeight);
 }
 
 //
@@ -142,7 +107,7 @@ static void sKeyCallback(GLFWwindow*, int key, int scancode, int action, int mod
 			}
 			else
 			{
-				settings.viewCenter.x -= 0.5f;
+				g_camera.m_center.x -= 0.5f;
 				sResizeWindow(mainWindow, windowWidth, windowHeight);
 			}
 			break;
@@ -156,7 +121,7 @@ static void sKeyCallback(GLFWwindow*, int key, int scancode, int action, int mod
 			}
 			else
 			{
-				settings.viewCenter.x += 0.5f;
+				g_camera.m_center.x += 0.5f;
 				sResizeWindow(mainWindow, windowWidth, windowHeight);
 			}
 			break;
@@ -170,7 +135,7 @@ static void sKeyCallback(GLFWwindow*, int key, int scancode, int action, int mod
 			}
 			else
 			{
-				settings.viewCenter.y -= 0.5f;
+				g_camera.m_center.y -= 0.5f;
 				sResizeWindow(mainWindow, windowWidth, windowHeight);
 			}
 			break;
@@ -184,27 +149,27 @@ static void sKeyCallback(GLFWwindow*, int key, int scancode, int action, int mod
 			}
 			else
 			{
-				settings.viewCenter.y += 0.5f;
+				g_camera.m_center.y += 0.5f;
 				sResizeWindow(mainWindow, windowWidth, windowHeight);
 			}
 			break;
 
 		case GLFW_KEY_HOME:
 			// Reset view
-			viewZoom = 1.0f;
-			settings.viewCenter.Set(0.0f, 20.0f);
+			g_camera.m_zoom = 1.0f;
+			g_camera.m_center.Set(0.0f, 20.0f);
 			sResizeWindow(mainWindow, windowWidth, windowHeight);
 			break;
 
 		case GLFW_KEY_Z:
 			// Zoom out
-			viewZoom = b2Min(1.1f * viewZoom, 20.0f);
+			g_camera.m_zoom = b2Min(1.1f * g_camera.m_zoom, 20.0f);
 			sResizeWindow(mainWindow, windowWidth, windowHeight);
 			break;
 
 		case GLFW_KEY_X:
 			// Zoom in
-			viewZoom = b2Max(0.9f * viewZoom, 0.02f);
+			g_camera.m_zoom = b2Max(0.9f * g_camera.m_zoom, 0.02f);
 			sResizeWindow(mainWindow, windowWidth, windowHeight);
 			break;
 
@@ -212,7 +177,6 @@ static void sKeyCallback(GLFWwindow*, int key, int scancode, int action, int mod
 			// Reset test
 			delete test;
 			test = entry->createFcn();
-			test->SetWindow(mainWindow);
 			break;
 
 		case GLFW_KEY_SPACE:
@@ -268,35 +232,34 @@ static void sMouseButton(GLFWwindow*, int32 button, int32 action, int32 mods)
 {
 	double xd, yd;
 	glfwGetCursorPos(mainWindow, &xd, &yd);
-	int32 x = static_cast<int32>(floor(xd));
-	int32 y = static_cast<int32>(floor(yd));
+	b2Vec2 ps((float32)xd, (float32)yd);
 
 	// Use the mouse to move things around.
 	if (button == GLFW_MOUSE_BUTTON_1)
 	{
-		b2Vec2 p = sConvertScreenToWorld(x, y);
+		b2Vec2 pw = g_camera.ConvertScreenToWorld(ps);
 		if (action == GLFW_PRESS)
 		{
 			if (mods == GLFW_MOD_SHIFT)
 			{
-				test->ShiftMouseDown(p);
+				test->ShiftMouseDown(pw);
 			}
 			else
 			{
-				test->MouseDown(p);
+				test->MouseDown(pw);
 			}
 		}
 		
 		if (action == GLFW_RELEASE)
 		{
-			test->MouseUp(p);
+			test->MouseUp(pw);
 		}
 	}
 	else if (button == GLFW_MOUSE_BUTTON_2)
 	{
 		if (action == GLFW_PRESS)
 		{	
-			lastp = sConvertScreenToWorld(x, y);
+			lastp = g_camera.ConvertScreenToWorld(ps);
 			rightMouseDown = true;
 		}
 
@@ -310,19 +273,17 @@ static void sMouseButton(GLFWwindow*, int32 button, int32 action, int32 mods)
 //
 static void sMouseMotion(GLFWwindow*, double xd, double yd)
 {
-	int32 x = static_cast<int32>(floor(xd));
-	int32 y = static_cast<int32>(floor(yd));
+	b2Vec2 ps((float)xd, (float)yd);
 
-	b2Vec2 p = sConvertScreenToWorld(x, y);
-	test->MouseMove(p);
+	b2Vec2 pw = g_camera.ConvertScreenToWorld(ps);
+	test->MouseMove(pw);
 	
 	if (rightMouseDown)
 	{
-		b2Vec2 diff = p - lastp;
-		settings.viewCenter.x -= diff.x;
-		settings.viewCenter.y -= diff.y;
-		sResizeWindow(mainWindow, windowWidth, windowHeight);
-		lastp = sConvertScreenToWorld(x, y);
+		b2Vec2 diff = pw - lastp;
+		g_camera.m_center.x -= diff.x;
+		g_camera.m_center.y -= diff.y;
+		lastp = g_camera.ConvertScreenToWorld(ps);
 	}
 }
 
@@ -337,11 +298,11 @@ static void sScrollCallback(GLFWwindow*, double, double dy)
 	{
 		if (dy > 0)
 		{
-			viewZoom /= 1.1f;
+			g_camera.m_zoom /= 1.1f;
 		}
 		else
 		{
-			viewZoom *= 1.1f;
+			g_camera.m_zoom *= 1.1f;
 		}
 	}
 }
@@ -352,7 +313,6 @@ static void sRestart()
 	delete test;
 	entry = g_testEntries + testIndex;
 	test = entry->createFcn();
-	test->SetWindow(mainWindow);
 	sResizeWindow(mainWindow, windowWidth, windowHeight);
 }
 
@@ -378,10 +338,10 @@ static void sSimulate()
 	float32 ratio = float32(windowWidth) / float32(windowHeight);
 
 	b2Vec2 extents(ratio * 25.0f, 25.0f);
-	extents *= viewZoom;
+	extents *= g_camera.m_zoom;
 
-	b2Vec2 lower = settings.viewCenter - extents;
-	b2Vec2 upper = settings.viewCenter + extents;
+	b2Vec2 lower = g_camera.m_center - extents;
+	b2Vec2 upper = g_camera.m_center + extents;
 
 	// L/R/B/T
 	gluOrtho2D(lower.x, upper.x, lower.y, upper.y);
@@ -399,9 +359,8 @@ static void sSimulate()
 		delete test;
 		entry = g_testEntries + testIndex;
 		test = entry->createFcn();
-		test->SetWindow(mainWindow);
-		viewZoom = 1.0f;
-		settings.viewCenter.Set(0.0f, 20.0f);
+		g_camera.m_zoom = 1.0f;
+		g_camera.m_center.Set(0.0f, 20.0f);
 	}
 }
 
@@ -490,7 +449,6 @@ static void sInterface()
 				delete test;
 				entry = g_testEntries + i;
 				test = entry->createFcn();
-				test->SetWindow(mainWindow);
 				ui.chooseTest = false;
 			}
 		}
@@ -549,7 +507,6 @@ int main(int argc, char** argv)
 
 	entry = g_testEntries + testIndex;
 	test = entry->createFcn();
-	test->SetWindow(mainWindow);
 
 	// Control the frame rate. One draw per monitor refresh.
 	glfwSwapInterval(1);
