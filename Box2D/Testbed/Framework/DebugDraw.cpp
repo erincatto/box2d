@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2007 Erin Catto http://www.box2d.org
+* Copyright (c) 2006-2013 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -25,6 +25,48 @@
 
 #include "RenderGL3.h"
 
+DebugDraw g_debugDraw;
+Camera g_camera;
+
+//
+b2Vec2 Camera::ConvertScreenToWorld(const b2Vec2& ps)
+{
+	float32 u = ps.x / m_width;
+	float32 v = (m_height - ps.y) / m_height;
+
+	float32 ratio = m_width / m_height;
+	b2Vec2 extents(ratio * 25.0f, 25.0f);
+	extents *= m_zoom;
+
+	b2Vec2 lower = m_center - extents;
+	b2Vec2 upper = m_center + extents;
+
+	b2Vec2 pw;
+	pw.x = (1.0f - u) * lower.x + u * upper.x;
+	pw.y = (1.0f - v) * lower.y + v * upper.y;
+	return pw;
+}
+
+//
+b2Vec2 Camera::ConvertWorldToScreen(const b2Vec2& pw)
+{
+	float32 ratio = m_width / m_height;
+	b2Vec2 extents(ratio * 25.0f, 25.0f);
+	extents *= m_zoom;
+
+	b2Vec2 lower = m_center - extents;
+	b2Vec2 upper = m_center + extents;
+
+	float32 u = (pw.x - lower.x) / (upper.x - lower.x);
+	float32 v = (pw.y - lower.y) / (upper.y - lower.y);
+
+	b2Vec2 ps;
+	ps.x = u * m_width;
+	ps.y = (1.0f - v) * m_height;
+	return ps;
+}
+
+//
 void DebugDraw::DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color)
 {
 	glColor3f(color.r, color.g, color.b);
@@ -150,8 +192,7 @@ void DebugDraw::DrawPoint(const b2Vec2& p, float32 size, const b2Color& color)
 
 void DebugDraw::DrawString(int x, int y, const char *string, ...)
 {
-	int w, h;
-	glfwGetWindowSize(m_window, &w, &h);
+	float32 h = g_camera.m_height;
 
 	char buffer[128];
 
@@ -160,13 +201,13 @@ void DebugDraw::DrawString(int x, int y, const char *string, ...)
 	vsprintf(buffer, string, arg);
 	va_end(arg);
 
-	addGfxCmdText(float(x), float(h - y), IMGUI_ALIGN_LEFT, buffer, SetRGBA(230, 153, 153, 255));
+	AddGfxCmdText(float(x), h - float(y), TEXT_ALIGN_LEFT, buffer, SetRGBA(230, 153, 153, 255));
 }
 
-void DebugDraw::DrawString(const b2Vec2& p, const char *string, ...)
+void DebugDraw::DrawString(const b2Vec2& pw, const char *string, ...)
 {
-	int w, h;
-	glfwGetWindowSize(m_window, &w, &h);
+	b2Vec2 ps = g_camera.ConvertWorldToScreen(pw);
+	float32 h = g_camera.m_height;
 
 	char buffer[128];
 
@@ -175,7 +216,7 @@ void DebugDraw::DrawString(const b2Vec2& p, const char *string, ...)
 	vsprintf(buffer, string, arg);
 	va_end(arg);
 
-	addGfxCmdText(p.x, h - p.y, IMGUI_ALIGN_LEFT, buffer, SetRGBA(230, 153, 153, 255));
+	AddGfxCmdText(ps.x, h - ps.y, TEXT_ALIGN_LEFT, buffer, SetRGBA(230, 153, 153, 255));
 }
 
 void DebugDraw::DrawAABB(b2AABB* aabb, const b2Color& c)
