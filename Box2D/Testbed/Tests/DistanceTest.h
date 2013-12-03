@@ -59,10 +59,10 @@ public:
 		b2DistanceOutput output;
 		b2Distance(&output, &cache, &input);
 
-		m_debugDraw.DrawString(5, m_textLine, "distance = %g", output.distance);
+		g_debugDraw.DrawString(5, m_textLine, "distance = %g", output.distance);
 		m_textLine += DRAW_STRING_NEW_LINE;
 
-		m_debugDraw.DrawString(5, m_textLine, "iterations = %d", output.iterations);
+		g_debugDraw.DrawString(5, m_textLine, "iterations = %d", output.iterations);
 		m_textLine += DRAW_STRING_NEW_LINE;
 
 		{
@@ -72,23 +72,23 @@ public:
 			{
 				v[i] = b2Mul(m_transformA, m_polygonA.m_vertices[i]);
 			}
-			m_debugDraw.DrawPolygon(v, m_polygonA.m_count, color);
+			g_debugDraw.DrawPolygon(v, m_polygonA.m_count, color);
 
 			for (int32 i = 0; i < m_polygonB.m_count; ++i)
 			{
 				v[i] = b2Mul(m_transformB, m_polygonB.m_vertices[i]);
 			}
-			m_debugDraw.DrawPolygon(v, m_polygonB.m_count, color);
+			g_debugDraw.DrawPolygon(v, m_polygonB.m_count, color);
 		}
 
 		b2Vec2 x1 = output.pointA;
 		b2Vec2 x2 = output.pointB;
 
 		b2Color c1(1.0f, 0.0f, 0.0f);
-		m_debugDraw.DrawPoint(x1, 4.0f, c1);
+		g_debugDraw.DrawPoint(x1, 4.0f, c1);
 
 		b2Color c2(1.0f, 1.0f, 0.0f);
-		m_debugDraw.DrawPoint(x2, 4.0f, c2);
+		g_debugDraw.DrawPoint(x2, 4.0f, c2);
 	}
 
 	void Keyboard(int key)

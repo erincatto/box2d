@@ -110,11 +110,11 @@ public:
 	void Step(Settings* settings)
 	{
 		Test::Step(settings);
-		m_debugDraw.DrawString(5, m_textLine, "Press: (c) create a shape, (d) destroy a shape.");
+		g_debugDraw.DrawString(5, m_textLine, "Press: (c) create a shape, (d) destroy a shape.");
 		m_textLine += DRAW_STRING_NEW_LINE;
 
         b2Vec2 v = m_character->GetBody()->GetLinearVelocity();
-        m_debugDraw.DrawString(5, m_textLine, "Character Linear Velocity: %f", v.y);
+        g_debugDraw.DrawString(5, m_textLine, "Character Linear Velocity: %f", v.y);
 		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
