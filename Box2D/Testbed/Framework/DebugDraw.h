@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2007 Erin Catto http://www.box2d.org
+* Copyright (c) 2006-2013 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -16,21 +16,41 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef RENDER_H
-#define RENDER_H
+#ifndef DEBUGDRAW_H
+#define DEBUGDRAW_H
 
 #include <Box2D/Box2D.h>
 
 struct b2AABB;
 struct GLFWwindow;
 
+//
+struct Camera
+{
+	Camera()
+	{
+		m_center.Set(0.0f, 20.0f);
+		m_extent = 25.0f;
+		m_zoom = 1.0f;
+		m_width = 1280.0f;
+		m_height = 800.0f;
+	}
+
+	b2Vec2 ConvertScreenToWorld(const b2Vec2& screenPoint);
+	b2Vec2 ConvertWorldToScreen(const b2Vec2& worldPoint);
+
+	b2Vec2 m_center;
+	float32 m_extent;
+	float32 m_zoom;
+	float32 m_width;
+	float32 m_height;
+};
+
 // This class implements debug drawing callbacks that are invoked
 // inside b2World::Step.
 class DebugDraw : public b2Draw
 {
 public:
-	DebugDraw() { m_window = NULL; }
-
 	void DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color);
 
 	void DrawSolidPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color);
@@ -50,9 +70,9 @@ public:
     void DrawString(const b2Vec2& p, const char* string, ...);
 
     void DrawAABB(b2AABB* aabb, const b2Color& color);
-
-	GLFWwindow* m_window;
 };
 
+extern DebugDraw g_debugDraw;
+extern Camera g_camera;
 
 #endif

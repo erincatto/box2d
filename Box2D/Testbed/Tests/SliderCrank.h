@@ -137,10 +137,10 @@ public:
 	void Step(Settings* settings)
 	{
 		Test::Step(settings);
-		m_debugDraw.DrawString(5, m_textLine, "Keys: (f) toggle friction, (m) toggle motor");
+		g_debugDraw.DrawString(5, m_textLine, "Keys: (f) toggle friction, (m) toggle motor");
 		m_textLine += DRAW_STRING_NEW_LINE;
 		float32 torque = m_joint1->GetMotorTorque(settings->hz);
-		m_debugDraw.DrawString(5, m_textLine, "Motor Torque = %5.0f", (float) torque);
+		g_debugDraw.DrawString(5, m_textLine, "Motor Torque = %5.0f", (float) torque);
 		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
