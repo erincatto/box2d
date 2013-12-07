@@ -48,7 +48,6 @@ namespace
 	TestEntry* entry;
 	Test* test;
 	Settings settings;
-	int32 framePeriod = 16;
 	bool rightMouseDown;
 	b2Vec2 lastp;
 }
@@ -317,20 +316,6 @@ static void sRestart()
 }
 
 //
-static void sExit()
-{
-	// Quit
-	glfwSetWindowShouldClose(mainWindow, GL_TRUE);
-}
-
-//
-static void sSingleStep()
-{
-	settings.pause = 1;
-	settings.singleStep = 1;
-}
-
-//
 static void sSimulate()
 {
 	glMatrixMode(GL_PROJECTION);
@@ -513,7 +498,6 @@ int main(int argc, char** argv)
 
 	glClearColor(0.3f, 0.3f, 0.3f, 1.f);
 	// glfw scrolling
-	int glfwscroll = 0;
 	while (!glfwWindowShouldClose(mainWindow))
 	{
 		glfwGetWindowSize(mainWindow, &windowWidth, &windowHeight);
