@@ -62,7 +62,7 @@ static void sCreateUI()
 	ui.mouseOverMenu = false;
 
 	// Init UI
-	if (!RenderGLInit("DroidSans.ttf"))
+	if (!RenderGLInit("../Data/DroidSans.ttf"))
 	{
 		fprintf(stderr, "Could not init GUI renderer.\n");
 		assert(false);
