@@ -38,6 +38,13 @@
 #define _GLFW_WGL
 #endif
 
+#if defined(__APPLE__)
+#define _GLFW_COCOA
+#define _GLFW_NSGL
+#define _GLFW_USE_CHDIR
+#define _GLFW_USE_MENUBAR
+#endif
+
 // TODO get defines for other platforms
 
 #define _GLFW_USE_OPENGL
