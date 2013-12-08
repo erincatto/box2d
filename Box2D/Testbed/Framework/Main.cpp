@@ -62,7 +62,7 @@ static void sCreateUI()
 	ui.mouseOverMenu = false;
 
 	// Init UI
-	if (!RenderGLInit("../Data/DroidSans.ttf"))
+	if (!RenderGLInit("DroidSans.ttf"))
 	{
 		fprintf(stderr, "Could not init GUI renderer.\n");
 		assert(false);
@@ -456,7 +456,11 @@ int main(int argc, char** argv)
 
 	char title[64];
 	sprintf(title, "Box2D Testbed Version %d.%d.%d", b2_version.major, b2_version.minor, b2_version.revision);
-	mainWindow = glfwCreateWindow(windowWidth, windowHeight, title, NULL, NULL);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    mainWindow = glfwCreateWindow(windowWidth, windowHeight, title, NULL, NULL);
 	if (mainWindow == NULL)
 	{
 		fprintf(stderr, "Failed to open GLFW mainWindow.\n");
@@ -472,7 +476,8 @@ int main(int argc, char** argv)
 	glfwSetCursorPosCallback(mainWindow, sMouseMotion);
 	glfwSetScrollCallback(mainWindow, sScrollCallback);
 
-	GLenum err = glewInit();
+    glewExperimental = GL_TRUE;
+    GLenum err = glewInit();
 	if (GLEW_OK != err)
 	{
 		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
