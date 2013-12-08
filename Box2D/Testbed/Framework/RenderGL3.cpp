@@ -489,7 +489,7 @@ bool RenderGLInit(const char* fontpath)
 	FILE* fp = fopen(fontpath, "rb");
 	if (!fp) return false;
 	fseek(fp, 0, SEEK_END);
-	int size = ftell(fp);
+	int size = (int)ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
 	unsigned char* ttfBuffer = (unsigned char*)malloc(size);
