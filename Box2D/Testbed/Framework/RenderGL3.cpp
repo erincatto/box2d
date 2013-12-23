@@ -18,7 +18,6 @@
 
 // Source altered and distributed from https://github.com/AdrienHerubel/imgui
 
-
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <stdio.h>
@@ -98,13 +97,6 @@ static GLuint g_program = 0;
 static GLuint g_programViewportLocation = 0;
 static GLuint g_programTextureLocation = 0;
 
-//inline unsigned int RGBA(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
-//{
-//	return (r) | (g << 8) | (b << 16) | (a << 24);
-//}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 static const unsigned TEXT_POOL_SIZE = 8000;
 static char g_textPool[TEXT_POOL_SIZE];
 static unsigned g_textPoolSize = 0;
@@ -123,7 +115,7 @@ static const unsigned GFXCMD_QUEUE_SIZE = 5000;
 static GfxCmd g_gfxCmdQueue[GFXCMD_QUEUE_SIZE];
 static unsigned g_gfxCmdQueueSize = 0;
 
-static void resetGfxCmdQueue()
+static void ResetGfxCmdQueue()
 {
 	g_gfxCmdQueueSize = 0;
 	g_textPoolSize = 0;
@@ -558,7 +550,7 @@ bool RenderGLInit(const char* fontpath)
 		"{\n"
 		"    vertexColor = VertexColor;\n"
 		"    texCoord = VertexTexCoord;\n"
-		"    gl_Position = vec4(VertexPosition * 2.0 / Viewport - 1.0, 0.f, 1.0);\n"
+		"    gl_Position = vec4(VertexPosition * 2.0 / Viewport - 1.0, 0.0, 1.0);\n"
 		"}\n";
 	GLuint vso = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vso, 1, (const char **)&vs, NULL);
@@ -627,7 +619,7 @@ void RenderGLDestroy()
 
 }
 
-static void getBakedQuad(stbtt_bakedchar *chardata, int pw, int ph, int char_index,
+static void sGetBakedQuad(stbtt_bakedchar *chardata, int pw, int ph, int char_index,
 						 float *xpos, float *ypos, stbtt_aligned_quad *q)
 {
 	stbtt_bakedchar *b = chardata + char_index;
@@ -649,7 +641,7 @@ static void getBakedQuad(stbtt_bakedchar *chardata, int pw, int ph, int char_ind
 
 static const float g_tabStops[4] = { 150, 210, 270, 330 };
 
-static float getTextLength(stbtt_bakedchar *chardata, const char* text)
+static float sGetTextLength(stbtt_bakedchar *chardata, const char* text)
 {
 	float xpos = 0;
 	float len = 0;
@@ -686,9 +678,9 @@ void sRenderString(float x, float y, const char *text, TextAlign align, unsigned
 	if (!text) return;
 
 	if (align == TEXT_ALIGN_CENTER)
-		x -= getTextLength(g_cdata, text) / 2;
+		x -= sGetTextLength(g_cdata, text) / 2;
 	else if (align == TEXT_ALIGN_RIGHT)
-		x -= getTextLength(g_cdata, text);
+		x -= sGetTextLength(g_cdata, text);
 
 	float r = (float)(col & 0xff) / 255.f;
 	float g = (float)((col >> 8) & 0xff) / 255.f;
@@ -717,7 +709,7 @@ void sRenderString(float x, float y, const char *text, TextAlign align, unsigned
 		else if (c >= 32 && c < 128)
 		{
 			stbtt_aligned_quad q;
-			getBakedQuad(g_cdata, 512, 512, c - 32, &x, &y, &q);
+			sGetBakedQuad(g_cdata, 512, 512, c - 32, &x, &y, &q);
 
 			float v[12] = {
 				q.x0, q.y0,
@@ -735,7 +727,7 @@ void sRenderString(float x, float y, const char *text, TextAlign align, unsigned
 				q.s0, q.t1,
 				q.s1, q.t1,
 			};
-			float c[24] = {
+			float color[24] = {
 				r, g, b, a,
 				r, g, b, a,
 				r, g, b, a,
@@ -749,15 +741,12 @@ void sRenderString(float x, float y, const char *text, TextAlign align, unsigned
 			glBindBuffer(GL_ARRAY_BUFFER, g_vbos[1]);
 			glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), uv, GL_STATIC_DRAW);
 			glBindBuffer(GL_ARRAY_BUFFER, g_vbos[2]);
-			glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float), c, GL_STATIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float), color, GL_STATIC_DRAW);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		}
 		++text;
 	}
-
-	//glEnd();        
-	//glDisable(GL_TEXTURE_2D);
 }
 
 //
@@ -839,6 +828,6 @@ void RenderGLFlush(int width, int height)
 	glDisable(GL_SCISSOR_TEST);
 	glUseProgram(0);
 
-	resetGfxCmdQueue();
+	ResetGfxCmdQueue();
 }
 

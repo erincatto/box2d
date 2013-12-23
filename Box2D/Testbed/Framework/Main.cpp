@@ -62,7 +62,7 @@ static void sCreateUI()
 	ui.mouseOverMenu = false;
 
 	// Init UI
-	if (!RenderGLInit("DroidSans.ttf"))
+	if (RenderGLInit("../Data/DroidSans.ttf") == false)
 	{
 		fprintf(stderr, "Could not init GUI renderer.\n");
 		assert(false);
@@ -456,10 +456,10 @@ int main(int argc, char** argv)
 
 	char title[64];
 	sprintf(title, "Box2D Testbed Version %d.%d.%d", b2_version.major, b2_version.minor, b2_version.revision);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     mainWindow = glfwCreateWindow(windowWidth, windowHeight, title, NULL, NULL);
 	if (mainWindow == NULL)
 	{
@@ -469,6 +469,8 @@ int main(int argc, char** argv)
 	}
 
 	glfwMakeContextCurrent(mainWindow);
+	printf("OpenGL %s, GLSL %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+
 	glfwSetScrollCallback(mainWindow, sScrollCallback);
 	glfwSetWindowSizeCallback(mainWindow, sResizeWindow);
 	glfwSetKeyCallback(mainWindow, sKeyCallback);
@@ -476,13 +478,15 @@ int main(int argc, char** argv)
 	glfwSetCursorPosCallback(mainWindow, sMouseMotion);
 	glfwSetScrollCallback(mainWindow, sScrollCallback);
 
-    glewExperimental = GL_TRUE;
+    //glewExperimental = GL_TRUE;
     GLenum err = glewInit();
 	if (GLEW_OK != err)
 	{
 		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
 		exit(EXIT_FAILURE);
 	}
+
+	g_debugDraw.Create();
 
 	sCreateUI();
 
@@ -539,6 +543,7 @@ int main(int argc, char** argv)
 		glfwPollEvents();
 	}
 
+	g_debugDraw.Destroy();
 	RenderGLDestroy();
 	glfwTerminate();
 
