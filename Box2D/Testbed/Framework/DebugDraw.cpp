@@ -188,11 +188,11 @@ struct GLRender
 			"#version 400\n"
 			"uniform mat4 projectionMatrix;\n"
 			"layout(location = 0) in vec2 v_position;\n"
-			"layout(location = 1) in vec3 v_color;\n"
+			"layout(location = 1) in vec4 v_color;\n"
 			"out vec4 f_color;\n"
 			"void main(void)\n"
 			"{\n"
-			"	f_color = vec4(v_color, 1.0f);\n"
+			"	f_color = v_color;\n"
 			"	gl_Position = projectionMatrix * vec4(v_position, 0.0f, 1.0f);\n"
 			"}\n";
 
@@ -229,7 +229,7 @@ struct GLRender
 		sCheckGLError();
 
 		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[1]);
-		glVertexAttribPointer(m_colorAttribute, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+		glVertexAttribPointer(m_colorAttribute, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 		glBufferData(GL_ARRAY_BUFFER, sizeof(m_colors), m_colors, GL_DYNAMIC_DRAW);
 
 		sCheckGLError();
@@ -290,29 +290,17 @@ struct GLRender
 
 		glUniformMatrix4fv(m_projectionUniform, 1, GL_FALSE, proj);
 
-		sCheckGLError();
-
 		glBindVertexArray(m_vaoId);
 
-		sCheckGLError();
-
 		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[0]);
-
-		sCheckGLError();
-
 		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(b2Vec2), m_vertices);
-
-		sCheckGLError();
 
 		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[1]);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(b2Color), m_colors);
 
-		sCheckGLError();
-
 		glDrawArrays(m_mode, 0, m_count);
 
 		sCheckGLError();
-		//glFlush();
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
@@ -368,35 +356,37 @@ void DebugDraw::Destroy()
 //
 void DebugDraw::DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color)
 {
-	glColor3f(color.r, color.g, color.b);
-	glBegin(GL_LINE_LOOP);
+	m_render->Begin(GL_LINE_LOOP);
+	m_render->Color(color);
 	for (int32 i = 0; i < vertexCount; ++i)
 	{
-		glVertex2f(vertices[i].x, vertices[i].y);
+		m_render->Vertex(vertices[i]);
 	}
-	glEnd();
+	m_render->End();
 }
 
 void DebugDraw::DrawSolidPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color)
 {
+	b2Color fillColor(0.5f * color.r, 0.5f * color.g, 0.5f * color.b, 0.5f);
+
 	glEnable(GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glColor4f(0.5f * color.r, 0.5f * color.g, 0.5f * color.b, 0.5f);
-	glBegin(GL_TRIANGLE_FAN);
+	m_render->Begin(GL_TRIANGLE_FAN);
+	m_render->Color(fillColor);
 	for (int32 i = 0; i < vertexCount; ++i)
 	{
-		glVertex2f(vertices[i].x, vertices[i].y);
+		m_render->Vertex(vertices[i]);
 	}
-	glEnd();
+	m_render->End();
 	glDisable(GL_BLEND);
 
-	glColor4f(color.r, color.g, color.b, 1.0f);
-	glBegin(GL_LINE_LOOP);
+	m_render->Begin(GL_LINE_LOOP);
+	m_render->Color(color);
 	for (int32 i = 0; i < vertexCount; ++i)
 	{
-		glVertex2f(vertices[i].x, vertices[i].y);
+		m_render->Vertex(vertices[i]);
 	}
-	glEnd();
+	m_render->End();
 }
 
 void DebugDraw::DrawCircle(const b2Vec2& center, float32 radius, const b2Color& color)
@@ -404,15 +394,15 @@ void DebugDraw::DrawCircle(const b2Vec2& center, float32 radius, const b2Color& 
 	const float32 k_segments = 16.0f;
 	const float32 k_increment = 2.0f * b2_pi / k_segments;
 	float32 theta = 0.0f;
-	glColor3f(color.r, color.g, color.b);
-	glBegin(GL_LINE_LOOP);
+	m_render->Begin(GL_LINE_LOOP);
+	m_render->Color(color);
 	for (int32 i = 0; i < k_segments; ++i)
 	{
 		b2Vec2 v = center + radius * b2Vec2(cosf(theta), sinf(theta));
-		glVertex2f(v.x, v.y);
+		m_render->Vertex(v);
 		theta += k_increment;
 	}
-	glEnd();
+	m_render->End();
 }
 
 void DebugDraw::DrawSolidCircle(const b2Vec2& center, float32 radius, const b2Vec2& axis, const b2Color& color)
@@ -420,63 +410,63 @@ void DebugDraw::DrawSolidCircle(const b2Vec2& center, float32 radius, const b2Ve
 	const float32 k_segments = 16.0f;
 	const float32 k_increment = 2.0f * b2_pi / k_segments;
 	float32 theta = 0.0f;
+	b2Color fillColor(0.5f * color.r, 0.5f * color.g, 0.5f * color.b, 0.5f);
 	glEnable(GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glColor4f(0.5f * color.r, 0.5f * color.g, 0.5f * color.b, 0.5f);
-	glBegin(GL_TRIANGLE_FAN);
+	m_render->Begin(GL_TRIANGLE_FAN);
+	m_render->Color(fillColor);
 	for (int32 i = 0; i < k_segments; ++i)
 	{
 		b2Vec2 v = center + radius * b2Vec2(cosf(theta), sinf(theta));
-		glVertex2f(v.x, v.y);
+		m_render->Vertex(v);
 		theta += k_increment;
 	}
-	glEnd();
+	m_render->End();
 	glDisable(GL_BLEND);
 
 	theta = 0.0f;
-	glColor4f(color.r, color.g, color.b, 1.0f);
-	glBegin(GL_LINE_LOOP);
+	m_render->Begin(GL_LINE_LOOP);
+	m_render->Color(color);
 	for (int32 i = 0; i < k_segments; ++i)
 	{
 		b2Vec2 v = center + radius * b2Vec2(cosf(theta), sinf(theta));
-		glVertex2f(v.x, v.y);
+		m_render->Vertex(v);
 		theta += k_increment;
 	}
-	glEnd();
+	m_render->End();
 
 	b2Vec2 p = center + radius * axis;
-	glBegin(GL_LINES);
-	glVertex2f(center.x, center.y);
-	glVertex2f(p.x, p.y);
-	glEnd();
+	m_render->Begin(GL_LINES);
+	m_render->Vertex(center);
+	m_render->Vertex(p);
+	m_render->End();
 }
 
 void DebugDraw::DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b2Color& color)
 {
-	glColor3f(color.r, color.g, color.b);
-	glBegin(GL_LINES);
-	glVertex2f(p1.x, p1.y);
-	glVertex2f(p2.x, p2.y);
-	glEnd();
+	m_render->Begin(GL_LINES);
+	m_render->Color(color);
+	m_render->Vertex(p1);
+	m_render->Vertex(p2);
+	m_render->End();
 }
 
 void DebugDraw::DrawTransform(const b2Transform& xf)
 {
 	b2Vec2 p1 = xf.p, p2;
 	const float32 k_axisScale = 0.4f;
-	glBegin(GL_LINES);
-	
-	glColor3f(1.0f, 0.0f, 0.0f);
-	glVertex2f(p1.x, p1.y);
+	m_render->Begin(GL_LINES);
+	m_render->Color(b2Color(1.0f, 0.0f, 0.0f));
+	m_render->Vertex(p1);
 	p2 = p1 + k_axisScale * xf.q.GetXAxis();
-	glVertex2f(p2.x, p2.y);
+	m_render->Vertex(p2);
 
-	glColor3f(0.0f, 1.0f, 0.0f);
-	glVertex2f(p1.x, p1.y);
+	m_render->Color(b2Color(0.0f, 1.0f, 0.0f));
+	m_render->Vertex(p1);
 	p2 = p1 + k_axisScale * xf.q.GetYAxis();
-	glVertex2f(p2.x, p2.y);
+	m_render->Vertex(p2);
 
-	glEnd();
+	m_render->End();
 }
 
 void DebugDraw::DrawPoint(const b2Vec2& p, float32 size, const b2Color& color)
@@ -520,11 +510,11 @@ void DebugDraw::DrawString(const b2Vec2& pw, const char *string, ...)
 
 void DebugDraw::DrawAABB(b2AABB* aabb, const b2Color& c)
 {
-	glColor3f(c.r, c.g, c.b);
-	glBegin(GL_LINE_LOOP);
-	glVertex2f(aabb->lowerBound.x, aabb->lowerBound.y);
-	glVertex2f(aabb->upperBound.x, aabb->lowerBound.y);
-	glVertex2f(aabb->upperBound.x, aabb->upperBound.y);
-	glVertex2f(aabb->lowerBound.x, aabb->upperBound.y);
-	glEnd();
+	m_render->Begin(GL_LINE_LOOP);
+	m_render->Color(c);
+	m_render->Vertex(aabb->lowerBound);
+	m_render->Vertex(b2Vec2(aabb->upperBound.x, aabb->lowerBound.y));
+	m_render->Vertex(aabb->upperBound);
+	m_render->Vertex(b2Vec2(aabb->lowerBound.x, aabb->upperBound.y));
+	m_render->End();
 }
