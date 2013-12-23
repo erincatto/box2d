@@ -209,8 +209,6 @@ struct GLRender
 		m_vertexAttribute = 0;
 		m_colorAttribute = 1;
 
-		sCheckGLError();
-
 		// Generate
 		glGenVertexArrays(1, &m_vaoId);
 		glGenBuffers(2, m_vboIds);
@@ -219,14 +217,10 @@ struct GLRender
 		glEnableVertexAttribArray(m_vertexAttribute);
 		glEnableVertexAttribArray(m_colorAttribute);
 
-		sCheckGLError();
-
 		// Vertex buffer
 		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[0]);
 		glVertexAttribPointer(m_vertexAttribute, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 		glBufferData(GL_ARRAY_BUFFER, sizeof(m_vertices), m_vertices, GL_DYNAMIC_DRAW);
-
-		sCheckGLError();
 
 		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[1]);
 		glVertexAttribPointer(m_colorAttribute, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
@@ -284,7 +278,6 @@ struct GLRender
 	{
 		glUseProgram(m_programId);
 
-		// Setup 2D projection into normalized device coordinates. Origin is top left, y grows down.
 		float32 proj[16] = { 0.0f };
 		g_camera.BuildProjectionMatrix(proj);
 
