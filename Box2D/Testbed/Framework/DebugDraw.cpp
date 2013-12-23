@@ -25,6 +25,8 @@
 
 #include "RenderGL3.h"
 
+#define BUFFER_OFFSET(x)  ((const void*) (x))
+
 DebugDraw g_debugDraw;
 Camera g_camera;
 
@@ -64,6 +66,303 @@ b2Vec2 Camera::ConvertWorldToScreen(const b2Vec2& pw)
 	ps.x = u * m_width;
 	ps.y = (1.0f - v) * m_height;
 	return ps;
+}
+
+// Convert from world coordinates to normalized device coordinates.
+// http://www.songho.ca/opengl/gl_projectionmatrix.html
+void Camera::BuildProjectionMatrix(float32* m)
+{
+	float32 ratio = m_width / m_height;
+	b2Vec2 extents(ratio * 25.0f, 25.0f);
+	extents *= m_zoom;
+
+	b2Vec2 lower = m_center - extents;
+	b2Vec2 upper = m_center + extents;
+
+	m[0] = 2.0f / (upper.x - lower.x);
+	m[1] = 0.0f;
+	m[2] = 0.0f;
+	m[3] = 0.0f;
+
+	m[4] = 0.0f;
+	m[5] = 2.0f / (upper.y - lower.y);
+	m[6] = 0.0f;
+	m[7] = 0.0f;
+
+	m[8] = 0.0f;
+	m[9] = 0.0f;
+	m[10] = 1.0f;
+	m[11] = 0.0f;
+
+	m[12] = -(upper.x + lower.x) / (upper.x - lower.x);
+	m[13] = -(upper.y + lower.y) / (upper.y - lower.y);
+	m[14] = 0.0f;
+	m[15] = 1.0f;
+}
+
+//
+static void sCheckGLError()
+{
+	GLenum errCode = glGetError();
+	if (errCode != GL_NO_ERROR)
+	{
+		fprintf(stderr, "OpenGL error = %d\n", errCode);
+		assert(false);
+	}
+}
+
+// Prints shader compilation errors
+static void sPrintLog(GLuint object)
+{
+	GLint log_length = 0;
+	if (glIsShader(object))
+		glGetShaderiv(object, GL_INFO_LOG_LENGTH, &log_length);
+	else if (glIsProgram(object))
+		glGetProgramiv(object, GL_INFO_LOG_LENGTH, &log_length);
+	else
+	{
+		fprintf(stderr, "printlog: Not a shader or a program\n");
+		return;
+	}
+
+	char* log = (char*)malloc(log_length);
+
+	if (glIsShader(object))
+		glGetShaderInfoLog(object, log_length, NULL, log);
+	else if (glIsProgram(object))
+		glGetProgramInfoLog(object, log_length, NULL, log);
+
+	fprintf(stderr, "%s", log);
+	free(log);
+}
+
+
+//
+static GLuint sCreateShaderFromString(const char* source, GLenum type)
+{
+	GLuint res = glCreateShader(type);
+	const char* sources[] = { source };
+	glShaderSource(res, 1, sources, NULL);
+	glCompileShader(res);
+	GLint compile_ok = GL_FALSE;
+	glGetShaderiv(res, GL_COMPILE_STATUS, &compile_ok);
+	if (compile_ok == GL_FALSE)
+	{
+		fprintf(stderr, "Error compiling shader of type %d!\n", type);
+		sPrintLog(res);
+		glDeleteShader(res);
+		return 0;
+	}
+
+	return res;
+}
+
+// 
+static GLuint sCreateShaderProgram(const char* vs, const char* fs)
+{
+	GLuint vsId = sCreateShaderFromString(vs, GL_VERTEX_SHADER);
+	GLuint fsId = sCreateShaderFromString(fs, GL_FRAGMENT_SHADER);
+	assert(vsId != 0 && fsId != 0);
+
+	GLuint programId = glCreateProgram();
+	glAttachShader(programId, vsId);
+	glAttachShader(programId, fsId);
+	glLinkProgram(programId);
+
+	glDeleteShader(vsId);
+	glDeleteShader(fsId);
+
+	GLint status = GL_FALSE;
+	glGetProgramiv(programId, GL_LINK_STATUS, &status);
+	assert(status != GL_FALSE);
+	
+	return programId;
+}
+
+//
+struct GLRender
+{
+	void Create()
+	{
+		const char* vs = \
+			"#version 400\n"
+			"uniform mat4 projectionMatrix;\n"
+			"layout(location = 0) in vec2 v_position;\n"
+			"layout(location = 1) in vec3 v_color;\n"
+			"out vec4 f_color;\n"
+			"void main(void)\n"
+			"{\n"
+			"	f_color = vec4(v_color, 1.0f);\n"
+			"	gl_Position = projectionMatrix * vec4(v_position, 0.0f, 1.0f);\n"
+			"}\n";
+
+		const char* fs = \
+			"#version 400\n"
+			"in vec4 f_color;\n"
+			"void main(void)\n"
+			"{\n"
+			"	gl_FragColor = f_color;\n"
+			"}\n";
+
+		m_programId = sCreateShaderProgram(vs, fs);
+		m_projectionUniform = glGetUniformLocation(m_programId, "projectionMatrix");
+		m_vertexAttribute = 0;
+		m_colorAttribute = 1;
+
+		sCheckGLError();
+
+		// Generate
+		glGenVertexArrays(1, &m_vaoId);
+		glGenBuffers(2, m_vboIds);
+
+		glBindVertexArray(m_vaoId);
+		glEnableVertexAttribArray(m_vertexAttribute);
+		glEnableVertexAttribArray(m_colorAttribute);
+
+		sCheckGLError();
+
+		// Vertex buffer
+		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[0]);
+		glVertexAttribPointer(m_vertexAttribute, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+		glBufferData(GL_ARRAY_BUFFER, sizeof(m_vertices), m_vertices, GL_DYNAMIC_DRAW);
+
+		sCheckGLError();
+
+		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[1]);
+		glVertexAttribPointer(m_colorAttribute, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+		glBufferData(GL_ARRAY_BUFFER, sizeof(m_colors), m_colors, GL_DYNAMIC_DRAW);
+
+		sCheckGLError();
+
+		// Cleanup
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+
+		m_color.Set(1.0f, 1.0f, 1.0f);
+		m_count = 0;
+		m_mode = GL_NONE;
+	}
+
+	void Destroy()
+	{
+		if (m_vaoId)
+		{
+			glDeleteVertexArrays(1, &m_vaoId);
+			glDeleteBuffers(2, m_vboIds);
+			m_vaoId = 0;
+		}
+
+		if (m_programId)
+		{
+			glDeleteProgram(m_programId);
+			m_programId = 0;
+		}
+	}
+
+	void Begin(GLenum mode)
+	{
+		m_count = 0;
+		m_mode = mode;
+	}
+
+	void Color(const b2Color& c)
+	{
+		m_color = c;
+	}
+
+	void Vertex(const b2Vec2& v)
+	{
+		if (m_count == e_maxVertices)
+			return;
+
+		m_vertices[m_count] = v;
+		m_colors[m_count] = m_color;
+		++m_count;
+	}
+
+	void End()
+	{
+		glUseProgram(m_programId);
+
+		// Setup 2D projection into normalized device coordinates. Origin is top left, y grows down.
+		float32 proj[16] = { 0.0f };
+		g_camera.BuildProjectionMatrix(proj);
+
+		glUniformMatrix4fv(m_projectionUniform, 1, GL_FALSE, proj);
+
+		sCheckGLError();
+
+		glBindVertexArray(m_vaoId);
+
+		sCheckGLError();
+
+		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[0]);
+
+		sCheckGLError();
+
+		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(b2Vec2), m_vertices);
+
+		sCheckGLError();
+
+		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[1]);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(b2Color), m_colors);
+
+		sCheckGLError();
+
+		glDrawArrays(m_mode, 0, m_count);
+
+		sCheckGLError();
+		//glFlush();
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+		glUseProgram(0);
+
+		m_count = 0;
+		m_mode = GL_NONE;
+	}
+
+	enum { e_maxVertices = 128 };
+	b2Vec2 m_vertices[e_maxVertices];
+	b2Color m_colors[e_maxVertices];
+
+	GLenum m_mode;
+	int32 m_count;
+	b2Color m_color;
+
+	GLuint m_vaoId;
+	GLuint m_vboIds[2];
+	GLuint m_programId;
+	GLint m_projectionUniform;
+	GLint m_vertexAttribute;
+	GLint m_colorAttribute;
+};
+
+//
+DebugDraw::DebugDraw()
+{
+	m_render = NULL;
+}
+
+//
+DebugDraw::~DebugDraw()
+{
+	b2Assert(m_render == NULL);
+}
+
+//
+void DebugDraw::Create()
+{
+	m_render = new GLRender;
+	m_render->Create();
+}
+
+//
+void DebugDraw::Destroy()
+{
+	m_render->Destroy();
+	delete m_render;
+	m_render = NULL;
 }
 
 //
@@ -183,10 +482,10 @@ void DebugDraw::DrawTransform(const b2Transform& xf)
 void DebugDraw::DrawPoint(const b2Vec2& p, float32 size, const b2Color& color)
 {
 	glPointSize(size);
-	glBegin(GL_POINTS);
-	glColor3f(color.r, color.g, color.b);
-	glVertex2f(p.x, p.y);
-	glEnd();
+	m_render->Begin(GL_POINTS);
+	m_render->Color(color);
+	m_render->Vertex(p);
+	m_render->End();
 	glPointSize(1.0f);
 }
 

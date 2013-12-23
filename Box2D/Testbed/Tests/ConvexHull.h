@@ -86,7 +86,7 @@ public:
 
 		for (int32 i = 0; i < m_count; ++i)
 		{
-			g_debugDraw.DrawPoint(m_points[i], 2.0f, b2Color(0.9f, 0.5f, 0.5f));
+			g_debugDraw.DrawPoint(m_points[i], 3.0f, b2Color(0.3f, 0.9f, 0.3f));
 			g_debugDraw.DrawString(m_points[i] + b2Vec2(0.05f, 0.05f), "%d", i);
 		}
 
