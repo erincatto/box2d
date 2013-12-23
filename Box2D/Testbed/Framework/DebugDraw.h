@@ -22,7 +22,7 @@
 #include <Box2D/Box2D.h>
 
 struct b2AABB;
-struct GLFWwindow;
+struct GLRender;
 
 //
 struct Camera
@@ -38,6 +38,7 @@ struct Camera
 
 	b2Vec2 ConvertScreenToWorld(const b2Vec2& screenPoint);
 	b2Vec2 ConvertWorldToScreen(const b2Vec2& worldPoint);
+	void BuildProjectionMatrix(float32* m);
 
 	b2Vec2 m_center;
 	float32 m_extent;
@@ -51,6 +52,12 @@ struct Camera
 class DebugDraw : public b2Draw
 {
 public:
+	DebugDraw();
+	~DebugDraw();
+
+	void Create();
+	void Destroy();
+
 	void DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color);
 
 	void DrawSolidPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color);
@@ -70,6 +77,9 @@ public:
     void DrawString(const b2Vec2& p, const char* string, ...);
 
     void DrawAABB(b2AABB* aabb, const b2Color& color);
+
+private:
+	GLRender* m_render;
 };
 
 extern DebugDraw g_debugDraw;
