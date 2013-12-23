@@ -25,20 +25,9 @@
 struct b2Color
 {
 	b2Color() {}
-	b2Color(float32 r, float32 g, float32 b) : r(r), g(g), b(b) {}
-	void Set(float32 ri, float32 gi, float32 bi) { r = ri; g = gi; b = bi; }
-	uint32 Compress() const
-	{
-		int32 ri = static_cast<int32>(255.0f * r);
-		int32 gi = static_cast<int32>(255.0f * g);
-		int32 bi = static_cast<int32>(255.0f * b);
-		uint8 rc = static_cast<uint8>(ri);
-		uint8 gc = static_cast<uint8>(gi);
-		uint8 bc = static_cast<uint8>(bi);
-		return (rc) | (gc << 8) | (bc << 16) | (0xFF << 24);
-	}
-
-	float32 r, g, b;
+	b2Color(float32 r, float32 g, float32 b, float32 a = 1.0f) : r(r), g(g), b(b), a(a) {}
+	void Set(float32 ri, float32 gi, float32 bi, float32 ai = 1.0f) { r = ri; g = gi; b = bi; a = ai; }
+	float32 r, g, b, a;
 };
 
 /// Implement and register this class with a b2World to provide debug drawing of physics
