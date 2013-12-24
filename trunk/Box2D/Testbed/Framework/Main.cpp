@@ -21,7 +21,7 @@
 #include "DebugDraw.h"
 #include "Test.h"
 
-#if defined(__APPLE_CC__)
+#if defined(__APPLE__)
 #include <OpenGL/gl3.h>
 #else
 #include <glew/glew.h>
@@ -29,7 +29,6 @@
 
 #include <glfw/glfw3.h>
 #include <stdio.h>
-
 
 //
 struct UIState
@@ -67,9 +66,6 @@ static void sCreateUI()
 	ui.chooseTest = false;
 	ui.mouseOverMenu = false;
 
-    char buffer[128];
-    getcwd(buffer, 128);
-    
 	// Init UI
 #if defined(__APPLE__)
     const char* fontPath = "../../../../../../Data/DroidSans.ttf";
@@ -455,10 +451,15 @@ int main(int argc, char** argv)
 
 	char title[64];
 	sprintf(title, "Box2D Testbed Version %d.%d.%d", b2_version.major, b2_version.minor, b2_version.revision);
+
+#if defined(__APPLE__)
+	// Not sure why, but these settings cause glewInit below to crash.
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#endif
+
     mainWindow = glfwCreateWindow(windowWidth, windowHeight, title, NULL, NULL);
 	if (mainWindow == NULL)
 	{
@@ -477,8 +478,8 @@ int main(int argc, char** argv)
 	glfwSetCursorPosCallback(mainWindow, sMouseMotion);
 	glfwSetScrollCallback(mainWindow, sScrollCallback);
 
-    //glewExperimental = GL_TRUE;
 #if defined(__APPLE__) == FALSE
+	//glewExperimental = GL_TRUE;
     GLenum err = glewInit();
 	if (GLEW_OK != err)
 	{
