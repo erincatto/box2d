@@ -70,6 +70,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Tiles", Tiles::Create},
 	{"Convex Hull", ConvexHull::Create},
 	{"Sphere Stack", SphereStack::Create},
 	{"Tumbler", Tumbler::Create},
@@ -85,7 +86,6 @@ TestEntry g_testEntries[] =
 	{"Conveyor Belt", ConveyorBelt::Create},
 	{"Gears", Gears::Create},
 	{"Varying Restitution", VaryingRestitution::Create},
-	{"Tiles", Tiles::Create},
 	{"Cantilever", Cantilever::Create},
 	{"Character Collision", CharacterCollision::Create},
 	{"Edge Test", EdgeTest::Create},
