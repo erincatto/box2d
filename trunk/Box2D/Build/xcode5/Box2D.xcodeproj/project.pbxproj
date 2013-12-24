@@ -35,9 +35,6 @@
 		8069C934184EFC560038E156 /* cocoa_monitor.m in Sources */ = {isa = PBXBuildFile; fileRef = 8069C91D184EFC560038E156 /* cocoa_monitor.m */; };
 		8069C935184EFC560038E156 /* cocoa_window.m in Sources */ = {isa = PBXBuildFile; fileRef = 8069C91E184EFC560038E156 /* cocoa_window.m */; };
 		8069C936184EFC560038E156 /* nsgl_context.m in Sources */ = {isa = PBXBuildFile; fileRef = 8069C91F184EFC560038E156 /* nsgl_context.m */; };
-		8069C946184EFD7E0038E156 /* glew.c in Sources */ = {isa = PBXBuildFile; fileRef = 8069C942184EFD7E0038E156 /* glew.c */; };
-		8069C947184EFD7E0038E156 /* glew.h in Headers */ = {isa = PBXBuildFile; fileRef = 8069C943184EFD7E0038E156 /* glew.h */; };
-		8069C94E184EFE6B0038E156 /* libGLEW.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8069C93C184EFD160038E156 /* libGLEW.a */; };
 		8069C94F184EFE6B0038E156 /* libGLFW.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 805900B8184EEF2E00C8ECA3 /* libGLFW.a */; };
 		80A390791852F2A000E19E2B /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 80A390771852F2A000E19E2B /* Cocoa.framework */; };
 		80A3907A1852F2A000E19E2B /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 80A390781852F2A000E19E2B /* CoreFoundation.framework */; };
@@ -150,13 +147,6 @@
 			remoteGlobalIDString = 805900B7184EEF2E00C8ECA3;
 			remoteInfo = GLFW;
 		};
-		8069C94C184EFE590038E156 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 80FF01C9141C3D980059E59D /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 8069C93B184EFD160038E156;
-			remoteInfo = GLEW;
-		};
 		80BB8A6F141C3EA100F1753A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 80FF01C9141C3D980059E59D /* Project object */;
@@ -229,9 +219,6 @@
 		8069C91D184EFC560038E156 /* cocoa_monitor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = cocoa_monitor.m; path = ../../glfw/cocoa_monitor.m; sourceTree = "<group>"; };
 		8069C91E184EFC560038E156 /* cocoa_window.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = cocoa_window.m; path = ../../glfw/cocoa_window.m; sourceTree = "<group>"; };
 		8069C91F184EFC560038E156 /* nsgl_context.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = nsgl_context.m; path = ../../glfw/nsgl_context.m; sourceTree = "<group>"; };
-		8069C93C184EFD160038E156 /* libGLEW.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libGLEW.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		8069C942184EFD7E0038E156 /* glew.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = glew.c; sourceTree = "<group>"; };
-		8069C943184EFD7E0038E156 /* glew.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = glew.h; sourceTree = "<group>"; };
 		80A390771852F2A000E19E2B /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		80A390781852F2A000E19E2B /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		80A3907B1852F2D100E19E2B /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
@@ -390,13 +377,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8069C939184EFD160038E156 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		80BB8907141C3E2600F1753A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -412,7 +392,6 @@
 				80A3907C1852F2D100E19E2B /* IOKit.framework in Frameworks */,
 				80A390791852F2A000E19E2B /* Cocoa.framework in Frameworks */,
 				80A3907A1852F2A000E19E2B /* CoreFoundation.framework in Frameworks */,
-				8069C94E184EFE6B0038E156 /* libGLEW.a in Frameworks */,
 				8069C94F184EFE6B0038E156 /* libGLFW.a in Frameworks */,
 				80BB8A7B141C3FA700F1753A /* OpenGL.framework in Frameworks */,
 				80BB8A76141C3F7600F1753A /* libBox2D.a in Frameworks */,
@@ -457,16 +436,6 @@
 				8069C91F184EFC560038E156 /* nsgl_context.m */,
 			);
 			name = GLFW;
-			sourceTree = "<group>";
-		};
-		8069C941184EFD7E0038E156 /* GLEW */ = {
-			isa = PBXGroup;
-			children = (
-				8069C942184EFD7E0038E156 /* glew.c */,
-				8069C943184EFD7E0038E156 /* glew.h */,
-			);
-			name = GLEW;
-			path = ../../glew;
 			sourceTree = "<group>";
 		};
 		80BB8922141C3E5900F1753A /* Box2D */ = {
@@ -722,7 +691,6 @@
 				80A3907B1852F2D100E19E2B /* IOKit.framework */,
 				80A390771852F2A000E19E2B /* Cocoa.framework */,
 				80A390781852F2A000E19E2B /* CoreFoundation.framework */,
-				8069C941184EFD7E0038E156 /* GLEW */,
 				8069C937184EFC630038E156 /* GLFW */,
 				80BB8A7A141C3FA700F1753A /* OpenGL.framework */,
 				80BB8A35141C3E8500F1753A /* Testbed */,
@@ -739,7 +707,6 @@
 				80BB890A141C3E2700F1753A /* HelloWorld */,
 				80BB8918141C3E3600F1753A /* Testbed */,
 				805900B8184EEF2E00C8ECA3 /* libGLFW.a */,
-				8069C93C184EFD160038E156 /* libGLEW.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -757,14 +724,6 @@
 				8069C925184EFC560038E156 /* internal.h in Headers */,
 				8069C921184EFC560038E156 /* config.h in Headers */,
 				8069C920184EFC560038E156 /* cocoa_platform.h in Headers */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		8069C93A184EFD160038E156 /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				8069C947184EFD7E0038E156 /* glew.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -842,23 +801,6 @@
 			productReference = 805900B8184EEF2E00C8ECA3 /* libGLFW.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		8069C93B184EFD160038E156 /* GLEW */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 8069C93D184EFD160038E156 /* Build configuration list for PBXNativeTarget "GLEW" */;
-			buildPhases = (
-				8069C938184EFD160038E156 /* Sources */,
-				8069C939184EFD160038E156 /* Frameworks */,
-				8069C93A184EFD160038E156 /* Headers */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = GLEW;
-			productName = GLEW;
-			productReference = 8069C93C184EFD160038E156 /* libGLEW.a */;
-			productType = "com.apple.product-type.library.static";
-		};
 		80BB8909141C3E2600F1753A /* HelloWorld */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 80BB8911141C3E2700F1753A /* Build configuration list for PBXNativeTarget "HelloWorld" */;
@@ -889,7 +831,6 @@
 			);
 			dependencies = (
 				8069C94B184EFE590038E156 /* PBXTargetDependency */,
-				8069C94D184EFE590038E156 /* PBXTargetDependency */,
 				80BB8A72141C3EA800F1753A /* PBXTargetDependency */,
 			);
 			name = Testbed;
@@ -938,7 +879,6 @@
 				80BB8909141C3E2600F1753A /* HelloWorld */,
 				80BB8917141C3E3600F1753A /* Testbed */,
 				805900B7184EEF2E00C8ECA3 /* GLFW */,
-				8069C93B184EFD160038E156 /* GLEW */,
 			);
 		};
 /* End PBXProject section */
@@ -965,14 +905,6 @@
 				8069C933184EFC560038E156 /* cocoa_joystick.m in Sources */,
 				8069C92A184EFC560038E156 /* gamma.c in Sources */,
 				8069C932184EFC560038E156 /* cocoa_init.m in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		8069C938184EFD160038E156 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				8069C946184EFD7E0038E156 /* glew.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1058,11 +990,6 @@
 			target = 805900B7184EEF2E00C8ECA3 /* GLFW */;
 			targetProxy = 8069C94A184EFE590038E156 /* PBXContainerItemProxy */;
 		};
-		8069C94D184EFE590038E156 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 8069C93B184EFD160038E156 /* GLEW */;
-			targetProxy = 8069C94C184EFE590038E156 /* PBXContainerItemProxy */;
-		};
 		80BB8A70141C3EA100F1753A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 80FF01D1141C3D980059E59D /* Box2D */;
@@ -1121,43 +1048,6 @@
 			};
 			name = Release;
 		};
-		8069C93E184EFD160038E156 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				EXECUTABLE_PREFIX = lib;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
-		8069C93F184EFD160038E156 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				ENABLE_NS_ASSERTIONS = NO;
-				EXECUTABLE_PREFIX = lib;
-				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Release;
-		};
 		80BB8912141C3E2700F1753A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1179,6 +1069,10 @@
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				GCC_WARN_UNUSED_VALUE = NO;
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-DGLFW_INCLUDE_GLCOREARB",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1190,6 +1084,10 @@
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				GCC_WARN_UNUSED_VALUE = NO;
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-DGLFW_INCLUDE_GLCOREARB",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1287,15 +1185,6 @@
 			buildConfigurations = (
 				805900BA184EEF2E00C8ECA3 /* Debug */,
 				805900BB184EEF2E00C8ECA3 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		8069C93D184EFD160038E156 /* Build configuration list for PBXNativeTarget "GLEW" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				8069C93E184EFD160038E156 /* Debug */,
-				8069C93F184EFD160038E156 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
