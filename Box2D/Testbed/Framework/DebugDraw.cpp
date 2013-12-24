@@ -18,7 +18,12 @@
 
 #include "DebugDraw.h"
 
+#if defined(__APPLE_CC__)
+#include <OpenGL/gl3.h>
+#else
 #include <glew/glew.h>
+#endif
+
 #include <glfw/glfw3.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -167,6 +172,7 @@ static GLuint sCreateShaderProgram(const char* vs, const char* fs)
 	GLuint programId = glCreateProgram();
 	glAttachShader(programId, vsId);
 	glAttachShader(programId, fsId);
+    glBindFragDataLocation(programId, 0, "color");
 	glLinkProgram(programId);
 
 	glDeleteShader(vsId);
@@ -199,9 +205,10 @@ struct GLRender
 		const char* fs = \
 			"#version 400\n"
 			"in vec4 f_color;\n"
+            "out vec4 color;\n"
 			"void main(void)\n"
 			"{\n"
-			"	gl_FragColor = f_color;\n"
+			"	color = f_color;\n"
 			"}\n";
 
 		m_programId = sCreateShaderProgram(vs, fs);
