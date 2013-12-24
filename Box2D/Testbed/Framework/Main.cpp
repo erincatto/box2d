@@ -21,9 +21,15 @@
 #include "DebugDraw.h"
 #include "Test.h"
 
+#if defined(__APPLE_CC__)
+#include <OpenGL/gl3.h>
+#else
 #include <glew/glew.h>
+#endif
+
 #include <glfw/glfw3.h>
 #include <stdio.h>
+
 
 //
 struct UIState
@@ -61,8 +67,17 @@ static void sCreateUI()
 	ui.chooseTest = false;
 	ui.mouseOverMenu = false;
 
+    char buffer[128];
+    getcwd(buffer, 128);
+    
 	// Init UI
-	if (RenderGLInit("../Data/DroidSans.ttf") == false)
+#if defined(__APPLE__)
+    const char* fontPath = "../../../../../../Data/DroidSans.ttf";
+#else
+    const char* fontPath = "../Data/DroidSans.ttf";
+#endif
+    
+	if (RenderGLInit(fontPath) == false)
 	{
 		fprintf(stderr, "Could not init GUI renderer.\n");
 		assert(false);
@@ -318,22 +333,6 @@ static void sRestart()
 //
 static void sSimulate()
 {
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	float32 ratio = float32(windowWidth) / float32(windowHeight);
-
-	b2Vec2 extents(ratio * 25.0f, 25.0f);
-	extents *= g_camera.m_zoom;
-
-	b2Vec2 lower = g_camera.m_center - extents;
-	b2Vec2 upper = g_camera.m_center + extents;
-
-	// L/R/B/T
-	gluOrtho2D(lower.x, upper.x, lower.y, upper.y);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
 	test->Step(&settings);
 
 	test->DrawTitle(entry->name);
@@ -456,10 +455,10 @@ int main(int argc, char** argv)
 
 	char title[64];
 	sprintf(title, "Box2D Testbed Version %d.%d.%d", b2_version.major, b2_version.minor, b2_version.revision);
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     mainWindow = glfwCreateWindow(windowWidth, windowHeight, title, NULL, NULL);
 	if (mainWindow == NULL)
 	{
@@ -479,13 +478,15 @@ int main(int argc, char** argv)
 	glfwSetScrollCallback(mainWindow, sScrollCallback);
 
     //glewExperimental = GL_TRUE;
+#if defined(__APPLE__) == FALSE
     GLenum err = glewInit();
 	if (GLEW_OK != err)
 	{
 		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
 		exit(EXIT_FAILURE);
 	}
-
+#endif
+    
 	g_debugDraw.Create();
 
 	sCreateUI();
