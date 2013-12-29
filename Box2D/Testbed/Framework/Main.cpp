@@ -507,9 +507,12 @@ int main(int argc, char** argv)
 	// Control the frame rate. One draw per monitor refresh.
 	glfwSwapInterval(1);
 
-	glClearColor(0.3f, 0.3f, 0.3f, 1.f);
-	// glfw scrolling
-	while (!glfwWindowShouldClose(mainWindow))
+    double time1 = glfwGetTime();
+    double frameTime = 0.0;
+   
+    glClearColor(0.3f, 0.3f, 0.3f, 1.f);
+	
+ 	while (!glfwWindowShouldClose(mainWindow))
 	{
 		glfwGetWindowSize(mainWindow, &windowWidth, &windowHeight);
 		glViewport(0, 0, windowWidth, windowHeight);
@@ -534,7 +537,17 @@ int main(int argc, char** argv)
 
 		sSimulate();
 		sInterface();
+        
+        // Measure speed
+        double time2 = glfwGetTime();
+        double alpha = 0.9f;
+        frameTime = alpha * frameTime + (1.0 - alpha) * (time2 - time1);
+        time1 = time2;
 
+        char buffer[32];
+        snprintf(buffer, 32, "%.1f ms", 1000.0 * frameTime);
+        AddGfxCmdText(5, 5, TEXT_ALIGN_LEFT, buffer, WHITE);
+        
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_DEPTH_TEST);
