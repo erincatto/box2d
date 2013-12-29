@@ -22,7 +22,9 @@
 #include <Box2D/Box2D.h>
 
 struct b2AABB;
-struct GLRender;
+struct GLRenderPoints;
+struct GLRenderLines;
+struct GLRenderTriangles;
 
 //
 struct Camera
@@ -78,8 +80,12 @@ public:
 
     void DrawAABB(b2AABB* aabb, const b2Color& color);
 
+    void Flush();
+    
 private:
-	GLRender* m_render;
+	GLRenderPoints* m_points;
+    GLRenderLines* m_lines;
+    GLRenderTriangles* m_triangles;
 };
 
 extern DebugDraw g_debugDraw;
