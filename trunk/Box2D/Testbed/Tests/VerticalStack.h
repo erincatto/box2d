@@ -19,14 +19,16 @@
 #ifndef VERTICAL_STACK_H
 #define VERTICAL_STACK_H
 
+extern bool g_blockSolve;
+
 class VerticalStack : public Test
 {
 public:
 
 	enum
 	{
-		e_columnCount = 5,
-		e_rowCount = 16
+		e_columnCount = 1,
+		e_rowCount = 15
 		//e_columnCount = 1,
 		//e_rowCount = 1
 	};
@@ -69,8 +71,8 @@ public:
 
 				float32 x = 0.0f;
 				//float32 x = RandomFloat(-0.02f, 0.02f);
-				//float32 x = i % 2 == 0 ? -0.025f : 0.025f;
-				bd.position.Set(xs[j] + x, 0.752f + 1.54f * i);
+				//float32 x = i % 2 == 0 ? -0.01f : 0.01f;
+				bd.position.Set(xs[j] + x, 0.55f + 1.1f * i);
 				b2Body* body = m_world->CreateBody(&bd);
 
 				m_bodies[n] = body;
@@ -113,6 +115,10 @@ public:
 				m_bullet->SetLinearVelocity(b2Vec2(400.0f, 0.0f));
 			}
 			break;
+                
+        case GLFW_KEY_B:
+            g_blockSolve = !g_blockSolve;
+            break;
 		}
 	}
 
@@ -121,7 +127,7 @@ public:
 		Test::Step(settings);
 		g_debugDraw.DrawString(5, m_textLine, "Press: (,) to launch a bullet.");
 		m_textLine += DRAW_STRING_NEW_LINE;
-
+		g_debugDraw.DrawString(5, m_textLine, "Blocksolve = %d", g_blockSolve);
 		//if (m_stepCount == 300)
 		//{
 		//	if (m_bullet != NULL)

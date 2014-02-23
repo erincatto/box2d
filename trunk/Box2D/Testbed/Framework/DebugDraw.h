@@ -34,8 +34,8 @@ struct Camera
 		m_center.Set(0.0f, 20.0f);
 		m_extent = 25.0f;
 		m_zoom = 1.0f;
-		m_width = 1280.0f;
-		m_height = 800.0f;
+		m_width = 1280;
+		m_height = 800;
 	}
 
 	b2Vec2 ConvertScreenToWorld(const b2Vec2& screenPoint);
@@ -45,8 +45,8 @@ struct Camera
 	b2Vec2 m_center;
 	float32 m_extent;
 	float32 m_zoom;
-	float32 m_width;
-	float32 m_height;
+	int32 m_width;
+	int32 m_height;
 };
 
 // This class implements debug drawing callbacks that are invoked
