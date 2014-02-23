@@ -196,6 +196,7 @@
 		805900B8184EEF2E00C8ECA3 /* libGLFW.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libGLFW.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		80620F8D168B934600D46C8D /* b2MotorJoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = b2MotorJoint.cpp; sourceTree = "<group>"; };
 		80620F8E168B934600D46C8D /* b2MotorJoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = b2MotorJoint.h; sourceTree = "<group>"; };
+		8066C2311890307100985759 /* BasicSliderCrank.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BasicSliderCrank.h; sourceTree = "<group>"; };
 		8069C909184EFC560038E156 /* cocoa_platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cocoa_platform.h; path = ../../glfw/cocoa_platform.h; sourceTree = "<group>"; };
 		8069C90A184EFC560038E156 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../../glfw/config.h; sourceTree = "<group>"; };
 		8069C90B184EFC560038E156 /* glext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = glext.h; path = ../../glfw/glext.h; sourceTree = "<group>"; };
@@ -219,6 +220,8 @@
 		8069C91D184EFC560038E156 /* cocoa_monitor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = cocoa_monitor.m; path = ../../glfw/cocoa_monitor.m; sourceTree = "<group>"; };
 		8069C91E184EFC560038E156 /* cocoa_window.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = cocoa_window.m; path = ../../glfw/cocoa_window.m; sourceTree = "<group>"; };
 		8069C91F184EFC560038E156 /* nsgl_context.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = nsgl_context.m; path = ../../glfw/nsgl_context.m; sourceTree = "<group>"; };
+		809BC10118B855CB00F5D9F0 /* HeavyOnLight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HeavyOnLight.h; sourceTree = "<group>"; };
+		809BC10218B85A4900F5D9F0 /* HeavyOnLightTwo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HeavyOnLightTwo.h; sourceTree = "<group>"; };
 		80A390771852F2A000E19E2B /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		80A390781852F2A000E19E2B /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		80A3907B1852F2D100E19E2B /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
@@ -634,6 +637,7 @@
 		80BB8A3D141C3E8500F1753A /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				8066C2311890307100985759 /* BasicSliderCrank.h */,
 				80BB8A3E141C3E8500F1753A /* AddPair.h */,
 				80BB8A3F141C3E8500F1753A /* ApplyForce.h */,
 				80BB8A40141C3E8500F1753A /* BodyTypes.h */,
@@ -673,6 +677,8 @@
 				80BB8A61141C3E8600F1753A /* SliderCrank.h */,
 				80BB8A62141C3E8600F1753A /* SphereStack.h */,
 				80BB8A63141C3E8600F1753A /* TestEntries.cpp */,
+				809BC10118B855CB00F5D9F0 /* HeavyOnLight.h */,
+				809BC10218B85A4900F5D9F0 /* HeavyOnLightTwo.h */,
 				80BB8A64141C3E8600F1753A /* TheoJansen.h */,
 				80BB8A65141C3E8600F1753A /* Tiles.h */,
 				80BB8A66141C3E8600F1753A /* TimeOfImpact.h */,
