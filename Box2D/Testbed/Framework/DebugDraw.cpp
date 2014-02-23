@@ -38,10 +38,12 @@ Camera g_camera;
 //
 b2Vec2 Camera::ConvertScreenToWorld(const b2Vec2& ps)
 {
-	float32 u = ps.x / m_width;
-	float32 v = (m_height - ps.y) / m_height;
+    float32 w = m_width;
+    float32 h = m_height;
+	float32 u = ps.x / w;
+	float32 v = (h - ps.y) / h;
 
-	float32 ratio = m_width / m_height;
+	float32 ratio = w / h;
 	b2Vec2 extents(ratio * 25.0f, 25.0f);
 	extents *= m_zoom;
 
@@ -57,7 +59,9 @@ b2Vec2 Camera::ConvertScreenToWorld(const b2Vec2& ps)
 //
 b2Vec2 Camera::ConvertWorldToScreen(const b2Vec2& pw)
 {
-	float32 ratio = m_width / m_height;
+    float32 w = m_width;
+    float32 h = m_height;
+	float32 ratio = w / h;
 	b2Vec2 extents(ratio * 25.0f, 25.0f);
 	extents *= m_zoom;
 
@@ -68,8 +72,8 @@ b2Vec2 Camera::ConvertWorldToScreen(const b2Vec2& pw)
 	float32 v = (pw.y - lower.y) / (upper.y - lower.y);
 
 	b2Vec2 ps;
-	ps.x = u * m_width;
-	ps.y = (1.0f - v) * m_height;
+	ps.x = u * w;
+	ps.y = (1.0f - v) * h;
 	return ps;
 }
 
@@ -77,7 +81,9 @@ b2Vec2 Camera::ConvertWorldToScreen(const b2Vec2& pw)
 // http://www.songho.ca/opengl/gl_projectionmatrix.html
 void Camera::BuildProjectionMatrix(float32* m)
 {
-	float32 ratio = m_width / m_height;
+    float32 w = m_width;
+    float32 h = m_height;
+	float32 ratio = w / h;
 	b2Vec2 extents(ratio * 25.0f, 25.0f);
 	extents *= m_zoom;
 
@@ -289,7 +295,7 @@ struct GLRenderPoints
 		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(b2Color), m_colors);
         
         // TODO use gl_PointSize?
-        glPointSize(4.0f);
+        glPointSize(10.0f);
 		glDrawArrays(GL_POINTS, 0, m_count);
         
 		sCheckGLError();
