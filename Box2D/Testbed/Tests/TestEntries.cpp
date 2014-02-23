@@ -20,6 +20,7 @@
 
 #include "AddPair.h"
 #include "ApplyForce.h"
+#include "BasicSliderCrank.h"
 #include "BodyTypes.h"
 #include "Breakable.h"
 #include "Bridge.h"
@@ -42,6 +43,8 @@
 #include "EdgeShapes.h"
 #include "EdgeTest.h"
 #include "Gears.h"
+#include "HeavyOnLight.h"
+#include "HeavyOnLightTwo.h"
 #include "Mobile.h"
 #include "MobileBalanced.h"
 #include "MotorJoint.h"
@@ -70,9 +73,14 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Basic Slider Crank", BasicSliderCrank::Create},
+	{"Heavy on Light", HeavyOnLight::Create},
+	{"Heavy on Light Two", HeavyOnLightTwo::Create},
+	{"Vertical Stack", VerticalStack::Create},
+	{"Slider Crank", SliderCrank::Create},
+	{"Sphere Stack", SphereStack::Create},
 	{"Tiles", Tiles::Create},
 	{"Convex Hull", ConvexHull::Create},
-	{"Sphere Stack", SphereStack::Create},
 	{"Tumbler", Tumbler::Create},
 	{"Ray-Cast", RayCast::Create},
 	{"Dump Shell", DumpShell::Create},
@@ -93,7 +101,6 @@ TestEntry g_testEntries[] =
 	{"Shape Editing", ShapeEditing::Create},
 	{"Car", Car::Create},
 	{"Prismatic", Prismatic::Create},
-	{"Vertical Stack", VerticalStack::Create},
 	{"Revolute", Revolute::Create},
 	{"Pulleys", Pulleys::Create},
 	{"Polygon Shapes", PolyShapes::Create},
@@ -116,7 +123,6 @@ TestEntry g_testEntries[] =
 	{"Dominos", Dominos::Create},
 	{"Dynamic Tree", DynamicTreeTest::Create},
 	{"Sensor Test", SensorTest::Create},
-	{"Slider Crank", SliderCrank::Create},
 	{"Varying Friction", VaryingFriction::Create},
 	{"Add Pair Stress Test", AddPair::Create},
 	{NULL, NULL}
