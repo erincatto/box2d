@@ -44,7 +44,6 @@ struct UIState
 namespace
 {
 	GLFWwindow* mainWindow = NULL;
-	int windowWidth = 1280, windowHeight = 800;
 	UIState ui;
 
 	int32 testIndex = 0;
@@ -84,8 +83,6 @@ static void sCreateUI()
 //
 static void sResizeWindow(GLFWwindow*, int width, int height)
 {
-	windowWidth = width;
-	windowHeight = height;
 	g_camera.m_width = float(width);
 	g_camera.m_height = float(height);
 }
@@ -118,7 +115,6 @@ static void sKeyCallback(GLFWwindow*, int key, int scancode, int action, int mod
 			else
 			{
 				g_camera.m_center.x -= 0.5f;
-				sResizeWindow(mainWindow, windowWidth, windowHeight);
 			}
 			break;
 
@@ -132,7 +128,6 @@ static void sKeyCallback(GLFWwindow*, int key, int scancode, int action, int mod
 			else
 			{
 				g_camera.m_center.x += 0.5f;
-				sResizeWindow(mainWindow, windowWidth, windowHeight);
 			}
 			break;
 
@@ -146,7 +141,6 @@ static void sKeyCallback(GLFWwindow*, int key, int scancode, int action, int mod
 			else
 			{
 				g_camera.m_center.y -= 0.5f;
-				sResizeWindow(mainWindow, windowWidth, windowHeight);
 			}
 			break;
 
@@ -160,7 +154,6 @@ static void sKeyCallback(GLFWwindow*, int key, int scancode, int action, int mod
 			else
 			{
 				g_camera.m_center.y += 0.5f;
-				sResizeWindow(mainWindow, windowWidth, windowHeight);
 			}
 			break;
 
@@ -168,19 +161,16 @@ static void sKeyCallback(GLFWwindow*, int key, int scancode, int action, int mod
 			// Reset view
 			g_camera.m_zoom = 1.0f;
 			g_camera.m_center.Set(0.0f, 20.0f);
-			sResizeWindow(mainWindow, windowWidth, windowHeight);
 			break;
 
 		case GLFW_KEY_Z:
 			// Zoom out
 			g_camera.m_zoom = b2Min(1.1f * g_camera.m_zoom, 20.0f);
-			sResizeWindow(mainWindow, windowWidth, windowHeight);
 			break;
 
 		case GLFW_KEY_X:
 			// Zoom in
 			g_camera.m_zoom = b2Max(0.9f * g_camera.m_zoom, 0.02f);
-			sResizeWindow(mainWindow, windowWidth, windowHeight);
 			break;
 
 		case GLFW_KEY_R:
@@ -247,6 +237,8 @@ static void sMouseButton(GLFWwindow*, int32 button, int32 action, int32 mods)
 	// Use the mouse to move things around.
 	if (button == GLFW_MOUSE_BUTTON_1)
 	{
+        //<##>
+        //ps.Set(0, 0);
 		b2Vec2 pw = g_camera.ConvertScreenToWorld(ps);
 		if (action == GLFW_PRESS)
 		{
@@ -323,7 +315,6 @@ static void sRestart()
 	delete test;
 	entry = g_testEntries + testIndex;
 	test = entry->createFcn();
-	sResizeWindow(mainWindow, windowWidth, windowHeight);
 }
 
 //
@@ -351,7 +342,7 @@ static void sInterface()
 	ui.mouseOverMenu = false;
 	if (ui.showMenu)
 	{
-		bool over = imguiBeginScrollArea("Testbed Controls", windowWidth - menuWidth - 10, 10, menuWidth, windowHeight - 20, &ui.scrollarea1);
+		bool over = imguiBeginScrollArea("Testbed Controls", g_camera.m_width - menuWidth - 10, 10, menuWidth, g_camera.m_height - 20, &ui.scrollarea1);
 		if (over) ui.mouseOverMenu = true;
 
 		imguiSeparatorLine();
@@ -419,7 +410,7 @@ static void sInterface()
 	if (ui.chooseTest)
 	{
 		static int testScroll = 0;
-		bool over = imguiBeginScrollArea("Choose Sample", windowWidth - menuWidth - testMenuWidth - 20, 10, testMenuWidth, windowHeight - 20, &testScroll);
+		bool over = imguiBeginScrollArea("Choose Sample", g_camera.m_width - menuWidth - testMenuWidth - 20, 10, testMenuWidth, g_camera.m_height - 20, &testScroll);
 		if (over) ui.mouseOverMenu = true;
 
 		for (int i = 0; i < testCount; ++i)
@@ -443,6 +434,9 @@ static void sInterface()
 //
 int main(int argc, char** argv)
 {
+    g_camera.m_width = 1024.0f;
+    g_camera.m_height = 640.0f;
+    
 	if (glfwInit() == 0)
 	{
 		fprintf(stderr, "Failed to initialize GLFW\n");
@@ -460,7 +454,7 @@ int main(int argc, char** argv)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
 
-    mainWindow = glfwCreateWindow(windowWidth, windowHeight, title, NULL, NULL);
+    mainWindow = glfwCreateWindow(g_camera.m_width, g_camera.m_height, title, NULL, NULL);
 	if (mainWindow == NULL)
 	{
 		fprintf(stderr, "Failed to open GLFW mainWindow.\n");
@@ -514,8 +508,8 @@ int main(int argc, char** argv)
 	
  	while (!glfwWindowShouldClose(mainWindow))
 	{
-		glfwGetWindowSize(mainWindow, &windowWidth, &windowHeight);
-		glViewport(0, 0, windowWidth, windowHeight);
+ 		glfwGetWindowSize(mainWindow, &g_camera.m_width, &g_camera.m_height);
+		glViewport(0, 0, g_camera.m_width, g_camera.m_height);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -528,7 +522,7 @@ int main(int argc, char** argv)
 		int mousex = int(xd);
 		int mousey = int(yd);
 
-		mousey = windowHeight - mousey;
+		mousey = g_camera.m_height - mousey;
 		int leftButton = glfwGetMouseButton(mainWindow, GLFW_MOUSE_BUTTON_LEFT);
 		if (leftButton == GLFW_PRESS)
 			mousebutton |= IMGUI_MBUT_LEFT;
@@ -551,7 +545,7 @@ int main(int argc, char** argv)
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_DEPTH_TEST);
-		RenderGLFlush(windowWidth, windowHeight);
+		RenderGLFlush(g_camera.m_width, g_camera.m_height);
 
 		glfwSwapBuffers(mainWindow);
 
