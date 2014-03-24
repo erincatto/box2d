@@ -588,7 +588,6 @@ bool RenderGLInit(const char* fontpath)
 
 	glUseProgram(0);
 
-
 	free(ttfBuffer);
 	free(bmap);
 
