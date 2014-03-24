@@ -36,14 +36,14 @@ public:
         
 		b2BodyDef bd;
 		bd.type = b2_dynamicBody;
-		bd.position.Set(0.0f, 2.5f);
+		bd.position.Set(0.0f, 0.5f);
 		b2Body* body = m_world->CreateBody(&bd);
         
 		b2CircleShape shape;
 		shape.m_radius = 0.5f;
         body->CreateFixture(&shape, 10.0f);
         
-        bd.position.Set(0.0f, 8.0f);
+        bd.position.Set(0.0f, 6.0f);
         body = m_world->CreateBody(&bd);
         shape.m_radius = 5.0f;
         body->CreateFixture(&shape, 10.0f);

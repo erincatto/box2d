@@ -67,7 +67,7 @@ static void sCreateUI()
 
 	// Init UI
 #if defined(__APPLE__)
-    const char* fontPath = "../../../../../../Data/DroidSans.ttf";
+    const char* fontPath = "./Data/DroidSans.ttf";
 #else
     const char* fontPath = "../Data/DroidSans.ttf";
 #endif
