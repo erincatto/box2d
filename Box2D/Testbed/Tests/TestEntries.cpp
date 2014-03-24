@@ -73,10 +73,10 @@
 
 TestEntry g_testEntries[] =
 {
-	{"Basic Slider Crank", BasicSliderCrank::Create},
 	{"Heavy on Light", HeavyOnLight::Create},
 	{"Heavy on Light Two", HeavyOnLightTwo::Create},
 	{"Vertical Stack", VerticalStack::Create},
+	{"Basic Slider Crank", BasicSliderCrank::Create},
 	{"Slider Crank", SliderCrank::Create},
 	{"Sphere Stack", SphereStack::Create},
 	{"Tiles", Tiles::Create},
