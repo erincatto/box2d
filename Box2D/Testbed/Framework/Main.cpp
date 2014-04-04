@@ -30,6 +30,10 @@
 #include <glfw/glfw3.h>
 #include <stdio.h>
 
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
+
 //
 struct UIState
 {
@@ -83,8 +87,8 @@ static void sCreateUI()
 //
 static void sResizeWindow(GLFWwindow*, int width, int height)
 {
-	g_camera.m_width = float(width);
-	g_camera.m_height = float(height);
+	g_camera.m_width = width;
+	g_camera.m_height = height;
 }
 
 //
@@ -320,9 +324,11 @@ static void sRestart()
 //
 static void sSimulate()
 {
+	glEnable(GL_DEPTH_TEST);
 	test->Step(&settings);
 
 	test->DrawTitle(entry->name);
+	glDisable(GL_DEPTH_TEST);
 
 	if (testSelection != testIndex)
 	{
@@ -434,8 +440,8 @@ static void sInterface()
 //
 int main(int argc, char** argv)
 {
-    g_camera.m_width = 1024.0f;
-    g_camera.m_height = 640.0f;
+    g_camera.m_width = 1024;
+    g_camera.m_height = 640;
     
 	if (glfwInit() == 0)
 	{
