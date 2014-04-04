@@ -38,8 +38,8 @@ Camera g_camera;
 //
 b2Vec2 Camera::ConvertScreenToWorld(const b2Vec2& ps)
 {
-    float32 w = m_width;
-    float32 h = m_height;
+    float32 w = float32(m_width);
+    float32 h = float32(m_height);
 	float32 u = ps.x / w;
 	float32 v = (h - ps.y) / h;
 
@@ -59,8 +59,8 @@ b2Vec2 Camera::ConvertScreenToWorld(const b2Vec2& ps)
 //
 b2Vec2 Camera::ConvertWorldToScreen(const b2Vec2& pw)
 {
-    float32 w = m_width;
-    float32 h = m_height;
+	float32 w = float32(m_width);
+	float32 h = float32(m_height);
 	float32 ratio = w / h;
 	b2Vec2 extents(ratio * 25.0f, 25.0f);
 	extents *= m_zoom;
@@ -79,10 +79,10 @@ b2Vec2 Camera::ConvertWorldToScreen(const b2Vec2& pw)
 
 // Convert from world coordinates to normalized device coordinates.
 // http://www.songho.ca/opengl/gl_projectionmatrix.html
-void Camera::BuildProjectionMatrix(float32* m)
+void Camera::BuildProjectionMatrix(float32* m, float32 zBias)
 {
-    float32 w = m_width;
-    float32 h = m_height;
+	float32 w = float32(m_width);
+	float32 h = float32(m_height);
 	float32 ratio = w / h;
 	b2Vec2 extents(ratio * 25.0f, 25.0f);
 	extents *= m_zoom;
@@ -107,7 +107,7 @@ void Camera::BuildProjectionMatrix(float32* m)
 
 	m[12] = -(upper.x + lower.x) / (upper.x - lower.x);
 	m[13] = -(upper.y + lower.y) / (upper.y - lower.y);
-	m[14] = 0.0f;
+	m[14] = zBias;
 	m[15] = 1.0f;
 }
 
@@ -201,11 +201,13 @@ struct GLRenderPoints
         "uniform mat4 projectionMatrix;\n"
         "layout(location = 0) in vec2 v_position;\n"
         "layout(location = 1) in vec4 v_color;\n"
+		"layout(location = 2) in float v_size;\n"
         "out vec4 f_color;\n"
         "void main(void)\n"
         "{\n"
         "	f_color = v_color;\n"
         "	gl_Position = projectionMatrix * vec4(v_position, 0.0f, 1.0f);\n"
+		"   gl_PointSize = v_size;\n"
         "}\n";
         
 		const char* fs = \
@@ -221,6 +223,7 @@ struct GLRenderPoints
 		m_projectionUniform = glGetUniformLocation(m_programId, "projectionMatrix");
 		m_vertexAttribute = 0;
 		m_colorAttribute = 1;
+		m_sizeAttribute = 2;
         
 		// Generate
 		glGenVertexArrays(1, &m_vaoId);
@@ -229,6 +232,7 @@ struct GLRenderPoints
 		glBindVertexArray(m_vaoId);
 		glEnableVertexAttribArray(m_vertexAttribute);
 		glEnableVertexAttribArray(m_colorAttribute);
+		glEnableVertexAttribArray(m_sizeAttribute);
         
 		// Vertex buffer
 		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[0]);
@@ -239,6 +243,10 @@ struct GLRenderPoints
 		glVertexAttribPointer(m_colorAttribute, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 		glBufferData(GL_ARRAY_BUFFER, sizeof(m_colors), m_colors, GL_DYNAMIC_DRAW);
         
+		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[2]);
+		glVertexAttribPointer(m_sizeAttribute, 1, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+		glBufferData(GL_ARRAY_BUFFER, sizeof(m_sizes), m_sizes, GL_DYNAMIC_DRAW);
+
 		sCheckGLError();
         
 		// Cleanup
@@ -264,13 +272,14 @@ struct GLRenderPoints
 		}
 	}
     
-	void Vertex(const b2Vec2& v, const b2Color& c)
+	void Vertex(const b2Vec2& v, const b2Color& c, float32 size)
 	{
 		if (m_count == e_maxVertices)
 			Flush();
         
 		m_vertices[m_count] = v;
 		m_colors[m_count] = c;
+		m_sizes[m_count] = size;
 		++m_count;
 	}
     
@@ -282,7 +291,7 @@ struct GLRenderPoints
 		glUseProgram(m_programId);
         
 		float32 proj[16] = { 0.0f };
-		g_camera.BuildProjectionMatrix(proj);
+		g_camera.BuildProjectionMatrix(proj, 0.0f);
         
 		glUniformMatrix4fv(m_projectionUniform, 1, GL_FALSE, proj);
         
@@ -294,10 +303,13 @@ struct GLRenderPoints
 		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[1]);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(b2Color), m_colors);
         
-        // TODO use gl_PointSize?
-        glPointSize(10.0f);
+		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[2]);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(float32), m_sizes);
+
+		glEnable(GL_PROGRAM_POINT_SIZE);
 		glDrawArrays(GL_POINTS, 0, m_count);
-        
+        glDisable(GL_PROGRAM_POINT_SIZE);
+
 		sCheckGLError();
         
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -310,15 +322,17 @@ struct GLRenderPoints
 	enum { e_maxVertices = 512 };
 	b2Vec2 m_vertices[e_maxVertices];
 	b2Color m_colors[e_maxVertices];
-    
+    float32 m_sizes[e_maxVertices];
+
 	int32 m_count;
     
 	GLuint m_vaoId;
-	GLuint m_vboIds[2];
+	GLuint m_vboIds[3];
 	GLuint m_programId;
 	GLint m_projectionUniform;
 	GLint m_vertexAttribute;
 	GLint m_colorAttribute;
+	GLint m_sizeAttribute;
 };
 
 //
@@ -412,7 +426,7 @@ struct GLRenderLines
 		glUseProgram(m_programId);
         
 		float32 proj[16] = { 0.0f };
-		g_camera.BuildProjectionMatrix(proj);
+		g_camera.BuildProjectionMatrix(proj, 0.1f);
         
 		glUniformMatrix4fv(m_projectionUniform, 1, GL_FALSE, proj);
         
@@ -540,7 +554,7 @@ struct GLRenderTriangles
 		glUseProgram(m_programId);
         
 		float32 proj[16] = { 0.0f };
-		g_camera.BuildProjectionMatrix(proj);
+		g_camera.BuildProjectionMatrix(proj, 0.2f);
         
 		glUniformMatrix4fv(m_projectionUniform, 1, GL_FALSE, proj);
         
@@ -752,14 +766,12 @@ void DebugDraw::DrawTransform(const b2Transform& xf)
 
 void DebugDraw::DrawPoint(const b2Vec2& p, float32 size, const b2Color& color)
 {
-    // TODO_ERIN implement point size
-    B2_NOT_USED(size);
-    m_points->Vertex(p, color);
+    m_points->Vertex(p, color, size);
 }
 
 void DebugDraw::DrawString(int x, int y, const char *string, ...)
 {
-	float32 h = g_camera.m_height;
+	float32 h = float32(g_camera.m_height);
 
 	char buffer[128];
 
@@ -774,7 +786,7 @@ void DebugDraw::DrawString(int x, int y, const char *string, ...)
 void DebugDraw::DrawString(const b2Vec2& pw, const char *string, ...)
 {
 	b2Vec2 ps = g_camera.ConvertWorldToScreen(pw);
-	float32 h = g_camera.m_height;
+	float32 h = float32(g_camera.m_height);
 
 	char buffer[128];
 
