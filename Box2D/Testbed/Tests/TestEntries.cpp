@@ -73,13 +73,13 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Tiles", Tiles::Create},
 	{"Heavy on Light", HeavyOnLight::Create},
 	{"Heavy on Light Two", HeavyOnLightTwo::Create},
 	{"Vertical Stack", VerticalStack::Create},
 	{"Basic Slider Crank", BasicSliderCrank::Create},
 	{"Slider Crank", SliderCrank::Create},
 	{"Sphere Stack", SphereStack::Create},
-	{"Tiles", Tiles::Create},
 	{"Convex Hull", ConvexHull::Create},
 	{"Tumbler", Tumbler::Create},
 	{"Ray-Cast", RayCast::Create},
