@@ -37,6 +37,9 @@ public:
 	/// The destructor frees the vertices using b2Free.
 	~b2ChainShape();
 
+	/// Clear all data.
+	void Clear();
+
 	/// Create a loop. This automatically adjusts connectivity.
 	/// @param vertices an array of vertices, these are copied
 	/// @param count the vertex count
