@@ -227,7 +227,7 @@ struct GLRenderPoints
         
 		// Generate
 		glGenVertexArrays(1, &m_vaoId);
-		glGenBuffers(2, m_vboIds);
+		glGenBuffers(3, m_vboIds);
         
 		glBindVertexArray(m_vaoId);
 		glEnableVertexAttribArray(m_vertexAttribute);
