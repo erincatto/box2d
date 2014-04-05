@@ -23,6 +23,11 @@
 
 b2ChainShape::~b2ChainShape()
 {
+	Clear();
+}
+
+void b2ChainShape::Clear()
+{
 	b2Free(m_vertices);
 	m_vertices = NULL;
 	m_count = 0;
