@@ -217,6 +217,14 @@ void b2PolygonShape::Set(const b2Vec2* vertices, int32 count)
 		}
 	}
 	
+	if (m < 3)
+	{
+		// Polygon is degenerate.
+		b2Assert(false);
+		SetAsBox(1.0f, 1.0f);
+		return;
+	}
+
 	m_count = m;
 
 	// Copy vertices.
