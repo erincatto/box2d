@@ -440,6 +440,11 @@ static void sInterface()
 //
 int main(int argc, char** argv)
 {
+#if defined(_WIN32)
+	// Enable memory-leak reports
+	_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG));
+#endif
+
     g_camera.m_width = 1024;
     g_camera.m_height = 640;
     
