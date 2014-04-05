@@ -56,10 +56,8 @@ void b2ChainShape::CreateChain(const b2Vec2* vertices, int32 count)
 	b2Assert(count >= 2);
 	for (int32 i = 1; i < count; ++i)
 	{
-		b2Vec2 v1 = vertices[i-1];
-		b2Vec2 v2 = vertices[i];
 		// If the code crashes here, it means your vertices are too close together.
-		b2Assert(b2DistanceSquared(v1, v2) > b2_linearSlop * b2_linearSlop);
+		b2Assert(b2DistanceSquared(vertices[i-1], vertices[i]) > b2_linearSlop * b2_linearSlop);
 	}
 
 	m_count = count;
