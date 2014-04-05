@@ -70,11 +70,7 @@ static void sCreateUI()
 	ui.mouseOverMenu = false;
 
 	// Init UI
-#if defined(__APPLE__)
-    const char* fontPath = "./Data/DroidSans.ttf";
-#else
     const char* fontPath = "../Data/DroidSans.ttf";
-#endif
     
 	if (RenderGLInit(fontPath) == false)
 	{
@@ -89,12 +85,6 @@ static void sResizeWindow(GLFWwindow*, int width, int height)
 {
 	g_camera.m_width = width;
 	g_camera.m_height = height;
-}
-
-//
-static inline int32 FloatToInt(float32 x)
-{
-	return x >= 0.0f ? (int32)(x + 0.5f) : (int32)(x + 0.5f);
 }
 
 //
