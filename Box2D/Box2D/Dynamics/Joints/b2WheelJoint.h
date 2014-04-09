@@ -72,9 +72,8 @@ struct b2WheelJointDef : public b2JointDef
 };
 
 /// A wheel joint. This joint provides two degrees of freedom: translation
-/// along an axis fixed in bodyA and rotation in the plane. You can use a
-/// joint limit to restrict the range of motion and a joint motor to drive
-/// the rotation or to model rotational friction.
+/// along an axis fixed in bodyA and rotation in the plane. In other words, it is a point to
+/// line constraint with a rotational motor and a linear spring/damper.
 /// This joint is designed for vehicle suspensions.
 class b2WheelJoint : public b2Joint
 {
