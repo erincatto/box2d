@@ -1,5 +1,5 @@
 # Some flags for Freeglut and GLUI.
-add_definitions( -DFREEGLUT_EXPORTS -DFREEGLUT_STATIC -D_CRT_SECURE_NO_WARNINGS )
+add_definitions( -DGLEW_STATIC -D_CRT_SECURE_NO_WARNINGS )
 
 # Define the framework files.
 set(Testbed_Framework_SRCS
@@ -72,7 +72,7 @@ if(APPLE)
 	# We are not using the Apple's framework version, but X11's
 	include_directories( /usr/X11/include )
 	link_directories( /usr/X11/lib )
-	set (OPENGL_LIBRARIES GL GLU GLUT X11)
+	set (OPENGL_LIBRARIES GL GLU X11)
 elseif(WIN32)
 	set (ADDITIONAL_LIBRARIES winmm)
 endif(APPLE)
@@ -85,8 +85,8 @@ add_executable(Testbed
 target_link_libraries (
 	Testbed
 	Box2D
-	freeglut_static
-	glui
+	glew
+	glfw
 	${ADDITIONAL_LIBRARIES}
 	${OPENGL_LIBRARIES}
 ) 
