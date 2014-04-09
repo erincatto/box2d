@@ -14,7 +14,7 @@ option(BOX2D_BUILD_SHARED "Build Box2D shared libraries" OFF)
 option(BOX2D_BUILD_STATIC "Build Box2D static libraries" ON)
 option(BOX2D_BUILD_EXAMPLES "Build Box2D examples" ON)
 
-set(BOX2D_VERSION 2.3.0)
+set(BOX2D_VERSION 2.3.2)
 set(LIB_INSTALL_DIR lib${LIB_SUFFIX})
 
 # The Box2D library.
@@ -26,8 +26,8 @@ if(BOX2D_BUILD_EXAMPLES)
 
   # Testbed and dependencies.
   find_package(OpenGL REQUIRED)
-  add_subdirectory(freeglut)
-  add_subdirectory(glui)
+  add_subdirectory(glew)
+  add_subdirectory(glfw)
   add_subdirectory(Testbed)
 endif(BOX2D_BUILD_EXAMPLES)
 
