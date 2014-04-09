@@ -26,23 +26,19 @@ solution "Box2D"
 		vpaths { [""] = "Box2D" }
 		includedirs { "." }
 		
-	if os.get == "windows" then
-		project "FreeGLUT"
-			kind "StaticLib"
-			language "C"
-			files { "freeglut/*.h", "freeglut/*.c" }
-			vpaths { ["Headers"] = "**.h",  ["Sources"] = "**.c" }
-	end
-	
-	project "GLUI"
+	project "GLEW"
 		kind "StaticLib"
 		language "C++"
-		files { "glui/*.h", "glui/*.cpp" }
-		vpaths { ["Headers"] = "**.h",  ["Sources"] = "**.cpp" }
+		files { "glew/*.h", "glew/*.c" }
+		vpaths { ["Headers"] = "**.h",  ["Sources"] = "**.c" }
 		includedirs { "." }
-		configuration { "windows" }
-			 buildoptions { "/W1" }
 			 
+	project "GLFW"
+		kind "StaticLib"
+		language "C"
+		files { "glfw/*.h", "glfw/*.c" }
+		vpaths { ["Headers"] = "**.h",  ["Sources"] = "**.c" }
+	
 	project "HelloWorld"
 		kind "ConsoleApp"
 		language "C++"
@@ -57,11 +53,11 @@ solution "Box2D"
 		files { "Testbed/**.h", "Testbed/**.cpp" }
 		vpaths { [""] = "Testbed" }
 		includedirs { "." }
-		links { "Box2D", "GLUI" }
+		links { "Box2D", "GLEW", "GLFW" }
 		configuration { "windows" }
-			links { "FreeGLUT", "glu32", "opengl32", "winmm" }
+			links { "glu32", "opengl32", "winmm" }
 		configuration { "macosx" }
-			linkoptions { "-framework OpenGL -framework GLUT" }
+			linkoptions { "-framework OpenGL -framework Cocoa" }
 		configuration { "not windows", "not macosx" }
-			links { "X11", "GL", "GLU", "glut" }
+			links { "X11", "GL", "GLU" }
 
