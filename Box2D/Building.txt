@@ -1,5 +1,7 @@
 The Build folder contains custom made project files for Visual Studio and XCode.
 
+=============== OLD METHOD 1 UNSUPPORTED ====================
+
 For other platforms you need to run premake in this directory. You can get premake here:
 http://industriousone.com/premake
 
@@ -12,7 +14,7 @@ make config="debug"
 If you have build problems, you can post a question here:
 http://box2d.org/forum/viewforum.php?f=7
 
-=============== OLD METHOD ====================
+=============== OLD METHOD 1 UNSUPPORTED ====================
 
 Box2D uses CMake to describe the build in a platform independent manner.
 
