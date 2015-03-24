@@ -1,3 +1,5 @@
+[![Build Status](https://webapi.biicode.com/v1/badges/david/david/box2d/master)](https://www.biicode.com/david/box2d) 
+
 Box2D is a 2D physics engine for games.
 
 For help with Box2D, please visit http://www.box2d.org. There is a forum there where you may post your questions.
@@ -13,4 +15,3 @@ To run the demos, set "Testbed" as your startup project and press F5. Some test 
 
 Erin Catto
 http://www.box2d.org
-
