@@ -3,9 +3,13 @@ add_definitions( -DGLEW_STATIC -D_CRT_SECURE_NO_WARNINGS )
 
 # Define the framework files.
 set(Testbed_Framework_SRCS
+	Framework/DebugDraw.cpp
+	Framework/DebugDraw.h
+	Framework/imgui.h
+	Framework/imgui.cpp
 	Framework/Main.cpp
-	Framework/Render.cpp
-	Framework/Render.h
+	Framework/RenderGL3.cpp
+	Framework/RenderGL3.h
 	Framework/Test.cpp
 	Framework/Test.h
 )
@@ -90,3 +94,6 @@ target_link_libraries (
 	${ADDITIONAL_LIBRARIES}
 	${OPENGL_LIBRARIES}
 ) 
+
+file(COPY ../Build/Data DESTINATION ..)
+
