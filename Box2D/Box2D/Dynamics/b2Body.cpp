@@ -393,8 +393,8 @@ void b2Body::SetMassData(const b2MassData* massData)
 
 bool b2Body::ShouldCollide(const b2Body* other) const
 {
-	// At least one body should be dynamic.
-	if (m_type != b2_dynamicBody && other->m_type != b2_dynamicBody)
+	// At least one body should be dynamic or kinematic.
+	if (m_type == b2_staticBody && other->m_type == b2_staticBody)
 	{
 		return false;
 	}
