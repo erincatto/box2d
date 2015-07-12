@@ -23,6 +23,7 @@
 #include "DebugDraw.h"
 
 #if defined(__APPLE__)
+#include <random>
 #include <OpenGL/gl3.h>
 #else
 #include <glew/glew.h>
