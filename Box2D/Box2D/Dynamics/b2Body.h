@@ -385,6 +385,9 @@ public:
 	b2World* GetWorld();
 	const b2World* GetWorld() const;
 
+	/// Does a joint prevent collision?
+	bool ShouldCollideConnected(const b2Body* other) const;
+
 	/// Dump this body to a log file
 	void Dump();
 

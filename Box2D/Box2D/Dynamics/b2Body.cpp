@@ -399,6 +399,11 @@ bool b2Body::ShouldCollide(const b2Body* other) const
 		return false;
 	}
 
+	return ShouldCollideConnected(other);
+}
+
+bool b2Body::ShouldCollideConnected(const b2Body* other) const
+{
 	// Does a joint prevent collision?
 	for (b2JointEdge* jn = m_jointList; jn; jn = jn->next)
 	{

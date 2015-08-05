@@ -34,15 +34,9 @@ bool b2ContactFilter::ShouldCollide(b2Fixture* fixtureA, b2Fixture* fixtureB)
 	}
 
 	// Does a joint prevent collision?
-	for (const b2JointEdge* jn = bodyB->GetJointList(); jn; jn = jn->next)
+	if (bodyB->ShouldCollideConnected(bodyA) == false)
 	{
-		if (jn->other == bodyA)
-		{
-			if (jn->joint->GetCollideConnected() == false)
-			{
-				return false;
-			}
-		}
+		return false;
 	}
 
 	const b2Filter& filterA = fixtureA->GetFilterData();
