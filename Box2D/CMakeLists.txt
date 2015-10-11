@@ -31,9 +31,7 @@ if(BOX2D_BUILD_EXAMPLES)
   endif()
 
   if(NOT BOX2D_DISABLE_BUNDLED_GLFW)
-      set(GLFW_LIBRARIES)
-      set(GLFW_INCLUDE_DIRS)
-      add_subdirectory(glfw)
+      add_subdirectory(glfw-3.1.1)
   endif()
 
   add_subdirectory(Testbed)
