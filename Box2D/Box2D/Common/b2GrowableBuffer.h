@@ -36,14 +36,14 @@ public:
 		capacity(0),
 		allocator(&allocator)
 	{
-	#if defined(LIQUIDFUN_SIMD_NEON)
+	#if defined(BOX2D_SIMD_NEON)
 		// b2ParticleAssembly.neon.s assumes these values are at fixed offsets.
         // If this assert fails, be sure to update the assembly offsets!
 		// ldr r3, [r9, #0] @ r3 = out = contacts.data
         // ldr r6, [r9, #8] @ r6 = contacts.capacity
 		b2Assert((intptr_t)&data - (intptr_t)(this) == 0
 			  && (intptr_t)&capacity - (intptr_t)(this) == 8);
-	#endif // defined(LIQUIDFUN_SIMD_NEON)
+	#endif // defined(BOX2D_SIMD_NEON)
 	}
 
 	b2GrowableBuffer(const b2GrowableBuffer<T>& rhs) :
