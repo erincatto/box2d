@@ -1,5 +1,6 @@
 /*
 * Copyright (c) 2006-2009 Erin Catto http://www.box2d.org
+* Copyright (c) 2013 Google, Inc.
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -24,7 +25,23 @@
 #include <float.h>
 
 #define B2_NOT_USED(x) ((void)(x))
+#if DEBUG && !defined(NDEBUG)
 #define b2Assert(A) assert(A)
+#define B2_ASSERT_ENABLED 1
+#else
+#define b2Assert(A)
+#define B2_ASSERT_ENABLED 0
+#endif
+
+// Statement which is compiled out when DEBUG isn't defined.
+#if DEBUG
+#define B2_DEBUG_STATEMENT(A) A
+#else
+#define B2_DEBUG_STATEMENT(A)
+#endif  // DEBUG
+
+// Calculate the size of a static array.
+#define B2_ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 typedef signed char	int8;
 typedef signed short int16;
@@ -35,9 +52,35 @@ typedef unsigned int uint32;
 typedef float float32;
 typedef double float64;
 
+#ifdef WIN32
+typedef __int64   int64;
+typedef unsigned __int64   uint64;
+#else // !WIN32
+typedef long long int64;
+typedef unsigned long long uint64;
+#endif
+
 #define	b2_maxFloat		FLT_MAX
 #define	b2_epsilon		FLT_EPSILON
 #define b2_pi			3.14159265359f
+
+#if !defined(b2Inline)
+#if defined(__GNUC__)
+#define b2Inline __attribute__((always_inline))
+#else
+#define b2Inline inline
+#endif // defined(__GNUC__)
+#endif // !defined(b2Inline)
+
+// We expand the API so that other languages (e.g. Java) can call into
+// our C++ more easily. Only set if when the flag is not externally defined.
+#if !defined(BOX2D_EXTERNAL_LANGUAGE_API)
+#if SWIG || BOX2D_UNIT_TESTS
+#define BOX2D_EXTERNAL_LANGUAGE_API 1
+#else
+#define BOX2D_EXTERNAL_LANGUAGE_API 0
+#endif
+#endif
 
 /// @file
 /// Global tuning constants based on meters-kilograms-seconds (MKS) units.
@@ -114,6 +157,45 @@ typedef double float64;
 #define b2_toiBaugarte				0.75f
 
 
+// Particle
+
+/// NEON SIMD requires 16-bit particle indices
+#if !defined(B2_USE_16_BIT_PARTICLE_INDICES) && defined(BOX2D_SIMD_NEON)
+#define B2_USE_16_BIT_PARTICLE_INDICES
+#endif
+
+/// A symbolic constant that stands for particle allocation error.
+#define b2_invalidParticleIndex		(-1)
+
+#ifdef B2_USE_16_BIT_PARTICLE_INDICES
+#define b2_maxParticleIndex			0x7FFF
+#else
+#define b2_maxParticleIndex			0x7FFFFFFF
+#endif
+
+/// The default distance between particles, multiplied by the particle diameter.
+#define b2_particleStride			0.75f
+
+/// The minimum particle weight that produces pressure.
+#define b2_minParticleWeight			1.0f
+
+/// The upper limit for particle pressure.
+#define b2_maxParticlePressure		0.25f
+
+/// The upper limit for force between particles.
+#define b2_maxParticleForce		0.5f
+
+/// The maximum distance between particles in a triad, multiplied by the
+/// particle diameter.
+#define b2_maxTriadDistance			2
+#define b2_maxTriadDistanceSquared		(b2_maxTriadDistance * b2_maxTriadDistance)
+
+/// The initial size of particle data buffers.
+#define b2_minParticleSystemBufferCapacity	256
+
+/// The time into the future that collisions against barrier particles will be detected.
+#define b2_barrierCollisionTime 2.5f
+
 // Sleep
 
 /// The time that a body must be still before it will go to sleep.
@@ -132,6 +214,27 @@ void* b2Alloc(int32 size);
 
 /// If you implement b2Alloc, you should also implement this function.
 void b2Free(void* mem);
+
+/// Use this function to override b2Alloc() without recompiling this library.
+typedef void* (*b2AllocFunction)(int32 size, void* callbackData);
+/// Use this function to override b2Free() without recompiling this library.
+typedef void (*b2FreeFunction)(void* mem, void* callbackData);
+
+/// Set alloc and free callbacks to override the default behavior of using
+/// malloc() and free() for dynamic memory allocation.
+/// Set allocCallback and freeCallback to NULL to restore the default
+/// allocator (malloc / free).
+void b2SetAllocFreeCallbacks(b2AllocFunction allocCallback,
+							 b2FreeFunction freeCallback,
+							 void* callbackData);
+
+/// Set the number of calls to b2Alloc minus the number of calls to b2Free.
+/// This can be used to disable the empty heap check in
+/// b2SetAllocFreeCallbacks() which can be useful for testing.
+void b2SetNumAllocs(const int32 numAllocs);
+
+/// Get number of calls to b2Alloc minus number of calls to b2Free.
+int32 b2GetNumAllocs();
 
 /// Logging function.
 void b2Log(const char* string, ...);
