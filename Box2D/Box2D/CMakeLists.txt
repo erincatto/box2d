@@ -171,6 +171,10 @@ if(BOX2D_BUILD_SHARED)
 		CLEAN_DIRECT_OUTPUT 1
 		VERSION ${BOX2D_VERSION}
 	)
+
+	if(UNIX AND NOT APPLE)
+		target_link_libraries(Box2D_shared rt)
+	endif(UNIX AND NOT APPLE)
 endif()
 
 if(BOX2D_BUILD_STATIC)
@@ -194,9 +198,14 @@ if(BOX2D_BUILD_STATIC)
 		${BOX2D_Rope_HDRS}
 	)
 	set_target_properties(Box2D PROPERTIES
+		OUTPUT_NAME "Box2D"
 		CLEAN_DIRECT_OUTPUT 1
 		VERSION ${BOX2D_VERSION}
 	)
+
+	if(UNIX AND NOT APPLE)
+		target_link_libraries(Box2D rt)
+	endif(UNIX AND NOT APPLE)
 endif()
 
 # These are used to create visual studio folders.
@@ -225,23 +234,23 @@ if(BOX2D_INSTALL)
 	# install libraries
 	if(BOX2D_BUILD_SHARED)
 		install(TARGETS Box2D_shared EXPORT Box2D-targets 
-                  LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-                  ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
+                  LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
+                  ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
                   RUNTIME DESTINATION bin)
 	endif()
 	if(BOX2D_BUILD_STATIC)
-		install(TARGETS Box2D EXPORT Box2D-targets DESTINATION ${LIB_INSTALL_DIR})
+		install(TARGETS Box2D EXPORT Box2D-targets DESTINATION "${LIB_INSTALL_DIR}")
 	endif()
 
 	# install build system hooks for third-party apps
-	install(EXPORT Box2D-targets DESTINATION ${LIB_INSTALL_DIR}/Box2D)
+	install(EXPORT Box2D-targets DESTINATION "${LIB_INSTALL_DIR}/Box2D")
 
-        set (BOX2D_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include)
-        set (BOX2D_INCLUDE_DIRS ${BOX2D_INCLUDE_DIR} )
-        set (BOX2D_LIBRARY_DIRS ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR})
+        set (BOX2D_INCLUDE_DIR "${CMAKE_INSTALL_PREFIX}/include")
+        set (BOX2D_INCLUDE_DIRS "${BOX2D_INCLUDE_DIR}" )
+        set (BOX2D_LIBRARY_DIRS "${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}")
         set (BOX2D_LIBRARY Box2D)
-        set (BOX2D_LIBRARIES ${BOX2D_LIBRARY})
-        set (BOX2D_USE_FILE ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}/cmake/Box2D/UseBox2D.cmake)
-        configure_file(Box2DConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/Box2DConfig.cmake @ONLY ESCAPE_QUOTES)
-        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Box2DConfig.cmake UseBox2D.cmake DESTINATION ${LIB_INSTALL_DIR}/cmake/Box2D)
+        set (BOX2D_LIBRARIES "${BOX2D_LIBRARY}")
+        set (BOX2D_USE_FILE "${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}/cmake/Box2D/UseBox2D.cmake")
+        configure_file(Box2DConfig.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/Box2DConfig.cmake" @ONLY ESCAPE_QUOTES)
+        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/Box2DConfig.cmake" UseBox2D.cmake DESTINATION "${LIB_INSTALL_DIR}/cmake/Box2D")
 endif(BOX2D_INSTALL)
