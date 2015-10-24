@@ -29,6 +29,14 @@ option(BOX2D_CODE_COVERAGE "Enable the code coverage build option." OFF)
 set(BOX2D_VERSION 2.3.2)
 set(LIB_INSTALL_DIR lib${LIB_SUFFIX})
 
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to 'Debug' as none was specified.")
+  set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
+   "MinSizeRel" "RelWithDebInfo")
+endif()
+
 # Detect clang
 if(CMAKE_CXX_COMPILER MATCHES ".*clang")
   set(CMAKE_COMPILER_IS_CLANGXX 1)
@@ -141,11 +149,7 @@ endif()
 # makefiles.  This makes it possible to keep multiple build artifacts
 set(OUTPUT_SUBDIR "")
 if(CMAKE_GENERATOR STREQUAL "Unix Makefiles")
-  if(CMAKE_BUILD_TYPE STREQUAL "")
-    set(OUTPUT_SUBDIR "Release/")
-  else()
-    set(OUTPUT_SUBDIR "${CMAKE_BUILD_TYPE}/")
-  endif()
+  set(OUTPUT_SUBDIR "${CMAKE_BUILD_TYPE}/")
 endif()
 
 # Override / reset the output directory for all targets.
