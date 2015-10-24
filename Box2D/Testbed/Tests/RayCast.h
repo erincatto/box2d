@@ -74,6 +74,7 @@ public:
 
 	float32 ReportFixture(b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float32 fraction)
 	{
+		B2_NOT_USED(fraction);
 		b2Body* body = fixture->GetBody();
 		void* userData = body->GetUserData();
 		if (userData)
@@ -119,6 +120,7 @@ public:
 
 	float32 ReportFixture(b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float32 fraction)
 	{
+		B2_NOT_USED(fraction);
 		b2Body* body = fixture->GetBody();
 		void* userData = body->GetUserData();
 		if (userData)

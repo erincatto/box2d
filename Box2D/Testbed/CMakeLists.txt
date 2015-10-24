@@ -8,10 +8,13 @@ set(Testbed_Framework_SRCS
 	Framework/imgui.h
 	Framework/imgui.cpp
 	Framework/Main.cpp
+	Framework/Main.h
 	Framework/RenderGL3.cpp
 	Framework/RenderGL3.h
 	Framework/Test.cpp
 	Framework/Test.h
+	Framework/ParticleParameter.cpp
+	Framework/ParticleParameter.h
 )
 
 #define the test files.
@@ -32,6 +35,8 @@ set(Testbed_Tests_SRCS
 	Tests/CompoundShapes.h
 	Tests/Confined.h
 	Tests/ContinuousTest.h
+	Tests/ConvexHull.h
+	Tests/ConveyorBelt.h
 	Tests/DistanceTest.h
 	Tests/Dominos.h
 	Tests/DumpShell.h
@@ -39,6 +44,9 @@ set(Testbed_Tests_SRCS
 	Tests/EdgeShapes.h
 	Tests/EdgeTest.h
 	Tests/Gears.h
+	Tests/Mobile.h
+	Tests/MobileBalanced.h
+	Tests/MotorJoint.h
 	Tests/OneSidedPlatform.h
 	Tests/Pinball.h
 	Tests/PolyCollision.h
@@ -57,10 +65,34 @@ set(Testbed_Tests_SRCS
 	Tests/TheoJansen.h
 	Tests/Tiles.h
 	Tests/TimeOfImpact.h
+	Tests/Tumbler.h
 	Tests/VaryingFriction.h
 	Tests/VaryingRestitution.h
 	Tests/VerticalStack.h
 	Tests/Web.h
+
+	Tests/AntiPointy.h
+	Tests/CornerCase.h
+	Tests/DamBreak.h
+	Tests/DrawingParticles.h
+	Tests/ElasticParticles.h
+	Tests/Faucet.h
+	Tests/Fracker.h
+	Tests/Impulse.h
+	Tests/LiquidTimer.h
+	Tests/Maxwell.h
+	Tests/MultipleParticleSystems.h
+	Tests/Particles.h
+	Tests/ParticleCollisionFilter.h
+	Tests/ParticlesSurfaceTension.h
+	Tests/Pointy.h
+	Tests/Ramp.h
+	Tests/RigidParticles.h
+	Tests/Sandbox.h
+	Tests/Soup.h
+	Tests/SoupStirrer.h
+	Tests/Sparky.h
+	Tests/WaveMachine.h
 )
 
 # These are used to create visual studio folders.

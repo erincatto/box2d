@@ -159,6 +159,10 @@ public:
 			}
 		}
 
+		// This works around gcc-4.8 spuriously warning about nuke[i] being
+		// out of bounds the following loop.
+		nukeCount = b2Min(nukeCount, k_maxNuke);
+
 		// Sort the nuke array to group duplicates.
 		std::sort(nuke, nuke + nukeCount);
 
