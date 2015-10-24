@@ -1,5 +1,6 @@
 /*
 * Copyright (c) 2006-2009 Erin Catto http://www.box2d.org
+* Copyright (c) 2013 Google, Inc.
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -36,6 +37,9 @@ public:
 	/// Implement b2Shape.
 	bool TestPoint(const b2Transform& transform, const b2Vec2& p) const;
 
+	// @see b2Shape::ComputeDistance
+	void ComputeDistance(const b2Transform& xf, const b2Vec2& p, float32* distance, b2Vec2* normal, int32 childIndex) const;
+
 	/// Implement b2Shape.
 	bool RayCast(b2RayCastOutput* output, const b2RayCastInput& input,
 				const b2Transform& transform, int32 childIndex) const;
@@ -57,6 +61,18 @@ public:
 
 	/// Get a vertex by index. Used by b2Distance.
 	const b2Vec2& GetVertex(int32 index) const;
+
+#if BOX2D_EXTERNAL_LANGUAGE_API
+public:
+	/// Set position with direct floats.
+	void SetPosition(float32 x, float32 y) { m_p.Set(x, y); }
+
+	/// Get x-coordinate of position.
+	float32 GetPositionX() const { return m_p.x; }
+
+	/// Get y-coordinate of position.
+	float32 GetPositionY() const { return m_p.y; }
+#endif // BOX2D_EXTERNAL_LANGUAGE_API
 
 	/// Position
 	b2Vec2 m_p;

@@ -1,5 +1,6 @@
 /*
 * Copyright (c) 2006-2010 Erin Catto http://www.box2d.org
+* Copyright (c) 2013 Google, Inc.
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -19,6 +20,7 @@
 #include <Box2D/Collision/Shapes/b2ChainShape.h>
 #include <Box2D/Collision/Shapes/b2EdgeShape.h>
 #include <new>
+#include <memory.h>
 #include <string.h>
 
 b2ChainShape::~b2ChainShape()
@@ -39,10 +41,12 @@ void b2ChainShape::CreateLoop(const b2Vec2* vertices, int32 count)
 	b2Assert(count >= 3);
 	for (int32 i = 1; i < count; ++i)
 	{
+#if B2_ASSERT_ENABLED
 		b2Vec2 v1 = vertices[i-1];
 		b2Vec2 v2 = vertices[i];
 		// If the code crashes here, it means your vertices are too close together.
 		b2Assert(b2DistanceSquared(v1, v2) > b2_linearSlop * b2_linearSlop);
+#endif // B2_ASSERT_ENABLED
 	}
 
 	m_count = count + 1;
@@ -61,8 +65,12 @@ void b2ChainShape::CreateChain(const b2Vec2* vertices, int32 count)
 	b2Assert(count >= 2);
 	for (int32 i = 1; i < count; ++i)
 	{
+#if B2_ASSERT_ENABLED
+		b2Vec2 v1 = vertices[i-1];
+		b2Vec2 v2 = vertices[i];
 		// If the code crashes here, it means your vertices are too close together.
-		b2Assert(b2DistanceSquared(vertices[i-1], vertices[i]) > b2_linearSlop * b2_linearSlop);
+		b2Assert(b2DistanceSquared(v1, v2) > b2_linearSlop * b2_linearSlop);
+#endif // B2_ASSERT_ENABLED
 	}
 
 	m_count = count;
@@ -136,6 +144,13 @@ void b2ChainShape::GetChildEdge(b2EdgeShape* edge, int32 index) const
 		edge->m_vertex3 = m_nextVertex;
 		edge->m_hasVertex3 = m_hasNextVertex;
 	}
+}
+
+void b2ChainShape::ComputeDistance(const b2Transform& xf, const b2Vec2& p, float32* distance, b2Vec2* normal, int32 childIndex) const
+{
+	b2EdgeShape edge;
+	GetChildEdge(&edge, childIndex);
+	edge.ComputeDistance(xf, p, distance, normal, 0);
 }
 
 bool b2ChainShape::TestPoint(const b2Transform& xf, const b2Vec2& p) const

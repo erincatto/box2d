@@ -1,5 +1,6 @@
 /*
 * Copyright (c) 2006-2009 Erin Catto http://www.box2d.org
+* Copyright (c) 2013 Google, Inc.
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -58,6 +59,9 @@ public:
 	/// @see b2Shape::TestPoint
 	bool TestPoint(const b2Transform& transform, const b2Vec2& p) const;
 
+	// @see b2Shape::ComputeDistance
+	void ComputeDistance(const b2Transform& xf, const b2Vec2& p, float32* distance, b2Vec2* normal, int32 childIndex) const;
+
 	/// Implement b2Shape.
 	bool RayCast(b2RayCastOutput* output, const b2RayCastInput& input,
 					const b2Transform& transform, int32 childIndex) const;
@@ -78,6 +82,20 @@ public:
 	/// @returns true if valid
 	bool Validate() const;
 
+#if BOX2D_EXTERNAL_LANGUAGE_API
+public:
+	/// Set centroid with direct floats.
+	void SetCentroid(float32 x, float32 y);
+
+	/// SetAsBox with direct floats for center.
+	/// @see b2Shape::SetAsBox
+	void SetAsBox(float32 hx,
+								float32 hy,
+								float32 centerX,
+								float32 centerY,
+								float32 angle);
+#endif // BOX2D_EXTERNAL_LANGUAGE_API
+
 	b2Vec2 m_centroid;
 	b2Vec2 m_vertices[b2_maxPolygonVertices];
 	b2Vec2 m_normals[b2_maxPolygonVertices];
@@ -97,5 +115,20 @@ inline const b2Vec2& b2PolygonShape::GetVertex(int32 index) const
 	b2Assert(0 <= index && index < m_count);
 	return m_vertices[index];
 }
+
+#if BOX2D_EXTERNAL_LANGUAGE_API
+inline void b2PolygonShape::SetCentroid(float32 x, float32 y)
+{
+	m_centroid.Set(x, y);
+}
+
+inline void b2PolygonShape::SetAsBox(float32 hx,
+	float32 hy,
+	float32 centerX,
+	float32 centerY,
+	float32 angle) {
+	SetAsBox(hx, hy, b2Vec2(centerX, centerY), angle);
+}
+#endif // BOX2D_EXTERNAL_LANGUAGE_API
 
 #endif

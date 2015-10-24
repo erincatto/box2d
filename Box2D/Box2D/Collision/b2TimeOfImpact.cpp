@@ -67,6 +67,7 @@ struct b2SeparationFunction
 			b2Vec2 pointB = b2Mul(xfB, localPointB);
 			m_axis = pointB - pointA;
 			float32 s = m_axis.Normalize();
+			m_localPoint = b2Vec2_zero;
 			return s;
 		}
 		else if (cache->indexA[0] == cache->indexA[1])

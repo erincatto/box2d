@@ -1,5 +1,6 @@
 /*
 * Copyright (c) 2007-2009 Erin Catto http://www.box2d.org
+* Copyright (c) 2014 Google, Inc.
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -15,6 +16,8 @@
 * misrepresented as being the original software.
 * 3. This notice may not be removed or altered from any source distribution.
 */
+#include <string.h>
+#include <memory.h>
 
 #include <Box2D/Collision/b2Distance.h>
 #include <Box2D/Collision/Shapes/b2CircleShape.h>
@@ -465,6 +468,14 @@ void b2Distance(b2DistanceOutput* output,
 	// can check for duplicates and prevent cycling.
 	int32 saveA[3], saveB[3];
 	int32 saveCount = 0;
+
+	// Work around spurious gcc-4.8.2 warnings when -Wmaybe-uninitialized is
+	// enabled by initializing saveA / saveB arrays when they're referenced
+	// at the end of the main iteration loop below even though saveCount
+	// entries of each array are initialized at the start of the main
+	// iteration loop.
+	memset(saveA, 0, sizeof(saveA));
+	memset(saveB, 0, sizeof(saveB));
 
 	float32 distanceSqr1 = b2_maxFloat;
 	float32 distanceSqr2 = distanceSqr1;
