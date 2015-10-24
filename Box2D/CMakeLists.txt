@@ -133,6 +133,11 @@ if(BOX2D_BUILD_EXAMPLES)
   add_subdirectory(Testbed)
 endif(BOX2D_BUILD_EXAMPLES)
 
+if(BOX2D_BUILD_UNITTESTS)
+  add_subdirectory(googletest)
+  add_subdirectory(Unittests)
+endif(BOX2D_BUILD_UNITTESTS)
+
 if(BOX2D_INSTALL_DOC)
   install(DIRECTORY Documentation DESTINATION share/doc/Box2D PATTERN ".svn" EXCLUDE)
 endif(BOX2D_INSTALL_DOC)
