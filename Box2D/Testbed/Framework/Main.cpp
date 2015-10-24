@@ -27,7 +27,7 @@
 #include <glew/glew.h>
 #endif
 
-#include <glfw/glfw3.h>
+#include <GLFW/glfw3.h>
 #include <stdio.h>
 
 #ifdef _MSC_VER

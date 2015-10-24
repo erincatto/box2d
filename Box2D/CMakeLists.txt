@@ -14,8 +14,6 @@ endif(UNIX)
 if(MSVC)
   set(gtest_force_shared_crt ON CACHE INTERNAL "")
 endif()
-# Disable build of freeglut demos.
-set(FREEGLUT_BUILD_DEMOS OFF CACHE INTERNAL "")
 # Disable install of Box2D by default on all platforms.
 set(BOX2D_INSTALL_BY_DEFAULT OFF)
 
