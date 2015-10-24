@@ -1,5 +1,6 @@
 /*
 * Copyright (c) 2006-2009 Erin Catto http://www.box2d.org
+* Copyright (c) 2013 Google, Inc.
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -21,13 +22,14 @@
 
 #include <Box2D/Box2D.h>
 #include "DebugDraw.h"
+#include "ParticleParameter.h"
 
 #if defined(__APPLE__)
 #include <OpenGL/gl3.h>
 #else
 #include <glew/glew.h>
 #endif
-#include <glfw/glfw3.h>
+#include <GLFW/glfw3.h>
 
 #include <stdlib.h>
 
@@ -62,10 +64,16 @@ struct Settings
 {
 	Settings()
 	{
+		viewCenter.Set(0.0f, 20.0f);
 		hz = 60.0f;
 		velocityIterations = 8;
 		positionIterations = 3;
+		// Particle iterations are needed for numerical stability in particle
+		// simulations with small particles and relatively high gravity.
+		// b2CalculateParticleIterations helps to determine the number.
+		particleIterations = b2CalculateParticleIterations(10, 0.04f, 1 / hz);
 		drawShapes = true;
+		drawParticles = true;
 		drawJoints = true;
 		drawAABBs = false;
 		drawContactPoints = false;
@@ -81,12 +89,18 @@ struct Settings
 		enableSleep = true;
 		pause = false;
 		singleStep = false;
+		printStepTimeStats = true;
+		stepTimeOut = false;
+		strictContacts = false;
 	}
 
+	b2Vec2 viewCenter;
 	float32 hz;
 	int32 velocityIterations;
 	int32 positionIterations;
+	int32 particleIterations;
 	bool drawShapes;
+	bool drawParticles;
 	bool drawJoints;
 	bool drawAABBs;
 	bool drawContactPoints;
@@ -102,6 +116,11 @@ struct Settings
 	bool enableSleep;
 	bool pause;
 	bool singleStep;
+	bool printStepTimeStats;
+	bool strictContacts;
+
+	/// Measures how long did the world step took, in ms
+	float32 stepTimeOut;
 };
 
 struct TestEntry
@@ -119,6 +138,7 @@ class DestructionListener : public b2DestructionListener
 public:
 	void SayGoodbye(b2Fixture* fixture) { B2_NOT_USED(fixture); }
 	void SayGoodbye(b2Joint* joint);
+	void SayGoodbye(b2ParticleGroup* group);
 
 	Test* test;
 };
@@ -151,7 +171,7 @@ public:
 	void ShiftMouseDown(const b2Vec2& p);
 	virtual void MouseDown(const b2Vec2& p);
 	virtual void MouseUp(const b2Vec2& p);
-	void MouseMove(const b2Vec2& p);
+	virtual void MouseMove(const b2Vec2& p);
 	void LaunchBomb();
 	void LaunchBomb(const b2Vec2& position, const b2Vec2& velocity);
 	
@@ -160,6 +180,9 @@ public:
 
 	// Let derived tests know that a joint was destroyed.
 	virtual void JointDestroyed(b2Joint* joint) { B2_NOT_USED(joint); }
+
+	// Let derived tests know that a particle group was destroyed.
+	virtual void ParticleGroupDestroyed(b2ParticleGroup* group) { B2_NOT_USED(group); }
 
 	// Callbacks for derived classes.
 	virtual void BeginContact(b2Contact* contact) { B2_NOT_USED(contact); }
@@ -172,6 +195,22 @@ public:
 	}
 
 	void ShiftOrigin(const b2Vec2& newOrigin);
+	virtual float32 GetDefaultViewZoom() const;
+
+	// Apply a preset range of colors to a particle group.
+	// A different color out of k_ParticleColors is applied to each
+	// particlesPerColor particles in the specified group.
+	// If particlesPerColor is 0, the particles in the group are divided into
+	// k_ParticleColorsCount equal sets of colored particles.
+	void ColorParticleGroup(b2ParticleGroup * const group,
+							uint32 particlesPerColor);
+
+	// Remove particle parameters matching "filterMask" from the set of
+	// particle parameters available for this test.
+	void InitializeParticleParameters(const uint32 filterMask);
+
+	// Restore default particle parameters.
+	void RestoreParticleParameters();
 
 protected:
 	friend class DestructionListener;
@@ -185,15 +224,26 @@ protected:
 	DestructionListener m_destructionListener;
 	int32 m_textLine;
 	b2World* m_world;
+	b2ParticleSystem* m_particleSystem;
 	b2Body* m_bomb;
 	b2MouseJoint* m_mouseJoint;
 	b2Vec2 m_bombSpawnPoint;
 	bool m_bombSpawning;
 	b2Vec2 m_mouseWorld;
+	bool m_mouseTracing;
+	b2Vec2 m_mouseTracerPosition;
+	b2Vec2 m_mouseTracerVelocity;
 	int32 m_stepCount;
 
 	b2Profile m_maxProfile;
 	b2Profile m_totalProfile;
+
+	// Valid particle parameters for this test.
+	ParticleParameter::Value* m_particleParameters;
+	ParticleParameter::Definition m_particleParameterDef;
+
+	static const b2ParticleColor k_ParticleColors[];
+	static const uint32 k_ParticleColorsCount;
 };
 
 #endif

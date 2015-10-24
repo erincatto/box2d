@@ -1,5 +1,6 @@
 /*
 * Copyright (c) 2006-2009 Erin Catto http://www.box2d.org
+* Copyright (c) 2013 Google, Inc.
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -17,6 +18,8 @@
 */
 
 #include "../Framework/Test.h"
+#include "../Framework/Main.h"
+#include "../Framework/ParticleParameter.h"
 
 #include "AddPair.h"
 #include "ApplyForce.h"
@@ -71,59 +74,102 @@
 #include "VerticalStack.h"
 #include "Web.h"
 
+#include "AntiPointy.h"
+#include "CornerCase.h"
+#include "DamBreak.h"
+#include "DrawingParticles.h"
+#include "ElasticParticles.h"
+#include "Faucet.h"
+#include "Fracker.h"
+#include "Impulse.h"
+#include "LiquidTimer.h"
+#include "Maxwell.h"
+#include "MultipleParticleSystems.h"
+#include "Particles.h"
+#include "ParticleCollisionFilter.h"
+#include "ParticlesSurfaceTension.h"
+#include "Pointy.h"
+#include "Ramp.h"
+#include "RigidParticles.h"
+#include "Sandbox.h"
+#include "Soup.h"
+#include "SoupStirrer.h"
+#include "Sparky.h"
+#include "WaveMachine.h"
+
 TestEntry g_testEntries[] =
 {
-	{"Tiles", Tiles::Create},
-	{"Heavy on Light", HeavyOnLight::Create},
-	{"Heavy on Light Two", HeavyOnLightTwo::Create},
-	{"Vertical Stack", VerticalStack::Create},
-	{"Basic Slider Crank", BasicSliderCrank::Create},
-	{"Slider Crank", SliderCrank::Create},
-	{"Sphere Stack", SphereStack::Create},
-	{"Convex Hull", ConvexHull::Create},
-	{"Tumbler", Tumbler::Create},
-	{"Ray-Cast", RayCast::Create},
-	{"Dump Shell", DumpShell::Create},
+	{"Sandbox", Sandbox::Create},
+	{"Add Pair Stress Test", AddPair::Create},
+	{"AntiPointy", AntiPointy::Create},
 	{"Apply Force", ApplyForce::Create},
-	{"Continuous Test", ContinuousTest::Create},
-	{"Time of Impact", TimeOfImpact::Create},
-	{"Motor Joint", MotorJoint::Create},
-	{"One-Sided Platform", OneSidedPlatform::Create},
-	{"Mobile", Mobile::Create},
-	{"MobileBalanced", MobileBalanced::Create},
-	{"Conveyor Belt", ConveyorBelt::Create},
-	{"Gears", Gears::Create},
-	{"Varying Restitution", VaryingRestitution::Create},
-	{"Cantilever", Cantilever::Create},
-	{"Character Collision", CharacterCollision::Create},
-	{"Edge Test", EdgeTest::Create},
 	{"Body Types", BodyTypes::Create},
-	{"Shape Editing", ShapeEditing::Create},
-	{"Car", Car::Create},
-	{"Prismatic", Prismatic::Create},
-	{"Revolute", Revolute::Create},
-	{"Pulleys", Pulleys::Create},
-	{"Polygon Shapes", PolyShapes::Create},
-	{"Web", Web::Create},
-	{"RopeJoint", RopeJoint::Create},
-	{"Pinball", Pinball::Create},
-	{"Bullet Test", BulletTest::Create},
-	{"Confined", Confined::Create},
-	{"Pyramid", Pyramid::Create},
-	{"Theo Jansen's Walker", TheoJansen::Create},
-	{"Edge Shapes", EdgeShapes::Create},
-	{"PolyCollision", PolyCollision::Create},
-	{"Bridge", Bridge::Create},
 	{"Breakable", Breakable::Create},
+	{"Bridge", Bridge::Create},
+	{"Bullet Test", BulletTest::Create},
+	{"Cantilever", Cantilever::Create},
+	{"Car", Car::Create},
 	{"Chain", Chain::Create},
+	{"Character Collision", CharacterCollision::Create},
 	{"Collision Filtering", CollisionFiltering::Create},
 	{"Collision Processing", CollisionProcessing::Create},
 	{"Compound Shapes", CompoundShapes::Create},
+	{"Confined", Confined::Create},
+	{"Continuous Test", ContinuousTest::Create},
+	{"Convex Hull", ConvexHull::Create},
+	{"Conveyor Belt", ConveyorBelt::Create},
+	{"Corner Case", CornerCase::Create},
+	{"DamBreak", DamBreak::Create},
 	{"Distance Test", DistanceTest::Create},
 	{"Dominos", Dominos::Create},
+	{"Dump Shell", DumpShell::Create},
 	{"Dynamic Tree", DynamicTreeTest::Create},
+	{"Edge Shapes", EdgeShapes::Create},
+	{"Edge Test", EdgeTest::Create},
+	{"Elastic Particles", ElasticParticles::Create},
+	{"Faucet", Faucet::Create},
+	{"Fracker", Fracker::Create},
+	{"Gears", Gears::Create},
+	{"Impulse", Impulse::Create},
+	{"Liquid Timer", LiquidTimer::Create},
+	{"Maxwell", Maxwell::Create},
+	{"Mobile", Mobile::Create},
+	{"MobileBalanced", MobileBalanced::Create},
+	{"Motor Joint", MotorJoint::Create},
+	{"Multiple Systems", MultipleParticleSystems::Create},
+	{"One-Sided Platform", OneSidedPlatform::Create},
+	{"Particle Collisions", ParticleCollisionFilter::Create},
+	{"Particle Drawing", DrawingParticles::Create},
+	{"Particles", Particles::Create},
+	{"Pinball", Pinball::Create},
+	{"Pointy", Pointy::Create},
+	{"PolyCollision", PolyCollision::Create},
+	{"Polygon Shapes", PolyShapes::Create},
+	{"Prismatic", Prismatic::Create},
+	{"Pulleys", Pulleys::Create},
+	{"Pyramid", Pyramid::Create},
+	{"Ramp", Ramp::Create},
+	{"Ray-Cast", RayCast::Create},
+	{"Revolute", Revolute::Create},
+	{"Rigid Particles", RigidParticles::Create},
+	{"RopeJoint", RopeJoint::Create},
 	{"Sensor Test", SensorTest::Create},
+	{"Shape Editing", ShapeEditing::Create},
+	{"Slider Crank", SliderCrank::Create},
+	{"Soup Stirrer", SoupStirrer::Create},
+	{"Soup", Soup::Create},
+	{"Sparky", Sparky::Create},
+	{"SphereStack", SphereStack::Create},
+	{"Surface Tension", ParticlesSurfaceTension::Create},
+	{"Theo Jansen's Walker", TheoJansen::Create},
+	{"Tiles", Tiles::Create},
+	{"Time of Impact", TimeOfImpact::Create},
+	{"Tumbler", Tumbler::Create},
 	{"Varying Friction", VaryingFriction::Create},
-	{"Add Pair Stress Test", AddPair::Create},
+	{"Varying Restitution", VaryingRestitution::Create},
+	{"Vertical Stack", VerticalStack::Create},
+	{"Wave Machine", WaveMachine::Create},
+	{"Web", Web::Create},
+
 	{NULL, NULL}
 };

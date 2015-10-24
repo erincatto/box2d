@@ -20,6 +20,7 @@
 #define B2_BLOCK_ALLOCATOR_H
 
 #include <Box2D/Common/b2Settings.h>
+#include <Box2D/Common/b2TrackedBlock.h>
 
 const int32 b2_chunkSize = 16 * 1024;
 const int32 b2_maxBlockSize = 640;
@@ -38,21 +39,26 @@ public:
 	b2BlockAllocator();
 	~b2BlockAllocator();
 
-	/// Allocate memory. This will use b2Alloc if the size is larger than b2_maxBlockSize.
+	/// Allocate memory. This uses b2Alloc if the size is larger than b2_maxBlockSize.
 	void* Allocate(int32 size);
 
-	/// Free memory. This will use b2Free if the size is larger than b2_maxBlockSize.
+	/// Free memory. This uses b2Free if the size is larger than b2_maxBlockSize.
 	void Free(void* p, int32 size);
 
 	void Clear();
 
-private:
+	/// Returns the number of allocations larger than the max block size.
+	uint32 GetNumGiantAllocations() const;
 
+private:
 	b2Chunk* m_chunks;
 	int32 m_chunkCount;
 	int32 m_chunkSpace;
 
 	b2Block* m_freeLists[b2_blockSizes];
+
+	// Record giant allocations--ones bigger than the max block size
+	b2TrackedBlockAllocator m_giants;
 
 	static int32 s_blockSizes[b2_blockSizes];
 	static uint8 s_blockSizeLookup[b2_maxBlockSize + 1];

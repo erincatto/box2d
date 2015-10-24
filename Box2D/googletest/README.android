@@ -1,0 +1,58 @@
+URL:http://code.google.com/p/googletest/downloads/list
+Version: 1.6.0
+License: New BSD License
+
+Description:
+Google's framework for writing C++ tests on a variety of platforms
+(Linux, Mac OS X, Windows, Cygwin, Windows CE, and Symbian). Based on
+the xUnit architecture. Supports automatic test discovery, a rich set
+of assertions, user-defined assertions, death tests, fatal and
+non-fatal failures, value- and type-parameterized tests, various
+options for running the tests, and XML test report generation.
+
+Local Modifications:
+Wed Nov 30, 2011 (brettchabot)
+Thu Apr 30, 2009 (niko)
+
+Added Android.mk, src/Android.mk and test/Android.mk files.
+
+Removed non Android build files:
+ rm Makefile.in
+ rm Makefile.am
+ rm aclocal.m4
+ rm CMakeLists.txt
+ rm configure*
+ rm -rf build-aux/
+ rm -rf codegear/
+ rm -rf m4/
+ rm -rf make/
+ rm -rf msvc/
+ rm -rf scons/
+ rm -rf xcode/
+ rm -rf cmake/
+ rm -rf fused-src/
+
+Feature supported (see '// ANDROID' comments in 
+include/gtest/internals/gtest-port.h for modifications
+made):
+
+GTEST_HAS_CLONE          0
+GTEST_HAS_GLOBAL_STRING  0
+GTEST_HAS_GLOBAL_WSTRING 0
+GTEST_HAS_PTHREAD        0
+GTEST_HAS_RTTI           0
+GTEST_HAS_STD_STRING     1
+GTEST_HAS_STD_WSTRING    0
+GTEST_HAS_TR1_TUPLE      0
+
+
+In test/gtest_prod_test.cc, added
+
+#ifdef ANDROID
+#include "test/production.cc"
+#endif
+
+because the build script takes only one .cc per binary.
+
+In src/gtest-port.cc, test/gtest-filepath_test.cc,
+changed tmp file paths to /sdcard.

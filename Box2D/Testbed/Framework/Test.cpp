@@ -1,5 +1,6 @@
 /*
 * Copyright (c) 2006-2009 Erin Catto http://www.box2d.org
+* Copyright (c) 2013 Google, Inc.
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -17,6 +18,7 @@
 */
 
 #include "Test.h"
+#include "Main.h"
 #include <stdio.h>
 
 void DestructionListener::SayGoodbye(b2Joint* joint)
@@ -31,11 +33,31 @@ void DestructionListener::SayGoodbye(b2Joint* joint)
 	}
 }
 
+void DestructionListener::SayGoodbye(b2ParticleGroup* group)
+{
+	test->ParticleGroupDestroyed(group);
+}
+
+const b2ParticleColor Test::k_ParticleColors[] = {
+	b2ParticleColor(0xff, 0x00, 0x00, 0xff), // red
+	b2ParticleColor(0x00, 0xff, 0x00, 0xff), // green
+	b2ParticleColor(0x00, 0x00, 0xff, 0xff), // blue
+	b2ParticleColor(0xff, 0x8c, 0x00, 0xff), // orange
+	b2ParticleColor(0x00, 0xce, 0xd1, 0xff), // turquoise
+	b2ParticleColor(0xff, 0x00, 0xff, 0xff), // magenta
+	b2ParticleColor(0xff, 0xd7, 0x00, 0xff), // gold
+	b2ParticleColor(0x00, 0xff, 0xff, 0xff), // cyan
+};
+const uint32 Test::k_ParticleColorsCount =
+	B2_ARRAY_SIZE(Test::k_ParticleColors);
+
 Test::Test()
 {
+	const b2ParticleSystemDef particleSystemDef;
 	b2Vec2 gravity;
 	gravity.Set(0.0f, -10.0f);
 	m_world = new b2World(gravity);
+	m_particleSystem = m_world->CreateParticleSystem(&particleSystemDef);
 	m_bomb = NULL;
 	m_textLine = 30;
 	m_mouseJoint = NULL;
@@ -46,15 +68,25 @@ Test::Test()
 	m_world->SetContactListener(this);
 	m_world->SetDebugDraw(&g_debugDraw);
 	
+	m_particleSystem->SetGravityScale(0.4f);
+	m_particleSystem->SetDensity(1.2f);
+
 	m_bombSpawning = false;
 
 	m_stepCount = 0;
+
+	m_mouseWorld = b2Vec2_zero;
+	m_mouseTracing = false;
+	m_mouseTracerPosition = b2Vec2_zero;
+	m_mouseTracerVelocity = b2Vec2_zero;
 
 	b2BodyDef bodyDef;
 	m_groundBody = m_world->CreateBody(&bodyDef);
 
 	memset(&m_maxProfile, 0, sizeof(b2Profile));
 	memset(&m_totalProfile, 0, sizeof(b2Profile));
+
+	m_particleParameters = NULL;
 }
 
 Test::~Test()
@@ -62,6 +94,7 @@ Test::~Test()
 	// By deleting the world, we delete the bomb, mouse joint, etc.
 	delete m_world;
 	m_world = NULL;
+	RestoreParticleParameters();
 }
 
 void Test::PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
@@ -135,10 +168,51 @@ public:
 	b2Fixture* m_fixture;
 };
 
+class QueryCallback2 : public b2QueryCallback
+{
+public:
+	QueryCallback2(b2ParticleSystem* particleSystem,
+					 const b2Shape* shape, const b2Vec2& velocity)
+	{
+		m_particleSystem = particleSystem;
+		m_shape = shape;
+		m_velocity = velocity;
+	}
+
+	bool ReportFixture(b2Fixture* fixture)
+	{
+		B2_NOT_USED(fixture);
+		return false;
+	}
+
+	bool ReportParticle(const b2ParticleSystem* particleSystem, int32 index)
+	{
+		if (particleSystem != m_particleSystem)
+			return false;
+
+		b2Transform xf;
+		xf.SetIdentity();
+		b2Vec2 p = m_particleSystem->GetPositionBuffer()[index];
+		if (m_shape->TestPoint(xf, p))
+		{
+			b2Vec2& v = m_particleSystem->GetVelocityBuffer()[index];
+			v = m_velocity;
+		}
+		return true;
+	}
+
+	b2ParticleSystem* m_particleSystem;
+	const b2Shape* m_shape;
+	b2Vec2 m_velocity;
+};
+
 void Test::MouseDown(const b2Vec2& p)
 {
 	m_mouseWorld = p;
-	
+	m_mouseTracing = true;
+	m_mouseTracerPosition = p;
+	m_mouseTracerVelocity = b2Vec2_zero;
+
 	if (m_mouseJoint != NULL)
 	{
 		return;
@@ -202,6 +276,8 @@ void Test::ShiftMouseDown(const b2Vec2& p)
 
 void Test::MouseUp(const b2Vec2& p)
 {
+	m_mouseTracing = false;
+
 	if (m_mouseJoint)
 	{
 		m_world->DestroyJoint(m_mouseJoint);
@@ -285,6 +361,7 @@ void Test::Step(Settings* settings)
 
 	uint32 flags = 0;
 	flags += settings->drawShapes			* b2Draw::e_shapeBit;
+	flags += settings->drawParticles		* b2Draw::e_particleBit;
 	flags += settings->drawJoints			* b2Draw::e_jointBit;
 	flags += settings->drawAABBs			* b2Draw::e_aabbBit;
 	flags += settings->drawCOMs				* b2Draw::e_centerOfMassBit;
@@ -294,14 +371,19 @@ void Test::Step(Settings* settings)
 	m_world->SetWarmStarting(settings->enableWarmStarting);
 	m_world->SetContinuousPhysics(settings->enableContinuous);
 	m_world->SetSubStepping(settings->enableSubStepping);
+	m_particleSystem->SetStrictContactCheck(settings->strictContacts);
 
 	m_pointCount = 0;
 
-	m_world->Step(timeStep, settings->velocityIterations, settings->positionIterations);
+	b2Timer timer;
+	m_world->Step(timeStep,
+		settings->velocityIterations,
+		settings->positionIterations,
+		settings->particleIterations);
+	settings->stepTimeOut = timer.GetMilliseconds();
 
 	m_world->DrawDebugData();
-    g_debugDraw.Flush();
-
+	g_debugDraw.Flush();
 	if (timeStep > 0.0f)
 	{
 		++m_stepCount;
@@ -313,6 +395,13 @@ void Test::Step(Settings* settings)
 		int32 contactCount = m_world->GetContactCount();
 		int32 jointCount = m_world->GetJointCount();
 		g_debugDraw.DrawString(5, m_textLine, "bodies/contacts/joints = %d/%d/%d", bodyCount, contactCount, jointCount);
+		m_textLine += DRAW_STRING_NEW_LINE;
+
+		int32 particleCount = m_particleSystem->GetParticleCount();
+		int32 groupCount = m_particleSystem->GetParticleGroupCount();
+		int32 pairCount = m_particleSystem->GetPairCount();
+		int32 triadCount = m_particleSystem->GetTriadCount();
+		g_debugDraw.DrawString(5, m_textLine, "particles/groups/pairs/triads = %d/%d/%d/%d", particleCount, groupCount, pairCount, triadCount);
 		m_textLine += DRAW_STRING_NEW_LINE;
 
 		int32 proxyCount = m_world->GetProxyCount();
@@ -382,6 +471,23 @@ void Test::Step(Settings* settings)
 		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
+	if (m_mouseTracing && !m_mouseJoint)
+	{
+		float32 delay = 0.1f;
+		b2Vec2 acceleration = 2 / delay * (1 / delay * (m_mouseWorld - m_mouseTracerPosition) - m_mouseTracerVelocity);
+		m_mouseTracerVelocity += timeStep * acceleration;
+		m_mouseTracerPosition += timeStep * m_mouseTracerVelocity;
+		b2CircleShape shape;
+		shape.m_p = m_mouseTracerPosition;
+		shape.m_radius = 2 * GetDefaultViewZoom();
+		QueryCallback2 callback(m_particleSystem, &shape, m_mouseTracerVelocity);
+		b2AABB aabb;
+		b2Transform xf;
+		xf.SetIdentity();
+		shape.ComputeAABB(&aabb, xf, 0);
+		m_world->QueryAABB(&callback, aabb);
+	}
+
 	if (m_mouseJoint)
 	{
 		b2Vec2 p1 = m_mouseJoint->GetAnchorB();
@@ -426,20 +532,20 @@ void Test::Step(Settings* settings)
 				g_debugDraw.DrawPoint(point->position, 5.0f, b2Color(0.3f, 0.3f, 0.95f));
 			}
 
-			if (settings->drawContactNormals == 1)
+			if (settings->drawContactNormals)
 			{
 				b2Vec2 p1 = point->position;
 				b2Vec2 p2 = p1 + k_axisScale * point->normal;
 				g_debugDraw.DrawSegment(p1, p2, b2Color(0.9f, 0.9f, 0.9f));
 			}
-			else if (settings->drawContactImpulse == 1)
+			else if (settings->drawContactImpulse)
 			{
 				b2Vec2 p1 = point->position;
 				b2Vec2 p2 = p1 + k_impulseScale * point->normalImpulse * point->normal;
 				g_debugDraw.DrawSegment(p1, p2, b2Color(0.9f, 0.9f, 0.3f));
 			}
 
-			if (settings->drawFrictionImpulse == 1)
+			if (settings->drawFrictionImpulse)
 			{
 				b2Vec2 tangent = b2Cross(point->normal, 1.0f);
 				b2Vec2 p1 = point->position;
@@ -453,4 +559,77 @@ void Test::Step(Settings* settings)
 void Test::ShiftOrigin(const b2Vec2& newOrigin)
 {
 	m_world->ShiftOrigin(newOrigin);
+}
+
+float32 Test::GetDefaultViewZoom() const
+{
+	return 1.0f;
+}
+
+// Apply a preset range of colors to a particle group.
+// A different color out of k_ParticleColors is applied to each
+// particlesPerColor particles in the specified group.
+// If particlesPerColor is 0, the particles in the group are divided into
+// k_ParticleColorsCount equal sets of colored particles.
+void Test::ColorParticleGroup(b2ParticleGroup * const group,
+								uint32 particlesPerColor)
+{
+	b2Assert(group);
+	b2ParticleColor * const colorBuffer = m_particleSystem->GetColorBuffer();
+	const int32 particleCount = group->GetParticleCount();
+	const int32 groupStart = group->GetBufferIndex();
+	const int32 groupEnd = particleCount + groupStart;
+	const int32 colorCount = (int32)k_ParticleColorsCount;
+	if (!particlesPerColor)
+	{
+		particlesPerColor = particleCount / colorCount;
+		if (!particlesPerColor)
+		{
+			particlesPerColor = 1;
+		}
+	}
+	for (int32 i = groupStart; i < groupEnd; i++)
+	{
+		colorBuffer[i] = k_ParticleColors[i / particlesPerColor];
+	}
+}
+
+
+// Remove particle parameters matching "filterMask" from the set of
+// particle parameters available for this test.
+void Test::InitializeParticleParameters(const uint32 filterMask)
+{
+	const uint32 defaultNumValues =
+		ParticleParameter::k_defaultDefinition[0].numValues;
+	const ParticleParameter::Value * const defaultValues =
+		ParticleParameter::k_defaultDefinition[0].values;
+	m_particleParameters = new ParticleParameter::Value[defaultNumValues];
+
+	// Disable selection of wall and barrier particle types.
+	uint32 numValues = 0;
+	for (uint32 i = 0; i < defaultNumValues; i++)
+	{
+		if (defaultValues[i].value & filterMask)
+		{
+			continue;
+		}
+		memcpy(&m_particleParameters[numValues], &defaultValues[i],
+				 sizeof(defaultValues[0]));
+		numValues++;
+	}
+	m_particleParameterDef.values = m_particleParameters;
+	m_particleParameterDef.numValues = numValues;
+	TestMain::SetParticleParameters(&m_particleParameterDef, 1);
+}
+
+// Restore default particle parameters.
+void Test::RestoreParticleParameters()
+{
+	if (m_particleParameters)
+	{
+		TestMain::SetParticleParameters(
+			ParticleParameter::k_defaultDefinition, 1);
+		delete [] m_particleParameters;
+		m_particleParameters = NULL;
+	}
 }
