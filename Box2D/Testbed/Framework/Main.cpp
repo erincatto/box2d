@@ -1,5 +1,6 @@
 /*
 * Copyright (c) 2006-2013 Erin Catto http://www.box2d.org
+* Copyright (c) 2013 Google, Inc.
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -34,6 +35,9 @@
 #define snprintf _snprintf
 #endif
 
+namespace TestMain
+{
+
 //
 struct UIState
 {
@@ -58,6 +62,45 @@ namespace
 	Settings settings;
 	bool rightMouseDown;
 	b2Vec2 lastp;
+	// Used to control the behavior of particle tests.
+	ParticleParameter particleParameter;
+}
+
+// Set whether to restart the test on particle parameter changes.
+// This parameter is re-enabled when the test changes.
+void SetRestartOnParticleParameterChange(bool enable)
+{
+	particleParameter.SetRestartOnChange(enable);
+}
+
+// Set the currently selected particle parameter value.  This value must
+// match one of the values in TestMain::k_particleTypes or one of the values
+// referenced by particleParameterDef passed to SetParticleParameters().
+uint32 SetParticleParameterValue(uint32 value)
+{
+	const int32 index = particleParameter.FindIndexByValue(value);
+	// If the particle type isn't found, so fallback to the first entry in the
+	// parameter.
+	particleParameter.Set(index >= 0 ? index : 0);
+	return particleParameter.GetValue();
+}
+
+// Get the currently selected particle parameter value and enable particle
+// parameter selection arrows on Android.
+uint32 GetParticleParameterValue()
+{
+	// Enable display of particle type selection arrows.
+	//fullscreenUI.SetParticleParameterSelectionEnabled(true);
+	return particleParameter.GetValue();
+}
+
+// Override the default particle parameters for the test.
+void SetParticleParameters(
+	const ParticleParameter::Definition * const particleParameterDef,
+	const uint32 particleParameterDefCount)
+{
+	particleParameter.SetDefinition(particleParameterDef,
+									particleParameterDefCount);
 }
 
 //
@@ -430,6 +473,8 @@ static void sInterface()
 //
 int main(int argc, char** argv)
 {
+	using namespace TestMain;
+
 #if defined(_WIN32)
 	// Enable memory-leak reports
 	_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG));
@@ -473,7 +518,7 @@ int main(int argc, char** argv)
 	glfwSetCursorPosCallback(mainWindow, sMouseMotion);
 	glfwSetScrollCallback(mainWindow, sScrollCallback);
 
-#if defined(__APPLE__) == FALSE
+#if !defined(__APPLE__)
 	//glewExperimental = GL_TRUE;
     GLenum err = glewInit();
 	if (GLEW_OK != err)
@@ -502,14 +547,14 @@ int main(int argc, char** argv)
 	// Control the frame rate. One draw per monitor refresh.
 	glfwSwapInterval(1);
 
-    double time1 = glfwGetTime();
-    double frameTime = 0.0;
-   
-    glClearColor(0.3f, 0.3f, 0.3f, 1.f);
-	
- 	while (!glfwWindowShouldClose(mainWindow))
+	double time1 = glfwGetTime();
+	double frameTime = 0.0;
+
+	glClearColor(0.3f, 0.3f, 0.3f, 1.f);
+
+	while (!glfwWindowShouldClose(mainWindow))
 	{
- 		glfwGetWindowSize(mainWindow, &g_camera.m_width, &g_camera.m_height);
+		glfwGetWindowSize(mainWindow, &g_camera.m_width, &g_camera.m_height);
 		glViewport(0, 0, g_camera.m_width, g_camera.m_height);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -532,17 +577,17 @@ int main(int argc, char** argv)
 
 		sSimulate();
 		sInterface();
-        
-        // Measure speed
-        double time2 = glfwGetTime();
-        double alpha = 0.9f;
-        frameTime = alpha * frameTime + (1.0 - alpha) * (time2 - time1);
-        time1 = time2;
 
-        char buffer[32];
-        snprintf(buffer, 32, "%.1f ms", 1000.0 * frameTime);
-        AddGfxCmdText(5, 5, TEXT_ALIGN_LEFT, buffer, WHITE);
-        
+		// Measure speed
+		double time2 = glfwGetTime();
+		double alpha = 0.9f;
+		frameTime = alpha * frameTime + (1.0 - alpha) * (time2 - time1);
+		time1 = time2;
+
+		char buffer[32];
+		snprintf(buffer, 32, "%.1f ms", 1000.0 * frameTime);
+		AddGfxCmdText(5, 5, TEXT_ALIGN_LEFT, buffer, WHITE);
+
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_DEPTH_TEST);
