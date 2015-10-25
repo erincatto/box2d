@@ -25,9 +25,10 @@
 #if defined(__APPLE__)
 #include <OpenGL/gl3.h>
 #else
-#include <glew/glew.h>
+#include "glew.h"
 #endif
-#include <glfw/glfw3.h>
+
+#include "glfw.h"
 
 #include <stdlib.h>
 
