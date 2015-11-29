@@ -1,5 +1,5 @@
-﻿/*
-* Box2D.UWP port of Box2D:
+﻿/* Box2D.uwp port of Box2D.Xna: Copyright (c) 2015 Nukepayload2
+* Box2D.Xna port of Box2D:
 * Copyright (c) 2009 Brandon Furtwangler, Nathan Furtwangler
 *
 * Original source Box2D:
