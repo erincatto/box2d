@@ -16,19 +16,15 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "DebugDraw.h"
-
-#if defined(__APPLE_CC__)
-#include <OpenGL/gl3.h>
-#else
-#include <glew/glew.h>
-#endif
-
-#include <glfw/glfw3.h>
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "RenderGL3.h"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+#include <imgui.h>
+
+#include "DebugDraw.h"
 
 #define BUFFER_OFFSET(x)  ((const void*) (x))
 
@@ -771,8 +767,6 @@ void DebugDraw::DrawPoint(const b2Vec2& p, float32 size, const b2Color& color)
 
 void DebugDraw::DrawString(int x, int y, const char *string, ...)
 {
-	float32 h = float32(g_camera.m_height);
-
 	char buffer[128];
 
 	va_list arg;
@@ -780,13 +774,12 @@ void DebugDraw::DrawString(int x, int y, const char *string, ...)
 	vsprintf(buffer, string, arg);
 	va_end(arg);
 
-	AddGfxCmdText(float(x), h - float(y), TEXT_ALIGN_LEFT, buffer, SetRGBA(230, 153, 153, 255));
+	ImGui::TextColored(ImColor(230,153,153), "%s", buffer);
 }
 
 void DebugDraw::DrawString(const b2Vec2& pw, const char *string, ...)
 {
 	b2Vec2 ps = g_camera.ConvertWorldToScreen(pw);
-	float32 h = float32(g_camera.m_height);
 
 	char buffer[128];
 
@@ -795,7 +788,10 @@ void DebugDraw::DrawString(const b2Vec2& pw, const char *string, ...)
 	vsprintf(buffer, string, arg);
 	va_end(arg);
 
-	AddGfxCmdText(ps.x, h - ps.y, TEXT_ALIGN_LEFT, buffer, SetRGBA(230, 153, 153, 255));
+    ImDrawList* draw_list = ImGui::GetWindowDrawList();
+    draw_list->PushClipRectFullScreen();
+    draw_list->AddText(ImVec2(ps.x, ps.y - ImGui::GetWindowFontSize()), ImColor(230,153,153), buffer);
+    draw_list->PopClipRect();
 }
 
 void DebugDraw::DrawAABB(b2AABB* aabb, const b2Color& c)

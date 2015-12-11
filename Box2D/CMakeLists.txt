@@ -25,9 +25,6 @@ if(BOX2D_BUILD_EXAMPLES)
   add_subdirectory(HelloWorld)
 
   # Testbed and dependencies.
-  find_package(OpenGL REQUIRED)
-  add_subdirectory(glew)
-  add_subdirectory(glfw)
   add_subdirectory(Testbed)
 endif(BOX2D_BUILD_EXAMPLES)
 
