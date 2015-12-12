@@ -297,7 +297,7 @@ static void sSimulate()
 {
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
 	ImGui::Begin("Test", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings);
-	ImGui::Text(entry->name);
+	ImGui::Text("%s", entry->name);
 	test->Step(&settings);
 	ImGui::End();
 
