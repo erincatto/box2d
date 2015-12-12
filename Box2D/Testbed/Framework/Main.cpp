@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 
-#include <glad/glad.h>
+#include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 
 #include "imgui.h"
@@ -413,7 +413,7 @@ int main(int argc, char** argv)
 
 	glfwMakeContextCurrent(mainWindow);
 
-	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+	gl3wInit();
 
 	printf("OpenGL %s, GLSL %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 

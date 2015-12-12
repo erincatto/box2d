@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include <glad/glad.h>
+#include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 
 #include <imgui.h>

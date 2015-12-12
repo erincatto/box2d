@@ -5,10 +5,6 @@ find_package(OpenGL REQUIRED)
 add_subdirectory(glfw)
 set(GLFW_INCLUDE_DIR glfw/include glfw/deps)
 
-# glad
-set(GLAD glfw/deps/glad.c)
-set(GLAD_INCLUDE_DIR glfw/deps/glad)
-
 # imgui
 set(IMGUI 
 	imgui/imgui.h 
@@ -18,11 +14,13 @@ set(IMGUI
 	imgui/stb_truetype.h
 	imgui/examples/opengl3_example/imgui_impl_glfw_gl3.h
 	imgui/examples/opengl3_example/imgui_impl_glfw_gl3.cpp
+	imgui/examples/libs/gl3w/GL/gl3w.h
+	imgui/examples/libs/gl3w/GL/gl3w.c
 )
 set(IMGUI_INCLUDE_DIR 
 	imgui
 	imgui/examples/opengl3_example
-	gl3w/include
+	imgui/examples/libs/gl3w
 )
 
 # Testbed
@@ -92,7 +90,6 @@ source_group(Tests FILES ${Testbed_Tests_SRCS})
 include_directories(
 	${Box2D_SOURCE_DIR}
 	${IMGUI_INCLUDE_DIR}
-	${GLAD_INCLUDE_DIR}
 	${GLFW_INCLUDE_DIR}
 	${OPENGL_INCLUDE_DIR}
 )
@@ -101,10 +98,6 @@ add_executable(Testbed
 	${Testbed_Framework_SRCS}
 	${Testbed_Tests_SRCS}
 	${IMGUI}
-	${GLAD}
 )
 
 target_link_libraries(Testbed Box2D glfw ${GLFW_LIBRARIES})
-
-file(COPY ../Build/Data DESTINATION ..)
-
