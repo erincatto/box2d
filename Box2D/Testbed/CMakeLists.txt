@@ -22,6 +22,7 @@ set(IMGUI
 set(IMGUI_INCLUDE_DIR 
 	imgui
 	imgui/examples/opengl3_example
+	gl3w/include
 )
 
 # Testbed
