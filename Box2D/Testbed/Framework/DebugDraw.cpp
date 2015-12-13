@@ -290,6 +290,10 @@ struct GLRenderPoints
 		glDrawArrays(GL_POINTS, 0, m_count);
         glDisable(GL_PROGRAM_POINT_SIZE);
 
+		glDisableVertexAttribArray(m_positionAttribute);
+		glDisableVertexAttribArray(m_colorAttribute);
+		glDisableVertexAttribArray(m_sizeAttribute);
+
 		sCheckGLError();
         
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -401,17 +405,15 @@ struct GLRenderLines
 		glBindBuffer(GL_ARRAY_BUFFER, m_vboId);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(struct Vertex), m_vertices);
 
-		size_t offset = 0;
-        
 		glEnableVertexAttribArray(m_positionAttribute);
 		glVertexAttribPointer(m_positionAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(struct Vertex), (const void*) offsetof(struct Vertex, position));
-		offset += sizeof(b2Vec2);
-
 		glEnableVertexAttribArray(m_colorAttribute);
 		glVertexAttribPointer(m_colorAttribute, 4, GL_FLOAT, GL_FALSE, sizeof(struct Vertex), (const void*) offsetof(struct Vertex, color));
-		offset += sizeof(b2Color);
         
 		glDrawArrays(GL_LINES, 0, m_count);
+
+		glDisableVertexAttribArray(m_positionAttribute);
+		glDisableVertexAttribArray(m_colorAttribute);
         
 		sCheckGLError();
         
@@ -532,6 +534,9 @@ struct GLRenderTriangles
         glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDrawArrays(GL_TRIANGLES, 0, m_count);
         glDisable(GL_BLEND);
+
+		glDisableVertexAttribArray(m_positionAttribute);
+		glDisableVertexAttribArray(m_colorAttribute);
         
 		sCheckGLError();
         
