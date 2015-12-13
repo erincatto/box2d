@@ -21,7 +21,7 @@
 
 #include <stdlib.h>
 
-#include <GL/gl3w.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include <Box2D/Box2D.h>

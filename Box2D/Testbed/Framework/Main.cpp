@@ -18,11 +18,11 @@
 
 #include <stdio.h>
 
-#include <GL/gl3w.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include "imgui.h"
-#include "imgui_impl_glfw_gl3.h"
+#include "examples/opengl_example/imgui_impl_glfw.h"
 
 #include "DebugDraw.h"
 #include "Test.h"
@@ -413,7 +413,7 @@ int main(int argc, char** argv)
 
 	glfwMakeContextCurrent(mainWindow);
 
-	gl3wInit();
+	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
 	printf("OpenGL %s, GLSL %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 
@@ -493,3 +493,5 @@ int main(int argc, char** argv)
 
 	return 0;
 }
+
+#include "examples/opengl_example/imgui_impl_glfw.cpp"

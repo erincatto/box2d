@@ -3,7 +3,7 @@ find_package(OpenGL REQUIRED)
 
 # glfw
 add_subdirectory(glfw)
-set(GLFW_INCLUDE_DIR glfw/include glfw/deps)
+set(GLFW_INCLUDE_DIR glfw/include)
 
 # imgui
 set(IMGUI 
@@ -12,15 +12,18 @@ set(IMGUI
 	imgui/imgui_draw.cpp 
 	imgui/imgui_demo.cpp 
 	imgui/stb_truetype.h
-	imgui/examples/opengl3_example/imgui_impl_glfw_gl3.h
-	imgui/examples/opengl3_example/imgui_impl_glfw_gl3.cpp
-	imgui/examples/libs/gl3w/GL/gl3w.h
-	imgui/examples/libs/gl3w/GL/gl3w.c
+	#imgui/examples/opengl3_example/imgui_impl_glfw_gl3.h
+	#imgui/examples/opengl3_example/imgui_impl_glfw_gl3.cpp
+	#imgui/examples/libs/gl3w/GL/gl3w.h
+	#imgui/examples/libs/gl3w/GL/gl3w.c
+	glfw/deps/glad/glad.h
+	glfw/deps/glad.c
 )
 set(IMGUI_INCLUDE_DIR 
 	imgui
-	imgui/examples/opengl3_example
-	imgui/examples/libs/gl3w
+	#imgui/examples/opengl3_example
+	#imgui/examples/libs/gl3w
+	glfw/deps
 )
 
 # Testbed
