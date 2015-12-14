@@ -1,3 +1,12 @@
+Linux / OSX
+$ (mkdir -p Build && cd Build && cmake .. && make && Testbed/Testbed)
+
+Windows (cygwin)
+$ (mkdir -p Build && cd Build && cmake .. && cygstart Box2D.sln)
+- Select Testbed as Startup Project; F5 to run
+
+=============== OLD METHOD 1 UNSUPPORTED ====================
+
 The Build folder contains custom made project files for Visual Studio and XCode.
 
 =============== OLD METHOD 1 UNSUPPORTED ====================
