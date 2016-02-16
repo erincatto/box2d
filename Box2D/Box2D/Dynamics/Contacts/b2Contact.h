@@ -46,18 +46,6 @@ inline float32 b2MixRestitution(float32 restitution1, float32 restitution2)
 	return restitution1 > restitution2 ? restitution1 : restitution2;
 }
 
-typedef b2Contact* b2ContactCreateFcn(	b2Fixture* fixtureA, int32 indexA,
-										b2Fixture* fixtureB, int32 indexB,
-										b2BlockAllocator* allocator);
-typedef void b2ContactDestroyFcn(b2Contact* contact, b2BlockAllocator* allocator);
-
-struct b2ContactRegister
-{
-	b2ContactCreateFcn* createFcn;
-	b2ContactDestroyFcn* destroyFcn;
-	bool primary;
-};
-
 /// A contact edge is used to connect bodies and contacts together
 /// in a contact graph where each body is a node and each contact
 /// is an edge. A contact edge belongs to a doubly linked list
@@ -176,9 +164,6 @@ protected:
 	/// Flag this contact for filtering. Filtering will occur the next time step.
 	void FlagForFiltering();
 
-	static void AddType(b2ContactCreateFcn* createFcn, b2ContactDestroyFcn* destroyFcn,
-						b2Shape::Type typeA, b2Shape::Type typeB);
-	static void InitializeRegisters();
 	static b2Contact* Create(b2Fixture* fixtureA, int32 indexA, b2Fixture* fixtureB, int32 indexB, b2BlockAllocator* allocator);
 	static void Destroy(b2Contact* contact, b2Shape::Type typeA, b2Shape::Type typeB, b2BlockAllocator* allocator);
 	static void Destroy(b2Contact* contact, b2BlockAllocator* allocator);
@@ -188,9 +173,6 @@ protected:
 	virtual ~b2Contact() {}
 
 	void Update(b2ContactListener* listener);
-
-	static b2ContactRegister s_registers[b2Shape::e_typeCount][b2Shape::e_typeCount];
-	static bool s_initialized;
 
 	uint32 m_flags;
 
