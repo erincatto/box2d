@@ -34,6 +34,10 @@
 #define snprintf _snprintf
 #endif
 
+#ifdef _WIN32
+#include <crtdbg.h>
+#endif
+
 //
 struct UIState
 {
