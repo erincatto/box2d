@@ -307,7 +307,7 @@ void b2Island::Solve(b2Profile* profile, const b2TimeStep& step, const b2Vec2& g
 	// Solve position constraints
 	timer.Reset();
 	bool positionSolved = false;
-	for (int32 i = 0; i < step.positionIterations; ++i)
+	for (int32 iter = 0; iter < step.positionIterations; ++iter)
 	{
 		bool contactsOkay = contactSolver.SolvePositionConstraints();
 
