@@ -1,0 +1,6 @@
+[submodule "Box2D/Testbed/glfw"]
+	path = Box2D/Testbed/glfw
+	url = ../../glfw/glfw.git
+[submodule "Box2D/Testbed/imgui"]
+	path = Box2D/Testbed/imgui
+	url = ../../ocornut/imgui.git

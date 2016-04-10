@@ -1,15 +1,38 @@
-# Some flags for Freeglut and GLUI.
-add_definitions( -DGLEW_STATIC -D_CRT_SECURE_NO_WARNINGS )
+# OpenGL
+find_package(OpenGL REQUIRED)
+
+# glfw
+add_subdirectory(glfw)
+set(GLFW_INCLUDE_DIR glfw/include)
+
+# imgui
+set(IMGUI 
+	imgui/imgui.h 
+	imgui/imgui.cpp 
+	imgui/imgui_draw.cpp 
+	imgui/imgui_demo.cpp 
+	imgui/stb_truetype.h
+	#imgui/examples/opengl3_example/imgui_impl_glfw_gl3.h
+	#imgui/examples/opengl3_example/imgui_impl_glfw_gl3.cpp
+	#imgui/examples/libs/gl3w/GL/gl3w.h
+	#imgui/examples/libs/gl3w/GL/gl3w.c
+	glfw/deps/glad/glad.h
+	glfw/deps/glad.c
+)
+set(IMGUI_INCLUDE_DIR 
+	imgui
+	#imgui/examples/opengl3_example
+	#imgui/examples/libs/gl3w
+	glfw/deps
+)
+
+# Testbed
 
 # Define the framework files.
 set(Testbed_Framework_SRCS
 	Framework/DebugDraw.cpp
 	Framework/DebugDraw.h
-	Framework/imgui.h
-	Framework/imgui.cpp
 	Framework/Main.cpp
-	Framework/RenderGL3.cpp
-	Framework/RenderGL3.h
 	Framework/Test.cpp
 	Framework/Test.h
 )
@@ -67,33 +90,17 @@ set(Testbed_Tests_SRCS
 source_group(Framework FILES ${Testbed_Framework_SRCS})
 source_group(Tests FILES ${Testbed_Tests_SRCS})
 
-include_directories (
-	${OPENGL_INCLUDE_DIR}
+include_directories(
 	${Box2D_SOURCE_DIR}
+	${IMGUI_INCLUDE_DIR}
+	${GLFW_INCLUDE_DIR}
+	${OPENGL_INCLUDE_DIR}
 )
-
-if(APPLE)
-	# We are not using the Apple's framework version, but X11's
-	include_directories( /usr/X11/include )
-	link_directories( /usr/X11/lib )
-	set (OPENGL_LIBRARIES GL GLU X11)
-elseif(WIN32)
-	set (ADDITIONAL_LIBRARIES winmm)
-endif(APPLE)
 
 add_executable(Testbed
 	${Testbed_Framework_SRCS}
 	${Testbed_Tests_SRCS}
+	${IMGUI}
 )
 
-target_link_libraries (
-	Testbed
-	Box2D
-	glew
-	glfw
-	${ADDITIONAL_LIBRARIES}
-	${OPENGL_LIBRARIES}
-) 
-
-file(COPY ../Build/Data DESTINATION ..)
-
+target_link_libraries(Testbed Box2D glfw ${GLFW_LIBRARIES})
