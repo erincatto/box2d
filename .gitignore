@@ -8,3 +8,6 @@
 *.ilk
 *.suo
 *.sdf
+**/obj
+*.user
+*.db

@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.0 - www.glfw.org
+// GLFW 3.1 POSIX - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2010 Camilla Berglund <elmindreda@elmindreda.org>
@@ -29,62 +29,38 @@
 
 
 //////////////////////////////////////////////////////////////////////////
-//////                        GLFW public API                       //////
+//////                       GLFW internal API                      //////
 //////////////////////////////////////////////////////////////////////////
 
-GLFWAPI int glfwJoystickPresent(int joy)
+int _glfwCreateContextTLS(void)
 {
-    _GLFW_REQUIRE_INIT_OR_RETURN(0);
-
-    if (joy < 0 || joy > GLFW_JOYSTICK_LAST)
+    if (pthread_key_create(&_glfw.posix_tls.context, NULL) != 0)
     {
-        _glfwInputError(GLFW_INVALID_ENUM, NULL);
-        return 0;
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                        "POSIX: Failed to create context TLS");
+        return GL_FALSE;
     }
 
-    return _glfwPlatformJoystickPresent(joy);
+    return GL_TRUE;
 }
 
-GLFWAPI const float* glfwGetJoystickAxes(int joy, int* count)
+void _glfwDestroyContextTLS(void)
 {
-    *count = 0;
-
-    _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
-
-    if (joy < 0 || joy > GLFW_JOYSTICK_LAST)
-    {
-        _glfwInputError(GLFW_INVALID_ENUM, NULL);
-        return NULL;
-    }
-
-    return _glfwPlatformGetJoystickAxes(joy, count);
+    pthread_key_delete(_glfw.posix_tls.context);
 }
 
-GLFWAPI const unsigned char* glfwGetJoystickButtons(int joy, int* count)
+void _glfwSetContextTLS(_GLFWwindow* context)
 {
-    *count = 0;
-
-    _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
-
-    if (joy < 0 || joy > GLFW_JOYSTICK_LAST)
-    {
-        _glfwInputError(GLFW_INVALID_ENUM, NULL);
-        return NULL;
-    }
-
-    return _glfwPlatformGetJoystickButtons(joy, count);
+    pthread_setspecific(_glfw.posix_tls.context, context);
 }
 
-GLFWAPI const char* glfwGetJoystickName(int joy)
+
+//////////////////////////////////////////////////////////////////////////
+//////                       GLFW platform API                      //////
+//////////////////////////////////////////////////////////////////////////
+
+_GLFWwindow* _glfwPlatformGetCurrentContext(void)
 {
-    _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
-
-    if (joy < 0 || joy > GLFW_JOYSTICK_LAST)
-    {
-        _glfwInputError(GLFW_INVALID_ENUM, NULL);
-        return NULL;
-    }
-
-    return _glfwPlatformGetJoystickName(joy);
+    return pthread_getspecific(_glfw.posix_tls.context);
 }
 

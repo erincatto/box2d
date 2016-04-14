@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.0 X11 - www.glfw.org
+// GLFW 3.1 X11 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2010 Camilla Berglund <elmindreda@elmindreda.org>
@@ -64,7 +64,7 @@
 //****                KeySym to Unicode mapping table                 ****
 //************************************************************************
 
-static struct codepair {
+static const struct codepair {
   unsigned short keysym;
   unsigned short ucs;
 } keysymtab[] = {
@@ -852,40 +852,38 @@ static struct codepair {
 //////                       GLFW internal API                      //////
 //////////////////////////////////////////////////////////////////////////
 
-// Convert X11 KeySym to Unicode
+// Convert XKB KeySym to Unicode
 //
-long _glfwKeySym2Unicode( KeySym keysym )
+long _glfwKeySym2Unicode(unsigned int keysym)
 {
     int min = 0;
     int max = sizeof(keysymtab) / sizeof(struct codepair) - 1;
     int mid;
 
-    /* First check for Latin-1 characters (1:1 mapping) */
-    if( (keysym >= 0x0020 && keysym <= 0x007e) ||
-        (keysym >= 0x00a0 && keysym <= 0x00ff) )
-    { return keysym;
+    // First check for Latin-1 characters (1:1 mapping)
+    if ((keysym >= 0x0020 && keysym <= 0x007e) ||
+        (keysym >= 0x00a0 && keysym <= 0x00ff))
+    {
+        return keysym;
     }
 
-    /* Also check for directly encoded 24-bit UCS characters */
-    if( (keysym & 0xff000000) == 0x01000000 )
+    // Also check for directly encoded 24-bit UCS characters
+    if ((keysym & 0xff000000) == 0x01000000)
         return keysym & 0x00ffffff;
 
-    /* Binary search in table */
-    while( max >= min )
+    // Binary search in table
+    while (max >= min)
     {
         mid = (min + max) / 2;
-        if( keysymtab[mid].keysym < keysym )
+        if (keysymtab[mid].keysym < keysym)
             min = mid + 1;
-        else if( keysymtab[mid].keysym > keysym )
+        else if (keysymtab[mid].keysym > keysym)
             max = mid - 1;
         else
-        {
-            /* Found it! */
             return keysymtab[mid].ucs;
-        }
     }
 
-    /* No matching Unicode value found */
+    // No matching Unicode value found
     return -1;
 }
 

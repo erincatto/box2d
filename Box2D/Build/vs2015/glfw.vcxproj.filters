@@ -1,25 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\..\glfw\clipboard.c" />
     <ClCompile Include="..\..\glfw\context.c" />
-    <ClCompile Include="..\..\glfw\gamma.c" />
     <ClCompile Include="..\..\glfw\init.c" />
     <ClCompile Include="..\..\glfw\input.c" />
-    <ClCompile Include="..\..\glfw\joystick.c" />
     <ClCompile Include="..\..\glfw\monitor.c" />
-    <ClCompile Include="..\..\glfw\time.c" />
     <ClCompile Include="..\..\glfw\window.c" />
-    <ClCompile Include="..\..\glfw\win32_clipboard.c">
-      <Filter>win32</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\glfw\win32_gamma.c">
-      <Filter>win32</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\glfw\win32_init.c">
-      <Filter>win32</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\glfw\win32_joystick.c">
       <Filter>win32</Filter>
     </ClCompile>
     <ClCompile Include="..\..\glfw\win32_monitor.c">
@@ -34,6 +21,12 @@
     <ClCompile Include="..\..\glfw\wgl_context.c">
       <Filter>win32</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\glfw\win32_tls.c">
+      <Filter>win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\glfw\winmm_joystick.c">
+      <Filter>win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\glfw\glfw3.h" />
@@ -41,12 +34,17 @@
     <ClInclude Include="..\..\glfw\win32_platform.h">
       <Filter>win32</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\glfw\config.h" />
     <ClInclude Include="..\..\glfw\glext.h" />
     <ClInclude Include="..\..\glfw\wgl_platform.h">
       <Filter>win32</Filter>
     </ClInclude>
     <ClInclude Include="..\..\glfw\wglext.h">
+      <Filter>win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\glfw\win32_tls.h">
+      <Filter>win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\glfw\winmm_joystick.h">
       <Filter>win32</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,7 +1,7 @@
 //========================================================================
-// GLFW 3.0 OS X - www.glfw.org
+// GLFW 3.1 OS X - www.glfw.org
 //------------------------------------------------------------------------
-// Copyright (c) 2010 Camilla Berglund <elmindreda@elmindreda.org>
+// Copyright (c) 2009-2010 Camilla Berglund <elmindreda@elmindreda.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -26,45 +26,46 @@
 
 #include "internal.h"
 
-#include <limits.h>
-#include <string.h>
+#include <mach/mach_time.h>
+
+
+// Return raw time
+//
+static uint64_t getRawTime(void)
+{
+    return mach_absolute_time();
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+//////                       GLFW internal API                      //////
+//////////////////////////////////////////////////////////////////////////
+
+// Initialise timer
+//
+void _glfwInitTimer(void)
+{
+    mach_timebase_info_data_t info;
+    mach_timebase_info(&info);
+
+    _glfw.ns_time.resolution = (double) info.numer / (info.denom * 1.0e9);
+    _glfw.ns_time.base = getRawTime();
+}
 
 
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
 
-void _glfwPlatformSetClipboardString(_GLFWwindow* window, const char* string)
+double _glfwPlatformGetTime(void)
 {
-    NSArray* types = [NSArray arrayWithObjects:NSStringPboardType, nil];
-
-    NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
-    [pasteboard declareTypes:types owner:nil];
-    [pasteboard setString:[NSString stringWithUTF8String:string]
-                  forType:NSStringPboardType];
+    return (double) (getRawTime() - _glfw.ns_time.base) *
+        _glfw.ns_time.resolution;
 }
 
-const char* _glfwPlatformGetClipboardString(_GLFWwindow* window)
+void _glfwPlatformSetTime(double time)
 {
-    NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
-
-    if (![[pasteboard types] containsObject:NSStringPboardType])
-    {
-        _glfwInputError(GLFW_FORMAT_UNAVAILABLE, NULL);
-        return NULL;
-    }
-
-    NSString* object = [pasteboard stringForType:NSStringPboardType];
-    if (!object)
-    {
-        _glfwInputError(GLFW_PLATFORM_ERROR,
-                        "Cocoa: Failed to retrieve object from pasteboard");
-        return NULL;
-    }
-
-    free(_glfw.ns.clipboardString);
-    _glfw.ns.clipboardString = strdup([object UTF8String]);
-
-    return _glfw.ns.clipboardString;
+    _glfw.ns_time.base = getRawTime() -
+        (uint64_t) (time / _glfw.ns_time.resolution);
 }
 

@@ -1,7 +1,7 @@
 //========================================================================
-// GLFW 3.0 - www.glfw.org
+// GLFW 3.1 WinMM - www.glfw.org
 //------------------------------------------------------------------------
-// Copyright (c) 2010 Camilla Berglund <elmindreda@elmindreda.org>
+// Copyright (c) 2006-2014 Camilla Berglund <elmindreda@elmindreda.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -24,27 +24,24 @@
 //
 //========================================================================
 
-#include "internal.h"
+#ifndef _glfw3_winmm_joystick_h_
+#define _glfw3_winmm_joystick_h_
 
-#include <math.h>
-#include <string.h>
+#define _GLFW_PLATFORM_LIBRARY_JOYSTICK_STATE \
+    _GLFWjoystickWinMM winmm_js[GLFW_JOYSTICK_LAST + 1]
 
 
-//////////////////////////////////////////////////////////////////////////
-//////                        GLFW public API                       //////
-//////////////////////////////////////////////////////////////////////////
-
-GLFWAPI void glfwSetClipboardString(GLFWwindow* handle, const char* string)
+// WinMM-specific per-joystick data
+//
+typedef struct _GLFWjoystickWinMM
 {
-    _GLFWwindow* window = (_GLFWwindow*) handle;
-    _GLFW_REQUIRE_INIT();
-    _glfwPlatformSetClipboardString(window, string);
-}
+    float           axes[6];
+    unsigned char   buttons[36]; // 32 buttons plus one hat
+    char*           name;
+} _GLFWjoystickWinMM;
 
-GLFWAPI const char* glfwGetClipboardString(GLFWwindow* handle)
-{
-    _GLFWwindow* window = (_GLFWwindow*) handle;
-    _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
-    return _glfwPlatformGetClipboardString(window);
-}
 
+void _glfwInitJoysticks(void);
+void _glfwTerminateJoysticks(void);
+
+#endif // _glfw3_winmm_joystick_h_

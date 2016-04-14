@@ -19,32 +19,28 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\glfw\clipboard.c" />
     <ClCompile Include="..\..\glfw\context.c" />
-    <ClCompile Include="..\..\glfw\gamma.c" />
     <ClCompile Include="..\..\glfw\init.c" />
     <ClCompile Include="..\..\glfw\input.c" />
-    <ClCompile Include="..\..\glfw\joystick.c" />
     <ClCompile Include="..\..\glfw\monitor.c" />
-    <ClCompile Include="..\..\glfw\time.c" />
     <ClCompile Include="..\..\glfw\wgl_context.c" />
-    <ClCompile Include="..\..\glfw\win32_clipboard.c" />
-    <ClCompile Include="..\..\glfw\win32_gamma.c" />
     <ClCompile Include="..\..\glfw\win32_init.c" />
-    <ClCompile Include="..\..\glfw\win32_joystick.c" />
     <ClCompile Include="..\..\glfw\win32_monitor.c" />
     <ClCompile Include="..\..\glfw\win32_time.c" />
+    <ClCompile Include="..\..\glfw\win32_tls.c" />
     <ClCompile Include="..\..\glfw\win32_window.c" />
     <ClCompile Include="..\..\glfw\window.c" />
+    <ClCompile Include="..\..\glfw\winmm_joystick.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\glfw\config.h" />
     <ClInclude Include="..\..\glfw\glext.h" />
     <ClInclude Include="..\..\glfw\glfw3.h" />
     <ClInclude Include="..\..\glfw\internal.h" />
     <ClInclude Include="..\..\glfw\wglext.h" />
     <ClInclude Include="..\..\glfw\wgl_platform.h" />
     <ClInclude Include="..\..\glfw\win32_platform.h" />
+    <ClInclude Include="..\..\glfw\win32_tls.h" />
+    <ClInclude Include="..\..\glfw\winmm_joystick.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{EEB8858B-CAFA-445B-8253-3A9C2571E132}</ProjectGuid>
@@ -144,12 +140,14 @@
     <ClCompile>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ProgramDataBaseFileName>$(OutDir)glfw.pdb</ProgramDataBaseFileName>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ProgramDataBaseFileName>$(OutDir)glfw.pdb</ProgramDataBaseFileName>
+      <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

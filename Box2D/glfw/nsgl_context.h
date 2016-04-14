@@ -1,7 +1,7 @@
 //========================================================================
-// GLFW 3.0 - www.glfw.org
+// GLFW 3.1 OS X - www.glfw.org
 //------------------------------------------------------------------------
-// Copyright (c) 2010 Camilla Berglund <elmindreda@elmindreda.org>
+// Copyright (c) 2009-2010 Camilla Berglund <elmindreda@elmindreda.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -23,30 +23,40 @@
 //    distribution.
 //
 //========================================================================
-// As config.h.in, this file is used by CMake to produce the config.h shared
-// configuration header file.  If you are adding a feature requiring
-// conditional compilation, this is the proper place to add the macros.
-//========================================================================
-// As config.h, this file defines compile-time build options and macros for
-// all platforms supported by GLFW.  As this is a generated file, don't modify
-// it.  Instead, you should modify the config.h.in file.
-//========================================================================
 
-// GLFW doesn't like to be embedded as source, but that is what I'm doing.
-#if defined(WIN32)
-#define _GLFW_WIN32
-#define _GLFW_WGL
-#endif
+#ifndef _glfw3_nsgl_context_h_
+#define _glfw3_nsgl_context_h_
 
-#if defined(__APPLE__)
-#define _GLFW_COCOA
-#define _GLFW_NSGL
-//#define _GLFW_USE_CHDIR
-#define _GLFW_USE_MENUBAR
-#endif
+#define _GLFW_PLATFORM_FBCONFIG
+#define _GLFW_PLATFORM_CONTEXT_STATE            _GLFWcontextNSGL nsgl
+#define _GLFW_PLATFORM_LIBRARY_CONTEXT_STATE    _GLFWlibraryNSGL nsgl
 
-// TODO get defines for other platforms
 
-#define _GLFW_USE_OPENGL
-#define _GLFW_VERSION_FULL "3.0.3"
+// NSGL-specific per-context data
+//
+typedef struct _GLFWcontextNSGL
+{
+    id           pixelFormat;
+    id	         context;
 
+} _GLFWcontextNSGL;
+
+
+// NSGL-specific global data
+//
+typedef struct _GLFWlibraryNSGL
+{
+    // dlopen handle for OpenGL.framework (for glfwGetProcAddress)
+    void*           framework;
+
+} _GLFWlibraryNSGL;
+
+
+int _glfwInitContextAPI(void);
+void _glfwTerminateContextAPI(void);
+int _glfwCreateContext(_GLFWwindow* window,
+                       const _GLFWctxconfig* ctxconfig,
+                       const _GLFWfbconfig* fbconfig);
+void _glfwDestroyContext(_GLFWwindow* window);
+
+#endif // _glfw3_nsgl_context_h_
