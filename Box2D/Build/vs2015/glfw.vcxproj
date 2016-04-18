@@ -35,9 +35,9 @@
   <ItemGroup>
     <ClInclude Include="..\..\glfw\glext.h" />
     <ClInclude Include="..\..\glfw\glfw3.h" />
+    <ClInclude Include="..\..\glfw\glfw_config.h" />
     <ClInclude Include="..\..\glfw\internal.h" />
     <ClInclude Include="..\..\glfw\wglext.h" />
-    <ClInclude Include="..\..\glfw\wgl_platform.h" />
     <ClInclude Include="..\..\glfw\win32_platform.h" />
     <ClInclude Include="..\..\glfw\win32_tls.h" />
     <ClInclude Include="..\..\glfw\winmm_joystick.h" />

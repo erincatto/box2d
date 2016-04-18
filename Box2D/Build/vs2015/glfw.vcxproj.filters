@@ -35,9 +35,6 @@
       <Filter>win32</Filter>
     </ClInclude>
     <ClInclude Include="..\..\glfw\glext.h" />
-    <ClInclude Include="..\..\glfw\wgl_platform.h">
-      <Filter>win32</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\glfw\wglext.h">
       <Filter>win32</Filter>
     </ClInclude>
@@ -47,6 +44,7 @@
     <ClInclude Include="..\..\glfw\winmm_joystick.h">
       <Filter>win32</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\glfw\glfw_config.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="win32">

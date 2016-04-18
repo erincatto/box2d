@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2013 Erin Catto http://www.box2d.org
+* Copyright (c) 2006-2016 Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -16,16 +16,16 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "imgui.h"
-#include "RenderGL3.h"
-#include "DebugDraw.h"
-#include "Test.h"
-
 #if defined(__APPLE__)
 #include <OpenGL/gl3.h>
 #else
 #include <glew/glew.h>
 #endif
+
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_glfw_gl3.h>
+#include "DebugDraw.h"
+#include "Test.h"
 
 #include <glfw/glfw3.h>
 #include <stdio.h>
@@ -38,10 +38,6 @@
 struct UIState
 {
 	bool showMenu;
-	int scroll;
-	int scrollarea1;
-	bool mouseOverMenu;
-	bool chooseTest;
 };
 
 //
@@ -61,23 +57,26 @@ namespace
 }
 
 //
-static void sCreateUI()
+static void sCreateUI(GLFWwindow* window)
 {
 	ui.showMenu = true;
-	ui.scroll = 0;
-	ui.scrollarea1 = 0;
-	ui.chooseTest = false;
-	ui.mouseOverMenu = false;
 
 	// Init UI
-    const char* fontPath = "../Data/DroidSans.ttf";
-    
-	if (RenderGLInit(fontPath) == false)
+	const char* fontPath = "../Data/DroidSans.ttf";
+	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath, 15.f);
+
+	if (ImGui_ImplGlfwGL3_Init(window, false) == false)
 	{
 		fprintf(stderr, "Could not init GUI renderer.\n");
 		assert(false);
 		return;
 	}
+
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.FrameRounding = style.GrabRounding = style.ScrollbarRounding = 2.0f;
+	style.FramePadding = ImVec2(4, 2);
+	style.DisplayWindowPadding = ImVec2(0, 0);
+	style.DisplaySafeAreaPadding = ImVec2(0, 0);
 }
 
 //
@@ -88,8 +87,13 @@ static void sResizeWindow(GLFWwindow*, int width, int height)
 }
 
 //
-static void sKeyCallback(GLFWwindow*, int key, int scancode, int action, int mods)
+static void sKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	ImGui_ImplGlfwGL3_KeyCallback(window, key, scancode, action, mods);
+	bool keys_for_ui = ImGui::GetIO().WantCaptureKeyboard;
+	if (keys_for_ui)
+		return;
+
 	if (action == GLFW_PRESS)
 	{
 		switch (key)
@@ -222,8 +226,16 @@ static void sKeyCallback(GLFWwindow*, int key, int scancode, int action, int mod
 }
 
 //
-static void sMouseButton(GLFWwindow*, int32 button, int32 action, int32 mods)
+static void sCharCallback(GLFWwindow* window, unsigned int c)
 {
+	ImGui_ImplGlfwGL3_CharCallback(window, c);
+}
+
+//
+static void sMouseButton(GLFWwindow* window, int32 button, int32 action, int32 mods)
+{
+	ImGui_ImplGlfwGL3_MouseButtonCallback(window, button, action, mods);
+
 	double xd, yd;
 	glfwGetCursorPos(mainWindow, &xd, &yd);
 	b2Vec2 ps((float32)xd, (float32)yd);
@@ -284,13 +296,12 @@ static void sMouseMotion(GLFWwindow*, double xd, double yd)
 }
 
 //
-static void sScrollCallback(GLFWwindow*, double, double dy)
+static void sScrollCallback(GLFWwindow* window, double dx, double dy)
 {
-	if (ui.mouseOverMenu)
-	{
-		ui.scroll = -int(dy);
-	}
-	else
+	ImGui_ImplGlfwGL3_ScrollCallback(window, dx, dy);
+	bool mouse_for_ui = ImGui::GetIO().WantCaptureMouse;
+
+	if (!mouse_for_ui)
 	{
 		if (dy > 0)
 		{
@@ -332,99 +343,79 @@ static void sSimulate()
 }
 
 //
+static bool sTestEntriesGetName(void* data, int idx, const char** out_name)
+{
+	*out_name = g_testEntries[idx].name;
+	return true;
+}
+
+//
 static void sInterface()
 {
 	int menuWidth = 200;
-	ui.mouseOverMenu = false;
 	if (ui.showMenu)
 	{
-		bool over = imguiBeginScrollArea("Testbed Controls", g_camera.m_width - menuWidth - 10, 10, menuWidth, g_camera.m_height - 20, &ui.scrollarea1);
-		if (over) ui.mouseOverMenu = true;
+		ImGui::SetNextWindowPos(ImVec2((float)g_camera.m_width - menuWidth - 10, 10));
+		ImGui::SetNextWindowSize(ImVec2((float)menuWidth, (float)g_camera.m_height - 20));
+		ImGui::Begin("Testbed Controls", &ui.showMenu, ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoCollapse);
+		ImGui::PushAllowKeyboardFocus(false); // Disable TAB
 
-		imguiSeparatorLine();
+		ImGui::PushItemWidth(-1.0f);
 
-		imguiLabel("Test");
-		if (imguiButton(entry->name, true))
+		ImGui::Text("Test");
+		if (ImGui::Combo("##Test", &testIndex, sTestEntriesGetName, NULL, testCount, testCount))
 		{
-			ui.chooseTest = !ui.chooseTest;
+			delete test;
+			entry = g_testEntries + testIndex;
+			test = entry->createFcn();
+			testSelection = testIndex;
 		}
+		ImGui::Separator();
 
-		imguiSeparatorLine();
+		ImGui::Text("Vel Iters");
+		ImGui::SliderInt("##Vel Iters", &settings.velocityIterations, 0, 50);
+		ImGui::Text("Pos Iters");
+		ImGui::SliderInt("##Pos Iters", &settings.positionIterations, 0, 50);
+		ImGui::Text("Hertz");
+		ImGui::SliderFloat("##Hertz", &settings.hz, 5.0f, 120.0f, "%.0f hz");
+		ImGui::PopItemWidth();
 
-		imguiSlider("Vel Iters", &settings.velocityIterations, 0, 50, 1, true);
-		imguiSlider("Pos Iters", &settings.positionIterations, 0, 50, 1, true);
-		imguiSlider("Hertz", &settings.hz, 5.0f, 120.0f, 5.0f, true);
+		ImGui::Checkbox("Sleep", &settings.enableSleep);
+		ImGui::Checkbox("Warm Starting", &settings.enableWarmStarting);
+		ImGui::Checkbox("Time of Impact", &settings.enableContinuous);
+		ImGui::Checkbox("Sub-Stepping", &settings.enableSubStepping);
 
-		if (imguiCheck("Sleep", settings.enableSleep, true))
-			settings.enableSleep = !settings.enableSleep;
-		if (imguiCheck("Warm Starting", settings.enableWarmStarting, true))
-			settings.enableWarmStarting = !settings.enableWarmStarting;
-		if (imguiCheck("Time of Impact", settings.enableContinuous, true))
-			settings.enableContinuous = !settings.enableContinuous;
-		if (imguiCheck("Sub-Stepping", settings.enableSubStepping, true))
-			settings.enableSubStepping = !settings.enableSubStepping;
+		ImGui::Separator();
 
-		imguiSeparatorLine();
+		ImGui::Checkbox("Shapes", &settings.drawShapes);
+		ImGui::Checkbox("Joints", &settings.drawJoints);
+		ImGui::Checkbox("AABBs", &settings.drawAABBs);
+		ImGui::Checkbox("Contact Points", &settings.drawContactPoints);
+		ImGui::Checkbox("Contact Normals", &settings.drawContactNormals);
+		ImGui::Checkbox("Contact Impulses", &settings.drawContactImpulse);
+		ImGui::Checkbox("Friction Impulses", &settings.drawFrictionImpulse);
+		ImGui::Checkbox("Center of Masses", &settings.drawCOMs);
+		ImGui::Checkbox("Statistics", &settings.drawStats);
+		ImGui::Checkbox("Profile", &settings.drawProfile);
 
-		if (imguiCheck("Shapes", settings.drawShapes, true))
-			settings.drawShapes = !settings.drawShapes;
-		if (imguiCheck("Joints", settings.drawJoints, true))
-			settings.drawJoints = !settings.drawJoints;
-		if (imguiCheck("AABBs", settings.drawAABBs, true))
-			settings.drawAABBs = !settings.drawAABBs;
-		if (imguiCheck("Contact Points", settings.drawContactPoints, true))
-			settings.drawContactPoints = !settings.drawContactPoints;
-		if (imguiCheck("Contact Normals", settings.drawContactNormals, true))
-			settings.drawContactNormals = !settings.drawContactNormals;
-		if (imguiCheck("Contact Impulses", settings.drawContactImpulse, true))
-			settings.drawContactImpulse = !settings.drawContactImpulse;
-		if (imguiCheck("Friction Impulses", settings.drawFrictionImpulse, true))
-			settings.drawFrictionImpulse = !settings.drawFrictionImpulse;
-		if (imguiCheck("Center of Masses", settings.drawCOMs, true))
-			settings.drawCOMs = !settings.drawCOMs;
-		if (imguiCheck("Statistics", settings.drawStats, true))
-			settings.drawStats = !settings.drawStats;
-		if (imguiCheck("Profile", settings.drawProfile, true))
-			settings.drawProfile = !settings.drawProfile;
-
-		if (imguiButton("Pause", true))
+		ImVec2 button_sz = ImVec2(-1, 0);
+		if (ImGui::Button("Pause (P)", button_sz))
 			settings.pause = !settings.pause;
 
-		if (imguiButton("Single Step", true))
+		if (ImGui::Button("Single Step", button_sz))
 			settings.singleStep = !settings.singleStep;
 
-		if (imguiButton("Restart", true))
+		if (ImGui::Button("Restart (R)", button_sz))
 			sRestart();
 
-		if (imguiButton("Quit", true))
+		if (ImGui::Button("Quit", button_sz))
 			glfwSetWindowShouldClose(mainWindow, GL_TRUE);
 
-		imguiEndScrollArea();
+		ImGui::PopAllowKeyboardFocus();
+		ImGui::End();
 	}
 
-	int testMenuWidth = 200;
-	if (ui.chooseTest)
-	{
-		static int testScroll = 0;
-		bool over = imguiBeginScrollArea("Choose Sample", g_camera.m_width - menuWidth - testMenuWidth - 20, 10, testMenuWidth, g_camera.m_height - 20, &testScroll);
-		if (over) ui.mouseOverMenu = true;
-
-		for (int i = 0; i < testCount; ++i)
-		{
-			if (imguiItem(g_testEntries[i].name, true))
-			{
-				delete test;
-				entry = g_testEntries + i;
-				test = entry->createFcn();
-				ui.chooseTest = false;
-			}
-		}
-
-		imguiEndScrollArea();
-	}
-
-	imguiEndFrame();
-
+	//ImGui::ShowTestWindow(NULL);
 }
 
 //
@@ -435,9 +426,9 @@ int main(int argc, char** argv)
 	_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG));
 #endif
 
-    g_camera.m_width = 1024;
-    g_camera.m_height = 640;
-    
+	g_camera.m_width = 1024;
+	g_camera.m_height = 640;
+
 	if (glfwInit() == 0)
 	{
 		fprintf(stderr, "Failed to initialize GLFW\n");
@@ -449,13 +440,13 @@ int main(int argc, char** argv)
 
 #if defined(__APPLE__)
 	// Not sure why, but these settings cause glewInit below to crash.
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
 
-    mainWindow = glfwCreateWindow(g_camera.m_width, g_camera.m_height, title, NULL, NULL);
+	mainWindow = glfwCreateWindow(g_camera.m_width, g_camera.m_height, title, NULL, NULL);
 	if (mainWindow == NULL)
 	{
 		fprintf(stderr, "Failed to open GLFW mainWindow.\n");
@@ -469,23 +460,24 @@ int main(int argc, char** argv)
 	glfwSetScrollCallback(mainWindow, sScrollCallback);
 	glfwSetWindowSizeCallback(mainWindow, sResizeWindow);
 	glfwSetKeyCallback(mainWindow, sKeyCallback);
+	glfwSetCharCallback(mainWindow, sCharCallback);
 	glfwSetMouseButtonCallback(mainWindow, sMouseButton);
 	glfwSetCursorPosCallback(mainWindow, sMouseMotion);
 	glfwSetScrollCallback(mainWindow, sScrollCallback);
 
 #if defined(__APPLE__) == FALSE
 	//glewExperimental = GL_TRUE;
-    GLenum err = glewInit();
+	GLenum err = glewInit();
 	if (GLEW_OK != err)
 	{
 		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
 		exit(EXIT_FAILURE);
 	}
 #endif
-    
+
 	g_debugDraw.Create();
 
-	sCreateUI();
+	sCreateUI(mainWindow);
 
 	testCount = 0;
 	while (g_testEntries[testCount].createFcn != NULL)
@@ -502,51 +494,36 @@ int main(int argc, char** argv)
 	// Control the frame rate. One draw per monitor refresh.
 	glfwSwapInterval(1);
 
-    double time1 = glfwGetTime();
-    double frameTime = 0.0;
+	double time1 = glfwGetTime();
+	double frameTime = 0.0;
    
-    glClearColor(0.3f, 0.3f, 0.3f, 1.f);
+	glClearColor(0.3f, 0.3f, 0.3f, 1.f);
 	
- 	while (!glfwWindowShouldClose(mainWindow))
+	while (!glfwWindowShouldClose(mainWindow))
 	{
- 		glfwGetWindowSize(mainWindow, &g_camera.m_width, &g_camera.m_height);
+		glfwGetWindowSize(mainWindow, &g_camera.m_width, &g_camera.m_height);
 		glViewport(0, 0, g_camera.m_width, g_camera.m_height);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		unsigned char mousebutton = 0;
-		int mscroll = ui.scroll;
-		ui.scroll = 0;
-
-		double xd, yd;
-		glfwGetCursorPos(mainWindow, &xd, &yd);
-		int mousex = int(xd);
-		int mousey = int(yd);
-
-		mousey = g_camera.m_height - mousey;
-		int leftButton = glfwGetMouseButton(mainWindow, GLFW_MOUSE_BUTTON_LEFT);
-		if (leftButton == GLFW_PRESS)
-			mousebutton |= IMGUI_MBUT_LEFT;
-
-		imguiBeginFrame(mousex, mousey, mousebutton, mscroll);
+		ImGui_ImplGlfwGL3_NewFrame();
+		ImGui::SetNextWindowPos(ImVec2(0,0));
+		ImGui::SetNextWindowSize(ImVec2((float)g_camera.m_width, (float)g_camera.m_height));
+		ImGui::Begin("Overlay", NULL, ImVec2(0,0), 0.0f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoInputs|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoScrollbar);
+		ImGui::SetCursorPos(ImVec2(5, (float)g_camera.m_height - 20));
+		ImGui::Text("%.1f ms", 1000.0 * frameTime);
+		ImGui::End();
 
 		sSimulate();
 		sInterface();
-        
-        // Measure speed
-        double time2 = glfwGetTime();
-        double alpha = 0.9f;
-        frameTime = alpha * frameTime + (1.0 - alpha) * (time2 - time1);
-        time1 = time2;
 
-        char buffer[32];
-        snprintf(buffer, 32, "%.1f ms", 1000.0 * frameTime);
-        AddGfxCmdText(5, 5, TEXT_ALIGN_LEFT, buffer, WHITE);
-        
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_DEPTH_TEST);
-		RenderGLFlush(g_camera.m_width, g_camera.m_height);
+		// Measure speed
+		double time2 = glfwGetTime();
+		double alpha = 0.9f;
+		frameTime = alpha * frameTime + (1.0 - alpha) * (time2 - time1);
+		time1 = time2;
+
+		ImGui::Render();
 
 		glfwSwapBuffers(mainWindow);
 
@@ -554,7 +531,7 @@ int main(int argc, char** argv)
 	}
 
 	g_debugDraw.Destroy();
-	RenderGLDestroy();
+	ImGui_ImplGlfwGL3_Shutdown();
 	glfwTerminate();
 
 	return 0;

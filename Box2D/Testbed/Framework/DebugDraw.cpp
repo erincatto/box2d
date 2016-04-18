@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "RenderGL3.h"
+#include <imgui/imgui.h>
 
 #define BUFFER_OFFSET(x)  ((const void*) (x))
 
@@ -764,40 +764,39 @@ void DebugDraw::DrawTransform(const b2Transform& xf)
 	m_lines->Vertex(p2, green);
 }
 
+//
 void DebugDraw::DrawPoint(const b2Vec2& p, float32 size, const b2Color& color)
 {
     m_points->Vertex(p, color, size);
 }
 
+//
 void DebugDraw::DrawString(int x, int y, const char *string, ...)
 {
-	float32 h = float32(g_camera.m_height);
-
-	char buffer[128];
-
 	va_list arg;
 	va_start(arg, string);
-	vsprintf(buffer, string, arg);
+	ImGui::Begin("Overlay", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar);
+	ImGui::SetCursorPos(b2Vec2(float(x), float(y)));
+	ImGui::TextColoredV(ImColor(230, 153, 153, 255), string, arg);
+	ImGui::End();
 	va_end(arg);
-
-	AddGfxCmdText(float(x), h - float(y), TEXT_ALIGN_LEFT, buffer, SetRGBA(230, 153, 153, 255));
 }
 
+//
 void DebugDraw::DrawString(const b2Vec2& pw, const char *string, ...)
 {
 	b2Vec2 ps = g_camera.ConvertWorldToScreen(pw);
-	float32 h = float32(g_camera.m_height);
-
-	char buffer[128];
 
 	va_list arg;
 	va_start(arg, string);
-	vsprintf(buffer, string, arg);
+	ImGui::Begin("Overlay", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar);
+	ImGui::SetCursorPos(ps);
+	ImGui::TextColoredV(ImColor(230, 153, 153, 255), string, arg);
+	ImGui::End();
 	va_end(arg);
-
-	AddGfxCmdText(ps.x, h - ps.y, TEXT_ALIGN_LEFT, buffer, SetRGBA(230, 153, 153, 255));
 }
 
+//
 void DebugDraw::DrawAABB(b2AABB* aabb, const b2Color& c)
 {
     b2Vec2 p1 = aabb->lowerBound;
