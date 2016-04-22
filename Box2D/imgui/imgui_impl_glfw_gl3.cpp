@@ -10,7 +10,11 @@
 #include "imgui_impl_glfw_gl3.h"
 
 // GL3W/GLFW
+#if defined(__APPLE_CC__)
+#include <OpenGL/gl3.h>
+#else
 #include <glew/glew.h>
+#endif
 #include <glfw/glfw3.h>
 #ifdef _WIN32
 #undef APIENTRY
@@ -33,7 +37,7 @@ static unsigned int g_VboHandle = 0, g_VaoHandle = 0, g_ElementsHandle = 0;
 // This is the main rendering function that you have to implement and provide to ImGui (via setting up 'RenderDrawListsFn' in the ImGuiIO structure)
 // If text or lines are blurry when integrating ImGui in your engine:
 // - in your Render function, try translating your projection matrix by (0.5f,0.5f) or (0.375f,0.375f)
-void ImGui_ImplGlfwGL3_RenderDrawLists(ImDrawData* draw_data)
+static void ImGui_ImplGlfwGL3_RenderDrawLists(ImDrawData* draw_data)
 {
     // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
     ImGuiIO& io = ImGui::GetIO();
@@ -167,7 +171,7 @@ void ImGui_ImplGlfwGL3_CharCallback(GLFWwindow*, unsigned int c)
         io.AddInputCharacter((unsigned short)c);
 }
 
-bool ImGui_ImplGlfwGL3_CreateFontsTexture()
+static bool ImGui_ImplGlfwGL3_CreateFontsTexture()
 {
     // Build texture atlas
     ImGuiIO& io = ImGui::GetIO();

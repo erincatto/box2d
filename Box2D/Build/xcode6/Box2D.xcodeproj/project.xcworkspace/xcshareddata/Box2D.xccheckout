@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>142B6749-7081-4159-A7BC-BCDCF2A31453</string>
+	<key>IDESourceControlProjectName</key>
+	<string>Box2D</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>32BC8F1EBE6195751A3AF787748A5E3CF9A9BEDE</key>
+		<string>https://github.com/erincatto/Box2D.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>Box2D/Build/xcode6/Box2D.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>32BC8F1EBE6195751A3AF787748A5E3CF9A9BEDE</key>
+		<string>../../../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/erincatto/Box2D.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>32BC8F1EBE6195751A3AF787748A5E3CF9A9BEDE</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>32BC8F1EBE6195751A3AF787748A5E3CF9A9BEDE</string>
+			<key>IDESourceControlWCCName</key>
+			<string>Box2D</string>
+		</dict>
+	</array>
+</dict>
+</plist>
