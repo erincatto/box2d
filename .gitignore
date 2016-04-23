@@ -14,3 +14,4 @@
 *.opendb
 *.orig
 **/xcuserdata
+imgui.ini
