@@ -15,3 +15,4 @@
 *.orig
 **/xcuserdata
 imgui.ini
+**/xcshareddata
