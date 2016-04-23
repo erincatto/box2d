@@ -13,3 +13,4 @@
 *.db
 *.opendb
 *.orig
+**/xcuserdata
