@@ -343,7 +343,7 @@ static void sSimulate()
 }
 
 //
-static bool sTestEntriesGetName(void* data, int idx, const char** out_name)
+static bool sTestEntriesGetName(void*, int idx, const char** out_name)
 {
 	*out_name = g_testEntries[idx].name;
 	return true;
@@ -419,7 +419,7 @@ static void sInterface()
 }
 
 //
-int main(int argc, char** argv)
+int main(int, char**)
 {
 #if defined(_WIN32)
 	// Enable memory-leak reports
