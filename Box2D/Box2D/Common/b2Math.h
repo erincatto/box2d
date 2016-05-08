@@ -56,7 +56,7 @@ struct b2Vec2
 	b2Vec2() {}
 
 	/// Construct using coordinates.
-	b2Vec2(float32 x, float32 y) : x(x), y(y) {}
+	b2Vec2(float32 xIn, float32 yIn) : x(xIn), y(yIn) {}
 
 	/// Set this vector to all zeros.
 	void SetZero() { x = 0.0f; y = 0.0f; }
@@ -147,7 +147,7 @@ struct b2Vec3
 	b2Vec3() {}
 
 	/// Construct using coordinates.
-	b2Vec3(float32 x, float32 y, float32 z) : x(x), y(y), z(z) {}
+	b2Vec3(float32 xIn, float32 yIn, float32 zIn) : x(xIn), y(yIn), z(zIn) {}
 
 	/// Set this vector to all zeros.
 	void SetZero() { x = 0.0f; y = 0.0f; z = 0.0f; }
