@@ -530,6 +530,12 @@ int main(int, char**)
 		glfwPollEvents();
 	}
 
+	if (test)
+	{
+		delete test;
+		test = nullptr;
+	}
+
 	g_debugDraw.Destroy();
 	ImGui_ImplGlfwGL3_Shutdown();
 	glfwTerminate();
