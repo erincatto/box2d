@@ -454,6 +454,7 @@ int main(int, char**)
 		return -1;
 	}
 
+
 	glfwMakeContextCurrent(mainWindow);
 	printf("OpenGL %s, GLSL %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 
@@ -530,6 +531,7 @@ int main(int, char**)
 		glfwPollEvents();
 	}
 
+	delete test;
 	g_debugDraw.Destroy();
 	ImGui_ImplGlfwGL3_Shutdown();
 	glfwTerminate();
