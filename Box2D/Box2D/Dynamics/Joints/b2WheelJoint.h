@@ -96,8 +96,14 @@ public:
 	/// Get the current joint translation, usually in meters.
 	float32 GetJointTranslation() const;
 
-	/// Get the current joint translation speed, usually in meters per second.
-	float32 GetJointSpeed() const;
+	/// Get the current joint linear speed, usually in meters per second.
+	float32 GetJointLinearSpeed() const;
+
+	/// Get the current joint angle in radians.
+	float32 GetJointAngle() const;
+
+	/// Get the current joint angular speed in radians per second.
+	float32 GetJointAngularSpeed() const;
 
 	/// Is the joint motor enabled?
 	bool IsMotorEnabled() const;
