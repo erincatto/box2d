@@ -93,11 +93,23 @@ public:
 	/// The local joint axis relative to bodyA.
 	const b2Vec2& GetLocalAxisA() const { return m_localXAxisA; }
 
-	/// Get the current joint translation, usually in meters.
-	float32 GetJointTranslation() const;
+	/// Get the current prismatic joint translation, usually in meters.
+	float32 GetJointTranslation() const { return GetPrismaticJointTranslation(); }
 
-	/// Get the current joint translation speed, usually in meters per second.
-	float32 GetJointSpeed() const;
+	/// Get the current revolute joint angle speed in radians per second.
+	float32 GetJointSpeed() const { return GetRevoluteJointSpeed(); }
+
+	/// Get the current prismatic joint translation, usually in meters.
+	float32 GetPrismaticJointTranslation() const;
+
+	/// Get the current prismatic joint translation speed, usually in meters per second.
+    float32 GetPrismaticJointSpeed() const;
+
+	/// Get the current revolute joint angle in radians.
+	float32 GetRevoluteJointAngle() const;
+
+	/// Get the current revolute joint angle speed in radians per second.
+    float32 GetRevoluteJointSpeed() const;
 
 	/// Is the joint motor enabled?
 	bool IsMotorEnabled() const;

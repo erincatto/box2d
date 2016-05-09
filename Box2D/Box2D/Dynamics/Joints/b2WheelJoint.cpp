@@ -346,7 +346,7 @@ float32 b2WheelJoint::GetReactionTorque(float32 inv_dt) const
 	return inv_dt * m_motorImpulse;
 }
 
-float32 b2WheelJoint::GetJointTranslation() const
+float32 b2WheelJoint::GetPrismaticJointTranslation() const
 {
 	b2Body* bA = m_bodyA;
 	b2Body* bB = m_bodyB;
@@ -360,7 +360,35 @@ float32 b2WheelJoint::GetJointTranslation() const
 	return translation;
 }
 
-float32 b2WheelJoint::GetJointSpeed() const
+float32 b2WheelJoint::GetPrismaticJointSpeed() const
+{
+	b2Body* bA = m_bodyA;
+	b2Body* bB = m_bodyB;
+
+	b2Vec2 rA = b2Mul(bA->m_xf.q, m_localAnchorA - bA->m_sweep.localCenter);
+	b2Vec2 rB = b2Mul(bB->m_xf.q, m_localAnchorB - bB->m_sweep.localCenter);
+	b2Vec2 p1 = bA->m_sweep.c + rA;
+	b2Vec2 p2 = bB->m_sweep.c + rB;
+	b2Vec2 d = p2 - p1;
+	b2Vec2 axis = b2Mul(bA->m_xf.q, m_localXAxisA);
+
+	b2Vec2 vA = bA->m_linearVelocity;
+	b2Vec2 vB = bB->m_linearVelocity;
+	float32 wA = bA->m_angularVelocity;
+	float32 wB = bB->m_angularVelocity;
+
+	float32 speed = b2Dot(d, b2Cross(wA, axis)) + b2Dot(axis, vB + b2Cross(wB, rB) - vA - b2Cross(wA, rA));
+	return speed;
+}
+
+float32 b2WheelJoint::GetRevoluteJointAngle() const
+{
+	b2Body* bA = m_bodyA;
+	b2Body* bB = m_bodyB;
+	return bB->m_sweep.a - bA->m_sweep.a;
+}
+
+float32 b2WheelJoint::GetRevoluteJointSpeed() const
 {
 	float32 wA = m_bodyA->m_angularVelocity;
 	float32 wB = m_bodyB->m_angularVelocity;
