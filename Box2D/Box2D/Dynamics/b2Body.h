@@ -222,6 +222,11 @@ public:
 	/// @param wake also wake up the body
 	void ApplyLinearImpulse(const b2Vec2& impulse, const b2Vec2& point, bool wake);
 
+	/// Apply an impulse to the center of mass. This wakes up the body.
+	/// @param impulse the world impulse vector, usually in N-seconds or kg-m/s.
+	/// @param wake also wake up the body
+	void ApplyLinearImpulseToCenter(const b2Vec2& impulse, bool wake);
+
 	/// Apply an angular impulse.
 	/// @param impulse the angular impulse in units of kg*m*m/s
 	/// @param wake also wake up the body
@@ -809,6 +814,25 @@ inline void b2Body::ApplyLinearImpulse(const b2Vec2& impulse, const b2Vec2& poin
 	{
 		m_linearVelocity += m_invMass * impulse;
 		m_angularVelocity += m_invI * b2Cross(point - m_sweep.c, impulse);
+	}
+}
+
+inline void b2Body::ApplyLinearImpulseToCenter(const b2Vec2& impulse, bool wake)
+{
+	if (m_type != b2_dynamicBody)
+	{
+		return;
+	}
+
+	if (wake && (m_flags & e_awakeFlag) == 0)
+	{
+		SetAwake(true);
+	}
+
+	// Don't accumulate velocity if the body is sleeping
+	if (m_flags & e_awakeFlag)
+	{
+		m_linearVelocity += m_invMass * impulse;
 	}
 }
 
