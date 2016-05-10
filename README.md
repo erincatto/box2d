@@ -12,7 +12,7 @@ To run the demos, set "Testbed" as your startup project and press F5. Some test 
 - 'x' and 'z' to zoom in/out
 - use the mouse to click and drag objects
 
-Please do not submit pull requests with new features. Instead, please file an issue first for discussion.
+Please do not submit pull requests with new features. Instead, please file an issue first for discussion. For bugs, I prefer detailed bug reports over pull requests.
 
 Erin Catto
 http://www.box2d.org
