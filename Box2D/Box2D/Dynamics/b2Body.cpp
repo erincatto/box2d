@@ -213,6 +213,11 @@ b2Fixture* b2Body::CreateFixture(const b2Shape* shape, float32 density)
 
 void b2Body::DestroyFixture(b2Fixture* fixture)
 {
+	if (fixture == nullptr)
+	{
+		return;
+	}
+
 	b2Assert(m_world->IsLocked() == false);
 	if (m_world->IsLocked() == true)
 	{
@@ -266,9 +271,9 @@ void b2Body::DestroyFixture(b2Fixture* fixture)
 		fixture->DestroyProxies(broadPhase);
 	}
 
-	fixture->Destroy(allocator);
 	fixture->m_body = NULL;
 	fixture->m_next = NULL;
+	fixture->Destroy(allocator);
 	fixture->~b2Fixture();
 	allocator->Free(fixture, sizeof(b2Fixture));
 
