@@ -32,7 +32,7 @@ class b2BlockAllocator;
 class b2StackAllocator;
 class b2ContactListener;
 
-/// Friction mixing law. The idea is to allow either fixture to drive the restitution to zero.
+/// Friction mixing law. The idea is to allow either fixture to drive the friction to zero.
 /// For example, anything slides on ice.
 inline float32 b2MixFriction(float32 friction1, float32 friction2)
 {
@@ -157,7 +157,7 @@ protected:
 		// Used when crawling contact graph when forming islands.
 		e_islandFlag		= 0x0001,
 
-        // Set when the shapes are touching.
+		// Set when the shapes are touching.
 		e_touchingFlag		= 0x0002,
 
 		// This contact can be disabled (by user)
