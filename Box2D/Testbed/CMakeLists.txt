@@ -5,13 +5,12 @@ add_definitions( -DGLEW_STATIC -D_CRT_SECURE_NO_WARNINGS )
 set(Testbed_Framework_SRCS
 	Framework/DebugDraw.cpp
 	Framework/DebugDraw.h
-	Framework/imgui.h
-	Framework/imgui.cpp
 	Framework/Main.cpp
-	Framework/RenderGL3.cpp
-	Framework/RenderGL3.h
 	Framework/Test.cpp
 	Framework/Test.h
+	${Box2D_SOURCE_DIR}/imgui/imgui.cpp
+	${Box2D_SOURCE_DIR}/imgui/imgui_draw.cpp
+	${Box2D_SOURCE_DIR}/imgui/imgui_impl_glfw_gl3.cpp
 )
 
 #define the test files.
@@ -91,6 +90,7 @@ target_link_libraries (
 	Box2D
 	glew
 	glfw
+	${GLFW_LIBRARIES}
 	${ADDITIONAL_LIBRARIES}
 	${OPENGL_LIBRARIES}
 ) 
