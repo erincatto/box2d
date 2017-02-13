@@ -190,8 +190,11 @@ static void sKeyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			}
 			break;
 
+		case GLFW_KEY_O:
+			settings.singleStep = true;
+			break;
+
 		case GLFW_KEY_P:
-			// Pause
 			settings.pause = !settings.pause;
 			break;
 
@@ -407,7 +410,7 @@ static void sInterface()
 		if (ImGui::Button("Pause (P)", button_sz))
 			settings.pause = !settings.pause;
 
-		if (ImGui::Button("Single Step", button_sz))
+		if (ImGui::Button("Single Step (O)", button_sz))
 			settings.singleStep = !settings.singleStep;
 
 		if (ImGui::Button("Restart (R)", button_sz))

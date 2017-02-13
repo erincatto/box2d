@@ -34,7 +34,7 @@
 // macros in whatever way is suitable.
 //========================================================================
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #define _GLFW_WIN32
 #define _GLFW_WGL
 #endif
