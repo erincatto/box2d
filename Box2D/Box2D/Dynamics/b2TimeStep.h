@@ -19,7 +19,7 @@
 #ifndef B2_TIME_STEP_H
 #define B2_TIME_STEP_H
 
-#include <Box2D/Common/b2Math.h>
+#include "Box2D/Common/b2Math.h"
 
 /// Profiling data. Times are in milliseconds.
 struct b2Profile

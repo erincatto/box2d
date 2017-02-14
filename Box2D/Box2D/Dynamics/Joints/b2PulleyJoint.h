@@ -19,7 +19,7 @@
 #ifndef B2_PULLEY_JOINT_H
 #define B2_PULLEY_JOINT_H
 
-#include <Box2D/Dynamics/Joints/b2Joint.h>
+#include "Box2D/Dynamics/Joints/b2Joint.h"
 
 const float32 b2_minPulleyLength = 2.0f;
 

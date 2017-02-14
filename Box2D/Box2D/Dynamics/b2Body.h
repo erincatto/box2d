@@ -19,8 +19,8 @@
 #ifndef B2_BODY_H
 #define B2_BODY_H
 
-#include <Box2D/Common/b2Math.h>
-#include <Box2D/Collision/Shapes/b2Shape.h>
+#include "Box2D/Common/b2Math.h"
+#include "Box2D/Collision/Shapes/b2Shape.h"
 #include <memory>
 
 class b2Fixture;

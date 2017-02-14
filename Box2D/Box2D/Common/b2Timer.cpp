@@ -16,7 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include <Box2D/Common/b2Timer.h>
+#include "Box2D/Common/b2Timer.h"
 
 #if defined(_WIN32)
 

@@ -19,7 +19,7 @@
 #ifndef B2_POLYGON_CONTACT_H
 #define B2_POLYGON_CONTACT_H
 
-#include <Box2D/Dynamics/Contacts/b2Contact.h>
+#include "Box2D/Dynamics/Contacts/b2Contact.h"
 
 class b2BlockAllocator;
 

@@ -19,7 +19,7 @@
 #ifndef B2_ROPE_JOINT_H
 #define B2_ROPE_JOINT_H
 
-#include <Box2D/Dynamics/Joints/b2Joint.h>
+#include "Box2D/Dynamics/Joints/b2Joint.h"
 
 /// Rope joint definition. This requires two body anchor points and
 /// a maximum lengths.

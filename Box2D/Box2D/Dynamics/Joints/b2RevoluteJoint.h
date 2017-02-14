@@ -19,7 +19,7 @@
 #ifndef B2_REVOLUTE_JOINT_H
 #define B2_REVOLUTE_JOINT_H
 
-#include <Box2D/Dynamics/Joints/b2Joint.h>
+#include "Box2D/Dynamics/Joints/b2Joint.h"
 
 /// Revolute joint definition. This requires defining an
 /// anchor point where the bodies are joined. The definition

@@ -19,7 +19,7 @@
 #ifndef B2_WELD_JOINT_H
 #define B2_WELD_JOINT_H
 
-#include <Box2D/Dynamics/Joints/b2Joint.h>
+#include "Box2D/Dynamics/Joints/b2Joint.h"
 
 /// Weld joint definition. You need to specify local anchor points
 /// where they are attached and the relative body angle. The position

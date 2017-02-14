@@ -19,7 +19,7 @@
 #ifndef B2_GEAR_JOINT_H
 #define B2_GEAR_JOINT_H
 
-#include <Box2D/Dynamics/Joints/b2Joint.h>
+#include "Box2D/Dynamics/Joints/b2Joint.h"
 
 /// Gear joint definition. This definition requires two existing
 /// revolute or prismatic joints (any combination will work).

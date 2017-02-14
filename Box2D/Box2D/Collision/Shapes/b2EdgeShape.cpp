@@ -16,7 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include <Box2D/Collision/Shapes/b2EdgeShape.h>
+#include "Box2D/Collision/Shapes/b2EdgeShape.h"
 #include <new>
 
 void b2EdgeShape::Set(const b2Vec2& v1, const b2Vec2& v2)

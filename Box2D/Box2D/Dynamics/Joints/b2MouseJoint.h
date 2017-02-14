@@ -19,7 +19,7 @@
 #ifndef B2_MOUSE_JOINT_H
 #define B2_MOUSE_JOINT_H
 
-#include <Box2D/Dynamics/Joints/b2Joint.h>
+#include "Box2D/Dynamics/Joints/b2Joint.h"
 
 /// Mouse joint definition. This requires a world target point,
 /// tuning parameters, and the time step.

@@ -16,9 +16,9 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include <Box2D/Dynamics/Joints/b2MouseJoint.h>
-#include <Box2D/Dynamics/b2Body.h>
-#include <Box2D/Dynamics/b2TimeStep.h>
+#include "Box2D/Dynamics/Joints/b2MouseJoint.h"
+#include "Box2D/Dynamics/b2Body.h"
+#include "Box2D/Dynamics/b2TimeStep.h"
 
 // p = attached point, m = mouse point
 // C = p - m

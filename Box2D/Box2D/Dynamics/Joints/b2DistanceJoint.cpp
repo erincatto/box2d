@@ -16,9 +16,9 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include <Box2D/Dynamics/Joints/b2DistanceJoint.h>
-#include <Box2D/Dynamics/b2Body.h>
-#include <Box2D/Dynamics/b2TimeStep.h>
+#include "Box2D/Dynamics/Joints/b2DistanceJoint.h"
+#include "Box2D/Dynamics/b2Body.h"
+#include "Box2D/Dynamics/b2TimeStep.h"
 
 // 1-D constrained system
 // m (v2 - v1) = lambda

@@ -19,7 +19,7 @@
 #ifndef B2_FRICTION_JOINT_H
 #define B2_FRICTION_JOINT_H
 
-#include <Box2D/Dynamics/Joints/b2Joint.h>
+#include "Box2D/Dynamics/Joints/b2Joint.h"
 
 /// Friction joint definition.
 struct b2FrictionJointDef : public b2JointDef
