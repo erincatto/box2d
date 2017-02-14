@@ -18,11 +18,27 @@
 
 #include <Box2D/Dynamics/b2WorldCallbacks.h>
 #include <Box2D/Dynamics/b2Fixture.h>
+#include <Box2D/Dynamics/Joints/b2Joint.h>
 
 // Return true if contact calculations should be performed between these two shapes.
 // If you implement your own collision filter you may want to build from this implementation.
 bool b2ContactFilter::ShouldCollide(b2Fixture* fixtureA, b2Fixture* fixtureB)
 {
+	const b2Body* bodyA = fixtureA->GetBody();
+	const b2Body* bodyB = fixtureB->GetBody();
+
+	// At least one body should be dynamic or kinematic.
+	if (bodyB->GetType() == b2_staticBody && bodyA->GetType() == b2_staticBody)
+	{
+		return false;
+	}
+
+	// Does a joint prevent collision?
+	if (bodyB->ShouldCollideConnected(bodyA) == false)
+	{
+		return false;
+	}
+
 	const b2Filter& filterA = fixtureA->GetFilterData();
 	const b2Filter& filterB = fixtureB->GetFilterData();
 
