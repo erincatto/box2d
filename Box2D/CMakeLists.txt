@@ -8,6 +8,8 @@ else(UNIX)
 	set(BOX2D_INSTALL_BY_DEFAULT OFF)
 endif(UNIX)
 
+set (CMAKE_CXX_STANDARD 11)
+
 option(BOX2D_INSTALL "Install Box2D libs, includes, and CMake scripts" ${BOX2D_INSTALL_BY_DEFAULT})
 option(BOX2D_INSTALL_DOC "Install Box2D documentation" OFF)
 option(BOX2D_BUILD_SHARED "Build Box2D shared libraries" OFF)
