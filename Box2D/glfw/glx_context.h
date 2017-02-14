@@ -35,7 +35,7 @@
 // We ship and use our own copy of glxext.h since GLFW uses fairly new
 // extensions and not all operating systems come with an up-to-date version
 #define GLX_GLXEXT_PROTOTYPES
-#include "../deps/GL/glxext.h"
+#include "glxext.h"
 
 // libGL.so function pointer typedefs
 typedef int (*PFNGLXGETFBCONFIGATTRIBPROC)(Display*,GLXFBConfig,int,int*);
