@@ -1,7 +1,7 @@
 //========================================================================
-// GLFW 3.3 Linux - www.glfw.org
+// GLFW 3.3 - www.glfw.org
 //------------------------------------------------------------------------
-// Copyright (c) 2014 Jonas Ådahl <jadahl@gmail.com>
+// Copyright (c) 2006-2016 Camilla Löwy <elmindreda@glfw.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -24,10 +24,15 @@
 //
 //========================================================================
 
-#ifndef _glfw3_xkb_unicode_h_
-#define _glfw3_xkb_unicode_h_
+#include "internal.h"
 
 
-long _glfwKeySym2Unicode(unsigned int keysym);
+//////////////////////////////////////////////////////////////////////////
+//////                       GLFW platform API                      //////
+//////////////////////////////////////////////////////////////////////////
 
-#endif // _glfw3_xkb_unicode_h_
+int _glfwPlatformPollJoystick(int jid, int mode)
+{
+    return GLFW_FALSE;
+}
+

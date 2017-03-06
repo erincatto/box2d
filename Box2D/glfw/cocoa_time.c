@@ -1,7 +1,7 @@
 //========================================================================
-// GLFW 3.3 Linux - www.glfw.org
+// GLFW 3.3 macOS - www.glfw.org
 //------------------------------------------------------------------------
-// Copyright (c) 2014 Jonas Ådahl <jadahl@gmail.com>
+// Copyright (c) 2009-2016 Camilla Löwy <elmindreda@glfw.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -24,10 +24,37 @@
 //
 //========================================================================
 
-#ifndef _glfw3_xkb_unicode_h_
-#define _glfw3_xkb_unicode_h_
+#include "internal.h"
+
+#include <mach/mach_time.h>
 
 
-long _glfwKeySym2Unicode(unsigned int keysym);
+//////////////////////////////////////////////////////////////////////////
+//////                       GLFW internal API                      //////
+//////////////////////////////////////////////////////////////////////////
 
-#endif // _glfw3_xkb_unicode_h_
+// Initialise timer
+//
+void _glfwInitTimerNS(void)
+{
+    mach_timebase_info_data_t info;
+    mach_timebase_info(&info);
+
+    _glfw.ns_time.frequency = (info.denom * 1e9) / info.numer;
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+//////                       GLFW platform API                      //////
+//////////////////////////////////////////////////////////////////////////
+
+uint64_t _glfwPlatformGetTimerValue(void)
+{
+    return mach_absolute_time();
+}
+
+uint64_t _glfwPlatformGetTimerFrequency(void)
+{
+    return _glfw.ns_time.frequency;
+}
+

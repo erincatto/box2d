@@ -13,14 +13,14 @@
 #if defined(__APPLE_CC__)
 #include <OpenGL/gl3.h>
 #else
-#include <glew/glew.h>
+#include "glew/glew.h"
 #endif
-#include <glfw/glfw3.h>
+#include "glfw/glfw3.h"
 #ifdef _WIN32
 #undef APIENTRY
 #define GLFW_EXPOSE_NATIVE_WIN32
 #define GLFW_EXPOSE_NATIVE_WGL
-#include <glfw/glfw3native.h>
+#include "glfw/glfw3native.h"
 #endif
 
 // Data
