@@ -44,7 +44,7 @@
 // This path may need to be changed if you build GLFW using your own setup
 // We ship and use our own copy of eglext.h since GLFW uses fairly new
 // extensions and not all operating systems come with an up-to-date version
-#include "../deps/EGL/eglext.h"
+#include "eglext.h"
 
 // EGL function pointer typedefs
 typedef EGLBoolean (EGLAPIENTRY * PFNEGLGETCONFIGATTRIBPROC)(EGLDisplay,EGLConfig,EGLint,EGLint*);
