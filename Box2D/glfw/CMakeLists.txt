@@ -516,7 +516,7 @@ include_directories("${GLFW_SOURCE_DIR}"
 add_definitions(-D_GLFW_USE_CONFIG_H)
 
 set(common_HEADERS internal.h
-                   "${GLFW_BINARY_DIR}/glfw_config.h"
+                   "${GLFW_SOURCE_DIR}/glfw_config.h"
                    "${GLFW_SOURCE_DIR}/glfw3.h"
                    "${GLFW_SOURCE_DIR}/glfw3native.h")
 set(common_SOURCES context.c init.c input.c monitor.c window.c)
