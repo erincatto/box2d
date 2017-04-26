@@ -1,3 +1,5 @@
+![Box2D Logo](http://box2d.org/images/icon.gif)
+
 # Box2D 
 
 **Box2D is a 2D physics engine for games.**
