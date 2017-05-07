@@ -14,7 +14,10 @@ Here are the steps for Visual Studio 2017:
 Here are the steps for Xcode:
 - Command line: premake5 xcode4
 - Open the resulting project file (should be Build/xcode4)
-- TODO
+- Set the Testbed as the current Scheme
+- Edit the Testbed Scheme, in the Run Options, use a custom working directory
+- Set the Testbed directory as the working directory
+- Press Command-R to build and run the Testbed
 
 Thanks,
 Erin
