@@ -56,7 +56,7 @@ project "GLFW"
 			"glfw/wgl_context.h",
 			"glfw/egl_context.h",
 			"glfw/win32_init.c",
-            "glfw/winmm_joystick.c",
+            "glfw/win32_joystick.c",
 			"glfw/win32_monitor.c",
 			"glfw/win32_time.c",
             "glfw/win32_tls.c",

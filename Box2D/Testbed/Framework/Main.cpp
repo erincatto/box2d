@@ -67,7 +67,7 @@ static void sCreateUI(GLFWwindow* window)
 	ui.showMenu = true;
 
 	// Init UI
-	const char* fontPath = "../Data/DroidSans.ttf";
+	const char* fontPath = "Data/DroidSans.ttf";
 	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath, 15.f);
 
 	if (ImGui_ImplGlfwGL3_Init(window, false) == false)
