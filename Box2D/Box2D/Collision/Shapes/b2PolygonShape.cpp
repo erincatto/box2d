@@ -182,6 +182,7 @@ void b2PolygonShape::Set(const b2Vec2* vertices, int32 count)
 
 	for (;;)
 	{
+		b2Assert(m < b2_maxPolygonVertices);
 		hull[m] = ih;
 
 		int32 ie = 0;
