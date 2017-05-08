@@ -638,11 +638,8 @@ inline void b2Body::SetAwake(bool flag)
 {
 	if (flag)
 	{
-		if ((m_flags & e_awakeFlag) == 0)
-		{
-			m_flags |= e_awakeFlag;
-			m_sleepTime = 0.0f;
-		}
+		m_flags |= e_awakeFlag;
+		m_sleepTime = 0.0f;
 	}
 	else
 	{
