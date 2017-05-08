@@ -46,6 +46,7 @@ local glfw_common = {
 project "GLFW"
 	kind "StaticLib"
 	language "C"
+	defines {"GLEW_STATIC"}
 	configuration { "windows" }
 		local f = {
 			"glfw/win32_platform.h",
@@ -91,6 +92,9 @@ project "GLFW"
 			"glfw/x11_init.c",
 			"glfw/x11_monitor.c",
 			"glfw/x11_window.c",
+			"glfw/glx_context.h",
+			"glfw/glx_context.c",
+			"glfw/glext.h",
             "glfw/xkb_unicode.c",
             "glfw/linux_joystick.c",
             "glfw/posix_time.c",
@@ -127,4 +131,4 @@ project "Testbed"
 	configuration { "macosx" }
 		links { "OpenGL.framework", "Cocoa.framework" }
 	configuration { "not windows", "not macosx" }
-		links { "X11", "GL", "GLU" }
+		links { "GL", "GLU", "X11", "Xrandr", "Xinerama", "Xcursor", "pthread", "dl" }
