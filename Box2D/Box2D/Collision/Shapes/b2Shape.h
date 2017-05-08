@@ -90,6 +90,9 @@ public:
 	virtual void ComputeMass(b2MassData* massData, float32 density) const = 0;
 
 	Type m_type;
+
+	/// Radius of a shape. For polygonal shapes this must be b2_polygonRadius. There is no support for
+	/// making rounded polygons.
 	float32 m_radius;
 };
 
