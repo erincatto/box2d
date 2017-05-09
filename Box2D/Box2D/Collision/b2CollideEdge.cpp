@@ -432,7 +432,7 @@ void b2EPCollider::Collide(b2Manifold* manifold, const b2EdgeShape* edgeA, const
 		m_polygonB.normals[i] = b2Mul(m_xf.q, polygonB->m_normals[i]);
 	}
 	
-	m_radius = 2.0f * b2_polygonRadius;
+	m_radius = polygonB->m_radius + edgeA->m_radius;
 	
 	manifold->pointCount = 0;
 	

@@ -22,12 +22,12 @@
 #include <glew/glew.h>
 #endif
 
-#include <imgui/imgui.h>
-#include <imgui/imgui_impl_glfw_gl3.h>
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw_gl3.h"
 #include "DebugDraw.h"
 #include "Test.h"
 
-#include <glfw/glfw3.h>
+#include "glfw/glfw3.h"
 #include <stdio.h>
 
 #ifdef _MSC_VER
@@ -67,7 +67,7 @@ static void sCreateUI(GLFWwindow* window)
 	ui.showMenu = true;
 
 	// Init UI
-	const char* fontPath = "../Data/DroidSans.ttf";
+	const char* fontPath = "Data/DroidSans.ttf";
 	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath, 15.f);
 
 	if (ImGui_ImplGlfwGL3_Init(window, false) == false)
@@ -510,7 +510,10 @@ int main(int, char**)
 	while (!glfwWindowShouldClose(mainWindow))
 	{
 		glfwGetWindowSize(mainWindow, &g_camera.m_width, &g_camera.m_height);
-		glViewport(0, 0, g_camera.m_width, g_camera.m_height);
+        
+        int bufferWidth, bufferHeight;
+        glfwGetFramebufferSize(mainWindow, &bufferWidth, &bufferHeight);
+        glViewport(0, 0, bufferWidth, bufferHeight);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

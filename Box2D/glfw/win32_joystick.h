@@ -1,7 +1,7 @@
 //========================================================================
-// GLFW 3.3 Linux - www.glfw.org
+// GLFW 3.3 Win32 - www.glfw.org
 //------------------------------------------------------------------------
-// Copyright (c) 2014 Jonas Ådahl <jadahl@gmail.com>
+// Copyright (c) 2006-2016 Camilla Löwy <elmindreda@glfw.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -24,10 +24,36 @@
 //
 //========================================================================
 
-#ifndef _glfw3_xkb_unicode_h_
-#define _glfw3_xkb_unicode_h_
+#ifndef _glfw3_win32_joystick_h_
+#define _glfw3_win32_joystick_h_
+
+#define _GLFW_PLATFORM_JOYSTICK_STATE         _GLFWjoystickWin32 win32
+#define _GLFW_PLATFORM_LIBRARY_JOYSTICK_STATE int dummy
 
 
-long _glfwKeySym2Unicode(unsigned int keysym);
+// Joystick element (axis, button or slider)
+//
+typedef struct _GLFWjoyobjectWin32
+{
+    int                     offset;
+    int                     type;
+} _GLFWjoyobjectWin32;
 
-#endif // _glfw3_xkb_unicode_h_
+// Win32-specific per-joystick data
+//
+typedef struct _GLFWjoystickWin32
+{
+    _GLFWjoyobjectWin32*    objects;
+    int                     objectCount;
+    IDirectInputDevice8W*   device;
+    DWORD                   index;
+    GUID                    guid;
+} _GLFWjoystickWin32;
+
+
+void _glfwInitJoysticksWin32(void);
+void _glfwTerminateJoysticksWin32(void);
+void _glfwDetectJoystickConnectionWin32(void);
+void _glfwDetectJoystickDisconnectionWin32(void);
+
+#endif // _glfw3_win32_joystick_h_

@@ -445,8 +445,8 @@ void b2World::Solve(const b2TimeStep& step)
 			b2Assert(b->IsActive() == true);
 			island.Add(b);
 
-			// Make sure the body is awake.
-			b->SetAwake(true);
+			// Make sure the body is awake (without resetting sleep timer).
+			b->m_flags |= b2Body::e_awakeFlag;
 
 			// To keep islands as small as possible, we don't
 			// propagate islands across static bodies.

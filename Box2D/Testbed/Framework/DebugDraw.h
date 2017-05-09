@@ -32,7 +32,6 @@ struct Camera
 	Camera()
 	{
 		m_center.Set(0.0f, 20.0f);
-		m_extent = 25.0f;
 		m_zoom = 1.0f;
 		m_width = 1280;
 		m_height = 800;
@@ -43,7 +42,6 @@ struct Camera
 	void BuildProjectionMatrix(float32* m, float32 zBias);
 
 	b2Vec2 m_center;
-	float32 m_extent;
 	float32 m_zoom;
 	int32 m_width;
 	int32 m_height;
