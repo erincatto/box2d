@@ -8,7 +8,7 @@ workspace "Box2D"
 	
 	configuration "vs*"
 		defines { "_CRT_SECURE_NO_WARNINGS" }	
-		
+	
 	filter "configurations:Debug"
 		targetdir ( "Build/%{_ACTION}/bin/Debug" )
 	 	defines { "DEBUG" }
@@ -24,6 +24,9 @@ project "Box2D"
 	language "C++"
 	files { "Box2D/**.h", "Box2D/**.cpp" }
 	includedirs { "." }
+	configuration "gmake"
+		buildoptions { "-std=c++11" }
+		
 	
 project "GLEW"
 	kind "StaticLib"
@@ -31,7 +34,6 @@ project "GLEW"
 	defines {"GLEW_STATIC"}
 	files { "glew/*.h", "glew/*.c" }
 	includedirs { "." }
-end
 
 local glfw_common = {
 	"glfw/internal.h",
@@ -126,6 +128,8 @@ project "IMGUI"
 	includedirs { "." }
 	configuration { "macosx" }
     	defines{ "GLFW_INCLUDE_GLCOREARB" }
+	configuration "gmake"
+		buildoptions { "-std=c++11" }
 
 project "HelloWorld"
 	kind "ConsoleApp"
@@ -133,6 +137,45 @@ project "HelloWorld"
 	files { "HelloWorld/HelloWorld.cpp" }
 	includedirs { "." }
 	links { "Box2D" }
+	configuration "gmake"
+		buildoptions { "-std=c++11" }
+
+project "HelloWorld"
+	kind "ConsoleApp"
+	language "C++"
+	files { "HelloWorld/HelloWorld.cpp" }
+	includedirs { "." }
+	links { "Box2D" }
+	configuration "gmake"
+		buildoptions { "-std=c++11" }
+
+project "HelloWorld"
+	kind "ConsoleApp"
+	language "C++"
+	files { "HelloWorld/HelloWorld.cpp" }
+	includedirs { "." }
+	links { "Box2D" }
+	configuration "gmake"
+		buildoptions { "-std=c++11" }
+
+project "HelloWorld"
+	kind "ConsoleApp"
+	language "C++"
+	files { "HelloWorld/HelloWorld.cpp" }
+	includedirs { "." }
+	links { "Box2D" }
+	configuration "gmake"
+		buildoptions { "-std=c++11" }
+
+project "HelloWorld"
+	kind "ConsoleApp"
+	language "C++"
+	files { "HelloWorld/HelloWorld.cpp" }
+	includedirs { "." }
+	links { "Box2D" }
+	configuration "gmake"
+		buildoptions { "-std=c++11" }
+
 
 project "Testbed"
 	kind "ConsoleApp"
@@ -146,5 +189,6 @@ project "Testbed"
 	configuration { "macosx" }
     	defines{ "GLFW_INCLUDE_GLCOREARB" }
 		links { "OpenGL.framework", "Cocoa.framework", "IOKit.framework", "CoreFoundation.framework", "CoreVideo.framework"}
-	configuration { "not windows", "not macosx" }
-		links { "GL", "GLU", "X11", "Xrandr", "Xinerama", "Xcursor", "pthread", "dl" }
+	configuration { "gmake" }
+		buildoptions { "-std=c++11" }
+		links { "GL", "GLU", "GLEW", "X11", "Xrandr", "Xinerama", "Xcursor", "pthread", "dl" }
