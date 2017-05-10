@@ -19,13 +19,15 @@ workspace "Box2D"
 		defines { "NDEBUG" }
 		optimize "On"
 
+	filter "action:gmake"
+		buildoptions {"-std=c++11"}
+
+
 project "Box2D"
 	kind "StaticLib"
 	language "C++"
 	files { "Box2D/**.h", "Box2D/**.cpp" }
 	includedirs { "." }
-	configuration "gmake"
-		buildoptions { "-std=c++11" }
 		
 	
 project "GLEW"
@@ -128,8 +130,6 @@ project "IMGUI"
 	includedirs { "." }
 	configuration { "macosx" }
     	defines{ "GLFW_INCLUDE_GLCOREARB" }
-	configuration "gmake"
-		buildoptions { "-std=c++11" }
 
 project "HelloWorld"
 	kind "ConsoleApp"
@@ -137,8 +137,6 @@ project "HelloWorld"
 	files { "HelloWorld/HelloWorld.cpp" }
 	includedirs { "." }
 	links { "Box2D" }
-	configuration "gmake"
-		buildoptions { "-std=c++11" }
 
 project "HelloWorld"
 	kind "ConsoleApp"
@@ -146,8 +144,6 @@ project "HelloWorld"
 	files { "HelloWorld/HelloWorld.cpp" }
 	includedirs { "." }
 	links { "Box2D" }
-	configuration "gmake"
-		buildoptions { "-std=c++11" }
 
 project "HelloWorld"
 	kind "ConsoleApp"
@@ -155,8 +151,6 @@ project "HelloWorld"
 	files { "HelloWorld/HelloWorld.cpp" }
 	includedirs { "." }
 	links { "Box2D" }
-	configuration "gmake"
-		buildoptions { "-std=c++11" }
 
 project "HelloWorld"
 	kind "ConsoleApp"
@@ -164,8 +158,6 @@ project "HelloWorld"
 	files { "HelloWorld/HelloWorld.cpp" }
 	includedirs { "." }
 	links { "Box2D" }
-	configuration "gmake"
-		buildoptions { "-std=c++11" }
 
 project "HelloWorld"
 	kind "ConsoleApp"
@@ -173,8 +165,6 @@ project "HelloWorld"
 	files { "HelloWorld/HelloWorld.cpp" }
 	includedirs { "." }
 	links { "Box2D" }
-	configuration "gmake"
-		buildoptions { "-std=c++11" }
 
 
 project "Testbed"
@@ -190,5 +180,4 @@ project "Testbed"
     	defines{ "GLFW_INCLUDE_GLCOREARB" }
 		links { "OpenGL.framework", "Cocoa.framework", "IOKit.framework", "CoreFoundation.framework", "CoreVideo.framework"}
 	configuration { "gmake" }
-		buildoptions { "-std=c++11" }
 		links { "GL", "GLU", "GLEW", "X11", "Xrandr", "Xinerama", "Xcursor", "pthread", "dl" }
