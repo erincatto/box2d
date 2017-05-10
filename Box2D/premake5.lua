@@ -19,7 +19,7 @@ workspace "Box2D"
 		defines { "NDEBUG" }
 		optimize "On"
 
-	filter "action:gmake"
+	filter "system:linux"
 		buildoptions {"-std=c++11"}
 
 
