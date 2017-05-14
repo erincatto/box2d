@@ -46,4 +46,9 @@
 #define _GLFW_USE_MENUBAR
 #endif
 
+#if !(defined(_WIN32) || defined(__APPLE__))
+#define _GLFW_X11
+#define _GLFW_GLX
+#endif
+
 #define _GLFW_USE_OPENGL

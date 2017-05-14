@@ -165,9 +165,14 @@ typedef struct _GLFWcontextEGL
    EGLContext       handle;
    EGLSurface       surface;
 
+#if defined(_GLFW_X11)
+   XVisualInfo*     visual;
+#endif
+
    void*            client;
 
 } _GLFWcontextEGL;
+
 
 // EGL-specific global data
 //
