@@ -29,12 +29,12 @@
 
 b2Fixture::b2Fixture()
 {
-	m_userData = NULL;
-	m_body = NULL;
-	m_next = NULL;
-	m_proxies = NULL;
+	m_userData = nullptr;
+	m_body = nullptr;
+	m_next = nullptr;
+	m_proxies = nullptr;
 	m_proxyCount = 0;
-	m_shape = NULL;
+	m_shape = nullptr;
 	m_density = 0.0f;
 }
 
@@ -45,7 +45,7 @@ void b2Fixture::Create(b2BlockAllocator* allocator, b2Body* body, const b2Fixtur
 	m_restitution = def->restitution;
 
 	m_body = body;
-	m_next = NULL;
+	m_next = nullptr;
 
 	m_filter = def->filter;
 
@@ -58,7 +58,7 @@ void b2Fixture::Create(b2BlockAllocator* allocator, b2Body* body, const b2Fixtur
 	m_proxies = (b2FixtureProxy*)allocator->Allocate(childCount * sizeof(b2FixtureProxy));
 	for (int32 i = 0; i < childCount; ++i)
 	{
-		m_proxies[i].fixture = NULL;
+		m_proxies[i].fixture = nullptr;
 		m_proxies[i].proxyId = b2BroadPhase::e_nullProxy;
 	}
 	m_proxyCount = 0;
@@ -74,7 +74,7 @@ void b2Fixture::Destroy(b2BlockAllocator* allocator)
 	// Free the proxy array.
 	int32 childCount = m_shape->GetChildCount();
 	allocator->Free(m_proxies, childCount * sizeof(b2FixtureProxy));
-	m_proxies = NULL;
+	m_proxies = nullptr;
 
 	// Free the child shape.
 	switch (m_shape->m_type)
@@ -116,7 +116,7 @@ void b2Fixture::Destroy(b2BlockAllocator* allocator)
 		break;
 	}
 
-	m_shape = NULL;
+	m_shape = nullptr;
 }
 
 void b2Fixture::CreateProxies(b2BroadPhase* broadPhase, const b2Transform& xf)
@@ -182,7 +182,7 @@ void b2Fixture::SetFilterData(const b2Filter& filter)
 
 void b2Fixture::Refilter()
 {
-	if (m_body == NULL)
+	if (m_body == nullptr)
 	{
 		return;
 	}
@@ -204,7 +204,7 @@ void b2Fixture::Refilter()
 
 	b2World* world = m_body->GetWorld();
 
-	if (world == NULL)
+	if (world == nullptr)
 	{
 		return;
 	}

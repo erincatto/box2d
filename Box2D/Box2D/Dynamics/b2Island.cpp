@@ -515,7 +515,7 @@ void b2Island::SolveTOI(const b2TimeStep& subStep, int32 toiIndexA, int32 toiInd
 
 void b2Island::Report(const b2ContactVelocityConstraint* constraints)
 {
-	if (m_listener == NULL)
+	if (m_listener == nullptr)
 	{
 		return;
 	}

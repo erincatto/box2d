@@ -76,9 +76,9 @@ struct b2JointDef
 	b2JointDef()
 	{
 		type = e_unknownJoint;
-		userData = NULL;
-		bodyA = NULL;
-		bodyB = NULL;
+		userData = nullptr;
+		bodyA = nullptr;
+		bodyB = nullptr;
 		collideConnected = false;
 	}
 

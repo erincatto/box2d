@@ -36,11 +36,11 @@
 
 b2World::b2World(const b2Vec2& gravity)
 {
-	m_destructionListener = NULL;
-	g_debugDraw = NULL;
+	m_destructionListener = nullptr;
+	g_debugDraw = nullptr;
 
-	m_bodyList = NULL;
-	m_jointList = NULL;
+	m_bodyList = nullptr;
+	m_jointList = nullptr;
 
 	m_bodyCount = 0;
 	m_jointCount = 0;
@@ -109,14 +109,14 @@ b2Body* b2World::CreateBody(const b2BodyDef* def)
 	b2Assert(IsLocked() == false);
 	if (IsLocked())
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	void* mem = m_blockAllocator.Allocate(sizeof(b2Body));
 	b2Body* b = new (mem) b2Body(def, this);
 
 	// Add to world doubly linked list.
-	b->m_prev = NULL;
+	b->m_prev = nullptr;
 	b->m_next = m_bodyList;
 	if (m_bodyList)
 	{
@@ -153,7 +153,7 @@ void b2World::DestroyBody(b2Body* b)
 
 		b->m_jointList = je;
 	}
-	b->m_jointList = NULL;
+	b->m_jointList = nullptr;
 
 	// Delete the attached contacts.
 	b2ContactEdge* ce = b->m_contactList;
@@ -163,7 +163,7 @@ void b2World::DestroyBody(b2Body* b)
 		ce = ce->next;
 		m_contactManager.Destroy(ce0->contact);
 	}
-	b->m_contactList = NULL;
+	b->m_contactList = nullptr;
 
 	// Delete the attached fixtures. This destroys broad-phase proxies.
 	b2Fixture* f = b->m_fixtureList;
@@ -185,7 +185,7 @@ void b2World::DestroyBody(b2Body* b)
 		b->m_fixtureList = f;
 		b->m_fixtureCount -= 1;
 	}
-	b->m_fixtureList = NULL;
+	b->m_fixtureList = nullptr;
 	b->m_fixtureCount = 0;
 
 	// Remove world body list.
@@ -214,13 +214,13 @@ b2Joint* b2World::CreateJoint(const b2JointDef* def)
 	b2Assert(IsLocked() == false);
 	if (IsLocked())
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	b2Joint* j = b2Joint::Create(def, &m_blockAllocator);
 
 	// Connect to the world list.
-	j->m_prev = NULL;
+	j->m_prev = nullptr;
 	j->m_next = m_jointList;
 	if (m_jointList)
 	{
@@ -232,14 +232,14 @@ b2Joint* b2World::CreateJoint(const b2JointDef* def)
 	// Connect to the bodies' doubly linked lists.
 	j->m_edgeA.joint = j;
 	j->m_edgeA.other = j->m_bodyB;
-	j->m_edgeA.prev = NULL;
+	j->m_edgeA.prev = nullptr;
 	j->m_edgeA.next = j->m_bodyA->m_jointList;
 	if (j->m_bodyA->m_jointList) j->m_bodyA->m_jointList->prev = &j->m_edgeA;
 	j->m_bodyA->m_jointList = &j->m_edgeA;
 
 	j->m_edgeB.joint = j;
 	j->m_edgeB.other = j->m_bodyA;
-	j->m_edgeB.prev = NULL;
+	j->m_edgeB.prev = nullptr;
 	j->m_edgeB.next = j->m_bodyB->m_jointList;
 	if (j->m_bodyB->m_jointList) j->m_bodyB->m_jointList->prev = &j->m_edgeB;
 	j->m_bodyB->m_jointList = &j->m_edgeB;
@@ -319,8 +319,8 @@ void b2World::DestroyJoint(b2Joint* j)
 		bodyA->m_jointList = j->m_edgeA.next;
 	}
 
-	j->m_edgeA.prev = NULL;
-	j->m_edgeA.next = NULL;
+	j->m_edgeA.prev = nullptr;
+	j->m_edgeA.next = nullptr;
 
 	// Remove from body 2
 	if (j->m_edgeB.prev)
@@ -338,8 +338,8 @@ void b2World::DestroyJoint(b2Joint* j)
 		bodyB->m_jointList = j->m_edgeB.next;
 	}
 
-	j->m_edgeB.prev = NULL;
-	j->m_edgeB.next = NULL;
+	j->m_edgeB.prev = nullptr;
+	j->m_edgeB.next = nullptr;
 
 	b2Joint::Destroy(j, &m_blockAllocator);
 
@@ -599,7 +599,7 @@ void b2World::SolveTOI(const b2TimeStep& step)
 	for (;;)
 	{
 		// Find the first TOI.
-		b2Contact* minContact = NULL;
+		b2Contact* minContact = nullptr;
 		float32 minAlpha = 1.0f;
 
 		for (b2Contact* c = m_contactManager.m_contactList; c; c = c->m_next)
@@ -712,7 +712,7 @@ void b2World::SolveTOI(const b2TimeStep& step)
 			}
 		}
 
-		if (minContact == NULL || 1.0f - 10.0f * b2_epsilon < minAlpha)
+		if (minContact == nullptr || 1.0f - 10.0f * b2_epsilon < minAlpha)
 		{
 			// No more TOI events. Done!
 			m_stepComplete = true;
@@ -1152,7 +1152,7 @@ void b2World::DrawJoint(b2Joint* joint)
 
 void b2World::DrawDebugData()
 {
-	if (g_debugDraw == NULL)
+	if (g_debugDraw == nullptr)
 	{
 		return;
 	}
@@ -1352,6 +1352,6 @@ void b2World::Dump()
 
 	b2Log("b2Free(joints);\n");
 	b2Log("b2Free(bodies);\n");
-	b2Log("joints = NULL;\n");
-	b2Log("bodies = NULL;\n");
+	b2Log("joints = nullptr;\n");
+	b2Log("bodies = nullptr;\n");
 }

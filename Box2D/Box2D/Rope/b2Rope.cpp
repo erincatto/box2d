@@ -22,12 +22,12 @@
 b2Rope::b2Rope()
 {
 	m_count = 0;
-	m_ps = NULL;
-	m_p0s = NULL;
-	m_vs = NULL;
-	m_ims = NULL;
-	m_Ls = NULL;
-	m_as = NULL;
+	m_ps = nullptr;
+	m_p0s = nullptr;
+	m_vs = nullptr;
+	m_ims = nullptr;
+	m_Ls = nullptr;
+	m_as = nullptr;
 	m_gravity.SetZero();
 	m_k2 = 1.0f;
 	m_k3 = 0.1f;

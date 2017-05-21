@@ -36,7 +36,7 @@
 
 b2Joint* b2Joint::Create(const b2JointDef* def, b2BlockAllocator* allocator)
 {
-	b2Joint* joint = NULL;
+	b2Joint* joint = nullptr;
 
 	switch (def->type)
 	{
@@ -185,8 +185,8 @@ b2Joint::b2Joint(const b2JointDef* def)
 	b2Assert(def->bodyA != def->bodyB);
 
 	m_type = def->type;
-	m_prev = NULL;
-	m_next = NULL;
+	m_prev = nullptr;
+	m_next = nullptr;
 	m_bodyA = def->bodyA;
 	m_bodyB = def->bodyB;
 	m_index = 0;
@@ -194,15 +194,15 @@ b2Joint::b2Joint(const b2JointDef* def)
 	m_islandFlag = false;
 	m_userData = def->userData;
 
-	m_edgeA.joint = NULL;
-	m_edgeA.other = NULL;
-	m_edgeA.prev = NULL;
-	m_edgeA.next = NULL;
+	m_edgeA.joint = nullptr;
+	m_edgeA.other = nullptr;
+	m_edgeA.prev = nullptr;
+	m_edgeA.next = nullptr;
 
-	m_edgeB.joint = NULL;
-	m_edgeB.other = NULL;
-	m_edgeB.prev = NULL;
-	m_edgeB.next = NULL;
+	m_edgeB.joint = nullptr;
+	m_edgeB.other = nullptr;
+	m_edgeB.prev = nullptr;
+	m_edgeB.next = nullptr;
 }
 
 bool b2Joint::IsActive() const

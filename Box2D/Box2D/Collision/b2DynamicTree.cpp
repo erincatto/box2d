@@ -83,7 +83,7 @@ int32 b2DynamicTree::AllocateNode()
 	m_nodes[nodeId].child1 = b2_nullNode;
 	m_nodes[nodeId].child2 = b2_nullNode;
 	m_nodes[nodeId].height = 0;
-	m_nodes[nodeId].userData = NULL;
+	m_nodes[nodeId].userData = nullptr;
 	++m_nodeCount;
 	return nodeId;
 }
@@ -261,7 +261,7 @@ void b2DynamicTree::InsertLeaf(int32 leaf)
 	int32 oldParent = m_nodes[sibling].parent;
 	int32 newParent = AllocateNode();
 	m_nodes[newParent].parent = oldParent;
-	m_nodes[newParent].userData = NULL;
+	m_nodes[newParent].userData = nullptr;
 	m_nodes[newParent].aabb.Combine(leafAABB, m_nodes[sibling].aabb);
 	m_nodes[newParent].height = m_nodes[sibling].height + 1;
 

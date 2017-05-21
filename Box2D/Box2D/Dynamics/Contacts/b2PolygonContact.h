@@ -33,7 +33,7 @@ public:
 	b2PolygonContact(b2Fixture* fixtureA, b2Fixture* fixtureB);
 	~b2PolygonContact() {}
 
-	void Evaluate(b2Manifold* manifold, const b2Transform& xfA, const b2Transform& xfB);
+	void Evaluate(b2Manifold* manifold, const b2Transform& xfA, const b2Transform& xfB) override;
 };
 
 #endif

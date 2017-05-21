@@ -32,7 +32,7 @@ public:
 	b2PolygonAndCircleContact(b2Fixture* fixtureA, b2Fixture* fixtureB);
 	~b2PolygonAndCircleContact() {}
 
-	void Evaluate(b2Manifold* manifold, const b2Transform& xfA, const b2Transform& xfB);
+	void Evaluate(b2Manifold* manifold, const b2Transform& xfA, const b2Transform& xfB) override;
 };
 
 #endif

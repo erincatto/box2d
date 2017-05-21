@@ -112,7 +112,7 @@ public:
 		m_fixture = NULL;
 	}
 
-	bool ReportFixture(b2Fixture* fixture)
+	bool ReportFixture(b2Fixture* fixture) override
 	{
 		b2Body* body = fixture->GetBody();
 		if (body->GetType() == b2_dynamicBody)

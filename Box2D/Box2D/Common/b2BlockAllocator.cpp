@@ -97,7 +97,7 @@ b2BlockAllocator::~b2BlockAllocator()
 void* b2BlockAllocator::Allocate(int32 size)
 {
 	if (size == 0)
-		return NULL;
+		return nullptr;
 
 	b2Assert(0 < size);
 
@@ -143,7 +143,7 @@ void* b2BlockAllocator::Allocate(int32 size)
 			block->next = next;
 		}
 		b2Block* last = (b2Block*)((int8*)chunk->blocks + blockSize * (blockCount - 1));
-		last->next = NULL;
+		last->next = nullptr;
 
 		m_freeLists[index] = chunk->blocks->next;
 		++m_chunkCount;

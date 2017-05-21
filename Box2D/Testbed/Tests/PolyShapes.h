@@ -80,7 +80,7 @@ public:
 
 	/// Called for each fixture found in the query AABB.
 	/// @return false to terminate the query.
-	bool ReportFixture(b2Fixture* fixture)
+	bool ReportFixture(b2Fixture* fixture) override
 	{
 		if (m_count == e_maxCount)
 		{

@@ -94,7 +94,7 @@ b2Contact* b2Contact::Create(b2Fixture* fixtureA, int32 indexA, b2Fixture* fixtu
 	}
 	else
 	{
-		return NULL;
+		return nullptr;
 	}
 }
 
@@ -135,18 +135,18 @@ b2Contact::b2Contact(b2Fixture* fA, int32 indexA, b2Fixture* fB, int32 indexB)
 
 	m_manifold.pointCount = 0;
 
-	m_prev = NULL;
-	m_next = NULL;
+	m_prev = nullptr;
+	m_next = nullptr;
 
-	m_nodeA.contact = NULL;
-	m_nodeA.prev = NULL;
-	m_nodeA.next = NULL;
-	m_nodeA.other = NULL;
+	m_nodeA.contact = nullptr;
+	m_nodeA.prev = nullptr;
+	m_nodeA.next = nullptr;
+	m_nodeA.other = nullptr;
 
-	m_nodeB.contact = NULL;
-	m_nodeB.prev = NULL;
-	m_nodeB.next = NULL;
-	m_nodeB.other = NULL;
+	m_nodeB.contact = nullptr;
+	m_nodeB.prev = nullptr;
+	m_nodeB.next = nullptr;
+	m_nodeB.other = nullptr;
 
 	m_toiCount = 0;
 
