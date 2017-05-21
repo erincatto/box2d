@@ -8,7 +8,7 @@ workspace "Box2D"
 	
 	configuration "vs*"
 		defines { "_CRT_SECURE_NO_WARNINGS" }	
-		
+	
 	filter "configurations:Debug"
 		targetdir ( "Build/%{_ACTION}/bin/Debug" )
 	 	defines { "DEBUG" }
@@ -19,20 +19,23 @@ workspace "Box2D"
 		defines { "NDEBUG" }
 		optimize "On"
 
+	filter "system:linux"
+		buildoptions {"-std=c++11"}
+
+
 project "Box2D"
 	kind "StaticLib"
 	language "C++"
 	files { "Box2D/**.h", "Box2D/**.cpp" }
 	includedirs { "." }
-
-if os.is("windows") then
+		
+	
 project "GLEW"
 	kind "StaticLib"
 	language "C++"
 	defines {"GLEW_STATIC"}
 	files { "glew/*.h", "glew/*.c" }
 	includedirs { "." }
-end
 
 local glfw_common = {
 	"glfw/internal.h",
@@ -91,11 +94,11 @@ project "GLFW"
         	f[#f + 1] = glfw_common[i]
         end
     	files(f)
-
 	configuration { "not windows", "not macosx" }
 		local f = {
 			"glfw/x11_platform.h",
 			"glfw/xkb_unicode.h",
+			"glfw/linux_joystick.h",
 			"glfw/posix_time.h",
 			"glfw/posix_tls.h",
 			"glfw/glx_context.h",
@@ -103,7 +106,11 @@ project "GLFW"
 			"glfw/x11_init.c",
 			"glfw/x11_monitor.c",
 			"glfw/x11_window.c",
+			"glfw/glx_context.h",
+			"glfw/glx_context.c",
+			"glfw/glext.h",
             "glfw/xkb_unicode.c",
+            "glfw/linux_joystick.c",
             "glfw/posix_time.c",
         	"glfw/posix_tls.c",
         	"glfw/glx_context.c",
@@ -131,6 +138,35 @@ project "HelloWorld"
 	includedirs { "." }
 	links { "Box2D" }
 
+project "HelloWorld"
+	kind "ConsoleApp"
+	language "C++"
+	files { "HelloWorld/HelloWorld.cpp" }
+	includedirs { "." }
+	links { "Box2D" }
+
+project "HelloWorld"
+	kind "ConsoleApp"
+	language "C++"
+	files { "HelloWorld/HelloWorld.cpp" }
+	includedirs { "." }
+	links { "Box2D" }
+
+project "HelloWorld"
+	kind "ConsoleApp"
+	language "C++"
+	files { "HelloWorld/HelloWorld.cpp" }
+	includedirs { "." }
+	links { "Box2D" }
+
+project "HelloWorld"
+	kind "ConsoleApp"
+	language "C++"
+	files { "HelloWorld/HelloWorld.cpp" }
+	includedirs { "." }
+	links { "Box2D" }
+
+
 project "Testbed"
 	kind "ConsoleApp"
 	language "C++"
@@ -143,5 +179,5 @@ project "Testbed"
 	configuration { "macosx" }
     	defines{ "GLFW_INCLUDE_GLCOREARB" }
 		links { "OpenGL.framework", "Cocoa.framework", "IOKit.framework", "CoreFoundation.framework", "CoreVideo.framework"}
-	configuration { "not windows", "not macosx" }
-		links { "X11", "GL", "GLU"}
+	configuration { "gmake" }
+		links { "GL", "GLU", "GLEW", "X11", "Xrandr", "Xinerama", "Xcursor", "pthread", "dl" }

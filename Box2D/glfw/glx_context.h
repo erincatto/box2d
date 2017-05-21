@@ -112,6 +112,10 @@ typedef GLXContext (*PFNGLXCREATECONTEXTATTRIBSARBPROC)(Display*,GLXFBConfig,GLX
 #define _GLFW_PLATFORM_CONTEXT_STATE            _GLFWcontextGLX glx
 #define _GLFW_PLATFORM_LIBRARY_CONTEXT_STATE    _GLFWlibraryGLX glx
 
+#ifndef GLX_MESA_swap_control
+typedef int (*PFNGLXSWAPINTERVALMESAPROC)(int);
+#endif
+
 
 // GLX-specific per-context data
 //
@@ -121,6 +125,7 @@ typedef struct _GLFWcontextGLX
     GLXWindow       window;
 
 } _GLFWcontextGLX;
+
 
 // GLX-specific global data
 //
