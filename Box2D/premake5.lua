@@ -19,8 +19,8 @@ workspace "Box2D"
 		defines { "NDEBUG" }
 		optimize "On"
 
-	filter "system:linux"
-		buildoptions {"-std=c++11"}
+	filter "language:C++"
+		buildoptions { "-std=c++11" }
 
 
 project "Box2D"
