@@ -5,10 +5,10 @@ workspace "Box2D"
 	location ( "Build/%{_ACTION}" )
 	architecture "x86_64"
 	configurations { "Debug", "Release" }
-	
+
 	configuration "vs*"
 		defines { "_CRT_SECURE_NO_WARNINGS" }	
-	
+
 	filter "configurations:Debug"
 		targetdir ( "Build/%{_ACTION}/bin/Debug" )
 	 	defines { "DEBUG" }
@@ -19,8 +19,8 @@ workspace "Box2D"
 		defines { "NDEBUG" }
 		optimize "On"
 
-	filter "system:linux"
-		buildoptions {"-std=c++11"}
+	filter "language:C++"
+		buildoptions { "-std=c++11" }
 
 
 project "Box2D"
@@ -28,12 +28,11 @@ project "Box2D"
 	language "C++"
 	files { "Box2D/**.h", "Box2D/**.cpp" }
 	includedirs { "." }
-		
-	
+
 project "GLEW"
 	kind "StaticLib"
 	language "C++"
-	defines {"GLEW_STATIC"}
+	defines { "GLEW_STATIC" }
 	files { "glew/*.h", "glew/*.c" }
 	includedirs { "." }
 
@@ -59,19 +58,19 @@ project "GLFW"
 			"glfw/wgl_context.h",
 			"glfw/egl_context.h",
 			"glfw/win32_init.c",
-            "glfw/win32_joystick.c",
+			"glfw/win32_joystick.c",
 			"glfw/win32_monitor.c",
 			"glfw/win32_time.c",
-            "glfw/win32_tls.c",
-            "glfw/win32_window.c",
-        	"glfw/wgl_context.c",
-        	"glfw/egl_context.c"
-        }
-   
-        for i, v in ipairs(glfw_common) do
-        	f[#f + 1] = glfw_common[i]
-        end
-    	files(f)
+			"glfw/win32_tls.c",
+			"glfw/win32_window.c",
+			"glfw/wgl_context.c",
+			"glfw/egl_context.c"
+		}
+
+		for i, v in ipairs(glfw_common) do
+			f[#f + 1] = glfw_common[i]
+		end
+		files(f)
 
 	configuration { "macosx" }
 		local f = {
@@ -84,16 +83,16 @@ project "GLFW"
 			"glfw/cocoa_joystick.m",
 			"glfw/cocoa_monitor.m",
 			"glfw/cocoa_window.m",
-            "glfw/cocoa_time.c",
-            "glfw/posix_tls.c",
-            "glfw/nsgl_context.m",
-            "glfw/egl_context.c"
-        }
+			"glfw/cocoa_time.c",
+			"glfw/posix_tls.c",
+			"glfw/nsgl_context.m",
+			"glfw/egl_context.c"
+		}
 
-        for i, v in ipairs(glfw_common) do
-        	f[#f + 1] = glfw_common[i]
-        end
-    	files(f)
+		for i, v in ipairs(glfw_common) do
+			f[#f + 1] = glfw_common[i]
+		end
+		files(f)
 	configuration { "not windows", "not macosx" }
 		local f = {
 			"glfw/x11_platform.h",
@@ -109,27 +108,27 @@ project "GLFW"
 			"glfw/glx_context.h",
 			"glfw/glx_context.c",
 			"glfw/glext.h",
-            "glfw/xkb_unicode.c",
-            "glfw/linux_joystick.c",
-            "glfw/posix_time.c",
-        	"glfw/posix_tls.c",
-        	"glfw/glx_context.c",
-        	"glfw/egl_context.c"
-        }
+			"glfw/xkb_unicode.c",
+			"glfw/linux_joystick.c",
+			"glfw/posix_time.c",
+			"glfw/posix_tls.c",
+			"glfw/glx_context.c",
+			"glfw/egl_context.c"
+		}
 
-        for i, v in ipairs(glfw_common) do
-        	f[#f + 1] = glfw_common[i]
-        end
-    	files(f)
+		for i, v in ipairs(glfw_common) do
+			f[#f + 1] = glfw_common[i]
+		end
+		files(f)
 
 project "IMGUI"
 	kind "StaticLib"
 	language "C++"
-	defines {"GLEW_STATIC"}
+	defines { "GLEW_STATIC" }
 	files { "imgui/*.h", "imgui/*.cpp" }
 	includedirs { "." }
 	configuration { "macosx" }
-    	defines{ "GLFW_INCLUDE_GLCOREARB" }
+		defines { "GLFW_INCLUDE_GLCOREARB" }
 
 project "HelloWorld"
 	kind "ConsoleApp"
@@ -165,19 +164,18 @@ project "HelloWorld"
 	files { "HelloWorld/HelloWorld.cpp" }
 	includedirs { "." }
 	links { "Box2D" }
-
 
 project "Testbed"
 	kind "ConsoleApp"
 	language "C++"
-	defines {"GLEW_STATIC"}
+	defines { "GLEW_STATIC" }
 	files { "Testbed/**.h", "Testbed/**.cpp" }
 	includedirs { "." }
 	links { "Box2D", "GLFW", "IMGUI"}
 	configuration { "windows" }
 		links { "GLEW", "glu32", "opengl32", "winmm" }
 	configuration { "macosx" }
-    	defines{ "GLFW_INCLUDE_GLCOREARB" }
+		defines { "GLFW_INCLUDE_GLCOREARB" }
 		links { "OpenGL.framework", "Cocoa.framework", "IOKit.framework", "CoreFoundation.framework", "CoreVideo.framework"}
 	configuration { "gmake" }
 		links { "GL", "GLU", "GLEW", "X11", "Xrandr", "Xinerama", "Xcursor", "pthread", "dl" }
