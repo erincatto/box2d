@@ -22,7 +22,6 @@ workspace "Box2D"
 	filter "language:C++"
 		buildoptions { "-std=c++11" }
 
-
 project "Box2D"
 	kind "StaticLib"
 	language "C++"
@@ -36,23 +35,23 @@ project "GLEW"
 	files { "glew/*.h", "glew/*.c" }
 	includedirs { "." }
 
-local glfw_common = {
-	"glfw/internal.h",
-	"glfw/glfw_config.h",
-	"glfw/glfw3.h",
-	"glfw/glfw3native.h",
-	"glfw/context.c",
-	"glfw/init.c",
-	"glfw/input.c",
-	"glfw/monitor.c",
-	"glfw/vulkan.c",
-	"glfw/window.c" }
-
 project "GLFW"
 	kind "StaticLib"
 	language "C"
+	files {
+		"glfw/internal.h",
+		"glfw/glfw_config.h",
+		"glfw/glfw3.h",
+		"glfw/glfw3native.h",
+		"glfw/context.c",
+		"glfw/init.c",
+		"glfw/input.c",
+		"glfw/monitor.c",
+		"glfw/vulkan.c",
+		"glfw/window.c" }
+
 	configuration { "windows" }
-		local f = {
+		files {
 			"glfw/win32_platform.h",
 			"glfw/win32_joystick.h",
 			"glfw/wgl_context.h",
@@ -67,13 +66,8 @@ project "GLFW"
 			"glfw/egl_context.c"
 		}
 
-		for i, v in ipairs(glfw_common) do
-			f[#f + 1] = glfw_common[i]
-		end
-		files(f)
-
 	configuration { "macosx" }
-		local f = {
+		files {
 			"glfw/cocoa_platform.h",
 			"glfw/iokit_joystick.h",
 			"glfw/posix_tls.h",
@@ -89,12 +83,8 @@ project "GLFW"
 			"glfw/egl_context.c"
 		}
 
-		for i, v in ipairs(glfw_common) do
-			f[#f + 1] = glfw_common[i]
-		end
-		files(f)
 	configuration { "not windows", "not macosx" }
-		local f = {
+		files {
 			"glfw/x11_platform.h",
 			"glfw/xkb_unicode.h",
 			"glfw/linux_joystick.h",
@@ -115,11 +105,6 @@ project "GLFW"
 			"glfw/glx_context.c",
 			"glfw/egl_context.c"
 		}
-
-		for i, v in ipairs(glfw_common) do
-			f[#f + 1] = glfw_common[i]
-		end
-		files(f)
 
 project "IMGUI"
 	kind "StaticLib"
