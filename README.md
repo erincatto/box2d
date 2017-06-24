@@ -27,7 +27,7 @@ Please do not submit pull requests with new features. Instead, please file an is
 ### Collision
 - Continuous collision detection
 - Contact callbacks: begin, end, pre-solve, post-solve
-- Convex polyons and circles.
+- Convex polygons and circles
 - Multiple shapes per body
 - One-shot contact manifolds
 - Dynamic tree broadphase
