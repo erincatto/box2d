@@ -242,14 +242,14 @@ public:
 	float32 GetInertia() const;
 
 	/// Get the mass data of the body.
-	/// @return a struct containing the mass, inertia and center of the body.
+	/// @param data a struct for setting the mass, inertia and center of the body.
 	void GetMassData(b2MassData* data) const;
 
 	/// Set the mass properties to override the mass properties of the fixtures.
 	/// Note that this changes the center of mass position.
 	/// Note that creating or destroying fixtures can also alter the mass.
 	/// This function has no effect if the body isn't dynamic.
-	/// @param massData the mass properties.
+	/// @param data the mass properties.
 	void SetMassData(const b2MassData* data);
 
 	/// This resets the mass properties to the sum of the mass properties of the fixtures.
@@ -268,22 +268,22 @@ public:
 	b2Vec2 GetWorldVector(const b2Vec2& localVector) const;
 
 	/// Gets a local point relative to the body's origin given a world point.
-	/// @param a point in world coordinates.
+	/// @param worldPoint point in world coordinates.
 	/// @return the corresponding local point relative to the body's origin.
 	b2Vec2 GetLocalPoint(const b2Vec2& worldPoint) const;
 
 	/// Gets a local vector given a world vector.
-	/// @param a vector in world coordinates.
+	/// @param worldVector vector in world coordinates.
 	/// @return the corresponding local vector.
 	b2Vec2 GetLocalVector(const b2Vec2& worldVector) const;
 
 	/// Get the world linear velocity of a world point attached to this body.
-	/// @param a point in world coordinates.
+	/// @param worldPoint point in world coordinates.
 	/// @return the world velocity of a point.
 	b2Vec2 GetLinearVelocityFromWorldPoint(const b2Vec2& worldPoint) const;
 
 	/// Get the world velocity of a local point.
-	/// @param a point in local coordinates.
+	/// @param localPoint point in local coordinates.
 	/// @return the world velocity of a point.
 	b2Vec2 GetLinearVelocityFromLocalPoint(const b2Vec2& localPoint) const;
 

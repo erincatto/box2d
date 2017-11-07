@@ -99,7 +99,7 @@ public:
 	float32 GetDampingRatio() const;
 
 	/// Dump joint to dmLog
-	void Dump();
+	void Dump() override;
 
 protected:
 
