@@ -70,6 +70,7 @@
 #include "VaryingRestitution.h"
 #include "VerticalStack.h"
 #include "Web.h"
+#include "iforce2d_Buoyancy_boat.h"
 
 TestEntry g_testEntries[] =
 {
@@ -125,5 +126,6 @@ TestEntry g_testEntries[] =
 	{"Sensor Test", SensorTest::Create},
 	{"Varying Friction", VaryingFriction::Create},
 	{"Add Pair Stress Test", AddPair::Create},
+    {"Buoyancy Test", iforce2d_Buoyancy_boat::Create},
 	{NULL, NULL}
 };
