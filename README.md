@@ -59,10 +59,12 @@ Please do not submit pull requests with new features. Instead, please file an is
 - Mouse picking and the bomb!
 - CMake build system files
 
-### Documentation
-- User manual
-- Doxygen document with code comments
-- Active user forum
+## Documentation
+You can find documentation related to the project in the [documentation page](http://box2d.org/documentation/) and in the [documentation folder](https://github.com/erincatto/Box2D/tree/master/Box2D/Documentation) in GitHub
+- [User manual](http://box2d.org/manual.pdf)
+- [Doxygen document](https://github.com/dknacht/Box2D/blob/master/Box2D/Documentation/Doxyfile) with code comments
+- [Active user forum](http://box2d.org/forum/)
+You can also visit the project wiki where you will find the [FAQ](https://github.com/erincatto/Box2D/wiki/FAQ)'s page
 
 ## License
 
