@@ -34,18 +34,13 @@ inline bool b2IsValid(float32 x)
 /// This is a approximate yet fast inverse square-root.
 inline float32 b2InvSqrt(float32 x)
 {
-	union
-	{
-		float32 x;
-		int32 i;
-	} convert;
+	int32 i;
+	memcpy(&i, &x, sizeof(x));
+	i = 0x5f3759df - (i >> 1);
+	memcpy(&x, &i, sizeof(x));
 
-	convert.x = x;
 	float32 xhalf = 0.5f * x;
-	convert.i = 0x5f3759df - (convert.i >> 1);
-	x = convert.x;
-	x = x * (1.5f - xhalf * x * x);
-	return x;
+	return x * (1.5f - xhalf * x * x);
 }
 
 #define	b2Sqrt(x)	sqrtf(x)
