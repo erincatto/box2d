@@ -26,6 +26,9 @@
 // J = [-I -r1_skew I r2_skew ]
 // Identity used:
 // w k % (rx i + ry j) = w * (-ry i + rx j)
+//
+// r1 = offset - c1
+// r2 = -c2
 
 // Angle constraint
 // Cdot = w2 - w1
@@ -82,11 +85,10 @@ void b2MotorJoint::InitVelocityConstraints(const b2SolverData& data)
 	b2Rot qA(aA), qB(aB);
 
 	// Compute the effective mass matrix.
-	m_rA = b2Mul(qA, -m_localCenterA);
+	m_rA = b2Mul(qA, m_linearOffset - m_localCenterA);
 	m_rB = b2Mul(qB, -m_localCenterB);
 
 	// J = [-I -r1_skew I r2_skew]
-	//     [ 0       -1 0       1]
 	// r_skew = [-ry; rx]
 
 	// Matlab
@@ -94,9 +96,12 @@ void b2MotorJoint::InitVelocityConstraints(const b2SolverData& data)
 	//     [  -r1y*iA*r1x-r2y*iB*r2x, mA+r1x^2*iA+mB+r2x^2*iB,           r1x*iA+r2x*iB]
 	//     [          -r1y*iA-r2y*iB,           r1x*iA+r2x*iB,                   iA+iB]
 
+
+
 	float32 mA = m_invMassA, mB = m_invMassB;
 	float32 iA = m_invIA, iB = m_invIB;
 
+	// Upper 2 by 2 of K for point to point
 	b2Mat22 K;
 	K.ex.x = mA + mB + iA * m_rA.y * m_rA.y + iB * m_rB.y * m_rB.y;
 	K.ex.y = -iA * m_rA.x * m_rA.y - iB * m_rB.x * m_rB.y;
@@ -111,7 +116,7 @@ void b2MotorJoint::InitVelocityConstraints(const b2SolverData& data)
 		m_angularMass = 1.0f / m_angularMass;
 	}
 
-	m_linearError = cB + m_rB - cA - m_rA - b2Mul(qA, m_linearOffset);
+	m_linearError = cB + m_rB - cA - m_rA;
 	m_angularError = aB - aA - m_angularOffset;
 
 	if (data.step.warmStarting)
