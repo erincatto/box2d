@@ -5,9 +5,10 @@ workspace "Box2D"
 	location ( "Build/%{_ACTION}" )
 	architecture "x86_64"
 	configurations { "Debug", "Release" }
+	startproject "Testbed"
 
 	configuration "vs*"
-		defines { "_CRT_SECURE_NO_WARNINGS" }	
+		defines { "_CRT_SECURE_NO_WARNINGS" }
 
 	filter "configurations:Debug"
 		targetdir ( "Build/%{_ACTION}/bin/Debug" )
@@ -125,6 +126,7 @@ project "HelloWorld"
 project "Testbed"
 	kind "ConsoleApp"
 	language "C++"
+	debugdir "Testbed"
 	defines { "GLEW_STATIC" }
 	files { "Testbed/**.h", "Testbed/**.cpp" }
 	includedirs { "." }
