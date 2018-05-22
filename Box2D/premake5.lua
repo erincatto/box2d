@@ -7,11 +7,11 @@ workspace "Box2D"
 	configurations { "Debug", "Release" }
 
 	configuration "vs*"
-		defines { "_CRT_SECURE_NO_WARNINGS" }	
+		defines { "_CRT_SECURE_NO_WARNINGS" }
 
 	filter "configurations:Debug"
 		targetdir ( "Build/%{_ACTION}/bin/Debug" )
-	 	defines { "DEBUG" }
+		defines { "DEBUG" }
 		symbols "On"
 
 	filter "configurations:Release"
@@ -19,12 +19,10 @@ workspace "Box2D"
 		defines { "NDEBUG" }
 		optimize "On"
 
-	filter { "language:C++", "toolset:gcc" }
-		buildoptions { "-std=c++11" }
-
 project "Box2D"
 	kind "StaticLib"
 	language "C++"
+	cppdialect "C++11"
 	files { "Box2D/**.h", "Box2D/**.cpp" }
 	includedirs { "." }
 
@@ -118,6 +116,7 @@ project "IMGUI"
 project "HelloWorld"
 	kind "ConsoleApp"
 	language "C++"
+	cppdialect "C++11"
 	files { "HelloWorld/HelloWorld.cpp" }
 	includedirs { "." }
 	links { "Box2D" }
@@ -125,6 +124,7 @@ project "HelloWorld"
 project "Testbed"
 	kind "ConsoleApp"
 	language "C++"
+	cppdialect "C++11"
 	defines { "GLEW_STATIC" }
 	files { "Testbed/**.h", "Testbed/**.cpp" }
 	includedirs { "." }
