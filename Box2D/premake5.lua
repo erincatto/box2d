@@ -3,6 +3,7 @@
 
 workspace 'Box2D'
 	configurations { 'Debug', 'Release' }
+	startproject 'Testbed'
 
     filter 'system:linux'
         platforms { 'x86_64' }
@@ -11,6 +12,7 @@ workspace 'Box2D'
         platforms { 'x86_64' }
     filter 'system:windows'
         platforms { 'x86', 'x86_64' }
+        defaultplatform 'x86_64'
 	filter 'action:vs*'
 		defines { '_CRT_SECURE_NO_WARNINGS' }
 	filter 'configurations:Debug'
@@ -126,6 +128,7 @@ project 'HelloWorld'
 project 'Testbed'
 	kind 'ConsoleApp'
 	language 'C++'
+	debugdir 'Testbed'
 	defines { 'GLEW_STATIC' }
 	files { 'Testbed/**.h', 'Testbed/**.cpp' }
 	includedirs { '.' }
