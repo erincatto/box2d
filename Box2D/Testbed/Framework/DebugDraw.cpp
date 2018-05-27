@@ -178,7 +178,6 @@ static GLuint sCreateShaderProgram(const char* vs, const char* fs)
 	GLuint programId = glCreateProgram();
 	glAttachShader(programId, vsId);
 	glAttachShader(programId, fsId);
-    glBindFragDataLocation(programId, 0, "color");
 	glLinkProgram(programId);
 
 	glDeleteShader(vsId);
@@ -218,48 +217,31 @@ struct GLRenderPoints
         
 		m_programId = sCreateShaderProgram(vs, fs);
 		m_projectionUniform = glGetUniformLocation(m_programId, "projectionMatrix");
-		m_vertexAttribute = glGetAttribLocation(m_programId, "v_position");
+		m_positionAttribute = glGetAttribLocation(m_programId, "v_position");
 		m_colorAttribute = glGetAttribLocation(m_programId, "v_color");
 		m_sizeAttribute = glGetAttribLocation(m_programId, "v_size");
         
 		// Generate
-		glGenVertexArrays(1, &m_vaoId);
-		glGenBuffers(3, m_vboIds);
-        
-		glBindVertexArray(m_vaoId);
-		glEnableVertexAttribArray(m_vertexAttribute);
-		glEnableVertexAttribArray(m_colorAttribute);
-		glEnableVertexAttribArray(m_sizeAttribute);
+		glGenBuffers(1, &m_vboId);
         
 		// Vertex buffer
-		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[0]);
-		glVertexAttribPointer(m_vertexAttribute, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+		glBindBuffer(GL_ARRAY_BUFFER, m_vboId);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(m_vertices), m_vertices, GL_DYNAMIC_DRAW);
         
-		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[1]);
-		glVertexAttribPointer(m_colorAttribute, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-		glBufferData(GL_ARRAY_BUFFER, sizeof(m_colors), m_colors, GL_DYNAMIC_DRAW);
-        
-		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[2]);
-		glVertexAttribPointer(m_sizeAttribute, 1, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-		glBufferData(GL_ARRAY_BUFFER, sizeof(m_sizes), m_sizes, GL_DYNAMIC_DRAW);
-
 		sCheckGLError();
         
 		// Cleanup
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
         
 		m_count = 0;
 	}
     
 	void Destroy()
 	{
-		if (m_vaoId)
+		if (m_vboId)
 		{
-			glDeleteVertexArrays(1, &m_vaoId);
-			glDeleteBuffers(2, m_vboIds);
-			m_vaoId = 0;
+			glDeleteBuffers(1, &m_vboId);
+			m_vboId = 0;
 		}
         
 		if (m_programId)
@@ -274,9 +256,9 @@ struct GLRenderPoints
 		if (m_count == e_maxVertices)
 			Flush();
         
-		m_vertices[m_count] = v;
-		m_colors[m_count] = c;
-		m_sizes[m_count] = size;
+		m_vertices[m_count].position = v;
+		m_vertices[m_count].color = c;
+		m_vertices[m_count].size = size;
 		++m_count;
 	}
     
@@ -292,16 +274,16 @@ struct GLRenderPoints
         
 		glUniformMatrix4fv(m_projectionUniform, 1, GL_FALSE, proj);
         
-		glBindVertexArray(m_vaoId);
-        
-		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[0]);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(b2Vec2), m_vertices);
-        
-		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[1]);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(b2Color), m_colors);
-        
-		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[2]);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(float32), m_sizes);
+		glBindBuffer(GL_ARRAY_BUFFER, m_vboId);
+		glEnableVertexAttribArray(m_positionAttribute);
+        glEnableVertexAttribArray(m_colorAttribute);
+        glEnableVertexAttribArray(m_sizeAttribute);
+		#define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
+		glVertexAttribPointer(m_positionAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), (GLvoid*)OFFSETOF(VertexFormat, position));
+		glVertexAttribPointer(m_colorAttribute, 4, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), (GLvoid*)OFFSETOF(VertexFormat, color));
+		glVertexAttribPointer(m_sizeAttribute, 1, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), (GLvoid*)OFFSETOF(VertexFormat, size));
+		#undef OFFSETOF
+		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(VertexFormat), m_vertices);
 
 		glEnable(GL_PROGRAM_POINT_SIZE);
 		glDrawArrays(GL_POINTS, 0, m_count);
@@ -310,24 +292,28 @@ struct GLRenderPoints
 		sCheckGLError();
         
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
+		glDisableVertexAttribArray(m_positionAttribute);
+        glDisableVertexAttribArray(m_colorAttribute);
+        glDisableVertexAttribArray(m_sizeAttribute);
 		glUseProgram(0);
         
 		m_count = 0;
 	}
     
 	enum { e_maxVertices = 512 };
-	b2Vec2 m_vertices[e_maxVertices];
-	b2Color m_colors[e_maxVertices];
-    float32 m_sizes[e_maxVertices];
+	struct VertexFormat {
+		b2Vec2 position;
+		b2Color color;
+		float size;
+	};
+	VertexFormat m_vertices[e_maxVertices];
 
 	int32 m_count;
     
-	GLuint m_vaoId;
-	GLuint m_vboIds[3];
+	GLuint m_vboId;
 	GLuint m_programId;
 	GLint m_projectionUniform;
-	GLint m_vertexAttribute;
+	GLint m_positionAttribute;
 	GLint m_colorAttribute;
 	GLint m_sizeAttribute;
 };
@@ -357,42 +343,30 @@ struct GLRenderLines
         
 		m_programId = sCreateShaderProgram(vs, fs);
 		m_projectionUniform = glGetUniformLocation(m_programId, "projectionMatrix");
-		m_vertexAttribute = glGetAttribLocation(m_programId, "v_position");
+		m_positionAttribute = glGetAttribLocation(m_programId, "v_position");
 		m_colorAttribute = glGetAttribLocation(m_programId, "v_color");
         
 		// Generate
-		glGenVertexArrays(1, &m_vaoId);
-		glGenBuffers(2, m_vboIds);
-        
-		glBindVertexArray(m_vaoId);
-		glEnableVertexAttribArray(m_vertexAttribute);
-		glEnableVertexAttribArray(m_colorAttribute);
+		glGenBuffers(1, &m_vboId);
         
 		// Vertex buffer
-		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[0]);
-		glVertexAttribPointer(m_vertexAttribute, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+		glBindBuffer(GL_ARRAY_BUFFER, m_vboId);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(m_vertices), m_vertices, GL_DYNAMIC_DRAW);
-        
-		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[1]);
-		glVertexAttribPointer(m_colorAttribute, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-		glBufferData(GL_ARRAY_BUFFER, sizeof(m_colors), m_colors, GL_DYNAMIC_DRAW);
         
 		sCheckGLError();
         
 		// Cleanup
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
         
 		m_count = 0;
 	}
     
 	void Destroy()
 	{
-		if (m_vaoId)
+		if (m_vboId)
 		{
-			glDeleteVertexArrays(1, &m_vaoId);
-			glDeleteBuffers(2, m_vboIds);
-			m_vaoId = 0;
+			glDeleteBuffers(1, &m_vboId);
+			m_vboId = 0;
 		}
         
 		if (m_programId)
@@ -407,8 +381,8 @@ struct GLRenderLines
 		if (m_count == e_maxVertices)
 			Flush();
         
-		m_vertices[m_count] = v;
-		m_colors[m_count] = c;
+		m_vertices[m_count].position = v;
+		m_vertices[m_count].color = c;
 		++m_count;
 	}
     
@@ -424,36 +398,40 @@ struct GLRenderLines
         
 		glUniformMatrix4fv(m_projectionUniform, 1, GL_FALSE, proj);
         
-		glBindVertexArray(m_vaoId);
-        
-		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[0]);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(b2Vec2), m_vertices);
-        
-		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[1]);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(b2Color), m_colors);
+		glBindBuffer(GL_ARRAY_BUFFER, m_vboId);
+		glEnableVertexAttribArray(m_positionAttribute);
+        glEnableVertexAttribArray(m_colorAttribute);
+		#define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
+		glVertexAttribPointer(m_positionAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), (GLvoid*)OFFSETOF(VertexFormat, position));
+		glVertexAttribPointer(m_colorAttribute, 4, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), (GLvoid*)OFFSETOF(VertexFormat, color));
+		#undef OFFSETOF
+		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(VertexFormat), m_vertices);
         
 		glDrawArrays(GL_LINES, 0, m_count);
         
 		sCheckGLError();
         
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
+		glDisableVertexAttribArray(m_positionAttribute);
+        glDisableVertexAttribArray(m_colorAttribute);
 		glUseProgram(0);
         
 		m_count = 0;
 	}
     
 	enum { e_maxVertices = 2 * 512 };
-	b2Vec2 m_vertices[e_maxVertices];
-	b2Color m_colors[e_maxVertices];
+	struct VertexFormat {
+		b2Vec2 position;
+		b2Color color;
+	};
+	VertexFormat m_vertices[e_maxVertices];
     
 	int32 m_count;
     
-	GLuint m_vaoId;
-	GLuint m_vboIds[2];
+	GLuint m_vboId;
 	GLuint m_programId;
 	GLint m_projectionUniform;
-	GLint m_vertexAttribute;
+	GLint m_positionAttribute;
 	GLint m_colorAttribute;
 };
 
@@ -482,42 +460,30 @@ struct GLRenderTriangles
 
 		m_programId = sCreateShaderProgram(vs, fs);
 		m_projectionUniform = glGetUniformLocation(m_programId, "projectionMatrix");
-		m_vertexAttribute = glGetAttribLocation(m_programId, "v_position");
+		m_positionAttribute = glGetAttribLocation(m_programId, "v_position");
 		m_colorAttribute = glGetAttribLocation(m_programId, "v_color");
 
 		// Generate
-		glGenVertexArrays(1, &m_vaoId);
-		glGenBuffers(2, m_vboIds);
-
-		glBindVertexArray(m_vaoId);
-		glEnableVertexAttribArray(m_vertexAttribute);
-		glEnableVertexAttribArray(m_colorAttribute);
+		glGenBuffers(1, &m_vboId);
 
 		// Vertex buffer
-		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[0]);
-		glVertexAttribPointer(m_vertexAttribute, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+		glBindBuffer(GL_ARRAY_BUFFER, m_vboId);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(m_vertices), m_vertices, GL_DYNAMIC_DRAW);
-
-		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[1]);
-		glVertexAttribPointer(m_colorAttribute, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-		glBufferData(GL_ARRAY_BUFFER, sizeof(m_colors), m_colors, GL_DYNAMIC_DRAW);
 
 		sCheckGLError();
 
 		// Cleanup
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
 
 		m_count = 0;
 	}
 
 	void Destroy()
 	{
-		if (m_vaoId)
+		if (m_vboId)
 		{
-			glDeleteVertexArrays(1, &m_vaoId);
-			glDeleteBuffers(2, m_vboIds);
-			m_vaoId = 0;
+			glDeleteBuffers(1, &m_vboId);
+			m_vboId = 0;
 		}
 
 		if (m_programId)
@@ -532,8 +498,8 @@ struct GLRenderTriangles
 		if (m_count == e_maxVertices)
 			Flush();
 
-		m_vertices[m_count] = v;
-		m_colors[m_count] = c;
+		m_vertices[m_count].position = v;
+		m_vertices[m_count].color = c;
 		++m_count;
 	}
 
@@ -549,13 +515,14 @@ struct GLRenderTriangles
         
 		glUniformMatrix4fv(m_projectionUniform, 1, GL_FALSE, proj);
         
-		glBindVertexArray(m_vaoId);
-        
-		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[0]);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(b2Vec2), m_vertices);
-        
-		glBindBuffer(GL_ARRAY_BUFFER, m_vboIds[1]);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(b2Color), m_colors);
+		glBindBuffer(GL_ARRAY_BUFFER, m_vboId);
+		glEnableVertexAttribArray(m_positionAttribute);
+        glEnableVertexAttribArray(m_colorAttribute);
+		#define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
+		glVertexAttribPointer(m_positionAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), (GLvoid*)OFFSETOF(VertexFormat, position));
+		glVertexAttribPointer(m_colorAttribute, 4, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), (GLvoid*)OFFSETOF(VertexFormat, color));
+		#undef OFFSETOF
+		glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(VertexFormat), m_vertices);
         
         glEnable(GL_BLEND);
         glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -565,23 +532,26 @@ struct GLRenderTriangles
 		sCheckGLError();
         
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
+		glDisableVertexAttribArray(m_positionAttribute);
+        glDisableVertexAttribArray(m_colorAttribute);
 		glUseProgram(0);
         
 		m_count = 0;
 	}
     
 	enum { e_maxVertices = 3 * 512 };
-	b2Vec2 m_vertices[e_maxVertices];
-	b2Color m_colors[e_maxVertices];
+	struct VertexFormat {
+		b2Vec2 position;
+		b2Color color;
+	};
+	VertexFormat m_vertices[e_maxVertices];
 
 	int32 m_count;
 
-	GLuint m_vaoId;
-	GLuint m_vboIds[2];
+	GLuint m_vboId;
 	GLuint m_programId;
 	GLint m_projectionUniform;
-	GLint m_vertexAttribute;
+	GLint m_positionAttribute;
 	GLint m_colorAttribute;
 };
 
