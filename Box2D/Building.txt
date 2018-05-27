@@ -5,10 +5,18 @@ Building the testbed is optional and may not work on your platform. I use premak
 I support premake working well for Visual Studio on Windows 10 and Xcode on on MacOS. I appreciate contributions to get premake working on other platforms.
 
 Here are the steps for Visual Studio 2017:
+- Copy premake5.exe to your project folder ~\Box2D\Box2D
+- Command line: cd ~\Box2D\Box2D
 - Command line: premake5 vs2017
 - Open the resulting Box2D.sln (should be in Build/vs2017)
 - Set Testbed as the startup project
+        - (Details) In the 'Solution Explorer' right click on 'TestBed' and click 'Set as Startup Project'
 - In the Testbed debugging properties, set the Working Directory to ..\..\Testbed
+        - (Details) In the 'Solution Explorer' right click on 'TestBed' and click 'Properties'
+        - (Details) On the left select 'Debugging'. Set the 'Working Directory' to ..\..\Testbed
+- Now for each solution TestBed/IMGUI/GLFW/GLEW/Box2D
+	Right Click on each solution / Click on Properties / Click on VC++ Directories / Click on Include Directories
+	Add "C:\Program Files (x86)\Windows Kits\10\Include\10.0.14393.0\ucrt;" and Apply        
 - Press F5 to build and run the Testbed
 
 Here are the steps for Xcode:
