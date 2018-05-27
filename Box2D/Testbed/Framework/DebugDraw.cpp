@@ -197,33 +197,30 @@ struct GLRenderPoints
 	void Create()
 	{
 		const char* vs = \
-        "#version 330\n"
         "uniform mat4 projectionMatrix;\n"
-        "layout(location = 0) in vec2 v_position;\n"
-        "layout(location = 1) in vec4 v_color;\n"
-		"layout(location = 2) in float v_size;\n"
-        "out vec4 f_color;\n"
+        "attribute vec2 v_position;\n"
+        "attribute vec4 v_color;\n"
+		"attribute float v_size;\n"
+        "varying vec4 f_color;\n"
         "void main(void)\n"
         "{\n"
         "	f_color = v_color;\n"
-        "	gl_Position = projectionMatrix * vec4(v_position, 0.0f, 1.0f);\n"
+        "	gl_Position = projectionMatrix * vec4(v_position, 0.0, 1.0);\n"
 		"   gl_PointSize = v_size;\n"
         "}\n";
         
 		const char* fs = \
-        "#version 330\n"
-        "in vec4 f_color;\n"
-        "out vec4 color;\n"
+        "varying vec4 f_color;\n"
         "void main(void)\n"
         "{\n"
-        "	color = f_color;\n"
+        "	gl_FragColor = f_color;\n"
         "}\n";
         
 		m_programId = sCreateShaderProgram(vs, fs);
 		m_projectionUniform = glGetUniformLocation(m_programId, "projectionMatrix");
-		m_vertexAttribute = 0;
-		m_colorAttribute = 1;
-		m_sizeAttribute = 2;
+		m_vertexAttribute = glGetAttribLocation(m_programId, "v_position");
+		m_colorAttribute = glGetAttribLocation(m_programId, "v_color");
+		m_sizeAttribute = glGetAttribLocation(m_programId, "v_size");
         
 		// Generate
 		glGenVertexArrays(1, &m_vaoId);
@@ -341,30 +338,27 @@ struct GLRenderLines
 	void Create()
 	{
 		const char* vs = \
-        "#version 330\n"
         "uniform mat4 projectionMatrix;\n"
-        "layout(location = 0) in vec2 v_position;\n"
-        "layout(location = 1) in vec4 v_color;\n"
-        "out vec4 f_color;\n"
+        "attribute vec2 v_position;\n"
+        "attribute vec4 v_color;\n"
+        "varying vec4 f_color;\n"
         "void main(void)\n"
         "{\n"
         "	f_color = v_color;\n"
-        "	gl_Position = projectionMatrix * vec4(v_position, 0.0f, 1.0f);\n"
+        "	gl_Position = projectionMatrix * vec4(v_position, 0.0, 1.0);\n"
         "}\n";
         
 		const char* fs = \
-        "#version 330\n"
-        "in vec4 f_color;\n"
-        "out vec4 color;\n"
+        "varying vec4 f_color;\n"
         "void main(void)\n"
         "{\n"
-        "	color = f_color;\n"
+        "	gl_FragColor = f_color;\n"
         "}\n";
         
 		m_programId = sCreateShaderProgram(vs, fs);
 		m_projectionUniform = glGetUniformLocation(m_programId, "projectionMatrix");
-		m_vertexAttribute = 0;
-		m_colorAttribute = 1;
+		m_vertexAttribute = glGetAttribLocation(m_programId, "v_position");
+		m_colorAttribute = glGetAttribLocation(m_programId, "v_color");
         
 		// Generate
 		glGenVertexArrays(1, &m_vaoId);
@@ -469,30 +463,27 @@ struct GLRenderTriangles
 	void Create()
 	{
 		const char* vs = \
-			"#version 330\n"
 			"uniform mat4 projectionMatrix;\n"
-			"layout(location = 0) in vec2 v_position;\n"
-			"layout(location = 1) in vec4 v_color;\n"
-			"out vec4 f_color;\n"
+			"attribute vec2 v_position;\n"
+			"attribute vec4 v_color;\n"
+			"varying vec4 f_color;\n"
 			"void main(void)\n"
 			"{\n"
 			"	f_color = v_color;\n"
-			"	gl_Position = projectionMatrix * vec4(v_position, 0.0f, 1.0f);\n"
+			"	gl_Position = projectionMatrix * vec4(v_position, 0.0, 1.0);\n"
 			"}\n";
 
 		const char* fs = \
-			"#version 330\n"
-			"in vec4 f_color;\n"
-            "out vec4 color;\n"
+			"varying vec4 f_color;\n"
 			"void main(void)\n"
 			"{\n"
-			"	color = f_color;\n"
+			"	gl_FragColor = f_color;\n"
 			"}\n";
 
 		m_programId = sCreateShaderProgram(vs, fs);
 		m_projectionUniform = glGetUniformLocation(m_programId, "projectionMatrix");
-		m_vertexAttribute = 0;
-		m_colorAttribute = 1;
+		m_vertexAttribute = glGetAttribLocation(m_programId, "v_position");
+		m_colorAttribute = glGetAttribLocation(m_programId, "v_color");
 
 		// Generate
 		glGenVertexArrays(1, &m_vaoId);
