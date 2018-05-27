@@ -67,8 +67,9 @@ static void sCreateUI(GLFWwindow* window)
 	ui.showMenu = true;
 
 	// Init UI
-	const char* fontPath = "Data/DroidSans.ttf";
-	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath, 15.f);
+	extern const unsigned int DroidSans_compressed_size;
+	extern const unsigned int DroidSans_compressed_data[];
+	ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(DroidSans_compressed_data, DroidSans_compressed_size, 15.f);
 
 	if (ImGui_ImplGlfwGL3_Init(window, false) == false)
 	{
