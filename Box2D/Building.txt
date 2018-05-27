@@ -7,8 +7,8 @@ I support premake working well for Visual Studio on Windows 10 and Xcode on on M
 Here are the steps for Visual Studio 2017:
 - Command line: premake5 vs2017
 - Open the resulting Box2D.sln (should be in Build/vs2017)
-- Set Testbed as the startup project
-- In the Testbed debugging properties, set the Working Directory to ..\..\Testbed
+- Startup project: Testbed (should be set automatically by premake)
+- Working directory: Testbed (should be set automatically by premake)
 - Press F5 to build and run the Testbed
 
 Here are the steps for Xcode:
