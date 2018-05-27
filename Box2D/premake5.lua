@@ -7,7 +7,6 @@ workspace 'Box2D'
 
     filter 'system:linux'
         platforms { 'x86_64' }
-        cppdialect 'C++11'
     filter 'system:macosx'
         platforms { 'x86_64' }
     filter 'system:windows'
@@ -28,6 +27,7 @@ workspace 'Box2D'
 project 'Box2D'
 	kind 'StaticLib'
 	language 'C++'
+	cppdialect 'C++11'
 	files { 'Box2D/**.h', 'Box2D/**.cpp' }
 	includedirs { '.' }
 
@@ -121,6 +121,7 @@ project 'IMGUI'
 project 'HelloWorld'
 	kind 'ConsoleApp'
 	language 'C++'
+	cppdialect 'C++11'
 	files { 'HelloWorld/HelloWorld.cpp' }
 	includedirs { '.' }
 	links { 'Box2D' }
@@ -128,6 +129,7 @@ project 'HelloWorld'
 project 'Testbed'
 	kind 'ConsoleApp'
 	language 'C++'
+	cppdialect 'C++11'
 	debugdir 'Testbed'
 	defines { 'GLEW_STATIC' }
 	files { 'Testbed/**.h', 'Testbed/**.cpp' }
