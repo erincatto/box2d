@@ -90,6 +90,27 @@ void b2Distance(b2DistanceOutput* output,
 				b2SimplexCache* cache, 
 				const b2DistanceInput* input);
 
+/// Input parameters for b2ShapeCast
+struct b2ShapeCastInput
+{
+	b2DistanceProxy proxyA;
+	b2DistanceProxy proxyB;
+	b2Transform transformA;
+	b2Transform transformB;
+	b2Vec2 translationB;
+};
+
+/// Output results for b2ShapeCast
+struct b2ShapeCastOutput
+{
+	b2Vec2 point;
+	b2Vec2 normal;
+	float32 lambda;
+	int32 iterations;
+};
+
+/// Perform a linear shape cast of shape B moving and shape A fixed. Determines the hit point, normal, and translation fraction.
+bool b2ShapeCast(b2ShapeCastOutput* output, const b2ShapeCastInput* input);
 
 //////////////////////////////////////////////////////////////////////////
 

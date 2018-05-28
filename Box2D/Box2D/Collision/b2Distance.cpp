@@ -587,3 +587,146 @@ void b2Distance(b2DistanceOutput* output,
 		}
 	}
 }
+
+//
+bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
+{
+	const b2DistanceProxy* proxyA = &input->proxyA;
+	const b2DistanceProxy* proxyB = &input->proxyB;
+
+	b2Transform transformA = input->transformA;
+	b2Transform transformB = input->transformB;
+
+	b2Simplex simplex;
+
+	// Get simplex vertices as an array.
+	b2SimplexVertex* vertices = &simplex.m_v1;
+
+	const int32 k_maxIters = 20;
+
+	// These store the vertices of the last simplex so that we
+	// can check for duplicates and prevent cycling.
+	int32 saveA[3], saveB[3];
+	int32 saveCount = 0;
+
+	// Main iteration loop.
+	int32 iter = 0;
+	while (iter < k_maxIters)
+	{
+		// Copy simplex so we can identify duplicates.
+		saveCount = simplex.m_count;
+		for (int32 i = 0; i < saveCount; ++i)
+		{
+			saveA[i] = vertices[i].indexA;
+			saveB[i] = vertices[i].indexB;
+		}
+
+		switch (simplex.m_count)
+		{
+		case 1:
+			break;
+
+		case 2:
+			simplex.Solve2();
+			break;
+
+		case 3:
+			simplex.Solve3();
+			break;
+
+		default:
+			b2Assert(false);
+		}
+
+		// If we have 3 points, then the origin is in the corresponding triangle.
+		if (simplex.m_count == 3)
+		{
+			break;
+		}
+
+		// Get search direction.
+		b2Vec2 d = simplex.GetSearchDirection();
+
+		// Ensure the search direction is numerically fit.
+		if (d.LengthSquared() < b2_epsilon * b2_epsilon)
+		{
+			// The origin is probably contained by a line segment
+			// or triangle. Thus the shapes are overlapped.
+
+			// We can't return zero here even though there may be overlap.
+			// In case the simplex is a point, segment, or triangle it is difficult
+			// to determine if the origin is contained in the CSO or very close to it.
+			break;
+		}
+
+		// Compute a tentative new simplex vertex using support points.
+		b2SimplexVertex* vertex = vertices + simplex.m_count;
+		vertex->indexA = proxyA->GetSupport(b2MulT(transformA.q, -d));
+		vertex->wA = b2Mul(transformA, proxyA->GetVertex(vertex->indexA));
+		b2Vec2 wBLocal;
+		vertex->indexB = proxyB->GetSupport(b2MulT(transformB.q, d));
+		vertex->wB = b2Mul(transformB, proxyB->GetVertex(vertex->indexB));
+		vertex->w = vertex->wB - vertex->wA;
+
+		// Iteration count is equated to the number of support point calls.
+		++iter;
+		++b2_gjkIters;
+
+		// Check for duplicate support points. This is the main termination criteria.
+		bool duplicate = false;
+		for (int32 i = 0; i < saveCount; ++i)
+		{
+			if (vertex->indexA == saveA[i] && vertex->indexB == saveB[i])
+			{
+				duplicate = true;
+				break;
+			}
+		}
+
+		// If we found a duplicate support point we must exit to avoid cycling.
+		if (duplicate)
+		{
+			break;
+		}
+
+		// New vertex is ok and needed.
+		++simplex.m_count;
+	}
+
+	b2_gjkMaxIters = b2Max(b2_gjkMaxIters, iter);
+
+	// Prepare output.
+	simplex.GetWitnessPoints(&output->pointA, &output->pointB);
+	output->distance = b2Distance(output->pointA, output->pointB);
+	output->iterations = iter;
+
+	// Cache the simplex.
+	simplex.WriteCache(cache);
+
+	// Apply radii if requested.
+	if (input->useRadii)
+	{
+		float32 rA = proxyA->m_radius;
+		float32 rB = proxyB->m_radius;
+
+		if (output->distance > rA + rB && output->distance > b2_epsilon)
+		{
+			// Shapes are still no overlapped.
+			// Move the witness points to the outer surface.
+			output->distance -= rA + rB;
+			b2Vec2 normal = output->pointB - output->pointA;
+			normal.Normalize();
+			output->pointA += rA * normal;
+			output->pointB -= rB * normal;
+		}
+		else
+		{
+			// Shapes are overlapped when radii are considered.
+			// Move the witness points to the middle.
+			b2Vec2 p = 0.5f * (output->pointA + output->pointB);
+			output->pointA = p;
+			output->pointB = p;
+			output->distance = 0.0f;
+		}
+	}
+}
