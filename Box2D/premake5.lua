@@ -109,7 +109,6 @@ project 'GLFW'
 project 'IMGUI'
 	kind 'StaticLib'
 	language 'C++'
-	defines { 'GLEW_STATIC' }
 	files { 'imgui/*.h', 'imgui/*.cpp' }
 	includedirs { '.' }
 	filter { 'system:macosx' }
