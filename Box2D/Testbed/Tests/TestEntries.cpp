@@ -59,6 +59,7 @@
 #include "Revolute.h"
 #include "RopeJoint.h"
 #include "SensorTest.h"
+#include "ShapeCast.h"
 #include "ShapeEditing.h"
 #include "SliderCrank.h"
 #include "SphereStack.h"
@@ -73,6 +74,8 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Shape Cast", ShapeCast::Create },
+	{"Time of Impact", TimeOfImpact::Create},
 	{"Character Collision", CharacterCollision::Create},
 	{"Tiles", Tiles::Create},
 	{"Heavy on Light", HeavyOnLight::Create},
@@ -87,7 +90,6 @@ TestEntry g_testEntries[] =
 	{"Dump Shell", DumpShell::Create},
 	{"Apply Force", ApplyForce::Create},
 	{"Continuous Test", ContinuousTest::Create},
-	{"Time of Impact", TimeOfImpact::Create},
 	{"Motor Joint", MotorJoint::Create},
 	{"One-Sided Platform", OneSidedPlatform::Create},
 	{"Mobile", Mobile::Create},

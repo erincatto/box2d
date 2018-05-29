@@ -597,11 +597,10 @@ bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 	b2Transform transformA = input->transformA;
 	b2Transform transformB = input->transformB;
 
-	b2Vec2 r = input->translationB;
+	b2Vec2 r = -input->translationB;
 	b2Vec2 s(0.0f, 0.0f);
 	b2Vec2 n(0.0f, 0.0f);
 	float32 lambda = 0.0f;
-	b2Vec2 x = s;
 
 	// Initial simplex
 	b2Simplex simplex;
@@ -610,16 +609,12 @@ bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 	// Get simplex vertices as an array.
 	b2SimplexVertex* vertices = &simplex.m_v1;
 
-	// Get support point in -r direction (A - B)
-	b2SimplexVertex* vertex = vertices + simplex.m_count;
-	vertex->indexA = proxyA->GetSupport(b2MulT(transformA.q, -r));
-	vertex->wA = b2Mul(transformA, proxyA->GetVertex(vertex->indexA));
-	b2Vec2 wBLocal;
-	vertex->indexB = proxyB->GetSupport(b2MulT(transformB.q, r));
-	vertex->wB = b2Mul(transformB, proxyB->GetVertex(vertex->indexB));
-	vertex->w = vertex->wB - vertex->wA;
-
-	b2Vec2 v = x - vertex->w;
+	// Get support point in r direction (A - B)
+	int32 indexA = proxyA->GetSupport(b2MulT(transformA.q, r));
+	b2Vec2 wA = b2Mul(transformA, proxyA->GetVertex(indexA));
+	int32 indexB = proxyB->GetSupport(b2MulT(transformB.q, -r));
+	b2Vec2 wB = b2Mul(transformB, proxyB->GetVertex(indexB));
+	b2Vec2 v = wA - wB;
 
 	const int32 k_maxIters = 20;
 
@@ -633,16 +628,12 @@ bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 		b2Assert(simplex.m_count < 3);
 
 		// Support in direction v (A - B)
-		b2SimplexVertex* vertex = vertices + simplex.m_count;
-		vertex->indexA = proxyA->GetSupport(b2MulT(transformA.q, v));
-		vertex->wA = b2Mul(transformA, proxyA->GetVertex(vertex->indexA));
-		b2Vec2 wBLocal;
-		vertex->indexB = proxyB->GetSupport(b2MulT(transformB.q, -v));
-		vertex->wB = b2Mul(transformB, proxyB->GetVertex(vertex->indexB));
-		vertex->w = vertex->wB - vertex->wA;
+		indexA = proxyA->GetSupport(b2MulT(transformA.q, -v));
+		wA = b2Mul(transformA, proxyA->GetVertex(indexA));
+		indexB = proxyB->GetSupport(b2MulT(transformB.q, v));
+		wB = b2Mul(transformB, proxyB->GetVertex(indexB));
 
-		b2Vec2 p = vertex->w;
-		b2Vec2 w = x - p;
+		b2Vec2 w = wA - wB;
 
 		float32 vw = b2Dot(v, w);
 		if (vw > 0.0f)
@@ -654,29 +645,55 @@ bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 			}
 
 			lambda = lambda - vw / vr;
-			x = s + lambda * r;
+			if (lambda > 1.0f)
+			{
+				return false;
+			}
+
+			transformB.p = input->transformB.p - lambda * r;
 			n = v;
 		}
 
-		simplex.m_count += 1;
-		
-		switch (simplex.m_count)
+		bool duplicate = false;
+		for (int32 i = 0; i < simplex.m_count; ++i)
 		{
-		case 1:
-			break;
-
-		case 2:
-			simplex.Solve2();
-			break;
-
-		case 3:
-			simplex.Solve3();
-			break;
-
-		default:
-			b2Assert(false);
+			if (vertices[i].w == -w)
+			{
+				duplicate = true;
+				break;
+			}
 		}
 
+		if (duplicate == false)
+		{
+			b2SimplexVertex* vertex = vertices + simplex.m_count;
+			vertex->indexA = indexB;
+			vertex->wA = wB;
+			vertex->indexB = indexA;
+			vertex->wB = wA;
+			vertex->w = wA - wB;
+			vertex->a = 1.0f;
+			simplex.m_count += 1;
+
+			switch (simplex.m_count)
+			{
+			case 1:
+				break;
+
+			case 2:
+				simplex.Solve2();
+				break;
+
+			case 3:
+				simplex.Solve3();
+				break;
+
+			default:
+				b2Assert(false);
+			}
+
+		}
+		
 		// If we have 3 points, then the origin is in the corresponding triangle.
 		if (simplex.m_count == 3)
 		{
@@ -685,7 +702,7 @@ bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 		}
 
 		// Get search direction.
-		v = simplex.GetSearchDirection();
+		v = simplex.GetClosestPoint();
 
 		// Iteration count is equated to the number of support point calls.
 		++iter;
@@ -694,6 +711,11 @@ bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 	// Prepare output.
 	b2Vec2 pointA, pointB;
 	simplex.GetWitnessPoints(&pointA, &pointB);
+
+	if (n.LengthSquared() > 0.0f)
+	{
+		n.Normalize();
+	}
 
 	output->point = 0.5f * (pointA + pointB);
 	output->normal = n;
