@@ -13,7 +13,7 @@
 #if defined(__APPLE_CC__)
 #include <OpenGL/gl3.h>
 #else
-#include "glew/glew.h"
+#include "Testbed/glad/glad.h"
 #endif
 #include "glfw/glfw3.h"
 #ifdef _WIN32

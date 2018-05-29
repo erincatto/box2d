@@ -25,7 +25,7 @@
 #if defined(__APPLE__)
 #include <OpenGL/gl3.h>
 #else
-#include "glew/glew.h"
+#include "Testbed/glad/glad.h"
 #endif
 #include "glfw/glfw3.h"
 

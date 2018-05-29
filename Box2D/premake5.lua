@@ -31,17 +31,11 @@ project 'Box2D'
 	files { 'Box2D/**.h', 'Box2D/**.cpp' }
 	includedirs { '.' }
 
-project 'GLEW'
-	kind 'StaticLib'
-	language 'C++'
-	defines { 'GLEW_STATIC' }
-	files { 'glew/*.h', 'glew/*.c' }
-	includedirs { '.' }
-
 project 'GLFW'
 	kind 'StaticLib'
 	language 'C'
-	files {
+	files
+	{
 		'glfw/internal.h',
 		'glfw/glfw_config.h',
 		'glfw/glfw3.h',
@@ -53,8 +47,9 @@ project 'GLFW'
 		'glfw/vulkan.c',
 		'glfw/window.c' }
 
-	configuration { 'windows' }
-		files {
+	filter { 'system:windows' }
+		files
+		{
 			'glfw/win32_platform.h',
 			'glfw/win32_joystick.h',
 			'glfw/wgl_context.h',
@@ -69,8 +64,9 @@ project 'GLFW'
 			'glfw/egl_context.c'
 		}
 
-	configuration { 'macosx' }
-		files {
+	filter { 'system:macosx' }
+		files
+		{
 			'glfw/cocoa_platform.h',
 			'glfw/iokit_joystick.h',
 			'glfw/posix_tls.h',
@@ -86,8 +82,9 @@ project 'GLFW'
 			'glfw/egl_context.c'
 		}
 
-	configuration { 'not windows', 'not macosx' }
-		files {
+	filter { 'system:linux' }
+		files
+		{
 			'glfw/x11_platform.h',
 			'glfw/xkb_unicode.h',
 			'glfw/linux_joystick.h',
@@ -115,7 +112,7 @@ project 'IMGUI'
 	defines { 'GLEW_STATIC' }
 	files { 'imgui/*.h', 'imgui/*.cpp' }
 	includedirs { '.' }
-	configuration { 'macosx' }
+	filter { 'system:macosx' }
 		defines { 'GLFW_INCLUDE_GLCOREARB' }
 
 project 'HelloWorld'
@@ -131,14 +128,21 @@ project 'Testbed'
 	language 'C++'
 	cppdialect 'C++11'
 	debugdir 'Testbed'
-	defines { 'GLEW_STATIC' }
-	files { 'Testbed/**.h', 'Testbed/**.cpp' }
+	files
+	{
+		'Testbed/Framework/*',
+		'Testbed/Tests/*'
+	}
+
 	includedirs { '.' }
 	links { 'Box2D', 'GLFW', 'IMGUI'}
-	configuration { 'windows' }
-		links { 'GLEW', 'glu32', 'opengl32', 'winmm' }
-	configuration { 'macosx' }
+    filter { 'system:windows' }
+    	files { 'Testbed/glad/*' }
+    	links { 'opengl32', 'winmm' }
+    filter { 'system:macosx' }
 		defines { 'GLFW_INCLUDE_GLCOREARB' }
 		links { 'OpenGL.framework', 'Cocoa.framework', 'IOKit.framework', 'CoreFoundation.framework', 'CoreVideo.framework'}
-	configuration { 'gmake' }
-		links { 'GL', 'GLU', 'GLEW', 'X11', 'Xrandr', 'Xinerama', 'Xcursor', 'pthread', 'dl' }
+    filter { 'system:linux' }
+    	files { 'Testbed/glad/*' }
+		links { 'GL', 'GLU', 'X11', 'Xrandr', 'Xinerama', 'Xcursor', 'pthread', 'dl' }
+	filter {}

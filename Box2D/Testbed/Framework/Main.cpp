@@ -19,7 +19,7 @@
 #if defined(__APPLE__)
 #include <OpenGL/gl3.h>
 #else
-#include <glew/glew.h>
+#include "Testbed/glad/glad.h"
 #endif
 
 #include "imgui/imgui.h"
@@ -454,14 +454,10 @@ int main(int, char**)
 	char title[64];
 	sprintf(title, "Box2D Testbed Version %d.%d.%d", b2_version.major, b2_version.minor, b2_version.revision);
 
-#if defined(__APPLE__)
-	// Without these settings on macOS, OpenGL 2.1 will be used by default which will cause crashes at boot.
-	// This code is a slightly modified version of the code found here: http://www.glfw.org/faq.html#how-do-i-create-an-opengl-30-context
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#endif
 
 	mainWindow = glfwCreateWindow(g_camera.m_width, g_camera.m_height, title, NULL, NULL);
 	if (mainWindow == NULL)
@@ -472,6 +468,16 @@ int main(int, char**)
 	}
 
 	glfwMakeContextCurrent(mainWindow);
+
+#if defined(__APPLE__) == FALSE
+	// Load OpenGL functions using glad
+	if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
+	{
+		printf("Failed to initialize OpenGL context\n");
+		return -1;
+	}
+#endif
+
 	printf("OpenGL %s, GLSL %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 
 	glfwSetScrollCallback(mainWindow, sScrollCallback);
@@ -481,16 +487,6 @@ int main(int, char**)
 	glfwSetMouseButtonCallback(mainWindow, sMouseButton);
 	glfwSetCursorPosCallback(mainWindow, sMouseMotion);
 	glfwSetScrollCallback(mainWindow, sScrollCallback);
-
-#if defined(__APPLE__) == FALSE
-	//glewExperimental = GL_TRUE;
-	GLenum err = glewInit();
-	if (GLEW_OK != err)
-	{
-		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
-		exit(EXIT_FAILURE);
-	}
-#endif
 
 	g_debugDraw.Create();
 
