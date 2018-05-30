@@ -19,10 +19,26 @@
 class ShapeCast : public Test
 {
 public:
+    enum
+    {
+        e_vertexCount = 8
+    };
+
 	ShapeCast()
 	{
-		m_shapeA.SetAsBox(0.5f, 0.5f);
-		m_shapeB.SetAsBox(0.5f, 0.5f);
+        m_vAs[0].Set(-0.5f, -0.5f);
+        m_vAs[1].Set(0.5f, -0.5f);
+        m_vAs[2].Set(0.5f, 0.5f);
+        m_vAs[3].Set(-0.5f, 0.5f);
+        m_countA = 4;
+        m_radiusA = 0.0f;
+
+        m_vBs[0].Set(-0.5f, -0.5f);
+        m_vBs[1].Set(0.5f, -0.5f);
+        m_vBs[2].Set(0.5f, 0.5f);
+        m_vBs[3].Set(-0.5f, 0.5f);
+        m_countB = 4;
+        m_radiusB = 0.0f;
 	}
 
 	static Test* Create()
@@ -35,18 +51,18 @@ public:
 		Test::Step(settings);
 
 		b2Transform transformA;
-		transformA.p = b2Vec2(2.0f, 0.0f);
+		transformA.p = b2Vec2(4.0f, 0.0f);
 		transformA.q.SetIdentity();
 
 		b2Transform transformB;
 		transformB.SetIdentity();
 
 		b2ShapeCastInput input;
-		input.proxyA.Set(&m_shapeA, 0);
-		input.proxyB.Set(&m_shapeB, 0);
+		input.proxyA.Set(m_vAs, m_countA, 0.0f);
+		input.proxyB.Set(m_vBs, m_countB, 0.0f);
 		input.transformA = transformA;
 		input.transformB = transformB;
-		input.translationB.Set(4.0f, 0.0f);
+		input.translationB.Set(8.0f, 0.0f);
 
 		b2ShapeCastOutput output;
 
@@ -57,25 +73,25 @@ public:
 
 		b2Vec2 vertices[b2_maxPolygonVertices];
 
-		for (int32 i = 0; i < m_shapeA.m_count; ++i)
+		for (int32 i = 0; i < m_countA; ++i)
 		{
-			vertices[i] = b2Mul(transformA, m_shapeA.m_vertices[i]);
+			vertices[i] = b2Mul(transformA, m_vAs[i]);
 		}
-		g_debugDraw.DrawPolygon(vertices, m_shapeA.m_count, b2Color(0.9f, 0.9f, 0.9f));
+		g_debugDraw.DrawPolygon(vertices, m_countA, b2Color(0.9f, 0.9f, 0.9f));
 
-		for (int32 i = 0; i < m_shapeB.m_count; ++i)
+		for (int32 i = 0; i < m_countB; ++i)
 		{
-			vertices[i] = b2Mul(transformB, m_shapeB.m_vertices[i]);
+			vertices[i] = b2Mul(transformB, m_vBs[i]);
 		}
-		g_debugDraw.DrawPolygon(vertices, m_shapeB.m_count, b2Color(0.5f, 0.9f, 0.5f));
+		g_debugDraw.DrawPolygon(vertices, m_countB, b2Color(0.5f, 0.9f, 0.5f));
 
 		b2Transform transformBHit = transformB;
 		transformBHit.p = transformB.p + output.lambda * input.translationB;
-		for (int32 i = 0; i < m_shapeB.m_count; ++i)
+		for (int32 i = 0; i < m_countB; ++i)
 		{
-			vertices[i] = b2Mul(transformBHit, m_shapeB.m_vertices[i]);
+			vertices[i] = b2Mul(transformBHit, m_vBs[i]);
 		}
-		g_debugDraw.DrawPolygon(vertices, m_shapeB.m_count, b2Color(0.5f, 0.7f, 0.9f));
+		g_debugDraw.DrawPolygon(vertices, m_countB, b2Color(0.5f, 0.7f, 0.9f));
 
 		if (hit)
 		{
@@ -86,6 +102,11 @@ public:
 		}
 	}
 
-	b2PolygonShape m_shapeA;
-	b2PolygonShape m_shapeB;
+    b2Vec2 m_vAs[b2_maxPolygonVertices];
+    int32 m_countA;
+    float32 m_radiusA;
+
+    b2Vec2 m_vBs[b2_maxPolygonVertices];
+    int32 m_countB;
+    float32 m_radiusB;
 };

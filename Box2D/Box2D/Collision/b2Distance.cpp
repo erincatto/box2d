@@ -82,6 +82,12 @@ void b2DistanceProxy::Set(const b2Shape* shape, int32 index)
 	}
 }
 
+void b2DistanceProxy::Set(const b2Vec2* vertices, int32 count, float32 radius)
+{
+    m_vertices = vertices;
+    m_count = count;
+    m_radius = radius;
+}
 
 struct b2SimplexVertex
 {
@@ -597,7 +603,7 @@ bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 	b2Transform transformA = input->transformA;
 	b2Transform transformB = input->transformB;
 
-	b2Vec2 r = -input->translationB;
+	b2Vec2 r = input->translationB;
 	b2Vec2 s(0.0f, 0.0f);
 	b2Vec2 n(0.0f, 0.0f);
 	float32 lambda = 0.0f;
@@ -609,12 +615,15 @@ bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 	// Get simplex vertices as an array.
 	b2SimplexVertex* vertices = &simplex.m_v1;
 
-	// Get support point in r direction (A - B)
-	int32 indexA = proxyA->GetSupport(b2MulT(transformA.q, r));
+	// Get support point in -r direction
+	int32 indexA = proxyA->GetSupport(b2MulT(transformA.q, -r));
 	b2Vec2 wA = b2Mul(transformA, proxyA->GetVertex(indexA));
-	int32 indexB = proxyB->GetSupport(b2MulT(transformB.q, -r));
+	int32 indexB = proxyB->GetSupport(b2MulT(transformB.q, r));
 	b2Vec2 wB = b2Mul(transformB, proxyB->GetVertex(indexB));
-	b2Vec2 v = wA - wB;
+    b2Vec2 p = wA - wB;
+
+    // v is a normal at p
+    b2Vec2 v = -p;
 
 	const int32 k_maxIters = 20;
 
@@ -628,12 +637,14 @@ bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 		b2Assert(simplex.m_count < 3);
 
 		// Support in direction v (A - B)
-		indexA = proxyA->GetSupport(b2MulT(transformA.q, -v));
+		indexA = proxyA->GetSupport(b2MulT(transformA.q, v));
 		wA = b2Mul(transformA, proxyA->GetVertex(indexA));
-		indexB = proxyB->GetSupport(b2MulT(transformB.q, v));
+		indexB = proxyB->GetSupport(b2MulT(transformB.q, -v));
 		wB = b2Mul(transformB, proxyB->GetVertex(indexB));
+        p = wA - wB;
 
-		b2Vec2 w = wA - wB;
+        // Support 
+		b2Vec2 w = -p;
 
 		float32 vw = b2Dot(v, w);
 		if (vw > 0.0f)
@@ -650,8 +661,10 @@ bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 				return false;
 			}
 
-			transformB.p = input->transformB.p - lambda * r;
-			n = v;
+			transformB.p = input->transformB.p + lambda * r;
+
+            n = v;
+            // TODO_ERIN reset simplex?
 		}
 
 		bool duplicate = false;
@@ -666,6 +679,7 @@ bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 
 		if (duplicate == false)
 		{
+            // Reverse simplex since it works with B - A
 			b2SimplexVertex* vertex = vertices + simplex.m_count;
 			vertex->indexA = indexB;
 			vertex->wA = wB;
@@ -702,7 +716,7 @@ bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 		}
 
 		// Get search direction.
-		v = simplex.GetClosestPoint();
+		v = simplex.GetSearchDirection();
 
 		// Iteration count is equated to the number of support point calls.
 		++iter;
