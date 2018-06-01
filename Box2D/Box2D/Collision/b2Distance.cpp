@@ -594,17 +594,27 @@ void b2Distance(b2DistanceOutput* output,
 	}
 }
 
-//
+// GJK-raycast
+// Algorithm by Gino van den Bergen.
+// "Smooth Mesh Contacts with GJK" in Game Physics Pearls. 2010
 bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 {
+    output->iterations = 0;
+    output->lambda = 1.0f;
+    output->normal.SetZero();
+    output->point.SetZero();
+
 	const b2DistanceProxy* proxyA = &input->proxyA;
 	const b2DistanceProxy* proxyB = &input->proxyB;
 
-	b2Transform transformA = input->transformA;
-	b2Transform transformB = input->transformB;
+    float32 radiusA = b2Max(proxyA->m_radius, b2_polygonRadius);
+    float32 radiusB = b2Max(proxyB->m_radius, b2_polygonRadius);
+    float32 radius = radiusA + radiusB;
+
+	b2Transform xfA = input->transformA;
+	b2Transform xfB = input->transformB;
 
 	b2Vec2 r = input->translationB;
-	b2Vec2 s(0.0f, 0.0f);
 	b2Vec2 n(0.0f, 0.0f);
 	float32 lambda = 0.0f;
 
@@ -616,96 +626,83 @@ bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 	b2SimplexVertex* vertices = &simplex.m_v1;
 
 	// Get support point in -r direction
-	int32 indexA = proxyA->GetSupport(b2MulT(transformA.q, -r));
-	b2Vec2 wA = b2Mul(transformA, proxyA->GetVertex(indexA));
-	int32 indexB = proxyB->GetSupport(b2MulT(transformB.q, r));
-	b2Vec2 wB = b2Mul(transformB, proxyB->GetVertex(indexB));
-    b2Vec2 p = wA - wB;
+	int32 indexA = proxyA->GetSupport(b2MulT(xfA.q, -r));
+	b2Vec2 wA = b2Mul(xfA, proxyA->GetVertex(indexA));
+	int32 indexB = proxyB->GetSupport(b2MulT(xfB.q, r));
+	b2Vec2 wB = b2Mul(xfB, proxyB->GetVertex(indexB));
+    b2Vec2 v = wA - wB;
 
-    // v is a normal at p
-    b2Vec2 v = -p;
-
-	const int32 k_maxIters = 20;
-
-	// TODO_ERIN
-	const float32 tol = 0.1f * b2_linearSlop;
+    // Sigma is the target distance between polygons
+    float32 sigma = b2Max(b2_polygonRadius, radius - b2_polygonRadius);
+	const float32 tolerance = 0.5f * b2_linearSlop;
 
 	// Main iteration loop.
+	const int32 k_maxIters = 20;
 	int32 iter = 0;
-	while (iter < k_maxIters && v.LengthSquared() > tol * tol)
+	while (iter < k_maxIters && b2Abs(v.Length() - sigma) > tolerance)
 	{
 		b2Assert(simplex.m_count < 3);
 
-		// Support in direction v (A - B)
-		indexA = proxyA->GetSupport(b2MulT(transformA.q, v));
-		wA = b2Mul(transformA, proxyA->GetVertex(indexA));
-		indexB = proxyB->GetSupport(b2MulT(transformB.q, -v));
-		wB = b2Mul(transformB, proxyB->GetVertex(indexB));
-        p = wA - wB;
+        output->iterations += 1;
 
-        // Support 
-		b2Vec2 w = -p;
+		// Support in direction -v (A - B)
+		indexA = proxyA->GetSupport(b2MulT(xfA.q, -v));
+		wA = b2Mul(xfA, proxyA->GetVertex(indexA));
+		indexB = proxyB->GetSupport(b2MulT(xfB.q, v));
+		wB = b2Mul(xfB, proxyB->GetVertex(indexB));
+        b2Vec2 p = wA - wB;
 
-		float32 vw = b2Dot(v, w);
-		if (vw > 0.0f)
+        // -v is a normal at p
+        v.Normalize();
+
+        // Intersect ray with plane
+		float32 vp = b2Dot(v, p);
+        float32 vr = b2Dot(v, r);
+		if (vp - sigma > lambda * vr)
 		{
-			float32 vr = b2Dot(v, r);
-			if (vr >= 0.0f)
+			if (vr <= 0.0f)
 			{
 				return false;
 			}
 
-			lambda = lambda - vw / vr;
+			lambda = (vp - sigma) / vr;
 			if (lambda > 1.0f)
 			{
 				return false;
 			}
 
-			transformB.p = input->transformB.p + lambda * r;
-
-            n = v;
-            // TODO_ERIN reset simplex?
+            n = -v;
+            simplex.m_count = 0;
 		}
 
-		bool duplicate = false;
-		for (int32 i = 0; i < simplex.m_count; ++i)
+        // Reverse simplex since it works with B - A.
+        // Shift by lambda * r because we want the closest point to the current clip point.
+        // Note that the support point p is not shifted because we want the plane equation
+        // to be formed in unshifted space.
+		b2SimplexVertex* vertex = vertices + simplex.m_count;
+		vertex->indexA = indexB;
+		vertex->wA = wB + lambda * r;
+		vertex->indexB = indexA;
+		vertex->wB = wA;
+		vertex->w = vertex->wB - vertex->wA;
+		vertex->a = 1.0f;
+		simplex.m_count += 1;
+
+		switch (simplex.m_count)
 		{
-			if (vertices[i].w == -w)
-			{
-				duplicate = true;
-				break;
-			}
-		}
+		case 1:
+			break;
 
-		if (duplicate == false)
-		{
-            // Reverse simplex since it works with B - A
-			b2SimplexVertex* vertex = vertices + simplex.m_count;
-			vertex->indexA = indexB;
-			vertex->wA = wB;
-			vertex->indexB = indexA;
-			vertex->wB = wA;
-			vertex->w = wA - wB;
-			vertex->a = 1.0f;
-			simplex.m_count += 1;
+		case 2:
+			simplex.Solve2();
+			break;
 
-			switch (simplex.m_count)
-			{
-			case 1:
-				break;
+		case 3:
+			simplex.Solve3();
+			break;
 
-			case 2:
-				simplex.Solve2();
-				break;
-
-			case 3:
-				simplex.Solve3();
-				break;
-
-			default:
-				b2Assert(false);
-			}
-
+		default:
+			b2Assert(false);
 		}
 		
 		// If we have 3 points, then the origin is in the corresponding triangle.
@@ -716,7 +713,7 @@ bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 		}
 
 		// Get search direction.
-		v = simplex.GetSearchDirection();
+		v = simplex.GetClosestPoint();
 
 		// Iteration count is equated to the number of support point calls.
 		++iter;
@@ -724,14 +721,15 @@ bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 
 	// Prepare output.
 	b2Vec2 pointA, pointB;
-	simplex.GetWitnessPoints(&pointA, &pointB);
+	simplex.GetWitnessPoints(&pointB, &pointA);
 
-	if (n.LengthSquared() > 0.0f)
+	if (v.LengthSquared() > 0.0f)
 	{
+        n = -v;
 		n.Normalize();
 	}
 
-	output->point = 0.5f * (pointA + pointB);
+    output->point = pointA + radiusA * n;
 	output->normal = n;
 	output->lambda = lambda;
 	output->iterations = iter;

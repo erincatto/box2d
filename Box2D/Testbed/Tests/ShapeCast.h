@@ -26,19 +26,28 @@ public:
 
 	ShapeCast()
 	{
-        m_vAs[0].Set(-0.5f, -0.5f);
-        m_vAs[1].Set(0.5f, -0.5f);
-        m_vAs[2].Set(0.5f, 0.5f);
-        m_vAs[3].Set(-0.5f, 0.5f);
-        m_countA = 4;
-        m_radiusA = 0.0f;
+#if 1
+        m_vAs[0].Set(-0.5f, 1.0f);
+        m_vAs[1].Set(0.5f, 1.0f);
+        m_vAs[2].Set(0.0f, 0.0f);
+        m_countA = 3;
+        m_radiusA = b2_polygonRadius;
 
         m_vBs[0].Set(-0.5f, -0.5f);
         m_vBs[1].Set(0.5f, -0.5f);
         m_vBs[2].Set(0.5f, 0.5f);
         m_vBs[3].Set(-0.5f, 0.5f);
         m_countB = 4;
-        m_radiusB = 0.0f;
+        m_radiusB = b2_polygonRadius;
+#else
+        m_vAs[0].Set(0.0f, 0.0f);
+        m_countA = 1;
+        m_radiusA = 0.5f;
+
+        m_vBs[0].Set(0.0f, 0.0f);
+        m_countB = 1;
+        m_radiusB = 0.5f;
+#endif
 	}
 
 	static Test* Create()
@@ -51,15 +60,15 @@ public:
 		Test::Step(settings);
 
 		b2Transform transformA;
-		transformA.p = b2Vec2(4.0f, 0.0f);
+		transformA.p = b2Vec2(0.0f, 0.25f);
 		transformA.q.SetIdentity();
 
 		b2Transform transformB;
 		transformB.SetIdentity();
 
 		b2ShapeCastInput input;
-		input.proxyA.Set(m_vAs, m_countA, 0.0f);
-		input.proxyB.Set(m_vBs, m_countB, 0.0f);
+		input.proxyA.Set(m_vAs, m_countA, m_radiusA);
+		input.proxyB.Set(m_vBs, m_countB, m_radiusB);
 		input.transformA = transformA;
 		input.transformB = transformB;
 		input.translationB.Set(8.0f, 0.0f);
@@ -68,7 +77,24 @@ public:
 
 		bool hit = b2ShapeCast(&output, &input);
 
-		g_debugDraw.DrawString(5, m_textLine, "hit = %s, lambda = %g", hit ? "true" : "false", output.lambda);
+        b2Transform transformB2;
+        transformB2.q = transformB.q;
+        transformB2.p = transformB.p + output.lambda * input.translationB;
+        
+        b2DistanceInput distanceInput;
+        distanceInput.proxyA.Set(m_vAs, m_countA, m_radiusA);
+        distanceInput.proxyB.Set(m_vBs, m_countB, m_radiusB);
+        distanceInput.transformA = transformA;
+        distanceInput.transformB = transformB2;
+        distanceInput.useRadii = false;
+        b2SimplexCache simplexCache;
+        simplexCache.count = 0;
+        b2DistanceOutput distanceOutput;
+        
+        b2Distance(&distanceOutput, &simplexCache, &distanceInput);
+
+		g_debugDraw.DrawString(5, m_textLine, "hit = %s, iters = %d, lambda = %g, distance = %g",
+            hit ? "true" : "false", output.iterations, output.lambda, distanceOutput.distance);
 		m_textLine += DRAW_STRING_NEW_LINE;
 
 		b2Vec2 vertices[b2_maxPolygonVertices];
@@ -77,21 +103,22 @@ public:
 		{
 			vertices[i] = b2Mul(transformA, m_vAs[i]);
 		}
+        //g_debugDraw.DrawCircle(vertices[0], m_radiusA, b2Color(0.9f, 0.9f, 0.9f));
 		g_debugDraw.DrawPolygon(vertices, m_countA, b2Color(0.9f, 0.9f, 0.9f));
 
 		for (int32 i = 0; i < m_countB; ++i)
 		{
 			vertices[i] = b2Mul(transformB, m_vBs[i]);
 		}
-		g_debugDraw.DrawPolygon(vertices, m_countB, b2Color(0.5f, 0.9f, 0.5f));
+        //g_debugDraw.DrawCircle(vertices[0], m_radiusB, b2Color(0.5f, 0.9f, 0.5f));
+        g_debugDraw.DrawPolygon(vertices, m_countB, b2Color(0.5f, 0.9f, 0.5f));
 
-		b2Transform transformBHit = transformB;
-		transformBHit.p = transformB.p + output.lambda * input.translationB;
 		for (int32 i = 0; i < m_countB; ++i)
 		{
-			vertices[i] = b2Mul(transformBHit, m_vBs[i]);
+			vertices[i] = b2Mul(transformB2, m_vBs[i]);
 		}
-		g_debugDraw.DrawPolygon(vertices, m_countB, b2Color(0.5f, 0.7f, 0.9f));
+        //g_debugDraw.DrawCircle(vertices[0], m_radiusB, b2Color(0.5f, 0.7f, 0.9f));
+        g_debugDraw.DrawPolygon(vertices, m_countB, b2Color(0.5f, 0.7f, 0.9f));
 
 		if (hit)
 		{
