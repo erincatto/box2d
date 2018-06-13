@@ -1140,7 +1140,8 @@ void b2World::DrawJoint(b2Joint* joint)
 		break;
 
 	case e_mouseJoint:
-		// don't draw this
+            g_debugDraw->DrawSegment(p1, p2, color);
+            g_debugDraw->DrawSegment(x2, p2, color);
 		break;
 
 	default:
