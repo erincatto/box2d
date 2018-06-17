@@ -23,5 +23,15 @@ Here are the steps for Xcode:
 - Set the Testbed directory as the working directory
 - Press <kbd>Command</kbd>-<kbd>R</kbd> to build and run the Testbed
 
+### Linux
+Here are the steps for Linux:
+- Command line: `premake gmake`
+- Command line: `make -C Build`
+- Command line: `cd Testbed`
+- Command line: `../Build/bin/x86_64/Debug/Testbed`
+
+If using Mesa, you may need to override the OpenGL version.
+- Command line: `MESA_GL_VERSION_OVERRIDE=3.3COMPAT ../Build/bin/x86_64/Debug/Testbed`
+
 Thanks,
 Erin
