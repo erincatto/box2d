@@ -247,7 +247,7 @@ private:
 	bool m_allowSleep;
 
 	b2DestructionListener* m_destructionListener;
-	b2Draw* g_debugDraw;
+	b2Draw* m_debugDraw;
 
 	// This is used to compute the time step ratio to
 	// support a variable time step.

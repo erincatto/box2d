@@ -386,14 +386,6 @@ void Test::Step(Settings* settings)
 	{
 		b2Vec2 p1 = m_mouseJoint->GetAnchorB();
 		b2Vec2 p2 = m_mouseJoint->GetTarget();
-
-		b2Color c;
-		c.Set(0.0f, 1.0f, 0.0f);
-		g_debugDraw.DrawPoint(p1, 4.0f, c);
-		g_debugDraw.DrawPoint(p2, 4.0f, c);
-
-		c.Set(0.8f, 0.8f, 0.8f);
-		g_debugDraw.DrawSegment(p1, p2, c);
 	}
 	
 	if (m_bombSpawning)
