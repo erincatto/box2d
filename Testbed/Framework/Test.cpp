@@ -382,12 +382,6 @@ void Test::Step(Settings* settings)
 		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
-	if (m_mouseJoint)
-	{
-		b2Vec2 p1 = m_mouseJoint->GetAnchorB();
-		b2Vec2 p2 = m_mouseJoint->GetTarget();
-	}
-	
 	if (m_bombSpawning)
 	{
 		b2Color c;
