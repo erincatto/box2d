@@ -11,6 +11,7 @@
 
 // GL3W/GLFW
 #if defined(__APPLE_CC__)
+#define GLFW_INCLUDE_GLCOREARB
 #include <OpenGL/gl3.h>
 #else
 #include "Testbed/glad/glad.h"
