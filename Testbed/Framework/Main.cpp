@@ -25,7 +25,6 @@
 
 #include "Testbed/imgui/imgui.h"
 #include "Testbed/imgui/imgui_impl_glfw_gl3.h"
-#include "DebugDraw.h"
 #include "Test.h"
 
 #include "Testbed/glfw/glfw3.h"
@@ -489,8 +488,6 @@ int main(int, char**)
 	glfwSetCursorPosCallback(mainWindow, sMouseMotion);
 	glfwSetScrollCallback(mainWindow, sScrollCallback);
 
-	g_debugDraw.Create();
-
 	sCreateUI(mainWindow);
 
 	testCount = 0;
@@ -553,7 +550,6 @@ int main(int, char**)
 		test = NULL;
 	}
 
-	g_debugDraw.Destroy();
 	ImGui_ImplGlfwGL3_Shutdown();
 	glfwTerminate();
 

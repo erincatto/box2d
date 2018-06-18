@@ -43,7 +43,7 @@ project 'Testbed'
 	debugdir 'Testbed'
 	warnings 'Default'
 	includedirs { '.' }
-
+	defines { 'ImDrawIdx=unsigned int' }
 	files
 	{
 		'Testbed/Framework/*',
