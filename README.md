@@ -6,7 +6,7 @@
 
 For help with Box2D, please visit http://www.box2d.org. There is a forum there where you may post your questions.
 
-Please see [Building.md](https://github.com/erincatto/Box2D/blob/master/Box2D/Building.md) to learn how to build Box2D and run the testbed.
+Please see [Building.md](https://github.com/erincatto/Box2D/blob/master/Building.md) to learn how to build Box2D and run the testbed.
 
 ## Demos
 
