@@ -7,10 +7,10 @@ workspace 'Box2D'
 	location 'Build'
 	symbols 'On'
 	warnings 'Extra'
+	cppdialect 'C++11'
 
     filter 'system:linux'
         platforms { 'x86_64' }
-        cppdialect 'C++11'
     filter 'system:macosx'
         platforms { 'x86_64' }
     filter 'system:windows'
@@ -63,7 +63,7 @@ project 'Testbed'
 
     filter { 'system:windows' }
     	files
-    	{ 
+    	{
     		'Testbed/glad/*',
 			'Testbed/glfw/win32_platform.h',
 			'Testbed/glfw/win32_joystick.h',
@@ -107,7 +107,7 @@ project 'Testbed'
 			'CoreFoundation.framework',
 			'CoreVideo.framework'
 		}
-    
+
     filter { 'system:linux' }
     	files
     	{
@@ -143,5 +143,5 @@ project 'Testbed'
 			'pthread',
 			'dl'
 		}
-	
+
 	filter {}
