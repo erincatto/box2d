@@ -7,10 +7,10 @@ workspace 'Box2D'
 	location 'Build'
 	symbols 'On'
 	warnings 'Extra'
+    cppdialect 'C++11'
 
     filter 'system:linux'
         platforms { 'x86_64' }
-        cppdialect 'C++11'
     filter 'system:macosx'
         platforms { 'x86_64' }
     filter 'system:windows'
@@ -46,6 +46,7 @@ project 'Testbed'
 
 	files
 	{
+		'Testbed/Data/*',
 		'Testbed/Framework/*',
 		'Testbed/Tests/*',
 		'Testbed/glfw/internal.h',
