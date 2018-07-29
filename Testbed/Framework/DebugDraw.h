@@ -22,9 +22,6 @@
 #include "Box2D/Box2D.h"
 
 struct b2AABB;
-struct GLRenderPoints;
-struct GLRenderLines;
-struct GLRenderTriangles;
 
 //
 struct Camera
@@ -52,12 +49,6 @@ struct Camera
 class DebugDraw : public b2Draw
 {
 public:
-	DebugDraw();
-	~DebugDraw();
-
-	void Create();
-	void Destroy();
-
 	void DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color) override;
 
 	void DrawSolidPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color) override;
@@ -77,13 +68,6 @@ public:
 	void DrawString(const b2Vec2& p, const char* string, ...);
 
 	void DrawAABB(b2AABB* aabb, const b2Color& color);
-
-	void Flush();
-
-private:
-	GLRenderPoints* m_points;
-	GLRenderLines* m_lines;
-	GLRenderTriangles* m_triangles;
 };
 
 extern DebugDraw g_debugDraw;
