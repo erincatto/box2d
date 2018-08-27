@@ -187,6 +187,17 @@ void b2BroadPhase::UpdatePairs(T* callback)
 	// Reset pair buffer
 	m_pairCount = 0;
 
+	// Remove all invalid leafs
+	for (int32 i = 0; i < m_moveCount; ++i)
+	{
+		if (m_moveBuffer[i] == e_nullProxy)
+		{
+			continue;
+		}
+
+		m_tree.RemoveLeaf(m_moveBuffer[i]);
+	}
+
 	// Perform tree queries for all moving proxies.
 	for (int32 i = 0; i < m_moveCount; ++i)
 	{
@@ -202,13 +213,11 @@ void b2BroadPhase::UpdatePairs(T* callback)
 
 		// Query tree, create pairs and add them pair buffer.
 		m_tree.Query(this, fatAABB);
+		m_tree.InsertLeaf(m_queryProxyId);
 	}
 
 	// Reset move buffer
 	m_moveCount = 0;
-
-	// Sort the pair buffer to expose duplicates.
-	std::sort(m_pairBuffer, m_pairBuffer + m_pairCount, b2PairLessThan);
 
 	// Send the pairs back to the client.
 	int32 i = 0;
@@ -220,17 +229,6 @@ void b2BroadPhase::UpdatePairs(T* callback)
 
 		callback->AddPair(userDataA, userDataB);
 		++i;
-
-		// Skip any duplicate pairs.
-		while (i < m_pairCount)
-		{
-			b2Pair* pair = m_pairBuffer + i;
-			if (pair->proxyIdA != primaryPair->proxyIdA || pair->proxyIdB != primaryPair->proxyIdB)
-			{
-				break;
-			}
-			++i;
-		}
 	}
 
 	// Try to keep the tree balanced.

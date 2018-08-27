@@ -95,12 +95,6 @@ void b2BroadPhase::UnBufferMove(int32 proxyId)
 // This is called from b2DynamicTree::Query when we are gathering pairs.
 bool b2BroadPhase::QueryCallback(int32 proxyId)
 {
-	// A proxy cannot form a pair with itself.
-	if (proxyId == m_queryProxyId)
-	{
-		return true;
-	}
-
 	// Grow the pair buffer as needed.
 	if (m_pairCount == m_pairCapacity)
 	{

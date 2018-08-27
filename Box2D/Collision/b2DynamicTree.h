@@ -123,13 +123,14 @@ public:
 	/// @param newOrigin the new origin with respect to the old origin
 	void ShiftOrigin(const b2Vec2& newOrigin);
 
+	void InsertLeaf(int32 node);
+
+	void RemoveLeaf(int32 node);
+
 private:
 
 	int32 AllocateNode();
 	void FreeNode(int32 node);
-
-	void InsertLeaf(int32 node);
-	void RemoveLeaf(int32 node);
 
 	int32 Balance(int32 index);
 

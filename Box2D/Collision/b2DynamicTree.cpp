@@ -138,8 +138,6 @@ bool b2DynamicTree::MoveProxy(int32 proxyId, const b2AABB& aabb, const b2Vec2& d
 		return false;
 	}
 
-	RemoveLeaf(proxyId);
-
 	// Extend AABB.
 	b2AABB b = aabb;
 	b2Vec2 r(b2_aabbExtension, b2_aabbExtension);
@@ -169,7 +167,6 @@ bool b2DynamicTree::MoveProxy(int32 proxyId, const b2AABB& aabb, const b2Vec2& d
 
 	m_nodes[proxyId].aabb = b;
 
-	InsertLeaf(proxyId);
 	return true;
 }
 
@@ -187,72 +184,20 @@ void b2DynamicTree::InsertLeaf(int32 leaf)
 	// Find the best sibling for this node
 	b2AABB leafAABB = m_nodes[leaf].aabb;
 	int32 index = m_root;
+
+	b2Vec2 leafVec = leafAABB.lowerBound + leafAABB.upperBound;
 	while (m_nodes[index].IsLeaf() == false)
 	{
-		int32 child1 = m_nodes[index].child1;
-		int32 child2 = m_nodes[index].child2;
+		auto child1 = m_nodes[index].child1;
+		auto child2 = m_nodes[index].child2;
 
-		float32 area = m_nodes[index].aabb.GetPerimeter();
+		b2Vec2 child1Vec = m_nodes[child1].aabb.lowerBound + m_nodes[child1].aabb.upperBound;
+		b2Vec2 child2Vec = m_nodes[child2].aabb.lowerBound + m_nodes[child2].aabb.upperBound;
 
-		b2AABB combinedAABB;
-		combinedAABB.Combine(m_nodes[index].aabb, leafAABB);
-		float32 combinedArea = combinedAABB.GetPerimeter();
+		float cost1 = (child1Vec - leafVec).LengthSquared();
+		float cost2 = (child2Vec - leafVec).LengthSquared();
 
-		// Cost of creating a new parent for this node and the new leaf
-		float32 cost = 2.0f * combinedArea;
-
-		// Minimum cost of pushing the leaf further down the tree
-		float32 inheritanceCost = 2.0f * (combinedArea - area);
-
-		// Cost of descending into child1
-		float32 cost1;
-		if (m_nodes[child1].IsLeaf())
-		{
-			b2AABB aabb;
-			aabb.Combine(leafAABB, m_nodes[child1].aabb);
-			cost1 = aabb.GetPerimeter() + inheritanceCost;
-		}
-		else
-		{
-			b2AABB aabb;
-			aabb.Combine(leafAABB, m_nodes[child1].aabb);
-			float32 oldArea = m_nodes[child1].aabb.GetPerimeter();
-			float32 newArea = aabb.GetPerimeter();
-			cost1 = (newArea - oldArea) + inheritanceCost;
-		}
-
-		// Cost of descending into child2
-		float32 cost2;
-		if (m_nodes[child2].IsLeaf())
-		{
-			b2AABB aabb;
-			aabb.Combine(leafAABB, m_nodes[child2].aabb);
-			cost2 = aabb.GetPerimeter() + inheritanceCost;
-		}
-		else
-		{
-			b2AABB aabb;
-			aabb.Combine(leafAABB, m_nodes[child2].aabb);
-			float32 oldArea = m_nodes[child2].aabb.GetPerimeter();
-			float32 newArea = aabb.GetPerimeter();
-			cost2 = newArea - oldArea + inheritanceCost;
-		}
-
-		// Descend according to the minimum cost.
-		if (cost < cost1 && cost < cost2)
-		{
-			break;
-		}
-
-		// Descend
-		if (cost1 < cost2)
-		{
-			index = child1;
-		}
-		else
-		{
-			index = child2;
-		}
+		cost1 < cost2 ? index = child1 : index = child2;
 	}
 
 	int32 sibling = index;
