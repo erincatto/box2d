@@ -188,8 +188,8 @@ void b2DynamicTree::InsertLeaf(int32 leaf)
 	b2Vec2 leafVec = leafAABB.lowerBound + leafAABB.upperBound;
 	while (m_nodes[index].IsLeaf() == false)
 	{
-		auto child1 = m_nodes[index].child1;
-		auto child2 = m_nodes[index].child2;
+		int32 child1 = m_nodes[index].child1;
+		int32 child2 = m_nodes[index].child2;
 
 		b2Vec2 child1Vec = m_nodes[child1].aabb.lowerBound + m_nodes[child1].aabb.upperBound;
 		b2Vec2 child2Vec = m_nodes[child2].aabb.lowerBound + m_nodes[child2].aabb.upperBound;
