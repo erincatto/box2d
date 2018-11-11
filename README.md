@@ -6,7 +6,7 @@
 
 For help with Box2D, please visit http://www.box2d.org. There is a forum there where you may post your questions.
 
-Please see `Building.txt` to learn how to build Box2D and run the testbed.
+Please see [Building.md](https://github.com/erincatto/Box2D/blob/master/Building.md) to learn how to build Box2D and run the testbed.
 
 ## Demos
 
@@ -59,10 +59,15 @@ Please do not submit pull requests with new features. Instead, please file an is
 - Mouse picking and the bomb!
 - CMake build system files
 
-### Documentation
-- User manual
-- Doxygen document with code comments
-- Active user forum
+## Documentation
+You can find documentation related to the project in the [documentation page](http://box2d.org/documentation/) and in the [documentation folder](https://github.com/erincatto/Box2D/tree/master/Box2D/Documentation) in GitHub
+- [User manual](http://box2d.org/manual.pdf)
+- [Doxygen document](https://github.com/erincatto/Box2D/blob/master/Box2D/Documentation/Doxyfile) with code comments
+- [subreddit](https://www.reddit.com/r/box2d/)
+- [Discord server](https://discord.gg/NKYgCBP)
+- [User forum (legacy)](http://box2d.org/forum/)
+
+You can also visit the project wiki where you will find the [FAQ](https://github.com/erincatto/Box2D/wiki/FAQ)'s page
 
 ## License
 
