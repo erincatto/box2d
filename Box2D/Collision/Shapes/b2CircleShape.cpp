@@ -64,11 +64,25 @@ bool b2CircleShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input
 		return false;
 	}
 
+	float32 sigma_sqrt = b2Sqrt(sigma);
+
 	// Find the point of intersection of the line with the circle.
-	float32 a = -(c + b2Sqrt(sigma));
+	float32 a = -c - sigma_sqrt;
+
+	float32 maxDistance = input.maxFraction * rr;
 
 	// Is the intersection point on the segment?
-	if (0.0f <= a && a <= input.maxFraction * rr)
+	if (a > maxDistance)
+	{
+		return false;
+	}	
+	if (a < 0.0f)
+	{
+		//use second intersection
+		a = -c + sigma_sqrt;
+	}
+	
+	if (0.0f <= a && a <= maxDistance)
 	{
 		a /= rr;
 		output->fraction = a;
