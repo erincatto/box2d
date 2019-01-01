@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
-project(Box2D)
+project(box2d)
 
-add_library(Box2D
+add_library(box2d
   Box2D/Box2D.h
   Box2D/Collision/b2TimeOfImpact.h
   Box2D/Collision/b2Collision.h
@@ -97,10 +97,10 @@ add_library(Box2D
   Box2D/Rope/b2Rope.h
   )
 
-target_include_directories (Box2D PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories (box2d PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # References project, not the dir
-install (TARGETS Box2D DESTINATION lib)
+install (TARGETS box2d DESTINATION lib)
 install (DIRECTORY Box2D
   DESTINATION "include"
   FILES_MATCHING
