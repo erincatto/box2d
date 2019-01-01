@@ -100,7 +100,7 @@ add_library(Box2D
 target_include_directories (Box2D PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # References project, not the dir
-install (TARGETS Box2D DESTINATION bin)
+install (TARGETS Box2D DESTINATION lib)
 install (DIRECTORY Box2D
   DESTINATION "include"
   FILES_MATCHING
