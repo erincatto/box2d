@@ -30,6 +30,17 @@ Here are the steps for Linux:
 - Command line: `cd Testbed`
 - Command line: `../Build/bin/x86_64/Debug/Testbed`
 
+For those who prefer cmake, this builds *ONLY* Box2D as a library
+
+Create the build files
+`cmake .`
+
+Build Box2D
+`make`
+
+Install this to your system for use in other projects
+`sudo make install`
+
 If using Mesa, you may need to override the OpenGL version.
 - Command line: `MESA_GL_VERSION_OVERRIDE=3.3COMPAT ../Build/bin/x86_64/Debug/Testbed`
 
