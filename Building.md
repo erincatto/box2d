@@ -33,5 +33,12 @@ Here are the steps for Linux:
 If using Mesa, you may need to override the OpenGL version.
 - Command line: `MESA_GL_VERSION_OVERRIDE=3.3COMPAT ../Build/bin/x86_64/Debug/Testbed`
 
+### CMake
+- Command line: `mkdir build'
+- Command line: `cd build'
+- Command line: `cmake ..'
+- Command line: `cmake --build .'
+
+
 Thanks,
 Erin
