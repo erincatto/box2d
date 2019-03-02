@@ -22,4 +22,3 @@ set(Shapes_SRC
 
 add_library(${PROJECT_NAME} OBJECT ${Collision_SRC} ${Shapes_SRC})
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_11)
-target_sources(${PROJECT_NAME} INTERFACE $<TARGET_OBJECTS:${PROJECT_NAME}>)

@@ -8,4 +8,3 @@ set(Rope_SRC
 
 add_library(${PROJECT_NAME} OBJECT ${Rope_SRC})
 target_compile_options(${PROJECT_NAME} PRIVATE "-std=c++11")
-target_sources(${PROJECT_NAME} INTERFACE $<TARGET_OBJECTS:${PROJECT_NAME}>)
