@@ -2,19 +2,27 @@
 
 cmake_minimum_required(VERSION 3.12)
 
+if(PROJECT_NAME)
+  set(IS_SUBPROJECT ON)
+endif()
+
 project(Box2D VERSION 2.3.1)
 
-include(cmake/build.cmake)
-include(cmake/doxygen.cmake)
+if(NOT IS_SUBPROJECT)
+  include(cmake/build.cmake)
+  include(cmake/doxygen.cmake)
+endif()
 
 add_subdirectory(Box2D)
 
 # tests and examples
-if (BUILD_TESTING)
+if (NOT IS_SUBPROJECT AND BUILD_TESTING)
   add_executable(HelloWorld "HelloWorld/HelloWorld.cpp")
   target_link_libraries(HelloWorld PRIVATE Box2D)
   target_compile_features(HelloWorld PRIVATE cxx_std_11)
 endif()
 
-include(cmake/install.cmake)
-include(cmake/uninstall.cmake)
+if(NOT IS_SUBPROJECT)
+  include(cmake/install.cmake)
+  include(cmake/uninstall.cmake)
+endif()
