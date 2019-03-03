@@ -1,10 +1,10 @@
 # cmake for Box2D
 
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../")
+
 if (UNIX)
   add_compile_options("-fPIC")
 endif()
-
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../")
 
 set(LIST_SUBDIRS Collision Common Dynamics Rope)
 message(STATUS "SUBDIRECTORIES: ${LIST_SUBDIRS}")
@@ -21,4 +21,14 @@ add_library(${PROJECT_NAME}
   )
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_11)
-target_include_directories(${PROJECT_NAME} INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../")
+target_include_directories(${PROJECT_NAME}
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../>
+    $<INSTALL_INTERFACE:include>
+  )
+
+set_target_properties(Box2D
+  PROPERTIES
+    VERSION "${PROJECT_VERSION}"
+    SOVERSION "${PROJECT_VERSION_MAJOR}"
+  )
