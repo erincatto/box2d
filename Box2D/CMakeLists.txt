@@ -1,7 +1,5 @@
 # cmake for Box2D
 
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../")
-
 if (UNIX)
   add_compile_options("-fPIC")
 endif()
