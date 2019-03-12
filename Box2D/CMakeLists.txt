@@ -1,9 +1,5 @@
 # cmake for Box2D
 
-if (UNIX)
-  add_compile_options("-fPIC")
-endif()
-
 set(LIST_SUBDIRS Collision Common Dynamics Rope)
 message(STATUS "SUBDIRECTORIES: ${LIST_SUBDIRS}")
 

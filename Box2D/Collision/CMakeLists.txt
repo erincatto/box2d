@@ -20,5 +20,7 @@ set(Shapes_SRC
   "Shapes/b2PolygonShape.cpp"
   )
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 add_library(${PROJECT_NAME} OBJECT ${Collision_SRC} ${Shapes_SRC})
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_11)

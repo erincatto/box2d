@@ -38,5 +38,7 @@ set(Joints_SRC
   "Joints/b2WheelJoint.cpp"
   )
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 add_library(${PROJECT_NAME} OBJECT ${Dynamics_SRC} ${Contacts_SRC} ${Joints_SRC})
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_11)
