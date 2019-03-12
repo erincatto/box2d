@@ -14,6 +14,8 @@ add_library(${PROJECT_NAME}
   $<TARGET_OBJECTS:Rope>
   )
 
+add_library(Box2D::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_11)
 target_include_directories(${PROJECT_NAME}
   PUBLIC
