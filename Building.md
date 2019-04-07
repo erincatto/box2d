@@ -16,7 +16,7 @@ Here are the steps for Visual Studio 2017:
 
 ### Xcode
 Here are the steps for Xcode:
-- Command line: `premake5 xcode4`
+- Command line: `./premake5 xcode4`
 - Open the resulting project file (should be `Build/xcode4`)
 - Set the Testbed as the current Scheme
 - Edit the Testbed Scheme, in the Run Options, use a custom working directory
