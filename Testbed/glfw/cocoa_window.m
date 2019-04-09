@@ -1420,7 +1420,7 @@ void _glfwPlatformSetWindowFloating(_GLFWwindow* window, GLFWbool enabled)
 
 void _glfwPlatformPollEvents(void)
 {
-    for (;;)
+    while (true)
     {
         NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
                                             untilDate:[NSDate distantPast]
