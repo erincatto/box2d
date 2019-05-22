@@ -63,6 +63,7 @@
 #include "ShapeEditing.h"
 #include "SliderCrank.h"
 #include "SphereStack.h"
+#include "TestProxyMove.h"
 #include "TheoJansen.h"
 #include "Tiles.h"
 #include "TimeOfImpact.h"
@@ -127,5 +128,6 @@ TestEntry g_testEntries[] =
 	{"Sensor Test", SensorTest::Create},
 	{"Varying Friction", VaryingFriction::Create},
 	{"Add Pair Stress Test", AddPair::Create},
+	{"Test Proxy Move", TestProxyMove::Create },
 	{NULL, NULL}
 };

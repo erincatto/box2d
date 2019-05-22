@@ -439,7 +439,7 @@ void b2Body::SetTransform(const b2Vec2& position, float32 angle)
 	b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
 	for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
 	{
-		f->Synchronize(broadPhase, m_xf, m_xf);
+		f->Synchronize(broadPhase, m_xf, m_xf, b2Vec2_zero);
 	}
 }
 
@@ -449,10 +449,14 @@ void b2Body::SynchronizeFixtures()
 	xf1.q.Set(m_sweep.a0);
 	xf1.p = m_sweep.c0 - b2Mul(xf1.q, m_sweep.localCenter);
 
+	// use sweep center instead of transform position for broad phase displacement
+	// b2Vec2 displacement = m_xf.p - xf1.p;
+	b2Vec2 displacement = m_sweep.c - m_sweep.c0;
+
 	b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
 	for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
 	{
-		f->Synchronize(broadPhase, xf1, m_xf);
+		f->Synchronize(broadPhase, xf1, m_xf, displacement);
 	}
 }
 

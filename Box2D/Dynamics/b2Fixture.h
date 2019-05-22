@@ -213,7 +213,7 @@ protected:
 	void CreateProxies(b2BroadPhase* broadPhase, const b2Transform& xf);
 	void DestroyProxies(b2BroadPhase* broadPhase);
 
-	void Synchronize(b2BroadPhase* broadPhase, const b2Transform& xf1, const b2Transform& xf2);
+	void Synchronize(b2BroadPhase* broadPhase, const b2Transform& xf1, const b2Transform& xf2, const b2Vec2& displacement);
 
 	float32 m_density;
 
