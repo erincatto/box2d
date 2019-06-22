@@ -191,15 +191,15 @@ struct b2PriorityQueue
 		{
 			m_capacity *= 2;
 
-			float32* old_costs = m_costs;
+			float32* oldCosts = m_costs;
 			m_costs = (float32*)b2Alloc(m_capacity * sizeof(float32));
-			memcpy(m_costs, old_costs, m_count * sizeof(float32));
-			if (old_costs != m_costArray) b2Free(old_costs);
+			memcpy(m_costs, oldCosts, m_count * sizeof(float32));
+			if (oldCosts != m_costArray) b2Free(oldCosts);
 
-			int32* old_indices = m_indices;
+			int32* oldIndices = m_indices;
 			m_indices = (int32*)b2Alloc(m_capacity * sizeof(int32));
-			memcpy(m_indices, old_indices, m_count * sizeof(int32));
-			if (old_indices != m_indexArray) b2Free(old_indices);
+			memcpy(m_indices, oldIndices, m_count * sizeof(int32));
+			if (oldIndices != m_indexArray) b2Free(oldIndices);
 		}
 
 		m_indices[m_count] = index;
@@ -246,9 +246,9 @@ struct b2PriorityQueue
 private:
 	inline int32 Predicate(int32 index_a, int32 index_b)
 	{
-		float32 cost_a = m_costs[index_a];
-		float32 cost_b = m_costs[index_b];
-		return cost_a < cost_b ? -1 : cost_a > cost_b ? 1 : 0;
+		float32 costA = m_costs[index_a];
+		float32 costB = m_costs[index_b];
+		return costA < costB ? -1 : costA > costB ? 1 : 0;
 	}
 
 	inline void Swap(int32 index_a, int32 index_b)
@@ -287,34 +287,34 @@ int32 b2DynamicTree::PickBest(b2AABB to_insert)
 	b2PriorityQueue queue;
 	queue.Push(m_root, InheritedCost(to_insert, m_nodes[m_root].aabb));
 
-	float to_insert_sa = to_insert.GetPerimeter();
-	float best_cost = FLT_MAX;
-	int best_index = b2_nullNode;
-	int search_index;
-	float search_delta_cost;
-	while (queue.Pop(&search_index, &search_delta_cost))
+	float toInsertSurfaceArea = to_insert.GetPerimeter();
+	float bestCost = FLT_MAX;
+	int bestIndex = b2_nullNode;
+	int searchIndex;
+	float searchInheritedCost;
+	while (queue.Pop(&searchIndex, &searchInheritedCost))
 	{
-		b2AABB search_aabb = m_nodes[search_index].aabb;
-		float cost = Cost(to_insert, search_aabb) + search_delta_cost;
-		if (cost < best_cost) {
-			best_cost = cost;
-			best_index = search_index;
+		b2AABB search_aabb = m_nodes[searchIndex].aabb;
+		float cost = Cost(to_insert, search_aabb) + searchInheritedCost;
+		if (cost < bestCost) {
+			bestCost = cost;
+			bestIndex = searchIndex;
 		}
 
-		float delta_cost = InheritedCost(to_insert, search_aabb) + search_delta_cost;
-		float lower_bound = to_insert_sa + delta_cost;
-		if (lower_bound < best_cost) {
-			int child1 = m_nodes[search_index].child1;
-			int child2 = m_nodes[search_index].child2;
+		float inheritedCost = InheritedCost(to_insert, search_aabb) + searchInheritedCost;
+		float lower_bound = toInsertSurfaceArea + inheritedCost;
+		if (lower_bound < bestCost) {
+			int child1 = m_nodes[searchIndex].child1;
+			int child2 = m_nodes[searchIndex].child2;
 			if (child1 != b2_nullNode) {
 				assert(child2 != b2_nullNode);
-				queue.Push(child1, delta_cost);
-				queue.Push(child2, delta_cost);
+				queue.Push(child1, inheritedCost);
+				queue.Push(child2, inheritedCost);
 			}
 		}
 	}
 
-	return best_index;
+	return bestIndex;
 }
 
 void b2DynamicTree::InsertLeaf(int32 leaf)
@@ -484,7 +484,7 @@ int32 b2DynamicTree::Balance(int32 iA)
 		C->parent = A->parent;
 		A->parent = iC;
 
-		// A's old_costs parent should point to C
+		// A's old parent should point to C
 		if (C->parent != b2_nullNode)
 		{
 			if (m_nodes[C->parent].child1 == iA)
@@ -544,7 +544,7 @@ int32 b2DynamicTree::Balance(int32 iA)
 		B->parent = A->parent;
 		A->parent = iB;
 
-		// A's old_costs parent should point to B
+		// A's old parent should point to B
 		if (B->parent != b2_nullNode)
 		{
 			if (m_nodes[B->parent].child1 == iA)
