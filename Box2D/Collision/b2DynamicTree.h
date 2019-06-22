@@ -128,6 +128,8 @@ private:
 	int32 AllocateNode();
 	void FreeNode(int32 node);
 
+	
+	int32 PickBest(b2AABB to_insert);
 	void InsertLeaf(int32 node);
 	void RemoveLeaf(int32 node);
 
@@ -146,9 +148,6 @@ private:
 	int32 m_nodeCapacity;
 
 	int32 m_freeList;
-
-	/// This is used to incrementally traverse the tree for re-balancing.
-	uint32 m_path;
 
 	int32 m_insertionCount;
 };

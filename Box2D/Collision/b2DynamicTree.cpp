@@ -38,8 +38,6 @@ b2DynamicTree::b2DynamicTree()
 	m_nodes[m_nodeCapacity-1].height = -1;
 	m_freeList = 0;
 
-	m_path = 0;
-
 	m_insertionCount = 0;
 }
 
@@ -173,6 +171,152 @@ bool b2DynamicTree::MoveProxy(int32 proxyId, const b2AABB& aabb, const b2Vec2& d
 	return true;
 }
 
+struct b2PriorityQueue
+{
+	b2PriorityQueue()
+	{
+		b2Assert(m_capacity <= sizeof(m_indexArray) / sizeof(m_indexArray[0]));
+		b2Assert(m_capacity <= sizeof(m_costArray) / sizeof(m_costArray[0]));
+	}
+
+	~b2PriorityQueue()
+	{
+		if (m_costs != m_costArray) b2Free(m_costs);
+		if (m_indices != m_indexArray) b2Free(m_indices);
+	}
+
+	inline void Push(int32 index, float32 cost)
+	{
+		if (m_count == m_capacity)
+		{
+			m_capacity *= 2;
+
+			float32* old_costs = m_costs;
+			m_costs = (float32*)b2Alloc(m_capacity * sizeof(float32));
+			memcpy(m_costs, old_costs, m_count * sizeof(float32));
+			if (old_costs != m_costArray) b2Free(old_costs);
+
+			int32* old_indices = m_indices;
+			m_indices = (int32*)b2Alloc(m_capacity * sizeof(int32));
+			memcpy(m_indices, old_indices, m_count * sizeof(int32));
+			if (old_indices != m_indexArray) b2Free(old_indices);
+		}
+
+		m_indices[m_count] = index;
+		m_costs[m_count] = cost;
+		++m_count;
+
+		int32 i = m_count;
+		while (i > 1 && Predicate(i - 1, i / 2 - 1) > 0)
+		{
+			Swap(i - 1, i / 2 - 1);
+			i /= 2;
+		}
+	}
+
+	inline bool Pop(int32* index, float32* cost)
+	{
+		if (!m_count) return false;
+		*index = m_indices[0];
+		*cost = m_costs[0];
+
+		m_count--;
+		m_indices[0] = m_indices[m_count];
+		m_costs[0] = m_costs[m_count];
+
+		int32 u = 0, v = 1;
+		while (u != v)
+		{
+			u = v;
+			if (2 * u - 1 <= m_count) {
+				if (Predicate(u - 1, 2 * u - 1) <= 0) v = 2 * u;
+				if (Predicate(v - 1, 2 * u + 1 - 1) <= 0) v = 2 * u + 1;
+			} else if (2 * u <= m_count) {
+				if (Predicate(u - 1, 2 * u - 1) <= 0) v = 2 * u;
+			}
+
+			if (u != v) {
+				Swap(u - 1, v - 1);
+			}
+		}
+
+		return true;
+	}
+
+private:
+	inline int32 Predicate(int32 index_a, int32 index_b)
+	{
+		float32 cost_a = m_costs[index_a];
+		float32 cost_b = m_costs[index_b];
+		return cost_a < cost_b ? -1 : cost_a > cost_b ? 1 : 0;
+	}
+
+	inline void Swap(int32 index_a, int32 index_b)
+	{
+		int32 ival = m_indices[index_a];
+		m_indices[index_a] = m_indices[index_b];
+		m_indices[index_b] = ival;
+
+		float32 fval = m_costs[index_a];
+		m_costs[index_a] = m_costs[index_b];
+		m_costs[index_b] = fval;
+	}
+
+	int32 m_count = 0;
+	int32 m_capacity = 256;
+	int32* m_indices = m_indexArray;
+	float32* m_costs = m_costArray;
+	int32 m_indexArray[256];
+	float32 m_costArray[256];
+};
+
+static inline float Cost(b2AABB to_insert, b2AABB searchAABB)
+{
+	to_insert.Combine(searchAABB);
+	return to_insert.GetPerimeter();
+}
+
+static inline float InheritedCost(b2AABB to_insert, b2AABB candidate)
+{
+	to_insert.Combine(candidate);
+	return to_insert.GetPerimeter() - candidate.GetPerimeter();
+}
+
+int32 b2DynamicTree::PickBest(b2AABB to_insert)
+{
+	b2PriorityQueue queue;
+	queue.Push(m_root, InheritedCost(to_insert, m_nodes[m_root].aabb));
+
+	float to_insert_sa = to_insert.GetPerimeter();
+	float best_cost = FLT_MAX;
+	int best_index = b2_nullNode;
+	int search_index;
+	float search_delta_cost;
+	while (queue.Pop(&search_index, &search_delta_cost))
+	{
+		b2AABB search_aabb = m_nodes[search_index].aabb;
+		float cost = Cost(to_insert, search_aabb) + search_delta_cost;
+		if (cost < best_cost) {
+			best_cost = cost;
+			best_index = search_index;
+		}
+
+		float delta_cost = InheritedCost(to_insert, search_aabb) + search_delta_cost;
+		float lower_bound = to_insert_sa + delta_cost;
+		if (lower_bound < best_cost) {
+			int child1 = m_nodes[search_index].child1;
+			int child2 = m_nodes[search_index].child2;
+			if (child1 != b2_nullNode) {
+				assert(child2 != b2_nullNode);
+				queue.Push(child1, delta_cost);
+				queue.Push(child2, delta_cost);
+			}
+		}
+	}
+
+	return best_index;
+}
+
 void b2DynamicTree::InsertLeaf(int32 leaf)
 {
 	++m_insertionCount;
@@ -186,76 +330,7 @@ void b2DynamicTree::InsertLeaf(int32 leaf)
 
 	// Find the best sibling for this node
 	b2AABB leafAABB = m_nodes[leaf].aabb;
-	int32 index = m_root;
-	while (m_nodes[index].IsLeaf() == false)
-	{
-		int32 child1 = m_nodes[index].child1;
-		int32 child2 = m_nodes[index].child2;
-
-		float32 area = m_nodes[index].aabb.GetPerimeter();
-
-		b2AABB combinedAABB;
-		combinedAABB.Combine(m_nodes[index].aabb, leafAABB);
-		float32 combinedArea = combinedAABB.GetPerimeter();
-
-		// Cost of creating a new parent for this node and the new leaf
-		float32 cost = 2.0f * combinedArea;
-
-		// Minimum cost of pushing the leaf further down the tree
-		float32 inheritanceCost = 2.0f * (combinedArea - area);
-
-		// Cost of descending into child1
-		float32 cost1;
-		if (m_nodes[child1].IsLeaf())
-		{
-			b2AABB aabb;
-			aabb.Combine(leafAABB, m_nodes[child1].aabb);
-			cost1 = aabb.GetPerimeter() + inheritanceCost;
-		}
-		else
-		{
-			b2AABB aabb;
-			aabb.Combine(leafAABB, m_nodes[child1].aabb);
-			float32 oldArea = m_nodes[child1].aabb.GetPerimeter();
-			float32 newArea = aabb.GetPerimeter();
-			cost1 = (newArea - oldArea) + inheritanceCost;
-		}
-
-		// Cost of descending into child2
-		float32 cost2;
-		if (m_nodes[child2].IsLeaf())
-		{
-			b2AABB aabb;
-			aabb.Combine(leafAABB, m_nodes[child2].aabb);
-			cost2 = aabb.GetPerimeter() + inheritanceCost;
-		}
-		else
-		{
-			b2AABB aabb;
-			aabb.Combine(leafAABB, m_nodes[child2].aabb);
-			float32 oldArea = m_nodes[child2].aabb.GetPerimeter();
-			float32 newArea = aabb.GetPerimeter();
-			cost2 = newArea - oldArea + inheritanceCost;
-		}
-
-		// Descend according to the minimum cost.
-		if (cost < cost1 && cost < cost2)
-		{
-			break;
-		}
-
-		// Descend
-		if (cost1 < cost2)
-		{
-			index = child1;
-		}
-		else
-		{
-			index = child2;
-		}
-	}
-
-	int32 sibling = index;
+	int32 sibling = PickBest(leafAABB);
 
 	// Create a new parent.
 	int32 oldParent = m_nodes[sibling].parent;
@@ -293,7 +368,7 @@ void b2DynamicTree::InsertLeaf(int32 leaf)
 	}
 
 	// Walk back up the tree fixing heights and AABBs
-	index = m_nodes[leaf].parent;
+	int32 index = m_nodes[leaf].parent;
 	while (index != b2_nullNode)
 	{
 		index = Balance(index);
@@ -409,7 +484,7 @@ int32 b2DynamicTree::Balance(int32 iA)
 		C->parent = A->parent;
 		A->parent = iC;
 
-		// A's old parent should point to C
+		// A's old_costs parent should point to C
 		if (C->parent != b2_nullNode)
 		{
 			if (m_nodes[C->parent].child1 == iA)
@@ -469,7 +544,7 @@ int32 b2DynamicTree::Balance(int32 iA)
 		B->parent = A->parent;
 		A->parent = iB;
 
-		// A's old parent should point to B
+		// A's old_costs parent should point to B
 		if (B->parent != b2_nullNode)
 		{
 			if (m_nodes[B->parent].child1 == iA)
