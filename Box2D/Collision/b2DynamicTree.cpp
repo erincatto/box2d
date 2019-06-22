@@ -244,22 +244,22 @@ struct b2PriorityQueue
 	}
 
 private:
-	inline int32 Predicate(int32 index_a, int32 index_b)
+	inline int32 Predicate(int32 iA, int32 iB)
 	{
-		float32 costA = m_costs[index_a];
-		float32 costB = m_costs[index_b];
+		float32 costA = m_costs[iA];
+		float32 costB = m_costs[iB];
 		return costA < costB ? -1 : costA > costB ? 1 : 0;
 	}
 
-	inline void Swap(int32 index_a, int32 index_b)
+	inline void Swap(int32 iA, int32 iB)
 	{
-		int32 ival = m_indices[index_a];
-		m_indices[index_a] = m_indices[index_b];
-		m_indices[index_b] = ival;
+		int32 ival = m_indices[iA];
+		m_indices[iA] = m_indices[iB];
+		m_indices[iB] = ival;
 
-		float32 fval = m_costs[index_a];
-		m_costs[index_a] = m_costs[index_b];
-		m_costs[index_b] = fval;
+		float32 fval = m_costs[iA];
+		m_costs[iA] = m_costs[iB];
+		m_costs[iB] = fval;
 	}
 
 	int32 m_count = 0;
@@ -270,24 +270,24 @@ private:
 	float32 m_costArray[256];
 };
 
-static inline float Cost(b2AABB to_insert, b2AABB searchAABB)
+static inline float Cost(b2AABB L, b2AABB searchAABB)
 {
-	to_insert.Combine(searchAABB);
-	return to_insert.GetPerimeter();
+	L.Combine(searchAABB);
+	return L.GetPerimeter();
 }
 
-static inline float InheritedCost(b2AABB to_insert, b2AABB candidate)
+static inline float InheritedCost(b2AABB L, b2AABB candidate)
 {
-	to_insert.Combine(candidate);
-	return to_insert.GetPerimeter() - candidate.GetPerimeter();
+	L.Combine(candidate);
+	return L.GetPerimeter() - candidate.GetPerimeter();
 }
 
-int32 b2DynamicTree::PickBest(b2AABB to_insert)
+int32 b2DynamicTree::PickBest(b2AABB L)
 {
 	b2PriorityQueue queue;
-	queue.Push(m_root, InheritedCost(to_insert, m_nodes[m_root].aabb));
+	queue.Push(m_root, InheritedCost(L, m_nodes[m_root].aabb));
 
-	float toInsertSurfaceArea = to_insert.GetPerimeter();
+	float toInsertSurfaceArea = L.GetPerimeter();
 	float bestCost = FLT_MAX;
 	int bestIndex = b2_nullNode;
 	int searchIndex;
@@ -295,13 +295,13 @@ int32 b2DynamicTree::PickBest(b2AABB to_insert)
 	while (queue.Pop(&searchIndex, &searchInheritedCost))
 	{
 		b2AABB search_aabb = m_nodes[searchIndex].aabb;
-		float cost = Cost(to_insert, search_aabb) + searchInheritedCost;
+		float cost = Cost(L, search_aabb) + searchInheritedCost;
 		if (cost < bestCost) {
 			bestCost = cost;
 			bestIndex = searchIndex;
 		}
 
-		float inheritedCost = InheritedCost(to_insert, search_aabb) + searchInheritedCost;
+		float inheritedCost = InheritedCost(L, search_aabb) + searchInheritedCost;
 		float lower_bound = toInsertSurfaceArea + inheritedCost;
 		if (lower_bound < bestCost) {
 			int child1 = m_nodes[searchIndex].child1;
