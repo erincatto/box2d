@@ -282,6 +282,9 @@ static inline float InheritedCost(b2AABB L, b2AABB candidate)
 	return L.GetPerimeter() - candidate.GetPerimeter();
 }
 
+// Branch and bound method.
+// See http://box2d.org/files/GDC2019/ErinCatto_DynamicBVH_Full.pdf
+// And https://en.wikipedia.org/wiki/Branch_and_bound
 int32 b2DynamicTree::PickBest(b2AABB L)
 {
 	b2PriorityQueue queue;
