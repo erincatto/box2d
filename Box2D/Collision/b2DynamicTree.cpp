@@ -846,7 +846,6 @@ void b2DynamicTree::RebuildBottomUp()
 
 void b2DynamicTree::ShiftOrigin(const b2Vec2& newOrigin)
 {
-	// Build array of leaves. Free the rest.
 	for (int32 i = 0; i < m_nodeCapacity; ++i)
 	{
 		m_nodes[i].aabb.lowerBound -= newOrigin;
