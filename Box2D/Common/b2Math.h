@@ -20,12 +20,12 @@
 #define B2_MATH_H
 
 #include "Box2D/Common/b2Settings.h"
-#include <math.h>
+#include <cmath>
 
 /// This function is used to ensure that a floating point number is not a NaN or infinity.
 inline bool b2IsValid(float32 x)
 {
-	return isfinite(x);
+	return std::isfinite(x);
 }
 
 #define	b2Sqrt(x)	sqrtf(x)
