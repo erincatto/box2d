@@ -20,23 +20,7 @@
 #define B2_DRAW_H
 
 #include "Box2D/Common/b2Math.h"
-
-/// Color for debug drawing. Each value has the range [0,1].
-struct b2Color
-{
-	b2Color() {}
-	b2Color(float32 rIn, float32 gIn, float32 bIn, float32 aIn = 1.0f)
-	{
-		r = rIn; g = gIn; b = bIn; a = aIn;
-	}
-
-	void Set(float32 rIn, float32 gIn, float32 bIn, float32 aIn = 1.0f)
-	{
-		r = rIn; g = gIn; b = bIn; a = aIn;
-	}
-
-	float32 r, g, b, a;
-};
+#include "Box2D/Common/b2Rendering.h"
 
 /// Implement and register this class with a b2World to provide debug drawing of physics
 /// entities in your game.

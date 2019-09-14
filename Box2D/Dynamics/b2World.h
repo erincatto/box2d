@@ -30,10 +30,12 @@ struct b2AABB;
 struct b2BodyDef;
 struct b2Color;
 struct b2JointDef;
+struct b2LightDef;
 class b2Body;
 class b2Draw;
 class b2Fixture;
 class b2Joint;
+class b2Light;
 
 /// The world class manages all physics entities, dynamic simulation,
 /// and asynchronous queries. The world also contains efficient memory
@@ -86,7 +88,13 @@ public:
 	/// @warning This function is locked during callbacks.
 	void DestroyJoint(b2Joint* joint);
 
-	/// Take a time step. This performs collision detection, integration,
+    /// Create a light
+    b2Light* CreateLight(const b2LightDef* def);
+
+    /// Destroy a light
+    void DestroyLight(b2Light* light);
+
+    /// Take a time step. This performs collision detection, integration,
 	/// and constraint solution.
 	/// @param timeStep the amount of time to simulate, this should not vary.
 	/// @param velocityIterations for the velocity constraint solver.
@@ -133,7 +141,11 @@ public:
 	b2Joint* GetJointList();
 	const b2Joint* GetJointList() const;
 
-	/// Get the world contact list. With the returned contact, use b2Contact::GetNext to get
+    /// Get the world light list
+    b2Light* GetLightList() { return m_lightList; }
+    const b2Light* GetLightList() const { return m_lightList; }
+
+    /// Get the world contact list. With the returned contact, use b2Contact::GetNext to get
 	/// the next contact in the world list. A nullptr contact indicates the end of the list.
 	/// @return the head of the world contact list.
 	/// @warning contacts are created and destroyed in the middle of a time step.
@@ -165,6 +177,9 @@ public:
 
 	/// Get the number of joints.
 	int32 GetJointCount() const;
+
+    /// Get the number of lights.
+    int32 GetLightCount() const { return m_lightCount; }
 
 	/// Get the number of contacts (each may have 0 or more contact points).
 	int32 GetContactCount() const;
@@ -239,9 +254,11 @@ private:
 
 	b2Body* m_bodyList;
 	b2Joint* m_jointList;
+    b2Light* m_lightList;
 
 	int32 m_bodyCount;
 	int32 m_jointCount;
+    int32 m_lightCount;
 
 	b2Vec2 m_gravity;
 	bool m_allowSleep;

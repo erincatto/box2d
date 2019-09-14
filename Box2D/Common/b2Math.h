@@ -34,10 +34,10 @@ inline bool b2IsValid(float32 x)
 /// A 2D column vector.
 struct b2Vec2
 {
-	/// Default constructor does nothing (for performance).
-	b2Vec2() {}
+    /// Default constructor does nothing (for performance).
+    b2Vec2() = default;
 
-	/// Construct using coordinates.
+    /// Construct using coordinates.
 	b2Vec2(float32 xIn, float32 yIn) : x(xIn), y(yIn) {}
 
 	/// Set this vector to all zeros.
@@ -106,6 +106,14 @@ struct b2Vec2
 
 		return length;
 	}
+
+    /// Returns the normalized vector
+    b2Vec2 Normalized() const
+    {
+        b2Vec2 tmp(*this);
+        tmp.Normalize();
+        return tmp;
+    }
 
 	/// Does this vector contain finite coordinates?
 	bool IsValid() const

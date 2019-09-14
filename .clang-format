@@ -1,0 +1,8 @@
+BasedOnStyle: Microsoft
+Cpp11BracedListStyle: 'false'
+ColumnLimit: '90'
+PointerAlignment: Left
+TabWidth: '4'
+UseTab: Never
+AccessModifierOffset: '-4'
+AllowShortFunctionsOnASingleLine: InlineOnly

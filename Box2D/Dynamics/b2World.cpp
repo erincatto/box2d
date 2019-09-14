@@ -41,9 +41,11 @@ b2World::b2World(const b2Vec2& gravity)
 
 	m_bodyList = nullptr;
 	m_jointList = nullptr;
+    m_lightList = nullptr;
 
 	m_bodyCount = 0;
 	m_jointCount = 0;
+    m_lightCount = 0;
 
 	m_warmStarting = true;
 	m_continuousPhysics = true;
@@ -361,25 +363,78 @@ void b2World::DestroyJoint(b2Joint* j)
 
 			edge = edge->next;
 		}
-	}
+    }
 }
 
-//
+b2Light* b2World::CreateLight(const b2LightDef* def)
+{
+    b2Assert(IsLocked() == false);
+    if (IsLocked())
+    {
+        return nullptr;
+    }
+
+    void* mem = m_blockAllocator.Allocate(sizeof(b2Light));
+    auto light = new (mem) b2Light(def, this);
+
+    // Add to world's lights list
+    light->m_prev = nullptr;
+    light->m_next = m_lightList;
+    if (m_lightList != nullptr) {
+        m_lightList->m_prev = light;
+    }
+    m_lightList = light;
+    ++m_lightCount;
+
+    return light;
+}
+
+void b2World::DestroyLight(b2Light* light)
+{
+    b2Assert(m_lightCount > 0);
+    b2Assert(IsLocked() == false);
+    if (IsLocked())
+    {
+        return;
+    }
+
+    // Remove from the world's lights list
+    if (light->m_prev)
+    {
+        light->m_prev->m_next = light->m_next;
+    }
+
+    if (light->m_next)
+    {
+        light->m_next->m_prev = light->m_prev;
+    }
+
+    if (light == m_lightList)
+    {
+        m_lightList = light->m_next;
+    }
+
+    --m_lightCount;
+
+    light->~b2Light();
+    m_blockAllocator.Free(light, sizeof(b2Light));
+}
+
 void b2World::SetAllowSleeping(bool flag)
 {
-	if (flag == m_allowSleep)
-	{
-		return;
-	}
+    if (flag == m_allowSleep)
+    {
+        return;
+    }
 
-	m_allowSleep = flag;
-	if (m_allowSleep == false)
-	{
-		for (b2Body* b = m_bodyList; b; b = b->m_next)
-		{
-			b->SetAwake(true);
-		}
-	}
+    m_allowSleep = flag;
+    if (m_allowSleep == false)
+    {
+        for (b2Body* b = m_bodyList; b; b = b->m_next)
+        {
+            b->SetAwake(true);
+        }
+    }
 }
 
 // Find islands, integrate and solve constraints, solve position constraints
@@ -1059,7 +1114,7 @@ void b2World::DrawShape(b2Fixture* fixture, const b2Transform& xf, const b2Color
 			int32 count = chain->m_count;
 			const b2Vec2* vertices = chain->m_vertices;
 
-			b2Color ghostColor(0.75f * color.r, 0.75f * color.g, 0.75f * color.b, color.a);
+            b2Color ghostColor(0.75f * color.r, 0.75f * color.g, 0.75f * color.b);
 
 			b2Vec2 v1 = b2Mul(xf, vertices[0]);
 			m_debugDraw->DrawPoint(v1, 4.0f, color);
@@ -1141,14 +1196,12 @@ void b2World::DrawJoint(b2Joint* joint)
 
 	case e_mouseJoint:
 	{
-		b2Color c;
-		c.Set(0.0f, 1.0f, 0.0f);
-		m_debugDraw->DrawPoint(p1, 4.0f, c);
-		m_debugDraw->DrawPoint(p2, 4.0f, c);
+        b2Color point_color(0.0f, 1.0f, 0.0f);
+        m_debugDraw->DrawPoint(p1, 4.0f, point_color);
+        m_debugDraw->DrawPoint(p2, 4.0f, point_color);
 
-		c.Set(0.8f, 0.8f, 0.8f);
-		m_debugDraw->DrawSegment(p1, p2, c);
-
+        b2Color segment_color(0.8f, 0.8f, 0.8f);
+        m_debugDraw->DrawSegment(p1, p2, segment_color);
 	}
 	break;
 

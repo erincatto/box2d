@@ -22,6 +22,7 @@
 #include "Box2D/Dynamics/b2Body.h"
 #include "Box2D/Collision/b2Collision.h"
 #include "Box2D/Collision/Shapes/b2Shape.h"
+#include "Box2D/Common/b2Rendering.h"
 
 class b2BlockAllocator;
 class b2Body;
@@ -88,6 +89,9 @@ struct b2FixtureDef
 
 	/// Contact filtering data.
 	b2Filter filter;
+
+    /// Material, used for rendering.
+    b2Material material;
 };
 
 /// This proxy is used internally to connect fixtures to the broad-phase.
@@ -195,6 +199,9 @@ public:
 	/// Dump this fixture to the log file.
 	void Dump(int32 bodyIndex);
 
+    /// Fixture's material
+    const b2Material& GetMaterial() const { return m_material; }
+
 protected:
 
 	friend class b2Body;
@@ -231,6 +238,8 @@ protected:
 	b2Filter m_filter;
 
 	bool m_isSensor;
+
+    b2Material m_material;
 
 	void* m_userData;
 };
