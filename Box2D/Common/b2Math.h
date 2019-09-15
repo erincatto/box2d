@@ -34,6 +34,9 @@ inline bool b2IsValid(float32 x)
 /// A 2D column vector.
 struct b2Vec2
 {
+	float32 x;
+	float32 y;
+
     /// Default constructor does nothing (for performance).
     b2Vec2() = default;
 
@@ -47,7 +50,7 @@ struct b2Vec2
 	void Set(float32 x_, float32 y_) { x = x_; y = y_; }
 
 	/// Negate this vector.
-	b2Vec2 operator -() const { b2Vec2 v; v.Set(-x, -y); return v; }
+	b2Vec2 operator -() const { return b2Vec2(-x, -y); }
 	
 	/// Read from and indexed element.
 	float32 operator () (int32 i) const
@@ -95,12 +98,12 @@ struct b2Vec2
 	/// Convert this vector into a unit vector. Returns the length.
 	float32 Normalize()
 	{
-		float32 length = Length();
+		const float32 length = Length();
 		if (length < b2_epsilon)
 		{
 			return 0.0f;
 		}
-		float32 invLength = 1.0f / length;
+		const float32 invLength = 1.0f / length;
 		x *= invLength;
 		y *= invLength;
 
@@ -126,13 +129,15 @@ struct b2Vec2
 	{
 		return b2Vec2(-y, x);
 	}
-
-	float32 x, y;
 };
 
 /// A 2D column vector with 3 elements.
 struct b2Vec3
 {
+	float32 x;
+	float32 y;
+	float32 z;
+	
 	/// Default constructor does nothing (for performance).
 	b2Vec3() {}
 
@@ -146,7 +151,7 @@ struct b2Vec3
 	void Set(float32 x_, float32 y_, float32 z_) { x = x_; y = y_; z = z_; }
 
 	/// Negate this vector.
-	b2Vec3 operator -() const { b2Vec3 v; v.Set(-x, -y, -z); return v; }
+	b2Vec3 operator -() const { return b2Vec3(-x, -y, -z); }
 
 	/// Add a vector to this vector.
 	void operator += (const b2Vec3& v)
@@ -165,15 +170,16 @@ struct b2Vec3
 	{
 		x *= s; y *= s; z *= s;
 	}
-
-	float32 x, y, z;
 };
 
 /// A 2-by-2 matrix. Stored in column-major order.
 struct b2Mat22
 {
+	b2Vec2 ex;
+	b2Vec2 ey;
+
 	/// The default constructor does nothing (for performance).
-	b2Mat22() {}
+	b2Mat22() = default;
 
 	/// Construct this matrix using columns.
 	b2Mat22(const b2Vec2& c1, const b2Vec2& c2)
@@ -196,21 +202,25 @@ struct b2Mat22
 		ey = c2;
 	}
 
-	/// Set this to the identity matrix.
-	void SetIdentity()
-	{
-		ex.x = 1.0f; ey.x = 0.0f;
-		ex.y = 0.0f; ey.y = 1.0f;
-	}
+    /// Set this to the identity matrix.
+    void SetIdentity()
+    {
+        ex.x = 1.0f;
+        ey.x = 0.0f;
+        ex.y = 0.0f;
+        ey.y = 1.0f;
+    }
 
-	/// Set this matrix to all zeros.
-	void SetZero()
-	{
-		ex.x = 0.0f; ey.x = 0.0f;
-		ex.y = 0.0f; ey.y = 0.0f;
-	}
+    /// Set this matrix to all zeros.
+    void SetZero()
+    {
+        ex.x = 0.0f;
+        ey.x = 0.0f;
+        ex.y = 0.0f;
+        ey.y = 0.0f;
+    }
 
-	b2Mat22 GetInverse() const
+    b2Mat22 GetInverse() const
 	{
 		float32 a = ex.x, b = ey.x, c = ex.y, d = ey.y;
 		b2Mat22 B;
@@ -239,15 +249,17 @@ struct b2Mat22
 		x.y = det * (a11 * b.y - a21 * b.x);
 		return x;
 	}
-
-	b2Vec2 ex, ey;
 };
 
 /// A 3-by-3 matrix. Stored in column-major order.
 struct b2Mat33
 {
+	b2Vec3 ex;
+	b2Vec3 ey;
+	b2Vec3 ez;
+	
 	/// The default constructor does nothing (for performance).
-	b2Mat33() {}
+	b2Mat33() = default;
 
 	/// Construct this matrix using columns.
 	b2Mat33(const b2Vec3& c1, const b2Vec3& c2, const b2Vec3& c3)
@@ -281,14 +293,15 @@ struct b2Mat33
 	/// Get the symmetric inverse of this matrix as a 3-by-3.
 	/// Returns the zero matrix if singular.
 	void GetSymInverse33(b2Mat33* M) const;
-
-	b2Vec3 ex, ey, ez;
 };
 
 /// Rotation
 struct b2Rot
 {
-	b2Rot() {}
+	/// Sine and cosine
+	float32 s, c;
+
+	b2Rot() = default;
 
 	/// Initialize from an angle in radians
 	explicit b2Rot(float32 angle)
@@ -330,17 +343,17 @@ struct b2Rot
 	{
 		return b2Vec2(-s, c);
 	}
-
-	/// Sine and cosine
-	float32 s, c;
 };
 
 /// A transform contains translation and rotation. It is used to represent
 /// the position and orientation of rigid frames.
 struct b2Transform
 {
+	b2Vec2 p;
+	b2Rot q;
+
 	/// The default constructor does nothing.
-	b2Transform() {}
+	b2Transform() = default;
 
 	/// Initialize using a position vector and a rotation.
 	b2Transform(const b2Vec2& position, const b2Rot& rotation) : p(position), q(rotation) {}
@@ -358,9 +371,6 @@ struct b2Transform
 		p = position;
 		q.Set(angle);
 	}
-
-	b2Vec2 p;
-	b2Rot q;
 };
 
 /// This describes the motion of a body/shape for TOI computation.
@@ -369,6 +379,14 @@ struct b2Transform
 /// we must interpolate the center of mass position.
 struct b2Sweep
 {
+	b2Vec2 localCenter;	///< local center of mass position
+	b2Vec2 c0, c;		///< center world positions
+	float32 a0, a;		///< world angles
+
+	/// Fraction of the current time step in the range [0,1]
+	/// c0 and a0 are the positions at alpha0.
+	float32 alpha0;
+
 	/// Get the interpolated transform at a specific time.
 	/// @param beta is a factor in [0,1], where 0 indicates alpha0.
 	void GetTransform(b2Transform* xfb, float32 beta) const;
@@ -379,14 +397,6 @@ struct b2Sweep
 
 	/// Normalize the angles.
 	void Normalize();
-
-	b2Vec2 localCenter;	///< local center of mass position
-	b2Vec2 c0, c;		///< center world positions
-	float32 a0, a;		///< world angles
-
-	/// Fraction of the current time step in the range [0,1]
-	/// c0 and a0 are the positions at alpha0.
-	float32 alpha0;
 };
 
 /// Useful constant
@@ -449,6 +459,11 @@ inline b2Vec2 operator * (float32 s, const b2Vec2& a)
 	return b2Vec2(s * a.x, s * a.y);
 }
 
+inline b2Vec2 operator * (const b2Vec2& a, float32 s)
+{
+	return b2Vec2(s * a.x, s * a.y);
+}
+
 inline bool operator == (const b2Vec2& a, const b2Vec2& b)
 {
 	return a.x == b.x && a.y == b.y;
@@ -461,13 +476,12 @@ inline bool operator != (const b2Vec2& a, const b2Vec2& b)
 
 inline float32 b2Distance(const b2Vec2& a, const b2Vec2& b)
 {
-	b2Vec2 c = a - b;
-	return c.Length();
+	return (a - b).Length();
 }
 
 inline float32 b2DistanceSquared(const b2Vec2& a, const b2Vec2& b)
 {
-	b2Vec2 c = a - b;
+	const b2Vec2 c = a - b;
 	return b2Dot(c, c);
 }
 
@@ -514,8 +528,8 @@ inline b2Mat22 b2Mul(const b2Mat22& A, const b2Mat22& B)
 // A^T * B
 inline b2Mat22 b2MulT(const b2Mat22& A, const b2Mat22& B)
 {
-	b2Vec2 c1(b2Dot(A.ex, B.ex), b2Dot(A.ey, B.ex));
-	b2Vec2 c2(b2Dot(A.ex, B.ey), b2Dot(A.ey, B.ey));
+	const b2Vec2 c1(b2Dot(A.ex, B.ex), b2Dot(A.ey, B.ex));
+	const b2Vec2 c2(b2Dot(A.ex, B.ey), b2Dot(A.ey, B.ey));
 	return b2Mat22(c1, c2);
 }
 
@@ -571,18 +585,18 @@ inline b2Vec2 b2MulT(const b2Rot& q, const b2Vec2& v)
 
 inline b2Vec2 b2Mul(const b2Transform& T, const b2Vec2& v)
 {
-	float32 x = (T.q.c * v.x - T.q.s * v.y) + T.p.x;
-	float32 y = (T.q.s * v.x + T.q.c * v.y) + T.p.y;
+	const float32 x = (T.q.c * v.x - T.q.s * v.y) + T.p.x;
+	const float32 y = (T.q.s * v.x + T.q.c * v.y) + T.p.y;
 
 	return b2Vec2(x, y);
 }
 
 inline b2Vec2 b2MulT(const b2Transform& T, const b2Vec2& v)
 {
-	float32 px = v.x - T.p.x;
-	float32 py = v.y - T.p.y;
-	float32 x = (T.q.c * px + T.q.s * py);
-	float32 y = (-T.q.s * px + T.q.c * py);
+	const float32 px = v.x - T.p.x;
+	const float32 py = v.y - T.p.y;
+	const float32 x = (T.q.c * px + T.q.s * py);
+	const float32 y = (-T.q.s * px + T.q.c * py);
 
 	return b2Vec2(x, y);
 }
@@ -658,7 +672,7 @@ inline b2Vec2 b2Clamp(const b2Vec2& a, const b2Vec2& low, const b2Vec2& high)
 
 template<typename T> inline void b2Swap(T& a, T& b)
 {
-	T tmp = a;
+	const T tmp = a;
 	a = b;
 	b = tmp;
 }
@@ -680,14 +694,13 @@ inline uint32 b2NextPowerOfTwo(uint32 x)
 
 inline bool b2IsPowerOfTwo(uint32 x)
 {
-	bool result = x > 0 && (x & (x - 1)) == 0;
-	return result;
+	return x > 0 && (x & (x - 1)) == 0;
 }
 
 inline void b2Sweep::GetTransform(b2Transform* xf, float32 beta) const
 {
 	xf->p = (1.0f - beta) * c0 + beta * c;
-	float32 angle = (1.0f - beta) * a0 + beta * a;
+	const float32 angle = (1.0f - beta) * a0 + beta * a;
 	xf->q.Set(angle);
 
 	// Shift to origin
@@ -697,7 +710,7 @@ inline void b2Sweep::GetTransform(b2Transform* xf, float32 beta) const
 inline void b2Sweep::Advance(float32 alpha)
 {
 	b2Assert(alpha0 < 1.0f);
-	float32 beta = (alpha - alpha0) / (1.0f - alpha0);
+	const float32 beta = (alpha - alpha0) / (1.0f - alpha0);
 	c0 += beta * (c - c0);
 	a0 += beta * (a - a0);
 	alpha0 = alpha;
@@ -706,8 +719,8 @@ inline void b2Sweep::Advance(float32 alpha)
 /// Normalize an angle in radians to be between -pi and pi
 inline void b2Sweep::Normalize()
 {
-	float32 twoPi = 2.0f * b2_pi;
-	float32 d =  twoPi * floorf(a0 / twoPi);
+	const float32 twoPi = 2.0f * b2_pi;
+	const float32 d =  twoPi * floorf(a0 / twoPi);
 	a0 -= d;
 	a -= d;
 }
