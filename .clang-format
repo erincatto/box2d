@@ -1,8 +1,10 @@
-BasedOnStyle: Microsoft
-Cpp11BracedListStyle: 'false'
+BasedOnStyle: Chromium
+BreakBeforeBraces: Allman
 ColumnLimit: '90'
-PointerAlignment: Left
+IndentWidth: '4'
 TabWidth: '4'
-UseTab: Never
 AccessModifierOffset: '-4'
+UseTab: Never
+Cpp11BracedListStyle: 'false'
 AllowShortFunctionsOnASingleLine: InlineOnly
+KeepEmptyLinesAtTheStartOfBlocks: 'true'

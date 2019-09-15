@@ -72,4 +72,4 @@ private:
     b2Light* m_next = nullptr;
 };
 
-#endif // B2_RENDERING_H
+#endif  // B2_RENDERING_H
