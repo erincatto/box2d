@@ -5,6 +5,8 @@
 #include "Box2D/Common/b2Math.h"
 #include "Box2D/Common/b2Settings.h"
 
+#include <limits>
+
 class b2Body;
 class b2World;
 
@@ -43,8 +45,9 @@ struct b2Material
 
 struct b2LightDef
 {
-    b2Color color;
-    float32 intensity = 0;
+    b2Color color{ 1, 1, 1 };
+    float32 intensity = 1.0f;
+    float32 attenuation_distance = std::numeric_limits<float>::infinity();
     b2Vec2 position{ 0, 0 };
     b2Body* body = nullptr;
 };
