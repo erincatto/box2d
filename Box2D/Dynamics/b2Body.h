@@ -67,6 +67,7 @@ struct b2BodyDef
 		type = b2_staticBody;
 		active = true;
 		gravityScale = 1.0f;
+        useDefaultRendering = true;
 	}
 
 	/// The body type: static, kinematic, or dynamic.
@@ -98,7 +99,10 @@ struct b2BodyDef
 	/// Units are 1/time
 	float32 angularDamping;
 
-	/// Set this flag to false if this body should never fall asleep. Note that
+    /// Scale the gravity applied to this body.
+    float32 gravityScale;
+
+    /// Set this flag to false if this body should never fall asleep. Note that
 	/// this increases CPU usage.
 	bool allowSleep;
 
@@ -117,11 +121,11 @@ struct b2BodyDef
 	/// Does this body start out active?
 	bool active;
 
-	/// Use this to store application specific body data.
-	void* userData;
+    /// Should we use the default
+    bool useDefaultRendering;
 
-	/// Scale the gravity applied to this body.
-	float32 gravityScale;
+    /// Use this to store application specific body data.
+	void* userData;
 };
 
 /// A rigid body. These are created via b2World::CreateBody.
@@ -349,7 +353,10 @@ public:
 	void SetActive(bool flag);
 
 	/// Get the active state of the body.
-	bool IsActive() const;
+    bool IsActive() const;
+
+    /// Use the default rendering for this body?
+    bool UseDefaultRendering() const { return (m_flags & e_renderFlag) != 0; }
 
 	/// Set this body to have fixed rotation. This causes the mass
 	/// to be reset.
@@ -418,11 +425,14 @@ private:
 		e_bulletFlag		= 0x0008,
 		e_fixedRotationFlag	= 0x0010,
 		e_activeFlag		= 0x0020,
-		e_toiFlag			= 0x0040
+        e_toiFlag			= 0x0040,
+        e_renderFlag        = 0x1000,
 	};
 
-	b2Body(const b2BodyDef* bd, b2World* world);
-	~b2Body();
+    b2Body(const b2BodyDef* bd, b2World* world);
+
+    // shapes and joints are destroyed in b2World::Destroy
+    ~b2Body() = default;
 
 	void SynchronizeFixtures();
 	void SynchronizeTransform();

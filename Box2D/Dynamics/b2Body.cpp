@@ -52,7 +52,11 @@ b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 	if (bd->active)
 	{
 		m_flags |= e_activeFlag;
-	}
+    }
+    if (bd->useDefaultRendering)
+    {
+        m_flags |= e_renderFlag;
+    }
 
 	m_world = world;
 
@@ -103,11 +107,6 @@ b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 
 	m_fixtureList = nullptr;
 	m_fixtureCount = 0;
-}
-
-b2Body::~b2Body()
-{
-	// shapes and joints are destroyed in b2World::Destroy
 }
 
 void b2Body::SetType(b2BodyType type)
