@@ -19,51 +19,75 @@
 #ifndef ROPE_H
 #define ROPE_H
 
+#include "Box2D/Rope/b2Rope.h"
+
 ///
 class Rope : public Test
 {
 public:
 	Rope()
 	{
-		const int32 N = 40;
+		const int32 N = 20;
+		const float L = 0.5f;
 		b2Vec2 vertices[N];
 		float32 masses[N];
 
 		for (int32 i = 0; i < N; ++i)
 		{
-			vertices[i].Set(0.0f, 20.0f - 0.25f * i);
+			vertices[i].Set(0.0f, L * (N - i));
 			masses[i] = 1.0f;
 		}
 		masses[0] = 0.0f;
 		masses[1] = 0.0f;
+
+		m_tuning.bendHertz = 1.0f;
+		m_tuning.bendDamping = 0.0f;
+		m_tuning.bendStiffness = 0.5f;
+		m_tuning.bendingModel = b2_xpbdAngleBendingModel;
 
 		b2RopeDef def;
 		def.vertices = vertices;
 		def.count = N;
 		def.gravity.Set(0.0f, -10.0f);
 		def.masses = masses;
-		def.damping = 0.1f;
-		def.k2 = 1.0f;
-		def.k3 = 0.5f;
+		def.tuning = m_tuning;
 
 		m_rope.Initialize(&def);
 
 		m_angle = 0.0f;
 		m_rope.SetAngle(m_angle);
+		m_iterations = 1;
+		m_position.Set(0.0f, 0.0f);
 	}
 
-	void Keyboard(unsigned char key)
+	void Keyboard(int key) override
 	{
 		switch (key)
 		{
-		case 'q':
-			m_angle = b2Max(-b2_pi, m_angle - 0.05f * b2_pi);
-			m_rope.SetAngle(m_angle);
+		case GLFW_KEY_I:
+			m_iterations += 1;
 			break;
 
-		case 'e':
-			m_angle = b2Min(b2_pi, m_angle + 0.05f * b2_pi);
-			m_rope.SetAngle(m_angle);
+		case GLFW_KEY_K:
+			m_iterations = b2Max(m_iterations - 1, 1);
+			break;
+
+		case GLFW_KEY_U:
+			m_tuning.bendHertz = b2Min(m_tuning.bendHertz + 1.0f, 100.0f);
+			m_tuning.bendStiffness = b2Min(m_tuning.bendStiffness + 0.1f, 1.0f);
+			break;
+
+		case GLFW_KEY_J:
+			m_tuning.bendHertz = b2Max(m_tuning.bendHertz - 1.0f, 0.0f);
+			m_tuning.bendStiffness = b2Max(m_tuning.bendStiffness - 0.1f, 0.0f);
+			break;
+
+		case GLFW_KEY_Y:
+			m_tuning.bendDamping = b2Min(m_tuning.bendDamping + 0.1f, 10.0f);
+			break;
+
+		case GLFW_KEY_H:
+			m_tuning.bendDamping = b2Max(m_tuning.bendDamping - 0.1f, 0.0f);
 			break;
 		}
 	}
@@ -77,15 +101,40 @@ public:
 			dt = 0.0f;
 		}
 
-		m_rope.Step(dt, 1);
+		if (glfwGetKey(g_mainWindow, GLFW_KEY_COMMA) == GLFW_PRESS)
+		{
+			m_position.x -= 4.0f * dt;
+		}
+
+		if (glfwGetKey(g_mainWindow, GLFW_KEY_PERIOD) == GLFW_PRESS)
+		{
+			m_position.x += 4.0f * dt;
+		}
+
+		if (glfwGetKey(g_mainWindow, GLFW_KEY_Q) == GLFW_PRESS)
+		{
+			m_angle = b2Max(-b2_pi, m_angle - 0.2f * b2_pi / 180.0f);
+			m_rope.SetAngle(m_angle);
+		}
+
+		if (glfwGetKey(g_mainWindow, GLFW_KEY_E) == GLFW_PRESS)
+		{
+			m_angle = b2Min(b2_pi, m_angle + 0.2f * b2_pi / 180.0f);
+			m_rope.SetAngle(m_angle);
+		}
+
+		m_rope.SetTuning(m_tuning);
+		m_rope.Step(dt, m_iterations, m_position);
 
 		Test::Step(settings);
 
-		m_rope.Draw(&m_debugDraw);
+		m_rope.Draw(&g_debugDraw);
 
-		m_debugDraw.DrawString(5, m_textLine, "Press (q,e) to adjust target angle");
+		g_debugDraw.DrawString(5, m_textLine, "Press (q,e) to adjust target angle, (i,k) to adjust iterations");
 		m_textLine += DRAW_STRING_NEW_LINE;
-		m_debugDraw.DrawString(5, m_textLine, "Target angle = %g degrees", m_angle * 180.0f / b2_pi);
+		g_debugDraw.DrawString(5, m_textLine, "angle = %g, iterations = %d", m_angle * 180.0f / b2_pi, m_iterations);
+		m_textLine += DRAW_STRING_NEW_LINE;
+		g_debugDraw.DrawString(5, m_textLine, "bend: hertz = %g, damping = %g, stiffness = %g", m_tuning.bendHertz, m_tuning.bendDamping, m_tuning.bendStiffness);
 		m_textLine += DRAW_STRING_NEW_LINE;
 	}
 
@@ -95,7 +144,10 @@ public:
 	}
 
 	b2Rope m_rope;
+	b2RopeTuning m_tuning;
 	float32 m_angle;
+	int32 m_iterations;
+	b2Vec2 m_position;
 };
 
 #endif

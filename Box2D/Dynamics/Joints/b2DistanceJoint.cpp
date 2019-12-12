@@ -119,6 +119,8 @@ void b2DistanceJoint::InitVelocityConstraints(const b2SolverData& data)
 
 		// magic formulas
 		float32 h = data.step.dt;
+
+		// gamma = 1 / (h * (d + h * k)), the extra factor of h in the denominator is since the lambda is an impulse, not a force
 		m_gamma = h * (d + h * k);
 		m_gamma = m_gamma != 0.0f ? 1.0f / m_gamma : 0.0f;
 		m_bias = C * h * k * m_gamma;
