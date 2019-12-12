@@ -46,10 +46,11 @@ struct UIState
 	bool showMenu;
 };
 
+GLFWwindow* g_mainWindow = NULL;
+
 //
 namespace
 {
-	GLFWwindow* mainWindow = NULL;
 	UIState ui;
 
 	int32 testIndex = 0;
@@ -106,7 +107,7 @@ static void sKeyCallback(GLFWwindow* window, int key, int scancode, int action, 
 		{
 		case GLFW_KEY_ESCAPE:
 			// Quit
-			glfwSetWindowShouldClose(mainWindow, GL_TRUE);
+			glfwSetWindowShouldClose(g_mainWindow, GL_TRUE);
 			break;
 
 		case GLFW_KEY_LEFT:
@@ -246,7 +247,7 @@ static void sMouseButton(GLFWwindow* window, int32 button, int32 action, int32 m
 	ImGui_ImplGlfwGL3_MouseButtonCallback(window, button, action, mods);
 
 	double xd, yd;
-	glfwGetCursorPos(mainWindow, &xd, &yd);
+	glfwGetCursorPos(g_mainWindow, &xd, &yd);
 	b2Vec2 ps((float32)xd, (float32)yd);
 
 	// Use the mouse to move things around.
@@ -418,7 +419,7 @@ static void sInterface()
 			sRestart();
 
 		if (ImGui::Button("Quit", button_sz))
-			glfwSetWindowShouldClose(mainWindow, GL_TRUE);
+			glfwSetWindowShouldClose(g_mainWindow, GL_TRUE);
 
 		ImGui::PopAllowKeyboardFocus();
 		ImGui::End();
@@ -460,15 +461,15 @@ int main(int, char**)
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	mainWindow = glfwCreateWindow(g_camera.m_width, g_camera.m_height, title, NULL, NULL);
-	if (mainWindow == NULL)
+	g_mainWindow = glfwCreateWindow(g_camera.m_width, g_camera.m_height, title, NULL, NULL);
+	if (g_mainWindow == NULL)
 	{
-		fprintf(stderr, "Failed to open GLFW mainWindow.\n");
+		fprintf(stderr, "Failed to open GLFW g_mainWindow.\n");
 		glfwTerminate();
 		return -1;
 	}
 
-	glfwMakeContextCurrent(mainWindow);
+	glfwMakeContextCurrent(g_mainWindow);
 
 #if defined(__APPLE__) == FALSE
 	// Load OpenGL functions using glad
@@ -481,17 +482,17 @@ int main(int, char**)
 
 	printf("OpenGL %s, GLSL %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-	glfwSetScrollCallback(mainWindow, sScrollCallback);
-	glfwSetWindowSizeCallback(mainWindow, sResizeWindow);
-	glfwSetKeyCallback(mainWindow, sKeyCallback);
-	glfwSetCharCallback(mainWindow, sCharCallback);
-	glfwSetMouseButtonCallback(mainWindow, sMouseButton);
-	glfwSetCursorPosCallback(mainWindow, sMouseMotion);
-	glfwSetScrollCallback(mainWindow, sScrollCallback);
+	glfwSetScrollCallback(g_mainWindow, sScrollCallback);
+	glfwSetWindowSizeCallback(g_mainWindow, sResizeWindow);
+	glfwSetKeyCallback(g_mainWindow, sKeyCallback);
+	glfwSetCharCallback(g_mainWindow, sCharCallback);
+	glfwSetMouseButtonCallback(g_mainWindow, sMouseButton);
+	glfwSetCursorPosCallback(g_mainWindow, sMouseMotion);
+	glfwSetScrollCallback(g_mainWindow, sScrollCallback);
 
 	g_debugDraw.Create();
 
-	sCreateUI(mainWindow);
+	sCreateUI(g_mainWindow);
 
 	testCount = 0;
 	while (g_testEntries[testCount].createFcn != NULL)
@@ -513,12 +514,12 @@ int main(int, char**)
    
 	glClearColor(0.3f, 0.3f, 0.3f, 1.f);
 	
-	while (!glfwWindowShouldClose(mainWindow))
+	while (!glfwWindowShouldClose(g_mainWindow))
 	{
-		glfwGetWindowSize(mainWindow, &g_camera.m_width, &g_camera.m_height);
+		glfwGetWindowSize(g_mainWindow, &g_camera.m_width, &g_camera.m_height);
         
         int bufferWidth, bufferHeight;
-        glfwGetFramebufferSize(mainWindow, &bufferWidth, &bufferHeight);
+        glfwGetFramebufferSize(g_mainWindow, &bufferWidth, &bufferHeight);
         glViewport(0, 0, bufferWidth, bufferHeight);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -542,7 +543,7 @@ int main(int, char**)
 
 		ImGui::Render();
 
-		glfwSwapBuffers(mainWindow);
+		glfwSwapBuffers(g_mainWindow);
 
 		glfwPollEvents();
 	}

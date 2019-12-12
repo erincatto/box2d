@@ -57,6 +57,7 @@
 #include "Pyramid.h"
 #include "RayCast.h"
 #include "Revolute.h"
+#include "Rope.h"
 #include "RopeJoint.h"
 #include "SensorTest.h"
 #include "ShapeCast.h"
@@ -74,6 +75,7 @@
 
 TestEntry g_testEntries[] =
 {
+	{"Rope", Rope::Create },
 	{"Shape Cast", ShapeCast::Create },
 	{"Time of Impact", TimeOfImpact::Create},
 	{"Character Collision", CharacterCollision::Create},

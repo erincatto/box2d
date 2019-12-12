@@ -23,6 +23,35 @@
 
 class b2Draw;
 
+enum b2BendingModel
+{
+	b2_pbdDistanceBendingModel,
+	b2_pbdAngleBendingModel,
+	b2_forceAngleBendingModel,
+	b2_xpbdAngleBendingModel
+};
+
+///
+struct b2RopeTuning
+{
+	b2RopeTuning()
+	{
+		bendingModel = b2_pbdDistanceBendingModel;
+		damping = 0.0f;
+		stretchStiffness = 1.0f;
+		bendStiffness = 0.5f;
+		bendHertz = 1.0f;
+		bendDamping = 0.0f;
+	}
+
+	b2BendingModel bendingModel;
+	float32 damping;
+	float32 stretchStiffness;
+	float32 bendStiffness;
+	float32 bendHertz;
+	float32 bendDamping;
+};
+
 /// 
 struct b2RopeDef
 {
@@ -32,9 +61,6 @@ struct b2RopeDef
 		count = 0;
 		masses = nullptr;
 		gravity.SetZero();
-		damping = 0.1f;
-		k2 = 0.9f;
-		k3 = 0.1f;
 	}
 
 	///
@@ -49,14 +75,7 @@ struct b2RopeDef
 	///
 	b2Vec2 gravity;
 
-	///
-	float32 damping;
-
-	/// Stretching stiffness
-	float32 k2;
-
-	/// Bending stiffness. Values above 0.5 can make the simulation blow up.
-	float32 k3;
+	b2RopeTuning tuning;
 };
 
 /// 
@@ -70,7 +89,10 @@ public:
 	void Initialize(const b2RopeDef* def);
 
 	///
-	void Step(float32 timeStep, int32 iterations);
+	void SetTuning(const b2RopeTuning& tuning);
+
+	///
+	void Step(float32 timeStep, int32 iterations, const b2Vec2& position);
 
 	///
 	int32 GetVertexCount() const
@@ -92,10 +114,17 @@ public:
 
 private:
 
-	void SolveC2();
-	void SolveC3();
+	void SolveStretch();
+	//void SolveBend_PBD_Distance();
+	void SolveBend_PBD_Angle();
+	void SolveBend_XPBD_Angle(float32 dt);
+	void ApplyBendForces(float32 dt);
 
 	int32 m_count;
+	int32 m_stretchCount;
+	int32 m_bendCount;
+
+	b2Vec2* m_bindPositions;
 	b2Vec2* m_ps;
 	b2Vec2* m_p0s;
 	b2Vec2* m_vs;
@@ -104,12 +133,11 @@ private:
 
 	float32* m_Ls;
 	float32* m_as;
+	float32* m_bendingLambdas;
 
 	b2Vec2 m_gravity;
-	float32 m_damping;
 
-	float32 m_k2;
-	float32 m_k3;
+	b2RopeTuning m_tuning;
 };
 
 #endif
