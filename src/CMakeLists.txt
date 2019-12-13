@@ -1,0 +1,104 @@
+set(BOX2D_SOURCE_FILES
+	collision/b2BroadPhase.cpp
+	collision/b2BroadPhase.h
+	collision/b2ChainShape.cpp
+	collision/b2CircleShape.cpp
+	collision/b2CollideCircle.cpp
+	collision/b2CollideEdge.cpp
+	collision/b2CollidePolygon.cpp
+	collision/b2Collision.cpp
+	collision/b2Distance.cpp
+	collision/b2Distance.h
+	collision/b2DynamicTree.cpp
+	collision/b2EdgeShape.cpp
+	collision/b2PolygonShape.cpp
+	collision/b2TimeOfImpact.cpp
+	collision/b2TimeOfImpact.h
+	common/b2BlockAllocator.cpp
+	common/b2BlockAllocator.h
+	common/b2Draw.cpp
+	common/b2Math.cpp
+	common/b2Settings.cpp
+	common/b2StackAllocator.cpp
+	common/b2StackAllocator.h
+	common/b2Timer.cpp
+	dynamics/b2Body.cpp
+	dynamics/b2ChainAndCircleContact.cpp
+	dynamics/b2ChainAndCircleContact.h
+	dynamics/b2ChainAndPolygonContact.cpp
+	dynamics/b2ChainAndPolygonContact.h
+	dynamics/b2CircleContact.cpp
+	dynamics/b2CircleContact.h
+	dynamics/b2Contact.cpp
+	dynamics/b2Contact.h
+	dynamics/b2ContactManager.cpp
+	dynamics/b2ContactManager.h
+	dynamics/b2ContactSolver.cpp
+	dynamics/b2ContactSolver.h
+	dynamics/b2DistanceJoint.cpp
+	dynamics/b2EdgeAndCircleContact.cpp
+	dynamics/b2EdgeAndCircleContact.h
+	dynamics/b2EdgeAndPolygonContact.cpp
+	dynamics/b2EdgeAndPolygonContact.h
+	dynamics/b2Fixture.cpp
+	dynamics/b2FrictionJoint.cpp
+	dynamics/b2GearJoint.cpp
+	dynamics/b2Island.cpp
+	dynamics/b2Island.h
+	dynamics/b2Joint.cpp
+	dynamics/b2MotorJoint.cpp
+	dynamics/b2MouseJoint.cpp
+	dynamics/b2PolygonAndCircleContact.cpp
+	dynamics/b2PolygonAndCircleContact.h
+	dynamics/b2PolygonContact.cpp
+	dynamics/b2PolygonContact.h
+	dynamics/b2PrismaticJoint.cpp
+	dynamics/b2PulleyJoint.cpp
+	dynamics/b2RevoluteJoint.cpp
+	dynamics/b2RopeJoint.cpp
+	dynamics/b2WeldJoint.cpp
+	dynamics/b2WheelJoint.cpp
+	dynamics/b2World.cpp
+	dynamics/b2WorldCallbacks.cpp
+	rope/b2Rope.cpp)
+
+set(BOX2D_HEADER_FILES
+	../include/box2d/b2Body.h
+	../include/box2d/b2ChainShape.h
+	../include/box2d/b2CircleShape.h
+	../include/box2d/b2Collision.h
+	../include/box2d/b2DistanceJoint.h
+	../include/box2d/b2Draw.h
+	../include/box2d/b2DynamicTree.h
+	../include/box2d/b2EdgeShape.h
+	../include/box2d/b2Fixture.h
+	../include/box2d/b2FrictionJoint.h
+	../include/box2d/b2GearJoint.h
+	../include/box2d/b2GrowableStack.h
+	../include/box2d/b2Joint.h
+	../include/box2d/b2Math.h
+	../include/box2d/b2MotorJoint.h
+	../include/box2d/b2MouseJoint.h
+	../include/box2d/b2PolygonShape.h
+	../include/box2d/b2PrismaticJoint.h
+	../include/box2d/b2PulleyJoint.h
+	../include/box2d/b2RevoluteJoint.h
+	../include/box2d/b2Rope.h
+	../include/box2d/b2RopeJoint.h
+	../include/box2d/b2Settings.h
+	../include/box2d/b2Shape.h
+	../include/box2d/b2Timer.h
+	../include/box2d/b2TimeStep.h
+	../include/box2d/b2WeldJoint.h
+	../include/box2d/b2WheelJoint.h
+	../include/box2d/b2World.h
+	../include/box2d/b2WorldCallbacks.h
+	../include/box2d/Box2D.h)
+
+add_library(box2d STATIC ${BOX2D_SOURCE_FILES} ${BOX2D_HEADER_FILES})
+target_include_directories(box2d PUBLIC ../include)
+target_include_directories(box2d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "src" FILES ${BOX2D_SOURCE_FILES})
+source_group(TREE "../include" PREFIX "include" FILES ${BOX2D_HEADER_FILES})
