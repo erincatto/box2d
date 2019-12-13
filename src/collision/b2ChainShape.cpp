@@ -19,7 +19,7 @@
 #include "box2d/b2ChainShape.h"
 #include "box2d/b2EdgeShape.h"
 
-#include "common/b2BlockAllocator.h"
+#include "box2d/b2BlockAllocator.h"
 
 #include <new>
 #include <string.h>

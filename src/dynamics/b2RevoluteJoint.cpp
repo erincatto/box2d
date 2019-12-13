@@ -16,9 +16,9 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "Box2D/Dynamics/Joints/b2RevoluteJoint.h"
-#include "Box2D/Dynamics/b2Body.h"
-#include "Box2D/Dynamics/b2TimeStep.h"
+#include "box2d/b2RevoluteJoint.h"
+#include "box2d/b2Body.h"
+#include "box2d/b2TimeStep.h"
 
 // Point-to-point constraint
 // C = p2 - p1

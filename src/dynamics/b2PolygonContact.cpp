@@ -17,7 +17,7 @@
 */
 
 #include "b2PolygonContact.h"
-#include "common/b2BlockAllocator.h"
+#include "box2d/b2BlockAllocator.h"
 #include "collision/b2TimeOfImpact.h"
 #include "box2d/b2Body.h"
 #include "box2d/b2Fixture.h"

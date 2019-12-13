@@ -16,7 +16,9 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "Box2D/Collision/Shapes/b2CircleShape.h"
+#include "box2d/b2CircleShape.h"
+#include "box2d/b2BlockAllocator.h"
+
 #include <new>
 
 b2Shape* b2CircleShape::Clone(b2BlockAllocator* allocator) const

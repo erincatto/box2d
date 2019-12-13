@@ -1,6 +1,5 @@
 set(BOX2D_SOURCE_FILES
 	collision/b2BroadPhase.cpp
-	collision/b2BroadPhase.h
 	collision/b2ChainShape.cpp
 	collision/b2CircleShape.cpp
 	collision/b2CollideCircle.cpp
@@ -15,12 +14,10 @@ set(BOX2D_SOURCE_FILES
 	collision/b2TimeOfImpact.cpp
 	collision/b2TimeOfImpact.h
 	common/b2BlockAllocator.cpp
-	common/b2BlockAllocator.h
 	common/b2Draw.cpp
 	common/b2Math.cpp
 	common/b2Settings.cpp
 	common/b2StackAllocator.cpp
-	common/b2StackAllocator.h
 	common/b2Timer.cpp
 	dynamics/b2Body.cpp
 	dynamics/b2ChainAndCircleContact.cpp
@@ -32,7 +29,6 @@ set(BOX2D_SOURCE_FILES
 	dynamics/b2Contact.cpp
 	dynamics/b2Contact.h
 	dynamics/b2ContactManager.cpp
-	dynamics/b2ContactManager.h
 	dynamics/b2ContactSolver.cpp
 	dynamics/b2ContactSolver.h
 	dynamics/b2DistanceJoint.cpp
@@ -63,10 +59,13 @@ set(BOX2D_SOURCE_FILES
 	rope/b2Rope.cpp)
 
 set(BOX2D_HEADER_FILES
+	../include/box2d/b2BlockAllocator.h
 	../include/box2d/b2Body.h
+	../include/box2d/b2BroadPhase.h
 	../include/box2d/b2ChainShape.h
 	../include/box2d/b2CircleShape.h
 	../include/box2d/b2Collision.h
+	../include/box2d/b2ContactManager.h
 	../include/box2d/b2DistanceJoint.h
 	../include/box2d/b2Draw.h
 	../include/box2d/b2DynamicTree.h
@@ -87,6 +86,7 @@ set(BOX2D_HEADER_FILES
 	../include/box2d/b2RopeJoint.h
 	../include/box2d/b2Settings.h
 	../include/box2d/b2Shape.h
+	../include/box2d/b2StackAllocator.h
 	../include/box2d/b2Timer.h
 	../include/box2d/b2TimeStep.h
 	../include/box2d/b2WeldJoint.h
