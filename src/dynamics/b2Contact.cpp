@@ -16,7 +16,6 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "b2Contact.h"
 #include "b2CircleContact.h"
 #include "b2PolygonAndCircleContact.h"
 #include "b2PolygonContact.h"
@@ -25,13 +24,14 @@
 #include "b2ChainAndCircleContact.h"
 #include "b2ChainAndPolygonContact.h"
 #include "b2ContactSolver.h"
-#include "collision/b2TimeOfImpact.h"
 
 #include "box2d/b2Collision.h"
+#include "box2d/b2Contact.h"
 #include "box2d/b2Shape.h"
 #include "box2d/b2BlockAllocator.h"
 #include "box2d/b2Body.h"
 #include "box2d/b2Fixture.h"
+#include "box2d/b2TimeOfImpact.h"
 #include "box2d/b2World.h"
 
 b2ContactRegister b2Contact::s_registers[b2Shape::e_typeCount][b2Shape::e_typeCount];

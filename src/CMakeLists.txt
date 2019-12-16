@@ -7,12 +7,10 @@ set(BOX2D_SOURCE_FILES
 	collision/b2CollidePolygon.cpp
 	collision/b2Collision.cpp
 	collision/b2Distance.cpp
-	collision/b2Distance.h
 	collision/b2DynamicTree.cpp
 	collision/b2EdgeShape.cpp
 	collision/b2PolygonShape.cpp
 	collision/b2TimeOfImpact.cpp
-	collision/b2TimeOfImpact.h
 	common/b2BlockAllocator.cpp
 	common/b2Draw.cpp
 	common/b2Math.cpp
@@ -27,7 +25,6 @@ set(BOX2D_SOURCE_FILES
 	dynamics/b2CircleContact.cpp
 	dynamics/b2CircleContact.h
 	dynamics/b2Contact.cpp
-	dynamics/b2Contact.h
 	dynamics/b2ContactManager.cpp
 	dynamics/b2ContactSolver.cpp
 	dynamics/b2ContactSolver.h
@@ -65,7 +62,9 @@ set(BOX2D_HEADER_FILES
 	../include/box2d/b2ChainShape.h
 	../include/box2d/b2CircleShape.h
 	../include/box2d/b2Collision.h
+	../include/box2d/b2Contact.h
 	../include/box2d/b2ContactManager.h
+	../include/box2d/b2Distance.h
 	../include/box2d/b2DistanceJoint.h
 	../include/box2d/b2Draw.h
 	../include/box2d/b2DynamicTree.h
@@ -87,18 +86,18 @@ set(BOX2D_HEADER_FILES
 	../include/box2d/b2Settings.h
 	../include/box2d/b2Shape.h
 	../include/box2d/b2StackAllocator.h
+	../include/box2d/b2TimeOfImpact.h
 	../include/box2d/b2Timer.h
 	../include/box2d/b2TimeStep.h
 	../include/box2d/b2WeldJoint.h
 	../include/box2d/b2WheelJoint.h
 	../include/box2d/b2World.h
 	../include/box2d/b2WorldCallbacks.h
-	../include/box2d/Box2D.h)
+	../include/box2d/box2d.h)
 
 add_library(box2d STATIC ${BOX2D_SOURCE_FILES} ${BOX2D_HEADER_FILES})
 target_include_directories(box2d PUBLIC ../include)
 target_include_directories(box2d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "src" FILES ${BOX2D_SOURCE_FILES})
 source_group(TREE "../include" PREFIX "include" FILES ${BOX2D_HEADER_FILES})

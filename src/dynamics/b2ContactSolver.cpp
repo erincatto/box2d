@@ -18,8 +18,8 @@
 
 #include "b2ContactSolver.h"
 
-#include "b2Contact.h"
 #include "box2d/b2Body.h"
+#include "box2d/b2Contact.h"
 #include "box2d/b2Fixture.h"
 #include "box2d/b2StackAllocator.h"
 #include "box2d/b2World.h"

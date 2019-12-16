@@ -19,6 +19,7 @@ if (BUILD_SAMPLES)
 	add_subdirectory(extern/glad)
 	add_subdirectory(extern/glfw)
 	add_subdirectory(extern/imgui)
+	add_subdirectory(extern/sajson)
 	add_subdirectory(samples)
 
 	# default startup project for Visual Studio

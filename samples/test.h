@@ -19,26 +19,23 @@
 #ifndef TEST_H
 #define TEST_H
 
-#include "Box2D/Box2D.h"
-#include "DebugDraw.h"
+#include "box2d/box2d.h"
+#include "draw.h"
 
 #if defined(__APPLE__)
 #define GLFW_INCLUDE_GLCOREARB
 #include <OpenGL/gl3.h>
 #else
-#include "Testbed/glad/glad.h"
+#include "glad.h"
 #endif
-#include "Testbed/glfw/glfw3.h"
+#include "GLFW/glfw3.h"
 
 #include <stdlib.h>
 
-class Test;
 struct Settings;
+class Test;
 
-typedef Test* TestCreateFcn();
-
-#define	RAND_LIMIT	32767
-#define DRAW_STRING_NEW_LINE 16
+#define	RAND_LIMIT 32767
 
 /// Random number in range [-1,1]
 inline float32 RandomFloat()
@@ -58,60 +55,6 @@ inline float32 RandomFloat(float32 lo, float32 hi)
 	return r;
 }
 
-/// Test settings. Some can be controlled in the GUI.
-struct Settings
-{
-	Settings()
-	{
-		hz = 60.0f;
-		velocityIterations = 8;
-		positionIterations = 3;
-		drawShapes = true;
-		drawJoints = true;
-		drawAABBs = false;
-		drawContactPoints = false;
-		drawContactNormals = false;
-		drawContactImpulse = false;
-		drawFrictionImpulse = false;
-		drawCOMs = false;
-		drawStats = false;
-		drawProfile = false;
-		enableWarmStarting = true;
-		enableContinuous = true;
-		enableSubStepping = false;
-		enableSleep = true;
-		pause = false;
-		singleStep = false;
-	}
-
-	float32 hz;
-	int32 velocityIterations;
-	int32 positionIterations;
-	bool drawShapes;
-	bool drawJoints;
-	bool drawAABBs;
-	bool drawContactPoints;
-	bool drawContactNormals;
-	bool drawContactImpulse;
-	bool drawFrictionImpulse;
-	bool drawCOMs;
-	bool drawStats;
-	bool drawProfile;
-	bool enableWarmStarting;
-	bool enableContinuous;
-	bool enableSubStepping;
-	bool enableSleep;
-	bool pause;
-	bool singleStep;
-};
-
-struct TestEntry
-{
-	const char *name;
-	TestCreateFcn *createFcn;
-};
-
-extern TestEntry g_testEntries[];
 // This is called when a joint in the world is implicitly destroyed
 // because an attached body is destroyed. This gives us a chance to
 // nullify the mouse joint.
@@ -145,8 +88,13 @@ public:
 	Test();
 	virtual ~Test();
 
-	void DrawTitle(const char *string);
-	virtual void Step(Settings* settings);
+	virtual const char* GetCategory() const = 0;
+	virtual const char* GetName() const = 0;
+
+	void SetUIScale(float scale);
+	void DrawTitle(const char* string);
+	virtual void Step(Settings& settings);
+	virtual void UpdateUI() {}
 	virtual void Keyboard(int key) { B2_NOT_USED(key); }
 	virtual void KeyboardUp(int key) { B2_NOT_USED(key); }
 	void ShiftMouseDown(const b2Vec2& p);
@@ -192,9 +140,26 @@ protected:
 	bool m_bombSpawning;
 	b2Vec2 m_mouseWorld;
 	int32 m_stepCount;
-
+	float m_uiScale;
+	int32 m_textIncrement;
 	b2Profile m_maxProfile;
 	b2Profile m_totalProfile;
 };
+
+int RegisterTest(Test* test);
+
+typedef Test* TestCreateFcn();
+
+//
+struct TestEntry
+{
+	const char* category;
+	const char* name;
+	TestCreateFcn* createFcn;
+};
+
+#define MAX_TESTS 256
+extern TestEntry g_testEntries[MAX_TESTS];
+extern int g_testCount;
 
 #endif

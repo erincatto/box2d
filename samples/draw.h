@@ -16,10 +16,10 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef DEBUGDRAW_H
-#define DEBUGDRAW_H
+#ifndef DRAW_H
+#define DRAW_H
 
-#include "Box2D/Box2D.h"
+#include "box2d/box2d.h"
 
 struct b2AABB;
 struct GLRenderPoints;

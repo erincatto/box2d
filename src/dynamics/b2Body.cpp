@@ -17,10 +17,10 @@
 */
 
 #include "box2d/b2Body.h"
+#include "box2d/b2Contact.h"
 #include "box2d/b2Fixture.h"
-#include "box2d/b2World.h"
-#include "b2Contact.h"
 #include "box2d/b2Joint.h"
+#include "box2d/b2World.h"
 
 b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 {

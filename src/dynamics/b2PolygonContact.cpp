@@ -18,11 +18,10 @@
 
 #include "b2PolygonContact.h"
 #include "box2d/b2BlockAllocator.h"
-#include "collision/b2TimeOfImpact.h"
 #include "box2d/b2Body.h"
 #include "box2d/b2Fixture.h"
+#include "box2d/b2TimeOfImpact.h"
 #include "box2d/b2WorldCallbacks.h"
-
 #include <new>
 
 b2Contact* b2PolygonContact::Create(b2Fixture* fixtureA, int32, b2Fixture* fixtureB, int32, b2BlockAllocator* allocator)

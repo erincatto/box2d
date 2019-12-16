@@ -17,10 +17,10 @@
 */
 
 #include "box2d/b2Collision.h"
-#include "b2Distance.h"
-#include "b2TimeOfImpact.h"
+#include "box2d/b2Distance.h"
 #include "box2d/b2CircleShape.h"
 #include "box2d/b2PolygonShape.h"
+#include "box2d/b2TimeOfImpact.h"
 #include "box2d/b2Timer.h"
 
 #include <stdio.h>

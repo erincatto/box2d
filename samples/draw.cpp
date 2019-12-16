@@ -16,20 +16,20 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "DebugDraw.h"
+#include "draw.h"
 
 #if defined(__APPLE_CC__)
 #define GLFW_INCLUDE_GLCOREARB
 #include <OpenGL/gl3.h>
 #else
-#include "Testbed/glad/glad.h"
+#include "glad.h"
 #endif
 
-#include "Testbed/glfw/glfw3.h"
+#include "GLFW/glfw3.h"
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "Testbed/imgui/imgui.h"
+#include "imgui/imgui.h"
 
 #define BUFFER_OFFSET(x)  ((const void*) (x))
 
@@ -777,7 +777,7 @@ void DebugDraw::DrawString(int x, int y, const char *string, ...)
 	va_list arg;
 	va_start(arg, string);
 	ImGui::Begin("Overlay", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar);
-	ImGui::SetCursorPos(b2Vec2(float(x), float(y)));
+	ImGui::SetCursorPos(ImVec2(float(x), float(y)));
 	ImGui::TextColoredV(ImColor(230, 153, 153, 255), string, arg);
 	ImGui::End();
 	va_end(arg);
@@ -791,7 +791,7 @@ void DebugDraw::DrawString(const b2Vec2& pw, const char *string, ...)
 	va_list arg;
 	va_start(arg, string);
 	ImGui::Begin("Overlay", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar);
-	ImGui::SetCursorPos(ps);
+	ImGui::SetCursorPos(ImVec2(ps.x, ps.y));
 	ImGui::TextColoredV(ImColor(230, 153, 153, 255), string, arg);
 	ImGui::End();
 	va_end(arg);

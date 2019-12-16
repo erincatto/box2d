@@ -20,86 +20,99 @@
 #define GLFW_INCLUDE_GLCOREARB
 #include <OpenGL/gl3.h>
 #else
-#include "Testbed/glad/glad.h"
+#include "glad.h"
 #endif
 
-#include "Testbed/imgui/imgui.h"
-#include "Testbed/imgui/imgui_impl_glfw_gl3.h"
-#include "DebugDraw.h"
-#include "Test.h"
+#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS 1
 
-#include "Testbed/glfw/glfw3.h"
+#include "imgui/imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
+#include "draw.h"
+#include "settings.h"
+#include "test.h"
+
+#include "glfw/glfw3.h"
+
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 
 #ifdef _MSC_VER
 #define snprintf _snprintf
 #endif
 
-// This include was added to support MinGW
-#ifdef _WIN32
-#include <crtdbg.h>
-#endif
+static GLFWwindow* s_mainWindow = NULL;
+static int32 s_testSelection = 0;
+static Test* s_test = nullptr;
+static Settings s_settings;
+static float s_uiScale = 1.0f;
+static bool s_showMenu = true;
+static bool s_rightMouseDown = false;
+static b2Vec2 s_clickPointWS = b2Vec2_zero;
 
-//
-struct UIState
+void glfwErrorCallback(int error, const char* description)
 {
-	bool showMenu;
-};
-
-GLFWwindow* g_mainWindow = NULL;
-
-//
-namespace
-{
-	UIState ui;
-
-	int32 testIndex = 0;
-	int32 testSelection = 0;
-	int32 testCount = 0;
-	TestEntry* entry;
-	Test* test;
-	Settings settings;
-	bool rightMouseDown;
-	b2Vec2 lastp;
+	fprintf(stderr, "GLFW error occured. Code: %d. Description: %s\n", error, description);
 }
 
-//
-static void sCreateUI(GLFWwindow* window)
+static inline bool CompareTests(const TestEntry* a, const TestEntry* b)
 {
-	ui.showMenu = true;
-
-	// Init UI
-	const char* fontPath = "Data/DroidSans.ttf";
-	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath, 15.f);
-
-	if (ImGui_ImplGlfwGL3_Init(window, false) == false)
+	int result = strcmp(a->category, b->category);
+	if (result == 0)
 	{
-		fprintf(stderr, "Could not init GUI renderer.\n");
-		assert(false);
-		return;
+		result = strcmp(a->name, b->name);
 	}
 
-	ImGuiStyle& style = ImGui::GetStyle();
-	style.FrameRounding = style.GrabRounding = style.ScrollbarRounding = 2.0f;
-	style.FramePadding = ImVec2(4, 2);
-	style.DisplayWindowPadding = ImVec2(0, 0);
-	style.DisplaySafeAreaPadding = ImVec2(0, 0);
+	return result < 0;
 }
 
-//
-static void sResizeWindow(GLFWwindow*, int width, int height)
+static void SortTests()
+{
+	std::sort(g_testEntries, g_testEntries + g_testCount, CompareTests);
+}
+
+static void CreateUI(GLFWwindow* window)
+{
+	float xscale, yscale;
+	glfwGetWindowContentScale(window, &xscale, &yscale);
+	s_uiScale = xscale;
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+
+	bool success;
+	success = ImGui_ImplGlfw_InitForOpenGL(window, false);
+	if (success == false)
+	{
+		printf("ImGui_ImplGlfw_InitForOpenGL failed\n");
+		assert(false);
+	}
+
+	success = ImGui_ImplOpenGL3_Init();
+	if (success == false)
+	{
+		printf("ImGui_ImplOpenGL3_Init failed\n");
+		assert(false);
+	}
+
+	const char* fontPath = "Data/DroidSans.ttf";
+	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath, s_uiScale * 14.0f);
+}
+
+static void ResizeWindowCallback(GLFWwindow*, int width, int height)
 {
 	g_camera.m_width = width;
 	g_camera.m_height = height;
 }
 
-//
-static void sKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	ImGui_ImplGlfwGL3_KeyCallback(window, key, scancode, action, mods);
-	bool keys_for_ui = ImGui::GetIO().WantCaptureKeyboard;
-	if (keys_for_ui)
+	ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
+	if (ImGui::GetIO().WantCaptureKeyboard)
+	{
 		return;
+	}
 
 	if (action == GLFW_PRESS)
 	{
@@ -115,7 +128,7 @@ static void sKeyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			if (mods == GLFW_MOD_CONTROL)
 			{
 				b2Vec2 newOrigin(2.0f, 0.0f);
-				test->ShiftOrigin(newOrigin);
+				s_test->ShiftOrigin(newOrigin);
 			}
 			else
 			{
@@ -128,7 +141,7 @@ static void sKeyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			if (mods == GLFW_MOD_CONTROL)
 			{
 				b2Vec2 newOrigin(-2.0f, 0.0f);
-				test->ShiftOrigin(newOrigin);
+				s_test->ShiftOrigin(newOrigin);
 			}
 			else
 			{
@@ -141,7 +154,7 @@ static void sKeyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			if (mods == GLFW_MOD_CONTROL)
 			{
 				b2Vec2 newOrigin(0.0f, 2.0f);
-				test->ShiftOrigin(newOrigin);
+				s_test->ShiftOrigin(newOrigin);
 			}
 			else
 			{
@@ -154,7 +167,7 @@ static void sKeyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			if (mods == GLFW_MOD_CONTROL)
 			{
 				b2Vec2 newOrigin(0.0f, -2.0f);
-				test->ShiftOrigin(newOrigin);
+				s_test->ShiftOrigin(newOrigin);
 			}
 			else
 			{
@@ -180,71 +193,69 @@ static void sKeyCallback(GLFWwindow* window, int key, int scancode, int action, 
 
 		case GLFW_KEY_R:
 			// Reset test
-			delete test;
-			test = entry->createFcn();
+			delete s_test;
+			s_test = g_testEntries[s_settings.m_testIndex].createFcn();
 			break;
 
 		case GLFW_KEY_SPACE:
 			// Launch a bomb.
-			if (test)
+			if (s_test)
 			{
-				test->LaunchBomb();
+				s_test->LaunchBomb();
 			}
 			break;
 
 		case GLFW_KEY_O:
-			settings.singleStep = true;
+			s_settings.m_singleStep = true;
 			break;
 
 		case GLFW_KEY_P:
-			settings.pause = !settings.pause;
+			s_settings.m_pause = !s_settings.m_pause;
 			break;
 
 		case GLFW_KEY_LEFT_BRACKET:
 			// Switch to previous test
-			--testSelection;
-			if (testSelection < 0)
+			--s_testSelection;
+			if (s_testSelection < 0)
 			{
-				testSelection = testCount - 1;
+				s_testSelection = g_testCount - 1;
 			}
 			break;
 
 		case GLFW_KEY_RIGHT_BRACKET:
 			// Switch to next test
-			++testSelection;
-			if (testSelection == testCount)
+			++s_testSelection;
+			if (s_testSelection == g_testCount)
 			{
-				testSelection = 0;
+				s_testSelection = 0;
 			}
 			break;
 
 		case GLFW_KEY_TAB:
-			ui.showMenu = !ui.showMenu;
+			s_showMenu = !s_showMenu;
 
 		default:
-			if (test)
+			if (s_test)
 			{
-				test->Keyboard(key);
+				s_test->Keyboard(key);
 			}
 		}
 	}
 	else if (action == GLFW_RELEASE)
 	{
-		test->KeyboardUp(key);
+		s_test->KeyboardUp(key);
 	}
 	// else GLFW_REPEAT
 }
 
-//
-static void sCharCallback(GLFWwindow* window, unsigned int c)
+static void CharCallback(GLFWwindow* window, unsigned int c)
 {
-	ImGui_ImplGlfwGL3_CharCallback(window, c);
+	ImGui_ImplGlfw_CharCallback(window, c);
 }
 
-//
-static void sMouseButton(GLFWwindow* window, int32 button, int32 action, int32 mods)
+static void MouseButtonCallback(GLFWwindow* window, int32 button, int32 action, int32 mods)
 {
-	ImGui_ImplGlfwGL3_MouseButtonCallback(window, button, action, mods);
+	ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
 
 	double xd, yd;
 	glfwGetCursorPos(g_mainWindow, &xd, &yd);
@@ -260,178 +271,217 @@ static void sMouseButton(GLFWwindow* window, int32 button, int32 action, int32 m
 		{
 			if (mods == GLFW_MOD_SHIFT)
 			{
-				test->ShiftMouseDown(pw);
+				s_test->ShiftMouseDown(pw);
 			}
 			else
 			{
-				test->MouseDown(pw);
+				s_test->MouseDown(pw);
 			}
 		}
 		
 		if (action == GLFW_RELEASE)
 		{
-			test->MouseUp(pw);
+			s_test->MouseUp(pw);
 		}
 	}
 	else if (button == GLFW_MOUSE_BUTTON_2)
 	{
 		if (action == GLFW_PRESS)
 		{	
-			lastp = g_camera.ConvertScreenToWorld(ps);
-			rightMouseDown = true;
+			s_clickPointWS = g_camera.ConvertScreenToWorld(ps);
+			s_rightMouseDown = true;
 		}
 
 		if (action == GLFW_RELEASE)
 		{
-			rightMouseDown = false;
+			s_rightMouseDown = false;
 		}
 	}
 }
 
-//
-static void sMouseMotion(GLFWwindow*, double xd, double yd)
+static void MouseMotionCallback(GLFWwindow*, double xd, double yd)
 {
 	b2Vec2 ps((float)xd, (float)yd);
 
 	b2Vec2 pw = g_camera.ConvertScreenToWorld(ps);
-	test->MouseMove(pw);
+	s_test->MouseMove(pw);
 	
-	if (rightMouseDown)
+	if (s_rightMouseDown)
 	{
-		b2Vec2 diff = pw - lastp;
+		b2Vec2 diff = pw - s_clickPointWS;
 		g_camera.m_center.x -= diff.x;
 		g_camera.m_center.y -= diff.y;
-		lastp = g_camera.ConvertScreenToWorld(ps);
+		s_clickPointWS = g_camera.ConvertScreenToWorld(ps);
 	}
 }
 
-//
-static void sScrollCallback(GLFWwindow* window, double dx, double dy)
+static void ScrollCallback(GLFWwindow* window, double dx, double dy)
 {
-	ImGui_ImplGlfwGL3_ScrollCallback(window, dx, dy);
-	bool mouse_for_ui = ImGui::GetIO().WantCaptureMouse;
-
-	if (!mouse_for_ui)
+	ImGui_ImplGlfw_ScrollCallback(window, dx, dy);
+	if (ImGui::GetIO().WantCaptureMouse)
 	{
-		if (dy > 0)
-		{
-			g_camera.m_zoom /= 1.1f;
-		}
-		else
-		{
-			g_camera.m_zoom *= 1.1f;
-		}
+		return;
+	}
+
+	if (dy > 0)
+	{
+		g_camera.m_zoom /= 1.1f;
+	}
+	else
+	{
+		g_camera.m_zoom *= 1.1f;
 	}
 }
 
-//
-static void sRestart()
+static void RestartTest()
 {
-	delete test;
-	entry = g_testEntries + testIndex;
-	test = entry->createFcn();
+	delete s_test;
+	s_test = g_testEntries[s_settings.m_testIndex].createFcn();
 }
 
-//
-static void sSimulate()
+static void Simulate()
 {
 	glEnable(GL_DEPTH_TEST);
-	test->Step(&settings);
+	s_test->Step(s_settings);
 
-	test->DrawTitle(entry->name);
+	s_test->DrawTitle(g_testEntries[s_settings.m_testIndex].name);
 	glDisable(GL_DEPTH_TEST);
 
-	if (testSelection != testIndex)
+	if (s_testSelection != s_settings.m_testIndex)
 	{
-		testIndex = testSelection;
-		delete test;
-		entry = g_testEntries + testIndex;
-		test = entry->createFcn();
+		s_settings.m_testIndex = s_testSelection;
+		delete s_test;
+		s_test = g_testEntries[s_settings.m_testIndex].createFcn();
 		g_camera.m_zoom = 1.0f;
 		g_camera.m_center.Set(0.0f, 20.0f);
 	}
 }
 
-//
-static bool sTestEntriesGetName(void*, int idx, const char** out_name)
-{
-	*out_name = g_testEntries[idx].name;
-	return true;
-}
-
-//
-static void sInterface()
+static void UpdateUI()
 {
 	int menuWidth = 200;
-	if (ui.showMenu)
+	if (s_showMenu)
 	{
 		ImGui::SetNextWindowPos(ImVec2((float)g_camera.m_width - menuWidth - 10, 10));
 		ImGui::SetNextWindowSize(ImVec2((float)menuWidth, (float)g_camera.m_height - 20));
-		ImGui::Begin("Testbed Controls", &ui.showMenu, ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoCollapse);
-		ImGui::PushAllowKeyboardFocus(false); // Disable TAB
 
-		ImGui::PushItemWidth(-1.0f);
+		ImGui::Begin("Tools", &s_showMenu, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
-		ImGui::Text("Test");
-		if (ImGui::Combo("##Test", &testIndex, sTestEntriesGetName, NULL, testCount, testCount))
+		if (ImGui::BeginTabBar("ControlTabs", ImGuiTabBarFlags_None))
 		{
-			delete test;
-			entry = g_testEntries + testIndex;
-			test = entry->createFcn();
-			testSelection = testIndex;
+			if (ImGui::BeginTabItem("Controls"))
+			{
+				ImGui::Text("Vel Iters");
+				ImGui::SliderInt("##Vel Iters", &s_settings.m_velocityIterations, 0, 50);
+				ImGui::Text("Pos Iters");
+				ImGui::SliderInt("##Pos Iters", &s_settings.m_positionIterations, 0, 50);
+				ImGui::Text("Hertz");
+				ImGui::SliderFloat("##Hertz", &s_settings.m_hertz, 5.0f, 120.0f, "%.0f hz");
+				ImGui::PopItemWidth();
+
+				ImGui::Checkbox("Sleep", &s_settings.m_enableSleep);
+				ImGui::Checkbox("Warm Starting", &s_settings.m_enableWarmStarting);
+				ImGui::Checkbox("Time of Impact", &s_settings.m_enableContinuous);
+				ImGui::Checkbox("Sub-Stepping", &s_settings.m_enableSubStepping);
+
+				ImGui::Separator();
+
+				ImGui::Checkbox("Shapes", &s_settings.m_drawShapes);
+				ImGui::Checkbox("Joints", &s_settings.m_drawJoints);
+				ImGui::Checkbox("AABBs", &s_settings.m_drawAABBs);
+				ImGui::Checkbox("Contact Points", &s_settings.m_drawContactPoints);
+				ImGui::Checkbox("Contact Normals", &s_settings.m_drawContactNormals);
+				ImGui::Checkbox("Contact Impulses", &s_settings.m_drawContactImpulse);
+				ImGui::Checkbox("Friction Impulses", &s_settings.m_drawFrictionImpulse);
+				ImGui::Checkbox("Center of Masses", &s_settings.m_drawCOMs);
+				ImGui::Checkbox("Statistics", &s_settings.m_drawStats);
+				ImGui::Checkbox("Profile", &s_settings.m_drawProfile);
+
+				ImVec2 button_sz = ImVec2(-1, 0);
+				if (ImGui::Button("Pause (P)", button_sz))
+				{
+					s_settings.m_pause = !s_settings.m_pause;
+				}
+
+				if (ImGui::Button("Single Step (O)", button_sz))
+				{
+					s_settings.m_singleStep = !s_settings.m_singleStep;
+				}
+
+				if (ImGui::Button("Restart (R)", button_sz))
+				{
+					RestartTest();
+				}
+
+				if (ImGui::Button("Quit", button_sz))
+				{
+					glfwSetWindowShouldClose(g_mainWindow, GL_TRUE);
+				}
+
+				ImGui::EndTabItem();
+			}
+
+			ImGuiTreeNodeFlags leafNodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+			leafNodeFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
+			ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+
+			if (ImGui::BeginTabItem("Tests"))
+			{
+				int categoryIndex = 0;
+				const char* category = g_testEntries[categoryIndex].category;
+				int i = 0;
+				while (i < g_testCount)
+				{
+					bool categorySelected = strcmp(category, g_testEntries[s_settings.m_testIndex].category) == 0;
+					ImGuiTreeNodeFlags nodeSelectionFlags = categorySelected ? ImGuiTreeNodeFlags_Selected : 0;
+					bool nodeOpen = ImGui::TreeNodeEx(category, nodeFlags | nodeSelectionFlags);
+
+					if (nodeOpen)
+					{
+						while (i < g_testCount && strcmp(category, g_testEntries[i].category) == 0)
+						{
+							ImGuiTreeNodeFlags selectionFlags = 0;
+							if (s_settings.m_testIndex == i)
+							{
+								selectionFlags = ImGuiTreeNodeFlags_Selected;
+							}
+							ImGui::TreeNodeEx((void*)(intptr_t)i, leafNodeFlags | selectionFlags, "%s", g_testEntries[i].name);
+							if (ImGui::IsItemClicked())
+							{
+								delete s_test;
+								s_settings.m_testIndex = i;
+								s_test = g_testEntries[i].createFcn();
+								s_test->SetUIScale(s_uiScale);
+								s_testSelection = i;
+							}
+							++i;
+						}
+						ImGui::TreePop();
+					}
+					else
+					{
+						while (i < g_testCount && strcmp(category, g_testEntries[i].category) == 0)
+						{
+							++i;
+						}
+					}
+
+					if (i < g_testCount)
+					{
+						category = g_testEntries[i].category;
+						categoryIndex = i;
+					}
+				}
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
 		}
-		ImGui::Separator();
 
-		ImGui::Text("Vel Iters");
-		ImGui::SliderInt("##Vel Iters", &settings.velocityIterations, 0, 50);
-		ImGui::Text("Pos Iters");
-		ImGui::SliderInt("##Pos Iters", &settings.positionIterations, 0, 50);
-		ImGui::Text("Hertz");
-		ImGui::SliderFloat("##Hertz", &settings.hz, 5.0f, 120.0f, "%.0f hz");
-		ImGui::PopItemWidth();
-
-		ImGui::Checkbox("Sleep", &settings.enableSleep);
-		ImGui::Checkbox("Warm Starting", &settings.enableWarmStarting);
-		ImGui::Checkbox("Time of Impact", &settings.enableContinuous);
-		ImGui::Checkbox("Sub-Stepping", &settings.enableSubStepping);
-
-		ImGui::Separator();
-
-		ImGui::Checkbox("Shapes", &settings.drawShapes);
-		ImGui::Checkbox("Joints", &settings.drawJoints);
-		ImGui::Checkbox("AABBs", &settings.drawAABBs);
-		ImGui::Checkbox("Contact Points", &settings.drawContactPoints);
-		ImGui::Checkbox("Contact Normals", &settings.drawContactNormals);
-		ImGui::Checkbox("Contact Impulses", &settings.drawContactImpulse);
-		ImGui::Checkbox("Friction Impulses", &settings.drawFrictionImpulse);
-		ImGui::Checkbox("Center of Masses", &settings.drawCOMs);
-		ImGui::Checkbox("Statistics", &settings.drawStats);
-		ImGui::Checkbox("Profile", &settings.drawProfile);
-
-		ImVec2 button_sz = ImVec2(-1, 0);
-		if (ImGui::Button("Pause (P)", button_sz))
-			settings.pause = !settings.pause;
-
-		if (ImGui::Button("Single Step (O)", button_sz))
-			settings.singleStep = !settings.singleStep;
-
-		if (ImGui::Button("Restart (R)", button_sz))
-			sRestart();
-
-		if (ImGui::Button("Quit", button_sz))
-			glfwSetWindowShouldClose(g_mainWindow, GL_TRUE);
-
-		ImGui::PopAllowKeyboardFocus();
 		ImGui::End();
+
+		s_test->UpdateUI();
 	}
-
-	//ImGui::ShowTestWindow(NULL);
-}
-
-//
-void glfwErrorCallback(int error, const char *description)
-{
-	fprintf(stderr, "GLFW error occured. Code: %d. Description: %s\n", error, description);
 }
 
 //
@@ -441,6 +491,9 @@ int main(int, char**)
 	// Enable memory-leak reports
 	_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG));
 #endif
+
+	s_settings.Load();
+	SortTests();
 
 	glfwSetErrorCallback(glfwErrorCallback);
 
@@ -482,29 +535,21 @@ int main(int, char**)
 
 	printf("OpenGL %s, GLSL %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-	glfwSetScrollCallback(g_mainWindow, sScrollCallback);
-	glfwSetWindowSizeCallback(g_mainWindow, sResizeWindow);
-	glfwSetKeyCallback(g_mainWindow, sKeyCallback);
-	glfwSetCharCallback(g_mainWindow, sCharCallback);
-	glfwSetMouseButtonCallback(g_mainWindow, sMouseButton);
-	glfwSetCursorPosCallback(g_mainWindow, sMouseMotion);
-	glfwSetScrollCallback(g_mainWindow, sScrollCallback);
+	glfwSetScrollCallback(g_mainWindow, ScrollCallback);
+	glfwSetWindowSizeCallback(g_mainWindow, ResizeWindowCallback);
+	glfwSetKeyCallback(g_mainWindow, KeyCallback);
+	glfwSetCharCallback(g_mainWindow, CharCallback);
+	glfwSetMouseButtonCallback(g_mainWindow, MouseButtonCallback);
+	glfwSetCursorPosCallback(g_mainWindow, MouseMotionCallback);
+	glfwSetScrollCallback(g_mainWindow, ScrollCallback);
 
 	g_debugDraw.Create();
 
-	sCreateUI(g_mainWindow);
+	CreateUI(g_mainWindow);
 
-	testCount = 0;
-	while (g_testEntries[testCount].createFcn != NULL)
-	{
-		++testCount;
-	}
-
-	testIndex = b2Clamp(testIndex, 0, testCount - 1);
-	testSelection = testIndex;
-
-	entry = g_testEntries + testIndex;
-	test = entry->createFcn();
+	s_settings.m_testIndex = b2Clamp(s_settings.m_testIndex, 0, g_testCount - 1);
+	s_testSelection = s_settings.m_testIndex;
+	s_test = g_testEntries[s_settings.m_testIndex].createFcn();
 
 	// Control the frame rate. One draw per monitor refresh.
 	glfwSwapInterval(1);
@@ -524,16 +569,19 @@ int main(int, char**)
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		ImGui_ImplGlfwGL3_NewFrame();
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+
+		ImGui::NewFrame();
 		ImGui::SetNextWindowPos(ImVec2(0,0));
 		ImGui::SetNextWindowSize(ImVec2((float)g_camera.m_width, (float)g_camera.m_height));
-		ImGui::Begin("Overlay", NULL, ImVec2(0,0), 0.0f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoInputs|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoScrollbar);
+		ImGui::Begin("##Controls", &s_showMenu, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 		ImGui::SetCursorPos(ImVec2(5, (float)g_camera.m_height - 20));
 		ImGui::Text("%.1f ms", 1000.0 * frameTime);
 		ImGui::End();
 
-		sSimulate();
-		sInterface();
+		Simulate();
+		UpdateUI();
 
 		// Measure speed
 		double time2 = glfwGetTime();
@@ -542,21 +590,25 @@ int main(int, char**)
 		time1 = time2;
 
 		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		glfwSwapBuffers(g_mainWindow);
 
 		glfwPollEvents();
 	}
 
-	if (test)
+	if (s_test)
 	{
-		delete test;
-		test = NULL;
+		delete s_test;
+		s_test = NULL;
 	}
 
 	g_debugDraw.Destroy();
-	ImGui_ImplGlfwGL3_Shutdown();
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
 	glfwTerminate();
+
+	s_settings.Save();
 
 	return 0;
 }

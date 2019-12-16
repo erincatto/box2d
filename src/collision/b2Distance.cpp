@@ -16,8 +16,8 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "b2Distance.h"
 #include "box2d/b2CircleShape.h"
+#include "box2d/b2Distance.h"
 #include "box2d/b2EdgeShape.h"
 #include "box2d/b2ChainShape.h"
 #include "box2d/b2PolygonShape.h"

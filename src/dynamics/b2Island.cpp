@@ -16,16 +16,17 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "collision/b2Distance.h"
-#include "b2Island.h"
 #include "box2d/b2Body.h"
+#include "box2d/b2Contact.h"
+#include "box2d/b2Distance.h"
 #include "box2d/b2Fixture.h"
-#include "box2d/b2World.h"
-#include "dynamics/b2Contact.h"
-#include "dynamics/b2ContactSolver.h"
 #include "box2d/b2Joint.h"
 #include "box2d/b2StackAllocator.h"
 #include "box2d/b2Timer.h"
+#include "box2d/b2World.h"
+
+#include "b2Island.h"
+#include "dynamics/b2ContactSolver.h"
 
 /*
 Position Correction Notes

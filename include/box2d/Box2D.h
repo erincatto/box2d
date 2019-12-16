@@ -41,17 +41,14 @@ For discussion please visit http://box2d.org/forum
 #include "b2PolygonShape.h"
 
 #include "b2BroadPhase.h"
-#include "b2Distance.h"
 #include "b2DynamicTree.h"
-#include "b2TimeOfImpact.h"
 
 #include "b2Body.h"
+#include "b2Contact.h"
 #include "b2Fixture.h"
 #include "b2WorldCallbacks.h"
 #include "b2TimeStep.h"
 #include "b2World.h"
-
-#include "b2Contact.h"
 
 #include "b2DistanceJoint.h"
 #include "b2FrictionJoint.h"

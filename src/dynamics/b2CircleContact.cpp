@@ -21,7 +21,7 @@
 #include "box2d/b2Fixture.h"
 #include "box2d/b2WorldCallbacks.h"
 #include "box2d/b2BlockAllocator.h"
-#include "collision/b2TimeOfImpact.h"
+#include "box2d/b2TimeOfImpact.h"
 
 #include <new>
 

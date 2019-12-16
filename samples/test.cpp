@@ -16,7 +16,8 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "Test.h"
+#include "test.h"
+#include "settings.h"
 #include <stdio.h>
 
 void DestructionListener::SayGoodbye(b2Joint* joint)
@@ -38,6 +39,8 @@ Test::Test()
 	m_world = new b2World(gravity);
 	m_bomb = NULL;
 	m_textLine = 30;
+	m_uiScale = 1.0f;
+	m_textIncrement = 14;
 	m_mouseJoint = NULL;
 	m_pointCount = 0;
 
@@ -97,10 +100,16 @@ void Test::PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
 	}
 }
 
+void Test::SetUIScale(float scale)
+{
+	m_uiScale = scale;
+	m_textIncrement = int32(14.0f * scale);
+}
+
 void Test::DrawTitle(const char *string)
 {
-    g_debugDraw.DrawString(5, DRAW_STRING_NEW_LINE, string);
-    m_textLine = 3 * DRAW_STRING_NEW_LINE;
+    g_debugDraw.DrawString(5, 5, string);
+    m_textLine = int32(28.0f * m_uiScale);
 }
 
 class QueryCallback : public b2QueryCallback
@@ -264,15 +273,15 @@ void Test::LaunchBomb(const b2Vec2& position, const b2Vec2& velocity)
 	m_bomb->CreateFixture(&fd);
 }
 
-void Test::Step(Settings* settings)
+void Test::Step(Settings& settings)
 {
-	float32 timeStep = settings->hz > 0.0f ? 1.0f / settings->hz : float32(0.0f);
+	float32 timeStep = settings.m_hertz > 0.0f ? 1.0f / settings.m_hertz : float32(0.0f);
 
-	if (settings->pause)
+	if (settings.m_pause)
 	{
-		if (settings->singleStep)
+		if (settings.m_singleStep)
 		{
-			settings->singleStep = 0;
+			settings.m_singleStep = 0;
 		}
 		else
 		{
@@ -280,24 +289,24 @@ void Test::Step(Settings* settings)
 		}
 
 		g_debugDraw.DrawString(5, m_textLine, "****PAUSED****");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 	}
 
 	uint32 flags = 0;
-	flags += settings->drawShapes			* b2Draw::e_shapeBit;
-	flags += settings->drawJoints			* b2Draw::e_jointBit;
-	flags += settings->drawAABBs			* b2Draw::e_aabbBit;
-	flags += settings->drawCOMs				* b2Draw::e_centerOfMassBit;
+	flags += settings.m_drawShapes			* b2Draw::e_shapeBit;
+	flags += settings.m_drawJoints			* b2Draw::e_jointBit;
+	flags += settings.m_drawAABBs			* b2Draw::e_aabbBit;
+	flags += settings.m_drawCOMs				* b2Draw::e_centerOfMassBit;
 	g_debugDraw.SetFlags(flags);
 
-	m_world->SetAllowSleeping(settings->enableSleep);
-	m_world->SetWarmStarting(settings->enableWarmStarting);
-	m_world->SetContinuousPhysics(settings->enableContinuous);
-	m_world->SetSubStepping(settings->enableSubStepping);
+	m_world->SetAllowSleeping(settings.m_enableSleep);
+	m_world->SetWarmStarting(settings.m_enableWarmStarting);
+	m_world->SetContinuousPhysics(settings.m_enableContinuous);
+	m_world->SetSubStepping(settings.m_enableSubStepping);
 
 	m_pointCount = 0;
 
-	m_world->Step(timeStep, settings->velocityIterations, settings->positionIterations);
+	m_world->Step(timeStep, settings.m_velocityIterations, settings.m_positionIterations);
 
 	m_world->DrawDebugData();
     g_debugDraw.Flush();
@@ -307,20 +316,20 @@ void Test::Step(Settings* settings)
 		++m_stepCount;
 	}
 
-	if (settings->drawStats)
+	if (settings.m_drawStats)
 	{
 		int32 bodyCount = m_world->GetBodyCount();
 		int32 contactCount = m_world->GetContactCount();
 		int32 jointCount = m_world->GetJointCount();
 		g_debugDraw.DrawString(5, m_textLine, "bodies/contacts/joints = %d/%d/%d", bodyCount, contactCount, jointCount);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 
 		int32 proxyCount = m_world->GetProxyCount();
 		int32 height = m_world->GetTreeHeight();
 		int32 balance = m_world->GetTreeBalance();
 		float32 quality = m_world->GetTreeQuality();
 		g_debugDraw.DrawString(5, m_textLine, "proxies/height/balance/quality = %d/%d/%d/%g", proxyCount, height, balance, quality);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 	}
 
 	// Track maximum profile times
@@ -345,7 +354,7 @@ void Test::Step(Settings* settings)
 		m_totalProfile.broadphase += p.broadphase;
 	}
 
-	if (settings->drawProfile)
+	if (settings.m_drawProfile)
 	{
 		const b2Profile& p = m_world->GetProfile();
 
@@ -365,21 +374,21 @@ void Test::Step(Settings* settings)
 		}
 
 		g_debugDraw.DrawString(5, m_textLine, "step [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.step, aveProfile.step, m_maxProfile.step);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "collide [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.collide, aveProfile.collide, m_maxProfile.collide);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "solve [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solve, aveProfile.solve, m_maxProfile.solve);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "solve init [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveInit, aveProfile.solveInit, m_maxProfile.solveInit);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "solve velocity [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveVelocity, aveProfile.solveVelocity, m_maxProfile.solveVelocity);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "solve position [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solvePosition, aveProfile.solvePosition, m_maxProfile.solvePosition);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "solveTOI [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveTOI, aveProfile.solveTOI, m_maxProfile.solveTOI);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "broad-phase [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.broadphase, aveProfile.broadphase, m_maxProfile.broadphase);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 	}
 
 	if (m_bombSpawning)
@@ -392,7 +401,7 @@ void Test::Step(Settings* settings)
 		g_debugDraw.DrawSegment(m_mouseWorld, m_bombSpawnPoint, c);
 	}
 
-	if (settings->drawContactPoints)
+	if (settings.m_drawContactPoints)
 	{
 		const float32 k_impulseScale = 0.1f;
 		const float32 k_axisScale = 0.3f;
@@ -412,20 +421,20 @@ void Test::Step(Settings* settings)
 				g_debugDraw.DrawPoint(point->position, 5.0f, b2Color(0.3f, 0.3f, 0.95f));
 			}
 
-			if (settings->drawContactNormals == 1)
+			if (settings.m_drawContactNormals == 1)
 			{
 				b2Vec2 p1 = point->position;
 				b2Vec2 p2 = p1 + k_axisScale * point->normal;
 				g_debugDraw.DrawSegment(p1, p2, b2Color(0.9f, 0.9f, 0.9f));
 			}
-			else if (settings->drawContactImpulse == 1)
+			else if (settings.m_drawContactImpulse == 1)
 			{
 				b2Vec2 p1 = point->position;
 				b2Vec2 p2 = p1 + k_impulseScale * point->normalImpulse * point->normal;
 				g_debugDraw.DrawSegment(p1, p2, b2Color(0.9f, 0.9f, 0.3f));
 			}
 
-			if (settings->drawFrictionImpulse == 1)
+			if (settings.m_drawFrictionImpulse == 1)
 			{
 				b2Vec2 tangent = b2Cross(point->normal, 1.0f);
 				b2Vec2 p1 = point->position;
@@ -439,4 +448,20 @@ void Test::Step(Settings* settings)
 void Test::ShiftOrigin(const b2Vec2& newOrigin)
 {
 	m_world->ShiftOrigin(newOrigin);
+}
+
+TestEntry g_testEntries[MAX_TESTS] = { nullptr };
+int g_testCount = 0;
+
+int RegisterTest(const char* category, const char* name, TestCreateFcn* fcn)
+{
+	int index = g_testCount;
+	if (index < MAX_TESTS)
+	{
+		g_testEntries[index] = { category, name, fcn };
+		++g_testCount;
+		return index;
+	}
+
+	return -1;
 }
