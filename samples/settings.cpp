@@ -46,24 +46,26 @@ void Settings::Save()
 {
 	FILE* file = fopen(fileName, "w");
 	fprintf(file, "{\n");
-	fprintf(file, "  testIndex: %d\n", m_testIndex);
-	fprintf(file, "  hertz: %.9g\n", m_hertz);
-	fprintf(file, "  velocityIterations: %d\n", m_velocityIterations);
-	fprintf(file, "  positionIterations: %d\n", m_positionIterations);
-	fprintf(file, "  drawShapes: %s\n", m_drawShapes ? "true" : "false");
-	fprintf(file, "  drawJoints: %s\n", m_drawJoints ? "true" : "false");
-	fprintf(file, "  drawAABBs: %s\n", m_drawAABBs ? "true" : "false");
-	fprintf(file, "  drawContactPoints: %s\n", m_drawContactPoints ? "true" : "false");
-	fprintf(file, "  drawContactNormals: %s\n", m_drawContactNormals ? "true" : "false");
-	fprintf(file, "  drawContactImpulse: %s\n", m_drawContactImpulse ? "true" : "false");
-	fprintf(file, "  drawFrictionImpulse: %s\n", m_drawFrictionImpulse ? "true" : "false");
-	fprintf(file, "  drawCOMs: %s\n", m_drawCOMs ? "true" : "false");
-	fprintf(file, "  drawStats: %s\n", m_drawStats ? "true" : "false");
-	fprintf(file, "  drawProfile: %s\n", m_drawProfile ? "true" : "false");
-	fprintf(file, "  enableWarmStarting: %s\n", m_enableWarmStarting ? "true" : "false");
-	fprintf(file, "  enableContinuous: %s\n", m_enableContinuous ? "true" : "false");
-	fprintf(file, "  enableSubStepping: %s\n", m_enableSubStepping ? "true" : "false");
-	fprintf(file, "  enableSleep: %s\n", m_enableSleep ? "true" : "false");
+	fprintf(file, "  \"testIndex\": %d,\n", m_testIndex);
+	fprintf(file, "  \"windowWidth\": %d,\n", m_windowWidth);
+	fprintf(file, "  \"windowHeight\": %d,\n", m_windowHeight);
+	fprintf(file, "  \"hertz\": %.9g,\n", m_hertz);
+	fprintf(file, "  \"velocityIterations\": %d,\n", m_velocityIterations);
+	fprintf(file, "  \"positionIterations\": %d,\n", m_positionIterations);
+	fprintf(file, "  \"drawShapes\": %s,\n", m_drawShapes ? "true" : "false");
+	fprintf(file, "  \"drawJoints\": %s,\n", m_drawJoints ? "true" : "false");
+	fprintf(file, "  \"drawAABBs\": %s,\n", m_drawAABBs ? "true" : "false");
+	fprintf(file, "  \"drawContactPoints\": %s,\n", m_drawContactPoints ? "true" : "false");
+	fprintf(file, "  \"drawContactNormals\": %s,\n", m_drawContactNormals ? "true" : "false");
+	fprintf(file, "  \"drawContactImpulse\": %s,\n", m_drawContactImpulse ? "true" : "false");
+	fprintf(file, "  \"drawFrictionImpulse\": %s,\n", m_drawFrictionImpulse ? "true" : "false");
+	fprintf(file, "  \"drawCOMs\": %s,\n", m_drawCOMs ? "true" : "false");
+	fprintf(file, "  \"drawStats\": %s,\n", m_drawStats ? "true" : "false");
+	fprintf(file, "  \"drawProfile\": %s,\n", m_drawProfile ? "true" : "false");
+	fprintf(file, "  \"enableWarmStarting\": %s,\n", m_enableWarmStarting ? "true" : "false");
+	fprintf(file, "  \"enableContinuous\": %s,\n", m_enableContinuous ? "true" : "false");
+	fprintf(file, "  \"enableSubStepping\": %s,\n", m_enableSubStepping ? "true" : "false");
+	fprintf(file, "  \"enableSleep\": %s\n", m_enableSleep ? "true" : "false");
 	fprintf(file, "}\n");
 	fclose(file);
 }
@@ -79,6 +81,10 @@ void Settings::Load()
 	}
 
 	const sajson::document& document = sajson::parse(sajson::dynamic_allocation(), sajson::mutable_string_view(size, data));
+	if (document.is_valid() == false)
+	{
+		return;
+	}
 
 	sajson::value root = document.get_root();
 	int fieldCount = int(root.get_length());
@@ -92,6 +98,24 @@ void Settings::Load()
 			if (fieldValue.get_type() == sajson::TYPE_INTEGER)
 			{
 				m_testIndex = fieldValue.get_integer_value();
+			}
+			continue;
+		}
+
+		if (strncmp(fieldName.data(), "windowWidth", fieldName.length()) == 0)
+		{
+			if (fieldValue.get_type() == sajson::TYPE_INTEGER)
+			{
+				m_windowWidth = fieldValue.get_integer_value();
+			}
+			continue;
+		}
+
+		if (strncmp(fieldName.data(), "windowHeight", fieldName.length()) == 0)
+		{
+			if (fieldValue.get_type() == sajson::TYPE_INTEGER)
+			{
+				m_windowHeight = fieldValue.get_integer_value();
 			}
 			continue;
 		}

@@ -16,6 +16,8 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #if defined(__APPLE__)
 #define GLFW_INCLUDE_GLCOREARB
 #include <OpenGL/gl3.h>
@@ -35,14 +37,13 @@
 
 #include "glfw/glfw3.h"
 
-#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 
 #ifdef _MSC_VER
 #define snprintf _snprintf
 #endif
 
-static GLFWwindow* s_mainWindow = NULL;
+GLFWwindow* g_mainWindow = nullptr;
 static int32 s_testSelection = 0;
 static Test* s_test = nullptr;
 static Settings s_settings;
@@ -56,12 +57,12 @@ void glfwErrorCallback(int error, const char* description)
 	fprintf(stderr, "GLFW error occured. Code: %d. Description: %s\n", error, description);
 }
 
-static inline bool CompareTests(const TestEntry* a, const TestEntry* b)
+static inline bool CompareTests(const TestEntry& a, const TestEntry& b)
 {
-	int result = strcmp(a->category, b->category);
+	int result = strcmp(a.category, b.category);
 	if (result == 0)
 	{
-		result = strcmp(a->name, b->name);
+		result = strcmp(a.name, b.name);
 	}
 
 	return result < 0;
@@ -104,6 +105,8 @@ static void ResizeWindowCallback(GLFWwindow*, int width, int height)
 {
 	g_camera.m_width = width;
 	g_camera.m_height = height;
+	s_settings.m_windowWidth = width;
+	s_settings.m_windowHeight = height;
 }
 
 static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -371,13 +374,11 @@ static void UpdateUI()
 		{
 			if (ImGui::BeginTabItem("Controls"))
 			{
-				ImGui::Text("Vel Iters");
-				ImGui::SliderInt("##Vel Iters", &s_settings.m_velocityIterations, 0, 50);
-				ImGui::Text("Pos Iters");
-				ImGui::SliderInt("##Pos Iters", &s_settings.m_positionIterations, 0, 50);
-				ImGui::Text("Hertz");
-				ImGui::SliderFloat("##Hertz", &s_settings.m_hertz, 5.0f, 120.0f, "%.0f hz");
-				ImGui::PopItemWidth();
+				ImGui::SliderInt("Vel Iters", &s_settings.m_velocityIterations, 0, 50);
+				ImGui::SliderInt("Pos Iters", &s_settings.m_positionIterations, 0, 50);
+				ImGui::SliderFloat("Hertz", &s_settings.m_hertz, 5.0f, 120.0f, "%.0f hz");
+				
+				ImGui::Separator();
 
 				ImGui::Checkbox("Sleep", &s_settings.m_enableSleep);
 				ImGui::Checkbox("Warm Starting", &s_settings.m_enableWarmStarting);
@@ -497,8 +498,8 @@ int main(int, char**)
 
 	glfwSetErrorCallback(glfwErrorCallback);
 
-	g_camera.m_width = 1024;
-	g_camera.m_height = 640;
+	g_camera.m_width = s_settings.m_windowWidth;
+	g_camera.m_height = s_settings.m_windowHeight;
 
 	if (glfwInit() == 0)
 	{
@@ -573,15 +574,25 @@ int main(int, char**)
 		ImGui_ImplGlfw_NewFrame();
 
 		ImGui::NewFrame();
+
+		ImGui::SetNextWindowPos(ImVec2(0, 0));
+		ImGui::SetNextWindowSize(ImVec2(float(g_camera.m_width), float(g_camera.m_height)));
+
+		const TestEntry& entry = g_testEntries[s_settings.m_testIndex];
+		char buffer[128];
+		sprintf_s(buffer, "%s : %s", entry.category, entry.name);
+		s_test->DrawTitle(buffer);
+
 		ImGui::SetNextWindowPos(ImVec2(0,0));
 		ImGui::SetNextWindowSize(ImVec2((float)g_camera.m_width, (float)g_camera.m_height));
-		ImGui::Begin("##Controls", &s_showMenu, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
-		ImGui::SetCursorPos(ImVec2(5, (float)g_camera.m_height - 20));
-		ImGui::Text("%.1f ms", 1000.0 * frameTime);
-		ImGui::End();
 
 		Simulate();
 		UpdateUI();
+
+		ImGui::Begin("Overlay", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar);
+		ImGui::SetCursorPos(ImVec2(5, float(g_camera.m_height - 20)));
+		ImGui::Text("%.1f ms", 1000.0 * frameTime);
+		ImGui::End();
 
 		// Measure speed
 		double time2 = glfwGetTime();

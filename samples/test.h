@@ -88,9 +88,6 @@ public:
 	Test();
 	virtual ~Test();
 
-	virtual const char* GetCategory() const = 0;
-	virtual const char* GetName() const = 0;
-
 	void SetUIScale(float scale);
 	void DrawTitle(const char* string);
 	virtual void Step(Settings& settings);
@@ -146,9 +143,9 @@ protected:
 	b2Profile m_totalProfile;
 };
 
-int RegisterTest(Test* test);
-
 typedef Test* TestCreateFcn();
+
+int RegisterTest(const char* category, const char* name, TestCreateFcn* fcn);
 
 //
 struct TestEntry

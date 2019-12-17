@@ -16,7 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "b2StackAllocator.h"
+#include "box2d/b2StackAllocator.h"
 #include "box2d/b2Math.h"
 
 b2StackAllocator::b2StackAllocator()
