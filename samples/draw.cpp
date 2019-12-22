@@ -598,6 +598,7 @@ struct GLRenderTriangles
 //
 DebugDraw::DebugDraw()
 {
+	m_showUI = true;
 	m_points = NULL;
     m_lines = NULL;
     m_triangles = NULL;
@@ -774,6 +775,11 @@ void DebugDraw::DrawPoint(const b2Vec2& p, float32 size, const b2Color& color)
 //
 void DebugDraw::DrawString(int x, int y, const char *string, ...)
 {
+	if (m_showUI == false)
+	{
+		return;
+	}
+
 	va_list arg;
 	va_start(arg, string);
 	ImGui::Begin("Overlay", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar);

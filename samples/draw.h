@@ -81,7 +81,7 @@ public:
 
 	void Flush();
 
-private:
+	bool m_showUI;
 	GLRenderPoints* m_points;
 	GLRenderLines* m_lines;
 	GLRenderTriangles* m_triangles;

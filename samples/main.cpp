@@ -48,7 +48,6 @@ static int32 s_testSelection = 0;
 static Test* s_test = nullptr;
 static Settings s_settings;
 static float s_uiScale = 1.0f;
-static bool s_showMenu = true;
 static bool s_rightMouseDown = false;
 static b2Vec2 s_clickPointWS = b2Vec2_zero;
 
@@ -235,7 +234,7 @@ static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
 			break;
 
 		case GLFW_KEY_TAB:
-			s_showMenu = !s_showMenu;
+			g_debugDraw.m_showUI = !g_debugDraw.m_showUI;
 
 		default:
 			if (s_test)
@@ -342,33 +341,15 @@ static void RestartTest()
 	s_test = g_testEntries[s_settings.m_testIndex].createFcn();
 }
 
-static void Simulate()
-{
-	glEnable(GL_DEPTH_TEST);
-	s_test->Step(s_settings);
-
-	s_test->DrawTitle(g_testEntries[s_settings.m_testIndex].name);
-	glDisable(GL_DEPTH_TEST);
-
-	if (s_testSelection != s_settings.m_testIndex)
-	{
-		s_settings.m_testIndex = s_testSelection;
-		delete s_test;
-		s_test = g_testEntries[s_settings.m_testIndex].createFcn();
-		g_camera.m_zoom = 1.0f;
-		g_camera.m_center.Set(0.0f, 20.0f);
-	}
-}
-
 static void UpdateUI()
 {
 	int menuWidth = 200;
-	if (s_showMenu)
+	if (g_debugDraw.m_showUI)
 	{
 		ImGui::SetNextWindowPos(ImVec2((float)g_camera.m_width - menuWidth - 10, 10));
 		ImGui::SetNextWindowSize(ImVec2((float)menuWidth, (float)g_camera.m_height - 20));
 
-		ImGui::Begin("Tools", &s_showMenu, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+		ImGui::Begin("Tools", &g_debugDraw.m_showUI, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
 		if (ImGui::BeginTabBar("ControlTabs", ImGuiTabBarFlags_None))
 		{
@@ -493,6 +474,8 @@ int main(int, char**)
 	_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG));
 #endif
 
+	char buffer[128];
+
 	s_settings.Load();
 	SortTests();
 
@@ -507,15 +490,14 @@ int main(int, char**)
 		return -1;
 	}
 
-	char title[64];
-	sprintf(title, "Box2D Testbed Version %d.%d.%d", b2_version.major, b2_version.minor, b2_version.revision);
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	g_mainWindow = glfwCreateWindow(g_camera.m_width, g_camera.m_height, title, NULL, NULL);
+	sprintf(buffer, "Box2D Samples Version %d.%d.%d", b2_version.major, b2_version.minor, b2_version.revision);
+	g_mainWindow = glfwCreateWindow(g_camera.m_width, g_camera.m_height, buffer, NULL, NULL);
 	if (g_mainWindow == NULL)
 	{
 		fprintf(stderr, "Failed to open GLFW g_mainWindow.\n");
@@ -575,30 +557,43 @@ int main(int, char**)
 
 		ImGui::NewFrame();
 
-		ImGui::SetNextWindowPos(ImVec2(0, 0));
-		ImGui::SetNextWindowSize(ImVec2(float(g_camera.m_width), float(g_camera.m_height)));
+		if (g_debugDraw.m_showUI)
+		{
+			ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+			ImGui::SetNextWindowSize(ImVec2(float(g_camera.m_width), float(g_camera.m_height)));
+			ImGui::SetNextWindowBgAlpha(0.0f);
+			ImGui::Begin("Overlay", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar);
+			ImGui::End();
 
-		const TestEntry& entry = g_testEntries[s_settings.m_testIndex];
-		char buffer[128];
-		sprintf_s(buffer, "%s : %s", entry.category, entry.name);
-		s_test->DrawTitle(buffer);
+			const TestEntry& entry = g_testEntries[s_settings.m_testIndex];
+			sprintf_s(buffer, "%s : %s", entry.category, entry.name);
+			s_test->DrawTitle(buffer);
+		}
 
-		ImGui::SetNextWindowPos(ImVec2(0,0));
-		ImGui::SetNextWindowSize(ImVec2((float)g_camera.m_width, (float)g_camera.m_height));
+		s_test->Step(s_settings);
 
-		Simulate();
+		if (s_testSelection != s_settings.m_testIndex)
+		{
+			s_settings.m_testIndex = s_testSelection;
+			delete s_test;
+			s_test = g_testEntries[s_settings.m_testIndex].createFcn();
+			g_camera.m_zoom = 1.0f;
+			g_camera.m_center.Set(0.0f, 20.0f);
+		}
+
 		UpdateUI();
-
-		ImGui::Begin("Overlay", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar);
-		ImGui::SetCursorPos(ImVec2(5, float(g_camera.m_height - 20)));
-		ImGui::Text("%.1f ms", 1000.0 * frameTime);
-		ImGui::End();
 
 		// Measure speed
 		double time2 = glfwGetTime();
-		double alpha = 0.9f;
+		double alpha = 0.9;
 		frameTime = alpha * frameTime + (1.0 - alpha) * (time2 - time1);
 		time1 = time2;
+
+		if (g_debugDraw.m_showUI)
+		{
+			sprintf_s(buffer, "%.1f ms", 1000.0 * frameTime);
+			g_debugDraw.DrawString(5, g_camera.m_height - 20, buffer);
+		}
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
