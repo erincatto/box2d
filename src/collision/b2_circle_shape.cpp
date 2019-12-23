@@ -52,13 +52,13 @@ bool b2CircleShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input
 
 	b2Vec2 position = transform.p + b2Mul(transform.q, m_p);
 	b2Vec2 s = input.p1 - position;
-	float32 b = b2Dot(s, s) - m_radius * m_radius;
+	float b = b2Dot(s, s) - m_radius * m_radius;
 
 	// Solve quadratic equation.
 	b2Vec2 r = input.p2 - input.p1;
-	float32 c =  b2Dot(s, r);
-	float32 rr = b2Dot(r, r);
-	float32 sigma = c * c - rr * b;
+	float c =  b2Dot(s, r);
+	float rr = b2Dot(r, r);
+	float sigma = c * c - rr * b;
 
 	// Check for negative discriminant and short segment.
 	if (sigma < 0.0f || rr < b2_epsilon)
@@ -67,7 +67,7 @@ bool b2CircleShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input
 	}
 
 	// Find the point of intersection of the line with the circle.
-	float32 a = -(c + b2Sqrt(sigma));
+	float a = -(c + b2Sqrt(sigma));
 
 	// Is the intersection point on the segment?
 	if (0.0f <= a && a <= input.maxFraction * rr)
@@ -91,7 +91,7 @@ void b2CircleShape::ComputeAABB(b2AABB* aabb, const b2Transform& transform, int3
 	aabb->upperBound.Set(p.x + m_radius, p.y + m_radius);
 }
 
-void b2CircleShape::ComputeMass(b2MassData* massData, float32 density) const
+void b2CircleShape::ComputeMass(b2MassData* massData, float density) const
 {
 	massData->mass = density * b2_pi * m_radius * m_radius;
 	massData->center = m_p;

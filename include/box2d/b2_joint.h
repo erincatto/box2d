@@ -53,8 +53,8 @@ enum b2LimitState
 struct b2Jacobian
 {
 	b2Vec2 linear;
-	float32 angularA;
-	float32 angularB;
+	float angularA;
+	float angularB;
 };
 
 /// A joint edge is used to connect bodies and joints together
@@ -120,10 +120,10 @@ public:
 	virtual b2Vec2 GetAnchorB() const = 0;
 
 	/// Get the reaction force on bodyB at the joint anchor in Newtons.
-	virtual b2Vec2 GetReactionForce(float32 inv_dt) const = 0;
+	virtual b2Vec2 GetReactionForce(float inv_dt) const = 0;
 
 	/// Get the reaction torque on bodyB in N*m.
-	virtual float32 GetReactionTorque(float32 inv_dt) const = 0;
+	virtual float GetReactionTorque(float inv_dt) const = 0;
 
 	/// Get the next joint the world joint list.
 	b2Joint* GetNext();

@@ -191,7 +191,7 @@ void b2ChainShape::ComputeAABB(b2AABB* aabb, const b2Transform& xf, int32 childI
 	aabb->upperBound = b2Max(v1, v2);
 }
 
-void b2ChainShape::ComputeMass(b2MassData* massData, float32 density) const
+void b2ChainShape::ComputeMass(b2MassData* massData, float density) const
 {
 	B2_NOT_USED(density);
 

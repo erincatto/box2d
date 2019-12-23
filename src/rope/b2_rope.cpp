@@ -52,7 +52,7 @@ void b2Rope::Initialize(const b2RopeDef* def)
 	m_ps = (b2Vec2*)b2Alloc(m_count * sizeof(b2Vec2));
 	m_p0s = (b2Vec2*)b2Alloc(m_count * sizeof(b2Vec2));
 	m_vs = (b2Vec2*)b2Alloc(m_count * sizeof(b2Vec2));
-	m_ims = (float32*)b2Alloc(m_count * sizeof(float32));
+	m_ims = (float*)b2Alloc(m_count * sizeof(float));
 
 	for (int32 i = 0; i < m_count; ++i)
 	{
@@ -61,7 +61,7 @@ void b2Rope::Initialize(const b2RopeDef* def)
 		m_p0s[i] = def->vertices[i];
 		m_vs[i].SetZero();
 
-		float32 m = def->masses[i];
+		float m = def->masses[i];
 		if (m > 0.0f)
 		{
 			m_ims[i] = 1.0f / m;
@@ -74,9 +74,9 @@ void b2Rope::Initialize(const b2RopeDef* def)
 
 	m_stretchCount = m_count - 1;
 	m_bendCount = m_count - 2;
-	m_Ls = (float32*)b2Alloc(m_stretchCount * sizeof(float32));
-	m_as = (float32*)b2Alloc(m_bendCount * sizeof(float32));
-	m_bendingLambdas = (float32*)b2Alloc(m_bendCount * sizeof(float32));
+	m_Ls = (float*)b2Alloc(m_stretchCount * sizeof(float));
+	m_as = (float*)b2Alloc(m_bendCount * sizeof(float));
+	m_bendingLambdas = (float*)b2Alloc(m_bendCount * sizeof(float));
 
 	for (int32 i = 0; i < m_stretchCount; ++i)
 	{
@@ -94,8 +94,8 @@ void b2Rope::Initialize(const b2RopeDef* def)
 		b2Vec2 d1 = p2 - p1;
 		b2Vec2 d2 = p3 - p2;
 
-		float32 a = b2Cross(d1, d2);
-		float32 b = b2Dot(d1, d2);
+		float a = b2Cross(d1, d2);
+		float b = b2Dot(d1, d2);
 
 		m_as[i] = b2Atan2(a, b);
 		m_bendingLambdas[i] = 0.0f;
@@ -110,15 +110,15 @@ void b2Rope::SetTuning(const b2RopeTuning& tuning)
 	m_tuning = tuning;
 }
 
-void b2Rope::Step(float32 dt, int32 iterations, const b2Vec2& position)
+void b2Rope::Step(float dt, int32 iterations, const b2Vec2& position)
 {
 	if (dt == 0.0)
 	{
 		return;
 	}
 
-	const float32 inv_dt = 1.0f / dt;
-	float32 d = expf(- dt * m_tuning.damping);
+	const float inv_dt = 1.0f / dt;
+	float d = expf(- dt * m_tuning.damping);
 
 	for (int32 i = 0; i < m_count; ++i)
 	{
@@ -171,7 +171,7 @@ void b2Rope::Step(float32 dt, int32 iterations, const b2Vec2& position)
 
 void b2Rope::SolveStretch()
 {
-	const float32 k2 = m_tuning.stretchStiffness;
+	const float k2 = m_tuning.stretchStiffness;
 
 	for (int32 i = 0; i < m_stretchCount; ++i)
 	{
@@ -179,18 +179,18 @@ void b2Rope::SolveStretch()
 		b2Vec2 p2 = m_ps[i + 1];
 
 		b2Vec2 d = p2 - p1;
-		float32 L = d.Normalize();
+		float L = d.Normalize();
 
-		float32 im1 = m_ims[i];
-		float32 im2 = m_ims[i + 1];
+		float im1 = m_ims[i];
+		float im2 = m_ims[i + 1];
 
 		if (im1 + im2 == 0.0f)
 		{
 			continue;
 		}
 
-		float32 s1 = im1 / (im1 + im2);
-		float32 s2 = im2 / (im1 + im2);
+		float s1 = im1 / (im1 + im2);
+		float s2 = im2 / (im1 + im2);
 
 		p1 -= k2 * s1 * (m_Ls[i] - L) * d;
 		p2 += k2 * s2 * (m_Ls[i] - L) * d;
@@ -200,7 +200,7 @@ void b2Rope::SolveStretch()
 	}
 }
 
-void b2Rope::SetAngle(float32 angle)
+void b2Rope::SetAngle(float angle)
 {
 	for (int32 i = 0; i < m_bendCount; ++i)
 	{
@@ -210,7 +210,7 @@ void b2Rope::SetAngle(float32 angle)
 
 void b2Rope::SolveBend_PBD_Angle()
 {
-	const float32 k3 = m_tuning.bendStiffness;
+	const float k3 = m_tuning.bendStiffness;
 
 	for (int32 i = 0; i < m_bendCount; ++i)
 	{
@@ -218,25 +218,25 @@ void b2Rope::SolveBend_PBD_Angle()
 		b2Vec2 p2 = m_ps[i + 1];
 		b2Vec2 p3 = m_ps[i + 2];
 
-		float32 m1 = m_ims[i];
-		float32 m2 = m_ims[i + 1];
-		float32 m3 = m_ims[i + 2];
+		float m1 = m_ims[i];
+		float m2 = m_ims[i + 1];
+		float m3 = m_ims[i + 2];
 
 		b2Vec2 d1 = p2 - p1;
 		b2Vec2 d2 = p3 - p2;
 
-		float32 L1sqr = d1.LengthSquared();
-		float32 L2sqr = d2.LengthSquared();
+		float L1sqr = d1.LengthSquared();
+		float L2sqr = d2.LengthSquared();
 
 		if (L1sqr * L2sqr == 0.0f)
 		{
 			continue;
 		}
 
-		float32 a = b2Cross(d1, d2);
-		float32 b = b2Dot(d1, d2);
+		float a = b2Cross(d1, d2);
+		float b = b2Dot(d1, d2);
 
-		float32 angle = b2Atan2(a, b);
+		float angle = b2Atan2(a, b);
 
 		b2Vec2 Jd1 = (-1.0f / L1sqr) * d1.Skew();
 		b2Vec2 Jd2 = (1.0f / L2sqr) * d2.Skew();
@@ -245,7 +245,7 @@ void b2Rope::SolveBend_PBD_Angle()
 		b2Vec2 J2 = Jd1 - Jd2;
 		b2Vec2 J3 = Jd2;
 
-		float32 mass = m1 * b2Dot(J1, J1) + m2 * b2Dot(J2, J2) + m3 * b2Dot(J3, J3);
+		float mass = m1 * b2Dot(J1, J1) + m2 * b2Dot(J2, J2) + m3 * b2Dot(J3, J3);
 		if (mass == 0.0f)
 		{
 			continue;
@@ -253,7 +253,7 @@ void b2Rope::SolveBend_PBD_Angle()
 
 		mass = 1.0f / mass;
 
-		float32 C = angle - m_as[i];
+		float C = angle - m_as[i];
 
 		while (C > b2_pi)
 		{
@@ -267,7 +267,7 @@ void b2Rope::SolveBend_PBD_Angle()
 			C = angle - m_as[i];
 		}
 
-		float32 impulse = - k3 * mass * C;
+		float impulse = - k3 * mass * C;
 
 		p1 += (m1 * impulse) * J1;
 		p2 += (m2 * impulse) * J2;
@@ -279,7 +279,7 @@ void b2Rope::SolveBend_PBD_Angle()
 	}
 }
 
-void b2Rope::SolveBend_XPBD_Angle(float32 dt)
+void b2Rope::SolveBend_XPBD_Angle(float dt)
 {
 	b2Assert(dt > 0.0f);
 
@@ -293,25 +293,25 @@ void b2Rope::SolveBend_XPBD_Angle(float32 dt)
 		b2Vec2 v2 = m_vs[i + 1];
 		b2Vec2 v3 = m_vs[i + 2];
 
-		float32 m1 = m_ims[i];
-		float32 m2 = m_ims[i + 1];
-		float32 m3 = m_ims[i + 2];
+		float m1 = m_ims[i];
+		float m2 = m_ims[i + 1];
+		float m3 = m_ims[i + 2];
 
 		b2Vec2 d1 = p2 - p1;
 		b2Vec2 d2 = p3 - p2;
 
-		float32 L1sqr = d1.LengthSquared();
-		float32 L2sqr = d2.LengthSquared();
+		float L1sqr = d1.LengthSquared();
+		float L2sqr = d2.LengthSquared();
 
 		if (L1sqr * L2sqr == 0.0f)
 		{
 			continue;
 		}
 
-		float32 a = b2Cross(d1, d2);
-		float32 b = b2Dot(d1, d2);
+		float a = b2Cross(d1, d2);
+		float b = b2Dot(d1, d2);
 
-		float32 angle = b2Atan2(a, b);
+		float angle = b2Atan2(a, b);
 
 		b2Vec2 Jd1 = (-1.0f / L1sqr) * d1.Skew();
 		b2Vec2 Jd2 = (1.0f / L2sqr) * d2.Skew();
@@ -320,24 +320,24 @@ void b2Rope::SolveBend_XPBD_Angle(float32 dt)
 		b2Vec2 J2 = Jd1 - Jd2;
 		b2Vec2 J3 = Jd2;
 
-		float32 lambda = m_bendingLambdas[i];
+		float lambda = m_bendingLambdas[i];
 
-		float32 W = m1 * b2Dot(J1, J1) + m2 * b2Dot(J2, J2) + m3 * b2Dot(J3, J3);
+		float W = m1 * b2Dot(J1, J1) + m2 * b2Dot(J2, J2) + m3 * b2Dot(J3, J3);
 		if (W == 0.0f)
 		{
 			continue;
 		}
 
-		float32 meff = 1.0f / W;
+		float meff = 1.0f / W;
 
 		// omega = 2 * pi * hz
-		float32 omega = 2.0f * b2_pi * m_tuning.bendHertz;
-		const float32 spring = meff * omega * omega;
-		const float32 damper = 2.0f * meff * m_tuning.bendDamping * omega;
+		float omega = 2.0f * b2_pi * m_tuning.bendHertz;
+		const float spring = meff * omega * omega;
+		const float damper = 2.0f * meff * m_tuning.bendDamping * omega;
 
-		const float32 alpha = 1.0f / (spring * dt * dt);
-		const float32 beta = dt * dt * damper;
-		float32 C = angle - m_as[i];
+		const float alpha = 1.0f / (spring * dt * dt);
+		const float beta = dt * dt * damper;
+		float C = angle - m_as[i];
 		while (C > b2_pi)
 		{
 			angle -= 2 * b2_pi;
@@ -350,11 +350,11 @@ void b2Rope::SolveBend_XPBD_Angle(float32 dt)
 			C = angle - m_as[i];
 		}
 
-		float32 Cdot = b2Dot(J1, v1) + b2Dot(J2, v2) + b2Dot(J3, v3);
-		float32 B = C + alpha * lambda + alpha * beta * Cdot;
-		float32 Ws = (1.0f + alpha * beta / dt) * W + alpha;
+		float Cdot = b2Dot(J1, v1) + b2Dot(J2, v2) + b2Dot(J3, v3);
+		float B = C + alpha * lambda + alpha * beta * Cdot;
+		float Ws = (1.0f + alpha * beta / dt) * W + alpha;
 
-		float32 impulse = -B / Ws;
+		float impulse = -B / Ws;
 
 		p1 += (m1 * impulse) * J1;
 		p2 += (m2 * impulse) * J2;
@@ -368,11 +368,11 @@ void b2Rope::SolveBend_XPBD_Angle(float32 dt)
 	}
 }
 
-void b2Rope::ApplyBendForces(float32 dt)
+void b2Rope::ApplyBendForces(float dt)
 {
 	int32 count3 = m_count - 2;
-	const float32 stiffness = m_tuning.bendStiffness;
-	const float32 damping = m_tuning.bendDamping;
+	const float stiffness = m_tuning.bendStiffness;
+	const float damping = m_tuning.bendDamping;
 
 	for (int32 i = 0; i < count3; ++i)
 	{
@@ -384,25 +384,25 @@ void b2Rope::ApplyBendForces(float32 dt)
 		b2Vec2 v2 = m_vs[i + 1];
 		b2Vec2 v3 = m_vs[i + 2];
 
-		float32 m1 = m_ims[i];
-		float32 m2 = m_ims[i + 1];
-		float32 m3 = m_ims[i + 2];
+		float m1 = m_ims[i];
+		float m2 = m_ims[i + 1];
+		float m3 = m_ims[i + 2];
 
 		b2Vec2 d1 = p2 - p1;
 		b2Vec2 d2 = p3 - p2;
 
-		float32 L1sqr = d1.LengthSquared();
-		float32 L2sqr = d2.LengthSquared();
+		float L1sqr = d1.LengthSquared();
+		float L2sqr = d2.LengthSquared();
 
 		if (L1sqr * L2sqr == 0.0f)
 		{
 			continue;
 		}
 
-		float32 a = b2Cross(d1, d2);
-		float32 b = b2Dot(d1, d2);
+		float a = b2Cross(d1, d2);
+		float b = b2Dot(d1, d2);
 
-		float32 angle = b2Atan2(a, b);
+		float angle = b2Atan2(a, b);
 
 		b2Vec2 Jd1 = (-1.0f / L1sqr) * d1.Skew();
 		b2Vec2 Jd2 = (1.0f / L2sqr) * d2.Skew();
@@ -411,21 +411,21 @@ void b2Rope::ApplyBendForces(float32 dt)
 		b2Vec2 J2 = Jd1 - Jd2;
 		b2Vec2 J3 = Jd2;
 
-		float32 W = m1 * b2Dot(J1, J1) + m2 * b2Dot(J2, J2) + m3 * b2Dot(J3, J3);
+		float W = m1 * b2Dot(J1, J1) + m2 * b2Dot(J2, J2) + m3 * b2Dot(J3, J3);
 		if (W == 0.0f)
 		{
 			continue;
 		}
 
-		float32 meff = 1.0f / W;
+		float meff = 1.0f / W;
 
 		// omega = 2 * pi * hz
-		float32 omega = 2.0f * b2_pi * m_tuning.bendHertz;
-		const float32 spring = meff * omega * omega;
-		const float32 damper = 2.0f * meff * m_tuning.bendDamping * omega;
+		float omega = 2.0f * b2_pi * m_tuning.bendHertz;
+		const float spring = meff * omega * omega;
+		const float damper = 2.0f * meff * m_tuning.bendDamping * omega;
 
-		float32 C = angle - m_as[i];
-		float32 Cdot = b2Dot(J1, v1) + b2Dot(J2, v2) + b2Dot(J3, v3);
+		float C = angle - m_as[i];
+		float Cdot = b2Dot(J1, v1) + b2Dot(J2, v2) + b2Dot(J3, v3);
 
 		while (C > b2_pi)
 		{
@@ -439,7 +439,7 @@ void b2Rope::ApplyBendForces(float32 dt)
 			C = angle - m_as[i];
 		}
 
-		float32 impulse = -dt * (spring * C + damper * Cdot);
+		float impulse = -dt * (spring * C + damper * Cdot);
 
 		m_vs[i + 0] += (m1 * impulse) * J1;
 		m_vs[i + 1] += (m2 * impulse) * J2;

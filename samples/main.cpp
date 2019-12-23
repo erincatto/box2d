@@ -261,7 +261,7 @@ static void MouseButtonCallback(GLFWwindow* window, int32 button, int32 action, 
 
 	double xd, yd;
 	glfwGetCursorPos(g_mainWindow, &xd, &yd);
-	b2Vec2 ps((float32)xd, (float32)yd);
+	b2Vec2 ps((float)xd, (float)yd);
 
 	// Use the mouse to move things around.
 	if (button == GLFW_MOUSE_BUTTON_1)

@@ -38,18 +38,18 @@ class Test;
 #define	RAND_LIMIT 32767
 
 /// Random number in range [-1,1]
-inline float32 RandomFloat()
+inline float RandomFloat()
 {
-	float32 r = (float32)(rand() & (RAND_LIMIT));
+	float r = (float)(rand() & (RAND_LIMIT));
 	r /= RAND_LIMIT;
 	r = 2.0f * r - 1.0f;
 	return r;
 }
 
 /// Random floating point number in range [lo, hi]
-inline float32 RandomFloat(float32 lo, float32 hi)
+inline float RandomFloat(float lo, float hi)
 {
-	float32 r = (float32)(rand() & (RAND_LIMIT));
+	float r = (float)(rand() & (RAND_LIMIT));
 	r /= RAND_LIMIT;
 	r = (hi - lo) * r + lo;
 	return r;
@@ -76,9 +76,9 @@ struct ContactPoint
 	b2Vec2 normal;
 	b2Vec2 position;
 	b2PointState state;
-	float32 normalImpulse;
-	float32 tangentImpulse;
-	float32 separation;
+	float normalImpulse;
+	float tangentImpulse;
+	float separation;
 };
 
 class Test : public b2ContactListener

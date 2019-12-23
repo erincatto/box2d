@@ -24,7 +24,7 @@ const b2Vec2 b2Vec2_zero(0.0f, 0.0f);
 /// than computing the inverse in one-shot cases.
 b2Vec3 b2Mat33::Solve33(const b2Vec3& b) const
 {
-	float32 det = b2Dot(ex, b2Cross(ey, ez));
+	float det = b2Dot(ex, b2Cross(ey, ez));
 	if (det != 0.0f)
 	{
 		det = 1.0f / det;
@@ -40,8 +40,8 @@ b2Vec3 b2Mat33::Solve33(const b2Vec3& b) const
 /// than computing the inverse in one-shot cases.
 b2Vec2 b2Mat33::Solve22(const b2Vec2& b) const
 {
-	float32 a11 = ex.x, a12 = ey.x, a21 = ex.y, a22 = ey.y;
-	float32 det = a11 * a22 - a12 * a21;
+	float a11 = ex.x, a12 = ey.x, a21 = ex.y, a22 = ey.y;
+	float det = a11 * a22 - a12 * a21;
 	if (det != 0.0f)
 	{
 		det = 1.0f / det;
@@ -55,8 +55,8 @@ b2Vec2 b2Mat33::Solve22(const b2Vec2& b) const
 ///
 void b2Mat33::GetInverse22(b2Mat33* M) const
 {
-	float32 a = ex.x, b = ey.x, c = ex.y, d = ey.y;
-	float32 det = a * d - b * c;
+	float a = ex.x, b = ey.x, c = ex.y, d = ey.y;
+	float det = a * d - b * c;
 	if (det != 0.0f)
 	{
 		det = 1.0f / det;
@@ -70,15 +70,15 @@ void b2Mat33::GetInverse22(b2Mat33* M) const
 /// Returns the zero matrix if singular.
 void b2Mat33::GetSymInverse33(b2Mat33* M) const
 {
-	float32 det = b2Dot(ex, b2Cross(ey, ez));
+	float det = b2Dot(ex, b2Cross(ey, ez));
 	if (det != 0.0f)
 	{
 		det = 1.0f / det;
 	}
 
-	float32 a11 = ex.x, a12 = ey.x, a13 = ez.x;
-	float32 a22 = ey.y, a23 = ez.y;
-	float32 a33 = ez.z;
+	float a11 = ex.x, a12 = ey.x, a13 = ez.x;
+	float a22 = ey.y, a23 = ez.y;
+	float a33 = ez.z;
 
 	M->ex.x = det * (a22 * a33 - a23 * a23);
 	M->ex.y = det * (a13 * a23 - a12 * a33);

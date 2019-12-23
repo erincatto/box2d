@@ -28,13 +28,13 @@ class b2BlockAllocator;
 struct b2MassData
 {
 	/// The mass of the shape, usually in kilograms.
-	float32 mass;
+	float mass;
 
 	/// The position of the shape's centroid relative to the shape's origin.
 	b2Vec2 center;
 
 	/// The rotational inertia of the shape about the local origin.
-	float32 I;
+	float I;
 };
 
 /// A shape is used for collision detection. You can create a shape however you like.
@@ -88,13 +88,13 @@ public:
 	/// The inertia tensor is computed about the local origin.
 	/// @param massData returns the mass data for this shape.
 	/// @param density the density in kilograms per meter squared.
-	virtual void ComputeMass(b2MassData* massData, float32 density) const = 0;
+	virtual void ComputeMass(b2MassData* massData, float density) const = 0;
 
 	Type m_type;
 
 	/// Radius of a shape. For polygonal shapes this must be b2_polygonRadius. There is no support for
 	/// making rounded polygons.
-	float32 m_radius;
+	float m_radius;
 };
 
 inline b2Shape::Type b2Shape::GetType() const

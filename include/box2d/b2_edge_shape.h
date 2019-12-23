@@ -49,7 +49,7 @@ public:
 	void ComputeAABB(b2AABB* aabb, const b2Transform& transform, int32 childIndex) const override;
 
 	/// @see b2Shape::ComputeMass
-	void ComputeMass(b2MassData* massData, float32 density) const override;
+	void ComputeMass(b2MassData* massData, float density) const override;
 	
 	/// These are the edge vertices
 	b2Vec2 m_vertex1, m_vertex2;

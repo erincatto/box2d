@@ -69,8 +69,8 @@ union b2ContactID
 struct b2ManifoldPoint
 {
 	b2Vec2 localPoint;		///< usage depends on manifold type
-	float32 normalImpulse;	///< the non-penetration impulse
-	float32 tangentImpulse;	///< the friction impulse
+	float normalImpulse;	///< the non-penetration impulse
+	float tangentImpulse;	///< the friction impulse
 	b2ContactID id;			///< uniquely identifies a contact point between two shapes
 };
 
@@ -114,12 +114,12 @@ struct b2WorldManifold
 	/// point count, impulses, etc. The radii must come from the shapes
 	/// that generated the manifold.
 	void Initialize(const b2Manifold* manifold,
-					const b2Transform& xfA, float32 radiusA,
-					const b2Transform& xfB, float32 radiusB);
+					const b2Transform& xfA, float radiusA,
+					const b2Transform& xfB, float radiusB);
 
 	b2Vec2 normal;								///< world vector pointing from A to B
 	b2Vec2 points[b2_maxManifoldPoints];		///< world contact point (point of intersection)
-	float32 separations[b2_maxManifoldPoints];	///< a negative value indicates overlap, in meters
+	float separations[b2_maxManifoldPoints];	///< a negative value indicates overlap, in meters
 };
 
 /// This is used for determining the state of contact points.
@@ -147,7 +147,7 @@ struct b2ClipVertex
 struct b2RayCastInput
 {
 	b2Vec2 p1, p2;
-	float32 maxFraction;
+	float maxFraction;
 };
 
 /// Ray-cast output data. The ray hits at p1 + fraction * (p2 - p1), where p1 and p2
@@ -155,7 +155,7 @@ struct b2RayCastInput
 struct b2RayCastOutput
 {
 	b2Vec2 normal;
-	float32 fraction;
+	float fraction;
 };
 
 /// An axis aligned bounding box.
@@ -177,10 +177,10 @@ struct b2AABB
 	}
 
 	/// Get the perimeter length
-	float32 GetPerimeter() const
+	float GetPerimeter() const
 	{
-		float32 wx = upperBound.x - lowerBound.x;
-		float32 wy = upperBound.y - lowerBound.y;
+		float wx = upperBound.x - lowerBound.x;
+		float wy = upperBound.y - lowerBound.y;
 		return 2.0f * (wx + wy);
 	}
 
@@ -242,7 +242,7 @@ void b2CollideEdgeAndPolygon(b2Manifold* manifold,
 
 /// Clipping for contact manifolds.
 int32 b2ClipSegmentToLine(b2ClipVertex vOut[2], const b2ClipVertex vIn[2],
-							const b2Vec2& normal, float32 offset, int32 vertexIndexA);
+							const b2Vec2& normal, float offset, int32 vertexIndexA);
 
 /// Determine if two generic shapes overlap.
 bool b2TestOverlap(	const b2Shape* shapeA, int32 indexA,

@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 	// Prepare for simulation. Typically we use a time step of 1/60 of a
 	// second (60Hz) and 10 iterations. This provides a high quality simulation
 	// in most game scenarios.
-	float32 timeStep = 1.0f / 60.0f;
+	float timeStep = 1.0f / 60.0f;
 	int32 velocityIterations = 6;
 	int32 positionIterations = 2;
 
@@ -93,7 +93,7 @@ int main(int argc, char** argv)
 
 		// Now print the position and angle of the body.
 		b2Vec2 position = body->GetPosition();
-		float32 angle = body->GetAngle();
+		float angle = body->GetAngle();
 
 		printf("%4.2f %4.2f %4.2f\n", position.x, position.y, angle);
 	}

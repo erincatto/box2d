@@ -20,7 +20,7 @@
 
 #if defined(_WIN32)
 
-float64 b2Timer::s_invFrequency = 0.0f;
+double b2Timer::s_invFrequency = 0.0f;
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -35,7 +35,7 @@ b2Timer::b2Timer()
 	if (s_invFrequency == 0.0f)
 	{
 		QueryPerformanceFrequency(&largeInteger);
-		s_invFrequency = float64(largeInteger.QuadPart);
+		s_invFrequency = double(largeInteger.QuadPart);
 		if (s_invFrequency > 0.0f)
 		{
 			s_invFrequency = 1000.0f / s_invFrequency;
@@ -43,22 +43,22 @@ b2Timer::b2Timer()
 	}
 
 	QueryPerformanceCounter(&largeInteger);
-	m_start = float64(largeInteger.QuadPart);
+	m_start = double(largeInteger.QuadPart);
 }
 
 void b2Timer::Reset()
 {
 	LARGE_INTEGER largeInteger;
 	QueryPerformanceCounter(&largeInteger);
-	m_start = float64(largeInteger.QuadPart);
+	m_start = double(largeInteger.QuadPart);
 }
 
-float32 b2Timer::GetMilliseconds() const
+float b2Timer::GetMilliseconds() const
 {
 	LARGE_INTEGER largeInteger;
 	QueryPerformanceCounter(&largeInteger);
-	float64 count = float64(largeInteger.QuadPart);
-	float32 ms = float32(s_invFrequency * (count - m_start));
+	double count = double(largeInteger.QuadPart);
+	float ms = float(s_invFrequency * (count - m_start));
 	return ms;
 }
 
@@ -79,7 +79,7 @@ void b2Timer::Reset()
     m_start_usec = t.tv_usec;
 }
 
-float32 b2Timer::GetMilliseconds() const
+float b2Timer::GetMilliseconds() const
 {
     timeval t;
     gettimeofday(&t, 0);
@@ -113,7 +113,7 @@ void b2Timer::Reset()
 {
 }
 
-float32 b2Timer::GetMilliseconds() const
+float b2Timer::GetMilliseconds() const
 {
 	return 0.0f;
 }

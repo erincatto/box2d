@@ -64,8 +64,8 @@ public:
 /// match up one-to-one with the contact points in b2Manifold.
 struct b2ContactImpulse
 {
-	float32 normalImpulses[b2_maxManifoldPoints];
-	float32 tangentImpulses[b2_maxManifoldPoints];
+	float normalImpulses[b2_maxManifoldPoints];
+	float tangentImpulses[b2_maxManifoldPoints];
 	int32 count;
 };
 
@@ -148,8 +148,8 @@ public:
 	/// @param normal the normal vector at the point of intersection
 	/// @return -1 to filter, 0 to terminate, fraction to clip the ray for
 	/// closest hit, 1 to continue
-	virtual float32 ReportFixture(	b2Fixture* fixture, const b2Vec2& point,
-									const b2Vec2& normal, float32 fraction) = 0;
+	virtual float ReportFixture(	b2Fixture* fixture, const b2Vec2& point,
+									const b2Vec2& normal, float fraction) = 0;
 };
 
 #endif

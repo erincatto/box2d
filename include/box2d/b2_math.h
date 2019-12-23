@@ -23,7 +23,7 @@
 #include <math.h>
 
 /// This function is used to ensure that a floating point number is not a NaN or infinity.
-inline bool b2IsValid(float32 x)
+inline bool b2IsValid(float x)
 {
 	return isfinite(x);
 }
@@ -38,25 +38,25 @@ struct b2Vec2
 	b2Vec2() {}
 
 	/// Construct using coordinates.
-	b2Vec2(float32 xIn, float32 yIn) : x(xIn), y(yIn) {}
+	b2Vec2(float xIn, float yIn) : x(xIn), y(yIn) {}
 
 	/// Set this vector to all zeros.
 	void SetZero() { x = 0.0f; y = 0.0f; }
 
 	/// Set this vector to some specified coordinates.
-	void Set(float32 x_, float32 y_) { x = x_; y = y_; }
+	void Set(float x_, float y_) { x = x_; y = y_; }
 
 	/// Negate this vector.
 	b2Vec2 operator -() const { b2Vec2 v; v.Set(-x, -y); return v; }
 	
 	/// Read from and indexed element.
-	float32 operator () (int32 i) const
+	float operator () (int32 i) const
 	{
 		return (&x)[i];
 	}
 
 	/// Write to an indexed element.
-	float32& operator () (int32 i)
+	float& operator () (int32 i)
 	{
 		return (&x)[i];
 	}
@@ -74,33 +74,33 @@ struct b2Vec2
 	}
 
 	/// Multiply this vector by a scalar.
-	void operator *= (float32 a)
+	void operator *= (float a)
 	{
 		x *= a; y *= a;
 	}
 
 	/// Get the length of this vector (the norm).
-	float32 Length() const
+	float Length() const
 	{
 		return b2Sqrt(x * x + y * y);
 	}
 
 	/// Get the length squared. For performance, use this instead of
 	/// b2Vec2::Length (if possible).
-	float32 LengthSquared() const
+	float LengthSquared() const
 	{
 		return x * x + y * y;
 	}
 
 	/// Convert this vector into a unit vector. Returns the length.
-	float32 Normalize()
+	float Normalize()
 	{
-		float32 length = Length();
+		float length = Length();
 		if (length < b2_epsilon)
 		{
 			return 0.0f;
 		}
-		float32 invLength = 1.0f / length;
+		float invLength = 1.0f / length;
 		x *= invLength;
 		y *= invLength;
 
@@ -119,7 +119,7 @@ struct b2Vec2
 		return b2Vec2(-y, x);
 	}
 
-	float32 x, y;
+	float x, y;
 };
 
 /// A 2D column vector with 3 elements.
@@ -129,13 +129,13 @@ struct b2Vec3
 	b2Vec3() {}
 
 	/// Construct using coordinates.
-	b2Vec3(float32 xIn, float32 yIn, float32 zIn) : x(xIn), y(yIn), z(zIn) {}
+	b2Vec3(float xIn, float yIn, float zIn) : x(xIn), y(yIn), z(zIn) {}
 
 	/// Set this vector to all zeros.
 	void SetZero() { x = 0.0f; y = 0.0f; z = 0.0f; }
 
 	/// Set this vector to some specified coordinates.
-	void Set(float32 x_, float32 y_, float32 z_) { x = x_; y = y_; z = z_; }
+	void Set(float x_, float y_, float z_) { x = x_; y = y_; z = z_; }
 
 	/// Negate this vector.
 	b2Vec3 operator -() const { b2Vec3 v; v.Set(-x, -y, -z); return v; }
@@ -153,12 +153,12 @@ struct b2Vec3
 	}
 
 	/// Multiply this vector by a scalar.
-	void operator *= (float32 s)
+	void operator *= (float s)
 	{
 		x *= s; y *= s; z *= s;
 	}
 
-	float32 x, y, z;
+	float x, y, z;
 };
 
 /// A 2-by-2 matrix. Stored in column-major order.
@@ -175,7 +175,7 @@ struct b2Mat22
 	}
 
 	/// Construct this matrix using scalars.
-	b2Mat22(float32 a11, float32 a12, float32 a21, float32 a22)
+	b2Mat22(float a11, float a12, float a21, float a22)
 	{
 		ex.x = a11; ex.y = a21;
 		ey.x = a12; ey.y = a22;
@@ -204,9 +204,9 @@ struct b2Mat22
 
 	b2Mat22 GetInverse() const
 	{
-		float32 a = ex.x, b = ey.x, c = ex.y, d = ey.y;
+		float a = ex.x, b = ey.x, c = ex.y, d = ey.y;
 		b2Mat22 B;
-		float32 det = a * d - b * c;
+		float det = a * d - b * c;
 		if (det != 0.0f)
 		{
 			det = 1.0f / det;
@@ -220,8 +220,8 @@ struct b2Mat22
 	/// than computing the inverse in one-shot cases.
 	b2Vec2 Solve(const b2Vec2& b) const
 	{
-		float32 a11 = ex.x, a12 = ey.x, a21 = ex.y, a22 = ey.y;
-		float32 det = a11 * a22 - a12 * a21;
+		float a11 = ex.x, a12 = ey.x, a21 = ex.y, a22 = ey.y;
+		float det = a11 * a22 - a12 * a21;
 		if (det != 0.0f)
 		{
 			det = 1.0f / det;
@@ -283,7 +283,7 @@ struct b2Rot
 	b2Rot() {}
 
 	/// Initialize from an angle in radians
-	explicit b2Rot(float32 angle)
+	explicit b2Rot(float angle)
 	{
 		/// TODO_ERIN optimize
 		s = sinf(angle);
@@ -291,7 +291,7 @@ struct b2Rot
 	}
 
 	/// Set using an angle in radians.
-	void Set(float32 angle)
+	void Set(float angle)
 	{
 		/// TODO_ERIN optimize
 		s = sinf(angle);
@@ -306,7 +306,7 @@ struct b2Rot
 	}
 
 	/// Get the angle in radians
-	float32 GetAngle() const
+	float GetAngle() const
 	{
 		return b2Atan2(s, c);
 	}
@@ -324,7 +324,7 @@ struct b2Rot
 	}
 
 	/// Sine and cosine
-	float32 s, c;
+	float s, c;
 };
 
 /// A transform contains translation and rotation. It is used to represent
@@ -345,7 +345,7 @@ struct b2Transform
 	}
 
 	/// Set this based on the position and angle.
-	void Set(const b2Vec2& position, float32 angle)
+	void Set(const b2Vec2& position, float angle)
 	{
 		p = position;
 		q.Set(angle);
@@ -363,49 +363,49 @@ struct b2Sweep
 {
 	/// Get the interpolated transform at a specific time.
 	/// @param beta is a factor in [0,1], where 0 indicates alpha0.
-	void GetTransform(b2Transform* xfb, float32 beta) const;
+	void GetTransform(b2Transform* xfb, float beta) const;
 
 	/// Advance the sweep forward, yielding a new initial state.
 	/// @param alpha the new initial time.
-	void Advance(float32 alpha);
+	void Advance(float alpha);
 
 	/// Normalize the angles.
 	void Normalize();
 
 	b2Vec2 localCenter;	///< local center of mass position
 	b2Vec2 c0, c;		///< center world positions
-	float32 a0, a;		///< world angles
+	float a0, a;		///< world angles
 
 	/// Fraction of the current time step in the range [0,1]
 	/// c0 and a0 are the positions at alpha0.
-	float32 alpha0;
+	float alpha0;
 };
 
 /// Useful constant
 extern const b2Vec2 b2Vec2_zero;
 
 /// Perform the dot product on two vectors.
-inline float32 b2Dot(const b2Vec2& a, const b2Vec2& b)
+inline float b2Dot(const b2Vec2& a, const b2Vec2& b)
 {
 	return a.x * b.x + a.y * b.y;
 }
 
 /// Perform the cross product on two vectors. In 2D this produces a scalar.
-inline float32 b2Cross(const b2Vec2& a, const b2Vec2& b)
+inline float b2Cross(const b2Vec2& a, const b2Vec2& b)
 {
 	return a.x * b.y - a.y * b.x;
 }
 
 /// Perform the cross product on a vector and a scalar. In 2D this produces
 /// a vector.
-inline b2Vec2 b2Cross(const b2Vec2& a, float32 s)
+inline b2Vec2 b2Cross(const b2Vec2& a, float s)
 {
 	return b2Vec2(s * a.y, -s * a.x);
 }
 
 /// Perform the cross product on a scalar and a vector. In 2D this produces
 /// a vector.
-inline b2Vec2 b2Cross(float32 s, const b2Vec2& a)
+inline b2Vec2 b2Cross(float s, const b2Vec2& a)
 {
 	return b2Vec2(-s * a.y, s * a.x);
 }
@@ -436,7 +436,7 @@ inline b2Vec2 operator - (const b2Vec2& a, const b2Vec2& b)
 	return b2Vec2(a.x - b.x, a.y - b.y);
 }
 
-inline b2Vec2 operator * (float32 s, const b2Vec2& a)
+inline b2Vec2 operator * (float s, const b2Vec2& a)
 {
 	return b2Vec2(s * a.x, s * a.y);
 }
@@ -451,19 +451,19 @@ inline bool operator != (const b2Vec2& a, const b2Vec2& b)
 	return a.x != b.x || a.y != b.y;
 }
 
-inline float32 b2Distance(const b2Vec2& a, const b2Vec2& b)
+inline float b2Distance(const b2Vec2& a, const b2Vec2& b)
 {
 	b2Vec2 c = a - b;
 	return c.Length();
 }
 
-inline float32 b2DistanceSquared(const b2Vec2& a, const b2Vec2& b)
+inline float b2DistanceSquared(const b2Vec2& a, const b2Vec2& b)
 {
 	b2Vec2 c = a - b;
 	return b2Dot(c, c);
 }
 
-inline b2Vec3 operator * (float32 s, const b2Vec3& a)
+inline b2Vec3 operator * (float s, const b2Vec3& a)
 {
 	return b2Vec3(s * a.x, s * a.y, s * a.z);
 }
@@ -481,7 +481,7 @@ inline b2Vec3 operator - (const b2Vec3& a, const b2Vec3& b)
 }
 
 /// Perform the dot product on two vectors.
-inline float32 b2Dot(const b2Vec3& a, const b2Vec3& b)
+inline float b2Dot(const b2Vec3& a, const b2Vec3& b)
 {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
 }
@@ -563,18 +563,18 @@ inline b2Vec2 b2MulT(const b2Rot& q, const b2Vec2& v)
 
 inline b2Vec2 b2Mul(const b2Transform& T, const b2Vec2& v)
 {
-	float32 x = (T.q.c * v.x - T.q.s * v.y) + T.p.x;
-	float32 y = (T.q.s * v.x + T.q.c * v.y) + T.p.y;
+	float x = (T.q.c * v.x - T.q.s * v.y) + T.p.x;
+	float y = (T.q.s * v.x + T.q.c * v.y) + T.p.y;
 
 	return b2Vec2(x, y);
 }
 
 inline b2Vec2 b2MulT(const b2Transform& T, const b2Vec2& v)
 {
-	float32 px = v.x - T.p.x;
-	float32 py = v.y - T.p.y;
-	float32 x = (T.q.c * px + T.q.s * py);
-	float32 y = (-T.q.s * px + T.q.c * py);
+	float px = v.x - T.p.x;
+	float py = v.y - T.p.y;
+	float x = (T.q.c * px + T.q.s * py);
+	float y = (-T.q.s * px + T.q.c * py);
 
 	return b2Vec2(x, y);
 }
@@ -676,20 +676,20 @@ inline bool b2IsPowerOfTwo(uint32 x)
 	return result;
 }
 
-inline void b2Sweep::GetTransform(b2Transform* xf, float32 beta) const
+inline void b2Sweep::GetTransform(b2Transform* xf, float beta) const
 {
 	xf->p = (1.0f - beta) * c0 + beta * c;
-	float32 angle = (1.0f - beta) * a0 + beta * a;
+	float angle = (1.0f - beta) * a0 + beta * a;
 	xf->q.Set(angle);
 
 	// Shift to origin
 	xf->p -= b2Mul(xf->q, localCenter);
 }
 
-inline void b2Sweep::Advance(float32 alpha)
+inline void b2Sweep::Advance(float alpha)
 {
 	b2Assert(alpha0 < 1.0f);
-	float32 beta = (alpha - alpha0) / (1.0f - alpha0);
+	float beta = (alpha - alpha0) / (1.0f - alpha0);
 	c0 += beta * (c - c0);
 	a0 += beta * (a - a0);
 	alpha0 = alpha;
@@ -698,8 +698,8 @@ inline void b2Sweep::Advance(float32 alpha)
 /// Normalize an angle in radians to be between -pi and pi
 inline void b2Sweep::Normalize()
 {
-	float32 twoPi = 2.0f * b2_pi;
-	float32 d =  twoPi * floorf(a0 / twoPi);
+	float twoPi = 2.0f * b2_pi;
+	float d =  twoPi * floorf(a0 / twoPi);
 	a0 -= d;
 	a -= d;
 }

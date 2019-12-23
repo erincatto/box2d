@@ -46,14 +46,14 @@ public:
 	/// Build vertices to represent an axis-aligned box centered on the local origin.
 	/// @param hx the half-width.
 	/// @param hy the half-height.
-	void SetAsBox(float32 hx, float32 hy);
+	void SetAsBox(float hx, float hy);
 
 	/// Build vertices to represent an oriented box.
 	/// @param hx the half-width.
 	/// @param hy the half-height.
 	/// @param center the center of the box in local coordinates.
 	/// @param angle the rotation of the box in local coordinates.
-	void SetAsBox(float32 hx, float32 hy, const b2Vec2& center, float32 angle);
+	void SetAsBox(float hx, float hy, const b2Vec2& center, float angle);
 
 	/// @see b2Shape::TestPoint
 	bool TestPoint(const b2Transform& transform, const b2Vec2& p) const override;
@@ -66,7 +66,7 @@ public:
 	void ComputeAABB(b2AABB* aabb, const b2Transform& transform, int32 childIndex) const override;
 
 	/// @see b2Shape::ComputeMass
-	void ComputeMass(b2MassData* massData, float32 density) const override;
+	void ComputeMass(b2MassData* massData, float density) const override;
 
 	/// Validate convexity. This is a very time consuming operation.
 	/// @returns true if valid

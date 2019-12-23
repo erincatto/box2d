@@ -71,14 +71,14 @@ void b2DistanceJoint::InitVelocityConstraints(const b2SolverData& data)
 	m_invIB = m_bodyB->m_invI;
 
 	b2Vec2 cA = data.positions[m_indexA].c;
-	float32 aA = data.positions[m_indexA].a;
+	float aA = data.positions[m_indexA].a;
 	b2Vec2 vA = data.velocities[m_indexA].v;
-	float32 wA = data.velocities[m_indexA].w;
+	float wA = data.velocities[m_indexA].w;
 
 	b2Vec2 cB = data.positions[m_indexB].c;
-	float32 aB = data.positions[m_indexB].a;
+	float aB = data.positions[m_indexB].a;
 	b2Vec2 vB = data.velocities[m_indexB].v;
-	float32 wB = data.velocities[m_indexB].w;
+	float wB = data.velocities[m_indexB].w;
 
 	b2Rot qA(aA), qB(aB);
 
@@ -87,7 +87,7 @@ void b2DistanceJoint::InitVelocityConstraints(const b2SolverData& data)
 	m_u = cB + m_rB - cA - m_rA;
 
 	// Handle singularity.
-	float32 length = m_u.Length();
+	float length = m_u.Length();
 	if (length > b2_linearSlop)
 	{
 		m_u *= 1.0f / length;
@@ -97,28 +97,28 @@ void b2DistanceJoint::InitVelocityConstraints(const b2SolverData& data)
 		m_u.Set(0.0f, 0.0f);
 	}
 
-	float32 crAu = b2Cross(m_rA, m_u);
-	float32 crBu = b2Cross(m_rB, m_u);
-	float32 invMass = m_invMassA + m_invIA * crAu * crAu + m_invMassB + m_invIB * crBu * crBu;
+	float crAu = b2Cross(m_rA, m_u);
+	float crBu = b2Cross(m_rB, m_u);
+	float invMass = m_invMassA + m_invIA * crAu * crAu + m_invMassB + m_invIB * crBu * crBu;
 
 	// Compute the effective mass matrix.
 	m_mass = invMass != 0.0f ? 1.0f / invMass : 0.0f;
 
 	if (m_frequencyHz > 0.0f)
 	{
-		float32 C = length - m_length;
+		float C = length - m_length;
 
 		// Frequency
-		float32 omega = 2.0f * b2_pi * m_frequencyHz;
+		float omega = 2.0f * b2_pi * m_frequencyHz;
 
 		// Damping coefficient
-		float32 d = 2.0f * m_mass * m_dampingRatio * omega;
+		float d = 2.0f * m_mass * m_dampingRatio * omega;
 
 		// Spring stiffness
-		float32 k = m_mass * omega * omega;
+		float k = m_mass * omega * omega;
 
 		// magic formulas
-		float32 h = data.step.dt;
+		float h = data.step.dt;
 
 		// gamma = 1 / (h * (d + h * k)), the extra factor of h in the denominator is since the lambda is an impulse, not a force
 		m_gamma = h * (d + h * k);
@@ -159,16 +159,16 @@ void b2DistanceJoint::InitVelocityConstraints(const b2SolverData& data)
 void b2DistanceJoint::SolveVelocityConstraints(const b2SolverData& data)
 {
 	b2Vec2 vA = data.velocities[m_indexA].v;
-	float32 wA = data.velocities[m_indexA].w;
+	float wA = data.velocities[m_indexA].w;
 	b2Vec2 vB = data.velocities[m_indexB].v;
-	float32 wB = data.velocities[m_indexB].w;
+	float wB = data.velocities[m_indexB].w;
 
 	// Cdot = dot(u, v + cross(w, r))
 	b2Vec2 vpA = vA + b2Cross(wA, m_rA);
 	b2Vec2 vpB = vB + b2Cross(wB, m_rB);
-	float32 Cdot = b2Dot(m_u, vpB - vpA);
+	float Cdot = b2Dot(m_u, vpB - vpA);
 
-	float32 impulse = -m_mass * (Cdot + m_bias + m_gamma * m_impulse);
+	float impulse = -m_mass * (Cdot + m_bias + m_gamma * m_impulse);
 	m_impulse += impulse;
 
 	b2Vec2 P = impulse * m_u;
@@ -192,9 +192,9 @@ bool b2DistanceJoint::SolvePositionConstraints(const b2SolverData& data)
 	}
 
 	b2Vec2 cA = data.positions[m_indexA].c;
-	float32 aA = data.positions[m_indexA].a;
+	float aA = data.positions[m_indexA].a;
 	b2Vec2 cB = data.positions[m_indexB].c;
-	float32 aB = data.positions[m_indexB].a;
+	float aB = data.positions[m_indexB].a;
 
 	b2Rot qA(aA), qB(aB);
 
@@ -202,11 +202,11 @@ bool b2DistanceJoint::SolvePositionConstraints(const b2SolverData& data)
 	b2Vec2 rB = b2Mul(qB, m_localAnchorB - m_localCenterB);
 	b2Vec2 u = cB + rB - cA - rA;
 
-	float32 length = u.Normalize();
-	float32 C = length - m_length;
+	float length = u.Normalize();
+	float C = length - m_length;
 	C = b2Clamp(C, -b2_maxLinearCorrection, b2_maxLinearCorrection);
 
-	float32 impulse = -m_mass * C;
+	float impulse = -m_mass * C;
 	b2Vec2 P = impulse * u;
 
 	cA -= m_invMassA * P;
@@ -232,13 +232,13 @@ b2Vec2 b2DistanceJoint::GetAnchorB() const
 	return m_bodyB->GetWorldPoint(m_localAnchorB);
 }
 
-b2Vec2 b2DistanceJoint::GetReactionForce(float32 inv_dt) const
+b2Vec2 b2DistanceJoint::GetReactionForce(float inv_dt) const
 {
 	b2Vec2 F = (inv_dt * m_impulse) * m_u;
 	return F;
 }
 
-float32 b2DistanceJoint::GetReactionTorque(float32 inv_dt) const
+float b2DistanceJoint::GetReactionTorque(float inv_dt) const
 {
 	B2_NOT_USED(inv_dt);
 	return 0.0f;

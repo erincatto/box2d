@@ -20,8 +20,8 @@
 #include "box2d/b2_distance.h"
 
 void b2WorldManifold::Initialize(const b2Manifold* manifold,
-						  const b2Transform& xfA, float32 radiusA,
-						  const b2Transform& xfB, float32 radiusB)
+						  const b2Transform& xfA, float radiusA,
+						  const b2Transform& xfB, float radiusB)
 {
 	if (manifold->pointCount == 0)
 	{
@@ -132,8 +132,8 @@ void b2GetPointStates(b2PointState state1[b2_maxManifoldPoints], b2PointState st
 // From Real-time Collision Detection, p179.
 bool b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
 {
-	float32 tmin = -b2_maxFloat;
-	float32 tmax = b2_maxFloat;
+	float tmin = -b2_maxFloat;
+	float tmax = b2_maxFloat;
 
 	b2Vec2 p = input.p1;
 	b2Vec2 d = input.p2 - input.p1;
@@ -153,12 +153,12 @@ bool b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
 		}
 		else
 		{
-			float32 inv_d = 1.0f / d(i);
-			float32 t1 = (lowerBound(i) - p(i)) * inv_d;
-			float32 t2 = (upperBound(i) - p(i)) * inv_d;
+			float inv_d = 1.0f / d(i);
+			float t1 = (lowerBound(i) - p(i)) * inv_d;
+			float t2 = (upperBound(i) - p(i)) * inv_d;
 
 			// Sign of the normal vector.
-			float32 s = -1.0f;
+			float s = -1.0f;
 
 			if (t1 > t2)
 			{
@@ -199,14 +199,14 @@ bool b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
 
 // Sutherland-Hodgman clipping.
 int32 b2ClipSegmentToLine(b2ClipVertex vOut[2], const b2ClipVertex vIn[2],
-						const b2Vec2& normal, float32 offset, int32 vertexIndexA)
+						const b2Vec2& normal, float offset, int32 vertexIndexA)
 {
 	// Start with no output points
 	int32 numOut = 0;
 
 	// Calculate the distance of end points to the line
-	float32 distance0 = b2Dot(normal, vIn[0].v) - offset;
-	float32 distance1 = b2Dot(normal, vIn[1].v) - offset;
+	float distance0 = b2Dot(normal, vIn[0].v) - offset;
+	float distance1 = b2Dot(normal, vIn[1].v) - offset;
 
 	// If the points are behind the plane
 	if (distance0 <= 0.0f) vOut[numOut++] = vIn[0];
@@ -216,7 +216,7 @@ int32 b2ClipSegmentToLine(b2ClipVertex vOut[2], const b2ClipVertex vIn[2],
 	if (distance0 * distance1 < 0.0f)
 	{
 		// Find intersection point of edge and plane
-		float32 interp = distance0 / (distance0 - distance1);
+		float interp = distance0 / (distance0 - distance1);
 		vOut[numOut].v = vIn[0].v + interp * (vIn[1].v - vIn[0].v);
 
 		// VertexA is hitting edgeB.

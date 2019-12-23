@@ -55,14 +55,14 @@ void b2RopeJoint::InitVelocityConstraints(const b2SolverData& data)
 	m_invIB = m_bodyB->m_invI;
 
 	b2Vec2 cA = data.positions[m_indexA].c;
-	float32 aA = data.positions[m_indexA].a;
+	float aA = data.positions[m_indexA].a;
 	b2Vec2 vA = data.velocities[m_indexA].v;
-	float32 wA = data.velocities[m_indexA].w;
+	float wA = data.velocities[m_indexA].w;
 
 	b2Vec2 cB = data.positions[m_indexB].c;
-	float32 aB = data.positions[m_indexB].a;
+	float aB = data.positions[m_indexB].a;
 	b2Vec2 vB = data.velocities[m_indexB].v;
-	float32 wB = data.velocities[m_indexB].w;
+	float wB = data.velocities[m_indexB].w;
 
 	b2Rot qA(aA), qB(aB);
 
@@ -72,7 +72,7 @@ void b2RopeJoint::InitVelocityConstraints(const b2SolverData& data)
 
 	m_length = m_u.Length();
 
-	float32 C = m_length - m_maxLength;
+	float C = m_length - m_maxLength;
 	if (C > 0.0f)
 	{
 		m_state = e_atUpperLimit;
@@ -95,9 +95,9 @@ void b2RopeJoint::InitVelocityConstraints(const b2SolverData& data)
 	}
 
 	// Compute effective mass.
-	float32 crA = b2Cross(m_rA, m_u);
-	float32 crB = b2Cross(m_rB, m_u);
-	float32 invMass = m_invMassA + m_invIA * crA * crA + m_invMassB + m_invIB * crB * crB;
+	float crA = b2Cross(m_rA, m_u);
+	float crB = b2Cross(m_rB, m_u);
+	float invMass = m_invMassA + m_invIA * crA * crA + m_invMassB + m_invIB * crB * crB;
 
 	m_mass = invMass != 0.0f ? 1.0f / invMass : 0.0f;
 
@@ -126,15 +126,15 @@ void b2RopeJoint::InitVelocityConstraints(const b2SolverData& data)
 void b2RopeJoint::SolveVelocityConstraints(const b2SolverData& data)
 {
 	b2Vec2 vA = data.velocities[m_indexA].v;
-	float32 wA = data.velocities[m_indexA].w;
+	float wA = data.velocities[m_indexA].w;
 	b2Vec2 vB = data.velocities[m_indexB].v;
-	float32 wB = data.velocities[m_indexB].w;
+	float wB = data.velocities[m_indexB].w;
 
 	// Cdot = dot(u, v + cross(w, r))
 	b2Vec2 vpA = vA + b2Cross(wA, m_rA);
 	b2Vec2 vpB = vB + b2Cross(wB, m_rB);
-	float32 C = m_length - m_maxLength;
-	float32 Cdot = b2Dot(m_u, vpB - vpA);
+	float C = m_length - m_maxLength;
+	float Cdot = b2Dot(m_u, vpB - vpA);
 
 	// Predictive constraint.
 	if (C < 0.0f)
@@ -142,8 +142,8 @@ void b2RopeJoint::SolveVelocityConstraints(const b2SolverData& data)
 		Cdot += data.step.inv_dt * C;
 	}
 
-	float32 impulse = -m_mass * Cdot;
-	float32 oldImpulse = m_impulse;
+	float impulse = -m_mass * Cdot;
+	float oldImpulse = m_impulse;
 	m_impulse = b2Min(0.0f, m_impulse + impulse);
 	impulse = m_impulse - oldImpulse;
 
@@ -162,9 +162,9 @@ void b2RopeJoint::SolveVelocityConstraints(const b2SolverData& data)
 bool b2RopeJoint::SolvePositionConstraints(const b2SolverData& data)
 {
 	b2Vec2 cA = data.positions[m_indexA].c;
-	float32 aA = data.positions[m_indexA].a;
+	float aA = data.positions[m_indexA].a;
 	b2Vec2 cB = data.positions[m_indexB].c;
-	float32 aB = data.positions[m_indexB].a;
+	float aB = data.positions[m_indexB].a;
 
 	b2Rot qA(aA), qB(aB);
 
@@ -172,12 +172,12 @@ bool b2RopeJoint::SolvePositionConstraints(const b2SolverData& data)
 	b2Vec2 rB = b2Mul(qB, m_localAnchorB - m_localCenterB);
 	b2Vec2 u = cB + rB - cA - rA;
 
-	float32 length = u.Normalize();
-	float32 C = length - m_maxLength;
+	float length = u.Normalize();
+	float C = length - m_maxLength;
 
 	C = b2Clamp(C, 0.0f, b2_maxLinearCorrection);
 
-	float32 impulse = -m_mass * C;
+	float impulse = -m_mass * C;
 	b2Vec2 P = impulse * u;
 
 	cA -= m_invMassA * P;
@@ -203,19 +203,19 @@ b2Vec2 b2RopeJoint::GetAnchorB() const
 	return m_bodyB->GetWorldPoint(m_localAnchorB);
 }
 
-b2Vec2 b2RopeJoint::GetReactionForce(float32 inv_dt) const
+b2Vec2 b2RopeJoint::GetReactionForce(float inv_dt) const
 {
 	b2Vec2 F = (inv_dt * m_impulse) * m_u;
 	return F;
 }
 
-float32 b2RopeJoint::GetReactionTorque(float32 inv_dt) const
+float b2RopeJoint::GetReactionTorque(float inv_dt) const
 {
 	B2_NOT_USED(inv_dt);
 	return 0.0f;
 }
 
-float32 b2RopeJoint::GetMaxLength() const
+float b2RopeJoint::GetMaxLength() const
 {
 	return m_maxLength;
 }

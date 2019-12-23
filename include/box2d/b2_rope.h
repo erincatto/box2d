@@ -45,11 +45,11 @@ struct b2RopeTuning
 	}
 
 	b2BendingModel bendingModel;
-	float32 damping;
-	float32 stretchStiffness;
-	float32 bendStiffness;
-	float32 bendHertz;
-	float32 bendDamping;
+	float damping;
+	float stretchStiffness;
+	float bendStiffness;
+	float bendHertz;
+	float bendDamping;
 };
 
 /// 
@@ -70,7 +70,7 @@ struct b2RopeDef
 	int32 count;
 
 	///
-	float32* masses;
+	float* masses;
 
 	///
 	b2Vec2 gravity;
@@ -92,7 +92,7 @@ public:
 	void SetTuning(const b2RopeTuning& tuning);
 
 	///
-	void Step(float32 timeStep, int32 iterations, const b2Vec2& position);
+	void Step(float timeStep, int32 iterations, const b2Vec2& position);
 
 	///
 	int32 GetVertexCount() const
@@ -110,15 +110,15 @@ public:
 	void Draw(b2Draw* draw) const;
 
 	///
-	void SetAngle(float32 angle);
+	void SetAngle(float angle);
 
 private:
 
 	void SolveStretch();
 	//void SolveBend_PBD_Distance();
 	void SolveBend_PBD_Angle();
-	void SolveBend_XPBD_Angle(float32 dt);
-	void ApplyBendForces(float32 dt);
+	void SolveBend_XPBD_Angle(float dt);
+	void ApplyBendForces(float dt);
 
 	int32 m_count;
 	int32 m_stretchCount;
@@ -129,11 +129,11 @@ private:
 	b2Vec2* m_p0s;
 	b2Vec2* m_vs;
 
-	float32* m_ims;
+	float* m_ims;
 
-	float32* m_Ls;
-	float32* m_as;
-	float32* m_bendingLambdas;
+	float* m_Ls;
+	float* m_as;
+	float* m_bendingLambdas;
 
 	b2Vec2 m_gravity;
 

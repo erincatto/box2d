@@ -36,7 +36,7 @@ struct b2DistanceProxy
 
     /// Initialize the proxy using a vertex cloud and radius. The vertices
     /// must remain in scope while the proxy is in use.
-    void Set(const b2Vec2* vertices, int32 count, float32 radius);
+    void Set(const b2Vec2* vertices, int32 count, float radius);
 
 	/// Get the supporting vertex index in the given direction.
 	int32 GetSupport(const b2Vec2& d) const;
@@ -53,14 +53,14 @@ struct b2DistanceProxy
 	b2Vec2 m_buffer[2];
 	const b2Vec2* m_vertices;
 	int32 m_count;
-	float32 m_radius;
+	float m_radius;
 };
 
 /// Used to warm start b2Distance.
 /// Set count to zero on first call.
 struct b2SimplexCache
 {
-	float32 metric;		///< length or area
+	float metric;		///< length or area
 	uint16 count;
 	uint8 indexA[3];	///< vertices on shape A
 	uint8 indexB[3];	///< vertices on shape B
@@ -83,7 +83,7 @@ struct b2DistanceOutput
 {
 	b2Vec2 pointA;		///< closest point on shapeA
 	b2Vec2 pointB;		///< closest point on shapeB
-	float32 distance;
+	float distance;
 	int32 iterations;	///< number of GJK iterations used
 };
 
@@ -109,7 +109,7 @@ struct b2ShapeCastOutput
 {
 	b2Vec2 point;
 	b2Vec2 normal;
-	float32 lambda;
+	float lambda;
 	int32 iterations;
 };
 
@@ -132,10 +132,10 @@ inline const b2Vec2& b2DistanceProxy::GetVertex(int32 index) const
 inline int32 b2DistanceProxy::GetSupport(const b2Vec2& d) const
 {
 	int32 bestIndex = 0;
-	float32 bestValue = b2Dot(m_vertices[0], d);
+	float bestValue = b2Dot(m_vertices[0], d);
 	for (int32 i = 1; i < m_count; ++i)
 	{
-		float32 value = b2Dot(m_vertices[i], d);
+		float value = b2Dot(m_vertices[i], d);
 		if (value > bestValue)
 		{
 			bestIndex = i;
@@ -149,10 +149,10 @@ inline int32 b2DistanceProxy::GetSupport(const b2Vec2& d) const
 inline const b2Vec2& b2DistanceProxy::GetSupportVertex(const b2Vec2& d) const
 {
 	int32 bestIndex = 0;
-	float32 bestValue = b2Dot(m_vertices[0], d);
+	float bestValue = b2Dot(m_vertices[0], d);
 	for (int32 i = 1; i < m_count; ++i)
 	{
-		float32 value = b2Dot(m_vertices[i], d);
+		float value = b2Dot(m_vertices[i], d);
 		if (value > bestValue)
 		{
 			bestIndex = i;
