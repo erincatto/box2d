@@ -19,9 +19,9 @@
 #ifndef B2_CONTACT_SOLVER_H
 #define B2_CONTACT_SOLVER_H
 
-#include "box2d/b2Math.h"
-#include "box2d/b2Collision.h"
-#include "box2d/b2TimeStep.h"
+#include "box2d/b2_collision.h"
+#include "box2d/b2_math.h"
+#include "box2d/b2_time_step.h"
 
 class b2Contact;
 class b2Body;

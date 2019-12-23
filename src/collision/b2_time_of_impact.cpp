@@ -16,12 +16,12 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "box2d/b2Collision.h"
-#include "box2d/b2Distance.h"
-#include "box2d/b2CircleShape.h"
-#include "box2d/b2PolygonShape.h"
-#include "box2d/b2TimeOfImpact.h"
-#include "box2d/b2Timer.h"
+#include "box2d/b2_collision.h"
+#include "box2d/b2_distance.h"
+#include "box2d/b2_circle_shape.h"
+#include "box2d/b2_polygon_shape.h"
+#include "box2d/b2_time_of_impact.h"
+#include "box2d/b2_timer.h"
 
 #include <stdio.h>
 

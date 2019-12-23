@@ -19,7 +19,7 @@
 #ifndef B2_JOINT_H
 #define B2_JOINT_H
 
-#include "b2Math.h"
+#include "b2_math.h"
 
 class b2Body;
 class b2Joint;

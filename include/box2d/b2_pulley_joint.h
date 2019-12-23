@@ -19,7 +19,7 @@
 #ifndef B2_PULLEY_JOINT_H
 #define B2_PULLEY_JOINT_H
 
-#include "b2Joint.h"
+#include "b2_joint.h"
 
 const float32 b2_minPulleyLength = 2.0f;
 

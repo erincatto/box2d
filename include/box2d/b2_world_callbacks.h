@@ -19,7 +19,7 @@
 #ifndef B2_WORLD_CALLBACKS_H
 #define B2_WORLD_CALLBACKS_H
 
-#include "box2d/b2Settings.h"
+#include "b2_settings.h"
 
 struct b2Vec2;
 struct b2Transform;

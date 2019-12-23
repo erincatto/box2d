@@ -16,12 +16,12 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "b2CircleContact.h"
-#include "box2d/b2Body.h"
-#include "box2d/b2Fixture.h"
-#include "box2d/b2WorldCallbacks.h"
-#include "box2d/b2BlockAllocator.h"
-#include "box2d/b2TimeOfImpact.h"
+#include "b2_circle_contact.h"
+#include "box2d/b2_block_allocator.h"
+#include "box2d/b2_body.h"
+#include "box2d/b2_fixture.h"
+#include "box2d/b2_time_of_impact.h"
+#include "box2d/b2_world_callbacks.h"
 
 #include <new>
 

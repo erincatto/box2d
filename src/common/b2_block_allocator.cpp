@@ -16,7 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "box2d/b2BlockAllocator.h"
+#include "box2d/b2_block_allocator.h"
 #include <limits.h>
 #include <string.h>
 #include <stddef.h>

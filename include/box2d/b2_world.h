@@ -19,12 +19,12 @@
 #ifndef B2_WORLD_H
 #define B2_WORLD_H
 
-#include "b2Math.h"
-#include "b2BlockAllocator.h"
-#include "b2StackAllocator.h"
-#include "b2ContactManager.h"
-#include "b2WorldCallbacks.h"
-#include "b2TimeStep.h"
+#include "b2_block_allocator.h"
+#include "b2_contact_manager.h"
+#include "b2_math.h"
+#include "b2_stack_allocator.h"
+#include "b2_time_step.h"
+#include "b2_world_callbacks.h"
 
 struct b2AABB;
 struct b2BodyDef;

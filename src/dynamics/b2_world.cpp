@@ -16,24 +16,24 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "box2d/b2World.h"
 
-#include "b2ContactSolver.h"
-#include "b2Island.h"
+#include "b2_contact_solver.h"
+#include "b2_island.h"
 
-#include "box2d/b2Body.h"
-#include "box2d/b2BroadPhase.h"
-#include "box2d/b2ChainShape.h"
-#include "box2d/b2CircleShape.h"
-#include "box2d/b2Collision.h"
-#include "box2d/b2Contact.h"
-#include "box2d/b2Draw.h"
-#include "box2d/b2EdgeShape.h"
-#include "box2d/b2Fixture.h"
-#include "box2d/b2PolygonShape.h"
-#include "box2d/b2PulleyJoint.h"
-#include "box2d/b2TimeOfImpact.h"
-#include "box2d/b2Timer.h"
+#include "box2d/b2_body.h"
+#include "box2d/b2_broad_phase.h"
+#include "box2d/b2_chain_shape.h"
+#include "box2d/b2_circle_shape.h"
+#include "box2d/b2_collision.h"
+#include "box2d/b2_contact.h"
+#include "box2d/b2_draw.h"
+#include "box2d/b2_edge_shape.h"
+#include "box2d/b2_fixture.h"
+#include "box2d/b2_polygon_shape.h"
+#include "box2d/b2_pulley_joint.h"
+#include "box2d/b2_time_of_impact.h"
+#include "box2d/b2_timer.h"
+#include "box2d/b2_world.h"
 
 #include <new>
 

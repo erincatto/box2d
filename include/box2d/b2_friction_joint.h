@@ -19,7 +19,7 @@
 #ifndef B2_FRICTION_JOINT_H
 #define B2_FRICTION_JOINT_H
 
-#include "b2Joint.h"
+#include "b2_joint.h"
 
 /// Friction joint definition.
 struct b2FrictionJointDef : public b2JointDef

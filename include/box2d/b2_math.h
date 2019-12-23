@@ -19,7 +19,7 @@
 #ifndef B2_MATH_H
 #define B2_MATH_H
 
-#include "b2Settings.h"
+#include "b2_settings.h"
 #include <math.h>
 
 /// This function is used to ensure that a floating point number is not a NaN or infinity.

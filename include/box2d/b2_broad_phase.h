@@ -19,9 +19,9 @@
 #ifndef B2_BROAD_PHASE_H
 #define B2_BROAD_PHASE_H
 
-#include "box2d/b2Settings.h"
-#include "box2d/b2Collision.h"
-#include "box2d/b2DynamicTree.h"
+#include "b2_settings.h"
+#include "b2_collision.h"
+#include "b2_dynamic_tree.h"
 #include <algorithm>
 
 struct b2Pair

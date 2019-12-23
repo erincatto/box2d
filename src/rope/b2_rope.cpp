@@ -16,8 +16,8 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "box2d/b2Rope.h"
-#include "box2d/b2Draw.h"
+#include "box2d/b2_draw.h"
+#include "box2d/b2_rope.h"
 
 b2Rope::b2Rope()
 {

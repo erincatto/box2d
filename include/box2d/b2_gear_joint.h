@@ -19,7 +19,7 @@
 #ifndef B2_GEAR_JOINT_H
 #define B2_GEAR_JOINT_H
 
-#include "b2Joint.h"
+#include "b2_joint.h"
 
 /// Gear joint definition. This definition requires two existing
 /// revolute or prismatic joints (any combination will work).

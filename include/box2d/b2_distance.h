@@ -20,7 +20,7 @@
 #ifndef B2_DISTANCE_H
 #define B2_DISTANCE_H
 
-#include "box2d/b2Math.h"
+#include "b2_math.h"
 
 class b2Shape;
 

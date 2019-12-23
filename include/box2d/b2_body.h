@@ -19,8 +19,8 @@
 #ifndef B2_BODY_H
 #define B2_BODY_H
 
-#include "b2Math.h"
-#include "b2Shape.h"
+#include "b2_math.h"
+#include "b2_shape.h"
 
 class b2Fixture;
 class b2Joint;

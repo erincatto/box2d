@@ -19,8 +19,8 @@
 #ifndef B2_TIME_OF_IMPACT_H
 #define B2_TIME_OF_IMPACT_H
 
-#include "box2d/b2Math.h"
-#include "b2Distance.h"
+#include "b2_math.h"
+#include "b2_distance.h"
 
 /// Input parameters for b2TimeOfImpact
 struct b2TOIInput

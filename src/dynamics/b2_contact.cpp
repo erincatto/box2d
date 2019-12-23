@@ -16,23 +16,23 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "b2CircleContact.h"
-#include "b2PolygonAndCircleContact.h"
-#include "b2PolygonContact.h"
-#include "b2EdgeAndCircleContact.h"
-#include "b2EdgeAndPolygonContact.h"
-#include "b2ChainAndCircleContact.h"
-#include "b2ChainAndPolygonContact.h"
-#include "b2ContactSolver.h"
+#include "b2_chain_circle_contact.h"
+#include "b2_chain_polygon_contact.h"
+#include "b2_circle_contact.h"
+#include "b2_contact_solver.h"
+#include "b2_edge_circle_contact.h"
+#include "b2_edge_polygon_contact.h"
+#include "b2_polygon_circle_contact.h"
+#include "b2_polygon_contact.h"
 
-#include "box2d/b2Collision.h"
-#include "box2d/b2Contact.h"
-#include "box2d/b2Shape.h"
-#include "box2d/b2BlockAllocator.h"
-#include "box2d/b2Body.h"
-#include "box2d/b2Fixture.h"
-#include "box2d/b2TimeOfImpact.h"
-#include "box2d/b2World.h"
+#include "box2d/b2_contact.h"
+#include "box2d/b2_block_allocator.h"
+#include "box2d/b2_body.h"
+#include "box2d/b2_collision.h"
+#include "box2d/b2_fixture.h"
+#include "box2d/b2_shape.h"
+#include "box2d/b2_time_of_impact.h"
+#include "box2d/b2_world.h"
 
 b2ContactRegister b2Contact::s_registers[b2Shape::e_typeCount][b2Shape::e_typeCount];
 bool b2Contact::s_initialized = false;

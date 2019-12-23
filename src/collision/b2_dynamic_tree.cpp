@@ -16,7 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "box2d/b2DynamicTree.h"
+#include "box2d/b2_dynamic_tree.h"
 #include <string.h>
 
 b2DynamicTree::b2DynamicTree()

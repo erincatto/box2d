@@ -16,8 +16,8 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "box2d/b2EdgeShape.h"
-#include "box2d/b2BlockAllocator.h"
+#include "box2d/b2_edge_shape.h"
+#include "box2d/b2_block_allocator.h"
 #include <new>
 
 void b2EdgeShape::Set(const b2Vec2& v1, const b2Vec2& v2)

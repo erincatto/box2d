@@ -19,7 +19,7 @@
 #ifndef B2_STACK_ALLOCATOR_H
 #define B2_STACK_ALLOCATOR_H
 
-#include "box2d/b2Settings.h"
+#include "b2_settings.h"
 
 const int32 b2_stackSize = 100 * 1024;	// 100k
 const int32 b2_maxStackEntries = 32;

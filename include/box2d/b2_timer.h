@@ -19,7 +19,7 @@
 #ifndef B2_TIMER_H
 #define B2_TIMER_H
 
-#include "box2d/b2Settings.h"
+#include "b2_settings.h"
 
 /// Timer for profiling. This has platform specific code and may
 /// not work on every platform.

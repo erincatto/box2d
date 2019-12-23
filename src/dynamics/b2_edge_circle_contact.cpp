@@ -16,9 +16,10 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "b2EdgeAndCircleContact.h"
-#include "box2d/b2BlockAllocator.h"
-#include "box2d/b2Fixture.h"
+#include "b2_edge_circle_contact.h"
+
+#include "box2d/b2_block_allocator.h"
+#include "box2d/b2_fixture.h"
 
 #include <new>
 

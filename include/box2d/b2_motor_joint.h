@@ -19,7 +19,7 @@
 #ifndef B2_MOTOR_JOINT_H
 #define B2_MOTOR_JOINT_H
 
-#include "b2Joint.h"
+#include "b2_joint.h"
 
 /// Motor joint definition.
 struct b2MotorJointDef : public b2JointDef

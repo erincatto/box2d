@@ -16,11 +16,11 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "b2ChainAndPolygonContact.h"
-#include "box2d/b2BlockAllocator.h"
-#include "box2d/b2Fixture.h"
-#include "box2d/b2ChainShape.h"
-#include "box2d/b2EdgeShape.h"
+#include "b2_chain_polygon_contact.h"
+#include "box2d/b2_block_allocator.h"
+#include "box2d/b2_fixture.h"
+#include "box2d/b2_chain_shape.h"
+#include "box2d/b2_edge_shape.h"
 
 #include <new>
 

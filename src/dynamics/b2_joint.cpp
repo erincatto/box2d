@@ -16,21 +16,20 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "box2d/b2Joint.h"
-#include "box2d/b2DistanceJoint.h"
-#include "box2d/b2WheelJoint.h"
-#include "box2d/b2MouseJoint.h"
-#include "box2d/b2RevoluteJoint.h"
-#include "box2d/b2PrismaticJoint.h"
-#include "box2d/b2PulleyJoint.h"
-#include "box2d/b2GearJoint.h"
-#include "box2d/b2WeldJoint.h"
-#include "box2d/b2FrictionJoint.h"
-#include "box2d/b2RopeJoint.h"
-#include "box2d/b2MotorJoint.h"
-#include "box2d/b2Body.h"
-#include "box2d/b2World.h"
-#include "box2d/b2BlockAllocator.h"
+#include "box2d/b2_block_allocator.h"
+#include "box2d/b2_body.h"
+#include "box2d/b2_distance_joint.h"
+#include "box2d/b2_friction_joint.h"
+#include "box2d/b2_gear_joint.h"
+#include "box2d/b2_motor_joint.h"
+#include "box2d/b2_mouse_joint.h"
+#include "box2d/b2_prismatic_joint.h"
+#include "box2d/b2_pulley_joint.h"
+#include "box2d/b2_revolute_joint.h"
+#include "box2d/b2_rope_joint.h"
+#include "box2d/b2_weld_joint.h"
+#include "box2d/b2_wheel_joint.h"
+#include "box2d/b2_world.h"
 
 #include <new>
 

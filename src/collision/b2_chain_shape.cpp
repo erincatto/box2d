@@ -16,10 +16,10 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "box2d/b2ChainShape.h"
-#include "box2d/b2EdgeShape.h"
+#include "box2d/b2_chain_shape.h"
+#include "box2d/b2_edge_shape.h"
 
-#include "box2d/b2BlockAllocator.h"
+#include "box2d/b2_block_allocator.h"
 
 #include <new>
 #include <string.h>

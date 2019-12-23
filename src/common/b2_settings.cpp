@@ -16,7 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "box2d/b2Settings.h"
+#include "box2d/b2_settings.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>

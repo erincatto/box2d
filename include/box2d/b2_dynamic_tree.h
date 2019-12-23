@@ -19,8 +19,8 @@
 #ifndef B2_DYNAMIC_TREE_H
 #define B2_DYNAMIC_TREE_H
 
-#include "box2d/b2Collision.h"
-#include "box2d/b2GrowableStack.h"
+#include "b2_collision.h"
+#include "b2_growable_stack.h"
 
 #define b2_nullNode (-1)
 

@@ -16,7 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "box2d/b2Draw.h"
+#include "box2d/b2_draw.h"
 
 b2Draw::b2Draw()
 {

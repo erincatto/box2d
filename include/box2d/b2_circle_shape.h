@@ -19,7 +19,7 @@
 #ifndef B2_CIRCLE_SHAPE_H
 #define B2_CIRCLE_SHAPE_H
 
-#include "box2d/b2Shape.h"
+#include "b2_shape.h"
 
 /// A circle shape.
 class b2CircleShape : public b2Shape

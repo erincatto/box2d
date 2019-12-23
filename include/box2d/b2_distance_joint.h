@@ -19,7 +19,7 @@
 #ifndef B2_DISTANCE_JOINT_H
 #define B2_DISTANCE_JOINT_H
 
-#include "b2Joint.h"
+#include "b2_joint.h"
 
 /// Distance joint definition. This requires defining an
 /// anchor point on both bodies and the non-zero length of the

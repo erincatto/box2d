@@ -19,9 +19,9 @@
 #ifndef B2_FIXTURE_H
 #define B2_FIXTURE_H
 
-#include "b2Body.h"
-#include "b2Collision.h"
-#include "b2Shape.h"
+#include "b2_body.h"
+#include "b2_collision.h"
+#include "b2_shape.h"
 
 class b2BlockAllocator;
 class b2Body;

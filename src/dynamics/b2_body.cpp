@@ -16,11 +16,11 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "box2d/b2Body.h"
-#include "box2d/b2Contact.h"
-#include "box2d/b2Fixture.h"
-#include "box2d/b2Joint.h"
-#include "box2d/b2World.h"
+#include "box2d/b2_body.h"
+#include "box2d/b2_contact.h"
+#include "box2d/b2_fixture.h"
+#include "box2d/b2_joint.h"
+#include "box2d/b2_world.h"
 
 b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 {

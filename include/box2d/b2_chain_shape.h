@@ -19,7 +19,7 @@
 #ifndef B2_CHAIN_SHAPE_H
 #define B2_CHAIN_SHAPE_H
 
-#include "b2Shape.h"
+#include "b2_shape.h"
 
 class b2EdgeShape;
 

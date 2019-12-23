@@ -19,7 +19,7 @@
 #ifndef B2_ROPE_H
 #define B2_ROPE_H
 
-#include "b2Math.h"
+#include "b2_math.h"
 
 class b2Draw;
 

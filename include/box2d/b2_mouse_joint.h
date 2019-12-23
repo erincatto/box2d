@@ -19,7 +19,7 @@
 #ifndef B2_MOUSE_JOINT_H
 #define B2_MOUSE_JOINT_H
 
-#include "b2Joint.h"
+#include "b2_joint.h"
 
 /// Mouse joint definition. This requires a world target point,
 /// tuning parameters, and the time step.
