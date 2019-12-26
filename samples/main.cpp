@@ -18,12 +18,8 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#if defined(__APPLE__)
-#define GLFW_INCLUDE_GLCOREARB
-#include <OpenGL/gl3.h>
-#else
 #include "glad.h"
-#endif
+#include "GLFW/glfw3.h"
 
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS 1
 
@@ -35,7 +31,6 @@
 #include "settings.h"
 #include "test.h"
 
-#include "glfw/glfw3.h"
 
 #include <stdio.h>
 

@@ -22,14 +22,6 @@
 #include "box2d/box2d.h"
 #include "draw.h"
 
-#if defined(__APPLE__)
-#define GLFW_INCLUDE_GLCOREARB
-#include <OpenGL/gl3.h>
-#else
-#include "glad.h"
-#endif
-#include "GLFW/glfw3.h"
-
 #include <stdlib.h>
 
 struct Settings;

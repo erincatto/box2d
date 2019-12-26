@@ -17,14 +17,7 @@
 */
 
 #include "draw.h"
-
-#if defined(__APPLE_CC__)
-#define GLFW_INCLUDE_GLCOREARB
-#include <OpenGL/gl3.h>
-#else
 #include "glad.h"
-#endif
-
 #include "GLFW/glfw3.h"
 #include <stdio.h>
 #include <stdarg.h>

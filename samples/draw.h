@@ -19,6 +19,9 @@
 #ifndef DRAW_H
 #define DRAW_H
 
+#include "glad.h"
+#include "GLFW/glfw3.h"
+
 #include "box2d/box2d.h"
 
 struct b2AABB;
