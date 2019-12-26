@@ -557,7 +557,7 @@ int main(int, char**)
 			ImGui::End();
 
 			const TestEntry& entry = g_testEntries[s_settings.m_testIndex];
-			sprintf_s(buffer, "%s : %s", entry.category, entry.name);
+			sprintf(buffer, "%s : %s", entry.category, entry.name);
 			s_test->DrawTitle(buffer);
 		}
 
@@ -582,7 +582,7 @@ int main(int, char**)
 
 		if (g_debugDraw.m_showUI)
 		{
-			sprintf_s(buffer, "%.1f ms", 1000.0 * frameTime);
+			sprintf(buffer, "%.1f ms", 1000.0 * frameTime);
 			g_debugDraw.DrawString(5, g_camera.m_height - 20, buffer);
 		}
 
