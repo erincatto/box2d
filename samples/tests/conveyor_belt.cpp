@@ -94,4 +94,4 @@ public:
 	b2Fixture* m_platform;
 };
 
-static int testIndex = RegisterTest("Example", "Conveyor Belt", ConveyorBelt::Create);
+static int testIndex = RegisterTest("Examples", "Conveyor Belt", ConveyorBelt::Create);

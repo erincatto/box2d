@@ -87,4 +87,4 @@ public:
 	b2Body* m_heavy;
 };
 
-static int testIndex = RegisterTest("Test", "Heavy 2", Heavy2::Create);
+static int testIndex = RegisterTest("Solver", "Heavy 2", Heavy2::Create);

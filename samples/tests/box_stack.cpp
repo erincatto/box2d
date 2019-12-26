@@ -167,4 +167,4 @@ public:
 	int32 m_indices[e_rowCount * e_columnCount];
 };
 
-static int testIndex = RegisterTest("Stacking", "Box Stack", BoxStack::Create);
+static int testIndex = RegisterTest("Stacking", "Boxes", BoxStack::Create);

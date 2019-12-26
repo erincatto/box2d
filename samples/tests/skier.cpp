@@ -218,4 +218,4 @@ public:
 	bool m_fixed_camera;
 };
 
-static int testIndex = RegisterTest("Examples", "Skier", Skier::Create);
+static int testIndex = RegisterTest("Bugs", "Skier", Skier::Create);

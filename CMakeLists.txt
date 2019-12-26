@@ -14,8 +14,6 @@ if (BUILD_TESTS)
 endif()
 
 if (BUILD_SAMPLES)
-	find_package(OpenGL REQUIRED)
-
 	add_subdirectory(extern/glad)
 	add_subdirectory(extern/glfw)
 	add_subdirectory(extern/imgui)

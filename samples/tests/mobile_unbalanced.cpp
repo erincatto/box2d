@@ -98,4 +98,4 @@ public:
 	}
 };
 
-static int testIndex = RegisterTest("Test", "Mobile Unbalanced", MobileUnbalanced::Create);
+static int testIndex = RegisterTest("Solver", "Mobile Unbalanced", MobileUnbalanced::Create);

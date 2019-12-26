@@ -54,4 +54,4 @@ public:
 	}
 };
 
-static int testIndex = RegisterTest("Test", "Heavy 1", Heavy1::Create);
+static int testIndex = RegisterTest("Solver", "Heavy 1", Heavy1::Create);

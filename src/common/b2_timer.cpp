@@ -20,7 +20,7 @@
 
 #if defined(_WIN32)
 
-double b2Timer::s_invFrequency = 0.0f;
+double b2Timer::s_invFrequency = 0.0;
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -32,13 +32,13 @@ b2Timer::b2Timer()
 {
 	LARGE_INTEGER largeInteger;
 
-	if (s_invFrequency == 0.0f)
+	if (s_invFrequency == 0.0)
 	{
 		QueryPerformanceFrequency(&largeInteger);
 		s_invFrequency = double(largeInteger.QuadPart);
-		if (s_invFrequency > 0.0f)
+		if (s_invFrequency > 0.0)
 		{
-			s_invFrequency = 1000.0f / s_invFrequency;
+			s_invFrequency = 1000.0 / s_invFrequency;
 		}
 	}
 

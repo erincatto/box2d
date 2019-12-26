@@ -101,4 +101,4 @@ public:
 	}
 };
 
-static int testIndex = RegisterTest("Test", "Mobile Balanced", MobileBalanced::Create);
+static int testIndex = RegisterTest("Solver", "Mobile Balanced", MobileBalanced::Create);
