@@ -17,8 +17,6 @@
 */
 
 #include "draw.h"
-#include "glad.h"
-#include "GLFW/glfw3.h"
 #include <stdio.h>
 #include <stdarg.h>
 

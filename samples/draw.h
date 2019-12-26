@@ -19,6 +19,7 @@
 #ifndef DRAW_H
 #define DRAW_H
 
+#define GLFW_INCLUDE_NONE
 #include "glad.h"
 #include "GLFW/glfw3.h"
 

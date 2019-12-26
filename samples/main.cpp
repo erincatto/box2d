@@ -17,10 +17,6 @@
 */
 
 #define _CRT_SECURE_NO_WARNINGS
-
-#include "glad.h"
-#include "GLFW/glfw3.h"
-
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS 1
 
 #include "imgui/imgui.h"
