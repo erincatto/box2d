@@ -52,7 +52,7 @@ public:
 		m_count = e_count;
 	}
 
-	void Keyboard(int key)
+	void Keyboard(int key) override
 	{
 		switch (key)
 		{

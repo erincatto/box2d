@@ -91,7 +91,7 @@ public:
 		g_debugDraw.DrawPoint(x2, 4.0f, c2);
 	}
 
-	void Keyboard(int key)
+	void Keyboard(int key) override
 	{
 		switch (key)
 		{

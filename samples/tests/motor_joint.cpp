@@ -68,7 +68,7 @@ public:
 		m_time = 0.0f;
 	}
 
-	void Keyboard(int key)
+	void Keyboard(int key) override
 	{
 		switch (key)
 		{

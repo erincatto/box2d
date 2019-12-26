@@ -181,7 +181,7 @@ public:
 		m_fixed_camera = true;
 	}
 
-	void Keyboard(int key)
+	void Keyboard(int key) override
 	{
 		switch (key)
 		{

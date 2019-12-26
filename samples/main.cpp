@@ -22,17 +22,11 @@
 #include "imgui/imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-
 #include "draw.h"
 #include "settings.h"
 #include "test.h"
 
-
 #include <stdio.h>
-
-#ifdef _MSC_VER
-#define snprintf _snprintf
-#endif
 
 GLFWwindow* g_mainWindow = nullptr;
 static int32 s_testSelection = 0;

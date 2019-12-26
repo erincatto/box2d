@@ -73,7 +73,7 @@ public:
 		}
 	}
 
-	void PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
+	void PreSolve(b2Contact* contact, const b2Manifold* oldManifold) override
 	{
 		Test::PreSolve(contact, oldManifold);
 

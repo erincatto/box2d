@@ -145,7 +145,7 @@ public:
 		}
 	}
 
-	void Keyboard(int key)
+	void Keyboard(int key) override
 	{
 		switch (key)
 		{
@@ -184,7 +184,7 @@ public:
 		m_textLine += m_textIncrement;
 	}
 
-	void JointDestroyed(b2Joint* joint)
+	void JointDestroyed(b2Joint* joint) override
 	{
 		for (int32 i = 0; i < 8; ++i)
 		{

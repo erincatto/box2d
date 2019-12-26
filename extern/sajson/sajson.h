@@ -1310,7 +1310,7 @@ namespace sajson {
 
         /// \cond INTERNAL
 
-        allocator make_allocator(size_t input_document_size_in_bytes, bool* succeeded) const {
+        allocator make_allocator(size_t, bool* succeeded) const {
             size_t capacity = initial_ast_capacity;
             if (!capacity) {
                 // TODO: guess based on input document size
@@ -1501,7 +1501,7 @@ namespace sajson {
 
         /// \cond INTERNAL
 
-        allocator make_allocator(size_t input_document_size_in_bytes, bool* succeeded) const {
+        allocator make_allocator(size_t, bool* succeeded) const {
             *succeeded = true;
             return allocator(existing_buffer, existing_buffer_size);
         }
@@ -2292,20 +2292,20 @@ namespace sajson {
 
         void write_utf8(unsigned codepoint, char*& end) {
             if (codepoint < 0x80) {
-                *end++ = codepoint;
+                *end++ = char(codepoint);
             } else if (codepoint < 0x800) {
-                *end++ = 0xC0 | (codepoint >> 6);
-                *end++ = 0x80 | (codepoint & 0x3F);
+                *end++ = 0xC0 | char(codepoint >> 6);
+                *end++ = 0x80 | char(codepoint & 0x3F);
             } else if (codepoint < 0x10000) {
-                *end++ = 0xE0 | (codepoint >> 12);
-                *end++ = 0x80 | ((codepoint >> 6) & 0x3F);
-                *end++ = 0x80 | (codepoint & 0x3F);
+                *end++ = 0xE0 | char(codepoint >> 12);
+                *end++ = 0x80 | char((codepoint >> 6) & 0x3F);
+                *end++ = 0x80 | char(codepoint & 0x3F);
             } else {
                 assert(codepoint < 0x200000);
-                *end++ = 0xF0 | (codepoint >> 18);
-                *end++ = 0x80 | ((codepoint >> 12) & 0x3F);
-                *end++ = 0x80 | ((codepoint >> 6) & 0x3F);
-                *end++ = 0x80 | (codepoint & 0x3F);
+                *end++ = 0xF0 | char(codepoint >> 18);
+                *end++ = 0x80 | char((codepoint >> 12) & 0x3F);
+                *end++ = 0x80 | char((codepoint >> 6) & 0x3F);
+                *end++ = 0x80 | char(codepoint & 0x3F);
             }
         }
 

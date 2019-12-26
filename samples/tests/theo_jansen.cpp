@@ -217,7 +217,7 @@ public:
 		Test::Step(settings);
 	}
 
-	void Keyboard(int key)
+	void Keyboard(int key) override
 	{
 		switch (key)
 		{
