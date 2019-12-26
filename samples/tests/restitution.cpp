@@ -16,16 +16,15 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef VARYING_RESTITUTION_H
-#define VARYING_RESTITUTION_H
+#include "test.h"
 
 // Note: even with a restitution of 1.0, there is some energy change
 // due to position correction.
-class VaryingRestitution : public Test
+class Restitution : public Test
 {
 public:
 
-	VaryingRestitution()
+	Restitution()
 	{
 		{
 			b2BodyDef bd;
@@ -44,7 +43,7 @@ public:
 			fd.shape = &shape;
 			fd.density = 1.0f;
 
-			float32 restitution[7] = {0.0f, 0.1f, 0.3f, 0.5f, 0.75f, 0.9f, 1.0f};
+			float restitution[7] = { 0.0f, 0.1f, 0.3f, 0.5f, 0.75f, 0.9f, 1.0f };
 
 			for (int32 i = 0; i < 7; ++i)
 			{
@@ -62,8 +61,8 @@ public:
 
 	static Test* Create()
 	{
-		return new VaryingRestitution;
+		return new Restitution;
 	}
 };
 
-#endif
+static int testIndex = RegisterTest("Forces", "Restitution", Restitution::Create);

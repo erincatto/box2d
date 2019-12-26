@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef EDGE_TEST_H
-#define EDGE_TEST_H
+#include "test.h"
 
 class EdgeTest : public Test
 {
@@ -106,4 +105,4 @@ public:
 	}
 };
 
-#endif
+static int testIndex = RegisterTest("Geometry", "Edge Test", EdgeTest::Create);

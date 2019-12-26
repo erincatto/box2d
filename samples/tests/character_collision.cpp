@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef CHARACTER_COLLISION_H
-#define CHARACTER_COLLISION_H
+#include "test.h"
 
 /// This is a test of typical character collision scenarios. This does not
 /// show how you should implement a character in your application.
@@ -170,8 +169,8 @@ public:
 
 			b2Body* body = m_world->CreateBody(&bd);
 
-			float32 angle = 0.0f;
-			float32 delta = b2_pi / 3.0f;
+			float angle = 0.0f;
+			float delta = b2_pi / 3.0f;
 			b2Vec2 vertices[6];
 			for (int32 i = 0; i < 6; ++i)
 			{
@@ -227,7 +226,7 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		b2Vec2 v = m_character->GetLinearVelocity();
 		v.x = -5.0f;
@@ -235,11 +234,11 @@ public:
 
 		Test::Step(settings);
 		g_debugDraw.DrawString(5, m_textLine, "This tests various character collision shapes.");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "Limitation: square and hexagon can snag on aligned boxes.");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "Feature: edge chains have smooth collision inside and out.");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()
@@ -250,4 +249,4 @@ public:
 	b2Body* m_character;
 };
 
-#endif
+static int testIndex = RegisterTest("Examples", "Character Collision", CharacterCollision::Create);

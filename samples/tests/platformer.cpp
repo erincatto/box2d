@@ -16,10 +16,9 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef ONE_SIDED_PLATFORM_H
-#define ONE_SIDED_PLATFORM_H
+#include "test.h"
 
-class OneSidedPlatform : public Test
+class Platformer : public Test
 {
 public:
 
@@ -30,7 +29,7 @@ public:
 		e_below
 	};
 
-	OneSidedPlatform()
+	Platformer()
 	{
 		// Ground
 		{
@@ -107,26 +106,26 @@ public:
 #endif
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 		g_debugDraw.DrawString(5, m_textLine, "Press: (c) create a shape, (d) destroy a shape.");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 
         b2Vec2 v = m_character->GetBody()->GetLinearVelocity();
         g_debugDraw.DrawString(5, m_textLine, "Character Linear Velocity: %f", v.y);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()
 	{
-		return new OneSidedPlatform;
+		return new Platformer;
 	}
 
-	float32 m_radius, m_top, m_bottom;
+	float m_radius, m_top, m_bottom;
 	State m_state;
 	b2Fixture* m_platform;
 	b2Fixture* m_character;
 };
 
-#endif
+static int testIndex = RegisterTest("Examples", "Platformer", Platformer::Create);

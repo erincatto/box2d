@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef SHAPE_EDITING_H
-#define SHAPE_EDITING_H
+#include "test.h"
 
 class ShapeEditing : public Test
 {
@@ -82,13 +81,13 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 		g_debugDraw.DrawString(5, m_textLine, "Press: (c) create a shape, (d) destroy a shape.");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "sensor = %d", m_sensor);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()
@@ -102,4 +101,4 @@ public:
 	bool m_sensor;
 };
 
-#endif
+static int testIndex = RegisterTest("Examples", "Shape Editing", ShapeEditing::Create);

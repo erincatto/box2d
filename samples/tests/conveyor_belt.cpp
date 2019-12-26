@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef CONVEYOR_BELT_H
-#define CONVEYOR_BELT_H
+#include "test.h"
 
 class ConveyorBelt : public Test
 {
@@ -82,7 +81,7 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 	}
@@ -95,4 +94,4 @@ public:
 	b2Fixture* m_platform;
 };
 
-#endif
+static int testIndex = RegisterTest("Example", "Conveyor Belt", ConveyorBelt::Create);

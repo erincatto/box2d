@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef CONFINED_H
-#define CONFINED_H
+#include "test.h"
 
 class Confined : public Test
 {
@@ -54,7 +53,7 @@ public:
 			ground->CreateFixture(&shape, 0.0f);
 		}
 
-		float32 radius = 0.5f;
+		float radius = 0.5f;
 		b2CircleShape shape;
 		shape.m_p.SetZero();
 		shape.m_radius = radius;
@@ -82,7 +81,7 @@ public:
 
 	void CreateCircle()
 	{
-		float32 radius = 2.0f;
+		float radius = 2.0f;
 		b2CircleShape shape;
 		shape.m_p.SetZero();
 		shape.m_radius = radius;
@@ -112,7 +111,7 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		bool sleeping = true;
 		for (b2Body* b = m_world->GetBodyList(); b; b = b->GetNext())
@@ -155,7 +154,7 @@ public:
 		}
 
 		g_debugDraw.DrawString(5, m_textLine, "Press 'c' to create a circle.");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()
@@ -164,4 +163,4 @@ public:
 	}
 };
 
-#endif
+static int testIndex = RegisterTest("Solver", "Confined", Confined::Create);

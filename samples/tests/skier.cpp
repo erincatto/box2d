@@ -2,12 +2,10 @@
 Test case for collision/jerking issue.
 */
 
-#ifndef SKIER_H
-#define SKIER_H
+#include "test.h"
 
 #include <vector>
 #include <iostream>
-
 
 class Skier : public Test
 {
@@ -197,10 +195,10 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		g_debugDraw.DrawString(5, m_textLine, "Keys: c = Camera fixed/tracking");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 
 		if(!m_fixed_camera)
 		{
@@ -220,4 +218,4 @@ public:
 	bool m_fixed_camera;
 };
 
-#endif
+static int testIndex = RegisterTest("Examples", "Skier", Skier::Create);

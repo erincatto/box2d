@@ -16,10 +16,9 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef DYNAMIC_TREE_TEST_H
-#define DYNAMIC_TREE_TEST_H
+#include "test.h"
 
-class DynamicTreeTest : public Test
+class DynamicTree : public Test
 {
 public:
 
@@ -28,7 +27,7 @@ public:
 		e_actorCount = 128
 	};
 
-	DynamicTreeTest()
+	DynamicTree()
 	{
 		m_worldExtent = 15.0f;
 		m_proxyExtent = 0.5f;
@@ -44,7 +43,7 @@ public:
 
 		m_stepCount = 0;
 
-		float32 h = m_worldExtent;
+		float h = m_worldExtent;
 		m_queryAABB.lowerBound.Set(-3.0f, -4.0f + h);
 		m_queryAABB.upperBound.Set(5.0f, 6.0f + h);
 
@@ -59,10 +58,10 @@ public:
 
 	static Test* Create()
 	{
-		return new DynamicTreeTest;
+		return new DynamicTree;
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		B2_NOT_USED(settings);
 
@@ -129,7 +128,7 @@ public:
 		{
 			int32 height = m_tree.GetHeight();
 			g_debugDraw.DrawString(5, m_textLine, "dynamic tree height = %d", height);
-			m_textLine += DRAW_STRING_NEW_LINE;
+			m_textLine += m_textIncrement;
 		}
 
 		++m_stepCount;
@@ -164,7 +163,7 @@ public:
 		return true;
 	}
 
-	float32 RayCastCallback(const b2RayCastInput& input, int32 proxyId)
+	float RayCastCallback(const b2RayCastInput& input, int32 proxyId)
 	{
 		Actor* actor = (Actor*)m_tree.GetUserData(proxyId);
 
@@ -187,7 +186,7 @@ private:
 	struct Actor
 	{
 		b2AABB aabb;
-		float32 fraction;
+		float fraction;
 		bool overlap;
 		int32 proxyId;
 	};
@@ -341,8 +340,8 @@ private:
 		}
 	}
 
-	float32 m_worldExtent;
-	float32 m_proxyExtent;
+	float m_worldExtent;
+	float m_proxyExtent;
 
 	b2DynamicTree m_tree;
 	b2AABB m_queryAABB;
@@ -354,4 +353,4 @@ private:
 	bool m_automated;
 };
 
-#endif
+static int testIndex = RegisterTest("Collision", "Dynamic Tree", DynamicTree::Create);

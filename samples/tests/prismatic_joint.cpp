@@ -16,14 +16,14 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef PRISMATIC_H
-#define PRISMATIC_H
+#include "settings.h"
+#include "test.h"
 
 // The motor in this test gets smoother with higher velocity iterations.
-class Prismatic : public Test
+class PrismaticJoint : public Test
 {
 public:
-	Prismatic()
+	PrismaticJoint()
 	{
 		b2Body* ground = NULL;
 		{
@@ -86,22 +86,22 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 		g_debugDraw.DrawString(5, m_textLine, "Keys: (l) limits, (m) motors, (s) speed");
-		m_textLine += DRAW_STRING_NEW_LINE;
-		float32 force = m_joint->GetMotorForce(settings->hz);
+		m_textLine += m_textIncrement;
+		float force = m_joint->GetMotorForce(settings.m_hertz);
 		g_debugDraw.DrawString(5, m_textLine, "Motor Force = %4.0f", (float) force);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()
 	{
-		return new Prismatic;
+		return new PrismaticJoint;
 	}
 
 	b2PrismaticJoint* m_joint;
 };
 
-#endif
+static int testIndex = RegisterTest("Joints", "Prismatic", PrismaticJoint::Create);

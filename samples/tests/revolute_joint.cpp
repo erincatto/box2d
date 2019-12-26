@@ -16,13 +16,12 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef REVOLUTE_H
-#define REVOLUTE_H
+#include "test.h"
 
-class Revolute : public Test
+class RevoluteJoint : public Test
 {
 public:
-	Revolute()
+	RevoluteJoint()
 	{
 		b2Body* ground = NULL;
 		{
@@ -52,7 +51,7 @@ public:
 			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&shape, 5.0f);
 
-			float32 w = 100.0f;
+			float w = 100.0f;
 			body->SetAngularVelocity(w);
 			body->SetLinearVelocity(b2Vec2(-8.0f * w, 0.0f));
 
@@ -138,29 +137,29 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 		g_debugDraw.DrawString(5, m_textLine, "Keys: (l) limits, (m) motor");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 
 		//if (m_stepCount == 360)
 		//{
 		//	m_ball->SetTransform(b2Vec2(0.0f, 0.5f), 0.0f);
 		//}
 
-		//float32 torque1 = m_joint1->GetMotorTorque();
+		//float torque1 = m_joint1->GetMotorTorque();
 		//g_debugDraw.DrawString(5, m_textLine, "Motor Torque = %4.0f, %4.0f : Motor Force = %4.0f", (float) torque1, (float) torque2, (float) force3);
-		//m_textLine += DRAW_STRING_NEW_LINE;
+		//m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()
 	{
-		return new Revolute;
+		return new RevoluteJoint;
 	}
 
 	b2Body* m_ball;
 	b2RevoluteJoint* m_joint;
 };
 
-#endif
+static int testIndex = RegisterTest("Joints", "Revolute", RevoluteJoint::Create);

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2009 Erin Catto http://www.box2d.org
+* Copyright (c) Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef BRIDGE_H
-#define BRIDGE_H
+#include "test.h"
 
 class Bridge : public Test
 {
@@ -122,4 +121,4 @@ public:
 	b2Body* m_middle;
 };
 
-#endif
+static int testIndex = RegisterTest("Joints", "Bridge", Bridge::Create);

@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef TUMBLER_H
-#define TUMBLER_H
+#include "test.h"
 
 class Tumbler : public Test
 {
@@ -68,7 +67,7 @@ public:
 		m_count = 0;
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 
@@ -96,4 +95,4 @@ public:
 	int32 m_count;
 };
 
-#endif
+static int testIndex = RegisterTest("Benchmark", "Tumbler", Tumbler::Create);

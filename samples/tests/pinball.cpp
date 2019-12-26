@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef PINBALL_H
-#define PINBALL_H
+#include "test.h"
 
 /// This tests bullet collision and provides an example of a gameplay scenario.
 /// This also uses a loop shape.
@@ -113,7 +112,7 @@ public:
 		m_button = false;
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		if (m_button)
 		{
@@ -129,7 +128,7 @@ public:
 		Test::Step(settings);
 
 		g_debugDraw.DrawString(5, m_textLine, "Press 'a' to control the flippers");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 
 	}
 
@@ -164,4 +163,4 @@ public:
 	bool m_button;
 };
 
-#endif
+static int testIndex = RegisterTest("Examples", "Pinball", Pinball::Create);

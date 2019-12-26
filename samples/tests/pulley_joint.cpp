@@ -16,18 +16,17 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef PULLEYS_H
-#define PULLEYS_H
+#include "test.h"
 
-class Pulleys : public Test
+class PulleyJoint : public Test
 {
 public:
-	Pulleys()
+	PulleyJoint()
 	{
-		float32 y = 16.0f;
-		float32 L = 12.0f;
-		float32 a = 1.0f;
-		float32 b = 2.0f;
+		float y = 16.0f;
+		float L = 12.0f;
+		float a = 1.0f;
+		float b = 2.0f;
 
 		b2Body* ground = NULL;
 		{
@@ -76,22 +75,22 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 
-		float32 ratio = m_joint1->GetRatio();
-		float32 L = m_joint1->GetCurrentLengthA() + ratio * m_joint1->GetCurrentLengthB();
+		float ratio = m_joint1->GetRatio();
+		float L = m_joint1->GetCurrentLengthA() + ratio * m_joint1->GetCurrentLengthB();
 		g_debugDraw.DrawString(5, m_textLine, "L1 + %4.2f * L2 = %4.2f", (float) ratio, (float) L);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()
 	{
-		return new Pulleys;
+		return new PulleyJoint;
 	}
 
 	b2PulleyJoint* m_joint1;
 };
 
-#endif
+static int testIndex = RegisterTest("Joints", "Pulley", PulleyJoint::Create);

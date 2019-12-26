@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef DOMINOS_H
-#define DOMINOS_H
+#include "test.h"
 
 class Dominos : public Test
 {
@@ -190,7 +189,7 @@ public:
 		m_world->CreateJoint(&djd);
 
 		{
-			float32 radius = 0.2f;
+			float radius = 0.2f;
 
 			b2CircleShape shape;
 			shape.m_radius = radius;
@@ -212,4 +211,4 @@ public:
 	}
 };
 
-#endif
+static int testIndex = RegisterTest("Examples", "Dominos", Dominos::Create);

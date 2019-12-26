@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef PYRAMID_H
-#define PYRAMID_H
+#include "test.h"
 
 class Pyramid : public Test
 {
@@ -39,7 +38,7 @@ public:
 		}
 
 		{
-			float32 a = 0.5f;
+			float a = 0.5f;
 			b2PolygonShape shape;
 			shape.SetAsBox(a, a);
 
@@ -68,7 +67,7 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 
@@ -86,4 +85,4 @@ public:
 	}
 };
 
-#endif
+static int testIndex = RegisterTest("Stacking", "Pyramid", Pyramid::Create);

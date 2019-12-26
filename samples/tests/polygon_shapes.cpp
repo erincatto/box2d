@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef POLY_SHAPES_H
-#define POLY_SHAPES_H
+#include "test.h"
 
 /// This tests stacking. It also shows how to use b2World::Query
 /// and b2TestOverlap.
@@ -25,7 +24,7 @@
 /// This callback is called by b2World::QueryAABB. We find all the fixtures
 /// that overlap an AABB. Of those, we use b2TestOverlap to determine which fixtures
 /// overlap a circle. Up to 4 overlapped fixtures will be highlighted with a yellow border.
-class PolyShapesCallback : public b2QueryCallback
+class PolygonShapesCallback : public b2QueryCallback
 {
 public:
 	
@@ -34,7 +33,7 @@ public:
 		e_maxCount = 4
 	};
 
-	PolyShapesCallback()
+	PolygonShapesCallback()
 	{
 		m_count = 0;
 	}
@@ -51,7 +50,7 @@ public:
 				b2CircleShape* circle = (b2CircleShape*)fixture->GetShape();
 
 				b2Vec2 center = b2Mul(xf, circle->m_p);
-				float32 radius = circle->m_radius;
+				float radius = circle->m_radius;
 
 				g_debugDraw->DrawCircle(center, radius, color);
 			}
@@ -107,7 +106,7 @@ public:
 	int32 m_count;
 };
 
-class PolyShapes : public Test
+class PolygonShapes : public Test
 {
 public:
 
@@ -116,7 +115,7 @@ public:
 		e_maxBodies = 256
 	};
 
-	PolyShapes()
+	PolygonShapes()
 	{
 		// Ground body
 		{
@@ -145,9 +144,9 @@ public:
 		}
 
 		{
-			float32 w = 1.0f;
-			float32 b = w / (2.0f + b2Sqrt(2.0f));
-			float32 s = b2Sqrt(2.0f) * b;
+			float w = 1.0f;
+			float b = w / (2.0f + b2Sqrt(2.0f));
+			float s = b2Sqrt(2.0f) * b;
 
 			b2Vec2 vertices[8];
 			vertices[0].Set(0.5f * s, 0.0f);
@@ -185,7 +184,7 @@ public:
 		b2BodyDef bd;
 		bd.type = b2_dynamicBody;
 
-		float32 x = RandomFloat(-2.0f, 2.0f);
+		float x = RandomFloat(-2.0f, 2.0f);
 		bd.position.Set(x, 10.0f);
 		bd.angle = RandomFloat(-b2_pi, b2_pi);
 
@@ -259,11 +258,11 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 
-		PolyShapesCallback callback;
+		PolygonShapesCallback callback;
 		callback.m_circle.m_radius = 2.0f;
 		callback.m_circle.m_p.Set(0.0f, 1.1f);
 		callback.m_transform.SetIdentity();
@@ -278,16 +277,16 @@ public:
 		g_debugDraw.DrawCircle(callback.m_circle.m_p, callback.m_circle.m_radius, color);
 
 		g_debugDraw.DrawString(5, m_textLine, "Press 1-5 to drop stuff");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "Press 'a' to (de)activate some bodies");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "Press 'd' to destroy a body");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()
 	{
-		return new PolyShapes;
+		return new PolygonShapes;
 	}
 
 	int32 m_bodyIndex;
@@ -296,4 +295,4 @@ public:
 	b2CircleShape m_circle;
 };
 
-#endif
+static int testIndex = RegisterTest("Geometry", "Polygon Shapes", PolygonShapes::Create);

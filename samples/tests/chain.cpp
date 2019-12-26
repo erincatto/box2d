@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef CHAIN_H
-#define CHAIN_H
+#include "test.h"
 
 class Chain : public Test
 {
@@ -46,7 +45,7 @@ public:
 			b2RevoluteJointDef jd;
 			jd.collideConnected = false;
 
-			const float32 y = 25.0f;
+			const float y = 25.0f;
 			b2Body* prevBody = ground;
 			for (int32 i = 0; i < 30; ++i)
 			{
@@ -56,7 +55,7 @@ public:
 				b2Body* body = m_world->CreateBody(&bd);
 				body->CreateFixture(&fd);
 
-				b2Vec2 anchor(float32(i), y);
+				b2Vec2 anchor(float(i), y);
 				jd.Initialize(prevBody, body, anchor);
 				m_world->CreateJoint(&jd);
 
@@ -71,4 +70,4 @@ public:
 	}
 };
 
-#endif
+static int testIndex = RegisterTest("Joints", "Chain", Chain::Create);

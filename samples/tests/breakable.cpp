@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef BREAKABLE_TEST_H
-#define BREAKABLE_TEST_H
+#include "test.h"
 
 // This is used to test sensor shapes.
 class Breakable : public Test
@@ -71,7 +70,7 @@ public:
 		// Should the body break?
 		int32 count = contact->GetManifold()->pointCount;
 
-		float32 maxImpulse = 0.0f;
+		float maxImpulse = 0.0f;
 		for (int32 i = 0; i < count; ++i)
 		{
 			maxImpulse = b2Max(maxImpulse, impulse->normalImpulses[i]);
@@ -116,7 +115,7 @@ public:
 		body2->SetLinearVelocity(velocity2);
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		if (m_break)
 		{
@@ -142,7 +141,7 @@ public:
 
 	b2Body* m_body1;
 	b2Vec2 m_velocity;
-	float32 m_angularVelocity;
+	float m_angularVelocity;
 	b2PolygonShape m_shape1;
 	b2PolygonShape m_shape2;
 	b2Fixture* m_piece1;
@@ -152,4 +151,4 @@ public:
 	bool m_break;
 };
 
-#endif
+static int testIndex = RegisterTest("Examples", "Breakable", Breakable::Create);

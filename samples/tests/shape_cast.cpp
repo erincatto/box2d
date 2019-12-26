@@ -16,6 +16,9 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
+#include "test.h"
+#include "box2d/b2_distance.h"
+
 class ShapeCast : public Test
 {
 public:
@@ -55,7 +58,7 @@ public:
 		return new ShapeCast;
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 
@@ -95,7 +98,7 @@ public:
 
 		g_debugDraw.DrawString(5, m_textLine, "hit = %s, iters = %d, lambda = %g, distance = %g",
             hit ? "true" : "false", output.iterations, output.lambda, distanceOutput.distance);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 
 		b2Vec2 vertices[b2_maxPolygonVertices];
 
@@ -131,9 +134,11 @@ public:
 
     b2Vec2 m_vAs[b2_maxPolygonVertices];
     int32 m_countA;
-    float32 m_radiusA;
+    float m_radiusA;
 
     b2Vec2 m_vBs[b2_maxPolygonVertices];
     int32 m_countB;
-    float32 m_radiusB;
+    float m_radiusB;
 };
+
+static int testIndex = RegisterTest("Collision", "Shape Cast", ShapeCast::Create);

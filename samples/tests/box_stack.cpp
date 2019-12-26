@@ -16,12 +16,11 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef VERTICAL_STACK_H
-#define VERTICAL_STACK_H
+#include "test.h"
 
 extern bool g_blockSolve;
 
-class VerticalStack : public Test
+class BoxStack : public Test
 {
 public:
 
@@ -33,7 +32,7 @@ public:
 		//e_rowCount = 1
 	};
 
-	VerticalStack()
+	BoxStack()
 	{
 		{
 			b2BodyDef bd;
@@ -47,7 +46,7 @@ public:
 			ground->CreateFixture(&shape, 0.0f);
 		}
 
-		float32 xs[5] = {0.0f, -10.0f, -5.0f, 5.0f, 10.0f};
+		float xs[5] = {0.0f, -10.0f, -5.0f, 5.0f, 10.0f};
 
 		for (int32 j = 0; j < e_columnCount; ++j)
 		{
@@ -69,9 +68,9 @@ public:
 				m_indices[n] = n;
 				bd.userData = m_indices + n;
 
-				float32 x = 0.0f;
-				//float32 x = RandomFloat(-0.02f, 0.02f);
-				//float32 x = i % 2 == 0 ? -0.01f : 0.01f;
+				float x = 0.0f;
+				//float x = RandomFloat(-0.02f, 0.02f);
+				//float x = i % 2 == 0 ? -0.01f : 0.01f;
 				bd.position.Set(xs[j] + x, 0.55f + 1.1f * i);
 				b2Body* body = m_world->CreateBody(&bd);
 
@@ -122,11 +121,11 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 		g_debugDraw.DrawString(5, m_textLine, "Press: (,) to launch a bullet.");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "Blocksolve = %d", g_blockSolve);
 		//if (m_stepCount == 300)
 		//{
@@ -160,7 +159,7 @@ public:
 
 	static Test* Create()
 	{
-		return new VerticalStack;
+		return new BoxStack;
 	}
 
 	b2Body* m_bullet;
@@ -168,4 +167,4 @@ public:
 	int32 m_indices[e_rowCount * e_columnCount];
 };
 
-#endif
+static int testIndex = RegisterTest("Stacking", "Box Stack", BoxStack::Create);

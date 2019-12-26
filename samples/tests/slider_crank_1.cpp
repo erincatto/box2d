@@ -16,14 +16,13 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifndef BASIC_SLIDER_CRANK_H
-#define BASIC_SLIDER_CRANK_H
+#include "test.h"
 
 // A basic slider crank created for GDC tutorial: Understanding Constraints
-class BasicSliderCrank : public Test
+class SliderCrank1 : public Test
 {
 public:
-	BasicSliderCrank()
+	SliderCrank1()
 	{
 		b2Body* ground = NULL;
 		{
@@ -96,8 +95,8 @@ public:
     
 	static Test* Create()
 	{
-		return new BasicSliderCrank;
+		return new SliderCrank1;
 	}
 };
 
-#endif
+static int testIndex = RegisterTest("Examples", "Slider Crank 1", SliderCrank1::Create);

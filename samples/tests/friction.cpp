@@ -16,14 +16,13 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef VARYING_FRICTION_H
-#define VARYING_FRICTION_H
+#include "test.h"
 
-class VaryingFriction : public Test
+class Friction : public Test
 {
 public:
 
-	VaryingFriction()
+	Friction()
 	{
 		{
 			b2BodyDef bd;
@@ -117,8 +116,8 @@ public:
 
 	static Test* Create()
 	{
-		return new VaryingFriction;
+		return new Friction;
 	}
 };
 
-#endif
+static int testIndex = RegisterTest("Forces", "Friction", Friction::Create);

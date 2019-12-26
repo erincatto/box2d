@@ -16,10 +16,9 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef SPHERE_STACK_H
-#define SPHERE_STACK_H
+#include "test.h"
 
-class SphereStack : public Test
+class CircleStack : public Test
 {
 public:
 
@@ -28,7 +27,7 @@ public:
 		e_count = 10
 	};
 
-	SphereStack()
+	CircleStack()
 	{
 		{
 			b2BodyDef bd;
@@ -58,7 +57,7 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 
@@ -77,10 +76,10 @@ public:
 
 	static Test* Create()
 	{
-		return new SphereStack;
+		return new CircleStack;
 	}
 
 	b2Body* m_bodies[e_count];
 };
 
-#endif
+static int testIndex = RegisterTest("Stacking", "Circles", CircleStack::Create);

@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef ROPE_JOINT_H
-#define ROPE_JOINT_H
+#include "test.h"
 
 /// This test shows how a rope joint can be used to stabilize a chain of
 /// bodies with a heavy payload. Notice that the rope joint just prevents
@@ -57,7 +56,7 @@ public:
 			jd.collideConnected = false;
 
 			const int32 N = 10;
-			const float32 y = 15.0f;
+			const float y = 15.0f;
 			m_ropeDef.localAnchorA.Set(0.0f, y);
 
 			b2Body* prevBody = ground;
@@ -79,7 +78,7 @@ public:
 
 				body->CreateFixture(&fd);
 
-				b2Vec2 anchor(float32(i), y);
+				b2Vec2 anchor(float(i), y);
 				jd.Initialize(prevBody, body, anchor);
 				m_world->CreateJoint(&jd);
 
@@ -88,7 +87,7 @@ public:
 
 			m_ropeDef.localAnchorB.SetZero();
 
-			float32 extraLength = 0.01f;
+			float extraLength = 0.01f;
 			m_ropeDef.maxLength = N - 1.0f + extraLength;
 			m_ropeDef.bodyB = prevBody;
 		}
@@ -117,11 +116,11 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 		g_debugDraw.DrawString(5, m_textLine, "Press (j) to toggle the rope joint.");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		if (m_rope)
 		{
 			g_debugDraw.DrawString(5, m_textLine, "Rope ON");
@@ -130,7 +129,7 @@ public:
 		{
 			g_debugDraw.DrawString(5, m_textLine, "Rope OFF");
 		}
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()
@@ -142,4 +141,4 @@ public:
 	b2Joint* m_rope;
 };
 
-#endif
+static int testIndex = RegisterTest("Joints", "Rope", RopeJoint::Create);

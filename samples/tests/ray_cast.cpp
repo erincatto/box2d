@@ -16,8 +16,8 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef RAY_CAST_H
-#define RAY_CAST_H
+#include "settings.h"
+#include "test.h"
 
 // This test demonstrates how to use the world ray-cast feature.
 // NOTE: we are intentionally filtering one of the polygons, therefore
@@ -32,7 +32,7 @@ public:
 		m_hit = false;
 	}
 
-	float32 ReportFixture(b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float32 fraction) override
+	float ReportFixture(b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float fraction) override
 	{
 		b2Body* body = fixture->GetBody();
 		void* userData = body->GetUserData();
@@ -72,7 +72,7 @@ public:
 		m_hit = false;
 	}
 
-	float32 ReportFixture(b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float32) override
+	float ReportFixture(b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float) override
 	{
 		b2Body* body = fixture->GetBody();
 		void* userData = body->GetUserData();
@@ -117,7 +117,7 @@ public:
 		m_count = 0;
 	}
 
-	float32 ReportFixture(b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float32) override
+	float ReportFixture(b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float) override
 	{
 		b2Body* body = fixture->GetBody();
 		void* userData = body->GetUserData();
@@ -200,9 +200,9 @@ public:
 		}
 
 		{
-			float32 w = 1.0f;
-			float32 b = w / (2.0f + b2Sqrt(2.0f));
-			float32 s = b2Sqrt(2.0f) * b;
+			float w = 1.0f;
+			float b = w / (2.0f + b2Sqrt(2.0f));
+			float s = b2Sqrt(2.0f) * b;
 
 			b2Vec2 vertices[8];
 			vertices[0].Set(0.5f * s, 0.0f);
@@ -247,8 +247,8 @@ public:
 
 		b2BodyDef bd;
 
-		float32 x = RandomFloat(-10.0f, 10.0f);
-		float32 y = RandomFloat(0.0f, 20.0f);
+		float x = RandomFloat(-10.0f, 10.0f);
+		float y = RandomFloat(0.0f, 20.0f);
 		bd.position.Set(x, y);
 		bd.angle = RandomFloat(-b2_pi, b2_pi);
 
@@ -335,13 +335,13 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
-		bool advanceRay = settings->pause == 0 || settings->singleStep;
+		bool advanceRay = settings.m_pause == 0 || settings.m_singleStep;
 
 		Test::Step(settings);
 		g_debugDraw.DrawString(5, m_textLine, "Press 1-6 to drop stuff, m to change the mode");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		switch (m_mode)
 		{
 		case e_closest:
@@ -357,9 +357,9 @@ public:
 			break;
 		}
 
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 
-		float32 L = 11.0f;
+		float L = 11.0f;
 		b2Vec2 point1(0.0f, 10.0f);
 		b2Vec2 d(L * cosf(m_angle), L * sinf(m_angle));
 		b2Vec2 point2 = point1 + d;
@@ -473,9 +473,9 @@ public:
 	b2CircleShape m_circle;
 	b2EdgeShape m_edge;
 
-	float32 m_angle;
+	float m_angle;
 
 	Mode m_mode;
 };
 
-#endif
+static int testIndex = RegisterTest("Collision", "Ray Cast", RayCast::Create);

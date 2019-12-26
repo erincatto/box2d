@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef COMPOUND_SHAPES_H
-#define COMPOUND_SHAPES_H
+#include "test.h"
 
 // TODO_ERIN test joints on compounds.
 class CompoundShapes : public Test
@@ -47,7 +46,7 @@ public:
 
 			for (int i = 0; i < 10; ++i)
 			{
-				float32 x = RandomFloat(-0.1f, 0.1f);
+				float x = RandomFloat(-0.1f, 0.1f);
 				b2BodyDef bd;
 				bd.type = b2_dynamicBody;
 				bd.position.Set(x + 5.0f, 1.05f + 2.5f * i);
@@ -67,7 +66,7 @@ public:
 
 			for (int i = 0; i < 10; ++i)
 			{
-				float32 x = RandomFloat(-0.1f, 0.1f);
+				float x = RandomFloat(-0.1f, 0.1f);
 				b2BodyDef bd;
 				bd.type = b2_dynamicBody;
 				bd.position.Set(x - 5.0f, 1.05f + 2.5f * i);
@@ -103,7 +102,7 @@ public:
 
 			for (int32 i = 0; i < 10; ++i)
 			{
-				float32 x = RandomFloat(-0.1f, 0.1f);
+				float x = RandomFloat(-0.1f, 0.1f);
 				b2BodyDef bd;
 				bd.type = b2_dynamicBody;
 				bd.position.Set(x, 2.05f + 2.5f * i);
@@ -140,4 +139,4 @@ public:
 	}
 };
 
-#endif
+static int testIndex = RegisterTest("Examples", "Compound Shapes", CompoundShapes::Create);

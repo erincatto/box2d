@@ -16,11 +16,10 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef SENSOR_TEST_H
-#define SENSOR_TEST_H
+#include "test.h"
 
-// This is used to test sensor shapes.
-class SensorTest : public Test
+// This shows how to use sensor shapes. Sensors don't have collision, but report overlap events.
+class Sensors : public Test
 {
 public:
 
@@ -29,7 +28,7 @@ public:
 		e_count = 7
 	};
 
-	SensorTest()
+	Sensors()
 	{
 		{
 			b2BodyDef bd;
@@ -135,7 +134,7 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 
@@ -170,7 +169,7 @@ public:
 
 	static Test* Create()
 	{
-		return new SensorTest;
+		return new Sensors;
 	}
 
 	b2Fixture* m_sensor;
@@ -178,4 +177,4 @@ public:
 	bool m_touching[e_count];
 };
 
-#endif
+static int testIndex = RegisterTest("Collision", "Sensors", Sensors::Create);

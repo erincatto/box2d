@@ -16,10 +16,9 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef ROPE_H
-#define ROPE_H
-
-#include "Box2D/Rope/b2Rope.h"
+#include "settings.h"
+#include "test.h"
+#include "box2d/b2_rope.h"
 
 ///
 class Rope : public Test
@@ -30,7 +29,7 @@ public:
 		const int32 N = 20;
 		const float L = 0.5f;
 		b2Vec2 vertices[N];
-		float32 masses[N];
+		float masses[N];
 
 		for (int32 i = 0; i < N; ++i)
 		{
@@ -92,11 +91,11 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
-		float32 dt = settings->hz > 0.0f ? 1.0f / settings->hz : 0.0f;
+		float dt = settings.m_hertz > 0.0f ? 1.0f / settings.m_hertz : 0.0f;
 
-		if (settings->pause == 1 && settings->singleStep == 0)
+		if (settings.m_pause == 1 && settings.m_singleStep == 0)
 		{
 			dt = 0.0f;
 		}
@@ -131,11 +130,11 @@ public:
 		m_rope.Draw(&g_debugDraw);
 
 		g_debugDraw.DrawString(5, m_textLine, "Press (q,e) to adjust target angle, (i,k) to adjust iterations");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "angle = %g, iterations = %d", m_angle * 180.0f / b2_pi, m_iterations);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "bend: hertz = %g, damping = %g, stiffness = %g", m_tuning.bendHertz, m_tuning.bendDamping, m_tuning.bendStiffness);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()
@@ -145,9 +144,9 @@ public:
 
 	b2Rope m_rope;
 	b2RopeTuning m_tuning;
-	float32 m_angle;
+	float m_angle;
 	int32 m_iterations;
 	b2Vec2 m_position;
 };
 
-#endif
+static int testIndex = RegisterTest("Rope", "Bending", Rope::Create);

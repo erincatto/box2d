@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef BODY_TYPES_H
-#define BODY_TYPES_H
+#include "test.h"
 
 class BodyTypes : public Test
 {
@@ -125,7 +124,7 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		// Drive the kinematic body.
 		if (m_platform->GetType() == b2_kinematicBody)
@@ -142,8 +141,9 @@ public:
 		}
 
 		Test::Step(settings);
+
 		g_debugDraw.DrawString(5, m_textLine, "Keys: (d) dynamic, (s) static, (k) kinematic");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()
@@ -153,7 +153,7 @@ public:
 
 	b2Body* m_attachment;
 	b2Body* m_platform;
-	float32 m_speed;
+	float m_speed;
 };
 
-#endif
+static int testIndex = RegisterTest("Examples", "Body Types", BodyTypes::Create);

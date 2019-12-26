@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef CONVEX_HULL_H
-#define CONVEX_HULL_H
+#include "test.h"
 
 class ConvexHull : public Test
 {
@@ -40,8 +39,8 @@ public:
 
 		for (int32 i = 0; i < e_count; ++i)
 		{
-			float32 x = 10.0f * RandomFloat();
-			float32 y = 10.0f * RandomFloat();
+			float x = 10.0f * RandomFloat();
+			float y = 10.0f * RandomFloat();
 
 			// Clamp onto a square to help create collinearities.
 			// This will stress the convex hull algorithm.
@@ -51,11 +50,6 @@ public:
 		}
 
 		m_count = e_count;
-	}
-
-	static Test* Create()
-	{
-		return new ConvexHull;
 	}
 
 	void Keyboard(int key)
@@ -72,7 +66,7 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 
@@ -80,7 +74,7 @@ public:
 		shape.Set(m_points, m_count);
 
 		g_debugDraw.DrawString(5, m_textLine, "Press g to generate a new random convex hull");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 
 		g_debugDraw.DrawPolygon(shape.m_vertices, shape.m_count, b2Color(0.9f, 0.9f, 0.9f));
 
@@ -101,9 +95,14 @@ public:
 		}
 	}
 
+	static Test* Create()
+	{
+		return new ConvexHull;
+	}
+
 	b2Vec2 m_points[b2_maxPolygonVertices];
 	int32 m_count;
 	bool m_auto;
 };
 
-#endif
+static int testIndex = RegisterTest("Geometry", "Convex Hull", ConvexHull::Create);

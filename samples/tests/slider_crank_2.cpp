@@ -16,15 +16,15 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef SLIDER_CRANK_H
-#define SLIDER_CRANK_H
+#include "settings.h"
+#include "test.h"
 
 // A motor driven slider crank with joint friction.
 
-class SliderCrank : public Test
+class SliderCrank2 : public Test
 {
 public:
-	SliderCrank()
+	SliderCrank2()
 	{
 		b2Body* ground = NULL;
 		{
@@ -134,23 +134,23 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 		g_debugDraw.DrawString(5, m_textLine, "Keys: (f) toggle friction, (m) toggle motor");
-		m_textLine += DRAW_STRING_NEW_LINE;
-		float32 torque = m_joint1->GetMotorTorque(settings->hz);
+		m_textLine += m_textIncrement;
+		float torque = m_joint1->GetMotorTorque(settings.m_hertz);
 		g_debugDraw.DrawString(5, m_textLine, "Motor Torque = %5.0f", (float) torque);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()
 	{
-		return new SliderCrank;
+		return new SliderCrank2;
 	}
 
 	b2RevoluteJoint* m_joint1;
 	b2PrismaticJoint* m_joint2;
 };
 
-#endif
+static int testIndex = RegisterTest("Examples", "Slider Crank 2", SliderCrank2::Create);

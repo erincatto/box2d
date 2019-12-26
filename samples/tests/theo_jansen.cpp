@@ -16,17 +16,16 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-// Inspired by a contribution by roman_m
+// Inspired by a contribution from roman_m
 // Dimensions scooped from APE (http://www.cove.org/ape/index.htm)
 
-#ifndef THEO_JANSEN_H
-#define THEO_JANSEN_H
+#include "test.h"
 
 class TheoJansen : public Test
 {
 public:
 
-	void CreateLeg(float32 s, const b2Vec2& wheelAnchor)
+	void CreateLeg(float s, const b2Vec2& wheelAnchor)
 	{
 		b2Vec2 p1(5.4f * s, -6.1f);
 		b2Vec2 p2(7.2f * s, -1.2f);
@@ -210,10 +209,10 @@ public:
 		CreateLeg(1.0f, wheelAnchor);
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		g_debugDraw.DrawString(5, m_textLine, "Keys: left = a, brake = s, right = d, toggle motor = m");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 
 		Test::Step(settings);
 	}
@@ -250,7 +249,7 @@ public:
 	b2Body* m_wheel;
 	b2RevoluteJoint* m_motorJoint;
 	bool m_motorOn;
-	float32 m_motorSpeed;
+	float m_motorSpeed;
 };
 
-#endif // THEO_JANSEN_H
+static int testIndex = RegisterTest("Examples", "Theo Jansen", TheoJansen::Create);

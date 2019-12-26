@@ -16,8 +16,8 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef MOTOR_JOINT_H
-#define MOTOR_JOINT_H
+#include "settings.h"
+#include "test.h"
 
 /// This test shows how to use a motor joint. A motor joint
 /// can be used to animate a dynamic body. With finite motor forces
@@ -78,18 +78,18 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
-		if (m_go && settings->hz > 0.0f)
+		if (m_go && settings.m_hertz > 0.0f)
 		{
-			m_time += 1.0f / settings->hz;
+			m_time += 1.0f / settings.m_hertz;
 		}
 
 		b2Vec2 linearOffset;
 		linearOffset.x = 6.0f * sinf(2.0f * m_time);
 		linearOffset.y = 8.0f + 4.0f * sinf(1.0f * m_time);
 		
-		float32 angularOffset = 4.0f * m_time;
+		float angularOffset = 4.0f * m_time;
 
 		m_joint->SetLinearOffset(linearOffset);
 		m_joint->SetAngularOffset(angularOffset);
@@ -107,8 +107,8 @@ public:
 	}
 
 	b2MotorJoint* m_joint;
-	float32 m_time;
+	float m_time;
 	bool m_go;
 };
 
-#endif
+static int testIndex = RegisterTest("Joints", "Motor Joint", MotorJoint::Create);

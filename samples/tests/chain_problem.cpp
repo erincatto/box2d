@@ -16,13 +16,13 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef CHAIN_PROBLEM_H
-#define CHAIN_PROBLEM_H
+#include "test.h"
 
-class chainProblem : public Test
+class ChainProblem : public Test
 {
 public:
-    chainProblem()
+
+    ChainProblem()
     {
         //dump
         {
@@ -120,9 +120,9 @@ public:
 
     static Test* Create()
     {
-        return new chainProblem;
+        return new ChainProblem;
     }
 
 };
 
-#endif
+static int testIndex = RegisterTest("Bugs", "Chain Problem", ChainProblem::Create);

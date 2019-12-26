@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 Erin Catto http://www.box2d.org
+ * Copyright 2019 Erin Catto http://www.box2d.org
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -16,14 +16,13 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifndef HEAVY_ON_LIGHT_H
-#define HEAVY_ON_LIGHT_H
+#include "test.h"
 
-class HeavyOnLight : public Test
+class Heavy2 : public Test
 {
 public:
     
-	HeavyOnLight()
+    Heavy2()
 	{
 		{
 			b2BodyDef bd;
@@ -36,23 +35,56 @@ public:
         
 		b2BodyDef bd;
 		bd.type = b2_dynamicBody;
-		bd.position.Set(0.0f, 0.5f);
+		bd.position.Set(0.0f, 2.5f);
 		b2Body* body = m_world->CreateBody(&bd);
         
 		b2CircleShape shape;
 		shape.m_radius = 0.5f;
         body->CreateFixture(&shape, 10.0f);
         
-        bd.position.Set(0.0f, 6.0f);
+        bd.position.Set(0.0f, 3.5f);
         body = m_world->CreateBody(&bd);
-        shape.m_radius = 5.0f;
         body->CreateFixture(&shape, 10.0f);
+        
+        m_heavy = NULL;
+	}
+    
+    void ToggleHeavy()
+    {
+        if (m_heavy)
+        {
+            m_world->DestroyBody(m_heavy);
+            m_heavy = NULL;
+        }
+        else
+        {
+            b2BodyDef bd;
+            bd.type = b2_dynamicBody;
+            bd.position.Set(0.0f, 9.0f);
+            m_heavy = m_world->CreateBody(&bd);
+            
+            b2CircleShape shape;
+            shape.m_radius = 5.0f;
+            m_heavy->CreateFixture(&shape, 10.0f);
+        }
+    }
+    
+	void Keyboard(int key)
+	{
+		switch (key)
+		{
+        case GLFW_KEY_H:
+            ToggleHeavy();
+            break;
+		}
 	}
     
 	static Test* Create()
 	{
-		return new HeavyOnLight;
+		return new Heavy2;
 	}
+    
+	b2Body* m_heavy;
 };
 
-#endif
+static int testIndex = RegisterTest("Test", "Heavy 2", Heavy2::Create);

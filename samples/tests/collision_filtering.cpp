@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef COLLISION_FILTERING_H
-#define COLLISION_FILTERING_H
+#include "test.h"
 
 // This is a test of collision filtering.
 // There is a triangle, a box, and a circle.
@@ -174,4 +173,4 @@ public:
 	}
 };
 
-#endif
+static int testIndex = RegisterTest("Examples", "Collision Filtering", CollisionFiltering::Create);

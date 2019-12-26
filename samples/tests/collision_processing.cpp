@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef COLLISION_PROCESSING_H
-#define COLLISION_PROCESSING_H
+#include "test.h"
 
 #include <algorithm>
 
@@ -41,8 +40,8 @@ public:
 			ground->CreateFixture(&sd);
 		}
 
-		float32 xLo = -5.0f, xHi = 5.0f;
-		float32 yLo = 2.0f, yHi = 35.0f;
+		float xLo = -5.0f, xHi = 5.0f;
+		float yLo = 2.0f, yHi = 35.0f;
 
 		// Small triangle
 		b2Vec2 vertices[3];
@@ -119,7 +118,7 @@ public:
 		body6->CreateFixture(&circleShapeDef);
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 
@@ -138,8 +137,8 @@ public:
 
 			b2Body* body1 = point->fixtureA->GetBody();
 			b2Body* body2 = point->fixtureB->GetBody();
-			float32 mass1 = body1->GetMass();
-			float32 mass2 = body2->GetMass();
+			float mass1 = body1->GetMass();
+			float mass2 = body2->GetMass();
 
 			if (mass1 > 0.0f && mass2 > 0.0f)
 			{
@@ -185,4 +184,4 @@ public:
 	}
 };
 
-#endif
+static int testIndex = RegisterTest("Examples", "Collision Processing", CollisionProcessing::Create);

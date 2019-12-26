@@ -16,15 +16,14 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef DUMP_SHELL_H
-#define DUMP_SHELL_H
+#include "test.h"
 
 // This test holds worlds dumped using b2World::Dump.
-class DumpShell : public Test
+class DumpLoader : public Test
 {
 public:
 
-	DumpShell()
+	DumpLoader()
 	{
 		//Source code dump of Box2D scene: issue304-minimal-case.rube
 		//
@@ -168,8 +167,8 @@ public:
 
 	static Test* Create()
 	{
-		return new DumpShell;
+		return new DumpLoader;
 	}
 };
 
-#endif
+static int testIndex = RegisterTest("Bugs", "Dump Loader", DumpLoader::Create);

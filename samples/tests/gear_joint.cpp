@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2007-2009 Erin Catto http://www.box2d.org
+* Copyright (c) Erin Catto http://www.box2d.org
 *
 * This software is provided 'as-is', without any express or implied
 * warranty.  In no event will the authors be held liable for any damages
@@ -16,13 +16,12 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef GEARS_H
-#define GEARS_H
+#include "test.h"
 
-class Gears : public Test
+class GearJoint : public Test
 {
 public:
-	Gears()
+	GearJoint()
 	{
 		b2Body* ground = NULL;
 		{
@@ -145,26 +144,26 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 
-		float32 ratio, value;
+		float ratio, value;
 		
 		ratio = m_joint4->GetRatio();
 		value = m_joint1->GetJointAngle() + ratio * m_joint2->GetJointAngle();
 		g_debugDraw.DrawString(5, m_textLine, "theta1 + %4.2f * theta2 = %4.2f", (float) ratio, (float) value);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 
 		ratio = m_joint5->GetRatio();
 		value = m_joint2->GetJointAngle() + ratio * m_joint3->GetJointTranslation();
 		g_debugDraw.DrawString(5, m_textLine, "theta2 + %4.2f * delta = %4.2f", (float) ratio, (float) value);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()
 	{
-		return new Gears;
+		return new GearJoint;
 	}
 
 	b2RevoluteJoint* m_joint1;
@@ -174,4 +173,4 @@ public:
 	b2GearJoint* m_joint5;
 };
 
-#endif
+static int testIndex = RegisterTest("Joints", "Gear", GearJoint::Create);

@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef MOBILE_BALANCED_H
-#define MOBILE_BALANCED_H
+#include "test.h"
 
 class MobileBalanced : public Test
 {
@@ -39,7 +38,7 @@ public:
 			ground = m_world->CreateBody(&bodyDef);
 		}
 
-		float32 a = 0.5f;
+		float a = 0.5f;
 		b2Vec2 h(0.0f, a);
 
 		b2Body* root = AddNode(ground, b2Vec2_zero, 0, 3.0f, a);
@@ -52,9 +51,9 @@ public:
 		m_world->CreateJoint(&jointDef);
 	}
 
-	b2Body* AddNode(b2Body* parent, const b2Vec2& localAnchor, int32 depth, float32 offset, float32 a)
+	b2Body* AddNode(b2Body* parent, const b2Vec2& localAnchor, int32 depth, float offset, float a)
 	{
-		float32 density = 20.0f;
+		float density = 20.0f;
 		b2Vec2 h(0.0f, a);
 
 		b2Vec2 p = parent->GetPosition() + localAnchor - h;
@@ -102,4 +101,4 @@ public:
 	}
 };
 
-#endif
+static int testIndex = RegisterTest("Test", "Mobile Balanced", MobileBalanced::Create);

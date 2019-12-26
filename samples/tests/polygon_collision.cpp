@@ -16,13 +16,12 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef POLYCOLLISION_H
-#define POLYCOLLISION_H
+#include "test.h"
 
-class PolyCollision : public Test
+class PolygonCollision : public Test
 {
 public:
-	PolyCollision()
+	PolygonCollision()
 	{
 		{
 			m_polygonA.SetAsBox(0.2f, 0.4f);
@@ -39,10 +38,10 @@ public:
 
 	static Test* Create()
 	{
-		return new PolyCollision;
+		return new PolygonCollision;
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		B2_NOT_USED(settings);
 
@@ -53,7 +52,7 @@ public:
 		worldManifold.Initialize(&manifold, m_transformA, m_polygonA.m_radius, m_transformB, m_polygonB.m_radius);
 
 		g_debugDraw.DrawString(5, m_textLine, "point count = %d", manifold.pointCount);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 
 		{
 			b2Color color(0.9f, 0.9f, 0.9f);
@@ -116,7 +115,7 @@ public:
 	b2Transform m_transformB;
 
 	b2Vec2 m_positionB;
-	float32 m_angleB;
+	float m_angleB;
 };
 
-#endif
+static int testIndex = RegisterTest("Geometry", "Polygon Collision", PolygonCollision::Create);

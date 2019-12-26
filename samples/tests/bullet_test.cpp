@@ -16,8 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef BULLET_TEST_H
-#define BULLET_TEST_H
+#include "test.h"
 
 class BulletTest : public Test
 {
@@ -91,7 +90,7 @@ public:
 		b2_toiMaxRootIters = 0;
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 
@@ -102,19 +101,19 @@ public:
 		if (b2_gjkCalls > 0)
 		{
 			g_debugDraw.DrawString(5, m_textLine, "gjk calls = %d, ave gjk iters = %3.1f, max gjk iters = %d",
-				b2_gjkCalls, b2_gjkIters / float32(b2_gjkCalls), b2_gjkMaxIters);
-			m_textLine += DRAW_STRING_NEW_LINE;
+				b2_gjkCalls, b2_gjkIters / float(b2_gjkCalls), b2_gjkMaxIters);
+			m_textLine += m_textIncrement;
 		}
 
 		if (b2_toiCalls > 0)
 		{
 			g_debugDraw.DrawString(5, m_textLine, "toi calls = %d, ave toi iters = %3.1f, max toi iters = %d",
-				b2_toiCalls, b2_toiIters / float32(b2_toiCalls), b2_toiMaxRootIters);
-			m_textLine += DRAW_STRING_NEW_LINE;
+				b2_toiCalls, b2_toiIters / float(b2_toiCalls), b2_toiMaxRootIters);
+			m_textLine += m_textIncrement;
 
 			g_debugDraw.DrawString(5, m_textLine, "ave toi root iters = %3.1f, max toi root iters = %d",
-				b2_toiRootIters / float32(b2_toiCalls), b2_toiMaxRootIters);
-			m_textLine += DRAW_STRING_NEW_LINE;
+				b2_toiRootIters / float(b2_toiCalls), b2_toiMaxRootIters);
+			m_textLine += m_textIncrement;
 		}
 
 		if (m_stepCount % 60 == 0)
@@ -130,7 +129,7 @@ public:
 
 	b2Body* m_body;
 	b2Body* m_bullet;
-	float32 m_x;
+	float m_x;
 };
 
-#endif
+static int testIndex = RegisterTest("Continuous", "Bullet Test", BulletTest::Create);

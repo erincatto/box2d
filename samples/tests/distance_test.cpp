@@ -16,8 +16,8 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef DISTANCE_TEST_H
-#define DISTANCE_TEST_H
+#include "test.h"
+#include "box2d/b2_distance.h"
 
 class DistanceTest : public Test
 {
@@ -44,7 +44,7 @@ public:
 		return new DistanceTest;
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 
@@ -60,10 +60,10 @@ public:
 		b2Distance(&output, &cache, &input);
 
 		g_debugDraw.DrawString(5, m_textLine, "distance = %g", output.distance);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 
 		g_debugDraw.DrawString(5, m_textLine, "iterations = %d", output.iterations);
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 
 		{
 			b2Color color(0.9f, 0.9f, 0.9f);
@@ -124,7 +124,7 @@ public:
 	}
 
 	b2Vec2 m_positionB;
-	float32 m_angleB;
+	float m_angleB;
 
 	b2Transform m_transformA;
 	b2Transform m_transformB;
@@ -132,4 +132,4 @@ public:
 	b2PolygonShape m_polygonB;
 };
 
-#endif
+static int testIndex = RegisterTest("Geometry", "Distance Test", DistanceTest::Create);

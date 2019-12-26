@@ -16,14 +16,13 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef WEB_H
-#define WEB_H
+#include "test.h"
 
 // This tests distance joints, body destruction, and joint destruction.
-class Web : public Test
+class DistanceJoint : public Test
 {
 public:
-	Web()
+	DistanceJoint()
 	{
 		b2Body* ground = NULL;
 		{
@@ -176,13 +175,13 @@ public:
 		}
 	}
 
-	void Step(Settings* settings)
+	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
 		g_debugDraw.DrawString(5, m_textLine, "This demonstrates a soft distance joint.");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "Press: (b) to delete a body, (j) to delete a joint");
-		m_textLine += DRAW_STRING_NEW_LINE;
+		m_textLine += m_textIncrement;
 	}
 
 	void JointDestroyed(b2Joint* joint)
@@ -199,11 +198,11 @@ public:
 
 	static Test* Create()
 	{
-		return new Web;
+		return new DistanceJoint;
 	}
 
 	b2Body* m_bodies[4];
 	b2Joint* m_joints[8];
 };
 
-#endif
+static int testIndex = RegisterTest("Joints", "Distance Joint", DistanceJoint::Create);
