@@ -20,7 +20,7 @@
 #define DRAW_H
 
 #define GLFW_INCLUDE_NONE
-#include "glad.h"
+#include "glad/gl.h"
 #include "GLFW/glfw3.h"
 
 #include "box2d/box2d.h"

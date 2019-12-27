@@ -492,15 +492,9 @@ int main(int, char**)
 
 	glfwMakeContextCurrent(g_mainWindow);
 
-#if defined(__APPLE__) == FALSE
 	// Load OpenGL functions using glad
-	if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
-	{
-		printf("Failed to initialize OpenGL context\n");
-		return -1;
-	}
-#endif
-
+	int version = gladLoadGL(glfwGetProcAddress);
+	printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
 	printf("OpenGL %s, GLSL %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 
 	glfwSetScrollCallback(g_mainWindow, ScrollCallback);

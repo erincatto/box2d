@@ -87,7 +87,7 @@
 #include <GL/glew.h>
 #elif defined(IMGUI_IMPL_OPENGL_LOADER_GLAD)
 // MOD_ERIN
-#include "glad.h"
+#include "glad/gl.h"
 #else
 #include IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 #endif

@@ -36,7 +36,7 @@
 
 // GLFW
 #define GLFW_INCLUDE_NONE
-#include "glad.h"
+#include "glad/gl.h"
 #include "GLFW/glfw3.h"
 #ifdef _WIN32
 #undef APIENTRY
