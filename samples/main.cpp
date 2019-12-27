@@ -571,6 +571,8 @@ int main(int, char**)
 
 		UpdateUI();
 
+		ImGui::ShowDemoWindow();
+
 		// Measure speed
 		double time2 = glfwGetTime();
 		double alpha = 0.9;

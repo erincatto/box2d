@@ -25,7 +25,10 @@
 
 b2Rope::b2Rope()
 {
+	m_position.SetZero();
 	m_count = 0;
+	m_stretchCount = 0;
+	m_bendCount = 0;
 	m_bindPositions = nullptr;
 	m_ps = nullptr;
 	m_p0s = nullptr;
@@ -33,6 +36,7 @@ b2Rope::b2Rope()
 	m_ims = nullptr;
 	m_Ls = nullptr;
 	m_as = nullptr;
+	m_bendingLambdas = nullptr;
 	m_gravity.SetZero();
 }
 
@@ -48,9 +52,10 @@ b2Rope::~b2Rope()
 	b2Free(m_bendingLambdas);
 }
 
-void b2Rope::Initialize(const b2RopeDef* def)
+void b2Rope::Create(const b2RopeDef& def)
 {
 	b2Assert(def->count >= 3);
+	m_position = def->position;
 	m_count = def->count;
 	m_bindPositions = (b2Vec2*)b2Alloc(m_count * sizeof(b2Vec2));
 	m_ps = (b2Vec2*)b2Alloc(m_count * sizeof(b2Vec2));
@@ -137,7 +142,7 @@ void b2Rope::Step(float dt, int32 iterations, const b2Vec2& position)
 		}
 	}
 
-	if (m_tuning.bendingModel == b2_forceAngleBendingModel)
+	if (m_tuning.bendingModel == b2_springAngleBendingModel)
 	{
 		ApplyBendForces(dt);
 	}

@@ -29,9 +29,8 @@ class b2Draw;
 
 enum b2BendingModel
 {
-	b2_pbdDistanceBendingModel,
+	b2_springAngleBendingModel = 0,
 	b2_pbdAngleBendingModel,
-	b2_forceAngleBendingModel,
 	b2_xpbdAngleBendingModel
 };
 
@@ -40,7 +39,7 @@ struct b2RopeTuning
 {
 	b2RopeTuning()
 	{
-		bendingModel = b2_pbdDistanceBendingModel;
+		bendingModel = b2_springAngleBendingModel;
 		damping = 0.0f;
 		stretchStiffness = 1.0f;
 		bendStiffness = 0.5f;
@@ -61,24 +60,18 @@ struct b2RopeDef
 {
 	b2RopeDef()
 	{
+		position.SetZero();
 		vertices = nullptr;
 		count = 0;
 		masses = nullptr;
 		gravity.SetZero();
 	}
 
-	///
+	b2Vec2 position;
 	b2Vec2* vertices;
-
-	///
 	int32 count;
-
-	///
 	float* masses;
-
-	///
 	b2Vec2 gravity;
-
 	b2RopeTuning tuning;
 };
 
@@ -90,7 +83,7 @@ public:
 	~b2Rope();
 
 	///
-	void Initialize(const b2RopeDef* def);
+	void Create(const b2RopeDef& def);
 
 	///
 	void SetTuning(const b2RopeTuning& tuning);
@@ -123,6 +116,8 @@ private:
 	void SolveBend_PBD_Angle();
 	void SolveBend_XPBD_Angle(float dt);
 	void ApplyBendForces(float dt);
+
+	b2Vec2 m_position;
 
 	int32 m_count;
 	int32 m_stretchCount;
