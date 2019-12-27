@@ -7,8 +7,6 @@
 
 **Box2D is a 2D physics engine for games.**
 
-Please see [Building.md](https://github.com/erincatto/Box2D/blob/master/Building.md) to learn how to build Box2D and run the testbed.
-
 ## Contributing
 
 Please do not submit pull requests with new features. Instead, please file an issue first for discussion. For bugs, I prefer detailed bug reports over pull requests.
@@ -45,10 +43,8 @@ Please do not submit pull requests with new features. Instead, please file an is
 ### Samples
 - OpenGL with GLFW
 - Graphical user interface with imgui
-- Easily switch between samples using GUI
-- Test framework for easily adding new tests
-- Mouse picking
-- CMake build system files
+- Extensible test framework
+- Support for loading world dumps
 
 ## Building
 - Install [CMake](https://cmake.org/)
