@@ -103,5 +103,3 @@ set_target_properties(box2d PROPERTIES
     CXX_STANDARD_REQUIRED YES
     CXX_EXTENSIONS NO
 )
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "src" FILES ${BOX2D_SOURCE_FILES})
-source_group(TREE "../include" PREFIX "include" FILES ${BOX2D_HEADER_FILES})
