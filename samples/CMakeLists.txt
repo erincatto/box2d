@@ -73,5 +73,9 @@ set (SAMPLE_SOURCE_FILES
 add_executable(samples ${SAMPLE_SOURCE_FILES})
 target_include_directories(samples PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(samples PUBLIC box2d glfw imgui sajson glad)
-
+set_target_properties(samples PROPERTIES
+	CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
+)
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SAMPLE_SOURCE_FILES})

@@ -142,7 +142,7 @@ public:
 		}
 	}
 
-	void KeyboardUp(int key)
+	void KeyboardUp(int key) override
 	{
 		switch (key)
 		{
