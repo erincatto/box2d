@@ -1,0 +1,27 @@
+language: cpp
+compiler: clang
+
+branches:
+    only:
+        - master
+
+addons:
+  apt:
+    packages:
+      - libxrandr-dev
+      - libxinerama-dev
+      - libxcursor-dev
+      - libxi-dev
+      
+matrix:
+  include:
+    - os: linux
+      env:
+    - os: osx
+      env:
+          
+script:
+    - mkdir build
+    - cd build
+    - cmake ..
+    - cmake --build .

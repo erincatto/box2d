@@ -1,22 +1,13 @@
 ![Box2D Logo](http://box2d.org/images/icon.gif)
 
+# Build Status
+[![Build Status](https://travis-ci.org/erincatto/box2d-lite.svg?branch=master)](https://travis-ci.org/erincatto/box2d-lite)
+
 # Box2D 
 
 **Box2D is a 2D physics engine for games.**
 
-For help with Box2D, please visit http://www.box2d.org. There is a forum there where you may post your questions.
-
 Please see [Building.md](https://github.com/erincatto/Box2D/blob/master/Building.md) to learn how to build Box2D and run the testbed.
-
-## Demos
-
-To run the demos, set `Testbed` as your startup project and press <kbd>F5</kbd>. Some test bed commands are:
-
-- <kbd>r</kbd> to reset the current test
-- <kbd>SPACE</kbd> to launch a bomb
-- <kbd>&larr;</kbd> <kbd>&rarr;</kbd> keys to pan
-- <kbd>x</kbd> and <kbd>z</kbd> to zoom in/out
-- use the mouse to click and drag objects
 
 ## Contributing
 
@@ -51,13 +42,20 @@ Please do not submit pull requests with new features. Instead, please file an is
 - Centralized tuning parameters
 - Highly portable C++ with no use of STL containers
 
-### Testbed
+### Samples
 - OpenGL with GLFW
 - Graphical user interface with imgui
-- Easily switch between tests using GUI
+- Easily switch between samples using GUI
 - Test framework for easily adding new tests
-- Mouse picking and the bomb!
+- Mouse picking
 - CMake build system files
+
+## Building
+- Install [CMake](https://cmake.org/)
+- Ensure CMake is in the user `PATH`
+- Visual Studio: run `build.bat` from the command prompt
+- Otherwise: run `build.sh` from a bash shell
+- Results are in the build sub-folder
 
 ## Documentation
 You can find documentation related to the project in the [documentation page](http://box2d.org/documentation/) and in the [documentation folder](https://github.com/erincatto/Box2D/tree/master/Box2D/Documentation) in GitHub
@@ -65,10 +63,9 @@ You can find documentation related to the project in the [documentation page](ht
 - [Doxygen document](https://github.com/erincatto/Box2D/blob/master/Box2D/Documentation/Doxyfile) with code comments
 - [subreddit](https://www.reddit.com/r/box2d/)
 - [Discord server](https://discord.gg/NKYgCBP)
-- [User forum (legacy)](http://box2d.org/forum/)
 
 You can also visit the project wiki where you will find the [FAQ](https://github.com/erincatto/Box2D/wiki/FAQ)'s page
 
 ## License
 
-Box2D is developed by Erin Catto, and has the [zlib license](http://en.wikipedia.org/wiki/Zlib_License). While the zlib license does not require acknowledgement, we encourage you to give credit to Box2D in your product.
+Box2D is developed by Erin Catto, and uses the [MIT license](https://en.wikipedia.org/wiki/MIT_License).
