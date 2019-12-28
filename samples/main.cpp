@@ -61,7 +61,7 @@ static void SortTests()
 	std::sort(g_testEntries, g_testEntries + g_testCount, CompareTests);
 }
 
-static void CreateUI(GLFWwindow* window)
+static void CreateUI(GLFWwindow* window, const char* glslVersion = NULL)
 {
 	float xscale, yscale;
 	glfwGetWindowContentScale(window, &xscale, &yscale);
@@ -78,7 +78,7 @@ static void CreateUI(GLFWwindow* window)
 		assert(false);
 	}
 
-	success = ImGui_ImplOpenGL3_Init();
+	success = ImGui_ImplOpenGL3_Init(glslVersion);
 	if (success == false)
 	{
 		printf("ImGui_ImplOpenGL3_Init failed\n");
@@ -479,6 +479,11 @@ int main(int, char**)
 		return -1;
 	}
 
+#if __APPLE__
+    const char* glslVersion = "#version 150";
+#else
+    const char* glslVersion = NULL;
+#endif
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -511,7 +516,7 @@ int main(int, char**)
 
 	g_debugDraw.Create();
 
-	CreateUI(g_mainWindow);
+	CreateUI(g_mainWindow, glslVersion);
 
 	s_settings.m_testIndex = b2Clamp(s_settings.m_testIndex, 0, g_testCount - 1);
 	s_testSelection = s_settings.m_testIndex;
