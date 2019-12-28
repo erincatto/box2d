@@ -44,15 +44,18 @@ public:
 		masses[0] = 0.0f;
 		masses[1] = 0.0f;
 
-		m_tuning1.bendHertz = 1.0f;
-		m_tuning1.bendDamping = 0.0f;
-		m_tuning1.bendStiffness = 0.5f;
+		m_tuning1.bendHertz = 10.0f;
+		m_tuning1.bendDamping = 0.7f;
+		m_tuning1.bendStiffness = 0.8f;
 		m_tuning1.bendingModel = b2_springAngleBendingModel;
 
-		m_tuning2.bendHertz = 1.0f;
-		m_tuning2.bendDamping = 0.0f;
-		m_tuning2.bendStiffness = 0.5f;
+		m_tuning2.bendHertz = 10.0f;
+		m_tuning2.bendDamping = 0.7f;
+		m_tuning2.bendStiffness = 0.8f;
 		m_tuning2.bendingModel = b2_xpbdAngleBendingModel;
+
+		m_position1.Set(-5.0f, 10.0f);
+		m_position2.Set(5.0f, 10.0f);
 
 		b2RopeDef def;
 		def.vertices = vertices;
@@ -60,18 +63,19 @@ public:
 		def.gravity.Set(0.0f, -10.0f);
 		def.masses = masses;
 
+		def.position = m_position1;
 		def.tuning = m_tuning1;
-		m_rope1.Initialize(&def);
+		m_rope1.Create(def);
 
+		def.position = m_position2;
 		def.tuning = m_tuning2;
-		m_rope2.Initialize(&def);
+		m_rope2.Create(def);
 
 		m_angle = 0.0f;
 		m_rope1.SetAngle(m_angle);
 		m_rope2.SetAngle(m_angle);
-		m_iterations = 1;
-		m_position1.Set(-2.0f, 4.0f);
-		m_position2.Set(2.0f, 4.0f);
+		m_iterations1 = 2;
+		m_iterations2 = 2;
 	}
 
 	void UpdateUI() override
@@ -86,14 +90,15 @@ public:
 		const char* items[] = { "Spring", "PBD", "XPBD" };
 
 		ImGui::Text("Rope 1");
-		static int modelA = m_tuning1.bendingModel;
-		if (ImGui::BeginCombo("Model##1", items[modelA], comboFlags))
+		static int model1 = m_tuning1.bendingModel;
+		if (ImGui::BeginCombo("Model##1", items[model1], comboFlags))
 		{
 			for (int i = 0; i < IM_ARRAYSIZE(items); ++i)
 			{
-				bool isSelected = (modelA == i);
+				bool isSelected = (model1 == i);
 				if (ImGui::Selectable(items[i], isSelected))
 				{
+					model1 = i;
 					m_tuning1.bendingModel = b2BendingModel(i);
 				}
 
@@ -105,9 +110,10 @@ public:
 			ImGui::EndCombo();
 		}
 
-		ImGui::SliderFloat("Damping", &m_tuning1.bendDamping, 0.0f, 2.0f, "%.1f");
-		ImGui::SliderFloat("Hertz", &m_tuning1.bendHertz, 0.0f, 15.0f, "%.1f");
-		ImGui::SliderFloat("Stiffness", &m_tuning1.bendStiffness, 0.0f, 1.0f, "%.1f");
+		ImGui::SliderInt("Iterations##1", &m_iterations1, 1, 100, "%d");
+		ImGui::SliderFloat("Damping##1", &m_tuning1.bendDamping, 0.0f, 2.0f, "%.1f");
+		ImGui::SliderFloat("Hertz##1", &m_tuning1.bendHertz, 0.0f, 15.0f, "%.0f");
+		ImGui::SliderFloat("Stiffness##1", &m_tuning1.bendStiffness, 0.0f, 1.0f, "%.1f");
 
 		ImGui::Separator();
 
@@ -120,6 +126,7 @@ public:
 				bool isSelected = (model2 == i);
 				if (ImGui::Selectable(items[i], isSelected))
 				{
+					model2 = i;
 					m_tuning2.bendingModel = b2BendingModel(i);
 				}
 
@@ -132,45 +139,12 @@ public:
 			ImGui::EndCombo();
 		}
 
-		ImGui::SliderFloat("Damping", &m_tuning2.bendDamping, 0.0f, 2.0f, "%.1f");
-		ImGui::SliderFloat("Hertz", &m_tuning2.bendHertz, 0.0f, 15.0f, "%.1f");
-		ImGui::SliderFloat("Stiffness", &m_tuning2.bendStiffness, 0.0f, 1.0f, "%.1f");
+		ImGui::SliderInt("Iterations##2", &m_iterations2, 1, 100, "%d");
+		ImGui::SliderFloat("Damping##2", &m_tuning2.bendDamping, 0.0f, 2.0f, "%.1f");
+		ImGui::SliderFloat("Hertz##2", &m_tuning2.bendHertz, 0.0f, 15.0f, "%.0f");
+		ImGui::SliderFloat("Stiffness##2", &m_tuning2.bendStiffness, 0.0f, 1.0f, "%.1f");
 		ImGui::End();
 	}
-
-#if 0
-	void Keyboard(int key) override
-	{
-		switch (key)
-		{
-		case GLFW_KEY_I:
-			m_iterations += 1;
-			break;
-
-		case GLFW_KEY_K:
-			m_iterations = b2Max(m_iterations - 1, 1);
-			break;
-
-		case GLFW_KEY_U:
-			m_tuning1.bendHertz = b2Min(m_tuning.bendHertz + 1.0f, 100.0f);
-			m_tuning1.bendStiffness = b2Min(m_tuning.bendStiffness + 0.1f, 1.0f);
-			break;
-
-		case GLFW_KEY_J:
-			m_tuning.bendHertz = b2Max(m_tuning.bendHertz - 1.0f, 0.0f);
-			m_tuning.bendStiffness = b2Max(m_tuning.bendStiffness - 0.1f, 0.0f);
-			break;
-
-		case GLFW_KEY_Y:
-			m_tuning.bendDamping = b2Min(m_tuning.bendDamping + 0.1f, 10.0f);
-			break;
-
-		case GLFW_KEY_H:
-			m_tuning.bendDamping = b2Max(m_tuning.bendDamping - 0.1f, 0.0f);
-			break;
-		}
-	}
-#endif
 
 	void Step(Settings& settings) override
 	{
@@ -183,46 +157,28 @@ public:
 
 		if (glfwGetKey(g_mainWindow, GLFW_KEY_COMMA) == GLFW_PRESS)
 		{
-			m_position1.x -= 4.0f * dt;
-			m_position2.x -= 4.0f * dt;
+			m_position1.x -= 8.0f * dt;
+			m_position2.x -= 8.0f * dt;
 		}
 
 		if (glfwGetKey(g_mainWindow, GLFW_KEY_PERIOD) == GLFW_PRESS)
 		{
-			m_position1.x += 4.0f * dt;
-			m_position2.x += 4.0f * dt;
-		}
-
-		if (glfwGetKey(g_mainWindow, GLFW_KEY_Q) == GLFW_PRESS)
-		{
-			m_angle = b2Max(-b2_pi, m_angle - 0.2f * b2_pi / 180.0f);
-			m_rope1.SetAngle(m_angle);
-			m_rope2.SetAngle(m_angle);
-		}
-
-		if (glfwGetKey(g_mainWindow, GLFW_KEY_E) == GLFW_PRESS)
-		{
-			m_angle = b2Min(b2_pi, m_angle + 0.2f * b2_pi / 180.0f);
-			m_rope1.SetAngle(m_angle);
-			m_rope2.SetAngle(m_angle);
+			m_position1.x += 8.0f * dt;
+			m_position2.x += 8.0f * dt;
 		}
 
 		m_rope1.SetTuning(m_tuning1);
 		m_rope2.SetTuning(m_tuning2);
-		m_rope1.Step(dt, m_iterations, m_position1);
-		m_rope2.Step(dt, m_iterations, m_position2);
+		m_rope1.Step(dt, m_iterations1, m_position1);
+		m_rope2.Step(dt, m_iterations2, m_position2);
 
 		Test::Step(settings);
 
 		m_rope1.Draw(&g_debugDraw);
 		m_rope2.Draw(&g_debugDraw);
 
-		g_debugDraw.DrawString(5, m_textLine, "Press (q,e) to adjust target angle, (i,k) to adjust iterations");
+		g_debugDraw.DrawString(5, m_textLine, "Press comma and period to move left and right");
 		m_textLine += m_textIncrement;
-		g_debugDraw.DrawString(5, m_textLine, "angle = %g, iterations = %d", m_angle * 180.0f / b2_pi, m_iterations);
-		m_textLine += m_textIncrement;
-		//g_debugDraw.DrawString(5, m_textLine, "bend: hertz = %g, damping = %g, stiffness = %g", m_tuning.bendHertz, m_tuning.bendDamping, m_tuning.bendStiffness);
-		//m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()
@@ -235,7 +191,8 @@ public:
 	b2RopeTuning m_tuning1;
 	b2RopeTuning m_tuning2;
 	float m_angle;
-	int32 m_iterations;
+	int32 m_iterations1;
+	int32 m_iterations2;
 	b2Vec2 m_position1;
 	b2Vec2 m_position2;
 };

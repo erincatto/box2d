@@ -26,6 +26,8 @@
 #include "b2_math.h"
 
 class b2Draw;
+struct b2RopeStretch;
+struct b2RopeBend;
 
 enum b2BendingModel
 {
@@ -45,6 +47,7 @@ struct b2RopeTuning
 		bendStiffness = 0.5f;
 		bendHertz = 1.0f;
 		bendDamping = 0.0f;
+		isometricBending = false;
 	}
 
 	b2BendingModel bendingModel;
@@ -53,6 +56,7 @@ struct b2RopeTuning
 	float bendStiffness;
 	float bendHertz;
 	float bendDamping;
+	bool isometricBending;
 };
 
 /// 
@@ -106,12 +110,9 @@ public:
 	///
 	void Draw(b2Draw* draw) const;
 
-	///
-	void SetAngle(float angle);
-
 private:
 
-	void SolveStretch();
+	void SolveStretch(float stiffness);
 	//void SolveBend_PBD_Distance();
 	void SolveBend_PBD_Angle();
 	void SolveBend_XPBD_Angle(float dt);
@@ -123,17 +124,15 @@ private:
 	int32 m_stretchCount;
 	int32 m_bendCount;
 
+	b2RopeStretch* m_stretchConstraints;
+	b2RopeBend* m_bendConstraints;
+
 	b2Vec2* m_bindPositions;
 	b2Vec2* m_ps;
 	b2Vec2* m_p0s;
 	b2Vec2* m_vs;
 
-	float* m_ims;
-
-	float* m_Ls;
-	float* m_as;
-	float* m_bendingLambdas;
-
+	float* m_invMasses;
 	b2Vec2 m_gravity;
 
 	b2RopeTuning m_tuning;

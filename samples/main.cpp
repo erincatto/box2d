@@ -571,7 +571,7 @@ int main(int, char**)
 
 		UpdateUI();
 
-		ImGui::ShowDemoWindow();
+		// ImGui::ShowDemoWindow();
 
 		// Measure speed
 		double time2 = glfwGetTime();
@@ -593,11 +593,8 @@ int main(int, char**)
 		glfwPollEvents();
 	}
 
-	if (s_test)
-	{
-		delete s_test;
-		s_test = NULL;
-	}
+	delete s_test;
+	s_test = nullptr;
 
 	g_debugDraw.Destroy();
 	ImGui_ImplOpenGL3_Shutdown();
