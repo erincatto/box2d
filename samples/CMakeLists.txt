@@ -70,7 +70,11 @@ set (SAMPLE_SOURCE_FILES
 	tests/tumbler.cpp
 )
 
-add_executable(samples ${SAMPLE_SOURCE_FILES})
+set (SAMPLE_RESOURCE_FILES
+    data/DroidSans.ttf
+)
+
+add_executable(samples ${SAMPLE_SOURCE_FILES} ${SAMPLE_RESOURCE_FILES})
 target_include_directories(samples PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(samples PUBLIC box2d glfw imgui sajson glad)
 set_target_properties(samples PROPERTIES
@@ -78,4 +82,20 @@ set_target_properties(samples PROPERTIES
     CXX_STANDARD_REQUIRED YES
     CXX_EXTENSIONS NO
 )
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SAMPLE_SOURCE_FILES})
+if(APPLE)
+	set_target_properties(samples PROPERTIES
+        MACOSX_BUNDLE_INFO_PLIST            "${CMAKE_CURRENT_SOURCE_DIR}/MacOSXBundleInfo.plist.in"
+		MACOSX_BUNDLE						TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME           "Samples"
+        MACOSX_BUNDLE_GUI_IDENTIFIER        "org.box2d.samples"
+    )
+
+	# Reflect resources directory tree inside bundle
+	foreach (SAMPLE_RESOURCE_FILE ${SAMPLE_RESOURCE_FILES})
+		get_filename_component(SAMPLE_RESOURCE_DIR ${SAMPLE_RESOURCE_FILE} DIRECTORY)
+		set_source_files_properties(${SAMPLE_RESOURCE_FILE} PROPERTIES
+			MACOSX_PACKAGE_LOCATION Resources/${SAMPLE_RESOURCE_DIR}
+		)
+	endforeach()
+endif()
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SAMPLE_SOURCE_FILES} ${SAMPLE_RESOURCE_FILES})
