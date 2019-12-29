@@ -47,7 +47,8 @@ struct b2RopeTuning
 		bendStiffness = 0.5f;
 		bendHertz = 1.0f;
 		bendDamping = 0.0f;
-		isometricBending = false;
+		isometric = false;
+		fixedEffectiveMass = false;
 	}
 
 	b2BendingModel bendingModel;
@@ -56,7 +57,8 @@ struct b2RopeTuning
 	float bendStiffness;
 	float bendHertz;
 	float bendDamping;
-	bool isometricBending;
+	bool isometric;
+	bool fixedEffectiveMass;
 };
 
 /// 
@@ -96,23 +98,26 @@ public:
 	void Step(float timeStep, int32 iterations, const b2Vec2& position);
 
 	///
-	int32 GetVertexCount() const
-	{
-		return m_count;
-	}
+	void Reset(const b2Vec2& position);
 
 	///
-	const b2Vec2* GetVertices() const
-	{
-		return m_ps;
-	}
+	//int32 GetVertexCount() const
+	//{
+	//	return m_count;
+	//}
+
+	/////
+	//const b2Vec2* GetVertices() const
+	//{
+	//	return m_ps;
+	//}
 
 	///
 	void Draw(b2Draw* draw) const;
 
 private:
 
-	void SolveStretch(float stiffness);
+	void SolveStretch();
 	//void SolveBend_PBD_Distance();
 	void SolveBend_PBD_Angle();
 	void SolveBend_XPBD_Angle(float dt);
