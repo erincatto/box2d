@@ -52,6 +52,7 @@ Please do not submit pull requests with new features. Instead, please file an is
 - Visual Studio: run `build.bat` from the command prompt
 - Otherwise: run `build.sh` from a bash shell
 - Results are in the build sub-folder
+- On Windows you can open box2d.sln
 
 ## Documentation
 You can find documentation related to the project in the [documentation page](http://box2d.org/documentation/) and in the [documentation folder](https://github.com/erincatto/Box2D/tree/master/Box2D/Documentation) in GitHub

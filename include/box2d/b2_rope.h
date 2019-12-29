@@ -26,12 +26,13 @@
 #include "b2_math.h"
 
 class b2Draw;
+struct b2RopeStretch;
+struct b2RopeBend;
 
 enum b2BendingModel
 {
-	b2_pbdDistanceBendingModel,
+	b2_springAngleBendingModel = 0,
 	b2_pbdAngleBendingModel,
-	b2_forceAngleBendingModel,
 	b2_xpbdAngleBendingModel
 };
 
@@ -40,12 +41,14 @@ struct b2RopeTuning
 {
 	b2RopeTuning()
 	{
-		bendingModel = b2_pbdDistanceBendingModel;
+		bendingModel = b2_springAngleBendingModel;
 		damping = 0.0f;
 		stretchStiffness = 1.0f;
 		bendStiffness = 0.5f;
 		bendHertz = 1.0f;
 		bendDamping = 0.0f;
+		isometric = false;
+		fixedEffectiveMass = false;
 	}
 
 	b2BendingModel bendingModel;
@@ -54,6 +57,8 @@ struct b2RopeTuning
 	float bendStiffness;
 	float bendHertz;
 	float bendDamping;
+	bool isometric;
+	bool fixedEffectiveMass;
 };
 
 /// 
@@ -61,24 +66,18 @@ struct b2RopeDef
 {
 	b2RopeDef()
 	{
+		position.SetZero();
 		vertices = nullptr;
 		count = 0;
 		masses = nullptr;
 		gravity.SetZero();
 	}
 
-	///
+	b2Vec2 position;
 	b2Vec2* vertices;
-
-	///
 	int32 count;
-
-	///
 	float* masses;
-
-	///
 	b2Vec2 gravity;
-
 	b2RopeTuning tuning;
 };
 
@@ -90,7 +89,7 @@ public:
 	~b2Rope();
 
 	///
-	void Initialize(const b2RopeDef* def);
+	void Create(const b2RopeDef& def);
 
 	///
 	void SetTuning(const b2RopeTuning& tuning);
@@ -99,22 +98,22 @@ public:
 	void Step(float timeStep, int32 iterations, const b2Vec2& position);
 
 	///
-	int32 GetVertexCount() const
-	{
-		return m_count;
-	}
+	void Reset(const b2Vec2& position);
 
 	///
-	const b2Vec2* GetVertices() const
-	{
-		return m_ps;
-	}
+	//int32 GetVertexCount() const
+	//{
+	//	return m_count;
+	//}
+
+	/////
+	//const b2Vec2* GetVertices() const
+	//{
+	//	return m_ps;
+	//}
 
 	///
 	void Draw(b2Draw* draw) const;
-
-	///
-	void SetAngle(float angle);
 
 private:
 
@@ -124,21 +123,21 @@ private:
 	void SolveBend_XPBD_Angle(float dt);
 	void ApplyBendForces(float dt);
 
+	b2Vec2 m_position;
+
 	int32 m_count;
 	int32 m_stretchCount;
 	int32 m_bendCount;
+
+	b2RopeStretch* m_stretchConstraints;
+	b2RopeBend* m_bendConstraints;
 
 	b2Vec2* m_bindPositions;
 	b2Vec2* m_ps;
 	b2Vec2* m_p0s;
 	b2Vec2* m_vs;
 
-	float* m_ims;
-
-	float* m_Ls;
-	float* m_as;
-	float* m_bendingLambdas;
-
+	float* m_invMasses;
 	b2Vec2 m_gravity;
 
 	b2RopeTuning m_tuning;
