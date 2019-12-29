@@ -71,9 +71,6 @@ public:
 		def.tuning = m_tuning2;
 		m_rope2.Create(def);
 
-		m_angle = 0.0f;
-		m_rope1.SetAngle(m_angle);
-		m_rope2.SetAngle(m_angle);
 		m_iterations1 = 2;
 		m_iterations2 = 2;
 	}
@@ -111,9 +108,11 @@ public:
 		}
 
 		ImGui::SliderInt("Iterations##1", &m_iterations1, 1, 100, "%d");
-		ImGui::SliderFloat("Damping##1", &m_tuning1.bendDamping, 0.0f, 2.0f, "%.1f");
-		ImGui::SliderFloat("Hertz##1", &m_tuning1.bendHertz, 0.0f, 15.0f, "%.0f");
+		ImGui::SliderFloat("Damping##1", &m_tuning1.bendDamping, 0.0f, 4.0f, "%.1f");
+		ImGui::SliderFloat("Hertz##1", &m_tuning1.bendHertz, 0.0f, 30.0f, "%.0f");
 		ImGui::SliderFloat("Stiffness##1", &m_tuning1.bendStiffness, 0.0f, 1.0f, "%.1f");
+		ImGui::Checkbox("Isometric##1", &m_tuning1.isometric);
+		ImGui::Checkbox("Fixed Mass##1", &m_tuning1.fixedEffectiveMass);
 
 		ImGui::Separator();
 
@@ -140,9 +139,22 @@ public:
 		}
 
 		ImGui::SliderInt("Iterations##2", &m_iterations2, 1, 100, "%d");
-		ImGui::SliderFloat("Damping##2", &m_tuning2.bendDamping, 0.0f, 2.0f, "%.1f");
-		ImGui::SliderFloat("Hertz##2", &m_tuning2.bendHertz, 0.0f, 15.0f, "%.0f");
+		ImGui::SliderFloat("Damping##2", &m_tuning2.bendDamping, 0.0f, 4.0f, "%.1f");
+		ImGui::SliderFloat("Hertz##2", &m_tuning2.bendHertz, 0.0f, 30.0f, "%.0f");
 		ImGui::SliderFloat("Stiffness##2", &m_tuning2.bendStiffness, 0.0f, 1.0f, "%.1f");
+		ImGui::Checkbox("Isometric##2", &m_tuning2.isometric);
+		ImGui::Checkbox("Fixed Mass##2", &m_tuning2.fixedEffectiveMass);
+
+		ImGui::Separator();
+
+		if (ImGui::Button("Reset"))
+		{
+			m_position1.Set(-5.0f, 10.0f);
+			m_position2.Set(5.0f, 10.0f);
+			m_rope1.Reset(m_position1);
+			m_rope2.Reset(m_position2);
+		}
+
 		ImGui::End();
 	}
 
@@ -190,7 +202,6 @@ public:
 	b2Rope m_rope2;
 	b2RopeTuning m_tuning1;
 	b2RopeTuning m_tuning2;
-	float m_angle;
 	int32 m_iterations1;
 	int32 m_iterations2;
 	b2Vec2 m_position1;
