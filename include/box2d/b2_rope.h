@@ -33,7 +33,10 @@ enum b2BendingModel
 {
 	b2_springAngleBendingModel = 0,
 	b2_pbdAngleBendingModel,
-	b2_xpbdAngleBendingModel
+	b2_xpbdAngleBendingModel,
+	b2_softAngleBendingModel,
+	b2_pbdDistanceBendingModel,
+	b2_pbdHeightBendingModel
 };
 
 ///
@@ -49,6 +52,7 @@ struct b2RopeTuning
 		bendDamping = 0.0f;
 		isometric = false;
 		fixedEffectiveMass = false;
+		warmStart = false;
 	}
 
 	b2BendingModel bendingModel;
@@ -59,6 +63,7 @@ struct b2RopeTuning
 	float bendDamping;
 	bool isometric;
 	bool fixedEffectiveMass;
+	bool warmStart;
 };
 
 /// 
@@ -101,28 +106,7 @@ public:
 	void Reset(const b2Vec2& position);
 
 	///
-	//int32 GetVertexCount() const
-	//{
-	//	return m_count;
-	//}
-
-	/////
-	//const b2Vec2* GetVertices() const
-	//{
-	//	return m_ps;
-	//}
-
-	///
-	//int32 GetVertexCount() const
-	//{
-	//	return m_count;
-	//}
-
-	/////
-	//const b2Vec2* GetVertices() const
-	//{
-	//	return m_ps;
-	//}
+	void Draw(b2Draw* draw) const;
 
 private:
 
@@ -130,6 +114,9 @@ private:
 	//void SolveBend_PBD_Distance();
 	void SolveBend_PBD_Angle();
 	void SolveBend_XPBD_Angle(float dt);
+	void SolveBend_Soft_Angle(float dt);
+	void SolveBend_PBD_Distance();
+	void SolveBend_PBD_Height();
 	void ApplyBendForces(float dt);
 
 	b2Vec2 m_position;

@@ -45,17 +45,17 @@ public:
 		masses[1] = 0.0f;
 
 		m_tuning1.bendHertz = 10.0f;
-		m_tuning1.bendDamping = 0.7f;
-		m_tuning1.bendStiffness = 0.8f;
+		m_tuning1.bendDamping = 1.0f;
+		m_tuning1.bendStiffness = 1.0f;
 		m_tuning1.bendingModel = b2_springAngleBendingModel;
 
 		m_tuning2.bendHertz = 10.0f;
-		m_tuning2.bendDamping = 0.7f;
-		m_tuning2.bendStiffness = 0.8f;
+		m_tuning2.bendDamping = 1.0f;
+		m_tuning2.bendStiffness = 1.0f;
 		m_tuning2.bendingModel = b2_xpbdAngleBendingModel;
 
-		m_position1.Set(-5.0f, 10.0f);
-		m_position2.Set(5.0f, 10.0f);
+		m_position1.Set(-5.0f, 15.0f);
+		m_position2.Set(5.0f, 15.0f);
 
 		b2RopeDef def;
 		def.vertices = vertices;
@@ -71,8 +71,10 @@ public:
 		def.tuning = m_tuning2;
 		m_rope2.Create(def);
 
-		m_iterations1 = 2;
-		m_iterations2 = 2;
+		m_iterations1 = 4;
+		m_iterations2 = 4;
+
+		m_speed = 10.0f;
 	}
 
 	void UpdateUI() override
@@ -84,7 +86,7 @@ public:
 		ImGui::Separator();
 
 		const ImGuiComboFlags comboFlags = 0;
-		const char* items[] = { "Spring", "PBD", "XPBD" };
+		const char* items[] = { "Spring", "PBD Ang", "XPBD Ang", "Soft Ang", "PBD Dist", "PBD Height" };
 
 		ImGui::Text("Rope 1");
 		static int model1 = m_tuning1.bendingModel;
@@ -109,10 +111,11 @@ public:
 
 		ImGui::SliderInt("Iterations##1", &m_iterations1, 1, 100, "%d");
 		ImGui::SliderFloat("Damping##1", &m_tuning1.bendDamping, 0.0f, 4.0f, "%.1f");
-		ImGui::SliderFloat("Hertz##1", &m_tuning1.bendHertz, 0.0f, 30.0f, "%.0f");
+		ImGui::SliderFloat("Hertz##1", &m_tuning1.bendHertz, 0.0f, 60.0f, "%.0f");
 		ImGui::SliderFloat("Stiffness##1", &m_tuning1.bendStiffness, 0.0f, 1.0f, "%.1f");
 		ImGui::Checkbox("Isometric##1", &m_tuning1.isometric);
 		ImGui::Checkbox("Fixed Mass##1", &m_tuning1.fixedEffectiveMass);
+		ImGui::Checkbox("Warm Start##1", &m_tuning1.warmStart);
 
 		ImGui::Separator();
 
@@ -140,17 +143,20 @@ public:
 
 		ImGui::SliderInt("Iterations##2", &m_iterations2, 1, 100, "%d");
 		ImGui::SliderFloat("Damping##2", &m_tuning2.bendDamping, 0.0f, 4.0f, "%.1f");
-		ImGui::SliderFloat("Hertz##2", &m_tuning2.bendHertz, 0.0f, 30.0f, "%.0f");
+		ImGui::SliderFloat("Hertz##2", &m_tuning2.bendHertz, 0.0f, 60.0f, "%.0f");
 		ImGui::SliderFloat("Stiffness##2", &m_tuning2.bendStiffness, 0.0f, 1.0f, "%.1f");
 		ImGui::Checkbox("Isometric##2", &m_tuning2.isometric);
 		ImGui::Checkbox("Fixed Mass##2", &m_tuning2.fixedEffectiveMass);
+		ImGui::Checkbox("Warm Start##2", &m_tuning2.warmStart);
 
 		ImGui::Separator();
 
+		ImGui::SliderFloat("Speed", &m_speed, 10.0f, 100.0f, "%.0f");
+
 		if (ImGui::Button("Reset"))
 		{
-			m_position1.Set(-5.0f, 10.0f);
-			m_position2.Set(5.0f, 10.0f);
+			m_position1.Set(-5.0f, 15.0f);
+			m_position2.Set(5.0f, 15.0f);
 			m_rope1.Reset(m_position1);
 			m_rope2.Reset(m_position2);
 		}
@@ -169,14 +175,14 @@ public:
 
 		if (glfwGetKey(g_mainWindow, GLFW_KEY_COMMA) == GLFW_PRESS)
 		{
-			m_position1.x -= 8.0f * dt;
-			m_position2.x -= 8.0f * dt;
+			m_position1.x -= m_speed * dt;
+			m_position2.x -= m_speed * dt;
 		}
 
 		if (glfwGetKey(g_mainWindow, GLFW_KEY_PERIOD) == GLFW_PRESS)
 		{
-			m_position1.x += 8.0f * dt;
-			m_position2.x += 8.0f * dt;
+			m_position1.x += m_speed * dt;
+			m_position2.x += m_speed * dt;
 		}
 
 		m_rope1.SetTuning(m_tuning1);
@@ -206,6 +212,7 @@ public:
 	int32 m_iterations2;
 	b2Vec2 m_position1;
 	b2Vec2 m_position2;
+	float m_speed;
 };
 
 static int testIndex = RegisterTest("Rope", "Bending", Rope::Create);
