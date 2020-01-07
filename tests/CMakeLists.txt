@@ -4,8 +4,19 @@ set (TEST_SOURCE_FILES hello_world.cpp)
 
 add_executable(test ${TEST_SOURCE_FILES})
 set_target_properties(test PROPERTIES
-	CXX_STANDARD 11
+    CXX_STANDARD 11
     CXX_STANDARD_REQUIRED YES
     CXX_EXTENSIONS NO
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 target_link_libraries(test PUBLIC box2d)
+
+
+INSTALL(DIRECTORY ../tests 
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/samples"
+)
+
+INSTALL(TARGETS test 
+        RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/bin"        
+)

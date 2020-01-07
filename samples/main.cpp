@@ -23,6 +23,12 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS 1
 
+#if defined(_WIN32)
+	#ifdef __MINGW32__
+	#	include <crtdbg.h>
+	#endif
+#endif
+
 #include "imgui/imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"

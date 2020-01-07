@@ -75,6 +75,13 @@ public:
 	/// @returns true if valid
 	bool Validate() const;
 
+        /// Get the vertex count. recovered from old version,for compatible purpose
+        int32 GetVertexCount() const { return m_count; }
+    
+     
+        /// Get a vertex by index. recovered from old version,for compatible purpose
+        const b2Vec2 &GetVertex(int32 index) const;
+
 	b2Vec2 m_centroid;
 	b2Vec2 m_vertices[b2_maxPolygonVertices];
 	b2Vec2 m_normals[b2_maxPolygonVertices];
@@ -87,6 +94,11 @@ inline b2PolygonShape::b2PolygonShape()
 	m_radius = b2_polygonRadius;
 	m_count = 0;
 	m_centroid.SetZero();
+}
+
+inline const b2Vec2 &b2PolygonShape::GetVertex(int32 index) const {
+  b2Assert(0 <= index && index < m_count);
+  return m_vertices[index];
 }
 
 #endif

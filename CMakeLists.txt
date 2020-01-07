@@ -14,10 +14,10 @@ if (BUILD_TESTS)
 endif()
 
 if (BUILD_SAMPLES)
-	add_subdirectory(extern/glad)
-	add_subdirectory(extern/glfw)
-	add_subdirectory(extern/imgui)
-	add_subdirectory(extern/sajson)
+	# add_subdirectory(extern/glad)
+	# add_subdirectory(extern/glfw)
+	# add_subdirectory(extern/imgui)
+	# add_subdirectory(extern/sajson)
 	add_subdirectory(samples)
 
 	# default startup project for Visual Studio
@@ -26,3 +26,4 @@ if (BUILD_SAMPLES)
 		set_property(TARGET samples PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/samples")
 	endif()
 endif()
+
