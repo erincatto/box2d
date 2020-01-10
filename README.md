@@ -55,8 +55,7 @@ Please do not submit pull requests with new features. Instead, please file an is
 - On Windows you can open box2d.sln
 
 ## Documentation
-You can find documentation related to the project in the [documentation page](http://box2d.org/documentation/) and in the [documentation folder](https://github.com/erincatto/Box2D/tree/master/Box2D/Documentation) in GitHub
-- [User manual](http://box2d.org/manual.pdf)
+- [User manual](https://github.com/erincatto/box2d/tree/master/docs)
 - [Doxygen document](https://github.com/erincatto/Box2D/blob/master/Box2D/Documentation/Doxyfile) with code comments
 - [subreddit](https://www.reddit.com/r/box2d/)
 - [Discord server](https://discord.gg/NKYgCBP)
