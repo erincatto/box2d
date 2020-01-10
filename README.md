@@ -56,7 +56,6 @@ Please do not submit pull requests with new features. Instead, please file an is
 
 ## Documentation
 - [User manual](https://github.com/erincatto/box2d/tree/master/docs)
-- [Doxygen document](https://github.com/erincatto/Box2D/blob/master/Box2D/Documentation/Doxyfile) with code comments
 - [subreddit](https://www.reddit.com/r/box2d/)
 - [Discord server](https://discord.gg/NKYgCBP)
 
