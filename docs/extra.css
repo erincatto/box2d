@@ -1,0 +1,20 @@
+#titlearea {
+    padding: 20px;
+    margin: 0px;
+    width: 100%;
+    border-bottom: 1px solid #5373B4;
+}
+
+.image {
+    margin: 20px;
+    align: center;
+}
+
+.caption {
+    margin-top: 20px;
+    font-weight: bold;
+}
+
+div.contents {
+    max-width: 920px;
+}

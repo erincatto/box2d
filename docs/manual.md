@@ -1,4 +1,4 @@
-# Box2D Manual
+# Manual
 
 ## Overview
 Box2D is a 2D rigid body simulation library for games. Programmers can
