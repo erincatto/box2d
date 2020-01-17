@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 
 # https://cmake.org/cmake/help/latest/command/project.html
-# This defines BOX2D_SOURCE_DIR and BOX2D_BINARY_DIR
-project(BOX2D VERSION 2.4.0 LANGUAGES CXX)
+project(box2d VERSION 2.4.0 LANGUAGES CXX)
 
 # set(CMAKE_CONFIGURATION_TYPES "Debug;RelWithDebInfo" CACHE STRING "" FORCE)
 
