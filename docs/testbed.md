@@ -1,4 +1,4 @@
-# The Testbed
+# Testbed
 Once you have conquered the HelloWorld example, you should start looking
 at Box2D's testbed. The testbed is a testing framework and demo
 environment. Here are some of the features:

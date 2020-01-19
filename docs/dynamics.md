@@ -25,14 +25,14 @@ Bodies have position and velocity. You can apply forces, torques, and
 impulses to bodies. Bodies can be static, kinematic, or dynamic. Here
 are the body type definitions:
 
-#### `b2_staticBody`
+#### b2_staticBody
 A static body does not move under simulation and behaves as if it has
 infinite mass. Internally, Box2D stores zero for the mass and the
 inverse mass. Static bodies can be moved manually by the user. A static
 body has zero velocity. Static bodies do not collide with other static
 or kinematic bodies.
 
-#### `b2_kinematicBody`
+#### b2_kinematicBody
 A kinematic body moves under simulation according to its velocity.
 Kinematic bodies do not respond to forces. They can be moved manually by
 the user, but normally a kinematic body is moved by setting its
@@ -40,7 +40,7 @@ velocity. A kinematic body behaves as if it has infinite mass, however,
 Box2D stores zero for the mass and the inverse mass. Kinematic bodies do
 not collide with other kinematic or static bodies.
 
-#### `b2_dynamicBody`
+#### b2_dynamicBody
 A dynamic body is fully simulated. They can be moved manually by the
 user, but normally they move according to forces. A dynamic body can
 collide with all body types. A dynamic body always has finite, non-zero
