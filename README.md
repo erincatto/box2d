@@ -1,4 +1,4 @@
-![Box2D Logo](https://box2d.org/images/icon.gif)
+![Box2D Logo](https://box2d.org/images/logo.svg)
 
 # Build Status
 [![Build Status](https://travis-ci.org/erincatto/box2d.svg?branch=master)](https://travis-ci.org/erincatto/box2d)
