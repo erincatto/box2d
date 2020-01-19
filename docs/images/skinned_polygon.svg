@@ -9,12 +9,12 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="236.53163"
-   height="176.41858"
+   width="174.87"
+   height="149.37024"
    id="svg2"
    version="1.1"
    inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
-   sodipodi:docname="winding.svg"
+   sodipodi:docname="skinned_polygon.svg"
    inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90">
@@ -126,16 +126,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.70710678"
-     inkscape:cx="-672.64537"
-     inkscape:cy="145.50488"
+     inkscape:zoom="2.8284271"
+     inkscape:cx="64.699886"
+     inkscape:cy="74.828007"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1737"
      inkscape:window-height="1054"
-     inkscape:window-x="25"
-     inkscape:window-y="25"
+     inkscape:window-x="65"
+     inkscape:window-y="121"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -157,85 +157,25 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-245.94154,-381.59189)">
-    <text
-       id="6"
-       xml:space="preserve"
-       x="476.47318"
-       y="507.86407"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000"
-       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
-       inkscape:export-xdpi="90"
-       inkscape:export-ydpi="90">x</text>
-    <text
-       id="7"
-       xml:space="preserve"
-       x="482.47318"
-       y="507.86407"
-       style="font-style:normal;font-weight:normal;font-size:13.80000019px;line-height:0%;font-family:Calibri;text-align:start;text-anchor:start;fill:#000000"
-       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
-       inkscape:export-xdpi="90"
-       inkscape:export-ydpi="90"> </text>
-    <text
-       id="8"
-       xml:space="preserve"
-       x="387.67319"
-       y="387.19345"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000"
-       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
-       inkscape:export-xdpi="90"
-       inkscape:export-ydpi="90">y</text>
-    <text
-       id="9"
-       xml:space="preserve"
-       x="396.32318"
-       y="383.19345"
-       style="font-style:normal;font-weight:normal;font-size:13.80000019px;line-height:0%;font-family:Calibri;text-align:start;text-anchor:start;fill:#000000"
-       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
-       inkscape:export-xdpi="90"
-       inkscape:export-ydpi="90"> </text>
-    <text
-       id="11"
-       xml:space="preserve"
-       x="245.37318"
-       y="420.09586"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000"
-       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
-       inkscape:export-xdpi="90"
-       inkscape:export-ydpi="90">CCW winding</text>
-    <text
-       id="12"
-       xml:space="preserve"
-       x="294.62317"
-       y="397.59586"
-       style="font-style:normal;font-weight:normal;font-size:13.80000019px;line-height:0%;font-family:Calibri;text-align:start;text-anchor:start;fill:#000000"
-       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
-       inkscape:export-xdpi="90"
-       inkscape:export-ydpi="90"> </text>
-    <path
-       style="fill:none;stroke:#000000;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Arrow2Mend)"
-       d="m 345.5,414.36218 -56.5,34"
-       id="path4267"
-       sodipodi:nodetypes="cc"
-       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
-       inkscape:export-xdpi="90"
-       inkscape:export-ydpi="90"
-       inkscape:connector-curvature="0" />
+     transform="translate(-283.1327,-415.03117)">
     <path
        style="fill:#d7e3f4;fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 289.5,466.36218 26,47.5 57.5,43.5 77.5,-70 -17,-61.5 -70.5,-4 z"
        id="path5829"
-       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
-       inkscape:export-xdpi="90"
-       inkscape:export-ydpi="90"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\SkinnedPolygon.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545"
        inkscape:connector-curvature="0" />
     <path
-       style="fill:none;stroke:#000000;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow2Mstart);marker-end:url(#Arrow2Mend)"
-       d="m 384,392.86218 v 101 h 95.5"
-       id="path5241"
-       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
-       inkscape:export-xdpi="90"
-       inkscape:export-ydpi="90"
-       inkscape:connector-curvature="0" />
+       sodipodi:type="inkscape:offset"
+       inkscape:radius="6.4355307"
+       inkscape:original="M 486.25 547.125 L 412.75 591.625 L 438.75 639.125 L 496.25 682.625 L 573.75 612.625 L 556.75 551.125 L 486.25 547.125 z "
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:1, 4;stroke-dashoffset:0;stroke-opacity:1"
+       id="path3928"
+       d="m 485.9707,540.69531 a 6.4361742,6.4361742 0 0 0 -3.05468,0.92383 l -73.5,44.5 a 6.4361742,6.4361742 0 0 0 -2.31055,8.5957 l 26,47.5 a 6.4361742,6.4361742 0 0 0 1.76172,2.04297 l 57.5,43.5 a 6.4361742,6.4361742 0 0 0 8.19726,-0.35742 l 77.5,-70 a 6.4361742,6.4361742 0 0 0 1.88867,-6.49023 l -17,-61.5 a 6.4361742,6.4361742 0 0 0 -5.83789,-4.71094 l -70.5,-4 a 6.4361742,6.4361742 0 0 0 -0.64453,-0.004 z"
+       transform="translate(-122.68303,-125.1579)"
+       inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\SkinnedPolygon.png"
+       inkscape:export-xdpi="179.94545"
+       inkscape:export-ydpi="179.94545" />
   </g>
 </svg>

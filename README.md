@@ -1,4 +1,4 @@
-![Box2D Logo](http://box2d.org/images/icon.gif)
+![Box2D Logo](https://box2d.org/images/icon.gif)
 
 # Build Status
 [![Build Status](https://travis-ci.org/erincatto/box2d.svg?branch=master)](https://travis-ci.org/erincatto/box2d)
@@ -55,11 +55,9 @@ Please do not submit pull requests with new features. Instead, please file an is
 - On Windows you can open box2d.sln
 
 ## Documentation
-- [User manual](https://github.com/erincatto/box2d/tree/master/docs)
+- [Manual](https://box2d.org/documentation/)
 - [subreddit](https://www.reddit.com/r/box2d/)
 - [Discord server](https://discord.gg/NKYgCBP)
-
-You can also visit the project wiki where you will find the [FAQ](https://github.com/erincatto/Box2D/wiki/FAQ)'s page
 
 ## License
 

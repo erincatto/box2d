@@ -1,0 +1,603 @@
+/*
+Doxygen CSS overrides
+Adapted from: https://github.com/MaJerle/doxygen-dark-theme
+blog-light: #fafafa
+blog-dark: #252627
+Dark background: #353629;
+New light dark background #32363d
+Light background: #dfe5f2;
+*/
+
+body {
+	background: #282923;
+	background-image: none;
+	color: #D8D8D8;
+}
+
+#titlearea {
+    border-bottom: 1px solid #32363d;
+}
+
+div.contents {
+    max-width: 900px;
+}
+
+.image {
+	background-color: #CCCCCC;
+	border: 1px solid #000000;
+	margin: 10px;
+	padding: 10px;
+}
+
+.image img, object {
+	padding: 10px;
+	margin: 10px 0px;
+	background-color: white;
+	border: 1px solid #000000;
+}
+
+.caption {
+	padding-top: 10px;
+	color: black;
+}
+
+div.fragment, pre.fragment {
+	margin: 20px 0px;
+	padding: 10px;
+}
+
+blockquote.doxtable {
+	border: 1px solid #000000;
+	background: #32363d;
+    background-color: #bf5f82;
+    background-color: #456114;
+    margin: 10px 24px 10px 4px;
+}
+
+div.toc {
+	margin: 0 !important;
+	border-radius: 4px !important;
+}
+
+div.toc h3 {
+	font-size: 150%;
+	color: inherit;
+}
+
+.contents table.doxtable {
+	margin: 0 auto;
+}
+
+.fieldtable {
+	box-shadow: none !important;
+	-webkit-box-shadow: none;
+	-moz-box-shadow: none;
+}
+
+.memitem,
+.memproto,
+.memdoc {
+	box-shadow: none;
+	-webkit-box-shadow: none;
+	-moz-box-shadow: none;
+	background-image: none;
+}
+
+.tablist a:hover,
+.tablist li.current a {
+	text-shadow: none;
+	-moz-text-shadow: none;
+	-webkit-text-shadow: none;
+}
+
+.textblock h1 {
+    border-bottom: 1px solid #32363d;
+    border-left: 3px solid #32363d;
+    margin: 40px 0px 10px 0px;
+    padding-bottom: 10px;
+    padding-top: 10px;
+    padding-left: 5px;
+}
+
+.textblock h1:first-child {
+	margin-top: 10px;
+}
+
+dl.note,
+dl.warning,
+dl.todo,
+dl.deprecated,
+dl.reflist {
+	border: 0;
+	padding: 0px;
+	margin: 4px 0px 4px 0px;
+	border-radius: 4px;
+}
+
+dl.note dt,
+dl.warning dt,
+dl.todo dt,
+dl.deprecated dt,
+dl.reflist dt {
+	margin: 0;
+	font-size: 14px;
+	padding: 2px 4px;
+
+	border: none;
+	border-top-left-radius: 0px;
+	border-top-right-radius:0px;
+
+	font-weight: bold;
+	text-transform: uppercase;
+	color: #FFFFFF !important;
+
+	box-shadow: none;
+	-webkit-box-shadow: none;
+	-moz-box-shadow: none;
+	text-shadow: none;
+}
+
+dl.note dd,
+dl.warning dd,
+dl.todo dd,
+dl.deprecated dd,
+dl.reflist dd {
+	margin: 0;
+	padding: 4px;
+	background: none;
+
+	color: #222222;
+
+	border: 1px solid;
+	border-bottom-left-radius: 0px;
+	border-bottom-right-radius: 0px;
+	border-top: none;
+
+	box-shadow: none;
+	-webkit-box-shadow: none;
+	-moz-box-shadow: none;
+	text-shadow: none;
+}
+
+dl.reflist dd {
+	margin-bottom: 15px;
+}
+
+dl.note dt {
+	background-color: #cbc693;
+}
+
+dl.warning dt {
+	background-color: #bf5f82;
+}
+
+dl.todo dt {
+	background-color: #82b3c9;
+}
+
+dl.deprecated dt {
+	background-color: #af8eb5;
+}
+
+dl.reflist dt {
+	background-color: #cbae82;
+}
+
+dl.note dd {
+	background-color: #fff9c4;
+	border-color: #cbc693;
+}
+
+dl.warning dd {
+	background-color: #f48fb1;
+	border-color: #bf5f82;
+}
+
+dl.todo dd {
+	background-color: #b3e5fc;
+	border-color: #82b3c9;
+}
+
+dl.deprecated dd {
+	background-color: #e1bee7;
+	border-color: #af8eb5;
+}
+
+dl.reflist dd {
+	background-color: #ffe0b2;
+	border-color: #cbae82;
+}
+
+#docs_list {
+	padding: 0 10px;
+}
+
+#docs_list ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+#docs_list ul li {
+	display: inline-block;
+	border-right: 1px solid #BFBFBF;
+}
+
+#docs_list ul li:last-child {
+	border-right: none;
+}
+
+#docs_list ul li a {
+	display: block;
+	padding: 8px 13px;
+	font-weight: bold;
+	font-size: 15px;
+}
+
+#docs_list ul li a:hover,
+#docs_list ul li a.docs_current {
+	text-decoration: underline;
+}
+
+.ui-resizable-e {
+	width: 3px;
+}
+
+.download_url {
+	font-weight: bold;
+	font-size: 150%;
+	line-height: 150%;
+}
+
+span.lineno a {
+	text-decoration: none;
+}
+
+.directory .arrow {
+	height: initial;
+}
+
+.directory td.entry {
+	padding: 3px 6px;
+}
+
+.memproto table td {
+	font-family: monospace, fixed !important;
+}
+
+td.memItemLeft, td.memItemRight {
+	font-family: monospace, fixed;
+}
+
+.paramname, .paramname em {
+	font-style: italic;
+}
+
+.memdoc {
+	text-shadow: none;
+}
+
+.memItem {
+	font-family: monospace, fixed;
+}
+
+.memItem table {
+	font-family: inherit;
+}
+
+img.footer {
+	height: 22px;
+}
+
+.sm-dox {
+	background: #dfe5f2 !important;
+}
+
+.sm-dox a {
+	background: none;
+}
+
+div.fragment, pre.fragment {
+	border: 1px solid #000000;
+	background: #32363d;
+}
+
+a, a:link, a:visited {
+	color: #67d8ef !important;
+}
+
+.highlighted {
+	background: none !important;
+}
+
+a.highlighted {
+	background: none !important;
+}
+
+#main-nav {
+	border-bottom: 1px solid #32363d;
+}
+
+#main-nav .sm-dox {
+	background: transparent !important;
+}
+
+.sm-dox a {
+	text-shadow: none !important;
+	background: transparent !important;
+}
+
+.sm-dox a:hover {
+	background: #282923 !important;
+}
+
+.sm-dox {
+	text-shadow: none !important;
+	box-shadow: none !important;
+}
+
+.sm-dox ul {
+	border: 1px solid #000000;
+	background: #32363d;
+}
+
+.directory tr.even {
+	background: #32363d;
+}
+
+#MSearchSelectWindow {
+	border: 1px solid #000000;
+	background: #32363d;
+}
+
+a.selectItem {
+	padding: 3px;
+}
+
+a.SelectItem:hover {
+	background: #282923 !important;
+}
+
+#MSearchResultsWindow {
+	border: 1px solid #000000;
+	background: #32363d;
+	color: #67d8ef !important;;
+}
+
+#nav-tree {
+	background: transparent;
+}
+
+#nav-tree .selected {
+	background-image: none;
+	background: #32363d;
+}
+
+
+div.toc {
+	background: #32363d;
+	border: 1px solid #000000;
+}
+
+div.toc h3 {
+	font-size: 150%;
+	color: inherit;
+}
+
+table.doxtable tr:nth-child(even) td {
+	background: #32363d;
+}
+
+div.header {
+	background: transparent;
+	border-bottom: 1px solid #32363d;
+}
+
+.fieldtable th {
+	background: #282923;
+	color: inherit;
+}
+
+.memdoc {
+	border: 1px solid #A8B8D9;
+}
+
+.tabs, .tabs2, .tabs3 {
+	background: #DDDDDD;
+}
+
+.tablist li {
+	background: transparent !important;
+}
+
+.tablist a {
+	background-image: none;
+	border-right: 1px solid #999999;
+
+	color: #32363d;
+}
+
+.tablist a:hover,
+.tablist li.current a {
+	text-decoration: none;
+	color: #000000;
+	background: #CCCCCC;
+	background-image: none;
+}
+
+#docs_list {
+	background: #32363d;
+}
+
+#docs_list ul li {
+	border-right: 1px solid #BFBFBF;
+}
+
+#docs_list ul li a {
+	color: #1b1e21;
+}
+
+#docs_list ul li a:hover,
+#docs_list ul li a.docs_current {
+	background: #282923;
+}
+
+.ui-resizable-e {
+	background: #32363d;
+}
+
+div.line {
+	background: transparent;
+	color: inherit;
+}
+
+div.line a {
+	text-decoration: underline;
+    color: inherit;
+}
+
+span.keyword {
+	color: #f92472;
+	font-style: italic;
+}
+
+span.keywordtype {
+	color: #67cfc1;
+	font-style: italic;
+}
+
+span.keywordflow {
+	color: #f92472;
+	font-style: italic;
+}
+
+span.comment {
+	color: #74705a;
+}
+
+span.preprocessor {
+	color: #a6e22b;
+}
+
+span.stringliteral {
+	color: #e7db74;
+}
+
+span.charliteral {
+	color: #e7db74;
+}
+
+span.vhdldigit { 
+	color: #ff00ff;
+}
+
+span.vhdlchar { 
+	color: #000000;
+}
+
+span.vhdlkeyword { 
+	color: #700070;
+}
+
+span.vhdllogic { 
+	color: #ff0000;
+}
+
+span.lineno {
+	background: transparent;
+}
+
+span.lineno a {
+	background: transparent;
+}
+
+.mdescLeft, .mdescRight, .memItemLeft, .memItemRight,
+.memTemplItemLeft, .memTemplItemRight, .memTemplParams {
+	background: #32363d;
+	color: inherit;
+}
+
+.memSeparator {
+	border: none;
+	background: transparent;
+}
+
+h2.groupheader {
+	color: #67d8ef;
+}
+
+.memtitle {
+	background: #32363d !important;
+	border-color: #000000;
+}
+
+.memitem {
+	background: #32363d !important;
+	color: inherit;
+	text-shadow: none;
+}
+
+.memproto {
+	background: inherit;
+	border-color: #000000;
+	color: inherit;
+	text-shadow: none;
+}
+
+.memproto table td {
+	font-family: monospace, fixed !important;
+}
+
+td.memItemLeft, td.memItemRight {
+	font-family: monospace, fixed;
+}
+
+.paramname, .paramname em {
+	color: #bf5f82;
+}
+
+.memdoc {
+	background: inherit;
+	border-color: #000000;
+}
+
+#nav-path {
+	background: transparent;
+}
+
+#nav-path ul {
+	background: transparent;
+	color: inherit;
+	border: none;
+	border-top: 1px solid #32363d;
+}
+
+.navpath li.footer {
+	color: inherit;
+}
+
+.navpath li.navelem a {
+	text-shadow: none;
+}
+
+::-webkit-scrollbar {
+	width: 10px;
+}
+
+::-webkit-scrollbar-track {
+	border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #234567;
+	border: none;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #32363d; 
+}
+
+h1.glow, h2.glow, h3.glow,
+h4.glow, h5.glow, h6.glow {
+	text-shadow: 0 0 15px #67d8ef;
+}

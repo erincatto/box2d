@@ -163,6 +163,7 @@ public:
 	/// Cast a ray against this shape.
 	/// @param output the ray-cast results.
 	/// @param input the ray-cast input parameters.
+	/// @param childIndex the child shape index (e.g. edge index)
 	bool RayCast(b2RayCastOutput* output, const b2RayCastInput& input, int32 childIndex) const;
 
 	/// Get the mass data for this fixture. The mass data is based on the density and

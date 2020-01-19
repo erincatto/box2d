@@ -150,6 +150,7 @@ public:
 	/// @param fixture the fixture hit by the ray
 	/// @param point the point of initial intersection
 	/// @param normal the normal vector at the point of intersection
+	/// @param fraction the fraction along the ray at the point of intersection
 	/// @return -1 to filter, 0 to terminate, fraction to clip the ray for
 	/// closest hit, 1 to continue
 	virtual float ReportFixture(	b2Fixture* fixture, const b2Vec2& point,

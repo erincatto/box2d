@@ -9,11 +9,11 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="744.09448819"
-   height="1052.3622047"
+   width="296.5"
+   height="142.84351"
    id="svg4080"
    version="1.1"
-   inkscape:version="0.47 r22583"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
    sodipodi:docname="captured.svg"
    inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\captured.png"
    inkscape:export-xdpi="90"
@@ -35,9 +35,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2"
-     inkscape:cx="276.5"
-     inkscape:cy="516"
+     inkscape:zoom="1.4142136"
+     inkscape:cx="-105.19711"
+     inkscape:cy="-99.626528"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -45,7 +45,11 @@
      inkscape:window-height="1138"
      inkscape:window-x="-8"
      inkscape:window-y="-8"
-     inkscape:window-maximized="1" />
+     inkscape:window-maximized="1"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
   <metadata
      id="metadata4085">
     <rdf:RDF>
@@ -61,68 +65,60 @@
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
-     id="layer1">
+     id="layer1"
+     transform="translate(-245,-431.01868)">
     <rect
-       style="fill:none;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="rect4090"
        width="295.5"
        height="17"
        x="245.5"
        y="556.36218" />
     <rect
-       style="fill:none;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="rect4602"
        width="8"
        height="134"
        x="565.5022"
        y="92.054398"
-       transform="matrix(0.76995664,0.63809621,-0.63809621,0.76995664,0,0)" />
+       transform="rotate(39.650005)" />
     <rect
        y="502.45367"
        x="298.04913"
        height="134"
        width="8"
        id="rect4604"
-       style="fill:none;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
-       transform="matrix(0.98091789,-0.19442246,0.19442246,0.98091789,0,0)" />
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       transform="rotate(-11.210987)" />
     <text
        xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Calibri;-inkscape-font-specification:Calibri"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
        x="328"
        y="465.36218"
-       id="text4608"
-       sodipodi:linespacing="125%"><tspan
+       id="text4608"><tspan
          sodipodi:role="line"
          id="tspan4610"
          x="328"
-         y="465.36218">t=0</tspan></text>
+         y="465.36218"
+         style="font-size:12px;line-height:1.25">t=0</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Calibri;-inkscape-font-specification:Calibri"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
        x="419.5"
        y="465.33875"
-       id="text4612"
-       sodipodi:linespacing="125%"><tspan
+       id="text4612"><tspan
          sodipodi:role="line"
          id="tspan4614"
          x="419.5"
-         y="465.33875">t=1</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Calibri;-inkscape-font-specification:Calibri"
-       x="354"
-       y="598.36218"
-       id="text4616"
-       sodipodi:linespacing="125%"><tspan
-         sodipodi:role="line"
-         id="tspan3596">captured collision</tspan></text>
+         y="465.33875"
+         style="font-size:12px;line-height:1.25">t=1</tspan></text>
     <rect
-       transform="matrix(0.86105534,0.50851126,-0.50851126,0.86105534,0,0)"
+       transform="rotate(30.564716)"
        y="182.57234"
        x="547.54456"
        height="134"
        width="8"
        id="rect2822"
-       style="fill:none;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1,2;stroke-dashoffset:0" />
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:1, 2;stroke-dashoffset:0;stroke-opacity:1" />
   </g>
 </svg>

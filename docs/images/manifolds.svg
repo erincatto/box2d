@@ -9,11 +9,11 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="744.09448819"
-   height="1052.3622047"
+   width="278.64941"
+   height="199.68138"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.1 "
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
    sodipodi:docname="manifolds.svg"
    inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\manifolds.png"
    inkscape:export-xdpi="90"
@@ -23,28 +23,30 @@
     <marker
        inkscape:stockid="Arrow2Mend"
        orient="auto"
-       refY="0.0"
-       refX="0.0"
+       refY="0"
+       refX="0"
        id="Arrow2Mend"
-       style="overflow:visible;">
+       style="overflow:visible">
       <path
          id="path3696"
-         style="font-size:12.0;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round;"
-         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
-         transform="scale(0.6) rotate(180) translate(0,0)" />
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="scale(-0.6)"
+         inkscape:connector-curvature="0" />
     </marker>
     <marker
        inkscape:stockid="Arrow2Lend"
        orient="auto"
-       refY="0.0"
-       refX="0.0"
+       refY="0"
+       refX="0"
        id="Arrow2Lend"
-       style="overflow:visible;">
+       style="overflow:visible">
       <path
          id="path3690"
-         style="font-size:12.0;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round;"
-         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
-         transform="scale(1.1) rotate(180) translate(1,0)" />
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         inkscape:connector-curvature="0" />
     </marker>
     <inkscape:perspective
        sodipodi:type="inkscape:persp3d"
@@ -92,7 +94,8 @@
          id="path3696-9"
          style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
          d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
-         transform="scale(-0.6,-0.6)" />
+         transform="scale(-0.6)"
+         inkscape:connector-curvature="0" />
     </marker>
     <inkscape:perspective
        id="perspective4342"
@@ -110,8 +113,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2"
-     inkscape:cx="391"
-     inkscape:cy="397"
+     inkscape:cx="107.80664"
+     inkscape:cy="78.632812"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -119,7 +122,11 @@
      inkscape:window-height="1068"
      inkscape:window-x="214"
      inkscape:window-y="23"
-     inkscape:window-maximized="0" />
+     inkscape:window-maximized="0"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -135,21 +142,24 @@
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
-     id="layer1">
+     id="layer1"
+     transform="translate(-208.19336,-534.31362)">
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 227,602.36218 79,-1 14,56 -91,43 -2,-98 z"
+       d="m 227,602.36218 79,-1 14,56 -91,43 z"
        id="path2816"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\manifolds.png"
        inkscape:export-xdpi="180.11958"
-       inkscape:export-ydpi="180.11958" />
+       inkscape:export-ydpi="180.11958"
+       inkscape:connector-curvature="0" />
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 246.19848,535.12334 80.64122,69.26034 -116.72691,8.47526 36.08569,-77.7356 z"
+       d="m 246.19848,535.12334 80.64122,69.26034 -116.72691,8.47526 z"
        id="path2818"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\manifolds.png"
        inkscape:export-xdpi="180.11958"
-       inkscape:export-ydpi="180.11958" />
+       inkscape:export-ydpi="180.11958"
+       inkscape:connector-curvature="0" />
     <rect
        style="fill:#00ff00;fill-opacity:1;stroke-width:1.5;stroke-miterlimit:4;stroke-dasharray:none"
        id="rect2820"
@@ -172,24 +182,22 @@
        inkscape:export-ydpi="180.11958" />
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 386,601.86218 79,-1 14,56 -91,43 -2,-98 z"
+       d="m 386,601.86218 79,-1 14,56 -91,43 z"
        id="path2816-7"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\manifolds.png"
        inkscape:export-xdpi="180.11958"
-       inkscape:export-ydpi="180.11958" />
-    <path
-       sodipodi:type="arc"
-       style="fill:none;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       inkscape:export-ydpi="180.11958"
+       inkscape:connector-curvature="0" />
+    <circle
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="path2866"
-       sodipodi:cx="428.75"
-       sodipodi:cy="556.61218"
-       sodipodi:rx="34.75"
-       sodipodi:ry="34.75"
-       d="m 463.5,556.61218 a 34.75,34.75 0 1 1 -69.5,0 34.75,34.75 0 1 1 69.5,0 z"
        transform="translate(-2,14)"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\manifolds.png"
        inkscape:export-xdpi="180.11958"
-       inkscape:export-ydpi="180.11958" />
+       inkscape:export-ydpi="180.11958"
+       cx="428.75"
+       cy="556.61218"
+       r="34.75" />
     <rect
        style="fill:#00ff00;fill-opacity:1;stroke-width:1.5;stroke-miterlimit:4;stroke-dasharray:none"
        id="rect2820-4"
@@ -202,45 +210,47 @@
        inkscape:export-ydpi="180.11958" />
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Mend)"
-       d="m 264,601.36218 0,-26.5"
+       d="m 264,601.36218 v -26.5"
        id="path3664"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\manifolds.png"
        inkscape:export-xdpi="180.11958"
-       inkscape:export-ydpi="180.11958" />
+       inkscape:export-ydpi="180.11958"
+       inkscape:connector-curvature="0" />
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Mend)"
-       d="m 427.50961,601.02437 0,-26.5"
+       d="m 427.50961,601.02437 v -26.5"
        id="path3664-4"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\manifolds.png"
        inkscape:export-xdpi="180.11958"
-       inkscape:export-ydpi="180.11958" />
+       inkscape:export-ydpi="180.11958"
+       inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Calibri;-inkscape-font-specification:Calibri"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
        x="208"
        y="731.86218"
        id="text4330"
-       sodipodi:linespacing="125%"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\manifolds.png"
        inkscape:export-xdpi="180.11958"
        inkscape:export-ydpi="180.11958"><tspan
          sodipodi:role="line"
          id="tspan4332"
          x="208"
-         y="731.86218">two points, one normal</tspan></text>
+         y="731.86218"
+         style="font-size:12px;line-height:1.25">two points, one normal</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Calibri;-inkscape-font-specification:Calibri"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
        x="378.83105"
        y="731.86218"
        id="text4330-8"
-       sodipodi:linespacing="125%"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\manifolds.png"
        inkscape:export-xdpi="180.11958"
        inkscape:export-ydpi="180.11958"><tspan
          sodipodi:role="line"
          id="tspan4332-8"
          x="378.83105"
-         y="731.86218">one point, one normal</tspan></text>
+         y="731.86218"
+         style="font-size:12px;line-height:1.25">one point, one normal</tspan></text>
   </g>
 </svg>
