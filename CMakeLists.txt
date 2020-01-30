@@ -11,7 +11,7 @@ add_subdirectory(src)
 
 option(BOX2D_BUILD_TESTS "Build the Box2D unit tests" ON)
 option(BOX2D_BUILD_SAMPLES "Build the Box2D samples" ON)
-option(BOX2D_BUILD_DOCS "Build the Box2D documentation" ON)
+option(BOX2D_BUILD_DOCS "Build the Box2D documentation" OFF)
 
 if (BOX2D_BUILD_DOCS)
     set(DOXYGEN_SKIP_DOT TRUE)

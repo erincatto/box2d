@@ -44,13 +44,13 @@ public:
 		masses[0] = 0.0f;
 		masses[1] = 0.0f;
 
-		m_tuning1.bendHertz = 10.0f;
-		m_tuning1.bendDamping = 1.0f;
+		m_tuning1.bendHertz = 15.0f;
+		m_tuning1.bendDamping = 0.7f;
 		m_tuning1.bendStiffness = 1.0f;
-		m_tuning1.bendingModel = b2_springAngleBendingModel;
+		m_tuning1.bendingModel = b2_softAngleBendingModel;
 
-		m_tuning2.bendHertz = 10.0f;
-		m_tuning2.bendDamping = 1.0f;
+		m_tuning2.bendHertz = 15.0f;
+		m_tuning2.bendDamping = 0.7f;
 		m_tuning2.bendStiffness = 1.0f;
 		m_tuning2.bendingModel = b2_xpbdAngleBendingModel;
 
@@ -71,8 +71,8 @@ public:
 		def.tuning = m_tuning2;
 		m_rope2.Create(def);
 
-		m_iterations1 = 4;
-		m_iterations2 = 4;
+		m_iterations1 = 8;
+		m_iterations2 = 8;
 
 		m_speed = 10.0f;
 	}
