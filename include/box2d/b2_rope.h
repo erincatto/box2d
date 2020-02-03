@@ -120,7 +120,7 @@ public:
 private:
 
 	void SolveStretch_PBD();
-	void SolveStretch_XPBD();
+	void SolveStretch_XPBD(float dt);
 	void SolveBend_PBD_Angle();
 	void SolveBend_XPBD_Angle(float dt);
 	void SolveBend_PBD_Distance();

@@ -110,14 +110,19 @@ void b2Rope::Create(const b2RopeDef& def)
 
 	for (int32 i = 0; i < m_stretchCount; ++i)
 	{
+		b2RopeStretch& c = m_stretchConstraints[i];
+
 		b2Vec2 p1 = m_ps[i];
 		b2Vec2 p2 = m_ps[i+1];
 
-		m_stretchConstraints[i].i1 = i;
-		m_stretchConstraints[i].i2 = i + 1;
-		m_stretchConstraints[i].L = b2Distance(p1, p2);
-		m_stretchConstraints[i].invMass1 = m_invMasses[i];
-		m_stretchConstraints[i].invMass2 = m_invMasses[i + 1];
+		c.i1 = i;
+		c.i2 = i + 1;
+		c.L = b2Distance(p1, p2);
+		c.invMass1 = m_invMasses[i];
+		c.invMass2 = m_invMasses[i + 1];
+		c.lambda = 0.0f;
+		c.damper = 0.0f;
+		c.spring = 0.0f;
 	}
 
 	for (int32 i = 0; i < m_bendCount; ++i)
@@ -171,8 +176,7 @@ void b2Rope::SetTuning(const b2RopeTuning& tuning)
 
 	// Pre-compute spring and damper values based on tuning
 
-	// omega = 2 * pi * hz
-	const float omega = 2.0f * b2_pi * m_tuning.bendHertz;
+	const float bendOmega = 2.0f * b2_pi * m_tuning.bendHertz;
 
 	for (int32 i = 0; i < m_bendCount; ++i)
 	{
@@ -188,9 +192,29 @@ void b2Rope::SetTuning(const b2RopeTuning& tuning)
 			continue;
 		}
 
-		// Flatten the triamgle formed by the two edges
+		// Flatten the triangle formed by the two edges
 		float J2 = 1.0f / c.L1 + 1.0f / c.L2;
 		float sum = c.invMass1 / L1sqr + c.invMass2 * J2 * J2 + c.invMass3 / L2sqr;
+		if (sum == 0.0f)
+		{
+			c.spring = 0.0f;
+			c.damper = 0.0f;
+			continue;
+		}
+
+		float mass = 1.0f / sum;
+
+		c.spring = mass * bendOmega * bendOmega;
+		c.damper = 2.0f * mass * m_tuning.bendDamping * bendOmega;
+	}
+	
+	const float stretchOmega = 2.0f * b2_pi * m_tuning.stretchHertz;
+
+	for (int32 i = 0; i < m_stretchCount; ++i)
+	{
+		b2RopeStretch& c = m_stretchConstraints[i];
+
+		float sum = c.invMass1 + c.invMass2;
 		if (sum == 0.0f)
 		{
 			continue;
@@ -198,8 +222,8 @@ void b2Rope::SetTuning(const b2RopeTuning& tuning)
 
 		float mass = 1.0f / sum;
 
-		c.spring = mass * omega * omega;
-		c.damper = 2.0f * mass * m_tuning.bendDamping * omega;
+		c.spring = mass * stretchOmega * stretchOmega;
+		c.damper = 2.0f * mass * m_tuning.stretchDamping * stretchOmega;
 	}
 }
 
@@ -238,6 +262,11 @@ void b2Rope::Step(float dt, int32 iterations, const b2Vec2& position)
 		m_bendConstraints[i].lambda = 0.0f;
 	}
 
+	for (int32 i = 0; i < m_stretchCount; ++i)
+	{
+		m_stretchConstraints[i].lambda = 0.0f;
+	}
+
 	// Update position
 	for (int32 i = 0; i < m_count; ++i)
 	{
@@ -270,7 +299,7 @@ void b2Rope::Step(float dt, int32 iterations, const b2Vec2& position)
 		}
 		else if (m_tuning.stretchingModel == b2_xpbdStretchingModel)
 		{
-			SolveStretch_XPBD();
+			SolveStretch_XPBD(dt);
 		}
 	}
 
@@ -296,6 +325,11 @@ void b2Rope::Reset(const b2Vec2& position)
 	for (int32 i = 0; i < m_bendCount; ++i)
 	{
 		m_bendConstraints[i].lambda = 0.0f;
+	}
+
+	for (int32 i = 0; i < m_stretchCount; ++i)
+	{
+		m_stretchConstraints[i].lambda = 0.0f;
 	}
 }
 
@@ -330,19 +364,28 @@ void b2Rope::SolveStretch_PBD()
 	}
 }
 
-void b2Rope::SolveStretch_XPBD()
+void b2Rope::SolveStretch_XPBD(float dt)
 {
-	const float stiffness = m_tuning.stretchStiffness;
+	b2Assert(dt > 0.0f);
+
+	// omega = 2 * pi * hz
+	const float omega = 2.0f * b2_pi * m_tuning.bendHertz;
 
 	for (int32 i = 0; i < m_stretchCount; ++i)
 	{
-		const b2RopeStretch& c = m_stretchConstraints[i];
+		b2RopeStretch& c = m_stretchConstraints[i];
 
 		b2Vec2 p1 = m_ps[c.i1];
 		b2Vec2 p2 = m_ps[c.i2];
 
-		b2Vec2 d = p2 - p1;
-		float L = d.Normalize();
+		b2Vec2 dp1 = p1 - m_p0s[c.i1];
+		b2Vec2 dp2 = p2 - m_p0s[c.i2];
+
+		b2Vec2 u = p2 - p1;
+		float L = u.Normalize();
+
+		b2Vec2 J1 = -u;
+		b2Vec2 J2 = u;
 
 		float sum = c.invMass1 + c.invMass2;
 		if (sum == 0.0f)
@@ -350,24 +393,25 @@ void b2Rope::SolveStretch_XPBD()
 			continue;
 		}
 
-		float impulse = -stiffness * angle / sum;
+		const float alpha = 1.0f / (c.spring * dt * dt);
+		const float beta = dt * dt * c.damper;
+		const float sigma = alpha * beta / dt;
+		float C = L - c.L;
+
+		// This is using the initial velocities
+		float Cdot = b2Dot(J1, dp1) + b2Dot(J2, dp2);
+
+		float B = C + alpha * c.lambda + sigma * Cdot;
+		float sum2 = (1.0f + sigma) * sum + alpha;
+
+		float impulse = -B / sum2;
 
 		p1 += (c.invMass1 * impulse) * J1;
 		p2 += (c.invMass2 * impulse) * J2;
-		p3 += (c.invMass3 * impulse) * J3;
 
 		m_ps[c.i1] = p1;
 		m_ps[c.i2] = p2;
-		m_ps[c.i3] = p3;
-
-		float s1 = c.invMass1 / sum;
-		float s2 = c.invMass2 / sum;
-
-		p1 -= stiffness * s1 * (c.L - L) * d;
-		p2 += stiffness * s2 * (c.L - L) * d;
-
-		m_ps[c.i1] = p1;
-		m_ps[c.i2] = p2;
+		c.lambda += impulse;
 	}
 }
 
