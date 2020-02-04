@@ -716,8 +716,16 @@ void b2Rope::SolveBend_PBD_Height()
 
 		float alpha = b2Dot(e2, r) / rr;
 		float beta = b2Dot(e1, r) / rr;
-		b2Vec2 d = alpha * p1 + beta * p3 - p2;
 
+		// Check for closest point outside of segment between p1 and p3.
+		// This can happen at acute angles where the triangle is a sliver.
+		// When this happens the rope may buckle.
+		if (alpha < 0.0f || 1.0f < alpha || beta < 0.0f || 1.0f < beta)
+		{
+			continue;
+		}
+
+		b2Vec2 d = alpha * p1 + beta * p3 - p2;
 		float dLen = d.Length();
 
 		if (dLen == 0.0f)
