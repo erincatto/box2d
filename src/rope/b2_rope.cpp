@@ -42,6 +42,7 @@ struct b2RopeBend
 	float invEffectiveMass;
 	float lambda;
 	float L1, L2;
+	float alpha1, alpha2;
 	float spring;
 	float damper;
 };
@@ -145,24 +146,35 @@ void b2Rope::Create(const b2RopeDef& def)
 		c.lambda = 0.0f;
 
 		// Pre-compute effective mass (TODO use flattened config)
-		b2Vec2 d1 = p2 - p1;
-		b2Vec2 d2 = p3 - p2;
-		float L1sqr = d1.LengthSquared();
-		float L2sqr = d2.LengthSquared();
+		b2Vec2 e1 = p2 - p1;
+		b2Vec2 e2 = p3 - p2;
+		float L1sqr = e1.LengthSquared();
+		float L2sqr = e2.LengthSquared();
 
 		if (L1sqr * L2sqr == 0.0f)
 		{
 			continue;
 		}
 
-		b2Vec2 Jd1 = (-1.0f / L1sqr) * d1.Skew();
-		b2Vec2 Jd2 = (1.0f / L2sqr) * d2.Skew();
+		b2Vec2 Jd1 = (-1.0f / L1sqr) * e1.Skew();
+		b2Vec2 Jd2 = (1.0f / L2sqr) * e2.Skew();
 
 		b2Vec2 J1 = -Jd1;
 		b2Vec2 J2 = Jd1 - Jd2;
 		b2Vec2 J3 = Jd2;
 
 		c.invEffectiveMass = c.invMass1 * b2Dot(J1, J1) + c.invMass2 * b2Dot(J2, J2) + c.invMass3 * b2Dot(J3, J3);
+	
+		b2Vec2 r = p3 - p1;
+
+		float rr = r.LengthSquared();
+		if (rr == 0.0f)
+		{
+			continue;
+		}
+
+		c.alpha1 = b2Dot(e2, r) / rr;
+		c.alpha2 = b2Dot(e1, r) / rr;
 	}
 
 	m_gravity = def.gravity;
@@ -692,6 +704,8 @@ void b2Rope::SolveBend_PBD_Distance()
 	}
 }
 
+// Constraint based implementation of:
+// P. Volino: Simple Linear Bending Stiffness in Particle Systems
 void b2Rope::SolveBend_PBD_Height()
 {
 	const float stiffness = m_tuning.bendStiffness;
@@ -714,18 +728,8 @@ void b2Rope::SolveBend_PBD_Height()
 			continue;
 		}
 
-		float alpha = b2Dot(e2, r) / rr;
-		float beta = b2Dot(e1, r) / rr;
-
-		// Check for closest point outside of segment between p1 and p3.
-		// This can happen at acute angles where the triangle is a sliver.
-		// When this happens the rope may buckle.
-		if (alpha < 0.0f || 1.0f < alpha || beta < 0.0f || 1.0f < beta)
-		{
-			continue;
-		}
-
-		b2Vec2 d = alpha * p1 + beta * p3 - p2;
+		// Barycentric coordinates are held constant
+		b2Vec2 d = c.alpha1 * p1 + c.alpha2 * p3 - p2;
 		float dLen = d.Length();
 
 		if (dLen == 0.0f)
@@ -735,9 +739,9 @@ void b2Rope::SolveBend_PBD_Height()
 
 		b2Vec2 dHat = (1.0f / dLen) * d;
 
-		b2Vec2 J1 = alpha * dHat;
+		b2Vec2 J1 = c.alpha1 * dHat;
 		b2Vec2 J2 = -dHat;
-		b2Vec2 J3 = beta * dHat;
+		b2Vec2 J3 = c.alpha2 * dHat;
 
 		float sum = c.invMass1 * b2Dot(J1, J1) + c.invMass2 * b2Dot(J2, J2) + c.invMass3 * b2Dot(J3, J3);
 
@@ -759,6 +763,7 @@ void b2Rope::SolveBend_PBD_Height()
 		m_ps[c.i3] = p3;
 	}
 }
+
 void b2Rope::Draw(b2Draw* draw) const
 {
 	b2Color c(0.4f, 0.5f, 0.7f);

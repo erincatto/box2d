@@ -44,25 +44,27 @@ public:
 		masses[0] = 0.0f;
 		masses[1] = 0.0f;
 
-		m_tuning1.bendHertz = 15.0f;
-		m_tuning1.bendDamping = 0.7f;
+		m_tuning1.bendHertz = 30.0f;
+		m_tuning1.bendDamping = 4.0f;
 		m_tuning1.bendStiffness = 1.0f;
-		m_tuning1.bendingModel = b2_pbdAngleBendingModel;
+		m_tuning1.bendingModel = b2_xpbdAngleBendingModel;
+		m_tuning1.isometric = true;
 
-		m_tuning1.stretchHertz = 15.0f;
-		m_tuning1.stretchDamping = 0.7f;
+		m_tuning1.stretchHertz = 30.0f;
+		m_tuning1.stretchDamping = 4.0f;
 		m_tuning1.stretchStiffness = 1.0f;
-		m_tuning1.stretchingModel = b2_pbdStretchingModel;
+		m_tuning1.stretchingModel = b2_xpbdStretchingModel;
 
-		m_tuning2.bendHertz = 15.0f;
+		m_tuning2.bendHertz = 30.0f;
 		m_tuning2.bendDamping = 0.7f;
 		m_tuning2.bendStiffness = 1.0f;
-		m_tuning2.bendingModel = b2_xpbdAngleBendingModel;
+		m_tuning2.bendingModel = b2_pbdHeightBendingModel;
+		m_tuning2.isometric = true;
 
-		m_tuning2.stretchHertz = 15.0f;
-		m_tuning2.stretchDamping = 0.7f;
+		m_tuning2.stretchHertz = 30.0f;
+		m_tuning2.stretchDamping = 1.0f;
 		m_tuning2.stretchStiffness = 1.0f;
-		m_tuning2.stretchingModel = b2_xpbdStretchingModel;
+		m_tuning2.stretchingModel = b2_pbdStretchingModel;
 
 		m_position1.Set(-5.0f, 15.0f);
 		m_position2.Set(5.0f, 15.0f);
