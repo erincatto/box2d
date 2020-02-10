@@ -44,15 +44,27 @@ public:
 		masses[0] = 0.0f;
 		masses[1] = 0.0f;
 
-		m_tuning1.bendHertz = 10.0f;
-		m_tuning1.bendDamping = 1.0f;
+		m_tuning1.bendHertz = 30.0f;
+		m_tuning1.bendDamping = 4.0f;
 		m_tuning1.bendStiffness = 1.0f;
-		m_tuning1.bendingModel = b2_springAngleBendingModel;
+		m_tuning1.bendingModel = b2_xpbdAngleBendingModel;
+		m_tuning1.isometric = true;
 
-		m_tuning2.bendHertz = 10.0f;
-		m_tuning2.bendDamping = 1.0f;
+		m_tuning1.stretchHertz = 30.0f;
+		m_tuning1.stretchDamping = 4.0f;
+		m_tuning1.stretchStiffness = 1.0f;
+		m_tuning1.stretchingModel = b2_xpbdStretchingModel;
+
+		m_tuning2.bendHertz = 30.0f;
+		m_tuning2.bendDamping = 0.7f;
 		m_tuning2.bendStiffness = 1.0f;
-		m_tuning2.bendingModel = b2_xpbdAngleBendingModel;
+		m_tuning2.bendingModel = b2_pbdHeightBendingModel;
+		m_tuning2.isometric = true;
+
+		m_tuning2.stretchHertz = 30.0f;
+		m_tuning2.stretchDamping = 1.0f;
+		m_tuning2.stretchStiffness = 1.0f;
+		m_tuning2.stretchingModel = b2_pbdStretchingModel;
 
 		m_position1.Set(-5.0f, 15.0f);
 		m_position2.Set(5.0f, 15.0f);
@@ -71,8 +83,8 @@ public:
 		def.tuning = m_tuning2;
 		m_rope2.Create(def);
 
-		m_iterations1 = 4;
-		m_iterations2 = 4;
+		m_iterations1 = 8;
+		m_iterations2 = 8;
 
 		m_speed = 10.0f;
 	}
@@ -80,24 +92,25 @@ public:
 	void UpdateUI() override
 	{
 		ImGui::SetNextWindowPos(ImVec2(10.0f * m_uiScale, 150.0f * m_uiScale));
-		ImGui::SetNextWindowSize(ImVec2(200.0f * m_uiScale, 500.0f * m_uiScale));
+		ImGui::SetNextWindowSize(ImVec2(350.0f * m_uiScale, 800.0f * m_uiScale));
 		ImGui::Begin("Tuning", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 
 		ImGui::Separator();
 
 		const ImGuiComboFlags comboFlags = 0;
-		const char* items[] = { "Spring", "PBD Ang", "XPBD Ang", "Soft Ang", "PBD Dist", "PBD Height" };
+		const char* bendModels[] = { "Spring", "PBD Ang", "XPBD Ang", "PBD Dist", "PBD Height" };
+		const char* stretchModels[] = { "PBD", "XPBD" };
 
 		ImGui::Text("Rope 1");
-		static int model1 = m_tuning1.bendingModel;
-		if (ImGui::BeginCombo("Model##1", items[model1], comboFlags))
+		static int bendModel1 = m_tuning1.bendingModel;
+		if (ImGui::BeginCombo("Bend Model##1", bendModels[bendModel1], comboFlags))
 		{
-			for (int i = 0; i < IM_ARRAYSIZE(items); ++i)
+			for (int i = 0; i < IM_ARRAYSIZE(bendModels); ++i)
 			{
-				bool isSelected = (model1 == i);
-				if (ImGui::Selectable(items[i], isSelected))
+				bool isSelected = (bendModel1 == i);
+				if (ImGui::Selectable(bendModels[i], isSelected))
 				{
-					model1 = i;
+					bendModel1 = i;
 					m_tuning1.bendingModel = b2BendingModel(i);
 				}
 
@@ -109,26 +122,52 @@ public:
 			ImGui::EndCombo();
 		}
 
-		ImGui::SliderInt("Iterations##1", &m_iterations1, 1, 100, "%d");
-		ImGui::SliderFloat("Damping##1", &m_tuning1.bendDamping, 0.0f, 4.0f, "%.1f");
-		ImGui::SliderFloat("Hertz##1", &m_tuning1.bendHertz, 0.0f, 60.0f, "%.0f");
-		ImGui::SliderFloat("Stiffness##1", &m_tuning1.bendStiffness, 0.0f, 1.0f, "%.1f");
+		ImGui::SliderFloat("Bend Damping##1", &m_tuning1.bendDamping, 0.0f, 4.0f, "%.1f");
+		ImGui::SliderFloat("Bend Hertz##1", &m_tuning1.bendHertz, 0.0f, 60.0f, "%.0f");
+		ImGui::SliderFloat("Bend Stiffness##1", &m_tuning1.bendStiffness, 0.0f, 1.0f, "%.1f");
+
 		ImGui::Checkbox("Isometric##1", &m_tuning1.isometric);
 		ImGui::Checkbox("Fixed Mass##1", &m_tuning1.fixedEffectiveMass);
 		ImGui::Checkbox("Warm Start##1", &m_tuning1.warmStart);
 
+		static int stretchModel1 = m_tuning1.stretchingModel;
+		if (ImGui::BeginCombo("StretchModel##1", stretchModels[stretchModel1], comboFlags))
+		{
+			for (int i = 0; i < IM_ARRAYSIZE(stretchModels); ++i)
+			{
+				bool isSelected = (stretchModel1 == i);
+				if (ImGui::Selectable(stretchModels[i], isSelected))
+				{
+					stretchModel1 = i;
+					m_tuning1.stretchingModel = b2StretchingModel(i);
+				}
+
+				if (isSelected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+			ImGui::EndCombo();
+		}
+
+		ImGui::SliderFloat("Stretch Damping##1", &m_tuning1.stretchDamping, 0.0f, 4.0f, "%.1f");
+		ImGui::SliderFloat("Stretch Hertz##1", &m_tuning1.stretchHertz, 0.0f, 60.0f, "%.0f");
+		ImGui::SliderFloat("Stretch Stiffness##1", &m_tuning1.stretchStiffness, 0.0f, 1.0f, "%.1f");
+
+		ImGui::SliderInt("Iterations##1", &m_iterations1, 1, 100, "%d");
+
 		ImGui::Separator();
 
 		ImGui::Text("Rope 2");
-		static int model2 = m_tuning2.bendingModel;
-		if (ImGui::BeginCombo("Model##2", items[model2], comboFlags))
+		static int bendModel2 = m_tuning2.bendingModel;
+		if (ImGui::BeginCombo("BendModel##2", bendModels[bendModel2], comboFlags))
 		{
-			for (int i = 0; i < IM_ARRAYSIZE(items); ++i)
+			for (int i = 0; i < IM_ARRAYSIZE(bendModels); ++i)
 			{
-				bool isSelected = (model2 == i);
-				if (ImGui::Selectable(items[i], isSelected))
+				bool isSelected = (bendModel2 == i);
+				if (ImGui::Selectable(bendModels[i], isSelected))
 				{
-					model2 = i;
+					bendModel2 = i;
 					m_tuning2.bendingModel = b2BendingModel(i);
 				}
 
@@ -137,17 +176,42 @@ public:
 					ImGui::SetItemDefaultFocus();
 				}
 			}
-
 			ImGui::EndCombo();
 		}
 
-		ImGui::SliderInt("Iterations##2", &m_iterations2, 1, 100, "%d");
-		ImGui::SliderFloat("Damping##2", &m_tuning2.bendDamping, 0.0f, 4.0f, "%.1f");
-		ImGui::SliderFloat("Hertz##2", &m_tuning2.bendHertz, 0.0f, 60.0f, "%.0f");
-		ImGui::SliderFloat("Stiffness##2", &m_tuning2.bendStiffness, 0.0f, 1.0f, "%.1f");
+		ImGui::SliderFloat("Bend Damping##2", &m_tuning2.bendDamping, 0.0f, 4.0f, "%.1f");
+		ImGui::SliderFloat("Bend Hertz##2", &m_tuning2.bendHertz, 0.0f, 60.0f, "%.0f");
+		ImGui::SliderFloat("Bend Stiffness##2", &m_tuning2.bendStiffness, 0.0f, 1.0f, "%.1f");
+
 		ImGui::Checkbox("Isometric##2", &m_tuning2.isometric);
 		ImGui::Checkbox("Fixed Mass##2", &m_tuning2.fixedEffectiveMass);
 		ImGui::Checkbox("Warm Start##2", &m_tuning2.warmStart);
+
+		static int stretchModel2 = m_tuning2.stretchingModel;
+		if (ImGui::BeginCombo("Stretch Model##2", stretchModels[stretchModel2], comboFlags))
+		{
+			for (int i = 0; i < IM_ARRAYSIZE(stretchModels); ++i)
+			{
+				bool isSelected = (stretchModel2 == i);
+				if (ImGui::Selectable(stretchModels[i], isSelected))
+				{
+					stretchModel2 = i;
+					m_tuning2.stretchingModel = b2StretchingModel(i);
+				}
+
+				if (isSelected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+			ImGui::EndCombo();
+		}
+
+		ImGui::SliderFloat("Stretch Damping##2", &m_tuning2.stretchDamping, 0.0f, 4.0f, "%.1f");
+		ImGui::SliderFloat("Stretch Hertz##2", &m_tuning2.stretchHertz, 0.0f, 60.0f, "%.0f");
+		ImGui::SliderFloat("Stretch Stiffness##2", &m_tuning2.stretchStiffness, 0.0f, 1.0f, "%.1f");
+
+		ImGui::SliderInt("Iterations##2", &m_iterations2, 1, 100, "%d");
 
 		ImGui::Separator();
 
