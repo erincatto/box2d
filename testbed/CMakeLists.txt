@@ -1,6 +1,6 @@
-project(samples LANGUAGES CXX)
+project(testbed LANGUAGES CXX)
 
-set (SAMPLE_SOURCE_FILES
+set (TESTBED_SOURCE_FILES
 	draw.cpp
 	draw.h
 	imgui_impl_glfw.cpp
@@ -70,32 +70,32 @@ set (SAMPLE_SOURCE_FILES
 	tests/tumbler.cpp
 )
 
-set (SAMPLE_RESOURCE_FILES
+set (TESTBED_RESOURCE_FILES
     data/DroidSans.ttf
 )
 
-add_executable(samples ${SAMPLE_SOURCE_FILES} ${SAMPLE_RESOURCE_FILES})
-target_include_directories(samples PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(samples PUBLIC box2d glfw imgui sajson glad)
-set_target_properties(samples PROPERTIES
+add_executable(testbed ${TESTBED_SOURCE_FILES} ${TESTBED_RESOURCE_FILES})
+target_include_directories(testbed PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(testbed PUBLIC box2d glfw imgui sajson glad)
+set_target_properties(testbed PROPERTIES
 	CXX_STANDARD 11
     CXX_STANDARD_REQUIRED YES
     CXX_EXTENSIONS NO
 )
 if(APPLE)
-	set_target_properties(samples PROPERTIES
+	set_target_properties(testbed PROPERTIES
         MACOSX_BUNDLE_INFO_PLIST            "${CMAKE_CURRENT_SOURCE_DIR}/MacOSXBundleInfo.plist.in"
 		MACOSX_BUNDLE						TRUE
-        MACOSX_BUNDLE_BUNDLE_NAME           "Samples"
-        MACOSX_BUNDLE_GUI_IDENTIFIER        "org.box2d.samples"
+        MACOSX_BUNDLE_BUNDLE_NAME           "Testbed"
+        MACOSX_BUNDLE_GUI_IDENTIFIER        "org.box2d.testbed"
     )
 
 	# Reflect resources directory tree inside bundle
-	foreach (SAMPLE_RESOURCE_FILE ${SAMPLE_RESOURCE_FILES})
-		get_filename_component(SAMPLE_RESOURCE_DIR ${SAMPLE_RESOURCE_FILE} DIRECTORY)
-		set_source_files_properties(${SAMPLE_RESOURCE_FILE} PROPERTIES
-			MACOSX_PACKAGE_LOCATION Resources/${SAMPLE_RESOURCE_DIR}
+	foreach (TESTBED_RESOURCE_FILE ${TESTBED_RESOURCE_FILE})
+		get_filename_component(TESTBED_RESOURCE_DIR ${TESTBED_RESOURCE_FILE} DIRECTORY)
+		set_source_files_properties(${TESTBED_RESOURCE_FILE} PROPERTIES
+			MACOSX_PACKAGE_LOCATION Resources/${TESTBED_RESOURCE_DIR}
 		)
 	endforeach()
 endif()
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SAMPLE_SOURCE_FILES} ${SAMPLE_RESOURCE_FILES})
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${TESTBED_SOURCE_FILES} ${TESTBED_RESOURCE_FILES})
