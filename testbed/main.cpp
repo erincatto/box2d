@@ -36,7 +36,6 @@ GLFWwindow* g_mainWindow = nullptr;
 static int32 s_testSelection = 0;
 static Test* s_test = nullptr;
 static Settings s_settings;
-static float s_uiScale = 1.0f;
 static bool s_rightMouseDown = false;
 static b2Vec2 s_clickPointWS = b2Vec2_zero;
 
@@ -63,10 +62,6 @@ static void SortTests()
 
 static void CreateUI(GLFWwindow* window, const char* glslVersion = NULL)
 {
-	float xscale, yscale;
-	glfwGetWindowContentScale(window, &xscale, &yscale);
-	s_uiScale = xscale;
-
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 
@@ -85,8 +80,8 @@ static void CreateUI(GLFWwindow* window, const char* glslVersion = NULL)
 		assert(false);
 	}
 
-	const char* fontPath = "Data/DroidSans.ttf";
-	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath, s_uiScale * 14.0f);
+	const char* fontPath = "data/droid_sans.ttf";
+	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath, 13.0f);
 }
 
 static void ResizeWindowCallback(GLFWwindow*, int width, int height)
@@ -332,7 +327,7 @@ static void RestartTest()
 
 static void UpdateUI()
 {
-	int menuWidth = 200;
+	int menuWidth = 180;
 	if (g_debugDraw.m_showUI)
 	{
 		ImGui::SetNextWindowPos(ImVec2((float)g_camera.m_width - menuWidth - 10, 10));
@@ -423,7 +418,6 @@ static void UpdateUI()
 								delete s_test;
 								s_settings.m_testIndex = i;
 								s_test = g_testEntries[i].createFcn();
-								s_test->SetUIScale(s_uiScale);
 								s_testSelection = i;
 							}
 							++i;
@@ -490,7 +484,7 @@ int main(int, char**)
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	sprintf(buffer, "Box2D Samples Version %d.%d.%d", b2_version.major, b2_version.minor, b2_version.revision);
+	sprintf(buffer, "Box2D Testbed Version %d.%d.%d", b2_version.major, b2_version.minor, b2_version.revision);
 	g_mainWindow = glfwCreateWindow(g_camera.m_width, g_camera.m_height, buffer, NULL, NULL);
 	if (g_mainWindow == NULL)
 	{

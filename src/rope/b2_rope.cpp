@@ -380,9 +380,6 @@ void b2Rope::SolveStretch_XPBD(float dt)
 {
 	b2Assert(dt > 0.0f);
 
-	// omega = 2 * pi * hz
-	const float omega = 2.0f * b2_pi * m_tuning.bendHertz;
-
 	for (int32 i = 0; i < m_stretchCount; ++i)
 	{
 		b2RopeStretch& c = m_stretchConstraints[i];
@@ -501,9 +498,6 @@ void b2Rope::SolveBend_PBD_Angle()
 void b2Rope::SolveBend_XPBD_Angle(float dt)
 {
 	b2Assert(dt > 0.0f);
-
-	// omega = 2 * pi * hz
-	const float omega = 2.0f * b2_pi * m_tuning.bendHertz;
 
 	for (int32 i = 0; i < m_bendCount; ++i)
 	{
@@ -718,8 +712,6 @@ void b2Rope::SolveBend_PBD_Height()
 		b2Vec2 p2 = m_ps[c.i2];
 		b2Vec2 p3 = m_ps[c.i3];
 
-		b2Vec2 e1 = p2 - p1;
-		b2Vec2 e2 = p3 - p2;
 		b2Vec2 r = p3 - p1;
 
 		float rr = r.LengthSquared();

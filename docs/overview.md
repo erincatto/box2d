@@ -28,7 +28,7 @@ should be comfortable with compiling, linking, and debugging.
 
 ## Scope
 This manual covers the majority of the Box2D API. However, not every
-aspect is covered. Please look at the samples included
+aspect is covered. Please look at the testbed included
 with Box2D to learn more.
 
 This manual is only updated with new releases. The latest version of

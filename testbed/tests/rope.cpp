@@ -91,12 +91,14 @@ public:
 
 	void UpdateUI() override
 	{
-		ImGui::SetNextWindowPos(ImVec2(10.0f * m_uiScale, 150.0f * m_uiScale));
-		ImGui::SetNextWindowSize(ImVec2(350.0f * m_uiScale, 800.0f * m_uiScale));
+		ImGui::SetNextWindowPos(ImVec2(10.0f, 100.0f));
+		ImGui::SetNextWindowSize(ImVec2(200.0f, 700.0f));
 		ImGui::Begin("Tuning", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 
 		ImGui::Separator();
 
+        ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
+        
 		const ImGuiComboFlags comboFlags = 0;
 		const char* bendModels[] = { "Spring", "PBD Ang", "XPBD Ang", "PBD Dist", "PBD Height" };
 		const char* stretchModels[] = { "PBD", "XPBD" };
@@ -122,16 +124,16 @@ public:
 			ImGui::EndCombo();
 		}
 
-		ImGui::SliderFloat("Bend Damping##1", &m_tuning1.bendDamping, 0.0f, 4.0f, "%.1f");
-		ImGui::SliderFloat("Bend Hertz##1", &m_tuning1.bendHertz, 0.0f, 60.0f, "%.0f");
-		ImGui::SliderFloat("Bend Stiffness##1", &m_tuning1.bendStiffness, 0.0f, 1.0f, "%.1f");
+		ImGui::SliderFloat("Damping##1", &m_tuning1.bendDamping, 0.0f, 4.0f, "%.1f");
+		ImGui::SliderFloat("Hertz##1", &m_tuning1.bendHertz, 0.0f, 60.0f, "%.0f");
+		ImGui::SliderFloat("Stiffness##1", &m_tuning1.bendStiffness, 0.0f, 1.0f, "%.1f");
 
 		ImGui::Checkbox("Isometric##1", &m_tuning1.isometric);
 		ImGui::Checkbox("Fixed Mass##1", &m_tuning1.fixedEffectiveMass);
 		ImGui::Checkbox("Warm Start##1", &m_tuning1.warmStart);
 
 		static int stretchModel1 = m_tuning1.stretchingModel;
-		if (ImGui::BeginCombo("StretchModel##1", stretchModels[stretchModel1], comboFlags))
+		if (ImGui::BeginCombo("Stretch Model##1", stretchModels[stretchModel1], comboFlags))
 		{
 			for (int i = 0; i < IM_ARRAYSIZE(stretchModels); ++i)
 			{
@@ -150,9 +152,9 @@ public:
 			ImGui::EndCombo();
 		}
 
-		ImGui::SliderFloat("Stretch Damping##1", &m_tuning1.stretchDamping, 0.0f, 4.0f, "%.1f");
-		ImGui::SliderFloat("Stretch Hertz##1", &m_tuning1.stretchHertz, 0.0f, 60.0f, "%.0f");
-		ImGui::SliderFloat("Stretch Stiffness##1", &m_tuning1.stretchStiffness, 0.0f, 1.0f, "%.1f");
+		ImGui::SliderFloat("Damping##1", &m_tuning1.stretchDamping, 0.0f, 4.0f, "%.1f");
+		ImGui::SliderFloat("Hertz##1", &m_tuning1.stretchHertz, 0.0f, 60.0f, "%.0f");
+		ImGui::SliderFloat("Stiffness##1", &m_tuning1.stretchStiffness, 0.0f, 1.0f, "%.1f");
 
 		ImGui::SliderInt("Iterations##1", &m_iterations1, 1, 100, "%d");
 
@@ -160,7 +162,7 @@ public:
 
 		ImGui::Text("Rope 2");
 		static int bendModel2 = m_tuning2.bendingModel;
-		if (ImGui::BeginCombo("BendModel##2", bendModels[bendModel2], comboFlags))
+		if (ImGui::BeginCombo("Bend Model##2", bendModels[bendModel2], comboFlags))
 		{
 			for (int i = 0; i < IM_ARRAYSIZE(bendModels); ++i)
 			{
@@ -179,9 +181,9 @@ public:
 			ImGui::EndCombo();
 		}
 
-		ImGui::SliderFloat("Bend Damping##2", &m_tuning2.bendDamping, 0.0f, 4.0f, "%.1f");
-		ImGui::SliderFloat("Bend Hertz##2", &m_tuning2.bendHertz, 0.0f, 60.0f, "%.0f");
-		ImGui::SliderFloat("Bend Stiffness##2", &m_tuning2.bendStiffness, 0.0f, 1.0f, "%.1f");
+		ImGui::SliderFloat("Damping##2", &m_tuning2.bendDamping, 0.0f, 4.0f, "%.1f");
+		ImGui::SliderFloat("Hertz##2", &m_tuning2.bendHertz, 0.0f, 60.0f, "%.0f");
+		ImGui::SliderFloat("Stiffness##2", &m_tuning2.bendStiffness, 0.0f, 1.0f, "%.1f");
 
 		ImGui::Checkbox("Isometric##2", &m_tuning2.isometric);
 		ImGui::Checkbox("Fixed Mass##2", &m_tuning2.fixedEffectiveMass);
@@ -207,9 +209,9 @@ public:
 			ImGui::EndCombo();
 		}
 
-		ImGui::SliderFloat("Stretch Damping##2", &m_tuning2.stretchDamping, 0.0f, 4.0f, "%.1f");
-		ImGui::SliderFloat("Stretch Hertz##2", &m_tuning2.stretchHertz, 0.0f, 60.0f, "%.0f");
-		ImGui::SliderFloat("Stretch Stiffness##2", &m_tuning2.stretchStiffness, 0.0f, 1.0f, "%.1f");
+		ImGui::SliderFloat("Damping##2", &m_tuning2.stretchDamping, 0.0f, 4.0f, "%.1f");
+		ImGui::SliderFloat("Hertz##2", &m_tuning2.stretchHertz, 0.0f, 60.0f, "%.0f");
+		ImGui::SliderFloat("Stiffness##2", &m_tuning2.stretchStiffness, 0.0f, 1.0f, "%.1f");
 
 		ImGui::SliderInt("Iterations##2", &m_iterations2, 1, 100, "%d");
 
@@ -224,6 +226,8 @@ public:
 			m_rope1.Reset(m_position1);
 			m_rope2.Reset(m_position2);
 		}
+
+        ImGui::PopItemWidth();
 
 		ImGui::End();
 	}
