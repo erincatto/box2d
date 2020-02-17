@@ -31,7 +31,6 @@
 const int16	k_smallGroup = 1;
 const int16 k_largeGroup = -1;
 
-const uint16 k_defaultCategory = 0x0001;
 const uint16 k_triangleCategory = 0x0002;
 const uint16 k_boxCategory = 0x0004;
 const uint16 k_circleCategory = 0x0008;

@@ -40,7 +40,7 @@ Please do not submit pull requests with new features. Instead, please file an is
 - Centralized tuning parameters
 - Highly portable C++ with no use of STL containers
 
-### Samples
+### Testbed
 - OpenGL with GLFW
 - Graphical user interface with imgui
 - Extensible test framework
@@ -53,6 +53,18 @@ Please do not submit pull requests with new features. Instead, please file an is
 - Otherwise: run `build.sh` from a bash shell
 - Results are in the build sub-folder
 - On Windows you can open box2d.sln
+
+## Building for Xcode
+- Install [CMake](https://cmake.org)
+- Add Cmake to the path in .zprofile (the default Terminal shell is zsh)
+    - export PATH="/Applications/CMake.app/Contents/bin:$PATH"
+- mkdir build
+- cd build
+- cmake -G Xcode ..
+- open box2d.xcodeproj
+- Select the testbed scheme
+- Edit the scheme to set a custom working directory, make this be in box2d/testbed
+- You can now build and run the testbed
 
 ## Documentation
 - [Manual](https://box2d.org/documentation/)
