@@ -66,6 +66,18 @@ You can download and install Box2D using the [vcpkg](https://github.com/Microsof
 
 The Box2D port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
 
+## Building for Xcode
+- Install [CMake](https://cmake.org)
+- Add Cmake to the path in .zprofile (the default Terminal shell is zsh)
+    - export PATH="/Applications/CMake.app/Contents/bin:$PATH"
+- mkdir build
+- cd build
+- cmake -G Xcode ..
+- open box2d.xcodeproj
+- Select the testbed scheme
+- Edit the scheme to set a custom working directory, make this be in box2d/testbed
+- You can now build and run the testbed
+
 ## Documentation
 - [Manual](https://box2d.org/documentation/)
 - [subreddit](https://www.reddit.com/r/box2d/)
