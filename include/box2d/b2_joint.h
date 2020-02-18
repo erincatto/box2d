@@ -139,8 +139,8 @@ public:
 	/// Set the user data pointer.
 	void SetUserData(void* data);
 
-	/// Short-cut function to determine if either body is inactive.
-	bool IsActive() const;
+	/// Short-cut function to determine if either body is enabled.
+	bool IsEnabled() const;
 
 	/// Get collide connected.
 	/// Note: modifying the collide connect flag won't work correctly because

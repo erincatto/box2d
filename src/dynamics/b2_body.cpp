@@ -53,9 +53,9 @@ b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 	{
 		m_flags |= e_awakeFlag;
 	}
-	if (bd->active)
+	if (bd->enabled)
 	{
-		m_flags |= e_activeFlag;
+		m_flags |= e_enabledFlag;
 	}
 
 	m_world = world;
@@ -181,7 +181,7 @@ b2Fixture* b2Body::CreateFixture(const b2FixtureDef* def)
 	b2Fixture* fixture = new (memory) b2Fixture;
 	fixture->Create(allocator, this, def);
 
-	if (m_flags & e_activeFlag)
+	if (m_flags & e_enabledFlag)
 	{
 		b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
 		fixture->CreateProxies(broadPhase, m_xf);
@@ -201,7 +201,7 @@ b2Fixture* b2Body::CreateFixture(const b2FixtureDef* def)
 
 	// Let the world know we have a new fixture. This will cause new contacts
 	// to be created at the beginning of the next time step.
-	m_world->m_flags |= b2World::e_newFixture;
+	m_world->m_newContacts = true;
 
 	return fixture;
 }
@@ -269,7 +269,7 @@ void b2Body::DestroyFixture(b2Fixture* fixture)
 
 	b2BlockAllocator* allocator = &m_world->m_blockAllocator;
 
-	if (m_flags & e_activeFlag)
+	if (m_flags & e_enabledFlag)
 	{
 		b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
 		fixture->DestroyProxies(broadPhase);
@@ -460,18 +460,18 @@ void b2Body::SynchronizeFixtures()
 	}
 }
 
-void b2Body::SetActive(bool flag)
+void b2Body::SetEnabled(bool flag)
 {
 	b2Assert(m_world->IsLocked() == false);
 
-	if (flag == IsActive())
+	if (flag == IsEnabled())
 	{
 		return;
 	}
 
 	if (flag)
 	{
-		m_flags |= e_activeFlag;
+		m_flags |= e_enabledFlag;
 
 		// Create all proxies.
 		b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
@@ -480,11 +480,12 @@ void b2Body::SetActive(bool flag)
 			f->CreateProxies(broadPhase, m_xf);
 		}
 
-		// Contacts are created the next time step.
+		// Contacts are created at the beginning of the next
+		m_world->m_newContacts = true;
 	}
 	else
 	{
-		m_flags &= ~e_activeFlag;
+		m_flags &= ~e_enabledFlag;
 
 		// Destroy all proxies.
 		b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
@@ -544,7 +545,7 @@ void b2Body::Dump()
 	b2Log("  bd.awake = bool(%d);\n", m_flags & e_awakeFlag);
 	b2Log("  bd.fixedRotation = bool(%d);\n", m_flags & e_fixedRotationFlag);
 	b2Log("  bd.bullet = bool(%d);\n", m_flags & e_bulletFlag);
-	b2Log("  bd.active = bool(%d);\n", m_flags & e_activeFlag);
+	b2Log("  bd.enabled = bool(%d);\n", m_flags & e_enabledFlag);
 	b2Log("  bd.gravityScale = %.15lef;\n", m_gravityScale);
 	b2Log("  bodies[%d] = m_world->CreateBody(&bd);\n", m_islandIndex);
 	b2Log("\n");

@@ -331,8 +331,8 @@ void b2Body::SetSleepingAllowed(bool flag);
 bool b2Body::IsSleepingAllowed() const;
 void b2Body::SetAwake(bool flag);
 bool b2Body::IsAwake() const;
-void b2Body::SetActive(bool flag);
-bool b2Body::IsActive() const;
+void b2Body::SetEnabled(bool flag);
+bool b2Body::IsEnabled() const;
 void b2Body::SetFixedRotation(bool flag);
 bool b2Body::IsFixedRotation() const;
 ```

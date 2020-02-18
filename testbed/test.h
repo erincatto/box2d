@@ -84,7 +84,6 @@ public:
 	Test();
 	virtual ~Test();
 
-	void SetUIScale(float scale);
 	void DrawTitle(const char* string);
 	virtual void Step(Settings& settings);
 	virtual void UpdateUI() {}
@@ -133,7 +132,6 @@ protected:
 	bool m_bombSpawning;
 	b2Vec2 m_mouseWorld;
 	int32 m_stepCount;
-	float m_uiScale;
 	int32 m_textIncrement;
 	b2Profile m_maxProfile;
 	b2Profile m_totalProfile;

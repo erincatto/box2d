@@ -29,12 +29,17 @@ class b2Draw;
 struct b2RopeStretch;
 struct b2RopeBend;
 
+enum b2StretchingModel
+{
+	b2_pbdStretchingModel,
+	b2_xpbdStretchingModel
+};
+
 enum b2BendingModel
 {
 	b2_springAngleBendingModel = 0,
 	b2_pbdAngleBendingModel,
 	b2_xpbdAngleBendingModel,
-	b2_softAngleBendingModel,
 	b2_pbdDistanceBendingModel,
 	b2_pbdHeightBendingModel
 };
@@ -44,7 +49,8 @@ struct b2RopeTuning
 {
 	b2RopeTuning()
 	{
-		bendingModel = b2_springAngleBendingModel;
+		stretchingModel = b2_pbdStretchingModel;
+		bendingModel = b2_pbdAngleBendingModel;
 		damping = 0.0f;
 		stretchStiffness = 1.0f;
 		bendStiffness = 0.5f;
@@ -55,9 +61,12 @@ struct b2RopeTuning
 		warmStart = false;
 	}
 
+	b2StretchingModel stretchingModel;
 	b2BendingModel bendingModel;
 	float damping;
 	float stretchStiffness;
+	float stretchHertz;
+	float stretchDamping;
 	float bendStiffness;
 	float bendHertz;
 	float bendDamping;
@@ -110,11 +119,10 @@ public:
 
 private:
 
-	void SolveStretch();
-	//void SolveBend_PBD_Distance();
+	void SolveStretch_PBD();
+	void SolveStretch_XPBD(float dt);
 	void SolveBend_PBD_Angle();
 	void SolveBend_XPBD_Angle(float dt);
-	void SolveBend_Soft_Angle(float dt);
 	void SolveBend_PBD_Distance();
 	void SolveBend_PBD_Height();
 	void ApplyBendForces(float dt);

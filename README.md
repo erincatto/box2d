@@ -40,7 +40,7 @@ Please do not submit pull requests with new features. Instead, please file an is
 - Centralized tuning parameters
 - Highly portable C++ with no use of STL containers
 
-### Samples
+### Testbed
 - OpenGL with GLFW
 - Graphical user interface with imgui
 - Extensible test framework

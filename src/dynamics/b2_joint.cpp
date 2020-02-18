@@ -208,7 +208,7 @@ b2Joint::b2Joint(const b2JointDef* def)
 	m_edgeB.next = nullptr;
 }
 
-bool b2Joint::IsActive() const
+bool b2Joint::IsEnabled() const
 {
-	return m_bodyA->IsActive() && m_bodyB->IsActive();
+	return m_bodyA->IsEnabled() && m_bodyB->IsEnabled();
 }

@@ -43,8 +43,7 @@ Test::Test()
 	m_world = new b2World(gravity);
 	m_bomb = NULL;
 	m_textLine = 30;
-	m_uiScale = 1.0f;
-	m_textIncrement = 14;
+	m_textIncrement = 13;
 	m_mouseJoint = NULL;
 	m_pointCount = 0;
 
@@ -104,16 +103,10 @@ void Test::PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
 	}
 }
 
-void Test::SetUIScale(float scale)
-{
-	m_uiScale = scale;
-	m_textIncrement = int32(14.0f * scale);
-}
-
 void Test::DrawTitle(const char *string)
 {
     g_debugDraw.DrawString(5, 5, string);
-    m_textLine = int32(28.0f * m_uiScale);
+    m_textLine = int32(26.0f);
 }
 
 class QueryCallback : public b2QueryCallback
@@ -454,7 +447,7 @@ void Test::ShiftOrigin(const b2Vec2& newOrigin)
 	m_world->ShiftOrigin(newOrigin);
 }
 
-TestEntry g_testEntries[MAX_TESTS] = { nullptr };
+TestEntry g_testEntries[MAX_TESTS] = { {nullptr} };
 int g_testCount = 0;
 
 int RegisterTest(const char* category, const char* name, TestCreateFcn* fcn)

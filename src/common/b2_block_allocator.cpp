@@ -25,7 +25,12 @@
 #include <string.h>
 #include <stddef.h>
 
-int32 b2BlockAllocator::s_blockSizes[b2_blockSizes] = 
+static const int32 b2_chunkSize = 16 * 1024;
+static const int32 b2_maxBlockSize = 640;
+static const int32 b2_chunkArrayIncrement = 128;
+
+// These are the supported object sizes. Actual allocations are rounded up the next size.
+static const int32 b2_blockSizes[b2_blockSizeCount] =
 {
 	16,		// 0
 	32,		// 1
@@ -42,8 +47,33 @@ int32 b2BlockAllocator::s_blockSizes[b2_blockSizes] =
 	512,	// 12
 	640,	// 13
 };
-uint8 b2BlockAllocator::s_blockSizeLookup[b2_maxBlockSize + 1];
-bool b2BlockAllocator::s_blockSizeLookupInitialized;
+
+// This maps an arbitrary allocation size to a suitable slot in b2_blockSizes.
+struct b2SizeMap
+{
+	b2SizeMap()
+	{
+		int32 j = 0;
+		values[0] = 0;
+		for (int32 i = 1; i <= b2_maxBlockSize; ++i)
+		{
+			b2Assert(j < b2_blockSizeCount);
+			if (i <= b2_blockSizes[j])
+			{
+				values[i] = (uint8)j;
+			}
+			else
+			{
+				++j;
+				values[i] = (uint8)j;
+			}
+		}
+	}
+
+	uint8 values[b2_maxBlockSize + 1];
+};
+
+static const b2SizeMap b2_sizeMap;
 
 struct b2Chunk
 {
@@ -58,7 +88,7 @@ struct b2Block
 
 b2BlockAllocator::b2BlockAllocator()
 {
-	b2Assert(b2_blockSizes < UCHAR_MAX);
+	b2Assert(b2_blockSizeCount < UCHAR_MAX);
 
 	m_chunkSpace = b2_chunkArrayIncrement;
 	m_chunkCount = 0;
@@ -66,26 +96,6 @@ b2BlockAllocator::b2BlockAllocator()
 	
 	memset(m_chunks, 0, m_chunkSpace * sizeof(b2Chunk));
 	memset(m_freeLists, 0, sizeof(m_freeLists));
-
-	if (s_blockSizeLookupInitialized == false)
-	{
-		int32 j = 0;
-		for (int32 i = 1; i <= b2_maxBlockSize; ++i)
-		{
-			b2Assert(j < b2_blockSizes);
-			if (i <= s_blockSizes[j])
-			{
-				s_blockSizeLookup[i] = (uint8)j;
-			}
-			else
-			{
-				++j;
-				s_blockSizeLookup[i] = (uint8)j;
-			}
-		}
-
-		s_blockSizeLookupInitialized = true;
-	}
 }
 
 b2BlockAllocator::~b2BlockAllocator()
@@ -101,7 +111,9 @@ b2BlockAllocator::~b2BlockAllocator()
 void* b2BlockAllocator::Allocate(int32 size)
 {
 	if (size == 0)
+	{
 		return nullptr;
+	}
 
 	b2Assert(0 < size);
 
@@ -110,8 +122,8 @@ void* b2BlockAllocator::Allocate(int32 size)
 		return b2Alloc(size);
 	}
 
-	int32 index = s_blockSizeLookup[size];
-	b2Assert(0 <= index && index < b2_blockSizes);
+	int32 index = b2_sizeMap.values[size];
+	b2Assert(0 <= index && index < b2_blockSizeCount);
 
 	if (m_freeLists[index])
 	{
@@ -136,7 +148,7 @@ void* b2BlockAllocator::Allocate(int32 size)
 #if defined(_DEBUG)
 		memset(chunk->blocks, 0xcd, b2_chunkSize);
 #endif
-		int32 blockSize = s_blockSizes[index];
+		int32 blockSize = b2_blockSizes[index];
 		chunk->blockSize = blockSize;
 		int32 blockCount = b2_chunkSize / blockSize;
 		b2Assert(blockCount * blockSize <= b2_chunkSize);
@@ -171,12 +183,12 @@ void b2BlockAllocator::Free(void* p, int32 size)
 		return;
 	}
 
-	int32 index = s_blockSizeLookup[size];
-	b2Assert(0 <= index && index < b2_blockSizes);
+	int32 index = b2_sizeMap.values[size];
+	b2Assert(0 <= index && index < b2_blockSizeCount);
 
-#ifdef _DEBUG
+#if defined(_DEBUG)
 	// Verify the memory address and size is valid.
-	int32 blockSize = s_blockSizes[index];
+	int32 blockSize = b2_blockSizes[index];
 	bool found = false;
 	for (int32 i = 0; i < m_chunkCount; ++i)
 	{
@@ -214,6 +226,5 @@ void b2BlockAllocator::Clear()
 
 	m_chunkCount = 0;
 	memset(m_chunks, 0, m_chunkSpace * sizeof(b2Chunk));
-
 	memset(m_freeLists, 0, sizeof(m_freeLists));
 }

@@ -250,8 +250,8 @@ public:
 			{
 				if (m_bodies[i])
 				{
-					bool active = m_bodies[i]->IsActive();
-					m_bodies[i]->SetActive(!active);
+					bool enabled = m_bodies[i]->IsEnabled();
+					m_bodies[i]->SetEnabled(!enabled);
 				}
 			}
 			break;
@@ -282,7 +282,7 @@ public:
 
 		g_debugDraw.DrawString(5, m_textLine, "Press 1-5 to drop stuff");
 		m_textLine += m_textIncrement;
-		g_debugDraw.DrawString(5, m_textLine, "Press 'a' to (de)activate some bodies");
+		g_debugDraw.DrawString(5, m_textLine, "Press 'a' to enable/disable some bodies");
 		m_textLine += m_textIncrement;
 		g_debugDraw.DrawString(5, m_textLine, "Press 'd' to destroy a body");
 		m_textLine += m_textIncrement;
