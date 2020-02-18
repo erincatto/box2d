@@ -68,7 +68,7 @@ struct b2BodyDef
 		fixedRotation = false;
 		bullet = false;
 		type = b2_staticBody;
-		active = true;
+		enabled = true;
 		gravityScale = 1.0f;
 	}
 
@@ -117,8 +117,8 @@ struct b2BodyDef
 	/// @warning You should use this flag sparingly since it increases processing time.
 	bool bullet;
 
-	/// Does this body start out active?
-	bool active;
+	/// Does this body start out enabled?
+	bool enabled;
 
 	/// Use this to store application specific body data.
 	void* userData;
@@ -336,23 +336,22 @@ public:
 	/// @return true if the body is awake.
 	bool IsAwake() const;
 
-	/// Set the active state of the body. An inactive body is not
-	/// simulated and cannot be collided with or woken up.
-	/// If you pass a flag of true, all fixtures will be added to the
-	/// broad-phase.
-	/// If you pass a flag of false, all fixtures will be removed from
-	/// the broad-phase and all contacts will be destroyed.
+	/// Allow a body to be disabled. A disabled body is not simulated and cannot
+	/// be collided with or woken up.
+	/// If you pass a flag of true, all fixtures will be added to the broad-phase.
+	/// If you pass a flag of false, all fixtures will be removed from the
+	/// broad-phase and all contacts will be destroyed.
 	/// Fixtures and joints are otherwise unaffected. You may continue
-	/// to create/destroy fixtures and joints on inactive bodies.
-	/// Fixtures on an inactive body are implicitly inactive and will
+	/// to create/destroy fixtures and joints on disabled bodies.
+	/// Fixtures on a disabled body are implicitly disabled and will
 	/// not participate in collisions, ray-casts, or queries.
-	/// Joints connected to an inactive body are implicitly inactive.
-	/// An inactive body is still owned by a b2World object and remains
+	/// Joints connected to a disabled body are implicitly disabled.
+	/// An diabled body is still owned by a b2World object and remains
 	/// in the body list.
-	void SetActive(bool flag);
+	void SetEnabled(bool flag);
 
 	/// Get the active state of the body.
-	bool IsActive() const;
+	bool IsEnabled() const;
 
 	/// Set this body to have fixed rotation. This causes the mass
 	/// to be reset.
@@ -420,7 +419,7 @@ private:
 		e_autoSleepFlag		= 0x0004,
 		e_bulletFlag		= 0x0008,
 		e_fixedRotationFlag	= 0x0010,
-		e_activeFlag		= 0x0020,
+		e_enabledFlag		= 0x0020,
 		e_toiFlag			= 0x0040
 	};
 
@@ -662,9 +661,9 @@ inline bool b2Body::IsAwake() const
 	return (m_flags & e_awakeFlag) == e_awakeFlag;
 }
 
-inline bool b2Body::IsActive() const
+inline bool b2Body::IsEnabled() const
 {
-	return (m_flags & e_activeFlag) == e_activeFlag;
+	return (m_flags & e_enabledFlag) == e_enabledFlag;
 }
 
 inline bool b2Body::IsFixedRotation() const

@@ -47,7 +47,7 @@ public:
                 bd.awake = bool(2);
                 bd.fixedRotation = bool(0);
                 bd.bullet = bool(0);
-                bd.active = bool(32);
+                bd.enabled = bool(32);
                 bd.gravityScale = 1.000000000000000e+00f;
                 bodies[0] = m_world->CreateBody(&bd);
 
@@ -89,7 +89,7 @@ public:
                 bd.awake = bool(2);
                 bd.fixedRotation = bool(0);
                 bd.bullet = bool(1);
-                bd.active = bool(32);
+                bd.enabled = bool(32);
                 bd.gravityScale = 1.000000000000000e+00f;
                 bodies[1] = m_world->CreateBody(&bd);
 

@@ -428,7 +428,7 @@ void b2World::Solve(const b2TimeStep& step)
 			continue;
 		}
 
-		if (seed->IsAwake() == false || seed->IsActive() == false)
+		if (seed->IsAwake() == false || seed->IsEnabled() == false)
 		{
 			continue;
 		}
@@ -450,7 +450,7 @@ void b2World::Solve(const b2TimeStep& step)
 		{
 			// Grab the next body off the stack and add it to the island.
 			b2Body* b = stack[--stackCount];
-			b2Assert(b->IsActive() == true);
+			b2Assert(b->IsEnabled() == true);
 			island.Add(b);
 
 			// Make sure the body is awake (without resetting sleep timer).
@@ -515,8 +515,8 @@ void b2World::Solve(const b2TimeStep& step)
 
 				b2Body* other = je->other;
 
-				// Don't simulate joints connected to inactive bodies.
-				if (other->IsActive() == false)
+				// Don't simulate joints connected to diabled bodies.
+				if (other->IsEnabled() == false)
 				{
 					continue;
 				}
@@ -1183,7 +1183,7 @@ void b2World::DrawDebugData()
 			const b2Transform& xf = b->GetTransform();
 			for (b2Fixture* f = b->GetFixtureList(); f; f = f->GetNext())
 			{
-				if (b->IsActive() == false)
+				if (b->IsEnabled() == false)
 				{
 					DrawShape(f, xf, b2Color(0.5f, 0.5f, 0.3f));
 				}
@@ -1237,7 +1237,7 @@ void b2World::DrawDebugData()
 
 		for (b2Body* b = m_bodyList; b; b = b->GetNext())
 		{
-			if (b->IsActive() == false)
+			if (b->IsEnabled() == false)
 			{
 				continue;
 			}
