@@ -201,7 +201,7 @@ b2Fixture* b2Body::CreateFixture(const b2FixtureDef* def)
 
 	// Let the world know we have a new fixture. This will cause new contacts
 	// to be created at the beginning of the next time step.
-	m_world->m_flags |= b2World::e_newFixture;
+	m_world->m_newContacts = true;
 
 	return fixture;
 }
@@ -480,7 +480,8 @@ void b2Body::SetActive(bool flag)
 			f->CreateProxies(broadPhase, m_xf);
 		}
 
-		// Contacts are created the next time step.
+		// Contacts are created at the beginning of the next
+		m_world->m_newContacts = true;
 	}
 	else
 	{

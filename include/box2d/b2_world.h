@@ -215,14 +215,6 @@ public:
 
 private:
 
-	// m_flags
-	enum
-	{
-		e_newFixture	= 0x0001,
-		e_locked		= 0x0002,
-		e_clearForces	= 0x0004
-	};
-
 	friend class b2Body;
 	friend class b2Fixture;
 	friend class b2ContactManager;
@@ -236,8 +228,6 @@ private:
 
 	b2BlockAllocator m_blockAllocator;
 	b2StackAllocator m_stackAllocator;
-
-	int32 m_flags;
 
 	b2ContactManager m_contactManager;
 
@@ -256,6 +246,10 @@ private:
 	// This is used to compute the time step ratio to
 	// support a variable time step.
 	float m_inv_dt0;
+
+	bool m_newContacts;
+	bool m_locked;
+	bool m_clearForces;
 
 	// These are for debugging the solver.
 	bool m_warmStarting;
@@ -324,25 +318,18 @@ inline b2Vec2 b2World::GetGravity() const
 
 inline bool b2World::IsLocked() const
 {
-	return (m_flags & e_locked) == e_locked;
+	return m_locked;
 }
 
 inline void b2World::SetAutoClearForces(bool flag)
 {
-	if (flag)
-	{
-		m_flags |= e_clearForces;
-	}
-	else
-	{
-		m_flags &= ~e_clearForces;
-	}
+	m_clearForces = flag;
 }
 
 /// Get the flag that controls automatic clearing of forces after each time step.
 inline bool b2World::GetAutoClearForces() const
 {
-	return (m_flags & e_clearForces) == e_clearForces;
+	return m_clearForces;
 }
 
 inline const b2ContactManager& b2World::GetContactManager() const
