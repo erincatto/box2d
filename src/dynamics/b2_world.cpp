@@ -60,7 +60,9 @@ b2World::b2World(const b2Vec2& gravity)
 	m_allowSleep = true;
 	m_gravity = gravity;
 
-	m_flags = e_clearForces;
+	m_newContacts = false;
+	m_locked = false;
+	m_clearForces = true;
 
 	m_inv_dt0 = 0.0f;
 
@@ -426,7 +428,7 @@ void b2World::Solve(const b2TimeStep& step)
 			continue;
 		}
 
-		if (seed->IsAwake() == false || seed->IsActive() == false)
+		if (seed->IsAwake() == false || seed->IsEnabled() == false)
 		{
 			continue;
 		}
@@ -448,7 +450,7 @@ void b2World::Solve(const b2TimeStep& step)
 		{
 			// Grab the next body off the stack and add it to the island.
 			b2Body* b = stack[--stackCount];
-			b2Assert(b->IsActive() == true);
+			b2Assert(b->IsEnabled() == true);
 			island.Add(b);
 
 			// Make sure the body is awake (without resetting sleep timer).
@@ -513,8 +515,8 @@ void b2World::Solve(const b2TimeStep& step)
 
 				b2Body* other = je->other;
 
-				// Don't simulate joints connected to inactive bodies.
-				if (other->IsActive() == false)
+				// Don't simulate joints connected to diabled bodies.
+				if (other->IsEnabled() == false)
 				{
 					continue;
 				}
@@ -905,13 +907,13 @@ void b2World::Step(float dt, int32 velocityIterations, int32 positionIterations)
 	b2Timer stepTimer;
 
 	// If new fixtures were added, we need to find the new contacts.
-	if (m_flags & e_newFixture)
+	if (m_newContacts)
 	{
 		m_contactManager.FindNewContacts();
-		m_flags &= ~e_newFixture;
+		m_newContacts = false;
 	}
 
-	m_flags |= e_locked;
+	m_locked = true;
 
 	b2TimeStep step;
 	step.dt = dt;
@@ -958,12 +960,12 @@ void b2World::Step(float dt, int32 velocityIterations, int32 positionIterations)
 		m_inv_dt0 = step.inv_dt;
 	}
 
-	if (m_flags & e_clearForces)
+	if (m_clearForces)
 	{
 		ClearForces();
 	}
 
-	m_flags &= ~e_locked;
+	m_locked = false;
 
 	m_profile.step = stepTimer.GetMilliseconds();
 }
@@ -1181,7 +1183,7 @@ void b2World::DrawDebugData()
 			const b2Transform& xf = b->GetTransform();
 			for (b2Fixture* f = b->GetFixtureList(); f; f = f->GetNext())
 			{
-				if (b->IsActive() == false)
+				if (b->IsEnabled() == false)
 				{
 					DrawShape(f, xf, b2Color(0.5f, 0.5f, 0.3f));
 				}
@@ -1235,7 +1237,7 @@ void b2World::DrawDebugData()
 
 		for (b2Body* b = m_bodyList; b; b = b->GetNext())
 		{
-			if (b->IsActive() == false)
+			if (b->IsEnabled() == false)
 			{
 				continue;
 			}
@@ -1291,8 +1293,8 @@ float b2World::GetTreeQuality() const
 
 void b2World::ShiftOrigin(const b2Vec2& newOrigin)
 {
-	b2Assert((m_flags & e_locked) == 0);
-	if ((m_flags & e_locked) == e_locked)
+	b2Assert(m_locked == false);
+	if (m_locked)
 	{
 		return;
 	}
@@ -1314,7 +1316,7 @@ void b2World::ShiftOrigin(const b2Vec2& newOrigin)
 
 void b2World::Dump()
 {
-	if ((m_flags & e_locked) == e_locked)
+	if (m_locked)
 	{
 		return;
 	}
