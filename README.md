@@ -1,5 +1,5 @@
 ![Box2D Logo](https://box2d.org/images/logo.svg)
-
+[![Run on Repl.it](https://repl.it/badge/github/erincatto/box2d)](https://repl.it/github/erincatto/box2d)
 # Build Status
 [![Build Status](https://travis-ci.org/erincatto/box2d.svg?branch=master)](https://travis-ci.org/erincatto/box2d)
 
