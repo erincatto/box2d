@@ -1,9 +1,13 @@
 language: cpp
-compiler: clang
+
+dist: bionic
+
+# This is clang on macOS
+compiler: gcc
 
 branches:
-    only:
-        - master
+  only:
+    - master
 
 addons:
   apt:
@@ -13,7 +17,7 @@ addons:
       - libxcursor-dev
       - libxi-dev
       
-matrix:
+jobs:
   include:
     - os: linux
       env:
