@@ -117,7 +117,7 @@ typedef unsigned int uint32;
 /// that overlap is removed in one time step. However using values close to 1 often lead
 /// to overshoot.
 #define b2_baumgarte				0.2f
-#define b2_toiBaugarte				0.75f
+#define b2_toiBaumgarte				0.75f
 
 
 // Sleep
