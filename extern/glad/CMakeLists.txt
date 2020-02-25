@@ -1,5 +1,3 @@
-project(glad C)
-
 set(GLAD_SOURCE_FILES
   src/gl.c)
 

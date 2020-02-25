@@ -1,5 +1,3 @@
-project(glfw C)
-
 find_package(Threads REQUIRED)
 
 # Establish target libraries and include directories

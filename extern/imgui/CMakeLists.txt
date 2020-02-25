@@ -1,5 +1,3 @@
-project(imgui CXX)
-
 # dear imgui
 set(IMGUI_SOURCE_FILES
   imgui.cpp
