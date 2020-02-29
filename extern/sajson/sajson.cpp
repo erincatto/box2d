@@ -1,4 +1,2 @@
-#define _CRT_SECURE_NO_WARNINGS
-#include "sajson.h"
-
-sajson::dynamic_allocation sajson_dummy;
+// This cpp is here to force cmake to make a project file for sajson.
+int sajson_dummy;
