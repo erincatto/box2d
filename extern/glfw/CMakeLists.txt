@@ -88,3 +88,5 @@ add_library(glfw ${glfw_SOURCES} ${glfw_HEADERS})
 target_include_directories(glfw PUBLIC include)
 target_include_directories(glfw PRIVATE ${glfw_INCLUDE_DIRS})
 target_link_libraries(glfw INTERFACE ${glfw_LIBRARIES})
+
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${glfw_SOURCE_FILES} ${glfw_HEADER_FILES} )
