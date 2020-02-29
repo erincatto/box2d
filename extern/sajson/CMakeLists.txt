@@ -1,5 +1,10 @@
-project(sajson CXX)
+add_library(sajson STATIC sajson.cpp sajson.h)
+target_include_directories(sajson PUBLIC ..)
 
-add_library(sajson INTERFACE)
-# target_sources(sajson INTERFACE sajson.h)
-target_include_directories(sajson INTERFACE ..)
+set_target_properties(sajson PROPERTIES
+	CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
+)
+
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES sajson.cpp sajson.h)

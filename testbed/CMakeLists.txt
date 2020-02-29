@@ -1,5 +1,3 @@
-project(testbed LANGUAGES CXX)
-
 set (TESTBED_SOURCE_FILES
 	draw.cpp
 	draw.h
@@ -79,4 +77,4 @@ set_target_properties(testbed PROPERTIES
     CXX_EXTENSIONS NO
 )
 
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${TESTBED_SOURCE_FILES} ${TESTBED_RESOURCE_FILES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${TESTBED_SOURCE_FILES})

@@ -21,19 +21,18 @@
 // SOFTWARE.
 
 #include "box2d/box2d.h"
-
 #include <stdio.h>
+
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.h"
 
 // This is a simple example of building and running a simulation
 // using Box2D. Here we create a large ground box and a small dynamic
 // box.
 // There are no graphics for this example. Box2D is meant to be used
 // with your rendering engine in your game engine.
-int main(int argc, char** argv)
+DOCTEST_TEST_CASE("hello world")
 {
-	B2_NOT_USED(argc);
-	B2_NOT_USED(argv);
-
 	// Define the gravity vector.
 	b2Vec2 gravity(0.0f, -10.0f);
 
@@ -88,6 +87,9 @@ int main(int argc, char** argv)
 	int32 velocityIterations = 6;
 	int32 positionIterations = 2;
 
+	b2Vec2 position = body->GetPosition();
+	float angle = body->GetAngle();
+
 	// This is our little game loop.
 	for (int32 i = 0; i < 60; ++i)
 	{
@@ -96,8 +98,8 @@ int main(int argc, char** argv)
 		world.Step(timeStep, velocityIterations, positionIterations);
 
 		// Now print the position and angle of the body.
-		b2Vec2 position = body->GetPosition();
-		float angle = body->GetAngle();
+		position = body->GetPosition();
+		angle = body->GetAngle();
 
 		printf("%4.2f %4.2f %4.2f\n", position.x, position.y, angle);
 	}
@@ -105,5 +107,7 @@ int main(int argc, char** argv)
 	// When the world destructor is called, all bodies and joints are freed. This can
 	// create orphaned pointers, so be careful about your world management.
 
-	return 0;
+	CHECK(b2Abs(position.x) < 0.01f);
+	CHECK(b2Abs(position.y - 1.01f) < 0.01f);
+	CHECK(b2Abs(angle) < 0.01f);
 }
