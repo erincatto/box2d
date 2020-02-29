@@ -80,8 +80,28 @@ static void CreateUI(GLFWwindow* window, const char* glslVersion = NULL)
 		assert(false);
 	}
 
-	const char* fontPath = "data/droid_sans.ttf";
-	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath, 13.0f);
+	// Search for font file
+	const char* fontPath1 = "data/droid_sans.ttf";
+	const char* fontPath2 = "../data/droid_sans.ttf";
+	const char* fontPath = nullptr;
+	FILE* file1 = fopen(fontPath1, "rb");
+	FILE* file2 = fopen(fontPath2, "rb");
+	if (file1)
+	{
+		fontPath = fontPath1;
+	}
+	else if (file2)
+	{
+		fontPath = fontPath2;
+	}
+
+	fclose(file1);
+	fclose(file2);
+
+	if (fontPath)
+	{
+		ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath, 13.0f);
+	}
 }
 
 static void ResizeWindowCallback(GLFWwindow*, int width, int height)
