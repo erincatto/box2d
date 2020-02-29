@@ -77,4 +77,14 @@ set_target_properties(testbed PROPERTIES
     CXX_EXTENSIONS NO
 )
 
+# message(STATUS "runtime = ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+# message(STATUS "binary = ${CMAKE_CURRENT_BINARY_DIR}")
+
+# Copy font files, etc
+add_custom_command(
+        TARGET testbed POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_CURRENT_SOURCE_DIR}/data/
+                ${CMAKE_CURRENT_BINARY_DIR}/data/)
+
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${TESTBED_SOURCE_FILES})
