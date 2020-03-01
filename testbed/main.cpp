@@ -89,14 +89,14 @@ static void CreateUI(GLFWwindow* window, const char* glslVersion = NULL)
 	if (file1)
 	{
 		fontPath = fontPath1;
+		fclose(file1);
 	}
-	else if (file2)
+	
+	if (file2)
 	{
 		fontPath = fontPath2;
+		fclose(file2);
 	}
-
-	fclose(file1);
-	fclose(file2);
 
 	if (fontPath)
 	{
