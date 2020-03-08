@@ -585,7 +585,7 @@ int main(int, char**)
 			
 		if (g_debugDraw.m_showUI)
 		{
-			sprintf(buffer, "%.1f ms, %.3f", 1000.0 * frameTime.count(), 1000.0 * sleepAdjust.count());
+			sprintf(buffer, "%.1f ms", 1000.0 * frameTime.count());
 			g_debugDraw.DrawString(5, g_camera.m_height - 20, buffer);
 		}
 
