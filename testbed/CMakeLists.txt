@@ -11,7 +11,7 @@ set (TESTBED_SOURCE_FILES
 	test.cpp
 	test.h
 	tests/add_pair.cpp
-	tests/apply_forces.cpp
+	tests/apply_force.cpp
 	tests/body_types.cpp
 	tests/box_stack.cpp
 	tests/breakable.cpp

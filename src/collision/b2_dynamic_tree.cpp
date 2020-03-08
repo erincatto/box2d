@@ -87,6 +87,7 @@ int32 b2DynamicTree::AllocateNode()
 	m_nodes[nodeId].child2 = b2_nullNode;
 	m_nodes[nodeId].height = 0;
 	m_nodes[nodeId].userData = nullptr;
+	m_nodes[nodeId].moved = false;
 	++m_nodeCount;
 	return nodeId;
 }
@@ -115,6 +116,7 @@ int32 b2DynamicTree::CreateProxy(const b2AABB& aabb, void* userData)
 	m_nodes[proxyId].aabb.upperBound = aabb.upperBound + r;
 	m_nodes[proxyId].userData = userData;
 	m_nodes[proxyId].height = 0;
+	m_nodes[proxyId].moved = true;
 
 	InsertLeaf(proxyId);
 
@@ -136,43 +138,61 @@ bool b2DynamicTree::MoveProxy(int32 proxyId, const b2AABB& aabb, const b2Vec2& d
 
 	b2Assert(m_nodes[proxyId].IsLeaf());
 
-	if (m_nodes[proxyId].aabb.Contains(aabb))
-	{
-		return false;
-	}
-
-	RemoveLeaf(proxyId);
-
-	// Extend AABB.
-	b2AABB b = aabb;
+	// Extend AABB
+	b2AABB fatAABB;
 	b2Vec2 r(b2_aabbExtension, b2_aabbExtension);
-	b.lowerBound = b.lowerBound - r;
-	b.upperBound = b.upperBound + r;
+	fatAABB.lowerBound = aabb.lowerBound - r;
+	fatAABB.upperBound = aabb.upperBound + r;
 
-	// Predict AABB displacement.
+	// Predict AABB movement
 	b2Vec2 d = b2_aabbMultiplier * displacement;
 
 	if (d.x < 0.0f)
 	{
-		b.lowerBound.x += d.x;
+		fatAABB.lowerBound.x += d.x;
 	}
 	else
 	{
-		b.upperBound.x += d.x;
+		fatAABB.upperBound.x += d.x;
 	}
 
 	if (d.y < 0.0f)
 	{
-		b.lowerBound.y += d.y;
+		fatAABB.lowerBound.y += d.y;
 	}
 	else
 	{
-		b.upperBound.y += d.y;
+		fatAABB.upperBound.y += d.y;
 	}
 
-	m_nodes[proxyId].aabb = b;
+	const b2AABB& treeAABB = m_nodes[proxyId].aabb;
+	if (treeAABB.Contains(aabb))
+	{
+		// The tree AABB still contains the object, but it might be too large.
+		// Perhaps the object was moving fast but has since gone to sleep.
+		// The huge AABB is larger than the new fat AABB.
+		b2AABB hugeAABB;
+		hugeAABB.lowerBound = fatAABB.lowerBound - 4.0f * r;
+		hugeAABB.upperBound = fatAABB.upperBound + 4.0f * r;
+
+		if (hugeAABB.Contains(treeAABB))
+		{
+			// The tree AABB contains the object AABB and the tree AABB is
+			// not too large. No tree update needed.
+			return false;
+		}
+
+		// Otherwise the tree AABB is huge and needs to be shrunk
+	}
+
+	RemoveLeaf(proxyId);
+
+	m_nodes[proxyId].aabb = fatAABB;
 
 	InsertLeaf(proxyId);
+
+	m_nodes[proxyId].moved = true;
+
 	return true;
 }
 

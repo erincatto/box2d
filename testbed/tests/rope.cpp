@@ -124,9 +124,9 @@ public:
 			ImGui::EndCombo();
 		}
 
-		ImGui::SliderFloat("Damping##1", &m_tuning1.bendDamping, 0.0f, 4.0f, "%.1f");
-		ImGui::SliderFloat("Hertz##1", &m_tuning1.bendHertz, 0.0f, 60.0f, "%.0f");
-		ImGui::SliderFloat("Stiffness##1", &m_tuning1.bendStiffness, 0.0f, 1.0f, "%.1f");
+		ImGui::SliderFloat("Damping##B1", &m_tuning1.bendDamping, 0.0f, 4.0f, "%.1f");
+		ImGui::SliderFloat("Hertz##B1", &m_tuning1.bendHertz, 0.0f, 60.0f, "%.0f");
+		ImGui::SliderFloat("Stiffness##B1", &m_tuning1.bendStiffness, 0.0f, 1.0f, "%.1f");
 
 		ImGui::Checkbox("Isometric##1", &m_tuning1.isometric);
 		ImGui::Checkbox("Fixed Mass##1", &m_tuning1.fixedEffectiveMass);
@@ -152,9 +152,9 @@ public:
 			ImGui::EndCombo();
 		}
 
-		ImGui::SliderFloat("Damping##1", &m_tuning1.stretchDamping, 0.0f, 4.0f, "%.1f");
-		ImGui::SliderFloat("Hertz##1", &m_tuning1.stretchHertz, 0.0f, 60.0f, "%.0f");
-		ImGui::SliderFloat("Stiffness##1", &m_tuning1.stretchStiffness, 0.0f, 1.0f, "%.1f");
+		ImGui::SliderFloat("Damping##S1", &m_tuning1.stretchDamping, 0.0f, 4.0f, "%.1f");
+		ImGui::SliderFloat("Hertz##S1", &m_tuning1.stretchHertz, 0.0f, 60.0f, "%.0f");
+		ImGui::SliderFloat("Stiffness##S1", &m_tuning1.stretchStiffness, 0.0f, 1.0f, "%.1f");
 
 		ImGui::SliderInt("Iterations##1", &m_iterations1, 1, 100, "%d");
 
@@ -181,9 +181,9 @@ public:
 			ImGui::EndCombo();
 		}
 
-		ImGui::SliderFloat("Damping##2", &m_tuning2.bendDamping, 0.0f, 4.0f, "%.1f");
-		ImGui::SliderFloat("Hertz##2", &m_tuning2.bendHertz, 0.0f, 60.0f, "%.0f");
-		ImGui::SliderFloat("Stiffness##2", &m_tuning2.bendStiffness, 0.0f, 1.0f, "%.1f");
+		ImGui::SliderFloat("Damping##B2", &m_tuning2.bendDamping, 0.0f, 4.0f, "%.1f");
+		ImGui::SliderFloat("Hertz##B2", &m_tuning2.bendHertz, 0.0f, 60.0f, "%.0f");
+		ImGui::SliderFloat("Stiffness##B2", &m_tuning2.bendStiffness, 0.0f, 1.0f, "%.1f");
 
 		ImGui::Checkbox("Isometric##2", &m_tuning2.isometric);
 		ImGui::Checkbox("Fixed Mass##2", &m_tuning2.fixedEffectiveMass);
@@ -209,9 +209,9 @@ public:
 			ImGui::EndCombo();
 		}
 
-		ImGui::SliderFloat("Damping##2", &m_tuning2.stretchDamping, 0.0f, 4.0f, "%.1f");
-		ImGui::SliderFloat("Hertz##2", &m_tuning2.stretchHertz, 0.0f, 60.0f, "%.0f");
-		ImGui::SliderFloat("Stiffness##2", &m_tuning2.stretchStiffness, 0.0f, 1.0f, "%.1f");
+		ImGui::SliderFloat("Damping##S2", &m_tuning2.stretchDamping, 0.0f, 4.0f, "%.1f");
+		ImGui::SliderFloat("Hertz##S2", &m_tuning2.stretchHertz, 0.0f, 60.0f, "%.0f");
+		ImGui::SliderFloat("Stiffness##S2", &m_tuning2.stretchStiffness, 0.0f, 1.0f, "%.1f");
 
 		ImGui::SliderInt("Iterations##2", &m_iterations2, 1, 100, "%d");
 

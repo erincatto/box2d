@@ -305,7 +305,7 @@ void Test::Step(Settings& settings)
 
 	m_world->Step(timeStep, settings.m_velocityIterations, settings.m_positionIterations);
 
-	m_world->DrawDebugData();
+	m_world->DebugDraw();
     g_debugDraw.Flush();
 
 	if (timeStep > 0.0f)

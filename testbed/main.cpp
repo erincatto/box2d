@@ -30,7 +30,10 @@
 #include "settings.h"
 #include "test.h"
 
+#include <algorithm>
 #include <stdio.h>
+#include <thread>
+#include <chrono> 
 
 GLFWwindow* g_mainWindow = nullptr;
 static int32 s_testSelection = 0;
@@ -537,15 +540,17 @@ int main(int, char**)
 	s_test = g_testEntries[s_settings.m_testIndex].createFcn();
 
 	// Control the frame rate. One draw per monitor refresh.
-	glfwSwapInterval(1);
+	//glfwSwapInterval(1);
 
-	double time1 = glfwGetTime();
-	double frameTime = 0.0;
-   
 	glClearColor(0.3f, 0.3f, 0.3f, 1.f);
-	
+
+	std::chrono::duration<double> frameTime(0.0);
+	std::chrono::duration<double> sleepAdjust(0.0);
+
 	while (!glfwWindowShouldClose(g_mainWindow))
 	{
+		std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+
 		glfwGetWindowSize(g_mainWindow, &g_camera.m_width, &g_camera.m_height);
         
         int bufferWidth, bufferHeight;
@@ -574,6 +579,21 @@ int main(int, char**)
 
 		s_test->Step(s_settings);
 
+		UpdateUI();
+
+		// ImGui::ShowDemoWindow();
+			
+		if (g_debugDraw.m_showUI)
+		{
+			sprintf(buffer, "%.1f ms", 1000.0 * frameTime.count());
+			g_debugDraw.DrawString(5, g_camera.m_height - 20, buffer);
+		}
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+		glfwSwapBuffers(g_mainWindow);
+
 		if (s_testSelection != s_settings.m_testIndex)
 		{
 			s_settings.m_testIndex = s_testSelection;
@@ -583,28 +603,24 @@ int main(int, char**)
 			g_camera.m_center.Set(0.0f, 20.0f);
 		}
 
-		UpdateUI();
+		glfwPollEvents();
 
-		// ImGui::ShowDemoWindow();
-
-		// Measure speed
-		double time2 = glfwGetTime();
-		double alpha = 0.9;
-		frameTime = alpha * frameTime + (1.0 - alpha) * (time2 - time1);
-		time1 = time2;
-
-		if (g_debugDraw.m_showUI)
+		// Throttle to cap at 60Hz. This adaptive using a sleep adjustment. This could be improved by
+		// using mm_pause or equivalent for the last millisecond.
+		std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+		std::chrono::duration<double> target(1.0 / 60.0);
+		std::chrono::duration<double> timeUsed = t2 - t1;
+		std::chrono::duration<double> sleepTime = target - timeUsed + sleepAdjust;
+		if (sleepTime > std::chrono::duration<double>(0))
 		{
-			sprintf(buffer, "%.1f ms", 1000.0 * frameTime);
-			g_debugDraw.DrawString(5, g_camera.m_height - 20, buffer);
+			std::this_thread::sleep_for(sleepTime);
 		}
 
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
+		frameTime = t3 - t1;
 
-		glfwSwapBuffers(g_mainWindow);
-
-		glfwPollEvents();
+		// Compute the sleep adjustment using a low pass filter
+		sleepAdjust = 0.9 * sleepAdjust + 0.1 * (target - frameTime);
 	}
 
 	delete s_test;

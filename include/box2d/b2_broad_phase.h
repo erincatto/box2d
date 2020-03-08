@@ -26,7 +26,6 @@
 #include "b2_settings.h"
 #include "b2_collision.h"
 #include "b2_dynamic_tree.h"
-#include <algorithm>
 
 struct b2Pair
 {
@@ -132,22 +131,6 @@ private:
 	int32 m_queryProxyId;
 };
 
-/// This is used to sort pairs.
-inline bool b2PairLessThan(const b2Pair& pair1, const b2Pair& pair2)
-{
-	if (pair1.proxyIdA < pair2.proxyIdA)
-	{
-		return true;
-	}
-
-	if (pair1.proxyIdA == pair2.proxyIdA)
-	{
-		return pair1.proxyIdB < pair2.proxyIdB;
-	}
-
-	return false;
-}
-
 inline void* b2BroadPhase::GetUserData(int32 proxyId) const
 {
 	return m_tree.GetUserData(proxyId);
@@ -208,37 +191,30 @@ void b2BroadPhase::UpdatePairs(T* callback)
 		m_tree.Query(this, fatAABB);
 	}
 
-	// Reset move buffer
-	m_moveCount = 0;
-
-	// Sort the pair buffer to expose duplicates.
-	std::sort(m_pairBuffer, m_pairBuffer + m_pairCount, b2PairLessThan);
-
-	// Send the pairs back to the client.
-	int32 i = 0;
-	while (i < m_pairCount)
+	// Send pairs to caller
+	for (int32 i = 0; i < m_pairCount; ++i)
 	{
 		b2Pair* primaryPair = m_pairBuffer + i;
 		void* userDataA = m_tree.GetUserData(primaryPair->proxyIdA);
 		void* userDataB = m_tree.GetUserData(primaryPair->proxyIdB);
 
 		callback->AddPair(userDataA, userDataB);
-		++i;
-
-		// Skip any duplicate pairs.
-		while (i < m_pairCount)
-		{
-			b2Pair* pair = m_pairBuffer + i;
-			if (pair->proxyIdA != primaryPair->proxyIdA || pair->proxyIdB != primaryPair->proxyIdB)
-			{
-				break;
-			}
-			++i;
-		}
 	}
 
-	// Try to keep the tree balanced.
-	//m_tree.Rebalance(4);
+	// Clear move flags
+	for (int32 i = 0; i < m_moveCount; ++i)
+	{
+		int32 proxyId = m_moveBuffer[i];
+		if (proxyId == e_nullProxy)
+		{
+			continue;
+		}
+
+		m_tree.ClearMoved(proxyId);
+	}
+
+	// Reset move buffer
+	m_moveCount = 0;
 }
 
 template <typename T>

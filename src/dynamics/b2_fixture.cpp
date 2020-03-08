@@ -171,7 +171,7 @@ void b2Fixture::Synchronize(b2BroadPhase* broadPhase, const b2Transform& transfo
 	
 		proxy->aabb.Combine(aabb1, aabb2);
 
-		b2Vec2 displacement = transform2.p - transform1.p;
+		b2Vec2 displacement = aabb2.GetCenter() - aabb1.GetCenter();
 
 		broadPhase->MoveProxy(proxy->proxyId, proxy->aabb, displacement);
 	}

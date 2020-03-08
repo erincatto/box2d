@@ -22,6 +22,9 @@
 
 #include "test.h"
 
+// This test shows how to apply forces and torques to a body.
+// It also shows how to use the friction joint that can be useful
+// for overhead games.
 class ApplyForce : public Test
 {
 public:
@@ -76,7 +79,7 @@ public:
 
 			b2FixtureDef sd1;
 			sd1.shape = &poly1;
-			sd1.density = 4.0f;
+			sd1.density = 2.0f;
 
 			b2Transform xf2;
 			xf2.q.Set(-0.3524f * b2_pi);
@@ -95,15 +98,33 @@ public:
 
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
-			bd.angularDamping = 2.0f;
-			bd.linearDamping = 0.5f;
 
-			bd.position.Set(0.0f, 2.0);
+			bd.position.Set(0.0f, 3.0);
 			bd.angle = b2_pi;
 			bd.allowSleep = false;
 			m_body = m_world->CreateBody(&bd);
 			m_body->CreateFixture(&sd1);
 			m_body->CreateFixture(&sd2);
+
+			float gravity = 10.0f;
+			float I = m_body->GetInertia();
+			float mass = m_body->GetMass();
+
+			// Compute an effective radius that can be used to
+			// set the max torque for a friction joint
+			// For a circle: I = 0.5 * m * r * r ==> r = sqrt(2 * I / m)
+			float radius = b2Sqrt(2.0f * I / mass);
+
+			b2FrictionJointDef jd;
+			jd.bodyA = ground;
+			jd.bodyB = m_body;
+			jd.localAnchorA.SetZero();
+			jd.localAnchorB = m_body->GetLocalCenter();
+			jd.collideConnected = true;
+			jd.maxForce = 0.5f * mass * gravity;
+			jd.maxTorque = 0.2f * mass * radius * gravity;
+
+			m_world->CreateJoint(&jd);
 		}
 
 		{
@@ -120,7 +141,7 @@ public:
 				b2BodyDef bd;
 				bd.type = b2_dynamicBody;
 
-				bd.position.Set(0.0f, 5.0f + 1.54f * i);
+				bd.position.Set(0.0f, 7.0f + 1.54f * i);
 				b2Body* body = m_world->CreateBody(&bd);
 
 				body->CreateFixture(&fd);
@@ -139,37 +160,36 @@ public:
 				jd.bodyB = body;
 				jd.collideConnected = true;
 				jd.maxForce = mass * gravity;
-				jd.maxTorque = mass * radius * gravity;
+				jd.maxTorque = 0.1f * mass * radius * gravity;
 
 				m_world->CreateJoint(&jd);
 			}
 		}
 	}
 
-	void Keyboard(int key) override
+	void Step(Settings& settings) override
 	{
-		switch (key)
+		g_debugDraw.DrawString(5, m_textLine, "Forward (W), Turn (A) and (D)");
+		m_textLine += m_textIncrement;
+
+		if (glfwGetKey(g_mainWindow, GLFW_KEY_W) == GLFW_PRESS)
 		{
-		case GLFW_KEY_W:
-			{
-				b2Vec2 f = m_body->GetWorldVector(b2Vec2(0.0f, -200.0f));
-				b2Vec2 p = m_body->GetWorldPoint(b2Vec2(0.0f, 2.0f));
-				m_body->ApplyForce(f, p, true);
-			}
-			break;
-
-		case GLFW_KEY_A:
-			{
-				m_body->ApplyTorque(50.0f, true);
-			}
-			break;
-
-		case GLFW_KEY_D:
-			{
-				m_body->ApplyTorque(-50.0f, true);
-			}
-			break;
+			b2Vec2 f = m_body->GetWorldVector(b2Vec2(0.0f, -50.0f));
+			b2Vec2 p = m_body->GetWorldPoint(b2Vec2(0.0f, 3.0f));
+			m_body->ApplyForce(f, p, true);
 		}
+
+		if (glfwGetKey(g_mainWindow, GLFW_KEY_A) == GLFW_PRESS)
+		{
+			m_body->ApplyTorque(10.0f, true);
+		}
+
+		if (glfwGetKey(g_mainWindow, GLFW_KEY_D) == GLFW_PRESS)
+		{
+			m_body->ApplyTorque(-10.0f, true);
+		}
+
+		Test::Step(settings);
 	}
 
 	static Test* Create()
