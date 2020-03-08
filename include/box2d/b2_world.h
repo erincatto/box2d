@@ -66,7 +66,7 @@ public:
 	void SetContactListener(b2ContactListener* listener);
 
 	/// Register a routine for debug drawing. The debug draw functions are called
-	/// inside with b2World::DrawDebugData method. The debug draw object is owned
+	/// inside with b2World::DebugDraw method. The debug draw object is owned
 	/// by you and must remain in scope.
 	void SetDebugDraw(b2Draw* debugDraw);
 
@@ -109,7 +109,7 @@ public:
 	void ClearForces();
 
 	/// Call this to draw shapes and other debug draw data. This is intentionally non-const.
-	void DrawDebugData();
+	void DebugDraw();
 
 	/// Query the world for all fixtures that potentially overlap the
 	/// provided AABB.

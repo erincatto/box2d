@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include "box2d/b2_broad_phase.h"
+#include <string.h>
 
 b2BroadPhase::b2BroadPhase()
 {
@@ -105,11 +106,18 @@ bool b2BroadPhase::QueryCallback(int32 proxyId)
 		return true;
 	}
 
+	const bool moved = m_tree.WasMoved(proxyId);
+	if (moved && proxyId > m_queryProxyId)
+	{
+		// Both proxies are moving. Avoid duplicate pairs.
+		return true;
+	}
+
 	// Grow the pair buffer as needed.
 	if (m_pairCount == m_pairCapacity)
 	{
 		b2Pair* oldBuffer = m_pairBuffer;
-		m_pairCapacity *= 2;
+		m_pairCapacity = m_pairCapacity + (m_pairCapacity >> 1);
 		m_pairBuffer = (b2Pair*)b2Alloc(m_pairCapacity * sizeof(b2Pair));
 		memcpy(m_pairBuffer, oldBuffer, m_pairCount * sizeof(b2Pair));
 		b2Free(oldBuffer);

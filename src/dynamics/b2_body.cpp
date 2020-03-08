@@ -26,6 +26,8 @@
 #include "box2d/b2_joint.h"
 #include "box2d/b2_world.h"
 
+#include <new>
+
 b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 {
 	b2Assert(bd->position.IsValid());
@@ -449,14 +451,25 @@ void b2Body::SetTransform(const b2Vec2& position, float angle)
 
 void b2Body::SynchronizeFixtures()
 {
-	b2Transform xf1;
-	xf1.q.Set(m_sweep.a0);
-	xf1.p = m_sweep.c0 - b2Mul(xf1.q, m_sweep.localCenter);
-
 	b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
-	for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
+
+	if (m_flags & b2Body::e_awakeFlag)
 	{
-		f->Synchronize(broadPhase, xf1, m_xf);
+		b2Transform xf1;
+		xf1.q.Set(m_sweep.a0);
+		xf1.p = m_sweep.c0 - b2Mul(xf1.q, m_sweep.localCenter);
+
+		for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
+		{
+			f->Synchronize(broadPhase, xf1, m_xf);
+		}
+	}
+	else
+	{
+		for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
+		{
+			f->Synchronize(broadPhase, m_xf, m_xf);
+		}
 	}
 }
 

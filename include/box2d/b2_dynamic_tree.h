@@ -52,6 +52,8 @@ struct b2TreeNode
 
 	// leaf = 0, free node = -1
 	int32 height;
+
+	bool moved;
 };
 
 /// A dynamic AABB tree broad-phase, inspired by Nathanael Presson's btDbvt.
@@ -86,6 +88,9 @@ public:
 	/// Get proxy user data.
 	/// @return the proxy user data or 0 if the id is invalid.
 	void* GetUserData(int32 proxyId) const;
+
+	bool WasMoved(int32 proxyId) const;
+	void ClearMoved(int32 proxyId);
 
 	/// Get the fat AABB for a proxy.
 	const b2AABB& GetFatAABB(int32 proxyId) const;
@@ -161,6 +166,18 @@ inline void* b2DynamicTree::GetUserData(int32 proxyId) const
 {
 	b2Assert(0 <= proxyId && proxyId < m_nodeCapacity);
 	return m_nodes[proxyId].userData;
+}
+
+inline bool b2DynamicTree::WasMoved(int32 proxyId) const
+{
+	b2Assert(0 <= proxyId && proxyId < m_nodeCapacity);
+	return m_nodes[proxyId].moved;
+}
+
+inline void b2DynamicTree::ClearMoved(int32 proxyId)
+{
+	b2Assert(0 <= proxyId && proxyId < m_nodeCapacity);
+	m_nodes[proxyId].moved = false;
 }
 
 inline const b2AABB& b2DynamicTree::GetFatAABB(int32 proxyId) const
