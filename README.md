@@ -5,11 +5,11 @@
 
 # Box2D 
 
-**Box2D is a 2D physics engine for games.**
+Box2D is a 2D physics engine for games.
 
 ## Contributing
 
-Please do not submit pull requests with new features. Instead, please file an issue first for discussion. For bugs, I prefer detailed bug reports over pull requests.
+Please do not submit pull requests with new features or core library changes. Instead, please file an issue first for discussion. For bugs, I prefer detailed bug reports over pull requests.
 
 ## Features
 
@@ -68,9 +68,11 @@ Please do not submit pull requests with new features. Instead, please file an is
 
 ## Documentation
 - [Manual](https://box2d.org/documentation/)
-- [subreddit](https://www.reddit.com/r/box2d/)
-- [Discord server](https://discord.gg/NKYgCBP)
+- [reddit](https://www.reddit.com/r/box2d/)
+- [Discord](https://discord.gg/NKYgCBP)
 
 ## License
-
 Box2D is developed by Erin Catto, and uses the [MIT license](https://en.wikipedia.org/wiki/MIT_License).
+
+## Sponsorship
+Support development of Box2D through [Github Sponsors](https://github.com/sponsors/erincatto)
