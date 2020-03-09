@@ -30,11 +30,14 @@
 #include "settings.h"
 #include "test.h"
 
-#include <crtdbg.h>
 #include <algorithm>
 #include <stdio.h>
 #include <thread>
-#include <chrono> 
+#include <chrono>
+
+#if defined(_WIN32)
+#include <crtdbg.h>
+#endif
 
 GLFWwindow* g_mainWindow = nullptr;
 static int32 s_testSelection = 0;
