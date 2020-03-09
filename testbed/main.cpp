@@ -30,6 +30,7 @@
 #include "settings.h"
 #include "test.h"
 
+#include <crtdbg.h>
 #include <algorithm>
 #include <stdio.h>
 #include <thread>
