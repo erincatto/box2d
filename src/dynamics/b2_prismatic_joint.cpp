@@ -44,7 +44,6 @@
 // s1 = cross(d + r1, a) = cross(p2 - x1, a)
 // s2 = cross(r2, a) = cross(p2 - x2, a)
 
-
 // Motor/Limit linear constraint
 // C = dot(ax1, d)
 // Cdot = = -dot(ax1, v1) - dot(cross(d + r1, ax1), w1) + dot(ax1, v2) + dot(cross(r2, ax1), v2)

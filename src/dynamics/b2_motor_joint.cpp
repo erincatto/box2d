@@ -100,8 +100,6 @@ void b2MotorJoint::InitVelocityConstraints(const b2SolverData& data)
 	//     [  -r1y*iA*r1x-r2y*iB*r2x, mA+r1x^2*iA+mB+r2x^2*iB,           r1x*iA+r2x*iB]
 	//     [          -r1y*iA-r2y*iB,           r1x*iA+r2x*iB,                   iA+iB]
 
-
-
 	float mA = m_invMassA, mB = m_invMassB;
 	float iA = m_invIA, iB = m_invIB;
 

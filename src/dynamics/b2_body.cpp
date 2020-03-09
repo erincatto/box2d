@@ -91,16 +91,8 @@ b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 
 	m_type = bd->type;
 
-	if (m_type == b2_dynamicBody)
-	{
-		m_mass = 1.0f;
-		m_invMass = 1.0f;
-	}
-	else
-	{
-		m_mass = 0.0f;
-		m_invMass = 0.0f;
-	}
+	m_mass = 0.0f;
+	m_invMass = 0.0f;
 
 	m_I = 0.0f;
 	m_invI = 0.0f;
@@ -330,12 +322,6 @@ void b2Body::ResetMassData()
 	{
 		m_invMass = 1.0f / m_mass;
 		localCenter *= m_invMass;
-	}
-	else
-	{
-		// Force all dynamic bodies to have a positive mass.
-		m_mass = 1.0f;
-		m_invMass = 1.0f;
 	}
 
 	if (m_I > 0.0f && (m_flags & e_fixedRotationFlag) == 0)

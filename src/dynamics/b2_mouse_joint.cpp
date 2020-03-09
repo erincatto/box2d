@@ -126,7 +126,6 @@ void b2MouseJoint::InitVelocityConstraints(const b2SolverData& data)
 	// gamma has units of inverse mass.
 	// beta has units of inverse time.
 	float h = data.step.dt;
-	b2Assert(d + h * k > b2_epsilon);
 	m_gamma = h * (d + h * k);
 	if (m_gamma != 0.0f)
 	{
