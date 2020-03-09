@@ -22,6 +22,8 @@
 
 #include "test.h"
 
+#define TEST_BAD_BODY 0
+
 class Chain : public Test
 {
 public:
@@ -57,6 +59,19 @@ public:
 				bd.type = b2_dynamicBody;
 				bd.position.Set(0.5f + i, y);
 				b2Body* body = m_world->CreateBody(&bd);
+
+#if TEST_BAD_BODY == 1
+				if (i == 10)
+				{
+					// Test zero density dynamic body
+					fd.density = 0.0f;
+				}
+				else
+				{
+					fd.density = 20.0f;
+				}
+#endif
+
 				body->CreateFixture(&fd);
 
 				b2Vec2 anchor(float(i), y);
