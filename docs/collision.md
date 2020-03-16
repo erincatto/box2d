@@ -241,10 +241,11 @@ bool hit = shape->TestPoint(transform, point);
 Edge and chain shapes always return false, even if the chain is a loop.
 
 ### Shape Ray Cast
-You can cast a ray at a shape to get the point of first intersection and
-normal vector. No hit will register if the ray starts inside the shape.
-A child index is included for chain shapes because the ray cast will
-only check a single edge at a time.
+You can cast a ray at a shape to get the point of first intersection and normal vector. A child index is included for chain shapes because the ray cast will only check a single edge at a time.
+
+> **Caution**:
+> No hit will register if the ray starts inside a convex shape like a circle or polygon. This is consistent with Box2D treating convex shapes as solid. 
+>
 
 ```cpp
 b2Transfrom transform;

@@ -546,7 +546,7 @@ int main(int, char**)
 	// Control the frame rate. One draw per monitor refresh.
 	//glfwSwapInterval(1);
 
-	glClearColor(0.3f, 0.3f, 0.3f, 1.f);
+	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
 	std::chrono::duration<double> frameTime(0.0);
 	std::chrono::duration<double> sleepAdjust(0.0);
