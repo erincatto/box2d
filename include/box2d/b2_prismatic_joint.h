@@ -151,6 +151,9 @@ public:
 	/// Dump to b2Log
 	void Dump() override;
 
+	///
+	void Draw(b2Draw* draw) const override;
+
 protected:
 	friend class b2Joint;
 	friend class b2GearJoint;
@@ -160,21 +163,21 @@ protected:
 	void SolveVelocityConstraints(const b2SolverData& data) override;
 	bool SolvePositionConstraints(const b2SolverData& data) override;
 
-	// Solver shared
 	b2Vec2 m_localAnchorA;
 	b2Vec2 m_localAnchorB;
 	b2Vec2 m_localXAxisA;
 	b2Vec2 m_localYAxisA;
 	float m_referenceAngle;
-	b2Vec3 m_impulse;
+	b2Vec2 m_impulse;
 	float m_motorImpulse;
+	float m_lowerImpulse;
+	float m_upperImpulse;
 	float m_lowerTranslation;
 	float m_upperTranslation;
 	float m_maxMotorForce;
 	float m_motorSpeed;
 	bool m_enableLimit;
 	bool m_enableMotor;
-	b2LimitState m_limitState;
 
 	// Solver temp
 	int32 m_indexA;
@@ -188,8 +191,9 @@ protected:
 	b2Vec2 m_axis, m_perp;
 	float m_s1, m_s2;
 	float m_a1, m_a2;
-	b2Mat33 m_K;
-	float m_motorMass;
+	b2Mat22 m_K;
+	float m_translation;
+	float m_axialMass;
 };
 
 inline float b2PrismaticJoint::GetMotorSpeed() const

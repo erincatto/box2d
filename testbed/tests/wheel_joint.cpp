@@ -24,11 +24,11 @@
 #include "test.h"
 #include "imgui/imgui.h"
 
-// Test the prismatic joint with limits and motor options.
-class PrismaticJoint : public Test
+// Test the wheel joint with motor, spring, and limit options.
+class WheelJoint : public Test
 {
 public:
-	PrismaticJoint()
+	WheelJoint()
 	{
 		b2Body* ground = NULL;
 		{
@@ -45,38 +45,44 @@ public:
 		m_motorSpeed = 10.0f;
 
 		{
-			b2PolygonShape shape;
-			shape.SetAsBox(1.0f, 1.0f);
+			b2CircleShape shape;
+			shape.m_radius = 2.0f;
 
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
 			bd.position.Set(0.0f, 10.0f);
-			bd.angle = 0.5f * b2_pi;
 			bd.allowSleep = false;
 			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&shape, 5.0f);
 
-			b2PrismaticJointDef pjd;
+			float mass = body->GetMass();
+			float hertz = 1.0f;
+			float dampingRatio = 0.7f;
+			float omega = 2.0f * b2_pi * hertz;
+
+			b2WheelJointDef jd;
 
 			// Horizontal
-			pjd.Initialize(ground, body, bd.position, b2Vec2(1.0f, 0.0f));
+			jd.Initialize(ground, body, bd.position, b2Vec2(0.0f, 1.0f));
 
-			pjd.motorSpeed = m_motorSpeed;
-			pjd.maxMotorForce = 10000.0f;
-			pjd.enableMotor = m_enableMotor;
-			pjd.lowerTranslation = -10.0f;
-			pjd.upperTranslation = 10.0f;
-			pjd.enableLimit = m_enableLimit;
+			jd.motorSpeed = m_motorSpeed;
+			jd.maxMotorTorque = 10000.0f;
+			jd.enableMotor = m_enableMotor;
+			jd.stiffness = mass * omega * omega;
+			jd.damping = 2.0f * mass * dampingRatio * omega;
+			jd.lowerTranslation = -3.0f;
+			jd.upperTranslation = 3.0f;
+			jd.enableLimit = m_enableLimit;
 
-			m_joint = (b2PrismaticJoint*)m_world->CreateJoint(&pjd);
+			m_joint = (b2WheelJoint*)m_world->CreateJoint(&jd);
 		}
 	}
 
 	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
-		float force = m_joint->GetMotorForce(settings.m_hertz);
-		g_debugDraw.DrawString(5, m_textLine, "Motor Force = %4.0f", (float) force);
+		float torque = m_joint->GetMotorTorque(settings.m_hertz);
+		g_debugDraw.DrawString(5, m_textLine, "Motor Torque = %4.0f", (float)torque);
 		m_textLine += m_textIncrement;
 	}
 
@@ -106,13 +112,13 @@ public:
 
 	static Test* Create()
 	{
-		return new PrismaticJoint;
+		return new WheelJoint;
 	}
 
-	b2PrismaticJoint* m_joint;
+	b2WheelJoint* m_joint;
 	float m_motorSpeed;
 	bool m_enableMotor;
 	bool m_enableLimit;
 };
 
-static int testIndex = RegisterTest("Joints", "Prismatic", PrismaticJoint::Create);
+static int testIndex = RegisterTest("Joints", "Wheel", WheelJoint::Create);

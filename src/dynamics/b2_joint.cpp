@@ -23,6 +23,7 @@
 #include "box2d/b2_block_allocator.h"
 #include "box2d/b2_body.h"
 #include "box2d/b2_distance_joint.h"
+#include "box2d/b2_draw.h"
 #include "box2d/b2_friction_joint.h"
 #include "box2d/b2_gear_joint.h"
 #include "box2d/b2_motor_joint.h"
@@ -211,4 +212,52 @@ b2Joint::b2Joint(const b2JointDef* def)
 bool b2Joint::IsEnabled() const
 {
 	return m_bodyA->IsEnabled() && m_bodyB->IsEnabled();
+}
+
+void b2Joint::Draw(b2Draw* draw) const
+{
+	const b2Transform& xf1 = m_bodyA->GetTransform();
+	const b2Transform& xf2 = m_bodyB->GetTransform();
+	b2Vec2 x1 = xf1.p;
+	b2Vec2 x2 = xf2.p;
+	b2Vec2 p1 = GetAnchorA();
+	b2Vec2 p2 = GetAnchorB();
+
+	b2Color color(0.5f, 0.8f, 0.8f);
+
+	switch (m_type)
+	{
+	case e_distanceJoint:
+		draw->DrawSegment(p1, p2, color);
+		break;
+
+	case e_pulleyJoint:
+	{
+		b2PulleyJoint* pulley = (b2PulleyJoint*)this;
+		b2Vec2 s1 = pulley->GetGroundAnchorA();
+		b2Vec2 s2 = pulley->GetGroundAnchorB();
+		draw->DrawSegment(s1, p1, color);
+		draw->DrawSegment(s2, p2, color);
+		draw->DrawSegment(s1, s2, color);
+	}
+	break;
+
+	case e_mouseJoint:
+	{
+		b2Color c;
+		c.Set(0.0f, 1.0f, 0.0f);
+		draw->DrawPoint(p1, 4.0f, c);
+		draw->DrawPoint(p2, 4.0f, c);
+
+		c.Set(0.8f, 0.8f, 0.8f);
+		draw->DrawSegment(p1, p2, c);
+
+	}
+	break;
+
+	default:
+		draw->DrawSegment(x1, p1, color);
+		draw->DrawSegment(p1, p2, color);
+		draw->DrawSegment(x2, p2, color);
+	}
 }
