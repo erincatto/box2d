@@ -142,6 +142,11 @@ void b2Free(void* mem);
 /// Logging function.
 void b2Log(const char* string, ...);
 
+/// Dump to a file. Only one dump file allowed at a time.
+void b2OpenDump(const char* fileName);
+void b2Dump(const char* string, ...);
+void b2CloseDump();
+
 /// Version numbering scheme.
 /// See http://en.wikipedia.org/wiki/Software_versioning
 struct b2Version

@@ -412,12 +412,12 @@ void b2GearJoint::Dump()
 	int32 index1 = m_joint1->m_index;
 	int32 index2 = m_joint2->m_index;
 
-	b2Log("  b2GearJointDef jd;\n");
-	b2Log("  jd.bodyA = bodies[%d];\n", indexA);
-	b2Log("  jd.bodyB = bodies[%d];\n", indexB);
-	b2Log("  jd.collideConnected = bool(%d);\n", m_collideConnected);
-	b2Log("  jd.joint1 = joints[%d];\n", index1);
-	b2Log("  jd.joint2 = joints[%d];\n", index2);
-	b2Log("  jd.ratio = %.15lef;\n", m_ratio);
-	b2Log("  joints[%d] = m_world->CreateJoint(&jd);\n", m_index);
+	b2Dump("  b2GearJointDef jd;\n");
+	b2Dump("  jd.bodyA = bodies[%d];\n", indexA);
+	b2Dump("  jd.bodyB = bodies[%d];\n", indexB);
+	b2Dump("  jd.collideConnected = bool(%d);\n", m_collideConnected);
+	b2Dump("  jd.joint1 = joints[%d];\n", index1);
+	b2Dump("  jd.joint2 = joints[%d];\n", index2);
+	b2Dump("  jd.ratio = %.15lef;\n", m_ratio);
+	b2Dump("  joints[%d] = m_world->CreateJoint(&jd);\n", m_index);
 }

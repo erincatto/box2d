@@ -589,21 +589,21 @@ void b2PrismaticJoint::Dump()
 	int32 indexA = m_bodyA->m_islandIndex;
 	int32 indexB = m_bodyB->m_islandIndex;
 
-	b2Log("  b2PrismaticJointDef jd;\n");
-	b2Log("  jd.bodyA = bodies[%d];\n", indexA);
-	b2Log("  jd.bodyB = bodies[%d];\n", indexB);
-	b2Log("  jd.collideConnected = bool(%d);\n", m_collideConnected);
-	b2Log("  jd.localAnchorA.Set(%.9g, %.9g);\n", m_localAnchorA.x, m_localAnchorA.y);
-	b2Log("  jd.localAnchorB.Set(%.9g, %.9g);\n", m_localAnchorB.x, m_localAnchorB.y);
-	b2Log("  jd.localAxisA.Set(%.9g, %.9g);\n", m_localXAxisA.x, m_localXAxisA.y);
-	b2Log("  jd.referenceAngle = %.9g;\n", m_referenceAngle);
-	b2Log("  jd.enableLimit = bool(%d);\n", m_enableLimit);
-	b2Log("  jd.lowerTranslation = %.9g;\n", m_lowerTranslation);
-	b2Log("  jd.upperTranslation = %.9g;\n", m_upperTranslation);
-	b2Log("  jd.enableMotor = bool(%d);\n", m_enableMotor);
-	b2Log("  jd.motorSpeed = %.9g;\n", m_motorSpeed);
-	b2Log("  jd.maxMotorForce = %.9g;\n", m_maxMotorForce);
-	b2Log("  joints[%d] = m_world->CreateJoint(&jd);\n", m_index);
+	b2Dump("  b2PrismaticJointDef jd;\n");
+	b2Dump("  jd.bodyA = bodies[%d];\n", indexA);
+	b2Dump("  jd.bodyB = bodies[%d];\n", indexB);
+	b2Dump("  jd.collideConnected = bool(%d);\n", m_collideConnected);
+	b2Dump("  jd.localAnchorA.Set(%.9g, %.9g);\n", m_localAnchorA.x, m_localAnchorA.y);
+	b2Dump("  jd.localAnchorB.Set(%.9g, %.9g);\n", m_localAnchorB.x, m_localAnchorB.y);
+	b2Dump("  jd.localAxisA.Set(%.9g, %.9g);\n", m_localXAxisA.x, m_localXAxisA.y);
+	b2Dump("  jd.referenceAngle = %.9g;\n", m_referenceAngle);
+	b2Dump("  jd.enableLimit = bool(%d);\n", m_enableLimit);
+	b2Dump("  jd.lowerTranslation = %.9g;\n", m_lowerTranslation);
+	b2Dump("  jd.upperTranslation = %.9g;\n", m_upperTranslation);
+	b2Dump("  jd.enableMotor = bool(%d);\n", m_enableMotor);
+	b2Dump("  jd.motorSpeed = %.9g;\n", m_motorSpeed);
+	b2Dump("  jd.maxMotorForce = %.9g;\n", m_maxMotorForce);
+	b2Dump("  joints[%d] = m_world->CreateJoint(&jd);\n", m_index);
 }
 
 ///

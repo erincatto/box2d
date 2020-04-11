@@ -1277,11 +1277,14 @@ void b2World::Dump()
 		return;
 	}
 
-	b2Log("b2Vec2 g(%.15lef, %.15lef);\n", m_gravity.x, m_gravity.y);
-	b2Log("m_world->SetGravity(g);\n");
+	b2OpenDump("box2d_dump.inl");
 
-	b2Log("b2Body** bodies = (b2Body**)b2Alloc(%d * sizeof(b2Body*));\n", m_bodyCount);
-	b2Log("b2Joint** joints = (b2Joint**)b2Alloc(%d * sizeof(b2Joint*));\n", m_jointCount);
+	b2Dump("b2Vec2 g(%.15lef, %.15lef);\n", m_gravity.x, m_gravity.y);
+	b2Dump("m_world->SetGravity(g);\n");
+
+	b2Dump("b2Body** bodies = (b2Body**)b2Alloc(%d * sizeof(b2Body*));\n", m_bodyCount);
+	b2Dump("b2Joint** joints = (b2Joint**)b2Alloc(%d * sizeof(b2Joint*));\n", m_jointCount);
+
 	int32 i = 0;
 	for (b2Body* b = m_bodyList; b; b = b->m_next)
 	{
@@ -1305,9 +1308,9 @@ void b2World::Dump()
 			continue;
 		}
 
-		b2Log("{\n");
+		b2Dump("{\n");
 		j->Dump();
-		b2Log("}\n");
+		b2Dump("}\n");
 	}
 
 	// Second pass on joints, only gear joints.
@@ -1318,13 +1321,15 @@ void b2World::Dump()
 			continue;
 		}
 
-		b2Log("{\n");
+		b2Dump("{\n");
 		j->Dump();
-		b2Log("}\n");
+		b2Dump("}\n");
 	}
 
-	b2Log("b2Free(joints);\n");
-	b2Log("b2Free(bodies);\n");
-	b2Log("joints = nullptr;\n");
-	b2Log("bodies = nullptr;\n");
+	b2Dump("b2Free(joints);\n");
+	b2Dump("b2Free(bodies);\n");
+	b2Dump("joints = nullptr;\n");
+	b2Dump("bodies = nullptr;\n");
+
+	b2CloseDump();
 }

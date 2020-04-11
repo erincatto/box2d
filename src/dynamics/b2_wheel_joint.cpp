@@ -620,19 +620,19 @@ void b2WheelJoint::Dump()
 	int32 indexA = m_bodyA->m_islandIndex;
 	int32 indexB = m_bodyB->m_islandIndex;
 
-	b2Log("  b2WheelJointDef jd;\n");
-	b2Log("  jd.bodyA = bodies[%d];\n", indexA);
-	b2Log("  jd.bodyB = bodies[%d];\n", indexB);
-	b2Log("  jd.collideConnected = bool(%d);\n", m_collideConnected);
-	b2Log("  jd.localAnchorA.Set(%.9g, %.9g);\n", m_localAnchorA.x, m_localAnchorA.y);
-	b2Log("  jd.localAnchorB.Set(%.9g, %.9g);\n", m_localAnchorB.x, m_localAnchorB.y);
-	b2Log("  jd.localAxisA.Set(%.9g, %.9g);\n", m_localXAxisA.x, m_localXAxisA.y);
-	b2Log("  jd.enableMotor = bool(%d);\n", m_enableMotor);
-	b2Log("  jd.motorSpeed = %.9g;\n", m_motorSpeed);
-	b2Log("  jd.maxMotorTorque = %.9g;\n", m_maxMotorTorque);
-	b2Log("  jd.stiffness = %.9g;\n", m_stiffness);
-	b2Log("  jd.damping = %.9g;\n", m_damping);
-	b2Log("  joints[%d] = m_world->CreateJoint(&jd);\n", m_index);
+	b2Dump("  b2WheelJointDef jd;\n");
+	b2Dump("  jd.bodyA = bodies[%d];\n", indexA);
+	b2Dump("  jd.bodyB = bodies[%d];\n", indexB);
+	b2Dump("  jd.collideConnected = bool(%d);\n", m_collideConnected);
+	b2Dump("  jd.localAnchorA.Set(%.9g, %.9g);\n", m_localAnchorA.x, m_localAnchorA.y);
+	b2Dump("  jd.localAnchorB.Set(%.9g, %.9g);\n", m_localAnchorB.x, m_localAnchorB.y);
+	b2Dump("  jd.localAxisA.Set(%.9g, %.9g);\n", m_localXAxisA.x, m_localXAxisA.y);
+	b2Dump("  jd.enableMotor = bool(%d);\n", m_enableMotor);
+	b2Dump("  jd.motorSpeed = %.9g;\n", m_motorSpeed);
+	b2Dump("  jd.maxMotorTorque = %.9g;\n", m_maxMotorTorque);
+	b2Dump("  jd.stiffness = %.9g;\n", m_stiffness);
+	b2Dump("  jd.damping = %.9g;\n", m_damping);
+	b2Dump("  joints[%d] = m_world->CreateJoint(&jd);\n", m_index);
 }
 
 ///
