@@ -388,7 +388,7 @@ public:
 	b2World* GetWorld();
 	const b2World* GetWorld() const;
 
-	/// Dump this body to a log file
+	/// Dump this body to a file
 	void Dump();
 
 private:

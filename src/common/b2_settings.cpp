@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "box2d/b2_settings.h"
 #include <stdio.h>
 #include <stdarg.h>
@@ -45,4 +47,31 @@ void b2Log(const char* string, ...)
 	va_start(args, string);
 	vprintf(string, args);
 	va_end(args);
+}
+
+FILE* b2_dumpFile = nullptr;
+
+void b2OpenDump(const char* fileName)
+{
+	b2Assert(b2_dumpFile == nullptr);
+	b2_dumpFile = fopen(fileName, "w");
+}
+
+void b2Dump(const char* string, ...)
+{
+	if (b2_dumpFile == nullptr)
+	{
+		return;
+	}
+
+	va_list args;
+	va_start(args, string);
+	vfprintf(b2_dumpFile, string, args);
+	va_end(args);
+}
+
+void b2CloseDump()
+{
+	fclose(b2_dumpFile);
+	b2_dumpFile = nullptr;
 }
