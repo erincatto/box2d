@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include "test.h"
+#include "imgui/imgui.h"
 
 class CompoundShapes : public Test
 {
@@ -43,7 +44,7 @@ public:
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
 			bd.position.Set(-15.0f, 1.0f);
-			b2Body* body = m_world->CreateBody(&bd);
+			m_table1 = m_world->CreateBody(&bd);
 
 			b2PolygonShape top;
 			top.SetAsBox(3.0f, 0.5f, b2Vec2(0.0f, 3.5f), 0.0f);
@@ -54,9 +55,9 @@ public:
 			b2PolygonShape rightLeg;
 			rightLeg.SetAsBox(0.5f, 1.5f, b2Vec2(2.5f, 1.5f), 0.0f);
 
-			body->CreateFixture(&top, 2.0f);
-			body->CreateFixture(&leftLeg, 2.0f);
-			body->CreateFixture(&rightLeg, 2.0f);
+			m_table1->CreateFixture(&top, 2.0f);
+			m_table1->CreateFixture(&leftLeg, 2.0f);
+			m_table1->CreateFixture(&rightLeg, 2.0f);
 		}
 
 		// Table 2
@@ -64,7 +65,7 @@ public:
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
 			bd.position.Set(-5.0f, 1.0f);
-			b2Body* body = m_world->CreateBody(&bd);
+			m_table2 = m_world->CreateBody(&bd);
 
 			b2PolygonShape top;
 			top.SetAsBox(3.0f, 0.5f, b2Vec2(0.0f, 3.5f), 0.0f);
@@ -75,9 +76,9 @@ public:
 			b2PolygonShape rightLeg;
 			rightLeg.SetAsBox(0.5f, 2.0f, b2Vec2(2.5f, 2.0f), 0.0f);
 
-			body->CreateFixture(&top, 2.0f);
-			body->CreateFixture(&leftLeg, 2.0f);
-			body->CreateFixture(&rightLeg, 2.0f);
+			m_table2->CreateFixture(&top, 2.0f);
+			m_table2->CreateFixture(&leftLeg, 2.0f);
+			m_table2->CreateFixture(&rightLeg, 2.0f);
 		}
 
 		// Spaceship 1
@@ -85,7 +86,7 @@ public:
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
 			bd.position.Set(5.0f, 1.0f);
-			b2Body* body = m_world->CreateBody(&bd);
+			m_ship1 = m_world->CreateBody(&bd);
 
 			b2Vec2 vertices[3];
 
@@ -101,8 +102,8 @@ public:
 			vertices[2].Set(0.0f, 4.0f);
 			right.Set(vertices, 3);
 
-			body->CreateFixture(&left, 2.0f);
-			body->CreateFixture(&right, 2.0f);
+			m_ship1->CreateFixture(&left, 2.0f);
+			m_ship1->CreateFixture(&right, 2.0f);
 		}
 
 		// Spaceship 2
@@ -110,7 +111,7 @@ public:
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
 			bd.position.Set(15.0f, 1.0f);
-			b2Body* body = m_world->CreateBody(&bd);
+			m_ship2 = m_world->CreateBody(&bd);
 
 			b2Vec2 vertices[3];
 
@@ -126,9 +127,90 @@ public:
 			vertices[2].Set(0.0f, 4.0f);
 			right.Set(vertices, 3);
 
-			body->CreateFixture(&left, 2.0f);
-			body->CreateFixture(&right, 2.0f);
+			m_ship2->CreateFixture(&left, 2.0f);
+			m_ship2->CreateFixture(&right, 2.0f);
 		}
+	}
+
+	void Spawn()
+	{
+		// Table 1 obstruction
+		{
+			b2BodyDef bd;
+			bd.type = b2_dynamicBody;
+			bd.position = m_table1->GetPosition();
+			bd.angle = m_table1->GetAngle();
+
+			b2Body* body = m_world->CreateBody(&bd);
+
+			b2PolygonShape box;
+			box.SetAsBox(4.0f, 0.1f, b2Vec2(0.0f, 3.0f), 0.0f);
+			
+			body->CreateFixture(&box, 2.0f);
+		}
+
+		// Table 2 obstruction
+		{
+			b2BodyDef bd;
+			bd.type = b2_dynamicBody;
+			bd.position = m_table2->GetPosition();
+			bd.angle = m_table2->GetAngle();
+
+			b2Body* body = m_world->CreateBody(&bd);
+
+			b2PolygonShape box;
+			box.SetAsBox(4.0f, 0.1f, b2Vec2(0.0f, 3.0f), 0.0f);
+			
+			body->CreateFixture(&box, 2.0f);
+		}
+
+		// Ship 1 obstruction
+		{
+			b2BodyDef bd;
+			bd.type = b2_dynamicBody;
+			bd.position = m_ship1->GetPosition();
+			bd.angle = m_ship1->GetAngle();
+			bd.gravityScale = 0.0f;
+
+			b2Body* body = m_world->CreateBody(&bd);
+
+			b2CircleShape circle;
+			circle.m_radius = 0.5f;
+			circle.m_p.Set(0.0f, 2.0f);
+
+			body->CreateFixture(&circle, 2.0f);
+		}
+
+		// Ship 2 obstruction
+		{
+			b2BodyDef bd;
+			bd.type = b2_dynamicBody;
+			bd.position = m_ship2->GetPosition();
+			bd.angle = m_ship2->GetAngle();
+			bd.gravityScale = 0.0f;
+
+			b2Body* body = m_world->CreateBody(&bd);
+
+			b2CircleShape circle;
+			circle.m_radius = 0.5f;
+			circle.m_p.Set(0.0f, 2.0f);
+
+			body->CreateFixture(&circle, 2.0f);
+		}
+	}
+
+	void UpdateUI() override
+	{
+		ImGui::SetNextWindowPos(ImVec2(10.0f, 100.0f));
+		ImGui::SetNextWindowSize(ImVec2(200.0f, 100.0f));
+		ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+
+		if (ImGui::Button("Spawn"))
+		{
+			Spawn();
+		}
+
+		ImGui::End();
 	}
 
 	static Test* Create()
