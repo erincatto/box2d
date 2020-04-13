@@ -92,13 +92,13 @@ public:
 
 			b2PolygonShape left;
 			vertices[0].Set(-2.0f, 0.0f);
-			vertices[1].Set(0.0f, 1.0f);
+			vertices[1].Set(0.0f, 4.0f / 3.0f);
 			vertices[2].Set(0.0f, 4.0f);
 			left.Set(vertices, 3);
 
 			b2PolygonShape right;
 			vertices[0].Set(2.0f, 0.0f);
-			vertices[1].Set(0.0f, 1.0f);
+			vertices[1].Set(0.0f, 4.0f / 3.0f);
 			vertices[2].Set(0.0f, 4.0f);
 			right.Set(vertices, 3);
 
