@@ -43,7 +43,6 @@ b2RopeJoint::b2RopeJoint(const b2RopeJointDef* def)
 
 	m_mass = 0.0f;
 	m_impulse = 0.0f;
-	m_state = e_inactiveLimit;
 	m_length = 0.0f;
 }
 
@@ -77,14 +76,6 @@ void b2RopeJoint::InitVelocityConstraints(const b2SolverData& data)
 	m_length = m_u.Length();
 
 	float C = m_length - m_maxLength;
-	if (C > 0.0f)
-	{
-		m_state = e_atUpperLimit;
-	}
-	else
-	{
-		m_state = e_inactiveLimit;
-	}
 
 	if (m_length > b2_linearSlop)
 	{
@@ -176,8 +167,8 @@ bool b2RopeJoint::SolvePositionConstraints(const b2SolverData& data)
 	b2Vec2 rB = b2Mul(qB, m_localAnchorB - m_localCenterB);
 	b2Vec2 u = cB + rB - cA - rA;
 
-	float length = u.Normalize();
-	float C = length - m_maxLength;
+	m_length = u.Normalize();
+	float C = m_length - m_maxLength;
 
 	C = b2Clamp(C, 0.0f, b2_maxLinearCorrection);
 
@@ -194,7 +185,7 @@ bool b2RopeJoint::SolvePositionConstraints(const b2SolverData& data)
 	data.positions[m_indexB].c = cB;
 	data.positions[m_indexB].a = aB;
 
-	return length - m_maxLength < b2_linearSlop;
+	return m_length - m_maxLength < b2_linearSlop;
 }
 
 b2Vec2 b2RopeJoint::GetAnchorA() const
@@ -224,9 +215,9 @@ float b2RopeJoint::GetMaxLength() const
 	return m_maxLength;
 }
 
-b2LimitState b2RopeJoint::GetLimitState() const
+float b2RopeJoint::GetLength() const
 {
-	return m_state;
+	return m_length;
 }
 
 void b2RopeJoint::Dump()

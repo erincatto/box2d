@@ -78,7 +78,8 @@ public:
 	void SetMaxLength(float length) { m_maxLength = length; }
 	float GetMaxLength() const;
 
-	b2LimitState GetLimitState() const;
+	// Get current length
+	float GetLength() const;
 
 	/// Dump joint to dmLog
 	void Dump() override;
@@ -112,7 +113,6 @@ protected:
 	float m_invIA;
 	float m_invIB;
 	float m_mass;
-	b2LimitState m_state;
 };
 
 #endif
