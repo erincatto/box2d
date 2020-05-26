@@ -76,6 +76,7 @@ public:
 			ground->CreateFixture(&shape, 0.0f);
 		}
 
+#if 0
 		{
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
@@ -88,6 +89,7 @@ public:
 
 			body->CreateFixture(&shape, 1.0f);
 		}
+#endif
 
 		{
 			b2BodyDef bd;
@@ -97,7 +99,7 @@ public:
 			b2Body* body = m_world->CreateBody(&bd);
 
 			b2PolygonShape shape;
-			shape.SetAsBox(0.5f, 0.5f);
+			shape.SetAsBox(0.5f, 0.25f);
 
 			body->CreateFixture(&shape, 1.0f);
 		}
