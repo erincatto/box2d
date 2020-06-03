@@ -206,32 +206,34 @@ int32 b2ClipSegmentToLine(b2ClipVertex vOut[2], const b2ClipVertex vIn[2],
 						const b2Vec2& normal, float offset, int32 vertexIndexA)
 {
 	// Start with no output points
-	int32 numOut = 0;
+	int32 count = 0;
 
 	// Calculate the distance of end points to the line
 	float distance0 = b2Dot(normal, vIn[0].v) - offset;
 	float distance1 = b2Dot(normal, vIn[1].v) - offset;
 
 	// If the points are behind the plane
-	if (distance0 <= 0.0f) vOut[numOut++] = vIn[0];
-	if (distance1 <= 0.0f) vOut[numOut++] = vIn[1];
+	if (distance0 <= 0.0f) vOut[count++] = vIn[0];
+	if (distance1 <= 0.0f) vOut[count++] = vIn[1];
 
 	// If the points are on different sides of the plane
 	if (distance0 * distance1 < 0.0f)
 	{
 		// Find intersection point of edge and plane
 		float interp = distance0 / (distance0 - distance1);
-		vOut[numOut].v = vIn[0].v + interp * (vIn[1].v - vIn[0].v);
+		vOut[count].v = vIn[0].v + interp * (vIn[1].v - vIn[0].v);
 
 		// VertexA is hitting edgeB.
-		vOut[numOut].id.cf.indexA = static_cast<uint8>(vertexIndexA);
-		vOut[numOut].id.cf.indexB = vIn[0].id.cf.indexB;
-		vOut[numOut].id.cf.typeA = b2ContactFeature::e_vertex;
-		vOut[numOut].id.cf.typeB = b2ContactFeature::e_face;
-		++numOut;
+		vOut[count].id.cf.indexA = static_cast<uint8>(vertexIndexA);
+		vOut[count].id.cf.indexB = vIn[0].id.cf.indexB;
+		vOut[count].id.cf.typeA = b2ContactFeature::e_vertex;
+		vOut[count].id.cf.typeB = b2ContactFeature::e_face;
+		++count;
+
+		b2Assert(count == 2);
 	}
 
-	return numOut;
+	return count;
 }
 
 bool b2TestOverlap(	const b2Shape* shapeA, int32 indexA,
