@@ -223,6 +223,13 @@ struct b2EPCollider
 
 		bool hasVertex0 = edgeA->m_hasVertex0;
 		bool hasVertex3 = edgeA->m_hasVertex3;
+		
+		// TODO temp
+		if (hasVertex0 == false || hasVertex3 == false)
+		{
+			hasVertex0 = false;
+			hasVertex3 = false;
+		}
 
 		b2Vec2 edge1 = m_v2 - m_v1;
 		edge1.Normalize();
@@ -520,7 +527,7 @@ struct b2EPCollider
 		const float k_absoluteTol = 0.001f;
 
 		b2EPAxis primaryAxis;
-		if (polygonAxis.separation > k_relativeTol * edgeAxis.separation + k_absoluteTol)
+		if (polygonAxis.separation - m_radius > k_relativeTol * (edgeAxis.separation - m_radius) + k_absoluteTol)
 		{
 			primaryAxis = polygonAxis;
 		}
@@ -529,6 +536,7 @@ struct b2EPCollider
 			primaryAxis = edgeAxis;
 		}
 
+		const float sinTol = 0.1f;
 		if (hasVertex0 && hasVertex3)
 		{
 			bool side1 = b2Dot(primaryAxis.normal, edge1) <= 0.0f;
@@ -540,7 +548,7 @@ struct b2EPCollider
 				{
 					if (convex1)
 					{
-						if (b2Cross(m_normal0, primaryAxis.normal) > 0.0f)
+						if (b2Cross(m_normal0, primaryAxis.normal) > sinTol)
 						{
 							// Skip region
 							return;
@@ -556,7 +564,7 @@ struct b2EPCollider
 				{
 					if (convex2)
 					{
-						if (b2Cross(primaryAxis.normal, m_normal2) > 0.0f)
+						if (b2Cross(primaryAxis.normal, m_normal2) > sinTol)
 						{
 							// Skip region
 							return;
@@ -576,7 +584,7 @@ struct b2EPCollider
 				{
 					if (convex1 == false)
 					{
-						if (b2Cross(primaryAxis.normal, -m_normal0) > 0.0f)
+						if (b2Cross(primaryAxis.normal, -m_normal0) > sinTol)
 						{
 							// Skip region
 							return;
@@ -592,7 +600,7 @@ struct b2EPCollider
 				{
 					if (convex2 == false)
 					{
-						if (b2Cross(-m_normal2, primaryAxis.normal) > 0.0f)
+						if (b2Cross(-m_normal2, primaryAxis.normal) > sinTol)
 						{
 							// Skip region
 							return;
@@ -641,6 +649,7 @@ struct b2EPCollider
 			clipPoints[1].id.cf.typeA = b2ContactFeature::e_face;
 			clipPoints[1].id.cf.typeB = b2ContactFeature::e_vertex;
 
+			// TODO does order matter?
 			if (m_front)
 			{
 				ref.i1 = 1;
@@ -648,8 +657,8 @@ struct b2EPCollider
 				ref.v1 = m_v2;
 				ref.v2 = m_v1;
 				ref.normal = primaryAxis.normal;
-				ref.sideNormal1.Set(ref.normal.y, -ref.normal.x);
-				ref.sideNormal2 = -ref.sideNormal1;
+				ref.sideNormal1 = edge1;
+				ref.sideNormal2 = -edge1;
 			}
 			else
 			{
@@ -658,8 +667,8 @@ struct b2EPCollider
 				ref.v1 = m_v1;
 				ref.v2 = m_v2;
 				ref.normal = primaryAxis.normal;
-				ref.sideNormal1.Set(ref.normal.y, -ref.normal.x);
-				ref.sideNormal2 = -ref.sideNormal1;
+				ref.sideNormal1 = -edge1;
+				ref.sideNormal2 = edge1;
 			}		
 		}
 		else
@@ -683,6 +692,8 @@ struct b2EPCollider
 			ref.v1 = m_polygonB.vertices[ref.i1];
 			ref.v2 = m_polygonB.vertices[ref.i2];
 			ref.normal = m_polygonB.normals[ref.i1];
+
+			// CCW winding
 			ref.sideNormal1.Set(ref.normal.y, -ref.normal.x);
 			ref.sideNormal2 = -ref.sideNormal1;
 		}

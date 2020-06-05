@@ -1058,7 +1058,9 @@ void b2World::DrawShape(b2Fixture* fixture, const b2Transform& xf, const b2Color
 			b2Vec2 v1 = b2Mul(xf, edge->m_vertex1);
 			b2Vec2 v2 = b2Mul(xf, edge->m_vertex2);
 			m_debugDraw->DrawSegment(v1, v2, color);
-		}
+			m_debugDraw->DrawPoint(v1, 4.0f, color);
+			m_debugDraw->DrawPoint(v2, 4.0f, color);
+	}
 		break;
 
 	case b2Shape::e_chain:
