@@ -212,50 +212,46 @@ struct b2EPCollider
 		const b2EdgeShape* edgeA, const b2Transform& xfA,
 		const b2PolygonShape* polygonB, const b2Transform& xfB)
 	{
-		m_xf = b2MulT(xfA, xfB);
+		b2Transform xf = b2MulT(xfA, xfB);
 
-		m_centroidB = b2Mul(m_xf, polygonB->m_centroid);
+		b2Vec2 centroidB = b2Mul(xf, polygonB->m_centroid);
 
-		m_v0 = edgeA->m_vertex0;
 		m_v1 = edgeA->m_vertex1;
 		m_v2 = edgeA->m_vertex2;
-		m_v3 = edgeA->m_vertex3;
+
+		b2Vec2 v0 = edgeA->m_vertex0;
+		b2Vec2 v3 = edgeA->m_vertex3;
 
 		bool hasVertex0 = edgeA->m_hasVertex0;
 		bool hasVertex3 = edgeA->m_hasVertex3;
-		
-		// TODO temp
-		if (hasVertex0 == false || hasVertex3 == false)
-		{
-			hasVertex0 = false;
-			hasVertex3 = false;
-		}
 
 		b2Vec2 edge1 = m_v2 - m_v1;
 		edge1.Normalize();
 		m_normal1.Set(-edge1.y, edge1.x);
-		float offset1 = b2Dot(m_normal1, m_centroidB - m_v1);
+		float offset1 = b2Dot(m_normal1, centroidB - m_v1);
 		float offset0 = 0.0f, offset2 = 0.0f;
 		bool convex1 = false, convex2 = false;
+		b2Vec2 normal0, normal2;
+		bool front = false;
 
 		// Is there a preceding edge?
 		if (hasVertex0)
 		{
-			b2Vec2 edge0 = m_v1 - m_v0;
+			b2Vec2 edge0 = m_v1 - v0;
 			edge0.Normalize();
-			m_normal0.Set(-edge0.y, edge0.x);
+			normal0.Set(-edge0.y, edge0.x);
 			convex1 = b2Cross(edge0, edge1) <= 0.0f;
-			offset0 = b2Dot(m_normal0, m_centroidB - m_v0);
+			offset0 = b2Dot(normal0, centroidB - v0);
 		}
 
 		// Is there a following edge?
 		if (hasVertex3)
 		{
-			b2Vec2 edge2 = m_v3 - m_v2;
+			b2Vec2 edge2 = v3 - m_v2;
 			edge2.Normalize();
-			m_normal2.Set(-edge2.y, edge2.x);
+			normal2.Set(-edge2.y, edge2.x);
 			convex2 = b2Cross(edge1, edge2) <= 0.0f;
-			offset2 = b2Dot(m_normal2, m_centroidB - m_v2);
+			offset2 = b2Dot(normal2, centroidB - m_v2);
 		}
 
 		// Determine front or back collision. Determine collision normal limits.
@@ -268,7 +264,7 @@ struct b2EPCollider
 			if (convex1 && convex2)
 			{
 				// convex-convex
-				m_front = front0 || front1 || front2;
+				front = front0 || front1 || front2;
 			}
 			else if (convex1)
 			{
@@ -280,12 +276,12 @@ struct b2EPCollider
 						if (front0)
 						{
 							// FFF
-							m_front = true;
+							front = true;
 						}
 						else
 						{
 							// BFF
-							m_front = true;
+							front = true;
 						}
 					}
 					else
@@ -293,13 +289,13 @@ struct b2EPCollider
 						if (front0)
 						{
 							// FBF
-							m_front = true;
+							front = true;
 							return;
 						}
 						else
 						{
 							// BBF
-							m_front = false;
+							front = false;
 						}
 					}
 				}
@@ -310,13 +306,13 @@ struct b2EPCollider
 						if (front0)
 						{
 							// FFB
-							m_front = false;
+							front = false;
 							return;
 						}
 						else
 						{
 							// BFB
-							m_front = false;
+							front = false;
 							return;
 						}
 					}
@@ -325,13 +321,13 @@ struct b2EPCollider
 						if (front0)
 						{
 							// FBB
-							m_front = true;
+							front = true;
 							return;
 						}
 						else
 						{
 							// BBB
-							m_front = false;
+							front = false;
 						}
 					}
 				}
@@ -346,12 +342,12 @@ struct b2EPCollider
 						if (front2)
 						{
 							// FFF
-							m_front = true;
+							front = true;
 						}
 						else
 						{
 							// FFB
-							m_front = true;
+							front = true;
 						}
 					}
 					else
@@ -359,13 +355,13 @@ struct b2EPCollider
 						if (front2)
 						{
 							// FBF
-							m_front = true;
+							front = true;
 							return;
 						}
 						else
 						{
 							// FBB
-							m_front = false;
+							front = false;
 						}
 					}
 				}
@@ -376,13 +372,13 @@ struct b2EPCollider
 						if (front2)
 						{
 							// BFF
-							m_front = false;
+							front = false;
 							return;
 						}
 						else
 						{
 							// BFB
-							m_front = false;
+							front = false;
 							return;
 						}
 					}
@@ -391,13 +387,13 @@ struct b2EPCollider
 						if (front2)
 						{
 							// BBF
-							m_front = true;
+							front = true;
 							return;
 						}
 						else
 						{
 							// BBB
-							m_front = false;
+							front = false;
 						}
 					}
 				}
@@ -405,105 +401,42 @@ struct b2EPCollider
 			else
 			{
 				// concave-concave
-				m_front = front0 && front1 && front2;
+				front = front0 && front1 && front2;
 			}
 		}
 		else if (hasVertex0)
 		{
-			// TODO
-			b2Assert(false);
 			if (convex1)
 			{
-				m_front = offset0 >= 0.0f || offset1 >= 0.0f;
-				if (m_front)
-				{
-					m_normal = m_normal1;
-					m_lowerLimit = m_normal0;
-					m_upperLimit = -m_normal1;
-				}
-				else
-				{
-					m_normal = -m_normal1;
-					m_lowerLimit = m_normal1;
-					m_upperLimit = -m_normal1;
-				}
+				front = offset0 >= 0.0f || offset1 >= 0.0f;
 			}
 			else
 			{
-				m_front = offset0 >= 0.0f && offset1 >= 0.0f;
-				if (m_front)
-				{
-					m_normal = m_normal1;
-					m_lowerLimit = m_normal1;
-					m_upperLimit = -m_normal1;
-				}
-				else
-				{
-					m_normal = -m_normal1;
-					m_lowerLimit = m_normal1;
-					m_upperLimit = -m_normal0;
-				}
+				front = offset0 >= 0.0f && offset1 >= 0.0f;
 			}
 		}
 		else if (hasVertex3)
 		{
-			b2Assert(false);
 			if (convex2)
 			{
-				m_front = offset1 >= 0.0f || offset2 >= 0.0f;
-				if (m_front)
-				{
-					m_normal = m_normal1;
-					m_lowerLimit = -m_normal1;
-					m_upperLimit = m_normal2;
-				}
-				else
-				{
-					m_normal = -m_normal1;
-					m_lowerLimit = -m_normal1;
-					m_upperLimit = m_normal1;
-				}
+				front = offset1 >= 0.0f || offset2 >= 0.0f;
 			}
 			else
 			{
-				m_front = offset1 >= 0.0f && offset2 >= 0.0f;
-				if (m_front)
-				{
-					m_normal = m_normal1;
-					m_lowerLimit = -m_normal1;
-					m_upperLimit = m_normal1;
-				}
-				else
-				{
-					m_normal = -m_normal1;
-					m_lowerLimit = -m_normal2;
-					m_upperLimit = m_normal1;
-				}
+				front = offset1 >= 0.0f && offset2 >= 0.0f;
 			}		
 		}
 		else
 		{
-			m_front = offset1 >= 0.0f;
-			if (m_front)
-			{
-				m_normal = m_normal1;
-				m_lowerLimit = -m_normal1;
-				m_upperLimit = -m_normal1;
-			}
-			else
-			{
-				m_normal = -m_normal1;
-				m_lowerLimit = m_normal1;
-				m_upperLimit = m_normal1;
-			}
+			front = offset1 >= 0.0f;
 		}
 
 		// Get polygonB in frameA
 		m_polygonB.count = polygonB->m_count;
 		for (int32 i = 0; i < polygonB->m_count; ++i)
 		{
-			m_polygonB.vertices[i] = b2Mul(m_xf, polygonB->m_vertices[i]);
-			m_polygonB.normals[i] = b2Mul(m_xf.q, polygonB->m_normals[i]);
+			m_polygonB.vertices[i] = b2Mul(xf, polygonB->m_vertices[i]);
+			m_polygonB.normals[i] = b2Mul(xf.q, polygonB->m_normals[i]);
 		}
 
 		m_radius = polygonB->m_radius + edgeA->m_radius;
@@ -537,18 +470,17 @@ struct b2EPCollider
 		}
 
 		const float sinTol = 0.1f;
+		bool side1 = b2Dot(primaryAxis.normal, edge1) <= 0.0f;
 		if (hasVertex0 && hasVertex3)
 		{
-			bool side1 = b2Dot(primaryAxis.normal, edge1) <= 0.0f;
-
 			// Check Gauss Map
-			if (m_front)
+			if (front)
 			{
 				if (side1)
 				{
 					if (convex1)
 					{
-						if (b2Cross(m_normal0, primaryAxis.normal) > sinTol)
+						if (b2Cross(normal0, primaryAxis.normal) > sinTol)
 						{
 							// Skip region
 							return;
@@ -564,7 +496,7 @@ struct b2EPCollider
 				{
 					if (convex2)
 					{
-						if (b2Cross(primaryAxis.normal, m_normal2) > sinTol)
+						if (b2Cross(primaryAxis.normal, normal2) > sinTol)
 						{
 							// Skip region
 							return;
@@ -584,7 +516,7 @@ struct b2EPCollider
 				{
 					if (convex1 == false)
 					{
-						if (b2Cross(primaryAxis.normal, -m_normal0) > sinTol)
+						if (b2Cross(primaryAxis.normal, -normal0) > sinTol)
 						{
 							// Skip region
 							return;
@@ -600,7 +532,93 @@ struct b2EPCollider
 				{
 					if (convex2 == false)
 					{
-						if (b2Cross(-m_normal2, primaryAxis.normal) > sinTol)
+						if (b2Cross(-normal2, primaryAxis.normal) > sinTol)
+						{
+							// Skip region
+							return;
+						}
+					}
+					else
+					{
+						// Snap region
+						primaryAxis = edgeAxis;
+					}
+				}
+			}
+		}
+		else if (hasVertex0)
+		{
+			// Check Gauss Map
+			if (front)
+			{
+				if (side1)
+				{
+					if (convex1)
+					{
+						if (b2Cross(normal0, primaryAxis.normal) > sinTol)
+						{
+							// Skip region
+							return;
+						}
+					}
+					else
+					{
+						// Snap region
+						primaryAxis = edgeAxis;
+					}
+				}
+			}
+			else
+			{
+				// Welcome to the upside-down
+				if (side1)
+				{
+					if (convex1 == false)
+					{
+						if (b2Cross(primaryAxis.normal, -normal0) > sinTol)
+						{
+							// Skip region
+							return;
+						}
+					}
+					else
+					{
+						// Snap region
+						primaryAxis = edgeAxis;
+					}
+				}
+			}
+		}
+		else if (hasVertex3)
+		{
+			// Check Gauss Map
+			if (front)
+			{
+				if (side1 == false)
+				{
+					if (convex2)
+					{
+						if (b2Cross(primaryAxis.normal, normal2) > sinTol)
+						{
+							// Skip region
+							return;
+						}
+					}
+					else
+					{
+						// Snap region
+						primaryAxis = edgeAxis;
+					}
+				}
+			}
+			else
+			{
+				// Welcome to the upside-down
+				if (side1 == false)
+				{
+					if (convex2 == false)
+					{
+						if (b2Cross(-normal2, primaryAxis.normal) > sinTol)
 						{
 							// Skip region
 							return;
@@ -650,7 +668,7 @@ struct b2EPCollider
 			clipPoints[1].id.cf.typeB = b2ContactFeature::e_vertex;
 
 			// TODO does order matter?
-			if (m_front)
+			if (front)
 			{
 				ref.i1 = 1;
 				ref.i2 = 0;
@@ -747,7 +765,7 @@ struct b2EPCollider
 
 				if (primaryAxis.type == b2EPAxis::e_edgeA)
 				{
-					cp->localPoint = b2MulT(m_xf, clipPoints2[i].v);
+					cp->localPoint = b2MulT(xf, clipPoints2[i].v);
 					cp->id = clipPoints2[i].id;
 				}
 				else
@@ -839,15 +857,10 @@ struct b2EPCollider
 	
 	b2TempPolygon m_polygonB;
 	
-	b2Transform m_xf;
-	b2Vec2 m_centroidB;
-	b2Vec2 m_v0, m_v1, m_v2, m_v3;
-	b2Vec2 m_normal0, m_normal1, m_normal2;
-	b2Vec2 m_normal;
+	b2Vec2 m_v1, m_v2;
+	b2Vec2 m_normal1;
 	VertexType m_type1, m_type2;
-	b2Vec2 m_lowerLimit, m_upperLimit;
 	float m_radius;
-	bool m_front;
 };
 
 void b2CollideEdgeAndPolygon(	b2Manifold* manifold,
