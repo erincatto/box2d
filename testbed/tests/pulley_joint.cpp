@@ -37,10 +37,6 @@ public:
 			b2BodyDef bd;
 			ground = m_world->CreateBody(&bd);
 
-			b2EdgeShape edge;
-			edge.Set(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
-			//ground->CreateFixture(&shape, 0.0f);
-
 			b2CircleShape circle;
 			circle.m_radius = 2.0f;
 

@@ -35,7 +35,7 @@ public:
 
 			b2EdgeShape edge;
 
-			edge.Set(b2Vec2(-10.0f, 0.0f), b2Vec2(10.0f, 0.0f));
+			edge.SetTwoSided(b2Vec2(-10.0f, 0.0f), b2Vec2(10.0f, 0.0f));
 			body->CreateFixture(&edge, 0.0f);
 
 			b2PolygonShape shape;

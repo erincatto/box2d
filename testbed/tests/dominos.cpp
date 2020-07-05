@@ -31,7 +31,7 @@ public:
 		b2Body* b1;
 		{
 			b2EdgeShape shape;
-			shape.Set(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
+			shape.SetTwoSided(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
 
 			b2BodyDef bd;
 			b1 = m_world->CreateBody(&bd);

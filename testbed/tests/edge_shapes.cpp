@@ -70,7 +70,7 @@ public:
 				float y2 = 2.0f * cosf(x2 / 10.0f * b2_pi);
 
 				b2EdgeShape shape;
-				shape.Set(b2Vec2(x1, y1), b2Vec2(x2, y2));
+				shape.SetTwoSided(b2Vec2(x1, y1), b2Vec2(x2, y2));
 				ground->CreateFixture(&shape, 0.0f);
 
 				x1 = x2;

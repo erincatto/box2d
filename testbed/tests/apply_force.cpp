@@ -48,19 +48,19 @@ public:
 			sd.restitution = k_restitution;
 
 			// Left vertical
-			shape.Set(b2Vec2(-20.0f, -20.0f), b2Vec2(-20.0f, 20.0f));
+			shape.SetTwoSided(b2Vec2(-20.0f, -20.0f), b2Vec2(-20.0f, 20.0f));
 			ground->CreateFixture(&sd);
 
 			// Right vertical
-			shape.Set(b2Vec2(20.0f, -20.0f), b2Vec2(20.0f, 20.0f));
+			shape.SetTwoSided(b2Vec2(20.0f, -20.0f), b2Vec2(20.0f, 20.0f));
 			ground->CreateFixture(&sd);
 
 			// Top horizontal
-			shape.Set(b2Vec2(-20.0f, 20.0f), b2Vec2(20.0f, 20.0f));
+			shape.SetTwoSided(b2Vec2(-20.0f, 20.0f), b2Vec2(20.0f, 20.0f));
 			ground->CreateFixture(&sd);
 
 			// Bottom horizontal
-			shape.Set(b2Vec2(-20.0f, -20.0f), b2Vec2(20.0f, -20.0f));
+			shape.SetTwoSided(b2Vec2(-20.0f, -20.0f), b2Vec2(20.0f, -20.0f));
 			ground->CreateFixture(&sd);
 		}
 

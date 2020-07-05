@@ -24,12 +24,20 @@
 #include "box2d/b2_block_allocator.h"
 #include <new>
 
-void b2EdgeShape::Set(const b2Vec2& v1, const b2Vec2& v2)
+void b2EdgeShape::SetOneSided(const b2Vec2& v0, const b2Vec2& v1, const b2Vec2& v2, const b2Vec2& v3)
+{
+	m_vertex0 = v0;
+	m_vertex1 = v1;
+	m_vertex2 = v2;
+	m_vertex3 = v3;
+	m_oneSided = true;
+}
+
+void b2EdgeShape::SetTwoSided(const b2Vec2& v1, const b2Vec2& v2)
 {
 	m_vertex1 = v1;
 	m_vertex2 = v2;
-	m_hasVertex0 = false;
-	m_hasVertex3 = false;
+	m_oneSided = false;
 }
 
 b2Shape* b2EdgeShape::Clone(b2BlockAllocator* allocator) const
@@ -69,6 +77,8 @@ bool b2EdgeShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input,
 	b2Vec2 v1 = m_vertex1;
 	b2Vec2 v2 = m_vertex2;
 	b2Vec2 e = v2 - v1;
+
+	// Normal points to the right, looking from v1 at v2
 	b2Vec2 normal(e.y, -e.x);
 	normal.Normalize();
 
@@ -76,6 +86,11 @@ bool b2EdgeShape::RayCast(b2RayCastOutput* output, const b2RayCastInput& input,
 	// dot(normal, q - v1) = 0
 	// dot(normal, p1 - v1) + t * dot(normal, d) = 0
 	float numerator = b2Dot(normal, v1 - p1);
+	if (m_oneSided && numerator > 0.0f)
+	{
+		return false;
+	}
+
 	float denominator = b2Dot(normal, d);
 
 	if (denominator == 0.0f)

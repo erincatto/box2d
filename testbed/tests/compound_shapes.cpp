@@ -34,7 +34,7 @@ public:
 			b2Body* body = m_world->CreateBody(&bd);
 
 			b2EdgeShape shape;
-			shape.Set(b2Vec2(50.0f, 0.0f), b2Vec2(-50.0f, 0.0f));
+			shape.SetTwoSided(b2Vec2(50.0f, 0.0f), b2Vec2(-50.0f, 0.0f));
 
 			body->CreateFixture(&shape, 0.0f);
 		}
