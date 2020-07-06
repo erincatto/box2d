@@ -40,6 +40,16 @@ void b2CollideEdgeAndCircle(b2Manifold* manifold,
 	b2Vec2 A = edgeA->m_vertex1, B = edgeA->m_vertex2;
 	b2Vec2 e = B - A;
 	
+	// Normal points to the right for a CCW winding
+	b2Vec2 n(e.y, -e.x);
+	float offset = b2Dot(n, Q - A);
+
+	bool oneSided = edgeA->m_oneSided;
+	if (oneSided && offset < 0.0f)
+	{
+		return;
+	}
+
 	// Barycentric coordinates
 	float u = b2Dot(e, B - Q);
 	float v = b2Dot(e, Q - A);
@@ -137,8 +147,7 @@ void b2CollideEdgeAndCircle(b2Manifold* manifold,
 		return;
 	}
 	
-	b2Vec2 n(-e.y, e.x);
-	if (b2Dot(n, Q - A) < 0.0f)
+	if (offset < 0.0f)
 	{
 		n.Set(-n.x, -n.y);
 	}
@@ -277,9 +286,8 @@ void b2CollideEdgeAndPolygon(b2Manifold* manifold,
 	b2Vec2 normal1(edge1.y, -edge1.x);
 	float offset1 = b2Dot(normal1, centroidB - v1);
 
-	bool front = offset1 >= 0.0f;
 	bool oneSided = edgeA->m_oneSided;
-	if (oneSided && front == false)
+	if (oneSided && offset1 < 0.0f)
 	{
 		return;
 	}
@@ -412,27 +420,13 @@ void b2CollideEdgeAndPolygon(b2Manifold* manifold,
 		clipPoints[1].id.cf.typeA = b2ContactFeature::e_face;
 		clipPoints[1].id.cf.typeB = b2ContactFeature::e_vertex;
 
-		// TODO does order matter?
-		//if (front)
-		{
-			ref.i1 = 0;
-			ref.i2 = 1;
-			ref.v1 = v1;
-			ref.v2 = v2;
-			ref.normal = primaryAxis.normal;
-			ref.sideNormal1 = -edge1;
-			ref.sideNormal2 = edge1;
-		}
-		//else
-		//{
-		//	ref.i1 = 1;
-		//	ref.i2 = 0;
-		//	ref.v1 = v2;
-		//	ref.v2 = v1;
-		//	ref.normal = primaryAxis.normal;
-		//	ref.sideNormal1 = edge1;
-		//	ref.sideNormal2 = -edge1;
-		//}		
+		ref.i1 = 0;
+		ref.i2 = 1;
+		ref.v1 = v1;
+		ref.v2 = v2;
+		ref.normal = primaryAxis.normal;
+		ref.sideNormal1 = -edge1;
+		ref.sideNormal2 = edge1;
 	}
 	else
 	{

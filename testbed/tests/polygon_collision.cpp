@@ -78,6 +78,8 @@ public:
 		{
 			g_debugDraw.DrawPoint(worldManifold.points[i], 4.0f, b2Color(0.9f, 0.3f, 0.3f));
 		}
+
+		Test::Step(settings);
 	}
 
 	void Keyboard(int key) override

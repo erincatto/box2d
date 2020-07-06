@@ -29,20 +29,37 @@ public:
 
 	EdgeTest()
 	{
+		b2Vec2 vertices[10] =
 		{
+			{10.0f, -4.0f},
+			{10.0f, 0.0f},
+			{6.0f, 0.0f},
+			{4.0f, 2.0f},
+			{2.0f, 0.0f},
+			{-2.0f, 0.0f},
+			{-6.0f, 0.0f},
+			{-8.0f, -3.0f},
+			{-10.0f, 0.0f},
+			{-10.0f, -4.0f}
+		};
+
+		m_offset1.Set(0.0f, 8.0f);
+		m_offset2.Set(0.0f, 16.0f);
+
+		{
+			b2Vec2 v1 = vertices[0] + m_offset1;
+			b2Vec2 v2 = vertices[1] + m_offset1;
+			b2Vec2 v3 = vertices[2] + m_offset1;
+			b2Vec2 v4 = vertices[3] + m_offset1;
+			b2Vec2 v5 = vertices[4] + m_offset1;
+			b2Vec2 v6 = vertices[5] + m_offset1;
+			b2Vec2 v7 = vertices[6] + m_offset1;
+			b2Vec2 v8 = vertices[7] + m_offset1;
+			b2Vec2 v9 = vertices[8] + m_offset1;
+			b2Vec2 v10 = vertices[9] + m_offset1;
+
 			b2BodyDef bd;
 			b2Body* ground = m_world->CreateBody(&bd);
-
-			b2Vec2 v1(14.0f, -4.0f);
-			b2Vec2 v2(14.0f, 0.0f);
-			b2Vec2 v3(10.0f, 0.0f);
-			b2Vec2 v4(7.0f, 2.0f);
-			b2Vec2 v5(4.0f, 0.0f);
-			b2Vec2 v6(0.0f, 0.0f);
-			b2Vec2 v7(-4.0f, 0.0f);
-			b2Vec2 v8(-7.0f, -2.0f);
-			b2Vec2 v9(-10.0f, 0.0f);
-			b2Vec2 v10(-10.0f, -4.0f);
 
 			b2EdgeShape shape;
 
@@ -78,20 +95,19 @@ public:
 		}
 
 		{
+			b2Vec2 v1 = vertices[0] + m_offset2;
+			b2Vec2 v2 = vertices[1] + m_offset2;
+			b2Vec2 v3 = vertices[2] + m_offset2;
+			b2Vec2 v4 = vertices[3] + m_offset2;
+			b2Vec2 v5 = vertices[4] + m_offset2;
+			b2Vec2 v6 = vertices[5] + m_offset2;
+			b2Vec2 v7 = vertices[6] + m_offset2;
+			b2Vec2 v8 = vertices[7] + m_offset2;
+			b2Vec2 v9 = vertices[8] + m_offset2;
+			b2Vec2 v10 = vertices[9] + m_offset2;
+
 			b2BodyDef bd;
 			b2Body* ground = m_world->CreateBody(&bd);
-
-			float y = 8.0f;
-			b2Vec2 v1(14.0f, -4.0f + y);
-			b2Vec2 v2(14.0f, 0.0f + y);
-			b2Vec2 v3(10.0f, 0.0f + y);
-			b2Vec2 v4(7.0f, 2.0f + y);
-			b2Vec2 v5(4.0f, 0.0f + y);
-			b2Vec2 v6(0.0f, 0.0f + y);
-			b2Vec2 v7(-4.0f, 0.0f + y);
-			b2Vec2 v8(-7.0f, -2.0f + y);
-			b2Vec2 v9(-10.0f, 0.0f + y);
-			b2Vec2 v10(-10.0f, -4.0f + y);
 
 			b2EdgeShape shape;
 
@@ -149,7 +165,7 @@ public:
 		{
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
-			bd.position.Set(12.0f, 2.6f);
+			bd.position = b2Vec2(8.0f, 2.6f) + m_offset1;
 			bd.allowSleep = false;
 			m_body1 = m_world->CreateBody(&bd);
 
@@ -162,7 +178,7 @@ public:
 		{
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
-			bd.position.Set(12.0f, 2.6f + 8.0f);
+			bd.position = b2Vec2(8.0f, 2.6f) + m_offset2;
 			bd.allowSleep = false;
 			m_body2 = m_world->CreateBody(&bd);
 
@@ -190,7 +206,7 @@ public:
 		{
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
-			bd.position.Set(-0.5f, 0.6f);
+			bd.position = b2Vec2(-0.5f, 0.6f) + m_offset1;
 			bd.allowSleep = false;
 			m_body1 = m_world->CreateBody(&bd);
 
@@ -203,7 +219,7 @@ public:
 		{
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
-			bd.position.Set(-0.5f, 0.6f + 8.0f);
+			bd.position = b2Vec2(-0.5f, 0.6f) + m_offset2;
 			bd.allowSleep = false;
 			m_body2 = m_world->CreateBody(&bd);
 
@@ -257,6 +273,7 @@ public:
 		return new EdgeTest;
 	}
 
+	b2Vec2 m_offset1, m_offset2;
 	b2Body* m_body1;
 	b2Body* m_body2;
 	bool m_boxes;
