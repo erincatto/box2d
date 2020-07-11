@@ -36,7 +36,7 @@ public:
 			b2Body* ground = m_world->CreateBody(&bd);
 
 			b2EdgeShape shape;
-			shape.Set(b2Vec2(-20.0f, 0.0f), b2Vec2(20.0f, 0.0f));
+			shape.SetTwoSided(b2Vec2(-20.0f, 0.0f), b2Vec2(20.0f, 0.0f));
 			ground->CreateFixture(&shape, 0.0f);
 		}
 
@@ -48,11 +48,11 @@ public:
 			b2Body* ground = m_world->CreateBody(&bd);
 
 			b2EdgeShape shape;
-			shape.Set(b2Vec2(-8.0f, 1.0f), b2Vec2(-6.0f, 1.0f));
+			shape.SetTwoSided(b2Vec2(-8.0f, 1.0f), b2Vec2(-6.0f, 1.0f));
 			ground->CreateFixture(&shape, 0.0f);
-			shape.Set(b2Vec2(-6.0f, 1.0f), b2Vec2(-4.0f, 1.0f));
+			shape.SetTwoSided(b2Vec2(-6.0f, 1.0f), b2Vec2(-4.0f, 1.0f));
 			ground->CreateFixture(&shape, 0.0f);
-			shape.Set(b2Vec2(-4.0f, 1.0f), b2Vec2(-2.0f, 1.0f));
+			shape.SetTwoSided(b2Vec2(-4.0f, 1.0f), b2Vec2(-2.0f, 1.0f));
 			ground->CreateFixture(&shape, 0.0f);
 		}
 
@@ -68,7 +68,7 @@ public:
 			vs[2].Set(7.0f, 8.0f);
 			vs[3].Set(8.0f, 7.0f);
 			b2ChainShape shape;
-			shape.CreateChain(vs, 4);
+			shape.CreateLoop(vs, 4);
 			ground->CreateFixture(&shape, 0.0f);
 		}
 

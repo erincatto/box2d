@@ -41,19 +41,19 @@ public:
 			b2EdgeShape shape;
 
 			// Floor
-			shape.Set(b2Vec2(-10.0f, 0.0f), b2Vec2(10.0f, 0.0f));
+			shape.SetTwoSided(b2Vec2(-10.0f, 0.0f), b2Vec2(10.0f, 0.0f));
 			ground->CreateFixture(&shape, 0.0f);
 
 			// Left wall
-			shape.Set(b2Vec2(-10.0f, 0.0f), b2Vec2(-10.0f, 20.0f));
+			shape.SetTwoSided(b2Vec2(-10.0f, 0.0f), b2Vec2(-10.0f, 20.0f));
 			ground->CreateFixture(&shape, 0.0f);
 
 			// Right wall
-			shape.Set(b2Vec2(10.0f, 0.0f), b2Vec2(10.0f, 20.0f));
+			shape.SetTwoSided(b2Vec2(10.0f, 0.0f), b2Vec2(10.0f, 20.0f));
 			ground->CreateFixture(&shape, 0.0f);
 
 			// Roof
-			shape.Set(b2Vec2(-10.0f, 20.0f), b2Vec2(10.0f, 20.0f));
+			shape.SetTwoSided(b2Vec2(-10.0f, 20.0f), b2Vec2(10.0f, 20.0f));
 			ground->CreateFixture(&shape, 0.0f);
 		}
 

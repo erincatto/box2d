@@ -28,11 +28,10 @@
 class b2EdgeShape;
 
 /// A chain shape is a free form sequence of line segments.
-/// The chain has two-sided collision, so you can use inside and outside collision.
-/// Therefore, you may use any winding order.
-/// Since there may be many vertices, they are allocated using b2Alloc.
+/// The chain has one-sided collision, with the surface normal pointing to the right of the edge.
+/// This provides a counter-clockwise winding like the polygon shape.
 /// Connectivity information is used to create smooth collisions.
-/// WARNING: The chain will not collide properly if there are self-intersections.
+/// @warning the chain will not collide properly if there are self-intersections.
 class b2ChainShape : public b2Shape
 {
 public:
@@ -49,18 +48,13 @@ public:
 	/// @param count the vertex count
 	void CreateLoop(const b2Vec2* vertices, int32 count);
 
-	/// Create a chain with isolated end vertices.
+	/// Create a chain with ghost vertices to connect multiple chains together.
 	/// @param vertices an array of vertices, these are copied
 	/// @param count the vertex count
-	void CreateChain(const b2Vec2* vertices, int32 count);
-
-	/// Establish connectivity to a vertex that precedes the first vertex.
-	/// Don't call this for loops.
-	void SetPrevVertex(const b2Vec2& prevVertex);
-
-	/// Establish connectivity to a vertex that follows the last vertex.
-	/// Don't call this for loops.
-	void SetNextVertex(const b2Vec2& nextVertex);
+	/// @param prevVertex previous vertex from chain that connects to the start
+	/// @param nextVertex next vertex from chain that connects to the end
+	void CreateChain(const b2Vec2* vertices, int32 count,
+		const b2Vec2& prevVertex, const b2Vec2& nextVertex);
 
 	/// Implement b2Shape. Vertices are cloned using b2Alloc.
 	b2Shape* Clone(b2BlockAllocator* allocator) const override;
@@ -93,7 +87,6 @@ public:
 	int32 m_count;
 
 	b2Vec2 m_prevVertex, m_nextVertex;
-	bool m_hasPrevVertex, m_hasNextVertex;
 };
 
 inline b2ChainShape::b2ChainShape()
@@ -102,8 +95,6 @@ inline b2ChainShape::b2ChainShape()
 	m_radius = b2_polygonRadius;
 	m_vertices = nullptr;
 	m_count = 0;
-	m_hasPrevVertex = false;
-	m_hasNextVertex = false;
 }
 
 #endif

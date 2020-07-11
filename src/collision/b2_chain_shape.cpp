@@ -63,11 +63,9 @@ void b2ChainShape::CreateLoop(const b2Vec2* vertices, int32 count)
 	m_vertices[count] = m_vertices[0];
 	m_prevVertex = m_vertices[m_count - 2];
 	m_nextVertex = m_vertices[1];
-	m_hasPrevVertex = true;
-	m_hasNextVertex = true;
 }
 
-void b2ChainShape::CreateChain(const b2Vec2* vertices, int32 count)
+void b2ChainShape::CreateChain(const b2Vec2* vertices, int32 count,	const b2Vec2& prevVertex, const b2Vec2& nextVertex)
 {
 	b2Assert(m_vertices == nullptr && m_count == 0);
 	b2Assert(count >= 2);
@@ -81,34 +79,15 @@ void b2ChainShape::CreateChain(const b2Vec2* vertices, int32 count)
 	m_vertices = (b2Vec2*)b2Alloc(count * sizeof(b2Vec2));
 	memcpy(m_vertices, vertices, m_count * sizeof(b2Vec2));
 
-	m_hasPrevVertex = false;
-	m_hasNextVertex = false;
-
-	m_prevVertex.SetZero();
-	m_nextVertex.SetZero();
-}
-
-void b2ChainShape::SetPrevVertex(const b2Vec2& prevVertex)
-{
 	m_prevVertex = prevVertex;
-	m_hasPrevVertex = true;
-}
-
-void b2ChainShape::SetNextVertex(const b2Vec2& nextVertex)
-{
 	m_nextVertex = nextVertex;
-	m_hasNextVertex = true;
 }
 
 b2Shape* b2ChainShape::Clone(b2BlockAllocator* allocator) const
 {
 	void* mem = allocator->Allocate(sizeof(b2ChainShape));
 	b2ChainShape* clone = new (mem) b2ChainShape;
-	clone->CreateChain(m_vertices, m_count);
-	clone->m_prevVertex = m_prevVertex;
-	clone->m_nextVertex = m_nextVertex;
-	clone->m_hasPrevVertex = m_hasPrevVertex;
-	clone->m_hasNextVertex = m_hasNextVertex;
+	clone->CreateChain(m_vertices, m_count, m_prevVertex, m_nextVertex);
 	return clone;
 }
 
@@ -126,27 +105,24 @@ void b2ChainShape::GetChildEdge(b2EdgeShape* edge, int32 index) const
 
 	edge->m_vertex1 = m_vertices[index + 0];
 	edge->m_vertex2 = m_vertices[index + 1];
+	edge->m_oneSided = true;
 
 	if (index > 0)
 	{
 		edge->m_vertex0 = m_vertices[index - 1];
-		edge->m_hasVertex0 = true;
 	}
 	else
 	{
 		edge->m_vertex0 = m_prevVertex;
-		edge->m_hasVertex0 = m_hasPrevVertex;
 	}
 
 	if (index < m_count - 2)
 	{
 		edge->m_vertex3 = m_vertices[index + 2];
-		edge->m_hasVertex3 = true;
 	}
 	else
 	{
 		edge->m_vertex3 = m_nextVertex;
-		edge->m_hasVertex3 = m_hasNextVertex;
 	}
 }
 

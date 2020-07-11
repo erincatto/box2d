@@ -43,71 +43,26 @@ public:
 
 			m_platform_width = PlatformWidth;
 
-			std::vector< b2Vec2 > verts;
-
 			// Horizontal platform
-			verts.emplace_back(-PlatformWidth, 0.0f);
-			verts.emplace_back(0.0f, 0.0f);
+			b2Vec2 v1(-PlatformWidth, 0.0f);
+			b2Vec2 v2(0.0f, 0.0f);
+			b2Vec2 v3(SlopeLength * cosf(Slope1Incline), -SlopeLength * sinf(Slope1Incline));
+			b2Vec2 v4(v3.x + SlopeLength * cosf(Slope2Incline), v3.y - SlopeLength * sinf(Slope2Incline));
+			b2Vec2 v5(v4.x, v4.y - 1.0f);
 
-			// Slope
-			verts.emplace_back(
-				verts.back().x + SlopeLength * cosf(Slope1Incline),
-				verts.back().y - SlopeLength * sinf(Slope1Incline)
-				);
+			b2Vec2 vertices[5] = { v5, v4, v3, v2, v1 };
 
-			verts.emplace_back(
-				verts.back().x + SlopeLength * cosf(Slope2Incline),
-				verts.back().y - SlopeLength * sinf(Slope2Incline)
-				);
+			b2ChainShape shape;
+			shape.CreateLoop(vertices, 5);
+			b2FixtureDef fd;
+			fd.shape = &shape;
+			fd.density = 0.0f;
+			fd.friction = SurfaceFriction;
 
-			{
-				b2EdgeShape shape;
-				shape.Set(verts[0], verts[1]);
-				shape.m_hasVertex3 = true;
-				shape.m_vertex3 = verts[2];
-
-				b2FixtureDef fd;
-				fd.shape = &shape;
-				fd.density = 0.0f;
-				fd.friction = SurfaceFriction;
-
-				ground->CreateFixture(&fd);
-			}
-
-			{
-				b2EdgeShape shape;
-				shape.Set(verts[1], verts[2]);
-				shape.m_hasVertex0 = true;
-				shape.m_hasVertex3 = true;
-				shape.m_vertex0 = verts[0];
-				shape.m_vertex3 = verts[3];
-
-				b2FixtureDef fd;
-				fd.shape = &shape;
-				fd.density = 0.0f;
-				fd.friction = SurfaceFriction;
-
-				ground->CreateFixture(&fd);
-			}
-			
-			{
-				b2EdgeShape shape;
-				shape.Set(verts[2], verts[3]);
-				shape.m_hasVertex0 = true;
-				shape.m_vertex0 = verts[1];
-
-				b2FixtureDef fd;
-				fd.shape = &shape;
-				fd.density = 0.0f;
-				fd.friction = SurfaceFriction;
-
-				ground->CreateFixture(&fd);
-			}
+			ground->CreateFixture(&fd);
 		}
 
 		{
-			bool const EnableCircularSkiTips = false;
-
 			float const BodyWidth = 1.0f;
 			float const BodyHeight = 2.5f;
 			float const SkiLength = 3.0f;
@@ -124,52 +79,26 @@ public:
 			bd.type = b2_dynamicBody;
 
 			float initial_y = BodyHeight / 2 + SkiThickness;
-			if(EnableCircularSkiTips)
-			{
-				initial_y += SkiThickness / 6;
-			}
 			bd.position.Set(-m_platform_width / 2, initial_y);
 
 			b2Body* skier = m_world->CreateBody(&bd);
 
-			b2PolygonShape body;
-			body.SetAsBox(BodyWidth / 2, BodyHeight / 2);
-
 			b2PolygonShape ski;
-			std::vector< b2Vec2 > verts;
-			verts.emplace_back(-SkiLength / 2 - SkiThickness, -BodyHeight / 2);
-			verts.emplace_back(-SkiLength / 2, -BodyHeight / 2 - SkiThickness);
-			verts.emplace_back(SkiLength / 2, -BodyHeight / 2 - SkiThickness);
-			verts.emplace_back(SkiLength / 2 + SkiThickness, -BodyHeight / 2);
-			ski.Set(verts.data(), (int32)verts.size());
-
-			b2CircleShape ski_back_shape;
-			ski_back_shape.m_p.Set(-SkiLength / 2.0f, -BodyHeight / 2 - SkiThickness * (2.0f / 3));
-			ski_back_shape.m_radius = SkiThickness / 2;
-
-			b2CircleShape ski_front_shape;
-			ski_front_shape.m_p.Set(SkiLength / 2, -BodyHeight / 2 - SkiThickness * (2.0f / 3));
-			ski_front_shape.m_radius = SkiThickness / 2;
+			b2Vec2 verts[4];
+			verts[0].Set(-SkiLength / 2 - SkiThickness, -BodyHeight / 2);
+			verts[1].Set(-SkiLength / 2, -BodyHeight / 2 - SkiThickness);
+			verts[2].Set(SkiLength / 2, -BodyHeight / 2 - SkiThickness);
+			verts[3].Set(SkiLength / 2 + SkiThickness, -BodyHeight / 2);
+			ski.Set(verts, 4);
 
 			b2FixtureDef fd;
-			fd.shape = &body;
 			fd.density = 1.0f;
-			skier->CreateFixture(&fd);
 
 			fd.friction = SkiFriction;
 			fd.restitution = SkiRestitution;
 
 			fd.shape = &ski;
 			skier->CreateFixture(&fd);
-
-			if(EnableCircularSkiTips)
-			{
-				fd.shape = &ski_back_shape;
-				skier->CreateFixture(&fd);
-
-				fd.shape = &ski_front_shape;
-				skier->CreateFixture(&fd);
-			}
 
 			skier->SetLinearVelocity(b2Vec2(0.5f, 0.0f));
 

@@ -261,8 +261,7 @@ void b2Fixture::Dump(int32 bodyIndex)
 			b2Dump("    shape.m_vertex1.Set(%.15lef, %.15lef);\n", s->m_vertex1.x, s->m_vertex1.y);
 			b2Dump("    shape.m_vertex2.Set(%.15lef, %.15lef);\n", s->m_vertex2.x, s->m_vertex2.y);
 			b2Dump("    shape.m_vertex3.Set(%.15lef, %.15lef);\n", s->m_vertex3.x, s->m_vertex3.y);
-			b2Dump("    shape.m_hasVertex0 = bool(%d);\n", s->m_hasVertex0);
-			b2Dump("    shape.m_hasVertex3 = bool(%d);\n", s->m_hasVertex3);
+			b2Dump("    shape.m_oneSided = bool(%d);\n", s->m_oneSided);
 		}
 		break;
 
@@ -291,8 +290,6 @@ void b2Fixture::Dump(int32 bodyIndex)
 			b2Dump("    shape.CreateChain(vs, %d);\n", s->m_count);
 			b2Dump("    shape.m_prevVertex.Set(%.15lef, %.15lef);\n", s->m_prevVertex.x, s->m_prevVertex.y);
 			b2Dump("    shape.m_nextVertex.Set(%.15lef, %.15lef);\n", s->m_nextVertex.x, s->m_nextVertex.y);
-			b2Dump("    shape.m_hasPrevVertex = bool(%d);\n", s->m_hasPrevVertex);
-			b2Dump("    shape.m_hasNextVertex = bool(%d);\n", s->m_hasNextVertex);
 		}
 		break;
 
