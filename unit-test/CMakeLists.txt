@@ -1,6 +1,7 @@
 add_executable(unit_test
     doctest.h
     hello_world.cpp
+    collision_test.cpp
 )
 
 set_target_properties(unit_test PROPERTIES
@@ -13,4 +14,4 @@ target_link_libraries(unit_test PUBLIC box2d)
 # Place the test executable at the project binary directory instead of in the nested subfolder
 set_target_properties(unit_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES doctest.h hello_world.cpp)
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES doctest.h hello_world.cpp collision_test.cpp)

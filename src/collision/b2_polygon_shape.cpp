@@ -81,29 +81,21 @@ static b2Vec2 ComputeCentroid(const b2Vec2* vs, int32 count)
 {
 	b2Assert(count >= 3);
 
-	b2Vec2 c; c.Set(0.0f, 0.0f);
+	b2Vec2 c(0.0f, 0.0f);
 	float area = 0.0f;
 
-	// pRef is the reference point for forming triangles.
-	// It's location doesn't change the result (except for rounding error).
-	b2Vec2 pRef(0.0f, 0.0f);
-#if 0
-	// This code would put the reference point inside the polygon.
-	for (int32 i = 0; i < count; ++i)
-	{
-		pRef += vs[i];
-	}
-	pRef *= 1.0f / count;
-#endif
+	// Get a reference point for forming triangles.
+	// Use the first vertex to reduce round-off errors.
+	b2Vec2 s = vs[0];
 
 	const float inv3 = 1.0f / 3.0f;
 
 	for (int32 i = 0; i < count; ++i)
 	{
 		// Triangle vertices.
-		b2Vec2 p1 = pRef;
-		b2Vec2 p2 = vs[i];
-		b2Vec2 p3 = i + 1 < count ? vs[i+1] : vs[0];
+		b2Vec2 p1 = vs[0] - s;
+		b2Vec2 p2 = vs[i] - s;
+		b2Vec2 p3 = i + 1 < count ? vs[i+1] - s : vs[0] - s;
 
 		b2Vec2 e1 = p2 - p1;
 		b2Vec2 e2 = p3 - p1;
@@ -119,7 +111,7 @@ static b2Vec2 ComputeCentroid(const b2Vec2* vs, int32 count)
 
 	// Centroid
 	b2Assert(area > b2_epsilon);
-	c *= 1.0f / area;
+	c = (1.0f / area) * c + s;
 	return c;
 }
 
@@ -390,20 +382,13 @@ void b2PolygonShape::ComputeMass(b2MassData* massData, float density) const
 
 	b2Assert(m_count >= 3);
 
-	b2Vec2 center; center.Set(0.0f, 0.0f);
+	b2Vec2 center(0.0f, 0.0f);
 	float area = 0.0f;
 	float I = 0.0f;
 
-	// s is the reference point for forming triangles.
-	// It's location doesn't change the result (except for rounding error).
-	b2Vec2 s(0.0f, 0.0f);
-
-	// This code would put the reference point inside the polygon.
-	for (int32 i = 0; i < m_count; ++i)
-	{
-		s += m_vertices[i];
-	}
-	s *= 1.0f / m_count;
+	// Get a reference point for forming triangles.
+	// Use the first vertex to reduce round-off errors.
+	b2Vec2 s = m_vertices[0];
 
 	const float k_inv3 = 1.0f / 3.0f;
 
