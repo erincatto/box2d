@@ -120,8 +120,8 @@ void b2Contact::Destroy(b2Contact* contact, b2BlockAllocator* allocator)
 	b2Shape::Type typeA = fixtureA->GetType();
 	b2Shape::Type typeB = fixtureB->GetType();
 
-	b2Assert(0 <= typeA && typeB < b2Shape::e_typeCount);
-	b2Assert(0 <= typeA && typeB < b2Shape::e_typeCount);
+	b2Assert(0 <= typeA && typeA < b2Shape::e_typeCount);
+	b2Assert(0 <= typeB && typeB < b2Shape::e_typeCount);
 
 	b2ContactDestroyFcn* destroyFcn = s_registers[typeA][typeB].destroyFcn;
 	destroyFcn(contact, allocator);
