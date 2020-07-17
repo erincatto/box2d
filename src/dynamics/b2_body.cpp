@@ -51,7 +51,7 @@ b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 	{
 		m_flags |= e_autoSleepFlag;
 	}
-	if (bd->awake)
+	if (bd->awake && bd->type != b2_staticBody)
 	{
 		m_flags |= e_awakeFlag;
 	}
@@ -131,6 +131,7 @@ void b2Body::SetType(b2BodyType type)
 		m_angularVelocity = 0.0f;
 		m_sweep.a0 = m_sweep.a;
 		m_sweep.c0 = m_sweep.c;
+		m_flags &= ~e_awakeFlag;
 		SynchronizeFixtures();
 	}
 
