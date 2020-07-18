@@ -54,6 +54,7 @@ public:
 		b2BodyDef ballBodyDef;
 		ballBodyDef.type = b2BodyType::b2_dynamicBody;
 		ballBodyDef.position = b2Vec2(0, 10);
+		// ballBodyDef.angularDamping = 0.2f;
 
 		m_ball = m_world->CreateBody(&ballBodyDef);
 		b2Fixture *ballFixture = m_ball->CreateFixture(&ballFixtureDef);
@@ -70,7 +71,7 @@ public:
 
 		float ke = 0.5f * massData.mass * b2Dot(v, v) + 0.5f * massData.I * omega * omega;
 
-		g_debugDraw.DrawString(5, m_textLine, "kinetic energy = %.5f", ke);
+		g_debugDraw.DrawString(5, m_textLine, "kinetic energy = %.6f", ke);
 		m_textLine += m_textIncrement;
 
 		Test::Step(settings);
