@@ -1266,7 +1266,7 @@ void b2World::Dump()
 
 	b2OpenDump("box2d_dump.inl");
 
-	b2Dump("b2Vec2 g(%.15lef, %.15lef);\n", m_gravity.x, m_gravity.y);
+	b2Dump("b2Vec2 g(%.9g, %.9g);\n", m_gravity.x, m_gravity.y);
 	b2Dump("m_world->SetGravity(g);\n");
 
 	b2Dump("b2Body** bodies = (b2Body**)b2Alloc(%d * sizeof(b2Body*));\n", m_bodyCount);

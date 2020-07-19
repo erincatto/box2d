@@ -233,9 +233,9 @@ void b2Fixture::SetSensor(bool sensor)
 void b2Fixture::Dump(int32 bodyIndex)
 {
 	b2Dump("    b2FixtureDef fd;\n");
-	b2Dump("    fd.friction = %.15lef;\n", m_friction);
-	b2Dump("    fd.restitution = %.15lef;\n", m_restitution);
-	b2Dump("    fd.density = %.15lef;\n", m_density);
+	b2Dump("    fd.friction = %.9g;\n", m_friction);
+	b2Dump("    fd.restitution = %.9g;\n", m_restitution);
+	b2Dump("    fd.density = %.9g;\n", m_density);
 	b2Dump("    fd.isSensor = bool(%d);\n", m_isSensor);
 	b2Dump("    fd.filter.categoryBits = uint16(%d);\n", m_filter.categoryBits);
 	b2Dump("    fd.filter.maskBits = uint16(%d);\n", m_filter.maskBits);
@@ -247,8 +247,8 @@ void b2Fixture::Dump(int32 bodyIndex)
 		{
 			b2CircleShape* s = (b2CircleShape*)m_shape;
 			b2Dump("    b2CircleShape shape;\n");
-			b2Dump("    shape.m_radius = %.15lef;\n", s->m_radius);
-			b2Dump("    shape.m_p.Set(%.15lef, %.15lef);\n", s->m_p.x, s->m_p.y);
+			b2Dump("    shape.m_radius = %.9g;\n", s->m_radius);
+			b2Dump("    shape.m_p.Set(%.9g, %.9g);\n", s->m_p.x, s->m_p.y);
 		}
 		break;
 
@@ -256,11 +256,11 @@ void b2Fixture::Dump(int32 bodyIndex)
 		{
 			b2EdgeShape* s = (b2EdgeShape*)m_shape;
 			b2Dump("    b2EdgeShape shape;\n");
-			b2Dump("    shape.m_radius = %.15lef;\n", s->m_radius);
-			b2Dump("    shape.m_vertex0.Set(%.15lef, %.15lef);\n", s->m_vertex0.x, s->m_vertex0.y);
-			b2Dump("    shape.m_vertex1.Set(%.15lef, %.15lef);\n", s->m_vertex1.x, s->m_vertex1.y);
-			b2Dump("    shape.m_vertex2.Set(%.15lef, %.15lef);\n", s->m_vertex2.x, s->m_vertex2.y);
-			b2Dump("    shape.m_vertex3.Set(%.15lef, %.15lef);\n", s->m_vertex3.x, s->m_vertex3.y);
+			b2Dump("    shape.m_radius = %.9g;\n", s->m_radius);
+			b2Dump("    shape.m_vertex0.Set(%.9g, %.9g);\n", s->m_vertex0.x, s->m_vertex0.y);
+			b2Dump("    shape.m_vertex1.Set(%.9g, %.9g);\n", s->m_vertex1.x, s->m_vertex1.y);
+			b2Dump("    shape.m_vertex2.Set(%.9g, %.9g);\n", s->m_vertex2.x, s->m_vertex2.y);
+			b2Dump("    shape.m_vertex3.Set(%.9g, %.9g);\n", s->m_vertex3.x, s->m_vertex3.y);
 			b2Dump("    shape.m_oneSided = bool(%d);\n", s->m_oneSided);
 		}
 		break;
@@ -272,7 +272,7 @@ void b2Fixture::Dump(int32 bodyIndex)
 			b2Dump("    b2Vec2 vs[%d];\n", b2_maxPolygonVertices);
 			for (int32 i = 0; i < s->m_count; ++i)
 			{
-				b2Dump("    vs[%d].Set(%.15lef, %.15lef);\n", i, s->m_vertices[i].x, s->m_vertices[i].y);
+				b2Dump("    vs[%d].Set(%.9g, %.9g);\n", i, s->m_vertices[i].x, s->m_vertices[i].y);
 			}
 			b2Dump("    shape.Set(vs, %d);\n", s->m_count);
 		}
@@ -285,11 +285,11 @@ void b2Fixture::Dump(int32 bodyIndex)
 			b2Dump("    b2Vec2 vs[%d];\n", s->m_count);
 			for (int32 i = 0; i < s->m_count; ++i)
 			{
-				b2Dump("    vs[%d].Set(%.15lef, %.15lef);\n", i, s->m_vertices[i].x, s->m_vertices[i].y);
+				b2Dump("    vs[%d].Set(%.9g, %.9g);\n", i, s->m_vertices[i].x, s->m_vertices[i].y);
 			}
 			b2Dump("    shape.CreateChain(vs, %d);\n", s->m_count);
-			b2Dump("    shape.m_prevVertex.Set(%.15lef, %.15lef);\n", s->m_prevVertex.x, s->m_prevVertex.y);
-			b2Dump("    shape.m_nextVertex.Set(%.15lef, %.15lef);\n", s->m_nextVertex.x, s->m_nextVertex.y);
+			b2Dump("    shape.m_prevVertex.Set(%.9g, %.9g);\n", s->m_prevVertex.x, s->m_prevVertex.y);
+			b2Dump("    shape.m_nextVertex.Set(%.9g, %.9g);\n", s->m_nextVertex.x, s->m_nextVertex.y);
 		}
 		break;
 

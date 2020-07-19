@@ -247,9 +247,9 @@ void b2FrictionJoint::Dump()
 	b2Dump("  jd.bodyA = bodies[%d];\n", indexA);
 	b2Dump("  jd.bodyB = bodies[%d];\n", indexB);
 	b2Dump("  jd.collideConnected = bool(%d);\n", m_collideConnected);
-	b2Dump("  jd.localAnchorA.Set(%.15lef, %.15lef);\n", m_localAnchorA.x, m_localAnchorA.y);
-	b2Dump("  jd.localAnchorB.Set(%.15lef, %.15lef);\n", m_localAnchorB.x, m_localAnchorB.y);
-	b2Dump("  jd.maxForce = %.15lef;\n", m_maxForce);
-	b2Dump("  jd.maxTorque = %.15lef;\n", m_maxTorque);
+	b2Dump("  jd.localAnchorA.Set(%.9g, %.9g);\n", m_localAnchorA.x, m_localAnchorA.y);
+	b2Dump("  jd.localAnchorB.Set(%.9g, %.9g);\n", m_localAnchorB.x, m_localAnchorB.y);
+	b2Dump("  jd.maxForce = %.9g;\n", m_maxForce);
+	b2Dump("  jd.maxTorque = %.9g;\n", m_maxTorque);
 	b2Dump("  joints[%d] = m_world->CreateJoint(&jd);\n", m_index);
 }

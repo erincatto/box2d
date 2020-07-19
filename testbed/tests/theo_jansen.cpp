@@ -93,30 +93,37 @@ public:
 		body1->CreateFixture(&fd1);
 		body2->CreateFixture(&fd2);
 
-		b2DistanceJointDef djd;
+		{
+			b2DistanceJointDef jd;
 
-		// Using a soft distance constraint can reduce some jitter.
-		// It also makes the structure seem a bit more fluid by
-		// acting like a suspension system.
-		djd.dampingRatio = 0.5f;
-		djd.frequencyHz = 10.0f;
+			// Using a soft distance constraint can reduce some jitter.
+			// It also makes the structure seem a bit more fluid by
+			// acting like a suspension system.
+			float dampingRatio = 0.5f;
+			float frequencyHz = 10.0f;
 
-		djd.Initialize(body1, body2, p2 + m_offset, p5 + m_offset);
-		m_world->CreateJoint(&djd);
+			jd.Initialize(body1, body2, p2 + m_offset, p5 + m_offset);
+			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
+			m_world->CreateJoint(&jd);
 
-		djd.Initialize(body1, body2, p3 + m_offset, p4 + m_offset);
-		m_world->CreateJoint(&djd);
+			jd.Initialize(body1, body2, p3 + m_offset, p4 + m_offset);
+			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
+			m_world->CreateJoint(&jd);
 
-		djd.Initialize(body1, m_wheel, p3 + m_offset, wheelAnchor + m_offset);
-		m_world->CreateJoint(&djd);
+			jd.Initialize(body1, m_wheel, p3 + m_offset, wheelAnchor + m_offset);
+			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
+			m_world->CreateJoint(&jd);
 
-		djd.Initialize(body2, m_wheel, p6 + m_offset, wheelAnchor + m_offset);
-		m_world->CreateJoint(&djd);
+			jd.Initialize(body2, m_wheel, p6 + m_offset, wheelAnchor + m_offset);
+			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
+			m_world->CreateJoint(&jd);
+		}
 
-		b2RevoluteJointDef rjd;
-
-		rjd.Initialize(body2, m_chassis, p4 + m_offset);
-		m_world->CreateJoint(&rjd);
+		{
+			b2RevoluteJointDef jd;
+			jd.Initialize(body2, m_chassis, p4 + m_offset);
+			m_world->CreateJoint(&jd);
+		}
 	}
 
 	TheoJansen()

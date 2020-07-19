@@ -20,7 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include "settings.h"
 #include "test.h"
+#include "imgui/imgui.h"
 
 class RevoluteJoint : public Test
 {
@@ -42,6 +44,10 @@ public:
 			ground->CreateFixture(&fd);
 		}
 
+		m_enableLimit = true;
+		m_enableMotor = false;
+		m_motorSpeed = 1.0f;
+
 		{
 			b2CircleShape shape;
 			shape.m_radius = 0.5f;
@@ -60,12 +66,12 @@ public:
 			body->SetLinearVelocity(b2Vec2(-8.0f * w, 0.0f));
 
 			rjd.Initialize(ground, body, b2Vec2(-10.0f, 12.0f));
-			rjd.motorSpeed = 1.0f * b2_pi;
+			rjd.motorSpeed = m_motorSpeed;
 			rjd.maxMotorTorque = 10000.0f;
-			rjd.enableMotor = false;
+			rjd.enableMotor = m_enableMotor;
 			rjd.lowerAngle = -0.25f * b2_pi;
 			rjd.upperAngle = 0.5f * b2_pi;
-			rjd.enableLimit = true;
+			rjd.enableLimit = m_enableLimit;
 			rjd.collideConnected = true;
 
 			m_joint = (b2RevoluteJoint*)m_world->CreateJoint(&rjd);
@@ -104,57 +110,38 @@ public:
 			rjd.enableLimit = true;
 			m_world->CreateJoint(&rjd);
 		}
-
-		// Tests mass computation of a small object far from the origin
-		{
-			b2BodyDef bodyDef;
-			bodyDef.type = b2_dynamicBody;
-			b2Body* body = m_world->CreateBody(&bodyDef);
-		
-			b2PolygonShape polyShape;		
-			b2Vec2 verts[3];
-			verts[0].Set( 17.63f, 36.31f );
-			verts[1].Set( 17.52f, 36.69f );
-			verts[2].Set( 17.19f, 36.36f );
-			polyShape.Set(verts, 3);
-		
-			b2FixtureDef polyFixtureDef;
-			polyFixtureDef.shape = &polyShape;
-			polyFixtureDef.density = 1;
-
-			body->CreateFixture(&polyFixtureDef);	//assertion hits inside here
-		}
-
 	}
 
-	void Keyboard(int key) override
+	void UpdateUI() override
 	{
-		switch (key)
-		{
-		case GLFW_KEY_L:
-			m_joint->EnableLimit(!m_joint->IsLimitEnabled());
-			break;
+		ImGui::SetNextWindowPos(ImVec2(10.0f, 100.0f));
+		ImGui::SetNextWindowSize(ImVec2(200.0f, 100.0f));
+		ImGui::Begin("Joint Controls", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 
-		case GLFW_KEY_M:
-			m_joint->EnableMotor(!m_joint->IsMotorEnabled());
-			break;
+		if (ImGui::Checkbox("Limit", &m_enableLimit))
+		{
+			m_joint->EnableLimit(m_enableLimit);
 		}
+
+		if (ImGui::Checkbox("Motor", &m_enableMotor))
+		{
+			m_joint->EnableMotor(m_enableMotor);
+		}
+
+		if (ImGui::SliderFloat("Speed", &m_motorSpeed, -10.0f, 10.0f, "%.0f"))
+		{
+			m_joint->SetMotorSpeed(m_motorSpeed);
+		}
+
+		ImGui::End();
 	}
 
 	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
-		g_debugDraw.DrawString(5, m_textLine, "Keys: (l) limits, (m) motor");
+		float torque = m_joint->GetMotorTorque(settings.m_hertz);
+		g_debugDraw.DrawString(5, m_textLine, "Motor Torque = %4.0f", torque);
 		m_textLine += m_textIncrement;
-
-		//if (m_stepCount == 360)
-		//{
-		//	m_ball->SetTransform(b2Vec2(0.0f, 0.5f), 0.0f);
-		//}
-
-		//float torque1 = m_joint1->GetMotorTorque();
-		//g_debugDraw.DrawString(5, m_textLine, "Motor Torque = %4.0f, %4.0f : Motor Force = %4.0f", (float) torque1, (float) torque2, (float) force3);
-		//m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()
@@ -164,6 +151,9 @@ public:
 
 	b2Body* m_ball;
 	b2RevoluteJoint* m_joint;
+	float m_motorSpeed;
+	bool m_enableMotor;
+	bool m_enableLimit;
 };
 
 static int testIndex = RegisterTest("Joints", "Revolute", RevoluteJoint::Create);

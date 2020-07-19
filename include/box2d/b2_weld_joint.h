@@ -36,12 +36,14 @@ struct b2WeldJointDef : public b2JointDef
 		localAnchorA.Set(0.0f, 0.0f);
 		localAnchorB.Set(0.0f, 0.0f);
 		referenceAngle = 0.0f;
-		frequencyHz = 0.0f;
-		dampingRatio = 0.0f;
+		stiffness = 0.0f;
+		damping = 0.0f;
 	}
 
-	/// Initialize the bodies, anchors, and reference angle using a world
-	/// anchor point.
+	/// Initialize the bodies, anchors, reference angle, stiffness, and damping.
+	/// @param bodyA the first body connected by this joint
+	/// @param bodyB the second body connected by this joint
+	/// @param anchor the point of connection in world coordinates
 	void Initialize(b2Body* bodyA, b2Body* bodyB, const b2Vec2& anchor);
 
 	/// The local anchor point relative to bodyA's origin.
@@ -53,12 +55,12 @@ struct b2WeldJointDef : public b2JointDef
 	/// The bodyB angle minus bodyA angle in the reference state (radians).
 	float referenceAngle;
 	
-	/// The mass-spring-damper frequency in Hertz. Rotation only.
-	/// Disable softness with a value of 0.
-	float frequencyHz;
+	/// The rotational stiffness in N*m
+	/// Disable softness with a value of 0
+	float stiffness;
 
-	/// The damping ratio. 0 = no damping, 1 = critical damping.
-	float dampingRatio;
+	/// The rotational damping in N*m*s
+	float damping;
 };
 
 /// A weld joint essentially glues two bodies together. A weld joint may
@@ -81,13 +83,13 @@ public:
 	/// Get the reference angle.
 	float GetReferenceAngle() const { return m_referenceAngle; }
 
-	/// Set/get frequency in Hz.
-	void SetFrequency(float hz) { m_frequencyHz = hz; }
-	float GetFrequency() const { return m_frequencyHz; }
+	/// Set/get stiffness in N*m
+	void SetStiffness(float hz) { m_stiffness = hz; }
+	float GetFrequency() const { return m_stiffness; }
 
-	/// Set/get damping ratio.
-	void SetDampingRatio(float ratio) { m_dampingRatio = ratio; }
-	float GetDampingRatio() const { return m_dampingRatio; }
+	/// Set/get damping in N*m*s
+	void SetDamping(float damping) { m_damping = damping; }
+	float GetDamping() const { return m_damping; }
 
 	/// Dump to b2Log
 	void Dump() override;
@@ -102,8 +104,8 @@ protected:
 	void SolveVelocityConstraints(const b2SolverData& data) override;
 	bool SolvePositionConstraints(const b2SolverData& data) override;
 
-	float m_frequencyHz;
-	float m_dampingRatio;
+	float m_stiffness;
+	float m_damping;
 	float m_bias;
 
 	// Solver shared

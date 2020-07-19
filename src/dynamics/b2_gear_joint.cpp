@@ -418,6 +418,6 @@ void b2GearJoint::Dump()
 	b2Dump("  jd.collideConnected = bool(%d);\n", m_collideConnected);
 	b2Dump("  jd.joint1 = joints[%d];\n", index1);
 	b2Dump("  jd.joint2 = joints[%d];\n", index2);
-	b2Dump("  jd.ratio = %.15lef;\n", m_ratio);
+	b2Dump("  jd.ratio = %.9g;\n", m_ratio);
 	b2Dump("  joints[%d] = m_world->CreateJoint(&jd);\n", m_index);
 }

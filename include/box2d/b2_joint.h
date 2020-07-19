@@ -47,14 +47,6 @@ enum b2JointType
 	e_motorJoint
 };
 
-enum b2LimitState
-{
-	e_inactiveLimit,
-	e_atLowerLimit,
-	e_atUpperLimit,
-	e_equalLimits
-};
-
 struct b2Jacobian
 {
 	b2Vec2 linear;
@@ -102,6 +94,16 @@ struct b2JointDef
 	/// Set this flag to true if the attached bodies should collide.
 	bool collideConnected;
 };
+
+/// Utility to compute linear stiffness values from frequency and damping ratio
+void b2LinearStiffness(float& stiffness, float& damping,
+	float frequencyHertz, float dampingRatio,
+	const b2Body* bodyA, const b2Body* bodyB);
+
+/// Utility to compute rotational stiffness values frequency and damping ratio
+void b2AngularStiffness(float& stiffness, float& damping,
+	float frequencyHertz, float dampingRatio,
+	const b2Body* bodyA, const b2Body* bodyB);
 
 /// The base joint class. Joints are used to constraint two bodies together in
 /// various fashions. Some joints also feature limits and motors.
