@@ -121,14 +121,11 @@ void b2RevoluteJoint::InitVelocityConstraints(const b2SolverData& data)
 		fixedRotation = true;
 	}
 
+	m_angle = aB - aA - m_referenceAngle;
 	if (m_enableLimit == false || fixedRotation)
 	{
 		m_lowerImpulse = 0.0f;
 		m_upperImpulse = 0.0f;
-	}
-	else
-	{
-		m_angle = aB - aA - m_referenceAngle;
 	}
 
 	if (m_enableMotor == false || fixedRotation)
@@ -273,17 +270,13 @@ bool b2RevoluteJoint::SolvePositionConstraints(const b2SolverData& data)
 		}
 		else if (angle <= m_lowerAngle)
 		{
-			float C = angle - m_lowerAngle;
-
 			// Prevent large angular corrections and allow some slop.
-			C = b2Clamp(C + b2_angularSlop, -b2_maxAngularCorrection, 0.0f);
+			C = b2Clamp(angle - m_lowerAngle + b2_angularSlop, -b2_maxAngularCorrection, 0.0f);
 		}
 		else if (angle >= m_upperAngle)
 		{
-			float C = angle - m_upperAngle;
-
 			// Prevent large angular corrections and allow some slop.
-			C = b2Clamp(C - b2_angularSlop, 0.0f, b2_maxAngularCorrection);
+			C = b2Clamp(angle - m_upperAngle - b2_angularSlop, 0.0f, b2_maxAngularCorrection);
 		}
 
 		float limitImpulse = -m_axialMass * C;
@@ -324,7 +317,7 @@ bool b2RevoluteJoint::SolvePositionConstraints(const b2SolverData& data)
 	data.positions[m_indexA].a = aA;
 	data.positions[m_indexB].c = cB;
 	data.positions[m_indexB].a = aB;
-	
+
 	return positionError <= b2_linearSlop && angularError <= b2_angularSlop;
 }
 
@@ -483,13 +476,20 @@ void b2RevoluteJoint::Draw(b2Draw* draw) const
 	draw->DrawPoint(pA, 5.0f, c4);
 	draw->DrawPoint(pB, 5.0f, c5);
 
-	b2Vec2 r = 0.2f * b2Vec2(cosf(m_angle), sinf(m_angle));
+	float aA = m_bodyA->GetAngle();
+	float aB = m_bodyB->GetAngle();
+	float angle = aB - aA - m_referenceAngle;
+
+	const float L = 0.5f;
+
+	b2Vec2 r = L * b2Vec2(cosf(angle), sinf(angle));
 	draw->DrawSegment(pB, pB + r, c1);
+	draw->DrawCircle(pB, L, c1);
 
 	if (m_enableLimit)
 	{
-		b2Vec2 rlo = 0.2f * b2Vec2(cosf(m_lowerAngle), sinf(m_lowerAngle));
-		b2Vec2 rhi = 0.2f * b2Vec2(cosf(m_upperAngle), sinf(m_upperAngle));
+		b2Vec2 rlo = L * b2Vec2(cosf(m_lowerAngle), sinf(m_lowerAngle));
+		b2Vec2 rhi = L * b2Vec2(cosf(m_upperAngle), sinf(m_upperAngle));
 
 		draw->DrawSegment(pB, pB + rlo, c2);
 		draw->DrawSegment(pB, pB + rhi, c3);

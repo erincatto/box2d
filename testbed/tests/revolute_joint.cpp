@@ -49,37 +49,30 @@ public:
 		m_motorSpeed = 1.0f;
 
 		{
-			b2CircleShape shape;
-			shape.m_radius = 0.5f;
+			b2PolygonShape shape;
+			shape.SetAsBox(0.25f, 3.0f, b2Vec2(0.0f, 3.0f), 0.0f);
 
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
-
-			b2RevoluteJointDef rjd;
-
 			bd.position.Set(-10.0f, 20.0f);
 			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&shape, 5.0f);
 
-			float w = 100.0f;
-			body->SetAngularVelocity(w);
-			body->SetLinearVelocity(b2Vec2(-8.0f * w, 0.0f));
+			b2RevoluteJointDef jd;
+			jd.Initialize(ground, body, b2Vec2(-10.0f, 20.0f));
+			jd.motorSpeed = m_motorSpeed;
+			jd.maxMotorTorque = 10000.0f;
+			jd.enableMotor = m_enableMotor;
+			jd.lowerAngle = -0.25f * b2_pi;
+			jd.upperAngle = 0.5f * b2_pi;
+			jd.enableLimit = m_enableLimit;
 
-			rjd.Initialize(ground, body, b2Vec2(-10.0f, 12.0f));
-			rjd.motorSpeed = m_motorSpeed;
-			rjd.maxMotorTorque = 10000.0f;
-			rjd.enableMotor = m_enableMotor;
-			rjd.lowerAngle = -0.25f * b2_pi;
-			rjd.upperAngle = 0.5f * b2_pi;
-			rjd.enableLimit = m_enableLimit;
-			rjd.collideConnected = true;
-
-			m_joint = (b2RevoluteJoint*)m_world->CreateJoint(&rjd);
+			m_joint1 = (b2RevoluteJoint*)m_world->CreateJoint(&jd);
 		}
 
 		{
 			b2CircleShape circle_shape;
-			circle_shape.m_radius = 3.0f;
+			circle_shape.m_radius = 2.0f;
 
 			b2BodyDef circle_bd;
 			circle_bd.type = b2_dynamicBody;
@@ -94,7 +87,7 @@ public:
 			m_ball->CreateFixture(&fd);
 
 			b2PolygonShape polygon_shape;
-			polygon_shape.SetAsBox(10.0f, 0.2f, b2Vec2 (-10.0f, 0.0f), 0.0f);
+			polygon_shape.SetAsBox(10.0f, 0.5f, b2Vec2 (-10.0f, 0.0f), 0.0f);
 
 			b2BodyDef polygon_bd;
 			polygon_bd.position.Set(20.0f, 10.0f);
@@ -103,12 +96,16 @@ public:
 			b2Body* polygon_body = m_world->CreateBody(&polygon_bd);
 			polygon_body->CreateFixture(&polygon_shape, 2.0f);
 
-			b2RevoluteJointDef rjd;
-			rjd.Initialize(ground, polygon_body, b2Vec2(20.0f, 10.0f));
-			rjd.lowerAngle = -0.25f * b2_pi;
-			rjd.upperAngle = 0.0f * b2_pi;
-			rjd.enableLimit = true;
-			m_world->CreateJoint(&rjd);
+			b2RevoluteJointDef jd;
+			jd.Initialize(ground, polygon_body, b2Vec2(20.0f, 10.0f));
+			jd.lowerAngle = -0.25f * b2_pi;
+			jd.upperAngle = 0.0f * b2_pi;
+			jd.enableLimit = true;
+			jd.enableMotor = true;
+			jd.motorSpeed = 0.0f;
+			jd.maxMotorTorque = 10000.0f;
+
+			m_joint2 = (b2RevoluteJoint*)m_world->CreateJoint(&jd);
 		}
 	}
 
@@ -120,17 +117,17 @@ public:
 
 		if (ImGui::Checkbox("Limit", &m_enableLimit))
 		{
-			m_joint->EnableLimit(m_enableLimit);
+			m_joint1->EnableLimit(m_enableLimit);
 		}
 
 		if (ImGui::Checkbox("Motor", &m_enableMotor))
 		{
-			m_joint->EnableMotor(m_enableMotor);
+			m_joint1->EnableMotor(m_enableMotor);
 		}
 
-		if (ImGui::SliderFloat("Speed", &m_motorSpeed, -10.0f, 10.0f, "%.0f"))
+		if (ImGui::SliderFloat("Speed", &m_motorSpeed, -20.0f, 20.0f, "%.0f"))
 		{
-			m_joint->SetMotorSpeed(m_motorSpeed);
+			m_joint1->SetMotorSpeed(m_motorSpeed);
 		}
 
 		ImGui::End();
@@ -139,8 +136,13 @@ public:
 	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
-		float torque = m_joint->GetMotorTorque(settings.m_hertz);
-		g_debugDraw.DrawString(5, m_textLine, "Motor Torque = %4.0f", torque);
+		
+		float torque1 = m_joint1->GetMotorTorque(settings.m_hertz);
+		g_debugDraw.DrawString(5, m_textLine, "Motor Torque 1= %4.0f", torque1);
+		m_textLine += m_textIncrement;
+
+		float torque2 = m_joint2->GetMotorTorque(settings.m_hertz);
+		g_debugDraw.DrawString(5, m_textLine, "Motor Torque 2= %4.0f", torque2);
 		m_textLine += m_textIncrement;
 	}
 
@@ -150,7 +152,8 @@ public:
 	}
 
 	b2Body* m_ball;
-	b2RevoluteJoint* m_joint;
+	b2RevoluteJoint* m_joint1;
+	b2RevoluteJoint* m_joint2;
 	float m_motorSpeed;
 	bool m_enableMotor;
 	bool m_enableLimit;
