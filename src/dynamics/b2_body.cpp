@@ -27,6 +27,7 @@
 #include "box2d/b2_world.h"
 
 #include <new>
+#include <float.h>
 
 b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 {
