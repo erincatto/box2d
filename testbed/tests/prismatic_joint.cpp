@@ -72,14 +72,6 @@ public:
 		}
 	}
 
-	void Step(Settings& settings) override
-	{
-		Test::Step(settings);
-		float force = m_joint->GetMotorForce(settings.m_hertz);
-		g_debugDraw.DrawString(5, m_textLine, "Motor Force = %4.0f", (float) force);
-		m_textLine += m_textIncrement;
-	}
-
 	void UpdateUI() override
 	{
 		ImGui::SetNextWindowPos(ImVec2(10.0f, 100.0f));
@@ -102,6 +94,14 @@ public:
 		}
 
 		ImGui::End();
+	}
+
+	void Step(Settings& settings) override
+	{
+		Test::Step(settings);
+		float force = m_joint->GetMotorForce(settings.m_hertz);
+		g_debugDraw.DrawString(5, m_textLine, "Motor Force = %4.0f", force);
+		m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()

@@ -64,8 +64,8 @@ public:
 			b2DistanceJointDef jd;
 			b2Vec2 p1, p2, d;
 
-			jd.frequencyHz = 2.0f;
-			jd.dampingRatio = 0.0f;
+			float frequencyHz = 2.0f;
+			float dampingRatio = 0.0f;
 
 			jd.bodyA = ground;
 			jd.bodyB = m_bodies[0];
@@ -75,6 +75,7 @@ public:
 			p2 = jd.bodyB->GetWorldPoint(jd.localAnchorB);
 			d = p2 - p1;
 			jd.length = d.Length();
+			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
 			m_joints[0] = m_world->CreateJoint(&jd);
 
 			jd.bodyA = ground;
@@ -85,6 +86,7 @@ public:
 			p2 = jd.bodyB->GetWorldPoint(jd.localAnchorB);
 			d = p2 - p1;
 			jd.length = d.Length();
+			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
 			m_joints[1] = m_world->CreateJoint(&jd);
 
 			jd.bodyA = ground;
@@ -95,6 +97,7 @@ public:
 			p2 = jd.bodyB->GetWorldPoint(jd.localAnchorB);
 			d = p2 - p1;
 			jd.length = d.Length();
+			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
 			m_joints[2] = m_world->CreateJoint(&jd);
 
 			jd.bodyA = ground;
@@ -105,6 +108,7 @@ public:
 			p2 = jd.bodyB->GetWorldPoint(jd.localAnchorB);
 			d = p2 - p1;
 			jd.length = d.Length();
+			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
 			m_joints[3] = m_world->CreateJoint(&jd);
 
 			jd.bodyA = m_bodies[0];
@@ -115,6 +119,7 @@ public:
 			p2 = jd.bodyB->GetWorldPoint(jd.localAnchorB);
 			d = p2 - p1;
 			jd.length = d.Length();
+			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
 			m_joints[4] = m_world->CreateJoint(&jd);
 
 			jd.bodyA = m_bodies[1];
@@ -125,6 +130,7 @@ public:
 			p2 = jd.bodyB->GetWorldPoint(jd.localAnchorB);
 			d = p2 - p1;
 			jd.length = d.Length();
+			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
 			m_joints[5] = m_world->CreateJoint(&jd);
 
 			jd.bodyA = m_bodies[2];
@@ -135,6 +141,7 @@ public:
 			p2 = jd.bodyB->GetWorldPoint(jd.localAnchorB);
 			d = p2 - p1;
 			jd.length = d.Length();
+			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
 			m_joints[6] = m_world->CreateJoint(&jd);
 
 			jd.bodyA = m_bodies[3];
@@ -145,6 +152,7 @@ public:
 			p2 = jd.bodyB->GetWorldPoint(jd.localAnchorB);
 			d = p2 - p1;
 			jd.length = d.Length();
+			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
 			m_joints[7] = m_world->CreateJoint(&jd);
 		}
 	}

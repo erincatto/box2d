@@ -25,12 +25,11 @@
 
 #include "b2_joint.h"
 
-/// Revolute joint definition. This requires defining an
-/// anchor point where the bodies are joined. The definition
-/// uses local anchor points so that the initial configuration
-/// can violate the constraint slightly. You also need to
-/// specify the initial relative angle for joint limits. This
-/// helps when saving and loading a game.
+/// Revolute joint definition. This requires defining an anchor point where the
+/// bodies are joined. The definition uses local anchor points so that the
+/// initial configuration can violate the constraint slightly. You also need to
+/// specify the initial relative angle for joint limits. This helps when saving
+/// and loading a game.
 /// The local anchor points are measured from the body's origin
 /// rather than the center of mass because:
 /// 1. you might not know where the center of mass will be.
@@ -158,6 +157,9 @@ public:
 	/// Dump to b2Log.
 	void Dump() override;
 
+	///
+	void Draw(b2Draw* draw) const override;
+
 protected:
 	
 	friend class b2Joint;
@@ -172,13 +174,13 @@ protected:
 	// Solver shared
 	b2Vec2 m_localAnchorA;
 	b2Vec2 m_localAnchorB;
-	b2Vec3 m_impulse;
+	b2Vec2 m_impulse;
 	float m_motorImpulse;
-
+	float m_lowerImpulse;
+	float m_upperImpulse;
 	bool m_enableMotor;
 	float m_maxMotorTorque;
 	float m_motorSpeed;
-
 	bool m_enableLimit;
 	float m_referenceAngle;
 	float m_lowerAngle;
@@ -195,9 +197,9 @@ protected:
 	float m_invMassB;
 	float m_invIA;
 	float m_invIB;
-	b2Mat33 m_mass;			// effective mass for point-to-point constraint.
-	float m_motorMass;	// effective mass for motor/limit angular constraint.
-	b2LimitState m_limitState;
+	b2Mat22 m_K;
+	float m_angle;
+	float m_axialMass;
 };
 
 inline float b2RevoluteJoint::GetMotorSpeed() const
