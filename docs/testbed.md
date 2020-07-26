@@ -9,7 +9,7 @@ environment. Here are some of the features:
 - Pause and single step simulation.
 - Text rendering.
 
-![Box2D Testbed](images/testbed.gif)
+![Box2D Testbed](images/testbed.png)
 
 The testbed has many examples of Box2D usage in the test cases and the
 framework itself. I encourage you to explore and tinker with the testbed

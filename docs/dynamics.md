@@ -398,10 +398,10 @@ Interactive Applications\" by Jim Van Verth and Lars Bishop. These
 functions are efficient (when inlined).
 
 ```cpp
-b2Vec2 GetWorldPoint(const b2Vec2& localPoint);
-b2Vec2 GetWorldVector(const b2Vec2& localVector);
-b2Vec2 GetLocalPoint(const b2Vec2& worldPoint);
-b2Vec2 GetLocalVector(const b2Vec2& worldVector);
+b2Vec2 b2Body::GetWorldPoint(const b2Vec2& localPoint);
+b2Vec2 b2Body::GetWorldVector(const b2Vec2& localVector);
+b2Vec2 b2Body::GetLocalPoint(const b2Vec2& worldPoint);
+b2Vec2 b2Body::GetLocalVector(const b2Vec2& worldVector);
 ```
 
 ### Acessing Fixtures, Joints, and Contacts
@@ -754,20 +754,29 @@ The distance joint can also be made soft, like a spring-damper
 connection. See the Web example in the testbed to see how this behaves.
 
 Softness is achieved by tuning two constants in the definition:
-frequency and damping ratio. Think of the frequency as the frequency of
-a harmonic oscillator (like a guitar string). The frequency is specified
-in Hertz. Typically the frequency should be less than a half the
-frequency of the time step. So if you are using a 60Hz time step, the
-frequency of the distance joint should be less than 30Hz. The reason is
-related to the Nyquist frequency.
+stiffness and damping. It can be non-intuitive setting these values directly
+since they have units in terms on Newtons. Box2D provides and API to compute
+these values in terms of frequency and damping ratio.
+```cpp
+void b2LinearStiffness(float& stiffness, float& damping,
+	float frequencyHertz, float dampingRatio,
+	const b2Body* bodyA, const b2Body* bodyB);
+```
+
+Think of the frequency as the frequency of a harmonic oscillator (like a
+guitar string). The frequency is specified in Hertz. Typically the frequency
+should be less than a half the frequency of the time step. So if you are using
+a 60Hz time step, the frequency of the distance joint should be less than 30Hz.
+The reason is related to the Nyquist frequency.
 
 The damping ratio is non-dimensional and is typically between 0 and 1,
 but can be larger. At 1, the damping is critical (all oscillations
 should vanish).
 
 ```cpp
-jointDef.frequencyHz = 4.0f;
-jointDef.dampingRatio = 0.5f;
+float frequencyHz = 4.0f;
+float dampingRatio = 0.5f;
+b2LinearStiffness(jointDef.stiffness, jointDef.damping, frequencyHz, dampingRatio, jointDef.bodyA, jointDef.bodyB);
 ```
 
 ### Revolute Joint
@@ -1056,12 +1065,12 @@ testbed.
 ### Rope Joint
 The rope joint restricts the maximum distance between two points. This
 can be useful to prevent chains of bodies from stretching, even under
-high load. See b2RopeJoint.h and RopeJoint.h for details.
+high load. See b2RopeJoint.h and rope_joint.cpp for details.
 
 ### Friction Joint
 The friction joint is used for top-down friction. The joint provides 2D
 translational friction and angular friction. See b2FrictionJoint.h and
-ApplyForce.h for details.
+apply_force.cpp for details.
 
 ### Motor Joint
 A motor joint lets you control the motion of a body by specifying target
@@ -1069,7 +1078,14 @@ position and rotation offsets. You can set the maximum motor force and
 torque that will be applied to reach the target position and rotation.
 If the body is blocked, it will stop and the contact forces will be
 proportional the maximum motor force and torque. See b2MotorJoint and
-MotorJoint.h for details.
+motor_joint.cpp for details.
+
+### Wheel Joint
+The wheel joint is designed specifically for vehicles. It provides a translation
+and rotation. The translation has a spring and damper to simulate the vehicle
+suspension. The rotation allows the wheel to rotate. You can specify an rotational
+motor to drive the wheel and to apply braking. See b2WheelJoint, wheel_joint.cpp,
+and car.cpp for details.
 
 ## Contacts
 Contacts are objects created by Box2D to manage collision between two
