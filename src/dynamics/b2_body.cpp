@@ -27,7 +27,6 @@
 #include "box2d/b2_world.h"
 
 #include <new>
-#include <float.h>
 
 b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 {
@@ -534,7 +533,7 @@ void b2Body::Dump()
 	int32 bodyIndex = m_islandIndex;
 
 	// %.9g is sufficient to save and load the same value using text
-	b2Assert(FLT_DECIMAL_DIG == 9);
+	// FLT_DECIMAL_DIG == 9
 
 	b2Dump("{\n");
 	b2Dump("  b2BodyDef bd;\n");
