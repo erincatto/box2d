@@ -9,7 +9,7 @@ Light background: #dfe5f2;
 */
 
 body {
-	background: #282923;
+	background: #292a2d;
 	background-image: none;
 	color: #D8D8D8;
 }
@@ -24,17 +24,19 @@ div.contents {
 
 .image {
 	background-color: #CCCCCC;
-	border: 1px solid #000000;
-	margin: 10px;
-	padding: 10px;
+	border: 10px solid #CCCCCC;
+	margin: 0px;
+	padding: 0px;
 }
 
+/*
 .image img, object {
 	padding: 10px;
 	margin: 10px 0px;
 	background-color: white;
 	border: 1px solid #000000;
 }
+*/
 
 .caption {
 	padding-top: 10px;
