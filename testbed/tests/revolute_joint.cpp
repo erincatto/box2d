@@ -59,7 +59,7 @@ public:
 			body->CreateFixture(&shape, 5.0f);
 
 			b2RevoluteJointDef jd;
-			jd.Initialize(ground, body, b2Vec2(-10.0f, 20.0f));
+			jd.Initialize(ground, body, b2Vec2(-10.0f, 20.5f));
 			jd.motorSpeed = m_motorSpeed;
 			jd.maxMotorTorque = 10000.0f;
 			jd.enableMotor = m_enableMotor;
@@ -97,7 +97,7 @@ public:
 			polygon_body->CreateFixture(&polygon_shape, 2.0f);
 
 			b2RevoluteJointDef jd;
-			jd.Initialize(ground, polygon_body, b2Vec2(20.0f, 10.0f));
+			jd.Initialize(ground, polygon_body, b2Vec2(19.0f, 10.0f));
 			jd.lowerAngle = -0.25f * b2_pi;
 			jd.upperAngle = 0.0f * b2_pi;
 			jd.enableLimit = true;
