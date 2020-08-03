@@ -85,7 +85,7 @@ public:
 
 	/// Set/get stiffness in N*m
 	void SetStiffness(float hz) { m_stiffness = hz; }
-	float GetFrequency() const { return m_stiffness; }
+	float GetStiffness() const { return m_stiffness; }
 
 	/// Set/get damping in N*m*s
 	void SetDamping(float damping) { m_damping = damping; }
