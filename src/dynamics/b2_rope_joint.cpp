@@ -75,8 +75,6 @@ void b2RopeJoint::InitVelocityConstraints(const b2SolverData& data)
 
 	m_length = m_u.Length();
 
-	float C = m_length - m_maxLength;
-
 	if (m_length > b2_linearSlop)
 	{
 		m_u *= 1.0f / m_length;
