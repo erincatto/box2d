@@ -35,20 +35,13 @@
 b2MouseJoint::b2MouseJoint(const b2MouseJointDef* def)
 : b2Joint(def)
 {
-	b2Assert(def->target.IsValid());
-	b2Assert(b2IsValid(def->maxForce) && def->maxForce >= 0.0f);
-	b2Assert(b2IsValid(def->frequencyHz) && def->frequencyHz >= 0.0f);
-	b2Assert(b2IsValid(def->dampingRatio) && def->dampingRatio >= 0.0f);
-
 	m_targetA = def->target;
 	m_localAnchorB = b2MulT(m_bodyB->GetTransform(), m_targetA);
-
 	m_maxForce = def->maxForce;
+	m_stiffness = def->stiffness;
+	m_damping = def->damping;
+
 	m_impulse.SetZero();
-
-	m_frequencyHz = def->frequencyHz;
-	m_dampingRatio = def->dampingRatio;
-
 	m_beta = 0.0f;
 	m_gamma = 0.0f;
 }
@@ -77,26 +70,6 @@ float b2MouseJoint::GetMaxForce() const
 	return m_maxForce;
 }
 
-void b2MouseJoint::SetFrequency(float hz)
-{
-	m_frequencyHz = hz;
-}
-
-float b2MouseJoint::GetFrequency() const
-{
-	return m_frequencyHz;
-}
-
-void b2MouseJoint::SetDampingRatio(float ratio)
-{
-	m_dampingRatio = ratio;
-}
-
-float b2MouseJoint::GetDampingRatio() const
-{
-	return m_dampingRatio;
-}
-
 void b2MouseJoint::InitVelocityConstraints(const b2SolverData& data)
 {
 	m_indexB = m_bodyB->m_islandIndex;
@@ -113,14 +86,8 @@ void b2MouseJoint::InitVelocityConstraints(const b2SolverData& data)
 
 	float mass = m_bodyB->GetMass();
 
-	// Frequency
-	float omega = 2.0f * b2_pi * m_frequencyHz;
-
-	// Damping coefficient
-	float d = 2.0f * mass * m_dampingRatio * omega;
-
-	// Spring stiffness
-	float k = mass * (omega * omega);
+	float d = m_damping;
+	float k = m_stiffness;
 
 	// magic formulas
 	// gamma has units of inverse mass.

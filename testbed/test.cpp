@@ -163,13 +163,18 @@ void Test::MouseDown(const b2Vec2& p)
 
 	if (callback.m_fixture)
 	{
+		float frequencyHz = 5.0f;
+		float dampingRatio = 0.7f;
+
 		b2Body* body = callback.m_fixture->GetBody();
-		b2MouseJointDef md;
-		md.bodyA = m_groundBody;
-		md.bodyB = body;
-		md.target = p;
-		md.maxForce = 1000.0f * body->GetMass();
-		m_mouseJoint = (b2MouseJoint*)m_world->CreateJoint(&md);
+		b2MouseJointDef jd;
+		jd.bodyA = m_groundBody;
+		jd.bodyB = body;
+		jd.target = p;
+		jd.maxForce = 1000.0f * body->GetMass();
+		b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
+
+		m_mouseJoint = (b2MouseJoint*)m_world->CreateJoint(&jd);
 		body->SetAwake(true);
 	}
 }
