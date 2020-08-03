@@ -34,8 +34,8 @@ struct b2MouseJointDef : public b2JointDef
 		type = e_mouseJoint;
 		target.Set(0.0f, 0.0f);
 		maxForce = 0.0f;
-		frequencyHz = 5.0f;
-		dampingRatio = 0.7f;
+		stiffness = 0.0f;
+		damping = 0.0f;
 	}
 
 	/// The initial world target point. This is assumed
@@ -47,11 +47,11 @@ struct b2MouseJointDef : public b2JointDef
 	/// as some multiple of the weight (multiplier * mass * gravity).
 	float maxForce;
 
-	/// The response speed.
-	float frequencyHz;
+	/// The linear stiffness in N/m
+	float stiffness;
 
-	/// The damping ratio. 0 = no damping, 1 = critical damping.
-	float dampingRatio;
+	/// The linear damping in N*s/m
+	float damping;
 };
 
 /// A mouse joint is used to make a point on a body track a
@@ -85,13 +85,13 @@ public:
 	void SetMaxForce(float force);
 	float GetMaxForce() const;
 
-	/// Set/get the frequency in Hertz.
-	void SetFrequency(float hz);
-	float GetFrequency() const;
+	/// Set/get the linear stiffness in N/m
+	void SetStiffness(float stiffness) { m_stiffness = stiffness; }
+	float GetStiffness() const { return m_stiffness; }
 
-	/// Set/get the damping ratio (dimensionless).
-	void SetDampingRatio(float ratio);
-	float GetDampingRatio() const;
+	/// Set/get linear damping in N*s/m
+	void SetDamping(float damping) { m_damping = damping; }
+	float GetDamping() const { return m_damping; }
 
 	/// The mouse joint does not support dumping.
 	void Dump() override { b2Log("Mouse joint dumping is not supported.\n"); }
@@ -110,8 +110,8 @@ protected:
 
 	b2Vec2 m_localAnchorB;
 	b2Vec2 m_targetA;
-	float m_frequencyHz;
-	float m_dampingRatio;
+	float m_stiffness;
+	float m_damping;
 	float m_beta;
 	
 	// Solver shared
