@@ -23,6 +23,7 @@
 #ifndef B2_CONTACT_H
 #define B2_CONTACT_H
 
+#include "b2_api.h"
 #include "b2_collision.h"
 #include "b2_fixture.h"
 #include "b2_math.h"
@@ -61,7 +62,7 @@ typedef b2Contact* b2ContactCreateFcn(	b2Fixture* fixtureA, int32 indexA,
 										b2BlockAllocator* allocator);
 typedef void b2ContactDestroyFcn(b2Contact* contact, b2BlockAllocator* allocator);
 
-struct b2ContactRegister
+struct B2_API b2ContactRegister
 {
 	b2ContactCreateFcn* createFcn;
 	b2ContactDestroyFcn* destroyFcn;
@@ -73,7 +74,7 @@ struct b2ContactRegister
 /// is an edge. A contact edge belongs to a doubly linked list
 /// maintained in each attached body. Each contact has two contact
 /// nodes, one for each attached body.
-struct b2ContactEdge
+struct B2_API b2ContactEdge
 {
 	b2Body* other;			///< provides quick access to the other body attached.
 	b2Contact* contact;		///< the contact
@@ -84,7 +85,7 @@ struct b2ContactEdge
 /// The class manages contact between two shapes. A contact exists for each overlapping
 /// AABB in the broad-phase (except if filtered). Therefore a contact object may exist
 /// that has no contact points.
-class b2Contact
+class B2_API b2Contact
 {
 public:
 
@@ -381,5 +382,8 @@ inline float b2Contact::GetTangentSpeed() const
 {
 	return m_tangentSpeed;
 }
+
+/// internal for testbed, do not use
+extern B2_API bool g_blockSolve;
 
 #endif

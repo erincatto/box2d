@@ -24,6 +24,7 @@
 #define B2_SETTINGS_H
 
 #include "b2_types.h"
+#include "b2_api.h"
 
 /// @file
 /// Settings that can be overriden for your application
@@ -54,7 +55,7 @@
 // User data
 
 /// You can define this to inject whatever data you want in b2Body
-struct b2BodyUserData
+struct B2_API b2BodyUserData
 {
 	b2BodyUserData()
 	{
@@ -66,7 +67,7 @@ struct b2BodyUserData
 };
 
 /// You can define this to inject whatever data you want in b2Fixture
-struct b2FixtureUserData
+struct B2_API b2FixtureUserData
 {
 	b2FixtureUserData()
 	{
@@ -78,7 +79,7 @@ struct b2FixtureUserData
 };
 
 /// You can define this to inject whatever data you want in b2Joint
-struct b2JointUserData
+struct B2_API b2JointUserData
 {
 	b2JointUserData()
 	{
@@ -92,8 +93,8 @@ struct b2JointUserData
 // Memory Allocation
 
 /// Default allocation functions
-void* b2Alloc_Default(int32 size);
-void b2Free_Default(void* mem);
+B2_API void* b2Alloc_Default(int32 size);
+B2_API void b2Free_Default(void* mem);
 
 /// Implement this function to use your own memory allocator.
 inline void* b2Alloc(int32 size)
@@ -108,7 +109,7 @@ inline void b2Free(void* mem)
 }
 
 /// Default logging function
-void b2Log_Default(const char* string, va_list args);
+B2_API void b2Log_Default(const char* string, va_list args);
 
 /// Implement this to use your own logging.
 inline void b2Log(const char* string, ...)

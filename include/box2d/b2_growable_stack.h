@@ -23,8 +23,9 @@
 #ifndef B2_GROWABLE_STACK_H
 #define B2_GROWABLE_STACK_H
 
+#include <cstring>
+
 #include "b2_settings.h"
-#include <string.h>
 
 /// This is a growable LIFO stack with an initial capacity of N.
 /// If the stack size exceeds the initial capacity, the heap is used
@@ -56,7 +57,7 @@ public:
 			T* old = m_stack;
 			m_capacity *= 2;
 			m_stack = (T*)b2Alloc(m_capacity * sizeof(T));
-			memcpy(m_stack, old, m_count * sizeof(T));
+			std::memcpy(m_stack, old, m_count * sizeof(T));
 			if (old != m_array)
 			{
 				b2Free(old);

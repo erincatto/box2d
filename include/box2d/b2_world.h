@@ -23,6 +23,7 @@
 #ifndef B2_WORLD_H
 #define B2_WORLD_H
 
+#include "b2_api.h"
 #include "b2_block_allocator.h"
 #include "b2_contact_manager.h"
 #include "b2_math.h"
@@ -42,7 +43,7 @@ class b2Joint;
 /// The world class manages all physics entities, dynamic simulation,
 /// and asynchronous queries. The world also contains efficient memory
 /// management facilities.
-class b2World
+class B2_API b2World
 {
 public:
 	/// Construct a world object.
@@ -58,7 +59,7 @@ public:
 
 	/// Register a contact filter to provide specific control over collision.
 	/// Otherwise the default filter is used (b2_defaultFilter). The listener is
-	/// owned by you and must remain in scope. 
+	/// owned by you and must remain in scope.
 	void SetContactFilter(b2ContactFilter* filter);
 
 	/// Register a contact event listener. The listener is owned by you and must
@@ -185,7 +186,7 @@ public:
 
 	/// Change the global gravity vector.
 	void SetGravity(const b2Vec2& gravity);
-	
+
 	/// Get the global gravity vector.
 	b2Vec2 GetGravity() const;
 

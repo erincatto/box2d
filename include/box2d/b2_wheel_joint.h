@@ -23,6 +23,7 @@
 #ifndef B2_WHEEL_JOINT_H
 #define B2_WHEEL_JOINT_H
 
+#include "b2_api.h"
 #include "b2_joint.h"
 
 /// Wheel joint definition. This requires defining a line of
@@ -31,7 +32,7 @@
 /// can violate the constraint slightly. The joint translation is zero
 /// when the local anchor points coincide in world space. Using local
 /// anchors and a local axis helps when saving and loading a game.
-struct b2WheelJointDef : public b2JointDef
+struct B2_API b2WheelJointDef : public b2JointDef
 {
 	b2WheelJointDef()
 	{
@@ -91,7 +92,7 @@ struct b2WheelJointDef : public b2JointDef
 /// along an axis fixed in bodyA and rotation in the plane. In other words, it is a point to
 /// line constraint with a rotational motor and a linear spring/damper. The spring/damper is
 /// initialized upon creation. This joint is designed for vehicle suspensions.
-class b2WheelJoint : public b2Joint
+class B2_API b2WheelJoint : public b2Joint
 {
 public:
 	b2Vec2 GetAnchorA() const override;

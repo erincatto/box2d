@@ -23,11 +23,12 @@
 #ifndef B2_TIME_OF_IMPACT_H
 #define B2_TIME_OF_IMPACT_H
 
+#include "b2_api.h"
 #include "b2_math.h"
 #include "b2_distance.h"
 
 /// Input parameters for b2TimeOfImpact
-struct b2TOIInput
+struct B2_API b2TOIInput
 {
 	b2DistanceProxy proxyA;
 	b2DistanceProxy proxyB;
@@ -37,7 +38,7 @@ struct b2TOIInput
 };
 
 /// Output parameters for b2TimeOfImpact.
-struct b2TOIOutput
+struct B2_API b2TOIOutput
 {
 	enum State
 	{
@@ -57,6 +58,13 @@ struct b2TOIOutput
 /// non-tunneling collisions. If you change the time interval, you should call this function
 /// again.
 /// Note: use b2Distance to compute the contact point and normal at the time of impact.
-void b2TimeOfImpact(b2TOIOutput* output, const b2TOIInput* input);
+B2_API void b2TimeOfImpact(b2TOIOutput* output, const b2TOIInput* input);
+
+/// internal for testbed, do not use
+extern B2_API int32 b2_toiCalls, b2_toiIters, b2_toiMaxIters;
+/// internal for testbed, do not use
+extern B2_API int32 b2_toiRootIters, b2_toiMaxRootIters;
+/// internal for testbed, do not use
+extern B2_API float b2_toiTime, b2_toiMaxTime;
 
 #endif

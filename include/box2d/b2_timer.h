@@ -23,11 +23,12 @@
 #ifndef B2_TIMER_H
 #define B2_TIMER_H
 
+#include "b2_api.h"
 #include "b2_settings.h"
 
 /// Timer for profiling. This has platform specific code and may
 /// not work on every platform.
-class b2Timer
+class B2_API b2Timer
 {
 public:
 
