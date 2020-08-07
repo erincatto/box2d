@@ -5,6 +5,12 @@ project(box2d VERSION 2.4.0)
 
 # set(CMAKE_CONFIGURATION_TYPES "Debug;RelWithDebInfo" CACHE STRING "" FORCE)
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+
+option(BUILD_SHARED_LIBS "Build Box2D as a shared library" OFF)
+
 option(BOX2D_BUILD_UNIT_TESTS "Build the Box2D unit tests" ON)
 option(BOX2D_BUILD_TESTBED "Build the Box2D testbed" ON)
 option(BOX2D_BUILD_DOCS "Build the Box2D documentation" OFF)

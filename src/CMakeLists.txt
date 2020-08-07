@@ -1,3 +1,5 @@
+include(GenerateExportHeader)
+
 set(BOX2D_SOURCE_FILES
 	collision/b2_broad_phase.cpp
 	collision/b2_chain_shape.cpp
@@ -95,7 +97,7 @@ set(BOX2D_HEADER_FILES
 	../include/box2d/b2_world_callbacks.h
 	../include/box2d/box2d.h)
 
-add_library(box2d STATIC ${BOX2D_SOURCE_FILES} ${BOX2D_HEADER_FILES})
+add_library(box2d ${BOX2D_SOURCE_FILES} ${BOX2D_HEADER_FILES})
 target_include_directories(box2d
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
@@ -103,6 +105,7 @@ target_include_directories(box2d
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
 set_target_properties(box2d PROPERTIES
 	CXX_STANDARD 11
     CXX_STANDARD_REQUIRED YES
@@ -121,6 +124,25 @@ if(MSVC)
     OPTIONAL
   )
 endif()
+
+generate_export_header(box2d
+  BASE_NAME b2
+  EXPORT_MACRO_NAME B2_API
+  EXPORT_FILE_NAME b2_api.h
+  STATIC_DEFINE B2_STATIC
+)
+
+if (NOT BUILD_SHARED_LIBS)
+  target_compile_definitions(box2d
+    PUBLIC
+      B2_STATIC
+  )
+endif()
+
+target_compile_definitions(box2d
+  PRIVATE
+    box2d_EXPORTS
+)
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "src" FILES ${BOX2D_SOURCE_FILES})
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/../include" PREFIX "include" FILES ${BOX2D_HEADER_FILES})
