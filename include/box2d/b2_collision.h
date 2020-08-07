@@ -23,7 +23,7 @@
 #ifndef B2_COLLISION_H
 #define B2_COLLISION_H
 
-#include <limits.h>
+#include <climits>
 
 #include "b2_api.h"
 #include "b2_math.h"
