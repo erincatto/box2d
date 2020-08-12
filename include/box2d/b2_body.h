@@ -54,9 +54,9 @@ enum b2BodyType
 struct b2BodyDef
 {
 	/// This constructor sets the body definition default values.
-	b2BodyDef()
+	b2BodyDef() :
+	    userData{}
 	{
-		userData = nullptr;
 		position.Set(0.0f, 0.0f);
 		angle = 0.0f;
 		linearVelocity.Set(0.0f, 0.0f);
@@ -121,7 +121,7 @@ struct b2BodyDef
 	bool enabled;
 
 	/// Use this to store application specific body data.
-	void* userData;
+    b2BodyUserData userData;
 
 	/// Scale the gravity applied to this body.
 	float gravityScale;
@@ -379,10 +379,10 @@ public:
 	const b2Body* GetNext() const;
 
 	/// Get the user data pointer that was provided in the body definition.
-	void* GetUserData() const;
+    b2BodyUserData GetUserData() const;
 
 	/// Set the user data. Use this to store your application specific data.
-	void SetUserData(void* data);
+	void SetUserData(b2BodyUserData data);
 
 	/// Get the parent world of this body.
 	b2World* GetWorld();
@@ -471,7 +471,7 @@ private:
 
 	float m_sleepTime;
 
-	void* m_userData;
+    b2BodyUserData m_userData;
 };
 
 inline b2BodyType b2Body::GetType() const
@@ -734,12 +734,12 @@ inline const b2Body* b2Body::GetNext() const
 	return m_next;
 }
 
-inline void b2Body::SetUserData(void* data)
+inline void b2Body::SetUserData(b2BodyUserData data)
 {
 	m_userData = data;
 }
 
-inline void* b2Body::GetUserData() const
+inline b2BodyUserData b2Body::GetUserData() const
 {
 	return m_userData;
 }

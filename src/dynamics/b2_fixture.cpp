@@ -31,9 +31,9 @@
 #include "box2d/b2_polygon_shape.h"
 #include "box2d/b2_world.h"
 
-b2Fixture::b2Fixture()
+b2Fixture::b2Fixture() :
+    m_userData{}
 {
-	m_userData = nullptr;
 	m_body = nullptr;
 	m_next = nullptr;
 	m_proxies = nullptr;

@@ -60,10 +60,10 @@ struct b2Filter
 struct b2FixtureDef
 {
 	/// The constructor sets the default fixture definition values.
-	b2FixtureDef()
+	b2FixtureDef() :
+	    userData{}
 	{
 		shape = nullptr;
-		userData = nullptr;
 		friction = 0.2f;
 		restitution = 0.0f;
 		density = 0.0f;
@@ -75,7 +75,7 @@ struct b2FixtureDef
 	const b2Shape* shape;
 
 	/// Use this to store application specific fixture data.
-	void* userData;
+    b2FixtureUserData userData;
 
 	/// The friction coefficient, usually in the range [0,1].
 	float friction;
@@ -151,10 +151,10 @@ public:
 
 	/// Get the user data that was assigned in the fixture definition. Use this to
 	/// store your application specific data.
-	void* GetUserData() const;
+    b2FixtureUserData GetUserData() const;
 
 	/// Set the user data. Use this to store your application specific data.
-	void SetUserData(void* data);
+	void SetUserData(b2FixtureUserData data);
 
 	/// Test a point for containment in this fixture.
 	/// @param p a point in world coordinates.
@@ -237,7 +237,7 @@ protected:
 
 	bool m_isSensor;
 
-	void* m_userData;
+    b2FixtureUserData m_userData;
 };
 
 inline b2Shape::Type b2Fixture::GetType() const
@@ -265,12 +265,12 @@ inline const b2Filter& b2Fixture::GetFilterData() const
 	return m_filter;
 }
 
-inline void* b2Fixture::GetUserData() const
+inline b2FixtureUserData b2Fixture::GetUserData() const
 {
 	return m_userData;
 }
 
-inline void b2Fixture::SetUserData(void* data)
+inline void b2Fixture::SetUserData(b2FixtureUserData data)
 {
 	m_userData = data;
 }
