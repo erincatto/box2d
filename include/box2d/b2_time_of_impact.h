@@ -60,11 +60,4 @@ struct B2_API b2TOIOutput
 /// Note: use b2Distance to compute the contact point and normal at the time of impact.
 B2_API void b2TimeOfImpact(b2TOIOutput* output, const b2TOIInput* input);
 
-/// internal for testbed, do not use
-extern B2_API int32 b2_toiCalls, b2_toiIters, b2_toiMaxIters;
-/// internal for testbed, do not use
-extern B2_API int32 b2_toiRootIters, b2_toiMaxRootIters;
-/// internal for testbed, do not use
-extern B2_API float b2_toiTime, b2_toiMaxTime;
-
 #endif

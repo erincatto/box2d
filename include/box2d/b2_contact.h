@@ -383,7 +383,4 @@ inline float b2Contact::GetTangentSpeed() const
 	return m_tangentSpeed;
 }
 
-/// internal for testbed, do not use
-extern B2_API bool g_blockSolve;
-
 #endif
