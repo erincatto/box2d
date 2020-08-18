@@ -168,7 +168,4 @@ inline const b2Vec2& b2DistanceProxy::GetSupportVertex(const b2Vec2& d) const
 	return m_vertices[bestIndex];
 }
 
-/// internal for testbed, do not use
-extern B2_API int32 b2_gjkCalls, b2_gjkIters, b2_gjkMaxIters;
-
 #endif
