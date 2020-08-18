@@ -142,11 +142,6 @@ if (NOT BUILD_SHARED_LIBS)
   )
 endif()
 
-target_compile_definitions(box2d
-  PRIVATE
-    box2d_EXPORTS
-)
-
 # TODO: if you merge https://github.com/erincatto/box2d/pull/630, you have to uncomment these lines!
 # install(
 #   FILES
