@@ -114,20 +114,15 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/../include" PREFIX "include" FILE
 
 install(
   TARGETS box2d
-  EXPORT box2dTargets
+  EXPORT box2dConfig
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 install(
-  EXPORT box2dTargets
+  EXPORT box2dConfig
   NAMESPACE box2d::
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/box2d"
-)
-
-install(
-  FILES box2dConfig.cmake
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/box2d"
 )
 
