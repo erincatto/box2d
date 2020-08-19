@@ -7,7 +7,7 @@ project(box2d VERSION 2.4.0)
 
 include(GNUInstallDirs)
 
-if(NOT CMAKE_CONFIGURATION_TYPES)
+if(NOT GENERATOR_IS_MULTI_CONFIG)
   if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
     set(CMAKE_BUILD_TYPE "RelWithDebInfo")
