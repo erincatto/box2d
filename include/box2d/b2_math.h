@@ -23,7 +23,7 @@
 #ifndef B2_MATH_H
 #define B2_MATH_H
 
-#include <cmath>
+#include <math.h>
 
 #include "b2_api.h"
 #include "b2_settings.h"
@@ -31,11 +31,11 @@
 /// This function is used to ensure that a floating point number is not a NaN or infinity.
 inline bool b2IsValid(float x)
 {
-	return std::isfinite(x);
+	return isfinite(x);
 }
 
-#define	b2Sqrt(x)	std::sqrt(x)
-#define	b2Atan2(y, x)	std::atan2(y, x)
+#define	b2Sqrt(x)	sqrtf(x)
+#define	b2Atan2(y, x)	atan2f(y, x)
 
 /// A 2D column vector.
 struct B2_API b2Vec2
@@ -292,16 +292,16 @@ struct B2_API b2Rot
 	explicit b2Rot(float angle)
 	{
 		/// TODO_ERIN optimize
-		s = std::sin(angle);
-		c = std::cos(angle);
+		s = sinf(angle);
+		c = cosf(angle);
 	}
 
 	/// Set using an angle in radians.
 	void Set(float angle)
 	{
 		/// TODO_ERIN optimize
-		s = std::sin(angle);
-		c = std::cos(angle);
+		s = sinf(angle);
+		c = cosf(angle);
 	}
 
 	/// Set to the identity rotation
@@ -707,7 +707,7 @@ inline void b2Sweep::Advance(float alpha)
 inline void b2Sweep::Normalize()
 {
 	float twoPi = 2.0f * b2_pi;
-	float d =  twoPi * std::floor(a0 / twoPi);
+	float d =  twoPi * floorf(a0 / twoPi);
 	a0 -= d;
 	a -= d;
 }
