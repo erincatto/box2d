@@ -22,7 +22,7 @@
 
 #include "test.h"
 
-extern bool g_blockSolve;
+extern B2_API bool g_blockSolve;
 
 class BoxStack : public Test
 {
