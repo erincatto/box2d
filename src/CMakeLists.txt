@@ -118,6 +118,7 @@ if(MSVC)
   install(
     FILES "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/box2d.pdb"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    OPTIONAL
   )
 endif()
 
