@@ -26,3 +26,7 @@ add_custom_target(docs ALL "${DOXYGEN_EXECUTABLE}"
                   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/docs"
                   COMMENT "Generating HTML documentation" VERBATIM)
 
+install(
+  DIRECTORY "${CMAKE_BINARY_DIR}/docs/html"
+  DESTINATION "${CMAKE_INSTALL_DOCDIR}"
+)

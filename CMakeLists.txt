@@ -5,6 +5,8 @@ project(box2d VERSION 2.4.0)
 
 # set(CMAKE_CONFIGURATION_TYPES "Debug;RelWithDebInfo" CACHE STRING "" FORCE)
 
+include(GNUInstallDirs)
+
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_subdirectory(src)
@@ -39,3 +41,8 @@ if (BOX2D_BUILD_TESTBED)
 		set_property(TARGET testbed PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/testbed")
 	endif()
 endif()
+
+install(
+  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/box2d"
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
