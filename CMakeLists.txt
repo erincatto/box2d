@@ -7,15 +7,6 @@ project(box2d VERSION 2.4.0)
 
 include(GNUInstallDirs)
 
-get_property(BOX2D_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-
-if(NOT BOX2D_MULTI_CONFIG)
-  if(NOT CMAKE_BUILD_TYPE)
-    message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
-    set(CMAKE_BUILD_TYPE "RelWithDebInfo")
-  endif()
-endif()
-
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_subdirectory(src)
