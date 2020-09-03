@@ -434,6 +434,9 @@ void b2Body::SetTransform(const b2Vec2& position, float angle)
 	{
 		f->Synchronize(broadPhase, m_xf, m_xf);
 	}
+
+	// Check for new contacts the next step
+	m_world->m_newContacts = true;
 }
 
 void b2Body::SynchronizeFixtures()
