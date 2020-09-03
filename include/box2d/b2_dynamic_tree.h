@@ -156,9 +156,6 @@ private:
 
 	int32 m_freeList;
 
-	/// This is used to incrementally traverse the tree for re-balancing.
-	uint32 m_path;
-
 	int32 m_insertionCount;
 };
 

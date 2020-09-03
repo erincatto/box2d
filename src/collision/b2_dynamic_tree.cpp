@@ -41,8 +41,6 @@ b2DynamicTree::b2DynamicTree()
 	m_nodes[m_nodeCapacity-1].height = -1;
 	m_freeList = 0;
 
-	m_path = 0;
-
 	m_insertionCount = 0;
 }
 
