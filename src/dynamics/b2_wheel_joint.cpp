@@ -455,7 +455,7 @@ b2Vec2 b2WheelJoint::GetAnchorB() const
 
 b2Vec2 b2WheelJoint::GetReactionForce(float inv_dt) const
 {
-	return inv_dt * (m_impulse * m_ay + m_springImpulse * m_ax);
+	return inv_dt * (m_impulse * m_ay + (m_springImpulse + m_lowerImpulse - m_upperImpulse) * m_ax);
 }
 
 float b2WheelJoint::GetReactionTorque(float inv_dt) const

@@ -78,8 +78,13 @@ public:
 	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
+
 		float torque = m_joint->GetMotorTorque(settings.m_hertz);
-		g_debugDraw.DrawString(5, m_textLine, "Motor Torque = %4.0f", (float)torque);
+		g_debugDraw.DrawString(5, m_textLine, "Motor Torque = %4.0f", torque);
+		m_textLine += m_textIncrement;
+
+		b2Vec2 F = m_joint->GetReactionForce(settings.m_hertz);
+		g_debugDraw.DrawString(5, m_textLine, "Reaction Force = (%4.1f, %4.1f)", F.x, F.y);
 		m_textLine += m_textIncrement;
 	}
 
