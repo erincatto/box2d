@@ -63,7 +63,7 @@ struct b2DistanceJointDef : public b2JointDef
 	/// Maximum length. Must be greater than or equal to the minimum length.
 	float maxLength;
 
-	/// The linear stiffness in N/m. A value of 0 disables softness.
+	/// The linear stiffness in N/m.
 	float stiffness;
 
 	/// The linear damping in N*s/m.
