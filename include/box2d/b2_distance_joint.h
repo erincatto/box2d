@@ -95,11 +95,23 @@ public:
 	/// Get the rest length
 	float GetLength() const { return m_length; }
 
+	/// Set the rest length
+	/// @returns clamped rest length
+	float SetLength(float length);
+
 	/// Get the minimum length
-	float GetMinLength() const { return m_length; }
+	float GetMinLength() const { return m_minLength; }
+
+	/// Set the minimum length
+	/// @returns the clamped minimum length
+	float SetMinLength(float minLength);
 
 	/// Get the maximum length
-	float GetMaxLength() const { return m_length; }
+	float GetMaxLength() const { return m_maxLength; }
+
+	/// Set the maximum length
+	/// @returns the clamped maximum length
+	float SetMaxLength(float maxLength);
 
 	/// Get the current length
 	float GetCurrentLength() const;
@@ -114,6 +126,9 @@ public:
 
 	/// Dump joint to dmLog
 	void Dump() override;
+
+	///
+	void Draw(b2Draw* draw) const override;
 
 protected:
 

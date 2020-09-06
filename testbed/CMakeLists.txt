@@ -66,6 +66,7 @@ set (TESTBED_SOURCE_FILES
 	tests/tiles.cpp
 	tests/time_of_impact.cpp
 	tests/tumbler.cpp
+	tests/web.cpp
 	tests/wheel_joint.cpp
 )
 

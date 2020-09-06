@@ -513,7 +513,7 @@ int main(int, char**)
 
 	sprintf(buffer, "Box2D Testbed Version %d.%d.%d", b2_version.major, b2_version.minor, b2_version.revision);
 
-	bool fullscreen = false;
+	bool fullscreen = true;
 	if (fullscreen)
 	{
 		g_mainWindow = glfwCreateWindow(1920, 1080, buffer, glfwGetPrimaryMonitor(), NULL);
