@@ -607,7 +607,6 @@ void b2PrismaticJoint::Dump()
 	b2Dump("  joints[%d] = m_world->CreateJoint(&jd);\n", m_index);
 }
 
-///
 void b2PrismaticJoint::Draw(b2Draw* draw) const
 {
 	const b2Transform& xfA = m_bodyA->GetTransform();

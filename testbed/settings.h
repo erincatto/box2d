@@ -38,7 +38,7 @@ struct Settings
 		m_velocityIterations = 8;
 		m_positionIterations = 3;
 		m_drawShapes = true;
-		m_drawJoints = false;
+		m_drawJoints = true;
 		m_drawAABBs = false;
 		m_drawContactPoints = false;
 		m_drawContactNormals = false;

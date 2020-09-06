@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include "test.h"
+#include "imgui/imgui.h"
 
 // This tests distance joints, body destruction, and joint destruction.
 class DistanceJoint : public Test
@@ -39,173 +40,71 @@ public:
 		}
 
 		{
-			b2PolygonShape shape;
-			shape.SetAsBox(0.5f, 0.5f);
-
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
+			bd.angularDamping = 0.1f;
 
-			bd.position.Set(-5.0f, 5.0f);
-			m_bodies[0] = m_world->CreateBody(&bd);
-			m_bodies[0]->CreateFixture(&shape, 5.0f);
+			bd.position.Set(0.0f, 5.0f);
+			b2Body* body = m_world->CreateBody(&bd);
 
-			bd.position.Set(5.0f, 5.0f);
-			m_bodies[1] = m_world->CreateBody(&bd);
-			m_bodies[1]->CreateFixture(&shape, 5.0f);
+			b2PolygonShape shape;
+			shape.SetAsBox(0.5f, 0.5f);
+			body->CreateFixture(&shape, 5.0f);
 
-			bd.position.Set(5.0f, 15.0f);
-			m_bodies[2] = m_world->CreateBody(&bd);
-			m_bodies[2]->CreateFixture(&shape, 5.0f);
-
-			bd.position.Set(-5.0f, 15.0f);
-			m_bodies[3] = m_world->CreateBody(&bd);
-			m_bodies[3]->CreateFixture(&shape, 5.0f);
+			m_hertz = 1.0f;
+			m_dampingRatio = 0.7f;
 
 			b2DistanceJointDef jd;
-			b2Vec2 p1, p2, d;
-
-			float frequencyHz = 2.0f;
-			float dampingRatio = 0.0f;
-
-			jd.bodyA = ground;
-			jd.bodyB = m_bodies[0];
-			jd.localAnchorA.Set(-10.0f, 0.0f);
-			jd.localAnchorB.Set(-0.5f, -0.5f);
-			p1 = jd.bodyA->GetWorldPoint(jd.localAnchorA);
-			p2 = jd.bodyB->GetWorldPoint(jd.localAnchorB);
-			d = p2 - p1;
-			jd.length = d.Length();
-			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
-			m_joints[0] = m_world->CreateJoint(&jd);
-
-			jd.bodyA = ground;
-			jd.bodyB = m_bodies[1];
-			jd.localAnchorA.Set(10.0f, 0.0f);
-			jd.localAnchorB.Set(0.5f, -0.5f);
-			p1 = jd.bodyA->GetWorldPoint(jd.localAnchorA);
-			p2 = jd.bodyB->GetWorldPoint(jd.localAnchorB);
-			d = p2 - p1;
-			jd.length = d.Length();
-			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
-			m_joints[1] = m_world->CreateJoint(&jd);
-
-			jd.bodyA = ground;
-			jd.bodyB = m_bodies[2];
-			jd.localAnchorA.Set(10.0f, 20.0f);
-			jd.localAnchorB.Set(0.5f, 0.5f);
-			p1 = jd.bodyA->GetWorldPoint(jd.localAnchorA);
-			p2 = jd.bodyB->GetWorldPoint(jd.localAnchorB);
-			d = p2 - p1;
-			jd.length = d.Length();
-			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
-			m_joints[2] = m_world->CreateJoint(&jd);
-
-			jd.bodyA = ground;
-			jd.bodyB = m_bodies[3];
-			jd.localAnchorA.Set(-10.0f, 20.0f);
-			jd.localAnchorB.Set(-0.5f, 0.5f);
-			p1 = jd.bodyA->GetWorldPoint(jd.localAnchorA);
-			p2 = jd.bodyB->GetWorldPoint(jd.localAnchorB);
-			d = p2 - p1;
-			jd.length = d.Length();
-			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
-			m_joints[3] = m_world->CreateJoint(&jd);
-
-			jd.bodyA = m_bodies[0];
-			jd.bodyB = m_bodies[1];
-			jd.localAnchorA.Set(0.5f, 0.0f);
-			jd.localAnchorB.Set(-0.5f, 0.0f);;
-			p1 = jd.bodyA->GetWorldPoint(jd.localAnchorA);
-			p2 = jd.bodyB->GetWorldPoint(jd.localAnchorB);
-			d = p2 - p1;
-			jd.length = d.Length();
-			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
-			m_joints[4] = m_world->CreateJoint(&jd);
-
-			jd.bodyA = m_bodies[1];
-			jd.bodyB = m_bodies[2];
-			jd.localAnchorA.Set(0.0f, 0.5f);
-			jd.localAnchorB.Set(0.0f, -0.5f);
-			p1 = jd.bodyA->GetWorldPoint(jd.localAnchorA);
-			p2 = jd.bodyB->GetWorldPoint(jd.localAnchorB);
-			d = p2 - p1;
-			jd.length = d.Length();
-			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
-			m_joints[5] = m_world->CreateJoint(&jd);
-
-			jd.bodyA = m_bodies[2];
-			jd.bodyB = m_bodies[3];
-			jd.localAnchorA.Set(-0.5f, 0.0f);
-			jd.localAnchorB.Set(0.5f, 0.0f);
-			p1 = jd.bodyA->GetWorldPoint(jd.localAnchorA);
-			p2 = jd.bodyB->GetWorldPoint(jd.localAnchorB);
-			d = p2 - p1;
-			jd.length = d.Length();
-			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
-			m_joints[6] = m_world->CreateJoint(&jd);
-
-			jd.bodyA = m_bodies[3];
-			jd.bodyB = m_bodies[0];
-			jd.localAnchorA.Set(0.0f, -0.5f);
-			jd.localAnchorB.Set(0.0f, 0.5f);
-			p1 = jd.bodyA->GetWorldPoint(jd.localAnchorA);
-			p2 = jd.bodyB->GetWorldPoint(jd.localAnchorB);
-			d = p2 - p1;
-			jd.length = d.Length();
-			b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
-			m_joints[7] = m_world->CreateJoint(&jd);
+			jd.Initialize(ground, body, b2Vec2(0.0f, 15.0f), bd.position);
+			jd.collideConnected = true;
+			m_length = jd.length;
+			m_minLength = m_length;
+			m_maxLength = m_length;
+			b2LinearStiffness(jd.stiffness, jd.damping, m_hertz, m_dampingRatio, jd.bodyA, jd.bodyB);
+			m_joint = (b2DistanceJoint*)m_world->CreateJoint(&jd);
 		}
 	}
 
-	void Keyboard(int key) override
+	void UpdateUI() override
 	{
-		switch (key)
+		ImGui::SetNextWindowPos(ImVec2(10.0f, 100.0f));
+		ImGui::SetNextWindowSize(ImVec2(260.0f, 150.0f));
+		ImGui::Begin("Joint Controls", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+
+		if (ImGui::SliderFloat("Length", &m_length, 0.0f, 20.0f, "%.0f"))
 		{
-		case GLFW_KEY_B:
-			for (int32 i = 0; i < 4; ++i)
-			{
-				if (m_bodies[i])
-				{
-					m_world->DestroyBody(m_bodies[i]);
-					m_bodies[i] = NULL;
-					break;
-				}
-			}
-			break;
-
-		case GLFW_KEY_J:
-			for (int32 i = 0; i < 8; ++i)
-			{
-				if (m_joints[i])
-				{
-					m_world->DestroyJoint(m_joints[i]);
-					m_joints[i] = NULL;
-					break;
-				}
-			}
-			break;
+			m_length = m_joint->SetLength(m_length);
 		}
-	}
 
-	void Step(Settings& settings) override
-	{
-		Test::Step(settings);
-		g_debugDraw.DrawString(5, m_textLine, "This demonstrates a soft distance joint.");
-		m_textLine += m_textIncrement;
-		g_debugDraw.DrawString(5, m_textLine, "Press: (b) to delete a body, (j) to delete a joint");
-		m_textLine += m_textIncrement;
-	}
-
-	void JointDestroyed(b2Joint* joint) override
-	{
-		for (int32 i = 0; i < 8; ++i)
+		if (ImGui::SliderFloat("Min Length", &m_minLength, 0.0f, 20.0f, "%.0f"))
 		{
-			if (m_joints[i] == joint)
-			{
-				m_joints[i] = NULL;
-				break;
-			}
+			m_minLength = m_joint->SetMinLength(m_minLength);
 		}
+
+		if (ImGui::SliderFloat("Max Length", &m_maxLength, 0.0f, 20.0f, "%.0f"))
+		{
+			m_maxLength = m_joint->SetMaxLength(m_maxLength);
+		}
+
+		if (ImGui::SliderFloat("Hertz", &m_hertz, 0.0f, 10.0f, "%.1f"))
+		{
+			float stiffness;
+			float damping;
+			b2LinearStiffness(stiffness, damping, m_hertz, m_dampingRatio, m_joint->GetBodyA(), m_joint->GetBodyB());
+			m_joint->SetStiffness(stiffness);
+			m_joint->SetDamping(damping);
+		}
+
+		if (ImGui::SliderFloat("Damping Ratio", &m_dampingRatio, 0.0f, 2.0f, "%.1f"))
+		{
+			float stiffness;
+			float damping;
+			b2LinearStiffness(stiffness, damping, m_hertz, m_dampingRatio, m_joint->GetBodyA(), m_joint->GetBodyB());
+			m_joint->SetStiffness(stiffness);
+			m_joint->SetDamping(damping);
+		}
+
+		ImGui::End();
 	}
 
 	static Test* Create()
@@ -213,8 +112,12 @@ public:
 		return new DistanceJoint;
 	}
 
-	b2Body* m_bodies[4];
-	b2Joint* m_joints[8];
+	b2DistanceJoint* m_joint;
+	float m_length;
+	float m_minLength;
+	float m_maxLength;
+	float m_hertz;
+	float m_dampingRatio;
 };
 
 static int testIndex = RegisterTest("Joints", "Distance Joint", DistanceJoint::Create);

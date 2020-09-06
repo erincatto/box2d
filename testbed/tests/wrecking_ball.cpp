@@ -21,19 +21,20 @@
 // SOFTWARE.
 
 #include "test.h"
+#include "imgui/imgui.h"
 
-/// This test shows how a rope joint can be used to stabilize a chain of
-/// bodies with a heavy payload. Notice that the rope joint just prevents
+/// This test shows how a distance joint can be used to stabilize a chain of
+/// bodies with a heavy payload. Notice that the distance joint just prevents
 /// excessive stretching and has no other effect.
-/// By disabling the rope joint you can see that the Box2D solver has trouble
+/// By disabling the distance joint you can see that the Box2D solver has trouble
 /// supporting heavy bodies with light bodies. Try playing around with the
 /// densities, time step, and iterations to see how they affect stability.
 /// This test also shows how to use contact filtering. Filtering is configured
 /// so that the payload does not collide with the chain.
-class RopeJoint : public Test
+class WreckingBall : public Test
 {
 public:
-	RopeJoint()
+	WreckingBall()
 	{
 		b2Body* ground = NULL;
 		{
@@ -61,7 +62,7 @@ public:
 
 			const int32 N = 10;
 			const float y = 15.0f;
-			m_ropeDef.localAnchorA.Set(0.0f, y);
+			m_distanceJointDef.localAnchorA.Set(0.0f, y);
 
 			b2Body* prevBody = ground;
 			for (int32 i = 0; i < N; ++i)
@@ -71,16 +72,26 @@ public:
 				bd.position.Set(0.5f + 1.0f * i, y);
 				if (i == N - 1)
 				{
-					shape.SetAsBox(1.5f, 1.5f);
-					fd.density = 100.0f;
-					fd.filter.categoryBits = 0x0002;
 					bd.position.Set(1.0f * i, y);
 					bd.angularDamping = 0.4f;
 				}
 
 				b2Body* body = m_world->CreateBody(&bd);
 
-				body->CreateFixture(&fd);
+				if (i == N - 1)
+				{
+					b2CircleShape circleShape;
+					circleShape.m_radius = 1.5f;
+					b2FixtureDef sfd;
+					sfd.shape = &circleShape;
+					sfd.density = 100.0f;
+					sfd.filter.categoryBits = 0x0002;
+					body->CreateFixture(&sfd);
+				}
+				else
+				{
+					body->CreateFixture(&fd);
+				}
 
 				b2Vec2 anchor(float(i), y);
 				jd.Initialize(prevBody, body, anchor);
@@ -89,60 +100,66 @@ public:
 				prevBody = body;
 			}
 
-			m_ropeDef.localAnchorB.SetZero();
+			m_distanceJointDef.localAnchorB.SetZero();
 
 			float extraLength = 0.01f;
-			m_ropeDef.maxLength = N - 1.0f + extraLength;
-			m_ropeDef.bodyB = prevBody;
+			m_distanceJointDef.minLength = 0.0f;
+			m_distanceJointDef.maxLength = N - 1.0f + extraLength;
+			m_distanceJointDef.bodyB = prevBody;
 		}
 
 		{
-			m_ropeDef.bodyA = ground;
-			m_rope = m_world->CreateJoint(&m_ropeDef);
+			m_distanceJointDef.bodyA = ground;
+			m_distanceJoint = m_world->CreateJoint(&m_distanceJointDef);
+			m_stabilize = true;
 		}
 	}
 
-	void Keyboard(int key) override
+	void UpdateUI() override
 	{
-		switch (key)
+		ImGui::SetNextWindowPos(ImVec2(10.0f, 100.0f));
+		ImGui::SetNextWindowSize(ImVec2(200.0f, 100.0f));
+		ImGui::Begin("Wrecking Ball Controls", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+
+		if (ImGui::Checkbox("Stabilize", &m_stabilize))
 		{
-		case GLFW_KEY_J:
-			if (m_rope)
+			if (m_stabilize == true && m_distanceJoint == nullptr)
 			{
-				m_world->DestroyJoint(m_rope);
-				m_rope = NULL;
+				m_distanceJoint = m_world->CreateJoint(&m_distanceJointDef);
 			}
-			else
+			else if (m_stabilize == false && m_distanceJoint != nullptr)
 			{
-				m_rope = m_world->CreateJoint(&m_ropeDef);
+				m_world->DestroyJoint(m_distanceJoint);
+				m_distanceJoint = nullptr;
 			}
-			break;
 		}
+
+		ImGui::End();
 	}
 
 	void Step(Settings& settings) override
 	{
 		Test::Step(settings);
-		g_debugDraw.DrawString(5, m_textLine, "Press (j) to toggle the rope joint.");
-		m_textLine += m_textIncrement;
-		if (m_rope)
+
+		if (m_distanceJoint)
 		{
-			g_debugDraw.DrawString(5, m_textLine, "Rope ON");
+			g_debugDraw.DrawString(5, m_textLine, "Distance Joint ON");
 		}
 		else
 		{
-			g_debugDraw.DrawString(5, m_textLine, "Rope OFF");
+			g_debugDraw.DrawString(5, m_textLine, "Distance Joint OFF");
 		}
 		m_textLine += m_textIncrement;
 	}
 
 	static Test* Create()
 	{
-		return new RopeJoint;
+		return new WreckingBall;
 	}
 
-	b2RopeJointDef m_ropeDef;
-	b2Joint* m_rope;
+	b2DistanceJointDef m_distanceJointDef;
+	b2Joint* m_distanceJoint;
+	bool m_stabilize;
 };
 
-static int testIndex = RegisterTest("Joints", "Rope", RopeJoint::Create);
+static int testIndex = RegisterTest("Examples", "Wrecking Ball", WreckingBall::Create);

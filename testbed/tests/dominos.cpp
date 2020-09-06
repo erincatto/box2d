@@ -190,6 +190,8 @@ public:
 		djd.localAnchorB.Set(0.0f, -1.0f);
 		b2Vec2 d = djd.bodyB->GetWorldPoint(djd.localAnchorB) - djd.bodyA->GetWorldPoint(djd.localAnchorA);
 		djd.length = d.Length();
+
+		b2LinearStiffness(djd.stiffness, djd.damping, 1.0f, 1.0f, djd.bodyA, djd.bodyB);
 		m_world->CreateJoint(&djd);
 
 		{
