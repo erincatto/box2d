@@ -406,9 +406,16 @@ void b2DistanceJoint::Draw(b2Draw* draw) const
 
 	if (m_minLength != m_maxLength)
 	{
-		b2Vec2 pMin = pA + m_minLength * axis;
-		draw->DrawPoint(pMin, 4.0f, c2);
-		b2Vec2 pMax = pA + m_maxLength * axis;
-		draw->DrawPoint(pMax, 4.0f, c3);
+		if (m_minLength > b2_linearSlop)
+		{
+			b2Vec2 pMin = pA + m_minLength * axis;
+			draw->DrawPoint(pMin, 4.0f, c2);
+		}
+
+		if (m_maxLength < FLT_MAX)
+		{
+			b2Vec2 pMax = pA + m_maxLength * axis;
+			draw->DrawPoint(pMax, 4.0f, c3);
+		}
 	}
 }

@@ -56,7 +56,7 @@ public:
 
 			b2DistanceJointDef jd;
 			jd.Initialize(ground, body, b2Vec2(0.0f, 15.0f), bd.position);
-
+			jd.collideConnected = true;
 			m_length = jd.length;
 			m_minLength = m_length;
 			m_maxLength = m_length;

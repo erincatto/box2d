@@ -37,13 +37,14 @@ struct b2DistanceJointDef : public b2JointDef
 		localAnchorA.Set(0.0f, 0.0f);
 		localAnchorB.Set(0.0f, 0.0f);
 		length = 1.0f;
-		minLength = 1.0f;
-		maxLength = 1.0f;
+		minLength = 0.0f;
+		maxLength = FLT_MAX;
 		stiffness = 0.0f;
 		damping = 0.0f;
 	}
 
-	/// Initialize the bodies, anchors, and distance using world space anchors
+	/// Initialize the bodies, anchors, and rest length using world space anchors.
+	/// The minimum and maximum lengths are set to the rest length.
 	void Initialize(b2Body* bodyA, b2Body* bodyB,
 					const b2Vec2& anchorA, const b2Vec2& anchorB);
 
