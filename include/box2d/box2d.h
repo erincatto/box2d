@@ -52,7 +52,6 @@
 #include "b2_prismatic_joint.h"
 #include "b2_pulley_joint.h"
 #include "b2_revolute_joint.h"
-#include "b2_rope_joint.h"
 #include "b2_weld_joint.h"
 #include "b2_wheel_joint.h"
 

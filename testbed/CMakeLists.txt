@@ -55,7 +55,6 @@ set (TESTBED_SOURCE_FILES
 	tests/restitution.cpp
 	tests/revolute_joint.cpp
 	tests/rope.cpp
-	tests/rope_joint.cpp
 	tests/sensor.cpp
 	tests/shape_cast.cpp
 	tests/shape_editing.cpp
@@ -68,6 +67,7 @@ set (TESTBED_SOURCE_FILES
 	tests/tumbler.cpp
 	tests/web.cpp
 	tests/wheel_joint.cpp
+	tests/wrecking_ball.cpp
 )
 
 add_executable(testbed ${TESTBED_SOURCE_FILES})

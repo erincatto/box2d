@@ -31,7 +31,6 @@
 #include "box2d/b2_prismatic_joint.h"
 #include "box2d/b2_pulley_joint.h"
 #include "box2d/b2_revolute_joint.h"
-#include "box2d/b2_rope_joint.h"
 #include "box2d/b2_weld_joint.h"
 #include "box2d/b2_wheel_joint.h"
 #include "box2d/b2_world.h"
@@ -157,13 +156,6 @@ b2Joint* b2Joint::Create(const b2JointDef* def, b2BlockAllocator* allocator)
 		}
 		break;
 
-	case e_ropeJoint:
-		{
-			void* mem = allocator->Allocate(sizeof(b2RopeJoint));
-			joint = new (mem) b2RopeJoint(static_cast<const b2RopeJointDef*>(def));
-		}
-		break;
-
 	case e_motorJoint:
 		{
 			void* mem = allocator->Allocate(sizeof(b2MotorJoint));
@@ -218,10 +210,6 @@ void b2Joint::Destroy(b2Joint* joint, b2BlockAllocator* allocator)
 
 	case e_frictionJoint:
 		allocator->Free(joint, sizeof(b2FrictionJoint));
-		break;
-
-	case e_ropeJoint:
-		allocator->Free(joint, sizeof(b2RopeJoint));
 		break;
 
 	case e_motorJoint:
