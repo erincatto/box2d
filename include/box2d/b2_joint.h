@@ -73,7 +73,6 @@ struct b2JointDef
 	b2JointDef()
 	{
 		type = e_unknownJoint;
-		userData = nullptr;
 		bodyA = nullptr;
 		bodyB = nullptr;
 		collideConnected = false;
@@ -83,7 +82,7 @@ struct b2JointDef
 	b2JointType type;
 
 	/// Use this to attach application specific data to your joints.
-	void* userData;
+	b2JointUserData userData;
 
 	/// The first attached body.
 	b2Body* bodyA;
@@ -137,10 +136,7 @@ public:
 	const b2Joint* GetNext() const;
 
 	/// Get the user data pointer.
-	void* GetUserData() const;
-
-	/// Set the user data pointer.
-	void SetUserData(void* data);
+	b2JointUserData& GetUserData();
 
 	/// Short-cut function to determine if either body is enabled.
 	bool IsEnabled() const;
@@ -190,7 +186,7 @@ protected:
 	bool m_islandFlag;
 	bool m_collideConnected;
 
-	void* m_userData;
+	b2JointUserData m_userData;
 };
 
 inline b2JointType b2Joint::GetType() const
@@ -218,14 +214,9 @@ inline const b2Joint* b2Joint::GetNext() const
 	return m_next;
 }
 
-inline void* b2Joint::GetUserData() const
+inline b2JointUserData& b2Joint::GetUserData()
 {
 	return m_userData;
-}
-
-inline void b2Joint::SetUserData(void* data)
-{
-	m_userData = data;
 }
 
 inline bool b2Joint::GetCollideConnected() const

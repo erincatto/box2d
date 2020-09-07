@@ -70,7 +70,7 @@ public:
 				int32 n = j * e_rowCount + i;
 				b2Assert(n < e_rowCount * e_columnCount);
 				m_indices[n] = n;
-				bd.userData = m_indices + n;
+				bd.userData.pointer = n;
 
 				float x = 0.0f;
 				//float x = RandomFloat(-0.02f, 0.02f);

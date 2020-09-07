@@ -33,7 +33,6 @@
 
 b2Fixture::b2Fixture()
 {
-	m_userData = nullptr;
 	m_body = nullptr;
 	m_next = nullptr;
 	m_proxies = nullptr;
