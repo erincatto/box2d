@@ -39,6 +39,7 @@
 #else
 
 #include <stdarg.h>
+#include <stdint.h>
 
 // Tunable Constants
 
