@@ -22,6 +22,12 @@
 
 #include "settings.h"
 #include "test.h"
+#include "imgui/imgui.h"
+
+enum
+{
+	e_maxBodies = 256
+};
 
 // This test demonstrates how to use the world ray-cast feature.
 // NOTE: we are intentionally filtering one of the polygons, therefore
@@ -38,17 +44,12 @@ public:
 
 	float ReportFixture(b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float fraction) override
 	{
-		b2Body* body = fixture->GetBody();
-		void* userData = body->GetUserData();
-		if (userData)
+		uintptr_t index = fixture->GetUserData().pointer;
+		if (index == 1)
 		{
-			int32 index = *(int32*)userData;
-			if (index == 0)
-			{
-				// By returning -1, we instruct the calling code to ignore this fixture and
-				// continue the ray-cast to the next fixture.
-				return -1.0f;
-			}
+			// By returning -1, we instruct the calling code to ignore this fixture and
+			// continue the ray-cast to the next fixture.
+			return -1.0f;
 		}
 
 		m_hit = true;
@@ -78,17 +79,12 @@ public:
 
 	float ReportFixture(b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float) override
 	{
-		b2Body* body = fixture->GetBody();
-		void* userData = body->GetUserData();
-		if (userData)
+		uintptr_t index = fixture->GetUserData().pointer;
+		if (index == 1)
 		{
-			int32 index = *(int32*)userData;
-			if (index == 0)
-			{
-				// By returning -1, we instruct the calling code to ignore this fixture
-				// and continue the ray-cast to the next fixture.
-				return -1.0f;
-			}
+			// By returning -1, we instruct the calling code to ignore this fixture and
+			// continue the ray-cast to the next fixture.
+			return -1.0f;
 		}
 
 		m_hit = true;
@@ -123,17 +119,12 @@ public:
 
 	float ReportFixture(b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float) override
 	{
-		b2Body* body = fixture->GetBody();
-		void* userData = body->GetUserData();
-		if (userData)
+		uintptr_t index = fixture->GetUserData().pointer;
+		if (index == 1)
 		{
-			int32 index = *(int32*)userData;
-			if (index == 0)
-			{
-				// By returning -1, we instruct the calling code to ignore this fixture
-				// and continue the ray-cast to the next fixture.
-				return -1.0f;
-			}
+			// By returning -1, we instruct the calling code to ignore this fixture and
+			// continue the ray-cast to the next fixture.
+			return -1.0f;
 		}
 
 		b2Assert(m_count < e_maxCount);
@@ -163,16 +154,11 @@ class RayCast : public Test
 {
 public:
 
-	enum
-	{
-		e_maxBodies = 256
-	};
-
 	enum Mode
 	{
-		e_closest,
-		e_any,
-		e_multiple
+		e_any = 0,
+		e_closest = 1,
+		e_multiple = 2
 	};
 
 	RayCast()
@@ -236,7 +222,7 @@ public:
 		m_bodyIndex = 0;
 		memset(m_bodies, 0, sizeof(m_bodies));
 
-		m_angle = 0.0f;
+		m_degrees = 0.0f;
 
 		m_mode = e_closest;
 	}
@@ -256,9 +242,6 @@ public:
 		bd.position.Set(x, y);
 		bd.angle = RandomFloat(-b2_pi, b2_pi);
 
-		m_userData[m_bodyIndex] = index;
-		bd.userData = m_userData + m_bodyIndex;
-
 		if (index == 4)
 		{
 			bd.angularDamping = 0.02f;
@@ -271,6 +254,7 @@ public:
 			b2FixtureDef fd;
 			fd.shape = m_polygons + index;
 			fd.friction = 0.3f;
+			fd.userData.pointer = index + 1;
 			m_bodies[m_bodyIndex]->CreateFixture(&fd);
 		}
 		else if (index < 5)
@@ -278,7 +262,7 @@ public:
 			b2FixtureDef fd;
 			fd.shape = &m_circle;
 			fd.friction = 0.3f;
-
+			fd.userData.pointer = index + 1;
 			m_bodies[m_bodyIndex]->CreateFixture(&fd);
 		}
 		else
@@ -286,6 +270,7 @@ public:
 			b2FixtureDef fd;
 			fd.shape = &m_edge;
 			fd.friction = 0.3f;
+			fd.userData.pointer = index + 1;
 
 			m_bodies[m_bodyIndex]->CreateFixture(&fd);
 		}
@@ -306,45 +291,61 @@ public:
 		}
 	}
 
-	void Keyboard(int key) override
+	void UpdateUI() override
 	{
-		switch (key)
+		ImGui::SetNextWindowPos(ImVec2(10.0f, 100.0f));
+		ImGui::SetNextWindowSize(ImVec2(210.0f, 285.0f));
+		ImGui::Begin("Ray-cast Controls", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+
+		if (ImGui::Button("Shape 1"))
 		{
-		case GLFW_KEY_1:
-		case GLFW_KEY_2:
-		case GLFW_KEY_3:
-		case GLFW_KEY_4:
-		case GLFW_KEY_5:
-		case GLFW_KEY_6:
-			Create(key - GLFW_KEY_1);
-			break;
-
-		case GLFW_KEY_D:
-			DestroyBody();
-			break;
-
-		case GLFW_KEY_M:
-			if (m_mode == e_closest)
-			{
-				m_mode = e_any;
-			}
-			else if (m_mode == e_any)
-			{
-				m_mode = e_multiple;
-			}
-			else if (m_mode == e_multiple)
-			{
-				m_mode = e_closest;
-			}
+			Create(0);
 		}
+
+		if (ImGui::Button("Shape 2"))
+		{
+			Create(1);
+		}
+
+		if (ImGui::Button("Shape 3"))
+		{
+			Create(2);
+		}
+
+		if (ImGui::Button("Shape 4"))
+		{
+			Create(3);
+		}
+
+		if (ImGui::Button("Shape 5"))
+		{
+			Create(4);
+		}
+
+		if (ImGui::Button("Shape 6"))
+		{
+			Create(5);
+		}
+
+		if (ImGui::Button("Destroy Shape"))
+		{
+			DestroyBody();
+		}
+
+		ImGui::RadioButton("Any", &m_mode, e_any);
+		ImGui::RadioButton("Closest", &m_mode, e_closest);
+		ImGui::RadioButton("Multiple", &m_mode, e_multiple);
+
+		ImGui::SliderFloat("Angle", &m_degrees, 0.0f, 360.0f, "%.0f");
+
+		ImGui::End();
 	}
 
 	void Step(Settings& settings) override
 	{
-		bool advanceRay = settings.m_pause == 0 || settings.m_singleStep;
-
 		Test::Step(settings);
-		g_debugDraw.DrawString(5, m_textLine, "Press 1-6 to drop stuff, m to change the mode");
+
+		g_debugDraw.DrawString(5, m_textLine, "Shape 1 is intentionally ignored by the ray");
 		m_textLine += m_textIncrement;
 		switch (m_mode)
 		{
@@ -363,9 +364,10 @@ public:
 
 		m_textLine += m_textIncrement;
 
+		float angle = b2_pi * m_degrees / 180.0f;
 		float L = 11.0f;
 		b2Vec2 point1(0.0f, 10.0f);
-		b2Vec2 d(L * cosf(m_angle), L * sinf(m_angle));
+		b2Vec2 d(L * cosf(angle), L * sinf(angle));
 		b2Vec2 point2 = point1 + d;
 
 		if (m_mode == e_closest)
@@ -419,11 +421,6 @@ public:
 			}
 		}
 
-		if (advanceRay)
-		{
-			m_angle += 0.25f * b2_pi / 180.0f;
-		}
-
 #if 0
 		// This case was failing.
 		{
@@ -472,14 +469,11 @@ public:
 
 	int32 m_bodyIndex;
 	b2Body* m_bodies[e_maxBodies];
-	int32 m_userData[e_maxBodies];
 	b2PolygonShape m_polygons[4];
 	b2CircleShape m_circle;
 	b2EdgeShape m_edge;
-
-	float m_angle;
-
-	Mode m_mode;
+	float m_degrees;
+	int32 m_mode;
 };
 
 static int testIndex = RegisterTest("Collision", "Ray Cast", RayCast::Create);

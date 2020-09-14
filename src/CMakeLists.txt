@@ -61,6 +61,7 @@ set(BOX2D_HEADER_FILES
 	../include/box2d/b2_chain_shape.h
 	../include/box2d/b2_circle_shape.h
 	../include/box2d/b2_collision.h
+	../include/box2d/b2_common.h
 	../include/box2d/b2_contact.h
 	../include/box2d/b2_contact_manager.h
 	../include/box2d/b2_distance.h
@@ -87,6 +88,7 @@ set(BOX2D_HEADER_FILES
 	../include/box2d/b2_time_of_impact.h
 	../include/box2d/b2_timer.h
 	../include/box2d/b2_time_step.h
+	../include/box2d/b2_types.h
 	../include/box2d/b2_weld_joint.h
 	../include/box2d/b2_wheel_joint.h
 	../include/box2d/b2_world.h

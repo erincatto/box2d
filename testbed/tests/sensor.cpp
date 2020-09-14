@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include "test.h"
+#include "imgui/imgui.h"
 
 // This shows how to use sensor shapes. Sensors don't have collision, but report overlap events.
 class Sensors : public Test
@@ -74,7 +75,7 @@ public:
 				b2BodyDef bd;
 				bd.type = b2_dynamicBody;
 				bd.position.Set(-10.0f + 3.0f * i, 20.0f);
-				bd.userData = m_touching + i;
+				bd.userData.pointer = i;
 
 				m_touching[i] = false;
 				m_bodies[i] = m_world->CreateBody(&bd);
@@ -82,6 +83,8 @@ public:
 				m_bodies[i]->CreateFixture(&shape, 1.0f);
 			}
 		}
+
+		m_force = 100.0f;
 	}
 
 	// Implement contact listener.
@@ -92,21 +95,19 @@ public:
 
 		if (fixtureA == m_sensor)
 		{
-			void* userData = fixtureB->GetBody()->GetUserData();
-			if (userData)
+			uintptr_t index = fixtureB->GetBody()->GetUserData().pointer;
+			if (index < e_count)
 			{
-				bool* touching = (bool*)userData;
-				*touching = true;
+				m_touching[index] = true;
 			}
 		}
 
 		if (fixtureB == m_sensor)
 		{
-			void* userData = fixtureA->GetBody()->GetUserData();
-			if (userData)
+			uintptr_t index = fixtureA->GetBody()->GetUserData().pointer;
+			if (index < e_count)
 			{
-				bool* touching = (bool*)userData;
-				*touching = true;
+				m_touching[index] = true;
 			}
 		}
 	}
@@ -119,23 +120,32 @@ public:
 
 		if (fixtureA == m_sensor)
 		{
-			void* userData = fixtureB->GetBody()->GetUserData();
-			if (userData)
+			uintptr_t index = fixtureB->GetBody()->GetUserData().pointer;
+			if (index < e_count)
 			{
-				bool* touching = (bool*)userData;
-				*touching = false;
+				m_touching[index] = false;
 			}
 		}
 
 		if (fixtureB == m_sensor)
 		{
-			void* userData = fixtureA->GetBody()->GetUserData();
-			if (userData)
+			uintptr_t index = fixtureA->GetBody()->GetUserData().pointer;
+			if (index < e_count)
 			{
-				bool* touching = (bool*)userData;
-				*touching = false;
+				m_touching[index] = false;
 			}
 		}
+	}
+
+	void UpdateUI() override
+	{
+		ImGui::SetNextWindowPos(ImVec2(10.0f, 100.0f));
+		ImGui::SetNextWindowSize(ImVec2(200.0f, 60.0f));
+		ImGui::Begin("Sensor Controls", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+
+		ImGui::SliderFloat("Force", &m_force, 0.0f, 2000.0f, "%.0f");
+
+		ImGui::End();
 	}
 
 	void Step(Settings& settings) override
@@ -166,7 +176,7 @@ public:
 			}
 
 			d.Normalize();
-			b2Vec2 F = 100.0f * d;
+			b2Vec2 F = m_force * d;
 			body->ApplyForce(F, position, false);
 		}
 	}
@@ -178,6 +188,7 @@ public:
 
 	b2Fixture* m_sensor;
 	b2Body* m_bodies[e_count];
+	float m_force;
 	bool m_touching[e_count];
 };
 

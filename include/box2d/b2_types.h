@@ -1,6 +1,6 @@
 // MIT License
 
-// Copyright (c) 2019 Erin Catto
+// Copyright (c) 2020 Erin Catto
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,55 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#define _CRT_SECURE_NO_WARNINGS
+#ifndef B2_TYPES_H
+#define B2_TYPES_H
 
-#include "box2d/b2_settings.h"
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdlib.h>
+typedef signed char	int8;
+typedef signed short int16;
+typedef signed int int32;
+typedef unsigned char uint8;
+typedef unsigned short uint16;
+typedef unsigned int uint32;
 
-b2Version b2_version = {2, 4, 0};
-
-// Memory allocators. Modify these to use your own allocator.
-void* b2Alloc_Default(int32 size)
-{
-	return malloc(size);
-}
-
-void b2Free_Default(void* mem)
-{
-	free(mem);
-}
-
-// You can modify this to use your logging facility.
-void b2Log_Default(const char* string, va_list args)
-{
-	vprintf(string, args);
-}
-
-FILE* b2_dumpFile = nullptr;
-
-void b2OpenDump(const char* fileName)
-{
-	b2Assert(b2_dumpFile == nullptr);
-	b2_dumpFile = fopen(fileName, "w");
-}
-
-void b2Dump(const char* string, ...)
-{
-	if (b2_dumpFile == nullptr)
-	{
-		return;
-	}
-
-	va_list args;
-	va_start(args, string);
-	vfprintf(b2_dumpFile, string, args);
-	va_end(args);
-}
-
-void b2CloseDump()
-{
-	fclose(b2_dumpFile);
-	b2_dumpFile = nullptr;
-}
+#endif

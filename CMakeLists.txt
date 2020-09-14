@@ -5,15 +5,20 @@ project(box2d VERSION 2.4.0)
 
 # set(CMAKE_CONFIGURATION_TYPES "Debug;RelWithDebInfo" CACHE STRING "" FORCE)
 
+option(BOX2D_BUILD_UNIT_TESTS "Build the Box2D unit tests" ON)
+option(BOX2D_BUILD_TESTBED "Build the Box2D testbed" ON)
+option(BOX2D_BUILD_DOCS "Build the Box2D documentation" OFF)
+option(BOX2D_USER_SETTINGS "Override Box2D settings with b2UserSettings.h" OFF)
+
 include(GNUInstallDirs)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-add_subdirectory(src)
+if (BOX2D_USER_SETTINGS)
+	add_compile_definitions(B2_USER_SETTINGS)
+endif()
 
-option(BOX2D_BUILD_UNIT_TESTS "Build the Box2D unit tests" ON)
-option(BOX2D_BUILD_TESTBED "Build the Box2D testbed" ON)
-option(BOX2D_BUILD_DOCS "Build the Box2D documentation" OFF)
+add_subdirectory(src)
 
 if (BOX2D_BUILD_DOCS)
     set(DOXYGEN_SKIP_DOT TRUE)
