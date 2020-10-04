@@ -142,12 +142,11 @@ if (NOT BUILD_SHARED_LIBS)
   )
 endif()
 
-# TODO: if you merge https://github.com/erincatto/box2d/pull/630, you have to uncomment these lines!
-# install(
-#   FILES
-#     "${CMAKE_CURRENT_BINARY_DIR}/b2_api.h"
-#   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/box2d"
-# )
+install(
+  FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/b2_api.h"
+  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/box2d"
+)
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "src" FILES ${BOX2D_SOURCE_FILES})
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/../include" PREFIX "include" FILES ${BOX2D_HEADER_FILES})
