@@ -47,13 +47,13 @@ public:
 		m_tuning1.bendHertz = 30.0f;
 		m_tuning1.bendDamping = 4.0f;
 		m_tuning1.bendStiffness = 1.0f;
-		m_tuning1.bendingModel = b2_xpbdAngleBendingModel;
+		m_tuning1.bendingModel = b2_pbdTriangleBendingModel;
 		m_tuning1.isometric = true;
 
 		m_tuning1.stretchHertz = 30.0f;
 		m_tuning1.stretchDamping = 4.0f;
 		m_tuning1.stretchStiffness = 1.0f;
-		m_tuning1.stretchingModel = b2_xpbdStretchingModel;
+		m_tuning1.stretchingModel = b2_pbdStretchingModel;
 
 		m_tuning2.bendHertz = 30.0f;
 		m_tuning2.bendDamping = 0.7f;
@@ -100,7 +100,7 @@ public:
         ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
         
 		const ImGuiComboFlags comboFlags = 0;
-		const char* bendModels[] = { "Spring", "PBD Ang", "XPBD Ang", "PBD Dist", "PBD Height" };
+		const char* bendModels[] = { "Spring", "PBD Ang", "XPBD Ang", "PBD Dist", "PBD Height", "PBD Triangle" };
 		const char* stretchModels[] = { "PBD", "XPBD" };
 
 		ImGui::Text("Rope 1");

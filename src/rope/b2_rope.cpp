@@ -306,6 +306,10 @@ void b2Rope::Step(float dt, int32 iterations, const b2Vec2& position)
 		{
 			SolveBend_PBD_Height();
 		}
+		else if (m_tuning.bendingModel == b2_pbdTriangleBendingModel)
+		{
+			SolveBend_PBD_Triangle();
+		}
 
 		if (m_tuning.stretchingModel == b2_pbdStretchingModel)
 		{
@@ -747,6 +751,42 @@ void b2Rope::SolveBend_PBD_Height()
 		m_ps[c.i1] = p1;
 		m_ps[c.i2] = p2;
 		m_ps[c.i3] = p3;
+	}
+}
+
+// M. Kelager: A Triangle Bending Constraint Model for PBD
+void b2Rope::SolveBend_PBD_Triangle()
+{
+	const float stiffness = m_tuning.bendStiffness;
+
+	for (int32 i = 0; i < m_bendCount; ++i)
+	{
+		const b2RopeBend& c = m_bendConstraints[i];
+
+		b2Vec2 b0 = m_ps[c.i1];
+		b2Vec2 v = m_ps[c.i2];
+		b2Vec2 b1 = m_ps[c.i3];
+
+		float wb0 = c.invMass1;
+		float wv = c.invMass2;
+		float wb1 = c.invMass3;
+
+		float W = wb0 + wb1 + 2.0f * wv;
+		float invW = stiffness / W;
+
+		b2Vec2 d = v - (1.0f / 3.0f) * (b0 + v + b1);
+
+		b2Vec2 db0 = 2.0f * wb0 * invW * d;
+		b2Vec2 dv = -4.0f * wv * invW * d;
+		b2Vec2 db1 = 2.0f * wb1 * invW * d;
+
+		b0 += db0;
+		v += dv;
+		b1 += db1;
+
+		m_ps[c.i1] = b0;
+		m_ps[c.i2] = v;
+		m_ps[c.i3] = b1;
 	}
 }
 
