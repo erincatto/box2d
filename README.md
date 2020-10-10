@@ -84,7 +84,7 @@ You can use the CMake install feature to deploy the library to a central locatio
 be accessed using:
 ```
 find_package(box2d REQUIRED)
-target_link_libraries(mytarget PRIVATE box2d::box2d)
+target_link_libraries(mytarget PRIVATE box2d)
 ```
 You can build and install the library and docs using this command sequence (requires Doxygen):
 ```
