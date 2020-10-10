@@ -27,6 +27,7 @@
 
 /// Gear joint definition. This definition requires two existing
 /// revolute or prismatic joints (any combination will work).
+/// @warning bodyB on the input joints must both be dynamic
 struct b2GearJointDef : public b2JointDef
 {
 	b2GearJointDef()

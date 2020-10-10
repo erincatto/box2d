@@ -64,6 +64,9 @@ b2GearJoint::b2GearJoint(const b2GearJointDef* def)
 	m_bodyC = m_joint1->GetBodyA();
 	m_bodyA = m_joint1->GetBodyB();
 
+	// Body B on joint1 must be dynamic
+	b2Assert(m_bodyA->m_type == b2_dynamicBody);
+
 	// Get geometry of joint1
 	b2Transform xfA = m_bodyA->m_xf;
 	float aA = m_bodyA->m_sweep.a;
@@ -95,6 +98,9 @@ b2GearJoint::b2GearJoint(const b2GearJointDef* def)
 
 	m_bodyD = m_joint2->GetBodyA();
 	m_bodyB = m_joint2->GetBodyB();
+
+	// Body B on joint2 must be dynamic
+	b2Assert(m_bodyB->m_type == b2_dynamicBody);
 
 	// Get geometry of joint2
 	b2Transform xfB = m_bodyB->m_xf;
