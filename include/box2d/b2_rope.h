@@ -41,7 +41,8 @@ enum b2BendingModel
 	b2_pbdAngleBendingModel,
 	b2_xpbdAngleBendingModel,
 	b2_pbdDistanceBendingModel,
-	b2_pbdHeightBendingModel
+	b2_pbdHeightBendingModel,
+	b2_pbdTriangleBendingModel
 };
 
 ///
@@ -125,6 +126,7 @@ private:
 	void SolveBend_XPBD_Angle(float dt);
 	void SolveBend_PBD_Distance();
 	void SolveBend_PBD_Height();
+	void SolveBend_PBD_Triangle();
 	void ApplyBendForces(float dt);
 
 	b2Vec2 m_position;
