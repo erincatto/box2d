@@ -57,6 +57,7 @@ set(BOX2D_SOURCE_FILES
 	rope/b2_rope.cpp)
 
 set(BOX2D_HEADER_FILES
+	../include/box2d/b2_api.h
 	../include/box2d/b2_block_allocator.h
 	../include/box2d/b2_body.h
 	../include/box2d/b2_broad_phase.h
@@ -128,25 +129,12 @@ if(MSVC)
   )
 endif()
 
-generate_export_header(box2d
-  BASE_NAME b2
-  EXPORT_MACRO_NAME B2_API
-  EXPORT_FILE_NAME b2_api.h
-  STATIC_DEFINE B2_STATIC
-)
-
-if (NOT BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
   target_compile_definitions(box2d
-    PUBLIC
-      B2_STATIC
+    PRIVATE
+      B2_SHARED
   )
 endif()
-
-install(
-  FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/b2_api.h"
-  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/box2d"
-)
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "src" FILES ${BOX2D_SOURCE_FILES})
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/../include" PREFIX "include" FILES ${BOX2D_HEADER_FILES})
