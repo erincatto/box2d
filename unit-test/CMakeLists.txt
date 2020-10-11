@@ -2,6 +2,7 @@ add_executable(unit_test
     doctest.h
     hello_world.cpp
     collision_test.cpp
+    joint_test.cpp
     math_test.cpp
     world_test.cpp
 )
@@ -17,4 +18,4 @@ target_link_libraries(unit_test PUBLIC box2d)
 set_target_properties(unit_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES doctest.h
-    hello_world.cpp collision_test.cpp math_test.cpp world_test.cpp )
+    hello_world.cpp collision_test.cpp joint_test.cpp math_test.cpp world_test.cpp )

@@ -21,8 +21,8 @@
 // SOFTWARE.
 
 #include "box2d/box2d.h"
-#include <stdio.h>
 #include "doctest.h"
+#include <stdio.h>
 
 static bool begin_contact = false;
 
@@ -37,7 +37,7 @@ public:
 
 DOCTEST_TEST_CASE("begin contact")
 {
-	b2World world = b2World(b2Vec2());
+	b2World world = b2World(b2Vec2(0.0f, -10.0f));
 	MyContactListener listener;
 	world.SetContactListener(&listener);
 

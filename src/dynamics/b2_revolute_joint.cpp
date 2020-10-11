@@ -338,7 +338,7 @@ b2Vec2 b2RevoluteJoint::GetReactionForce(float inv_dt) const
 
 float b2RevoluteJoint::GetReactionTorque(float inv_dt) const
 {
-	return inv_dt * (m_lowerImpulse + m_upperImpulse);
+	return inv_dt * (m_motorImpulse + m_lowerImpulse - m_upperImpulse);
 }
 
 float b2RevoluteJoint::GetJointAngle() const

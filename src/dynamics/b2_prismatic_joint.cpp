@@ -462,7 +462,7 @@ b2Vec2 b2PrismaticJoint::GetAnchorB() const
 
 b2Vec2 b2PrismaticJoint::GetReactionForce(float inv_dt) const
 {
-	return inv_dt * (m_impulse.x * m_perp + (m_motorImpulse + m_lowerImpulse + m_upperImpulse) * m_axis);
+	return inv_dt * (m_impulse.x * m_perp + (m_motorImpulse + m_lowerImpulse - m_upperImpulse) * m_axis);
 }
 
 float b2PrismaticJoint::GetReactionTorque(float inv_dt) const

@@ -21,9 +21,8 @@
 // SOFTWARE.
 
 #include "box2d/box2d.h"
-#include <stdio.h>
-
 #include "doctest.h"
+#include <stdio.h>
 
 // Unit tests for collision algorithms
 DOCTEST_TEST_CASE("collision test")
