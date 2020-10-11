@@ -50,6 +50,12 @@ inline float b2MixRestitution(float restitution1, float restitution2)
 	return restitution1 > restitution2 ? restitution1 : restitution2;
 }
 
+/// Restitution mixing law. This picks the lowest value.
+inline float b2MixRestitutionThreshold(float threshold1, float threshold2)
+{
+	return threshold1 < threshold2 ? threshold1 : threshold2;
+}
+
 typedef b2Contact* b2ContactCreateFcn(	b2Fixture* fixtureA, int32 indexA,
 										b2Fixture* fixtureB, int32 indexB,
 										b2BlockAllocator* allocator);
@@ -139,6 +145,16 @@ public:
 	/// Reset the restitution to the default value.
 	void ResetRestitution();
 
+	/// Override the default restitution velocity threshold mixture. You can call this in b2ContactListener::PreSolve.
+	/// The value persists until you set or reset.
+	void SetRestitutionThreshold(float threshold);
+
+	/// Get the restitution threshold.
+	float GetRestitutionThreshold() const;
+
+	/// Reset the restitution threshold to the default value.
+	void ResetRestitutionThreshold();
+
 	/// Set the desired tangent speed for a conveyor belt behavior. In meters per second.
 	void SetTangentSpeed(float speed);
 
@@ -219,6 +235,7 @@ protected:
 
 	float m_friction;
 	float m_restitution;
+	float m_restitutionThreshold;
 
 	float m_tangentSpeed;
 };
@@ -338,6 +355,21 @@ inline float b2Contact::GetRestitution() const
 inline void b2Contact::ResetRestitution()
 {
 	m_restitution = b2MixRestitution(m_fixtureA->m_restitution, m_fixtureB->m_restitution);
+}
+
+inline void b2Contact::SetRestitutionThreshold(float threshold)
+{
+	m_restitutionThreshold = threshold;
+}
+
+inline float b2Contact::GetRestitutionThreshold() const
+{
+	return m_restitutionThreshold;
+}
+
+inline void b2Contact::ResetRestitutionThreshold()
+{
+	m_restitutionThreshold = b2MixRestitutionThreshold(m_fixtureA->m_restitutionThreshold, m_fixtureB->m_restitutionThreshold);
 }
 
 inline void b2Contact::SetTangentSpeed(float speed)

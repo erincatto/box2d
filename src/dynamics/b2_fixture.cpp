@@ -46,6 +46,7 @@ void b2Fixture::Create(b2BlockAllocator* allocator, b2Body* body, const b2Fixtur
 	m_userData = def->userData;
 	m_friction = def->friction;
 	m_restitution = def->restitution;
+	m_restitutionThreshold = def->restitutionThreshold;
 
 	m_body = body;
 	m_next = nullptr;
@@ -234,6 +235,7 @@ void b2Fixture::Dump(int32 bodyIndex)
 	b2Dump("    b2FixtureDef fd;\n");
 	b2Dump("    fd.friction = %.9g;\n", m_friction);
 	b2Dump("    fd.restitution = %.9g;\n", m_restitution);
+	b2Dump("    fd.restitutionThreshold = %.9g;\n", m_restitutionThreshold);
 	b2Dump("    fd.density = %.9g;\n", m_density);
 	b2Dump("    fd.isSensor = bool(%d);\n", m_isSensor);
 	b2Dump("    fd.filter.categoryBits = uint16(%d);\n", m_filter.categoryBits);

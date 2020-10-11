@@ -30,13 +30,19 @@ public:
 
 	Restitution()
 	{
+		const float threshold = 10.0f;
+
 		{
 			b2BodyDef bd;
 			b2Body* ground = m_world->CreateBody(&bd);
 
 			b2EdgeShape shape;
 			shape.SetTwoSided(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
-			ground->CreateFixture(&shape, 0.0f);
+			
+			b2FixtureDef fd;
+			fd.shape = &shape;
+			fd.restitutionThreshold = threshold;
+			ground->CreateFixture(&fd);
 		}
 
 		{
@@ -58,6 +64,7 @@ public:
 				b2Body* body = m_world->CreateBody(&bd);
 
 				fd.restitution = restitution[i];
+				fd.restitutionThreshold = threshold;
 				body->CreateFixture(&fd);
 			}
 		}
