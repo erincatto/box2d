@@ -55,6 +55,7 @@ struct b2ContactVelocityConstraint
 	float invIA, invIB;
 	float friction;
 	float restitution;
+	float threshold;
 	float tangentSpeed;
 	int32 pointCount;
 	int32 contactIndex;

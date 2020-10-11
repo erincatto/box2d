@@ -65,6 +65,7 @@ struct b2FixtureDef
 		shape = nullptr;
 		friction = 0.2f;
 		restitution = 0.0f;
+		restitutionThreshold = 1.0f * b2_lengthUnitsPerMeter;
 		density = 0.0f;
 		isSensor = false;
 	}
@@ -81,6 +82,10 @@ struct b2FixtureDef
 
 	/// The restitution (elasticity) usually in the range [0,1].
 	float restitution;
+
+	/// Restitution velocity threshold, usually in m/s. Collisions above this
+	/// speed have restitution applied (will bounce).
+	float restitutionThreshold;
 
 	/// The density, usually in kg/m^2.
 	float density;
@@ -188,6 +193,13 @@ public:
 	/// existing contacts.
 	void SetRestitution(float restitution);
 
+	/// Get the restitution velocity threshold.
+	float GetRestitutionThreshold() const;
+
+	/// Set the restitution threshold. This will _not_ change the restitution threshold of
+	/// existing contacts.
+	void SetRestitutionThreshold(float threshold);
+
 	/// Get the fixture's AABB. This AABB may be enlarge and/or stale.
 	/// If you need a more accurate AABB, compute it using the shape and
 	/// the body transform.
@@ -225,6 +237,7 @@ protected:
 
 	float m_friction;
 	float m_restitution;
+	float m_restitutionThreshold;
 
 	b2FixtureProxy* m_proxies;
 	int32 m_proxyCount;
@@ -315,6 +328,16 @@ inline float b2Fixture::GetRestitution() const
 inline void b2Fixture::SetRestitution(float restitution)
 {
 	m_restitution = restitution;
+}
+
+inline float b2Fixture::GetRestitutionThreshold() const
+{
+	return m_restitutionThreshold;
+}
+
+inline void b2Fixture::SetRestitutionThreshold(float threshold)
+{
+	m_restitutionThreshold = threshold;
 }
 
 inline bool b2Fixture::TestPoint(const b2Vec2& p) const
