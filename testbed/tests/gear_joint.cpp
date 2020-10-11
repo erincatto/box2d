@@ -66,7 +66,7 @@ public:
 			body3->CreateFixture(&circle2, 5.0f);
 
 			b2RevoluteJointDef jd1;
-			jd1.Initialize(body2, body1, bd1.position);
+			jd1.Initialize(body1, body2, bd1.position);
 			b2Joint* joint1 = m_world->CreateJoint(&jd1);
 
 			b2RevoluteJointDef jd2;
