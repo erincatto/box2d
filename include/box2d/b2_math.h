@@ -681,10 +681,11 @@ inline bool b2IsPowerOfTwo(uint32 x)
 	return result;
 }
 
+// https://fgiesen.wordpress.com/2012/08/15/linear-interpolation-past-present-and-future/
 inline void b2Sweep::GetTransform(b2Transform* xf, float beta) const
 {
-	xf->p = c0 + beta * (c - c0);
-	float angle = a0 + beta * (a - a0);
+	xf->p = (1.0f - beta) * c0 + beta * c;
+	float angle = (1.0f - beta) * a0 + beta * a;
 	xf->q.Set(angle);
 
 	// Shift to origin
