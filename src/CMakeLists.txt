@@ -1,5 +1,3 @@
-include(GenerateExportHeader)
-
 set(BOX2D_SOURCE_FILES
 	collision/b2_broad_phase.cpp
 	collision/b2_chain_shape.cpp
@@ -102,7 +100,6 @@ add_library(box2d ${BOX2D_SOURCE_FILES} ${BOX2D_HEADER_FILES})
 target_include_directories(box2d
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
