@@ -131,7 +131,7 @@ endif()
 
 if (BUILD_SHARED_LIBS)
   target_compile_definitions(box2d
-    PRIVATE
+    PUBLIC
       B2_SHARED
   )
 endif()
