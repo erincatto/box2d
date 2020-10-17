@@ -166,6 +166,11 @@ the magnitude of the angle becomes too large (use b2Body::SetAngle).
 > **Caution**:
 > Box2D uses radians, not degrees.
 
+## Changing the length units
+Advanced users may change the length unit modifying `b2_lengthUnitsPerMeter`.
+You can avoid merge conflicts by defining `B2_USER_SETTINGS` and providing
+`b2_user_settings.h`. See the file `b2_settings.h` for details.
+
 ## Factories and Definitions
 Fast memory management plays a central role in the design of the Box2D
 API. So when you create a b2Body or a b2Joint, you need to call the

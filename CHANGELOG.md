@@ -1,3 +1,21 @@
+# Changes for version 2.4.1
+
+## API Changes
+- Extended distance joint to have a minimum and maximum limit.
+- Removed rope joint. Use the distance joint instead.
+- B2_USER_SETTINGS and b2_user_settings.h can control user data, length units, and maximum polygon vertices.
+- Default user data is now uintptr_t instead of void*
+- b2FixtureDef::restitutionThreshold lets you set the restitution velocity threshold per fixture.
+
+## BREAKING Changes
+- BREAKING: distance joint 0 stiffness now means the spring is turned off rather than making the joint rigid.
+- BREAKING: distance joint minimum and maximum must be set correctly to get old behavior.
+
+## Infrastructure
+- Library installation function available in CMake.
+- Shared library (DLL) option available.
+- Bug fixes
+
 # Changes for version 2.4.0
 
 ## Infrastructure

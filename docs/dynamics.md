@@ -248,7 +248,7 @@ object type for all body user data.
 
 ```cpp
 b2BodyDef bodyDef;
-bodyDef.userData = &myActor;
+bodyDef.userData.pointer = reinterpret_cast<uintptr_t>(&myActor);
 ```
 
 ### Body Factory
@@ -779,6 +779,9 @@ float dampingRatio = 0.5f;
 b2LinearStiffness(jointDef.stiffness, jointDef.damping, frequencyHz, dampingRatio, jointDef.bodyA, jointDef.bodyB);
 ```
 
+It is also possible to define a minimum and maximum length for the distance joint.
+See `b2DistanceJointDef` for details.
+
 ### Revolute Joint
 A revolute joint forces two bodies to share a common anchor point, often
 called a hinge point. The revolute joint has a single degree of freedom:
@@ -1183,7 +1186,7 @@ bodies.
 ```cpp
 b2Fixture* fixtureA = myContact->GetFixtureA();
 b2Body* bodyA = fixtureA->GetBody();
-MyActor* actorA = (MyActor*)bodyA->GetUserData();
+MyActor* actorA = (MyActor*)bodyA->GetUserData().pointer;
 ```
 
 You can disable a contact. This only works inside the
@@ -1520,7 +1523,7 @@ following code is broken:
 ```cpp
 for (b2Body* b = myWorld->GetBodyList(); b; b = b->GetNext())
 {
-    GameActor* myActor = (GameActor*)b->GetUserData();
+    GameActor* myActor = (GameActor*)b->GetUserData().pointer;
     if (myActor->IsDead())
     {
         myWorld->DestroyBody(b); // ERROR: now GetNext returns garbage.
@@ -1540,7 +1543,7 @@ while (node)
     b2Body* b = node;
     node = node->GetNext();
     
-    GameActor* myActor = (GameActor*)b->GetUserData();
+    GameActor* myActor = (GameActor*)b->GetUserData().pointer;
     if (myActor->IsDead())
     {
         myWorld->DestroyBody(b);
@@ -1560,7 +1563,7 @@ while (node)
     b2Body* b = node;
     node = node->GetNext();
 
-    GameActor* myActor = (GameActor*)b->GetUserData();
+    GameActor* myActor = (GameActor*)b->GetUserData().pointer;
     if (myActor->IsDead())
     {
         bool otherBodiesDestroyed = GameCrazyBodyDestroyer(b);
