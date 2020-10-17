@@ -161,7 +161,7 @@ need to store a physics offset when translating between game units and Box2D uni
 
 Box2D uses radians for angles. The body rotation is stored in radians
 and may grow unbounded. Consider normalizing the angle of your bodies if
-the magnitude of the angle becomes too large (use b2Body::SetAngle).
+the magnitude of the angle becomes too large (use `b2Body::SetTransform`).
 
 > **Caution**:
 > Box2D uses radians, not degrees.
