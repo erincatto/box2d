@@ -55,6 +55,7 @@ set(BOX2D_SOURCE_FILES
 	rope/b2_rope.cpp)
 
 set(BOX2D_HEADER_FILES
+	../include/box2d/b2_api.h
 	../include/box2d/b2_block_allocator.h
 	../include/box2d/b2_body.h
 	../include/box2d/b2_broad_phase.h
@@ -95,7 +96,7 @@ set(BOX2D_HEADER_FILES
 	../include/box2d/b2_world_callbacks.h
 	../include/box2d/box2d.h)
 
-add_library(box2d STATIC ${BOX2D_SOURCE_FILES} ${BOX2D_HEADER_FILES})
+add_library(box2d ${BOX2D_SOURCE_FILES} ${BOX2D_HEADER_FILES})
 target_include_directories(box2d
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
@@ -103,10 +104,13 @@ target_include_directories(box2d
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
 set_target_properties(box2d PROPERTIES
 	CXX_STANDARD 11
     CXX_STANDARD_REQUIRED YES
     CXX_EXTENSIONS NO
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
 if(MSVC)
@@ -119,6 +123,13 @@ if(MSVC)
     FILES "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/box2d.pdb"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
     OPTIONAL
+  )
+endif()
+
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(box2d
+    PUBLIC
+      B2_SHARED
   )
 endif()
 

@@ -23,10 +23,11 @@
 #ifndef B2_DRAW_H
 #define B2_DRAW_H
 
+#include "b2_api.h"
 #include "b2_math.h"
 
 /// Color for debug drawing. Each value has the range [0,1].
-struct b2Color
+struct B2_API b2Color
 {
 	b2Color() {}
 	b2Color(float rIn, float gIn, float bIn, float aIn = 1.0f)
@@ -44,7 +45,7 @@ struct b2Color
 
 /// Implement and register this class with a b2World to provide debug drawing of physics
 /// entities in your game.
-class b2Draw
+class B2_API b2Draw
 {
 public:
 	b2Draw();
@@ -65,7 +66,7 @@ public:
 
 	/// Get the drawing flags.
 	uint32 GetFlags() const;
-	
+
 	/// Append flags to the current flags.
 	void AppendFlags(uint32 flags);
 
@@ -80,10 +81,10 @@ public:
 
 	/// Draw a circle.
 	virtual void DrawCircle(const b2Vec2& center, float radius, const b2Color& color) = 0;
-	
+
 	/// Draw a solid circle.
 	virtual void DrawSolidCircle(const b2Vec2& center, float radius, const b2Vec2& axis, const b2Color& color) = 0;
-	
+
 	/// Draw a line segment.
 	virtual void DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b2Color& color) = 0;
 

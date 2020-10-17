@@ -23,8 +23,10 @@
 #ifndef B2_COLLISION_H
 #define B2_COLLISION_H
 
-#include "b2_math.h"
 #include <limits.h>
+
+#include "b2_api.h"
+#include "b2_math.h"
 
 /// @file
 /// Structures and functions used for computing contact points, distance
@@ -39,7 +41,7 @@ const uint8 b2_nullFeature = UCHAR_MAX;
 
 /// The features that intersect to form the contact point
 /// This must be 4 bytes or less.
-struct b2ContactFeature
+struct B2_API b2ContactFeature
 {
 	enum Type
 	{
@@ -54,7 +56,7 @@ struct b2ContactFeature
 };
 
 /// Contact ids to facilitate warm starting.
-union b2ContactID
+union B2_API b2ContactID
 {
 	b2ContactFeature cf;
 	uint32 key;					///< Used to quickly compare contact ids.
@@ -70,7 +72,7 @@ union b2ContactID
 /// This structure is stored across time steps, so we keep it small.
 /// Note: the impulses are used for internal caching and may not
 /// provide reliable contact forces, especially for high speed collisions.
-struct b2ManifoldPoint
+struct B2_API b2ManifoldPoint
 {
 	b2Vec2 localPoint;		///< usage depends on manifold type
 	float normalImpulse;	///< the non-penetration impulse
@@ -94,7 +96,7 @@ struct b2ManifoldPoint
 /// account for movement, which is critical for continuous physics.
 /// All contact scenarios must be expressed in one of these types.
 /// This structure is stored across time steps, so we keep it small.
-struct b2Manifold
+struct B2_API b2Manifold
 {
 	enum Type
 	{
@@ -111,7 +113,7 @@ struct b2Manifold
 };
 
 /// This is used to compute the current state of a contact manifold.
-struct b2WorldManifold
+struct B2_API b2WorldManifold
 {
 	/// Evaluate the manifold with supplied transforms. This assumes
 	/// modest motion from the original state. This does not change the
@@ -137,18 +139,18 @@ enum b2PointState
 
 /// Compute the point states given two manifolds. The states pertain to the transition from manifold1
 /// to manifold2. So state1 is either persist or remove while state2 is either add or persist.
-void b2GetPointStates(b2PointState state1[b2_maxManifoldPoints], b2PointState state2[b2_maxManifoldPoints],
+B2_API void b2GetPointStates(b2PointState state1[b2_maxManifoldPoints], b2PointState state2[b2_maxManifoldPoints],
 					  const b2Manifold* manifold1, const b2Manifold* manifold2);
 
 /// Used for computing contact manifolds.
-struct b2ClipVertex
+struct B2_API b2ClipVertex
 {
 	b2Vec2 v;
 	b2ContactID id;
 };
 
 /// Ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
-struct b2RayCastInput
+struct B2_API b2RayCastInput
 {
 	b2Vec2 p1, p2;
 	float maxFraction;
@@ -156,14 +158,14 @@ struct b2RayCastInput
 
 /// Ray-cast output data. The ray hits at p1 + fraction * (p2 - p1), where p1 and p2
 /// come from b2RayCastInput.
-struct b2RayCastOutput
+struct B2_API b2RayCastOutput
 {
 	b2Vec2 normal;
 	float fraction;
 };
 
 /// An axis aligned bounding box.
-struct b2AABB
+struct B2_API b2AABB
 {
 	/// Verify that the bounds are sorted.
 	bool IsValid() const;
@@ -220,36 +222,36 @@ struct b2AABB
 };
 
 /// Compute the collision manifold between two circles.
-void b2CollideCircles(b2Manifold* manifold,
+B2_API void b2CollideCircles(b2Manifold* manifold,
 					  const b2CircleShape* circleA, const b2Transform& xfA,
 					  const b2CircleShape* circleB, const b2Transform& xfB);
 
 /// Compute the collision manifold between a polygon and a circle.
-void b2CollidePolygonAndCircle(b2Manifold* manifold,
+B2_API void b2CollidePolygonAndCircle(b2Manifold* manifold,
 							   const b2PolygonShape* polygonA, const b2Transform& xfA,
 							   const b2CircleShape* circleB, const b2Transform& xfB);
 
 /// Compute the collision manifold between two polygons.
-void b2CollidePolygons(b2Manifold* manifold,
+B2_API void b2CollidePolygons(b2Manifold* manifold,
 					   const b2PolygonShape* polygonA, const b2Transform& xfA,
 					   const b2PolygonShape* polygonB, const b2Transform& xfB);
 
 /// Compute the collision manifold between an edge and a circle.
-void b2CollideEdgeAndCircle(b2Manifold* manifold,
+B2_API void b2CollideEdgeAndCircle(b2Manifold* manifold,
 							   const b2EdgeShape* polygonA, const b2Transform& xfA,
 							   const b2CircleShape* circleB, const b2Transform& xfB);
 
 /// Compute the collision manifold between an edge and a polygon.
-void b2CollideEdgeAndPolygon(b2Manifold* manifold,
+B2_API void b2CollideEdgeAndPolygon(b2Manifold* manifold,
 							   const b2EdgeShape* edgeA, const b2Transform& xfA,
 							   const b2PolygonShape* circleB, const b2Transform& xfB);
 
 /// Clipping for contact manifolds.
-int32 b2ClipSegmentToLine(b2ClipVertex vOut[2], const b2ClipVertex vIn[2],
+B2_API int32 b2ClipSegmentToLine(b2ClipVertex vOut[2], const b2ClipVertex vIn[2],
 							const b2Vec2& normal, float offset, int32 vertexIndexA);
 
 /// Determine if two generic shapes overlap.
-bool b2TestOverlap(	const b2Shape* shapeA, int32 indexA,
+B2_API bool b2TestOverlap(	const b2Shape* shapeA, int32 indexA,
 					const b2Shape* shapeB, int32 indexB,
 					const b2Transform& xfA, const b2Transform& xfB);
 

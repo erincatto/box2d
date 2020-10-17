@@ -23,10 +23,11 @@
 #ifndef B2_MOTOR_JOINT_H
 #define B2_MOTOR_JOINT_H
 
+#include "b2_api.h"
 #include "b2_joint.h"
 
 /// Motor joint definition.
-struct b2MotorJointDef : public b2JointDef
+struct B2_API b2MotorJointDef : public b2JointDef
 {
 	b2MotorJointDef()
 	{
@@ -46,7 +47,7 @@ struct b2MotorJointDef : public b2JointDef
 
 	/// The bodyB angle minus bodyA angle in radians.
 	float angularOffset;
-	
+
 	/// The maximum motor force in N.
 	float maxForce;
 
@@ -60,7 +61,7 @@ struct b2MotorJointDef : public b2JointDef
 /// A motor joint is used to control the relative motion
 /// between two bodies. A typical usage is to control the movement
 /// of a dynamic body with respect to the ground.
-class b2MotorJoint : public b2Joint
+class B2_API b2MotorJoint : public b2Joint
 {
 public:
 	b2Vec2 GetAnchorA() const override;

@@ -23,8 +23,10 @@
 #ifndef B2_MATH_H
 #define B2_MATH_H
 
-#include "b2_settings.h"
 #include <math.h>
+
+#include "b2_api.h"
+#include "b2_settings.h"
 
 /// This function is used to ensure that a floating point number is not a NaN or infinity.
 inline bool b2IsValid(float x)
@@ -36,7 +38,7 @@ inline bool b2IsValid(float x)
 #define	b2Atan2(y, x)	atan2f(y, x)
 
 /// A 2D column vector.
-struct b2Vec2
+struct B2_API b2Vec2
 {
 	/// Default constructor does nothing (for performance).
 	b2Vec2() {}
@@ -52,7 +54,7 @@ struct b2Vec2
 
 	/// Negate this vector.
 	b2Vec2 operator -() const { b2Vec2 v; v.Set(-x, -y); return v; }
-	
+
 	/// Read from and indexed element.
 	float operator () (int32 i) const
 	{
@@ -70,7 +72,7 @@ struct b2Vec2
 	{
 		x += v.x; y += v.y;
 	}
-	
+
 	/// Subtract a vector from this vector.
 	void operator -= (const b2Vec2& v)
 	{
@@ -127,7 +129,7 @@ struct b2Vec2
 };
 
 /// A 2D column vector with 3 elements.
-struct b2Vec3
+struct B2_API b2Vec3
 {
 	/// Default constructor does nothing (for performance).
 	b2Vec3() {}
@@ -166,7 +168,7 @@ struct b2Vec3
 };
 
 /// A 2-by-2 matrix. Stored in column-major order.
-struct b2Mat22
+struct B2_API b2Mat22
 {
 	/// The default constructor does nothing (for performance).
 	b2Mat22() {}
@@ -240,7 +242,7 @@ struct b2Mat22
 };
 
 /// A 3-by-3 matrix. Stored in column-major order.
-struct b2Mat33
+struct B2_API b2Mat33
 {
 	/// The default constructor does nothing (for performance).
 	b2Mat33() {}
@@ -282,7 +284,7 @@ struct b2Mat33
 };
 
 /// Rotation
-struct b2Rot
+struct B2_API b2Rot
 {
 	b2Rot() {}
 
@@ -333,7 +335,7 @@ struct b2Rot
 
 /// A transform contains translation and rotation. It is used to represent
 /// the position and orientation of rigid frames.
-struct b2Transform
+struct B2_API b2Transform
 {
 	/// The default constructor does nothing.
 	b2Transform() {}
@@ -363,7 +365,7 @@ struct b2Transform
 /// Shapes are defined with respect to the body origin, which may
 /// no coincide with the center of mass. However, to support dynamics
 /// we must interpolate the center of mass position.
-struct b2Sweep
+struct B2_API b2Sweep
 {
 	/// Get the interpolated transform at a specific time.
 	/// @param transform the output transform
@@ -387,7 +389,7 @@ struct b2Sweep
 };
 
 /// Useful constant
-extern const b2Vec2 b2Vec2_zero;
+extern B2_API const b2Vec2 b2Vec2_zero;
 
 /// Perform the dot product on two vectors.
 inline float b2Dot(const b2Vec2& a, const b2Vec2& b)

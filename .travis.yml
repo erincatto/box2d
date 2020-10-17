@@ -16,17 +16,17 @@ addons:
       - libxinerama-dev
       - libxcursor-dev
       - libxi-dev
-      
+
 jobs:
   include:
     - os: linux
       env:
     - os: osx
       env:
-          
+
 script:
     - mkdir build
     - cd build
     - cmake ..
     - cmake --build .
-    - ./unit_test
+    - ./bin/unit_test

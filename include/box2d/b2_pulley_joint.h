@@ -23,13 +23,14 @@
 #ifndef B2_PULLEY_JOINT_H
 #define B2_PULLEY_JOINT_H
 
+#include "b2_api.h"
 #include "b2_joint.h"
 
 const float b2_minPulleyLength = 2.0f;
 
 /// Pulley joint definition. This requires two ground anchors,
 /// two dynamic body anchor points, and a pulley ratio.
-struct b2PulleyJointDef : public b2JointDef
+struct B2_API b2PulleyJointDef : public b2JointDef
 {
 	b2PulleyJointDef()
 	{
@@ -80,7 +81,7 @@ struct b2PulleyJointDef : public b2JointDef
 /// work better when combined with prismatic joints. You should also cover the
 /// the anchor points with static shapes to prevent one side from going to
 /// zero length.
-class b2PulleyJoint : public b2Joint
+class B2_API b2PulleyJoint : public b2Joint
 {
 public:
 	b2Vec2 GetAnchorA() const override;
@@ -129,7 +130,7 @@ protected:
 	b2Vec2 m_groundAnchorB;
 	float m_lengthA;
 	float m_lengthB;
-	
+
 	// Solver shared
 	b2Vec2 m_localAnchorA;
 	b2Vec2 m_localAnchorB;

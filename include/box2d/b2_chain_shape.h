@@ -23,6 +23,7 @@
 #ifndef B2_CHAIN_SHAPE_H
 #define B2_CHAIN_SHAPE_H
 
+#include "b2_api.h"
 #include "b2_shape.h"
 
 class b2EdgeShape;
@@ -32,7 +33,7 @@ class b2EdgeShape;
 /// This provides a counter-clockwise winding like the polygon shape.
 /// Connectivity information is used to create smooth collisions.
 /// @warning the chain will not collide properly if there are self-intersections.
-class b2ChainShape : public b2Shape
+class B2_API b2ChainShape : public b2Shape
 {
 public:
 	b2ChainShape();

@@ -23,6 +23,7 @@
 #ifndef B2_FIXTURE_H
 #define B2_FIXTURE_H
 
+#include "b2_api.h"
 #include "b2_body.h"
 #include "b2_collision.h"
 #include "b2_shape.h"
@@ -33,7 +34,7 @@ class b2BroadPhase;
 class b2Fixture;
 
 /// This holds contact filtering data.
-struct b2Filter
+struct B2_API b2Filter
 {
 	b2Filter()
 	{
@@ -57,7 +58,7 @@ struct b2Filter
 
 /// A fixture definition is used to create a fixture. This class defines an
 /// abstract fixture definition. You can reuse fixture definitions safely.
-struct b2FixtureDef
+struct B2_API b2FixtureDef
 {
 	/// The constructor sets the default fixture definition values.
 	b2FixtureDef()
@@ -99,7 +100,7 @@ struct b2FixtureDef
 };
 
 /// This proxy is used internally to connect fixtures to the broad-phase.
-struct b2FixtureProxy
+struct B2_API b2FixtureProxy
 {
 	b2AABB aabb;
 	b2Fixture* fixture;
@@ -112,7 +113,7 @@ struct b2FixtureProxy
 /// such as friction, collision filters, etc.
 /// Fixtures are created via b2Body::CreateFixture.
 /// @warning you cannot reuse fixtures.
-class b2Fixture
+class B2_API b2Fixture
 {
 public:
 	/// Get the type of the child shape. You can use this to down cast to the concrete shape.

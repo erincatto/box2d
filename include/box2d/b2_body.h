@@ -23,6 +23,7 @@
 #ifndef B2_BODY_H
 #define B2_BODY_H
 
+#include "b2_api.h"
 #include "b2_math.h"
 #include "b2_shape.h"
 
@@ -48,7 +49,7 @@ enum b2BodyType
 
 /// A body definition holds all the data needed to construct a rigid body.
 /// You can safely re-use body definitions. Shapes are added to a body after construction.
-struct b2BodyDef
+struct B2_API b2BodyDef
 {
 	/// This constructor sets the body definition default values.
 	b2BodyDef()
@@ -124,7 +125,7 @@ struct b2BodyDef
 };
 
 /// A rigid body. These are created via b2World::CreateBody.
-class b2Body
+class B2_API b2Body
 {
 public:
 	/// Creates a fixture and attach it to this body. Use this function if you need
@@ -394,7 +395,7 @@ private:
 	friend class b2ContactManager;
 	friend class b2ContactSolver;
 	friend class b2Contact;
-	
+
 	friend class b2DistanceJoint;
 	friend class b2FrictionJoint;
 	friend class b2GearJoint;

@@ -23,12 +23,13 @@
 #ifndef B2_EDGE_SHAPE_H
 #define B2_EDGE_SHAPE_H
 
+#include "b2_api.h"
 #include "b2_shape.h"
 
 /// A line segment (edge) shape. These can be connected in chains or loops
 /// to other edge shapes. Edges created independently are two-sided and do
-/// no provide smooth movement across junctions. 
-class b2EdgeShape : public b2Shape
+/// no provide smooth movement across junctions.
+class B2_API b2EdgeShape : public b2Shape
 {
 public:
 	b2EdgeShape();
@@ -60,7 +61,7 @@ public:
 
 	/// @see b2Shape::ComputeMass
 	void ComputeMass(b2MassData* massData, float density) const override;
-	
+
 	/// These are the edge vertices
 	b2Vec2 m_vertex1, m_vertex2;
 

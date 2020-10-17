@@ -23,6 +23,7 @@
 #ifndef B2_REVOLUTE_JOINT_H
 #define B2_REVOLUTE_JOINT_H
 
+#include "b2_api.h"
 #include "b2_joint.h"
 
 /// Revolute joint definition. This requires defining an anchor point where the
@@ -35,7 +36,7 @@
 /// 1. you might not know where the center of mass will be.
 /// 2. if you add/remove shapes from a body and recompute the mass,
 ///    the joints will be broken.
-struct b2RevoluteJointDef : public b2JointDef
+struct B2_API b2RevoluteJointDef : public b2JointDef
 {
 	b2RevoluteJointDef()
 	{
@@ -90,7 +91,7 @@ struct b2RevoluteJointDef : public b2JointDef
 /// a joint limit that specifies a lower and upper angle. You can use a motor
 /// to drive the relative rotation about the shared point. A maximum motor torque
 /// is provided so that infinite forces are not generated.
-class b2RevoluteJoint : public b2Joint
+class B2_API b2RevoluteJoint : public b2Joint
 {
 public:
 	b2Vec2 GetAnchorA() const override;
@@ -161,7 +162,7 @@ public:
 	void Draw(b2Draw* draw) const override;
 
 protected:
-	
+
 	friend class b2Joint;
 	friend class b2GearJoint;
 
