@@ -158,6 +158,9 @@ public:
 	/// store your application specific data.
 	b2FixtureUserData& GetUserData();
 
+	/// Set the user data. Use this to store your application specific data.
+	void SetUserData(const b2FixtureUserData& userData);
+
 	/// Test a point for containment in this fixture.
 	/// @param p a point in world coordinates.
 	bool TestPoint(const b2Vec2& p) const;
@@ -278,6 +281,11 @@ inline const b2Filter& b2Fixture::GetFilterData() const
 inline b2FixtureUserData& b2Fixture::GetUserData()
 {
 	return m_userData;
+}
+
+inline void b2Fixture::SetUserData(const b2FixtureUserData& userData)
+{
+	m_userData = userData;
 }
 
 inline b2Body* b2Fixture::GetBody()

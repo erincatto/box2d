@@ -139,6 +139,9 @@ public:
 	/// Get the user data pointer.
 	b2JointUserData& GetUserData();
 
+	/// Set the user data pointer.
+	void SetUserData(const b2JointUserData& userData);
+
 	/// Short-cut function to determine if either body is enabled.
 	bool IsEnabled() const;
 
@@ -218,6 +221,11 @@ inline const b2Joint* b2Joint::GetNext() const
 inline b2JointUserData& b2Joint::GetUserData()
 {
 	return m_userData;
+}
+
+inline void b2Joint::SetUserData(const b2JointUserData& userData)
+{
+	m_userData = userData;
 }
 
 inline bool b2Joint::GetCollideConnected() const

@@ -379,7 +379,7 @@ public:
 	b2BodyUserData& GetUserData();
 
 	/// Set the user data. Use this to store your application specific data.
-	void SetUserData(void* data);
+	void SetUserData(const b2BodyUserData& data);
 
 	/// Get the parent world of this body.
 	b2World* GetWorld();
@@ -734,6 +734,11 @@ inline const b2Body* b2Body::GetNext() const
 inline b2BodyUserData& b2Body::GetUserData()
 {
 	return m_userData;
+}
+
+inline void b2Body::SetUserData(const b2BodyUserData& userData)
+{
+	m_userData = userData;
 }
 
 inline void b2Body::ApplyForce(const b2Vec2& force, const b2Vec2& point, bool wake)
