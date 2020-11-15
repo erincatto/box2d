@@ -371,7 +371,7 @@ static void UpdateUI()
 
 				ImGui::Checkbox("Sleep", &s_settings.m_enableSleep);
 				ImGui::Checkbox("Warm Starting", &s_settings.m_enableWarmStarting);
-				ImGui::Checkbox("Time of Impact", &s_settings.m_enableContinuous);
+				ImGui::Checkbox("Continuous", &s_settings.m_enableContinuous);
 				ImGui::Checkbox("Sub-Stepping", &s_settings.m_enableSubStepping);
 
 				ImGui::Separator();

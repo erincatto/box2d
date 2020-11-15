@@ -130,7 +130,7 @@ void b2DynamicTree::DestroyProxy(int32 proxyId)
 	FreeNode(proxyId);
 }
 
-bool b2DynamicTree::MoveProxy(int32 proxyId, const b2AABB& aabb, const b2Vec2& displacement)
+bool b2DynamicTree::MoveProxy(int32 proxyId, const b2AABB& aabb)
 {
 	b2Assert(0 <= proxyId && proxyId < m_nodeCapacity);
 
@@ -141,27 +141,6 @@ bool b2DynamicTree::MoveProxy(int32 proxyId, const b2AABB& aabb, const b2Vec2& d
 	b2Vec2 r(b2_aabbExtension, b2_aabbExtension);
 	fatAABB.lowerBound = aabb.lowerBound - r;
 	fatAABB.upperBound = aabb.upperBound + r;
-
-	// Predict AABB movement
-	b2Vec2 d = b2_aabbMultiplier * displacement;
-
-	if (d.x < 0.0f)
-	{
-		fatAABB.lowerBound.x += d.x;
-	}
-	else
-	{
-		fatAABB.upperBound.x += d.x;
-	}
-
-	if (d.y < 0.0f)
-	{
-		fatAABB.lowerBound.y += d.y;
-	}
-	else
-	{
-		fatAABB.upperBound.y += d.y;
-	}
 
 	const b2AABB& treeAABB = m_nodes[proxyId].aabb;
 	if (treeAABB.Contains(aabb))

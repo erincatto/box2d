@@ -73,7 +73,7 @@ float b2MouseJoint::GetMaxForce() const
 void b2MouseJoint::InitVelocityConstraints(const b2SolverData& data)
 {
 	m_indexB = m_bodyB->m_islandIndex;
-	m_localCenterB = m_bodyB->m_sweep.localCenter;
+	m_localCenterB = m_bodyB->m_localCenter;
 	m_invMassB = m_bodyB->m_invMass;
 	m_invIB = m_bodyB->m_invI;
 

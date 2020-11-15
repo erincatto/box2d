@@ -23,6 +23,8 @@
 #include "box2d/b2_collision.h"
 #include "box2d/b2_polygon_shape.h"
 
+// TODO try O(n) algorithm in de Berg p. 279
+
 // Find the max separation between poly1 and poly2 using edge normals from poly1.
 static float b2FindMaxSeparation(int32* edgeIndex,
 								 const b2PolygonShape* poly1, const b2Transform& xf1,
@@ -122,17 +124,12 @@ void b2CollidePolygons(b2Manifold* manifold,
 					  const b2PolygonShape* polyB, const b2Transform& xfB)
 {
 	manifold->pointCount = 0;
-	float totalRadius = polyA->m_radius + polyB->m_radius;
 
 	int32 edgeA = 0;
 	float separationA = b2FindMaxSeparation(&edgeA, polyA, xfA, polyB, xfB);
-	if (separationA > totalRadius)
-		return;
 
 	int32 edgeB = 0;
 	float separationB = b2FindMaxSeparation(&edgeB, polyB, xfB, polyA, xfA);
-	if (separationB > totalRadius)
-		return;
 
 	const b2PolygonShape* poly1;	// reference polygon
 	const b2PolygonShape* poly2;	// incident polygon
@@ -190,21 +187,25 @@ void b2CollidePolygons(b2Manifold* manifold,
 	float frontOffset = b2Dot(normal, v11);
 
 	// Side offsets, extended by polytope skin thickness.
-	float sideOffset1 = -b2Dot(tangent, v11) + totalRadius;
-	float sideOffset2 = b2Dot(tangent, v12) + totalRadius;
+	float sideOffset1 = -b2Dot(tangent, v11);
+	float sideOffset2 = b2Dot(tangent, v12);
 
 	// Clip incident edge against extruded edge1 side edges.
 	b2ClipVertex clipPoints1[2];
 	b2ClipVertex clipPoints2[2];
 	int np;
 
-	// Clip to box side 1
+	// TODO stabilize ids by using only vertex indices?
+
+	// First side edge
 	np = b2ClipSegmentToLine(clipPoints1, incidentEdge, -tangent, sideOffset1, iv1);
 
 	if (np < 2)
+	{
 		return;
+	}
 
-	// Clip to negative box side 1
+	// Second side edge
 	np = b2ClipSegmentToLine(clipPoints2, clipPoints1,  tangent, sideOffset2, iv2);
 
 	if (np < 2)
@@ -216,28 +217,21 @@ void b2CollidePolygons(b2Manifold* manifold,
 	manifold->localNormal = localNormal;
 	manifold->localPoint = planePoint;
 
-	int32 pointCount = 0;
 	for (int32 i = 0; i < b2_maxManifoldPoints; ++i)
 	{
-		float separation = b2Dot(normal, clipPoints2[i].v) - frontOffset;
-
-		if (separation <= totalRadius)
+		b2ManifoldPoint* cp = manifold->points + i;
+		cp->localPoint = b2MulT(xf2, clipPoints2[i].v);
+		cp->id = clipPoints2[i].id;
+		if (flip)
 		{
-			b2ManifoldPoint* cp = manifold->points + pointCount;
-			cp->localPoint = b2MulT(xf2, clipPoints2[i].v);
-			cp->id = clipPoints2[i].id;
-			if (flip)
-			{
-				// Swap features
-				b2ContactFeature cf = cp->id.cf;
-				cp->id.cf.indexA = cf.indexB;
-				cp->id.cf.indexB = cf.indexA;
-				cp->id.cf.typeA = cf.typeB;
-				cp->id.cf.typeB = cf.typeA;
-			}
-			++pointCount;
+			// Swap features
+			b2ContactFeature cf = cp->id.cf;
+			cp->id.cf.indexA = cf.indexB;
+			cp->id.cf.indexB = cf.indexA;
+			cp->id.cf.typeA = cf.typeB;
+			cp->id.cf.typeB = cf.typeA;
 		}
 	}
 
-	manifold->pointCount = pointCount;
+	manifold->pointCount = b2_maxManifoldPoints;
 }

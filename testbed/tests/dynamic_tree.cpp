@@ -265,10 +265,8 @@ private:
 				continue;
 			}
 
-			b2AABB aabb0 = actor->aabb;
 			MoveAABB(&actor->aabb);
-			b2Vec2 displacement = actor->aabb.GetCenter() - aabb0.GetCenter();
-			m_tree.MoveProxy(actor->proxyId, actor->aabb, displacement);
+			m_tree.MoveProxy(actor->proxyId, actor->aabb);
 			return;
 		}
 	}

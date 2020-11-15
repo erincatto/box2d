@@ -41,6 +41,7 @@ struct b2VelocityConstraintPoint
 	float normalMass;
 	float tangentMass;
 	float velocityBias;
+	float relativeVelocity;
 };
 
 struct b2ContactVelocityConstraint
@@ -81,10 +82,10 @@ public:
 
 	void WarmStart();
 	void SolveVelocityConstraints();
+	void ApplyRestitution();
 	void StoreImpulses();
 
 	bool SolvePositionConstraints();
-	bool SolveTOIPositionConstraints(int32 toiIndexA, int32 toiIndexB);
 
 	b2TimeStep m_step;
 	b2Position* m_positions;

@@ -196,14 +196,10 @@ void b2Island::Solve(b2Profile* profile, const b2TimeStep& step, const b2Vec2& g
 	{
 		b2Body* b = m_bodies[i];
 
-		b2Vec2 c = b->m_sweep.c;
-		float a = b->m_sweep.a;
+		b2Vec2 c = b->m_position;
+		float a = b->m_angle;
 		b2Vec2 v = b->m_linearVelocity;
 		float w = b->m_angularVelocity;
-
-		// Store positions for continuous collision.
-		b->m_sweep.c0 = b->m_sweep.c;
-		b->m_sweep.a0 = b->m_sweep.a;
 
 		if (b->m_type == b2_dynamicBody)
 		{
@@ -272,6 +268,9 @@ void b2Island::Solve(b2Profile* profile, const b2TimeStep& step, const b2Vec2& g
 		contactSolver.SolveVelocityConstraints();
 	}
 
+	// Special handling for restitution
+	contactSolver.ApplyRestitution();
+
 	// Store impulses for warm starting
 	contactSolver.StoreImpulses();
 	profile->solveVelocity = timer.GetMilliseconds();
@@ -335,8 +334,8 @@ void b2Island::Solve(b2Profile* profile, const b2TimeStep& step, const b2Vec2& g
 	for (int32 i = 0; i < m_bodyCount; ++i)
 	{
 		b2Body* body = m_bodies[i];
-		body->m_sweep.c = m_positions[i].c;
-		body->m_sweep.a = m_positions[i].a;
+		body->m_position = m_positions[i].c;
+		body->m_angle = m_positions[i].a;
 		body->m_linearVelocity = m_velocities[i].v;
 		body->m_angularVelocity = m_velocities[i].w;
 		body->SynchronizeTransform();
@@ -384,138 +383,36 @@ void b2Island::Solve(b2Profile* profile, const b2TimeStep& step, const b2Vec2& g
 			}
 		}
 	}
-}
 
-void b2Island::SolveTOI(const b2TimeStep& subStep, int32 toiIndexA, int32 toiIndexB)
-{
-	b2Assert(toiIndexA < m_bodyCount);
-	b2Assert(toiIndexB < m_bodyCount);
-
-	// Initialize the body state.
 	for (int32 i = 0; i < m_bodyCount; ++i)
 	{
 		b2Body* b = m_bodies[i];
-		m_positions[i].c = b->m_sweep.c;
-		m_positions[i].a = b->m_sweep.a;
-		m_velocities[i].v = b->m_linearVelocity;
-		m_velocities[i].w = b->m_angularVelocity;
-	}
-
-	b2ContactSolverDef contactSolverDef;
-	contactSolverDef.contacts = m_contacts;
-	contactSolverDef.count = m_contactCount;
-	contactSolverDef.allocator = m_allocator;
-	contactSolverDef.step = subStep;
-	contactSolverDef.positions = m_positions;
-	contactSolverDef.velocities = m_velocities;
-	b2ContactSolver contactSolver(&contactSolverDef);
-
-	// Solve position constraints.
-	for (int32 i = 0; i < subStep.positionIterations; ++i)
-	{
-		bool contactsOkay = contactSolver.SolveTOIPositionConstraints(toiIndexA, toiIndexB);
-		if (contactsOkay)
+		if (b->IsAwake() == false || b->IsEnabled() == false)
 		{
-			break;
-		}
-	}
-
-#if 0
-	// Is the new position really safe?
-	for (int32 i = 0; i < m_contactCount; ++i)
-	{
-		b2Contact* c = m_contacts[i];
-		b2Fixture* fA = c->GetFixtureA();
-		b2Fixture* fB = c->GetFixtureB();
-
-		b2Body* bA = fA->GetBody();
-		b2Body* bB = fB->GetBody();
-
-		int32 indexA = c->GetChildIndexA();
-		int32 indexB = c->GetChildIndexB();
-
-		b2DistanceInput input;
-		input.proxyA.Set(fA->GetShape(), indexA);
-		input.proxyB.Set(fB->GetShape(), indexB);
-		input.transformA = bA->GetTransform();
-		input.transformB = bB->GetTransform();
-		input.useRadii = false;
-
-		b2DistanceOutput output;
-		b2SimplexCache cache;
-		cache.count = 0;
-		b2Distance(&output, &cache, &input);
-
-		if (output.distance == 0 || cache.count == 3)
-		{
-			cache.count += 0;
-		}
-	}
-#endif
-
-	// Leap of faith to new safe state.
-	m_bodies[toiIndexA]->m_sweep.c0 = m_positions[toiIndexA].c;
-	m_bodies[toiIndexA]->m_sweep.a0 = m_positions[toiIndexA].a;
-	m_bodies[toiIndexB]->m_sweep.c0 = m_positions[toiIndexB].c;
-	m_bodies[toiIndexB]->m_sweep.a0 = m_positions[toiIndexB].a;
-
-	// No warm starting is needed for TOI events because warm
-	// starting impulses were applied in the discrete solver.
-	contactSolver.InitializeVelocityConstraints();
-
-	// Solve velocity constraints.
-	for (int32 i = 0; i < subStep.velocityIterations; ++i)
-	{
-		contactSolver.SolveVelocityConstraints();
-	}
-
-	// Don't store the TOI contact forces for warm starting
-	// because they can be quite large.
-
-	float h = subStep.dt;
-
-	// Integrate positions
-	for (int32 i = 0; i < m_bodyCount; ++i)
-	{
-		b2Vec2 c = m_positions[i].c;
-		float a = m_positions[i].a;
-		b2Vec2 v = m_velocities[i].v;
-		float w = m_velocities[i].w;
-
-		// Check for large velocities
-		b2Vec2 translation = h * v;
-		if (b2Dot(translation, translation) > b2_maxTranslationSquared)
-		{
-			float ratio = b2_maxTranslation / translation.Length();
-			v *= ratio;
+			continue;
 		}
 
-		float rotation = h * w;
-		if (rotation * rotation > b2_maxRotationSquared)
-		{
-			float ratio = b2_maxRotation / b2Abs(rotation);
-			w *= ratio;
-		}
+		b2Vec2 v = b->m_linearVelocity;
+		float w = b->m_angularVelocity;
 
-		// Integrate
-		c += h * v;
-		a += h * w;
+		// Stage 1 - apply forces
+		v += step.dt * b->m_invMass * (b->m_gravityScale * b->m_mass * gravity + b->m_force);
+		w += step.dt * b->m_invI * b->m_torque;
 
-		m_positions[i].c = c;
-		m_positions[i].a = a;
-		m_velocities[i].v = v;
-		m_velocities[i].w = w;
+		// Apply damping.
+		// ODE: dv/dt + c * v = 0
+		// Solution: v(t) = v0 * exp(-c * t)
+		// Time step: v(t + dt) = v0 * exp(-c * (t + dt)) = v0 * exp(-c * t) * exp(-c * dt) = v * exp(-c * dt)
+		// v2 = exp(-c * dt) * v1
+		// Pade approximation:
+		// v2 = v1 * 1 / (1 + c * dt)
+		v *= 1.0f / (1.0f + step.dt * b->m_linearDamping);
+		w *= 1.0f / (1.0f + step.dt * b->m_angularDamping);
 
-		// Sync bodies
-		b2Body* body = m_bodies[i];
-		body->m_sweep.c = c;
-		body->m_sweep.a = a;
-		body->m_linearVelocity = v;
-		body->m_angularVelocity = w;
-		body->SynchronizeTransform();
+		// Stage 3 - predict new transforms
+		b->m_speculativePosition = b->m_position + step.dt * v;
+		b->m_speculativeAngle = b->m_angle + step.dt * w;
 	}
-
-	Report(contactSolver.m_velocityConstraints);
 }
 
 void b2Island::Report(const b2ContactVelocityConstraint* constraints)

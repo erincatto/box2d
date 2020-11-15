@@ -30,19 +30,6 @@ void b2CollideCircles(
 	const b2CircleShape* circleB, const b2Transform& xfB)
 {
 	manifold->pointCount = 0;
-
-	b2Vec2 pA = b2Mul(xfA, circleA->m_p);
-	b2Vec2 pB = b2Mul(xfB, circleB->m_p);
-
-	b2Vec2 d = pB - pA;
-	float distSqr = b2Dot(d, d);
-	float rA = circleA->m_radius, rB = circleB->m_radius;
-	float radius = rA + rB;
-	if (distSqr > radius * radius)
-	{
-		return;
-	}
-
 	manifold->type = b2Manifold::e_circles;
 	manifold->localPoint = circleA->m_p;
 	manifold->localNormal.SetZero();
@@ -74,13 +61,6 @@ void b2CollidePolygonAndCircle(
 	for (int32 i = 0; i < vertexCount; ++i)
 	{
 		float s = b2Dot(normals[i], cLocal - vertices[i]);
-
-		if (s > radius)
-		{
-			// Early out.
-			return;
-		}
-
 		if (s > separation)
 		{
 			separation = s;
@@ -111,11 +91,6 @@ void b2CollidePolygonAndCircle(
 	float u2 = b2Dot(cLocal - v2, v1 - v2);
 	if (u1 <= 0.0f)
 	{
-		if (b2DistanceSquared(cLocal, v1) > radius * radius)
-		{
-			return;
-		}
-
 		manifold->pointCount = 1;
 		manifold->type = b2Manifold::e_faceA;
 		manifold->localNormal = cLocal - v1;
@@ -126,11 +101,6 @@ void b2CollidePolygonAndCircle(
 	}
 	else if (u2 <= 0.0f)
 	{
-		if (b2DistanceSquared(cLocal, v2) > radius * radius)
-		{
-			return;
-		}
-
 		manifold->pointCount = 1;
 		manifold->type = b2Manifold::e_faceA;
 		manifold->localNormal = cLocal - v2;
@@ -141,17 +111,10 @@ void b2CollidePolygonAndCircle(
 	}
 	else
 	{
-		b2Vec2 faceCenter = 0.5f * (v1 + v2);
-		float s = b2Dot(cLocal - faceCenter, normals[vertIndex1]);
-		if (s > radius)
-		{
-			return;
-		}
-
 		manifold->pointCount = 1;
 		manifold->type = b2Manifold::e_faceA;
 		manifold->localNormal = normals[vertIndex1];
-		manifold->localPoint = faceCenter;
+		manifold->localPoint = v1;
 		manifold->points[0].localPoint = circleB->m_p;
 		manifold->points[0].id.key = 0;
 	}

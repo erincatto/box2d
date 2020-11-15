@@ -115,8 +115,8 @@ void b2PrismaticJoint::InitVelocityConstraints(const b2SolverData& data)
 {
 	m_indexA = m_bodyA->m_islandIndex;
 	m_indexB = m_bodyB->m_islandIndex;
-	m_localCenterA = m_bodyA->m_sweep.localCenter;
-	m_localCenterB = m_bodyB->m_sweep.localCenter;
+	m_localCenterA = m_bodyA->m_localCenter;
+	m_localCenterB = m_bodyB->m_localCenter;
 	m_invMassA = m_bodyA->m_invMass;
 	m_invMassB = m_bodyB->m_invMass;
 	m_invIA = m_bodyA->m_invI;
@@ -486,10 +486,10 @@ float b2PrismaticJoint::GetJointSpeed() const
 	b2Body* bA = m_bodyA;
 	b2Body* bB = m_bodyB;
 
-	b2Vec2 rA = b2Mul(bA->m_xf.q, m_localAnchorA - bA->m_sweep.localCenter);
-	b2Vec2 rB = b2Mul(bB->m_xf.q, m_localAnchorB - bB->m_sweep.localCenter);
-	b2Vec2 p1 = bA->m_sweep.c + rA;
-	b2Vec2 p2 = bB->m_sweep.c + rB;
+	b2Vec2 rA = b2Mul(bA->m_xf.q, m_localAnchorA - bA->m_localCenter);
+	b2Vec2 rB = b2Mul(bB->m_xf.q, m_localAnchorB - bB->m_localCenter);
+	b2Vec2 p1 = bA->m_position + rA;
+	b2Vec2 p2 = bB->m_position + rB;
 	b2Vec2 d = p2 - p1;
 	b2Vec2 axis = b2Mul(bA->m_xf.q, m_localXAxisA);
 

@@ -196,7 +196,7 @@ public:
 			b2FixtureDef fd;
 			fd.shape = &circle;
 			fd.density = 1.0f;
-			fd.friction = 0.9f;
+			fd.friction = 0.8f;
 
 			bd.position.Set(-1.0f, 0.35f);
 			m_wheel1 = m_world->CreateBody(&bd);

@@ -92,7 +92,6 @@ public:
 			b2BodyDef polygon_bd;
 			polygon_bd.position.Set(20.0f, 10.0f);
 			polygon_bd.type = b2_dynamicBody;
-			polygon_bd.bullet = true;
 			b2Body* polygon_body = m_world->CreateBody(&polygon_bd);
 			polygon_body->CreateFixture(&polygon_shape, 2.0f);
 

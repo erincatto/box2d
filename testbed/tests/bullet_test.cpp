@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include "test.h"
+#include "imgui/imgui.h"
 
 class BulletTest : public Test
 {
@@ -39,7 +40,7 @@ public:
 			body->CreateFixture(&edge, 0.0f);
 
 			b2PolygonShape shape;
-			shape.SetAsBox(0.2f, 1.0f, b2Vec2(0.5f, 1.0f), 0.0f);
+			shape.SetAsBox(0.1f, 0.5f, b2Vec2(0.0f, 0.5f), 0.0f);
 			body->CreateFixture(&shape, 0.0f);
 		}
 
@@ -47,24 +48,24 @@ public:
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
 			bd.position.Set(0.0f, 4.0f);
+			bd.allowSleep = false;
 
 			b2PolygonShape box;
-			box.SetAsBox(2.0f, 0.1f);
+			box.SetAsBox(2.0f, 0.05f);
 
 			m_body = m_world->CreateBody(&bd);
 			m_body->CreateFixture(&box, 1.0f);
 
-			box.SetAsBox(0.25f, 0.25f);
+			box.SetAsBox(0.1f, 0.1f);
 
+			m_x = -0.299417078f;
 			//m_x = RandomFloat(-1.0f, 1.0f);
-			m_x = 0.20352793f;
-			bd.position.Set(m_x, 10.0f);
-			bd.bullet = true;
+			bd.position.Set(m_x, 20.0f);
 
 			m_bullet = m_world->CreateBody(&bd);
-			m_bullet->CreateFixture(&box, 100.0f);
+			m_bullet->CreateFixture(&box, 2.0f);
 
-			m_bullet->SetLinearVelocity(b2Vec2(0.0f, -50.0f));
+			m_bullet->SetLinearVelocity(b2Vec2(0.0f, -100.0f));
 		}
 	}
 
@@ -75,8 +76,8 @@ public:
 		m_body->SetAngularVelocity(0.0f);
 
 		m_x = RandomFloat(-1.0f, 1.0f);
-		m_bullet->SetTransform(b2Vec2(m_x, 10.0f), 0.0f);
-		m_bullet->SetLinearVelocity(b2Vec2(0.0f, -50.0f));
+		m_bullet->SetTransform(b2Vec2(m_x, 20.0f), 0.0f);
+		m_bullet->SetLinearVelocity(b2Vec2(0.0f, -100.0f));
 		m_bullet->SetAngularVelocity(0.0f);
 
 		extern B2_API int32 b2_gjkCalls, b2_gjkIters, b2_gjkMaxIters;
@@ -92,6 +93,20 @@ public:
 		b2_toiMaxIters = 0;
 		b2_toiRootIters = 0;
 		b2_toiMaxRootIters = 0;
+	}
+
+	void UpdateUI() override
+	{
+		ImGui::SetNextWindowPos(ImVec2(10.0f, 100.0f));
+		ImGui::SetNextWindowSize(ImVec2(200.0f, 60.0f));
+		ImGui::Begin("Bullet Test", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+
+		if (ImGui::Button("Launch"))
+		{
+			Launch();
+		}
+
+		ImGui::End();
 	}
 
 	void Step(Settings& settings) override
@@ -118,11 +133,6 @@ public:
 			g_debugDraw.DrawString(5, m_textLine, "ave toi root iters = %3.1f, max toi root iters = %d",
 				b2_toiRootIters / float(b2_toiCalls), b2_toiMaxRootIters);
 			m_textLine += m_textIncrement;
-		}
-
-		if (m_stepCount % 60 == 0)
-		{
-			Launch();
 		}
 	}
 

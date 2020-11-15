@@ -100,7 +100,6 @@ public:
 			b2BodyDef bd;
 			bd.position.Set(1.0f, 15.0f);
 			bd.type = b2_dynamicBody;
-			bd.bullet = true;
 
 			m_ball = m_world->CreateBody(&bd);
 

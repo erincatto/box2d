@@ -54,8 +54,6 @@ void b2CollideEdgeAndCircle(b2Manifold* manifold,
 	float u = b2Dot(e, B - Q);
 	float v = b2Dot(e, Q - A);
 	
-	float radius = edgeA->m_radius + circleB->m_radius;
-	
 	b2ContactFeature cf;
 	cf.indexB = 0;
 	cf.typeB = b2ContactFeature::e_vertex;
@@ -63,14 +61,6 @@ void b2CollideEdgeAndCircle(b2Manifold* manifold,
 	// Region A
 	if (v <= 0.0f)
 	{
-		b2Vec2 P = A;
-		b2Vec2 d = Q - P;
-		float dd = b2Dot(d, d);
-		if (dd > radius * radius)
-		{
-			return;
-		}
-		
 		// Is there an edge connected to A?
 		if (edgeA->m_oneSided)
 		{
@@ -91,7 +81,7 @@ void b2CollideEdgeAndCircle(b2Manifold* manifold,
 		manifold->pointCount = 1;
 		manifold->type = b2Manifold::e_circles;
 		manifold->localNormal.SetZero();
-		manifold->localPoint = P;
+		manifold->localPoint = A;
 		manifold->points[0].id.key = 0;
 		manifold->points[0].id.cf = cf;
 		manifold->points[0].localPoint = circleB->m_p;
@@ -101,14 +91,6 @@ void b2CollideEdgeAndCircle(b2Manifold* manifold,
 	// Region B
 	if (u <= 0.0f)
 	{
-		b2Vec2 P = B;
-		b2Vec2 d = Q - P;
-		float dd = b2Dot(d, d);
-		if (dd > radius * radius)
-		{
-			return;
-		}
-		
 		// Is there an edge connected to B?
 		if (edgeA->m_oneSided)
 		{
@@ -129,7 +111,7 @@ void b2CollideEdgeAndCircle(b2Manifold* manifold,
 		manifold->pointCount = 1;
 		manifold->type = b2Manifold::e_circles;
 		manifold->localNormal.SetZero();
-		manifold->localPoint = P;
+		manifold->localPoint = B;
 		manifold->points[0].id.key = 0;
 		manifold->points[0].id.cf = cf;
 		manifold->points[0].localPoint = circleB->m_p;
@@ -137,16 +119,6 @@ void b2CollideEdgeAndCircle(b2Manifold* manifold,
 	}
 	
 	// Region AB
-	float den = b2Dot(e, e);
-	b2Assert(den > 0.0f);
-	b2Vec2 P = (1.0f / den) * (u * A + v * B);
-	b2Vec2 d = Q - P;
-	float dd = b2Dot(d, d);
-	if (dd > radius * radius)
-	{
-		return;
-	}
-	
 	if (offset < 0.0f)
 	{
 		n.Set(-n.x, -n.y);
@@ -301,26 +273,15 @@ void b2CollideEdgeAndPolygon(b2Manifold* manifold,
 		tempPolygonB.normals[i] = b2Mul(xf.q, polygonB->m_normals[i]);
 	}
 
-	float radius = polygonB->m_radius + edgeA->m_radius;
-
 	b2EPAxis edgeAxis = b2ComputeEdgeSeparation(tempPolygonB, v1, normal1);
-	if (edgeAxis.separation > radius)
-	{
-		return;
-	}
-
 	b2EPAxis polygonAxis = b2ComputePolygonSeparation(tempPolygonB, v1, v2);
-	if (polygonAxis.separation > radius)
-	{
-		return;
-	}
 
 	// Use hysteresis for jitter reduction.
 	const float k_relativeTol = 0.98f;
 	const float k_absoluteTol = 0.001f;
 
 	b2EPAxis primaryAxis;
-	if (polygonAxis.separation - radius > k_relativeTol * (edgeAxis.separation - radius) + k_absoluteTol)
+	if (polygonAxis.separation > k_relativeTol * edgeAxis.separation + k_absoluteTol)
 	{
 		primaryAxis = polygonAxis;
 	}
@@ -491,34 +452,24 @@ void b2CollideEdgeAndPolygon(b2Manifold* manifold,
 		manifold->localPoint = polygonB->m_vertices[ref.i1];
 	}
 
-	int32 pointCount = 0;
 	for (int32 i = 0; i < b2_maxManifoldPoints; ++i)
 	{
-		float separation;
+		b2ManifoldPoint* cp = manifold->points + i;
 
-		separation = b2Dot(ref.normal, clipPoints2[i].v - ref.v1);
-
-		if (separation <= radius)
+		if (primaryAxis.type == b2EPAxis::e_edgeA)
 		{
-			b2ManifoldPoint* cp = manifold->points + pointCount;
-
-			if (primaryAxis.type == b2EPAxis::e_edgeA)
-			{
-				cp->localPoint = b2MulT(xf, clipPoints2[i].v);
-				cp->id = clipPoints2[i].id;
-			}
-			else
-			{
-				cp->localPoint = clipPoints2[i].v;
-				cp->id.cf.typeA = clipPoints2[i].id.cf.typeB;
-				cp->id.cf.typeB = clipPoints2[i].id.cf.typeA;
-				cp->id.cf.indexA = clipPoints2[i].id.cf.indexB;
-				cp->id.cf.indexB = clipPoints2[i].id.cf.indexA;
-			}
-
-			++pointCount;
+			cp->localPoint = b2MulT(xf, clipPoints2[i].v);
+			cp->id = clipPoints2[i].id;
+		}
+		else
+		{
+			cp->localPoint = clipPoints2[i].v;
+			cp->id.cf.typeA = clipPoints2[i].id.cf.typeB;
+			cp->id.cf.typeB = clipPoints2[i].id.cf.typeA;
+			cp->id.cf.indexA = clipPoints2[i].id.cf.indexB;
+			cp->id.cf.indexB = clipPoints2[i].id.cf.indexA;
 		}
 	}
 
-	manifold->pointCount = pointCount;
+	manifold->pointCount = b2_maxManifoldPoints;
 }

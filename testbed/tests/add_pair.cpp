@@ -55,7 +55,6 @@ public:
 			b2BodyDef bd;
 			bd.type = b2_dynamicBody;
 			bd.position.Set(-40.0f,5.0f);
-			bd.bullet = true;
 			b2Body* body = m_world->CreateBody(&bd);
 			body->CreateFixture(&shape, 1.0f);
 			body->SetLinearVelocity(b2Vec2(10.0f, 0.0f));

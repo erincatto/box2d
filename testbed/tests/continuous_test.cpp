@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include "test.h"
+#include "imgui/imgui.h"
 
 class ContinuousTest : public Test
 {
@@ -38,9 +39,9 @@ public:
 			edge.SetTwoSided(b2Vec2(-10.0f, 0.0f), b2Vec2(10.0f, 0.0f));
 			body->CreateFixture(&edge, 0.0f);
 
-			b2PolygonShape shape;
-			shape.SetAsBox(0.2f, 1.0f, b2Vec2(0.5f, 1.0f), 0.0f);
-			body->CreateFixture(&shape, 0.0f);
+			//b2PolygonShape shape;
+			//shape.SetAsBox(0.2f, 1.0f, b2Vec2(0.5f, 1.0f), 0.0f);
+			//body->CreateFixture(&shape, 0.0f);
 		}
 
 #if 1
@@ -56,8 +57,9 @@ public:
 			m_body = m_world->CreateBody(&bd);
 			m_body->CreateFixture(&shape, 1.0f);
 
-			m_angularVelocity = RandomFloat(-50.0f, 50.0f);
-			//m_angularVelocity = 46.661274f;
+			//m_angularVelocity = RandomFloat(-50.0f, 50.0f);
+			m_angularVelocity = -30.6695766f;
+			//m_angularVelocity = 0.0f;
 			m_body->SetLinearVelocity(b2Vec2(0.0f, -100.0f));
 			m_body->SetAngularVelocity(m_angularVelocity);
 		}
@@ -108,6 +110,20 @@ public:
 		m_angularVelocity = RandomFloat(-50.0f, 50.0f);
 		m_body->SetLinearVelocity(b2Vec2(0.0f, -100.0f));
 		m_body->SetAngularVelocity(m_angularVelocity);
+	}
+
+	void UpdateUI() override
+	{
+		ImGui::SetNextWindowPos(ImVec2(10.0f, 100.0f));
+		ImGui::SetNextWindowSize(ImVec2(200.0f, 60.0f));
+		ImGui::Begin("Continuous Test", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+
+		if (ImGui::Button("Launch"))
+		{
+			Launch();
+		}
+
+		ImGui::End();
 	}
 
 	void Step(Settings& settings) override

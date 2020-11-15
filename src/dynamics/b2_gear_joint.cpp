@@ -69,9 +69,9 @@ b2GearJoint::b2GearJoint(const b2GearJointDef* def)
 
 	// Get geometry of joint1
 	b2Transform xfA = m_bodyA->m_xf;
-	float aA = m_bodyA->m_sweep.a;
+	float aA = m_bodyA->m_angle;
 	b2Transform xfC = m_bodyC->m_xf;
-	float aC = m_bodyC->m_sweep.a;
+	float aC = m_bodyC->m_angle;
 
 	if (m_typeA == e_revoluteJoint)
 	{
@@ -110,9 +110,9 @@ b2GearJoint::b2GearJoint(const b2GearJointDef* def)
 
 	// Get geometry of joint2
 	b2Transform xfB = m_bodyB->m_xf;
-	float aB = m_bodyB->m_sweep.a;
+	float aB = m_bodyB->m_angle;
 	b2Transform xfD = m_bodyD->m_xf;
-	float aD = m_bodyD->m_sweep.a;
+	float aD = m_bodyD->m_angle;
 
 	if (m_typeB == e_revoluteJoint)
 	{
@@ -150,10 +150,10 @@ void b2GearJoint::InitVelocityConstraints(const b2SolverData& data)
 	m_indexB = m_bodyB->m_islandIndex;
 	m_indexC = m_bodyC->m_islandIndex;
 	m_indexD = m_bodyD->m_islandIndex;
-	m_lcA = m_bodyA->m_sweep.localCenter;
-	m_lcB = m_bodyB->m_sweep.localCenter;
-	m_lcC = m_bodyC->m_sweep.localCenter;
-	m_lcD = m_bodyD->m_sweep.localCenter;
+	m_lcA = m_bodyA->m_localCenter;
+	m_lcB = m_bodyB->m_localCenter;
+	m_lcC = m_bodyC->m_localCenter;
+	m_lcD = m_bodyD->m_localCenter;
 	m_mA = m_bodyA->m_invMass;
 	m_mB = m_bodyB->m_invMass;
 	m_mC = m_bodyC->m_invMass;

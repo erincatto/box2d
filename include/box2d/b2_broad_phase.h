@@ -58,7 +58,7 @@ public:
 
 	/// Call MoveProxy as many times as you like, then when you are done
 	/// call UpdatePairs to finalized the proxy pairs (for your time step).
-	void MoveProxy(int32 proxyId, const b2AABB& aabb, const b2Vec2& displacement);
+	void MoveProxy(int32 proxyId, const b2AABB& aabb);
 
 	/// Call to trigger a re-processing of it's pairs on the next call to UpdatePairs.
 	void TouchProxy(int32 proxyId);

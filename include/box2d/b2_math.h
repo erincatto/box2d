@@ -374,16 +374,12 @@ struct B2_API b2Sweep
 	/// @param beta is a factor in [0,1], where 0 indicates alpha0.
 	void GetTransform(b2Transform* transform, float beta) const;
 
-	/// Advance the sweep forward, yielding a new initial state.
-	/// @param alpha the new initial time.
-	void Advance(float alpha);
-
 	/// Normalize the angles.
 	void Normalize();
 
 	b2Vec2 localCenter;	///< local center of mass position
-	b2Vec2 c0, c;		///< center world positions
-	float a0, a;		///< world angles
+	b2Vec2 c1, c2;		///< center world positions
+	float a1, a2;		///< world angles
 
 	/// Fraction of the current time step in the range [0,1]
 	/// c0 and a0 are the positions at alpha0.
@@ -688,30 +684,21 @@ inline bool b2IsPowerOfTwo(uint32 x)
 // https://fgiesen.wordpress.com/2012/08/15/linear-interpolation-past-present-and-future/
 inline void b2Sweep::GetTransform(b2Transform* xf, float beta) const
 {
-	xf->p = (1.0f - beta) * c0 + beta * c;
-	float angle = (1.0f - beta) * a0 + beta * a;
+	xf->p = (1.0f - beta) * c1 + beta * c2;
+	float angle = (1.0f - beta) * a1 + beta * a2;
 	xf->q.Set(angle);
 
 	// Shift to origin
 	xf->p -= b2Mul(xf->q, localCenter);
 }
 
-inline void b2Sweep::Advance(float alpha)
-{
-	b2Assert(alpha0 < 1.0f);
-	float beta = (alpha - alpha0) / (1.0f - alpha0);
-	c0 += beta * (c - c0);
-	a0 += beta * (a - a0);
-	alpha0 = alpha;
-}
-
 /// Normalize an angle in radians to be between -pi and pi
 inline void b2Sweep::Normalize()
 {
 	float twoPi = 2.0f * b2_pi;
-	float d =  twoPi * floorf(a0 / twoPi);
-	a0 -= d;
-	a -= d;
+	float d =  twoPi * floorf(a1 / twoPi);
+	a1 -= d;
+	a2 -= d;
 }
 
 #endif

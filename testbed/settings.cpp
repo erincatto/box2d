@@ -58,11 +58,6 @@ void Settings::Save()
 	FILE* file = fopen(fileName, "w");
 	fprintf(file, "{\n");
 	fprintf(file, "  \"testIndex\": %d,\n", m_testIndex);
-	fprintf(file, "  \"windowWidth\": %d,\n", m_windowWidth);
-	fprintf(file, "  \"windowHeight\": %d,\n", m_windowHeight);
-	fprintf(file, "  \"hertz\": %.9g,\n", m_hertz);
-	fprintf(file, "  \"velocityIterations\": %d,\n", m_velocityIterations);
-	fprintf(file, "  \"positionIterations\": %d,\n", m_positionIterations);
 	fprintf(file, "  \"drawShapes\": %s,\n", m_drawShapes ? "true" : "false");
 	fprintf(file, "  \"drawJoints\": %s,\n", m_drawJoints ? "true" : "false");
 	fprintf(file, "  \"drawAABBs\": %s,\n", m_drawAABBs ? "true" : "false");
@@ -109,51 +104,6 @@ void Settings::Load()
 			if (fieldValue.get_type() == sajson::TYPE_INTEGER)
 			{
 				m_testIndex = fieldValue.get_integer_value();
-			}
-			continue;
-		}
-
-		if (strncmp(fieldName.data(), "windowWidth", fieldName.length()) == 0)
-		{
-			if (fieldValue.get_type() == sajson::TYPE_INTEGER)
-			{
-				m_windowWidth = fieldValue.get_integer_value();
-			}
-			continue;
-		}
-
-		if (strncmp(fieldName.data(), "windowHeight", fieldName.length()) == 0)
-		{
-			if (fieldValue.get_type() == sajson::TYPE_INTEGER)
-			{
-				m_windowHeight = fieldValue.get_integer_value();
-			}
-			continue;
-		}
-
-		if (strncmp(fieldName.data(), "hertz", fieldName.length()) == 0)
-		{
-			if (fieldValue.get_type() == sajson::TYPE_DOUBLE || fieldValue.get_type() == sajson::TYPE_INTEGER)
-			{
-				m_hertz = float(fieldValue.get_number_value());
-			}
-			continue;
-		}
-
-		if (strncmp(fieldName.data(), "velocityIterations", fieldName.length()) == 0)
-		{
-			if (fieldValue.get_type() == sajson::TYPE_INTEGER)
-			{
-				m_velocityIterations = fieldValue.get_integer_value();
-			}
-			continue;
-		}
-
-		if (strncmp(fieldName.data(), "positionIterations", fieldName.length()) == 0)
-		{
-			if (fieldValue.get_type() == sajson::TYPE_INTEGER)
-			{
-				m_positionIterations = fieldValue.get_integer_value();
 			}
 			continue;
 		}

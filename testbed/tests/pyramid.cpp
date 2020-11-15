@@ -21,13 +21,14 @@
 // SOFTWARE.
 
 #include "test.h"
+#include "imgui/imgui.h"
 
 class Pyramid : public Test
 {
 public:
 	enum
 	{
-		e_count = 20
+		e_maxCount = 20
 	};
 
 	Pyramid()
@@ -41,52 +42,84 @@ public:
 			ground->CreateFixture(&shape, 0.0f);
 		}
 
+		int32 n = e_maxCount * (e_maxCount + 1) / 2;
+		for (int32 i = 0; i < n; ++i)
 		{
-			float a = 0.5f;
-			b2PolygonShape shape;
-			shape.SetAsBox(a, a);
+			m_bodies[i] = nullptr;
+		}
 
-			b2Vec2 x(-7.0f, 0.75f);
-			b2Vec2 y;
-			b2Vec2 deltaX(0.5625f, 1.25f);
-			b2Vec2 deltaY(1.125f, 0.0f);
+		m_count = 5;
+		CreatePyramid();
+	}
 
-			for (int32 i = 0; i < e_count; ++i)
+	void CreatePyramid()
+	{
+		int32 n = e_maxCount * (e_maxCount + 1) / 2;
+		for (int32 i = 0; i < n; ++i)
+		{
+			if (m_bodies[i] != nullptr)
 			{
-				y = x;
-
-				for (int32 j = i; j < e_count; ++j)
-				{
-					b2BodyDef bd;
-					bd.type = b2_dynamicBody;
-					bd.position = y;
-					b2Body* body = m_world->CreateBody(&bd);
-					body->CreateFixture(&shape, 5.0f);
-
-					y += deltaY;
-				}
-
-				x += deltaX;
+				m_world->DestroyBody(m_bodies[i]);
+				m_bodies[i] = nullptr;
 			}
+		}
+
+		float a = 0.5f;
+		b2PolygonShape shape;
+		shape.SetAsBox(a, a);
+
+		b2Vec2 x(-7.0f, 0.75f);
+		b2Vec2 y;
+		b2Vec2 deltaX(0.5625f, 1.25f);
+		b2Vec2 deltaY(1.125f, 0.0f);
+
+		int32 k = 0;
+
+		for (int32 i = 0; i < m_count; ++i)
+		{
+			y = x;
+
+			for (int32 j = i; j < m_count; ++j)
+			{
+				b2BodyDef bd;
+				bd.type = b2_dynamicBody;
+				bd.position = y;
+				b2Body* body = m_world->CreateBody(&bd);
+				body->CreateFixture(&shape, 5.0f);
+
+				m_bodies[k] = body;
+				++k;
+
+				y += deltaY;
+			}
+
+			x += deltaX;
 		}
 	}
 
-	void Step(Settings& settings) override
+	void UpdateUI() override
 	{
-		Test::Step(settings);
+		ImGui::SetNextWindowPos(ImVec2(10.0f, 100.0f));
+		ImGui::SetNextWindowSize(ImVec2(240.0f, 230.0f));
+		ImGui::Begin("Pyramid", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 
-		//b2DynamicTree* tree = &m_world->m_contactManager.m_broadPhase.m_tree;
+		bool changed = ImGui::SliderInt("Base Count", &m_count, 1, e_maxCount);
 
-		//if (m_stepCount == 400)
-		//{
-		//	tree->RebuildBottomUp();
-		//}
+		if (changed)
+		{
+			CreatePyramid();
+		}
+
+		ImGui::End();
 	}
 
 	static Test* Create()
 	{
 		return new Pyramid;
 	}
+
+	b2Body* m_bodies[e_maxCount * (e_maxCount + 1) / 2];
+	int32 m_count;
 };
 
 static int testIndex = RegisterTest("Stacking", "Pyramid", Pyramid::Create);

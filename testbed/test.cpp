@@ -253,7 +253,6 @@ void Test::LaunchBomb(const b2Vec2& position, const b2Vec2& velocity)
 	b2BodyDef bd;
 	bd.type = b2_dynamicBody;
 	bd.position = position;
-	bd.bullet = true;
 	m_bomb = m_world->CreateBody(&bd);
 	m_bomb->SetLinearVelocity(velocity);
 	
@@ -412,7 +411,12 @@ void Test::Step(Settings& settings)
 		{
 			ContactPoint* point = m_points + i;
 
-			if (point->state == b2_addState)
+			if (point->separation > b2_linearSlop)
+			{
+				// Speculative
+				g_debugDraw.DrawPoint(point->position, 5.0f, b2Color(0.3f, 0.3f, 0.3f));
+			}
+			else if (point->state == b2_addState)
 			{
 				// Add
 				g_debugDraw.DrawPoint(point->position, 10.0f, b2Color(0.3f, 0.95f, 0.3f));

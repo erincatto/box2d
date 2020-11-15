@@ -153,6 +153,23 @@ void b2Fixture::DestroyProxies(b2BroadPhase* broadPhase)
 	m_proxyCount = 0;
 }
 
+void b2Fixture::Synchronize(b2BroadPhase* broadPhase, const b2Transform& transform)
+{
+	if (m_proxyCount == 0)
+	{	
+		return;
+	}
+
+	for (int32 i = 0; i < m_proxyCount; ++i)
+	{
+		b2FixtureProxy* proxy = m_proxies + i;
+
+		// Compute an AABB that covers the swept shape (may miss some rotation effect).
+		m_shape->ComputeAABB(&proxy->aabb, transform, proxy->childIndex);
+		broadPhase->MoveProxy(proxy->proxyId, proxy->aabb);
+	}
+}
+
 void b2Fixture::Synchronize(b2BroadPhase* broadPhase, const b2Transform& transform1, const b2Transform& transform2)
 {
 	if (m_proxyCount == 0)
@@ -171,9 +188,7 @@ void b2Fixture::Synchronize(b2BroadPhase* broadPhase, const b2Transform& transfo
 	
 		proxy->aabb.Combine(aabb1, aabb2);
 
-		b2Vec2 displacement = aabb2.GetCenter() - aabb1.GetCenter();
-
-		broadPhase->MoveProxy(proxy->proxyId, proxy->aabb, displacement);
+		broadPhase->MoveProxy(proxy->proxyId, proxy->aabb);
 	}
 }
 

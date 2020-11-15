@@ -63,7 +63,6 @@ struct B2_API b2BodyDef
 		allowSleep = true;
 		awake = true;
 		fixedRotation = false;
-		bullet = false;
 		type = b2_staticBody;
 		enabled = true;
 		gravityScale = 1.0f;
@@ -107,12 +106,6 @@ struct B2_API b2BodyDef
 
 	/// Should this body be prevented from rotating? Useful for characters.
 	bool fixedRotation;
-
-	/// Is this a fast moving body that should be prevented from tunneling through
-	/// other moving bodies? Note that all bodies are prevented from tunneling through
-	/// kinematic and static bodies. This setting is only considered on dynamic bodies.
-	/// @warning You should use this flag sparingly since it increases processing time.
-	bool bullet;
 
 	/// Does this body start out enabled?
 	bool enabled;
@@ -311,12 +304,6 @@ public:
 	/// Get the type of this body.
 	b2BodyType GetType() const;
 
-	/// Should this body be treated like a bullet for continuous collision detection?
-	void SetBullet(bool flag);
-
-	/// Is this body treated like a bullet for continuous collision detection?
-	bool IsBullet() const;
-
 	/// You can disable sleeping on this body. If you disable sleeping, the
 	/// body will be woken.
 	void SetSleepingAllowed(bool flag);
@@ -411,7 +398,6 @@ private:
 		e_islandFlag		= 0x0001,
 		e_awakeFlag			= 0x0002,
 		e_autoSleepFlag		= 0x0004,
-		e_bulletFlag		= 0x0008,
 		e_fixedRotationFlag	= 0x0010,
 		e_enabledFlag		= 0x0020,
 		e_toiFlag			= 0x0040
@@ -421,13 +407,14 @@ private:
 	~b2Body();
 
 	void SynchronizeFixtures();
+	void SynchronizeFixturesPredicted();
 	void SynchronizeTransform();
 
 	// This is used to prevent connected bodies from colliding.
 	// It may lie, depending on the collideConnected flag.
 	bool ShouldCollide(const b2Body* other) const;
 
-	void Advance(float t);
+	b2Sweep GetSweep() const;
 
 	b2BodyType m_type;
 
@@ -436,7 +423,12 @@ private:
 	int32 m_islandIndex;
 
 	b2Transform m_xf;		// the body origin transform
-	b2Sweep m_sweep;		// the swept motion for CCD
+	b2Vec2 m_position;		// position of center of mass in world space
+	float m_angle;			// rotation of body in radians
+	b2Vec2 m_localCenter;	// local center of mass position
+
+	b2Vec2 m_speculativePosition;
+	float m_speculativeAngle;
 
 	b2Vec2 m_linearVelocity;
 	float m_angularVelocity;
@@ -485,17 +477,17 @@ inline const b2Vec2& b2Body::GetPosition() const
 
 inline float b2Body::GetAngle() const
 {
-	return m_sweep.a;
+	return m_angle;
 }
 
 inline const b2Vec2& b2Body::GetWorldCenter() const
 {
-	return m_sweep.c;
+	return m_position;
 }
 
 inline const b2Vec2& b2Body::GetLocalCenter() const
 {
-	return m_sweep.localCenter;
+	return m_localCenter;
 }
 
 inline void b2Body::SetLinearVelocity(const b2Vec2& v)
@@ -545,15 +537,15 @@ inline float b2Body::GetMass() const
 
 inline float b2Body::GetInertia() const
 {
-	return m_I + m_mass * b2Dot(m_sweep.localCenter, m_sweep.localCenter);
+	return m_I + m_mass * b2Dot(m_localCenter, m_localCenter);
 }
 
 inline b2MassData b2Body::GetMassData() const
 {
 	b2MassData data;
 	data.mass = m_mass;
-	data.I = m_I + m_mass * b2Dot(m_sweep.localCenter, m_sweep.localCenter);
-	data.center = m_sweep.localCenter;
+	data.I = m_I + m_mass * b2Dot(m_localCenter, m_localCenter);
+	data.center = m_localCenter;
 	return data;
 }
 
@@ -579,7 +571,7 @@ inline b2Vec2 b2Body::GetLocalVector(const b2Vec2& worldVector) const
 
 inline b2Vec2 b2Body::GetLinearVelocityFromWorldPoint(const b2Vec2& worldPoint) const
 {
-	return m_linearVelocity + b2Cross(m_angularVelocity, worldPoint - m_sweep.c);
+	return m_linearVelocity + b2Cross(m_angularVelocity, worldPoint - m_position);
 }
 
 inline b2Vec2 b2Body::GetLinearVelocityFromLocalPoint(const b2Vec2& localPoint) const
@@ -615,23 +607,6 @@ inline float b2Body::GetGravityScale() const
 inline void b2Body::SetGravityScale(float scale)
 {
 	m_gravityScale = scale;
-}
-
-inline void b2Body::SetBullet(bool flag)
-{
-	if (flag)
-	{
-		m_flags |= e_bulletFlag;
-	}
-	else
-	{
-		m_flags &= ~e_bulletFlag;
-	}
-}
-
-inline bool b2Body::IsBullet() const
-{
-	return (m_flags & e_bulletFlag) == e_bulletFlag;
 }
 
 inline void b2Body::SetAwake(bool flag)
@@ -756,7 +731,7 @@ inline void b2Body::ApplyForce(const b2Vec2& force, const b2Vec2& point, bool wa
 	if (m_flags & e_awakeFlag)
 	{
 		m_force += force;
-		m_torque += b2Cross(point - m_sweep.c, force);
+		m_torque += b2Cross(point - m_position, force);
 	}
 }
 
@@ -814,7 +789,7 @@ inline void b2Body::ApplyLinearImpulse(const b2Vec2& impulse, const b2Vec2& poin
 	if (m_flags & e_awakeFlag)
 	{
 		m_linearVelocity += m_invMass * impulse;
-		m_angularVelocity += m_invI * b2Cross(point - m_sweep.c, impulse);
+		m_angularVelocity += m_invI * b2Cross(point - m_position, impulse);
 	}
 }
 
@@ -858,18 +833,8 @@ inline void b2Body::ApplyAngularImpulse(float impulse, bool wake)
 
 inline void b2Body::SynchronizeTransform()
 {
-	m_xf.q.Set(m_sweep.a);
-	m_xf.p = m_sweep.c - b2Mul(m_xf.q, m_sweep.localCenter);
-}
-
-inline void b2Body::Advance(float alpha)
-{
-	// Advance to the new safe time. This doesn't sync the broad-phase.
-	m_sweep.Advance(alpha);
-	m_sweep.c = m_sweep.c0;
-	m_sweep.a = m_sweep.a0;
-	m_xf.q.Set(m_sweep.a);
-	m_xf.p = m_sweep.c - b2Mul(m_xf.q, m_sweep.localCenter);
+	m_xf.q.Set(m_angle);
+	m_xf.p = m_position - b2Mul(m_xf.q, m_localCenter);
 }
 
 inline b2World* b2Body::GetWorld()

@@ -39,10 +39,6 @@ b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 
 	m_flags = 0;
 
-	if (bd->bullet)
-	{
-		m_flags |= e_bulletFlag;
-	}
 	if (bd->fixedRotation)
 	{
 		m_flags |= e_fixedRotationFlag;
@@ -65,12 +61,12 @@ b2Body::b2Body(const b2BodyDef* bd, b2World* world)
 	m_xf.p = bd->position;
 	m_xf.q.Set(bd->angle);
 
-	m_sweep.localCenter.SetZero();
-	m_sweep.c0 = m_xf.p;
-	m_sweep.c = m_xf.p;
-	m_sweep.a0 = bd->angle;
-	m_sweep.a = bd->angle;
-	m_sweep.alpha0 = 0.0f;
+	m_localCenter.SetZero();
+	m_position = m_xf.p;
+	m_angle = bd->angle;
+
+	m_speculativePosition = m_position;
+	m_speculativeAngle = m_angle;
 
 	m_jointList = nullptr;
 	m_contactList = nullptr;
@@ -129,8 +125,6 @@ void b2Body::SetType(b2BodyType type)
 	{
 		m_linearVelocity.SetZero();
 		m_angularVelocity = 0.0f;
-		m_sweep.a0 = m_sweep.a;
-		m_sweep.c0 = m_sweep.c;
 		m_flags &= ~e_awakeFlag;
 		SynchronizeFixtures();
 	}
@@ -294,14 +288,12 @@ void b2Body::ResetMassData()
 	m_invMass = 0.0f;
 	m_I = 0.0f;
 	m_invI = 0.0f;
-	m_sweep.localCenter.SetZero();
+	m_localCenter.SetZero();
 
 	// Static and kinematic bodies have zero mass.
 	if (m_type == b2_staticBody || m_type == b2_kinematicBody)
 	{
-		m_sweep.c0 = m_xf.p;
-		m_sweep.c = m_xf.p;
-		m_sweep.a0 = m_sweep.a;
+		m_position = m_xf.p;
 		return;
 	}
 
@@ -345,12 +337,12 @@ void b2Body::ResetMassData()
 	}
 
 	// Move center of mass.
-	b2Vec2 oldCenter = m_sweep.c;
-	m_sweep.localCenter = localCenter;
-	m_sweep.c0 = m_sweep.c = b2Mul(m_xf, m_sweep.localCenter);
+	b2Vec2 oldCenter = m_position;
+	m_localCenter = localCenter;
+	m_position = b2Mul(m_xf, m_localCenter);
 
 	// Update center of mass velocity.
-	m_linearVelocity += b2Cross(m_angularVelocity, m_sweep.c - oldCenter);
+	m_linearVelocity += b2Cross(m_angularVelocity, m_position - oldCenter);
 }
 
 void b2Body::SetMassData(const b2MassData* massData)
@@ -386,12 +378,12 @@ void b2Body::SetMassData(const b2MassData* massData)
 	}
 
 	// Move center of mass.
-	b2Vec2 oldCenter = m_sweep.c;
-	m_sweep.localCenter =  massData->center;
-	m_sweep.c0 = m_sweep.c = b2Mul(m_xf, m_sweep.localCenter);
+	b2Vec2 oldCenter = m_position;
+	m_localCenter =  massData->center;
+	m_position = b2Mul(m_xf, m_localCenter);
 
 	// Update center of mass velocity.
-	m_linearVelocity += b2Cross(m_angularVelocity, m_sweep.c - oldCenter);
+	m_linearVelocity += b2Cross(m_angularVelocity, m_position - oldCenter);
 }
 
 bool b2Body::ShouldCollide(const b2Body* other) const
@@ -428,11 +420,8 @@ void b2Body::SetTransform(const b2Vec2& position, float angle)
 	m_xf.q.Set(angle);
 	m_xf.p = position;
 
-	m_sweep.c = b2Mul(m_xf, m_sweep.localCenter);
-	m_sweep.a = angle;
-
-	m_sweep.c0 = m_sweep.c;
-	m_sweep.a0 = angle;
+	m_position = b2Mul(m_xf, m_localCenter);
+	m_angle = angle;
 
 	b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
 	for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
@@ -448,25 +437,49 @@ void b2Body::SynchronizeFixtures()
 {
 	b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
 
-	if (m_flags & b2Body::e_awakeFlag)
+	for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
 	{
-		b2Transform xf1;
-		xf1.q.Set(m_sweep.a0);
-		xf1.p = m_sweep.c0 - b2Mul(xf1.q, m_sweep.localCenter);
+		f->Synchronize(broadPhase, m_xf);
+	}
+}
 
-		for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
-		{
-			f->Synchronize(broadPhase, xf1, m_xf);
-		}
+void b2Body::SynchronizeFixturesPredicted()
+{
+	b2BroadPhase* broadPhase = &m_world->m_contactManager.m_broadPhase;
+
+	b2Transform xf2;
+	xf2.q.Set(m_speculativeAngle);
+	xf2.p = m_speculativePosition - b2Mul(xf2.q, m_localCenter);
+
+	for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
+	{
+		f->Synchronize(broadPhase, m_xf, xf2);
+	}
+}
+
+b2Sweep b2Body::GetSweep() const
+{
+	b2Sweep s;
+	if (m_type == b2_staticBody)
+	{
+		s.c1 = m_position;
+		s.c2 = m_position;
+		s.a1 = m_angle;
+		s.a2 = m_angle;
 	}
 	else
 	{
-		for (b2Fixture* f = m_fixtureList; f; f = f->m_next)
-		{
-			f->Synchronize(broadPhase, m_xf, m_xf);
-		}
+		s.c1 = m_position;
+		s.c2 = m_speculativePosition;
+		s.a1 = m_angle;
+		s.a2 = m_speculativeAngle;
 	}
+
+	s.localCenter = m_localCenter;
+	s.alpha0 = 0.0f;
+	return s;
 }
+
 
 void b2Body::SetEnabled(bool flag)
 {
@@ -547,7 +560,7 @@ void b2Body::Dump()
 	b2Dump("  b2BodyDef bd;\n");
 	b2Dump("  bd.type = b2BodyType(%d);\n", m_type);
 	b2Dump("  bd.position.Set(%.9g, %.9g);\n", m_xf.p.x, m_xf.p.y);
-	b2Dump("  bd.angle = %.9g;\n", m_sweep.a);
+	b2Dump("  bd.angle = %.9g;\n", m_angle);
 	b2Dump("  bd.linearVelocity.Set(%.9g, %.9g);\n", m_linearVelocity.x, m_linearVelocity.y);
 	b2Dump("  bd.angularVelocity = %.9g;\n", m_angularVelocity);
 	b2Dump("  bd.linearDamping = %.9g;\n", m_linearDamping);
@@ -555,7 +568,6 @@ void b2Body::Dump()
 	b2Dump("  bd.allowSleep = bool(%d);\n", m_flags & e_autoSleepFlag);
 	b2Dump("  bd.awake = bool(%d);\n", m_flags & e_awakeFlag);
 	b2Dump("  bd.fixedRotation = bool(%d);\n", m_flags & e_fixedRotationFlag);
-	b2Dump("  bd.bullet = bool(%d);\n", m_flags & e_bulletFlag);
 	b2Dump("  bd.enabled = bool(%d);\n", m_flags & e_enabledFlag);
 	b2Dump("  bd.gravityScale = %.9g;\n", m_gravityScale);
 	b2Dump("  bodies[%d] = m_world->CreateBody(&bd);\n", m_islandIndex);

@@ -51,8 +51,6 @@ public:
 
 	void Solve(b2Profile* profile, const b2TimeStep& step, const b2Vec2& gravity, bool allowSleep);
 
-	void SolveTOI(const b2TimeStep& subStep, int32 toiIndexA, int32 toiIndexB);
-
 	void Add(b2Body* body)
 	{
 		b2Assert(m_bodyCount < m_bodyCapacity);

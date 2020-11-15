@@ -155,8 +155,8 @@ public:
 	bool GetWarmStarting() const { return m_warmStarting; }
 
 	/// Enable/disable continuous physics. For testing.
-	void SetContinuousPhysics(bool flag) { m_continuousPhysics = flag; }
-	bool GetContinuousPhysics() const { return m_continuousPhysics; }
+	void SetContinuousPhysics(bool flag) { m_useContinuous = flag; }
+	bool GetContinuousPhysics() const { return m_useContinuous; }
 
 	/// Enable/disable single stepped continuous physics. For testing.
 	void SetSubStepping(bool flag) { m_subStepping = flag; }
@@ -256,7 +256,7 @@ private:
 
 	// These are for debugging the solver.
 	bool m_warmStarting;
-	bool m_continuousPhysics;
+	bool m_useContinuous;
 	bool m_subStepping;
 
 	bool m_stepComplete;

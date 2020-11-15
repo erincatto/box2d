@@ -633,7 +633,7 @@ bool b2ShapeCast(b2ShapeCastOutput * output, const b2ShapeCastInput * input)
 	b2Vec2 wB = b2Mul(xfB, proxyB->GetVertex(indexB));
     b2Vec2 v = wA - wB;
 
-    // Sigma is the target distance between polygons
+    // Sigma is the target distance between proxies
     float sigma = b2Max(b2_polygonRadius, radius - b2_polygonRadius);
 	const float tolerance = 0.5f * b2_linearSlop;
 
