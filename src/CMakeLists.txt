@@ -96,7 +96,15 @@ set(BOX2D_HEADER_FILES
 	../include/box2d/b2_world_callbacks.h
 	../include/box2d/box2d.h)
 
-add_library(box2d ${BOX2D_SOURCE_FILES} ${BOX2D_HEADER_FILES})
+if(BOX2D_USER_SETTINGS)
+	add_library(box2d ${BOX2D_SOURCE_FILES} ${BOX2D_HEADER_FILES}
+			"${BOX2D_USER_SETTINGS_PATH}/b2_user_settings.h"
+			"${BOX2D_USER_SETTINGS_PATH}/b2_user_settings.cpp")
+else()
+	add_library(box2d ${BOX2D_SOURCE_FILES} ${BOX2D_HEADER_FILES})
+endif()
+
+
 target_include_directories(box2d
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
