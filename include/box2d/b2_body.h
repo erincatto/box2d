@@ -242,7 +242,7 @@ public:
 	float GetInertia() const;
 
 	/// Get the mass data of the body.
-	/// @return a struct containing the mass, inertia and center of the body.
+    /// @param data the mass properties.
 	void GetMassData(b2MassData* data) const;
 
 	/// Set the mass properties to override the mass properties of the fixtures.
