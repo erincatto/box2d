@@ -88,7 +88,7 @@ float b2Timer::GetMilliseconds() const
     timeval t;
     gettimeofday(&t, 0);
 	time_t start_sec = m_start_sec;
-	suseconds_t start_usec = m_start_usec;
+	suseconds_t start_usec = (suseconds_t)m_start_usec;
 	
 	// http://www.gnu.org/software/libc/manual/html_node/Elapsed-Time.html
 	if (t.tv_usec < start_usec)
