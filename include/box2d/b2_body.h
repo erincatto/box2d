@@ -377,6 +377,7 @@ public:
 
 	/// Get the user data pointer that was provided in the body definition.
 	b2BodyUserData& GetUserData();
+	const b2BodyUserData& GetUserData() const;
 
 	/// Get the parent world of this body.
 	b2World* GetWorld();
@@ -729,6 +730,11 @@ inline const b2Body* b2Body::GetNext() const
 }
 
 inline b2BodyUserData& b2Body::GetUserData()
+{
+	return m_userData;
+}
+
+inline const b2BodyUserData& b2Body::GetUserData() const
 {
 	return m_userData;
 }
