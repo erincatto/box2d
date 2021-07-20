@@ -515,7 +515,7 @@ void b2World::Solve(const b2TimeStep& step)
 
 				b2Body* other = je->other;
 
-				// Don't simulate joints connected to diabled bodies.
+				// Don't simulate joints connected to disabled bodies.
 				if (other->IsEnabled() == false)
 				{
 					continue;
