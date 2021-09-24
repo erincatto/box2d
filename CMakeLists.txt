@@ -42,6 +42,7 @@ if (DOXYGEN_FOUND AND BOX2D_BUILD_DOCS)
 endif()
 
 if (BOX2D_BUILD_UNIT_TESTS)
+	enable_testing()
 	add_subdirectory(unit-test)
 endif()
 
