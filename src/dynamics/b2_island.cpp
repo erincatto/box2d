@@ -29,8 +29,8 @@
 #include "box2d/b2_timer.h"
 #include "box2d/b2_world.h"
 
+#include "b2_contact_solver.h"
 #include "b2_island.h"
-#include "dynamics/b2_contact_solver.h"
 
 /*
 Position Correction Notes

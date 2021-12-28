@@ -157,6 +157,7 @@ public:
 	/// Get the user data that was assigned in the fixture definition. Use this to
 	/// store your application specific data.
 	b2FixtureUserData& GetUserData();
+	const b2FixtureUserData& GetUserData() const;
 
 	/// Test a point for containment in this fixture.
 	/// @param p a point in world coordinates.
@@ -276,6 +277,11 @@ inline const b2Filter& b2Fixture::GetFilterData() const
 }
 
 inline b2FixtureUserData& b2Fixture::GetUserData()
+{
+	return m_userData;
+}
+
+inline const b2FixtureUserData& b2Fixture::GetUserData() const
 {
 	return m_userData;
 }
