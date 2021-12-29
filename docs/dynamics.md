@@ -1065,11 +1065,6 @@ body with multiple fixtures. When the body breaks, you can destroy a
 fixture and recreate it on a new body. See the Breakable example in the
 testbed.
 
-### Rope Joint
-The rope joint restricts the maximum distance between two points. This
-can be useful to prevent chains of bodies from stretching, even under
-high load. See b2RopeJoint.h and rope_joint.cpp for details.
-
 ### Friction Joint
 The friction joint is used for top-down friction. The joint provides 2D
 translational friction and angular friction. See b2FrictionJoint.h and
