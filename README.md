@@ -1,7 +1,7 @@
 ![Box2D Logo](https://box2d.org/images/logo.svg)
 
 # Build Status
-![Build Status](https://github.com/erincatto/box2d/actions/workflows/build.xml/badge.svg)
+[![Build Status](https://github.com/erincatto/box2d/actions/workflows/build.yml/badge.svg)](https://github.com/erincatto/box2d/actions)
 
 # Box2D 
 
