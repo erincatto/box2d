@@ -1,7 +1,7 @@
 ![Box2D Logo](https://box2d.org/images/logo.svg)
 
 # Build Status
-[![Build Status](https://travis-ci.org/erincatto/box2d.svg?branch=master)](https://travis-ci.org/erincatto/box2d)
+![Build Status](https://github.com/erincatto/box2d/actions/workflows/build.xml/badge.svg)
 
 # Box2D 
 
