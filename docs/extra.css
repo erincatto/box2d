@@ -22,6 +22,7 @@ div.contents {
     max-width: 900px;
 }
 
+/* this works with doxygen /image */
 .image {
 	background-color: #CCCCCC;
 	border: 10px solid #CCCCCC;
@@ -29,14 +30,12 @@ div.contents {
 	padding: 0px;
 }
 
-/*
-.image img, object {
-	padding: 10px;
-	margin: 10px 0px;
-	background-color: white;
-	border: 1px solid #000000;
+/* this kind of works with doxygen markdown */
+img.inline {
+	background-color: #CCCCCC;
+	border: 10px solid #CCCCCC;
+	margin: 0px;
 }
-*/
 
 .caption {
 	padding-top: 10px;

@@ -220,7 +220,7 @@ own bounding box in the broad-phase collision tree.
 
 ```cpp
 // Visit each child edge.
-for (int32 i = 0; i \< chain.GetChildCount(); ++i)
+for (int32 i = 0; i < chain.GetChildCount(); ++i)
 {
     b2EdgeShape edge;
     chain.GetChildEdge(&edge, i);
@@ -318,7 +318,7 @@ b2WorldManifold worldManifold;
 worldManifold.Initialize(&manifold, transformA, shapeA.m_radius,
 transformB, shapeB.m_radius);
 
-for (int32 i = 0; i \< manifold.pointCount; ++i)
+for (int32 i = 0; i < manifold.pointCount; ++i)
 {
     b2Vec2 point = worldManifold.points[i];
     ...
