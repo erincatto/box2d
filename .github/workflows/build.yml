@@ -74,4 +74,5 @@ jobs:
 
     - name: Test
       working-directory: ${{github.workspace}}/build
-      run: ./bin/unit_test
+      run: ./bin/${{env.BUILD_TYPE}}/unit_test
+      
