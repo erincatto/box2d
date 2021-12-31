@@ -82,6 +82,9 @@ b2GearJoint::b2GearJoint(const b2GearJointDef* def)
 		m_localAxisC.SetZero();
 
 		coordinateA = aA - aC - m_referenceAngleA;
+
+		// position error is measured in radians
+		m_tolerance = b2_angularSlop;
 	}
 	else
 	{
@@ -94,6 +97,9 @@ b2GearJoint::b2GearJoint(const b2GearJointDef* def)
 		b2Vec2 pC = m_localAnchorC;
 		b2Vec2 pA = b2MulT(xfC.q, b2Mul(xfA.q, m_localAnchorA) + (xfA.p - xfC.p));
 		coordinateA = b2Dot(pA - pC, m_localAxisC);
+
+		// position error is measured in meters
+		m_tolerance = b2_linearSlop;
 	}
 
 	m_bodyD = m_joint2->GetBodyA();
@@ -291,8 +297,6 @@ bool b2GearJoint::SolvePositionConstraints(const b2SolverData& data)
 
 	b2Rot qA(aA), qB(aB), qC(aC), qD(aD);
 
-	float linearError = 0.0f;
-
 	float coordinateA, coordinateB;
 
 	b2Vec2 JvAC, JvBD;
@@ -373,8 +377,12 @@ bool b2GearJoint::SolvePositionConstraints(const b2SolverData& data)
 	data.positions[m_indexD].c = cD;
 	data.positions[m_indexD].a = aD;
 
-	// TODO_ERIN not implemented
-	return linearError < b2_linearSlop;
+	if (b2Abs(C) < m_tolerance)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 b2Vec2 b2GearJoint::GetAnchorA() const

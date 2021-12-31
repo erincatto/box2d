@@ -392,7 +392,7 @@ void b2DistanceJoint::Draw(b2Draw* draw) const
 	b2Vec2 pB = b2Mul(xfB, m_localAnchorB);
 
 	b2Vec2 axis = pB - pA;
-	float length = axis.Normalize();
+	axis.Normalize();
 
 	b2Color c1(0.7f, 0.7f, 0.7f);
 	b2Color c2(0.3f, 0.9f, 0.3f);

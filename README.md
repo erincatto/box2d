@@ -80,12 +80,6 @@ Note: vcpkg support is not provided by the Box2D project
 - You can now build and run the testbed
 
 ## Installing using CMake
-You can use the CMake install feature to deploy the library to a central location that can
-be accessed using:
-```
-find_package(box2d REQUIRED)
-target_link_libraries(mytarget PRIVATE box2d)
-```
 You can build and install the library and docs using this command sequence (requires Doxygen):
 ```
 mkdir build
