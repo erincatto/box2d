@@ -75,6 +75,8 @@ class b2ContactSolver
 {
 public:
 	b2ContactSolver(b2ContactSolverDef* def);
+    b2ContactSolver(const b2ContactSolver&) = delete;
+    b2ContactSolver& operator=(const b2ContactSolver&) = delete;
 	~b2ContactSolver();
 
 	void InitializeVelocityConstraints();
@@ -97,4 +99,3 @@ public:
 };
 
 #endif
-

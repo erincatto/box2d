@@ -82,6 +82,8 @@ class Test : public b2ContactListener
 public:
 
 	Test();
+    Test(const Test&) = delete;
+    Test& operator=(const Test&) = delete;
 	virtual ~Test();
 
 	void DrawTitle(const char* string);
@@ -95,7 +97,7 @@ public:
 	virtual void MouseMove(const b2Vec2& p);
 	void LaunchBomb();
 	void LaunchBomb(const b2Vec2& position, const b2Vec2& velocity);
-	
+
 	void SpawnBomb(const b2Vec2& worldPt);
 	void CompleteBombSpawn(const b2Vec2& p);
 

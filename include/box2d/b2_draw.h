@@ -50,6 +50,9 @@ class B2_API b2Draw
 public:
 	b2Draw();
 
+    b2Draw(const b2Draw&) = default;
+    b2Draw& operator=(const b2Draw&) = default;
+
 	virtual ~b2Draw() {}
 
 	enum

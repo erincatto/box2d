@@ -418,6 +418,8 @@ private:
 	};
 
 	b2Body(const b2BodyDef* bd, b2World* world);
+    b2Body(const b2Body&) = delete;
+    b2Body& operator=(const b2Body&) = delete;
 	~b2Body();
 
 	void SynchronizeFixtures();

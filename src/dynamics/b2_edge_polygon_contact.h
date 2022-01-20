@@ -35,7 +35,6 @@ public:
 	static void Destroy(b2Contact* contact, b2BlockAllocator* allocator);
 
 	b2EdgeAndPolygonContact(b2Fixture* fixtureA, b2Fixture* fixtureB);
-	~b2EdgeAndPolygonContact() {}
 
 	void Evaluate(b2Manifold* manifold, const b2Transform& xfA, const b2Transform& xfB) override;
 };

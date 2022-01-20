@@ -43,6 +43,8 @@ class B2_API b2StackAllocator
 {
 public:
 	b2StackAllocator();
+    b2StackAllocator(const b2StackAllocator&) = delete;
+    b2StackAllocator& operator=(const b2StackAllocator&) = delete;
 	~b2StackAllocator();
 
 	void* Allocate(int32 size);

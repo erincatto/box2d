@@ -71,6 +71,9 @@ public:
 	/// Constructing the tree initializes the node pool.
 	b2DynamicTree();
 
+    b2DynamicTree(const b2DynamicTree&) = delete;
+    b2DynamicTree& operator=(const b2DynamicTree&) = delete;
+
 	/// Destroy the tree, freeing the node pool.
 	~b2DynamicTree();
 

@@ -47,6 +47,8 @@ public:
 	};
 
 	b2BroadPhase();
+    b2BroadPhase(const b2BroadPhase&) = delete;
+    b2BroadPhase& operator=(const b2BroadPhase&) = delete;
 	~b2BroadPhase();
 
 	/// Create a proxy with an initial AABB. Pairs are not reported until

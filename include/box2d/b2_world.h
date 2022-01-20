@@ -50,6 +50,9 @@ public:
 	/// @param gravity the world gravity vector.
 	b2World(const b2Vec2& gravity);
 
+    b2World(const b2World&) = delete;
+    b2World& operator=(const b2World&) = delete;
+
 	/// Destruct the world. All physics entities are destroyed and all heap memory is released.
 	~b2World();
 

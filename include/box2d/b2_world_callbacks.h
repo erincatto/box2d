@@ -41,6 +41,9 @@ struct b2Manifold;
 class B2_API b2DestructionListener
 {
 public:
+    b2DestructionListener() = default;
+    b2DestructionListener(const b2DestructionListener&) = default;
+    b2DestructionListener& operator=(const b2DestructionListener&) = default;
 	virtual ~b2DestructionListener() {}
 
 	/// Called when any joint is about to be destroyed due
@@ -57,6 +60,9 @@ public:
 class B2_API b2ContactFilter
 {
 public:
+    b2ContactFilter() = default;
+    b2ContactFilter(const b2ContactFilter&) = default;
+    b2ContactFilter& operator=(const b2ContactFilter&) = default;
 	virtual ~b2ContactFilter() {}
 
 	/// Return true if contact calculations should be performed between these two shapes.
@@ -86,6 +92,9 @@ struct B2_API b2ContactImpulse
 class B2_API b2ContactListener
 {
 public:
+    b2ContactListener() = default;
+    b2ContactListener(const b2ContactListener&) = default;
+    b2ContactListener& operator=(const b2ContactListener&) = default;
 	virtual ~b2ContactListener() {}
 
 	/// Called when two fixtures begin to touch.
@@ -128,6 +137,9 @@ public:
 class B2_API b2QueryCallback
 {
 public:
+    b2QueryCallback() = default;
+    b2QueryCallback(const b2QueryCallback&) = default;
+    b2QueryCallback& operator=(const b2QueryCallback&) = default;
 	virtual ~b2QueryCallback() {}
 
 	/// Called for each fixture found in the query AABB.
@@ -140,6 +152,9 @@ public:
 class B2_API b2RayCastCallback
 {
 public:
+    b2RayCastCallback() = default;
+    b2RayCastCallback(const b2RayCastCallback&) = default;
+    b2RayCastCallback& operator=(const b2RayCastCallback&) = default;
 	virtual ~b2RayCastCallback() {}
 
 	/// Called for each fixture found in the query. You control how the ray cast

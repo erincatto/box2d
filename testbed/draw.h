@@ -57,6 +57,8 @@ class DebugDraw : public b2Draw
 {
 public:
 	DebugDraw();
+    DebugDraw(const DebugDraw&) = delete;
+    DebugDraw& operator=(const DebugDraw&) = delete;
 	~DebugDraw();
 
 	void Create();
@@ -76,7 +78,7 @@ public:
 
 	void DrawPoint(const b2Vec2& p, float size, const b2Color& color) override;
 
-	void DrawString(int x, int y, const char* string, ...); 
+	void DrawString(int x, int y, const char* string, ...);
 
 	void DrawString(const b2Vec2& p, const char* string, ...);
 

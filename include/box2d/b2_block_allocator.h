@@ -38,6 +38,8 @@ class B2_API b2BlockAllocator
 {
 public:
 	b2BlockAllocator();
+    b2BlockAllocator(const b2BlockAllocator&) = delete;
+    b2BlockAllocator& operator=(const b2BlockAllocator&) = delete;
 	~b2BlockAllocator();
 
 	/// Allocate memory. This will use b2Alloc if the size is larger than b2_maxBlockSize.

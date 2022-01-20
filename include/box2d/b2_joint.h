@@ -166,6 +166,8 @@ protected:
 	static void Destroy(b2Joint* joint, b2BlockAllocator* allocator);
 
 	b2Joint(const b2JointDef* def);
+    b2Joint(const b2Joint&) = delete;
+    b2Joint& operator=(const b2Joint&) = delete;
 	virtual ~b2Joint() {}
 
 	virtual void InitVelocityConstraints(const b2SolverData& data) = 0;

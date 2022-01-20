@@ -104,6 +104,8 @@ class B2_API b2Rope
 {
 public:
 	b2Rope();
+    b2Rope(const b2Rope&) = delete;
+    b2Rope& operator=(const b2Rope&) = delete;
 	~b2Rope();
 
 	///

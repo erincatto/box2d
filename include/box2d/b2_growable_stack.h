@@ -41,6 +41,9 @@ public:
 		m_capacity = N;
 	}
 
+    b2GrowableStack(const b2GrowableStack&) = delete;
+    b2GrowableStack& operator=(const b2GrowableStack&) = delete;
+
 	~b2GrowableStack()
 	{
 		if (m_stack != m_array)

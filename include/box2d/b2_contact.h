@@ -206,6 +206,8 @@ protected:
 
 	b2Contact() : m_fixtureA(nullptr), m_fixtureB(nullptr) {}
 	b2Contact(b2Fixture* fixtureA, int32 indexA, b2Fixture* fixtureB, int32 indexB);
+    b2Contact(const b2Contact&) = delete;
+    b2Contact& operator=(const b2Contact&) = delete;
 	virtual ~b2Contact() {}
 
 	void Update(b2ContactListener* listener);

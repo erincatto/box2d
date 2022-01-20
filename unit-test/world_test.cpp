@@ -37,7 +37,7 @@ public:
 
 DOCTEST_TEST_CASE("begin contact")
 {
-	b2World world = b2World(b2Vec2(0.0f, -10.0f));
+	b2World world{b2Vec2(0.0f, -10.0f)};
 	MyContactListener listener;
 	world.SetContactListener(&listener);
 
@@ -63,7 +63,7 @@ DOCTEST_TEST_CASE("begin contact")
 
 	CHECK(world.GetContactList() == nullptr);
 	CHECK(begin_contact == false);
-	
+
 	bodyB->SetTransform(b2Vec2(1.f, 0.f), 0.f);
 
 	world.Step(timeStep, velocityIterations, positionIterations);

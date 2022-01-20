@@ -38,6 +38,9 @@ class B2_API b2ChainShape : public b2Shape
 public:
 	b2ChainShape();
 
+    b2ChainShape(const b2ChainShape&) = delete;
+    b2ChainShape& operator=(const b2ChainShape&) = delete;
+
 	/// The destructor frees the vertices using b2Free.
 	~b2ChainShape();
 

@@ -58,6 +58,10 @@ public:
 		e_typeCount = 4
 	};
 
+    b2Shape() = default;
+    b2Shape(const b2Shape&) = default;
+    b2Shape& operator=(const b2Shape&) = default;
+
 	virtual ~b2Shape() {}
 
 	/// Clone the concrete shape using the provided allocator.
