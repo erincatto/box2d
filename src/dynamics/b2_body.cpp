@@ -244,6 +244,8 @@ void b2Body::DestroyFixture(b2Fixture* fixture)
 	// You tried to remove a shape that is not attached to this body.
 	b2Assert(found);
 
+	const float density = fixture->m_density;
+
 	// Destroy any contacts associated with the fixture.
 	b2ContactEdge* edge = m_contactList;
 	while (edge)
@@ -278,8 +280,11 @@ void b2Body::DestroyFixture(b2Fixture* fixture)
 
 	--m_fixtureCount;
 
-	// Reset the mass data.
-	ResetMassData();
+	// Reset the mass data
+	if (density > 0.0f)
+	{
+		ResetMassData();
+	}
 }
 
 void b2Body::ResetMassData()

@@ -569,30 +569,28 @@ void b2Distance(b2DistanceOutput* output,
 	// Cache the simplex.
 	simplex.WriteCache(cache);
 
-	// Apply radii if requested.
+	// Apply radii if requested
 	if (input->useRadii)
 	{
-		float rA = proxyA->m_radius;
-		float rB = proxyB->m_radius;
-
-		if (output->distance > rA + rB && output->distance > b2_epsilon)
+		if (output->distance < b2_epsilon)
 		{
-			// Shapes are still no overlapped.
-			// Move the witness points to the outer surface.
-			output->distance -= rA + rB;
-			b2Vec2 normal = output->pointB - output->pointA;
-			normal.Normalize();
-			output->pointA += rA * normal;
-			output->pointB -= rB * normal;
-		}
-		else
-		{
-			// Shapes are overlapped when radii are considered.
-			// Move the witness points to the middle.
+			// Shapes are too close to safely compute normal
 			b2Vec2 p = 0.5f * (output->pointA + output->pointB);
 			output->pointA = p;
 			output->pointB = p;
 			output->distance = 0.0f;
+		}
+		else
+		{
+			// Keep closest points on perimeter even if overlapped, this way
+			// the points move smoothly.
+			float rA = proxyA->m_radius;
+			float rB = proxyB->m_radius;
+			b2Vec2 normal = output->pointB - output->pointA;
+			normal.Normalize();
+			output->distance = b2Max(0.0f, output->distance - rA - rB);
+			output->pointA += rA * normal;
+			output->pointB -= rB * normal;
 		}
 	}
 }

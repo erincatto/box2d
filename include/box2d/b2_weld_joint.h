@@ -85,7 +85,7 @@ public:
 	float GetReferenceAngle() const { return m_referenceAngle; }
 
 	/// Set/get stiffness in N*m
-	void SetStiffness(float hz) { m_stiffness = hz; }
+	void SetStiffness(float stiffness) { m_stiffness = stiffness; }
 	float GetStiffness() const { return m_stiffness; }
 
 	/// Set/get damping in N*m*s

@@ -114,6 +114,7 @@ protected:
 
 	float m_constant;
 	float m_ratio;
+	float m_tolerance;
 
 	float m_impulse;
 

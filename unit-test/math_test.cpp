@@ -29,7 +29,7 @@ DOCTEST_TEST_CASE("math test")
 	SUBCASE("sweep")
 	{
 		// From issue #447
-		b2Sweep sweep;
+		b2Sweep sweep{};
 		sweep.localCenter.SetZero();
 		sweep.c0.Set(-2.0f, 4.0f);
 		sweep.c.Set(3.0f, 8.0f);

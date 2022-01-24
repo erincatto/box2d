@@ -33,6 +33,21 @@ DebugDraw g_debugDraw;
 Camera g_camera;
 
 //
+Camera::Camera()
+{
+	m_width = 1280;
+	m_height = 800;
+	ResetView();
+}
+
+//
+void Camera::ResetView()
+{
+	m_center.Set(0.0f, 20.0f);
+	m_zoom = 1.0f;
+}
+
+//
 b2Vec2 Camera::ConvertScreenToWorld(const b2Vec2& ps)
 {
 	float w = float(m_width);

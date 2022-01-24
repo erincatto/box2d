@@ -44,7 +44,6 @@ enum b2JointType
 	e_wheelJoint,
     e_weldJoint,
 	e_frictionJoint,
-	e_ropeJoint,
 	e_motorJoint
 };
 
@@ -138,6 +137,7 @@ public:
 
 	/// Get the user data pointer.
 	b2JointUserData& GetUserData();
+	const b2JointUserData& GetUserData() const;
 
 	/// Short-cut function to determine if either body is enabled.
 	bool IsEnabled() const;
@@ -216,6 +216,11 @@ inline const b2Joint* b2Joint::GetNext() const
 }
 
 inline b2JointUserData& b2Joint::GetUserData()
+{
+	return m_userData;
+}
+
+inline const b2JointUserData& b2Joint::GetUserData() const
 {
 	return m_userData;
 }
