@@ -84,6 +84,12 @@ struct B2_API b2Vec2
 	{
 		x *= a; y *= a;
 	}
+	
+	/// Divide this vector by a scalar.
+	void operator /= (float a)
+	{
+		x /= a; y /= a;
+	}
 
 	/// Get the length of this vector (the norm).
 	float Length() const
@@ -162,6 +168,12 @@ struct B2_API b2Vec3
 	void operator *= (float s)
 	{
 		x *= s; y *= s; z *= s;
+	}
+	
+	/// Divide this vector by a scalar.
+	void operator /= (float s)
+	{
+		x /= s; y /= s; z /= s;
 	}
 
 	float x, y, z;
@@ -450,6 +462,11 @@ inline b2Vec2 operator * (float s, const b2Vec2& a)
 	return b2Vec2(s * a.x, s * a.y);
 }
 
+inline b2Vec2 operator / (const b2Vec2& a, float s)
+{
+	return b2Vec2(a.x / s, a.y / s);
+}
+
 inline bool operator == (const b2Vec2& a, const b2Vec2& b)
 {
 	return a.x == b.x && a.y == b.y;
@@ -475,6 +492,11 @@ inline float b2DistanceSquared(const b2Vec2& a, const b2Vec2& b)
 inline b2Vec3 operator * (float s, const b2Vec3& a)
 {
 	return b2Vec3(s * a.x, s * a.y, s * a.z);
+}
+
+inline b2Vec3 operator / (const b2Vec3& a, float s)
+{
+	return b2Vec3(a.x / s, a.y / s, a.z / s);
 }
 
 /// Add two vectors component-wise.
