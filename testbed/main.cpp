@@ -45,6 +45,9 @@ static Test* s_test = nullptr;
 static Settings s_settings;
 static bool s_rightMouseDown = false;
 static b2Vec2 s_clickPointWS = b2Vec2_zero;
+// Display scaling factor of the current monitor AKA DPI. A value of 1.0f means
+// 100% (default)
+static float displayScalingFactor = 1.0f;
 
 void glfwErrorCallback(int error, const char* description)
 {
@@ -113,7 +116,7 @@ static void CreateUI(GLFWwindow* window, const char* glslVersion = NULL)
 
 	if (fontPath)
 	{
-		ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath, 13.0f);
+		ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath, 13.0f * displayScalingFactor);
 	}
 }
 
@@ -350,7 +353,7 @@ static void ScrollCallback(GLFWwindow* window, double dx, double dy)
 
 static void UpdateUI()
 {
-	int menuWidth = 180;
+	int menuWidth = floor(180 * displayScalingFactor);
 	if (g_debugDraw.m_showUI)
 	{
 		ImGui::SetNextWindowPos(ImVec2((float)g_camera.m_width - menuWidth - 10, 10));
@@ -522,6 +525,11 @@ int main(int, char**)
 		glfwTerminate();
 		return -1;
 	}
+
+	float x_dpi = 1.0f, y_dpi = 1.0f;
+	glfwGetMonitorContentScale(glfwGetPrimaryMonitor(),&x_dpi, &y_dpi);
+	// assume X dpi and Y DPI are the same for now
+	displayScalingFactor = x_dpi;
 
 	glfwMakeContextCurrent(g_mainWindow);
 
