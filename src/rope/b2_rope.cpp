@@ -243,7 +243,7 @@ void b2Rope::SetTuning(const b2RopeTuning& tuning)
 
 void b2Rope::Step(float dt, int32 iterations, const b2Vec2& position)
 {
-	if (dt == 0.0)
+	if (dt == 0.0f)
 	{
 		return;
 	}
