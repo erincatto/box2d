@@ -25,6 +25,14 @@
 
 #include <new>
 
+b2PolygonShape::b2PolygonShape()
+{
+	m_type = e_polygon;
+	m_radius = b2_polygonRadius;
+	m_count = 0;
+	m_centroid.SetZero();
+}
+
 b2Shape* b2PolygonShape::Clone(b2BlockAllocator* allocator) const
 {
 	void* mem = allocator->Allocate(sizeof(b2PolygonShape));
@@ -115,100 +123,157 @@ static b2Vec2 ComputeCentroid(const b2Vec2* vs, int32 count)
 	return c;
 }
 
-void b2PolygonShape::Set(const b2Vec2* vertices, int32 count)
+enum class b2HullState
 {
-	b2Assert(3 <= count && count <= b2_maxPolygonVertices);
-	if (count < 3)
+	Welded,
+	Candidate,
+	Collinear,
+	HullRoot,
+	Hull
+};
+
+bool b2PolygonShape::Set(const b2Vec2* vertices, int32 count)
+{
+	if (count < 3 || count > b2_maxPolygonVertices)
 	{
-		SetAsBox(1.0f, 1.0f);
-		return;
+		return false;
 	}
 	
 	int32 n = b2Min(count, b2_maxPolygonVertices);
 
-	// Perform welding and copy vertices into local buffer.
-	b2Vec2 ps[b2_maxPolygonVertices];
-	int32 tempCount = 0;
+	b2HullState states[b2_maxPolygonVertices] = {};
 	for (int32 i = 0; i < n; ++i)
 	{
-		b2Vec2 v = vertices[i];
+		states[i] = b2HullState::Candidate;
+	}
+
+	// Perform aggressive welding. First vertex always remains as a candidate.
+	int32 candidateCount = 0;
+	const float tolSqr = 16.0f * b2_linearSlop * b2_linearSlop;
+	for (int32 i = 0; i < n; ++i)
+	{
+		b2Vec2 vi = vertices[i];
 
 		bool unique = true;
-		for (int32 j = 0; j < tempCount; ++j)
+		for (int32 j = 0; j < i; ++j)
 		{
-			if (b2DistanceSquared(v, ps[j]) < ((0.5f * b2_linearSlop) * (0.5f * b2_linearSlop)))
+			b2Vec2 vj = vertices[j];
+
+			float distSqr = b2DistanceSquared(vi, vj);
+			if (distSqr < tolSqr)
 			{
 				unique = false;
+				states[i] = b2HullState::Welded;
 				break;
 			}
 		}
 
 		if (unique)
 		{
-			ps[tempCount++] = v;
+			// Keep track of how many candidate points remain
+			++candidateCount;
 		}
 	}
 
-	n = tempCount;
-	if (n < 3)
+	if (candidateCount < 3)
 	{
-		// Polygon is degenerate.
-		b2Assert(false);
-		SetAsBox(1.0f, 1.0f);
-		return;
+		// Polygon is degenerate
+		return false;
 	}
 
 	// Create the convex hull using the Gift wrapping algorithm
 	// http://en.wikipedia.org/wiki/Gift_wrapping_algorithm
 
-	// Find the right most point on the hull
+	// Find the right most point as the first point on the hull
+	b2Vec2 p0 = vertices[0];
+	float x0 = p0.x;
 	int32 i0 = 0;
-	float x0 = ps[0].x;
 	for (int32 i = 1; i < n; ++i)
 	{
-		float x = ps[i].x;
-		if (x > x0 || (x == x0 && ps[i].y < ps[i0].y))
+		if (states[i] == b2HullState::Welded)
 		{
+			continue;
+		}
+
+		float x = vertices[i].x;
+		if (x > x0 || (x == x0 && vertices[i].y < p0.y))
+		{
+			p0 = vertices[i];
 			i0 = i;
 			x0 = x;
 		}
 	}
 
-	int32 hull[b2_maxPolygonVertices];
-	int32 m = 0;
-	int32 ih = i0;
+	states[i0] = b2HullState::HullRoot;
 
+	b2Vec2 hull[b2_maxPolygonVertices];
+
+	// m is the current size of the hull
+	int32 m = 0;
+	b2Vec2 pivot = p0;
+	int32 pivotIndex = i0;
+
+	// build hull in CCW order
 	for (;;)
 	{
 		b2Assert(m < b2_maxPolygonVertices);
-		hull[m] = ih;
+
+		hull[m] = pivot;
+		++m;
 
 		int32 ie = 0;
+
 		for (int32 j = 1; j < n; ++j)
 		{
-			if (ie == ih)
+			if (states[j] == b2HullState::Welded ||
+				states[j] == b2HullState::Hull ||
+				states[j] == b2HullState::Collinear ||
+				j == pivotIndex)
 			{
+				// don't consider welded or hull points (allow root)
+				continue;
+			}
+
+			if (states[ie] == b2HullState::Welded ||
+				states[ie] == b2HullState::Hull ||
+				states[j] == b2HullState::Collinear ||
+				ie == pivotIndex)
+			{
+				// endpoint must be a candidate, try next
 				ie = j;
 				continue;
 			}
 
-			b2Vec2 r = ps[ie] - ps[hull[m]];
-			b2Vec2 v = ps[j] - ps[hull[m]];
-			float c = b2Cross(r, v);
-			if (c < 0.0f)
+			b2Vec2 re = vertices[ie] - pivot;
+			b2Vec2 rj = vertices[j] - pivot;
+			float c = b2Cross(re, rj);
+			
+			// Collinear check
+			float reLen = re.Length();
+			float rjLen = rj.Length();
+			float tol = b2_linearSlop * b2Max(rjLen, reLen);
+			if (b2Abs(c) < tol && rjLen > reLen)
 			{
+				if (ie != i0)
+				{
+					states[ie] = b2HullState::Collinear;
+				}
+
+				// the angle is small and rj is longer than re
 				ie = j;
+				continue;
 			}
 
-			// Collinearity check
-			if (c == 0.0f && v.LengthSquared() > r.LengthSquared())
+			if (c <= -tol)
 			{
+				// rj is clearly to the right of re
 				ie = j;
 			}
 		}
 
-		++m;
-		ih = ie;
+		pivot = vertices[ie];
+		pivotIndex = ie;
+		states[ie] = b2HullState::Hull;
 
 		if (ie == i0)
 		{
@@ -219,9 +284,7 @@ void b2PolygonShape::Set(const b2Vec2* vertices, int32 count)
 	if (m < 3)
 	{
 		// Polygon is degenerate.
-		b2Assert(false);
-		SetAsBox(1.0f, 1.0f);
-		return;
+		return false;
 	}
 
 	m_count = m;
@@ -229,7 +292,7 @@ void b2PolygonShape::Set(const b2Vec2* vertices, int32 count)
 	// Copy vertices.
 	for (int32 i = 0; i < m; ++i)
 	{
-		m_vertices[i] = ps[hull[i]];
+		m_vertices[i] = hull[i];
 	}
 
 	// Compute normals. Ensure the edges have non-zero length.
@@ -245,6 +308,8 @@ void b2PolygonShape::Set(const b2Vec2* vertices, int32 count)
 
 	// Compute the polygon centroid.
 	m_centroid = ComputeCentroid(m_vertices, m);
+
+	return true;
 }
 
 bool b2PolygonShape::TestPoint(const b2Transform& xf, const b2Vec2& p) const

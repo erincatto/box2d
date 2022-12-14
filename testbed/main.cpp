@@ -113,7 +113,7 @@ static void CreateUI(GLFWwindow* window, const char* glslVersion = NULL)
 
 	if (fontPath)
 	{
-		ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath, 13.0f);
+		ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath, 16.0f);
 	}
 }
 
@@ -530,7 +530,6 @@ int main(int, char**)
 	printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
 	printf("OpenGL %s, GLSL %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-	glfwSetScrollCallback(g_mainWindow, ScrollCallback);
 	glfwSetWindowSizeCallback(g_mainWindow, ResizeWindowCallback);
 	glfwSetKeyCallback(g_mainWindow, KeyCallback);
 	glfwSetCharCallback(g_mainWindow, CharCallback);

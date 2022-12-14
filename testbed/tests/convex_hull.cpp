@@ -38,8 +38,41 @@ public:
 
 	void Generate()
 	{
-		b2Vec2 lowerBound(-8.0f, -8.0f);
-		b2Vec2 upperBound(8.0f, 8.0f);
+#if 0
+		unsigned int vals[6][2] = {
+			{0xC1078533,0x3F0BAB5E},
+			{0xC0F5B2E8,0x3F28AF8C},
+			{0xC0E2B14A,0x3F3E72AE},
+			{0xC0EBC298, 0x402E521E},
+			{0xC1158EA9, 0x401C2F82},
+			{0xC1110602, 0x3EEBD078}};
+
+		m_count = 6;
+		for (int i = 0; i < m_count; ++i)
+		{
+			m_points[i].x = *(float*)(&(vals[i][0]));
+			m_points[i].y = *(float*)(&(vals[i][1]));
+		}
+
+#elif 1
+
+		m_points[0] = { -4.03110123f, 1.21307147f };
+		m_points[1] = { 0.991306305f, -5.56931877f };
+		m_points[2] = { -2.30727673f, -3.26756334f };
+		m_points[3] = { 0.991306305f, -5.56931877f };
+		m_points[4] = { 5.20646906f, 1.24450326f };
+		m_points[5] = { -0.459646702f, 3.91972303f };
+		m_points[6] = { 5.20346594f, 1.24659896f };
+		m_points[7] = { -3.36815786f, 2.16311741f };
+
+		m_count = e_count;
+#else
+
+		float angle = b2_pi * RandomFloat();
+		b2Rot r(angle);
+
+		b2Vec2 lowerBound(-4.0f, -4.0f);
+		b2Vec2 upperBound(4.0f, 4.0f);
 
 		for (int32 i = 0; i < e_count; ++i)
 		{
@@ -50,10 +83,11 @@ public:
 			// This will stress the convex hull algorithm.
 			b2Vec2 v(x, y);
 			v = b2Clamp(v, lowerBound, upperBound);
-			m_points[i] = v;
+			m_points[i] = b2Mul(r, v);
 		}
 
 		m_count = e_count;
+#endif
 	}
 
 	void Keyboard(int key) override
@@ -74,10 +108,21 @@ public:
 	{
 		Test::Step(settings);
 
-		b2PolygonShape shape;
-		shape.Set(m_points, m_count);
-
 		g_debugDraw.DrawString(5, m_textLine, "Press g to generate a new random convex hull");
+		m_textLine += m_textIncrement;
+
+		b2PolygonShape shape;
+		bool success = shape.Set(m_points, m_count);
+		if (success == false)
+		{
+			g_debugDraw.DrawString(5, m_textLine, "FAILED");
+			shape.Set(m_points, m_count);
+		}
+		else
+		{
+			g_debugDraw.DrawString(5, m_textLine, "count = %d", shape.m_count);
+		}
+
 		m_textLine += m_textIncrement;
 
 		g_debugDraw.DrawPolygon(shape.m_vertices, shape.m_count, b2Color(0.9f, 0.9f, 0.9f));
@@ -88,10 +133,10 @@ public:
 			g_debugDraw.DrawString(m_points[i] + b2Vec2(0.05f, 0.05f), "%d", i);
 		}
 
-		if (shape.Validate() == false)
-		{
-			m_textLine += 0;
-		}
+		//if (success && shape.Validate() == false)
+		//{
+		//	shape.Set(m_points, m_count);
+		//}
 
 		if (m_auto)
 		{
