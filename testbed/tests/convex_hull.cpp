@@ -32,8 +32,10 @@ public:
 
 	ConvexHull()
 	{
-		Generate();
+		m_generation = 0;
 		m_auto = false;
+		m_bulk = false;
+		Generate();
 	}
 
 	void Generate()
@@ -56,14 +58,14 @@ public:
 
 #elif 1
 
-		m_points[0] = { -4.03110123f, 1.21307147f };
-		m_points[1] = { 0.991306305f, -5.56931877f };
-		m_points[2] = { -2.30727673f, -3.26756334f };
-		m_points[3] = { 0.991306305f, -5.56931877f };
-		m_points[4] = { 5.20646906f, 1.24450326f };
-		m_points[5] = { -0.459646702f, 3.91972303f };
-		m_points[6] = { 5.20346594f, 1.24659896f };
-		m_points[7] = { -3.36815786f, 2.16311741f };
+		m_points[0] = { -2.99307323f, -2.84361196f };
+		m_points[1] = { -5.41493702f,  1.55601883f };
+		m_points[2] = { 1.54026687f,  5.44312191f };
+		m_points[3] = { -2.17538762f, -4.30669880f };
+		m_points[4] = { -1.54026687f, -5.44312191f };
+		m_points[5] = { -2.31474543f, -4.05734587f };
+		m_points[6] = { 1.54026687f,  5.44312191f };
+		m_points[7] = { -3.09342265f, -2.66405630f };
 
 		m_count = e_count;
 #else
@@ -88,6 +90,8 @@ public:
 
 		m_count = e_count;
 #endif
+
+		m_generation += 1;
 	}
 
 	void Keyboard(int key) override
@@ -96,6 +100,10 @@ public:
 		{
 		case GLFW_KEY_A:
 			m_auto = !m_auto;
+			break;
+
+		case GLFW_KEY_B:
+			m_bulk = !m_bulk;
 			break;
 
 		case GLFW_KEY_G:
@@ -110,17 +118,50 @@ public:
 
 		g_debugDraw.DrawString(5, m_textLine, "Press g to generate a new random convex hull");
 		m_textLine += m_textIncrement;
-
+		
+		bool success;
 		b2PolygonShape shape;
-		bool success = shape.Set(m_points, m_count);
-		if (success == false)
+
+		if (m_bulk)
 		{
-			g_debugDraw.DrawString(5, m_textLine, "FAILED");
-			shape.Set(m_points, m_count);
+			for (int32 i = 0; i < 1000; ++i)
+			{
+				Generate();
+				success = shape.Set(m_points, m_count);
+
+				if (success && shape.Validate() == false)
+				{
+					m_bulk = false;
+					break;
+				}
+			}
 		}
 		else
 		{
-			g_debugDraw.DrawString(5, m_textLine, "count = %d", shape.m_count);
+			if (m_auto)
+			{
+				Generate();
+			}
+
+			success = shape.Set(m_points, m_count);
+			if (success && shape.Validate() == false)
+			{
+				m_auto = false;
+			}
+		}
+
+		if (success == false)
+		{
+			g_debugDraw.DrawString(5, m_textLine, "generation = %d, FAILED", m_generation);
+
+			if (m_generation != 1570)
+			{
+				m_auto = false;
+			}
+		}
+		else
+		{
+			g_debugDraw.DrawString(5, m_textLine, "generation = %d, count = %d", m_generation, shape.m_count);
 		}
 
 		m_textLine += m_textIncrement;
@@ -132,16 +173,6 @@ public:
 			g_debugDraw.DrawPoint(m_points[i], 3.0f, b2Color(0.3f, 0.9f, 0.3f));
 			g_debugDraw.DrawString(m_points[i] + b2Vec2(0.05f, 0.05f), "%d", i);
 		}
-
-		//if (success && shape.Validate() == false)
-		//{
-		//	shape.Set(m_points, m_count);
-		//}
-
-		if (m_auto)
-		{
-			Generate();
-		}
 	}
 
 	static Test* Create()
@@ -151,7 +182,9 @@ public:
 
 	b2Vec2 m_points[b2_maxPolygonVertices];
 	int32 m_count;
+	int32 m_generation;
 	bool m_auto;
+	bool m_bulk;
 };
 
 static int testIndex = RegisterTest("Geometry", "Convex Hull", ConvexHull::Create);

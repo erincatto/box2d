@@ -25,6 +25,146 @@
 
 #include <new>
 
+struct b2Hull
+{
+	b2Vec2 points[b2_maxPolygonVertices];
+	int32 count;
+};
+
+static b2Hull b2RecurseHull(b2Vec2 p1, b2Vec2 p2, b2Vec2* ps, int32 count)
+{
+	b2Hull hull;
+	hull.count = 0;
+
+	if (count == 0)
+	{
+		return hull;
+	}
+
+
+	return hull;
+}
+
+static b2Hull b2CombineHulls(const b2Vec2& hull1, const b2Hull& hull2)
+{
+	b2Hull hull;
+	hull.count = 0;
+	return hull;
+}
+
+static b2Hull b2ComputeHull(const b2Vec2* points, int32 count)
+{
+	b2Hull hull;
+	hull.count = 0;
+
+	if (count < 3 || count > b2_maxPolygonVertices)
+	{
+		return hull;
+	}
+
+	int32 n = b2Min(count, b2_maxPolygonVertices);
+
+	b2AABB aabb = { {b2_maxFloat, b2_maxFloat}, {-b2_maxFloat, -b2_maxFloat} };
+
+	// Perform aggressive welding. First vertex always remains as a candidate.
+	b2Vec2 ps[b2_maxPolygonVertices];
+	int32 m = 0;
+	const float tolSqr = 16.0f * b2_linearSlop * b2_linearSlop;
+	for (int32 i = 0; i < n; ++i)
+	{
+		aabb.lowerBound = b2Min(aabb.lowerBound, points[i]);
+		aabb.upperBound = b2Max(aabb.upperBound, points[i]);
+
+		b2Vec2 vi = points[i];
+
+		bool unique = true;
+		for (int32 j = 0; j < i; ++j)
+		{
+			b2Vec2 vj = points[j];
+
+			float distSqr = b2DistanceSquared(vi, vj);
+			if (distSqr < tolSqr)
+			{
+				unique = false;
+				break;
+			}
+		}
+
+		if (unique)
+		{
+			ps[i] = vi;
+			++m;
+		}
+	}
+
+	if (m < 3)
+	{
+		return hull;
+	}
+
+	// Find an extreme point as the first point on the hull
+	b2Vec2 c = aabb.GetCenter();
+	int32 i1 = 0;
+	float d1 = b2DistanceSquared(c, ps[i1]);
+	for (int32 i = 1; i < m; ++i)
+	{
+		float d = b2DistanceSquared(c, ps[i]);
+		if (d > d1)
+		{
+			i1 = i;
+			d1 = d;
+		}
+	}
+
+	// remove p1 from working set
+	b2Vec2 p1 = ps[i1];
+	ps[i1] = ps[m - 1];
+	m = m - 1;
+
+	int32 i2 = 0;
+	float d2 = b2DistanceSquared(p1, ps[i2]);
+	for (int32 i = 1; i < m; ++i)
+	{
+		float d = b2DistanceSquared(p1, ps[i]);
+		if (d > d2)
+		{
+			i2 = i;
+			d2 = d;
+		}
+	}
+
+	// remove p2 from working set
+	b2Vec2 p2 = ps[i2];
+	ps[i2] = ps[m - 1];
+	m = m - 1;
+
+	b2Vec2 above[b2_maxPolygonVertices - 2];
+	int32 aboveCount = 0;
+
+	b2Vec2 below[b2_maxPolygonVertices - 2];
+	int32 belowCount = 0;
+
+	b2Vec2 r = p2 - p1;
+	for (int32 i = 0; i < m; ++i)
+	{
+		b2Vec2 e = ps[i] - p1;
+		float f = b2Cross(e, r);
+		if (f >= 0.0f)
+		{
+			above[aboveCount++] = ps[i];
+		}
+		else
+		{
+			below[belowCount++] = ps[i];
+		}
+	}
+
+	b2Hull hullAbove = b2RecurseHull(p1, p2, above, aboveCount);
+	b2Hull hullBelow = b2RecurseHull(p2, p1, below, belowCount);
+	hull = b2CombineHulls(hullAbove, hullBelow);
+	return hull;
+}
+
 b2PolygonShape::b2PolygonShape()
 {
 	m_type = e_polygon;
@@ -142,9 +282,14 @@ bool b2PolygonShape::Set(const b2Vec2* vertices, int32 count)
 	int32 n = b2Min(count, b2_maxPolygonVertices);
 
 	b2HullState states[b2_maxPolygonVertices] = {};
+	b2AABB aabb = { {b2_maxFloat, b2_maxFloat}, {-b2_maxFloat, -b2_maxFloat} };
+
 	for (int32 i = 0; i < n; ++i)
 	{
 		states[i] = b2HullState::Candidate;
+
+		aabb.lowerBound = b2Min(aabb.lowerBound, vertices[i]);
+		aabb.upperBound = b2Max(aabb.upperBound, vertices[i]);
 	}
 
 	// Perform aggressive welding. First vertex always remains as a candidate.
@@ -184,9 +329,10 @@ bool b2PolygonShape::Set(const b2Vec2* vertices, int32 count)
 	// Create the convex hull using the Gift wrapping algorithm
 	// http://en.wikipedia.org/wiki/Gift_wrapping_algorithm
 
-	// Find the right most point as the first point on the hull
+	// Find an extreme point as the first point on the hull
+	b2Vec2 c = aabb.GetCenter();
 	b2Vec2 p0 = vertices[0];
-	float x0 = p0.x;
+	float d0 = b2DistanceSquared(c, p0);
 	int32 i0 = 0;
 	for (int32 i = 1; i < n; ++i)
 	{
@@ -195,12 +341,12 @@ bool b2PolygonShape::Set(const b2Vec2* vertices, int32 count)
 			continue;
 		}
 
-		float x = vertices[i].x;
-		if (x > x0 || (x == x0 && vertices[i].y < p0.y))
+		float d = b2DistanceSquared(c, vertices[i]);
+		if (d > d0)
 		{
 			p0 = vertices[i];
 			i0 = i;
-			x0 = x;
+			d0 = d;
 		}
 	}
 
@@ -246,27 +392,32 @@ bool b2PolygonShape::Set(const b2Vec2* vertices, int32 count)
 
 			b2Vec2 re = vertices[ie] - pivot;
 			b2Vec2 rj = vertices[j] - pivot;
-			float c = b2Cross(re, rj);
-			
+
+			// If c is positive then rj is to the right of re
+			float c = b2Cross(rj, re);
+
 			// Collinear check
 			float reLen = re.Length();
 			float rjLen = rj.Length();
-			float tol = b2_linearSlop * b2Max(rjLen, reLen);
-			if (b2Abs(c) < tol && rjLen > reLen)
+			float tol = 2.0f * b2_linearSlop * reLen;
+
+			if (c > tol)
 			{
+				// rj is clearly to the right
+				ie = j;
+				continue;
+			}
+
+			if (c > -tol && rjLen > reLen)
+			{
+				// the angle is small and rj is longer than re
+				// consider vertex ie to be collinear
+
 				if (ie != i0)
 				{
 					states[ie] = b2HullState::Collinear;
 				}
 
-				// the angle is small and rj is longer than re
-				ie = j;
-				continue;
-			}
-
-			if (c <= -tol)
-			{
-				// rj is clearly to the right of re
 				ie = j;
 			}
 		}
@@ -497,6 +648,7 @@ void b2PolygonShape::ComputeMass(b2MassData* massData, float density) const
 
 bool b2PolygonShape::Validate() const
 {
+	// Test that every point is behind every edge
 	for (int32 i = 0; i < m_count; ++i)
 	{
 		int32 i1 = i;
