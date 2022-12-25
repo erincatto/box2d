@@ -637,7 +637,7 @@ too strong.
 
 ### Joint Definition
 Each joint type has a definition that derives from b2JointDef. All
-joints are connected between two different bodies. One body may static.
+joints are connected between two different bodies. One body may be static.
 Joints between static and/or kinematic bodies are allowed, but have no
 effect and use some processing time.
 

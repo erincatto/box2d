@@ -37,7 +37,7 @@ public:
 			shape.SetTwoSided(b2Vec2(-50.0f, 0.0f), b2Vec2(50.0f, 0.0f));
 
 			b2FixtureDef sd;
-			sd.shape = &shape;;
+			sd.shape = &shape;
 
 			b2BodyDef bd;
 			b2Body* ground = m_world->CreateBody(&bd);

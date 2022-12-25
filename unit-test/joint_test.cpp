@@ -27,7 +27,7 @@
 DOCTEST_TEST_CASE("joint reactions")
 {
 	b2Vec2 gravity(0, -10.0f);
-	b2World world = b2World(gravity);
+	b2World world(gravity);
 
 	b2BodyDef bodyDef;
 	b2Body* ground = world.CreateBody(&bodyDef);
