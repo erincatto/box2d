@@ -43,7 +43,7 @@ Test::Test()
 	m_world = new b2World(gravity);
 	m_bomb = NULL;
 	m_textLine = 30;
-	m_textIncrement = 13;
+	m_textIncrement = 18;
 	m_mouseJoint = NULL;
 	m_pointCount = 0;
 
