@@ -255,6 +255,29 @@ B2_API bool b2TestOverlap(	const b2Shape* shapeA, int32 indexA,
 					const b2Shape* shapeB, int32 indexB,
 					const b2Transform& xfA, const b2Transform& xfB);
 
+/// Convex hull used for polygon collision
+struct b2Hull
+{
+	b2Vec2 points[b2_maxPolygonVertices];
+	int32 count;
+};
+
+/// Compute the convex hull of a set of points. Returns an empty hull if it fails.
+/// Some failure cases:
+/// - all points very close together
+/// - all points on a line
+/// - less than 3 points
+/// - more than b2_maxPolygonVertices points
+/// This welds close points and removes collinear points.
+b2Hull b2ComputeHull(const b2Vec2* points, int32 count);
+
+/// This determines if a hull is valid. Checks for:
+/// - convexity
+/// - collinear points
+/// This is expensive and should not be called at runtime.
+bool b2ValidateHull(const b2Hull& hull);
+
+
 // ---------------- Inline Functions ------------------------------------------
 
 inline bool b2AABB::IsValid() const

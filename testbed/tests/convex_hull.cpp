@@ -41,31 +41,14 @@ public:
 	void Generate()
 	{
 #if 0
-		unsigned int vals[6][2] = {
-			{0xC1078533,0x3F0BAB5E},
-			{0xC0F5B2E8,0x3F28AF8C},
-			{0xC0E2B14A,0x3F3E72AE},
-			{0xC0EBC298, 0x402E521E},
-			{0xC1158EA9, 0x401C2F82},
-			{0xC1110602, 0x3EEBD078}};
-
-		m_count = 6;
-		for (int i = 0; i < m_count; ++i)
-		{
-			m_points[i].x = *(float*)(&(vals[i][0]));
-			m_points[i].y = *(float*)(&(vals[i][1]));
-		}
-
-#elif 1
-
-		m_points[0] = { -2.99307323f, -2.84361196f };
-		m_points[1] = { -5.41493702f,  1.55601883f };
-		m_points[2] = { 1.54026687f,  5.44312191f };
-		m_points[3] = { -2.17538762f, -4.30669880f };
-		m_points[4] = { -1.54026687f, -5.44312191f };
-		m_points[5] = { -2.31474543f, -4.05734587f };
-		m_points[6] = { 1.54026687f,  5.44312191f };
-		m_points[7] = { -3.09342265f, -2.66405630f };
+		m_points[0] = { 5.65314484f, 0.204832315f };
+		m_points[1] = {-5.65314484f, -0.204832315f };
+		m_points[2] = {2.34463644f, 1.15731204f };
+		m_points[3] = {0.0508846045f, 3.23230696f };
+		m_points[4] = {-5.65314484f, -0.204832315f };
+		m_points[5] = {-5.65314484f, -0.204832315f };
+		m_points[6] = {3.73758054f, -1.11098099f };
+		m_points[7] = {1.33504069f, -4.43795443f };
 
 		m_count = e_count;
 #else
@@ -116,25 +99,46 @@ public:
 	{
 		Test::Step(settings);
 
-		g_debugDraw.DrawString(5, m_textLine, "Press g to generate a new random convex hull");
+		g_debugDraw.DrawString(5, m_textLine, "Options: generate(g), auto(a), bulk(b)");
 		m_textLine += m_textIncrement;
 		
-		bool success;
-		b2PolygonShape shape;
+		b2Hull hull;
+		bool valid = false;
+		float milliseconds = 0.0f;
 
 		if (m_bulk)
 		{
-			for (int32 i = 0; i < 1000; ++i)
+#if 1
+			// defect hunting
+			for (int32 i = 0; i < 10000; ++i)
 			{
 				Generate();
-				success = shape.Set(m_points, m_count);
+				hull = b2ComputeHull(m_points, m_count);
+				if (hull.count == 0)
+				{
+					//m_bulk = false;
+					//break;
+					continue;
+				}
 
-				if (success && shape.Validate() == false)
+				valid = b2ValidateHull(hull);
+				if (valid == false || m_bulk == false)
 				{
 					m_bulk = false;
 					break;
 				}
 			}
+#else
+			// performance
+			Generate();
+			b2Timer timer;
+			for (int32 i = 0; i < 1000000; ++i)
+			{
+				hull = b2ComputeHull(m_points, m_count);
+			}
+			valid = hull.count > 0;
+			milliseconds = timer.GetMilliseconds();
+#endif
 		}
 		else
 		{
@@ -143,35 +147,47 @@ public:
 				Generate();
 			}
 
-			success = shape.Set(m_points, m_count);
-			if (success && shape.Validate() == false)
+			hull = b2ComputeHull(m_points, m_count);
+			if (hull.count > 0)
 			{
-				m_auto = false;
+				valid = b2ValidateHull(hull);
+				if (valid == false)
+				{
+					m_auto = false;
+				}
 			}
 		}
 
-		if (success == false)
+		if (valid == false)
 		{
 			g_debugDraw.DrawString(5, m_textLine, "generation = %d, FAILED", m_generation);
-
-			if (m_generation != 1570)
-			{
-				m_auto = false;
-			}
+			m_textLine += m_textIncrement;
 		}
 		else
 		{
-			g_debugDraw.DrawString(5, m_textLine, "generation = %d, count = %d", m_generation, shape.m_count);
+			g_debugDraw.DrawString(5, m_textLine, "generation = %d, count = %d", m_generation, hull.count);
+			m_textLine += m_textIncrement;
+		}
+
+		if (milliseconds > 0.0f)
+		{
+			g_debugDraw.DrawString(5, m_textLine, "milliseconds = %g", milliseconds);
+			m_textLine += m_textIncrement;
 		}
 
 		m_textLine += m_textIncrement;
 
-		g_debugDraw.DrawPolygon(shape.m_vertices, shape.m_count, b2Color(0.9f, 0.9f, 0.9f));
+		g_debugDraw.DrawPolygon(hull.points, hull.count, b2Color(0.9f, 0.9f, 0.9f));
 
 		for (int32 i = 0; i < m_count; ++i)
 		{
-			g_debugDraw.DrawPoint(m_points[i], 3.0f, b2Color(0.3f, 0.9f, 0.3f));
-			g_debugDraw.DrawString(m_points[i] + b2Vec2(0.05f, 0.05f), "%d", i);
+			g_debugDraw.DrawPoint(m_points[i], 5.0f, b2Color(0.3f, 0.3f, 0.9f));
+			g_debugDraw.DrawString(m_points[i] + b2Vec2(0.1f, 0.1f), "%d", i);
+		}
+
+		for (int32 i = 0; i < hull.count; ++i)
+		{
+			g_debugDraw.DrawPoint(hull.points[i], 6.0f, b2Color(0.3f, 0.7f, 0.3f));
 		}
 	}
 
