@@ -37,7 +37,7 @@ public:
 
 DOCTEST_TEST_CASE("begin contact")
 {
-	b2World world = b2World(b2Vec2(0.0f, -10.0f));
+	b2World world({ 0.0f, -10.0f });
 	MyContactListener listener;
 	world.SetContactListener(&listener);
 

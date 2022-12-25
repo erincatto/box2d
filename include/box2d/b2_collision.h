@@ -244,7 +244,7 @@ B2_API void b2CollideEdgeAndCircle(b2Manifold* manifold,
 /// Compute the collision manifold between an edge and a polygon.
 B2_API void b2CollideEdgeAndPolygon(b2Manifold* manifold,
 							   const b2EdgeShape* edgeA, const b2Transform& xfA,
-							   const b2PolygonShape* circleB, const b2Transform& xfB);
+							   const b2PolygonShape* polygonB, const b2Transform& xfB);
 
 /// Clipping for contact manifolds.
 B2_API int32 b2ClipSegmentToLine(b2ClipVertex vOut[2], const b2ClipVertex vIn[2],
