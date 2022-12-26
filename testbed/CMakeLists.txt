@@ -36,6 +36,7 @@ set (TESTBED_SOURCE_FILES
 	tests/dynamic_tree.cpp
 	tests/edge_shapes.cpp
 	tests/edge_test.cpp
+	tests/fast_slow.cpp
 	tests/friction.cpp
 	tests/gear_joint.cpp
 	tests/ghost_test.cpp
