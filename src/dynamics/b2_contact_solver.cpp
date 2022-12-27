@@ -634,6 +634,7 @@ void b2ContactSolver::ApplyRestitution()
 		{
 			b2VelocityConstraintPoint* vcp = vc->points + j;
 
+			// if the normal impulse is zero then there was no collision
 			if (vcp->relativeVelocity > -vc->threshold || vcp->normalImpulse == 0.0f)
 			{
 				continue;
