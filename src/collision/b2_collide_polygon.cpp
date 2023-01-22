@@ -178,13 +178,9 @@ void b2CollidePolygons(b2Manifold* manifold,
 	b2Vec2 planePoint = 0.5f * (v11 + v12);
 
 	b2Vec2 tangent = b2Mul(xf1.q, localTangent);
-	b2Vec2 normal = b2Cross(tangent, 1.0f);
 	
 	v11 = b2Mul(xf1, v11);
 	v12 = b2Mul(xf1, v12);
-
-	// Face offset.
-	float frontOffset = b2Dot(normal, v11);
 
 	// Side offsets, extended by polytope skin thickness.
 	float sideOffset1 = -b2Dot(tangent, v11);

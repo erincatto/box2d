@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include "box2d/box2d.h"
+#include "box2d/b2_distance.h"
 #include "doctest.h"
 #include <stdio.h>
 
@@ -77,5 +78,37 @@ DOCTEST_TEST_CASE("collision test")
 		CHECK(b2Abs(massData2.center.y - center.y) < absTol + relTol * b2Abs(center.y));
 		CHECK(b2Abs(massData2.mass - mass) < 20.0f * (absTol + relTol * mass));
 		CHECK(b2Abs(massData2.I - inertia) < 40.0f * (absTol + relTol * inertia));
+	}
+
+	SUBCASE("distance box to segment")
+	{
+		b2Vec2 vas[] = {
+			{ -1.0f, -1.0f },
+			{ 1.0f, -1.0f },
+			{ 1.0f, 1.0f },
+			{ -1.0f, 1.0f }
+		};
+
+		b2Vec2 vbs[] = {
+			{ 2.0f, -1.0f },
+			{ 2.0f, 1.0f },
+		};
+
+		b2DistanceInput input;
+		input.proxyA.Set(vas, 4, 0.0f);
+		input.proxyB.Set(vbs, 2, 0.0f);
+		input.transformA.SetIdentity();
+		input.transformB.SetIdentity();
+		input.useRadii = false;
+
+		b2SimplexCache cache;
+		cache.count = 0;
+		b2DistanceOutput output;
+
+		const float absTol = 2.0f * b2_epsilon;
+
+		b2Distance(&output, &cache, &input);
+
+		CHECK(b2Abs(output.distance - 1.0f) < b2_epsilon);
 	}
 }

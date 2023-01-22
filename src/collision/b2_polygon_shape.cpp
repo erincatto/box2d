@@ -101,6 +101,7 @@ static b2Vec2 ComputeCentroid(const b2Vec2* vs, int32 count)
 	for (int32 i = 0; i < count; ++i)
 	{
 		// Triangle vertices.
+		// TODO p1 == 0
 		b2Vec2 p1 = vs[0] - s;
 		b2Vec2 p2 = vs[i] - s;
 		b2Vec2 p3 = i + 1 < count ? vs[i+1] - s : vs[0] - s;
