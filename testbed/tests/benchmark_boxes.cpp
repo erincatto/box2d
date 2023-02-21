@@ -22,20 +22,9 @@
 
 #include "test.h"
 
-extern B2_API bool g_blockSolve;
-
 class Boxes : public Test
 {
 public:
-
-	enum
-	{
-		e_columnCount = 1,
-		e_rowCount = 15
-		//e_columnCount = 1,
-		//e_rowCount = 1
-	};
-
 	Boxes()
 	{
 		float groundSize = 25.0f;
@@ -78,8 +67,6 @@ public:
 
 		b2PolygonShape cuboid;
 		cuboid.SetAsBox(0.5f, 0.5f);
-		//b2Circle circle = {0};
-		//circle.radius = rad;
 		sd.shape = &cuboid;
 
 #ifdef _DEBUG
@@ -100,7 +87,6 @@ public:
 
 				b2Body* rigidBody = m_world->CreateBody(&bd);
 				rigidBody->CreateFixture(&sd);
-				//b2Body_CreateCircle(rigidBody, &sd, &circle);
 			}
 		}
 	}
