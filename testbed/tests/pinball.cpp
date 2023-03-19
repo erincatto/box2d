@@ -36,14 +36,14 @@ public:
 			ground = m_world->CreateBody(&bd);
 
 			b2Vec2 vs[5];
-			vs[0].Set(-8.0f, 6.0f);
+			vs[0].Set(-8.0f, 0.0f);
 			vs[1].Set(-8.0f, 20.0f);
 			vs[2].Set(8.0f, 20.0f);
-			vs[3].Set(8.0f, 6.0f);
-			vs[4].Set(0.0f, -2.0f);
+			vs[3].Set(8.0f, 0.0f);
+//			vs[4].Set(-.0f, 0.0f);
 
 			b2ChainShape loop;
-			loop.CreateLoop(vs, 5);
+			loop.CreateLoop(vs, 4);
 			b2FixtureDef fd;
 			fd.shape = &loop;
 			fd.density = 0.0f;
@@ -113,19 +113,25 @@ public:
 			m_ball->CreateFixture(&fd);
 		}
 
-		m_button = false;
+		m_leftFlipperButton = m_rightFlipperButton = m_plunge = false;
 	}
 
 	void Step(Settings& settings) override
 	{
-		if (m_button)
+		if (m_leftFlipperButton)
 		{
 			m_leftJoint->SetMotorSpeed(20.0f);
-			m_rightJoint->SetMotorSpeed(-20.0f);
 		}
 		else
 		{
 			m_leftJoint->SetMotorSpeed(-10.0f);
+		}
+		if(m_rightFlipperButton)
+		{
+			m_rightJoint->SetMotorSpeed(-20.0f);
+		}
+		else
+		{
 			m_rightJoint->SetMotorSpeed(10.0f);
 		}
 
@@ -140,8 +146,14 @@ public:
 	{
 		switch (key)
 		{
-		case GLFW_KEY_A:
-			m_button = true;
+		case GLFW_KEY_LEFT_CONTROL:
+			m_leftFlipperButton = true;
+			break;
+		case GLFW_KEY_RIGHT_CONTROL:
+			m_rightFlipperButton = true;
+			break;
+		case GLFW_KEY_SPACE:
+			m_plunge = true;
 			break;
 		}
 	}
@@ -150,8 +162,14 @@ public:
 	{
 		switch (key)
 		{
-		case GLFW_KEY_A:
-			m_button = false;
+		case GLFW_KEY_LEFT_CONTROL:
+			m_leftFlipperButton = false;
+			break;
+		case GLFW_KEY_RIGHT_CONTROL:
+			m_rightFlipperButton = false;
+			break;
+		case GLFW_KEY_SPACE:
+			m_plunge = false;
 			break;
 		}
 	}
@@ -164,7 +182,7 @@ public:
 	b2RevoluteJoint* m_leftJoint;
 	b2RevoluteJoint* m_rightJoint;
 	b2Body* m_ball;
-	bool m_button;
+	bool m_leftFlipperButton, m_rightFlipperButton, m_plunge;
 };
 
 static int testIndex = RegisterTest("Examples", "Pinball", Pinball::Create);
