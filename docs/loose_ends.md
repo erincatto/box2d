@@ -184,7 +184,7 @@ make sure nothing breaks. You can also try adjusting it to improve
 stability.
 
 ## Debug Drawing
-You can implement the b2DebugDraw class to get detailed drawing of the
+You can implement the b2Draw class to get detailed drawing of the
 physics world. Here are the available entities:
 - shape outlines
 - joint connectivity

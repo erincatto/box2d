@@ -85,7 +85,7 @@ Visualization is very important for debugging collision and physics. I wrote the
 
 ### How do I draw shapes?
 
-Drawing shapes is not supported and shape internal data is likely to change. Instead you should implement the `b2DebugDraw` interface.
+Drawing shapes is not supported and shape internal data is likely to change. Instead you should implement the `b2Draw` interface.
 
 ## Accuracy
 
