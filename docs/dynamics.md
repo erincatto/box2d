@@ -1045,9 +1045,13 @@ The mouse joint doesn't work very well in that context. You may wish to
 consider using kinematic bodies instead.
 
 ### Wheel Joint
-The wheel joint restricts a point on bodyB to a line on bodyA. The wheel
-joint also provides a suspension spring. See b2WheelJoint.h and Car.h
-for details.
+
+The wheel joint is designed specifically for vehicles. It restricts a
+point on bodyB to a line on bodyA. It allows translation and rotation.
+The translation has a spring and damper to simulate the vehicle
+suspension. The rotation allows the wheel to rotate. You can specify
+an rotational motor to drive the wheel and to apply braking.
+See b2WheelJoint, wheel_joint.cpp, and car.cpp for details.
 
 ![Wheel Joint](images/wheel_joint.svg)
 
@@ -1077,13 +1081,6 @@ torque that will be applied to reach the target position and rotation.
 If the body is blocked, it will stop and the contact forces will be
 proportional the maximum motor force and torque. See b2MotorJoint and
 motor_joint.cpp for details.
-
-### Wheel Joint
-The wheel joint is designed specifically for vehicles. It provides a translation
-and rotation. The translation has a spring and damper to simulate the vehicle
-suspension. The rotation allows the wheel to rotate. You can specify an rotational
-motor to drive the wheel and to apply braking. See b2WheelJoint, wheel_joint.cpp,
-and car.cpp for details.
 
 ## Contacts
 Contacts are objects created by Box2D to manage collision between two
