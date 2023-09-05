@@ -105,12 +105,15 @@ target_include_directories(box2d
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+set(CMAKE_DEBUG_POSTFIX "d")
+
 set_target_properties(box2d PROPERTIES
 	CXX_STANDARD 11
     CXX_STANDARD_REQUIRED YES
     CXX_EXTENSIONS NO
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
+    DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX}
 )
 
 if(MSVC)
@@ -135,6 +138,8 @@ endif()
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "src" FILES ${BOX2D_SOURCE_FILES})
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/../include" PREFIX "include" FILES ${BOX2D_HEADER_FILES})
+
+add_library(box2d::box2d ALIAS box2d)
 
 install(
   TARGETS box2d
