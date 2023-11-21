@@ -238,7 +238,7 @@ B2_API void b2CollidePolygons(b2Manifold* manifold,
 
 /// Compute the collision manifold between an edge and a circle.
 B2_API void b2CollideEdgeAndCircle(b2Manifold* manifold,
-							   const b2EdgeShape* polygonA, const b2Transform& xfA,
+							   const b2EdgeShape* edgeA, const b2Transform& xfA,
 							   const b2CircleShape* circleB, const b2Transform& xfB);
 
 /// Compute the collision manifold between an edge and a polygon.
