@@ -492,7 +492,6 @@ b2Hull b2ComputeHull(const b2Vec2* points, int32 count)
 			b2Vec2 e = p3 - p1;
 			e.Normalize();
 
-			b2Vec2 v = p2 - p1;
 			float distance = b2Cross(p2 - p1, e);
 			if (distance <= 2.0f * b2_linearSlop)
 			{
@@ -567,7 +566,6 @@ bool b2ValidateHull(const b2Hull& hull)
 		b2Vec2 e = p3 - p1;
 		e.Normalize();
 
-		b2Vec2 v = p2 - p1;
 		float distance = b2Cross(p2 - p1, e);
 		if (distance <= b2_linearSlop)
 		{
