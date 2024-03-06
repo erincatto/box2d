@@ -2,31 +2,31 @@ language: cpp
 
 dist: bionic
 
-# This is clang on macros
+# This is clang on macos
 compiler: gcc
 
-branches:
+branches: 
   only: 
     - master
 
-    addons: 
-      apt:
-        packages: 
-         - lixrandar-dev
-         - libxinerama-dev
-         - libxcursor-dev
-         - libxi-dev
+ addons:
+   apt:
+     packages: 
+       - libxrandr-dev
+       - libxinerama-dev
+       -libxcursor-dev
+       - libxi-dev
 
-jobs:
-  include:
-    - os: linux
-      env:
-    - os: osx
-      env:
-
-script:
-    - mkdir build
-    - cd build
-    - cmake ..
-    - cmake --build .
-    - ./bin/unit_test 
+ jobs:
+   include:
+     - os: linux
+       env:
+     - os: osx
+       env:
+ 
+ script:
+     - mkdir build
+     - cd build
+     - cmake ..
+     - cmake --build 
+     - ./bin/unit_test
