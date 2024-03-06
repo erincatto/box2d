@@ -1,0 +1,32 @@
+language: cpp
+
+dist: bionic
+
+# This is clang on macros
+compiler: gcc
+
+branches:
+  only: 
+    - master
+
+    addons: 
+      apt:
+        packages: 
+         - lixrandar-dev
+         - libxinerama-dev
+         - libxcursor-dev
+         - libxi-dev
+
+jobs:
+  include:
+    - os: linux
+      env:
+    - os: osx
+      env:
+
+script:
+    - mkdir build
+    - cd build
+    - cmake ..
+    - cmake --build .
+    - ./bin/unit_test 
