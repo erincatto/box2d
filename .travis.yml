@@ -1,0 +1,32 @@
+language: cpp
+
+dist: bionic
+
+# This is clang on macOS
+compiler: gcc
+
+branches:
+  only:
+    - master
+
+addons:
+  apt:
+    packages:
+      - libxrandr-dev
+      - libxinerama-dev
+      - libxcursor-dev
+      - libxi-dev
+
+jobs:
+  include:
+    - os: linux
+      env:
+    - os: osx
+      env:
+
+script:
+    - mkdir build
+    - cd build
+    - cmake ..
+    - cmake --build .
+    - ./bin/unit_test
