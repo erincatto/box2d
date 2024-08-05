@@ -755,7 +755,7 @@ connection. See the Web example in the testbed to see how this behaves.
 
 Softness is achieved by tuning two constants in the definition:
 stiffness and damping. It can be non-intuitive setting these values directly
-since they have units in terms on Newtons. Box2D provides and API to compute
+since they have units in terms on Newtons. Box2D provides an API to compute
 these values in terms of frequency and damping ratio.
 ```cpp
 void b2LinearStiffness(float& stiffness, float& damping,
