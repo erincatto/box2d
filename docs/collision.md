@@ -1,58 +1,70 @@
-# Collision Module
-The Collision module contains shapes and functions that operate on them.
-The module also contains a dynamic tree and broad-phase to acceleration
-collision processing of large systems.
+# Collision
+Box2D provides geometric types and functions. These include:
+- raw geometry: circles, capsules, segments, and convex polygons
+- convex hull and related helper functions
+- mass and bounding box computation
+- local ray and shape casts
+- contact manifolds
+- shape distance
+- generic shape cast
+- time of impact
+- dynamic bounding volume tree
 
-The collision module is designed to be usable outside of the dynamic
-system. For example, you can use the dynamic tree for other aspects of
-your game besides physics.
+The collision interface is designed to be usable outside of rigid body simulation.
+For example, you can use the dynamic tree for other aspects of your game besides physics.
 
-However, the main purpose of Box2D is to provide a rigid body physics
-engine, so the using the collision module by itself may feel limited for
-some applications. Likewise, I will not make a strong effort to document
-it or polish the APIs.
+However, the main purpose of Box2D is to be a rigid body physics
+engine. So the collision interface only contains features that are also useful in
+the physics simulation.
 
-## Shapes
-Shapes describe collision geometry and may be used independently of
+## Shape Primitives
+Shape primitives describe collision geometry and may be used independently of
 physics simulation. At a minimum, you should understand how to create
-shapes that can be later attached to rigid bodies.
+primitives that can be later attached to rigid bodies.
 
-Box2D shapes implement the b2Shape base class. The base class defines
-functions to:
-- Test a point for overlap with the shape.
-- Perform a ray cast against the shape.
-- Compute the shape's AABB.
-- Compute the mass properties of the shape.
+Box2D shape primitives support several operations:
+- Test a point for overlap with the primitive
+- Perform a ray cast against the primitive
+- Compute the primitive's AABB
+- Compute the mass properties of the primitive
 
-In addition, each shape has a type member and a radius. The radius even
-applies to polygons, as discussed below.
+### Circles
+Circles have a center and radius. Circles are solid.
 
-Keep in mind that a shape does not know about bodies and stand apart
-from the dynamics system. Shapes are stored in a compact form that is
-optimized for size and performance. As such, shapes are not easily moved
-around. You have to manually set the shape vertex positions to move a
-shape. However, when a shape is attached to a body using a fixture, the
-shapes move rigidly with the host body. In summary:
-- When a shape is **not** attached to a body, you can view it's vertices as being expressed in world-space.
-- When a shape is attached to a body, you can view it's vertices as being expressed in local coordinates.
+![Circle](images/circle.svg)
 
-### Circle Shapes
-Circle shapes have a position and radius. Circles are solid. You cannot
-make a hollow circle using the circle shape.
-
-```cpp
-b2CircleShape circle;
-circle.m_p.Set(2.0f, 3.0f);
-circle.m_radius = 0.5f;
+```c
+b2Circle circle;
+circle.center = (b2Vec2){2.0f, 3.0f};
+circle.radius = 0.5f;
 ```
 
-### Polygon Shapes
-Polygon shapes are solid convex polygons. A polygon is convex when all
+You can also initialize a circle and other structures inline. This is an equivalent circle:
+
+```c
+b2Circle circle = {{2.0f, 3.0f}, 0.5f};
+```
+
+### Capsules
+Capsules have two center points and a radius. The center points are the centers of two
+semicircles that are connected by a rectangle.
+
+![Capsule](images/capsule.svg)
+
+```c
+b2Capsule capsule;
+capsule.center1 = (b2Vec2){1.0f, 1.0f};
+capsule.center1 = (b2Vec2){2.0f, 3.0f};
+capsule.radius = 0.25f;
+```
+
+### Polygons
+Box2D polygons are solid convex polygons. A polygon is convex when all
 line segments connecting two points in the interior do not cross any
 edge of the polygon. Polygons are solid and never hollow. A polygon must
 have 3 or more vertices.
 
-![Convex and Concave Polygons](images/convex_concave.gif)
+![Convex and Concave Polygons](images/convex_concave.svg)
 
 Polygons vertices are stored with a counter clockwise winding (CCW). We
 must be careful because the notion of CCW is with respect to a
@@ -66,229 +78,211 @@ The polygon members are public, but you should use initialization
 functions to create a polygon. The initialization functions create
 normal vectors and perform validation.
 
-You can create a polygon shape by passing in a vertex array. The maximal
-size of the array is controlled by `b2_maxPolygonVertices` which has a
-default value of 8. This is sufficient to describe most convex polygons.
+Polygons in Box2D have a maximum of 8 vertices, as controlled by #b2_maxPolygonVertices.
+If you have more complex shapes, I recommend to use multiple polygons.
 
-The `b2PolygonShape::Set` function automatically computes the convex hull
-and establishes the proper winding order. This function is fast when the
-number of vertices is low. If you increase `b2_maxPolygonVertices`, then
-the convex hull computation might become slow. Also note that the convex
-hull function may eliminate and/or re-order the points you provide.
-Vertices that are closer than `b2_linearSlop` may be merged.
+There are a few ways to create polygons. You can attempt to create them manually,
+but this is not recommended. Instead there are several functions provided to create them.
 
-```cpp
-// This defines a triangle in CCW order.
-b2Vec2 vertices[3];
-vertices[0].Set(0.0f, 0.0f);
-vertices[1].Set(1.0f, 0.0f);
-vertices[2].Set(0.0f, 1.0f);
+For example if you need a square or box you can use these functions:
 
-int32 count = 3;
-b2PolygonShape polygon;
-polygon.Set(vertices, count);
+```c
+b2Polygon square = b2MakeSquare(0.5f);
+b2Polygon box = b2MakeBox(0.5f, 1.0f);
 ```
 
-The polygon shape has some convenience functions to create boxes.
+The values provided to these functions are *extents*, which are half-widths or half-heights.
+This corresponds with circles and capsules using radii instead of diameters.
 
-```cpp
-void SetAsBox(float hx, float hy);
-void SetAsBox(float hx, float hy, const b2Vec2& center, float angle);
+Box2D also supports rounded polygons. These are convex polygons with a thick rounded skin.
+
+```c
+b2Polygon roundedBox = b2MakeRoundedBox(0.5f, 1.0f, 0.25f);
 ```
 
-Polygons inherit a radius from b2Shape. The radius creates a skin around
-the polygon. The skin is used in stacking scenarios to keep polygons
-slightly separated. This allows continuous collision to work against the
-core polygon.
+If you want a box that is not centered on the body origin, you can use an offset box.
 
-![Polygon Skin](images/skinned_polygon.svg)
-
-The polygon skin helps prevent tunneling by keeping the polygons
-separated. This results in small gaps between the shapes. Your visual
-representation can be larger than the polygon to hide any gaps.
-
-![Skin Collision](images/skin_collision.svg)
-
-Not that polygon skin is only provided to help with continuous collision.
-The purpose is not to simulate rounded polygons.
-
-### Edge Shapes
-Edge shapes are line segments. These are provided to assist in making a
-free-form static environment for your game. A major limitation of edge
-shapes is that they can collide with circles and polygons but not with
-themselves. The collision algorithms used by Box2D require that at least
-one of two colliding shapes have volume. Edge shapes have no volume, so
-edge-edge collision is not possible.
-
-```cpp
-// This an edge shape.
-b2Vec2 v1(0.0f, 0.0f);
-b2Vec2 v2(1.0f, 0.0f);
-
-b2EdgeShape edge;
-edge.SetTwoSided(v1, v2);
+```c
+b2Vec2 center = {1.0f, 0.0f};
+float angle = b2_pi / 4.0f;
+b2Polygon offsetBox = b2MakeOffsetBox(0.5f, 1.0f, center, angle);
 ```
 
+If you want a more general convex polygon, you can compute the hull using `b2ComputeHull()`. Then you can
+create a polygon from the hull. You can make this rounded or not.
+
+```c
+b2Vec2 points[] = {{-1.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 1.0f}};
+b2Hull hull = b2ComputeHull(points, 3);
+float radius = 0.1f;
+b2Polygon roundedTriangle = b2MakePolygon(&hull, radius);
+```
+
+If you have an automatic process for generating convex polygons, you may feed a degenerate set of points to `b2ComputeHull()`. You should check that the hull was created successfully before creating the polygon or you will get an assertion.
+
+```c
+b2Hull questionableHull = b2ComputeHull(randomPoints, 8);
+if (questionableHull.count == 0)
+{
+    // handle failure
+}
+```
+
+Degenerate points may be coincident and/or collinear. For the hull to be viable, the enclosed area must be sufficiently positive.
+
+### Segments
+Segments are line segments. Segment
+shapes can collide with circles, capsules, and polygons but not with other line segments.
+The collision algorithms used by Box2D require that at least
+one of two colliding shapes has sufficiently positive area. Segment shapes have no area, so
+segment-segment collision is not possible.
+
+```c
+b2Segment segment1;
+segment1.point1 = (b2Vec2){0.0f, 0.0f};
+segment2.point2 = (b2Vec2){1.0f, 0.0f};
+
+// equivalent
+b2Segment segment2 = {{0.0f, 0.0f}, {1.0f, 0.0f}};
+```
+
+### Ghost Collisions
 In many cases a game environment is constructed by connecting several
-edge shapes end-to-end. This can give rise to an unexpected artifact
-when a polygon slides along the chain of edges. In the figure below we
-see a box colliding with an internal vertex. These *ghost* collisions
+segment shapes end-to-end. This can give rise to an unexpected artifact
+when a polygon slides along the chain of segments. In the figure below there is
+ a box colliding with an internal vertex. These *ghost* collisions
 are caused when the polygon collides with an internal vertex generating
 an internal collision normal.
 
-![Ghost Collision](images/ghost_collision.svg)
+![Ghost Collision](images/ghost_collision.svg){html: width=30%}
 
 If edge1 did not exist this collision would seem fine. With edge1
 present, the internal collision seems like a bug. But normally when
 Box2D collides two shapes, it views them in isolation.
 
-Fortunately, the edge shape provides a mechanism for eliminating ghost
+`b2SmoothSegment` provides a mechanism for eliminating ghost
 collisions by storing the adjacent *ghost* vertices. Box2D uses these
 ghost vertices to prevent internal collisions.
 
-![Ghost Vertices](images/ghost_vertices.svg)
+![Ghost Vertices](images/ghost_vertices.svg){html: width=30%}
 
 The Box2D algorithm for dealing with ghost collisions only supports
 one-sided collision. The front face is to the right when looking from the first
-vertex towards the second vertex. This matches the CCW winding order
+vertex towards the second vertex. This matches the counter-clockwise winding order
 used by polygons.
 
-```cpp
-// This is an edge shape with ghost vertices.
-b2Vec2 v0(1.7f, 0.0f);
-b2Vec2 v1(1.0f, 0.25f);
-b2Vec2 v2(0.0f, 0.0f);
-b2Vec2 v3(-1.7f, 0.4f);
+### Smooth segment
+Smooth segments use a concept called *ghost vertices* that Box2D can use to eliminate ghost
+collisions.
 
-b2EdgeShape edge;
-edge.SetOneSided(v0, v1, v2, v3);
+```c
+b2SmoothSegment smoothSegment = {0};
+smoothSegment.ghost1 = (b2Vec2){1.7f, 0.0f};
+smoothSegment.segment = (b2Segment){{1.0f, 0.25f}, {0.0f, 0.0f}};
+smoothSegment.ghost2 = (b2Vec2){-1.7f, 0.4f};
 ```
 
-In general stitching edges together this way is a bit wasteful and
-tedious. This brings us to chain shapes.
+These ghost vertices must align with vertices of neighboring smooth segments, making them
+tedious and error-prone to setup.
 
-### Chain Shapes
-
-The chain shape provides an efficient way to connect many edges together
-to construct your static game worlds. Chain shapes automatically
-eliminate ghost collisions and provide one-sided collision. The collision is
-one-sided to eliminate ghost collisions.
-
-If you don't care about ghost collisions, you can just create a bunch of
-two-sided edge shapes. The efficiency is similar.
-
-The simplest way to use chain shapes is to create loops. Simply provide an
-array of vertices.
-
-```cpp
-b2Vec2 vs[4];
-vs[0].Set(1.7f, 0.0f);
-vs[1].Set(1.0f, 0.25f);
-vs[2].Set(0.0f, 0.0f);
-vs[3].Set(-1.7f, 0.4f);
-
-b2ChainShape chain;
-chain.CreateLoop(vs, 4);
-```
-
-The edge normal depends on the winding order. A counter-clockwise winding order orients the normal outwards and a clockwise winding order orients the normal inwards.
-
-![Chain Shape Outwards Loop](images/chain_loop_outwards.svg)
-
-![Chain Shape Inwards Loop](images/chain_loop_inwards.svg)
-
-You may have a scrolling game world and would like to connect several chains together.
-You can connect chains together using ghost vertices, like we did with b2EdgeShape.
-
-![Chain Shape](images/chain_shape.svg)
-
-```cpp
-b2ChainShape::CreateChain(const b2Vec2* vertices, int32 count,
-		const b2Vec2& prevVertex, const b2Vec2& nextVertex);
-```
-
-Self-intersection of chain shapes is not supported. It might work, it
-might not. The code that prevents ghost collisions assumes there are no
-self-intersections of the chain. Also, very close vertices can cause
-problems. Make sure all your edges are longer than b2_linearSlop (5mm).
-
-![Self Intersection is Bad](images/self_intersect.svg)
-
-Each edge in the chain is treated as a child shape and can be accessed
-by index. When a chain shape is connected to a body, each edge gets its
-own bounding box in the broad-phase collision tree.
-
-```cpp
-// Visit each child edge.
-for (int32 i = 0; i < chain.GetChildCount(); ++i)
-{
-    b2EdgeShape edge;
-    chain.GetChildEdge(&edge, i);
-
-    ...
-}
-```
+Smooth segments are not created directly. Instead, you can create chains of smooth
+segments. See `b2ChainDef` and `b2CreateChain()`.
 
 ## Geometric Queries
-You can perform a couple geometric queries on a single shape.
+You can perform a geometric queries on a single shape.
 
 ### Shape Point Test
 You can test a point for overlap with a shape. You provide a transform
 for the shape and a world point.
 
-```cpp
-b2Transform transform;
-transform.SetIdentity();
-b2Vec2 point(5.0f, 2.0f);
-
-bool hit = shape->TestPoint(transform, point);
+```c
+b2Vec2 point = {5.0f, 2.0f};
+bool hit = b2PointInCapsule(point, &myCapsule);
 ```
 
-Edge and chain shapes always return false, even if the chain is a loop.
+See also `b2PointInCircle()` and `b2PointInPolygon()`.
 
-### Shape Ray Cast
-You can cast a ray at a shape to get the point of first intersection and normal vector. A child index is included for chain shapes because the ray cast will only check a single edge at a time.
+### Ray Cast
+You can cast a ray at a shape to get the point of first intersection and normal vector.
 
 > **Caution**:
-> No hit will register if the ray starts inside a convex shape like a circle or polygon. This is consistent with Box2D treating convex shapes as solid. 
->
+> No hit will register if the ray starts inside a convex shape like a circle or polygon. This is
+> consistent with Box2D treating convex shapes as solid. 
 
-```cpp
-b2Transfrom transform;
-transform.SetIdentity();
-
+```c
 b2RayCastInput input;
-input.p1.Set(0.0f, 0.0f);
-input.p2.Set(1.0f, 0.0f);
+input.origin = (b2Vec2){0.0f, 0.0f};
+input.translation = (b2Vec2){1.0f, 0.0f};
 input.maxFraction = 1.0f;
-int32 childIndex = 0;
 
-b2RayCastOutput output;
-bool hit = shape->RayCast(&output, input, transform, childIndex);
-
-if (hit)
+b2CastOutput output = b2RayCastPolygon(&input, &myPolygon);
+if (output.hit == true)
 {
-    b2Vec2 hitPoint = input.p1 + output.fraction * (input.p2 -- input.p1);
-    ...
+    // do something
 }
 ```
 
-## Pairwise Functions
-The Collision module contains functions that take a pair of shapes and compute some results. These include:
-- Overlap
-- Contact manifolds
-- Distance
-- Time of impact
+### Shape Cast
+You can also cast a shape at another shape. This uses an abstract way of describing the moving shape. It is represented as a point cloud with a radius. This implies a convex shape even if the input data is not convex. The internal algorithm (GJK) will essentially only use the convex portion.
 
-### Overlap
-You can test two shapes for overlap using this function:
+```c
+b2ShapeCastInput input;
+input.points[0] = (b2Vec2){1.0f, 0.0f};
+input.points[1] = (b2Vec2){2.0f, -3.0f};
+input.radius = 0.2f;
+input.translation = (b2Vec2){1.0f, 0.0f};
+input.maxFraction = 1.0f;
 
-```cpp
-b2Transform xfA = ..., xfB = ...;
-bool overlap = b2TestOverlap(shapeA, indexA, shapeB, indexB, xfA, xfB);
+b2CastOutput output = b2ShapeCastPolygon(&input, &myPolygon);
+if (output.hit == true)
+{
+    // do something
+}
 ```
 
-Again you must provide child indices to for the case of chain shapes.
+Even more generic, you can use `b2ShapeCast()` to linearly cast one point cloud at another point cloud. All shape cast functions use this internally.
+
+### Distance
+`b2ShapeDistance()` function can be used to compute the distance between two
+shapes. The distance function needs both shapes to be converted into a
+`b2DistanceProxy` (which are point clouds with radii). There is also some caching used to warm start the
+distance function for repeated calls. This can improve performance when the shapes move by small amounts.
+
+![Distance Function](images/distance.svg)
+
+### Time of Impact
+If two shapes are moving fast, they may *tunnel* through each other in a
+single time step.
+
+![Tunneling](images/tunneling2.svg){html: width=30%}
+
+The `b2TimeOfImpact()` function is used to determine the time when two moving shapes collide.
+This is called the *time of impact* (TOI). The main purpose of `b2TimeOfImpact()` is for
+tunnel prevention. Box2D uses this internally to prevent moving objects from tunneling through
+static shapes.
+
+The `b2TimeOfImpact()` identifies an initial separating axis and
+ensures the shapes do not cross on that axis. This process is repeated
+as shapes are moved closer together, until they touch or pass by each other.
+
+The TOI function might miss collisions that are clear at the final positions.
+Nevertheless, it is very fast and adequate for tunnel prevention.
+
+![Captured Collision](images/captured_toi.svg){html: width=30%}
+
+![Missed Collision](images/missed_toi.svg){html: width=30%}
+
+It is difficult to put a restriction on the rotation magnitude. There
+may be cases where collisions are missed for small rotations. Normally,
+these missed rotational collisions should not harm game play. They tend
+to be glancing collisions.
+
+The function requires two shapes (converted to `b2DistanceProxy`) and two
+`b2Sweep` structures. The sweep structure defines the initial and final
+transforms of the shapes.
+
+You can use fixed rotations to perform a *shape cast*. In this case, the
+time of impact function will not miss any collisions.
 
 ### Contact Manifolds
 Box2D has functions to compute contact points for overlapping shapes. If
@@ -303,94 +297,14 @@ improve stacking stability.
 Normally you don't need to compute contact manifolds directly, however
 you will likely use the results produced in the simulation.
 
-The b2Manifold structure holds a normal vector and up to two contact
-points. The normal and points are held in local coordinates. As a
-convenience for the contact solver, each point stores the normal and
-tangential (friction) impulses.
-
-The data stored in b2Manifold is optimized for internal use. If you need
-this data, it is usually best to use the b2WorldManifold structure to
-generate the world coordinates of the contact normal and points. You
-need to provide a b2Manifold and the shape transforms and radii.
-
-```cpp
-b2WorldManifold worldManifold;
-worldManifold.Initialize(&manifold, transformA, shapeA.m_radius,
-transformB, shapeB.m_radius);
-
-for (int32 i = 0; i < manifold.pointCount; ++i)
-{
-    b2Vec2 point = worldManifold.points[i];
-    ...
-}
-```
-
-Notice that the world manifold uses the point count from the original
-manifold.
-
-During simulation shapes may move and the manifolds may change. Points
-may be added or removed. You can detect this using b2GetPointStates.
-
-```cpp
-b2PointState state1[2], state2[2];
-b2GetPointStates(state1, state2, &manifold1, &manifold2);
-
-if (state1[0] == b2_removeState)
-{
-    // process event
-}
-```
-
-### Distance
-The `b2Distance` function can be used to compute the distance between two
-shapes. The distance function needs both shapes to be converted into a
-b2DistanceProxy. There is also some caching used to warm start the
-distance function for repeated calls.
-
-![Distance Function](images/distance.svg)
-
-### Time of Impact
-If two shapes are moving fast, they may *tunnel* through each other in a
-single time step.
-
-![Tunneling](images/tunneling2.svg)
-
-The `b2TimeOfImpact` function is used to determine the time when two
-moving shapes collide. This is called the *time of impact* (TOI). The
-main purpose of `b2TimeOfImpact` is for tunnel prevention. In particular,
-it is designed to prevent moving objects from tunneling outside of
-static level geometry.
-
-This function accounts for rotation and translation of both shapes,
-however if the rotations are large enough, then the function may miss a
-collision. However the function will still report a non-overlapped time
-and will capture all translational collisions.
-
-The time of impact function identities an initial separating axis and
-ensures the shapes do not cross on that axis. This might miss collisions
-that are clear at the final positions. While this approach may miss some
-collisions, it is very fast and adequate for tunnel prevention.
-
-![Captured Collision](images/captured_toi.svg)
-
-![Missed Collision](images/missed_toi.svg)
-
-It is difficult to put a restriction on the rotation magnitude. There
-may be cases where collisions are missed for small rotations. Normally,
-these missed rotational collisions should not harm game play. They tend
-to be glancing collisions.
-
-The function requires two shapes (converted to b2DistanceProxy) and two
-b2Sweep structures. The sweep structure defines the initial and final
-transforms of the shapes.
-
-You can use fixed rotations to perform a *shape cast*. In this case, the
-time of impact function will not miss any collisions.
+The `b2Manifold` structure holds a normal vector and up to two contact
+points. The contact points store the normal and tangential (friction) impulses
+computed in the rigid body simulation.
 
 ## Dynamic Tree
-The b2DynamicTree class is used by Box2D to organize large numbers of
-shapes efficiently. The class does not know about shapes. Instead it
-operates on axis-aligned bounding boxes (AABBs) with user data pointers.
+`b2DynamicTree` is used by Box2D to organize large numbers of
+shapes efficiently. The object does not know directly about shapes. Instead it
+operates on axis-aligned bounding boxes (`b2AABB`) with user data integers.
 
 The dynamic tree is a hierarchical AABB tree. Each internal node in the
 tree has two children. A leaf node is a single user AABB. The tree uses
@@ -409,25 +323,11 @@ A region query uses the tree to find all leaf AABBs that overlap a query
 AABB. This is faster than a brute force approach because many shapes can
 be skipped.
 
-![Raycast](images/raycast.svg)
+![Ray-cast](images/raycast.svg){html: width=30%}
 
-![Overlap Test](images/overlap_test.svg)
+![Overlap Test](images/overlap_test.svg){html: width=30%}
 
 Normally you will not use the dynamic tree directly. Rather you will go
-through the b2World class for ray casts and region queries. If you plan
+through the `b2World` functions for ray casts and region queries. If you plan
 to instantiate your own dynamic tree, you can learn how to use it by
-looking at how Box2D uses it.
-
-## Broad-phase
-Collision processing in a physics step can be divided into narrow-phase
-and broad-phase. In the narrow-phase we compute contact points between
-pairs of shapes. Imagine we have N shapes. Using brute force, we would
-need to perform the narrow-phase for N*N/2 pairs.
-
-The b2BroadPhase class reduces this load by using a dynamic tree for
-pair management. This greatly reduces the number of narrow-phase calls.
-
-Normally you do not interact with the broad-phase directly. Instead,
-Box2D creates and manages a broad-phase internally. Also, b2BroadPhase
-is designed with Box2D's simulation loop in mind, so it is likely not
-suited for other use cases.
+looking at how Box2D uses it. Also see the `DynamicTree` sample.

@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="74.701591mm"
+   height="57.912811mm"
+   viewBox="0 0 74.701591 57.912812"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   sodipodi:docname="capsule.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="true"
+     inkscape:zoom="1.2302679"
+     inkscape:cx="39.828722"
+     inkscape:cy="112.5771"
+     inkscape:window-width="1991"
+     inkscape:window-height="1283"
+     inkscape:window-x="161"
+     inkscape:window-y="74"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1"
+     showborder="true">
+    <inkscape:grid
+       id="grid1"
+       units="px"
+       originx="-163.45355"
+       originy="-465.9191"
+       spacingx="0.26458333"
+       spacingy="0.26458334"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       dotted="false"
+       gridanglex="30"
+       gridanglez="30"
+       visible="true" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1">
+    <marker
+       style="overflow:visible"
+       id="marker6"
+       refX="2"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path6" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Triangle"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-43.247086,-123.27443)">
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-opacity:1;marker-start:url(#Triangle);marker-end:url(#Triangle)"
+       d="M 43.862625,132.52899 V 180.5717 H 91.802184"
+       id="path2" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333px;font-family:'Hack Nerd Font';-inkscape-font-specification:'Hack Nerd Font, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.2;stroke-opacity:1"
+       x="94.56707"
+       y="180.37776"
+       id="text6"
+       transform="scale(0.99892594,1.0010752)"><tspan
+         sodipodi:role="line"
+         id="tspan6"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333px;font-family:'Hack Nerd Font';-inkscape-font-specification:'Hack Nerd Font, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.2"
+         x="94.56707"
+         y="180.37776">x</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333px;font-family:'Hack Nerd Font';-inkscape-font-specification:'Hack Nerd Font, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.2;stroke-opacity:1"
+       x="43.839172"
+       y="128.60797"
+       id="text7"
+       transform="scale(0.99892594,1.0010752)"><tspan
+         sodipodi:role="line"
+         id="tspan7"
+         x="43.839172"
+         y="128.60797"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333px;font-family:'Hack Nerd Font';-inkscape-font-specification:'Hack Nerd Font, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.2">y</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:'Hack Nerd Font';-inkscape-font-specification:'Hack Nerd Font, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.2;stroke-opacity:1"
+       x="106.92114"
+       y="133.36127"
+       id="text8"
+       transform="scale(0.99892595,1.0010752)"><tspan
+         sodipodi:role="line"
+         id="tspan8"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:'Hack Nerd Font';-inkscape-font-specification:'Hack Nerd Font, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.2"
+         x="106.92114"
+         y="133.36127">radius</tspan></text>
+    <g
+       id="g13"
+       transform="rotate(44.077969,71.155285,164.2336)">
+      <g
+         id="g11">
+        <rect
+           style="fill:#d7e3f4;fill-opacity:1;stroke:none;stroke-width:0.2"
+           id="rect10"
+           width="25.965992"
+           height="20.089922"
+           x="53.587948"
+           y="129.86963" />
+        <path
+           style="fill:#d7e3f4;stroke:#000000;stroke-width:0.2"
+           id="path7"
+           sodipodi:type="arc"
+           sodipodi:cx="66.570946"
+           sodipodi:cy="149.70604"
+           sodipodi:rx="12.982997"
+           sodipodi:ry="12.982997"
+           sodipodi:start="0"
+           sodipodi:end="3.1415927"
+           sodipodi:open="true"
+           sodipodi:arc-type="arc"
+           d="m 79.553943,149.70604 a 12.982997,12.982997 0 0 1 -6.491499,11.2436 12.982997,12.982997 0 0 1 -12.982997,0 12.982997,12.982997 0 0 1 -6.491498,-11.2436" />
+        <path
+           style="fill:#d7e3f4;stroke:#000000;stroke-width:0.2"
+           id="path8"
+           sodipodi:type="arc"
+           sodipodi:cx="-66.570946"
+           sodipodi:cy="-129.86963"
+           sodipodi:rx="12.982997"
+           sodipodi:ry="12.982997"
+           sodipodi:start="0"
+           sodipodi:end="3.1415927"
+           sodipodi:open="true"
+           sodipodi:arc-type="arc"
+           d="m -53.587949,-129.86963 a 12.982997,12.982997 0 0 1 -6.491498,11.24361 12.982997,12.982997 0 0 1 -12.982998,0 12.982997,12.982997 0 0 1 -6.491498,-11.24361"
+           transform="scale(-1)" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:0.2"
+           d="M 53.587949,149.70604 V 129.86963"
+           id="path9" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:0.2"
+           d="M 79.553943,149.70604 V 129.86963"
+           id="path10" />
+      </g>
+      <g
+         id="g10"
+         transform="translate(-0.7121401)">
+        <path
+           style="fill:none;stroke:#000000;stroke-width:0.2;stroke-opacity:1"
+           d="m 64.663551,128.81687 5.23907,2e-5"
+           id="path3" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:0.2;stroke-opacity:1"
+           d="m 67.239311,126.14784 0.0438,5.54822"
+           id="path4" />
+      </g>
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.2;stroke-opacity:1;marker-end:url(#marker6)"
+         d="m 66.548845,128.81689 7.978012,-8.69753"
+         id="path5"
+         sodipodi:nodetypes="cc" />
+      <g
+         id="g12"
+         transform="translate(-0.7121401,21.142672)">
+        <path
+           style="fill:none;stroke:#000000;stroke-width:0.2;stroke-opacity:1"
+           d="m 64.663551,128.81687 5.23907,2e-5"
+           id="path11" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:0.2;stroke-opacity:1"
+           d="m 67.239311,126.14784 0.0438,5.54822"
+           id="path12" />
+      </g>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:'Hack Nerd Font';-inkscape-font-specification:'Hack Nerd Font, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.2;stroke-opacity:1"
+       x="84.581787"
+       y="140.62871"
+       id="text9"
+       transform="scale(0.99892595,1.0010752)"><tspan
+         sodipodi:role="line"
+         id="tspan9"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:'Hack Nerd Font';-inkscape-font-specification:'Hack Nerd Font, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.2"
+         x="84.581787"
+         y="140.62871">center2</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:'Hack Nerd Font';-inkscape-font-specification:'Hack Nerd Font, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.2;stroke-opacity:1"
+       x="71.103676"
+       y="156.31134"
+       id="text13"
+       transform="scale(0.99892595,1.0010752)"><tspan
+         sodipodi:role="line"
+         id="tspan13"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:'Hack Nerd Font';-inkscape-font-specification:'Hack Nerd Font, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.2"
+         x="71.103676"
+         y="156.31134">center1</tspan></text>
+  </g>
+</svg>
