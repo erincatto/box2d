@@ -17,11 +17,9 @@ Box2D is a 2D physics engine for games.
 - Ray casts, shape casts, and overlap queries
 
 ### Physics
-- Robust _Soft Step_ solver
+- Robust _Soft Step_ rigid body solver
 - Continuous physics for fast translations and rotations
 - Island based sleep
-- Contact, friction, and restitution
-- Stable stacking with a linear-time solver
 - Revolute, prismatic, distance, mouse joint, weld, and wheel joints
 - Joint limits, motors, springs, and friction
 - Joint and contact forces
@@ -35,7 +33,7 @@ Box2D is a 2D physics engine for games.
 ### Samples
 - OpenGL with GLFW and enkiTS
 - Graphical user interface with imgui
-- Extensible testing framework
+- Many samples to demonstrate features and performance
 
 ## Building
 - Install [CMake](https://cmake.org/)
@@ -55,7 +53,7 @@ Box2D is a 2D physics engine for games.
 - open box2d.xcodeproj
 - Select the samples scheme
 - Edit the scheme to set a custom working directory, make this be in box2d/samples
-- You can now build and run the testbed
+- You can now build and run the samples
 
 ## Compatibility
 The Box2D library and samples build and run on Windows, Linux, and Mac.
@@ -66,13 +64,13 @@ AVX2 CPU support is assumed on x64. You can turn this off in the CMake options a
 
 ## Documentation
 - [Manual](https://box2d.org/documentation/)
-- [Migration to Version 3](https://github.com/erincatto/box2d/docs/migration.md)
+- [Migration Guide](https://github.com/erincatto/box2d/docs/migration.md)
 
 ## Community
 - [Discord](https://discord.gg/NKYgCBP)
 
 ## Contributing
-Please do not submit pull requests. Instead, please file an issue for discussion. For bugs, I prefer detailed bug reports over pull requests.
+Please do not submit pull requests. Instead, please file an issue for bugs or feature requests. For support, please visit the Discord server.
 
 # Giving Feedback
 Please file an issue or start a chat on discord.
