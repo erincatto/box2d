@@ -994,7 +994,7 @@ typedef struct b2BodyMoveEvent
 
 /// Body events are buffered in the Box2D world and are available
 ///	as event arrays after the time step is complete.
-///	Note: this date becomes invalid if bodies are destroyed
+///	Note: this data becomes invalid if bodies are destroyed
 typedef struct b2BodyEvents
 {
 	/// Array of move events
