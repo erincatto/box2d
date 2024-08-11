@@ -61,18 +61,18 @@
 
 #if defined( B2_COMPILER_MSVC )
 	#define B2_BREAKPOINT __debugbreak()
-#elif defined( B2_COMPILER_GCC ) || defined( B2_COMPILER_CLANG )
-	#if defined( B2_CPU_X64 )
-		#define B2_BREAKPOINT __asm volatile( "int $0x3" )
-	#elif defined( B2_CPU_ARM )
-		#define B2_BREAKPOINT __builtin_trap()
-	#endif
 #elif defined( B2_PLATFORM_WASM )
 	#define B2_BREAKPOINT                                                                                                        \
 		do                                                                                                                       \
 		{                                                                                                                        \
 		}                                                                                                                        \
 		while ( 0 )
+#elif defined( B2_COMPILER_GCC ) || defined( B2_COMPILER_CLANG )
+	#if defined( B2_CPU_X64 )
+		#define B2_BREAKPOINT __asm volatile( "int $0x3" )
+	#elif defined( B2_CPU_ARM )
+		#define B2_BREAKPOINT __builtin_trap()
+	#endif
 #else
 	#error Unknown platform
 #endif
@@ -128,14 +128,9 @@ extern float b2_lengthUnitsPerMeter;
 // Maximum number of simultaneous worlds that can be allocated
 #define b2_maxWorlds 128
 
-// The maximum translation of a body per time step. This limit is very large and is used
-// to prevent numerical problems. You shouldn't need to adjust this. Meters.
-// @warning modifying this can have a significant impact on stability
-#define b2_maxTranslation ( 4.0f * b2_lengthUnitsPerMeter )
-
 // The maximum rotation of a body per time step. This limit is very large and is used
 // to prevent numerical problems. You shouldn't need to adjust this.
-// @warning modifying this can have a significant impact on stability
+// @warning increasing this to 0.5f * b2_pi or greater will break continuous collision.
 #define b2_maxRotation ( 0.25f * b2_pi )
 
 // @warning modifying this can have a significant impact on performance and stability

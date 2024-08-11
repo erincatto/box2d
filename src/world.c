@@ -165,6 +165,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->gravity = def->gravity;
 	world->hitEventThreshold = def->hitEventThreshold;
 	world->restitutionThreshold = def->restitutionThreshold;
+	world->maxLinearVelocity = def->maximumLinearVelocity;
 	world->contactPushoutVelocity = def->contactPushoutVelocity;
 	world->contactHertz = def->contactHertz;
 	world->contactDampingRatio = def->contactDampingRatio;
@@ -743,6 +744,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	context.jointSoftness = b2MakeSoft( jointHertz, world->jointDampingRatio, context.h );
 
 	context.restitutionThreshold = world->restitutionThreshold;
+	context.maxLinearVelocity = world->maxLinearVelocity;
 	context.enableWarmStarting = world->enableWarmStarting;
 
 	// Update contacts

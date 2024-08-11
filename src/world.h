@@ -125,6 +125,7 @@ typedef struct b2World
 	b2Vec2 gravity;
 	float hitEventThreshold;
 	float restitutionThreshold;
+	float maxLinearVelocity;
 	float contactPushoutVelocity;
 	float contactHertz;
 	float contactDampingRatio;

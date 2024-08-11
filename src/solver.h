@@ -91,6 +91,7 @@ typedef struct b2StepContext
 	b2Softness staticSoftness;
 
 	float restitutionThreshold;
+	float maxLinearVelocity;
 
 	struct b2World* world;
 	struct b2ConstraintGraph* graph;

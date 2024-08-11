@@ -55,10 +55,12 @@ void Car::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz, f
 	shapeDef.friction = 1.5f;
 
 	bodyDef.position = b2Add( { -1.0f * scale, 0.35f * scale }, position );
+	bodyDef.allowFastRotation = true;
 	m_rearWheelId = b2CreateBody( worldId, &bodyDef );
 	b2CreateCircleShape( m_rearWheelId, &shapeDef, &circle );
 
 	bodyDef.position = b2Add( { 1.0f * scale, 0.4f * scale }, position );
+	bodyDef.allowFastRotation = true;
 	m_frontWheelId = b2CreateBody( worldId, &bodyDef );
 	b2CreateCircleShape( m_frontWheelId, &shapeDef, &circle );
 

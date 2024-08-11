@@ -88,6 +88,9 @@ typedef struct b2WorldDef
 	/// Joint bounciness. Non-dimensional.
 	float jointDampingRatio;
 
+	/// Maximum linear velocity. Usually meters per second.
+	float maximumLinearVelocity;
+
 	/// Can bodies go to sleep to improve performance
 	bool enableSleep;
 
@@ -201,6 +204,10 @@ typedef struct b2BodyDef
 	/// Automatically compute mass and related properties on this body from shapes.
 	/// Triggers whenever a shape is add/removed/changed. Default is true.
 	bool automaticMass;
+
+	/// This allows this body to bypass rotational speed limits. Should only be used
+	///	for circular objects, like wheels.
+	bool allowFastRotation;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int32_t internalValue;

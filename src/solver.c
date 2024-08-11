@@ -40,7 +40,7 @@ static void b2IntegrateVelocitiesTask( int startIndex, int endIndex, b2StepConte
 
 	b2Vec2 gravity = context->world->gravity;
 	float h = context->h;
-	float maxLinearSpeed = b2_maxTranslation * context->inv_dt;
+	float maxLinearSpeed = context->maxLinearVelocity;
 	float maxAngularSpeed = b2_maxRotation * context->inv_dt;
 	float maxLinearSpeedSquared = maxLinearSpeed * maxLinearSpeed;
 	float maxAngularSpeedSquared = maxAngularSpeed * maxAngularSpeed;
@@ -78,7 +78,7 @@ static void b2IntegrateVelocitiesTask( int startIndex, int endIndex, b2StepConte
 		}
 
 		// Clamp to max angular speed
-		if ( w * w > maxAngularSpeedSquared )
+		if ( w * w > maxAngularSpeedSquared && sim->allowFastRotation == false )
 		{
 			float ratio = maxAngularSpeed / b2AbsFloat( w );
 			w *= ratio;

@@ -254,6 +254,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	bodySim->gravityScale = def->gravityScale;
 	bodySim->bodyId = bodyId;
 	bodySim->isBullet = def->isBullet;
+	bodySim->allowFastRotation = def->allowFastRotation;
 	bodySim->enlargeAABB = false;
 	bodySim->isFast = false;
 	bodySim->isSpeedCapped = false;
