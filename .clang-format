@@ -1,0 +1,46 @@
+# Reference: https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+# /c/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/bin
+# https://clang-format-configurator.site/
+# default values:
+# https://github.com/llvm/llvm-project/blob/main/clang/lib/Format/Format.cpp
+---
+Language: Cpp
+BasedOnStyle: Microsoft
+
+# BreakBeforeBraces: Allman 
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterUnion: true
+  BeforeWhile: true
+# BreakBeforeBinaryOperators: All
+
+ColumnLimit: 130
+PointerAlignment: Left
+UseTab: Always
+BreakConstructorInitializers: BeforeComma
+
+InsertNewlineAtEOF: true
+IncludeBlocks: Regroup
+
+IncludeCategories:
+  - Regex:           '^"(box2d\/)'
+    Priority:        2
+  - Regex:           '^<.*'
+    Priority:        3
+  - Regex:           '^".*'
+    Priority:        1
+
+IndentExternBlock: NoIndent
+IndentCaseLabels: true
+IndentPPDirectives: BeforeHash
+IndentAccessModifiers: false
+AccessModifierOffset: -4
+
+# AlignArrayOfStructures: Left
+# AlignAfterOpenBracket: BlockIndent
+
+SpacesInParens: Custom
+SpacesInParensOptions:
+  Other: true
+  

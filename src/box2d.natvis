@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+<Type Name="__m128">
+	<DisplayString>[{m128_f32[0]}, {m128_f32[1]}, {m128_f32[2]}, {m128_f32[3]}]</DisplayString>
+	<Expand>
+		<Item Name="x">m128_f32[0]</Item>
+		<Item Name="y">m128_f32[1]</Item>
+		<Item Name="z">m128_f32[2]</Item>
+		<Item Name="w">m128_f32[3]</Item>
+		<Item Name="Address">(void*)this</Item>
+	</Expand>
+</Type>
+<Type Name="__m256">
+	<DisplayString>[{m256_f32[0]}, {m256_f32[1]}, {m256_f32[2]}, {m256_f32[3]}, {m256_f32[4]}, {m256_f32[5]}, {m256_f32[6]}, {m256_f32[7]}]</DisplayString>
+	<Expand>
+		<Item Name="x1">m256_f32[0]</Item>
+		<Item Name="y1">m256_f32[1]</Item>
+		<Item Name="z1">m256_f32[2]</Item>
+		<Item Name="w1">m256_f32[3]</Item>
+		<Item Name="x2">m256_f32[4]</Item>
+		<Item Name="y2">m256_f32[5]</Item>
+		<Item Name="z2">m256_f32[6]</Item>
+		<Item Name="w2">m256_f32[7]</Item>
+		<Item Name="Address">(void*)this</Item>
+	</Expand>
+</Type>
+</AutoVisualizer>

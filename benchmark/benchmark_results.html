@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!--
+SPDX-FileCopyrightText: 2024 Erin Catto
+SPDX-License-Identifier: MIT -->
+
+<!-- https://cdn.jsdelivr.net/gh/erincatto/box2c@main/benchmark/amd7950x/joint_grid.csv -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Box2D Benchmarks</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+    <style>
+        body {
+            background-color: #181818;
+            color: #e0e0e0;
+            font-family: Arial, sans-serif;
+        }
+        select, button {
+            background-color: #333;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            padding: 5px 10px;
+            margin: 5px;
+        }
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .chart-item {
+            width: 100%;
+            height: 500px; /* Fixed height for each chart */
+        }
+        canvas {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Box2D Benchmarks</h1>
+
+    <label for="branchSelect">Select Branch:</label>
+    <select id="branchSelect">
+        <option value="">Loading branches...</option>
+    </select>
+
+    <button id="loadButton">Load Data</button>
+    
+    <div class="chart-container">
+        <div class="chart-item">
+            <canvas id="joint_grid"></canvas>
+        </div>
+        <div class="chart-item">
+            <canvas id="large_pyramid"></canvas>
+        </div>
+        <div class="chart-item">
+            <canvas id="many_pyramids"></canvas>
+        </div>
+        <div class="chart-item">
+            <canvas id="smash"></canvas>
+        </div>
+        <div class="chart-item">
+            <canvas id="tumbler"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const repoBaseUrl = 'https://raw.githubusercontent.com/erincatto/box2d';
+
+        const benchmarks = [
+            {
+                label: 'Joint Grid',
+                id: 'joint_grid',
+                description: '10k Circles, 19800 Revolute Joints',
+                chart: null
+            },
+            {
+                label: 'Large Pyramid',
+                id: 'large_pyramid',
+                description: '5050 boxes',
+                chart: null
+            },
+            {
+                label: 'Many Pyramids',
+                id: 'many_pyramids',
+                description: '400 Pyramids with 55 Boxes Each',
+                chart: null
+            },
+            {
+                label: 'Smash',
+                id: 'smash',
+                description: 'Large Box Colliding with 9600 Small Boxes',
+                chart: null
+            },
+            {
+                label: 'Tumbler',
+                id: 'tumbler',
+                description: '2026 Small Boxes Tumbling in a Large Hollow Box',
+                chart: null
+            }
+        ];
+
+        const processors = ['amd7950x', 'm2air'];
+        const branchSelect = document.getElementById('branchSelect');
+        const loadButton = document.getElementById('loadButton');
+        var currentBranch = null;
+
+        async function fetchCSV(url) {
+            const response = await fetch(url);
+            return response.text();
+        }
+
+        async function fetchBranches() {
+            const url = `https://api.github.com/repos/erincatto/box2c/branches`;
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        }
+
+        async function populateBranches() {
+            try {
+                const branches = await fetchBranches();
+
+                // Clear existing options
+                branchSelect.innerHTML = ''; 
+
+                branches.forEach(branch => {
+                    if (branch.name != 'main')
+                    {
+                        const option = document.createElement('option');
+                        option.value = branch.name;
+                        option.textContent = branch.name;
+                        branchSelect.appendChild(option);
+
+                        if (currentBranch == null)
+                        {
+                            currentBranch = branch.name;
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error fetching branches:', error);
+                branchSelect.innerHTML = '<option value="">Error loading branches</option>';
+            }
+        }
+
+        async function loadData(branches, benchmark)
+        {
+            const datasets = [];
+
+            var file = benchmark.id + '.csv';
+
+            for (const branch of branches)
+            {
+                for (const processor of processors)
+                {
+                    const csvUrl = repoBaseUrl + '/' + branch + '/benchmark/' + processor + '/' + file;
+
+                    try 
+                    {
+                        const csv = await fetchCSV(csvUrl);
+                        const csvResult = Papa.parse(csv, {header: true, skipEmptyLines: true});
+                        const data = csvResult.data;
+
+                        if (data != null)
+                        {
+                            datasets.push({
+                                label: processor + '-' + branch,
+
+                                // convert the csv data into chart ready data
+                                data: data.map(row => ({ x: row.threads, y: row.fps })),
+                                fill: false
+                            });                        
+                        }
+                    }
+                    catch (error) {
+                        console.error(`Error loading the CSV file (${csvUrl}):`, error);
+                        throw new Error('Failed to load the CSV file. It may be missing or inaccessible.');
+                    }          
+                }
+            }
+
+            return {datasets: datasets, benchmark: benchmark};
+        }
+
+        async function createChart(datasets, benchmark)
+        {
+            // get the document element for this benchmark
+            const ctx = document.getElementById(benchmark.id).getContext('2d');
+
+            if (benchmark.chart)
+            {
+                // Destroy the previous chart if it exists
+                benchmark.chart.destroy(); 
+                benchmark.chart = null;
+            }
+
+            if (datasets == null)
+            {
+                return;
+            }
+
+            benchmark.chart = new Chart(ctx,
+                {
+                    type: 'line',
+                    data: { datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                left: 10,
+                                right: 20,
+                                top: 10,
+                                bottom: 10
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: benchmark.label + ': ' + benchmark.description,
+                                color: '#e0e0e0'
+                            },
+                            legend: {
+                                display: true,
+                                labels: {
+                                    color: '#e0e0e0'
+                                }
+                            },
+                        },
+                        scales: {
+                            x: {
+                                title:
+                                {
+                                    display: true,
+                                    text: 'threads',
+                                    color: '#e0e0e0'
+                                },
+                                type: 'linear',
+                                position: 'bottom',
+                                grid: {
+                                    color: '#333'
+                                },
+                                ticks: {
+                                    color: '#e0e0e0'
+                                }
+                            },
+                            y: {
+                                title:
+                                {
+                                    display: true,
+                                    text: 'fps',
+                                    color: '#e0e0e0'
+                                },
+                                grid: {
+                                    color: '#333'
+                                },
+                                ticks: {
+                                    color: '#e0e0e0'
+                                }
+                            }
+                        }
+                    }
+                });
+        }
+
+        async function createCharts()
+        {
+            const branches = ['main'];
+
+            if (currentBranch != null)
+            {
+                branches.push(currentBranch);
+            }
+
+            const dataPromises = [];
+            for (const benchmark of benchmarks)
+            {
+                dataPromises.push(loadData(branches, benchmark));
+            }
+
+            Promise.all(dataPromises).then((values) =>
+            {
+                for (value of values)
+                {
+                    createChart(value.datasets, value.benchmark);
+                }
+            });
+        }
+
+        // connect button listener
+        loadButton.addEventListener('click', async () => {
+            
+            if (branchSelect.value == null)
+            {
+                alert('No branch selected');
+            }
+            else
+            {
+                try {
+                    currentBranch = branchSelect.value;
+                    await createCharts();
+                }
+                catch (error) {
+                    // failed to load data
+                    alert(error.message);
+                }
+            }
+        });
+
+        Chart.defaults.font.size = 14;
+        createCharts().then(populateBranches());
+
+    </script>
+</body>
+
+</html>

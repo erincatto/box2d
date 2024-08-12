@@ -1,0 +1,10 @@
+* text=auto
+
+*.c text
+*.cpp text
+*.h text
+*.md text
+*.txt text
+*.sh text eol=lf
+
+*.ttf binary

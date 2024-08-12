@@ -2,6 +2,8 @@ build/
 imgui.ini
 settings.ini
 .vscode/
-CMakeSettings.json
-out/
 .vs/
+.cap
+.DS_Store
+CMakeUserPresets.json
+.cache/

@@ -2,22 +2,22 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="236.53163"
-   height="176.41858"
+   width="227.47989"
+   height="177.37952"
    id="svg2"
    version="1.1"
-   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
    sodipodi:docname="winding.svg"
    inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
    inkscape:export-xdpi="90"
-   inkscape:export-ydpi="90">
+   inkscape:export-ydpi="90"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
   <defs
      id="defs4">
     <marker
@@ -58,7 +58,7 @@
       <path
          id="path3645"
          d="M 0,0 5,-5 -12.5,0 5,5 Z"
-         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.00000003pt;marker-start:none"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
          transform="matrix(-0.4,0,0,-0.4,-4,0)"
          inkscape:connector-curvature="0" />
     </marker>
@@ -86,7 +86,7 @@
       <path
          id="path3639"
          d="M 0,0 5,-5 -12.5,0 5,5 Z"
-         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.00000003pt;marker-start:none"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
          transform="matrix(-0.8,0,0,-0.8,-10,0)"
          inkscape:connector-curvature="0" />
     </marker>
@@ -106,17 +106,17 @@
     </marker>
     <inkscape:perspective
        sodipodi:type="inkscape:persp3d"
-       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_x="0 : 527.14203 : 1"
        inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_z="744.09448 : 526.18109 : 1"
-       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       inkscape:vp_z="744.09448 : 527.14203 : 1"
+       inkscape:persp3d-origin="372.04724 : 351.74833 : 1"
        id="perspective10" />
     <inkscape:perspective
        id="perspective2835"
-       inkscape:persp3d-origin="292.5 : 75.212601 : 1"
-       inkscape:vp_z="585 : 112.8189 : 1"
+       inkscape:persp3d-origin="292.5 : 76.173539 : 1"
+       inkscape:vp_z="585 : 113.77984 : 1"
        inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_x="0 : 112.8189 : 1"
+       inkscape:vp_x="0 : 113.77984 : 1"
        sodipodi:type="inkscape:persp3d" />
   </defs>
   <sodipodi:namedview
@@ -126,9 +126,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.70710678"
-     inkscape:cx="-672.64537"
-     inkscape:cy="145.50488"
+     inkscape:zoom="2"
+     inkscape:cx="87"
+     inkscape:cy="151.5"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -140,7 +140,10 @@
      fit-margin-top="0"
      fit-margin-left="0"
      fit-margin-right="0"
-     fit-margin-bottom="0" />
+     fit-margin-bottom="0"
+     inkscape:showpageshadow="2"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -149,7 +152,6 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -157,13 +159,13 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-245.94154,-381.59189)">
+     transform="translate(-255.77258,-380.63095)">
     <text
        id="6"
        xml:space="preserve"
        x="476.47318"
        y="507.86407"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:0%;font-family:'Hack Nerd Font';-inkscape-font-specification:'Hack Nerd Font, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
        inkscape:export-xdpi="90"
        inkscape:export-ydpi="90">x</text>
@@ -172,7 +174,7 @@
        xml:space="preserve"
        x="482.47318"
        y="507.86407"
-       style="font-style:normal;font-weight:normal;font-size:13.80000019px;line-height:0%;font-family:Calibri;text-align:start;text-anchor:start;fill:#000000"
+       style="font-style:normal;font-weight:normal;font-size:13.8px;line-height:0%;font-family:Calibri;text-align:start;text-anchor:start;fill:#000000"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
        inkscape:export-xdpi="90"
        inkscape:export-ydpi="90"> </text>
@@ -181,7 +183,7 @@
        xml:space="preserve"
        x="387.67319"
        y="387.19345"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:0%;font-family:'Hack Nerd Font';-inkscape-font-specification:'Hack Nerd Font, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
        inkscape:export-xdpi="90"
        inkscape:export-ydpi="90">y</text>
@@ -190,16 +192,16 @@
        xml:space="preserve"
        x="396.32318"
        y="383.19345"
-       style="font-style:normal;font-weight:normal;font-size:13.80000019px;line-height:0%;font-family:Calibri;text-align:start;text-anchor:start;fill:#000000"
+       style="font-style:normal;font-weight:normal;font-size:13.8px;line-height:0%;font-family:Calibri;text-align:start;text-anchor:start;fill:#000000"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
        inkscape:export-xdpi="90"
        inkscape:export-ydpi="90"> </text>
     <text
        id="11"
        xml:space="preserve"
-       x="245.37318"
-       y="420.09586"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000"
+       x="254.95813"
+       y="416.98911"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:0%;font-family:'Hack Nerd Font';-inkscape-font-specification:'Hack Nerd Font, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
        inkscape:export-xdpi="90"
        inkscape:export-ydpi="90">CCW winding</text>
@@ -208,13 +210,13 @@
        xml:space="preserve"
        x="294.62317"
        y="397.59586"
-       style="font-style:normal;font-weight:normal;font-size:13.80000019px;line-height:0%;font-family:Calibri;text-align:start;text-anchor:start;fill:#000000"
+       style="font-style:normal;font-weight:normal;font-size:13.8px;line-height:0%;font-family:Calibri;text-align:start;text-anchor:start;fill:#000000"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"
        inkscape:export-xdpi="90"
        inkscape:export-ydpi="90"> </text>
     <path
        style="fill:none;stroke:#000000;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Arrow2Mend)"
-       d="m 345.5,414.36218 -56.5,34"
+       d="m 352,416.36219 -56.5,34"
        id="path4267"
        sodipodi:nodetypes="cc"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\winding.png"

@@ -16,6 +16,7 @@ body {
 
 #titlearea {
     border-bottom: 1px solid #32363d;
+	background-color: #292a2d;
 }
 
 div.contents {
@@ -26,8 +27,6 @@ div.contents {
 .image {
 	background-color: #CCCCCC;
 	border: 10px solid #CCCCCC;
-	margin: 0px;
-	padding: 0px;
 }
 
 /* this kind of works with doxygen markdown */
@@ -343,7 +342,11 @@ a.highlighted {
 }
 
 .directory tr.even {
-	background: #32363d;
+	background: #36383d;
+}
+
+.directory tr.odd {
+	background: #292a2d;
 }
 
 #MSearchSelectWindow {
