@@ -64,7 +64,7 @@ AVX2 CPU support is assumed on x64. You can turn this off in the CMake options a
 
 ## Documentation
 - [Manual](https://box2d.org/documentation/)
-- [Migration Guide](https://github.com/erincatto/box2d/docs/migration.md)
+- [Migration Guide](https://github.com/erincatto/box2d/blob/main/docs/migration.md)
 
 ## Community
 - [Discord](https://discord.gg/NKYgCBP)
