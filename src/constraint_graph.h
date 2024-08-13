@@ -22,8 +22,9 @@ typedef struct b2World b2World;
 
 typedef struct b2GraphColor
 {
-	// base on bodyId so this is over-sized to encompass static bodies
+	// This bitset is indexed by bodyId so this is over-sized to encompass static bodies
 	// however I never traverse these bits or use the bit count for anything
+	// This bitset is unused on the overflow color.
 	b2BitSet bodySet;
 
 	// cache friendly arrays

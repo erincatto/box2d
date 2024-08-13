@@ -102,6 +102,7 @@ b2BodySim* b2AddBodySim( b2BodySimArray* array )
 	{
 		int newCapacity = 2 * array->capacity;
 		b2BodySim* newElements = b2Alloc( newCapacity * elementSize );
+		B2_ASSERT( array->data != NULL );
 		memcpy( newElements, array->data, array->capacity * elementSize );
 		b2Free( array->data, array->capacity * elementSize );
 		array->data = newElements;
@@ -126,6 +127,7 @@ b2BodyState* b2AddBodyState( b2BodyStateArray* array )
 	{
 		int newCapacity = 2 * array->capacity;
 		b2BodyState* newElements = b2Alloc( newCapacity * elementSize );
+		B2_ASSERT( array->data != NULL );
 		memcpy( newElements, array->data, array->capacity * elementSize );
 		b2Free( array->data, array->capacity * elementSize );
 		array->data = newElements;
@@ -150,6 +152,7 @@ b2ContactSim* b2AddContact( b2ContactArray* array )
 	{
 		int newCapacity = 2 * array->capacity;
 		b2ContactSim* newElements = b2Alloc( newCapacity * elementSize );
+		B2_ASSERT( array->data != NULL );
 		memcpy( newElements, array->data, array->capacity * elementSize );
 		b2Free( array->data, array->capacity * elementSize );
 		array->data = newElements;
@@ -174,6 +177,7 @@ b2JointSim* b2AddJoint( b2JointArray* array )
 	{
 		int newCapacity = 2 * array->capacity;
 		b2JointSim* newElements = b2Alloc( newCapacity * elementSize );
+		B2_ASSERT( array->data != NULL );
 		memcpy( newElements, array->data, array->capacity * elementSize );
 		b2Free( array->data, array->capacity * elementSize );
 		array->data = newElements;
@@ -198,6 +202,7 @@ b2IslandSim* b2AddIsland( b2IslandArray* array )
 	{
 		int newCapacity = 2 * array->capacity;
 		b2IslandSim* newElements = b2Alloc( newCapacity * elementSize );
+		B2_ASSERT( array->data != NULL );
 		memcpy( newElements, array->data, array->capacity * elementSize );
 		b2Free( array->data, array->capacity * elementSize );
 		array->data = newElements;
