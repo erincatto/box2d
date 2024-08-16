@@ -67,6 +67,8 @@ public:
 		m_bodyId = b2_nullBodyId;
 		m_enableHitEvents = true;
 
+		memset( m_hitEvents, 0, sizeof( m_hitEvents ) );
+
 		Launch();
 	}
 

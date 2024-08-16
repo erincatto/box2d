@@ -87,6 +87,7 @@ static int32_t b2AllocateNode( b2DynamicTree* tree )
 		int32_t oldCapcity = tree->nodeCapacity;
 		tree->nodeCapacity += oldCapcity >> 1;
 		tree->nodes = (b2TreeNode*)b2Alloc( tree->nodeCapacity * sizeof( b2TreeNode ) );
+		B2_ASSERT( oldNodes != NULL );
 		memcpy( tree->nodes, oldNodes, tree->nodeCount * sizeof( b2TreeNode ) );
 		b2Free( oldNodes, oldCapcity * sizeof( b2TreeNode ) );
 

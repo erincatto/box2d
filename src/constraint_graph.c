@@ -30,19 +30,19 @@ _Static_assert( b2_graphColorCount == 12, "graph color count assumed to be 12" )
 void b2CreateGraph( b2ConstraintGraph* graph, int bodyCapacity )
 {
 	_Static_assert( b2_graphColorCount >= 2, "must have at least two constraint graph colors" );
+	_Static_assert( b2_overflowIndex == b2_graphColorCount - 1, "bad over flow index");
 
 	*graph = ( b2ConstraintGraph ){ 0 };
 
 	bodyCapacity = b2MaxInt( bodyCapacity, 8 );
-	for ( int i = 0; i < b2_graphColorCount; ++i )
+
+	// Initialize graph color bit set.
+	// No bitset for overflow color.
+	for ( int i = 0; i < b2_overflowIndex; ++i )
 	{
 		b2GraphColor* color = graph->colors + i;
-
-		if ( i != b2_overflowIndex )
-		{
-			color->bodySet = b2CreateBitSet( bodyCapacity );
-			b2SetBitCountAndClear( &color->bodySet, bodyCapacity );
-		}
+		color->bodySet = b2CreateBitSet( bodyCapacity );
+		b2SetBitCountAndClear( &color->bodySet, bodyCapacity );
 	}
 }
 
@@ -51,6 +51,10 @@ void b2DestroyGraph( b2ConstraintGraph* graph )
 	for ( int i = 0; i < b2_graphColorCount; ++i )
 	{
 		b2GraphColor* color = graph->colors + i;
+		
+		// The bit set should never be used on the overflow color
+		B2_ASSERT( i != b2_overflowIndex || color->bodySet.bits == NULL );
+
 		b2DestroyBitSet( &color->bodySet );
 
 		b2DestroyContactArray( &color->contacts );
@@ -220,7 +224,7 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 #if B2_FORCE_OVERFLOW == 0
 	if ( staticA == false && staticB == false )
 	{
-		for ( int i = 0; i < b2_graphColorCount; ++i )
+		for ( int i = 0; i < b2_overflowIndex; ++i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdA ) || b2GetBit( &color->bodySet, bodyIdB ) )
@@ -235,7 +239,7 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 	}
 	else if ( staticA == false )
 	{
-		for ( int i = 0; i < b2_graphColorCount; ++i )
+		for ( int i = 0; i < b2_overflowIndex; ++i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdA ) )
@@ -249,7 +253,7 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 	}
 	else if ( staticB == false )
 	{
-		for ( int i = 0; i < b2_graphColorCount; ++i )
+		for ( int i = 0; i < b2_overflowIndex; ++i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdB ) )

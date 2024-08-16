@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-// Bit set provides fast operations on large arrays of bits
+// Bit set provides fast operations on large arrays of bits.
 typedef struct b2BitSet
 {
 	uint64_t* bits;

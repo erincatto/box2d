@@ -49,7 +49,8 @@ void b2GrowBitSet( b2BitSet* bitSet, uint32_t blockCount )
 		bitSet->blockCapacity = blockCount + blockCount / 2;
 		uint64_t* newBits = b2Alloc( bitSet->blockCapacity * sizeof( uint64_t ) );
 		memset( newBits, 0, bitSet->blockCapacity * sizeof( uint64_t ) );
-		memcpy( newBits, bitSet->bits, bitSet->blockCount * sizeof( uint64_t ) );
+		B2_ASSERT( bitSet->bits != NULL );
+		memcpy( newBits, bitSet->bits, oldCapacity * sizeof( uint64_t ) );
 		b2Free( bitSet->bits, oldCapacity * sizeof( uint64_t ) );
 		bitSet->bits = newBits;
 	}
