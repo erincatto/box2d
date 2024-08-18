@@ -54,7 +54,7 @@ Box2D is a 2D physics engine for games.
 - cmake -G Xcode ..
 - open box2d.xcodeproj
 - Select the samples scheme
-- Edit the scheme to set a custom working directory, make this be in box2d/samples
+- Edit the scheme to set a custom working directory to the box2d directory
 - You can now build and run the samples
 
 ## Compatibility

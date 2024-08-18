@@ -142,8 +142,6 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 		assert( false );
 	}
 
-	// this doesn't look that good
-	// Search for font file
 	const char* fontPath = "samples/data/droid_sans.ttf";
 	FILE* file = fopen( fontPath, "rb" );
 

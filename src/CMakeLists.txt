@@ -137,7 +137,7 @@ if (MSVC)
 
 	if (BOX2D_AVX2)
 		message(STATUS "Box2D using AVX2")	
-		target_compile_definitions(box2d PRIVATE B2_AVX2)
+		target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
 		target_compile_options(box2d PRIVATE /arch:AVX2)
 	endif()
 
@@ -145,7 +145,7 @@ elseif (MINGW)
 	message(STATUS "Box2D on MinGW")
 	if (BOX2D_AVX2)
 		message(STATUS "Box2D using AVX2")	
-		target_compile_definitions(box2d PRIVATE B2_AVX2)
+		target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
 		target_compile_options(box2d PRIVATE -mavx2)
 	else()
 		# see SIMDE_DIAGNOSTIC_DISABLE_PSABI_
@@ -170,7 +170,7 @@ elseif (UNIX)
 		if (BOX2D_AVX2)
 			message(STATUS "Box2D using AVX2")
 			# FMA -mfma -mavx -march=native
-			target_compile_definitions(box2d PRIVATE B2_AVX2)
+			target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
 			target_compile_options(box2d PRIVATE -mavx2)
 		else()
 			# see SIMDE_DIAGNOSTIC_DISABLE_PSABI_

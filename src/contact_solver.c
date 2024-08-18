@@ -10,6 +10,8 @@
 #include "solver_set.h"
 #include "world.h"
 
+#include <stddef.h>
+
 void b2PrepareOverflowContacts( b2StepContext* context )
 {
 	b2TracyCZoneNC( prepare_overflow_contact, "Prepare Overflow Contact", b2_colorYellow, true );
@@ -463,7 +465,7 @@ void b2StoreOverflowImpulses( b2StepContext* context )
 }
 
 // todo_erin cleanup
-#if defined( B2_AVX2 )
+#if defined( B2_SIMD_AVX2 )
 
 	#include <immintrin.h>
 
@@ -471,19 +473,23 @@ void b2StoreOverflowImpulses( b2StepContext* context )
 typedef __m256 b2FloatW;
 	#define B2_SIMD_WIDTH 8
 
-#elif defined( B2_NEON )
+#elif defined( B2_SIMD_NEON )
 
 	#include <arm_neon.h>
-// wide float holds 4 numbers
-typdef float32x4_t b2FloatW;
+	// wide float holds 4 numbers
+	typedef float32x4_t b2FloatW;
 	#define B2_SIMD_WIDTH 4
 
-#else
+#elif defined( B2_SIMD_SSE2 )
 
 	#include <emmintrin.h>
 // wide float holds 4 numbers
 typedef __m128 b2FloatW;
 	#define B2_SIMD_WIDTH 4
+
+#else
+
+#error Uknown SIMD type
 
 #endif
 
@@ -499,7 +505,7 @@ typedef struct b2RotW
 	b2FloatW C, S;
 } b2RotW;
 
-#if defined( B2_AVX2 )
+#if defined( B2_SIMD_AVX2 )
 
 static inline b2FloatW b2ZeroW()
 {
@@ -525,6 +531,10 @@ static inline b2FloatW b2MulW( b2FloatW a, b2FloatW b )
 {
 	return _mm256_mul_ps( a, b );
 }
+
+// todo SIMDE implementation of simde_mm256_fnmadd_ps is slow if FMA is not available
+// #define b2MulAddW(a, b, c) simde_mm256_fmadd_ps(b, c, a)
+// #define b2MulSubW(a, b, c) simde_mm256_fnmadd_ps(b, c, a)
 
 static inline b2FloatW b2MulAddW( b2FloatW a, b2FloatW b, b2FloatW c )
 {
@@ -567,9 +577,102 @@ static inline b2FloatW b2BlendW( b2FloatW a, b2FloatW b, b2FloatW mask )
 	return _mm256_blendv_ps( a, b, mask );
 }
 
-#elif defined( B2_NEON )
+#elif defined( B2_SIMD_NEON )
 
-#else
+static inline b2FloatW b2ZeroW( )
+{
+	return vdupq_n_f32(0.0f);
+}
+
+static inline b2FloatW b2SplatW( float scalar )
+{
+	return vdupq_n_f32( scalar );
+}
+
+static inline b2FloatW b2SetW(float a, float b, float c, float d)
+{
+	float32_t array[4] = {a, b, c, d};
+	return vld1q_f32(array);
+}
+
+static inline b2FloatW b2AddW( b2FloatW a, b2FloatW b )
+{
+	return vaddq_f32( a, b );
+}
+
+static inline b2FloatW b2SubW( b2FloatW a, b2FloatW b )
+{
+	return vsubq_f32( a, b );
+}
+
+static inline b2FloatW b2MulW( b2FloatW a, b2FloatW b )
+{
+	return vmulq_f32( a, b );
+}
+
+static inline b2FloatW b2MulAddW( b2FloatW a, b2FloatW b, b2FloatW c )
+{
+	return vmlaq_f32(a, b, c);
+}
+
+static inline b2FloatW b2MulSubW( b2FloatW a, b2FloatW b, b2FloatW c )
+{
+	return vmlsq_f32(a, b, c);
+}
+
+static inline b2FloatW b2MinW( b2FloatW a, b2FloatW b )
+{
+	return vminq_f32( a, b );
+}
+
+static inline b2FloatW b2MaxW( b2FloatW a, b2FloatW b )
+{
+	return vmaxq_f32( a, b );
+}
+
+static inline b2FloatW b2OrW( b2FloatW a, b2FloatW b )
+{
+	return vreinterpretq_f32_u32(vorrq_u32( vreinterpretq_u32_f32(a), vreinterpretq_u32_f32(b) ));
+}
+
+static inline b2FloatW b2GreaterThanW( b2FloatW a, b2FloatW b )
+{
+	return vreinterpretq_f32_u32(vcgtq_f32( a, b ));
+}
+
+static inline b2FloatW b2EqualsW( b2FloatW a, b2FloatW b )
+{
+	return vreinterpretq_f32_u32(vceqq_f32( a, b ));
+}
+
+// component-wise returns mask ? b : a
+static inline b2FloatW b2BlendW(b2FloatW a, b2FloatW b, b2FloatW mask)
+{
+	uint32x4_t mask32 = vreinterpretq_u32_f32(mask);
+	return vbslq_f32(mask32, b, a);
+}
+
+static inline b2FloatW b2LoadW(const float32_t* data)
+{
+	return vld1q_f32(data);
+}
+
+static inline void b2StoreW(float32_t* data, b2FloatW a)
+{
+	return vst1q_f32(data, a);
+}
+
+static inline b2FloatW b2UnpackLoW(b2FloatW a, b2FloatW b)
+{
+	return vzip1q_f32(a, b);
+}
+
+static inline b2FloatW b2UnpackHiW(b2FloatW a, b2FloatW b)
+{
+	return vzip2q_f32(a, b);
+}
+
+#elif defined(B2_SIMD_SSE2)
 
 static inline b2FloatW b2ZeroW( )
 {
@@ -637,10 +740,6 @@ static inline b2FloatW b2BlendW(b2FloatW a, b2FloatW b, b2FloatW mask)
 	return _mm_or_ps( _mm_and_ps( mask, b ), _mm_andnot_ps( mask, a ) );
 }
 
-// todo SIMDE implementation of simde_mm256_fnmadd_ps is slow if FMA is not available
-// #define b2MulAddW(a, b, c) simde_mm256_fmadd_ps(b, c, a)
-// #define b2MulSubW(a, b, c) simde_mm256_fnmadd_ps(b, c, a)
-
 #endif
 
 static inline b2FloatW b2DotW( b2Vec2W a, b2Vec2W b )
@@ -706,7 +805,9 @@ typedef struct b2SimdBody
 	b2RotW dq;
 } b2SimdBody;
 
-#if B2_SIMD_WIDTH == 8
+// Custom gather/scatter for each SIMD type
+#if defined(B2_SIMD_AVX2)
+
 // This is a load and 8x8 transpose
 static b2SimdBody b2GatherBodies( const b2BodyState* restrict states, int* restrict indices )
 {
@@ -794,7 +895,7 @@ static void b2ScatterBodies( b2BodyState* restrict states, int* restrict indices
 		_mm256_store_ps( (float*)( states + indices[7] ), _mm256_permute2f128_ps( tt3, tt7, 0x31 ) );
 }
 
-#elif B2_SIMD_WIDTH == 4
+#elif defined(B2_SIMD_NEON)
 
 // This is a load and transpose
 static b2SimdBody b2GatherBodies( const b2BodyState* restrict states, int* restrict indices )
@@ -803,19 +904,131 @@ static b2SimdBody b2GatherBodies( const b2BodyState* restrict states, int* restr
 	B2_ASSERT( ( (uintptr_t)states & 0x1F ) == 0 );
 
 	// [vx vy w flags]
-	b2FloatW identityA = _mm_setzero_ps();
+	b2FloatW identityA = b2ZeroW();
 
 	// [dpx dpy dqc dqs]
-	b2FloatW identityB = _mm_setr_ps( 0.0f, 0.0f, 1.0f, 0.0f );
+	
+	b2FloatW identityB = b2SetW( 0.0f, 0.0f, 1.0f, 0.0f );
 
-	b2FloatW b1a = indices[0] == B2_NULL_INDEX ? identityA : _mm_load_ps((float*)(states + indices[0]) + 0);
-	b2FloatW b1b = indices[0] == B2_NULL_INDEX ? identityB : _mm_load_ps((float*)(states + indices[0]) + 4);
-	b2FloatW b2a = indices[1] == B2_NULL_INDEX ? identityA : _mm_load_ps((float*)(states + indices[1]) + 0);
-	b2FloatW b2b = indices[1] == B2_NULL_INDEX ? identityB : _mm_load_ps((float*)(states + indices[1]) + 4);
-	b2FloatW b3a = indices[2] == B2_NULL_INDEX ? identityA : _mm_load_ps((float*)(states + indices[2]) + 0);
-	b2FloatW b3b = indices[2] == B2_NULL_INDEX ? identityB : _mm_load_ps((float*)(states + indices[2]) + 4);
-	b2FloatW b4a = indices[3] == B2_NULL_INDEX ? identityA : _mm_load_ps((float*)(states + indices[3]) + 0);
-	b2FloatW b4b = indices[3] == B2_NULL_INDEX ? identityB : _mm_load_ps((float*)(states + indices[3]) + 4);
+	b2FloatW b1a = indices[0] == B2_NULL_INDEX ? identityA : b2LoadW((float*)(states + indices[0]) + 0);
+	b2FloatW b1b = indices[0] == B2_NULL_INDEX ? identityB : b2LoadW((float*)(states + indices[0]) + 4);
+	b2FloatW b2a = indices[1] == B2_NULL_INDEX ? identityA : b2LoadW((float*)(states + indices[1]) + 0);
+	b2FloatW b2b = indices[1] == B2_NULL_INDEX ? identityB : b2LoadW((float*)(states + indices[1]) + 4);
+	b2FloatW b3a = indices[2] == B2_NULL_INDEX ? identityA : b2LoadW((float*)(states + indices[2]) + 0);
+	b2FloatW b3b = indices[2] == B2_NULL_INDEX ? identityB : b2LoadW((float*)(states + indices[2]) + 4);
+	b2FloatW b4a = indices[3] == B2_NULL_INDEX ? identityA : b2LoadW((float*)(states + indices[3]) + 0);
+	b2FloatW b4b = indices[3] == B2_NULL_INDEX ? identityB : b2LoadW((float*)(states + indices[3]) + 4);
+
+	// [vx1 vx3 vy1 vy3]
+	b2FloatW t1a = b2UnpackLoW( b1a, b3a );
+
+	// [vx2 vx4 vy2 vy4]
+	b2FloatW t2a = b2UnpackLoW( b2a, b4a );
+
+	// [w1 w3 f1 f3]
+	b2FloatW t3a = b2UnpackHiW( b1a, b3a );
+
+	// [w2 w4 f2 f4]
+	b2FloatW t4a = b2UnpackHiW( b2a, b4a );
+
+	b2SimdBody simdBody;
+	simdBody.v.X = b2UnpackLoW( t1a, t2a );
+	simdBody.v.Y = b2UnpackHiW( t1a, t2a );
+	simdBody.w = b2UnpackLoW( t3a, t4a );
+	simdBody.flags = b2UnpackHiW( t3a, t4a );
+
+	b2FloatW t1b = b2UnpackLoW( b1b, b3b );
+	b2FloatW t2b = b2UnpackLoW( b2b, b4b );
+	b2FloatW t3b = b2UnpackHiW( b1b, b3b );
+	b2FloatW t4b = b2UnpackHiW( b2b, b4b );
+
+	simdBody.dp.X = b2UnpackLoW(t1b, t2b);
+	simdBody.dp.Y = b2UnpackHiW(t1b, t2b);
+	simdBody.dq.C = b2UnpackLoW(t3b, t4b);
+	simdBody.dq.S = b2UnpackHiW(t3b, t4b);
+	
+	return simdBody;
+}
+
+// This writes only the velocities back to the solver bodies
+// https://developer.arm.com/documentation/102107a/0100/Floating-point-4x4-matrix-transposition
+static void b2ScatterBodies( b2BodyState* restrict states, int* restrict indices, const b2SimdBody* restrict simdBody )
+{
+	_Static_assert( sizeof( b2BodyState ) == 32, "b2BodyState not 32 bytes" );
+	B2_ASSERT( ( (uintptr_t)states & 0x1F ) == 0 );
+
+#if 0
+	b2FloatW x = b2SetW(0.0f, 1.0f, 2.0f, 3.0f);
+	b2FloatW y = b2SetW(4.0f, 5.0f, 6.0f, 7.0f);
+	b2FloatW z = b2SetW(8.0f, 9.0f, 10.0f, 11.0f);
+	b2FloatW w = b2SetW(12.0f, 13.0f, 14.0f, 15.0f);
+	
+	float32x4x2_t rr1 = vtrnq_f32( x, y );
+	float32x4x2_t rr2 = vtrnq_f32( z, w );
+	
+	float32x4_t b1 = vcombine_f32(vget_low_f32(rr1.val[0]), vget_low_f32(rr2.val[0]));
+	float32x4_t b2 = vcombine_f32(vget_low_f32(rr1.val[1]), vget_low_f32(rr2.val[1]));
+	float32x4_t b3 = vcombine_f32(vget_high_f32(rr1.val[0]), vget_high_f32(rr2.val[0]));
+	float32x4_t b4 = vcombine_f32(vget_high_f32(rr1.val[1]), vget_high_f32(rr2.val[1]));
+#endif
+	
+	// transpose
+	float32x4x2_t r1 = vtrnq_f32( simdBody->v.X, simdBody->v.Y );
+	float32x4x2_t r2 = vtrnq_f32( simdBody->w, simdBody->flags );
+
+	// I don't use any dummy body in the body array because this will lead to multithreaded sharing and the
+	// associated cache flushing.
+	if ( indices[0] != B2_NULL_INDEX )
+	{
+		float32x4_t body1 = vcombine_f32(vget_low_f32(r1.val[0]), vget_low_f32(r2.val[0]));
+		b2StoreW( (float*)( states + indices[0] ), body1 );
+	}
+
+	if ( indices[1] != B2_NULL_INDEX )
+	{
+		float32x4_t body2 = vcombine_f32(vget_low_f32(r1.val[1]), vget_low_f32(r2.val[1]));
+		b2StoreW( (float*)( states + indices[1] ), body2 );
+	}
+
+	if ( indices[2] != B2_NULL_INDEX )
+	{
+		float32x4_t body3 = vcombine_f32(vget_high_f32(r1.val[0]), vget_high_f32(r2.val[0]));
+		b2StoreW( (float*)( states + indices[2] ), body3 );
+	}
+	
+	if ( indices[3] != B2_NULL_INDEX )
+	{
+		float32x4_t body4 = vcombine_f32(vget_high_f32(r1.val[1]), vget_high_f32(r2.val[1]));
+		b2StoreW( (float*)( states + indices[3] ), body4 );
+	}
+
+	// todo temp for breakpoint
+	indices[0] += 0;
+}
+
+#elif defined(B2_SIMD_SSE2)
+
+// This is a load and transpose
+static b2SimdBody b2GatherBodies( const b2BodyState* restrict states, int* restrict indices )
+{
+	_Static_assert( sizeof( b2BodyState ) == 32, "b2BodyState not 32 bytes" );
+	B2_ASSERT( ( (uintptr_t)states & 0x1F ) == 0 );
+
+	// [vx vy w flags]
+	b2FloatW identityA = b2ZeroW();
+
+	// [dpx dpy dqc dqs]
+	
+	b2FloatW identityB = b2SetW( 0.0f, 0.0f, 1.0f, 0.0f );
+
+	b2FloatW b1a = indices[0] == B2_NULL_INDEX ? identityA : b2LoadW((float*)(states + indices[0]) + 0);
+	b2FloatW b1b = indices[0] == B2_NULL_INDEX ? identityB : b2LoadW((float*)(states + indices[0]) + 4);
+	b2FloatW b2a = indices[1] == B2_NULL_INDEX ? identityA : b2LoadW((float*)(states + indices[1]) + 0);
+	b2FloatW b2b = indices[1] == B2_NULL_INDEX ? identityB : b2LoadW((float*)(states + indices[1]) + 4);
+	b2FloatW b3a = indices[2] == B2_NULL_INDEX ? identityA : b2LoadW((float*)(states + indices[2]) + 0);
+	b2FloatW b3b = indices[2] == B2_NULL_INDEX ? identityB : b2LoadW((float*)(states + indices[2]) + 4);
+	b2FloatW b4a = indices[3] == B2_NULL_INDEX ? identityA : b2LoadW((float*)(states + indices[3]) + 0);
+	b2FloatW b4b = indices[3] == B2_NULL_INDEX ? identityB : b2LoadW((float*)(states + indices[3]) + 4);
 
 	// todo testing
 	//b1a = _mm_setr_ps( 0.0f, 1.0f, 2.0f, 3.0f );
@@ -831,32 +1044,32 @@ static b2SimdBody b2GatherBodies( const b2BodyState* restrict states, int* restr
 	//_MM_TRANSPOSE4_PS( b0a, b1a, b2a, b3a );
 
 	// [vx1 vx3 vy1 vy3]
-	b2FloatW t1a = _mm_unpacklo_ps( b1a, b3a );
+	b2FloatW t1a = b2UnpackLoW( b1a, b3a );
 
 	// [vx2 vx4 vy2 vy4]
-	b2FloatW t2a = _mm_unpacklo_ps( b2a, b4a );
+	b2FloatW t2a = b2UnpackLoW( b2a, b4a );
 
 	// [w1 w3 f1 f3]
-	b2FloatW t3a = _mm_unpackhi_ps( b1a, b3a );
+	b2FloatW t3a = b2UnpackHiW( b1a, b3a );
 
 	// [w2 w4 f2 f4]
-	b2FloatW t4a = _mm_unpackhi_ps( b2a, b4a );
+	b2FloatW t4a = b2UnpackHiW( b2a, b4a );
 
 	b2SimdBody simdBody;
-	simdBody.v.X = _mm_unpacklo_ps( t1a, t2a );
-	simdBody.v.Y = _mm_unpackhi_ps( t1a, t2a );
-	simdBody.w = _mm_unpacklo_ps( t3a, t4a );
-	simdBody.flags = _mm_unpackhi_ps( t3a, t4a );
+	simdBody.v.X = b2UnpackLoW( t1a, t2a );
+	simdBody.v.Y = b2UnpackHiW( t1a, t2a );
+	simdBody.w = b2UnpackLoW( t3a, t4a );
+	simdBody.flags = b2UnpackHiW( t3a, t4a );
 
-	b2FloatW t1b = _mm_unpacklo_ps( b1b, b3b );
-	b2FloatW t2b = _mm_unpacklo_ps( b2b, b4b );
-	b2FloatW t3b = _mm_unpackhi_ps( b1b, b3b );
-	b2FloatW t4b = _mm_unpackhi_ps( b2b, b4b );
+	b2FloatW t1b = b2UnpackLoW( b1b, b3b );
+	b2FloatW t2b = b2UnpackLoW( b2b, b4b );
+	b2FloatW t3b = b2UnpackHiW( b1b, b3b );
+	b2FloatW t4b = b2UnpackHiW( b2b, b4b );
 
-	simdBody.dp.X = _mm_unpacklo_ps(t1b, t2b);
-	simdBody.dp.Y = _mm_unpackhi_ps(t1b, t2b);
-	simdBody.dq.C = _mm_unpacklo_ps(t3b, t4b);
-	simdBody.dq.S = _mm_unpackhi_ps(t3b, t4b);
+	simdBody.dp.X = b2UnpackLoW(t1b, t2b);
+	simdBody.dp.Y = b2UnpackHiW(t1b, t2b);
+	simdBody.dq.C = b2UnpackLoW(t3b, t4b);
+	simdBody.dq.S = b2UnpackHiW(t3b, t4b);
 	return simdBody;
 }
 
@@ -867,43 +1080,47 @@ static void b2ScatterBodies( b2BodyState* restrict states, int* restrict indices
 	B2_ASSERT( ( (uintptr_t)states & 0x1F ) == 0 );
 
 	// [vx1 vy1 vx2 vy2]
-	b2FloatW t1 = _mm_unpacklo_ps( simdBody->v.X, simdBody->v.Y );
+	b2FloatW t1 = b2UnpackLoW( simdBody->v.X, simdBody->v.Y );
 	// [vx3 vy3 vx4 vy4]
-	b2FloatW t2 = _mm_unpackhi_ps( simdBody->v.X, simdBody->v.Y );
+	b2FloatW t2 = b2UnpackHiW( simdBody->v.X, simdBody->v.Y );
 	// [w1 f1 w2 f2]
-	b2FloatW t3 = _mm_unpacklo_ps( simdBody->w, simdBody->flags );
+	b2FloatW t3 = b2UnpackLoW( simdBody->w, simdBody->flags );
 	// [w3 f3 w4 f4]
-	b2FloatW t4 = _mm_unpackhi_ps( simdBody->w, simdBody->flags );
+	b2FloatW t4 = b2UnpackHiW( simdBody->w, simdBody->flags );
 
 	// I don't use any dummy body in the body array because this will lead to multithreaded sharing and the
 	// associated cache flushing.
 	if ( indices[0] != B2_NULL_INDEX )
 	{
 		// [t1.x t1.y t3.x t3.y]
-		_mm_store_ps( (float*)( states + indices[0] ), _mm_shuffle_ps(t1, t3, _MM_SHUFFLE(1, 0, 1, 0) ) );
+		b2StoreW( (float*)( states + indices[0] ), _mm_shuffle_ps(t1, t3, _MM_SHUFFLE(1, 0, 1, 0) ) );
 	}
 
 	if ( indices[1] != B2_NULL_INDEX )
 	{
 		// [t1.z t1.w t3.z t3.w]
-		_mm_store_ps( (float*)( states + indices[1] ), _mm_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) ) );
+		b2StoreW( (float*)( states + indices[1] ), _mm_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) ) );
 	}
 
 	if ( indices[2] != B2_NULL_INDEX )
 	{
 		// [t2.x t2.y t4.x t4.y]
-		_mm_store_ps( (float*)( states + indices[2] ), _mm_shuffle_ps( t2, t4, _MM_SHUFFLE( 1, 0, 1, 0 ) ) );
+		b2StoreW( (float*)( states + indices[2] ), _mm_shuffle_ps( t2, t4, _MM_SHUFFLE( 1, 0, 1, 0 ) ) );
 	}
 	
 	if ( indices[3] != B2_NULL_INDEX )
 	{
 		// [t2.z t2.w t4.z t4.w]
-		_mm_store_ps( (float*)( states + indices[3] ), _mm_shuffle_ps( t2, t4, _MM_SHUFFLE( 3, 2, 3, 2 ) ) );
+		b2StoreW( (float*)( states + indices[3] ), _mm_shuffle_ps( t2, t4, _MM_SHUFFLE( 3, 2, 3, 2 ) ) );
 	}
 
 	// todo temp for breakpoint
 	indices[0] += 0;
 }
+
+#else
+
+#error Unknown SIMD type
 
 #endif
 

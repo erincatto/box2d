@@ -42,19 +42,23 @@
 // Define CPU
 #if defined( __x86_64__ ) || defined( _M_X64 )
 	#define B2_CPU_X64
+	#if defined(BOX2D_AVX2)
+		#define B2_SIMD_AVX2
+		#define B2_SIMD_WIDTH 8
+	#else
+		#define B2_SIMD_SSE2
+		#define B2_SIMD_WIDTH 4
+	#endif
 #elif defined( __aarch64__ ) || defined( _M_ARM64 )
 	#define B2_CPU_ARM
-	#define B2_NEON
+	#define B2_SIMD_NEON
+	#define B2_SIMD_WIDTH 4
 #elif defined( __EMSCRIPTEN__ )
 	#define B2_CPU_WASM
+	#define B2_SIMD_SSE2
+	#define B2_SIMD_WIDTH 4
 #else
 	#error Unsupported CPU
-#endif
-
-#if defined(B2_AVX2)
-#define B2_SIMD_WIDTH 8
-#else
-#define B2_SIMD_WIDTH 4
 #endif
 
 // Define compiler
