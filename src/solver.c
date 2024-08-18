@@ -16,12 +16,22 @@
 #include "stack_allocator.h"
 #include "world.h"
 
-// for mm_pause
-#include "x86/sse2.h"
-
 #include <limits.h>
 #include <stdatomic.h>
 #include <stdbool.h>
+
+#if defined(B2_CPU_ARM)
+static inline void b2Pause (void)
+{
+	__asm__ __volatile__("isb\n");
+}
+#else
+#include <immintrin.h>
+static inline void b2Pause(void)
+{
+	_mm_pause();
+}
+#endif
 
 typedef struct b2WorkerContext
 {
@@ -548,7 +558,7 @@ static void b2ExecuteMainStage( b2SolverStage* stage, b2StepContext* context, ui
 		// todo consider using the cycle counter as well
 		while ( atomic_load( &stage->completionCount ) != blockCount )
 		{
-			simde_mm_pause();
+			b2Pause();
 		}
 
 		atomic_store( &stage->completionCount, 0 );
@@ -753,12 +763,12 @@ void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDontUse, vo
 				// uint64_t prev = __rdtsc();
 				// do
 				//{
-				//	simde_mm_pause();
+				//	b2Pause();
 				//}
 				// while ((__rdtsc() - prev) < maxSpinTime);
 				// maxSpinTime += 10;
-				simde_mm_pause();
-				simde_mm_pause();
+				b2Pause();
+				b2Pause();
 				spinCount += 1;
 			}
 		}

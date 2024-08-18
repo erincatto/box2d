@@ -53,7 +53,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # The Box2D library uses simde https://github.com/simd-everywhere/simde
-add_subdirectory(extern/simde)
+# add_subdirectory(extern/simde)
 add_subdirectory(src)
 
 # This hides samples, test, and doxygen from apps that use box2d via FetchContent
@@ -106,6 +106,12 @@ if(PROJECT_IS_TOP_LEVEL)
 		if(MSVC)
 			set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT samples)
 			set_property(TARGET samples PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+		endif()
+
+		if (XCODE)
+			set_target_properties(samples PROPERTIES
+				XCODE_GENERATE_SCHEME TRUE
+				XCODE_SCHEME_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 		endif()
 	endif()
 

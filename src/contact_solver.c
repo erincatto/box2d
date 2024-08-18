@@ -957,20 +957,18 @@ static void b2ScatterBodies( b2BodyState* restrict states, int* restrict indices
 	_Static_assert( sizeof( b2BodyState ) == 32, "b2BodyState not 32 bytes" );
 	B2_ASSERT( ( (uintptr_t)states & 0x1F ) == 0 );
 
-#if 0
-	b2FloatW x = b2SetW(0.0f, 1.0f, 2.0f, 3.0f);
-	b2FloatW y = b2SetW(4.0f, 5.0f, 6.0f, 7.0f);
-	b2FloatW z = b2SetW(8.0f, 9.0f, 10.0f, 11.0f);
-	b2FloatW w = b2SetW(12.0f, 13.0f, 14.0f, 15.0f);
-	
-	float32x4x2_t rr1 = vtrnq_f32( x, y );
-	float32x4x2_t rr2 = vtrnq_f32( z, w );
-	
-	float32x4_t b1 = vcombine_f32(vget_low_f32(rr1.val[0]), vget_low_f32(rr2.val[0]));
-	float32x4_t b2 = vcombine_f32(vget_low_f32(rr1.val[1]), vget_low_f32(rr2.val[1]));
-	float32x4_t b3 = vcombine_f32(vget_high_f32(rr1.val[0]), vget_high_f32(rr2.val[0]));
-	float32x4_t b4 = vcombine_f32(vget_high_f32(rr1.val[1]), vget_high_f32(rr2.val[1]));
-#endif
+//	b2FloatW x = b2SetW(0.0f, 1.0f, 2.0f, 3.0f);
+//	b2FloatW y = b2SetW(4.0f, 5.0f, 6.0f, 7.0f);
+//	b2FloatW z = b2SetW(8.0f, 9.0f, 10.0f, 11.0f);
+//	b2FloatW w = b2SetW(12.0f, 13.0f, 14.0f, 15.0f);
+//	
+//	float32x4x2_t rr1 = vtrnq_f32( x, y );
+//	float32x4x2_t rr2 = vtrnq_f32( z, w );
+//	
+//	float32x4_t b1 = vcombine_f32(vget_low_f32(rr1.val[0]), vget_low_f32(rr2.val[0]));
+//	float32x4_t b2 = vcombine_f32(vget_low_f32(rr1.val[1]), vget_low_f32(rr2.val[1]));
+//	float32x4_t b3 = vcombine_f32(vget_high_f32(rr1.val[0]), vget_high_f32(rr2.val[0]));
+//	float32x4_t b4 = vcombine_f32(vget_high_f32(rr1.val[1]), vget_high_f32(rr2.val[1]));
 	
 	// transpose
 	float32x4x2_t r1 = vtrnq_f32( simdBody->v.X, simdBody->v.Y );
@@ -1070,6 +1068,7 @@ static b2SimdBody b2GatherBodies( const b2BodyState* restrict states, int* restr
 	simdBody.dp.Y = b2UnpackHiW(t1b, t2b);
 	simdBody.dq.C = b2UnpackLoW(t3b, t4b);
 	simdBody.dq.S = b2UnpackHiW(t3b, t4b);
+	
 	return simdBody;
 }
 
