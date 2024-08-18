@@ -44,10 +44,17 @@
 	#define B2_CPU_X64
 #elif defined( __aarch64__ ) || defined( _M_ARM64 )
 	#define B2_CPU_ARM
+	#define B2_NEON
 #elif defined( __EMSCRIPTEN__ )
 	#define B2_CPU_WASM
 #else
 	#error Unsupported CPU
+#endif
+
+#if defined(B2_AVX2)
+#define B2_SIMD_WIDTH 8
+#else
+#define B2_SIMD_WIDTH 4
 #endif
 
 // Define compiler
@@ -155,3 +162,14 @@ extern float b2_lengthUnitsPerMeter;
 #define B2_SECRET_COOKIE 1152023
 
 #define b2CheckDef( DEF ) B2_ASSERT( DEF->internalValue == B2_SECRET_COOKIE )
+
+#if 0
+typedef enum b2InstructionSet
+{
+	B2_SSE2,
+	B2_NEON,
+	B2_AVX2,
+} b2InstructionSet;
+
+b2InstructionSet b2GetInstructionSet();
+#endif
