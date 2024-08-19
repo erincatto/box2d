@@ -532,10 +532,6 @@ static inline b2FloatW b2MulW( b2FloatW a, b2FloatW b )
 	return _mm256_mul_ps( a, b );
 }
 
-// todo SIMDE implementation of simde_mm256_fnmadd_ps is slow if FMA is not available
-// #define b2MulAddW(a, b, c) simde_mm256_fmadd_ps(b, c, a)
-// #define b2MulSubW(a, b, c) simde_mm256_fnmadd_ps(b, c, a)
-
 static inline b2FloatW b2MulAddW( b2FloatW a, b2FloatW b, b2FloatW c )
 {
 	return _mm256_add_ps( a, _mm256_mul_ps( b, c ) );
