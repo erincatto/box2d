@@ -123,7 +123,6 @@ if(PROJECT_IS_TOP_LEVEL)
 
 	if(BOX2D_DOCS)
 		add_subdirectory(docs)
-		set_target_properties(docs PROPERTIES XCODE_GENERATE_SCHEME TRUE)
 	endif()
 endif()
 
