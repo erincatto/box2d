@@ -116,6 +116,10 @@ if (BOX2D_VALIDATE)
 	target_compile_definitions(box2d PRIVATE BOX2D_VALIDATE)
 endif()
 
+if (BOX2D_ENABLE_SIMD)
+	target_compile_definitions(box2d PRIVATE BOX2D_ENABLE_SIMD)
+endif()
+
 if (MSVC)
 	message(STATUS "Box2D on MSVC")	
 	if (BUILD_SHARED_LIBS)

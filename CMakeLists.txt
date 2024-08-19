@@ -1,8 +1,9 @@
 ﻿cmake_minimum_required(VERSION 3.22)
 include(FetchContent)
+include(CMakeDependentOption)
 
 project(box2d
-	VERSION 3.0.0
+	VERSION 3.0.1
 	DESCRIPTION "A 2D physics engine for games"
 	HOMEPAGE_URL "https://box2d.org"
 	LANGUAGES C CXX
@@ -34,9 +35,12 @@ if (MSVC OR APPLE)
 	endif()
 endif()
 
+option(BOX2D_ENABLE_SIMD "Enable SIMD math (faster)" ON)
+
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
-	option(BOX2D_AVX2 "Enable AVX2 (faster)" ON)
+	cmake_dependent_option(BOX2D_AVX2 "Enable AVX2" OFF "BOX2D_ENABLE_SIMD" OFF)
 endif()
+
 
 if(PROJECT_IS_TOP_LEVEL)
 	# Needed for samples.exe to find box2d.dll

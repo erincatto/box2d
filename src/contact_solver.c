@@ -464,32 +464,34 @@ void b2StoreOverflowImpulses( b2StepContext* context )
 	b2TracyCZoneEnd( store_impulses );
 }
 
-// todo_erin cleanup
 #if defined( B2_SIMD_AVX2 )
 
-	#include <immintrin.h>
+#include <immintrin.h>
 
 // wide float holds 8 numbers
 typedef __m256 b2FloatW;
-	#define B2_SIMD_WIDTH 8
 
 #elif defined( B2_SIMD_NEON )
 
-	#include <arm_neon.h>
-	// wide float holds 4 numbers
-	typedef float32x4_t b2FloatW;
-	#define B2_SIMD_WIDTH 4
+#include <arm_neon.h>
+
+// wide float holds 4 numbers
+typedef float32x4_t b2FloatW;
 
 #elif defined( B2_SIMD_SSE2 )
 
-	#include <emmintrin.h>
+#include <emmintrin.h>
+
 // wide float holds 4 numbers
 typedef __m128 b2FloatW;
-	#define B2_SIMD_WIDTH 4
 
 #else
 
-#error Uknown SIMD type
+// scalar math
+typedef struct b2FloatW
+{
+	float x, y, z, w;
+} b2FloatW;
 
 #endif
 
@@ -575,9 +577,9 @@ static inline b2FloatW b2BlendW( b2FloatW a, b2FloatW b, b2FloatW mask )
 
 #elif defined( B2_SIMD_NEON )
 
-static inline b2FloatW b2ZeroW( )
+static inline b2FloatW b2ZeroW()
 {
-	return vdupq_n_f32(0.0f);
+	return vdupq_n_f32( 0.0f );
 }
 
 static inline b2FloatW b2SplatW( float scalar )
@@ -585,10 +587,10 @@ static inline b2FloatW b2SplatW( float scalar )
 	return vdupq_n_f32( scalar );
 }
 
-static inline b2FloatW b2SetW(float a, float b, float c, float d)
+static inline b2FloatW b2SetW( float a, float b, float c, float d )
 {
-	float32_t array[4] = {a, b, c, d};
-	return vld1q_f32(array);
+	float32_t array[4] = { a, b, c, d };
+	return vld1q_f32( array );
 }
 
 static inline b2FloatW b2AddW( b2FloatW a, b2FloatW b )
@@ -608,12 +610,12 @@ static inline b2FloatW b2MulW( b2FloatW a, b2FloatW b )
 
 static inline b2FloatW b2MulAddW( b2FloatW a, b2FloatW b, b2FloatW c )
 {
-	return vmlaq_f32(a, b, c);
+	return vmlaq_f32( a, b, c );
 }
 
 static inline b2FloatW b2MulSubW( b2FloatW a, b2FloatW b, b2FloatW c )
 {
-	return vmlsq_f32(a, b, c);
+	return vmlsq_f32( a, b, c );
 }
 
 static inline b2FloatW b2MinW( b2FloatW a, b2FloatW b )
@@ -628,49 +630,49 @@ static inline b2FloatW b2MaxW( b2FloatW a, b2FloatW b )
 
 static inline b2FloatW b2OrW( b2FloatW a, b2FloatW b )
 {
-	return vreinterpretq_f32_u32(vorrq_u32( vreinterpretq_u32_f32(a), vreinterpretq_u32_f32(b) ));
+	return vreinterpretq_f32_u32( vorrq_u32( vreinterpretq_u32_f32( a ), vreinterpretq_u32_f32( b ) ) );
 }
 
 static inline b2FloatW b2GreaterThanW( b2FloatW a, b2FloatW b )
 {
-	return vreinterpretq_f32_u32(vcgtq_f32( a, b ));
+	return vreinterpretq_f32_u32( vcgtq_f32( a, b ) );
 }
 
 static inline b2FloatW b2EqualsW( b2FloatW a, b2FloatW b )
 {
-	return vreinterpretq_f32_u32(vceqq_f32( a, b ));
+	return vreinterpretq_f32_u32( vceqq_f32( a, b ) );
 }
 
 // component-wise returns mask ? b : a
-static inline b2FloatW b2BlendW(b2FloatW a, b2FloatW b, b2FloatW mask)
+static inline b2FloatW b2BlendW( b2FloatW a, b2FloatW b, b2FloatW mask )
 {
-	uint32x4_t mask32 = vreinterpretq_u32_f32(mask);
-	return vbslq_f32(mask32, b, a);
+	uint32x4_t mask32 = vreinterpretq_u32_f32( mask );
+	return vbslq_f32( mask32, b, a );
 }
 
-static inline b2FloatW b2LoadW(const float32_t* data)
+static inline b2FloatW b2LoadW( const float32_t* data )
 {
-	return vld1q_f32(data);
+	return vld1q_f32( data );
 }
 
-static inline void b2StoreW(float32_t* data, b2FloatW a)
+static inline void b2StoreW( float32_t* data, b2FloatW a )
 {
-	return vst1q_f32(data, a);
+	return vst1q_f32( data, a );
 }
 
-static inline b2FloatW b2UnpackLoW(b2FloatW a, b2FloatW b)
+static inline b2FloatW b2UnpackLoW( b2FloatW a, b2FloatW b )
 {
-	return vzip1q_f32(a, b);
+	return vzip1q_f32( a, b );
 }
 
-static inline b2FloatW b2UnpackHiW(b2FloatW a, b2FloatW b)
+static inline b2FloatW b2UnpackHiW( b2FloatW a, b2FloatW b )
 {
-	return vzip2q_f32(a, b);
+	return vzip2q_f32( a, b );
 }
 
-#elif defined(B2_SIMD_SSE2)
+#elif defined( B2_SIMD_SSE2 )
 
-static inline b2FloatW b2ZeroW( )
+static inline b2FloatW b2ZeroW()
 {
 	return _mm_setzero_ps();
 }
@@ -678,6 +680,11 @@ static inline b2FloatW b2ZeroW( )
 static inline b2FloatW b2SplatW( float scalar )
 {
 	return _mm_set1_ps( scalar );
+}
+
+static inline b2FloatW b2SetW( float a, float b, float c, float d )
+{
+	return _mm_setr_ps( a, b, c, d );
 }
 
 static inline b2FloatW b2AddW( b2FloatW a, b2FloatW b )
@@ -731,9 +738,127 @@ static inline b2FloatW b2EqualsW( b2FloatW a, b2FloatW b )
 }
 
 // component-wise returns mask ? b : a
-static inline b2FloatW b2BlendW(b2FloatW a, b2FloatW b, b2FloatW mask)
+static inline b2FloatW b2BlendW( b2FloatW a, b2FloatW b, b2FloatW mask )
 {
 	return _mm_or_ps( _mm_and_ps( mask, b ), _mm_andnot_ps( mask, a ) );
+}
+
+static inline b2FloatW b2LoadW( const float* data )
+{
+	return _mm_load_ps( data );
+}
+
+static inline void b2StoreW( float* data, b2FloatW a )
+{
+	_mm_store_ps( data, a );
+}
+
+static inline b2FloatW b2UnpackLoW( b2FloatW a, b2FloatW b )
+{
+	return _mm_unpacklo_ps( a, b );
+}
+
+static inline b2FloatW b2UnpackHiW( b2FloatW a, b2FloatW b )
+{
+	return _mm_unpackhi_ps( a, b );
+}
+
+#else
+
+static inline b2FloatW b2ZeroW()
+{
+	return ( b2FloatW ){ 0.0f, 0.0f, 0.0f, 0.0f };
+}
+
+static inline b2FloatW b2SplatW( float scalar )
+{
+	return ( b2FloatW ){ scalar, scalar, scalar, scalar };
+}
+
+static inline b2FloatW b2AddW( b2FloatW a, b2FloatW b )
+{
+	return ( b2FloatW ){ a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w };
+}
+
+static inline b2FloatW b2SubW( b2FloatW a, b2FloatW b )
+{
+	return ( b2FloatW ){ a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w };
+}
+
+static inline b2FloatW b2MulW( b2FloatW a, b2FloatW b )
+{
+	return ( b2FloatW ){ a.x * b.x, a.y * b.y, a.z * b.z, a.w * b.w };
+}
+
+static inline b2FloatW b2MulAddW( b2FloatW a, b2FloatW b, b2FloatW c )
+{
+	return ( b2FloatW ){ a.x + b.x * c.x, a.y + b.y * c.y, a.z + b.z * c.z, a.w + b.w * c.w };
+}
+
+static inline b2FloatW b2MulSubW( b2FloatW a, b2FloatW b, b2FloatW c )
+{
+	return ( b2FloatW ){ a.x - b.x * c.x, a.y - b.y * c.y, a.z - b.z * c.z, a.w - b.w * c.w };
+}
+
+static inline b2FloatW b2MinW( b2FloatW a, b2FloatW b )
+{
+	b2FloatW r;
+	r.x = a.x <= b.x ? a.x : b.x;
+	r.y = a.y <= b.y ? a.y : b.y;
+	r.z = a.z <= b.z ? a.z : b.z;
+	r.w = a.w <= b.w ? a.w : b.w;
+	return r;
+}
+
+static inline b2FloatW b2MaxW( b2FloatW a, b2FloatW b )
+{
+	b2FloatW r;
+	r.x = a.x >= b.x ? a.x : b.x;
+	r.y = a.y >= b.y ? a.y : b.y;
+	r.z = a.z >= b.z ? a.z : b.z;
+	r.w = a.w >= b.w ? a.w : b.w;
+	return r;
+}
+
+static inline b2FloatW b2OrW( b2FloatW a, b2FloatW b )
+{
+	b2FloatW r;
+	r.x = a.x != 0.0f || b.x != 0.0f ? 1.0f : 0.0f;
+	r.y = a.y != 0.0f || b.y != 0.0f ? 1.0f : 0.0f;
+	r.z = a.z != 0.0f || b.z != 0.0f ? 1.0f : 0.0f;
+	r.w = a.w != 0.0f || b.w != 0.0f ? 1.0f : 0.0f;
+	return r;
+}
+
+static inline b2FloatW b2GreaterThanW( b2FloatW a, b2FloatW b )
+{
+	b2FloatW r;
+	r.x = a.x > b.x ? 1.0f : 0.0f;
+	r.y = a.y > b.y ? 1.0f : 0.0f;
+	r.z = a.z > b.z ? 1.0f : 0.0f;
+	r.w = a.w > b.w ? 1.0f : 0.0f;
+	return r;
+}
+
+static inline b2FloatW b2EqualsW( b2FloatW a, b2FloatW b )
+{
+	b2FloatW r;
+	r.x = a.x == b.x ? 1.0f : 0.0f;
+	r.y = a.y == b.y ? 1.0f : 0.0f;
+	r.z = a.z == b.z ? 1.0f : 0.0f;
+	r.w = a.w == b.w ? 1.0f : 0.0f;
+	return r;
+}
+
+// component-wise returns mask ? b : a
+static inline b2FloatW b2BlendW( b2FloatW a, b2FloatW b, b2FloatW mask )
+{
+	b2FloatW r;
+	r.x = mask.x != 0.0f ? b.x : a.x;
+	r.y = mask.y != 0.0f ? b.y : a.y;
+	r.z = mask.z != 0.0f ? b.z : a.z;
+	r.w = mask.w != 0.0f ? b.w : a.w;
+	return r;
 }
 
 #endif
@@ -802,7 +927,7 @@ typedef struct b2SimdBody
 } b2SimdBody;
 
 // Custom gather/scatter for each SIMD type
-#if defined(B2_SIMD_AVX2)
+#if defined( B2_SIMD_AVX2 )
 
 // This is a load and 8x8 transpose
 static b2SimdBody b2GatherBodies( const b2BodyState* restrict states, int* restrict indices )
@@ -891,7 +1016,7 @@ static void b2ScatterBodies( b2BodyState* restrict states, int* restrict indices
 		_mm256_store_ps( (float*)( states + indices[7] ), _mm256_permute2f128_ps( tt3, tt7, 0x31 ) );
 }
 
-#elif defined(B2_SIMD_NEON)
+#elif defined( B2_SIMD_NEON )
 
 // This is a load and transpose
 static b2SimdBody b2GatherBodies( const b2BodyState* restrict states, int* restrict indices )
@@ -903,17 +1028,17 @@ static b2SimdBody b2GatherBodies( const b2BodyState* restrict states, int* restr
 	b2FloatW identityA = b2ZeroW();
 
 	// [dpx dpy dqc dqs]
-	
+
 	b2FloatW identityB = b2SetW( 0.0f, 0.0f, 1.0f, 0.0f );
 
-	b2FloatW b1a = indices[0] == B2_NULL_INDEX ? identityA : b2LoadW((float*)(states + indices[0]) + 0);
-	b2FloatW b1b = indices[0] == B2_NULL_INDEX ? identityB : b2LoadW((float*)(states + indices[0]) + 4);
-	b2FloatW b2a = indices[1] == B2_NULL_INDEX ? identityA : b2LoadW((float*)(states + indices[1]) + 0);
-	b2FloatW b2b = indices[1] == B2_NULL_INDEX ? identityB : b2LoadW((float*)(states + indices[1]) + 4);
-	b2FloatW b3a = indices[2] == B2_NULL_INDEX ? identityA : b2LoadW((float*)(states + indices[2]) + 0);
-	b2FloatW b3b = indices[2] == B2_NULL_INDEX ? identityB : b2LoadW((float*)(states + indices[2]) + 4);
-	b2FloatW b4a = indices[3] == B2_NULL_INDEX ? identityA : b2LoadW((float*)(states + indices[3]) + 0);
-	b2FloatW b4b = indices[3] == B2_NULL_INDEX ? identityB : b2LoadW((float*)(states + indices[3]) + 4);
+	b2FloatW b1a = indices[0] == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + indices[0] ) + 0 );
+	b2FloatW b1b = indices[0] == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + indices[0] ) + 4 );
+	b2FloatW b2a = indices[1] == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + indices[1] ) + 0 );
+	b2FloatW b2b = indices[1] == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + indices[1] ) + 4 );
+	b2FloatW b3a = indices[2] == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + indices[2] ) + 0 );
+	b2FloatW b3b = indices[2] == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + indices[2] ) + 4 );
+	b2FloatW b4a = indices[3] == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + indices[3] ) + 0 );
+	b2FloatW b4b = indices[3] == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + indices[3] ) + 4 );
 
 	// [vx1 vx3 vy1 vy3]
 	b2FloatW t1a = b2UnpackLoW( b1a, b3a );
@@ -938,11 +1063,11 @@ static b2SimdBody b2GatherBodies( const b2BodyState* restrict states, int* restr
 	b2FloatW t3b = b2UnpackHiW( b1b, b3b );
 	b2FloatW t4b = b2UnpackHiW( b2b, b4b );
 
-	simdBody.dp.X = b2UnpackLoW(t1b, t2b);
-	simdBody.dp.Y = b2UnpackHiW(t1b, t2b);
-	simdBody.dq.C = b2UnpackLoW(t3b, t4b);
-	simdBody.dq.S = b2UnpackHiW(t3b, t4b);
-	
+	simdBody.dp.X = b2UnpackLoW( t1b, t2b );
+	simdBody.dp.Y = b2UnpackHiW( t1b, t2b );
+	simdBody.dq.C = b2UnpackLoW( t3b, t4b );
+	simdBody.dq.S = b2UnpackHiW( t3b, t4b );
+
 	return simdBody;
 }
 
@@ -953,19 +1078,19 @@ static void b2ScatterBodies( b2BodyState* restrict states, int* restrict indices
 	_Static_assert( sizeof( b2BodyState ) == 32, "b2BodyState not 32 bytes" );
 	B2_ASSERT( ( (uintptr_t)states & 0x1F ) == 0 );
 
-//	b2FloatW x = b2SetW(0.0f, 1.0f, 2.0f, 3.0f);
-//	b2FloatW y = b2SetW(4.0f, 5.0f, 6.0f, 7.0f);
-//	b2FloatW z = b2SetW(8.0f, 9.0f, 10.0f, 11.0f);
-//	b2FloatW w = b2SetW(12.0f, 13.0f, 14.0f, 15.0f);
-//	
-//	float32x4x2_t rr1 = vtrnq_f32( x, y );
-//	float32x4x2_t rr2 = vtrnq_f32( z, w );
-//	
-//	float32x4_t b1 = vcombine_f32(vget_low_f32(rr1.val[0]), vget_low_f32(rr2.val[0]));
-//	float32x4_t b2 = vcombine_f32(vget_low_f32(rr1.val[1]), vget_low_f32(rr2.val[1]));
-//	float32x4_t b3 = vcombine_f32(vget_high_f32(rr1.val[0]), vget_high_f32(rr2.val[0]));
-//	float32x4_t b4 = vcombine_f32(vget_high_f32(rr1.val[1]), vget_high_f32(rr2.val[1]));
-	
+	//	b2FloatW x = b2SetW(0.0f, 1.0f, 2.0f, 3.0f);
+	//	b2FloatW y = b2SetW(4.0f, 5.0f, 6.0f, 7.0f);
+	//	b2FloatW z = b2SetW(8.0f, 9.0f, 10.0f, 11.0f);
+	//	b2FloatW w = b2SetW(12.0f, 13.0f, 14.0f, 15.0f);
+	//
+	//	float32x4x2_t rr1 = vtrnq_f32( x, y );
+	//	float32x4x2_t rr2 = vtrnq_f32( z, w );
+	//
+	//	float32x4_t b1 = vcombine_f32(vget_low_f32(rr1.val[0]), vget_low_f32(rr2.val[0]));
+	//	float32x4_t b2 = vcombine_f32(vget_low_f32(rr1.val[1]), vget_low_f32(rr2.val[1]));
+	//	float32x4_t b3 = vcombine_f32(vget_high_f32(rr1.val[0]), vget_high_f32(rr2.val[0]));
+	//	float32x4_t b4 = vcombine_f32(vget_high_f32(rr1.val[1]), vget_high_f32(rr2.val[1]));
+
 	// transpose
 	float32x4x2_t r1 = vtrnq_f32( simdBody->v.X, simdBody->v.Y );
 	float32x4x2_t r2 = vtrnq_f32( simdBody->w, simdBody->flags );
@@ -974,25 +1099,25 @@ static void b2ScatterBodies( b2BodyState* restrict states, int* restrict indices
 	// associated cache flushing.
 	if ( indices[0] != B2_NULL_INDEX )
 	{
-		float32x4_t body1 = vcombine_f32(vget_low_f32(r1.val[0]), vget_low_f32(r2.val[0]));
+		float32x4_t body1 = vcombine_f32( vget_low_f32( r1.val[0] ), vget_low_f32( r2.val[0] ) );
 		b2StoreW( (float*)( states + indices[0] ), body1 );
 	}
 
 	if ( indices[1] != B2_NULL_INDEX )
 	{
-		float32x4_t body2 = vcombine_f32(vget_low_f32(r1.val[1]), vget_low_f32(r2.val[1]));
+		float32x4_t body2 = vcombine_f32( vget_low_f32( r1.val[1] ), vget_low_f32( r2.val[1] ) );
 		b2StoreW( (float*)( states + indices[1] ), body2 );
 	}
 
 	if ( indices[2] != B2_NULL_INDEX )
 	{
-		float32x4_t body3 = vcombine_f32(vget_high_f32(r1.val[0]), vget_high_f32(r2.val[0]));
+		float32x4_t body3 = vcombine_f32( vget_high_f32( r1.val[0] ), vget_high_f32( r2.val[0] ) );
 		b2StoreW( (float*)( states + indices[2] ), body3 );
 	}
-	
+
 	if ( indices[3] != B2_NULL_INDEX )
 	{
-		float32x4_t body4 = vcombine_f32(vget_high_f32(r1.val[1]), vget_high_f32(r2.val[1]));
+		float32x4_t body4 = vcombine_f32( vget_high_f32( r1.val[1] ), vget_high_f32( r2.val[1] ) );
 		b2StoreW( (float*)( states + indices[3] ), body4 );
 	}
 
@@ -1000,7 +1125,7 @@ static void b2ScatterBodies( b2BodyState* restrict states, int* restrict indices
 	indices[0] += 0;
 }
 
-#elif defined(B2_SIMD_SSE2)
+#elif defined( B2_SIMD_SSE2 )
 
 // This is a load and transpose
 static b2SimdBody b2GatherBodies( const b2BodyState* restrict states, int* restrict indices )
@@ -1012,27 +1137,27 @@ static b2SimdBody b2GatherBodies( const b2BodyState* restrict states, int* restr
 	b2FloatW identityA = b2ZeroW();
 
 	// [dpx dpy dqc dqs]
-	
+
 	b2FloatW identityB = b2SetW( 0.0f, 0.0f, 1.0f, 0.0f );
 
-	b2FloatW b1a = indices[0] == B2_NULL_INDEX ? identityA : b2LoadW((float*)(states + indices[0]) + 0);
-	b2FloatW b1b = indices[0] == B2_NULL_INDEX ? identityB : b2LoadW((float*)(states + indices[0]) + 4);
-	b2FloatW b2a = indices[1] == B2_NULL_INDEX ? identityA : b2LoadW((float*)(states + indices[1]) + 0);
-	b2FloatW b2b = indices[1] == B2_NULL_INDEX ? identityB : b2LoadW((float*)(states + indices[1]) + 4);
-	b2FloatW b3a = indices[2] == B2_NULL_INDEX ? identityA : b2LoadW((float*)(states + indices[2]) + 0);
-	b2FloatW b3b = indices[2] == B2_NULL_INDEX ? identityB : b2LoadW((float*)(states + indices[2]) + 4);
-	b2FloatW b4a = indices[3] == B2_NULL_INDEX ? identityA : b2LoadW((float*)(states + indices[3]) + 0);
-	b2FloatW b4b = indices[3] == B2_NULL_INDEX ? identityB : b2LoadW((float*)(states + indices[3]) + 4);
+	b2FloatW b1a = indices[0] == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + indices[0] ) + 0 );
+	b2FloatW b1b = indices[0] == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + indices[0] ) + 4 );
+	b2FloatW b2a = indices[1] == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + indices[1] ) + 0 );
+	b2FloatW b2b = indices[1] == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + indices[1] ) + 4 );
+	b2FloatW b3a = indices[2] == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + indices[2] ) + 0 );
+	b2FloatW b3b = indices[2] == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + indices[2] ) + 4 );
+	b2FloatW b4a = indices[3] == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + indices[3] ) + 0 );
+	b2FloatW b4b = indices[3] == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + indices[3] ) + 4 );
 
 	// todo testing
-	//b1a = _mm_setr_ps( 0.0f, 1.0f, 2.0f, 3.0f );
-	//b1b = _mm_setr_ps( 4.0f, 5.0f, 6.0f, 7.0f );
-	//b2a = _mm_setr_ps( 8.0f, 9.0f, 10.0f, 11.0f );
-	//b2b = _mm_setr_ps( 12.0f, 13.0f, 14.0f, 15.0f );
-	//b3a = _mm_setr_ps( 16.0f, 17.0f, 18.0f, 19.0f );
-	//b3b = _mm_setr_ps( 20.0f, 21.0f, 22.0f, 23.0f );
-	//b4a = _mm_setr_ps( 24.0f, 25.0f, 26.0f, 27.0f );
-	//b4b = _mm_setr_ps( 28.0f, 29.0f, 30.0f, 31.0f );
+	// b1a = _mm_setr_ps( 0.0f, 1.0f, 2.0f, 3.0f );
+	// b1b = _mm_setr_ps( 4.0f, 5.0f, 6.0f, 7.0f );
+	// b2a = _mm_setr_ps( 8.0f, 9.0f, 10.0f, 11.0f );
+	// b2b = _mm_setr_ps( 12.0f, 13.0f, 14.0f, 15.0f );
+	// b3a = _mm_setr_ps( 16.0f, 17.0f, 18.0f, 19.0f );
+	// b3b = _mm_setr_ps( 20.0f, 21.0f, 22.0f, 23.0f );
+	// b4a = _mm_setr_ps( 24.0f, 25.0f, 26.0f, 27.0f );
+	// b4b = _mm_setr_ps( 28.0f, 29.0f, 30.0f, 31.0f );
 
 	// neon see vzip1q_f32 and vzip2q_f32
 	//_MM_TRANSPOSE4_PS( b0a, b1a, b2a, b3a );
@@ -1060,11 +1185,11 @@ static b2SimdBody b2GatherBodies( const b2BodyState* restrict states, int* restr
 	b2FloatW t3b = b2UnpackHiW( b1b, b3b );
 	b2FloatW t4b = b2UnpackHiW( b2b, b4b );
 
-	simdBody.dp.X = b2UnpackLoW(t1b, t2b);
-	simdBody.dp.Y = b2UnpackHiW(t1b, t2b);
-	simdBody.dq.C = b2UnpackLoW(t3b, t4b);
-	simdBody.dq.S = b2UnpackHiW(t3b, t4b);
-	
+	simdBody.dp.X = b2UnpackLoW( t1b, t2b );
+	simdBody.dp.Y = b2UnpackHiW( t1b, t2b );
+	simdBody.dq.C = b2UnpackLoW( t3b, t4b );
+	simdBody.dq.S = b2UnpackHiW( t3b, t4b );
+
 	return simdBody;
 }
 
@@ -1088,7 +1213,7 @@ static void b2ScatterBodies( b2BodyState* restrict states, int* restrict indices
 	if ( indices[0] != B2_NULL_INDEX )
 	{
 		// [t1.x t1.y t3.x t3.y]
-		b2StoreW( (float*)( states + indices[0] ), _mm_shuffle_ps(t1, t3, _MM_SHUFFLE(1, 0, 1, 0) ) );
+		b2StoreW( (float*)( states + indices[0] ), _mm_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) ) );
 	}
 
 	if ( indices[1] != B2_NULL_INDEX )
@@ -1102,7 +1227,7 @@ static void b2ScatterBodies( b2BodyState* restrict states, int* restrict indices
 		// [t2.x t2.y t4.x t4.y]
 		b2StoreW( (float*)( states + indices[2] ), _mm_shuffle_ps( t2, t4, _MM_SHUFFLE( 1, 0, 1, 0 ) ) );
 	}
-	
+
 	if ( indices[3] != B2_NULL_INDEX )
 	{
 		// [t2.z t2.w t4.z t4.w]
@@ -1115,7 +1240,64 @@ static void b2ScatterBodies( b2BodyState* restrict states, int* restrict indices
 
 #else
 
-#error Unknown SIMD type
+// This is a load and transpose
+static b2SimdBody b2GatherBodies( const b2BodyState* restrict states, int* restrict indices )
+{
+	b2BodyState identity = b2_identityBodyState;
+
+	b2BodyState s1 = indices[0] == B2_NULL_INDEX ? identity : states[indices[0]];
+	b2BodyState s2 = indices[1] == B2_NULL_INDEX ? identity : states[indices[1]];
+	b2BodyState s3 = indices[2] == B2_NULL_INDEX ? identity : states[indices[2]];
+	b2BodyState s4 = indices[3] == B2_NULL_INDEX ? identity : states[indices[3]];
+
+	b2SimdBody simdBody;
+	simdBody.v.X = ( b2FloatW ){ s1.linearVelocity.x, s2.linearVelocity.x, s3.linearVelocity.x, s4.linearVelocity.x };
+	simdBody.v.Y = ( b2FloatW ){ s1.linearVelocity.y, s2.linearVelocity.y, s3.linearVelocity.y, s4.linearVelocity.y };
+	simdBody.w = ( b2FloatW ){ s1.angularVelocity, s2.angularVelocity, s3.angularVelocity, s4.angularVelocity };
+	simdBody.flags = ( b2FloatW ){ (float)s1.flags, (float)s2.flags, (float)s3.flags, (float)s4.flags };
+	simdBody.dp.X = ( b2FloatW ){ s1.deltaPosition.x, s2.deltaPosition.x, s3.deltaPosition.x, s4.deltaPosition.x };
+	simdBody.dp.Y = ( b2FloatW ){ s1.deltaPosition.y, s2.deltaPosition.y, s3.deltaPosition.y, s4.deltaPosition.y };
+	simdBody.dq.C = ( b2FloatW ){ s1.deltaRotation.c, s2.deltaRotation.c, s3.deltaRotation.c, s4.deltaRotation.c };
+	simdBody.dq.S = ( b2FloatW ){ s1.deltaRotation.s, s2.deltaRotation.s, s3.deltaRotation.s, s4.deltaRotation.s };
+
+	return simdBody;
+}
+
+// This writes only the velocities back to the solver bodies
+static void b2ScatterBodies( b2BodyState* restrict states, int* restrict indices, const b2SimdBody* restrict simdBody )
+{
+	if ( indices[0] != B2_NULL_INDEX )
+	{
+		b2BodyState* state = states + indices[0];
+		state->linearVelocity.x = simdBody->v.X.x;
+		state->linearVelocity.y = simdBody->v.Y.x;
+		state->angularVelocity = simdBody->w.x;
+	}
+
+	if ( indices[1] != B2_NULL_INDEX )
+	{
+		b2BodyState* state = states + indices[1];
+		state->linearVelocity.x = simdBody->v.X.y;
+		state->linearVelocity.y = simdBody->v.Y.y;
+		state->angularVelocity = simdBody->w.y;
+	}
+
+	if ( indices[2] != B2_NULL_INDEX )
+	{
+		b2BodyState* state = states + indices[2];
+		state->linearVelocity.x = simdBody->v.X.z;
+		state->linearVelocity.y = simdBody->v.Y.z;
+		state->angularVelocity = simdBody->w.z;
+	}
+
+	if ( indices[3] != B2_NULL_INDEX )
+	{
+		b2BodyState* state = states + indices[3];
+		state->linearVelocity.x = simdBody->v.X.w;
+		state->linearVelocity.y = simdBody->v.Y.w;
+		state->angularVelocity = simdBody->w.w;
+	}
+}
 
 #endif
 
@@ -1456,8 +1638,8 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW vn = b2AddW( b2MulW( dvx, c->normal.X ), b2MulW( dvy, c->normal.Y ) );
 
 			// Compute normal impulse
-			b2FloatW negImpulse =
-				b2AddW( b2MulW( c->normalMass1, b2MulW( massScale, b2AddW( vn, bias ) ) ), b2MulW( impulseScale, c->normalImpulse1 ) );
+			b2FloatW negImpulse = b2AddW( b2MulW( c->normalMass1, b2MulW( massScale, b2AddW( vn, bias ) ) ),
+										  b2MulW( impulseScale, c->normalImpulse1 ) );
 
 			// Clamp the accumulated impulse
 			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse1, negImpulse ), b2ZeroW() );
@@ -1491,7 +1673,7 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW mask = b2GreaterThanW( s, b2ZeroW() );
 			b2FloatW specBias = b2MulW( s, inv_h );
 			b2FloatW softBias = b2MaxW( b2MulW( biasRate, s ), minBiasVel );
-			b2FloatW bias = b2BlendW(softBias, specBias, mask );
+			b2FloatW bias = b2BlendW( softBias, specBias, mask );
 
 			// fixed anchors for Jacobians
 			b2Vec2W rA = c->anchorA2;
@@ -1503,8 +1685,8 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW vn = b2AddW( b2MulW( dvx, c->normal.X ), b2MulW( dvy, c->normal.Y ) );
 
 			// Compute normal impulse
-			b2FloatW negImpulse =
-				b2AddW( b2MulW( c->normalMass2, b2MulW( massScale, b2AddW( vn, bias ) ) ), b2MulW( impulseScale, c->normalImpulse2 ) );
+			b2FloatW negImpulse = b2AddW( b2MulW( c->normalMass2, b2MulW( massScale, b2AddW( vn, bias ) ) ),
+										  b2MulW( impulseScale, c->normalImpulse2 ) );
 
 			// Clamp the accumulated impulse
 			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse2, negImpulse ), b2ZeroW() );
@@ -1545,8 +1727,7 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			// Clamp the accumulated force
 			b2FloatW maxFriction = b2MulW( c->friction, c->normalImpulse1 );
 			b2FloatW newImpulse = b2SubW( c->tangentImpulse1, negImpulse );
-			newImpulse =
-				b2MaxW( b2SubW( b2ZeroW(), maxFriction ), b2MinW( newImpulse, maxFriction ) );
+			newImpulse = b2MaxW( b2SubW( b2ZeroW(), maxFriction ), b2MinW( newImpulse, maxFriction ) );
 			b2FloatW impulse = b2SubW( newImpulse, c->tangentImpulse1 );
 			c->tangentImpulse1 = newImpulse;
 
@@ -1580,8 +1761,7 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			// Clamp the accumulated force
 			b2FloatW maxFriction = b2MulW( c->friction, c->normalImpulse2 );
 			b2FloatW newImpulse = b2SubW( c->tangentImpulse2, negImpulse );
-			newImpulse =
-				b2MaxW( b2SubW( b2ZeroW(), maxFriction ), b2MinW( newImpulse, maxFriction ) );
+			newImpulse = b2MaxW( b2SubW( b2ZeroW(), maxFriction ), b2MinW( newImpulse, maxFriction ) );
 			b2FloatW impulse = b2SubW( newImpulse, c->tangentImpulse2 );
 			c->tangentImpulse2 = newImpulse;
 

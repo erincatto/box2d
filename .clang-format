@@ -33,7 +33,7 @@ IncludeCategories:
 
 IndentExternBlock: NoIndent
 IndentCaseLabels: true
-IndentPPDirectives: BeforeHash
+#IndentPPDirectives: None
 IndentAccessModifiers: false
 AccessModifierOffset: -4
 
