@@ -26,6 +26,6 @@ if(MSVC)
 	target_compile_options(test PRIVATE /experimental:c11atomics)
 endif()
 
-target_link_libraries(test PRIVATE box2d enkiTS simde)
+target_link_libraries(test PRIVATE box2d enkiTS)
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "" FILES ${BOX2D_TESTS})

@@ -88,9 +88,6 @@ target_include_directories(box2d
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-# SIMDE is used to support SIMD math on multiple platforms
-target_link_libraries(box2d PRIVATE simde)
-
 # Box2D uses C17
 set_target_properties(box2d PROPERTIES
 	C_STANDARD 17
@@ -119,6 +116,10 @@ if (BOX2D_VALIDATE)
 	target_compile_definitions(box2d PRIVATE BOX2D_VALIDATE)
 endif()
 
+if (BOX2D_ENABLE_SIMD)
+	target_compile_definitions(box2d PRIVATE BOX2D_ENABLE_SIMD)
+endif()
+
 if (MSVC)
 	message(STATUS "Box2D on MSVC")	
 	if (BUILD_SHARED_LIBS)
@@ -137,6 +138,7 @@ if (MSVC)
 
 	if (BOX2D_AVX2)
 		message(STATUS "Box2D using AVX2")	
+		target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
 		target_compile_options(box2d PRIVATE /arch:AVX2)
 	endif()
 
@@ -144,8 +146,10 @@ elseif (MINGW)
 	message(STATUS "Box2D on MinGW")
 	if (BOX2D_AVX2)
 		message(STATUS "Box2D using AVX2")	
+		target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
 		target_compile_options(box2d PRIVATE -mavx2)
 	else()
+		# todo should no longer be needed
 		# see SIMDE_DIAGNOSTIC_DISABLE_PSABI_
 		message(STATUS "Box2D disabling ABI warning")
 		target_compile_options(box2d PRIVATE -Wno-psabi)
@@ -154,6 +158,7 @@ elseif (APPLE)
 	message(STATUS "Box2D on Apple")
 elseif (EMSCRIPTEN)
 	message(STATUS "Box2D on Emscripten")
+	# todo should no longer be needed
 	# see SIMDE_DIAGNOSTIC_DISABLE_PSABI_
 	message(STATUS "Box2D disabling ABI warning")
 	target_compile_options(box2d PRIVATE -Wno-psabi)
@@ -168,8 +173,10 @@ elseif (UNIX)
 		if (BOX2D_AVX2)
 			message(STATUS "Box2D using AVX2")
 			# FMA -mfma -mavx -march=native
+			target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
 			target_compile_options(box2d PRIVATE -mavx2)
 		else()
+			# todo should no longer be needed
 			# see SIMDE_DIAGNOSTIC_DISABLE_PSABI_
 			message(STATUS "Box2D disabling ABI warning")
 			target_compile_options(box2d PRIVATE -Wno-psabi)

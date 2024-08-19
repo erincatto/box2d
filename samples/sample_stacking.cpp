@@ -409,7 +409,7 @@ public:
 		b2World_SetContactTuning( m_worldId, 0.25f * 360.0f, 10.0f, 3.0f );
 
 		b2Circle circle = {};
-		circle.radius = 0.1f;
+		circle.radius = 0.5f;
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -417,7 +417,7 @@ public:
 
 		float y = 0.5f;
 
-		for ( int i = 0; i < 20; ++i )
+		for ( int i = 0; i < 8; ++i )
 		{
 			bodyDef.position.y = y;
 

@@ -37,7 +37,7 @@ SPDX-License-Identifier: MIT -->
         }
         .chart-item {
             width: 100%;
-            height: 500px; /* Fixed height for each chart */
+            height: 700px; /* Fixed height for each chart */
         }
         canvas {
             background-color: #1e1e1e;
@@ -110,7 +110,26 @@ SPDX-License-Identifier: MIT -->
             }
         ];
 
-        const processors = ['amd7950x', 'm2air'];
+        const processors = [
+            {
+                folder: 'amd7950x',
+                label: 'avx2'
+            },
+            {
+                folder: 'm2air',
+                label: 'neon'
+            },
+            {
+                folder: 'amd7950x_sse2',
+                label: 'sse2',
+            },
+            {
+
+                folder: 'amd7950x_float',
+                label: 'float'
+            }
+        ];
+
         const branchSelect = document.getElementById('branchSelect');
         const loadButton = document.getElementById('loadButton');
         var currentBranch = null;
@@ -121,7 +140,7 @@ SPDX-License-Identifier: MIT -->
         }
 
         async function fetchBranches() {
-            const url = `https://api.github.com/repos/erincatto/box2c/branches`;
+            const url = `https://api.github.com/repos/erincatto/box2d/branches`;
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -167,7 +186,7 @@ SPDX-License-Identifier: MIT -->
             {
                 for (const processor of processors)
                 {
-                    const csvUrl = repoBaseUrl + '/' + branch + '/benchmark/' + processor + '/' + file;
+                    const csvUrl = repoBaseUrl + '/' + branch + '/benchmark/' + processor.folder + '/' + file;
 
                     try 
                     {
@@ -177,13 +196,31 @@ SPDX-License-Identifier: MIT -->
 
                         if (data != null)
                         {
-                            datasets.push({
-                                label: processor + '-' + branch,
+                            if (branch == 'main')
+                            {
+                                datasets.push({
+                                    label: processor.label,
 
-                                // convert the csv data into chart ready data
-                                data: data.map(row => ({ x: row.threads, y: row.fps })),
-                                fill: false
-                            });                        
+                                    // convert the csv data into chart ready data
+                                    data: data.map(row => ({ x: row.threads, y: row.fps })),
+                                    fill: false
+                                });
+                            }
+                            else
+                            {
+                                // remove leading name from branch name (e.g. erincatto)
+                                const branchLabel = branch.split('/').pop();
+
+                                datasets.push({
+                                    label: processor.label + '/' + branchLabel,
+
+                                    // convert the csv data into chart ready data
+                                    data: data.map(row => ({ x: row.threads, y: row.fps })),
+
+                                    borderDash: [5, 5],
+                                    fill: false
+                                });
+                            }
                         }
                     }
                     catch (error) {

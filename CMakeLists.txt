@@ -1,8 +1,9 @@
 ﻿cmake_minimum_required(VERSION 3.22)
 include(FetchContent)
+include(CMakeDependentOption)
 
 project(box2d
-	VERSION 3.0.0
+	VERSION 3.0.1
 	DESCRIPTION "A 2D physics engine for games"
 	HOMEPAGE_URL "https://box2d.org"
 	LANGUAGES C CXX
@@ -34,9 +35,12 @@ if (MSVC OR APPLE)
 	endif()
 endif()
 
+option(BOX2D_ENABLE_SIMD "Enable SIMD math (faster)" ON)
+
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
-	option(BOX2D_AVX2 "Enable AVX2 (faster)" ON)
+	cmake_dependent_option(BOX2D_AVX2 "Enable AVX2" OFF "BOX2D_ENABLE_SIMD" OFF)
 endif()
+
 
 if(PROJECT_IS_TOP_LEVEL)
 	# Needed for samples.exe to find box2d.dll
@@ -52,8 +56,6 @@ set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-# The Box2D library uses simde https://github.com/simd-everywhere/simde
-add_subdirectory(extern/simde)
 add_subdirectory(src)
 
 # This hides samples, test, and doxygen from apps that use box2d via FetchContent
@@ -95,6 +97,7 @@ if(PROJECT_IS_TOP_LEVEL)
 	if(NOT BUILD_SHARED_LIBS AND BOX2D_UNIT_TESTS)
 		message(STATUS "Adding Box2D unit tests")
 		add_subdirectory(test)
+		set_target_properties(test PROPERTIES XCODE_GENERATE_SCHEME TRUE)
 	else()
 		message(STATUS "Skipping Box2D unit tests")
 	endif()
@@ -107,10 +110,15 @@ if(PROJECT_IS_TOP_LEVEL)
 			set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT samples)
 			set_property(TARGET samples PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 		endif()
+
+			set_target_properties(samples PROPERTIES
+				XCODE_GENERATE_SCHEME TRUE
+				XCODE_SCHEME_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 	endif()
 
 	if(BOX2D_BENCHMARKS)
 		add_subdirectory(benchmark)
+		set_target_properties(benchmark PROPERTIES XCODE_GENERATE_SCHEME TRUE)
 	endif()
 
 	if(BOX2D_DOCS)

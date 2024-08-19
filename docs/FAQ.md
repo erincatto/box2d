@@ -1,7 +1,7 @@
 # FAQ
 
 ## What is Box2D?
-Box2D is a feature rich 2D rigid body physics engine, written in C11 by Erin Catto. It has been used in many games and in many
+Box2D is a feature rich 2D rigid body physics engine, written in C17 by Erin Catto. It has been used in many games and in many
 game engines.
 
 Box2D uses the [MIT license](https://en.wikipedia.org/wiki/MIT_License) license and can be used free of charge. Credit
@@ -9,13 +9,13 @@ should be included if possible. Support is [appreciated](https://github.com/spon
 Box2D [logo](https://box2d.org/images/logo.svg).
 
 ## What platforms does Box2D support?
-Box2D is developed using C11. Ports and bindings are likely available for most languages and platforms.
+Box2D is developed using C17. Ports and bindings are likely available for most languages and platforms.
 
-Erin Catto maintains the C11 version, but provides no support for other languages. Other languages are supported
+Erin Catto maintains the C17 version, but provides no support for other languages. Other languages are supported
 by the community and possibly by the authors of those ports.
 
 ## Who makes it?
-Erin Catto is the creator and sole contributor of the C11 version of Box2D, with various others supporting the ports. Box2D is an open source project, and accepts community feedback.
+Erin Catto is the creator and sole contributor of the C17 version of Box2D, with various others supporting the ports. Box2D is an open source project, and accepts community feedback.
 
 ## How do I get help?
 You should read the documentation and the rest of this FAQ first. Also, you should study the examples included in the source distribution. Then you can visit the [Discord](https://discord.gg/aM4mRKxW) to ask any remaining questions.
@@ -49,7 +49,7 @@ Now the only tricky part is choosing a scaling factor. This really depends on yo
 This [repo](https://github.com/erincatto/box2d-raylib) shows how to convert meters to pixels.
 
 ### Why don't you use this awesome language?
-Box2D is designed to be portable and easy to wrap with other languages, so I decided to use C11. I used C11 to get support for atomics.
+Box2D is designed to be portable and easy to wrap with other languages, so I decided to use C17. I used C17 to get support for atomics.
 
 ### Can I use Box2D in a DLL?
 Yes. See the CMake option `BUILD_SHARED_LIBS`.
