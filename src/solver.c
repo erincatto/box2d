@@ -19,6 +19,7 @@
 #include <limits.h>
 #include <stdatomic.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #if defined(B2_CPU_ARM)
 static inline void b2Pause (void)
