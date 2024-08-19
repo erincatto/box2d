@@ -252,8 +252,7 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 			b2ContactConstraintPoint* cp = constraint->points + j;
 
 			// compute current separation
-			// todo this is subject to round-off error if the anchor is far from the body center of mass
-			// todo for example a large world with a single static body and many offset shapes
+			// this is subject to round-off error if the anchor is far from the body center of mass
 			b2Vec2 ds = b2Add( dp, b2Sub( b2RotateVector( dqB, cp->anchorB ), b2RotateVector( dqA, cp->anchorA ) ) );
 			float s = b2Dot( ds, normal ) + cp->baseSeparation;
 
@@ -1120,9 +1119,6 @@ static void b2ScatterBodies( b2BodyState* restrict states, int* restrict indices
 		float32x4_t body4 = vcombine_f32( vget_high_f32( r1.val[1] ), vget_high_f32( r2.val[1] ) );
 		b2StoreW( (float*)( states + indices[3] ), body4 );
 	}
-
-	// todo temp for breakpoint
-	indices[0] += 0;
 }
 
 #elif defined( B2_SIMD_SSE2 )
@@ -1137,7 +1133,6 @@ static b2SimdBody b2GatherBodies( const b2BodyState* restrict states, int* restr
 	b2FloatW identityA = b2ZeroW();
 
 	// [dpx dpy dqc dqs]
-
 	b2FloatW identityB = b2SetW( 0.0f, 0.0f, 1.0f, 0.0f );
 
 	b2FloatW b1a = indices[0] == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + indices[0] ) + 0 );
@@ -1148,19 +1143,6 @@ static b2SimdBody b2GatherBodies( const b2BodyState* restrict states, int* restr
 	b2FloatW b3b = indices[2] == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + indices[2] ) + 4 );
 	b2FloatW b4a = indices[3] == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + indices[3] ) + 0 );
 	b2FloatW b4b = indices[3] == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + indices[3] ) + 4 );
-
-	// todo testing
-	// b1a = _mm_setr_ps( 0.0f, 1.0f, 2.0f, 3.0f );
-	// b1b = _mm_setr_ps( 4.0f, 5.0f, 6.0f, 7.0f );
-	// b2a = _mm_setr_ps( 8.0f, 9.0f, 10.0f, 11.0f );
-	// b2b = _mm_setr_ps( 12.0f, 13.0f, 14.0f, 15.0f );
-	// b3a = _mm_setr_ps( 16.0f, 17.0f, 18.0f, 19.0f );
-	// b3b = _mm_setr_ps( 20.0f, 21.0f, 22.0f, 23.0f );
-	// b4a = _mm_setr_ps( 24.0f, 25.0f, 26.0f, 27.0f );
-	// b4b = _mm_setr_ps( 28.0f, 29.0f, 30.0f, 31.0f );
-
-	// neon see vzip1q_f32 and vzip2q_f32
-	//_MM_TRANSPOSE4_PS( b0a, b1a, b2a, b3a );
 
 	// [vx1 vx3 vy1 vy3]
 	b2FloatW t1a = b2UnpackLoW( b1a, b3a );
@@ -1233,9 +1215,6 @@ static void b2ScatterBodies( b2BodyState* restrict states, int* restrict indices
 		// [t2.z t2.w t4.z t4.w]
 		b2StoreW( (float*)( states + indices[3] ), _mm_shuffle_ps( t2, t4, _MM_SHUFFLE( 3, 2, 3, 2 ) ) );
 	}
-
-	// todo temp for breakpoint
-	indices[0] += 0;
 }
 
 #else
@@ -1517,9 +1496,6 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 			}
 		}
 	}
-
-	// todo temp for break point
-	warmStartScale += 0.0f;
 
 	b2TracyCZoneEnd( prepare_contact );
 }
