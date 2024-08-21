@@ -66,6 +66,8 @@ static const b2Rot b2Rot_identity = { 1.0f, 0.0f };
 static const b2Transform b2Transform_identity = { { 0.0f, 0.0f }, { 1.0f, 0.0f } };
 static const b2Mat22 b2Mat22_zero = { { 0.0f, 0.0f }, { 0.0f, 0.0f } };
 
+B2_API float b2Atan2( float y, float x );
+
 /// @return the minimum of two floats
 B2_INLINE float b2MinFloat( float a, float b )
 {
@@ -263,12 +265,7 @@ B2_INLINE float b2DistanceSquared( b2Vec2 a, b2Vec2 b )
 }
 
 /// Make a rotation using an angle in radians
-B2_INLINE b2Rot b2MakeRot( float angle )
-{
-	// todo determinism
-	b2Rot q = { cosf( angle ), sinf( angle ) };
-	return q;
-}
+B2_API b2Rot b2MakeRot( float angle );
 
 /// Normalize rotation
 B2_INLINE b2Rot b2NormalizeRot( b2Rot q )
@@ -339,8 +336,7 @@ B2_INLINE float b2ComputeAngularVelocity( b2Rot q1, b2Rot q2, float inv_h )
 /// Get the angle in radians in the range [-pi, pi]
 B2_INLINE float b2Rot_GetAngle( b2Rot q )
 {
-	// todo determinism
-	return atan2f( q.s, q.c );
+	return b2Atan2( q.s, q.c );
 }
 
 /// Get the x-axis
@@ -390,7 +386,7 @@ B2_INLINE float b2RelativeAngle( b2Rot b, b2Rot a )
 	// cos(b - a) = bc * ac + bs * as
 	float s = b.s * a.c - b.c * a.s;
 	float c = b.c * a.c + b.s * a.s;
-	return atan2f( s, c );
+	return b2Atan2( s, c );
 }
 
 /// Convert an angle in the range [-2*pi, 2*pi] into the range [-pi, pi]
@@ -403,6 +399,22 @@ B2_INLINE float b2UnwindAngle( float angle )
 	else if ( angle > b2_pi )
 	{
 		return angle - 2.0f * b2_pi;
+	}
+
+	return angle;
+}
+
+/// Convert any into the range [-pi, pi] (slow)
+B2_INLINE float b2UnwindLargeAngle( float angle )
+{
+	while ( angle > b2_pi )
+	{
+		angle -= 2.0f * b2_pi;
+	}
+
+	while ( angle < -b2_pi )
+	{
+		angle += 2.0f * b2_pi;
 	}
 
 	return angle;
