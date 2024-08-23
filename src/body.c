@@ -1404,11 +1404,11 @@ bool b2Body_IsSleepEnabled( b2BodyId bodyId )
 	return body->enableSleep;
 }
 
-void b2Body_SetSleepThreshold( b2BodyId bodyId, float sleepVelocity )
+void b2Body_SetSleepThreshold( b2BodyId bodyId, float sleepThreshold )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
-	body->sleepThreshold = sleepVelocity;
+	body->sleepThreshold = sleepThreshold;
 }
 
 float b2Body_GetSleepThreshold( b2BodyId bodyId )

@@ -353,7 +353,7 @@ B2_API void b2Body_EnableSleep( b2BodyId bodyId, bool enableSleep );
 B2_API bool b2Body_IsSleepEnabled( b2BodyId bodyId );
 
 /// Set the sleep threshold, typically in meters per second
-B2_API void b2Body_SetSleepThreshold( b2BodyId bodyId, float sleepVelocity );
+B2_API void b2Body_SetSleepThreshold( b2BodyId bodyId, float sleepThreshold );
 
 /// Get the sleep threshold, typically in meters per second.
 B2_API float b2Body_GetSleepThreshold( b2BodyId bodyId );
@@ -892,6 +892,9 @@ B2_API b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJoint
 
 /// Enable/disable the revolute joint spring
 B2_API void b2RevoluteJoint_EnableSpring( b2JointId jointId, bool enableSpring );
+
+/// It the revolute angular spring enabled?
+B2_API bool b2RevoluteJoint_IsSpringEnabled( b2JointId jointId );
 
 /// Set the revolute joint spring stiffness in Hertz
 B2_API void b2RevoluteJoint_SetSpringHertz( b2JointId jointId, float hertz );

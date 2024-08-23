@@ -95,7 +95,7 @@ typedef struct b2WorldDef
 	bool enableSleep;
 
 	/// Enable continuous collision
-	bool enableContinous;
+	bool enableContinuous;
 
 	/// Number of workers to use with the provided task system. Box2D performs best when using only
 	///	performance cores and accessing a single L2 cache. Efficiency cores and hyper-threading provide
