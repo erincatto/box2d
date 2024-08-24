@@ -279,7 +279,8 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 	if ( joint->setIndex > b2_disabledSet )
 	{
 		// Add edge to island graph
-		b2LinkJoint( world, joint );
+		bool mergeIslands = true;
+		b2LinkJoint( world, joint, mergeIslands );
 	}
 
 	b2ValidateSolverSets( world );
@@ -712,7 +713,15 @@ void b2DestroyJointInternal( b2World* world, b2Joint* joint, bool wakeBodies )
 
 	bodyB->jointCount -= 1;
 
-	b2UnlinkJoint( world, joint );
+	if (joint->islandId != B2_NULL_INDEX)
+	{
+		B2_ASSERT( joint->setIndex > b2_disabledSet );
+		b2UnlinkJoint( world, joint );
+	}
+	else
+	{
+		B2_ASSERT( joint->setIndex <= b2_disabledSet );
+	}
 
 	// Remove joint from solver set that owns it
 	int setIndex = joint->setIndex;

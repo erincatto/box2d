@@ -200,56 +200,97 @@ static int TestIsValid( void )
 
 int TestForAmy( void )
 {
-	b2WorldDef worldDef = b2DefaultWorldDef();
-	b2WorldId world_id = b2CreateWorld( &worldDef );
+	{
+		b2WorldDef worldDef = b2DefaultWorldDef();
+		b2WorldId world_id = b2CreateWorld( &worldDef );
 
-	b2BodyDef body_def = b2DefaultBodyDef();
+		b2BodyDef body_def = b2DefaultBodyDef();
 
-	body_def.type = b2_staticBody;
-	body_def.position = ( b2Vec2 ){ 0., 0. };
-	b2BodyId body_id = b2CreateBody( world_id, &body_def );
-	b2Polygon polygon = b2MakeBox( 1., 1. );
-	b2ShapeDef shape_def = b2DefaultShapeDef();
-	b2CreatePolygonShape( body_id, &shape_def, &polygon );
+		body_def.type = b2_staticBody;
+		body_def.position = ( b2Vec2 ){ 0., 0. };
+		b2BodyId body_id = b2CreateBody( world_id, &body_def );
+		b2Polygon polygon = b2MakeBox( 1., 1. );
+		b2ShapeDef shape_def = b2DefaultShapeDef();
+		b2CreatePolygonShape( body_id, &shape_def, &polygon );
 
-	b2BodyDef simulon_body_def = b2DefaultBodyDef();
+		b2BodyDef simulon_body_def = b2DefaultBodyDef();
 
-	simulon_body_def.position = ( b2Vec2 ){ 0., -7.5 };
-	simulon_body_def.type = b2_dynamicBody;
+		simulon_body_def.position = ( b2Vec2 ){ 0., -7.5 };
+		simulon_body_def.type = b2_dynamicBody;
 
-	b2BodyId simulon_body_id = b2CreateBody( world_id, &simulon_body_def );
-	b2Circle ball = { { 0.0, 0.35 }, 0.5 };
+		b2BodyId simulon_body_id = b2CreateBody( world_id, &simulon_body_def );
+		b2Circle ball = { { 0.0, 0.35 }, 0.5 };
 
-	b2ShapeDef simulon_shape_def = b2DefaultShapeDef();
-	b2CreateCircleShape( simulon_body_id, &simulon_shape_def, &ball );
+		b2ShapeDef simulon_shape_def = b2DefaultShapeDef();
+		b2CreateCircleShape( simulon_body_id, &simulon_shape_def, &ball );
 
-	b2Polygon the_box = b2MakeRoundedBox( 0.1, 0.1, 0.01 );
-	b2CreatePolygonShape( simulon_body_id, &simulon_shape_def, &the_box );
-	b2BodyDef head_body_def = b2DefaultBodyDef();
-	head_body_def.position = ( b2Vec2 ){ 0., 6. };
-	head_body_def.type = b2_dynamicBody;
-	b2BodyId head_body_id = b2CreateBody( world_id, &head_body_def );
-	b2RevoluteJointDef joint_def5 = b2DefaultRevoluteJointDef();
-	joint_def5.bodyIdA = simulon_body_id;
-	joint_def5.bodyIdB = head_body_id;
-	joint_def5.localAnchorA = ( b2Vec2 ){ 0.0, 0.8 };
-	joint_def5.localAnchorB = ( b2Vec2 ){ 0.0, -0.17 / 2.0 };
+		b2Polygon the_box = b2MakeRoundedBox( 0.1, 0.1, 0.01 );
+		b2CreatePolygonShape( simulon_body_id, &simulon_shape_def, &the_box );
+		b2BodyDef head_body_def = b2DefaultBodyDef();
+		head_body_def.position = ( b2Vec2 ){ 0., 6. };
+		head_body_def.type = b2_dynamicBody;
+		b2BodyId head_body_id = b2CreateBody( world_id, &head_body_def );
+		b2RevoluteJointDef joint_def5 = b2DefaultRevoluteJointDef();
+		joint_def5.bodyIdA = simulon_body_id;
+		joint_def5.bodyIdB = head_body_id;
+		joint_def5.localAnchorA = ( b2Vec2 ){ 0.0, 0.8 };
+		joint_def5.localAnchorB = ( b2Vec2 ){ 0.0, -0.17 / 2.0 };
 
-	b2JointId revolute_joint_id = b2CreateRevoluteJoint( world_id, &joint_def5 );
-	b2DistanceJointDef joint_def6 = b2DefaultDistanceJointDef();
-	joint_def6.bodyIdA = simulon_body_id;
-	joint_def6.bodyIdB = head_body_id;
-	joint_def6.localAnchorA = ( b2Vec2 ){ 0.0, 1.7 };
-	joint_def6.localAnchorB = ( b2Vec2 ){ 0.0, 0.8 };
-	joint_def6.length = 0.005;
-	joint_def6.hertz = 1.;
-	b2CreateDistanceJoint( world_id, &joint_def6 );
+		b2JointId revolute_joint_id = b2CreateRevoluteJoint( world_id, &joint_def5 );
+		b2DistanceJointDef joint_def6 = b2DefaultDistanceJointDef();
+		joint_def6.bodyIdA = simulon_body_id;
+		joint_def6.bodyIdB = head_body_id;
+		joint_def6.localAnchorA = ( b2Vec2 ){ 0.0, 1.7 };
+		joint_def6.localAnchorB = ( b2Vec2 ){ 0.0, 0.8 };
+		joint_def6.length = 0.005;
+		joint_def6.hertz = 1.;
+		b2CreateDistanceJoint( world_id, &joint_def6 );
 
-	b2DestroyBody( simulon_body_id );
+		b2DestroyBody( simulon_body_id );
 
-	b2World_Step( world_id, 1. / 60., 4 );
+		b2World_Step( world_id, 1. / 60., 4 );
 
-	b2DestroyWorld( world_id );
+		b2DestroyWorld( world_id );
+	}
+
+	{
+		b2WorldDef worldDef = b2DefaultWorldDef();
+		b2WorldId world_id = b2CreateWorld( &worldDef );
+
+		b2BodyDef ground_body_def = b2DefaultBodyDef();
+		ground_body_def.type = b2_staticBody;
+		b2BodyId ground_body_id = b2CreateBody( world_id, &ground_body_def );
+
+		b2BodyDef box_body_def = b2DefaultBodyDef();
+		box_body_def.type = b2_dynamicBody;
+		box_body_def.position = ( b2Vec2 ){ 0.0, 0.0 };
+		b2BodyId box_body_id = b2CreateBody( world_id, &box_body_def );
+		b2Polygon polygon = b2MakeBox( 1., 1. );
+		b2ShapeDef shape_def = b2DefaultShapeDef();
+		b2ShapeId box_shape = b2CreatePolygonShape( box_body_id, &shape_def, &polygon );
+
+		b2DistanceJointDef distance_joint_def = b2DefaultDistanceJointDef();
+		distance_joint_def.hertz = 1.;
+		distance_joint_def.dampingRatio = 0.1;
+		distance_joint_def.bodyIdA = ground_body_id;
+		distance_joint_def.bodyIdB = box_body_id;
+		distance_joint_def.minLength = 0.005;
+		distance_joint_def.enableSpring = true;
+		distance_joint_def.enableLimit = false;
+		distance_joint_def.collideConnected = false;
+		distance_joint_def.length = 0.005;
+		b2Body_SetTransform( ground_body_id, ( b2Vec2 ){ 0.0, 0.0 }, ( b2Rot ){ 1., 0. } );
+		distance_joint_def.localAnchorA = ( b2Vec2 ){ 0.0, 0.0 };
+		distance_joint_def.localAnchorB = ( b2Vec2 ){ 0.0, 0.0 };
+		b2JointId distance_joint_id = b2CreateDistanceJoint( world_id, &distance_joint_def );
+
+		b2Body_SetType( box_body_id, b2_staticBody );
+		b2World_Step( world_id, 1. / 60., 4 );
+
+		b2DestroyJoint( distance_joint_id );
+
+		b2DestroyWorld( world_id );
+	}
 
 	return 0;
 }

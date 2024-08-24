@@ -1161,8 +1161,10 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 				continue;
 			}
 
-			b2LinkJoint( world, joint );
+			b2LinkJoint( world, joint, false);
 		}
+
+		b2MergeAwakeIslands( world );
 	}
 
 	// Body type affects the mass
@@ -1550,6 +1552,7 @@ void b2Body_Enable( b2BodyId bodyId )
 
 	// Transfer joints. If the other body is disabled, don't transfer.
 	// If the other body is sleeping, wake it.
+	bool mergeIslands = false;
 	int jointKey = body->headJointKey;
 	while ( jointKey != B2_NULL_INDEX )
 	{
@@ -1593,11 +1596,13 @@ void b2Body_Enable( b2BodyId bodyId )
 		// Now that the joint is in the correct set, I can link the joint in the island.
 		if ( jointSetId != b2_staticSet )
 		{
-			b2LinkJoint( world, joint );
+			b2LinkJoint( world, joint, mergeIslands );
 		}
 	}
 
-	b2ValidateConnectivity( world );
+	// Now merge islands
+	b2MergeAwakeIslands( world );
+
 	b2ValidateSolverSets( world );
 }
 

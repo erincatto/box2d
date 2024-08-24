@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 
 typedef struct b2Body b2Body;
@@ -74,7 +75,7 @@ void b2LinkContact( b2World* world, b2Contact* contact );
 void b2UnlinkContact( b2World* world, b2Contact* contact );
 
 // Link a joint into the island graph when it is created
-void b2LinkJoint( b2World* world, b2Joint* joint );
+void b2LinkJoint( b2World* world, b2Joint* joint, bool mergeIslands );
 
 // Unlink a joint from the island graph when it is destroyed
 void b2UnlinkJoint( b2World* world, b2Joint* joint );
