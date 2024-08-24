@@ -589,7 +589,7 @@ B2_API b2Manifold b2CollideSmoothSegmentAndPolygon( const b2SmoothSegment* smoot
  */
 
 /// The default category bit for a tree proxy. Used for collision filtering.
-#define b2_defaultCategoryBits ( 0x00000001ui64 )
+#define b2_defaultCategoryBits ( 1 )
 
 /// Convenience mask bits to use when you don't need collision filtering and just want
 ///	all results.
