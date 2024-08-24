@@ -198,8 +198,65 @@ static int TestIsValid( void )
 	return 0;
 }
 
+int TestForAmy( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	b2WorldId world_id = b2CreateWorld( &worldDef );
+
+	b2BodyDef body_def = b2DefaultBodyDef();
+
+	body_def.type = b2_staticBody;
+	body_def.position = ( b2Vec2 ){ 0., 0. };
+	b2BodyId body_id = b2CreateBody( world_id, &body_def );
+	b2Polygon polygon = b2MakeBox( 1., 1. );
+	b2ShapeDef shape_def = b2DefaultShapeDef();
+	b2CreatePolygonShape( body_id, &shape_def, &polygon );
+
+	b2BodyDef simulon_body_def = b2DefaultBodyDef();
+
+	simulon_body_def.position = ( b2Vec2 ){ 0., -7.5 };
+	simulon_body_def.type = b2_dynamicBody;
+
+	b2BodyId simulon_body_id = b2CreateBody( world_id, &simulon_body_def );
+	b2Circle ball = { { 0.0, 0.35 }, 0.5 };
+
+	b2ShapeDef simulon_shape_def = b2DefaultShapeDef();
+	b2CreateCircleShape( simulon_body_id, &simulon_shape_def, &ball );
+
+	b2Polygon the_box = b2MakeRoundedBox( 0.1, 0.1, 0.01 );
+	b2CreatePolygonShape( simulon_body_id, &simulon_shape_def, &the_box );
+	b2BodyDef head_body_def = b2DefaultBodyDef();
+	head_body_def.position = ( b2Vec2 ){ 0., 6. };
+	head_body_def.type = b2_dynamicBody;
+	b2BodyId head_body_id = b2CreateBody( world_id, &head_body_def );
+	b2RevoluteJointDef joint_def5 = b2DefaultRevoluteJointDef();
+	joint_def5.bodyIdA = simulon_body_id;
+	joint_def5.bodyIdB = head_body_id;
+	joint_def5.localAnchorA = ( b2Vec2 ){ 0.0, 0.8 };
+	joint_def5.localAnchorB = ( b2Vec2 ){ 0.0, -0.17 / 2.0 };
+
+	b2JointId revolute_joint_id = b2CreateRevoluteJoint( world_id, &joint_def5 );
+	b2DistanceJointDef joint_def6 = b2DefaultDistanceJointDef();
+	joint_def6.bodyIdA = simulon_body_id;
+	joint_def6.bodyIdB = head_body_id;
+	joint_def6.localAnchorA = ( b2Vec2 ){ 0.0, 1.7 };
+	joint_def6.localAnchorB = ( b2Vec2 ){ 0.0, 0.8 };
+	joint_def6.length = 0.005;
+	joint_def6.hertz = 1.;
+	b2CreateDistanceJoint( world_id, &joint_def6 );
+
+	b2DestroyBody( simulon_body_id );
+
+	b2World_Step( world_id, 1. / 60., 4 );
+
+	b2DestroyWorld( world_id );
+
+	return 0;
+}
+
 int WorldTest( void )
 {
+	RUN_SUBTEST( TestForAmy );
 	RUN_SUBTEST( HelloWorld );
 	RUN_SUBTEST( EmptyWorld );
 	RUN_SUBTEST( DestroyAllBodiesWorld );

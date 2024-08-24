@@ -66,6 +66,8 @@ static const b2Rot b2Rot_identity = { 1.0f, 0.0f };
 static const b2Transform b2Transform_identity = { { 0.0f, 0.0f }, { 1.0f, 0.0f } };
 static const b2Mat22 b2Mat22_zero = { { 0.0f, 0.0f }, { 0.0f, 0.0f } };
 
+/// Compute an approximate arctangent in the range [-pi, pi]
+/// This is hand coded for cross platform determinism
 B2_API float b2Atan2( float y, float x );
 
 /// @return the minimum of two floats

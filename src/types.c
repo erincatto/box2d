@@ -42,13 +42,13 @@ b2BodyDef b2DefaultBodyDef( void )
 
 b2Filter b2DefaultFilter( void )
 {
-	b2Filter filter = { 0x00000001, 0xFFFFFFFF, 0 };
+	b2Filter filter = { 0x0001ui64, UINT64_MAX, 0 };
 	return filter;
 }
 
 b2QueryFilter b2DefaultQueryFilter( void )
 {
-	b2QueryFilter filter = { 0x00000001, 0xFFFFFFFF };
+	b2QueryFilter filter = { 0x0001ui64, UINT64_MAX };
 	return filter;
 }
 

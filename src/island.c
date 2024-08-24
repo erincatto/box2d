@@ -377,6 +377,9 @@ void b2LinkJoint( b2World* world, b2Joint* joint )
 	{
 		b2AddJointToIsland( world, islandIdB, joint );
 	}
+
+	// Joints need to have islands merged immediately to keep the island graph valid.
+	b2MergeAwakeIslands( world );
 }
 
 void b2UnlinkJoint( b2World* world, b2Joint* joint )
@@ -598,8 +601,6 @@ void b2MergeAwakeIslands( b2World* world )
 		// this call does a remove swap from the end of the island sim array
 		b2DestroyIsland( world, islandId );
 	}
-
-	b2ValidateConnectivity( world );
 
 	b2TracyCZoneEnd( merge_islands );
 }

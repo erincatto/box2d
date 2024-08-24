@@ -234,7 +234,7 @@ typedef struct b2Filter
 	///	   // etc
 	/// };
 	///	@endcode
-	uint32_t categoryBits;
+	uint64_t categoryBits;
 
 	/// The collision mask bits. This states the categories that this
 	/// shape would accept for collision.
@@ -243,7 +243,7 @@ typedef struct b2Filter
 	///	@code{.c}
 	///	maskBits = Static | Player;
 	///	@endcode
-	uint32_t maskBits;
+	uint64_t maskBits;
 
 	/// Collision groups allow a certain group of objects to never collide (negative)
 	/// or always collide (positive). A group index of zero has no effect. Non-zero group filtering
@@ -265,11 +265,11 @@ B2_API b2Filter b2DefaultFilter( void );
 typedef struct b2QueryFilter
 {
 	/// The collision category bits of this query. Normally you would just set one bit.
-	uint32_t categoryBits;
+	uint64_t categoryBits;
 
 	/// The collision mask bits. This states the shape categories that this
 	/// query would accept for collision.
-	uint32_t maskBits;
+	uint64_t maskBits;
 } b2QueryFilter;
 
 /// Use this to initialize your query filter
@@ -325,6 +325,8 @@ typedef struct b2ShapeDef
 	uint32_t customColor;
 
 	/// A sensor shape generates overlap events but never generates a collision response.
+	///	Sensors do not collide with other sensors and do not have continuous collision.
+	///	Instead use a ray or shape cast for those scenarios.
 	bool isSensor;
 
 	/// Enable sensor events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors.

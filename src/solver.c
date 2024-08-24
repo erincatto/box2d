@@ -1130,6 +1130,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 	b2MergeAwakeIslands( world );
 
+	b2ValidateConnectivity( world );
+
 	world->profile.buildIslands = b2GetMillisecondsAndReset( &timer );
 
 	b2SolverSet* awakeSet = world->solverSetArray + b2_awakeSet;
