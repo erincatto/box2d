@@ -602,6 +602,8 @@ void b2MergeAwakeIslands( b2World* world )
 		b2DestroyIsland( world, islandId );
 	}
 
+	b2ValidateConnectivity( world );
+
 	b2TracyCZoneEnd( merge_islands );
 }
 

@@ -1168,7 +1168,6 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 	// Body type affects the mass
 	b2UpdateBodyMassData( world, body );
 
-	b2ValidateConnectivity( world );
 	b2ValidateSolverSets( world );
 }
 
