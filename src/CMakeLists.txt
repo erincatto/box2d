@@ -149,19 +149,12 @@ elseif (MINGW)
 		target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
 		target_compile_options(box2d PRIVATE -mavx2)
 	else()
-		# todo should no longer be needed
-		# see SIMDE_DIAGNOSTIC_DISABLE_PSABI_
-		message(STATUS "Box2D disabling ABI warning")
-		target_compile_options(box2d PRIVATE -Wno-psabi)
 	endif()
 elseif (APPLE)
 	message(STATUS "Box2D on Apple")
+	target_compile_options(box2d PRIVATE -ffp-contract=off)
 elseif (EMSCRIPTEN)
 	message(STATUS "Box2D on Emscripten")
-	# todo should no longer be needed
-	# see SIMDE_DIAGNOSTIC_DISABLE_PSABI_
-	message(STATUS "Box2D disabling ABI warning")
-	target_compile_options(box2d PRIVATE -Wno-psabi)
 elseif (UNIX)
 	message(STATUS "Box2D using Unix")
 	if ("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
@@ -176,10 +169,6 @@ elseif (UNIX)
 			target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
 			target_compile_options(box2d PRIVATE -mavx2)
 		else()
-			# todo should no longer be needed
-			# see SIMDE_DIAGNOSTIC_DISABLE_PSABI_
-			message(STATUS "Box2D disabling ABI warning")
-			target_compile_options(box2d PRIVATE -Wno-psabi)
 		endif()
 	endif()
 endif()
