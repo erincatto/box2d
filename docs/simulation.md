@@ -1448,8 +1448,7 @@ joint limit and a friction motor:
 ```c
 b2Vec2 worldPivot = {10.0f, -4.0f};
 b2Vec2 worldAxis = {1.0f, 0.0f};
-b2PrismaticJointDef jointDef;
-b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
 jointDef.bodyIdA = myBodyIdA;
 jointDef.bodyIdB = myBodyIdB;
 jointDef.localAnchorA = b2Body_GetLocalPoint(myBodyIdA, worldPivot);
