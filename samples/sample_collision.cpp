@@ -320,7 +320,7 @@ public:
 
 		m_simplexCount = output.simplexCount;
 
-		DrawShape( m_typeA, b2Transform_identity, m_radiusA, b2_colorAqua );
+		DrawShape( m_typeA, b2Transform_identity, m_radiusA, b2_colorCyan );
 		DrawShape( m_typeB, m_transform, m_radiusB, b2_colorBisque );
 
 		if ( m_drawSimplex )

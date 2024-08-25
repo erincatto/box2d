@@ -674,10 +674,10 @@ B2_API void b2DistanceJoint_SetSpringHertz( b2JointId jointId, float hertz );
 B2_API void b2DistanceJoint_SetSpringDampingRatio( b2JointId jointId, float dampingRatio );
 
 /// Get the spring Hertz
-B2_API float b2DistanceJoint_GetHertz( b2JointId jointId );
+B2_API float b2DistanceJoint_GetSprintHertz( b2JointId jointId );
 
 /// Get the spring damping ratio
-B2_API float b2DistanceJoint_GetDampingRatio( b2JointId jointId );
+B2_API float b2DistanceJoint_GetSpringDampingRatio( b2JointId jointId );
 
 /// Enable joint limit. The limit only works if the joint spring is enabled. Otherwise the joint is rigid
 ///	and the limit has no effect.

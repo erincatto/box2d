@@ -1084,7 +1084,6 @@ typedef enum b2HexColor
 {
 	b2_colorAliceBlue = 0xf0f8ff,
 	b2_colorAntiqueWhite = 0xfaebd7,
-	b2_colorAqua = 0x00ffff,
 	b2_colorAquamarine = 0x7fffd4,
 	b2_colorAzure = 0xf0ffff,
 	b2_colorBeige = 0xf5f5dc,
@@ -1127,7 +1126,6 @@ typedef enum b2HexColor
 	b2_colorFirebrick = 0xb22222,
 	b2_colorFloralWhite = 0xfffaf0,
 	b2_colorForestGreen = 0x228b22,
-	b2_colorFuchsia = 0xff00ff,
 	b2_colorGainsboro = 0xdcdcdc,
 	b2_colorGhostWhite = 0xf8f8ff,
 	b2_colorGold = 0xffd700,
@@ -1169,7 +1167,6 @@ typedef enum b2HexColor
 	b2_colorLightSlateGray = 0x778899,
 	b2_colorLightSteelBlue = 0xb0c4de,
 	b2_colorLightYellow = 0xffffe0,
-	b2_colorLime = 0x00ff00,
 	b2_colorLimeGreen = 0x32cd32,
 	b2_colorLinen = 0xfaf0e6,
 	b2_colorMagenta = 0xff00ff,
@@ -1188,7 +1185,6 @@ typedef enum b2HexColor
 	b2_colorMistyRose = 0xffe4e1,
 	b2_colorMoccasin = 0xffe4b5,
 	b2_colorNavajoWhite = 0xffdead,
-	b2_colorNavy = 0x000080,
 	b2_colorNavyBlue = 0x000080,
 	b2_colorOldLace = 0xfdf5e6,
 	b2_colorOlive = 0x808000,
@@ -1243,6 +1239,7 @@ typedef enum b2HexColor
 } b2HexColor;
 
 /// This struct holds callbacks you can implement to draw a Box2D world.
+///	This structure should be zero initialized.
 ///	@ingroup world
 typedef struct b2DebugDraw
 {
@@ -1316,3 +1313,7 @@ typedef struct b2DebugDraw
 	/// User context that is passed as an argument to drawing callback functions
 	void* context;
 } b2DebugDraw;
+
+/// Use this to initialize your drawing interface. This allows you to implement a sub-set
+/// of the drawing functions.
+B2_API b2DebugDraw b2DefaultDebugDraw( void );
