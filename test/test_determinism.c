@@ -38,7 +38,7 @@ enkiTaskSet* tasks[e_maxTasks];
 TaskData taskData[e_maxTasks];
 int taskCount;
 
-void ExecuteRangeTask( uint32_t start, uint32_t end, uint32_t threadIndex, void* context )
+static void ExecuteRangeTask( uint32_t start, uint32_t end, uint32_t threadIndex, void* context )
 {
 	TaskData* data = context;
 	data->box2dTask( start, end, threadIndex, data->box2dContext );
@@ -84,7 +84,7 @@ static void FinishTask( void* userTask, void* userContext )
 	enkiWaitForTaskSet( scheduler, task );
 }
 
-void TiltedStacks( int testIndex, int workerCount )
+static void TiltedStacks( int testIndex, int workerCount )
 {
 	scheduler = enkiNewTaskScheduler();
 	struct enkiTaskSchedulerConfig config = enkiGetTaskSchedulerConfig( scheduler );
@@ -176,7 +176,7 @@ void TiltedStacks( int testIndex, int workerCount )
 }
 
 // Test multithreaded determinism.
-int DeterminismTest( void )
+static int MultithreadingTest( void )
 {
 	// Test 1 : 4 threads
 	TiltedStacks( 0, 4 );
@@ -197,6 +197,13 @@ int DeterminismTest( void )
 		ENSURE( rot1.c == rot2.c );
 		ENSURE( rot1.s == rot2.s );
 	}
+
+	return 0;
+}
+
+int DeterminismTest( void )
+{
+	RUN_SUBTEST( MultithreadingTest );
 
 	return 0;
 }
