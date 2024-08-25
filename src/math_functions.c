@@ -7,15 +7,10 @@
 
 #include <float.h>
 
-// todo_erin maybe delete
-#if 0
 #if defined( B2_CPU_X64 ) || defined( B2_CPU_WASM )
 #include <emmintrin.h>
-typedef __m128 b2FloatW;
 #else
 #include <arm_neon.h>
-typedef float32x4_t b2FloatW;
-#endif
 #endif
 
 bool b2IsValid( float a )
@@ -63,9 +58,31 @@ bool b2Rot_IsValid( b2Rot q )
 	return b2IsNormalized( q );
 }
 
+float b2Sqrt(float x)
+{
+#if defined( B2_CPU_X64 ) || defined( B2_CPU_WASM )
+	return _mm_cvtss_f32(_mm_sqrt_ss( _mm_set1_ps(x) ));
+#else
+	float32x4_t v = vdupq_n_f32( x );
+	return vget_lane_f32( vsqrt_f32( v ), 0 );
+#endif
+}
+
+float b2Length( b2Vec2 v )
+{
+	return b2Sqrt( v.x * v.x + v.y * v.y );
+}
+
+float b2Distance( b2Vec2 a, b2Vec2 b )
+{
+	float dx = b.x - a.x;
+	float dy = b.y - a.y;
+	return b2Sqrt( dx * dx + dy * dy );
+}
+
 b2Vec2 b2Normalize( b2Vec2 v )
 {
-	float length = b2Length( v );
+	float length = b2Sqrt( v.x * v.x + v.y * v.y );
 	if ( length < FLT_EPSILON )
 	{
 		return b2Vec2_zero;
@@ -101,6 +118,27 @@ b2Vec2 b2GetLengthAndNormalize( float* length, b2Vec2 v )
 	float invLength = 1.0f / *length;
 	b2Vec2 n = { invLength * v.x, invLength * v.y };
 	return n;
+}
+
+b2Rot b2NormalizeRot( b2Rot q )
+{
+	float mag = b2Sqrt( q.s * q.s + q.c * q.c );
+	float invMag = mag > 0.0 ? 1.0f / mag : 0.0f;
+	b2Rot qn = { q.c * invMag, q.s * invMag };
+	return qn;
+}
+
+b2Rot b2IntegrateRotation( b2Rot q1, float deltaAngle )
+{
+	// dc/dt = -omega * sin(t)
+	// ds/dt = omega * cos(t)
+	// c2 = c1 - omega * h * s1
+	// s2 = s1 + omega * h * c1
+	b2Rot q2 = { q1.c - deltaAngle * q1.s, q1.s + deltaAngle * q1.c };
+	float mag = b2Sqrt( q2.s * q2.s + q2.c * q2.c );
+	float invMag = mag > 0.0 ? 1.0f / mag : 0.0f;
+	b2Rot qn = { q2.c * invMag, q2.s * invMag };
+	return qn;
 }
 
 #if 0

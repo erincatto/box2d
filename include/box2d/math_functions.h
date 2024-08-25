@@ -239,11 +239,10 @@ B2_INLINE b2Vec2 b2Clamp( b2Vec2 v, b2Vec2 a, b2Vec2 b )
 	return c;
 }
 
+B2_API float b2Sqrt( float x );
+
 /// Get the length of this vector (the norm)
-B2_INLINE float b2Length( b2Vec2 v )
-{
-	return sqrtf( v.x * v.x + v.y * v.y );
-}
+B2_API float b2Length( b2Vec2 v );
 
 /// Get the length squared of this vector
 B2_INLINE float b2LengthSquared( b2Vec2 v )
@@ -252,12 +251,7 @@ B2_INLINE float b2LengthSquared( b2Vec2 v )
 }
 
 /// Get the distance between two points
-B2_INLINE float b2Distance( b2Vec2 a, b2Vec2 b )
-{
-	float dx = b.x - a.x;
-	float dy = b.y - a.y;
-	return sqrtf( dx * dx + dy * dy );
-}
+B2_API float b2Distance( b2Vec2 a, b2Vec2 b );
 
 /// Get the distance squared between points
 B2_INLINE float b2DistanceSquared( b2Vec2 a, b2Vec2 b )
@@ -270,13 +264,7 @@ B2_INLINE float b2DistanceSquared( b2Vec2 a, b2Vec2 b )
 B2_API b2Rot b2MakeRot( float angle );
 
 /// Normalize rotation
-B2_INLINE b2Rot b2NormalizeRot( b2Rot q )
-{
-	float mag = sqrtf( q.s * q.s + q.c * q.c );
-	float invMag = mag > 0.0 ? 1.0f / mag : 0.0f;
-	b2Rot qn = { q.c * invMag, q.s * invMag };
-	return qn;
-}
+B2_API b2Rot b2NormalizeRot( b2Rot q );
 
 /// Is this rotation normalized?
 B2_INLINE bool b2IsNormalized( b2Rot q )
@@ -302,18 +290,7 @@ B2_INLINE b2Rot b2NLerp( b2Rot q1, b2Rot q2, float t )
 /// Integration rotation from angular velocity
 ///	@param q1 initial rotation
 ///	@param deltaAngle the angular displacement in radians
-B2_INLINE b2Rot b2IntegrateRotation( b2Rot q1, float deltaAngle )
-{
-	// dc/dt = -omega * sin(t)
-	// ds/dt = omega * cos(t)
-	// c2 = c1 - omega * h * s1
-	// s2 = s1 + omega * h * c1
-	b2Rot q2 = { q1.c - deltaAngle * q1.s, q1.s + deltaAngle * q1.c };
-	float mag = sqrtf( q2.s * q2.s + q2.c * q2.c );
-	float invMag = mag > 0.0 ? 1.0f / mag : 0.0f;
-	b2Rot qn = { q2.c * invMag, q2.s * invMag };
-	return qn;
-}
+B2_API b2Rot b2IntegrateRotation( b2Rot q1, float deltaAngle );
 
 /// Compute the angular velocity necessary to rotate between two rotations over a give time
 ///	@param q1 initial rotation

@@ -582,7 +582,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 			// v11 - v21
 			b2Vec2 normal = b2Sub( v21, v11 );
 			B2_ASSERT( result.distanceSquared > 0.0f );
-			float distance = sqrtf( result.distanceSquared );
+			float distance = b2Sqrt( result.distanceSquared );
 			if ( distance > b2_speculativeDistance + radius )
 			{
 				return manifold;
@@ -605,7 +605,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 			// v11 - v22
 			b2Vec2 normal = b2Sub( v22, v11 );
 			B2_ASSERT( result.distanceSquared > 0.0f );
-			float distance = sqrtf( result.distanceSquared );
+			float distance = b2Sqrt( result.distanceSquared );
 			if ( distance > b2_speculativeDistance + radius )
 			{
 				return manifold;
@@ -628,7 +628,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 			// v12 - v21
 			b2Vec2 normal = b2Sub( v21, v12 );
 			B2_ASSERT( result.distanceSquared > 0.0f );
-			float distance = sqrtf( result.distanceSquared );
+			float distance = b2Sqrt( result.distanceSquared );
 			if ( distance > b2_speculativeDistance + radius )
 			{
 				return manifold;
@@ -651,7 +651,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 			// v12 - v22
 			b2Vec2 normal = b2Sub( v22, v12 );
 			B2_ASSERT( result.distanceSquared > 0.0f );
-			float distance = sqrtf( result.distanceSquared );
+			float distance = b2Sqrt( result.distanceSquared );
 			if ( distance > b2_speculativeDistance + radius )
 			{
 				return manifold;
