@@ -69,7 +69,7 @@ public:
 			bodyDef.position = { -4.0f, 5.0f };
 			m_platformId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Polygon box = b2MakeOffsetBox( 0.5f, 4.0f, { 4.0f, 0.0f }, 0.5f * b2_pi );
+			b2Polygon box = b2MakeOffsetBox( 0.5f, 4.0f, { 4.0f, 0.0f }, b2MakeRot(0.5f * b2_pi) );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.friction = 0.6f;
@@ -353,13 +353,13 @@ public:
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { 4.0f, 3.0f }, 0.0f );
+			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { 4.0f, 3.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 1.0f, 1.0f, { 6.0f, 3.0f }, 0.0f );
+			box = b2MakeOffsetBox( 1.0f, 1.0f, { 6.0f, 3.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 1.0f, 1.0f, { 8.0f, 3.0f }, 0.0f );
+			box = b2MakeOffsetBox( 1.0f, 1.0f, { 8.0f, 3.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 
@@ -630,7 +630,7 @@ public:
 			bodyDef.enableSleep = false;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { 0.0f, 1.0f }, 0.25f * b2_pi );
+			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { 0.0f, 1.0f }, b2MakeRot(0.25f * b2_pi) );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 		}

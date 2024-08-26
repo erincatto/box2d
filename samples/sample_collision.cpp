@@ -2485,7 +2485,7 @@ public:
 		// box-capsule
 		{
 			b2Capsule capsule = { { -0.4f, 0.0f }, { -0.1f, 0.0f }, 0.1f };
-			b2Polygon box = b2MakeOffsetBox( 0.25f, 1.0f, { 1.0f, -1.0f }, 0.25f * b2_pi );
+			b2Polygon box = b2MakeOffsetBox( 0.25f, 1.0f, { 1.0f, -1.0f }, b2MakeRot(0.25f * b2_pi) );
 
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };

@@ -104,4 +104,9 @@ B2_API float b2GetMilliseconds( const b2Timer* timer );
 B2_API float b2GetMillisecondsAndReset( b2Timer* timer );
 B2_API void b2SleepMilliseconds( int milliseconds );
 B2_API void b2Yield( void );
+
+// Simple djb2 hash function for determinism testing
+#define B2_HASH_INIT 5381
+B2_API uint32_t b2Hash( uint32_t hash, const uint8_t* data, int count );
+
 //! @endcond

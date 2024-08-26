@@ -52,13 +52,13 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 1.2f, 2.0f * groundSize, { -groundSize, 2.0f * groundSize }, 0.0f );
+			box = b2MakeOffsetBox( 1.2f, 2.0f * groundSize, { -groundSize, 2.0f * groundSize }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 1.2f, 2.0f * groundSize, { groundSize, 2.0f * groundSize }, 0.0f );
+			box = b2MakeOffsetBox( 1.2f, 2.0f * groundSize, { groundSize, 2.0f * groundSize }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 800.0f, 10.0f, { 0.0f, -80.0f }, 0.0f );
+			box = b2MakeOffsetBox( 800.0f, 10.0f, { 0.0f, -80.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 
@@ -320,13 +320,13 @@ public:
 			shapeDef.density = 50.0f;
 
 			b2Polygon polygon;
-			polygon = b2MakeOffsetBox( 0.5f, 10.0f, { 10.0f, 0.0f }, 0.0 );
+			polygon = b2MakeOffsetBox( 0.5f, 10.0f, { 10.0f, 0.0f }, b2Rot_identity );
 			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-			polygon = b2MakeOffsetBox( 0.5f, 10.0f, { -10.0f, 0.0f }, 0.0 );
+			polygon = b2MakeOffsetBox( 0.5f, 10.0f, { -10.0f, 0.0f }, b2Rot_identity );
 			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-			polygon = b2MakeOffsetBox( 10.0f, 0.5f, { 0.0f, 10.0f }, 0.0 );
+			polygon = b2MakeOffsetBox( 10.0f, 0.5f, { 0.0f, 10.0f }, b2Rot_identity );
 			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-			polygon = b2MakeOffsetBox( 10.0f, 0.5f, { 0.0f, -10.0f }, 0.0 );
+			polygon = b2MakeOffsetBox( 10.0f, 0.5f, { 0.0f, -10.0f }, b2Rot_identity );
 			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
 
 			// m_motorSpeed = 9.0f;
@@ -456,13 +456,13 @@ public:
 		shapeDef.density = 50.0f;
 
 		b2Polygon polygon;
-		polygon = b2MakeOffsetBox( 0.25f, 2.0f, { 2.0f, 0.0f }, 0.0 );
+		polygon = b2MakeOffsetBox( 0.25f, 2.0f, { 2.0f, 0.0f }, b2Rot_identity );
 		b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-		polygon = b2MakeOffsetBox( 0.25f, 2.0f, { -2.0f, 0.0f }, 0.0 );
+		polygon = b2MakeOffsetBox( 0.25f, 2.0f, { -2.0f, 0.0f }, b2Rot_identity );
 		b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-		polygon = b2MakeOffsetBox( 2.0f, 0.25f, { 0.0f, 2.0f }, 0.0 );
+		polygon = b2MakeOffsetBox( 2.0f, 0.25f, { 0.0f, 2.0f }, b2Rot_identity );
 		b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-		polygon = b2MakeOffsetBox( 2.0f, 0.25f, { 0.0f, -2.0f }, 0.0 );
+		polygon = b2MakeOffsetBox( 2.0f, 0.25f, { 0.0f, -2.0f }, b2Rot_identity );
 		b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
 	}
 
@@ -1407,7 +1407,7 @@ public:
 				for ( int j = i; j < width; ++j )
 				{
 					float x = grid * j;
-					b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { x, y }, 0.0f );
+					b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { x, y }, b2Rot_identity );
 					b2CreatePolygonShape( groundId, &shapeDef, &square );
 				}
 			}
@@ -1418,7 +1418,7 @@ public:
 				for ( int j = i; j < width; ++j )
 				{
 					float x = -grid * j;
-					b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { x, y }, 0.0f );
+					b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { x, y }, b2Rot_identity );
 					b2CreatePolygonShape( groundId, &shapeDef, &square );
 				}
 			}
@@ -1455,7 +1455,7 @@ public:
 						for ( int j = 0; j < span; ++j )
 						{
 							float x = j * grid;
-							b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { x, y }, 0.0f );
+							b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { x, y }, b2Rot_identity );
 							b2CreatePolygonShape( bodyId, &shapeDef, &square );
 						}
 					}
@@ -1513,7 +1513,7 @@ public:
 			for ( int j = -span; j < span; ++j )
 			{
 				float x = j * grid;
-				b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { x, y }, 0.0f );
+				b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { x, y }, b2Rot_identity );
 				b2CreatePolygonShape( bodyId, &shapeDef, &square );
 			}
 		}

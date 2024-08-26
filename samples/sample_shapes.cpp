@@ -241,9 +241,9 @@ public:
 			m_table1Id = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Polygon top = b2MakeOffsetBox( 3.0f, 0.5f, { 0.0f, 3.5f }, 0.0f );
-			b2Polygon leftLeg = b2MakeOffsetBox( 0.5f, 1.5f, { -2.5f, 1.5f }, 0.0f );
-			b2Polygon rightLeg = b2MakeOffsetBox( 0.5f, 1.5f, { 2.5f, 1.5f }, 0.0f );
+			b2Polygon top = b2MakeOffsetBox( 3.0f, 0.5f, { 0.0f, 3.5f }, b2Rot_identity );
+			b2Polygon leftLeg = b2MakeOffsetBox( 0.5f, 1.5f, { -2.5f, 1.5f }, b2Rot_identity );
+			b2Polygon rightLeg = b2MakeOffsetBox( 0.5f, 1.5f, { 2.5f, 1.5f }, b2Rot_identity );
 
 			b2CreatePolygonShape( m_table1Id, &shapeDef, &top );
 			b2CreatePolygonShape( m_table1Id, &shapeDef, &leftLeg );
@@ -258,9 +258,9 @@ public:
 			m_table2Id = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Polygon top = b2MakeOffsetBox( 3.0f, 0.5f, { 0.0f, 3.5f }, 0.0f );
-			b2Polygon leftLeg = b2MakeOffsetBox( 0.5f, 2.0f, { -2.5f, 2.0f }, 0.0f );
-			b2Polygon rightLeg = b2MakeOffsetBox( 0.5f, 2.0f, { 2.5f, 2.0f }, 0.0f );
+			b2Polygon top = b2MakeOffsetBox( 3.0f, 0.5f, { 0.0f, 3.5f }, b2Rot_identity );
+			b2Polygon leftLeg = b2MakeOffsetBox( 0.5f, 2.0f, { -2.5f, 2.0f }, b2Rot_identity );
+			b2Polygon rightLeg = b2MakeOffsetBox( 0.5f, 2.0f, { 2.5f, 2.0f }, b2Rot_identity );
 
 			b2CreatePolygonShape( m_table2Id, &shapeDef, &top );
 			b2CreatePolygonShape( m_table2Id, &shapeDef, &leftLeg );
@@ -333,7 +333,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Polygon box = b2MakeOffsetBox( 4.0f, 0.1f, { 0.0f, 3.0f }, 0.0f );
+			b2Polygon box = b2MakeOffsetBox( 4.0f, 0.1f, { 0.0f, 3.0f }, b2Rot_identity );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 		}
 
@@ -346,7 +346,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Polygon box = b2MakeOffsetBox( 4.0f, 0.1f, { 0.0f, 3.0f }, 0.0f );
+			b2Polygon box = b2MakeOffsetBox( 4.0f, 0.1f, { 0.0f, 3.0f }, b2Rot_identity );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 		}
 
@@ -888,19 +888,19 @@ public:
 			b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 
-			b2Polygon box = b2MakeOffsetBox( 13.0f, 0.25f, { -4.0f, 22.0f }, -0.25f );
+			b2Polygon box = b2MakeOffsetBox( 13.0f, 0.25f, { -4.0f, 22.0f }, b2MakeRot(-0.25f) );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 0.25f, 1.0f, { 10.5f, 19.0f }, 0.0f );
+			box = b2MakeOffsetBox( 0.25f, 1.0f, { 10.5f, 19.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 13.0f, 0.25f, { 4.0f, 14.0f }, 0.25f );
+			box = b2MakeOffsetBox( 13.0f, 0.25f, { 4.0f, 14.0f }, b2MakeRot(0.25f) );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 0.25f, 1.0f, { -10.5f, 11.0f }, 0.0f );
+			box = b2MakeOffsetBox( 0.25f, 1.0f, { -10.5f, 11.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 13.0f, 0.25f, { -4.0f, 6.0f }, -0.25f );
+			box = b2MakeOffsetBox( 13.0f, 0.25f, { -4.0f, 6.0f }, b2MakeRot(-0.25f) );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 
@@ -951,7 +951,7 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Polygon box = b2MakeOffsetBox( 10.0f, 1.0f, { 0.0f, -1.0f }, 0.0f );
+			b2Polygon box = b2MakeOffsetBox( 10.0f, 1.0f, { 0.0f, -1.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 
@@ -1193,13 +1193,13 @@ public:
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Polygon box = b2MakeOffsetBox( 20.0f, 1.0f, { 0.0f, -1.0f }, 0.0f );
+			b2Polygon box = b2MakeOffsetBox( 20.0f, 1.0f, { 0.0f, -1.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 1.0f, 5.0f, { 19.0f, 5.0f }, 0.0f );
+			box = b2MakeOffsetBox( 1.0f, 5.0f, { 19.0f, 5.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 1.0f, 5.0f, { -19.0f, 5.0f }, 0.0f );
+			box = b2MakeOffsetBox( 1.0f, 5.0f, { -19.0f, 5.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 
@@ -1263,7 +1263,7 @@ public:
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { 10.0f, -2.0f }, 0.5f * b2_pi );
+			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { 10.0f, -2.0f }, b2MakeRot(0.5f * b2_pi) );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 
@@ -1278,7 +1278,7 @@ public:
 		}
 
 		{
-			b2Polygon box = b2MakeOffsetBox( 0.75f, 0.5f, { 9.0f, 2.0f }, 0.5f * b2_pi );
+			b2Polygon box = b2MakeOffsetBox( 0.75f, 0.5f, { 9.0f, 2.0f }, b2MakeRot(0.5f * b2_pi) );
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.position = { 0.0f, 0.0f };
 			bodyDef.type = b2_dynamicBody;

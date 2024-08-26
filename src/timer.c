@@ -74,6 +74,17 @@ void b2Yield()
 	SwitchToThread();
 }
 
+uint32_t b2Hash(uint32_t hash, const uint8_t* data, int count)
+{
+	uint32_t result = hash;
+	for ( size_t i = 0; i < count; i++ )
+	{
+		result = ( result << 5 ) + result + data[i];
+	}
+
+	return result;
+}
+
 #elif defined( __linux__ ) || defined( __APPLE__ )
 
 	#include <sched.h>
