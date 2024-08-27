@@ -60,12 +60,14 @@ bool b2Rot_IsValid( b2Rot q )
 
 float b2Sqrt(float x)
 {
-#if defined( B2_CPU_X64 ) || defined( B2_CPU_WASM )
-	return _mm_cvtss_f32(_mm_sqrt_ss( _mm_set1_ps(x) ));
-#else
-	float32x4_t v = vdupq_n_f32( x );
-	return vgetq_lane_f32( vsqrtq_f32( v ), 0 );
-#endif
+	return sqrtf( x );
+
+//#if defined( B2_CPU_X64 ) || defined( B2_CPU_WASM )
+//	return _mm_cvtss_f32(_mm_sqrt_ss( _mm_set1_ps(x) ));
+//#else
+//	float32x4_t v = vdupq_n_f32( x );
+//	return vgetq_lane_f32( vsqrtq_f32( v ), 0 );
+//#endif
 }
 
 float b2Length( b2Vec2 v )
