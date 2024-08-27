@@ -108,6 +108,22 @@ public:
 
 		m_hash = 0;
 		m_sleepStep = -1;
+
+		PrintTransforms();
+	}
+
+	void PrintTransforms()
+	{
+		uint32_t hash = B2_HASH_INIT;
+		int bodyCount = e_rows * e_columns;
+		for ( int i = 0; i < bodyCount; ++i )
+		{
+			b2Transform xf = b2Body_GetTransform( m_bodies[i] );
+			printf( "%d %.9f %.9f %.9f %.9f\n", i, xf.p.x, xf.p.y, xf.q.c, xf.q.s );
+			hash = b2Hash( hash, reinterpret_cast<uint8_t*>( &xf ), sizeof( b2Transform ) );
+		}
+
+		printf( "hash = 0x%08x\n", hash );
 	}
 
 	void Step(Settings& settings) override
@@ -127,7 +143,7 @@ public:
 				}
 			}
 
-			//if (sleeping == true)
+			if (sleeping == true)
 			{
 				uint32_t hash = B2_HASH_INIT;
 				for ( int i = 0; i < bodyCount; ++i )
