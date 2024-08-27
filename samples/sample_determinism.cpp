@@ -18,7 +18,7 @@ public:
 	enum
 	{
 		e_columns = 4,
-		e_rows = 30,
+		e_rows = 10,
 	};
 
 	explicit FallingHinges( Settings& settings )
@@ -46,7 +46,8 @@ public:
 		}
 
 		float h = 0.25f;
-		float r = 0.1f * h;
+		float r = 0.0f;
+		 //0.1f * h;
 		b2Polygon box = b2MakeRoundedBox( h - r, h - r, r );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -132,6 +133,7 @@ public:
 				for ( int i = 0; i < bodyCount; ++i )
 				{
 					b2Transform xf = b2Body_GetTransform( m_bodies[i] );
+					printf( "%d %.9f %.9f %.9f %.9f\n", i, xf.p.x, xf.p.y, xf.q.c, xf.q.s );
 					m_hash = b2Hash( m_hash, reinterpret_cast<uint8_t*>( &xf ), sizeof( b2Transform ) );
 				}
 			
