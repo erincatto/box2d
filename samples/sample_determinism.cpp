@@ -18,7 +18,7 @@ public:
 	enum
 	{
 		e_columns = 4,
-		e_rows = 10,
+		e_rows = 30,
 	};
 
 	explicit FallingHinges( Settings& settings )
@@ -46,8 +46,7 @@ public:
 		}
 
 		float h = 0.25f;
-		float r = 0.0f;
-		 //0.1f * h;
+		float r = 0.1f * h;
 		b2Polygon box = b2MakeRoundedBox( h - r, h - r, r );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -93,7 +92,7 @@ public:
 				{
 					jointDef.bodyIdA = prevBodyId;
 					jointDef.bodyIdB = bodyId;
-					//b2CreateRevoluteJoint( m_worldId, &jointDef );
+					b2CreateRevoluteJoint( m_worldId, &jointDef );
 					prevBodyId = b2_nullBodyId;
 				}
 
@@ -109,7 +108,7 @@ public:
 		m_hash = 0;
 		m_sleepStep = -1;
 
-		PrintTransforms();
+		//PrintTransforms();
 	}
 
 	void PrintTransforms()
@@ -153,17 +152,9 @@ public:
 					hash = b2Hash( hash, reinterpret_cast<uint8_t*>( &xf ), sizeof( b2Transform ) );
 				}
 			
-				if (sleeping == true)
-				{
-					m_sleepStep = m_stepCount - 1;
-					m_hash = hash;
-					printf( "sleep step = %d, hash = 0x%08x\n", m_sleepStep, m_hash );
-				}
-				else
-				{
-					printf( "step = %d, hash = 0x%08x\n", m_stepCount - 1, hash );
-				
-				}
+				m_sleepStep = m_stepCount - 1;
+				m_hash = hash;
+				printf( "sleep step = %d, hash = 0x%08x\n", m_sleepStep, m_hash );
 			}
 		}
 
