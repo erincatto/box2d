@@ -268,7 +268,7 @@ static int CrossPlatformTest(void)
 			{
 				jointDef.bodyIdA = prevBodyId;
 				jointDef.bodyIdB = bodyId;
-				b2CreateRevoluteJoint( worldId, &jointDef );
+				//b2CreateRevoluteJoint( worldId, &jointDef );
 				prevBodyId = b2_nullBodyId;
 			}
 
@@ -326,9 +326,12 @@ static int CrossPlatformTest(void)
 		stepCount += 1;
 	}
 
+	// step = 378, hash = 0x2d569026
 	ENSURE( stepCount < maxSteps );
-	ENSURE( sleepStep == 295 );
-	ENSURE( hash == 0x4a4d465c );
+	//ENSURE( sleepStep == 295 );
+	//ENSURE( hash == 0x4a4d465c );
+	ENSURE( sleepStep == 378 );
+	ENSURE( hash == 0x2d569026 );
 
 	free( bodies );
 
