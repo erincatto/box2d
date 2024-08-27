@@ -127,18 +127,27 @@ public:
 				}
 			}
 
-			if (sleeping == true)
+			//if (sleeping == true)
 			{
-				m_hash = B2_HASH_INIT;
+				uint32_t hash = B2_HASH_INIT;
 				for ( int i = 0; i < bodyCount; ++i )
 				{
 					b2Transform xf = b2Body_GetTransform( m_bodies[i] );
-					printf( "%d %.9f %.9f %.9f %.9f\n", i, xf.p.x, xf.p.y, xf.q.c, xf.q.s );
-					m_hash = b2Hash( m_hash, reinterpret_cast<uint8_t*>( &xf ), sizeof( b2Transform ) );
+					//printf( "%d %.9f %.9f %.9f %.9f\n", i, xf.p.x, xf.p.y, xf.q.c, xf.q.s );
+					hash = b2Hash( hash, reinterpret_cast<uint8_t*>( &xf ), sizeof( b2Transform ) );
 				}
 			
-				m_sleepStep = m_stepCount - 1;
-				printf( "step = %d, hash = 0x%08x\n", m_sleepStep, m_hash );
+				if (sleeping == true)
+				{
+					m_sleepStep = m_stepCount - 1;
+					m_hash = hash;
+					printf( "sleep step = %d, hash = 0x%08x\n", m_sleepStep, m_hash );
+				}
+				else
+				{
+					printf( "step = %d, hash = 0x%08x\n", m_stepCount - 1, hash );
+				
+				}
 			}
 		}
 
