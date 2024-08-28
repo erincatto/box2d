@@ -85,7 +85,7 @@ public:
 				bodyDef.position.y = h + 2.0f * h * i;
 				
 				// this tests the deterministic cosine and sine functions
-				bodyDef.rotation = b2MakeRot( 0.01f * i - 0.1f );
+				bodyDef.rotation = b2MakeRot( 0.1f * i - 1.0f );
 
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
