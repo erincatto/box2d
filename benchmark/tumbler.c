@@ -24,13 +24,13 @@ b2WorldId Tumbler( b2WorldDef* worldDef )
 		shapeDef.density = 50.0f;
 
 		b2Polygon polygon;
-		polygon = b2MakeOffsetBox( 0.5f, 10.0f, ( b2Vec2 ){ 10.0f, 0.0f }, 0.0 );
+		polygon = b2MakeOffsetBox( 0.5f, 10.0f, ( b2Vec2 ){ 10.0f, 0.0f }, b2Rot_identity );
 		b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-		polygon = b2MakeOffsetBox( 0.5f, 10.0f, ( b2Vec2 ){ -10.0f, 0.0f }, 0.0 );
+		polygon = b2MakeOffsetBox( 0.5f, 10.0f, ( b2Vec2 ){ -10.0f, 0.0f }, b2Rot_identity );
 		b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-		polygon = b2MakeOffsetBox( 10.0f, 0.5f, ( b2Vec2 ){ 0.0f, 10.0f }, 0.0 );
+		polygon = b2MakeOffsetBox( 10.0f, 0.5f, ( b2Vec2 ){ 0.0f, 10.0f }, b2Rot_identity );
 		b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-		polygon = b2MakeOffsetBox( 10.0f, 0.5f, ( b2Vec2 ){ 0.0f, -10.0f }, 0.0 );
+		polygon = b2MakeOffsetBox( 10.0f, 0.5f, ( b2Vec2 ){ 0.0f, -10.0f }, b2Rot_identity );
 		b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
 
 		float motorSpeed = 25.0f;

@@ -7,11 +7,11 @@
 
 #include <float.h>
 
-#if defined( B2_CPU_X64 ) || defined( B2_CPU_WASM )
-#include <emmintrin.h>
-#else
-#include <arm_neon.h>
-#endif
+//#if defined( B2_CPU_X64 ) || defined( B2_CPU_WASM )
+//#include <emmintrin.h>
+//#else
+//#include <arm_neon.h>
+//#endif
 
 bool b2IsValid( float a )
 {
@@ -58,16 +58,21 @@ bool b2Rot_IsValid( b2Rot q )
 	return b2IsNormalized( q );
 }
 
+#if 0
 float b2Sqrt(float x)
 {
+#if 1
 	return sqrtf( x );
-
-//#if defined( B2_CPU_X64 ) || defined( B2_CPU_WASM )
-//	return _mm_cvtss_f32(_mm_sqrt_ss( _mm_set1_ps(x) ));
-//#else
-//	float32x4_t v = vdupq_n_f32( x );
-//	return vgetq_lane_f32( vsqrtq_f32( v ), 0 );
-//#endif
+#else
+#if defined( B2_SIMD_AVX2 ) || defined( B2_SIMD_SSE2 )
+	return _mm_cvtss_f32(_mm_sqrt_ss( _mm_set1_ps(x) ));
+#elif defined( B2_SIMD_NEON )
+	float32x4_t v = vdupq_n_f32( x );
+	return vgetq_lane_f32( vsqrtq_f32( v ), 0 );
+#else
+	return sqrtf( x );
+#endif
+#endif
 }
 
 float b2Length( b2Vec2 v )
@@ -142,6 +147,8 @@ b2Rot b2IntegrateRotation( b2Rot q1, float deltaAngle )
 	b2Rot qn = { q2.c * invMag, q2.s * invMag };
 	return qn;
 }
+#endif
+
 
 #if 0
 // From

@@ -81,7 +81,8 @@ public:
 				b2BodyDef bodyDef = b2DefaultBodyDef();
 				bodyDef.type = b2_dynamicBody;
 
-				bodyDef.position = { x + offset * i, h + 2.0f * h * i };
+				bodyDef.position.x = x + offset * i;
+				bodyDef.position.y = h + 2.0f * h * i;
 				
 				// this tests the deterministic cosine and sine functions
 				bodyDef.rotation = b2MakeRot( 0.01f * i - 0.1f );

@@ -258,6 +258,9 @@ static int CrossPlatformTest(void)
 			bodyDef.position.x = x + offset * i;
 			bodyDef.position.y = h + 2.0f * h * i;
 
+			// this tests the deterministic cosine and sine functions
+			bodyDef.rotation = b2MakeRot( 0.01f * i - 0.1f );
+
 			b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
 			if ( ( i & 1 ) == 0 )
@@ -326,11 +329,10 @@ static int CrossPlatformTest(void)
 		stepCount += 1;
 	}
 
+	// sleep step = 316, hash = 0xd9b31433
 	ENSURE( stepCount < maxSteps );
-	ENSURE( sleepStep == 295 );
-	ENSURE( hash == 0x4a4d465c );
-	//ENSURE( sleepStep == 378 );
-	//ENSURE( hash == 0x2d569026 );
+	ENSURE( sleepStep == 316 );
+	ENSURE( hash == 0xd9b31433 );
 
 	free( bodies );
 
