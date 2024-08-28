@@ -18,7 +18,9 @@ static b2Polygon b2MakeCapsule( b2Vec2 p1, b2Vec2 p2, float radius )
 	shape.vertices[1] = p2;
 	shape.centroid = b2Lerp( p1, p2, 0.5f );
 
-	b2Vec2 axis = b2NormalizeChecked( b2Sub( p2, p1 ) );
+	b2Vec2 d = b2Sub( p2, p1 );
+	B2_ASSERT( b2LengthSquared( d ) > FLT_EPSILON );
+	b2Vec2 axis = b2Normalize(d);
 	b2Vec2 normal = b2RightPerp( axis );
 
 	shape.normals[0] = normal;
@@ -582,7 +584,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 			// v11 - v21
 			b2Vec2 normal = b2Sub( v21, v11 );
 			B2_ASSERT( result.distanceSquared > 0.0f );
-			float distance = b2Sqrt( result.distanceSquared );
+			float distance = sqrtf( result.distanceSquared );
 			if ( distance > b2_speculativeDistance + radius )
 			{
 				return manifold;
@@ -605,7 +607,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 			// v11 - v22
 			b2Vec2 normal = b2Sub( v22, v11 );
 			B2_ASSERT( result.distanceSquared > 0.0f );
-			float distance = b2Sqrt( result.distanceSquared );
+			float distance = sqrtf( result.distanceSquared );
 			if ( distance > b2_speculativeDistance + radius )
 			{
 				return manifold;
@@ -628,7 +630,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 			// v12 - v21
 			b2Vec2 normal = b2Sub( v21, v12 );
 			B2_ASSERT( result.distanceSquared > 0.0f );
-			float distance = b2Sqrt( result.distanceSquared );
+			float distance = sqrtf( result.distanceSquared );
 			if ( distance > b2_speculativeDistance + radius )
 			{
 				return manifold;
@@ -651,7 +653,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 			// v12 - v22
 			b2Vec2 normal = b2Sub( v22, v12 );
 			B2_ASSERT( result.distanceSquared > 0.0f );
-			float distance = b2Sqrt( result.distanceSquared );
+			float distance = sqrtf( result.distanceSquared );
 			if ( distance > b2_speculativeDistance + radius )
 			{
 				return manifold;

@@ -9,12 +9,6 @@
 #include <math.h>
 #include <stdbool.h>
 
-#if defined( B2_SIMD_AVX2 ) || defined( B2_SIMD_SSE2 )
-#include <emmintrin.h>
-#elif defined( B2_SIMD_NEON )
-#include <arm_neon.h>
-#endif
-
 /**
  * @defgroup math Math
  * @brief Vector math types and functions
@@ -247,36 +241,24 @@ B2_INLINE b2Vec2 b2Clamp( b2Vec2 v, b2Vec2 a, b2Vec2 b )
 	return c;
 }
 
-#if 1
-B2_INLINE float b2Sqrt( float x )
-{
-	return sqrtf( x );
-
-//#if defined( B2_SIMD_AVX2 ) || defined( B2_SIMD_SSE2 )
-//	return _mm_cvtss_f32( _mm_sqrt_ss( _mm_set1_ps( x ) ) );
-//#elif defined( B2_SIMD_NEON )
-//	float32x4_t v = vdupq_n_f32( x );
-//	return vgetq_lane_f32( vsqrtq_f32( v ), 0 );
-//#else
-//	return sqrtf( x );
-//#endif
-}
-
+/// Get the length of this vector (the norm)
 B2_INLINE float b2Length( b2Vec2 v )
 {
-	return b2Sqrt( v.x * v.x + v.y * v.y );
+	return sqrtf( v.x * v.x + v.y * v.y );
 }
 
+/// Get the distance between two points
 B2_INLINE float b2Distance( b2Vec2 a, b2Vec2 b )
 {
 	float dx = b.x - a.x;
 	float dy = b.y - a.y;
-	return b2Sqrt( dx * dx + dy * dy );
+	return sqrtf( dx * dx + dy * dy );
 }
 
+/// Convert a vector into a unit vector if possible, otherwise returns the zero vector.
 B2_INLINE b2Vec2 b2Normalize( b2Vec2 v )
 {
-	float length = b2Sqrt( v.x * v.x + v.y * v.y );
+	float length = sqrtf( v.x * v.x + v.y * v.y );
 	if ( length < FLT_EPSILON )
 	{
 		return b2Vec2_zero;
@@ -287,19 +269,8 @@ B2_INLINE b2Vec2 b2Normalize( b2Vec2 v )
 	return n;
 }
 
-B2_INLINE b2Vec2 b2NormalizeChecked( b2Vec2 v )
-{
-	float length = b2Length( v );
-	if ( length < FLT_EPSILON )
-	{
-		return b2Vec2_zero;
-	}
-
-	float invLength = 1.0f / length;
-	b2Vec2 n = { invLength * v.x, invLength * v.y };
-	return n;
-}
-
+/// Convert a vector into a unit vector if possible, otherwise returns the zero vector. Also
+///	outputs the length.
 B2_INLINE b2Vec2 b2GetLengthAndNormalize( float* length, b2Vec2 v )
 {
 	*length = b2Length( v );
@@ -313,14 +284,18 @@ B2_INLINE b2Vec2 b2GetLengthAndNormalize( float* length, b2Vec2 v )
 	return n;
 }
 
+/// Normalize rotation
 B2_INLINE b2Rot b2NormalizeRot( b2Rot q )
 {
-	float mag = b2Sqrt( q.s * q.s + q.c * q.c );
+	float mag = sqrtf( q.s * q.s + q.c * q.c );
 	float invMag = mag > 0.0 ? 1.0f / mag : 0.0f;
 	b2Rot qn = { q.c * invMag, q.s * invMag };
 	return qn;
 }
 
+/// Integration rotation from angular velocity
+///	@param q1 initial rotation
+///	@param deltaAngle the angular displacement in radians
 B2_INLINE b2Rot b2IntegrateRotation( b2Rot q1, float deltaAngle )
 {
 	// dc/dt = -omega * sin(t)
@@ -328,41 +303,11 @@ B2_INLINE b2Rot b2IntegrateRotation( b2Rot q1, float deltaAngle )
 	// c2 = c1 - omega * h * s1
 	// s2 = s1 + omega * h * c1
 	b2Rot q2 = { q1.c - deltaAngle * q1.s, q1.s + deltaAngle * q1.c };
-	float mag = b2Sqrt( q2.s * q2.s + q2.c * q2.c );
+	float mag = sqrtf( q2.s * q2.s + q2.c * q2.c );
 	float invMag = mag > 0.0 ? 1.0f / mag : 0.0f;
 	b2Rot qn = { q2.c * invMag, q2.s * invMag };
 	return qn;
 }
-
-#else
-
-B2_API float b2Sqrt( float x );
-
-/// Convert a vector into a unit vector if possible, otherwise returns the zero vector.
-B2_API b2Vec2 b2Normalize( b2Vec2 v );
-
-/// Convert a vector into a unit vector if possible, otherwise asserts.
-B2_API b2Vec2 b2NormalizeChecked( b2Vec2 v );
-
-/// Convert a vector into a unit vector if possible, otherwise returns the zero vector. Also
-///	outputs the length.
-B2_API b2Vec2 b2GetLengthAndNormalize( float* length, b2Vec2 v );
-
-/// Get the length of this vector (the norm)
-B2_API float b2Length( b2Vec2 v );
-
-/// Get the distance between two points
-B2_API float b2Distance( b2Vec2 a, b2Vec2 b );
-
-/// Integration rotation from angular velocity
-///	@param q1 initial rotation
-///	@param deltaAngle the angular displacement in radians
-B2_API b2Rot b2IntegrateRotation( b2Rot q1, float deltaAngle );
-
-/// Normalize rotation
-B2_API b2Rot b2NormalizeRot( b2Rot q );
-
-#endif
 
 /// Get the length squared of this vector
 B2_INLINE float b2LengthSquared( b2Vec2 v )

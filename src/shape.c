@@ -560,7 +560,7 @@ b2ShapeExtent b2ComputeShapeExtent( const b2Shape* shape, b2Vec2 localCenter )
 			extent.minExtent = radius;
 			b2Vec2 c1 = b2Sub( shape->capsule.center1, localCenter );
 			b2Vec2 c2 = b2Sub( shape->capsule.center2, localCenter );
-			extent.maxExtent = b2Sqrt( b2MaxFloat( b2LengthSquared( c1 ), b2LengthSquared( c2 ) ) ) + radius;
+			extent.maxExtent = sqrtf( b2MaxFloat( b2LengthSquared( c1 ), b2LengthSquared( c2 ) ) ) + radius;
 		}
 		break;
 
@@ -589,7 +589,7 @@ b2ShapeExtent b2ComputeShapeExtent( const b2Shape* shape, b2Vec2 localCenter )
 			}
 
 			extent.minExtent = minExtent + poly->radius;
-			extent.maxExtent = b2Sqrt( maxExtentSqr ) + poly->radius;
+			extent.maxExtent = sqrtf( maxExtentSqr ) + poly->radius;
 		}
 		break;
 
@@ -598,7 +598,7 @@ b2ShapeExtent b2ComputeShapeExtent( const b2Shape* shape, b2Vec2 localCenter )
 			extent.minExtent = 0.0f;
 			b2Vec2 c1 = b2Sub( shape->segment.point1, localCenter );
 			b2Vec2 c2 = b2Sub( shape->segment.point2, localCenter );
-			extent.maxExtent = b2Sqrt( b2MaxFloat( b2LengthSquared( c1 ), b2LengthSquared( c2 ) ) );
+			extent.maxExtent = sqrtf( b2MaxFloat( b2LengthSquared( c1 ), b2LengthSquared( c2 ) ) );
 		}
 		break;
 
@@ -607,7 +607,7 @@ b2ShapeExtent b2ComputeShapeExtent( const b2Shape* shape, b2Vec2 localCenter )
 			extent.minExtent = 0.0f;
 			b2Vec2 c1 = b2Sub( shape->smoothSegment.segment.point1, localCenter );
 			b2Vec2 c2 = b2Sub( shape->smoothSegment.segment.point2, localCenter );
-			extent.maxExtent = b2Sqrt( b2MaxFloat( b2LengthSquared( c1 ), b2LengthSquared( c2 ) ) );
+			extent.maxExtent = sqrtf( b2MaxFloat( b2LengthSquared( c1 ), b2LengthSquared( c2 ) ) );
 		}
 		break;
 
