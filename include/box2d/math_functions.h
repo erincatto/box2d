@@ -249,16 +249,16 @@ B2_INLINE b2Vec2 b2Clamp( b2Vec2 v, b2Vec2 a, b2Vec2 b )
 #if 1
 B2_INLINE float b2Sqrt( float x )
 {
-	//return sqrtf( x );
-
-#if defined( B2_SIMD_AVX2 ) || defined( B2_SIMD_SSE2 )
-	return _mm_cvtss_f32( _mm_sqrt_ss( _mm_set1_ps( x ) ) );
-#elif defined( B2_SIMD_NEON )
-	float32x4_t v = vdupq_n_f32( x );
-	return vgetq_lane_f32( vsqrtq_f32( v ), 0 );
-#else
 	return sqrtf( x );
-#endif
+
+//#if defined( B2_SIMD_AVX2 ) || defined( B2_SIMD_SSE2 )
+//	return _mm_cvtss_f32( _mm_sqrt_ss( _mm_set1_ps( x ) ) );
+//#elif defined( B2_SIMD_NEON )
+//	float32x4_t v = vdupq_n_f32( x );
+//	return vgetq_lane_f32( vsqrtq_f32( v ), 0 );
+//#else
+//	return sqrtf( x );
+//#endif
 }
 
 B2_INLINE float b2Length( b2Vec2 v )
