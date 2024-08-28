@@ -460,9 +460,6 @@ static inline float b2Atan( float x )
 
 float b2Atan2( float y, float x )
 {
-	return atan2f( y, x );
-
-#if 0
 	float pi = b2_pi;
 	float halfPi = 0.5f * b2_pi;
 
@@ -491,12 +488,14 @@ float b2Atan2( float y, float x )
 	} // 4th quadrant
 
 	return res;
-#endif
 }
 
 // https://en.wikipedia.org/wiki/Bh%C4%81skara_I%27s_sine_approximation_formula
 b2Rot b2MakeRot(float angle)
 {
+#if 1
+	return ( b2Rot ){ cosf( angle ), sinf( angle ) };
+#else
 	float x = b2UnwindLargeAngle( angle );
 	float pi2 = b2_pi * b2_pi;
 
@@ -534,5 +533,6 @@ b2Rot b2MakeRot(float angle)
 
 	q = b2NormalizeRot( q );
 	return q;
+#endif
 }
 #endif

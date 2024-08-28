@@ -333,8 +333,9 @@ static int CrossPlatformTest(void)
 
 	// sleep step = 316, hash = 0xd9b31433
 	// sleep step = 375, hash = 0xdb765ba8
-	ENSURE( sleepStep == 375 );
-	ENSURE( hash == 0xdb765ba8 );
+	// sleep step = 365, hash = 0x27d8846a
+	ENSURE( sleepStep == 365 );
+	ENSURE( hash == 0x27d8846a );
 
 	free( bodies );
 
