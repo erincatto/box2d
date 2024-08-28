@@ -66,6 +66,9 @@ if(PROJECT_IS_TOP_LEVEL)
 	option(BOX2D_PROFILE "Enable profiling with Tracy" OFF)
 	option(BOX2D_VALIDATE "Enable heavy validation" ON)
 	option(BOX2D_UNIT_TESTS "Build the Box2D unit tests" ON)
+ 
+	include(GNUInstallDirs)
+ 	install(DIRECTORY include/ DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 	if(MSVC AND WIN32)
 		# Enable edit and continue only in debug due to perf hit in release
