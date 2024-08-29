@@ -1195,7 +1195,7 @@ float b2Body_GetMass( b2BodyId bodyId )
 	return bodySim->mass;
 }
 
-float b2Body_GetInertiaTensor( b2BodyId bodyId )
+float b2Body_GetRotationalInertia( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
