@@ -38,5 +38,5 @@ void b2SetAssertFcn( b2AssertFcn* assertFcn )
 
 b2Version b2GetVersion( void )
 {
-	return ( b2Version ){ 3, 0, 1 };
+	return ( b2Version ){ 3, 1, 0 };
 }
