@@ -156,11 +156,11 @@ b2Polygon b2MakeRoundedBox( float hx, float hy, float radius )
 	return shape;
 }
 
-b2Polygon b2MakeOffsetBox( float hx, float hy, b2Vec2 center, float angle )
+b2Polygon b2MakeOffsetBox( float hx, float hy, b2Vec2 center, b2Rot rotation )
 {
 	b2Transform xf;
 	xf.p = center;
-	xf.q = b2MakeRot( angle );
+	xf.q = rotation;
 
 	b2Polygon shape = { 0 };
 	shape.count = 4;

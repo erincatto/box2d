@@ -5,23 +5,24 @@
 
 #include <stdint.h>
 
+// clang-format off
+// 
 // Shared library macros
 #if defined( _MSC_VER ) && defined( box2d_EXPORTS )
 	// build the Windows DLL
 	#define BOX2D_EXPORT __declspec( dllexport )
 #elif defined( _MSC_VER ) && defined( BOX2D_DLL )
-// using the Windows DLL
+	// using the Windows DLL
 	#define BOX2D_EXPORT __declspec( dllimport )
 #elif defined( box2d_EXPORTS )
-// building or using the Box2D shared library
+	// building or using the Box2D shared library
 	#define BOX2D_EXPORT __attribute__( ( visibility( "default" ) ) )
 #else
-// static library
+	// static library
 	#define BOX2D_EXPORT
 #endif
 
 // C++ macros
-// clang-format off
 #ifdef __cplusplus
 	#define B2_API extern "C" BOX2D_EXPORT
 	#define B2_INLINE inline
@@ -104,4 +105,9 @@ B2_API float b2GetMilliseconds( const b2Timer* timer );
 B2_API float b2GetMillisecondsAndReset( b2Timer* timer );
 B2_API void b2SleepMilliseconds( int milliseconds );
 B2_API void b2Yield( void );
+
+// Simple djb2 hash function for determinism testing
+#define B2_HASH_INIT 5381
+B2_API uint32_t b2Hash( uint32_t hash, const uint8_t* data, int count );
+
 //! @endcond

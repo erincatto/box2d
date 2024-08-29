@@ -3,7 +3,7 @@ include(FetchContent)
 include(CMakeDependentOption)
 
 project(box2d
-	VERSION 3.0.1
+	VERSION 3.1.0
 	DESCRIPTION "A 2D physics engine for games"
 	HOMEPAGE_URL "https://box2d.org"
 	LANGUAGES C CXX

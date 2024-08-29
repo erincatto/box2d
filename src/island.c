@@ -295,7 +295,7 @@ static void b2AddJointToIsland( b2World* world, int islandId, b2Joint* joint )
 	b2ValidateIsland( world, islandId );
 }
 
-void b2LinkJoint( b2World* world, b2Joint* joint )
+void b2LinkJoint( b2World* world, b2Joint* joint, bool mergeIslands )
 {
 	b2Body* bodyA = b2GetBody( world, joint->edges[0].bodyId );
 	b2Body* bodyB = b2GetBody( world, joint->edges[1].bodyId );
@@ -376,6 +376,15 @@ void b2LinkJoint( b2World* world, b2Joint* joint )
 	else
 	{
 		b2AddJointToIsland( world, islandIdB, joint );
+	}
+
+	// Joints need to have islands merged immediately when they are created
+	// to keep the island graph valid.
+	// However, when a body type is being changed the merge can be deferred until
+	// all joints are linked.
+	if (mergeIslands)
+	{
+		b2MergeAwakeIslands( world );
 	}
 }
 

@@ -455,8 +455,8 @@ scenarios that require altering the mass.
 b2MassData myMassData;
 myMassData.mass = 10.0f;
 myMassData.center = (b2Vec2){0.0f, 0.0f};
-myMassData.I = 100.0f;
-b2Body_SetMassData(myBodyId, &myMassData);
+myMassData.rotationalInertia = 100.0f;
+b2Body_SetMassData(myBodyId, myMassData);
 ```
 
 After setting a body's mass directly, you may wish to revert to the 
@@ -470,7 +470,7 @@ The body's mass data is available through the following functions:
 
 ```c
 float mass = b2Body_GetMass(myBodyId);
-float inertia = b2Body_GetInertiaTensor(myBodyId);
+float inertia = b2Body_GetRotationalInertia(myBodyId);
 b2Vec2 localCenter b2Body_GetLocalCenterOfMass(myBodyId);
 b2MassData massData = b2Body_GetMassData(myBodyId);
 ```
@@ -1448,8 +1448,7 @@ joint limit and a friction motor:
 ```c
 b2Vec2 worldPivot = {10.0f, -4.0f};
 b2Vec2 worldAxis = {1.0f, 0.0f};
-b2PrismaticJointDef jointDef;
-b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
 jointDef.bodyIdA = myBodyIdA;
 jointDef.bodyIdB = myBodyIdB;
 jointDef.localAnchorA = b2Body_GetLocalPoint(myBodyIdA, worldPivot);

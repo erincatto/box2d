@@ -119,14 +119,14 @@ void b2DistanceJoint_SetSpringDampingRatio( b2JointId jointId, float dampingRati
 	base->distanceJoint.dampingRatio = dampingRatio;
 }
 
-float b2DistanceJoint_GetHertz( b2JointId jointId )
+float b2DistanceJoint_GetSpringHertz( b2JointId jointId )
 {
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	b2DistanceJoint* joint = &base->distanceJoint;
 	return joint->hertz;
 }
 
-float b2DistanceJoint_GetDampingRatio( b2JointId jointId )
+float b2DistanceJoint_GetSpringDampingRatio( b2JointId jointId )
 {
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	b2DistanceJoint* joint = &base->distanceJoint;

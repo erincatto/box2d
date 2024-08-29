@@ -512,7 +512,8 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 
 	float angle = b2RelativeAngle( transformB.q, transformA.q );
 
-	b2Vec2 r = { L * cosf( angle ), L * sinf( angle ) };
+	b2Rot rot = b2MakeRot( angle );
+	b2Vec2 r = { L * rot.c, L * rot.s };
 	b2Vec2 pC = b2Add( pB, r );
 	draw->DrawSegment( pB, pC, c1, draw->context );
 
@@ -529,13 +530,17 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 
 	if ( joint->enableLimit )
 	{
-		b2Vec2 rlo = { L * cosf( lowerAngle ), L * sinf( lowerAngle ) };
-		b2Vec2 rhi = { L * cosf( upperAngle ), L * sinf( upperAngle ) };
+		b2Rot rotLo = b2MakeRot( lowerAngle );
+		b2Vec2 rlo = { L * rotLo.c, L * rotLo.s };
+
+		b2Rot rotHi = b2MakeRot( upperAngle );
+		b2Vec2 rhi = { L * rotHi.c, L * rotHi.s };
 
 		draw->DrawSegment( pB, b2Add( pB, rlo ), c2, draw->context );
 		draw->DrawSegment( pB, b2Add( pB, rhi ), c3, draw->context );
 
-		b2Vec2 ref = ( b2Vec2 ){ L * cosf( joint->referenceAngle ), L * sinf( joint->referenceAngle ) };
+		b2Rot rotRef = b2MakeRot( joint->referenceAngle );
+		b2Vec2 ref = ( b2Vec2 ){ L * rotRef.c, L * rotRef.s };
 		draw->DrawSegment( pB, b2Add( pB, ref ), b2_colorBlue, draw->context );
 	}
 

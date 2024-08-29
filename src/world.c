@@ -174,7 +174,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->enableSleep = def->enableSleep;
 	world->locked = false;
 	world->enableWarmStarting = true;
-	world->enableContinuous = def->enableContinous;
+	world->enableContinuous = def->enableContinuous;
 	world->userTreeTask = NULL;
 
 	if ( def->workerCount > 0 && def->enqueueTask != NULL && def->finishTask != NULL )

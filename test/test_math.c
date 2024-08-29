@@ -6,9 +6,35 @@
 #include "box2d/math_functions.h"
 
 #include <float.h>
+#include <stdio.h>
 
 int MathTest( void )
 {
+	for (float x = -10.0f * b2_pi; x < 10.0f * b2_pi; x += 0.01f )
+	{
+		b2Rot r = b2MakeRot( x );
+		float c = cosf( x );
+		float s = sinf( x );
+
+		// The cosine and sine approximations are accurate to about 0.1 degrees (0.002 radians) 
+		//printf( "%g %g\n", r.c - c, r.s - s );
+		ENSURE_SMALL( r.c - c, 0.002f );
+		ENSURE_SMALL( r.s - s, 0.002f );
+
+		float xn = b2UnwindLargeAngle( x );
+		float a = b2Atan2( s, c );
+		float diff = b2AbsFloat( a - xn );
+		
+		// The two results can be off by 360 degrees (-pi and pi)
+		if (diff > b2_pi)
+		{
+			diff -= 2.0f * b2_pi;
+		}
+
+		// The approximate atan2 is quite accurate
+		ENSURE_SMALL( diff, 1e-5f );
+	}
+
 	b2Vec2 zero = b2Vec2_zero;
 	b2Vec2 one = { 1.0f, 1.0f };
 	b2Vec2 two = { 2.0f, 2.0f };

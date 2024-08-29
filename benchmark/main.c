@@ -183,7 +183,7 @@ int main( int argc, char** argv )
 
 				b2WorldDef worldDef = b2DefaultWorldDef();
 				worldDef.enableSleep = false;
-				worldDef.enableContinous = enableContinuous;
+				worldDef.enableContinuous = enableContinuous;
 				worldDef.enqueueTask = EnqueueTask;
 				worldDef.finishTask = FinishTask;
 				worldDef.workerCount = threadCount;

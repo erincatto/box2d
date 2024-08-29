@@ -5,11 +5,11 @@
 
 #if defined( _WIN32 )
 
-	#ifndef WIN32_LEAN_AND_MEAN
-		#define WIN32_LEAN_AND_MEAN
-	#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 
-	#include <windows.h>
+#include <windows.h>
 
 static double s_invFrequency = 0.0;
 
@@ -76,9 +76,9 @@ void b2Yield()
 
 #elif defined( __linux__ ) || defined( __APPLE__ )
 
-	#include <sched.h>
-	#include <sys/time.h>
-	#include <time.h>
+#include <sched.h>
+#include <sys/time.h>
+#include <time.h>
 
 b2Timer b2CreateTimer( void )
 {
@@ -185,3 +185,14 @@ void b2Yield()
 }
 
 #endif
+
+uint32_t b2Hash( uint32_t hash, const uint8_t* data, int count )
+{
+	uint32_t result = hash;
+	for ( size_t i = 0; i < count; i++ )
+	{
+		result = ( result << 5 ) + result + data[i];
+	}
+
+	return result;
+}

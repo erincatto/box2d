@@ -228,7 +228,7 @@ struct GLPoints
 						 "{\n"
 						 "	f_color = v_color;\n"
 						 "	gl_Position = projectionMatrix * vec4(v_position, 0.0f, 1.0f);\n"
-						 "   gl_PointSize = v_size;\n"
+						 "	gl_PointSize = v_size;\n"
 						 "}\n";
 
 		const char* fs = "#version 330\n"

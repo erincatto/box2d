@@ -95,7 +95,7 @@ typedef struct b2WorldDef
 	bool enableSleep;
 
 	/// Enable continuous collision
-	bool enableContinous;
+	bool enableContinuous;
 
 	/// Number of workers to use with the provided task system. Box2D performs best when using only
 	///	performance cores and accessing a single L2 cache. Efficiency cores and hyper-threading provide
@@ -234,7 +234,7 @@ typedef struct b2Filter
 	///	   // etc
 	/// };
 	///	@endcode
-	uint32_t categoryBits;
+	uint64_t categoryBits;
 
 	/// The collision mask bits. This states the categories that this
 	/// shape would accept for collision.
@@ -243,7 +243,7 @@ typedef struct b2Filter
 	///	@code{.c}
 	///	maskBits = Static | Player;
 	///	@endcode
-	uint32_t maskBits;
+	uint64_t maskBits;
 
 	/// Collision groups allow a certain group of objects to never collide (negative)
 	/// or always collide (positive). A group index of zero has no effect. Non-zero group filtering
@@ -265,11 +265,11 @@ B2_API b2Filter b2DefaultFilter( void );
 typedef struct b2QueryFilter
 {
 	/// The collision category bits of this query. Normally you would just set one bit.
-	uint32_t categoryBits;
+	uint64_t categoryBits;
 
 	/// The collision mask bits. This states the shape categories that this
 	/// query would accept for collision.
-	uint32_t maskBits;
+	uint64_t maskBits;
 } b2QueryFilter;
 
 /// Use this to initialize your query filter
@@ -325,6 +325,8 @@ typedef struct b2ShapeDef
 	uint32_t customColor;
 
 	/// A sensor shape generates overlap events but never generates a collision response.
+	///	Sensors do not collide with other sensors and do not have continuous collision.
+	///	Instead use a ray or shape cast for those scenarios.
 	bool isSensor;
 
 	/// Enable sensor events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors.
@@ -1082,7 +1084,6 @@ typedef enum b2HexColor
 {
 	b2_colorAliceBlue = 0xf0f8ff,
 	b2_colorAntiqueWhite = 0xfaebd7,
-	b2_colorAqua = 0x00ffff,
 	b2_colorAquamarine = 0x7fffd4,
 	b2_colorAzure = 0xf0ffff,
 	b2_colorBeige = 0xf5f5dc,
@@ -1125,7 +1126,6 @@ typedef enum b2HexColor
 	b2_colorFirebrick = 0xb22222,
 	b2_colorFloralWhite = 0xfffaf0,
 	b2_colorForestGreen = 0x228b22,
-	b2_colorFuchsia = 0xff00ff,
 	b2_colorGainsboro = 0xdcdcdc,
 	b2_colorGhostWhite = 0xf8f8ff,
 	b2_colorGold = 0xffd700,
@@ -1167,7 +1167,6 @@ typedef enum b2HexColor
 	b2_colorLightSlateGray = 0x778899,
 	b2_colorLightSteelBlue = 0xb0c4de,
 	b2_colorLightYellow = 0xffffe0,
-	b2_colorLime = 0x00ff00,
 	b2_colorLimeGreen = 0x32cd32,
 	b2_colorLinen = 0xfaf0e6,
 	b2_colorMagenta = 0xff00ff,
@@ -1186,7 +1185,6 @@ typedef enum b2HexColor
 	b2_colorMistyRose = 0xffe4e1,
 	b2_colorMoccasin = 0xffe4b5,
 	b2_colorNavajoWhite = 0xffdead,
-	b2_colorNavy = 0x000080,
 	b2_colorNavyBlue = 0x000080,
 	b2_colorOldLace = 0xfdf5e6,
 	b2_colorOlive = 0x808000,
@@ -1241,6 +1239,7 @@ typedef enum b2HexColor
 } b2HexColor;
 
 /// This struct holds callbacks you can implement to draw a Box2D world.
+///	This structure should be zero initialized.
 ///	@ingroup world
 typedef struct b2DebugDraw
 {
@@ -1314,3 +1313,7 @@ typedef struct b2DebugDraw
 	/// User context that is passed as an argument to drawing callback functions
 	void* context;
 } b2DebugDraw;
+
+/// Use this to initialize your drawing interface. This allows you to implement a sub-set
+/// of the drawing functions.
+B2_API b2DebugDraw b2DefaultDebugDraw( void );

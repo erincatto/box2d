@@ -5,6 +5,7 @@
 
 #include "base.h"
 
+#include <float.h>
 #include <math.h>
 #include <stdbool.h>
 
@@ -65,6 +66,11 @@ static const b2Vec2 b2Vec2_zero = { 0.0f, 0.0f };
 static const b2Rot b2Rot_identity = { 1.0f, 0.0f };
 static const b2Transform b2Transform_identity = { { 0.0f, 0.0f }, { 1.0f, 0.0f } };
 static const b2Mat22 b2Mat22_zero = { { 0.0f, 0.0f }, { 0.0f, 0.0f } };
+
+/// Compute an approximate arctangent in the range [-pi, pi]
+/// This is hand coded for cross platform determinism. The atan2f
+///	function in the standard library is not cross platform deterministic.
+B2_API float b2Atan2( float y, float x );
 
 /// @return the minimum of two floats
 B2_INLINE float b2MinFloat( float a, float b )
@@ -241,12 +247,6 @@ B2_INLINE float b2Length( b2Vec2 v )
 	return sqrtf( v.x * v.x + v.y * v.y );
 }
 
-/// Get the length squared of this vector
-B2_INLINE float b2LengthSquared( b2Vec2 v )
-{
-	return v.x * v.x + v.y * v.y;
-}
-
 /// Get the distance between two points
 B2_INLINE float b2Distance( b2Vec2 a, b2Vec2 b )
 {
@@ -255,19 +255,33 @@ B2_INLINE float b2Distance( b2Vec2 a, b2Vec2 b )
 	return sqrtf( dx * dx + dy * dy );
 }
 
-/// Get the distance squared between points
-B2_INLINE float b2DistanceSquared( b2Vec2 a, b2Vec2 b )
+/// Convert a vector into a unit vector if possible, otherwise returns the zero vector.
+B2_INLINE b2Vec2 b2Normalize( b2Vec2 v )
 {
-	b2Vec2 c = { b.x - a.x, b.y - a.y };
-	return c.x * c.x + c.y * c.y;
+	float length = sqrtf( v.x * v.x + v.y * v.y );
+	if ( length < FLT_EPSILON )
+	{
+		return b2Vec2_zero;
+	}
+
+	float invLength = 1.0f / length;
+	b2Vec2 n = { invLength * v.x, invLength * v.y };
+	return n;
 }
 
-/// Make a rotation using an angle in radians
-B2_INLINE b2Rot b2MakeRot( float angle )
+/// Convert a vector into a unit vector if possible, otherwise returns the zero vector. Also
+///	outputs the length.
+B2_INLINE b2Vec2 b2GetLengthAndNormalize( float* length, b2Vec2 v )
 {
-	// todo determinism
-	b2Rot q = { cosf( angle ), sinf( angle ) };
-	return q;
+	*length = b2Length( v );
+	if ( *length < FLT_EPSILON )
+	{
+		return b2Vec2_zero;
+	}
+
+	float invLength = 1.0f / *length;
+	b2Vec2 n = { invLength * v.x, invLength * v.y };
+	return n;
 }
 
 /// Normalize rotation
@@ -278,6 +292,38 @@ B2_INLINE b2Rot b2NormalizeRot( b2Rot q )
 	b2Rot qn = { q.c * invMag, q.s * invMag };
 	return qn;
 }
+
+/// Integration rotation from angular velocity
+///	@param q1 initial rotation
+///	@param deltaAngle the angular displacement in radians
+B2_INLINE b2Rot b2IntegrateRotation( b2Rot q1, float deltaAngle )
+{
+	// dc/dt = -omega * sin(t)
+	// ds/dt = omega * cos(t)
+	// c2 = c1 - omega * h * s1
+	// s2 = s1 + omega * h * c1
+	b2Rot q2 = { q1.c - deltaAngle * q1.s, q1.s + deltaAngle * q1.c };
+	float mag = sqrtf( q2.s * q2.s + q2.c * q2.c );
+	float invMag = mag > 0.0 ? 1.0f / mag : 0.0f;
+	b2Rot qn = { q2.c * invMag, q2.s * invMag };
+	return qn;
+}
+
+/// Get the length squared of this vector
+B2_INLINE float b2LengthSquared( b2Vec2 v )
+{
+	return v.x * v.x + v.y * v.y;
+}
+
+/// Get the distance squared between points
+B2_INLINE float b2DistanceSquared( b2Vec2 a, b2Vec2 b )
+{
+	b2Vec2 c = { b.x - a.x, b.y - a.y };
+	return c.x * c.x + c.y * c.y;
+}
+
+/// Make a rotation using an angle in radians
+B2_API b2Rot b2MakeRot( float angle );
 
 /// Is this rotation normalized?
 B2_INLINE bool b2IsNormalized( b2Rot q )
@@ -300,21 +346,6 @@ B2_INLINE b2Rot b2NLerp( b2Rot q1, b2Rot q2, float t )
 	return b2NormalizeRot( q );
 }
 
-/// Integration rotation from angular velocity
-///	@param q1 initial rotation
-///	@param deltaAngle the angular displacement in radians
-B2_INLINE b2Rot b2IntegrateRotation( b2Rot q1, float deltaAngle )
-{
-	// dc/dt = -omega * sin(t)
-	// ds/dt = omega * cos(t)
-	// c2 = c1 - omega * h * s1
-	// s2 = s1 + omega * h * c1
-	b2Rot q2 = { q1.c - deltaAngle * q1.s, q1.s + deltaAngle * q1.c };
-	float mag = sqrtf( q2.s * q2.s + q2.c * q2.c );
-	float invMag = mag > 0.0 ? 1.0f / mag : 0.0f;
-	b2Rot qn = { q2.c * invMag, q2.s * invMag };
-	return qn;
-}
 
 /// Compute the angular velocity necessary to rotate between two rotations over a give time
 ///	@param q1 initial rotation
@@ -339,8 +370,7 @@ B2_INLINE float b2ComputeAngularVelocity( b2Rot q1, b2Rot q2, float inv_h )
 /// Get the angle in radians in the range [-pi, pi]
 B2_INLINE float b2Rot_GetAngle( b2Rot q )
 {
-	// todo determinism
-	return atan2f( q.s, q.c );
+	return b2Atan2( q.s, q.c );
 }
 
 /// Get the x-axis
@@ -390,7 +420,7 @@ B2_INLINE float b2RelativeAngle( b2Rot b, b2Rot a )
 	// cos(b - a) = bc * ac + bs * as
 	float s = b.s * a.c - b.c * a.s;
 	float c = b.c * a.c + b.s * a.s;
-	return atan2f( s, c );
+	return b2Atan2( s, c );
 }
 
 /// Convert an angle in the range [-2*pi, 2*pi] into the range [-pi, pi]
@@ -403,6 +433,22 @@ B2_INLINE float b2UnwindAngle( float angle )
 	else if ( angle > b2_pi )
 	{
 		return angle - 2.0f * b2_pi;
+	}
+
+	return angle;
+}
+
+/// Convert any into the range [-pi, pi] (slow)
+B2_INLINE float b2UnwindLargeAngle( float angle )
+{
+	while ( angle > b2_pi )
+	{
+		angle -= 2.0f * b2_pi;
+	}
+
+	while ( angle < -b2_pi )
+	{
+		angle += 2.0f * b2_pi;
 	}
 
 	return angle;
@@ -545,16 +591,6 @@ B2_API bool b2Rot_IsValid( b2Rot q );
 
 /// Is this a valid bounding box? Not Nan or infinity. Upper bound greater than or equal to lower bound.
 B2_API bool b2AABB_IsValid( b2AABB aabb );
-
-/// Convert a vector into a unit vector if possible, otherwise returns the zero vector.
-B2_API b2Vec2 b2Normalize( b2Vec2 v );
-
-/// Convert a vector into a unit vector if possible, otherwise asserts.
-B2_API b2Vec2 b2NormalizeChecked( b2Vec2 v );
-
-/// Convert a vector into a unit vector if possible, otherwise returns the zero vector. Also
-///	outputs the length.
-B2_API b2Vec2 b2GetLengthAndNormalize( float* length, b2Vec2 v );
 
 /// Box2D bases all length units on meters, but you may need different units for your game.
 /// You can set this value to use different units. This should be done at application startup

@@ -22,8 +22,11 @@ set_target_properties(test PROPERTIES
 # Special access to Box2D internals for testing
 target_include_directories(test PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
-if(MSVC)
+if (MSVC)
 	target_compile_options(test PRIVATE /experimental:c11atomics)
+elseif (APPLE)
+    # determinism settings
+	target_compile_options(test PRIVATE -ffp-model=precise -ffp-contract=off)
 endif()
 
 target_link_libraries(test PRIVATE box2d enkiTS)

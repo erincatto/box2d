@@ -73,6 +73,7 @@ add_executable(samples
 	sample_bodies.cpp
 	sample_collision.cpp
 	sample_continuous.cpp
+	sample_determinism.cpp
 	sample_events.cpp
 	sample_geometry.cpp
 	sample_joints.cpp
@@ -91,6 +92,12 @@ set_target_properties(samples PROPERTIES
     CXX_STANDARD_REQUIRED YES
     CXX_EXTENSIONS NO
 )
+
+
+if (APPLE)
+	# determinism settings
+	target_compile_options(samples PRIVATE -ffp-model=precise -ffp-contract=off)
+endif()
 
 target_include_directories(samples PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${JSMN_DIR})
 target_link_libraries(samples PUBLIC box2d imgui glfw glad enkiTS)

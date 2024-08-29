@@ -433,7 +433,7 @@ public:
 			bodyDef.type = b2_dynamicBody;
 			b2BodyId body = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Polygon box = b2MakeOffsetBox( 10.0f, 0.5f, { -10.0f, 0.0f }, 0.0f );
+			b2Polygon box = b2MakeOffsetBox( 10.0f, 0.5f, { -10.0f, 0.0f }, b2Rot_identity );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.density = 1.0f;
 			b2CreatePolygonShape( body, &shapeDef, &box );
@@ -1778,7 +1778,7 @@ public:
 		b2Vec2 localAnchors[2] = { { 1.0f, -0.5f }, { 1.0f, 0.5f } };
 		float mass = b2Body_GetMass( m_bodyId );
 		float invMass = mass < 0.0001f ? 0.0f : 1.0f / mass;
-		float inertiaTensor = b2Body_GetInertiaTensor( m_bodyId );
+		float inertiaTensor = b2Body_GetRotationalInertia( m_bodyId );
 		float invI = inertiaTensor < 0.0001f ? 0.0f : 1.0f / inertiaTensor;
 
 		b2Vec2 vB = b2Body_GetLinearVelocity( m_bodyId );
@@ -2224,7 +2224,7 @@ public:
 			b2Segment segment = { { -20.0f, 0.0f }, { 20.0f, 0.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 
-			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { 0.0f, 1.0f }, 0.0f );
+			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { 0.0f, 1.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 

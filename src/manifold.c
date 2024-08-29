@@ -18,7 +18,9 @@ static b2Polygon b2MakeCapsule( b2Vec2 p1, b2Vec2 p2, float radius )
 	shape.vertices[1] = p2;
 	shape.centroid = b2Lerp( p1, p2, 0.5f );
 
-	b2Vec2 axis = b2NormalizeChecked( b2Sub( p2, p1 ) );
+	b2Vec2 d = b2Sub( p2, p1 );
+	B2_ASSERT( b2LengthSquared( d ) > FLT_EPSILON );
+	b2Vec2 axis = b2Normalize(d);
 	b2Vec2 normal = b2RightPerp( axis );
 
 	shape.normals[0] = normal;

@@ -48,13 +48,6 @@ static inline bool b2EnlargeAABB( b2AABB* a, b2AABB b )
 	return changed;
 }
 
-static inline bool b2AABB_ContainsWithMargin( b2AABB a, b2AABB b, float margin )
-{
-	bool s = ( a.lowerBound.x <= b.lowerBound.x - margin ) & ( a.lowerBound.y <= b.lowerBound.y - margin ) &
-			 ( b.upperBound.x + margin <= a.upperBound.x ) & ( b.upperBound.y + margin <= a.upperBound.y );
-	return s;
-}
-
 /// Do a and b overlap
 static inline bool b2AABB_Overlaps( b2AABB a, b2AABB b )
 {

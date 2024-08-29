@@ -18,7 +18,7 @@
 
 static b2TreeNode b2_defaultTreeNode = {
 	{ { 0.0f, 0.0f }, { 0.0f, 0.0f } }, 0, { B2_NULL_INDEX }, B2_NULL_INDEX, B2_NULL_INDEX, -1, -2, false,
-	{ 0, 0, 0, 0, 0, 0, 0, 0, 0 } };
+	{ 0, 0, 0, 0, 0 } };
 
 static inline bool b2IsLeaf( const b2TreeNode* node )
 {
@@ -726,7 +726,7 @@ static void b2RemoveLeaf( b2DynamicTree* tree, int32_t leaf )
 
 // Create a proxy in the tree as a leaf node. We return the index of the node instead of a pointer so that we can grow
 // the node pool.
-int32_t b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint32_t categoryBits, int32_t userData )
+int32_t b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, int32_t userData )
 {
 	B2_ASSERT( -b2_huge < aabb.lowerBound.x && aabb.lowerBound.x < b2_huge );
 	B2_ASSERT( -b2_huge < aabb.lowerBound.y && aabb.lowerBound.y < b2_huge );
@@ -961,7 +961,7 @@ static void b2ValidateMetrics( const b2DynamicTree* tree, int32_t index )
 	// B2_ASSERT(aabb.upperBound.x == node->aabb.upperBound.x);
 	// B2_ASSERT(aabb.upperBound.y == node->aabb.upperBound.y);
 
-	uint32_t categoryBits = tree->nodes[child1].categoryBits | tree->nodes[child2].categoryBits;
+	uint64_t categoryBits = tree->nodes[child1].categoryBits | tree->nodes[child2].categoryBits;
 	B2_ASSERT( node->categoryBits == categoryBits );
 
 	b2ValidateMetrics( tree, child1 );
@@ -1118,7 +1118,7 @@ int b2DynamicTree_GetByteCount( const b2DynamicTree* tree )
 	return (int)size;
 }
 
-void b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint32_t maskBits, b2TreeQueryCallbackFcn* callback,
+void b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_t maskBits, b2TreeQueryCallbackFcn* callback,
 						  void* context )
 {
 	int32_t stack[b2_treeStackSize];
@@ -1159,7 +1159,7 @@ void b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint32_t maskB
 	}
 }
 
-void b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInput* input, uint32_t maskBits,
+void b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
 							b2TreeRayCastCallbackFcn* callback, void* context )
 {
 	b2Vec2 p1 = input->origin;
@@ -1248,7 +1248,7 @@ void b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInput* inp
 	}
 }
 
-void b2DynamicTree_ShapeCast( const b2DynamicTree* tree, const b2ShapeCastInput* input, uint32_t maskBits,
+void b2DynamicTree_ShapeCast( const b2DynamicTree* tree, const b2ShapeCastInput* input, uint64_t maskBits,
 							  b2TreeShapeCastCallbackFcn* callback, void* context )
 {
 	if ( input->count == 0 )

@@ -20,7 +20,7 @@ b2WorldDef b2DefaultWorldDef( void )
 	// 400 meters per second, faster than the speed of sound
 	def.maximumLinearVelocity = 400.0f * b2_lengthUnitsPerMeter;
 	def.enableSleep = true;
-	def.enableContinous = true;
+	def.enableContinuous = true;
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;
 }
@@ -42,13 +42,13 @@ b2BodyDef b2DefaultBodyDef( void )
 
 b2Filter b2DefaultFilter( void )
 {
-	b2Filter filter = { 0x00000001, 0xFFFFFFFF, 0 };
+	b2Filter filter = { 0x0001ULL, UINT64_MAX, 0 };
 	return filter;
 }
 
 b2QueryFilter b2DefaultQueryFilter( void )
 {
-	b2QueryFilter filter = { 0x00000001, 0xFFFFFFFF };
+	b2QueryFilter filter = { 0x0001ULL, UINT64_MAX };
 	return filter;
 }
 
@@ -71,4 +71,104 @@ b2ChainDef b2DefaultChainDef( void )
 	def.filter = b2DefaultFilter();
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;
+}
+
+static void b2EmptyDrawPolygon( const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context )
+{
+	B2_MAYBE_UNUSED( vertices );
+	B2_MAYBE_UNUSED( vertexCount );
+	B2_MAYBE_UNUSED( color );
+	B2_MAYBE_UNUSED( context );
+}
+
+static void b2EmptyDrawSolidPolygon( b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color,
+							void* context )
+{
+	B2_MAYBE_UNUSED( transform );
+	B2_MAYBE_UNUSED( vertices );
+	B2_MAYBE_UNUSED( vertexCount );
+	B2_MAYBE_UNUSED( radius );
+	B2_MAYBE_UNUSED( color );
+	B2_MAYBE_UNUSED( context );
+}
+
+static void b2EmptyDrawCircle( b2Vec2 center, float radius, b2HexColor color, void* context )
+{
+	B2_MAYBE_UNUSED( center );
+	B2_MAYBE_UNUSED( radius );
+	B2_MAYBE_UNUSED( color );
+	B2_MAYBE_UNUSED( context );
+}
+
+static void b2EmptyDrawSolidCircle( b2Transform transform, float radius, b2HexColor color, void* context )
+{
+	B2_MAYBE_UNUSED( transform );
+	B2_MAYBE_UNUSED( radius );
+	B2_MAYBE_UNUSED( color );
+	B2_MAYBE_UNUSED( context );
+}
+
+static void b2EmptyDrawCapsule( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context )
+{
+	B2_MAYBE_UNUSED( p1 );
+	B2_MAYBE_UNUSED( p2 );
+	B2_MAYBE_UNUSED( radius );
+	B2_MAYBE_UNUSED( color );
+	B2_MAYBE_UNUSED( context );
+}
+
+static void b2EmptyDrawSolidCapsule( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context )
+{
+	B2_MAYBE_UNUSED( p1 );
+	B2_MAYBE_UNUSED( p2 );
+	B2_MAYBE_UNUSED( radius );
+	B2_MAYBE_UNUSED( color );
+	B2_MAYBE_UNUSED( context );
+}
+
+static void b2EmptyDrawSegment( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context )
+{
+	B2_MAYBE_UNUSED( p1 );
+	B2_MAYBE_UNUSED( p2 );
+	B2_MAYBE_UNUSED( color );
+	B2_MAYBE_UNUSED( context );
+}
+
+static void b2EmptyDrawTransform( b2Transform transform, void* context )
+{
+	B2_MAYBE_UNUSED( transform );
+	B2_MAYBE_UNUSED( context );
+}
+
+static void b2EmptyDrawPoint( b2Vec2 p, float size, b2HexColor color, void* context )
+{
+	B2_MAYBE_UNUSED( p );
+	B2_MAYBE_UNUSED( size );
+	B2_MAYBE_UNUSED( color );
+	B2_MAYBE_UNUSED( context );
+}
+
+static void b2EmptyDrawString( b2Vec2 p, const char* s, void* context )
+{
+	B2_MAYBE_UNUSED( p );
+	B2_MAYBE_UNUSED( s );
+	B2_MAYBE_UNUSED( context );
+}
+
+b2DebugDraw b2DefaultDebugDraw(void)
+{
+	b2DebugDraw draw = { 0 };
+
+	// These allow the user to skip some implementations and not hit null exceptions.
+	draw.DrawPolygon = b2EmptyDrawPolygon;
+	draw.DrawSolidPolygon = b2EmptyDrawSolidPolygon;
+	draw.DrawCircle = b2EmptyDrawCircle;
+	draw.DrawSolidCircle = b2EmptyDrawSolidCircle;
+	draw.DrawCapsule = b2EmptyDrawCapsule;
+	draw.DrawSolidCapsule = b2EmptyDrawSolidCapsule;
+	draw.DrawSegment = b2EmptyDrawSegment;
+	draw.DrawTransform = b2EmptyDrawTransform;
+	draw.DrawPoint = b2EmptyDrawPoint;
+	draw.DrawString = b2EmptyDrawString;
+	return draw;
 }

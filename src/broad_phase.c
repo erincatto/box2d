@@ -88,7 +88,7 @@ static inline void b2UnBufferMove( b2BroadPhase* bp, int proxyKey )
 	}
 }
 
-int b2BroadPhase_CreateProxy( b2BroadPhase* bp, b2BodyType proxyType, b2AABB aabb, uint32_t categoryBits, int shapeIndex,
+int b2BroadPhase_CreateProxy( b2BroadPhase* bp, b2BodyType proxyType, b2AABB aabb, uint64_t categoryBits, int shapeIndex,
 							  bool forcePairCreation )
 {
 	B2_ASSERT( 0 <= proxyType && proxyType < b2_bodyTypeCount );
@@ -312,7 +312,8 @@ void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex, void* 
 		b2AABB fatAABB = b2DynamicTree_GetAABB( baseTree, proxyId );
 		queryContext.queryShapeIndex = b2DynamicTree_GetUserData( baseTree, proxyId );
 
-		// Query trees. Only dynamic proxies collide with kinematic and static proxies
+		// Query trees. Only dynamic proxies collide with kinematic and static proxies.
+		// Using b2_defaultMaskBits so that b2Filter::groupIndex works.
 		if ( proxyType == b2_dynamicBody )
 		{
 			queryContext.queryTreeType = b2_kinematicBody;
@@ -323,6 +324,7 @@ void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex, void* 
 		}
 
 		// All proxies collide with dynamic proxies
+		// Using b2_defaultMaskBits so that b2Filter::groupIndex works.
 		queryContext.queryTreeType = b2_dynamicBody;
 		b2DynamicTree_Query( bp->trees + b2_dynamicBody, fatAABB, b2_defaultMaskBits, b2PairQueryCallback, &queryContext );
 	}
