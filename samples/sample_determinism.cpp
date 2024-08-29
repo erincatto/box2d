@@ -11,7 +11,14 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
-// step = 295, hash = 0x4a4d465c
+// This sample provides a visual representation of the cross platform determinism unit test.
+// The scenario is designed to produce a chaotic result engaging:
+// - continuous collision
+// - joint limits (approximate atan2)
+// - b2MakeRot (approximate sin/cos)
+// Once all the bodies go to sleep the step counter and transform hash is emitted which
+// can then be transferred to the unit test and tested in GitHub build actions.
+// See CrossPlatformTest in the unit tests.
 class FallingHinges : public Sample
 {
 public:
