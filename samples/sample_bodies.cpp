@@ -506,7 +506,7 @@ public:
 			b2CreateCapsuleShape( m_weebleId, &shapeDef, &capsule );
 
 			float mass = b2Body_GetMass( m_weebleId );
-			float inertiaTensor = b2Body_GetInertiaTensor( m_weebleId );
+			float inertiaTensor = b2Body_GetRotationalInertia( m_weebleId );
 
 			float offset = 1.5f;
 

@@ -288,8 +288,8 @@ B2_API void b2Body_ApplyAngularImpulse( b2BodyId bodyId, float impulse, bool wak
 /// Get the mass of the body, typically in kilograms
 B2_API float b2Body_GetMass( b2BodyId bodyId );
 
-/// Get the inertia tensor of the body, typically in kg*m^2
-B2_API float b2Body_GetInertiaTensor( b2BodyId bodyId );
+/// Get the rotational inertia of the body, typically in kg*m^2
+B2_API float b2Body_GetRotationalInertia( b2BodyId bodyId );
 
 /// Get the center of mass position of the body in local space
 B2_API b2Vec2 b2Body_GetLocalCenterOfMass( b2BodyId bodyId );
