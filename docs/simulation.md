@@ -1492,13 +1492,6 @@ when multiple dynamic bodies interact. You can make this as large as you
 like. The frequency and damping ratio are used to create a spring/damper
 effect similar to the distance joint.
 
-### Wheel Joint
-The wheel joint restricts a point on bodyB to a line on bodyA. The wheel
-joint also provides a suspension spring and a motor. See the `Driving` sample
-for details.
-
-![Wheel Joint](images/wheel_joint.svg)
-
 ### Weld Joint
 The weld joint attempts to constrain all relative motion between two
 bodies. See the `Cantilever` sample to see how the weld joint
@@ -1521,6 +1514,12 @@ proportional the maximum motor force and torque. See `b2MotorJointDef` and
 the `MotorJoint` sample for details.
 
 ### Wheel Joint
+The wheel joint restricts a point on bodyB to a line on bodyA. The wheel
+joint also provides a suspension spring and a motor. See the `Driving` sample
+for details.
+
+![Wheel Joint](images/wheel_joint.svg)
+
 The wheel joint is designed specifically for vehicles. It provides a translation
 and rotation. The translation has a spring and damper to simulate the vehicle
 suspension. The rotation allows the wheel to rotate. You can specify an rotational
