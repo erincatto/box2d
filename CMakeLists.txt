@@ -41,7 +41,6 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
 	cmake_dependent_option(BOX2D_AVX2 "Enable AVX2" OFF "BOX2D_ENABLE_SIMD" OFF)
 endif()
 
-
 if(PROJECT_IS_TOP_LEVEL)
 	# Needed for samples.exe to find box2d.dll
 	# set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
@@ -66,6 +65,13 @@ if(PROJECT_IS_TOP_LEVEL)
 	option(BOX2D_PROFILE "Enable profiling with Tracy" OFF)
 	option(BOX2D_VALIDATE "Enable heavy validation" ON)
 	option(BOX2D_UNIT_TESTS "Build the Box2D unit tests" ON)
+
+	include(GNUInstallDirs)
+
+	install(
+		DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include"
+		DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+	)
 
 	if(MSVC AND WIN32)
 		# Enable edit and continue only in debug due to perf hit in release
