@@ -292,8 +292,8 @@ typedef enum b2ShapeType
 	/// A convex polygon
 	b2_polygonShape,
 
-	/// A smooth segment owned by a chain shape
-	b2_smoothSegmentShape,
+	/// A line segment owned by a chain shape
+	b2_chainSegmentShape,
 
 	/// The number of shape types
 	b2_shapeTypeCount
@@ -356,7 +356,7 @@ typedef struct b2ShapeDef
 /// @ingroup shape
 B2_API b2ShapeDef b2DefaultShapeDef( void );
 
-/// Used to create a chain of edges. This is designed to eliminate ghost collisions with some limitations.
+/// Used to create a chain of line segments. This is designed to eliminate ghost collisions with some limitations.
 ///	- chains are one-sided
 ///	- chains have no mass and should be used on static bodies
 ///	- chains have a counter-clockwise winding order
@@ -366,7 +366,7 @@ B2_API b2ShapeDef b2DefaultShapeDef( void );
 ///	- a chain shape should not self intersect (this is not validated)
 ///	- an open chain shape has NO COLLISION on the first and final edge
 ///	- you may overlap two open chains on their first three and/or last three points to get smooth collision
-///	- a chain shape creates multiple smooth edges shapes on the body
+///	- a chain shape creates multiple line segment shapes on the body
 /// https://en.wikipedia.org/wiki/Polygonal_chain
 /// Must be initialized using b2DefaultChainDef().
 ///	@warning Do not use chain shapes unless you understand the limitations. This is an advanced feature.

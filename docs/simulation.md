@@ -860,16 +860,15 @@ problems. Make sure all your points are more than than about a centimeter apart.
 
 ![Self Intersection is Bad](images/self_intersect.svg)
 
-Each segment in the chain is created as a `b2SmoothSegment` shape on the body. If you have the
-shape id for a smooth segment shape, you can get the owning chain id. This will return `b2_nullChainId`
-if the shape is not a smooth segment.
+Each segment in the chain is created as a `b2ChainSegment` shape on the body. If you have the
+shape id for a chain segment shape, you can get the owning chain id. This will return `b2_nullChainId`
+if the shape is not a chain segment.
 
 ```c
 b2ChainId chainId = b2SHape_GetParentChain(myShapeId);
 ```
 
-You cannot create a smooth segment shape directly.
-
+You cannot create a chain segment shape directly.
 
 ### Sensors
 Sometimes game logic needs to know when two shapes overlap yet there

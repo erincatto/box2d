@@ -13,7 +13,7 @@ typedef struct b2Capsule b2Capsule;
 typedef struct b2DistanceCache b2DistanceCache;
 typedef struct b2Polygon b2Polygon;
 typedef struct b2Segment b2Segment;
-typedef struct b2SmoothSegment b2SmoothSegment;
+typedef struct b2ChainSegment b2ChainSegment;
 
 typedef struct b2Hull b2Hull;
 
@@ -153,10 +153,10 @@ typedef struct b2Segment
 	b2Vec2 point2;
 } b2Segment;
 
-/// A smooth line segment with one-sided collision. Only collides on the right side.
+/// A line segment with one-sided collision. Only collides on the right side.
 /// Several of these are generated for a chain shape.
 /// ghost1 -> point1 -> point2 -> ghost2
-typedef struct b2SmoothSegment
+typedef struct b2ChainSegment
 {
 	/// The tail ghost vertex
 	b2Vec2 ghost1;
@@ -169,7 +169,7 @@ typedef struct b2SmoothSegment
 
 	/// The owning chain shape index (internal usage only)
 	int32_t chainId;
-} b2SmoothSegment;
+} b2ChainSegment;
 
 /// Validate ray cast input data (NaN, etc)
 B2_API bool b2IsValidRay( const b2RayCastInput* input );
@@ -554,16 +554,16 @@ B2_API b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA,
 B2_API b2Manifold b2CollideSegmentAndPolygon( const b2Segment* segmentA, b2Transform xfA, const b2Polygon* polygonB,
 											  b2Transform xfB );
 
-/// Compute the contact manifold between a smooth segment and a circle
-B2_API b2Manifold b2CollideSmoothSegmentAndCircle( const b2SmoothSegment* smoothSegmentA, b2Transform xfA,
+/// Compute the contact manifold between a chain segment and a circle
+B2_API b2Manifold b2CollideChainSegmentAndCircle( const b2ChainSegment* segmentA, b2Transform xfA,
 												   const b2Circle* circleB, b2Transform xfB );
 
-/// Compute the contact manifold between an segment and a capsule
-B2_API b2Manifold b2CollideSmoothSegmentAndCapsule( const b2SmoothSegment* smoothSegmentA, b2Transform xfA,
+/// Compute the contact manifold between a chain segment and a capsule
+B2_API b2Manifold b2CollideChainSegmentAndCapsule( const b2ChainSegment* segmentA, b2Transform xfA,
 													const b2Capsule* capsuleB, b2Transform xfB, b2DistanceCache* cache );
 
-/// Compute the contact manifold between a smooth segment and a rounded polygon
-B2_API b2Manifold b2CollideSmoothSegmentAndPolygon( const b2SmoothSegment* smoothSegmentA, b2Transform xfA,
+/// Compute the contact manifold between a chain segment and a rounded polygon
+B2_API b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Transform xfA,
 													const b2Polygon* polygonB, b2Transform xfB, b2DistanceCache* cache );
 
 /**@}*/

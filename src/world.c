@@ -814,9 +814,9 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2He
 		}
 		break;
 
-		case b2_smoothSegmentShape:
+		case b2_chainSegmentShape:
 		{
-			b2Segment* segment = &shape->smoothSegment.segment;
+			b2Segment* segment = &shape->chainSegment.segment;
 			b2Vec2 p1 = b2TransformPoint( xf, segment->point1 );
 			b2Vec2 p2 = b2TransformPoint( xf, segment->point2 );
 			draw->DrawSegment( p1, p2, color, draw->context );

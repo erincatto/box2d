@@ -877,12 +877,12 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 		}
 	}
 
-	// Prevent pausing on smooth segment junctions
-	if ( shape->type == b2_smoothSegmentShape )
+	// Prevent pausing on chain segment junctions
+	if ( shape->type == b2_chainSegmentShape )
 	{
 		b2Transform transform = bodySim->transform;
-		b2Vec2 p1 = b2TransformPoint( transform, shape->smoothSegment.segment.point1 );
-		b2Vec2 p2 = b2TransformPoint( transform, shape->smoothSegment.segment.point2 );
+		b2Vec2 p1 = b2TransformPoint( transform, shape->chainSegment.segment.point1 );
+		b2Vec2 p2 = b2TransformPoint( transform, shape->chainSegment.segment.point2 );
 		b2Vec2 e = b2Sub( p2, p1 );
 		b2Vec2 c1 = continuousContext->centroid1;
 		b2Vec2 c2 = continuousContext->centroid2;

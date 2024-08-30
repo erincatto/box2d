@@ -160,7 +160,7 @@ If edge1 did not exist this collision would seem fine. With edge1
 present, the internal collision seems like a bug. But normally when
 Box2D collides two shapes, it views them in isolation.
 
-`b2SmoothSegment` provides a mechanism for eliminating ghost
+`b2ChainSegment` provides a mechanism for eliminating ghost
 collisions by storing the adjacent *ghost* vertices. Box2D uses these
 ghost vertices to prevent internal collisions.
 
@@ -171,21 +171,21 @@ one-sided collision. The front face is to the right when looking from the first
 vertex towards the second vertex. This matches the counter-clockwise winding order
 used by polygons.
 
-### Smooth segment
-Smooth segments use a concept called *ghost vertices* that Box2D can use to eliminate ghost
+### Chain segment
+Chain segments use a concept called *ghost vertices* that Box2D can use to eliminate ghost
 collisions.
 
 ```c
-b2SmoothSegment smoothSegment = {0};
-smoothSegment.ghost1 = (b2Vec2){1.7f, 0.0f};
-smoothSegment.segment = (b2Segment){{1.0f, 0.25f}, {0.0f, 0.0f}};
-smoothSegment.ghost2 = (b2Vec2){-1.7f, 0.4f};
+b2ChainSegment chainSegment = {0};
+chainSegment.ghost1 = (b2Vec2){1.7f, 0.0f};
+chainSegment.segment = (b2Segment){{1.0f, 0.25f}, {0.0f, 0.0f}};
+chainSegment.ghost2 = (b2Vec2){-1.7f, 0.4f};
 ```
 
-These ghost vertices must align with vertices of neighboring smooth segments, making them
+These ghost vertices must align with vertices of neighboring chain segments, making them
 tedious and error-prone to setup.
 
-Smooth segments are not created directly. Instead, you can create chains of smooth
+Chain segments are not created directly. Instead, you can create chains of line
 segments. See `b2ChainDef` and `b2CreateChain()`.
 
 ## Geometric Queries

@@ -2657,15 +2657,15 @@ public:
 
 		offset = { -10.0f, 5.0f };
 
-		// smooth-segment vs circle
+		// chain-segment vs circle
 		{
-			b2SmoothSegment segment = { { 2.0f, 1.0f }, { { 1.0f, 1.0f }, { -1.0f, 0.0f } }, { -2.0f, 0.0f }, -1 };
+			b2ChainSegment segment = { { 2.0f, 1.0f }, { { 1.0f, 1.0f }, { -1.0f, 0.0f } }, { -2.0f, 0.0f }, -1 };
 			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
 
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollideSmoothSegmentAndCircle( &segment, transform1, &circle, transform2 );
+			b2Manifold m = b2CollideChainSegmentAndCircle( &segment, transform1, &circle, transform2 );
 
 			b2Vec2 g1 = b2TransformPoint( transform1, segment.ghost1 );
 			b2Vec2 g2 = b2TransformPoint( transform1, segment.ghost2 );
@@ -2681,22 +2681,22 @@ public:
 			offset.x += 2.0f * increment.x;
 		}
 
-		// smooth-segment vs rounded polygon
+		// chain-segment vs rounded polygon
 		{
-			b2SmoothSegment segment1 = { { 2.0f, 1.0f }, { { 1.0f, 1.0f }, { -1.0f, 0.0f } }, { -2.0f, 0.0f }, -1 };
-			b2SmoothSegment segment2 = { { 3.0f, 1.0f }, { { 2.0f, 1.0f }, { 1.0f, 1.0f } }, { -1.0f, 0.0f }, -1 };
-			// b2SmoothSegment segment1 = {{2.0f, 0.0f}, {{1.0f, 0.0f}, {-1.0f, 0.0f}}, {-2.0f, 0.0f}, -1};
-			// b2SmoothSegment segment2 = {{3.0f, 0.0f}, {{2.0f, 0.0f}, {1.0f, 0.0f}}, {-1.0f, 0.0f}, -1};
-			// b2SmoothSegment segment1 = {{0.5f, 1.0f}, {{0.0f, 2.0f}, {-0.5f, 1.0f}}, {-1.0f, 0.0f}, -1};
-			// b2SmoothSegment segment2 = {{1.0f, 0.0f}, {{0.5f, 1.0f}, {0.0f, 2.0f}}, {-0.5f, 1.0f}, -1};
+			b2ChainSegment segment1 = { { 2.0f, 1.0f }, { { 1.0f, 1.0f }, { -1.0f, 0.0f } }, { -2.0f, 0.0f }, -1 };
+			b2ChainSegment segment2 = { { 3.0f, 1.0f }, { { 2.0f, 1.0f }, { 1.0f, 1.0f } }, { -1.0f, 0.0f }, -1 };
+			// b2ChainSegment segment1 = {{2.0f, 0.0f}, {{1.0f, 0.0f}, {-1.0f, 0.0f}}, {-2.0f, 0.0f}, -1};
+			// b2ChainSegment segment2 = {{3.0f, 0.0f}, {{2.0f, 0.0f}, {1.0f, 0.0f}}, {-1.0f, 0.0f}, -1};
+			// b2ChainSegment segment1 = {{0.5f, 1.0f}, {{0.0f, 2.0f}, {-0.5f, 1.0f}}, {-1.0f, 0.0f}, -1};
+			// b2ChainSegment segment2 = {{1.0f, 0.0f}, {{0.5f, 1.0f}, {0.0f, 2.0f}}, {-0.5f, 1.0f}, -1};
 			float h = 0.5f - m_round;
 			b2Polygon rox = b2MakeRoundedBox( h, h, m_round );
 
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m1 = b2CollideSmoothSegmentAndPolygon( &segment1, transform1, &rox, transform2, &m_smgroxCache1 );
-			b2Manifold m2 = b2CollideSmoothSegmentAndPolygon( &segment2, transform1, &rox, transform2, &m_smgroxCache2 );
+			b2Manifold m1 = b2CollideChainSegmentAndPolygon( &segment1, transform1, &rox, transform2, &m_smgroxCache1 );
+			b2Manifold m2 = b2CollideChainSegmentAndPolygon( &segment2, transform1, &rox, transform2, &m_smgroxCache2 );
 
 			{
 				b2Vec2 g1 = b2TransformPoint( transform1, segment1.ghost1 );
@@ -2729,17 +2729,17 @@ public:
 			offset.x += 2.0f * increment.x;
 		}
 
-		// smooth-segment vs capsule
+		// chain-segment vs capsule
 		{
-			b2SmoothSegment segment1 = { { 2.0f, 1.0f }, { { 1.0f, 1.0f }, { -1.0f, 0.0f } }, { -2.0f, 0.0f }, -1 };
-			b2SmoothSegment segment2 = { { 3.0f, 1.0f }, { { 2.0f, 1.0f }, { 1.0f, 1.0f } }, { -1.0f, 0.0f }, -1 };
+			b2ChainSegment segment1 = { { 2.0f, 1.0f }, { { 1.0f, 1.0f }, { -1.0f, 0.0f } }, { -2.0f, 0.0f }, -1 };
+			b2ChainSegment segment2 = { { 3.0f, 1.0f }, { { 2.0f, 1.0f }, { 1.0f, 1.0f } }, { -1.0f, 0.0f }, -1 };
 			b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0 }, 0.25f };
 
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m1 = b2CollideSmoothSegmentAndCapsule( &segment1, transform1, &capsule, transform2, &m_smgcapCache1 );
-			b2Manifold m2 = b2CollideSmoothSegmentAndCapsule( &segment2, transform1, &capsule, transform2, &m_smgcapCache2 );
+			b2Manifold m1 = b2CollideChainSegmentAndCapsule( &segment1, transform1, &capsule, transform2, &m_smgcapCache1 );
+			b2Manifold m2 = b2CollideChainSegmentAndCapsule( &segment2, transform1, &capsule, transform2, &m_smgcapCache2 );
 
 			{
 				b2Vec2 g1 = b2TransformPoint( transform1, segment1.ghost1 );
@@ -2882,7 +2882,7 @@ public:
 		points[34] = { -15.29175, 14.54175 };
 		points[35] = { -19.2605, 14.54175 };
 
-		m_segments = (b2SmoothSegment*)malloc( m_count * sizeof( b2SmoothSegment ) );
+		m_segments = (b2ChainSegment*)malloc( m_count * sizeof( b2ChainSegment ) );
 
 		for ( int i = 0; i < m_count; ++i )
 		{
@@ -3037,14 +3037,14 @@ public:
 
 		for ( int i = 0; i < m_count; ++i )
 		{
-			const b2SmoothSegment* segment = m_segments + i;
+			const b2ChainSegment* segment = m_segments + i;
 			b2Vec2 p1 = b2TransformPoint( transform1, segment->segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment->segment.point2 );
 			g_draw.DrawSegment( p1, p2, color1 );
 			g_draw.DrawPoint( p1, 4.0f, color1 );
 		}
 
-		// smooth-segment vs circle
+		// chain-segment vs circle
 		if ( m_shapeType == e_circleShape )
 		{
 			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
@@ -3052,8 +3052,8 @@ public:
 
 			for ( int i = 0; i < m_count; ++i )
 			{
-				const b2SmoothSegment* segment = m_segments + i;
-				b2Manifold m = b2CollideSmoothSegmentAndCircle( segment, transform1, &circle, transform2 );
+				const b2ChainSegment* segment = m_segments + i;
+				b2Manifold m = b2CollideChainSegmentAndCircle( segment, transform1, &circle, transform2 );
 				DrawManifold( &m );
 			}
 		}
@@ -3065,9 +3065,9 @@ public:
 
 			for ( int i = 0; i < m_count; ++i )
 			{
-				const b2SmoothSegment* segment = m_segments + i;
+				const b2ChainSegment* segment = m_segments + i;
 				b2DistanceCache cache = {};
-				b2Manifold m = b2CollideSmoothSegmentAndPolygon( segment, transform1, &rox, transform2, &cache );
+				b2Manifold m = b2CollideChainSegmentAndPolygon( segment, transform1, &rox, transform2, &cache );
 				DrawManifold( &m );
 			}
 		}
@@ -3080,7 +3080,7 @@ public:
 
 	ShapeType m_shapeType;
 
-	b2SmoothSegment* m_segments;
+	b2ChainSegment* m_segments;
 	int m_count;
 
 	b2Transform m_transform;
