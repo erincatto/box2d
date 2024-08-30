@@ -45,6 +45,7 @@ add_library(imgui STATIC
 	${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
 	${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 )
+
 target_link_libraries(imgui PUBLIC glfw glad)
 target_include_directories(imgui PUBLIC ${IMGUI_DIR} ${IMGUI_DIR}/backends)
 target_compile_definitions(imgui PUBLIC IMGUI_DISABLE_OBSOLETE_FUNCTIONS)

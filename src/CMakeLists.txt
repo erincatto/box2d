@@ -88,6 +88,8 @@ target_include_directories(box2d
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+set(CMAKE_DEBUG_POSTFIX "d")
+
 # Box2D uses C17
 set_target_properties(box2d PROPERTIES
 	C_STANDARD 17
@@ -95,6 +97,7 @@ set_target_properties(box2d PROPERTIES
     C_EXTENSIONS YES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
+	DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX}
 )
 
 if (BOX2D_PROFILE)
@@ -175,5 +178,7 @@ endif()
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "src" FILES ${BOX2D_SOURCE_FILES})
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/../include" PREFIX "include" FILES ${BOX2D_API_FILES})
+
+add_library(box2d::box2d ALIAS box2d)
 
 install(TARGETS box2d)
