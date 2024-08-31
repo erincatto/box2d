@@ -860,16 +860,15 @@ problems. Make sure all your points are more than than about a centimeter apart.
 
 ![Self Intersection is Bad](images/self_intersect.svg)
 
-Each segment in the chain is created as a `b2SmoothSegment` shape on the body. If you have the
-shape id for a smooth segment shape, you can get the owning chain id. This will return `b2_nullChainId`
-if the shape is not a smooth segment.
+Each segment in the chain is created as a `b2ChainSegment` shape on the body. If you have the
+shape id for a chain segment shape, you can get the owning chain id. This will return `b2_nullChainId`
+if the shape is not a chain segment.
 
 ```c
 b2ChainId chainId = b2SHape_GetParentChain(myShapeId);
 ```
 
-You cannot create a smooth segment shape directly.
-
+You cannot create a chain segment shape directly.
 
 ### Sensors
 Sometimes game logic needs to know when two shapes overlap yet there
@@ -1181,7 +1180,7 @@ or disable a joint.
 You can specify user data for any joint type and you can provide a flag
 to prevent the attached bodies from colliding with each other. This is
 the default behavior and you must set the `collideConnected`
-Boolean to allow collision between to connected bodies.
+Boolean to allow collision between two connected bodies.
 
 Many joint definitions require that you provide some geometric data.
 Often a joint will be defined by anchor points. These are points fixed
@@ -1493,13 +1492,6 @@ when multiple dynamic bodies interact. You can make this as large as you
 like. The frequency and damping ratio are used to create a spring/damper
 effect similar to the distance joint.
 
-### Wheel Joint
-The wheel joint restricts a point on bodyB to a line on bodyA. The wheel
-joint also provides a suspension spring and a motor. See the `Driving` sample
-for details.
-
-![Wheel Joint](images/wheel_joint.svg)
-
 ### Weld Joint
 The weld joint attempts to constrain all relative motion between two
 bodies. See the `Cantilever` sample to see how the weld joint
@@ -1522,6 +1514,12 @@ proportional the maximum motor force and torque. See `b2MotorJointDef` and
 the `MotorJoint` sample for details.
 
 ### Wheel Joint
+The wheel joint restricts a point on bodyB to a line on bodyA. The wheel
+joint also provides a suspension spring and a motor. See the `Driving` sample
+for details.
+
+![Wheel Joint](images/wheel_joint.svg)
+
 The wheel joint is designed specifically for vehicles. It provides a translation
 and rotation. The translation has a spring and damper to simulate the vehicle
 suspension. The rotation allows the wheel to rotate. You can specify an rotational

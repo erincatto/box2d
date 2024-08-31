@@ -128,23 +128,23 @@ static b2Manifold b2SegmentAndPolygonManifold( const b2Shape* shapeA, b2Transfor
 	return b2CollideSegmentAndPolygon( &shapeA->segment, xfA, &shapeB->polygon, xfB );
 }
 
-static b2Manifold b2SmoothSegmentAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB,
+static b2Manifold b2ChainSegmentAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB,
 													b2Transform xfB, b2DistanceCache* cache )
 {
 	B2_MAYBE_UNUSED( cache );
-	return b2CollideSmoothSegmentAndCircle( &shapeA->smoothSegment, xfA, &shapeB->circle, xfB );
+	return b2CollideChainSegmentAndCircle( &shapeA->chainSegment, xfA, &shapeB->circle, xfB );
 }
 
-static b2Manifold b2SmoothSegmentAndCapsuleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB,
+static b2Manifold b2ChainSegmentAndCapsuleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB,
 													 b2Transform xfB, b2DistanceCache* cache )
 {
-	return b2CollideSmoothSegmentAndCapsule( &shapeA->smoothSegment, xfA, &shapeB->capsule, xfB, cache );
+	return b2CollideChainSegmentAndCapsule( &shapeA->chainSegment, xfA, &shapeB->capsule, xfB, cache );
 }
 
-static b2Manifold b2SmoothSegmentAndPolygonManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB,
+static b2Manifold b2ChainSegmentAndPolygonManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB,
 													 b2Transform xfB, b2DistanceCache* cache )
 {
-	return b2CollideSmoothSegmentAndPolygon( &shapeA->smoothSegment, xfA, &shapeB->polygon, xfB, cache );
+	return b2CollideChainSegmentAndPolygon( &shapeA->chainSegment, xfA, &shapeB->polygon, xfB, cache );
 }
 
 static void b2AddType( b2ManifoldFcn* fcn, b2ShapeType type1, b2ShapeType type2 )
@@ -175,9 +175,9 @@ void b2InitializeContactRegisters( void )
 		b2AddType( b2SegmentAndCircleManifold, b2_segmentShape, b2_circleShape );
 		b2AddType( b2SegmentAndCapsuleManifold, b2_segmentShape, b2_capsuleShape );
 		b2AddType( b2SegmentAndPolygonManifold, b2_segmentShape, b2_polygonShape );
-		b2AddType( b2SmoothSegmentAndCircleManifold, b2_smoothSegmentShape, b2_circleShape );
-		b2AddType( b2SmoothSegmentAndCapsuleManifold, b2_smoothSegmentShape, b2_capsuleShape );
-		b2AddType( b2SmoothSegmentAndPolygonManifold, b2_smoothSegmentShape, b2_polygonShape );
+		b2AddType( b2ChainSegmentAndCircleManifold, b2_chainSegmentShape, b2_circleShape );
+		b2AddType( b2ChainSegmentAndCapsuleManifold, b2_chainSegmentShape, b2_capsuleShape );
+		b2AddType( b2ChainSegmentAndPolygonManifold, b2_chainSegmentShape, b2_polygonShape );
 		s_initialized = true;
 	}
 }

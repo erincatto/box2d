@@ -529,9 +529,9 @@ B2_API b2Circle b2Shape_GetCircle( b2ShapeId shapeId );
 /// Get a copy of the shape's line segment. Asserts the type is correct.
 B2_API b2Segment b2Shape_GetSegment( b2ShapeId shapeId );
 
-/// Get a copy of the shape's smooth line segment. These come from chain shapes.
+/// Get a copy of the shape's chain segment. These come from chain shapes.
 /// Asserts the type is correct.
-B2_API b2SmoothSegment b2Shape_GetSmoothSegment( b2ShapeId shapeId );
+B2_API b2ChainSegment b2Shape_GetChainSegment( b2ShapeId shapeId );
 
 /// Get a copy of the shape's capsule. Asserts the type is correct.
 B2_API b2Capsule b2Shape_GetCapsule( b2ShapeId shapeId );
@@ -557,7 +557,7 @@ B2_API void b2Shape_SetSegment( b2ShapeId shapeId, const b2Segment* segment );
 ///	@see b2Body_ApplyMassFromShapes
 B2_API void b2Shape_SetPolygon( b2ShapeId shapeId, const b2Polygon* polygon );
 
-/// Get the parent chain id if the shape type is b2_smoothSegmentShape, otherwise
+/// Get the parent chain id if the shape type is a chain segment, otherwise
 /// returns b2_nullChainId.
 B2_API b2ChainId b2Shape_GetParentChain( b2ShapeId shapeId );
 

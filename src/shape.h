@@ -36,7 +36,7 @@ typedef struct b2Shape
 		b2Circle circle;
 		b2Polygon polygon;
 		b2Segment segment;
-		b2SmoothSegment smoothSegment;
+		b2ChainSegment chainSegment;
 	};
 
 	uint16_t revision;

@@ -713,7 +713,7 @@ b2Manifold b2CollideSegmentAndPolygon( const b2Segment* segmentA, b2Transform xf
 	return b2CollidePolygons( &polygonA, xfA, polygonB, xfB );
 }
 
-b2Manifold b2CollideSmoothSegmentAndCircle( const b2SmoothSegment* smoothSegmentA, b2Transform xfA, const b2Circle* circleB,
+b2Manifold b2CollideChainSegmentAndCircle( const b2ChainSegment* segmentA, b2Transform xfA, const b2Circle* circleB,
 											b2Transform xfB )
 {
 	b2Manifold manifold = { 0 };
@@ -723,8 +723,8 @@ b2Manifold b2CollideSmoothSegmentAndCircle( const b2SmoothSegment* smoothSegment
 	// Compute circle in frame of segment
 	b2Vec2 pB = b2TransformPoint( xf, circleB->center );
 
-	b2Vec2 p1 = smoothSegmentA->segment.point1;
-	b2Vec2 p2 = smoothSegmentA->segment.point2;
+	b2Vec2 p1 = segmentA->segment.point1;
+	b2Vec2 p2 = segmentA->segment.point2;
 	b2Vec2 e = b2Sub( p2, p1 );
 
 	// Normal points to the right
@@ -745,7 +745,7 @@ b2Manifold b2CollideSmoothSegmentAndCircle( const b2SmoothSegment* smoothSegment
 	{
 		// Behind point1?
 		// Is pB in the Voronoi region of the previous edge?
-		b2Vec2 prevEdge = b2Sub( p1, smoothSegmentA->ghost1 );
+		b2Vec2 prevEdge = b2Sub( p1, segmentA->ghost1 );
 		float uPrev = b2Dot( prevEdge, b2Sub( pB, p1 ) );
 		if ( uPrev <= 0.0f )
 		{
@@ -757,7 +757,7 @@ b2Manifold b2CollideSmoothSegmentAndCircle( const b2SmoothSegment* smoothSegment
 	else if ( u <= 0.0f )
 	{
 		// Ahead of point2?
-		b2Vec2 nextEdge = b2Sub( smoothSegmentA->ghost2, p2 );
+		b2Vec2 nextEdge = b2Sub( segmentA->ghost2, p2 );
 		float vNext = b2Dot( nextEdge, b2Sub( pB, p2 ) );
 
 		// Is pB in the Voronoi region of the next edge?
@@ -801,11 +801,11 @@ b2Manifold b2CollideSmoothSegmentAndCircle( const b2SmoothSegment* smoothSegment
 	return manifold;
 }
 
-b2Manifold b2CollideSmoothSegmentAndCapsule( const b2SmoothSegment* segmentA, b2Transform xfA, const b2Capsule* capsuleB,
+b2Manifold b2CollideChainSegmentAndCapsule( const b2ChainSegment* segmentA, b2Transform xfA, const b2Capsule* capsuleB,
 											 b2Transform xfB, b2DistanceCache* cache )
 {
 	b2Polygon polyB = b2MakeCapsule( capsuleB->center1, capsuleB->center2, capsuleB->radius );
-	return b2CollideSmoothSegmentAndPolygon( segmentA, xfA, &polyB, xfB, cache );
+	return b2CollideChainSegmentAndPolygon( segmentA, xfA, &polyB, xfB, cache );
 }
 
 static b2Manifold b2ClipSegments( b2Vec2 a1, b2Vec2 a2, b2Vec2 b1, b2Vec2 b2, b2Vec2 normal, float ra, float rb, uint16_t id1,
@@ -888,11 +888,11 @@ enum b2NormalType
 	// This means the normal points in a direction that is smooth relative to a convex vertex and should be used for collision
 	b2_normalAdmit,
 
-	// This means the normal is in a region of a concave vertex and should be snapped to the smooth segment normal
+	// This means the normal is in a region of a concave vertex and should be snapped to the segment normal
 	b2_normalSnap
 };
 
-struct b2SmoothSegmentParams
+struct b2ChainSegmentParams
 {
 	b2Vec2 edge1;
 	b2Vec2 normal0;
@@ -903,7 +903,7 @@ struct b2SmoothSegmentParams
 
 // Evaluate Gauss map
 // See https://box2d.org/posts/2020/06/ghost-collisions/
-static enum b2NormalType b2ClassifyNormal( struct b2SmoothSegmentParams params, b2Vec2 normal )
+static enum b2NormalType b2ClassifyNormal( struct b2ChainSegmentParams params, b2Vec2 normal )
 {
 	const float sinTol = 0.01f;
 
@@ -943,7 +943,7 @@ static enum b2NormalType b2ClassifyNormal( struct b2SmoothSegmentParams params, 
 	}
 }
 
-b2Manifold b2CollideSmoothSegmentAndPolygon( const b2SmoothSegment* smoothSegmentA, b2Transform xfA, const b2Polygon* polygonB,
+b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Transform xfA, const b2Polygon* polygonB,
 											 b2Transform xfB, b2DistanceCache* cache )
 {
 	b2Manifold manifold = { 0 };
@@ -953,20 +953,20 @@ b2Manifold b2CollideSmoothSegmentAndPolygon( const b2SmoothSegment* smoothSegmen
 	b2Vec2 centroidB = b2TransformPoint( xf, polygonB->centroid );
 	float radiusB = polygonB->radius;
 
-	b2Vec2 p1 = smoothSegmentA->segment.point1;
-	b2Vec2 p2 = smoothSegmentA->segment.point2;
+	b2Vec2 p1 = segmentA->segment.point1;
+	b2Vec2 p2 = segmentA->segment.point2;
 
 	b2Vec2 edge1 = b2Normalize( b2Sub( p2, p1 ) );
 
-	struct b2SmoothSegmentParams smoothParams = { 0 };
+	struct b2ChainSegmentParams smoothParams = { 0 };
 	smoothParams.edge1 = edge1;
 
 	const float convexTol = 0.01f;
-	b2Vec2 edge0 = b2Normalize( b2Sub( p1, smoothSegmentA->ghost1 ) );
+	b2Vec2 edge0 = b2Normalize( b2Sub( p1, segmentA->ghost1 ) );
 	smoothParams.normal0 = b2RightPerp( edge0 );
 	smoothParams.convex1 = b2Cross( edge0, edge1 ) >= convexTol;
 
-	b2Vec2 edge2 = b2Normalize( b2Sub( smoothSegmentA->ghost2, p2 ) );
+	b2Vec2 edge2 = b2Normalize( b2Sub( segmentA->ghost2, p2 ) );
 	smoothParams.normal2 = b2RightPerp( edge2 );
 	smoothParams.convex2 = b2Cross( edge1, edge2 ) >= convexTol;
 
@@ -1003,7 +1003,7 @@ b2Manifold b2CollideSmoothSegmentAndPolygon( const b2SmoothSegment* smoothSegmen
 
 	// Distance doesn't work correctly with partial polygons
 	b2DistanceInput input;
-	input.proxyA = b2MakeProxy( &smoothSegmentA->segment.point1, 2, 0.0f );
+	input.proxyA = b2MakeProxy( &segmentA->segment.point1, 2, 0.0f );
 	input.proxyB = b2MakeProxy( vertices, count, 0.0f );
 	input.transformA = b2Transform_identity;
 	input.transformB = b2Transform_identity;
