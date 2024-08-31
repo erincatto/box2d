@@ -62,7 +62,7 @@ int GetNumberOfCores()
 #elif defined( __APPLE__ )
 	return (int)sysconf( _SC_NPROCESSORS_ONLN );
 #elif defined( __linux__ )
-	(int)return sysconf( _SC_NPROCESSORS_ONLN );
+	return (int)sysconf( _SC_NPROCESSORS_ONLN );
 #else
 	return 1;
 #endif

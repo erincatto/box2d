@@ -150,7 +150,7 @@ static GLuint sCreateShaderFromFile( const char* filename, GLenum type )
 	fseek( file, 0, SEEK_SET );
 
 	char* source = static_cast<char*>( malloc( size + 1 ) );
-	fread( source, size, 1, file );
+	size_t count = fread( source, size, 1, file );
 	fclose( file );
 
 	source[size] = 0;
