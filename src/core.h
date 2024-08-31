@@ -89,6 +89,8 @@
 
 #if defined( B2_COMPILER_MSVC )
 	#define B2_BREAKPOINT __debugbreak()
+#elif defined( B2_PLATFORM_ANDROID )
+	#define B2_BREAKPOINT __builtin_trap()
 #elif defined( B2_PLATFORM_WASM )
 	#define B2_BREAKPOINT                                                                                                            \
 		do                                                                                                                           \
