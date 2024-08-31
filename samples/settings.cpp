@@ -32,7 +32,7 @@ static bool ReadFile( char*& data, int& size, const char* filename )
 	}
 
 	data = (char*)malloc( size + 1 );
-	fread( data, size, 1, file );
+	size_t count = fread( data, size, 1, file );
 	fclose( file );
 	data[size] = 0;
 
