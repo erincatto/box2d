@@ -22,11 +22,6 @@ static b2Shape* b2GetShape( b2World* world, b2ShapeId shapeId )
 	return shape;
 }
 
-b2Transform b2GetOwnerTransform( b2World* world, b2Shape* shape )
-{
-	return b2GetBodyTransform( world, shape->bodyId );
-}
-
 static b2ChainShape* b2GetChainShape( b2World* world, b2ChainId chainId )
 {
 	int id = chainId.index1 - 1;
@@ -766,7 +761,7 @@ bool b2Shape_TestPoint( b2ShapeId shapeId, b2Vec2 point )
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
 
-	b2Transform transform = b2GetOwnerTransform( world, shape );
+	b2Transform transform = b2GetBodyTransform( world, shape->bodyId );
 	b2Vec2 localPoint = b2InvTransformPoint( transform, point );
 
 	switch ( shape->type )
@@ -785,40 +780,41 @@ bool b2Shape_TestPoint( b2ShapeId shapeId, b2Vec2 point )
 	}
 }
 
-b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, b2Vec2 origin, b2Vec2 translation )
+// todo_erin untested
+b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, const b2RayCastInput* input )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
 
-	b2Transform transform = b2GetOwnerTransform( world, shape );
+	b2Transform transform = b2GetBodyTransform( world, shape->bodyId );
 
 	// input in local coordinates
-	b2RayCastInput input;
-	input.maxFraction = 1.0f;
-	input.origin = b2InvTransformPoint( transform, origin );
-	input.translation = b2InvRotateVector( transform.q, translation );
+	b2RayCastInput localInput;
+	localInput.origin = b2InvTransformPoint( transform, input->origin );
+	localInput.translation = b2InvRotateVector( transform.q, input->translation );
+	localInput.maxFraction = input->maxFraction;
 
 	b2CastOutput output = { 0 };
 	switch ( shape->type )
 	{
 		case b2_capsuleShape:
-			output = b2RayCastCapsule( &input, &shape->capsule );
+			output = b2RayCastCapsule( &localInput, &shape->capsule );
 			break;
 
 		case b2_circleShape:
-			output = b2RayCastCircle( &input, &shape->circle );
+			output = b2RayCastCircle( &localInput, &shape->circle );
 			break;
 
 		case b2_segmentShape:
-			output = b2RayCastSegment( &input, &shape->segment, false );
+			output = b2RayCastSegment( &localInput, &shape->segment, false );
 			break;
 
 		case b2_polygonShape:
-			output = b2RayCastPolygon( &input, &shape->polygon );
+			output = b2RayCastPolygon( &localInput, &shape->polygon );
 			break;
 
 		case b2_chainSegmentShape:
-			output = b2RayCastSegment( &input, &shape->chainSegment.segment, true );
+			output = b2RayCastSegment( &localInput, &shape->chainSegment.segment, true );
 			break;
 
 		default:
@@ -832,6 +828,7 @@ b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, b2Vec2 origin, b2Vec2 translati
 		output.normal = b2RotateVector( transform.q, output.normal );
 		output.point = b2TransformPoint( transform, output.point );
 	}
+
 	return output;
 }
 

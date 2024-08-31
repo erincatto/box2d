@@ -521,7 +521,7 @@ B2_API bool b2Shape_AreHitEventsEnabled( b2ShapeId shapeId );
 B2_API bool b2Shape_TestPoint( b2ShapeId shapeId, b2Vec2 point );
 
 /// Ray cast a shape directly
-B2_API b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, b2Vec2 origin, b2Vec2 translation );
+B2_API b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, const b2RayCastInput* input );
 
 /// Get a copy of the shape's circle. Asserts the type is correct.
 B2_API b2Circle b2Shape_GetCircle( b2ShapeId shapeId );
