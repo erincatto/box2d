@@ -181,4 +181,29 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/../include" PREFIX "include" FILE
 
 add_library(box2d::box2d ALIAS box2d)
 
-install(TARGETS box2d)
+install(
+  TARGETS box2d
+  EXPORT box2dConfig
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(
+  EXPORT box2dConfig
+  NAMESPACE box2d::
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/box2d"
+)
+
+include(CMakePackageConfigHelpers)
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/box2dConfigVersion.cmake"
+  COMPATIBILITY SameMajorVersion
+)
+
+install(
+  FILES "${CMAKE_CURRENT_BINARY_DIR}/box2dConfigVersion.cmake"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/box2d"
+)
+
