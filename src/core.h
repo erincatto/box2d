@@ -42,9 +42,9 @@
 #endif
 
 // Define CPU
-#if defined( __x86_64__ ) || defined( _M_X64 )
-	#define B2_CPU_X64
-#elif defined( __aarch64__ ) || defined( _M_ARM64 )
+#if defined( __x86_64__ ) || defined( _M_X64 ) || defined( __i386__ ) || defined( _M_IX86 )
+	#define B2_CPU_X86_X64
+#elif defined( __aarch64__ ) || defined( _M_ARM64 ) || defined( __arm__ ) || defined( _M_ARM )
 	#define B2_CPU_ARM
 #elif defined( __EMSCRIPTEN__ )
 	#define B2_CPU_WASM
@@ -54,7 +54,7 @@
 
 // Define SIMD
 #if defined( BOX2D_ENABLE_SIMD )
-	#if defined( B2_CPU_X64 )
+	#if defined( B2_CPU_X86_X64 )
 		#if defined( BOX2D_AVX2 )
 			#define B2_SIMD_AVX2
 			#define B2_SIMD_WIDTH 8
@@ -96,7 +96,7 @@
 		}                                                                                                                            \
 		while ( 0 )
 #elif defined( B2_COMPILER_GCC ) || defined( B2_COMPILER_CLANG )
-	#if defined( B2_CPU_X64 )
+	#if defined( B2_CPU_X86_X64 )
 		#define B2_BREAKPOINT __asm volatile( "int $0x3" )
 	#elif defined( B2_CPU_ARM )
 		#define B2_BREAKPOINT __builtin_trap()

@@ -1180,7 +1180,7 @@ or disable a joint.
 You can specify user data for any joint type and you can provide a flag
 to prevent the attached bodies from colliding with each other. This is
 the default behavior and you must set the `collideConnected`
-Boolean to allow collision between to connected bodies.
+Boolean to allow collision between two connected bodies.
 
 Many joint definitions require that you provide some geometric data.
 Often a joint will be defined by anchor points. These are points fixed
