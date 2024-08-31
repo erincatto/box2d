@@ -74,7 +74,7 @@ public:
 
 	void CreateScene()
 	{
-		srand( 42 );
+		g_seed = 42;
 
 		for ( int i = 0; i < e_maxRows * e_maxColumns; ++i )
 		{
