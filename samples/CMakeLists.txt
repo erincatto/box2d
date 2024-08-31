@@ -97,7 +97,8 @@ set_target_properties(samples PROPERTIES
 
 if (APPLE)
 	# determinism settings
-	target_compile_options(samples PRIVATE -ffp-model=precise -ffp-contract=off)
+	# target_compile_options(samples PRIVATE -ffp-model=precise -ffp-contract=off)
+	target_compile_options(samples PRIVATE -ffp-contract=off)
 endif()
 
 target_include_directories(samples PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${JSMN_DIR})

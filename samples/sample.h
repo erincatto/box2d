@@ -113,9 +113,12 @@ extern int g_sampleCount;
 #define RAND_LIMIT 32767
 #define RAND_SEED 12345
 
+// Global seed for simple random number generator. This is reset
+// for each sample.
 extern uint32_t g_seed;
 
-// Generate the next random number
+// Simple random number generator. Using this instead of rand()
+// for cross platform determinism.
 inline int RandomInt()
 {
 	// XorShift32 algorithm

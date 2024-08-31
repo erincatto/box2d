@@ -26,7 +26,8 @@ if (MSVC)
 	target_compile_options(test PRIVATE /experimental:c11atomics)
 elseif (APPLE)
     # determinism settings
-	target_compile_options(test PRIVATE -ffp-model=precise -ffp-contract=off)
+	# target_compile_options(test PRIVATE -ffp-model=precise -ffp-contract=off)
+    target_compile_options(test PRIVATE -ffp-contract=off)
 endif()
 
 target_link_libraries(test PRIVATE box2d enkiTS)
