@@ -19,7 +19,6 @@ if (MSVC)
 	target_compile_options(benchmark PRIVATE /experimental:c11atomics)
 elseif (APPLE)
     # determinism settings
-	# target_compile_options(benchmark PRIVATE -ffp-model=precise -ffp-contract=off)
     target_compile_options(benchmark PRIVATE -ffp-contract=off)
 endif()
 

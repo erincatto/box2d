@@ -97,7 +97,6 @@ set_target_properties(samples PROPERTIES
 
 if (APPLE)
 	# determinism settings
-	# target_compile_options(samples PRIVATE -ffp-model=precise -ffp-contract=off)
 	target_compile_options(samples PRIVATE -ffp-contract=off)
 endif()
 
