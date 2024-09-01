@@ -51,8 +51,12 @@ The multithreading design for Box2D is focused on [data parallelism](https://en.
 
 So when you design your game loop, you should let Box2D *go wide* and use multiple cores to finish its work quickly, without other threads trying to interact with the Box2D world.
 
+In a multithreaded environment you must be careful to avoid [race conditions](https://en.wikipedia.org/wiki/Race_condition). Modifying the world while it is simulating will lead to unpredictable behavior and this is never safe. It is also not safe to read data from a Box2D world while it is simulating. Box2D may move data structures to improve cache performance. So it is very likely that you will read garbage data.
+
 > **Caution**:
-> While Box2D is designed for multithreading, its interface is *not* thread-safe. Modifying
-> the Box2D world during simulation or from multiple threads will result in a [race condition](https://en.wikipedia.org/wiki/Race_condition).
+> Do not read or write the Box2D world during `b2World_Step()`
+
+> **Caution**:
+> Do not write to the Box2D world from multiple threads
 
 It *is safe* to do ray-casts, shape-casts, and overlap tests from multiple threads outside of `b2World_Step()`. Generally, any read-only operation is safe to do multithreaded outside of `b2World_Step()`. This can be very useful if you have multithreaded game logic.
