@@ -3,6 +3,8 @@
 
 #include "box2d/base.h"
 
+#include <stddef.h>
+
 #if defined( _WIN32 )
 
 #ifndef WIN32_LEAN_AND_MEAN
