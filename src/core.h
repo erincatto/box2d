@@ -48,8 +48,6 @@
 	#define B2_CPU_ARM
 #elif defined( __EMSCRIPTEN__ )
 	#define B2_CPU_WASM
-#else
-	#error Unsupported CPU
 #endif
 
 // Define SIMD
@@ -66,7 +64,6 @@
 		#define B2_SIMD_NEON
 		#define B2_SIMD_WIDTH 4
 	#elif defined( __EMSCRIPTEN__ )
-		#define B2_CPU_WASM
 		#define B2_SIMD_SSE2
 		#define B2_SIMD_WIDTH 4
 	#else
@@ -100,7 +97,7 @@
 #elif defined( B2_COMPILER_GCC ) || defined( B2_COMPILER_CLANG )
 	#if defined( B2_CPU_X86_X64 )
 		#define B2_BREAKPOINT __asm volatile( "int $0x3" )
-	#elif defined( B2_CPU_ARM )
+	#else
 		#define B2_BREAKPOINT __builtin_trap()
 	#endif
 #else

@@ -26,11 +26,15 @@ static inline void b2Pause (void)
 {
 	__asm__ __volatile__("isb\n");
 }
-#else
+#elif defined(B2_CPU_X86_X64) || defined(B2_CPU_WASM)
 #include <immintrin.h>
 static inline void b2Pause(void)
 {
 	_mm_pause();
+}
+#else
+static inline void b2Pause(void)
+{
 }
 #endif
 
