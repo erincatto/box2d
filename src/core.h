@@ -48,8 +48,6 @@
 	#define B2_CPU_ARM
 #elif defined( __EMSCRIPTEN__ )
 	#define B2_CPU_WASM
-#else
-	#error Unsupported CPU
 #endif
 
 // Define SIMD
@@ -66,7 +64,6 @@
 		#define B2_SIMD_NEON
 		#define B2_SIMD_WIDTH 4
 	#elif defined( __EMSCRIPTEN__ )
-		#define B2_CPU_WASM
 		#define B2_SIMD_SSE2
 		#define B2_SIMD_WIDTH 4
 	#else
