@@ -535,11 +535,14 @@ static inline b2FloatW b2MulW( b2FloatW a, b2FloatW b )
 
 static inline b2FloatW b2MulAddW( b2FloatW a, b2FloatW b, b2FloatW c )
 {
-	return _mm256_add_ps( a, _mm256_mul_ps( b, c ) );
+	// FMA can be emulated: https://github.com/lattera/glibc/blob/master/sysdeps/ieee754/dbl-64/s_fmaf.c#L34
+	//return _mm256_fmadd_ps( b, c, a );
+	return _mm256_add_ps( _mm256_mul_ps( b, c ), a );
 }
 
 static inline b2FloatW b2MulSubW( b2FloatW a, b2FloatW b, b2FloatW c )
 {
+	// return _mm256_fnmadd_ps(b, c, a);
 	return _mm256_sub_ps( a, _mm256_mul_ps( b, c ) );
 }
 
