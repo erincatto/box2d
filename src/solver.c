@@ -21,16 +21,21 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#if defined(B2_CPU_ARM)
-static inline void b2Pause (void)
+#if defined( B2_CPU_ARM )
+static inline void b2Pause( void )
 {
-	__asm__ __volatile__("isb\n");
+	__asm__ __volatile__( "isb\n" );
 }
-#else
+#elif defined( B2_CPU_X86_X64 )
 #include <immintrin.h>
-static inline void b2Pause(void)
+static inline void b2Pause( void )
 {
 	_mm_pause();
+}
+#else
+static inline void b2Pause( void )
+{
+	// no threading will likely be used in web assembly
 }
 #endif
 
@@ -1295,8 +1300,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		activeColorCount = c;
 
 		// Gather contact pointers for easy parallel-for traversal. Some may be NULL due to SIMD remainders.
-		b2ContactSim** contacts =
-			b2AllocateStackItem( &world->stackAllocator, B2_SIMD_WIDTH * simdContactCount * sizeof( b2ContactSim* ), "contact pointers" );
+		b2ContactSim** contacts = b2AllocateStackItem(
+			&world->stackAllocator, B2_SIMD_WIDTH * simdContactCount * sizeof( b2ContactSim* ), "contact pointers" );
 
 		// Gather joint pointers for easy parallel-for traversal.
 		b2JointSim** joints =
@@ -1329,7 +1334,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				}
 				else
 				{
-					color->simdConstraints = (b2ContactConstraintSIMD*)((uint8_t*)simdContactConstraints + contactBase * simdConstraintSize);
+					color->simdConstraints =
+						(b2ContactConstraintSIMD*)( (uint8_t*)simdContactConstraints + contactBase * simdConstraintSize );
 
 					for ( int k = 0; k < colorContactCount; ++k )
 					{
