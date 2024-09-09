@@ -87,10 +87,11 @@
 	#define B2_COMPILER_MSVC
 #endif
 
+// see https://github.com/scottt/debugbreak
 #if defined( B2_COMPILER_MSVC )
 	#define B2_BREAKPOINT __debugbreak()
 #elif defined( B2_COMPILER_GCC ) || defined( B2_COMPILER_CLANG )
-	#define B2_BREAKPOINT __builtin_debugtrap()
+	#define B2_BREAKPOINT __builtin_trap()
 #else
 	// Unknown compiler
 	#include <assert.h>
