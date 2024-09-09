@@ -99,21 +99,33 @@ B2_API void b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2
 ///	@see b2WorldDef
 B2_API void b2World_EnableSleeping( b2WorldId worldId, bool flag );
 
+/// Is body sleeping enabled?
+B2_API bool b2World_IsSleepingEnabled( b2WorldId worldId );
+
 /// Enable/disable continuous collision between dynamic and static bodies. Generally you should keep continuous
 /// collision enabled to prevent fast moving objects from going through static objects. The performance gain from
 ///	disabling continuous collision is minor.
 ///	@see b2WorldDef
 B2_API void b2World_EnableContinuous( b2WorldId worldId, bool flag );
 
+/// Is continuous collision enabled?
+B2_API bool b2World_IsContinuousEnabled( b2WorldId worldId );
+
 /// Adjust the restitution threshold. It is recommended not to make this value very small
 ///	because it will prevent bodies from sleeping. Typically in meters per second.
 ///	@see b2WorldDef
 B2_API void b2World_SetRestitutionThreshold( b2WorldId worldId, float value );
 
+/// Get the the restitution speed threshold. Typically in meters per second.
+B2_API float b2World_GetRestitutionThreshold( b2WorldId worldId );
+
 /// Adjust the hit event threshold. This controls the collision velocity needed to generate a b2ContactHitEvent.
 /// Typically in meters per second.
 ///	@see b2WorldDef::hitEventThreshold
 B2_API void b2World_SetHitEventThreshold( b2WorldId worldId, float value );
+
+/// Get the the hit event speed threshold. Typically in meters per second.
+B2_API float b2World_GetHitEventThreshold( b2WorldId worldId );
 
 /// Register the custom filter callback. This is optional.
 B2_API void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterFcn* fcn, void* context );
@@ -147,6 +159,9 @@ B2_API void b2World_SetContactTuning( b2WorldId worldId, float hertz, float damp
 /// Enable/disable constraint warm starting. Advanced feature for testing. Disabling
 ///	sleeping greatly reduces stability and provides no performance gain.
 B2_API void b2World_EnableWarmStarting( b2WorldId worldId, bool flag );
+
+/// Is constraint warm starting enabled?
+B2_API bool b2World_IsWarmStartingEnabled( b2WorldId worldId );
 
 /// Get the current world performance profile
 B2_API b2Profile b2World_GetProfile( b2WorldId worldId );

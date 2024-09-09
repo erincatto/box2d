@@ -108,15 +108,6 @@ static void b2EmptyDrawSolidCircle( b2Transform transform, float radius, b2HexCo
 	B2_MAYBE_UNUSED( context );
 }
 
-static void b2EmptyDrawCapsule( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context )
-{
-	B2_MAYBE_UNUSED( p1 );
-	B2_MAYBE_UNUSED( p2 );
-	B2_MAYBE_UNUSED( radius );
-	B2_MAYBE_UNUSED( color );
-	B2_MAYBE_UNUSED( context );
-}
-
 static void b2EmptyDrawSolidCapsule( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context )
 {
 	B2_MAYBE_UNUSED( p1 );
@@ -164,7 +155,6 @@ b2DebugDraw b2DefaultDebugDraw(void)
 	draw.DrawSolidPolygon = b2EmptyDrawSolidPolygon;
 	draw.DrawCircle = b2EmptyDrawCircle;
 	draw.DrawSolidCircle = b2EmptyDrawSolidCircle;
-	draw.DrawCapsule = b2EmptyDrawCapsule;
 	draw.DrawSolidCapsule = b2EmptyDrawSolidCapsule;
 	draw.DrawSegment = b2EmptyDrawSegment;
 	draw.DrawTransform = b2EmptyDrawTransform;
