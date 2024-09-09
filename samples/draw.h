@@ -38,7 +38,6 @@ public:
 	void DrawCircle( b2Vec2 center, float radius, b2HexColor color );
 	void DrawSolidCircle( b2Transform transform, b2Vec2 center, float radius, b2HexColor color );
 
-	void DrawCapsule( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color );
 	void DrawSolidCapsule( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color );
 
 	void DrawSegment( b2Vec2 p1, b2Vec2 p2, b2HexColor color );

@@ -3,6 +3,8 @@
 
 #include "box2d/base.h"
 
+#include <stddef.h>
+
 #if defined( _WIN32 )
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -186,6 +188,8 @@ void b2Yield()
 
 #endif
 
+// djb2 hash
+// https://en.wikipedia.org/wiki/List_of_hash_functions
 uint32_t b2Hash( uint32_t hash, const uint8_t* data, int count )
 {
 	uint32_t result = hash;

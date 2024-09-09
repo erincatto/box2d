@@ -118,7 +118,7 @@ public:
 				b2Vec2 p = b2TransformPoint( transform, m_point );
 				if ( radius > 0.0f )
 				{
-					g_draw.DrawCircle( p, radius, color );
+					g_draw.DrawSolidCircle( transform, m_point, radius, color );
 				}
 				else
 				{
@@ -134,7 +134,7 @@ public:
 
 				if ( radius > 0.0f )
 				{
-					g_draw.DrawCapsule( p1, p2, radius, color );
+					g_draw.DrawSolidCapsule( p1, p2, radius, color );
 				}
 				else
 				{
@@ -1756,41 +1756,41 @@ public:
 					g_draw.DrawSegment( p, head, color3 );
 
 					b2Vec2 t = b2MulSV( context.fractions[i], rayTranslation );
+					b2Transform shiftedTransform = { b2Add( transform.p, t ), transform.q };
 
 					if ( m_castType == e_circleCast )
 					{
-						g_draw.DrawCircle( b2Add( m_rayStart, t ), m_castRadius, b2_colorYellow );
+						g_draw.DrawSolidCircle( shiftedTransform, b2Vec2_zero, m_castRadius, b2_colorYellow );
 					}
 					else if ( m_castType == e_capsuleCast )
 					{
 						b2Vec2 p1 = b2Add( b2TransformPoint( transform, capsule.center1 ), t );
 						b2Vec2 p2 = b2Add( b2TransformPoint( transform, capsule.center2 ), t );
-						g_draw.DrawCapsule( p1, p2, m_castRadius, b2_colorYellow );
+						g_draw.DrawSolidCapsule( p1, p2, m_castRadius, b2_colorYellow );
 					}
 					else if ( m_castType == e_polygonCast )
 					{
-						b2Transform shiftedTransform = { b2Add( transform.p, t ), transform.q };
 						g_draw.DrawSolidPolygon( shiftedTransform, box.vertices, box.count, box.radius, b2_colorYellow );
 					}
 				}
 			}
 			else
 			{
+				b2Transform shiftedTransform = { b2Add( transform.p, rayTranslation ), transform.q };
 				g_draw.DrawSegment( m_rayStart, m_rayEnd, color2 );
 
 				if ( m_castType == e_circleCast )
 				{
-					g_draw.DrawCircle( b2Add( m_rayStart, rayTranslation ), m_castRadius, b2_colorGray );
+					g_draw.DrawSolidCircle( shiftedTransform, b2Vec2_zero, m_castRadius, b2_colorGray );
 				}
 				else if ( m_castType == e_capsuleCast )
 				{
 					b2Vec2 p1 = b2Add( b2TransformPoint( transform, capsule.center1 ), rayTranslation );
 					b2Vec2 p2 = b2Add( b2TransformPoint( transform, capsule.center2 ), rayTranslation );
-					g_draw.DrawCapsule( p1, p2, m_castRadius, b2_colorYellow );
+					g_draw.DrawSolidCapsule( p1, p2, m_castRadius, b2_colorYellow );
 				}
 				else if ( m_castType == e_polygonCast )
 				{
-					b2Transform shiftedTransform = { b2Add( transform.p, rayTranslation ), transform.q };
 					g_draw.DrawSolidPolygon( shiftedTransform, box.vertices, box.count, box.radius, b2_colorYellow );
 				}
 			}
@@ -2128,7 +2128,7 @@ public:
 		{
 			b2World_OverlapCircle( m_worldId, &m_queryCircle, transform, b2DefaultQueryFilter(), OverlapWorld::OverlapResultFcn,
 								   this );
-			g_draw.DrawCircle( transform.p, m_queryCircle.radius, b2_colorWhite );
+			g_draw.DrawSolidCircle( transform, b2Vec2_zero, m_queryCircle.radius, b2_colorWhite );
 		}
 		else if ( m_shapeType == e_capsuleShape )
 		{
@@ -2136,7 +2136,7 @@ public:
 									this );
 			b2Vec2 p1 = b2TransformPoint( transform, m_queryCapsule.center1 );
 			b2Vec2 p2 = b2TransformPoint( transform, m_queryCapsule.center2 );
-			g_draw.DrawCapsule( p1, p2, m_queryCapsule.radius, b2_colorWhite );
+			g_draw.DrawSolidCapsule( p1, p2, m_queryCapsule.radius, b2_colorWhite );
 		}
 		else if ( m_shapeType == e_boxShape )
 		{
@@ -3282,7 +3282,7 @@ public:
 		{
 			if ( m_radiusA > 0.0f )
 			{
-				g_draw.DrawCircle( vertices[0], m_radiusA, b2_colorGray9 );
+				g_draw.DrawSolidCircle( b2Transform_identity, vertices[0], m_radiusA, b2_colorGray9 );
 			}
 			else
 			{
@@ -3303,7 +3303,7 @@ public:
 		{
 			if ( m_radiusB > 0.0f )
 			{
-				g_draw.DrawCircle( vertices[0], m_radiusB, b2_colorGreen );
+				g_draw.DrawSolidCircle( b2Transform_identity, vertices[0], m_radiusB, b2_colorGreen );
 			}
 			else
 			{
@@ -3324,7 +3324,7 @@ public:
 		{
 			if ( m_radiusB > 0.0f )
 			{
-				g_draw.DrawCircle( vertices[0], m_radiusB, b2_colorOrange );
+				g_draw.DrawSolidCircle( b2Transform_identity, vertices[0], m_radiusB, b2_colorOrange );
 			}
 			else
 			{

@@ -1290,11 +1290,6 @@ void DrawSolidCircleFcn( b2Transform transform, float radius, b2HexColor color, 
 	static_cast<Draw*>( context )->DrawSolidCircle( transform, b2Vec2_zero, radius, color );
 }
 
-void DrawCapsuleFcn( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context )
-{
-	static_cast<Draw*>( context )->DrawCapsule( p1, p2, radius, color );
-}
-
 void DrawSolidCapsuleFcn( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context )
 {
 	static_cast<Draw*>( context )->DrawSolidCapsule( p1, p2, radius, color );
@@ -1369,7 +1364,6 @@ void Draw::Create()
 					DrawSolidPolygonFcn,
 					DrawCircleFcn,
 					DrawSolidCircleFcn,
-					DrawCapsuleFcn,
 					DrawSolidCapsuleFcn,
 					DrawSegmentFcn,
 					DrawTransformFcn,
@@ -1450,59 +1444,6 @@ void Draw::DrawSolidCircle( b2Transform transform, b2Vec2 center, float radius, 
 {
 	transform.p = b2TransformPoint( transform, center );
 	m_solidCircles->AddCircle( transform, radius, color );
-}
-
-// todo this is not used
-void Draw::DrawCapsule( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color )
-{
-	float length;
-	b2Vec2 axis = b2GetLengthAndNormalize( &length, b2Sub( p2, p1 ) );
-
-	if ( length == 0.0f )
-	{
-		DrawCircle( p1, radius, color );
-	}
-
-	const float k_segments = 16.0f;
-	const float k_increment = b2_pi / k_segments;
-	float sinInc = sinf( k_increment );
-	float cosInc = cosf( k_increment );
-
-	b2Vec2 r1 = { -axis.y, axis.x };
-	b2Vec2 v1 = b2MulAdd( p1, radius, r1 );
-	b2Vec2 a = v1;
-	for ( int i = 0; i < k_segments; ++i )
-	{
-		// Perform rotation to avoid additional trigonometry.
-		b2Vec2 r2;
-		r2.x = cosInc * r1.x - sinInc * r1.y;
-		r2.y = sinInc * r1.x + cosInc * r1.y;
-		b2Vec2 v2 = b2MulAdd( p1, radius, r2 );
-		m_lines->AddLine( v1, v2, color );
-		r1 = r2;
-		v1 = v2;
-	}
-	b2Vec2 b = v1;
-
-	r1 = { axis.y, -axis.x };
-	v1 = b2MulAdd( p2, radius, r1 );
-	b2Vec2 c = v1;
-	for ( int i = 0; i < k_segments; ++i )
-	{
-		// Perform rotation to avoid additional trigonometry.
-		b2Vec2 r2;
-		r2.x = cosInc * r1.x - sinInc * r1.y;
-		r2.y = sinInc * r1.x + cosInc * r1.y;
-		b2Vec2 v2 = b2MulAdd( p2, radius, r2 );
-		m_lines->AddLine( v1, v2, color );
-		r1 = r2;
-		v1 = v2;
-	}
-	b2Vec2 d = v1;
-
-	m_lines->AddLine( a, d, color );
-	m_lines->AddLine( b, c, color );
-	m_lines->AddLine( p1, p2, color );
 }
 
 void Draw::DrawSolidCapsule( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color )

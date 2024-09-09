@@ -1597,6 +1597,12 @@ void b2World_EnableSleeping( b2WorldId worldId, bool flag )
 	}
 }
 
+bool b2World_IsSleepingEnabled(b2WorldId worldId)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	return world->enableSleep;
+}
+
 void b2World_EnableWarmStarting( b2WorldId worldId, bool flag )
 {
 	b2World* world = b2GetWorldFromId( worldId );
@@ -1607,6 +1613,12 @@ void b2World_EnableWarmStarting( b2WorldId worldId, bool flag )
 	}
 
 	world->enableWarmStarting = flag;
+}
+
+bool b2World_IsWarmStartingEnabled(b2WorldId worldId)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	return world->enableWarmStarting;
 }
 
 void b2World_EnableContinuous( b2WorldId worldId, bool flag )
@@ -1621,6 +1633,12 @@ void b2World_EnableContinuous( b2WorldId worldId, bool flag )
 	world->enableContinuous = flag;
 }
 
+bool b2World_IsContinuousEnabled(b2WorldId worldId)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	return world->enableContinuous;
+}
+
 void b2World_SetRestitutionThreshold( b2WorldId worldId, float value )
 {
 	b2World* world = b2GetWorldFromId( worldId );
@@ -1633,6 +1651,12 @@ void b2World_SetRestitutionThreshold( b2WorldId worldId, float value )
 	world->restitutionThreshold = b2ClampFloat( value, 0.0f, FLT_MAX );
 }
 
+float b2World_GetRestitutionThreshold(b2WorldId worldId)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	return world->restitutionThreshold;
+}
+
 void b2World_SetHitEventThreshold( b2WorldId worldId, float value )
 {
 	b2World* world = b2GetWorldFromId( worldId );
@@ -1643,6 +1667,12 @@ void b2World_SetHitEventThreshold( b2WorldId worldId, float value )
 	}
 
 	world->hitEventThreshold = b2ClampFloat( value, 0.0f, FLT_MAX );
+}
+
+float b2World_GetHitEventThreshold(b2WorldId worldId)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	return world->hitEventThreshold;
 }
 
 void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushOut )

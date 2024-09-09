@@ -12,6 +12,7 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <vector>
 
 class SensorEvent : public Sample
 {
@@ -488,12 +489,52 @@ public:
 		int attachCount = 0;
 		int destroyCount = 0;
 
+		std::vector<b2ContactData> contactData;
+
 		b2ContactEvents contactEvents = b2World_GetContactEvents( m_worldId );
 		for ( int i = 0; i < contactEvents.beginCount; ++i )
 		{
 			b2ContactBeginTouchEvent event = contactEvents.beginEvents[i];
 			b2BodyId bodyIdA = b2Shape_GetBody( event.shapeIdA );
 			b2BodyId bodyIdB = b2Shape_GetBody( event.shapeIdB );
+
+			int capacityA = b2Shape_GetContactCapacity( event.shapeIdA );
+			contactData.resize( capacityA );
+			int countA = b2Shape_GetContactData( event.shapeIdA, contactData.data(), capacityA );
+			assert( countA >= 1 );
+
+			for (int j = 0; j < countA; ++j)
+			{
+				b2Manifold manifold = contactData[j].manifold;
+				b2Vec2 normal = manifold.normal;
+				assert( b2AbsFloat( b2Length( normal ) - 1.0f ) < 4.0f * FLT_EPSILON );
+
+				for (int k = 0; k < manifold.pointCount; ++k)
+				{
+					b2ManifoldPoint point = manifold.points[k];
+					g_draw.DrawSegment( point.point, point.point + 4.0f * normal, b2_colorBlueViolet );
+					g_draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
+				}
+			}
+
+			int capacityB = b2Shape_GetContactCapacity( event.shapeIdB );
+			contactData.resize( capacityB );
+			int countB = b2Shape_GetContactData( event.shapeIdB, contactData.data(), capacityB );
+			assert( countB >= 1 );
+
+			for (int j = 0; j < countB; ++j)
+			{
+				b2Manifold manifold = contactData[j].manifold;
+				b2Vec2 normal = manifold.normal;
+				assert( b2AbsFloat( b2Length( normal ) - 1.0f ) < 4.0f * FLT_EPSILON );
+
+				for (int k = 0; k < manifold.pointCount; ++k)
+				{
+					b2ManifoldPoint point = manifold.points[k];
+					g_draw.DrawSegment( point.point, point.point + 4.0f * normal, b2_colorYellowGreen );
+					g_draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
+				}
+			}
 
 			if ( B2_ID_EQUALS( bodyIdA, m_playerId ) )
 			{
@@ -566,7 +607,6 @@ public:
 		}
 
 		// Attach debris to player body
-		b2ShapeId shapeBuffer[4];
 		for ( int i = 0; i < attachCount; ++i )
 		{
 			int index = debrisToAttach[i];
