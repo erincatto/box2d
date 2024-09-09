@@ -17,9 +17,6 @@ set_target_properties(benchmark PROPERTIES
 
 if (MSVC)
 	target_compile_options(benchmark PRIVATE /experimental:c11atomics)
-elseif (APPLE)
-    # determinism settings
-    target_compile_options(benchmark PRIVATE -ffp-contract=off)
 endif()
 
 target_link_libraries(benchmark PRIVATE box2d enkiTS)

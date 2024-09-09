@@ -35,6 +35,12 @@ if (MSVC OR APPLE)
 	endif()
 endif()
 
+# Deterministic math
+# https://box2d.org/posts/2024/08/determinism/
+if (MINGW OR APPLE OR UNIX)
+	add_compile_options(-ffp-contract=off)
+endif()
+
 option(BOX2D_ENABLE_SIMD "Enable SIMD math (faster)" ON)
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
