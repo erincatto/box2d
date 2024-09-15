@@ -11,6 +11,7 @@
 #include "core.h"
 #include "ctz.h"
 #include "joint.h"
+#include "island.h"
 #include "shape.h"
 #include "solver_set.h"
 #include "stack_allocator.h"
@@ -187,7 +188,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 	bool enableSleep = world->enableSleep;
 	b2BodyState* states = stepContext->states;
 	b2BodySim* sims = stepContext->sims;
-	b2Body* bodies = world->bodyArray;
+	b2Body* bodies = world->bodyArrayNew.data;
 	float timeStep = stepContext->dt;
 	float invTimeStep = stepContext->inv_dt;
 
@@ -849,8 +850,7 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 		return true;
 	}
 
-	b2CheckIndex( world->bodyArray, shape->bodyId );
-	b2Body* body = world->bodyArray + shape->bodyId;
+	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, shape->bodyId);
 	b2BodySim* bodySim = b2GetBodySim( world, body );
 	B2_ASSERT( body->type == b2_staticBody || fastBodySim->isBullet );
 
@@ -861,8 +861,7 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 	}
 
 	// Skip filtered bodies
-	b2CheckIndex( world->bodyArray, fastBodySim->bodyId );
-	b2Body* fastBody = world->bodyArray + fastBodySim->bodyId;
+	b2Body* fastBody = b2BodyArray_Get( &world->bodyArrayNew, fastBodySim->bodyId);
 	canCollide = b2ShouldBodiesCollide( world, fastBody, body );
 	if ( canCollide == false )
 	{
@@ -960,9 +959,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 
 	bool isBullet = fastBodySim->isBullet;
 
-	// todo consider moving shape list to body sim
-	b2CheckIndex( world->bodyArray, fastBodySim->bodyId );
-	b2Body* fastBody = world->bodyArray + fastBodySim->bodyId;
+	b2Body* fastBody = b2BodyArray_Get( &world->bodyArrayNew, fastBodySim->bodyId);
 	int shapeId = fastBody->headShapeId;
 	while ( shapeId != B2_NULL_INDEX )
 	{
@@ -1789,8 +1786,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				B2_ASSERT( bodySimIndex < awakeSet->sims.count );
 				b2BodySim* bodySim = awakeSet->sims.data + bodySimIndex;
 
-				b2CheckIndex( world->bodyArray, bodySim->bodyId );
-				b2Body* body = world->bodyArray + bodySim->bodyId;
+				b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, bodySim->bodyId );
 
 				int shapeId = body->headShapeId;
 				while ( shapeId != B2_NULL_INDEX )
@@ -1849,7 +1845,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	{
 		b2BroadPhase* broadPhase = &world->broadPhase;
 		b2DynamicTree* dynamicTree = broadPhase->trees + b2_dynamicBody;
-		b2Body* bodies = world->bodyArray;
+		b2Body* bodies = world->bodyArrayNew.data;
 		b2Shape* shapes = world->shapeArray;
 
 		int* fastBodies = stepContext->fastBodies;
@@ -1868,8 +1864,9 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			// clear flag
 			fastBodySim->enlargeAABB = false;
 
-			b2CheckIndex( bodies, fastBodySim->bodyId );
-			b2Body* fastBody = bodies + fastBodySim->bodyId;
+			int bodyId = fastBodySim->bodyId;
+			B2_ASSERT(0 <= bodyId && bodyId < world->bodyArrayNew.count);
+			b2Body* fastBody = bodies + bodyId;
 
 			int shapeId = fastBody->headShapeId;
 			while ( shapeId != B2_NULL_INDEX )
@@ -1915,7 +1912,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	{
 		b2BroadPhase* broadPhase = &world->broadPhase;
 		b2DynamicTree* dynamicTree = broadPhase->trees + b2_dynamicBody;
-		b2Body* bodies = world->bodyArray;
+		b2Body* bodies = world->bodyArrayNew.data;
 		b2Shape* shapes = world->shapeArray;
 
 		// Serially enlarge broad-phase proxies for bullet shapes
@@ -1935,8 +1932,9 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			// clear flag
 			bulletBodySim->enlargeAABB = false;
 
-			b2CheckIndex( bodies, bulletBodySim->bodyId );
-			b2Body* bulletBody = bodies + bulletBodySim->bodyId;
+			int bodyId = bulletBodySim->bodyId;
+			B2_ASSERT( 0 <= bodyId && bodyId < world->bodyArrayNew.count );
+			b2Body* bulletBody = bodies + bodyId;
 
 			int shapeId = bulletBody->headShapeId;
 			while ( shapeId != B2_NULL_INDEX )

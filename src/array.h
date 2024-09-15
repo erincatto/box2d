@@ -44,6 +44,59 @@ void b2Array_Resize( void** a, int elementSize, int count );
 	B2_ASSERT( 0 < b2Array( a ).count );                                                                                         \
 	b2Array( a ).count--
 
-#define b2GetArrayCount( a ) ( b2Array( a ).count )
-#define b2GetArrayCapacity( a ) ( b2Array( a ).capacity )
 #define b2GetArrayBytes( a, elementSize ) ( (int)elementSize * b2Array( a ).capacity )
+
+// Array definition that doesn't need the type T to be defined
+#define B2_ARRAY( T )                                                                                                            \
+	typedef struct                                                                                                               \
+	{                                                                                                                            \
+		T* data;                                                                                                                 \
+		int count;                                                                                                               \
+		int capacity;                                                                                                            \
+	} T##Array;                                                                                                                  \
+	T##Array T##Array_Create( int capacity );                                                                                    \
+	void T##Array_Reserve( T##Array* a, int newCapacity );                                                                       \
+	void T##Array_Destroy( T##Array* a );
+
+typedef struct b2Body b2Body;
+B2_ARRAY( b2Body );
+
+// Inline array functions that need the type T to be defined
+#define B2_ARRAY_INLINE( T )                                                                                                     \
+	static inline T* T##Array_Get( T##Array* a, int index )                                                                      \
+	{                                                                                                                            \
+		B2_ASSERT( 0 <= index && index < a->count );                                                                             \
+		return a->data + index;                                                                                                  \
+	}                                                                                                                            \
+                                                                                                                                 \
+	static inline void T##Array_Push( T##Array* a, T value )                                                                     \
+	{                                                                                                                            \
+		if ( a->count == a->capacity )                                                                                           \
+		{                                                                                                                        \
+			int newCapacity = a->capacity < 2 ? 2 : a->capacity + ( a->capacity >> 1 );                                          \
+			T##Array_Reserve( a, newCapacity );                                                                                  \
+		}                                                                                                                        \
+		a->data[a->count] = value;                                                                                               \
+		a->count += 1;                                                                                                           \
+	}                                                                                                                            \
+                                                                                                                                 \
+	static inline void T##Array_Set( T##Array* a, int index, T value )                                                           \
+	{                                                                                                                            \
+		B2_ASSERT( 0 <= index && index < a->count );                                                                             \
+		a->data[index] = value;                                                                                                  \
+	}                                                                                                                            \
+                                                                                                                                 \
+	static inline void T##Array_RemoveSwap( T##Array* a, int index )                                                             \
+	{                                                                                                                            \
+		B2_ASSERT( 0 <= index && index < a->count );                                                                             \
+		if ( index != a->count - 1 )                                                                                             \
+		{                                                                                                                        \
+			a->data[index] = a->data[a->count - 1];                                                                              \
+		}                                                                                                                        \
+		a->count -= 1;                                                                                                           \
+	}                                                                                                                            \
+                                                                                                                                 \
+	static inline int T##Array_ByteCount( T##Array* a )                                                                          \
+	{                                                                                                                            \
+		return (int)( a->capacity * sizeof( T ) );                                                                               \
+	}

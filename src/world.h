@@ -3,11 +3,11 @@
 
 #pragma once
 
+#include "array.h"
 #include "bitset.h"
 #include "broad_phase.h"
 #include "constraint_graph.h"
 #include "id_pool.h"
-#include "island.h"
 #include "stack_allocator.h"
 
 #include "box2d/types.h"
@@ -58,7 +58,7 @@ typedef struct b2World
 	// This is a sparse array that maps body ids to the body data
 	// stored in solver sets. As sims move within a set or across set.
 	// Indices come from id pool.
-	struct b2Body* bodyArray;
+	b2BodyArray bodyArrayNew;
 
 	// Provides free list for solver sets.
 	b2IdPool solverSetIdPool;

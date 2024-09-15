@@ -40,7 +40,7 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 	b2SolverSet* awakeSet = world->solverSetArray + b2_awakeSet;
 	b2SolverSet* disabledSet = world->solverSetArray + b2_disabledSet;
 
-	b2Body* bodies = world->bodyArray;
+	b2Body* bodies = world->bodyArrayNew.data;
 	b2Contact* contacts = world->contactArray;
 
 	int bodyCount = set->sims.count;
@@ -203,13 +203,11 @@ void b2TrySleepIsland( b2World* world, int islandId )
 	// this shuffles around bodies in the awake set
 	{
 		b2SolverSet* disabledSet = world->solverSetArray + b2_disabledSet;
-		b2Body* bodies = world->bodyArray;
 		b2Contact* contacts = world->contactArray;
 		int bodyId = island->headBody;
 		while ( bodyId != B2_NULL_INDEX )
 		{
-			b2CheckIndex( bodies, bodyId );
-			b2Body* body = bodies + bodyId;
+			b2Body* body = b2BodyArray_Get(&world->bodyArrayNew, bodyId);
 			B2_ASSERT( body->setIndex == b2_awakeSet );
 			B2_ASSERT( body->islandId == islandId );
 
@@ -240,8 +238,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 				// fix local index on moved element
 				b2BodySim* movedSim = awakeSet->sims.data + awakeBodyIndex;
 				int movedId = movedSim->bodyId;
-				b2CheckIndex( bodies, movedId );
-				b2Body* movedBody = bodies + movedId;
+				b2Body* movedBody = b2BodyArray_Get(&world->bodyArrayNew, movedId);
 				B2_ASSERT( movedBody->localIndex == movedIndex );
 				movedBody->localIndex = awakeBodyIndex;
 			}
@@ -283,8 +280,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 				// for moving this contact to the disabled set.
 				int otherEdgeIndex = edgeIndex ^ 1;
 				int otherBodyId = contact->edges[otherEdgeIndex].bodyId;
-				b2CheckIndex( bodies, otherBodyId );
-				b2Body* otherBody = bodies + otherBodyId;
+				b2Body* otherBody = b2BodyArray_Get( &world->bodyArrayNew, otherBodyId);
 				if ( otherBody->setIndex == b2_awakeSet )
 				{
 					continue;
@@ -476,7 +472,7 @@ void b2MergeSolverSets( b2World* world, int setId1, int setId2 )
 
 	// transfer bodies
 	{
-		b2Body* bodies = world->bodyArray;
+		b2Body* bodies = world->bodyArrayNew.data;
 		int bodyCount = set2->sims.count;
 		for ( int i = 0; i < bodyCount; ++i )
 		{
@@ -572,7 +568,7 @@ void b2TransferBody( b2World* world, b2SolverSet* targetSet, b2SolverSet* source
 		// Fix moved body index
 		b2BodySim* movedSim = sourceSet->sims.data + sourceIndex;
 		int movedId = movedSim->bodyId;
-		b2Body* movedBody = world->bodyArray + movedId;
+		b2Body* movedBody = b2BodyArray_Get( &world->bodyArrayNew, movedId);
 		B2_ASSERT( movedBody->localIndex == movedIndex );
 		movedBody->localIndex = sourceIndex;
 	}

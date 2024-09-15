@@ -316,6 +316,7 @@ void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex, void* 
 		// Using b2_defaultMaskBits so that b2Filter::groupIndex works.
 		if ( proxyType == b2_dynamicBody )
 		{
+			// consider using bits = groupIndex > 0 ? b2_defaultMaskBits : maskBits
 			queryContext.queryTreeType = b2_kinematicBody;
 			b2DynamicTree_Query( bp->trees + b2_kinematicBody, fatAABB, b2_defaultMaskBits, b2PairQueryCallback, &queryContext );
 

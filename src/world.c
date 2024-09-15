@@ -114,7 +114,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 
 	// pools
 	world->bodyIdPool = b2CreateIdPool();
-	world->bodyArray = b2CreateArray( sizeof( b2Body ), 16 );
+	world->bodyArrayNew = b2BodyArray_Create( 16 );
 	world->solverSetArray = b2CreateArray( sizeof( b2SolverSet ), 8 );
 
 	// add empty static, active, and disabled body sets
@@ -246,7 +246,7 @@ void b2DestroyWorld( b2WorldId worldId )
 		}
 	}
 
-	b2DestroyArray( world->bodyArray, sizeof( b2Body ) );
+	b2BodyArray_Destroy( &world->bodyArrayNew );
 	b2DestroyArray( world->shapeArray, sizeof( b2Shape ) );
 	b2DestroyArray( world->chainArray, sizeof( b2ChainShape ) );
 	b2DestroyArray( world->contactArray, sizeof( b2Contact ) );
@@ -298,7 +298,7 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 	b2TaskContext* taskContext = world->taskContextArray + threadIndex;
 	b2ContactSim** contactSims = stepContext->contacts;
 	b2Shape* shapes = world->shapeArray;
-	b2Body* bodies = world->bodyArray;
+	b2Body* bodies = world->bodyArrayNew.data;
 
 	B2_ASSERT( startIndex < endIndex );
 
@@ -851,8 +851,7 @@ static bool DrawQueryCallback( int proxyId, int shapeId, void* context )
 
 	if ( draw->drawShapes )
 	{
-		b2CheckId( world->bodyArray, shape->bodyId );
-		b2Body* body = world->bodyArray + shape->bodyId;
+		b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, shape->bodyId );
 		b2BodySim* bodySim = b2GetBodySim( world, body );
 
 		b2HexColor color;
@@ -967,8 +966,7 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 			uint32_t ctz = b2CTZ64( word );
 			uint32_t bodyId = 64 * k + ctz;
 
-			b2CheckId( world->bodyArray, bodyId );
-			b2Body* body = world->bodyArray + bodyId;
+			b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, bodyId );
 
 			if ( draw->drawMass && body->type == b2_dynamicBody )
 			{
@@ -1136,8 +1134,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 			for ( int bodyIndex = 0; bodyIndex < bodyCount; ++bodyIndex )
 			{
 				b2BodySim* bodySim = set->sims.data + bodyIndex;
-				b2CheckIndex( world->bodyArray, bodySim->bodyId );
-				b2Body* body = world->bodyArray + bodySim->bodyId;
+				b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, bodySim->bodyId );
 				B2_ASSERT( body->setIndex == setIndex );
 
 				b2Transform xf = bodySim->transform;
@@ -1232,8 +1229,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				snprintf( buffer, 32, "%d", bodySim->bodyId );
 				draw->DrawString( bodySim->center, buffer, draw->context );
 
-				b2CheckIndex( world->bodyArray, bodySim->bodyId );
-				b2Body* body = world->bodyArray + bodySim->bodyId;
+				b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, bodySim->bodyId );
 				B2_ASSERT( body->setIndex == setIndex );
 
 				int shapeId = body->headShapeId;
@@ -1447,13 +1443,13 @@ bool b2Body_IsValid( b2BodyId id )
 		return false;
 	}
 
-	if ( id.index1 < 1 || b2Array( world->bodyArray ).count < id.index1 )
+	if ( id.index1 < 1 || world->bodyArrayNew.count < id.index1 )
 	{
 		// invalid index
 		return false;
 	}
 
-	b2Body* body = world->bodyArray + ( id.index1 - 1 );
+	b2Body* body = world->bodyArrayNew.data + ( id.index1 - 1 );
 	if ( body->setIndex == B2_NULL_INDEX )
 	{
 		// this was freed
@@ -1746,7 +1742,7 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 
 	// world arrays
 	fprintf( file, "world arrays\n" );
-	fprintf( file, "bodies: %d\n", b2GetArrayBytes( world->bodyArray, sizeof( b2Body ) ) );
+	fprintf( file, "bodies: %d\n", b2BodyArray_ByteCount( &world->bodyArrayNew ) );
 	fprintf( file, "solver sets: %d\n", b2GetArrayBytes( world->solverSetArray, sizeof( b2SolverSet ) ) );
 	fprintf( file, "joints: %d\n", b2GetArrayBytes( world->jointArray, sizeof( b2Joint ) ) );
 	fprintf( file, "contacts: %d\n", b2GetArrayBytes( world->contactArray, sizeof( b2Contact ) ) );
@@ -2390,8 +2386,7 @@ static bool ExplosionCallback( int proxyId, int shapeId, void* context )
 	b2CheckId( world->shapeArray, shapeId );
 	b2Shape* shape = world->shapeArray + shapeId;
 
-	b2CheckId( world->bodyArray, shape->bodyId );
-	b2Body* body = world->bodyArray + shape->bodyId;
+	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, shape->bodyId );
 	if ( body->type == b2_kinematicBody )
 	{
 		return true;
@@ -2502,8 +2497,8 @@ static int b2GetRootIslandId( b2World* world, int islandId )
 // This validates island graph connectivity for each body
 void b2ValidateConnectivity( b2World* world )
 {
-	b2Body* bodies = world->bodyArray;
-	int bodyCapacity = b2Array( bodies ).count;
+	b2Body* bodies = world->bodyArrayNew.data;
+	int bodyCapacity = world->bodyArrayNew.count;
 
 	for ( int bodyIndex = 0; bodyIndex < bodyCapacity; ++bodyIndex )
 	{
@@ -2557,8 +2552,7 @@ void b2ValidateConnectivity( b2World* world )
 
 			int otherEdgeIndex = edgeIndex ^ 1;
 
-			b2CheckIndex( world->bodyArray, joint->edges[otherEdgeIndex].bodyId );
-			b2Body* otherBody = world->bodyArray + joint->edges[otherEdgeIndex].bodyId;
+			b2Body* otherBody = b2BodyArray_Get(&world->bodyArrayNew, joint->edges[otherEdgeIndex].bodyId);
 
 			if ( bodySetIndex == b2_disabledSet || otherBody->setIndex == b2_disabledSet )
 			{
@@ -2585,7 +2579,7 @@ void b2ValidateConnectivity( b2World* world )
 // Validates solver sets, but not island connectivity
 void b2ValidateSolverSets( b2World* world )
 {
-	B2_ASSERT( b2GetIdCapacity( &world->bodyIdPool ) == b2Array( world->bodyArray ).count );
+	B2_ASSERT( b2GetIdCapacity( &world->bodyIdPool ) == world->bodyArrayNew.count );
 	B2_ASSERT( b2GetIdCapacity( &world->contactIdPool ) == b2Array( world->contactArray ).count );
 	B2_ASSERT( b2GetIdCapacity( &world->jointIdPool ) == b2Array( world->jointArray ).count );
 	B2_ASSERT( b2GetIdCapacity( &world->islandIdPool ) == b2Array( world->islandArray ).count );
@@ -2629,7 +2623,7 @@ void b2ValidateSolverSets( b2World* world )
 
 			// Validate bodies
 			{
-				b2Body* bodies = world->bodyArray;
+				b2Body* bodies = world->bodyArrayNew.data;
 				B2_ASSERT( set->sims.count >= 0 );
 				totalBodyCount += set->sims.count;
 				for ( int i = 0; i < set->sims.count; ++i )
@@ -2637,7 +2631,7 @@ void b2ValidateSolverSets( b2World* world )
 					b2BodySim* bodySim = set->sims.data + i;
 
 					int bodyId = bodySim->bodyId;
-					b2CheckIndex( bodies, bodyId );
+					B2_ASSERT( 0 <= bodyId && bodyId < world->bodyArrayNew.count);
 					b2Body* body = bodies + bodyId;
 					B2_ASSERT( body->setIndex == setIndex );
 					B2_ASSERT( body->localIndex == i );
@@ -2701,8 +2695,7 @@ void b2ValidateSolverSets( b2World* world )
 
 						int otherEdgeIndex = edgeIndex ^ 1;
 
-						b2CheckIndex( world->bodyArray, joint->edges[otherEdgeIndex].bodyId );
-						b2Body* otherBody = world->bodyArray + joint->edges[otherEdgeIndex].bodyId;
+						b2Body* otherBody = b2BodyArray_Get(&world->bodyArrayNew, joint->edges[otherEdgeIndex].bodyId);
 
 						if ( setIndex == b2_disabledSet || otherBody->setIndex == b2_disabledSet )
 						{
@@ -2826,13 +2819,11 @@ void b2ValidateSolverSets( b2World* world )
 
 				int bodyIdA = contact->edges[0].bodyId;
 				int bodyIdB = contact->edges[1].bodyId;
-				b2CheckIndex( world->bodyArray, bodyIdA );
-				b2CheckIndex( world->bodyArray, bodyIdB );
 
 				if ( colorIndex < b2_overflowIndex )
 				{
-					b2Body* bodyA = world->bodyArray + bodyIdA;
-					b2Body* bodyB = world->bodyArray + bodyIdB;
+					b2Body* bodyA = b2BodyArray_Get(&world->bodyArrayNew, bodyIdA);
+					b2Body* bodyB = b2BodyArray_Get(&world->bodyArrayNew, bodyIdB);
 					B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type != b2_staticBody ) );
 					B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type != b2_staticBody ) );
 				}
@@ -2854,13 +2845,11 @@ void b2ValidateSolverSets( b2World* world )
 
 				int bodyIdA = joint->edges[0].bodyId;
 				int bodyIdB = joint->edges[1].bodyId;
-				b2CheckIndex( world->bodyArray, bodyIdA );
-				b2CheckIndex( world->bodyArray, bodyIdB );
 
 				if ( colorIndex < b2_overflowIndex )
 				{
-					b2Body* bodyA = world->bodyArray + bodyIdA;
-					b2Body* bodyB = world->bodyArray + bodyIdB;
+					b2Body* bodyA = b2BodyArray_Get( &world->bodyArrayNew, bodyIdA );
+					b2Body* bodyB = b2BodyArray_Get( &world->bodyArrayNew, bodyIdB );
 					B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type != b2_staticBody ) );
 					B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type != b2_staticBody ) );
 				}

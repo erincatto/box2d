@@ -45,14 +45,14 @@ void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn )
 // Use 32 byte alignment for everything. Works with 256bit SIMD.
 #define B2_ALIGNMENT 32
 
-void* b2Alloc( uint32_t size )
+void* b2Alloc( int size )
 {
 	// This could cause some sharing issues, however Box2D rarely calls b2Alloc.
 	atomic_fetch_add_explicit( &b2_byteCount, size, memory_order_relaxed );
 
 	// Allocation must be a multiple of 32 or risk a seg fault
 	// https://en.cppreference.com/w/c/memory/aligned_alloc
-	uint32_t size32 = ( ( size - 1 ) | 0x1F ) + 1;
+	int size32 = ( ( size - 1 ) | 0x1F ) + 1;
 
 	if ( b2_allocFcn != NULL )
 	{
@@ -86,7 +86,7 @@ void* b2Alloc( uint32_t size )
 	return ptr;
 }
 
-void b2Free( void* mem, uint32_t size )
+void b2Free( void* mem, int size )
 {
 	if ( mem == NULL )
 	{
@@ -109,6 +109,18 @@ void b2Free( void* mem, uint32_t size )
 	}
 
 	atomic_fetch_sub_explicit( &b2_byteCount, size, memory_order_relaxed );
+}
+
+void* b2GrowAlloc( void* oldMem, int oldSize, int newSize )
+{
+	B2_ASSERT( newSize > oldSize );
+	void* newMem = b2Alloc( newSize );
+	if (oldSize > 0)
+	{
+		memcpy( newMem, oldMem, oldSize );
+		b2Free( oldMem, oldSize );
+	}
+	return newMem;
 }
 
 int b2GetByteCount( void )

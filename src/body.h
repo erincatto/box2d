@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "array.h"
+
 #include "box2d/math_functions.h"
 #include "box2d/types.h"
 
@@ -167,3 +169,5 @@ static inline b2Sweep b2MakeSweep( const b2BodySim* bodySim )
 	s.localCenter = bodySim->localCenter;
 	return s;
 }
+
+B2_ARRAY_INLINE( b2Body );

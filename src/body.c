@@ -23,8 +23,7 @@
 
 b2Body* b2GetBody( b2World* world, int bodyId )
 {
-	b2CheckIndex( world->bodyArray, bodyId );
-	return world->bodyArray + bodyId;
+	return b2BodyArray_Get(&world->bodyArrayNew, bodyId);
 }
 
 // Get a validated body from a world using an id.
@@ -47,16 +46,14 @@ b2Transform b2GetBodyTransformQuick( b2World* world, b2Body* body )
 
 b2Transform b2GetBodyTransform( b2World* world, int bodyId )
 {
-	b2CheckIndex( world->bodyArray, bodyId );
-	b2Body* body = world->bodyArray + bodyId;
+	b2Body* body = b2BodyArray_Get(&world->bodyArrayNew, bodyId);
 	return b2GetBodyTransformQuick( world, body );
 }
 
 // Create a b2BodyId from a raw id.
 b2BodyId b2MakeBodyId( b2World* world, int bodyId )
 {
-	b2CheckIndex( world->bodyArray, bodyId );
-	b2Body* body = world->bodyArray + bodyId;
+	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, bodyId );
 	return ( b2BodyId ){ bodyId + 1, world->worldId, body->revision };
 }
 
@@ -270,17 +267,16 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 		bodyState->deltaRotation = b2Rot_identity;
 	}
 
-	if ( bodyId == b2Array( world->bodyArray ).count )
+	if ( bodyId == world->bodyArrayNew.count )
 	{
-		b2Array_Push( world->bodyArray, ( b2Body ){ 0 } );
+		b2BodyArray_Push( &world->bodyArrayNew, ( b2Body ){ 0 } );
 	}
 	else
 	{
-		B2_ASSERT( world->bodyArray[bodyId].id == B2_NULL_INDEX );
+		B2_ASSERT( world->bodyArrayNew.data[bodyId].id == B2_NULL_INDEX );
 	}
 
-	b2CheckIndex( world->bodyArray, bodyId );
-	b2Body* body = world->bodyArray + bodyId;
+	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, bodyId);
 	body->userData = def->userData;
 	body->setIndex = setId;
 	body->localIndex = set->sims.count - 1;
@@ -406,7 +402,7 @@ void b2DestroyBody( b2BodyId bodyId )
 		// Fix moved body index
 		b2BodySim* movedSim = set->sims.data + body->localIndex;
 		int movedId = movedSim->bodyId;
-		b2Body* movedBody = world->bodyArray + movedId;
+		b2Body* movedBody = b2BodyArray_Get( &world->bodyArrayNew, movedId);
 		B2_ASSERT( movedBody->localIndex == movedIndex );
 		movedBody->localIndex = body->localIndex;
 	}
@@ -890,8 +886,7 @@ void b2Body_ApplyAngularImpulse( b2BodyId bodyId, float impulse, bool wake )
 	b2World* world = b2GetWorld( bodyId.world0 );
 
 	int id = bodyId.index1 - 1;
-	b2CheckIndex( world->bodyArray, id );
-	b2Body* body = world->bodyArray + id;
+	b2Body* body = b2BodyArray_Get(&world->bodyArrayNew, id);
 	B2_ASSERT( body->revision == bodyId.revision );
 
 	if ( wake && body->setIndex >= b2_firstSleepingSet )
@@ -970,8 +965,8 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 			// A body going from static to dynamic or kinematic goes to the awake set
 			// and other attached bodies must be awake as well. For consistency, this is
 			// done for all cases.
-			b2Body* bodyA = world->bodyArray + joint->edges[0].bodyId;
-			b2Body* bodyB = world->bodyArray + joint->edges[1].bodyId;
+			b2Body* bodyA = b2BodyArray_Get( &world->bodyArrayNew, joint->edges[0].bodyId);
+			b2Body* bodyB = b2BodyArray_Get( &world->bodyArrayNew, joint->edges[1].bodyId);
 			b2WakeBody( world, bodyA );
 			b2WakeBody( world, bodyB );
 
@@ -1067,7 +1062,7 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 			jointKey = joint->edges[edgeIndex].nextKey;
 
 			int otherEdgeIndex = edgeIndex ^ 1;
-			b2Body* otherBody = world->bodyArray + joint->edges[otherEdgeIndex].bodyId;
+			b2Body* otherBody = b2BodyArray_Get(&world->bodyArrayNew, joint->edges[otherEdgeIndex].bodyId);
 
 			// Skip disabled joint
 			if ( joint->setIndex == b2_disabledSet )
@@ -1148,8 +1143,7 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 
 			int otherEdgeIndex = edgeIndex ^ 1;
 			int otherBodyId = joint->edges[otherEdgeIndex].bodyId;
-			b2CheckIndex( world->bodyArray, otherBodyId );
-			b2Body* otherBody = world->bodyArray + otherBodyId;
+			b2Body* otherBody = b2BodyArray_Get(&world->bodyArrayNew, otherBodyId);
 
 			if ( otherBody->setIndex == b2_disabledSet )
 			{
@@ -1565,8 +1559,8 @@ void b2Body_Enable( b2BodyId bodyId )
 
 		jointKey = joint->edges[edgeIndex].nextKey;
 
-		b2Body* bodyA = world->bodyArray + joint->edges[0].bodyId;
-		b2Body* bodyB = world->bodyArray + joint->edges[1].bodyId;
+		b2Body* bodyA = b2BodyArray_Get( &world->bodyArrayNew, joint->edges[0].bodyId);
+		b2Body* bodyB = b2BodyArray_Get( &world->bodyArrayNew, joint->edges[1].bodyId);
 
 		if ( bodyA->setIndex == b2_disabledSet || bodyB->setIndex == b2_disabledSet )
 		{
@@ -1667,6 +1661,12 @@ void b2Body_EnableHitEvents( b2BodyId bodyId, bool enableHitEvents )
 		shape->enableHitEvents = enableHitEvents;
 		shapeId = shape->nextShapeId;
 	}
+}
+
+b2WorldId b2Body_GetWorld(b2BodyId bodyId)
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	return ( b2WorldId ){ bodyId.world0 + 1, world->revision };
 }
 
 int b2Body_GetShapeCount( b2BodyId bodyId )

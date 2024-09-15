@@ -637,7 +637,7 @@ void b2SplitIsland( b2World* world, int baseId )
 
 	int bodyCount = baseIsland->bodyCount;
 
-	b2Body* bodies = world->bodyArray;
+	b2Body* bodies = world->bodyArrayNew.data;
 	b2Contact* contacts = world->contactArray;
 
 	b2StackAllocator* alloc = &world->stackAllocator;
@@ -902,7 +902,6 @@ void b2ValidateIsland( b2World* world, int islandId )
 	B2_ASSERT( island->headBody != B2_NULL_INDEX );
 
 	{
-		b2Body* bodies = world->bodyArray;
 		B2_ASSERT( island->tailBody != B2_NULL_INDEX );
 		B2_ASSERT( island->bodyCount > 0 );
 		if ( island->bodyCount > 1 )
@@ -915,8 +914,7 @@ void b2ValidateIsland( b2World* world, int islandId )
 		int bodyId = island->headBody;
 		while ( bodyId != B2_NULL_INDEX )
 		{
-			b2CheckIndex( bodies, bodyId );
-			b2Body* body = bodies + bodyId;
+			b2Body* body = b2BodyArray_Get(&world->bodyArrayNew, bodyId);
 			B2_ASSERT( body->islandId == islandId );
 			B2_ASSERT( body->setIndex == island->setIndex );
 			count += 1;

@@ -6,6 +6,7 @@
 #include "body.h"
 #include "contact.h"
 #include "core.h"
+#include "island.h"
 #include "shape.h"
 #include "solver.h"
 #include "solver_set.h"
@@ -889,8 +890,8 @@ void b2Joint_WakeBodies( b2JointId jointId )
 	}
 
 	b2Joint* joint = b2GetJointFullId( world, jointId );
-	b2Body* bodyA = world->bodyArray + joint->edges[0].bodyId;
-	b2Body* bodyB = world->bodyArray + joint->edges[1].bodyId;
+	b2Body* bodyA = b2BodyArray_Get(&world->bodyArrayNew, joint->edges[0].bodyId);
+	b2Body* bodyB = b2BodyArray_Get(&world->bodyArrayNew, joint->edges[1].bodyId);
 
 	b2WakeBody( world, bodyA );
 	b2WakeBody( world, bodyB );

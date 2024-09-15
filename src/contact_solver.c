@@ -25,7 +25,7 @@ void b2PrepareOverflowContacts( b2StepContext* context )
 	b2BodyState* awakeStates = context->states;
 
 #if B2_VALIDATE
-	b2Body* bodies = world->bodyArray;
+	b2Body* bodies = world->bodyArrayNew.data;
 #endif
 
 	// Stiffer for static contacts to avoid bodies getting pushed through the ground
@@ -1291,7 +1291,7 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 	b2ContactConstraintSIMD* constraints = context->simdContactConstraints;
 	b2BodyState* awakeStates = context->states;
 #if B2_VALIDATE
-	b2Body* bodies = world->bodyArray;
+	b2Body* bodies = world->bodyArrayNew.data;
 #endif
 
 	// Stiffer for static contacts to avoid bodies getting pushed through the ground

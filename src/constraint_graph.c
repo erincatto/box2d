@@ -76,11 +76,8 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 
 	int bodyIdA = contact->edges[0].bodyId;
 	int bodyIdB = contact->edges[1].bodyId;
-	b2CheckIndex( world->bodyArray, bodyIdA );
-	b2CheckIndex( world->bodyArray, bodyIdB );
-
-	b2Body* bodyA = world->bodyArray + bodyIdA;
-	b2Body* bodyB = world->bodyArray + bodyIdB;
+	b2Body* bodyA = b2BodyArray_Get( &world->bodyArrayNew, bodyIdA);
+	b2Body* bodyB = b2BodyArray_Get( &world->bodyArrayNew, bodyIdB);
 	bool staticA = bodyA->setIndex == b2_staticSet;
 	bool staticB = bodyB->setIndex == b2_staticSet;
 	B2_ASSERT( staticA == false || staticB == false );
@@ -276,11 +273,8 @@ b2JointSim* b2CreateJointInGraph( b2World* world, b2Joint* joint )
 
 	int bodyIdA = joint->edges[0].bodyId;
 	int bodyIdB = joint->edges[1].bodyId;
-	b2CheckIndex( world->bodyArray, bodyIdA );
-	b2CheckIndex( world->bodyArray, bodyIdB );
-
-	b2Body* bodyA = world->bodyArray + bodyIdA;
-	b2Body* bodyB = world->bodyArray + bodyIdB;
+	b2Body* bodyA = b2BodyArray_Get(&world->bodyArrayNew, bodyIdA);
+	b2Body* bodyB = b2BodyArray_Get(&world->bodyArrayNew, bodyIdB);
 	bool staticA = bodyA->setIndex == b2_staticSet;
 	bool staticB = bodyB->setIndex == b2_staticSet;
 

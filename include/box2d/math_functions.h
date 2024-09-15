@@ -26,6 +26,15 @@ typedef struct b2Vec2
 	float x, y;
 } b2Vec2;
 
+/// Cosine and sine pair
+/// This uses a custom implementation designed for cross platform determinism
+typedef struct b2CosSin
+{
+	/// cosine and sine
+	float cosine;
+	float sine;
+} b2CosSin;
+
 /// 2D rotation
 /// This is similar to using a complex number for rotation
 typedef struct b2Rot
@@ -323,7 +332,14 @@ B2_INLINE float b2DistanceSquared( b2Vec2 a, b2Vec2 b )
 }
 
 /// Make a rotation using an angle in radians
-B2_API b2Rot b2MakeRot( float angle );
+B2_API b2CosSin b2ComputeCosSin( float angle );
+
+/// Make a rotation using an angle in radians
+B2_INLINE b2Rot b2MakeRot( float angle )
+{
+	b2CosSin cs = b2ComputeCosSin( angle );
+	return B2_LITERAL( b2Rot ){ cs.cosine, cs.sine };
+}
 
 /// Is this rotation normalized?
 B2_INLINE bool b2IsNormalized( b2Rot q )
@@ -345,7 +361,6 @@ B2_INLINE b2Rot b2NLerp( b2Rot q1, b2Rot q2, float t )
 
 	return b2NormalizeRot( q );
 }
-
 
 /// Compute the angular velocity necessary to rotate between two rotations over a give time
 ///	@param q1 initial rotation
