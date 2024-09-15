@@ -82,7 +82,7 @@ void b2Array_Resize( void** a, int elementSize, int count );
 		if ( a->count == a->capacity )                                                                                           \
 		{                                                                                                                        \
 			int newCapacity = a->capacity < 2 ? 2 : a->capacity + ( a->capacity >> 1 );                                          \
-			PREFIX##Array_Reserve( a, newCapacity );                                                                                  \
+			PREFIX##Array_Reserve( a, newCapacity );                                                                             \
 		}                                                                                                                        \
 		a->data[a->count] = value;                                                                                               \
 		a->count += 1;                                                                                                           \
@@ -104,13 +104,21 @@ void b2Array_Resize( void** a, int elementSize, int count );
 		a->count -= 1;                                                                                                           \
 	}                                                                                                                            \
                                                                                                                                  \
+	static inline T PREFIX##Array_Pop( PREFIX##Array* a )                                                                        \
+	{                                                                                                                            \
+		B2_ASSERT( a->count > 0 );                                                                                               \
+		T value = a->data[a->count - 1];                                                                                         \
+		a->count -= 1;                                                                                                           \
+		return value;                                                                                                            \
+	}                                                                                                                            \
+                                                                                                                                 \
 	static inline int PREFIX##Array_ByteCount( PREFIX##Array* a )                                                                \
 	{                                                                                                                            \
 		return (int)( a->capacity * sizeof( T ) );                                                                               \
 	}
 
 // Array implementations to be instantiated in a source file where the type T is known
-#define B2_ARRAY_SOURCE( T, PREFIX )                                                                                          \
+#define B2_ARRAY_SOURCE( T, PREFIX )                                                                                             \
 	PREFIX##Array PREFIX##Array_Create( int capacity )                                                                           \
 	{                                                                                                                            \
 		PREFIX##Array a;                                                                                                         \
