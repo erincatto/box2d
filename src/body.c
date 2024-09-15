@@ -21,6 +21,9 @@
 
 #include <string.h>
 
+// Implement functions for b2BodyArray
+B2_IMPLEMENT_ARRAY( b2Body, b2Body );
+
 b2Body* b2GetBody( b2World* world, int bodyId )
 {
 	return b2BodyArray_Get(&world->bodyArrayNew, bodyId);

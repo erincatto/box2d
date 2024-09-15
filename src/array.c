@@ -63,34 +63,4 @@ void b2Array_Resize( void** a, int elementSize, int count )
 	b2DestroyArray( tmp, elementSize );
 }
 
-#define B2_IMPLEMENT_ARRAY( T )                                                                                                  \
-	T##Array T##Array_Create( int capacity )                                                                                     \
-	{                                                                                                                            \
-		T##Array a;                                                                                                              \
-		a.data = b2Alloc( capacity * sizeof( T ) );                                                                              \
-		a.count = 0;                                                                                                             \
-		a.capacity = capacity;                                                                                                   \
-		return a;                                                                                                                \
-	}                                                                                                                            \
-                                                                                                                                 \
-	void T##Array_Reserve( T##Array* a, int newCapacity )                                                                        \
-	{                                                                                                                            \
-B2_ASSERT(newCapacity > a->capacity); \
-		if ( newCapacity <= a->capacity )                                                                                        \
-		{                                                                                                                        \
-			return;                                                                                                              \
-		}                                                                                                                        \
-		a->data = b2GrowAlloc( a->data, a->capacity * sizeof( T ), newCapacity * sizeof( T ) );                                  \
-		a->capacity = newCapacity;                                                                                               \
-	}                                                                                                                            \
-                                                                                                                                 \
-	void T##Array_Destroy( T##Array* a )                                                                                         \
-	{                                                                                                                            \
-		b2Free( a->data, a->capacity * sizeof( T ) );                                                                            \
-		a->data = NULL;                                                                                                          \
-		a->count = 0;                                                                                                            \
-		a->capacity = 0;                                                                                                         \
-	}
-
-#include "body.h"
-B2_IMPLEMENT_ARRAY( b2Body );
+B2_IMPLEMENT_ARRAY( int, b2Int );

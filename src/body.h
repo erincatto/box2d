@@ -170,4 +170,5 @@ static inline b2Sweep b2MakeSweep( const b2BodySim* bodySim )
 	return s;
 }
 
-B2_ARRAY_INLINE( b2Body );
+// Define inline functions for b2BodyArray
+B2_ARRAY_INLINE( b2Body, b2Body );
