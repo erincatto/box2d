@@ -16,7 +16,7 @@
 #endif
 
 #include <stdatomic.h>
-#include <stdint.h>
+#include <string.h>
 
 #ifdef BOX2D_PROFILE
 
