@@ -63,4 +63,4 @@ void b2Array_Resize( void** a, int elementSize, int count )
 	b2DestroyArray( tmp, elementSize );
 }
 
-B2_IMPLEMENT_ARRAY( int, b2Int );
+B2_ARRAY_SOURCE( int, b2Int );

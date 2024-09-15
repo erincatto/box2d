@@ -110,7 +110,7 @@ void b2Array_Resize( void** a, int elementSize, int count );
 	}
 
 // Array implementations to be instantiated in a source file where the type T is known
-#define B2_IMPLEMENT_ARRAY( T, PREFIX )                                                                                          \
+#define B2_ARRAY_SOURCE( T, PREFIX )                                                                                          \
 	PREFIX##Array PREFIX##Array_Create( int capacity )                                                                           \
 	{                                                                                                                            \
 		PREFIX##Array a;                                                                                                         \
