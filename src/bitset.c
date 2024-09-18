@@ -3,8 +3,6 @@
 
 #include "bitset.h"
 
-#include "allocate.h"
-
 #include <string.h>
 
 b2BitSet b2CreateBitSet( uint32_t bitCapacity )

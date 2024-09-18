@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include "block_array.h"
-
 #include "box2d/math_functions.h"
 
 #include <stdbool.h>

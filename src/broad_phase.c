@@ -6,7 +6,6 @@
 #include "broad_phase.h"
 
 #include "aabb.h"
-#include "allocate.h"
 #include "array.h"
 #include "body.h"
 #include "contact.h"
@@ -231,8 +230,8 @@ static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 	}
 
 	// Does a joint override collision?
-	b2Body* bodyA = b2GetBody( world, bodyIdA );
-	b2Body* bodyB = b2GetBody( world, bodyIdB );
+	b2Body* bodyA = b2BodyArray_Get( &world->bodyArrayNew, bodyIdA );
+	b2Body* bodyB = b2BodyArray_Get( &world->bodyArrayNew, bodyIdB );
 	if ( b2ShouldBodiesCollide( world, bodyA, bodyB ) == false )
 	{
 		return true;
@@ -345,7 +344,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 		return;
 	}
 
-	b2TracyCZoneNC( update_pairs, "Pairs", b2_colorFuchsia, true );
+	b2TracyCZoneNC( update_pairs, "Pairs", b2_colorMagenta, true );
 
 	b2StackAllocator* alloc = &world->stackAllocator;
 

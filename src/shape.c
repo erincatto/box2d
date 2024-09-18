@@ -3,7 +3,6 @@
 
 #include "shape.h"
 
-#include "allocate.h"
 #include "body.h"
 #include "broad_phase.h"
 #include "contact.h"
@@ -275,7 +274,7 @@ void b2DestroyShape( b2ShapeId shapeId )
 	// need to wake bodies because this might be a static body
 	bool wakeBodies = true;
 
-	b2Body* body = b2GetBody( world, shape->bodyId );
+	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, shape->bodyId );
 	b2DestroyShapeInternal( world, shape, body, wakeBodies );
 
 	if ( body->automaticMass == true )
@@ -407,7 +406,7 @@ void b2DestroyChain( b2ChainId chainId )
 	b2ChainShape* chain = world->chainArray + id;
 	bool wakeBodies = true;
 
-	b2Body* body = b2GetBody( world, chain->bodyId );
+	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, chain->bodyId );
 
 	// Remove the chain from the body's singly linked list.
 	int* chainIdPtr = &body->headChainId;
@@ -912,7 +911,7 @@ b2Filter b2Shape_GetFilter( b2ShapeId shapeId )
 
 static void b2ResetProxy( b2World* world, b2Shape* shape, bool wakeBodies, bool destroyProxy )
 {
-	b2Body* body = b2GetBody( world, shape->bodyId );
+	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, shape->bodyId );
 
 	int shapeId = shape->id;
 
@@ -1256,7 +1255,7 @@ int b2Shape_GetContactCapacity( b2ShapeId shapeId )
 		return 0;
 	}
 
-	b2Body* body = b2GetBody( world, shape->bodyId );
+	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, shape->bodyId );
 
 	// Conservative and fast
 	return body->contactCount;
@@ -1277,7 +1276,7 @@ int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData, int c
 		return 0;
 	}
 
-	b2Body* body = b2GetBody( world, shape->bodyId );
+	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, shape->bodyId );
 	int contactKey = body->headContactKey;
 	int index = 0;
 	while ( contactKey != B2_NULL_INDEX && index < capacity )
@@ -1332,7 +1331,7 @@ b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target )
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
-	b2Body* body = b2GetBody( world, shape->bodyId );
+	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, shape->bodyId );
 	b2Transform transform = b2GetBodyTransformQuick( world, body );
 
 	b2DistanceInput input;

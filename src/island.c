@@ -3,7 +3,6 @@
 
 #include "island.h"
 
-#include "array.h"
 #include "body.h"
 #include "contact.h"
 #include "core.h"
@@ -12,6 +11,9 @@
 #include "world.h"
 
 #include <stddef.h>
+
+B2_ARRAY_SOURCE( b2Island, b2Island );
+B2_ARRAY_SOURCE( b2IslandSim, b2IslandSim );
 
 b2Island* b2CreateIsland( b2World* world, int setIndex )
 {
@@ -34,7 +36,7 @@ b2Island* b2CreateIsland( b2World* world, int setIndex )
 
 	b2Island* island = world->islandArray + islandId;
 	island->setIndex = setIndex;
-	island->localIndex = set->islands.count;
+	island->localIndex = set->islandsNew.count;
 	island->islandId = islandId;
 	island->headBody = B2_NULL_INDEX;
 	island->tailBody = B2_NULL_INDEX;
@@ -48,7 +50,7 @@ b2Island* b2CreateIsland( b2World* world, int setIndex )
 	island->parentIsland = B2_NULL_INDEX;
 	island->constraintRemoveCount = 0;
 
-	b2IslandSim* islandSim = b2AddIsland( &set->islands );
+	b2IslandSim* islandSim = b2IslandSimArray_Add( &set->islandsNew );
 	islandSim->islandId = islandId;
 
 	return island;
@@ -61,11 +63,11 @@ void b2DestroyIsland( b2World* world, int islandId )
 	b2Island* island = world->islandArray + islandId;
 	b2CheckIndex( world->solverSetArray, island->setIndex );
 	b2SolverSet* set = world->solverSetArray + island->setIndex;
-	int movedIndex = b2RemoveIsland( &set->islands, island->localIndex );
+	int movedIndex = b2IslandSimArray_RemoveSwap( &set->islandsNew, island->localIndex );
 	if ( movedIndex != B2_NULL_INDEX )
 	{
 		// Fix index on moved element
-		b2IslandSim* movedElement = set->islands.data + island->localIndex;
+		b2IslandSim* movedElement = set->islandsNew.data + island->localIndex;
 		int movedId = movedElement->islandId;
 		b2Island* movedIsland = world->islandArray + movedId;
 		B2_ASSERT( movedIsland->localIndex == movedIndex );
@@ -124,8 +126,8 @@ void b2LinkContact( b2World* world, b2Contact* contact )
 	int bodyIdA = contact->edges[0].bodyId;
 	int bodyIdB = contact->edges[1].bodyId;
 
-	b2Body* bodyA = b2GetBody( world, bodyIdA );
-	b2Body* bodyB = b2GetBody( world, bodyIdB );
+	b2Body* bodyA = b2BodyArray_Get( &world->bodyArrayNew, bodyIdA );
+	b2Body* bodyB = b2BodyArray_Get( &world->bodyArrayNew, bodyIdB );
 
 	B2_ASSERT( bodyA->setIndex != b2_disabledSet && bodyB->setIndex != b2_disabledSet );
 	B2_ASSERT( bodyA->setIndex != b2_staticSet || bodyB->setIndex != b2_staticSet );
@@ -297,8 +299,8 @@ static void b2AddJointToIsland( b2World* world, int islandId, b2Joint* joint )
 
 void b2LinkJoint( b2World* world, b2Joint* joint, bool mergeIslands )
 {
-	b2Body* bodyA = b2GetBody( world, joint->edges[0].bodyId );
-	b2Body* bodyB = b2GetBody( world, joint->edges[1].bodyId );
+	b2Body* bodyA = b2BodyArray_Get( &world->bodyArrayNew, joint->edges[0].bodyId );
+	b2Body* bodyB = b2BodyArray_Get( &world->bodyArrayNew, joint->edges[1].bodyId );
 
 	if ( bodyA->setIndex == b2_awakeSet && bodyB->setIndex >= b2_firstSleepingSet )
 	{
@@ -447,7 +449,7 @@ static void b2MergeIsland( b2World* world, b2Island* island )
 	int bodyId = island->headBody;
 	while ( bodyId != B2_NULL_INDEX )
 	{
-		b2Body* body = b2GetBody( world, bodyId );
+		b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, bodyId );
 		body->islandId = rootId;
 		bodyId = body->islandNext;
 	}
@@ -471,12 +473,12 @@ static void b2MergeIsland( b2World* world, b2Island* island )
 
 	// connect body lists
 	B2_ASSERT( rootIsland->tailBody != B2_NULL_INDEX );
-	b2Body* tailBody = b2GetBody( world, rootIsland->tailBody );
+	b2Body* tailBody = b2BodyArray_Get( &world->bodyArrayNew, rootIsland->tailBody );
 	B2_ASSERT( tailBody->islandNext == B2_NULL_INDEX );
 	tailBody->islandNext = island->headBody;
 
 	B2_ASSERT( island->headBody != B2_NULL_INDEX );
-	b2Body* headBody = b2GetBody( world, island->headBody );
+	b2Body* headBody = b2BodyArray_Get( &world->bodyArrayNew, island->headBody );
 	B2_ASSERT( headBody->islandPrev == B2_NULL_INDEX );
 	headBody->islandPrev = rootIsland->tailBody;
 
@@ -553,8 +555,8 @@ void b2MergeAwakeIslands( b2World* world )
 	b2TracyCZoneNC( merge_islands, "Merge Islands", b2_colorMediumTurquoise, true );
 
 	b2SolverSet* awakeSet = world->solverSetArray + b2_awakeSet;
-	b2IslandSim* islandSims = awakeSet->islands.data;
-	int awakeIslandCount = awakeSet->islands.count;
+	b2IslandSim* islandSims = awakeSet->islandsNew.data;
+	int awakeIslandCount = awakeSet->islandsNew.count;
 	b2Island* islands = world->islandArray;
 
 	// Step 1: Ensure every child island points to its root island. This avoids merging a child island with

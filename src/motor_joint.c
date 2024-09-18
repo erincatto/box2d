@@ -119,11 +119,8 @@ void b2PrepareMotorJoint( b2JointSim* base, b2StepContext* context )
 	int localIndexA = bodyA->localIndex;
 	int localIndexB = bodyB->localIndex;
 
-	B2_ASSERT( 0 <= localIndexA && localIndexA <= setA->sims.count );
-	B2_ASSERT( 0 <= localIndexB && localIndexB <= setB->sims.count );
-
-	b2BodySim* bodySimA = setA->sims.data + bodyA->localIndex;
-	b2BodySim* bodySimB = setB->sims.data + bodyB->localIndex;
+	b2BodySim* bodySimA = b2BodySimArray_Get( &setA->simsNew, localIndexA );
+	b2BodySim* bodySimB = b2BodySimArray_Get( &setB->simsNew, localIndexB );
 
 	float mA = bodySimA->invMass;
 	float iA = bodySimA->invInertia;

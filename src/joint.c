@@ -17,6 +17,9 @@
 
 #include <stddef.h>
 
+B2_ARRAY_SOURCE( b2Joint, b2Joint );
+B2_ARRAY_SOURCE( b2JointSim, b2JointSim );
+
 b2DistanceJointDef b2DefaultDistanceJointDef( void )
 {
 	b2DistanceJointDef def = { 0 };
@@ -105,13 +108,11 @@ b2JointSim* b2GetJointSim( b2World* world, b2Joint* joint )
 	{
 		B2_ASSERT( 0 <= joint->colorIndex && joint->colorIndex < b2_graphColorCount );
 		b2GraphColor* color = world->constraintGraph.colors + joint->colorIndex;
-		B2_ASSERT( 0 <= joint->localIndex && joint->localIndex < color->joints.count );
-		return color->joints.data + joint->localIndex;
+		return b2JointSimArray_Get( &color->jointSims, joint->localIndex );
 	}
 
 	b2SolverSet* set = world->solverSetArray + joint->setIndex;
-	B2_ASSERT( 0 <= joint->localIndex && joint->localIndex < set->joints.count );
-	return set->joints.data + joint->localIndex;
+	return b2JointSimArray_Get( &set->jointsNew, joint->localIndex );
 }
 
 b2JointSim* b2GetJointSimCheckType( b2JointId jointId, b2JointType type )
@@ -204,9 +205,9 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 		// if either body is disabled, create in disabled set
 		b2SolverSet* set = world->solverSetArray + b2_disabledSet;
 		joint->setIndex = b2_disabledSet;
-		joint->localIndex = set->joints.count;
+		joint->localIndex = set->jointsNew.count;
 
-		jointSim = b2AddJoint( &set->joints );
+		jointSim = b2JointSimArray_Add( &set->jointsNew );
 		jointSim->jointId = jointId;
 		jointSim->bodyIdA = bodyIdA;
 		jointSim->bodyIdB = bodyIdB;
@@ -216,9 +217,9 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 		// joint is connecting static bodies
 		b2SolverSet* set = world->solverSetArray + b2_staticSet;
 		joint->setIndex = b2_staticSet;
-		joint->localIndex = set->joints.count;
+		joint->localIndex = set->jointsNew.count;
 
-		jointSim = b2AddJoint( &set->joints );
+		jointSim = b2JointSimArray_Add( &set->jointsNew );
 		jointSim->jointId = jointId;
 		jointSim->bodyIdA = bodyIdA;
 		jointSim->bodyIdB = bodyIdB;
@@ -250,8 +251,8 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 		b2CheckIndex( world->solverSetArray, setIndex );
 		b2SolverSet* set = world->solverSetArray + setIndex;
 		joint->setIndex = setIndex;
-		joint->localIndex = set->joints.count;
-		jointSim = b2AddJoint( &set->joints );
+		joint->localIndex = set->jointsNew.count;
+		jointSim = b2JointSimArray_Add( &set->jointsNew );
 		jointSim->jointId = jointId;
 		jointSim->bodyIdA = bodyIdA;
 		jointSim->bodyIdB = bodyIdB;
@@ -267,7 +268,7 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 			setIndex = bodyA->setIndex;
 
 			// Careful! The joint sim pointer was orphaned by the set merge.
-			jointSim = world->solverSetArray[setIndex].joints.data + joint->localIndex;
+			jointSim = world->solverSetArray[setIndex].jointsNew.data + joint->localIndex;
 		}
 
 		B2_ASSERT( joint->setIndex == setIndex );
@@ -665,8 +666,8 @@ void b2DestroyJointInternal( b2World* world, b2Joint* joint, bool wakeBodies )
 
 	int idA = edgeA->bodyId;
 	int idB = edgeB->bodyId;
-	b2Body* bodyA = b2GetBody( world, idA );
-	b2Body* bodyB = b2GetBody( world, idB );
+	b2Body* bodyA = b2BodyArray_Get( &world->bodyArrayNew, idA );
+	b2Body* bodyB = b2BodyArray_Get( &world->bodyArrayNew, idB );
 
 	// Remove from body A
 	if ( edgeA->prevKey != B2_NULL_INDEX )
@@ -714,7 +715,7 @@ void b2DestroyJointInternal( b2World* world, b2Joint* joint, bool wakeBodies )
 
 	bodyB->jointCount -= 1;
 
-	if (joint->islandId != B2_NULL_INDEX)
+	if ( joint->islandId != B2_NULL_INDEX )
 	{
 		B2_ASSERT( joint->setIndex > b2_disabledSet );
 		b2UnlinkJoint( world, joint );
@@ -735,11 +736,11 @@ void b2DestroyJointInternal( b2World* world, b2Joint* joint, bool wakeBodies )
 	else
 	{
 		b2SolverSet* set = world->solverSetArray + setIndex;
-		int movedIndex = b2RemoveJoint( &set->joints, localIndex );
+		int movedIndex = b2JointSimArray_RemoveSwap( &set->jointsNew, localIndex );
 		if ( movedIndex != B2_NULL_INDEX )
 		{
 			// Fix moved joint
-			b2JointSim* movedJointSim = set->joints.data + localIndex;
+			b2JointSim* movedJointSim = set->jointsNew.data + localIndex;
 			int movedId = movedJointSim->jointId;
 			b2Joint* movedJoint = world->jointArray + movedId;
 			B2_ASSERT( movedJoint->localIndex == movedIndex );
@@ -831,8 +832,8 @@ void b2Joint_SetCollideConnected( b2JointId jointId, bool shouldCollide )
 
 	joint->collideConnected = shouldCollide;
 
-	b2Body* bodyA = b2GetBody( world, joint->edges[0].bodyId );
-	b2Body* bodyB = b2GetBody( world, joint->edges[1].bodyId );
+	b2Body* bodyA = b2BodyArray_Get( &world->bodyArrayNew, joint->edges[0].bodyId );
+	b2Body* bodyB = b2BodyArray_Get( &world->bodyArrayNew, joint->edges[1].bodyId );
 
 	if ( shouldCollide )
 	{
@@ -890,8 +891,8 @@ void b2Joint_WakeBodies( b2JointId jointId )
 	}
 
 	b2Joint* joint = b2GetJointFullId( world, jointId );
-	b2Body* bodyA = b2BodyArray_Get(&world->bodyArrayNew, joint->edges[0].bodyId);
-	b2Body* bodyB = b2BodyArray_Get(&world->bodyArrayNew, joint->edges[1].bodyId);
+	b2Body* bodyA = b2BodyArray_Get( &world->bodyArrayNew, joint->edges[0].bodyId );
+	b2Body* bodyB = b2BodyArray_Get( &world->bodyArrayNew, joint->edges[1].bodyId );
 
 	b2WakeBody( world, bodyA );
 	b2WakeBody( world, bodyB );
@@ -1123,8 +1124,8 @@ void b2PrepareOverflowJoints( b2StepContext* context )
 
 	b2World* world = context->world;
 	b2ConstraintGraph* graph = context->graph;
-	b2JointSim* joints = graph->colors[b2_overflowIndex].joints.data;
-	int jointCount = graph->colors[b2_overflowIndex].joints.count;
+	b2JointSim* joints = graph->colors[b2_overflowIndex].jointSims.data;
+	int jointCount = graph->colors[b2_overflowIndex].jointSims.count;
 
 	for ( int i = 0; i < jointCount; ++i )
 	{
@@ -1141,8 +1142,8 @@ void b2WarmStartOverflowJoints( b2StepContext* context )
 
 	b2World* world = context->world;
 	b2ConstraintGraph* graph = context->graph;
-	b2JointSim* joints = graph->colors[b2_overflowIndex].joints.data;
-	int jointCount = graph->colors[b2_overflowIndex].joints.count;
+	b2JointSim* joints = graph->colors[b2_overflowIndex].jointSims.data;
+	int jointCount = graph->colors[b2_overflowIndex].jointSims.count;
 
 	for ( int i = 0; i < jointCount; ++i )
 	{
@@ -1159,8 +1160,8 @@ void b2SolveOverflowJoints( b2StepContext* context, bool useBias )
 
 	b2World* world = context->world;
 	b2ConstraintGraph* graph = context->graph;
-	b2JointSim* joints = graph->colors[b2_overflowIndex].joints.data;
-	int jointCount = graph->colors[b2_overflowIndex].joints.count;
+	b2JointSim* joints = graph->colors[b2_overflowIndex].jointSims.data;
+	int jointCount = graph->colors[b2_overflowIndex].jointSims.count;
 
 	for ( int i = 0; i < jointCount; ++i )
 	{
@@ -1179,8 +1180,8 @@ extern void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform t
 
 void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 {
-	b2Body* bodyA = b2GetBody( world, joint->edges[0].bodyId );
-	b2Body* bodyB = b2GetBody( world, joint->edges[1].bodyId );
+	b2Body* bodyA = b2BodyArray_Get( &world->bodyArrayNew, joint->edges[0].bodyId );
+	b2Body* bodyB = b2BodyArray_Get( &world->bodyArrayNew, joint->edges[1].bodyId );
 	if ( bodyA->setIndex == b2_disabledSet || bodyB->setIndex == b2_disabledSet )
 	{
 		return;

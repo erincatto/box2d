@@ -515,7 +515,6 @@ static void UpdateUI()
 	}
 }
 
-//
 int main( int, char** )
 {
 #if defined( _WIN32 )

@@ -3,7 +3,6 @@
 
 #include "stack_allocator.h"
 
-#include "allocate.h"
 #include "array.h"
 #include "core.h"
 

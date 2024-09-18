@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "array.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -18,9 +20,7 @@ typedef struct b2World b2World;
 // Use bit array to emit start/stop touching events in defined order, per thread. Try using contact index, assuming contacts are
 // created in a deterministic order. bit-wise OR together bit arrays and issue changes:
 // - start touching: merge islands - temporary linked list - mark root island dirty - wake all - largest island is root
-// - stop touching: mark island dirty - wake island
-// Reserve island jobs
-// - island job does a DFS to merge/split islands. Mutex to allocate new islands. Split islands sent to different jobs.
+// - stop touching: increment constraintRemoveCount
 
 // Persistent island for awake bodies, joints, and contacts
 // https://en.wikipedia.org/wiki/Component_(graph_theory)
@@ -54,6 +54,7 @@ typedef struct b2Island
 	int parentIsland;
 
 	// Keeps track of how many contacts have been removed from this island.
+	// This is used to determine if an island is a candidate for splitting.
 	int constraintRemoveCount;
 } b2Island;
 
@@ -86,3 +87,6 @@ void b2SplitIsland( b2World* world, int baseId );
 void b2SplitIslandTask( int startIndex, int endIndex, uint32_t threadIndex, void* context );
 
 void b2ValidateIsland( b2World* world, int islandId );
+
+B2_ARRAY_INLINE( b2Island, b2Island );
+B2_ARRAY_INLINE( b2IslandSim, b2IslandSim );

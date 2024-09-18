@@ -229,11 +229,11 @@ void b2PrepareDistanceJoint( b2JointSim* base, b2StepContext* context )
 	b2SolverSet* setA = world->solverSetArray + bodyA->setIndex;
 	b2SolverSet* setB = world->solverSetArray + bodyB->setIndex;
 
-	B2_ASSERT( 0 <= bodyA->localIndex && bodyA->localIndex <= setA->sims.count );
-	B2_ASSERT( 0 <= bodyB->localIndex && bodyB->localIndex <= setB->sims.count );
+	int localIndexA = bodyA->localIndex;
+	int localIndexB = bodyB->localIndex;
 
-	b2BodySim* bodySimA = setA->sims.data + bodyA->localIndex;
-	b2BodySim* bodySimB = setB->sims.data + bodyB->localIndex;
+	b2BodySim* bodySimA = b2BodySimArray_Get( &setA->simsNew, localIndexA );
+	b2BodySim* bodySimB = b2BodySimArray_Get( &setB->simsNew, localIndexB );
 
 	float mA = bodySimA->invMass;
 	float iA = bodySimA->invInertia;
@@ -247,8 +247,8 @@ void b2PrepareDistanceJoint( b2JointSim* base, b2StepContext* context )
 
 	b2DistanceJoint* joint = &base->distanceJoint;
 
-	joint->indexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
-	joint->indexB = bodyB->setIndex == b2_awakeSet ? bodyB->localIndex : B2_NULL_INDEX;
+	joint->indexA = bodyA->setIndex == b2_awakeSet ? localIndexA : B2_NULL_INDEX;
+	joint->indexB = bodyB->setIndex == b2_awakeSet ? localIndexB : B2_NULL_INDEX;
 
 	// initial anchors in world space
 	joint->anchorA = b2RotateVector( bodySimA->transform.q, b2Sub( base->localOriginAnchorA, bodySimA->localCenter ) );

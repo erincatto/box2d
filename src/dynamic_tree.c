@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 
 #include "aabb.h"
-#include "allocate.h"
 #include "core.h"
 
 #include "box2d/collision.h"

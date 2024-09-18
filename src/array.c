@@ -3,7 +3,6 @@
 
 #include "array.h"
 
-#include "allocate.h"
 #include "core.h"
 
 #include <string.h>

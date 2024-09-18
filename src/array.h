@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include "assert.h"
 #include "core.h"
 
 // todo compare with https://github.com/skeeto/growable-buf
@@ -57,14 +56,26 @@ void b2Array_Resize( void** a, int elementSize, int count );
 // Cons
 // - macros suck, however all array functions are real, type-safe functions
 
-// Array definition that doesn't need the type T to be defined
-#define B2_ARRAY( T, PREFIX )                                                                                                    \
+// Array declaration that doesn't need the type T to be defined
+#define B2_DECLARE_ARRAY( T, PREFIX )                                                                                            \
+	typedef struct                                                                                                               \
+	{                                                                                                                            \
+		struct T* data;                                                                                                          \
+		int count;                                                                                                               \
+		int capacity;                                                                                                            \
+	} PREFIX##Array;                                                                                                             \
+	PREFIX##Array PREFIX##Array_Create( int capacity );                                                                          \
+	void PREFIX##Array_Reserve( PREFIX##Array* a, int newCapacity );                                                             \
+	void PREFIX##Array_Destroy( PREFIX##Array* a );
+
+#define B2_DECLARE_ARRAY_NATIVE( T, PREFIX )                                                                                     \
 	typedef struct                                                                                                               \
 	{                                                                                                                            \
 		T* data;                                                                                                                 \
 		int count;                                                                                                               \
 		int capacity;                                                                                                            \
 	} PREFIX##Array;                                                                                                             \
+	/* Create array with initial capacity. Zero initialization is also supported */                                              \
 	PREFIX##Array PREFIX##Array_Create( int capacity );                                                                          \
 	void PREFIX##Array_Reserve( PREFIX##Array* a, int newCapacity );                                                             \
 	void PREFIX##Array_Destroy( PREFIX##Array* a );
@@ -75,6 +86,17 @@ void b2Array_Resize( void** a, int elementSize, int count );
 	{                                                                                                                            \
 		B2_ASSERT( 0 <= index && index < a->count );                                                                             \
 		return a->data + index;                                                                                                  \
+	}                                                                                                                            \
+                                                                                                                                 \
+	static inline T* PREFIX##Array_Add( PREFIX##Array* a )                                                                       \
+	{                                                                                                                            \
+		if ( a->count == a->capacity )                                                                                           \
+		{                                                                                                                        \
+			int newCapacity = a->capacity < 2 ? 2 : a->capacity + ( a->capacity >> 1 );                                          \
+			PREFIX##Array_Reserve( a, newCapacity );                                                                             \
+		}                                                                                                                        \
+		a->count += 1;                                                                                                           \
+		return a->data + ( a->count - 1 );                                                                                       \
 	}                                                                                                                            \
                                                                                                                                  \
 	static inline void PREFIX##Array_Push( PREFIX##Array* a, T value )                                                           \
@@ -94,14 +116,17 @@ void b2Array_Resize( void** a, int elementSize, int count );
 		a->data[index] = value;                                                                                                  \
 	}                                                                                                                            \
                                                                                                                                  \
-	static inline void PREFIX##Array_RemoveSwap( PREFIX##Array* a, int index )                                                   \
+	static inline int PREFIX##Array_RemoveSwap( PREFIX##Array* a, int index )                                                    \
 	{                                                                                                                            \
 		B2_ASSERT( 0 <= index && index < a->count );                                                                             \
+		int movedIndex = B2_NULL_INDEX;                                                                                          \
 		if ( index != a->count - 1 )                                                                                             \
 		{                                                                                                                        \
-			a->data[index] = a->data[a->count - 1];                                                                              \
+			movedIndex = a->count - 1;                                                                                           \
+			a->data[index] = a->data[movedIndex];                                                                                \
 		}                                                                                                                        \
 		a->count -= 1;                                                                                                           \
+		return movedIndex;                                                                                                       \
 	}                                                                                                                            \
                                                                                                                                  \
 	static inline T PREFIX##Array_Pop( PREFIX##Array* a )                                                                        \
@@ -146,8 +171,15 @@ void b2Array_Resize( void** a, int elementSize, int count );
 		a->capacity = 0;                                                                                                         \
 	}
 
-B2_ARRAY( int, b2Int );
+B2_DECLARE_ARRAY_NATIVE( int, b2Int );
 B2_ARRAY_INLINE( int, b2Int );
 
-typedef struct b2Body b2Body;
-B2_ARRAY( b2Body, b2Body );
+B2_DECLARE_ARRAY( b2Body, b2Body );
+B2_DECLARE_ARRAY( b2BodySim, b2BodySim );
+B2_DECLARE_ARRAY( b2BodyState, b2BodyState );
+B2_DECLARE_ARRAY( b2Contact, b2Contact );
+B2_DECLARE_ARRAY( b2ContactSim, b2ContactSim );
+B2_DECLARE_ARRAY( b2Joint, b2Joint );
+B2_DECLARE_ARRAY( b2JointSim, b2JointSim );
+B2_DECLARE_ARRAY( b2Island, b2Island );
+B2_DECLARE_ARRAY( b2IslandSim, b2IslandSim );
