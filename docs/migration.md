@@ -292,6 +292,6 @@ Iterating over all bodies/shapes/joints/contacts in a world is very inefficient 
 ### Library configuration
 Version 3.0 offers more library configuration. You can override the allocator and you can intercept assertions by registering global callbacks. These are for expert users and they must be thread safe.
 ```c
-void b2SetAllocator(b2AllocFcn* allocFcn, b2FreeFcn* freeFcn);
+void b2SetAllocator(b2AllocFcn* allocFcn, b2FreeFcn* freeFcn, void* userData);
 void b2SetAssertFcn(b2AssertFcn* assertFcn);
 ```

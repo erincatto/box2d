@@ -58,7 +58,7 @@ inline bool IsPowerOfTwo( int32_t x )
 	return ( x != 0 ) && ( ( x & ( x - 1 ) ) == 0 );
 }
 
-void* AllocFcn( uint32_t size, int32_t alignment )
+void* AllocFcn( uint32_t size, int32_t alignment, void* userData )
 {
 	// Allocation must be a multiple of alignment or risk a seg fault
 	// https://en.cppreference.com/w/c/memory/aligned_alloc
@@ -75,7 +75,7 @@ void* AllocFcn( uint32_t size, int32_t alignment )
 	return ptr;
 }
 
-void FreeFcn( void* mem )
+void FreeFcn( void* mem, void* userData )
 {
 #if defined( _WIN64 )
 	_aligned_free( mem );
@@ -530,7 +530,7 @@ int main( int, char** )
 #endif
 
 	// Install memory hooks
-	b2SetAllocator( AllocFcn, FreeFcn );
+	b2SetAllocator( AllocFcn, FreeFcn, nullptr );
 	b2SetAssertFcn( AssertFcn );
 
 	char buffer[128];
