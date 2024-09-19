@@ -46,18 +46,18 @@
 /// Prototype for user allocation function
 ///	@param size the allocation size in bytes
 ///	@param alignment the required alignment, guaranteed to be a power of 2
-typedef void* b2AllocFcn( unsigned int size, int alignment );
+typedef void* b2AllocFcn( unsigned int size, int alignment, void* userData );
 
 /// Prototype for user free function
 ///	@param mem the memory previously allocated through `b2AllocFcn`
-typedef void b2FreeFcn( void* mem );
+typedef void b2FreeFcn( void* mem, void* userData );
 
 /// Prototype for the user assert callback. Return 0 to skip the debugger break.
 typedef int b2AssertFcn( const char* condition, const char* fileName, int lineNumber );
 
 /// This allows the user to override the allocation functions. These should be
 ///	set during application startup.
-B2_API void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn );
+B2_API void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn, void* userData );
 
 /// @return the total bytes allocated by Box2D
 B2_API int b2GetByteCount( void );

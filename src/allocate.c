@@ -33,13 +33,15 @@
 
 static b2AllocFcn* b2_allocFcn = NULL;
 static b2FreeFcn* b2_freeFcn = NULL;
+static void* b2_userData = NULL;
 
 static _Atomic int b2_byteCount;
 
-void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn )
+void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn, void* userData )
 {
 	b2_allocFcn = allocFcn;
 	b2_freeFcn = freeFcn;
+	b2_userData = userData;
 }
 
 // Use 32 byte alignment for everything. Works with 256bit SIMD.
@@ -56,7 +58,7 @@ void* b2Alloc( uint32_t size )
 
 	if ( b2_allocFcn != NULL )
 	{
-		void* ptr = b2_allocFcn( size32, B2_ALIGNMENT );
+		void* ptr = b2_allocFcn( size32, B2_ALIGNMENT, b2_userData );
 		b2TracyCAlloc( ptr, size );
 
 		B2_ASSERT( ptr != NULL );
@@ -97,7 +99,7 @@ void b2Free( void* mem, uint32_t size )
 
 	if ( b2_freeFcn != NULL )
 	{
-		b2_freeFcn( mem );
+		b2_freeFcn( mem, b2_userData );
 	}
 	else
 	{
