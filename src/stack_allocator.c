@@ -16,6 +16,9 @@ typedef struct b2StackEntry
 	bool usedMalloc;
 } b2StackEntry;
 
+B2_ARRAY_INLINE( b2StackEntry, b2StackEntry );
+B2_ARRAY_SOURCE( b2StackEntry, b2StackEntry );
+
 b2StackAllocator b2CreateStackAllocator( int capacity )
 {
 	B2_ASSERT( capacity >= 0 );
@@ -25,13 +28,13 @@ b2StackAllocator b2CreateStackAllocator( int capacity )
 	allocator.allocation = 0;
 	allocator.maxAllocation = 0;
 	allocator.index = 0;
-	allocator.entries = b2CreateArray( sizeof( b2StackEntry ), 32 );
+	allocator.entries = b2StackEntryArray_Create( 32 );
 	return allocator;
 }
 
 void b2DestroyStackAllocator( b2StackAllocator* allocator )
 {
-	b2DestroyArray( allocator->entries, sizeof( b2StackEntry ) );
+	b2StackEntryArray_Destroy( &allocator->entries );
 	b2Free( allocator->data, allocator->capacity );
 }
 
@@ -66,15 +69,15 @@ void* b2AllocateStackItem( b2StackAllocator* alloc, int size, const char* name )
 		alloc->maxAllocation = alloc->allocation;
 	}
 
-	b2Array_Push( alloc->entries, entry );
+	b2StackEntryArray_Push( &alloc->entries, entry );
 	return entry.data;
 }
 
 void b2FreeStackItem( b2StackAllocator* alloc, void* mem )
 {
-	int entryCount = b2Array( alloc->entries ).count;
+	int entryCount = alloc->entries.count;
 	B2_ASSERT( entryCount > 0 );
-	b2StackEntry* entry = alloc->entries + ( entryCount - 1 );
+	b2StackEntry* entry = alloc->entries.data + ( entryCount - 1 );
 	B2_ASSERT( mem == entry->data );
 	if ( entry->usedMalloc )
 	{
@@ -85,7 +88,7 @@ void b2FreeStackItem( b2StackAllocator* alloc, void* mem )
 		alloc->index -= entry->size;
 	}
 	alloc->allocation -= entry->size;
-	b2Array_Pop( alloc->entries );
+	b2StackEntryArray_Pop( &alloc->entries );
 }
 
 void b2GrowStack( b2StackAllocator* alloc )

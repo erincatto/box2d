@@ -96,14 +96,14 @@ typedef struct b2World
 	struct b2ChainShape* chainArray;
 
 	// Per thread storage
-	b2TaskContext* taskContextArray;
+	b2TaskContextArray taskContextArray;
 
-	struct b2BodyMoveEvent* bodyMoveEventArray;
-	struct b2SensorBeginTouchEvent* sensorBeginEventArray;
-	struct b2SensorEndTouchEvent* sensorEndEventArray;
-	struct b2ContactBeginTouchEvent* contactBeginArray;
-	struct b2ContactEndTouchEvent* contactEndArray;
-	struct b2ContactHitEvent* contactHitArray;
+	b2BodyMoveEventArray bodyMoveEventArray;
+	b2SensorBeginTouchEventArray sensorBeginEventArray;
+	b2SensorEndTouchEventArray sensorEndEventArray;
+	b2ContactBeginTouchEventArray contactBeginArray;
+	b2ContactEndTouchEventArray contactEndArray;
+	b2ContactHitEventArray contactHitArray;
 
 	// Used to track debug draw
 	b2BitSet debugBodySet;
@@ -170,3 +170,11 @@ b2World* b2GetWorldLocked( int index );
 void b2ValidateConnectivity( b2World* world );
 void b2ValidateSolverSets( b2World* world );
 void b2ValidateContacts( b2World* world );
+
+B2_ARRAY_INLINE( b2BodyMoveEvent, b2BodyMoveEvent );
+B2_ARRAY_INLINE( b2ContactBeginTouchEvent, b2ContactBeginTouchEvent );
+B2_ARRAY_INLINE( b2ContactEndTouchEvent, b2ContactEndTouchEvent );
+B2_ARRAY_INLINE( b2ContactHitEvent, b2ContactHitEvent );
+B2_ARRAY_INLINE( b2SensorBeginTouchEvent, b2SensorBeginTouchEvent );
+B2_ARRAY_INLINE( b2SensorEndTouchEvent, b2SensorEndTouchEvent );
+B2_ARRAY_INLINE( b2TaskContext, b2TaskContext );

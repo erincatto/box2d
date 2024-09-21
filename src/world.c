@@ -30,6 +30,14 @@
 _Static_assert( b2_maxWorlds > 0, "must be 1 or more" );
 b2World b2_worlds[b2_maxWorlds];
 
+B2_ARRAY_SOURCE( b2BodyMoveEvent, b2BodyMoveEvent );
+B2_ARRAY_SOURCE( b2ContactBeginTouchEvent, b2ContactBeginTouchEvent );
+B2_ARRAY_SOURCE( b2ContactEndTouchEvent, b2ContactEndTouchEvent );
+B2_ARRAY_SOURCE( b2ContactHitEvent, b2ContactHitEvent );
+B2_ARRAY_SOURCE( b2SensorBeginTouchEvent, b2SensorBeginTouchEvent );
+B2_ARRAY_SOURCE( b2SensorEndTouchEvent, b2SensorEndTouchEvent );
+B2_ARRAY_SOURCE( b2TaskContext, b2TaskContext );
+
 b2World* b2GetWorldFromId( b2WorldId id )
 {
 	B2_ASSERT( 1 <= id.index1 && id.index1 <= b2_maxWorlds );
@@ -149,12 +157,12 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->islandIdPool = b2CreateIdPool();
 	world->islandArray = b2CreateArray( sizeof( b2Island ), 8 );
 
-	world->bodyMoveEventArray = b2CreateArray( sizeof( b2BodyMoveEvent ), 4 );
-	world->sensorBeginEventArray = b2CreateArray( sizeof( b2SensorBeginTouchEvent ), 4 );
-	world->sensorEndEventArray = b2CreateArray( sizeof( b2SensorEndTouchEvent ), 4 );
-	world->contactBeginArray = b2CreateArray( sizeof( b2ContactBeginTouchEvent ), 4 );
-	world->contactEndArray = b2CreateArray( sizeof( b2ContactEndTouchEvent ), 4 );
-	world->contactHitArray = b2CreateArray( sizeof( b2ContactHitEvent ), 4 );
+	world->bodyMoveEventArray = b2BodyMoveEventArray_Create( 4 );
+	world->sensorBeginEventArray = b2SensorBeginTouchEventArray_Create( 4 );
+	world->sensorEndEventArray = b2SensorEndTouchEventArray_Create( 4 );
+	world->contactBeginArray = b2ContactBeginTouchEventArray_Create( 4 );
+	world->contactEndArray = b2ContactEndTouchEventArray_Create( 4 );
+	world->contactHitArray = b2ContactHitEventArray_Create( 4 );
 
 	world->stepIndex = 0;
 	world->splitIslandId = B2_NULL_INDEX;
@@ -190,12 +198,14 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 		world->userTaskContext = NULL;
 	}
 
-	world->taskContextArray = b2CreateArray( sizeof( b2TaskContext ), world->workerCount );
+	world->taskContextArray = b2TaskContextArray_Create( world->workerCount );
+	b2TaskContextArray_Resize( &world->taskContextArray, world->workerCount );
+
 	for ( int i = 0; i < world->workerCount; ++i )
 	{
-		world->taskContextArray[i].contactStateBitSet = b2CreateBitSet( 1024 );
-		world->taskContextArray[i].enlargedSimBitSet = b2CreateBitSet( 256 );
-		world->taskContextArray[i].awakeIslandBitSet = b2CreateBitSet( 256 );
+		world->taskContextArray.data[i].contactStateBitSet = b2CreateBitSet( 1024 );
+		world->taskContextArray.data[i].enlargedSimBitSet = b2CreateBitSet( 256 );
+		world->taskContextArray.data[i].awakeIslandBitSet = b2CreateBitSet( 256 );
 	}
 
 	world->debugBodySet = b2CreateBitSet( 256 );
@@ -216,19 +226,19 @@ void b2DestroyWorld( b2WorldId worldId )
 
 	for ( int i = 0; i < world->workerCount; ++i )
 	{
-		b2DestroyBitSet( &world->taskContextArray[i].contactStateBitSet );
-		b2DestroyBitSet( &world->taskContextArray[i].enlargedSimBitSet );
-		b2DestroyBitSet( &world->taskContextArray[i].awakeIslandBitSet );
+		b2DestroyBitSet( &world->taskContextArray.data[i].contactStateBitSet );
+		b2DestroyBitSet( &world->taskContextArray.data[i].enlargedSimBitSet );
+		b2DestroyBitSet( &world->taskContextArray.data[i].awakeIslandBitSet );
 	}
 
-	b2DestroyArray( world->taskContextArray, sizeof( b2TaskContext ) );
+	b2TaskContextArray_Destroy( &world->taskContextArray );
 
-	b2DestroyArray( world->bodyMoveEventArray, sizeof( b2BodyMoveEvent ) );
-	b2DestroyArray( world->sensorBeginEventArray, sizeof( b2SensorBeginTouchEvent ) );
-	b2DestroyArray( world->sensorEndEventArray, sizeof( b2SensorEndTouchEvent ) );
-	b2DestroyArray( world->contactBeginArray, sizeof( b2ContactBeginTouchEvent ) );
-	b2DestroyArray( world->contactEndArray, sizeof( b2ContactEndTouchEvent ) );
-	b2DestroyArray( world->contactHitArray, sizeof( b2ContactHitEvent ) );
+	b2BodyMoveEventArray_Destroy( &world->bodyMoveEventArray );
+	b2SensorBeginTouchEventArray_Destroy( &world->sensorBeginEventArray );
+	b2SensorEndTouchEventArray_Destroy( &world->sensorEndEventArray );
+	b2ContactBeginTouchEventArray_Destroy( &world->contactBeginArray );
+	b2ContactEndTouchEventArray_Destroy( &world->contactEndArray );
+	b2ContactHitEventArray_Destroy( &world->contactHitArray );
 
 	int chainCapacity = b2Array( world->chainArray ).count;
 	for ( int i = 0; i < chainCapacity; ++i )
@@ -293,7 +303,7 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 	b2StepContext* stepContext = context;
 	b2World* world = stepContext->world;
 	B2_ASSERT( threadIndex < world->workerCount );
-	b2TaskContext* taskContext = world->taskContextArray + threadIndex;
+	b2TaskContext* taskContext = world->taskContextArray.data + threadIndex;
 	b2ContactSim** contactSims = stepContext->contacts;
 	b2Shape* shapes = world->shapeArray;
 	b2Body* bodies = world->bodyArrayNew.data;
@@ -469,7 +479,7 @@ static void b2Collide( b2StepContext* context )
 	int contactIdCapacity = b2GetIdCapacity( &world->contactIdPool );
 	for ( int i = 0; i < world->workerCount; ++i )
 	{
-		b2SetBitCountAndClear( &world->taskContextArray[i].contactStateBitSet, contactIdCapacity );
+		b2SetBitCountAndClear( &world->taskContextArray.data[i].contactStateBitSet, contactIdCapacity );
 	}
 
 	// Task should take at least 40us on a 4GHz CPU (10K cycles)
@@ -489,10 +499,10 @@ static void b2Collide( b2StepContext* context )
 	b2TracyCZoneNC( contact_state, "Contact State", b2_colorCoral, true );
 
 	// Bitwise OR all contact bits
-	b2BitSet* bitSet = &world->taskContextArray[0].contactStateBitSet;
+	b2BitSet* bitSet = &world->taskContextArray.data[0].contactStateBitSet;
 	for ( int i = 1; i < world->workerCount; ++i )
 	{
-		b2InPlaceUnion( bitSet, &world->taskContextArray[i].contactStateBitSet );
+		b2InPlaceUnion( bitSet, &world->taskContextArray.data[i].contactStateBitSet );
 	}
 
 	b2Contact* contacts = world->contactArray;
@@ -544,7 +554,7 @@ static void b2Collide( b2StepContext* context )
 				if ( ( flags & b2_contactTouchingFlag ) != 0 && ( flags & b2_contactEnableContactEvents ) != 0 )
 				{
 					b2ContactEndTouchEvent event = { shapeIdA, shapeIdB };
-					b2Array_Push( world->contactEndArray, event );
+					b2ContactEndTouchEventArray_Push( &world->contactEndArray, event );
 				}
 
 				// Bounding boxes no longer overlap
@@ -564,13 +574,13 @@ static void b2Collide( b2StepContext* context )
 						if ( shapeA->isSensor )
 						{
 							b2SensorBeginTouchEvent event = { shapeIdA, shapeIdB };
-							b2Array_Push( world->sensorBeginEventArray, event );
+							b2SensorBeginTouchEventArray_Push( &world->sensorBeginEventArray, event );
 						}
 
 						if ( shapeB->isSensor )
 						{
 							b2SensorBeginTouchEvent event = { shapeIdB, shapeIdA };
-							b2Array_Push( world->sensorBeginEventArray, event );
+							b2SensorBeginTouchEventArray_Push( &world->sensorBeginEventArray, event );
 						}
 					}
 
@@ -583,7 +593,7 @@ static void b2Collide( b2StepContext* context )
 					if ( flags & b2_contactEnableContactEvents )
 					{
 						b2ContactBeginTouchEvent event = { shapeIdA, shapeIdB };
-						b2Array_Push( world->contactBeginArray, event );
+						b2ContactBeginTouchEventArray_Push( &world->contactBeginArray, event );
 					}
 
 					B2_ASSERT( contactSim->manifold.pointCount > 0 );
@@ -623,13 +633,13 @@ static void b2Collide( b2StepContext* context )
 						if ( shapeA->isSensor )
 						{
 							b2SensorEndTouchEvent event = { shapeIdA, shapeIdB };
-							b2Array_Push( world->sensorEndEventArray, event );
+							b2SensorEndTouchEventArray_Push( &world->sensorEndEventArray, event );
 						}
 
 						if ( shapeB->isSensor )
 						{
 							b2SensorEndTouchEvent event = { shapeIdB, shapeIdA };
-							b2Array_Push( world->sensorEndEventArray, event );
+							b2SensorEndTouchEventArray_Push( &world->sensorEndEventArray, event );
 						}
 					}
 				}
@@ -641,7 +651,7 @@ static void b2Collide( b2StepContext* context )
 					if ( contact->flags & b2_contactEnableContactEvents )
 					{
 						b2ContactEndTouchEvent event = { shapeIdA, shapeIdB };
-						b2Array_Push( world->contactEndArray, event );
+						b2ContactEndTouchEventArray_Push( &world->contactEndArray, event );
 					}
 
 					B2_ASSERT( contactSim->manifold.pointCount == 0 );
@@ -680,12 +690,12 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 
 	// Prepare to capture events
 	// Ensure user does not access stale data if there is an early return
-	b2Array_Clear( world->bodyMoveEventArray );
-	b2Array_Clear( world->sensorBeginEventArray );
-	b2Array_Clear( world->sensorEndEventArray );
-	b2Array_Clear( world->contactBeginArray );
-	b2Array_Clear( world->contactEndArray );
-	b2Array_Clear( world->contactHitArray );
+	b2BodyMoveEventArray_Clear( &world->bodyMoveEventArray );
+	b2SensorBeginTouchEventArray_Clear( &world->sensorBeginEventArray );
+	b2SensorEndTouchEventArray_Clear( &world->sensorEndEventArray );
+	b2ContactBeginTouchEventArray_Clear( &world->contactBeginArray );
+	b2ContactEndTouchEventArray_Clear( &world->contactEndArray );
+	b2ContactHitEventArray_Clear( &world->contactHitArray );
 
 	world->profile = ( b2Profile ){ 0 };
 
@@ -1363,8 +1373,8 @@ b2BodyEvents b2World_GetBodyEvents( b2WorldId worldId )
 		return ( b2BodyEvents ){ 0 };
 	}
 
-	int count = b2Array( world->bodyMoveEventArray ).count;
-	b2BodyEvents events = { world->bodyMoveEventArray, count };
+	int count = world->bodyMoveEventArray.count;
+	b2BodyEvents events = { world->bodyMoveEventArray.data, count };
 	return events;
 }
 
@@ -1377,10 +1387,10 @@ b2SensorEvents b2World_GetSensorEvents( b2WorldId worldId )
 		return ( b2SensorEvents ){ 0 };
 	}
 
-	int beginCount = b2Array( world->sensorBeginEventArray ).count;
-	int endCount = b2Array( world->sensorEndEventArray ).count;
+	int beginCount = world->sensorBeginEventArray.count;
+	int endCount = world->sensorEndEventArray.count;
 
-	b2SensorEvents events = { world->sensorBeginEventArray, world->sensorEndEventArray, beginCount, endCount };
+	b2SensorEvents events = { world->sensorBeginEventArray.data, world->sensorEndEventArray.data, beginCount, endCount };
 	return events;
 }
 
@@ -1393,12 +1403,13 @@ b2ContactEvents b2World_GetContactEvents( b2WorldId worldId )
 		return ( b2ContactEvents ){ 0 };
 	}
 
-	int beginCount = b2Array( world->contactBeginArray ).count;
-	int endCount = b2Array( world->contactEndArray ).count;
-	int hitCount = b2Array( world->contactHitArray ).count;
+	int beginCount = world->contactBeginArray.count;
+	int endCount = world->contactEndArray.count;
+	int hitCount = world->contactHitArray.count;
 
 	b2ContactEvents events = {
-		world->contactBeginArray, world->contactEndArray, world->contactHitArray, beginCount, endCount, hitCount };
+		world->contactBeginArray.data, world->contactEndArray.data, world->contactHitArray.data, beginCount, endCount, hitCount,
+	};
 
 	return events;
 }
@@ -1751,7 +1762,7 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	fprintf( file, "dynamic tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_dynamicBody ) );
 	b2HashSet* moveSet = &world->broadPhase.moveSet;
 	fprintf( file, "moveSet: %d (%d, %d)\n", b2GetHashSetBytes( moveSet ), moveSet->count, moveSet->capacity );
-	fprintf( file, "moveArray: %d\n", b2GetArrayBytes( world->broadPhase.moveArray, sizeof( int ) ) );
+	fprintf( file, "moveArray: %d\n", b2IntArray_ByteCount( &world->broadPhase.moveArray ) );
 	b2HashSet* pairSet = &world->broadPhase.pairSet;
 	fprintf( file, "pairSet: %d (%d, %d)\n", b2GetHashSetBytes( pairSet ), pairSet->count, pairSet->capacity );
 	fprintf( file, "\n" );

@@ -34,7 +34,7 @@ void b2CreateBroadPhase( b2BroadPhase* bp )
 
 	bp->proxyCount = 0;
 	bp->moveSet = b2CreateSet( 16 );
-	bp->moveArray = b2CreateArray( sizeof( int ), 16 );
+	bp->moveArray = b2IntArray_Create( 16 );
 	bp->moveResults = NULL;
 	bp->movePairs = NULL;
 	bp->movePairCapacity = 0;
@@ -55,7 +55,7 @@ void b2DestroyBroadPhase( b2BroadPhase* bp )
 	}
 
 	b2DestroySet( &bp->moveSet );
-	b2DestroyArray( bp->moveArray, sizeof( int ) );
+	b2IntArray_Destroy( &bp->moveArray );
 	b2DestroySet( &bp->pairSet );
 
 	memset( bp, 0, sizeof( b2BroadPhase ) );
@@ -75,12 +75,12 @@ static inline void b2UnBufferMove( b2BroadPhase* bp, int proxyKey )
 	{
 		// Purge from move buffer. Linear search.
 		// todo if I can iterate the move set then I don't need the moveArray
-		int count = b2Array( bp->moveArray ).count;
+		int count = bp->moveArray.count;
 		for ( int i = 0; i < count; ++i )
 		{
-			if ( bp->moveArray[i] == proxyKey )
+			if ( bp->moveArray.data[i] == proxyKey )
 			{
-				b2Array_RemoveSwap( bp->moveArray, i );
+				b2IntArray_RemoveSwap( &bp->moveArray, i );
 				break;
 			}
 		}
@@ -102,7 +102,7 @@ int b2BroadPhase_CreateProxy( b2BroadPhase* bp, b2BodyType proxyType, b2AABB aab
 
 void b2BroadPhase_DestroyProxy( b2BroadPhase* bp, int proxyKey )
 {
-	B2_ASSERT( b2Array( bp->moveArray ).count == (int)bp->moveSet.count );
+	B2_ASSERT( bp->moveArray.count == (int)bp->moveSet.count );
 	b2UnBufferMove( bp, proxyKey );
 
 	--bp->proxyCount;
@@ -292,7 +292,7 @@ void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex, void* 
 		queryContext.moveResult = bp->moveResults + i;
 		queryContext.moveResult->pairList = NULL;
 
-		int proxyKey = bp->moveArray[i];
+		int proxyKey = bp->moveArray.data[i];
 		if ( proxyKey == B2_NULL_INDEX )
 		{
 			// proxy was destroyed after it moved
@@ -336,7 +336,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 {
 	b2BroadPhase* bp = &world->broadPhase;
 
-	int moveCount = b2Array( bp->moveArray ).count;
+	int moveCount = bp->moveArray.count;
 	B2_ASSERT( moveCount == (int)bp->moveSet.count );
 
 	if ( moveCount == 0 )
@@ -422,7 +422,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	// }
 
 	// Reset move buffer
-	b2Array_Clear( bp->moveArray );
+	b2IntArray_Clear( &bp->moveArray );
 	b2ClearSet( &bp->moveSet );
 
 	b2FreeStackItem( alloc, bp->movePairs );

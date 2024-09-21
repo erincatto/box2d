@@ -193,13 +193,16 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 	float invTimeStep = stepContext->inv_dt;
 
 	uint16_t worldId = world->worldId;
-	b2BodyMoveEvent* moveEvents = world->bodyMoveEventArray;
+
+	// The body move event array has should already have the correct size
+	B2_ASSERT( endIndex <= world->bodyMoveEventArray.count );
+	b2BodyMoveEvent* moveEvents = world->bodyMoveEventArray.data;
 
 	b2Island* islands = world->islandArray;
 
-	b2BitSet* enlargedSimBitSet = &world->taskContextArray[threadIndex].enlargedSimBitSet;
-	b2BitSet* awakeIslandBitSet = &world->taskContextArray[threadIndex].awakeIslandBitSet;
-	b2TaskContext* taskContext = world->taskContextArray + threadIndex;
+	b2BitSet* enlargedSimBitSet = &world->taskContextArray.data[threadIndex].enlargedSimBitSet;
+	b2BitSet* awakeIslandBitSet = &world->taskContextArray.data[threadIndex].awakeIslandBitSet;
+	b2TaskContext* taskContext = world->taskContextArray.data + threadIndex;
 
 	bool enableContinuous = world->enableContinuous;
 
@@ -1185,9 +1188,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		// Deal with void**
 		{
-			void* bodyMoveEventArray = world->bodyMoveEventArray;
-			b2Array_Resize( &bodyMoveEventArray, sizeof( b2BodyMoveEvent ), awakeBodyCount );
-			world->bodyMoveEventArray = bodyMoveEventArray;
+			b2BodyMoveEventArray_Resize( &world->bodyMoveEventArray, awakeBodyCount );
 		}
 
 		// Each worker receives at most M blocks of work. The workers may receive less than there is not sufficient work.
@@ -1655,7 +1656,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		int awakeIslandCount = awakeSet->islandsNew.count;
 		for ( int i = 0; i < world->workerCount; ++i )
 		{
-			b2TaskContext* taskContext = world->taskContextArray + i;
+			b2TaskContext* taskContext = world->taskContextArray.data + i;
 			b2SetBitCountAndClear( &taskContext->enlargedSimBitSet, awakeBodyCount );
 			b2SetBitCountAndClear( &taskContext->awakeIslandBitSet, awakeIslandCount );
 			taskContext->splitIslandId = B2_NULL_INDEX;
@@ -1692,7 +1693,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	{
 		b2TracyCZoneNC( hit_events, "Hit", b2_colorVioletRed, true );
 
-		B2_ASSERT( b2Array( world->contactHitArray ).count == 0 );
+		B2_ASSERT( world->contactHitArray.count == 0 );
 
 		float threshold = world->hitEventThreshold;
 		b2GraphColor* colors = world->constraintGraph.colors;
@@ -1738,7 +1739,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					event.shapeIdA = ( b2ShapeId ){ shapeA->id + 1, world->worldId, shapeA->revision };
 					event.shapeIdB = ( b2ShapeId ){ shapeB->id + 1, world->worldId, shapeB->revision };
 
-					b2Array_Push( world->contactHitArray, event );
+					b2ContactHitEventArray_Push( &world->contactHitArray, event );
 				}
 			}
 		}
@@ -1763,10 +1764,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	b2TracyCZoneNC( enlarge_proxies, "Enlarge Proxies", b2_colorDarkTurquoise, true );
 
 	// Gather bits for all sim bodies that have enlarged AABBs
-	b2BitSet* simBitSet = &world->taskContextArray[0].enlargedSimBitSet;
+	b2BitSet* simBitSet = &world->taskContextArray.data[0].enlargedSimBitSet;
 	for ( int i = 1; i < world->workerCount; ++i )
 	{
-		b2InPlaceUnion( simBitSet, &world->taskContextArray[i].enlargedSimBitSet );
+		b2InPlaceUnion( simBitSet, &world->taskContextArray.data[i].enlargedSimBitSet );
 	}
 
 	// Enlarge broad-phase proxies and build move array
@@ -1986,7 +1987,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		float splitSleepTimer = 0.0f;
 		for ( int i = 0; i < world->workerCount; ++i )
 		{
-			b2TaskContext* taskContext = world->taskContextArray + i;
+			b2TaskContext* taskContext = world->taskContextArray.data + i;
 			if ( taskContext->splitIslandId != B2_NULL_INDEX && taskContext->splitSleepTime >= splitSleepTimer )
 			{
 				B2_ASSERT( taskContext->splitSleepTime > 0.0f );
@@ -2002,10 +2003,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			}
 		}
 
-		b2BitSet* awakeIslandBitSet = &world->taskContextArray[0].awakeIslandBitSet;
+		b2BitSet* awakeIslandBitSet = &world->taskContextArray.data[0].awakeIslandBitSet;
 		for ( int i = 1; i < world->workerCount; ++i )
 		{
-			b2InPlaceUnion( awakeIslandBitSet, &world->taskContextArray[i].awakeIslandBitSet );
+			b2InPlaceUnion( awakeIslandBitSet, &world->taskContextArray.data[i].awakeIslandBitSet );
 		}
 
 		// Need to process in reverse because this moves islands to sleeping solver sets.

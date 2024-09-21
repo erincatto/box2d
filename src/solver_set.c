@@ -170,8 +170,6 @@ void b2TrySleepIsland( b2World* world, int islandId )
 		return;
 	}
 
-	b2BodyMoveEvent* moveEvents = world->bodyMoveEventArray;
-
 	// island is sleeping
 	// - create new sleeping solver set
 	// - move island to sleeping solver set
@@ -214,10 +212,10 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			// It could happen the body is forced asleep before it ever moves.
 			if ( body->bodyMoveIndex != B2_NULL_INDEX )
 			{
-				b2CheckIndex( moveEvents, body->bodyMoveIndex );
-				B2_ASSERT( moveEvents[body->bodyMoveIndex].bodyId.index1 - 1 == bodyId );
-				B2_ASSERT( moveEvents[body->bodyMoveIndex].bodyId.revision == body->revision );
-				moveEvents[body->bodyMoveIndex].fellAsleep = true;
+				b2BodyMoveEvent* moveEvent = b2BodyMoveEventArray_Get( &world->bodyMoveEventArray, body->bodyMoveIndex );
+				B2_ASSERT( moveEvent->bodyId.index1 - 1 == bodyId );
+				B2_ASSERT( moveEvent->bodyId.revision == body->revision );
+				moveEvent->fellAsleep = true;
 				body->bodyMoveIndex = B2_NULL_INDEX;
 			}
 
