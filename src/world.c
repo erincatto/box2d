@@ -152,7 +152,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->contactArray = b2CreateArray( sizeof( b2Contact ), 16 );
 
 	world->jointIdPool = b2CreateIdPool();
-	world->jointArray = b2CreateArray( sizeof( b2Joint ), 16 );
+	world->jointArray = b2JointArray_Create( 16 );
 
 	world->islandIdPool = b2CreateIdPool();
 	world->islandArray = b2CreateArray( sizeof( b2Island ), 8 );
@@ -258,7 +258,7 @@ void b2DestroyWorld( b2WorldId worldId )
 	b2ShapeArray_Destroy( &world->shapeArray );
 	b2ChainShapeArray_Destroy( &world->chainArray );
 	b2DestroyArray( world->contactArray, sizeof( b2Contact ) );
-	b2DestroyArray( world->jointArray, sizeof( b2Joint ) );
+	b2JointArray_Destroy( &world->jointArray );
 	b2DestroyArray( world->islandArray, sizeof( b2Island ) );
 
 	// The data in the solvers sets all comes from the block allocator so no
@@ -995,7 +995,7 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 				{
 					int jointId = jointKey >> 1;
 					int edgeIndex = jointKey & 1;
-					b2Joint* joint = world->jointArray + jointId;
+					b2Joint* joint = b2JointArray_Get( &world->jointArray, jointId );
 
 					// avoid double draw
 					if ( b2GetBit( &world->debugJointSet, jointId ) == false )
@@ -1202,10 +1202,10 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 	if ( draw->drawJoints )
 	{
-		int count = b2Array( world->jointArray ).count;
+		int count = world->jointArray.count;
 		for ( int i = 0; i < count; ++i )
 		{
-			b2Joint* joint = world->jointArray + i;
+			b2Joint* joint = world->jointArray.data + i;
 			if ( joint->setIndex == B2_NULL_INDEX )
 			{
 				continue;
@@ -1550,12 +1550,12 @@ bool b2Joint_IsValid( b2JointId id )
 	}
 
 	int jointId = id.index1 - 1;
-	if ( jointId < 0 || b2Array( world->jointArray ).count <= jointId )
+	if ( jointId < 0 || world->jointArray.count <= jointId )
 	{
 		return false;
 	}
 
-	b2Joint* joint = world->jointArray + jointId;
+	b2Joint* joint = world->jointArray.data + jointId;
 	if ( joint->jointId == B2_NULL_INDEX )
 	{
 		// joint is free
@@ -1748,7 +1748,7 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	fprintf( file, "world arrays\n" );
 	fprintf( file, "bodies: %d\n", b2BodyArray_ByteCount( &world->bodyArrayNew ) );
 	fprintf( file, "solver sets: %d\n", b2GetArrayBytes( world->solverSetArray, sizeof( b2SolverSet ) ) );
-	fprintf( file, "joints: %d\n", b2GetArrayBytes( world->jointArray, sizeof( b2Joint ) ) );
+	fprintf( file, "joints: %d\n", b2JointArray_ByteCount( &world->jointArray ) );
 	fprintf( file, "contacts: %d\n", b2GetArrayBytes( world->contactArray, sizeof( b2Contact ) ) );
 	fprintf( file, "islands: %d\n", b2GetArrayBytes( world->islandArray, sizeof( b2Island ) ) );
 	fprintf( file, "shapes: %d\n", b2ShapeArray_ByteCount( &world->shapeArray ) );
@@ -2545,8 +2545,7 @@ void b2ValidateConnectivity( b2World* world )
 			int jointId = jointKey >> 1;
 			int edgeIndex = jointKey & 1;
 
-			b2CheckIndex( world->jointArray, jointId );
-			b2Joint* joint = world->jointArray + jointId;
+			b2Joint* joint = b2JointArray_Get( &world->jointArray, jointId );
 
 			int otherEdgeIndex = edgeIndex ^ 1;
 
@@ -2579,7 +2578,7 @@ void b2ValidateSolverSets( b2World* world )
 {
 	B2_ASSERT( b2GetIdCapacity( &world->bodyIdPool ) == world->bodyArrayNew.count );
 	B2_ASSERT( b2GetIdCapacity( &world->contactIdPool ) == b2Array( world->contactArray ).count );
-	B2_ASSERT( b2GetIdCapacity( &world->jointIdPool ) == b2Array( world->jointArray ).count );
+	B2_ASSERT( b2GetIdCapacity( &world->jointIdPool ) == world->jointArray.count );
 	B2_ASSERT( b2GetIdCapacity( &world->islandIdPool ) == b2Array( world->islandArray ).count );
 	B2_ASSERT( b2GetIdCapacity( &world->solverSetIdPool ) == b2Array( world->solverSetArray ).count );
 
@@ -2688,8 +2687,7 @@ void b2ValidateSolverSets( b2World* world )
 						int jointId = jointKey >> 1;
 						int edgeIndex = jointKey & 1;
 
-						b2CheckIndex( world->jointArray, jointId );
-						b2Joint* joint = world->jointArray + jointId;
+						b2Joint* joint = b2JointArray_Get( &world->jointArray, jointId );
 
 						int otherEdgeIndex = edgeIndex ^ 1;
 
@@ -2747,14 +2745,12 @@ void b2ValidateSolverSets( b2World* world )
 
 			// Validate joints
 			{
-				b2Joint* joints = world->jointArray;
 				B2_ASSERT( set->jointsNew.count >= 0 );
 				totalJointCount += set->jointsNew.count;
 				for ( int i = 0; i < set->jointsNew.count; ++i )
 				{
 					b2JointSim* jointSim = set->jointsNew.data + i;
-					b2CheckIndex( joints, jointSim->jointId );
-					b2Joint* joint = joints + jointSim->jointId;
+					b2Joint* joint = b2JointArray_Get( &world->jointArray, jointSim->jointId );
 					B2_ASSERT( joint->setIndex == setIndex );
 					B2_ASSERT( joint->colorIndex == B2_NULL_INDEX );
 					B2_ASSERT( joint->localIndex == i );
@@ -2829,14 +2825,12 @@ void b2ValidateSolverSets( b2World* world )
 		}
 
 		{
-			b2Joint* joints = world->jointArray;
 			B2_ASSERT( color->jointSims.count >= 0 );
 			totalJointCount += color->jointSims.count;
 			for ( int i = 0; i < color->jointSims.count; ++i )
 			{
 				b2JointSim* jointSim = color->jointSims.data + i;
-				b2CheckIndex( joints, jointSim->jointId );
-				b2Joint* joint = joints + jointSim->jointId;
+				b2Joint* joint = b2JointArray_Get( &world->jointArray, jointSim->jointId );
 				B2_ASSERT( joint->setIndex == b2_awakeSet );
 				B2_ASSERT( joint->colorIndex == colorIndex );
 				B2_ASSERT( joint->localIndex == i );

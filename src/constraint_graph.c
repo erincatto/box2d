@@ -310,8 +310,7 @@ void b2RemoveJointFromGraph( b2World* world, int bodyIdA, int bodyIdB, int color
 		// Fix moved joint
 		b2JointSim* movedJointSim = color->jointSims.data + localIndex;
 		int movedId = movedJointSim->jointId;
-		b2CheckIndex( world->jointArray, movedId );
-		b2Joint* movedJoint = world->jointArray + movedId;
+		b2Joint* movedJoint = b2JointArray_Get( &world->jointArray, movedId );
 		B2_ASSERT( movedJoint->setIndex == b2_awakeSet );
 		B2_ASSERT( movedJoint->colorIndex == colorIndex );
 		B2_ASSERT( movedJoint->localIndex == movedIndex );

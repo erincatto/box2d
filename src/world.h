@@ -73,7 +73,7 @@ typedef struct b2World
 
 	// This is a sparse array that maps joint ids to the joint data stored in the constraint graph
 	// or in the solver sets.
-	struct b2Joint* jointArray;
+	b2JointArray jointArray;
 
 	// Used to create stable ids for contacts
 	b2IdPool contactIdPool;

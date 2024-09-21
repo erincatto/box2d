@@ -281,7 +281,7 @@ static void b2AddJointToIsland( b2World* world, int islandId, b2Joint* joint )
 	if ( island->headJoint != B2_NULL_INDEX )
 	{
 		joint->islandNext = island->headJoint;
-		b2Joint* headJoint = b2GetJoint( world, island->headJoint );
+		b2Joint* headJoint = b2JointArray_Get( &world->jointArray, island->headJoint );
 		headJoint->islandPrev = joint->jointId;
 	}
 
@@ -401,14 +401,14 @@ void b2UnlinkJoint( b2World* world, b2Joint* joint )
 
 	if ( joint->islandPrev != B2_NULL_INDEX )
 	{
-		b2Joint* prevJoint = b2GetJoint( world, joint->islandPrev );
+		b2Joint* prevJoint = b2JointArray_Get( &world->jointArray, joint->islandPrev );
 		B2_ASSERT( prevJoint->islandNext == joint->jointId );
 		prevJoint->islandNext = joint->islandNext;
 	}
 
 	if ( joint->islandNext != B2_NULL_INDEX )
 	{
-		b2Joint* nextJoint = b2GetJoint( world, joint->islandNext );
+		b2Joint* nextJoint = b2JointArray_Get( &world->jointArray, joint->islandNext );
 		B2_ASSERT( nextJoint->islandPrev == joint->jointId );
 		nextJoint->islandPrev = joint->islandPrev;
 	}
@@ -466,7 +466,7 @@ static void b2MergeIsland( b2World* world, b2Island* island )
 	int jointId = island->headJoint;
 	while ( jointId != B2_NULL_INDEX )
 	{
-		b2Joint* joint = b2GetJoint( world, jointId );
+		b2Joint* joint = b2JointArray_Get( &world->jointArray, jointId );
 		joint->islandId = rootId;
 		jointId = joint->islandNext;
 	}
@@ -528,11 +528,11 @@ static void b2MergeIsland( b2World* world, b2Island* island )
 		B2_ASSERT( island->tailJoint != B2_NULL_INDEX && island->jointCount > 0 );
 		B2_ASSERT( rootIsland->tailJoint != B2_NULL_INDEX && rootIsland->jointCount > 0 );
 
-		b2Joint* tailJoint = b2GetJoint( world, rootIsland->tailJoint );
+		b2Joint* tailJoint = b2JointArray_Get( &world->jointArray, rootIsland->tailJoint );
 		B2_ASSERT( tailJoint->islandNext == B2_NULL_INDEX );
 		tailJoint->islandNext = island->headJoint;
 
-		b2Joint* headJoint = b2GetJoint( world, island->headJoint );
+		b2Joint* headJoint = b2JointArray_Get( &world->jointArray, island->headJoint );
 		B2_ASSERT( headJoint->islandPrev == B2_NULL_INDEX );
 		headJoint->islandPrev = rootIsland->tailJoint;
 
@@ -678,7 +678,7 @@ void b2SplitIsland( b2World* world, int baseId )
 	int nextJoint = baseIsland->headJoint;
 	while ( nextJoint != B2_NULL_INDEX )
 	{
-		b2Joint* joint = b2GetJoint( world, nextJoint );
+		b2Joint* joint = b2JointArray_Get( &world->jointArray, nextJoint );
 		joint->isMarked = false;
 		nextJoint = joint->islandNext;
 	}
@@ -809,7 +809,7 @@ void b2SplitIsland( b2World* world, int baseId )
 				int jointId = jointKey >> 1;
 				int edgeIndex = jointKey & 1;
 
-				b2Joint* joint = b2GetJoint( world, jointId );
+				b2Joint* joint = b2JointArray_Get( &world->jointArray, jointId );
 				B2_ASSERT( joint->jointId == jointId );
 
 				// Next key
@@ -845,7 +845,7 @@ void b2SplitIsland( b2World* world, int baseId )
 				joint->islandId = islandId;
 				if ( island->tailJoint != B2_NULL_INDEX )
 				{
-					b2Joint* tailJoint = b2GetJoint( world, island->tailJoint );
+					b2Joint* tailJoint = b2JointArray_Get( &world->jointArray, island->tailJoint );
 					tailJoint->islandNext = jointId;
 				}
 				joint->islandPrev = island->tailJoint;
@@ -980,8 +980,7 @@ void b2ValidateIsland( b2World* world, int islandId )
 		int jointId = island->headJoint;
 		while ( jointId != B2_NULL_INDEX )
 		{
-			b2CheckIndex( world->jointArray, jointId );
-			b2Joint* joint = world->jointArray + jointId;
+			b2Joint* joint = b2JointArray_Get( &world->jointArray, jointId );
 			B2_ASSERT( joint->setIndex == island->setIndex );
 			count += 1;
 

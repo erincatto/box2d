@@ -121,12 +121,11 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 
 	// transfer joints from sleeping set to awake set
 	{
-		b2Joint* joints = world->jointArray;
 		int jointCount = set->jointsNew.count;
 		for ( int i = 0; i < jointCount; ++i )
 		{
 			b2JointSim* jointSim = set->jointsNew.data + i;
-			b2Joint* joint = joints + jointSim->jointId;
+			b2Joint* joint = b2JointArray_Get( &world->jointArray, + jointSim->jointId );
 			B2_ASSERT( joint->setIndex == setIndex );
 			b2AddJointToGraph( world, jointSim, joint );
 			joint->setIndex = b2_awakeSet;
@@ -363,12 +362,10 @@ void b2TrySleepIsland( b2World* world, int islandId )
 	// move joints
 	// this shuffles joints in the awake set
 	{
-		b2Joint* joints = world->jointArray;
 		int jointId = island->headJoint;
 		while ( jointId != B2_NULL_INDEX )
 		{
-			b2CheckIndex( joints, jointId );
-			b2Joint* joint = joints + jointId;
+			b2Joint* joint = b2JointArray_Get( &world->jointArray, jointId );
 			B2_ASSERT( joint->setIndex == b2_awakeSet );
 			B2_ASSERT( joint->islandId == islandId );
 			int colorIndex = joint->colorIndex;
@@ -397,8 +394,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 				// fix moved element
 				b2JointSim* movedJointSim = color->jointSims.data + localIndex;
 				int movedId = movedJointSim->jointId;
-				b2CheckIndex( joints, movedId );
-				b2Joint* movedJoint = joints + movedId;
+				b2Joint* movedJoint = b2JointArray_Get( &world->jointArray, movedId );
 				B2_ASSERT( movedJoint->localIndex == movedIndex );
 				movedJoint->localIndex = localIndex;
 			}
@@ -500,13 +496,12 @@ void b2MergeSolverSets( b2World* world, int setId1, int setId2 )
 
 	// transfer joints
 	{
-		b2Joint* joints = world->jointArray;
 		int jointCount = set2->jointsNew.count;
 		for ( int i = 0; i < jointCount; ++i )
 		{
 			b2JointSim* jointSrc = set2->jointsNew.data + i;
 
-			b2Joint* joint = joints + jointSrc->jointId;
+			b2Joint* joint = b2JointArray_Get( &world->jointArray, jointSrc->jointId );
 			B2_ASSERT( joint->setIndex == setId2 );
 			joint->setIndex = setId1;
 			joint->localIndex = set1->jointsNew.count;
@@ -629,8 +624,7 @@ void b2TransferJoint( b2World* world, b2SolverSet* targetSet, b2SolverSet* sourc
 			// fix swapped element
 			b2JointSim* movedJointSim = sourceSet->jointsNew.data + localIndex;
 			int movedId = movedJointSim->jointId;
-			b2CheckIndex( world->jointArray, movedId );
-			b2Joint* movedJoint = world->jointArray + movedId;
+			b2Joint* movedJoint = b2JointArray_Get( &world->jointArray, movedId );
 			movedJoint->localIndex = localIndex;
 		}
 	}

@@ -348,7 +348,7 @@ void b2DestroyBody( b2BodyId bodyId )
 		int jointId = edgeKey >> 1;
 		int edgeIndex = edgeKey & 1;
 
-		b2Joint* joint = world->jointArray + jointId;
+		b2Joint* joint = b2JointArray_Get( &world->jointArray, jointId );
 		edgeKey = joint->edges[edgeIndex].nextKey;
 
 		// Careful because this modifies the list being traversed
@@ -951,7 +951,7 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 			int jointId = jointKey >> 1;
 			int edgeIndex = jointKey & 1;
 
-			b2Joint* joint = world->jointArray + jointId;
+			b2Joint* joint = b2JointArray_Get( &world->jointArray, jointId );
 			if ( joint->islandId != B2_NULL_INDEX )
 			{
 				b2UnlinkJoint( world, joint );
@@ -992,7 +992,7 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 			int jointId = jointKey >> 1;
 			int edgeIndex = jointKey & 1;
 
-			b2Joint* joint = world->jointArray + jointId;
+			b2Joint* joint = b2JointArray_Get( &world->jointArray, jointId );
 
 			// Transfer the joint if it is in the static set
 			if ( joint->setIndex == b2_staticSet )
@@ -1053,7 +1053,7 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 			int jointId = jointKey >> 1;
 			int edgeIndex = jointKey & 1;
 
-			b2Joint* joint = world->jointArray + jointId;
+			b2Joint* joint = b2JointArray_Get( &world->jointArray, jointId );
 			jointKey = joint->edges[edgeIndex].nextKey;
 
 			int otherEdgeIndex = edgeIndex ^ 1;
@@ -1133,7 +1133,7 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 			int jointId = jointKey >> 1;
 			int edgeIndex = jointKey & 1;
 
-			b2Joint* joint = world->jointArray + jointId;
+			b2Joint* joint = b2JointArray_Get( &world->jointArray, jointId );
 			jointKey = joint->edges[edgeIndex].nextKey;
 
 			int otherEdgeIndex = edgeIndex ^ 1;
@@ -1474,7 +1474,7 @@ void b2Body_Disable( b2BodyId bodyId )
 		int jointId = jointKey >> 1;
 		int edgeIndex = jointKey & 1;
 
-		b2Joint* joint = world->jointArray + jointId;
+		b2Joint* joint = b2JointArray_Get( &world->jointArray, jointId );
 		jointKey = joint->edges[edgeIndex].nextKey;
 
 		// joint may already be disabled by other body
@@ -1549,7 +1549,7 @@ void b2Body_Enable( b2BodyId bodyId )
 		int jointId = jointKey >> 1;
 		int edgeIndex = jointKey & 1;
 
-		b2Joint* joint = world->jointArray + jointId;
+		b2Joint* joint = b2JointArray_Get( &world->jointArray, jointId );
 		B2_ASSERT( joint->setIndex == b2_disabledSet );
 		B2_ASSERT( joint->islandId == B2_NULL_INDEX );
 
@@ -1710,7 +1710,7 @@ int b2Body_GetJoints( b2BodyId bodyId, b2JointId* jointArray, int capacity )
 		int jointId = jointKey >> 1;
 		int edgeIndex = jointKey & 1;
 
-		b2Joint* joint = b2GetJoint( world, jointId );
+		b2Joint* joint = b2JointArray_Get( &world->jointArray, jointId );
 
 		b2JointId id = { jointId + 1, bodyId.world0, joint->revision };
 		jointArray[jointCount] = id;
@@ -1748,7 +1748,7 @@ bool b2ShouldBodiesCollide( b2World* world, b2Body* bodyA, b2Body* bodyB )
 		int edgeIndex = jointKey & 1;
 		int otherEdgeIndex = edgeIndex ^ 1;
 
-		b2Joint* joint = b2GetJoint( world, jointId );
+		b2Joint* joint = b2JointArray_Get( &world->jointArray, jointId );
 		if ( joint->collideConnected == false && joint->edges[otherEdgeIndex].bodyId == otherBodyId )
 		{
 			return false;

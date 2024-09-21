@@ -269,7 +269,6 @@ typedef struct b2JointSim
 	};
 } b2JointSim;
 
-b2Joint* b2GetJoint( b2World* world, int jointId );
 void b2DestroyJointInternal( b2World* world, b2Joint* joint, bool wakeBodies );
 
 b2JointSim* b2GetJointSim( b2World* world, b2Joint* joint );
