@@ -95,6 +95,7 @@ public:
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
+			bodyDef.angularDamping = 0.1f;
 			bodyDef.position = { m_length * ( i + 1.0f ), yOffset };
 			m_bodyIds[i] = b2CreateBody( m_worldId, &bodyDef );
 			b2CreateCircleShape( m_bodyIds[i], &shapeDef, &circle );
@@ -113,7 +114,7 @@ public:
 
 	void UpdateUI() override
 	{
-		float height = 140.0f;
+		float height = 240.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
 

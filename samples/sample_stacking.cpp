@@ -392,8 +392,8 @@ public:
 	{
 		if ( settings.restart == false )
 		{
-			g_camera.m_center = { 0.0f, 2.0f };
-			g_camera.m_zoom = 3.0f;
+			g_camera.m_center = { 0.0f, 5.0f };
+			g_camera.m_zoom = 6.0f;
 		}
 
 		{

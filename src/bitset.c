@@ -3,8 +3,6 @@
 
 #include "bitset.h"
 
-#include "allocate.h"
-
 #include <string.h>
 
 b2BitSet b2CreateBitSet( uint32_t bitCapacity )
@@ -58,7 +56,7 @@ void b2GrowBitSet( b2BitSet* bitSet, uint32_t blockCount )
 	bitSet->blockCount = blockCount;
 }
 
-void b2InPlaceUnion( b2BitSet* restrict setA, const b2BitSet* restrict setB )
+void b2InPlaceUnion( b2BitSet* B2_RESTRICT setA, const b2BitSet* B2_RESTRICT setB )
 {
 	B2_ASSERT( setA->blockCount == setB->blockCount );
 	uint32_t blockCount = setA->blockCount;

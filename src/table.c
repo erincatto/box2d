@@ -3,7 +3,6 @@
 
 #include "table.h"
 
-#include "allocate.h"
 #include "core.h"
 #include "ctz.h"
 

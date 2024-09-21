@@ -12,16 +12,18 @@
 #include <vector>
 
 #if defined( _WIN32 )
-	#define _CRTDBG_MAP_ALLOC
-	#include <crtdbg.h>
-	#include <stdlib.h>
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#include <stdlib.h>
 #else
-	#include <stdlib.h>
+#include <stdlib.h>
 #endif
 
+// clang-format off
 #include <glad/glad.h>
-// Keep glad.h before glfw3.h
 #include <GLFW/glfw3.h>
+// clang-format on
+
 #include <imgui.h>
 
 #define BUFFER_OFFSET( x ) ( (const void*)( x ) )

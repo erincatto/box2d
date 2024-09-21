@@ -1,14 +1,10 @@
 set(BOX2D_SOURCE_FILES
 	aabb.c
 	aabb.h
-	allocate.c
-	allocate.h
 	array.c
 	array.h
 	bitset.c
 	bitset.h
-	block_array.c
-	block_array.h
 	body.c
 	body.h
 	broad_phase.c

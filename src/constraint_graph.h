@@ -3,8 +3,8 @@
 
 #pragma once
 
+#include "array.h"
 #include "bitset.h"
-#include "block_array.h"
 
 typedef struct b2Body b2Body;
 typedef struct b2ContactSim b2ContactSim;
@@ -28,8 +28,8 @@ typedef struct b2GraphColor
 	b2BitSet bodySet;
 
 	// cache friendly arrays
-	b2ContactArray contacts;
-	b2JointArray joints;
+	b2ContactSimArray contactSims;
+	b2JointSimArray jointSims;
 
 	// transient
 	union

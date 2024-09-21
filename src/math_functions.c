@@ -103,9 +103,9 @@ float b2Atan2( float y, float x )
 // the same results on x64 and ARM using MSVC, GCC, and Clang. However, I don't trust
 // this result.
 // https://en.wikipedia.org/wiki/Bh%C4%81skara_I%27s_sine_approximation_formula
-b2Rot b2MakeRot(float angle)
+b2CosSin b2ComputeCosSin( float angle )
 {
-	// return ( b2Rot ){ cosf( angle ), sinf( angle ) };
+	// return ( b2CosSin ){ cosf( angle ), sinf( angle ) };
 
 	float x = b2UnwindLargeAngle( angle );
 	float pi2 = b2_pi * b2_pi;
@@ -143,5 +143,5 @@ b2Rot b2MakeRot(float angle)
 	}
 
 	q = b2NormalizeRot( q );
-	return q;
+	return ( b2CosSin ){ q.c, q.s };
 }

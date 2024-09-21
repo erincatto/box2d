@@ -3,6 +3,10 @@
 
 #pragma once
 
+#include "array.h"
+
+B2_ARRAY_DECLARE( b2StackEntry, b2StackEntry );
+
 // This is a stack-like arena allocator used for fast per step allocations.
 // You must nest allocate/free pairs. The code will B2_ASSERT
 // if you try to interleave multiple allocate/free pairs.
@@ -17,7 +21,7 @@ typedef struct b2StackAllocator
 	int allocation;
 	int maxAllocation;
 
-	struct b2StackEntry* entries;
+	b2StackEntryArray entries;
 } b2StackAllocator;
 
 b2StackAllocator b2CreateStackAllocator( int capacity );

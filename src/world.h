@@ -3,11 +3,11 @@
 
 #pragma once
 
+#include "array.h"
 #include "bitset.h"
 #include "broad_phase.h"
 #include "constraint_graph.h"
 #include "id_pool.h"
-#include "island.h"
 #include "stack_allocator.h"
 
 #include "box2d/types.h"
@@ -58,7 +58,7 @@ typedef struct b2World
 	// This is a sparse array that maps body ids to the body data
 	// stored in solver sets. As sims move within a set or across set.
 	// Indices come from id pool.
-	struct b2Body* bodyArray;
+	b2BodyArray bodies;
 
 	// Provides free list for solver sets.
 	b2IdPool solverSetIdPool;
@@ -66,44 +66,44 @@ typedef struct b2World
 	// Solvers sets allow sims to be stored in contiguous arrays. The first
 	// set is all static sims. The second set is active sims. The third set is disabled
 	// sims. The remaining sets are sleeping islands.
-	struct b2SolverSet* solverSetArray;
+	b2SolverSetArray solverSets;
 
 	// Used to create stable ids for joints
 	b2IdPool jointIdPool;
 
 	// This is a sparse array that maps joint ids to the joint data stored in the constraint graph
 	// or in the solver sets.
-	struct b2Joint* jointArray;
+	b2JointArray joints;
 
 	// Used to create stable ids for contacts
 	b2IdPool contactIdPool;
 
 	// This is a sparse array that maps contact ids to the contact data stored in the constraint graph
 	// or in the solver sets.
-	struct b2Contact* contactArray;
+	b2ContactArray contacts;
 
 	// Used to create stable ids for islands
 	b2IdPool islandIdPool;
 
 	// This is a sparse array that maps island ids to the island data stored in the solver sets.
-	struct b2Island* islandArray;
+	b2IslandArray islands;
 
 	b2IdPool shapeIdPool;
 	b2IdPool chainIdPool;
 
 	// These are sparse arrays that point into the pools above
-	struct b2Shape* shapeArray;
-	struct b2ChainShape* chainArray;
+	b2ShapeArray shapes;
+	b2ChainShapeArray chainShapes;
 
 	// Per thread storage
-	b2TaskContext* taskContextArray;
+	b2TaskContextArray taskContexts;
 
-	struct b2BodyMoveEvent* bodyMoveEventArray;
-	struct b2SensorBeginTouchEvent* sensorBeginEventArray;
-	struct b2SensorEndTouchEvent* sensorEndEventArray;
-	struct b2ContactBeginTouchEvent* contactBeginArray;
-	struct b2ContactEndTouchEvent* contactEndArray;
-	struct b2ContactHitEvent* contactHitArray;
+	b2BodyMoveEventArray bodyMoveEvents;
+	b2SensorBeginTouchEventArray sensorBeginEvents;
+	b2SensorEndTouchEventArray sensorEndEvents;
+	b2ContactBeginTouchEventArray contactBeginEvents;
+	b2ContactEndTouchEventArray contactEndEvents;
+	b2ContactHitEventArray contactHitEvents;
 
 	// Used to track debug draw
 	b2BitSet debugBodySet;
@@ -170,3 +170,11 @@ b2World* b2GetWorldLocked( int index );
 void b2ValidateConnectivity( b2World* world );
 void b2ValidateSolverSets( b2World* world );
 void b2ValidateContacts( b2World* world );
+
+B2_ARRAY_INLINE( b2BodyMoveEvent, b2BodyMoveEvent );
+B2_ARRAY_INLINE( b2ContactBeginTouchEvent, b2ContactBeginTouchEvent );
+B2_ARRAY_INLINE( b2ContactEndTouchEvent, b2ContactEndTouchEvent );
+B2_ARRAY_INLINE( b2ContactHitEvent, b2ContactHitEvent );
+B2_ARRAY_INLINE( b2SensorBeginTouchEvent, b2SensorBeginTouchEvent );
+B2_ARRAY_INLINE( b2SensorEndTouchEvent, b2SensorEndTouchEvent );
+B2_ARRAY_INLINE( b2TaskContext, b2TaskContext );

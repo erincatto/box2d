@@ -9,6 +9,9 @@
 
 #define B2_NULL_INDEX ( -1 )
 
+// for performance comparisons
+#define B2_RESTRICT restrict
+
 #ifdef NDEBUG
 	#define B2_DEBUG 0
 #else
@@ -174,3 +177,7 @@ extern float b2_lengthUnitsPerMeter;
 #define B2_SECRET_COOKIE 1152023
 
 #define b2CheckDef( DEF ) B2_ASSERT( DEF->internalValue == B2_SECRET_COOKIE )
+
+void* b2Alloc( int size );
+void b2Free( void* mem, int size );
+void* b2GrowAlloc( void* oldMem, int oldSize, int newSize );

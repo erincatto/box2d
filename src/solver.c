@@ -10,6 +10,7 @@
 #include "contact_solver.h"
 #include "core.h"
 #include "ctz.h"
+#include "island.h"
 #include "joint.h"
 #include "shape.h"
 #include "solver_set.h"
@@ -128,9 +129,9 @@ static void b2WarmStartJointsTask( int startIndex, int endIndex, b2StepContext* 
 	b2TracyCZoneNC( warm_joints, "WarmJoints", b2_colorGold, true );
 
 	b2GraphColor* color = context->graph->colors + colorIndex;
-	b2JointSim* joints = color->joints.data;
-	B2_ASSERT( 0 <= startIndex && startIndex < color->joints.count );
-	B2_ASSERT( startIndex <= endIndex && endIndex <= color->joints.count );
+	b2JointSim* joints = color->jointSims.data;
+	B2_ASSERT( 0 <= startIndex && startIndex < color->jointSims.count );
+	B2_ASSERT( startIndex <= endIndex && endIndex <= color->jointSims.count );
 
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
@@ -146,9 +147,9 @@ static void b2SolveJointsTask( int startIndex, int endIndex, b2StepContext* cont
 	b2TracyCZoneNC( solve_joints, "SolveJoints", b2_colorLemonChiffon, true );
 
 	b2GraphColor* color = context->graph->colors + colorIndex;
-	b2JointSim* joints = color->joints.data;
-	B2_ASSERT( 0 <= startIndex && startIndex < color->joints.count );
-	B2_ASSERT( startIndex <= endIndex && endIndex <= color->joints.count );
+	b2JointSim* joints = color->jointSims.data;
+	B2_ASSERT( 0 <= startIndex && startIndex < color->jointSims.count );
+	B2_ASSERT( startIndex <= endIndex && endIndex <= color->jointSims.count );
 
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
@@ -187,18 +188,19 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 	bool enableSleep = world->enableSleep;
 	b2BodyState* states = stepContext->states;
 	b2BodySim* sims = stepContext->sims;
-	b2Body* bodies = world->bodyArray;
+	b2Body* bodies = world->bodies.data;
 	float timeStep = stepContext->dt;
 	float invTimeStep = stepContext->inv_dt;
 
 	uint16_t worldId = world->worldId;
-	b2BodyMoveEvent* moveEvents = world->bodyMoveEventArray;
 
-	b2Island* islands = world->islandArray;
+	// The body move event array has should already have the correct size
+	B2_ASSERT( endIndex <= world->bodyMoveEvents.count );
+	b2BodyMoveEvent* moveEvents = world->bodyMoveEvents.data;
 
-	b2BitSet* enlargedSimBitSet = &world->taskContextArray[threadIndex].enlargedSimBitSet;
-	b2BitSet* awakeIslandBitSet = &world->taskContextArray[threadIndex].awakeIslandBitSet;
-	b2TaskContext* taskContext = world->taskContextArray + threadIndex;
+	b2BitSet* enlargedSimBitSet = &world->taskContexts.data[threadIndex].enlargedSimBitSet;
+	b2BitSet* awakeIslandBitSet = &world->taskContexts.data[threadIndex].awakeIslandBitSet;
+	b2TaskContext* taskContext = world->taskContexts.data + threadIndex;
 
 	bool enableContinuous = world->enableContinuous;
 
@@ -294,8 +296,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		}
 
 		// Any single body in an island can keep it awake
-		b2CheckIndex( islands, body->islandId );
-		b2Island* island = islands + body->islandId;
+		b2Island* island = b2IslandArray_Get( &world->islands, body->islandId );
 		if ( body->sleepTime < b2_timeToSleep )
 		{
 			// keep island awake
@@ -319,7 +320,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		int shapeId = body->headShapeId;
 		while ( shapeId != B2_NULL_INDEX )
 		{
-			b2Shape* shape = world->shapeArray + shapeId;
+			b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
 
 			B2_ASSERT( shape->isFast == false );
 
@@ -827,8 +828,7 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 
 	b2World* world = continuousContext->world;
 
-	b2CheckId( world->shapeArray, shapeId );
-	b2Shape* shape = world->shapeArray + shapeId;
+	b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
 
 	// Skip same body
 	if ( shape->bodyId == fastShape->bodyId )
@@ -849,8 +849,7 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 		return true;
 	}
 
-	b2CheckIndex( world->bodyArray, shape->bodyId );
-	b2Body* body = world->bodyArray + shape->bodyId;
+	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
 	b2BodySim* bodySim = b2GetBodySim( world, body );
 	B2_ASSERT( body->type == b2_staticBody || fastBodySim->isBullet );
 
@@ -861,8 +860,7 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 	}
 
 	// Skip filtered bodies
-	b2CheckIndex( world->bodyArray, fastBodySim->bodyId );
-	b2Body* fastBody = world->bodyArray + fastBodySim->bodyId;
+	b2Body* fastBody = b2BodyArray_Get( &world->bodies, fastBodySim->bodyId );
 	canCollide = b2ShouldBodiesCollide( world, fastBody, body );
 	if ( canCollide == false )
 	{
@@ -931,12 +929,9 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 // Continuous collision of dynamic versus static
 static void b2SolveContinuous( b2World* world, int bodySimIndex )
 {
-	b2SolverSet* awakeSet = world->solverSetArray + b2_awakeSet;
-	B2_ASSERT( 0 <= bodySimIndex && bodySimIndex < awakeSet->sims.count );
-	b2BodySim* fastBodySim = awakeSet->sims.data + bodySimIndex;
+	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
+	b2BodySim* fastBodySim = b2BodySimArray_Get( &awakeSet->bodySims, bodySimIndex );
 	B2_ASSERT( fastBodySim->isFast );
-
-	b2Shape* shapes = world->shapeArray;
 
 	b2Sweep sweep = b2MakeSweep( fastBodySim );
 
@@ -960,14 +955,11 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 
 	bool isBullet = fastBodySim->isBullet;
 
-	// todo consider moving shape list to body sim
-	b2CheckIndex( world->bodyArray, fastBodySim->bodyId );
-	b2Body* fastBody = world->bodyArray + fastBodySim->bodyId;
+	b2Body* fastBody = b2BodyArray_Get( &world->bodies, fastBodySim->bodyId );
 	int shapeId = fastBody->headShapeId;
 	while ( shapeId != B2_NULL_INDEX )
 	{
-		b2CheckId( shapes, shapeId );
-		b2Shape* fastShape = shapes + shapeId;
+		b2Shape* fastShape = b2ShapeArray_Get( &world->shapes, shapeId );
 		B2_ASSERT( fastShape->isFast == true );
 
 		shapeId = fastShape->nextShapeId;
@@ -1022,7 +1014,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 		shapeId = fastBody->headShapeId;
 		while ( shapeId != B2_NULL_INDEX )
 		{
-			b2Shape* shape = shapes + shapeId;
+			b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
 
 			// Must recompute aabb at the interpolated transform
 			b2AABB aabb = b2ComputeShapeAABB( shape, transform );
@@ -1060,7 +1052,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 		shapeId = fastBody->headShapeId;
 		while ( shapeId != B2_NULL_INDEX )
 		{
-			b2Shape* shape = shapes + shapeId;
+			b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
 
 			// shape->aabb is still valid
 
@@ -1086,7 +1078,7 @@ static void b2FastBodyTask( int startIndex, int endIndex, uint32_t threadIndex, 
 {
 	B2_MAYBE_UNUSED( threadIndex );
 
-	b2TracyCZoneNC( fast_body_task, "Fast Body Task", b2_colorAqua, true );
+	b2TracyCZoneNC( fast_body_task, "Fast Body Task", b2_colorCyan, true );
 
 	b2StepContext* stepContext = taskContext;
 
@@ -1137,8 +1129,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 	world->profile.buildIslands = b2GetMillisecondsAndReset( &timer );
 
-	b2SolverSet* awakeSet = world->solverSetArray + b2_awakeSet;
-	int awakeBodyCount = awakeSet->sims.count;
+	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
+	int awakeBodyCount = awakeSet->bodySims.count;
 	if ( awakeBodyCount == 0 )
 	{
 		// Nothing to simulate, however I must still finish the broad-phase rebuild.
@@ -1170,8 +1162,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2ConstraintGraph* graph = &world->constraintGraph;
 		b2GraphColor* colors = graph->colors;
 
-		stepContext->sims = awakeSet->sims.data;
-		stepContext->states = awakeSet->states.data;
+		stepContext->sims = awakeSet->bodySims.data;
+		stepContext->states = awakeSet->bodyStates.data;
 
 		// count contacts, joints, and colors
 		int awakeContactCount = 0;
@@ -1179,8 +1171,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		int activeColorCount = 0;
 		for ( int i = 0; i < b2_graphColorCount - 1; ++i )
 		{
-			int perColorContactCount = colors[i].contacts.count;
-			int perColorJointCount = colors[i].joints.count;
+			int perColorContactCount = colors[i].contactSims.count;
+			int perColorJointCount = colors[i].jointSims.count;
 			int occupancyCount = perColorContactCount + perColorJointCount;
 			activeColorCount += occupancyCount > 0 ? 1 : 0;
 			awakeContactCount += perColorContactCount;
@@ -1189,9 +1181,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		// Deal with void**
 		{
-			void* bodyMoveEventArray = world->bodyMoveEventArray;
-			b2Array_Resize( &bodyMoveEventArray, sizeof( b2BodyMoveEvent ), awakeBodyCount );
-			world->bodyMoveEventArray = bodyMoveEventArray;
+			b2BodyMoveEventArray_Resize( &world->bodyMoveEvents, awakeBodyCount );
 		}
 
 		// Each worker receives at most M blocks of work. The workers may receive less than there is not sufficient work.
@@ -1239,8 +1229,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		int c = 0;
 		for ( int i = 0; i < b2_graphColorCount - 1; ++i )
 		{
-			int colorContactCount = colors[i].contacts.count;
-			int colorJointCount = colors[i].joints.count;
+			int colorContactCount = colors[i].contactSims.count;
+			int colorJointCount = colors[i].jointSims.count;
 
 			if ( colorContactCount + colorJointCount > 0 )
 			{
@@ -1311,7 +1301,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2ContactConstraintSIMD* simdContactConstraints =
 			b2AllocateStackItem( &world->stackAllocator, simdContactCount * simdConstraintSize, "contact constraint" );
 
-		int overflowContactCount = colors[b2_overflowIndex].contacts.count;
+		int overflowContactCount = colors[b2_overflowIndex].contactSims.count;
 		b2ContactConstraint* overflowContactConstraints = b2AllocateStackItem(
 			&world->stackAllocator, overflowContactCount * sizeof( b2ContactConstraint ), "overflow contact constraint" );
 
@@ -1326,7 +1316,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				int j = activeColorIndices[i];
 				b2GraphColor* color = colors + j;
 
-				int colorContactCount = color->contacts.count;
+				int colorContactCount = color->contactSims.count;
 
 				if ( colorContactCount == 0 )
 				{
@@ -1339,7 +1329,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 					for ( int k = 0; k < colorContactCount; ++k )
 					{
-						contacts[B2_SIMD_WIDTH * contactBase + k] = color->contacts.data + k;
+						contacts[B2_SIMD_WIDTH * contactBase + k] = color->contactSims.data + k;
 					}
 
 					// remainder
@@ -1352,10 +1342,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					contactBase += colorContactCountSIMD;
 				}
 
-				int colorJointCount = color->joints.count;
+				int colorJointCount = color->jointSims.count;
 				for ( int k = 0; k < colorJointCount; ++k )
 				{
-					joints[jointBase + k] = color->joints.data + k;
+					joints[jointBase + k] = color->jointSims.data + k;
 				}
 				jointBase += colorJointCount;
 			}
@@ -1656,10 +1646,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		world->profile.solverTasks = b2GetMillisecondsAndReset( &timer );
 
 		// Prepare contact, enlarged body, and island bit sets used in body finalization.
-		int awakeIslandCount = awakeSet->islands.count;
+		int awakeIslandCount = awakeSet->islandSims.count;
 		for ( int i = 0; i < world->workerCount; ++i )
 		{
-			b2TaskContext* taskContext = world->taskContextArray + i;
+			b2TaskContext* taskContext = world->taskContexts.data + i;
 			b2SetBitCountAndClear( &taskContext->enlargedSimBitSet, awakeBodyCount );
 			b2SetBitCountAndClear( &taskContext->awakeIslandBitSet, awakeIslandCount );
 			taskContext->splitIslandId = B2_NULL_INDEX;
@@ -1694,15 +1684,17 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	// Report hit events
 	// todo perhaps optimize this with a bitset
 	{
-		B2_ASSERT( b2Array( world->contactHitArray ).count == 0 );
+		b2TracyCZoneNC( hit_events, "Hit", b2_colorVioletRed, true );
+
+		B2_ASSERT( world->contactHitEvents.count == 0 );
 
 		float threshold = world->hitEventThreshold;
 		b2GraphColor* colors = world->constraintGraph.colors;
 		for ( int i = 0; i < b2_graphColorCount; ++i )
 		{
 			b2GraphColor* color = colors + i;
-			int contactCount = color->contacts.count;
-			b2ContactSim* contactSims = color->contacts.data;
+			int contactCount = color->contactSims.count;
+			b2ContactSim* contactSims = color->contactSims.data;
 			for ( int j = 0; j < contactCount; ++j )
 			{
 				b2ContactSim* contactSim = contactSims + j;
@@ -1732,18 +1724,18 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				{
 					event.normal = contactSim->manifold.normal;
 
-					b2CheckId( world->shapeArray, contactSim->shapeIdA );
-					b2CheckId( world->shapeArray, contactSim->shapeIdB );
-					b2Shape* shapeA = world->shapeArray + contactSim->shapeIdA;
-					b2Shape* shapeB = world->shapeArray + contactSim->shapeIdB;
+					b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contactSim->shapeIdA );
+					b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contactSim->shapeIdB );
 
 					event.shapeIdA = ( b2ShapeId ){ shapeA->id + 1, world->worldId, shapeA->revision };
 					event.shapeIdB = ( b2ShapeId ){ shapeB->id + 1, world->worldId, shapeB->revision };
 
-					b2Array_Push( world->contactHitArray, event );
+					b2ContactHitEventArray_Push( &world->contactHitEvents, event );
 				}
 			}
 		}
+
+		b2TracyCZoneEnd( hit_events );
 	}
 
 	world->profile.hitEvents = b2GetMillisecondsAndReset( &timer );
@@ -1763,10 +1755,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	b2TracyCZoneNC( enlarge_proxies, "Enlarge Proxies", b2_colorDarkTurquoise, true );
 
 	// Gather bits for all sim bodies that have enlarged AABBs
-	b2BitSet* simBitSet = &world->taskContextArray[0].enlargedSimBitSet;
+	b2BitSet* simBitSet = &world->taskContexts.data[0].enlargedSimBitSet;
 	for ( int i = 1; i < world->workerCount; ++i )
 	{
-		b2InPlaceUnion( simBitSet, &world->taskContextArray[i].enlargedSimBitSet );
+		b2InPlaceUnion( simBitSet, &world->taskContexts.data[i].enlargedSimBitSet );
 	}
 
 	// Enlarge broad-phase proxies and build move array
@@ -1774,9 +1766,14 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	// in deterministic order. I'm tracking sim bodies because the number of shape ids can be huge.
 	{
 		b2BroadPhase* broadPhase = &world->broadPhase;
-		b2Shape* shapes = world->shapeArray;
 		uint32_t wordCount = simBitSet->blockCount;
 		uint64_t* bits = simBitSet->bits;
+
+		// Fast array access is important here
+		b2Body* bodyArray = world->bodies.data;
+		b2BodySim* bodySimArray = awakeSet->bodySims.data;
+		b2Shape* shapeArray = world->shapes.data;
+
 		for ( uint32_t k = 0; k < wordCount; ++k )
 		{
 			uint64_t word = bits[k];
@@ -1785,18 +1782,13 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				uint32_t ctz = b2CTZ64( word );
 				uint32_t bodySimIndex = 64 * k + ctz;
 
-				// cache misses
-				B2_ASSERT( bodySimIndex < awakeSet->sims.count );
-				b2BodySim* bodySim = awakeSet->sims.data + bodySimIndex;
-
-				b2CheckIndex( world->bodyArray, bodySim->bodyId );
-				b2Body* body = world->bodyArray + bodySim->bodyId;
+				b2BodySim* bodySim = bodySimArray + bodySimIndex;
+				b2Body* body = bodyArray + bodySim->bodyId;
 
 				int shapeId = body->headShapeId;
 				while ( shapeId != B2_NULL_INDEX )
 				{
-					b2CheckId( shapes, shapeId );
-					b2Shape* shape = shapes + shapeId;
+					b2Shape* shape = shapeArray + shapeId;
 
 					if ( shape->enlargedAABB )
 					{
@@ -1849,17 +1841,19 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	{
 		b2BroadPhase* broadPhase = &world->broadPhase;
 		b2DynamicTree* dynamicTree = broadPhase->trees + b2_dynamicBody;
-		b2Body* bodies = world->bodyArray;
-		b2Shape* shapes = world->shapeArray;
 
-		int* fastBodies = stepContext->fastBodies;
+		// Fast array access is important here
+		b2Body* bodyArray = world->bodies.data;
+		b2BodySim* bodySimArray = awakeSet->bodySims.data;
+		b2Shape* shapeArray = world->shapes.data;
+
+		int* fastBodySimIndices = stepContext->fastBodies;
 		int fastBodyCount = stepContext->fastBodyCount;
 
 		// This loop has non-deterministic order but it shouldn't affect the result
 		for ( int i = 0; i < fastBodyCount; ++i )
 		{
-			B2_ASSERT( 0 <= fastBodies[i] && fastBodies[i] < awakeSet->sims.count );
-			b2BodySim* fastBodySim = awakeSet->sims.data + fastBodies[i];
+			b2BodySim* fastBodySim = bodySimArray + fastBodySimIndices[i];
 			if ( fastBodySim->enlargeAABB == false )
 			{
 				continue;
@@ -1868,13 +1862,15 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			// clear flag
 			fastBodySim->enlargeAABB = false;
 
-			b2CheckIndex( bodies, fastBodySim->bodyId );
-			b2Body* fastBody = bodies + fastBodySim->bodyId;
+			int bodyId = fastBodySim->bodyId;
+
+			B2_ASSERT( 0 <= bodyId && bodyId < world->bodies.count );
+			b2Body* fastBody = bodyArray + bodyId;
 
 			int shapeId = fastBody->headShapeId;
 			while ( shapeId != B2_NULL_INDEX )
 			{
-				b2Shape* shape = shapes + shapeId;
+				b2Shape* shape = shapeArray + shapeId;
 				if ( shape->enlargedAABB == false )
 				{
 					shapeId = shape->nextShapeId;
@@ -1915,18 +1911,20 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	{
 		b2BroadPhase* broadPhase = &world->broadPhase;
 		b2DynamicTree* dynamicTree = broadPhase->trees + b2_dynamicBody;
-		b2Body* bodies = world->bodyArray;
-		b2Shape* shapes = world->shapeArray;
+
+		// Fast array access is important here
+		b2Body* bodyArray = world->bodies.data;
+		b2BodySim* bodySimArray = awakeSet->bodySims.data;
+		b2Shape* shapeArray = world->shapes.data;
 
 		// Serially enlarge broad-phase proxies for bullet shapes
-		int* bulletBodies = stepContext->bulletBodies;
+		int* bulletBodySimIndices = stepContext->bulletBodies;
 		int bulletBodyCount = stepContext->bulletBodyCount;
 
 		// This loop has non-deterministic order but it shouldn't affect the result
 		for ( int i = 0; i < bulletBodyCount; ++i )
 		{
-			B2_ASSERT( 0 <= bulletBodies[i] && bulletBodies[i] < awakeSet->sims.count );
-			b2BodySim* bulletBodySim = awakeSet->sims.data + bulletBodies[i];
+			b2BodySim* bulletBodySim = bodySimArray + bulletBodySimIndices[i];
 			if ( bulletBodySim->enlargeAABB == false )
 			{
 				continue;
@@ -1935,13 +1933,14 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			// clear flag
 			bulletBodySim->enlargeAABB = false;
 
-			b2CheckIndex( bodies, bulletBodySim->bodyId );
-			b2Body* bulletBody = bodies + bulletBodySim->bodyId;
+			int bodyId = bulletBodySim->bodyId;
+			B2_ASSERT( 0 <= bodyId && bodyId < world->bodies.count );
+			b2Body* bulletBody = bodyArray + bodyId;
 
 			int shapeId = bulletBody->headShapeId;
 			while ( shapeId != B2_NULL_INDEX )
 			{
-				b2Shape* shape = shapes + shapeId;
+				b2Shape* shape = shapeArray + shapeId;
 				if ( shape->enlargedAABB == false )
 				{
 					shapeId = shape->nextShapeId;
@@ -1988,23 +1987,31 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		float splitSleepTimer = 0.0f;
 		for ( int i = 0; i < world->workerCount; ++i )
 		{
-			b2TaskContext* taskContext = world->taskContextArray + i;
-			if ( taskContext->splitIslandId != B2_NULL_INDEX && taskContext->splitSleepTime > splitSleepTimer )
+			b2TaskContext* taskContext = world->taskContexts.data + i;
+			if ( taskContext->splitIslandId != B2_NULL_INDEX && taskContext->splitSleepTime >= splitSleepTimer )
 			{
+				B2_ASSERT( taskContext->splitSleepTime > 0.0f );
+
+				// Tie breaking for determinism. Largest island id wins. Needed due to work stealing.
+				if ( taskContext->splitSleepTime == splitSleepTimer && taskContext->splitIslandId < world->splitIslandId )
+				{
+					continue;
+				}
+
 				world->splitIslandId = taskContext->splitIslandId;
 				splitSleepTimer = taskContext->splitSleepTime;
 			}
 		}
 
-		b2BitSet* awakeIslandBitSet = &world->taskContextArray[0].awakeIslandBitSet;
+		b2BitSet* awakeIslandBitSet = &world->taskContexts.data[0].awakeIslandBitSet;
 		for ( int i = 1; i < world->workerCount; ++i )
 		{
-			b2InPlaceUnion( awakeIslandBitSet, &world->taskContextArray[i].awakeIslandBitSet );
+			b2InPlaceUnion( awakeIslandBitSet, &world->taskContexts.data[i].awakeIslandBitSet );
 		}
 
 		// Need to process in reverse because this moves islands to sleeping solver sets.
-		b2IslandSim* islands = awakeSet->islands.data;
-		int count = awakeSet->islands.count;
+		b2IslandSim* islands = awakeSet->islandSims.data;
+		int count = awakeSet->islandSims.count;
 		for ( int islandIndex = count - 1; islandIndex >= 0; islandIndex -= 1 )
 		{
 			if ( b2GetBit( awakeIslandBitSet, islandIndex ) == true )

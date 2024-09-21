@@ -15,11 +15,11 @@
 #include <string.h>
 
 #if defined( _WIN64 )
-	#include <windows.h>
+#include <windows.h>
 #elif defined( __APPLE__ )
-	#include <unistd.h>
+#include <unistd.h>
 #elif defined( __linux__ )
-	#include <unistd.h>
+#include <unistd.h>
 #endif
 
 #define ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
@@ -114,10 +114,23 @@ static void FinishTask( void* userTask, void* userContext )
 	enkiWaitForTaskSet( scheduler, task );
 }
 
+// Box2D benchmark application. On Windows I recommend running this in an administrator command prompt. Don't use Windows Terminal.
 int main( int argc, char** argv )
 {
+	Benchmark benchmarks[] = {
+		{ "joint_grid", JointGrid, 500 },
+		{ "large_pyramid", LargePyramid, 500 },
+		{ "many_pyramids", ManyPyramids, 200 },
+		{ "smash", Smash, 300 },
+		{ "tumbler", Tumbler, 750 },
+	};
+
+	int benchmarkCount = ARRAY_COUNT( benchmarks );
+
 	int maxThreadCount = GetNumberOfCores();
 	int runCount = 4;
+	int singleBenchmark = -1;
+	int singleWorkerCount = -1;
 	b2Counters counters = { 0 };
 	bool enableContinuous = true;
 
@@ -129,30 +142,47 @@ int main( int argc, char** argv )
 		if ( strncmp( arg, "-t=", 3 ) == 0 )
 		{
 			int threadCount = atoi( arg + 3 );
-			maxThreadCount = b2MinInt( maxThreadCount, threadCount );
+			maxThreadCount = b2ClampInt( threadCount, 1, maxThreadCount );
+		}
+		else if ( strncmp( arg, "-b=", 3 ) == 0 )
+		{
+			singleBenchmark = atoi( arg + 3 );
+			singleBenchmark = b2ClampInt( singleBenchmark, 0, benchmarkCount - 1 );
+		}
+		else if ( strncmp( arg, "-w=", 3 ) == 0 )
+		{
+			singleWorkerCount = atoi( arg + 3 );
+		}
+		else if ( strncmp( arg, "-r=", 3 ) == 0 )
+		{
+			runCount = b2ClampInt(atoi( arg + 3 ), 1, 16);
 		}
 		else if ( strcmp( arg, "-h" ) == 0 )
 		{
 			printf( "Usage\n"
-					"-t=<thread count>: the maximum number of threads to use\n" );
+					"-t=<integer>: the maximum number of threads to use\n"
+					"-b=<integer>: run a single benchmark\n"
+					"-w=<integer>: run a single worker count\n"
+					"-r=<integer>: number of repeats (default is 4)\n" );
+			exit( 0 );
 		}
 	}
 
-	Benchmark benchmarks[] = {
-		{ "joint_grid", JointGrid, 500 },
-		{ "large_pyramid", LargePyramid, 500 },
-		{ "many_pyramids", ManyPyramids, 200 },
-		{ "smash", Smash, 300 },
-		{ "tumbler", Tumbler, 750 },
-	};
-
-	int benchmarkCount = ARRAY_COUNT( benchmarks );
+	if ( singleWorkerCount != -1 )
+	{
+		singleWorkerCount = b2ClampInt( singleWorkerCount, 1, maxThreadCount );
+	}
 
 	printf( "Starting Box2D benchmarks\n" );
 	printf( "======================================\n" );
 
 	for ( int benchmarkIndex = 0; benchmarkIndex < benchmarkCount; ++benchmarkIndex )
 	{
+		if ( singleBenchmark != -1 && benchmarkIndex != singleBenchmark )
+		{
+			continue;
+		}
+
 #ifdef NDEBUG
 		int stepCount = benchmarks[benchmarkIndex].stepCount;
 #else
@@ -167,6 +197,11 @@ int main( int argc, char** argv )
 
 		for ( int threadCount = 1; threadCount <= maxThreadCount; ++threadCount )
 		{
+			if ( singleWorkerCount != -1 && singleWorkerCount != threadCount )
+			{
+				continue;
+			}
+
 			printf( "thread count: %d\n", threadCount );
 
 			for ( int runIndex = 0; runIndex < runCount; ++runIndex )
@@ -195,6 +230,7 @@ int main( int argc, char** argv )
 
 				// Initial step can be expensive and skew benchmark
 				b2World_Step( worldId, timeStep, subStepCount );
+				taskCount = 0;
 
 				b2Timer timer = b2CreateTimer();
 
@@ -242,9 +278,9 @@ int main( int argc, char** argv )
 		}
 
 		fprintf( file, "threads,fps\n" );
-		for ( int threadCount = 1; threadCount <= maxThreadCount; ++threadCount )
+		for ( int threadIndex = 1; threadIndex <= maxThreadCount; ++threadIndex )
 		{
-			fprintf( file, "%d,%g\n", threadCount, maxFps[threadCount - 1] );
+			fprintf( file, "%d,%g\n", threadIndex, maxFps[threadIndex - 1] );
 		}
 
 		fclose( file );

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
+#include "array.h"
 #include "solver.h"
 
 #include "box2d/types.h"
@@ -268,7 +269,6 @@ typedef struct b2JointSim
 	};
 } b2JointSim;
 
-b2Joint* b2GetJoint( b2World* world, int jointId );
 void b2DestroyJointInternal( b2World* world, b2Joint* joint, bool wakeBodies );
 
 b2JointSim* b2GetJointSim( b2World* world, b2Joint* joint );
@@ -283,3 +283,7 @@ void b2WarmStartOverflowJoints( b2StepContext* context );
 void b2SolveOverflowJoints( b2StepContext* context, bool useBias );
 
 void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint );
+
+// Define inline functions for arrays
+B2_ARRAY_INLINE( b2Joint, b2Joint );
+B2_ARRAY_INLINE( b2JointSim, b2JointSim );

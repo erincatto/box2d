@@ -399,6 +399,9 @@ B2_API bool b2Body_IsBullet( b2BodyId bodyId );
 ///	@see b2ShapeDef::enableHitEvents
 B2_API void b2Body_EnableHitEvents( b2BodyId bodyId, bool enableHitEvents );
 
+/// Get the world that owns this body
+B2_API b2WorldId b2Body_GetWorld( b2BodyId bodyId );
+
 /// Get the number of shapes on this body
 B2_API int b2Body_GetShapeCount( b2BodyId bodyId );
 

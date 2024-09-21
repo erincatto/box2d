@@ -7,7 +7,7 @@
 
 typedef struct b2IdPool
 {
-	int* freeArray;
+	b2IntArray freeArray;
 	int nextIndex;
 } b2IdPool;
 
@@ -20,7 +20,7 @@ void b2ValidateFreeId( b2IdPool* pool, int id );
 
 static inline int b2GetIdCount( b2IdPool* pool )
 {
-	return pool->nextIndex - b2Array( pool->freeArray ).count;
+	return pool->nextIndex - pool->freeArray.count;
 }
 
 static inline int b2GetIdCapacity( b2IdPool* pool )
@@ -30,5 +30,5 @@ static inline int b2GetIdCapacity( b2IdPool* pool )
 
 static inline int b2GetIdBytes( b2IdPool* pool )
 {
-	return b2GetArrayBytes( pool->freeArray, sizeof( int ) );
+	return b2IntArray_ByteCount(&pool->freeArray);
 }

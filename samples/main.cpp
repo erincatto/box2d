@@ -13,9 +13,11 @@
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
 
+// clang-format off
 #include <glad/glad.h>
-// Keep glad.h before glfw3.h
 #include <GLFW/glfw3.h>
+// clang-format on
+
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -23,13 +25,13 @@
 #include <stdlib.h>
 
 #ifdef BOX2D_PROFILE
-	#include <tracy/Tracy.hpp>
+#include <tracy/Tracy.hpp>
 #else
-	#define FrameMark
+#define FrameMark
 #endif
 
 #if defined( _WIN32 )
-	#include <crtdbg.h>
+#include <crtdbg.h>
 
 static int MyAllocHook( int allocType, void* userData, size_t size, int blockType, long requestNumber,
 						const unsigned char* filename, int lineNumber )
@@ -515,7 +517,6 @@ static void UpdateUI()
 	}
 }
 
-//
 int main( int, char** )
 {
 #if defined( _WIN32 )
@@ -707,9 +708,9 @@ int main( int, char** )
 
 		// if (g_draw.m_showUI)
 		{
-			 snprintf( buffer, 128, "%.1f ms - step %d - camera (%g, %g, %g)", 1000.0f * frameTime, s_sample->m_stepCount,
+			snprintf( buffer, 128, "%.1f ms - step %d - camera (%g, %g, %g)", 1000.0f * frameTime, s_sample->m_stepCount,
 					  g_camera.m_center.x, g_camera.m_center.y, g_camera.m_zoom );
-			//snprintf( buffer, 128, "%.1f ms", 1000.0f * frameTime );
+			// snprintf( buffer, 128, "%.1f ms", 1000.0f * frameTime );
 
 			ImGui::Begin( "Overlay", nullptr,
 						  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |

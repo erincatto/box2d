@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 
 #include "aabb.h"
-#include "allocate.h"
 #include "core.h"
 
 #include "box2d/collision.h"
@@ -1672,6 +1671,7 @@ static int32_t b2BuildTree( b2DynamicTree* tree, int32_t leafCount )
 	int32_t* binIndices = tree->binIndices;
 #endif
 
+	// todo large stack item
 	struct b2RebuildItem stack[b2_treeStackSize];
 	int32_t top = 0;
 
