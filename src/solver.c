@@ -1768,6 +1768,12 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2BroadPhase* broadPhase = &world->broadPhase;
 		uint32_t wordCount = simBitSet->blockCount;
 		uint64_t* bits = simBitSet->bits;
+
+		// Fast array access is important here
+		b2Body* bodyArray = world->bodies.data;
+		b2BodySim* bodySimArray = awakeSet->bodySims.data;
+		b2Shape* shapeArray = world->shapes.data;
+
 		for ( uint32_t k = 0; k < wordCount; ++k )
 		{
 			uint64_t word = bits[k];
@@ -1776,15 +1782,13 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				uint32_t ctz = b2CTZ64( word );
 				uint32_t bodySimIndex = 64 * k + ctz;
 
-				// cache misses
-				b2BodySim* bodySim = b2BodySimArray_Get( &awakeSet->bodySims, bodySimIndex );
-
-				b2Body* body = b2BodyArray_Get( &world->bodies, bodySim->bodyId );
+				b2BodySim* bodySim = bodySimArray + bodySimIndex;
+				b2Body* body = bodyArray + bodySim->bodyId;
 
 				int shapeId = body->headShapeId;
 				while ( shapeId != B2_NULL_INDEX )
 				{
-					b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+					b2Shape* shape = shapeArray + shapeId;
 
 					if ( shape->enlargedAABB )
 					{
@@ -1837,15 +1841,19 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	{
 		b2BroadPhase* broadPhase = &world->broadPhase;
 		b2DynamicTree* dynamicTree = broadPhase->trees + b2_dynamicBody;
-		b2Body* bodies = world->bodies.data;
 
-		int* fastBodies = stepContext->fastBodies;
+		// Fast array access is important here
+		b2Body* bodyArray = world->bodies.data;
+		b2BodySim* bodySimArray = awakeSet->bodySims.data;
+		b2Shape* shapeArray = world->shapes.data;
+
+		int* fastBodySimIndices = stepContext->fastBodies;
 		int fastBodyCount = stepContext->fastBodyCount;
 
 		// This loop has non-deterministic order but it shouldn't affect the result
 		for ( int i = 0; i < fastBodyCount; ++i )
 		{
-			b2BodySim* fastBodySim = b2BodySimArray_Get( &awakeSet->bodySims, fastBodies[i] );
+			b2BodySim* fastBodySim = bodySimArray + fastBodySimIndices[i];
 			if ( fastBodySim->enlargeAABB == false )
 			{
 				continue;
@@ -1855,13 +1863,14 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			fastBodySim->enlargeAABB = false;
 
 			int bodyId = fastBodySim->bodyId;
+
 			B2_ASSERT( 0 <= bodyId && bodyId < world->bodies.count );
-			b2Body* fastBody = bodies + bodyId;
+			b2Body* fastBody = bodyArray + bodyId;
 
 			int shapeId = fastBody->headShapeId;
 			while ( shapeId != B2_NULL_INDEX )
 			{
-				b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+				b2Shape* shape = shapeArray + shapeId;
 				if ( shape->enlargedAABB == false )
 				{
 					shapeId = shape->nextShapeId;
@@ -1902,16 +1911,20 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	{
 		b2BroadPhase* broadPhase = &world->broadPhase;
 		b2DynamicTree* dynamicTree = broadPhase->trees + b2_dynamicBody;
-		b2Body* bodies = world->bodies.data;
+
+		// Fast array access is important here
+		b2Body* bodyArray = world->bodies.data;
+		b2BodySim* bodySimArray = awakeSet->bodySims.data;
+		b2Shape* shapeArray = world->shapes.data;
 
 		// Serially enlarge broad-phase proxies for bullet shapes
-		int* bulletBodies = stepContext->bulletBodies;
+		int* bulletBodySimIndices = stepContext->bulletBodies;
 		int bulletBodyCount = stepContext->bulletBodyCount;
 
 		// This loop has non-deterministic order but it shouldn't affect the result
 		for ( int i = 0; i < bulletBodyCount; ++i )
 		{
-			b2BodySim* bulletBodySim = b2BodySimArray_Get( &awakeSet->bodySims, bulletBodies[i] );
+			b2BodySim* bulletBodySim = bodySimArray + bulletBodySimIndices[i];
 			if ( bulletBodySim->enlargeAABB == false )
 			{
 				continue;
@@ -1922,12 +1935,12 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 			int bodyId = bulletBodySim->bodyId;
 			B2_ASSERT( 0 <= bodyId && bodyId < world->bodies.count );
-			b2Body* bulletBody = bodies + bodyId;
+			b2Body* bulletBody = bodyArray + bodyId;
 
 			int shapeId = bulletBody->headShapeId;
 			while ( shapeId != B2_NULL_INDEX )
 			{
-				b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+				b2Shape* shape = shapeArray + shapeId;
 				if ( shape->enlargedAABB == false )
 				{
 					shapeId = shape->nextShapeId;

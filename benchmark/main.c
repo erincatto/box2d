@@ -114,6 +114,7 @@ static void FinishTask( void* userTask, void* userContext )
 	enkiWaitForTaskSet( scheduler, task );
 }
 
+// Box2D benchmark application. On Windows I recommend running this in an administrator command prompt. Don't use Windows Terminal.
 int main( int argc, char** argv )
 {
 	Benchmark benchmarks[] = {
@@ -152,11 +153,18 @@ int main( int argc, char** argv )
 		{
 			singleWorkerCount = atoi( arg + 3 );
 		}
+		else if ( strncmp( arg, "-r=", 3 ) == 0 )
+		{
+			runCount = b2ClampInt(atoi( arg + 3 ), 1, 16);
+		}
 		else if ( strcmp( arg, "-h" ) == 0 )
 		{
 			printf( "Usage\n"
 					"-t=<integer>: the maximum number of threads to use\n"
-					"-b=<integer>: run a single benchmark\n" );
+					"-b=<integer>: run a single benchmark\n"
+					"-w=<integer>: run a single worker count\n"
+					"-r=<integer>: number of repeats (default is 4)\n" );
+			exit( 0 );
 		}
 	}
 
@@ -222,6 +230,7 @@ int main( int argc, char** argv )
 
 				// Initial step can be expensive and skew benchmark
 				b2World_Step( worldId, timeStep, subStepCount );
+				taskCount = 0;
 
 				b2Timer timer = b2CreateTimer();
 
@@ -269,9 +278,9 @@ int main( int argc, char** argv )
 		}
 
 		fprintf( file, "threads,fps\n" );
-		for ( int threadCount = 1; threadCount <= maxThreadCount; ++threadCount )
+		for ( int threadIndex = 1; threadIndex <= maxThreadCount; ++threadIndex )
 		{
-			fprintf( file, "%d,%g\n", threadCount, maxFps[threadCount - 1] );
+			fprintf( file, "%d,%g\n", threadIndex, maxFps[threadIndex - 1] );
 		}
 
 		fclose( file );

@@ -172,10 +172,10 @@ static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 	}
 
 	// Is this proxy also moving?
-	if ( queryContext->queryTreeType != b2_staticBody )
+	if ( queryContext->queryTreeType != b2_staticBody && proxyKey < queryContext->queryProxyKey )
 	{
 		bool moved = b2ContainsKey( &bp->moveSet, proxyKey + 1 );
-		if ( moved && proxyKey < queryContext->queryProxyKey )
+		if ( moved )
 		{
 			// Both proxies are moving. Avoid duplicate pairs.
 			return true;
