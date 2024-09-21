@@ -21,20 +21,20 @@ b2Island* b2CreateIsland( b2World* world, int setIndex )
 
 	int islandId = b2AllocId( &world->islandIdPool );
 
-	if ( islandId == b2Array( world->islandArray ).count )
+	if ( islandId == world->islandArray.count )
 	{
 		b2Island emptyIsland = { 0 };
-		b2Array_Push( world->islandArray, emptyIsland );
+		b2IslandArray_Push( &world->islandArray, emptyIsland );
 	}
 	else
 	{
-		B2_ASSERT( world->islandArray[islandId].setIndex == B2_NULL_INDEX );
+		B2_ASSERT( world->islandArray.data[islandId].setIndex == B2_NULL_INDEX );
 	}
 
 	b2CheckIndex( world->solverSetArray, setIndex );
 	b2SolverSet* set = world->solverSetArray + setIndex;
 
-	b2Island* island = world->islandArray + islandId;
+	b2Island* island = b2IslandArray_Get( &world->islandArray, islandId );
 	island->setIndex = setIndex;
 	island->localIndex = set->islandsNew.count;
 	island->islandId = islandId;
@@ -59,8 +59,7 @@ b2Island* b2CreateIsland( b2World* world, int setIndex )
 void b2DestroyIsland( b2World* world, int islandId )
 {
 	// assume island is empty
-	b2CheckIndex( world->islandArray, islandId );
-	b2Island* island = world->islandArray + islandId;
+	b2Island* island = b2IslandArray_Get( &world->islandArray, islandId );
 	b2CheckIndex( world->solverSetArray, island->setIndex );
 	b2SolverSet* set = world->solverSetArray + island->setIndex;
 	int movedIndex = b2IslandSimArray_RemoveSwap( &set->islandsNew, island->localIndex );
@@ -69,7 +68,7 @@ void b2DestroyIsland( b2World* world, int islandId )
 		// Fix index on moved element
 		b2IslandSim* movedElement = set->islandsNew.data + island->localIndex;
 		int movedId = movedElement->islandId;
-		b2Island* movedIsland = world->islandArray + movedId;
+		b2Island* movedIsland = b2IslandArray_Get( &world->islandArray, movedId );
 		B2_ASSERT( movedIsland->localIndex == movedIndex );
 		movedIsland->localIndex = island->localIndex;
 	}
@@ -81,20 +80,13 @@ void b2DestroyIsland( b2World* world, int islandId )
 	b2FreeId( &world->islandIdPool, islandId );
 }
 
-b2Island* b2GetIsland( b2World* world, int islandId )
-{
-	b2CheckIndex( world->islandArray, islandId );
-	return world->islandArray + islandId;
-}
-
 static void b2AddContactToIsland( b2World* world, int islandId, b2Contact* contact )
 {
 	B2_ASSERT( contact->islandId == B2_NULL_INDEX );
 	B2_ASSERT( contact->islandPrev == B2_NULL_INDEX );
 	B2_ASSERT( contact->islandNext == B2_NULL_INDEX );
 
-	b2CheckIndex( world->islandArray, islandId );
-	b2Island* island = world->islandArray + islandId;
+	b2Island* island = b2IslandArray_Get( &world->islandArray, islandId );
 
 	if ( island->headContact != B2_NULL_INDEX )
 	{
@@ -163,11 +155,11 @@ void b2LinkContact( b2World* world, b2Contact* contact )
 	b2Island* islandA = NULL;
 	if ( islandIdA != B2_NULL_INDEX )
 	{
-		islandA = b2GetIsland( world, islandIdA );
+		islandA = b2IslandArray_Get( &world->islandArray, islandIdA );
 		int parentId = islandA->parentIsland;
 		while ( parentId != B2_NULL_INDEX )
 		{
-			b2Island* parent = b2GetIsland( world, parentId );
+			b2Island* parent = b2IslandArray_Get( &world->islandArray, parentId );
 			if ( parent->parentIsland != B2_NULL_INDEX )
 			{
 				// path compression
@@ -184,11 +176,11 @@ void b2LinkContact( b2World* world, b2Contact* contact )
 	b2Island* islandB = NULL;
 	if ( islandIdB != B2_NULL_INDEX )
 	{
-		islandB = b2GetIsland( world, islandIdB );
+		islandB = b2IslandArray_Get( &world->islandArray, islandIdB );
 		int parentId = islandB->parentIsland;
 		while ( islandB->parentIsland != B2_NULL_INDEX )
 		{
-			b2Island* parent = b2GetIsland( world, parentId );
+			b2Island* parent = b2IslandArray_Get( &world->islandArray, parentId );
 			if ( parent->parentIsland != B2_NULL_INDEX )
 			{
 				// path compression
@@ -229,8 +221,7 @@ void b2UnlinkContact( b2World* world, b2Contact* contact )
 
 	// remove from island
 	int islandId = contact->islandId;
-	b2CheckIndex( world->islandArray, islandId );
-	b2Island* island = b2GetIsland( world, islandId );
+	b2Island* island = b2IslandArray_Get( &world->islandArray, islandId );
 
 	if ( contact->islandPrev != B2_NULL_INDEX )
 	{
@@ -275,8 +266,7 @@ static void b2AddJointToIsland( b2World* world, int islandId, b2Joint* joint )
 	B2_ASSERT( joint->islandPrev == B2_NULL_INDEX );
 	B2_ASSERT( joint->islandNext == B2_NULL_INDEX );
 
-	b2CheckIndex( world->islandArray, islandId );
-	b2Island* island = world->islandArray + islandId;
+	b2Island* island = b2IslandArray_Get( &world->islandArray, islandId );
 
 	if ( island->headJoint != B2_NULL_INDEX )
 	{
@@ -327,10 +317,10 @@ void b2LinkJoint( b2World* world, b2Joint* joint, bool mergeIslands )
 	b2Island* islandA = NULL;
 	if ( islandIdA != B2_NULL_INDEX )
 	{
-		islandA = b2GetIsland( world, islandIdA );
+		islandA = b2IslandArray_Get( &world->islandArray, islandIdA );
 		while ( islandA->parentIsland != B2_NULL_INDEX )
 		{
-			b2Island* parent = b2GetIsland( world, islandA->parentIsland );
+			b2Island* parent = b2IslandArray_Get( &world->islandArray, islandA->parentIsland );
 			if ( parent->parentIsland != B2_NULL_INDEX )
 			{
 				// path compression
@@ -346,10 +336,10 @@ void b2LinkJoint( b2World* world, b2Joint* joint, bool mergeIslands )
 	b2Island* islandB = NULL;
 	if ( islandIdB != B2_NULL_INDEX )
 	{
-		islandB = b2GetIsland( world, islandIdB );
+		islandB = b2IslandArray_Get( &world->islandArray, islandIdB );
 		while ( islandB->parentIsland != B2_NULL_INDEX )
 		{
-			b2Island* parent = b2GetIsland( world, islandB->parentIsland );
+			b2Island* parent = b2IslandArray_Get( &world->islandArray, islandB->parentIsland );
 			if ( parent->parentIsland != B2_NULL_INDEX )
 			{
 				// path compression
@@ -396,8 +386,7 @@ void b2UnlinkJoint( b2World* world, b2Joint* joint )
 
 	// remove from island
 	int islandId = joint->islandId;
-	b2CheckIndex( world->islandArray, islandId );
-	b2Island* island = world->islandArray + islandId;
+	b2Island* island = b2IslandArray_Get( &world->islandArray, islandId );
 
 	if ( joint->islandPrev != B2_NULL_INDEX )
 	{
@@ -441,8 +430,7 @@ static void b2MergeIsland( b2World* world, b2Island* island )
 	B2_ASSERT( island->parentIsland != B2_NULL_INDEX );
 
 	int rootId = island->parentIsland;
-	b2CheckIndex( world->islandArray, rootId );
-	b2Island* rootIsland = world->islandArray + rootId;
+	b2Island* rootIsland = b2IslandArray_Get( &world->islandArray, rootId );
 	B2_ASSERT( rootIsland->parentIsland == B2_NULL_INDEX );
 
 	// remap island indices
@@ -557,7 +545,6 @@ void b2MergeAwakeIslands( b2World* world )
 	b2SolverSet* awakeSet = world->solverSetArray + b2_awakeSet;
 	b2IslandSim* islandSims = awakeSet->islandsNew.data;
 	int awakeIslandCount = awakeSet->islandsNew.count;
-	b2Island* islands = world->islandArray;
 
 	// Step 1: Ensure every child island points to its root island. This avoids merging a child island with
 	// a parent island that has already been merged with a grand-parent island.
@@ -565,16 +552,14 @@ void b2MergeAwakeIslands( b2World* world )
 	{
 		int islandId = islandSims[i].islandId;
 
-		b2CheckIndex( islands, islandId );
-		b2Island* island = islands + islandId;
+		b2Island* island = b2IslandArray_Get( &world->islandArray, islandId );
 
 		// find the root island
 		int rootId = islandId;
 		b2Island* rootIsland = island;
 		while ( rootIsland->parentIsland != B2_NULL_INDEX )
 		{
-			b2CheckIndex( islands, rootIsland->parentIsland );
-			b2Island* parent = islands + rootIsland->parentIsland;
+			b2Island* parent = b2IslandArray_Get( &world->islandArray, rootIsland->parentIsland );
 			if ( parent->parentIsland != B2_NULL_INDEX )
 			{
 				// path compression
@@ -596,8 +581,7 @@ void b2MergeAwakeIslands( b2World* world )
 	for ( int i = awakeIslandCount - 1; i >= 0; --i )
 	{
 		int islandId = islandSims[i].islandId;
-		b2CheckIndex( islands, islandId );
-		b2Island* island = islands + islandId;
+		b2Island* island = b2IslandArray_Get( &world->islandArray, islandId );
 
 		if ( island->parentIsland == B2_NULL_INDEX )
 		{
@@ -619,8 +603,7 @@ void b2MergeAwakeIslands( b2World* world )
 
 void b2SplitIsland( b2World* world, int baseId )
 {
-	b2CheckIndex( world->islandArray, baseId );
-	b2Island* baseIsland = world->islandArray + baseId;
+	b2Island* baseIsland = b2IslandArray_Get( &world->islandArray, baseId );
 	int setIndex = baseIsland->setIndex;
 
 	if ( setIndex != b2_awakeSet )
@@ -897,8 +880,7 @@ void b2SplitIslandTask( int startIndex, int endIndex, uint32_t threadIndex, void
 #if B2_VALIDATE
 void b2ValidateIsland( b2World* world, int islandId )
 {
-	b2CheckIndex( world->islandArray, islandId );
-	b2Island* island = world->islandArray + islandId;
+	b2Island* island = b2IslandArray_Get( &world->islandArray, islandId );
 	B2_ASSERT( island->islandId == islandId );
 	B2_ASSERT( island->setIndex != B2_NULL_INDEX );
 	B2_ASSERT( island->headBody != B2_NULL_INDEX );

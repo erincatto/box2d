@@ -155,7 +155,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->jointArray = b2JointArray_Create( 16 );
 
 	world->islandIdPool = b2CreateIdPool();
-	world->islandArray = b2CreateArray( sizeof( b2Island ), 8 );
+	world->islandArray = b2IslandArray_Create( 8 );
 
 	world->bodyMoveEventArray = b2BodyMoveEventArray_Create( 4 );
 	world->sensorBeginEventArray = b2SensorBeginTouchEventArray_Create( 4 );
@@ -259,7 +259,7 @@ void b2DestroyWorld( b2WorldId worldId )
 	b2ChainShapeArray_Destroy( &world->chainArray );
 	b2DestroyArray( world->contactArray, sizeof( b2Contact ) );
 	b2JointArray_Destroy( &world->jointArray );
-	b2DestroyArray( world->islandArray, sizeof( b2Island ) );
+	b2IslandArray_Destroy( &world->islandArray );
 
 	// The data in the solvers sets all comes from the block allocator so no
 	// need to destroy the set contents.
@@ -1750,7 +1750,7 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	fprintf( file, "solver sets: %d\n", b2GetArrayBytes( world->solverSetArray, sizeof( b2SolverSet ) ) );
 	fprintf( file, "joints: %d\n", b2JointArray_ByteCount( &world->jointArray ) );
 	fprintf( file, "contacts: %d\n", b2GetArrayBytes( world->contactArray, sizeof( b2Contact ) ) );
-	fprintf( file, "islands: %d\n", b2GetArrayBytes( world->islandArray, sizeof( b2Island ) ) );
+	fprintf( file, "islands: %d\n", b2IslandArray_ByteCount( &world->islandArray ) );
 	fprintf( file, "shapes: %d\n", b2ShapeArray_ByteCount( &world->shapeArray ) );
 	fprintf( file, "chains: %d\n", b2ChainShapeArray_ByteCount( &world->chainArray ) );
 	fprintf( file, "\n" );
@@ -2475,16 +2475,13 @@ static int b2GetRootIslandId( b2World* world, int islandId )
 		return B2_NULL_INDEX;
 	}
 
-	b2Island* islands = world->islandArray;
-	b2CheckIndex( islands, islandId );
-	b2Island* island = islands + islandId;
+	b2Island* island = b2IslandArray_Get( &world->islandArray, islandId );
 
 	int rootId = islandId;
 	b2Island* rootIsland = island;
 	while ( rootIsland->parentIsland != B2_NULL_INDEX )
 	{
-		b2CheckIndex( islands, rootIsland->parentIsland );
-		b2Island* parent = islands + rootIsland->parentIsland;
+		b2Island* parent = b2IslandArray_Get( &world->islandArray, rootIsland->parentIsland );
 		rootId = rootIsland->parentIsland;
 		rootIsland = parent;
 	}
@@ -2579,7 +2576,7 @@ void b2ValidateSolverSets( b2World* world )
 	B2_ASSERT( b2GetIdCapacity( &world->bodyIdPool ) == world->bodyArrayNew.count );
 	B2_ASSERT( b2GetIdCapacity( &world->contactIdPool ) == b2Array( world->contactArray ).count );
 	B2_ASSERT( b2GetIdCapacity( &world->jointIdPool ) == world->jointArray.count );
-	B2_ASSERT( b2GetIdCapacity( &world->islandIdPool ) == b2Array( world->islandArray ).count );
+	B2_ASSERT( b2GetIdCapacity( &world->islandIdPool ) == world->islandArray.count );
 	B2_ASSERT( b2GetIdCapacity( &world->solverSetIdPool ) == b2Array( world->solverSetArray ).count );
 
 	int activeSetCount = 0;
@@ -2759,14 +2756,12 @@ void b2ValidateSolverSets( b2World* world )
 
 			// Validate islands
 			{
-				b2Island* islands = world->islandArray;
 				B2_ASSERT( set->islandsNew.count >= 0 );
 				totalIslandCount += set->islandsNew.count;
 				for ( int i = 0; i < set->islandsNew.count; ++i )
 				{
 					b2IslandSim* islandSim = set->islandsNew.data + i;
-					b2CheckIndex( islands, islandSim->islandId );
-					b2Island* island = islands + islandSim->islandId;
+					b2Island* island = b2IslandArray_Get( &world->islandArray, islandSim->islandId );
 					B2_ASSERT( island->setIndex == setIndex );
 					B2_ASSERT( island->localIndex == i );
 				}

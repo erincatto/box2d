@@ -137,13 +137,11 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 	// that joints are created between sleeping islands and they
 	// are moved to the same sleeping set.
 	{
-		b2Island* islands = world->islandArray;
 		int islandCount = set->islandsNew.count;
 		for ( int i = 0; i < islandCount; ++i )
 		{
 			b2IslandSim* islandSrc = set->islandsNew.data + i;
-			b2CheckIndex( islands, islandSrc->islandId );
-			b2Island* island = islands + islandSrc->islandId;
+			b2Island* island = b2IslandArray_Get( &world->islandArray, islandSrc->islandId );
 			island->setIndex = b2_awakeSet;
 			island->localIndex = awakeSet->islandsNew.count;
 			b2IslandSim* islandDst = b2IslandSimArray_Add( &awakeSet->islandsNew );
@@ -159,8 +157,7 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 
 void b2TrySleepIsland( b2World* world, int islandId )
 {
-	b2CheckIndex( world->islandArray, islandId );
-	b2Island* island = world->islandArray + islandId;
+	b2Island* island = b2IslandArray_Get( &world->islandArray, islandId );
 	B2_ASSERT( island->setIndex == b2_awakeSet );
 
 	// cannot put an island to sleep while it has a pending split
@@ -421,8 +418,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			// fix index on moved element
 			b2IslandSim* movedIslandSim = awakeSet->islandsNew.data + islandIndex;
 			int movedIslandId = movedIslandSim->islandId;
-			b2CheckIndex( world->islandArray, movedIslandId );
-			b2Island* movedIsland = world->islandArray + movedIslandId;
+			b2Island* movedIsland = b2IslandArray_Get( &world->islandArray, movedIslandId );
 			B2_ASSERT( movedIsland->localIndex == movedIslandIndex );
 			movedIsland->localIndex = islandIndex;
 		}
@@ -513,15 +509,13 @@ void b2MergeSolverSets( b2World* world, int setId1, int setId2 )
 
 	// transfer islands
 	{
-		b2Island* islands = world->islandArray;
 		int islandCount = set2->islandsNew.count;
 		for ( int i = 0; i < islandCount; ++i )
 		{
 			b2IslandSim* islandSrc = set2->islandsNew.data + i;
 			int islandId = islandSrc->islandId;
 
-			b2CheckIndex( islands, islandId );
-			b2Island* island = islands + islandId;
+			b2Island* island = b2IslandArray_Get( &world->islandArray, islandId );
 			island->setIndex = setId1;
 			island->localIndex = set1->islandsNew.count;
 

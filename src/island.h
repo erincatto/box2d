@@ -67,8 +67,6 @@ typedef struct b2IslandSim
 b2Island* b2CreateIsland( b2World* world, int setIndex );
 void b2DestroyIsland( b2World* world, int islandId );
 
-b2Island* b2GetIsland( b2World* world, int islandId );
-
 // Link contacts into the island graph when it starts having contact points
 void b2LinkContact( b2World* world, b2Contact* contact );
 

@@ -198,8 +198,6 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 	B2_ASSERT( endIndex <= world->bodyMoveEventArray.count );
 	b2BodyMoveEvent* moveEvents = world->bodyMoveEventArray.data;
 
-	b2Island* islands = world->islandArray;
-
 	b2BitSet* enlargedSimBitSet = &world->taskContextArray.data[threadIndex].enlargedSimBitSet;
 	b2BitSet* awakeIslandBitSet = &world->taskContextArray.data[threadIndex].awakeIslandBitSet;
 	b2TaskContext* taskContext = world->taskContextArray.data + threadIndex;
@@ -298,8 +296,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		}
 
 		// Any single body in an island can keep it awake
-		b2CheckIndex( islands, body->islandId );
-		b2Island* island = islands + body->islandId;
+		b2Island* island = b2IslandArray_Get( &world->islandArray, body->islandId );
 		if ( body->sleepTime < b2_timeToSleep )
 		{
 			// keep island awake

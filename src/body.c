@@ -100,8 +100,7 @@ static void b2RemoveBodyFromIsland( b2World* world, b2Body* body )
 	}
 
 	int islandId = body->islandId;
-	b2CheckIndex( world->islandArray, islandId );
-	b2Island* island = world->islandArray + islandId;
+	b2Island* island = b2IslandArray_Get( &world->islandArray, islandId );
 
 	// Fix the island's linked list of sims
 	if ( body->islandPrev != B2_NULL_INDEX )
@@ -1369,8 +1368,7 @@ void b2Body_SetAwake( b2BodyId bodyId, bool awake )
 	}
 	else if ( awake == false && body->setIndex == b2_awakeSet )
 	{
-		b2CheckIndex( world->islandArray, body->islandId );
-		b2Island* island = world->islandArray + body->islandId;
+		b2Island* island = b2IslandArray_Get( &world->islandArray, body->islandId );
 		if ( island->constraintRemoveCount > 0 )
 		{
 			// Must split the island before sleeping. This is expensive.
