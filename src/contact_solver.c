@@ -25,7 +25,7 @@ void b2PrepareOverflowContacts( b2StepContext* context )
 	b2BodyState* awakeStates = context->states;
 
 #if B2_VALIDATE
-	b2Body* bodies = world->bodyArrayNew.data;
+	b2Body* bodies = world->bodies.data;
 #endif
 
 	// Stiffer for static contacts to avoid bodies getting pushed through the ground
@@ -149,8 +149,8 @@ void b2WarmStartOverflowContacts( b2StepContext* context )
 	b2ContactConstraint* constraints = color->overflowConstraints;
 	int contactCount = color->contactSims.count;
 	b2World* world = context->world;
-	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
-	b2BodyState* states = awakeSet->statesNew.data;
+	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
+	b2BodyState* states = awakeSet->bodyStates.data;
 
 	// This is a dummy state to represent a static body because static bodies don't have a solver body.
 	b2BodyState dummyState = b2_identityBodyState;
@@ -213,8 +213,8 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 	b2ContactConstraint* constraints = color->overflowConstraints;
 	int contactCount = color->contactSims.count;
 	b2World* world = context->world;
-	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
-	b2BodyState* states = awakeSet->statesNew.data;
+	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
+	b2BodyState* states = awakeSet->bodyStates.data;
 
 	float inv_h = context->inv_h;
 	const float pushout = context->world->contactPushoutVelocity;
@@ -348,8 +348,8 @@ void b2ApplyOverflowRestitution( b2StepContext* context )
 	b2ContactConstraint* constraints = color->overflowConstraints;
 	int contactCount = color->contactSims.count;
 	b2World* world = context->world;
-	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
-	b2BodyState* states = awakeSet->statesNew.data;
+	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
+	b2BodyState* states = awakeSet->bodyStates.data;
 
 	float threshold = context->world->restitutionThreshold;
 
@@ -1294,7 +1294,7 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 	b2ContactConstraintSIMD* constraints = context->simdContactConstraints;
 	b2BodyState* awakeStates = context->states;
 #if B2_VALIDATE
-	b2Body* bodies = world->bodyArrayNew.data;
+	b2Body* bodies = world->bodies.data;
 #endif
 
 	// Stiffer for static contacts to avoid bodies getting pushed through the ground

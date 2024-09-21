@@ -19,7 +19,7 @@ B2_ARRAY_SOURCE( b2Shape, b2Shape );
 static b2Shape* b2GetShape( b2World* world, b2ShapeId shapeId )
 {
 	int id = shapeId.index1 - 1;
-	b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, id );
+	b2Shape* shape = b2ShapeArray_Get( &world->shapes, id );
 	B2_ASSERT( shape->id == id && shape->revision == shapeId.revision );
 	return shape;
 }
@@ -27,7 +27,7 @@ static b2Shape* b2GetShape( b2World* world, b2ShapeId shapeId )
 static b2ChainShape* b2GetChainShape( b2World* world, b2ChainId chainId )
 {
 	int id = chainId.index1 - 1;
-	b2ChainShape* chain = b2ChainShapeArray_Get( &world->chainArray, id );
+	b2ChainShape* chain = b2ChainShapeArray_Get( &world->chainShapes, id );
 	B2_ASSERT( chain->id == id && chain->revision == chainId.revision );
 	return chain;
 }
@@ -64,16 +64,16 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 
 	int shapeId = b2AllocId( &world->shapeIdPool );
 
-	if ( shapeId == world->shapeArray.count )
+	if ( shapeId == world->shapes.count )
 	{
-		b2ShapeArray_Push( &world->shapeArray, ( b2Shape ){ 0 } );
+		b2ShapeArray_Push( &world->shapes, ( b2Shape ){ 0 } );
 	}
 	else
 	{
-		B2_ASSERT( world->shapeArray.data[shapeId].id == B2_NULL_INDEX );
+		B2_ASSERT( world->shapes.data[shapeId].id == B2_NULL_INDEX );
 	}
 
-	b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
+	b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
 
 	switch ( shapeType )
 	{
@@ -133,7 +133,7 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	// Add to shape doubly linked list
 	if ( body->headShapeId != B2_NULL_INDEX )
 	{
-		b2Shape* headShape = b2ShapeArray_Get( &world->shapeArray, body->headShapeId );
+		b2Shape* headShape = b2ShapeArray_Get( &world->shapes, body->headShapeId );
 		headShape->prevShapeId = shapeId;
 	}
 
@@ -219,13 +219,13 @@ void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body, bool 
 	// Remove the shape from the body's doubly linked list.
 	if ( shape->prevShapeId != B2_NULL_INDEX )
 	{
-		b2Shape* prevShape = b2ShapeArray_Get( &world->shapeArray, shape->prevShapeId );
+		b2Shape* prevShape = b2ShapeArray_Get( &world->shapes, shape->prevShapeId );
 		prevShape->nextShapeId = shape->nextShapeId;
 	}
 
 	if ( shape->nextShapeId != B2_NULL_INDEX )
 	{
-		b2Shape* nextShape = b2ShapeArray_Get( &world->shapeArray, shape->nextShapeId );
+		b2Shape* nextShape = b2ShapeArray_Get( &world->shapes, shape->nextShapeId );
 		nextShape->prevShapeId = shape->prevShapeId;
 	}
 
@@ -246,7 +246,7 @@ void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body, bool 
 		int contactId = contactKey >> 1;
 		int edgeIndex = contactKey & 1;
 
-		b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId );
+		b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
 		contactKey = contact->edges[edgeIndex].nextKey;
 
 		if ( contact->shapeIdA == shapeId || contact->shapeIdB == shapeId )
@@ -271,7 +271,7 @@ void b2DestroyShape( b2ShapeId shapeId )
 	// need to wake bodies because this might be a static body
 	bool wakeBodies = true;
 
-	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, shape->bodyId );
+	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
 	b2DestroyShapeInternal( world, shape, body, wakeBodies );
 
 	if ( body->automaticMass == true )
@@ -298,16 +298,16 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 
 	int chainId = b2AllocId( &world->chainIdPool );
 
-	if ( chainId == world->chainArray.count )
+	if ( chainId == world->chainShapes.count )
 	{
-		b2ChainShapeArray_Push( &world->chainArray, ( b2ChainShape ){ 0 } );
+		b2ChainShapeArray_Push( &world->chainShapes, ( b2ChainShape ){ 0 } );
 	}
 	else
 	{
-		B2_ASSERT( world->chainArray.data[chainId].id == B2_NULL_INDEX );
+		B2_ASSERT( world->chainShapes.data[chainId].id == B2_NULL_INDEX );
 	}
 
-	b2ChainShape* chainShape = b2ChainShapeArray_Get( &world->chainArray, chainId );
+	b2ChainShape* chainShape = b2ChainShapeArray_Get( &world->chainShapes, chainId );
 
 	chainShape->id = chainId;
 	chainShape->bodyId = body->id;
@@ -399,7 +399,7 @@ void b2DestroyChain( b2ChainId chainId )
 	b2ChainShape* chain = b2GetChainShape(world, chainId);
 	bool wakeBodies = true;
 
-	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, chain->bodyId );
+	b2Body* body = b2BodyArray_Get( &world->bodies, chain->bodyId );
 
 	// Remove the chain from the body's singly linked list.
 	int* chainIdPtr = &body->headChainId;
@@ -413,7 +413,7 @@ void b2DestroyChain( b2ChainId chainId )
 			break;
 		}
 
-		chainIdPtr = &( world->chainArray.data[*chainIdPtr].nextChainId );
+		chainIdPtr = &( world->chainShapes.data[*chainIdPtr].nextChainId );
 	}
 
 	B2_ASSERT( found == true );
@@ -426,7 +426,7 @@ void b2DestroyChain( b2ChainId chainId )
 	for ( int i = 0; i < count; ++i )
 	{
 		int shapeId = chain->shapeIndices[i];
-		b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
+		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
 		b2DestroyShapeInternal( world, shape, body, wakeBodies );
 	}
 
@@ -903,7 +903,7 @@ b2Filter b2Shape_GetFilter( b2ShapeId shapeId )
 
 static void b2ResetProxy( b2World* world, b2Shape* shape, bool wakeBodies, bool destroyProxy )
 {
-	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, shape->bodyId );
+	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
 
 	int shapeId = shape->id;
 
@@ -914,7 +914,7 @@ static void b2ResetProxy( b2World* world, b2Shape* shape, bool wakeBodies, bool 
 		int contactId = contactKey >> 1;
 		int edgeIndex = contactKey & 1;
 
-		b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId );
+		b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
 		contactKey = contact->edges[edgeIndex].nextKey;
 
 		if ( contact->shapeIdA == shapeId || contact->shapeIdB == shapeId )
@@ -1180,7 +1180,7 @@ b2ChainId b2Shape_GetParentChain( b2ShapeId shapeId )
 		int chainId = shape->chainSegment.chainId;
 		if ( chainId != B2_NULL_INDEX )
 		{
-			b2ChainShape* chain = b2ChainShapeArray_Get(&world->chainArray, chainId);
+			b2ChainShape* chain = b2ChainShapeArray_Get(&world->chainShapes, chainId);
 			b2ChainId id = { chainId + 1, shapeId.world0, chain->revision };
 			return id;
 		}
@@ -1204,7 +1204,7 @@ void b2Chain_SetFriction( b2ChainId chainId, float friction )
 	for ( int i = 0; i < count; ++i )
 	{
 		int shapeId = chainShape->shapeIndices[i];
-		b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
+		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
 		shape->friction = friction;
 	}
 }
@@ -1224,7 +1224,7 @@ void b2Chain_SetRestitution( b2ChainId chainId, float restitution )
 	for ( int i = 0; i < count; ++i )
 	{
 		int shapeId = chainShape->shapeIndices[i];
-		b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
+		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
 		shape->restitution = restitution;
 	}
 }
@@ -1243,7 +1243,7 @@ int b2Shape_GetContactCapacity( b2ShapeId shapeId )
 		return 0;
 	}
 
-	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, shape->bodyId );
+	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
 
 	// Conservative and fast
 	return body->contactCount;
@@ -1264,7 +1264,7 @@ int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData, int c
 		return 0;
 	}
 
-	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, shape->bodyId );
+	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
 	int contactKey = body->headContactKey;
 	int index = 0;
 	while ( contactKey != B2_NULL_INDEX && index < capacity )
@@ -1272,14 +1272,14 @@ int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData, int c
 		int contactId = contactKey >> 1;
 		int edgeIndex = contactKey & 1;
 
-		b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId );
+		b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
 
 		// Does contact involve this shape and is it touching?
 		if ( ( contact->shapeIdA == shapeId.index1 - 1 || contact->shapeIdB == shapeId.index1 - 1 ) &&
 			 ( contact->flags & b2_contactTouchingFlag ) != 0 )
 		{
-			b2Shape* shapeA = world->shapeArray.data + contact->shapeIdA;
-			b2Shape* shapeB = world->shapeArray.data + contact->shapeIdB;
+			b2Shape* shapeA = world->shapes.data + contact->shapeIdA;
+			b2Shape* shapeB = world->shapes.data + contact->shapeIdB;
 
 			contactData[index].shapeIdA = ( b2ShapeId ){ shapeA->id + 1, shapeId.world0, shapeA->revision };
 			contactData[index].shapeIdB = ( b2ShapeId ){ shapeB->id + 1, shapeId.world0, shapeB->revision };
@@ -1318,7 +1318,7 @@ b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target )
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
-	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, shape->bodyId );
+	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
 	b2Transform transform = b2GetBodyTransformQuick( world, body );
 
 	b2DistanceInput input;

@@ -58,7 +58,7 @@ typedef struct b2World
 	// This is a sparse array that maps body ids to the body data
 	// stored in solver sets. As sims move within a set or across set.
 	// Indices come from id pool.
-	b2BodyArray bodyArrayNew;
+	b2BodyArray bodies;
 
 	// Provides free list for solver sets.
 	b2IdPool solverSetIdPool;
@@ -66,44 +66,44 @@ typedef struct b2World
 	// Solvers sets allow sims to be stored in contiguous arrays. The first
 	// set is all static sims. The second set is active sims. The third set is disabled
 	// sims. The remaining sets are sleeping islands.
-	b2SolverSetArray solverSetArray;
+	b2SolverSetArray solverSets;
 
 	// Used to create stable ids for joints
 	b2IdPool jointIdPool;
 
 	// This is a sparse array that maps joint ids to the joint data stored in the constraint graph
 	// or in the solver sets.
-	b2JointArray jointArray;
+	b2JointArray joints;
 
 	// Used to create stable ids for contacts
 	b2IdPool contactIdPool;
 
 	// This is a sparse array that maps contact ids to the contact data stored in the constraint graph
 	// or in the solver sets.
-	b2ContactArray contactArray;
+	b2ContactArray contacts;
 
 	// Used to create stable ids for islands
 	b2IdPool islandIdPool;
 
 	// This is a sparse array that maps island ids to the island data stored in the solver sets.
-	b2IslandArray islandArray;
+	b2IslandArray islands;
 
 	b2IdPool shapeIdPool;
 	b2IdPool chainIdPool;
 
 	// These are sparse arrays that point into the pools above
-	b2ShapeArray shapeArray;
-	b2ChainShapeArray chainArray;
+	b2ShapeArray shapes;
+	b2ChainShapeArray chainShapes;
 
 	// Per thread storage
-	b2TaskContextArray taskContextArray;
+	b2TaskContextArray taskContexts;
 
-	b2BodyMoveEventArray bodyMoveEventArray;
-	b2SensorBeginTouchEventArray sensorBeginEventArray;
-	b2SensorEndTouchEventArray sensorEndEventArray;
-	b2ContactBeginTouchEventArray contactBeginArray;
-	b2ContactEndTouchEventArray contactEndArray;
-	b2ContactHitEventArray contactHitArray;
+	b2BodyMoveEventArray bodyMoveEvents;
+	b2SensorBeginTouchEventArray sensorBeginEvents;
+	b2SensorEndTouchEventArray sensorEndEvents;
+	b2ContactBeginTouchEventArray contactBeginEvents;
+	b2ContactEndTouchEventArray contactEndEvents;
+	b2ContactHitEventArray contactHitEvents;
 
 	// Used to track debug draw
 	b2BitSet debugBodySet;

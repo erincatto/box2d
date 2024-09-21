@@ -203,8 +203,8 @@ static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 
 	b2World* world = queryContext->world;
 
-	b2Shape* shapeA = b2ShapeArray_Get( &world->shapeArray, shapeIdA );
-	b2Shape* shapeB = b2ShapeArray_Get( &world->shapeArray, shapeIdB );
+	b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, shapeIdA );
+	b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, shapeIdB );
 
 	int bodyIdA = shapeA->bodyId;
 	int bodyIdB = shapeB->bodyId;
@@ -227,8 +227,8 @@ static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 	}
 
 	// Does a joint override collision?
-	b2Body* bodyA = b2BodyArray_Get( &world->bodyArrayNew, bodyIdA );
-	b2Body* bodyB = b2BodyArray_Get( &world->bodyArrayNew, bodyIdB );
+	b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
+	b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
 	if ( b2ShouldBodiesCollide( world, bodyA, bodyB ) == false )
 	{
 		return true;
@@ -380,8 +380,8 @@ void b2UpdateBroadPhasePairs( b2World* world )
 			//	fprintf(s_file, "%d %d\n", shapeIdA, shapeIdB);
 			// }
 
-			b2Shape* shapeA = b2ShapeArray_Get( &world->shapeArray, shapeIdA );
-			b2Shape* shapeB = b2ShapeArray_Get( &world->shapeArray, shapeIdB );
+			b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, shapeIdA );
+			b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, shapeIdB );
 
 			b2CreateContact( world, shapeA, shapeB );
 
