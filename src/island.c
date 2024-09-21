@@ -91,8 +91,7 @@ static void b2AddContactToIsland( b2World* world, int islandId, b2Contact* conta
 	if ( island->headContact != B2_NULL_INDEX )
 	{
 		contact->islandNext = island->headContact;
-		b2CheckIndex( world->contactArray, island->headContact );
-		b2Contact* headContact = world->contactArray + island->headContact;
+		b2Contact* headContact = b2ContactArray_Get( &world->contactArray, island->headContact);
 		headContact->islandPrev = contact->contactId;
 	}
 
@@ -225,16 +224,14 @@ void b2UnlinkContact( b2World* world, b2Contact* contact )
 
 	if ( contact->islandPrev != B2_NULL_INDEX )
 	{
-		b2CheckIndex( world->contactArray, contact->islandPrev );
-		b2Contact* prevContact = world->contactArray + contact->islandPrev;
+		b2Contact* prevContact = b2ContactArray_Get( &world->contactArray, contact->islandPrev);
 		B2_ASSERT( prevContact->islandNext == contact->contactId );
 		prevContact->islandNext = contact->islandNext;
 	}
 
 	if ( contact->islandNext != B2_NULL_INDEX )
 	{
-		b2CheckIndex( world->contactArray, contact->islandNext );
-		b2Contact* nextContact = world->contactArray + contact->islandNext;
+		b2Contact* nextContact = b2ContactArray_Get( &world->contactArray, contact->islandNext );
 		B2_ASSERT( nextContact->islandPrev == contact->contactId );
 		nextContact->islandPrev = contact->islandPrev;
 	}
@@ -445,8 +442,7 @@ static void b2MergeIsland( b2World* world, b2Island* island )
 	int contactId = island->headContact;
 	while ( contactId != B2_NULL_INDEX )
 	{
-		b2CheckIndex( world->contactArray, contactId );
-		b2Contact* contact = world->contactArray + contactId;
+		b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId );
 		contact->islandId = rootId;
 		contactId = contact->islandNext;
 	}
@@ -488,13 +484,11 @@ static void b2MergeIsland( b2World* world, b2Island* island )
 		B2_ASSERT( island->tailContact != B2_NULL_INDEX && island->contactCount > 0 );
 		B2_ASSERT( rootIsland->tailContact != B2_NULL_INDEX && rootIsland->contactCount > 0 );
 
-		b2CheckIndex( world->contactArray, rootIsland->tailContact );
-		b2Contact* tailContact = world->contactArray + rootIsland->tailContact;
+		b2Contact* tailContact = b2ContactArray_Get( &world->contactArray, rootIsland->tailContact );
 		B2_ASSERT( tailContact->islandNext == B2_NULL_INDEX );
 		tailContact->islandNext = island->headContact;
 
-		b2CheckIndex( world->contactArray, island->headContact );
-		b2Contact* headContact = world->contactArray + island->headContact;
+		b2Contact* headContact = b2ContactArray_Get( &world->contactArray, island->headContact );
 		B2_ASSERT( headContact->islandPrev == B2_NULL_INDEX );
 		headContact->islandPrev = rootIsland->tailContact;
 
@@ -623,8 +617,6 @@ void b2SplitIsland( b2World* world, int baseId )
 	int bodyCount = baseIsland->bodyCount;
 
 	b2Body* bodies = world->bodyArrayNew.data;
-	b2Contact* contacts = world->contactArray;
-
 	b2StackAllocator* alloc = &world->stackAllocator;
 
 	// No lock is needed because I ensure the allocator is not used while this task is active.
@@ -652,7 +644,7 @@ void b2SplitIsland( b2World* world, int baseId )
 	int nextContactId = baseIsland->headContact;
 	while ( nextContactId != B2_NULL_INDEX )
 	{
-		b2Contact* contact = contacts + nextContactId;
+		b2Contact* contact = b2ContactArray_Get( &world->contactArray, nextContactId );
 		contact->isMarked = false;
 		nextContactId = contact->islandNext;
 	}
@@ -726,8 +718,7 @@ void b2SplitIsland( b2World* world, int baseId )
 				int contactId = contactKey >> 1;
 				int edgeIndex = contactKey & 1;
 
-				b2CheckIndex( world->contactArray, contactId );
-				b2Contact* contact = world->contactArray + contactId;
+				b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId );
 				B2_ASSERT( contact->contactId == contactId );
 
 				// Next key
@@ -769,8 +760,7 @@ void b2SplitIsland( b2World* world, int baseId )
 				contact->islandId = islandId;
 				if ( island->tailContact != B2_NULL_INDEX )
 				{
-					b2CheckIndex( world->contactArray, island->tailContact );
-					b2Contact* tailContact = world->contactArray + island->tailContact;
+					b2Contact* tailContact = b2ContactArray_Get( &world->contactArray, island->tailContact );
 					tailContact->islandNext = contactId;
 				}
 				contact->islandPrev = island->tailContact;
@@ -927,8 +917,7 @@ void b2ValidateIsland( b2World* world, int islandId )
 		int contactId = island->headContact;
 		while ( contactId != B2_NULL_INDEX )
 		{
-			b2CheckIndex( world->contactArray, contactId );
-			b2Contact* contact = world->contactArray + contactId;
+			b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId );
 			B2_ASSERT( contact->setIndex == island->setIndex );
 			B2_ASSERT( contact->islandId == islandId );
 			count += 1;

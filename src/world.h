@@ -80,7 +80,7 @@ typedef struct b2World
 
 	// This is a sparse array that maps contact ids to the contact data stored in the constraint graph
 	// or in the solver sets.
-	struct b2Contact* contactArray;
+	b2ContactArray contactArray;
 
 	// Used to create stable ids for islands
 	b2IdPool islandIdPool;

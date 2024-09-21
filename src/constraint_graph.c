@@ -203,8 +203,7 @@ void b2RemoveContactFromGraph( b2World* world, int bodyIdA, int bodyIdB, int col
 
 		// Fix moved contact
 		int movedId = movedContactSim->contactId;
-		b2CheckIndex( world->contactArray, movedId );
-		b2Contact* movedContact = world->contactArray + movedId;
+		b2Contact* movedContact = b2ContactArray_Get( &world->contactArray, movedId );
 		B2_ASSERT( movedContact->setIndex == b2_awakeSet );
 		B2_ASSERT( movedContact->colorIndex == colorIndex );
 		B2_ASSERT( movedContact->localIndex == movedIndex );

@@ -160,7 +160,7 @@ static void b2DestroyBodyContacts( b2World* world, b2Body* body, bool wakeBodies
 		int contactId = edgeKey >> 1;
 		int edgeIndex = edgeKey & 1;
 
-		b2Contact* contact = world->contactArray + contactId;
+		b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId );
 		edgeKey = contact->edges[edgeIndex].nextKey;
 		b2DestroyContact( world, contact, wakeBodies );
 	}
@@ -455,8 +455,7 @@ int b2Body_GetContactData( b2BodyId bodyId, b2ContactData* contactData, int capa
 		int contactId = contactKey >> 1;
 		int edgeIndex = contactKey & 1;
 
-		b2CheckIndex( world->contactArray, contactId );
-		b2Contact* contact = world->contactArray + contactId;
+		b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId );
 
 		// Is contact touching?
 		if ( contact->flags & b2_contactTouchingFlag )

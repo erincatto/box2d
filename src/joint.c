@@ -307,8 +307,7 @@ static void b2DestroyContactsBetweenBodies( b2World* world, b2Body* bodyA, b2Bod
 		int contactId = contactKey >> 1;
 		int edgeIndex = contactKey & 1;
 
-		b2CheckIndex( world->contactArray, contactId );
-		b2Contact* contact = world->contactArray + contactId;
+		b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId );
 		contactKey = contact->edges[edgeIndex].nextKey;
 
 		int otherEdgeIndex = edgeIndex ^ 1;

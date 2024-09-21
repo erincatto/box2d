@@ -246,8 +246,7 @@ void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body, bool 
 		int contactId = contactKey >> 1;
 		int edgeIndex = contactKey & 1;
 
-		b2CheckIndex( world->contactArray, contactId );
-		b2Contact* contact = world->contactArray + contactId;
+		b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId );
 		contactKey = contact->edges[edgeIndex].nextKey;
 
 		if ( contact->shapeIdA == shapeId || contact->shapeIdB == shapeId )
@@ -915,8 +914,7 @@ static void b2ResetProxy( b2World* world, b2Shape* shape, bool wakeBodies, bool 
 		int contactId = contactKey >> 1;
 		int edgeIndex = contactKey & 1;
 
-		b2CheckIndex( world->contactArray, contactId );
-		b2Contact* contact = world->contactArray + contactId;
+		b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId );
 		contactKey = contact->edges[edgeIndex].nextKey;
 
 		if ( contact->shapeIdA == shapeId || contact->shapeIdB == shapeId )
@@ -1274,8 +1272,7 @@ int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData, int c
 		int contactId = contactKey >> 1;
 		int edgeIndex = contactKey & 1;
 
-		b2CheckIndex( world->contactArray, contactId );
-		b2Contact* contact = world->contactArray + contactId;
+		b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId );
 
 		// Does contact involve this shape and is it touching?
 		if ( ( contact->shapeIdA == shapeId.index1 - 1 || contact->shapeIdB == shapeId.index1 - 1 ) &&

@@ -41,7 +41,6 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 	b2SolverSet* disabledSet = world->solverSetArray + b2_disabledSet;
 
 	b2Body* bodies = world->bodyArrayNew.data;
-	b2Contact* contacts = world->contactArray;
 
 	int bodyCount = set->simsNew.count;
 	for ( int i = 0; i < bodyCount; ++i )
@@ -69,8 +68,7 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 			int edgeIndex = contactKey & 1;
 			int contactId = contactKey >> 1;
 
-			b2CheckIndex( contacts, contactId );
-			b2Contact* contact = contacts + contactId;
+			b2Contact* contact = b2ContactArray_Get(&world->contactArray, contactId);
 
 			contactKey = contact->edges[edgeIndex].nextKey;
 
@@ -94,11 +92,10 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 			if ( movedLocalIndex != B2_NULL_INDEX )
 			{
 				// fix moved element
-				b2ContactSim* movedContact = disabledSet->contactsNew.data + localIndex;
-				int movedId = movedContact->contactId;
-				b2CheckIndex( contacts, movedId );
-				B2_ASSERT( contacts[movedId].localIndex == movedLocalIndex );
-				contacts[movedId].localIndex = localIndex;
+				b2ContactSim* movedContactSim = disabledSet->contactsNew.data + localIndex;
+				b2Contact* movedContact = b2ContactArray_Get( &world->contactArray, movedContactSim->contactId );
+				B2_ASSERT( movedContact->localIndex == movedLocalIndex );
+				movedContact->localIndex = localIndex;
 			}
 		}
 	}
@@ -109,7 +106,7 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 		for ( int i = 0; i < contactCount; ++i )
 		{
 			b2ContactSim* contactSim = set->contactsNew.data + i;
-			b2Contact* contact = contacts + contactSim->contactId;
+			b2Contact* contact =  b2ContactArray_Get( &world->contactArray, contactSim->contactId);
 			B2_ASSERT( contact->flags & b2_contactTouchingFlag );
 			B2_ASSERT( contactSim->simFlags & b2_simTouchingFlag );
 			B2_ASSERT( contactSim->manifold.pointCount > 0 );
@@ -196,7 +193,6 @@ void b2TrySleepIsland( b2World* world, int islandId )
 	// this shuffles around bodies in the awake set
 	{
 		b2SolverSet* disabledSet = world->solverSetArray + b2_disabledSet;
-		b2Contact* contacts = world->contactArray;
 		int bodyId = island->headBody; 
 		while ( bodyId != B2_NULL_INDEX )
 		{
@@ -248,8 +244,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 				int contactId = contactKey >> 1;
 				int edgeIndex = contactKey & 1;
 
-				b2CheckIndex( contacts, contactId );
-				b2Contact* contact = contacts + contactId;
+				b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId);
 
 				B2_ASSERT( contact->setIndex == b2_awakeSet || contact->setIndex == b2_disabledSet );
 				contactKey = contact->edges[edgeIndex].nextKey;
@@ -289,15 +284,14 @@ void b2TrySleepIsland( b2World* world, int islandId )
 				b2ContactSim* disabledContactSim = b2ContactSimArray_Add( &disabledSet->contactsNew );
 				memcpy( disabledContactSim, contactSim, sizeof( b2ContactSim ) );
 
-				int movedContactIndex = b2ContactSimArray_RemoveSwap( &awakeSet->contactsNew, localIndex );
-				if ( movedContactIndex != B2_NULL_INDEX )
+				int movedLocalIndex = b2ContactSimArray_RemoveSwap( &awakeSet->contactsNew, localIndex );
+				if ( movedLocalIndex != B2_NULL_INDEX )
 				{
 					// fix moved element
 					b2ContactSim* movedContactSim = awakeSet->contactsNew.data + localIndex;
-					int movedId = movedContactSim->contactId;
-					b2CheckIndex( contacts, movedId );
-					B2_ASSERT( contacts[movedId].localIndex == movedContactIndex );
-					contacts[movedId].localIndex = localIndex;
+					b2Contact* movedContact = b2ContactArray_Get( &world->contactArray, movedContactSim->contactId );
+					B2_ASSERT( movedContact->localIndex == movedLocalIndex );
+					movedContact->localIndex = localIndex;
 				}
 			}
 
@@ -308,12 +302,10 @@ void b2TrySleepIsland( b2World* world, int islandId )
 	// move touching contacts
 	// this shuffles contacts in the awake set
 	{
-		b2Contact* contacts = world->contactArray;
 		int contactId = island->headContact;
 		while ( contactId != B2_NULL_INDEX )
 		{
-			b2CheckIndex( contacts, contactId );
-			b2Contact* contact = contacts + contactId;
+			b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId);
 			B2_ASSERT( contact->setIndex == b2_awakeSet );
 			B2_ASSERT( contact->islandId == islandId );
 			int colorIndex = contact->colorIndex;
@@ -329,23 +321,21 @@ void b2TrySleepIsland( b2World* world, int islandId )
 				b2ClearBit( &color->bodySet, contact->edges[1].bodyId );
 			}
 
-			int awakeContactIndex = contact->localIndex;
-			b2ContactSim* awakeContactSim = b2ContactSimArray_Get( &color->contactSims, awakeContactIndex);
+			int localIndex = contact->localIndex;
+			b2ContactSim* awakeContactSim = b2ContactSimArray_Get( &color->contactSims, localIndex);
 
 			int sleepContactIndex = sleepSet->contactsNew.count;
 			b2ContactSim* sleepContactSim = b2ContactSimArray_Add( &sleepSet->contactsNew );
 			memcpy( sleepContactSim, awakeContactSim, sizeof( b2ContactSim ) );
 
-			int movedIndex = b2ContactSimArray_RemoveSwap( &color->contactSims, awakeContactIndex );
-			if ( movedIndex != B2_NULL_INDEX )
+			int movedLocalIndex = b2ContactSimArray_RemoveSwap( &color->contactSims, localIndex );
+			if ( movedLocalIndex != B2_NULL_INDEX )
 			{
 				// fix moved element
-				b2ContactSim* movedContactSim = color->contactSims.data + awakeContactIndex;
-				int movedId = movedContactSim->contactId;
-				b2CheckIndex( contacts, movedId );
-				b2Contact* movedContact = contacts + movedId;
-				B2_ASSERT( movedContact->localIndex == movedIndex );
-				movedContact->localIndex = awakeContactIndex;
+				b2ContactSim* movedContactSim = color->contactSims.data + localIndex;
+				b2Contact* movedContact = b2ContactArray_Get( &world->contactArray, movedContactSim->contactId );
+				B2_ASSERT( movedContact->localIndex == movedLocalIndex );
+				movedContact->localIndex = localIndex;
 			}
 
 			contact->setIndex = sleepSetId;
@@ -474,13 +464,12 @@ void b2MergeSolverSets( b2World* world, int setId1, int setId2 )
 
 	// transfer contacts
 	{
-		b2Contact* contacts = world->contactArray;
 		int contactCount = set2->contactsNew.count;
 		for ( int i = 0; i < contactCount; ++i )
 		{
 			b2ContactSim* contactSrc = set2->contactsNew.data + i;
 
-			b2Contact* contact = contacts + contactSrc->contactId;
+			b2Contact* contact = b2ContactArray_Get(&world->contactArray, contactSrc->contactId);
 			B2_ASSERT( contact->setIndex == setId2 );
 			contact->setIndex = setId1;
 			contact->localIndex = set1->contactsNew.count;
