@@ -7,6 +7,7 @@
 #include "core.h"
 
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef struct b2StackEntry
 {
