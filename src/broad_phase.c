@@ -372,12 +372,6 @@ void b2UpdateBroadPhasePairs( b2World* world )
 		b2MovePair* pair = result->pairList;
 		while ( pair != NULL )
 		{
-			// TODO_ERIN Check user filtering.
-			// if (m_contactFilter && m_contactFilter->ShouldCollide(shapeA, shapeB) == false)
-			//{
-			//	return;
-			//}
-
 			int shapeIdA = pair->shapeIndexA;
 			int shapeIdB = pair->shapeIndexB;
 

@@ -36,8 +36,7 @@ b2Body* b2GetBodyFullId( b2World* world, b2BodyId bodyId )
 
 b2Transform b2GetBodyTransformQuick( b2World* world, b2Body* body )
 {
-	b2CheckIndex( world->solverSetArray, body->setIndex );
-	b2SolverSet* set = world->solverSetArray + body->setIndex;
+	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, body->setIndex );
 	b2BodySim* bodySim = b2BodySimArray_Get( &set->simsNew, body->localIndex );
 	return bodySim->transform;
 }
@@ -57,18 +56,16 @@ b2BodyId b2MakeBodyId( b2World* world, int bodyId )
 
 b2BodySim* b2GetBodySim( b2World* world, b2Body* body )
 {
-	b2CheckIndex( world->solverSetArray, body->setIndex );
-	b2SolverSet* set = world->solverSetArray + body->setIndex;
+	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, body->setIndex);
 	b2BodySim* bodySim = b2BodySimArray_Get( &set->simsNew, body->localIndex );
 	return bodySim;
 }
 
 b2BodyState* b2GetBodyState( b2World* world, b2Body* body )
 {
-	b2CheckIndex( world->solverSetArray, body->setIndex );
 	if ( body->setIndex == b2_awakeSet )
 	{
-		b2SolverSet* set = world->solverSetArray + b2_awakeSet;
+		b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
 		return b2BodyStateArray_Get( &set->statesNew, body->localIndex );
 	}
 
@@ -209,24 +206,24 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	{
 		// new set for a sleeping body in its own island
 		setId = b2AllocId( &world->solverSetIdPool );
-		if ( setId == b2Array( world->solverSetArray ).count )
+		if ( setId == world->solverSetArray.count )
 		{
 			// Create a zero initialized solver set. All sub-arrays are also zero initialized.
-			b2Array_Push( world->solverSetArray, ( b2SolverSet ){ 0 } );
+			b2SolverSetArray_Push( &world->solverSetArray, ( b2SolverSet ){ 0 } );
 		}
 		else
 		{
-			B2_ASSERT( world->solverSetArray[setId].setIndex == B2_NULL_INDEX );
+			B2_ASSERT( world->solverSetArray.data[setId].setIndex == B2_NULL_INDEX );
 		}
 
-		world->solverSetArray[setId].setIndex = setId;
+		world->solverSetArray.data[setId].setIndex = setId;
 	}
 
-	B2_ASSERT( 0 <= setId && setId < b2Array( world->solverSetArray ).count );
+	B2_ASSERT( 0 <= setId && setId < world->solverSetArray.count );
 
 	int bodyId = b2AllocId( &world->bodyIdPool );
 
-	b2SolverSet* set = world->solverSetArray + setId;
+	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, setId );
 	b2BodySim* bodySim = b2BodySimArray_Add( &set->simsNew );
 	*bodySim = ( b2BodySim ){ 0 };
 	bodySim->transform.p = def->position;
@@ -391,8 +388,7 @@ void b2DestroyBody( b2BodyId bodyId )
 	b2RemoveBodyFromIsland( world, body );
 
 	// Remove body sim from solver set that owns it
-	b2CheckIndex( world->solverSetArray, body->setIndex );
-	b2SolverSet* set = world->solverSetArray + body->setIndex;
+	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, body->setIndex );
 	int movedIndex = b2BodySimArray_RemoveSwap( &set->simsNew, body->localIndex );
 	if ( movedIndex != B2_NULL_INDEX )
 	{
@@ -846,7 +842,7 @@ void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Vec2 point, b
 	if ( body->setIndex == b2_awakeSet )
 	{
 		int localIndex = body->localIndex;
-		b2SolverSet* set = world->solverSetArray + b2_awakeSet;
+		b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
 		b2BodyState* state = b2BodyStateArray_Get( &set->statesNew, localIndex );
 		b2BodySim* bodySim = b2BodySimArray_Get( &set->simsNew, localIndex );
 		state->linearVelocity = b2MulAdd( state->linearVelocity, bodySim->invMass, impulse );
@@ -867,7 +863,7 @@ void b2Body_ApplyLinearImpulseToCenter( b2BodyId bodyId, b2Vec2 impulse, bool wa
 	if ( body->setIndex == b2_awakeSet )
 	{
 		int localIndex = body->localIndex;
-		b2SolverSet* set = world->solverSetArray + b2_awakeSet;
+		b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
 		b2BodyState* state = b2BodyStateArray_Get( &set->statesNew, localIndex );
 		b2BodySim* bodySim = b2BodySimArray_Get( &set->simsNew, localIndex );
 		state->linearVelocity = b2MulAdd( state->linearVelocity, bodySim->invMass, impulse );
@@ -892,7 +888,7 @@ void b2Body_ApplyAngularImpulse( b2BodyId bodyId, float impulse, bool wake )
 	if ( body->setIndex == b2_awakeSet )
 	{
 		int localIndex = body->localIndex;
-		b2SolverSet* set = world->solverSetArray + b2_awakeSet;
+		b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
 		b2BodyState* state = b2BodyStateArray_Get( &set->statesNew, localIndex );
 		b2BodySim* bodySim = b2BodySimArray_Get( &set->simsNew, localIndex );
 		state->angularVelocity += bodySim->invInertia * impulse;
@@ -974,8 +970,8 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 		// Body is going from static to dynamic or kinematic. It only makes sense to move it to the awake set.
 		B2_ASSERT( body->setIndex == b2_staticSet );
 
-		b2SolverSet* staticSet = world->solverSetArray + b2_staticSet;
-		b2SolverSet* awakeSet = world->solverSetArray + b2_awakeSet;
+		b2SolverSet* staticSet = b2SolverSetArray_Get( &world->solverSetArray, b2_staticSet );
+		b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
 
 		// Transfer body to awake set
 		b2TransferBody( world, awakeSet, staticSet, body );
@@ -1035,8 +1031,8 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 		// The body is going from dynamic/kinematic to static. It should be awake.
 		B2_ASSERT( body->setIndex == b2_awakeSet );
 
-		b2SolverSet* staticSet = world->solverSetArray + b2_staticSet;
-		b2SolverSet* awakeSet = world->solverSetArray + b2_awakeSet;
+		b2SolverSet* staticSet = b2SolverSetArray_Get( &world->solverSetArray, b2_staticSet );
+		b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
 
 		// Transfer body to static set
 		b2TransferBody( world, staticSet, awakeSet, body );
@@ -1457,9 +1453,8 @@ void b2Body_Disable( b2BodyId bodyId )
 	}
 
 	// Transfer simulation data to disabled set
-	b2CheckIndex( world->solverSetArray, body->setIndex );
-	b2SolverSet* set = world->solverSetArray + body->setIndex;
-	b2SolverSet* disabledSet = world->solverSetArray + b2_disabledSet;
+	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, body->setIndex );
+	b2SolverSet* disabledSet = b2SolverSetArray_Get( &world->solverSetArray, b2_disabledSet );
 
 	// Transfer body sim
 	b2TransferBody( world, disabledSet, set, body );
@@ -1489,8 +1484,7 @@ void b2Body_Disable( b2BodyId bodyId )
 		}
 
 		// Transfer joint to disabled set
-		b2CheckIndex( world->solverSetArray, joint->setIndex );
-		b2SolverSet* jointSet = world->solverSetArray + joint->setIndex;
+		b2SolverSet* jointSet = b2SolverSetArray_Get( &world->solverSetArray, joint->setIndex );
 		b2TransferJoint( world, disabledSet, jointSet, joint );
 	}
 
@@ -1512,9 +1506,9 @@ void b2Body_Enable( b2BodyId bodyId )
 		return;
 	}
 
-	b2SolverSet* disabledSet = world->solverSetArray + b2_disabledSet;
+	b2SolverSet* disabledSet = b2SolverSetArray_Get( &world->solverSetArray, b2_disabledSet );
 	int setId = body->type == b2_staticBody ? b2_staticSet : b2_awakeSet;
-	b2SolverSet* targetSet = world->solverSetArray + setId;
+	b2SolverSet* targetSet = b2SolverSetArray_Get( &world->solverSetArray, setId );
 
 	b2TransferBody( world, targetSet, disabledSet, body );
 
@@ -1576,8 +1570,7 @@ void b2Body_Enable( b2BodyId bodyId )
 			jointSetId = bodyA->setIndex;
 		}
 
-		b2CheckIndex( world->solverSetArray, jointSetId );
-		b2SolverSet* jointSet = world->solverSetArray + jointSetId;
+		b2SolverSet* jointSet = b2SolverSetArray_Get( &world->solverSetArray, jointSetId );
 		b2TransferJoint( world, jointSet, disabledSet, joint );
 
 		// Now that the joint is in the correct set, I can link the joint in the island.

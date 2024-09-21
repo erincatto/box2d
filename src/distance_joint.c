@@ -223,11 +223,9 @@ void b2PrepareDistanceJoint( b2JointSim* base, b2StepContext* context )
 	b2Body* bodyB = b2BodyArray_Get( &world->bodyArrayNew, idB );
 
 	B2_ASSERT( bodyA->setIndex == b2_awakeSet || bodyB->setIndex == b2_awakeSet );
-	b2CheckIndex( world->solverSetArray, bodyA->setIndex );
-	b2CheckIndex( world->solverSetArray, bodyB->setIndex );
 
-	b2SolverSet* setA = world->solverSetArray + bodyA->setIndex;
-	b2SolverSet* setB = world->solverSetArray + bodyB->setIndex;
+	b2SolverSet* setA = b2SolverSetArray_Get( &world->solverSetArray, bodyA->setIndex );
+	b2SolverSet* setB = b2SolverSetArray_Get( &world->solverSetArray, bodyB->setIndex );
 
 	int localIndexA = bodyA->localIndex;
 	int localIndexB = bodyB->localIndex;

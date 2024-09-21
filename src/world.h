@@ -66,7 +66,7 @@ typedef struct b2World
 	// Solvers sets allow sims to be stored in contiguous arrays. The first
 	// set is all static sims. The second set is active sims. The third set is disabled
 	// sims. The remaining sets are sleeping islands.
-	struct b2SolverSet* solverSetArray;
+	b2SolverSetArray solverSetArray;
 
 	// Used to create stable ids for joints
 	b2IdPool jointIdPool;

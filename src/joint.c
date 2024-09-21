@@ -93,8 +93,6 @@ static b2Joint* b2GetJointFullId( b2World* world, b2JointId jointId )
 
 b2JointSim* b2GetJointSim( b2World* world, b2Joint* joint )
 {
-	b2CheckIndex( world->solverSetArray, joint->setIndex );
-
 	if ( joint->setIndex == b2_awakeSet )
 	{
 		B2_ASSERT( 0 <= joint->colorIndex && joint->colorIndex < b2_graphColorCount );
@@ -102,7 +100,7 @@ b2JointSim* b2GetJointSim( b2World* world, b2Joint* joint )
 		return b2JointSimArray_Get( &color->jointSims, joint->localIndex );
 	}
 
-	b2SolverSet* set = world->solverSetArray + joint->setIndex;
+	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, joint->setIndex );
 	return b2JointSimArray_Get( &set->jointsNew, joint->localIndex );
 }
 
@@ -194,7 +192,7 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 	if ( bodyA->setIndex == b2_disabledSet || bodyB->setIndex == b2_disabledSet )
 	{
 		// if either body is disabled, create in disabled set
-		b2SolverSet* set = world->solverSetArray + b2_disabledSet;
+		b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, b2_disabledSet );
 		joint->setIndex = b2_disabledSet;
 		joint->localIndex = set->jointsNew.count;
 
@@ -206,7 +204,7 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 	else if ( bodyA->setIndex == b2_staticSet && bodyB->setIndex == b2_staticSet )
 	{
 		// joint is connecting static bodies
-		b2SolverSet* set = world->solverSetArray + b2_staticSet;
+		b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, b2_staticSet );
 		joint->setIndex = b2_staticSet;
 		joint->localIndex = set->jointsNew.count;
 
@@ -239,8 +237,7 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 		// joint should go into the sleeping set (not static set)
 		int setIndex = maxSetIndex;
 
-		b2CheckIndex( world->solverSetArray, setIndex );
-		b2SolverSet* set = world->solverSetArray + setIndex;
+		b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, setIndex );
 		joint->setIndex = setIndex;
 		joint->localIndex = set->jointsNew.count;
 		jointSim = b2JointSimArray_Add( &set->jointsNew );
@@ -258,8 +255,10 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 			// fix potentially invalid set index
 			setIndex = bodyA->setIndex;
 
+			b2SolverSet* mergedSet = b2SolverSetArray_Get( &world->solverSetArray, setIndex );
+
 			// Careful! The joint sim pointer was orphaned by the set merge.
-			jointSim = world->solverSetArray[setIndex].jointsNew.data + joint->localIndex;
+			jointSim = b2JointSimArray_Get( &mergedSet->jointsNew, joint->localIndex );
 		}
 
 		B2_ASSERT( joint->setIndex == setIndex );
@@ -725,7 +724,7 @@ void b2DestroyJointInternal( b2World* world, b2Joint* joint, bool wakeBodies )
 	}
 	else
 	{
-		b2SolverSet* set = world->solverSetArray + setIndex;
+		b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, setIndex );
 		int movedIndex = b2JointSimArray_RemoveSwap( &set->jointsNew, localIndex );
 		if ( movedIndex != B2_NULL_INDEX )
 		{

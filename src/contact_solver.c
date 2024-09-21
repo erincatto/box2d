@@ -148,7 +148,8 @@ void b2WarmStartOverflowContacts( b2StepContext* context )
 	b2GraphColor* color = graph->colors + b2_overflowIndex;
 	b2ContactConstraint* constraints = color->overflowConstraints;
 	int contactCount = color->contactSims.count;
-	b2SolverSet* awakeSet = context->world->solverSetArray + b2_awakeSet;
+	b2World* world = context->world;
+	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
 	b2BodyState* states = awakeSet->statesNew.data;
 
 	// This is a dummy state to represent a static body because static bodies don't have a solver body.
@@ -211,7 +212,8 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 	b2GraphColor* color = graph->colors + b2_overflowIndex;
 	b2ContactConstraint* constraints = color->overflowConstraints;
 	int contactCount = color->contactSims.count;
-	b2SolverSet* awakeSet = context->world->solverSetArray + b2_awakeSet;
+	b2World* world = context->world;
+	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
 	b2BodyState* states = awakeSet->statesNew.data;
 
 	float inv_h = context->inv_h;
@@ -345,7 +347,8 @@ void b2ApplyOverflowRestitution( b2StepContext* context )
 	b2GraphColor* color = graph->colors + b2_overflowIndex;
 	b2ContactConstraint* constraints = color->overflowConstraints;
 	int contactCount = color->contactSims.count;
-	b2SolverSet* awakeSet = context->world->solverSetArray + b2_awakeSet;
+	b2World* world = context->world;
+	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
 	b2BodyState* states = awakeSet->statesNew.data;
 
 	float threshold = context->world->restitutionThreshold;
@@ -536,7 +539,7 @@ static inline b2FloatW b2MulW( b2FloatW a, b2FloatW b )
 static inline b2FloatW b2MulAddW( b2FloatW a, b2FloatW b, b2FloatW c )
 {
 	// FMA can be emulated: https://github.com/lattera/glibc/blob/master/sysdeps/ieee754/dbl-64/s_fmaf.c#L34
-	//return _mm256_fmadd_ps( b, c, a );
+	// return _mm256_fmadd_ps( b, c, a );
 	return _mm256_add_ps( _mm256_mul_ps( b, c ), a );
 }
 

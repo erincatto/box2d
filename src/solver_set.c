@@ -13,9 +13,11 @@
 
 #include <string.h>
 
+B2_ARRAY_SOURCE( b2SolverSet, b2SolverSet );
+
 void b2DestroySolverSet( b2World* world, int setIndex )
 {
-	b2SolverSet* set = world->solverSetArray + setIndex;
+	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, setIndex );
 	b2BodySimArray_Destroy( &set->simsNew );
 	b2BodyStateArray_Destroy( &set->statesNew );
 	b2ContactSimArray_Destroy( &set->contactsNew );
@@ -35,10 +37,9 @@ void b2DestroySolverSet( b2World* world, int setIndex )
 void b2WakeSolverSet( b2World* world, int setIndex )
 {
 	B2_ASSERT( setIndex >= b2_firstSleepingSet );
-	b2CheckIndex( world->solverSetArray, setIndex );
-	b2SolverSet* set = world->solverSetArray + setIndex;
-	b2SolverSet* awakeSet = world->solverSetArray + b2_awakeSet;
-	b2SolverSet* disabledSet = world->solverSetArray + b2_disabledSet;
+	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, setIndex );
+	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
+	b2SolverSet* disabledSet = b2SolverSetArray_Get( &world->solverSetArray, b2_disabledSet );
 
 	b2Body* bodies = world->bodyArrayNew.data;
 
@@ -68,7 +69,7 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 			int edgeIndex = contactKey & 1;
 			int contactId = contactKey >> 1;
 
-			b2Contact* contact = b2ContactArray_Get(&world->contactArray, contactId);
+			b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId );
 
 			contactKey = contact->edges[edgeIndex].nextKey;
 
@@ -106,7 +107,7 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 		for ( int i = 0; i < contactCount; ++i )
 		{
 			b2ContactSim* contactSim = set->contactsNew.data + i;
-			b2Contact* contact =  b2ContactArray_Get( &world->contactArray, contactSim->contactId);
+			b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactSim->contactId );
 			B2_ASSERT( contact->flags & b2_contactTouchingFlag );
 			B2_ASSERT( contactSim->simFlags & b2_simTouchingFlag );
 			B2_ASSERT( contactSim->manifold.pointCount > 0 );
@@ -122,7 +123,7 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 		for ( int i = 0; i < jointCount; ++i )
 		{
 			b2JointSim* jointSim = set->jointsNew.data + i;
-			b2Joint* joint = b2JointArray_Get( &world->jointArray, + jointSim->jointId );
+			b2Joint* joint = b2JointArray_Get( &world->jointArray, +jointSim->jointId );
 			B2_ASSERT( joint->setIndex == setIndex );
 			b2AddJointToGraph( world, jointSim, joint );
 			joint->setIndex = b2_awakeSet;
@@ -170,18 +171,18 @@ void b2TrySleepIsland( b2World* world, int islandId )
 	// - remove old island
 	// - fix island
 	int sleepSetId = b2AllocId( &world->solverSetIdPool );
-	if ( sleepSetId == b2Array( world->solverSetArray ).count )
+	if ( sleepSetId == world->solverSetArray.count )
 	{
 		b2SolverSet set = { 0 };
 		set.setIndex = B2_NULL_INDEX;
-		b2Array_Push( world->solverSetArray, set );
+		b2SolverSetArray_Push( &world->solverSetArray, set );
 	}
 
-	b2SolverSet* sleepSet = world->solverSetArray + sleepSetId;
+	b2SolverSet* sleepSet = b2SolverSetArray_Get( &world->solverSetArray, sleepSetId );
 	*sleepSet = ( b2SolverSet ){ 0 };
 
 	// grab awake set after creating the sleep set because the solver set array may have been resized
-	b2SolverSet* awakeSet = world->solverSetArray + b2_awakeSet;
+	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
 	B2_ASSERT( 0 <= island->localIndex && island->localIndex < awakeSet->islandsNew.count );
 
 	sleepSet->setIndex = sleepSetId;
@@ -192,11 +193,11 @@ void b2TrySleepIsland( b2World* world, int islandId )
 	// move awake bodies to sleeping set
 	// this shuffles around bodies in the awake set
 	{
-		b2SolverSet* disabledSet = world->solverSetArray + b2_disabledSet;
-		int bodyId = island->headBody; 
+		b2SolverSet* disabledSet = b2SolverSetArray_Get( &world->solverSetArray, b2_disabledSet );
+		int bodyId = island->headBody;
 		while ( bodyId != B2_NULL_INDEX )
 		{
-			b2Body* body = b2BodyArray_Get(&world->bodyArrayNew, bodyId);
+			b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, bodyId );
 			B2_ASSERT( body->setIndex == b2_awakeSet );
 			B2_ASSERT( body->islandId == islandId );
 
@@ -212,7 +213,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			}
 
 			int awakeBodyIndex = body->localIndex;
-			b2BodySim* awakeSim = b2BodySimArray_Get(&awakeSet->simsNew, awakeBodyIndex);
+			b2BodySim* awakeSim = b2BodySimArray_Get( &awakeSet->simsNew, awakeBodyIndex );
 
 			// move body sim to sleep set
 			int sleepBodyIndex = sleepSet->simsNew.count;
@@ -225,7 +226,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 				// fix local index on moved element
 				b2BodySim* movedSim = awakeSet->simsNew.data + awakeBodyIndex;
 				int movedId = movedSim->bodyId;
-				b2Body* movedBody = b2BodyArray_Get(&world->bodyArrayNew, movedId);
+				b2Body* movedBody = b2BodyArray_Get( &world->bodyArrayNew, movedId );
 				B2_ASSERT( movedBody->localIndex == movedIndex );
 				movedBody->localIndex = awakeBodyIndex;
 			}
@@ -244,7 +245,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 				int contactId = contactKey >> 1;
 				int edgeIndex = contactKey & 1;
 
-				b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId);
+				b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId );
 
 				B2_ASSERT( contact->setIndex == b2_awakeSet || contact->setIndex == b2_disabledSet );
 				contactKey = contact->edges[edgeIndex].nextKey;
@@ -266,7 +267,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 				// for moving this contact to the disabled set.
 				int otherEdgeIndex = edgeIndex ^ 1;
 				int otherBodyId = contact->edges[otherEdgeIndex].bodyId;
-				b2Body* otherBody = b2BodyArray_Get( &world->bodyArrayNew, otherBodyId);
+				b2Body* otherBody = b2BodyArray_Get( &world->bodyArrayNew, otherBodyId );
 				if ( otherBody->setIndex == b2_awakeSet )
 				{
 					continue;
@@ -305,7 +306,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 		int contactId = island->headContact;
 		while ( contactId != B2_NULL_INDEX )
 		{
-			b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId);
+			b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactId );
 			B2_ASSERT( contact->setIndex == b2_awakeSet );
 			B2_ASSERT( contact->islandId == islandId );
 			int colorIndex = contact->colorIndex;
@@ -322,7 +323,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			}
 
 			int localIndex = contact->localIndex;
-			b2ContactSim* awakeContactSim = b2ContactSimArray_Get( &color->contactSims, localIndex);
+			b2ContactSim* awakeContactSim = b2ContactSimArray_Get( &color->contactSims, localIndex );
 
 			int sleepContactIndex = sleepSet->contactsNew.count;
 			b2ContactSim* sleepContactSim = b2ContactSimArray_Add( &sleepSet->contactsNew );
@@ -362,7 +363,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 
 			b2GraphColor* color = world->constraintGraph.colors + colorIndex;
 
-			b2JointSim* awakeJointSim = b2JointSimArray_Get( &color->jointSims, localIndex);
+			b2JointSim* awakeJointSim = b2JointSimArray_Get( &color->jointSims, localIndex );
 
 			if ( colorIndex != b2_overflowIndex )
 			{
@@ -402,7 +403,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 		b2IslandSim* sleepIsland = b2IslandSimArray_Add( &sleepSet->islandsNew );
 		sleepIsland->islandId = islandId;
 
-		int movedIslandIndex =  b2IslandSimArray_RemoveSwap( &awakeSet->islandsNew, islandIndex );
+		int movedIslandIndex = b2IslandSimArray_RemoveSwap( &awakeSet->islandsNew, islandIndex );
 		if ( movedIslandIndex != B2_NULL_INDEX )
 		{
 			// fix index on moved element
@@ -427,10 +428,8 @@ void b2MergeSolverSets( b2World* world, int setId1, int setId2 )
 {
 	B2_ASSERT( setId1 >= b2_firstSleepingSet );
 	B2_ASSERT( setId2 >= b2_firstSleepingSet );
-	b2CheckIndex( world->solverSetArray, setId1 );
-	b2CheckIndex( world->solverSetArray, setId2 );
-	b2SolverSet* set1 = world->solverSetArray + setId1;
-	b2SolverSet* set2 = world->solverSetArray + setId2;
+	b2SolverSet* set1 = b2SolverSetArray_Get( &world->solverSetArray, setId1 );
+	b2SolverSet* set2 = b2SolverSetArray_Get( &world->solverSetArray, setId2 );
 
 	// Move the fewest number of bodies
 	if ( set1->simsNew.count < set2->simsNew.count )
@@ -457,7 +456,7 @@ void b2MergeSolverSets( b2World* world, int setId1, int setId2 )
 			body->setIndex = setId1;
 			body->localIndex = set1->simsNew.count;
 
-			b2BodySim* simDst = b2BodySimArray_Add ( &set1->simsNew );
+			b2BodySim* simDst = b2BodySimArray_Add( &set1->simsNew );
 			memcpy( simDst, simSrc, sizeof( b2BodySim ) );
 		}
 	}
@@ -469,7 +468,7 @@ void b2MergeSolverSets( b2World* world, int setId1, int setId2 )
 		{
 			b2ContactSim* contactSrc = set2->contactsNew.data + i;
 
-			b2Contact* contact = b2ContactArray_Get(&world->contactArray, contactSrc->contactId);
+			b2Contact* contact = b2ContactArray_Get( &world->contactArray, contactSrc->contactId );
 			B2_ASSERT( contact->setIndex == setId2 );
 			contact->setIndex = setId1;
 			contact->localIndex = set1->contactsNew.count;
@@ -524,7 +523,7 @@ void b2TransferBody( b2World* world, b2SolverSet* targetSet, b2SolverSet* source
 	B2_ASSERT( targetSet != sourceSet );
 
 	int sourceIndex = body->localIndex;
-	b2BodySim* sourceSim = b2BodySimArray_Get(&sourceSet->simsNew, sourceIndex);
+	b2BodySim* sourceSim = b2BodySimArray_Get( &sourceSet->simsNew, sourceIndex );
 
 	int targetIndex = targetSet->simsNew.count;
 	b2BodySim* targetSim = b2BodySimArray_Add( &targetSet->simsNew );
@@ -537,7 +536,7 @@ void b2TransferBody( b2World* world, b2SolverSet* targetSet, b2SolverSet* source
 		// Fix moved body index
 		b2BodySim* movedSim = sourceSet->simsNew.data + sourceIndex;
 		int movedId = movedSim->bodyId;
-		b2Body* movedBody = b2BodyArray_Get( &world->bodyArrayNew, movedId);
+		b2Body* movedBody = b2BodyArray_Get( &world->bodyArrayNew, movedId );
 		B2_ASSERT( movedBody->localIndex == movedIndex );
 		movedBody->localIndex = sourceIndex;
 	}
@@ -570,12 +569,12 @@ void b2TransferJoint( b2World* world, b2SolverSet* targetSet, b2SolverSet* sourc
 		B2_ASSERT( 0 <= colorIndex && colorIndex < b2_graphColorCount );
 		b2GraphColor* color = world->constraintGraph.colors + colorIndex;
 
-		sourceSim = b2JointSimArray_Get( &color->jointSims, localIndex);
+		sourceSim = b2JointSimArray_Get( &color->jointSims, localIndex );
 	}
 	else
 	{
 		B2_ASSERT( colorIndex == B2_NULL_INDEX );
-		sourceSim = b2JointSimArray_Get( &sourceSet->jointsNew, + localIndex);
+		sourceSim = b2JointSimArray_Get( &sourceSet->jointsNew, +localIndex );
 	}
 
 	// Create target and copy. Fix joint.

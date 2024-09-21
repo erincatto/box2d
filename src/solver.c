@@ -929,7 +929,7 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 // Continuous collision of dynamic versus static
 static void b2SolveContinuous( b2World* world, int bodySimIndex )
 {
-	b2SolverSet* awakeSet = world->solverSetArray + b2_awakeSet;
+	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
 	b2BodySim* fastBodySim = b2BodySimArray_Get( &awakeSet->simsNew, bodySimIndex );
 	B2_ASSERT( fastBodySim->isFast );
 
@@ -1129,7 +1129,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 	world->profile.buildIslands = b2GetMillisecondsAndReset( &timer );
 
-	b2SolverSet* awakeSet = world->solverSetArray + b2_awakeSet;
+	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
 	int awakeBodyCount = awakeSet->simsNew.count;
 	if ( awakeBodyCount == 0 )
 	{

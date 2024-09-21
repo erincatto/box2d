@@ -151,7 +151,7 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	else
 	{
 		B2_ASSERT( bodyA->setIndex == b2_awakeSet );
-		b2SolverSet* awakeSet = world->solverSetArray + b2_awakeSet;
+		b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
 
 		int localIndex = bodyA->localIndex;
 		newContact->bodySimIndexA = localIndex;
@@ -170,7 +170,7 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	else
 	{
 		B2_ASSERT( bodyB->setIndex == b2_awakeSet );
-		b2SolverSet* awakeSet = world->solverSetArray + b2_awakeSet;
+		b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
 
 		int localIndex = bodyB->localIndex;
 		newContact->bodySimIndexB = localIndex;

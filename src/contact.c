@@ -225,7 +225,7 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 		setIndex = b2_disabledSet;
 	}
 
-	b2SolverSet* set = world->solverSetArray + setIndex;
+	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, setIndex );
 
 	// Create contact key and contact
 	int contactId = b2AllocId( &world->contactIdPool );
@@ -426,7 +426,7 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 		// contact is non-touching or is sleeping or is a sensor
 		B2_ASSERT( contact->setIndex != b2_awakeSet || ( contact->flags & b2_contactTouchingFlag ) == 0 ||
 				   ( contact->flags & b2_contactSensorFlag ) != 0 );
-		b2SolverSet* set = world->solverSetArray + contact->setIndex;
+		b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, contact->setIndex );
 		int movedIndex = b2ContactSimArray_RemoveSwap( &set->contactsNew, contact->localIndex );
 		if ( movedIndex != B2_NULL_INDEX )
 		{
@@ -460,7 +460,7 @@ b2ContactSim* b2GetContactSim( b2World* world, b2Contact* contact )
 		return b2ContactSimArray_Get( &color->contactSims, contact->localIndex );
 	}
 
-	b2SolverSet* set = world->solverSetArray + contact->setIndex;
+	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, contact->setIndex );
 	return b2ContactSimArray_Get( &set->contactsNew, contact->localIndex );
 }
 

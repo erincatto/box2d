@@ -31,8 +31,7 @@ b2Island* b2CreateIsland( b2World* world, int setIndex )
 		B2_ASSERT( world->islandArray.data[islandId].setIndex == B2_NULL_INDEX );
 	}
 
-	b2CheckIndex( world->solverSetArray, setIndex );
-	b2SolverSet* set = world->solverSetArray + setIndex;
+	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, setIndex );
 
 	b2Island* island = b2IslandArray_Get( &world->islandArray, islandId );
 	island->setIndex = setIndex;
@@ -60,8 +59,7 @@ void b2DestroyIsland( b2World* world, int islandId )
 {
 	// assume island is empty
 	b2Island* island = b2IslandArray_Get( &world->islandArray, islandId );
-	b2CheckIndex( world->solverSetArray, island->setIndex );
-	b2SolverSet* set = world->solverSetArray + island->setIndex;
+	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSetArray, island->setIndex );
 	int movedIndex = b2IslandSimArray_RemoveSwap( &set->islandsNew, island->localIndex );
 	if ( movedIndex != B2_NULL_INDEX )
 	{
@@ -536,7 +534,7 @@ void b2MergeAwakeIslands( b2World* world )
 {
 	b2TracyCZoneNC( merge_islands, "Merge Islands", b2_colorMediumTurquoise, true );
 
-	b2SolverSet* awakeSet = world->solverSetArray + b2_awakeSet;
+	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSetArray, b2_awakeSet );
 	b2IslandSim* islandSims = awakeSet->islandsNew.data;
 	int awakeIslandCount = awakeSet->islandsNew.count;
 
