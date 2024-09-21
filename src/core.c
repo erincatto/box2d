@@ -66,8 +66,6 @@ b2Version b2GetVersion( void )
 	return ( b2Version ){ 3, 1, 0 };
 }
 
-
-
 static b2AllocFcn* b2_allocFcn = NULL;
 static b2FreeFcn* b2_freeFcn = NULL;
 
