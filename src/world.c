@@ -143,10 +143,10 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	B2_ASSERT( world->solverSetArray[b2_awakeSet].setIndex == b2_awakeSet );
 
 	world->shapeIdPool = b2CreateIdPool();
-	world->shapeArray = b2CreateArray( sizeof( b2Shape ), 16 );
+	world->shapeArray = b2ShapeArray_Create( 16 );
 
 	world->chainIdPool = b2CreateIdPool();
-	world->chainArray = b2CreateArray( sizeof( b2ChainShape ), 4 );
+	world->chainArray = b2ChainShapeArray_Create( 4 );
 
 	world->contactIdPool = b2CreateIdPool();
 	world->contactArray = b2CreateArray( sizeof( b2Contact ), 16 );
@@ -240,10 +240,10 @@ void b2DestroyWorld( b2WorldId worldId )
 	b2ContactEndTouchEventArray_Destroy( &world->contactEndArray );
 	b2ContactHitEventArray_Destroy( &world->contactHitArray );
 
-	int chainCapacity = b2Array( world->chainArray ).count;
+	int chainCapacity = world->chainArray.count;
 	for ( int i = 0; i < chainCapacity; ++i )
 	{
-		b2ChainShape* chain = world->chainArray + i;
+		b2ChainShape* chain = world->chainArray.data + i;
 		if ( chain->id != B2_NULL_INDEX )
 		{
 			b2Free( chain->shapeIndices, chain->count * sizeof( int ) );
@@ -255,8 +255,8 @@ void b2DestroyWorld( b2WorldId worldId )
 	}
 
 	b2BodyArray_Destroy( &world->bodyArrayNew );
-	b2DestroyArray( world->shapeArray, sizeof( b2Shape ) );
-	b2DestroyArray( world->chainArray, sizeof( b2ChainShape ) );
+	b2ShapeArray_Destroy( &world->shapeArray );
+	b2ChainShapeArray_Destroy( &world->chainArray );
 	b2DestroyArray( world->contactArray, sizeof( b2Contact ) );
 	b2DestroyArray( world->jointArray, sizeof( b2Joint ) );
 	b2DestroyArray( world->islandArray, sizeof( b2Island ) );
@@ -305,7 +305,7 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 	B2_ASSERT( threadIndex < world->workerCount );
 	b2TaskContext* taskContext = world->taskContextArray.data + threadIndex;
 	b2ContactSim** contactSims = stepContext->contacts;
-	b2Shape* shapes = world->shapeArray;
+	b2Shape* shapes = world->shapeArray.data;
 	b2Body* bodies = world->bodyArrayNew.data;
 
 	B2_ASSERT( startIndex < endIndex );
@@ -508,7 +508,7 @@ static void b2Collide( b2StepContext* context )
 	b2Contact* contacts = world->contactArray;
 	b2SolverSet* awakeSet = world->solverSetArray + b2_awakeSet;
 
-	const b2Shape* shapes = world->shapeArray;
+	const b2Shape* shapes = world->shapeArray.data;
 	int16_t worldId = world->worldId;
 
 	// Process contact state changes. Iterate over set bits
@@ -849,8 +849,8 @@ static bool DrawQueryCallback( int proxyId, int shapeId, void* context )
 	b2World* world = drawContext->world;
 	b2DebugDraw* draw = drawContext->draw;
 
-	b2CheckId( world->shapeArray, shapeId );
-	b2Shape* shape = world->shapeArray + shapeId;
+	b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
+	B2_ASSERT( shape->id == shapeId );
 
 	b2SetBit( &world->debugBodySet, shape->bodyId );
 
@@ -1144,7 +1144,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				int shapeId = body->headShapeId;
 				while ( shapeId != B2_NULL_INDEX )
 				{
-					b2Shape* shape = world->shapeArray + shapeId;
+					b2Shape* shape = world->shapeArray.data + shapeId;
 					b2HexColor color;
 
 					if ( shape->customColor != 0 )
@@ -1238,7 +1238,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				int shapeId = body->headShapeId;
 				while ( shapeId != B2_NULL_INDEX )
 				{
-					b2Shape* shape = world->shapeArray + shapeId;
+					b2Shape* shape = world->shapeArray.data + shapeId;
 					b2AABB aabb = shape->fatAABB;
 
 					b2Vec2 vs[4] = { { aabb.lowerBound.x, aabb.lowerBound.y },
@@ -1486,12 +1486,12 @@ bool b2Shape_IsValid( b2ShapeId id )
 	}
 
 	int shapeId = id.index1 - 1;
-	if ( shapeId < 0 || b2Array( world->shapeArray ).count <= shapeId )
+	if ( shapeId < 0 || world->shapeArray.count <= shapeId )
 	{
 		return false;
 	}
 
-	b2Shape* shape = world->shapeArray + shapeId;
+	b2Shape* shape = world->shapeArray.data + shapeId;
 	if ( shape->id == B2_NULL_INDEX )
 	{
 		// shape is free
@@ -1518,12 +1518,12 @@ bool b2Chain_IsValid( b2ChainId id )
 	}
 
 	int chainId = id.index1 - 1;
-	if ( chainId < 0 || b2Array( world->chainArray ).count <= chainId )
+	if ( chainId < 0 || world->chainArray.count <= chainId )
 	{
 		return false;
 	}
 
-	b2ChainShape* chain = world->chainArray + chainId;
+	b2ChainShape* chain = world->chainArray.data + chainId;
 	if ( chain->id == B2_NULL_INDEX )
 	{
 		// chain is free
@@ -1751,8 +1751,8 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	fprintf( file, "joints: %d\n", b2GetArrayBytes( world->jointArray, sizeof( b2Joint ) ) );
 	fprintf( file, "contacts: %d\n", b2GetArrayBytes( world->contactArray, sizeof( b2Contact ) ) );
 	fprintf( file, "islands: %d\n", b2GetArrayBytes( world->islandArray, sizeof( b2Island ) ) );
-	fprintf( file, "shapes: %d\n", b2GetArrayBytes( world->shapeArray, sizeof( b2Shape ) ) );
-	fprintf( file, "chains: %d\n", b2GetArrayBytes( world->chainArray, sizeof( b2ChainShape ) ) );
+	fprintf( file, "shapes: %d\n", b2ShapeArray_ByteCount( &world->shapeArray ) );
+	fprintf( file, "chains: %d\n", b2ChainShapeArray_ByteCount( &world->chainArray ) );
 	fprintf( file, "\n" );
 
 	// broad-phase
@@ -1839,8 +1839,7 @@ static bool TreeQueryCallback( int proxyId, int shapeId, void* context )
 	WorldQueryContext* worldContext = context;
 	b2World* world = worldContext->world;
 
-	b2CheckId( world->shapeArray, shapeId );
-	b2Shape* shape = world->shapeArray + shapeId;
+	b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
 
 	b2Filter shapeFilter = shape->filter;
 	b2QueryFilter queryFilter = worldContext->filter;
@@ -1891,8 +1890,7 @@ static bool TreeOverlapCallback( int proxyId, int shapeId, void* context )
 	WorldOverlapContext* worldContext = context;
 	b2World* world = worldContext->world;
 
-	b2CheckId( world->shapeArray, shapeId );
-	b2Shape* shape = world->shapeArray + shapeId;
+	b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
 
 	b2Filter shapeFilter = shape->filter;
 	b2QueryFilter queryFilter = worldContext->filter;
@@ -2013,8 +2011,7 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, int shap
 	WorldRayCastContext* worldContext = context;
 	b2World* world = worldContext->world;
 
-	b2CheckId( world->shapeArray, shapeId );
-	b2Shape* shape = world->shapeArray + shapeId;
+	b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
 	b2Filter shapeFilter = shape->filter;
 	b2QueryFilter queryFilter = worldContext->filter;
 
@@ -2119,8 +2116,7 @@ static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, int 
 	WorldRayCastContext* worldContext = context;
 	b2World* world = worldContext->world;
 
-	b2CheckId( world->shapeArray, shapeId );
-	b2Shape* shape = world->shapeArray + shapeId;
+	b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
 	b2Filter shapeFilter = shape->filter;
 	b2QueryFilter queryFilter = worldContext->filter;
 
@@ -2387,8 +2383,7 @@ static bool ExplosionCallback( int proxyId, int shapeId, void* context )
 	struct ExplosionContext* explosionContext = context;
 	b2World* world = explosionContext->world;
 
-	b2CheckId( world->shapeArray, shapeId );
-	b2Shape* shape = world->shapeArray + shapeId;
+	b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
 
 	b2Body* body = b2BodyArray_Get( &world->bodyArrayNew, shape->bodyId );
 	if ( body->type == b2_kinematicBody )
@@ -2650,8 +2645,8 @@ void b2ValidateSolverSets( b2World* world )
 					int shapeId = body->headShapeId;
 					while ( shapeId != B2_NULL_INDEX )
 					{
-						b2CheckId( world->shapeArray, shapeId );
-						b2Shape* shape = world->shapeArray + shapeId;
+						b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
+						B2_ASSERT( shape->id == shapeId );
 						B2_ASSERT( shape->prevShapeId == prevShapeId );
 
 						if ( setIndex == b2_disabledSet )

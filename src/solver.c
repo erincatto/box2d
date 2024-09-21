@@ -323,7 +323,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		int shapeId = body->headShapeId;
 		while ( shapeId != B2_NULL_INDEX )
 		{
-			b2Shape* shape = world->shapeArray + shapeId;
+			b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
 
 			B2_ASSERT( shape->isFast == false );
 
@@ -831,8 +831,7 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 
 	b2World* world = continuousContext->world;
 
-	b2CheckId( world->shapeArray, shapeId );
-	b2Shape* shape = world->shapeArray + shapeId;
+	b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
 
 	// Skip same body
 	if ( shape->bodyId == fastShape->bodyId )
@@ -937,8 +936,6 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 	b2BodySim* fastBodySim = b2BodySimArray_Get( &awakeSet->simsNew, bodySimIndex );
 	B2_ASSERT( fastBodySim->isFast );
 
-	b2Shape* shapes = world->shapeArray;
-
 	b2Sweep sweep = b2MakeSweep( fastBodySim );
 
 	b2Transform xf1;
@@ -965,8 +962,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 	int shapeId = fastBody->headShapeId;
 	while ( shapeId != B2_NULL_INDEX )
 	{
-		b2CheckId( shapes, shapeId );
-		b2Shape* fastShape = shapes + shapeId;
+		b2Shape* fastShape = b2ShapeArray_Get( &world->shapeArray, shapeId );
 		B2_ASSERT( fastShape->isFast == true );
 
 		shapeId = fastShape->nextShapeId;
@@ -1021,7 +1017,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 		shapeId = fastBody->headShapeId;
 		while ( shapeId != B2_NULL_INDEX )
 		{
-			b2Shape* shape = shapes + shapeId;
+			b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
 
 			// Must recompute aabb at the interpolated transform
 			b2AABB aabb = b2ComputeShapeAABB( shape, transform );
@@ -1059,7 +1055,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 		shapeId = fastBody->headShapeId;
 		while ( shapeId != B2_NULL_INDEX )
 		{
-			b2Shape* shape = shapes + shapeId;
+			b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
 
 			// shape->aabb is still valid
 
@@ -1731,10 +1727,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				{
 					event.normal = contactSim->manifold.normal;
 
-					b2CheckId( world->shapeArray, contactSim->shapeIdA );
-					b2CheckId( world->shapeArray, contactSim->shapeIdB );
-					b2Shape* shapeA = world->shapeArray + contactSim->shapeIdA;
-					b2Shape* shapeB = world->shapeArray + contactSim->shapeIdB;
+					b2Shape* shapeA = b2ShapeArray_Get( &world->shapeArray, contactSim->shapeIdA );
+					b2Shape* shapeB = b2ShapeArray_Get( &world->shapeArray, contactSim->shapeIdB );
 
 					event.shapeIdA = ( b2ShapeId ){ shapeA->id + 1, world->worldId, shapeA->revision };
 					event.shapeIdB = ( b2ShapeId ){ shapeB->id + 1, world->worldId, shapeB->revision };
@@ -1775,7 +1769,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	// in deterministic order. I'm tracking sim bodies because the number of shape ids can be huge.
 	{
 		b2BroadPhase* broadPhase = &world->broadPhase;
-		b2Shape* shapes = world->shapeArray;
 		uint32_t wordCount = simBitSet->blockCount;
 		uint64_t* bits = simBitSet->bits;
 		for ( uint32_t k = 0; k < wordCount; ++k )
@@ -1794,8 +1787,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				int shapeId = body->headShapeId;
 				while ( shapeId != B2_NULL_INDEX )
 				{
-					b2CheckId( shapes, shapeId );
-					b2Shape* shape = shapes + shapeId;
+					b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
 
 					if ( shape->enlargedAABB )
 					{
@@ -1849,7 +1841,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2BroadPhase* broadPhase = &world->broadPhase;
 		b2DynamicTree* dynamicTree = broadPhase->trees + b2_dynamicBody;
 		b2Body* bodies = world->bodyArrayNew.data;
-		b2Shape* shapes = world->shapeArray;
 
 		int* fastBodies = stepContext->fastBodies;
 		int fastBodyCount = stepContext->fastBodyCount;
@@ -1873,7 +1864,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			int shapeId = fastBody->headShapeId;
 			while ( shapeId != B2_NULL_INDEX )
 			{
-				b2Shape* shape = shapes + shapeId;
+				b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
 				if ( shape->enlargedAABB == false )
 				{
 					shapeId = shape->nextShapeId;
@@ -1915,7 +1906,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2BroadPhase* broadPhase = &world->broadPhase;
 		b2DynamicTree* dynamicTree = broadPhase->trees + b2_dynamicBody;
 		b2Body* bodies = world->bodyArrayNew.data;
-		b2Shape* shapes = world->shapeArray;
 
 		// Serially enlarge broad-phase proxies for bullet shapes
 		int* bulletBodies = stepContext->bulletBodies;
@@ -1940,7 +1930,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			int shapeId = bulletBody->headShapeId;
 			while ( shapeId != B2_NULL_INDEX )
 			{
-				b2Shape* shape = shapes + shapeId;
+				b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
 				if ( shape->enlargedAABB == false )
 				{
 					shapeId = shape->nextShapeId;

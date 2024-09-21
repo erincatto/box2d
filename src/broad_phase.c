@@ -203,11 +203,8 @@ static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 
 	b2World* world = queryContext->world;
 
-	b2CheckId( world->shapeArray, shapeIdA );
-	b2CheckId( world->shapeArray, shapeIdB );
-
-	b2Shape* shapeA = world->shapeArray + shapeIdA;
-	b2Shape* shapeB = world->shapeArray + shapeIdB;
+	b2Shape* shapeA = b2ShapeArray_Get( &world->shapeArray, shapeIdA );
+	b2Shape* shapeB = b2ShapeArray_Get( &world->shapeArray, shapeIdB );
 
 	int bodyIdA = shapeA->bodyId;
 	int bodyIdB = shapeB->bodyId;
@@ -369,8 +366,6 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	// Single-threaded work
 	// - Clear move flags
 	// - Create contacts in deterministic order
-	b2Shape* shapes = world->shapeArray;
-
 	for ( int i = 0; i < moveCount; ++i )
 	{
 		b2MoveResult* result = bp->moveResults + i;
@@ -391,12 +386,10 @@ void b2UpdateBroadPhasePairs( b2World* world )
 			//	fprintf(s_file, "%d %d\n", shapeIdA, shapeIdB);
 			// }
 
-			//++pairCount;
+			b2Shape* shapeA = b2ShapeArray_Get( &world->shapeArray, shapeIdA );
+			b2Shape* shapeB = b2ShapeArray_Get( &world->shapeArray, shapeIdB );
 
-			b2CheckId( shapes, shapeIdA );
-			b2CheckId( shapes, shapeIdB );
-
-			b2CreateContact( world, shapes + shapeIdA, shapes + shapeIdB );
+			b2CreateContact( world, shapeA, shapeB );
 
 			if ( pair->heap )
 			{

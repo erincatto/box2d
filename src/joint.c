@@ -845,7 +845,7 @@ void b2Joint_SetCollideConnected( b2JointId jointId, bool shouldCollide )
 		int shapeId = shapeCountA < shapeCountB ? bodyA->headShapeId : bodyB->headShapeId;
 		while ( shapeId != B2_NULL_INDEX )
 		{
-			b2Shape* shape = world->shapeArray + shapeId;
+			b2Shape* shape = b2ShapeArray_Get( &world->shapeArray, shapeId );
 
 			if ( shape->proxyKey != B2_NULL_INDEX )
 			{

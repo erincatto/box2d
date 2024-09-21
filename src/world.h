@@ -92,8 +92,8 @@ typedef struct b2World
 	b2IdPool chainIdPool;
 
 	// These are sparse arrays that point into the pools above
-	struct b2Shape* shapeArray;
-	struct b2ChainShape* chainArray;
+	b2ShapeArray shapeArray;
+	b2ChainShapeArray chainArray;
 
 	// Per thread storage
 	b2TaskContextArray taskContextArray;
