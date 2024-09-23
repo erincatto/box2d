@@ -38,8 +38,8 @@ b2SegmentDistanceResult b2SegmentDistance( b2Vec2 p1, b2Vec2 q1, b2Vec2 p2, b2Ve
 	b2Vec2 r = b2Sub( p1, p2 );
 	float dd1 = b2Dot( d1, d1 );
 	float dd2 = b2Dot( d2, d2 );
-	float rd2 = b2Dot( r, d2 );
 	float rd1 = b2Dot( r, d1 );
+	float rd2 = b2Dot( r, d2 );
 
 	const float epsSqr = FLT_EPSILON * FLT_EPSILON;
 

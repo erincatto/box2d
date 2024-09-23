@@ -2232,6 +2232,7 @@ public:
 		m_smgcapCache2 = b2_emptyDistanceCache;
 
 		m_transform = b2Transform_identity;
+		m_transform.p.x = 1.25f;
 		m_angle = 0.0f;
 		m_round = 0.1f;
 
@@ -2371,7 +2372,7 @@ public:
 		b2Vec2 increment = { 4.0f, 0.0f };
 
 		b2HexColor color1 = b2_colorAquamarine;
-		b2HexColor color2 = b2_colorMagenta;
+		b2HexColor color2 = b2_colorPaleGoldenrod;
 
 		if ( m_enableCaching == false )
 		{
@@ -2381,6 +2382,7 @@ public:
 			m_smgcapCache2 = b2_emptyDistanceCache;
 		}
 
+#if 0
 		// circle-circle
 		{
 			b2Circle circle1 = { { 0.0f, 0.0f }, 0.5f };
@@ -2459,6 +2461,7 @@ public:
 
 			offset = b2Add( offset, increment );
 		}
+#endif
 
 		// capsule-capsule
 		{
@@ -2482,6 +2485,7 @@ public:
 			offset = b2Add( offset, increment );
 		}
 
+#if 0
 		// box-capsule
 		{
 			b2Capsule capsule = { { -0.4f, 0.0f }, { -0.1f, 0.0f }, 0.1f };
@@ -2776,6 +2780,7 @@ public:
 
 			offset.x += 2.0f * increment.x;
 		}
+#endif
 	}
 
 	static Sample* Create( Settings& settings )

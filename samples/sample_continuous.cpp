@@ -389,6 +389,62 @@ public:
 
 static int sampleSkinnyBox = RegisterSample( "Continuous", "Skinny Box", SkinnyBox::Create );
 
+class SpeculativeBug : public Sample
+{
+public:
+	explicit SpeculativeBug( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 1.0f, 5.0f };
+			g_camera.m_zoom = 25.0f * 0.25f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Segment segment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
+			shapeDef.friction = 0.0f;
+			b2Polygon box = b2MakeOffsetBox( 0.05f, 1.0f, { 0.0f, 1.0f }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+		}
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		for (int i = 0; i < 2; ++i)
+		{
+			if (i == 0)
+			{
+				bodyDef.position = { -0.8f, 0.25f };
+				bodyDef.isAwake = false;
+			}
+			else
+			{
+				bodyDef.position = { 0.8f, 2.0f };
+				bodyDef.isAwake = true;
+			}
+
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0f }, 0.25f };
+			b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
+		}
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new SpeculativeBug( settings );
+	}
+};
+
+static int sampleSpeculativeBug = RegisterSample( "Continuous", "Speculative Bug", SpeculativeBug::Create );
+
 // This sample shows ghost collisions
 class GhostCollision : public Sample
 {

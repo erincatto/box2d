@@ -5,7 +5,7 @@
 
 #include "core.h"
 
-// Macro based dynamic arrays
+// Macro generated functions for dynamic arrays
 // Pros
 // - type safe
 // - array data debuggable (visible count and capacity)
