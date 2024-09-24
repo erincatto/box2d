@@ -318,7 +318,9 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 	float distanceSquared = b2DistanceSquared( closest1, closest2 );
 
 	b2Manifold manifold = { 0 };
-	float radius = capsuleA->radius + capsuleB->radius;
+	float radiusA = capsuleA->radius;
+	float radiusB = capsuleB->radius;
+	float radius = radiusA + radiusB;
 	float maxDistance = radius + b2_speculativeDistance;
 
 	if ( distanceSquared > maxDistance * maxDistance )
@@ -326,49 +328,27 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 		return manifold;
 	}
 
-	b2Vec2 u1 = b2Normalize( d1 );
-	b2Vec2 u2 = b2Normalize( d2 );
+	float distance = sqrt( distanceSquared );
+
+	float length1, length2;
+	b2Vec2 u1 = b2GetLengthAndNormalize( &length1, d1 );
+	b2Vec2 u2 = b2GetLengthAndNormalize( &length2, d2 );
 
 	// Does segment B project outside segment A?
 	float fp2 = b2Dot( b2Sub( p2, p1 ), u1 );
 	float fq2 = b2Dot( b2Sub( q2, p1 ), u1 );
-	bool outsideA = ( fp2 <= 0.0f && fq2 <= 0.0f ) || ( fp2 >= 1.0f && fq2 >= 1.0f );
+	bool outsideA = ( fp2 <= 0.0f && fq2 <= 0.0f ) || ( fp2 >= length1 && fq2 >= length1 );
 
 	// Does segment A project outside segment B?
 	float fp1 = b2Dot( b2Sub( p1, p2 ), u2 );
 	float fq1 = b2Dot( b2Sub( q1, p2 ), u2 );
-	bool outsideB = ( fp1 <= 0.0f && fq1 <= 0.0f ) || ( fp1 >= 1.0f && fq1 >= 1.0f );
+	bool outsideB = ( fp1 <= 0.0f && fq1 <= 0.0f ) || ( fp1 >= length2 && fq1 >= length2 );
 
-	bool flip = false;
-	if ( outsideA && outsideB )
+	if ( outsideA == false && outsideB == false)
 	{
-		// vertex-vertex collision, no clipping needed
-
-		b2Vec2 normal = b2Sub( closest2, closest1 );
-		if ( b2Dot( normal, normal ) > epsSqr )
-		{
-			normal = b2Normalize( normal );
-		}
-		else
-		{
-			normal = b2LeftPerp( u1 );
-		}
-
-		b2Vec2 c1 = b2MulAdd( closest1, capsuleA->radius, normal );
-		b2Vec2 c2 = b2MulAdd( closest1, -capsuleB->radius, normal );
-
-		int i1 = f1 == 0.0f ? 0 : 1;
-		int i2 = f2 == 0.0f ? 0 : 1;
-
-		manifold.normal = normal;
-		manifold.points[0].anchorA = b2Lerp( c1, c2, 0.5f );
-		manifold.points[0].separation = sqrtf(distanceSquared) - radius;
-		manifold.points[0].id = B2_MAKE_ID( i1, i2 );
-		manifold.pointCount = 1;
-	}
-	else
-	{
-		// can clip
+		// attempt to clip
+		// this may yield contact points with excessive separation
+		// in that case the algorithm falls back to single point collision
 
 		// find reference edge using SAT
 		b2Vec2 normalA;
@@ -381,7 +361,7 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 			float s1p = ss1 < ss2 ? ss1 : ss2;
 			float s1n = -ss1 < -ss2 ? -ss1 : -ss2;
 
-			if (s1p > s1n)
+			if ( s1p > s1n )
 			{
 				separationA = s1p;
 			}
@@ -401,7 +381,7 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 			float s1p = ss1 < ss2 ? ss1 : ss2;
 			float s1n = -ss1 < -ss2 ? -ss1 : -ss2;
 
-			if (s1p > s1n)
+			if ( s1p > s1n )
 			{
 				separationB = s1p;
 			}
@@ -412,7 +392,7 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 			}
 		}
 
-		if (separationA > separationB)
+		if ( separationA >= separationB )
 		{
 			manifold.normal = normalA;
 
@@ -420,49 +400,47 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 			b2Vec2 cq = q2;
 
 			// clip to p1
-			if (fp2 < 0.0f && fq2 > 0.0f)
+			if ( fp2 < 0.0f && fq2 > 0.0f )
 			{
 				cp = b2Lerp( p2, q2, ( 0.0f - fp2 ) / ( fq2 - fp2 ) );
 			}
-			else if (fq2 < 0.0f && fp2 > 0.0f)
+			else if ( fq2 < 0.0f && fp2 > 0.0f )
 			{
 				cq = b2Lerp( q2, p2, ( 0.0f - fq2 ) / ( fp2 - fq2 ) );
 			}
 
 			// clip to q1
-			if (fp2 > 1.0f && fq2 < 1.0f)
+			if ( fp2 > length1 && fq2 < length1 )
 			{
-				cp = b2Lerp( q2, p2, ( fp2 - 1.0f ) / ( fp2 - fq2 ) );
+				cp = b2Lerp( p2, q2, ( fp2 - length1 ) / ( fp2 - fq2 ) );
 			}
-			else if (fq2 > 1.0f && fp2 < 1.0f)
+			else if ( fq2 > length1 && fp2 < length1 )
 			{
-				cq = b2Lerp( p2, q2, ( fq2 - 1.0f ) / ( fq2 - fp2 ) );
+				cq = b2Lerp( q2, p2, ( fq2 - length1 ) / ( fq2 - fp2 ) );
 			}
 
 			float sp = b2Dot( b2Sub( cp, p1 ), normalA );
 			float sq = b2Dot( b2Sub( cq, p1 ), normalA );
 
+			if ( sp <= distance + b2_linearSlop || sq <= distance + b2_linearSlop )
 			{
-				b2ManifoldPoint* mp = manifold.points + 0;
-				mp->anchorA = cp;
+				b2ManifoldPoint* mp;
+				mp = manifold.points + 0;
+				mp->anchorA = b2MulAdd( cp, 0.5f * ( radiusA - radiusB - sp ), normalA );
 				mp->separation = sp - radius;
-				mp->id = B2_MAKE_ID(0, 0);
-			}
+				mp->id = B2_MAKE_ID( 0, 0 );
 
-			{
-				b2ManifoldPoint* mp = manifold.points + 1;
-				mp->anchorA = cq;
+				mp = manifold.points + 1;
+				mp->anchorA = b2MulAdd( cq, 0.5f * ( radiusA - radiusB - sq ), normalA );
 				mp->separation = sq - radius;
 				mp->id = B2_MAKE_ID( 0, 1 );
+				manifold.pointCount = 2;
 			}
-
-			manifold.pointCount = 2;
 		}
 		else
 		{
-			flip = true;
-
-			manifold.normal = normalB;
+			// normal always points from A to B
+			manifold.normal = b2Neg( normalB );
 
 			b2Vec2 cp = p1;
 			b2Vec2 cq = q1;
@@ -478,34 +456,58 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 			}
 
 			// clip to q2
-			if ( fp1 > 1.0f && fq1 < 1.0f )
+			if ( fp1 > length2 && fq1 < length2 )
 			{
-				cp = b2Lerp( q1, p1, ( fp1 - 1.0f ) / ( fp1 - fq1 ) );
+				cp = b2Lerp( p1, q1, ( fp1 - length2 ) / ( fp1 - fq1 ) );
 			}
-			else if ( fq1 > 1.0f && fp1 < 1.0f )
+			else if ( fq1 > length2 && fp1 < length2 )
 			{
-				cq = b2Lerp( p1, q1, ( fq1 - 1.0f ) / ( fq1 - fp1 ) );
+				cq = b2Lerp( q1, p1, ( fq1 - length2 ) / ( fq1 - fp1 ) );
 			}
 
 			float sp = b2Dot( b2Sub( cp, p2 ), normalB );
 			float sq = b2Dot( b2Sub( cq, p2 ), normalB );
 
+			if ( sp <= distance + b2_linearSlop || sq <= distance + b2_linearSlop )
 			{
-				b2ManifoldPoint* mp = manifold.points + 0;
-				mp->anchorA = cp;
+				b2ManifoldPoint* mp;
+				mp = manifold.points + 0;
+				mp->anchorA = b2MulAdd( cp, 0.5f * ( radiusB - radiusA - sp ), normalB );
 				mp->separation = sp - radius;
 				mp->id = B2_MAKE_ID( 0, 0 );
-			}
-
-			{
-				b2ManifoldPoint* mp = manifold.points + 1;
-				mp->anchorA = cq;
+				mp = manifold.points + 1;
+				mp->anchorA = b2MulAdd( cq, 0.5f * ( radiusB - radiusA - sq ), normalB );
 				mp->separation = sq - radius;
 				mp->id = B2_MAKE_ID( 1, 0 );
+				manifold.pointCount = 2;
 			}
-
-			manifold.pointCount = 2;
 		}
+	}
+
+	if (manifold.pointCount == 0)
+	{
+		// single point collision
+		b2Vec2 normal = b2Sub( closest2, closest1 );
+		if ( b2Dot( normal, normal ) > epsSqr )
+		{
+			normal = b2Normalize( normal );
+		}
+		else
+		{
+			normal = b2LeftPerp( u1 );
+		}
+
+		b2Vec2 c1 = b2MulAdd( closest1, radiusA, normal );
+		b2Vec2 c2 = b2MulAdd( closest2, -radiusB, normal );
+
+		int i1 = f1 == 0.0f ? 0 : 1;
+		int i2 = f2 == 0.0f ? 0 : 1;
+
+		manifold.normal = normal;
+		manifold.points[0].anchorA = b2Lerp( c1, c2, 0.5f );
+		manifold.points[0].separation = sqrtf( distanceSquared ) - radius;
+		manifold.points[0].id = B2_MAKE_ID( i1, i2 );
+		manifold.pointCount = 1;
 	}
 
 	// Convert manifold to world space
@@ -528,9 +530,8 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 
 b2Manifold b2CollideSegmentAndCapsule( const b2Segment* segmentA, b2Transform xfA, const b2Capsule* capsuleB, b2Transform xfB )
 {
-	b2Polygon polyA = b2MakeCapsule( segmentA->point1, segmentA->point2, 0.0f );
-	b2Polygon polyB = b2MakeCapsule( capsuleB->center1, capsuleB->center2, capsuleB->radius );
-	return b2CollidePolygons( &polyA, xfA, &polyB, xfB );
+	b2Capsule capsuleA = { segmentA->point1, segmentA->point2, 0.0f };
+	return b2CollideCapsules( &capsuleA, xfA, capsuleB, xfB );
 }
 
 b2Manifold b2CollidePolygonAndCapsule( const b2Polygon* polygonA, b2Transform xfA, const b2Capsule* capsuleB, b2Transform xfB )
