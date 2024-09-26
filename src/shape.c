@@ -440,6 +440,35 @@ void b2DestroyChain( b2ChainId chainId )
 	b2ValidateSolverSets( world );
 }
 
+b2WorldId b2Chain_GetWorld(b2ChainId chainId)
+{
+	b2World* world = b2GetWorld( chainId.world0 );
+	return ( b2WorldId ){ chainId.world0 + 1, world->revision };
+}
+
+int b2Chain_GetSegmentCount(b2ChainId chainId)
+{
+	b2World* world = b2GetWorldLocked( chainId.world0 );
+	b2ChainShape* chain = b2GetChainShape( world, chainId );
+	return chain->count;
+}
+
+int b2Chain_GetSegments(b2ChainId chainId, b2ShapeId* segmentArray, int capacity)
+{
+	b2World* world = b2GetWorldLocked( chainId.world0 );
+	b2ChainShape* chain = b2GetChainShape( world, chainId );
+
+	int count = b2MinInt(chain->count, capacity);
+	for ( int i = 0; i < count; ++i )
+	{
+		int shapeId = chain->shapeIndices[i];
+		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+		segmentArray[i] = ( b2ShapeId ){ shapeId + 1, chainId.world0, shape->revision };
+	}
+
+	return count;
+}
+
 b2AABB b2ComputeShapeAABB( const b2Shape* shape, b2Transform xf )
 {
 	switch ( shape->type )
@@ -724,6 +753,12 @@ b2BodyId b2Shape_GetBody( b2ShapeId shapeId )
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
 	return b2MakeBodyId( world, shape->bodyId );
+}
+
+b2WorldId b2Shape_GetWorld(b2ShapeId shapeId)
+{
+	b2World* world = b2GetWorld( shapeId.world0 );
+	return ( b2WorldId ){ shapeId.world0 + 1, world->revision };
 }
 
 void b2Shape_SetUserData( b2ShapeId shapeId, void* userData )

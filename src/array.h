@@ -5,7 +5,7 @@
 
 #include "core.h"
 
-// Macro based dynamic arrays
+// Macro generated functions for dynamic arrays
 // Pros
 // - type safe
 // - array data debuggable (visible count and capacity)
@@ -46,10 +46,10 @@
 // Inline array functions that need the type T to be defined
 #define B2_ARRAY_INLINE( T, PREFIX )                                                                                             \
 	/* Resize */                                                                                                                 \
-	static inline void PREFIX##Array_Resize( PREFIX##Array* a, int count )                                                         \
+	static inline void PREFIX##Array_Resize( PREFIX##Array* a, int count )                                                       \
 	{                                                                                                                            \
 		PREFIX##Array_Reserve( a, count );                                                                                       \
-		a->count = count;                                                                                                         \
+		a->count = count;                                                                                                        \
 	}                                                                                                                            \
 	/* Get */                                                                                                                    \
 	static inline T* PREFIX##Array_Get( PREFIX##Array* a, int index )                                                            \
@@ -122,10 +122,12 @@
 	/* Create */                                                                                                                 \
 	PREFIX##Array PREFIX##Array_Create( int capacity )                                                                           \
 	{                                                                                                                            \
-		PREFIX##Array a;                                                                                                         \
-		a.data = b2Alloc( capacity * sizeof( T ) );                                                                              \
-		a.count = 0;                                                                                                             \
-		a.capacity = capacity;                                                                                                   \
+		PREFIX##Array a = { 0 };                                                                                                 \
+		if ( capacity > 0 )                                                                                                      \
+		{                                                                                                                        \
+			a.data = b2Alloc( capacity * sizeof( T ) );                                                                          \
+			a.capacity = capacity;                                                                                               \
+		}                                                                                                                        \
 		return a;                                                                                                                \
 	}                                                                                                                            \
 	/* Reserve */                                                                                                                \

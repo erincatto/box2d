@@ -2232,6 +2232,9 @@ public:
 		m_smgcapCache2 = b2_emptyDistanceCache;
 
 		m_transform = b2Transform_identity;
+		m_transform.p.x = 1.0f;
+		m_transform.p.y = 0.0f;
+		//m_transform.q = b2MakeRot( 0.5f * b2_pi );
 		m_angle = 0.0f;
 		m_round = 0.1f;
 
@@ -2371,7 +2374,7 @@ public:
 		b2Vec2 increment = { 4.0f, 0.0f };
 
 		b2HexColor color1 = b2_colorAquamarine;
-		b2HexColor color2 = b2_colorMagenta;
+		b2HexColor color2 = b2_colorPaleGoldenrod;
 
 		if ( m_enableCaching == false )
 		{
@@ -2462,20 +2465,21 @@ public:
 
 		// capsule-capsule
 		{
-			b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0 }, 0.25f };
+			b2Capsule capsule1 = { { -0.5f, 0.0f }, { 0.5f, 0.0 }, 0.25f };
+			b2Capsule capsule2 = { { 0.25f, 0.0f }, { 1.0f, 0.0 }, 0.1f };
 
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollideCapsules( &capsule, transform1, &capsule, transform2 );
+			b2Manifold m = b2CollideCapsules( &capsule1, transform1, &capsule2, transform2 );
 
-			b2Vec2 v1 = b2TransformPoint( transform1, capsule.center1 );
-			b2Vec2 v2 = b2TransformPoint( transform1, capsule.center2 );
-			g_draw.DrawSolidCapsule( v1, v2, capsule.radius, color1 );
+			b2Vec2 v1 = b2TransformPoint( transform1, capsule1.center1 );
+			b2Vec2 v2 = b2TransformPoint( transform1, capsule1.center2 );
+			g_draw.DrawSolidCapsule( v1, v2, capsule1.radius, color1 );
 
-			v1 = b2TransformPoint( transform2, capsule.center1 );
-			v2 = b2TransformPoint( transform2, capsule.center2 );
-			g_draw.DrawSolidCapsule( v1, v2, capsule.radius, color2 );
+			v1 = b2TransformPoint( transform2, capsule2.center1 );
+			v2 = b2TransformPoint( transform2, capsule2.center2 );
+			g_draw.DrawSolidCapsule( v1, v2, capsule2.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 

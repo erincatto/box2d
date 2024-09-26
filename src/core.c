@@ -82,6 +82,11 @@ void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn )
 
 void* b2Alloc( int size )
 {
+	if (size == 0)
+	{
+		return NULL;
+	}
+
 	// This could cause some sharing issues, however Box2D rarely calls b2Alloc.
 	atomic_fetch_add_explicit( &b2_byteCount, size, memory_order_relaxed );
 

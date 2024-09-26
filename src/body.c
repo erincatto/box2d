@@ -744,6 +744,11 @@ void b2Body_SetLinearVelocity( b2BodyId bodyId, b2Vec2 linearVelocity )
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
+	if ( body->type == b2_staticBody )
+	{
+		return;
+	}
+
 	if ( b2LengthSquared( linearVelocity ) > 0.0f )
 	{
 		b2WakeBody( world, body );
@@ -762,6 +767,11 @@ void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
+
+	if (body->type == b2_staticBody || body->fixedRotation)
+	{
+		return;
+	}
 
 	if ( angularVelocity != 0.0f )
 	{

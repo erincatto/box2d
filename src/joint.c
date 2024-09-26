@@ -789,6 +789,12 @@ b2BodyId b2Joint_GetBodyB( b2JointId jointId )
 	return b2MakeBodyId( world, joint->edges[1].bodyId );
 }
 
+b2WorldId b2Joint_GetWorld( b2JointId jointId )
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	return ( b2WorldId ){ jointId.world0 + 1, world->revision };
+}
+
 b2Vec2 b2Joint_GetLocalAnchorA( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
