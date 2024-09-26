@@ -785,7 +785,7 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { 0.0f, 3.0f };
-			bodyDef.angularVelocity = 0.2f;
+			bodyDef.angularVelocity = 0.5f;
 			bodyDef.rotation = b2MakeRot( 0.25f * b2_pi );
 
 			m_badBodyId = b2CreateBody( m_worldId, &bodyDef );
