@@ -928,6 +928,9 @@ typedef struct b2ContactBeginTouchEvent
 
 	/// Id of the second shape
 	b2ShapeId shapeIdB;
+
+	/// The initial contact manifold
+	b2Manifold manifold;
 } b2ContactBeginTouchEvent;
 
 /// An end touch event is generated when two shapes stop touching.

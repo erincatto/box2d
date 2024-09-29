@@ -488,10 +488,11 @@ typedef struct b2ManifoldPoint
 	b2Vec2 point;
 
 	/// Location of the contact point relative to bodyA's origin in world space
-	///	@note When used internally to the Box2D solver, these are relative to the center of mass.
+	///	@note When used internally to the Box2D solver, this is relative to the center of mass.
 	b2Vec2 anchorA;
 
 	/// Location of the contact point relative to bodyB's origin in world space
+	///	@note When used internally to the Box2D solver, this is relative to the center of mass.
 	b2Vec2 anchorB;
 
 	/// The separation of the contact point, negative if penetrating
@@ -504,7 +505,7 @@ typedef struct b2ManifoldPoint
 	float tangentImpulse;
 
 	/// The maximum normal impulse applied during sub-stepping
-	///	todo not sure this is needed
+	///	This could be a bool to indicate the point is confirmed (may be a speculative point)
 	float maxNormalImpulse;
 
 	/// Relative normal velocity pre-solve. Used for hit events. If the normal impulse is

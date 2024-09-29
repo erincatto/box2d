@@ -587,7 +587,7 @@ static void b2Collide( b2StepContext* context )
 					// Contact is solid
 					if ( flags & b2_contactEnableContactEvents )
 					{
-						b2ContactBeginTouchEvent event = { shapeIdA, shapeIdB };
+						b2ContactBeginTouchEvent event = { shapeIdA, shapeIdB, contactSim->manifold };
 						b2ContactBeginTouchEventArray_Push( &world->contactBeginEvents, event );
 					}
 
@@ -1670,7 +1670,7 @@ float b2World_GetHitEventThreshold( b2WorldId worldId )
 	return world->hitEventThreshold;
 }
 
-void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushOut )
+void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushVelocity )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
@@ -1681,7 +1681,20 @@ void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRati
 
 	world->contactHertz = b2ClampFloat( hertz, 0.0f, FLT_MAX );
 	world->contactDampingRatio = b2ClampFloat( dampingRatio, 0.0f, FLT_MAX );
-	world->contactPushoutVelocity = b2ClampFloat( pushOut, 0.0f, FLT_MAX );
+	world->contactPushoutVelocity = b2ClampFloat( pushVelocity, 0.0f, FLT_MAX );
+}
+
+void b2World_SetJointTuning(b2WorldId worldId, float hertz, float dampingRatio)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return;
+	}
+
+	world->jointHertz = b2ClampFloat( hertz, 0.0f, FLT_MAX );
+	world->jointDampingRatio = b2ClampFloat( dampingRatio, 0.0f, FLT_MAX );
 }
 
 b2Profile b2World_GetProfile( b2WorldId worldId )
