@@ -676,7 +676,7 @@ public:
 	bool m_useChain;
 };
 
-static int sampleGhostCollision = RegisterSample( "Continuous", "Ghost Collision", GhostBumps::Create );
+static int sampleGhostCollision = RegisterSample( "Continuous", "Ghost Bumps", GhostBumps::Create );
 
 // Speculative collision failure case suggested by Dirk Gregorius. This uses
 // a simple fallback scheme to prevent tunneling.
