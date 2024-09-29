@@ -139,7 +139,7 @@ extern float b2_lengthUnitsPerMeter;
 #define b2_maxWorkers 64
 
 // Maximum number of colors in the constraint graph. Constraints that cannot
-//	find a color are added to the overflow set which are solved single-threaded.
+// find a color are added to the overflow set which are solved single-threaded.
 #define b2_graphColorCount 12
 
 // A small length used as a collision and constraint tolerance. Usually it is

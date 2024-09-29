@@ -11,14 +11,6 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
-// This tests continuous collision robustness and also demonstrates the speed limits imposed
-// by b2_maxTranslation and b2_maxRotation.
-struct HitEvent
-{
-	b2Vec2 point;
-	float speed;
-	int stepIndex;
-};
 
 class BounceHouse : public Sample
 {
@@ -28,6 +20,13 @@ public:
 		e_circleShape = 0,
 		e_capsuleShape,
 		e_boxShape
+	};
+
+	struct HitEvent
+	{
+		b2Vec2 point;
+		float speed;
+		int stepIndex;
 	};
 
 	explicit BounceHouse( Settings& settings )
@@ -389,64 +388,8 @@ public:
 
 static int sampleSkinnyBox = RegisterSample( "Continuous", "Skinny Box", SkinnyBox::Create );
 
-class SpeculativeBug : public Sample
-{
-public:
-	explicit SpeculativeBug( Settings& settings )
-		: Sample( settings )
-	{
-		if ( settings.restart == false )
-		{
-			g_camera.m_center = { 1.0f, 5.0f };
-			g_camera.m_zoom = 25.0f * 0.25f;
-		}
-
-		{
-			b2BodyDef bodyDef = b2DefaultBodyDef();
-			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
-
-			b2Segment segment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2CreateSegmentShape( groundId, &shapeDef, &segment );
-
-			shapeDef.friction = 0.0f;
-			b2Polygon box = b2MakeOffsetBox( 0.05f, 1.0f, { 0.0f, 1.0f }, b2Rot_identity );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
-		}
-
-		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.type = b2_dynamicBody;
-		for (int i = 0; i < 2; ++i)
-		{
-			if (i == 0)
-			{
-				bodyDef.position = { -0.8f, 0.25f };
-				bodyDef.isAwake = false;
-			}
-			else
-			{
-				bodyDef.position = { 0.8f, 2.0f };
-				bodyDef.isAwake = true;
-			}
-
-			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
-
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0f }, 0.25f };
-			b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
-		}
-	}
-
-	static Sample* Create( Settings& settings )
-	{
-		return new SpeculativeBug( settings );
-	}
-};
-
-static int sampleSpeculativeBug = RegisterSample( "Continuous", "Speculative Bug", SpeculativeBug::Create );
-
-// This sample shows ghost collisions
-class GhostCollision : public Sample
+// This sample shows ghost bumps
+class GhostBumps : public Sample
 {
 public:
 	enum ShapeType
@@ -456,7 +399,7 @@ public:
 		e_boxShape
 	};
 
-	explicit GhostCollision( Settings& settings )
+	explicit GhostBumps( Settings& settings )
 		: Sample( settings )
 	{
 		if ( settings.restart == false )
@@ -671,7 +614,7 @@ public:
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
 
-		ImGui::Begin( "Ghost Collision", nullptr, ImGuiWindowFlags_NoResize );
+		ImGui::Begin( "Ghost Bumps", nullptr, ImGuiWindowFlags_NoResize );
 		ImGui::PushItemWidth( 100.0f );
 
 		if ( ImGui::Checkbox( "Chain", &m_useChain ) )
@@ -720,7 +663,7 @@ public:
 
 	static Sample* Create( Settings& settings )
 	{
-		return new GhostCollision( settings );
+		return new GhostBumps( settings );
 	}
 
 	b2BodyId m_groundId;
@@ -733,7 +676,7 @@ public:
 	bool m_useChain;
 };
 
-static int sampleGhostCollision = RegisterSample( "Continuous", "Ghost Collision", GhostCollision::Create );
+static int sampleGhostCollision = RegisterSample( "Continuous", "Ghost Collision", GhostBumps::Create );
 
 // Speculative collision failure case suggested by Dirk Gregorius. This uses
 // a simple fallback scheme to prevent tunneling.
@@ -785,6 +728,55 @@ public:
 };
 
 static int sampleSpeculativeFallback = RegisterSample( "Continuous", "Speculative Fallback", SpeculativeFallback::Create );
+
+// This shows that while Box2D uses speculative collision, it does not lead to speculative ghost collisions at small distances
+class SpeculativeGhost : public Sample
+{
+public:
+	explicit SpeculativeGhost( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 1.75f };
+			g_camera.m_zoom = 2.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Segment segment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
+			b2Polygon box = b2MakeOffsetBox( 1.0f, 0.1f, { 0.0f, 0.9f }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+
+			// The speculative distance is 0.02 meters, so this avoid it
+			bodyDef.position = { 0.015f, 2.515f };
+			bodyDef.linearVelocity = { 0.1f * 1.25f * settings.hertz, -0.1f * 1.25f * settings.hertz };
+			bodyDef.gravityScale = 0.0f;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Polygon box = b2MakeSquare( 0.25f );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		}
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new SpeculativeGhost( settings );
+	}
+};
+
+static int sampleSpeculativeGhost = RegisterSample( "Continuous", "Speculative Ghost", SpeculativeGhost::Create );
 
 // This shows a fast moving body that uses continuous collision versus static and dynamic bodies.
 // This is achieved by setting the ball body as a *bullet*.

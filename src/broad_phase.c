@@ -360,8 +360,11 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	int minRange = 64;
 	void* userPairTask = world->enqueueTaskFcn( &b2FindPairsTask, moveCount, minRange, world, world->userTaskContext );
-	world->finishTaskFcn( userPairTask, world->userTaskContext );
-	world->taskCount += 1;
+	if (userPairTask != NULL)
+	{
+		world->finishTaskFcn( userPairTask, world->userTaskContext );
+		world->taskCount += 1;
+	}
 
 	b2TracyCZoneNC( create_contacts, "Create Contacts", b2_colorGold, true );
 

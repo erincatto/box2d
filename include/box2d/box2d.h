@@ -156,6 +156,13 @@ B2_API void b2World_Explode( b2WorldId worldId, b2Vec2 position, float radius, f
 ///	@note Advanced feature
 B2_API void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushVelocity );
 
+/// Adjust joint tuning parameters
+///	@param worldId The world id
+/// @param hertz The contact stiffness (cycles per second)
+/// @param dampingRatio The contact bounciness with 1 being critical damping (non-dimensional)
+///	@note Advanced feature
+B2_API void b2World_SetJointTuning( b2WorldId worldId, float hertz, float dampingRatio );
+
 /// Enable/disable constraint warm starting. Advanced feature for testing. Disabling
 ///	sleeping greatly reduces stability and provides no performance gain.
 B2_API void b2World_EnableWarmStarting( b2WorldId worldId, bool flag );

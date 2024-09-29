@@ -383,10 +383,16 @@ public:
 
 static int sampleVerticalStack = RegisterSample( "Stacking", "Vertical Stack", VerticalStack::Create );
 
-// This shows how to handle high gravity and small shapes using a small time step
+// A simple circle stack that also shows how to collect hit events
 class CircleStack : public Sample
 {
 public:
+
+	struct Event
+	{
+		int indexA, indexB;
+	};
+
 	explicit CircleStack( Settings& settings )
 		: Sample( settings )
 	{
@@ -396,11 +402,16 @@ public:
 			g_camera.m_zoom = 6.0f;
 		}
 
+		int shapeIndex = 0;
+
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.userData = reinterpret_cast<void*>( intptr_t( shapeIndex ) );
+			shapeIndex += 1;
+
 			b2Segment segment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
@@ -409,9 +420,11 @@ public:
 		b2World_SetContactTuning( m_worldId, 0.25f * 360.0f, 10.0f, 3.0f );
 
 		b2Circle circle = {};
-		circle.radius = 0.5f;
+		circle.radius = 0.25f;
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.enableHitEvents = true;
+
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 
@@ -422,9 +435,39 @@ public:
 			bodyDef.position.y = y;
 
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			shapeDef.userData = reinterpret_cast<void*>( intptr_t( shapeIndex ) );
+			shapeIndex += 1;
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 
-			y += 1.0f;
+			y += 2.0f;
+		}
+	}
+
+	void Step( Settings& settings ) override
+	{
+		Sample::Step( settings );
+
+		b2ContactEvents events = b2World_GetContactEvents( m_worldId );
+		for ( int i = 0; i < events.hitCount; ++i )
+		{
+			b2ContactHitEvent* event = events.hitEvents + i;
+
+			void* userDataA = b2Shape_GetUserData( event->shapeIdA );
+			void* userDataB = b2Shape_GetUserData( event->shapeIdB );
+			int indexA = static_cast<int>( reinterpret_cast<intptr_t>( userDataA ) );
+			int indexB = static_cast<int>( reinterpret_cast<intptr_t>( userDataB ) );
+
+			g_draw.DrawPoint( event->point, 10.0f, b2_colorWhite );
+
+			m_events.push_back( { indexA, indexB } );
+		}
+
+		int eventCount = m_events.size();
+		for (int i = 0; i < eventCount; ++i)
+		{
+			g_draw.DrawString( 5, m_textLine, "%d, %d", m_events[i].indexA, m_events[i].indexB );
+			m_textLine += m_textIncrement;
 		}
 	}
 
@@ -432,6 +475,8 @@ public:
 	{
 		return new CircleStack( settings );
 	}
+
+	std::vector<Event> m_events;
 };
 
 static int sampleCircleStack = RegisterSample( "Stacking", "Circle Stack", CircleStack::Create );
