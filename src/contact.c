@@ -40,18 +40,29 @@ B2_ARRAY_SOURCE( b2ContactSim, b2ContactSim );
 // - As long as contacts are created in deterministic order, island link order is deterministic.
 // - This keeps the order of contacts in islands deterministic
 
-// Friction mixing law. The idea is to allow either shape to drive the friction to zero.
-// For example, anything slides on ice.
-static inline float b2MixFriction( float friction1, float friction2 )
+static inline float b2MixFloats( float value1, float value2, b2MixingRule mixingRule )
 {
-	return sqrtf( friction1 * friction2 );
-}
+	switch (mixingRule)
+	{
+		case b2_mixAverage:
+			return 0.5f * ( value1 + value2 );
 
-// Restitution mixing law. The idea is allow for anything to bounce off an inelastic surface.
-// For example, a superball bounces on anything.
-static inline float b2MixRestitution( float restitution1, float restitution2 )
-{
-	return restitution1 > restitution2 ? restitution1 : restitution2;
+		case b2_mixGeometricMean:
+			return sqrtf( value1 * value2 );
+
+		case b2_mixMultiply:
+			return value1 * value2;
+			
+		case b2_mixMinimum:
+			return value1 < value2 ? value1 : value2;
+				
+		case b2_mixMaximum:
+			return value1 > value2 ? value1 : value2;
+
+		default:
+			B2_ASSERT( false );
+			return 0.0f;
+	}
 }
 
 // todo make relative for all
@@ -323,8 +334,8 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contactSim->shapeIdB = shapeIdB;
 	contactSim->cache = b2_emptyDistanceCache;
 	contactSim->manifold = ( b2Manifold ){ 0 };
-	contactSim->friction = b2MixFriction( shapeA->friction, shapeB->friction );
-	contactSim->restitution = b2MixRestitution( shapeA->restitution, shapeB->restitution );
+	contactSim->friction = b2MixFloats( shapeA->friction, shapeB->friction, world->frictionMixingRule );
+	contactSim->restitution = b2MixFloats( shapeA->restitution, shapeB->restitution, world->restitutionMixingRule );
 	contactSim->tangentSpeed = 0.0f;
 	contactSim->simFlags = 0;
 

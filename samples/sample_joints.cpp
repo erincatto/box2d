@@ -223,8 +223,8 @@ static int sampleDistanceJoint = RegisterSample( "Joints", "Distance Joint", Dis
 /// This test shows how to use a motor joint. A motor joint
 /// can be used to animate a dynamic body. With finite motor forces
 /// the body can be blocked by collision with other bodies.
-///	By setting the correction factor to zero, the motor joint acts
-///	like top-down dry friction.
+/// By setting the correction factor to zero, the motor joint acts
+/// like top-down dry friction.
 class MotorJoint : public Sample
 {
 public:

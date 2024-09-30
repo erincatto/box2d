@@ -115,7 +115,7 @@
 #endif
 
 /// Tracy profiler instrumentation
-///	https://github.com/wolfpld/tracy
+/// https://github.com/wolfpld/tracy
 #ifdef BOX2D_PROFILE
 	#include <tracy/TracyC.h>
 	#define b2TracyCZoneC( ctx, color, active ) TracyCZoneC( ctx, color, active )
