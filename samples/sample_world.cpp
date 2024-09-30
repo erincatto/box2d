@@ -193,7 +193,14 @@ public:
 		if ( ( m_stepCount & 0x1 ) == 0x1 && m_explode )
 		{
 			m_explosionPosition.x = ( 0.5f + m_cycleIndex ) * m_period - span;
-			b2World_Explode( m_worldId, m_explosionPosition, radius, 1.0f );
+
+			b2ExplosionDef def = b2DefaultExplosionDef();
+			def.position = m_explosionPosition;
+			def.radius = radius;
+			def.falloff = 0.1f;
+			def.impulsePerLength = 1.0f;
+			b2World_Explode( m_worldId, &def );
+
 			m_cycleIndex = ( m_cycleIndex + 1 ) % m_cycleCount;
 		}
 

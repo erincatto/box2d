@@ -143,10 +143,8 @@ B2_API b2Vec2 b2World_GetGravity( b2WorldId worldId );
 
 /// Apply a radial explosion
 ///	@param worldId The world id
-///	@param position The center of the explosion
-///	@param radius The radius of the explosion
-///	@param impulse The impulse of the explosion, typically in kg * m / s or N * s.
-B2_API void b2World_Explode( b2WorldId worldId, b2Vec2 position, float radius, float impulse );
+///	@param explosionDef The explosion definition
+B2_API void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionDef );
 
 /// Adjust contact tuning parameters
 ///	@param worldId The world id
@@ -1005,6 +1003,12 @@ B2_API float b2RevoluteJoint_GetMaxMotorTorque( b2JointId jointId );
 /// Create a weld joint
 ///	@see b2WeldJointDef for details
 B2_API b2JointId b2CreateWeldJoint( b2WorldId worldId, const b2WeldJointDef* def );
+
+/// Get the weld joint reference angle in radians
+B2_API float b2WeldJoint_GetReferenceAngle( b2JointId jointId );
+
+/// Set the weld joint reference angle in radians, must be in [-pi,pi].
+B2_API void b2WeldJoint_SetReferenceAngle( b2JointId jointId, float angleInRadians );
 
 /// Set the weld joint linear stiffness in Hertz. 0 is rigid.
 B2_API void b2WeldJoint_SetLinearHertz( b2JointId jointId, float hertz );

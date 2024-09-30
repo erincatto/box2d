@@ -990,7 +990,7 @@ public:
 
 		m_explosionPosition = { 0.0f, -5.0f };
 		m_explosionRadius = 10.0f;
-		m_explosionMagnitude = 6.0f;
+		m_explosionMagnitude = 10.0f;
 	}
 
 	void CreateBodies()
@@ -1046,10 +1046,15 @@ public:
 
 		if ( ImGui::Button( "Explode" ) )
 		{
-			b2World_Explode( m_worldId, m_explosionPosition, m_explosionRadius, m_explosionMagnitude );
+			b2ExplosionDef def = b2DefaultExplosionDef();
+			def.position = m_explosionPosition;
+			def.radius = m_explosionRadius;
+			def.falloff = 0.1f;
+			def.impulsePerLength = m_explosionMagnitude;
+			b2World_Explode( m_worldId, &def );
 		}
 
-		ImGui::SliderFloat( "Magnitude", &m_explosionMagnitude, -8.0f, 8.0f, "%.1f" );
+		ImGui::SliderFloat( "Magnitude", &m_explosionMagnitude, -20.0f, 20.0f, "%.1f" );
 
 		ImGui::End();
 	}

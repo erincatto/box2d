@@ -254,6 +254,7 @@ void b2PreparePrismaticJoint( b2JointSim* base, b2StepContext* context )
 	joint->axisA = b2RotateVector( qA, joint->localAxisA );
 	joint->deltaCenter = b2Sub( bodySimB->center, bodySimA->center );
 	joint->deltaAngle = b2RelativeAngle( qB, qA ) - joint->referenceAngle;
+	joint->deltaAngle = b2UnwindAngle( joint->deltaAngle );
 
 	b2Vec2 rA = joint->anchorA;
 	b2Vec2 rB = joint->anchorB;

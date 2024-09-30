@@ -11,6 +11,19 @@
 // needed for dll export
 #include "box2d/box2d.h"
 
+float b2WeldJoint_GetReferenceAngle( b2JointId jointId )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	return joint->weldJoint.referenceAngle;
+}
+
+void b2WeldJoint_SetReferenceAngle( b2JointId jointId, float angleInRadians )
+{
+	B2_ASSERT( b2IsValid( angleInRadians ) );
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	joint->weldJoint.referenceAngle = b2ClampFloat(angleInRadians, -b2_pi, b2_pi);
+}
+
 void b2WeldJoint_SetLinearHertz( b2JointId jointId, float hertz )
 {
 	B2_ASSERT( b2IsValid( hertz ) && hertz >= 0.0f );
@@ -132,6 +145,7 @@ void b2PrepareWeldJoint( b2JointSim* base, b2StepContext* context )
 	joint->anchorB = b2RotateVector( qB, b2Sub( base->localOriginAnchorB, bodySimB->localCenter ) );
 	joint->deltaCenter = b2Sub( bodySimB->center, bodySimA->center );
 	joint->deltaAngle = b2RelativeAngle( qB, qA ) - joint->referenceAngle;
+	joint->deltaAngle = b2UnwindAngle( joint->deltaAngle );
 
 	float ka = iA + iB;
 	joint->axialMass = ka > 0.0f ? 1.0f / ka : 0.0f;
