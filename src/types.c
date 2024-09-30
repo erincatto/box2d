@@ -42,13 +42,13 @@ b2BodyDef b2DefaultBodyDef( void )
 
 b2Filter b2DefaultFilter( void )
 {
-	b2Filter filter = { 0x0001ULL, UINT64_MAX, 0 };
+	b2Filter filter = { B2_DEFAULT_CATEGORY_BITS, B2_DEFAULT_MASK_BITS, 0 };
 	return filter;
 }
 
 b2QueryFilter b2DefaultQueryFilter( void )
 {
-	b2QueryFilter filter = { 0x0001ULL, UINT64_MAX };
+	b2QueryFilter filter = { B2_DEFAULT_CATEGORY_BITS, B2_DEFAULT_MASK_BITS };
 	return filter;
 }
 

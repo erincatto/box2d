@@ -83,6 +83,13 @@ b2WheelJointDef b2DefaultWheelJointDef( void )
 	return def;
 }
 
+b2ExplosionDef b2DefaultExplosionDef(void)
+{
+	b2ExplosionDef def = { 0 };
+	def.maskBits = B2_DEFAULT_MASK_BITS;
+	return def;
+}
+
 static b2Joint* b2GetJointFullId( b2World* world, b2JointId jointId )
 {
 	int id = jointId.index1 - 1;

@@ -320,6 +320,7 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 	shapeDef.restitution = def->restitution;
 	shapeDef.friction = def->friction;
 	shapeDef.filter = def->filter;
+	shapeDef.customColor = def->customColor;
 	shapeDef.enableContactEvents = false;
 	shapeDef.enableHitEvents = false;
 	shapeDef.enableSensorEvents = false;
@@ -541,6 +542,58 @@ float b2GetShapePerimeter( const b2Shape* shape )
 			return 2.0f * b2Length( b2Sub( shape->segment.point1, shape->segment.point2 ) );
 		case b2_chainSegmentShape:
 			return 2.0f * b2Length( b2Sub( shape->chainSegment.segment.point1, shape->chainSegment.segment.point2 ) );
+		default:
+			return 0.0f;
+	}
+}
+
+// This projects the the shape perimeter onto an infinite line
+float b2GetShapeProjectedPerimeter( const b2Shape* shape, b2Vec2 line )
+{
+	switch ( shape->type )
+	{
+		case b2_capsuleShape:
+		{
+			b2Vec2 axis = b2Sub( shape->capsule.center2, shape->capsule.center1 );
+			float projectedLength = b2AbsFloat( b2Dot( axis, line ) );
+			return projectedLength + 2.0f * shape->capsule.radius;
+		}
+
+		case b2_circleShape:
+			return 2.0f * shape->circle.radius;
+
+		case b2_polygonShape:
+		{
+			const b2Vec2* points = shape->polygon.vertices;
+			int count = shape->polygon.count;
+			B2_ASSERT( count > 0 );
+			float value = b2Dot( points[0], line );
+			float lower = value;
+			float upper = value;
+			for ( int i = 1; i < count; ++i )
+			{
+				value = b2Dot( points[i], line );
+				lower = b2MinFloat( lower, value );
+				upper = b2MaxFloat( upper, value );
+			}
+
+			return (upper - lower) + 2.0f * shape->polygon.radius;
+		}
+
+		case b2_segmentShape:
+		{
+			float value1 = b2Dot( shape->segment.point1, line );
+			float value2 = b2Dot( shape->segment.point2, line );
+			return b2AbsFloat( value2 - value1 );
+		}
+
+		case b2_chainSegmentShape:
+		{
+			float value1 = b2Dot( shape->chainSegment.segment.point1, line );
+			float value2 = b2Dot( shape->chainSegment.segment.point2, line );
+			return b2AbsFloat( value2 - value1 );
+		}
+
 		default:
 			return 0.0f;
 	}

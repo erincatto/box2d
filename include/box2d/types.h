@@ -11,7 +11,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/// Task interface
+#define B2_DEFAULT_CATEGORY_BITS 0x0001ULL
+#define B2_DEFAULT_MASK_BITS UINT64_MAX
+
+	/// Task interface
 /// This is prototype for a Box2D task. Your task system is expected to invoke the Box2D task with these arguments.
 /// The task spans a range of the parallel-for: [startIndex, endIndex)
 /// The worker index must correctly identify each worker in the user thread pool, expected in [0, workerCount).
@@ -390,6 +393,9 @@ typedef struct b2ChainDef
 
 	/// Contact filtering data.
 	b2Filter filter;
+
+	/// Custom debug draw color.
+	uint32_t customColor;
 
 	/// Indicates a closed chain formed by connecting the first and last points
 	bool isLoop;
@@ -864,6 +870,33 @@ typedef struct b2WheelJointDef
 /// Use this to initialize your joint definition
 /// @ingroup wheel_joint
 B2_API b2WheelJointDef b2DefaultWheelJointDef( void );
+
+/// The explosion definition is used to configure options for explosions. Explosions
+///	consider shape geometry when computing the impulse.
+///	@ingroup world
+typedef struct b2ExplosionDef
+{
+	/// Mask bits to filter shapes
+	uint64_t maskBits;
+
+	/// The center of the explosion in world space
+	b2Vec2 position;
+
+	/// The radius of the explosion
+	float radius;
+
+	/// The falloff distance beyond the radius. Impulse is reduced to zero at this distance.
+	float falloff;
+
+	/// Impulse per unit length. This applies an impulse according to the shape perimeter that
+	///	is facing the explosion. Explosions only apply to circles, capsules, and polygons. This
+	///	may be negative for implosions.
+	float impulsePerLength;
+} b2ExplosionDef;
+
+/// Use this to initialize your explosion definition
+///	@ingroup world
+B2_API b2ExplosionDef b2DefaultExplosionDef( void );
 
 /**
  * @defgroup events Events
