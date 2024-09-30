@@ -26,7 +26,7 @@ typedef struct b2Hull b2Hull;
  */
 
 /// The maximum number of vertices on a convex polygon. Changing this affects performance even if you
-///	don't use more vertices.
+/// don't use more vertices.
 #define b2_maxPolygonVertices 8
 
 /// Low level ray-cast input data
@@ -43,8 +43,8 @@ typedef struct b2RayCastInput
 } b2RayCastInput;
 
 /// Low level shape cast input in generic form. This allows casting an arbitrary point
-///	cloud wrap with a radius. For example, a circle is a single point with a non-zero radius.
-///	A capsule is two points with a non-zero radius. A box is four points with a zero radius.
+/// cloud wrap with a radius. For example, a circle is a single point with a non-zero radius.
+/// A capsule is two points with a non-zero radius. A box is four points with a zero radius.
 typedef struct b2ShapeCastInput
 {
 	/// A point cloud to cast
@@ -106,7 +106,7 @@ typedef struct b2Circle
 } b2Circle;
 
 /// A solid capsule can be viewed as two semicircles connected
-///	by a rectangle.
+/// by a rectangle.
 typedef struct b2Capsule
 {
 	/// Local center of the first semicircle
@@ -123,8 +123,8 @@ typedef struct b2Capsule
 /// the left of each edge.
 /// Polygons have a maximum number of vertices equal to b2_maxPolygonVertices.
 /// In most cases you should not need many vertices for a convex polygon.
-///	@warning DO NOT fill this out manually, instead use a helper function like
-///	b2MakePolygon or b2MakeBox.
+/// @warning DO NOT fill this out manually, instead use a helper function like
+/// b2MakePolygon or b2MakeBox.
 typedef struct b2Polygon
 {
 	/// The polygon vertices
@@ -263,7 +263,7 @@ B2_API b2CastOutput b2ShapeCastSegment( const b2ShapeCastInput* input, const b2S
 B2_API b2CastOutput b2ShapeCastPolygon( const b2ShapeCastInput* input, const b2Polygon* shape );
 
 /// A convex hull. Used to create convex polygons.
-///	@warning Do not modify these values directly, instead use b2ComputeHull()
+/// @warning Do not modify these values directly, instead use b2ComputeHull()
 typedef struct b2Hull
 {
 	/// The final points of the hull
@@ -280,7 +280,7 @@ typedef struct b2Hull
 /// - less than 3 points
 /// - more than b2_maxPolygonVertices points
 /// This welds close points and removes collinear points.
-///	@warning Do not modify a hull once it has been computed
+/// @warning Do not modify a hull once it has been computed
 B2_API b2Hull b2ComputeHull( const b2Vec2* points, int32_t count );
 
 /// This determines if a hull is valid. Checks for:
@@ -337,7 +337,7 @@ typedef struct b2DistanceProxy
 } b2DistanceProxy;
 
 /// Used to warm start b2Distance. Set count to zero on first call or
-///	use zero initialization.
+/// use zero initialization.
 typedef struct b2DistanceCache
 {
 	/// The number of stored simplex points
@@ -401,7 +401,7 @@ typedef struct b2Simplex
 
 /// Compute the closest points between two shapes represented as point clouds.
 /// b2DistanceCache cache is input/output. On the first call set b2DistanceCache.count to zero.
-///	The underlying GJK algorithm may be debugged by passing in debug simplexes and capacity. You may pass in NULL and 0 for these.
+/// The underlying GJK algorithm may be debugged by passing in debug simplexes and capacity. You may pass in NULL and 0 for these.
 B2_API b2DistanceOutput b2ShapeDistance( b2DistanceCache* cache, const b2DistanceInput* input, b2Simplex* simplexes,
 										 int simplexCapacity );
 
@@ -484,15 +484,15 @@ B2_API b2TOIOutput b2TimeOfImpact( const b2TOIInput* input );
 typedef struct b2ManifoldPoint
 {
 	/// Location of the contact point in world space. Subject to precision loss at large coordinates.
-	///	@note Should only be used for debugging.
+	/// @note Should only be used for debugging.
 	b2Vec2 point;
 
 	/// Location of the contact point relative to bodyA's origin in world space
-	///	@note When used internally to the Box2D solver, this is relative to the center of mass.
+	/// @note When used internally to the Box2D solver, this is relative to the center of mass.
 	b2Vec2 anchorA;
 
 	/// Location of the contact point relative to bodyB's origin in world space
-	///	@note When used internally to the Box2D solver, this is relative to the center of mass.
+	/// @note When used internally to the Box2D solver, this is relative to the center of mass.
 	b2Vec2 anchorB;
 
 	/// The separation of the contact point, negative if penetrating
@@ -505,7 +505,7 @@ typedef struct b2ManifoldPoint
 	float tangentImpulse;
 
 	/// The maximum normal impulse applied during sub-stepping
-	///	This could be a bool to indicate the point is confirmed (may be a speculative point)
+	/// This could be a bool to indicate the point is confirmed (may be a speculative point)
 	float maxNormalImpulse;
 
 	/// Relative normal velocity pre-solve. Used for hit events. If the normal impulse is
@@ -603,7 +603,7 @@ B2_API b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segment
 #define b2_defaultCategoryBits ( 1 )
 
 /// Convenience mask bits to use when you don't need collision filtering and just want
-///	all results.
+/// all results.
 #define b2_defaultMaskBits ( UINT64_MAX )
 
 /// A node in the dynamic tree. This is private data placed here for performance reasons.
@@ -720,12 +720,12 @@ typedef float b2TreeRayCastCallbackFcn( const b2RayCastInput* input, int32_t pro
 /// The callback also performs the any collision filtering. This has performance
 /// roughly equal to k * log(n), where k is the number of collisions and n is the
 /// number of proxies in the tree.
-///	Bit-wise filtering using mask bits can greatly improve performance in some scenarios.
-///	@param tree the dynamic tree to ray cast
+/// Bit-wise filtering using mask bits can greatly improve performance in some scenarios.
+/// @param tree the dynamic tree to ray cast
 /// @param input the ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1)
-///	@param maskBits filter bits: `bool accept = (maskBits & node->categoryBits) != 0;`
+/// @param maskBits filter bits: `bool accept = (maskBits & node->categoryBits) != 0;`
 /// @param callback a callback class that is called for each proxy that is hit by the ray
-///	@param context user context that is passed to the callback
+/// @param context user context that is passed to the callback
 B2_API void b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
 								   b2TreeRayCastCallbackFcn* callback, void* context );
 
@@ -741,11 +741,11 @@ typedef float b2TreeShapeCastCallbackFcn( const b2ShapeCastInput* input, int32_t
 /// The callback also performs the any collision filtering. This has performance
 /// roughly equal to k * log(n), where k is the number of collisions and n is the
 /// number of proxies in the tree.
-///	@param tree the dynamic tree to ray cast
+/// @param tree the dynamic tree to ray cast
 /// @param input the ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
-///	@param maskBits filter bits: `bool accept = (maskBits & node->categoryBits) != 0;`
+/// @param maskBits filter bits: `bool accept = (maskBits & node->categoryBits) != 0;`
 /// @param callback a callback class that is called for each proxy that is hit by the shape
-///	@param context user context that is passed to the callback
+/// @param context user context that is passed to the callback
 B2_API void b2DynamicTree_ShapeCast( const b2DynamicTree* tree, const b2ShapeCastInput* input, uint64_t maskBits,
 									 b2TreeShapeCastCallbackFcn* callback, void* context );
 

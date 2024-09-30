@@ -179,6 +179,8 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->contactDampingRatio = def->contactDampingRatio;
 	world->jointHertz = def->jointHertz;
 	world->jointDampingRatio = def->jointDampingRatio;
+	world->frictionMixingRule = def->frictionMixingRule;
+	world->restitutionMixingRule = def->restitutionMixingRule;
 	world->enableSleep = def->enableSleep;
 	world->locked = false;
 	world->enableWarmStarting = true;
@@ -1695,6 +1697,26 @@ void b2World_SetJointTuning(b2WorldId worldId, float hertz, float dampingRatio)
 
 	world->jointHertz = b2ClampFloat( hertz, 0.0f, FLT_MAX );
 	world->jointDampingRatio = b2ClampFloat( dampingRatio, 0.0f, FLT_MAX );
+}
+
+void b2World_SetMaximumLinearVelocity(b2WorldId worldId, float maximumLinearVelocity)
+{
+	B2_ASSERT( b2IsValid( maximumLinearVelocity ) && maximumLinearVelocity > 0.0f );
+
+	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return;
+	}
+
+	world->maxLinearVelocity = maximumLinearVelocity;
+}
+
+float b2World_GetMaximumLinearVelocity(b2WorldId worldId)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	return world->maxLinearVelocity;
 }
 
 b2Profile b2World_GetProfile( b2WorldId worldId )

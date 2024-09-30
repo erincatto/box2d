@@ -22,8 +22,8 @@
  */
 
 /// Create a world for rigid body simulation. A world contains bodies, shapes, and constraints. You make create
-///	up to 128 worlds. Each world is completely independent and may be simulated in parallel.
-///	@return the world id.
+/// up to 128 worlds. Each world is completely independent and may be simulated in parallel.
+/// @return the world id.
 B2_API b2WorldId b2CreateWorld( const b2WorldDef* def );
 
 /// Destroy a world
@@ -68,13 +68,13 @@ B2_API void b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon,
 /// Cast a ray into the world to collect shapes in the path of the ray.
 /// Your callback function controls whether you get the closest point, any point, or n-points.
 /// The ray-cast ignores shapes that contain the starting point.
-///	@param worldId The world to cast the ray against
-///	@param origin The start point of the ray
-///	@param translation The translation of the ray from the start point to the end point
-///	@param filter Contains bit flags to filter unwanted shapes from the results
+/// @param worldId The world to cast the ray against
+/// @param origin The start point of the ray
+/// @param translation The translation of the ray from the start point to the end point
+/// @param filter Contains bit flags to filter unwanted shapes from the results
 /// @param fcn A user implemented callback function
 /// @param context A user context that is passed along to the callback function
-///	@note The callback function may receive shapes in any order
+/// @note The callback function may receive shapes in any order
 B2_API void b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn,
 							 void* context );
 
@@ -95,8 +95,8 @@ B2_API void b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2
 								 b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
 
 /// Enable/disable sleep. If your application does not need sleeping, you can gain some performance
-///	by disabling sleep completely at the world level.
-///	@see b2WorldDef
+/// by disabling sleep completely at the world level.
+/// @see b2WorldDef
 B2_API void b2World_EnableSleeping( b2WorldId worldId, bool flag );
 
 /// Is body sleeping enabled?
@@ -104,16 +104,16 @@ B2_API bool b2World_IsSleepingEnabled( b2WorldId worldId );
 
 /// Enable/disable continuous collision between dynamic and static bodies. Generally you should keep continuous
 /// collision enabled to prevent fast moving objects from going through static objects. The performance gain from
-///	disabling continuous collision is minor.
-///	@see b2WorldDef
+/// disabling continuous collision is minor.
+/// @see b2WorldDef
 B2_API void b2World_EnableContinuous( b2WorldId worldId, bool flag );
 
 /// Is continuous collision enabled?
 B2_API bool b2World_IsContinuousEnabled( b2WorldId worldId );
 
 /// Adjust the restitution threshold. It is recommended not to make this value very small
-///	because it will prevent bodies from sleeping. Typically in meters per second.
-///	@see b2WorldDef
+/// because it will prevent bodies from sleeping. Typically in meters per second.
+/// @see b2WorldDef
 B2_API void b2World_SetRestitutionThreshold( b2WorldId worldId, float value );
 
 /// Get the the restitution speed threshold. Typically in meters per second.
@@ -121,7 +121,7 @@ B2_API float b2World_GetRestitutionThreshold( b2WorldId worldId );
 
 /// Adjust the hit event threshold. This controls the collision velocity needed to generate a b2ContactHitEvent.
 /// Typically in meters per second.
-///	@see b2WorldDef::hitEventThreshold
+/// @see b2WorldDef::hitEventThreshold
 B2_API void b2World_SetHitEventThreshold( b2WorldId worldId, float value );
 
 /// Get the the hit event speed threshold. Typically in meters per second.
@@ -135,34 +135,40 @@ B2_API void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* fcn, 
 
 /// Set the gravity vector for the entire world. Box2D has no concept of an up direction and this
 /// is left as a decision for the application. Typically in m/s^2.
-///	@see b2WorldDef
+/// @see b2WorldDef
 B2_API void b2World_SetGravity( b2WorldId worldId, b2Vec2 gravity );
 
 /// Get the gravity vector
 B2_API b2Vec2 b2World_GetGravity( b2WorldId worldId );
 
 /// Apply a radial explosion
-///	@param worldId The world id
-///	@param explosionDef The explosion definition
+/// @param worldId The world id
+/// @param explosionDef The explosion definition
 B2_API void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionDef );
 
 /// Adjust contact tuning parameters
-///	@param worldId The world id
+/// @param worldId The world id
 /// @param hertz The contact stiffness (cycles per second)
 /// @param dampingRatio The contact bounciness with 1 being critical damping (non-dimensional)
 /// @param pushVelocity The maximum contact constraint push out velocity (meters per second)
-///	@note Advanced feature
+/// @note Advanced feature
 B2_API void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushVelocity );
 
 /// Adjust joint tuning parameters
-///	@param worldId The world id
+/// @param worldId The world id
 /// @param hertz The contact stiffness (cycles per second)
 /// @param dampingRatio The contact bounciness with 1 being critical damping (non-dimensional)
-///	@note Advanced feature
+/// @note Advanced feature
 B2_API void b2World_SetJointTuning( b2WorldId worldId, float hertz, float dampingRatio );
 
+/// Set the maximum linear velocity. Typically in m/s.
+B2_API void b2World_SetMaximumLinearVelocity( b2WorldId worldId, float maximumLinearVelocity );
+
+/// Get the maximum linear velocity. Typically in m/s.
+B2_API float b2World_GetMaximumLinearVelocity( b2WorldId worldId );
+
 /// Enable/disable constraint warm starting. Advanced feature for testing. Disabling
-///	sleeping greatly reduces stability and provides no performance gain.
+/// sleeping greatly reduces stability and provides no performance gain.
 B2_API void b2World_EnableWarmStarting( b2WorldId worldId, bool flag );
 
 /// Is constraint warm starting enabled?
@@ -186,16 +192,16 @@ B2_API void b2World_DumpMemoryStats( b2WorldId worldId );
  */
 
 /// Create a rigid body given a definition. No reference to the definition is retained. So you can create the definition
-///	on the stack and pass it as a pointer.
-///	@code{.c}
-///	b2BodyDef bodyDef = b2DefaultBodyDef();
-///	b2BodyId myBodyId = b2CreateBody(myWorldId, &bodyDef);
-///	@endcode
+/// on the stack and pass it as a pointer.
+/// @code{.c}
+/// b2BodyDef bodyDef = b2DefaultBodyDef();
+/// b2BodyId myBodyId = b2CreateBody(myWorldId, &bodyDef);
+/// @endcode
 /// @warning This function is locked during callbacks.
 B2_API b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def );
 
 /// Destroy a rigid body given an id. This destroys all shapes and joints attached to the body.
-///	Do not keep references to the associated shapes and joints.
+/// Do not keep references to the associated shapes and joints.
 B2_API void b2DestroyBody( b2BodyId bodyId );
 
 /// Body identifier validation. Can be used to detect orphaned ids. Provides validation for up to 64K allocations.
@@ -205,7 +211,7 @@ B2_API bool b2Body_IsValid( b2BodyId id );
 B2_API b2BodyType b2Body_GetType( b2BodyId bodyId );
 
 /// Change the body type. This is an expensive operation. This automatically updates the mass
-///	properties regardless of the automatic mass setting.
+/// properties regardless of the automatic mass setting.
 B2_API void b2Body_SetType( b2BodyId bodyId, b2BodyType type );
 
 /// Set the user data for a body
@@ -225,7 +231,7 @@ B2_API b2Transform b2Body_GetTransform( b2BodyId bodyId );
 
 /// Set the world transform of a body. This acts as a teleport and is fairly expensive.
 /// @note Generally you should create a body with then intended transform.
-///	@see b2BodyDef::position and b2BodyDef::angle
+/// @see b2BodyDef::position and b2BodyDef::angle
 B2_API void b2Body_SetTransform( b2BodyId bodyId, b2Vec2 position, b2Rot rotation );
 
 /// Get a local point on a body given a world point
@@ -254,23 +260,23 @@ B2_API void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity );
 
 /// Apply a force at a world point. If the force is not applied at the center of mass,
 /// it will generate a torque and affect the angular velocity. This optionally wakes up the body.
-///	The force is ignored if the body is not awake.
-///	@param bodyId The body id
+/// The force is ignored if the body is not awake.
+/// @param bodyId The body id
 /// @param force The world force vector, typically in newtons (N)
 /// @param point The world position of the point of application
 /// @param wake Option to wake up the body
 B2_API void b2Body_ApplyForce( b2BodyId bodyId, b2Vec2 force, b2Vec2 point, bool wake );
 
 /// Apply a force to the center of mass. This optionally wakes up the body.
-///	The force is ignored if the body is not awake.
-///	@param bodyId The body id
+/// The force is ignored if the body is not awake.
+/// @param bodyId The body id
 /// @param force the world force vector, usually in newtons (N).
 /// @param wake also wake up the body
 B2_API void b2Body_ApplyForceToCenter( b2BodyId bodyId, b2Vec2 force, bool wake );
 
 /// Apply a torque. This affects the angular velocity without affecting the linear velocity.
-///	This optionally wakes the body. The torque is ignored if the body is not awake.
-///	@param bodyId The body id
+/// This optionally wakes the body. The torque is ignored if the body is not awake.
+/// @param bodyId The body id
 /// @param torque about the z-axis (out of the screen), typically in N*m.
 /// @param wake also wake up the body
 B2_API void b2Body_ApplyTorque( b2BodyId bodyId, float torque, bool wake );
@@ -279,29 +285,29 @@ B2_API void b2Body_ApplyTorque( b2BodyId bodyId, float torque, bool wake );
 /// It also modifies the angular velocity if the point of application
 /// is not at the center of mass. This optionally wakes the body.
 /// The impulse is ignored if the body is not awake.
-///	@param bodyId The body id
+/// @param bodyId The body id
 /// @param impulse the world impulse vector, typically in N*s or kg*m/s.
 /// @param point the world position of the point of application.
 /// @param wake also wake up the body
-///	@warning This should be used for one-shot impulses. If you need a steady force,
+/// @warning This should be used for one-shot impulses. If you need a steady force,
 /// use a force instead, which will work better with the sub-stepping solver.
 B2_API void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Vec2 point, bool wake );
 
 /// Apply an impulse to the center of mass. This immediately modifies the velocity.
 /// The impulse is ignored if the body is not awake. This optionally wakes the body.
-///	@param bodyId The body id
+/// @param bodyId The body id
 /// @param impulse the world impulse vector, typically in N*s or kg*m/s.
 /// @param wake also wake up the body
-///	@warning This should be used for one-shot impulses. If you need a steady force,
+/// @warning This should be used for one-shot impulses. If you need a steady force,
 /// use a force instead, which will work better with the sub-stepping solver.
 B2_API void b2Body_ApplyLinearImpulseToCenter( b2BodyId bodyId, b2Vec2 impulse, bool wake );
 
 /// Apply an angular impulse. The impulse is ignored if the body is not awake.
 /// This optionally wakes the body.
-///	@param bodyId The body id
+/// @param bodyId The body id
 /// @param impulse the angular impulse, typically in units of kg*m*m/s
 /// @param wake also wake up the body
-///	@warning This should be used for one-shot impulses. If you need a steady force,
+/// @warning This should be used for one-shot impulses. If you need a steady force,
 /// use a force instead, which will work better with the sub-stepping solver.
 B2_API void b2Body_ApplyAngularImpulse( b2BodyId bodyId, float impulse, bool wake );
 
@@ -318,8 +324,8 @@ B2_API b2Vec2 b2Body_GetLocalCenterOfMass( b2BodyId bodyId );
 B2_API b2Vec2 b2Body_GetWorldCenterOfMass( b2BodyId bodyId );
 
 /// Override the body's mass properties. Normally this is computed automatically using the
-///	shape geometry and density. This information is lost if a shape is added or removed or if the
-///	body type changes.
+/// shape geometry and density. This information is lost if a shape is added or removed or if the
+/// body type changes.
 B2_API void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData );
 
 /// Get the mass data for a body
@@ -328,12 +334,12 @@ B2_API b2MassData b2Body_GetMassData( b2BodyId bodyId );
 /// This update the mass properties to the sum of the mass properties of the shapes.
 /// This normally does not need to be called unless you called SetMassData to override
 /// the mass and you later want to reset the mass.
-///	You may also use this when automatic mass computation has been disabled.
-///	You should call this regardless of body type.
+/// You may also use this when automatic mass computation has been disabled.
+/// You should call this regardless of body type.
 B2_API void b2Body_ApplyMassFromShapes( b2BodyId bodyId );
 
 /// Set the automatic mass setting. Normally this is set in b2BodyDef before creation.
-///	@see b2BodyDef::automaticMass
+/// @see b2BodyDef::automaticMass
 B2_API void b2Body_SetAutomaticMass( b2BodyId bodyId, bool automaticMass );
 
 /// Get the automatic mass setting
@@ -352,7 +358,7 @@ B2_API void b2Body_SetAngularDamping( b2BodyId bodyId, float angularDamping );
 B2_API float b2Body_GetAngularDamping( b2BodyId bodyId );
 
 /// Adjust the gravity scale. Normally this is set in b2BodyDef before creation.
-///	@see b2BodyDef::gravityScale
+/// @see b2BodyDef::gravityScale
 B2_API void b2Body_SetGravityScale( b2BodyId bodyId, float gravityScale );
 
 /// Get the current gravity scale
@@ -362,8 +368,8 @@ B2_API float b2Body_GetGravityScale( b2BodyId bodyId );
 B2_API bool b2Body_IsAwake( b2BodyId bodyId );
 
 /// Wake a body from sleep. This wakes the entire island the body is touching.
-///	@warning Putting a body to sleep will put the entire island of bodies touching this body to sleep,
-///	which can be expensive and possibly unintuitive.
+/// @warning Putting a body to sleep will put the entire island of bodies touching this body to sleep,
+/// which can be expensive and possibly unintuitive.
 B2_API void b2Body_SetAwake( b2BodyId bodyId, bool awake );
 
 /// Enable or disable sleeping for this body. If sleeping is disabled the body will wake.
@@ -401,7 +407,7 @@ B2_API void b2Body_SetBullet( b2BodyId bodyId, bool flag );
 B2_API bool b2Body_IsBullet( b2BodyId bodyId );
 
 /// Enable/disable hit events on all shapes
-///	@see b2ShapeDef::enableHitEvents
+/// @see b2ShapeDef::enableHitEvents
 B2_API void b2Body_EnableHitEvents( b2BodyId bodyId, bool enableHitEvents );
 
 /// Get the world that owns this body
@@ -411,14 +417,14 @@ B2_API b2WorldId b2Body_GetWorld( b2BodyId bodyId );
 B2_API int b2Body_GetShapeCount( b2BodyId bodyId );
 
 /// Get the shape ids for all shapes on this body, up to the provided capacity.
-///	@returns the number of shape ids stored in the user array
+/// @returns the number of shape ids stored in the user array
 B2_API int b2Body_GetShapes( b2BodyId bodyId, b2ShapeId* shapeArray, int capacity );
 
 /// Get the number of joints on this body
 B2_API int b2Body_GetJointCount( b2BodyId bodyId );
 
 /// Get the joint ids for all joints on this body, up to the provided capacity
-///	@returns the number of joint ids stored in the user array
+/// @returns the number of joint ids stored in the user array
 B2_API int b2Body_GetJoints( b2BodyId bodyId, b2JointId* jointArray, int capacity );
 
 /// Get the maximum capacity required for retrieving all the touching contacts on a body
@@ -428,7 +434,7 @@ B2_API int b2Body_GetContactCapacity( b2BodyId bodyId );
 B2_API int b2Body_GetContactData( b2BodyId bodyId, b2ContactData* contactData, int capacity );
 
 /// Get the current world AABB that contains all the attached shapes. Note that this may not encompass the body origin.
-///	If there are no shapes attached then the returned AABB is empty and centered on the body origin.
+/// If there are no shapes attached then the returned AABB is empty and centered on the body origin.
 B2_API b2AABB b2Body_ComputeAABB( b2BodyId bodyId );
 
 /** @} */
@@ -442,22 +448,22 @@ B2_API b2AABB b2Body_ComputeAABB( b2BodyId bodyId );
 
 /// Create a circle shape and attach it to a body. The shape definition and geometry are fully cloned.
 /// Contacts are not created until the next time step.
-///	@return the shape id for accessing the shape
+/// @return the shape id for accessing the shape
 B2_API b2ShapeId b2CreateCircleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Circle* circle );
 
 /// Create a line segment shape and attach it to a body. The shape definition and geometry are fully cloned.
 /// Contacts are not created until the next time step.
-///	@return the shape id for accessing the shape
+/// @return the shape id for accessing the shape
 B2_API b2ShapeId b2CreateSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Segment* segment );
 
 /// Create a capsule shape and attach it to a body. The shape definition and geometry are fully cloned.
 /// Contacts are not created until the next time step.
-///	@return the shape id for accessing the shape
+/// @return the shape id for accessing the shape
 B2_API b2ShapeId b2CreateCapsuleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Capsule* capsule );
 
 /// Create a polygon shape and attach it to a body. The shape definition and geometry are fully cloned.
 /// Contacts are not created until the next time step.
-///	@return the shape id for accessing the shape
+/// @return the shape id for accessing the shape
 B2_API b2ShapeId b2CreatePolygonShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Polygon* polygon );
 
 /// Destroy a shape
@@ -482,26 +488,26 @@ B2_API bool b2Shape_IsSensor( b2ShapeId shapeId );
 B2_API void b2Shape_SetUserData( b2ShapeId shapeId, void* userData );
 
 /// Get the user data for a shape. This is useful when you get a shape id
-///	from an event or query.
+/// from an event or query.
 B2_API void* b2Shape_GetUserData( b2ShapeId shapeId );
 
 /// Set the mass density of a shape, typically in kg/m^2.
-///	This will not update the mass properties on the parent body.
-///	@see b2ShapeDef::density, b2Body_ApplyMassFromShapes
+/// This will not update the mass properties on the parent body.
+/// @see b2ShapeDef::density, b2Body_ApplyMassFromShapes
 B2_API void b2Shape_SetDensity( b2ShapeId shapeId, float density );
 
 /// Get the density of a shape, typically in kg/m^2
 B2_API float b2Shape_GetDensity( b2ShapeId shapeId );
 
 /// Set the friction on a shape
-///	@see b2ShapeDef::friction
+/// @see b2ShapeDef::friction
 B2_API void b2Shape_SetFriction( b2ShapeId shapeId, float friction );
 
 /// Get the friction of a shape
 B2_API float b2Shape_GetFriction( b2ShapeId shapeId );
 
 /// Set the shape restitution (bounciness)
-///	@see b2ShapeDef::restitution
+/// @see b2ShapeDef::restitution
 B2_API void b2Shape_SetRestitution( b2ShapeId shapeId, float restitution );
 
 /// Get the shape restitution
@@ -511,33 +517,33 @@ B2_API float b2Shape_GetRestitution( b2ShapeId shapeId );
 B2_API b2Filter b2Shape_GetFilter( b2ShapeId shapeId );
 
 /// Set the current filter. This is almost as expensive as recreating the shape.
-///	@see b2ShapeDef::filter
+/// @see b2ShapeDef::filter
 B2_API void b2Shape_SetFilter( b2ShapeId shapeId, b2Filter filter );
 
 /// Enable sensor events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors.
-///	@see b2ShapeDef::isSensor
+/// @see b2ShapeDef::isSensor
 B2_API void b2Shape_EnableSensorEvents( b2ShapeId shapeId, bool flag );
 
 /// Returns true if sensor events are enabled
 B2_API bool b2Shape_AreSensorEventsEnabled( b2ShapeId shapeId );
 
 /// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors.
-///	@see b2ShapeDef::enableContactEvents
+/// @see b2ShapeDef::enableContactEvents
 B2_API void b2Shape_EnableContactEvents( b2ShapeId shapeId, bool flag );
 
 /// Returns true if contact events are enabled
 B2_API bool b2Shape_AreContactEventsEnabled( b2ShapeId shapeId );
 
 /// Enable pre-solve contact events for this shape. Only applies to dynamic bodies. These are expensive
-///	and must be carefully handled due to multithreading. Ignored for sensors.
-///	@see b2PreSolveFcn
+/// and must be carefully handled due to multithreading. Ignored for sensors.
+/// @see b2PreSolveFcn
 B2_API void b2Shape_EnablePreSolveEvents( b2ShapeId shapeId, bool flag );
 
 /// Returns true if pre-solve events are enabled
 B2_API bool b2Shape_ArePreSolveEventsEnabled( b2ShapeId shapeId );
 
 /// Enable contact hit events for this shape. Ignored for sensors.
-///	@see b2WorldDef.hitEventThreshold
+/// @see b2WorldDef.hitEventThreshold
 B2_API void b2Shape_EnableHitEvents( b2ShapeId shapeId, bool flag );
 
 /// Returns true if hit events are enabled
@@ -567,12 +573,12 @@ B2_API b2Polygon b2Shape_GetPolygon( b2ShapeId shapeId );
 
 /// Allows you to change a shape to be a circle or update the current circle.
 /// This does not modify the mass properties.
-///	@see b2Body_ApplyMassFromShapes
+/// @see b2Body_ApplyMassFromShapes
 B2_API void b2Shape_SetCircle( b2ShapeId shapeId, const b2Circle* circle );
 
 /// Allows you to change a shape to be a capsule or update the current capsule.
 /// This does not modify the mass properties.
-///	@see b2Body_ApplyMassFromShapes
+/// @see b2Body_ApplyMassFromShapes
 B2_API void b2Shape_SetCapsule( b2ShapeId shapeId, const b2Capsule* capsule );
 
 /// Allows you to change a shape to be a segment or update the current segment.
@@ -580,7 +586,7 @@ B2_API void b2Shape_SetSegment( b2ShapeId shapeId, const b2Segment* segment );
 
 /// Allows you to change a shape to be a polygon or update the current polygon.
 /// This does not modify the mass properties.
-///	@see b2Body_ApplyMassFromShapes
+/// @see b2Body_ApplyMassFromShapes
 B2_API void b2Shape_SetPolygon( b2ShapeId shapeId, const b2Polygon* polygon );
 
 /// Get the parent chain id if the shape type is a chain segment, otherwise
@@ -602,7 +608,7 @@ B2_API b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target );
 /// Chain Shape
 
 /// Create a chain shape
-///	@see b2ChainDef for details
+/// @see b2ChainDef for details
 B2_API b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def );
 
 /// Destroy a chain shape
@@ -615,7 +621,7 @@ B2_API b2WorldId b2Chain_GetWorld( b2ChainId chainId );
 B2_API int b2Chain_GetSegmentCount( b2ChainId chainId );
 
 /// Fill a user array with chain segment shape ids up to the specified capacity. Returns
-///	the actual number of segments returned.
+/// the actual number of segments returned.
 B2_API int b2Chain_GetSegments( b2ChainId chainId, b2ShapeId* segmentArray, int capacity );
 
 /// Set the chain friction
@@ -689,7 +695,7 @@ B2_API float b2Joint_GetConstraintTorque( b2JointId jointId );
  */
 
 /// Create a distance joint
-///	@see b2DistanceJointDef for details
+/// @see b2DistanceJointDef for details
 B2_API b2JointId b2CreateDistanceJoint( b2WorldId worldId, const b2DistanceJointDef* def );
 
 /// Set the rest length of a distance joint
@@ -719,7 +725,7 @@ B2_API float b2DistanceJoint_GetSpringHertz( b2JointId jointId );
 B2_API float b2DistanceJoint_GetSpringDampingRatio( b2JointId jointId );
 
 /// Enable joint limit. The limit only works if the joint spring is enabled. Otherwise the joint is rigid
-///	and the limit has no effect.
+/// and the limit has no effect.
 B2_API void b2DistanceJoint_EnableLimit( b2JointId jointId, bool enableLimit );
 
 /// Is the distance joint limit enabled?
@@ -771,7 +777,7 @@ B2_API float b2DistanceJoint_GetMotorForce( b2JointId jointId );
  */
 
 /// Create a motor joint
-///	@see b2MotorJointDef for details
+/// @see b2MotorJointDef for details
 B2_API b2JointId b2CreateMotorJoint( b2WorldId worldId, const b2MotorJointDef* def );
 
 /// Set the motor joint linear offset target
@@ -816,7 +822,7 @@ B2_API float b2MotorJoint_GetCorrectionFactor( b2JointId jointId );
  */
 
 /// Create a mouse joint
-///	@see b2MouseJointDef for details
+/// @see b2MouseJointDef for details
 B2_API b2JointId b2CreateMouseJoint( b2WorldId worldId, const b2MouseJointDef* def );
 
 /// Set the mouse joint target
@@ -855,7 +861,7 @@ B2_API float b2MouseJoint_GetMaxForce( b2JointId jointId );
  */
 
 /// Create a prismatic (slider) joint.
-///	@see b2PrismaticJointDef for details
+/// @see b2PrismaticJointDef for details
 B2_API b2JointId b2CreatePrismaticJoint( b2WorldId worldId, const b2PrismaticJointDef* def );
 
 /// Enable/disable the joint spring.
@@ -926,7 +932,7 @@ B2_API float b2PrismaticJoint_GetMotorForce( b2JointId jointId );
  */
 
 /// Create a revolute joint
-///	@see b2RevoluteJointDef for details
+/// @see b2RevoluteJointDef for details
 B2_API b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJointDef* def );
 
 /// Enable/disable the revolute joint spring
@@ -948,7 +954,7 @@ B2_API void b2RevoluteJoint_SetSpringDampingRatio( b2JointId jointId, float damp
 B2_API float b2RevoluteJoint_GetSpringDampingRatio( b2JointId jointId );
 
 /// Get the revolute joint current angle in radians relative to the reference angle
-///	@see b2RevoluteJointDef::referenceAngle
+/// @see b2RevoluteJointDef::referenceAngle
 B2_API float b2RevoluteJoint_GetAngle( b2JointId jointId );
 
 /// Enable/disable the revolute joint limit
@@ -1001,7 +1007,7 @@ B2_API float b2RevoluteJoint_GetMaxMotorTorque( b2JointId jointId );
  */
 
 /// Create a weld joint
-///	@see b2WeldJointDef for details
+/// @see b2WeldJointDef for details
 B2_API b2JointId b2CreateWeldJoint( b2WorldId worldId, const b2WeldJointDef* def );
 
 /// Get the weld joint reference angle in radians
@@ -1047,7 +1053,7 @@ B2_API float b2WeldJoint_GetAngularDampingRatio( b2JointId jointId );
  */
 
 /// Create a wheel joint
-///	@see b2WheelJointDef for details
+/// @see b2WheelJointDef for details
 B2_API b2JointId b2CreateWheelJoint( b2WorldId worldId, const b2WheelJointDef* def );
 
 /// Enable/disable the wheel joint spring

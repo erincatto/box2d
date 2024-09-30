@@ -78,7 +78,7 @@ static const b2Mat22 b2Mat22_zero = { { 0.0f, 0.0f }, { 0.0f, 0.0f } };
 
 /// Compute an approximate arctangent in the range [-pi, pi]
 /// This is hand coded for cross platform determinism. The atan2f
-///	function in the standard library is not cross platform deterministic.
+/// function in the standard library is not cross platform deterministic.
 B2_API float b2Atan2( float y, float x );
 
 /// @return the minimum of two floats
@@ -279,7 +279,7 @@ B2_INLINE b2Vec2 b2Normalize( b2Vec2 v )
 }
 
 /// Convert a vector into a unit vector if possible, otherwise returns the zero vector. Also
-///	outputs the length.
+/// outputs the length.
 B2_INLINE b2Vec2 b2GetLengthAndNormalize( float* length, b2Vec2 v )
 {
 	*length = b2Length( v );
@@ -303,8 +303,8 @@ B2_INLINE b2Rot b2NormalizeRot( b2Rot q )
 }
 
 /// Integration rotation from angular velocity
-///	@param q1 initial rotation
-///	@param deltaAngle the angular displacement in radians
+/// @param q1 initial rotation
+/// @param deltaAngle the angular displacement in radians
 B2_INLINE b2Rot b2IntegrateRotation( b2Rot q1, float deltaAngle )
 {
 	// dc/dt = -omega * sin(t)
@@ -363,9 +363,9 @@ B2_INLINE b2Rot b2NLerp( b2Rot q1, b2Rot q2, float t )
 }
 
 /// Compute the angular velocity necessary to rotate between two rotations over a give time
-///	@param q1 initial rotation
-///	@param q2 final rotation
-///	@param inv_h inverse time step
+/// @param q1 initial rotation
+/// @param q2 final rotation
+/// @param inv_h inverse time step
 B2_INLINE float b2ComputeAngularVelocity( b2Rot q1, b2Rot q2, float inv_h )
 {
 	// ds/dt = omega * cos(t)
@@ -609,8 +609,8 @@ B2_API bool b2AABB_IsValid( b2AABB aabb );
 
 /// Box2D bases all length units on meters, but you may need different units for your game.
 /// You can set this value to use different units. This should be done at application startup
-///	and only modified once. Default value is 1.
-///	@warning This must be modified before any calls to Box2D
+/// and only modified once. Default value is 1.
+/// @warning This must be modified before any calls to Box2D
 B2_API void b2SetLengthUnitsPerMeter( float lengthUnits );
 
 /// Get the current length units per meter.
