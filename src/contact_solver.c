@@ -667,12 +667,26 @@ static inline void b2StoreW( float32_t* data, b2FloatW a )
 
 static inline b2FloatW b2UnpackLoW( b2FloatW a, b2FloatW b )
 {
+#if defined(__aarch64__)
 	return vzip1q_f32( a, b );
+#else
+    float32x2_t a1 = vget_low_f32(a);
+    float32x2_t b1 = vget_low_f32(b);
+    float32x2x2_t result = vzip_f32(a1, b1);
+    return vcombine_f32(result.val[0], result.val[1]);
+#endif
 }
 
 static inline b2FloatW b2UnpackHiW( b2FloatW a, b2FloatW b )
 {
+#if defined(__aarch64__)
 	return vzip2q_f32( a, b );
+#else
+    float32x2_t a1 = vget_high_f32(a);
+    float32x2_t b1 = vget_high_f32(b);
+    float32x2x2_t result = vzip_f32(a1, b1);
+    return vcombine_f32(result.val[0], result.val[1]);
+#endif
 }
 
 #elif defined( B2_SIMD_SSE2 )
