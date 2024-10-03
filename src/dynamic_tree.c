@@ -1013,7 +1013,7 @@ int32_t b2DynamicTree_GetMaxBalance( const b2DynamicTree* tree )
 
 		int32_t child1 = node->child1;
 		int32_t child2 = node->child2;
-		int32_t balance = b2AbsFloat( tree->nodes[child2].height - tree->nodes[child1].height );
+		int32_t balance = (int32_t)b2AbsFloat( (float)(tree->nodes[child2].height - tree->nodes[child1].height) );
 		maxBalance = b2MaxInt( maxBalance, balance );
 	}
 

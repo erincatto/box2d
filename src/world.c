@@ -304,7 +304,7 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 
 	b2StepContext* stepContext = context;
 	b2World* world = stepContext->world;
-	B2_ASSERT( threadIndex < world->workerCount );
+	B2_ASSERT( (int)threadIndex < world->workerCount );
 	b2TaskContext* taskContext = world->taskContexts.data + threadIndex;
 	b2ContactSim** contactSims = stepContext->contacts;
 	b2Shape* shapes = world->shapes.data;
