@@ -165,7 +165,7 @@ b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const void* geo
 
 	b2Shape* shape = b2CreateShapeInternal( world, body, transform, def, geometry, shapeType );
 
-	if ( body->automaticMass == true )
+	if ( def->updateBodyMass == true )
 	{
 		b2UpdateBodyMassData( world, body );
 	}
@@ -262,7 +262,7 @@ void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body, bool 
 	b2ValidateSolverSets( world );
 }
 
-void b2DestroyShape( b2ShapeId shapeId )
+void b2DestroyShape( b2ShapeId shapeId, bool updateBodyMass )
 {
 	b2World* world = b2GetWorldLocked( shapeId.world0 );
 
@@ -274,7 +274,7 @@ void b2DestroyShape( b2ShapeId shapeId )
 	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
 	b2DestroyShapeInternal( world, shape, body, wakeBodies );
 
-	if ( body->automaticMass == true )
+	if ( updateBodyMass == true )
 	{
 		b2UpdateBodyMassData( world, body );
 	}
@@ -911,7 +911,7 @@ b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, const b2RayCastInput* input )
 	return output;
 }
 
-void b2Shape_SetDensity( b2ShapeId shapeId, float density )
+void b2Shape_SetDensity( b2ShapeId shapeId, float density, bool updateBodyMass )
 {
 	B2_ASSERT( b2IsValid( density ) && density >= 0.0f );
 
@@ -929,6 +929,12 @@ void b2Shape_SetDensity( b2ShapeId shapeId, float density )
 	}
 
 	shape->density = density;
+
+	if (updateBodyMass == true)
+	{
+		b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
+		b2UpdateBodyMassData( world, body );
+	}
 }
 
 float b2Shape_GetDensity( b2ShapeId shapeId )

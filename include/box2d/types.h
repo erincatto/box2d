@@ -220,10 +220,6 @@ typedef struct b2BodyDef
 	/// Used to disable a body. A disabled body does not move or collide.
 	bool isEnabled;
 
-	/// Automatically compute mass and related properties on this body from shapes.
-	/// Triggers whenever a shape is add/removed/changed. Default is true.
-	bool automaticMass;
-
 	/// This allows this body to bypass rotational speed limits. Should only be used
 	/// for circular objects, like wheels.
 	bool allowFastRotation;
@@ -366,6 +362,9 @@ typedef struct b2ShapeDef
 	/// when there are many static shapes.
 	/// This is implicitly always true for sensors.
 	bool forceContactCreation;
+
+	/// Should the body update the mass properties when this shape is created. Default is true.
+	bool updateBodyMass;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int32_t internalValue;

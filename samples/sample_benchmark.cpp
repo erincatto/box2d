@@ -329,6 +329,17 @@ public:
 			polygon = b2MakeOffsetBox( 10.0f, 0.5f, { 0.0f, -10.0f }, b2Rot_identity );
 			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
 
+			shapeDef.customColor = b2_colorBlueViolet;
+			b2Circle circle = { { 5.0f, 5.0f }, 1.0f };
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
+			circle = { { 5.0f, -5.0f }, 1.0f };
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
+			circle = { { -5.0f, -5.0f }, 1.0f };
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
+			circle = { { -5.0f, 5.0f }, 1.0f };
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
+
+
 			// m_motorSpeed = 9.0f;
 			m_motorSpeed = 25.0f;
 
@@ -1436,8 +1447,8 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			// defer mass properties to avoid n-squared mass computations
-			bodyDef.automaticMass = false;
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.updateBodyMass = false;
 
 			for ( int m = 0; m < count; ++m )
 			{
@@ -1498,12 +1509,13 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_kinematicBody;
 		bodyDef.angularVelocity = 1.0f;
-		// defer mass properties to avoid n-squared mass computations
-		bodyDef.automaticMass = false;
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.filter.categoryBits = 1;
 		shapeDef.filter.maskBits = 2;
+
+		// defer mass properties to avoid n-squared mass computations
+		shapeDef.updateBodyMass = false;
 
 		b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
@@ -1529,3 +1541,212 @@ public:
 };
 
 static int sampleKinematic = RegisterSample( "Benchmark", "Kinematic", BenchmarkKinematic::Create );
+
+#if 1
+
+enum QueryType
+{
+	e_rayCast,
+	e_shapeCast,
+	e_overlap,
+};
+
+class BenchmarkCast : public Sample
+{
+public:
+	explicit BenchmarkCast( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 500.0f, 500.0f };
+			g_camera.m_zoom = 25.0f * 21.0f;
+		}
+
+		m_queryType = e_rayCast;
+		m_ratio = 5.0f;
+		m_grid = 1.0f;
+		m_fill = 0.1f;
+		m_rowCount = g_sampleDebug ? 100 : 1000;
+		m_columnCount = g_sampleDebug ? 100 : 1000;
+		m_categoryBits = true;
+
+		BuildScene();
+	}
+
+	void BuildScene()
+	{
+		g_seed = 1234;
+		b2DestroyWorld( m_worldId );
+		b2WorldDef worldDef = b2DefaultWorldDef();
+		m_worldId = b2CreateWorld( &worldDef );
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+		float y = 0.0f;
+
+		for ( int i = 0; i < m_rowCount; ++i )
+		{
+			float x = 0.0f;
+
+			for ( int j = 0; j < m_columnCount; ++j )
+			{
+				float fillTest = RandomFloat( 0.0f, 1.0f );
+				if ( fillTest <= m_fill )
+				{
+					bodyDef.position = { x, y };
+					b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+					float ratio = RandomFloat( 1.0f, m_ratio );
+					float halfWidth = RandomFloat( 0.05f, 0.25f );
+
+					b2Polygon box;
+					if ( RandomFloat() > 0.0f )
+					{
+						box = b2MakeBox( ratio * halfWidth, halfWidth );
+					}
+					else
+					{
+						box = b2MakeBox( halfWidth, ratio * halfWidth );
+					}
+
+					int category = RandomInt( 1, 3 );
+					shapeDef.filter.categoryBits = category;
+					if ( category == 1 )
+					{
+						shapeDef.customColor = b2_colorBox2DBlue;
+					}
+					else if ( category == 2 )
+					{
+						shapeDef.customColor = b2_colorBox2DYellow;
+					}
+					else
+					{
+						shapeDef.customColor = b2_colorBox2DGreen;
+					}
+
+					b2CreatePolygonShape( bodyId, &shapeDef, &box );
+				}
+
+				x += m_grid;
+			}
+
+			y += m_grid;
+		}
+	}
+
+	void UpdateUI() override
+	{
+		float height = 320.0f;
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
+
+		ImGui::Begin( "Cast", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
+
+		ImGui::PushItemWidth( 100.0f );
+
+		bool changed = false;
+		if ( ImGui::SliderInt( "rows", &m_rowCount, 0, 1000, "%d" ) )
+		{
+			changed = true;
+		}
+
+		if ( ImGui::SliderInt( "columns", &m_columnCount, 0, 1000, "%d" ) )
+		{
+			changed = true;
+		}
+
+		if ( ImGui::SliderFloat( "fill", &m_fill, 0.0f, 1.0f, "%.2f" ) )
+		{
+			changed = true;
+		}
+
+		if ( ImGui::SliderFloat( "grid", &m_grid, 0.5f, 2.0f, "%.2f" ) )
+		{
+			changed = true;
+		}
+
+		if ( ImGui::SliderFloat( "ratio", &m_ratio, 1.0f, 10.0f, "%.2f" ) )
+		{
+			changed = true;
+		}
+
+		if ( ImGui::Checkbox( "categories", &m_categoryBits) )
+		{
+			changed = true;
+		}
+
+		const char* queryTypes[] = { "Ray Cast", "Circle Cast", "Overlap" };
+		int queryType = int( m_queryType );
+		changed = changed || ImGui::Combo( "Query", &queryType, queryTypes, IM_ARRAYSIZE( queryTypes ) );
+		m_queryType = QueryType( queryType );
+
+		ImGui::PopItemWidth();
+		ImGui::End();
+
+		if ( changed )
+		{
+			BuildScene();
+		}
+	}
+
+	void Step( Settings& settings) override
+	{
+		Sample::Step( settings );
+
+		int sampleCount = g_sampleDebug ? 10 : 1000;
+
+		float extent = m_rowCount * m_grid;
+		b2QueryFilter filter = b2DefaultQueryFilter();
+		filter.maskBits = 1;
+		int hitCount = 0;
+		float ms = 0.0f;
+
+		if (m_queryType == e_rayCast)
+		{
+			b2Timer timer = b2CreateTimer();
+
+			b2Vec2 rayStart = b2Vec2_zero;
+			b2Vec2 rayEnd = b2Vec2_zero;
+			for (int i = 0; i < sampleCount; ++i)
+			{
+				rayStart = RandomVec2( 0.0f, extent );
+				rayEnd = RandomVec2( 0.0f, extent );
+
+				b2RayResult result = b2World_CastRayClosest( m_worldId, rayStart, b2Sub( rayEnd, rayStart ), filter );
+				hitCount += result.hit ? 1 : 0;
+			}
+
+			ms = b2GetMilliseconds( &timer );
+		
+			g_draw.DrawSegment( rayStart, rayEnd, b2_colorBeige );
+		}
+
+		g_draw.DrawString( 5, m_textLine, "hit count = %03d", hitCount );
+		m_textLine += m_textIncrement;
+
+		g_draw.DrawString( 5, m_textLine, "ms = %.3f",ms );
+		m_textLine += m_textIncrement;
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new BenchmarkCast( settings );
+	}
+
+	QueryType m_queryType;
+
+	std::vector<b2Vec2> m_origins;
+	std::vector<b2Vec2> m_translations;
+
+	int m_rowCount, m_columnCount;
+	int m_updateType;
+	float m_fill;
+	float m_ratio;
+	float m_grid;
+	bool m_categoryBits;
+};
+
+static int sampleCast = RegisterSample( "Benchmark", "Cast", BenchmarkCast::Create );
+#endif

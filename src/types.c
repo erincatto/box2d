@@ -37,7 +37,6 @@ b2BodyDef b2DefaultBodyDef( void )
 	def.enableSleep = true;
 	def.isAwake = true;
 	def.isEnabled = true;
-	def.automaticMass = true;
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;
 }
@@ -62,6 +61,7 @@ b2ShapeDef b2DefaultShapeDef( void )
 	def.filter = b2DefaultFilter();
 	def.enableSensorEvents = true;
 	def.enableContactEvents = true;
+	def.updateBodyMass = true;
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;
 }

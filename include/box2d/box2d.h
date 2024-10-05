@@ -466,8 +466,10 @@ B2_API b2ShapeId b2CreateCapsuleShape( b2BodyId bodyId, const b2ShapeDef* def, c
 /// @return the shape id for accessing the shape
 B2_API b2ShapeId b2CreatePolygonShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Polygon* polygon );
 
-/// Destroy a shape
-B2_API void b2DestroyShape( b2ShapeId shapeId );
+/// Destroy a shape. You may defer the body mass update which can improve performance if several shapes on a
+///	body are destroyed at once.
+///	@see b2Body_ApplyMassFromShapes
+B2_API void b2DestroyShape( b2ShapeId shapeId, bool updateBodyMass );
 
 /// Shape identifier validation. Provides validation for up to 64K allocations.
 B2_API bool b2Shape_IsValid( b2ShapeId id );
@@ -492,9 +494,9 @@ B2_API void b2Shape_SetUserData( b2ShapeId shapeId, void* userData );
 B2_API void* b2Shape_GetUserData( b2ShapeId shapeId );
 
 /// Set the mass density of a shape, typically in kg/m^2.
-/// This will not update the mass properties on the parent body.
+/// This will optionally update the mass properties on the parent body.
 /// @see b2ShapeDef::density, b2Body_ApplyMassFromShapes
-B2_API void b2Shape_SetDensity( b2ShapeId shapeId, float density );
+B2_API void b2Shape_SetDensity( b2ShapeId shapeId, float density, bool updateBodyMass );
 
 /// Get the density of a shape, typically in kg/m^2
 B2_API float b2Shape_GetDensity( b2ShapeId shapeId );
