@@ -47,13 +47,14 @@ typedef struct b2Joint
 	int islandPrev;
 	int islandNext;
 
-	// This is monotonically advanced when a body is allocated in this slot
-	// Used to check for invalid b2JointId
-	int revision;
-
 	float drawSize;
 
 	b2JointType type;
+
+	// This is monotonically advanced when a body is allocated in this slot
+	// Used to check for invalid b2JointId
+	uint16_t revision;
+
 	bool isMarked;
 	bool collideConnected;
 

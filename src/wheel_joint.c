@@ -315,9 +315,6 @@ void b2SolveWheelJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 
 	b2WheelJoint* joint = &base->wheelJoint;
 
-	// This is a dummy body to represent a static body since static bodies don't have a solver body.
-	b2BodyState dummyBody = { 0 };
-
 	b2BodyState* stateA = joint->indexA == B2_NULL_INDEX ? &dummyState : context->states + joint->indexA;
 	b2BodyState* stateB = joint->indexB == B2_NULL_INDEX ? &dummyState : context->states + joint->indexB;
 
@@ -378,8 +375,6 @@ void b2SolveWheelJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 
 	if ( joint->enableLimit )
 	{
-		float translation = b2Dot( axisA, d );
-
 		// Lower limit
 		{
 			float C = translation - joint->lowerTranslation;

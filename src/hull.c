@@ -94,7 +94,7 @@ b2Hull b2ComputeHull( const b2Vec2* points, int count )
 		return hull;
 	}
 
-	count = b2MinFloat( count, b2_maxPolygonVertices );
+	count = b2MinInt( count, b2_maxPolygonVertices );
 
 	b2AABB aabb = { { FLT_MAX, FLT_MAX }, { -FLT_MAX, -FLT_MAX } };
 

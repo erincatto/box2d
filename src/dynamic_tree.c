@@ -871,7 +871,7 @@ static int b2ComputeHeight( const b2DynamicTree* tree, int32_t nodeId )
 
 	int32_t height1 = b2ComputeHeight( tree, node->child1 );
 	int32_t height2 = b2ComputeHeight( tree, node->child2 );
-	return 1 + b2MaxInt16( height1, height2 );
+	return 1 + b2MaxInt( height1, height2 );
 }
 
 int b2DynamicTree_ComputeHeight( const b2DynamicTree* tree )
@@ -930,8 +930,8 @@ static void b2ValidateMetrics( const b2DynamicTree* tree, int32_t index )
 
 	const b2TreeNode* node = tree->nodes + index;
 
-	int32_t child1 = node->child1;
-	int32_t child2 = node->child2;
+	int child1 = node->child1;
+	int child2 = node->child2;
 
 	if ( b2IsLeaf( node ) )
 	{
@@ -944,10 +944,9 @@ static void b2ValidateMetrics( const b2DynamicTree* tree, int32_t index )
 	B2_ASSERT( 0 <= child1 && child1 < tree->nodeCapacity );
 	B2_ASSERT( 0 <= child2 && child2 < tree->nodeCapacity );
 
-	int32_t height1 = tree->nodes[child1].height;
-	int32_t height2 = tree->nodes[child2].height;
-	int32_t height;
-	height = 1 + b2MaxInt16( height1, height2 );
+	int height1 = tree->nodes[child1].height;
+	int height2 = tree->nodes[child2].height;
+	int height = 1 + b2MaxInt( height1, height2 );
 	B2_ASSERT( node->height == height );
 
 	// b2AABB aabb = b2AABB_Union(tree->nodes[child1].aabb, tree->nodes[child2].aabb);
@@ -1000,8 +999,8 @@ void b2DynamicTree_Validate( const b2DynamicTree* tree )
 
 int32_t b2DynamicTree_GetMaxBalance( const b2DynamicTree* tree )
 {
-	int32_t maxBalance = 0;
-	for ( int32_t i = 0; i < tree->nodeCapacity; ++i )
+	int maxBalance = 0;
+	for ( int i = 0; i < tree->nodeCapacity; ++i )
 	{
 		const b2TreeNode* node = tree->nodes + i;
 		if ( node->height <= 1 )
@@ -1011,9 +1010,9 @@ int32_t b2DynamicTree_GetMaxBalance( const b2DynamicTree* tree )
 
 		B2_ASSERT( b2IsLeaf( node ) == false );
 
-		int32_t child1 = node->child1;
-		int32_t child2 = node->child2;
-		int32_t balance = b2AbsFloat( tree->nodes[child2].height - tree->nodes[child1].height );
+		int child1 = node->child1;
+		int child2 = node->child2;
+		int balance = b2AbsInt( tree->nodes[child2].height - tree->nodes[child1].height );
 		maxBalance = b2MaxInt( maxBalance, balance );
 	}
 
@@ -1022,11 +1021,11 @@ int32_t b2DynamicTree_GetMaxBalance( const b2DynamicTree* tree )
 
 void b2DynamicTree_RebuildBottomUp( b2DynamicTree* tree )
 {
-	int32_t* nodes = b2Alloc( tree->nodeCount * sizeof( int32_t ) );
-	int32_t count = 0;
+	int* nodes = b2Alloc( tree->nodeCount * sizeof( int ) );
+	int count = 0;
 
 	// Build array of leaves. Free the rest.
-	for ( int32_t i = 0; i < tree->nodeCapacity; ++i )
+	for ( int i = 0; i < tree->nodeCapacity; ++i )
 	{
 		if ( tree->nodes[i].height < 0 )
 		{

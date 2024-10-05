@@ -135,6 +135,9 @@ if (MSVC)
 	# Atomics are still considered experimental in Visual Studio 17.8
 	target_compile_options(box2d PRIVATE /experimental:c11atomics)
 
+	# All warnings
+	target_compile_options(box2d PRIVATE /W4)
+
 	if (BOX2D_AVX2)
 		message(STATUS "Box2D using AVX2")	
 		target_compile_definitions(box2d PRIVATE BOX2D_AVX2)

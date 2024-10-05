@@ -328,7 +328,7 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 		return manifold;
 	}
 
-	float distance = sqrt( distanceSquared );
+	float distance = sqrtf( distanceSquared );
 
 	float length1, length2;
 	b2Vec2 u1 = b2GetLengthAndNormalize( &length1, d1 );

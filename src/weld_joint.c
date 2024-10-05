@@ -150,8 +150,6 @@ void b2PrepareWeldJoint( b2JointSim* base, b2StepContext* context )
 	float ka = iA + iB;
 	joint->axialMass = ka > 0.0f ? 1.0f / ka : 0.0f;
 
-	const float h = context->dt;
-
 	if ( joint->linearHertz == 0.0f )
 	{
 		joint->linearSoftness = context->jointSoftness;

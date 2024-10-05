@@ -294,7 +294,7 @@ void b2DestroyWorld( b2WorldId worldId )
 	// Wipe world but preserve revision
 	uint16_t revision = world->revision;
 	*world = ( b2World ){ 0 };
-	world->worldId = B2_NULL_INDEX;
+	world->worldId = 0;
 	world->revision = revision + 1;
 }
 
@@ -304,7 +304,7 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 
 	b2StepContext* stepContext = context;
 	b2World* world = stepContext->world;
-	B2_ASSERT( threadIndex < world->workerCount );
+	B2_ASSERT( (int)threadIndex < world->workerCount );
 	b2TaskContext* taskContext = world->taskContexts.data + threadIndex;
 	b2ContactSim** contactSims = stepContext->contacts;
 	b2Shape* shapes = world->shapes.data;
@@ -2891,7 +2891,7 @@ void b2ValidateSolverSets( b2World* world )
 
 	int contactIdCount = b2GetIdCount( &world->contactIdPool );
 	B2_ASSERT( totalContactCount == contactIdCount );
-	B2_ASSERT( totalContactCount == world->broadPhase.pairSet.count );
+	B2_ASSERT( totalContactCount == (int)world->broadPhase.pairSet.count );
 
 	int jointIdCount = b2GetIdCount( &world->jointIdPool );
 	B2_ASSERT( totalJointCount == jointIdCount );
