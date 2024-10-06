@@ -1515,8 +1515,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			}
 		}
 
-		ptrdiff_t blockDiff = baseGraphBlock - graphBlocks;
-		B2_ASSERT( blockDiff == graphBlockCount );
+		B2_ASSERT( (ptrdiff_t)(baseGraphBlock - graphBlocks) == graphBlockCount );
 
 		b2SolverStage* stage = stages;
 

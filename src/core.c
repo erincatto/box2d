@@ -78,7 +78,7 @@ void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn )
 }
 
 // Use 32 byte alignment for everything. Works with 256bit SIMD.
-#define B2_ALIGNMENT 32
+#define B2_ALIGNMENT 64
 
 void* b2Alloc( int size )
 {

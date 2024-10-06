@@ -29,7 +29,7 @@ typedef struct b2Hull b2Hull;
 /// don't use more vertices.
 #define b2_maxPolygonVertices 8
 
-/// Low level ray-cast input data
+/// Low level ray cast input data
 typedef struct b2RayCastInput
 {
 	/// Start point of the ray cast
@@ -63,7 +63,7 @@ typedef struct b2ShapeCastInput
 	float maxFraction;
 } b2ShapeCastInput;
 
-/// Low level ray-cast or shape-cast output data
+/// Low level ray cast or shape-cast output data
 typedef struct b2CastOutput
 {
 	/// The surface normal at the hit point
@@ -602,10 +602,12 @@ B2_API b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segment
 /// The default category bit for a tree proxy. Used for collision filtering.
 #define b2_defaultCategoryBits ( 1 )
 
-/// Convenience mask bits to use when you don't need collision filtering and just want
-/// all results.
+/// Convenience mask bits to use when you don't need collision filtering and just want all results.
 #define b2_defaultMaskBits ( UINT64_MAX )
 
+#define B2_TREE_32 0
+
+#if B2_TREE_32 == 0
 /// A node in the dynamic tree. This is private data placed here for performance reasons.
 typedef struct b2TreeNode
 {
@@ -627,22 +629,61 @@ typedef struct b2TreeNode
 	/// Child 1 index
 	int32_t child1; // 4
 
-	/// Child 2 index
-	int32_t child2; // 4
+	union
+	{
+		/// Child 2 index
+		int32_t child2;
 
-	/// User data
-	// todo could be union with child index
-	int32_t userData; // 4
+		/// User data
+		int32_t userData;
+	}; // 4
 
 	/// Leaf = 0, free node = -1
-	int16_t height; // 2
-
-	/// Has the AABB been enlarged?
-	bool enlarged; // 1
-
-	/// Padding for clarity
-	char pad[5];
+	uint16_t height; // 2
+	uint16_t flags;
 } b2TreeNode;
+
+#else
+
+struct b2InternalNode
+{
+	int32_t child1;
+	int32_t child2;
+};
+
+struct b2LeafNode
+{
+	// limited to 32 bits, see b2TreeNode32::e_category64
+	uint32_t categoryBits;
+	int32_t userData;
+};
+
+typedef struct b2TreeNode
+{
+	/// The node bounding box
+	b2AABB aabb; // 16
+
+	union
+	{
+		struct b2InternalNode internal;
+		struct b2LeafNode leaf;
+	}; // 8
+
+	union
+	{
+		/// The node parent index
+		int32_t parent;
+
+		/// The node freelist next index
+		int32_t next;
+	}; // 4
+
+	uint16_t height; // 2
+	uint16_t flags;  // 2
+
+} b2TreeNode;
+
+#endif
 
 /// The dynamic tree structure. This should be considered private data.
 /// It is placed here for performance reasons.
@@ -682,6 +723,13 @@ typedef struct b2DynamicTree
 	int32_t rebuildCapacity;
 } b2DynamicTree;
 
+/// These are performance results returned by BVH queries.
+typedef struct b2TraversalResult
+{
+	int32_t nodeVisits;
+	int32_t leafVisits;
+} b2TraversalResult;
+
 /// Constructing the tree initializes the node pool.
 B2_API b2DynamicTree b2DynamicTree_Create( void );
 
@@ -708,41 +756,43 @@ typedef bool b2TreeQueryCallbackFcn( int32_t proxyId, int32_t userData, void* co
 B2_API void b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_t maskBits, b2TreeQueryCallbackFcn* callback,
 								 void* context );
 
-/// This function receives clipped raycast input for a proxy. The function
+/// This function receives clipped ray cast input for a proxy. The function
 /// returns the new ray fraction.
 /// - return a value of 0 to terminate the ray cast
 /// - return a value less than input->maxFraction to clip the ray
 /// - return a value of input->maxFraction to continue the ray cast without clipping
 typedef float b2TreeRayCastCallbackFcn( const b2RayCastInput* input, int32_t proxyId, int32_t userData, void* context );
 
-/// Ray-cast against the proxies in the tree. This relies on the callback
-/// to perform a exact ray-cast in the case were the proxy contains a shape.
+/// Ray cast against the proxies in the tree. This relies on the callback
+/// to perform a exact ray cast in the case were the proxy contains a shape.
 /// The callback also performs the any collision filtering. This has performance
 /// roughly equal to k * log(n), where k is the number of collisions and n is the
 /// number of proxies in the tree.
 /// Bit-wise filtering using mask bits can greatly improve performance in some scenarios.
+///	However, this filtering may be approximate, so the user should still apply filtering to results.
 /// @param tree the dynamic tree to ray cast
-/// @param input the ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1)
-/// @param maskBits filter bits: `bool accept = (maskBits & node->categoryBits) != 0;`
+/// @param input the ray cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1)
+/// @param maskBits mask bit hint: `bool accept = (maskBits & node->categoryBits) != 0;`
 /// @param callback a callback class that is called for each proxy that is hit by the ray
 /// @param context user context that is passed to the callback
-B2_API void b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
+///	@return performance data
+B2_API b2TraversalResult b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
 								   b2TreeRayCastCallbackFcn* callback, void* context );
 
-/// This function receives clipped ray-cast input for a proxy. The function
+/// This function receives clipped ray cast input for a proxy. The function
 /// returns the new ray fraction.
-/// - return a value of 0 to terminate the ray-cast
+/// - return a value of 0 to terminate the ray cast
 /// - return a value less than input->maxFraction to clip the ray
 /// - return a value of input->maxFraction to continue the ray cast without clipping
 typedef float b2TreeShapeCastCallbackFcn( const b2ShapeCastInput* input, int32_t proxyId, int32_t userData, void* context );
 
-/// Ray-cast against the proxies in the tree. This relies on the callback
-/// to perform a exact ray-cast in the case were the proxy contains a shape.
+/// Ray cast against the proxies in the tree. This relies on the callback
+/// to perform a exact ray cast in the case were the proxy contains a shape.
 /// The callback also performs the any collision filtering. This has performance
 /// roughly equal to k * log(n), where k is the number of collisions and n is the
 /// number of proxies in the tree.
 /// @param tree the dynamic tree to ray cast
-/// @param input the ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
+/// @param input the ray cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
 /// @param maskBits filter bits: `bool accept = (maskBits & node->categoryBits) != 0;`
 /// @param callback a callback class that is called for each proxy that is hit by the shape
 /// @param context user context that is passed to the callback
@@ -780,12 +830,25 @@ B2_API void b2DynamicTree_ShiftOrigin( b2DynamicTree* tree, b2Vec2 newOrigin );
 /// Get the number of bytes used by this tree
 B2_API int b2DynamicTree_GetByteCount( const b2DynamicTree* tree );
 
+#if B2_TREE_32 == 0
+
 /// Get proxy user data
 /// @return the proxy user data or 0 if the id is invalid
 B2_INLINE int32_t b2DynamicTree_GetUserData( const b2DynamicTree* tree, int32_t proxyId )
 {
 	return tree->nodes[proxyId].userData;
 }
+
+#else
+
+/// Get proxy user data
+/// @return the proxy user data or 0 if the id is invalid
+B2_INLINE int32_t b2DynamicTree_GetUserData( const b2DynamicTree* tree, int32_t proxyId )
+{
+	return tree->nodes[proxyId].leaf.userData;
+}
+
+#endif
 
 /// Get the AABB of a proxy
 B2_INLINE b2AABB b2DynamicTree_GetAABB( const b2DynamicTree* tree, int32_t proxyId )

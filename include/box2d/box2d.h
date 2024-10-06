@@ -68,14 +68,15 @@ B2_API void b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon,
 /// Cast a ray into the world to collect shapes in the path of the ray.
 /// Your callback function controls whether you get the closest point, any point, or n-points.
 /// The ray-cast ignores shapes that contain the starting point.
+/// @note The callback function may receive shapes in any order
 /// @param worldId The world to cast the ray against
 /// @param origin The start point of the ray
 /// @param translation The translation of the ray from the start point to the end point
 /// @param filter Contains bit flags to filter unwanted shapes from the results
 /// @param fcn A user implemented callback function
 /// @param context A user context that is passed along to the callback function
-/// @note The callback function may receive shapes in any order
-B2_API void b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn,
+///	@return traversal performance counters
+B2_API b2TraversalResult b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn,
 							 void* context );
 
 /// Cast a ray into the world to collect the closest hit. This is a convenience function.

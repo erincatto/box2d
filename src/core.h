@@ -178,6 +178,14 @@ extern float b2_lengthUnitsPerMeter;
 
 #define b2CheckDef( DEF ) B2_ASSERT( DEF->internalValue == B2_SECRET_COOKIE )
 
+enum b2TreeNodeFlags
+{
+	b2_allocatedNode = 0x0001,
+	b2_enlargedNode = 0x0002,
+	b2_leafNode = 0x0004,
+	b2_category64 = 0x0008,
+};
+
 void* b2Alloc( int size );
 void b2Free( void* mem, int size );
 void* b2GrowAlloc( void* oldMem, int oldSize, int newSize );

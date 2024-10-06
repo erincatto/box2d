@@ -58,6 +58,8 @@ typedef struct b2RayResult
 	b2Vec2 point;
 	b2Vec2 normal;
 	float fraction;
+	int nodeVisits;
+	int leafVisits;
 	bool hit;
 } b2RayResult;
 

@@ -2065,14 +2065,16 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, int shap
 	return input->maxFraction;
 }
 
-void b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn,
+b2TraversalResult b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn,
 					  void* context )
 {
+	b2TraversalResult traversalResult = { 0 };
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
 	{
-		return;
+		return traversalResult;
 	}
 
 	B2_ASSERT( b2Vec2_IsValid( origin ) );
@@ -2084,15 +2086,19 @@ void b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2Qu
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_RayCast( world->broadPhase.trees + i, &input, filter.maskBits, RayCastCallback, &worldContext );
+		b2TraversalResult treeResult = b2DynamicTree_RayCast( world->broadPhase.trees + i, &input, filter.maskBits, RayCastCallback, &worldContext );
+		traversalResult.nodeVisits += treeResult.nodeVisits;
+		traversalResult.leafVisits += treeResult.leafVisits;
 
 		if ( worldContext.fraction == 0.0f )
 		{
-			return;
+			return traversalResult;
 		}
 
 		input.maxFraction = worldContext.fraction;
 	}
+
+	return traversalResult;
 }
 
 // This callback finds the closest hit. This is the most common callback used in games.
@@ -2126,7 +2132,9 @@ b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 tra
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_RayCast( world->broadPhase.trees + i, &input, filter.maskBits, RayCastCallback, &worldContext );
+		b2TraversalResult treeResult = b2DynamicTree_RayCast( world->broadPhase.trees + i, &input, filter.maskBits, RayCastCallback, &worldContext );
+		result.nodeVisits += treeResult.nodeVisits;
+		result.leafVisits += treeResult.leafVisits;
 
 		if ( worldContext.fraction == 0.0f )
 		{
