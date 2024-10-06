@@ -1477,7 +1477,6 @@ static int32_t b2PartitionMid( int32_t* indices, b2Vec2* centers, int32_t count 
 		return count / 2;
 	}
 
-	// todo SIMD?
 	b2Vec2 lowerBound = centers[0];
 	b2Vec2 upperBound = centers[0];
 
@@ -1574,15 +1573,13 @@ static int32_t b2PartitionMid( int32_t* indices, b2Vec2* centers, int32_t count 
 	{
 		return i1;
 	}
-	else
-	{
-		return count / 2;
-	}
+
+	return count / 2;
 }
 
 #else
 
-#define B2_BIN_COUNT 8
+#define B2_BIN_COUNT 64
 
 typedef struct b2TreeBin
 {

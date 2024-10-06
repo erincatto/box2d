@@ -2524,6 +2524,20 @@ void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionDef )
 						 &explosionContext );
 }
 
+void b2World_RebuildStaticTree(b2WorldId worldId)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return;
+	}
+
+	b2DynamicTree* staticTree = world->broadPhase.trees + b2_staticBody;
+	b2DynamicTree_Rebuild( staticTree, true );
+}
+
+
 #if B2_VALIDATE
 // When validating islands ids I have to compare the root island
 // ids because islands are not merged until the next time step.
