@@ -25,7 +25,7 @@
 #endif
 
 // Define platform
-#if defined( _WIN64 )
+#if defined(_WIN32) || defined(_WIN64)
 	#define B2_PLATFORM_WINDOWS
 #elif defined( __ANDROID__ )
 	#define B2_PLATFORM_ANDROID

@@ -68,7 +68,7 @@ void* AllocFcn( uint32_t size, int32_t alignment )
 	size_t sizeAligned = ( ( size - 1 ) | ( alignment - 1 ) ) + 1;
 	assert( ( sizeAligned & ( alignment - 1 ) ) == 0 );
 
-#if defined( _WIN64 )
+#if defined( _WIN64 ) || defined( _WIN32 )
 	void* ptr = _aligned_malloc( sizeAligned, alignment );
 #else
 	void* ptr = aligned_alloc( alignment, sizeAligned );
@@ -79,7 +79,7 @@ void* AllocFcn( uint32_t size, int32_t alignment )
 
 void FreeFcn( void* mem )
 {
-#if defined( _WIN64 )
+#if defined( _WIN64 ) || defined( _WIN32 )
 	_aligned_free( mem );
 #else
 	free( mem );
