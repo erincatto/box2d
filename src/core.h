@@ -25,7 +25,7 @@
 #endif
 
 // Define platform
-#if defined( _WIN64 )
+#if defined(_WIN32) || defined(_WIN64)
 	#define B2_PLATFORM_WINDOWS
 #elif defined( __ANDROID__ )
 	#define B2_PLATFORM_ANDROID
@@ -177,6 +177,13 @@ extern float b2_lengthUnitsPerMeter;
 #define B2_SECRET_COOKIE 1152023
 
 #define b2CheckDef( DEF ) B2_ASSERT( DEF->internalValue == B2_SECRET_COOKIE )
+
+enum b2TreeNodeFlags
+{
+	b2_allocatedNode = 0x0001,
+	b2_enlargedNode = 0x0002,
+	b2_leafNode = 0x0004,
+};
 
 void* b2Alloc( int size );
 void b2Free( void* mem, int size );

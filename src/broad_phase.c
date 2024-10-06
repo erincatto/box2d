@@ -479,12 +479,7 @@ void b2ValidateNoEnlarged( const b2BroadPhase* bp )
 				continue;
 			}
 
-			if ( node->enlarged == true )
-			{
-				capacity += 0;
-			}
-
-			B2_ASSERT( node->enlarged == false );
+			B2_ASSERT( (node->flags & b2_enlargedNode) == 0 );
 		}
 	}
 #else

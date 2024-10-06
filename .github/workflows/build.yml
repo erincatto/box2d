@@ -75,7 +75,6 @@ jobs:
         arch: x64
 
     - name: Configure CMake
-      # enkiTS is failing ASAN on windows
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBOX2D_SANITIZE=ON -DBUILD_SHARED_LIBS=OFF
       # run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF
 
@@ -85,4 +84,22 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}/build
       run: ./bin/${{env.BUILD_TYPE}}/test
+      
+  samples-windows:
+    name: windows
+    runs-on: windows-latest
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Setup MSVC dev command prompt
+      uses: TheMrMilchmann/setup-msvc-dev@v3
+      with:
+        arch: x64
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DBOX2D_SAMPLES=ON -DBUILD_SHARED_LIBS=OFF -DBOX2D_UNIT_TESTS=OFF
+      
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Release
       

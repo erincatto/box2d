@@ -672,9 +672,17 @@ public:
 			m_debrisIds[index] = b2_nullBodyId;
 		}
 
+
 		for ( int i = 0; i < destroyCount; ++i )
 		{
-			b2DestroyShape( shapesToDestroy[i] );
+			bool updateMass = false;
+			b2DestroyShape( shapesToDestroy[i], updateMass );
+		}
+
+		if (destroyCount > 0)
+		{
+			// Update mass just once
+			b2Body_ApplyMassFromShapes( m_playerId );
 		}
 
 		if ( settings.hertz > 0.0f && settings.pause == false )
