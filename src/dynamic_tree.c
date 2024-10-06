@@ -1153,6 +1153,108 @@ void b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_t maskB
 	}
 }
 
+#define B2_DIRK_RECURSE 0
+
+#if B2_DIRK_RECURSE == 1
+b2TraversalResult b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
+										 b2TreeRayCastCallbackFcn* callback, void* context )
+{
+	b2TraversalResult result = { 0 };
+
+	b2Vec2 p1 = input->origin;
+	b2Vec2 d = input->translation;
+
+	b2Vec2 r = b2Normalize( d );
+
+	// v is perpendicular to the segment.
+	b2Vec2 v = b2CrossSV( 1.0f, r );
+	b2Vec2 abs_v = b2Abs( v );
+
+	// Separating axis for segment (Gino, p80).
+	// |dot(v, p1 - c)| > dot(|v|, h)
+
+	float maxFraction = input->maxFraction;
+
+	b2Vec2 p2 = b2MulAdd( p1, maxFraction, d );
+
+	// Build a bounding box for the segment.
+	b2AABB segmentAABB = { b2Min( p1, p2 ), b2Max( p1, p2 ) };
+
+	int32_t stack[b2_treeStackSize];
+	int32_t stackCount = 0;
+	int32_t nodeId = tree->root;
+
+	b2RayCastInput subInput = *input;
+
+	while ( true )
+	{
+		const b2TreeNode* node = tree->nodes + nodeId;
+		result.nodeVisits += 1;
+
+		b2AABB nodeAABB = node->aabb;
+
+		if ( ( node->categoryBits & maskBits ) != 0 &&
+			b2AABB_Overlaps( nodeAABB, segmentAABB ) )
+		{
+			// Separating axis for segment (Gino, p80).
+			// |dot(v, p1 - c)| > dot(|v|, h)
+			// radius extension is added to the node in this case
+			b2Vec2 c = b2AABB_Center( nodeAABB );
+			b2Vec2 h = b2AABB_Extents( nodeAABB );
+			float term1 = b2AbsFloat( b2Dot( v, b2Sub( p1, c ) ) );
+			float term2 = b2Dot( abs_v, h );
+			if ( term2 >= term1 )
+			{
+				if ( b2IsLeaf( node ) )
+				{
+					subInput.maxFraction = maxFraction;
+
+					float value = callback( &subInput, nodeId, node->userData, context );
+					result.leafVisits += 1;
+
+					if ( value == 0.0f )
+					{
+						// The client has terminated the ray cast.
+						return result;
+					}
+
+					if ( 0.0f < value && value < maxFraction )
+					{
+						// Update segment bounding box.
+						maxFraction = value;
+						p2 = b2MulAdd( p1, maxFraction, d );
+						segmentAABB.lowerBound = b2Min( p1, p2 );
+						segmentAABB.upperBound = b2Max( p1, p2 );
+					}
+				}
+				else
+				{
+					B2_ASSERT( stackCount < b2_treeStackSize - 1 );
+					if ( stackCount < b2_treeStackSize - 1 )
+					{
+						stack[stackCount++] = node->child2;
+					}
+
+					nodeId = node->child1;
+
+					continue;
+				}
+			}
+		}
+
+		if (stackCount == 0)
+		{
+			break;
+		}
+
+		nodeId = stack[--stackCount];
+	}
+
+	return result;
+}
+
+#else
+
 b2TraversalResult b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
 										 b2TreeRayCastCallbackFcn* callback, void* context )
 {
@@ -1250,6 +1352,9 @@ b2TraversalResult b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayC
 
 	return result;
 }
+
+#endif
+
 
 void b2DynamicTree_ShapeCast( const b2DynamicTree* tree, const b2ShapeCastInput* input, uint64_t maskBits,
 							  b2TreeShapeCastCallbackFcn* callback, void* context )
