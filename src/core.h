@@ -183,7 +183,6 @@ enum b2TreeNodeFlags
 	b2_allocatedNode = 0x0001,
 	b2_enlargedNode = 0x0002,
 	b2_leafNode = 0x0004,
-	b2_category64 = 0x0008,
 };
 
 void* b2Alloc( int size );

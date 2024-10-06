@@ -479,11 +479,7 @@ void b2ValidateNoEnlarged( const b2BroadPhase* bp )
 				continue;
 			}
 
-#if B2_TREE_32 == 0
-			B2_ASSERT( node->enlarged == false );
-#else
 			B2_ASSERT( (node->flags & b2_enlargedNode) == 0 );
-#endif
 		}
 	}
 #else

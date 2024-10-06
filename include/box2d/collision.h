@@ -605,9 +605,6 @@ B2_API b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segment
 /// Convenience mask bits to use when you don't need collision filtering and just want all results.
 #define b2_defaultMaskBits ( UINT64_MAX )
 
-#define B2_TREE_32 0
-
-#if B2_TREE_32 == 0
 /// A node in the dynamic tree. This is private data placed here for performance reasons.
 typedef struct b2TreeNode
 {
@@ -619,71 +616,28 @@ typedef struct b2TreeNode
 
 	union
 	{
-		/// The node parent index
+		/// The node parent index (allocated node)
 		int32_t parent;
 
-		/// The node freelist next index
+		/// The node freelist next index (free node)
 		int32_t next;
 	}; // 4
 
-	/// Child 1 index
+	/// Child 1 index (internal node)
 	int32_t child1; // 4
 
 	union
 	{
-		/// Child 2 index
+		/// Child 2 index (internal node)
 		int32_t child2;
 
-		/// User data
+		/// User data (leaf node)
 		int32_t userData;
 	}; // 4
 
-	/// Leaf = 0, free node = -1
 	uint16_t height; // 2
-	uint16_t flags;
+	uint16_t flags; // 2
 } b2TreeNode;
-
-#else
-
-struct b2InternalNode
-{
-	int32_t child1;
-	int32_t child2;
-};
-
-struct b2LeafNode
-{
-	// limited to 32 bits, see b2TreeNode32::e_category64
-	uint32_t categoryBits;
-	int32_t userData;
-};
-
-typedef struct b2TreeNode
-{
-	/// The node bounding box
-	b2AABB aabb; // 16
-
-	union
-	{
-		struct b2InternalNode internal;
-		struct b2LeafNode leaf;
-	}; // 8
-
-	union
-	{
-		/// The node parent index
-		int32_t parent;
-
-		/// The node freelist next index
-		int32_t next;
-	}; // 4
-
-	uint16_t height; // 2
-	uint16_t flags;  // 2
-
-} b2TreeNode;
-
-#endif
 
 /// The dynamic tree structure. This should be considered private data.
 /// It is placed here for performance reasons.
@@ -830,25 +784,11 @@ B2_API void b2DynamicTree_ShiftOrigin( b2DynamicTree* tree, b2Vec2 newOrigin );
 /// Get the number of bytes used by this tree
 B2_API int b2DynamicTree_GetByteCount( const b2DynamicTree* tree );
 
-#if B2_TREE_32 == 0
-
 /// Get proxy user data
-/// @return the proxy user data or 0 if the id is invalid
 B2_INLINE int32_t b2DynamicTree_GetUserData( const b2DynamicTree* tree, int32_t proxyId )
 {
 	return tree->nodes[proxyId].userData;
 }
-
-#else
-
-/// Get proxy user data
-/// @return the proxy user data or 0 if the id is invalid
-B2_INLINE int32_t b2DynamicTree_GetUserData( const b2DynamicTree* tree, int32_t proxyId )
-{
-	return tree->nodes[proxyId].leaf.userData;
-}
-
-#endif
 
 /// Get the AABB of a proxy
 B2_INLINE b2AABB b2DynamicTree_GetAABB( const b2DynamicTree* tree, int32_t proxyId )
