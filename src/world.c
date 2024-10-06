@@ -1884,13 +1884,16 @@ static bool TreeQueryCallback( int proxyId, int shapeId, void* context )
 	return result;
 }
 
-void b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context )
+b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter filter, b2OverlapResultFcn* fcn,
+									   void* context )
 {
+	b2TreeStats treeStats = { 0 };
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
 	{
-		return;
+		return treeStats;
 	}
 
 	B2_ASSERT( b2AABB_IsValid( aabb ) );
@@ -1899,8 +1902,14 @@ void b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter filter, 
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, TreeQueryCallback, &worldContext );
+		b2TreeStats treeResult =
+			b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, TreeQueryCallback, &worldContext );
+
+		treeStats.nodeVisits += treeResult.nodeVisits;
+		treeStats.leafVisits += treeResult.leafVisits;
 	}
+
+	return treeStats;
 }
 
 typedef struct WorldOverlapContext
@@ -1953,14 +1962,16 @@ static bool TreeOverlapCallback( int proxyId, int shapeId, void* context )
 	return result;
 }
 
-void b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2Transform transform, b2QueryFilter filter,
+b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2Transform transform, b2QueryFilter filter,
 							b2OverlapResultFcn* fcn, void* context )
 {
+	b2TreeStats treeStats = { 0 };
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
 	{
-		return;
+		return treeStats;
 	}
 
 	B2_ASSERT( b2Vec2_IsValid( transform.p ) );
@@ -1973,18 +1984,26 @@ void b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2Transfo
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, TreeOverlapCallback, &worldContext );
+		b2TreeStats treeResult =
+			b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, TreeOverlapCallback, &worldContext );
+
+		treeStats.nodeVisits += treeResult.nodeVisits;
+		treeStats.leafVisits += treeResult.leafVisits;
 	}
+
+	return treeStats;
 }
 
-void b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transform transform, b2QueryFilter filter,
+b2TreeStats b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transform transform, b2QueryFilter filter,
 							 b2OverlapResultFcn* fcn, void* context )
 {
+	b2TreeStats treeStats = { 0 };
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
 	{
-		return;
+		return treeStats;
 	}
 
 	B2_ASSERT( b2Vec2_IsValid( transform.p ) );
@@ -1997,18 +2016,26 @@ void b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Tran
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, TreeOverlapCallback, &worldContext );
+		b2TreeStats treeResult =
+			b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, TreeOverlapCallback, &worldContext );
+
+		treeStats.nodeVisits += treeResult.nodeVisits;
+		treeStats.leafVisits += treeResult.leafVisits;
 	}
+
+	return treeStats;
 }
 
-void b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform transform, b2QueryFilter filter,
+b2TreeStats b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform transform, b2QueryFilter filter,
 							 b2OverlapResultFcn* fcn, void* context )
 {
+	b2TreeStats treeStats = { 0 };
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
 	{
-		return;
+		return treeStats;
 	}
 
 	B2_ASSERT( b2Vec2_IsValid( transform.p ) );
@@ -2021,8 +2048,14 @@ void b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Tran
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, TreeOverlapCallback, &worldContext );
+		b2TreeStats treeResult =
+			b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, TreeOverlapCallback, &worldContext );
+
+		treeStats.nodeVisits += treeResult.nodeVisits;
+		treeStats.leafVisits += treeResult.leafVisits;
 	}
+
+	return treeStats;
 }
 
 typedef struct WorldRayCastContext
@@ -2065,16 +2098,16 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, int shap
 	return input->maxFraction;
 }
 
-b2TraversalResult b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn,
+b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn,
 					  void* context )
 {
-	b2TraversalResult traversalResult = { 0 };
+	b2TreeStats treeStats = { 0 };
 
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
 	{
-		return traversalResult;
+		return treeStats;
 	}
 
 	B2_ASSERT( b2Vec2_IsValid( origin ) );
@@ -2086,19 +2119,19 @@ b2TraversalResult b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 tran
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2TraversalResult treeResult = b2DynamicTree_RayCast( world->broadPhase.trees + i, &input, filter.maskBits, RayCastCallback, &worldContext );
-		traversalResult.nodeVisits += treeResult.nodeVisits;
-		traversalResult.leafVisits += treeResult.leafVisits;
+		b2TreeStats treeResult = b2DynamicTree_RayCast( world->broadPhase.trees + i, &input, filter.maskBits, RayCastCallback, &worldContext );
+		treeStats.nodeVisits += treeResult.nodeVisits;
+		treeStats.leafVisits += treeResult.leafVisits;
 
 		if ( worldContext.fraction == 0.0f )
 		{
-			return traversalResult;
+			return treeStats;
 		}
 
 		input.maxFraction = worldContext.fraction;
 	}
 
-	return traversalResult;
+	return treeStats;
 }
 
 // This callback finds the closest hit. This is the most common callback used in games.
@@ -2132,7 +2165,7 @@ b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 tra
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2TraversalResult treeResult = b2DynamicTree_RayCast( world->broadPhase.trees + i, &input, filter.maskBits, RayCastCallback, &worldContext );
+		b2TreeStats treeResult = b2DynamicTree_RayCast( world->broadPhase.trees + i, &input, filter.maskBits, RayCastCallback, &worldContext );
 		result.nodeVisits += treeResult.nodeVisits;
 		result.leafVisits += treeResult.leafVisits;
 
@@ -2165,6 +2198,7 @@ static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, int 
 
 	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
 	b2Transform transform = b2GetBodyTransformQuick( world, body );
+
 	b2CastOutput output = b2ShapeCastShape( input, shape, transform );
 
 	if ( output.hit )
@@ -2178,14 +2212,16 @@ static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, int 
 	return input->maxFraction;
 }
 
-void b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Transform originTransform, b2Vec2 translation,
+b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Transform originTransform, b2Vec2 translation,
 						 b2QueryFilter filter, b2CastResultFcn* fcn, void* context )
 {
+	b2TreeStats treeStats = { 0 };
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
 	{
-		return;
+		return treeStats;
 	}
 
 	B2_ASSERT( b2Vec2_IsValid( originTransform.p ) );
@@ -2203,25 +2239,33 @@ void b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Transform 
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_ShapeCast( world->broadPhase.trees + i, &input, filter.maskBits, ShapeCastCallback, &worldContext );
+		b2TreeStats treeResult =
+			b2DynamicTree_ShapeCast( world->broadPhase.trees + i, &input, filter.maskBits, ShapeCastCallback, &worldContext );
+		treeStats.nodeVisits += treeResult.nodeVisits;
+		treeStats.leafVisits += treeResult.leafVisits;
 
 		if ( worldContext.fraction == 0.0f )
 		{
-			return;
+			return treeStats;
 		}
 
 		input.maxFraction = worldContext.fraction;
 	}
+
+	return treeStats;
 }
 
-void b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transform originTransform, b2Vec2 translation,
+b2TreeStats b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transform originTransform,
+									   b2Vec2 translation,
 						  b2QueryFilter filter, b2CastResultFcn* fcn, void* context )
 {
+	b2TreeStats treeStats = { 0 };
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
 	{
-		return;
+		return treeStats;
 	}
 
 	B2_ASSERT( b2Vec2_IsValid( originTransform.p ) );
@@ -2240,25 +2284,33 @@ void b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transfo
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_ShapeCast( world->broadPhase.trees + i, &input, filter.maskBits, ShapeCastCallback, &worldContext );
+		b2TreeStats treeResult =
+			b2DynamicTree_ShapeCast( world->broadPhase.trees + i, &input, filter.maskBits, ShapeCastCallback, &worldContext );
+		treeStats.nodeVisits += treeResult.nodeVisits;
+		treeStats.leafVisits += treeResult.leafVisits;
 
 		if ( worldContext.fraction == 0.0f )
 		{
-			return;
+			return treeStats;
 		}
 
 		input.maxFraction = worldContext.fraction;
 	}
+
+	return treeStats;
 }
 
-void b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform originTransform, b2Vec2 translation,
+b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform originTransform,
+									   b2Vec2 translation,
 						  b2QueryFilter filter, b2CastResultFcn* fcn, void* context )
 {
+	b2TreeStats treeStats = { 0 };
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
 	{
-		return;
+		return treeStats;
 	}
 
 	B2_ASSERT( b2Vec2_IsValid( originTransform.p ) );
@@ -2279,15 +2331,20 @@ void b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transfo
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_ShapeCast( world->broadPhase.trees + i, &input, filter.maskBits, ShapeCastCallback, &worldContext );
+		b2TreeStats treeResult =
+			b2DynamicTree_ShapeCast( world->broadPhase.trees + i, &input, filter.maskBits, ShapeCastCallback, &worldContext );
+		treeStats.nodeVisits += treeResult.nodeVisits;
+		treeStats.leafVisits += treeResult.leafVisits;
 
 		if ( worldContext.fraction == 0.0f )
 		{
-			return;
+			return treeStats;
 		}
 
 		input.maxFraction = worldContext.fraction;
 	}
+
+	return treeStats;
 }
 
 #if 0

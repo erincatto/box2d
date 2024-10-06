@@ -51,19 +51,20 @@ B2_API b2SensorEvents b2World_GetSensorEvents( b2WorldId worldId );
 B2_API b2ContactEvents b2World_GetContactEvents( b2WorldId worldId );
 
 /// Overlap test for all shapes that *potentially* overlap the provided AABB
-B2_API void b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter filter, b2OverlapResultFcn* fcn,
+											  void* context );
 
 /// Overlap test for for all shapes that overlap the provided circle
-B2_API void b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2Transform transform, b2QueryFilter filter,
-								   b2OverlapResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2Transform transform,
+												b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
 
 /// Overlap test for all shapes that overlap the provided capsule
-B2_API void b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transform transform, b2QueryFilter filter,
-									b2OverlapResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transform transform,
+												 b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
 
 /// Overlap test for all shapes that overlap the provided polygon
-B2_API void b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform transform, b2QueryFilter filter,
-									b2OverlapResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform transform,
+												 b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
 
 /// Cast a ray into the world to collect shapes in the path of the ray.
 /// Your callback function controls whether you get the closest point, any point, or n-points.
@@ -76,24 +77,27 @@ B2_API void b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon,
 /// @param fcn A user implemented callback function
 /// @param context A user context that is passed along to the callback function
 ///	@return traversal performance counters
-B2_API b2TraversalResult b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn,
-							 void* context );
+B2_API b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter,
+										  b2CastResultFcn* fcn, void* context );
 
 /// Cast a ray into the world to collect the closest hit. This is a convenience function.
 /// This is less general than b2World_CastRay() and does not allow for custom filtering.
 B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter );
 
 /// Cast a circle through the world. Similar to a cast ray except that a circle is cast instead of a point.
-B2_API void b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Transform originTransform, b2Vec2 translation,
-								b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
+///	@see b2World_CastRay
+B2_API b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Transform originTransform,
+											 b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
 
 /// Cast a capsule through the world. Similar to a cast ray except that a capsule is cast instead of a point.
-B2_API void b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transform originTransform, b2Vec2 translation,
-								 b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
+///	@see b2World_CastRay
+B2_API b2TreeStats b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transform originTransform,
+											  b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
 
 /// Cast a polygon through the world. Similar to a cast ray except that a polygon is cast instead of a point.
-B2_API void b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform originTransform, b2Vec2 translation,
-								 b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
+///	@see b2World_CastRay
+B2_API b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform originTransform,
+											  b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
 
 /// Enable/disable sleep. If your application does not need sleeping, you can gain some performance
 /// by disabling sleep completely at the world level.

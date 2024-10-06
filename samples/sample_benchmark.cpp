@@ -1541,12 +1541,10 @@ public:
 
 static int sampleKinematic = RegisterSample( "Benchmark", "Kinematic", BenchmarkKinematic::Create );
 
-#if 1
-
 enum QueryType
 {
 	e_rayCast,
-	e_shapeCast,
+	e_circleCast,
 	e_overlap,
 };
 
@@ -1564,7 +1562,7 @@ public:
 			settings.drawShapes = g_sampleDebug;
 		}
 
-		m_queryType = e_rayCast;
+		m_queryType = e_circleCast;
 		m_ratio = 5.0f;
 		m_grid = 1.0f;
 		m_fill = 0.1f;
@@ -1572,6 +1570,9 @@ public:
 		m_columnCount = g_sampleDebug ? 100 : 1000;
 		m_minTime = 1e6f;
 		m_drawIndex = 0;
+		m_topDown = false;
+		m_buildTime = 0.0f;
+		m_radius = 0.1f;
 
 		g_seed = 1234;
 		int sampleCount = g_sampleDebug ? 100 : 10000;
@@ -1598,6 +1599,8 @@ public:
 		b2DestroyWorld( m_worldId );
 		b2WorldDef worldDef = b2DefaultWorldDef();
 		m_worldId = b2CreateWorld( &worldDef );
+
+		b2Timer timer = b2CreateTimer();
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -1652,11 +1655,19 @@ public:
 
 			y += m_grid;
 		}
+
+		if (m_topDown)
+		{
+			b2World_RebuildStaticTree( m_worldId );
+		}
+
+		m_buildTime = b2GetMilliseconds( &timer );
+		m_minTime = 1e6f;
 	}
 
 	void UpdateUI() override
 	{
-		float height = 220.0f;
+		float height = 240.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
 
@@ -1665,6 +1676,24 @@ public:
 		ImGui::PushItemWidth( 100.0f );
 
 		bool changed = false;
+
+		const char* queryTypes[] = { "Ray", "Circle", "Overlap" };
+		int queryType = int( m_queryType );
+		if (ImGui::Combo( "Query", &queryType, queryTypes, IM_ARRAYSIZE( queryTypes ) ))
+		{
+			m_queryType = QueryType( queryType );
+			if ( m_queryType == e_overlap )
+			{
+				m_radius = 5.0f;
+			}
+			else
+			{
+				m_radius = 0.1f;
+			}
+
+			changed = true;
+		}
+
 		if ( ImGui::SliderInt( "rows", &m_rowCount, 0, 1000, "%d" ) )
 		{
 			changed = true;
@@ -1690,10 +1719,10 @@ public:
 			changed = true;
 		}
 
-		const char* queryTypes[] = { "Ray Cast", "Circle Cast", "Overlap" };
-		int queryType = int( m_queryType );
-		changed = changed || ImGui::Combo( "Query", &queryType, queryTypes, IM_ARRAYSIZE( queryTypes ) );
-		m_queryType = QueryType( queryType );
+		if ( ImGui::Checkbox( "top down", &m_topDown ) )
+		{
+			changed = true;
+		}
 
 		if ( ImGui::Button( "Draw Next" ) )
 		{
@@ -1707,6 +1736,41 @@ public:
 		{
 			BuildScene();
 		}
+	}
+
+	struct CastResult
+	{
+		b2Vec2 point;
+		float fraction;
+		bool hit;
+	};
+
+	static float CastCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
+	{
+		CastResult* result = (CastResult*)context;
+		result->point = point;
+		result->fraction = fraction;
+		result->hit = true;
+		return fraction;
+	}
+
+	struct OverlapResult
+	{
+		b2Vec2 points[32];
+		int count;
+	};
+
+	static bool OverlapCallback( b2ShapeId shapeId, void* context )
+	{
+		OverlapResult* result = (OverlapResult*)context;
+		if (result->count < 32)
+		{
+			b2AABB aabb = b2Shape_GetAABB( shapeId );
+			result->points[result->count] = b2AABB_Center( aabb );
+			result->count += 1;
+		}
+
+		return true;
 	}
 
 	void Step( Settings& settings ) override
@@ -1731,12 +1795,6 @@ public:
 			{
 				b2Vec2 origin = m_origins[i];
 				b2Vec2 translation = m_translations[i];
-
-				// todo for breakpoint
-				if (i == 2)
-				{
-					i += 0;
-				}
 
 				b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, filter );
 
@@ -1764,6 +1822,91 @@ public:
 				g_draw.DrawPoint( drawResult.point, 5.0f, b2_colorWhite );
 			}
 		}
+		else if ( m_queryType == e_circleCast )
+		{
+			b2Timer timer = b2CreateTimer();
+
+			b2Circle circle = { { 0.0f, 0.0f }, m_radius };
+			CastResult drawResult = {};
+
+			for ( int i = 0; i < sampleCount; ++i )
+			{
+				b2Transform origin = { m_origins[i], { 1.0f, 0.0f } };
+				b2Vec2 translation = m_translations[i];
+
+				CastResult result;
+				b2TreeStats traversalResult =
+					b2World_CastCircle( m_worldId, &circle, origin, translation, filter, CastCallback, &result );
+
+				if (i == m_drawIndex)
+				{
+					drawResult = result;
+				}
+
+				nodeVisits += traversalResult.nodeVisits;
+				leafVisits += traversalResult.leafVisits;
+				hitCount += result.hit ? 1 : 0;
+			}
+
+			ms = b2GetMilliseconds( &timer );
+
+			m_minTime = b2MinFloat( m_minTime, ms );
+
+			b2Vec2 p1 = m_origins[m_drawIndex];
+			b2Vec2 p2 = p1 + m_translations[m_drawIndex];
+			g_draw.DrawSegment( p1, p2, b2_colorWhite );
+			g_draw.DrawPoint( p1, 5.0f, b2_colorGreen );
+			g_draw.DrawPoint( p2, 5.0f, b2_colorRed );
+			if (drawResult.hit)
+			{
+				b2Vec2 t = b2Lerp( p1, p2, drawResult.fraction );
+				g_draw.DrawCircle( t, m_radius, b2_colorWhite );
+				g_draw.DrawPoint( drawResult.point, 5.0f, b2_colorWhite );
+			}
+		}
+		else if ( m_queryType == e_overlap )
+		{
+			b2Timer timer = b2CreateTimer();
+
+			OverlapResult drawResult = {};
+			b2Vec2 extent = { m_radius, m_radius };
+			OverlapResult result = {};
+
+			for ( int i = 0; i < sampleCount; ++i )
+			{
+				b2Vec2 origin = m_origins[i];
+				b2AABB aabb = { origin - extent, origin + extent };	
+
+				result.count = 0;
+				b2TreeStats traversalResult = b2World_OverlapAABB( m_worldId, aabb, filter, OverlapCallback, &result );
+
+				if (i == m_drawIndex)
+				{
+					drawResult = result;
+				}
+
+				nodeVisits += traversalResult.nodeVisits;
+				leafVisits += traversalResult.leafVisits;
+				hitCount += result.count;
+			}
+
+			ms = b2GetMilliseconds( &timer );
+
+			m_minTime = b2MinFloat( m_minTime, ms );
+
+			b2Vec2 origin = m_origins[m_drawIndex];
+			b2AABB aabb = { origin - extent, origin + extent };	
+
+			g_draw.DrawAABB( aabb, b2_colorWhite );
+
+			for (int i = 0; i < drawResult.count; ++i)
+			{
+				g_draw.DrawPoint( drawResult.points[i], 5.0f, b2_colorHotPink );
+			}
+		}
+
+		g_draw.DrawString( 5, m_textLine, "build time ms = %g", m_buildTime );
+		m_textLine += m_textIncrement;
 
 		g_draw.DrawString( 5, m_textLine, "hit count = %d, node visits = %d, leaf visits = %d", hitCount, nodeVisits, leafVisits );
 		m_textLine += m_textIncrement;
@@ -1775,7 +1918,7 @@ public:
 		m_textLine += m_textIncrement;
 
 		float aveRayCost = 1000.0f * m_minTime / float( sampleCount );
-		g_draw.DrawString( 5, m_textLine, "average ray us = %.2f", aveRayCost );
+		g_draw.DrawString( 5, m_textLine, "average us = %.2f", aveRayCost );
 		m_textLine += m_textIncrement;
 	}
 
@@ -1789,14 +1932,16 @@ public:
 	std::vector<b2Vec2> m_origins;
 	std::vector<b2Vec2> m_translations;
 	float m_minTime;
+	float m_buildTime;
 
 	int m_rowCount, m_columnCount;
 	int m_updateType;
 	int m_drawIndex;
+	float m_radius;
 	float m_fill;
 	float m_ratio;
 	float m_grid;
+	bool m_topDown;
 };
 
 static int sampleCast = RegisterSample( "Benchmark", "Cast", BenchmarkCast::Create );
-#endif

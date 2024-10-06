@@ -566,16 +566,16 @@ B2_API b2Manifold b2CollideSegmentAndPolygon( const b2Segment* segmentA, b2Trans
 											  b2Transform xfB );
 
 /// Compute the contact manifold between a chain segment and a circle
-B2_API b2Manifold b2CollideChainSegmentAndCircle( const b2ChainSegment* segmentA, b2Transform xfA,
-												   const b2Circle* circleB, b2Transform xfB );
+B2_API b2Manifold b2CollideChainSegmentAndCircle( const b2ChainSegment* segmentA, b2Transform xfA, const b2Circle* circleB,
+												  b2Transform xfB );
 
 /// Compute the contact manifold between a chain segment and a capsule
-B2_API b2Manifold b2CollideChainSegmentAndCapsule( const b2ChainSegment* segmentA, b2Transform xfA,
-													const b2Capsule* capsuleB, b2Transform xfB, b2DistanceCache* cache );
+B2_API b2Manifold b2CollideChainSegmentAndCapsule( const b2ChainSegment* segmentA, b2Transform xfA, const b2Capsule* capsuleB,
+												   b2Transform xfB, b2DistanceCache* cache );
 
 /// Compute the contact manifold between a chain segment and a rounded polygon
-B2_API b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Transform xfA,
-													const b2Polygon* polygonB, b2Transform xfB, b2DistanceCache* cache );
+B2_API b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Transform xfA, const b2Polygon* polygonB,
+												   b2Transform xfB, b2DistanceCache* cache );
 
 /**@}*/
 
@@ -636,7 +636,7 @@ typedef struct b2TreeNode
 	}; // 4
 
 	uint16_t height; // 2
-	uint16_t flags; // 2
+	uint16_t flags;	 // 2
 } b2TreeNode;
 
 /// The dynamic tree structure. This should be considered private data.
@@ -677,12 +677,15 @@ typedef struct b2DynamicTree
 	int32_t rebuildCapacity;
 } b2DynamicTree;
 
-/// These are performance results returned by BVH queries.
-typedef struct b2TraversalResult
+/// These are performance results returned by dynamic tree queries.
+typedef struct b2TreeStats
 {
+	/// Number of internal nodes visited during the query
 	int32_t nodeVisits;
+
+	/// Number of leaf nodes visited during the query
 	int32_t leafVisits;
-} b2TraversalResult;
+} b2TreeStats;
 
 /// Constructing the tree initializes the node pool.
 B2_API b2DynamicTree b2DynamicTree_Create( void );
@@ -707,8 +710,9 @@ B2_API void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int32_t proxyId, b2
 typedef bool b2TreeQueryCallbackFcn( int32_t proxyId, int32_t userData, void* context );
 
 /// Query an AABB for overlapping proxies. The callback class is called for each proxy that overlaps the supplied AABB.
-B2_API void b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_t maskBits, b2TreeQueryCallbackFcn* callback,
-								 void* context );
+///	@return performance data
+B2_API b2TreeStats b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_t maskBits,
+											  b2TreeQueryCallbackFcn* callback, void* context );
 
 /// This function receives clipped ray cast input for a proxy. The function
 /// returns the new ray fraction.
@@ -730,8 +734,8 @@ typedef float b2TreeRayCastCallbackFcn( const b2RayCastInput* input, int32_t pro
 /// @param callback a callback class that is called for each proxy that is hit by the ray
 /// @param context user context that is passed to the callback
 ///	@return performance data
-B2_API b2TraversalResult b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
-								   b2TreeRayCastCallbackFcn* callback, void* context );
+B2_API b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
+												b2TreeRayCastCallbackFcn* callback, void* context );
 
 /// This function receives clipped ray cast input for a proxy. The function
 /// returns the new ray fraction.
@@ -750,8 +754,9 @@ typedef float b2TreeShapeCastCallbackFcn( const b2ShapeCastInput* input, int32_t
 /// @param maskBits filter bits: `bool accept = (maskBits & node->categoryBits) != 0;`
 /// @param callback a callback class that is called for each proxy that is hit by the shape
 /// @param context user context that is passed to the callback
-B2_API void b2DynamicTree_ShapeCast( const b2DynamicTree* tree, const b2ShapeCastInput* input, uint64_t maskBits,
-									 b2TreeShapeCastCallbackFcn* callback, void* context );
+///	@return performance data
+B2_API b2TreeStats b2DynamicTree_ShapeCast( const b2DynamicTree* tree, const b2ShapeCastInput* input, uint64_t maskBits,
+												  b2TreeShapeCastCallbackFcn* callback, void* context );
 
 /// Validate this tree. For testing.
 B2_API void b2DynamicTree_Validate( const b2DynamicTree* tree );
