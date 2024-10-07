@@ -1260,25 +1260,6 @@ void b2Body_ApplyMassFromShapes( b2BodyId bodyId )
 	b2UpdateBodyMassData( world, body );
 }
 
-void b2Body_SetAutomaticMass( b2BodyId bodyId, bool automaticMass )
-{
-	b2World* world = b2GetWorldLocked( bodyId.world0 );
-	if ( world == NULL )
-	{
-		return;
-	}
-
-	b2Body* body = b2GetBodyFullId( world, bodyId );
-	body->automaticMass = automaticMass;
-}
-
-bool b2Body_GetAutomaticMass( b2BodyId bodyId )
-{
-	b2World* world = b2GetWorld( bodyId.world0 );
-	b2Body* body = b2GetBodyFullId( world, bodyId );
-	return body->automaticMass;
-}
-
 void b2Body_SetLinearDamping( b2BodyId bodyId, float linearDamping )
 {
 	B2_ASSERT( b2IsValid( linearDamping ) && linearDamping >= 0.0f );

@@ -346,13 +346,6 @@ B2_API b2MassData b2Body_GetMassData( b2BodyId bodyId );
 /// You should call this regardless of body type.
 B2_API void b2Body_ApplyMassFromShapes( b2BodyId bodyId );
 
-/// Set the automatic mass setting. Normally this is set in b2BodyDef before creation.
-/// @see b2BodyDef::automaticMass
-B2_API void b2Body_SetAutomaticMass( b2BodyId bodyId, bool automaticMass );
-
-/// Get the automatic mass setting
-B2_API bool b2Body_GetAutomaticMass( b2BodyId bodyId );
-
 /// Adjust the linear damping. Normally this is set in b2BodyDef before creation.
 B2_API void b2Body_SetLinearDamping( b2BodyId bodyId, float linearDamping );
 
