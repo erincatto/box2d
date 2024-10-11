@@ -79,6 +79,7 @@ static const b2Mat22 b2Mat22_zero = { { 0.0f, 0.0f }, { 0.0f, 0.0f } };
 /// Compute an approximate arctangent in the range [-pi, pi]
 /// This is hand coded for cross platform determinism. The atan2f
 /// function in the standard library is not cross platform deterministic.
+///	Accurate to around 0.0023 degrees
 B2_API float b2Atan2( float y, float x );
 
 /// @return the minimum of two floats

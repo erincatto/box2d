@@ -54,7 +54,11 @@ B2_API b2ContactEvents b2World_GetContactEvents( b2WorldId worldId );
 B2_API b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter filter, b2OverlapResultFcn* fcn,
 											  void* context );
 
-/// Overlap test for for all shapes that overlap the provided circle
+/// Overlap test for for all shapes that overlap the provided point.
+B2_API b2TreeStats b2World_OverlapPoint( b2WorldId worldId, b2Vec2 point, b2Transform transform,
+												b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
+
+/// Overlap test for for all shapes that overlap the provided circle. A zero radius may be used for a point query.
 B2_API b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2Transform transform,
 												b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
 
