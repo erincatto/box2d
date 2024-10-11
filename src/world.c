@@ -1962,6 +1962,13 @@ static bool TreeOverlapCallback( int proxyId, int shapeId, void* context )
 	return result;
 }
 
+b2TreeStats b2World_OverlapPoint( b2WorldId worldId, b2Vec2 point, b2Transform transform, b2QueryFilter filter,
+								  b2OverlapResultFcn* fcn, void* context )
+{
+	b2Circle circle = { point, 0.0f };
+	return b2World_OverlapCircle( worldId, &circle, transform, filter, fcn, context );
+}
+
 b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2Transform transform, b2QueryFilter filter,
 							b2OverlapResultFcn* fcn, void* context )
 {
