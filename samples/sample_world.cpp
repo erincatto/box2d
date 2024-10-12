@@ -44,7 +44,7 @@ public:
 
 			// Setting this to false significantly reduces the cost of creating
 			// static bodies and shapes.
-			shapeDef.forceContactCreation = false;
+			shapeDef.invokeContactCreation = false;
 
 			float height = 4.0f;
 			float xBody = xStart;

@@ -141,6 +141,59 @@ float b2PrismaticJoint_GetMaxMotorForce( b2JointId jointId )
 	return joint->prismaticJoint.maxMotorForce;
 }
 
+float b2PrismaticJoint_GetJointTranslation(b2JointId jointId)
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2JointSim* jointSim = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Transform transformA = b2GetBodyTransform( world, jointSim->bodyIdA );
+	b2Transform transformB = b2GetBodyTransform( world, jointSim->bodyIdB );
+
+	b2PrismaticJoint* joint = &jointSim->prismaticJoint;
+	b2Vec2 axisA = b2RotateVector( transformA.q, joint->localAxisA );
+	b2Vec2 pA = b2TransformPoint( transformA, jointSim->localOriginAnchorA );
+	b2Vec2 pB = b2TransformPoint( transformB, jointSim->localOriginAnchorB );
+	b2Vec2 d = b2Sub( pB, pA );
+	float translation = b2Dot( d, axisA );
+	return translation;
+}
+
+float b2PrismaticJoint_GetJointSpeed(b2JointId jointId)
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	B2_ASSERT( joint->type == b2_prismaticJoint );
+	b2JointSim* jointSim = b2GetJointSim( world, joint );
+	B2_ASSERT( jointSim->type == b2_prismaticJoint );
+
+	b2Body* bodyA = b2BodyArray_Get( &world->bodies, jointSim->bodyIdA );
+	b2Body* bodyB = b2BodyArray_Get( &world->bodies, jointSim->bodyIdB );
+	b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
+	b2BodySim* bodySimB = b2GetBodySim( world, bodyB );
+	b2BodyState* bodyStateA = b2GetBodyState( world, bodyA );
+	b2BodyState* bodyStateB = b2GetBodyState( world, bodyB );
+
+	b2Transform transformA = bodySimA->transform;
+	b2Transform transformB = bodySimB->transform;
+
+	b2PrismaticJoint* prismatic = &jointSim->prismaticJoint;
+	b2Vec2 axisA = b2RotateVector( transformA.q, prismatic->localAxisA );
+	b2Vec2 cA = bodySimA->center;
+	b2Vec2 cB = bodySimB->center;
+	b2Vec2 rA = b2RotateVector( transformA.q, b2Sub( jointSim->localOriginAnchorA, bodySimA->localCenter ) );
+	b2Vec2 rB = b2RotateVector( transformB.q, b2Sub( jointSim->localOriginAnchorB, bodySimB->localCenter ) );
+
+	b2Vec2 d = b2Add(b2Sub(cB, cA), b2Sub( rB, rA ));
+
+	b2Vec2 vA = bodyStateA ? bodyStateA->linearVelocity : b2Vec2_zero;
+	b2Vec2 vB = bodyStateB ? bodyStateB->linearVelocity : b2Vec2_zero;
+	float wA = bodyStateA ? bodyStateA->angularVelocity : 0.0f;
+	float wB = bodyStateB ? bodyStateB->angularVelocity : 0.0f;
+
+	b2Vec2 vRel = b2Sub( b2Add( vB, b2CrossSV( wB, rB ) ), b2Add( vA, b2CrossSV( wA, rA ) ) );
+	float speed = b2Dot( d, b2CrossSV( wA, axisA ) ) + b2Dot( axisA, vRel );
+	return speed;
+}
+
 b2Vec2 b2GetPrismaticJointForce( b2World* world, b2JointSim* base )
 {
 	int idA = base->bodyIdA;

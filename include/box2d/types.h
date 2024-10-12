@@ -362,8 +362,8 @@ typedef struct b2ShapeDef
 	/// Normally shapes on static bodies don't invoke contact creation when they are added to the world. This overrides
 	/// that behavior and causes contact creation. This significantly slows down static body creation which can be important
 	/// when there are many static shapes.
-	/// This is implicitly always true for sensors.
-	bool forceContactCreation;
+	/// This is implicitly always true for sensors, dynamic bodies, and kinematic bodies.
+	bool invokeContactCreation;
 
 	/// Should the body update the mass properties when this shape is created. Default is true.
 	bool updateBodyMass;

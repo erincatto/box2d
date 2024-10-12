@@ -90,7 +90,7 @@ b2ExplosionDef b2DefaultExplosionDef(void)
 	return def;
 }
 
-static b2Joint* b2GetJointFullId( b2World* world, b2JointId jointId )
+b2Joint* b2GetJointFullId( b2World* world, b2JointId jointId )
 {
 	int id = jointId.index1 - 1;
 	b2Joint* joint = b2JointArray_Get( &world->joints, id );
