@@ -189,11 +189,6 @@ static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 	// There can easily be scenarios where the static proxy is in the moveSet but the dynamic proxy is not.
 	// I could have some flag to indicate that there are any static bodies in the moveSet.
 	
-	// Strategy to reduce moveSet checks:
-	// If the query proxy is dynamic and the tree dynamic -> lowest key checks move set
-	// If the query proxy is dynamic and the tree is kinematic or static -> don't check the move set
-	// If the query proxy is static or kinematic -> always check the move set (the tree must be dynamic)
-
 	// Is this proxy also moving?
 	if ( queryProxyType == b2_dynamicBody)
 	{

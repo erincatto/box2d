@@ -2110,8 +2110,11 @@ public:
 	{
 		if ( settings.restart == false )
 		{
-			g_camera.m_center = { 0.0f, 3.0f };
-			g_camera.m_zoom = 25.0f * 0.15f;
+			g_camera.m_center = { 0.0f, 12.0f };
+			g_camera.m_zoom = 16.0f;
+
+			//g_camera.m_center = { 0.0f, 26.0f };
+			//g_camera.m_zoom = 1.0f;
 		}
 
 		{
@@ -2122,12 +2125,17 @@ public:
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
-		m_jointFrictionTorque = 0.05f;
-		m_jointHertz = 0.0f;
+		m_jointFrictionTorque = 0.03f;
+		m_jointHertz = 5.0f;
 		m_jointDampingRatio = 0.5f;
 
-		m_human.Spawn( m_worldId, { 0.0f, 5.0f }, 1.0f, m_jointFrictionTorque, m_jointHertz, m_jointDampingRatio, 1, nullptr,
-					   true );
+		Spawn();
+	}
+
+	void Spawn()
+	{
+		m_human.Spawn( m_worldId, { 0.0f, 25.0f }, 1.0f, m_jointFrictionTorque, m_jointHertz, m_jointDampingRatio, 1, nullptr,
+					   false );
 		m_human.ApplyRandomAngularImpulse( 10.0f );
 	}
 
@@ -2155,6 +2163,11 @@ public:
 			m_human.SetJointDampingRatio( m_jointDampingRatio );
 		}
 
+		if ( ImGui::Button( "Respawn" ) )
+		{
+			m_human.Despawn();
+			Spawn();
+		}
 		ImGui::PopItemWidth();
 		ImGui::End();
 	}

@@ -178,7 +178,12 @@ public:
 		else
 		{
 			Human* human = m_humans + index;
-			human->Spawn( m_worldId, center, 2.0f, 0.05f, 0.0f, 0.0f, index + 1, human, false );
+			float scale = 2.0f;
+			float jointFriction = 0.05f;
+			float jointHertz = 6.0f;
+			float jointDamping = 0.5f;
+			bool colorize = true;
+			human->Spawn( m_worldId, center, scale, jointFriction, jointHertz, jointDamping, index + 1, human, colorize );
 		}
 
 		m_isSpawned[index] = true;

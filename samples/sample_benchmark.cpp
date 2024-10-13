@@ -28,7 +28,7 @@ public:
 	enum
 	{
 		e_maxColumns = 26,
-		e_maxRows = 130,
+		e_maxRows = 150,
 	};
 
 	explicit BenchmarkBarrel( Settings& settings )
@@ -42,24 +42,43 @@ public:
 
 		settings.drawJoints = false;
 
-		float groundSize = 25.0f;
-
 		{
+			float gridSize = 1.0f;
+		
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Polygon box = b2MakeBox( groundSize, 1.2f );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 1.2f, 2.0f * groundSize, { -groundSize, 2.0f * groundSize }, b2Rot_identity );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			float y = 0.0f;
+			float x = -40.0f * gridSize;
+			for (int i = 0; i < 81; ++i)
+			{
+				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, {x, y}, b2Rot_identity );
+				b2CreatePolygonShape( groundId, &shapeDef, &box );
+				x += gridSize;
+			}
+			
+			y = gridSize;
+			x = -40.0f * gridSize;
+			for (int i = 0; i < 100; ++i)
+			{
+				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, { x, y }, b2Rot_identity );
+				b2CreatePolygonShape( groundId, &shapeDef, &box );
+				y += gridSize;
+			}
 
-			box = b2MakeOffsetBox( 1.2f, 2.0f * groundSize, { groundSize, 2.0f * groundSize }, b2Rot_identity );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			y = gridSize;
+			x = 40.0f * gridSize;
+			for ( int i = 0; i < 100; ++i )
+			{
+				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, { x, y }, b2Rot_identity );
+				b2CreatePolygonShape( groundId, &shapeDef, &box );
+				y += gridSize;
+			}
 
-			box = b2MakeOffsetBox( 800.0f, 10.0f, { 0.0f, -80.0f }, b2Rot_identity );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			b2Segment segment = { { -800.0f, -80.0f }, { 800.0f, -80.f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
 		for ( int i = 0; i < e_maxRows * e_maxColumns; ++i )
@@ -67,7 +86,7 @@ public:
 			m_bodies[i] = b2_nullBodyId;
 		}
 
-		m_shapeType = e_circleShape;
+		m_shapeType = e_compoundShape;
 
 		CreateScene();
 	}
@@ -109,8 +128,7 @@ public:
 			}
 			else
 			{
-				m_columnCount = 15;
-				m_rowCount = 50;
+				m_rowCount = 30;
 			}
 		}
 
@@ -122,6 +140,12 @@ public:
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
+
+		// todo eliminate this once rolling resistance is added
+		if (m_shapeType == e_mixShape)
+		{
+			bodyDef.angularDamping = 0.3f;
+		}
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
@@ -170,6 +194,7 @@ public:
 		}
 
 		int index = 0;
+		float yStart = m_shapeType == e_humanShape ? 2.0f : 100.0f;
 
 		for ( int i = 0; i < m_columnCount; ++i )
 		{
@@ -177,7 +202,7 @@ public:
 
 			for ( int j = 0; j < m_rowCount; ++j )
 			{
-				float y = j * ( shift + extray ) + centery + 2.0f;
+				float y = j * ( shift + extray ) + centery + yStart;
 
 				bodyDef.position = { x + side, y };
 				side = -side;
@@ -244,7 +269,11 @@ public:
 				}
 				else if ( m_shapeType == e_humanShape )
 				{
-					m_humans[index].Spawn( m_worldId, bodyDef.position, 3.5f, 0.05f, 0.0f, 0.0f, index + 1, nullptr, false );
+					float scale = 3.5f;
+					float jointFriction = 0.05f;
+					float jointHertz = 5.0f;
+					float jointDamping = 0.5f;
+					m_humans[index].Spawn( m_worldId, bodyDef.position, scale, jointFriction, jointHertz, jointDamping, index + 1, nullptr, false );
 				}
 
 				index += 1;

@@ -859,6 +859,21 @@ B2_API float b2MouseJoint_GetMaxForce( b2JointId jointId );
 /**@}*/
 
 /**
+ * @defgroup null_joint Null Joint
+ * @brief Functions for the null joint.
+ *
+ * The null joint is used to disable collision between two bodies. As a side effect of being a joint, it also
+ * keeps the two bodies in the same simulation island.
+ * @{
+ */
+
+/// Create a null joint.
+/// @see b2NullJointDef for details
+B2_API b2JointId b2CreateNullJoint( b2WorldId worldId, const b2NullJointDef* def );
+
+/**@}*/
+
+/**
  * @defgroup prismatic_joint Prismatic Joint
  * @brief A prismatic joint allows for translation along a single axis with no rotation.
  *
