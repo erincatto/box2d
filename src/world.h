@@ -151,6 +151,8 @@ typedef struct b2World
 	void* userTaskContext;
 	void* userTreeTask;
 
+	void* userData;
+
 	// Remember type step used for reporting forces and torques
 	float inv_h;
 

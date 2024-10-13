@@ -133,6 +133,8 @@ typedef struct b2WorldDef
 	void* userTaskContext;
 
 	/// User data
+	void* userData;
+
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int32_t internalValue;
 } b2WorldDef;

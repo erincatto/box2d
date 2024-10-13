@@ -189,6 +189,12 @@ B2_API b2Profile b2World_GetProfile( b2WorldId worldId );
 /// Get world counters and sizes
 B2_API b2Counters b2World_GetCounters( b2WorldId worldId );
 
+/// Set the user data pointer.
+B2_API void b2World_SetUserData( b2WorldId worldId, void* userData );
+
+/// Get the user data pointer.
+B2_API void* b2World_GetUserData( b2WorldId worldId );
+
 /// Dump memory stats to box2d_memory.txt
 B2_API void b2World_DumpMemoryStats( b2WorldId worldId );
 
