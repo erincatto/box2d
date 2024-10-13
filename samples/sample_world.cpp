@@ -71,7 +71,7 @@ public:
 
 				for ( int j = 0; j < ycount; ++j )
 				{
-					b2Polygon square = b2MakeOffsetBox( 0.4f * m_gridSize, 0.4f * m_gridSize, { xShape, y }, b2Rot_identity );
+					b2Polygon square = b2MakeOffsetBox( 0.4f * m_gridSize, 0.4f * m_gridSize, { { xShape, y }, b2Rot_identity } );
 					square.radius = 0.1f;
 					b2CreatePolygonShape( groundId, &shapeDef, &square );
 

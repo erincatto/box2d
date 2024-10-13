@@ -2492,7 +2492,7 @@ public:
 		// box-capsule
 		{
 			b2Capsule capsule = { { -0.4f, 0.0f }, { -0.1f, 0.0f }, 0.1f };
-			b2Polygon box = b2MakeOffsetBox( 0.25f, 1.0f, { 1.0f, -1.0f }, b2MakeRot(0.25f * b2_pi) );
+			b2Polygon box = b2MakeOffsetBox( 0.25f, 1.0f, { { 1.0f, -1.0f }, b2MakeRot( 0.25f * b2_pi ) } );
 
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
@@ -2663,6 +2663,27 @@ public:
 		}
 
 		offset = { -10.0f, 5.0f };
+
+		// box-triangle
+		{
+			b2Polygon box = b2MakeBox( 1.0f, 1.0f );
+			b2Vec2 points[3] = { { -0.05f, 0.0f }, { 0.05f, 0.0f }, { 0.0f, 0.1f } };
+			b2Hull hull = b2ComputeHull( points, 3 );
+			b2Polygon tri = b2MakePolygon( &hull, 0.0f );
+
+			b2Transform transform1 = { offset, b2Rot_identity };
+			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
+			// b2Transform transform2 = {b2Add({0.0f, -0.1f}, offset), {0.0f, 1.0f}};
+
+			b2Manifold m = b2CollidePolygons( &box, transform1, &tri, transform2 );
+
+			g_draw.DrawSolidPolygon( transform1, box.vertices, box.count, 0.0f, color1 );
+			g_draw.DrawSolidPolygon( transform2, tri.vertices, tri.count, 0.0f, color2 );
+
+			DrawManifold( &m, transform1.p, transform2.p );
+
+			offset = b2Add( offset, increment );
+		}
 
 		// chain-segment vs circle
 		{

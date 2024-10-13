@@ -29,7 +29,7 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Polygon box = b2MakeOffsetBox( 50.0f, 1.0f, { 0.0f, -1.0f }, b2Rot_identity );
+			b2Polygon box = b2MakeOffsetBox( 50.0f, 1.0f, { { 0.0f, -1.0f }, b2Rot_identity } );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 
@@ -90,7 +90,7 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Polygon box = b2MakeOffsetBox( 50.0f, 1.0f, { 0.0f, -1.0f }, b2Rot_identity );
+			b2Polygon box = b2MakeOffsetBox( 50.0f, 1.0f, { { 0.0f, -1.0f }, b2Rot_identity } );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 
@@ -100,9 +100,6 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 
 			float extent = 1.0f;
-			b2Vec2 points[3] = { { -0.5f * extent, 0.0f }, { 0.5f * extent, 0.0f }, { 0.0f, 1.0f * extent } };
-			b2Hull hull = b2ComputeHull( points, 3 );
-			b2Polygon smallTriangle = b2MakePolygon( &hull, 0.0f );
 			b2Polygon smallBox = b2MakeBox( 0.5f * extent, 0.5f * extent );
 			b2Polygon bigBox = b2MakeBox( 10.0f * extent, 10.0f * extent );
 
@@ -133,6 +130,66 @@ public:
 };
 
 static int sampleIndex2 = RegisterSample( "Robustness", "HighMassRatio2", HighMassRatio2::Create );
+
+// Big box on small triangles
+class HighMassRatio3 : public Sample
+{
+public:
+	explicit HighMassRatio3( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 16.5f };
+			g_camera.m_zoom = 25.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Polygon box = b2MakeOffsetBox( 50.0f, 1.0f, { { 0.0f, -1.0f }, b2Rot_identity } );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+			float extent = 1.0f;
+			b2Vec2 points[3] = { { -0.5f * extent, 0.0f }, { 0.5f * extent, 0.0f }, { 0.0f, 1.0f * extent } };
+			b2Hull hull = b2ComputeHull( points, 3 );
+			b2Polygon smallTriangle = b2MakePolygon( &hull, 0.0f );
+			b2Polygon bigBox = b2MakeBox( 10.0f * extent, 10.0f * extent );
+
+			{
+				bodyDef.position = { -9.0f * extent, 0.5f * extent };
+				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+				b2CreatePolygonShape( bodyId, &shapeDef, &smallTriangle );
+			}
+
+			{
+				bodyDef.position = { 9.0f * extent, 0.5f * extent };
+				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+				b2CreatePolygonShape( bodyId, &shapeDef, &smallTriangle );
+			}
+
+			{
+				bodyDef.position = { 0.0f, ( 10.0f + 4.0f ) * extent };
+				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+				b2CreatePolygonShape( bodyId, &shapeDef, &bigBox );
+			}
+		}
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new HighMassRatio3( settings );
+	}
+};
+
+static int sampleIndex3 = RegisterSample( "Robustness", "HighMassRatio3", HighMassRatio3::Create );
 
 class OverlapRecovery : public Sample
 {

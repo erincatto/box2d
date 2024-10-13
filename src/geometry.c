@@ -151,16 +151,15 @@ b2Polygon b2MakeBox( float hx, float hy )
 
 b2Polygon b2MakeRoundedBox( float hx, float hy, float radius )
 {
+	B2_ASSERT( b2IsValid( radius ) && radius >= 0.0f );
 	b2Polygon shape = b2MakeBox( hx, hy );
 	shape.radius = radius;
 	return shape;
 }
 
-b2Polygon b2MakeOffsetBox( float hx, float hy, b2Vec2 center, b2Rot rotation )
+b2Polygon b2MakeOffsetBox( float hx, float hy, b2Transform transform )
 {
-	b2Transform xf;
-	xf.p = center;
-	xf.q = rotation;
+	b2Transform xf = transform;
 
 	b2Polygon shape = { 0 };
 	shape.count = 4;
@@ -173,7 +172,27 @@ b2Polygon b2MakeOffsetBox( float hx, float hy, b2Vec2 center, b2Rot rotation )
 	shape.normals[2] = b2RotateVector( xf.q, ( b2Vec2 ){ 0.0f, 1.0f } );
 	shape.normals[3] = b2RotateVector( xf.q, ( b2Vec2 ){ -1.0f, 0.0f } );
 	shape.radius = 0.0f;
-	shape.centroid = center;
+	shape.centroid = xf.p;
+	return shape;
+}
+
+b2Polygon b2MakeOffsetRoundedBox( float hx, float hy, b2Transform transform, float radius )
+{
+	B2_ASSERT( b2IsValid( radius ) && radius >= 0.0f );
+	b2Transform xf = transform;
+
+	b2Polygon shape = { 0 };
+	shape.count = 4;
+	shape.vertices[0] = b2TransformPoint( xf, ( b2Vec2 ){ -hx, -hy } );
+	shape.vertices[1] = b2TransformPoint( xf, ( b2Vec2 ){ hx, -hy } );
+	shape.vertices[2] = b2TransformPoint( xf, ( b2Vec2 ){ hx, hy } );
+	shape.vertices[3] = b2TransformPoint( xf, ( b2Vec2 ){ -hx, hy } );
+	shape.normals[0] = b2RotateVector( xf.q, ( b2Vec2 ){ 0.0f, -1.0f } );
+	shape.normals[1] = b2RotateVector( xf.q, ( b2Vec2 ){ 1.0f, 0.0f } );
+	shape.normals[2] = b2RotateVector( xf.q, ( b2Vec2 ){ 0.0f, 1.0f } );
+	shape.normals[3] = b2RotateVector( xf.q, ( b2Vec2 ){ -1.0f, 0.0f } );
+	shape.radius = radius;
+	shape.centroid = xf.p;
 	return shape;
 }
 

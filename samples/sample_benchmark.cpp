@@ -54,7 +54,7 @@ public:
 			float x = -40.0f * gridSize;
 			for (int i = 0; i < 81; ++i)
 			{
-				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, {x, y}, b2Rot_identity );
+				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, { { x, y }, b2Rot_identity } );
 				b2CreatePolygonShape( groundId, &shapeDef, &box );
 				x += gridSize;
 			}
@@ -63,7 +63,7 @@ public:
 			x = -40.0f * gridSize;
 			for (int i = 0; i < 100; ++i)
 			{
-				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, { x, y }, b2Rot_identity );
+				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize,{ { x, y }, b2Rot_identity } );
 				b2CreatePolygonShape( groundId, &shapeDef, &box );
 				y += gridSize;
 			}
@@ -72,7 +72,7 @@ public:
 			x = 40.0f * gridSize;
 			for ( int i = 0; i < 100; ++i )
 			{
-				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, { x, y }, b2Rot_identity );
+				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, { { x, y }, b2Rot_identity } );
 				b2CreatePolygonShape( groundId, &shapeDef, &box );
 				y += gridSize;
 			}
@@ -349,13 +349,13 @@ public:
 			shapeDef.density = 50.0f;
 
 			b2Polygon polygon;
-			polygon = b2MakeOffsetBox( 0.5f, 10.0f, { 10.0f, 0.0f }, b2Rot_identity );
+			polygon = b2MakeOffsetBox( 0.5f, 10.0f,{ { 10.0f, 0.0f }, b2Rot_identity } );
 			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-			polygon = b2MakeOffsetBox( 0.5f, 10.0f, { -10.0f, 0.0f }, b2Rot_identity );
+			polygon = b2MakeOffsetBox( 0.5f, 10.0f, { { -10.0f, 0.0f }, b2Rot_identity } );
 			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-			polygon = b2MakeOffsetBox( 10.0f, 0.5f, { 0.0f, 10.0f }, b2Rot_identity );
+			polygon = b2MakeOffsetBox( 10.0f, 0.5f, { { 0.0f, 10.0f }, b2Rot_identity } );
 			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-			polygon = b2MakeOffsetBox( 10.0f, 0.5f, { 0.0f, -10.0f }, b2Rot_identity );
+			polygon = b2MakeOffsetBox( 10.0f, 0.5f, { { 0.0f, -10.0f }, b2Rot_identity } );
 			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
 
 			shapeDef.customColor = b2_colorBlueViolet;
@@ -495,13 +495,13 @@ public:
 		shapeDef.density = 50.0f;
 
 		b2Polygon polygon;
-		polygon = b2MakeOffsetBox( 0.25f, 2.0f, { 2.0f, 0.0f }, b2Rot_identity );
+		polygon = b2MakeOffsetBox( 0.25f, 2.0f,{ { 2.0f, 0.0f }, b2Rot_identity } );
 		b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-		polygon = b2MakeOffsetBox( 0.25f, 2.0f, { -2.0f, 0.0f }, b2Rot_identity );
+		polygon = b2MakeOffsetBox( 0.25f, 2.0f, { { -2.0f, 0.0f }, b2Rot_identity } );
 		b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-		polygon = b2MakeOffsetBox( 2.0f, 0.25f, { 0.0f, 2.0f }, b2Rot_identity );
+		polygon = b2MakeOffsetBox( 2.0f, 0.25f, { { 0.0f, 2.0f }, b2Rot_identity } );
 		b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-		polygon = b2MakeOffsetBox( 2.0f, 0.25f, { 0.0f, -2.0f }, b2Rot_identity );
+		polygon = b2MakeOffsetBox( 2.0f, 0.25f, { { 0.0f, -2.0f }, b2Rot_identity } );
 		b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
 	}
 
@@ -1446,7 +1446,7 @@ public:
 				for ( int j = i; j < width; ++j )
 				{
 					float x = grid * j;
-					b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { x, y }, b2Rot_identity );
+					b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { { x, y }, b2Rot_identity } );
 					b2CreatePolygonShape( groundId, &shapeDef, &square );
 				}
 			}
@@ -1457,7 +1457,7 @@ public:
 				for ( int j = i; j < width; ++j )
 				{
 					float x = -grid * j;
-					b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { x, y }, b2Rot_identity );
+					b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { { x, y }, b2Rot_identity } );
 					b2CreatePolygonShape( groundId, &shapeDef, &square );
 				}
 			}
@@ -1494,7 +1494,7 @@ public:
 						for ( int j = 0; j < span; ++j )
 						{
 							float x = j * grid;
-							b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { x, y }, b2Rot_identity );
+							b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { { x, y }, b2Rot_identity } );
 							b2CreatePolygonShape( bodyId, &shapeDef, &square );
 						}
 					}
@@ -1553,7 +1553,7 @@ public:
 			for ( int j = -span; j < span; ++j )
 			{
 				float x = j * grid;
-				b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { x, y }, b2Rot_identity );
+				b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { { x, y }, b2Rot_identity } );
 				b2CreatePolygonShape( bodyId, &shapeDef, &square );
 			}
 		}

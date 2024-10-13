@@ -200,9 +200,15 @@ B2_API b2Polygon b2MakeRoundedBox( float hx, float hy, float radius );
 /// Make an offset box, bypassing the need for a convex hull.
 /// @param hx the half-width
 /// @param hy the half-height
-/// @param center the local position of the center of the box
-/// @param rotation the local rotation of the box
-B2_API b2Polygon b2MakeOffsetBox( float hx, float hy, b2Vec2 center, b2Rot rotation );
+/// @param transform the local position and rotation of the box
+B2_API b2Polygon b2MakeOffsetBox( float hx, float hy, b2Transform transform );
+
+/// Make an offset rounded box, bypassing the need for a convex hull.
+/// @param hx the half-width
+/// @param hy the half-height
+/// @param transform the local position and rotation of the box
+/// @param radius the radius of the rounded extension
+B2_API b2Polygon b2MakeOffsetRoundedBox( float hx, float hy, b2Transform transform, float radius );
 
 /// Transform a polygon. This is useful for transferring a shape from one body to another.
 B2_API b2Polygon b2TransformPolygon( b2Transform transform, const b2Polygon* polygon );
