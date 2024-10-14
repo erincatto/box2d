@@ -89,7 +89,12 @@ b2Polygon b2MakePolygon( const b2Hull* hull, float radius )
 	return shape;
 }
 
-b2Polygon b2MakeOffsetPolygon( const b2Hull* hull, float radius, b2Transform transform )
+b2Polygon b2MakeOffsetPolygon( const b2Hull* hull, b2Vec2 position, b2Rot rotation )
+{
+	return b2MakeOffsetRoundedPolygon( hull, position, rotation, 0.0f );
+}
+
+b2Polygon b2MakeOffsetRoundedPolygon( const b2Hull* hull, b2Vec2 position, b2Rot rotation, float radius )
 {
 	B2_ASSERT( b2ValidateHull( hull ) );
 
@@ -98,6 +103,8 @@ b2Polygon b2MakeOffsetPolygon( const b2Hull* hull, float radius, b2Transform tra
 		// Handle a bad hull when assertions are disabled
 		return b2MakeSquare( 0.5f );
 	}
+
+	b2Transform transform = { position, rotation };
 
 	b2Polygon shape = { 0 };
 	shape.count = hull->count;
@@ -157,9 +164,9 @@ b2Polygon b2MakeRoundedBox( float hx, float hy, float radius )
 	return shape;
 }
 
-b2Polygon b2MakeOffsetBox( float hx, float hy, b2Transform transform )
+b2Polygon b2MakeOffsetBox( float hx, float hy, b2Vec2 center, b2Rot rotation )
 {
-	b2Transform xf = transform;
+	b2Transform xf = { center, rotation };
 
 	b2Polygon shape = { 0 };
 	shape.count = 4;
@@ -176,10 +183,10 @@ b2Polygon b2MakeOffsetBox( float hx, float hy, b2Transform transform )
 	return shape;
 }
 
-b2Polygon b2MakeOffsetRoundedBox( float hx, float hy, b2Transform transform, float radius )
+b2Polygon b2MakeOffsetRoundedBox( float hx, float hy, b2Vec2 center, b2Rot rotation, float radius )
 {
 	B2_ASSERT( b2IsValid( radius ) && radius >= 0.0f );
-	b2Transform xf = transform;
+	b2Transform xf = { center, rotation };
 
 	b2Polygon shape = { 0 };
 	shape.count = 4;

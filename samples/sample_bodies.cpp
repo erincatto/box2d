@@ -69,7 +69,7 @@ public:
 			bodyDef.position = { -4.0f, 5.0f };
 			m_platformId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Polygon box = b2MakeOffsetBox( 0.5f, 4.0f, { { 4.0f, 0.0f }, b2MakeRot( 0.5f * b2_pi ) } );
+			b2Polygon box = b2MakeOffsetBox( 0.5f, 4.0f, { 4.0f, 0.0f }, b2MakeRot( 0.5f * b2_pi ) );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.friction = 0.6f;
@@ -353,13 +353,13 @@ public:
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { { 4.0f, 3.0f }, b2Rot_identity } );
+			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { 4.0f, 3.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 1.0f, 1.0f, { { 6.0f, 3.0f }, b2Rot_identity } );
+			box = b2MakeOffsetBox( 1.0f, 1.0f, { 6.0f, 3.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 1.0f, 1.0f, { { 8.0f, 3.0f }, b2Rot_identity } );
+			box = b2MakeOffsetBox( 1.0f, 1.0f, { 8.0f, 3.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 
@@ -633,7 +633,7 @@ public:
 			bodyDef.enableSleep = false;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { { 0.0f, 1.0f }, b2MakeRot( 0.25f * b2_pi ) } );
+			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { 0.0f, 1.0f }, b2MakeRot( 0.25f * b2_pi ) );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 		}
@@ -842,139 +842,3 @@ public:
 };
 
 static int sampleBadBody = RegisterSample( "Bodies", "Bad", BadBody::Create );
-
-// A kinematic body has infinite mass and a user specified velocity. It cannot be stopped by dynamic bodies.
-// If you single step the simulation you can see that the kinematic body can smash dynamic bodies into each other.
-// For this reason you can often get a better simulation result by motorizing a dynamic body.
-class KinematicBody : public Sample
-{
-public:
-	enum
-	{
-		e_count = 400
-	};
-
-	explicit KinematicBody( Settings& settings )
-		: Sample( settings )
-	{
-		if ( settings.restart == false )
-		{
-			g_camera.m_center = { 0.0f, 10.0f };
-			g_camera.m_zoom = 17.0f;
-		}
-
-		{
-			b2BodyDef bodyDef = b2DefaultBodyDef();
-			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
-
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.1f;
-
-			b2Polygon box = b2MakeOffsetBox( 12.0f, 0.1f, { { -10.0f, -0.1f }, b2MakeRot( -0.15f * b2_pi ) } );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
-
-			box = b2MakeOffsetBox( 12.0f, 0.1f, { { 10.0f, -0.1f }, b2MakeRot( 0.15f * b2_pi ) } );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
-
-			box = b2MakeOffsetBox( 0.1f, 20.0f, { { 19.9f, 20.0f }, b2Rot_identity } );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
-
-			box = b2MakeOffsetBox( 0.1f, 20.0f, { { -19.9f, 20.0f }, b2Rot_identity } );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
-
-			box = b2MakeOffsetBox( 20.0f, 0.1f, { { 0.0f, 40.1f }, b2Rot_identity } );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
-		}
-
-		{
-			m_angularVelocity = 2.0f;
-
-			b2BodyDef bodyDef = b2DefaultBodyDef();
-			bodyDef.type = b2_kinematicBody;
-			bodyDef.position = { 0.0, 6.0f };
-			bodyDef.angularVelocity = m_angularVelocity;
-
-			m_kinematicBodyId = b2CreateBody( m_worldId, &bodyDef );
-
-			b2Polygon box = b2MakeRoundedBox( 0.4f, 8.0f, 0.1f );
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.restitution = 0.9f;
-			shapeDef.friction = 0.0f;
-			b2CreatePolygonShape( m_kinematicBodyId, &shapeDef, &box );
-		}
-
-		b2Capsule capsule = { { -0.25f, 0.0f }, { 0.25f, 0.0f }, 0.25f };
-		b2Circle circle = { { 0.0f, 0.0f }, 0.35f };
-		b2Polygon square = b2MakeSquare( 0.35f );
-
-		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.type = b2_dynamicBody;
-		b2ShapeDef shapeDef = b2DefaultShapeDef();
-
-		float x = -10.0f, y = 4.0f;
-		for ( int i = 0; i < e_count; ++i )
-		{
-			bodyDef.position = { x, y };
-			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
-
-			int remainder = i % 4;
-			if ( remainder == 0 )
-			{
-				b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
-			}
-			else if ( remainder == 1 )
-			{
-				b2CreateCircleShape( bodyId, &shapeDef, &circle );
-			}
-			else if ( remainder == 2 )
-			{
-				b2CreatePolygonShape( bodyId, &shapeDef, &square );
-			}
-			else
-			{
-				b2Polygon poly = RandomPolygon( 0.75f );
-				poly.radius = 0.1f;
-				b2CreatePolygonShape( bodyId, &shapeDef, &poly );
-			}
-
-			x += 1.0f;
-
-			if (x > 10.0f)
-			{
-				x = -10.0f;
-				y += 1.5f;
-			}
-		}
-	}
-
-	void UpdateUI() override
-	{
-		float height = 60.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
-
-		ImGui::Begin( "Kinematic", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
-		if ( ImGui::SliderFloat( "Speed", &m_angularVelocity, -5.0f, 5.0f ) )
-		{
-			b2Body_SetAngularVelocity(m_kinematicBodyId, m_angularVelocity );
-		}
-
-		ImGui::End();
-	}
-
-	void Step( Settings& settings ) override
-	{
-		Sample::Step( settings );
-	}
-
-	static Sample* Create( Settings& settings )
-	{
-		return new KinematicBody( settings );
-	}
-
-	b2BodyId m_kinematicBodyId;
-	float m_angularVelocity;
-};
-
-static int sampleBodyMove = RegisterSample( "Bodies", "Kinematic", KinematicBody::Create );

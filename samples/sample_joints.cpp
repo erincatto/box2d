@@ -434,7 +434,7 @@ public:
 			bodyDef.type = b2_dynamicBody;
 			b2BodyId body = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Polygon box = b2MakeOffsetBox( 10.0f, 0.5f, { { -10.0f, 0.0f }, b2Rot_identity } );
+			b2Polygon box = b2MakeOffsetBox( 10.0f, 0.5f, { -10.0f, 0.0f }, b2Rot_identity );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.density = 1.0f;
 			b2CreatePolygonShape( body, &shapeDef, &box );
@@ -675,6 +675,14 @@ public:
 
 		float force = b2PrismaticJoint_GetMotorForce( m_jointId );
 		g_draw.DrawString( 5, m_textLine, "Motor Force = %4.1f", force );
+		m_textLine += m_textIncrement;
+
+		float translation = b2PrismaticJoint_GetTranslation( m_jointId );
+		g_draw.DrawString( 5, m_textLine, "Translation = %4.1f", translation );
+		m_textLine += m_textIncrement;
+
+		float speed = b2PrismaticJoint_GetSpeed( m_jointId );
+		g_draw.DrawString( 5, m_textLine, "Speed = %4.1f", speed );
 		m_textLine += m_textIncrement;
 	}
 
@@ -2113,8 +2121,8 @@ public:
 			g_camera.m_center = { 0.0f, 12.0f };
 			g_camera.m_zoom = 16.0f;
 
-			//g_camera.m_center = { 0.0f, 26.0f };
-			//g_camera.m_zoom = 1.0f;
+			// g_camera.m_center = { 0.0f, 26.0f };
+			// g_camera.m_zoom = 1.0f;
 		}
 
 		{
@@ -2238,7 +2246,7 @@ public:
 			b2Segment segment = { { -20.0f, 0.0f }, { 20.0f, 0.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 
-			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { { 0.0f, 1.0f }, b2Rot_identity } );
+			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { 0.0f, 1.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 
@@ -2484,7 +2492,8 @@ class Spinner : public Sample
 public:
 	enum
 	{
-		e_count = 400
+		e_count = 3038,
+		e_pointCount = 360,
 	};
 
 	explicit Spinner( Settings& settings )
@@ -2492,8 +2501,8 @@ public:
 	{
 		if ( settings.restart == false )
 		{
-			g_camera.m_center = { 0.0f, 10.0f };
-			g_camera.m_zoom = 17.0f;
+			g_camera.m_center = { 0.0f, 32.0f };
+			g_camera.m_zoom = 42.0f;
 		}
 
 		b2BodyId groundId;
@@ -2501,43 +2510,47 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			groundId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.1f;
+			b2Vec2 points[e_pointCount];
 
-			b2Polygon box = b2MakeOffsetBox( 12.0f, 0.1f, { { -10.0f, -0.1f }, b2MakeRot( -0.15f * b2_pi ) } );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			b2Rot q = b2MakeRot( -2.0f * b2_pi / e_pointCount );
+			b2Vec2 p = { 40.0f, 0.0f };
+			for ( int i = 0; i < e_pointCount; ++i )
+			{
+				points[i] = { p.x, p.y + 32.0f };
+				p = b2RotateVector( q, p );
+			}
 
-			box = b2MakeOffsetBox( 12.0f, 0.1f, { { 10.0f, -0.1f }, b2MakeRot( 0.15f * b2_pi ) } );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			b2ChainDef chainDef = b2DefaultChainDef();
+			chainDef.points = points;
+			chainDef.count = e_pointCount;
+			chainDef.isLoop = true;
+			chainDef.friction = 0.1f;
+			chainDef.customColor = b2_colorWhite;
 
-			box = b2MakeOffsetBox( 0.1f, 20.0f, { { 19.9f, 20.0f }, b2Rot_identity } );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
-
-			box = b2MakeOffsetBox( 0.1f, 20.0f, { { -19.9f, 20.0f }, b2Rot_identity } );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
-
-			box = b2MakeOffsetBox( 20.0f, 0.1f, { { 0.0f, 40.1f }, b2Rot_identity } );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			b2CreateChain( groundId, &chainDef );
 		}
 
 		{
+			m_bodyType = b2_dynamicBody;
+
 			b2BodyDef bodyDef = b2DefaultBodyDef();
-			bodyDef.type = b2_dynamicBody;
-			bodyDef.position = { 0.0, 6.0f };
+			bodyDef.type = m_bodyType;
+			bodyDef.position = { 0.0, 12.0f };
+			bodyDef.enableSleep = false;
 
-			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			m_spinnerId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Polygon box = b2MakeRoundedBox( 0.4f, 8.0f, 0.1f );
+			b2Polygon box = b2MakeRoundedBox( 0.4f, 20.0f, 0.2f );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.restitution = 0.9f;
 			shapeDef.friction = 0.0f;
-			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+			shapeDef.customColor = b2_colorAliceBlue;
+			b2CreatePolygonShape( m_spinnerId, &shapeDef, &box );
 
-			m_motorSpeed = 2.0f;
-			m_maxMotorTorque = 10000.0f;
+			m_motorSpeed = 5.0f;
+			m_maxMotorTorque = 40000.0f;
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.bodyIdA = groundId;
-			jointDef.bodyIdB = bodyId;
+			jointDef.bodyIdB = m_spinnerId;
 			jointDef.localAnchorA = bodyDef.position;
 			jointDef.enableMotor = true;
 			jointDef.motorSpeed = m_motorSpeed;
@@ -2553,41 +2566,52 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.friction = 0.1f;
+		shapeDef.restitution = 0.1f;
+		shapeDef.density = 0.25f;
 
-		float x = -10.0f, y = 4.0f;
-		for ( int i = 0; i < e_count; ++i )
+		int bodyCount = g_sampleDebug ? 499 : e_count;
+
+		float x = -24.0f, y = 2.0f;
+		for ( int i = 0; i < bodyCount; ++i )
 		{
 			bodyDef.position = { x, y };
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
-			int remainder = i % 4;
+			int remainder = i % 3;
 			if ( remainder == 0 )
 			{
+				shapeDef.customColor = b2_colorYellow;
 				b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
 			}
 			else if ( remainder == 1 )
 			{
+				shapeDef.customColor = b2_colorYellowGreen;
 				b2CreateCircleShape( bodyId, &shapeDef, &circle );
 			}
 			else if ( remainder == 2 )
 			{
+				shapeDef.customColor = b2_colorGreenYellow;
 				b2CreatePolygonShape( bodyId, &shapeDef, &square );
 			}
 			else
 			{
 				b2Polygon poly = RandomPolygon( 0.75f );
 				poly.radius = 0.1f;
+				shapeDef.customColor = b2_colorLightGoldenrodYellow;
 				b2CreatePolygonShape( bodyId, &shapeDef, &poly );
 			}
 
 			x += 1.0f;
 
-			if ( x > 10.0f )
+			if ( x > 24.0f )
 			{
-				x = -10.0f;
-				y += 1.5f;
+				x = -24.0f;
+				y += 1.0f;
 			}
 		}
+
+		m_acceleration = 0.0f;
 	}
 
 	void UpdateUI() override
@@ -2601,11 +2625,35 @@ public:
 		if ( ImGui::SliderFloat( "Speed", &m_motorSpeed, -5.0f, 5.0f ) )
 		{
 			b2RevoluteJoint_SetMotorSpeed( m_jointId, m_motorSpeed );
+
+			if ( m_bodyType == b2_kinematicBody )
+			{
+				b2Body_SetAngularVelocity( m_spinnerId, m_motorSpeed );
+			}
 		}
 
-		if ( ImGui::SliderFloat( "Torque", &m_maxMotorTorque, 0.0f, 20000.0f ) )
+		if ( ImGui::SliderFloat( "Torque", &m_maxMotorTorque, 0.0f, 200000.0f ) )
 		{
 			b2RevoluteJoint_SetMaxMotorTorque( m_jointId, m_maxMotorTorque );
+		}
+
+		if ( ImGui::RadioButton( "Static", m_bodyType == b2_staticBody ) )
+		{
+			m_bodyType = b2_staticBody;
+			b2Body_SetType( m_spinnerId, b2_staticBody );
+		}
+
+		if ( ImGui::RadioButton( "Kinematic", m_bodyType == b2_kinematicBody ) )
+		{
+			m_bodyType = b2_kinematicBody;
+			b2Body_SetType( m_spinnerId, b2_kinematicBody );
+			b2Body_SetAngularVelocity( m_spinnerId, m_motorSpeed );
+		}
+
+		if ( ImGui::RadioButton( "Dynamic", m_bodyType == b2_dynamicBody ) )
+		{
+			m_bodyType = b2_dynamicBody;
+			b2Body_SetType( m_spinnerId, b2_dynamicBody );
 		}
 
 		ImGui::End();
@@ -2613,6 +2661,33 @@ public:
 
 	void Step( Settings& settings ) override
 	{
+		if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) == GLFW_PRESS )
+		{
+			m_acceleration = -0.2f;
+		}
+
+		if ( glfwGetKey( g_mainWindow, GLFW_KEY_S ) == GLFW_PRESS )
+		{
+			m_acceleration = 0.0f;
+			m_motorSpeed = 0.0f;
+		}
+
+		if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) == GLFW_PRESS )
+		{
+			m_acceleration = 0.2f;
+		}
+
+		if ( settings.hertz > 0.0f )
+		{
+			m_motorSpeed = b2ClampFloat( m_motorSpeed + m_acceleration / settings.hertz, -5.0f, 5.0f );
+			b2RevoluteJoint_SetMotorSpeed( m_jointId, m_motorSpeed );
+
+			if ( m_bodyType == b2_kinematicBody )
+			{
+				b2Body_SetAngularVelocity( m_spinnerId, m_motorSpeed );
+			}
+		}
+
 		Sample::Step( settings );
 	}
 
@@ -2621,9 +2696,12 @@ public:
 		return new Spinner( settings );
 	}
 
+	b2BodyId m_spinnerId;
 	b2JointId m_jointId;
+	float m_acceleration;
 	float m_motorSpeed;
 	float m_maxMotorTorque;
+	b2BodyType m_bodyType;
 };
 
 static int sampleBodyMove = RegisterSample( "Joints", "Spinner", Spinner::Create );

@@ -949,10 +949,10 @@ B2_API float b2PrismaticJoint_GetMaxMotorForce( b2JointId jointId );
 B2_API float b2PrismaticJoint_GetMotorForce( b2JointId jointId );
 
 /// Get the current joint translation, usually in meters.
-B2_API float b2PrismaticJoint_GetJointTranslation( b2JointId jointId );
+B2_API float b2PrismaticJoint_GetTranslation( b2JointId jointId );
 
 /// Get the current joint translation speed, usually in meters per second.
-B2_API float b2PrismaticJoint_GetJointSpeed( b2JointId jointId );
+B2_API float b2PrismaticJoint_GetSpeed( b2JointId jointId );
 
 /** @} */
 

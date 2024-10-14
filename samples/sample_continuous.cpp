@@ -11,7 +11,6 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
-
 class BounceHouse : public Sample
 {
 public:
@@ -280,7 +279,7 @@ public:
 			shapeDef.friction = 0.9f;
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 
-			b2Polygon box = b2MakeOffsetBox( 0.1f, 1.0f, { { 0.0f, 1.0f }, b2Rot_identity } );
+			b2Polygon box = b2MakeOffsetBox( 0.1f, 1.0f, { 0.0f, 1.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 
@@ -501,21 +500,21 @@ public:
 
 			{
 				transform.p = { x, y };
-				b2Polygon polygon = b2MakeOffsetPolygon( &hull, 0.0f, transform );
+				b2Polygon polygon = b2MakeOffsetPolygon( &hull, transform.p, transform.q );
 				b2CreatePolygonShape( m_groundId, &shapeDef, &polygon );
 				x -= 2.0f * m * hx;
 				y += 2.0f * m * hx;
 			}
 			{
 				transform.p = { x, y };
-				b2Polygon polygon = b2MakeOffsetPolygon( &hull, 0.0f, transform );
+				b2Polygon polygon = b2MakeOffsetPolygon( &hull, transform.p, transform.q );
 				b2CreatePolygonShape( m_groundId, &shapeDef, &polygon );
 				x -= 2.0f * m * hx;
 				y += 2.0f * m * hx;
 			}
 			{
 				transform.p = { x, y };
-				b2Polygon polygon = b2MakeOffsetPolygon( &hull, 0.0f, transform );
+				b2Polygon polygon = b2MakeOffsetPolygon( &hull, transform.p, transform.q );
 				b2CreatePolygonShape( m_groundId, &shapeDef, &polygon );
 				x -= 2.0f * m * hx;
 				y += 2.0f * m * hx;
@@ -527,19 +526,19 @@ public:
 
 			{
 				transform.p = { x, y };
-				b2Polygon polygon = b2MakeOffsetPolygon( &hull, 0.0f, transform );
+				b2Polygon polygon = b2MakeOffsetPolygon( &hull, transform.p, transform.q );
 				b2CreatePolygonShape( m_groundId, &shapeDef, &polygon );
 				x += 2.0f * hx;
 			}
 			{
 				transform.p = { x, y };
-				b2Polygon polygon = b2MakeOffsetPolygon( &hull, 0.0f, transform );
+				b2Polygon polygon = b2MakeOffsetPolygon( &hull, transform.p, transform.q );
 				b2CreatePolygonShape( m_groundId, &shapeDef, &polygon );
 				x += 2.0f * hx;
 			}
 			{
 				transform.p = { x, y };
-				b2Polygon polygon = b2MakeOffsetPolygon( &hull, 0.0f, transform );
+				b2Polygon polygon = b2MakeOffsetPolygon( &hull, transform.p, transform.q );
 				b2CreatePolygonShape( m_groundId, &shapeDef, &polygon );
 				x += 2.0f * hx;
 			}
@@ -550,21 +549,21 @@ public:
 
 			{
 				transform.p = { x, y };
-				b2Polygon polygon = b2MakeOffsetPolygon( &hull, 0.0f, transform );
+				b2Polygon polygon = b2MakeOffsetPolygon( &hull, transform.p, transform.q );
 				b2CreatePolygonShape( m_groundId, &shapeDef, &polygon );
 				x += 2.0f * m * hx;
 				y += 2.0f * m * hx;
 			}
 			{
 				transform.p = { x, y };
-				b2Polygon polygon = b2MakeOffsetPolygon( &hull, 0.0f, transform );
+				b2Polygon polygon = b2MakeOffsetPolygon( &hull, transform.p, transform.q );
 				b2CreatePolygonShape( m_groundId, &shapeDef, &polygon );
 				x += 2.0f * m * hx;
 				y += 2.0f * m * hx;
 			}
 			{
 				transform.p = { x, y };
-				b2Polygon polygon = b2MakeOffsetPolygon( &hull, 0.0f, transform );
+				b2Polygon polygon = b2MakeOffsetPolygon( &hull, transform.p, transform.q );
 				b2CreatePolygonShape( m_groundId, &shapeDef, &polygon );
 				x += 2.0f * m * hx;
 				y += 2.0f * m * hx;
@@ -716,7 +715,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Polygon box = b2MakeOffsetBox( 2.0f, 0.05f, { { -offset, 0.0f }, b2MakeRot( b2_pi ) } );
+			b2Polygon box = b2MakeOffsetBox( 2.0f, 0.05f, { -offset, 0.0f }, b2MakeRot( b2_pi ) );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 		}
 	}
@@ -750,7 +749,7 @@ public:
 			b2Segment segment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 
-			b2Polygon box = b2MakeOffsetBox( 1.0f, 0.1f, { { 0.0f, 0.9f }, b2Rot_identity } );
+			b2Polygon box = b2MakeOffsetBox( 1.0f, 0.1f, { 0.0f, 0.9f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 

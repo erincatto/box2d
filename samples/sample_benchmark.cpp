@@ -44,7 +44,7 @@ public:
 
 		{
 			float gridSize = 1.0f;
-		
+
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
@@ -52,18 +52,18 @@ public:
 
 			float y = 0.0f;
 			float x = -40.0f * gridSize;
-			for (int i = 0; i < 81; ++i)
+			for ( int i = 0; i < 81; ++i )
 			{
-				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, { { x, y }, b2Rot_identity } );
+				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, { x, y }, b2Rot_identity );
 				b2CreatePolygonShape( groundId, &shapeDef, &box );
 				x += gridSize;
 			}
-			
+
 			y = gridSize;
 			x = -40.0f * gridSize;
-			for (int i = 0; i < 100; ++i)
+			for ( int i = 0; i < 100; ++i )
 			{
-				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize,{ { x, y }, b2Rot_identity } );
+				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, { x, y }, b2Rot_identity );
 				b2CreatePolygonShape( groundId, &shapeDef, &box );
 				y += gridSize;
 			}
@@ -72,7 +72,7 @@ public:
 			x = 40.0f * gridSize;
 			for ( int i = 0; i < 100; ++i )
 			{
-				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, { { x, y }, b2Rot_identity } );
+				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, { x, y }, b2Rot_identity );
 				b2CreatePolygonShape( groundId, &shapeDef, &box );
 				y += gridSize;
 			}
@@ -142,7 +142,7 @@ public:
 		bodyDef.type = b2_dynamicBody;
 
 		// todo eliminate this once rolling resistance is added
-		if (m_shapeType == e_mixShape)
+		if ( m_shapeType == e_mixShape )
 		{
 			bodyDef.angularDamping = 0.3f;
 		}
@@ -273,7 +273,8 @@ public:
 					float jointFriction = 0.05f;
 					float jointHertz = 5.0f;
 					float jointDamping = 0.5f;
-					m_humans[index].Spawn( m_worldId, bodyDef.position, scale, jointFriction, jointHertz, jointDamping, index + 1, nullptr, false );
+					m_humans[index].Spawn( m_worldId, bodyDef.position, scale, jointFriction, jointHertz, jointDamping, index + 1,
+										   nullptr, false );
 				}
 
 				index += 1;
@@ -349,13 +350,13 @@ public:
 			shapeDef.density = 50.0f;
 
 			b2Polygon polygon;
-			polygon = b2MakeOffsetBox( 0.5f, 10.0f,{ { 10.0f, 0.0f }, b2Rot_identity } );
+			polygon = b2MakeOffsetBox( 0.5f, 10.0f, { 10.0f, 0.0f }, b2Rot_identity );
 			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-			polygon = b2MakeOffsetBox( 0.5f, 10.0f, { { -10.0f, 0.0f }, b2Rot_identity } );
+			polygon = b2MakeOffsetBox( 0.5f, 10.0f, { -10.0f, 0.0f }, b2Rot_identity );
 			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-			polygon = b2MakeOffsetBox( 10.0f, 0.5f, { { 0.0f, 10.0f }, b2Rot_identity } );
+			polygon = b2MakeOffsetBox( 10.0f, 0.5f, { 0.0f, 10.0f }, b2Rot_identity );
 			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-			polygon = b2MakeOffsetBox( 10.0f, 0.5f, { { 0.0f, -10.0f }, b2Rot_identity } );
+			polygon = b2MakeOffsetBox( 10.0f, 0.5f, { 0.0f, -10.0f }, b2Rot_identity );
 			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
 
 			shapeDef.customColor = b2_colorBlueViolet;
@@ -495,13 +496,13 @@ public:
 		shapeDef.density = 50.0f;
 
 		b2Polygon polygon;
-		polygon = b2MakeOffsetBox( 0.25f, 2.0f,{ { 2.0f, 0.0f }, b2Rot_identity } );
+		polygon = b2MakeOffsetBox( 0.25f, 2.0f, { 2.0f, 0.0f }, b2Rot_identity );
 		b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-		polygon = b2MakeOffsetBox( 0.25f, 2.0f, { { -2.0f, 0.0f }, b2Rot_identity } );
+		polygon = b2MakeOffsetBox( 0.25f, 2.0f, { -2.0f, 0.0f }, b2Rot_identity );
 		b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-		polygon = b2MakeOffsetBox( 2.0f, 0.25f, { { 0.0f, 2.0f }, b2Rot_identity } );
+		polygon = b2MakeOffsetBox( 2.0f, 0.25f, { 0.0f, 2.0f }, b2Rot_identity );
 		b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
-		polygon = b2MakeOffsetBox( 2.0f, 0.25f, { { 0.0f, -2.0f }, b2Rot_identity } );
+		polygon = b2MakeOffsetBox( 2.0f, 0.25f, { 0.0f, -2.0f }, b2Rot_identity );
 		b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
 	}
 
@@ -1446,7 +1447,7 @@ public:
 				for ( int j = i; j < width; ++j )
 				{
 					float x = grid * j;
-					b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { { x, y }, b2Rot_identity } );
+					b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { x, y }, b2Rot_identity );
 					b2CreatePolygonShape( groundId, &shapeDef, &square );
 				}
 			}
@@ -1457,7 +1458,7 @@ public:
 				for ( int j = i; j < width; ++j )
 				{
 					float x = -grid * j;
-					b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { { x, y }, b2Rot_identity } );
+					b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { x, y }, b2Rot_identity );
 					b2CreatePolygonShape( groundId, &shapeDef, &square );
 				}
 			}
@@ -1494,7 +1495,7 @@ public:
 						for ( int j = 0; j < span; ++j )
 						{
 							float x = j * grid;
-							b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { { x, y }, b2Rot_identity } );
+							b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { x, y }, b2Rot_identity );
 							b2CreatePolygonShape( bodyId, &shapeDef, &square );
 						}
 					}
@@ -1553,7 +1554,7 @@ public:
 			for ( int j = -span; j < span; ++j )
 			{
 				float x = j * grid;
-				b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { { x, y }, b2Rot_identity } );
+				b2Polygon square = b2MakeOffsetBox( 0.5f * grid, 0.5f * grid, { x, y }, b2Rot_identity );
 				b2CreatePolygonShape( bodyId, &shapeDef, &square );
 			}
 		}
@@ -1580,7 +1581,6 @@ enum QueryType
 class BenchmarkCast : public Sample
 {
 public:
-
 	explicit BenchmarkCast( Settings& settings )
 		: Sample( settings )
 	{
@@ -1685,7 +1685,7 @@ public:
 			y += m_grid;
 		}
 
-		if (m_topDown)
+		if ( m_topDown )
 		{
 			b2World_RebuildStaticTree( m_worldId );
 		}
@@ -1708,7 +1708,7 @@ public:
 
 		const char* queryTypes[] = { "Ray", "Circle", "Overlap" };
 		int queryType = int( m_queryType );
-		if (ImGui::Combo( "Query", &queryType, queryTypes, IM_ARRAYSIZE( queryTypes ) ))
+		if ( ImGui::Combo( "Query", &queryType, queryTypes, IM_ARRAYSIZE( queryTypes ) ) )
 		{
 			m_queryType = QueryType( queryType );
 			if ( m_queryType == e_overlap )
@@ -1792,7 +1792,7 @@ public:
 	static bool OverlapCallback( b2ShapeId shapeId, void* context )
 	{
 		OverlapResult* result = (OverlapResult*)context;
-		if (result->count < 32)
+		if ( result->count < 32 )
 		{
 			b2AABB aabb = b2Shape_GetAABB( shapeId );
 			result->points[result->count] = b2AABB_Center( aabb );
@@ -1827,7 +1827,7 @@ public:
 
 				b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, filter );
 
-				if (i == m_drawIndex)
+				if ( i == m_drawIndex )
 				{
 					drawResult = result;
 				}
@@ -1846,7 +1846,7 @@ public:
 			g_draw.DrawSegment( p1, p2, b2_colorWhite );
 			g_draw.DrawPoint( p1, 5.0f, b2_colorGreen );
 			g_draw.DrawPoint( p2, 5.0f, b2_colorRed );
-			if (drawResult.hit)
+			if ( drawResult.hit )
 			{
 				g_draw.DrawPoint( drawResult.point, 5.0f, b2_colorWhite );
 			}
@@ -1867,7 +1867,7 @@ public:
 				b2TreeStats traversalResult =
 					b2World_CastCircle( m_worldId, &circle, origin, translation, filter, CastCallback, &result );
 
-				if (i == m_drawIndex)
+				if ( i == m_drawIndex )
 				{
 					drawResult = result;
 				}
@@ -1886,7 +1886,7 @@ public:
 			g_draw.DrawSegment( p1, p2, b2_colorWhite );
 			g_draw.DrawPoint( p1, 5.0f, b2_colorGreen );
 			g_draw.DrawPoint( p2, 5.0f, b2_colorRed );
-			if (drawResult.hit)
+			if ( drawResult.hit )
 			{
 				b2Vec2 t = b2Lerp( p1, p2, drawResult.fraction );
 				g_draw.DrawCircle( t, m_radius, b2_colorWhite );
@@ -1904,12 +1904,12 @@ public:
 			for ( int i = 0; i < sampleCount; ++i )
 			{
 				b2Vec2 origin = m_origins[i];
-				b2AABB aabb = { origin - extent, origin + extent };	
+				b2AABB aabb = { origin - extent, origin + extent };
 
 				result.count = 0;
 				b2TreeStats traversalResult = b2World_OverlapAABB( m_worldId, aabb, filter, OverlapCallback, &result );
 
-				if (i == m_drawIndex)
+				if ( i == m_drawIndex )
 				{
 					drawResult = result;
 				}
@@ -1924,11 +1924,11 @@ public:
 			m_minTime = b2MinFloat( m_minTime, ms );
 
 			b2Vec2 origin = m_origins[m_drawIndex];
-			b2AABB aabb = { origin - extent, origin + extent };	
+			b2AABB aabb = { origin - extent, origin + extent };
 
 			g_draw.DrawAABB( aabb, b2_colorWhite );
 
-			for (int i = 0; i < drawResult.count; ++i)
+			for ( int i = 0; i < drawResult.count; ++i )
 			{
 				g_draw.DrawPoint( drawResult.points[i], 5.0f, b2_colorHotPink );
 			}
@@ -1937,7 +1937,8 @@ public:
 		g_draw.DrawString( 5, m_textLine, "build time ms = %g", m_buildTime );
 		m_textLine += m_textIncrement;
 
-		g_draw.DrawString( 5, m_textLine, "hit count = %d, node visits = %d, leaf visits = %d", hitCount, nodeVisits, leafVisits );
+		g_draw.DrawString( 5, m_textLine, "hit count = %d, node visits = %d, leaf visits = %d", hitCount, nodeVisits,
+						   leafVisits );
 		m_textLine += m_textIncrement;
 
 		g_draw.DrawString( 5, m_textLine, "total ms = %.3f", ms );
