@@ -355,11 +355,39 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 
 				if ( b2AABB_Contains( shape->fatAABB, aabb ) == false )
 				{
+#if 1
+					float deltax = b2_aabbVelocityScale * v.x * timeStep;
+					float deltay = b2_aabbVelocityScale * v.y * timeStep;
+
+					b2AABB fatAABB = aabb;
+					if (deltax > 0.0f)
+					{
+						fatAABB.lowerBound.x -= aabbMargin;
+						fatAABB.upperBound.x += deltax + aabbMargin;
+					}
+					else
+					{
+						fatAABB.lowerBound.x += deltax - aabbMargin;
+						fatAABB.upperBound.x += aabbMargin;
+					}
+
+					if (deltay > 0.0f)
+					{
+						fatAABB.lowerBound.y -= aabbMargin;
+						fatAABB.upperBound.y += deltay + aabbMargin;
+					}
+					else
+					{
+						fatAABB.lowerBound.y += deltay - aabbMargin;
+						fatAABB.upperBound.y += aabbMargin;
+					}
+#else
 					b2AABB fatAABB;
 					fatAABB.lowerBound.x = aabb.lowerBound.x - aabbMargin;
 					fatAABB.lowerBound.y = aabb.lowerBound.y - aabbMargin;
 					fatAABB.upperBound.x = aabb.upperBound.x + aabbMargin;
 					fatAABB.upperBound.y = aabb.upperBound.y + aabbMargin;
+#endif
 					shape->fatAABB = fatAABB;
 
 					shape->enlargedAABB = true;
@@ -942,6 +970,8 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 	b2BodySim* fastBodySim = b2BodySimArray_Get( &awakeSet->bodySims, bodySimIndex );
 	B2_ASSERT( fastBodySim->isFast );
 
+	b2BodyState* bodyState = b2BodyStateArray_Get( &awakeSet->bodyStates, bodySimIndex );
+
 	b2Sweep sweep = b2MakeSweep( fastBodySim );
 
 	b2Transform xf1;
@@ -1004,6 +1034,10 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 
 	const float speculativeDistance = b2_speculativeDistance;
 	const float aabbMargin = b2_aabbMargin;
+	b2Vec2 v = bodyState->linearVelocity;
+
+	float deltax = b2_aabbVelocityScale * v.x * 1.0f / 60.0f;
+	float deltay = b2_aabbVelocityScale * v.y * 1.0f / 60.0f;
 
 	if ( context.fraction < 1.0f )
 	{
@@ -1035,11 +1069,36 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 
 			if ( b2AABB_Contains( shape->fatAABB, aabb ) == false )
 			{
+#if 1
+				b2AABB fatAABB = aabb;
+				if ( deltax > 0.0f )
+				{
+					fatAABB.lowerBound.x -= aabbMargin;
+					fatAABB.upperBound.x += deltax + aabbMargin;
+				}
+				else
+				{
+					fatAABB.lowerBound.x += deltax - aabbMargin;
+					fatAABB.upperBound.x += aabbMargin;
+				}
+
+				if ( deltay > 0.0f )
+				{
+					fatAABB.lowerBound.y -= aabbMargin;
+					fatAABB.upperBound.y += deltay + aabbMargin;
+				}
+				else
+				{
+					fatAABB.lowerBound.y += deltay - aabbMargin;
+					fatAABB.upperBound.y += aabbMargin;
+				}
+#else
 				b2AABB fatAABB;
 				fatAABB.lowerBound.x = aabb.lowerBound.x - aabbMargin;
 				fatAABB.lowerBound.y = aabb.lowerBound.y - aabbMargin;
 				fatAABB.upperBound.x = aabb.upperBound.x + aabbMargin;
 				fatAABB.upperBound.y = aabb.upperBound.y + aabbMargin;
+#endif
 				shape->fatAABB = fatAABB;
 
 				shape->enlargedAABB = true;
@@ -1067,11 +1126,36 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 
 			if ( b2AABB_Contains( shape->fatAABB, shape->aabb ) == false )
 			{
+#if 1
+				b2AABB fatAABB = shape->aabb;
+				if ( deltax > 0.0f )
+				{
+					fatAABB.lowerBound.x -= aabbMargin;
+					fatAABB.upperBound.x += deltax + aabbMargin;
+				}
+				else
+				{
+					fatAABB.lowerBound.x += deltax - aabbMargin;
+					fatAABB.upperBound.x += aabbMargin;
+				}
+
+				if ( deltay > 0.0f )
+				{
+					fatAABB.lowerBound.y -= aabbMargin;
+					fatAABB.upperBound.y += deltay + aabbMargin;
+				}
+				else
+				{
+					fatAABB.lowerBound.y += deltay - aabbMargin;
+					fatAABB.upperBound.y += aabbMargin;
+				}
+#else
 				b2AABB fatAABB;
 				fatAABB.lowerBound.x = shape->aabb.lowerBound.x - aabbMargin;
 				fatAABB.lowerBound.y = shape->aabb.lowerBound.y - aabbMargin;
 				fatAABB.upperBound.x = shape->aabb.upperBound.x + aabbMargin;
 				fatAABB.upperBound.y = shape->aabb.upperBound.y + aabbMargin;
+#endif
 				shape->fatAABB = fatAABB;
 
 				shape->enlargedAABB = true;
