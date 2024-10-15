@@ -555,6 +555,12 @@ static void b2Collide( b2StepContext* context )
 					b2ContactEndTouchEventArray_Push( &world->contactEndEvents, event );
 				}
 
+				if ( ( flags & b2_contactSensorTouchingFlag ) != 0 && ( flags & b2_contactEnableSensorEvents ) != 0 )
+				{
+					b2SensorEndTouchEvent event = { shapeIdA, shapeIdB };
+					b2SensorEndTouchEventArray_Push( &world->sensorEndEvents, event );
+				}
+
 				// Bounding boxes no longer overlap
 				contact->flags &= ~b2_contactTouchingFlag;
 				b2DestroyContact( world, contact, false );

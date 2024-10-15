@@ -881,7 +881,11 @@ body and you can have any mix of sensors and solid shapes. Also,
 sensors only form contacts when at least one body is dynamic, so you
 will not get sensors overlap detection for kinematic versus kinematic,
 kinematic versus static, or static versus static. Finally sensors do not
-detect other sensors. 
+detect other sensors.
+
+Sensors do not detect objects that pass through the sensor shape within 
+one time step. If you have fast moving object and/or small sensors then you
+should use a ray or shape cast to detect these events.
 
 Sensor overlap detection is achieved using events, which are described
 below.

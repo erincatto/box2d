@@ -2115,7 +2115,7 @@ public:
 			}
 		}
 
-		if ( ImGui::SliderFloat( "Torque", &m_maxMotorTorque, 0.0f, 200000.0f ) )
+		if ( ImGui::SliderFloat( "Torque", &m_maxMotorTorque, 0.0f, 100000.0f, "%.0f" ) )
 		{
 			b2RevoluteJoint_SetMaxMotorTorque( m_jointId, m_maxMotorTorque );
 		}
