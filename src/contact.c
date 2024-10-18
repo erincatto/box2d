@@ -551,6 +551,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 
 		// Match old contact ids to new contact ids and copy the
 		// stored impulses to warm start the solver.
+		int unmatchedCount = 0;
 		for ( int i = 0; i < pointCount; ++i )
 		{
 			b2ManifoldPoint* mp2 = contactSim->manifold.points + i;
@@ -576,10 +577,49 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 					mp2->normalImpulse = mp1->normalImpulse;
 					mp2->tangentImpulse = mp1->tangentImpulse;
 					mp2->persisted = true;
+
+					// clear old impulse
+					mp1->normalImpulse = 0.0f;
+					mp1->tangentImpulse = 0.0f;
 					break;
 				}
 			}
+
+			unmatchedCount += mp2->persisted ? 0 : 1;
 		}
+
+#if 0
+		// todo I haven't found an improvement from this yet
+		// If there are unmatched new contact points, apply any left over old impulse.
+		if (unmatchedCount > 0)
+		{
+			float unmatchedNormalImpulse = 0.0f;
+			float unmatchedTangentImpulse = 0.0f;
+			for (int i = 0; i < oldManifold.pointCount; ++i)
+			{
+				b2ManifoldPoint* mp = oldManifold.points + i;
+				unmatchedNormalImpulse += mp->normalImpulse;
+				unmatchedTangentImpulse += mp->tangentImpulse;
+			}
+
+			float inverse = 1.0f / unmatchedCount;
+			unmatchedNormalImpulse *= inverse;
+			unmatchedTangentImpulse *= inverse;
+
+			for ( int i = 0; i < pointCount; ++i )
+			{
+				b2ManifoldPoint* mp2 = contactSim->manifold.points + i;
+
+				if (mp2->persisted)
+				{
+					continue;
+				}
+
+				mp2->normalImpulse = unmatchedNormalImpulse;
+				mp2->tangentImpulse = unmatchedTangentImpulse;
+			}
+		}
+#endif
 	}
 
 	if ( touching )

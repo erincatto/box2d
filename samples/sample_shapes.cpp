@@ -10,6 +10,7 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <vector>
 
 class ChainShape : public Sample
 {
@@ -889,19 +890,19 @@ public:
 			b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 
-			b2Polygon box = b2MakeOffsetBox( 13.0f, 0.25f, { -4.0f, 22.0f }, b2MakeRot(-0.25f) );
+			b2Polygon box = b2MakeOffsetBox( 13.0f, 0.25f, { -4.0f, 22.0f }, b2MakeRot( -0.25f ) );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
 			box = b2MakeOffsetBox( 0.25f, 1.0f, { 10.5f, 19.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 13.0f, 0.25f, { 4.0f, 14.0f }, b2MakeRot(0.25f) );
+			box = b2MakeOffsetBox( 13.0f, 0.25f, { 4.0f, 14.0f }, b2MakeRot( 0.25f ) );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
 			box = b2MakeOffsetBox( 0.25f, 1.0f, { -10.5f, 11.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 13.0f, 0.25f, { -4.0f, 6.0f }, b2MakeRot(-0.25f) );
+			box = b2MakeOffsetBox( 13.0f, 0.25f, { -4.0f, 6.0f }, b2MakeRot( -0.25f ) );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 
@@ -1264,7 +1265,7 @@ public:
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { 10.0f, -2.0f }, b2MakeRot(0.5f * b2_pi) );
+			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { 10.0f, -2.0f }, b2MakeRot( 0.5f * b2_pi ) );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 
@@ -1279,7 +1280,7 @@ public:
 		}
 
 		{
-			b2Polygon box = b2MakeOffsetBox( 0.75f, 0.5f, { 9.0f, 2.0f }, b2MakeRot(0.5f * b2_pi) );
+			b2Polygon box = b2MakeOffsetBox( 0.75f, 0.5f, { 9.0f, 2.0f }, b2MakeRot( 0.5f * b2_pi ) );
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.position = { 0.0f, 0.0f };
 			bodyDef.type = b2_dynamicBody;
@@ -1308,7 +1309,6 @@ static int sampleOffsetShapes = RegisterSample( "Shapes", "Offset", OffsetShapes
 class Explosion : public Sample
 {
 public:
-
 	explicit Explosion( Settings& settings )
 		: Sample( settings )
 	{
@@ -1337,7 +1337,7 @@ public:
 		weldDef.localAnchorB = b2Vec2_zero;
 
 		float r = 8.0f;
-		for (float angle = 0.0f; angle < 360.0f; angle += 30.0f)
+		for ( float angle = 0.0f; angle < 360.0f; angle += 30.0f )
 		{
 			b2CosSin cosSin = b2ComputeCosSin( angle * b2_pi / 180.0f );
 			bodyDef.position = { r * cosSin.cosine, r * cosSin.sine };
@@ -1384,13 +1384,13 @@ public:
 
 	void Step( Settings& settings ) override
 	{
-		if (settings.pause == false || settings.singleStep == true)
+		if ( settings.pause == false || settings.singleStep == true )
 		{
 			m_referenceAngle += settings.hertz > 0.0f ? 60.0f * b2_pi / 180.0f / settings.hertz : 0.0f;
 			m_referenceAngle = b2UnwindAngle( m_referenceAngle );
 
 			int count = m_jointIds.size();
-			for (int i = 0; i < count; ++i)
+			for ( int i = 0; i < count; ++i )
 			{
 				b2WeldJoint_SetReferenceAngle( m_jointIds[i], m_referenceAngle );
 			}
@@ -1417,4 +1417,62 @@ public:
 	float m_referenceAngle;
 };
 
-static int sampleBodyMove = RegisterSample( "Shapes", "Explosion", Explosion::Create );
+static int sampleExplosion = RegisterSample( "Shapes", "Explosion", Explosion::Create );
+
+// This sample tests a static shape being recreated every step.
+class RecreateStatic : public Sample
+{
+public:
+	explicit RecreateStatic( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 2.5f };
+			g_camera.m_zoom = 3.5f;
+		}
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.position = { 0.0f, 1.0f };
+		b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2Polygon box = b2MakeBox( 1.0f, 1.0f );
+		b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+		m_groundId = {};
+	}
+
+	void Step( Settings& settings ) override
+	{
+		if ( B2_IS_NON_NULL( m_groundId ) )
+		{
+			b2DestroyBody( m_groundId );
+			m_groundId = {};
+		}
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		m_groundId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+		// Invoke contact creation so that contact points are created immediately
+		// on a static body.
+		shapeDef.invokeContactCreation = true;
+
+		b2Segment segment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
+		b2CreateSegmentShape( m_groundId, &shapeDef, &segment );
+
+		Sample::Step( settings );
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new RecreateStatic( settings );
+	}
+
+	b2BodyId m_groundId;
+};
+
+static int sampleSingleBox = RegisterSample( "Shapes", "Recreate Static", RecreateStatic::Create );

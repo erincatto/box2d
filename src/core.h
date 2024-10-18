@@ -164,6 +164,9 @@ extern float b2_lengthUnitsPerMeter;
 // @warning modifying this can have a significant impact on performance
 #define b2_aabbMargin ( 0.1f * b2_lengthUnitsPerMeter )
 
+// todo testing
+#define b2_aabbVelocityScale 0.0f
+
 // The time that a body must be still before it will go to sleep. In seconds.
 #define b2_timeToSleep 0.5f
 

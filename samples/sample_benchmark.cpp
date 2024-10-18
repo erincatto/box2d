@@ -11,6 +11,7 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <vector>
 
 // Note: resetting the scene is non-deterministic because the world uses freelists
 class BenchmarkBarrel : public Sample
@@ -28,7 +29,7 @@ public:
 	enum
 	{
 		e_maxColumns = 26,
-		e_maxRows = 130,
+		e_maxRows = 150,
 	};
 
 	explicit BenchmarkBarrel( Settings& settings )
@@ -42,24 +43,43 @@ public:
 
 		settings.drawJoints = false;
 
-		float groundSize = 25.0f;
-
 		{
+			float gridSize = 1.0f;
+
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Polygon box = b2MakeBox( groundSize, 1.2f );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 1.2f, 2.0f * groundSize, { -groundSize, 2.0f * groundSize }, b2Rot_identity );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			float y = 0.0f;
+			float x = -40.0f * gridSize;
+			for ( int i = 0; i < 81; ++i )
+			{
+				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, { x, y }, b2Rot_identity );
+				b2CreatePolygonShape( groundId, &shapeDef, &box );
+				x += gridSize;
+			}
 
-			box = b2MakeOffsetBox( 1.2f, 2.0f * groundSize, { groundSize, 2.0f * groundSize }, b2Rot_identity );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			y = gridSize;
+			x = -40.0f * gridSize;
+			for ( int i = 0; i < 100; ++i )
+			{
+				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, { x, y }, b2Rot_identity );
+				b2CreatePolygonShape( groundId, &shapeDef, &box );
+				y += gridSize;
+			}
 
-			box = b2MakeOffsetBox( 800.0f, 10.0f, { 0.0f, -80.0f }, b2Rot_identity );
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			y = gridSize;
+			x = 40.0f * gridSize;
+			for ( int i = 0; i < 100; ++i )
+			{
+				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, { x, y }, b2Rot_identity );
+				b2CreatePolygonShape( groundId, &shapeDef, &box );
+				y += gridSize;
+			}
+
+			b2Segment segment = { { -800.0f, -80.0f }, { 800.0f, -80.f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
 		for ( int i = 0; i < e_maxRows * e_maxColumns; ++i )
@@ -67,7 +87,7 @@ public:
 			m_bodies[i] = b2_nullBodyId;
 		}
 
-		m_shapeType = e_circleShape;
+		m_shapeType = e_compoundShape;
 
 		CreateScene();
 	}
@@ -109,8 +129,7 @@ public:
 			}
 			else
 			{
-				m_columnCount = 15;
-				m_rowCount = 50;
+				m_rowCount = 30;
 			}
 		}
 
@@ -122,6 +141,12 @@ public:
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
+
+		// todo eliminate this once rolling resistance is added
+		if ( m_shapeType == e_mixShape )
+		{
+			bodyDef.angularDamping = 0.3f;
+		}
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
@@ -170,6 +195,7 @@ public:
 		}
 
 		int index = 0;
+		float yStart = m_shapeType == e_humanShape ? 2.0f : 100.0f;
 
 		for ( int i = 0; i < m_columnCount; ++i )
 		{
@@ -177,7 +203,7 @@ public:
 
 			for ( int j = 0; j < m_rowCount; ++j )
 			{
-				float y = j * ( shift + extray ) + centery + 2.0f;
+				float y = j * ( shift + extray ) + centery + yStart;
 
 				bodyDef.position = { x + side, y };
 				side = -side;
@@ -244,7 +270,12 @@ public:
 				}
 				else if ( m_shapeType == e_humanShape )
 				{
-					m_humans[index].Spawn( m_worldId, bodyDef.position, 3.5f, 0.05f, 0.0f, 0.0f, index + 1, nullptr, false );
+					float scale = 3.5f;
+					float jointFriction = 0.05f;
+					float jointHertz = 5.0f;
+					float jointDamping = 0.5f;
+					m_humans[index].Spawn( m_worldId, bodyDef.position, scale, jointFriction, jointHertz, jointDamping, index + 1,
+										   nullptr, false );
 				}
 
 				index += 1;
@@ -1551,7 +1582,6 @@ enum QueryType
 class BenchmarkCast : public Sample
 {
 public:
-
 	explicit BenchmarkCast( Settings& settings )
 		: Sample( settings )
 	{
@@ -1656,7 +1686,7 @@ public:
 			y += m_grid;
 		}
 
-		if (m_topDown)
+		if ( m_topDown )
 		{
 			b2World_RebuildStaticTree( m_worldId );
 		}
@@ -1679,7 +1709,7 @@ public:
 
 		const char* queryTypes[] = { "Ray", "Circle", "Overlap" };
 		int queryType = int( m_queryType );
-		if (ImGui::Combo( "Query", &queryType, queryTypes, IM_ARRAYSIZE( queryTypes ) ))
+		if ( ImGui::Combo( "Query", &queryType, queryTypes, IM_ARRAYSIZE( queryTypes ) ) )
 		{
 			m_queryType = QueryType( queryType );
 			if ( m_queryType == e_overlap )
@@ -1763,7 +1793,7 @@ public:
 	static bool OverlapCallback( b2ShapeId shapeId, void* context )
 	{
 		OverlapResult* result = (OverlapResult*)context;
-		if (result->count < 32)
+		if ( result->count < 32 )
 		{
 			b2AABB aabb = b2Shape_GetAABB( shapeId );
 			result->points[result->count] = b2AABB_Center( aabb );
@@ -1798,7 +1828,7 @@ public:
 
 				b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, filter );
 
-				if (i == m_drawIndex)
+				if ( i == m_drawIndex )
 				{
 					drawResult = result;
 				}
@@ -1817,7 +1847,7 @@ public:
 			g_draw.DrawSegment( p1, p2, b2_colorWhite );
 			g_draw.DrawPoint( p1, 5.0f, b2_colorGreen );
 			g_draw.DrawPoint( p2, 5.0f, b2_colorRed );
-			if (drawResult.hit)
+			if ( drawResult.hit )
 			{
 				g_draw.DrawPoint( drawResult.point, 5.0f, b2_colorWhite );
 			}
@@ -1838,7 +1868,7 @@ public:
 				b2TreeStats traversalResult =
 					b2World_CastCircle( m_worldId, &circle, origin, translation, filter, CastCallback, &result );
 
-				if (i == m_drawIndex)
+				if ( i == m_drawIndex )
 				{
 					drawResult = result;
 				}
@@ -1857,7 +1887,7 @@ public:
 			g_draw.DrawSegment( p1, p2, b2_colorWhite );
 			g_draw.DrawPoint( p1, 5.0f, b2_colorGreen );
 			g_draw.DrawPoint( p2, 5.0f, b2_colorRed );
-			if (drawResult.hit)
+			if ( drawResult.hit )
 			{
 				b2Vec2 t = b2Lerp( p1, p2, drawResult.fraction );
 				g_draw.DrawCircle( t, m_radius, b2_colorWhite );
@@ -1875,12 +1905,12 @@ public:
 			for ( int i = 0; i < sampleCount; ++i )
 			{
 				b2Vec2 origin = m_origins[i];
-				b2AABB aabb = { origin - extent, origin + extent };	
+				b2AABB aabb = { origin - extent, origin + extent };
 
 				result.count = 0;
 				b2TreeStats traversalResult = b2World_OverlapAABB( m_worldId, aabb, filter, OverlapCallback, &result );
 
-				if (i == m_drawIndex)
+				if ( i == m_drawIndex )
 				{
 					drawResult = result;
 				}
@@ -1895,11 +1925,11 @@ public:
 			m_minTime = b2MinFloat( m_minTime, ms );
 
 			b2Vec2 origin = m_origins[m_drawIndex];
-			b2AABB aabb = { origin - extent, origin + extent };	
+			b2AABB aabb = { origin - extent, origin + extent };
 
 			g_draw.DrawAABB( aabb, b2_colorWhite );
 
-			for (int i = 0; i < drawResult.count; ++i)
+			for ( int i = 0; i < drawResult.count; ++i )
 			{
 				g_draw.DrawPoint( drawResult.points[i], 5.0f, b2_colorHotPink );
 			}
@@ -1908,7 +1938,8 @@ public:
 		g_draw.DrawString( 5, m_textLine, "build time ms = %g", m_buildTime );
 		m_textLine += m_textIncrement;
 
-		g_draw.DrawString( 5, m_textLine, "hit count = %d, node visits = %d, leaf visits = %d", hitCount, nodeVisits, leafVisits );
+		g_draw.DrawString( 5, m_textLine, "hit count = %d, node visits = %d, leaf visits = %d", hitCount, nodeVisits,
+						   leafVisits );
 		m_textLine += m_textIncrement;
 
 		g_draw.DrawString( 5, m_textLine, "total ms = %.3f", ms );
@@ -1945,3 +1976,216 @@ public:
 };
 
 static int sampleCast = RegisterSample( "Benchmark", "Cast", BenchmarkCast::Create );
+
+
+class BenchmarkSpinner : public Sample
+{
+public:
+	enum
+	{
+		e_count = 3038,
+		e_pointCount = 360,
+	};
+
+	explicit BenchmarkSpinner( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 32.0f };
+			g_camera.m_zoom = 42.0f;
+		}
+
+		b2BodyId groundId;
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Vec2 points[e_pointCount];
+
+			b2Rot q = b2MakeRot( -2.0f * b2_pi / e_pointCount );
+			b2Vec2 p = { 40.0f, 0.0f };
+			for ( int i = 0; i < e_pointCount; ++i )
+			{
+				points[i] = { p.x, p.y + 32.0f };
+				p = b2RotateVector( q, p );
+			}
+
+			b2ChainDef chainDef = b2DefaultChainDef();
+			chainDef.points = points;
+			chainDef.count = e_pointCount;
+			chainDef.isLoop = true;
+			chainDef.friction = 0.1f;
+			chainDef.customColor = b2_colorWhite;
+
+			b2CreateChain( groundId, &chainDef );
+		}
+
+		{
+			m_bodyType = b2_dynamicBody;
+
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = m_bodyType;
+			bodyDef.position = { 0.0, 12.0f };
+			bodyDef.enableSleep = false;
+
+			m_spinnerId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Polygon box = b2MakeRoundedBox( 0.4f, 20.0f, 0.2f );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.friction = 0.0f;
+			shapeDef.customColor = b2_colorAliceBlue;
+			b2CreatePolygonShape( m_spinnerId, &shapeDef, &box );
+
+			m_motorSpeed = 5.0f;
+			m_maxMotorTorque = 40000.0f;
+			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+			jointDef.bodyIdA = groundId;
+			jointDef.bodyIdB = m_spinnerId;
+			jointDef.localAnchorA = bodyDef.position;
+			jointDef.enableMotor = true;
+			jointDef.motorSpeed = m_motorSpeed;
+			jointDef.maxMotorTorque = m_maxMotorTorque;
+
+			m_jointId = b2CreateRevoluteJoint( m_worldId, &jointDef );
+		}
+
+		b2Capsule capsule = { { -0.25f, 0.0f }, { 0.25f, 0.0f }, 0.25f };
+		b2Circle circle = { { 0.0f, 0.0f }, 0.35f };
+		b2Polygon square = b2MakeSquare( 0.35f );
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.friction = 0.1f;
+		shapeDef.restitution = 0.1f;
+		shapeDef.density = 0.25f;
+
+		int bodyCount = g_sampleDebug ? 499 : e_count;
+
+		float x = -24.0f, y = 2.0f;
+		for ( int i = 0; i < bodyCount; ++i )
+		{
+			bodyDef.position = { x, y };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			int remainder = i % 3;
+			if ( remainder == 0 )
+			{
+				//shapeDef.customColor = b2_colorYellow;
+				b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
+			}
+			else if ( remainder == 1 )
+			{
+				//shapeDef.customColor = b2_colorYellowGreen;
+				b2CreateCircleShape( bodyId, &shapeDef, &circle );
+			}
+			else if ( remainder == 2 )
+			{
+				//shapeDef.customColor = b2_colorGreenYellow;
+				b2CreatePolygonShape( bodyId, &shapeDef, &square );
+			}
+
+			x += 1.0f;
+
+			if ( x > 24.0f )
+			{
+				x = -24.0f;
+				y += 1.0f;
+			}
+		}
+
+		m_acceleration = 0.0f;
+	}
+
+	void UpdateUI() override
+	{
+		float height = 160.0f;
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
+
+		ImGui::Begin( "Spinner", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
+
+		if ( ImGui::SliderFloat( "Speed", &m_motorSpeed, -5.0f, 5.0f ) )
+		{
+			b2RevoluteJoint_SetMotorSpeed( m_jointId, m_motorSpeed );
+
+			if ( m_bodyType == b2_kinematicBody )
+			{
+				b2Body_SetAngularVelocity( m_spinnerId, m_motorSpeed );
+			}
+		}
+
+		if ( ImGui::SliderFloat( "Torque", &m_maxMotorTorque, 0.0f, 100000.0f, "%.0f" ) )
+		{
+			b2RevoluteJoint_SetMaxMotorTorque( m_jointId, m_maxMotorTorque );
+		}
+
+		if ( ImGui::RadioButton( "Static", m_bodyType == b2_staticBody ) )
+		{
+			m_bodyType = b2_staticBody;
+			b2Body_SetType( m_spinnerId, b2_staticBody );
+		}
+
+		if ( ImGui::RadioButton( "Kinematic", m_bodyType == b2_kinematicBody ) )
+		{
+			m_bodyType = b2_kinematicBody;
+			b2Body_SetType( m_spinnerId, b2_kinematicBody );
+			b2Body_SetAngularVelocity( m_spinnerId, m_motorSpeed );
+		}
+
+		if ( ImGui::RadioButton( "Dynamic", m_bodyType == b2_dynamicBody ) )
+		{
+			m_bodyType = b2_dynamicBody;
+			b2Body_SetType( m_spinnerId, b2_dynamicBody );
+		}
+
+		ImGui::End();
+	}
+
+	void Step( Settings& settings ) override
+	{
+		if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) == GLFW_PRESS )
+		{
+			m_acceleration = -0.2f;
+		}
+
+		if ( glfwGetKey( g_mainWindow, GLFW_KEY_S ) == GLFW_PRESS )
+		{
+			m_acceleration = 0.0f;
+			m_motorSpeed = 0.0f;
+		}
+
+		if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) == GLFW_PRESS )
+		{
+			m_acceleration = 0.2f;
+		}
+
+		if ( settings.hertz > 0.0f )
+		{
+			m_motorSpeed = b2ClampFloat( m_motorSpeed + m_acceleration / settings.hertz, -5.0f, 5.0f );
+			b2RevoluteJoint_SetMotorSpeed( m_jointId, m_motorSpeed );
+
+			if ( m_bodyType == b2_kinematicBody )
+			{
+				b2Body_SetAngularVelocity( m_spinnerId, m_motorSpeed );
+			}
+		}
+
+		Sample::Step( settings );
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new BenchmarkSpinner( settings );
+	}
+
+	b2BodyId m_spinnerId;
+	b2JointId m_jointId;
+	float m_acceleration;
+	float m_motorSpeed;
+	float m_maxMotorTorque;
+	b2BodyType m_bodyType;
+};
+
+static int sampleSpinner = RegisterSample( "Benchmark", "Spinner", BenchmarkSpinner::Create );

@@ -192,11 +192,11 @@ void Truck::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz,
 	m_chassisId = b2CreateBody( worldId, &bodyDef );
 	b2CreatePolygonShape( m_chassisId, &shapeDef, &chassis );
 
-	b2Polygon box = b2MakeOffsetBox( 1.25f * scale, 0.1f * scale, { -2.05f * scale, -0.275f * scale }, b2Rot_identity );
+	b2Polygon box = b2MakeOffsetBox( 1.25f * scale, 0.1f * scale,  { -2.05f * scale, -0.275f * scale }, b2Rot_identity );
 	box.radius = 0.1f * scale;
 	b2CreatePolygonShape( m_chassisId, &shapeDef, &box );
 
-	box = b2MakeOffsetBox( 0.05f * scale, 0.35f * scale, { -3.25f * scale, 0.375f * scale }, b2Rot_identity );
+	box = b2MakeOffsetBox( 0.05f * scale, 0.35f * scale,  { -3.25f * scale, 0.375f * scale }, b2Rot_identity  );
 	box.radius = 0.1f * scale;
 	b2CreatePolygonShape( m_chassisId, &shapeDef, &box );
 

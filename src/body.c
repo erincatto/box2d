@@ -1044,11 +1044,15 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 		b2SolverSet* staticSet = b2SolverSetArray_Get( &world->solverSets, b2_staticSet );
 		b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
 
+
 		// Transfer body to static set
 		b2TransferBody( world, staticSet, awakeSet, body );
 
 		// Remove body from island.
 		b2RemoveBodyFromIsland( world, body );
+
+		b2BodySim* bodySim = b2BodySimArray_Get( &staticSet->bodySims, body->localIndex );
+		bodySim->isFast = false;
 
 		// Maybe transfer joints to static set.
 		int jointKey = body->headJointKey;

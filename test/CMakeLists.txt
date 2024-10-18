@@ -6,6 +6,7 @@ add_executable(test
     test_collision.c
     test_determinism.c
     test_distance.c
+    test_id.c
     test_macros.h
     test_math.c
     test_shape.c

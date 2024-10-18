@@ -127,7 +127,7 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	if ( body->setIndex != b2_disabledSet )
 	{
 		b2BodyType proxyType = body->type;
-		b2CreateShapeProxy( shape, &world->broadPhase, proxyType, transform, def->forceContactCreation || def->isSensor );
+		b2CreateShapeProxy( shape, &world->broadPhase, proxyType, transform, def->invokeContactCreation || def->isSensor );
 	}
 
 	// Add to shape doubly linked list

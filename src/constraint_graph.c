@@ -278,6 +278,8 @@ b2JointSim* b2CreateJointInGraph( b2World* world, b2Joint* joint )
 	int colorIndex = b2AssignJointColor( graph, bodyIdA, bodyIdB, staticA, staticB );
 
 	b2JointSim* jointSim = b2JointSimArray_Add( &graph->colors[colorIndex].jointSims );
+	memset( jointSim, 0, sizeof( b2JointSim ) );
+
 	joint->colorIndex = colorIndex;
 	joint->localIndex = graph->colors[colorIndex].jointSims.count - 1;
 	return jointSim;

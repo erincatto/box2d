@@ -10,6 +10,7 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <vector>
 
 class SingleBox : public Sample
 {
@@ -137,7 +138,7 @@ public:
 	enum
 	{
 		e_maxColumns = 10,
-		e_maxRows = 12,
+		e_maxRows = 15,
 		e_maxBullets = 8
 	};
 
@@ -499,13 +500,13 @@ public:
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Polygon box = b2MakeOffsetBox( 100.0f, 1.0f, { 0.0f, -1.0f }, b2Rot_identity );
+			b2Polygon box = b2MakeOffsetBox( 100.0f, 1.0f, { 0.0f, -1.0f }, b2Rot_identity  );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
 			b2Segment segment = { { -14.0f, 4.0f }, { -8.0f, 4.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 
-			box = b2MakeOffsetBox( 3.0f, 0.5f, { 0.0f, 4.0f }, b2Rot_identity );
+			box = b2MakeOffsetBox( 3.0f, 0.5f, { 0.0f, 4.0f }, b2Rot_identity  );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
 			b2Capsule capsule = { { 8.5f, 4.0f }, { 13.5f, 4.0f }, 0.5f };

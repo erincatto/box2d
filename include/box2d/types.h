@@ -132,6 +132,9 @@ typedef struct b2WorldDef
 	/// User context that is provided to enqueueTask and finishTask
 	void* userTaskContext;
 
+	/// User data
+	void* userData;
+
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int32_t internalValue;
 } b2WorldDef;
@@ -362,8 +365,8 @@ typedef struct b2ShapeDef
 	/// Normally shapes on static bodies don't invoke contact creation when they are added to the world. This overrides
 	/// that behavior and causes contact creation. This significantly slows down static body creation which can be important
 	/// when there are many static shapes.
-	/// This is implicitly always true for sensors.
-	bool forceContactCreation;
+	/// This is implicitly always true for sensors, dynamic bodies, and kinematic bodies.
+	bool invokeContactCreation;
 
 	/// Should the body update the mass properties when this shape is created. Default is true.
 	bool updateBodyMass;
@@ -480,6 +483,7 @@ typedef enum b2JointType
 	b2_distanceJoint,
 	b2_motorJoint,
 	b2_mouseJoint,
+	b2_nullJoint,
 	b2_prismaticJoint,
 	b2_revoluteJoint,
 	b2_weldJoint,
@@ -631,6 +635,28 @@ typedef struct b2MouseJointDef
 /// Use this to initialize your joint definition
 /// @ingroup mouse_joint
 B2_API b2MouseJointDef b2DefaultMouseJointDef( void );
+
+/// A null joint is used to disable collision between two specific bodies.
+///
+/// @ingroup null_joint
+typedef struct b2NullJointDef
+{
+	/// The first attached body.
+	b2BodyId bodyIdA;
+
+	/// The second attached body.
+	b2BodyId bodyIdB;
+
+	/// User data pointer
+	void* userData;
+
+	/// Used internally to detect a valid definition. DO NOT SET.
+	int32_t internalValue;
+} b2NullJointDef;
+
+/// Use this to initialize your joint definition
+/// @ingroup null_joint
+B2_API b2NullJointDef b2DefaultNullJointDef( void );
 
 /// Prismatic joint definition
 ///

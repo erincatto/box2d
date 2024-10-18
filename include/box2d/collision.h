@@ -180,7 +180,11 @@ B2_API b2Polygon b2MakePolygon( const b2Hull* hull, float radius );
 
 /// Make an offset convex polygon from a convex hull. This will assert if the hull is not valid.
 /// @warning Do not manually fill in the hull data, it must come directly from b2ComputeHull
-B2_API b2Polygon b2MakeOffsetPolygon( const b2Hull* hull, float radius, b2Transform transform );
+B2_API b2Polygon b2MakeOffsetPolygon( const b2Hull* hull, b2Vec2 position, b2Rot rotation );
+
+/// Make an offset convex polygon from a convex hull. This will assert if the hull is not valid.
+/// @warning Do not manually fill in the hull data, it must come directly from b2ComputeHull
+B2_API b2Polygon b2MakeOffsetRoundedPolygon( const b2Hull* hull, b2Vec2 position, b2Rot rotation, float radius );
 
 /// Make a square polygon, bypassing the need for a convex hull.
 /// @param h the half-width
@@ -200,9 +204,17 @@ B2_API b2Polygon b2MakeRoundedBox( float hx, float hy, float radius );
 /// Make an offset box, bypassing the need for a convex hull.
 /// @param hx the half-width
 /// @param hy the half-height
-/// @param center the local position of the center of the box
+/// @param center the local center of the box
 /// @param rotation the local rotation of the box
 B2_API b2Polygon b2MakeOffsetBox( float hx, float hy, b2Vec2 center, b2Rot rotation );
+
+/// Make an offset rounded box, bypassing the need for a convex hull.
+/// @param hx the half-width
+/// @param hy the half-height
+/// @param center the local center of the box
+/// @param rotation the local rotation of the box
+/// @param radius the radius of the rounded extension
+B2_API b2Polygon b2MakeOffsetRoundedBox( float hx, float hy, b2Vec2 center, b2Rot rotation, float radius );
 
 /// Transform a polygon. This is useful for transferring a shape from one body to another.
 B2_API b2Polygon b2TransformPolygon( b2Transform transform, const b2Polygon* polygon );
@@ -712,7 +724,7 @@ typedef bool b2TreeQueryCallbackFcn( int32_t proxyId, int32_t userData, void* co
 /// Query an AABB for overlapping proxies. The callback class is called for each proxy that overlaps the supplied AABB.
 ///	@return performance data
 B2_API b2TreeStats b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_t maskBits,
-											  b2TreeQueryCallbackFcn* callback, void* context );
+										b2TreeQueryCallbackFcn* callback, void* context );
 
 /// This function receives clipped ray cast input for a proxy. The function
 /// returns the new ray fraction.
@@ -735,7 +747,7 @@ typedef float b2TreeRayCastCallbackFcn( const b2RayCastInput* input, int32_t pro
 /// @param context user context that is passed to the callback
 ///	@return performance data
 B2_API b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
-												b2TreeRayCastCallbackFcn* callback, void* context );
+										  b2TreeRayCastCallbackFcn* callback, void* context );
 
 /// This function receives clipped ray cast input for a proxy. The function
 /// returns the new ray fraction.
@@ -756,7 +768,7 @@ typedef float b2TreeShapeCastCallbackFcn( const b2ShapeCastInput* input, int32_t
 /// @param context user context that is passed to the callback
 ///	@return performance data
 B2_API b2TreeStats b2DynamicTree_ShapeCast( const b2DynamicTree* tree, const b2ShapeCastInput* input, uint64_t maskBits,
-												  b2TreeShapeCastCallbackFcn* callback, void* context );
+											b2TreeShapeCastCallbackFcn* callback, void* context );
 
 /// Validate this tree. For testing.
 B2_API void b2DynamicTree_Validate( const b2DynamicTree* tree );

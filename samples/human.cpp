@@ -37,10 +37,15 @@ void Human::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float fricti
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
 	shapeDef.friction = 0.2f;
 	shapeDef.filter.groupIndex = -groupIndex;
-	shapeDef.filter.maskBits = 1;
+	shapeDef.filter.categoryBits = 2;
+	shapeDef.filter.maskBits = (1 | 2);
 
 	b2ShapeDef footShapeDef = shapeDef;
 	footShapeDef.friction = 0.05f;
+
+	// feet don't collide with ragdolls
+	footShapeDef.filter.categoryBits = 2;
+	footShapeDef.filter.maskBits = 1;
 
 	if ( colorize )
 	{
@@ -85,7 +90,7 @@ void Human::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float fricti
 
 		bodyDef.position = b2Add( { 0.0f, 1.2f * s }, position );
 		bodyDef.linearDamping = 0.0f;
-		// bodyDef.type = b2_staticBody;
+		//bodyDef.type = b2_staticBody;
 		bone->bodyId = b2CreateBody( worldId, &bodyDef );
 		bone->frictionScale = 0.5f;
 		bodyDef.type = b2_dynamicBody;
@@ -122,7 +127,7 @@ void Human::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float fricti
 		Bone* bone = m_bones + Bone::e_head;
 		bone->parentIndex = Bone::e_torso;
 
-		bodyDef.position = b2Add( { 0.0f * s, 1.5f * s }, position );
+		bodyDef.position = b2Add( { 0.0f * s, 1.475f * s }, position );
 		bodyDef.linearDamping = 0.1f;
 
 		bone->bodyId = b2CreateBody( worldId, &bodyDef );
@@ -133,12 +138,12 @@ void Human::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float fricti
 			shapeDef.customColor = skinColor;
 		}
 
-		b2Capsule capsule = { { 0.0f, -0.0325f * s }, { 0.0f, 0.0325f * s }, 0.08f * s };
+		b2Capsule capsule = { { 0.0f, -0.038f * s }, { 0.0f, 0.039f * s }, 0.075f * s };
 		b2CreateCapsuleShape( bone->bodyId, &shapeDef, &capsule );
 
-		// neck
-		capsule = { { 0.0f, -0.12f * s }, { 0.0f, -0.08f * s }, 0.05f * s };
-		b2CreateCapsuleShape( bone->bodyId, &shapeDef, &capsule );
+		//// neck
+		// capsule = { { 0.0f, -0.12f * s }, { 0.0f, -0.08f * s }, 0.05f * s };
+		// b2CreateCapsuleShape( bone->bodyId, &shapeDef, &capsule );
 
 		b2Vec2 pivot = b2Add( { 0.0f, 1.4f * s }, position );
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
@@ -196,6 +201,16 @@ void Human::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float fricti
 		bone->jointId = b2CreateRevoluteJoint( worldId, &jointDef );
 	}
 
+	b2Vec2 points[4] = {
+		{ -0.03f * s, -0.185f * s },
+		{ 0.11f * s, -0.185f * s },
+		{ 0.11f * s, -0.16f * s },
+		{ -0.03f * s, -0.14f * s },
+	};
+
+	b2Hull footHull = b2ComputeHull( points, 4 );
+	b2Polygon footPolygon = b2MakePolygon( &footHull, 0.015f * s );
+
 	// lower left leg
 	{
 		Bone* bone = m_bones + Bone::e_lowerLeftLeg;
@@ -211,14 +226,16 @@ void Human::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float fricti
 			shapeDef.customColor = pantColor;
 		}
 
-		b2Capsule capsule = { { 0.0f, -0.14f * s }, { 0.0f, 0.125f * s }, 0.05f * s };
+		b2Capsule capsule = { { 0.0f, -0.155f * s }, { 0.0f, 0.125f * s }, 0.045f * s };
 		b2CreateCapsuleShape( bone->bodyId, &shapeDef, &capsule );
 
 		// b2Polygon box = b2MakeOffsetBox(0.1f * s, 0.03f * s, {0.05f * s, -0.175f * s}, 0.0f);
 		// b2CreatePolygonShape(bone->bodyId, &shapeDef, &box);
 
-		capsule = { { -0.02f * s, -0.175f * s }, { 0.13f * s, -0.175f * s }, 0.03f * s };
-		b2CreateCapsuleShape( bone->bodyId, &footShapeDef, &capsule );
+		//capsule = { { -0.02f * s, -0.175f * s }, { 0.13f * s, -0.175f * s }, 0.03f * s };
+		//b2CreateCapsuleShape( bone->bodyId, &footShapeDef, &capsule );
+
+		b2CreatePolygonShape( bone->bodyId, &footShapeDef, &footPolygon );
 
 		b2Vec2 pivot = b2Add( { 0.0f, 0.625f * s }, position );
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
@@ -291,14 +308,16 @@ void Human::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float fricti
 			shapeDef.customColor = pantColor;
 		}
 
-		b2Capsule capsule = { { 0.0f, -0.14f * s }, { 0.0f, 0.125f * s }, 0.05f * s };
+		b2Capsule capsule = { { 0.0f, -0.155f * s }, { 0.0f, 0.125f * s }, 0.045f * s };
 		b2CreateCapsuleShape( bone->bodyId, &shapeDef, &capsule );
 
 		// b2Polygon box = b2MakeOffsetBox(0.1f * s, 0.03f * s, {0.05f * s, -0.175f * s}, 0.0f);
 		// b2CreatePolygonShape(bone->bodyId, &shapeDef, &box);
 
-		capsule = { { -0.02f * s, -0.175f * s }, { 0.13f * s, -0.175f * s }, 0.03f * s };
-		b2CreateCapsuleShape( bone->bodyId, &footShapeDef, &capsule );
+		//capsule = { { -0.02f * s, -0.175f * s }, { 0.13f * s, -0.175f * s }, 0.03f * s };
+		//b2CreateCapsuleShape( bone->bodyId, &footShapeDef, &capsule );
+
+		b2CreatePolygonShape( bone->bodyId, &footShapeDef, &footPolygon );
 
 		b2Vec2 pivot = b2Add( { 0.0f, 0.625f * s }, position );
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
@@ -380,9 +399,10 @@ void Human::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float fricti
 		jointDef.bodyIdB = bone->bodyId;
 		jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
 		jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+		jointDef.referenceAngle = 0.25f * b2_pi;
 		jointDef.enableLimit = enableLimit;
-		jointDef.lowerAngle = 0.01f * b2_pi;
-		jointDef.upperAngle = 0.5f * b2_pi;
+		jointDef.lowerAngle = -0.2f * b2_pi;
+		jointDef.upperAngle = 0.3f * b2_pi;
 		jointDef.enableMotor = enableMotor;
 		jointDef.maxMotorTorque = bone->frictionScale * maxTorque;
 		jointDef.enableSpring = hertz > 0.0f;
@@ -454,9 +474,10 @@ void Human::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float fricti
 		jointDef.bodyIdB = bone->bodyId;
 		jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
 		jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+		jointDef.referenceAngle = 0.25f * b2_pi;
 		jointDef.enableLimit = enableLimit;
-		jointDef.lowerAngle = 0.01f * b2_pi;
-		jointDef.upperAngle = 0.5f * b2_pi;
+		jointDef.lowerAngle = -0.2f * b2_pi;
+		jointDef.upperAngle = 0.3f * b2_pi;
 		jointDef.enableMotor = enableMotor;
 		jointDef.maxMotorTorque = bone->frictionScale * maxTorque;
 		jointDef.enableSpring = hertz > 0.0f;

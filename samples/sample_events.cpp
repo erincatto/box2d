@@ -178,7 +178,12 @@ public:
 		else
 		{
 			Human* human = m_humans + index;
-			human->Spawn( m_worldId, center, 2.0f, 0.05f, 0.0f, 0.0f, index + 1, human, false );
+			float scale = 2.0f;
+			float jointFriction = 0.05f;
+			float jointHertz = 6.0f;
+			float jointDamping = 0.5f;
+			bool colorize = true;
+			human->Spawn( m_worldId, center, scale, jointFriction, jointHertz, jointDamping, index + 1, human, colorize );
 		}
 
 		m_isSpawned[index] = true;
@@ -503,13 +508,13 @@ public:
 			int countA = b2Shape_GetContactData( event.shapeIdA, contactData.data(), capacityA );
 			assert( countA >= 1 );
 
-			for (int j = 0; j < countA; ++j)
+			for ( int j = 0; j < countA; ++j )
 			{
 				b2Manifold manifold = contactData[j].manifold;
 				b2Vec2 normal = manifold.normal;
 				assert( b2AbsFloat( b2Length( normal ) - 1.0f ) < 4.0f * FLT_EPSILON );
 
-				for (int k = 0; k < manifold.pointCount; ++k)
+				for ( int k = 0; k < manifold.pointCount; ++k )
 				{
 					b2ManifoldPoint point = manifold.points[k];
 					g_draw.DrawSegment( point.point, point.point + 4.0f * normal, b2_colorBlueViolet );
@@ -522,13 +527,13 @@ public:
 			int countB = b2Shape_GetContactData( event.shapeIdB, contactData.data(), capacityB );
 			assert( countB >= 1 );
 
-			for (int j = 0; j < countB; ++j)
+			for ( int j = 0; j < countB; ++j )
 			{
 				b2Manifold manifold = contactData[j].manifold;
 				b2Vec2 normal = manifold.normal;
 				assert( b2AbsFloat( b2Length( normal ) - 1.0f ) < 4.0f * FLT_EPSILON );
 
-				for (int k = 0; k < manifold.pointCount; ++k)
+				for ( int k = 0; k < manifold.pointCount; ++k )
 				{
 					b2ManifoldPoint point = manifold.points[k];
 					g_draw.DrawSegment( point.point, point.point + 4.0f * normal, b2_colorYellowGreen );
@@ -672,14 +677,13 @@ public:
 			m_debrisIds[index] = b2_nullBodyId;
 		}
 
-
 		for ( int i = 0; i < destroyCount; ++i )
 		{
 			bool updateMass = false;
 			b2DestroyShape( shapesToDestroy[i], updateMass );
 		}
 
-		if (destroyCount > 0)
+		if ( destroyCount > 0 )
 		{
 			// Update mass just once
 			b2Body_ApplyMassFromShapes( m_playerId );
@@ -975,10 +979,10 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.friction = 0.1f;
 
-			b2Polygon box = b2MakeOffsetBox( 12.0f, 0.1f, { -10.0f, -0.1f }, b2MakeRot(-0.15f * b2_pi) );
+			b2Polygon box = b2MakeOffsetBox( 12.0f, 0.1f, { -10.0f, -0.1f }, b2MakeRot( -0.15f * b2_pi ) );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			box = b2MakeOffsetBox( 12.0f, 0.1f, { 10.0f, -0.1f }, b2MakeRot(0.15f * b2_pi) );
+			box = b2MakeOffsetBox( 12.0f, 0.1f, { 10.0f, -0.1f }, b2MakeRot( 0.15f * b2_pi ) );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
 			shapeDef.restitution = 0.8f;

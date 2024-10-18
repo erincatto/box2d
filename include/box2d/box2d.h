@@ -189,6 +189,12 @@ B2_API b2Profile b2World_GetProfile( b2WorldId worldId );
 /// Get world counters and sizes
 B2_API b2Counters b2World_GetCounters( b2WorldId worldId );
 
+/// Set the user data pointer.
+B2_API void b2World_SetUserData( b2WorldId worldId, void* userData );
+
+/// Get the user data pointer.
+B2_API void* b2World_GetUserData( b2WorldId worldId );
+
 /// Dump memory stats to box2d_memory.txt
 B2_API void b2World_DumpMemoryStats( b2WorldId worldId );
 
@@ -859,6 +865,21 @@ B2_API float b2MouseJoint_GetMaxForce( b2JointId jointId );
 /**@}*/
 
 /**
+ * @defgroup null_joint Null Joint
+ * @brief Functions for the null joint.
+ *
+ * The null joint is used to disable collision between two bodies. As a side effect of being a joint, it also
+ * keeps the two bodies in the same simulation island.
+ * @{
+ */
+
+/// Create a null joint.
+/// @see b2NullJointDef for details
+B2_API b2JointId b2CreateNullJoint( b2WorldId worldId, const b2NullJointDef* def );
+
+/**@}*/
+
+/**
  * @defgroup prismatic_joint Prismatic Joint
  * @brief A prismatic joint allows for translation along a single axis with no rotation.
  *
@@ -926,6 +947,12 @@ B2_API float b2PrismaticJoint_GetMaxMotorForce( b2JointId jointId );
 
 /// Get the prismatic joint current motor force, typically in newtons
 B2_API float b2PrismaticJoint_GetMotorForce( b2JointId jointId );
+
+/// Get the current joint translation, usually in meters.
+B2_API float b2PrismaticJoint_GetTranslation( b2JointId jointId );
+
+/// Get the current joint translation speed, usually in meters per second.
+B2_API float b2PrismaticJoint_GetSpeed( b2JointId jointId );
 
 /** @} */
 

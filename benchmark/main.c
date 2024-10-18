@@ -30,6 +30,7 @@ extern b2WorldId JointGrid( b2WorldDef* worldDef );
 extern b2WorldId LargePyramid( b2WorldDef* worldDef );
 extern b2WorldId ManyPyramids( b2WorldDef* worldDef );
 extern b2WorldId Smash( b2WorldDef* worldDef );
+extern b2WorldId Spinner( b2WorldDef* worldDef );
 extern b2WorldId Tumbler( b2WorldDef* worldDef );
 
 typedef struct Benchmark
@@ -115,6 +116,8 @@ static void FinishTask( void* userTask, void* userContext )
 }
 
 // Box2D benchmark application. On Windows I recommend running this in an administrator command prompt. Don't use Windows Terminal.
+// Or use affinity. [0x01 0x02 0x04 0x08 0x10 0x20 0x40 0x80]
+// start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=4 -w=4
 int main( int argc, char** argv )
 {
 	Benchmark benchmarks[] = {
@@ -122,6 +125,7 @@ int main( int argc, char** argv )
 		{ "large_pyramid", LargePyramid, 500 },
 		{ "many_pyramids", ManyPyramids, 200 },
 		{ "smash", Smash, 300 },
+		{ "spinner", Spinner, 1400 },
 		{ "tumbler", Tumbler, 750 },
 	};
 

@@ -3,6 +3,8 @@
 
 #include "test_macros.h"
 
+#include "core.h"
+
 #include "box2d/box2d.h"
 #include "box2d/collision.h"
 #include "box2d/math_functions.h"
@@ -295,6 +297,50 @@ int TestForAmy( void )
 	return 0;
 }
 
+#define WORLD_COUNT (b2_maxWorlds/2)
+
+int TestWorldRecycle( void )
+{
+	_Static_assert( WORLD_COUNT > 0, "world count" );
+
+	int count = 100;
+
+	b2WorldId worldIds[WORLD_COUNT];
+
+	for (int i = 0; i < count; ++i)
+	{
+		b2WorldDef worldDef = b2DefaultWorldDef();
+		for (int j = 0; j < WORLD_COUNT; ++j)
+		{
+			worldIds[j] = b2CreateWorld( &worldDef );
+			ENSURE( b2World_IsValid( worldIds[j] ) == true );
+
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2CreateBody( worldIds[j], &bodyDef );
+		}
+
+		for (int j = 0; j < WORLD_COUNT; ++j)
+		{
+			float timeStep = 1.0f / 60.0f;
+			int subStepCount = 1;
+
+			for ( int k = 0; k < 10; ++k )
+			{
+				b2World_Step( worldIds[j], timeStep, subStepCount );
+			}
+		}
+
+		for ( int j = WORLD_COUNT - 1; j >= 0; --j )
+		{
+			b2DestroyWorld( worldIds[j] );
+			ENSURE( b2World_IsValid( worldIds[j] ) == false );
+			worldIds[j] = b2_nullWorldId;
+		}
+	}
+
+	return 0;
+}
+
 int WorldTest( void )
 {
 	RUN_SUBTEST( TestForAmy );
@@ -302,6 +348,7 @@ int WorldTest( void )
 	RUN_SUBTEST( EmptyWorld );
 	RUN_SUBTEST( DestroyAllBodiesWorld );
 	RUN_SUBTEST( TestIsValid );
+	RUN_SUBTEST( TestWorldRecycle );
 
 	return 0;
 }

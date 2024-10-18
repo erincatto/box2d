@@ -272,6 +272,7 @@ typedef struct b2JointSim
 
 void b2DestroyJointInternal( b2World* world, b2Joint* joint, bool wakeBodies );
 
+b2Joint* b2GetJointFullId( b2World* world, b2JointId jointId );
 b2JointSim* b2GetJointSim( b2World* world, b2Joint* joint );
 b2JointSim* b2GetJointSimCheckType( b2JointId jointId, b2JointType type );
 

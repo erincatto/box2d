@@ -186,6 +186,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->enableWarmStarting = true;
 	world->enableContinuous = def->enableContinuous;
 	world->userTreeTask = NULL;
+	world->userData = def->userData;
 
 	if ( def->workerCount > 0 && def->enqueueTask != NULL && def->finishTask != NULL )
 	{
@@ -552,6 +553,12 @@ static void b2Collide( b2StepContext* context )
 				{
 					b2ContactEndTouchEvent event = { shapeIdA, shapeIdB };
 					b2ContactEndTouchEventArray_Push( &world->contactEndEvents, event );
+				}
+
+				if ( ( flags & b2_contactSensorTouchingFlag ) != 0 && ( flags & b2_contactEnableSensorEvents ) != 0 )
+				{
+					b2SensorEndTouchEvent event = { shapeIdA, shapeIdB };
+					b2SensorEndTouchEventArray_Push( &world->sensorEndEvents, event );
 				}
 
 				// Bounding boxes no longer overlap
@@ -1751,6 +1758,18 @@ b2Counters b2World_GetCounters( b2WorldId worldId )
 		s.colorCounts[i] = world->constraintGraph.colors[i].contactSims.count + world->constraintGraph.colors[i].jointSims.count;
 	}
 	return s;
+}
+
+void b2World_SetUserData(b2WorldId worldId, void* userData)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	world->userData = userData;
+}
+
+void* b2World_GetUserData(b2WorldId worldId)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	return world->userData;
 }
 
 void b2World_DumpMemoryStats( b2WorldId worldId )

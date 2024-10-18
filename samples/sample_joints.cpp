@@ -349,6 +349,59 @@ public:
 
 static int sampleMotorJoint = RegisterSample( "Joints", "Motor Joint", MotorJoint::Create );
 
+// This sample shows how to use a null joint to prevent collision between two bodies.
+// This is more specific than filters. It also shows that sleeping is coupled by the null joint.
+class NullJoint : public Sample
+{
+public:
+	explicit NullJoint( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 7.0f };
+			g_camera.m_zoom = 25.0f * 0.4f;
+		}
+
+		{
+			b2BodyId groundId;
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			groundId = b2CreateBody( m_worldId, &bodyDef );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Segment segment = { { -20.0f, 0.0f }, { 20.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { -4.0f, 2.0f };
+			b2BodyId bodyId1 = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Polygon box = b2MakeSquare( 2.0f );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreatePolygonShape( bodyId1, &shapeDef, &box );
+
+			bodyDef.position = { 4.0f, 2.0f };
+			b2BodyId bodyId2 = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId2, &shapeDef, &box );
+
+			b2NullJointDef jointDef = b2DefaultNullJointDef();
+			jointDef.bodyIdA = bodyId1;
+			jointDef.bodyIdB = bodyId2;
+
+			b2CreateNullJoint( m_worldId, &jointDef );
+		}
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new NullJoint( settings );
+	}
+};
+
+static int sampleNullJoint = RegisterSample( "Joints", "Null Joint", NullJoint::Create );
+
 class RevoluteJoint : public Sample
 {
 public:
@@ -675,6 +728,14 @@ public:
 
 		float force = b2PrismaticJoint_GetMotorForce( m_jointId );
 		g_draw.DrawString( 5, m_textLine, "Motor Force = %4.1f", force );
+		m_textLine += m_textIncrement;
+
+		float translation = b2PrismaticJoint_GetTranslation( m_jointId );
+		g_draw.DrawString( 5, m_textLine, "Translation = %4.1f", translation );
+		m_textLine += m_textIncrement;
+
+		float speed = b2PrismaticJoint_GetSpeed( m_jointId );
+		g_draw.DrawString( 5, m_textLine, "Speed = %4.1f", speed );
 		m_textLine += m_textIncrement;
 	}
 
@@ -2110,8 +2171,11 @@ public:
 	{
 		if ( settings.restart == false )
 		{
-			g_camera.m_center = { 0.0f, 3.0f };
-			g_camera.m_zoom = 25.0f * 0.15f;
+			g_camera.m_center = { 0.0f, 12.0f };
+			g_camera.m_zoom = 16.0f;
+
+			// g_camera.m_center = { 0.0f, 26.0f };
+			// g_camera.m_zoom = 1.0f;
 		}
 
 		{
@@ -2122,12 +2186,17 @@ public:
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
-		m_jointFrictionTorque = 0.05f;
-		m_jointHertz = 0.0f;
+		m_jointFrictionTorque = 0.03f;
+		m_jointHertz = 5.0f;
 		m_jointDampingRatio = 0.5f;
 
-		m_human.Spawn( m_worldId, { 0.0f, 5.0f }, 1.0f, m_jointFrictionTorque, m_jointHertz, m_jointDampingRatio, 1, nullptr,
-					   true );
+		Spawn();
+	}
+
+	void Spawn()
+	{
+		m_human.Spawn( m_worldId, { 0.0f, 25.0f }, 1.0f, m_jointFrictionTorque, m_jointHertz, m_jointDampingRatio, 1, nullptr,
+					   false );
 		m_human.ApplyRandomAngularImpulse( 10.0f );
 	}
 
@@ -2155,6 +2224,11 @@ public:
 			m_human.SetJointDampingRatio( m_jointDampingRatio );
 		}
 
+		if ( ImGui::Button( "Respawn" ) )
+		{
+			m_human.Despawn();
+			Spawn();
+		}
 		ImGui::PopItemWidth();
 		ImGui::End();
 	}
@@ -2192,7 +2266,127 @@ public:
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
-		m_donut.Spawn( m_worldId, { 0.0f, 10.0f }, 2.0f, 0, nullptr );
+		m_beginFlag = false;
+		m_beginTransform = b2Transform_identity;
+		m_endFlag = false;
+		m_endTransform = b2Transform_identity;
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_staticBody;
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.density = 1.0f;
+			shapeDef.friction = 0.3f;
+			shapeDef.isSensor = true;
+
+			bodyDef.position = { -6.5f, 8.0f };
+			m_sensor = b2CreateBody( m_worldId, &bodyDef );
+			b2Polygon r1 = b2MakeBox( 3.0f, 0.5f );
+			b2CreatePolygonShape( m_sensor, &shapeDef, &r1 );
+		}
+
+		m_ball = b2_nullBodyId;
+	}
+
+	void CreateTestBall( b2Vec2 impulse )
+	{
+		if ( b2Body_IsValid( m_ball ) )
+		{
+			b2DestroyBody( m_ball );
+		}
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.position = { -6.5f, 4.0f };
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.density = 1.0f;
+		shapeDef.friction = 0.3f;
+		shapeDef.userData = (void*)"ball";
+
+		m_ball = b2CreateBody( m_worldId, &bodyDef );
+		b2Circle c1 = { b2Vec2_zero, 0.25f };
+		b2CreateCircleShape( m_ball, &shapeDef, &c1 );
+		b2Body_ApplyLinearImpulse( m_ball, impulse, bodyDef.position, true );
+	}
+
+	void Step( Settings& settings ) override
+	{
+		Sample::Step( settings );
+
+		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
+		for ( int i = 0; i < sensorEvents.beginCount; ++i )
+		{
+			b2SensorBeginTouchEvent event = sensorEvents.beginEvents[i];
+			void* userData = b2Shape_GetUserData( event.visitorShapeId );
+			if ( strcmp( (char*)userData, "ball" ) == 0 )
+			{
+				m_beginFlag = true;
+				m_endFlag = false;
+				if ( b2Body_GetLinearVelocity( m_ball ).y < 0 )
+				{
+					m_beginTransform.p = b2Add( b2Body_GetPosition( m_sensor ), { 0.0f, 0.5f } );
+				}
+				else
+				{
+					m_beginTransform.p = b2Sub( b2Body_GetPosition( m_sensor ), { 0.0f, 0.5f } );
+				}
+			}
+		}
+
+		for ( int i = 0; i < sensorEvents.endCount; ++i )
+		{
+			b2SensorEndTouchEvent event = sensorEvents.endEvents[i];
+			void* userData = b2Shape_GetUserData( event.visitorShapeId );
+			if ( strcmp( (char*)userData, "ball" ) == 0 )
+			{
+				m_endFlag = true;
+				if ( b2Body_GetLinearVelocity( m_ball ).y < 0 )
+				{
+					m_endTransform.p = b2Sub( b2Body_GetPosition( m_sensor ), { 0.0f, 0.5f } );
+				}
+				else
+				{
+					m_endTransform.p = b2Add( b2Body_GetPosition( m_sensor ), { 0.0f, 0.5f } );
+				}
+			}
+		}
+
+		if ( m_beginFlag )
+		{
+			g_draw.DrawSolidCircle( m_beginTransform, b2Vec2_zero, 0.5f, b2_colorGreen );
+		}
+
+		if ( m_endFlag )
+		{
+			g_draw.DrawSolidCircle( m_endTransform, b2Vec2_zero, 0.5f, b2_colorRed );
+		}
+	}
+
+	void UpdateUI() override
+	{
+		float height = 120.0f;
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 120.0f, height ) );
+
+		ImGui::Begin( "Spawn test ball", nullptr, ImGuiWindowFlags_NoResize );
+
+		if ( ImGui::Button( "Slow ball" ) )
+		{
+			m_beginFlag = false;
+			m_endFlag = false;
+			CreateTestBall( { 0.0f, 2.0f } );
+		}
+
+		if ( ImGui::Button( "Fast ball" ) )
+		{
+			m_beginFlag = false;
+			m_endFlag = false;
+			CreateTestBall( { 0.0f, 8.0f } );
+		}
+
+		ImGui::End();
 	}
 
 	static Sample* Create( Settings& settings )
@@ -2200,7 +2394,13 @@ public:
 		return new SoftBody( settings );
 	}
 
-	Donut m_donut;
+	b2BodyId m_ball;
+	b2BodyId m_sensor;
+
+	bool m_beginFlag;
+	b2Transform m_beginTransform;
+	bool m_endFlag;
+	b2Transform m_endTransform;
 };
 
 static int sampleDonut = RegisterSample( "Joints", "Soft Body", SoftBody::Create );

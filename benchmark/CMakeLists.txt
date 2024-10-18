@@ -6,6 +6,7 @@ add_executable(benchmark
     large_pyramid.c
     many_pyramids.c
     smash.c
+    spinner.c
     tumbler.c
 )
 

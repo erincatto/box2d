@@ -16,6 +16,7 @@
 #include "box2d/box2d.h"
 
 #include <stddef.h>
+#include <string.h>
 
 B2_ARRAY_SOURCE( b2Joint, b2Joint );
 B2_ARRAY_SOURCE( b2JointSim, b2JointSim );
@@ -45,6 +46,13 @@ b2MouseJointDef b2DefaultMouseJointDef( void )
 	def.hertz = 4.0f;
 	def.dampingRatio = 1.0f;
 	def.maxForce = 1.0f;
+	def.internalValue = B2_SECRET_COOKIE;
+	return def;
+}
+
+b2NullJointDef b2DefaultNullJointDef( void )
+{
+	b2NullJointDef def = { 0 };
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;
 }
@@ -90,7 +98,7 @@ b2ExplosionDef b2DefaultExplosionDef(void)
 	return def;
 }
 
-static b2Joint* b2GetJointFullId( b2World* world, b2JointId jointId )
+b2Joint* b2GetJointFullId( b2World* world, b2JointId jointId )
 {
 	int id = jointId.index1 - 1;
 	b2Joint* joint = b2JointArray_Get( &world->joints, id );
@@ -204,6 +212,8 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 		joint->localIndex = set->jointSims.count;
 
 		jointSim = b2JointSimArray_Add( &set->jointSims );
+		memset( jointSim, 0, sizeof( b2JointSim ) );
+
 		jointSim->jointId = jointId;
 		jointSim->bodyIdA = bodyIdA;
 		jointSim->bodyIdB = bodyIdB;
@@ -216,6 +226,8 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 		joint->localIndex = set->jointSims.count;
 
 		jointSim = b2JointSimArray_Add( &set->jointSims );
+		memset( jointSim, 0, sizeof( b2JointSim ) );
+
 		jointSim->jointId = jointId;
 		jointSim->bodyIdA = bodyIdA;
 		jointSim->bodyIdB = bodyIdB;
@@ -247,7 +259,10 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 		b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, setIndex );
 		joint->setIndex = setIndex;
 		joint->localIndex = set->jointSims.count;
+
 		jointSim = b2JointSimArray_Add( &set->jointSims );
+		memset( jointSim, 0, sizeof( b2JointSim ) );
+
 		jointSim->jointId = jointId;
 		jointSim->bodyIdA = bodyIdA;
 		jointSim->bodyIdB = bodyIdB;
@@ -449,6 +464,33 @@ b2JointId b2CreateMouseJoint( b2WorldId worldId, const b2MouseJointDef* def )
 	joint->mouseJoint.hertz = def->hertz;
 	joint->mouseJoint.dampingRatio = def->dampingRatio;
 	joint->mouseJoint.maxForce = def->maxForce;
+
+	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->revision };
+	return jointId;
+}
+
+b2JointId b2CreateNullJoint( b2WorldId worldId, const b2NullJointDef* def )
+{
+	b2CheckDef( def );
+	b2World* world = b2GetWorldFromId( worldId );
+
+	B2_ASSERT( world->locked == false );
+
+	if ( world->locked )
+	{
+		return ( b2JointId ){ 0 };
+	}
+
+	b2Body* bodyA = b2GetBodyFullId( world, def->bodyIdA );
+	b2Body* bodyB = b2GetBodyFullId( world, def->bodyIdB );
+
+	bool collideConnected = false;
+	b2JointPair pair = b2CreateJoint( world, bodyA, bodyB, def->userData, 1.0f, b2_nullJoint, collideConnected);
+
+	b2JointSim* joint = pair.jointSim;
+	joint->type = b2_nullJoint;
+	joint->localOriginAnchorA = b2Vec2_zero;
+	joint->localOriginAnchorB = b2Vec2_zero;
 
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->revision };
 	return jointId;
@@ -925,6 +967,9 @@ b2Vec2 b2Joint_GetConstraintForce( b2JointId jointId )
 		case b2_mouseJoint:
 			return b2GetMouseJointForce( world, base );
 
+		case b2_nullJoint:
+			return b2Vec2_zero;
+
 		case b2_prismaticJoint:
 			return b2GetPrismaticJointForce( world, base );
 
@@ -967,6 +1012,9 @@ float b2Joint_GetConstraintTorque( b2JointId jointId )
 		case b2_mouseJoint:
 			return b2GetMouseJointTorque( world, base );
 
+		case b2_nullJoint:
+			return 0.0f;
+
 		case b2_prismaticJoint:
 			return b2GetPrismaticJointTorque( world, base );
 
@@ -1007,6 +1055,9 @@ void b2PrepareJoint( b2JointSim* joint, b2StepContext* context )
 
 		case b2_mouseJoint:
 			b2PrepareMouseJoint( joint, context );
+			break;
+
+		case b2_nullJoint:
 			break;
 
 		case b2_prismaticJoint:
@@ -1054,6 +1105,9 @@ void b2WarmStartJoint( b2JointSim* joint, b2StepContext* context )
 			b2WarmStartMouseJoint( joint, context );
 			break;
 
+		case b2_nullJoint:
+			break;
+
 		case b2_prismaticJoint:
 			b2WarmStartPrismaticJoint( joint, context );
 			break;
@@ -1097,6 +1151,9 @@ void b2SolveJoint( b2JointSim* joint, b2StepContext* context, bool useBias )
 
 		case b2_mouseJoint:
 			b2SolveMouseJoint( joint, context );
+			break;
+
+		case b2_nullJoint:
 			break;
 
 		case b2_prismaticJoint:
@@ -1211,6 +1268,12 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 
 			b2HexColor c2 = b2_colorGray8;
 			draw->DrawSegment( target, pB, c2, draw->context );
+		}
+		break;
+
+		case b2_nullJoint:
+		{
+			draw->DrawSegment( pA, pB, b2_colorGold, draw->context );
 		}
 		break;
 

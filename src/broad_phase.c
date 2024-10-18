@@ -163,9 +163,10 @@ typedef struct b2QueryPairContext
 static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 {
 	b2QueryPairContext* queryContext = context;
-	b2BroadPhase* bp = &queryContext->world->broadPhase;
+	b2BroadPhase* broadPhase = &queryContext->world->broadPhase;
 
 	int proxyKey = B2_PROXY_KEY( proxyId, queryContext->queryTreeType );
+	int queryProxyKey = queryContext->queryProxyKey;
 
 	// A proxy cannot form a pair with itself.
 	if ( proxyKey == queryContext->queryProxyKey )
@@ -173,10 +174,38 @@ static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 		return true;
 	}
 
+	b2BodyType treeType = queryContext->queryTreeType;
+	b2BodyType queryProxyType = B2_PROXY_TYPE( queryProxyKey );
+
+	// De-duplication
+	// It is important to prevent duplicate contacts from being created. Ideally I can prevent duplicates
+	// early and in the worker. Most of the time the moveSet contains dynamic and kinematic proxies, but
+	// sometimes it has static proxies.
+
+	// I had an optimization here to skip checking the move set if this is a query into
+	// the static tree. The assumption is that the static proxies are never in the move set
+	// so there is no risk of duplication. However, this is not true with
+	// b2ShapeDef::forceContactCreation, b2ShapeDef::isSensor, or when a static shape is modified.
+	// There can easily be scenarios where the static proxy is in the moveSet but the dynamic proxy is not.
+	// I could have some flag to indicate that there are any static bodies in the moveSet.
+	
 	// Is this proxy also moving?
-	if ( queryContext->queryTreeType != b2_staticBody && proxyKey < queryContext->queryProxyKey )
+	if ( queryProxyType == b2_dynamicBody)
 	{
-		bool moved = b2ContainsKey( &bp->moveSet, proxyKey + 1 );
+		if ( treeType == b2_dynamicBody && proxyKey < queryProxyKey)
+		{
+			bool moved = b2ContainsKey( &broadPhase->moveSet, proxyKey + 1 );
+			if ( moved )
+			{
+				// Both proxies are moving. Avoid duplicate pairs.
+				return true;
+			}
+		}
+	}
+	else
+	{
+		B2_ASSERT( treeType == b2_dynamicBody );
+		bool moved = b2ContainsKey( &broadPhase->moveSet, proxyKey + 1 );
 		if ( moved )
 		{
 			// Both proxies are moving. Avoid duplicate pairs.
@@ -185,14 +214,14 @@ static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 	}
 
 	uint64_t pairKey = B2_SHAPE_PAIR_KEY( shapeId, queryContext->queryShapeIndex );
-	if ( b2ContainsKey( &bp->pairSet, pairKey ) )
+	if ( b2ContainsKey( &broadPhase->pairSet, pairKey ) )
 	{
 		// contact exists
 		return true;
 	}
 
 	int shapeIdA, shapeIdB;
-	if ( proxyKey < queryContext->queryProxyKey )
+	if ( proxyKey < queryProxyKey )
 	{
 		shapeIdA = shapeId;
 		shapeIdB = queryContext->queryShapeIndex;
@@ -249,13 +278,13 @@ static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 		}
 	}
 
-	// #todo per thread to eliminate atomic?
-	int pairIndex = atomic_fetch_add( &bp->movePairIndex, 1 );
+	// todo per thread to eliminate atomic?
+	int pairIndex = atomic_fetch_add( &broadPhase->movePairIndex, 1 );
 
 	b2MovePair* pair;
-	if ( pairIndex < bp->movePairCapacity )
+	if ( pairIndex < broadPhase->movePairCapacity )
 	{
-		pair = bp->movePairs + pairIndex;
+		pair = broadPhase->movePairs + pairIndex;
 		pair->heap = false;
 	}
 	else
