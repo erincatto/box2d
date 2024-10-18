@@ -92,52 +92,52 @@ static const b2JointId b2_nullJointId = B2_ZERO_INIT;
 /// Store a body id into a uint64_t.
 B2_INLINE uint64_t b2StoreBodyId( b2BodyId id )
 {
-	return ( (uint64_t)id.index1 << 8 ) | ( (uint64_t)id.world0 ) << 4 | (uint64_t)id.revision;
+	return ( (uint64_t)id.index1 << 32 ) | ( (uint64_t)id.world0 ) << 16 | (uint64_t)id.revision;
 }
 
 /// Load a uint64_t into a body id.
 B2_INLINE b2BodyId b2LoadBodyId( uint64_t x )
 {
-	b2BodyId id = { (int32_t)( x >> 8 ), (uint16_t)( x >> 4 ), (uint16_t)( x ) };
+	b2BodyId id = { (int32_t)( x >> 32 ), (uint16_t)( x >> 16 ), (uint16_t)( x ) };
 	return id;
 }
 
 /// Store a shape id into a uint64_t.
 B2_INLINE uint64_t b2StoreShapeId( b2ShapeId id )
 {
-	return ( (uint64_t)id.index1 << 8 ) | ( (uint64_t)id.world0 ) << 4 | (uint64_t)id.revision;
+	return ( (uint64_t)id.index1 << 32 ) | ( (uint64_t)id.world0 ) << 16 | (uint64_t)id.revision;
 }
 
 /// Load a uint64_t into a shape id.
 B2_INLINE b2ShapeId b2LoadShapeId( uint64_t x )
 {
-	b2ShapeId id = { (int32_t)( x >> 8 ), (uint16_t)( x >> 4 ), (uint16_t)( x ) };
+	b2ShapeId id = { (int32_t)( x >> 32 ), (uint16_t)( x >> 16 ), (uint16_t)( x ) };
 	return id;
 }
 
 /// Store a chain id into a uint64_t.
 B2_INLINE uint64_t b2StoreChainId( b2ChainId id )
 {
-	return ( (uint64_t)id.index1 << 8 ) | ( (uint64_t)id.world0 ) << 4 | (uint64_t)id.revision;
+	return ( (uint64_t)id.index1 << 32 ) | ( (uint64_t)id.world0 ) << 16 | (uint64_t)id.revision;
 }
 
 /// Load a uint64_t into a chain id.
 B2_INLINE b2ChainId b2LoadChainId( uint64_t x )
 {
-	b2ChainId id = { (int32_t)( x >> 8 ), (uint16_t)( x >> 4 ), (uint16_t)( x ) };
+	b2ChainId id = { (int32_t)( x >> 32 ), (uint16_t)( x >> 16 ), (uint16_t)( x ) };
 	return id;
 }
 
 /// Store a joint id into a uint64_t.
 B2_INLINE uint64_t b2StoreJointId( b2JointId id )
 {
-	return ( (uint64_t)id.index1 << 8 ) | ( (uint64_t)id.world0 ) << 4 | (uint64_t)id.revision;
+	return ( (uint64_t)id.index1 << 32 ) | ( (uint64_t)id.world0 ) << 16 | (uint64_t)id.revision;
 }
 
 /// Load a uint64_t into a joint id.
 B2_INLINE b2JointId b2LoadJointId( uint64_t x )
 {
-	b2JointId id = { (int32_t)( x >> 8 ), (uint16_t)( x >> 4 ), (uint16_t)( x ) };
+	b2JointId id = { (int32_t)( x >> 32 ), (uint16_t)( x >> 16 ), (uint16_t)( x ) };
 	return id;
 }
 

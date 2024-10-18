@@ -11,6 +11,7 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <vector>
 
 // Note: resetting the scene is non-deterministic because the world uses freelists
 class BenchmarkBarrel : public Sample
@@ -2071,17 +2072,17 @@ public:
 			int remainder = i % 3;
 			if ( remainder == 0 )
 			{
-				shapeDef.customColor = b2_colorYellow;
+				//shapeDef.customColor = b2_colorYellow;
 				b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
 			}
 			else if ( remainder == 1 )
 			{
-				shapeDef.customColor = b2_colorYellowGreen;
+				//shapeDef.customColor = b2_colorYellowGreen;
 				b2CreateCircleShape( bodyId, &shapeDef, &circle );
 			}
 			else if ( remainder == 2 )
 			{
-				shapeDef.customColor = b2_colorGreenYellow;
+				//shapeDef.customColor = b2_colorGreenYellow;
 				b2CreatePolygonShape( bodyId, &shapeDef, &square );
 			}
 

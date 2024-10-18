@@ -337,6 +337,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 			{
 				// The AABB is updated after continuous collision.
 				// Add to moved shapes regardless of AABB changes.
+				// todo_erin this blocks predicted AABB extension from helping
 				shape->isFast = true;
 
 				// Bit-set to keep the move array sorted
@@ -1894,6 +1895,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					else if ( shape->isFast )
 					{
 						// Shape is fast. It's aabb will be enlarged in continuous collision.
+						// todo_erin can this be deferred? This breaks AABB extension benefits.
 						b2BufferMove( broadPhase, shape->proxyKey );
 					}
 
@@ -1933,6 +1935,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	// Serially enlarge broad-phase proxies for fast shapes
 	// Doing this here so that bullet shapes see them
 	{
+		b2TracyCZoneNC( continuous_enlarge, "Enlarge Proxies", b2_colorDarkTurquoise, true );
+
 		b2BroadPhase* broadPhase = &world->broadPhase;
 		b2DynamicTree* dynamicTree = broadPhase->trees + b2_dynamicBody;
 
@@ -1986,6 +1990,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				shapeId = shape->nextShapeId;
 			}
 		}
+
+		b2TracyCZoneEnd( continuous_enlarge );
 	}
 
 	if ( stepContext->bulletBodyCount > 0 )

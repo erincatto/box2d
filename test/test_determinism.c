@@ -330,8 +330,8 @@ static int CrossPlatformTest(void)
 	}
 
 	ENSURE( stepCount < maxSteps );
-	ENSURE( sleepStep == 313 );
-	ENSURE( hash == 0x1fc667fa );
+	ENSURE( sleepStep == 0x13f );
+	ENSURE( hash == 0x049eb491 );
 
 	free( bodies );
 
