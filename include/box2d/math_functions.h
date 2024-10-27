@@ -21,7 +21,7 @@
 /// 2D vector
 /// This can be used to represent a point or free vector
 #if defined( __clang__ )
-typedef float b2Vec2 __attribute__((ext_vector_type(2));
+typedef float b2Vec2 __attribute__((ext_vector_type(2)));
 #else
 typedef struct b2Vec2
 {
