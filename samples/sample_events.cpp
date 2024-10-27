@@ -925,6 +925,11 @@ public:
 
 		Sample::Step( settings );
 
+		b2ContactData contactData = {};
+		int contactCount = b2Body_GetContactData( m_platformId, &contactData, 1 );
+		g_draw.DrawString( 5, m_textLine, "Platform contact count = %d, point count = %d", contactCount, contactData.manifold.pointCount );
+		m_textLine += m_textIncrement;
+
 		g_draw.DrawString( 5, m_textLine, "Movement: A/D/Space" );
 		m_textLine += m_textIncrement;
 

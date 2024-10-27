@@ -111,7 +111,7 @@ static inline int CompareSamples( const void* a, const void* b )
 	return result;
 }
 
-static void SortTests()
+static void SortSamples()
 {
 	qsort( g_sampleEntries, g_sampleCount, sizeof( SampleEntry ), CompareSamples );
 }
@@ -462,7 +462,7 @@ static void UpdateUI()
 
 			ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
-			if ( ImGui::BeginTabItem( "Tests" ) )
+			if ( ImGui::BeginTabItem( "Samples" ) )
 			{
 				int categoryIndex = 0;
 				const char* category = g_sampleEntries[categoryIndex].category;
@@ -538,7 +538,7 @@ int main( int, char** )
 
 	s_settings.Load();
 	s_settings.workerCount = b2MinInt( 8, (int)enki::GetNumHardwareThreads() / 2 );
-	SortTests();
+	SortSamples();
 
 	glfwSetErrorCallback( glfwErrorCallback );
 
@@ -563,7 +563,7 @@ int main( int, char** )
 	glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
 
 	// MSAA
-	glfwWindowHint( GLFW_SAMPLES, 4 );
+	//glfwWindowHint( GLFW_SAMPLES, 4 );
 
 	b2Version version = b2GetVersion();
 	snprintf( buffer, 128, "Box2D Version %d.%d.%d", version.major, version.minor, version.revision );

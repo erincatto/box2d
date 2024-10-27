@@ -1589,7 +1589,7 @@ public:
 		{
 			g_camera.m_center = { 500.0f, 500.0f };
 			g_camera.m_zoom = 25.0f * 21.0f;
-			settings.drawShapes = g_sampleDebug;
+			//settings.drawShapes = g_sampleDebug;
 		}
 
 		m_queryType = e_circleCast;

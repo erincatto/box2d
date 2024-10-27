@@ -633,11 +633,6 @@ struct GLTriangles
 	GLint m_projectionUniform;
 };
 
-struct Transform
-{
-	float x, y, c, s;
-};
-
 struct CircleData
 {
 	b2Vec2 position;
@@ -781,7 +776,7 @@ struct GLCircles
 
 struct SolidCircleData
 {
-	Transform transform;
+	b2Transform transform;
 	float radius;
 	RGBA8 rgba;
 };
@@ -926,7 +921,7 @@ struct GLSolidCircles
 
 struct CapsuleData
 {
-	Transform transform;
+	b2Transform transform;
 	float radius;
 	float length;
 	RGBA8 rgba;

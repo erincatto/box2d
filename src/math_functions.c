@@ -141,3 +141,14 @@ b2CosSin b2ComputeCosSin( float angle )
 	q = b2NormalizeRot( q );
 	return ( b2CosSin ){ q.c, q.s };
 }
+
+b2Rot b2ComputeRotationBetweenUnitVectors(b2Vec2 v1, b2Vec2 v2)
+{
+	B2_ASSERT( b2AbsFloat( 1.0f - b2Length( v1 ) ) < 100.0f * FLT_EPSILON );
+	B2_ASSERT( b2AbsFloat( 1.0f - b2Length( v2 ) ) < 100.0f * FLT_EPSILON );
+
+	b2Rot rot;
+	rot.c = b2Dot( v1, v2 );
+	rot.s = b2Cross( v1, v2 );
+	return b2NormalizeRot( rot );
+}

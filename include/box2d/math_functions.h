@@ -20,11 +20,15 @@
 
 /// 2D vector
 /// This can be used to represent a point or free vector
+#if defined( __clang__ )
+typedef float b2Vec2 __attribute__((ext_vector_type(2));
+#else
 typedef struct b2Vec2
 {
 	/// coordinates
 	float x, y;
 } b2Vec2;
+#endif
 
 /// Cosine and sine pair
 /// This uses a custom implementation designed for cross platform determinism
@@ -341,6 +345,9 @@ B2_INLINE b2Rot b2MakeRot( float angle )
 	b2CosSin cs = b2ComputeCosSin( angle );
 	return B2_LITERAL( b2Rot ){ cs.cosine, cs.sine };
 }
+
+/// Compute the rotation between two unit vectors
+B2_API b2Rot b2ComputeRotationBetweenUnitVectors( b2Vec2 v1, b2Vec2 v2 );
 
 /// Is this rotation normalized?
 B2_INLINE bool b2IsNormalized( b2Rot q )
