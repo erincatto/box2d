@@ -20,15 +20,11 @@
 
 /// 2D vector
 /// This can be used to represent a point or free vector
-#if defined( __clang__ )
-typedef float b2Vec2 __attribute__((ext_vector_type(2)));
-#else
 typedef struct b2Vec2
 {
 	/// coordinates
 	float x, y;
 } b2Vec2;
-#endif
 
 /// Cosine and sine pair
 /// This uses a custom implementation designed for cross platform determinism

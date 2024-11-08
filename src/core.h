@@ -159,13 +159,9 @@ extern float b2_lengthUnitsPerMeter;
 #define b2_speculativeDistance ( 4.0f * b2_linearSlop )
 
 // This is used to fatten AABBs in the dynamic tree. This allows proxies
-// to move by a small amount without triggering a tree adjustment.
-// This is in meters.
+// to move by a small amount without triggering a tree adjustment. This is in meters.
 // @warning modifying this can have a significant impact on performance
-#define b2_aabbMargin ( 0.1f * b2_lengthUnitsPerMeter )
-
-// todo testing
-#define b2_aabbVelocityScale 0.0f
+#define b2_aabbMargin ( 0.05f * b2_lengthUnitsPerMeter )
 
 // The time that a body must be still before it will go to sleep. In seconds.
 #define b2_timeToSleep 0.5f

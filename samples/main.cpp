@@ -563,7 +563,7 @@ int main( int, char** )
 	glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
 
 	// MSAA
-	//glfwWindowHint( GLFW_SAMPLES, 4 );
+	glfwWindowHint( GLFW_SAMPLES, 4 );
 
 	b2Version version = b2GetVersion();
 	snprintf( buffer, 128, "Box2D Version %d.%d.%d", version.major, version.minor, version.revision );

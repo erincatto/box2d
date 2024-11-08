@@ -94,7 +94,7 @@ Box2D also does not have exact collision. There is no continuous collision betwe
 Making a worms clone requires arbitrarily destructible terrain. This is beyond the scope of Box2D, so you will have to figure out how to do this on your own.
 
 ### Tile Based Environment
-Using many boxes for your terrain may not work well because box-like characters can get snagged on internal corners. Box2D proves chain shapes for smooth collision, see `b2ChainDef`. In general you should avoid using a rectangular character because collision tolerances will still lead to undesirable snagging. Box2D provides capsules and rounded polygons that may work better for characters.
+Using many boxes for your terrain may not work well because box-like characters can get snagged on internal corners. Box2D provides chain shapes for smooth collision, see `b2ChainDef`. In general you should avoid using a rectangular character because collision tolerances will still lead to undesirable snagging. Box2D provides capsules and rounded polygons that may work better for characters.
 
 ### Asteroid Type Coordinate Systems
 Box2D does not have any support for coordinate frame wrapping. You would likely need to customize Box2D for this purpose. You may need to use a different broad-phase for this to work.
