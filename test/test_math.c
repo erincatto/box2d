@@ -124,5 +124,25 @@ int MathTest( void )
 	ENSURE_SMALL( v.x - two.x, 8.0f * FLT_EPSILON );
 	ENSURE_SMALL( v.y - two.y, 8.0f * FLT_EPSILON );
 
+	v = b2Normalize(( b2Vec2 ){ 0.2f, -0.5f });
+	for ( float y = -1.0f; y <= 1.0f; y += 0.01f )
+	{
+		for ( float x = -1.0f; x <= 1.0f; x += 0.01f )
+		{
+			if (x == 0.0f && y == 0.0f)
+			{
+				continue;
+			}
+
+			u = b2Normalize( ( b2Vec2 ){ x, y } );
+
+			b2Rot r = b2ComputeRotationBetweenUnitVectors( v, u );
+
+			b2Vec2 w = b2RotateVector( r, v );
+			ENSURE_SMALL( w.x - u.x, 4.0f * FLT_EPSILON );
+			ENSURE_SMALL( w.y - u.y, 4.0f * FLT_EPSILON );
+		}
+	}
+
 	return 0;
 }

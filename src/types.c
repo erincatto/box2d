@@ -60,6 +60,7 @@ b2ShapeDef b2DefaultShapeDef( void )
 	def.density = 1.0f;
 	def.filter = b2DefaultFilter();
 	def.enableSensorEvents = true;
+	// todo_erin this might be too costly to have on my default
 	def.enableContactEvents = true;
 	def.updateBodyMass = true;
 	def.internalValue = B2_SECRET_COOKIE;

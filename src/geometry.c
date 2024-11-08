@@ -540,7 +540,7 @@ b2CastOutput b2RayCastCircle( const b2RayCastInput* input, const b2Circle* shape
 		return output;
 	}
 
-	// Pythagorus
+	// Pythagoras
 	float h = sqrtf( rr - cc );
 
 	float fraction = t - h;

@@ -516,11 +516,11 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	}
 	else
 	{
+		// Save old manifold
 		b2Manifold oldManifold = contactSim->manifold;
 
-		// Compute TOI
+		// Compute new manifold
 		b2ManifoldFcn* fcn = s_registers[shapeA->type][shapeB->type].fcn;
-
 		contactSim->manifold = fcn( shapeA, transformA, shapeB, transformB, &contactSim->cache );
 
 		int pointCount = contactSim->manifold.pointCount;
@@ -536,6 +536,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 			if ( touching == false )
 			{
 				// disable contact
+				pointCount = 0;
 				contactSim->manifold.pointCount = 0;
 			}
 		}

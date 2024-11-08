@@ -249,17 +249,17 @@ B2_API bool b2PointInCapsule( b2Vec2 point, const b2Capsule* shape );
 /// Test a point for overlap with a convex polygon in local space
 B2_API bool b2PointInPolygon( b2Vec2 point, const b2Polygon* shape );
 
-/// Ray cast versus circle in shape local space. Initial overlap is treated as a miss.
+/// Ray cast versus circle shape in local space. Initial overlap is treated as a miss.
 B2_API b2CastOutput b2RayCastCircle( const b2RayCastInput* input, const b2Circle* shape );
 
-/// Ray cast versus capsule in shape local space. Initial overlap is treated as a miss.
+/// Ray cast versus capsule shape in local space. Initial overlap is treated as a miss.
 B2_API b2CastOutput b2RayCastCapsule( const b2RayCastInput* input, const b2Capsule* shape );
 
-/// Ray cast versus segment in shape local space. Optionally treat the segment as one-sided with hits from
+/// Ray cast versus segment shape in local space. Optionally treat the segment as one-sided with hits from
 /// the left side being treated as a miss.
 B2_API b2CastOutput b2RayCastSegment( const b2RayCastInput* input, const b2Segment* shape, bool oneSided );
 
-/// Ray cast versus polygon in shape local space. Initial overlap is treated as a miss.
+/// Ray cast versus polygon shape in local space. Initial overlap is treated as a miss.
 B2_API b2CastOutput b2RayCastPolygon( const b2RayCastInput* input, const b2Polygon* shape );
 
 /// Shape cast versus a circle. Initial overlap is treated as a miss.
@@ -348,8 +348,10 @@ typedef struct b2DistanceProxy
 	float radius;
 } b2DistanceProxy;
 
-/// Used to warm start b2Distance. Set count to zero on first call or
-/// use zero initialization.
+/// Used to warm start the GJK simplex. If you call this function multiple times with nearby
+/// transforms this might improve performance. Otherwise you can zero initialize this.
+/// The distance cache must be initialized to zero on the first call.
+/// Users should generally just zero initialize this structure for each call.
 typedef struct b2DistanceCache
 {
 	/// The number of stored simplex points
