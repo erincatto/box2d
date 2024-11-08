@@ -359,6 +359,7 @@ B2_INLINE bool b2IsNormalized( b2Rot q )
 
 /// Normalized linear interpolation
 /// https://fgiesen.wordpress.com/2012/08/15/linear-interpolation-past-present-and-future/
+///	https://web.archive.org/web/20170825184056/http://number-none.com/product/Understanding%20Slerp,%20Then%20Not%20Using%20It/
 B2_INLINE b2Rot b2NLerp( b2Rot q1, b2Rot q2, float t )
 {
 	float omt = 1.0f - t;
@@ -506,6 +507,9 @@ B2_INLINE b2Vec2 b2InvTransformPoint( b2Transform t, const b2Vec2 p )
 	return B2_LITERAL( b2Vec2 ){ t.q.c * vx + t.q.s * vy, -t.q.s * vx + t.q.c * vy };
 }
 
+/// Multiply two transforms. If the result is applied to a point p local to frame B,
+/// the transform would first convert p to a point local to frame A, then into a point
+/// in the world frame.
 /// v2 = A.q.Rot(B.q.Rot(v1) + B.p) + A.p
 ///    = (A.q * B.q).Rot(v1) + A.q.Rot(B.p) + A.p
 B2_INLINE b2Transform b2MulTransforms( b2Transform A, b2Transform B )
@@ -516,6 +520,7 @@ B2_INLINE b2Transform b2MulTransforms( b2Transform A, b2Transform B )
 	return C;
 }
 
+/// Creates a transform that converts a local point in frame B to a local point in frame A.
 /// v2 = A.q' * (B.q * v1 + B.p - A.p)
 ///    = A.q' * B.q * v1 + A.q' * (B.p - A.p)
 B2_INLINE b2Transform b2InvMulTransforms( b2Transform A, b2Transform B )
