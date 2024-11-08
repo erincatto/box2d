@@ -1250,159 +1250,29 @@ public:
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 		}
 
-		m_created = false;
-	}
-
-	void CreateScene1()
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		if ( io.Fonts->Fonts.size() == 0 )
 		{
-			return;
-		}
+			float d = 0.4f;
+			b2Polygon box = b2MakeSquare( 0.5f * d );
 
-		const ImFont* font = io.Fonts->Fonts[0];
-		const unsigned char* pixels = font->ContainerAtlas->TexPixelsAlpha8;
-		int width = font->ContainerAtlas->TexWidth;
-		int height = font->ContainerAtlas->TexHeight;
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.isAwake = false;
 
-		float scale = 0.1f;
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
 
-		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.type = b2_dynamicBody;
-		bodyDef.isAwake = false;
+			int columns = g_sampleDebug ? 20 : 120;
+			int rows = g_sampleDebug ? 10 : 80;
 
-		b2ShapeDef shapeDef = b2DefaultShapeDef();
-
-		for ( int i = 0; i < height; ++i )
-		{
-			for ( int j = 0; j < width; ++j )
+			for ( int i = 0; i < columns; ++i )
 			{
-				unsigned char value = pixels[i * width + j];
-				if ( value != 0 && value != 0xFF )
+				for ( int j = 0; j < rows; ++j )
 				{
-					value += 0;
-				}
-
-				if ( value > 50 )
-				{
-					b2Polygon square = b2MakeSquare( 0.95f * scale * ( value / 255.0f ) );
-					bodyDef.position = { 2.0f * j * scale, 2.0f * ( height - i ) * scale - 10.0f };
+					bodyDef.position.x = i * d + 30.0f;
+					bodyDef.position.y = ( j - rows / 2.0f ) * d;
 					b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
-					b2CreatePolygonShape( bodyId, &shapeDef, &square );
+					b2CreatePolygonShape( bodyId, &shapeDef, &box );
 				}
 			}
-		}
-
-		m_created = true;
-	}
-
-	void CreateScene2()
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		if ( io.Fonts->Fonts.size() == 0 )
-		{
-			return;
-		}
-
-		const ImFont* font = io.Fonts->Fonts.back();
-		const unsigned char* pixels = font->ContainerAtlas->TexPixelsAlpha8;
-		int width = font->ContainerAtlas->TexWidth;
-		int height = font->ContainerAtlas->TexHeight;
-		int fontSize = font->Ascent;
-
-		float scale = 0.1f;
-
-		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.type = b2_dynamicBody;
-		bodyDef.isAwake = false;
-
-		b2ShapeDef shapeDef = b2DefaultShapeDef();
-
-		const char* text = "I";
-		int n = (int)strlen( text );
-		float zoom = 1.0f;
-
-		float x = 0.0f;
-		for ( int k = 0; k < n; ++k )
-		{
-			const ImFontGlyph* glyph = font->FindGlyph( text[k] );
-			float x1 = glyph->X0;
-			float x2 = glyph->X1;
-			float y1 = glyph->Y0;
-			float y2 = glyph->Y1;
-			float u1 = glyph->U0;
-			float v1 = glyph->V0;
-			float u2 = glyph->U1;
-			float v2 = glyph->V1;
-
-			float w = zoom * ( x2 - x1 );
-			float h = zoom * ( y2 - y1 );
-
-			int gridx = int( w );
-			int gridy = int( h );
-			for ( int i = 0; i < gridy; ++i )
-			{
-				float v = v1 + i / h * ( v2 - v1 );
-				int iy = int( v * height );
-
-				for ( int j = 0; j < gridx; ++j )
-				{
-					float u = u1 + j / w * ( u2 - u1 );
-					int ix = int( u * width );
-
-					unsigned char value = pixels[iy * width + ix];
-					if ( value > 50 )
-					{
-						b2Polygon square = b2MakeSquare( 0.9f * scale * value / 255.0f );
-						bodyDef.position = { x + 2.0f * ( zoom * x1 + j ) * scale, -2.0f * ( zoom * y1 + i ) * scale + 13.0f };
-						b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
-						b2CreatePolygonShape( bodyId, &shapeDef, &square );
-					}
-				}
-			}
-
-			x += 2.0f * zoom * scale * glyph->AdvanceX;
-		}
-
-		m_created = true;
-	}
-
-	void CreateScene3()
-	{
-		float d = 0.4f;
-		b2Polygon box = b2MakeSquare( 0.5f * d );
-
-		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.type = b2_dynamicBody;
-		bodyDef.isAwake = false;
-
-		b2ShapeDef shapeDef = b2DefaultShapeDef();
-
-		int columns = g_sampleDebug ? 20 : 120;
-		int rows = g_sampleDebug ? 10 : 80;
-
-		for ( int i = 0; i < columns; ++i )
-		{
-			for ( int j = 0; j < rows; ++j )
-			{
-				bodyDef.position.x = i * d + 30.0f;
-				bodyDef.position.y = ( j - rows / 2.0f ) * d;
-				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
-				b2CreatePolygonShape( bodyId, &shapeDef, &box );
-			}
-		}
-
-		m_created = true;
-	}
-
-	void Step( Settings& settings ) override
-	{
-		Sample::Step( settings );
-
-		if ( m_created == false )
-		{
-			CreateScene3();
 		}
 	}
 
@@ -1410,8 +1280,6 @@ public:
 	{
 		return new BenchmarkSmash( settings );
 	}
-
-	bool m_created;
 };
 
 static int sampleSmash = RegisterSample( "Benchmark", "Smash", BenchmarkSmash::Create );
@@ -1589,7 +1457,7 @@ public:
 		{
 			g_camera.m_center = { 500.0f, 500.0f };
 			g_camera.m_zoom = 25.0f * 21.0f;
-			//settings.drawShapes = g_sampleDebug;
+			// settings.drawShapes = g_sampleDebug;
 		}
 
 		m_queryType = e_circleCast;
@@ -1977,7 +1845,6 @@ public:
 
 static int sampleCast = RegisterSample( "Benchmark", "Cast", BenchmarkCast::Create );
 
-
 class BenchmarkSpinner : public Sample
 {
 public:
@@ -2072,17 +1939,17 @@ public:
 			int remainder = i % 3;
 			if ( remainder == 0 )
 			{
-				//shapeDef.customColor = b2_colorYellow;
+				// shapeDef.customColor = b2_colorYellow;
 				b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
 			}
 			else if ( remainder == 1 )
 			{
-				//shapeDef.customColor = b2_colorYellowGreen;
+				// shapeDef.customColor = b2_colorYellowGreen;
 				b2CreateCircleShape( bodyId, &shapeDef, &circle );
 			}
 			else if ( remainder == 2 )
 			{
-				//shapeDef.customColor = b2_colorGreenYellow;
+				// shapeDef.customColor = b2_colorGreenYellow;
 				b2CreatePolygonShape( bodyId, &shapeDef, &square );
 			}
 
