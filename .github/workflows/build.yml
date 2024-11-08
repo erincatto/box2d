@@ -86,7 +86,7 @@ jobs:
       run: ./bin/${{env.BUILD_TYPE}}/test
       
   samples-windows:
-    name: windows
+    name: samples-windows
     runs-on: windows-latest
     steps:
 
@@ -104,7 +104,7 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config Release
       
   samples-macos:
-    name: macos
+    name: samples-macos
     runs-on: macos-latest
 
     steps:
