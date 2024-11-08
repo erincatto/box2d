@@ -103,3 +103,15 @@ jobs:
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release
       
+  samples-macos:
+    name: macos
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DBOX2D_SAMPLES=ON -DBUILD_SHARED_LIBS=OFF -DBOX2D_UNIT_TESTS=OFF
+      
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Release
