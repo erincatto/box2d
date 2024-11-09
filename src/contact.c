@@ -367,10 +367,31 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 	b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
 	b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
 
-	// if (contactListener && contact->IsTouching())
-	//{
-	//	contactListener->EndContact(contact);
-	// }
+	const b2Shape* shapeA = b2ShapeArray_Get(&world->shapes, contact->shapeIdA);
+	const b2Shape* shapeB = b2ShapeArray_Get(&world->shapes, contact->shapeIdB);
+	b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->revision };
+	b2ShapeId shapeIdB = { shapeB->id + 1, worldId, shapeB->revision };
+	uint32_t flags = contact->flags;
+
+					// Was touching?
+	if ( ( flags & b2_contactTouchingFlag ) != 0 && ( flags & b2_contactEnableContactEvents ) != 0 )
+	{
+		b2ContactEndTouchEvent event = { shapeIdA, shapeIdB };
+		b2ContactEndTouchEventArray_Push( &world->contactEndEvents, event );
+	}
+
+	if ( ( flags & b2_contactSensorTouchingFlag ) != 0 && ( flags & b2_contactEnableSensorEvents ) != 0 )
+	{
+		b2SensorEndTouchEvent event = { shapeIdA, shapeIdB };
+		b2SensorEndTouchEventArray_Push( &world->sensorEndEvents, event );
+	}
+
+
+	world->contactEndEvents;
+	if (contactListener && contact->IsTouching())
+	{
+		contactListener->EndContact(contact);
+	}
 
 	// Remove from body A
 	if ( edgeA->prevKey != B2_NULL_INDEX )

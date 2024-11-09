@@ -969,16 +969,21 @@ typedef struct b2SensorBeginTouchEvent
 } b2SensorBeginTouchEvent;
 
 /// An end touch event is generated when a shape stops overlapping a sensor shape.
-///	You will not get an end event if you do anything that destroys contacts outside
-///	of the world step. These include things like setting the transform, destroying a body
+///	You will get an end event if you do anything that destroys contacts previous to the last
+///	world step.  These include things like setting the transform, destroying a body
 ///	or shape, or changing a filter or body type.
 typedef struct b2SensorEndTouchEvent
 {
 	/// The id of the sensor shape
+	///	@warning this shape may have been destroyed
+	///	@see b2Shape_IsValid
 	b2ShapeId sensorShapeId;
 
 	/// The id of the dynamic shape that stopped touching the sensor shape
+	///	@warning this shape may have been destroyed
+	///	@see b2Shape_IsValid
 	b2ShapeId visitorShapeId;
+
 } b2SensorEndTouchEvent;
 
 /// Sensor events are buffered in the Box2D world and are available
@@ -1013,15 +1018,19 @@ typedef struct b2ContactBeginTouchEvent
 } b2ContactBeginTouchEvent;
 
 /// An end touch event is generated when two shapes stop touching.
-///	You will not get an end event if you do anything that destroys contacts outside
-///	of the world step. These include things like setting the transform, destroying a body
+///	You will get an end event if you do anything that destroys contacts previous to the last
+///	world step. These include things like setting the transform, destroying a body
 ///	or shape, or changing a filter or body type.
 typedef struct b2ContactEndTouchEvent
 {
 	/// Id of the first shape
+	///	@warning this shape may have been destroyed
+	///	@see b2Shape_IsValid
 	b2ShapeId shapeIdA;
 
 	/// Id of the second shape
+	///	@warning this shape may have been destroyed
+	///	@see b2Shape_IsValid
 	b2ShapeId shapeIdB;
 } b2ContactEndTouchEvent;
 

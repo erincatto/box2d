@@ -161,10 +161,13 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 
 	world->bodyMoveEvents = b2BodyMoveEventArray_Create( 4 );
 	world->sensorBeginEvents = b2SensorBeginTouchEventArray_Create( 4 );
-	world->sensorEndEvents = b2SensorEndTouchEventArray_Create( 4 );
+	world->sensorEndEvents[0] = b2SensorEndTouchEventArray_Create( 4 );
+	world->sensorEndEvents[1] = b2SensorEndTouchEventArray_Create( 4 );
 	world->contactBeginEvents = b2ContactBeginTouchEventArray_Create( 4 );
-	world->contactEndEvents = b2ContactEndTouchEventArray_Create( 4 );
+	world->contactEndEvents[0] = b2ContactEndTouchEventArray_Create( 4 );
+	world->contactEndEvents[1] = b2ContactEndTouchEventArray_Create( 4 );
 	world->contactHitEvents = b2ContactHitEventArray_Create( 4 );
+	world->endEventArrayIndex = 0;
 
 	world->stepIndex = 0;
 	world->splitIslandId = B2_NULL_INDEX;
@@ -508,6 +511,8 @@ static void b2Collide( b2StepContext* context )
 
 	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
 
+	int endEventArrayIndex = world->endEventArrayIndex;
+
 	const b2Shape* shapes = world->shapes.data;
 	int16_t worldId = world->worldId;
 
@@ -548,21 +553,7 @@ static void b2Collide( b2StepContext* context )
 
 			if ( simFlags & b2_simDisjoint )
 			{
-				// Was touching?
-				if ( ( flags & b2_contactTouchingFlag ) != 0 && ( flags & b2_contactEnableContactEvents ) != 0 )
-				{
-					b2ContactEndTouchEvent event = { shapeIdA, shapeIdB };
-					b2ContactEndTouchEventArray_Push( &world->contactEndEvents, event );
-				}
-
-				if ( ( flags & b2_contactSensorTouchingFlag ) != 0 && ( flags & b2_contactEnableSensorEvents ) != 0 )
-				{
-					b2SensorEndTouchEvent event = { shapeIdA, shapeIdB };
-					b2SensorEndTouchEventArray_Push( &world->sensorEndEvents, event );
-				}
-
 				// Bounding boxes no longer overlap
-				contact->flags &= ~b2_contactTouchingFlag;
 				b2DestroyContact( world, contact, false );
 				contact = NULL;
 				contactSim = NULL;
@@ -637,13 +628,13 @@ static void b2Collide( b2StepContext* context )
 						if ( shapeA->isSensor )
 						{
 							b2SensorEndTouchEvent event = { shapeIdA, shapeIdB };
-							b2SensorEndTouchEventArray_Push( &world->sensorEndEvents, event );
+							b2SensorEndTouchEventArray_Push( world->sensorEndEvents + endEventArrayIndex, event );
 						}
 
 						if ( shapeB->isSensor )
 						{
 							b2SensorEndTouchEvent event = { shapeIdB, shapeIdA };
-							b2SensorEndTouchEventArray_Push( &world->sensorEndEvents, event );
+							b2SensorEndTouchEventArray_Push( world->sensorEndEvents + endEventArrayIndex, event );
 						}
 					}
 				}
@@ -655,7 +646,7 @@ static void b2Collide( b2StepContext* context )
 					if ( contact->flags & b2_contactEnableContactEvents )
 					{
 						b2ContactEndTouchEvent event = { shapeIdA, shapeIdB };
-						b2ContactEndTouchEventArray_Push( &world->contactEndEvents, event );
+						b2ContactEndTouchEventArray_Push( world->contactEndEvents + endEventArrayIndex, event );
 					}
 
 					B2_ASSERT( contactSim->manifold.pointCount == 0 );
