@@ -15,7 +15,7 @@ _Static_assert( b2_maxPolygonVertices > 2, "must be 3 or more" );
 
 bool b2IsValidRay( const b2RayCastInput* input )
 {
-	bool isValid = b2Vec2_IsValid( input->origin ) && b2Vec2_IsValid( input->translation ) && b2IsValid( input->maxFraction ) &&
+	bool isValid = b2Vec2_IsValid( input->origin ) && b2Vec2_IsValid( input->translation ) && b2Float_IsValid( input->maxFraction ) &&
 				   0.0f <= input->maxFraction && input->maxFraction < b2_huge;
 	return isValid;
 }
@@ -138,8 +138,8 @@ b2Polygon b2MakeSquare( float h )
 
 b2Polygon b2MakeBox( float hx, float hy )
 {
-	B2_ASSERT( b2IsValid( hx ) && hx > 0.0f );
-	B2_ASSERT( b2IsValid( hy ) && hy > 0.0f );
+	B2_ASSERT( b2Float_IsValid( hx ) && hx > 0.0f );
+	B2_ASSERT( b2Float_IsValid( hy ) && hy > 0.0f );
 
 	b2Polygon shape = { 0 };
 	shape.count = 4;
@@ -158,7 +158,7 @@ b2Polygon b2MakeBox( float hx, float hy )
 
 b2Polygon b2MakeRoundedBox( float hx, float hy, float radius )
 {
-	B2_ASSERT( b2IsValid( radius ) && radius >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( radius ) && radius >= 0.0f );
 	b2Polygon shape = b2MakeBox( hx, hy );
 	shape.radius = radius;
 	return shape;
@@ -185,7 +185,7 @@ b2Polygon b2MakeOffsetBox( float hx, float hy, b2Vec2 center, b2Rot rotation )
 
 b2Polygon b2MakeOffsetRoundedBox( float hx, float hy, b2Vec2 center, b2Rot rotation, float radius )
 {
-	B2_ASSERT( b2IsValid( radius ) && radius >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( radius ) && radius >= 0.0f );
 	b2Transform xf = { center, rotation };
 
 	b2Polygon shape = { 0 };

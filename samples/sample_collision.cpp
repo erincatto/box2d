@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "draw.h"
+#include "random.h"
 #include "sample.h"
 #include "settings.h"
 
@@ -527,15 +528,15 @@ public:
 
 			for ( int j = 0; j < m_columnCount; ++j )
 			{
-				float fillTest = RandomFloat( 0.0f, 1.0f );
+				float fillTest = RandomFloatRange( 0.0f, 1.0f );
 				if ( fillTest <= m_fill )
 				{
 					assert( m_proxyCount <= m_proxyCapacity );
 					Proxy* p = m_proxies + m_proxyCount;
 					p->position = { x, y };
 
-					float ratio = RandomFloat( 1.0f, m_ratio );
-					float width = RandomFloat( 0.1f, 0.5f );
+					float ratio = RandomFloatRange( 1.0f, m_ratio );
+					float width = RandomFloatRange( 0.1f, 0.5f );
 					if ( RandomFloat() > 0.0f )
 					{
 						p->width.x = ratio * width;
@@ -719,7 +720,7 @@ public:
 				g_draw.DrawAABB( p->box, c );
 			}
 
-			float moveTest = RandomFloat( 0.0f, 1.0f );
+			float moveTest = RandomFloatRange( 0.0f, 1.0f );
 			if ( m_moveFraction > moveTest )
 			{
 				float dx = m_moveDelta * RandomFloat();
@@ -1465,12 +1466,12 @@ public:
 			m_bodyIds[m_bodyIndex] = b2_nullBodyId;
 		}
 
-		float x = RandomFloat( -20.0f, 20.0f );
-		float y = RandomFloat( 0.0f, 20.0f );
+		float x = RandomFloatRange( -20.0f, 20.0f );
+		float y = RandomFloatRange( 0.0f, 20.0f );
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.position = { x, y };
-		bodyDef.rotation = b2MakeRot( RandomFloat( -b2_pi, b2_pi ) );
+		bodyDef.rotation = b2MakeRot( RandomFloatRange( -b2_pi, b2_pi ) );
 
 		m_bodyIds[m_bodyIndex] = b2CreateBody( m_worldId, &bodyDef );
 
@@ -1951,12 +1952,12 @@ public:
 			m_bodyIds[m_bodyIndex] = b2_nullBodyId;
 		}
 
-		float x = RandomFloat( -20.0f, 20.0f );
-		float y = RandomFloat( 0.0f, 20.0f );
+		float x = RandomFloatRange( -20.0f, 20.0f );
+		float y = RandomFloatRange( 0.0f, 20.0f );
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.position = { x, y };
-		bodyDef.rotation = b2MakeRot( RandomFloat( -b2_pi, b2_pi ) );
+		bodyDef.rotation = b2MakeRot( RandomFloatRange( -b2_pi, b2_pi ) );
 
 		m_bodyIds[m_bodyIndex] = b2CreateBody( m_worldId, &bodyDef );
 

@@ -5,7 +5,7 @@
 #include "donut.h"
 #include "doohickey.h"
 #include "draw.h"
-#include "human.h"
+#include "human_old.h"
 #include "sample.h"
 #include "settings.h"
 
@@ -2238,7 +2238,7 @@ public:
 		return new Ragdoll( settings );
 	}
 
-	Human m_human;
+	HumanOld m_human;
 	float m_jointFrictionTorque;
 	float m_jointHertz;
 	float m_jointDampingRatio;

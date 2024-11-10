@@ -20,4 +20,4 @@ if (MSVC)
 	target_compile_options(benchmark PRIVATE /experimental:c11atomics)
 endif()
 
-target_link_libraries(benchmark PRIVATE box2d enkiTS)
+target_link_libraries(benchmark PRIVATE box2d shared enkiTS)

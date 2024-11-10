@@ -4,7 +4,7 @@
 #include "car.h"
 #include "donut.h"
 #include "draw.h"
-#include "human.h"
+#include "human_old.h"
 #include "sample.h"
 #include "settings.h"
 
@@ -116,7 +116,7 @@ public:
 				b2Vec2 position = { xbase - 2.0f, 10.0f };
 				for ( int i = 0; i < 5; ++i )
 				{
-					Human human;
+					HumanOld human;
 					human.Spawn( m_worldId, position, 1.5f, 0.05f, 0.0f, 0.0f, humanIndex + 1, NULL, false );
 					humanIndex += 1;
 					position.x += 1.0f;

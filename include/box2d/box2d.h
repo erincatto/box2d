@@ -641,9 +641,15 @@ B2_API int b2Chain_GetSegments( b2ChainId chainId, b2ShapeId* segmentArray, int 
 /// @see b2ChainDef::friction
 B2_API void b2Chain_SetFriction( b2ChainId chainId, float friction );
 
+/// Get the chain friction
+B2_API float b2Chain_GetFriction( b2ChainId chainId );
+
 /// Set the chain restitution (bounciness)
 /// @see b2ChainDef::restitution
 B2_API void b2Chain_SetRestitution( b2ChainId chainId, float restitution );
+
+/// Get the chain restitution
+B2_API float b2Chain_GetRestitution( b2ChainId chainId );
 
 /// Chain identifier validation. Provides validation for up to 64K allocations.
 B2_API bool b2Chain_IsValid( b2ChainId id );

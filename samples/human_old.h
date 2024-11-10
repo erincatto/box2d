@@ -29,10 +29,10 @@ struct Bone
 	int parentIndex;
 };
 
-class Human
+class HumanOld
 {
 public:
-	Human();
+	HumanOld();
 
 	void Spawn( b2WorldId worldId, b2Vec2 position, float scale, float frictionTorque, float hertz, float dampingRatio,
 				int groupIndex, void* userData, bool colorize );

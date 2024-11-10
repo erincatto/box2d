@@ -605,7 +605,7 @@ B2_INLINE b2AABB b2AABB_Union( b2AABB a, b2AABB b )
 }
 
 /// Is this a valid number? Not NaN or infinity.
-B2_API bool b2IsValid( float a );
+B2_API bool b2Float_IsValid( float a );
 
 /// Is this a valid vector? Not NaN or infinity.
 B2_API bool b2Vec2_IsValid( b2Vec2 v );

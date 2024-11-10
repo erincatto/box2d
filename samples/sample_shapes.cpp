@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "draw.h"
+#include "random.h"
 #include "sample.h"
 #include "settings.h"
 
@@ -1229,7 +1230,7 @@ public:
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 				b2Polygon poly = RandomPolygon( 0.5f );
-				poly.radius = RandomFloat( 0.05f, 0.25f );
+				poly.radius = RandomFloatRange( 0.05f, 0.25f );
 				b2CreatePolygonShape( bodyId, &shapeDef, &poly );
 
 				x += 1.0f;

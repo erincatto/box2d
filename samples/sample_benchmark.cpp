@@ -3,6 +3,7 @@
 
 #include "draw.h"
 #include "human.h"
+#include "random.h"
 #include "sample.h"
 #include "settings.h"
 
@@ -85,11 +86,24 @@ public:
 		for ( int i = 0; i < e_maxRows * e_maxColumns; ++i )
 		{
 			m_bodies[i] = b2_nullBodyId;
+			m_humans[i] = nullptr;
 		}
 
 		m_shapeType = e_compoundShape;
 
 		CreateScene();
+	}
+
+	~BenchmarkBarrel() override
+	{
+		for ( int i = 0; i < e_maxRows * e_maxColumns; ++i )
+		{
+			if ( m_humans[i] != nullptr )
+			{
+				DestroyHuman(m_humans[i]);
+				m_humans[i] = nullptr;
+			}
+		}
 	}
 
 	void CreateScene()
@@ -104,9 +118,10 @@ public:
 				m_bodies[i] = b2_nullBodyId;
 			}
 
-			if ( m_humans[i].m_isSpawned )
+			if ( m_humans[i] != nullptr )
 			{
-				m_humans[i].Despawn();
+				DestroyHuman(m_humans[i]);
+				m_humans[i] = nullptr;
 			}
 		}
 
@@ -211,14 +226,14 @@ public:
 				if ( m_shapeType == e_circleShape )
 				{
 					m_bodies[index] = b2CreateBody( m_worldId, &bodyDef );
-					circle.radius = RandomFloat( 0.25f, 0.75f );
+					circle.radius = RandomFloatRange( 0.25f, 0.75f );
 					b2CreateCircleShape( m_bodies[index], &shapeDef, &circle );
 				}
 				else if ( m_shapeType == e_caspuleShape )
 				{
 					m_bodies[index] = b2CreateBody( m_worldId, &bodyDef );
-					capsule.radius = RandomFloat( 0.25f, 0.5f );
-					float length = RandomFloat( 0.25f, 1.0f );
+					capsule.radius = RandomFloatRange( 0.25f, 0.5f );
+					float length = RandomFloatRange( 0.25f, 1.0f );
 					capsule.center1 = { 0.0f, -0.5f * length };
 					capsule.center2 = { 0.0f, 0.5f * length };
 					b2CreateCapsuleShape( m_bodies[index], &shapeDef, &capsule );
@@ -230,31 +245,31 @@ public:
 					int mod = index % 3;
 					if ( mod == 0 )
 					{
-						circle.radius = RandomFloat( 0.25f, 0.75f );
+						circle.radius = RandomFloatRange( 0.25f, 0.75f );
 						b2CreateCircleShape( m_bodies[index], &shapeDef, &circle );
 					}
 					else if ( mod == 1 )
 					{
-						capsule.radius = RandomFloat( 0.25f, 0.5f );
-						float length = RandomFloat( 0.25f, 1.0f );
+						capsule.radius = RandomFloatRange( 0.25f, 0.5f );
+						float length = RandomFloatRange( 0.25f, 1.0f );
 						capsule.center1 = { 0.0f, -0.5f * length };
 						capsule.center2 = { 0.0f, 0.5f * length };
 						b2CreateCapsuleShape( m_bodies[index], &shapeDef, &capsule );
 					}
 					else if ( mod == 2 )
 					{
-						float width = RandomFloat( 0.1f, 0.5f );
-						float height = RandomFloat( 0.5f, 0.75f );
+						float width = RandomFloatRange( 0.1f, 0.5f );
+						float height = RandomFloatRange( 0.5f, 0.75f );
 						b2Polygon box = b2MakeBox( width, height );
 
 						// Don't put a function call into a macro.
-						float value = RandomFloat( -1.0f, 1.0f );
+						float value = RandomFloatRange( -1.0f, 1.0f );
 						box.radius = 0.25f * b2MaxFloat( 0.0f, value );
 						b2CreatePolygonShape( m_bodies[index], &shapeDef, &box );
 					}
 					else
 					{
-						wedge.radius = RandomFloat( 0.1f, 0.25f );
+						wedge.radius = RandomFloatRange( 0.1f, 0.25f );
 						b2CreatePolygonShape( m_bodies[index], &shapeDef, &wedge );
 					}
 				}
@@ -274,7 +289,7 @@ public:
 					float jointFriction = 0.05f;
 					float jointHertz = 5.0f;
 					float jointDamping = 0.5f;
-					m_humans[index].Spawn( m_worldId, bodyDef.position, scale, jointFriction, jointHertz, jointDamping, index + 1,
+					m_humans[index] = CreateHuman( m_worldId, bodyDef.position, scale, jointFriction, jointHertz, jointDamping, index + 1,
 										   nullptr, false );
 				}
 
@@ -313,7 +328,7 @@ public:
 	}
 
 	b2BodyId m_bodies[e_maxRows * e_maxColumns];
-	Human m_humans[e_maxRows * e_maxColumns];
+	Human* m_humans[e_maxRows * e_maxColumns];
 	int m_columnCount;
 	int m_rowCount;
 
@@ -1511,14 +1526,14 @@ public:
 
 			for ( int j = 0; j < m_columnCount; ++j )
 			{
-				float fillTest = RandomFloat( 0.0f, 1.0f );
+				float fillTest = RandomFloatRange( 0.0f, 1.0f );
 				if ( fillTest <= m_fill )
 				{
 					bodyDef.position = { x, y };
 					b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
-					float ratio = RandomFloat( 1.0f, m_ratio );
-					float halfWidth = RandomFloat( 0.05f, 0.25f );
+					float ratio = RandomFloatRange( 1.0f, m_ratio );
+					float halfWidth = RandomFloatRange( 0.05f, 0.25f );
 
 					b2Polygon box;
 					if ( RandomFloat() > 0.0f )
@@ -1530,7 +1545,7 @@ public:
 						box = b2MakeBox( halfWidth, ratio * halfWidth );
 					}
 
-					int category = RandomInt( 0, 2 );
+					int category = RandomIntRange( 0, 2 );
 					shapeDef.filter.categoryBits = 1 << category;
 					if ( category == 0 )
 					{

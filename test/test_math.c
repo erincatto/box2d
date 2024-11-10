@@ -27,7 +27,7 @@ int MathTest( void )
 
 		float xn = b2UnwindLargeAngle( angle );
 		float a = b2Atan2( s, c );
-		ENSURE( b2IsValid( a ) );
+		ENSURE( b2Float_IsValid( a ) );
 
 		float diff = b2AbsFloat( a - xn );
 
@@ -48,7 +48,7 @@ int MathTest( void )
 			float a1 = b2Atan2( y, x );
 			float a2 = atan2f( y, x );
 			float diff = b2AbsFloat( a1 - a2 );
-			ENSURE( b2IsValid( a1 ) );
+			ENSURE( b2Float_IsValid( a1 ) );
 			ENSURE_SMALL( diff, ATAN_TOL );
 		}
 	}
@@ -57,7 +57,7 @@ int MathTest( void )
 		float a1 = b2Atan2( 1.0f, 0.0f );
 		float a2 = atan2f( 1.0f, 0.0f );
 		float diff = b2AbsFloat( a1 - a2 );
-		ENSURE( b2IsValid( a1 ) );
+		ENSURE( b2Float_IsValid( a1 ) );
 		ENSURE_SMALL( diff, ATAN_TOL );
 	}
 
@@ -65,7 +65,7 @@ int MathTest( void )
 		float a1 = b2Atan2( -1.0f, 0.0f );
 		float a2 = atan2f( -1.0f, 0.0f );
 		float diff = b2AbsFloat( a1 - a2 );
-		ENSURE( b2IsValid( a1 ) );
+		ENSURE( b2Float_IsValid( a1 ) );
 		ENSURE_SMALL( diff, ATAN_TOL );
 	}
 
@@ -73,7 +73,7 @@ int MathTest( void )
 		float a1 = b2Atan2( 0.0f, 1.0f );
 		float a2 = atan2f( 0.0f, 1.0f );
 		float diff = b2AbsFloat( a1 - a2 );
-		ENSURE( b2IsValid( a1 ) );
+		ENSURE( b2Float_IsValid( a1 ) );
 		ENSURE_SMALL( diff, ATAN_TOL );
 	}
 
@@ -81,7 +81,7 @@ int MathTest( void )
 		float a1 = b2Atan2( 0.0f, -1.0f );
 		float a2 = atan2f( 0.0f, -1.0f );
 		float diff = b2AbsFloat( a1 - a2 );
-		ENSURE( b2IsValid( a1 ) );
+		ENSURE( b2Float_IsValid( a1 ) );
 		ENSURE_SMALL( diff, ATAN_TOL );
 	}
 
@@ -89,7 +89,7 @@ int MathTest( void )
 		float a1 = b2Atan2( 0.0f, 0.0f );
 		float a2 = atan2f( 0.0f, 0.0f );
 		float diff = b2AbsFloat( a1 - a2 );
-		ENSURE( b2IsValid( a1 ) );
+		ENSURE( b2Float_IsValid( a1 ) );
 		ENSURE_SMALL( diff, ATAN_TOL );
 	}
 

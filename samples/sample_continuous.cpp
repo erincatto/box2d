@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "draw.h"
+#include "random.h"
 #include "sample.h"
 #include "settings.h"
 
@@ -305,7 +306,7 @@ public:
 			b2DestroyBody( m_bulletId );
 		}
 
-		m_angularVelocity = RandomFloat( -50.0f, 50.0f );
+		m_angularVelocity = RandomFloatRange( -50.0f, 50.0f );
 		// m_angularVelocity = -30.6695766f;
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -334,7 +335,7 @@ public:
 		if ( m_bullet )
 		{
 			b2Polygon polygon = b2MakeBox( 0.25f, 0.25f );
-			m_x = RandomFloat( -1.0f, 1.0f );
+			m_x = RandomFloatRange( -1.0f, 1.0f );
 			bodyDef.position = { m_x, 10.0f };
 			bodyDef.linearVelocity = { 0.0f, -50.0f };
 			m_bulletId = b2CreateBody( m_worldId, &bodyDef );

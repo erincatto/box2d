@@ -26,7 +26,7 @@ b2Vec2 b2MouseJoint_GetTarget( b2JointId jointId )
 
 void b2MouseJoint_SetSpringHertz( b2JointId jointId, float hertz )
 {
-	B2_ASSERT( b2IsValid( hertz ) && hertz >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( hertz ) && hertz >= 0.0f );
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_mouseJoint );
 	base->mouseJoint.hertz = hertz;
 }
@@ -39,7 +39,7 @@ float b2MouseJoint_GetSpringHertz( b2JointId jointId )
 
 void b2MouseJoint_SetSpringDampingRatio( b2JointId jointId, float dampingRatio )
 {
-	B2_ASSERT( b2IsValid( dampingRatio ) && dampingRatio >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( dampingRatio ) && dampingRatio >= 0.0f );
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_mouseJoint );
 	base->mouseJoint.dampingRatio = dampingRatio;
 }
@@ -52,7 +52,7 @@ float b2MouseJoint_GetSpringDampingRatio( b2JointId jointId )
 
 void b2MouseJoint_SetMaxForce( b2JointId jointId, float maxForce )
 {
-	B2_ASSERT( b2IsValid( maxForce ) && maxForce >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( maxForce ) && maxForce >= 0.0f );
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_mouseJoint );
 	base->mouseJoint.maxForce = maxForce;
 }

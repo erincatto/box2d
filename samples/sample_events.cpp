@@ -3,7 +3,8 @@
 
 #include "donut.h"
 #include "draw.h"
-#include "human.h"
+#include "human_old.h"
+#include "random.h"
 #include "sample.h"
 #include "settings.h"
 
@@ -176,7 +177,7 @@ public:
 		}
 		else
 		{
-			Human* human = m_humans + index;
+			HumanOld* human = m_humans + index;
 			float scale = 2.0f;
 			float jointFriction = 0.05f;
 			float jointHertz = 6.0f;
@@ -198,7 +199,7 @@ public:
 		}
 		else
 		{
-			Human* human = m_humans + index;
+			HumanOld* human = m_humans + index;
 			human->Despawn();
 		}
 
@@ -280,7 +281,7 @@ public:
 			}
 			else
 			{
-				Human* human = (Human*)b2Body_GetUserData( bodyId );
+				HumanOld* human = (HumanOld*)b2Body_GetUserData( bodyId );
 				if ( human != nullptr )
 				{
 					int index = (int)( human - m_humans );
@@ -319,7 +320,7 @@ public:
 		return new SensorFunnel( settings );
 	}
 
-	Human m_humans[e_count];
+	HumanOld m_humans[e_count];
 	Donut m_donuts[e_count];
 	bool m_isSpawned[e_count];
 	int m_type;
@@ -568,10 +569,10 @@ public:
 		// Debris
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
-		bodyDef.position = { RandomFloat( -38.0f, 38.0f ), RandomFloat( -38.0f, 38.0f ) };
-		bodyDef.rotation = b2MakeRot( RandomFloat( -b2_pi, b2_pi ) );
-		bodyDef.linearVelocity = { RandomFloat( -5.0f, 5.0f ), RandomFloat( -5.0f, 5.0f ) };
-		bodyDef.angularVelocity = RandomFloat( -1.0f, 1.0f );
+		bodyDef.position = { RandomFloatRange( -38.0f, 38.0f ), RandomFloatRange( -38.0f, 38.0f ) };
+		bodyDef.rotation = b2MakeRot( RandomFloatRange( -b2_pi, b2_pi ) );
+		bodyDef.linearVelocity = { RandomFloatRange( -5.0f, 5.0f ), RandomFloatRange( -5.0f, 5.0f ) };
+		bodyDef.angularVelocity = RandomFloatRange( -1.0f, 1.0f );
 		bodyDef.gravityScale = 0.0f;
 		bodyDef.userData = m_bodyUserData + index;
 		m_debrisIds[index] = b2CreateBody( m_worldId, &bodyDef );

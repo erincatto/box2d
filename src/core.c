@@ -36,7 +36,7 @@ float b2_lengthUnitsPerMeter = 1.0f;
 
 void b2SetLengthUnitsPerMeter( float lengthUnits )
 {
-	B2_ASSERT( b2IsValid( lengthUnits ) && lengthUnits > 0.0f );
+	B2_ASSERT( b2Float_IsValid( lengthUnits ) && lengthUnits > 0.0f );
 	b2_lengthUnitsPerMeter = lengthUnits;
 }
 
