@@ -332,14 +332,13 @@ static int sampleSensorBeginEvent = RegisterSample( "Events", "Sensor Funnel", S
 class SensorBookend : public Sample
 {
 public:
-
 	explicit SensorBookend( Settings& settings )
 		: Sample( settings )
 	{
 		if ( settings.restart == false )
 		{
-			g_camera.m_center = { 0.0f, 8.0f };
-			g_camera.m_zoom = 10.0f;
+			g_camera.m_center = { 0.0f, 6.0f };
+			g_camera.m_zoom = 7.5f;
 		}
 
 		{
@@ -380,7 +379,7 @@ public:
 	void CreateVisitor()
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.position = {-4.0f, 1.0f };
+		bodyDef.position = { -4.0f, 1.0f };
 		bodyDef.type = b2_dynamicBody;
 
 		m_visitorBodyId = b2CreateBody( m_worldId, &bodyDef );
@@ -400,7 +399,7 @@ public:
 
 		ImGui::Begin( "Sensor Bookend", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 
-		if ( B2_IS_NULL(m_visitorBodyId) )
+		if ( B2_IS_NULL( m_visitorBodyId ) )
 		{
 			if ( ImGui::Button( "create visitor" ) )
 			{
@@ -417,6 +416,23 @@ public:
 			}
 		}
 
+		if ( B2_IS_NULL( m_sensorBodyId ) )
+		{
+			if ( ImGui::Button( "create sensor" ) )
+			{
+				CreateSensor();
+			}
+		}
+		else
+		{
+			if ( ImGui::Button( "destroy sensor" ) )
+			{
+				b2DestroyBody( m_sensorBodyId );
+				m_sensorBodyId = b2_nullBodyId;
+				m_sensorShapeId = b2_nullShapeId;
+			}
+		}
+
 		ImGui::End();
 	}
 
@@ -428,9 +444,8 @@ public:
 		for ( int i = 0; i < sensorEvents.beginCount; ++i )
 		{
 			b2SensorBeginTouchEvent event = sensorEvents.beginEvents[i];
-			b2ShapeId visitorId = event.visitorShapeId;
 
-			if ( B2_ID_EQUALS(visitorId, m_visitorShapeId) )
+			if ( B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ) )
 			{
 				assert( m_isVisiting == false );
 				m_isVisiting = true;
@@ -440,9 +455,9 @@ public:
 		for ( int i = 0; i < sensorEvents.endCount; ++i )
 		{
 			b2SensorEndTouchEvent event = sensorEvents.endEvents[i];
-			b2ShapeId visitorId = event.visitorShapeId;
 
-			if ( B2_ID_EQUALS(visitorId, m_visitorShapeId) )
+			bool wasVisitorDestroyed = b2Shape_IsValid( event.visitorShapeId ) == false;
+			if ( B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ) || wasVisitorDestroyed )
 			{
 				assert( m_isVisiting == true );
 				m_isVisiting = false;
@@ -1065,7 +1080,8 @@ public:
 
 		b2ContactData contactData = {};
 		int contactCount = b2Body_GetContactData( m_platformId, &contactData, 1 );
-		g_draw.DrawString( 5, m_textLine, "Platform contact count = %d, point count = %d", contactCount, contactData.manifold.pointCount );
+		g_draw.DrawString( 5, m_textLine, "Platform contact count = %d, point count = %d", contactCount,
+						   contactData.manifold.pointCount );
 		m_textLine += m_textIncrement;
 
 		g_draw.DrawString( 5, m_textLine, "Movement: A/D/Space" );
