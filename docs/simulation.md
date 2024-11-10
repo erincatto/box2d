@@ -1009,20 +1009,33 @@ for (int i = 0; i < sensorEvents.beginCount; ++i)
 }
 ```
 
-And there are events when a shape stops overlapping with a sensor.
+And there are events when a shape stops overlapping with a sensor. Be careful with end
+touch events because they may be generated when shapes are destroyed. Test the shape
+ids with `b2Shape_IsValid`.
 
 ```c
 for (int i = 0; i < sensorEvents.endCount; ++i)
 {
     b2SensorEndTouchEvent* endTouch = sensorEvents.endEvents + i;
-    void* myUserData = b2Shape_GetUserData(endTouch->visitorShapeId);
-    // process end event
+    if (b2Shape_IsValid(endTouch->visitorShapeId))
+    {
+        void* myUserData = b2Shape_GetUserData(endTouch->visitorShapeId);
+        // process end event
+    }
 }
 ```
 
-You will not get end events if a shape is destroyed. Sensor events should
-be processed after the world step and before other game logic. This should
+Sensor events should be processed after the world step and before other game logic. This should
 help you avoid processing stale data.
+
+There are several user operations that can cause sensors to stop touching. Such operations
+include:
+- destroying a body or shape
+- changing the filter on a shape
+- disabling a body
+- setting the body transform
+These may generate end-touch events and these events are included with simulation events available
+after the next call to `b2World_Step`. 
 
 Sensor events are only enabled for a non-sensor shape if `b2ShapeDef::enableSensorEvents`
 is true.
@@ -1065,11 +1078,17 @@ contain the two shape ids.
 for (int i = 0; i < contactEvents.endCount; ++i)
 {
     b2ContactEndTouchEvent* endEvent = contactEvents.endEvents + i;
-    ShapesStopTouching(endEvent->shapeIdA, endEvent->shapeIdB);
+
+    // Use b2Shape_IsValid because a shape may have been destroyed
+    if (b2Shape_IsValid(endEvent->shapeIdA) && b2Shape_IsValid(endEvent->shapeIdB))
+    {
+        ShapesStopTouching(endEvent->shapeIdA, endEvent->shapeIdB);
+    }
 }
 ```
 
-The end touch events are not generated when you destroy a shape or the body that owns it.
+Similar to `b2SensorEndTouchEvent`, `b2ContactEndTouchEvent` may be generated due to a user operation,
+such as destroying a body or shape. These events are included with simulation events after the next `b2World_Step`.
 
 Shapes only generate begin and end touch events if `b2ShapeDef::enableContactEvents` is true.
 
