@@ -42,7 +42,7 @@ B2_ARRAY_SOURCE( b2ContactSim, b2ContactSim );
 
 static inline float b2MixFloats( float value1, float value2, b2MixingRule mixingRule )
 {
-	switch (mixingRule)
+	switch ( mixingRule )
 	{
 		case b2_mixAverage:
 			return 0.5f * ( value1 + value2 );
@@ -52,10 +52,10 @@ static inline float b2MixFloats( float value1, float value2, b2MixingRule mixing
 
 		case b2_mixMultiply:
 			return value1 * value2;
-			
+
 		case b2_mixMinimum:
 			return value1 < value2 ? value1 : value2;
-				
+
 		case b2_mixMaximum:
 			return value1 > value2 ? value1 : value2;
 
@@ -248,7 +248,7 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	int shapeIdA = shapeA->id;
 	int shapeIdB = shapeB->id;
 
-	b2Contact* contact =  b2ContactArray_Get( &world->contacts, contactId );
+	b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
 	contact->contactId = contactId;
 	contact->setIndex = setIndex;
 	contact->colorIndex = B2_NULL_INDEX;
@@ -367,30 +367,30 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 	b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
 	b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
 
-	const b2Shape* shapeA = b2ShapeArray_Get(&world->shapes, contact->shapeIdA);
-	const b2Shape* shapeB = b2ShapeArray_Get(&world->shapes, contact->shapeIdB);
-	b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->revision };
-	b2ShapeId shapeIdB = { shapeB->id + 1, worldId, shapeB->revision };
 	uint32_t flags = contact->flags;
-
-					// Was touching?
-	if ( ( flags & b2_contactTouchingFlag ) != 0 && ( flags & b2_contactEnableContactEvents ) != 0 )
+	if ( ( flags & ( b2_contactTouchingFlag | b2_contactSensorTouchingFlag ) ) != 0 &&
+		 ( flags & ( b2_contactEnableContactEvents | b2_contactEnableSensorEvents ) ) != 0 )
 	{
-		b2ContactEndTouchEvent event = { shapeIdA, shapeIdB };
-		b2ContactEndTouchEventArray_Push( &world->contactEndEvents, event );
-	}
+		int16_t worldId = world->worldId;
+		const b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contact->shapeIdA );
+		const b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contact->shapeIdB );
+		b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->revision };
+		b2ShapeId shapeIdB = { shapeB->id + 1, worldId, shapeB->revision };
 
-	if ( ( flags & b2_contactSensorTouchingFlag ) != 0 && ( flags & b2_contactEnableSensorEvents ) != 0 )
-	{
-		b2SensorEndTouchEvent event = { shapeIdA, shapeIdB };
-		b2SensorEndTouchEventArray_Push( &world->sensorEndEvents, event );
-	}
+		// Was touching?
+		if ( ( flags & b2_contactTouchingFlag ) != 0 && ( flags & b2_contactEnableContactEvents ) != 0 )
+		{
+			B2_ASSERT( ( flags & b2_contactSensorFlag ) == 0 );
+			b2ContactEndTouchEvent event = { shapeIdA, shapeIdB };
+			b2ContactEndTouchEventArray_Push( world->contactEndEvents + world->endEventArrayIndex, event );
+		}
 
-
-	world->contactEndEvents;
-	if (contactListener && contact->IsTouching())
-	{
-		contactListener->EndContact(contact);
+		if ( ( flags & b2_contactSensorTouchingFlag ) != 0 && ( flags & b2_contactEnableSensorEvents ) != 0 )
+		{
+			B2_ASSERT( ( flags & b2_contactSensorFlag ) != 0 );
+			b2SensorEndTouchEvent event = { shapeIdA, shapeIdB };
+			b2SensorEndTouchEventArray_Push( world->sensorEndEvents + world->endEventArrayIndex, event );
+		}
 	}
 
 	// Remove from body A

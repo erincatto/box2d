@@ -1035,36 +1035,11 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 
 			if ( b2AABB_Contains( shape->fatAABB, aabb ) == false )
 			{
-#if 0
-				b2AABB fatAABB = aabb;
-				if ( deltax > 0.0f )
-				{
-					fatAABB.lowerBound.x -= aabbMargin;
-					fatAABB.upperBound.x += deltax + aabbMargin;
-				}
-				else
-				{
-					fatAABB.lowerBound.x += deltax - aabbMargin;
-					fatAABB.upperBound.x += aabbMargin;
-				}
-
-				if ( deltay > 0.0f )
-				{
-					fatAABB.lowerBound.y -= aabbMargin;
-					fatAABB.upperBound.y += deltay + aabbMargin;
-				}
-				else
-				{
-					fatAABB.lowerBound.y += deltay - aabbMargin;
-					fatAABB.upperBound.y += aabbMargin;
-				}
-#else
 				b2AABB fatAABB;
 				fatAABB.lowerBound.x = aabb.lowerBound.x - aabbMargin;
 				fatAABB.lowerBound.y = aabb.lowerBound.y - aabbMargin;
 				fatAABB.upperBound.x = aabb.upperBound.x + aabbMargin;
 				fatAABB.upperBound.y = aabb.upperBound.y + aabbMargin;
-#endif
 				shape->fatAABB = fatAABB;
 
 				shape->enlargedAABB = true;
@@ -1092,36 +1067,11 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 
 			if ( b2AABB_Contains( shape->fatAABB, shape->aabb ) == false )
 			{
-#if 0
-				b2AABB fatAABB = shape->aabb;
-				if ( deltax > 0.0f )
-				{
-					fatAABB.lowerBound.x -= aabbMargin;
-					fatAABB.upperBound.x += deltax + aabbMargin;
-				}
-				else
-				{
-					fatAABB.lowerBound.x += deltax - aabbMargin;
-					fatAABB.upperBound.x += aabbMargin;
-				}
-
-				if ( deltay > 0.0f )
-				{
-					fatAABB.lowerBound.y -= aabbMargin;
-					fatAABB.upperBound.y += deltay + aabbMargin;
-				}
-				else
-				{
-					fatAABB.lowerBound.y += deltay - aabbMargin;
-					fatAABB.upperBound.y += aabbMargin;
-				}
-#else
 				b2AABB fatAABB;
 				fatAABB.lowerBound.x = shape->aabb.lowerBound.x - aabbMargin;
 				fatAABB.lowerBound.y = shape->aabb.lowerBound.y - aabbMargin;
 				fatAABB.upperBound.x = shape->aabb.upperBound.x + aabbMargin;
 				fatAABB.upperBound.y = shape->aabb.upperBound.y + aabbMargin;
-#endif
 				shape->fatAABB = fatAABB;
 
 				shape->enlargedAABB = true;
