@@ -123,6 +123,7 @@ of the time step:
 
 - body movement events
 - contact begin and end events
+- sensor begin and end events
 - contact hit events
 
 These events allow your application to react to changes in the simulation.

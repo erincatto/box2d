@@ -14,7 +14,7 @@
 #include <imgui.h>
 #include <vector>
 
-class SensorEvent : public Sample
+class SensorFunnel : public Sample
 {
 public:
 	enum
@@ -24,7 +24,7 @@ public:
 		e_count = 32
 	};
 
-	explicit SensorEvent( Settings& settings )
+	explicit SensorFunnel( Settings& settings )
 		: Sample( settings )
 	{
 		if ( settings.restart == false )
@@ -56,7 +56,7 @@ public:
 				{ -8.26825142, 11.906374 },	 { -16.8672504, 17.1978741 },
 			};
 
-			int count = sizeof( points ) / sizeof( points[0] );
+			int count = std::size( points );
 
 			// float scale = 0.25f;
 			// b2Vec2 lower = {FLT_MAX, FLT_MAX};
@@ -101,7 +101,6 @@ public:
 			float y = 14.0f;
 			for ( int i = 0; i < 3; ++i )
 			{
-				b2BodyDef bodyDef = b2DefaultBodyDef();
 				bodyDef.position = { 0.0f, y };
 				bodyDef.type = b2_dynamicBody;
 
@@ -317,7 +316,7 @@ public:
 
 	static Sample* Create( Settings& settings )
 	{
-		return new SensorEvent( settings );
+		return new SensorFunnel( settings );
 	}
 
 	Human m_humans[e_count];
@@ -328,7 +327,161 @@ public:
 	float m_side;
 };
 
-static int sampleSensorEvent = RegisterSample( "Events", "Sensor", SensorEvent::Create );
+static int sampleSensorBeginEvent = RegisterSample( "Events", "Sensor Funnel", SensorFunnel::Create );
+
+class SensorBookend : public Sample
+{
+public:
+	explicit SensorBookend( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 6.0f };
+			g_camera.m_zoom = 7.5f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+			b2Segment groundSegment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &groundSegment );
+
+			groundSegment = { { -10.0f, 0.0f }, { -10.0f, 10.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &groundSegment );
+
+			groundSegment = { { 10.0f, 0.0f }, { 10.0f, 10.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &groundSegment );
+
+			m_isVisiting = false;
+		}
+
+		CreateSensor();
+
+		CreateVisitor();
+	}
+
+	void CreateSensor()
+	{
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+
+		bodyDef.position = { 0.0f, 1.0f };
+		m_sensorBodyId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.isSensor = true;
+		b2Polygon box = b2MakeSquare( 1.0f );
+		m_sensorShapeId = b2CreatePolygonShape( m_sensorBodyId, &shapeDef, &box );
+	}
+
+	void CreateVisitor()
+	{
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.position = { -4.0f, 1.0f };
+		bodyDef.type = b2_dynamicBody;
+
+		m_visitorBodyId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.enableSensorEvents = true;
+
+		b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+		m_visitorShapeId = b2CreateCircleShape( m_visitorBodyId, &shapeDef, &circle );
+	}
+
+	void UpdateUI() override
+	{
+		float height = 90.0f;
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
+
+		ImGui::Begin( "Sensor Bookend", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
+
+		if ( B2_IS_NULL( m_visitorBodyId ) )
+		{
+			if ( ImGui::Button( "create visitor" ) )
+			{
+				CreateVisitor();
+			}
+		}
+		else
+		{
+			if ( ImGui::Button( "destroy visitor" ) )
+			{
+				b2DestroyBody( m_visitorBodyId );
+				m_visitorBodyId = b2_nullBodyId;
+				m_visitorShapeId = b2_nullShapeId;
+			}
+		}
+
+		if ( B2_IS_NULL( m_sensorBodyId ) )
+		{
+			if ( ImGui::Button( "create sensor" ) )
+			{
+				CreateSensor();
+			}
+		}
+		else
+		{
+			if ( ImGui::Button( "destroy sensor" ) )
+			{
+				b2DestroyBody( m_sensorBodyId );
+				m_sensorBodyId = b2_nullBodyId;
+				m_sensorShapeId = b2_nullShapeId;
+			}
+		}
+
+		ImGui::End();
+	}
+
+	void Step( Settings& settings ) override
+	{
+		Sample::Step( settings );
+
+		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
+		for ( int i = 0; i < sensorEvents.beginCount; ++i )
+		{
+			b2SensorBeginTouchEvent event = sensorEvents.beginEvents[i];
+
+			if ( B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ) )
+			{
+				assert( m_isVisiting == false );
+				m_isVisiting = true;
+			}
+		}
+
+		for ( int i = 0; i < sensorEvents.endCount; ++i )
+		{
+			b2SensorEndTouchEvent event = sensorEvents.endEvents[i];
+
+			bool wasVisitorDestroyed = b2Shape_IsValid( event.visitorShapeId ) == false;
+			if ( B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ) || wasVisitorDestroyed )
+			{
+				assert( m_isVisiting == true );
+				m_isVisiting = false;
+			}
+		}
+
+		g_draw.DrawString( 5, m_textLine, "visiting == %s", m_isVisiting ? "true" : "false" );
+		m_textLine += m_textIncrement;
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new SensorBookend( settings );
+	}
+
+	b2BodyId m_sensorBodyId;
+	b2ShapeId m_sensorShapeId;
+
+	b2BodyId m_visitorBodyId;
+	b2ShapeId m_visitorShapeId;
+	bool m_isVisiting;
+};
+
+static int sampleSensorBookendEvent = RegisterSample( "Events", "Sensor Bookend", SensorBookend::Create );
 
 struct BodyUserData
 {
@@ -927,7 +1080,8 @@ public:
 
 		b2ContactData contactData = {};
 		int contactCount = b2Body_GetContactData( m_platformId, &contactData, 1 );
-		g_draw.DrawString( 5, m_textLine, "Platform contact count = %d, point count = %d", contactCount, contactData.manifold.pointCount );
+		g_draw.DrawString( 5, m_textLine, "Platform contact count = %d, point count = %d", contactCount,
+						   contactData.manifold.pointCount );
 		m_textLine += m_textIncrement;
 
 		g_draw.DrawString( 5, m_textLine, "Movement: A/D/Space" );

@@ -35,6 +35,12 @@ if (MSVC OR APPLE)
 			add_compile_options(-fsanitize=address -fsanitize-address-use-after-scope -fsanitize=undefined)
 			add_link_options(-fsanitize=address -fsanitize-address-use-after-scope -fsanitize=undefined)
 		endif()
+	else()
+		if(MSVC)
+			# enable hot reloading
+			add_compile_options("$<$<CONFIG:Debug>:/ZI>")
+			add_link_options("$<$<CONFIG:Debug>:/INCREMENTAL>")
+		endif()
 	endif()
 endif()
 
