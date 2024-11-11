@@ -2110,7 +2110,7 @@ public:
 				float x = -0.5f * m_gridCount * m_gridSize;
 				for ( int j = 0; j <= m_gridCount; ++j )
 				{
-					b2Polygon box = b2MakeOffsetBox( 0.5f * m_gridSize, 0.1f * m_gridSize, { x, y }, b2Rot_identity );
+					b2Polygon box = b2MakeOffsetBox( 0.5f * m_gridSize, 0.5f * m_gridSize, { x, y }, b2Rot_identity );
 					b2CreatePolygonShape( groundId, &shapeDef, &box );
 					x += m_gridSize;
 				}
