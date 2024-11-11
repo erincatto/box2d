@@ -8,42 +8,12 @@
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
 
-#include <stdlib.h>
+#include <assert.h>
 
-typedef enum BoneId
-{
-	boneId_hip = 0,
-	boneId_torso = 1,
-	boneId_head = 2,
-	boneId_upperLeftLeg = 3,
-	boneId_lowerLeftLeg = 4,
-	boneId_upperRightLeg = 5,
-	boneId_lowerRightLeg = 6,
-	boneId_upperLeftArm = 7,
-	boneId_lowerLeftArm = 8,
-	boneId_upperRightArm = 9,
-	boneId_lowerRightArm = 10,
-	boneId_count = 11,
-} BoneId;
-
-typedef struct Bone
-{
-	b2BodyId bodyId;
-	b2JointId jointId;
-	float frictionScale;
-	int parentIndex;
-} Bone;
-
-typedef struct Human
-{
-	Bone bones[boneId_count];
-	float scale;
-} Human;
-
-Human* CreateHuman( b2WorldId worldId, b2Vec2 position, float scale, float frictionTorque, float hertz, float dampingRatio,
+void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale, float frictionTorque, float hertz, float dampingRatio,
 						   int groupIndex, void* userData, bool colorize )
 {
-	Human* human = malloc( sizeof( Human ) );
+	assert( human->isSpawned == false );
 
 	for ( int i = 0; i < boneId_count; ++i )
 	{
@@ -513,11 +483,13 @@ Human* CreateHuman( b2WorldId worldId, b2Vec2 position, float scale, float frict
 		bone->jointId = b2CreateRevoluteJoint( worldId, &jointDef );
 	}
 
-	return human;
+	human->isSpawned = true;
 }
 
 void DestroyHuman( Human* human )
 {
+	assert( human->isSpawned == true );
+
 	for ( int i = 0; i < boneId_count; ++i )
 	{
 		if ( B2_IS_NULL( human->bones[i].jointId ) )
@@ -540,17 +512,19 @@ void DestroyHuman( Human* human )
 		human->bones[i].bodyId = b2_nullBodyId;
 	}
 
-	free( human );
+	human->isSpawned = false;
 }
 
 void Human_ApplyRandomAngularImpulse( Human* human, float magnitude )
 {
+	assert( human->isSpawned == true );
 	float impulse = RandomFloatRange( -magnitude, magnitude );
 	b2Body_ApplyAngularImpulse( human->bones[boneId_torso].bodyId, impulse, true );
 }
 
 void Human_SetJointFrictionTorque( Human* human, float torque )
 {
+	assert( human->isSpawned == true );
 	if ( torque == 0.0f )
 	{
 		for ( int i = 1; i < boneId_count; ++i )
@@ -571,6 +545,7 @@ void Human_SetJointFrictionTorque( Human* human, float torque )
 
 void Human_SetJointSpringHertz( Human* human, float hertz )
 {
+	assert( human->isSpawned == true );
 	if ( hertz == 0.0f )
 	{
 		for ( int i = 1; i < boneId_count; ++i )
@@ -590,6 +565,7 @@ void Human_SetJointSpringHertz( Human* human, float hertz )
 
 void Human_SetJointDampingRatio( Human* human, float dampingRatio )
 {
+	assert( human->isSpawned == true );
 	for ( int i = 1; i < boneId_count; ++i )
 	{
 		b2RevoluteJoint_SetSpringDampingRatio( human->bones[i].jointId, dampingRatio );

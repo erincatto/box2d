@@ -10,7 +10,7 @@
 #define RAND_SEED 12345
 
 // Global seed for simple random number generator.
-B2_API extern uint32_t g_seed;
+B2_API uint32_t g_seed;
 
 // Simple random number generator. Using this instead of rand() for cross platform determinism.
 B2_INLINE int RandomInt()

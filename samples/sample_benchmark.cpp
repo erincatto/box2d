@@ -86,24 +86,13 @@ public:
 		for ( int i = 0; i < e_maxRows * e_maxColumns; ++i )
 		{
 			m_bodies[i] = b2_nullBodyId;
-			m_humans[i] = nullptr;
 		}
+
+		memset( m_humans, 0, sizeof( m_humans ) );
 
 		m_shapeType = e_compoundShape;
 
 		CreateScene();
-	}
-
-	~BenchmarkBarrel() override
-	{
-		for ( int i = 0; i < e_maxRows * e_maxColumns; ++i )
-		{
-			if ( m_humans[i] != nullptr )
-			{
-				DestroyHuman(m_humans[i]);
-				m_humans[i] = nullptr;
-			}
-		}
 	}
 
 	void CreateScene()
@@ -118,10 +107,9 @@ public:
 				m_bodies[i] = b2_nullBodyId;
 			}
 
-			if ( m_humans[i] != nullptr )
+			if ( m_humans[i].isSpawned )
 			{
-				DestroyHuman(m_humans[i]);
-				m_humans[i] = nullptr;
+				DestroyHuman( m_humans + i );
 			}
 		}
 
@@ -289,8 +277,8 @@ public:
 					float jointFriction = 0.05f;
 					float jointHertz = 5.0f;
 					float jointDamping = 0.5f;
-					m_humans[index] = CreateHuman( m_worldId, bodyDef.position, scale, jointFriction, jointHertz, jointDamping, index + 1,
-										   nullptr, false );
+					CreateHuman( m_humans + index, m_worldId, bodyDef.position, scale, jointFriction, jointHertz, jointDamping,
+								 index + 1, nullptr, false );
 				}
 
 				index += 1;
@@ -328,7 +316,7 @@ public:
 	}
 
 	b2BodyId m_bodies[e_maxRows * e_maxColumns];
-	Human* m_humans[e_maxRows * e_maxColumns];
+	Human m_humans[e_maxRows * e_maxColumns];
 	int m_columnCount;
 	int m_rowCount;
 
@@ -2071,3 +2059,150 @@ public:
 };
 
 static int sampleSpinner = RegisterSample( "Benchmark", "Spinner", BenchmarkSpinner::Create );
+
+class BenchmarkRain : public Sample
+{
+public:
+#ifdef NDEBUG
+	enum
+	{
+		e_rowCount = 5,
+		e_columnCount = 40,
+		e_groupSize = 5,
+	};
+#else
+	enum
+	{
+		e_rowCount = 3,
+		e_columnCount = 10,
+		e_groupSize = 2,
+	};
+#endif
+
+	struct Group
+	{
+		Human humans[e_groupSize];
+	};
+
+	explicit BenchmarkRain( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 110.0f };
+			g_camera.m_zoom = 125.0f;
+		}
+
+		settings.drawJoints = false;
+
+		m_gridSize = 0.5f;
+		m_gridCount = g_sampleDebug ? 200 : 500;
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			float y = 0.0f;
+
+			for ( int i = 0; i < e_rowCount; ++i )
+			{
+				float x = -0.5f * m_gridCount * m_gridSize;
+				for ( int j = 0; j <= m_gridCount; ++j )
+				{
+					b2Polygon box = b2MakeOffsetBox( 0.5f * m_gridSize, 0.1f * m_gridSize, { x, y }, b2Rot_identity );
+					b2CreatePolygonShape( groundId, &shapeDef, &box );
+					x += m_gridSize;
+				}
+
+				y += 45.0f;
+			}
+		}
+
+		memset( m_groups, 0, sizeof( m_groups ) );
+		m_columnCount = 0;
+		m_columnIndex = 0;
+	}
+
+	void CreateGroup( int rowIndex, int columnIndex )
+	{
+		assert( rowIndex < e_rowCount && columnIndex < e_columnCount );
+
+		int groupIndex = rowIndex * e_columnCount + columnIndex;
+
+		float span = m_gridCount * m_gridSize;
+		float groupDistance = 1.0f * span / e_columnCount;
+
+		b2Vec2 position;
+		position.x = -0.5f * span + groupDistance * ( columnIndex + 0.5f );
+		position.y = 40.0f + 45.0f * rowIndex;
+
+		float scale = 1.0f;
+		float jointFriction = 0.05f;
+		float jointHertz = 5.0f;
+		float jointDamping = 0.5f;
+
+		for ( int i = 0; i < e_groupSize; ++i )
+		{
+			Human* human = m_groups[groupIndex].humans + i;
+
+			CreateHuman( human, m_worldId, position, scale, jointFriction, jointHertz, jointDamping, i + 1, nullptr, false );
+			position.x += 0.5f;
+		}
+	}
+
+	void DestroyGroup( int rowIndex, int columnIndex )
+	{
+		assert( rowIndex < e_rowCount && columnIndex < e_columnCount );
+
+		int groupIndex = rowIndex * e_columnCount + columnIndex;
+
+		for ( int i = 0; i < e_groupSize; ++i )
+		{
+			DestroyHuman( m_groups[groupIndex].humans + i );
+		}
+	}
+
+	void Step( Settings& settings ) override
+	{
+		int delay = g_sampleDebug ? 0x1F : 0x7;
+
+		if ( ( m_stepCount & delay ) == 0 )
+		{
+			if ( m_columnCount < e_columnCount )
+			{
+				for ( int i = 0; i < e_rowCount; ++i )
+				{
+					CreateGroup( i, m_columnCount );
+				}
+
+				m_columnCount += 1;
+			}
+			else
+			{
+				for ( int i = 0; i < e_rowCount; ++i )
+				{
+					DestroyGroup( i, m_columnIndex );
+					CreateGroup( i, m_columnIndex );
+				}
+
+				m_columnIndex = ( m_columnIndex + 1 ) % e_columnCount;
+			}
+		}
+
+		Sample::Step( settings );
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new BenchmarkRain( settings );
+	}
+
+	Group m_groups[e_rowCount * e_columnCount];
+	float m_gridSize;
+	int m_gridCount;
+	int m_columnCount;
+	int m_columnIndex;
+};
+
+static int benchmarkRain = RegisterSample( "Benchmark", "Rain", BenchmarkRain::Create );
