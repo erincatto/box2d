@@ -3,7 +3,7 @@
 
 #include "donut.h"
 #include "draw.h"
-#include "human_old.h"
+#include "human.h"
 #include "random.h"
 #include "sample.h"
 #include "settings.h"
@@ -147,6 +147,8 @@ public:
 			m_isSpawned[i] = false;
 		}
 
+		memset( m_humans, 0, sizeof( m_humans ) );
+
 		CreateElement();
 	}
 
@@ -177,13 +179,13 @@ public:
 		}
 		else
 		{
-			HumanOld* human = m_humans + index;
+			Human* human = m_humans + index;
 			float scale = 2.0f;
 			float jointFriction = 0.05f;
 			float jointHertz = 6.0f;
 			float jointDamping = 0.5f;
 			bool colorize = true;
-			human->Spawn( m_worldId, center, scale, jointFriction, jointHertz, jointDamping, index + 1, human, colorize );
+			CreateHuman( human, m_worldId, center, scale, jointFriction, jointHertz, jointDamping, index + 1, human, colorize );
 		}
 
 		m_isSpawned[index] = true;
@@ -199,8 +201,8 @@ public:
 		}
 		else
 		{
-			HumanOld* human = m_humans + index;
-			human->Despawn();
+			Human* human = m_humans + index;
+			DestroyHuman(human);
 		}
 
 		m_isSpawned[index] = false;
@@ -218,8 +220,8 @@ public:
 				}
 				else
 				{
-					m_humans[i].Despawn();
-				}
+					DestroyHuman( m_humans + i );
+				}					
 
 				m_isSpawned[i] = false;
 			}
@@ -281,7 +283,7 @@ public:
 			}
 			else
 			{
-				HumanOld* human = (HumanOld*)b2Body_GetUserData( bodyId );
+				Human* human = (Human*)b2Body_GetUserData( bodyId );
 				if ( human != nullptr )
 				{
 					int index = (int)( human - m_humans );
@@ -320,7 +322,7 @@ public:
 		return new SensorFunnel( settings );
 	}
 
-	HumanOld m_humans[e_count];
+	Human m_humans[e_count];
 	Donut m_donuts[e_count];
 	bool m_isSpawned[e_count];
 	int m_type;

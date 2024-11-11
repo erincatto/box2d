@@ -65,8 +65,6 @@ set(BOX2D_SAMPLE_FILES
 	doohickey.h
 	draw.cpp
 	draw.h
-	human_old.cpp
-	human_old.h
 	main.cpp
 	sample.cpp
 	sample.h

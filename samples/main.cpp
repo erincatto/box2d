@@ -537,7 +537,7 @@ int main( int, char** )
 	char buffer[128];
 
 	s_settings.Load();
-	s_settings.workerCount = b2MinInt( 4, (int)enki::GetNumHardwareThreads() / 2 );
+	s_settings.workerCount = b2MinInt( 8, (int)enki::GetNumHardwareThreads() / 2 );
 	SortSamples();
 
 	glfwSetErrorCallback( glfwErrorCallback );
