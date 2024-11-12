@@ -4,15 +4,15 @@
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
 
-b2WorldId LargePyramid( b2WorldDef* worldDef )
+void LargePyramid( b2WorldId worldId )
 {
+	b2World_EnableSleeping( worldId, false );
+
 #ifdef NDEBUG
 	int baseCount = 100;
 #else
 	int baseCount = 20;
 #endif
-
-	b2WorldId worldId = b2CreateWorld( worldDef );
 
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -50,6 +50,4 @@ b2WorldId LargePyramid( b2WorldDef* worldDef )
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 		}
 	}
-
-	return worldId;
 }

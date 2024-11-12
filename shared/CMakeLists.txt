@@ -1,4 +1,6 @@
 set(BOX2D_SHARED_FILES
+	benchmarks.c
+	benchmarks.h
 	human.c
 	human.h
 	random.c

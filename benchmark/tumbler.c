@@ -4,10 +4,8 @@
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
 
-b2WorldId Tumbler( b2WorldDef* worldDef )
+void Tumbler( b2WorldId worldId )
 {
-	b2WorldId worldId = b2CreateWorld( worldDef );
-
 	b2BodyId groundId;
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -76,6 +74,4 @@ b2WorldId Tumbler( b2WorldDef* worldDef )
 
 		y += 0.4f;
 	}
-
-	return worldId;
 }

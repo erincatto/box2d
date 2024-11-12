@@ -4,10 +4,8 @@
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
 
-b2WorldId Smash( b2WorldDef* worldDef )
+void Smash( b2WorldId worldId )
 {
-	b2WorldId worldId = b2CreateWorld( worldDef );
-
 	{
 		b2Polygon box = b2MakeBox( 4.0f, 4.0f );
 
@@ -49,6 +47,4 @@ b2WorldId Smash( b2WorldDef* worldDef )
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 		}
 	}
-
-	return worldId;
 }

@@ -10,11 +10,9 @@ enum
 	e_pointCount = 360,
 };
 
-b2WorldId Spinner( b2WorldDef* worldDef )
+void Spinner( b2WorldId worldId )
 {
-	b2WorldId worldId = b2CreateWorld( worldDef );
-
-		b2BodyId groundId;
+	b2BodyId groundId;
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		groundId = b2CreateBody( worldId, &bodyDef );
@@ -25,7 +23,7 @@ b2WorldId Spinner( b2WorldDef* worldDef )
 		b2Vec2 p = { 40.0f, 0.0f };
 		for ( int i = 0; i < e_pointCount; ++i )
 		{
-			points[i] = (b2Vec2){ p.x, p.y + 32.0f };
+			points[i] = ( b2Vec2 ){ p.x, p.y + 32.0f };
 			p = b2RotateVector( q, p );
 		}
 
@@ -41,7 +39,7 @@ b2WorldId Spinner( b2WorldDef* worldDef )
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
-		bodyDef.position = (b2Vec2){ 0.0, 12.0f };
+		bodyDef.position = ( b2Vec2 ){ 0.0, 12.0f };
 		bodyDef.enableSleep = false;
 
 		b2BodyId spinnerId = b2CreateBody( worldId, &bodyDef );
@@ -82,7 +80,7 @@ b2WorldId Spinner( b2WorldDef* worldDef )
 	float x = -24.0f, y = 2.0f;
 	for ( int i = 0; i < bodyCount; ++i )
 	{
-		bodyDef.position = (b2Vec2){ x, y };
+		bodyDef.position = ( b2Vec2 ){ x, y };
 		b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
 		int remainder = i % 3;
@@ -107,6 +105,4 @@ b2WorldId Spinner( b2WorldDef* worldDef )
 			y += 1.0f;
 		}
 	}
-
-	return worldId;
 }

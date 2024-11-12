@@ -29,8 +29,10 @@ static void CreatePyramid( b2WorldId worldId, int baseCount, float extent, float
 	}
 }
 
-b2WorldId ManyPyramids( b2WorldDef* worldDef )
+void ManyPyramids( b2WorldId worldId )
 {
+	b2World_EnableSleeping( worldId, false );
+
 	int baseCount = 10;
 	float extent = 0.5f;
 #ifdef NDEBUG
@@ -40,10 +42,6 @@ b2WorldId ManyPyramids( b2WorldDef* worldDef )
 	int rowCount = 5;
 	int columnCount = 5;
 #endif
-
-	worldDef->enableSleep = false;
-
-	b2WorldId worldId = b2CreateWorld( worldDef );
 
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
@@ -74,6 +72,4 @@ b2WorldId ManyPyramids( b2WorldDef* worldDef )
 
 		baseY += groundDeltaY;
 	}
-
-	return worldId;
 }

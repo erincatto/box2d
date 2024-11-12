@@ -6,12 +6,11 @@
 
 #include <stdlib.h>
 
-b2WorldId JointGrid( b2WorldDef* worldDef )
+void JointGrid( b2WorldId worldId )
 {
 	// Turning gravity off to isolate joint performance.
-	worldDef->gravity = b2Vec2_zero;
-
-	b2WorldId worldId = b2CreateWorld( worldDef );
+	b2World_SetGravity(worldId, b2Vec2_zero);
+	b2World_EnableSleeping(worldId, false);
 
 #ifdef NDEBUG
 	int N = 100;
@@ -32,7 +31,6 @@ b2WorldId JointGrid( b2WorldDef* worldDef )
 
 	b2RevoluteJointDef jd = b2DefaultRevoluteJointDef();
 	b2BodyDef bodyDef = b2DefaultBodyDef();
-	bodyDef.enableSleep = false;
 
 	for ( int k = 0; k < N; ++k )
 	{
@@ -79,6 +77,4 @@ b2WorldId JointGrid( b2WorldDef* worldDef )
 	}
 
 	free( bodies );
-
-	return worldId;
 }

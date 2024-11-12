@@ -185,6 +185,8 @@ struct GLBackground
 		glUseProgram( m_programId );
 
 		float time = (float)glfwGetTime();
+		time = fmodf(time, 100.0f);
+		
 		glUniform1f( m_timeUniform, time );
 		glUniform2f( m_resolutionUniform, (float)g_camera.m_width, (float)g_camera.m_height );
 
