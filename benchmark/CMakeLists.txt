@@ -2,12 +2,6 @@
 
 add_executable(benchmark
     main.c
-    joint_grid.c
-    large_pyramid.c
-    many_pyramids.c
-    smash.c
-    spinner.c
-    tumbler.c
 )
 
 set_target_properties(benchmark PROPERTIES

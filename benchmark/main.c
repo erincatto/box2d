@@ -30,13 +30,6 @@
 typedef void CreateFcn( b2WorldId worldId );
 typedef void StepFcn( b2WorldId worldId, int stepCount );
 
-extern void JointGrid( b2WorldId worldId );
-extern void LargePyramid( b2WorldId worldId );
-extern void ManyPyramids( b2WorldId worldId );
-extern void Smash( b2WorldId worldId );
-extern void Spinner( b2WorldId worldId );
-extern void Tumbler( b2WorldId worldId );
-
 typedef struct Benchmark
 {
 	const char* name;
@@ -128,13 +121,13 @@ static void FinishTask( void* userTask, void* userContext )
 int main( int argc, char** argv )
 {
 	Benchmark benchmarks[] = {
-		{ "joint_grid", JointGrid, NULL, 500 },
-		{ "large_pyramid", LargePyramid, NULL, 500 },
-		{ "many_pyramids", ManyPyramids, NULL, 200 },
-		{ "smash", Smash, NULL, 300 },
-		{ "spinner", Spinner, NULL, 1400 },
-		{ "tumbler", Tumbler, NULL, 750 },
+		{ "joint_grid", CreateJointGrid, NULL, 500 },
+		{ "large_pyramid", CreateLargePyramid, NULL, 500 },
+		{ "many_pyramids", CreateManyPyramids, NULL, 200 },
 		{ "rain", CreateRain, StepRain, 1000 },
+		{ "smash", CreateSmash, NULL, 300 },
+		{ "spinner", CreateSpinner, NULL, 1400 },
+		{ "tumbler", CreateTumbler, NULL, 750 },
 	};
 
 	int benchmarkCount = ARRAY_COUNT( benchmarks );
