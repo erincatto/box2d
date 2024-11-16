@@ -1,3 +1,5 @@
+# Box2D code shared by samples, benchmarks, and unit tests
+
 set(BOX2D_SHARED_FILES
 	benchmarks.c
 	benchmarks.h

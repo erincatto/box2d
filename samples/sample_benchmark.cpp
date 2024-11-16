@@ -1504,7 +1504,10 @@ public:
 
 	void Step( Settings& settings ) override
 	{
-		StepRain( m_worldId, m_stepCount );
+		if (settings.pause == false || settings.singleStep == true)
+		{
+			StepRain( m_worldId, m_stepCount );
+		}
 
 		Sample::Step( settings );
 	}

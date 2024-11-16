@@ -20,7 +20,7 @@ set(GLFW_INSTALL OFF CACHE BOOL "GLFW Install")
 FetchContent_Declare(
 	glfw
 	GIT_REPOSITORY https://github.com/glfw/glfw.git
-	GIT_TAG master
+	GIT_TAG 3.4
 	GIT_SHALLOW TRUE
 	GIT_PROGRESS TRUE
 )
@@ -28,9 +28,10 @@ FetchContent_MakeAvailable(glfw)
 
 # imgui and glfw backend for GUI
 # https://gist.github.com/jeffamstutz/992723dfabac4e3ffff265eb71a24cd9
+# Modified to pin to a specific imgui release
 FetchContent_Populate(imgui
-  URL https://github.com/ocornut/imgui/archive/docking.zip
-  SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/imgui
+	URL https://github.com/ocornut/imgui/archive/refs/tags/v1.91.3.zip
+	SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/imgui
 )
 
 set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/build/imgui)

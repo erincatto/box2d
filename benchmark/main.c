@@ -162,6 +162,10 @@ int main( int argc, char** argv )
 		{
 			runCount = b2ClampInt(atoi( arg + 3 ), 1, 16);
 		}
+		else if ( strncmp( arg, "-nc", 3 ) == 0 )
+		{
+			enableContinuous = false;
+		}
 		else if ( strcmp( arg, "-h" ) == 0 )
 		{
 			printf( "Usage\n"

@@ -407,6 +407,11 @@ void b2DestroyBody( b2BodyId bodyId )
 		B2_MAYBE_UNUSED( result );
 		B2_ASSERT( result == movedIndex );
 	}
+	else if ( set->setIndex >= b2_firstSleepingSet && set->bodySims.count == 0 )
+	{
+		// Remove solver set if it's now an orphan.
+		b2DestroySolverSet( world, set->setIndex );
+	}
 
 	// Free body and id (preserve body revision)
 	b2FreeId( &world->bodyIdPool, body->id );

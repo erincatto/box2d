@@ -1882,6 +1882,7 @@ void b2ApplyRestitutionTask( int startIndex, int endIndex, b2StepContext* contex
 
 #if B2_SIMD_WIDTH == 8
 
+// todo try making an inner loop on B2_SIMD_WIDTH to have a single implementation of this function
 void b2StoreImpulsesTask( int startIndex, int endIndex, b2StepContext* context )
 {
 	b2TracyCZoneNC( store_impulses, "Store", b2_colorFirebrick, true );
