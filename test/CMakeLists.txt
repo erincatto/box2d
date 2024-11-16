@@ -1,6 +1,6 @@
 # Box2D unit test app
 
-add_executable(test
+set(BOX2D_TEST_FILES
     main.c
     test_bitset.c
     test_collision.c
@@ -13,6 +13,8 @@ add_executable(test
     test_table.c
     test_world.c
 )
+
+add_executable(test ${BOX2D_TEST_FILES})
 
 set_target_properties(test PROPERTIES
     C_STANDARD 17
@@ -29,4 +31,4 @@ endif()
 
 target_link_libraries(test PRIVATE box2d enkiTS)
 
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "" FILES ${BOX2D_TESTS})
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "" FILES ${BOX2D_TEST_FILES})

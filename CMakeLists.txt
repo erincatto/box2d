@@ -112,6 +112,8 @@ if(PROJECT_IS_TOP_LEVEL)
 			GIT_PROGRESS TRUE
 		)
 		FetchContent_MakeAvailable(enkits)
+
+		add_subdirectory(shared)
 	endif()
 
 	# Tests need static linkage because they test internal Box2D functions

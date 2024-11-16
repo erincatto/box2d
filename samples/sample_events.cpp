@@ -4,6 +4,7 @@
 #include "donut.h"
 #include "draw.h"
 #include "human.h"
+#include "random.h"
 #include "sample.h"
 #include "settings.h"
 
@@ -146,6 +147,8 @@ public:
 			m_isSpawned[i] = false;
 		}
 
+		memset( m_humans, 0, sizeof( m_humans ) );
+
 		CreateElement();
 	}
 
@@ -182,7 +185,7 @@ public:
 			float jointHertz = 6.0f;
 			float jointDamping = 0.5f;
 			bool colorize = true;
-			human->Spawn( m_worldId, center, scale, jointFriction, jointHertz, jointDamping, index + 1, human, colorize );
+			CreateHuman( human, m_worldId, center, scale, jointFriction, jointHertz, jointDamping, index + 1, human, colorize );
 		}
 
 		m_isSpawned[index] = true;
@@ -199,7 +202,7 @@ public:
 		else
 		{
 			Human* human = m_humans + index;
-			human->Despawn();
+			DestroyHuman(human);
 		}
 
 		m_isSpawned[index] = false;
@@ -217,8 +220,8 @@ public:
 				}
 				else
 				{
-					m_humans[i].Despawn();
-				}
+					DestroyHuman( m_humans + i );
+				}					
 
 				m_isSpawned[i] = false;
 			}
@@ -568,10 +571,10 @@ public:
 		// Debris
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
-		bodyDef.position = { RandomFloat( -38.0f, 38.0f ), RandomFloat( -38.0f, 38.0f ) };
-		bodyDef.rotation = b2MakeRot( RandomFloat( -b2_pi, b2_pi ) );
-		bodyDef.linearVelocity = { RandomFloat( -5.0f, 5.0f ), RandomFloat( -5.0f, 5.0f ) };
-		bodyDef.angularVelocity = RandomFloat( -1.0f, 1.0f );
+		bodyDef.position = { RandomFloatRange( -38.0f, 38.0f ), RandomFloatRange( -38.0f, 38.0f ) };
+		bodyDef.rotation = b2MakeRot( RandomFloatRange( -b2_pi, b2_pi ) );
+		bodyDef.linearVelocity = { RandomFloatRange( -5.0f, 5.0f ), RandomFloatRange( -5.0f, 5.0f ) };
+		bodyDef.angularVelocity = RandomFloatRange( -1.0f, 1.0f );
 		bodyDef.gravityScale = 0.0f;
 		bodyDef.userData = m_bodyUserData + index;
 		m_debrisIds[index] = b2CreateBody( m_worldId, &bodyDef );

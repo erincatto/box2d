@@ -1729,7 +1729,7 @@ void b2World_SetJointTuning( b2WorldId worldId, float hertz, float dampingRatio 
 
 void b2World_SetMaximumLinearVelocity( b2WorldId worldId, float maximumLinearVelocity )
 {
-	B2_ASSERT( b2IsValid( maximumLinearVelocity ) && maximumLinearVelocity > 0.0f );
+	B2_ASSERT( b2Float_IsValid( maximumLinearVelocity ) && maximumLinearVelocity > 0.0f );
 
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
@@ -2603,9 +2603,9 @@ void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionDef )
 	float impulsePerLength = explosionDef->impulsePerLength;
 
 	B2_ASSERT( b2Vec2_IsValid( position ) );
-	B2_ASSERT( b2IsValid( radius ) && radius >= 0.0f );
-	B2_ASSERT( b2IsValid( falloff ) && falloff >= 0.0f );
-	B2_ASSERT( b2IsValid( impulsePerLength ) );
+	B2_ASSERT( b2Float_IsValid( radius ) && radius >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( falloff ) && falloff >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( impulsePerLength ) );
 
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );

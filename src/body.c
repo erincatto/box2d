@@ -171,11 +171,11 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	B2_ASSERT( b2Vec2_IsValid( def->position ) );
 	B2_ASSERT( b2Rot_IsValid( def->rotation ) );
 	B2_ASSERT( b2Vec2_IsValid( def->linearVelocity ) );
-	B2_ASSERT( b2IsValid( def->angularVelocity ) );
-	B2_ASSERT( b2IsValid( def->linearDamping ) && def->linearDamping >= 0.0f );
-	B2_ASSERT( b2IsValid( def->angularDamping ) && def->angularDamping >= 0.0f );
-	B2_ASSERT( b2IsValid( def->sleepThreshold ) && def->sleepThreshold >= 0.0f );
-	B2_ASSERT( b2IsValid( def->gravityScale ) );
+	B2_ASSERT( b2Float_IsValid( def->angularVelocity ) );
+	B2_ASSERT( b2Float_IsValid( def->linearDamping ) && def->linearDamping >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( def->angularDamping ) && def->angularDamping >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( def->sleepThreshold ) && def->sleepThreshold >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( def->gravityScale ) );
 
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
@@ -406,6 +406,11 @@ void b2DestroyBody( b2BodyId bodyId )
 		int result = b2BodyStateArray_RemoveSwap( &set->bodyStates, body->localIndex );
 		B2_MAYBE_UNUSED( result );
 		B2_ASSERT( result == movedIndex );
+	}
+	else if ( set->setIndex >= b2_firstSleepingSet && set->bodySims.count == 0 )
+	{
+		// Remove solver set if it's now an orphan.
+		b2DestroySolverSet( world, set->setIndex );
 	}
 
 	// Free body and id (preserve body revision)
@@ -1218,8 +1223,8 @@ b2Vec2 b2Body_GetWorldCenterOfMass( b2BodyId bodyId )
 
 void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData )
 {
-	B2_ASSERT( b2IsValid( massData.mass ) && massData.mass >= 0.0f );
-	B2_ASSERT( b2IsValid( massData.rotationalInertia ) && massData.rotationalInertia >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( massData.mass ) && massData.mass >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( massData.rotationalInertia ) && massData.rotationalInertia >= 0.0f );
 	B2_ASSERT( b2Vec2_IsValid( massData.center ) );
 
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
@@ -1266,7 +1271,7 @@ void b2Body_ApplyMassFromShapes( b2BodyId bodyId )
 
 void b2Body_SetLinearDamping( b2BodyId bodyId, float linearDamping )
 {
-	B2_ASSERT( b2IsValid( linearDamping ) && linearDamping >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( linearDamping ) && linearDamping >= 0.0f );
 
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
 	if ( world == NULL )
@@ -1289,7 +1294,7 @@ float b2Body_GetLinearDamping( b2BodyId bodyId )
 
 void b2Body_SetAngularDamping( b2BodyId bodyId, float angularDamping )
 {
-	B2_ASSERT( b2IsValid( angularDamping ) && angularDamping >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( angularDamping ) && angularDamping >= 0.0f );
 
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
 	if ( world == NULL )
@@ -1313,7 +1318,7 @@ float b2Body_GetAngularDamping( b2BodyId bodyId )
 void b2Body_SetGravityScale( b2BodyId bodyId, float gravityScale )
 {
 	B2_ASSERT( b2Body_IsValid( bodyId ) );
-	B2_ASSERT( b2IsValid( gravityScale ) );
+	B2_ASSERT( b2Float_IsValid( gravityScale ) );
 
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
 	if ( world == NULL )

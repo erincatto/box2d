@@ -54,8 +54,10 @@ typedef struct b2ChainShape
 	int id;
 	int bodyId;
 	int nextChainId;
-	int* shapeIndices;
 	int count;
+	int* shapeIndices;
+	float friction;
+	float restitution;
 	uint16_t revision;
 } b2ChainShape;
 

@@ -356,7 +356,7 @@ b2JointId b2CreateDistanceJoint( b2WorldId worldId, const b2DistanceJointDef* de
 
 	B2_ASSERT( b2Body_IsValid( def->bodyIdA ) );
 	B2_ASSERT( b2Body_IsValid( def->bodyIdB ) );
-	B2_ASSERT( b2IsValid( def->length ) && def->length > 0.0f );
+	B2_ASSERT( b2Float_IsValid( def->length ) && def->length > 0.0f );
 
 	b2Body* bodyA = b2GetBodyFullId( world, def->bodyIdA );
 	b2Body* bodyB = b2GetBodyFullId( world, def->bodyIdB );

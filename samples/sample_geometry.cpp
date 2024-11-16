@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "draw.h"
+#include "random.h"
 #include "sample.h"
 #include "settings.h"
 

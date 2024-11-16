@@ -20,7 +20,7 @@ set(GLFW_INSTALL OFF CACHE BOOL "GLFW Install")
 FetchContent_Declare(
 	glfw
 	GIT_REPOSITORY https://github.com/glfw/glfw.git
-	GIT_TAG master
+	GIT_TAG 3.4
 	GIT_SHALLOW TRUE
 	GIT_PROGRESS TRUE
 )
@@ -28,9 +28,10 @@ FetchContent_MakeAvailable(glfw)
 
 # imgui and glfw backend for GUI
 # https://gist.github.com/jeffamstutz/992723dfabac4e3ffff265eb71a24cd9
+# Modified to pin to a specific imgui release
 FetchContent_Populate(imgui
-  URL https://github.com/ocornut/imgui/archive/docking.zip
-  SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/imgui
+	URL https://github.com/ocornut/imgui/archive/refs/tags/v1.91.3.zip
+	SOURCE_DIR ${CMAKE_SOURCE_DIR}/build/imgui
 )
 
 set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/build/imgui)
@@ -56,7 +57,7 @@ set(JSMN_DIR ${CMAKE_SOURCE_DIR}/extern/jsmn)
 add_library(jsmn INTERFACE ${JSMN_DIR}/jsmn.h)
 target_include_directories(jsmn INTERFACE ${JSMN_DIR})
 
-add_executable(samples
+set(BOX2D_SAMPLE_FILES
 	car.cpp
 	car.h
 	donut.cpp
@@ -65,8 +66,6 @@ add_executable(samples
 	doohickey.h
 	draw.cpp
 	draw.h
-	human.cpp
-	human.h
 	main.cpp
 	sample.cpp
 	sample.h
@@ -85,8 +84,9 @@ add_executable(samples
 	settings.cpp
 	settings.h
 	shader.cpp
-	shader.h
-)
+	shader.h)
+
+add_executable(samples ${BOX2D_SAMPLE_FILES})
 
 set_target_properties(samples PROPERTIES
 	CXX_STANDARD 17
@@ -95,7 +95,7 @@ set_target_properties(samples PROPERTIES
 )
 
 target_include_directories(samples PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${JSMN_DIR})
-target_link_libraries(samples PUBLIC box2d imgui glfw glad enkiTS)
+target_link_libraries(samples PUBLIC box2d shared imgui glfw glad enkiTS)
 
 # target_compile_definitions(samples PRIVATE "$<$<CONFIG:DEBUG>:SAMPLES_DEBUG>")
 # message(STATUS "runtime = ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
@@ -108,4 +108,4 @@ add_custom_command(
 			${CMAKE_CURRENT_SOURCE_DIR}/data/
 			${CMAKE_CURRENT_BINARY_DIR}/data/)
 
-# source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${BOX2D_SAMPLES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${BOX2D_SAMPLE_FILES})

@@ -19,14 +19,14 @@ float b2WeldJoint_GetReferenceAngle( b2JointId jointId )
 
 void b2WeldJoint_SetReferenceAngle( b2JointId jointId, float angleInRadians )
 {
-	B2_ASSERT( b2IsValid( angleInRadians ) );
+	B2_ASSERT( b2Float_IsValid( angleInRadians ) );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.referenceAngle = b2ClampFloat(angleInRadians, -b2_pi, b2_pi);
 }
 
 void b2WeldJoint_SetLinearHertz( b2JointId jointId, float hertz )
 {
-	B2_ASSERT( b2IsValid( hertz ) && hertz >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( hertz ) && hertz >= 0.0f );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.linearHertz = hertz;
 }
@@ -39,7 +39,7 @@ float b2WeldJoint_GetLinearHertz( b2JointId jointId )
 
 void b2WeldJoint_SetLinearDampingRatio( b2JointId jointId, float dampingRatio )
 {
-	B2_ASSERT( b2IsValid( dampingRatio ) && dampingRatio >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( dampingRatio ) && dampingRatio >= 0.0f );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.linearDampingRatio = dampingRatio;
 }
@@ -52,7 +52,7 @@ float b2WeldJoint_GetLinearDampingRatio( b2JointId jointId )
 
 void b2WeldJoint_SetAngularHertz( b2JointId jointId, float hertz )
 {
-	B2_ASSERT( b2IsValid( hertz ) && hertz >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( hertz ) && hertz >= 0.0f );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.angularHertz = hertz;
 }
@@ -65,7 +65,7 @@ float b2WeldJoint_GetAngularHertz( b2JointId jointId )
 
 void b2WeldJoint_SetAngularDampingRatio( b2JointId jointId, float dampingRatio )
 {
-	B2_ASSERT( b2IsValid( dampingRatio ) && dampingRatio >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( dampingRatio ) && dampingRatio >= 0.0f );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.angularDampingRatio = dampingRatio;
 }

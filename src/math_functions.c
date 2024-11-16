@@ -7,7 +7,7 @@
 
 #include <float.h>
 
-bool b2IsValid( float a )
+bool b2Float_IsValid( float a )
 {
 	if ( isnan( a ) )
 	{

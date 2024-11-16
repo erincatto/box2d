@@ -2190,14 +2190,16 @@ public:
 		m_jointHertz = 5.0f;
 		m_jointDampingRatio = 0.5f;
 
+		m_human = {};
+
 		Spawn();
 	}
 
 	void Spawn()
 	{
-		m_human.Spawn( m_worldId, { 0.0f, 25.0f }, 1.0f, m_jointFrictionTorque, m_jointHertz, m_jointDampingRatio, 1, nullptr,
-					   false );
-		m_human.ApplyRandomAngularImpulse( 10.0f );
+		CreateHuman( &m_human, m_worldId, { 0.0f, 25.0f }, 1.0f, m_jointFrictionTorque, m_jointHertz, m_jointDampingRatio, 1,
+					 nullptr, false );
+		Human_ApplyRandomAngularImpulse( &m_human, 10.0f );
 	}
 
 	void UpdateUI() override
@@ -2211,22 +2213,22 @@ public:
 
 		if ( ImGui::SliderFloat( "Friction", &m_jointFrictionTorque, 0.0f, 1.0f, "%3.2f" ) )
 		{
-			m_human.SetJointFrictionTorque( m_jointFrictionTorque );
+			Human_SetJointFrictionTorque( &m_human, m_jointFrictionTorque );
 		}
 
 		if ( ImGui::SliderFloat( "Hertz", &m_jointHertz, 0.0f, 10.0f, "%3.1f" ) )
 		{
-			m_human.SetJointSpringHertz( m_jointHertz );
+			Human_SetJointSpringHertz( &m_human, m_jointHertz );
 		}
 
 		if ( ImGui::SliderFloat( "Damping", &m_jointDampingRatio, 0.0f, 4.0f, "%3.1f" ) )
 		{
-			m_human.SetJointDampingRatio( m_jointDampingRatio );
+			Human_SetJointDampingRatio( &m_human, m_jointDampingRatio );
 		}
 
 		if ( ImGui::Button( "Respawn" ) )
 		{
-			m_human.Despawn();
+			DestroyHuman( &m_human );
 			Spawn();
 		}
 		ImGui::PopItemWidth();

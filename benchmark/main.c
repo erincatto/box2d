@@ -5,6 +5,8 @@
 
 #include "TaskScheduler_c.h"
 
+#include "benchmarks.h"
+
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
 
@@ -25,19 +27,15 @@
 #define ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
 #define MAYBE_UNUSED( x ) ( (void)( x ) )
 
-typedef b2WorldId CreateBenchmarkFcn( b2WorldDef* worldDef );
-extern b2WorldId JointGrid( b2WorldDef* worldDef );
-extern b2WorldId LargePyramid( b2WorldDef* worldDef );
-extern b2WorldId ManyPyramids( b2WorldDef* worldDef );
-extern b2WorldId Smash( b2WorldDef* worldDef );
-extern b2WorldId Spinner( b2WorldDef* worldDef );
-extern b2WorldId Tumbler( b2WorldDef* worldDef );
+typedef void CreateFcn( b2WorldId worldId );
+typedef void StepFcn( b2WorldId worldId, int stepCount );
 
 typedef struct Benchmark
 {
 	const char* name;
-	CreateBenchmarkFcn* createFcn;
-	int stepCount;
+	CreateFcn* createFcn;
+	StepFcn* stepFcn;
+	int totalStepCount;
 } Benchmark;
 
 #define MAX_TASKS 128
@@ -117,16 +115,19 @@ static void FinishTask( void* userTask, void* userContext )
 
 // Box2D benchmark application. On Windows I recommend running this in an administrator command prompt. Don't use Windows Terminal.
 // Or use affinity. [0x01 0x02 0x04 0x08 0x10 0x20 0x40 0x80]
+// Examples:
 // start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=4 -w=4
+// start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=8
 int main( int argc, char** argv )
 {
 	Benchmark benchmarks[] = {
-		{ "joint_grid", JointGrid, 500 },
-		{ "large_pyramid", LargePyramid, 500 },
-		{ "many_pyramids", ManyPyramids, 200 },
-		{ "smash", Smash, 300 },
-		{ "spinner", Spinner, 1400 },
-		{ "tumbler", Tumbler, 750 },
+		{ "joint_grid", CreateJointGrid, NULL, 500 },
+		{ "large_pyramid", CreateLargePyramid, NULL, 500 },
+		{ "many_pyramids", CreateManyPyramids, NULL, 200 },
+		{ "rain", CreateRain, StepRain, 1000 },
+		{ "smash", CreateSmash, NULL, 300 },
+		{ "spinner", CreateSpinner, NULL, 1400 },
+		{ "tumbler", CreateTumbler, NULL, 750 },
 	};
 
 	int benchmarkCount = ARRAY_COUNT( benchmarks );
@@ -161,6 +162,10 @@ int main( int argc, char** argv )
 		{
 			runCount = b2ClampInt(atoi( arg + 3 ), 1, 16);
 		}
+		else if ( strncmp( arg, "-nc", 3 ) == 0 )
+		{
+			enableContinuous = false;
+		}
 		else if ( strcmp( arg, "-h" ) == 0 )
 		{
 			printf( "Usage\n"
@@ -188,10 +193,12 @@ int main( int argc, char** argv )
 		}
 
 #ifdef NDEBUG
-		int stepCount = benchmarks[benchmarkIndex].stepCount;
+		int stepCount = benchmarks[benchmarkIndex].totalStepCount;
 #else
 		int stepCount = 10;
 #endif
+
+		Benchmark* benchmark = benchmarks + benchmarkIndex;
 
 		bool countersAcquired = false;
 
@@ -221,25 +228,33 @@ int main( int argc, char** argv )
 				}
 
 				b2WorldDef worldDef = b2DefaultWorldDef();
-				worldDef.enableSleep = false;
 				worldDef.enableContinuous = enableContinuous;
 				worldDef.enqueueTask = EnqueueTask;
 				worldDef.finishTask = FinishTask;
 				worldDef.workerCount = threadCount;
+				b2WorldId worldId = b2CreateWorld( &worldDef );
 
-				b2WorldId worldId = benchmarks[benchmarkIndex].createFcn( &worldDef );
+				benchmark->createFcn( worldId );
 
 				float timeStep = 1.0f / 60.0f;
 				int subStepCount = 4;
 
 				// Initial step can be expensive and skew benchmark
+				if ( benchmark->stepFcn != NULL)
+				{
+					benchmark->stepFcn( worldId, 0 );
+				}
 				b2World_Step( worldId, timeStep, subStepCount );
 				taskCount = 0;
 
 				b2Timer timer = b2CreateTimer();
 
-				for ( int step = 0; step < stepCount; ++step )
+				for ( int step = 1; step < stepCount; ++step )
 				{
+					if ( benchmark->stepFcn != NULL)
+					{
+						benchmark->stepFcn( worldId, step );
+					}
 					b2World_Step( worldId, timeStep, subStepCount );
 					taskCount = 0;
 				}

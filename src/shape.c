@@ -58,9 +58,9 @@ static void b2UpdateShapeAABBs( b2Shape* shape, b2Transform transform, b2BodyTyp
 static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform transform, const b2ShapeDef* def,
 									   const void* geometry, b2ShapeType shapeType )
 {
-	B2_ASSERT( b2IsValid( def->density ) && def->density >= 0.0f );
-	B2_ASSERT( b2IsValid( def->friction ) && def->friction >= 0.0f );
-	B2_ASSERT( b2IsValid( def->restitution ) && def->restitution >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( def->density ) && def->density >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( def->friction ) && def->friction >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( def->restitution ) && def->restitution >= 0.0f );
 
 	int shapeId = b2AllocId( &world->shapeIdPool );
 
@@ -150,9 +150,9 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const void* geometry, b2ShapeType shapeType )
 {
 	b2CheckDef( def );
-	B2_ASSERT( b2IsValid( def->density ) && def->density >= 0.0f );
-	B2_ASSERT( b2IsValid( def->friction ) && def->friction >= 0.0f );
-	B2_ASSERT( b2IsValid( def->restitution ) && def->restitution >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( def->density ) && def->density >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( def->friction ) && def->friction >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( def->restitution ) && def->restitution >= 0.0f );
 
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
 	if ( world == NULL )
@@ -195,7 +195,7 @@ b2ShapeId b2CreateCapsuleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2
 
 b2ShapeId b2CreatePolygonShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Polygon* polygon )
 {
-	B2_ASSERT( b2IsValid( polygon->radius ) && polygon->radius >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( polygon->radius ) && polygon->radius >= 0.0f );
 	return b2CreateShape( bodyId, def, polygon, b2_polygonShape );
 }
 
@@ -283,8 +283,8 @@ void b2DestroyShape( b2ShapeId shapeId, bool updateBodyMass )
 b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 {
 	b2CheckDef( def );
-	B2_ASSERT( b2IsValid( def->friction ) && def->friction >= 0.0f );
-	B2_ASSERT( b2IsValid( def->restitution ) && def->restitution >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( def->friction ) && def->friction >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( def->restitution ) && def->restitution >= 0.0f );
 	B2_ASSERT( def->count >= 4 );
 
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
@@ -313,6 +313,9 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 	chainShape->bodyId = body->id;
 	chainShape->nextChainId = body->headChainId;
 	chainShape->revision += 1;
+	chainShape->friction = def->friction;
+	chainShape->restitution = def->restitution;
+
 	body->headChainId = chainId;
 
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -913,7 +916,7 @@ b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, const b2RayCastInput* input )
 
 void b2Shape_SetDensity( b2ShapeId shapeId, float density, bool updateBodyMass )
 {
-	B2_ASSERT( b2IsValid( density ) && density >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( density ) && density >= 0.0f );
 
 	b2World* world = b2GetWorldLocked( shapeId.world0 );
 	if ( world == NULL )
@@ -946,7 +949,7 @@ float b2Shape_GetDensity( b2ShapeId shapeId )
 
 void b2Shape_SetFriction( b2ShapeId shapeId, float friction )
 {
-	B2_ASSERT( b2IsValid( friction ) && friction >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( friction ) && friction >= 0.0f );
 
 	b2World* world = b2GetWorld( shapeId.world0 );
 	B2_ASSERT( world->locked == false );
@@ -968,7 +971,7 @@ float b2Shape_GetFriction( b2ShapeId shapeId )
 
 void b2Shape_SetRestitution( b2ShapeId shapeId, float restitution )
 {
-	B2_ASSERT( b2IsValid( restitution ) && restitution >= 0.0f );
+	B2_ASSERT( b2Float_IsValid( restitution ) && restitution >= 0.0f );
 
 	b2World* world = b2GetWorld( shapeId.world0 );
 	B2_ASSERT( world->locked == false );
@@ -1285,6 +1288,8 @@ b2ChainId b2Shape_GetParentChain( b2ShapeId shapeId )
 
 void b2Chain_SetFriction( b2ChainId chainId, float friction )
 {
+	B2_ASSERT( b2Float_IsValid( friction ) );
+
 	b2World* world = b2GetWorldLocked( chainId.world0 );
 	if ( world == NULL )
 	{
@@ -1292,6 +1297,7 @@ void b2Chain_SetFriction( b2ChainId chainId, float friction )
 	}
 
 	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
+	chainShape->friction = friction;
 
 	int count = chainShape->count;
 
@@ -1303,8 +1309,17 @@ void b2Chain_SetFriction( b2ChainId chainId, float friction )
 	}
 }
 
+float b2Chain_GetFriction(b2ChainId chainId)
+{
+	b2World* world = b2GetWorld( chainId.world0 );
+	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
+	return chainShape->friction;
+}
+
 void b2Chain_SetRestitution( b2ChainId chainId, float restitution )
 {
+	B2_ASSERT( b2Float_IsValid( restitution ) );
+
 	b2World* world = b2GetWorldLocked( chainId.world0 );
 	if ( world == NULL )
 	{
@@ -1312,6 +1327,7 @@ void b2Chain_SetRestitution( b2ChainId chainId, float restitution )
 	}
 
 	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
+	chainShape->restitution = restitution;
 
 	int count = chainShape->count;
 
@@ -1321,6 +1337,13 @@ void b2Chain_SetRestitution( b2ChainId chainId, float restitution )
 		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
 		shape->restitution = restitution;
 	}
+}
+
+float b2Chain_GetRestitution(b2ChainId chainId)
+{
+	b2World* world = b2GetWorld( chainId.world0 );
+	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
+	return chainShape->restitution;
 }
 
 int b2Shape_GetContactCapacity( b2ShapeId shapeId )

@@ -109,7 +109,6 @@ typedef struct b2World
 
 	b2ContactHitEventArray contactHitEvents;
 
-
 	// Used to track debug draw
 	b2BitSet debugBodySet;
 	b2BitSet debugJointSet;
