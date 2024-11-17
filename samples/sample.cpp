@@ -241,8 +241,11 @@ void Sample::Step( Settings& settings )
 			timeStep = 0.0f;
 		}
 
-		g_draw.DrawString( 5, m_textLine, "****PAUSED****" );
-		m_textLine += m_textIncrement;
+		if (g_draw.m_showUI)
+		{
+			g_draw.DrawString( 5, m_textLine, "****PAUSED****" );
+			m_textLine += m_textIncrement;
+		}
 	}
 
 	g_draw.m_debugDraw.drawingBounds = g_camera.GetViewBounds();

@@ -845,6 +845,12 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 		return true;
 	}
 
+	// Skip sensors
+	if ( shape->isSensor == true )
+	{
+		return true;
+	}
+
 	// Skip filtered shapes
 	bool canCollide = b2ShouldShapesCollide( fastShape->filter, shape->filter );
 	if ( canCollide == false )
@@ -852,13 +858,8 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 		return true;
 	}
 
-	// Skip sensors
-	if ( shape->isSensor == true )
-	{
-		return true;
-	}
-
 	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
+
 	b2BodySim* bodySim = b2GetBodySim( world, body );
 	B2_ASSERT( body->type == b2_staticBody || fastBodySim->isBullet );
 
@@ -915,10 +916,14 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 	input.sweepB = continuousContext->sweep;
 	input.tMax = continuousContext->fraction;
 
+	float hitFraction = continuousContext->fraction;
+
+	bool didHit = false;
 	b2TOIOutput output = b2TimeOfImpact( &input );
 	if ( 0.0f < output.t && output.t < continuousContext->fraction )
 	{
-		continuousContext->fraction = output.t;
+		hitFraction = output.t;
+		didHit = true;
 	}
 	else if ( 0.0f == output.t )
 	{
@@ -928,8 +933,28 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 		output = b2TimeOfImpact( &input );
 		if ( 0.0f < output.t && output.t < continuousContext->fraction )
 		{
-			continuousContext->fraction = output.t;
+			hitFraction = output.t;
+			didHit = true;
 		}
+	}
+
+	if ( didHit && (shape->enablePreSolveEvents || fastShape->enablePreSolveEvents) )
+	{
+		// Pre-solve is expensive because I need to compute a temporary manifold
+		b2Transform transformA = b2GetSweepTransform( &input.sweepA, hitFraction );
+		b2Transform transformB = b2GetSweepTransform( &input.sweepB, hitFraction );
+		b2Manifold manifold = b2ComputeManifold( shape, transformA, fastShape, transformB );
+		b2ShapeId shapeIdA = { shape->id + 1, world->worldId, shape->revision };
+		b2ShapeId shapeIdB = { fastShape->id + 1, world->worldId, fastShape->revision };
+
+		// The user may modify the temporary manifold here but it doesn't matter. They will be able to
+		// modify the real manifold in the discrete solver.
+		didHit = world->preSolveFcn( shapeIdA, shapeIdB, &manifold, world->preSolveContext );
+	}
+
+	if (didHit)
+	{
+		continuousContext->fraction = hitFraction;
 	}
 
 	return true;
@@ -955,6 +980,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 	b2DynamicTree* staticTree = world->broadPhase.trees + b2_staticBody;
 	b2DynamicTree* kinematicTree = world->broadPhase.trees + b2_kinematicBody;
 	b2DynamicTree* dynamicTree = world->broadPhase.trees + b2_dynamicBody;
+	b2Body* fastBody = b2BodyArray_Get( &world->bodies, fastBodySim->bodyId );
 
 	struct b2ContinuousContext context;
 	context.world = world;
@@ -964,7 +990,6 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 
 	bool isBullet = fastBodySim->isBullet;
 
-	b2Body* fastBody = b2BodyArray_Get( &world->bodies, fastBodySim->bodyId );
 	int shapeId = fastBody->headShapeId;
 	while ( shapeId != B2_NULL_INDEX )
 	{

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "draw.h"
+#include "human.h"
 #include "random.h"
 #include "sample.h"
 #include "settings.h"
@@ -777,6 +778,183 @@ public:
 };
 
 static int sampleSpeculativeGhost = RegisterSample( "Continuous", "Speculative Ghost", SpeculativeGhost::Create );
+
+class Drop : public Sample
+{
+public:
+	explicit Drop( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 1.5f };
+			g_camera.m_zoom = 3.0f;
+			settings.enableSleep = false;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			float y = 0.0f;
+			float w = 0.25f;
+			float h = 0.05f;
+
+			int count = 40;
+			float x = -0.5f * count * w;
+			for ( int j = 0; j <= count; ++j )
+			{
+				b2Polygon box = b2MakeOffsetBox( w, h, { x, y }, b2Rot_identity );
+				b2CreatePolygonShape( groundId, &shapeDef, &box );
+				x += w;
+			}
+		}
+
+		m_human = {};
+		m_ballId = {};
+		m_frameSkip = 0;
+		m_frameCount = 0;
+		m_continuous = true;
+	}
+
+	void Clear()
+	{
+		if ( B2_IS_NON_NULL( m_ballId ) )
+		{
+			b2DestroyBody( m_ballId );
+			m_ballId = b2_nullBodyId;
+		}
+
+		if (m_human.isSpawned)
+		{
+			DestroyHuman( &m_human );
+		}
+	}
+
+	void DropBall()
+	{
+		if ( B2_IS_NON_NULL( m_ballId ) )
+		{
+			b2DestroyBody( m_ballId );
+		}
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.position = { 0.0f, 4.0f };
+		bodyDef.linearVelocity = { 0.0f, -100.0f };
+
+		m_ballId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2Circle circle = { { 0.0f, 0.0f }, 0.125f };
+		b2CreateCircleShape( m_ballId, &shapeDef, &circle );
+
+		m_frameCount = 1;
+	}
+
+	void DropHuman()
+	{
+		if (m_human.isSpawned)
+		{
+			DestroyHuman( &m_human );
+		}
+
+		float jointFrictionTorque = 0.03f;
+		float jointHertz = 1.0f;
+		float jointDampingRatio = 0.5f;
+
+		CreateHuman( &m_human, m_worldId, { 0.0f, 40.0f }, 1.0f, jointFrictionTorque, jointHertz, jointDampingRatio, 1,
+					 nullptr, true );
+
+		m_frameCount = 1;
+	}
+
+	void Keyboard( int key ) override
+	{
+		switch ( key )
+		{
+			case GLFW_KEY_B:
+				DropBall();
+				break;
+
+			case GLFW_KEY_C:
+				Clear();
+				m_continuous = !m_continuous;
+				break;
+
+			case GLFW_KEY_H:
+				DropHuman();
+				break;
+
+			case GLFW_KEY_S:
+				m_frameSkip = 60;
+				break;
+
+			case GLFW_KEY_F:
+				m_frameSkip = 0;
+				break;
+
+			default:
+				Sample::Keyboard( key );
+				break;
+		}
+	}
+
+	void Step( Settings& settings ) override
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		if ( io.Fonts->Fonts.size() == 0 )
+		{
+			return;
+		}
+
+		const ImFont* font = io.Fonts->Fonts.back();
+		
+		ImGui::SetNextWindowPos( ImVec2( 0.0f, 0.0f ) );
+		ImGui::SetNextWindowSize( ImVec2( float( g_camera.m_width ), float( g_camera.m_height ) ) );
+		ImGui::SetNextWindowBgAlpha( 0.0f );
+		ImGui::Begin( "DropBackground", nullptr,
+					  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
+						  ImGuiWindowFlags_NoScrollbar );
+
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+		const char* ContinuousText = m_continuous ? "Continuous ON" : "Continuous OFF";
+		drawList->AddText( font, font->FontSize, { 40.0f, 40.0f }, IM_COL32_WHITE, ContinuousText );
+
+		ImGui::End();
+
+		settings.enableContinuous = m_continuous;
+
+		if ( ( m_frameSkip == 0 || m_frameCount % m_frameSkip == 0 ) && settings.pause == false )
+		{
+			Sample::Step( settings );
+		}
+		else
+		{
+			bool pause = settings.pause;
+			settings.pause = true;
+			Sample::Step( settings );
+			settings.pause = pause;
+		}
+
+		m_frameCount += 1;
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new Drop( settings );
+	}
+
+	b2BodyId m_ballId;
+	Human m_human;
+	int m_frameSkip;
+	int m_frameCount;
+	bool m_continuous;
+};
+
+static int sampleDrop = RegisterSample( "Continuous", "Drop", Drop::Create );
 
 // This shows a fast moving body that uses continuous collision versus static and dynamic bodies.
 // This is achieved by setting the ball body as a *bullet*.

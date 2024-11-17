@@ -55,7 +55,8 @@ void b2ClearSet( b2HashSet* set )
 // A simple hash like hash = (integer1 XOR integer2) has many collisions.
 // https://lemire.me/blog/2018/08/15/fast-strongly-universal-64-bit-hashing-everywhere/
 // https://preshing.com/20130107/this-hash-set-is-faster-than-a-judy-array/
-// TODO_ERIN try: https://www.jandrewrogers.com/2019/02/12/fast-perfect-hashing/
+// todo try: https://www.jandrewrogers.com/2019/02/12/fast-perfect-hashing/
+// todo try: https://probablydance.com/2018/06/16/fibonacci-hashing-the-optimization-that-the-world-forgot-or-a-better-alternative-to-integer-modulo/
 static inline uint32_t b2KeyHash( uint64_t key )
 {
 	uint64_t h = key;
@@ -66,6 +67,9 @@ static inline uint32_t b2KeyHash( uint64_t key )
 	h ^= h >> 33;
 
 	return (uint32_t)h;
+
+	// todo_erin 
+	// return 11400714819323198485ull * key;
 }
 
 int32_t b2FindSlot( const b2HashSet* set, uint64_t key, uint32_t hash )
