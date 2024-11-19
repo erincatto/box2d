@@ -151,8 +151,9 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 	{
 		ImFontConfig fontConfig;
 		fontConfig.RasterizerMultiply = s_windowScale * s_framebufferScale;
-		ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 15.0f, &fontConfig );
-		ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 64.0f, &fontConfig );
+		g_draw.m_smallFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 15.0f, &fontConfig );
+		g_draw.m_mediumFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 40.0f, &fontConfig );
+		g_draw.m_largeFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 64.0f, &fontConfig );
 	}
 	else
 	{
