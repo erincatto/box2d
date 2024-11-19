@@ -820,7 +820,7 @@ public:
 		m_continuous = true;
 		m_speculative = true;
 
-		Scene4();
+		Scene1();
 	}
 
 	void Clear()
@@ -1056,12 +1056,7 @@ public:
 
 	void Step( Settings& settings ) override
 	{
-		ImGuiIO& io = ImGui::GetIO();
-		if ( io.Fonts->Fonts.size() == 0 )
-		{
-			return;
-		}
-
+#if 0
 		ImGui::SetNextWindowPos( ImVec2( 0.0f, 0.0f ) );
 		ImGui::SetNextWindowSize( ImVec2( float( g_camera.m_width ), float( g_camera.m_height ) ) );
 		ImGui::SetNextWindowBgAlpha( 0.0f );
@@ -1081,12 +1076,13 @@ public:
 		}
 
 		ImGui::End();
+#endif
 
-		if (m_frameCount == 165)
-		{
-			settings.pause = true;
-			m_frameSkip = 30;
-		}
+		//if (m_frameCount == 165)
+		//{
+		//	settings.pause = true;
+		//	m_frameSkip = 30;
+		//}
 
 		settings.enableContinuous = m_continuous;
 

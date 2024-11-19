@@ -2268,127 +2268,7 @@ public:
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
-		m_beginFlag = false;
-		m_beginTransform = b2Transform_identity;
-		m_endFlag = false;
-		m_endTransform = b2Transform_identity;
-
-		{
-			b2BodyDef bodyDef = b2DefaultBodyDef();
-			bodyDef.type = b2_staticBody;
-
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.density = 1.0f;
-			shapeDef.friction = 0.3f;
-			shapeDef.isSensor = true;
-
-			bodyDef.position = { -6.5f, 8.0f };
-			m_sensor = b2CreateBody( m_worldId, &bodyDef );
-			b2Polygon r1 = b2MakeBox( 3.0f, 0.5f );
-			b2CreatePolygonShape( m_sensor, &shapeDef, &r1 );
-		}
-
-		m_ball = b2_nullBodyId;
-	}
-
-	void CreateTestBall( b2Vec2 impulse )
-	{
-		if ( b2Body_IsValid( m_ball ) )
-		{
-			b2DestroyBody( m_ball );
-		}
-
-		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.type = b2_dynamicBody;
-		bodyDef.position = { -6.5f, 4.0f };
-
-		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.density = 1.0f;
-		shapeDef.friction = 0.3f;
-		shapeDef.userData = (void*)"ball";
-
-		m_ball = b2CreateBody( m_worldId, &bodyDef );
-		b2Circle c1 = { b2Vec2_zero, 0.25f };
-		b2CreateCircleShape( m_ball, &shapeDef, &c1 );
-		b2Body_ApplyLinearImpulse( m_ball, impulse, bodyDef.position, true );
-	}
-
-	void Step( Settings& settings ) override
-	{
-		Sample::Step( settings );
-
-		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
-		for ( int i = 0; i < sensorEvents.beginCount; ++i )
-		{
-			b2SensorBeginTouchEvent event = sensorEvents.beginEvents[i];
-			void* userData = b2Shape_GetUserData( event.visitorShapeId );
-			if ( strcmp( (char*)userData, "ball" ) == 0 )
-			{
-				m_beginFlag = true;
-				m_endFlag = false;
-				if ( b2Body_GetLinearVelocity( m_ball ).y < 0 )
-				{
-					m_beginTransform.p = b2Add( b2Body_GetPosition( m_sensor ), { 0.0f, 0.5f } );
-				}
-				else
-				{
-					m_beginTransform.p = b2Sub( b2Body_GetPosition( m_sensor ), { 0.0f, 0.5f } );
-				}
-			}
-		}
-
-		for ( int i = 0; i < sensorEvents.endCount; ++i )
-		{
-			b2SensorEndTouchEvent event = sensorEvents.endEvents[i];
-			void* userData = b2Shape_GetUserData( event.visitorShapeId );
-			if ( strcmp( (char*)userData, "ball" ) == 0 )
-			{
-				m_endFlag = true;
-				if ( b2Body_GetLinearVelocity( m_ball ).y < 0 )
-				{
-					m_endTransform.p = b2Sub( b2Body_GetPosition( m_sensor ), { 0.0f, 0.5f } );
-				}
-				else
-				{
-					m_endTransform.p = b2Add( b2Body_GetPosition( m_sensor ), { 0.0f, 0.5f } );
-				}
-			}
-		}
-
-		if ( m_beginFlag )
-		{
-			g_draw.DrawSolidCircle( m_beginTransform, b2Vec2_zero, 0.5f, b2_colorGreen );
-		}
-
-		if ( m_endFlag )
-		{
-			g_draw.DrawSolidCircle( m_endTransform, b2Vec2_zero, 0.5f, b2_colorRed );
-		}
-	}
-
-	void UpdateUI() override
-	{
-		float height = 120.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 120.0f, height ) );
-
-		ImGui::Begin( "Spawn test ball", nullptr, ImGuiWindowFlags_NoResize );
-
-		if ( ImGui::Button( "Slow ball" ) )
-		{
-			m_beginFlag = false;
-			m_endFlag = false;
-			CreateTestBall( { 0.0f, 2.0f } );
-		}
-
-		if ( ImGui::Button( "Fast ball" ) )
-		{
-			m_beginFlag = false;
-			m_endFlag = false;
-			CreateTestBall( { 0.0f, 8.0f } );
-		}
-
-		ImGui::End();
+		m_donut.Spawn( m_worldId, { 0.0f, 10.0f }, 2.0f, 0, nullptr );
 	}
 
 	static Sample* Create( Settings& settings )
@@ -2396,13 +2276,7 @@ public:
 		return new SoftBody( settings );
 	}
 
-	b2BodyId m_ball;
-	b2BodyId m_sensor;
-
-	bool m_beginFlag;
-	b2Transform m_beginTransform;
-	bool m_endFlag;
-	b2Transform m_endTransform;
+	Donut m_donut;
 };
 
 static int sampleDonut = RegisterSample( "Joints", "Soft Body", SoftBody::Create );

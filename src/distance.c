@@ -1018,7 +1018,9 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 	float tMax = input->tMax;
 
 	float totalRadius = proxyA->radius + proxyB->radius;
-	float target = b2MaxFloat( b2_linearSlop, totalRadius );
+	// todo_erin consider different target
+	// float target = b2MaxFloat( b2_linearSlop, totalRadius );
+	float target = b2MaxFloat( b2_linearSlop, totalRadius - b2_linearSlop );
 	float tolerance = 0.25f * b2_linearSlop;
 	B2_ASSERT( target > tolerance );
 
