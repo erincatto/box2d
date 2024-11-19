@@ -388,7 +388,20 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 		if ( ( flags & b2_contactSensorTouchingFlag ) != 0 && ( flags & b2_contactEnableSensorEvents ) != 0 )
 		{
 			B2_ASSERT( ( flags & b2_contactSensorFlag ) != 0 );
-			b2SensorEndTouchEvent event = { shapeIdA, shapeIdB };
+			B2_ASSERT( shapeA->isSensor == true || shapeB->isSensor == true );
+			B2_ASSERT( shapeA->isSensor != shapeB->isSensor );
+
+			b2SensorEndTouchEvent event;
+			if (shapeA->isSensor)
+			{
+				event.sensorShapeId = shapeIdA;
+				event.visitorShapeId = shapeIdB;
+			}
+			else
+			{
+				event.sensorShapeId = shapeIdB;
+				event.visitorShapeId = shapeIdA;
+			}
 			b2SensorEndTouchEventArray_Push( world->sensorEndEvents + world->endEventArrayIndex, event );
 		}
 	}
@@ -562,6 +575,22 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 			}
 		}
 
+		// This flag is for testing
+		if (world->enableSpeculative == false && pointCount == 2)
+		{
+			if ( contactSim->manifold.points[0].separation > 1.5f * b2_linearSlop )
+			{
+				contactSim->manifold.points[0] = contactSim->manifold.points[1];
+				contactSim->manifold.pointCount = 1;
+			}
+			else if ( contactSim->manifold.points[0].separation > 1.5f * b2_linearSlop )
+			{
+				contactSim->manifold.pointCount = 1;
+			}
+
+			pointCount = contactSim->manifold.pointCount;
+		}
+
 		if ( touching && ( shapeA->enableHitEvents || shapeB->enableHitEvents ) )
 		{
 			contactSim->simFlags |= b2_simEnableHitEvent;
@@ -654,4 +683,11 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	}
 
 	return touching;
+}
+
+b2Manifold b2ComputeManifold(b2Shape* shapeA, b2Transform transformA, b2Shape* shapeB, b2Transform transformB)
+{
+	b2ManifoldFcn* fcn = s_registers[shapeA->type][shapeB->type].fcn;
+	b2DistanceCache cache = { 0 };
+	return fcn( shapeA, transformA, shapeB, transformB, &cache );
 }

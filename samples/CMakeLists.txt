@@ -37,6 +37,9 @@ FetchContent_Populate(imgui
 set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/build/imgui)
 
 add_library(imgui STATIC
+	${IMGUI_DIR}/imconfig.h
+	${IMGUI_DIR}/imgui.h
+
 	${IMGUI_DIR}/imgui.cpp
 	${IMGUI_DIR}/imgui_draw.cpp
 	${IMGUI_DIR}/imgui_demo.cpp

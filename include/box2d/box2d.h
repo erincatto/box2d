@@ -198,8 +198,11 @@ B2_API void* b2World_GetUserData( b2WorldId worldId );
 /// Dump memory stats to box2d_memory.txt
 B2_API void b2World_DumpMemoryStats( b2WorldId worldId );
 
-/// todo testing
+/// This is for internal testing
 B2_API void b2World_RebuildStaticTree( b2WorldId worldId );
+
+/// This is for internal testing
+B2_API void b2World_EnableSpeculative( b2WorldId worldId, bool flag );
 
 /** @} */
 

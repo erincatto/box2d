@@ -486,6 +486,115 @@ public:
 
 static int sampleSensorBookendEvent = RegisterSample( "Events", "Sensor Bookend", SensorBookend::Create );
 
+class FootSensor : public Sample
+{
+public:
+	explicit FootSensor( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 6.0f };
+			g_camera.m_zoom = 7.5f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Vec2 points[20];
+			float x = 10.0f;
+			for (int i = 0; i < 20; ++i)
+			{
+				points[i] = { x, 0.0f };
+				x -= 1.0f;
+			}
+
+			b2ChainDef chainDef = b2DefaultChainDef();
+			chainDef.points = points;
+			chainDef.count = 20;
+			chainDef.isLoop = false;
+
+			b2CreateChain( groundId, &chainDef );
+
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.fixedRotation = true;
+			bodyDef.position = { 0.0f, 1.0f };
+			m_playerId = b2CreateBody( m_worldId, &bodyDef );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.friction = 0.3f;
+			b2Capsule capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.5f };
+			b2CreateCapsuleShape( m_playerId, &shapeDef, &capsule );
+
+			b2Polygon box = b2MakeOffsetBox( 0.5f, 0.25f, { 0.0f, -1.0f }, b2Rot_identity );
+			shapeDef.isSensor = true;
+			m_sensorId = b2CreatePolygonShape( m_playerId, &shapeDef, &box );
+		}
+
+		m_overlapCount = 0;
+	}
+
+
+	void Step( Settings& settings ) override
+	{
+		if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) == GLFW_PRESS )
+		{
+			b2Body_ApplyForceToCenter( m_playerId, { -50.0f, 0.0f }, true );
+		}
+
+		if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) == GLFW_PRESS )
+		{
+			b2Body_ApplyForceToCenter( m_playerId, { 50.0f, 0.0f }, true );
+		}
+
+		Sample::Step( settings );
+
+		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
+		for ( int i = 0; i < sensorEvents.beginCount; ++i )
+		{
+			b2SensorBeginTouchEvent event = sensorEvents.beginEvents[i];
+
+			assert( B2_ID_EQUALS( event.visitorShapeId, m_sensorId ) == false );
+
+			if ( B2_ID_EQUALS( event.sensorShapeId, m_sensorId ) )
+			{
+				m_overlapCount += 1;
+			}
+		}
+
+		for ( int i = 0; i < sensorEvents.endCount; ++i )
+		{
+			b2SensorEndTouchEvent event = sensorEvents.endEvents[i];
+
+			assert( B2_ID_EQUALS( event.visitorShapeId, m_sensorId ) == false );
+
+			if ( B2_ID_EQUALS( event.sensorShapeId, m_sensorId ) )
+			{
+				m_overlapCount -= 1;
+			}
+		}
+
+		g_draw.DrawString( 5, m_textLine, "count == %d", m_overlapCount );
+		m_textLine += m_textIncrement;
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new FootSensor( settings );
+	}
+
+	b2BodyId m_playerId;
+	b2ShapeId m_sensorId;
+	int m_overlapCount;
+};
+
+static int sampleCharacterSensor = RegisterSample( "Events", "Foot Sensor", FootSensor::Create );
+
+
 struct BodyUserData
 {
 	int index;
@@ -871,7 +980,8 @@ public:
 
 static int sampleWeeble = RegisterSample( "Events", "Contact", ContactEvent::Create );
 
-// Shows how to make a rigid body character mover and use the pre-solve callback.
+// Shows how to make a rigid body character mover and use the pre-solve callback. In this
+// case the platform should get the pre-solve event, not the player.
 class Platformer : public Sample
 {
 public:
@@ -895,37 +1005,55 @@ public:
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
-		// Platform
+		// Static Platform
+		// This tests pre-solve with continuous collision
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_staticBody;
+			bodyDef.position = { -6.0f, 6.0f };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+			// Need to turn this on to get the callback
+			shapeDef.enablePreSolveEvents = true;
+
+			b2Polygon box = b2MakeBox( 2.0f, 0.5f );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		}
+
+		// Moving Platform
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_kinematicBody;
 			bodyDef.position = { 0.0f, 6.0f };
 			bodyDef.linearVelocity = { 2.0f, 0.0f };
-			m_platformId = b2CreateBody( m_worldId, &bodyDef );
+			m_movingPlatformId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+			// Need to turn this on to get the callback
+			shapeDef.enablePreSolveEvents = true;
+
 			b2Polygon box = b2MakeBox( 3.0f, 0.5f );
-			m_platformShapeId = b2CreatePolygonShape( m_platformId, &shapeDef, &box );
+			b2CreatePolygonShape( m_movingPlatformId, &shapeDef, &box );
 		}
 
-		// Actor
+		// Player
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.fixedRotation = true;
 			bodyDef.linearDamping = 0.5f;
 			bodyDef.position = { 0.0f, 1.0f };
-			m_characterId = b2CreateBody( m_worldId, &bodyDef );
+			m_playerId = b2CreateBody( m_worldId, &bodyDef );
 
 			m_radius = 0.5f;
 			b2Capsule capsule = { { 0.0f, 0.0f }, { 0.0f, 1.0f }, m_radius };
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.friction = 0.1f;
 
-			// Need to turn this on to get the callback
-			shapeDef.enablePreSolveEvents = true;
-
-			b2CreateCapsuleShape( m_characterId, &shapeDef, &capsule );
+			m_playerShapeId = b2CreateCapsuleShape( m_playerId, &shapeDef, &capsule );
 		}
 
 		m_force = 25.0f;
@@ -948,28 +1076,18 @@ public:
 		assert( b2Shape_IsValid( shapeIdA ) );
 		assert( b2Shape_IsValid( shapeIdB ) );
 
-		b2ShapeId actorShapeId = b2_nullShapeId;
 		float sign = 0.0f;
-		if ( B2_ID_EQUALS( shapeIdA, m_platformShapeId ) )
-		{
-			sign = 1.0f;
-			actorShapeId = shapeIdB;
-		}
-		else if ( B2_ID_EQUALS( shapeIdB, m_platformShapeId ) )
+		if ( B2_ID_EQUALS( shapeIdA, m_playerShapeId ) )
 		{
 			sign = -1.0f;
-			actorShapeId = shapeIdA;
+		}
+		else if ( B2_ID_EQUALS( shapeIdB, m_playerShapeId ) )
+		{
+			sign = 1.0f;
 		}
 		else
 		{
-			// not the platform, enable contact
-			return true;
-		}
-
-		b2BodyId bodyId = b2Shape_GetBody( actorShapeId );
-		if ( B2_ID_EQUALS( bodyId, m_characterId ) == false )
-		{
-			// not the character, enable contact
+			// not colliding with the player, enable contact
 			return true;
 		}
 
@@ -1002,7 +1120,7 @@ public:
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
-		ImGui::Begin( "Platformer", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
+		ImGui::Begin( "One-Sided Platform", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 
 		ImGui::SliderFloat( "force", &m_force, 0.0f, 50.0f, "%.1f" );
 		ImGui::SliderFloat( "impulse", &m_impulse, 0.0f, 50.0f, "%.1f" );
@@ -1013,18 +1131,18 @@ public:
 	void Step( Settings& settings ) override
 	{
 		bool canJump = false;
-		b2Vec2 velocity = b2Body_GetLinearVelocity( m_characterId );
+		b2Vec2 velocity = b2Body_GetLinearVelocity( m_playerId );
 		if ( m_jumpDelay == 0.0f && m_jumping == false && velocity.y < 0.01f )
 		{
-			int capacity = b2Body_GetContactCapacity( m_characterId );
+			int capacity = b2Body_GetContactCapacity( m_playerId );
 			capacity = b2MinInt( capacity, 4 );
 			b2ContactData contactData[4];
-			int count = b2Body_GetContactData( m_characterId, contactData, capacity );
+			int count = b2Body_GetContactData( m_playerId, contactData, capacity );
 			for ( int i = 0; i < count; ++i )
 			{
 				b2BodyId bodyIdA = b2Shape_GetBody( contactData[i].shapeIdA );
 				float sign = 0.0f;
-				if ( B2_ID_EQUALS( bodyIdA, m_characterId ) )
+				if ( B2_ID_EQUALS( bodyIdA, m_playerId ) )
 				{
 					// normal points from A to B
 					sign = -1.0f;
@@ -1044,24 +1162,24 @@ public:
 
 		// A kinematic body is moved by setting its velocity. This
 		// ensure friction works correctly.
-		b2Vec2 platformPosition = b2Body_GetPosition( m_platformId );
+		b2Vec2 platformPosition = b2Body_GetPosition( m_movingPlatformId );
 		if ( platformPosition.x < -15.0f )
 		{
-			b2Body_SetLinearVelocity( m_platformId, { 2.0f, 0.0f } );
+			b2Body_SetLinearVelocity( m_movingPlatformId, { 2.0f, 0.0f } );
 		}
 		else if ( platformPosition.x > 15.0f )
 		{
-			b2Body_SetLinearVelocity( m_platformId, { -2.0f, 0.0f } );
+			b2Body_SetLinearVelocity( m_movingPlatformId, { -2.0f, 0.0f } );
 		}
 
 		if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) == GLFW_PRESS )
 		{
-			b2Body_ApplyForceToCenter( m_characterId, { -m_force, 0.0f }, true );
+			b2Body_ApplyForceToCenter( m_playerId, { -m_force, 0.0f }, true );
 		}
 
 		if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) == GLFW_PRESS )
 		{
-			b2Body_ApplyForceToCenter( m_characterId, { m_force, 0.0f }, true );
+			b2Body_ApplyForceToCenter( m_playerId, { m_force, 0.0f }, true );
 		}
 
 		int keyState = glfwGetKey( g_mainWindow, GLFW_KEY_SPACE );
@@ -1069,7 +1187,7 @@ public:
 		{
 			if ( canJump )
 			{
-				b2Body_ApplyLinearImpulseToCenter( m_characterId, { 0.0f, m_impulse }, true );
+				b2Body_ApplyLinearImpulseToCenter( m_playerId, { 0.0f, m_impulse }, true );
 				m_jumpDelay = 0.5f;
 				m_jumping = true;
 			}
@@ -1082,7 +1200,7 @@ public:
 		Sample::Step( settings );
 
 		b2ContactData contactData = {};
-		int contactCount = b2Body_GetContactData( m_platformId, &contactData, 1 );
+		int contactCount = b2Body_GetContactData( m_movingPlatformId, &contactData, 1 );
 		g_draw.DrawString( 5, m_textLine, "Platform contact count = %d, point count = %d", contactCount,
 						   contactData.manifold.pointCount );
 		m_textLine += m_textIncrement;
@@ -1109,9 +1227,9 @@ public:
 	float m_force;
 	float m_impulse;
 	float m_jumpDelay;
-	b2BodyId m_characterId;
-	b2BodyId m_platformId;
-	b2ShapeId m_platformShapeId;
+	b2BodyId m_playerId;
+	b2ShapeId m_playerShapeId;
+	b2BodyId m_movingPlatformId;
 };
 
 static int samplePlatformer = RegisterSample( "Events", "Platformer", Platformer::Create );

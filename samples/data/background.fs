@@ -23,7 +23,7 @@ void main()
     float noise = random(uv + time * 0.1);
     
     // Adjust these values to control the intensity and color of the grain
-    float grainIntensity = 0.03;
+    float grainIntensity = 0.01;
     
     // Mix the base color with the noise
     vec3 color = baseColor + vec3(noise * grainIntensity);

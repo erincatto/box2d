@@ -188,6 +188,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->locked = false;
 	world->enableWarmStarting = true;
 	world->enableContinuous = def->enableContinuous;
+	world->enableSpeculative = true;
 	world->userTreeTask = NULL;
 	world->userData = def->userData;
 
@@ -2636,6 +2637,12 @@ void b2World_RebuildStaticTree( b2WorldId worldId )
 
 	b2DynamicTree* staticTree = world->broadPhase.trees + b2_staticBody;
 	b2DynamicTree_Rebuild( staticTree, true );
+}
+
+void b2World_EnableSpeculative(b2WorldId worldId, bool flag)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	world->enableSpeculative = flag;
 }
 
 #if B2_VALIDATE
