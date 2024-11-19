@@ -486,6 +486,115 @@ public:
 
 static int sampleSensorBookendEvent = RegisterSample( "Events", "Sensor Bookend", SensorBookend::Create );
 
+class FootSensor : public Sample
+{
+public:
+	explicit FootSensor( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 6.0f };
+			g_camera.m_zoom = 7.5f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Vec2 points[20];
+			float x = 10.0f;
+			for (int i = 0; i < 20; ++i)
+			{
+				points[i] = { x, 0.0f };
+				x -= 1.0f;
+			}
+
+			b2ChainDef chainDef = b2DefaultChainDef();
+			chainDef.points = points;
+			chainDef.count = 20;
+			chainDef.isLoop = false;
+
+			b2CreateChain( groundId, &chainDef );
+
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.fixedRotation = true;
+			bodyDef.position = { 0.0f, 1.0f };
+			m_playerId = b2CreateBody( m_worldId, &bodyDef );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.friction = 0.3f;
+			b2Capsule capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.5f };
+			b2CreateCapsuleShape( m_playerId, &shapeDef, &capsule );
+
+			b2Polygon box = b2MakeOffsetBox( 0.5f, 0.25f, { 0.0f, -1.0f }, b2Rot_identity );
+			shapeDef.isSensor = true;
+			m_sensorId = b2CreatePolygonShape( m_playerId, &shapeDef, &box );
+		}
+
+		m_overlapCount = 0;
+	}
+
+
+	void Step( Settings& settings ) override
+	{
+		if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) == GLFW_PRESS )
+		{
+			b2Body_ApplyForceToCenter( m_playerId, { -50.0f, 0.0f }, true );
+		}
+
+		if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) == GLFW_PRESS )
+		{
+			b2Body_ApplyForceToCenter( m_playerId, { 50.0f, 0.0f }, true );
+		}
+
+		Sample::Step( settings );
+
+		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
+		for ( int i = 0; i < sensorEvents.beginCount; ++i )
+		{
+			b2SensorBeginTouchEvent event = sensorEvents.beginEvents[i];
+
+			assert( B2_ID_EQUALS( event.visitorShapeId, m_sensorId ) == false );
+
+			if ( B2_ID_EQUALS( event.sensorShapeId, m_sensorId ) )
+			{
+				m_overlapCount += 1;
+			}
+		}
+
+		for ( int i = 0; i < sensorEvents.endCount; ++i )
+		{
+			b2SensorEndTouchEvent event = sensorEvents.endEvents[i];
+
+			assert( B2_ID_EQUALS( event.visitorShapeId, m_sensorId ) == false );
+
+			if ( B2_ID_EQUALS( event.sensorShapeId, m_sensorId ) )
+			{
+				m_overlapCount -= 1;
+			}
+		}
+
+		g_draw.DrawString( 5, m_textLine, "count == %d", m_overlapCount );
+		m_textLine += m_textIncrement;
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new FootSensor( settings );
+	}
+
+	b2BodyId m_playerId;
+	b2ShapeId m_sensorId;
+	int m_overlapCount;
+};
+
+static int sampleCharacterSensor = RegisterSample( "Events", "Foot Sensor", FootSensor::Create );
+
+
 struct BodyUserData
 {
 	int index;

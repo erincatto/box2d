@@ -388,7 +388,20 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 		if ( ( flags & b2_contactSensorTouchingFlag ) != 0 && ( flags & b2_contactEnableSensorEvents ) != 0 )
 		{
 			B2_ASSERT( ( flags & b2_contactSensorFlag ) != 0 );
-			b2SensorEndTouchEvent event = { shapeIdA, shapeIdB };
+			B2_ASSERT( shapeA->isSensor == true || shapeB->isSensor == true );
+			B2_ASSERT( shapeA->isSensor != shapeB->isSensor );
+
+			b2SensorEndTouchEvent event;
+			if (shapeA->isSensor)
+			{
+				event.sensorShapeId = shapeIdA;
+				event.visitorShapeId = shapeIdB;
+			}
+			else
+			{
+				event.sensorShapeId = shapeIdB;
+				event.visitorShapeId = shapeIdA;
+			}
 			b2SensorEndTouchEventArray_Push( world->sensorEndEvents + world->endEventArrayIndex, event );
 		}
 	}
