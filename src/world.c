@@ -710,7 +710,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		return;
 	}
 
-	b2TracyCZoneNC( world_step, "Step", b2_colorChartreuse, true );
+	b2TracyCZoneNC( world_step, "Step", b2_colorBox2DGreen, true );
 
 	world->locked = true;
 	world->activeTaskCount = 0;

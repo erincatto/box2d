@@ -1179,7 +1179,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		return;
 	}
 
-	b2TracyCZoneNC( solve, "Solve", b2_colorMistyRose, true );
+	b2TracyCZoneNC( solve, "Solve", b2_colorIndigo, true );
 
 	// Prepare buffers for continuous collision (fast bodies)
 	stepContext->fastBodyCount = 0;
@@ -1848,19 +1848,18 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		}
 	}
 
-	b2TracyCZoneEnd( enlarge_proxies );
-
 	b2ValidateBroadphase( &world->broadPhase );
 
 	world->profile.broadphase = b2GetMillisecondsAndReset( &timer );
 
+	b2TracyCZoneEnd( enlarge_proxies );
 	b2TracyCZoneEnd( broad_phase );
-
-	b2TracyCZoneNC( continuous_collision, "Continuous", b2_colorDarkGoldenrod, true );
 
 	// Parallel continuous collision
 	if ( stepContext->fastBodyCount > 0 )
 	{
+		b2TracyCZoneNC( continuous_collision, "Continuous", b2_colorDarkGoldenrod, true );
+
 		// fast bodies
 		int minRange = 8;
 		void* userFastBodyTask =
@@ -1870,12 +1869,15 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		{
 			world->finishTaskFcn( userFastBodyTask, world->userTaskContext );
 		}
+
+		b2TracyCZoneEnd( continuous_collision );
 	}
 
 	// Serially enlarge broad-phase proxies for fast shapes
 	// Doing this here so that bullet shapes see them
 	{
-		b2TracyCZoneNC( continuous_enlarge, "Enlarge Proxies", b2_colorDarkTurquoise, true );
+		b2TracyCZoneNC( broad_phase_fast, "Broadphase", b2_colorPurple, true );
+		b2TracyCZoneNC( enlarge_proxies_fast, "Enlarge Proxies", b2_colorDarkTurquoise, true );
 
 		b2BroadPhase* broadPhase = &world->broadPhase;
 		b2DynamicTree* dynamicTree = broadPhase->trees + b2_dynamicBody;
@@ -1931,11 +1933,14 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			}
 		}
 
-		b2TracyCZoneEnd( continuous_enlarge );
+		b2TracyCZoneEnd( enlarge_proxies_fast );
+		b2TracyCZoneEnd( broad_phase_fast );
 	}
 
 	if ( stepContext->bulletBodyCount > 0 )
 	{
+		b2TracyCZoneNC( bullets, "Bullets", b2_colorDarkGoldenrod, true );
+
 		// bullet bodies
 		int minRange = 8;
 		void* userBulletBodyTask = world->enqueueTaskFcn( &b2BulletBodyTask, stepContext->bulletBodyCount, minRange, stepContext,
@@ -1945,10 +1950,15 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		{
 			world->finishTaskFcn( userBulletBodyTask, world->userTaskContext );
 		}
+
+		b2TracyCZoneEnd( bullets );
 	}
 
 	// Serially enlarge broad-phase proxies for bullet shapes
 	{
+		b2TracyCZoneNC( broad_phase_bullet, "Broadphase", b2_colorPurple, true );
+		b2TracyCZoneNC( enlarge_proxies_bullet, "Enlarge Proxies", b2_colorDarkTurquoise, true );
+
 		b2BroadPhase* broadPhase = &world->broadPhase;
 		b2DynamicTree* dynamicTree = broadPhase->trees + b2_dynamicBody;
 
@@ -2002,9 +2012,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				shapeId = shape->nextShapeId;
 			}
 		}
-	}
 
-	b2TracyCZoneEnd( continuous_collision );
+		b2TracyCZoneEnd( enlarge_proxies_bullet );
+		b2TracyCZoneEnd( broad_phase_bullet );
+	}
 
 	b2FreeStackItem( &world->stackAllocator, stepContext->bulletBodies );
 	stepContext->bulletBodies = NULL;
