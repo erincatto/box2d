@@ -68,6 +68,7 @@ public:
 	b2DebugDraw m_debugDraw;
 
 	ImFont* m_smallFont;
+	ImFont* m_regularFont;
 	ImFont* m_mediumFont;
 	ImFont* m_largeFont;
 };
