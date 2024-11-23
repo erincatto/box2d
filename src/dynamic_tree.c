@@ -846,7 +846,7 @@ float b2DynamicTree_GetAreaRatio( const b2DynamicTree* tree )
 	for ( int32_t i = 0; i < tree->nodeCapacity; ++i )
 	{
 		const b2TreeNode* node = tree->nodes + i;
-		if ( node->height < 0 || b2IsLeaf( node ) || i == tree->root )
+		if ( b2IsLeaf( node ) || i == tree->root )
 		{
 			// Free node in pool
 			continue;
@@ -1008,7 +1008,7 @@ int32_t b2DynamicTree_GetMaxBalance( const b2DynamicTree* tree )
 
 		int child1 = node->child1;
 		int child2 = node->child2;
-		int balance = b2AbsInt( tree->nodes[child2].height - tree->nodes[child1].height );
+		int balance = b2AbsInt( (int)tree->nodes[child2].height - (int)tree->nodes[child1].height );
 		maxBalance = b2MaxInt( maxBalance, balance );
 	}
 
@@ -1023,12 +1023,6 @@ void b2DynamicTree_RebuildBottomUp( b2DynamicTree* tree )
 	// Build array of leaves. Free the rest.
 	for ( int i = 0; i < tree->nodeCapacity; ++i )
 	{
-		if ( tree->nodes[i].height < 0 )
-		{
-			// free node in pool
-			continue;
-		}
-
 		if ( b2IsLeaf( tree->nodes + i ) )
 		{
 			tree->nodes[i].parent = B2_NULL_INDEX;
