@@ -88,6 +88,7 @@ static int32_t b2AllocateNode( b2DynamicTree* tree )
 		tree->nodes = (b2TreeNode*)b2Alloc( tree->nodeCapacity * sizeof( b2TreeNode ) );
 		B2_ASSERT( oldNodes != NULL );
 		memcpy( tree->nodes, oldNodes, tree->nodeCount * sizeof( b2TreeNode ) );
+		memset( tree->nodes + tree->nodeCount, 0, tree->nodeCapacity * sizeof( b2TreeNode ) - tree->nodeCount * sizeof( b2TreeNode ) );
 		b2Free( oldNodes, oldCapcity * sizeof( b2TreeNode ) );
 
 		// Build a linked list for the free list. The parent pointer becomes the "next" pointer.
