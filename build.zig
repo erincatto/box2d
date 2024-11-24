@@ -1,7 +1,7 @@
 const std = @import("std");
 
 pub const Options = struct {
-    sanitize: bool = false,
+    sanitize: bool = true,
     simd: bool = true,
     //
     // samples: bool = true,
@@ -49,7 +49,10 @@ pub fn build(b: *std.Build) !void {
             try res.append("-fsanitize-c");
             try res.append("-fsanitize-thread");
         }
-        if (options.simd) try res.append("-DBOX2D_ENABLE_SIMD");
+        if (options.simd) {
+            box2d.defineCMacro("BOX2D_ENABLE_SIMD", null);
+            //try res.append("-DBOX2D_ENABLE_SIMD");
+        }
 
         break :blk try res.toOwnedSlice();
     };
