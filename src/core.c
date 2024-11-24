@@ -61,6 +61,11 @@ void b2SetAssertFcn( b2AssertFcn* assertFcn )
 	b2AssertHandler = assertFcn;
 }
 
+int b2InternalAssertFcn( const char* condition, const char* fileName, int lineNumber )
+{
+	return b2AssertHandler( condition, fileName, lineNumber );
+}
+
 b2Version b2GetVersion( void )
 {
 	return ( b2Version ){ 3, 1, 0 };

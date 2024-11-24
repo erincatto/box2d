@@ -78,11 +78,11 @@ B2_API void b2SetAssertFcn( b2AssertFcn* assertFcn );
 #endif
 
 #if !defined( NDEBUG ) || defined( B2_ENABLE_ASSERT )
-B2_API b2AssertFcn* b2AssertHandler;
+B2_API int b2InternalAssertFcn( const char* condition, const char* fileName, int lineNumber );
 #define B2_ASSERT( condition )                                                                                                   \
 	do                                                                                                                           \
 	{                                                                                                                            \
-		if ( !( condition ) && b2AssertHandler( #condition, __FILE__, (int)__LINE__ ) )                                          \
+		if ( !( condition ) && b2InternalAssertFcn( #condition, __FILE__, (int)__LINE__ ) )                                          \
 			B2_BREAKPOINT;                                                                                                       \
 	}                                                                                                                            \
 	while ( 0 )
