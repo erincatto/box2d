@@ -1,7 +1,7 @@
 const std = @import("std");
 
 pub const Options = struct {
-    sanitize: bool = true,
+    // sanitize: bool = false,
     simd: bool = true,
     //
     // samples: bool = true,
@@ -15,7 +15,7 @@ pub const Options = struct {
 
     fn getOptions(b: *std.Build) Options {
         return .{
-            .sanitize = b.option(bool, "BOX2D_SANITIZE", "Enable sanitizers for some builds") orelse defaults.sanitize,
+            // .sanitize = b.option(bool, "BOX2D_SANITIZE", "Enable sanitizers for some builds") orelse defaults.sanitize,
             .simd = b.option(bool, "BOX2D_ENABLE_SIMD", "Enable SIMD math (faster)") orelse defaults.simd,
             //
             // .samples = b.option("BOX2D_SAMPLES", "Build the Box2D samples") orelse defaults.samples,
@@ -45,13 +45,13 @@ pub fn build(b: *std.Build) !void {
         var res = std.ArrayList([]const u8).init(b.allocator);
         defer res.deinit();
 
-        if (options.sanitize) {
-            try res.append("--fsanitize-c");
-            try res.append("--fsanitize-thread");
-        }
+        // if (options.sanitize) {
+        //     try res.append("--fsanitize-c");
+        //     try res.append("--fsanitize-thread");
+        // }
         if (options.simd) {
             box2d.defineCMacro("BOX2D_ENABLE_SIMD", null);
-            //try res.append("-DBOX2D_ENABLE_SIMD");
+            try res.append("-DBOX2D_ENABLE_SIMD");
         }
 
         break :blk try res.toOwnedSlice();
