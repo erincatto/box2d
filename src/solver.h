@@ -104,10 +104,6 @@ typedef struct b2StepContext
 	int* enlargedShapes;
 	int enlargedShapeCount;
 
-	// Array of fast bodies that need continuous collision handling
-	int* fastBodies;
-	_Atomic int fastBodyCount;
-
 	// Array of bullet bodies that need continuous collision handling
 	int* bulletBodies;
 	_Atomic int bulletBodyCount;
