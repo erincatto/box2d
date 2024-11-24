@@ -5,6 +5,7 @@
 
 #include "array.h"
 #include "bitset.h"
+#include "constants.h"
 
 typedef struct b2Body b2Body;
 typedef struct b2ContactSim b2ContactSim;

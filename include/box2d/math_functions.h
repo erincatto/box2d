@@ -15,9 +15,6 @@
  * @{
  */
 
-/// https://en.wikipedia.org/wiki/Pi
-#define b2_pi 3.14159265359f
-
 /// 2D vector
 /// This can be used to represent a point or free vector
 typedef struct b2Vec2
@@ -70,6 +67,9 @@ typedef struct b2AABB
  * @addtogroup math
  * @{
  */
+
+/// https://en.wikipedia.org/wiki/Pi
+#define b2_pi 3.14159265359f
 
 static const b2Vec2 b2Vec2_zero = { 0.0f, 0.0f };
 static const b2Rot b2Rot_identity = { 1.0f, 0.0f };
@@ -191,11 +191,11 @@ B2_INLINE b2Vec2 b2Lerp( b2Vec2 a, b2Vec2 b, float t )
 	return B2_LITERAL( b2Vec2 ){ ( 1.0f - t ) * a.x + t * b.x, ( 1.0f - t ) * a.y + t * b.y };
 }
 
-/// Component-wise multiplication
-B2_INLINE b2Vec2 b2Mul( b2Vec2 a, b2Vec2 b )
-{
-	return B2_LITERAL( b2Vec2 ){ a.x * b.x, a.y * b.y };
-}
+///// Component-wise multiplication
+//B2_INLINE b2Vec2 b2Mul( b2Vec2 a, b2Vec2 b )
+//{
+//	return B2_LITERAL( b2Vec2 ){ a.x * b.x, a.y * b.y };
+//}
 
 /// Multiply a scalar and vector
 B2_INLINE b2Vec2 b2MulSV( float s, b2Vec2 v )
@@ -605,16 +605,16 @@ B2_INLINE b2AABB b2AABB_Union( b2AABB a, b2AABB b )
 }
 
 /// Is this a valid number? Not NaN or infinity.
-B2_API bool b2Float_IsValid( float a );
+B2_API bool b2IsValidFloat( float a );
 
 /// Is this a valid vector? Not NaN or infinity.
-B2_API bool b2Vec2_IsValid( b2Vec2 v );
+B2_API bool b2IsValidVec2( b2Vec2 v );
 
 /// Is this a valid rotation? Not NaN or infinity. Is normalized.
-B2_API bool b2Rot_IsValid( b2Rot q );
+B2_API bool b2IsValidRotation( b2Rot q );
 
 /// Is this a valid bounding box? Not Nan or infinity. Upper bound greater than or equal to lower bound.
-B2_API bool b2AABB_IsValid( b2AABB aabb );
+B2_API bool b2IsValidAABB( b2AABB aabb );
 
 /// Box2D bases all length units on meters, but you may need different units for your game.
 /// You can set this value to use different units. This should be done at application startup

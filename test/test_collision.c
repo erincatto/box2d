@@ -12,10 +12,10 @@ static int AABBTest( void )
 	a.lowerBound = ( b2Vec2 ){ -1.0f, -1.0f };
 	a.upperBound = ( b2Vec2 ){ -2.0f, -2.0f };
 
-	ENSURE( b2AABB_IsValid( a ) == false );
+	ENSURE( b2IsValidAABB( a ) == false );
 
 	a.upperBound = ( b2Vec2 ){ 1.0f, 1.0f };
-	ENSURE( b2AABB_IsValid( a ) == true );
+	ENSURE( b2IsValidAABB( a ) == true );
 
 	b2AABB b = { { 2.0f, 2.0f }, { 4.0f, 4.0f } };
 	ENSURE( b2AABB_Overlaps( a, b ) == false );

@@ -867,17 +867,21 @@ public:
 
 		// Create a separate body on the ground
 		{
-			float v = 2.0f;
-			m_lever = 3.0f;
+			b2Vec2 v = { 5.0f, 0.0f };
 
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { 0.0f, 3.0f };
 			bodyDef.gravityScale = 0.0f;
-			bodyDef.linearVelocity = { v, 0.0f };
-			bodyDef.angularVelocity = -v / m_lever;
+			bodyDef.linearVelocity = v;
 
 			m_bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			m_lever = 3.0f;
+			b2Vec2 r = { 0.0f, -m_lever };
+
+			float omega = b2Cross(v, r) / b2Dot(r, r);
+			b2Body_SetAngularVelocity( m_bodyId, omega );
 
 			b2Polygon box = b2MakeBox( 0.1f, m_lever );
 

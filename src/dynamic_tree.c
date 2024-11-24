@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "aabb.h"
+#include "constants.h"
 #include "core.h"
 
 #include "box2d/collision.h"
@@ -767,7 +768,7 @@ int32_t b2DynamicTree_GetProxyCount( const b2DynamicTree* tree )
 
 void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int32_t proxyId, b2AABB aabb )
 {
-	B2_ASSERT( b2AABB_IsValid( aabb ) );
+	B2_ASSERT( b2IsValidAABB( aabb ) );
 	B2_ASSERT( aabb.upperBound.x - aabb.lowerBound.x < b2_huge );
 	B2_ASSERT( aabb.upperBound.y - aabb.lowerBound.y < b2_huge );
 	B2_ASSERT( 0 <= proxyId && proxyId < tree->nodeCapacity );
@@ -785,7 +786,7 @@ void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int32_t proxyId, b2AABB aa
 {
 	b2TreeNode* nodes = tree->nodes;
 
-	B2_ASSERT( b2AABB_IsValid( aabb ) );
+	B2_ASSERT( b2IsValidAABB( aabb ) );
 	B2_ASSERT( aabb.upperBound.x - aabb.lowerBound.x < b2_huge );
 	B2_ASSERT( aabb.upperBound.y - aabb.lowerBound.y < b2_huge );
 	B2_ASSERT( 0 <= proxyId && proxyId < tree->nodeCapacity );

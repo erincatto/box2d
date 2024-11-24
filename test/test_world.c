@@ -1,9 +1,8 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#include "constants.h"
 #include "test_macros.h"
-
-#include "core.h"
 
 #include "box2d/box2d.h"
 #include "box2d/collision.h"
@@ -297,7 +296,7 @@ int TestForAmy( void )
 	return 0;
 }
 
-#define WORLD_COUNT (b2_maxWorlds/2)
+#define WORLD_COUNT ( b2_maxWorlds / 2 )
 
 int TestWorldRecycle( void )
 {
@@ -307,10 +306,10 @@ int TestWorldRecycle( void )
 
 	b2WorldId worldIds[WORLD_COUNT];
 
-	for (int i = 0; i < count; ++i)
+	for ( int i = 0; i < count; ++i )
 	{
 		b2WorldDef worldDef = b2DefaultWorldDef();
-		for (int j = 0; j < WORLD_COUNT; ++j)
+		for ( int j = 0; j < WORLD_COUNT; ++j )
 		{
 			worldIds[j] = b2CreateWorld( &worldDef );
 			ENSURE( b2World_IsValid( worldIds[j] ) == true );
@@ -319,7 +318,7 @@ int TestWorldRecycle( void )
 			b2CreateBody( worldIds[j], &bodyDef );
 		}
 
-		for (int j = 0; j < WORLD_COUNT; ++j)
+		for ( int j = 0; j < WORLD_COUNT; ++j )
 		{
 			float timeStep = 1.0f / 60.0f;
 			int subStepCount = 1;

@@ -226,8 +226,8 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		b2Vec2 v = state->linearVelocity;
 		float w = state->angularVelocity;
 
-		B2_ASSERT( b2Vec2_IsValid( v ) );
-		B2_ASSERT( b2Float_IsValid( w ) );
+		B2_ASSERT( b2IsValidVec2( v ) );
+		B2_ASSERT( b2IsValidFloat( w ) );
 
 		sim->center = b2Add( sim->center, state->deltaPosition );
 		sim->transform.q = b2NormalizeRot( b2MulRot( state->deltaRotation, sim->transform.q ) );
@@ -331,13 +331,13 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		{
 			b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
 
-			B2_ASSERT( shape->isFast == false );
+			//B2_ASSERT( shape->isFast == false );
 
 			if ( isFast )
 			{
 				// The AABB is updated after continuous collision.
-				// Add to moved shapes regardless of AABB changes.
-				shape->isFast = true;
+				// Add to enlarged shapes regardless of AABB changes.
+				//shape->isFast = true;
 
 				// Bit-set to keep the move array sorted
 				b2SetBit( enlargedSimBitSet, simIndex );
@@ -994,12 +994,12 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 	while ( shapeId != B2_NULL_INDEX )
 	{
 		b2Shape* fastShape = b2ShapeArray_Get( &world->shapes, shapeId );
-		B2_ASSERT( fastShape->isFast == true );
+		//B2_ASSERT( fastShape->isFast == true );
 
 		shapeId = fastShape->nextShapeId;
 
 		// Clear flag (keep set on body)
-		fastShape->isFast = false;
+		//fastShape->isFast = false;
 
 		context.fastShape = fastShape;
 		context.centroid1 = b2TransformPoint( xf1, fastShape->localCentroid );
@@ -1785,6 +1785,24 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 	b2ValidateNoEnlarged( &world->broadPhase );
 
+	// Parallel continuous collision for dynamic versus static
+	if ( stepContext->fastBodyCount > 0 )
+	{
+		b2TracyCZoneNC( continuous_collision, "Continuous", b2_colorDarkGoldenrod, true );
+
+		// fast bodies
+		int minRange = 8;
+		void* userFastBodyTask =
+			world->enqueueTaskFcn( &b2FastBodyTask, stepContext->fastBodyCount, minRange, stepContext, world->userTaskContext );
+		world->taskCount += 1;
+		if ( userFastBodyTask != NULL )
+		{
+			world->finishTaskFcn( userFastBodyTask, world->userTaskContext );
+		}
+
+		b2TracyCZoneEnd( continuous_collision );
+	}
+
 	b2TracyCZoneNC( broad_phase, "Broadphase", b2_colorPurple, true );
 
 	b2TracyCZoneNC( enlarge_proxies, "Enlarge Proxies", b2_colorDarkTurquoise, true );
@@ -1799,6 +1817,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	// Enlarge broad-phase proxies and build move array
 	// Apply shape AABB changes to broad-phase. This also create the move array which must be
 	// in deterministic order. I'm tracking sim bodies because the number of shape ids can be huge.
+	// This has to happen before bullets are processed.
 	{
 		b2BroadPhase* broadPhase = &world->broadPhase;
 		uint32_t wordCount = simBitSet->blockCount;
@@ -1818,28 +1837,39 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				uint32_t bodySimIndex = 64 * k + ctz;
 
 				b2BodySim* bodySim = bodySimArray + bodySimIndex;
+
 				b2Body* body = bodyArray + bodySim->bodyId;
 
 				int shapeId = body->headShapeId;
-				while ( shapeId != B2_NULL_INDEX )
+				if (bodySim->isBullet && bodySim->isFast)
 				{
-					b2Shape* shape = shapeArray + shapeId;
-
-					if ( shape->enlargedAABB )
+					// Fast bullet bodies don't have their final AABB yet
+					while ( shapeId != B2_NULL_INDEX )
 					{
-						B2_ASSERT( shape->isFast == false );
+						b2Shape* shape = shapeArray + shapeId;
 
-						b2BroadPhase_EnlargeProxy( broadPhase, shape->proxyKey, shape->fatAABB );
-						shape->enlargedAABB = false;
-					}
-					else if ( shape->isFast )
-					{
 						// Shape is fast. It's aabb will be enlarged in continuous collision.
-						// todo_erin can this be deferred? This breaks AABB extension benefits.
 						b2BufferMove( broadPhase, shape->proxyKey );
-					}
 
-					shapeId = shape->nextShapeId;
+						shapeId = shape->nextShapeId;
+					}
+				}
+				else
+				{
+					while ( shapeId != B2_NULL_INDEX )
+					{
+						b2Shape* shape = shapeArray + shapeId;
+
+						if ( shape->enlargedAABB )
+						{
+							//B2_ASSERT( shape->isFast == false );
+
+							b2BroadPhase_EnlargeProxy( broadPhase, shape->proxyKey, shape->fatAABB );
+							shape->enlargedAABB = false;
+						}
+
+						shapeId = shape->nextShapeId;
+					}
 				}
 
 				// Clear the smallest set bit
@@ -1855,93 +1885,12 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	b2TracyCZoneEnd( enlarge_proxies );
 	b2TracyCZoneEnd( broad_phase );
 
-	// Parallel continuous collision
-	if ( stepContext->fastBodyCount > 0 )
-	{
-		b2TracyCZoneNC( continuous_collision, "Continuous", b2_colorDarkGoldenrod, true );
-
-		// fast bodies
-		int minRange = 8;
-		void* userFastBodyTask =
-			world->enqueueTaskFcn( &b2FastBodyTask, stepContext->fastBodyCount, minRange, stepContext, world->userTaskContext );
-		world->taskCount += 1;
-		if ( userFastBodyTask != NULL )
-		{
-			world->finishTaskFcn( userFastBodyTask, world->userTaskContext );
-		}
-
-		b2TracyCZoneEnd( continuous_collision );
-	}
-
-	// Serially enlarge broad-phase proxies for fast shapes
-	// Doing this here so that bullet shapes see them
-	{
-		b2TracyCZoneNC( broad_phase_fast, "Broadphase", b2_colorPurple, true );
-		b2TracyCZoneNC( enlarge_proxies_fast, "Enlarge Proxies", b2_colorDarkTurquoise, true );
-
-		b2BroadPhase* broadPhase = &world->broadPhase;
-		b2DynamicTree* dynamicTree = broadPhase->trees + b2_dynamicBody;
-
-		// Fast array access is important here
-		b2Body* bodyArray = world->bodies.data;
-		b2BodySim* bodySimArray = awakeSet->bodySims.data;
-		b2Shape* shapeArray = world->shapes.data;
-
-		int* fastBodySimIndices = stepContext->fastBodies;
-		int fastBodyCount = stepContext->fastBodyCount;
-
-		// This loop has non-deterministic order but it shouldn't affect the result
-		for ( int i = 0; i < fastBodyCount; ++i )
-		{
-			b2BodySim* fastBodySim = bodySimArray + fastBodySimIndices[i];
-			if ( fastBodySim->enlargeAABB == false )
-			{
-				continue;
-			}
-
-			// clear flag
-			fastBodySim->enlargeAABB = false;
-
-			int bodyId = fastBodySim->bodyId;
-
-			B2_ASSERT( 0 <= bodyId && bodyId < world->bodies.count );
-			b2Body* fastBody = bodyArray + bodyId;
-
-			int shapeId = fastBody->headShapeId;
-			while ( shapeId != B2_NULL_INDEX )
-			{
-				b2Shape* shape = shapeArray + shapeId;
-				if ( shape->enlargedAABB == false )
-				{
-					shapeId = shape->nextShapeId;
-					continue;
-				}
-
-				// clear flag
-				shape->enlargedAABB = false;
-
-				int proxyKey = shape->proxyKey;
-				int proxyId = B2_PROXY_ID( proxyKey );
-				B2_ASSERT( B2_PROXY_TYPE( proxyKey ) == b2_dynamicBody );
-
-				// all fast shapes should already be in the move buffer
-				B2_ASSERT( b2ContainsKey( &broadPhase->moveSet, proxyKey + 1 ) );
-
-				b2DynamicTree_EnlargeProxy( dynamicTree, proxyId, shape->fatAABB );
-
-				shapeId = shape->nextShapeId;
-			}
-		}
-
-		b2TracyCZoneEnd( enlarge_proxies_fast );
-		b2TracyCZoneEnd( broad_phase_fast );
-	}
-
 	if ( stepContext->bulletBodyCount > 0 )
 	{
 		b2TracyCZoneNC( bullets, "Bullets", b2_colorDarkGoldenrod, true );
 
-		// bullet bodies
+		// Fast bullet bodies
+		// Note: a bullet body may be moving slow
 		int minRange = 8;
 		void* userBulletBodyTask = world->enqueueTaskFcn( &b2BulletBodyTask, stepContext->bulletBodyCount, minRange, stepContext,
 														  world->userTaskContext );
