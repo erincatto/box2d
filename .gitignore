@@ -7,3 +7,5 @@ settings.ini
 .DS_Store
 CMakeUserPresets.json
 .cache/
+.zig-cache/
+zig-out/
