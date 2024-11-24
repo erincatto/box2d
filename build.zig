@@ -46,8 +46,8 @@ pub fn build(b: *std.Build) !void {
         defer res.deinit();
 
         if (options.sanitize) {
-            try res.append("-fsanitize-c");
-            try res.append("-fsanitize-thread");
+            try res.append("--fsanitize-c");
+            try res.append("--fsanitize-thread");
         }
         if (options.simd) {
             box2d.defineCMacro("BOX2D_ENABLE_SIMD", null);
