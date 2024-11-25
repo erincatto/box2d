@@ -374,12 +374,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 	while ( shapeId != B2_NULL_INDEX )
 	{
 		b2Shape* fastShape = b2ShapeArray_Get( &world->shapes, shapeId );
-		// B2_ASSERT( fastShape->isFast == true );
-
 		shapeId = fastShape->nextShapeId;
-
-		// Clear flag (keep set on body)
-		// fastShape->isFast = false;
 
 		context.fastShape = fastShape;
 		context.centroid1 = b2TransformPoint( xf1, fastShape->localCentroid );
@@ -636,14 +631,10 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		{
 			b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
 
-			//B2_ASSERT( shape->isFast == false );
-
 			if ( isFast )
 			{
 				// For fast non-bullet bodies the AABB has already been updated in b2SolveContinuous
 				// For fast bullet bodies the AABB will be updated at a later stage
-
-				//shape->isFast = true;
 
 				// Add to enlarged shapes regardless of AABB changes.
 				// Bit-set to keep the move array sorted
@@ -1778,10 +1769,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	b2TracyCZoneNC( enlarge_proxies, "Enlarge Proxies", b2_colorDarkTurquoise, true );
 
 	// Gather bits for all sim bodies that have enlarged AABBs
-	b2BitSet* simBitSet = &world->taskContexts.data[0].enlargedSimBitSet;
+	b2BitSet* enlargedBodyBitSet = &world->taskContexts.data[0].enlargedSimBitSet;
 	for ( int i = 1; i < world->workerCount; ++i )
 	{
-		b2InPlaceUnion( simBitSet, &world->taskContexts.data[i].enlargedSimBitSet );
+		b2InPlaceUnion( enlargedBodyBitSet, &world->taskContexts.data[i].enlargedSimBitSet );
 	}
 
 	// Enlarge broad-phase proxies and build move array
@@ -1790,8 +1781,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	// This has to happen before bullets are processed.
 	{
 		b2BroadPhase* broadPhase = &world->broadPhase;
-		uint32_t wordCount = simBitSet->blockCount;
-		uint64_t* bits = simBitSet->bits;
+		uint32_t wordCount = enlargedBodyBitSet->blockCount;
+		uint64_t* bits = enlargedBodyBitSet->bits;
 
 		// Fast array access is important here
 		b2Body* bodyArray = world->bodies.data;
@@ -1819,7 +1810,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 						b2Shape* shape = shapeArray + shapeId;
 
 						// Shape is fast. It's aabb will be enlarged in continuous collision.
-						// Buffer the move here for determinism
+						// Update the move array here for determinism because bullets are processed
+						// below in non-deterministic order.
 						b2BufferMove( broadPhase, shape->proxyKey );
 
 						shapeId = shape->nextShapeId;
@@ -1831,10 +1823,11 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					{
 						b2Shape* shape = shapeArray + shapeId;
 
+						// The AABB may not have been enlarged, despite the body being flagged as enlarged.
+						// For example, a body with multiple shapes may have not have all shapes enlarged.
+						// A fast body may have been flagged as enlarged despite having no shapes enlarged.
 						if ( shape->enlargedAABB )
 						{
-							//B2_ASSERT( shape->isFast == false );
-
 							b2BroadPhase_EnlargeProxy( broadPhase, shape->proxyKey, shape->fatAABB );
 							shape->enlargedAABB = false;
 						}
