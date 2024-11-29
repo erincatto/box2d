@@ -529,7 +529,7 @@ int main( int, char** )
 
 	// How to break at the leaking allocation, in the watch window enter this variable
 	// and set it to the allocation number in {}. Do this at the first line in main.
-	// {,,ucrtbased.dll}_crtBreakAlloc = <allocation number> 3970
+	// {,,ucrtbased.dll}_crtBreakAlloc = <allocation number>
 #endif
 
 	// Install memory hooks

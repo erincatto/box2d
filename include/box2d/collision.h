@@ -779,26 +779,14 @@ B2_API void b2DynamicTree_Validate( const b2DynamicTree* tree );
 /// called often.
 B2_API int b2DynamicTree_GetHeight( const b2DynamicTree* tree );
 
-/// Get the maximum balance of the tree. The balance is the difference in height of the two children of a node.
-B2_API int b2DynamicTree_GetMaxBalance( const b2DynamicTree* tree );
-
 /// Get the ratio of the sum of the node areas to the root area.
 B2_API float b2DynamicTree_GetAreaRatio( const b2DynamicTree* tree );
-
-/// Build an optimal tree. Very expensive. For testing.
-B2_API void b2DynamicTree_RebuildBottomUp( b2DynamicTree* tree );
 
 /// Get the number of proxies created
 B2_API int b2DynamicTree_GetProxyCount( const b2DynamicTree* tree );
 
 /// Rebuild the tree while retaining subtrees that haven't changed. Returns the number of boxes sorted.
 B2_API int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild );
-
-/// Shift the world origin. Useful for large worlds.
-/// The shift formula is: position -= newOrigin
-/// @param tree the tree to shift
-/// @param newOrigin the new origin with respect to the old origin
-B2_API void b2DynamicTree_ShiftOrigin( b2DynamicTree* tree, b2Vec2 newOrigin );
 
 /// Get the number of bytes used by this tree
 B2_API int b2DynamicTree_GetByteCount( const b2DynamicTree* tree );

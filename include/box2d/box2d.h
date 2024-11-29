@@ -444,7 +444,9 @@ B2_API int b2Body_GetJoints( b2BodyId bodyId, b2JointId* jointArray, int capacit
 /// Get the maximum capacity required for retrieving all the touching contacts on a body
 B2_API int b2Body_GetContactCapacity( b2BodyId bodyId );
 
-/// Get the touching contact data for a body
+/// Get the touching contact data for a body.
+/// @returns the number of elements filled in the provided array
+/// @warning do not ignore the return value, it specifies the valid number of elements
 B2_API int b2Body_GetContactData( b2BodyId bodyId, b2ContactData* contactData, int capacity );
 
 /// Get the current world AABB that contains all the attached shapes. Note that this may not encompass the body origin.
