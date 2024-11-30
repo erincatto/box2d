@@ -6,11 +6,20 @@
 
 // This allows benchmarks to be tested on the benchmark app and also visualized in the samples app
 
-B2_API void CreateJointGrid( b2WorldId worldId );
-B2_API void CreateLargePyramid( b2WorldId worldId );
-B2_API void CreateManyPyramids( b2WorldId worldId );
-B2_API void CreateRain( b2WorldId worldId );
-B2_API void StepRain( b2WorldId worldId, int stepCount );
-B2_API void CreateSpinner( b2WorldId worldId );
-B2_API void CreateSmash( b2WorldId worldId );
-B2_API void CreateTumbler( b2WorldId worldId );
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+void CreateJointGrid( b2WorldId worldId );
+void CreateLargePyramid( b2WorldId worldId );
+void CreateManyPyramids( b2WorldId worldId );
+void CreateRain( b2WorldId worldId );
+void StepRain( b2WorldId worldId, int stepCount );
+void CreateSpinner( b2WorldId worldId );
+void CreateSmash( b2WorldId worldId );
+void CreateTumbler( b2WorldId worldId );
+
+#ifdef __cplusplus
+}
+#endif
