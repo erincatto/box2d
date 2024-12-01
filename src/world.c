@@ -1648,6 +1648,13 @@ bool b2World_IsWarmStartingEnabled( b2WorldId worldId )
 	return world->enableWarmStarting;
 }
 
+int b2World_GetAwakeBodyCount(b2WorldId worldId)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
+	return awakeSet->bodySims.count;
+}
+
 void b2World_EnableContinuous( b2WorldId worldId, bool flag )
 {
 	b2World* world = b2GetWorldFromId( worldId );

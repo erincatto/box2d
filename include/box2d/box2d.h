@@ -183,6 +183,9 @@ B2_API void b2World_EnableWarmStarting( b2WorldId worldId, bool flag );
 /// Is constraint warm starting enabled?
 B2_API bool b2World_IsWarmStartingEnabled( b2WorldId worldId );
 
+/// Get the number of awake bodies.
+B2_API int b2World_GetAwakeBodyCount( b2WorldId worldId );
+
 /// Get the current world performance profile
 B2_API b2Profile b2World_GetProfile( b2WorldId worldId );
 

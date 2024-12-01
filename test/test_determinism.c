@@ -289,29 +289,24 @@ static int CrossPlatformTest(void)
 	uint32_t hash = 0;
 	int sleepStep = -1;
 	float timeStep = 1.0f / 60.0f;
-	int subStepCount = 4;
 
 	int stepCount = 0;
 	int maxSteps = 500;
 	while ( stepCount < maxSteps )
 	{
+		int subStepCount = 4;
 		b2World_Step( worldId, timeStep, subStepCount );
 		TracyCFrameMark;
 
 		if ( hash == 0 )
 		{
-			bool sleeping = true;
-			for ( int i = 0; i < bodyCount; ++i )
-			{
-				if ( b2Body_IsAwake( bodies[i] ) == true )
-				{
-					sleeping = false;
-					break;
-				}
-			}
+			b2BodyEvents bodyEvents = b2World_GetBodyEvents( worldId );
 
-			if ( sleeping == true )
+			if ( bodyEvents.moveCount == 0 )
 			{
+				int awakeCount = b2World_GetAwakeBodyCount( worldId );
+				ENSURE( awakeCount == 0 );
+
 				hash = B2_HASH_INIT;
 				for ( int i = 0; i < bodyCount; ++i )
 				{
@@ -330,7 +325,7 @@ static int CrossPlatformTest(void)
 	}
 
 	ENSURE( stepCount < maxSteps );
-	ENSURE( sleepStep == 281 );
+	ENSURE( sleepStep == 282 );
 	ENSURE( hash == 0x7efc22e7 );
 
 	free( bodies );
