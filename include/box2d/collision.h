@@ -492,9 +492,11 @@ B2_API b2TOIOutput b2TimeOfImpact( const b2TOIInput* input );
  * @{
  */
 
-/// A manifold point is a contact point belonging to a contact
-/// manifold. It holds details related to the geometry and dynamics
-/// of the contact points.
+/// A manifold point is a contact point belonging to a contact manifold.
+/// It holds details related to the geometry and dynamics of the contact points.
+/// Box2D uses speculative collision so some contact points may be separated.
+/// You may use the maxNormalImpulse to determine if there was an interaction during
+/// the time step.
 typedef struct b2ManifoldPoint
 {
 	/// Location of the contact point in world space. Subject to precision loss at large coordinates.
@@ -518,8 +520,8 @@ typedef struct b2ManifoldPoint
 	/// The friction impulse
 	float tangentImpulse;
 
-	/// The maximum normal impulse applied during sub-stepping
-	/// This could be a bool to indicate the point is confirmed (may be a speculative point)
+	/// The maximum normal impulse applied during sub-stepping. This is important
+	/// to identify speculative contact points that had an interaction in the time step.
 	float maxNormalImpulse;
 
 	/// Relative normal velocity pre-solve. Used for hit events. If the normal impulse is
@@ -533,7 +535,8 @@ typedef struct b2ManifoldPoint
 	bool persisted;
 } b2ManifoldPoint;
 
-/// A contact manifold describes the contact points between colliding shapes
+/// A contact manifold describes the contact points between colliding shapes.
+/// @note Box2D uses speculative collision so some contact points may be separated.
 typedef struct b2Manifold
 {
 	/// The manifold points, up to two are possible in 2D

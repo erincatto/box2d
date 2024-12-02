@@ -76,7 +76,7 @@ void b2Yield()
 	SwitchToThread();
 }
 
-#elif defined( __linux__ ) || defined( __APPLE__ )
+#elif defined( __linux__ ) || defined( __APPLE__ ) || defined( __EMSCRIPTEN__ )
 
 #include <sched.h>
 #include <sys/time.h>

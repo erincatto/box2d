@@ -448,6 +448,7 @@ B2_API int b2Body_GetJoints( b2BodyId bodyId, b2JointId* jointArray, int capacit
 B2_API int b2Body_GetContactCapacity( b2BodyId bodyId );
 
 /// Get the touching contact data for a body.
+/// @note Box2D uses speculative collision so some contact points may be separated.
 /// @returns the number of elements filled in the provided array
 /// @warning do not ignore the return value, it specifies the valid number of elements
 B2_API int b2Body_GetContactData( b2BodyId bodyId, b2ContactData* contactData, int capacity );
