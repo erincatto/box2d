@@ -54,7 +54,7 @@ semicircles that are connected by a rectangle.
 ```c
 b2Capsule capsule;
 capsule.center1 = (b2Vec2){1.0f, 1.0f};
-capsule.center1 = (b2Vec2){2.0f, 3.0f};
+capsule.center2 = (b2Vec2){2.0f, 3.0f};
 capsule.radius = 0.25f;
 ```
 
