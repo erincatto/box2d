@@ -15,7 +15,7 @@
 	// using the Windows DLL
 	#define BOX2D_EXPORT __declspec( dllimport )
 #elif defined( box2d_EXPORTS )
-	// building or using the Box2D shared library
+	// building or using the shared library
 	#define BOX2D_EXPORT __attribute__( ( visibility( "default" ) ) )
 #else
 	// static library
@@ -65,6 +65,30 @@ B2_API int b2GetByteCount( void );
 /// Override the default assert callback
 /// @param assertFcn a non-null assert callback
 B2_API void b2SetAssertFcn( b2AssertFcn* assertFcn );
+
+// see https://github.com/scottt/debugbreak
+#if defined( _MSC_VER )
+#define B2_BREAKPOINT __debugbreak()
+#elif defined( __GNUC__ ) || defined( __clang__ )
+#define B2_BREAKPOINT __builtin_trap()
+#else
+// Unknown compiler
+#include <assert.h>
+#define B2_BREAKPOINT assert( 0 )
+#endif
+
+#if !defined( NDEBUG ) || defined( B2_ENABLE_ASSERT )
+B2_API int b2InternalAssertFcn( const char* condition, const char* fileName, int lineNumber );
+#define B2_ASSERT( condition )                                                                                                   \
+	do                                                                                                                           \
+	{                                                                                                                            \
+		if ( !( condition ) && b2InternalAssertFcn( #condition, __FILE__, (int)__LINE__ ) )                                          \
+			B2_BREAKPOINT;                                                                                                       \
+	}                                                                                                                            \
+	while ( 0 )
+#else
+#define B2_ASSERT( ... ) ( (void)0 )
+#endif
 
 /// Version numbering scheme.
 /// See https://semver.org/

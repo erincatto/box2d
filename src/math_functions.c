@@ -7,7 +7,7 @@
 
 #include <float.h>
 
-bool b2Float_IsValid( float a )
+bool b2IsValidFloat( float a )
 {
 	if ( isnan( a ) )
 	{
@@ -22,7 +22,7 @@ bool b2Float_IsValid( float a )
 	return true;
 }
 
-bool b2Vec2_IsValid( b2Vec2 v )
+bool b2IsValidVec2( b2Vec2 v )
 {
 	if ( isnan( v.x ) || isnan( v.y ) )
 	{
@@ -37,7 +37,7 @@ bool b2Vec2_IsValid( b2Vec2 v )
 	return true;
 }
 
-bool b2Rot_IsValid( b2Rot q )
+bool b2IsValidRotation( b2Rot q )
 {
 	if ( isnan( q.s ) || isnan( q.c ) )
 	{

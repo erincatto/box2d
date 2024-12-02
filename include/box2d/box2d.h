@@ -183,6 +183,9 @@ B2_API void b2World_EnableWarmStarting( b2WorldId worldId, bool flag );
 /// Is constraint warm starting enabled?
 B2_API bool b2World_IsWarmStartingEnabled( b2WorldId worldId );
 
+/// Get the number of awake bodies.
+B2_API int b2World_GetAwakeBodyCount( b2WorldId worldId );
+
 /// Get the current world performance profile
 B2_API b2Profile b2World_GetProfile( b2WorldId worldId );
 
@@ -444,7 +447,10 @@ B2_API int b2Body_GetJoints( b2BodyId bodyId, b2JointId* jointArray, int capacit
 /// Get the maximum capacity required for retrieving all the touching contacts on a body
 B2_API int b2Body_GetContactCapacity( b2BodyId bodyId );
 
-/// Get the touching contact data for a body
+/// Get the touching contact data for a body.
+/// @note Box2D uses speculative collision so some contact points may be separated.
+/// @returns the number of elements filled in the provided array
+/// @warning do not ignore the return value, it specifies the valid number of elements
 B2_API int b2Body_GetContactData( b2BodyId bodyId, b2ContactData* contactData, int capacity );
 
 /// Get the current world AABB that contains all the attached shapes. Note that this may not encompass the body origin.

@@ -4,6 +4,7 @@
 #include "sample.h"
 
 #include "draw.h"
+#include "imgui.h"
 #include "random.h"
 #include "settings.h"
 
@@ -91,7 +92,7 @@ Sample::Sample( Settings& settings )
 
 	m_worldId = b2CreateWorld( &worldDef );
 	m_textLine = 30;
-	m_textIncrement = 18;
+	m_textIncrement = 22;
 	m_mouseJointId = b2_nullJointId;
 
 	m_stepCount = 0;

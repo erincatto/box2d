@@ -3,6 +3,7 @@
 
 #include "box2d/types.h"
 
+#include "constants.h"
 #include "core.h"
 
 b2WorldDef b2DefaultWorldDef( void )

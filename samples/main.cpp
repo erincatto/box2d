@@ -152,6 +152,7 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 		ImFontConfig fontConfig;
 		fontConfig.RasterizerMultiply = s_windowScale * s_framebufferScale;
 		g_draw.m_smallFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 14.0f, &fontConfig );
+		g_draw.m_regularFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 18.0f, &fontConfig );
 		g_draw.m_mediumFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 40.0f, &fontConfig );
 		g_draw.m_largeFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 64.0f, &fontConfig );
 	}
@@ -528,7 +529,7 @@ int main( int, char** )
 
 	// How to break at the leaking allocation, in the watch window enter this variable
 	// and set it to the allocation number in {}. Do this at the first line in main.
-	// {,,ucrtbased.dll}_crtBreakAlloc = <allocation number> 3970
+	// {,,ucrtbased.dll}_crtBreakAlloc = <allocation number>
 #endif
 
 	// Install memory hooks

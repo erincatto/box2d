@@ -62,6 +62,8 @@ int GetNumberOfCores()
 	return (int)sysconf( _SC_NPROCESSORS_ONLN );
 #elif defined( __linux__ )
 	return (int)sysconf( _SC_NPROCESSORS_ONLN );
+#elif defined( __EMSCRIPTEN__ )
+	return (int)sysconf( _SC_NPROCESSORS_ONLN );
 #else
 	return 1;
 #endif

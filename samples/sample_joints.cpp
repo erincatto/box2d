@@ -735,7 +735,7 @@ public:
 		m_textLine += m_textIncrement;
 
 		float speed = b2PrismaticJoint_GetSpeed( m_jointId );
-		g_draw.DrawString( 5, m_textLine, "Speed = %4.1f", speed );
+		g_draw.DrawString( 5, m_textLine, "Speed = %4.8f", speed );
 		m_textLine += m_textIncrement;
 	}
 

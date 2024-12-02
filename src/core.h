@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "box2d/base.h"
+#include "box2d/math_functions.h"
 
 // clang-format off
 
@@ -90,30 +90,6 @@
 	#define B2_COMPILER_MSVC
 #endif
 
-// see https://github.com/scottt/debugbreak
-#if defined( B2_COMPILER_MSVC )
-	#define B2_BREAKPOINT __debugbreak()
-#elif defined( B2_COMPILER_GCC ) || defined( B2_COMPILER_CLANG )
-	#define B2_BREAKPOINT __builtin_trap()
-#else
-	// Unknown compiler
-	#include <assert.h>
-	#definef B2_BREAKPOINT assert(0)
-#endif
-
-#if !defined( NDEBUG ) || defined( B2_ENABLE_ASSERT )
-	extern b2AssertFcn* b2AssertHandler;
-	#define B2_ASSERT( condition )                                                                                                   \
-		do                                                                                                                           \
-		{                                                                                                                            \
-			if ( !( condition ) && b2AssertHandler( #condition, __FILE__, (int)__LINE__ ) )                                          \
-				B2_BREAKPOINT;                                                                                                       \
-		}                                                                                                                            \
-		while ( 0 )
-#else
-	#define B2_ASSERT( ... ) ( (void)0 )
-#endif
-
 /// Tracy profiler instrumentation
 /// https://github.com/wolfpld/tracy
 #ifdef BOX2D_PROFILE
@@ -129,43 +105,6 @@
 
 // clang-format on
 
-extern float b2_lengthUnitsPerMeter;
-
-// Used to detect bad values. Positions greater than about 16km will have precision
-// problems, so 100km as a limit should be fine in all cases.
-#define b2_huge ( 100000.0f * b2_lengthUnitsPerMeter )
-
-// Maximum parallel workers. Used to size some static arrays.
-#define b2_maxWorkers 64
-
-// Maximum number of colors in the constraint graph. Constraints that cannot
-// find a color are added to the overflow set which are solved single-threaded.
-#define b2_graphColorCount 12
-
-// A small length used as a collision and constraint tolerance. Usually it is
-// chosen to be numerically significant, but visually insignificant. In meters.
-// @warning modifying this can have a significant impact on stability
-#define b2_linearSlop ( 0.005f * b2_lengthUnitsPerMeter )
-
-// Maximum number of simultaneous worlds that can be allocated
-#define b2_maxWorlds 128
-
-// The maximum rotation of a body per time step. This limit is very large and is used
-// to prevent numerical problems. You shouldn't need to adjust this.
-// @warning increasing this to 0.5f * b2_pi or greater will break continuous collision.
-#define b2_maxRotation ( 0.25f * b2_pi )
-
-// @warning modifying this can have a significant impact on performance and stability
-#define b2_speculativeDistance ( 4.0f * b2_linearSlop )
-
-// This is used to fatten AABBs in the dynamic tree. This allows proxies
-// to move by a small amount without triggering a tree adjustment. This is in meters.
-// @warning modifying this can have a significant impact on performance
-#define b2_aabbMargin ( 0.05f * b2_lengthUnitsPerMeter )
-
-// The time that a body must be still before it will go to sleep. In seconds.
-#define b2_timeToSleep 0.5f
-
 // Returns the number of elements of an array
 #define B2_ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
 
@@ -176,13 +115,6 @@ extern float b2_lengthUnitsPerMeter;
 #define B2_SECRET_COOKIE 1152023
 
 #define b2CheckDef( DEF ) B2_ASSERT( DEF->internalValue == B2_SECRET_COOKIE )
-
-enum b2TreeNodeFlags
-{
-	b2_allocatedNode = 0x0001,
-	b2_enlargedNode = 0x0002,
-	b2_leafNode = 0x0004,
-};
 
 void* b2Alloc( int size );
 void b2Free( void* mem, int size );

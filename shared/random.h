@@ -10,7 +10,18 @@
 #define RAND_SEED 12345
 
 // Global seed for simple random number generator.
-B2_API uint32_t g_seed;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+extern uint32_t g_seed;
+b2Polygon RandomPolygon( float extent );
+
+#ifdef __cplusplus
+}
+#endif
 
 // Simple random number generator. Using this instead of rand() for cross platform determinism.
 B2_INLINE int RandomInt()
@@ -58,5 +69,3 @@ B2_INLINE b2Vec2 RandomVec2( float lo, float hi )
 	v.y = RandomFloatRange( lo, hi );
 	return v;
 }
-
-B2_API b2Polygon RandomPolygon( float extent );

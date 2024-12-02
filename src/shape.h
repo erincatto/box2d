@@ -46,7 +46,6 @@ typedef struct b2Shape
 	bool enableHitEvents;
 	bool enablePreSolveEvents;
 	bool enlargedAABB;
-	bool isFast;
 } b2Shape;
 
 typedef struct b2ChainShape

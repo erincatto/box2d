@@ -126,8 +126,9 @@ typedef struct b2BodySim
 	// body data can be moved around, the id is stable (used in b2BodyId)
 	int bodyId;
 
-	// todo eliminate
+	// This flag is used for debug draw
 	bool isFast;
+
 	bool isBullet;
 	bool isSpeedCapped;
 	bool allowFastRotation;

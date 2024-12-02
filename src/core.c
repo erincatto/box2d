@@ -36,7 +36,7 @@ float b2_lengthUnitsPerMeter = 1.0f;
 
 void b2SetLengthUnitsPerMeter( float lengthUnits )
 {
-	B2_ASSERT( b2Float_IsValid( lengthUnits ) && lengthUnits > 0.0f );
+	B2_ASSERT( b2IsValidFloat( lengthUnits ) && lengthUnits > 0.0f );
 	b2_lengthUnitsPerMeter = lengthUnits;
 }
 
@@ -59,6 +59,11 @@ void b2SetAssertFcn( b2AssertFcn* assertFcn )
 {
 	B2_ASSERT( assertFcn != NULL );
 	b2AssertHandler = assertFcn;
+}
+
+int b2InternalAssertFcn( const char* condition, const char* fileName, int lineNumber )
+{
+	return b2AssertHandler( condition, fileName, lineNumber );
 }
 
 b2Version b2GetVersion( void )

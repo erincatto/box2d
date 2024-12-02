@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#include "constants.h"
 #include "core.h"
 
 #include "box2d/collision.h"
@@ -511,18 +512,15 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 	}
 
 	// Convert manifold to world space
-	if ( manifold.pointCount > 0 )
+	manifold.normal = b2RotateVector( xfA.q, manifold.normal );
+	for ( int i = 0; i < manifold.pointCount; ++i )
 	{
-		manifold.normal = b2RotateVector( xfA.q, manifold.normal );
-		for ( int i = 0; i < manifold.pointCount; ++i )
-		{
-			b2ManifoldPoint* mp = manifold.points + i;
+		b2ManifoldPoint* mp = manifold.points + i;
 
-			// anchor points relative to shape origin in world space
-			mp->anchorA = b2RotateVector( xfA.q, b2Add( mp->anchorA, origin ) );
-			mp->anchorB = b2Add( mp->anchorA, b2Sub( xfA.p, xfB.p ) );
-			mp->point = b2Add( xfA.p, mp->anchorA );
-		}
+		// anchor points relative to shape origin in world space
+		mp->anchorA = b2RotateVector( xfA.q, b2Add( mp->anchorA, origin ) );
+		mp->anchorB = b2Add( mp->anchorA, b2Sub( xfA.p, xfB.p ) );
+		mp->point = b2Add( xfA.p, mp->anchorA );
 	}
 
 	return manifold;

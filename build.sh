@@ -4,5 +4,8 @@
 rm -rf build
 mkdir build
 cd build
-cmake -DBOX2D_BUILD_DOCS=OFF ..
+
+# I haven't been able to get Wayland working on WSL but X11 works.
+# https://www.glfw.org/docs/latest/compile.html
+cmake -DBOX2D_BUILD_DOCS=OFF -DGLFW_BUILD_WAYLAND=OFF ..
 cmake --build .

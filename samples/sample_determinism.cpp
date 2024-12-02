@@ -144,20 +144,12 @@ public:
 
 		if (m_hash == 0)
 		{
-			bool sleeping = true;
-			int bodyCount = e_rows * e_columns;
-			for (int i = 0; i < bodyCount; ++i)
-			{
-				if ( b2Body_IsAwake( m_bodies[i] ) == true )
-				{
-					sleeping = false;
-					break;
-				}
-			}
+			b2BodyEvents bodyEvents = b2World_GetBodyEvents( m_worldId );
 
-			if (sleeping == true)
+			if ( bodyEvents.moveCount == 0 )
 			{
 				uint32_t hash = B2_HASH_INIT;
+				int bodyCount = e_rows * e_columns;
 				for ( int i = 0; i < bodyCount; ++i )
 				{
 					b2Transform xf = b2Body_GetTransform( m_bodies[i] );

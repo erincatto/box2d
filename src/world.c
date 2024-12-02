@@ -12,6 +12,7 @@
 #include "bitset.h"
 #include "body.h"
 #include "broad_phase.h"
+#include "constants.h"
 #include "constraint_graph.h"
 #include "contact.h"
 #include "core.h"
@@ -710,7 +711,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		return;
 	}
 
-	b2TracyCZoneNC( world_step, "Step", b2_colorChartreuse, true );
+	b2TracyCZoneNC( world_step, "Step", b2_colorBox2DGreen, true );
 
 	world->locked = true;
 	world->activeTaskCount = 0;
@@ -939,7 +940,7 @@ static bool DrawQueryCallback( int proxyId, int shapeId, void* context )
 // solution: display order by shape id modulus 3, keep 3 buckets in GLSolid* and flush in 3 passes.
 static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 {
-	B2_ASSERT( b2AABB_IsValid( draw->drawingBounds ) );
+	B2_ASSERT( b2IsValidAABB( draw->drawingBounds ) );
 
 	const float k_impulseScale = 1.0f;
 	const float k_axisScale = 0.3f;
@@ -1647,6 +1648,13 @@ bool b2World_IsWarmStartingEnabled( b2WorldId worldId )
 	return world->enableWarmStarting;
 }
 
+int b2World_GetAwakeBodyCount(b2WorldId worldId)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
+	return awakeSet->bodySims.count;
+}
+
 void b2World_EnableContinuous( b2WorldId worldId, bool flag )
 {
 	b2World* world = b2GetWorldFromId( worldId );
@@ -1730,7 +1738,7 @@ void b2World_SetJointTuning( b2WorldId worldId, float hertz, float dampingRatio 
 
 void b2World_SetMaximumLinearVelocity( b2WorldId worldId, float maximumLinearVelocity )
 {
-	B2_ASSERT( b2Float_IsValid( maximumLinearVelocity ) && maximumLinearVelocity > 0.0f );
+	B2_ASSERT( b2IsValidFloat( maximumLinearVelocity ) && maximumLinearVelocity > 0.0f );
 
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
@@ -1936,7 +1944,7 @@ b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter f
 		return treeStats;
 	}
 
-	B2_ASSERT( b2AABB_IsValid( aabb ) );
+	B2_ASSERT( b2IsValidAABB( aabb ) );
 
 	WorldQueryContext worldContext = { world, fcn, filter, context };
 
@@ -2021,8 +2029,8 @@ b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2
 		return treeStats;
 	}
 
-	B2_ASSERT( b2Vec2_IsValid( transform.p ) );
-	B2_ASSERT( b2Rot_IsValid( transform.q ) );
+	B2_ASSERT( b2IsValidVec2( transform.p ) );
+	B2_ASSERT( b2IsValidRotation( transform.q ) );
 
 	b2AABB aabb = b2ComputeCircleAABB( circle, transform );
 	WorldOverlapContext worldContext = {
@@ -2053,8 +2061,8 @@ b2TreeStats b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule,
 		return treeStats;
 	}
 
-	B2_ASSERT( b2Vec2_IsValid( transform.p ) );
-	B2_ASSERT( b2Rot_IsValid( transform.q ) );
+	B2_ASSERT( b2IsValidVec2( transform.p ) );
+	B2_ASSERT( b2IsValidRotation( transform.q ) );
 
 	b2AABB aabb = b2ComputeCapsuleAABB( capsule, transform );
 	WorldOverlapContext worldContext = {
@@ -2085,8 +2093,8 @@ b2TreeStats b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon,
 		return treeStats;
 	}
 
-	B2_ASSERT( b2Vec2_IsValid( transform.p ) );
-	B2_ASSERT( b2Rot_IsValid( transform.q ) );
+	B2_ASSERT( b2IsValidVec2( transform.p ) );
+	B2_ASSERT( b2IsValidRotation( transform.q ) );
 
 	b2AABB aabb = b2ComputePolygonAABB( polygon, transform );
 	WorldOverlapContext worldContext = {
@@ -2157,8 +2165,8 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translatio
 		return treeStats;
 	}
 
-	B2_ASSERT( b2Vec2_IsValid( origin ) );
-	B2_ASSERT( b2Vec2_IsValid( translation ) );
+	B2_ASSERT( b2IsValidVec2( origin ) );
+	B2_ASSERT( b2IsValidVec2( translation ) );
 
 	b2RayCastInput input = { origin, translation, 1.0f };
 
@@ -2205,8 +2213,8 @@ b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 tra
 		return result;
 	}
 
-	B2_ASSERT( b2Vec2_IsValid( origin ) );
-	B2_ASSERT( b2Vec2_IsValid( translation ) );
+	B2_ASSERT( b2IsValidVec2( origin ) );
+	B2_ASSERT( b2IsValidVec2( translation ) );
 
 	b2RayCastInput input = { origin, translation, 1.0f };
 	WorldRayCastContext worldContext = { world, b2RayCastClosestFcn, filter, 1.0f, &result };
@@ -2273,9 +2281,9 @@ b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Tra
 		return treeStats;
 	}
 
-	B2_ASSERT( b2Vec2_IsValid( originTransform.p ) );
-	B2_ASSERT( b2Rot_IsValid( originTransform.q ) );
-	B2_ASSERT( b2Vec2_IsValid( translation ) );
+	B2_ASSERT( b2IsValidVec2( originTransform.p ) );
+	B2_ASSERT( b2IsValidRotation( originTransform.q ) );
+	B2_ASSERT( b2IsValidVec2( translation ) );
 
 	b2ShapeCastInput input;
 	input.points[0] = b2TransformPoint( originTransform, circle->center );
@@ -2316,9 +2324,9 @@ b2TreeStats b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2
 		return treeStats;
 	}
 
-	B2_ASSERT( b2Vec2_IsValid( originTransform.p ) );
-	B2_ASSERT( b2Rot_IsValid( originTransform.q ) );
-	B2_ASSERT( b2Vec2_IsValid( translation ) );
+	B2_ASSERT( b2IsValidVec2( originTransform.p ) );
+	B2_ASSERT( b2IsValidRotation( originTransform.q ) );
+	B2_ASSERT( b2IsValidVec2( translation ) );
 
 	b2ShapeCastInput input;
 	input.points[0] = b2TransformPoint( originTransform, capsule->center1 );
@@ -2360,9 +2368,9 @@ b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2
 		return treeStats;
 	}
 
-	B2_ASSERT( b2Vec2_IsValid( originTransform.p ) );
-	B2_ASSERT( b2Rot_IsValid( originTransform.q ) );
-	B2_ASSERT( b2Vec2_IsValid( translation ) );
+	B2_ASSERT( b2IsValidVec2( originTransform.p ) );
+	B2_ASSERT( b2IsValidRotation( originTransform.q ) );
+	B2_ASSERT( b2IsValidVec2( translation ) );
 
 	b2ShapeCastInput input;
 	for ( int i = 0; i < polygon->count; ++i )
@@ -2603,10 +2611,10 @@ void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionDef )
 	float falloff = explosionDef->falloff;
 	float impulsePerLength = explosionDef->impulsePerLength;
 
-	B2_ASSERT( b2Vec2_IsValid( position ) );
-	B2_ASSERT( b2Float_IsValid( radius ) && radius >= 0.0f );
-	B2_ASSERT( b2Float_IsValid( falloff ) && falloff >= 0.0f );
-	B2_ASSERT( b2Float_IsValid( impulsePerLength ) );
+	B2_ASSERT( b2IsValidVec2( position ) );
+	B2_ASSERT( b2IsValidFloat( radius ) && radius >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( falloff ) && falloff >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( impulsePerLength ) );
 
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
