@@ -12,6 +12,7 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <vector>
 
 class BounceHouse : public Sample
 {

@@ -619,6 +619,16 @@ B2_API bool b2IsValidAABB( b2AABB aabb );
 /// Box2D bases all length units on meters, but you may need different units for your game.
 /// You can set this value to use different units. This should be done at application startup
 /// and only modified once. Default value is 1.
+/// For example, if your game uses pixels for units you can use pixels for all length values
+/// sent to Box2D. There should be no extra cost. However, Box2D has some internal tolerances
+/// and thresholds that have been tuned for meters. By calling this function, Box2D is able
+/// to adjust those tolerances and thresholds to improve accuracy.
+/// A good rule of thumb is to pass the height of your player character to this function. So
+/// if your player character is 32 pixels high, then pass 32 to this function. Then you may
+/// confidently use pixels for all the length values sent to Box2D. All length values returned
+/// from Box2D will also be pixels because Box2D does not do any scaling internally.
+/// However, you are now on the hook for coming up with good values for gravity, density, and
+/// forces.
 /// @warning This must be modified before any calls to Box2D
 B2_API void b2SetLengthUnitsPerMeter( float lengthUnits );
 
