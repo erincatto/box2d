@@ -13,6 +13,8 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
+#include <stdlib.h>
+
 constexpr int SIMPLEX_CAPACITY = 20;
 
 class ShapeDistance : public Sample
