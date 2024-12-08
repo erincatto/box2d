@@ -115,7 +115,7 @@ typedef struct b2Timer
 {
 #if defined( _WIN32 )
 	int64_t start;
-#elif defined( __linux__ ) || defined( __APPLE__ )
+#elif defined( __linux__ ) || defined( __APPLE__ ) || defined( __EMSCRIPTEN__ )
 	unsigned long long start_sec;
 	unsigned long long start_usec;
 #else
