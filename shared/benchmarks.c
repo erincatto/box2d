@@ -336,7 +336,7 @@ void CreateSpinner( b2WorldId worldId )
 
 		b2Vec2 points[SPINNER_POINT_COUNT];
 
-		b2Rot q = b2MakeRot( -2.0f * b2_pi / SPINNER_POINT_COUNT );
+		b2Rot q = b2MakeRot( -2.0f * B2_PI / SPINNER_POINT_COUNT );
 		b2Vec2 p = { 40.0f, 0.0f };
 		for ( int i = 0; i < SPINNER_POINT_COUNT; ++i )
 		{
@@ -499,7 +499,7 @@ void CreateTumbler( b2WorldId worldId )
 		jd.localAnchorA = ( b2Vec2 ){ 0.0f, 10.0f };
 		jd.localAnchorB = ( b2Vec2 ){ 0.0f, 0.0f };
 		jd.referenceAngle = 0.0f;
-		jd.motorSpeed = ( b2_pi / 180.0f ) * motorSpeed;
+		jd.motorSpeed = ( B2_PI / 180.0f ) * motorSpeed;
 		jd.maxMotorTorque = 1e8f;
 		jd.enableMotor = true;
 

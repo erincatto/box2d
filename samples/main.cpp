@@ -541,6 +541,7 @@ int main( int, char** )
 
 	s_settings.Load();
 	s_settings.workerCount = b2MinInt( 8, (int)enki::GetNumHardwareThreads() / 2 );
+
 	SortSamples();
 
 	glfwSetErrorCallback( glfwErrorCallback );

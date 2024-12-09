@@ -66,7 +66,7 @@ public:
 		m_count = e_count;
 #else
 
-		float angle = b2_pi * RandomFloat();
+		float angle = B2_PI * RandomFloat();
 		b2Rot r = b2MakeRot( angle );
 
 		b2Vec2 lowerBound = { -4.0f, -4.0f };

@@ -22,7 +22,7 @@ void b2DistanceJoint_SetLength( b2JointId jointId, float length )
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	b2DistanceJoint* joint = &base->distanceJoint;
 
-	joint->length = b2ClampFloat( length, b2_linearSlop, b2_huge );
+	joint->length = b2ClampFloat( length, b2_linearSlop, B2_HUGE );
 	joint->impulse = 0.0f;
 	joint->lowerImpulse = 0.0f;
 	joint->upperImpulse = 0.0f;
@@ -53,8 +53,8 @@ void b2DistanceJoint_SetLengthRange( b2JointId jointId, float minLength, float m
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	b2DistanceJoint* joint = &base->distanceJoint;
 
-	minLength = b2ClampFloat( minLength, b2_linearSlop, b2_huge );
-	maxLength = b2ClampFloat( maxLength, b2_linearSlop, b2_huge );
+	minLength = b2ClampFloat( minLength, b2_linearSlop, B2_HUGE );
+	maxLength = b2ClampFloat( maxLength, b2_linearSlop, B2_HUGE );
 	joint->minLength = b2MinFloat( minLength, maxLength );
 	joint->maxLength = b2MaxFloat( minLength, maxLength );
 	joint->impulse = 0.0f;
@@ -532,13 +532,13 @@ void b2DrawDistanceJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 			draw->DrawSegment( b2Sub( pMin, offset ), b2Add( pMin, offset ), b2_colorLightGreen, draw->context );
 		}
 
-		if ( joint->maxLength < b2_huge )
+		if ( joint->maxLength < B2_HUGE )
 		{
 			// draw->DrawPoint(pMax, 4.0f, c3, draw->context);
 			draw->DrawSegment( b2Sub( pMax, offset ), b2Add( pMax, offset ), b2_colorRed, draw->context );
 		}
 
-		if ( joint->minLength > b2_linearSlop && joint->maxLength < b2_huge )
+		if ( joint->minLength > b2_linearSlop && joint->maxLength < B2_HUGE )
 		{
 			draw->DrawSegment( pMin, pMax, b2_colorGray, draw->context );
 		}

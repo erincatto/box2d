@@ -30,8 +30,8 @@
 #include <stdio.h>
 #include <string.h>
 
-_Static_assert( b2_maxWorlds > 0, "must be 1 or more" );
-b2World b2_worlds[b2_maxWorlds];
+_Static_assert( B2_MAX_WORLDS > 0, "must be 1 or more" );
+b2World b2_worlds[B2_MAX_WORLDS];
 
 B2_ARRAY_SOURCE( b2BodyMoveEvent, b2BodyMoveEvent );
 B2_ARRAY_SOURCE( b2ContactBeginTouchEvent, b2ContactBeginTouchEvent );
@@ -43,7 +43,7 @@ B2_ARRAY_SOURCE( b2TaskContext, b2TaskContext );
 
 b2World* b2GetWorldFromId( b2WorldId id )
 {
-	B2_ASSERT( 1 <= id.index1 && id.index1 <= b2_maxWorlds );
+	B2_ASSERT( 1 <= id.index1 && id.index1 <= B2_MAX_WORLDS );
 	b2World* world = b2_worlds + ( id.index1 - 1 );
 	B2_ASSERT( id.index1 == world->worldId + 1 );
 	B2_ASSERT( id.revision == world->revision );
@@ -52,7 +52,7 @@ b2World* b2GetWorldFromId( b2WorldId id )
 
 b2World* b2GetWorld( int index )
 {
-	B2_ASSERT( 0 <= index && index < b2_maxWorlds );
+	B2_ASSERT( 0 <= index && index < B2_MAX_WORLDS );
 	b2World* world = b2_worlds + index;
 	B2_ASSERT( world->worldId == index );
 	return world;
@@ -60,7 +60,7 @@ b2World* b2GetWorld( int index )
 
 b2World* b2GetWorldLocked( int index )
 {
-	B2_ASSERT( 0 <= index && index < b2_maxWorlds );
+	B2_ASSERT( 0 <= index && index < B2_MAX_WORLDS );
 	b2World* world = b2_worlds + index;
 	B2_ASSERT( world->worldId == index );
 	if ( world->locked )
@@ -88,11 +88,11 @@ static void b2DefaultFinishTaskFcn( void* userTask, void* userContext )
 
 b2WorldId b2CreateWorld( const b2WorldDef* def )
 {
-	_Static_assert( b2_maxWorlds < UINT16_MAX, "b2_maxWorlds limit exceeded" );
+	_Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B2_MAX_WORLDS limit exceeded" );
 	b2CheckDef( def );
 
 	int worldId = B2_NULL_INDEX;
-	for ( int i = 0; i < b2_maxWorlds; ++i )
+	for ( int i = 0; i < B2_MAX_WORLDS; ++i )
 	{
 		if ( b2_worlds[i].inUse == false )
 		{
@@ -178,7 +178,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->hitEventThreshold = def->hitEventThreshold;
 	world->restitutionThreshold = def->restitutionThreshold;
 	world->maxLinearVelocity = def->maximumLinearVelocity;
-	world->contactPushoutVelocity = def->contactPushoutVelocity;
+	world->contactPushoutVelocity = def->contactPushVelocity;
 	world->contactHertz = def->contactHertz;
 	world->contactDampingRatio = def->contactDampingRatio;
 	world->jointHertz = def->jointHertz;
@@ -389,7 +389,7 @@ static void b2UpdateTreesTask( int startIndex, int endIndex, uint32_t threadInde
 	B2_MAYBE_UNUSED( endIndex );
 	B2_MAYBE_UNUSED( threadIndex );
 
-	b2TracyCZoneNC( tree_task, "Rebuild Trees", b2_colorSnow, true );
+	b2TracyCZoneNC( tree_task, "Rebuild Trees", b2_colorFireBrick, true );
 
 	b2World* world = context;
 	b2BroadPhase_RebuildTrees( &world->broadPhase );
@@ -432,8 +432,9 @@ static void b2Collide( b2StepContext* context )
 
 	b2TracyCZoneNC( collide, "Collide", b2_colorDarkOrchid, true );
 
-	// Tasks that can be done in parallel with the narrow-phase
+	// Task that can be done in parallel with the narrow-phase
 	// - rebuild the collision tree for dynamic and kinematic bodies to keep their query performance good
+	// todo_erin move this to start when contacts are being created
 	world->userTreeTask = world->enqueueTaskFcn( &b2UpdateTreesTask, 1, 1, world, world->userTaskContext );
 	world->taskCount += 1;
 	world->activeTaskCount += world->userTreeTask == NULL ? 0 : 1;
@@ -504,7 +505,8 @@ static void b2Collide( b2StepContext* context )
 	contactSims = NULL;
 
 	// Serially update contact state
-	b2TracyCZoneNC( contact_state, "Contact State", b2_colorCoral, true );
+	// todo_erin bring this zone together with island merge
+	b2TracyCZoneNC( contact_state, "Contact State", b2_colorLightSlateGray, true );
 
 	// Bitwise OR all contact bits
 	b2BitSet* bitSet = &world->taskContexts.data[0].contactStateBitSet;
@@ -944,16 +946,16 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 
 	const float k_impulseScale = 1.0f;
 	const float k_axisScale = 0.3f;
-	b2HexColor speculativeColor = b2_colorGray3;
+	b2HexColor speculativeColor = b2_colorGainsboro;
 	b2HexColor addColor = b2_colorGreen;
 	b2HexColor persistColor = b2_colorBlue;
-	b2HexColor normalColor = b2_colorGray9;
+	b2HexColor normalColor = b2_colorDimGray;
 	b2HexColor impulseColor = b2_colorMagenta;
 	b2HexColor frictionColor = b2_colorYellow;
 
 	b2HexColor graphColors[b2_graphColorCount] = { b2_colorRed,		  b2_colorOrange,	 b2_colorYellow, b2_colorGreen,
 												   b2_colorCyan,	  b2_colorBlue,		 b2_colorViolet, b2_colorPink,
-												   b2_colorChocolate, b2_colorGoldenrod, b2_colorCoral,	 b2_colorBlack };
+												   b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,	 b2_colorBlack };
 
 	int bodyCapacity = b2GetIdCapacity( &world->bodyIdPool );
 	b2SetBitCountAndClear( &world->debugBodySet, bodyCapacity );
@@ -1295,16 +1297,16 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 		const float k_axisScale = 0.3f;
 		const float linearSlop = b2_linearSlop;
 
-		b2HexColor speculativeColor = b2_colorGray3;
+		b2HexColor speculativeColor = b2_colorLightGray;
 		b2HexColor addColor = b2_colorGreen;
 		b2HexColor persistColor = b2_colorBlue;
-		b2HexColor normalColor = b2_colorGray9;
+		b2HexColor normalColor = b2_colorDimGray;
 		b2HexColor impulseColor = b2_colorMagenta;
 		b2HexColor frictionColor = b2_colorYellow;
 
 		b2HexColor colors[b2_graphColorCount] = { b2_colorRed,		 b2_colorOrange,	b2_colorYellow, b2_colorGreen,
 												  b2_colorCyan,		 b2_colorBlue,		b2_colorViolet, b2_colorPink,
-												  b2_colorChocolate, b2_colorGoldenrod, b2_colorCoral,	b2_colorBlack };
+												  b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,	b2_colorBlack };
 
 		for ( int colorIndex = 0; colorIndex < b2_graphColorCount; ++colorIndex )
 		{
@@ -1443,7 +1445,7 @@ b2ContactEvents b2World_GetContactEvents( b2WorldId worldId )
 
 bool b2World_IsValid( b2WorldId id )
 {
-	if ( id.index1 < 1 || b2_maxWorlds < id.index1 )
+	if ( id.index1 < 1 || B2_MAX_WORLDS < id.index1 )
 	{
 		return false;
 	}
@@ -1461,7 +1463,7 @@ bool b2World_IsValid( b2WorldId id )
 
 bool b2Body_IsValid( b2BodyId id )
 {
-	if ( id.world0 < 0 || b2_maxWorlds <= id.world0 )
+	if ( id.world0 < 0 || B2_MAX_WORLDS <= id.world0 )
 	{
 		// invalid world
 		return false;
@@ -1500,7 +1502,7 @@ bool b2Body_IsValid( b2BodyId id )
 
 bool b2Shape_IsValid( b2ShapeId id )
 {
-	if ( b2_maxWorlds <= id.world0 )
+	if ( B2_MAX_WORLDS <= id.world0 )
 	{
 		return false;
 	}
@@ -1532,7 +1534,7 @@ bool b2Shape_IsValid( b2ShapeId id )
 
 bool b2Chain_IsValid( b2ChainId id )
 {
-	if ( id.world0 < 0 || b2_maxWorlds <= id.world0 )
+	if ( id.world0 < 0 || B2_MAX_WORLDS <= id.world0 )
 	{
 		return false;
 	}
@@ -1564,7 +1566,7 @@ bool b2Chain_IsValid( b2ChainId id )
 
 bool b2Joint_IsValid( b2JointId id )
 {
-	if ( id.world0 < 0 || b2_maxWorlds <= id.world0 )
+	if ( id.world0 < 0 || B2_MAX_WORLDS <= id.world0 )
 	{
 		return false;
 	}

@@ -67,7 +67,7 @@ static void b2IntegrateVelocitiesTask( int startIndex, int endIndex, b2StepConte
 	b2Vec2 gravity = context->world->gravity;
 	float h = context->h;
 	float maxLinearSpeed = context->maxLinearVelocity;
-	float maxAngularSpeed = b2_maxRotation * context->inv_dt;
+	float maxAngularSpeed = B2_MAX_ROTATION * context->inv_dt;
 	float maxLinearSpeedSquared = maxLinearSpeed * maxLinearSpeed;
 	float maxAngularSpeedSquared = maxAngularSpeed * maxAngularSpeed;
 
@@ -490,7 +490,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 
 static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
 {
-	b2TracyCZoneNC( finalize_bodies, "FinalizeBodies", b2_colorViolet, true );
+	b2TracyCZoneNC( finalize_bodies, "Positions", b2_colorMediumSeaGreen, true );
 
 	b2StepContext* stepContext = context;
 	b2World* world = stepContext->world;
@@ -571,8 +571,8 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 			// Body is not sleepy
 			body->sleepTime = 0.0f;
 
-			const float saftetyFactor = 0.5f;
-			if ( body->type == b2_dynamicBody && enableContinuous && maxVelocity * timeStep > saftetyFactor * sim->minExtent )
+			const float safetyFactor = 0.5f;
+			if ( body->type == b2_dynamicBody && enableContinuous && maxVelocity * timeStep > safetyFactor * sim->minExtent )
 			{
 				// This flag is only retained for debug draw
 				sim->isFast = true;
@@ -1764,7 +1764,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 	b2ValidateNoEnlarged( &world->broadPhase );
 
-	b2TracyCZoneNC( broad_phase, "Broadphase", b2_colorPurple, true );
+	b2TracyCZoneNC( broad_phase, "Broadphase", b2_colorFireBrick, true );
 
 	b2TracyCZoneNC( enlarge_proxies, "Enlarge Proxies", b2_colorDarkTurquoise, true );
 
@@ -1938,9 +1938,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 	// Island sleeping
 	// This must be done last because putting islands to sleep invalidates the enlarged body bits.
+	// todo_erin figure out how to do this in parallel with tree refit
 	if ( world->enableSleep == true )
 	{
-		b2TracyCZoneNC( sleep_islands, "Island Sleep", b2_colorGainsboro, true );
+		b2TracyCZoneNC( sleep_islands, "Island Sleep", b2_colorLightSlateGray, true );
 
 		// Collect split island candidate for the next time step. No need to split if sleeping is disabled.
 		B2_ASSERT( world->splitIslandId == B2_NULL_INDEX );

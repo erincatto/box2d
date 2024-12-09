@@ -30,8 +30,8 @@ void Donut::Spawn( b2WorldId worldId, b2Vec2 position, float scale, int groupInd
 	}
 
 	float radius = 1.0f * scale;
-	float deltaAngle = 2.0f * b2_pi / e_sides;
-	float length = 2.0f * b2_pi * radius / e_sides;
+	float deltaAngle = 2.0f * B2_PI / e_sides;
+	float length = 2.0f * B2_PI * radius / e_sides;
 
 	b2Capsule capsule = { { 0.0f, -0.5f * length }, { 0.0f, 0.5f * length }, 0.25f * scale };
 

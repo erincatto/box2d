@@ -296,7 +296,7 @@ int TestForAmy( void )
 	return 0;
 }
 
-#define WORLD_COUNT ( b2_maxWorlds / 2 )
+#define WORLD_COUNT ( B2_MAX_WORLDS / 2 )
 
 int TestWorldRecycle( void )
 {

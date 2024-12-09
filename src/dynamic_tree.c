@@ -733,10 +733,10 @@ static void b2RemoveLeaf( b2DynamicTree* tree, int32_t leaf )
 // the node pool.
 int32_t b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, int32_t userData )
 {
-	B2_ASSERT( -b2_huge < aabb.lowerBound.x && aabb.lowerBound.x < b2_huge );
-	B2_ASSERT( -b2_huge < aabb.lowerBound.y && aabb.lowerBound.y < b2_huge );
-	B2_ASSERT( -b2_huge < aabb.upperBound.x && aabb.upperBound.x < b2_huge );
-	B2_ASSERT( -b2_huge < aabb.upperBound.y && aabb.upperBound.y < b2_huge );
+	B2_ASSERT( -B2_HUGE < aabb.lowerBound.x && aabb.lowerBound.x < B2_HUGE );
+	B2_ASSERT( -B2_HUGE < aabb.lowerBound.y && aabb.lowerBound.y < B2_HUGE );
+	B2_ASSERT( -B2_HUGE < aabb.upperBound.x && aabb.upperBound.x < B2_HUGE );
+	B2_ASSERT( -B2_HUGE < aabb.upperBound.y && aabb.upperBound.y < B2_HUGE );
 
 	int32_t proxyId = b2AllocateNode( tree );
 	b2TreeNode* node = tree->nodes + proxyId;
@@ -775,8 +775,8 @@ int32_t b2DynamicTree_GetProxyCount( const b2DynamicTree* tree )
 void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int32_t proxyId, b2AABB aabb )
 {
 	B2_ASSERT( b2IsValidAABB( aabb ) );
-	B2_ASSERT( aabb.upperBound.x - aabb.lowerBound.x < b2_huge );
-	B2_ASSERT( aabb.upperBound.y - aabb.lowerBound.y < b2_huge );
+	B2_ASSERT( aabb.upperBound.x - aabb.lowerBound.x < B2_HUGE );
+	B2_ASSERT( aabb.upperBound.y - aabb.lowerBound.y < B2_HUGE );
 	B2_ASSERT( 0 <= proxyId && proxyId < tree->nodeCapacity );
 	B2_ASSERT( b2IsLeaf( tree->nodes + proxyId ) );
 
@@ -793,8 +793,8 @@ void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int32_t proxyId, b2AABB aa
 	b2TreeNode* nodes = tree->nodes;
 
 	B2_ASSERT( b2IsValidAABB( aabb ) );
-	B2_ASSERT( aabb.upperBound.x - aabb.lowerBound.x < b2_huge );
-	B2_ASSERT( aabb.upperBound.y - aabb.lowerBound.y < b2_huge );
+	B2_ASSERT( aabb.upperBound.x - aabb.lowerBound.x < B2_HUGE );
+	B2_ASSERT( aabb.upperBound.y - aabb.lowerBound.y < B2_HUGE );
 	B2_ASSERT( 0 <= proxyId && proxyId < tree->nodeCapacity );
 	B2_ASSERT( b2IsLeaf( tree->nodes + proxyId ) );
 
