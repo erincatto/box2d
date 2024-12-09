@@ -7,7 +7,7 @@ extern float b2_lengthUnitsPerMeter;
 
 // Used to detect bad values. Positions greater than about 16km will have precision
 // problems, so 100km as a limit should be fine in all cases.
-#define b2_huge ( 100000.0f * b2_lengthUnitsPerMeter )
+#define B2_HUGE ( 100000.0f * b2_lengthUnitsPerMeter )
 
 // Maximum parallel workers. Used to size some static arrays.
 #define b2_maxWorkers 64
@@ -22,12 +22,12 @@ extern float b2_lengthUnitsPerMeter;
 #define b2_linearSlop ( 0.005f * b2_lengthUnitsPerMeter )
 
 // Maximum number of simultaneous worlds that can be allocated
-#define b2_maxWorlds 128
+#define B2_MAX_WORLDS 128
 
 // The maximum rotation of a body per time step. This limit is very large and is used
 // to prevent numerical problems. You shouldn't need to adjust this.
 // @warning increasing this to 0.5f * b2_pi or greater will break continuous collision.
-#define b2_maxRotation ( 0.25f * b2_pi )
+#define B2_MAX_ROTATION ( 0.25f * B2_PI )
 
 // @warning modifying this can have a significant impact on performance and stability
 #define b2_speculativeDistance ( 4.0f * b2_linearSlop )

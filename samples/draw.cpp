@@ -1328,6 +1328,8 @@ Draw::Draw()
 	m_smallFont = nullptr;
 	m_mediumFont = nullptr;
 	m_largeFont = nullptr;
+	m_regularFont = nullptr;
+	m_background = nullptr;
 }
 
 Draw::~Draw()
@@ -1339,6 +1341,7 @@ Draw::~Draw()
 	assert( m_solidCircles == nullptr );
 	assert( m_solidCapsules == nullptr );
 	assert( m_solidPolygons == nullptr );
+	assert( m_background == nullptr );
 }
 
 void Draw::Create()

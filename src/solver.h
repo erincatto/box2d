@@ -143,7 +143,7 @@ static inline b2Softness b2MakeSoft( float hertz, float zeta, float h )
 		return ( b2Softness ){ 0.0f, 1.0f, 0.0f };
 	}
 
-	float omega = 2.0f * b2_pi * hertz;
+	float omega = 2.0f * B2_PI * hertz;
 	float a1 = 2.0f * zeta + h * omega;
 	float a2 = h * omega * a1;
 	float a3 = 1.0f / ( 1.0f + a2 );

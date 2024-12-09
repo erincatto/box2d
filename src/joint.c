@@ -25,7 +25,7 @@ b2DistanceJointDef b2DefaultDistanceJointDef( void )
 {
 	b2DistanceJointDef def = { 0 };
 	def.length = 1.0f;
-	def.maxLength = b2_huge;
+	def.maxLength = B2_HUGE;
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;
 }
@@ -522,7 +522,7 @@ b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJointDef* de
 	b2RevoluteJoint empty = { 0 };
 	joint->revoluteJoint = empty;
 
-	joint->revoluteJoint.referenceAngle = b2ClampFloat( def->referenceAngle, -b2_pi, b2_pi );
+	joint->revoluteJoint.referenceAngle = b2ClampFloat( def->referenceAngle, -B2_PI, B2_PI );
 	joint->revoluteJoint.linearImpulse = b2Vec2_zero;
 	joint->revoluteJoint.axialMass = 0.0f;
 	joint->revoluteJoint.springImpulse = 0.0f;
@@ -533,8 +533,8 @@ b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJointDef* de
 	joint->revoluteJoint.dampingRatio = def->dampingRatio;
 	joint->revoluteJoint.lowerAngle = b2MinFloat( def->lowerAngle, def->upperAngle );
 	joint->revoluteJoint.upperAngle = b2MaxFloat( def->lowerAngle, def->upperAngle );
-	joint->revoluteJoint.lowerAngle = b2ClampFloat( joint->revoluteJoint.lowerAngle, -b2_pi, b2_pi );
-	joint->revoluteJoint.upperAngle = b2ClampFloat( joint->revoluteJoint.upperAngle, -b2_pi, b2_pi );
+	joint->revoluteJoint.lowerAngle = b2ClampFloat( joint->revoluteJoint.lowerAngle, -B2_PI, B2_PI );
+	joint->revoluteJoint.upperAngle = b2ClampFloat( joint->revoluteJoint.upperAngle, -B2_PI, B2_PI );
 	joint->revoluteJoint.maxMotorTorque = def->maxMotorTorque;
 	joint->revoluteJoint.motorSpeed = def->motorSpeed;
 	joint->revoluteJoint.enableSpring = def->enableSpring;
@@ -1266,7 +1266,7 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 			draw->DrawPoint( target, 4.0f, c1, draw->context );
 			draw->DrawPoint( pB, 4.0f, c1, draw->context );
 
-			b2HexColor c2 = b2_colorGray8;
+			b2HexColor c2 = b2_colorLightGray;
 			draw->DrawSegment( target, pB, c2, draw->context );
 		}
 		break;
@@ -1299,7 +1299,7 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 	{
 		b2HexColor colors[b2_graphColorCount] = { b2_colorRed,		 b2_colorOrange,	b2_colorYellow, b2_colorGreen,
 												  b2_colorCyan,		 b2_colorBlue,		b2_colorViolet, b2_colorPink,
-												  b2_colorChocolate, b2_colorGoldenrod, b2_colorCoral,	b2_colorBlack };
+												  b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,	b2_colorBlack };
 
 		int colorIndex = joint->colorIndex;
 		if ( colorIndex != B2_NULL_INDEX )

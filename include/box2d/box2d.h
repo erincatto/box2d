@@ -542,8 +542,9 @@ B2_API b2Filter b2Shape_GetFilter( b2ShapeId shapeId );
 /// @see b2ShapeDef::filter
 B2_API void b2Shape_SetFilter( b2ShapeId shapeId, b2Filter filter );
 
-/// Enable sensor events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors.
+/// Enable sensor events for this shape. Only applies to kinematic and dynamic bodies.
 /// @see b2ShapeDef::isSensor
+/// @warning changing this at run-time may lead to lost begin/end events
 B2_API void b2Shape_EnableSensorEvents( b2ShapeId shapeId, bool flag );
 
 /// Returns true if sensor events are enabled
@@ -551,6 +552,7 @@ B2_API bool b2Shape_AreSensorEventsEnabled( b2ShapeId shapeId );
 
 /// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors.
 /// @see b2ShapeDef::enableContactEvents
+/// @warning changing this at run-time may lead to lost begin/end events
 B2_API void b2Shape_EnableContactEvents( b2ShapeId shapeId, bool flag );
 
 /// Returns true if contact events are enabled

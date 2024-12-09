@@ -12,6 +12,7 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <vector>
 
 class BounceHouse : public Sample
 {
@@ -63,7 +64,7 @@ public:
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
-		m_shapeType = e_circleShape;
+		m_shapeType = e_boxShape;
 		m_bodyId = b2_nullBodyId;
 		m_enableHitEvents = true;
 
@@ -169,6 +170,11 @@ public:
 				g_draw.DrawCircle( e->point, 0.1f, b2_colorOrangeRed );
 				g_draw.DrawString( e->point, "%.1f", e->speed );
 			}
+		}
+
+		if ( m_stepCount == 1000 )
+		{
+			m_stepCount += 0;
 		}
 	}
 
@@ -498,7 +504,7 @@ public:
 			// Left slope
 			x = -3.0f * hx - m * hx - m * hy;
 			y = hy + m * hx - m * hy;
-			transform.q = b2MakeRot( -0.25f * b2_pi );
+			transform.q = b2MakeRot( -0.25f * B2_PI );
 
 			{
 				transform.p = { x, y };
@@ -547,7 +553,7 @@ public:
 
 			x = 3.0f * hx + m * hx + m * hy;
 			y = hy + m * hx - m * hy;
-			transform.q = b2MakeRot( 0.25f * b2_pi );
+			transform.q = b2MakeRot( 0.25f * B2_PI );
 
 			{
 				transform.p = { x, y };
@@ -717,7 +723,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Polygon box = b2MakeOffsetBox( 2.0f, 0.05f, { -offset, 0.0f }, b2MakeRot( b2_pi ) );
+			b2Polygon box = b2MakeOffsetBox( 2.0f, 0.05f, { -offset, 0.0f }, b2MakeRot( B2_PI ) );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 		}
 	}
@@ -947,7 +953,7 @@ public:
 		float h = 0.05f;
 		for ( int j = 0; j <= count; ++j )
 		{
-			b2Polygon box = b2MakeOffsetBox( w, h, { x, 0.0f }, b2Rot_identity );
+			b2Polygon box = b2MakeOffsetBox( 0.5f * w, h, { x, 0.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 			x += w;
 		}
@@ -1008,7 +1014,7 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 		bodyDef.position = { 0.0f, 4.0f };
-		bodyDef.rotation = b2MakeRot( 0.5f * b2_pi );
+		bodyDef.rotation = b2MakeRot( 0.5f * B2_PI );
 		bodyDef.linearVelocity = { 0.0f, 0.0f };
 		bodyDef.angularVelocity = -0.5f;
 
@@ -1247,15 +1253,15 @@ public:
 			jointDef.motorSpeed = 0.0f;
 			jointDef.localAnchorA = p1;
 			jointDef.bodyIdB = leftFlipperId;
-			jointDef.lowerAngle = -30.0f * b2_pi / 180.0f;
-			jointDef.upperAngle = 5.0f * b2_pi / 180.0f;
+			jointDef.lowerAngle = -30.0f * B2_PI / 180.0f;
+			jointDef.upperAngle = 5.0f * B2_PI / 180.0f;
 			m_leftJointId = b2CreateRevoluteJoint( m_worldId, &jointDef );
 
 			jointDef.motorSpeed = 0.0f;
 			jointDef.localAnchorA = p2;
 			jointDef.bodyIdB = rightFlipperId;
-			jointDef.lowerAngle = -5.0f * b2_pi / 180.0f;
-			jointDef.upperAngle = 30.0f * b2_pi / 180.0f;
+			jointDef.lowerAngle = -5.0f * B2_PI / 180.0f;
+			jointDef.upperAngle = 30.0f * B2_PI / 180.0f;
 			m_rightJointId = b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 

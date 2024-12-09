@@ -69,7 +69,7 @@ public:
 			bodyDef.position = { -4.0f, 5.0f };
 			m_platformId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Polygon box = b2MakeOffsetBox( 0.5f, 4.0f, { 4.0f, 0.0f }, b2MakeRot( 0.5f * b2_pi ) );
+			b2Polygon box = b2MakeOffsetBox( 0.5f, 4.0f, { 4.0f, 0.0f }, b2MakeRot( 0.5f * B2_PI ) );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.friction = 0.6f;
@@ -333,7 +333,7 @@ public:
 		// Chain shape
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
-			bodyDef.rotation = b2MakeRot( 0.25f * b2_pi );
+			bodyDef.rotation = b2MakeRot( 0.25f * B2_PI );
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2Vec2 points[4] = { { 8.0f, 7.0f }, { 7.0f, 8.0f }, { 6.0f, 8.0f }, { 5.0f, 7.0f } };
@@ -495,7 +495,7 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { 0.0f, 3.0f };
-			bodyDef.rotation = b2MakeRot( 0.25f * b2_pi );
+			bodyDef.rotation = b2MakeRot( 0.25f * B2_PI );
 			m_weebleId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2Capsule capsule = { { 0.0f, -1.0f }, { 0.0f, 1.0f }, 1.0f };
@@ -528,7 +528,7 @@ public:
 		ImGui::Begin( "Weeble", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 		if ( ImGui::Button( "Teleport" ) )
 		{
-			b2Body_SetTransform( m_weebleId, { 0.0f, 5.0f }, b2MakeRot( 0.95 * b2_pi ) );
+			b2Body_SetTransform( m_weebleId, { 0.0f, 5.0f }, b2MakeRot( 0.95 * B2_PI ) );
 		}
 
 		if ( ImGui::Button( "Explode" ) )
@@ -633,7 +633,7 @@ public:
 			bodyDef.enableSleep = false;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { 0.0f, 1.0f }, b2MakeRot( 0.25f * b2_pi ) );
+			b2Polygon box = b2MakeOffsetBox( 1.0f, 1.0f, { 0.0f, 1.0f }, b2MakeRot( 0.25f * B2_PI ) );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 		}
@@ -791,7 +791,7 @@ public:
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { 0.0f, 3.0f };
 			bodyDef.angularVelocity = 0.5f;
-			bodyDef.rotation = b2MakeRot( 0.25f * b2_pi );
+			bodyDef.rotation = b2MakeRot( 0.25f * B2_PI );
 
 			m_badBodyId = b2CreateBody( m_worldId, &bodyDef );
 
@@ -808,7 +808,7 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { 2.0f, 3.0f };
-			bodyDef.rotation = b2MakeRot( 0.25f * b2_pi );
+			bodyDef.rotation = b2MakeRot( 0.25f * B2_PI );
 
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 

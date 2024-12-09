@@ -372,7 +372,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 		return;
 	}
 
-	b2TracyCZoneNC( update_pairs, "Pairs", b2_colorMagenta, true );
+	b2TracyCZoneNC( update_pairs, "Pairs", b2_colorMediumSlateBlue, true );
 
 	b2StackAllocator* alloc = &world->stackAllocator;
 
@@ -395,7 +395,9 @@ void b2UpdateBroadPhasePairs( b2World* world )
 		world->taskCount += 1;
 	}
 
-	b2TracyCZoneNC( create_contacts, "Create Contacts", b2_colorGold, true );
+	// todo_erin could start tree rebuild here
+
+	b2TracyCZoneNC( create_contacts, "Create Contacts", b2_colorCoral, true );
 
 	// Single-threaded work
 	// - Clear move flags

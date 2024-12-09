@@ -848,7 +848,7 @@ void b2SplitIsland( b2World* world, int baseId )
 // are interacting with these data structures.
 void b2SplitIslandTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
 {
-	b2TracyCZoneNC( split, "Split Island", b2_colorHoneydew, true );
+	b2TracyCZoneNC( split, "Split Island", b2_colorOlive, true );
 
 	B2_MAYBE_UNUSED( startIndex );
 	B2_MAYBE_UNUSED( endIndex );

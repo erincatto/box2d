@@ -8,13 +8,7 @@
 
 #include <stdbool.h>
 
-typedef struct b2Circle b2Circle;
-typedef struct b2Capsule b2Capsule;
 typedef struct b2DistanceCache b2DistanceCache;
-typedef struct b2Polygon b2Polygon;
-typedef struct b2Segment b2Segment;
-typedef struct b2ChainSegment b2ChainSegment;
-
 typedef struct b2Hull b2Hull;
 
 /**

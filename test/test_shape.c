@@ -19,9 +19,9 @@ static int ShapeMassTest( void )
 {
 	{
 		b2MassData md = b2ComputeCircleMass( &circle, 1.0f );
-		ENSURE_SMALL( md.mass - b2_pi, FLT_EPSILON );
+		ENSURE_SMALL( md.mass - B2_PI, FLT_EPSILON );
 		ENSURE( md.center.x == 1.0f && md.center.y == 0.0f );
-		ENSURE_SMALL( md.rotationalInertia - 1.5f * b2_pi, FLT_EPSILON );
+		ENSURE_SMALL( md.rotationalInertia - 1.5f * B2_PI, FLT_EPSILON );
 	}
 
 	{
@@ -36,8 +36,8 @@ static int ShapeMassTest( void )
 
 		// Approximate capsule using convex hull
 		b2Vec2 points[2 * N];
-		float d = b2_pi / ( N - 1.0f );
-		float angle = -0.5f * b2_pi;
+		float d = B2_PI / ( N - 1.0f );
+		float angle = -0.5f * B2_PI;
 		for ( int i = 0; i < N; ++i )
 		{
 			points[i].x = 1.0f + radius * cosf( angle );
@@ -45,7 +45,7 @@ static int ShapeMassTest( void )
 			angle += d;
 		}
 
-		angle = 0.5f * b2_pi;
+		angle = 0.5f * B2_PI;
 		for ( int i = N; i < 2 * N; ++i )
 		{
 			points[i].x = -1.0f + radius * cosf( angle );

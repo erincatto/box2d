@@ -522,10 +522,10 @@ void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transfor
 	b2Vec2 pB = b2TransformPoint( transformB, base->localOriginAnchorB );
 	b2Vec2 axis = b2RotateVector( transformA.q, joint->localAxisA );
 
-	b2HexColor c1 = b2_colorGray7;
+	b2HexColor c1 = b2_colorGray;
 	b2HexColor c2 = b2_colorGreen;
 	b2HexColor c3 = b2_colorRed;
-	b2HexColor c4 = b2_colorGray4;
+	b2HexColor c4 = b2_colorDimGray;
 	b2HexColor c5 = b2_colorBlue;
 
 	draw->DrawSegment( pA, pB, c5, draw->context );

@@ -521,14 +521,14 @@ float b2GetShapePerimeter( const b2Shape* shape )
 	{
 		case b2_capsuleShape:
 			return 2.0f * b2Length( b2Sub( shape->capsule.center1, shape->capsule.center2 ) ) +
-				   2.0f * b2_pi * shape->capsule.radius;
+				   2.0f * B2_PI * shape->capsule.radius;
 		case b2_circleShape:
-			return 2.0f * b2_pi * shape->circle.radius;
+			return 2.0f * B2_PI * shape->circle.radius;
 		case b2_polygonShape:
 		{
 			const b2Vec2* points = shape->polygon.vertices;
 			int count = shape->polygon.count;
-			float perimeter = 2.0f * b2_pi * shape->polygon.radius;
+			float perimeter = 2.0f * B2_PI * shape->polygon.radius;
 			B2_ASSERT( count > 0 );
 			b2Vec2 prev = points[count - 1];
 			for ( int i = 0; i < count; ++i )
@@ -645,7 +645,7 @@ b2ShapeExtent b2ComputeShapeExtent( const b2Shape* shape, b2Vec2 localCenter )
 		case b2_polygonShape:
 		{
 			const b2Polygon* poly = &shape->polygon;
-			float minExtent = b2_huge;
+			float minExtent = B2_HUGE;
 			float maxExtentSqr = 0.0f;
 			int count = poly->count;
 			for ( int i = 0; i < count; ++i )

@@ -6,12 +6,14 @@
 #include "box2d/id.h"
 #include "box2d/types.h"
 
-// todo this include is slow
-#include "TaskScheduler.h"
-
 #define ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
 
 struct Settings;
+
+namespace enki
+{
+class TaskScheduler;
+};
 
 #ifdef NDEBUG
 constexpr bool g_sampleDebug = false;
@@ -34,23 +36,6 @@ struct ContactPoint
 	int32_t constraintIndex;
 	int32_t color;
 };
-
-class SampleTask : public enki::ITaskSet
-{
-public:
-	SampleTask() = default;
-
-	void ExecuteRange( enki::TaskSetPartition range, uint32_t threadIndex ) override
-	{
-		m_task( range.start, range.end, threadIndex, m_taskContext );
-	}
-
-	b2TaskCallback* m_task = nullptr;
-	void* m_taskContext = nullptr;
-};
-
-constexpr int32_t maxTasks = 64;
-constexpr int32_t maxThreads = 64;
 
 class Sample
 {
@@ -77,8 +62,12 @@ public:
 	friend class BoundaryListener;
 	friend class ContactListener;
 
-	enki::TaskScheduler m_scheduler;
-	SampleTask m_tasks[maxTasks];
+	static constexpr int m_maxTasks = 64;
+	static constexpr int m_maxThreads = 64;
+
+	enki::TaskScheduler* m_scheduler;
+	class SampleTask* m_tasks;
+
 	int32_t m_taskCount;
 	int m_threadCount;
 

@@ -22,7 +22,7 @@ public:
 	enum ShapeType
 	{
 		e_circleShape = 0,
-		e_caspuleShape,
+		e_capsuleShape,
 		e_mixShape,
 		e_compoundShape,
 		e_humanShape,
@@ -218,7 +218,7 @@ public:
 					circle.radius = RandomFloatRange( 0.25f, 0.75f );
 					b2CreateCircleShape( m_bodies[index], &shapeDef, &circle );
 				}
-				else if ( m_shapeType == e_caspuleShape )
+				else if ( m_shapeType == e_capsuleShape )
 				{
 					m_bodies[index] = b2CreateBody( m_worldId, &bodyDef );
 					capsule.radius = RandomFloatRange( 0.25f, 0.5f );
@@ -394,7 +394,7 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_kinematicBody;
 		bodyDef.position = { position.x, position.y };
-		bodyDef.angularVelocity = ( b2_pi / 180.0f ) * m_angularSpeed;
+		bodyDef.angularVelocity = ( B2_PI / 180.0f ) * m_angularSpeed;
 		b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 		m_tumblerIds[index] = bodyId;
 
@@ -482,7 +482,7 @@ public:
 		{
 			for ( int i = 0; i < m_tumblerCount; ++i )
 			{
-				b2Body_SetAngularVelocity( m_tumblerIds[i], ( b2_pi / 180.0f ) * m_angularSpeed );
+				b2Body_SetAngularVelocity( m_tumblerIds[i], ( B2_PI / 180.0f ) * m_angularSpeed );
 				b2Body_SetAwake( m_tumblerIds[i], true );
 			}
 		}
@@ -1476,6 +1476,16 @@ public:
 		CreateSpinner( m_worldId );
 	}
 
+	void Step( Settings& settings ) override
+	{
+		Sample::Step( settings );
+
+		if ( m_stepCount == 2000 )
+		{
+			m_stepCount += 0;
+		}
+	}
+
 	static Sample* Create( Settings& settings )
 	{
 		return new BenchmarkSpinner( settings );
@@ -1510,6 +1520,11 @@ public:
 		}
 
 		Sample::Step( settings );
+
+		if (m_stepCount == 1000)
+		{
+			m_stepCount += 0;
+		}
 	}
 
 	static Sample* Create( Settings& settings )
