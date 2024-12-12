@@ -21,7 +21,7 @@ typedef struct b2Hull b2Hull;
 
 /// The maximum number of vertices on a convex polygon. Changing this affects performance even if you
 /// don't use more vertices.
-#define b2_maxPolygonVertices 8
+#define B2_MAX_POLYGON_VERTICES 8
 
 /// Low level ray cast input data
 typedef struct b2RayCastInput
@@ -42,7 +42,7 @@ typedef struct b2RayCastInput
 typedef struct b2ShapeCastInput
 {
 	/// A point cloud to cast
-	b2Vec2 points[b2_maxPolygonVertices];
+	b2Vec2 points[B2_MAX_POLYGON_VERTICES];
 
 	/// The number of points
 	int32_t count;
@@ -115,17 +115,17 @@ typedef struct b2Capsule
 
 /// A solid convex polygon. It is assumed that the interior of the polygon is to
 /// the left of each edge.
-/// Polygons have a maximum number of vertices equal to b2_maxPolygonVertices.
+/// Polygons have a maximum number of vertices equal to B2_MAX_POLYGON_VERTICES.
 /// In most cases you should not need many vertices for a convex polygon.
 /// @warning DO NOT fill this out manually, instead use a helper function like
 /// b2MakePolygon or b2MakeBox.
 typedef struct b2Polygon
 {
 	/// The polygon vertices
-	b2Vec2 vertices[b2_maxPolygonVertices];
+	b2Vec2 vertices[B2_MAX_POLYGON_VERTICES];
 
 	/// The outward normal vectors of the polygon sides
-	b2Vec2 normals[b2_maxPolygonVertices];
+	b2Vec2 normals[B2_MAX_POLYGON_VERTICES];
 
 	/// The centroid of the polygon
 	b2Vec2 centroid;
@@ -273,7 +273,7 @@ B2_API b2CastOutput b2ShapeCastPolygon( const b2ShapeCastInput* input, const b2P
 typedef struct b2Hull
 {
 	/// The final points of the hull
-	b2Vec2 points[b2_maxPolygonVertices];
+	b2Vec2 points[B2_MAX_POLYGON_VERTICES];
 
 	/// The number of points
 	int32_t count;
@@ -284,7 +284,7 @@ typedef struct b2Hull
 /// - all points very close together
 /// - all points on a line
 /// - less than 3 points
-/// - more than b2_maxPolygonVertices points
+/// - more than B2_MAX_POLYGON_VERTICES points
 /// This welds close points and removes collinear points.
 /// @warning Do not modify a hull once it has been computed
 B2_API b2Hull b2ComputeHull( const b2Vec2* points, int32_t count );
@@ -333,7 +333,7 @@ B2_API b2SegmentDistanceResult b2SegmentDistance( b2Vec2 p1, b2Vec2 q1, b2Vec2 p
 typedef struct b2DistanceProxy
 {
 	/// The point cloud
-	b2Vec2 points[b2_maxPolygonVertices];
+	b2Vec2 points[B2_MAX_POLYGON_VERTICES];
 
 	/// The number of points
 	int32_t count;
@@ -601,20 +601,12 @@ B2_API b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segment
  * A dynamic AABB tree broad-phase, inspired by Nathanael Presson's btDbvt.
  * A dynamic tree arranges data in a binary tree to accelerate
  * queries such as AABB queries and ray casts. Leaf nodes are proxies
- * with an AABB. These are used to hold a user collision object, such as a reference to a b2Shape.
+ * with an AABB. These are used to hold a user collision object.
  * Nodes are pooled and relocatable, so I use node indices rather than pointers.
  * The dynamic tree is made available for advanced users that would like to use it to organize
  * spatial game data besides rigid bodies.
- *
- * @note This is an advanced feature and normally not used by applications directly.
  * @{
  */
-
-/// The default category bit for a tree proxy. Used for collision filtering.
-#define b2_defaultCategoryBits ( 1 )
-
-/// Convenience mask bits to use when you don't need collision filtering and just want all results.
-#define b2_defaultMaskBits ( UINT64_MAX )
 
 /// A node in the dynamic tree. This is private data placed here for performance reasons.
 typedef struct b2TreeNode
@@ -653,7 +645,7 @@ typedef struct b2TreeNode
 /// The dynamic tree structure. This should be considered private data.
 /// It is placed here for performance reasons.
 typedef struct b2DynamicTree
-{
+{  
 	/// The tree nodes
 	b2TreeNode* nodes;
 

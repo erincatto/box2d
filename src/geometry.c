@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
-#include "aabb.h"
-#include "core.h"
+#include "constants.h"
 #include "shape.h"
 
 #include "box2d/collision.h"
@@ -11,7 +10,7 @@
 #include <float.h>
 #include <stddef.h>
 
-_Static_assert( b2_maxPolygonVertices > 2, "must be 3 or more" );
+_Static_assert( B2_MAX_POLYGON_VERTICES > 2, "must be 3 or more" );
 
 bool b2IsValidRay( const b2RayCastInput* input )
 {
@@ -319,7 +318,7 @@ b2MassData b2ComputePolygonMass( const b2Polygon* shape, float density )
 		return b2ComputeCapsuleMass( &capsule, density );
 	}
 
-	b2Vec2 vertices[b2_maxPolygonVertices] = { 0 };
+	b2Vec2 vertices[B2_MAX_POLYGON_VERTICES] = { 0 };
 	int32_t count = shape->count;
 	float radius = shape->radius;
 

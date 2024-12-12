@@ -554,7 +554,7 @@ public:
 					p->fatBox.lowerBound = b2Sub( p->box.lowerBound, aabbMargin );
 					p->fatBox.upperBound = b2Add( p->box.upperBound, aabbMargin );
 
-					p->proxyId = b2DynamicTree_CreateProxy( &m_tree, p->fatBox, b2_defaultCategoryBits, m_proxyCount );
+					p->proxyId = b2DynamicTree_CreateProxy( &m_tree, p->fatBox, B2_DEFAULT_CATEGORY_BITS, m_proxyCount );
 					p->rayStamp = -1;
 					p->queryStamp = -1;
 					p->moved = false;
@@ -682,7 +682,7 @@ public:
 		if ( m_queryDrag )
 		{
 			b2AABB box = { b2Min( m_startPoint, m_endPoint ), b2Max( m_startPoint, m_endPoint ) };
-			b2DynamicTree_Query( &m_tree, box, b2_defaultMaskBits, QueryCallback, this );
+			b2DynamicTree_Query( &m_tree, box, B2_DEFAULT_MASK_BITS, QueryCallback, this );
 
 			g_draw.DrawAABB( box, b2_colorWhite );
 		}
@@ -693,7 +693,7 @@ public:
 		if ( m_rayDrag )
 		{
 			b2RayCastInput input = { m_startPoint, b2Sub( m_endPoint, m_startPoint ), 1.0f };
-			b2TreeStats result = b2DynamicTree_RayCast( &m_tree, &input, b2_defaultMaskBits, RayCallback, this );
+			b2TreeStats result = b2DynamicTree_RayCast( &m_tree, &input, B2_DEFAULT_MASK_BITS, RayCallback, this );
 
 			g_draw.DrawSegment( m_startPoint, m_endPoint, b2_colorWhite );
 			g_draw.DrawPoint( m_startPoint, 5.0f, b2_colorGreen );
@@ -2162,7 +2162,7 @@ public:
 		{
 			b2World_OverlapPolygon( m_worldId, &m_queryBox, transform, b2DefaultQueryFilter(), OverlapWorld::OverlapResultFcn,
 									this );
-			b2Vec2 points[b2_maxPolygonVertices] = { 0 };
+			b2Vec2 points[B2_MAX_POLYGON_VERTICES] = { 0 };
 			for ( int i = 0; i < m_queryBox.count; ++i )
 			{
 				points[i] = b2TransformPoint( transform, m_queryBox.vertices[i] );
@@ -3316,7 +3316,7 @@ public:
 						   output.iterations, output.fraction, distanceOutput.distance );
 		m_textLine += m_textIncrement;
 
-		b2Vec2 vertices[b2_maxPolygonVertices];
+		b2Vec2 vertices[B2_MAX_POLYGON_VERTICES];
 
 		for ( int i = 0; i < m_countA; ++i )
 		{
@@ -3392,11 +3392,11 @@ public:
 		g_draw.DrawSegment( m_transformB.p, b2Add( m_transformB.p, m_translationB ), b2_colorGray );
 	}
 
-	b2Vec2 m_vAs[b2_maxPolygonVertices];
+	b2Vec2 m_vAs[B2_MAX_POLYGON_VERTICES];
 	int m_countA;
 	float m_radiusA;
 
-	b2Vec2 m_vBs[b2_maxPolygonVertices];
+	b2Vec2 m_vBs[B2_MAX_POLYGON_VERTICES];
 	int m_countB;
 	float m_radiusB;
 
@@ -3497,7 +3497,7 @@ public:
 		//                        b2_toiMaxRootIters);
 		m_textLine += m_textIncrement;
 
-		b2Vec2 vertices[b2_maxPolygonVertices];
+		b2Vec2 vertices[B2_MAX_POLYGON_VERTICES];
 
 		// Draw A
 		b2Transform transformA = b2GetSweepTransform( &sweepA, 0.0f );

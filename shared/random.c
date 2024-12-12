@@ -7,7 +7,7 @@ uint32_t g_seed = RAND_SEED;
 
 b2Polygon RandomPolygon( float extent )
 {
-	b2Vec2 points[b2_maxPolygonVertices];
+	b2Vec2 points[B2_MAX_POLYGON_VERTICES];
 	int count = 3 + RandomInt() % 6;
 	for ( int i = 0; i < count; ++i )
 	{

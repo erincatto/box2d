@@ -340,21 +340,21 @@ void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex, void* 
 		queryContext.queryShapeIndex = b2DynamicTree_GetUserData( baseTree, proxyId );
 
 		// Query trees. Only dynamic proxies collide with kinematic and static proxies.
-		// Using b2_defaultMaskBits so that b2Filter::groupIndex works.
+		// Using B2_DEFAULT_MASK_BITS so that b2Filter::groupIndex works.
 		if ( proxyType == b2_dynamicBody )
 		{
-			// consider using bits = groupIndex > 0 ? b2_defaultMaskBits : maskBits
+			// consider using bits = groupIndex > 0 ? B2_DEFAULT_MASK_BITS : maskBits
 			queryContext.queryTreeType = b2_kinematicBody;
-			b2DynamicTree_Query( bp->trees + b2_kinematicBody, fatAABB, b2_defaultMaskBits, b2PairQueryCallback, &queryContext );
+			b2DynamicTree_Query( bp->trees + b2_kinematicBody, fatAABB, B2_DEFAULT_MASK_BITS, b2PairQueryCallback, &queryContext );
 
 			queryContext.queryTreeType = b2_staticBody;
-			b2DynamicTree_Query( bp->trees + b2_staticBody, fatAABB, b2_defaultMaskBits, b2PairQueryCallback, &queryContext );
+			b2DynamicTree_Query( bp->trees + b2_staticBody, fatAABB, B2_DEFAULT_MASK_BITS, b2PairQueryCallback, &queryContext );
 		}
 
 		// All proxies collide with dynamic proxies
-		// Using b2_defaultMaskBits so that b2Filter::groupIndex works.
+		// Using B2_DEFAULT_MASK_BITS so that b2Filter::groupIndex works.
 		queryContext.queryTreeType = b2_dynamicBody;
-		b2DynamicTree_Query( bp->trees + b2_dynamicBody, fatAABB, b2_defaultMaskBits, b2PairQueryCallback, &queryContext );
+		b2DynamicTree_Query( bp->trees + b2_dynamicBody, fatAABB, B2_DEFAULT_MASK_BITS, b2PairQueryCallback, &queryContext );
 	}
 
 	b2TracyCZoneEnd( pair_task );

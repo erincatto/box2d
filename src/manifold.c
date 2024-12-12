@@ -1257,8 +1257,8 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 
 	// Get polygonB in frameA
 	int32_t count = polygonB->count;
-	b2Vec2 vertices[b2_maxPolygonVertices];
-	b2Vec2 normals[b2_maxPolygonVertices];
+	b2Vec2 vertices[B2_MAX_POLYGON_VERTICES];
+	b2Vec2 normals[B2_MAX_POLYGON_VERTICES];
 	for ( int32_t i = 0; i < count; ++i )
 	{
 		vertices[i] = b2TransformPoint( xf, polygonB->vertices[i] );
