@@ -46,6 +46,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 void DestroyHuman( Human* human );
 
+void Human_SetVelocity( Human* human, b2Vec2 velocity );
 void Human_ApplyRandomAngularImpulse( Human* human, float magnitude );
 void Human_SetJointFrictionTorque( Human* human, float torque );
 void Human_SetJointSpringHertz( Human* human, float hertz );

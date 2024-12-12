@@ -947,7 +947,7 @@ public:
 		float h = 0.05f;
 		for ( int j = 0; j <= count; ++j )
 		{
-			b2Polygon box = b2MakeOffsetBox( w, h, { x, 0.0f }, b2Rot_identity );
+			b2Polygon box = b2MakeOffsetBox( 0.5f * w, h, { x, 0.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 			x += w;
 		}

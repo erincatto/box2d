@@ -76,7 +76,7 @@ void b2Yield()
 	SwitchToThread();
 }
 
-#elif defined( __linux__ ) || defined( __APPLE__ ) || defined( __EMSCRIPTEN__ )
+#elif defined( __linux__ ) || defined( __EMSCRIPTEN__ )
 
 #include <sched.h>
 #include <sys/time.h>
@@ -84,6 +84,115 @@ void b2Yield()
 
 b2Timer b2CreateTimer( void )
 {
+	// todo_erin
+
+	//struct timespec ts;
+	//clock_gettime( CLOCK_MONOTONIC_RAW, &ts );
+
+	//struct timespec res;
+	//clock_getres( CLOCK_MONOTONIC, &res );
+
+	b2Timer timer;
+	struct timeval t;
+	gettimeofday( &t, 0 );
+	timer.start_sec = t.tv_sec;
+	timer.start_usec = t.tv_usec;
+	return timer;
+}
+
+float b2GetMilliseconds( const b2Timer* timer )
+{
+	struct timeval t;
+	gettimeofday( &t, 0 );
+	time_t start_sec = timer->start_sec;
+	suseconds_t start_usec = (suseconds_t)timer->start_usec;
+
+	// http://www.gnu.org/software/libc/manual/html_node/Elapsed-Time.html
+	if ( t.tv_usec < start_usec )
+	{
+		int nsec = ( start_usec - t.tv_usec ) / 1000000 + 1;
+		start_usec -= 1000000 * nsec;
+		start_sec += nsec;
+	}
+
+	if ( t.tv_usec - start_usec > 1000000 )
+	{
+		int nsec = ( t.tv_usec - start_usec ) / 1000000;
+		start_usec += 1000000 * nsec;
+		start_sec -= nsec;
+	}
+	return 1000.0f * ( t.tv_sec - start_sec ) + 0.001f * ( t.tv_usec - start_usec );
+}
+
+float b2GetMillisecondsAndReset( b2Timer* timer )
+{
+	struct timeval t;
+	gettimeofday( &t, 0 );
+	time_t start_sec = timer->start_sec;
+	suseconds_t start_usec = (suseconds_t)timer->start_usec;
+
+	// http://www.gnu.org/software/libc/manual/html_node/Elapsed-Time.html
+	if ( t.tv_usec < start_usec )
+	{
+		int nsec = ( start_usec - t.tv_usec ) / 1000000 + 1;
+		start_usec -= 1000000 * nsec;
+		start_sec += nsec;
+	}
+
+	if ( t.tv_usec - start_usec > 1000000 )
+	{
+		int nsec = ( t.tv_usec - start_usec ) / 1000000;
+		start_usec += 1000000 * nsec;
+		start_sec -= nsec;
+	}
+
+	timer->start_sec = t.tv_sec;
+	timer->start_usec = t.tv_usec;
+
+	return 1000.0f * ( t.tv_sec - start_sec ) + 0.001f * ( t.tv_usec - start_usec );
+}
+
+void b2SleepMilliseconds( int milliseconds )
+{
+	struct timespec ts;
+	ts.tv_sec = milliseconds / 1000;
+	ts.tv_nsec = ( milliseconds % 1000 ) * 1000000;
+	nanosleep( &ts, NULL );
+}
+
+void b2Yield()
+{
+	sched_yield();
+}
+
+#elif defined( __APPLE__ )
+
+#include <sched.h>
+#include <sys/time.h>
+#include <time.h>
+
+//#include <mach/mach_time.h>
+
+b2Timer b2CreateTimer( void )
+{
+	// todo_erin
+	//#include <mach/mach_time.h>
+
+	//// Get current time
+	//uint64_t start = mach_absolute_time();
+
+	//// To convert to nanoseconds, you'll need to use mach_timebase_info
+	//mach_timebase_info_data_t timebase;
+	//mach_timebase_info( &timebase );
+
+	//// Convert to nanoseconds
+	//uint64_t elapsed_ns = ( start * timebase.numer ) / timebase.denom;
+
+	//mach_timebase_info_data_t timebase;
+	//mach_timebase_info( &timebase );
+	//// timebase.numer and timebase.denom can be used to calculate frequency
+	//// Specifically, frequency = 1e9 / (timebase.numer / timebase.denom)
+
 	b2Timer timer;
 	struct timeval t;
 	gettimeofday( &t, 0 );
