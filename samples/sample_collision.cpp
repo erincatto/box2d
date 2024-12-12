@@ -12,6 +12,7 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <stdlib.h>
 
 constexpr int SIMPLEX_CAPACITY = 20;
 
@@ -195,7 +196,7 @@ public:
 		ImGui::SliderFloat( "x offset", &m_transform.p.x, -2.0f, 2.0f, "%.2f" );
 		ImGui::SliderFloat( "y offset", &m_transform.p.y, -2.0f, 2.0f, "%.2f" );
 
-		if ( ImGui::SliderFloat( "angle", &m_angle, -b2_pi, b2_pi, "%.2f" ) )
+		if ( ImGui::SliderFloat( "angle", &m_angle, -B2_PI, B2_PI, "%.2f" ) )
 		{
 			m_transform.q = b2MakeRot( m_angle );
 		}
@@ -259,7 +260,7 @@ public:
 		else if ( m_rotating )
 		{
 			float dx = p.x - m_startPoint.x;
-			m_angle = b2ClampFloat( m_baseAngle + 1.0f * dx, -b2_pi, b2_pi );
+			m_angle = b2ClampFloat( m_baseAngle + 1.0f * dx, -B2_PI, B2_PI );
 			m_transform.q = b2MakeRot( m_angle );
 		}
 	}
@@ -925,7 +926,7 @@ public:
 		ImGui::SliderFloat( "x offset", &m_transform.p.x, -2.0f, 2.0f, "%.2f" );
 		ImGui::SliderFloat( "y offset", &m_transform.p.y, -2.0f, 2.0f, "%.2f" );
 
-		if ( ImGui::SliderFloat( "angle", &m_angle, -b2_pi, b2_pi, "%.2f" ) )
+		if ( ImGui::SliderFloat( "angle", &m_angle, -B2_PI, B2_PI, "%.2f" ) )
 		{
 			m_transform.q = b2MakeRot( m_angle );
 		}
@@ -1001,7 +1002,7 @@ public:
 		else if ( m_rotating )
 		{
 			float dx = p.x - m_startPosition.x;
-			m_angle = b2ClampFloat( m_baseAngle + 0.5f * dx, -b2_pi, b2_pi );
+			m_angle = b2ClampFloat( m_baseAngle + 0.5f * dx, -B2_PI, B2_PI );
 			m_transform.q = b2MakeRot( m_angle );
 		}
 	}
@@ -1471,7 +1472,7 @@ public:
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.position = { x, y };
-		bodyDef.rotation = b2MakeRot( RandomFloatRange( -b2_pi, b2_pi ) );
+		bodyDef.rotation = b2MakeRot( RandomFloatRange( -B2_PI, B2_PI ) );
 
 		int mod = m_bodyIndex % 3;
 		if (mod == 0)
@@ -1674,7 +1675,7 @@ public:
 		m_textLine += m_textIncrement;
 
 		b2HexColor color1 = b2_colorGreen;
-		b2HexColor color2 = b2_colorGray8;
+		b2HexColor color2 = b2_colorLightGray;
 		b2HexColor color3 = b2_colorMagenta;
 
 		b2Vec2 rayTranslation = b2Sub( m_rayEnd, m_rayStart );
@@ -1972,7 +1973,7 @@ public:
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.position = { x, y };
-		bodyDef.rotation = b2MakeRot( RandomFloatRange( -b2_pi, b2_pi ) );
+		bodyDef.rotation = b2MakeRot( RandomFloatRange( -B2_PI, B2_PI ) );
 
 		m_bodyIds[m_bodyIndex] = b2CreateBody( m_worldId, &bodyDef );
 
@@ -2283,7 +2284,7 @@ public:
 		ImGui::SliderFloat( "x offset", &m_transform.p.x, -2.0f, 2.0f, "%.2f" );
 		ImGui::SliderFloat( "y offset", &m_transform.p.y, -2.0f, 2.0f, "%.2f" );
 
-		if ( ImGui::SliderFloat( "angle", &m_angle, -b2_pi, b2_pi, "%.2f" ) )
+		if ( ImGui::SliderFloat( "angle", &m_angle, -B2_PI, B2_PI, "%.2f" ) )
 		{
 			m_transform.q = b2MakeRot( m_angle );
 		}
@@ -2346,7 +2347,7 @@ public:
 		else if ( m_rotating )
 		{
 			float dx = p.x - m_startPoint.x;
-			m_angle = b2ClampFloat( m_baseAngle + 1.0f * dx, -b2_pi, b2_pi );
+			m_angle = b2ClampFloat( m_baseAngle + 1.0f * dx, -B2_PI, B2_PI );
 			m_transform.q = b2MakeRot( m_angle );
 		}
 	}
@@ -2393,7 +2394,7 @@ public:
 		b2Vec2 increment = { 4.0f, 0.0f };
 
 		b2HexColor color1 = b2_colorAquamarine;
-		b2HexColor color2 = b2_colorPaleGoldenrod;
+		b2HexColor color2 = b2_colorPaleGoldenRod;
 
 		if ( m_enableCaching == false )
 		{
@@ -2508,7 +2509,7 @@ public:
 		// box-capsule
 		{
 			b2Capsule capsule = { { -0.4f, 0.0f }, { -0.1f, 0.0f }, 0.1f };
-			b2Polygon box = b2MakeOffsetBox( 0.25f, 1.0f, { 1.0f, -1.0f }, b2MakeRot( 0.25f * b2_pi ) );
+			b2Polygon box = b2MakeOffsetBox( 0.25f, 1.0f, { 1.0f, -1.0f }, b2MakeRot( 0.25f * B2_PI ) );
 
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
@@ -2968,7 +2969,7 @@ public:
 		ImGui::SliderFloat( "x Offset", &m_transform.p.x, -2.0f, 2.0f, "%.2f" );
 		ImGui::SliderFloat( "y Offset", &m_transform.p.y, -2.0f, 2.0f, "%.2f" );
 
-		if ( ImGui::SliderFloat( "Angle", &m_angle, -b2_pi, b2_pi, "%.2f" ) )
+		if ( ImGui::SliderFloat( "Angle", &m_angle, -B2_PI, B2_PI, "%.2f" ) )
 		{
 			m_transform.q = b2MakeRot( m_angle );
 		}
@@ -3031,7 +3032,7 @@ public:
 		else if ( m_rotating )
 		{
 			float dx = p.x - m_startPoint.x;
-			m_angle = b2ClampFloat( m_baseAngle + 1.0f * dx, -b2_pi, b2_pi );
+			m_angle = b2ClampFloat( m_baseAngle + 1.0f * dx, -B2_PI, B2_PI );
 			m_transform.q = b2MakeRot( m_angle );
 		}
 	}
@@ -3196,7 +3197,7 @@ public:
 		m_radiusB = 0.25f;
 
 		m_transformA.p = { 0.0f, 0.0 };
-		m_transformA.q = b2MakeRot( 0.25f * b2_pi );
+		m_transformA.q = b2MakeRot( 0.25f * B2_PI );
 		m_transformB.p = { -8.0f, 0.0f };
 		m_transformB.q = b2Rot_identity;
 		m_translationB = { 8.0f, 0.0f };
@@ -3326,16 +3327,16 @@ public:
 		{
 			if ( m_radiusA > 0.0f )
 			{
-				g_draw.DrawSolidCircle( b2Transform_identity, vertices[0], m_radiusA, b2_colorGray9 );
+				g_draw.DrawSolidCircle( b2Transform_identity, vertices[0], m_radiusA, b2_colorLightGray );
 			}
 			else
 			{
-				g_draw.DrawPoint( vertices[0], 5.0f, b2_colorGray9 );
+				g_draw.DrawPoint( vertices[0], 5.0f, b2_colorLightGray );
 			}
 		}
 		else
 		{
-			g_draw.DrawSolidPolygon( b2Transform_identity, vertices, m_countA, m_radiusA, b2_colorGray9 );
+			g_draw.DrawSolidPolygon( b2Transform_identity, vertices, m_countA, m_radiusA, b2_colorLightGray );
 		}
 
 		for ( int i = 0; i < m_countB; ++i )
@@ -3416,7 +3417,8 @@ public:
 		if ( settings.restart == false )
 		{
 			g_camera.m_center = { 0.6f, 2.0f };
-			g_camera.m_zoom = 25.0f * 0.18f;
+			g_camera.m_center = { -123.750000f, 134.750000f };
+			g_camera.m_zoom = 5.0f;
 		}
 	}
 
@@ -3425,16 +3427,63 @@ public:
 		return new TimeOfImpact( settings );
 	}
 
+#if 0
+-		input	0x00000044f14fd550 {proxyA={points=0x00000044f14fd550 {{...}, {...}, {...}, {...}, {...}, {...}, {...}, ...} ...} ...}	const b2TOIInput *
+-		proxyA	{points=0x00000044f14fd550 {{x=-123.750000 y=134.750000 }, {x=-123.250000 y=134.750000 }, {x=-123.250000 ...}, ...} ...}	b2DistanceProxy
+-		points	0x00000044f14fd550 {{x=-123.750000 y=134.750000 }, {x=-123.250000 y=134.750000 }, {x=-123.250000 y=135.250000 }, ...}	b2Vec2[8]
++		[0]	{x=-123.750000 y=134.750000 }	b2Vec2
++		[1]	{x=-123.250000 y=134.750000 }	b2Vec2
++		[2]	{x=-123.250000 y=135.250000 }	b2Vec2
++		[3]	{x=-123.750000 y=135.250000 }	b2Vec2
++		[4]	{x=-123.905960 y=135.246246 }	b2Vec2
++		[5]	{x=-123.583496 y=135.491089 }	b2Vec2
++		[6]	{x=-1.02951760e+30 y=9.529e-44#DEN }	b2Vec2
++		[7]	{x=8.40272566e-18 y=7.539e-43#DEN }	b2Vec2
+		count	4	int
+		radius	0.00000000	float
+-		proxyB	{points=0x00000044f14fd598 {{x=0.00000000 y=-0.125000000 }, {x=0.00000000 y=0.125000000 }, {x=-123.250000 ...}, ...} ...}	b2DistanceProxy
+-		points	0x00000044f14fd598 {{x=0.00000000 y=-0.125000000 }, {x=0.00000000 y=0.125000000 }, {x=-123.250000 y=...}, ...}	b2Vec2[8]
++		[0]	{x=0.00000000 y=-0.125000000 }	b2Vec2
++		[1]	{x=0.00000000 y=0.125000000 }	b2Vec2
++		[2]	{x=-123.250000 y=135.250000 }	b2Vec2
++		[3]	{x=-123.750000 y=135.250000 }	b2Vec2
++		[4]	{x=-123.905960 y=135.246246 }	b2Vec2
++		[5]	{x=-123.583496 y=135.491089 }	b2Vec2
++		[6]	{x=-1.02951760e+30 y=9.529e-44#DEN }	b2Vec2
++		[7]	{x=8.40272566e-18 y=7.539e-43#DEN }	b2Vec2
+		count	2	int
+		radius	0.0350000001	float
+-		sweepA	{localCenter={x=0.00000000 y=0.00000000 } c1={x=0.00000000 y=0.00000000 } c2={x=0.00000000 y=0.00000000 } ...}	b2Sweep
++		localCenter	{x=0.00000000 y=0.00000000 }	b2Vec2
++		c1	{x=0.00000000 y=0.00000000 }	b2Vec2
++		c2	{x=0.00000000 y=0.00000000 }	b2Vec2
++		q1	{c=1.00000000 s=0.00000000 }	b2Rot
++		q2	{c=1.00000000 s=0.00000000 }	b2Rot
+-		sweepB	{localCenter={x=0.00000000 y=0.00000000 } c1={x=-123.721443 y=135.385178 } c2={x=-123.757744 y=135.334244 } ...}	b2Sweep
++		localCenter	{x=0.00000000 y=0.00000000 }	b2Vec2
++		c1	{x=-123.721443 y=135.385178 }	b2Vec2
++		c2	{x=-123.757744 y=135.334244 }	b2Vec2
++		q1	{c=0.567239463 s=0.823552966 }	b2Rot
++		q2	{c=0.423919678 s=0.905699849 }	b2Rot
+		tMax	1.00000000	float
+
+#endif
 	void Step( Settings& settings ) override
 	{
 		Sample::Step( settings );
 
-		b2Sweep sweepA = { b2Vec2_zero, { 0.0f, 0.0f }, { 0.0f, 0.0f }, b2Rot_identity, b2Rot_identity };
-		b2Sweep sweepB = { b2Vec2_zero, { 2.0f, 4.0f }, { 2.0f, 4.0f }, b2Rot_identity, b2MakeRot( -0.25f * b2_pi ) };
+		b2Sweep sweepA = {
+			b2Vec2_zero, { 0.0f, 0.0f }, { 0.0f, 0.0f }, b2Rot_identity, b2Rot_identity,
+		};
+		b2Sweep sweepB = { b2Vec2_zero,
+						   { -123.721443f, 135.385178f },
+						   { -123.757744f, 135.334244f },
+						   { 0.567239463f, 0.823552966f },
+						   { 0.423919678f, 0.905699849f } };
 
 		b2TOIInput input;
-		input.proxyA = b2MakeProxy( m_verticesA, m_countA, 0.0f );
-		input.proxyB = b2MakeProxy( m_verticesB, m_countB, 0.0f );
+		input.proxyA = b2MakeProxy( m_verticesA, m_countA, m_radiusA );
+		input.proxyB = b2MakeProxy( m_verticesB, m_countB, m_radiusB );
 		input.sweepA = sweepA;
 		input.sweepB = sweepB;
 		input.tMax = 1.0f;
@@ -3464,7 +3513,8 @@ public:
 		{
 			vertices[i] = b2TransformPoint( transformB, m_verticesB[i] );
 		}
-		g_draw.DrawPolygon( vertices, m_countB, b2_colorGreen );
+		g_draw.DrawSolidCapsule( vertices[0], vertices[1], m_radiusB, b2_colorGreen );
+		// g_draw.DrawPolygon( vertices, m_countB, b2_colorGreen );
 
 		// Draw B at t = hit_time
 		transformB = b2GetSweepTransform( &sweepB, output.t );
@@ -3480,7 +3530,8 @@ public:
 		{
 			vertices[i] = b2TransformPoint( transformB, m_verticesB[i] );
 		}
-		g_draw.DrawPolygon( vertices, m_countB, b2_colorRed );
+		g_draw.DrawSolidCapsule( vertices[0], vertices[1], m_radiusB, b2_colorRed );
+		// g_draw.DrawPolygon( vertices, m_countB, b2_colorRed );
 
 		if ( output.state == b2_toiStateHit )
 		{
@@ -3509,10 +3560,15 @@ public:
 #endif
 	}
 
-	b2Vec2 m_verticesA[4] = { { -1.0f, -1.0f }, { 1.0f, -1.0f }, { 1.0f, 5.0f }, { -1.0f, 5.0f } };
-	b2Vec2 m_verticesB[4] = { { -0.5f, -4.0f }, { 0.0f, -4.0f }, { 0.0f, 0.0f }, { -0.5f, 0.0f } };
+	b2Vec2 m_verticesA[4] = {
+		{ -123.750000, 134.750000 }, { -123.250000, 134.750000 }, { -123.250000, 135.250000 }, { -123.750000, 135.250000 } };
+	b2Vec2 m_verticesB[2] = { { 0.0f, -0.125000000f }, { 0.0f, 0.125000000f } };
+
 	int m_countA = ARRAY_COUNT( m_verticesA );
 	int m_countB = ARRAY_COUNT( m_verticesB );
+
+	float m_radiusA = 0.0f;
+	float m_radiusB = 0.0350000001f;
 };
 
 static int sampleTimeOfImpact = RegisterSample( "Collision", "Time of Impact", TimeOfImpact::Create );

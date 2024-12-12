@@ -15,7 +15,7 @@ int MathTest( void )
 {
 	for ( float t = -10.0f; t < 10.0f; t += 0.01f )
 	{
-		float angle = b2_pi * t;
+		float angle = B2_PI * t;
 		b2Rot r = b2MakeRot( angle );
 		float c = cosf( angle );
 		float s = sinf( angle );
@@ -32,9 +32,9 @@ int MathTest( void )
 		float diff = b2AbsFloat( a - xn );
 
 		// The two results can be off by 360 degrees (-pi and pi)
-		if ( diff > b2_pi )
+		if ( diff > B2_PI )
 		{
-			diff -= 2.0f * b2_pi;
+			diff -= 2.0f * B2_PI;
 		}
 
 		// The approximate atan2 is quite accurate

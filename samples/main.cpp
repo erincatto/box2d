@@ -5,6 +5,7 @@
 #define _CRTDBG_MAP_ALLOC
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS 1
 
+#include "TaskScheduler.h"
 #include "draw.h"
 #include "sample.h"
 #include "settings.h"
@@ -540,6 +541,7 @@ int main( int, char** )
 
 	s_settings.Load();
 	s_settings.workerCount = b2MinInt( 8, (int)enki::GetNumHardwareThreads() / 2 );
+
 	SortSamples();
 
 	glfwSetErrorCallback( glfwErrorCallback );
@@ -708,7 +710,7 @@ int main( int, char** )
 
 		// ImGui::ShowDemoWindow();
 
-		if (g_draw.m_showUI)
+		if ( g_draw.m_showUI )
 		{
 			snprintf( buffer, 128, "%.1f ms - step %d - camera (%g, %g, %g)", 1000.0f * frameTime, s_sample->m_stepCount,
 					  g_camera.m_center.x, g_camera.m_center.y, g_camera.m_zoom );

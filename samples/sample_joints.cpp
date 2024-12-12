@@ -317,7 +317,7 @@ public:
 		linearOffset.x = 6.0f * sinf( 2.0f * m_time );
 		linearOffset.y = 8.0f + 4.0f * sinf( 1.0f * m_time );
 
-		float angularOffset = b2_pi * sinf( -0.5f * m_time );
+		float angularOffset = B2_PI * sinf( -0.5f * m_time );
 
 		b2MotorJoint_SetLinearOffset( m_jointId, linearOffset );
 		b2MotorJoint_SetAngularOffset( m_jointId, angularOffset );
@@ -458,9 +458,9 @@ public:
 			jointDef.motorSpeed = m_motorSpeed;
 			jointDef.maxMotorTorque = m_motorTorque;
 			jointDef.enableMotor = m_enableMotor;
-			jointDef.referenceAngle = 0.5f * b2_pi;
-			jointDef.lowerAngle = -0.5f * b2_pi;
-			jointDef.upperAngle = 0.75f * b2_pi;
+			jointDef.referenceAngle = 0.5f * B2_PI;
+			jointDef.lowerAngle = -0.5f * B2_PI;
+			jointDef.upperAngle = 0.75f * B2_PI;
 			jointDef.enableLimit = m_enableLimit;
 
 			m_jointId1 = b2CreateRevoluteJoint( m_worldId, &jointDef );
@@ -498,8 +498,8 @@ public:
 			jointDef.bodyIdB = body;
 			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
 			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
-			jointDef.lowerAngle = -0.25f * b2_pi;
-			jointDef.upperAngle = 0.0f * b2_pi;
+			jointDef.lowerAngle = -0.25f * B2_PI;
+			jointDef.upperAngle = 0.0f * B2_PI;
 			jointDef.enableLimit = true;
 			jointDef.enableMotor = true;
 			jointDef.motorSpeed = 0.0f;
@@ -1830,7 +1830,7 @@ public:
 		static float hertz = 3.0f;
 		static float zeta = 0.7f;
 		static float maxForce = 1000.0f;
-		float omega = 2.0f * b2_pi * hertz;
+		float omega = 2.0f * B2_PI * hertz;
 		float sigma = 2.0f * zeta + timeStep * omega;
 		float s = timeStep * omega * sigma;
 		float impulseCoefficient = 1.0f / ( 1.0f + s );
@@ -1992,8 +1992,8 @@ public:
 			jointDef.bodyIdB = bodyId;
 			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
 			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
-			jointDef.lowerAngle = -8.0f * b2_pi / 180.0f;
-			jointDef.upperAngle = 8.0f * b2_pi / 180.0f;
+			jointDef.lowerAngle = -8.0f * B2_PI / 180.0f;
+			jointDef.upperAngle = 8.0f * B2_PI / 180.0f;
 			jointDef.enableLimit = true;
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}

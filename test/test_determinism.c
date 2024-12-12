@@ -233,8 +233,8 @@ static int CrossPlatformTest(void)
 
 	b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 	jointDef.enableLimit = true;
-	jointDef.lowerAngle = -0.1f * b2_pi;
-	jointDef.upperAngle = 0.2f * b2_pi;
+	jointDef.lowerAngle = -0.1f * B2_PI;
+	jointDef.upperAngle = 0.2f * B2_PI;
 	jointDef.enableSpring = true;
 	jointDef.hertz = 0.5f;
 	jointDef.dampingRatio = 0.5f;

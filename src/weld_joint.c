@@ -21,7 +21,7 @@ void b2WeldJoint_SetReferenceAngle( b2JointId jointId, float angleInRadians )
 {
 	B2_ASSERT( b2IsValidFloat( angleInRadians ) );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
-	joint->weldJoint.referenceAngle = b2ClampFloat(angleInRadians, -b2_pi, b2_pi);
+	joint->weldJoint.referenceAngle = b2ClampFloat(angleInRadians, -B2_PI, B2_PI);
 }
 
 void b2WeldJoint_SetLinearHertz( b2JointId jointId, float hertz )

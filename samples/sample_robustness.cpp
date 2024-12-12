@@ -9,6 +9,7 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <stdlib.h>
 
 // Pyramid with heavy box on top
 class HighMassRatio1 : public Sample
