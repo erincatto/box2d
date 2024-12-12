@@ -19,6 +19,8 @@
 // - cannot debug
 // - breaks code navigation
 
+// todo_erin consider code-gen: https://github.com/IbrahimHindawi/haikal
+
 // Array declaration that doesn't need the type T to be defined
 #define B2_ARRAY_DECLARE( T, PREFIX )                                                                                            \
 	typedef struct                                                                                                               \

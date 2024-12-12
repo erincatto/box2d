@@ -1474,6 +1474,21 @@ public:
 		bodyDef.position = { x, y };
 		bodyDef.rotation = b2MakeRot( RandomFloatRange( -B2_PI, B2_PI ) );
 
+		int mod = m_bodyIndex % 3;
+		if (mod == 0)
+		{
+			bodyDef.type = b2_staticBody;
+		}
+		else if (mod == 1)
+		{
+			bodyDef.type = b2_kinematicBody;
+		}
+		else if (mod == 2)
+		{
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.gravityScale = 0.0f;
+		}
+
 		m_bodyIds[m_bodyIndex] = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -1817,9 +1832,9 @@ public:
 	}
 
 	int m_bodyIndex;
-	b2BodyId m_bodyIds[e_maxCount];
-	ShapeUserData m_userData[e_maxCount];
-	b2Polygon m_polygons[4];
+	b2BodyId m_bodyIds[e_maxCount] = {};
+	ShapeUserData m_userData[e_maxCount] = {};
+	b2Polygon m_polygons[4] = {};
 	b2Capsule m_capsule;
 	b2Circle m_circle;
 	b2Segment m_segment;

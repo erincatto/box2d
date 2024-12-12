@@ -1241,13 +1241,15 @@ b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInp
 			float value = callback( &subInput, nodeId, node->userData, context );
 			result.leafVisits += 1;
 
+			// The user may return -1 to indicate this shape should be skipped
+
 			if ( value == 0.0f )
 			{
 				// The client has terminated the ray cast.
 				return result;
 			}
 
-			if ( 0.0f < value && value < maxFraction )
+			if ( 0.0f < value && value <= maxFraction )
 			{
 				// Update segment bounding box.
 				maxFraction = value;

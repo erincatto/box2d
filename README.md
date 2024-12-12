@@ -81,7 +81,9 @@ Please file an issue or start a chat on discord.
 Box2D is developed by Erin Catto and uses the [MIT license](https://en.wikipedia.org/wiki/MIT_License).
 
 ## Sponsorship
-Support development of Box2D through [Github Sponsors](https://github.com/sponsors/erincatto)
+Support development of Box2D through [Github Sponsors](https://github.com/sponsors/erincatto).
+
+Please consider starring this repository and subscribing to my [YouTube channel](https://www.youtube.com/@erin_catto).
 
 ## Ports, wrappers, and bindings
 - https://github.com/EnokViking/Box2DBeef

@@ -515,6 +515,21 @@ void DestroyHuman( Human* human )
 	human->isSpawned = false;
 }
 
+void Human_SetVelocity( Human* human, b2Vec2 velocity )
+{
+	for ( int i = 0; i < boneId_count; ++i )
+	{
+		b2BodyId bodyId = human->bones[i].bodyId;
+
+		if ( B2_IS_NULL( bodyId ) )
+		{
+			continue;
+		}
+
+		b2Body_SetLinearVelocity( bodyId, velocity );
+	}
+}
+
 void Human_ApplyRandomAngularImpulse( Human* human, float magnitude )
 {
 	assert( human->isSpawned == true );
