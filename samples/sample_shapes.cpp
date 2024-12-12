@@ -1390,7 +1390,7 @@ public:
 			m_referenceAngle += settings.hertz > 0.0f ? 60.0f * B2_PI / 180.0f / settings.hertz : 0.0f;
 			m_referenceAngle = b2UnwindAngle( m_referenceAngle );
 
-			int count = m_jointIds.size();
+			int count = (int)m_jointIds.size();
 			for ( int i = 0; i < count; ++i )
 			{
 				b2WeldJoint_SetReferenceAngle( m_jointIds[i], m_referenceAngle );
