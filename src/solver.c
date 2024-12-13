@@ -393,12 +393,12 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 			continue;
 		}
 
-		b2DynamicTree_Query( staticTree, box, b2_defaultMaskBits, b2ContinuousQueryCallback, &context );
+		b2DynamicTree_Query( staticTree, box, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
 
 		if ( isBullet )
 		{
-			b2DynamicTree_Query( kinematicTree, box, b2_defaultMaskBits, b2ContinuousQueryCallback, &context );
-			b2DynamicTree_Query( dynamicTree, box, b2_defaultMaskBits, b2ContinuousQueryCallback, &context );
+			b2DynamicTree_Query( kinematicTree, box, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
+			b2DynamicTree_Query( dynamicTree, box, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
 		}
 	}
 

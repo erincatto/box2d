@@ -1297,7 +1297,7 @@ public:
 		int nodeVisits = 0;
 		int leafVisits = 0;
 		float ms = 0.0f;
-		int sampleCount = m_origins.size();
+		int sampleCount = (int)m_origins.size();
 
 		if ( m_queryType == e_rayCast )
 		{

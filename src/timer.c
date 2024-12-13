@@ -79,77 +79,46 @@ void b2Yield()
 #elif defined( __linux__ ) || defined( __EMSCRIPTEN__ )
 
 #include <sched.h>
-#include <sys/time.h>
 #include <time.h>
 
+// maybe try CLOCK_MONOTONIC_RAW
 b2Timer b2CreateTimer( void )
 {
-	// todo_erin
-
-	//struct timespec ts;
-	//clock_gettime( CLOCK_MONOTONIC_RAW, &ts );
-
-	//struct timespec res;
-	//clock_getres( CLOCK_MONOTONIC, &res );
-
 	b2Timer timer;
-	struct timeval t;
-	gettimeofday( &t, 0 );
-	timer.start_sec = t.tv_sec;
-	timer.start_usec = t.tv_usec;
+	struct timespec ts;
+	clock_gettime( CLOCK_MONOTONIC, &ts );
+	timer.tv_sec = ts.tv_sec;
+	timer.tv_nsec = ts.tv_nsec;
 	return timer;
 }
 
 float b2GetMilliseconds( const b2Timer* timer )
 {
-	struct timeval t;
-	gettimeofday( &t, 0 );
-	time_t start_sec = timer->start_sec;
-	suseconds_t start_usec = (suseconds_t)timer->start_usec;
+	struct timespec ts;
+	clock_gettime( CLOCK_MONOTONIC, &ts );
+	time_t start_sec = timer->tv_sec;
+	long start_nsec = timer->tv_nsec;
 
-	// http://www.gnu.org/software/libc/manual/html_node/Elapsed-Time.html
-	if ( t.tv_usec < start_usec )
-	{
-		int nsec = ( start_usec - t.tv_usec ) / 1000000 + 1;
-		start_usec -= 1000000 * nsec;
-		start_sec += nsec;
-	}
+	time_t sec_diff = ts.tv_sec - start_sec;
+	long nsec_diff = ts.tv_nsec - start_nsec;
 
-	if ( t.tv_usec - start_usec > 1000000 )
-	{
-		int nsec = ( t.tv_usec - start_usec ) / 1000000;
-		start_usec += 1000000 * nsec;
-		start_sec -= nsec;
-	}
-	return 1000.0f * ( t.tv_sec - start_sec ) + 0.001f * ( t.tv_usec - start_usec );
+	return (float)( sec_diff * 1000.0 + nsec_diff / 1000000.0 );
 }
 
 float b2GetMillisecondsAndReset( b2Timer* timer )
 {
-	struct timeval t;
-	gettimeofday( &t, 0 );
-	time_t start_sec = timer->start_sec;
-	suseconds_t start_usec = (suseconds_t)timer->start_usec;
+	struct timespec ts;
+	clock_gettime( CLOCK_MONOTONIC, &ts );
+	time_t start_sec = timer->tv_sec;
+	long start_nsec = timer->tv_nsec;
 
-	// http://www.gnu.org/software/libc/manual/html_node/Elapsed-Time.html
-	if ( t.tv_usec < start_usec )
-	{
-		int nsec = ( start_usec - t.tv_usec ) / 1000000 + 1;
-		start_usec -= 1000000 * nsec;
-		start_sec += nsec;
-	}
+	time_t sec_diff = ts.tv_sec - start_sec;
+	long nsec_diff = ts.tv_nsec - start_nsec;
 
-	if ( t.tv_usec - start_usec > 1000000 )
-	{
-		int nsec = ( t.tv_usec - start_usec ) / 1000000;
-		start_usec += 1000000 * nsec;
-		start_sec -= nsec;
-	}
+	timer->tv_sec = ts.tv_sec;
+	timer->tv_nsec = ts.tv_nsec;
 
-	timer->start_sec = t.tv_sec;
-	timer->start_usec = t.tv_usec;
-
-	return 1000.0f * ( t.tv_sec - start_sec ) + 0.001f * ( t.tv_usec - start_usec );
+	return (float)( sec_diff * 1000.0 + nsec_diff / 1000000.0 );
 }
 
 void b2SleepMilliseconds( int milliseconds )
@@ -167,90 +136,41 @@ void b2Yield()
 
 #elif defined( __APPLE__ )
 
+#include <mach/mach_time.h>
 #include <sched.h>
 #include <sys/time.h>
-#include <time.h>
 
-//#include <mach/mach_time.h>
+static double s_invFrequency = 0.0;
 
 b2Timer b2CreateTimer( void )
 {
-	// todo_erin
-	//#include <mach/mach_time.h>
+	if (s_invFrequency == 0)
+	{
+		mach_timebase_info_data_t timebase;
+		mach_timebase_info( &timebase );
 
-	//// Get current time
-	//uint64_t start = mach_absolute_time();
+		// convert to ns then to ms
+		s_invFrequency = 1e-6 * (double)timebase.numer / (double)timebase.denom;
+	}
 
-	//// To convert to nanoseconds, you'll need to use mach_timebase_info
-	//mach_timebase_info_data_t timebase;
-	//mach_timebase_info( &timebase );
-
-	//// Convert to nanoseconds
-	//uint64_t elapsed_ns = ( start * timebase.numer ) / timebase.denom;
-
-	//mach_timebase_info_data_t timebase;
-	//mach_timebase_info( &timebase );
-	//// timebase.numer and timebase.denom can be used to calculate frequency
-	//// Specifically, frequency = 1e9 / (timebase.numer / timebase.denom)
-
-	b2Timer timer;
-	struct timeval t;
-	gettimeofday( &t, 0 );
-	timer.start_sec = t.tv_sec;
-	timer.start_usec = t.tv_usec;
+	uint64_t start = mach_absolute_time();
+	b2Timer timer = { start };
 	return timer;
 }
 
 float b2GetMilliseconds( const b2Timer* timer )
 {
-	struct timeval t;
-	gettimeofday( &t, 0 );
-	time_t start_sec = timer->start_sec;
-	suseconds_t start_usec = (suseconds_t)timer->start_usec;
-
-	// http://www.gnu.org/software/libc/manual/html_node/Elapsed-Time.html
-	if ( t.tv_usec < start_usec )
-	{
-		int nsec = ( start_usec - t.tv_usec ) / 1000000 + 1;
-		start_usec -= 1000000 * nsec;
-		start_sec += nsec;
-	}
-
-	if ( t.tv_usec - start_usec > 1000000 )
-	{
-		int nsec = ( t.tv_usec - start_usec ) / 1000000;
-		start_usec += 1000000 * nsec;
-		start_sec -= nsec;
-	}
-	return 1000.0f * ( t.tv_sec - start_sec ) + 0.001f * ( t.tv_usec - start_usec );
+	uint64_t count = mach_absolute_time();
+	float ms = (float)( s_invFrequency * ( count - timer->start ) );
+	return ms;
 }
 
 float b2GetMillisecondsAndReset( b2Timer* timer )
 {
-	struct timeval t;
-	gettimeofday( &t, 0 );
-	time_t start_sec = timer->start_sec;
-	suseconds_t start_usec = (suseconds_t)timer->start_usec;
-
-	// http://www.gnu.org/software/libc/manual/html_node/Elapsed-Time.html
-	if ( t.tv_usec < start_usec )
-	{
-		int nsec = ( start_usec - t.tv_usec ) / 1000000 + 1;
-		start_usec -= 1000000 * nsec;
-		start_sec += nsec;
-	}
-
-	if ( t.tv_usec - start_usec > 1000000 )
-	{
-		int nsec = ( t.tv_usec - start_usec ) / 1000000;
-		start_usec += 1000000 * nsec;
-		start_sec -= nsec;
-	}
-
-	timer->start_sec = t.tv_sec;
-	timer->start_usec = t.tv_usec;
-
-	return 1000.0f * ( t.tv_sec - start_sec ) + 0.001f * ( t.tv_usec - start_usec );
+	uint64_t count = mach_absolute_time();
+	float ms = (float)( s_invFrequency * ( count - timer->start ) );
+	timer->start = count;
+	return ms;
 }
 
 void b2SleepMilliseconds( int milliseconds )

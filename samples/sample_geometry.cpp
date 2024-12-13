@@ -15,7 +15,7 @@ class ConvexHull : public Sample
 public:
 	enum
 	{
-		e_count = b2_maxPolygonVertices
+		e_count = B2_MAX_POLYGON_VERTICES
 	};
 
 	explicit ConvexHull( Settings& settings )
@@ -211,7 +211,7 @@ public:
 		return new ConvexHull( settings );
 	}
 
-	b2Vec2 m_points[b2_maxPolygonVertices];
+	b2Vec2 m_points[B2_MAX_POLYGON_VERTICES];
 	int32_t m_count;
 	int32_t m_generation;
 	bool m_auto;

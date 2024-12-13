@@ -3,12 +3,11 @@
 
 #pragma once
 
-#include "world.h"
+#include "array.h"
 
 #include "box2d/types.h"
 
 typedef struct b2BroadPhase b2BroadPhase;
-typedef struct b2World b2World;
 
 typedef struct b2Shape
 {

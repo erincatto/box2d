@@ -970,7 +970,7 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_Query( world->broadPhase.trees + i, draw->drawingBounds, b2_defaultMaskBits, DrawQueryCallback,
+		b2DynamicTree_Query( world->broadPhase.trees + i, draw->drawingBounds, B2_DEFAULT_MASK_BITS, DrawQueryCallback,
 							 &drawContext );
 	}
 

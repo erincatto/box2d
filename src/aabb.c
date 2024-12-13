@@ -130,26 +130,3 @@ b2CastOutput b2AABB_RayCast( b2AABB a, b2Vec2 p1, b2Vec2 p2 )
 	output.hit = true;
 	return output;
 }
-
-#if 0
-bool b2TestOverlap(	const b2Shape* shapeA, int32_t indexA,
-					const b2Shape* shapeB, int32_t indexB,
-					b2Transform xfA, b2Transform xfB)
-{
-	b2DistanceInput input;
-	input->proxyA.Set(shapeA, indexA);
-	input->proxyB.Set(shapeB, indexB);
-	input->transformA = xfA;
-	input->transformB = xfB;
-	input->useRadii = true;
-
-	b2DistanceCache cache;
-	cache.count = 0;
-
-	b2DistanceOutput output;
-
-	b2Distance(&output, &cache, &input);
-
-	return output.distance < 10.0f * b2_epsilon;
-}
-#endif

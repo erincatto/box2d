@@ -464,7 +464,7 @@ public:
 			m_events.push_back( { indexA, indexB } );
 		}
 
-		int eventCount = m_events.size();
+		int eventCount = (int)m_events.size();
 		for ( int i = 0; i < eventCount; ++i )
 		{
 			g_draw.DrawString( 5, m_textLine, "%d, %d", m_events[i].indexA, m_events[i].indexB );

@@ -109,7 +109,7 @@ b2SegmentDistanceResult b2SegmentDistance( b2Vec2 p1, b2Vec2 q1, b2Vec2 p2, b2Ve
 // todo try not copying
 b2DistanceProxy b2MakeProxy( const b2Vec2* vertices, int count, float radius )
 {
-	count = b2MinInt( count, b2_maxPolygonVertices );
+	count = b2MinInt( count, B2_MAX_POLYGON_VERTICES );
 	b2DistanceProxy proxy;
 	for ( int i = 0; i < count; ++i )
 	{
@@ -638,7 +638,7 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	b2DistanceProxy proxyB;
 	proxyB.count = input->proxyB.count;
 	proxyB.radius = input->proxyB.radius;
-	B2_ASSERT( proxyB.count <= b2_maxPolygonVertices );
+	B2_ASSERT( proxyB.count <= B2_MAX_POLYGON_VERTICES );
 
 	for ( int i = 0; i < proxyB.count; ++i )
 	{
@@ -1231,7 +1231,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 
 			pushBackIterations += 1;
 
-			if ( pushBackIterations == b2_maxPolygonVertices )
+			if ( pushBackIterations == B2_MAX_POLYGON_VERTICES )
 			{
 				break;
 			}
