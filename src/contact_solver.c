@@ -217,7 +217,7 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 	b2BodyState* states = awakeSet->bodyStates.data;
 
 	float inv_h = context->inv_h;
-	const float pushout = context->world->contactPushoutVelocity;
+	const float pushout = context->world->contactPushSpeed;
 
 	// This is a dummy body to represent a static body since static bodies don't have a solver body.
 	b2BodyState dummyState = b2_identityBodyState;
@@ -1582,7 +1582,7 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 	b2BodyState* states = context->states;
 	b2ContactConstraintSIMD* constraints = context->graph->colors[colorIndex].simdConstraints;
 	b2FloatW inv_h = b2SplatW( context->inv_h );
-	b2FloatW minBiasVel = b2SplatW( -context->world->contactPushoutVelocity );
+	b2FloatW minBiasVel = b2SplatW( -context->world->contactPushSpeed );
 
 	for ( int i = startIndex; i < endIndex; ++i )
 	{

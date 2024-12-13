@@ -81,14 +81,14 @@ typedef struct b2WorldDef
 	/// Gravity vector. Box2D has no up-vector defined.
 	b2Vec2 gravity;
 
-	/// Restitution velocity threshold, usually in m/s. Collisions above this
+	/// Restitution speed threshold, usually in m/s. Collisions above this
 	/// speed have restitution applied (will bounce).
 	float restitutionThreshold;
 
-	/// This parameter controls how fast overlap is resolved and has units of meters per second
-	float contactPushVelocity;
+	/// This parameter controls how fast overlap is resolved and usually has units of meters per second
+	float contactPushSpeed;
 
-	/// Threshold velocity for hit events. Usually meters per second.
+	/// Threshold speed for hit events. Usually meters per second.
 	float hitEventThreshold;
 
 	/// Contact stiffness. Cycles per second.
@@ -103,8 +103,8 @@ typedef struct b2WorldDef
 	/// Joint bounciness. Non-dimensional.
 	float jointDampingRatio;
 
-	/// Maximum linear velocity. Usually meters per second.
-	float maximumLinearVelocity;
+	/// Maximum linear speed. Usually meters per second.
+	float maximumLinearSpeed;
 
 	/// Mixing rule for friction. Default is b2_mixGeometricMean.
 	b2MixingRule frictionMixingRule;
@@ -179,20 +179,20 @@ typedef struct b2BodyDef
 	/// The initial world rotation of the body. Use b2MakeRot() if you have an angle.
 	b2Rot rotation;
 
-	/// The initial linear velocity of the body's origin. Typically in meters per second.
+	/// The initial linear velocity of the body's origin. Usually in meters per second.
 	b2Vec2 linearVelocity;
 
 	/// The initial angular velocity of the body. Radians per second.
 	float angularVelocity;
 
-	/// Linear damping is use to reduce the linear velocity. The damping parameter
+	/// Linear damping is used to reduce the linear velocity. The damping parameter
 	/// can be larger than 1 but the damping effect becomes sensitive to the
 	/// time step when the damping parameter is large.
 	/// Generally linear damping is undesirable because it makes objects move slowly
 	/// as if they are floating.
 	float linearDamping;
 
-	/// Angular damping is use to reduce the angular velocity. The damping parameter
+	/// Angular damping is used to reduce the angular velocity. The damping parameter
 	/// can be larger than 1.0f but the damping effect becomes sensitive to the
 	/// time step when the damping parameter is large.
 	/// Angular damping can be use slow down rotating bodies.
@@ -201,7 +201,7 @@ typedef struct b2BodyDef
 	/// Scale the gravity applied to this body. Non-dimensional.
 	float gravityScale;
 
-	/// Sleep velocity threshold, default is 0.05 meter per second
+	/// Sleep speed threshold, default is 0.05 meters per second
 	float sleepThreshold;
 
 	/// Use this to store application specific body data.

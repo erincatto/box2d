@@ -13,13 +13,13 @@ b2WorldDef b2DefaultWorldDef( void )
 	def.gravity.y = -10.0f;
 	def.hitEventThreshold = 1.0f * b2_lengthUnitsPerMeter;
 	def.restitutionThreshold = 1.0f * b2_lengthUnitsPerMeter;
-	def.contactPushVelocity = 3.0f * b2_lengthUnitsPerMeter;
+	def.contactPushSpeed = 3.0f * b2_lengthUnitsPerMeter;
 	def.contactHertz = 30.0;
 	def.contactDampingRatio = 10.0f;
 	def.jointHertz = 60.0;
 	def.jointDampingRatio = 2.0f;
 	// 400 meters per second, faster than the speed of sound
-	def.maximumLinearVelocity = 400.0f * b2_lengthUnitsPerMeter;
+	def.maximumLinearSpeed = 400.0f * b2_lengthUnitsPerMeter;
 	def.frictionMixingRule = b2_mixGeometricMean;
 	def.restitutionMixingRule = b2_mixMaximum;
 	def.enableSleep = true;

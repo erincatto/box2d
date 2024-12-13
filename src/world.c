@@ -177,8 +177,8 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->gravity = def->gravity;
 	world->hitEventThreshold = def->hitEventThreshold;
 	world->restitutionThreshold = def->restitutionThreshold;
-	world->maxLinearVelocity = def->maximumLinearVelocity;
-	world->contactPushoutVelocity = def->contactPushVelocity;
+	world->maxLinearVelocity = def->maximumLinearSpeed;
+	world->contactPushSpeed = def->contactPushSpeed;
 	world->contactHertz = def->contactHertz;
 	world->contactDampingRatio = def->contactDampingRatio;
 	world->jointHertz = def->jointHertz;
@@ -366,7 +366,7 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 			bool touching =
 				b2UpdateContact( world, contactSim, shapeA, transformA, centerOffsetA, shapeB, transformB, centerOffsetB );
 
-			// State changes that affect island connectivity. Also contact and sensor events.
+			// State changes that affect island connectivity. Also affects contact and sensor events.
 			if ( touching == true && wasTouching == false )
 			{
 				contactSim->simFlags |= b2_simStartedTouching;
@@ -1711,7 +1711,7 @@ float b2World_GetHitEventThreshold( b2WorldId worldId )
 	return world->hitEventThreshold;
 }
 
-void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushVelocity )
+void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushSpeed )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
@@ -1722,7 +1722,7 @@ void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRati
 
 	world->contactHertz = b2ClampFloat( hertz, 0.0f, FLT_MAX );
 	world->contactDampingRatio = b2ClampFloat( dampingRatio, 0.0f, FLT_MAX );
-	world->contactPushoutVelocity = b2ClampFloat( pushVelocity, 0.0f, FLT_MAX );
+	world->contactPushSpeed = b2ClampFloat( pushSpeed, 0.0f, FLT_MAX );
 }
 
 void b2World_SetJointTuning( b2WorldId worldId, float hertz, float dampingRatio )
@@ -1738,7 +1738,7 @@ void b2World_SetJointTuning( b2WorldId worldId, float hertz, float dampingRatio 
 	world->jointDampingRatio = b2ClampFloat( dampingRatio, 0.0f, FLT_MAX );
 }
 
-void b2World_SetMaximumLinearVelocity( b2WorldId worldId, float maximumLinearVelocity )
+void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearVelocity )
 {
 	B2_ASSERT( b2IsValidFloat( maximumLinearVelocity ) && maximumLinearVelocity > 0.0f );
 
