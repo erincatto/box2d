@@ -307,7 +307,7 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 	{
 		// fallback to TOI of a small circle around the fast shape centroid
 		b2Vec2 centroid = b2GetShapeCentroid( fastShape );
-		input.proxyB = b2MakeProxy( &centroid, 1, b2_speculativeDistance );
+		input.proxyB = b2MakeProxy( &centroid, 1, B2_SPECULATIVE_DISTANCE );
 		output = b2TimeOfImpact( &input );
 		if ( 0.0f < output.t && output.t < continuousContext->fraction )
 		{
@@ -402,8 +402,8 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 		}
 	}
 
-	const float speculativeDistance = b2_speculativeDistance;
-	const float aabbMargin = b2_aabbMargin;
+	const float speculativeDistance = B2_SPECULATIVE_DISTANCE;
+	const float aabbMargin = B2_AABB_MARGIN;
 
 	if ( context.fraction < 1.0f )
 	{
@@ -513,8 +513,8 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 
 	bool enableContinuous = world->enableContinuous;
 
-	const float speculativeDistance = b2_speculativeDistance;
-	const float aabbMargin = b2_aabbMargin;
+	const float speculativeDistance = B2_SPECULATIVE_DISTANCE;
+	const float aabbMargin = B2_AABB_MARGIN;
 
 	B2_ASSERT( startIndex <= endIndex );
 
@@ -606,7 +606,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 
 		// Any single body in an island can keep it awake
 		b2Island* island = b2IslandArray_Get( &world->islands, body->islandId );
-		if ( body->sleepTime < b2_timeToSleep )
+		if ( body->sleepTime < B2_TIME_TO_SLEEP )
 		{
 			// keep island awake
 			int islandIndex = island->localIndex;
@@ -1182,7 +1182,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		int awakeContactCount = 0;
 		int awakeJointCount = 0;
 		int activeColorCount = 0;
-		for ( int i = 0; i < b2_graphColorCount - 1; ++i )
+		for ( int i = 0; i < B2_GRAPH_COLOR_COUNT - 1; ++i )
 		{
 			int perColorContactCount = colors[i].contactSims.count;
 			int perColorJointCount = colors[i].jointSims.count;
@@ -1225,22 +1225,22 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		// Configure blocks for tasks parallel-for each active graph color
 		// The blocks are a mix of SIMD contact blocks and joint blocks
-		int activeColorIndices[b2_graphColorCount];
+		int activeColorIndices[B2_GRAPH_COLOR_COUNT];
 
-		int colorContactCounts[b2_graphColorCount];
-		int colorContactBlockSizes[b2_graphColorCount];
-		int colorContactBlockCounts[b2_graphColorCount];
+		int colorContactCounts[B2_GRAPH_COLOR_COUNT];
+		int colorContactBlockSizes[B2_GRAPH_COLOR_COUNT];
+		int colorContactBlockCounts[B2_GRAPH_COLOR_COUNT];
 
-		int colorJointCounts[b2_graphColorCount];
-		int colorJointBlockSizes[b2_graphColorCount];
-		int colorJointBlockCounts[b2_graphColorCount];
+		int colorJointCounts[B2_GRAPH_COLOR_COUNT];
+		int colorJointBlockSizes[B2_GRAPH_COLOR_COUNT];
+		int colorJointBlockCounts[B2_GRAPH_COLOR_COUNT];
 
 		int graphBlockCount = 0;
 
 		// c is the active color index
 		int simdContactCount = 0;
 		int c = 0;
-		for ( int i = 0; i < b2_graphColorCount - 1; ++i )
+		for ( int i = 0; i < B2_GRAPH_COLOR_COUNT - 1; ++i )
 		{
 			int colorContactCount = colors[i].contactSims.count;
 			int colorJointCount = colors[i].jointSims.count;
@@ -1314,11 +1314,11 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2ContactConstraintSIMD* simdContactConstraints =
 			b2AllocateStackItem( &world->stackAllocator, simdContactCount * simdConstraintSize, "contact constraint" );
 
-		int overflowContactCount = colors[b2_overflowIndex].contactSims.count;
+		int overflowContactCount = colors[B2_OVERFLOW_INDEX].contactSims.count;
 		b2ContactConstraint* overflowContactConstraints = b2AllocateStackItem(
 			&world->stackAllocator, overflowContactCount * sizeof( b2ContactConstraint ), "overflow contact constraint" );
 
-		graph->colors[b2_overflowIndex].overflowConstraints = overflowContactConstraints;
+		graph->colors[B2_OVERFLOW_INDEX].overflowConstraints = overflowContactConstraints;
 
 		// Distribute transient constraints to each graph color and build flat arrays of contact and joint pointers
 		{
@@ -1475,7 +1475,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		}
 
 		// Prepare graph work blocks
-		b2SolverBlock* graphColorBlocks[b2_graphColorCount];
+		b2SolverBlock* graphColorBlocks[B2_GRAPH_COLOR_COUNT];
 		b2SolverBlock* baseGraphBlock = graphBlocks;
 
 		for ( int i = 0; i < activeColorCount; ++i )
@@ -1610,8 +1610,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		B2_ASSERT( (int)( stage - stages ) == stageCount );
 
-		B2_ASSERT( workerCount <= b2_maxWorkers );
-		b2WorkerContext workerContext[b2_maxWorkers];
+		B2_ASSERT( workerCount <= B2_MAX_WORKERS );
+		b2WorkerContext workerContext[B2_MAX_WORKERS];
 
 		stepContext->graph = graph;
 		stepContext->joints = joints;
@@ -1702,7 +1702,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		float threshold = world->hitEventThreshold;
 		b2GraphColor* colors = world->constraintGraph.colors;
-		for ( int i = 0; i < b2_graphColorCount; ++i )
+		for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
 		{
 			b2GraphColor* color = colors + i;
 			int contactCount = color->contactSims.count;

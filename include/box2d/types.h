@@ -386,7 +386,7 @@ B2_API b2ShapeDef b2DefaultShapeDef( void );
 /// - chains have a counter-clockwise winding order
 /// - chains are either a loop or open
 /// - a chain must have at least 4 points
-/// - the distance between any two points must be greater than b2_linearSlop
+/// - the distance between any two points must be greater than B2_LINEAR_SLOP
 /// - a chain shape should not self intersect (this is not validated)
 /// - an open chain shape has NO COLLISION on the first and final edge
 /// - you may overlap two open chains on their first three and/or last three points to get smooth collision

@@ -686,8 +686,8 @@ void b2Body_SetTransform( b2BodyId bodyId, b2Vec2 position, b2Rot rotation )
 	b2BroadPhase* broadPhase = &world->broadPhase;
 
 	b2Transform transform = bodySim->transform;
-	const float margin = b2_aabbMargin;
-	const float speculativeDistance = b2_speculativeDistance;
+	const float margin = B2_AABB_MARGIN;
+	const float speculativeDistance = B2_SPECULATIVE_DISTANCE;
 
 	int shapeId = body->headShapeId;
 	while ( shapeId != B2_NULL_INDEX )
@@ -1094,7 +1094,7 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 				B2_ASSERT( otherBody->setIndex == b2_awakeSet );
 
 				// The joint must live in a graph color.
-				B2_ASSERT( 0 <= joint->colorIndex && joint->colorIndex < b2_graphColorCount );
+				B2_ASSERT( 0 <= joint->colorIndex && joint->colorIndex < B2_GRAPH_COLOR_COUNT );
 
 				// In this case the joint must be re-inserted into the constraint graph to ensure the correct
 				// graph color.

@@ -621,6 +621,9 @@ B2_API b2ChainId b2Shape_GetParentChain( b2ShapeId shapeId );
 B2_API int b2Shape_GetContactCapacity( b2ShapeId shapeId );
 
 /// Get the touching contact data for a shape. The provided shapeId will be either shapeIdA or shapeIdB on the contact data.
+/// @note Box2D uses speculative collision so some contact points may be separated.
+/// @returns the number of elements filled in the provided array
+/// @warning do not ignore the return value, it specifies the valid number of elements
 B2_API int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData, int capacity );
 
 /// Get the current world AABB

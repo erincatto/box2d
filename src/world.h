@@ -12,8 +12,6 @@
 
 #include "box2d/types.h"
 
-typedef struct b2ContactSim b2ContactSim;
-
 enum b2SetType
 {
 	b2_staticSet = 0,
@@ -41,9 +39,8 @@ typedef struct b2TaskContext
 
 } b2TaskContext;
 
-/// The world class manages all physics entities, dynamic simulation,
-/// and asynchronous queries. The world also contains efficient memory
-/// management facilities.
+// The world struct manages all physics entities, dynamic simulation,  and asynchronous queries.
+// The world also contains efficient memory management facilities.
 typedef struct b2World
 {
 	b2StackAllocator stackAllocator;

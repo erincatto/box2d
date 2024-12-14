@@ -35,8 +35,8 @@ static b2ChainShape* b2GetChainShape( b2World* world, b2ChainId chainId )
 static void b2UpdateShapeAABBs( b2Shape* shape, b2Transform transform, b2BodyType proxyType )
 {
 	// Compute a bounding box with a speculative margin
-	const float speculativeDistance = b2_speculativeDistance;
-	const float aabbMargin = b2_aabbMargin;
+	const float speculativeDistance = B2_SPECULATIVE_DISTANCE;
+	const float aabbMargin = B2_AABB_MARGIN;
 
 	b2AABB aabb = b2ComputeShapeAABB( shape, transform );
 	aabb.lowerBound.x -= speculativeDistance;
@@ -183,7 +183,7 @@ b2ShapeId b2CreateCircleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2C
 b2ShapeId b2CreateCapsuleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Capsule* capsule )
 {
 	float lengthSqr = b2DistanceSquared( capsule->center1, capsule->center2 );
-	if ( lengthSqr <= b2_linearSlop * b2_linearSlop )
+	if ( lengthSqr <= B2_LINEAR_SLOP * B2_LINEAR_SLOP )
 	{
 		b2Circle circle = { b2Lerp( capsule->center1, capsule->center2, 0.5f ), capsule->radius };
 		return b2CreateShape( bodyId, def, &circle, b2_circleShape );
@@ -201,7 +201,7 @@ b2ShapeId b2CreatePolygonShape( b2BodyId bodyId, const b2ShapeDef* def, const b2
 b2ShapeId b2CreateSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Segment* segment )
 {
 	float lengthSqr = b2DistanceSquared( segment->point1, segment->point2 );
-	if ( lengthSqr <= b2_linearSlop * b2_linearSlop )
+	if ( lengthSqr <= B2_LINEAR_SLOP * B2_LINEAR_SLOP )
 	{
 		B2_ASSERT( false );
 		return b2_nullShapeId;

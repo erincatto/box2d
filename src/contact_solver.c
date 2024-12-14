@@ -18,7 +18,7 @@ void b2PrepareOverflowContacts( b2StepContext* context )
 
 	b2World* world = context->world;
 	b2ConstraintGraph* graph = context->graph;
-	b2GraphColor* color = graph->colors + b2_overflowIndex;
+	b2GraphColor* color = graph->colors + B2_OVERFLOW_INDEX;
 	b2ContactConstraint* constraints = color->overflowConstraints;
 	int contactCount = color->contactSims.count;
 	b2ContactSim* contacts = color->contactSims.data;
@@ -145,7 +145,7 @@ void b2WarmStartOverflowContacts( b2StepContext* context )
 	b2TracyCZoneNC( warmstart_overflow_contact, "WarmStart Overflow Contact", b2_colorDarkOrange, true );
 
 	b2ConstraintGraph* graph = context->graph;
-	b2GraphColor* color = graph->colors + b2_overflowIndex;
+	b2GraphColor* color = graph->colors + B2_OVERFLOW_INDEX;
 	b2ContactConstraint* constraints = color->overflowConstraints;
 	int contactCount = color->contactSims.count;
 	b2World* world = context->world;
@@ -209,7 +209,7 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 	b2TracyCZoneNC( solve_contact, "Solve Contact", b2_colorAliceBlue, true );
 
 	b2ConstraintGraph* graph = context->graph;
-	b2GraphColor* color = graph->colors + b2_overflowIndex;
+	b2GraphColor* color = graph->colors + B2_OVERFLOW_INDEX;
 	b2ContactConstraint* constraints = color->overflowConstraints;
 	int contactCount = color->contactSims.count;
 	b2World* world = context->world;
@@ -344,7 +344,7 @@ void b2ApplyOverflowRestitution( b2StepContext* context )
 	b2TracyCZoneNC( overflow_resitution, "Overflow Restitution", b2_colorViolet, true );
 
 	b2ConstraintGraph* graph = context->graph;
-	b2GraphColor* color = graph->colors + b2_overflowIndex;
+	b2GraphColor* color = graph->colors + B2_OVERFLOW_INDEX;
 	b2ContactConstraint* constraints = color->overflowConstraints;
 	int contactCount = color->contactSims.count;
 	b2World* world = context->world;
@@ -440,7 +440,7 @@ void b2StoreOverflowImpulses( b2StepContext* context )
 	b2TracyCZoneNC( store_impulses, "Store", b2_colorFirebrick, true );
 
 	b2ConstraintGraph* graph = context->graph;
-	b2GraphColor* color = graph->colors + b2_overflowIndex;
+	b2GraphColor* color = graph->colors + B2_OVERFLOW_INDEX;
 	b2ContactConstraint* constraints = color->overflowConstraints;
 	b2ContactSim* contacts = color->contactSims.data;
 	int contactCount = color->contactSims.count;
