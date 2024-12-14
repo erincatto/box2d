@@ -500,7 +500,7 @@ b2ContactSim* b2GetContactSim( b2World* world, b2Contact* contact )
 	if ( contact->setIndex == b2_awakeSet && contact->colorIndex != B2_NULL_INDEX )
 	{
 		// contact lives in constraint graph
-		B2_ASSERT( 0 <= contact->colorIndex && contact->colorIndex < b2_graphColorCount );
+		B2_ASSERT( 0 <= contact->colorIndex && contact->colorIndex < B2_GRAPH_COLOR_COUNT );
 		b2GraphColor* color = world->constraintGraph.colors + contact->colorIndex;
 		return b2ContactSimArray_Get( &color->contactSims, contact->localIndex );
 	}
@@ -578,12 +578,12 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 		// This flag is for testing
 		if (world->enableSpeculative == false && pointCount == 2)
 		{
-			if ( contactSim->manifold.points[0].separation > 1.5f * b2_linearSlop )
+			if ( contactSim->manifold.points[0].separation > 1.5f * B2_LINEAR_SLOP )
 			{
 				contactSim->manifold.points[0] = contactSim->manifold.points[1];
 				contactSim->manifold.pointCount = 1;
 			}
-			else if ( contactSim->manifold.points[0].separation > 1.5f * b2_linearSlop )
+			else if ( contactSim->manifold.points[0].separation > 1.5f * B2_LINEAR_SLOP )
 			{
 				contactSim->manifold.pointCount = 1;
 			}

@@ -1808,7 +1808,7 @@ int32_t b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 	// considered leaves in the tree rebuild.
 	// Free all internal nodes that have grown.
 	// todo use a node growth metric instead of simply enlarged to reduce rebuild size and frequency
-	// this should be weighed against b2_aabbMargin
+	// this should be weighed against B2_AABB_MARGIN
 	while ( true )
 	{
 		if ( node->height == 0 || ( ( node->flags & b2_enlargedNode ) == 0 && fullBuild == false ) )

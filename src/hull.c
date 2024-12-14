@@ -49,7 +49,7 @@ static b2Hull b2RecurseHull( b2Vec2 p1, b2Vec2 p2, b2Vec2* ps, int count )
 		}
 	}
 
-	if ( bestDistance < 2.0f * b2_linearSlop )
+	if ( bestDistance < 2.0f * B2_LINEAR_SLOP )
 	{
 		return hull;
 	}
@@ -81,8 +81,8 @@ static b2Hull b2RecurseHull( b2Vec2 p1, b2Vec2 p2, b2Vec2* ps, int count )
 }
 
 // quickhull algorithm
-// - merges vertices based on b2_linearSlop
-// - removes collinear points using b2_linearSlop
+// - merges vertices based on B2_LINEAR_SLOP
+// - removes collinear points using B2_LINEAR_SLOP
 // - returns an empty hull if it fails
 b2Hull b2ComputeHull( const b2Vec2* points, int count )
 {
@@ -103,7 +103,7 @@ b2Hull b2ComputeHull( const b2Vec2* points, int count )
 	// Also compute the bounding box for later.
 	b2Vec2 ps[B2_MAX_POLYGON_VERTICES];
 	int n = 0;
-	const float linearSlop = b2_linearSlop;
+	const float linearSlop = B2_LINEAR_SLOP;
 	const float tolSqr = 16.0f * linearSlop * linearSlop;
 	for ( int i = 0; i < count; ++i )
 	{
@@ -303,7 +303,7 @@ bool b2ValidateHull( const b2Hull* hull )
 	}
 
 	// test for collinear points
-	const float linearSlop = b2_linearSlop;
+	const float linearSlop = B2_LINEAR_SLOP;
 	for ( int i = 0; i < hull->count; ++i )
 	{
 		int i1 = i;

@@ -310,12 +310,12 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			B2_ASSERT( contact->setIndex == b2_awakeSet );
 			B2_ASSERT( contact->islandId == islandId );
 			int colorIndex = contact->colorIndex;
-			B2_ASSERT( 0 <= colorIndex && colorIndex < b2_graphColorCount );
+			B2_ASSERT( 0 <= colorIndex && colorIndex < B2_GRAPH_COLOR_COUNT );
 
 			b2GraphColor* color = world->constraintGraph.colors + colorIndex;
 
 			// Remove bodies from graph coloring associated with this constraint
-			if ( colorIndex != b2_overflowIndex )
+			if ( colorIndex != B2_OVERFLOW_INDEX )
 			{
 				// might clear a bit for a static body, but this has no effect
 				b2ClearBit( &color->bodySet, contact->edges[0].bodyId );
@@ -359,13 +359,13 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			int colorIndex = joint->colorIndex;
 			int localIndex = joint->localIndex;
 
-			B2_ASSERT( 0 <= colorIndex && colorIndex < b2_graphColorCount );
+			B2_ASSERT( 0 <= colorIndex && colorIndex < B2_GRAPH_COLOR_COUNT );
 
 			b2GraphColor* color = world->constraintGraph.colors + colorIndex;
 
 			b2JointSim* awakeJointSim = b2JointSimArray_Get( &color->jointSims, localIndex );
 
-			if ( colorIndex != b2_overflowIndex )
+			if ( colorIndex != B2_OVERFLOW_INDEX )
 			{
 				// might clear a bit for a static body, but this has no effect
 				b2ClearBit( &color->bodySet, joint->edges[0].bodyId );
@@ -566,7 +566,7 @@ void b2TransferJoint( b2World* world, b2SolverSet* targetSet, b2SolverSet* sourc
 	b2JointSim* sourceSim;
 	if ( sourceSet->setIndex == b2_awakeSet )
 	{
-		B2_ASSERT( 0 <= colorIndex && colorIndex < b2_graphColorCount );
+		B2_ASSERT( 0 <= colorIndex && colorIndex < B2_GRAPH_COLOR_COUNT );
 		b2GraphColor* color = world->constraintGraph.colors + colorIndex;
 
 		sourceSim = b2JointSimArray_Get( &color->jointSims, localIndex );

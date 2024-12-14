@@ -8,10 +8,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct b2Body b2Body;
 typedef struct b2Contact b2Contact;
 typedef struct b2Joint b2Joint;
-typedef struct b2StepContext b2StepContext;
 typedef struct b2World b2World;
 
 // Deterministic solver
@@ -58,10 +56,10 @@ typedef struct b2Island
 	int constraintRemoveCount;
 } b2Island;
 
+// This is used to move islands across solver sets
 typedef struct b2IslandSim
 {
 	int islandId;
-
 } b2IslandSim;
 
 b2Island* b2CreateIsland( b2World* world, int setIndex );

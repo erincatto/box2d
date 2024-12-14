@@ -666,7 +666,7 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	b2Vec2 v = b2Sub( wA, wB );
 
 	// Sigma is the target distance between proxies
-	const float linearSlop = b2_linearSlop;
+	const float linearSlop = B2_LINEAR_SLOP;
 	const float sigma = b2MaxFloat( linearSlop, radius - linearSlop );
 
 	// Main iteration loop.
@@ -1028,9 +1028,9 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 
 	float totalRadius = proxyA->radius + proxyB->radius;
 	// todo_erin consider different target
-	// float target = b2MaxFloat( b2_linearSlop, totalRadius );
-	float target = b2MaxFloat( b2_linearSlop, totalRadius - b2_linearSlop );
-	float tolerance = 0.25f * b2_linearSlop;
+	// float target = b2MaxFloat( B2_LINEAR_SLOP, totalRadius );
+	float target = b2MaxFloat( B2_LINEAR_SLOP, totalRadius - B2_LINEAR_SLOP );
+	float tolerance = 0.25f * B2_LINEAR_SLOP;
 	B2_ASSERT( target > tolerance );
 
 	float t1 = 0.0f;

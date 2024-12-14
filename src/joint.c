@@ -110,7 +110,7 @@ b2JointSim* b2GetJointSim( b2World* world, b2Joint* joint )
 {
 	if ( joint->setIndex == b2_awakeSet )
 	{
-		B2_ASSERT( 0 <= joint->colorIndex && joint->colorIndex < b2_graphColorCount );
+		B2_ASSERT( 0 <= joint->colorIndex && joint->colorIndex < B2_GRAPH_COLOR_COUNT );
 		b2GraphColor* color = world->constraintGraph.colors + joint->colorIndex;
 		return b2JointSimArray_Get( &color->jointSims, joint->localIndex );
 	}
@@ -370,10 +370,10 @@ b2JointId b2CreateDistanceJoint( b2WorldId worldId, const b2DistanceJointDef* de
 
 	b2DistanceJoint empty = { 0 };
 	joint->distanceJoint = empty;
-	joint->distanceJoint.length = b2MaxFloat( def->length, b2_linearSlop );
+	joint->distanceJoint.length = b2MaxFloat( def->length, B2_LINEAR_SLOP );
 	joint->distanceJoint.hertz = def->hertz;
 	joint->distanceJoint.dampingRatio = def->dampingRatio;
-	joint->distanceJoint.minLength = b2MaxFloat( def->minLength, b2_linearSlop );
+	joint->distanceJoint.minLength = b2MaxFloat( def->minLength, B2_LINEAR_SLOP );
 	joint->distanceJoint.maxLength = b2MaxFloat( def->minLength, def->maxLength );
 	joint->distanceJoint.maxMotorForce = def->maxMotorForce;
 	joint->distanceJoint.motorSpeed = def->motorSpeed;
@@ -1182,8 +1182,8 @@ void b2PrepareOverflowJoints( b2StepContext* context )
 	b2TracyCZoneNC( prepare_joints, "PrepJoints", b2_colorOldLace, true );
 
 	b2ConstraintGraph* graph = context->graph;
-	b2JointSim* joints = graph->colors[b2_overflowIndex].jointSims.data;
-	int jointCount = graph->colors[b2_overflowIndex].jointSims.count;
+	b2JointSim* joints = graph->colors[B2_OVERFLOW_INDEX].jointSims.data;
+	int jointCount = graph->colors[B2_OVERFLOW_INDEX].jointSims.count;
 
 	for ( int i = 0; i < jointCount; ++i )
 	{
@@ -1199,8 +1199,8 @@ void b2WarmStartOverflowJoints( b2StepContext* context )
 	b2TracyCZoneNC( prepare_joints, "PrepJoints", b2_colorOldLace, true );
 
 	b2ConstraintGraph* graph = context->graph;
-	b2JointSim* joints = graph->colors[b2_overflowIndex].jointSims.data;
-	int jointCount = graph->colors[b2_overflowIndex].jointSims.count;
+	b2JointSim* joints = graph->colors[B2_OVERFLOW_INDEX].jointSims.data;
+	int jointCount = graph->colors[B2_OVERFLOW_INDEX].jointSims.count;
 
 	for ( int i = 0; i < jointCount; ++i )
 	{
@@ -1216,8 +1216,8 @@ void b2SolveOverflowJoints( b2StepContext* context, bool useBias )
 	b2TracyCZoneNC( solve_joints, "SolveJoints", b2_colorLemonChiffon, true );
 
 	b2ConstraintGraph* graph = context->graph;
-	b2JointSim* joints = graph->colors[b2_overflowIndex].jointSims.data;
-	int jointCount = graph->colors[b2_overflowIndex].jointSims.count;
+	b2JointSim* joints = graph->colors[B2_OVERFLOW_INDEX].jointSims.data;
+	int jointCount = graph->colors[B2_OVERFLOW_INDEX].jointSims.count;
 
 	for ( int i = 0; i < jointCount; ++i )
 	{
@@ -1297,7 +1297,7 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 
 	if ( draw->drawGraphColors )
 	{
-		b2HexColor colors[b2_graphColorCount] = { b2_colorRed,		 b2_colorOrange,	b2_colorYellow, b2_colorGreen,
+		b2HexColor colors[B2_GRAPH_COLOR_COUNT] = { b2_colorRed,		 b2_colorOrange,	b2_colorYellow, b2_colorGreen,
 												  b2_colorCyan,		 b2_colorBlue,		b2_colorViolet, b2_colorPink,
 												  b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,	b2_colorBlack };
 
