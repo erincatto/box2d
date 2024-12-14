@@ -248,8 +248,8 @@ void b2DestroyWorld( b2WorldId worldId )
 	b2SensorEndTouchEventArray_Destroy( world->sensorEndEvents + 0 );
 	b2SensorEndTouchEventArray_Destroy( world->sensorEndEvents + 1 );
 	b2ContactBeginTouchEventArray_Destroy( &world->contactBeginEvents );
-	b2ContactEndTouchEventArray_Destroy( world->contactEndEvents + 0);
-	b2ContactEndTouchEventArray_Destroy( world->contactEndEvents + 1);
+	b2ContactEndTouchEventArray_Destroy( world->contactEndEvents + 0 );
+	b2ContactEndTouchEventArray_Destroy( world->contactEndEvents + 1 );
 	b2ContactHitEventArray_Destroy( &world->contactHitEvents );
 
 	int chainCapacity = world->chainShapes.count;
@@ -878,7 +878,7 @@ static bool DrawQueryCallback( int proxyId, int shapeId, void* context )
 		{
 			color = shape->customColor;
 		}
-		else if ( body->type == b2_dynamicBody && bodySim->mass == 0.0f )
+		else if ( body->type == b2_dynamicBody && body->mass == 0.0f )
 		{
 			// Bad body
 			color = b2_colorRed;
@@ -953,9 +953,9 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 	b2HexColor impulseColor = b2_colorMagenta;
 	b2HexColor frictionColor = b2_colorYellow;
 
-	b2HexColor graphColors[B2_GRAPH_COLOR_COUNT] = { b2_colorRed,		  b2_colorOrange,	 b2_colorYellow, b2_colorGreen,
-												   b2_colorCyan,	  b2_colorBlue,		 b2_colorViolet, b2_colorPink,
-												   b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,	 b2_colorBlack };
+	b2HexColor graphColors[B2_GRAPH_COLOR_COUNT] = { b2_colorRed,		b2_colorOrange,	   b2_colorYellow, b2_colorGreen,
+													 b2_colorCyan,		b2_colorBlue,	   b2_colorViolet, b2_colorPink,
+													 b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,  b2_colorBlack };
 
 	int bodyCapacity = b2GetIdCapacity( &world->bodyIdPool );
 	b2SetBitCountAndClear( &world->debugBodySet, bodyCapacity );
@@ -997,7 +997,7 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 				b2Vec2 p = b2TransformPoint( transform, offset );
 
 				char buffer[32];
-				snprintf( buffer, 32, "  %.2f", bodySim->mass );
+				snprintf( buffer, 32, "  %.2f", body->mass );
 				draw->DrawString( p, buffer, draw->context );
 			}
 
@@ -1164,7 +1164,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 					{
 						color = shape->customColor;
 					}
-					else if ( body->type == b2_dynamicBody && bodySim->mass == 0.0f )
+					else if ( body->type == b2_dynamicBody && body->mass == 0.0f )
 					{
 						// Bad body
 						color = b2_colorRed;
@@ -1285,7 +1285,8 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				b2Vec2 p = b2TransformPoint( transform, offset );
 
 				char buffer[32];
-				snprintf( buffer, 32, "  %.2f", bodySim->mass );
+				float mass = bodySim->invMass > 0.0f ? 1.0f / bodySim->invMass : 0.0f;
+				snprintf( buffer, 32, "  %.2f", mass );
 				draw->DrawString( p, buffer, draw->context );
 			}
 		}
@@ -1304,9 +1305,9 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 		b2HexColor impulseColor = b2_colorMagenta;
 		b2HexColor frictionColor = b2_colorYellow;
 
-		b2HexColor colors[B2_GRAPH_COLOR_COUNT] = { b2_colorRed,		 b2_colorOrange,	b2_colorYellow, b2_colorGreen,
-												  b2_colorCyan,		 b2_colorBlue,		b2_colorViolet, b2_colorPink,
-												  b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,	b2_colorBlack };
+		b2HexColor colors[B2_GRAPH_COLOR_COUNT] = { b2_colorRed,	   b2_colorOrange,	  b2_colorYellow, b2_colorGreen,
+													b2_colorCyan,	   b2_colorBlue,	  b2_colorViolet, b2_colorPink,
+													b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,  b2_colorBlack };
 
 		for ( int colorIndex = 0; colorIndex < B2_GRAPH_COLOR_COUNT; ++colorIndex )
 		{
@@ -1650,7 +1651,7 @@ bool b2World_IsWarmStartingEnabled( b2WorldId worldId )
 	return world->enableWarmStarting;
 }
 
-int b2World_GetAwakeBodyCount(b2WorldId worldId)
+int b2World_GetAwakeBodyCount( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
@@ -2150,7 +2151,7 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, int shap
 		float fraction = worldContext->fcn( id, output.point, output.normal, output.fraction, worldContext->userContext );
 
 		// The user may return -1 to skip this shape
-		if (0.0f <= fraction && fraction <= 1.0f)
+		if ( 0.0f <= fraction && fraction <= 1.0f )
 		{
 			worldContext->fraction = fraction;
 		}
@@ -2655,7 +2656,7 @@ void b2World_RebuildStaticTree( b2WorldId worldId )
 	b2DynamicTree_Rebuild( staticTree, true );
 }
 
-void b2World_EnableSpeculative(b2WorldId worldId, bool flag)
+void b2World_EnableSpeculative( b2WorldId worldId, bool flag )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 	world->enableSpeculative = flag;

@@ -335,6 +335,9 @@ typedef struct b2ShapeDef
 	/// The restitution (bounce) usually in the range [0,1].
 	float restitution;
 
+	/// The rolling resistance usually in the range [0,1].
+	float rollingResistance;
+
 	/// The density, usually in kg/m^2.
 	float density;
 
@@ -349,9 +352,9 @@ typedef struct b2ShapeDef
 	/// Instead, use a ray or shape cast for those scenarios.
 	bool isSensor;
 
-/// Enable sensor events for this shape. Only applies to kinematic and dynamic bodies.
-/// This applies for sensors and non-sensors.
-bool enableSensorEvents;
+	/// Enable sensor events for this shape. Only applies to kinematic and dynamic bodies.
+	/// This applies for sensors and non-sensors.
+	bool enableSensorEvents;
 
 	/// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors.
 	bool enableContactEvents;
