@@ -1017,7 +1017,8 @@ typedef struct b2ContactBeginTouchEvent
 	/// Id of the second shape
 	b2ShapeId shapeIdB;
 
-	/// The initial contact manifold
+	/// The initial contact manifold. This is recorded before the solver is called,
+	/// so all the impulses will be zero.
 	b2Manifold manifold;
 } b2ContactBeginTouchEvent;
 

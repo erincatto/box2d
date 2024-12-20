@@ -50,7 +50,7 @@ public:
 		m_transform = { { 1.5f, -1.5f }, b2Rot_identity };
 		m_angle = 0.0f;
 
-		m_cache = b2_emptyDistanceCache;
+		m_cache = b2_emptySimplexCache;
 		m_simplexCount = 0;
 		m_startPoint = { 0.0f, 0.0f };
 		m_basePosition = { 0.0f, 0.0f };
@@ -71,9 +71,9 @@ public:
 		m_proxyB = MakeProxy( m_typeB, m_radiusB );
 	}
 
-	b2DistanceProxy MakeProxy( ShapeType type, float radius )
+	b2ShapeProxy MakeProxy( ShapeType type, float radius )
 	{
-		b2DistanceProxy proxy = {};
+		b2ShapeProxy proxy = {};
 		proxy.radius = radius;
 
 		switch ( type )
@@ -410,10 +410,10 @@ public:
 	ShapeType m_typeB;
 	float m_radiusA;
 	float m_radiusB;
-	b2DistanceProxy m_proxyA;
-	b2DistanceProxy m_proxyB;
+	b2ShapeProxy m_proxyA;
+	b2ShapeProxy m_proxyB;
 
-	b2DistanceCache m_cache;
+	b2SimplexCache m_cache;
 	b2Simplex m_simplexes[SIMPLEX_CAPACITY];
 	int m_simplexCount;
 	int m_simplexIndex;
@@ -2246,10 +2246,10 @@ public:
 			g_camera.m_zoom = 25.0f * 0.45f;
 		}
 
-		m_smgroxCache1 = b2_emptyDistanceCache;
-		m_smgroxCache2 = b2_emptyDistanceCache;
-		m_smgcapCache1 = b2_emptyDistanceCache;
-		m_smgcapCache2 = b2_emptyDistanceCache;
+		m_smgroxCache1 = b2_emptySimplexCache;
+		m_smgroxCache2 = b2_emptySimplexCache;
+		m_smgcapCache1 = b2_emptySimplexCache;
+		m_smgcapCache2 = b2_emptySimplexCache;
 
 		m_transform = b2Transform_identity;
 		m_transform.p.x = 1.0f;
@@ -2398,10 +2398,10 @@ public:
 
 		if ( m_enableCaching == false )
 		{
-			m_smgroxCache1 = b2_emptyDistanceCache;
-			m_smgroxCache2 = b2_emptyDistanceCache;
-			m_smgcapCache1 = b2_emptyDistanceCache;
-			m_smgcapCache2 = b2_emptyDistanceCache;
+			m_smgroxCache1 = b2_emptySimplexCache;
+			m_smgroxCache2 = b2_emptySimplexCache;
+			m_smgcapCache1 = b2_emptySimplexCache;
+			m_smgcapCache2 = b2_emptySimplexCache;
 		}
 
 		// circle-circle
@@ -2828,10 +2828,10 @@ public:
 		return new Manifold( settings );
 	}
 
-	b2DistanceCache m_smgroxCache1;
-	b2DistanceCache m_smgroxCache2;
-	b2DistanceCache m_smgcapCache1;
-	b2DistanceCache m_smgcapCache2;
+	b2SimplexCache m_smgroxCache1;
+	b2SimplexCache m_smgroxCache2;
+	b2SimplexCache m_smgcapCache1;
+	b2SimplexCache m_smgcapCache2;
 
 	b2Hull m_wedge;
 
@@ -3111,7 +3111,7 @@ public:
 			for ( int i = 0; i < m_count; ++i )
 			{
 				const b2ChainSegment* segment = m_segments + i;
-				b2DistanceCache cache = {};
+				b2SimplexCache cache = {};
 				b2Manifold m = b2CollideChainSegmentAndPolygon( segment, transform1, &rox, transform2, &cache );
 				DrawManifold( &m );
 			}
@@ -3308,7 +3308,7 @@ public:
 		distanceInput.transformA = m_transformA;
 		distanceInput.transformB = transformB2;
 		distanceInput.useRadii = false;
-		b2DistanceCache distanceCache;
+		b2SimplexCache distanceCache;
 		distanceCache.count = 0;
 		b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceCache, &distanceInput, nullptr, 0 );
 
@@ -3429,7 +3429,7 @@ public:
 
 #if 0
 -		input	0x00000044f14fd550 {proxyA={points=0x00000044f14fd550 {{...}, {...}, {...}, {...}, {...}, {...}, {...}, ...} ...} ...}	const b2TOIInput *
--		proxyA	{points=0x00000044f14fd550 {{x=-123.750000 y=134.750000 }, {x=-123.250000 y=134.750000 }, {x=-123.250000 ...}, ...} ...}	b2DistanceProxy
+-		proxyA	{points=0x00000044f14fd550 {{x=-123.750000 y=134.750000 }, {x=-123.250000 y=134.750000 }, {x=-123.250000 ...}, ...} ...}	b2ShapeProxy
 -		points	0x00000044f14fd550 {{x=-123.750000 y=134.750000 }, {x=-123.250000 y=134.750000 }, {x=-123.250000 y=135.250000 }, ...}	b2Vec2[8]
 +		[0]	{x=-123.750000 y=134.750000 }	b2Vec2
 +		[1]	{x=-123.250000 y=134.750000 }	b2Vec2
@@ -3441,7 +3441,7 @@ public:
 +		[7]	{x=8.40272566e-18 y=7.539e-43#DEN }	b2Vec2
 		count	4	int
 		radius	0.00000000	float
--		proxyB	{points=0x00000044f14fd598 {{x=0.00000000 y=-0.125000000 }, {x=0.00000000 y=0.125000000 }, {x=-123.250000 ...}, ...} ...}	b2DistanceProxy
+-		proxyB	{points=0x00000044f14fd598 {{x=0.00000000 y=-0.125000000 }, {x=0.00000000 y=0.125000000 }, {x=-123.250000 ...}, ...} ...}	b2ShapeProxy
 -		points	0x00000044f14fd598 {{x=0.00000000 y=-0.125000000 }, {x=0.00000000 y=0.125000000 }, {x=-123.250000 y=...}, ...}	b2Vec2[8]
 +		[0]	{x=0.00000000 y=-0.125000000 }	b2Vec2
 +		[1]	{x=0.00000000 y=0.125000000 }	b2Vec2
@@ -3486,11 +3486,11 @@ public:
 		input.proxyB = b2MakeProxy( m_verticesB, m_countB, m_radiusB );
 		input.sweepA = sweepA;
 		input.sweepB = sweepB;
-		input.tMax = 1.0f;
+		input.maxFraction = 1.0f;
 
 		b2TOIOutput output = b2TimeOfImpact( &input );
 
-		g_draw.DrawString( 5, m_textLine, "toi = %g", output.t );
+		g_draw.DrawString( 5, m_textLine, "toi = %g", output.fraction );
 		m_textLine += m_textIncrement;
 
 		// g_draw.DrawString(5, m_textLine, "max toi iters = %d, max root iters = %d", b2_toiMaxIters,
@@ -3517,7 +3517,7 @@ public:
 		// g_draw.DrawPolygon( vertices, m_countB, b2_colorGreen );
 
 		// Draw B at t = hit_time
-		transformB = b2GetSweepTransform( &sweepB, output.t );
+		transformB = b2GetSweepTransform( &sweepB, output.fraction );
 		for ( int i = 0; i < m_countB; ++i )
 		{
 			vertices[i] = b2TransformPoint( transformB, m_verticesB[i] );
@@ -3538,10 +3538,10 @@ public:
 			b2DistanceInput dinput;
 			dinput.proxyA = input.proxyA;
 			dinput.proxyB = input.proxyB;
-			dinput.transformA = b2GetSweepTransform( &sweepA, output.t );
-			dinput.transformB = b2GetSweepTransform( &sweepB, output.t );
+			dinput.transformA = b2GetSweepTransform( &sweepA, output.fraction );
+			dinput.transformB = b2GetSweepTransform( &sweepB, output.fraction );
 			dinput.useRadii = false;
-			b2DistanceCache cache = { 0 };
+			b2SimplexCache cache = { 0 };
 			b2DistanceOutput doutput = b2ShapeDistance( &cache, &dinput, nullptr, 0 );
 			g_draw.DrawString( 5, m_textLine, "distance = %g", doutput.distance );
 			m_textLine += m_textIncrement;

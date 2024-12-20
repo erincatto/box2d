@@ -1066,7 +1066,7 @@ b2Manifold b2CollideChainSegmentAndCircle( const b2ChainSegment* segmentA, b2Tra
 }
 
 b2Manifold b2CollideChainSegmentAndCapsule( const b2ChainSegment* segmentA, b2Transform xfA, const b2Capsule* capsuleB,
-											b2Transform xfB, b2DistanceCache* cache )
+											b2Transform xfB, b2SimplexCache* cache )
 {
 	b2Polygon polyB = b2MakeCapsule( capsuleB->center1, capsuleB->center2, capsuleB->radius );
 	return b2CollideChainSegmentAndPolygon( segmentA, xfA, &polyB, xfB, cache );
@@ -1208,7 +1208,7 @@ static enum b2NormalType b2ClassifyNormal( struct b2ChainSegmentParams params, b
 }
 
 b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Transform xfA, const b2Polygon* polygonB,
-											b2Transform xfB, b2DistanceCache* cache )
+											b2Transform xfB, b2SimplexCache* cache )
 {
 	b2Manifold manifold = { 0 };
 

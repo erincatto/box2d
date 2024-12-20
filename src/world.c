@@ -1968,7 +1968,7 @@ typedef struct WorldOverlapContext
 	b2World* world;
 	b2OverlapResultFcn* fcn;
 	b2QueryFilter filter;
-	b2DistanceProxy proxy;
+	b2ShapeProxy proxy;
 	b2Transform transform;
 	void* userContext;
 } WorldOverlapContext;
@@ -2000,7 +2000,7 @@ static bool TreeOverlapCallback( int proxyId, int shapeId, void* context )
 	input.transformB = transform;
 	input.useRadii = true;
 
-	b2DistanceCache cache = { 0 };
+	b2SimplexCache cache = { 0 };
 	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
 
 	if ( output.distance > 0.0f )
@@ -2557,7 +2557,7 @@ static bool ExplosionCallback( int proxyId, int shapeId, void* context )
 	input.transformB = b2Transform_identity;
 	input.useRadii = true;
 
-	b2DistanceCache cache = { 0 };
+	b2SimplexCache cache = { 0 };
 	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
 
 	float radius = explosionContext->radius;

@@ -423,9 +423,19 @@ B2_API void b2Body_SetBullet( b2BodyId bodyId, bool flag );
 /// Is this body a bullet?
 B2_API bool b2Body_IsBullet( b2BodyId bodyId );
 
+/// Enable/disable sensor events on all shapes.
+/// @see b2ShapeDef::enableSensorEvents
+/// @warning changing this at runtime may cause mismatched begin/end touch events
+B2_API void b2Body_EnableSensorEvents( b2BodyId bodyId, bool flag );
+
+/// Enable/disable contact events on all shapes.
+/// @see b2ShapeDef::enableContactEvents
+/// @warning changing this at runtime may cause mismatched begin/end touch events
+B2_API void b2Body_EnableContactEvents( b2BodyId bodyId, bool flag );
+
 /// Enable/disable hit events on all shapes
 /// @see b2ShapeDef::enableHitEvents
-B2_API void b2Body_EnableHitEvents( b2BodyId bodyId, bool enableHitEvents );
+B2_API void b2Body_EnableHitEvents( b2BodyId bodyId, bool flag );
 
 /// Get the world that owns this body
 B2_API b2WorldId b2Body_GetWorld( b2BodyId bodyId );
@@ -625,6 +635,20 @@ B2_API int b2Shape_GetContactCapacity( b2ShapeId shapeId );
 /// @returns the number of elements filled in the provided array
 /// @warning do not ignore the return value, it specifies the valid number of elements
 B2_API int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData, int capacity );
+
+/// Get the maximum capacity required for retrieving all the overlapped shapes on a sensor shape.
+/// This returns 0 if the provided shape is not a sensor.
+/// @param shapeId the id of a sensor shape
+/// @returns the required capacity to get all the overlaps in b2Shape_GetSensorOverlaps
+B2_API int b2Shape_GetSensorCapacity( b2ShapeId shapeId );
+
+/// Get the overlapped shapes for a sensor shape.
+/// @param shapeId the id of a sensor shape
+/// @param overlappedShapes a user allocated array that is filled with the overlapping shapes
+/// @param capacity the capacity of overlappedShapes
+/// @returns the number of elements filled in the provided array
+/// @warning do not ignore the return value, it specifies the valid number of elements
+B2_API int b2Shape_GetSensorOverlaps( b2ShapeId shapeId, b2ShapeId* overlappedShapes, int capacity );
 
 /// Get the current world AABB
 B2_API b2AABB b2Shape_GetAABB( b2ShapeId shapeId );

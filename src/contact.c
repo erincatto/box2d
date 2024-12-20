@@ -66,9 +66,9 @@ static inline float b2MixFloats( float value1, float value2, b2MixingRule mixing
 }
 
 // todo make relative for all
-// typedef b2Manifold b2ManifoldFcn(const b2Shape* shapeA, const b2Shape* shapeB, b2Transform xfB, b2DistanceCache* cache);
+// typedef b2Manifold b2ManifoldFcn(const b2Shape* shapeA, const b2Shape* shapeB, b2Transform xfB, b2SimplexCache* cache);
 typedef b2Manifold b2ManifoldFcn( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
-								  b2DistanceCache* cache );
+								  b2SimplexCache* cache );
 
 struct b2ContactRegister
 {
@@ -80,83 +80,83 @@ static struct b2ContactRegister s_registers[b2_shapeTypeCount][b2_shapeTypeCount
 static bool s_initialized = false;
 
 static b2Manifold b2CircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
-									b2DistanceCache* cache )
+									b2SimplexCache* cache )
 {
 	B2_MAYBE_UNUSED( cache );
 	return b2CollideCircles( &shapeA->circle, xfA, &shapeB->circle, xfB );
 }
 
 static b2Manifold b2CapsuleAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
-											  b2DistanceCache* cache )
+											  b2SimplexCache* cache )
 {
 	B2_MAYBE_UNUSED( cache );
 	return b2CollideCapsuleAndCircle( &shapeA->capsule, xfA, &shapeB->circle, xfB );
 }
 
 static b2Manifold b2CapsuleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
-									 b2DistanceCache* cache )
+									 b2SimplexCache* cache )
 {
 	B2_MAYBE_UNUSED( cache );
 	return b2CollideCapsules( &shapeA->capsule, xfA, &shapeB->capsule, xfB );
 }
 
 static b2Manifold b2PolygonAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
-											  b2DistanceCache* cache )
+											  b2SimplexCache* cache )
 {
 	B2_MAYBE_UNUSED( cache );
 	return b2CollidePolygonAndCircle( &shapeA->polygon, xfA, &shapeB->circle, xfB );
 }
 
 static b2Manifold b2PolygonAndCapsuleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
-											   b2DistanceCache* cache )
+											   b2SimplexCache* cache )
 {
 	B2_MAYBE_UNUSED( cache );
 	return b2CollidePolygonAndCapsule( &shapeA->polygon, xfA, &shapeB->capsule, xfB );
 }
 
 static b2Manifold b2PolygonManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
-									 b2DistanceCache* cache )
+									 b2SimplexCache* cache )
 {
 	B2_MAYBE_UNUSED( cache );
 	return b2CollidePolygons( &shapeA->polygon, xfA, &shapeB->polygon, xfB );
 }
 
 static b2Manifold b2SegmentAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
-											  b2DistanceCache* cache )
+											  b2SimplexCache* cache )
 {
 	B2_MAYBE_UNUSED( cache );
 	return b2CollideSegmentAndCircle( &shapeA->segment, xfA, &shapeB->circle, xfB );
 }
 
 static b2Manifold b2SegmentAndCapsuleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
-											   b2DistanceCache* cache )
+											   b2SimplexCache* cache )
 {
 	B2_MAYBE_UNUSED( cache );
 	return b2CollideSegmentAndCapsule( &shapeA->segment, xfA, &shapeB->capsule, xfB );
 }
 
 static b2Manifold b2SegmentAndPolygonManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
-											   b2DistanceCache* cache )
+											   b2SimplexCache* cache )
 {
 	B2_MAYBE_UNUSED( cache );
 	return b2CollideSegmentAndPolygon( &shapeA->segment, xfA, &shapeB->polygon, xfB );
 }
 
 static b2Manifold b2ChainSegmentAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
-												   b2DistanceCache* cache )
+												   b2SimplexCache* cache )
 {
 	B2_MAYBE_UNUSED( cache );
 	return b2CollideChainSegmentAndCircle( &shapeA->chainSegment, xfA, &shapeB->circle, xfB );
 }
 
 static b2Manifold b2ChainSegmentAndCapsuleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB,
-													b2Transform xfB, b2DistanceCache* cache )
+													b2Transform xfB, b2SimplexCache* cache )
 {
 	return b2CollideChainSegmentAndCapsule( &shapeA->chainSegment, xfA, &shapeB->capsule, xfB, cache );
 }
 
 static b2Manifold b2ChainSegmentAndPolygonManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB,
-													b2Transform xfB, b2DistanceCache* cache )
+													b2Transform xfB, b2SimplexCache* cache )
 {
 	return b2CollideChainSegmentAndPolygon( &shapeA->chainSegment, xfA, &shapeB->polygon, xfB, cache );
 }
@@ -332,7 +332,7 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contactSim->invIB = 0.0f;
 	contactSim->shapeIdA = shapeIdA;
 	contactSim->shapeIdB = shapeIdB;
-	contactSim->cache = b2_emptyDistanceCache;
+	contactSim->cache = b2_emptySimplexCache;
 	contactSim->manifold = ( b2Manifold ){ 0 };
 	contactSim->friction = b2MixFloats( shapeA->friction, shapeB->friction, world->frictionMixingRule );
 	contactSim->restitution = b2MixFloats( shapeA->restitution, shapeB->restitution, world->restitutionMixingRule );
@@ -521,7 +521,7 @@ bool b2ShouldShapesCollide( b2Filter filterA, b2Filter filterB )
 }
 
 static bool b2TestShapeOverlap( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
-								b2DistanceCache* cache )
+								b2SimplexCache* cache )
 {
 	b2DistanceInput input;
 	input.proxyA = b2MakeShapeDistanceProxy( shapeA );
@@ -688,6 +688,6 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 b2Manifold b2ComputeManifold(b2Shape* shapeA, b2Transform transformA, b2Shape* shapeB, b2Transform transformB)
 {
 	b2ManifoldFcn* fcn = s_registers[shapeA->type][shapeB->type].fcn;
-	b2DistanceCache cache = { 0 };
+	b2SimplexCache cache = { 0 };
 	return fcn( shapeA, transformA, shapeB, transformB, &cache );
 }

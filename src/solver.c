@@ -297,26 +297,26 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 	input.proxyB = b2MakeShapeDistanceProxy( fastShape );
 	input.sweepA = b2MakeSweep( bodySim );
 	input.sweepB = continuousContext->sweep;
-	input.tMax = continuousContext->fraction;
+	input.maxFraction = continuousContext->fraction;
 
 	float hitFraction = continuousContext->fraction;
 
 	bool didHit = false;
 	b2TOIOutput output = b2TimeOfImpact( &input );
-	if ( 0.0f < output.t && output.t < continuousContext->fraction )
+	if ( 0.0f < output.fraction && output.fraction < continuousContext->fraction )
 	{
-		hitFraction = output.t;
+		hitFraction = output.fraction;
 		didHit = true;
 	}
-	else if ( 0.0f == output.t )
+	else if ( 0.0f == output.fraction )
 	{
 		// fallback to TOI of a small circle around the fast shape centroid
 		b2Vec2 centroid = b2GetShapeCentroid( fastShape );
 		input.proxyB = b2MakeProxy( &centroid, 1, B2_SPECULATIVE_DISTANCE );
 		output = b2TimeOfImpact( &input );
-		if ( 0.0f < output.t && output.t < continuousContext->fraction )
+		if ( 0.0f < output.fraction && output.fraction < continuousContext->fraction )
 		{
-			hitFraction = output.t;
+			hitFraction = output.fraction;
 			didHit = true;
 		}
 	}

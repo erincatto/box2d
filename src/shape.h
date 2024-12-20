@@ -75,7 +75,7 @@ b2Vec2 b2GetShapeCentroid( const b2Shape* shape );
 float b2GetShapePerimeter( const b2Shape* shape );
 float b2GetShapeProjectedPerimeter( const b2Shape* shape, b2Vec2 line );
 
-b2DistanceProxy b2MakeShapeDistanceProxy( const b2Shape* shape );
+b2ShapeProxy b2MakeShapeDistanceProxy( const b2Shape* shape );
 
 b2CastOutput b2RayCastShape( const b2RayCastInput* input, const b2Shape* shape, b2Transform transform );
 b2CastOutput b2ShapeCastShape( const b2ShapeCastInput* input, const b2Shape* shape, b2Transform transform );
