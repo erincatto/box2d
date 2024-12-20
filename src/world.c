@@ -177,7 +177,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->gravity = def->gravity;
 	world->hitEventThreshold = def->hitEventThreshold;
 	world->restitutionThreshold = def->restitutionThreshold;
-	world->maxLinearVelocity = def->maximumLinearSpeed;
+	world->maxLinearSpeed = def->maximumLinearSpeed;
 	world->contactPushSpeed = def->contactPushSpeed;
 	world->contactHertz = def->contactHertz;
 	world->contactDampingRatio = def->contactDampingRatio;
@@ -757,7 +757,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	context.jointSoftness = b2MakeSoft( jointHertz, world->jointDampingRatio, context.h );
 
 	context.restitutionThreshold = world->restitutionThreshold;
-	context.maxLinearVelocity = world->maxLinearVelocity;
+	context.maxLinearVelocity = world->maxLinearSpeed;
 	context.enableWarmStarting = world->enableWarmStarting;
 
 	// Update contacts
@@ -1739,9 +1739,9 @@ void b2World_SetJointTuning( b2WorldId worldId, float hertz, float dampingRatio 
 	world->jointDampingRatio = b2ClampFloat( dampingRatio, 0.0f, FLT_MAX );
 }
 
-void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearVelocity )
+void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearSpeed )
 {
-	B2_ASSERT( b2IsValidFloat( maximumLinearVelocity ) && maximumLinearVelocity > 0.0f );
+	B2_ASSERT( b2IsValidFloat( maximumLinearSpeed ) && maximumLinearSpeed > 0.0f );
 
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
@@ -1750,13 +1750,13 @@ void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearVeloci
 		return;
 	}
 
-	world->maxLinearVelocity = maximumLinearVelocity;
+	world->maxLinearSpeed = maximumLinearSpeed;
 }
 
-float b2World_GetMaximumLinearVelocity( b2WorldId worldId )
+float b2World_GetMaximumLinearSpeed( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
-	return world->maxLinearVelocity;
+	return world->maxLinearSpeed;
 }
 
 b2Profile b2World_GetProfile( b2WorldId worldId )
