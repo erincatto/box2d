@@ -8,7 +8,7 @@
 
 #include <stdbool.h>
 
-typedef struct b2DistanceCache b2DistanceCache;
+typedef struct b2SimplexCache b2SimplexCache;
 typedef struct b2Hull b2Hull;
 
 /**
@@ -181,34 +181,34 @@ B2_API b2Polygon b2MakeOffsetPolygon( const b2Hull* hull, b2Vec2 position, b2Rot
 B2_API b2Polygon b2MakeOffsetRoundedPolygon( const b2Hull* hull, b2Vec2 position, b2Rot rotation, float radius );
 
 /// Make a square polygon, bypassing the need for a convex hull.
-/// @param h the half-width
-B2_API b2Polygon b2MakeSquare( float h );
+/// @param halfWidth the half-width
+B2_API b2Polygon b2MakeSquare( float halfWidth );
 
 /// Make a box (rectangle) polygon, bypassing the need for a convex hull.
-/// @param hx the half-width
-/// @param hy the half-height
-B2_API b2Polygon b2MakeBox( float hx, float hy );
+/// @param halfWidth the half-width (x-axis)
+/// @param halfHeight the half-height (y-axis)
+B2_API b2Polygon b2MakeBox( float halfWidth, float halfHeight );
 
 /// Make a rounded box, bypassing the need for a convex hull.
-/// @param hx the half-width
-/// @param hy the half-height
+/// @param halfWidth the half-width (x-axis)
+/// @param halfHeight the half-height (y-axis)
 /// @param radius the radius of the rounded extension
-B2_API b2Polygon b2MakeRoundedBox( float hx, float hy, float radius );
+B2_API b2Polygon b2MakeRoundedBox( float halfWidth, float halfHeight, float radius );
 
 /// Make an offset box, bypassing the need for a convex hull.
-/// @param hx the half-width
-/// @param hy the half-height
+/// @param halfWidth the half-width (x-axis)
+/// @param halfHeight the half-height (y-axis)
 /// @param center the local center of the box
 /// @param rotation the local rotation of the box
-B2_API b2Polygon b2MakeOffsetBox( float hx, float hy, b2Vec2 center, b2Rot rotation );
+B2_API b2Polygon b2MakeOffsetBox( float halfWidth, float halfHeight, b2Vec2 center, b2Rot rotation );
 
 /// Make an offset rounded box, bypassing the need for a convex hull.
-/// @param hx the half-width
-/// @param hy the half-height
+/// @param halfWidth the half-width (x-axis)
+/// @param halfHeight the half-height (y-axis)
 /// @param center the local center of the box
 /// @param rotation the local rotation of the box
 /// @param radius the radius of the rounded extension
-B2_API b2Polygon b2MakeOffsetRoundedBox( float hx, float hy, b2Vec2 center, b2Rot rotation, float radius );
+B2_API b2Polygon b2MakeOffsetRoundedBox( float halfWidth, float halfHeight, b2Vec2 center, b2Rot rotation, float radius );
 
 /// Transform a polygon. This is useful for transferring a shape from one body to another.
 B2_API b2Polygon b2TransformPolygon( b2Transform transform, const b2Polygon* polygon );
@@ -330,7 +330,7 @@ typedef struct b2SegmentDistanceResult
 B2_API b2SegmentDistanceResult b2SegmentDistance( b2Vec2 p1, b2Vec2 q1, b2Vec2 p2, b2Vec2 q2 );
 
 /// A distance proxy is used by the GJK algorithm. It encapsulates any shape.
-typedef struct b2DistanceProxy
+typedef struct b2ShapeProxy
 {
 	/// The point cloud
 	b2Vec2 points[B2_MAX_POLYGON_VERTICES];
@@ -340,13 +340,13 @@ typedef struct b2DistanceProxy
 
 	/// The external radius of the point cloud
 	float radius;
-} b2DistanceProxy;
+} b2ShapeProxy;
 
 /// Used to warm start the GJK simplex. If you call this function multiple times with nearby
 /// transforms this might improve performance. Otherwise you can zero initialize this.
 /// The distance cache must be initialized to zero on the first call.
 /// Users should generally just zero initialize this structure for each call.
-typedef struct b2DistanceCache
+typedef struct b2SimplexCache
 {
 	/// The number of stored simplex points
 	uint16_t count;
@@ -356,18 +356,18 @@ typedef struct b2DistanceCache
 
 	/// The cached simplex indices on shape B
 	uint8_t indexB[3];
-} b2DistanceCache;
+} b2SimplexCache;
 
-static const b2DistanceCache b2_emptyDistanceCache = B2_ZERO_INIT;
+static const b2SimplexCache b2_emptySimplexCache = B2_ZERO_INIT;
 
 /// Input for b2ShapeDistance
 typedef struct b2DistanceInput
 {
 	/// The proxy for shape A
-	b2DistanceProxy proxyA;
+	b2ShapeProxy proxyA;
 
 	/// The proxy for shape B
-	b2DistanceProxy proxyB;
+	b2ShapeProxy proxyB;
 
 	/// The world transform for shape A
 	b2Transform transformA;
@@ -382,8 +382,10 @@ typedef struct b2DistanceInput
 /// Output for b2ShapeDistance
 typedef struct b2DistanceOutput
 {
-	b2Vec2 pointA;		  ///< Closest point on shapeA
-	b2Vec2 pointB;		  ///< Closest point on shapeB
+	b2Vec2 pointA; ///< Closest point on shapeA
+	b2Vec2 pointB; ///< Closest point on shapeB
+	// todo_erin implement this
+	// b2Vec2 normal;			///< Normal vector that points from A to B
 	float distance;		  ///< The final distance, zero if overlapped
 	int32_t iterations;	  ///< Number of GJK iterations used
 	int32_t simplexCount; ///< The number of simplexes stored in the simplex array
@@ -408,16 +410,16 @@ typedef struct b2Simplex
 } b2Simplex;
 
 /// Compute the closest points between two shapes represented as point clouds.
-/// b2DistanceCache cache is input/output. On the first call set b2DistanceCache.count to zero.
+/// b2SimplexCache cache is input/output. On the first call set b2SimplexCache.count to zero.
 /// The underlying GJK algorithm may be debugged by passing in debug simplexes and capacity. You may pass in NULL and 0 for these.
-B2_API b2DistanceOutput b2ShapeDistance( b2DistanceCache* cache, const b2DistanceInput* input, b2Simplex* simplexes,
+B2_API b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* input, b2Simplex* simplexes,
 										 int simplexCapacity );
 
 /// Input parameters for b2ShapeCast
 typedef struct b2ShapeCastPairInput
 {
-	b2DistanceProxy proxyA; ///< The proxy for shape A
-	b2DistanceProxy proxyB; ///< The proxy for shape B
+	b2ShapeProxy proxyA;	///< The proxy for shape A
+	b2ShapeProxy proxyB;	///< The proxy for shape B
 	b2Transform transformA; ///< The world transform for shape A
 	b2Transform transformB; ///< The world transform for shape B
 	b2Vec2 translationB;	///< The translation of shape B
@@ -428,7 +430,7 @@ typedef struct b2ShapeCastPairInput
 B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input );
 
 /// Make a proxy for use in GJK and related functions.
-B2_API b2DistanceProxy b2MakeProxy( const b2Vec2* vertices, int32_t count, float radius );
+B2_API b2ShapeProxy b2MakeProxy( const b2Vec2* vertices, int32_t count, float radius );
 
 /// This describes the motion of a body/shape for TOI computation. Shapes are defined with respect to the body origin,
 /// which may not coincide with the center of mass. However, to support dynamics we must interpolate the center of mass
@@ -448,11 +450,11 @@ B2_API b2Transform b2GetSweepTransform( const b2Sweep* sweep, float time );
 /// Input parameters for b2TimeOfImpact
 typedef struct b2TOIInput
 {
-	b2DistanceProxy proxyA; ///< The proxy for shape A
-	b2DistanceProxy proxyB; ///< The proxy for shape B
-	b2Sweep sweepA;			///< The movement of shape A
-	b2Sweep sweepB;			///< The movement of shape B
-	float tMax;				///< Defines the sweep interval [0, tMax]
+	b2ShapeProxy proxyA; ///< The proxy for shape A
+	b2ShapeProxy proxyB; ///< The proxy for shape B
+	b2Sweep sweepA;		 ///< The movement of shape A
+	b2Sweep sweepB;		 ///< The movement of shape B
+	float maxFraction;	 ///< Defines the sweep interval [0, maxFraction]
 } b2TOIInput;
 
 /// Describes the TOI output
@@ -469,7 +471,7 @@ typedef enum b2TOIState
 typedef struct b2TOIOutput
 {
 	b2TOIState state; ///< The type of result
-	float t;		  ///< The time of the collision
+	float fraction;	  ///< The sweep time of the collision
 } b2TOIOutput;
 
 /// Compute the upper bound on time before two shapes penetrate. Time is represented as
@@ -582,11 +584,11 @@ B2_API b2Manifold b2CollideChainSegmentAndCircle( const b2ChainSegment* segmentA
 
 /// Compute the contact manifold between a chain segment and a capsule
 B2_API b2Manifold b2CollideChainSegmentAndCapsule( const b2ChainSegment* segmentA, b2Transform xfA, const b2Capsule* capsuleB,
-												   b2Transform xfB, b2DistanceCache* cache );
+												   b2Transform xfB, b2SimplexCache* cache );
 
 /// Compute the contact manifold between a chain segment and a rounded polygon
 B2_API b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Transform xfA, const b2Polygon* polygonB,
-												   b2Transform xfB, b2DistanceCache* cache );
+												   b2Transform xfB, b2SimplexCache* cache );
 
 /**@}*/
 
@@ -645,7 +647,7 @@ typedef struct b2TreeNode
 /// The dynamic tree structure. This should be considered private data.
 /// It is placed here for performance reasons.
 typedef struct b2DynamicTree
-{  
+{
 	/// The tree nodes
 	b2TreeNode* nodes;
 

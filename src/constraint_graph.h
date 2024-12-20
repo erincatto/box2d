@@ -19,7 +19,7 @@ typedef struct b2World b2World;
 
 // This holds constraints that cannot fit the graph color limit. This happens when a single dynamic body
 // is touching many other bodies.
-#define b2_overflowIndex b2_graphColorCount - 1
+#define B2_OVERFLOW_INDEX (B2_GRAPH_COLOR_COUNT - 1)
 
 typedef struct b2GraphColor
 {
@@ -43,7 +43,7 @@ typedef struct b2GraphColor
 typedef struct b2ConstraintGraph
 {
 	// including overflow at the end
-	b2GraphColor colors[b2_graphColorCount];
+	b2GraphColor colors[B2_GRAPH_COLOR_COUNT];
 } b2ConstraintGraph;
 
 void b2CreateGraph( b2ConstraintGraph* graph, int bodyCapacity );

@@ -130,22 +130,22 @@ b2Polygon b2MakeOffsetRoundedPolygon( const b2Hull* hull, b2Vec2 position, b2Rot
 	return shape;
 }
 
-b2Polygon b2MakeSquare( float h )
+b2Polygon b2MakeSquare( float halfWidth )
 {
-	return b2MakeBox( h, h );
+	return b2MakeBox( halfWidth, halfWidth );
 }
 
-b2Polygon b2MakeBox( float hx, float hy )
+b2Polygon b2MakeBox( float halfWidth, float halfHeight )
 {
-	B2_ASSERT( b2IsValidFloat( hx ) && hx > 0.0f );
-	B2_ASSERT( b2IsValidFloat( hy ) && hy > 0.0f );
+	B2_ASSERT( b2IsValidFloat( halfWidth ) && halfWidth > 0.0f );
+	B2_ASSERT( b2IsValidFloat( halfHeight ) && halfHeight > 0.0f );
 
 	b2Polygon shape = { 0 };
 	shape.count = 4;
-	shape.vertices[0] = ( b2Vec2 ){ -hx, -hy };
-	shape.vertices[1] = ( b2Vec2 ){ hx, -hy };
-	shape.vertices[2] = ( b2Vec2 ){ hx, hy };
-	shape.vertices[3] = ( b2Vec2 ){ -hx, hy };
+	shape.vertices[0] = ( b2Vec2 ){ -halfWidth, -halfHeight };
+	shape.vertices[1] = ( b2Vec2 ){ halfWidth, -halfHeight };
+	shape.vertices[2] = ( b2Vec2 ){ halfWidth, halfHeight };
+	shape.vertices[3] = ( b2Vec2 ){ -halfWidth, halfHeight };
 	shape.normals[0] = ( b2Vec2 ){ 0.0f, -1.0f };
 	shape.normals[1] = ( b2Vec2 ){ 1.0f, 0.0f };
 	shape.normals[2] = ( b2Vec2 ){ 0.0f, 1.0f };
@@ -155,24 +155,24 @@ b2Polygon b2MakeBox( float hx, float hy )
 	return shape;
 }
 
-b2Polygon b2MakeRoundedBox( float hx, float hy, float radius )
+b2Polygon b2MakeRoundedBox( float halfWidth, float halfHeight, float radius )
 {
 	B2_ASSERT( b2IsValidFloat( radius ) && radius >= 0.0f );
-	b2Polygon shape = b2MakeBox( hx, hy );
+	b2Polygon shape = b2MakeBox( halfWidth, halfHeight );
 	shape.radius = radius;
 	return shape;
 }
 
-b2Polygon b2MakeOffsetBox( float hx, float hy, b2Vec2 center, b2Rot rotation )
+b2Polygon b2MakeOffsetBox( float halfWidth, float halfHeight, b2Vec2 center, b2Rot rotation )
 {
 	b2Transform xf = { center, rotation };
 
 	b2Polygon shape = { 0 };
 	shape.count = 4;
-	shape.vertices[0] = b2TransformPoint( xf, ( b2Vec2 ){ -hx, -hy } );
-	shape.vertices[1] = b2TransformPoint( xf, ( b2Vec2 ){ hx, -hy } );
-	shape.vertices[2] = b2TransformPoint( xf, ( b2Vec2 ){ hx, hy } );
-	shape.vertices[3] = b2TransformPoint( xf, ( b2Vec2 ){ -hx, hy } );
+	shape.vertices[0] = b2TransformPoint( xf, ( b2Vec2 ){ -halfWidth, -halfHeight } );
+	shape.vertices[1] = b2TransformPoint( xf, ( b2Vec2 ){ halfWidth, -halfHeight } );
+	shape.vertices[2] = b2TransformPoint( xf, ( b2Vec2 ){ halfWidth, halfHeight } );
+	shape.vertices[3] = b2TransformPoint( xf, ( b2Vec2 ){ -halfWidth, halfHeight } );
 	shape.normals[0] = b2RotateVector( xf.q, ( b2Vec2 ){ 0.0f, -1.0f } );
 	shape.normals[1] = b2RotateVector( xf.q, ( b2Vec2 ){ 1.0f, 0.0f } );
 	shape.normals[2] = b2RotateVector( xf.q, ( b2Vec2 ){ 0.0f, 1.0f } );
@@ -182,17 +182,17 @@ b2Polygon b2MakeOffsetBox( float hx, float hy, b2Vec2 center, b2Rot rotation )
 	return shape;
 }
 
-b2Polygon b2MakeOffsetRoundedBox( float hx, float hy, b2Vec2 center, b2Rot rotation, float radius )
+b2Polygon b2MakeOffsetRoundedBox( float halfWidth, float halfHeight, b2Vec2 center, b2Rot rotation, float radius )
 {
 	B2_ASSERT( b2IsValidFloat( radius ) && radius >= 0.0f );
 	b2Transform xf = { center, rotation };
 
 	b2Polygon shape = { 0 };
 	shape.count = 4;
-	shape.vertices[0] = b2TransformPoint( xf, ( b2Vec2 ){ -hx, -hy } );
-	shape.vertices[1] = b2TransformPoint( xf, ( b2Vec2 ){ hx, -hy } );
-	shape.vertices[2] = b2TransformPoint( xf, ( b2Vec2 ){ hx, hy } );
-	shape.vertices[3] = b2TransformPoint( xf, ( b2Vec2 ){ -hx, hy } );
+	shape.vertices[0] = b2TransformPoint( xf, ( b2Vec2 ){ -halfWidth, -halfHeight } );
+	shape.vertices[1] = b2TransformPoint( xf, ( b2Vec2 ){ halfWidth, -halfHeight } );
+	shape.vertices[2] = b2TransformPoint( xf, ( b2Vec2 ){ halfWidth, halfHeight } );
+	shape.vertices[3] = b2TransformPoint( xf, ( b2Vec2 ){ -halfWidth, halfHeight } );
 	shape.normals[0] = b2RotateVector( xf.q, ( b2Vec2 ){ 0.0f, -1.0f } );
 	shape.normals[1] = b2RotateVector( xf.q, ( b2Vec2 ){ 1.0f, 0.0f } );
 	shape.normals[2] = b2RotateVector( xf.q, ( b2Vec2 ){ 0.0f, 1.0f } );
@@ -495,7 +495,7 @@ bool b2PointInPolygon( b2Vec2 point, const b2Polygon* shape )
 	input.transformB = b2Transform_identity;
 	input.useRadii = false;
 
-	b2DistanceCache cache = { 0 };
+	b2SimplexCache cache = { 0 };
 	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
 
 	return output.distance <= shape->radius;
@@ -550,6 +550,7 @@ b2CastOutput b2RayCastCircle( const b2RayCastInput* input, const b2Circle* shape
 		return output;
 	}
 
+	// hit point relative to center
 	b2Vec2 hitPoint = b2MulAdd( s, fraction, d );
 
 	output.fraction = fraction / length;

@@ -107,10 +107,10 @@ b2SegmentDistanceResult b2SegmentDistance( b2Vec2 p1, b2Vec2 q1, b2Vec2 p2, b2Ve
 
 // GJK using Voronoi regions (Christer Ericson) and Barycentric coordinates.
 // todo try not copying
-b2DistanceProxy b2MakeProxy( const b2Vec2* vertices, int count, float radius )
+b2ShapeProxy b2MakeProxy( const b2Vec2* vertices, int count, float radius )
 {
 	count = b2MinInt( count, B2_MAX_POLYGON_VERTICES );
-	b2DistanceProxy proxy;
+	b2ShapeProxy proxy;
 	for ( int i = 0; i < count; ++i )
 	{
 		proxy.points[i] = vertices[i];
@@ -130,7 +130,7 @@ static b2Vec2 b2Weight3( float a1, b2Vec2 w1, float a2, b2Vec2 w2, float a3, b2V
 	return ( b2Vec2 ){ a1 * w1.x + a2 * w2.x + a3 * w3.x, a1 * w1.y + a2 * w2.y + a3 * w3.y };
 }
 
-static int b2FindSupport( const b2DistanceProxy* proxy, b2Vec2 direction )
+static int b2FindSupport( const b2ShapeProxy* proxy, b2Vec2 direction )
 {
 	int bestIndex = 0;
 	float bestValue = b2Dot( proxy->points[0], direction );
@@ -147,8 +147,8 @@ static int b2FindSupport( const b2DistanceProxy* proxy, b2Vec2 direction )
 	return bestIndex;
 }
 
-static b2Simplex b2MakeSimplexFromCache( const b2DistanceCache* cache, const b2DistanceProxy* proxyA, b2Transform transformA,
-										 const b2DistanceProxy* proxyB, b2Transform transformB )
+static b2Simplex b2MakeSimplexFromCache( const b2SimplexCache* cache, const b2ShapeProxy* proxyA, b2Transform transformA,
+										 const b2ShapeProxy* proxyB, b2Transform transformB )
 {
 	B2_ASSERT( cache->count <= 3 );
 	b2Simplex s;
@@ -190,7 +190,7 @@ static b2Simplex b2MakeSimplexFromCache( const b2DistanceCache* cache, const b2D
 	return s;
 }
 
-static void b2MakeSimplexCache( b2DistanceCache* cache, const b2Simplex* simplex )
+static void b2MakeSimplexCache( b2SimplexCache* cache, const b2Simplex* simplex )
 {
 	cache->count = (uint16_t)simplex->count;
 	const b2SimplexVertex* vertices[] = { &simplex->v1, &simplex->v2, &simplex->v3 };
@@ -457,13 +457,13 @@ void b2SolveSimplex3( b2Simplex* s )
 	s->count = 3;
 }
 
-b2DistanceOutput b2ShapeDistance( b2DistanceCache* cache, const b2DistanceInput* input, b2Simplex* simplexes,
+b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* input, b2Simplex* simplexes,
 								  int simplexCapacity )
 {
 	b2DistanceOutput output = { 0 };
 
-	const b2DistanceProxy* proxyA = &input->proxyA;
-	const b2DistanceProxy* proxyB = &input->proxyB;
+	const b2ShapeProxy* proxyA = &input->proxyA;
+	const b2ShapeProxy* proxyB = &input->proxyB;
 
 	b2Transform transformA = input->transformA;
 	b2Transform transformB = input->transformB;
@@ -628,14 +628,14 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	b2CastOutput output = { 0 };
 	output.fraction = input->maxFraction;
 
-	b2DistanceProxy proxyA = input->proxyA;
+	b2ShapeProxy proxyA = input->proxyA;
 
 	b2Transform xfA = input->transformA;
 	b2Transform xfB = input->transformB;
 	b2Transform xf = b2InvMulTransforms( xfA, xfB );
 
 	// Put proxyB in proxyA's frame to reduce round-off error
-	b2DistanceProxy proxyB;
+	b2ShapeProxy proxyB;
 	proxyB.count = input->proxyB.count;
 	proxyB.radius = input->proxyB.radius;
 	B2_ASSERT( proxyB.count <= B2_MAX_POLYGON_VERTICES );
@@ -666,7 +666,7 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	b2Vec2 v = b2Sub( wA, wB );
 
 	// Sigma is the target distance between proxies
-	const float linearSlop = b2_linearSlop;
+	const float linearSlop = B2_LINEAR_SLOP;
 	const float sigma = b2MaxFloat( linearSlop, radius - linearSlop );
 
 	// Main iteration loop.
@@ -798,16 +798,16 @@ typedef enum b2SeparationType
 
 typedef struct b2SeparationFunction
 {
-	const b2DistanceProxy* proxyA;
-	const b2DistanceProxy* proxyB;
+	const b2ShapeProxy* proxyA;
+	const b2ShapeProxy* proxyB;
 	b2Sweep sweepA, sweepB;
 	b2Vec2 localPoint;
 	b2Vec2 axis;
 	b2SeparationType type;
 } b2SeparationFunction;
 
-b2SeparationFunction b2MakeSeparationFunction( const b2DistanceCache* cache, const b2DistanceProxy* proxyA, const b2Sweep* sweepA,
-											   const b2DistanceProxy* proxyB, const b2Sweep* sweepB, float t1 )
+b2SeparationFunction b2MakeSeparationFunction( const b2SimplexCache* cache, const b2ShapeProxy* proxyA, const b2Sweep* sweepA,
+											   const b2ShapeProxy* proxyB, const b2Sweep* sweepB, float t1 )
 {
 	b2SeparationFunction f;
 
@@ -1010,7 +1010,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 
 	b2TOIOutput output;
 	output.state = b2_toiStateUnknown;
-	output.t = input->tMax;
+	output.fraction = input->maxFraction;
 
 	b2Sweep sweepA = input->sweepA;
 	b2Sweep sweepB = input->sweepB;
@@ -1021,16 +1021,16 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 	// c1 can be at the origin yet the points are far away
 	// b2Vec2 origin = b2Add(sweepA.c1, input->proxyA.points[0]);
 
-	const b2DistanceProxy* proxyA = &input->proxyA;
-	const b2DistanceProxy* proxyB = &input->proxyB;
+	const b2ShapeProxy* proxyA = &input->proxyA;
+	const b2ShapeProxy* proxyB = &input->proxyB;
 
-	float tMax = input->tMax;
+	float tMax = input->maxFraction;
 
 	float totalRadius = proxyA->radius + proxyB->radius;
 	// todo_erin consider different target
-	// float target = b2MaxFloat( b2_linearSlop, totalRadius );
-	float target = b2MaxFloat( b2_linearSlop, totalRadius - b2_linearSlop );
-	float tolerance = 0.25f * b2_linearSlop;
+	// float target = b2MaxFloat( B2_LINEAR_SLOP, totalRadius );
+	float target = b2MaxFloat( B2_LINEAR_SLOP, totalRadius - B2_LINEAR_SLOP );
+	float tolerance = 0.25f * B2_LINEAR_SLOP;
 	B2_ASSERT( target > tolerance );
 
 	float t1 = 0.0f;
@@ -1038,7 +1038,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 	int distanceIterations = 0;
 
 	// Prepare input for distance query.
-	b2DistanceCache cache = { 0 };
+	b2SimplexCache cache = { 0 };
 	b2DistanceInput distanceInput;
 	distanceInput.proxyA = input->proxyA;
 	distanceInput.proxyB = input->proxyB;
@@ -1070,7 +1070,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 #if B2_TOI_DEBUG
 			b2_toiOverlappedCount += 1;
 #endif
-			output.t = 0.0f;
+			output.fraction = 0.0f;
 			break;
 		}
 
@@ -1081,7 +1081,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 #if B2_TOI_DEBUG
 			b2_toiHitCount += 1;
 #endif
-			output.t = t1;
+			output.fraction = t1;
 			break;
 		}
 
@@ -1132,7 +1132,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 #if B2_TOI_DEBUG
 				b2_toiSeparatedCount += 1;
 #endif
-				output.t = tMax;
+				output.fraction = tMax;
 				done = true;
 				break;
 			}
@@ -1156,7 +1156,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 #if B2_TOI_DEBUG
 				b2_toiFailedCount += 1;
 #endif
-				output.t = t1;
+				output.fraction = t1;
 				done = true;
 				break;
 			}
@@ -1169,7 +1169,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 #if B2_TOI_DEBUG
 				b2_toiHitCount += 1;
 #endif
-				output.t = t1;
+				output.fraction = t1;
 				done = true;
 				break;
 			}
@@ -1249,7 +1249,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 #if B2_TOI_DEBUG
 			b2_toiFailedCount += 1;
 #endif
-			output.t = t1;
+			output.fraction = t1;
 			break;
 		}
 	}

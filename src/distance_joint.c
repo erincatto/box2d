@@ -22,7 +22,7 @@ void b2DistanceJoint_SetLength( b2JointId jointId, float length )
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	b2DistanceJoint* joint = &base->distanceJoint;
 
-	joint->length = b2ClampFloat( length, b2_linearSlop, B2_HUGE );
+	joint->length = b2ClampFloat( length, B2_LINEAR_SLOP, B2_HUGE );
 	joint->impulse = 0.0f;
 	joint->lowerImpulse = 0.0f;
 	joint->upperImpulse = 0.0f;
@@ -53,8 +53,8 @@ void b2DistanceJoint_SetLengthRange( b2JointId jointId, float minLength, float m
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	b2DistanceJoint* joint = &base->distanceJoint;
 
-	minLength = b2ClampFloat( minLength, b2_linearSlop, B2_HUGE );
-	maxLength = b2ClampFloat( maxLength, b2_linearSlop, B2_HUGE );
+	minLength = b2ClampFloat( minLength, B2_LINEAR_SLOP, B2_HUGE );
+	maxLength = b2ClampFloat( maxLength, B2_LINEAR_SLOP, B2_HUGE );
 	joint->minLength = b2MinFloat( minLength, maxLength );
 	joint->maxLength = b2MaxFloat( minLength, maxLength );
 	joint->impulse = 0.0f;
@@ -526,7 +526,7 @@ void b2DrawDistanceJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 		b2Vec2 pMax = b2MulAdd( pA, joint->maxLength, axis );
 		b2Vec2 offset = b2MulSV( 0.05f * b2_lengthUnitsPerMeter, b2RightPerp( axis ) );
 
-		if ( joint->minLength > b2_linearSlop )
+		if ( joint->minLength > B2_LINEAR_SLOP )
 		{
 			// draw->DrawPoint(pMin, 4.0f, c2, draw->context);
 			draw->DrawSegment( b2Sub( pMin, offset ), b2Add( pMin, offset ), b2_colorLightGreen, draw->context );
@@ -538,7 +538,7 @@ void b2DrawDistanceJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 			draw->DrawSegment( b2Sub( pMax, offset ), b2Add( pMax, offset ), b2_colorRed, draw->context );
 		}
 
-		if ( joint->minLength > b2_linearSlop && joint->maxLength < B2_HUGE )
+		if ( joint->minLength > B2_LINEAR_SLOP && joint->maxLength < B2_HUGE )
 		{
 			draw->DrawSegment( pMin, pMax, b2_colorGray, draw->context );
 		}

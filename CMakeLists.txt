@@ -144,9 +144,11 @@ if(PROJECT_IS_TOP_LEVEL)
 			set_property(TARGET samples PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 		endif()
 
+		if(APPLE)
 			set_target_properties(samples PROPERTIES
 				XCODE_GENERATE_SCHEME TRUE
 				XCODE_SCHEME_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+		endif()
 	endif()
 
 	if(BOX2D_BENCHMARKS)

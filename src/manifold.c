@@ -52,7 +52,7 @@ b2Manifold b2CollideCircles( const b2Circle* circleA, b2Transform xfA, const b2C
 	float radiusB = circleB->radius;
 
 	float separation = distance - radiusA - radiusB;
-	if ( separation > b2_speculativeDistance )
+	if ( separation > B2_SPECULATIVE_DISTANCE )
 	{
 		return manifold;
 	}
@@ -117,7 +117,7 @@ b2Manifold b2CollideCapsuleAndCircle( const b2Capsule* capsuleA, b2Transform xfA
 	float radiusA = capsuleA->radius;
 	float radiusB = circleB->radius;
 	float separation = distance - radiusA - radiusB;
-	if ( separation > b2_speculativeDistance )
+	if ( separation > B2_SPECULATIVE_DISTANCE )
 	{
 		return manifold;
 	}
@@ -140,7 +140,7 @@ b2Manifold b2CollideCapsuleAndCircle( const b2Capsule* capsuleA, b2Transform xfA
 b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2Transform xfA, const b2Circle* circleB, b2Transform xfB )
 {
 	b2Manifold manifold = { 0 };
-	const float speculativeDistance = b2_speculativeDistance;
+	const float speculativeDistance = B2_SPECULATIVE_DISTANCE;
 
 	b2Transform xf = b2InvMulTransforms( xfA, xfB );
 
@@ -322,7 +322,7 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 	float radiusA = capsuleA->radius;
 	float radiusB = capsuleB->radius;
 	float radius = radiusA + radiusB;
-	float maxDistance = radius + b2_speculativeDistance;
+	float maxDistance = radius + B2_SPECULATIVE_DISTANCE;
 
 	if ( distanceSquared > maxDistance * maxDistance )
 	{
@@ -423,7 +423,7 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 			float sp = b2Dot( b2Sub( cp, p1 ), normalA );
 			float sq = b2Dot( b2Sub( cq, p1 ), normalA );
 
-			if ( sp <= distance + b2_linearSlop || sq <= distance + b2_linearSlop )
+			if ( sp <= distance + B2_LINEAR_SLOP || sq <= distance + B2_LINEAR_SLOP )
 			{
 				b2ManifoldPoint* mp;
 				mp = manifold.points + 0;
@@ -469,7 +469,7 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 			float sp = b2Dot( b2Sub( cp, p2 ), normalB );
 			float sq = b2Dot( b2Sub( cq, p2 ), normalB );
 
-			if ( sp <= distance + b2_linearSlop || sq <= distance + b2_linearSlop )
+			if ( sp <= distance + B2_LINEAR_SLOP || sq <= distance + B2_LINEAR_SLOP )
 			{
 				b2ManifoldPoint* mp;
 				mp = manifold.points + 0;
@@ -722,7 +722,7 @@ static float b2FindMaxSeparation( int32_t* edgeIndex, const b2Polygon* poly1, co
 // if (separation > speculation_distance)
 //   return
 // find reference and incident edge
-// if separation >= 0.1f * b2_linearSlop
+// if separation >= 0.1f * B2_LINEAR_SLOP
 //   compute closest points between reference and incident edge
 //   if vertices are closest
 //      single vertex-vertex contact
@@ -773,7 +773,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 
 	float radius = localPolyA.radius + localPolyB.radius;
 
-	if ( separationA > b2_speculativeDistance + radius || separationB > b2_speculativeDistance + radius )
+	if ( separationA > B2_SPECULATIVE_DISTANCE + radius || separationB > B2_SPECULATIVE_DISTANCE + radius )
 	{
 		return ( b2Manifold ){ 0 };
 	}
@@ -827,7 +827,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 
 	// Using slop here to ensure vertex-vertex normal vectors can be safely normalized
 	// todo this means edge clipping needs to handle slightly non-overlapping edges.
-	if ( separationA > 0.1f * b2_linearSlop || separationB > 0.1f * b2_linearSlop )
+	if ( separationA > 0.1f * B2_LINEAR_SLOP || separationB > 0.1f * B2_LINEAR_SLOP )
 	{
 		// Polygons are disjoint. Find closest points between reference edge and incident edge
 		// Reference edge on polygon A
@@ -849,7 +849,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 			b2Vec2 normal = b2Sub( v21, v11 );
 			B2_ASSERT( result.distanceSquared > 0.0f );
 			float distance = sqrtf( result.distanceSquared );
-			if ( distance > b2_speculativeDistance + radius )
+			if ( distance > B2_SPECULATIVE_DISTANCE + radius )
 			{
 				return manifold;
 			}
@@ -872,7 +872,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 			b2Vec2 normal = b2Sub( v22, v11 );
 			B2_ASSERT( result.distanceSquared > 0.0f );
 			float distance = sqrtf( result.distanceSquared );
-			if ( distance > b2_speculativeDistance + radius )
+			if ( distance > B2_SPECULATIVE_DISTANCE + radius )
 			{
 				return manifold;
 			}
@@ -895,7 +895,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 			b2Vec2 normal = b2Sub( v21, v12 );
 			B2_ASSERT( result.distanceSquared > 0.0f );
 			float distance = sqrtf( result.distanceSquared );
-			if ( distance > b2_speculativeDistance + radius )
+			if ( distance > B2_SPECULATIVE_DISTANCE + radius )
 			{
 				return manifold;
 			}
@@ -918,7 +918,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 			b2Vec2 normal = b2Sub( v22, v12 );
 			B2_ASSERT( result.distanceSquared > 0.0f );
 			float distance = sqrtf( result.distanceSquared );
-			if ( distance > b2_speculativeDistance + radius )
+			if ( distance > B2_SPECULATIVE_DISTANCE + radius )
 			{
 				return manifold;
 			}
@@ -1044,7 +1044,7 @@ b2Manifold b2CollideChainSegmentAndCircle( const b2ChainSegment* segmentA, b2Tra
 
 	float radius = circleB->radius;
 	float separation = distance - radius;
-	if ( separation > b2_speculativeDistance )
+	if ( separation > B2_SPECULATIVE_DISTANCE )
 	{
 		return manifold;
 	}
@@ -1066,7 +1066,7 @@ b2Manifold b2CollideChainSegmentAndCircle( const b2ChainSegment* segmentA, b2Tra
 }
 
 b2Manifold b2CollideChainSegmentAndCapsule( const b2ChainSegment* segmentA, b2Transform xfA, const b2Capsule* capsuleB,
-											b2Transform xfB, b2DistanceCache* cache )
+											b2Transform xfB, b2SimplexCache* cache )
 {
 	b2Polygon polyB = b2MakeCapsule( capsuleB->center1, capsuleB->center2, capsuleB->radius );
 	return b2CollideChainSegmentAndPolygon( segmentA, xfA, &polyB, xfB, cache );
@@ -1208,7 +1208,7 @@ static enum b2NormalType b2ClassifyNormal( struct b2ChainSegmentParams params, b
 }
 
 b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Transform xfA, const b2Polygon* polygonB,
-											b2Transform xfB, b2DistanceCache* cache )
+											b2Transform xfB, b2SimplexCache* cache )
 {
 	b2Manifold manifold = { 0 };
 
@@ -1275,7 +1275,7 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 
 	b2DistanceOutput output = b2ShapeDistance( cache, &input, NULL, 0 );
 
-	if ( output.distance > radiusB + b2_speculativeDistance )
+	if ( output.distance > radiusB + B2_SPECULATIVE_DISTANCE )
 	{
 		return manifold;
 	}
@@ -1288,7 +1288,7 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 	int32_t incidentIndex = -1;
 	int32_t incidentNormal = -1;
 
-	if ( behind1 == false && output.distance > 0.1f * b2_linearSlop )
+	if ( behind1 == false && output.distance > 0.1f * B2_LINEAR_SLOP )
 	{
 		// The closest features may be two vertices or an edge and a vertex even when there should
 		// be face contact

@@ -25,12 +25,12 @@
 // This is used for debugging by making all constraints be assigned to overflow.
 #define B2_FORCE_OVERFLOW 0
 
-_Static_assert( b2_graphColorCount == 12, "graph color count assumed to be 12" );
+_Static_assert( B2_GRAPH_COLOR_COUNT == 12, "graph color count assumed to be 12" );
 
 void b2CreateGraph( b2ConstraintGraph* graph, int bodyCapacity )
 {
-	_Static_assert( b2_graphColorCount >= 2, "must have at least two constraint graph colors" );
-	_Static_assert( b2_overflowIndex == b2_graphColorCount - 1, "bad over flow index" );
+	_Static_assert( B2_GRAPH_COLOR_COUNT >= 2, "must have at least two constraint graph colors" );
+	_Static_assert( B2_OVERFLOW_INDEX == B2_GRAPH_COLOR_COUNT - 1, "bad over flow index" );
 
 	*graph = ( b2ConstraintGraph ){ 0 };
 
@@ -38,7 +38,7 @@ void b2CreateGraph( b2ConstraintGraph* graph, int bodyCapacity )
 
 	// Initialize graph color bit set.
 	// No bitset for overflow color.
-	for ( int i = 0; i < b2_overflowIndex; ++i )
+	for ( int i = 0; i < B2_OVERFLOW_INDEX; ++i )
 	{
 		b2GraphColor* color = graph->colors + i;
 		color->bodySet = b2CreateBitSet( bodyCapacity );
@@ -48,12 +48,12 @@ void b2CreateGraph( b2ConstraintGraph* graph, int bodyCapacity )
 
 void b2DestroyGraph( b2ConstraintGraph* graph )
 {
-	for ( int i = 0; i < b2_graphColorCount; ++i )
+	for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
 	{
 		b2GraphColor* color = graph->colors + i;
 
 		// The bit set should never be used on the overflow color
-		B2_ASSERT( i != b2_overflowIndex || color->bodySet.bits == NULL );
+		B2_ASSERT( i != B2_OVERFLOW_INDEX || color->bodySet.bits == NULL );
 
 		b2DestroyBitSet( &color->bodySet );
 
@@ -72,7 +72,7 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	B2_ASSERT( contact->flags & b2_contactTouchingFlag );
 
 	b2ConstraintGraph* graph = &world->constraintGraph;
-	int colorIndex = b2_overflowIndex;
+	int colorIndex = B2_OVERFLOW_INDEX;
 
 	int bodyIdA = contact->edges[0].bodyId;
 	int bodyIdB = contact->edges[1].bodyId;
@@ -85,7 +85,7 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 #if B2_FORCE_OVERFLOW == 0
 	if ( staticA == false && staticB == false )
 	{
-		for ( int i = 0; i < b2_overflowIndex; ++i )
+		for ( int i = 0; i < B2_OVERFLOW_INDEX; ++i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdA ) || b2GetBit( &color->bodySet, bodyIdB ) )
@@ -102,7 +102,7 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	else if ( staticA == false )
 	{
 		// No static contacts in color 0
-		for ( int i = 1; i < b2_overflowIndex; ++i )
+		for ( int i = 1; i < B2_OVERFLOW_INDEX; ++i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdA ) )
@@ -118,7 +118,7 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	else if ( staticB == false )
 	{
 		// No static contacts in color 0
-		for ( int i = 1; i < b2_overflowIndex; ++i )
+		for ( int i = 1; i < B2_OVERFLOW_INDEX; ++i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdB ) )
@@ -185,10 +185,10 @@ void b2RemoveContactFromGraph( b2World* world, int bodyIdA, int bodyIdB, int col
 {
 	b2ConstraintGraph* graph = &world->constraintGraph;
 
-	B2_ASSERT( 0 <= colorIndex && colorIndex < b2_graphColorCount );
+	B2_ASSERT( 0 <= colorIndex && colorIndex < B2_GRAPH_COLOR_COUNT );
 	b2GraphColor* color = graph->colors + colorIndex;
 
-	if ( colorIndex != b2_overflowIndex )
+	if ( colorIndex != B2_OVERFLOW_INDEX )
 	{
 		// might clear a bit for a static body, but this has no effect
 		b2ClearBit( &color->bodySet, bodyIdA );
@@ -218,7 +218,7 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 #if B2_FORCE_OVERFLOW == 0
 	if ( staticA == false && staticB == false )
 	{
-		for ( int i = 0; i < b2_overflowIndex; ++i )
+		for ( int i = 0; i < B2_OVERFLOW_INDEX; ++i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdA ) || b2GetBit( &color->bodySet, bodyIdB ) )
@@ -233,7 +233,7 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 	}
 	else if ( staticA == false )
 	{
-		for ( int i = 0; i < b2_overflowIndex; ++i )
+		for ( int i = 0; i < B2_OVERFLOW_INDEX; ++i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdA ) )
@@ -247,7 +247,7 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 	}
 	else if ( staticB == false )
 	{
-		for ( int i = 0; i < b2_overflowIndex; ++i )
+		for ( int i = 0; i < B2_OVERFLOW_INDEX; ++i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdB ) )
@@ -261,7 +261,7 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 	}
 #endif
 
-	return b2_overflowIndex;
+	return B2_OVERFLOW_INDEX;
 }
 
 b2JointSim* b2CreateJointInGraph( b2World* world, b2Joint* joint )
@@ -295,10 +295,10 @@ void b2RemoveJointFromGraph( b2World* world, int bodyIdA, int bodyIdB, int color
 {
 	b2ConstraintGraph* graph = &world->constraintGraph;
 
-	B2_ASSERT( 0 <= colorIndex && colorIndex < b2_graphColorCount );
+	B2_ASSERT( 0 <= colorIndex && colorIndex < B2_GRAPH_COLOR_COUNT );
 	b2GraphColor* color = graph->colors + colorIndex;
 
-	if ( colorIndex != b2_overflowIndex )
+	if ( colorIndex != B2_OVERFLOW_INDEX )
 	{
 		// May clear static bodies, no effect
 		b2ClearBit( &color->bodySet, bodyIdA );

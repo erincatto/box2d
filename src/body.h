@@ -8,12 +8,7 @@
 #include "box2d/math_functions.h"
 #include "box2d/types.h"
 
-typedef struct b2Polygon b2Polygon;
 typedef struct b2World b2World;
-typedef struct b2JointSim b2JointSim;
-typedef struct b2ContactSim b2ContactSim;
-typedef struct b2Shape b2Shape;
-typedef struct b2Body b2Body;
 
 // Body organizational details that are not used in the solver.
 typedef struct b2Body
@@ -48,6 +43,11 @@ typedef struct b2Body
 	// doubly-linked island list
 	int islandPrev;
 	int islandNext;
+
+	float mass;
+
+	// Rotational inertia about the center of mass.
+	float inertia;
 
 	float sleepThreshold;
 	float sleepTime;
@@ -112,10 +112,9 @@ typedef struct b2BodySim
 	b2Vec2 force;
 	float torque;
 
-	float mass, invMass;
-
-	// Rotational inertia about the center of mass.
-	float inertia, invInertia;
+	// inverse inertia
+	float invMass;
+	float invInertia;
 
 	float minExtent;
 	float maxExtent;

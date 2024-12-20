@@ -86,6 +86,7 @@ static void FinishTask( void* userTask, void* userContext )
 	enkiWaitForTaskSet( scheduler, task );
 }
 
+// todo_erin move this to shared
 static void TiltedStacks( int testIndex, int workerCount )
 {
 	scheduler = enkiNewTaskScheduler();
@@ -325,8 +326,8 @@ static int CrossPlatformTest(void)
 	}
 
 	ENSURE( stepCount < maxSteps );
-	ENSURE( sleepStep == 282 );
-	ENSURE( hash == 0x7efc22e7 );
+	ENSURE( sleepStep == 263 );
+	ENSURE( hash == 0x7de58fbe );
 
 	free( bodies );
 

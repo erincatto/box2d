@@ -138,7 +138,7 @@ typedef struct b2ContactSim
 	// b2ContactSimFlags
 	uint32_t simFlags;
 
-	b2DistanceCache cache;
+	b2SimplexCache cache;
 } b2ContactSim;
 
 void b2InitializeContactRegisters( void );

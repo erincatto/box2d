@@ -44,7 +44,7 @@ static int ShapeDistanceTest( void )
 	input.transformB = b2Transform_identity;
 	input.useRadii = false;
 
-	b2DistanceCache cache = { 0 };
+	b2SimplexCache cache = { 0 };
 	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
 
 	ENSURE_SMALL( output.distance - 1.0f, FLT_EPSILON );
@@ -91,12 +91,12 @@ static int TimeOfImpactTest( void )
 	input.proxyB = b2MakeProxy( vbs, ARRAY_COUNT( vbs ), 0.0f );
 	input.sweepA = ( b2Sweep ){ b2Vec2_zero, b2Vec2_zero, b2Vec2_zero, b2Rot_identity, b2Rot_identity };
 	input.sweepB = ( b2Sweep ){ b2Vec2_zero, b2Vec2_zero, ( b2Vec2 ){ -2.0f, 0.0f }, b2Rot_identity, b2Rot_identity };
-	input.tMax = 1.0f;
+	input.maxFraction = 1.0f;
 
 	b2TOIOutput output = b2TimeOfImpact( &input );
 
 	ENSURE( output.state == b2_toiStateHit );
-	ENSURE_SMALL( output.t - 0.5f, 0.005f );
+	ENSURE_SMALL( output.fraction - 0.5f, 0.005f );
 
 	return 0;
 }

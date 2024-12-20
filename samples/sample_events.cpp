@@ -202,7 +202,7 @@ public:
 		else
 		{
 			Human* human = m_humans + index;
-			DestroyHuman(human);
+			DestroyHuman( human );
 		}
 
 		m_isSpawned[index] = false;
@@ -221,7 +221,7 @@ public:
 				else
 				{
 					DestroyHuman( m_humans + i );
-				}					
+				}
 
 				m_isSpawned[i] = false;
 			}
@@ -504,7 +504,7 @@ public:
 
 			b2Vec2 points[20];
 			float x = 10.0f;
-			for (int i = 0; i < 20; ++i)
+			for ( int i = 0; i < 20; ++i )
 			{
 				points[i] = { x, 0.0f };
 				x -= 1.0f;
@@ -516,7 +516,6 @@ public:
 			chainDef.isLoop = false;
 
 			b2CreateChain( groundId, &chainDef );
-
 		}
 
 		{
@@ -537,7 +536,6 @@ public:
 
 		m_overlapCount = 0;
 	}
-
 
 	void Step( Settings& settings ) override
 	{
@@ -580,6 +578,18 @@ public:
 
 		g_draw.DrawString( 5, m_textLine, "count == %d", m_overlapCount );
 		m_textLine += m_textIncrement;
+
+		int capacity = b2Shape_GetSensorCapacity( m_sensorId );
+		m_overlaps.clear();
+		m_overlaps.resize( capacity );
+		int count = b2Shape_GetSensorOverlaps( m_sensorId, m_overlaps.data(), capacity );
+		for ( int i = 0; i < count; ++i )
+		{
+			b2ShapeId shapeId = m_overlaps[i];
+			b2AABB aabb = b2Shape_GetAABB( shapeId );
+			b2Vec2 point = b2AABB_Center( aabb );
+			g_draw.DrawPoint( point, 10.0f, b2_colorWhite );
+		}
 	}
 
 	static Sample* Create( Settings& settings )
@@ -589,11 +599,11 @@ public:
 
 	b2BodyId m_playerId;
 	b2ShapeId m_sensorId;
+	std::vector<b2ShapeId> m_overlaps;
 	int m_overlapCount;
 };
 
 static int sampleCharacterSensor = RegisterSample( "Events", "Foot Sensor", FootSensor::Create );
-
 
 struct BodyUserData
 {
@@ -761,6 +771,7 @@ public:
 
 		std::vector<b2ContactData> contactData;
 
+		// Process contact begin touch events.
 		b2ContactEvents contactEvents = b2World_GetContactEvents( m_worldId );
 		for ( int i = 0; i < contactEvents.beginCount; ++i )
 		{
@@ -768,41 +779,72 @@ public:
 			b2BodyId bodyIdA = b2Shape_GetBody( event.shapeIdA );
 			b2BodyId bodyIdB = b2Shape_GetBody( event.shapeIdB );
 
+			// The begin touch events have the contact manifolds, but the impulses are zero. This is because the manifolds
+			// are gathered before the contact solver is run.
+
+			// We can get the final contact data from the shapes. The manifold is shared by the two shapes, so we just need the
+			// contact data from one of the shapes. Choose the one with the smallest number of contacts.
+
 			int capacityA = b2Shape_GetContactCapacity( event.shapeIdA );
-			contactData.resize( capacityA );
-			int countA = b2Shape_GetContactData( event.shapeIdA, contactData.data(), capacityA );
-			assert( countA >= 1 );
+			int capacityB = b2Shape_GetContactCapacity( event.shapeIdB );
 
-			for ( int j = 0; j < countA; ++j )
+			if ( capacityA < capacityB )
 			{
-				b2Manifold manifold = contactData[j].manifold;
-				b2Vec2 normal = manifold.normal;
-				assert( b2AbsFloat( b2Length( normal ) - 1.0f ) < 4.0f * FLT_EPSILON );
+				contactData.resize( capacityA );
 
-				for ( int k = 0; k < manifold.pointCount; ++k )
+				// The count may be less than the capacity
+				int countA = b2Shape_GetContactData( event.shapeIdA, contactData.data(), capacityA );
+				assert( countA >= 1 );
+
+				for ( int j = 0; j < countA; ++j )
 				{
-					b2ManifoldPoint point = manifold.points[k];
-					g_draw.DrawSegment( point.point, point.point + 4.0f * normal, b2_colorBlueViolet );
-					g_draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
+					b2ShapeId idA = contactData[j].shapeIdA;
+					b2ShapeId idB = contactData[j].shapeIdB;
+					if ( B2_ID_EQUALS( idA, event.shapeIdB ) || B2_ID_EQUALS( idB, event.shapeIdB ) )
+					{
+						assert( B2_ID_EQUALS( idA, event.shapeIdA ) || B2_ID_EQUALS( idB, event.shapeIdA ) );
+
+						b2Manifold manifold = contactData[j].manifold;
+						b2Vec2 normal = manifold.normal;
+						assert( b2AbsFloat( b2Length( normal ) - 1.0f ) < 4.0f * FLT_EPSILON );
+
+						for ( int k = 0; k < manifold.pointCount; ++k )
+						{
+							b2ManifoldPoint point = manifold.points[k];
+							g_draw.DrawSegment( point.point, point.point + point.maxNormalImpulse * normal, b2_colorBlueViolet );
+							g_draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
+						}
+					}
 				}
 			}
-
-			int capacityB = b2Shape_GetContactCapacity( event.shapeIdB );
-			contactData.resize( capacityB );
-			int countB = b2Shape_GetContactData( event.shapeIdB, contactData.data(), capacityB );
-			assert( countB >= 1 );
-
-			for ( int j = 0; j < countB; ++j )
+			else
 			{
-				b2Manifold manifold = contactData[j].manifold;
-				b2Vec2 normal = manifold.normal;
-				assert( b2AbsFloat( b2Length( normal ) - 1.0f ) < 4.0f * FLT_EPSILON );
+				contactData.resize( capacityB );
 
-				for ( int k = 0; k < manifold.pointCount; ++k )
+				// The count may be less than the capacity
+				int countB = b2Shape_GetContactData( event.shapeIdB, contactData.data(), capacityB );
+				assert( countB >= 1 );
+
+				for ( int j = 0; j < countB; ++j )
 				{
-					b2ManifoldPoint point = manifold.points[k];
-					g_draw.DrawSegment( point.point, point.point + 4.0f * normal, b2_colorYellowGreen );
-					g_draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
+					b2ShapeId idA = contactData[j].shapeIdA;
+					b2ShapeId idB = contactData[j].shapeIdB;
+
+					if ( B2_ID_EQUALS( idA, event.shapeIdA ) || B2_ID_EQUALS( idB, event.shapeIdA ) )
+					{
+						assert( B2_ID_EQUALS( idA, event.shapeIdB ) || B2_ID_EQUALS( idB, event.shapeIdB ) );
+
+						b2Manifold manifold = contactData[j].manifold;
+						b2Vec2 normal = manifold.normal;
+						assert( b2AbsFloat( b2Length( normal ) - 1.0f ) < 4.0f * FLT_EPSILON );
+
+						for ( int k = 0; k < manifold.pointCount; ++k )
+						{
+							b2ManifoldPoint point = manifold.points[k];
+							g_draw.DrawSegment( point.point, point.point + point.maxNormalImpulse * normal, b2_colorYellowGreen );
+							g_draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
+						}
+					}
 				}
 			}
 

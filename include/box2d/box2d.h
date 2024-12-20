@@ -34,8 +34,8 @@ B2_API bool b2World_IsValid( b2WorldId id );
 
 /// Simulate a world for one time step. This performs collision detection, integration, and constraint solution.
 /// @param worldId The world to simulate
-/// @param timeStep The amount of time to simulate, this should be a fixed number. Typically 1/60.
-/// @param subStepCount The number of sub-steps, increasing the sub-step count can increase accuracy. Typically 4.
+/// @param timeStep The amount of time to simulate, this should be a fixed number. Usually 1/60.
+/// @param subStepCount The number of sub-steps, increasing the sub-step count can increase accuracy. Usually 4.
 B2_API void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount );
 
 /// Call this to draw shapes and other debug draw data
@@ -121,19 +121,19 @@ B2_API void b2World_EnableContinuous( b2WorldId worldId, bool flag );
 B2_API bool b2World_IsContinuousEnabled( b2WorldId worldId );
 
 /// Adjust the restitution threshold. It is recommended not to make this value very small
-/// because it will prevent bodies from sleeping. Typically in meters per second.
+/// because it will prevent bodies from sleeping. Usually in meters per second.
 /// @see b2WorldDef
 B2_API void b2World_SetRestitutionThreshold( b2WorldId worldId, float value );
 
-/// Get the the restitution speed threshold. Typically in meters per second.
+/// Get the the restitution speed threshold. Usually in meters per second.
 B2_API float b2World_GetRestitutionThreshold( b2WorldId worldId );
 
-/// Adjust the hit event threshold. This controls the collision velocity needed to generate a b2ContactHitEvent.
-/// Typically in meters per second.
+/// Adjust the hit event threshold. This controls the collision speed needed to generate a b2ContactHitEvent.
+/// Usually in meters per second.
 /// @see b2WorldDef::hitEventThreshold
 B2_API void b2World_SetHitEventThreshold( b2WorldId worldId, float value );
 
-/// Get the the hit event speed threshold. Typically in meters per second.
+/// Get the the hit event speed threshold. Usually in meters per second.
 B2_API float b2World_GetHitEventThreshold( b2WorldId worldId );
 
 /// Register the custom filter callback. This is optional.
@@ -143,7 +143,7 @@ B2_API void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterFc
 B2_API void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* fcn, void* context );
 
 /// Set the gravity vector for the entire world. Box2D has no concept of an up direction and this
-/// is left as a decision for the application. Typically in m/s^2.
+/// is left as a decision for the application. Usually in m/s^2.
 /// @see b2WorldDef
 B2_API void b2World_SetGravity( b2WorldId worldId, b2Vec2 gravity );
 
@@ -159,9 +159,9 @@ B2_API void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionD
 /// @param worldId The world id
 /// @param hertz The contact stiffness (cycles per second)
 /// @param dampingRatio The contact bounciness with 1 being critical damping (non-dimensional)
-/// @param pushVelocity The maximum contact constraint push out velocity (meters per second)
+/// @param pushSpeed The maximum contact constraint push out speed (meters per second)
 /// @note Advanced feature
-B2_API void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushVelocity );
+B2_API void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushSpeed );
 
 /// Adjust joint tuning parameters
 /// @param worldId The world id
@@ -170,11 +170,11 @@ B2_API void b2World_SetContactTuning( b2WorldId worldId, float hertz, float damp
 /// @note Advanced feature
 B2_API void b2World_SetJointTuning( b2WorldId worldId, float hertz, float dampingRatio );
 
-/// Set the maximum linear velocity. Typically in m/s.
-B2_API void b2World_SetMaximumLinearVelocity( b2WorldId worldId, float maximumLinearVelocity );
+/// Set the maximum linear speed. Usually in m/s.
+B2_API void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearSpeed );
 
-/// Get the maximum linear velocity. Typically in m/s.
-B2_API float b2World_GetMaximumLinearVelocity( b2WorldId worldId );
+/// Get the maximum linear speed. Usually in m/s.
+B2_API float b2World_GetMaximumLinearSpeed( b2WorldId worldId );
 
 /// Enable/disable constraint warm starting. Advanced feature for testing. Disabling
 /// sleeping greatly reduces stability and provides no performance gain.
@@ -270,13 +270,13 @@ B2_API b2Vec2 b2Body_GetLocalVector( b2BodyId bodyId, b2Vec2 worldVector );
 /// Get a world vector on a body given a local vector
 B2_API b2Vec2 b2Body_GetWorldVector( b2BodyId bodyId, b2Vec2 localVector );
 
-/// Get the linear velocity of a body's center of mass. Typically in meters per second.
+/// Get the linear velocity of a body's center of mass. Usually in meters per second.
 B2_API b2Vec2 b2Body_GetLinearVelocity( b2BodyId bodyId );
 
 /// Get the angular velocity of a body in radians per second
 B2_API float b2Body_GetAngularVelocity( b2BodyId bodyId );
 
-/// Set the linear velocity of a body. Typically in meters per second.
+/// Set the linear velocity of a body. Usually in meters per second.
 B2_API void b2Body_SetLinearVelocity( b2BodyId bodyId, b2Vec2 linearVelocity );
 
 /// Set the angular velocity of a body in radians per second
@@ -286,7 +286,7 @@ B2_API void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity );
 /// it will generate a torque and affect the angular velocity. This optionally wakes up the body.
 /// The force is ignored if the body is not awake.
 /// @param bodyId The body id
-/// @param force The world force vector, typically in newtons (N)
+/// @param force The world force vector, usually in newtons (N)
 /// @param point The world position of the point of application
 /// @param wake Option to wake up the body
 B2_API void b2Body_ApplyForce( b2BodyId bodyId, b2Vec2 force, b2Vec2 point, bool wake );
@@ -301,7 +301,7 @@ B2_API void b2Body_ApplyForceToCenter( b2BodyId bodyId, b2Vec2 force, bool wake 
 /// Apply a torque. This affects the angular velocity without affecting the linear velocity.
 /// This optionally wakes the body. The torque is ignored if the body is not awake.
 /// @param bodyId The body id
-/// @param torque about the z-axis (out of the screen), typically in N*m.
+/// @param torque about the z-axis (out of the screen), usually in N*m.
 /// @param wake also wake up the body
 B2_API void b2Body_ApplyTorque( b2BodyId bodyId, float torque, bool wake );
 
@@ -310,7 +310,7 @@ B2_API void b2Body_ApplyTorque( b2BodyId bodyId, float torque, bool wake );
 /// is not at the center of mass. This optionally wakes the body.
 /// The impulse is ignored if the body is not awake.
 /// @param bodyId The body id
-/// @param impulse the world impulse vector, typically in N*s or kg*m/s.
+/// @param impulse the world impulse vector, usually in N*s or kg*m/s.
 /// @param point the world position of the point of application.
 /// @param wake also wake up the body
 /// @warning This should be used for one-shot impulses. If you need a steady force,
@@ -320,7 +320,7 @@ B2_API void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Vec2 p
 /// Apply an impulse to the center of mass. This immediately modifies the velocity.
 /// The impulse is ignored if the body is not awake. This optionally wakes the body.
 /// @param bodyId The body id
-/// @param impulse the world impulse vector, typically in N*s or kg*m/s.
+/// @param impulse the world impulse vector, usually in N*s or kg*m/s.
 /// @param wake also wake up the body
 /// @warning This should be used for one-shot impulses. If you need a steady force,
 /// use a force instead, which will work better with the sub-stepping solver.
@@ -329,16 +329,16 @@ B2_API void b2Body_ApplyLinearImpulseToCenter( b2BodyId bodyId, b2Vec2 impulse, 
 /// Apply an angular impulse. The impulse is ignored if the body is not awake.
 /// This optionally wakes the body.
 /// @param bodyId The body id
-/// @param impulse the angular impulse, typically in units of kg*m*m/s
+/// @param impulse the angular impulse, usually in units of kg*m*m/s
 /// @param wake also wake up the body
 /// @warning This should be used for one-shot impulses. If you need a steady force,
 /// use a force instead, which will work better with the sub-stepping solver.
 B2_API void b2Body_ApplyAngularImpulse( b2BodyId bodyId, float impulse, bool wake );
 
-/// Get the mass of the body, typically in kilograms
+/// Get the mass of the body, usually in kilograms
 B2_API float b2Body_GetMass( b2BodyId bodyId );
 
-/// Get the rotational inertia of the body, typically in kg*m^2
+/// Get the rotational inertia of the body, usually in kg*m^2
 B2_API float b2Body_GetRotationalInertia( b2BodyId bodyId );
 
 /// Get the center of mass position of the body in local space
@@ -395,10 +395,10 @@ B2_API void b2Body_EnableSleep( b2BodyId bodyId, bool enableSleep );
 /// Returns true if sleeping is enabled for this body
 B2_API bool b2Body_IsSleepEnabled( b2BodyId bodyId );
 
-/// Set the sleep threshold, typically in meters per second
+/// Set the sleep threshold, usually in meters per second
 B2_API void b2Body_SetSleepThreshold( b2BodyId bodyId, float sleepThreshold );
 
-/// Get the sleep threshold, typically in meters per second.
+/// Get the sleep threshold, usually in meters per second.
 B2_API float b2Body_GetSleepThreshold( b2BodyId bodyId );
 
 /// Returns true if this body is enabled
@@ -423,9 +423,19 @@ B2_API void b2Body_SetBullet( b2BodyId bodyId, bool flag );
 /// Is this body a bullet?
 B2_API bool b2Body_IsBullet( b2BodyId bodyId );
 
+/// Enable/disable sensor events on all shapes.
+/// @see b2ShapeDef::enableSensorEvents
+/// @warning changing this at runtime may cause mismatched begin/end touch events
+B2_API void b2Body_EnableSensorEvents( b2BodyId bodyId, bool flag );
+
+/// Enable/disable contact events on all shapes.
+/// @see b2ShapeDef::enableContactEvents
+/// @warning changing this at runtime may cause mismatched begin/end touch events
+B2_API void b2Body_EnableContactEvents( b2BodyId bodyId, bool flag );
+
 /// Enable/disable hit events on all shapes
 /// @see b2ShapeDef::enableHitEvents
-B2_API void b2Body_EnableHitEvents( b2BodyId bodyId, bool enableHitEvents );
+B2_API void b2Body_EnableHitEvents( b2BodyId bodyId, bool flag );
 
 /// Get the world that owns this body
 B2_API b2WorldId b2Body_GetWorld( b2BodyId bodyId );
@@ -513,12 +523,12 @@ B2_API void b2Shape_SetUserData( b2ShapeId shapeId, void* userData );
 /// from an event or query.
 B2_API void* b2Shape_GetUserData( b2ShapeId shapeId );
 
-/// Set the mass density of a shape, typically in kg/m^2.
+/// Set the mass density of a shape, usually in kg/m^2.
 /// This will optionally update the mass properties on the parent body.
 /// @see b2ShapeDef::density, b2Body_ApplyMassFromShapes
 B2_API void b2Shape_SetDensity( b2ShapeId shapeId, float density, bool updateBodyMass );
 
-/// Get the density of a shape, typically in kg/m^2
+/// Get the density of a shape, usually in kg/m^2
 B2_API float b2Shape_GetDensity( b2ShapeId shapeId );
 
 /// Set the friction on a shape
@@ -621,7 +631,24 @@ B2_API b2ChainId b2Shape_GetParentChain( b2ShapeId shapeId );
 B2_API int b2Shape_GetContactCapacity( b2ShapeId shapeId );
 
 /// Get the touching contact data for a shape. The provided shapeId will be either shapeIdA or shapeIdB on the contact data.
+/// @note Box2D uses speculative collision so some contact points may be separated.
+/// @returns the number of elements filled in the provided array
+/// @warning do not ignore the return value, it specifies the valid number of elements
 B2_API int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData, int capacity );
+
+/// Get the maximum capacity required for retrieving all the overlapped shapes on a sensor shape.
+/// This returns 0 if the provided shape is not a sensor.
+/// @param shapeId the id of a sensor shape
+/// @returns the required capacity to get all the overlaps in b2Shape_GetSensorOverlaps
+B2_API int b2Shape_GetSensorCapacity( b2ShapeId shapeId );
+
+/// Get the overlapped shapes for a sensor shape.
+/// @param shapeId the id of a sensor shape
+/// @param overlappedShapes a user allocated array that is filled with the overlapping shapes
+/// @param capacity the capacity of overlappedShapes
+/// @returns the number of elements filled in the provided array
+/// @warning do not ignore the return value, it specifies the valid number of elements
+B2_API int b2Shape_GetSensorOverlaps( b2ShapeId shapeId, b2ShapeId* overlappedShapes, int capacity );
 
 /// Get the current world AABB
 B2_API b2AABB b2Shape_GetAABB( b2ShapeId shapeId );
@@ -779,19 +806,19 @@ B2_API void b2DistanceJoint_EnableMotor( b2JointId jointId, bool enableMotor );
 /// Is the distance joint motor enabled?
 B2_API bool b2DistanceJoint_IsMotorEnabled( b2JointId jointId );
 
-/// Set the distance joint motor speed, typically in meters per second
+/// Set the distance joint motor speed, usually in meters per second
 B2_API void b2DistanceJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed );
 
-/// Get the distance joint motor speed, typically in meters per second
+/// Get the distance joint motor speed, usually in meters per second
 B2_API float b2DistanceJoint_GetMotorSpeed( b2JointId jointId );
 
-/// Set the distance joint maximum motor force, typically in newtons
+/// Set the distance joint maximum motor force, usually in newtons
 B2_API void b2DistanceJoint_SetMaxMotorForce( b2JointId jointId, float force );
 
-/// Get the distance joint maximum motor force, typically in newtons
+/// Get the distance joint maximum motor force, usually in newtons
 B2_API float b2DistanceJoint_GetMaxMotorForce( b2JointId jointId );
 
-/// Get the distance joint current motor force, typically in newtons
+/// Get the distance joint current motor force, usually in newtons
 B2_API float b2DistanceJoint_GetMotorForce( b2JointId jointId );
 
 /** @} */
@@ -822,22 +849,22 @@ B2_API void b2MotorJoint_SetAngularOffset( b2JointId jointId, float angularOffse
 /// Get the motor joint angular offset target in radians
 B2_API float b2MotorJoint_GetAngularOffset( b2JointId jointId );
 
-/// Set the motor joint maximum force, typically in newtons
+/// Set the motor joint maximum force, usually in newtons
 B2_API void b2MotorJoint_SetMaxForce( b2JointId jointId, float maxForce );
 
-/// Get the motor joint maximum force, typically in newtons
+/// Get the motor joint maximum force, usually in newtons
 B2_API float b2MotorJoint_GetMaxForce( b2JointId jointId );
 
-/// Set the motor joint maximum torque, typically in newton-meters
+/// Set the motor joint maximum torque, usually in newton-meters
 B2_API void b2MotorJoint_SetMaxTorque( b2JointId jointId, float maxTorque );
 
-/// Get the motor joint maximum torque, typically in newton-meters
+/// Get the motor joint maximum torque, usually in newton-meters
 B2_API float b2MotorJoint_GetMaxTorque( b2JointId jointId );
 
-/// Set the motor joint correction factor, typically in [0, 1]
+/// Set the motor joint correction factor, usually in [0, 1]
 B2_API void b2MotorJoint_SetCorrectionFactor( b2JointId jointId, float correctionFactor );
 
-/// Get the motor joint correction factor, typically in [0, 1]
+/// Get the motor joint correction factor, usually in [0, 1]
 B2_API float b2MotorJoint_GetCorrectionFactor( b2JointId jointId );
 
 /**@}*/
@@ -873,10 +900,10 @@ B2_API void b2MouseJoint_SetSpringDampingRatio( b2JointId jointId, float damping
 /// Get the mouse joint damping ratio, non-dimensional
 B2_API float b2MouseJoint_GetSpringDampingRatio( b2JointId jointId );
 
-/// Set the mouse joint maximum force, typically in newtons
+/// Set the mouse joint maximum force, usually in newtons
 B2_API void b2MouseJoint_SetMaxForce( b2JointId jointId, float maxForce );
 
-/// Get the mouse joint maximum force, typically in newtons
+/// Get the mouse joint maximum force, usually in newtons
 B2_API float b2MouseJoint_GetMaxForce( b2JointId jointId );
 
 /**@}*/
@@ -950,19 +977,19 @@ B2_API void b2PrismaticJoint_EnableMotor( b2JointId jointId, bool enableMotor );
 /// Is the prismatic joint motor enabled?
 B2_API bool b2PrismaticJoint_IsMotorEnabled( b2JointId jointId );
 
-/// Set the prismatic joint motor speed, typically in meters per second
+/// Set the prismatic joint motor speed, usually in meters per second
 B2_API void b2PrismaticJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed );
 
-/// Get the prismatic joint motor speed, typically in meters per second
+/// Get the prismatic joint motor speed, usually in meters per second
 B2_API float b2PrismaticJoint_GetMotorSpeed( b2JointId jointId );
 
-/// Set the prismatic joint maximum motor force, typically in newtons
+/// Set the prismatic joint maximum motor force, usually in newtons
 B2_API void b2PrismaticJoint_SetMaxMotorForce( b2JointId jointId, float force );
 
-/// Get the prismatic joint maximum motor force, typically in newtons
+/// Get the prismatic joint maximum motor force, usually in newtons
 B2_API float b2PrismaticJoint_GetMaxMotorForce( b2JointId jointId );
 
-/// Get the prismatic joint current motor force, typically in newtons
+/// Get the prismatic joint current motor force, usually in newtons
 B2_API float b2PrismaticJoint_GetMotorForce( b2JointId jointId );
 
 /// Get the current joint translation, usually in meters.
@@ -1035,13 +1062,13 @@ B2_API void b2RevoluteJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed )
 /// Get the revolute joint motor speed in radians per second
 B2_API float b2RevoluteJoint_GetMotorSpeed( b2JointId jointId );
 
-/// Get the revolute joint current motor torque, typically in newton-meters
+/// Get the revolute joint current motor torque, usually in newton-meters
 B2_API float b2RevoluteJoint_GetMotorTorque( b2JointId jointId );
 
-/// Set the revolute joint maximum motor torque, typically in newton-meters
+/// Set the revolute joint maximum motor torque, usually in newton-meters
 B2_API void b2RevoluteJoint_SetMaxMotorTorque( b2JointId jointId, float torque );
 
-/// Get the revolute joint maximum motor torque, typically in newton-meters
+/// Get the revolute joint maximum motor torque, usually in newton-meters
 B2_API float b2RevoluteJoint_GetMaxMotorTorque( b2JointId jointId );
 
 /**@}*/
@@ -1152,13 +1179,13 @@ B2_API void b2WheelJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed );
 /// Get the wheel joint motor speed in radians per second
 B2_API float b2WheelJoint_GetMotorSpeed( b2JointId jointId );
 
-/// Set the wheel joint maximum motor torque, typically in newton-meters
+/// Set the wheel joint maximum motor torque, usually in newton-meters
 B2_API void b2WheelJoint_SetMaxMotorTorque( b2JointId jointId, float torque );
 
-/// Get the wheel joint maximum motor torque, typically in newton-meters
+/// Get the wheel joint maximum motor torque, usually in newton-meters
 B2_API float b2WheelJoint_GetMaxMotorTorque( b2JointId jointId );
 
-/// Get the wheel joint current motor torque, typically in newton-meters
+/// Get the wheel joint current motor torque, usually in newton-meters
 B2_API float b2WheelJoint_GetMotorTorque( b2JointId jointId );
 
 /**@}*/
