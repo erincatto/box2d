@@ -942,14 +942,6 @@ void b2Joint_WakeBodies( b2JointId jointId )
 	b2WakeBody( world, bodyB );
 }
 
-extern b2Vec2 b2GetDistanceJointForce( b2World* world, b2JointSim* base );
-extern b2Vec2 b2GetMotorJointForce( b2World* world, b2JointSim* base );
-extern b2Vec2 b2GetMouseJointForce( b2World* world, b2JointSim* base );
-extern b2Vec2 b2GetPrismaticJointForce( b2World* world, b2JointSim* base );
-extern b2Vec2 b2GetRevoluteJointForce( b2World* world, b2JointSim* base );
-extern b2Vec2 b2GetWeldJointForce( b2World* world, b2JointSim* base );
-extern b2Vec2 b2GetWheelJointForce( b2World* world, b2JointSim* base );
-
 b2Vec2 b2Joint_GetConstraintForce( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
@@ -988,13 +980,6 @@ b2Vec2 b2Joint_GetConstraintForce( b2JointId jointId )
 	}
 }
 
-extern float b2GetMotorJointTorque( b2World* world, b2JointSim* base );
-extern float b2GetMouseJointTorque( b2World* world, b2JointSim* base );
-extern float b2GetPrismaticJointTorque( b2World* world, b2JointSim* base );
-extern float b2GetRevoluteJointTorque( b2World* world, b2JointSim* base );
-extern float b2GetWeldJointTorque( b2World* world, b2JointSim* base );
-extern float b2GetWheelJointTorque( b2World* world, b2JointSim* base );
-
 float b2Joint_GetConstraintTorque( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
@@ -1032,14 +1017,6 @@ float b2Joint_GetConstraintTorque( b2JointId jointId )
 			return 0.0f;
 	}
 }
-
-extern void b2PrepareDistanceJoint( b2JointSim* base, b2StepContext* context );
-extern void b2PrepareMotorJoint( b2JointSim* base, b2StepContext* context );
-extern void b2PrepareMouseJoint( b2JointSim* base, b2StepContext* context );
-extern void b2PreparePrismaticJoint( b2JointSim* base, b2StepContext* context );
-extern void b2PrepareRevoluteJoint( b2JointSim* base, b2StepContext* context );
-extern void b2PrepareWeldJoint( b2JointSim* base, b2StepContext* context );
-extern void b2PrepareWheelJoint( b2JointSim* base, b2StepContext* context );
 
 void b2PrepareJoint( b2JointSim* joint, b2StepContext* context )
 {
@@ -1081,14 +1058,6 @@ void b2PrepareJoint( b2JointSim* joint, b2StepContext* context )
 	}
 }
 
-extern void b2WarmStartDistanceJoint( b2JointSim* base, b2StepContext* context );
-extern void b2WarmStartMotorJoint( b2JointSim* base, b2StepContext* context );
-extern void b2WarmStartMouseJoint( b2JointSim* base, b2StepContext* context );
-extern void b2WarmStartPrismaticJoint( b2JointSim* base, b2StepContext* context );
-extern void b2WarmStartRevoluteJoint( b2JointSim* base, b2StepContext* context );
-extern void b2WarmStartWeldJoint( b2JointSim* base, b2StepContext* context );
-extern void b2WarmStartWheelJoint( b2JointSim* base, b2StepContext* context );
-
 void b2WarmStartJoint( b2JointSim* joint, b2StepContext* context )
 {
 	switch ( joint->type )
@@ -1128,14 +1097,6 @@ void b2WarmStartJoint( b2JointSim* joint, b2StepContext* context )
 			B2_ASSERT( false );
 	}
 }
-
-extern void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBias );
-extern void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context, bool useBias );
-extern void b2SolveMouseJoint( b2JointSim* base, b2StepContext* context );
-extern void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBias );
-extern void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBias );
-extern void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias );
-extern void b2SolveWheelJoint( b2JointSim* base, b2StepContext* context, bool useBias );
 
 void b2SolveJoint( b2JointSim* joint, b2StepContext* context, bool useBias )
 {
@@ -1227,12 +1188,6 @@ void b2SolveOverflowJoints( b2StepContext* context, bool useBias )
 
 	b2TracyCZoneEnd( solve_joints );
 }
-
-extern void b2DrawDistanceJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB );
-extern void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB );
-extern void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB,
-								 float drawSize );
-extern void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB );
 
 void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 {
