@@ -57,7 +57,7 @@ void b2ClearSet( b2HashSet* set )
 // https://preshing.com/20130107/this-hash-set-is-faster-than-a-judy-array/
 // todo try: https://www.jandrewrogers.com/2019/02/12/fast-perfect-hashing/
 // todo try: https://probablydance.com/2018/06/16/fibonacci-hashing-the-optimization-that-the-world-forgot-or-a-better-alternative-to-integer-modulo/
-static inline uint32_t b2KeyHash( uint64_t key )
+static uint32_t b2KeyHash( uint64_t key )
 {
 	uint64_t h = key;
 	h ^= h >> 33;
@@ -72,7 +72,7 @@ static inline uint32_t b2KeyHash( uint64_t key )
 	// return 11400714819323198485ull * key;
 }
 
-int32_t b2FindSlot( const b2HashSet* set, uint64_t key, uint32_t hash )
+static int32_t b2FindSlot( const b2HashSet* set, uint64_t key, uint32_t hash )
 {
 	uint32_t capacity = set->capacity;
 	int32_t index = hash & ( capacity - 1 );
