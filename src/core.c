@@ -61,10 +61,12 @@ void b2SetAssertFcn( b2AssertFcn* assertFcn )
 	b2AssertHandler = assertFcn;
 }
 
+#if !defined( NDEBUG ) || defined( B2_ENABLE_ASSERT )
 int b2InternalAssertFcn( const char* condition, const char* fileName, int lineNumber )
 {
 	return b2AssertHandler( condition, fileName, lineNumber );
 }
+#endif
 
 b2Version b2GetVersion( void )
 {

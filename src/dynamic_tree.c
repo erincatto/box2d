@@ -986,7 +986,7 @@ void b2DynamicTree_Validate( const b2DynamicTree* tree )
 	}
 
 	int height = b2DynamicTree_GetHeight( tree );
-	int computedHeight = b2ComputeHeight( tree );
+	int computedHeight = b2ComputeHeight( tree, tree->root );
 	B2_ASSERT( height == computedHeight );
 
 	B2_ASSERT( tree->nodeCount + freeCount == tree->nodeCapacity );
