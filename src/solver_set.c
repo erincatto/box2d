@@ -574,7 +574,7 @@ void b2TransferJoint( b2World* world, b2SolverSet* targetSet, b2SolverSet* sourc
 	else
 	{
 		B2_ASSERT( colorIndex == B2_NULL_INDEX );
-		sourceSim = b2JointSimArray_Get( &sourceSet->jointSims, +localIndex );
+		sourceSim = b2JointSimArray_Get( &sourceSet->jointSims, localIndex );
 	}
 
 	// Create target and copy. Fix joint.

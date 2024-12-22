@@ -885,7 +885,7 @@ static void b2ExecuteMainStage( b2SolverStage* stage, b2StepContext* context, ui
 }
 
 // This should not use the thread index because thread 0 can be called twice by enkiTS.
-void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDontUse, void* taskContext )
+static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDontUse, void* taskContext )
 {
 	B2_MAYBE_UNUSED( startIndex );
 	B2_MAYBE_UNUSED( endIndex );
