@@ -1263,17 +1263,17 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 			b2Vec2 target = jointSim->mouseJoint.targetA;
 
 			b2HexColor c1 = b2_colorGreen;
-			draw->DrawPoint( target, 4.0f, c1, draw->context );
-			draw->DrawPoint( pB, 4.0f, c1, draw->context );
+			draw->drawPoint( target, 4.0f, c1, draw->context );
+			draw->drawPoint( pB, 4.0f, c1, draw->context );
 
 			b2HexColor c2 = b2_colorLightGray;
-			draw->DrawSegment( target, pB, c2, draw->context );
+			draw->drawSegment( target, pB, c2, draw->context );
 		}
 		break;
 
 		case b2_nullJoint:
 		{
-			draw->DrawSegment( pA, pB, b2_colorGold, draw->context );
+			draw->drawSegment( pA, pB, b2_colorGold, draw->context );
 		}
 		break;
 
@@ -1290,9 +1290,9 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 			break;
 
 		default:
-			draw->DrawSegment( transformA.p, pA, color, draw->context );
-			draw->DrawSegment( pA, pB, color, draw->context );
-			draw->DrawSegment( transformB.p, pB, color, draw->context );
+			draw->drawSegment( transformA.p, pA, color, draw->context );
+			draw->drawSegment( pA, pB, color, draw->context );
+			draw->drawSegment( transformB.p, pB, color, draw->context );
 	}
 
 	if ( draw->drawGraphColors )
@@ -1305,7 +1305,7 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 		if ( colorIndex != B2_NULL_INDEX )
 		{
 			b2Vec2 p = b2Lerp( pA, pB, 0.5f );
-			draw->DrawPoint( p, 5.0f, colors[colorIndex], draw->context );
+			draw->drawPoint( p, 5.0f, colors[colorIndex], draw->context );
 		}
 	}
 }

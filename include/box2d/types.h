@@ -1176,7 +1176,7 @@ typedef bool b2OverlapResultFcn( b2ShapeId shapeId, void* context );
 /// @ingroup world
 typedef float b2CastResultFcn( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context );
 
-/// These colors are used for debug draw.
+/// These colors are used for debug draw and mostly match the named SVG colors.
 /// See https://www.rapidtables.com/web/color/index.html
 /// https://johndecember.com/html/spec/colorsvg.html
 /// https://upload.wikimedia.org/wikipedia/commons/2/2b/SVG_Recognized_color_keyword_names.svg
@@ -1323,6 +1323,7 @@ typedef enum b2HexColor
 	b2_colorWhiteSmoke = 0xF5F5F5,
 	b2_colorYellow = 0xFFFF00,
 	b2_colorYellowGreen = 0x9ACD32,
+
 	b2_colorBox2DRed = 0xDC3132,
 	b2_colorBox2DBlue = 0x30AEBF,
 	b2_colorBox2DGreen = 0x8CC924,
@@ -1335,32 +1336,32 @@ typedef enum b2HexColor
 typedef struct b2DebugDraw
 {
 	/// Draw a closed polygon provided in CCW order.
-	void ( *DrawPolygon )( const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context );
+	void ( *drawPolygon )( const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context );
 
 	/// Draw a solid closed polygon provided in CCW order.
-	void ( *DrawSolidPolygon )( b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color,
+	void ( *drawSolidPolygon )( b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color,
 								void* context );
 
 	/// Draw a circle.
-	void ( *DrawCircle )( b2Vec2 center, float radius, b2HexColor color, void* context );
+	void ( *drawCircle )( b2Vec2 center, float radius, b2HexColor color, void* context );
 
 	/// Draw a solid circle.
-	void ( *DrawSolidCircle )( b2Transform transform, float radius, b2HexColor color, void* context );
+	void ( *drawSolidCircle )( b2Transform transform, float radius, b2HexColor color, void* context );
 
 	/// Draw a solid capsule.
-	void ( *DrawSolidCapsule )( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context );
+	void ( *drawSolidCapsule )( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context );
 
 	/// Draw a line segment.
-	void ( *DrawSegment )( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context );
+	void ( *drawSegment )( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context );
 
 	/// Draw a transform. Choose your own length scale.
-	void ( *DrawTransform )( b2Transform transform, void* context );
+	void ( *drawTransform )( b2Transform transform, void* context );
 
 	/// Draw a point.
-	void ( *DrawPoint )( b2Vec2 p, float size, b2HexColor color, void* context );
+	void ( *drawPoint )( b2Vec2 p, float size, b2HexColor color, void* context );
 
-	/// Draw a string.
-	void ( *DrawString )( b2Vec2 p, const char* s, void* context );
+	/// Draw a string in world space
+	void ( *drawString )( b2Vec2 p, const char* s, b2HexColor color, void* context );
 
 	/// Bounds to use if restricting drawing to a rectangular region
 	b2AABB drawingBounds;

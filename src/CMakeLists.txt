@@ -1,6 +1,8 @@
 set(BOX2D_SOURCE_FILES
 	aabb.c
 	aabb.h
+	arena_allocator.c
+	arena_allocator.h
 	array.c
 	array.h
 	bitset.c
@@ -42,8 +44,6 @@ set(BOX2D_SOURCE_FILES
 	solver.h
 	solver_set.c
 	solver_set.h
-	stack_allocator.c
-	stack_allocator.h
 	table.c
 	table.h
 	timer.c
@@ -155,11 +155,13 @@ elseif (MINGW)
 	endif()
 elseif (APPLE)
 	message(STATUS "Box2D on Apple")
+	target_compile_options(box2d PRIVATE -Wmissing-prototypes)
 elseif (EMSCRIPTEN)
 	message(STATUS "Box2D on Emscripten")
 	target_compile_options(box2d PRIVATE -msimd128 -msse2)
 elseif (UNIX)
 	message(STATUS "Box2D using Unix")
+	target_compile_options(box2d PRIVATE -Wmissing-prototypes)
 	if ("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
 		# raspberry pi
 		# -mfpu=neon

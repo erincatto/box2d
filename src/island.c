@@ -615,11 +615,11 @@ void b2SplitIsland( b2World* world, int baseId )
 	int bodyCount = baseIsland->bodyCount;
 
 	b2Body* bodies = world->bodies.data;
-	b2StackAllocator* alloc = &world->stackAllocator;
+	b2ArenaAllocator* alloc = &world->stackAllocator;
 
 	// No lock is needed because I ensure the allocator is not used while this task is active.
-	int* stack = b2AllocateStackItem( alloc, bodyCount * sizeof( int ), "island stack" );
-	int* bodyIds = b2AllocateStackItem( alloc, bodyCount * sizeof( int ), "body ids" );
+	int* stack = b2AllocateArenaItem( alloc, bodyCount * sizeof( int ), "island stack" );
+	int* bodyIds = b2AllocateArenaItem( alloc, bodyCount * sizeof( int ), "body ids" );
 
 	// Build array containing all body indices from base island. These
 	// serve as seed bodies for the depth first search (DFS).
@@ -835,8 +835,8 @@ void b2SplitIsland( b2World* world, int baseId )
 		b2ValidateIsland( world, islandId );
 	}
 
-	b2FreeStackItem( alloc, bodyIds );
-	b2FreeStackItem( alloc, stack );
+	b2FreeArenaItem( alloc, bodyIds );
+	b2FreeArenaItem( alloc, stack );
 }
 
 // Split an island because some contacts and/or joints have been removed.

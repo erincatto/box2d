@@ -8,7 +8,7 @@
 #include "broad_phase.h"
 #include "constraint_graph.h"
 #include "id_pool.h"
-#include "stack_allocator.h"
+#include "arena_allocator.h"
 
 #include "box2d/types.h"
 
@@ -43,7 +43,7 @@ typedef struct b2TaskContext
 // The world also contains efficient memory management facilities.
 typedef struct b2World
 {
-	b2StackAllocator stackAllocator;
+	b2ArenaAllocator stackAllocator;
 	b2BroadPhase broadPhase;
 	b2ConstraintGraph constraintGraph;
 

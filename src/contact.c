@@ -371,7 +371,7 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 	if ( ( flags & ( b2_contactTouchingFlag | b2_contactSensorTouchingFlag ) ) != 0 &&
 		 ( flags & ( b2_contactEnableContactEvents | b2_contactEnableSensorEvents ) ) != 0 )
 	{
-		int16_t worldId = world->worldId;
+		uint16_t worldId = world->worldId;
 		const b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contact->shapeIdA );
 		const b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contact->shapeIdB );
 		b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->revision };

@@ -14,7 +14,7 @@
 #include "joint.h"
 #include "shape.h"
 #include "solver_set.h"
-#include "stack_allocator.h"
+#include "arena_allocator.h"
 #include "world.h"
 
 #include <limits.h>
@@ -1169,7 +1169,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 	// Prepare buffers for continuous collision (fast bodies)
 	stepContext->bulletBodyCount = 0;
-	stepContext->bulletBodies = b2AllocateStackItem( &world->stackAllocator, awakeBodyCount * sizeof( int ), "bullet bodies" );
+	stepContext->bulletBodies = b2AllocateArenaItem( &world->stackAllocator, awakeBodyCount * sizeof( int ), "bullet bodies" );
 
 	b2TracyCZoneNC( graph_solver, "Graph", b2_colorSeaGreen, true );
 
@@ -1308,19 +1308,19 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		activeColorCount = c;
 
 		// Gather contact pointers for easy parallel-for traversal. Some may be NULL due to SIMD remainders.
-		b2ContactSim** contacts = b2AllocateStackItem(
+		b2ContactSim** contacts = b2AllocateArenaItem(
 			&world->stackAllocator, B2_SIMD_WIDTH * simdContactCount * sizeof( b2ContactSim* ), "contact pointers" );
 
 		// Gather joint pointers for easy parallel-for traversal.
 		b2JointSim** joints =
-			b2AllocateStackItem( &world->stackAllocator, awakeJointCount * sizeof( b2JointSim* ), "joint pointers" );
+			b2AllocateArenaItem( &world->stackAllocator, awakeJointCount * sizeof( b2JointSim* ), "joint pointers" );
 
 		int simdConstraintSize = b2GetContactConstraintSIMDByteCount();
 		b2ContactConstraintSIMD* simdContactConstraints =
-			b2AllocateStackItem( &world->stackAllocator, simdContactCount * simdConstraintSize, "contact constraint" );
+			b2AllocateArenaItem( &world->stackAllocator, simdContactCount * simdConstraintSize, "contact constraint" );
 
 		int overflowContactCount = colors[B2_OVERFLOW_INDEX].contactSims.count;
-		b2ContactConstraint* overflowContactConstraints = b2AllocateStackItem(
+		b2ContactConstraint* overflowContactConstraints = b2AllocateArenaItem(
 			&world->stackAllocator, overflowContactCount * sizeof( b2ContactConstraint ), "overflow contact constraint" );
 
 		graph->colors[B2_OVERFLOW_INDEX].overflowConstraints = overflowContactConstraints;
@@ -1413,15 +1413,15 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// b2_stageStoreImpulses
 		stageCount += 1;
 
-		b2SolverStage* stages = b2AllocateStackItem( &world->stackAllocator, stageCount * sizeof( b2SolverStage ), "stages" );
+		b2SolverStage* stages = b2AllocateArenaItem( &world->stackAllocator, stageCount * sizeof( b2SolverStage ), "stages" );
 		b2SolverBlock* bodyBlocks =
-			b2AllocateStackItem( &world->stackAllocator, bodyBlockCount * sizeof( b2SolverBlock ), "body blocks" );
+			b2AllocateArenaItem( &world->stackAllocator, bodyBlockCount * sizeof( b2SolverBlock ), "body blocks" );
 		b2SolverBlock* contactBlocks =
-			b2AllocateStackItem( &world->stackAllocator, contactBlockCount * sizeof( b2SolverBlock ), "contact blocks" );
+			b2AllocateArenaItem( &world->stackAllocator, contactBlockCount * sizeof( b2SolverBlock ), "contact blocks" );
 		b2SolverBlock* jointBlocks =
-			b2AllocateStackItem( &world->stackAllocator, jointBlockCount * sizeof( b2SolverBlock ), "joint blocks" );
+			b2AllocateArenaItem( &world->stackAllocator, jointBlockCount * sizeof( b2SolverBlock ), "joint blocks" );
 		b2SolverBlock* graphBlocks =
-			b2AllocateStackItem( &world->stackAllocator, graphBlockCount * sizeof( b2SolverBlock ), "graph blocks" );
+			b2AllocateArenaItem( &world->stackAllocator, graphBlockCount * sizeof( b2SolverBlock ), "graph blocks" );
 
 		// Split an awake island. This modifies:
 		// - stack allocator
@@ -1684,15 +1684,15 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		world->profile.finalizeBodies = b2GetMillisecondsAndReset( &timer );
 
-		b2FreeStackItem( &world->stackAllocator, graphBlocks );
-		b2FreeStackItem( &world->stackAllocator, jointBlocks );
-		b2FreeStackItem( &world->stackAllocator, contactBlocks );
-		b2FreeStackItem( &world->stackAllocator, bodyBlocks );
-		b2FreeStackItem( &world->stackAllocator, stages );
-		b2FreeStackItem( &world->stackAllocator, overflowContactConstraints );
-		b2FreeStackItem( &world->stackAllocator, simdContactConstraints );
-		b2FreeStackItem( &world->stackAllocator, joints );
-		b2FreeStackItem( &world->stackAllocator, contacts );
+		b2FreeArenaItem( &world->stackAllocator, graphBlocks );
+		b2FreeArenaItem( &world->stackAllocator, jointBlocks );
+		b2FreeArenaItem( &world->stackAllocator, contactBlocks );
+		b2FreeArenaItem( &world->stackAllocator, bodyBlocks );
+		b2FreeArenaItem( &world->stackAllocator, stages );
+		b2FreeArenaItem( &world->stackAllocator, overflowContactConstraints );
+		b2FreeArenaItem( &world->stackAllocator, simdContactConstraints );
+		b2FreeArenaItem( &world->stackAllocator, joints );
+		b2FreeArenaItem( &world->stackAllocator, contacts );
 	}
 
 	b2TracyCZoneEnd( graph_solver );
@@ -1935,7 +1935,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2TracyCZoneEnd( broad_phase_bullet );
 	}
 
-	b2FreeStackItem( &world->stackAllocator, stepContext->bulletBodies );
+	b2FreeArenaItem( &world->stackAllocator, stepContext->bulletBodies );
 	stepContext->bulletBodies = NULL;
 	stepContext->bulletBodyCount = 0;
 

@@ -1309,7 +1309,7 @@ void DrawPointFcn( b2Vec2 p, float size, b2HexColor color, void* context )
 	static_cast<Draw*>( context )->DrawPoint( p, size, color );
 }
 
-void DrawStringFcn( b2Vec2 p, const char* s, void* context )
+void DrawStringFcn( b2Vec2 p, const char* s, b2HexColor color, void* context )
 {
 	static_cast<Draw*>( context )->DrawString( p, s );
 }
@@ -1365,28 +1365,32 @@ void Draw::Create()
 
 	b2AABB bounds = { { -FLT_MAX, -FLT_MAX }, { FLT_MAX, FLT_MAX } };
 
-	m_debugDraw = { DrawPolygonFcn,
-					DrawSolidPolygonFcn,
-					DrawCircleFcn,
-					DrawSolidCircleFcn,
-					DrawSolidCapsuleFcn,
-					DrawSegmentFcn,
-					DrawTransformFcn,
-					DrawPointFcn,
-					DrawStringFcn,
-					bounds,
-					false, // drawUsingBounds
-					true,  // shapes
-					true,  // joints
-					false, // joint extras
-					false, // aabbs
-					false, // mass
-					false, // contacts
-					false, // colors
-					false, // normals
-					false, // impulse
-					false, // friction
-					this };
+	m_debugDraw = {};
+
+	m_debugDraw.drawPolygon = DrawPolygonFcn;
+	m_debugDraw.drawSolidPolygon = DrawSolidPolygonFcn;
+	m_debugDraw.drawCircle = DrawCircleFcn;
+	m_debugDraw.drawSolidCircle = DrawSolidCircleFcn;
+	m_debugDraw.drawSolidCapsule = DrawSolidCapsuleFcn;
+	m_debugDraw.drawSegment = DrawSegmentFcn;
+	m_debugDraw.drawTransform = DrawTransformFcn;
+	m_debugDraw.drawPoint = DrawPointFcn;
+	m_debugDraw.drawString = DrawStringFcn;
+	m_debugDraw.drawingBounds = bounds;
+
+	m_debugDraw.useDrawingBounds = false;
+	m_debugDraw.drawShapes = true;
+	m_debugDraw.drawJoints = true;
+	m_debugDraw.drawJointExtras = false;
+	m_debugDraw.drawAABBs = false;
+	m_debugDraw.drawMass = false;
+	m_debugDraw.drawContacts = false;
+	m_debugDraw.drawGraphColors = false;
+	m_debugDraw.drawContactNormals = false;
+	m_debugDraw.drawContactImpulses = false;
+	m_debugDraw.drawFrictionImpulses = false;
+
+	m_debugDraw.context = this;
 }
 
 void Draw::Destroy()

@@ -13,7 +13,7 @@
 #include "contact.h"
 #include "core.h"
 #include "shape.h"
-#include "stack_allocator.h"
+#include "arena_allocator.h"
 #include "world.h"
 
 #include <stdatomic.h>
@@ -374,12 +374,12 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	b2TracyCZoneNC( update_pairs, "Pairs", b2_colorMediumSlateBlue, true );
 
-	b2StackAllocator* alloc = &world->stackAllocator;
+	b2ArenaAllocator* alloc = &world->stackAllocator;
 
 	// todo these could be in the step context
-	bp->moveResults = b2AllocateStackItem( alloc, moveCount * sizeof( b2MoveResult ), "move results" );
+	bp->moveResults = b2AllocateArenaItem( alloc, moveCount * sizeof( b2MoveResult ), "move results" );
 	bp->movePairCapacity = 16 * moveCount;
-	bp->movePairs = b2AllocateStackItem( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
+	bp->movePairs = b2AllocateArenaItem( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
 	bp->movePairIndex = 0;
 
 #ifndef NDEBUG
@@ -448,9 +448,9 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	b2IntArray_Clear( &bp->moveArray );
 	b2ClearSet( &bp->moveSet );
 
-	b2FreeStackItem( alloc, bp->movePairs );
+	b2FreeArenaItem( alloc, bp->movePairs );
 	bp->movePairs = NULL;
-	b2FreeStackItem( alloc, bp->moveResults );
+	b2FreeArenaItem( alloc, bp->moveResults );
 	bp->moveResults = NULL;
 
 	b2ValidateSolverSets( world );
