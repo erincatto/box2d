@@ -123,7 +123,7 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 		for ( int i = 0; i < jointCount; ++i )
 		{
 			b2JointSim* jointSim = set->jointSims.data + i;
-			b2Joint* joint = b2JointArray_Get( &world->joints, +jointSim->jointId );
+			b2Joint* joint = b2JointArray_Get( &world->joints, jointSim->jointId );
 			B2_ASSERT( joint->setIndex == setIndex );
 			b2AddJointToGraph( world, jointSim, joint );
 			joint->setIndex = b2_awakeSet;

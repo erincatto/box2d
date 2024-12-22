@@ -208,7 +208,7 @@ static void b2MakeSimplexCache( b2SimplexCache* cache, const b2Simplex* simplex 
 // vector of the simplex. For example, the normal vector of a line segment
 // can be computed more accurately because it does not involve barycentric
 // coordinates.
-b2Vec2 b2ComputeSimplexSearchDirection( const b2Simplex* simplex )
+static b2Vec2 b2ComputeSimplexSearchDirection( const b2Simplex* simplex )
 {
 	switch ( simplex->count )
 	{
@@ -237,7 +237,7 @@ b2Vec2 b2ComputeSimplexSearchDirection( const b2Simplex* simplex )
 	}
 }
 
-b2Vec2 b2ComputeSimplexClosestPoint( const b2Simplex* s )
+static b2Vec2 b2ComputeSimplexClosestPoint( const b2Simplex* s )
 {
 	switch ( s->count )
 	{
@@ -260,7 +260,7 @@ b2Vec2 b2ComputeSimplexClosestPoint( const b2Simplex* s )
 	}
 }
 
-void b2ComputeSimplexWitnessPoints( b2Vec2* a, b2Vec2* b, const b2Simplex* s )
+static void b2ComputeSimplexWitnessPoints( b2Vec2* a, b2Vec2* b, const b2Simplex* s )
 {
 	switch ( s->count )
 	{
@@ -314,7 +314,7 @@ void b2ComputeSimplexWitnessPoints( b2Vec2* a, b2Vec2* b, const b2Simplex* s )
 // Solution
 // a1 = d12_1 / d12
 // a2 = d12_2 / d12
-void b2SolveSimplex2( b2Simplex* s )
+static void b2SolveSimplex2( b2Simplex* s )
 {
 	b2Vec2 w1 = s->v1.w;
 	b2Vec2 w2 = s->v2.w;
@@ -348,7 +348,7 @@ void b2SolveSimplex2( b2Simplex* s )
 	s->count = 2;
 }
 
-void b2SolveSimplex3( b2Simplex* s )
+static void b2SolveSimplex3( b2Simplex* s )
 {
 	b2Vec2 w1 = s->v1.w;
 	b2Vec2 w2 = s->v2.w;
@@ -806,7 +806,7 @@ typedef struct b2SeparationFunction
 	b2SeparationType type;
 } b2SeparationFunction;
 
-b2SeparationFunction b2MakeSeparationFunction( const b2SimplexCache* cache, const b2ShapeProxy* proxyA, const b2Sweep* sweepA,
+static b2SeparationFunction b2MakeSeparationFunction( const b2SimplexCache* cache, const b2ShapeProxy* proxyA, const b2Sweep* sweepA,
 											   const b2ShapeProxy* proxyB, const b2Sweep* sweepB, float t1 )
 {
 	b2SeparationFunction f;
@@ -950,7 +950,7 @@ static float b2FindMinSeparation( const b2SeparationFunction* f, int* indexA, in
 }
 
 //
-float b2EvaluateSeparation( const b2SeparationFunction* f, int indexA, int indexB, float t )
+static float b2EvaluateSeparation( const b2SeparationFunction* f, int indexA, int indexB, float t )
 {
 	b2Transform xfA = b2GetSweepTransform( &f->sweepA, t );
 	b2Transform xfB = b2GetSweepTransform( &f->sweepB, t );
