@@ -880,12 +880,6 @@ static int b2ComputeHeight( const b2DynamicTree* tree, int32_t nodeId )
 	return 1 + b2MaxInt( height1, height2 );
 }
 
-int b2DynamicTree_ComputeHeight( const b2DynamicTree* tree )
-{
-	int height = b2ComputeHeight( tree, tree->root );
-	return height;
-}
-
 #if B2_VALIDATE
 static void b2ValidateStructure( const b2DynamicTree* tree, int index )
 {
@@ -992,7 +986,7 @@ void b2DynamicTree_Validate( const b2DynamicTree* tree )
 	}
 
 	int height = b2DynamicTree_GetHeight( tree );
-	int computedHeight = b2DynamicTree_ComputeHeight( tree );
+	int computedHeight = b2ComputeHeight( tree );
 	B2_ASSERT( height == computedHeight );
 
 	B2_ASSERT( tree->nodeCount + freeCount == tree->nodeCapacity );
