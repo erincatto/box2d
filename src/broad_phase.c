@@ -302,7 +302,7 @@ static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 	return true;
 }
 
-void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
+static void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
 {
 	b2TracyCZoneNC( pair_task, "Pair Task", b2_colorAquamarine, true );
 
