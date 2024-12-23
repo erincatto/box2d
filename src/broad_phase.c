@@ -160,7 +160,7 @@ typedef struct b2QueryPairContext
 } b2QueryPairContext;
 
 // This is called from b2DynamicTree::Query when we are gathering pairs.
-static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
+static bool b2PairQueryCallback( int32_t proxyId, int32_t shapeId, void* context )
 {
 	b2QueryPairContext* queryContext = context;
 	b2BroadPhase* broadPhase = &queryContext->world->broadPhase;
@@ -302,7 +302,7 @@ static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 	return true;
 }
 
-void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
+void b2FindPairsTask( int32_t startIndex, int32_t endIndex, uint32_t threadIndex, void* context )
 {
 	b2TracyCZoneNC( pair_task, "Pair Task", b2_colorAquamarine, true );
 

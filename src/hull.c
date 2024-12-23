@@ -84,7 +84,7 @@ static b2Hull b2RecurseHull( b2Vec2 p1, b2Vec2 p2, b2Vec2* ps, int count )
 // - merges vertices based on B2_LINEAR_SLOP
 // - removes collinear points using B2_LINEAR_SLOP
 // - returns an empty hull if it fails
-b2Hull b2ComputeHull( const b2Vec2* points, int count )
+b2Hull b2ComputeHull( const b2Vec2* points, int32_t count )
 {
 	b2Hull hull;
 	hull.count = 0;

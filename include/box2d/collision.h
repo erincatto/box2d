@@ -774,10 +774,10 @@ B2_API int b2DynamicTree_GetHeight( const b2DynamicTree* tree );
 B2_API float b2DynamicTree_GetAreaRatio( const b2DynamicTree* tree );
 
 /// Get the number of proxies created
-B2_API int b2DynamicTree_GetProxyCount( const b2DynamicTree* tree );
+B2_API int32_t b2DynamicTree_GetProxyCount( const b2DynamicTree* tree );
 
 /// Rebuild the tree while retaining subtrees that haven't changed. Returns the number of boxes sorted.
-B2_API int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild );
+B2_API int32_t b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild );
 
 /// Get the number of bytes used by this tree
 B2_API int b2DynamicTree_GetByteCount( const b2DynamicTree* tree );

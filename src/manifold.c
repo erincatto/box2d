@@ -765,10 +765,10 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 		localPolyB.normals[i] = b2RotateVector( xf.q, polygonB->normals[i] );
 	}
 
-	int edgeA = 0;
+	int32_t edgeA = 0;
 	float separationA = b2FindMaxSeparation( &edgeA, &localPolyA, &localPolyB );
 
-	int edgeB = 0;
+	int32_t edgeB = 0;
 	float separationB = b2FindMaxSeparation( &edgeB, &localPolyB, &localPolyA );
 
 	float radius = localPolyA.radius + localPolyB.radius;

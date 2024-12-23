@@ -204,7 +204,7 @@ struct b2ContinuousContext
 };
 
 // This is called from b2DynamicTree_Query for continuous collision
-static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
+static bool b2ContinuousQueryCallback( int32_t proxyId, int32_t shapeId, void* context )
 {
 	B2_MAYBE_UNUSED( proxyId );
 
@@ -493,7 +493,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 	b2TracyCZoneEnd( fast_body );
 }
 
-static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
+static void b2FinalizeBodiesTask( int32_t startIndex, int32_t endIndex, uint32_t threadIndex, void* context )
 {
 	b2TracyCZoneNC( finalize_bodies, "Positions", b2_colorMediumSeaGreen, true );
 
@@ -885,7 +885,7 @@ static void b2ExecuteMainStage( b2SolverStage* stage, b2StepContext* context, ui
 }
 
 // This should not use the thread index because thread 0 can be called twice by enkiTS.
-void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDontUse, void* taskContext )
+void b2SolverTask( int32_t startIndex, int32_t endIndex, uint32_t threadIndexDontUse, void* taskContext )
 {
 	B2_MAYBE_UNUSED( startIndex );
 	B2_MAYBE_UNUSED( endIndex );
@@ -1113,7 +1113,7 @@ void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDontUse, vo
 	}
 }
 
-static void b2BulletBodyTask( int startIndex, int endIndex, uint32_t threadIndex, void* taskContext )
+static void b2BulletBodyTask( int32_t startIndex, int32_t endIndex, uint32_t threadIndex, void* taskContext )
 {
 	B2_MAYBE_UNUSED( threadIndex );
 

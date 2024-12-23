@@ -72,7 +72,7 @@ b2World* b2GetWorldLocked( int index )
 	return world;
 }
 
-static void* b2DefaultAddTaskFcn( b2TaskCallback* task, int count, int minRange, void* taskContext, void* userContext )
+static void* b2DefaultAddTaskFcn( b2TaskCallback* task, int32_t count, int32_t minRange, void* taskContext, void* userContext )
 {
 	B2_MAYBE_UNUSED( minRange );
 	B2_MAYBE_UNUSED( userContext );
@@ -306,7 +306,7 @@ void b2DestroyWorld( b2WorldId worldId )
 	world->revision = revision + 1;
 }
 
-static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
+static void b2CollideTask( int32_t startIndex, int32_t endIndex, uint32_t threadIndex, void* context )
 {
 	b2TracyCZoneNC( collide_task, "Collide Task", b2_colorDodgerBlue, true );
 
@@ -383,7 +383,7 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 	b2TracyCZoneEnd( collide_task );
 }
 
-static void b2UpdateTreesTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
+static void b2UpdateTreesTask( int32_t startIndex, int32_t endIndex, uint32_t threadIndex, void* context )
 {
 	B2_MAYBE_UNUSED( startIndex );
 	B2_MAYBE_UNUSED( endIndex );
@@ -854,7 +854,7 @@ struct DrawContext
 	b2DebugDraw* draw;
 };
 
-static bool DrawQueryCallback( int proxyId, int shapeId, void* context )
+static bool DrawQueryCallback( int32_t proxyId, int32_t shapeId, void* context )
 {
 	B2_MAYBE_UNUSED( proxyId );
 
@@ -1843,10 +1843,10 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	fprintf( file, "kinematic tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_kinematicBody ) );
 	fprintf( file, "dynamic tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_dynamicBody ) );
 	b2HashSet* moveSet = &world->broadPhase.moveSet;
-	fprintf( file, "moveSet: %d (%d, %d)\n", b2GetHashSetBytes( moveSet ), moveSet->count, moveSet->capacity );
+	fprintf( file, "moveSet: %d (%d, %d)\n", b2GetHashSetBytes( moveSet ), (int)moveSet->count, (int)moveSet->capacity );
 	fprintf( file, "moveArray: %d\n", b2IntArray_ByteCount( &world->broadPhase.moveArray ) );
 	b2HashSet* pairSet = &world->broadPhase.pairSet;
-	fprintf( file, "pairSet: %d (%d, %d)\n", b2GetHashSetBytes( pairSet ), pairSet->count, pairSet->capacity );
+	fprintf( file, "pairSet: %d (%d, %d)\n", b2GetHashSetBytes( pairSet ), (int)pairSet->count, (int)pairSet->capacity );
 	fprintf( file, "\n" );
 
 	// solver sets
@@ -1914,7 +1914,7 @@ typedef struct WorldQueryContext
 	void* userContext;
 } WorldQueryContext;
 
-static bool TreeQueryCallback( int proxyId, int shapeId, void* context )
+static bool TreeQueryCallback( int32_t proxyId, int32_t shapeId, void* context )
 {
 	B2_MAYBE_UNUSED( proxyId );
 
@@ -1973,7 +1973,7 @@ typedef struct WorldOverlapContext
 	void* userContext;
 } WorldOverlapContext;
 
-static bool TreeOverlapCallback( int proxyId, int shapeId, void* context )
+static bool TreeOverlapCallback( int32_t proxyId, int32_t shapeId, void* context )
 {
 	B2_MAYBE_UNUSED( proxyId );
 
@@ -2125,7 +2125,7 @@ typedef struct WorldRayCastContext
 	void* userContext;
 } WorldRayCastContext;
 
-static float RayCastCallback( const b2RayCastInput* input, int proxyId, int shapeId, void* context )
+static float RayCastCallback( const b2RayCastInput* input, int32_t proxyId, int32_t shapeId, void* context )
 {
 	B2_MAYBE_UNUSED( proxyId );
 
@@ -2246,7 +2246,7 @@ b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 tra
 	return result;
 }
 
-static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, int shapeId, void* context )
+static float ShapeCastCallback( const b2ShapeCastInput* input, int32_t proxyId, int32_t shapeId, void* context )
 {
 	B2_MAYBE_UNUSED( proxyId );
 
@@ -2536,7 +2536,7 @@ struct ExplosionContext
 	float impulsePerLength;
 };
 
-static bool ExplosionCallback( int proxyId, int shapeId, void* context )
+static bool ExplosionCallback( int32_t proxyId, int32_t shapeId, void* context )
 {
 	B2_MAYBE_UNUSED( proxyId );
 

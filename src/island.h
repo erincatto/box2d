@@ -80,7 +80,7 @@ void b2UnlinkJoint( b2World* world, b2Joint* joint );
 void b2MergeAwakeIslands( b2World* world );
 
 void b2SplitIsland( b2World* world, int baseId );
-void b2SplitIslandTask( int startIndex, int endIndex, uint32_t threadIndex, void* context );
+void b2SplitIslandTask( int32_t startIndex, int32_t endIndex, uint32_t threadIndex, void* context );
 
 void b2ValidateIsland( b2World* world, int islandId );
 
