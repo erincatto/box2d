@@ -3,9 +3,9 @@
 
 #include "box2d/math_functions.h"
 
-#include "core.h"
-
 #include <float.h>
+
+_Static_assert( sizeof( int32_t ) == sizeof( int ), "Box2D expects int32_t and int to be the same" );
 
 bool b2IsValidFloat( float a )
 {

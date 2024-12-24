@@ -45,7 +45,7 @@ typedef struct b2ShapeCastInput
 	b2Vec2 points[B2_MAX_POLYGON_VERTICES];
 
 	/// The number of points
-	int32_t count;
+	int count;
 
 	/// The radius around the point cloud
 	float radius;
@@ -70,7 +70,7 @@ typedef struct b2CastOutput
 	float fraction;
 
 	/// The number of iterations used
-	int32_t iterations;
+	int iterations;
 
 	/// Did the cast hit?
 	bool hit;
@@ -134,7 +134,7 @@ typedef struct b2Polygon
 	float radius;
 
 	/// The number of polygon vertices
-	int32_t count;
+	int count;
 } b2Polygon;
 
 /// A line segment with two-sided collision.
@@ -162,7 +162,7 @@ typedef struct b2ChainSegment
 	b2Vec2 ghost2;
 
 	/// The owning chain shape index (internal usage only)
-	int32_t chainId;
+	int chainId;
 } b2ChainSegment;
 
 /// Validate ray cast input data (NaN, etc)
@@ -276,7 +276,7 @@ typedef struct b2Hull
 	b2Vec2 points[B2_MAX_POLYGON_VERTICES];
 
 	/// The number of points
-	int32_t count;
+	int count;
 } b2Hull;
 
 /// Compute the convex hull of a set of points. Returns an empty hull if it fails.
@@ -287,7 +287,7 @@ typedef struct b2Hull
 /// - more than B2_MAX_POLYGON_VERTICES points
 /// This welds close points and removes collinear points.
 /// @warning Do not modify a hull once it has been computed
-B2_API b2Hull b2ComputeHull( const b2Vec2* points, int32_t count );
+B2_API b2Hull b2ComputeHull( const b2Vec2* points, int count );
 
 /// This determines if a hull is valid. Checks for:
 /// - convexity
@@ -336,7 +336,7 @@ typedef struct b2ShapeProxy
 	b2Vec2 points[B2_MAX_POLYGON_VERTICES];
 
 	/// The number of points
-	int32_t count;
+	int count;
 
 	/// The external radius of the point cloud
 	float radius;
@@ -387,8 +387,8 @@ typedef struct b2DistanceOutput
 	// todo_erin implement this
 	// b2Vec2 normal;			///< Normal vector that points from A to B
 	float distance;		  ///< The final distance, zero if overlapped
-	int32_t iterations;	  ///< Number of GJK iterations used
-	int32_t simplexCount; ///< The number of simplexes stored in the simplex array
+	int iterations;	  ///< Number of GJK iterations used
+	int simplexCount; ///< The number of simplexes stored in the simplex array
 } b2DistanceOutput;
 
 /// Simplex vertex for debugging the GJK algorithm
@@ -398,15 +398,15 @@ typedef struct b2SimplexVertex
 	b2Vec2 wB;		///< support point in proxyB
 	b2Vec2 w;		///< wB - wA
 	float a;		///< barycentric coordinate for closest point
-	int32_t indexA; ///< wA index
-	int32_t indexB; ///< wB index
+	int indexA; ///< wA index
+	int indexB; ///< wB index
 } b2SimplexVertex;
 
 /// Simplex from the GJK algorithm
 typedef struct b2Simplex
 {
 	b2SimplexVertex v1, v2, v3; ///< vertices
-	int32_t count;				///< number of valid vertices
+	int count;				///< number of valid vertices
 } b2Simplex;
 
 /// Compute the closest points between two shapes represented as point clouds.
@@ -430,7 +430,7 @@ typedef struct b2ShapeCastPairInput
 B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input );
 
 /// Make a proxy for use in GJK and related functions.
-B2_API b2ShapeProxy b2MakeProxy( const b2Vec2* vertices, int32_t count, float radius );
+B2_API b2ShapeProxy b2MakeProxy( const b2Vec2* vertices, int count, float radius );
 
 /// This describes the motion of a body/shape for TOI computation. Shapes are defined with respect to the body origin,
 /// which may not coincide with the center of mass. However, to support dynamics we must interpolate the center of mass
@@ -499,12 +499,12 @@ typedef struct b2ManifoldPoint
 	/// @note Should only be used for debugging.
 	b2Vec2 point;
 
-	/// Location of the contact point relative to bodyA's origin in world space
-	/// @note When used internally to the Box2D solver, this is relative to the center of mass.
+	/// Location of the contact point relative to shapeA's origin in world space
+	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
 	b2Vec2 anchorA;
 
-	/// Location of the contact point relative to bodyB's origin in world space
-	/// @note When used internally to the Box2D solver, this is relative to the center of mass.
+	/// Location of the contact point relative to shapeB's origin in world space
+	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
 	b2Vec2 anchorB;
 
 	/// The separation of the contact point, negative if penetrating
@@ -542,7 +542,7 @@ typedef struct b2Manifold
 	b2Vec2 normal;
 
 	/// The number of contacts points, will be 0, 1, or 2
-	int32_t pointCount;
+	int pointCount;
 } b2Manifold;
 
 /// Compute the contact manifold between two circles
@@ -610,64 +610,30 @@ B2_API b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segment
  * @{
  */
 
-/// A node in the dynamic tree. This is private data placed here for performance reasons.
-typedef struct b2TreeNode
-{
-	/// The node bounding box
-	b2AABB aabb; // 16
-
-	/// Category bits for collision filtering
-	uint64_t categoryBits; // 8
-
-	union
-	{
-		/// The node parent index (allocated node)
-		int32_t parent;
-
-		/// The node freelist next index (free node)
-		int32_t next;
-	}; // 4
-
-	/// Child 1 index (internal node)
-	int32_t child1; // 4
-
-	union
-	{
-		/// Child 2 index (internal node)
-		int32_t child2;
-
-		/// User data (leaf node)
-		int32_t userData;
-	}; // 4
-
-	uint16_t height; // 2
-	uint16_t flags;	 // 2
-} b2TreeNode;
-
 /// The dynamic tree structure. This should be considered private data.
 /// It is placed here for performance reasons.
 typedef struct b2DynamicTree
 {
 	/// The tree nodes
-	b2TreeNode* nodes;
+	struct b2TreeNode* nodes;
 
 	/// The root index
-	int32_t root;
+	int root;
 
 	/// The number of nodes
-	int32_t nodeCount;
+	int nodeCount;
 
 	/// The allocated node space
-	int32_t nodeCapacity;
+	int nodeCapacity;
 
 	/// Node free list
-	int32_t freeList;
+	int freeList;
 
 	/// Number of proxies created
-	int32_t proxyCount;
+	int proxyCount;
 
 	/// Leaf indices for rebuild
-	int32_t* leafIndices;
+	int* leafIndices;
 
 	/// Leaf bounding boxes for rebuild
 	b2AABB* leafBoxes;
@@ -676,20 +642,20 @@ typedef struct b2DynamicTree
 	b2Vec2* leafCenters;
 
 	/// Bins for sorting during rebuild
-	int32_t* binIndices;
+	int* binIndices;
 
 	/// Allocated space for rebuilding
-	int32_t rebuildCapacity;
+	int rebuildCapacity;
 } b2DynamicTree;
 
 /// These are performance results returned by dynamic tree queries.
 typedef struct b2TreeStats
 {
 	/// Number of internal nodes visited during the query
-	int32_t nodeVisits;
+	int nodeVisits;
 
 	/// Number of leaf nodes visited during the query
-	int32_t leafVisits;
+	int leafVisits;
 } b2TreeStats;
 
 /// Constructing the tree initializes the node pool.
@@ -699,20 +665,20 @@ B2_API b2DynamicTree b2DynamicTree_Create( void );
 B2_API void b2DynamicTree_Destroy( b2DynamicTree* tree );
 
 /// Create a proxy. Provide an AABB and a userData value.
-B2_API int32_t b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, int32_t userData );
+B2_API int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, int userData );
 
 /// Destroy a proxy. This asserts if the id is invalid.
-B2_API void b2DynamicTree_DestroyProxy( b2DynamicTree* tree, int32_t proxyId );
+B2_API void b2DynamicTree_DestroyProxy( b2DynamicTree* tree, int proxyId );
 
 /// Move a proxy to a new AABB by removing and reinserting into the tree.
-B2_API void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int32_t proxyId, b2AABB aabb );
+B2_API void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb );
 
 /// Enlarge a proxy and enlarge ancestors as necessary.
-B2_API void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int32_t proxyId, b2AABB aabb );
+B2_API void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb );
 
 /// This function receives proxies found in the AABB query.
 /// @return true if the query should continue
-typedef bool b2TreeQueryCallbackFcn( int32_t proxyId, int32_t userData, void* context );
+typedef bool b2TreeQueryCallbackFcn( int proxyId, int userData, void* context );
 
 /// Query an AABB for overlapping proxies. The callback class is called for each proxy that overlaps the supplied AABB.
 ///	@return performance data
@@ -724,7 +690,7 @@ B2_API b2TreeStats b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, 
 /// - return a value of 0 to terminate the ray cast
 /// - return a value less than input->maxFraction to clip the ray
 /// - return a value of input->maxFraction to continue the ray cast without clipping
-typedef float b2TreeRayCastCallbackFcn( const b2RayCastInput* input, int32_t proxyId, int32_t userData, void* context );
+typedef float b2TreeRayCastCallbackFcn( const b2RayCastInput* input, int proxyId, int userData, void* context );
 
 /// Ray cast against the proxies in the tree. This relies on the callback
 /// to perform a exact ray cast in the case were the proxy contains a shape.
@@ -747,7 +713,7 @@ B2_API b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2Ray
 /// - return a value of 0 to terminate the ray cast
 /// - return a value less than input->maxFraction to clip the ray
 /// - return a value of input->maxFraction to continue the ray cast without clipping
-typedef float b2TreeShapeCastCallbackFcn( const b2ShapeCastInput* input, int32_t proxyId, int32_t userData, void* context );
+typedef float b2TreeShapeCastCallbackFcn( const b2ShapeCastInput* input, int proxyId, int userData, void* context );
 
 /// Ray cast against the proxies in the tree. This relies on the callback
 /// to perform a exact ray cast in the case were the proxy contains a shape.
@@ -762,9 +728,6 @@ typedef float b2TreeShapeCastCallbackFcn( const b2ShapeCastInput* input, int32_t
 ///	@return performance data
 B2_API b2TreeStats b2DynamicTree_ShapeCast( const b2DynamicTree* tree, const b2ShapeCastInput* input, uint64_t maskBits,
 											b2TreeShapeCastCallbackFcn* callback, void* context );
-
-/// Validate this tree. For testing.
-B2_API void b2DynamicTree_Validate( const b2DynamicTree* tree );
 
 /// Compute the height of the binary tree in O(N) time. Should not be
 /// called often.
@@ -783,15 +746,17 @@ B2_API int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild );
 B2_API int b2DynamicTree_GetByteCount( const b2DynamicTree* tree );
 
 /// Get proxy user data
-B2_INLINE int32_t b2DynamicTree_GetUserData( const b2DynamicTree* tree, int32_t proxyId )
-{
-	return tree->nodes[proxyId].userData;
-}
+B2_API int b2DynamicTree_GetUserData( const b2DynamicTree* tree, int proxyId );
 
 /// Get the AABB of a proxy
-B2_INLINE b2AABB b2DynamicTree_GetAABB( const b2DynamicTree* tree, int32_t proxyId )
-{
-	return tree->nodes[proxyId].aabb;
-}
+B2_API b2AABB b2DynamicTree_GetAABB( const b2DynamicTree* tree, int proxyId );
+
+/// Validate this tree. For testing.
+B2_API void b2DynamicTree_Validate( const b2DynamicTree* tree );
+
+/// Validate this tree has no enlarged AABBs. For testing.
+B2_API void b2DynamicTree_ValidateNoEnlarged( const b2DynamicTree* tree );
+
+
 
 /**@}*/

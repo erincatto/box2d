@@ -121,7 +121,7 @@ typedef struct b2Timer
 #elif defined( __APPLE__ )
 	uint64_t start;
 #else
-	int32_t dummy;
+	int dummy;
 #endif
 } b2Timer;
 

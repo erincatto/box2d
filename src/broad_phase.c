@@ -13,7 +13,7 @@
 #include "contact.h"
 #include "core.h"
 #include "shape.h"
-#include "stack_allocator.h"
+#include "arena_allocator.h"
 #include "world.h"
 
 #include <stdatomic.h>
@@ -302,7 +302,7 @@ static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 	return true;
 }
 
-void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
+static void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
 {
 	b2TracyCZoneNC( pair_task, "Pair Task", b2_colorAquamarine, true );
 
@@ -374,12 +374,12 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	b2TracyCZoneNC( update_pairs, "Pairs", b2_colorMediumSlateBlue, true );
 
-	b2StackAllocator* alloc = &world->stackAllocator;
+	b2ArenaAllocator* alloc = &world->stackAllocator;
 
 	// todo these could be in the step context
-	bp->moveResults = b2AllocateStackItem( alloc, moveCount * sizeof( b2MoveResult ), "move results" );
+	bp->moveResults = b2AllocateArenaItem( alloc, moveCount * sizeof( b2MoveResult ), "move results" );
 	bp->movePairCapacity = 16 * moveCount;
-	bp->movePairs = b2AllocateStackItem( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
+	bp->movePairs = b2AllocateArenaItem( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
 	bp->movePairIndex = 0;
 
 #ifndef NDEBUG
@@ -448,9 +448,9 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	b2IntArray_Clear( &bp->moveArray );
 	b2ClearSet( &bp->moveSet );
 
-	b2FreeStackItem( alloc, bp->movePairs );
+	b2FreeArenaItem( alloc, bp->movePairs );
 	bp->movePairs = NULL;
-	b2FreeStackItem( alloc, bp->moveResults );
+	b2FreeArenaItem( alloc, bp->moveResults );
 	bp->moveResults = NULL;
 
 	b2ValidateSolverSets( world );
@@ -500,18 +500,7 @@ void b2ValidateNoEnlarged( const b2BroadPhase* bp )
 	for ( int j = 0; j < b2_bodyTypeCount; ++j )
 	{
 		const b2DynamicTree* tree = bp->trees + j;
-		int capacity = tree->nodeCapacity;
-		const b2TreeNode* nodes = tree->nodes;
-		for ( int i = 0; i < capacity; ++i )
-		{
-			const b2TreeNode* node = nodes + i;
-			if ( node->height < 0 )
-			{
-				continue;
-			}
-
-			B2_ASSERT( (node->flags & b2_enlargedNode) == 0 );
-		}
+		b2DynamicTree_ValidateNoEnlarged( tree );
 	}
 #else
 	B2_MAYBE_UNUSED( bp );
