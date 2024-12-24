@@ -65,8 +65,20 @@ static inline float b2MixFloats( float value1, float value2, b2MixingRule mixing
 	}
 }
 
-// todo make relative for all
-// typedef b2Manifold b2ManifoldFcn(const b2Shape* shapeA, const b2Shape* shapeB, b2Transform xfB, b2SimplexCache* cache);
+// Manifold functions should compute important results in local space to improve precision. However, this
+// interface function takes two world transforms instead of a relative transform for these reasons:
+//
+// First:
+// The anchors need to be computed relative to the shape origin in world space. This is necessary so the
+// solver does not need to access static body transforms. Not even in constraint preparation. This approach
+// has world space vectors yet retains precision.
+//
+// Second:
+// b3ManifoldPoint::point is very useful for debugging and it is in world space.
+//
+// Third:
+// The user may call the manifold functions directly and they should be easy to use and have easy to use
+// results.
 typedef b2Manifold b2ManifoldFcn( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 								  b2SimplexCache* cache );
 

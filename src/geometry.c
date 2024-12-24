@@ -68,16 +68,16 @@ b2Polygon b2MakePolygon( const b2Hull* hull, float radius )
 	shape.radius = radius;
 
 	// Copy vertices
-	for ( int32_t i = 0; i < shape.count; ++i )
+	for ( int i = 0; i < shape.count; ++i )
 	{
 		shape.vertices[i] = hull->points[i];
 	}
 
 	// Compute normals. Ensure the edges have non-zero length.
-	for ( int32_t i = 0; i < shape.count; ++i )
+	for ( int i = 0; i < shape.count; ++i )
 	{
-		int32_t i1 = i;
-		int32_t i2 = i + 1 < shape.count ? i + 1 : 0;
+		int i1 = i;
+		int i2 = i + 1 < shape.count ? i + 1 : 0;
 		b2Vec2 edge = b2Sub( shape.vertices[i2], shape.vertices[i1] );
 		B2_ASSERT( b2Dot( edge, edge ) > FLT_EPSILON * FLT_EPSILON );
 		shape.normals[i] = b2Normalize( b2CrossVS( edge, 1.0f ) );
@@ -110,16 +110,16 @@ b2Polygon b2MakeOffsetRoundedPolygon( const b2Hull* hull, b2Vec2 position, b2Rot
 	shape.radius = radius;
 
 	// Copy vertices
-	for ( int32_t i = 0; i < shape.count; ++i )
+	for ( int i = 0; i < shape.count; ++i )
 	{
 		shape.vertices[i] = b2TransformPoint( transform, hull->points[i] );
 	}
 
 	// Compute normals. Ensure the edges have non-zero length.
-	for ( int32_t i = 0; i < shape.count; ++i )
+	for ( int i = 0; i < shape.count; ++i )
 	{
-		int32_t i1 = i;
-		int32_t i2 = i + 1 < shape.count ? i + 1 : 0;
+		int i1 = i;
+		int i2 = i + 1 < shape.count ? i + 1 : 0;
 		b2Vec2 edge = b2Sub( shape.vertices[i2], shape.vertices[i1] );
 		B2_ASSERT( b2Dot( edge, edge ) > FLT_EPSILON * FLT_EPSILON );
 		shape.normals[i] = b2Normalize( b2CrossVS( edge, 1.0f ) );
@@ -319,16 +319,16 @@ b2MassData b2ComputePolygonMass( const b2Polygon* shape, float density )
 	}
 
 	b2Vec2 vertices[B2_MAX_POLYGON_VERTICES] = { 0 };
-	int32_t count = shape->count;
+	int count = shape->count;
 	float radius = shape->radius;
 
 	if ( radius > 0.0f )
 	{
 		// Approximate mass of rounded polygons by pushing out the vertices.
 		float sqrt2 = 1.412f;
-		for ( int32_t i = 0; i < count; ++i )
+		for ( int i = 0; i < count; ++i )
 		{
-			int32_t j = i == 0 ? count - 1 : i - 1;
+			int j = i == 0 ? count - 1 : i - 1;
 			b2Vec2 n1 = shape->normals[j];
 			b2Vec2 n2 = shape->normals[i];
 
@@ -338,7 +338,7 @@ b2MassData b2ComputePolygonMass( const b2Polygon* shape, float density )
 	}
 	else
 	{
-		for ( int32_t i = 0; i < count; ++i )
+		for ( int i = 0; i < count; ++i )
 		{
 			vertices[i] = shape->vertices[i];
 		}
@@ -354,7 +354,7 @@ b2MassData b2ComputePolygonMass( const b2Polygon* shape, float density )
 
 	const float inv3 = 1.0f / 3.0f;
 
-	for ( int32_t i = 1; i < count - 1; ++i )
+	for ( int i = 1; i < count - 1; ++i )
 	{
 		// Triangle edges
 		b2Vec2 e1 = b2Sub( vertices[i], r );
@@ -426,7 +426,7 @@ b2AABB b2ComputePolygonAABB( const b2Polygon* shape, b2Transform xf )
 	b2Vec2 lower = b2TransformPoint( xf, shape->vertices[0] );
 	b2Vec2 upper = lower;
 
-	for ( int32_t i = 1; i < shape->count; ++i )
+	for ( int i = 1; i < shape->count; ++i )
 	{
 		b2Vec2 v = b2TransformPoint( xf, shape->vertices[i] );
 		lower = b2Min( lower, v );
@@ -788,11 +788,11 @@ b2CastOutput b2RayCastPolygon( const b2RayCastInput* input, const b2Polygon* sha
 
 		float lower = 0.0f, upper = input->maxFraction;
 
-		int32_t index = -1;
+		int index = -1;
 
 		b2CastOutput output = { 0 };
 
-		for ( int32_t i = 0; i < shape->count; ++i )
+		for ( int i = 0; i < shape->count; ++i )
 		{
 			// p = p1 + a * d
 			// dot(normal, p - v) = 0

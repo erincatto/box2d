@@ -500,18 +500,7 @@ void b2ValidateNoEnlarged( const b2BroadPhase* bp )
 	for ( int j = 0; j < b2_bodyTypeCount; ++j )
 	{
 		const b2DynamicTree* tree = bp->trees + j;
-		int capacity = tree->nodeCapacity;
-		const b2TreeNode* nodes = tree->nodes;
-		for ( int i = 0; i < capacity; ++i )
-		{
-			const b2TreeNode* node = nodes + i;
-			if ( node->height < 0 )
-			{
-				continue;
-			}
-
-			B2_ASSERT( (node->flags & b2_enlargedNode) == 0 );
-		}
+		b2DynamicTree_ValidateNoEnlarged( tree );
 	}
 #else
 	B2_MAYBE_UNUSED( bp );

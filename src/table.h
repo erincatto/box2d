@@ -21,7 +21,7 @@ typedef struct b2HashSet
 	uint32_t count;
 } b2HashSet;
 
-b2HashSet b2CreateSet( int32_t capacity );
+b2HashSet b2CreateSet( int capacity );
 void b2DestroySet( b2HashSet* set );
 
 void b2ClearSet( b2HashSet* set );

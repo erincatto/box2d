@@ -30,7 +30,7 @@
 /// }
 /// @endcode
 /// @ingroup world
-typedef void b2TaskCallback( int32_t startIndex, int32_t endIndex, uint32_t workerIndex, void* taskContext );
+typedef void b2TaskCallback( int startIndex, int endIndex, uint32_t workerIndex, void* taskContext );
 
 /// These functions can be provided to Box2D to invoke a task system. These are designed to work well with enkiTS.
 /// Returns a pointer to the user's task object. May be nullptr. A nullptr indicates to Box2D that the work was executed
@@ -43,7 +43,7 @@ typedef void b2TaskCallback( int32_t startIndex, int32_t endIndex, uint32_t work
 /// endIndex - startIndex >= minRange
 /// The exception of course is when itemCount < minRange.
 /// @ingroup world
-typedef void* b2EnqueueTaskCallback( b2TaskCallback* task, int32_t itemCount, int32_t minRange, void* taskContext,
+typedef void* b2EnqueueTaskCallback( b2TaskCallback* task, int itemCount, int minRange, void* taskContext,
 									 void* userContext );
 
 /// Finishes a user task object that wraps a Box2D task.
@@ -121,7 +121,7 @@ typedef struct b2WorldDef
 	/// Number of workers to use with the provided task system. Box2D performs best when using only
 	/// performance cores and accessing a single L2 cache. Efficiency cores and hyper-threading provide
 	/// little benefit and may even harm performance.
-	int32_t workerCount;
+	int workerCount;
 
 	/// Function to spawn tasks
 	b2EnqueueTaskCallback* enqueueTask;
@@ -136,7 +136,7 @@ typedef struct b2WorldDef
 	void* userData;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	int32_t internalValue;
+	int internalValue;
 } b2WorldDef;
 
 /// Use this to initialize your world definition
@@ -230,7 +230,7 @@ typedef struct b2BodyDef
 	bool allowFastRotation;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	int32_t internalValue;
+	int internalValue;
 } b2BodyDef;
 
 /// Use this to initialize your body definition
@@ -271,7 +271,7 @@ typedef struct b2Filter
 	/// For example, you may want ragdolls to collide with other ragdolls but you don't want
 	/// ragdoll self-collision. In this case you would give each ragdoll a unique negative group index
 	/// and apply that group index to all shapes on the ragdoll.
-	int32_t groupIndex;
+	int groupIndex;
 } b2Filter;
 
 /// Use this to initialize your filter
@@ -376,7 +376,7 @@ typedef struct b2ShapeDef
 	bool updateBodyMass;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	int32_t internalValue;
+	int internalValue;
 } b2ShapeDef;
 
 /// Use this to initialize your shape definition
@@ -407,7 +407,7 @@ typedef struct b2ChainDef
 	const b2Vec2* points;
 
 	/// The point count, must be 4 or more.
-	int32_t count;
+	int count;
 
 	/// The friction coefficient, usually in the range [0,1].
 	float friction;
@@ -425,7 +425,7 @@ typedef struct b2ChainDef
 	bool isLoop;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	int32_t internalValue;
+	int internalValue;
 } b2ChainDef;
 
 /// Use this to initialize your chain definition
@@ -463,17 +463,17 @@ typedef struct b2Profile
 /// Counters that give details of the simulation size.
 typedef struct b2Counters
 {
-	int32_t bodyCount;
-	int32_t shapeCount;
-	int32_t contactCount;
-	int32_t jointCount;
-	int32_t islandCount;
-	int32_t stackUsed;
-	int32_t staticTreeHeight;
-	int32_t treeHeight;
-	int32_t byteCount;
-	int32_t taskCount;
-	int32_t colorCounts[12];
+	int bodyCount;
+	int shapeCount;
+	int contactCount;
+	int jointCount;
+	int islandCount;
+	int stackUsed;
+	int staticTreeHeight;
+	int treeHeight;
+	int byteCount;
+	int taskCount;
+	int colorCounts[12];
 } b2Counters;
 //! @endcond
 
@@ -553,7 +553,7 @@ typedef struct b2DistanceJointDef
 	void* userData;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	int32_t internalValue;
+	int internalValue;
 } b2DistanceJointDef;
 
 /// Use this to initialize your joint definition
@@ -594,7 +594,7 @@ typedef struct b2MotorJointDef
 	void* userData;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	int32_t internalValue;
+	int internalValue;
 } b2MotorJointDef;
 
 /// Use this to initialize your joint definition
@@ -633,7 +633,7 @@ typedef struct b2MouseJointDef
 	void* userData;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	int32_t internalValue;
+	int internalValue;
 } b2MouseJointDef;
 
 /// Use this to initialize your joint definition
@@ -655,7 +655,7 @@ typedef struct b2NullJointDef
 	void* userData;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	int32_t internalValue;
+	int internalValue;
 } b2NullJointDef;
 
 /// Use this to initialize your joint definition
@@ -723,7 +723,7 @@ typedef struct b2PrismaticJointDef
 	void* userData;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	int32_t internalValue;
+	int internalValue;
 } b2PrismaticJointDef;
 
 /// Use this to initialize your joint definition
@@ -797,7 +797,7 @@ typedef struct b2RevoluteJointDef
 	void* userData;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	int32_t internalValue;
+	int internalValue;
 } b2RevoluteJointDef;
 
 /// Use this to initialize your joint definition.
@@ -846,7 +846,7 @@ typedef struct b2WeldJointDef
 	void* userData;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	int32_t internalValue;
+	int internalValue;
 } b2WeldJointDef;
 
 /// Use this to initialize your joint definition
@@ -911,7 +911,7 @@ typedef struct b2WheelJointDef
 	void* userData;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	int32_t internalValue;
+	int internalValue;
 } b2WheelJointDef;
 
 /// Use this to initialize your joint definition
@@ -1002,10 +1002,10 @@ typedef struct b2SensorEvents
 	b2SensorEndTouchEvent* endEvents;
 
 	/// The number of begin touch events
-	int32_t beginCount;
+	int beginCount;
 
 	/// The number of end touch events
-	int32_t endCount;
+	int endCount;
 } b2SensorEvents;
 
 /// A begin touch event is generated when two shapes begin touching.
@@ -1073,13 +1073,13 @@ typedef struct b2ContactEvents
 	b2ContactHitEvent* hitEvents;
 
 	/// Number of begin touch events
-	int32_t beginCount;
+	int beginCount;
 
 	/// Number of end touch events
-	int32_t endCount;
+	int endCount;
 
 	/// Number of hit events
-	int32_t hitCount;
+	int hitCount;
 } b2ContactEvents;
 
 /// Body move events triggered when a body moves.
@@ -1109,7 +1109,7 @@ typedef struct b2BodyEvents
 	b2BodyMoveEvent* moveEvents;
 
 	/// Number of move events
-	int32_t moveCount;
+	int moveCount;
 } b2BodyEvents;
 
 /// The contact data for two shapes. By convention the manifold normal points

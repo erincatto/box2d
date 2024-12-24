@@ -13,6 +13,7 @@
 
 #include <stdatomic.h>
 #include <string.h>
+#include <stdio.h>
 
 #ifdef BOX2D_PROFILE
 
@@ -28,8 +29,6 @@
 #endif
 
 #include "box2d/math_functions.h"
-
-#include <stdio.h>
 
 // This allows the user to change the length units at runtime
 float b2_lengthUnitsPerMeter = 1.0f;

@@ -16,7 +16,7 @@ _Atomic int g_probeCount;
 
 // todo compare with https://github.com/skeeto/scratch/blob/master/set32/set32.h
 
-b2HashSet b2CreateSet( int32_t capacity )
+b2HashSet b2CreateSet( int capacity )
 {
 	b2HashSet set = { 0 };
 
@@ -72,10 +72,10 @@ static uint32_t b2KeyHash( uint64_t key )
 	// return 11400714819323198485ull * key;
 }
 
-static int32_t b2FindSlot( const b2HashSet* set, uint64_t key, uint32_t hash )
+static int b2FindSlot( const b2HashSet* set, uint64_t key, uint32_t hash )
 {
 	uint32_t capacity = set->capacity;
-	int32_t index = hash & ( capacity - 1 );
+	int index = hash & ( capacity - 1 );
 	const b2SetItem* items = set->items;
 	while ( items[index].hash != 0 && items[index].key != key )
 	{
@@ -90,7 +90,7 @@ static int32_t b2FindSlot( const b2HashSet* set, uint64_t key, uint32_t hash )
 
 static void b2AddKeyHaveCapacity( b2HashSet* set, uint64_t key, uint32_t hash )
 {
-	int32_t index = b2FindSlot( set, key, hash );
+	int index = b2FindSlot( set, key, hash );
 	b2SetItem* items = set->items;
 	B2_ASSERT( items[index].hash == 0 );
 
@@ -136,7 +136,7 @@ bool b2ContainsKey( const b2HashSet* set, uint64_t key )
 	// key of zero is a sentinel
 	B2_ASSERT( key != 0 );
 	uint32_t hash = b2KeyHash( key );
-	int32_t index = b2FindSlot( set, key, hash );
+	int index = b2FindSlot( set, key, hash );
 	return set->items[index].key == key;
 }
 
@@ -153,7 +153,7 @@ bool b2AddKey( b2HashSet* set, uint64_t key )
 	uint32_t hash = b2KeyHash( key );
 	B2_ASSERT( hash != 0 );
 
-	int32_t index = b2FindSlot( set, key, hash );
+	int index = b2FindSlot( set, key, hash );
 	if ( set->items[index].hash != 0 )
 	{
 		// Already in set
@@ -174,7 +174,7 @@ bool b2AddKey( b2HashSet* set, uint64_t key )
 bool b2RemoveKey( b2HashSet* set, uint64_t key )
 {
 	uint32_t hash = b2KeyHash( key );
-	int32_t i = b2FindSlot( set, key, hash );
+	int i = b2FindSlot( set, key, hash );
 	b2SetItem* items = set->items;
 	if ( items[i].hash == 0 )
 	{
@@ -190,7 +190,7 @@ bool b2RemoveKey( b2HashSet* set, uint64_t key )
 	set->count -= 1;
 
 	// Attempt to fill item i
-	int32_t j = i;
+	int j = i;
 	uint32_t capacity = set->capacity;
 	for ( ;; )
 	{
@@ -201,7 +201,7 @@ bool b2RemoveKey( b2HashSet* set, uint64_t key )
 		}
 
 		// k is the first item for the hash of j
-		int32_t k = items[j].hash & ( capacity - 1 );
+		int k = items[j].hash & ( capacity - 1 );
 
 		// determine if k lies cyclically in (i,j]
 		// i <= j: | i..k..j |
