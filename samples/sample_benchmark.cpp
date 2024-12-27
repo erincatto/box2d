@@ -1521,7 +1521,7 @@ public:
 
 		Sample::Step( settings );
 
-		if (m_stepCount == 1000)
+		if (m_stepCount % 1000 == 0)
 		{
 			m_stepCount += 0;
 		}

@@ -776,10 +776,8 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	return output;
 }
 
-#define B2_TOI_DEBUG 0
-
 // Warning: writing to these globals significantly slows multithreading performance
-#if B2_TOI_DEBUG
+#if B2_SNOOP_TOI_COUNTERS
 float b2_toiTime, b2_toiMaxTime;
 int b2_toiCalls, b2_toiDistanceIterations, b2_toiMaxDistanceIterations;
 int b2_toiRootIterations, b2_toiMaxRootIterations;
@@ -1003,7 +1001,7 @@ static float b2EvaluateSeparation( const b2SeparationFunction* f, int indexA, in
 // by computing the largest time at which separation is maintained.
 b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 {
-#if B2_TOI_DEBUG
+#if B2_SNOOP_TOI_COUNTERS
 	b2Timer timer = b2CreateTimer();
 	++b2_toiCalls;
 #endif
@@ -1058,7 +1056,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 		b2DistanceOutput distanceOutput = b2ShapeDistance( &cache, &distanceInput, NULL, 0 );
 
 		distanceIterations += 1;
-#if B2_TOI_DEBUG
+#if B2_SNOOP_TOI_COUNTERS
 		b2_toiDistanceIterations += 1;
 #endif
 
@@ -1067,7 +1065,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 		{
 			// Failure!
 			output.state = b2_toiStateOverlapped;
-#if B2_TOI_DEBUG
+#if B2_SNOOP_TOI_COUNTERS
 			b2_toiOverlappedCount += 1;
 #endif
 			output.fraction = 0.0f;
@@ -1078,7 +1076,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 		{
 			// Victory!
 			output.state = b2_toiStateHit;
-#if B2_TOI_DEBUG
+#if B2_SNOOP_TOI_COUNTERS
 			b2_toiHitCount += 1;
 #endif
 			output.fraction = t1;
@@ -1129,7 +1127,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 			{
 				// Victory!
 				output.state = b2_toiStateSeparated;
-#if B2_TOI_DEBUG
+#if B2_SNOOP_TOI_COUNTERS
 				b2_toiSeparatedCount += 1;
 #endif
 				output.fraction = tMax;
@@ -1153,7 +1151,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 			if ( s1 < target - tolerance )
 			{
 				output.state = b2_toiStateFailed;
-#if B2_TOI_DEBUG
+#if B2_SNOOP_TOI_COUNTERS
 				b2_toiFailedCount += 1;
 #endif
 				output.fraction = t1;
@@ -1166,7 +1164,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 			{
 				// Victory! t1 should hold the TOI (could be 0.0).
 				output.state = b2_toiStateHit;
-#if B2_TOI_DEBUG
+#if B2_SNOOP_TOI_COUNTERS
 				b2_toiHitCount += 1;
 #endif
 				output.fraction = t1;
@@ -1194,7 +1192,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 
 				rootIterationCount += 1;
 
-#if B2_TOI_DEBUG
+#if B2_SNOOP_TOI_COUNTERS
 				++b2_toiRootIterations;
 #endif
 
@@ -1225,7 +1223,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 				}
 			}
 
-#if B2_TOI_DEBUG
+#if B2_SNOOP_TOI_COUNTERS
 			b2_toiMaxRootIterations = b2MaxInt( b2_toiMaxRootIterations, rootIterationCount );
 #endif
 
@@ -1246,7 +1244,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 		{
 			// Root finder got stuck. Semi-victory.
 			output.state = b2_toiStateFailed;
-#if B2_TOI_DEBUG
+#if B2_SNOOP_TOI_COUNTERS
 			b2_toiFailedCount += 1;
 #endif
 			output.fraction = t1;
@@ -1254,7 +1252,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 		}
 	}
 
-#if B2_TOI_DEBUG
+#if B2_SNOOP_TOI_COUNTERS
 	b2_toiMaxDistanceIterations = b2MaxInt( b2_toiMaxDistanceIterations, distanceIterations );
 
 	float time = b2GetMilliseconds( &timer );

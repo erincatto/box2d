@@ -148,7 +148,7 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 
 static b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const void* geometry, b2ShapeType shapeType )
 {
-	b2CheckDef( def );
+	B2_CHECK_DEF( def );
 	B2_ASSERT( b2IsValidFloat( def->density ) && def->density >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->friction ) && def->friction >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->restitution ) && def->restitution >= 0.0f );
@@ -281,7 +281,7 @@ void b2DestroyShape( b2ShapeId shapeId, bool updateBodyMass )
 
 b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 {
-	b2CheckDef( def );
+	B2_CHECK_DEF( def );
 	B2_ASSERT( b2IsValidFloat( def->friction ) && def->friction >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->restitution ) && def->restitution >= 0.0f );
 	B2_ASSERT( def->count >= 4 );

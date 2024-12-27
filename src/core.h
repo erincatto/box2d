@@ -114,7 +114,12 @@
 // Use to validate definitions. Do not take my cookie.
 #define B2_SECRET_COOKIE 1152023
 
-#define b2CheckDef( DEF ) B2_ASSERT( DEF->internalValue == B2_SECRET_COOKIE )
+// Snoop counters. These should be disabled in optimized builds because they are expensive.
+#define B2_SNOOP_TABLE_COUNTERS B2_DEBUG
+#define B2_SNOOP_PAIR_COUNTERS B2_DEBUG
+#define B2_SNOOP_TOI_COUNTERS B2_DEBUG
+
+#define B2_CHECK_DEF( DEF ) B2_ASSERT( DEF->internalValue == B2_SECRET_COOKIE )
 
 void* b2Alloc( int size );
 void b2Free( void* mem, int size );

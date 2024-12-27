@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "benchmarks.h"
+
 #include "human.h"
 
 #include "box2d/box2d.h"
@@ -18,8 +19,6 @@
 
 void CreateJointGrid( b2WorldId worldId )
 {
-	// Turning gravity off to isolate joint performance.
-	//b2World_SetGravity( worldId, b2Vec2_zero );
 	b2World_EnableSleeping( worldId, false );
 
 	int N = BENCHMARK_DEBUG ? 10 : 100;
@@ -238,16 +237,20 @@ void CreateRain( b2WorldId worldId )
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		float y = 0.0f;
-		float w = 0.5f * g_rainData.gridSize;
-		float h = 0.5f * g_rainData.gridSize;
+		float width = g_rainData.gridSize;
+		float height = g_rainData.gridSize;
 
 		for ( int i = 0; i < RAIN_ROW_COUNT; ++i )
 		{
 			float x = -0.5f * g_rainData.gridCount * g_rainData.gridSize;
 			for ( int j = 0; j <= g_rainData.gridCount; ++j )
 			{
-				b2Polygon box = b2MakeOffsetBox( w, h, ( b2Vec2 ){ x, y }, b2Rot_identity );
+				b2Polygon box = b2MakeOffsetBox( 0.5f * width, 0.5f * height, ( b2Vec2 ){ x, y }, b2Rot_identity );
 				b2CreatePolygonShape( groundId, &shapeDef, &box );
+
+				//b2Segment segment = { { x - 0.5f * width, y }, { x + 0.5f * width, y } };
+				//b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
 				x += g_rainData.gridSize;
 			}
 

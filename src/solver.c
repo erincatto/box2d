@@ -292,6 +292,33 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 		}
 	}
 
+	// todo_erin testing early out for segments
+#if 0
+	if ( shape->type == b2_segmentShape )
+	{
+		b2Transform transform = bodySim->transform;
+		b2Vec2 p1 = b2TransformPoint( transform, shape->segment.point1 );
+		b2Vec2 p2 = b2TransformPoint( transform, shape->segment.point2 );
+		b2Vec2 e = b2Sub( p2, p1 );
+		b2Vec2 c1 = continuousContext->centroid1;
+		b2Vec2 c2 = continuousContext->centroid2;
+		float offset1 = b2Cross( b2Sub( c1, p1 ), e );
+		float offset2 = b2Cross( b2Sub( c2, p1 ), e );
+
+		if ( offset1 > 0.0f && offset2 > 0.0f )
+		{
+			// Started behind or finished in front
+			return true;
+		}
+
+		if ( offset1 < 0.0f && offset2 < 0.0f )
+		{
+			// Started behind or finished in front
+			return true;
+		}
+	}
+#endif
+
 	b2TOIInput input;
 	input.proxyA = b2MakeShapeDistanceProxy( shape );
 	input.proxyB = b2MakeShapeDistanceProxy( fastShape );

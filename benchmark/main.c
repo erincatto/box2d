@@ -120,6 +120,8 @@ static void FinishTask( void* userTask, void* userContext )
 // Examples:
 // start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=4 -w=4
 // start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=8
+// start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=4 -w=4 -b=3 -r=1 -nc -s
+
 int main( int argc, char** argv )
 {
 	Benchmark benchmarks[] = {
@@ -134,12 +136,21 @@ int main( int argc, char** argv )
 
 	int benchmarkCount = ARRAY_COUNT( benchmarks );
 
+	int maxSteps = benchmarks[0].totalStepCount;
+	for (int i = 1; i < benchmarkCount; ++i)
+	{
+		maxSteps = b2MaxInt( maxSteps, benchmarks[i].totalStepCount );
+	}
+
+	float* stepTimes = malloc( maxSteps * sizeof( float ) );
+
 	int maxThreadCount = GetNumberOfCores();
 	int runCount = 4;
 	int singleBenchmark = -1;
 	int singleWorkerCount = -1;
 	b2Counters counters = { 0 };
 	bool enableContinuous = true;
+	bool recordStepTimes = false;
 
 	assert( maxThreadCount <= THREAD_LIMIT );
 
@@ -168,13 +179,18 @@ int main( int argc, char** argv )
 		{
 			enableContinuous = false;
 		}
+		else if ( strncmp( arg, "-s", 3 ) == 0 )
+		{
+			recordStepTimes = true;
+		}
 		else if ( strcmp( arg, "-h" ) == 0 )
 		{
 			printf( "Usage\n"
 					"-t=<integer>: the maximum number of threads to use\n"
 					"-b=<integer>: run a single benchmark\n"
 					"-w=<integer>: run a single worker count\n"
-					"-r=<integer>: number of repeats (default is 4)\n" );
+					"-r=<integer>: number of repeats (default is 4)\n"
+					"-s: record step times\n" );
 			exit( 0 );
 		}
 	}
@@ -246,7 +262,13 @@ int main( int argc, char** argv )
 				{
 					benchmark->stepFcn( worldId, 0 );
 				}
+
+				assert( stepCount <= maxSteps );
+
+				b2Timer stepTimer = b2CreateTimer();
 				b2World_Step( worldId, timeStep, subStepCount );
+				stepTimes[0] = b2GetMillisecondsAndReset( &stepTimer );
+
 				taskCount = 0;
 
 				b2Timer timer = b2CreateTimer();
@@ -259,6 +281,8 @@ int main( int argc, char** argv )
 					}
 					b2World_Step( worldId, timeStep, subStepCount );
 					taskCount = 0;
+
+					stepTimes[step] = b2GetMillisecondsAndReset( &stepTimer );
 				}
 
 				float ms = b2GetMilliseconds( &timer );
@@ -284,6 +308,24 @@ int main( int argc, char** argv )
 
 				enkiDeleteTaskScheduler( scheduler );
 				scheduler = NULL;
+
+				if (recordStepTimes && runIndex == 0)
+				{
+					char fileName[64] = { 0 };
+					snprintf( fileName, 64, "%s_t%d.dat", benchmarks[benchmarkIndex].name, threadCount );
+					FILE* file = fopen( fileName, "w" );
+					if ( file == NULL )
+					{
+						continue;
+					}
+
+					for ( int stepIndex = 0; stepIndex < stepCount; ++stepIndex)
+					{
+						fprintf( file, "%g\n", stepTimes[stepIndex] );
+					}
+
+					fclose( file );
+				}
 			}
 		}
 
@@ -309,6 +351,8 @@ int main( int argc, char** argv )
 
 	printf( "======================================\n" );
 	printf( "All Box2D benchmarks complete!\n" );
+
+	free( stepTimes );
 
 	return 0;
 }

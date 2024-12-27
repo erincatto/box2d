@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#include "core.h"
 #include "ctz.h"
 #include "table.h"
 #include "test_macros.h"
@@ -63,9 +64,9 @@ int TableTest( void )
 
 		ENSURE( set.count == ( itemCount - removeCount ) );
 
-#ifndef NDEBUG
-		extern _Atomic int g_probeCount;
-		g_probeCount = 0;
+#if B2_SNOOP_TABLE_COUNTERS
+		extern _Atomic int b2_probeCount;
+		b2_probeCount = 0;
 #endif
 
 		// Test key search
@@ -89,9 +90,9 @@ int TableTest( void )
 		float ms = b2GetMilliseconds( &timer );
 		printf( "set: count = %d, b2ContainsKey = %.5f ms, ave = %.5f us\n", itemCount, ms, 1000.0f * ms / itemCount );
 
-#if !NDEBUG
-		float aveProbeCount = (float)g_probeCount / (float)itemCount;
-		printf( "item count = %d, probe count = %d, ave probe count %.2f\n", itemCount, g_probeCount, aveProbeCount );
+#if B2_SNOOP_TABLE_COUNTERS
+		float aveProbeCount = (float)b2_probeCount / (float)itemCount;
+		printf( "item count = %d, probe count = %d, ave probe count %.2f\n", itemCount, b2_probeCount, aveProbeCount );
 #endif
 
 		// Remove all keys from set

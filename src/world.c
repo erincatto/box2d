@@ -89,7 +89,7 @@ static void b2DefaultFinishTaskFcn( void* userTask, void* userContext )
 b2WorldId b2CreateWorld( const b2WorldDef* def )
 {
 	_Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B2_MAX_WORLDS limit exceeded" );
-	b2CheckDef( def );
+	B2_CHECK_DEF( def );
 
 	int worldId = B2_NULL_INDEX;
 	for ( int i = 0; i < B2_MAX_WORLDS; ++i )

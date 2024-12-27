@@ -6,12 +6,13 @@
 #include "core.h"
 #include "ctz.h"
 
-#include <stdatomic.h>
 #include <stdbool.h>
 #include <string.h>
 
-#if B2_DEBUG
-_Atomic int g_probeCount;
+#if B2_SNOOP_TABLE_COUNTERS
+#include <stdatomic.h>
+_Atomic int b2_findCount;
+_Atomic int b2_probeCount;
 #endif
 
 // todo compare with https://github.com/skeeto/scratch/blob/master/set32/set32.h
@@ -74,13 +75,17 @@ static uint32_t b2KeyHash( uint64_t key )
 
 static int b2FindSlot( const b2HashSet* set, uint64_t key, uint32_t hash )
 {
+#if B2_SNOOP_TABLE_COUNTERS 
+		atomic_fetch_add( &b2_findCount, 1 );
+#endif
+
 	uint32_t capacity = set->capacity;
 	int index = hash & ( capacity - 1 );
 	const b2SetItem* items = set->items;
 	while ( items[index].hash != 0 && items[index].key != key )
 	{
-#if B2_DEBUG
-		atomic_fetch_add( &g_probeCount, 1 );
+#if B2_SNOOP_TABLE_COUNTERS
+		atomic_fetch_add( &b2_probeCount, 1 );
 #endif
 		index = ( index + 1 ) & ( capacity - 1 );
 	}

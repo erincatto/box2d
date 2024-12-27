@@ -302,6 +302,13 @@ static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 	return true;
 }
 
+// Warning: writing to these globals significantly slows multithreading performance
+#if B2_SNOOP_PAIR_COUNTERS
+b2TreeStats b2_dynamicStats;
+b2TreeStats b2_kinematicStats;
+b2TreeStats b2_staticStats;
+#endif
+
 static void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
 {
 	b2TracyCZoneNC( pair_task, "Pair Task", b2_colorAquamarine, true );
@@ -341,20 +348,27 @@ static void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex,
 
 		// Query trees. Only dynamic proxies collide with kinematic and static proxies.
 		// Using B2_DEFAULT_MASK_BITS so that b2Filter::groupIndex works.
+		b2TreeStats stats = { 0 };
 		if ( proxyType == b2_dynamicBody )
 		{
 			// consider using bits = groupIndex > 0 ? B2_DEFAULT_MASK_BITS : maskBits
 			queryContext.queryTreeType = b2_kinematicBody;
-			b2DynamicTree_Query( bp->trees + b2_kinematicBody, fatAABB, B2_DEFAULT_MASK_BITS, b2PairQueryCallback, &queryContext );
+			b2TreeStats statsKinematic = b2DynamicTree_Query( bp->trees + b2_kinematicBody, fatAABB, B2_DEFAULT_MASK_BITS, b2PairQueryCallback, &queryContext );
+			stats.nodeVisits += statsKinematic.nodeVisits;
+			stats.leafVisits += statsKinematic.leafVisits;
 
 			queryContext.queryTreeType = b2_staticBody;
-			b2DynamicTree_Query( bp->trees + b2_staticBody, fatAABB, B2_DEFAULT_MASK_BITS, b2PairQueryCallback, &queryContext );
+			b2TreeStats statsStatic = b2DynamicTree_Query( bp->trees + b2_staticBody, fatAABB, B2_DEFAULT_MASK_BITS, b2PairQueryCallback, &queryContext );
+			stats.nodeVisits += statsStatic.nodeVisits;
+			stats.leafVisits += statsStatic.leafVisits;
 		}
 
 		// All proxies collide with dynamic proxies
 		// Using B2_DEFAULT_MASK_BITS so that b2Filter::groupIndex works.
 		queryContext.queryTreeType = b2_dynamicBody;
-		b2DynamicTree_Query( bp->trees + b2_dynamicBody, fatAABB, B2_DEFAULT_MASK_BITS, b2PairQueryCallback, &queryContext );
+		b2TreeStats statsDynamic = b2DynamicTree_Query( bp->trees + b2_dynamicBody, fatAABB, B2_DEFAULT_MASK_BITS, b2PairQueryCallback, &queryContext );
+		stats.nodeVisits += statsDynamic.nodeVisits;
+		stats.leafVisits += statsDynamic.leafVisits;
 	}
 
 	b2TracyCZoneEnd( pair_task );
@@ -382,9 +396,9 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	bp->movePairs = b2AllocateArenaItem( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
 	bp->movePairIndex = 0;
 
-#ifndef NDEBUG
-	extern _Atomic int g_probeCount;
-	g_probeCount = 0;
+#if B2_SNOOP_TABLE_COUNTERS
+	extern _Atomic int b2_probeCount;
+	b2_probeCount = 0;
 #endif
 
 	int minRange = 64;

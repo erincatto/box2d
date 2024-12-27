@@ -92,6 +92,22 @@ b2Timer b2CreateTimer( void )
 	return timer;
 }
 
+int64_t b2GetTicks( b2Timer* timer )
+{
+	struct timespec ts;
+	clock_gettime( CLOCK_MONOTONIC, &ts );
+	int64_t start_sec = timer->tv_sec;
+	int64_t start_nsec = timer->tv_nsec;
+
+	int64_t sec_diff = ts.tv_sec - start_sec;
+	int64_t nsec_diff = ts.tv_nsec - start_nsec;
+
+	timer->tv_sec = ts.tv_sec;
+	timer->tv_nsec = ts.tv_nsec;
+
+	return sec_diff * 1000000000LL + nsec_diff;
+}
+
 float b2GetMilliseconds( const b2Timer* timer )
 {
 	struct timespec ts;
@@ -156,6 +172,14 @@ b2Timer b2CreateTimer( void )
 	uint64_t start = mach_absolute_time();
 	b2Timer timer = { start };
 	return timer;
+}
+
+int64_t b2GetTicks( b2Timer* timer )
+{
+	uint64_t count = mach_absolute_time();
+	int64_t ticks = count - timer->start;
+	timer->start = count;
+	return ticks;
 }
 
 float b2GetMilliseconds( const b2Timer* timer )
