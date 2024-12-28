@@ -311,7 +311,7 @@ b2TreeStats b2_staticStats;
 
 static void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
 {
-	b2TracyCZoneNC( pair_task, "Pair Task", b2_colorAquamarine, true );
+	b2TracyCZoneNC( pair_task, "Pair", b2_colorMediumSlateBlue, true );
 
 	B2_MAYBE_UNUSED( threadIndex );
 
@@ -386,7 +386,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 		return;
 	}
 
-	b2TracyCZoneNC( update_pairs, "Pairs", b2_colorMediumSlateBlue, true );
+	b2TracyCZoneNC( update_pairs, "Find Pairs", b2_colorMediumSlateBlue, true );
 
 	b2ArenaAllocator* alloc = &world->stackAllocator;
 

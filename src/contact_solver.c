@@ -437,7 +437,7 @@ void b2ApplyOverflowRestitution( b2StepContext* context )
 
 void b2StoreOverflowImpulses( b2StepContext* context )
 {
-	b2TracyCZoneNC( store_impulses, "Store", b2_colorFirebrick, true );
+	b2TracyCZoneNC( store_impulses, "Store", b2_colorFireBrick, true );
 
 	b2ConstraintGraph* graph = context->graph;
 	b2GraphColor* color = graph->colors + B2_OVERFLOW_INDEX;
@@ -1885,7 +1885,7 @@ void b2ApplyRestitutionTask( int startIndex, int endIndex, b2StepContext* contex
 // todo try making an inner loop on B2_SIMD_WIDTH to have a single implementation of this function
 void b2StoreImpulsesTask( int startIndex, int endIndex, b2StepContext* context )
 {
-	b2TracyCZoneNC( store_impulses, "Store", b2_colorFirebrick, true );
+	b2TracyCZoneNC( store_impulses, "Store", b2_colorFireBrick, true );
 
 	b2ContactSim** contacts = context->contacts;
 	const b2ContactConstraintSIMD* constraints = context->simdContactConstraints;

@@ -300,7 +300,7 @@ void DestroyGroup( int rowIndex, int columnIndex )
 	}
 }
 
-void StepRain( b2WorldId worldId, int stepCount )
+float StepRain( b2WorldId worldId, int stepCount )
 {
 	int delay = BENCHMARK_DEBUG ? 0x1F : 0x7;
 
@@ -326,9 +326,18 @@ void StepRain( b2WorldId worldId, int stepCount )
 			g_rainData.columnIndex = ( g_rainData.columnIndex + 1 ) % RAIN_COLUMN_COUNT;
 		}
 	}
+
+	return 0.0f;
 }
 
 #define SPINNER_POINT_COUNT 360
+
+typedef struct
+{
+	b2JointId spinnerId;
+} SpinnerData;
+
+SpinnerData g_spinnerData;
 
 void CreateSpinner( b2WorldId worldId )
 {
@@ -379,7 +388,7 @@ void CreateSpinner( b2WorldId worldId )
 		jointDef.motorSpeed = motorSpeed;
 		jointDef.maxMotorTorque = maxMotorTorque;
 
-		b2CreateRevoluteJoint( worldId, &jointDef );
+		g_spinnerData.spinnerId = b2CreateRevoluteJoint( worldId, &jointDef );
 	}
 
 	b2Capsule capsule = { { -0.25f, 0.0f }, { 0.25f, 0.0f }, 0.25f };
@@ -423,6 +432,14 @@ void CreateSpinner( b2WorldId worldId )
 			y += 1.0f;
 		}
 	}
+}
+
+float StepSpinner( b2WorldId worldId, int stepCount )
+{
+	(void)worldId;
+	(void)stepCount;
+
+	return b2RevoluteJoint_GetAngle(g_spinnerData.spinnerId);
 }
 
 void CreateSmash( b2WorldId worldId )

@@ -440,24 +440,23 @@ typedef struct b2Profile
 	float pairs;
 	float collide;
 	float solve;
-	float buildIslands;
+	float mergeIslands;
+	float prepareStages;
 	float solveConstraints;
-	float prepareTasks;
-	float solverTasks;
 	float prepareConstraints;
 	float integrateVelocities;
 	float warmStart;
-	float solveVelocities;
+	float solveImpulses;
 	float integratePositions;
-	float relaxVelocities;
+	float relaxImpulses;
 	float applyRestitution;
 	float storeImpulses;
-	float finalizeBodies;
 	float splitIslands;
-	float sleepIslands;
+	float transforms;
 	float hitEvents;
-	float broadphase;
-	float continuous;
+	float refit;
+	float bullets;
+	float sleepIslands;
 } b2Profile;
 
 /// Counters that give details of the simulation size.

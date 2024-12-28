@@ -308,7 +308,7 @@ void b2DestroyWorld( b2WorldId worldId )
 
 static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
 {
-	b2TracyCZoneNC( collide_task, "Collide Task", b2_colorDodgerBlue, true );
+	b2TracyCZoneNC( collide_task, "Collide", b2_colorDodgerBlue, true );
 
 	b2StepContext* stepContext = context;
 	b2World* world = stepContext->world;
@@ -389,7 +389,7 @@ static void b2UpdateTreesTask( int startIndex, int endIndex, uint32_t threadInde
 	B2_MAYBE_UNUSED( endIndex );
 	B2_MAYBE_UNUSED( threadIndex );
 
-	b2TracyCZoneNC( tree_task, "Rebuild Trees", b2_colorFireBrick, true );
+	b2TracyCZoneNC( tree_task, "Rebuild BVH", b2_colorFireBrick, true );
 
 	b2World* world = context;
 	b2BroadPhase_RebuildTrees( &world->broadPhase );
@@ -430,7 +430,7 @@ static void b2Collide( b2StepContext* context )
 
 	B2_ASSERT( world->workerCount > 0 );
 
-	b2TracyCZoneNC( collide, "Collide", b2_colorDarkOrchid, true );
+	b2TracyCZoneNC( collide, "Narrow Phase", b2_colorDodgerBlue, true );
 
 	// Task that can be done in parallel with the narrow-phase
 	// - rebuild the collision tree for dynamic and kinematic bodies to keep their query performance good
@@ -689,10 +689,6 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		return;
 	}
 
-	// 1. destroy shape
-	// 2. step
-	// 3. get events
-
 	// Prepare to capture events
 	// Ensure user does not access stale data if there is an early return
 	b2BodyMoveEventArray_Clear( &world->bodyMoveEvents );
@@ -709,7 +705,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		b2SensorEndTouchEventArray_Clear( world->sensorEndEvents + world->endEventArrayIndex );
 		b2ContactEndTouchEventArray_Clear( world->contactEndEvents + world->endEventArrayIndex );
 
-		// todo would be useful to still process collision while paused
+		// todo_erin would be useful to still process collision while paused
 		return;
 	}
 
