@@ -226,6 +226,7 @@ public:
 		m_bodyId = b2_nullBodyId;
 		m_yOffset = -0.1f;
 		m_speed = -42.0f;
+		m_clipFraction = 0.1f;
 
 		Launch();
 	}
@@ -241,17 +242,27 @@ public:
 		bodyDef.type = b2_dynamicBody;
 		bodyDef.linearVelocity = { 0.0f, m_speed };
 		bodyDef.position = { 0.0f, 10.0f + m_yOffset };
-		bodyDef.gravityScale = 1.0f;
+		bodyDef.rotation = b2MakeRot( 0.5f * B2_PI );
+		bodyDef.fixedRotation = true;
 		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
-		b2CreateCircleShape( m_bodyId, &shapeDef, &circle );
+		shapeDef.allowedClipFraction = m_clipFraction;
+
+		//b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+		//m_shapeId = b2CreateCircleShape( m_bodyId, &shapeDef, &circle );
+
+		//b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0 }, 0.25f };
+		//m_shapeId = b2CreateCapsuleShape( m_bodyId, &shapeDef, &capsule );
+
+		float h = 0.5f;
+		b2Polygon box = b2MakeBox( h, h );
+		m_shapeId = b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
 	}
 
 	void UpdateUI() override
 	{
-		float height = 120.0f;
+		float height = 140.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
@@ -259,6 +270,10 @@ public:
 
 		ImGui::SliderFloat( "Speed", &m_speed, -100.0f, 0.0f, "%.0f" );
 		ImGui::SliderFloat( "Y Offset", &m_yOffset, -1.0f, 1.0f, "%.1f" );
+		if (ImGui::SliderFloat( "Clip Fraction", &m_clipFraction, 0.0f, 1.0f, "%.1f" ))
+		{
+			b2Shape_SetAllowedClipFraction( m_shapeId, m_clipFraction );
+		}
 
 		if ( ImGui::Button( "Launch" ) )
 		{
@@ -274,8 +289,10 @@ public:
 	}
 
 	b2BodyId m_bodyId;
+	b2ShapeId m_shapeId;
 	float m_yOffset;
 	float m_speed;
+	float m_clipFraction;
 };
 
 static int sampleChainDrop = RegisterSample( "Continuous", "Chain Drop", ChainDrop::Create );

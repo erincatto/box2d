@@ -92,6 +92,9 @@ typedef struct b2World
 	b2ShapeArray shapes;
 	b2ChainShapeArray chainShapes;
 
+	// Array of all sensor shape indices
+	b2IntArray sensors;
+
 	// Per thread storage
 	b2TaskContextArray taskContexts;
 
