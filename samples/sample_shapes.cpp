@@ -13,6 +13,11 @@
 #include <imgui.h>
 #include <vector>
 
+#ifndef NDEBUG
+extern "C" extern int b2_toiCalls;
+extern "C" extern int b2_toiHitCount;
+#endif
+
 class ChainShape : public Sample
 {
 public:
@@ -39,6 +44,8 @@ public:
 		m_shapeType = e_circleShape;
 		m_restitution = 0.0f;
 		m_friction = 0.2f;
+		m_allowedClipFraction = 0.1f;
+
 		CreateScene();
 		Launch();
 	}
@@ -135,6 +142,7 @@ public:
 		shapeDef.density = 1.0f;
 		shapeDef.friction = m_friction;
 		shapeDef.restitution = m_restitution;
+		shapeDef.allowedClipFraction = m_allowedClipFraction;
 
 		if ( m_shapeType == e_circleShape )
 		{
@@ -152,11 +160,18 @@ public:
 			b2Polygon box = b2MakeBox( h, h );
 			m_shapeId = b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
 		}
+
+#ifndef NDEBUG
+		b2_toiCalls = 0;
+		b2_toiHitCount = 0;
+#endif
+
+		m_stepCount = 0;
 	}
 
 	void UpdateUI() override
 	{
-		float height = 135.0f;
+		float height = 155.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
@@ -181,6 +196,11 @@ public:
 			b2Shape_SetRestitution( m_shapeId, m_restitution );
 		}
 
+		if ( ImGui::SliderFloat( "Clip Fraction", &m_allowedClipFraction, 0.0f, 1.0f, "%.2f" ) )
+		{
+			b2Shape_SetAllowedClipFraction( m_shapeId, m_allowedClipFraction );
+		}
+
 		if ( ImGui::Button( "Launch" ) )
 		{
 			Launch();
@@ -195,6 +215,11 @@ public:
 
 		g_draw.DrawSegment( b2Vec2_zero, { 0.5f, 0.0f }, b2_colorRed );
 		g_draw.DrawSegment( b2Vec2_zero, { 0.0f, 0.5f }, b2_colorGreen );
+
+#ifndef NDEBUG
+		g_draw.DrawString( 5, m_textLine, "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
+		m_textLine += m_textIncrement;
+#endif
 	}
 
 	static Sample* Create( Settings& settings )
@@ -209,6 +234,7 @@ public:
 	b2ShapeId m_shapeId;
 	float m_restitution;
 	float m_friction;
+	float m_allowedClipFraction;
 };
 
 static int sampleChainShape = RegisterSample( "Shapes", "Chain Shape", ChainShape::Create );

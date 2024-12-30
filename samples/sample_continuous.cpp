@@ -14,6 +14,10 @@
 #include <imgui.h>
 #include <vector>
 
+#ifndef NDEBUG
+extern "C" extern int b2_toiHitCount;
+#endif
+
 class BounceHouse : public Sample
 {
 public:
@@ -191,10 +195,10 @@ public:
 
 static int sampleBounceHouse = RegisterSample( "Continuous", "Bounce House", BounceHouse::Create );
 
-class FastChain : public Sample
+class ChainDrop : public Sample
 {
 public:
-	explicit FastChain( Settings& settings )
+	explicit ChainDrop( Settings& settings )
 		: Sample( settings )
 	{
 		if ( settings.restart == false )
@@ -202,6 +206,9 @@ public:
 			g_camera.m_center = { 0.0f, 0.0f };
 			g_camera.m_zoom = 25.0f * 0.35f;
 		}
+
+		// 
+		//b2World_SetContactTuning( m_worldId, 30.0f, 1.0f, 100.0f );
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.position = { 0.0f, -6.0f };
@@ -217,6 +224,8 @@ public:
 		b2CreateChain( groundId, &chainDef );
 
 		m_bodyId = b2_nullBodyId;
+		m_yOffset = -0.1f;
+		m_speed = -42.0f;
 
 		Launch();
 	}
@@ -230,8 +239,8 @@ public:
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
-		bodyDef.linearVelocity = { 0.0f, -200.0f };
-		bodyDef.position = { 0.0f, 10.0f };
+		bodyDef.linearVelocity = { 0.0f, m_speed };
+		bodyDef.position = { 0.0f, 10.0f + m_yOffset };
 		bodyDef.gravityScale = 1.0f;
 		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
 
@@ -242,11 +251,14 @@ public:
 
 	void UpdateUI() override
 	{
-		float height = 70.0f;
+		float height = 120.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
-		ImGui::Begin( "Fast Chain", nullptr, ImGuiWindowFlags_NoResize );
+		ImGui::Begin( "Chain Drop", nullptr, ImGuiWindowFlags_NoResize );
+
+		ImGui::SliderFloat( "Speed", &m_speed, -100.0f, 0.0f, "%.0f" );
+		ImGui::SliderFloat( "Y Offset", &m_yOffset, -1.0f, 1.0f, "%.1f" );
 
 		if ( ImGui::Button( "Launch" ) )
 		{
@@ -258,13 +270,105 @@ public:
 
 	static Sample* Create( Settings& settings )
 	{
-		return new FastChain( settings );
+		return new ChainDrop( settings );
 	}
 
 	b2BodyId m_bodyId;
+	float m_yOffset;
+	float m_speed;
 };
 
-static int sampleFastChainHouse = RegisterSample( "Continuous", "Fast Chain", FastChain::Create );
+static int sampleChainDrop = RegisterSample( "Continuous", "Chain Drop", ChainDrop::Create );
+
+class ChainSlide : public Sample
+{
+public:
+	explicit ChainSlide( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 10.0f };
+			g_camera.m_zoom = 15.0f;
+		}
+
+#ifndef NDEBUG
+		b2_toiHitCount = 0;
+#endif
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			constexpr int count = 80;
+			b2Vec2 points[count];
+
+			float w = 2.0f;
+			float h = 1.0f;
+			float x = 20.0f, y = 0.0f;
+			for (int i = 0; i < 20; ++i)
+			{
+				points[i] = { x, y };
+				x -= w;
+			}
+
+			for (int i = 20; i < 40; ++i)
+			{
+				points[i] = { x, y };
+				y += h;
+			}
+
+			for (int i = 40; i < 60; ++i)
+			{
+				points[i] = { x, y };
+				x += w;
+			}
+
+			for (int i = 60; i < 80; ++i)
+			{
+				points[i] = { x, y };
+				y -= h;
+			}
+
+			b2ChainDef chainDef = b2DefaultChainDef();
+			chainDef.points = points;
+			chainDef.count = count;
+			chainDef.isLoop = true;
+
+			b2CreateChain( groundId, &chainDef );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.linearVelocity = { 100.0f, 0.0f };
+			bodyDef.position = { -19.5f, 0.0f + 0.5f };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.friction = 0.0f;
+			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
+		}
+	}
+
+	void Step( Settings& settings ) override
+	{
+		Sample::Step( settings );
+
+#ifndef NDEBUG
+		g_draw.DrawString( 5, m_textLine, "toi hits = %d", b2_toiHitCount );
+		m_textLine += m_textIncrement;
+#endif
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new ChainSlide( settings );
+	}
+};
+
+static int sampleChainSlide = RegisterSample( "Continuous", "Chain Slide", ChainSlide::Create );
 
 class SkinnyBox : public Sample
 {

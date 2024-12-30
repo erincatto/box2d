@@ -15,6 +15,10 @@
 #include <imgui.h>
 #include <vector>
 
+#ifndef NDEBUG
+extern "C" extern int b2_toiHitCount;
+#endif
+
 // Note: resetting the scene is non-deterministic because the world uses freelists
 class BenchmarkBarrel : public Sample
 {
@@ -1473,6 +1477,10 @@ public:
 			g_camera.m_zoom = 42.0f;
 		}
 
+#ifndef NDEBUG
+		b2_toiHitCount = 0;
+#endif
+
 		CreateSpinner( m_worldId );
 	}
 
@@ -1480,10 +1488,14 @@ public:
 	{
 		Sample::Step( settings );
 
-		if ( m_stepCount == 2000 )
+		if ( m_stepCount == 1000 )
 		{
 			m_stepCount += 0;
 		}
+#ifndef NDEBUG
+		g_draw.DrawString( 5, m_textLine, "toi hits = %d", b2_toiHitCount );
+		m_textLine += m_textIncrement;
+#endif
 	}
 
 	static Sample* Create( Settings& settings )

@@ -19,6 +19,7 @@ typedef struct b2Shape
 	float density;
 	float friction;
 	float restitution;
+	float allowedClipFraction;
 
 	b2AABB aabb;
 	b2AABB fatAABB;

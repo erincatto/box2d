@@ -43,8 +43,7 @@ typedef void b2TaskCallback( int startIndex, int endIndex, uint32_t workerIndex,
 /// endIndex - startIndex >= minRange
 /// The exception of course is when itemCount < minRange.
 /// @ingroup world
-typedef void* b2EnqueueTaskCallback( b2TaskCallback* task, int itemCount, int minRange, void* taskContext,
-									 void* userContext );
+typedef void* b2EnqueueTaskCallback( b2TaskCallback* task, int itemCount, int minRange, void* taskContext, void* userContext );
 
 /// Finishes a user task object that wraps a Box2D task.
 /// @ingroup world
@@ -85,17 +84,20 @@ typedef struct b2WorldDef
 	/// speed have restitution applied (will bounce).
 	float restitutionThreshold;
 
-	/// This parameter controls how fast overlap is resolved and usually has units of meters per second
-	float contactPushSpeed;
-
 	/// Threshold speed for hit events. Usually meters per second.
 	float hitEventThreshold;
 
-	/// Contact stiffness. Cycles per second.
+	/// Contact stiffness. Cycles per second. Increasing this increases the speed of overlap recovery, but can introduce jitter.
 	float contactHertz;
 
-	/// Contact bounciness. Non-dimensional.
+	/// Contact bounciness. Non-dimensional. You can speed up overlap recovery by decreasing this with
+	/// the trade-off that overlap resolution becomes more energetic.
 	float contactDampingRatio;
+
+	/// This parameter controls how fast overlap is resolved and usually has units of meters per second. This only
+	/// puts a cap on the resolution speed. The resolution speed is increased by increasing the hertz and/or
+	/// decreasing the damping ratio.
+	float contactPushMaxSpeed;
 
 	/// Joint stiffness. Cycles per second.
 	float jointHertz;
@@ -340,6 +342,15 @@ typedef struct b2ShapeDef
 
 	/// The density, usually in kg/m^2.
 	float density;
+
+	/// This is used to optimize continuous physics and to prevent hitching when a shape moves fast along
+	/// the surface of a chain shape. This has a value between [0,1]. When the value is 0 then continuous
+	/// physics will try to prevent all clipping but this may result in hitching as a shape slides across
+	/// the junction between two chain segments. A value of 1 allows clipping up to the radius of the
+	/// largest embedded circle centered on the shape centroid. For a circle or capsule this is just the
+	/// radius. Besides hitching this parameter also affects performance. A fraction closer to 1 will have
+	/// better performance. A very small or zero value will do many unnecessary time of impact calculations.
+	float allowedClipFraction;
 
 	/// Collision filtering data.
 	b2Filter filter;

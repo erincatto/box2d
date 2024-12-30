@@ -178,7 +178,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->hitEventThreshold = def->hitEventThreshold;
 	world->restitutionThreshold = def->restitutionThreshold;
 	world->maxLinearSpeed = def->maximumLinearSpeed;
-	world->contactPushSpeed = def->contactPushSpeed;
+	world->contactMaxPushSpeed = def->contactPushMaxSpeed;
 	world->contactHertz = def->contactHertz;
 	world->contactDampingRatio = def->contactDampingRatio;
 	world->jointHertz = def->jointHertz;
@@ -1719,7 +1719,7 @@ void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRati
 
 	world->contactHertz = b2ClampFloat( hertz, 0.0f, FLT_MAX );
 	world->contactDampingRatio = b2ClampFloat( dampingRatio, 0.0f, FLT_MAX );
-	world->contactPushSpeed = b2ClampFloat( pushSpeed, 0.0f, FLT_MAX );
+	world->contactMaxPushSpeed = b2ClampFloat( pushSpeed, 0.0f, FLT_MAX );
 }
 
 void b2World_SetJointTuning( b2WorldId worldId, float hertz, float dampingRatio )

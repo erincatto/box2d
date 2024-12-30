@@ -280,15 +280,20 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 		b2Vec2 p1 = b2TransformPoint( transform, shape->chainSegment.segment.point1 );
 		b2Vec2 p2 = b2TransformPoint( transform, shape->chainSegment.segment.point2 );
 		b2Vec2 e = b2Sub( p2, p1 );
-		b2Vec2 c1 = continuousContext->centroid1;
-		b2Vec2 c2 = continuousContext->centroid2;
-		float offset1 = b2Cross( b2Sub( c1, p1 ), e );
-		float offset2 = b2Cross( b2Sub( c2, p1 ), e );
-
-		if ( offset1 < 0.0f || offset2 > 0.0f )
+		float length;
+		e = b2GetLengthAndNormalize( &length, e );
+		if (length > B2_LINEAR_SLOP)
 		{
-			// Started behind or finished in front
-			return true;
+			b2Vec2 c1 = continuousContext->centroid1;
+			float offset1 = b2Cross( b2Sub( c1, p1 ), e );
+			b2Vec2 c2 = continuousContext->centroid2;
+			float offset2 = b2Cross( b2Sub( c2, p1 ), e );
+
+			if ( offset1 < 0.0f || offset2 > (1.0f - fastShape->allowedClipFraction) * fastBodySim->minExtent )
+			{
+				// Minimal clipping
+				return true;
+			}
 		}
 	}
 

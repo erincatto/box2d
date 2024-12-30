@@ -401,6 +401,7 @@ void CreateSpinner( b2WorldId worldId )
 	shapeDef.friction = 0.1f;
 	shapeDef.restitution = 0.1f;
 	shapeDef.density = 0.25f;
+	shapeDef.allowedClipFraction = 0.5f;
 
 	int bodyCount = BENCHMARK_DEBUG ? 499 : 3038;
 

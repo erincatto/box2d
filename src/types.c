@@ -13,7 +13,7 @@ b2WorldDef b2DefaultWorldDef( void )
 	def.gravity.y = -10.0f;
 	def.hitEventThreshold = 1.0f * b2_lengthUnitsPerMeter;
 	def.restitutionThreshold = 1.0f * b2_lengthUnitsPerMeter;
-	def.contactPushSpeed = 3.0f * b2_lengthUnitsPerMeter;
+	def.contactPushMaxSpeed = 3.0f * b2_lengthUnitsPerMeter;
 	def.contactHertz = 30.0;
 	def.contactDampingRatio = 10.0f;
 	def.jointHertz = 60.0;
@@ -59,6 +59,7 @@ b2ShapeDef b2DefaultShapeDef( void )
 	b2ShapeDef def = { 0 };
 	def.friction = 0.6f;
 	def.density = 1.0f;
+	def.allowedClipFraction = 0.1f;
 	def.filter = b2DefaultFilter();
 	def.enableSensorEvents = true;
 	def.updateBodyMass = true;
