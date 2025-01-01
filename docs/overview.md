@@ -240,8 +240,8 @@ Shapes are created in a similar way. For example, here is how a box shape is cre
 ```c
 b2ShapeDef shapeDef = b2DefaultShapeDef();
 shapeDef.friction = 0.42f;
-b2Polygon box = b2MakeBody(0.5f, 0.25f);
-b2ShapeId myShapeId = b2CreateCircleShape(myBodyId, &shapeDef, &box);
+b2Polygon box = b2MakeBox(0.5f, 0.25f);
+b2ShapeId myShapeId = b2CreatePolygonShape(myBodyId, &shapeDef, &box);
 ```
 
 And the shape may be destroyed as follows:

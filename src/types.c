@@ -13,7 +13,7 @@ b2WorldDef b2DefaultWorldDef( void )
 	def.gravity.y = -10.0f;
 	def.hitEventThreshold = 1.0f * b2_lengthUnitsPerMeter;
 	def.restitutionThreshold = 1.0f * b2_lengthUnitsPerMeter;
-	def.contactPushSpeed = 3.0f * b2_lengthUnitsPerMeter;
+	def.contactPushMaxSpeed = 3.0f * b2_lengthUnitsPerMeter;
 	def.contactHertz = 30.0;
 	def.contactDampingRatio = 10.0f;
 	def.jointHertz = 60.0;
@@ -59,6 +59,7 @@ b2ShapeDef b2DefaultShapeDef( void )
 	b2ShapeDef def = { 0 };
 	def.friction = 0.6f;
 	def.density = 1.0f;
+	def.allowedClipFraction = 0.1f;
 	def.filter = b2DefaultFilter();
 	def.enableSensorEvents = true;
 	def.updateBodyMass = true;
@@ -141,10 +142,11 @@ static void b2EmptyDrawPoint( b2Vec2 p, float size, b2HexColor color, void* cont
 	B2_MAYBE_UNUSED( context );
 }
 
-static void b2EmptyDrawString( b2Vec2 p, const char* s, void* context )
+static void b2EmptyDrawString( b2Vec2 p, const char* s, b2HexColor color, void* context )
 {
 	B2_MAYBE_UNUSED( p );
 	B2_MAYBE_UNUSED( s );
+	B2_MAYBE_UNUSED( color );
 	B2_MAYBE_UNUSED( context );
 }
 
@@ -153,14 +155,14 @@ b2DebugDraw b2DefaultDebugDraw(void)
 	b2DebugDraw draw = { 0 };
 
 	// These allow the user to skip some implementations and not hit null exceptions.
-	draw.DrawPolygon = b2EmptyDrawPolygon;
-	draw.DrawSolidPolygon = b2EmptyDrawSolidPolygon;
-	draw.DrawCircle = b2EmptyDrawCircle;
-	draw.DrawSolidCircle = b2EmptyDrawSolidCircle;
-	draw.DrawSolidCapsule = b2EmptyDrawSolidCapsule;
-	draw.DrawSegment = b2EmptyDrawSegment;
-	draw.DrawTransform = b2EmptyDrawTransform;
-	draw.DrawPoint = b2EmptyDrawPoint;
-	draw.DrawString = b2EmptyDrawString;
+	draw.drawPolygon = b2EmptyDrawPolygon;
+	draw.drawSolidPolygon = b2EmptyDrawSolidPolygon;
+	draw.drawCircle = b2EmptyDrawCircle;
+	draw.drawSolidCircle = b2EmptyDrawSolidCircle;
+	draw.drawSolidCapsule = b2EmptyDrawSolidCapsule;
+	draw.drawSegment = b2EmptyDrawSegment;
+	draw.drawTransform = b2EmptyDrawTransform;
+	draw.drawPoint = b2EmptyDrawPoint;
+	draw.drawString = b2EmptyDrawString;
 	return draw;
 }

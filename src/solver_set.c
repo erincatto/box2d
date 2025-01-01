@@ -123,7 +123,7 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 		for ( int i = 0; i < jointCount; ++i )
 		{
 			b2JointSim* jointSim = set->jointSims.data + i;
-			b2Joint* joint = b2JointArray_Get( &world->joints, +jointSim->jointId );
+			b2Joint* joint = b2JointArray_Get( &world->joints, jointSim->jointId );
 			B2_ASSERT( joint->setIndex == setIndex );
 			b2AddJointToGraph( world, jointSim, joint );
 			joint->setIndex = b2_awakeSet;
@@ -574,7 +574,7 @@ void b2TransferJoint( b2World* world, b2SolverSet* targetSet, b2SolverSet* sourc
 	else
 	{
 		B2_ASSERT( colorIndex == B2_NULL_INDEX );
-		sourceSim = b2JointSimArray_Get( &sourceSet->jointSims, +localIndex );
+		sourceSim = b2JointSimArray_Get( &sourceSet->jointSims, localIndex );
 	}
 
 	// Create target and copy. Fix joint.

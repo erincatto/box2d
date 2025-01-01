@@ -167,7 +167,7 @@ static void b2DestroyBodyContacts( b2World* world, b2Body* body, bool wakeBodies
 
 b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 {
-	b2CheckDef( def );
+	B2_CHECK_DEF( def );
 	B2_ASSERT( b2IsValidVec2( def->position ) );
 	B2_ASSERT( b2IsValidRotation( def->rotation ) );
 	B2_ASSERT( b2IsValidVec2( def->linearVelocity ) );

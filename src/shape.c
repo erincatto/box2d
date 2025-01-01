@@ -61,6 +61,7 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	B2_ASSERT( b2IsValidFloat( def->density ) && def->density >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->friction ) && def->friction >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->restitution ) && def->restitution >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( def->allowedClipFraction ) && def->allowedClipFraction >= 0.0f && def->allowedClipFraction <= 1.0f);
 
 	int shapeId = b2AllocId( &world->shapeIdPool );
 
@@ -108,6 +109,7 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	shape->density = def->density;
 	shape->friction = def->friction;
 	shape->restitution = def->restitution;
+	shape->allowedClipFraction = b2ClampFloat(def->allowedClipFraction, 0.0f, 1.0f);
 	shape->filter = def->filter;
 	shape->userData = def->userData;
 	shape->customColor = def->customColor;
@@ -146,9 +148,9 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	return shape;
 }
 
-b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const void* geometry, b2ShapeType shapeType )
+static b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const void* geometry, b2ShapeType shapeType )
 {
-	b2CheckDef( def );
+	B2_CHECK_DEF( def );
 	B2_ASSERT( b2IsValidFloat( def->density ) && def->density >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->friction ) && def->friction >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->restitution ) && def->restitution >= 0.0f );
@@ -211,7 +213,7 @@ b2ShapeId b2CreateSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, const b2
 }
 
 // Destroy a shape on a body. This doesn't need to be called when destroying a body.
-void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body, bool wakeBodies )
+static void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body, bool wakeBodies )
 {
 	int shapeId = shape->id;
 
@@ -281,7 +283,7 @@ void b2DestroyShape( b2ShapeId shapeId, bool updateBodyMass )
 
 b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 {
-	b2CheckDef( def );
+	B2_CHECK_DEF( def );
 	B2_ASSERT( b2IsValidFloat( def->friction ) && def->friction >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->restitution ) && def->restitution >= 0.0f );
 	B2_ASSERT( def->count >= 4 );
@@ -986,6 +988,29 @@ float b2Shape_GetRestitution( b2ShapeId shapeId )
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
 	return shape->restitution;
+}
+
+float b2Shape_GetAllowedClipFraction( b2ShapeId shapeId )
+{
+	b2World* world = b2GetWorld( shapeId.world0 );
+	b2Shape* shape = b2GetShape( world, shapeId );
+	return shape->allowedClipFraction;
+}
+
+void b2Shape_SetAllowedClipFraction( b2ShapeId shapeId, float allowedClipFraction )
+{
+	B2_ASSERT( b2IsValidFloat( allowedClipFraction ) && allowedClipFraction >= 0.0f && allowedClipFraction <= 1.0f );
+
+	b2World* world = b2GetWorld( shapeId.world0 );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return;
+	}
+
+	b2Shape* shape = b2GetShape( world, shapeId );
+	shape->allowedClipFraction = b2ClampFloat( allowedClipFraction, 0.0f, 1.0f );
+	;
 }
 
 b2Filter b2Shape_GetFilter( b2ShapeId shapeId )

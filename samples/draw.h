@@ -19,8 +19,8 @@ struct Camera
 
 	b2Vec2 m_center;
 	float m_zoom;
-	int32_t m_width;
-	int32_t m_height;
+	int m_width;
+	int m_height;
 };
 
 // This class implements Box2D debug drawing callbacks

@@ -3,9 +3,7 @@
 
 #include "id_pool.h"
 
-#include "array.h"
-
-b2IdPool b2CreateIdPool()
+b2IdPool b2CreateIdPool( void )
 {
 	b2IdPool pool = { 0 };
 	pool.freeArray = b2IntArray_Create( 32 );
@@ -21,9 +19,9 @@ void b2DestroyIdPool( b2IdPool* pool )
 int b2AllocId( b2IdPool* pool )
 {
 	int count = pool->freeArray.count;
-	if (count > 0 )
+	if ( count > 0 )
 	{
-		int id = b2IntArray_Pop(&pool->freeArray);
+		int id = b2IntArray_Pop( &pool->freeArray );
 		return id;
 	}
 

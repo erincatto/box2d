@@ -11,7 +11,7 @@ typedef struct b2IdPool
 	int nextIndex;
 } b2IdPool;
 
-b2IdPool b2CreateIdPool();
+b2IdPool b2CreateIdPool( void );
 void b2DestroyIdPool( b2IdPool* pool );
 
 int b2AllocId( b2IdPool* pool );
