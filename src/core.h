@@ -122,5 +122,11 @@
 #define B2_CHECK_DEF( DEF ) B2_ASSERT( DEF->internalValue == B2_SECRET_COOKIE )
 
 void* b2Alloc( int size );
+#define B2_ALLOC_STRUCT( type ) b2Alloc(sizeof(type))
+#define B2_ALLOC_ARRAY( count, type ) b2Alloc(count * sizeof(type))
+
 void b2Free( void* mem, int size );
+#define B2_FREE_STRUCT( mem, type ) b2Free( mem, sizeof(type));
+#define B2_FREE_ARRAY( mem, count, type ) b2Free(mem, count * sizeof(type))
+
 void* b2GrowAlloc( void* oldMem, int oldSize, int newSize );
