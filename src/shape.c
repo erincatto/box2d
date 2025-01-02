@@ -398,6 +398,10 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 void b2DestroyChain( b2ChainId chainId )
 {
 	b2World* world = b2GetWorldLocked( chainId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
 
 	b2ChainShape* chain = b2GetChainShape( world, chainId );
 	bool wakeBodies = true;
