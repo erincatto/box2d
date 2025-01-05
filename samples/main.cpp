@@ -148,7 +148,7 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 	const char* fontPath = "samples/data/droid_sans.ttf";
 	FILE* file = fopen( fontPath, "rb" );
 
-	if ( file != NULL )
+	if ( file != nullptr )
 	{
 		ImFontConfig fontConfig;
 		fontConfig.RasterizerMultiply = s_windowScale * s_framebufferScale;

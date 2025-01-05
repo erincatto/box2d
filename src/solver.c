@@ -608,8 +608,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 			// Body is not sleepy
 			body->sleepTime = 0.0f;
 
-			const float safetyFactor = 0.5f;
-			if ( body->type == b2_dynamicBody && enableContinuous && maxVelocity * timeStep > safetyFactor * sim->minExtent )
+			if ( body->type == b2_dynamicBody && enableContinuous && maxVelocity * timeStep > body->continuousSafetyFactor * sim->minExtent )
 			{
 				// This flag is only retained for debug draw
 				sim->isFast = true;
@@ -1166,8 +1165,10 @@ static void b2BulletBodyTask( int startIndex, int endIndex, uint32_t threadIndex
 
 #if B2_SIMD_WIDTH == 8
 #define B2_SIMD_SHIFT 3
-#else
+#elif B2_SIMD_WIDTH == 4
 #define B2_SIMD_SHIFT 2
+#else
+#define B2_SIMD_SHIFT 0
 #endif
 
 // Solve with graph coloring

@@ -206,6 +206,12 @@ typedef struct b2BodyDef
 	/// Sleep speed threshold, default is 0.05 meters per second
 	float sleepThreshold;
 
+	/// Continuous collision safety factor in the range [0,1]. Default is 0.25.
+	/// Making this smaller increases safety but reduces performance. Making this
+	/// larger risks tunneling more with big piles of bodies but will increase
+	/// performance.
+	float continuousSafetyFactor;
+
 	/// Use this to store application specific body data.
 	void* userData;
 

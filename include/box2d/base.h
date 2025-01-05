@@ -111,6 +111,7 @@ B2_API b2Version b2GetVersion( void );
 
 //! @cond
 // Timer for profiling. This has platform specific code and may not work on every platform.
+// todo reduce to single uint64 for all platforms (see SDL_systimer.c)
 typedef struct b2Timer
 {
 #if defined( _WIN32 )
@@ -129,7 +130,6 @@ B2_API b2Timer b2CreateTimer( void );
 B2_API int64_t b2GetTicks( b2Timer* timer );
 B2_API float b2GetMilliseconds( const b2Timer* timer );
 B2_API float b2GetMillisecondsAndReset( b2Timer* timer );
-B2_API void b2SleepMilliseconds( int milliseconds );
 B2_API void b2Yield( void );
 
 // Simple djb2 hash function for determinism testing

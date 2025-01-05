@@ -56,7 +56,7 @@ b2BodyId b2MakeBodyId( b2World* world, int bodyId )
 
 b2BodySim* b2GetBodySim( b2World* world, b2Body* body )
 {
-	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, body->setIndex);
+	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, body->setIndex );
 	b2BodySim* bodySim = b2BodySimArray_Get( &set->bodySims, body->localIndex );
 	return bodySim;
 }
@@ -175,6 +175,8 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	B2_ASSERT( b2IsValidFloat( def->linearDamping ) && def->linearDamping >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->angularDamping ) && def->angularDamping >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->sleepThreshold ) && def->sleepThreshold >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( def->continuousSafetyFactor ) );
+	B2_ASSERT( def->continuousSafetyFactor >= 0.0f && def->continuousSafetyFactor <= 1.0f );
 	B2_ASSERT( b2IsValidFloat( def->gravityScale ) );
 
 	b2World* world = b2GetWorldFromId( worldId );
@@ -288,6 +290,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	body->mass = 0.0f;
 	body->inertia = 0.0f;
 	body->sleepThreshold = def->sleepThreshold;
+	body->continuousSafetyFactor = def->continuousSafetyFactor;
 	body->sleepTime = 0.0f;
 	body->type = def->type;
 	body->enableSleep = def->enableSleep;
@@ -774,7 +777,7 @@ void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity )
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
-	if (body->type == b2_staticBody || body->fixedRotation)
+	if ( body->type == b2_staticBody || body->fixedRotation )
 	{
 		return;
 	}
@@ -1049,7 +1052,6 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 
 		b2SolverSet* staticSet = b2SolverSetArray_Get( &world->solverSets, b2_staticSet );
 		b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
-
 
 		// Transfer body to static set
 		b2TransferBody( world, staticSet, awakeSet, body );
@@ -1635,7 +1637,7 @@ bool b2Body_IsBullet( b2BodyId bodyId )
 	return bodySim->isBullet;
 }
 
-void b2Body_EnableSensorEvents(b2BodyId bodyId, bool flag)
+void b2Body_EnableSensorEvents( b2BodyId bodyId, bool flag )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
@@ -1648,7 +1650,7 @@ void b2Body_EnableSensorEvents(b2BodyId bodyId, bool flag)
 	}
 }
 
-void b2Body_EnableContactEvents(b2BodyId bodyId, bool flag)
+void b2Body_EnableContactEvents( b2BodyId bodyId, bool flag )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );

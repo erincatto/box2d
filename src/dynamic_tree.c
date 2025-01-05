@@ -1107,11 +1107,14 @@ b2TreeStats b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_
 			}
 			else
 			{
-				B2_ASSERT( stackCount < B2_TREE_STACK_SIZE - 1 );
 				if ( stackCount < B2_TREE_STACK_SIZE - 1 )
 				{
 					stack[stackCount++] = node->child1;
 					stack[stackCount++] = node->child2;
+				}
+				else
+				{
+					B2_ASSERT( stackCount < B2_TREE_STACK_SIZE - 1 );
 				}
 			}
 		}
@@ -1215,7 +1218,6 @@ b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInp
 		}
 		else
 		{
-			B2_ASSERT( stackCount < B2_TREE_STACK_SIZE - 1 );
 			if ( stackCount < B2_TREE_STACK_SIZE - 1 )
 			{
 				b2Vec2 c1 = b2AABB_Center( nodes[node->child1].aabb );
@@ -1230,6 +1232,10 @@ b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInp
 					stack[stackCount++] = node->child1;
 					stack[stackCount++] = node->child2;
 				}
+			}
+			else
+			{
+				B2_ASSERT( stackCount < B2_TREE_STACK_SIZE - 1 );
 			}
 		}
 	}
@@ -1340,7 +1346,6 @@ b2TreeStats b2DynamicTree_ShapeCast( const b2DynamicTree* tree, const b2ShapeCas
 		}
 		else
 		{
-			B2_ASSERT( stackCount < B2_TREE_STACK_SIZE - 1 );
 			if ( stackCount < B2_TREE_STACK_SIZE - 1 )
 			{
 				b2Vec2 c1 = b2AABB_Center( nodes[node->child1].aabb );
@@ -1355,6 +1360,10 @@ b2TreeStats b2DynamicTree_ShapeCast( const b2DynamicTree* tree, const b2ShapeCas
 					stack[stackCount++] = node->child1;
 					stack[stackCount++] = node->child2;
 				}
+			}
+			else
+			{
+				B2_ASSERT( stackCount < B2_TREE_STACK_SIZE - 1 );
 			}
 		}
 	}
@@ -1887,10 +1896,13 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 			// Handle children
 			nodeIndex = node->child1;
 
-			B2_ASSERT( stackCount < B2_TREE_STACK_SIZE );
 			if ( stackCount < B2_TREE_STACK_SIZE )
 			{
 				stack[stackCount++] = node->child2;
+			}
+			else
+			{
+				B2_ASSERT( stackCount < B2_TREE_STACK_SIZE );
 			}
 
 			node = nodes + nodeIndex;

@@ -78,6 +78,7 @@
 	#endif
 #else
 	#define B2_SIMD_NONE
+	// note: I tried width of 1 and got no performance change
 	#define B2_SIMD_WIDTH 4
 #endif
 

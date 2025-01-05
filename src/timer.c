@@ -65,12 +65,6 @@ float b2GetMillisecondsAndReset( b2Timer* timer )
 	return ms;
 }
 
-void b2SleepMilliseconds( int milliseconds )
-{
-	// also SwitchToThread()
-	Sleep( (DWORD)milliseconds );
-}
-
 void b2Yield()
 {
 	SwitchToThread();
@@ -137,14 +131,6 @@ float b2GetMillisecondsAndReset( b2Timer* timer )
 	return (float)( sec_diff * 1000.0 + nsec_diff / 1000000.0 );
 }
 
-void b2SleepMilliseconds( int milliseconds )
-{
-	struct timespec ts;
-	ts.tv_sec = milliseconds / 1000;
-	ts.tv_nsec = ( milliseconds % 1000 ) * 1000000;
-	nanosleep( &ts, NULL );
-}
-
 void b2Yield()
 {
 	sched_yield();
@@ -197,14 +183,6 @@ float b2GetMillisecondsAndReset( b2Timer* timer )
 	return ms;
 }
 
-void b2SleepMilliseconds( int milliseconds )
-{
-	struct timespec ts;
-	ts.tv_sec = milliseconds / 1000;
-	ts.tv_nsec = ( milliseconds % 1000 ) * 1000000;
-	nanosleep( &ts, NULL );
-}
-
 void b2Yield()
 {
 	sched_yield();
@@ -228,11 +206,6 @@ float b2GetMillisecondsAndReset( b2Timer* timer )
 {
 	( (void)( timer ) );
 	return 0.0f;
-}
-
-void b2SleepMilliseconds( int milliseconds )
-{
-	( (void)( milliseconds ) );
 }
 
 void b2Yield()

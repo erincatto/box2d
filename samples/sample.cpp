@@ -109,6 +109,8 @@ Sample::Sample( Settings& settings )
 	worldDef.userTaskContext = this;
 	worldDef.enableSleep = settings.enableSleep;
 
+	worldDef.restitutionMixingRule = b2_mixMaximum;
+
 	m_worldId = b2CreateWorld( &worldDef );
 	m_textLine = 30;
 	m_textIncrement = 22;

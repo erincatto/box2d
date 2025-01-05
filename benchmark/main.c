@@ -265,7 +265,7 @@ int main( int argc, char** argv )
 
 		printf( "benchmark: %s, steps = %d\n", benchmarks[benchmarkIndex].name, stepCount );
 
-		float maxFps[THREAD_LIMIT] = { 0 };
+		float minTime[THREAD_LIMIT] = { 0 };
 
 		for ( int threadCount = 1; threadCount <= maxThreadCount; ++threadCount )
 		{
@@ -332,10 +332,16 @@ int main( int argc, char** argv )
 				}
 
 				float ms = b2GetMilliseconds( &timer );
-				float fps = 1000.0f * stepCount / ms;
-				printf( "run %d : %g (ms), %g (fps)\n", runIndex, ms, fps );
+				printf( "run %d : %g (ms)\n", runIndex, ms );
 
-				maxFps[threadCount - 1] = b2MaxFloat( maxFps[threadCount - 1], fps );
+				if (runIndex == 0)
+				{
+					minTime[threadCount - 1] = ms ;
+				}
+				else
+				{
+					minTime[threadCount - 1] = b2MinFloat( minTime[threadCount - 1], ms );
+				}
 
 				if ( countersAcquired == false )
 				{
@@ -388,10 +394,10 @@ int main( int argc, char** argv )
 			continue;
 		}
 
-		fprintf( file, "threads,fps\n" );
+		fprintf( file, "threads, ms\n" );
 		for ( int threadIndex = 1; threadIndex <= maxThreadCount; ++threadIndex )
 		{
-			fprintf( file, "%d,%g\n", threadIndex, maxFps[threadIndex - 1] );
+			fprintf( file, "%d,%g\n", threadIndex, minTime[threadIndex - 1] );
 		}
 
 		fclose( file );
