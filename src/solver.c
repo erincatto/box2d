@@ -1220,7 +1220,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stepContext->states = awakeSet->bodyStates.data;
 
 		// count contacts, joints, and colors
-		int awakeContactCount = 0;
 		int awakeJointCount = 0;
 		int activeColorCount = 0;
 		for ( int i = 0; i < B2_GRAPH_COLOR_COUNT - 1; ++i )
@@ -1229,7 +1228,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			int perColorJointCount = colors[i].jointSims.count;
 			int occupancyCount = perColorContactCount + perColorJointCount;
 			activeColorCount += occupancyCount > 0 ? 1 : 0;
-			awakeContactCount += perColorContactCount;
 			awakeJointCount += perColorJointCount;
 		}
 

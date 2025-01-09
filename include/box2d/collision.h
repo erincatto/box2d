@@ -729,8 +729,7 @@ typedef float b2TreeShapeCastCallbackFcn( const b2ShapeCastInput* input, int pro
 B2_API b2TreeStats b2DynamicTree_ShapeCast( const b2DynamicTree* tree, const b2ShapeCastInput* input, uint64_t maskBits,
 											b2TreeShapeCastCallbackFcn* callback, void* context );
 
-/// Compute the height of the binary tree in O(N) time. Should not be
-/// called often.
+/// Get the height of the binary tree.
 B2_API int b2DynamicTree_GetHeight( const b2DynamicTree* tree );
 
 /// Get the ratio of the sum of the node areas to the root area.

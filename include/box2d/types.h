@@ -120,10 +120,14 @@ typedef struct b2WorldDef
 	/// Enable continuous collision
 	bool enableContinuous;
 
-	/// Number of workers to use with the provided task system. Box2D performs best when using only
-	/// performance cores and accessing a single L2 cache. Efficiency cores and hyper-threading provide
-	/// little benefit and may even harm performance.
-	int workerCount;
+/// Number of workers to use with the provided task system. Box2D performs best when using only
+/// performance cores and accessing a single L2 cache. Efficiency cores and hyper-threading provide
+/// little benefit and may even harm performance.
+/// @note Box2D does not create threads. This is the number of threads your applications has created
+/// that you are allocating to b2World_Step.
+/// @warning Do not modify the default value unless you are also providing a task system and providing
+/// task callbacks (enqueueTask and finishTask).
+int workerCount;
 
 	/// Function to spawn tasks
 	b2EnqueueTaskCallback* enqueueTask;
@@ -624,7 +628,7 @@ B2_API b2MotorJointDef b2DefaultMotorJointDef( void );
 /// @ingroup mouse_joint
 typedef struct b2MouseJointDef
 {
-	/// The first attached body.
+	/// The first attached body. This is assumed to be static.
 	b2BodyId bodyIdA;
 
 	/// The second attached body.

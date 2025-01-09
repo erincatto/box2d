@@ -661,6 +661,7 @@ B2_API int b2Shape_GetSensorOverlaps( b2ShapeId shapeId, b2ShapeId* overlappedSh
 B2_API b2AABB b2Shape_GetAABB( b2ShapeId shapeId );
 
 /// Get the closest point on a shape to a target point. Target and result are in world space.
+/// todo need sample
 B2_API b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target );
 
 /// Chain Shape
@@ -746,10 +747,10 @@ B2_API void* b2Joint_GetUserData( b2JointId jointId );
 /// Wake the bodies connect to this joint
 B2_API void b2Joint_WakeBodies( b2JointId jointId );
 
-/// Get the current constraint force for this joint
+/// Get the current constraint force for this joint. Usually in Newtons.
 B2_API b2Vec2 b2Joint_GetConstraintForce( b2JointId jointId );
 
-/// Get the current constraint torque for this joint
+/// Get the current constraint torque for this joint. Usually in Newton * meters.
 B2_API float b2Joint_GetConstraintTorque( b2JointId jointId );
 
 /**
