@@ -608,7 +608,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 			// Body is not sleepy
 			body->sleepTime = 0.0f;
 
-			if ( body->type == b2_dynamicBody && enableContinuous && maxVelocity * timeStep > body->continuousSafetyFactor * sim->minExtent )
+			if ( body->type == b2_dynamicBody && enableContinuous && maxVelocity * timeStep > 0.5f * sim->minExtent )
 			{
 				// This flag is only retained for debug draw
 				sim->isFast = true;
@@ -1800,7 +1800,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2TracyCZoneNC( refit_bvh, "Refit BVH", b2_colorFireBrick, true );
 		b2Timer refitTimer = b2CreateTimer();
 
-		b2ValidateNoEnlarged( &world->broadPhase );
 
 		// Finish the user tree task that was queued earlier in the time step. This must be complete before touching the
 		// broad-phase.
@@ -1810,6 +1809,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			world->userTreeTask = NULL;
 			world->activeTaskCount -= 1;
 		}
+
+		b2ValidateNoEnlarged( &world->broadPhase );
 
 		// Gather bits for all sim bodies that have enlarged AABBs
 		b2BitSet* enlargedBodyBitSet = &world->taskContexts.data[0].enlargedSimBitSet;

@@ -120,14 +120,14 @@ typedef struct b2WorldDef
 	/// Enable continuous collision
 	bool enableContinuous;
 
-/// Number of workers to use with the provided task system. Box2D performs best when using only
-/// performance cores and accessing a single L2 cache. Efficiency cores and hyper-threading provide
-/// little benefit and may even harm performance.
-/// @note Box2D does not create threads. This is the number of threads your applications has created
-/// that you are allocating to b2World_Step.
-/// @warning Do not modify the default value unless you are also providing a task system and providing
-/// task callbacks (enqueueTask and finishTask).
-int workerCount;
+	/// Number of workers to use with the provided task system. Box2D performs best when using only
+	/// performance cores and accessing a single L2 cache. Efficiency cores and hyper-threading provide
+	/// little benefit and may even harm performance.
+	/// @note Box2D does not create threads. This is the number of threads your applications has created
+	/// that you are allocating to b2World_Step.
+	/// @warning Do not modify the default value unless you are also providing a task system and providing
+	/// task callbacks (enqueueTask and finishTask).
+	int workerCount;
 
 	/// Function to spawn tasks
 	b2EnqueueTaskCallback* enqueueTask;
@@ -209,12 +209,6 @@ typedef struct b2BodyDef
 
 	/// Sleep speed threshold, default is 0.05 meters per second
 	float sleepThreshold;
-
-	/// Continuous collision safety factor in the range [0,1]. Default is 0.25.
-	/// Making this smaller increases safety but reduces performance. Making this
-	/// larger risks tunneling more with big piles of bodies but will increase
-	/// performance.
-	float continuousSafetyFactor;
 
 	/// Use this to store application specific body data.
 	void* userData;

@@ -34,7 +34,6 @@ b2BodyDef b2DefaultBodyDef( void )
 	def.type = b2_staticBody;
 	def.rotation = b2Rot_identity;
 	def.sleepThreshold = 0.05f * b2_lengthUnitsPerMeter;
-	def.continuousSafetyFactor = 0.25f;
 	def.gravityScale = 1.0f;
 	def.enableSleep = true;
 	def.isAwake = true;
