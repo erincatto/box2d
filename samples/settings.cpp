@@ -5,6 +5,8 @@
 #include "settings.h"
 
 // todo consider using https://github.com/skeeto/pdjson
+#include "../src/core.h"
+
 #include <assert.h>
 #include <jsmn.h>
 #include <stdio.h>
@@ -33,6 +35,7 @@ static bool ReadFile( char*& data, int& size, const char* filename )
 
 	data = (char*)malloc( size + 1 );
 	size_t count = fread( data, size, 1, file );
+	B2_MAYBE_UNUSED( count );
 	fclose( file );
 	data[size] = 0;
 

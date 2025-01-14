@@ -467,7 +467,7 @@ public:
 		}
 
 		{
-			b2Circle circle = { 0 };
+			b2Circle circle = { };
 			circle.radius = 2.0f;
 
 			b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -1928,7 +1928,7 @@ public:
 			points[count--] = { 20.0f, 0.0f };
 
 			float hs[10] = { 0.25f, 1.0f, 4.0f, 0.0f, 0.0f, -1.0f, -2.0f, -2.0f, -1.25f, 0.0f };
-			float x = 20.0f, y1 = 0.0f, dx = 5.0f;
+			float x = 20.0f, dx = 5.0f;
 
 			for ( int j = 0; j < 2; ++j )
 			{
@@ -1936,7 +1936,6 @@ public:
 				{
 					float y2 = hs[i];
 					points[count--] = { x + dx, y2 };
-					y1 = y2;
 					x += dx;
 				}
 			}

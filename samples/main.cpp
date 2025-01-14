@@ -31,7 +31,7 @@
 #define FrameMark
 #endif
 
-#if defined( _WIN32 )
+#if defined( _WIN32 ) && 0
 #include <crtdbg.h>
 
 static int MyAllocHook( int allocType, void* userData, size_t size, int blockType, long requestNumber,
@@ -637,7 +637,7 @@ int main( int, char** )
 
 	float frameTime = 0.0;
 
-	int32_t frame = 0;
+	//int32_t frame = 0;
 
 	while ( !glfwWindowShouldClose( g_mainWindow ) )
 	{
@@ -752,12 +752,12 @@ int main( int, char** )
 		// Limit frame rate to 60Hz
 		double time2 = glfwGetTime();
 		double targetTime = time1 + 1.0f / 60.0f;
-		int loopCount = 0;
+		//int loopCount = 0;
 		while ( time2 < targetTime )
 		{
 			b2Yield();
 			time2 = glfwGetTime();
-			++loopCount;
+			//++loopCount;
 		}
 
 		frameTime = (float)( time2 - time1 );
@@ -765,7 +765,7 @@ int main( int, char** )
 		//{
 		//	printf("loop count = %d, frame time = %.1f\n", loopCount, 1000.0f * frameTime);
 		// }
-		++frame;
+		//++frame;
 	}
 
 	delete s_sample;

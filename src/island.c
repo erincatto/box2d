@@ -854,14 +854,14 @@ void b2SplitIslandTask( int startIndex, int endIndex, uint32_t threadIndex, void
 	B2_MAYBE_UNUSED( endIndex );
 	B2_MAYBE_UNUSED( threadIndex );
 
-	b2Timer timer = b2CreateTimer();
+	uint64_t ticks = b2GetTicks();
 	b2World* world = context;
 
 	B2_ASSERT( world->splitIslandId != B2_NULL_INDEX );
 
 	b2SplitIsland( world, world->splitIslandId );
 
-	world->profile.splitIslands += b2GetMilliseconds( &timer );
+	world->profile.splitIslands += b2GetMilliseconds( ticks );
 	b2TracyCZoneEnd( split );
 }
 

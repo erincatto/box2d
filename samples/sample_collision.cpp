@@ -518,7 +518,6 @@ public:
 
 		float y = -4.0f;
 
-		bool isStatic = false;
 		m_tree = b2DynamicTree_Create();
 
 		const b2Vec2 aabbMargin = { 0.1f, 0.1f };
@@ -756,7 +755,7 @@ public:
 		{
 			case Update_Incremental:
 			{
-				b2Timer timer = b2CreateTimer();
+				uint64_t ticks = b2GetTicks();
 				for ( int i = 0; i < m_proxyCount; ++i )
 				{
 					Proxy* p = m_proxies + i;
@@ -765,7 +764,7 @@ public:
 						b2DynamicTree_MoveProxy( &m_tree, p->proxyId, p->fatBox );
 					}
 				}
-				float ms = b2GetMilliseconds( &timer );
+				float ms = b2GetMilliseconds( ticks );
 				g_draw.DrawString( 5, m_textLine, "incremental : %.3f ms", ms );
 				m_textLine += m_textIncrement;
 			}
@@ -782,9 +781,9 @@ public:
 					}
 				}
 
-				b2Timer timer = b2CreateTimer();
+				uint64_t ticks = b2GetTicks();
 				int boxCount = b2DynamicTree_Rebuild( &m_tree, true );
-				float ms = b2GetMilliseconds( &timer );
+				float ms = b2GetMilliseconds( ticks );
 				g_draw.DrawString( 5, m_textLine, "full build %d : %.3f ms", boxCount, ms );
 				m_textLine += m_textIncrement;
 			}
@@ -801,9 +800,9 @@ public:
 					}
 				}
 
-				b2Timer timer = b2CreateTimer();
+				uint64_t ticks = b2GetTicks();
 				int boxCount = b2DynamicTree_Rebuild( &m_tree, false );
-				float ms = b2GetMilliseconds( &timer );
+				float ms = b2GetMilliseconds( ticks );
 				g_draw.DrawString( 5, m_textLine, "partial rebuild %d : %.3f ms", boxCount, ms );
 				m_textLine += m_textIncrement;
 			}
@@ -1056,7 +1055,7 @@ public:
 
 		b2HexColor color1 = b2_colorYellow;
 
-		b2CastOutput output = { 0 };
+		b2CastOutput output = { };
 		float maxFraction = 1.0f;
 
 		// circle
@@ -1728,7 +1727,7 @@ public:
 										RayCastSortedCallback };
 			b2CastResultFcn* modeFcn = fcns[m_mode];
 
-			RayCastContext context = { 0 };
+			RayCastContext context = { };
 
 			// Must initialize fractions for sorting
 			context.fractions[0] = FLT_MAX;
@@ -2162,7 +2161,7 @@ public:
 		{
 			b2World_OverlapPolygon( m_worldId, &m_queryBox, transform, b2DefaultQueryFilter(), OverlapWorld::OverlapResultFcn,
 									this );
-			b2Vec2 points[B2_MAX_POLYGON_VERTICES] = { 0 };
+			b2Vec2 points[B2_MAX_POLYGON_VERTICES] = { };
 			for ( int i = 0; i < m_queryBox.count; ++i )
 			{
 				points[i] = b2TransformPoint( transform, m_queryBox.vertices[i] );
@@ -2744,7 +2743,6 @@ public:
 			b2Manifold m2 = b2CollideChainSegmentAndPolygon( &segment2, transform1, &rox, transform2, &m_smgroxCache2 );
 
 			{
-				b2Vec2 g1 = b2TransformPoint( transform1, segment1.ghost1 );
 				b2Vec2 g2 = b2TransformPoint( transform1, segment1.ghost2 );
 				b2Vec2 p1 = b2TransformPoint( transform1, segment1.segment.point1 );
 				b2Vec2 p2 = b2TransformPoint( transform1, segment1.segment.point2 );
@@ -2756,7 +2754,6 @@ public:
 
 			{
 				b2Vec2 g1 = b2TransformPoint( transform1, segment2.ghost1 );
-				b2Vec2 g2 = b2TransformPoint( transform1, segment2.ghost2 );
 				b2Vec2 p1 = b2TransformPoint( transform1, segment2.segment.point1 );
 				b2Vec2 p2 = b2TransformPoint( transform1, segment2.segment.point2 );
 				g_draw.DrawSegment( g1, p1, b2_colorLightGray );
@@ -2787,7 +2784,6 @@ public:
 			b2Manifold m2 = b2CollideChainSegmentAndCapsule( &segment2, transform1, &capsule, transform2, &m_smgcapCache2 );
 
 			{
-				b2Vec2 g1 = b2TransformPoint( transform1, segment1.ghost1 );
 				b2Vec2 g2 = b2TransformPoint( transform1, segment1.ghost2 );
 				b2Vec2 p1 = b2TransformPoint( transform1, segment1.segment.point1 );
 				b2Vec2 p2 = b2TransformPoint( transform1, segment1.segment.point2 );
@@ -2800,7 +2796,6 @@ public:
 
 			{
 				b2Vec2 g1 = b2TransformPoint( transform1, segment2.ghost1 );
-				b2Vec2 g2 = b2TransformPoint( transform1, segment2.ghost2 );
 				b2Vec2 p1 = b2TransformPoint( transform1, segment2.segment.point1 );
 				b2Vec2 p2 = b2TransformPoint( transform1, segment2.segment.point2 );
 				g_draw.DrawSegment( g1, p1, b2_colorLightGray );
@@ -3288,7 +3283,7 @@ public:
 	{
 		Sample::Step( settings );
 
-		b2ShapeCastPairInput input = { 0 };
+		b2ShapeCastPairInput input = { };
 		input.proxyA = b2MakeProxy( m_vAs, m_countA, m_radiusA );
 		input.proxyB = b2MakeProxy( m_vBs, m_countB, m_radiusB );
 		input.transformA = m_transformA;

@@ -244,6 +244,23 @@ void Sample::MouseMove( b2Vec2 p )
 	}
 }
 
+void Sample::DrawTextLine(const char* text, ...)
+{
+	va_list arg;
+	va_start( arg, text );
+	ImGui::Begin( "Overlay", nullptr,
+				  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
+					  ImGuiWindowFlags_NoScrollbar );
+	ImGui::PushFont( g_draw.m_regularFont );
+	ImGui::SetCursorPos( ImVec2( 5.0f, float(m_textLine) ) );
+	ImGui::TextColoredV( ImColor( 230, 153, 153, 255 ), text, arg );
+	ImGui::PopFont();
+	ImGui::End();
+	va_end( arg );
+
+	m_textLine += m_textIncrement;
+}
+
 void Sample::ResetProfile()
 {
 	m_totalProfile = {};

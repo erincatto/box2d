@@ -951,7 +951,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDont
 		b2_stageStoreImpulses
 		*/
 
-		b2Timer timer = b2CreateTimer();
+		uint64_t ticks = b2GetTicks();
 
 		int bodySyncIndex = 1;
 		int stageIndex = 0;
@@ -978,7 +978,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDont
 		b2PrepareOverflowJoints( context );
 		b2PrepareOverflowContacts( context );
 
-		profile->prepareConstraints += b2GetMillisecondsAndReset( &timer );
+		profile->prepareConstraints += b2GetMillisecondsAndReset( &ticks );
 
 		int subStepCount = context->subStepCount;
 		for ( int i = 0; i < subStepCount; ++i )
@@ -994,7 +994,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDont
 			iterStageIndex += 1;
 			bodySyncIndex += 1;
 
-			profile->integrateVelocities += b2GetMillisecondsAndReset( &timer );
+			profile->integrateVelocities += b2GetMillisecondsAndReset( &ticks );
 
 			// warm start constraints
 			b2WarmStartOverflowJoints( context );
@@ -1009,7 +1009,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDont
 			}
 			graphSyncIndex += 1;
 
-			profile->warmStart += b2GetMillisecondsAndReset( &timer );
+			profile->warmStart += b2GetMillisecondsAndReset( &ticks );
 
 			// solve constraints
 			bool useBias = true;
@@ -1025,7 +1025,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDont
 			}
 			graphSyncIndex += 1;
 
-			profile->solveImpulses += b2GetMillisecondsAndReset( &timer );
+			profile->solveImpulses += b2GetMillisecondsAndReset( &ticks );
 
 			// integrate positions
 			B2_ASSERT( stages[iterStageIndex].type == b2_stageIntegratePositions );
@@ -1034,7 +1034,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDont
 			iterStageIndex += 1;
 			bodySyncIndex += 1;
 
-			profile->integratePositions += b2GetMillisecondsAndReset( &timer );
+			profile->integratePositions += b2GetMillisecondsAndReset( &ticks );
 
 			// relax constraints
 			useBias = false;
@@ -1050,7 +1050,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDont
 			}
 			graphSyncIndex += 1;
 
-			profile->relaxImpulses += b2GetMillisecondsAndReset( &timer );
+			profile->relaxImpulses += b2GetMillisecondsAndReset( &ticks );
 		}
 
 		// advance the stage according to the sub-stepping tasks just completed
@@ -1073,7 +1073,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDont
 			stageIndex += activeColorCount;
 		}
 
-		profile->applyRestitution += b2GetMillisecondsAndReset( &timer );
+		profile->applyRestitution += b2GetMillisecondsAndReset( &ticks );
 
 		b2StoreOverflowImpulses( context );
 
@@ -1081,7 +1081,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDont
 		B2_ASSERT( stages[stageIndex].type == b2_stageStoreImpulses );
 		b2ExecuteMainStage( stages + stageIndex, context, syncBits );
 
-		profile->storeImpulses += b2GetMillisecondsAndReset( &timer );
+		profile->storeImpulses += b2GetMillisecondsAndReset( &ticks );
 
 		// Signal workers to finish
 		atomic_store( &context->atomicSyncBits, UINT_MAX );
@@ -1179,11 +1179,11 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	// Merge islands
 	{
 		b2TracyCZoneNC( merge, "Merge", b2_colorLightGoldenRodYellow, true );
-		b2Timer mergeTimer = b2CreateTimer();
+		uint64_t mergeTicks = b2GetTicks();
 
 		b2MergeAwakeIslands( world );
 
-		world->profile.mergeIslands = b2GetMilliseconds( &mergeTimer );
+		world->profile.mergeIslands = b2GetMilliseconds( mergeTicks );
 		b2TracyCZoneEnd( merge );
 	}
 
@@ -1211,7 +1211,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stepContext->bulletBodies = b2AllocateArenaItem( &world->stackAllocator, awakeBodyCount * sizeof( int ), "bullet bodies" );
 
 		b2TracyCZoneNC( prepare_stages, "Prepare Stages", b2_colorDarkOrange, true );
-		b2Timer prepareTimer = b2CreateTimer();
+		uint64_t prepareTicks = b2GetTicks();
 
 		b2ConstraintGraph* graph = &world->constraintGraph;
 		b2GraphColor* colors = graph->colors;
@@ -1660,11 +1660,11 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stepContext->stages = stages;
 		stepContext->atomicSyncBits = 0;
 
-		world->profile.prepareStages = b2GetMillisecondsAndReset( &prepareTimer );
+		world->profile.prepareStages = b2GetMillisecondsAndReset( &prepareTicks );
 		b2TracyCZoneEnd( prepare_stages );
 
 		b2TracyCZoneNC( solve_constraints, "Solve Constraints", b2_colorIndigo, true );
-		b2Timer constraintTimer = b2CreateTimer();
+		uint64_t constraintTicks = b2GetTicks();
 
 		// Must use worker index because thread 0 can be assigned multiple tasks by enkiTS
 		for ( int i = 0; i < workerCount; ++i )
@@ -1694,11 +1694,11 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			}
 		}
 
-		world->profile.solveConstraints = b2GetMillisecondsAndReset( &constraintTimer );
+		world->profile.solveConstraints = b2GetMillisecondsAndReset( &constraintTicks );
 		b2TracyCZoneEnd( solve_constraints );
 
 		b2TracyCZoneNC( update_transforms, "Update Transforms", b2_colorMediumSeaGreen, true );
-		b2Timer transformTimer = b2CreateTimer();
+		uint64_t transformTicks = b2GetTicks();
 
 		// Prepare contact, enlarged body, and island bit sets used in body finalization.
 		int awakeIslandCount = awakeSet->islandSims.count;
@@ -1730,7 +1730,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2FreeArenaItem( &world->stackAllocator, joints );
 		b2FreeArenaItem( &world->stackAllocator, contacts );
 
-		world->profile.transforms = b2GetMillisecondsAndReset( &transformTimer );
+		world->profile.transforms = b2GetMilliseconds( transformTicks );
 		b2TracyCZoneEnd( update_transforms );
 	}
 
@@ -1739,7 +1739,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	// todo_erin perhaps do this in parallel with other work below
 	{
 		b2TracyCZoneNC( hit_events, "Hit Events", b2_colorRosyBrown, true );
-		b2Timer hitTimer = b2CreateTimer();
+		uint64_t hitTicks = b2GetTicks();
 
 		B2_ASSERT( world->contactHitEvents.count == 0 );
 
@@ -1792,14 +1792,13 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			}
 		}
 
-		world->profile.hitEvents = b2GetMillisecondsAndReset( &hitTimer );
+		world->profile.hitEvents = b2GetMillisecondsAndReset( &hitTicks );
 		b2TracyCZoneEnd( hit_events );
 	}
 
 	{
 		b2TracyCZoneNC( refit_bvh, "Refit BVH", b2_colorFireBrick, true );
-		b2Timer refitTimer = b2CreateTimer();
-
+		uint64_t refitTicks = b2GetTicks();
 
 		// Finish the user tree task that was queued earlier in the time step. This must be complete before touching the
 		// broad-phase.
@@ -1888,14 +1887,14 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		b2ValidateBroadphase( &world->broadPhase );
 
-		world->profile.refit = b2GetMillisecondsAndReset( &refitTimer );
+		world->profile.refit = b2GetMilliseconds( refitTicks );
 		b2TracyCZoneEnd( refit_bvh );
 	}
 
 	if ( stepContext->bulletBodyCount > 0 )
 	{
 		b2TracyCZoneNC( bullets, "Bullets", b2_colorLightYellow, true );
-		b2Timer bulletTimer = b2CreateTimer();
+		uint64_t bulletTicks = b2GetTicks();
 
 		// Fast bullet bodies
 		// Note: a bullet body may be moving slow
@@ -1963,7 +1962,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			}
 		}
 
-		world->profile.bullets = b2GetMillisecondsAndReset( &bulletTimer );
+		world->profile.bullets = b2GetMilliseconds( bulletTicks );
 		b2TracyCZoneEnd( bullets );
 	}
 
@@ -1978,7 +1977,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	if ( world->enableSleep == true )
 	{
 		b2TracyCZoneNC( sleep_islands, "Island Sleep", b2_colorLightSlateGray, true );
-		b2Timer sleepTimer = b2CreateTimer();
+		uint64_t sleepTicks = b2GetTicks();
 
 		// Collect split island candidate for the next time step. No need to split if sleeping is disabled.
 		B2_ASSERT( world->splitIslandId == B2_NULL_INDEX );
@@ -2026,7 +2025,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		b2ValidateSolverSets( world );
 
-		world->profile.sleepIslands = b2GetMillisecondsAndReset( &sleepTimer );
+		world->profile.sleepIslands = b2GetMilliseconds( sleepTicks );
 		b2TracyCZoneEnd( sleep_islands );
 	}
 }

@@ -1086,7 +1086,7 @@ void b2Shape_SetFilter( b2ShapeId shapeId, b2Filter filter )
 	}
 
 	// If the category bits change, I need to destroy the proxy because it affects the tree sorting.
-	bool destroyProxy = filter.categoryBits == shape->filter.categoryBits;
+	bool destroyProxy = filter.categoryBits != shape->filter.categoryBits;
 
 	shape->filter = filter;
 

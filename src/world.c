@@ -715,13 +715,13 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	world->activeTaskCount = 0;
 	world->taskCount = 0;
 
-	b2Timer stepTimer = b2CreateTimer();
+	uint64_t stepTicks = b2GetTicks();
 
 	// Update collision pairs and create contacts
 	{
-		b2Timer timer = b2CreateTimer();
+		uint64_t pairTicks = b2GetTicks();
 		b2UpdateBroadPhasePairs( world );
-		world->profile.pairs = b2GetMilliseconds( &timer );
+		world->profile.pairs = b2GetMilliseconds( pairTicks );
 	}
 
 	b2StepContext context = { 0 };
@@ -758,22 +758,22 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 
 	// Update contacts
 	{
-		b2Timer timer = b2CreateTimer();
+		uint64_t collideTicks = b2GetTicks();
 		b2Collide( &context );
-		world->profile.collide = b2GetMilliseconds( &timer );
+		world->profile.collide = b2GetMilliseconds(collideTicks );
 	}
 
 	// Integrate velocities, solve velocity constraints, and integrate positions.
 	if ( context.dt > 0.0f )
 	{
-		b2Timer timer = b2CreateTimer();
+		uint64_t solveTicks = b2GetTicks();
 		b2Solve( world, &context );
-		world->profile.solve = b2GetMilliseconds( &timer );
+		world->profile.solve = b2GetMilliseconds( solveTicks );
 	}
 
 	world->locked = false;
 
-	world->profile.step = b2GetMilliseconds( &stepTimer );
+	world->profile.step = b2GetMilliseconds( stepTicks );
 
 	B2_ASSERT( b2GetArenaAllocation( &world->stackAllocator ) == 0 );
 

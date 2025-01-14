@@ -25,7 +25,7 @@ set_target_properties(test PROPERTIES
 # Special access to Box2D internals for testing
 target_include_directories(test PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
-if (MSVC)
+if (MSVC AND CMAKE_C_COMPILER_ID MATCHES "MSVC")
 	target_compile_options(test PRIVATE /experimental:c11atomics)
 endif()
 

@@ -55,6 +55,7 @@ public:
 	virtual void MouseUp( b2Vec2 p, int button );
 	virtual void MouseMove( b2Vec2 p );
 
+	void DrawTextLine( const char* text, ... );
 	void ResetProfile();
 	void ShiftOrigin( b2Vec2 newOrigin );
 

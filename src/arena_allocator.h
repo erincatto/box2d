@@ -7,6 +7,14 @@
 
 B2_ARRAY_DECLARE( b2ArenaEntry, b2ArenaEntry );
 
+typedef struct b2ArenaEntry
+{
+	char* data;
+	const char* name;
+	int size;
+	bool usedMalloc;
+} b2ArenaEntry;
+
 // This is a stack-like arena allocator used for fast per step allocations.
 // You must nest allocate/free pairs. The code will B2_ASSERT
 // if you try to interleave multiple allocate/free pairs.
@@ -36,3 +44,5 @@ void b2GrowArena( b2ArenaAllocator* alloc );
 int b2GetArenaCapacity( b2ArenaAllocator* alloc );
 int b2GetArenaAllocation( b2ArenaAllocator* alloc );
 int b2GetMaxArenaAllocation( b2ArenaAllocator* alloc );
+
+B2_ARRAY_INLINE( b2ArenaEntry, b2ArenaEntry );

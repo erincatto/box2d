@@ -201,7 +201,7 @@ public:
 			}
 		}
 
-		b2Circle circle = { 0 };
+		b2Circle circle = { };
 		circle.radius = 0.5f;
 
 		b2Polygon box = b2MakeBox( 0.5f, 0.5f );

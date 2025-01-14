@@ -7,7 +7,7 @@ add_executable(benchmark ${BOX2D_BENCHMARK_FILES})
 
 set_target_properties(benchmark PROPERTIES C_STANDARD 17)
 
-if (MSVC)
+if (MSVC AND CMAKE_C_COMPILER_ID MATCHES "MSVC")
 	target_compile_options(benchmark PRIVATE /experimental:c11atomics)
 endif()
 

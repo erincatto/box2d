@@ -71,7 +71,7 @@ int TableTest( void )
 
 		// Test key search
 		// ~5ns per search on an AMD 7950x
-		b2Timer timer = b2CreateTimer();
+		uint64_t ticks = b2GetTicks();
 
 		k = 0;
 		for ( int32_t i = 0; i < N; ++i )
@@ -87,7 +87,7 @@ int TableTest( void )
 		// uint64_t ticks = b2GetTicks(&timer);
 		// printf("set ticks = %llu\n", ticks);
 
-		float ms = b2GetMilliseconds( &timer );
+		float ms = b2GetMilliseconds( ticks );
 		printf( "set: count = %d, b2ContainsKey = %.5f ms, ave = %.5f us\n", itemCount, ms, 1000.0f * ms / itemCount );
 
 #if B2_SNOOP_TABLE_COUNTERS

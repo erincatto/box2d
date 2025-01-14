@@ -136,7 +136,9 @@ if (MSVC)
 	target_compile_definitions(box2d PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:B2_ENABLE_ASSERT>")
 
 	# Atomics are still considered experimental in Visual Studio 17.8
-	target_compile_options(box2d PRIVATE /experimental:c11atomics)
+	if (CMAKE_C_COMPILER_ID MATCHES "MSVC")
+		target_compile_options(box2d PRIVATE /experimental:c11atomics)
+	endif()
 
 	# All warnings
 	target_compile_options(box2d PRIVATE /W4)

@@ -15,7 +15,7 @@
 #include <vector>
 
 #ifndef NDEBUG
-extern "C" extern int b2_toiHitCount;
+extern "C" int b2_toiHitCount;
 #endif
 
 class BounceHouse : public Sample
@@ -687,7 +687,7 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.friction = m_friction;
 
-			b2Hull hull = { 0 };
+			b2Hull hull = { };
 
 			if ( m_bevel > 0.0f )
 			{

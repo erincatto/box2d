@@ -9,15 +9,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-typedef struct b2ArenaEntry
-{
-	char* data;
-	const char* name;
-	int size;
-	bool usedMalloc;
-} b2ArenaEntry;
-
-B2_ARRAY_INLINE( b2ArenaEntry, b2ArenaEntry );
 B2_ARRAY_SOURCE( b2ArenaEntry, b2ArenaEntry );
 
 b2ArenaAllocator b2CreateArenaAllocator( int capacity )

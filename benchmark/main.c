@@ -315,7 +315,7 @@ int main( int argc, char** argv )
 
 				taskCount = 0;
 
-				b2Timer timer = b2CreateTimer();
+				uint64_t ticks = b2GetTicks();
 
 				for ( int stepIndex = 1; stepIndex < stepCount; ++stepIndex )
 				{
@@ -331,7 +331,7 @@ int main( int argc, char** argv )
 					MinProfile( profiles + stepIndex, &profile );
 				}
 
-				float ms = b2GetMilliseconds( &timer );
+				float ms = b2GetMilliseconds( ticks );
 				printf( "run %d : %g (ms)\n", runIndex, ms );
 
 				if (runIndex == 0)
