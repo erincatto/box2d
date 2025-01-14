@@ -106,7 +106,7 @@ static double s_invFrequency = 0.0;
 
 uint64_t b2GetTicks( void )
 {
-	return = mach_absolute_time();
+	return mach_absolute_time();
 }
 
 float b2GetMilliseconds( uint64_t ticks )
