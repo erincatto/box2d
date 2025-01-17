@@ -246,13 +246,13 @@ static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 		return true;
 	}
 
-	if ( b2ShouldShapesCollide( shapeA->filter, shapeB->filter ) == false )
+	// Sensors are handled elsewhere
+	if ( shapeA->sensorIndex != B2_NULL_INDEX || shapeB->sensorIndex != B2_NULL_INDEX )
 	{
 		return true;
 	}
 
-	// Sensors don't collide with other sensors
-	if ( shapeA->isSensor == true && shapeB->isSensor == true )
+	if ( b2ShouldShapesCollide( shapeA->filter, shapeB->filter ) == false )
 	{
 		return true;
 	}

@@ -273,10 +273,7 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contact->isMarked = false;
 	contact->flags = 0;
 
-	if ( shapeA->isSensor || shapeB->isSensor )
-	{
-		contact->flags |= b2_contactSensorFlag;
-	}
+	B2_ASSERT( shapeA->sensorIndex == B2_NULL_INDEX && shapeB->sensorIndex == B2_NULL_INDEX );
 
 	if ( shapeA->enableSensorEvents || shapeB->enableSensorEvents )
 	{

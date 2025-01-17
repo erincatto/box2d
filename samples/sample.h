@@ -21,7 +21,7 @@ constexpr bool g_sampleDebug = false;
 constexpr bool g_sampleDebug = true;
 #endif
 
-constexpr int32_t k_maxContactPoints = 12 * 2048;
+constexpr int k_maxContactPoints = 12 * 2048;
 
 struct ContactPoint
 {
@@ -33,8 +33,8 @@ struct ContactPoint
 	float normalImpulse;
 	float tangentImpulse;
 	float separation;
-	int32_t constraintIndex;
-	int32_t color;
+	int constraintIndex;
+	int color;
 };
 
 class Sample
@@ -69,17 +69,17 @@ public:
 	enki::TaskScheduler* m_scheduler;
 	class SampleTask* m_tasks;
 
-	int32_t m_taskCount;
+	int m_taskCount;
 	int m_threadCount;
 
 	b2BodyId m_groundBodyId;
 
 	// DestructionListener m_destructionListener;
-	int32_t m_textLine;
+	int m_textLine;
 	b2WorldId m_worldId;
 	b2JointId m_mouseJointId;
-	int32_t m_stepCount;
-	int32_t m_textIncrement;
+	int m_stepCount;
+	int m_textIncrement;
 	b2Profile m_maxProfile;
 	b2Profile m_totalProfile;
 };

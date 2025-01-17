@@ -38,6 +38,8 @@ set(BOX2D_SOURCE_FILES
 	mouse_joint.c
 	prismatic_joint.c
 	revolute_joint.c
+	sensor.c
+	sensor.h
 	shape.c
 	shape.h
 	solver.c

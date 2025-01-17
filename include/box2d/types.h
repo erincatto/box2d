@@ -347,15 +347,6 @@ typedef struct b2ShapeDef
 	/// The density, usually in kg/m^2.
 	float density;
 
-	/// This is used to optimize continuous physics and to prevent hitching when a shape moves fast along
-	/// the surface of a chain shape. This has a value between [0,1]. When the value is 0 then continuous
-	/// physics will try to prevent all clipping but this may result in hitching as a shape slides across
-	/// the junction between two chain segments. A value of 1 allows clipping up to the radius of the
-	/// largest embedded circle centered on the shape centroid. For a circle or capsule this is just the
-	/// radius. Besides hitching this parameter also affects performance. A fraction closer to 1 will have
-	/// better performance. A very small or zero value will do many unnecessary time of impact calculations.
-	float allowedClipFraction;
-
 	/// Collision filtering data.
 	b2Filter filter;
 
@@ -472,6 +463,7 @@ typedef struct b2Profile
 	float refit;
 	float bullets;
 	float sleepIslands;
+	float sensors;
 } b2Profile;
 
 /// Counters that give details of the simulation size.
@@ -1141,12 +1133,13 @@ typedef struct b2ContactData
 /// Prototype for a contact filter callback.
 /// This is called when a contact pair is considered for collision. This allows you to
 /// perform custom logic to prevent collision between shapes. This is only called if
-/// one of the two shapes has custom filtering enabled. @see b2ShapeDef.
+/// one of the two shapes has custom filtering enabled. 
 /// Notes:
 /// - this function must be thread-safe
 /// - this is only called if one of the two shapes has enabled custom filtering
 /// - this is called only for awake dynamic bodies
 /// Return false if you want to disable the collision
+/// @see b2ShapeDef
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
 typedef bool b2CustomFilterFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* context );
@@ -1168,7 +1161,7 @@ typedef bool b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* 
 
 /// Prototype callback for overlap queries.
 /// Called for each shape found in the query.
-/// @see b2World_QueryAABB
+/// @see b2World_OverlapABB
 /// @return false to terminate the query.
 /// @ingroup world
 typedef bool b2OverlapResultFcn( b2ShapeId shapeId, void* context );

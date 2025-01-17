@@ -20,7 +20,6 @@ typedef struct b2Shape
 	float density;
 	float friction;
 	float restitution;
-	float allowedClipFraction;
 
 	b2AABB aabb;
 	b2AABB fatAABB;
@@ -41,7 +40,6 @@ typedef struct b2Shape
 	};
 
 	uint16_t revision;
-	bool isSensor;
 	bool enableSensorEvents;
 	bool enableContactEvents;
 	bool enableHitEvents;

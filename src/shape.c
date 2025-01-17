@@ -109,11 +109,9 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	shape->density = def->density;
 	shape->friction = def->friction;
 	shape->restitution = def->restitution;
-	shape->allowedClipFraction = b2ClampFloat(def->allowedClipFraction, 0.0f, 1.0f);
 	shape->filter = def->filter;
 	shape->userData = def->userData;
 	shape->customColor = def->customColor;
-	shape->isSensor = def->isSensor;
 	shape->enlargedAABB = false;
 	shape->enableSensorEvents = def->enableSensorEvents;
 	shape->enableContactEvents = def->enableContactEvents;
@@ -142,6 +140,16 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	shape->nextShapeId = body->headShapeId;
 	body->headShapeId = shapeId;
 	body->shapeCount += 1;
+
+	if (def->isSensor)
+	{
+		shape->sensorIndex = world->sensors.count;
+		b2IntArray_Push( &world->sensors, shapeId );
+	}
+	else
+	{
+		shape->sensorIndex = B2_NULL_INDEX;
+	}
 
 	b2ValidateSolverSets( world );
 

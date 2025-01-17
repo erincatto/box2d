@@ -15,13 +15,15 @@
 #include "box2d/math_functions.h"
 
 // clang-format off
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "glad/glad.h"
+#include "GLFW/glfw3.h"
 // clang-format on
 
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -98,7 +100,7 @@ void glfwErrorCallback( int error, const char* description )
 	fprintf( stderr, "GLFW error occurred. Code: %d. Description: %s\n", error, description );
 }
 
-static inline int CompareSamples( const void* a, const void* b )
+static int CompareSamples( const void* a, const void* b )
 {
 	SampleEntry* sa = (SampleEntry*)a;
 	SampleEntry* sb = (SampleEntry*)b;
@@ -637,7 +639,7 @@ int main( int, char** )
 
 	float frameTime = 0.0;
 
-	//int32_t frame = 0;
+	// int32_t frame = 0;
 
 	while ( !glfwWindowShouldClose( g_mainWindow ) )
 	{
@@ -671,7 +673,6 @@ int main( int, char** )
 		ImGui_ImplGlfw_CursorPosCallback( g_mainWindow, cursorPosX / s_windowScale, cursorPosY / s_windowScale );
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
-		ImGui_ImplGlfw_CursorPosCallback( g_mainWindow, cursorPosX / s_windowScale, cursorPosY / s_windowScale );
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize.x = float( g_camera.m_width );
@@ -752,7 +753,7 @@ int main( int, char** )
 		// Limit frame rate to 60Hz
 		double time2 = glfwGetTime();
 		double targetTime = time1 + 1.0f / 60.0f;
-		//int loopCount = 0;
+		// int loopCount = 0;
 		while ( time2 < targetTime )
 		{
 			b2Yield();
