@@ -39,7 +39,7 @@ typedef struct b2Shape
 		b2ChainSegment chainSegment;
 	};
 
-	uint16_t revision;
+	uint16_t generation;
 	bool enableSensorEvents;
 	bool enableContactEvents;
 	bool enableHitEvents;

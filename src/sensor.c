@@ -4,6 +4,7 @@
 #include "sensor.h"
 
 #include "body.h"
+#include "contact.h"
 #include "shape.h"
 #include "world.h"
 
@@ -13,20 +14,41 @@
 
 B2_ARRAY_SOURCE( b2Sensor, b2Sensor );
 
-struct b2SensorContext
+struct b2SensorTaskContext
 {
 	b2World* world;
+	b2BitSet sensorEventBits;
+};
+
+struct b2SensorQueryContext
+{
+	struct b2SensorTaskContext* taskContext;
+	b2Sensor* sensor;
 	b2Shape* sensorShape;
 	b2Transform transform;
-	int* resultBuffer;
-	int resultCount;
-	int resultCapacity;
+	b2BitSet sensorEventBits;
 };
+
+// Sensor shapes need to
+// - detect begin and end overlap events
+// - events must be reported in deterministic order
+// - maintain an active list of overlaps for query
+
+// Assumption
+// - sensors don't detect other sensors
+
+// Algorithm
+// Query all sensors for overlaps
+// Check against previous overlaps
+
+// Data structures
+// Each sensor has an double buffered array of overlaps
+// These overlaps use a shape reference with index and generation
 
 static bool b2SensorQueryCallback( int proxyId, int shapeId, void* context )
 {
-	struct b2SensorContext* sensorContext = context;
-	b2Shape* sensorShape = sensorContext->sensorShape;
+	struct b2SensorQueryContext* queryContext = context;
+	b2Shape* sensorShape = queryContext->sensorShape;
 	int sensorShapeId = sensorShape->id;
 
 	if ( shapeId == sensorShapeId )
@@ -34,27 +56,76 @@ static bool b2SensorQueryCallback( int proxyId, int shapeId, void* context )
 		return true;
 	}
 
-	b2World* world = sensorContext->world;
+	b2World* world = queryContext->taskContext->world;
 	b2Shape* otherShape = b2ShapeArray_Get( &world->shapes, shapeId );
 
-	// test for overlap
+	// Sensors don't overlap with other sensors
+	if ( otherShape->sensorIndex != B2_NULL_INDEX )
+	{
+		return true;
+	}
 
-	return true;
+	// Does other shape want sensor events?
+	if ( otherShape->enableSensorEvents == false )
+	{
+		return true;
+	}
+
+	// Check filter
+	if ( b2ShouldShapesCollide( sensorShape->filter, otherShape->filter ) )
+	{
+		return true;
+	}
+
+	b2Transform otherTransform = b2GetBodyTransform( world, otherShape->bodyId );
+
+	b2DistanceInput input;
+	input.proxyA = b2MakeShapeDistanceProxy( sensorShape );
+	input.proxyB = b2MakeShapeDistanceProxy( otherShape );
+	input.transformA = queryContext->transform;
+	input.transformB = otherTransform;
+	input.useRadii = true;
+	b2SimplexCache cache = { 0 };
+	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
+
+	bool overlaps = output.distance < 10.0f * FLT_EPSILON;
+	if ( overlaps == false )
+	{
+		return true;
+	}
+
+	b2Sensor* sensor = queryContext->sensor;
+	b2ShapeRef* shapeRef = b2ShapeRefArray_Add( &sensor->overlaps2 );
+	shapeRef->shapeId = shapeId;
+	shapeRef->generation = otherShape->
+
+						   return true;
 }
 
 void b2OverlapSensors( b2World* world )
 {
+	int sensorCount = world->sensors.count;
+	if ( sensorCount == 0 )
+	{
+		return;
+	}
+
 	struct b2SensorContext context = { 0 };
+	context.sensorEventBits = b2CreateBitSet( sensorCount );
+
 	context.world = world;
-	context.resultBuffer = b2AllocateArenaItem( &world->stackAllocator, 1024 * sizeof( int ), "sensor overlaps" );
-	context.resultCapacity = 1024;
 
 	b2DynamicTree* trees = world->broadPhase.trees;
-	int sensorCount = world->sensors.count;
-	for (int sensorIndex = 0; sensorIndex < sensorCount; ++sensorIndex)
+	for ( int sensorIndex = 0; sensorIndex < sensorCount; ++sensorIndex )
 	{
 		b2Sensor* sensor = world->sensors.data + sensorIndex;
 		b2Shape* sensorShape = b2ShapeArray_Get( &world->shapes, sensor->shapeId );
+
+		// swap overlap arrays
+		b2ShapeRefArray temp = sensor->overlaps1;
+		sensor->overlaps1 = sensor->overlaps2;
+		sensor->overlaps2 = temp;
+		sensor->overlaps2.count = 0;
 
 		context.sensorShape = sensorShape;
 		context.transform = b2GetBodyTransform( world, sensorShape->bodyId );
@@ -67,4 +138,6 @@ void b2OverlapSensors( b2World* world )
 		b2DynamicTree_Query( trees + 1, queryBounds, sensorShape->filter.maskBits, b2SensorQueryCallback, &context );
 		b2DynamicTree_Query( trees + 2, queryBounds, sensorShape->filter.maskBits, b2SensorQueryCallback, &context );
 	}
+
+	// Iterate sensors bits and publish events
 }

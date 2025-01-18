@@ -7,13 +7,20 @@
 
 typedef struct b2World b2World;
 
-typedef struct b2Sensor
+typedef struct b2ShapeRef
 {
 	int shapeId;
-	int overlapStartIndex;
-	int overlapCount;
+	uint16_t generation;
+} b2ShapeRef;
+
+typedef struct b2Sensor
+{
+	b2ShapeRefArray overlaps1;
+	b2ShapeRefArray overlaps2;
+	int shapeId;
 } b2Sensor;
 
 void b2OverlapSensors( b2World* world );
 
+B2_ARRAY_INLINE(b2ShapeRef, b2ShapeRef);
 B2_ARRAY_INLINE(b2Sensor, b2Sensor);

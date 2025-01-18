@@ -102,7 +102,7 @@ b2Joint* b2GetJointFullId( b2World* world, b2JointId jointId )
 {
 	int id = jointId.index1 - 1;
 	b2Joint* joint = b2JointArray_Get( &world->joints, id );
-	B2_ASSERT( joint->jointId == id && joint->revision == jointId.revision );
+	B2_ASSERT( joint->jointId == id && joint->generation == jointId.generation );
 	return joint;
 }
 
@@ -160,7 +160,7 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 	b2Joint* joint = b2JointArray_Get( &world->joints, jointId );
 	joint->jointId = jointId;
 	joint->userData = userData;
-	joint->revision += 1;
+	joint->generation += 1;
 	joint->setIndex = B2_NULL_INDEX;
 	joint->colorIndex = B2_NULL_INDEX;
 	joint->localIndex = B2_NULL_INDEX;
@@ -391,7 +391,7 @@ b2JointId b2CreateDistanceJoint( b2WorldId worldId, const b2DistanceJointDef* de
 		b2DestroyContactsBetweenBodies( world, bodyA, bodyB );
 	}
 
-	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->revision };
+	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 	return jointId;
 }
 
@@ -429,7 +429,7 @@ b2JointId b2CreateMotorJoint( b2WorldId worldId, const b2MotorJointDef* def )
 		b2DestroyContactsBetweenBodies( world, bodyA, bodyB );
 	}
 
-	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->revision };
+	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 	return jointId;
 }
 
@@ -465,7 +465,7 @@ b2JointId b2CreateMouseJoint( b2WorldId worldId, const b2MouseJointDef* def )
 	joint->mouseJoint.dampingRatio = def->dampingRatio;
 	joint->mouseJoint.maxForce = def->maxForce;
 
-	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->revision };
+	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 	return jointId;
 }
 
@@ -492,7 +492,7 @@ b2JointId b2CreateNullJoint( b2WorldId worldId, const b2NullJointDef* def )
 	joint->localOriginAnchorA = b2Vec2_zero;
 	joint->localOriginAnchorB = b2Vec2_zero;
 
-	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->revision };
+	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 	return jointId;
 }
 
@@ -547,7 +547,7 @@ b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJointDef* de
 		b2DestroyContactsBetweenBodies( world, bodyA, bodyB );
 	}
 
-	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->revision };
+	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 	return jointId;
 }
 
@@ -600,7 +600,7 @@ b2JointId b2CreatePrismaticJoint( b2WorldId worldId, const b2PrismaticJointDef* 
 		b2DestroyContactsBetweenBodies( world, bodyA, bodyB );
 	}
 
-	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->revision };
+	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 	return jointId;
 }
 
@@ -642,7 +642,7 @@ b2JointId b2CreateWeldJoint( b2WorldId worldId, const b2WeldJointDef* def )
 		b2DestroyContactsBetweenBodies( world, bodyA, bodyB );
 	}
 
-	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->revision };
+	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 	return jointId;
 }
 
@@ -691,7 +691,7 @@ b2JointId b2CreateWheelJoint( b2WorldId worldId, const b2WheelJointDef* def )
 		b2DestroyContactsBetweenBodies( world, bodyA, bodyB );
 	}
 
-	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->revision };
+	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 	return jointId;
 }
 

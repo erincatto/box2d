@@ -20,7 +20,7 @@ static b2Shape* b2GetShape( b2World* world, b2ShapeId shapeId )
 {
 	int id = shapeId.index1 - 1;
 	b2Shape* shape = b2ShapeArray_Get( &world->shapes, id );
-	B2_ASSERT( shape->id == id && shape->revision == shapeId.revision );
+	B2_ASSERT( shape->id == id && shape->generation == shapeId.generation );
 	return shape;
 }
 
@@ -28,7 +28,7 @@ static b2ChainShape* b2GetChainShape( b2World* world, b2ChainId chainId )
 {
 	int id = chainId.index1 - 1;
 	b2ChainShape* chain = b2ChainShapeArray_Get( &world->chainShapes, id );
-	B2_ASSERT( chain->id == id && chain->revision == chainId.revision );
+	B2_ASSERT( chain->id == id && chain->revision == chainId.generation );
 	return chain;
 }
 
@@ -121,7 +121,7 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	shape->localCentroid = b2GetShapeCentroid( shape );
 	shape->aabb = ( b2AABB ){ b2Vec2_zero, b2Vec2_zero };
 	shape->fatAABB = ( b2AABB ){ b2Vec2_zero, b2Vec2_zero };
-	shape->revision += 1;
+	shape->generation += 1;
 
 	if ( body->setIndex != b2_disabledSet )
 	{
@@ -181,7 +181,7 @@ static b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const vo
 
 	b2ValidateSolverSets( world );
 
-	b2ShapeId id = { shape->id + 1, bodyId.world0, shape->revision };
+	b2ShapeId id = { shape->id + 1, bodyId.world0, shape->generation };
 	return id;
 }
 
@@ -476,7 +476,7 @@ int b2Chain_GetSegments( b2ChainId chainId, b2ShapeId* segmentArray, int capacit
 	{
 		int shapeId = chain->shapeIndices[i];
 		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
-		segmentArray[i] = ( b2ShapeId ){ shapeId + 1, chainId.world0, shape->revision };
+		segmentArray[i] = ( b2ShapeId ){ shapeId + 1, chainId.world0, shape->generation };
 	}
 
 	return count;
@@ -1427,8 +1427,8 @@ int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData, int c
 			b2Shape* shapeA = world->shapes.data + contact->shapeIdA;
 			b2Shape* shapeB = world->shapes.data + contact->shapeIdB;
 
-			contactData[index].shapeIdA = ( b2ShapeId ){ shapeA->id + 1, shapeId.world0, shapeA->revision };
-			contactData[index].shapeIdB = ( b2ShapeId ){ shapeB->id + 1, shapeId.world0, shapeB->revision };
+			contactData[index].shapeIdA = ( b2ShapeId ){ shapeA->id + 1, shapeId.world0, shapeA->generation };
+			contactData[index].shapeIdB = ( b2ShapeId ){ shapeB->id + 1, shapeId.world0, shapeB->generation };
 
 			b2ContactSim* contactSim = b2GetContactSim( world, contact );
 			contactData[index].manifold = contactSim->manifold;
@@ -1496,13 +1496,13 @@ int b2Shape_GetSensorOverlaps(b2ShapeId shapeId, b2ShapeId* overlappedShapes, in
 		if ( contact->shapeIdA == shapeId.index1 - 1 )
 		{
 			b2Shape* otherShape = world->shapes.data + contact->shapeIdB;
-			overlappedShapes[index] = ( b2ShapeId ){ otherShape->id + 1, shapeId.world0, otherShape->revision };
+			overlappedShapes[index] = ( b2ShapeId ){ otherShape->id + 1, shapeId.world0, otherShape->generation };
 			index += 1;
 		}
 		else if ( contact->shapeIdB == shapeId.index1 - 1 )
 		{
 			b2Shape* otherShape = world->shapes.data + contact->shapeIdA;
-			overlappedShapes[index] = ( b2ShapeId ){ otherShape->id + 1, shapeId.world0, otherShape->revision };
+			overlappedShapes[index] = ( b2ShapeId ){ otherShape->id + 1, shapeId.world0, otherShape->generation };
 			index += 1;
 		}
 	}

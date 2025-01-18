@@ -142,7 +142,7 @@ typedef struct b2World
 	b2MixingRule frictionMixingRule;
 	b2MixingRule restitutionMixingRule;
 
-	uint16_t revision;
+	uint16_t generation;
 
 	b2Profile profile;
 

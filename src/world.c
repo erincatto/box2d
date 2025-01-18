@@ -46,7 +46,7 @@ b2World* b2GetWorldFromId( b2WorldId id )
 	B2_ASSERT( 1 <= id.index1 && id.index1 <= B2_MAX_WORLDS );
 	b2World* world = b2_worlds + ( id.index1 - 1 );
 	B2_ASSERT( id.index1 == world->worldId + 1 );
-	B2_ASSERT( id.revision == world->revision );
+	B2_ASSERT( id.generation == world->revision );
 	return world;
 }
 
@@ -552,8 +552,8 @@ static void b2Collide( b2StepContext* context )
 
 			const b2Shape* shapeA = shapes + contact->shapeIdA;
 			const b2Shape* shapeB = shapes + contact->shapeIdB;
-			b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->revision };
-			b2ShapeId shapeIdB = { shapeB->id + 1, worldId, shapeB->revision };
+			b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->generation };
+			b2ShapeId shapeIdB = { shapeB->id + 1, worldId, shapeB->generation };
 			uint32_t flags = contact->flags;
 			uint32_t simFlags = contactSim->simFlags;
 
@@ -1462,7 +1462,7 @@ bool b2World_IsValid( b2WorldId id )
 		return false;
 	}
 
-	return id.revision == world->revision;
+	return id.generation == world->revision;
 }
 
 bool b2Body_IsValid( b2BodyId id )
@@ -1495,7 +1495,7 @@ bool b2Body_IsValid( b2BodyId id )
 
 	B2_ASSERT( body->localIndex != B2_NULL_INDEX );
 
-	if ( body->revision != id.revision )
+	if ( body->revision != id.generation )
 	{
 		// this id is orphaned
 		return false;
@@ -1533,7 +1533,7 @@ bool b2Shape_IsValid( b2ShapeId id )
 
 	B2_ASSERT( shape->id == shapeId );
 
-	return id.revision == shape->revision;
+	return id.generation == shape->generation;
 }
 
 bool b2Chain_IsValid( b2ChainId id )
@@ -1565,7 +1565,7 @@ bool b2Chain_IsValid( b2ChainId id )
 
 	B2_ASSERT( chain->id == chainId );
 
-	return id.revision == chain->revision;
+	return id.generation == chain->revision;
 }
 
 bool b2Joint_IsValid( b2JointId id )
@@ -1597,7 +1597,7 @@ bool b2Joint_IsValid( b2JointId id )
 
 	B2_ASSERT( joint->jointId == jointId );
 
-	return id.revision == joint->revision;
+	return id.generation == joint->generation;
 }
 
 void b2World_EnableSleeping( b2WorldId worldId, bool flag )
@@ -1934,7 +1934,7 @@ static bool TreeQueryCallback( int proxyId, int shapeId, void* context )
 		return true;
 	}
 
-	b2ShapeId id = { shapeId + 1, world->worldId, shape->revision };
+	b2ShapeId id = { shapeId + 1, world->worldId, shape->generation };
 	bool result = worldContext->fcn( id, worldContext->userContext );
 	return result;
 }
@@ -2011,7 +2011,7 @@ static bool TreeOverlapCallback( int proxyId, int shapeId, void* context )
 		return true;
 	}
 
-	b2ShapeId id = { shape->id + 1, world->worldId, shape->revision };
+	b2ShapeId id = { shape->id + 1, world->worldId, shape->generation };
 	bool result = worldContext->fcn( id, worldContext->userContext );
 	return result;
 }
@@ -2150,7 +2150,7 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, int shap
 
 	if ( output.hit )
 	{
-		b2ShapeId id = { shapeId + 1, world->worldId, shape->revision };
+		b2ShapeId id = { shapeId + 1, world->worldId, shape->generation };
 		float fraction = worldContext->fcn( id, output.point, output.normal, output.fraction, worldContext->userContext );
 
 		// The user may return -1 to skip this shape
@@ -2272,7 +2272,7 @@ static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, int 
 
 	if ( output.hit )
 	{
-		b2ShapeId id = { shapeId + 1, world->worldId, shape->revision };
+		b2ShapeId id = { shapeId + 1, world->worldId, shape->generation };
 		float fraction = worldContext->fcn( id, output.point, output.normal, output.fraction, worldContext->userContext );
 		worldContext->fraction = fraction;
 		return fraction;

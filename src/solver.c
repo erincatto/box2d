@@ -264,8 +264,8 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 	b2CustomFilterFcn* customFilterFcn = world->customFilterFcn;
 	if ( customFilterFcn != NULL )
 	{
-		b2ShapeId idA = { shape->id + 1, world->worldId, shape->revision };
-		b2ShapeId idB = { fastShape->id + 1, world->worldId, fastShape->revision };
+		b2ShapeId idA = { shape->id + 1, world->worldId, shape->generation };
+		b2ShapeId idB = { fastShape->id + 1, world->worldId, fastShape->generation };
 		canCollide = customFilterFcn( idA, idB, world->customFilterContext );
 		if ( canCollide == false )
 		{
@@ -289,7 +289,8 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 			b2Vec2 c2 = continuousContext->centroid2;
 			float offset2 = b2Cross( b2Sub( c2, p1 ), e );
 
-			if ( offset1 < 0.0f || offset1 - offset2 < fastShape->allowedClipFraction * fastBodySim->minExtent )
+			const float allowedFraction = 0.1f;
+			if ( offset1 < 0.0f || offset1 - offset2 < allowedFraction * fastBodySim->minExtent )
 			{
 				// Minimal clipping
 				return true;
@@ -359,8 +360,8 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 		b2Transform transformA = b2GetSweepTransform( &input.sweepA, hitFraction );
 		b2Transform transformB = b2GetSweepTransform( &input.sweepB, hitFraction );
 		b2Manifold manifold = b2ComputeManifold( shape, transformA, fastShape, transformB );
-		b2ShapeId shapeIdA = { shape->id + 1, world->worldId, shape->revision };
-		b2ShapeId shapeIdB = { fastShape->id + 1, world->worldId, fastShape->revision };
+		b2ShapeId shapeIdA = { shape->id + 1, world->worldId, shape->generation };
+		b2ShapeId shapeIdB = { fastShape->id + 1, world->worldId, fastShape->generation };
 
 		// The user may modify the temporary manifold here but it doesn't matter. They will be able to
 		// modify the real manifold in the discrete solver.
@@ -1784,8 +1785,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contactSim->shapeIdA );
 					b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contactSim->shapeIdB );
 
-					event.shapeIdA = ( b2ShapeId ){ shapeA->id + 1, world->worldId, shapeA->revision };
-					event.shapeIdB = ( b2ShapeId ){ shapeB->id + 1, world->worldId, shapeB->revision };
+					event.shapeIdA = ( b2ShapeId ){ shapeA->id + 1, world->worldId, shapeA->generation };
+					event.shapeIdB = ( b2ShapeId ){ shapeB->id + 1, world->worldId, shapeB->generation };
 
 					b2ContactHitEventArray_Push( &world->contactHitEvents, event );
 				}

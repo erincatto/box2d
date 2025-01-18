@@ -59,7 +59,6 @@ b2ShapeDef b2DefaultShapeDef( void )
 	b2ShapeDef def = { 0 };
 	def.friction = 0.6f;
 	def.density = 1.0f;
-	def.allowedClipFraction = 0.1f;
 	def.filter = b2DefaultFilter();
 	def.enableSensorEvents = true;
 	def.updateBodyMass = true;

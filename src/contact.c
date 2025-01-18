@@ -383,8 +383,8 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 		uint16_t worldId = world->worldId;
 		const b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contact->shapeIdA );
 		const b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contact->shapeIdB );
-		b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->revision };
-		b2ShapeId shapeIdB = { shapeB->id + 1, worldId, shapeB->revision };
+		b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->generation };
+		b2ShapeId shapeIdB = { shapeB->id + 1, worldId, shapeB->generation };
 
 		// Was touching?
 		if ( ( flags & b2_contactTouchingFlag ) != 0 && ( flags & b2_contactEnableContactEvents ) != 0 )
@@ -571,8 +571,8 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 
 		if ( touching && world->preSolveFcn && ( contactSim->simFlags & b2_simEnablePreSolveEvents ) != 0 )
 		{
-			b2ShapeId shapeIdA = { shapeA->id + 1, world->worldId, shapeA->revision };
-			b2ShapeId shapeIdB = { shapeB->id + 1, world->worldId, shapeB->revision };
+			b2ShapeId shapeIdA = { shapeA->id + 1, world->worldId, shapeA->generation };
+			b2ShapeId shapeIdB = { shapeB->id + 1, world->worldId, shapeB->generation };
 
 			// this call assumes thread safety
 			touching = world->preSolveFcn( shapeIdA, shapeIdB, &contactSim->manifold, world->preSolveContext );

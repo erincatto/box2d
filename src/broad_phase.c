@@ -269,8 +269,8 @@ static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 	b2CustomFilterFcn* customFilterFcn = queryContext->world->customFilterFcn;
 	if ( customFilterFcn != NULL )
 	{
-		b2ShapeId idA = { shapeIdA + 1, world->worldId, shapeA->revision };
-		b2ShapeId idB = { shapeIdB + 1, world->worldId, shapeB->revision };
+		b2ShapeId idA = { shapeIdA + 1, world->worldId, shapeA->generation };
+		b2ShapeId idB = { shapeIdB + 1, world->worldId, shapeB->generation };
 		bool shouldCollide = customFilterFcn( idA, idB, queryContext->world->customFilterContext );
 		if ( shouldCollide == false )
 		{

@@ -207,7 +207,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			{
 				b2BodyMoveEvent* moveEvent = b2BodyMoveEventArray_Get( &world->bodyMoveEvents, body->bodyMoveIndex );
 				B2_ASSERT( moveEvent->bodyId.index1 - 1 == bodyId );
-				B2_ASSERT( moveEvent->bodyId.revision == body->revision );
+				B2_ASSERT( moveEvent->bodyId.generation == body->revision );
 				moveEvent->fellAsleep = true;
 				body->bodyMoveIndex = B2_NULL_INDEX;
 			}

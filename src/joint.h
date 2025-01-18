@@ -53,7 +53,7 @@ typedef struct b2Joint
 
 	// This is monotonically advanced when a body is allocated in this slot
 	// Used to check for invalid b2JointId
-	uint16_t revision;
+	uint16_t generation;
 
 	bool isMarked;
 	bool collideConnected;
