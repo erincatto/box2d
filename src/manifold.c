@@ -145,7 +145,7 @@ b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2Transform xfA
 	b2Transform xf = b2InvMulTransforms( xfA, xfB );
 
 	// Compute circle position in the frame of the polygon.
-	b2Vec2 c = b2TransformPoint( xf, circleB->center );
+	b2Vec2 center = b2TransformPoint( xf, circleB->center );
 	float radiusA = polygonA->radius;
 	float radiusB = circleB->radius;
 	float radius = radiusA + radiusB;
@@ -159,7 +159,7 @@ b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2Transform xfA
 
 	for ( int i = 0; i < vertexCount; ++i )
 	{
-		float s = b2Dot( normals[i], b2Sub( c, vertices[i] ) );
+		float s = b2Dot( normals[i], b2Sub( center, vertices[i] ) );
 		if ( s > separation )
 		{
 			separation = s;
@@ -179,21 +179,21 @@ b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2Transform xfA
 	b2Vec2 v2 = vertices[vertIndex2];
 
 	// Compute barycentric coordinates
-	float u1 = b2Dot( b2Sub( c, v1 ), b2Sub( v2, v1 ) );
-	float u2 = b2Dot( b2Sub( c, v2 ), b2Sub( v1, v2 ) );
+	float u1 = b2Dot( b2Sub( center, v1 ), b2Sub( v2, v1 ) );
+	float u2 = b2Dot( b2Sub( center, v2 ), b2Sub( v1, v2 ) );
 
 	if ( u1 < 0.0f && separation > FLT_EPSILON )
 	{
 		// Circle center is closest to v1 and safely outside the polygon
-		b2Vec2 normal = b2Normalize( b2Sub( c, v1 ) );
-		separation = b2Dot( b2Sub( c, v1 ), normal );
+		b2Vec2 normal = b2Normalize( b2Sub( center, v1 ) );
+		separation = b2Dot( b2Sub( center, v1 ), normal );
 		if ( separation > radius + speculativeDistance )
 		{
 			return manifold;
 		}
 
 		b2Vec2 cA = b2MulAdd( v1, radiusA, normal );
-		b2Vec2 cB = b2MulSub( c, radiusB, normal );
+		b2Vec2 cB = b2MulSub( center, radiusB, normal );
 		b2Vec2 contactPointA = b2Lerp( cA, cB, 0.5f );
 
 		manifold.normal = b2RotateVector( xfA.q, normal );
@@ -208,15 +208,15 @@ b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2Transform xfA
 	else if ( u2 < 0.0f && separation > FLT_EPSILON )
 	{
 		// Circle center is closest to v2 and safely outside the polygon
-		b2Vec2 normal = b2Normalize( b2Sub( c, v2 ) );
-		separation = b2Dot( b2Sub( c, v2 ), normal );
+		b2Vec2 normal = b2Normalize( b2Sub( center, v2 ) );
+		separation = b2Dot( b2Sub( center, v2 ), normal );
 		if ( separation > radius + speculativeDistance )
 		{
 			return manifold;
 		}
 
 		b2Vec2 cA = b2MulAdd( v2, radiusA, normal );
-		b2Vec2 cB = b2MulSub( c, radiusB, normal );
+		b2Vec2 cB = b2MulSub( center, radiusB, normal );
 		b2Vec2 contactPointA = b2Lerp( cA, cB, 0.5f );
 
 		manifold.normal = b2RotateVector( xfA.q, normal );
@@ -235,10 +235,10 @@ b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2Transform xfA
 		manifold.normal = b2RotateVector( xfA.q, normal );
 
 		// cA is the projection of the circle center onto to the reference edge
-		b2Vec2 cA = b2MulAdd( c, radiusA - b2Dot( b2Sub( c, v1 ), normal ), normal );
+		b2Vec2 cA = b2MulAdd( center, radiusA - b2Dot( b2Sub( center, v1 ), normal ), normal );
 
 		// cB is the deepest point on the circle with respect to the reference edge
-		b2Vec2 cB = b2MulSub( c, radiusB, normal );
+		b2Vec2 cB = b2MulSub( center, radiusB, normal );
 
 		b2Vec2 contactPointA = b2Lerp( cA, cB, 0.5f );
 

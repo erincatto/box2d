@@ -309,7 +309,6 @@ public:
 		m_bodyId = b2_nullBodyId;
 		m_yOffset = -0.1f;
 		m_speed = -42.0f;
-		m_clipFraction = 0.1f;
 
 		Launch();
 	}
@@ -330,7 +329,6 @@ public:
 		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.allowedClipFraction = m_clipFraction;
 
 		//b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
 		//m_shapeId = b2CreateCircleShape( m_bodyId, &shapeDef, &circle );
@@ -353,10 +351,6 @@ public:
 
 		ImGui::SliderFloat( "Speed", &m_speed, -100.0f, 0.0f, "%.0f" );
 		ImGui::SliderFloat( "Y Offset", &m_yOffset, -1.0f, 1.0f, "%.1f" );
-		if (ImGui::SliderFloat( "Clip Fraction", &m_clipFraction, 0.0f, 1.0f, "%.1f" ))
-		{
-			b2Shape_SetAllowedClipFraction( m_shapeId, m_clipFraction );
-		}
 
 		if ( ImGui::Button( "Launch" ) )
 		{
@@ -375,7 +369,6 @@ public:
 	b2ShapeId m_shapeId;
 	float m_yOffset;
 	float m_speed;
-	float m_clipFraction;
 };
 
 static int sampleChainDrop = RegisterSample( "Continuous", "Chain Drop", ChainDrop::Create );
