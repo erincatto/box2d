@@ -388,7 +388,6 @@ public:
 		m_visitorBodyId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.enableSensorEvents = true;
 
 		b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
 		m_visitorShapeId = b2CreateCircleShape( m_visitorBodyId, &shapeDef, &circle );
@@ -489,6 +488,15 @@ static int sampleSensorBookendEvent = RegisterSample( "Events", "Sensor Bookend"
 class FootSensor : public Sample
 {
 public:
+	enum CollisionBits
+	{
+		GROUND = 0x00000001,
+		PLAYER = 0x00000002,
+		FOOT = 0x00000004,
+
+		ALL_BITS = ( ~0u )
+	};
+
 	explicit FootSensor( Settings& settings )
 		: Sample( settings )
 	{
@@ -513,6 +521,8 @@ public:
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
 			chainDef.count = 20;
+			chainDef.filter.categoryBits = GROUND;
+			chainDef.filter.maskBits = FOOT | PLAYER;
 			chainDef.isLoop = false;
 
 			b2CreateChain( groundId, &chainDef );
@@ -525,11 +535,15 @@ public:
 			bodyDef.position = { 0.0f, 1.0f };
 			m_playerId = b2CreateBody( m_worldId, &bodyDef );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.filter.categoryBits = PLAYER;
+			shapeDef.filter.maskBits = GROUND;
 			shapeDef.friction = 0.3f;
 			b2Capsule capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.5f };
 			b2CreateCapsuleShape( m_playerId, &shapeDef, &capsule );
 
 			b2Polygon box = b2MakeOffsetBox( 0.5f, 0.25f, { 0.0f, -1.0f }, b2Rot_identity );
+			shapeDef.filter.categoryBits = FOOT;
+			shapeDef.filter.maskBits = GROUND;
 			shapeDef.isSensor = true;
 			m_sensorId = b2CreatePolygonShape( m_playerId, &shapeDef, &box );
 		}

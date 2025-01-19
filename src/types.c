@@ -60,7 +60,6 @@ b2ShapeDef b2DefaultShapeDef( void )
 	def.friction = 0.6f;
 	def.density = 1.0f;
 	def.filter = b2DefaultFilter();
-	def.enableSensorEvents = true;
 	def.updateBodyMass = true;
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;

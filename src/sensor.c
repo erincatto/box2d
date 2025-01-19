@@ -15,14 +15,9 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-B2_ARRAY_SOURCE( b2Sensor, b2Sensor );
 B2_ARRAY_SOURCE( b2ShapeRef, b2ShapeRef );
-
-struct b2SensorTaskContext
-{
-	b2World* world;
-	b2BitSet sensorEventBits;
-};
+B2_ARRAY_SOURCE( b2Sensor, b2Sensor );
+B2_ARRAY_SOURCE( b2SensorTaskContext, b2SensorTaskContext );
 
 struct b2SensorQueryContext
 {
@@ -70,14 +65,8 @@ static bool b2SensorQueryCallback( int proxyId, int shapeId, void* context )
 		return true;
 	}
 
-	// Does other shape want sensor events?
-	if ( otherShape->enableSensorEvents == false )
-	{
-		return true;
-	}
-
 	// Check filter
-	if ( b2ShouldShapesCollide( sensorShape->filter, otherShape->filter ) )
+	if ( b2ShouldShapesCollide( sensorShape->filter, otherShape->filter ) == false)
 	{
 		return true;
 	}
@@ -142,10 +131,13 @@ void b2OverlapSensors( b2World* world )
 		return;
 	}
 
-	struct b2SensorTaskContext taskContext = {
+	// todo use task array on world
+	b2SensorTaskContext taskContext = {
 		.world = world,
 		.sensorEventBits = b2CreateBitSet( sensorCount ),
 	};
+
+	b2SetBitCountAndClear( &taskContext.sensorEventBits, sensorCount );
 
 	b2DynamicTree* trees = world->broadPhase.trees;
 	for ( int sensorIndex = 0; sensorIndex < sensorCount; ++sensorIndex )
@@ -294,9 +286,49 @@ void b2OverlapSensors( b2World* world )
 				b2SensorBeginTouchEventArray_Push( &world->sensorBeginEvents, event );
 				index2 += 1;
 			}
-		}
 
-		// Clear the smallest set bit
-		word = word & ( word - 1 );
+			// Clear the smallest set bit
+			word = word & ( word - 1 );
+		}
+	}
+
+	b2DestroyBitSet( &taskContext.sensorEventBits );
+}
+
+void b2DestroySensor(b2World* world, b2Shape* sensorShape)
+{
+	b2Sensor* sensor = b2SensorArray_Get( &world->sensors, sensorShape->sensorIndex );
+	for ( int i = 0; i < sensor->overlaps2.count; ++i )
+	{
+		b2ShapeRef* ref = sensor->overlaps2.data + i;
+		b2SensorEndTouchEvent event = {
+			.sensorShapeId =
+				{
+					.index1 = sensorShape->id + 1,
+					.generation = sensorShape->generation,
+					.world0 = world->worldId,
+				},
+			.visitorShapeId =
+				{
+					.index1 = ref->shapeId + 1,
+					.generation = ref->generation,
+					.world0 = world->worldId,
+				},
+		};
+
+		b2SensorEndTouchEventArray_Push( world->sensorEndEvents + world->endEventArrayIndex, event );
+	}
+
+	// Destroy sensor
+	b2ShapeRefArray_Destroy( &sensor->overlaps1 );
+	b2ShapeRefArray_Destroy( &sensor->overlaps2 );
+
+	int movedIndex = b2SensorArray_RemoveSwap( &world->sensors, sensorShape->sensorIndex );
+	if ( movedIndex != B2_NULL_INDEX )
+	{
+		// Fixup moved sensor
+		b2Sensor* movedSensor = b2SensorArray_Get( &world->sensors, sensorShape->sensorIndex );
+		b2Shape* otherSensorShape = b2ShapeArray_Get( &world->shapes, movedSensor->shapeId );
+		otherSensorShape->sensorIndex = sensorShape->sensorIndex;
 	}
 }

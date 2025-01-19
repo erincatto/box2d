@@ -4,7 +4,9 @@
 #pragma once
 
 #include "array.h"
+#include "bitset.h"
 
+typedef struct b2Shape b2Shape;
 typedef struct b2World b2World;
 
 typedef struct b2ShapeRef
@@ -20,7 +22,16 @@ typedef struct b2Sensor
 	int shapeId;
 } b2Sensor;
 
+typedef struct b2SensorTaskContext
+{
+	b2World* world;
+	b2BitSet sensorEventBits;
+} b2SensorTaskContext;
+
 void b2OverlapSensors( b2World* world );
 
-B2_ARRAY_INLINE(b2ShapeRef, b2ShapeRef);
-B2_ARRAY_INLINE(b2Sensor, b2Sensor);
+void b2DestroySensor( b2World* world, b2Shape* sensorShape );
+
+B2_ARRAY_INLINE( b2ShapeRef, b2ShapeRef );
+B2_ARRAY_INLINE( b2Sensor, b2Sensor );
+B2_ARRAY_INLINE( b2SensorTaskContext, b2SensorTaskContext );

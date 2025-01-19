@@ -113,7 +113,6 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	shape->userData = def->userData;
 	shape->customColor = def->customColor;
 	shape->enlargedAABB = false;
-	shape->enableSensorEvents = def->enableSensorEvents;
 	shape->enableContactEvents = def->enableContactEvents;
 	shape->enableHitEvents = def->enableHitEvents;
 	shape->enablePreSolveEvents = def->enablePreSolveEvents;
@@ -292,6 +291,19 @@ static void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body
 
 			b2SensorEndTouchEventArray_Push( world->sensorEndEvents + world->endEventArrayIndex, event );
 		}
+
+		// Destroy sensor
+		b2ShapeRefArray_Destroy( &sensor->overlaps1 );
+		b2ShapeRefArray_Destroy( &sensor->overlaps2 );
+
+		int movedIndex = b2SensorArray_RemoveSwap( &world->sensors, shape->sensorIndex );
+		if ( movedIndex != B2_NULL_INDEX )
+		{
+			// Fixup moved sensor
+			b2Sensor* movedSensor = b2SensorArray_Get( &world->sensors, shape->sensorIndex );
+			b2Shape* otherSensorShape = b2ShapeArray_Get( &world->shapes, movedSensor->shapeId );
+			otherSensorShape->sensorIndex = shape->sensorIndex;
+		}
 	}
 
 	// Return shape to free list.
@@ -365,7 +377,6 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 	shapeDef.customColor = def->customColor;
 	shapeDef.enableContactEvents = false;
 	shapeDef.enableHitEvents = false;
-	shapeDef.enableSensorEvents = false;
 
 	int n = def->count;
 	const b2Vec2* points = def->points;
@@ -1111,25 +1122,6 @@ void b2Shape_SetFilter( b2ShapeId shapeId, b2Filter filter )
 
 	// note: this does not immediately update sensor overlaps. Instead sensor
 	// overlaps are updated the next time step
-}
-
-void b2Shape_EnableSensorEvents( b2ShapeId shapeId, bool flag )
-{
-	b2World* world = b2GetWorldLocked( shapeId.world0 );
-	if ( world == NULL )
-	{
-		return;
-	}
-
-	b2Shape* shape = b2GetShape( world, shapeId );
-	shape->enableSensorEvents = flag;
-}
-
-bool b2Shape_AreSensorEventsEnabled( b2ShapeId shapeId )
-{
-	b2World* world = b2GetWorld( shapeId.world0 );
-	b2Shape* shape = b2GetShape( world, shapeId );
-	return shape->enableSensorEvents;
 }
 
 void b2Shape_EnableContactEvents( b2ShapeId shapeId, bool flag )

@@ -358,10 +358,6 @@ typedef struct b2ShapeDef
 	/// Instead, use a ray or shape cast for those scenarios.
 	bool isSensor;
 
-	/// Enable sensor events for this shape. Only applies to kinematic and dynamic bodies.
-	/// This applies for sensors and non-sensors.
-	bool enableSensorEvents;
-
 	/// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors.
 	bool enableContactEvents;
 
@@ -429,6 +425,9 @@ typedef struct b2ChainDef
 
 	/// Indicates a closed chain formed by connecting the first and last points
 	bool isLoop;
+
+	/// Generate events when a sensor overlaps this chain
+	bool enableSensorEvents;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;

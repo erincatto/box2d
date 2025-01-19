@@ -100,6 +100,7 @@ typedef struct b2World
 
 	// Per thread storage
 	b2TaskContextArray taskContexts;
+	b2SensorTaskContextArray sensorTaskContexts;
 
 	b2BodyMoveEventArray bodyMoveEvents;
 	b2SensorBeginTouchEventArray sensorBeginEvents;

@@ -423,11 +423,6 @@ B2_API void b2Body_SetBullet( b2BodyId bodyId, bool flag );
 /// Is this body a bullet?
 B2_API bool b2Body_IsBullet( b2BodyId bodyId );
 
-/// Enable/disable sensor events on all shapes.
-/// @see b2ShapeDef::enableSensorEvents
-/// @warning changing this at runtime may cause mismatched begin/end touch events
-B2_API void b2Body_EnableSensorEvents( b2BodyId bodyId, bool flag );
-
 /// Enable/disable contact events on all shapes.
 /// @see b2ShapeDef::enableContactEvents
 /// @warning changing this at runtime may cause mismatched begin/end touch events
@@ -556,14 +551,6 @@ B2_API b2Filter b2Shape_GetFilter( b2ShapeId shapeId );
 /// Sensor overlap state is also not updated until the next world step.
 /// @see b2ShapeDef::filter
 B2_API void b2Shape_SetFilter( b2ShapeId shapeId, b2Filter filter );
-
-/// Enable sensor events for this shape. Only applies to kinematic and dynamic bodies.
-/// @see b2ShapeDef::isSensor
-/// @warning changing this at run-time may lead to lost begin/end events
-B2_API void b2Shape_EnableSensorEvents( b2ShapeId shapeId, bool flag );
-
-/// Returns true if sensor events are enabled
-B2_API bool b2Shape_AreSensorEventsEnabled( b2ShapeId shapeId );
 
 /// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors.
 /// @see b2ShapeDef::enableContactEvents

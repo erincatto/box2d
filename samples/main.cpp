@@ -673,6 +673,7 @@ int main( int, char** )
 		ImGui_ImplGlfw_CursorPosCallback( g_mainWindow, cursorPosX / s_windowScale, cursorPosY / s_windowScale );
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
+		ImGui_ImplGlfw_CursorPosCallback( g_mainWindow, cursorPosX / s_windowScale, cursorPosY / s_windowScale );
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize.x = float( g_camera.m_width );

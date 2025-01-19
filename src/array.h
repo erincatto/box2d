@@ -172,6 +172,7 @@ B2_ARRAY_DECLARE( b2JointSim, b2JointSim );
 B2_ARRAY_DECLARE( b2Sensor, b2Sensor );
 B2_ARRAY_DECLARE( b2SensorBeginTouchEvent, b2SensorBeginTouchEvent );
 B2_ARRAY_DECLARE( b2SensorEndTouchEvent, b2SensorEndTouchEvent );
+B2_ARRAY_DECLARE( b2SensorTaskContext, b2SensorTaskContext );
 B2_ARRAY_DECLARE( b2Shape, b2Shape );
 B2_ARRAY_DECLARE( b2ShapeRef, b2ShapeRef );
 B2_ARRAY_DECLARE( b2SolverSet, b2SolverSet );

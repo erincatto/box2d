@@ -15,6 +15,7 @@
 #include "world.h"
 
 // needed for dll export
+#include "sensor.h"
 #include "box2d/box2d.h"
 #include "box2d/id.h"
 
@@ -359,6 +360,11 @@ void b2DestroyBody( b2BodyId bodyId )
 	while ( shapeId != B2_NULL_INDEX )
 	{
 		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+
+		if (shape->sensorIndex != B2_NULL_INDEX)
+		{
+			b2DestroySensor( world, shape );
+		}
 
 		b2DestroyShapeProxy( shape, &world->broadPhase );
 
@@ -1632,19 +1638,6 @@ bool b2Body_IsBullet( b2BodyId bodyId )
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	b2BodySim* bodySim = b2GetBodySim( world, body );
 	return bodySim->isBullet;
-}
-
-void b2Body_EnableSensorEvents( b2BodyId bodyId, bool flag )
-{
-	b2World* world = b2GetWorld( bodyId.world0 );
-	b2Body* body = b2GetBodyFullId( world, bodyId );
-	int shapeId = body->headShapeId;
-	while ( shapeId != B2_NULL_INDEX )
-	{
-		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
-		shape->enableSensorEvents = flag;
-		shapeId = shape->nextShapeId;
-	}
 }
 
 void b2Body_EnableContactEvents( b2BodyId bodyId, bool flag )
