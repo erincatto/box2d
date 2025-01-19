@@ -501,21 +501,6 @@ bool b2ShouldShapesCollide( b2Filter filterA, b2Filter filterB )
 	return collide;
 }
 
-static bool b2TestShapeOverlap( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
-								b2SimplexCache* cache )
-{
-	b2DistanceInput input;
-	input.proxyA = b2MakeShapeDistanceProxy( shapeA );
-	input.proxyB = b2MakeShapeDistanceProxy( shapeB );
-	input.transformA = xfA;
-	input.transformB = xfB;
-	input.useRadii = true;
-
-	b2DistanceOutput output = b2ShapeDistance( cache, &input, NULL, 0 );
-
-	return output.distance < 10.0f * FLT_EPSILON;
-}
-
 // Update the contact manifold and touching status. Also updates sensor overlap.
 // Note: do not assume the shape AABBs are overlapping or are valid.
 bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA, b2Transform transformA, b2Vec2 centerOffsetA,
