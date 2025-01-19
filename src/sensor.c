@@ -3,6 +3,7 @@
 
 #include "sensor.h"
 
+#include "array.h"
 #include "body.h"
 #include "contact.h"
 #include "shape.h"
@@ -187,7 +188,23 @@ void b2OverlapSensors( b2World* world )
 			b2ShapeRef* s1 = sensor->overlaps1.data + index1;
 			b2ShapeRef* s2 = sensor->overlaps2.data + index2;
 
-			if (sensor-)
+			if ( s1->shapeId == s2->shapeId && s1->generation == s2->generation)
+			{
+				index1 += 1;
+				index2 += 1;
+			}
+			else
+			{
+				b2SetBit( &taskContext.sensorEventBits, sensorIndex );
+
+				// Begin event
+				b2BitSet_Set( &taskContext.sensorEventBits, sensorIndex );
+				index1 += 1;
+			}
+			else
+			{
+				index2 += 1;
+			}
 		}
 		for (int index1 = 0; index1 < count1; ++index1)
 		{
