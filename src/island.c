@@ -110,7 +110,7 @@ static void b2AddContactToIsland( b2World* world, int islandId, b2Contact* conta
 // https://en.wikipedia.org/wiki/Disjoint-set_data_structure
 void b2LinkContact( b2World* world, b2Contact* contact )
 {
-	B2_ASSERT( ( contact->flags & b2_contactTouchingFlag ) != 0 && ( contact->flags & b2_contactSensorFlag ) == 0 );
+	B2_ASSERT( ( contact->flags & b2_contactTouchingFlag ) != 0 );
 
 	int bodyIdA = contact->edges[0].bodyId;
 	int bodyIdB = contact->edges[1].bodyId;
@@ -213,7 +213,6 @@ void b2LinkContact( b2World* world, b2Contact* contact )
 // This is called when a contact no longer has contact points or when a contact is destroyed.
 void b2UnlinkContact( b2World* world, b2Contact* contact )
 {
-	B2_ASSERT( ( contact->flags & b2_contactSensorFlag ) == 0 );
 	B2_ASSERT( contact->islandId != B2_NULL_INDEX );
 
 	// remove from island
@@ -724,12 +723,6 @@ void b2SplitIsland( b2World* world, int baseId )
 
 				// Has this contact already been added to this island?
 				if ( contact->isMarked )
-				{
-					continue;
-				}
-
-				// Skip sensors
-				if ( contact->flags & b2_contactSensorFlag )
 				{
 					continue;
 				}

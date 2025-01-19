@@ -142,7 +142,6 @@ public:
 		shapeDef.density = 1.0f;
 		shapeDef.friction = m_friction;
 		shapeDef.restitution = m_restitution;
-		shapeDef.allowedClipFraction = m_allowedClipFraction;
 
 		if ( m_shapeType == e_circleShape )
 		{
@@ -194,11 +193,6 @@ public:
 		if ( ImGui::SliderFloat( "Restitution", &m_restitution, 0.0f, 2.0f, "%.1f" ) )
 		{
 			b2Shape_SetRestitution( m_shapeId, m_restitution );
-		}
-
-		if ( ImGui::SliderFloat( "Clip Fraction", &m_allowedClipFraction, 0.0f, 1.0f, "%.2f" ) )
-		{
-			b2Shape_SetAllowedClipFraction( m_shapeId, m_allowedClipFraction );
 		}
 
 		if ( ImGui::Button( "Launch" ) )

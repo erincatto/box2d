@@ -786,7 +786,7 @@ void b2DestroyJointInternal( b2World* world, b2Joint* joint, bool wakeBodies )
 		}
 	}
 
-	// Free joint and id (preserve joint revision)
+	// Free joint and id (preserve joint generation)
 	joint->setIndex = B2_NULL_INDEX;
 	joint->localIndex = B2_NULL_INDEX;
 	joint->colorIndex = B2_NULL_INDEX;
@@ -841,7 +841,7 @@ b2BodyId b2Joint_GetBodyB( b2JointId jointId )
 b2WorldId b2Joint_GetWorld( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
-	return ( b2WorldId ){ jointId.world0 + 1, world->revision };
+	return ( b2WorldId ){ jointId.world0 + 1, world->generation };
 }
 
 b2Vec2 b2Joint_GetLocalAnchorA( b2JointId jointId )

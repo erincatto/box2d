@@ -545,17 +545,15 @@ B2_API void b2Shape_SetRestitution( b2ShapeId shapeId, float restitution );
 /// Get the shape restitution
 B2_API float b2Shape_GetRestitution( b2ShapeId shapeId );
 
-/// Set the allowed clip fraction in the range [0, 1].
-/// @see b2ShapeDef::allowedClipFraction
-B2_API void b2Shape_SetAllowedClipFraction( b2ShapeId shapeId, float allowedClipFraction );
-
 /// Get the allowed clip fraction.
 B2_API float b2Shape_GetAllowedClipFraction( b2ShapeId shapeId );
 
 /// Get the shape filter
 B2_API b2Filter b2Shape_GetFilter( b2ShapeId shapeId );
 
-/// Set the current filter. This is almost as expensive as recreating the shape.
+/// Set the current filter. This is almost as expensive as recreating the shape. This may cause
+/// contacts to be immediately destroyed. However contacts are not created until the next world step.
+/// Sensor overlap state is also not updated until the next world step.
 /// @see b2ShapeDef::filter
 B2_API void b2Shape_SetFilter( b2ShapeId shapeId, b2Filter filter );
 
@@ -651,11 +649,12 @@ B2_API int b2Shape_GetSensorCapacity( b2ShapeId shapeId );
 
 /// Get the overlapped shapes for a sensor shape.
 /// @param shapeId the id of a sensor shape
-/// @param overlappedShapes a user allocated array that is filled with the overlapping shapes
+/// @param overlaps a user allocated array that is filled with the overlapping shapes
 /// @param capacity the capacity of overlappedShapes
 /// @returns the number of elements filled in the provided array
 /// @warning do not ignore the return value, it specifies the valid number of elements
-B2_API int b2Shape_GetSensorOverlaps( b2ShapeId shapeId, b2ShapeId* overlappedShapes, int capacity );
+/// @warning overlaps may contain destroyed shapes so use b2Shape_IsValid to confirm each overlap
+B2_API int b2Shape_GetSensorOverlaps( b2ShapeId shapeId, b2ShapeId* overlaps, int capacity );
 
 /// Get the current world AABB
 B2_API b2AABB b2Shape_GetAABB( b2ShapeId shapeId );

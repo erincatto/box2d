@@ -8,6 +8,7 @@
 #include "world.h"
 
 #include "aabb.h"
+#include "arena_allocator.h"
 #include "array.h"
 #include "bitset.h"
 #include "body.h"
@@ -19,10 +20,10 @@
 #include "ctz.h"
 #include "island.h"
 #include "joint.h"
+#include "sensor.h"
 #include "shape.h"
 #include "solver.h"
 #include "solver_set.h"
-#include "arena_allocator.h"
 
 #include "box2d/box2d.h"
 
@@ -46,7 +47,7 @@ b2World* b2GetWorldFromId( b2WorldId id )
 	B2_ASSERT( 1 <= id.index1 && id.index1 <= B2_MAX_WORLDS );
 	b2World* world = b2_worlds + ( id.index1 - 1 );
 	B2_ASSERT( id.index1 == world->worldId + 1 );
-	B2_ASSERT( id.generation == world->revision );
+	B2_ASSERT( id.generation == world->generation );
 	return world;
 }
 
@@ -109,12 +110,12 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	b2InitializeContactRegisters();
 
 	b2World* world = b2_worlds + worldId;
-	uint16_t revision = world->revision;
+	uint16_t generation = world->generation;
 
 	*world = ( b2World ){ 0 };
 
 	world->worldId = (uint16_t)worldId;
-	world->revision = revision;
+	world->generation = generation;
 	world->inUse = true;
 
 	world->stackAllocator = b2CreateArenaAllocator( 2048 );
@@ -159,6 +160,8 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 
 	world->islandIdPool = b2CreateIdPool();
 	world->islands = b2IslandArray_Create( 8 );
+
+	world->sensors = b2SensorArray_Create( 4 );
 
 	world->bodyMoveEvents = b2BodyMoveEventArray_Create( 4 );
 	world->sensorBeginEvents = b2SensorBeginTouchEventArray_Create( 4 );
@@ -223,7 +226,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->debugContactSet = b2CreateBitSet( 256 );
 
 	// add one to worldId so that 0 represents a null b2WorldId
-	return ( b2WorldId ){ (uint16_t)( worldId + 1 ), world->revision };
+	return ( b2WorldId ){ (uint16_t)( worldId + 1 ), world->generation };
 }
 
 void b2DestroyWorld( b2WorldId worldId )
@@ -266,6 +269,15 @@ void b2DestroyWorld( b2WorldId worldId )
 		}
 	}
 
+	int sensorCount = world->sensors.count;
+	for ( int i = 0; i < sensorCount; ++i )
+	{
+		b2ShapeRefArray_Destroy( &world->sensors.data[i].overlaps1 );
+		b2ShapeRefArray_Destroy( &world->sensors.data[i].overlaps2 );
+	}
+
+	b2SensorArray_Destroy( &world->sensors );
+
 	b2BodyArray_Destroy( &world->bodies );
 	b2ShapeArray_Destroy( &world->shapes );
 	b2ChainShapeArray_Destroy( &world->chainShapes );
@@ -299,11 +311,11 @@ void b2DestroyWorld( b2WorldId worldId )
 
 	b2DestroyArenaAllocator( &world->stackAllocator );
 
-	// Wipe world but preserve revision
-	uint16_t revision = world->revision;
+	// Wipe world but preserve generation
+	uint16_t generation = world->generation;
 	*world = ( b2World ){ 0 };
 	world->worldId = 0;
-	world->revision = revision + 1;
+	world->generation = generation + 1;
 }
 
 static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
@@ -456,7 +468,8 @@ static void b2Collide( b2StepContext* context )
 		return;
 	}
 
-	b2ContactSim** contactSims = b2AllocateArenaItem( &world->stackAllocator, contactCount * sizeof( b2ContactSim* ), "contacts" );
+	b2ContactSim** contactSims =
+		b2AllocateArenaItem( &world->stackAllocator, contactCount * sizeof( b2ContactSim* ), "contacts" );
 
 	int contactIndex = 0;
 	for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
@@ -567,105 +580,58 @@ static void b2Collide( b2StepContext* context )
 			else if ( simFlags & b2_simStartedTouching )
 			{
 				B2_ASSERT( contact->islandId == B2_NULL_INDEX );
-				if ( ( flags & b2_contactSensorFlag ) != 0 )
+				// Contact is solid
+				if ( flags & b2_contactEnableContactEvents )
 				{
-					// Contact is a sensor
-					if ( ( flags & b2_contactEnableSensorEvents ) != 0 )
-					{
-						if ( shapeA->isSensor )
-						{
-							b2SensorBeginTouchEvent event = { shapeIdA, shapeIdB };
-							b2SensorBeginTouchEventArray_Push( &world->sensorBeginEvents, event );
-						}
-
-						if ( shapeB->isSensor )
-						{
-							b2SensorBeginTouchEvent event = { shapeIdB, shapeIdA };
-							b2SensorBeginTouchEventArray_Push( &world->sensorBeginEvents, event );
-						}
-					}
-
-					contactSim->simFlags &= ~b2_simStartedTouching;
-					contact->flags |= b2_contactSensorTouchingFlag;
+					b2ContactBeginTouchEvent event = { shapeIdA, shapeIdB, contactSim->manifold };
+					b2ContactBeginTouchEventArray_Push( &world->contactBeginEvents, event );
 				}
-				else
-				{
-					// Contact is solid
-					if ( flags & b2_contactEnableContactEvents )
-					{
-						b2ContactBeginTouchEvent event = { shapeIdA, shapeIdB, contactSim->manifold };
-						b2ContactBeginTouchEventArray_Push( &world->contactBeginEvents, event );
-					}
 
-					B2_ASSERT( contactSim->manifold.pointCount > 0 );
-					B2_ASSERT( contact->setIndex == b2_awakeSet );
+				B2_ASSERT( contactSim->manifold.pointCount > 0 );
+				B2_ASSERT( contact->setIndex == b2_awakeSet );
 
-					// Link first because this wakes colliding bodies and ensures the body sims
-					// are in the correct place.
-					contact->flags |= b2_contactTouchingFlag;
-					b2LinkContact( world, contact );
+				// Link first because this wakes colliding bodies and ensures the body sims
+				// are in the correct place.
+				contact->flags |= b2_contactTouchingFlag;
+				b2LinkContact( world, contact );
 
-					// Make sure these didn't change
-					B2_ASSERT( contact->colorIndex == B2_NULL_INDEX );
-					B2_ASSERT( contact->localIndex == localIndex );
+				// Make sure these didn't change
+				B2_ASSERT( contact->colorIndex == B2_NULL_INDEX );
+				B2_ASSERT( contact->localIndex == localIndex );
 
-					// Contact sim pointer may have become orphaned due to awake set growth,
-					// so I just need to refresh it.
-					contactSim = b2ContactSimArray_Get( &awakeSet->contactSims, localIndex );
+				// Contact sim pointer may have become orphaned due to awake set growth,
+				// so I just need to refresh it.
+				contactSim = b2ContactSimArray_Get( &awakeSet->contactSims, localIndex );
 
-					contactSim->simFlags &= ~b2_simStartedTouching;
+				contactSim->simFlags &= ~b2_simStartedTouching;
 
-					b2AddContactToGraph( world, contactSim, contact );
-					b2RemoveNonTouchingContact( world, b2_awakeSet, localIndex );
-					contactSim = NULL;
-				}
+				b2AddContactToGraph( world, contactSim, contact );
+				b2RemoveNonTouchingContact( world, b2_awakeSet, localIndex );
+				contactSim = NULL;
 			}
 			else if ( simFlags & b2_simStoppedTouching )
 			{
 				contactSim->simFlags &= ~b2_simStoppedTouching;
 
-				if ( ( flags & b2_contactSensorFlag ) != 0 )
+				// Contact is solid
+				contact->flags &= ~b2_contactTouchingFlag;
+
+				if ( contact->flags & b2_contactEnableContactEvents )
 				{
-					// Contact is a sensor
-					contact->flags &= ~b2_contactSensorTouchingFlag;
-
-					if ( ( flags & b2_contactEnableSensorEvents ) != 0 )
-					{
-						if ( shapeA->isSensor )
-						{
-							b2SensorEndTouchEvent event = { shapeIdA, shapeIdB };
-							b2SensorEndTouchEventArray_Push( world->sensorEndEvents + endEventArrayIndex, event );
-						}
-
-						if ( shapeB->isSensor )
-						{
-							b2SensorEndTouchEvent event = { shapeIdB, shapeIdA };
-							b2SensorEndTouchEventArray_Push( world->sensorEndEvents + endEventArrayIndex, event );
-						}
-					}
+					b2ContactEndTouchEvent event = { shapeIdA, shapeIdB };
+					b2ContactEndTouchEventArray_Push( world->contactEndEvents + endEventArrayIndex, event );
 				}
-				else
-				{
-					// Contact is solid
-					contact->flags &= ~b2_contactTouchingFlag;
 
-					if ( contact->flags & b2_contactEnableContactEvents )
-					{
-						b2ContactEndTouchEvent event = { shapeIdA, shapeIdB };
-						b2ContactEndTouchEventArray_Push( world->contactEndEvents + endEventArrayIndex, event );
-					}
+				B2_ASSERT( contactSim->manifold.pointCount == 0 );
 
-					B2_ASSERT( contactSim->manifold.pointCount == 0 );
+				b2UnlinkContact( world, contact );
+				int bodyIdA = contact->edges[0].bodyId;
+				int bodyIdB = contact->edges[1].bodyId;
 
-					b2UnlinkContact( world, contact );
-					int bodyIdA = contact->edges[0].bodyId;
-					int bodyIdB = contact->edges[1].bodyId;
-
-					b2AddNonTouchingContact( world, contact, contactSim );
-					b2RemoveContactFromGraph( world, bodyIdA, bodyIdB, colorIndex, localIndex );
-					contact = NULL;
-					contactSim = NULL;
-				}
+				b2AddNonTouchingContact( world, contact, contactSim );
+				b2RemoveContactFromGraph( world, bodyIdA, bodyIdB, colorIndex, localIndex );
+				contact = NULL;
+				contactSim = NULL;
 			}
 
 			// Clear the smallest set bit
@@ -760,7 +726,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	{
 		uint64_t collideTicks = b2GetTicks();
 		b2Collide( &context );
-		world->profile.collide = b2GetMilliseconds(collideTicks );
+		world->profile.collide = b2GetMilliseconds( collideTicks );
 	}
 
 	// Integrate velocities, solve velocity constraints, and integrate positions.
@@ -776,7 +742,6 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		uint64_t sensorTicks = b2GetTicks();
 		b2OverlapSensors( world );
 		world->profile.sensors = b2GetMilliseconds( sensorTicks );
-
 	}
 
 	world->profile.step = b2GetMilliseconds( stepTicks );
@@ -890,7 +855,7 @@ static bool DrawQueryCallback( int proxyId, int shapeId, void* context )
 		{
 			color = b2_colorSlateGray;
 		}
-		else if ( shape->isSensor )
+		else if ( shape->sensorIndex != B2_NULL_INDEX )
 		{
 			color = b2_colorWheat;
 		}
@@ -1176,7 +1141,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 					{
 						color = b2_colorSlateGray;
 					}
-					else if ( shape->isSensor )
+					else if ( shape->sensorIndex != B2_NULL_INDEX )
 					{
 						color = b2_colorWheat;
 					}
@@ -1462,7 +1427,7 @@ bool b2World_IsValid( b2WorldId id )
 		return false;
 	}
 
-	return id.generation == world->revision;
+	return id.generation == world->generation;
 }
 
 bool b2Body_IsValid( b2BodyId id )
@@ -1495,7 +1460,7 @@ bool b2Body_IsValid( b2BodyId id )
 
 	B2_ASSERT( body->localIndex != B2_NULL_INDEX );
 
-	if ( body->revision != id.generation )
+	if ( body->generation != id.generation )
 	{
 		// this id is orphaned
 		return false;
@@ -1565,7 +1530,7 @@ bool b2Chain_IsValid( b2ChainId id )
 
 	B2_ASSERT( chain->id == chainId );
 
-	return id.generation == chain->revision;
+	return id.generation == chain->generation;
 }
 
 bool b2Joint_IsValid( b2JointId id )
@@ -2719,7 +2684,7 @@ void b2ValidateConnectivity( b2World* world )
 			b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
 
 			bool touching = ( contact->flags & b2_contactTouchingFlag ) != 0;
-			if ( touching && ( contact->flags & b2_contactSensorFlag ) == 0 )
+			if ( touching )
 			{
 				if ( bodySetIndex != b2_staticSet )
 				{
@@ -2828,7 +2793,7 @@ void b2ValidateSolverSets( b2World* world )
 					b2Body* body = bodies + bodyId;
 					B2_ASSERT( body->setIndex == setIndex );
 					B2_ASSERT( body->localIndex == i );
-					B2_ASSERT( body->revision == body->revision );
+					B2_ASSERT( body->generation == body->generation );
 
 					if ( setIndex == b2_disabledSet )
 					{
@@ -3110,18 +3075,13 @@ void b2ValidateContacts( b2World* world )
 		allocatedContactCount += 1;
 
 		bool touching = ( contact->flags & b2_contactTouchingFlag ) != 0;
-		bool sensorTouching = ( contact->flags & b2_contactSensorTouchingFlag ) != 0;
-		bool isSensor = ( contact->flags & b2_contactSensorFlag ) != 0;
-
-		B2_ASSERT( touching == false || sensorTouching == false );
-		B2_ASSERT( touching == false || isSensor == false );
 
 		int setId = contact->setIndex;
 
 		if ( setId == b2_awakeSet )
 		{
 			// If touching and not a sensor
-			if ( touching && isSensor == false )
+			if ( touching )
 			{
 				B2_ASSERT( 0 <= contact->colorIndex && contact->colorIndex < B2_GRAPH_COLOR_COUNT );
 			}
@@ -3133,7 +3093,7 @@ void b2ValidateContacts( b2World* world )
 		else if ( setId >= b2_firstSleepingSet )
 		{
 			// Only touching contacts allowed in a sleeping set
-			B2_ASSERT( touching == true && isSensor == false );
+			B2_ASSERT( touching == true );
 		}
 		else
 		{
@@ -3148,7 +3108,7 @@ void b2ValidateContacts( b2World* world )
 
 		// Sim touching is true for solid and sensor contacts
 		bool simTouching = ( contactSim->simFlags & b2_simTouchingFlag ) != 0;
-		B2_ASSERT( touching == simTouching || sensorTouching == simTouching );
+		B2_ASSERT( touching == simTouching );
 
 		B2_ASSERT( 0 <= contactSim->manifold.pointCount && contactSim->manifold.pointCount <= 2 );
 	}

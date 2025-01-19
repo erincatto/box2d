@@ -8,6 +8,7 @@
 #include "box2d/types.h"
 
 typedef struct b2BroadPhase b2BroadPhase;
+typedef struct b2World b2World;
 
 typedef struct b2Shape
 {
@@ -56,7 +57,7 @@ typedef struct b2ChainShape
 	int* shapeIndices;
 	float friction;
 	float restitution;
-	uint16_t revision;
+	uint16_t generation;
 } b2ChainShape;
 
 typedef struct b2ShapeExtent

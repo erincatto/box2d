@@ -275,11 +275,6 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 
 	B2_ASSERT( shapeA->sensorIndex == B2_NULL_INDEX && shapeB->sensorIndex == B2_NULL_INDEX );
 
-	if ( shapeA->enableSensorEvents || shapeB->enableSensorEvents )
-	{
-		contact->flags |= b2_contactEnableSensorEvents;
-	}
-
 	if ( shapeA->enableContactEvents || shapeB->enableContactEvents )
 	{
 		contact->flags |= b2_contactEnableContactEvents;
@@ -377,8 +372,7 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 	b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
 
 	uint32_t flags = contact->flags;
-	if ( ( flags & ( b2_contactTouchingFlag | b2_contactSensorTouchingFlag ) ) != 0 &&
-		 ( flags & ( b2_contactEnableContactEvents | b2_contactEnableSensorEvents ) ) != 0 )
+	if ( ( flags & b2_contactTouchingFlag ) != 0 && ( flags & b2_contactEnableContactEvents ) != 0 )
 	{
 		uint16_t worldId = world->worldId;
 		const b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contact->shapeIdA );
@@ -389,29 +383,8 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 		// Was touching?
 		if ( ( flags & b2_contactTouchingFlag ) != 0 && ( flags & b2_contactEnableContactEvents ) != 0 )
 		{
-			B2_ASSERT( ( flags & b2_contactSensorFlag ) == 0 );
 			b2ContactEndTouchEvent event = { shapeIdA, shapeIdB };
 			b2ContactEndTouchEventArray_Push( world->contactEndEvents + world->endEventArrayIndex, event );
-		}
-
-		if ( ( flags & b2_contactSensorTouchingFlag ) != 0 && ( flags & b2_contactEnableSensorEvents ) != 0 )
-		{
-			B2_ASSERT( ( flags & b2_contactSensorFlag ) != 0 );
-			B2_ASSERT( shapeA->isSensor == true || shapeB->isSensor == true );
-			B2_ASSERT( shapeA->isSensor != shapeB->isSensor );
-
-			b2SensorEndTouchEvent event;
-			if (shapeA->isSensor)
-			{
-				event.sensorShapeId = shapeIdA;
-				event.visitorShapeId = shapeIdB;
-			}
-			else
-			{
-				event.sensorShapeId = shapeIdB;
-				event.visitorShapeId = shapeIdA;
-			}
-			b2SensorEndTouchEventArray_Push( world->sensorEndEvents + world->endEventArrayIndex, event );
 		}
 	}
 
@@ -478,8 +451,7 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 	else
 	{
 		// contact is non-touching or is sleeping or is a sensor
-		B2_ASSERT( contact->setIndex != b2_awakeSet || ( contact->flags & b2_contactTouchingFlag ) == 0 ||
-				   ( contact->flags & b2_contactSensorFlag ) != 0 );
+		B2_ASSERT( contact->setIndex != b2_awakeSet || ( contact->flags & b2_contactTouchingFlag ) == 0 );
 		b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, contact->setIndex );
 		int movedIndex = b2ContactSimArray_RemoveSwap( &set->contactSims, contact->localIndex );
 		if ( movedIndex != B2_NULL_INDEX )
@@ -549,106 +521,96 @@ static bool b2TestShapeOverlap( const b2Shape* shapeA, b2Transform xfA, const b2
 bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA, b2Transform transformA, b2Vec2 centerOffsetA,
 					  b2Shape* shapeB, b2Transform transformB, b2Vec2 centerOffsetB )
 {
-	bool touching;
+	// Save old manifold
+	b2Manifold oldManifold = contactSim->manifold;
 
-	// Is this contact a sensor?
-	if ( shapeA->isSensor || shapeB->isSensor )
+	// Compute new manifold
+	b2ManifoldFcn* fcn = s_registers[shapeA->type][shapeB->type].fcn;
+	contactSim->manifold = fcn( shapeA, transformA, shapeB, transformB, &contactSim->cache );
+
+	int pointCount = contactSim->manifold.pointCount;
+	bool touching = pointCount > 0;
+
+	if ( touching && world->preSolveFcn && ( contactSim->simFlags & b2_simEnablePreSolveEvents ) != 0 )
 	{
-		// Sensors don't generate manifolds or hit events
-		touching = b2TestShapeOverlap( shapeA, transformA, shapeB, transformB, &contactSim->cache );
+		b2ShapeId shapeIdA = { shapeA->id + 1, world->worldId, shapeA->generation };
+		b2ShapeId shapeIdB = { shapeB->id + 1, world->worldId, shapeB->generation };
+
+		// this call assumes thread safety
+		touching = world->preSolveFcn( shapeIdA, shapeIdB, &contactSim->manifold, world->preSolveContext );
+		if ( touching == false )
+		{
+			// disable contact
+			pointCount = 0;
+			contactSim->manifold.pointCount = 0;
+		}
+	}
+
+	// This flag is for testing
+	if ( world->enableSpeculative == false && pointCount == 2 )
+	{
+		if ( contactSim->manifold.points[0].separation > 1.5f * B2_LINEAR_SLOP )
+		{
+			contactSim->manifold.points[0] = contactSim->manifold.points[1];
+			contactSim->manifold.pointCount = 1;
+		}
+		else if ( contactSim->manifold.points[0].separation > 1.5f * B2_LINEAR_SLOP )
+		{
+			contactSim->manifold.pointCount = 1;
+		}
+
+		pointCount = contactSim->manifold.pointCount;
+	}
+
+	if ( touching && ( shapeA->enableHitEvents || shapeB->enableHitEvents ) )
+	{
+		contactSim->simFlags |= b2_simEnableHitEvent;
 	}
 	else
 	{
-		// Save old manifold
-		b2Manifold oldManifold = contactSim->manifold;
+		contactSim->simFlags &= ~b2_simEnableHitEvent;
+	}
 
-		// Compute new manifold
-		b2ManifoldFcn* fcn = s_registers[shapeA->type][shapeB->type].fcn;
-		contactSim->manifold = fcn( shapeA, transformA, shapeB, transformB, &contactSim->cache );
+	// Match old contact ids to new contact ids and copy the
+	// stored impulses to warm start the solver.
+	int unmatchedCount = 0;
+	for ( int i = 0; i < pointCount; ++i )
+	{
+		b2ManifoldPoint* mp2 = contactSim->manifold.points + i;
 
-		int pointCount = contactSim->manifold.pointCount;
-		touching = pointCount > 0;
+		// shift anchors to be center of mass relative
+		mp2->anchorA = b2Sub( mp2->anchorA, centerOffsetA );
+		mp2->anchorB = b2Sub( mp2->anchorB, centerOffsetB );
 
-		if ( touching && world->preSolveFcn && ( contactSim->simFlags & b2_simEnablePreSolveEvents ) != 0 )
+		mp2->normalImpulse = 0.0f;
+		mp2->tangentImpulse = 0.0f;
+		mp2->maxNormalImpulse = 0.0f;
+		mp2->normalVelocity = 0.0f;
+		mp2->persisted = false;
+
+		uint16_t id2 = mp2->id;
+
+		for ( int j = 0; j < oldManifold.pointCount; ++j )
 		{
-			b2ShapeId shapeIdA = { shapeA->id + 1, world->worldId, shapeA->generation };
-			b2ShapeId shapeIdB = { shapeB->id + 1, world->worldId, shapeB->generation };
+			b2ManifoldPoint* mp1 = oldManifold.points + j;
 
-			// this call assumes thread safety
-			touching = world->preSolveFcn( shapeIdA, shapeIdB, &contactSim->manifold, world->preSolveContext );
-			if ( touching == false )
+			if ( mp1->id == id2 )
 			{
-				// disable contact
-				pointCount = 0;
-				contactSim->manifold.pointCount = 0;
+				mp2->normalImpulse = mp1->normalImpulse;
+				mp2->tangentImpulse = mp1->tangentImpulse;
+				mp2->persisted = true;
+
+				// clear old impulse
+				mp1->normalImpulse = 0.0f;
+				mp1->tangentImpulse = 0.0f;
+				break;
 			}
 		}
 
-		// This flag is for testing
-		if (world->enableSpeculative == false && pointCount == 2)
-		{
-			if ( contactSim->manifold.points[0].separation > 1.5f * B2_LINEAR_SLOP )
-			{
-				contactSim->manifold.points[0] = contactSim->manifold.points[1];
-				contactSim->manifold.pointCount = 1;
-			}
-			else if ( contactSim->manifold.points[0].separation > 1.5f * B2_LINEAR_SLOP )
-			{
-				contactSim->manifold.pointCount = 1;
-			}
+		unmatchedCount += mp2->persisted ? 0 : 1;
+	}
 
-			pointCount = contactSim->manifold.pointCount;
-		}
-
-		if ( touching && ( shapeA->enableHitEvents || shapeB->enableHitEvents ) )
-		{
-			contactSim->simFlags |= b2_simEnableHitEvent;
-		}
-		else
-		{
-			contactSim->simFlags &= ~b2_simEnableHitEvent;
-		}
-
-		// Match old contact ids to new contact ids and copy the
-		// stored impulses to warm start the solver.
-		int unmatchedCount = 0;
-		for ( int i = 0; i < pointCount; ++i )
-		{
-			b2ManifoldPoint* mp2 = contactSim->manifold.points + i;
-
-			// shift anchors to be center of mass relative
-			mp2->anchorA = b2Sub( mp2->anchorA, centerOffsetA );
-			mp2->anchorB = b2Sub( mp2->anchorB, centerOffsetB );
-
-			mp2->normalImpulse = 0.0f;
-			mp2->tangentImpulse = 0.0f;
-			mp2->maxNormalImpulse = 0.0f;
-			mp2->normalVelocity = 0.0f;
-			mp2->persisted = false;
-
-			uint16_t id2 = mp2->id;
-
-			for ( int j = 0; j < oldManifold.pointCount; ++j )
-			{
-				b2ManifoldPoint* mp1 = oldManifold.points + j;
-
-				if ( mp1->id == id2 )
-				{
-					mp2->normalImpulse = mp1->normalImpulse;
-					mp2->tangentImpulse = mp1->tangentImpulse;
-					mp2->persisted = true;
-
-					// clear old impulse
-					mp1->normalImpulse = 0.0f;
-					mp1->tangentImpulse = 0.0f;
-					break;
-				}
-			}
-
-			unmatchedCount += mp2->persisted ? 0 : 1;
-		}
-
-		B2_MAYBE_UNUSED( unmatchedCount );
+	B2_MAYBE_UNUSED( unmatchedCount );
 
 #if 0
 		// todo I haven't found an improvement from this yet
@@ -682,7 +644,6 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 			}
 		}
 #endif
-	}
 
 	if ( touching )
 	{
@@ -696,7 +657,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	return touching;
 }
 
-b2Manifold b2ComputeManifold(b2Shape* shapeA, b2Transform transformA, b2Shape* shapeB, b2Transform transformB)
+b2Manifold b2ComputeManifold( b2Shape* shapeA, b2Transform transformA, b2Shape* shapeB, b2Transform transformB )
 {
 	b2ManifoldFcn* fcn = s_registers[shapeA->type][shapeB->type].fcn;
 	b2SimplexCache cache = { 0 };

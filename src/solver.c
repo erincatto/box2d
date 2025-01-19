@@ -229,7 +229,7 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 	}
 
 	// Skip sensors
-	if ( shape->isSensor == true )
+	if ( shape->sensorIndex != B2_NULL_INDEX )
 	{
 		return true;
 	}
@@ -425,8 +425,8 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 		// Store this to avoid double computation in the case there is no impact event
 		fastShape->aabb = box2;
 
-		// No continuous collision for sensors
-		if ( fastShape->isSensor )
+		// No continuous collision for sensors (but still need the updated bounds)
+		if ( fastShape->sensorIndex != B2_NULL_INDEX )
 		{
 			continue;
 		}
@@ -591,7 +591,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		b2Body* body = bodies + sim->bodyId;
 		body->bodyMoveIndex = simIndex;
 		moveEvents[simIndex].transform = sim->transform;
-		moveEvents[simIndex].bodyId = ( b2BodyId ){ sim->bodyId + 1, worldId, body->revision };
+		moveEvents[simIndex].bodyId = ( b2BodyId ){ sim->bodyId + 1, worldId, body->generation };
 		moveEvents[simIndex].userData = body->userData;
 		moveEvents[simIndex].fellAsleep = false;
 
