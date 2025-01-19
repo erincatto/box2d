@@ -11,8 +11,9 @@
 #include "box2d/collision.h"
 
 #include <stddef.h>
+#include <stdlib.h>
 
-B2_ARRAY_SOURCE( b2Sensor, b2Sensor );
+B2_ARRAY_SOURCE(b2Sensor, b2Sensor);
 
 struct b2SensorTaskContext
 {
@@ -26,7 +27,6 @@ struct b2SensorQueryContext
 	b2Sensor* sensor;
 	b2Shape* sensorShape;
 	b2Transform transform;
-	b2BitSet sensorEventBits;
 };
 
 // Sensor shapes need to
@@ -94,12 +94,44 @@ static bool b2SensorQueryCallback( int proxyId, int shapeId, void* context )
 		return true;
 	}
 
+	// Record the overlap
 	b2Sensor* sensor = queryContext->sensor;
 	b2ShapeRef* shapeRef = b2ShapeRefArray_Add( &sensor->overlaps2 );
 	shapeRef->shapeId = shapeId;
-	shapeRef->generation = otherShape->
+	shapeRef->generation = otherShape->generation;
 
-						   return true;
+	return true;
+}
+
+static int b2CompareShapeRefs( const void* a, const void* b )
+{
+	const b2ShapeRef* sa = a;
+	const b2ShapeRef* sb = b;
+
+	if (sa->shapeId < sb->shapeId)
+	{
+		return -1;
+	}
+
+	if (sa->shapeId == sb->shapeId)
+	{
+		if (sa->generation < sb->generation)
+		{
+			return -1;
+		}
+		
+		if (sa->generation == sb->generation)
+		{
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+static bool b2AreShapeRefsEqual(const b2ShapeRef* a, const b2ShapeRef* b)
+{
+	return a->shapeId == b->shapeId && a->generation == b->generation;
 }
 
 void b2OverlapSensors( b2World* world )
@@ -110,10 +142,10 @@ void b2OverlapSensors( b2World* world )
 		return;
 	}
 
-	struct b2SensorContext context = { 0 };
-	context.sensorEventBits = b2CreateBitSet( sensorCount );
-
-	context.world = world;
+	struct b2SensorTaskContext taskContext = {
+		.world = world,
+		.sensorEventBits = b2CreateBitSet( sensorCount ),
+	};
 
 	b2DynamicTree* trees = world->broadPhase.trees;
 	for ( int sensorIndex = 0; sensorIndex < sensorCount; ++sensorIndex )
@@ -125,18 +157,41 @@ void b2OverlapSensors( b2World* world )
 		b2ShapeRefArray temp = sensor->overlaps1;
 		sensor->overlaps1 = sensor->overlaps2;
 		sensor->overlaps2 = temp;
-		sensor->overlaps2.count = 0;
+		b2ShapeRefArray_Clear( &sensor->overlaps2 );
 
-		context.sensorShape = sensorShape;
-		context.transform = b2GetBodyTransform( world, sensorShape->bodyId );
+		b2Transform transform = b2GetBodyTransform( world, sensorShape->bodyId );
+
+		struct b2SensorQueryContext queryContext = {
+			.taskContext = &taskContext,
+			.sensorShape = sensorShape,
+			.sensor = sensor,
+			.transform = transform,
+		};
 
 		B2_ASSERT( sensorShape->sensorIndex == sensorIndex );
 		b2AABB queryBounds = sensorShape->aabb;
 
 		// Query all trees
-		b2DynamicTree_Query( trees + 0, queryBounds, sensorShape->filter.maskBits, b2SensorQueryCallback, &context );
-		b2DynamicTree_Query( trees + 1, queryBounds, sensorShape->filter.maskBits, b2SensorQueryCallback, &context );
-		b2DynamicTree_Query( trees + 2, queryBounds, sensorShape->filter.maskBits, b2SensorQueryCallback, &context );
+		b2DynamicTree_Query( trees + 0, queryBounds, sensorShape->filter.maskBits, b2SensorQueryCallback, &queryContext );
+		b2DynamicTree_Query( trees + 1, queryBounds, sensorShape->filter.maskBits, b2SensorQueryCallback, &queryContext );
+		b2DynamicTree_Query( trees + 2, queryBounds, sensorShape->filter.maskBits, b2SensorQueryCallback, &queryContext );
+
+		// Sort the overlaps to enable finding begin and end events.
+		qsort( sensor->overlaps2.data, sensor->overlaps2.count, sizeof( b2ShapeRef ), b2CompareShapeRefs );
+
+		int count1 = sensor->overlaps1.count;
+		int count2 = sensor->overlaps2.count;
+		int index1 = 0, index2 = 0;
+		while (index1 < count1 && index2 < count2)
+		{
+			b2ShapeRef* s1 = sensor->overlaps1.data + index1;
+			b2ShapeRef* s2 = sensor->overlaps2.data + index2;
+
+			if (sensor-)
+		}
+		for (int index1 = 0; index1 < count1; ++index1)
+		{
+		}
 	}
 
 	// Iterate sensors bits and publish events
