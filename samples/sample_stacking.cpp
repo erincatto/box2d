@@ -16,6 +16,43 @@
 class SingleBox : public Sample
 {
 public:
+#if 1
+	explicit SingleBox( Settings& settings )
+		: Sample( settings )
+	{
+		// todo_erin test me
+		// https://discord.com/channels/460295137705197568/1064661081903075429/1330362522888437814
+		assert( false );
+
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 2.5f };
+			g_camera.m_zoom = 3.5f;
+		}
+
+		float extent = 0.5f;
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2Polygon box = b2MakeBox( extent, extent );
+			bodyDef.position = { 0.0f, 20.0f };
+			;
+			bodyDef.type = b2_dynamicBody;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		}
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2Polygon box = b2MakeBox( extent, extent );
+			bodyDef.position = { 0.0f, 0.0f };
+			bodyDef.type = b2_staticBody;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		}
+	}
+#else
 	explicit SingleBox( Settings& settings )
 		: Sample( settings )
 	{
@@ -43,6 +80,7 @@ public:
 		b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 		b2CreatePolygonShape( bodyId, &shapeDef, &box );
 	}
+#endif
 
 	void Step( Settings& settings ) override
 	{
