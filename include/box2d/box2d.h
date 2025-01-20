@@ -649,6 +649,9 @@ B2_API int b2Shape_GetSensorOverlaps( b2ShapeId shapeId, b2ShapeId* overlaps, in
 /// Get the current world AABB
 B2_API b2AABB b2Shape_GetAABB( b2ShapeId shapeId );
 
+/// Get the mass data for a shape
+B2_API b2MassData b2Shape_GetMassData( b2ShapeId shapeId );
+
 /// Get the closest point on a shape to a target point. Target and result are in world space.
 /// todo need sample
 B2_API b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target );

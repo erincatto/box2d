@@ -1523,6 +1523,18 @@ b2AABB b2Shape_GetAABB( b2ShapeId shapeId )
 	return shape->aabb;
 }
 
+b2MassData b2Shape_GetMassData(b2ShapeId shapeId)
+{
+	b2World* world = b2GetWorld( shapeId.world0 );
+	if ( world == NULL )
+	{
+		return ( b2MassData ){ 0 };
+	}
+
+	b2Shape* shape = b2GetShape( world, shapeId );
+	return b2ComputeShapeMass( shape );
+}
+
 b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
