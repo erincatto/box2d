@@ -304,6 +304,7 @@ void Sample::Step( Settings& settings )
 	g_draw.m_debugDraw.drawJointExtras = settings.drawJointExtras;
 	g_draw.m_debugDraw.drawAABBs = settings.drawAABBs;
 	g_draw.m_debugDraw.drawMass = settings.drawMass;
+	g_draw.m_debugDraw.drawBodyNames = settings.drawBodyNames;
 	g_draw.m_debugDraw.drawContacts = settings.drawContactPoints;
 	g_draw.m_debugDraw.drawGraphColors = settings.drawGraphColors;
 	g_draw.m_debugDraw.drawContactNormals = settings.drawContactNormals;

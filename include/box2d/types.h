@@ -210,6 +210,9 @@ typedef struct b2BodyDef
 	/// Sleep speed threshold, default is 0.05 meters per second
 	float sleepThreshold;
 
+	/// Optional body name for debugging. Up to 31 characters (excluding null termination)
+	const char* name;
+
 	/// Use this to store application specific body data.
 	void* userData;
 
@@ -1389,6 +1392,9 @@ typedef struct b2DebugDraw
 
 	/// Option to draw the mass and center of mass of dynamic bodies
 	bool drawMass;
+
+	/// Option to draw body names
+	bool drawBodyNames;
 
 	/// Option to draw contact points
 	bool drawContacts;

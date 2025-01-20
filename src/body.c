@@ -270,6 +270,21 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	}
 
 	b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
+
+	if ( def->name )
+	{
+		for ( int i = 0; i < 31; ++i )
+		{
+			body->name[i] = def->name[i];
+		}
+
+		body->name[31] = 0;
+	}
+	else
+	{
+		memset( body->name, 0, 32 * sizeof( char ) );
+	}
+
 	body->userData = def->userData;
 	body->setIndex = setId;
 	body->localIndex = set->bodySims.count - 1;
@@ -1179,6 +1194,33 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 	b2UpdateBodyMassData( world, body );
 
 	b2ValidateSolverSets( world );
+}
+
+void b2Body_SetName(b2BodyId bodyId, const char* name)
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+
+	if ( name != NULL )
+	{
+		for ( int i = 0; i < 31; ++i )
+		{
+			body->name[i] = name[i];
+		}
+
+		body->name[31] = 0;
+	}
+	else
+	{
+		memset( body->name, 0, 32 * sizeof( char ) );
+	}
+}
+
+const char* b2Body_GetName(b2BodyId bodyId)
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	return body->name;
 }
 
 void b2Body_SetUserData( b2BodyId bodyId, void* userData )

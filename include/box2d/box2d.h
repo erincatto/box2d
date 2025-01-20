@@ -238,6 +238,12 @@ B2_API b2BodyType b2Body_GetType( b2BodyId bodyId );
 /// properties regardless of the automatic mass setting.
 B2_API void b2Body_SetType( b2BodyId bodyId, b2BodyType type );
 
+/// Set the body name. Up to 31 characters excluding 0 termination.
+B2_API void b2Body_SetName( b2BodyId bodyId, const char* name );
+
+/// Get the body name. May be null.
+B2_API const char* b2Body_GetName( b2BodyId bodyId );
+
 /// Set the user data for a body
 B2_API void b2Body_SetUserData( b2BodyId bodyId, void* userData );
 

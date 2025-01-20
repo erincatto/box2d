@@ -424,6 +424,7 @@ static void UpdateUI()
 				ImGui::Checkbox( "Contact Impulses", &s_settings.drawContactImpulses );
 				ImGui::Checkbox( "Friction Impulses", &s_settings.drawFrictionImpulses );
 				ImGui::Checkbox( "Center of Masses", &s_settings.drawMass );
+				ImGui::Checkbox( "Body Names", &s_settings.drawBodyNames );
 				ImGui::Checkbox( "Graph Colors", &s_settings.drawGraphColors );
 				ImGui::Checkbox( "Counters", &s_settings.drawCounters );
 				ImGui::Checkbox( "Profile", &s_settings.drawProfile );
@@ -666,7 +667,7 @@ int main( int, char** )
 
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-		g_draw.DrawBackground();
+		//g_draw.DrawBackground();
 
 		double cursorPosX = 0, cursorPosY = 0;
 		glfwGetCursorPos( g_mainWindow, &cursorPosX, &cursorPosY );

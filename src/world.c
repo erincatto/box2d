@@ -954,6 +954,19 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 
 			b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
 
+			if (draw->drawBodyNames && body->name[0] != 0)
+			{
+				b2Vec2 offset = { 0.1f, 0.1f };
+				b2BodySim* bodySim = b2GetBodySim( world, body );
+
+				b2Transform transform = { bodySim->center, bodySim->transform.q };
+				draw->drawTransform( transform, draw->context );
+
+				b2Vec2 p = b2TransformPoint( transform, offset );
+
+				draw->drawString( p, body->name, b2_colorBlueViolet, draw->context );
+			}
+
 			if ( draw->drawMass && body->type == b2_dynamicBody )
 			{
 				b2Vec2 offset = { 0.1f, 0.1f };
@@ -1232,6 +1245,30 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 					shapeId = shape->nextShapeId;
 				}
 			}
+		}
+	}
+
+	if ( draw->drawBodyNames )
+	{
+		b2Vec2 offset = { 0.1f, 0.2f };
+		int count = world->bodies.count;
+		for ( int i = 0; i < count; ++i )
+		{
+			b2Body* body = world->bodies.data + i;
+			if ( body->setIndex == B2_NULL_INDEX )
+			{
+				continue;
+			}
+
+			if ( body->name[0] == 0)
+			{
+				continue;
+			}
+
+			b2Transform transform = b2GetBodyTransformQuick( world, body );
+			b2Vec2 p = b2TransformPoint( transform, offset );
+
+			draw->drawString( p, body->name, b2_colorBlueViolet, draw->context );
 		}
 	}
 

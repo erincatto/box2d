@@ -1454,7 +1454,7 @@ int b2Shape_GetSensorCapacity(b2ShapeId shapeId)
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
-	if ( shape->sensorIndex != B2_NULL_INDEX )
+	if ( shape->sensorIndex == B2_NULL_INDEX )
 	{
 		return 0;
 	}
@@ -1472,7 +1472,7 @@ int b2Shape_GetSensorOverlaps( b2ShapeId shapeId, b2ShapeId* overlaps, int capac
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
-	if ( shape->sensorIndex != B2_NULL_INDEX )
+	if ( shape->sensorIndex == B2_NULL_INDEX )
 	{
 		return 0;
 	}

@@ -13,6 +13,8 @@ typedef struct b2World b2World;
 // Body organizational details that are not used in the solver.
 typedef struct b2Body
 {
+	char name[32];
+
 	void* userData;
 
 	// index of solver set stored in b2World
