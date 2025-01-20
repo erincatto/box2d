@@ -553,6 +553,17 @@ public:
 		Sample::Step( settings );
 
 		g_draw.DrawCircle( m_explosionPosition, m_explosionRadius, b2_colorAzure );
+
+		// This shows how to get the velocity of a point on a body
+		b2Vec2 localPoint = { 0.0f, 2.0f };
+		b2Vec2 worldPoint = b2Body_GetWorldPoint( m_weebleId, localPoint );
+
+		b2Vec2 v1 = b2Body_GetLocalPointVelocity( m_weebleId, localPoint );
+		b2Vec2 v2 = b2Body_GetWorldPointVelocity( m_weebleId, worldPoint );
+
+		b2Vec2 offset = { 0.05f, 0.0f };
+		g_draw.DrawSegment( worldPoint, worldPoint + v1, b2_colorRed );
+		g_draw.DrawSegment( worldPoint + offset, worldPoint + v2 + offset, b2_colorGreen );
 	}
 
 	static Sample* Create( Settings& settings )

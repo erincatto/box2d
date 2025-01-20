@@ -316,6 +316,10 @@ static void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body
 void b2DestroyShape( b2ShapeId shapeId, bool updateBodyMass )
 {
 	b2World* world = b2GetWorldLocked( shapeId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
 
@@ -449,6 +453,10 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 void b2DestroyChain( b2ChainId chainId )
 {
 	b2World* world = b2GetWorldLocked( chainId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
 
 	b2ChainShape* chain = b2GetChainShape( world, chainId );
 	bool wakeBodies = true;
@@ -503,6 +511,11 @@ b2WorldId b2Chain_GetWorld( b2ChainId chainId )
 int b2Chain_GetSegmentCount( b2ChainId chainId )
 {
 	b2World* world = b2GetWorldLocked( chainId.world0 );
+	if ( world == NULL )
+	{
+		return 0;
+	}
+
 	b2ChainShape* chain = b2GetChainShape( world, chainId );
 	return chain->count;
 }
@@ -510,6 +523,11 @@ int b2Chain_GetSegmentCount( b2ChainId chainId )
 int b2Chain_GetSegments( b2ChainId chainId, b2ShapeId* segmentArray, int capacity )
 {
 	b2World* world = b2GetWorldLocked( chainId.world0 );
+	if ( world == NULL )
+	{
+		return 0;
+	}
+
 	b2ChainShape* chain = b2GetChainShape( world, chainId );
 
 	int count = b2MinInt( chain->count, capacity );
@@ -1503,6 +1521,18 @@ b2AABB b2Shape_GetAABB( b2ShapeId shapeId )
 
 	b2Shape* shape = b2GetShape( world, shapeId );
 	return shape->aabb;
+}
+
+b2MassData b2Shape_GetMassData(b2ShapeId shapeId)
+{
+	b2World* world = b2GetWorld( shapeId.world0 );
+	if ( world == NULL )
+	{
+		return ( b2MassData ){ 0 };
+	}
+
+	b2Shape* shape = b2GetShape( world, shapeId );
+	return b2ComputeShapeMass( shape );
 }
 
 b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target )

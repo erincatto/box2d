@@ -326,6 +326,72 @@ int TestWorldCoverage( void )
 	return 0;
 }
 
+static int TestSensor( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	// Wall from x = 1 to x = 2
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_staticBody;
+	bodyDef.position.x = 1.5f;
+	bodyDef.position.y = 11.0f;
+	b2BodyId wallId = b2CreateBody( worldId, &bodyDef );
+	b2Polygon box = b2MakeBox( 0.5f, 10.0f );
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2CreatePolygonShape( wallId, &shapeDef, &box );
+
+	// Bullet fired towards the wall
+	bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+	bodyDef.isBullet = true;
+	bodyDef.gravityScale = 0.0f;
+	bodyDef.position = (b2Vec2){ 7.39814, 4.0 };
+	bodyDef.linearVelocity = (b2Vec2){ -20.0f, 0.0f };
+	b2BodyId bulletId = b2CreateBody( worldId, &bodyDef );
+	shapeDef = b2DefaultShapeDef();
+	shapeDef.isSensor = true;
+	b2Circle circle = { { 0.0f, 0.0f }, 0.1f };
+	b2CreateCircleShape( bulletId, &shapeDef, &circle );
+
+	int beginCount = 0;
+	int endCount = 0;
+
+	while ( true )
+	{
+		float timeStep = 1.0f / 60.0f;
+		int subStepCount = 4;
+		b2World_Step( worldId, timeStep, subStepCount );
+
+		b2Vec2 bulletPos = b2Body_GetPosition( bulletId );
+		//printf( "Bullet pos: %g %g\n", bulletPos.x, bulletPos.y );
+
+		b2SensorEvents events = b2World_GetSensorEvents( worldId );
+
+		if ( events.beginCount > 0 )
+		{
+			beginCount += 1;
+		}
+
+		if ( events.endCount > 0 )
+		{
+			endCount += 1;
+		}
+
+		if ( bulletPos.x < -1.0f )
+		{
+			break;
+		}
+	}
+
+	b2DestroyWorld( worldId );
+
+	ENSURE( beginCount == 1 );
+	ENSURE( endCount == 1 );
+
+	return 0;
+}
+
 int WorldTest( void )
 {
 	RUN_SUBTEST( HelloWorld );
@@ -334,6 +400,7 @@ int WorldTest( void )
 	RUN_SUBTEST( TestIsValid );
 	RUN_SUBTEST( TestWorldRecycle );
 	RUN_SUBTEST( TestWorldCoverage );
+	RUN_SUBTEST( TestSensor );
 
 	return 0;
 }

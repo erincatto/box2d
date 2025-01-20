@@ -2368,7 +2368,7 @@ public:
 			}
 			else
 			{
-				g_draw.DrawPoint( p1, 5.0f, b2_colorBlue );
+				g_draw.DrawPoint( p1, 10.0f, b2_colorBlue );
 			}
 
 			if ( m_showIds )
@@ -2550,6 +2550,24 @@ public:
 		}
 
 		offset = { -10.0f, 0.0f };
+
+		// square-square
+		{
+			b2Polygon box1 = b2MakeSquare( 0.5f );
+			b2Polygon box = b2MakeSquare( 0.5f );
+
+			b2Transform transform1 = { offset, b2Rot_identity };
+			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
+
+			b2Manifold m = b2CollidePolygons( &box1, transform1, &box, transform2 );
+
+			g_draw.DrawSolidPolygon( transform1, box1.vertices, box1.count, box1.radius, color1 );
+			g_draw.DrawSolidPolygon( transform2, box.vertices, box.count, box.radius, color2 );
+
+			DrawManifold( &m, transform1.p, transform2.p );
+
+			offset = b2Add( offset, increment );
+		}
 
 		// box-box
 		{

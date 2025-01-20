@@ -288,6 +288,12 @@ B2_API void b2Body_SetLinearVelocity( b2BodyId bodyId, b2Vec2 linearVelocity );
 /// Set the angular velocity of a body in radians per second
 B2_API void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity );
 
+/// Get the linear velocity of a local point attached to a body. Usually in meters per second.
+B2_API b2Vec2 b2Body_GetLocalPointVelocity( b2BodyId bodyId, b2Vec2 localPoint );
+
+/// Get the linear velocity of a world point attached to a body. Usually in meters per second.
+B2_API b2Vec2 b2Body_GetWorldPointVelocity( b2BodyId bodyId, b2Vec2 worldPoint );
+
 /// Apply a force at a world point. If the force is not applied at the center of mass,
 /// it will generate a torque and affect the angular velocity. This optionally wakes up the body.
 /// The force is ignored if the body is not awake.
@@ -648,6 +654,9 @@ B2_API int b2Shape_GetSensorOverlaps( b2ShapeId shapeId, b2ShapeId* overlaps, in
 
 /// Get the current world AABB
 B2_API b2AABB b2Shape_GetAABB( b2ShapeId shapeId );
+
+/// Get the mass data for a shape
+B2_API b2MassData b2Shape_GetMassData( b2ShapeId shapeId );
 
 /// Get the closest point on a shape to a target point. Target and result are in world space.
 /// todo need sample
