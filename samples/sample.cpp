@@ -3,6 +3,7 @@
 
 #include "sample.h"
 
+#include "TaskScheduler.h"
 #include "draw.h"
 #include "imgui.h"
 #include "random.h"
@@ -14,8 +15,6 @@
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <string.h>
-
-#include "TaskScheduler.h"
 
 class SampleTask : public enki::ITaskSet
 {
@@ -244,7 +243,7 @@ void Sample::MouseMove( b2Vec2 p )
 	}
 }
 
-void Sample::DrawTextLine(const char* text, ...)
+void Sample::DrawTextLine( const char* text, ... )
 {
 	va_list arg;
 	va_start( arg, text );
@@ -252,7 +251,7 @@ void Sample::DrawTextLine(const char* text, ...)
 				  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
 					  ImGuiWindowFlags_NoScrollbar );
 	ImGui::PushFont( g_draw.m_regularFont );
-	ImGui::SetCursorPos( ImVec2( 5.0f, float(m_textLine) ) );
+	ImGui::SetCursorPos( ImVec2( 5.0f, float( m_textLine ) ) );
 	ImGui::TextColoredV( ImColor( 230, 153, 153, 255 ), text, arg );
 	ImGui::PopFont();
 	ImGui::End();
@@ -382,11 +381,12 @@ void Sample::Step( Settings& settings )
 		m_maxProfile.applyRestitution = b2MaxFloat( m_maxProfile.applyRestitution, p.applyRestitution );
 		m_maxProfile.storeImpulses = b2MaxFloat( m_maxProfile.storeImpulses, p.storeImpulses );
 		m_maxProfile.transforms = b2MaxFloat( m_maxProfile.transforms, p.transforms );
-		m_maxProfile.sleepIslands = b2MaxFloat( m_maxProfile.sleepIslands, p.sleepIslands );
 		m_maxProfile.splitIslands = b2MaxFloat( m_maxProfile.splitIslands, p.splitIslands );
 		m_maxProfile.hitEvents = b2MaxFloat( m_maxProfile.hitEvents, p.hitEvents );
 		m_maxProfile.refit = b2MaxFloat( m_maxProfile.refit, p.refit );
 		m_maxProfile.bullets = b2MaxFloat( m_maxProfile.bullets, p.bullets );
+		m_maxProfile.sleepIslands = b2MaxFloat( m_maxProfile.sleepIslands, p.sleepIslands );
+		m_maxProfile.sensors = b2MaxFloat( m_maxProfile.sensors, p.sensors );
 
 		m_totalProfile.step += p.step;
 		m_totalProfile.pairs += p.pairs;
@@ -404,19 +404,19 @@ void Sample::Step( Settings& settings )
 		m_totalProfile.applyRestitution += p.applyRestitution;
 		m_totalProfile.storeImpulses += p.storeImpulses;
 		m_totalProfile.transforms += p.transforms;
-		m_totalProfile.sleepIslands += p.sleepIslands;
 		m_totalProfile.splitIslands += p.splitIslands;
 		m_totalProfile.hitEvents += p.hitEvents;
 		m_totalProfile.refit += p.refit;
 		m_totalProfile.bullets += p.bullets;
+		m_totalProfile.sleepIslands += p.sleepIslands;
+		m_totalProfile.sensors += p.sensors;
 	}
 
 	if ( settings.drawProfile )
 	{
 		b2Profile p = b2World_GetProfile( m_worldId );
 
-		b2Profile aveProfile;
-		memset( &aveProfile, 0, sizeof( b2Profile ) );
+		b2Profile aveProfile = {};
 		if ( m_stepCount > 0 )
 		{
 			float scale = 1.0f / m_stepCount;
@@ -436,76 +436,51 @@ void Sample::Step( Settings& settings )
 			aveProfile.applyRestitution = scale * m_totalProfile.applyRestitution;
 			aveProfile.storeImpulses = scale * m_totalProfile.storeImpulses;
 			aveProfile.transforms = scale * m_totalProfile.transforms;
-			aveProfile.sleepIslands = scale * m_totalProfile.sleepIslands;
 			aveProfile.splitIslands = scale * m_totalProfile.splitIslands;
 			aveProfile.hitEvents = scale * m_totalProfile.hitEvents;
 			aveProfile.refit = scale * m_totalProfile.refit;
 			aveProfile.bullets = scale * m_totalProfile.bullets;
+			aveProfile.sleepIslands = scale * m_totalProfile.sleepIslands;
+			aveProfile.sensors = scale * m_totalProfile.sensors;
 		}
 
-		g_draw.DrawString( 5, m_textLine, "step [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.step, aveProfile.step,
-						   m_maxProfile.step );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, "pairs [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.pairs, aveProfile.pairs,
-						   m_maxProfile.pairs );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, "collide [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.collide, aveProfile.collide,
-						   m_maxProfile.collide );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, "solve [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solve, aveProfile.solve,
-						   m_maxProfile.solve );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, "> merge islands [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.mergeIslands,
-						   aveProfile.mergeIslands, m_maxProfile.mergeIslands );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, "> prepare tasks [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.prepareStages,
-						   aveProfile.prepareStages, m_maxProfile.prepareStages );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, "> solve constraints [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveConstraints,
-						   aveProfile.solveConstraints, m_maxProfile.solveConstraints );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, ">> prepare constraints [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.prepareConstraints,
-						   aveProfile.prepareConstraints, m_maxProfile.prepareConstraints );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, ">> integrate velocities [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.integrateVelocities,
-						   aveProfile.integrateVelocities, m_maxProfile.integrateVelocities );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, ">> warm start [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.warmStart, aveProfile.warmStart,
-						   m_maxProfile.warmStart );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, ">> solve impulses [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveImpulses,
-						   aveProfile.solveImpulses, m_maxProfile.solveImpulses );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, ">> integrate positions [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.integratePositions,
-						   aveProfile.integratePositions, m_maxProfile.integratePositions );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, ">> relax impulses [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.relaxImpulses,
-						   aveProfile.relaxImpulses, m_maxProfile.relaxImpulses );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, ">> apply restitution [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.applyRestitution,
-						   aveProfile.applyRestitution, m_maxProfile.applyRestitution );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, ">> store impulses [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.storeImpulses,
-						   aveProfile.storeImpulses, m_maxProfile.storeImpulses );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, ">> split islands [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.splitIslands,
-						   aveProfile.splitIslands, m_maxProfile.splitIslands );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, "> update transforms [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.transforms,
-						   aveProfile.transforms, m_maxProfile.transforms );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, "> hit events [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.hitEvents, aveProfile.hitEvents,
-						   m_maxProfile.hitEvents );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, "> refit BVH [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.refit, aveProfile.refit,
-						   m_maxProfile.refit );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, "> sleep islands [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.sleepIslands,
-						   aveProfile.sleepIslands, m_maxProfile.sleepIslands );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, "> bullets [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.bullets,
-						   aveProfile.bullets, m_maxProfile.bullets );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "step [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.step, aveProfile.step, m_maxProfile.step );
+		DrawTextLine( "pairs [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.pairs, aveProfile.pairs, m_maxProfile.pairs );
+		DrawTextLine( "collide [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.collide, aveProfile.collide, m_maxProfile.collide );
+		DrawTextLine( "solve [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solve, aveProfile.solve, m_maxProfile.solve );
+		DrawTextLine( "> merge islands [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.mergeIslands, aveProfile.mergeIslands,
+					  m_maxProfile.mergeIslands );
+		DrawTextLine( "> prepare tasks [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.prepareStages, aveProfile.prepareStages,
+					  m_maxProfile.prepareStages );
+		DrawTextLine( "> solve constraints [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveConstraints, aveProfile.solveConstraints,
+					  m_maxProfile.solveConstraints );
+		DrawTextLine( ">> prepare constraints [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.prepareConstraints,
+					  aveProfile.prepareConstraints, m_maxProfile.prepareConstraints );
+		DrawTextLine( ">> integrate velocities [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.integrateVelocities,
+					  aveProfile.integrateVelocities, m_maxProfile.integrateVelocities );
+		DrawTextLine( ">> warm start [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.warmStart, aveProfile.warmStart,
+					  m_maxProfile.warmStart );
+		DrawTextLine( ">> solve impulses [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveImpulses, aveProfile.solveImpulses,
+					  m_maxProfile.solveImpulses );
+		DrawTextLine( ">> integrate positions [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.integratePositions,
+					  aveProfile.integratePositions, m_maxProfile.integratePositions );
+		DrawTextLine( ">> relax impulses [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.relaxImpulses, aveProfile.relaxImpulses,
+					  m_maxProfile.relaxImpulses );
+		DrawTextLine( ">> apply restitution [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.applyRestitution, aveProfile.applyRestitution,
+					  m_maxProfile.applyRestitution );
+		DrawTextLine( ">> store impulses [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.storeImpulses, aveProfile.storeImpulses,
+					  m_maxProfile.storeImpulses );
+		DrawTextLine( ">> split islands [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.splitIslands, aveProfile.splitIslands,
+					  m_maxProfile.splitIslands );
+		DrawTextLine( "> update transforms [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.transforms, aveProfile.transforms,
+					  m_maxProfile.transforms );
+		DrawTextLine( "> hit events [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.hitEvents, aveProfile.hitEvents,
+					  m_maxProfile.hitEvents );
+		DrawTextLine( "> refit BVH [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.refit, aveProfile.refit, m_maxProfile.refit );
+		DrawTextLine( "> sleep islands [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.sleepIslands, aveProfile.sleepIslands,
+					  m_maxProfile.sleepIslands );
+		DrawTextLine( "> bullets [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.bullets, aveProfile.bullets, m_maxProfile.bullets );
+		DrawTextLine( "sensors [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.sensors, aveProfile.sensors, m_maxProfile.sensors );
 	}
 }
 

@@ -843,6 +843,7 @@ public:
 
 static int sampleBadBody = RegisterSample( "Bodies", "Bad", BadBody::Create );
 
+// This shows how to set the initial angular velocity to get a specific movement.
 class Pivot : public Sample
 {
 public:
@@ -872,7 +873,7 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { 0.0f, 3.0f };
-			bodyDef.gravityScale = 0.0f;
+			bodyDef.gravityScale = 1.0f;
 			bodyDef.linearVelocity = v;
 
 			m_bodyId = b2CreateBody( m_worldId, &bodyDef );
