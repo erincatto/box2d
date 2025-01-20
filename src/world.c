@@ -214,11 +214,16 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->taskContexts = b2TaskContextArray_Create( world->workerCount );
 	b2TaskContextArray_Resize( &world->taskContexts, world->workerCount );
 
+	world->sensorTaskContexts = b2SensorTaskContextArray_Create( world->workerCount );
+	b2SensorTaskContextArray_Resize( &world->sensorTaskContexts, world->workerCount );
+
 	for ( int i = 0; i < world->workerCount; ++i )
 	{
 		world->taskContexts.data[i].contactStateBitSet = b2CreateBitSet( 1024 );
 		world->taskContexts.data[i].enlargedSimBitSet = b2CreateBitSet( 256 );
 		world->taskContexts.data[i].awakeIslandBitSet = b2CreateBitSet( 256 );
+
+		world->sensorTaskContexts.data[i].eventBits = b2CreateBitSet( 128 );
 	}
 
 	world->debugBodySet = b2CreateBitSet( 256 );
@@ -242,9 +247,12 @@ void b2DestroyWorld( b2WorldId worldId )
 		b2DestroyBitSet( &world->taskContexts.data[i].contactStateBitSet );
 		b2DestroyBitSet( &world->taskContexts.data[i].enlargedSimBitSet );
 		b2DestroyBitSet( &world->taskContexts.data[i].awakeIslandBitSet );
+
+		b2DestroyBitSet( &world->sensorTaskContexts.data[i].eventBits );
 	}
 
 	b2TaskContextArray_Destroy( &world->taskContexts );
+	b2SensorTaskContextArray_Destroy( &world->sensorTaskContexts );
 
 	b2BodyMoveEventArray_Destroy( &world->bodyMoveEvents );
 	b2SensorBeginTouchEventArray_Destroy( &world->sensorBeginEvents );

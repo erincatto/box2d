@@ -24,8 +24,7 @@ typedef struct b2Sensor
 
 typedef struct b2SensorTaskContext
 {
-	b2World* world;
-	b2BitSet sensorEventBits;
+	b2BitSet eventBits;
 } b2SensorTaskContext;
 
 void b2OverlapSensors( b2World* world );

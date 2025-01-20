@@ -32,7 +32,7 @@
 	</Expand>
 </Type>
 	
-<Type Name="b2Body">
+<Type Name="b2BodyId">
 	<DisplayString>
 		{b2_worlds[world0].bodies.data[index1-1].name,na},
 		{b2_worlds[world0].bodies.data[index1-1].type}

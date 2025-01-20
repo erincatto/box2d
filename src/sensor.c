@@ -21,7 +21,8 @@ B2_ARRAY_SOURCE( b2SensorTaskContext, b2SensorTaskContext );
 
 struct b2SensorQueryContext
 {
-	struct b2SensorTaskContext* taskContext;
+	b2World* world;
+	b2SensorTaskContext* taskContext;
 	b2Sensor* sensor;
 	b2Shape* sensorShape;
 	b2Transform transform;
@@ -56,7 +57,7 @@ static bool b2SensorQueryCallback( int proxyId, int shapeId, void* context )
 		return true;
 	}
 
-	b2World* world = queryContext->taskContext->world;
+	b2World* world = queryContext->world;
 	b2Shape* otherShape = b2ShapeArray_Get( &world->shapes, shapeId );
 
 	// Sensors don't overlap with other sensors
@@ -66,7 +67,7 @@ static bool b2SensorQueryCallback( int proxyId, int shapeId, void* context )
 	}
 
 	// Check filter
-	if ( b2ShouldShapesCollide( sensorShape->filter, otherShape->filter ) == false)
+	if ( b2ShouldShapesCollide( sensorShape->filter, otherShape->filter ) == false )
 	{
 		return true;
 	}
@@ -123,26 +124,20 @@ static int b2CompareShapeRefs( const void* a, const void* b )
 	return 1;
 }
 
-void b2OverlapSensors( b2World* world )
+static void b2SensorTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
 {
-	int sensorCount = world->sensors.count;
-	if ( sensorCount == 0 )
-	{
-		return;
-	}
+	b2TracyCZoneNC( sensor_task, "Overlap", b2_colorBrown, true );
 
-	// todo use task array on world
-	b2SensorTaskContext taskContext = {
-		.world = world,
-		.sensorEventBits = b2CreateBitSet( sensorCount ),
-	};
+	b2World* world = context;
+	B2_ASSERT( (int)threadIndex < world->workerCount );
+	b2SensorTaskContext* taskContext = world->sensorTaskContexts.data + threadIndex;
 
-	b2SetBitCountAndClear( &taskContext.sensorEventBits, sensorCount );
+	B2_ASSERT( startIndex < endIndex );
 
 	b2DynamicTree* trees = world->broadPhase.trees;
-	for ( int sensorIndex = 0; sensorIndex < sensorCount; ++sensorIndex )
+	for ( int sensorIndex = startIndex; sensorIndex < endIndex; ++sensorIndex )
 	{
-		b2Sensor* sensor = world->sensors.data + sensorIndex;
+		b2Sensor* sensor = b2SensorArray_Get( &world->sensors, sensorIndex );
 		b2Shape* sensorShape = b2ShapeArray_Get( &world->shapes, sensor->shapeId );
 
 		// swap overlap arrays
@@ -154,7 +149,8 @@ void b2OverlapSensors( b2World* world )
 		b2Transform transform = b2GetBodyTransform( world, sensorShape->bodyId );
 
 		struct b2SensorQueryContext queryContext = {
-			.taskContext = &taskContext,
+			.world = world,
+			.taskContext = taskContext,
 			.sensorShape = sensorShape,
 			.sensor = sensor,
 			.transform = transform,
@@ -176,7 +172,7 @@ void b2OverlapSensors( b2World* world )
 		if ( count1 != count2 )
 		{
 			// something changed
-			b2SetBit( &taskContext.sensorEventBits, sensorIndex );
+			b2SetBit( &taskContext->eventBits, sensorIndex );
 		}
 		else
 		{
@@ -188,17 +184,54 @@ void b2OverlapSensors( b2World* world )
 				if ( s1->shapeId != s2->shapeId || s1->generation != s2->generation )
 				{
 					// something changed
-					b2SetBit( &taskContext.sensorEventBits, sensorIndex );
+					b2SetBit( &taskContext->eventBits, sensorIndex );
 					break;
 				}
 			}
 		}
 	}
 
+	b2TracyCZoneEnd( sensor_task );
+}
+
+void b2OverlapSensors( b2World* world )
+{
+	int sensorCount = world->sensors.count;
+	if ( sensorCount == 0 )
+	{
+		return;
+	}
+
+	B2_ASSERT( world->workerCount > 0 );
+
+	b2TracyCZoneNC( overlap_sensors, "Sensors", b2_colorMediumPurple, true );
+
+	for ( int i = 0; i < world->workerCount; ++i )
+	{
+		b2SetBitCountAndClear( &world->sensorTaskContexts.data[i].eventBits, sensorCount );
+	}
+
+	// Parallel-for sensors overlaps
+	int minRange = 16;
+	void* userSensorTask = world->enqueueTaskFcn( &b2SensorTask, sensorCount, minRange, world, world->userTaskContext );
+	world->taskCount += 1;
+	if ( userSensorTask != NULL )
+	{
+		world->finishTaskFcn( userSensorTask, world->userTaskContext );
+	}
+
+	b2TracyCZoneNC( sensor_state, "Events", b2_colorLightSlateGray, true );
+
+	b2BitSet* bitSet = &world->sensorTaskContexts.data[0].eventBits;
+	for ( int i = 1; i < world->workerCount; ++i )
+	{
+		b2InPlaceUnion( bitSet, &world->sensorTaskContexts.data[i].eventBits );
+	}
+
 	// Iterate sensors bits and publish events
 	// Process contact state changes. Iterate over set bits
-	uint64_t* bits = taskContext.sensorEventBits.bits;
-	uint32_t blockCount = taskContext.sensorEventBits.blockCount;
+	uint64_t* bits = bitSet->bits;
+	uint32_t blockCount = bitSet->blockCount;
 
 	for ( uint32_t k = 0; k < blockCount; ++k )
 	{
@@ -292,10 +325,11 @@ void b2OverlapSensors( b2World* world )
 		}
 	}
 
-	b2DestroyBitSet( &taskContext.sensorEventBits );
+	b2TracyCZoneEnd( sensor_state );
+	b2TracyCZoneEnd( overlap_sensors );
 }
 
-void b2DestroySensor(b2World* world, b2Shape* sensorShape)
+void b2DestroySensor( b2World* world, b2Shape* sensorShape )
 {
 	b2Sensor* sensor = b2SensorArray_Get( &world->sensors, sensorShape->sensorIndex );
 	for ( int i = 0; i < sensor->overlaps2.count; ++i )
