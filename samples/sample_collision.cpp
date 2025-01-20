@@ -518,7 +518,6 @@ public:
 
 		float y = -4.0f;
 
-		bool isStatic = false;
 		m_tree = b2DynamicTree_Create();
 
 		const b2Vec2 aabbMargin = { 0.1f, 0.1f };
@@ -756,7 +755,7 @@ public:
 		{
 			case Update_Incremental:
 			{
-				b2Timer timer = b2CreateTimer();
+				uint64_t ticks = b2GetTicks();
 				for ( int i = 0; i < m_proxyCount; ++i )
 				{
 					Proxy* p = m_proxies + i;
@@ -765,7 +764,7 @@ public:
 						b2DynamicTree_MoveProxy( &m_tree, p->proxyId, p->fatBox );
 					}
 				}
-				float ms = b2GetMilliseconds( &timer );
+				float ms = b2GetMilliseconds( ticks );
 				g_draw.DrawString( 5, m_textLine, "incremental : %.3f ms", ms );
 				m_textLine += m_textIncrement;
 			}
@@ -782,9 +781,9 @@ public:
 					}
 				}
 
-				b2Timer timer = b2CreateTimer();
+				uint64_t ticks = b2GetTicks();
 				int boxCount = b2DynamicTree_Rebuild( &m_tree, true );
-				float ms = b2GetMilliseconds( &timer );
+				float ms = b2GetMilliseconds( ticks );
 				g_draw.DrawString( 5, m_textLine, "full build %d : %.3f ms", boxCount, ms );
 				m_textLine += m_textIncrement;
 			}
@@ -801,9 +800,9 @@ public:
 					}
 				}
 
-				b2Timer timer = b2CreateTimer();
+				uint64_t ticks = b2GetTicks();
 				int boxCount = b2DynamicTree_Rebuild( &m_tree, false );
-				float ms = b2GetMilliseconds( &timer );
+				float ms = b2GetMilliseconds( ticks );
 				g_draw.DrawString( 5, m_textLine, "partial rebuild %d : %.3f ms", boxCount, ms );
 				m_textLine += m_textIncrement;
 			}
@@ -1056,7 +1055,7 @@ public:
 
 		b2HexColor color1 = b2_colorYellow;
 
-		b2CastOutput output = { 0 };
+		b2CastOutput output = { };
 		float maxFraction = 1.0f;
 
 		// circle
@@ -1475,15 +1474,15 @@ public:
 		bodyDef.rotation = b2MakeRot( RandomFloatRange( -B2_PI, B2_PI ) );
 
 		int mod = m_bodyIndex % 3;
-		if (mod == 0)
+		if ( mod == 0 )
 		{
 			bodyDef.type = b2_staticBody;
 		}
-		else if (mod == 1)
+		else if ( mod == 1 )
 		{
 			bodyDef.type = b2_kinematicBody;
 		}
-		else if (mod == 2)
+		else if ( mod == 2 )
 		{
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.gravityScale = 0.0f;
@@ -1728,7 +1727,7 @@ public:
 										RayCastSortedCallback };
 			b2CastResultFcn* modeFcn = fcns[m_mode];
 
-			RayCastContext context = { 0 };
+			RayCastContext context = { };
 
 			// Must initialize fractions for sorting
 			context.fractions[0] = FLT_MAX;
@@ -2162,7 +2161,7 @@ public:
 		{
 			b2World_OverlapPolygon( m_worldId, &m_queryBox, transform, b2DefaultQueryFilter(), OverlapWorld::OverlapResultFcn,
 									this );
-			b2Vec2 points[B2_MAX_POLYGON_VERTICES] = { 0 };
+			b2Vec2 points[B2_MAX_POLYGON_VERTICES] = { };
 			for ( int i = 0; i < m_queryBox.count; ++i )
 			{
 				points[i] = b2TransformPoint( transform, m_queryBox.vertices[i] );
@@ -2744,7 +2743,6 @@ public:
 			b2Manifold m2 = b2CollideChainSegmentAndPolygon( &segment2, transform1, &rox, transform2, &m_smgroxCache2 );
 
 			{
-				b2Vec2 g1 = b2TransformPoint( transform1, segment1.ghost1 );
 				b2Vec2 g2 = b2TransformPoint( transform1, segment1.ghost2 );
 				b2Vec2 p1 = b2TransformPoint( transform1, segment1.segment.point1 );
 				b2Vec2 p2 = b2TransformPoint( transform1, segment1.segment.point2 );
@@ -2756,7 +2754,6 @@ public:
 
 			{
 				b2Vec2 g1 = b2TransformPoint( transform1, segment2.ghost1 );
-				b2Vec2 g2 = b2TransformPoint( transform1, segment2.ghost2 );
 				b2Vec2 p1 = b2TransformPoint( transform1, segment2.segment.point1 );
 				b2Vec2 p2 = b2TransformPoint( transform1, segment2.segment.point2 );
 				g_draw.DrawSegment( g1, p1, b2_colorLightGray );
@@ -2787,7 +2784,6 @@ public:
 			b2Manifold m2 = b2CollideChainSegmentAndCapsule( &segment2, transform1, &capsule, transform2, &m_smgcapCache2 );
 
 			{
-				b2Vec2 g1 = b2TransformPoint( transform1, segment1.ghost1 );
 				b2Vec2 g2 = b2TransformPoint( transform1, segment1.ghost2 );
 				b2Vec2 p1 = b2TransformPoint( transform1, segment1.segment.point1 );
 				b2Vec2 p2 = b2TransformPoint( transform1, segment1.segment.point2 );
@@ -2800,7 +2796,6 @@ public:
 
 			{
 				b2Vec2 g1 = b2TransformPoint( transform1, segment2.ghost1 );
-				b2Vec2 g2 = b2TransformPoint( transform1, segment2.ghost2 );
 				b2Vec2 p1 = b2TransformPoint( transform1, segment2.segment.point1 );
 				b2Vec2 p2 = b2TransformPoint( transform1, segment2.segment.point2 );
 				g_draw.DrawSegment( g1, p1, b2_colorLightGray );
@@ -3288,7 +3283,7 @@ public:
 	{
 		Sample::Step( settings );
 
-		b2ShapeCastPairInput input = { 0 };
+		b2ShapeCastPairInput input = { };
 		input.proxyA = b2MakeProxy( m_vAs, m_countA, m_radiusA );
 		input.proxyB = b2MakeProxy( m_vBs, m_countB, m_radiusB );
 		input.transformA = m_transformA;
@@ -3417,7 +3412,7 @@ public:
 		if ( settings.restart == false )
 		{
 			g_camera.m_center = { 0.6f, 2.0f };
-			g_camera.m_center = { -123.750000f, 134.750000f };
+			g_camera.m_center = { -16, 45 };
 			g_camera.m_zoom = 5.0f;
 		}
 	}
@@ -3427,47 +3422,6 @@ public:
 		return new TimeOfImpact( settings );
 	}
 
-#if 0
--		input	0x00000044f14fd550 {proxyA={points=0x00000044f14fd550 {{...}, {...}, {...}, {...}, {...}, {...}, {...}, ...} ...} ...}	const b2TOIInput *
--		proxyA	{points=0x00000044f14fd550 {{x=-123.750000 y=134.750000 }, {x=-123.250000 y=134.750000 }, {x=-123.250000 ...}, ...} ...}	b2ShapeProxy
--		points	0x00000044f14fd550 {{x=-123.750000 y=134.750000 }, {x=-123.250000 y=134.750000 }, {x=-123.250000 y=135.250000 }, ...}	b2Vec2[8]
-+		[0]	{x=-123.750000 y=134.750000 }	b2Vec2
-+		[1]	{x=-123.250000 y=134.750000 }	b2Vec2
-+		[2]	{x=-123.250000 y=135.250000 }	b2Vec2
-+		[3]	{x=-123.750000 y=135.250000 }	b2Vec2
-+		[4]	{x=-123.905960 y=135.246246 }	b2Vec2
-+		[5]	{x=-123.583496 y=135.491089 }	b2Vec2
-+		[6]	{x=-1.02951760e+30 y=9.529e-44#DEN }	b2Vec2
-+		[7]	{x=8.40272566e-18 y=7.539e-43#DEN }	b2Vec2
-		count	4	int
-		radius	0.00000000	float
--		proxyB	{points=0x00000044f14fd598 {{x=0.00000000 y=-0.125000000 }, {x=0.00000000 y=0.125000000 }, {x=-123.250000 ...}, ...} ...}	b2ShapeProxy
--		points	0x00000044f14fd598 {{x=0.00000000 y=-0.125000000 }, {x=0.00000000 y=0.125000000 }, {x=-123.250000 y=...}, ...}	b2Vec2[8]
-+		[0]	{x=0.00000000 y=-0.125000000 }	b2Vec2
-+		[1]	{x=0.00000000 y=0.125000000 }	b2Vec2
-+		[2]	{x=-123.250000 y=135.250000 }	b2Vec2
-+		[3]	{x=-123.750000 y=135.250000 }	b2Vec2
-+		[4]	{x=-123.905960 y=135.246246 }	b2Vec2
-+		[5]	{x=-123.583496 y=135.491089 }	b2Vec2
-+		[6]	{x=-1.02951760e+30 y=9.529e-44#DEN }	b2Vec2
-+		[7]	{x=8.40272566e-18 y=7.539e-43#DEN }	b2Vec2
-		count	2	int
-		radius	0.0350000001	float
--		sweepA	{localCenter={x=0.00000000 y=0.00000000 } c1={x=0.00000000 y=0.00000000 } c2={x=0.00000000 y=0.00000000 } ...}	b2Sweep
-+		localCenter	{x=0.00000000 y=0.00000000 }	b2Vec2
-+		c1	{x=0.00000000 y=0.00000000 }	b2Vec2
-+		c2	{x=0.00000000 y=0.00000000 }	b2Vec2
-+		q1	{c=1.00000000 s=0.00000000 }	b2Rot
-+		q2	{c=1.00000000 s=0.00000000 }	b2Rot
--		sweepB	{localCenter={x=0.00000000 y=0.00000000 } c1={x=-123.721443 y=135.385178 } c2={x=-123.757744 y=135.334244 } ...}	b2Sweep
-+		localCenter	{x=0.00000000 y=0.00000000 }	b2Vec2
-+		c1	{x=-123.721443 y=135.385178 }	b2Vec2
-+		c2	{x=-123.757744 y=135.334244 }	b2Vec2
-+		q1	{c=0.567239463 s=0.823552966 }	b2Rot
-+		q2	{c=0.423919678 s=0.905699849 }	b2Rot
-		tMax	1.00000000	float
-
-#endif
 	void Step( Settings& settings ) override
 	{
 		Sample::Step( settings );
@@ -3475,11 +3429,13 @@ public:
 		b2Sweep sweepA = {
 			b2Vec2_zero, { 0.0f, 0.0f }, { 0.0f, 0.0f }, b2Rot_identity, b2Rot_identity,
 		};
-		b2Sweep sweepB = { b2Vec2_zero,
-						   { -123.721443f, 135.385178f },
-						   { -123.757744f, 135.334244f },
-						   { 0.567239463f, 0.823552966f },
-						   { 0.423919678f, 0.905699849f } };
+		b2Sweep sweepB = {
+			b2Vec2_zero,
+			{ -15.8332710, 45.3520279 },
+			{ -15.8324337, 45.3413048 },
+			{ -0.540891349, 0.841092527 },
+			{ -0.457797021, 0.889056742 },
+		};
 
 		b2TOIInput input;
 		input.proxyA = b2MakeProxy( m_verticesA, m_countA, m_radiusA );
@@ -3535,15 +3491,15 @@ public:
 
 		if ( output.state == b2_toiStateHit )
 		{
-			b2DistanceInput dinput;
-			dinput.proxyA = input.proxyA;
-			dinput.proxyB = input.proxyB;
-			dinput.transformA = b2GetSweepTransform( &sweepA, output.fraction );
-			dinput.transformB = b2GetSweepTransform( &sweepB, output.fraction );
-			dinput.useRadii = false;
+			b2DistanceInput distanceInput;
+			distanceInput.proxyA = input.proxyA;
+			distanceInput.proxyB = input.proxyB;
+			distanceInput.transformA = b2GetSweepTransform( &sweepA, output.fraction );
+			distanceInput.transformB = b2GetSweepTransform( &sweepB, output.fraction );
+			distanceInput.useRadii = false;
 			b2SimplexCache cache = { 0 };
-			b2DistanceOutput doutput = b2ShapeDistance( &cache, &dinput, nullptr, 0 );
-			g_draw.DrawString( 5, m_textLine, "distance = %g", doutput.distance );
+			b2DistanceOutput distanceOutput = b2ShapeDistance( &cache, &distanceInput, nullptr, 0 );
+			g_draw.DrawString( 5, m_textLine, "distance = %g", distanceOutput.distance );
 			m_textLine += m_textIncrement;
 		}
 
@@ -3560,15 +3516,14 @@ public:
 #endif
 	}
 
-	b2Vec2 m_verticesA[4] = {
-		{ -123.750000, 134.750000 }, { -123.250000, 134.750000 }, { -123.250000, 135.250000 }, { -123.750000, 135.250000 } };
+	b2Vec2 m_verticesA[4] = { { -16.25, 44.75 }, { -15.75, 44.75 }, { -15.75, 45.25 }, { -16.25, 45.25 } };
 	b2Vec2 m_verticesB[2] = { { 0.0f, -0.125000000f }, { 0.0f, 0.125000000f } };
 
 	int m_countA = ARRAY_COUNT( m_verticesA );
 	int m_countB = ARRAY_COUNT( m_verticesB );
 
 	float m_radiusA = 0.0f;
-	float m_radiusB = 0.0350000001f;
+	float m_radiusB = 0.0299999993f;
 };
 
 static int sampleTimeOfImpact = RegisterSample( "Collision", "Time of Impact", TimeOfImpact::Create );

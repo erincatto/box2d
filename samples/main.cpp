@@ -15,13 +15,15 @@
 #include "box2d/math_functions.h"
 
 // clang-format off
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "glad/glad.h"
+#include "GLFW/glfw3.h"
 // clang-format on
 
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -31,7 +33,7 @@
 #define FrameMark
 #endif
 
-#if defined( _WIN32 )
+#if defined( _WIN32 ) && 0
 #include <crtdbg.h>
 
 static int MyAllocHook( int allocType, void* userData, size_t size, int blockType, long requestNumber,
@@ -98,7 +100,7 @@ void glfwErrorCallback( int error, const char* description )
 	fprintf( stderr, "GLFW error occurred. Code: %d. Description: %s\n", error, description );
 }
 
-static inline int CompareSamples( const void* a, const void* b )
+static int CompareSamples( const void* a, const void* b )
 {
 	SampleEntry* sa = (SampleEntry*)a;
 	SampleEntry* sb = (SampleEntry*)b;
@@ -148,7 +150,7 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 	const char* fontPath = "samples/data/droid_sans.ttf";
 	FILE* file = fopen( fontPath, "rb" );
 
-	if ( file != NULL )
+	if ( file != nullptr )
 	{
 		ImFontConfig fontConfig;
 		fontConfig.RasterizerMultiply = s_windowScale * s_framebufferScale;
@@ -422,6 +424,7 @@ static void UpdateUI()
 				ImGui::Checkbox( "Contact Impulses", &s_settings.drawContactImpulses );
 				ImGui::Checkbox( "Friction Impulses", &s_settings.drawFrictionImpulses );
 				ImGui::Checkbox( "Center of Masses", &s_settings.drawMass );
+				ImGui::Checkbox( "Body Names", &s_settings.drawBodyNames );
 				ImGui::Checkbox( "Graph Colors", &s_settings.drawGraphColors );
 				ImGui::Checkbox( "Counters", &s_settings.drawCounters );
 				ImGui::Checkbox( "Profile", &s_settings.drawProfile );
@@ -637,7 +640,7 @@ int main( int, char** )
 
 	float frameTime = 0.0;
 
-	int32_t frame = 0;
+	// int32_t frame = 0;
 
 	while ( !glfwWindowShouldClose( g_mainWindow ) )
 	{
@@ -664,7 +667,7 @@ int main( int, char** )
 
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-		g_draw.DrawBackground();
+		//g_draw.DrawBackground();
 
 		double cursorPosX = 0, cursorPosY = 0;
 		glfwGetCursorPos( g_mainWindow, &cursorPosX, &cursorPosY );
@@ -752,12 +755,12 @@ int main( int, char** )
 		// Limit frame rate to 60Hz
 		double time2 = glfwGetTime();
 		double targetTime = time1 + 1.0f / 60.0f;
-		int loopCount = 0;
+		// int loopCount = 0;
 		while ( time2 < targetTime )
 		{
 			b2Yield();
 			time2 = glfwGetTime();
-			++loopCount;
+			//++loopCount;
 		}
 
 		frameTime = (float)( time2 - time1 );
@@ -765,7 +768,7 @@ int main( int, char** )
 		//{
 		//	printf("loop count = %d, frame time = %.1f\n", loopCount, 1000.0f * frameTime);
 		// }
-		++frame;
+		//++frame;
 	}
 
 	delete s_sample;

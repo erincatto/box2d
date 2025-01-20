@@ -8,7 +8,7 @@
 #include "broad_phase.h"
 #include "constraint_graph.h"
 #include "id_pool.h"
-#include "stack_allocator.h"
+#include "arena_allocator.h"
 
 #include "box2d/types.h"
 
@@ -43,7 +43,7 @@ typedef struct b2TaskContext
 // The world also contains efficient memory management facilities.
 typedef struct b2World
 {
-	b2StackAllocator stackAllocator;
+	b2ArenaAllocator stackAllocator;
 	b2BroadPhase broadPhase;
 	b2ConstraintGraph constraintGraph;
 
@@ -92,8 +92,15 @@ typedef struct b2World
 	b2ShapeArray shapes;
 	b2ChainShapeArray chainShapes;
 
+	// Array of all sensor shape indices
+	b2SensorArray sensors;
+
+	// Global array of shapes that sensors overlap with.
+	b2IntArray sensorOverlaps;
+
 	// Per thread storage
 	b2TaskContextArray taskContexts;
+	b2SensorTaskContextArray sensorTaskContexts;
 
 	b2BodyMoveEventArray bodyMoveEvents;
 	b2SensorBeginTouchEventArray sensorBeginEvents;
@@ -127,7 +134,7 @@ typedef struct b2World
 	float hitEventThreshold;
 	float restitutionThreshold;
 	float maxLinearSpeed;
-	float contactPushSpeed;
+	float contactMaxPushSpeed;
 	float contactHertz;
 	float contactDampingRatio;
 	float jointHertz;
@@ -136,7 +143,7 @@ typedef struct b2World
 	b2MixingRule frictionMixingRule;
 	b2MixingRule restitutionMixingRule;
 
-	uint16_t revision;
+	uint16_t generation;
 
 	b2Profile profile;
 

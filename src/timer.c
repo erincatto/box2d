@@ -15,63 +15,52 @@
 
 static double s_invFrequency = 0.0;
 
-b2Timer b2CreateTimer( void )
+uint64_t b2GetTicks( void )
 {
-	LARGE_INTEGER largeInteger;
+	LARGE_INTEGER counter;
+	QueryPerformanceCounter( &counter );
+	return (uint64_t)counter.QuadPart;
+}
 
+float b2GetMilliseconds( uint64_t ticks )
+{
 	if ( s_invFrequency == 0.0 )
 	{
-		QueryPerformanceFrequency( &largeInteger );
+		LARGE_INTEGER frequency;
+		QueryPerformanceFrequency( &frequency );
 
-		s_invFrequency = (double)largeInteger.QuadPart;
+		s_invFrequency = (double)frequency.QuadPart;
 		if ( s_invFrequency > 0.0 )
 		{
 			s_invFrequency = 1000.0 / s_invFrequency;
 		}
 	}
 
-	QueryPerformanceCounter( &largeInteger );
-	b2Timer timer;
-	timer.start = largeInteger.QuadPart;
-	return timer;
+	uint64_t ticksNow = b2GetTicks();
+	return (float)( s_invFrequency * ( ticksNow - ticks ) );
 }
 
-int64_t b2GetTicks( b2Timer* timer )
+float b2GetMillisecondsAndReset( uint64_t* ticks )
 {
-	LARGE_INTEGER largeInteger;
-	QueryPerformanceCounter( &largeInteger );
-	int64_t ticks = largeInteger.QuadPart;
-	int64_t count = ticks - timer->start;
-	timer->start = ticks;
-	return count;
-}
+	if ( s_invFrequency == 0.0 )
+	{
+		LARGE_INTEGER frequency;
+		QueryPerformanceFrequency( &frequency );
 
-float b2GetMilliseconds( const b2Timer* timer )
-{
-	LARGE_INTEGER largeInteger;
-	QueryPerformanceCounter( &largeInteger );
-	int64_t count = largeInteger.QuadPart;
-	float ms = (float)( s_invFrequency * ( count - timer->start ) );
+		s_invFrequency = (double)frequency.QuadPart;
+		if ( s_invFrequency > 0.0 )
+		{
+			s_invFrequency = 1000.0 / s_invFrequency;
+		}
+	}
+
+	uint64_t ticksNow = b2GetTicks();
+	float ms = (float)( s_invFrequency * ( ticksNow - *ticks ) );
+	*ticks = ticksNow;
 	return ms;
 }
 
-float b2GetMillisecondsAndReset( b2Timer* timer )
-{
-	LARGE_INTEGER largeInteger;
-	QueryPerformanceCounter( &largeInteger );
-	int64_t count = largeInteger.QuadPart;
-	float ms = (float)( s_invFrequency * ( count - timer->start ) );
-	timer->start = count;
-	return ms;
-}
-
-void b2SleepMilliseconds( int milliseconds )
-{
-	// also SwitchToThread()
-	Sleep( (DWORD)milliseconds );
-}
-
-void b2Yield()
+void b2Yield( void )
 {
 	SwitchToThread();
 }
@@ -81,55 +70,28 @@ void b2Yield()
 #include <sched.h>
 #include <time.h>
 
-// maybe try CLOCK_MONOTONIC_RAW
-b2Timer b2CreateTimer( void )
-{
-	b2Timer timer;
-	struct timespec ts;
-	clock_gettime( CLOCK_MONOTONIC, &ts );
-	timer.tv_sec = ts.tv_sec;
-	timer.tv_nsec = ts.tv_nsec;
-	return timer;
-}
-
-float b2GetMilliseconds( const b2Timer* timer )
+uint64_t b2GetTicks( void )
 {
 	struct timespec ts;
 	clock_gettime( CLOCK_MONOTONIC, &ts );
-	time_t start_sec = timer->tv_sec;
-	long start_nsec = timer->tv_nsec;
-
-	time_t sec_diff = ts.tv_sec - start_sec;
-	long nsec_diff = ts.tv_nsec - start_nsec;
-
-	return (float)( sec_diff * 1000.0 + nsec_diff / 1000000.0 );
+	return ts.tv_sec * 1000000000LL + ts.tv_nsec;
 }
 
-float b2GetMillisecondsAndReset( b2Timer* timer )
+float b2GetMilliseconds( uint64_t ticks )
 {
-	struct timespec ts;
-	clock_gettime( CLOCK_MONOTONIC, &ts );
-	time_t start_sec = timer->tv_sec;
-	long start_nsec = timer->tv_nsec;
-
-	time_t sec_diff = ts.tv_sec - start_sec;
-	long nsec_diff = ts.tv_nsec - start_nsec;
-
-	timer->tv_sec = ts.tv_sec;
-	timer->tv_nsec = ts.tv_nsec;
-
-	return (float)( sec_diff * 1000.0 + nsec_diff / 1000000.0 );
+	uint64_t ticksNow = b2GetTicks();
+	return (float)( (ticksNow - ticks) / 1000000.0 );
 }
 
-void b2SleepMilliseconds( int milliseconds )
+float b2GetMillisecondsAndReset( uint64_t* ticks )
 {
-	struct timespec ts;
-	ts.tv_sec = milliseconds / 1000;
-	ts.tv_nsec = ( milliseconds % 1000 ) * 1000000;
-	nanosleep( &ts, NULL );
+	uint64_t ticksNow = b2GetTicks();
+	float ms = (float)( (ticksNow - *ticks) / 1000000.0 );
+	*ticks = ticksNow;
+	return ms;
 }
 
-void b2Yield()
+void b2Yield( void )
 {
 	sched_yield();
 }
@@ -142,9 +104,14 @@ void b2Yield()
 
 static double s_invFrequency = 0.0;
 
-b2Timer b2CreateTimer( void )
+uint64_t b2GetTicks( void )
 {
-	if (s_invFrequency == 0)
+	return mach_absolute_time();
+}
+
+float b2GetMilliseconds( uint64_t ticks )
+{
+	if ( s_invFrequency == 0 )
 	{
 		mach_timebase_info_data_t timebase;
 		mach_timebase_info( &timebase );
@@ -153,65 +120,52 @@ b2Timer b2CreateTimer( void )
 		s_invFrequency = 1e-6 * (double)timebase.numer / (double)timebase.denom;
 	}
 
-	uint64_t start = mach_absolute_time();
-	b2Timer timer = { start };
-	return timer;
+	uint64_t ticksNow = b2GetTicks();
+	return (float)( s_invFrequency * (ticksNow - ticks) );
 }
 
-float b2GetMilliseconds( const b2Timer* timer )
+float b2GetMillisecondsAndReset( uint64_t* ticks )
 {
-	uint64_t count = mach_absolute_time();
-	float ms = (float)( s_invFrequency * ( count - timer->start ) );
+	if ( s_invFrequency == 0 )
+	{
+		mach_timebase_info_data_t timebase;
+		mach_timebase_info( &timebase );
+
+		// convert to ns then to ms
+		s_invFrequency = 1e-6 * (double)timebase.numer / (double)timebase.denom;
+	}
+
+	uint64_t ticksNow = b2GetTicks();
+	float ms = (float)( s_invFrequency * ( ticksNow - *ticks ) );
+	*ticks = ticksNow;
 	return ms;
 }
 
-float b2GetMillisecondsAndReset( b2Timer* timer )
-{
-	uint64_t count = mach_absolute_time();
-	float ms = (float)( s_invFrequency * ( count - timer->start ) );
-	timer->start = count;
-	return ms;
-}
-
-void b2SleepMilliseconds( int milliseconds )
-{
-	struct timespec ts;
-	ts.tv_sec = milliseconds / 1000;
-	ts.tv_nsec = ( milliseconds % 1000 ) * 1000000;
-	nanosleep( &ts, NULL );
-}
-
-void b2Yield()
+void b2Yield( void )
 {
 	sched_yield();
 }
 
 #else
 
-b2Timer b2CreateTimer( void )
+uint64_t b2GetTicks( void )
 {
-	b2Timer timer = { 0 };
-	return timer;
+	return 0;
 }
 
-float b2GetMilliseconds( const b2Timer* timer )
+float b2GetMilliseconds( uint64_t ticks )
 {
-	( (void)( timer ) );
+	( (void)( ticks ) );
 	return 0.0f;
 }
 
-float b2GetMillisecondsAndReset( b2Timer* timer )
+float b2GetMillisecondsAndReset( uint64_t* ticks )
 {
-	( (void)( timer ) );
+	( (void)( ticks ) );
 	return 0.0f;
 }
 
-void b2SleepMilliseconds( int milliseconds )
-{
-	( (void)( milliseconds ) );
-}
-
-void b2Yield()
+void b2Yield( void )
 {
 }
 

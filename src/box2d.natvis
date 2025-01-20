@@ -24,4 +24,18 @@
 		<Item Name="Address">(void*)this</Item>
 	</Expand>
 </Type>
+
+<Type Name="b2WorldId">
+	<DisplayString>index: {index1}</DisplayString>
+	<Expand>
+		<ExpandedItem>b2_worlds[ index1 - 1 ]</ExpandedItem>
+	</Expand>
+</Type>
+	
+<Type Name="b2BodyId">
+	<DisplayString>
+		{b2_worlds[world0].bodies.data[index1-1].name,na},
+		{b2_worlds[world0].bodies.data[index1-1].type}
+	</DisplayString>
+</Type>
 </AutoVisualizer>

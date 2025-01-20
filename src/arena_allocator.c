@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
-#include "stack_allocator.h"
+#include "arena_allocator.h"
 
 #include "array.h"
 #include "core.h"
@@ -9,42 +9,33 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-typedef struct b2StackEntry
-{
-	char* data;
-	const char* name;
-	int size;
-	bool usedMalloc;
-} b2StackEntry;
+B2_ARRAY_SOURCE( b2ArenaEntry, b2ArenaEntry );
 
-B2_ARRAY_INLINE( b2StackEntry, b2StackEntry );
-B2_ARRAY_SOURCE( b2StackEntry, b2StackEntry );
-
-b2StackAllocator b2CreateStackAllocator( int capacity )
+b2ArenaAllocator b2CreateArenaAllocator( int capacity )
 {
 	B2_ASSERT( capacity >= 0 );
-	b2StackAllocator allocator = { 0 };
+	b2ArenaAllocator allocator = { 0 };
 	allocator.capacity = capacity;
 	allocator.data = b2Alloc( capacity );
 	allocator.allocation = 0;
 	allocator.maxAllocation = 0;
 	allocator.index = 0;
-	allocator.entries = b2StackEntryArray_Create( 32 );
+	allocator.entries = b2ArenaEntryArray_Create( 32 );
 	return allocator;
 }
 
-void b2DestroyStackAllocator( b2StackAllocator* allocator )
+void b2DestroyArenaAllocator( b2ArenaAllocator* allocator )
 {
-	b2StackEntryArray_Destroy( &allocator->entries );
+	b2ArenaEntryArray_Destroy( &allocator->entries );
 	b2Free( allocator->data, allocator->capacity );
 }
 
-void* b2AllocateStackItem( b2StackAllocator* alloc, int size, const char* name )
+void* b2AllocateArenaItem( b2ArenaAllocator* alloc, int size, const char* name )
 {
 	// ensure allocation is 32 byte aligned to support 256-bit SIMD
 	int size32 = ( ( size - 1 ) | 0x1F ) + 1;
 
-	b2StackEntry entry;
+	b2ArenaEntry entry;
 	entry.size = size32;
 	entry.name = name;
 	if ( alloc->index + size32 > alloc->capacity )
@@ -70,15 +61,15 @@ void* b2AllocateStackItem( b2StackAllocator* alloc, int size, const char* name )
 		alloc->maxAllocation = alloc->allocation;
 	}
 
-	b2StackEntryArray_Push( &alloc->entries, entry );
+	b2ArenaEntryArray_Push( &alloc->entries, entry );
 	return entry.data;
 }
 
-void b2FreeStackItem( b2StackAllocator* alloc, void* mem )
+void b2FreeArenaItem( b2ArenaAllocator* alloc, void* mem )
 {
 	int entryCount = alloc->entries.count;
 	B2_ASSERT( entryCount > 0 );
-	b2StackEntry* entry = alloc->entries.data + ( entryCount - 1 );
+	b2ArenaEntry* entry = alloc->entries.data + ( entryCount - 1 );
 	B2_ASSERT( mem == entry->data );
 	if ( entry->usedMalloc )
 	{
@@ -89,10 +80,10 @@ void b2FreeStackItem( b2StackAllocator* alloc, void* mem )
 		alloc->index -= entry->size;
 	}
 	alloc->allocation -= entry->size;
-	b2StackEntryArray_Pop( &alloc->entries );
+	b2ArenaEntryArray_Pop( &alloc->entries );
 }
 
-void b2GrowStack( b2StackAllocator* alloc )
+void b2GrowArena( b2ArenaAllocator* alloc )
 {
 	// Stack must not be in use
 	B2_ASSERT( alloc->allocation == 0 );
@@ -105,17 +96,17 @@ void b2GrowStack( b2StackAllocator* alloc )
 	}
 }
 
-int b2GetStackCapacity( b2StackAllocator* alloc )
+int b2GetArenaCapacity( b2ArenaAllocator* alloc )
 {
 	return alloc->capacity;
 }
 
-int b2GetStackAllocation( b2StackAllocator* alloc )
+int b2GetArenaAllocation( b2ArenaAllocator* alloc )
 {
 	return alloc->allocation;
 }
 
-int b2GetMaxStackAllocation( b2StackAllocator* alloc )
+int b2GetMaxArenaAllocation( b2ArenaAllocator* alloc )
 {
 	return alloc->maxAllocation;
 }

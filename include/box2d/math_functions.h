@@ -307,7 +307,7 @@ B2_INLINE b2Rot b2NormalizeRot( b2Rot q )
 	return qn;
 }
 
-/// Integration rotation from angular velocity
+/// Integrate rotation from angular velocity
 /// @param q1 initial rotation
 /// @param deltaAngle the angular displacement in radians
 B2_INLINE b2Rot b2IntegrateRotation( b2Rot q1, float deltaAngle )

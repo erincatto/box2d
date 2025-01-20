@@ -13,6 +13,8 @@ typedef struct b2World b2World;
 // Body organizational details that are not used in the solver.
 typedef struct b2Body
 {
+	char name[32];
+
 	void* userData;
 
 	// index of solver set stored in b2World
@@ -61,7 +63,7 @@ typedef struct b2Body
 
 	// This is monotonically advanced when a body is allocated in this slot
 	// Used to check for invalid b2BodyId
-	uint16_t revision;
+	uint16_t generation;
 
 	bool enableSleep;
 	bool fixedRotation;

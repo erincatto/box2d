@@ -498,8 +498,8 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 	b2HexColor c3 = b2_colorRed;
 
 	const float L = drawSize;
-	// draw->DrawPoint(pA, 3.0f, b2_colorGray40, draw->context);
-	// draw->DrawPoint(pB, 3.0f, b2_colorLightBlue, draw->context);
+	// draw->drawPoint(pA, 3.0f, b2_colorGray40, draw->context);
+	// draw->drawPoint(pB, 3.0f, b2_colorLightBlue, draw->context);
 	draw->DrawCircle( pB, L, c1, draw->context );
 
 	float angle = b2RelativeAngle( transformB.q, transformA.q );
@@ -514,7 +514,7 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 		float jointAngle = b2UnwindAngle( angle - joint->referenceAngle );
 		char buffer[32];
 		snprintf( buffer, 32, " %.1f deg", 180.0f * jointAngle / B2_PI );
-		draw->DrawString( pC, buffer, draw->context );
+		draw->DrawString( pC, buffer, b2_colorWhite, draw->context );
 	}
 
 	float lowerAngle = joint->lowerAngle + joint->referenceAngle;

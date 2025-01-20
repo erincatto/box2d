@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#include "core.h"
 #include "ctz.h"
 #include "table.h"
 #include "test_macros.h"
@@ -63,14 +64,14 @@ int TableTest( void )
 
 		ENSURE( set.count == ( itemCount - removeCount ) );
 
-#ifndef NDEBUG
-		extern _Atomic int g_probeCount;
-		g_probeCount = 0;
+#if B2_SNOOP_TABLE_COUNTERS
+		extern _Atomic int b2_probeCount;
+		b2_probeCount = 0;
 #endif
 
 		// Test key search
 		// ~5ns per search on an AMD 7950x
-		b2Timer timer = b2CreateTimer();
+		uint64_t ticks = b2GetTicks();
 
 		k = 0;
 		for ( int32_t i = 0; i < N; ++i )
@@ -86,12 +87,12 @@ int TableTest( void )
 		// uint64_t ticks = b2GetTicks(&timer);
 		// printf("set ticks = %llu\n", ticks);
 
-		float ms = b2GetMilliseconds( &timer );
+		float ms = b2GetMilliseconds( ticks );
 		printf( "set: count = %d, b2ContainsKey = %.5f ms, ave = %.5f us\n", itemCount, ms, 1000.0f * ms / itemCount );
 
-#if !NDEBUG
-		float aveProbeCount = (float)g_probeCount / (float)itemCount;
-		printf( "item count = %d, probe count = %d, ave probe count %.2f\n", itemCount, g_probeCount, aveProbeCount );
+#if B2_SNOOP_TABLE_COUNTERS
+		float aveProbeCount = (float)b2_probeCount / (float)itemCount;
+		printf( "item count = %d, probe count = %d, ave probe count %.2f\n", itemCount, b2_probeCount, aveProbeCount );
 #endif
 
 		// Remove all keys from set

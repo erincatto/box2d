@@ -217,7 +217,7 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 	b2BodyState* states = awakeSet->bodyStates.data;
 
 	float inv_h = context->inv_h;
-	const float pushout = context->world->contactPushSpeed;
+	const float pushout = context->world->contactMaxPushSpeed;
 
 	// This is a dummy body to represent a static body since static bodies don't have a solver body.
 	b2BodyState dummyState = b2_identityBodyState;
@@ -437,7 +437,7 @@ void b2ApplyOverflowRestitution( b2StepContext* context )
 
 void b2StoreOverflowImpulses( b2StepContext* context )
 {
-	b2TracyCZoneNC( store_impulses, "Store", b2_colorFirebrick, true );
+	b2TracyCZoneNC( store_impulses, "Store", b2_colorFireBrick, true );
 
 	b2ConstraintGraph* graph = context->graph;
 	b2GraphColor* color = graph->colors + B2_OVERFLOW_INDEX;
@@ -1582,7 +1582,7 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 	b2BodyState* states = context->states;
 	b2ContactConstraintSIMD* constraints = context->graph->colors[colorIndex].simdConstraints;
 	b2FloatW inv_h = b2SplatW( context->inv_h );
-	b2FloatW minBiasVel = b2SplatW( -context->world->contactPushSpeed );
+	b2FloatW minBiasVel = b2SplatW( -context->world->contactMaxPushSpeed );
 
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
@@ -1619,6 +1619,7 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW s = b2AddW( b2DotW( c->normal, ds ), c->baseSeparation1 );
 
 			// Apply speculative bias if separation is greater than zero, otherwise apply soft constraint bias
+			// The minBiasVel is meant to limit stiffness, not increase it.
 			b2FloatW mask = b2GreaterThanW( s, b2ZeroW() );
 			b2FloatW specBias = b2MulW( s, inv_h );
 			b2FloatW softBias = b2MaxW( b2MulW( biasRate, s ), minBiasVel );
@@ -1885,7 +1886,7 @@ void b2ApplyRestitutionTask( int startIndex, int endIndex, b2StepContext* contex
 // todo try making an inner loop on B2_SIMD_WIDTH to have a single implementation of this function
 void b2StoreImpulsesTask( int startIndex, int endIndex, b2StepContext* context )
 {
-	b2TracyCZoneNC( store_impulses, "Store", b2_colorFirebrick, true );
+	b2TracyCZoneNC( store_impulses, "Store", b2_colorFireBrick, true );
 
 	b2ContactSim** contacts = context->contacts;
 	const b2ContactConstraintSIMD* constraints = context->simdContactConstraints;

@@ -6,6 +6,7 @@
 #include "body.h"
 #include "broad_phase.h"
 #include "contact.h"
+#include "sensor.h"
 #include "world.h"
 
 // needed for dll export
@@ -20,7 +21,7 @@ static b2Shape* b2GetShape( b2World* world, b2ShapeId shapeId )
 {
 	int id = shapeId.index1 - 1;
 	b2Shape* shape = b2ShapeArray_Get( &world->shapes, id );
-	B2_ASSERT( shape->id == id && shape->revision == shapeId.revision );
+	B2_ASSERT( shape->id == id && shape->generation == shapeId.generation );
 	return shape;
 }
 
@@ -28,7 +29,7 @@ static b2ChainShape* b2GetChainShape( b2World* world, b2ChainId chainId )
 {
 	int id = chainId.index1 - 1;
 	b2ChainShape* chain = b2ChainShapeArray_Get( &world->chainShapes, id );
-	B2_ASSERT( chain->id == id && chain->revision == chainId.revision );
+	B2_ASSERT( chain->id == id && chain->generation == chainId.generation );
 	return chain;
 }
 
@@ -111,9 +112,7 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	shape->filter = def->filter;
 	shape->userData = def->userData;
 	shape->customColor = def->customColor;
-	shape->isSensor = def->isSensor;
 	shape->enlargedAABB = false;
-	shape->enableSensorEvents = def->enableSensorEvents;
 	shape->enableContactEvents = def->enableContactEvents;
 	shape->enableHitEvents = def->enableHitEvents;
 	shape->enablePreSolveEvents = def->enablePreSolveEvents;
@@ -121,7 +120,7 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	shape->localCentroid = b2GetShapeCentroid( shape );
 	shape->aabb = ( b2AABB ){ b2Vec2_zero, b2Vec2_zero };
 	shape->fatAABB = ( b2AABB ){ b2Vec2_zero, b2Vec2_zero };
-	shape->revision += 1;
+	shape->generation += 1;
 
 	if ( body->setIndex != b2_disabledSet )
 	{
@@ -141,14 +140,29 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	body->headShapeId = shapeId;
 	body->shapeCount += 1;
 
+	if (def->isSensor)
+	{
+		shape->sensorIndex = world->sensors.count;
+		b2Sensor sensor = {
+			.overlaps1 = b2ShapeRefArray_Create( 16 ),
+			.overlaps2 = b2ShapeRefArray_Create( 16 ),
+			.shapeId = shapeId,
+		};
+		b2SensorArray_Push( &world->sensors, sensor );
+	}
+	else
+	{
+		shape->sensorIndex = B2_NULL_INDEX;
+	}
+
 	b2ValidateSolverSets( world );
 
 	return shape;
 }
 
-b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const void* geometry, b2ShapeType shapeType )
+static b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const void* geometry, b2ShapeType shapeType )
 {
-	b2CheckDef( def );
+	B2_CHECK_DEF( def );
 	B2_ASSERT( b2IsValidFloat( def->density ) && def->density >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->friction ) && def->friction >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->restitution ) && def->restitution >= 0.0f );
@@ -171,7 +185,7 @@ b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const void* geo
 
 	b2ValidateSolverSets( world );
 
-	b2ShapeId id = { shape->id + 1, bodyId.world0, shape->revision };
+	b2ShapeId id = { shape->id + 1, bodyId.world0, shape->generation };
 	return id;
 }
 
@@ -211,7 +225,7 @@ b2ShapeId b2CreateSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, const b2
 }
 
 // Destroy a shape on a body. This doesn't need to be called when destroying a body.
-void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body, bool wakeBodies )
+static void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body, bool wakeBodies )
 {
 	int shapeId = shape->id;
 
@@ -254,6 +268,44 @@ void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body, bool 
 		}
 	}
 
+	if (shape->sensorIndex != B2_NULL_INDEX)
+	{
+		b2Sensor* sensor = b2SensorArray_Get( &world->sensors, shape->sensorIndex );
+		for ( int i = 0; i < sensor->overlaps2.count; ++i )
+		{
+			b2ShapeRef* ref = sensor->overlaps2.data + i;
+			b2SensorEndTouchEvent event = {
+				.sensorShapeId =
+					{
+						.index1 = shapeId + 1,
+						.generation = shape->generation,
+						.world0 = world->worldId,
+					},
+				.visitorShapeId =
+					{
+						.index1 = ref->shapeId + 1,
+						.generation = ref->generation,
+						.world0 = world->worldId,
+					},
+			};
+
+			b2SensorEndTouchEventArray_Push( world->sensorEndEvents + world->endEventArrayIndex, event );
+		}
+
+		// Destroy sensor
+		b2ShapeRefArray_Destroy( &sensor->overlaps1 );
+		b2ShapeRefArray_Destroy( &sensor->overlaps2 );
+
+		int movedIndex = b2SensorArray_RemoveSwap( &world->sensors, shape->sensorIndex );
+		if ( movedIndex != B2_NULL_INDEX )
+		{
+			// Fixup moved sensor
+			b2Sensor* movedSensor = b2SensorArray_Get( &world->sensors, shape->sensorIndex );
+			b2Shape* otherSensorShape = b2ShapeArray_Get( &world->shapes, movedSensor->shapeId );
+			otherSensorShape->sensorIndex = shape->sensorIndex;
+		}
+	}
+
 	// Return shape to free list.
 	b2FreeId( &world->shapeIdPool, shapeId );
 	shape->id = B2_NULL_INDEX;
@@ -281,7 +333,7 @@ void b2DestroyShape( b2ShapeId shapeId, bool updateBodyMass )
 
 b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 {
-	b2CheckDef( def );
+	B2_CHECK_DEF( def );
 	B2_ASSERT( b2IsValidFloat( def->friction ) && def->friction >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->restitution ) && def->restitution >= 0.0f );
 	B2_ASSERT( def->count >= 4 );
@@ -311,7 +363,7 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 	chainShape->id = chainId;
 	chainShape->bodyId = body->id;
 	chainShape->nextChainId = body->headChainId;
-	chainShape->revision += 1;
+	chainShape->generation += 1;
 	chainShape->friction = def->friction;
 	chainShape->restitution = def->restitution;
 
@@ -325,7 +377,6 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 	shapeDef.customColor = def->customColor;
 	shapeDef.enableContactEvents = false;
 	shapeDef.enableHitEvents = false;
-	shapeDef.enableSensorEvents = false;
 
 	int n = def->count;
 	const b2Vec2* points = def->points;
@@ -391,7 +442,7 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 		}
 	}
 
-	b2ChainId id = { chainId + 1, world->worldId, chainShape->revision };
+	b2ChainId id = { chainId + 1, world->worldId, chainShape->generation };
 	return id;
 }
 
@@ -446,7 +497,7 @@ void b2DestroyChain( b2ChainId chainId )
 b2WorldId b2Chain_GetWorld( b2ChainId chainId )
 {
 	b2World* world = b2GetWorld( chainId.world0 );
-	return ( b2WorldId ){ chainId.world0 + 1, world->revision };
+	return ( b2WorldId ){ chainId.world0 + 1, world->generation };
 }
 
 int b2Chain_GetSegmentCount( b2ChainId chainId )
@@ -466,7 +517,7 @@ int b2Chain_GetSegments( b2ChainId chainId, b2ShapeId* segmentArray, int capacit
 	{
 		int shapeId = chain->shapeIndices[i];
 		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
-		segmentArray[i] = ( b2ShapeId ){ shapeId + 1, chainId.world0, shape->revision };
+		segmentArray[i] = ( b2ShapeId ){ shapeId + 1, chainId.world0, shape->generation };
 	}
 
 	return count;
@@ -811,7 +862,7 @@ b2BodyId b2Shape_GetBody( b2ShapeId shapeId )
 b2WorldId b2Shape_GetWorld( b2ShapeId shapeId )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
-	return ( b2WorldId ){ shapeId.world0 + 1, world->revision };
+	return ( b2WorldId ){ shapeId.world0 + 1, world->generation };
 }
 
 void b2Shape_SetUserData( b2ShapeId shapeId, void* userData )
@@ -832,7 +883,7 @@ bool b2Shape_IsSensor( b2ShapeId shapeId )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
-	return shape->isSensor;
+	return shape->sensorIndex != B2_NULL_INDEX;
 }
 
 bool b2Shape_TestPoint( b2ShapeId shapeId, b2Vec2 point )
@@ -1061,32 +1112,16 @@ void b2Shape_SetFilter( b2ShapeId shapeId, b2Filter filter )
 	}
 
 	// If the category bits change, I need to destroy the proxy because it affects the tree sorting.
-	bool destroyProxy = filter.categoryBits == shape->filter.categoryBits;
+	bool destroyProxy = filter.categoryBits != shape->filter.categoryBits;
 
 	shape->filter = filter;
 
 	// need to wake bodies because a filter change may destroy contacts
 	bool wakeBodies = true;
 	b2ResetProxy( world, shape, wakeBodies, destroyProxy );
-}
 
-void b2Shape_EnableSensorEvents( b2ShapeId shapeId, bool flag )
-{
-	b2World* world = b2GetWorldLocked( shapeId.world0 );
-	if ( world == NULL )
-	{
-		return;
-	}
-
-	b2Shape* shape = b2GetShape( world, shapeId );
-	shape->enableSensorEvents = flag;
-}
-
-bool b2Shape_AreSensorEventsEnabled( b2ShapeId shapeId )
-{
-	b2World* world = b2GetWorld( shapeId.world0 );
-	b2Shape* shape = b2GetShape( world, shapeId );
-	return shape->enableSensorEvents;
+	// note: this does not immediately update sensor overlaps. Instead sensor
+	// overlaps are updated the next time step
 }
 
 void b2Shape_EnableContactEvents( b2ShapeId shapeId, bool flag )
@@ -1275,7 +1310,7 @@ b2ChainId b2Shape_GetParentChain( b2ShapeId shapeId )
 		if ( chainId != B2_NULL_INDEX )
 		{
 			b2ChainShape* chain = b2ChainShapeArray_Get( &world->chainShapes, chainId );
-			b2ChainId id = { chainId + 1, shapeId.world0, chain->revision };
+			b2ChainId id = { chainId + 1, shapeId.world0, chain->generation };
 			return id;
 		}
 	}
@@ -1352,7 +1387,7 @@ int b2Shape_GetContactCapacity( b2ShapeId shapeId )
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
-	if ( shape->isSensor )
+	if ( shape->sensorIndex != B2_NULL_INDEX )
 	{
 		return 0;
 	}
@@ -1372,7 +1407,7 @@ int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData, int c
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
-	if ( shape->isSensor )
+	if ( shape->sensorIndex != B2_NULL_INDEX )
 	{
 		return 0;
 	}
@@ -1394,8 +1429,8 @@ int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData, int c
 			b2Shape* shapeA = world->shapes.data + contact->shapeIdA;
 			b2Shape* shapeB = world->shapes.data + contact->shapeIdB;
 
-			contactData[index].shapeIdA = ( b2ShapeId ){ shapeA->id + 1, shapeId.world0, shapeA->revision };
-			contactData[index].shapeIdB = ( b2ShapeId ){ shapeB->id + 1, shapeId.world0, shapeB->revision };
+			contactData[index].shapeIdA = ( b2ShapeId ){ shapeA->id + 1, shapeId.world0, shapeA->generation };
+			contactData[index].shapeIdB = ( b2ShapeId ){ shapeB->id + 1, shapeId.world0, shapeB->generation };
 
 			b2ContactSim* contactSim = b2GetContactSim( world, contact );
 			contactData[index].manifold = contactSim->manifold;
@@ -1419,18 +1454,16 @@ int b2Shape_GetSensorCapacity(b2ShapeId shapeId)
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
-	if ( shape->isSensor == false )
+	if ( shape->sensorIndex == B2_NULL_INDEX )
 	{
 		return 0;
 	}
 
-	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
-
-	// Conservative and fast
-	return body->contactCount;
+	b2Sensor* sensor = b2SensorArray_Get( &world->sensors, shape->sensorIndex );
+	return sensor->overlaps2.count;
 }
 
-int b2Shape_GetSensorOverlaps(b2ShapeId shapeId, b2ShapeId* overlappedShapes, int capacity)
+int b2Shape_GetSensorOverlaps( b2ShapeId shapeId, b2ShapeId* overlaps, int capacity )
 {
 	b2World* world = b2GetWorldLocked( shapeId.world0 );
 	if ( world == NULL )
@@ -1439,44 +1472,25 @@ int b2Shape_GetSensorOverlaps(b2ShapeId shapeId, b2ShapeId* overlappedShapes, in
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
-	if ( shape->isSensor == false )
+	if ( shape->sensorIndex == B2_NULL_INDEX )
 	{
 		return 0;
 	}
 
-	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
-	int contactKey = body->headContactKey;
-	int index = 0;
-	while ( contactKey != B2_NULL_INDEX && index < capacity )
+	b2Sensor* sensor = b2SensorArray_Get( &world->sensors, shape->sensorIndex );
+
+	int count = b2MinInt( sensor->overlaps2.count, capacity );
+	b2ShapeRef* refs = sensor->overlaps2.data;
+	for ( int i = 0; i < count; ++i )
 	{
-		int contactId = contactKey >> 1;
-		int edgeIndex = contactKey & 1;
-
-		b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
-		contactKey = contact->edges[edgeIndex].nextKey;
-
-		if ( (contact->flags & b2_contactSensorTouchingFlag) == 0 )
-		{
-			continue;
-		}
-
-		if ( contact->shapeIdA == shapeId.index1 - 1 )
-		{
-			b2Shape* otherShape = world->shapes.data + contact->shapeIdB;
-			overlappedShapes[index] = ( b2ShapeId ){ otherShape->id + 1, shapeId.world0, otherShape->revision };
-			index += 1;
-		}
-		else if ( contact->shapeIdB == shapeId.index1 - 1 )
-		{
-			b2Shape* otherShape = world->shapes.data + contact->shapeIdA;
-			overlappedShapes[index] = ( b2ShapeId ){ otherShape->id + 1, shapeId.world0, otherShape->revision };
-			index += 1;
-		}
+		overlaps[i] = ( b2ShapeId ){
+			.index1 = refs[i].shapeId + 1,
+			.generation = refs[i].generation,
+			.world0 = shapeId.world0,
+		};
 	}
 
-	B2_ASSERT( index <= capacity );
-
-	return index;
+	return count;
 }
 
 b2AABB b2Shape_GetAABB( b2ShapeId shapeId )

@@ -123,7 +123,7 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 		for ( int i = 0; i < jointCount; ++i )
 		{
 			b2JointSim* jointSim = set->jointSims.data + i;
-			b2Joint* joint = b2JointArray_Get( &world->joints, +jointSim->jointId );
+			b2Joint* joint = b2JointArray_Get( &world->joints, jointSim->jointId );
 			B2_ASSERT( joint->setIndex == setIndex );
 			b2AddJointToGraph( world, jointSim, joint );
 			joint->setIndex = b2_awakeSet;
@@ -207,7 +207,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			{
 				b2BodyMoveEvent* moveEvent = b2BodyMoveEventArray_Get( &world->bodyMoveEvents, body->bodyMoveIndex );
 				B2_ASSERT( moveEvent->bodyId.index1 - 1 == bodyId );
-				B2_ASSERT( moveEvent->bodyId.revision == body->revision );
+				B2_ASSERT( moveEvent->bodyId.generation == body->generation );
 				moveEvent->fellAsleep = true;
 				body->bodyMoveIndex = B2_NULL_INDEX;
 			}
@@ -277,7 +277,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 				b2ContactSim* contactSim = b2ContactSimArray_Get( &awakeSet->contactSims, localIndex );
 
 				B2_ASSERT( contactSim->manifold.pointCount == 0 );
-				B2_ASSERT( ( contact->flags & b2_contactTouchingFlag ) == 0 || ( contact->flags & b2_contactSensorFlag ) != 0 );
+				B2_ASSERT( ( contact->flags & b2_contactTouchingFlag ) == 0 );
 
 				// move the non-touching contact to the disabled set
 				contact->setIndex = b2_disabledSet;
@@ -574,7 +574,7 @@ void b2TransferJoint( b2World* world, b2SolverSet* targetSet, b2SolverSet* sourc
 	else
 	{
 		B2_ASSERT( colorIndex == B2_NULL_INDEX );
-		sourceSim = b2JointSimArray_Get( &sourceSet->jointSims, +localIndex );
+		sourceSim = b2JointSimArray_Get( &sourceSet->jointSims, localIndex );
 	}
 
 	// Create target and copy. Fix joint.

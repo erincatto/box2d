@@ -8,6 +8,7 @@
 #include "box2d/math_functions.h"
 
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <vector>
 
@@ -35,7 +36,7 @@ struct RGBA8
 	uint8_t r, g, b, a;
 };
 
-static inline RGBA8 MakeRGBA8( b2HexColor c, float alpha )
+static RGBA8 MakeRGBA8( b2HexColor c, float alpha )
 {
 	return { uint8_t( ( c >> 16 ) & 0xFF ), uint8_t( ( c >> 8 ) & 0xFF ), uint8_t( c & 0xFF ), uint8_t( 0xFF * alpha ) };
 }
@@ -260,12 +261,12 @@ struct GLPoints
 
 		// Vertex buffer
 		glBindBuffer( GL_ARRAY_BUFFER, m_vboId );
-		glBufferData( GL_ARRAY_BUFFER, e_maxCount * sizeof( PointData ), NULL, GL_DYNAMIC_DRAW );
+		glBufferData( GL_ARRAY_BUFFER, e_batchSize * sizeof( PointData ), nullptr, GL_DYNAMIC_DRAW );
 
 		glVertexAttribPointer( vertexAttribute, 2, GL_FLOAT, GL_FALSE, sizeof( PointData ),
 							   (void*)offsetof( PointData, position ) );
 		glVertexAttribPointer( sizeAttribute, 1, GL_FLOAT, GL_FALSE, sizeof( PointData ), (void*)offsetof( PointData, size ) );
-		// color will get automatically expanded to floats in the shader
+		// save bandwidth by expanding color to floats in the shader
 		glVertexAttribPointer( colorAttribute, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof( PointData ),
 							   (void*)offsetof( PointData, rgba ) );
 
@@ -324,14 +325,14 @@ struct GLPoints
 		int base = 0;
 		while ( count > 0 )
 		{
-			int batchCount = b2MinInt( count, e_maxCount );
+			int batchCount = b2MinInt( count, e_batchSize );
 			glBufferSubData( GL_ARRAY_BUFFER, 0, batchCount * sizeof( PointData ), &m_points[base] );
 			glDrawArrays( GL_POINTS, 0, batchCount );
 
 			CheckErrorGL();
 
-			count -= e_maxCount;
-			base += e_maxCount;
+			count -= e_batchSize;
+			base += e_batchSize;
 		}
 
 		glDisable( GL_PROGRAM_POINT_SIZE );
@@ -344,7 +345,7 @@ struct GLPoints
 
 	enum
 	{
-		e_maxCount = 2048
+		e_batchSize = 2048
 	};
 
 	std::vector<PointData> m_points;
@@ -399,11 +400,11 @@ struct GLLines
 
 		// Vertex buffer
 		glBindBuffer( GL_ARRAY_BUFFER, m_vboId );
-		glBufferData( GL_ARRAY_BUFFER, e_maxCount * sizeof( VertexData ), NULL, GL_DYNAMIC_DRAW );
+		glBufferData( GL_ARRAY_BUFFER, e_batchSize * sizeof( VertexData ), nullptr, GL_DYNAMIC_DRAW );
 
 		glVertexAttribPointer( vertexAttribute, 2, GL_FLOAT, GL_FALSE, sizeof( VertexData ),
 							   (void*)offsetof( VertexData, position ) );
-		// color will get automatically expanded to floats in the shader
+		// save bandwidth by expanding color to floats in the shader
 		glVertexAttribPointer( colorAttribute, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof( VertexData ),
 							   (void*)offsetof( VertexData, rgba ) );
 
@@ -462,15 +463,15 @@ struct GLLines
 		int base = 0;
 		while ( count > 0 )
 		{
-			int batchCount = b2MinInt( count, e_maxCount );
+			int batchCount = b2MinInt( count, e_batchSize );
 			glBufferSubData( GL_ARRAY_BUFFER, 0, batchCount * sizeof( VertexData ), &m_points[base] );
 
 			glDrawArrays( GL_LINES, 0, batchCount );
 
 			CheckErrorGL();
 
-			count -= e_maxCount;
-			base += e_maxCount;
+			count -= e_batchSize;
+			base += e_batchSize;
 		}
 
 		glBindBuffer( GL_ARRAY_BUFFER, 0 );
@@ -485,7 +486,7 @@ struct GLLines
 	enum
 	{
 		// must be multiple of 2
-		e_maxCount = 2 * 2048
+		e_batchSize = 2 * 2048
 	};
 
 	std::vector<VertexData> m_points;
@@ -535,7 +536,7 @@ struct GLTriangles
 
 		// Vertex buffer
 		glBindBuffer( GL_ARRAY_BUFFER, m_vboId );
-		glBufferData( GL_ARRAY_BUFFER, e_maxCount * sizeof( VertexData ), NULL, GL_DYNAMIC_DRAW );
+		glBufferData( GL_ARRAY_BUFFER, e_batchSize * sizeof( VertexData ), nullptr, GL_DYNAMIC_DRAW );
 
 		glVertexAttribPointer( vertexAttribute, 2, GL_FLOAT, GL_FALSE, sizeof( VertexData ),
 							   (void*)offsetof( VertexData, position ) );
@@ -601,15 +602,15 @@ struct GLTriangles
 		int base = 0;
 		while ( count > 0 )
 		{
-			int batchCount = b2MinInt( count, e_maxCount );
+			int batchCount = b2MinInt( count, e_batchSize );
 
 			glBufferSubData( GL_ARRAY_BUFFER, 0, batchCount * sizeof( VertexData ), &m_points[base] );
 			glDrawArrays( GL_TRIANGLES, 0, batchCount );
 
 			CheckErrorGL();
 
-			count -= e_maxCount;
-			base += e_maxCount;
+			count -= e_batchSize;
+			base += e_batchSize;
 		}
 
 		glDisable( GL_BLEND );
@@ -624,7 +625,7 @@ struct GLTriangles
 	enum
 	{
 		// must be multiple of 3
-		e_maxCount = 3 * 512
+		e_batchSize = 3 * 512
 	};
 
 	std::vector<VertexData> m_points;
@@ -673,7 +674,7 @@ struct GLCircles
 
 		// Circle buffer
 		glBindBuffer( GL_ARRAY_BUFFER, m_vboIds[1] );
-		glBufferData( GL_ARRAY_BUFFER, e_maxCount * sizeof( CircleData ), NULL, GL_DYNAMIC_DRAW );
+		glBufferData( GL_ARRAY_BUFFER, e_batchSize * sizeof( CircleData ), nullptr, GL_DYNAMIC_DRAW );
 
 		glVertexAttribPointer( positionInstance, 2, GL_FLOAT, GL_FALSE, sizeof( CircleData ),
 							   (void*)offsetof( CircleData, position ) );
@@ -742,15 +743,15 @@ struct GLCircles
 		int base = 0;
 		while ( count > 0 )
 		{
-			int batchCount = b2MinInt( count, e_maxCount );
+			int batchCount = b2MinInt( count, e_batchSize );
 
 			glBufferSubData( GL_ARRAY_BUFFER, 0, batchCount * sizeof( CircleData ), &m_circles[base] );
 			glDrawArraysInstanced( GL_TRIANGLES, 0, 6, batchCount );
 
 			CheckErrorGL();
 
-			count -= e_maxCount;
-			base += e_maxCount;
+			count -= e_batchSize;
+			base += e_batchSize;
 		}
 
 		glDisable( GL_BLEND );
@@ -764,7 +765,7 @@ struct GLCircles
 
 	enum
 	{
-		e_maxCount = 2048
+		e_batchSize = 2048
 	};
 
 	std::vector<CircleData> m_circles;
@@ -818,7 +819,7 @@ struct GLSolidCircles
 
 		// Circle buffer
 		glBindBuffer( GL_ARRAY_BUFFER, m_vboIds[1] );
-		glBufferData( GL_ARRAY_BUFFER, e_maxCount * sizeof( SolidCircleData ), NULL, GL_DYNAMIC_DRAW );
+		glBufferData( GL_ARRAY_BUFFER, e_batchSize * sizeof( SolidCircleData ), nullptr, GL_DYNAMIC_DRAW );
 
 		glVertexAttribPointer( transformInstance, 4, GL_FLOAT, GL_FALSE, sizeof( SolidCircleData ),
 							   (void*)offsetof( SolidCircleData, transform ) );
@@ -859,7 +860,7 @@ struct GLSolidCircles
 	void AddCircle( const b2Transform& transform, float radius, b2HexColor color )
 	{
 		RGBA8 rgba = MakeRGBA8( color, 1.0f );
-		m_circles.push_back( { { transform.p.x, transform.p.y, transform.q.c, transform.q.s }, radius, rgba } );
+		m_circles.push_back( { transform, radius, rgba } );
 	}
 
 	void Flush()
@@ -887,15 +888,15 @@ struct GLSolidCircles
 		int base = 0;
 		while ( count > 0 )
 		{
-			int batchCount = b2MinInt( count, e_maxCount );
+			int batchCount = b2MinInt( count, e_batchSize );
 
 			glBufferSubData( GL_ARRAY_BUFFER, 0, batchCount * sizeof( SolidCircleData ), &m_circles[base] );
 			glDrawArraysInstanced( GL_TRIANGLES, 0, 6, batchCount );
 
 			CheckErrorGL();
 
-			count -= e_maxCount;
-			base += e_maxCount;
+			count -= e_batchSize;
+			base += e_batchSize;
 		}
 
 		glDisable( GL_BLEND );
@@ -909,7 +910,7 @@ struct GLSolidCircles
 
 	enum
 	{
-		e_maxCount = 2048
+		e_batchSize = 2048
 	};
 
 	std::vector<SolidCircleData> m_circles;
@@ -965,7 +966,7 @@ struct GLSolidCapsules
 
 		// Capsule buffer
 		glBindBuffer( GL_ARRAY_BUFFER, m_vboIds[1] );
-		glBufferData( GL_ARRAY_BUFFER, e_maxCount * sizeof( CapsuleData ), NULL, GL_DYNAMIC_DRAW );
+		glBufferData( GL_ARRAY_BUFFER, e_batchSize * sizeof( CapsuleData ), nullptr, GL_DYNAMIC_DRAW );
 
 		glVertexAttribPointer( transformInstance, 4, GL_FLOAT, GL_FALSE, sizeof( CapsuleData ),
 							   (void*)offsetof( CapsuleData, transform ) );
@@ -1024,7 +1025,7 @@ struct GLSolidCapsules
 
 		RGBA8 rgba = MakeRGBA8( c, 1.0f );
 
-		m_capsules.push_back( { { transform.p.x, transform.p.y, transform.q.c, transform.q.s }, radius, length, rgba } );
+		m_capsules.push_back( { transform, radius, length, rgba } );
 	}
 
 	void Flush()
@@ -1052,15 +1053,15 @@ struct GLSolidCapsules
 		int base = 0;
 		while ( count > 0 )
 		{
-			int batchCount = b2MinInt( count, e_maxCount );
+			int batchCount = b2MinInt( count, e_batchSize );
 
 			glBufferSubData( GL_ARRAY_BUFFER, 0, batchCount * sizeof( CapsuleData ), &m_capsules[base] );
 			glDrawArraysInstanced( GL_TRIANGLES, 0, 6, batchCount );
 
 			CheckErrorGL();
 
-			count -= e_maxCount;
-			base += e_maxCount;
+			count -= e_batchSize;
+			base += e_batchSize;
 		}
 
 		glDisable( GL_BLEND );
@@ -1074,7 +1075,7 @@ struct GLSolidCapsules
 
 	enum
 	{
-		e_maxCount = 2048
+		e_batchSize = 2048
 	};
 
 	std::vector<CapsuleData> m_capsules;
@@ -1140,7 +1141,7 @@ struct GLSolidPolygons
 
 		// Polygon buffer
 		glBindBuffer( GL_ARRAY_BUFFER, m_vboIds[1] );
-		glBufferData( GL_ARRAY_BUFFER, e_maxCount * sizeof( PolygonData ), NULL, GL_DYNAMIC_DRAW );
+		glBufferData( GL_ARRAY_BUFFER, e_batchSize * sizeof( PolygonData ), nullptr, GL_DYNAMIC_DRAW );
 		glVertexAttribPointer( instanceTransform, 4, GL_FLOAT, GL_FALSE, sizeof( PolygonData ),
 							   (void*)offsetof( PolygonData, transform ) );
 		glVertexAttribPointer( instancePoint12, 4, GL_FLOAT, GL_FALSE, sizeof( PolygonData ),
@@ -1235,14 +1236,14 @@ struct GLSolidPolygons
 		int base = 0;
 		while ( count > 0 )
 		{
-			int batchCount = b2MinInt( count, e_maxCount );
+			int batchCount = b2MinInt( count, e_batchSize );
 
 			glBufferSubData( GL_ARRAY_BUFFER, 0, batchCount * sizeof( PolygonData ), &m_polygons[base] );
 			glDrawArraysInstanced( GL_TRIANGLES, 0, 6, batchCount );
 			CheckErrorGL();
 
-			count -= e_maxCount;
-			base += e_maxCount;
+			count -= e_batchSize;
+			base += e_batchSize;
 		}
 
 		glDisable( GL_BLEND );
@@ -1256,7 +1257,7 @@ struct GLSolidPolygons
 
 	enum
 	{
-		e_maxCount = 512
+		e_batchSize = 512
 	};
 
 	std::vector<PolygonData> m_polygons;
@@ -1309,7 +1310,7 @@ void DrawPointFcn( b2Vec2 p, float size, b2HexColor color, void* context )
 	static_cast<Draw*>( context )->DrawPoint( p, size, color );
 }
 
-void DrawStringFcn( b2Vec2 p, const char* s, void* context )
+void DrawStringFcn( b2Vec2 p, const char* s, b2HexColor color, void* context )
 {
 	static_cast<Draw*>( context )->DrawString( p, s );
 }
@@ -1365,28 +1366,32 @@ void Draw::Create()
 
 	b2AABB bounds = { { -FLT_MAX, -FLT_MAX }, { FLT_MAX, FLT_MAX } };
 
-	m_debugDraw = { DrawPolygonFcn,
-					DrawSolidPolygonFcn,
-					DrawCircleFcn,
-					DrawSolidCircleFcn,
-					DrawSolidCapsuleFcn,
-					DrawSegmentFcn,
-					DrawTransformFcn,
-					DrawPointFcn,
-					DrawStringFcn,
-					bounds,
-					false, // drawUsingBounds
-					true,  // shapes
-					true,  // joints
-					false, // joint extras
-					false, // aabbs
-					false, // mass
-					false, // contacts
-					false, // colors
-					false, // normals
-					false, // impulse
-					false, // friction
-					this };
+	m_debugDraw = {};
+
+	m_debugDraw.DrawPolygon = DrawPolygonFcn;
+	m_debugDraw.DrawSolidPolygon = DrawSolidPolygonFcn;
+	m_debugDraw.DrawCircle = DrawCircleFcn;
+	m_debugDraw.DrawSolidCircle = DrawSolidCircleFcn;
+	m_debugDraw.DrawSolidCapsule = DrawSolidCapsuleFcn;
+	m_debugDraw.DrawSegment = DrawSegmentFcn;
+	m_debugDraw.DrawTransform = DrawTransformFcn;
+	m_debugDraw.DrawPoint = DrawPointFcn;
+	m_debugDraw.DrawString = DrawStringFcn;
+	m_debugDraw.drawingBounds = bounds;
+
+	m_debugDraw.useDrawingBounds = false;
+	m_debugDraw.drawShapes = true;
+	m_debugDraw.drawJoints = true;
+	m_debugDraw.drawJointExtras = false;
+	m_debugDraw.drawAABBs = false;
+	m_debugDraw.drawMass = false;
+	m_debugDraw.drawContacts = false;
+	m_debugDraw.drawGraphColors = false;
+	m_debugDraw.drawContactNormals = false;
+	m_debugDraw.drawContactImpulses = false;
+	m_debugDraw.drawFrictionImpulses = false;
+
+	m_debugDraw.context = this;
 }
 
 void Draw::Destroy()

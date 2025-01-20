@@ -8,6 +8,7 @@
 #include "box2d/types.h"
 
 typedef struct b2BroadPhase b2BroadPhase;
+typedef struct b2World b2World;
 
 typedef struct b2Shape
 {
@@ -15,6 +16,7 @@ typedef struct b2Shape
 	int bodyId;
 	int prevShapeId;
 	int nextShapeId;
+	int sensorIndex;
 	b2ShapeType type;
 	float density;
 	float friction;
@@ -38,9 +40,7 @@ typedef struct b2Shape
 		b2ChainSegment chainSegment;
 	};
 
-	uint16_t revision;
-	bool isSensor;
-	bool enableSensorEvents;
+	uint16_t generation;
 	bool enableContactEvents;
 	bool enableHitEvents;
 	bool enablePreSolveEvents;
@@ -56,7 +56,7 @@ typedef struct b2ChainShape
 	int* shapeIndices;
 	float friction;
 	float restitution;
-	uint16_t revision;
+	uint16_t generation;
 } b2ChainShape;
 
 typedef struct b2ShapeExtent
@@ -64,6 +64,18 @@ typedef struct b2ShapeExtent
 	float minExtent;
 	float maxExtent;
 } b2ShapeExtent;
+
+// Sensors are shapes that live in the broad-phase but never have contacts.
+// At the end of the time step all sensors are queried for overlap with any other shapes.
+// Sensors ignore body type and sleeping.
+// Sensors generate events when there is a new overlap or and overlap disappears.
+// The sensor overlaps don't get cleared until the next time step regardless of the overlapped
+// shapes being destroyed.
+// When a sensor is destroyed.
+typedef struct 
+{
+	b2IntArray overlaps;
+} b2SensorOverlaps;
 
 void b2CreateShapeProxy( b2Shape* shape, b2BroadPhase* bp, b2BodyType type, b2Transform transform, bool forcePairCreation );
 void b2DestroyShapeProxy( b2Shape* shape, b2BroadPhase* bp );

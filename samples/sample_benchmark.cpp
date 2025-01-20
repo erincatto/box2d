@@ -15,6 +15,10 @@
 #include <imgui.h>
 #include <vector>
 
+#ifndef NDEBUG
+extern "C" int b2_toiHitCount;
+#endif
+
 // Note: resetting the scene is non-deterministic because the world uses freelists
 class BenchmarkBarrel : public Sample
 {
@@ -675,14 +679,14 @@ public:
 
 	void Step( Settings& settings ) override
 	{
-		b2Timer timer = b2CreateTimer();
+		uint64_t ticks = b2GetTicks();
 
 		for ( int i = 0; i < m_iterations; ++i )
 		{
 			CreateScene();
 		}
 
-		float ms = b2GetMilliseconds( &timer );
+		float ms = b2GetMilliseconds( ticks );
 
 		g_draw.DrawString( 5, m_textLine, "milliseconds = %g", ms );
 		m_textLine += m_textIncrement;
@@ -800,21 +804,19 @@ public:
 
 	void Step( Settings& settings ) override
 	{
-		float timeStep = settings.hertz > 0.0f ? 1.0f / settings.hertz : float( 0.0f );
-
-		b2Timer timer = b2CreateTimer();
+		uint64_t ticks = b2GetTicks();
 
 		for ( int i = 0; i < m_iterations; ++i )
 		{
 			b2Body_SetAwake( m_bodies[0], m_awake );
 			if ( m_awake )
 			{
-				m_wakeTotal += b2GetMillisecondsAndReset( &timer );
+				m_wakeTotal += b2GetMillisecondsAndReset( &ticks );
 				m_wakeCount += 1;
 			}
 			else
 			{
-				m_sleepTotal += b2GetMillisecondsAndReset( &timer );
+				m_sleepTotal += b2GetMillisecondsAndReset( &ticks );
 				m_sleepCount += 1;
 			}
 			m_awake = !m_awake;
@@ -1114,7 +1116,7 @@ public:
 		b2WorldDef worldDef = b2DefaultWorldDef();
 		m_worldId = b2CreateWorld( &worldDef );
 
-		b2Timer timer = b2CreateTimer();
+		uint64_t ticks = b2GetTicks();
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -1175,7 +1177,7 @@ public:
 			b2World_RebuildStaticTree( m_worldId );
 		}
 
-		m_buildTime = b2GetMilliseconds( &timer );
+		m_buildTime = b2GetMilliseconds( ticks );
 		m_minTime = 1e6f;
 	}
 
@@ -1301,7 +1303,7 @@ public:
 
 		if ( m_queryType == e_rayCast )
 		{
-			b2Timer timer = b2CreateTimer();
+			uint64_t ticks = b2GetTicks();
 
 			b2RayResult drawResult = {};
 
@@ -1322,7 +1324,7 @@ public:
 				hitCount += result.hit ? 1 : 0;
 			}
 
-			ms = b2GetMilliseconds( &timer );
+			ms = b2GetMilliseconds( ticks );
 
 			m_minTime = b2MinFloat( m_minTime, ms );
 
@@ -1338,7 +1340,7 @@ public:
 		}
 		else if ( m_queryType == e_circleCast )
 		{
-			b2Timer timer = b2CreateTimer();
+			uint64_t ticks = b2GetTicks();
 
 			b2Circle circle = { { 0.0f, 0.0f }, m_radius };
 			CastResult drawResult = {};
@@ -1362,7 +1364,7 @@ public:
 				hitCount += result.hit ? 1 : 0;
 			}
 
-			ms = b2GetMilliseconds( &timer );
+			ms = b2GetMilliseconds( ticks );
 
 			m_minTime = b2MinFloat( m_minTime, ms );
 
@@ -1380,7 +1382,7 @@ public:
 		}
 		else if ( m_queryType == e_overlap )
 		{
-			b2Timer timer = b2CreateTimer();
+			uint64_t ticks = b2GetTicks();
 
 			OverlapResult drawResult = {};
 			b2Vec2 extent = { m_radius, m_radius };
@@ -1404,7 +1406,7 @@ public:
 				hitCount += result.count;
 			}
 
-			ms = b2GetMilliseconds( &timer );
+			ms = b2GetMilliseconds( ticks );
 
 			m_minTime = b2MinFloat( m_minTime, ms );
 
@@ -1473,6 +1475,10 @@ public:
 			g_camera.m_zoom = 42.0f;
 		}
 
+#ifndef NDEBUG
+		b2_toiHitCount = 0;
+#endif
+
 		CreateSpinner( m_worldId );
 	}
 
@@ -1480,10 +1486,14 @@ public:
 	{
 		Sample::Step( settings );
 
-		if ( m_stepCount == 2000 )
+		if ( m_stepCount == 1000 )
 		{
 			m_stepCount += 0;
 		}
+#ifndef NDEBUG
+		g_draw.DrawString( 5, m_textLine, "toi hits = %d", b2_toiHitCount );
+		m_textLine += m_textIncrement;
+#endif
 	}
 
 	static Sample* Create( Settings& settings )
@@ -1521,7 +1531,7 @@ public:
 
 		Sample::Step( settings );
 
-		if (m_stepCount == 1000)
+		if (m_stepCount % 1000 == 0)
 		{
 			m_stepCount += 0;
 		}

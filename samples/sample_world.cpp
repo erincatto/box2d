@@ -84,7 +84,6 @@ public:
 		}
 
 		int humanIndex = 0;
-		int donutIndex = 0;
 		for ( int cycleIndex = 0; cycleIndex < m_cycleCount; ++cycleIndex )
 		{
 			float xbase = ( 0.5f + cycleIndex ) * m_period + xStart;
@@ -130,7 +129,6 @@ public:
 				{
 					Donut donut;
 					donut.Spawn( m_worldId, position, 0.75f, 0, NULL );
-					donutIndex += 1;
 					position.x += 2.0f;
 				}
 			}

@@ -53,7 +53,7 @@ typedef struct b2Joint
 
 	// This is monotonically advanced when a body is allocated in this slot
 	// Used to check for invalid b2JointId
-	uint16_t revision;
+	uint16_t generation;
 
 	bool isMarked;
 	bool collideConnected;
@@ -285,6 +285,50 @@ void b2WarmStartOverflowJoints( b2StepContext* context );
 void b2SolveOverflowJoints( b2StepContext* context, bool useBias );
 
 void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint );
+
+b2Vec2 b2GetDistanceJointForce( b2World* world, b2JointSim* base );
+b2Vec2 b2GetMotorJointForce( b2World* world, b2JointSim* base );
+b2Vec2 b2GetMouseJointForce( b2World* world, b2JointSim* base );
+b2Vec2 b2GetPrismaticJointForce( b2World* world, b2JointSim* base );
+b2Vec2 b2GetRevoluteJointForce( b2World* world, b2JointSim* base );
+b2Vec2 b2GetWeldJointForce( b2World* world, b2JointSim* base );
+b2Vec2 b2GetWheelJointForce( b2World* world, b2JointSim* base );
+
+float b2GetMotorJointTorque( b2World* world, b2JointSim* base );
+float b2GetMouseJointTorque( b2World* world, b2JointSim* base );
+float b2GetPrismaticJointTorque( b2World* world, b2JointSim* base );
+float b2GetRevoluteJointTorque( b2World* world, b2JointSim* base );
+float b2GetWeldJointTorque( b2World* world, b2JointSim* base );
+float b2GetWheelJointTorque( b2World* world, b2JointSim* base );
+
+void b2PrepareDistanceJoint( b2JointSim* base, b2StepContext* context );
+void b2PrepareMotorJoint( b2JointSim* base, b2StepContext* context );
+void b2PrepareMouseJoint( b2JointSim* base, b2StepContext* context );
+void b2PreparePrismaticJoint( b2JointSim* base, b2StepContext* context );
+void b2PrepareRevoluteJoint( b2JointSim* base, b2StepContext* context );
+void b2PrepareWeldJoint( b2JointSim* base, b2StepContext* context );
+void b2PrepareWheelJoint( b2JointSim* base, b2StepContext* context );
+
+void b2WarmStartDistanceJoint( b2JointSim* base, b2StepContext* context );
+void b2WarmStartMotorJoint( b2JointSim* base, b2StepContext* context );
+void b2WarmStartMouseJoint( b2JointSim* base, b2StepContext* context );
+void b2WarmStartPrismaticJoint( b2JointSim* base, b2StepContext* context );
+void b2WarmStartRevoluteJoint( b2JointSim* base, b2StepContext* context );
+void b2WarmStartWeldJoint( b2JointSim* base, b2StepContext* context );
+void b2WarmStartWheelJoint( b2JointSim* base, b2StepContext* context );
+
+void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBias );
+void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context, bool useBias );
+void b2SolveMouseJoint( b2JointSim* base, b2StepContext* context );
+void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBias );
+void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBias );
+void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias );
+void b2SolveWheelJoint( b2JointSim* base, b2StepContext* context, bool useBias );
+
+void b2DrawDistanceJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB );
+void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB );
+void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawSize );
+void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB );
 
 // Define inline functions for arrays
 B2_ARRAY_INLINE( b2Joint, b2Joint );

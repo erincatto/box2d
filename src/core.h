@@ -78,6 +78,7 @@
 	#endif
 #else
 	#define B2_SIMD_NONE
+	// note: I tried width of 1 and got no performance change
 	#define B2_SIMD_WIDTH 4
 #endif
 
@@ -114,8 +115,19 @@
 // Use to validate definitions. Do not take my cookie.
 #define B2_SECRET_COOKIE 1152023
 
-#define b2CheckDef( DEF ) B2_ASSERT( DEF->internalValue == B2_SECRET_COOKIE )
+// Snoop counters. These should be disabled in optimized builds because they are expensive.
+#define B2_SNOOP_TABLE_COUNTERS B2_DEBUG
+#define B2_SNOOP_PAIR_COUNTERS B2_DEBUG
+#define B2_SNOOP_TOI_COUNTERS B2_DEBUG
+
+#define B2_CHECK_DEF( DEF ) B2_ASSERT( DEF->internalValue == B2_SECRET_COOKIE )
 
 void* b2Alloc( int size );
+#define B2_ALLOC_STRUCT( type ) b2Alloc(sizeof(type))
+#define B2_ALLOC_ARRAY( count, type ) b2Alloc(count * sizeof(type))
+
 void b2Free( void* mem, int size );
+#define B2_FREE_STRUCT( mem, type ) b2Free( mem, sizeof(type));
+#define B2_FREE_ARRAY( mem, count, type ) b2Free(mem, count * sizeof(type))
+
 void* b2GrowAlloc( void* oldMem, int oldSize, int newSize );

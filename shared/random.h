@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include <box2d/collision.h>
-#include <box2d/math_functions.h>
+#include "box2d/collision.h"
+#include "box2d/math_functions.h"
 
 #define RAND_LIMIT 32767
 #define RAND_SEED 12345

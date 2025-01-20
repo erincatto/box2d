@@ -65,7 +65,7 @@ b2Manifold b2CollideCircles( const b2Circle* circleA, b2Transform xfA, const b2C
 	b2ManifoldPoint* mp = manifold.points + 0;
 	mp->anchorA = b2RotateVector( xfA.q, contactPointA );
 	mp->anchorB = b2Add( mp->anchorA, b2Sub( xfA.p, xfB.p ) );
-	mp->point = b2Add( xfA.p, mp->anchorA );
+	mp->point = b2Add( mp->anchorA, xfA.p );
 	mp->separation = separation;
 	mp->id = 0;
 	manifold.pointCount = 1;
@@ -145,21 +145,21 @@ b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2Transform xfA
 	b2Transform xf = b2InvMulTransforms( xfA, xfB );
 
 	// Compute circle position in the frame of the polygon.
-	b2Vec2 c = b2TransformPoint( xf, circleB->center );
+	b2Vec2 center = b2TransformPoint( xf, circleB->center );
 	float radiusA = polygonA->radius;
 	float radiusB = circleB->radius;
 	float radius = radiusA + radiusB;
 
 	// Find the min separating edge.
-	int32_t normalIndex = 0;
+	int normalIndex = 0;
 	float separation = -FLT_MAX;
-	int32_t vertexCount = polygonA->count;
+	int vertexCount = polygonA->count;
 	const b2Vec2* vertices = polygonA->vertices;
 	const b2Vec2* normals = polygonA->normals;
 
-	for ( int32_t i = 0; i < vertexCount; ++i )
+	for ( int i = 0; i < vertexCount; ++i )
 	{
-		float s = b2Dot( normals[i], b2Sub( c, vertices[i] ) );
+		float s = b2Dot( normals[i], b2Sub( center, vertices[i] ) );
 		if ( s > separation )
 		{
 			separation = s;
@@ -173,27 +173,27 @@ b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2Transform xfA
 	}
 
 	// Vertices of the reference edge.
-	int32_t vertIndex1 = normalIndex;
-	int32_t vertIndex2 = vertIndex1 + 1 < vertexCount ? vertIndex1 + 1 : 0;
+	int vertIndex1 = normalIndex;
+	int vertIndex2 = vertIndex1 + 1 < vertexCount ? vertIndex1 + 1 : 0;
 	b2Vec2 v1 = vertices[vertIndex1];
 	b2Vec2 v2 = vertices[vertIndex2];
 
 	// Compute barycentric coordinates
-	float u1 = b2Dot( b2Sub( c, v1 ), b2Sub( v2, v1 ) );
-	float u2 = b2Dot( b2Sub( c, v2 ), b2Sub( v1, v2 ) );
+	float u1 = b2Dot( b2Sub( center, v1 ), b2Sub( v2, v1 ) );
+	float u2 = b2Dot( b2Sub( center, v2 ), b2Sub( v1, v2 ) );
 
 	if ( u1 < 0.0f && separation > FLT_EPSILON )
 	{
 		// Circle center is closest to v1 and safely outside the polygon
-		b2Vec2 normal = b2Normalize( b2Sub( c, v1 ) );
-		separation = b2Dot( b2Sub( c, v1 ), normal );
+		b2Vec2 normal = b2Normalize( b2Sub( center, v1 ) );
+		separation = b2Dot( b2Sub( center, v1 ), normal );
 		if ( separation > radius + speculativeDistance )
 		{
 			return manifold;
 		}
 
 		b2Vec2 cA = b2MulAdd( v1, radiusA, normal );
-		b2Vec2 cB = b2MulSub( c, radiusB, normal );
+		b2Vec2 cB = b2MulSub( center, radiusB, normal );
 		b2Vec2 contactPointA = b2Lerp( cA, cB, 0.5f );
 
 		manifold.normal = b2RotateVector( xfA.q, normal );
@@ -208,15 +208,15 @@ b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2Transform xfA
 	else if ( u2 < 0.0f && separation > FLT_EPSILON )
 	{
 		// Circle center is closest to v2 and safely outside the polygon
-		b2Vec2 normal = b2Normalize( b2Sub( c, v2 ) );
-		separation = b2Dot( b2Sub( c, v2 ), normal );
+		b2Vec2 normal = b2Normalize( b2Sub( center, v2 ) );
+		separation = b2Dot( b2Sub( center, v2 ), normal );
 		if ( separation > radius + speculativeDistance )
 		{
 			return manifold;
 		}
 
 		b2Vec2 cA = b2MulAdd( v2, radiusA, normal );
-		b2Vec2 cB = b2MulSub( c, radiusB, normal );
+		b2Vec2 cB = b2MulSub( center, radiusB, normal );
 		b2Vec2 contactPointA = b2Lerp( cA, cB, 0.5f );
 
 		manifold.normal = b2RotateVector( xfA.q, normal );
@@ -235,10 +235,10 @@ b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2Transform xfA
 		manifold.normal = b2RotateVector( xfA.q, normal );
 
 		// cA is the projection of the circle center onto to the reference edge
-		b2Vec2 cA = b2MulAdd( c, radiusA - b2Dot( b2Sub( c, v1 ), normal ), normal );
+		b2Vec2 cA = b2MulAdd( center, radiusA - b2Dot( b2Sub( center, v1 ), normal ), normal );
 
 		// cB is the deepest point on the circle with respect to the reference edge
-		b2Vec2 cB = b2MulSub( c, radiusB, normal );
+		b2Vec2 cB = b2MulSub( center, radiusB, normal );
 
 		b2Vec2 contactPointA = b2Lerp( cA, cB, 0.5f );
 
@@ -345,7 +345,7 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 	float fq1 = b2Dot( b2Sub( q1, p2 ), u2 );
 	bool outsideB = ( fp1 <= 0.0f && fq1 <= 0.0f ) || ( fp1 >= length2 && fq1 >= length2 );
 
-	if ( outsideA == false && outsideB == false)
+	if ( outsideA == false && outsideB == false )
 	{
 		// attempt to clip
 		// this may yield contact points with excessive separation
@@ -485,7 +485,7 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 		}
 	}
 
-	if (manifold.pointCount == 0)
+	if ( manifold.pointCount == 0 )
 	{
 		// single point collision
 		b2Vec2 normal = b2Sub( closest2, closest1 );
@@ -539,17 +539,17 @@ b2Manifold b2CollidePolygonAndCapsule( const b2Polygon* polygonA, b2Transform xf
 }
 
 // Polygon clipper used to compute contact points when there are potentially two contact points.
-static b2Manifold b2ClipPolygons( const b2Polygon* polyA, const b2Polygon* polyB, int32_t edgeA, int32_t edgeB, bool flip )
+static b2Manifold b2ClipPolygons( const b2Polygon* polyA, const b2Polygon* polyB, int edgeA, int edgeB, bool flip )
 {
 	b2Manifold manifold = { 0 };
 
 	// reference polygon
 	const b2Polygon* poly1;
-	int32_t i11, i12;
+	int i11, i12;
 
 	// incident polygon
 	const b2Polygon* poly2;
-	int32_t i21, i22;
+	int i21, i22;
 
 	if ( flip )
 	{
@@ -677,17 +677,17 @@ static b2Manifold b2ClipPolygons( const b2Polygon* polyA, const b2Polygon* polyB
 }
 
 // Find the max separation between poly1 and poly2 using edge normals from poly1.
-static float b2FindMaxSeparation( int32_t* edgeIndex, const b2Polygon* poly1, const b2Polygon* poly2 )
+static float b2FindMaxSeparation( int* edgeIndex, const b2Polygon* poly1, const b2Polygon* poly2 )
 {
-	int32_t count1 = poly1->count;
-	int32_t count2 = poly2->count;
+	int count1 = poly1->count;
+	int count2 = poly2->count;
 	const b2Vec2* n1s = poly1->normals;
 	const b2Vec2* v1s = poly1->vertices;
 	const b2Vec2* v2s = poly2->vertices;
 
-	int32_t bestIndex = 0;
+	int bestIndex = 0;
 	float maxSeparation = -FLT_MAX;
-	for ( int32_t i = 0; i < count1; ++i )
+	for ( int i = 0; i < count1; ++i )
 	{
 		// Get poly1 normal in frame2.
 		b2Vec2 n = n1s[i];
@@ -695,7 +695,7 @@ static float b2FindMaxSeparation( int32_t* edgeIndex, const b2Polygon* poly1, co
 
 		// Find the deepest point for normal i.
 		float si = FLT_MAX;
-		for ( int32_t j = 0; j < count2; ++j )
+		for ( int j = 0; j < count2; ++j )
 		{
 			float sij = b2Dot( n, b2Sub( v2s[j], v1 ) );
 			if ( sij < si )
@@ -1256,10 +1256,10 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 	}
 
 	// Get polygonB in frameA
-	int32_t count = polygonB->count;
+	int count = polygonB->count;
 	b2Vec2 vertices[B2_MAX_POLYGON_VERTICES];
 	b2Vec2 normals[B2_MAX_POLYGON_VERTICES];
-	for ( int32_t i = 0; i < count; ++i )
+	for ( int i = 0; i < count; ++i )
 	{
 		vertices[i] = b2TransformPoint( xf, polygonB->vertices[i] );
 		normals[i] = b2RotateVector( xf.q, polygonB->normals[i] );
@@ -1285,8 +1285,8 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 	b2Vec2 n2 = smoothParams.convex2 ? smoothParams.normal2 : normal1;
 
 	// Index of incident vertex on polygon
-	int32_t incidentIndex = -1;
-	int32_t incidentNormal = -1;
+	int incidentIndex = -1;
+	int incidentNormal = -1;
 
 	if ( behind1 == false && output.distance > 0.1f * B2_LINEAR_SLOP )
 	{
@@ -1328,10 +1328,10 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 			// vertex-edge collision
 			B2_ASSERT( cache->count == 2 );
 
-			int32_t ia1 = cache->indexA[0];
-			int32_t ia2 = cache->indexA[1];
-			int32_t ib1 = cache->indexB[0];
-			int32_t ib2 = cache->indexB[1];
+			int ia1 = cache->indexA[0];
+			int ia2 = cache->indexA[1];
+			int ib1 = cache->indexB[0];
+			int ib2 = cache->indexB[1];
 
 			if ( ia1 == ia2 )
 			{
@@ -1343,7 +1343,7 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 				b2Vec2 normalB = b2Sub( output.pointA, output.pointB );
 				float dot1 = b2Dot( normalB, normals[ib1] );
 				float dot2 = b2Dot( normalB, normals[ib2] );
-				int32_t ib = dot1 > dot2 ? ib1 : ib2;
+				int ib = dot1 > dot2 ? ib1 : ib2;
 
 				// Use accurate normal
 				normalB = normals[ib];
@@ -1414,7 +1414,7 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 		// SAT edge normal
 		float edgeSeparation = FLT_MAX;
 
-		for ( int32_t i = 0; i < count; ++i )
+		for ( int i = 0; i < count; ++i )
 		{
 			float s = b2Dot( normal1, b2Sub( vertices[i], p1 ) );
 			if ( s < edgeSeparation )
@@ -1429,7 +1429,7 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 		{
 			float s0 = FLT_MAX;
 
-			for ( int32_t i = 0; i < count; ++i )
+			for ( int i = 0; i < count; ++i )
 			{
 				float s = b2Dot( smoothParams.normal0, b2Sub( vertices[i], p1 ) );
 				if ( s < s0 )
@@ -1452,7 +1452,7 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 		{
 			float s2 = FLT_MAX;
 
-			for ( int32_t i = 0; i < count; ++i )
+			for ( int i = 0; i < count; ++i )
 			{
 				float s = b2Dot( smoothParams.normal2, b2Sub( vertices[i], p2 ) );
 				if ( s < s2 )
@@ -1472,9 +1472,9 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 
 		// SAT polygon normals
 		float polygonSeparation = -FLT_MAX;
-		int32_t referenceIndex = -1;
+		int referenceIndex = -1;
 
-		for ( int32_t i = 0; i < count; ++i )
+		for ( int i = 0; i < count; ++i )
 		{
 			b2Vec2 n = normals[i];
 
@@ -1502,8 +1502,8 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 
 		if ( polygonSeparation > edgeSeparation )
 		{
-			int32_t ia1 = referenceIndex;
-			int32_t ia2 = ia1 < count - 1 ? ia1 + 1 : 0;
+			int ia1 = referenceIndex;
+			int ia2 = ia1 < count - 1 ? ia1 + 1 : 0;
 			b2Vec2 a1 = vertices[ia1];
 			b2Vec2 a2 = vertices[ia2];
 
@@ -1556,7 +1556,7 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 
 	// Find incident polygon normal: normal adjacent to deepest vertex that is most anti-parallel to segment normal
 	b2Vec2 b1, b2;
-	int32_t ib1, ib2;
+	int ib1, ib2;
 
 	if ( incidentNormal != -1 )
 	{
@@ -1567,8 +1567,8 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 	}
 	else
 	{
-		int32_t i2 = incidentIndex;
-		int32_t i1 = i2 > 0 ? i2 - 1 : count - 1;
+		int i2 = incidentIndex;
+		int i1 = i2 > 0 ? i2 - 1 : count - 1;
 		float d1 = b2Dot( normal1, normals[i1] );
 		float d2 = b2Dot( normal1, normals[i2] );
 		if ( d1 < d2 )

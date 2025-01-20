@@ -108,6 +108,8 @@ Box2D is also deterministic under multithreading. A simulation using two threads
 
 However, people often want more stringent determinism. People often want to know if Box2D can produce identical results on different binaries and on different platforms. Currently this is not provided, but the situation may improve in a future update.
 
+todo update here on cross-platform determinism
+
 ### But I really want determinism
 This naturally leads to the question of fixed-point math. Box2D does not support fixed-point math. In the past Box2D was ported to the NDS in fixed-point and apparently it worked okay. Fixed-point math is slower and more tedious to develop, so I have chosen not to use fixed-point for the development of Box2D.
 

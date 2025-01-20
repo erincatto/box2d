@@ -13,6 +13,7 @@
 
 #include <stdatomic.h>
 #include <string.h>
+#include <stdio.h>
 
 #ifdef BOX2D_PROFILE
 
@@ -28,8 +29,6 @@
 #endif
 
 #include "box2d/math_functions.h"
-
-#include <stdio.h>
 
 // This allows the user to change the length units at runtime
 float b2_lengthUnitsPerMeter = 1.0f;
@@ -61,10 +60,12 @@ void b2SetAssertFcn( b2AssertFcn* assertFcn )
 	b2AssertHandler = assertFcn;
 }
 
+#if !defined( NDEBUG ) || defined( B2_ENABLE_ASSERT )
 int b2InternalAssertFcn( const char* condition, const char* fileName, int lineNumber )
 {
 	return b2AssertHandler( condition, fileName, lineNumber );
 }
+#endif
 
 b2Version b2GetVersion( void )
 {

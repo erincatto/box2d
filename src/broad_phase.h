@@ -12,7 +12,7 @@
 typedef struct b2Shape b2Shape;
 typedef struct b2MovePair b2MovePair;
 typedef struct b2MoveResult b2MoveResult;
-typedef struct b2StackAllocator b2StackAllocator;
+typedef struct b2ArenaAllocator b2ArenaAllocator;
 typedef struct b2World b2World;
 
 // Store the proxy type in the lower 2 bits of the proxy key. This leaves 30 bits for the id.

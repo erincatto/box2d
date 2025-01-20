@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "benchmarks.h"
+
 #include "human.h"
 
 #include "box2d/box2d.h"
@@ -18,8 +19,6 @@
 
 void CreateJointGrid( b2WorldId worldId )
 {
-	// Turning gravity off to isolate joint performance.
-	//b2World_SetGravity( worldId, b2Vec2_zero );
 	b2World_EnableSleeping( worldId, false );
 
 	int N = BENCHMARK_DEBUG ? 10 : 100;
@@ -238,16 +237,20 @@ void CreateRain( b2WorldId worldId )
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		float y = 0.0f;
-		float w = 0.5f * g_rainData.gridSize;
-		float h = 0.5f * g_rainData.gridSize;
+		float width = g_rainData.gridSize;
+		float height = g_rainData.gridSize;
 
 		for ( int i = 0; i < RAIN_ROW_COUNT; ++i )
 		{
 			float x = -0.5f * g_rainData.gridCount * g_rainData.gridSize;
 			for ( int j = 0; j <= g_rainData.gridCount; ++j )
 			{
-				b2Polygon box = b2MakeOffsetBox( w, h, ( b2Vec2 ){ x, y }, b2Rot_identity );
+				b2Polygon box = b2MakeOffsetBox( 0.5f * width, 0.5f * height, ( b2Vec2 ){ x, y }, b2Rot_identity );
 				b2CreatePolygonShape( groundId, &shapeDef, &box );
+
+				//b2Segment segment = { { x - 0.5f * width, y }, { x + 0.5f * width, y } };
+				//b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
 				x += g_rainData.gridSize;
 			}
 
@@ -297,7 +300,7 @@ void DestroyGroup( int rowIndex, int columnIndex )
 	}
 }
 
-void StepRain( b2WorldId worldId, int stepCount )
+float StepRain( b2WorldId worldId, int stepCount )
 {
 	int delay = BENCHMARK_DEBUG ? 0x1F : 0x7;
 
@@ -323,9 +326,18 @@ void StepRain( b2WorldId worldId, int stepCount )
 			g_rainData.columnIndex = ( g_rainData.columnIndex + 1 ) % RAIN_COLUMN_COUNT;
 		}
 	}
+
+	return 0.0f;
 }
 
 #define SPINNER_POINT_COUNT 360
+
+typedef struct
+{
+	b2JointId spinnerId;
+} SpinnerData;
+
+SpinnerData g_spinnerData;
 
 void CreateSpinner( b2WorldId worldId )
 {
@@ -376,7 +388,7 @@ void CreateSpinner( b2WorldId worldId )
 		jointDef.motorSpeed = motorSpeed;
 		jointDef.maxMotorTorque = maxMotorTorque;
 
-		b2CreateRevoluteJoint( worldId, &jointDef );
+		g_spinnerData.spinnerId = b2CreateRevoluteJoint( worldId, &jointDef );
 	}
 
 	b2Capsule capsule = { { -0.25f, 0.0f }, { 0.25f, 0.0f }, 0.25f };
@@ -420,6 +432,14 @@ void CreateSpinner( b2WorldId worldId )
 			y += 1.0f;
 		}
 	}
+}
+
+float StepSpinner( b2WorldId worldId, int stepCount )
+{
+	(void)worldId;
+	(void)stepCount;
+
+	return b2RevoluteJoint_GetAngle(g_spinnerData.spinnerId);
 }
 
 void CreateSmash( b2WorldId worldId )
