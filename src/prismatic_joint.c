@@ -633,22 +633,22 @@ void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform tran
 	b2HexColor c4 = b2_colorBlue;
 	b2HexColor c5 = b2_colorDimGray;
 
-	draw->drawSegment( pA, pB, c5, draw->context );
+	draw->DrawSegment( pA, pB, c5, draw->context );
 
 	if ( joint->enableLimit )
 	{
 		b2Vec2 lower = b2MulAdd( pA, joint->lowerTranslation, axis );
 		b2Vec2 upper = b2MulAdd( pA, joint->upperTranslation, axis );
 		b2Vec2 perp = b2LeftPerp( axis );
-		draw->drawSegment( lower, upper, c1, draw->context );
-		draw->drawSegment( b2MulSub( lower, 0.1f, perp ), b2MulAdd( lower, 0.1f, perp ), c2, draw->context );
-		draw->drawSegment( b2MulSub( upper, 0.1f, perp ), b2MulAdd( upper, 0.1f, perp ), c3, draw->context );
+		draw->DrawSegment( lower, upper, c1, draw->context );
+		draw->DrawSegment( b2MulSub( lower, 0.1f, perp ), b2MulAdd( lower, 0.1f, perp ), c2, draw->context );
+		draw->DrawSegment( b2MulSub( upper, 0.1f, perp ), b2MulAdd( upper, 0.1f, perp ), c3, draw->context );
 	}
 	else
 	{
-		draw->drawSegment( b2MulSub( pA, 1.0f, axis ), b2MulAdd( pA, 1.0f, axis ), c1, draw->context );
+		draw->DrawSegment( b2MulSub( pA, 1.0f, axis ), b2MulAdd( pA, 1.0f, axis ), c1, draw->context );
 	}
 
-	draw->drawPoint( pA, 5.0f, c1, draw->context );
-	draw->drawPoint( pB, 5.0f, c4, draw->context );
+	draw->DrawPoint( pA, 5.0f, c1, draw->context );
+	draw->DrawPoint( pB, 5.0f, c4, draw->context );
 }

@@ -153,14 +153,14 @@ b2DebugDraw b2DefaultDebugDraw(void)
 	b2DebugDraw draw = { 0 };
 
 	// These allow the user to skip some implementations and not hit null exceptions.
-	draw.drawPolygon = b2EmptyDrawPolygon;
-	draw.drawSolidPolygon = b2EmptyDrawSolidPolygon;
-	draw.drawCircle = b2EmptyDrawCircle;
-	draw.drawSolidCircle = b2EmptyDrawSolidCircle;
-	draw.drawSolidCapsule = b2EmptyDrawSolidCapsule;
-	draw.drawSegment = b2EmptyDrawSegment;
-	draw.drawTransform = b2EmptyDrawTransform;
-	draw.drawPoint = b2EmptyDrawPoint;
-	draw.drawString = b2EmptyDrawString;
+	draw.DrawPolygon = b2EmptyDrawPolygon;
+	draw.DrawSolidPolygon = b2EmptyDrawSolidPolygon;
+	draw.DrawCircle = b2EmptyDrawCircle;
+	draw.DrawSolidCircle = b2EmptyDrawSolidCircle;
+	draw.DrawSolidCapsule = b2EmptyDrawSolidCapsule;
+	draw.DrawSegment = b2EmptyDrawSegment;
+	draw.DrawTransform = b2EmptyDrawTransform;
+	draw.DrawPoint = b2EmptyDrawPoint;
+	draw.DrawString = b2EmptyDrawString;
 	return draw;
 }

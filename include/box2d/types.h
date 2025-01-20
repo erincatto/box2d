@@ -1345,32 +1345,32 @@ typedef enum b2HexColor
 typedef struct b2DebugDraw
 {
 	/// Draw a closed polygon provided in CCW order.
-	void ( *drawPolygon )( const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context );
+	void ( *DrawPolygon )( const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context );
 
 	/// Draw a solid closed polygon provided in CCW order.
-	void ( *drawSolidPolygon )( b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color,
+	void ( *DrawSolidPolygon )( b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color,
 								void* context );
 
 	/// Draw a circle.
-	void ( *drawCircle )( b2Vec2 center, float radius, b2HexColor color, void* context );
+	void ( *DrawCircle )( b2Vec2 center, float radius, b2HexColor color, void* context );
 
 	/// Draw a solid circle.
-	void ( *drawSolidCircle )( b2Transform transform, float radius, b2HexColor color, void* context );
+	void ( *DrawSolidCircle )( b2Transform transform, float radius, b2HexColor color, void* context );
 
 	/// Draw a solid capsule.
-	void ( *drawSolidCapsule )( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context );
+	void ( *DrawSolidCapsule )( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context );
 
 	/// Draw a line segment.
-	void ( *drawSegment )( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context );
+	void ( *DrawSegment )( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context );
 
 	/// Draw a transform. Choose your own length scale.
-	void ( *drawTransform )( b2Transform transform, void* context );
+	void ( *DrawTransform )( b2Transform transform, void* context );
 
 	/// Draw a point.
-	void ( *drawPoint )( b2Vec2 p, float size, b2HexColor color, void* context );
+	void ( *DrawPoint )( b2Vec2 p, float size, b2HexColor color, void* context );
 
 	/// Draw a string in world space
-	void ( *drawString )( b2Vec2 p, const char* s, b2HexColor color, void* context );
+	void ( *DrawString )( b2Vec2 p, const char* s, b2HexColor color, void* context );
 
 	/// Bounds to use if restricting drawing to a rectangular region
 	b2AABB drawingBounds;

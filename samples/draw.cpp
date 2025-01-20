@@ -1368,15 +1368,15 @@ void Draw::Create()
 
 	m_debugDraw = {};
 
-	m_debugDraw.drawPolygon = DrawPolygonFcn;
-	m_debugDraw.drawSolidPolygon = DrawSolidPolygonFcn;
-	m_debugDraw.drawCircle = DrawCircleFcn;
-	m_debugDraw.drawSolidCircle = DrawSolidCircleFcn;
-	m_debugDraw.drawSolidCapsule = DrawSolidCapsuleFcn;
-	m_debugDraw.drawSegment = DrawSegmentFcn;
-	m_debugDraw.drawTransform = DrawTransformFcn;
-	m_debugDraw.drawPoint = DrawPointFcn;
-	m_debugDraw.drawString = DrawStringFcn;
+	m_debugDraw.DrawPolygon = DrawPolygonFcn;
+	m_debugDraw.DrawSolidPolygon = DrawSolidPolygonFcn;
+	m_debugDraw.DrawCircle = DrawCircleFcn;
+	m_debugDraw.DrawSolidCircle = DrawSolidCircleFcn;
+	m_debugDraw.DrawSolidCapsule = DrawSolidCapsuleFcn;
+	m_debugDraw.DrawSegment = DrawSegmentFcn;
+	m_debugDraw.DrawTransform = DrawTransformFcn;
+	m_debugDraw.DrawPoint = DrawPointFcn;
+	m_debugDraw.DrawString = DrawStringFcn;
 	m_debugDraw.drawingBounds = bounds;
 
 	m_debugDraw.useDrawingBounds = false;
