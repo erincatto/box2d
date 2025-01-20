@@ -546,9 +546,6 @@ B2_API void b2Shape_SetRestitution( b2ShapeId shapeId, float restitution );
 /// Get the shape restitution
 B2_API float b2Shape_GetRestitution( b2ShapeId shapeId );
 
-/// Get the allowed clip fraction.
-B2_API float b2Shape_GetAllowedClipFraction( b2ShapeId shapeId );
-
 /// Get the shape filter
 B2_API b2Filter b2Shape_GetFilter( b2ShapeId shapeId );
 

@@ -20,18 +20,8 @@ enum b2ContactFlags
 	// Contact has a hit event
 	b2_contactHitEventFlag = 0x00000002,
 
-	// One of the shapes is a sensor
-	//b2_contactSensorFlag = 0x0000004,
-
-	// Set when a sensor is touching
-	// todo this is not used, perhaps have b2Body_GetSensorContactData()
-	//b2_contactSensorTouchingFlag = 0x00000008,
-
-	// This contact wants sensor events
-	//b2_contactEnableSensorEvents = 0x00000010,
-
 	// This contact wants contact events
-	b2_contactEnableContactEvents = 0x00000020,
+	b2_contactEnableContactEvents = 0x00000004,
 };
 
 // A contact edge is used to connect bodies and contacts together

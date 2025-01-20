@@ -44,7 +44,6 @@ public:
 		m_shapeType = e_circleShape;
 		m_restitution = 0.0f;
 		m_friction = 0.2f;
-		m_allowedClipFraction = 0.1f;
 
 		CreateScene();
 		Launch();
@@ -228,7 +227,6 @@ public:
 	b2ShapeId m_shapeId;
 	float m_restitution;
 	float m_friction;
-	float m_allowedClipFraction;
 };
 
 static int sampleChainShape = RegisterSample( "Shapes", "Chain Shape", ChainShape::Create );
