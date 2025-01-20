@@ -814,6 +814,42 @@ void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity )
 	state->angularVelocity = angularVelocity;
 }
 
+b2Vec2 b2Body_GetLocalPointVelocity(b2BodyId bodyId, b2Vec2 localPoint)
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	b2BodyState* state = b2GetBodyState( world, body );
+	if ( state == NULL )
+	{
+		return b2Vec2_zero;
+	}
+
+	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, body->setIndex );
+	b2BodySim* bodySim = b2BodySimArray_Get( &set->bodySims, body->localIndex );
+
+	b2Vec2 r = b2RotateVector( bodySim->transform.q, b2Sub(localPoint, bodySim->localCenter) );
+	b2Vec2 v = b2Add(state->linearVelocity, b2CrossSV( state->angularVelocity, r ));
+	return v;
+}
+
+b2Vec2 b2Body_GetWorldPointVelocity(b2BodyId bodyId, b2Vec2 worldPoint)
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	b2BodyState* state = b2GetBodyState( world, body );
+	if ( state == NULL )
+	{
+		return b2Vec2_zero;
+	}
+
+	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, body->setIndex );
+	b2BodySim* bodySim = b2BodySimArray_Get( &set->bodySims, body->localIndex );
+
+	b2Vec2 r = b2Sub( worldPoint, bodySim->center );
+	b2Vec2 v = b2Add( state->linearVelocity, b2CrossSV( state->angularVelocity, r ) );
+	return v;
+}
+
 void b2Body_ApplyForce( b2BodyId bodyId, b2Vec2 force, b2Vec2 point, bool wake )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
