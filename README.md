@@ -84,5 +84,6 @@ Support development of Box2D through [Github Sponsors](https://github.com/sponso
 Please consider starring this repository and subscribing to my [YouTube channel](https://www.youtube.com/@erin_catto).
 
 ## Ports, wrappers, and bindings
-- https://github.com/EnokViking/Box2DBeef
-- https://github.com/HolyBlackCat/box2cpp
+- Beef bindings - https://github.com/EnokViking/Box2DBeef
+- C++ bindings - https://github.com/HolyBlackCat/box2cpp
+- WASM - https://github.com/Birch-san/box2d3-wasm
