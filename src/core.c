@@ -75,12 +75,12 @@ b2Version b2GetVersion( void )
 #include <intrin.h>
 #endif
 
-int b2AtomicStoreInt( b2AtomicInt* a, int value )
+void b2AtomicStoreInt( b2AtomicInt* a, int value )
 {
 #if defined( _MSC_VER )
-	return _InterlockedExchange( (long*)&a->value, value );
+	(void)_InterlockedExchange( (long*)&a->value, value );
 #elif defined( __GNUC__ ) || defined( __clang__ )
-	return __atomic_store_n( &a->value, value, __ATOMIC_SEQ_CST );
+	__atomic_store_n( &a->value, value, __ATOMIC_SEQ_CST );
 #else
 #error "Unsupported platform"
 #endif
@@ -120,12 +120,12 @@ bool b2AtomicCompareExchangeInt( b2AtomicInt* a, int expected, int desired )
 #endif
 }
 
-uint32_t b2AtomicStoreU32( b2AtomicU32* a, uint32_t value )
+void b2AtomicStoreU32( b2AtomicU32* a, uint32_t value )
 {
 #if defined( _MSC_VER )
-	return _InterlockedExchange( (long*)&a->value, value );
+	(void)_InterlockedExchange( (long*)&a->value, value );
 #elif defined( __GNUC__ ) || defined( __clang__ )
-	return __atomic_store_n( &a->value, value, __ATOMIC_SEQ_CST );
+	__atomic_store_n( &a->value, value, __ATOMIC_SEQ_CST );
 #else
 #error "Unsupported platform"
 #endif

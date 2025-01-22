@@ -142,10 +142,10 @@ typedef struct b2AtomicU32
 	uint32_t value;
 } b2AtomicU32;
 
-int b2AtomicStoreInt( b2AtomicInt* a, int value );
+void b2AtomicStoreInt( b2AtomicInt* a, int value );
 int b2AtomicLoadInt( b2AtomicInt* a );
 int b2AtomicFetchAddInt( b2AtomicInt* a, int increment );
 bool b2AtomicCompareExchangeInt( b2AtomicInt* obj, int expected, int desired );
 
-uint32_t b2AtomicStoreU32( b2AtomicU32* a, uint32_t value );
+void b2AtomicStoreU32( b2AtomicU32* a, uint32_t value );
 uint32_t b2AtomicLoadU32( b2AtomicU32* a );
