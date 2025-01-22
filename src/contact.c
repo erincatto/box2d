@@ -40,31 +40,6 @@ B2_ARRAY_SOURCE( b2ContactSim, b2ContactSim );
 // - As long as contacts are created in deterministic order, island link order is deterministic.
 // - This keeps the order of contacts in islands deterministic
 
-static inline float b2MixFloats( float value1, float value2, b2MixingRule mixingRule )
-{
-	switch ( mixingRule )
-	{
-		case b2_mixAverage:
-			return 0.5f * ( value1 + value2 );
-
-		case b2_mixGeometricMean:
-			return sqrtf( value1 * value2 );
-
-		case b2_mixMultiply:
-			return value1 * value2;
-
-		case b2_mixMinimum:
-			return value1 < value2 ? value1 : value2;
-
-		case b2_mixMaximum:
-			return value1 > value2 ? value1 : value2;
-
-		default:
-			B2_ASSERT( false );
-			return 0.0f;
-	}
-}
-
 // Manifold functions should compute important results in local space to improve precision. However, this
 // interface function takes two world transforms instead of a relative transform for these reasons:
 //
@@ -338,8 +313,11 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contactSim->shapeIdB = shapeIdB;
 	contactSim->cache = b2_emptySimplexCache;
 	contactSim->manifold = ( b2Manifold ){ 0 };
-	contactSim->friction = b2MixFloats( shapeA->friction, shapeB->friction, world->frictionMixingRule );
-	contactSim->restitution = b2MixFloats( shapeA->restitution, shapeB->restitution, world->restitutionMixingRule );
+
+	// these get set in the narrow phase
+	contactSim->friction = 0.0f;
+	contactSim->restitution = 0.0f;
+
 	contactSim->tangentSpeed = 0.0f;
 	contactSim->simFlags = 0;
 
@@ -372,6 +350,8 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 	b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
 
 	uint32_t flags = contact->flags;
+
+	// End touch event
 	if ( ( flags & b2_contactTouchingFlag ) != 0 && ( flags & b2_contactEnableContactEvents ) != 0 )
 	{
 		uint16_t worldId = world->worldId;
@@ -380,12 +360,8 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 		b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->generation };
 		b2ShapeId shapeIdB = { shapeB->id + 1, worldId, shapeB->generation };
 
-		// Was touching?
-		if ( ( flags & b2_contactTouchingFlag ) != 0 && ( flags & b2_contactEnableContactEvents ) != 0 )
-		{
-			b2ContactEndTouchEvent event = { shapeIdA, shapeIdB };
-			b2ContactEndTouchEventArray_Push( world->contactEndEvents + world->endEventArrayIndex, event );
-		}
+		b2ContactEndTouchEvent event = { shapeIdA, shapeIdB };
+		b2ContactEndTouchEventArray_Push( world->contactEndEvents + world->endEventArrayIndex, event );
 	}
 
 	// Remove from body A
@@ -512,6 +488,10 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	// Compute new manifold
 	b2ManifoldFcn* fcn = s_registers[shapeA->type][shapeB->type].fcn;
 	contactSim->manifold = fcn( shapeA, transformA, shapeB, transformB, &contactSim->cache );
+
+	// Keep these updated in case the values on the shapes are modified
+	contactSim->friction = world->frictionCallback( shapeA->friction, shapeA->material, shapeB->friction, shapeB->material );
+	contactSim->restitution = world->restitutionCallback( shapeA->restitution, shapeA->material, shapeB->restitution, shapeB->material );
 
 	int pointCount = contactSim->manifold.pointCount;
 	bool touching = pointCount > 0;

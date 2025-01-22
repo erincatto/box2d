@@ -18,7 +18,6 @@
 #include "world.h"
 
 #include <limits.h>
-#include <stdatomic.h>
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -618,7 +617,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 				// This is deterministic because the order of TOI sweeps doesn't matter
 				if ( sim->isBullet )
 				{
-					int bulletIndex = atomic_fetch_add( &stepContext->bulletBodyCount, 1 );
+					int bulletIndex = b2AtomicFetchAddInt( &stepContext->bulletBodyCount, 1 );
 					stepContext->bulletBodies[bulletIndex] = simIndex;
 				}
 				else
@@ -839,8 +838,7 @@ static void b2ExecuteStage( b2SolverStage* stage, b2StepContext* context, int pr
 
 	int blockIndex = startIndex;
 
-	// Caution: this can change expectedSyncIndex
-	while ( atomic_compare_exchange_strong( &blocks[blockIndex].syncIndex, &expectedSyncIndex, syncIndex ) == true )
+	while ( b2AtomicCompareExchangeInt( &blocks[blockIndex].syncIndex, expectedSyncIndex, syncIndex ) == true )
 	{
 		B2_ASSERT( stage->type != b2_stagePrepareContacts || syncIndex < 2 );
 
@@ -870,8 +868,7 @@ static void b2ExecuteStage( b2SolverStage* stage, b2StepContext* context, int pr
 
 		expectedSyncIndex = previousSyncIndex;
 
-		// Caution: this can change expectedSyncIndex
-		if ( atomic_compare_exchange_strong( &blocks[blockIndex].syncIndex, &expectedSyncIndex, syncIndex ) == false )
+		if ( b2AtomicCompareExchangeInt( &blocks[blockIndex].syncIndex, expectedSyncIndex, syncIndex ) == false )
 		{
 			break;
 		}
@@ -881,7 +878,7 @@ static void b2ExecuteStage( b2SolverStage* stage, b2StepContext* context, int pr
 		blockIndex -= 1;
 	}
 
-	(void)atomic_fetch_add( &stage->completionCount, completedCount );
+	(void)b2AtomicFetchAddInt( &stage->completionCount, completedCount );
 }
 
 static void b2ExecuteMainStage( b2SolverStage* stage, b2StepContext* context, uint32_t syncBits )
@@ -898,7 +895,7 @@ static void b2ExecuteMainStage( b2SolverStage* stage, b2StepContext* context, ui
 	}
 	else
 	{
-		atomic_store( &context->atomicSyncBits, syncBits );
+		b2AtomicStoreU32( &context->atomicSyncBits, syncBits );
 
 		int syncIndex = ( syncBits >> 16 ) & 0xFFFF;
 		B2_ASSERT( syncIndex > 0 );
@@ -907,12 +904,12 @@ static void b2ExecuteMainStage( b2SolverStage* stage, b2StepContext* context, ui
 		b2ExecuteStage( stage, context, previousSyncIndex, syncIndex, 0 );
 
 		// todo consider using the cycle counter as well
-		while ( atomic_load( &stage->completionCount ) != blockCount )
+		while ( b2AtomicLoadInt( &stage->completionCount ) != blockCount )
 		{
 			b2Pause();
 		}
 
-		atomic_store( &stage->completionCount, 0 );
+		b2AtomicStoreInt( &stage->completionCount, 0 );
 	}
 }
 
@@ -1085,7 +1082,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDont
 		profile->storeImpulses += b2GetMillisecondsAndReset( &ticks );
 
 		// Signal workers to finish
-		atomic_store( &context->atomicSyncBits, UINT_MAX );
+		b2AtomicStoreU32( &context->atomicSyncBits, UINT_MAX );
 
 		B2_ASSERT( stageIndex + 1 == context->stageCount );
 		return;
@@ -1100,7 +1097,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDont
 		// parallel simulation with graph coloring.
 		uint32_t syncBits;
 		int spinCount = 0;
-		while ( ( syncBits = atomic_load( &context->atomicSyncBits ) ) == lastSyncBits )
+		while ( ( syncBits = b2AtomicLoadU32( &context->atomicSyncBits ) ) == lastSyncBits )
 		{
 			if ( spinCount > 5 )
 			{
@@ -1208,7 +1205,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	// Solve constraints using graph coloring
 	{
 		// Prepare buffers for bullets
-		stepContext->bulletBodyCount = 0;
+		b2AtomicStoreInt(&stepContext->bulletBodyCount, 0);
 		stepContext->bulletBodies = b2AllocateArenaItem( &world->stackAllocator, awakeBodyCount * sizeof( int ), "bullet bodies" );
 
 		b2TracyCZoneNC( prepare_stages, "Prepare Stages", b2_colorDarkOrange, true );
@@ -1477,7 +1474,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			block->startIndex = i * bodyBlockSize;
 			block->count = (int16_t)bodyBlockSize;
 			block->blockType = b2_bodyBlock;
-			block->syncIndex = 0;
+			b2AtomicStoreInt(&block->syncIndex, 0);
 		}
 		bodyBlocks[bodyBlockCount - 1].count = (int16_t)( awakeBodyCount - ( bodyBlockCount - 1 ) * bodyBlockSize );
 
@@ -1488,7 +1485,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			block->startIndex = i * jointBlockSize;
 			block->count = (int16_t)jointBlockSize;
 			block->blockType = b2_jointBlock;
-			block->syncIndex = 0;
+			b2AtomicStoreInt( &block->syncIndex, 0 );
 		}
 
 		if ( jointBlockCount > 0 )
@@ -1503,7 +1500,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			block->startIndex = i * contactBlockSize;
 			block->count = (int16_t)contactBlockSize;
 			block->blockType = b2_contactBlock;
-			block->syncIndex = 0;
+			b2AtomicStoreInt( &block->syncIndex, 0 );
 		}
 
 		if ( contactBlockCount > 0 )
@@ -1528,7 +1525,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				block->startIndex = j * colorJointBlockSize;
 				block->count = (int16_t)colorJointBlockSize;
 				block->blockType = b2_graphJointBlock;
-				block->syncIndex = 0;
+				b2AtomicStoreInt( &block->syncIndex, 0 );
 			}
 
 			if ( colorJointBlockCount > 0 )
@@ -1546,7 +1543,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				block->startIndex = j * colorContactBlockSize;
 				block->count = (int16_t)colorContactBlockSize;
 				block->blockType = b2_graphContactBlock;
-				block->syncIndex = 0;
+				b2AtomicStoreInt( &block->syncIndex, 0 );
 			}
 
 			if ( colorContactBlockCount > 0 )
@@ -1566,7 +1563,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stage->blocks = jointBlocks;
 		stage->blockCount = jointBlockCount;
 		stage->colorIndex = -1;
-		stage->completionCount = 0;
+		b2AtomicStoreInt(&stage->completionCount, 0);
 		stage += 1;
 
 		// Prepare contacts
@@ -1574,7 +1571,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stage->blocks = contactBlocks;
 		stage->blockCount = contactBlockCount;
 		stage->colorIndex = -1;
-		stage->completionCount = 0;
+		b2AtomicStoreInt( &stage->completionCount, 0 );
 		stage += 1;
 
 		// Integrate velocities
@@ -1582,7 +1579,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stage->blocks = bodyBlocks;
 		stage->blockCount = bodyBlockCount;
 		stage->colorIndex = -1;
-		stage->completionCount = 0;
+		b2AtomicStoreInt( &stage->completionCount, 0 );
 		stage += 1;
 
 		// Warm start
@@ -1592,7 +1589,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			stage->blocks = graphColorBlocks[i];
 			stage->blockCount = colorJointBlockCounts[i] + colorContactBlockCounts[i];
 			stage->colorIndex = activeColorIndices[i];
-			stage->completionCount = 0;
+			b2AtomicStoreInt( &stage->completionCount, 0 );
 			stage += 1;
 		}
 
@@ -1603,7 +1600,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			stage->blocks = graphColorBlocks[i];
 			stage->blockCount = colorJointBlockCounts[i] + colorContactBlockCounts[i];
 			stage->colorIndex = activeColorIndices[i];
-			stage->completionCount = 0;
+			b2AtomicStoreInt( &stage->completionCount, 0 );
 			stage += 1;
 		}
 
@@ -1612,7 +1609,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stage->blocks = bodyBlocks;
 		stage->blockCount = bodyBlockCount;
 		stage->colorIndex = -1;
-		stage->completionCount = 0;
+		b2AtomicStoreInt( &stage->completionCount, 0 );
 		stage += 1;
 
 		// Relax constraints
@@ -1622,7 +1619,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			stage->blocks = graphColorBlocks[i];
 			stage->blockCount = colorJointBlockCounts[i] + colorContactBlockCounts[i];
 			stage->colorIndex = activeColorIndices[i];
-			stage->completionCount = 0;
+			b2AtomicStoreInt( &stage->completionCount, 0 );
 			stage += 1;
 		}
 
@@ -1634,7 +1631,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			stage->blocks = graphColorBlocks[i];
 			stage->blockCount = colorJointBlockCounts[i] + colorContactBlockCounts[i];
 			stage->colorIndex = activeColorIndices[i];
-			stage->completionCount = 0;
+			b2AtomicStoreInt( &stage->completionCount, 0 );
 			stage += 1;
 		}
 
@@ -1643,7 +1640,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stage->blocks = contactBlocks;
 		stage->blockCount = contactBlockCount;
 		stage->colorIndex = -1;
-		stage->completionCount = 0;
+		b2AtomicStoreInt( &stage->completionCount, 0 );
 		stage += 1;
 
 		B2_ASSERT( (int)( stage - stages ) == stageCount );
@@ -1659,7 +1656,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stepContext->workerCount = workerCount;
 		stepContext->stageCount = stageCount;
 		stepContext->stages = stages;
-		stepContext->atomicSyncBits = 0;
+		b2AtomicStoreU32(&stepContext->atomicSyncBits, 0);
 
 		world->profile.prepareStages = b2GetMillisecondsAndReset( &prepareTicks );
 		b2TracyCZoneEnd( prepare_stages );
@@ -1892,7 +1889,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2TracyCZoneEnd( refit_bvh );
 	}
 
-	if ( stepContext->bulletBodyCount > 0 )
+	int bulletBodyCount = b2AtomicLoadInt( &stepContext->bulletBodyCount );
+	if ( bulletBodyCount > 0 )
 	{
 		b2TracyCZoneNC( bullets, "Bullets", b2_colorLightYellow, true );
 		uint64_t bulletTicks = b2GetTicks();
@@ -1900,7 +1898,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// Fast bullet bodies
 		// Note: a bullet body may be moving slow
 		int minRange = 8;
-		void* userBulletBodyTask = world->enqueueTaskFcn( &b2BulletBodyTask, stepContext->bulletBodyCount, minRange, stepContext,
+		void* userBulletBodyTask = world->enqueueTaskFcn( &b2BulletBodyTask, bulletBodyCount, minRange, stepContext,
 														  world->userTaskContext );
 		world->taskCount += 1;
 		if ( userBulletBodyTask != NULL )
@@ -1919,7 +1917,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		// Serially enlarge broad-phase proxies for bullet shapes
 		int* bulletBodySimIndices = stepContext->bulletBodies;
-		int bulletBodyCount = stepContext->bulletBodyCount;
 
 		// This loop has non-deterministic order but it shouldn't affect the result
 		for ( int i = 0; i < bulletBodyCount; ++i )
@@ -1970,7 +1967,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	// Need to free this even if no bullets got processed.
 	b2FreeArenaItem( &world->stackAllocator, stepContext->bulletBodies );
 	stepContext->bulletBodies = NULL;
-	stepContext->bulletBodyCount = 0;
+	b2AtomicStoreInt(&stepContext->bulletBodyCount, 0);
 
 	// Island sleeping
 	// This must be done last because putting islands to sleep invalidates the enlarged body bits.

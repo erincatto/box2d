@@ -42,7 +42,7 @@ typedef struct b2BroadPhase
 	b2MoveResult* moveResults;
 	b2MovePair* movePairs;
 	int movePairCapacity;
-	_Atomic int movePairIndex;
+	b2AtomicInt movePairIndex;
 
 	// Tracks shape pairs that have a b2Contact
 	// todo pairSet can grow quite large on the first time step and remain large

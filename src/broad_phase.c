@@ -16,7 +16,6 @@
 #include "arena_allocator.h"
 #include "world.h"
 
-#include <stdatomic.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -40,7 +39,7 @@ void b2CreateBroadPhase( b2BroadPhase* bp )
 	bp->moveResults = NULL;
 	bp->movePairs = NULL;
 	bp->movePairCapacity = 0;
-	bp->movePairIndex = 0;
+	b2AtomicStoreInt(&bp->movePairIndex, 0);
 	bp->pairSet = b2CreateSet( 32 );
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
@@ -279,7 +278,7 @@ static bool b2PairQueryCallback( int proxyId, int shapeId, void* context )
 	}
 
 	// todo per thread to eliminate atomic?
-	int pairIndex = atomic_fetch_add( &broadPhase->movePairIndex, 1 );
+	int pairIndex = b2AtomicFetchAddInt( &broadPhase->movePairIndex, 1 );
 
 	b2MovePair* pair;
 	if ( pairIndex < broadPhase->movePairCapacity )
@@ -394,11 +393,11 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	bp->moveResults = b2AllocateArenaItem( alloc, moveCount * sizeof( b2MoveResult ), "move results" );
 	bp->movePairCapacity = 16 * moveCount;
 	bp->movePairs = b2AllocateArenaItem( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
-	bp->movePairIndex = 0;
+	b2AtomicStoreInt(&bp->movePairIndex, 0);
 
 #if B2_SNOOP_TABLE_COUNTERS
-	extern _Atomic int b2_probeCount;
-	b2_probeCount = 0;
+	extern b2AtomicInt b2_probeCount;
+	b2AtomicStoreInt(&b2_probeCount, 0);
 #endif
 
 	int minRange = 64;

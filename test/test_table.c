@@ -8,8 +8,6 @@
 
 #include "box2d/base.h"
 
-#include <stdatomic.h>
-
 #define SET_SPAN 317
 #define ITEM_COUNT ( ( SET_SPAN * SET_SPAN - SET_SPAN ) / 2 )
 
@@ -65,8 +63,8 @@ int TableTest( void )
 		ENSURE( set.count == ( itemCount - removeCount ) );
 
 #if B2_SNOOP_TABLE_COUNTERS
-		extern _Atomic int b2_probeCount;
-		b2_probeCount = 0;
+		extern b2AtomicInt b2_probeCount;
+		b2AtomicStoreInt(&b2_probeCount, 0);
 #endif
 
 		// Test key search
@@ -91,8 +89,9 @@ int TableTest( void )
 		printf( "set: count = %d, b2ContainsKey = %.5f ms, ave = %.5f us\n", itemCount, ms, 1000.0f * ms / itemCount );
 
 #if B2_SNOOP_TABLE_COUNTERS
-		float aveProbeCount = (float)b2_probeCount / (float)itemCount;
-		printf( "item count = %d, probe count = %d, ave probe count %.2f\n", itemCount, b2_probeCount, aveProbeCount );
+		int probeCount = b2AtomicLoadInt( &b2_probeCount );
+		float aveProbeCount = (float)probeCount / (float)itemCount;
+		printf( "item count = %d, probe count = %d, ave probe count %.2f\n", itemCount, probeCount, aveProbeCount );
 #endif
 
 		// Remove all keys from set

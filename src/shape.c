@@ -109,6 +109,7 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	shape->density = def->density;
 	shape->friction = def->friction;
 	shape->restitution = def->restitution;
+	shape->material = def->material;
 	shape->filter = def->filter;
 	shape->userData = def->userData;
 	shape->customColor = def->customColor;
@@ -1055,6 +1056,26 @@ float b2Shape_GetRestitution( b2ShapeId shapeId )
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
 	return shape->restitution;
+}
+
+void b2Shape_SetMaterial( b2ShapeId shapeId, int material )
+{
+	b2World* world = b2GetWorld( shapeId.world0 );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return;
+	}
+
+	b2Shape* shape = b2GetShape( world, shapeId );
+	shape->material = material;
+}
+
+int b2Shape_GetMaterial( b2ShapeId shapeId )
+{
+	b2World* world = b2GetWorld( shapeId.world0 );
+	b2Shape* shape = b2GetShape( world, shapeId );
+	return shape->material;
 }
 
 b2Filter b2Shape_GetFilter( b2ShapeId shapeId )

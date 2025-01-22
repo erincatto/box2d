@@ -5,6 +5,8 @@
 
 #include "box2d/math_functions.h"
 
+#include "core.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -54,7 +56,7 @@ typedef struct b2SolverBlock
 	int16_t count;
 	int16_t blockType; // b2SolverBlockType
 	// todo consider false sharing of this atomic
-	_Atomic int syncIndex;
+	b2AtomicInt syncIndex;
 } b2SolverBlock;
 
 // Each stage must be completed before going to the next stage.
@@ -66,7 +68,7 @@ typedef struct b2SolverStage
 	int blockCount;
 	int colorIndex;
 	// todo consider false sharing of this atomic
-	_Atomic int completionCount;
+	b2AtomicInt completionCount;
 } b2SolverStage;
 
 // Context for a time step. Recreated each time step.
@@ -106,7 +108,7 @@ typedef struct b2StepContext
 
 	// Array of bullet bodies that need continuous collision handling
 	int* bulletBodies;
-	_Atomic int bulletBodyCount;
+	b2AtomicInt bulletBodyCount;
 
 	// joint pointers for simplified parallel-for access.
 	b2JointSim** joints;
@@ -130,7 +132,7 @@ typedef struct b2StepContext
 	char dummy1[64];
 
 	// sync index (16-bits) | stage type (16-bits)
-	_Atomic unsigned int atomicSyncBits;
+	b2AtomicU32 atomicSyncBits;
 
 	char dummy2[64];
 

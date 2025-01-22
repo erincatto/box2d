@@ -108,8 +108,6 @@ Sample::Sample( Settings& settings )
 	worldDef.userTaskContext = this;
 	worldDef.enableSleep = settings.enableSleep;
 
-	worldDef.restitutionMixingRule = b2_mixMaximum;
-
 	m_worldId = b2CreateWorld( &worldDef );
 	m_textLine = 30;
 	m_textIncrement = 22;
@@ -345,6 +343,7 @@ void Sample::Step( Settings& settings )
 		char buffer[256] = { 0 };
 		static_assert( std::size( s.colorCounts ) == 12 );
 
+		// todo fix this
 		int offset = snprintf( buffer, 256, "colors: " );
 		for ( int i = 0; i < 12; ++i )
 		{

@@ -100,7 +100,6 @@ if(PROJECT_IS_TOP_LEVEL)
 
 	# enkiTS is used by all the test apps, but not directly by the Box2D library
 	if(BOX2D_UNIT_TESTS OR BOX2D_SAMPLES OR BOX2D_BENCHMARKS)
-		SET(ENKITS_BUILD_EXAMPLES OFF CACHE BOOL "Build enkiTS examples")
 
 		# Emscripten pthread support for enkiTS
 		if(EMSCRIPTEN)
@@ -111,7 +110,8 @@ if(PROJECT_IS_TOP_LEVEL)
 			string(APPEND CMAKE_EXE_LINKER_FLAGS " ${EMSCRIPTEN_PTHREADS_LINKER_FLAGS}")
 		endif()
 
-		# Used in tests and samples
+		# Task system used in tests and samples
+		set(ENKITS_BUILD_EXAMPLES OFF CACHE BOOL "Build enkiTS examples")
 		FetchContent_Declare(
 			enkits
 			GIT_REPOSITORY https://github.com/dougbinks/enkiTS.git
