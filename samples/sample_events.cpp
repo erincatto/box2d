@@ -13,6 +13,7 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <stdio.h>
 #include <vector>
 
 class SensorFunnel : public Sample
