@@ -5,6 +5,7 @@ set(BOX2D_SOURCE_FILES
 	arena_allocator.h
 	array.c
 	array.h
+	atomic.h
 	bitset.c
 	bitset.h
 	body.c
@@ -136,11 +137,6 @@ if (MSVC)
 
 	# Enable asserts in release with debug info
 	target_compile_definitions(box2d PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:B2_ENABLE_ASSERT>")
-
-	# Atomics are still considered experimental in Visual Studio 17.8
-	if (CMAKE_C_COMPILER_ID MATCHES "MSVC")
-		target_compile_options(box2d PRIVATE /experimental:c11atomics)
-	endif()
 
 	# All warnings
 	target_compile_options(box2d PRIVATE /W4)

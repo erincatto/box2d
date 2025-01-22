@@ -49,6 +49,16 @@ typedef void* b2EnqueueTaskCallback( b2TaskCallback* task, int itemCount, int mi
 /// @ingroup world
 typedef void b2FinishTaskCallback( void* userTask, void* userContext );
 
+/// Optional friction mixing callback. This intentionally provides no context objects because this is called
+/// from a worker thread.
+/// @warning This function should not attempt to modify Box2D state or user application state.
+typedef float b2FrictionCallback( float frictionA, int materialA, float frictionB, int materialB );
+
+/// Optional restitution mixing callback. This intentionally provides no context objects because this is called
+/// from a worker thread.
+/// @warning This function should not attempt to modify Box2D state or user application state.
+typedef float b2RestitutionCallback( float restitutionA, int materialA, float restitutionB, int materialB );
+
 /// Result from b2World_RayCastClosest
 /// @ingroup world
 typedef struct b2RayResult
@@ -61,16 +71,6 @@ typedef struct b2RayResult
 	int leafVisits;
 	bool hit;
 } b2RayResult;
-
-/// Mixing rules for friction and restitution
-typedef enum b2MixingRule
-{
-	b2_mixAverage,
-	b2_mixGeometricMean,
-	b2_mixMultiply,
-	b2_mixMinimum,
-	b2_mixMaximum
-} b2MixingRule;
 
 /// World definition used to create a simulation world.
 /// Must be initialized using b2DefaultWorldDef().
@@ -108,11 +108,11 @@ typedef struct b2WorldDef
 	/// Maximum linear speed. Usually meters per second.
 	float maximumLinearSpeed;
 
-	/// Mixing rule for friction. Default is b2_mixGeometricMean.
-	b2MixingRule frictionMixingRule;
+	/// Optional mixing callback for friction. The default uses sqrt(frictionA * frictionB).
+	b2FrictionCallback* frictionCallback;
 
-	/// Mixing rule for restitution. Default is b2_mixMaximum.
-	b2MixingRule restitutionMixingRule;
+	/// Optional mixing callback for restitution. The default uses max(restitutionA, restitutionB).
+	b2RestitutionCallback* restitutionCallback;
 
 	/// Can bodies go to sleep to improve performance
 	bool enableSleep;
@@ -341,11 +341,17 @@ typedef struct b2ShapeDef
 	/// The Coulomb (dry) friction coefficient, usually in the range [0,1].
 	float friction;
 
-	/// The restitution (bounce) usually in the range [0,1].
+	/// The coefficient of restitution (bounce) usually in the range [0,1].
+	/// https://en.wikipedia.org/wiki/Coefficient_of_restitution
 	float restitution;
 
 	/// The rolling resistance usually in the range [0,1].
+	/// todo
 	float rollingResistance;
+
+	/// User material identifier. This is passed with query results and to friction and restitution
+	/// combining functions. It is not used internally.
+	int material;
 
 	/// The density, usually in kg/m^2.
 	float density;

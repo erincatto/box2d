@@ -92,11 +92,8 @@ typedef struct b2World
 	b2ShapeArray shapes;
 	b2ChainShapeArray chainShapes;
 
-	// Array of all sensor shape indices
+	// This is a dense array of sensor data.
 	b2SensorArray sensors;
-
-	// Global array of shapes that sensors overlap with.
-	b2IntArray sensorOverlaps;
 
 	// Per thread storage
 	b2TaskContextArray taskContexts;
@@ -140,8 +137,8 @@ typedef struct b2World
 	float jointHertz;
 	float jointDampingRatio;
 
-	b2MixingRule frictionMixingRule;
-	b2MixingRule restitutionMixingRule;
+	b2FrictionCallback* frictionCallback;
+	b2RestitutionCallback* restitutionCallback;
 
 	uint16_t generation;
 

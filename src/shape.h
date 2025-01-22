@@ -21,6 +21,7 @@ typedef struct b2Shape
 	float density;
 	float friction;
 	float restitution;
+	int material;
 
 	b2AABB aabb;
 	b2AABB fatAABB;

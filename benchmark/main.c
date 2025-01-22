@@ -394,7 +394,7 @@ int main( int argc, char** argv )
 			continue;
 		}
 
-		fprintf( file, "threads, ms\n" );
+		fprintf( file, "threads,ms\n" );
 		for ( int threadIndex = 1; threadIndex <= maxThreadCount; ++threadIndex )
 		{
 			fprintf( file, "%d,%g\n", threadIndex, minTime[threadIndex - 1] );

@@ -87,6 +87,20 @@ static void b2DefaultFinishTaskFcn( void* userTask, void* userContext )
 	B2_MAYBE_UNUSED( userContext );
 }
 
+static float b2DefaultFrictionCallback( float frictionA, int materialA, float frictionB, int materialB )
+{
+	B2_MAYBE_UNUSED( materialA );
+	B2_MAYBE_UNUSED( materialB );
+	return sqrtf( frictionA * frictionB );
+}
+
+static float b2DefaultRestitutionCallback( float restitutionA, int materialA, float restitutionB, int materialB )
+{
+	B2_MAYBE_UNUSED( materialA );
+	B2_MAYBE_UNUSED( materialB );
+	return b2MaxFloat( restitutionA, restitutionB );
+}
+
 b2WorldId b2CreateWorld( const b2WorldDef* def )
 {
 	_Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B2_MAX_WORLDS limit exceeded" );
@@ -186,8 +200,25 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->contactDampingRatio = def->contactDampingRatio;
 	world->jointHertz = def->jointHertz;
 	world->jointDampingRatio = def->jointDampingRatio;
-	world->frictionMixingRule = def->frictionMixingRule;
-	world->restitutionMixingRule = def->restitutionMixingRule;
+
+	if (def->frictionCallback == NULL)
+	{
+		world->frictionCallback = b2DefaultFrictionCallback;
+	}
+	else
+	{
+		world->frictionCallback = def->frictionCallback;
+	}
+
+	if ( def->restitutionCallback == NULL )
+	{
+		world->restitutionCallback = b2DefaultRestitutionCallback;
+	}
+	else
+	{
+		world->restitutionCallback = def->restitutionCallback;
+	}
+
 	world->enableSleep = def->enableSleep;
 	world->locked = false;
 	world->enableWarmStarting = true;
@@ -1816,6 +1847,42 @@ void* b2World_GetUserData( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 	return world->userData;
+}
+
+void b2World_SetFrictionCallback(b2WorldId worldId, b2FrictionCallback* callback)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	if (world->locked)
+	{
+		return;
+	}
+
+	if (callback != NULL)
+	{
+		world->frictionCallback = callback;
+	}
+	else
+	{
+		world->frictionCallback = b2DefaultFrictionCallback;
+	}
+}
+
+void b2World_SetRestitutionCallback( b2WorldId worldId, b2RestitutionCallback* callback )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	if (world->locked)
+	{
+		return;
+	}
+
+	if (callback != NULL)
+	{
+		world->restitutionCallback = callback;
+	}
+	else
+	{
+		world->restitutionCallback = b2DefaultRestitutionCallback;
+	}
 }
 
 void b2World_DumpMemoryStats( b2WorldId worldId )

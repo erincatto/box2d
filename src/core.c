@@ -11,9 +11,8 @@
 #include <stdlib.h>
 #endif
 
-#include <stdatomic.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 
 #ifdef BOX2D_PROFILE
 
@@ -28,7 +27,7 @@
 
 #endif
 
-#include "box2d/math_functions.h"
+#include "atomic.h"
 
 // This allows the user to change the length units at runtime
 float b2_lengthUnitsPerMeter = 1.0f;
@@ -72,10 +71,83 @@ b2Version b2GetVersion( void )
 	return ( b2Version ){ 3, 1, 0 };
 }
 
+#if 0
+#if defined( _MSC_VER )
+#include <intrin.h>
+#endif
+
+void b2AtomicStoreInt( b2AtomicInt* a, int value )
+{
+#if defined( _MSC_VER )
+	(void)_InterlockedExchange( (long*)&a->value, value );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	__atomic_store_n( &a->value, value, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
+int b2AtomicLoadInt( b2AtomicInt* a )
+{
+#if defined( _MSC_VER )
+	return _InterlockedOr( (long*)&a->value, 0 );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_load_n( &a->value, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
+int b2AtomicFetchAddInt( b2AtomicInt* a, int increment )
+{
+#if defined( _MSC_VER )
+	return _InterlockedExchangeAdd( (long*)&a->value, (long)increment );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_fetch_add( &a->value, increment, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
+bool b2AtomicCompareExchangeInt( b2AtomicInt* a, int expected, int desired )
+{
+#if defined( _MSC_VER )
+	return _InterlockedCompareExchange( (long*)&a->value, (long)desired, (long)expected ) == expected;
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	// The value written to expected is ignored
+	return __atomic_compare_exchange_n( &a->value, &expected, desired, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
+void b2AtomicStoreU32( b2AtomicU32* a, uint32_t value )
+{
+#if defined( _MSC_VER )
+	(void)_InterlockedExchange( (long*)&a->value, value );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	__atomic_store_n( &a->value, value, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
+uint32_t b2AtomicLoadU32( b2AtomicU32* a )
+{
+#if defined( _MSC_VER )
+	return (uint32_t)_InterlockedOr( (long*)&a->value, 0 );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_load_n( &a->value, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+#endif
+
 static b2AllocFcn* b2_allocFcn = NULL;
 static b2FreeFcn* b2_freeFcn = NULL;
 
-static _Atomic int b2_byteCount;
+b2AtomicInt b2_byteCount;
 
 void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn )
 {
@@ -88,13 +160,13 @@ void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn )
 
 void* b2Alloc( int size )
 {
-	if (size == 0)
+	if ( size == 0 )
 	{
 		return NULL;
 	}
 
 	// This could cause some sharing issues, however Box2D rarely calls b2Alloc.
-	atomic_fetch_add_explicit( &b2_byteCount, size, memory_order_relaxed );
+	b2AtomicFetchAddInt( &b2_byteCount, size );
 
 	// Allocation must be a multiple of 32 or risk a seg fault
 	// https://en.cppreference.com/w/c/memory/aligned_alloc
@@ -154,7 +226,7 @@ void b2Free( void* mem, int size )
 #endif
 	}
 
-	atomic_fetch_sub_explicit( &b2_byteCount, size, memory_order_relaxed );
+	b2AtomicFetchAddInt( &b2_byteCount, -size );
 }
 
 void* b2GrowAlloc( void* oldMem, int oldSize, int newSize )
@@ -171,5 +243,5 @@ void* b2GrowAlloc( void* oldMem, int oldSize, int newSize )
 
 int b2GetByteCount( void )
 {
-	return atomic_load_explicit( &b2_byteCount, memory_order_relaxed );
+	return b2AtomicLoadInt( &b2_byteCount );
 }

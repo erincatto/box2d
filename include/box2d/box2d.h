@@ -198,6 +198,12 @@ B2_API void b2World_SetUserData( b2WorldId worldId, void* userData );
 /// Get the user data pointer.
 B2_API void* b2World_GetUserData( b2WorldId worldId );
 
+/// Set the friction callback. Passing NULL resets to default.
+B2_API void b2World_SetFrictionCallback( b2WorldId worldId, b2FrictionCallback* callback );
+
+/// Set the restitution callback. Passing NULL resets to default.
+B2_API void b2World_SetRestitutionCallback( b2WorldId worldId, b2RestitutionCallback* callback );
+
 /// Dump memory stats to box2d_memory.txt
 B2_API void b2World_DumpMemoryStats( b2WorldId worldId );
 
@@ -551,6 +557,13 @@ B2_API void b2Shape_SetRestitution( b2ShapeId shapeId, float restitution );
 
 /// Get the shape restitution
 B2_API float b2Shape_GetRestitution( b2ShapeId shapeId );
+
+/// Set the shape material identifier
+/// @see b2ShapeDef::material
+B2_API void b2Shape_SetMaterial( b2ShapeId shapeId, int material );
+
+/// Get the shape material identifier 
+B2_API int b2Shape_GetMaterial( b2ShapeId shapeId );
 
 /// Get the shape filter
 B2_API b2Filter b2Shape_GetFilter( b2ShapeId shapeId );
