@@ -114,7 +114,7 @@ bool b2AtomicCompareExchangeInt( b2AtomicInt* a, int expected, int desired )
 	return _InterlockedCompareExchange( (long*)&a->value, (long)desired, (long)expected ) == expected;
 #elif defined( __GNUC__ ) || defined( __clang__ )
 	// The value written to expected is ignored
-	return __atomic_compare_exchange_n( &a->value, *expected, desired, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
+	return __atomic_compare_exchange_n( &a->value, &expected, desired, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
 #else
 #error "Unsupported platform"
 #endif
