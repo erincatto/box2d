@@ -10,14 +10,8 @@ struct Settings
 	void Load();
 
 	int sampleIndex = 0;
-	// int windowWidth = 3840;
-	// int windowHeight = 2160;
 	int windowWidth = 1920;
 	int windowHeight = 1080;
-	// int windowWidth = 1280;
-	// int windowHeight = 720;
-	// int windowWidth = 800;
-	// int windowHeight = 600;
 	float hertz = 60.0f;
 	int subStepCount = 4;
 	int workerCount = 1;

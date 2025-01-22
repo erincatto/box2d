@@ -1849,6 +1849,42 @@ void* b2World_GetUserData( b2WorldId worldId )
 	return world->userData;
 }
 
+void b2World_SetFrictionCallback(b2WorldId worldId, b2FrictionCallback* callback)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	if (world->locked)
+	{
+		return;
+	}
+
+	if (callback != NULL)
+	{
+		world->frictionCallback = callback;
+	}
+	else
+	{
+		world->frictionCallback = b2DefaultFrictionCallback;
+	}
+}
+
+void b2World_SetRestitutionCallback( b2WorldId worldId, b2RestitutionCallback* callback )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	if (world->locked)
+	{
+		return;
+	}
+
+	if (callback != NULL)
+	{
+		world->restitutionCallback = callback;
+	}
+	else
+	{
+		world->restitutionCallback = b2DefaultRestitutionCallback;
+	}
+}
+
 void b2World_DumpMemoryStats( b2WorldId worldId )
 {
 	FILE* file = fopen( "box2d_memory.txt", "w" );

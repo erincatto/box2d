@@ -198,6 +198,12 @@ B2_API void b2World_SetUserData( b2WorldId worldId, void* userData );
 /// Get the user data pointer.
 B2_API void* b2World_GetUserData( b2WorldId worldId );
 
+/// Set the friction callback. Passing NULL resets to default.
+B2_API void b2World_SetFrictionCallback( b2WorldId worldId, b2FrictionCallback* callback );
+
+/// Set the restitution callback. Passing NULL resets to default.
+B2_API void b2World_SetRestitutionCallback( b2WorldId worldId, b2RestitutionCallback* callback );
+
 /// Dump memory stats to box2d_memory.txt
 B2_API void b2World_DumpMemoryStats( b2WorldId worldId );
 

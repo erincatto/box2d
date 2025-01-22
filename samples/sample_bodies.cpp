@@ -468,6 +468,16 @@ public:
 
 static int sampleCharacter = RegisterSample( "Bodies", "Character", Character::Create );
 
+float FrictionCallback( float, int, float, int )
+{
+	return 0.1f;
+}
+
+float RestitutionCallback( float, int, float, int )
+{
+	return 1.0f;
+}
+
 class Weeble : public Sample
 {
 public:
@@ -479,6 +489,10 @@ public:
 			g_camera.m_center = { 2.3f, 10.0f };
 			g_camera.m_zoom = 25.0f * 0.5f;
 		}
+
+		// Test friction and restitution callbacks
+		b2World_SetFrictionCallback( m_worldId, FrictionCallback );
+		b2World_SetRestitutionCallback( m_worldId, RestitutionCallback );
 
 		b2BodyId groundId = b2_nullBodyId;
 		{
@@ -892,7 +906,7 @@ public:
 			m_lever = 3.0f;
 			b2Vec2 r = { 0.0f, -m_lever };
 
-			float omega = b2Cross(v, r) / b2Dot(r, r);
+			float omega = b2Cross( v, r ) / b2Dot( r, r );
 			b2Body_SetAngularVelocity( m_bodyId, omega );
 
 			b2Polygon box = b2MakeBox( 0.1f, m_lever );
@@ -911,7 +925,7 @@ public:
 		b2Vec2 r = b2Body_GetWorldVector( m_bodyId, { 0.0f, -m_lever } );
 
 		b2Vec2 vp = v + b2CrossSV( omega, r );
-		g_draw.DrawString( 5, m_textLine, "pivot velocity = (%g, %g)", vp.x, vp.y);
+		g_draw.DrawString( 5, m_textLine, "pivot velocity = (%g, %g)", vp.x, vp.y );
 		m_textLine += m_textIncrement;
 	}
 

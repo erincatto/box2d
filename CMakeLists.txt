@@ -47,6 +47,7 @@ endif()
 
 # Deterministic math
 # https://box2d.org/posts/2024/08/determinism/
+# todo make this apply to ClangCL
 if (MINGW OR APPLE OR UNIX)
 	add_compile_options(-ffp-contract=off)
 endif()
