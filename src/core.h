@@ -5,8 +5,6 @@
 
 #include "box2d/math_functions.h"
 
-#include <intrin0.inl.h>
-
 // clang-format off
 
 #define B2_NULL_INDEX ( -1 )
@@ -143,7 +141,6 @@ typedef struct b2AtomicU32
 {
 	uint32_t value;
 } b2AtomicU32;
-
 
 int b2AtomicStoreInt( b2AtomicInt* a, int value );
 int b2AtomicLoadInt( b2AtomicInt* a );
