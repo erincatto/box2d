@@ -3,6 +3,7 @@
 
 #include "table.h"
 
+#include "atomic.h"
 #include "core.h"
 #include "ctz.h"
 

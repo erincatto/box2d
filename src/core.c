@@ -27,7 +27,7 @@
 
 #endif
 
-#include "box2d/math_functions.h"
+#include "atomic.h"
 
 // This allows the user to change the length units at runtime
 float b2_lengthUnitsPerMeter = 1.0f;
@@ -71,6 +71,7 @@ b2Version b2GetVersion( void )
 	return ( b2Version ){ 3, 1, 0 };
 }
 
+#if 0
 #if defined( _MSC_VER )
 #include <intrin.h>
 #endif
@@ -141,6 +142,7 @@ uint32_t b2AtomicLoadU32( b2AtomicU32* a )
 #error "Unsupported platform"
 #endif
 }
+#endif
 
 static b2AllocFcn* b2_allocFcn = NULL;
 static b2FreeFcn* b2_freeFcn = NULL;

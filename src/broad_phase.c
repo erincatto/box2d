@@ -9,6 +9,7 @@
 
 #include "aabb.h"
 #include "array.h"
+#include "atomic.h"
 #include "body.h"
 #include "contact.h"
 #include "core.h"

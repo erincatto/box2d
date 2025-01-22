@@ -4,6 +4,7 @@
 #include "solver.h"
 
 #include "array.h"
+#include "atomic.h"
 #include "bitset.h"
 #include "body.h"
 #include "contact.h"

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#include "atomic.h"
 #include "core.h"
 #include "ctz.h"
 #include "table.h"
@@ -64,7 +65,7 @@ int TableTest( void )
 
 #if B2_SNOOP_TABLE_COUNTERS
 		extern b2AtomicInt b2_probeCount;
-		b2AtomicStoreInt(&b2_probeCount, 0);
+		b2AtomicStoreInt( &b2_probeCount, 0 );
 #endif
 
 		// Test key search

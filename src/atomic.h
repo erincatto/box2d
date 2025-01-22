@@ -3,82 +3,77 @@
 
 #pragma once
 
+#include "core.h"
+
 #include <stdint.h>
 
-// Compare to SDL_AtomicInt
-
-struct b3AtomicInt
-{
-	int value;
-};
-
-struct b3AtomicU32
-{
-	uint32_t value;
-};
-
 #if defined( _MSC_VER )
-	#include <intrin.h>
-
-static inline void b3AtomicStoreInt( b2AtomicInt* obj, int desired )
-{
-	_InterlockedExchange( (volatile long*)obj, (long)desired );
-}
-
-static inline int b3AtomicLoadInt( volatile int* obj )
-{
-	return _InterlockedOr( (volatile long*)obj, 0 );
-}
-
-static inline void b3AtomicStoreUInt( volatile uint32_t* obj, uint32_t desired )
-{
-	_InterlockedExchange( (volatile long*)obj, (long)desired );
-}
-
-static inline int b3AtomicFetchAddInt( volatile int* obj, int increment )
-{
-	return _InterlockedExchangeAdd( (volatile long*)obj, (long)increment );
-}
-
-static inline bool b3AtomicCompareExchangeInt( volatile int* obj, int* expected, int desired )
-{
-	int original = _InterlockedCompareExchange( (volatile long*)obj, (long)desired, (long)*expected );
-	if ( original == *expected )
-	{
-		return true;
-	}
-
-	*expected = original;
-	return false;
-}
-
-#elif defined( __GNUC__ ) || defined( __clang__ )
-
-static inline void b3AtomicStoreInt( volatile int* obj, int desired )
-{
-	__atomic_store_n( obj, desired, __ATOMIC_SEQ_CST );
-}
-
-static inline int b3AtomicLoadInt( volatile int* obj )
-{
-	return __atomic_load_n( obj, __ATOMIC_SEQ_CST );
-}
-
-static inline void b3AtomicStoreUInt( volatile uint32_t* obj, uint32_t desired )
-{
-	__atomic_store_n( obj, desired, __ATOMIC_SEQ_CST );
-}
-
-static inline int b3AtomicFetchAddInt( volatile int* obj, int arg )
-{
-	return __atomic_fetch_add( obj, arg, __ATOMIC_SEQ_CST );
-}
-
-static inline bool b3AtomicCompareExchangeInt( volatile int* obj, int* expected, int desired )
-{
-	return __atomic_compare_exchange_n( obj, expected, desired, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
-}
-
-#else
-	#error "Unsupported platform"
+#include <intrin.h>
 #endif
+
+static inline void b2AtomicStoreInt( b2AtomicInt* a, int value )
+{
+#if defined( _MSC_VER )
+	(void)_InterlockedExchange( (long*)&a->value, value );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	__atomic_store_n( &a->value, value, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
+static inline int b2AtomicLoadInt( b2AtomicInt* a )
+{
+#if defined( _MSC_VER )
+	return _InterlockedOr( (long*)&a->value, 0 );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_load_n( &a->value, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
+static inline int b2AtomicFetchAddInt( b2AtomicInt* a, int increment )
+{
+#if defined( _MSC_VER )
+	return _InterlockedExchangeAdd( (long*)&a->value, (long)increment );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_fetch_add( &a->value, increment, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
+static inline bool b2AtomicCompareExchangeInt( b2AtomicInt* a, int expected, int desired )
+{
+#if defined( _MSC_VER )
+	return _InterlockedCompareExchange( (long*)&a->value, (long)desired, (long)expected ) == expected;
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	// The value written to expected is ignored
+	return __atomic_compare_exchange_n( &a->value, &expected, desired, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
+static inline void b2AtomicStoreU32( b2AtomicU32* a, uint32_t value )
+{
+#if defined( _MSC_VER )
+	(void)_InterlockedExchange( (long*)&a->value, value );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	__atomic_store_n( &a->value, value, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
+static inline uint32_t b2AtomicLoadU32( b2AtomicU32* a )
+{
+#if defined( _MSC_VER )
+	return (uint32_t)_InterlockedOr( (long*)&a->value, 0 );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_load_n( &a->value, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
