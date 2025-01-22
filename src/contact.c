@@ -314,9 +314,9 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contactSim->cache = b2_emptySimplexCache;
 	contactSim->manifold = ( b2Manifold ){ 0 };
 
-	// these get set in the narrow phase
-	contactSim->friction = 0.0f;
-	contactSim->restitution = 0.0f;
+	// These also get updated in the narrow phase
+	contactSim->friction = world->frictionCallback(shapeA->friction, shapeA->material, shapeB->friction, shapeB->material);
+	contactSim->restitution = world->restitutionCallback(shapeA->restitution, shapeA->material, shapeB->restitution, shapeB->material);
 
 	contactSim->tangentSpeed = 0.0f;
 	contactSim->simFlags = 0;
