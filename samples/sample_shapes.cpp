@@ -118,6 +118,7 @@ public:
 		chainDef.customColor = b2_colorSteelBlue;
 		chainDef.isLoop = true;
 		chainDef.friction = 0.2f;
+		chainDef.material = 42;
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		m_groundId = b2CreateBody( m_worldId, &bodyDef );
@@ -210,8 +211,7 @@ public:
 		g_draw.DrawSegment( b2Vec2_zero, { 0.0f, 0.5f }, b2_colorGreen );
 
 #ifndef NDEBUG
-		g_draw.DrawString( 5, m_textLine, "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
 #endif
 	}
 
@@ -814,7 +814,7 @@ public:
 			}
 		}
 
-		b2Circle circle = { };
+		b2Circle circle = {};
 		circle.radius = 0.5f;
 
 		b2Polygon box = b2MakeBox( 0.5f, 0.5f );

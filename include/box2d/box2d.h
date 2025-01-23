@@ -708,6 +708,13 @@ B2_API void b2Chain_SetRestitution( b2ChainId chainId, float restitution );
 /// Get the chain restitution
 B2_API float b2Chain_GetRestitution( b2ChainId chainId );
 
+/// Set the chain material
+/// @see b2ChainDef::material
+B2_API void b2Chain_SetMaterial( b2ChainId chainId, int material );
+
+/// Get the chain material
+B2_API int b2Chain_GetMaterial( b2ChainId chainId );
+
 /// Chain identifier validation. Provides validation for up to 64K allocations.
 B2_API bool b2Chain_IsValid( b2ChainId id );
 

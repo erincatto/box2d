@@ -16,6 +16,7 @@
 #include <vector>
 
 #ifndef NDEBUG
+extern "C" int b2_toiCalls;
 extern "C" int b2_toiHitCount;
 #endif
 
@@ -1476,6 +1477,7 @@ public:
 		}
 
 #ifndef NDEBUG
+		b2_toiCalls = 0;
 		b2_toiHitCount = 0;
 #endif
 
@@ -1486,13 +1488,16 @@ public:
 	{
 		Sample::Step( settings );
 
-		if ( m_stepCount == 1000 )
+		if ( m_stepCount == 1000 && false )
 		{
-			m_stepCount += 0;
+			// 0.1 : 46544, 25752
+			// 0.25 : 5745, 1947
+			// 0.5 : 2197, 660
+			settings.pause = true;
 		}
+
 #ifndef NDEBUG
-		g_draw.DrawString( 5, m_textLine, "toi hits = %d", b2_toiHitCount );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
 #endif
 	}
 

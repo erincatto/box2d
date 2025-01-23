@@ -371,13 +371,15 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 	chainShape->generation += 1;
 	chainShape->friction = def->friction;
 	chainShape->restitution = def->restitution;
+	chainShape->material = def->material;
 
 	body->headChainId = chainId;
 
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
 	shapeDef.userData = def->userData;
-	shapeDef.restitution = def->restitution;
 	shapeDef.friction = def->friction;
+	shapeDef.restitution = def->restitution;
+	shapeDef.material = def->material;
 	shapeDef.filter = def->filter;
 	shapeDef.customColor = def->customColor;
 	shapeDef.enableContactEvents = false;
@@ -1415,6 +1417,34 @@ float b2Chain_GetRestitution( b2ChainId chainId )
 	b2World* world = b2GetWorld( chainId.world0 );
 	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
 	return chainShape->restitution;
+}
+
+void b2Chain_SetMaterial( b2ChainId chainId, int material )
+{
+	b2World* world = b2GetWorldLocked( chainId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
+
+	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
+	chainShape->material = material;
+
+	int count = chainShape->count;
+
+	for ( int i = 0; i < count; ++i )
+	{
+		int shapeId = chainShape->shapeIndices[i];
+		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+		shape->material = material;
+	}
+}
+
+int b2Chain_GetMaterial( b2ChainId chainId )
+{
+	b2World* world = b2GetWorld( chainId.world0 );
+	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
+	return chainShape->material;
 }
 
 int b2Shape_GetContactCapacity( b2ShapeId shapeId )

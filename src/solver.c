@@ -289,7 +289,7 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 			b2Vec2 c2 = continuousContext->centroid2;
 			float offset2 = b2Cross( b2Sub( c2, p1 ), e );
 
-			const float allowedFraction = 0.1f;
+			const float allowedFraction = 0.25f;
 			if ( offset1 < 0.0f || offset1 - offset2 < allowedFraction * fastBodySim->minExtent )
 			{
 				// Minimal clipping
