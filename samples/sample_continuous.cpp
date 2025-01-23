@@ -330,15 +330,15 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 
-		//b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
-		//m_shapeId = b2CreateCircleShape( m_bodyId, &shapeDef, &circle );
+		b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+		m_shapeId = b2CreateCircleShape( m_bodyId, &shapeDef, &circle );
 
 		//b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0 }, 0.25f };
 		//m_shapeId = b2CreateCapsuleShape( m_bodyId, &shapeDef, &capsule );
 
-		float h = 0.5f;
-		b2Polygon box = b2MakeBox( h, h );
-		m_shapeId = b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
+		//float h = 0.5f;
+		//b2Polygon box = b2MakeBox( h, h );
+		//m_shapeId = b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
 	}
 
 	void UpdateUI() override

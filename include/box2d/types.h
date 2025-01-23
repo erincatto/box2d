@@ -426,6 +426,10 @@ typedef struct b2ChainDef
 	/// The restitution (elasticity) usually in the range [0,1].
 	float restitution;
 
+	/// User material identifier. This is passed with query results and to friction and restitution
+	/// combining functions. It is not used internally.
+	int material;
+
 	/// Contact filtering data.
 	b2Filter filter;
 

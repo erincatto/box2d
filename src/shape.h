@@ -57,6 +57,7 @@ typedef struct b2ChainShape
 	int* shapeIndices;
 	float friction;
 	float restitution;
+	int material;
 	uint16_t generation;
 } b2ChainShape;
 
