@@ -62,6 +62,9 @@ void b2PrepareOverflowContacts( b2StepContext* context )
 		constraint->normal = manifold->normal;
 		constraint->friction = contactSim->friction;
 		constraint->restitution = contactSim->restitution;
+		constraint->rollingResistance = contactSim->rollingResistance;
+		constraint->rollingImpulse = warmStartScale * manifold->rollingImpulse;
+		constraint->tangentSpeed = contactSim->tangentSpeed;
 		constraint->pointCount = pointCount;
 
 		b2Vec2 vA = b2Vec2_zero;
@@ -100,6 +103,11 @@ void b2PrepareOverflowContacts( b2StepContext* context )
 		constraint->invIA = iA;
 		constraint->invMassB = mB;
 		constraint->invIB = iB;
+
+		{
+			float k = iA + iB;
+			constraint->rollingMass = k > 0.0f ? 1.0f / k : 0.0f;
+		}
 
 		b2Vec2 normal = constraint->normal;
 		b2Vec2 tangent = b2RightPerp( constraint->normal );
@@ -195,6 +203,9 @@ void b2WarmStartOverflowContacts( b2StepContext* context )
 			vB = b2MulAdd( vB, mB, P );
 		}
 
+		wA -= constraint->rollingImpulse;
+		wB += constraint->rollingImpulse;
+
 		stateA->linearVelocity = vA;
 		stateA->angularVelocity = wA;
 		stateB->linearVelocity = vB;
@@ -248,7 +259,9 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 		b2Softness softness = constraint->softness;
 
 		int pointCount = constraint->pointCount;
+		float totalNormalImpulse = 0.0f;
 
+		// Non-penetration
 		for ( int j = 0; j < pointCount; ++j )
 		{
 			b2ContactConstraintPoint* cp = constraint->points + j;
@@ -290,6 +303,7 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 			impulse = newImpulse - cp->normalImpulse;
 			cp->normalImpulse = newImpulse;
 			cp->maxNormalImpulse = b2MaxFloat( cp->maxNormalImpulse, impulse );
+			totalNormalImpulse += newImpulse;
 
 			// apply normal impulse
 			b2Vec2 P = b2MulSV( impulse, normal );
@@ -300,6 +314,7 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 			wB += iB * b2Cross( rB, P );
 		}
 
+		// Friction
 		for ( int j = 0; j < pointCount; ++j )
 		{
 			b2ContactConstraintPoint* cp = constraint->points + j;
@@ -311,7 +326,7 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 			// relative tangent velocity at contact
 			b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
 			b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
-			float vt = b2Dot( b2Sub( vrB, vrA ), tangent );
+			float vt = b2Dot( b2Sub( vrB, vrA ), tangent ) + constraint->tangentSpeed;
 
 			// incremental tangent impulse
 			float impulse = cp->tangentMass * ( -vt );
@@ -328,6 +343,20 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 			wA -= iA * b2Cross( rA, P );
 			vB = b2MulAdd( vB, mB, P );
 			wB += iB * b2Cross( rB, P );
+		}
+
+		// Rolling resistance
+		{
+			float deltaLambda = -constraint->rollingMass * ( wB - wA );
+			float lambda = constraint->rollingImpulse;
+			constraint->rollingImpulse = lambda + deltaLambda;
+
+			float maxLambda = constraint->rollingResistance * totalNormalImpulse;
+			constraint->rollingImpulse = b2ClampFloat( lambda + deltaLambda, -maxLambda, maxLambda );
+			deltaLambda = constraint->rollingImpulse - lambda;
+
+			wA -= iA * deltaLambda;
+			wB += iB * deltaLambda;
 		}
 
 		stateA->linearVelocity = vA;
@@ -461,6 +490,8 @@ void b2StoreOverflowImpulses( b2StepContext* context )
 			manifold->points[j].maxNormalImpulse = constraint->points[j].maxNormalImpulse;
 			manifold->points[j].normalVelocity = constraint->points[j].relativeVelocity;
 		}
+
+		manifold->rollingImpulse = constraint->rollingImpulse;
 	}
 
 	b2TracyCZoneEnd( store_impulses );

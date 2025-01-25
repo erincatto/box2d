@@ -535,14 +535,18 @@ typedef struct b2ManifoldPoint
 /// @note Box2D uses speculative collision so some contact points may be separated.
 typedef struct b2Manifold
 {
-	/// The manifold points, up to two are possible in 2D
-	b2ManifoldPoint points[2];
-
 	/// The unit normal vector in world space, points from shape A to bodyB
 	b2Vec2 normal;
 
+	/// Angular impulse applied for rolling resistance. N * m * s = kg * m^2 / s
+	float rollingImpulse;
+
+	/// The manifold points, up to two are possible in 2D
+	b2ManifoldPoint points[2];
+
 	/// The number of contacts points, will be 0, 1, or 2
 	int pointCount;
+
 } b2Manifold;
 
 /// Compute the contact manifold between two circles

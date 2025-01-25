@@ -101,14 +101,8 @@ Sample::Sample( Settings& settings )
 
 	m_threadCount = 1 + settings.workerCount;
 
-	b2WorldDef worldDef = b2DefaultWorldDef();
-	worldDef.workerCount = settings.workerCount;
-	worldDef.enqueueTask = EnqueueTask;
-	worldDef.finishTask = FinishTask;
-	worldDef.userTaskContext = this;
-	worldDef.enableSleep = settings.enableSleep;
+	m_worldId = b2_nullWorldId;
 
-	m_worldId = b2CreateWorld( &worldDef );
 	m_textLine = 30;
 	m_textIncrement = 22;
 	m_mouseJointId = b2_nullJointId;
@@ -122,6 +116,9 @@ Sample::Sample( Settings& settings )
 
 	g_seed = RAND_SEED;
 
+	m_settings = &settings;
+
+	CreateWorld( );
 	TestMathCpp();
 }
 
@@ -132,6 +129,24 @@ Sample::~Sample()
 
 	delete m_scheduler;
 	delete[] m_tasks;
+}
+
+void Sample::CreateWorld(  )
+{
+	if ( B2_IS_NON_NULL( m_worldId ) )
+	{
+		b2DestroyWorld( m_worldId );
+		m_worldId = b2_nullWorldId;
+	}
+
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.workerCount = m_settings->workerCount;
+	worldDef.enqueueTask = EnqueueTask;
+	worldDef.finishTask = FinishTask;
+	worldDef.userTaskContext = this;
+	worldDef.enableSleep = m_settings->enableSleep;
+
+	m_worldId = b2CreateWorld( &worldDef );
 }
 
 void Sample::DrawTitle( const char* string )

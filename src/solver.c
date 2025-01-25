@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+// Compare to SDL_CPUPauseInstruction
 #if ( defined( __GNUC__ ) || defined( __clang__ ) ) && ( defined( __i386__ ) || defined( __x86_64__ ) )
 static inline void b2Pause( void )
 {

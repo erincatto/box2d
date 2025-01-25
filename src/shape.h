@@ -21,6 +21,8 @@ typedef struct b2Shape
 	float density;
 	float friction;
 	float restitution;
+	float rollingResistance;
+	float tangentSpeed;
 	int material;
 
 	b2AABB aabb;
@@ -93,6 +95,21 @@ b2ShapeProxy b2MakeShapeDistanceProxy( const b2Shape* shape );
 
 b2CastOutput b2RayCastShape( const b2RayCastInput* input, const b2Shape* shape, b2Transform transform );
 b2CastOutput b2ShapeCastShape( const b2ShapeCastInput* input, const b2Shape* shape, b2Transform transform );
+
+static inline float b2GetShapeRadius(const b2Shape* shape)
+{
+	switch ( shape->type )
+	{
+		case b2_capsuleShape:
+			return shape->capsule.radius;
+		case b2_circleShape:
+			return shape->circle.radius;
+		case b2_polygonShape:
+			return shape->polygon.radius;
+		default:
+			return 0.0f;
+	}
+}
 
 B2_ARRAY_INLINE( b2ChainShape, b2ChainShape );
 B2_ARRAY_INLINE( b2Shape, b2Shape );

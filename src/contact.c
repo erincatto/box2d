@@ -493,6 +493,21 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	contactSim->friction = world->frictionCallback( shapeA->friction, shapeA->material, shapeB->friction, shapeB->material );
 	contactSim->restitution = world->restitutionCallback( shapeA->restitution, shapeA->material, shapeB->restitution, shapeB->material );
 
+	// todo branch improves perf?
+	if (shapeA->rollingResistance > 0.0f || shapeB->rollingResistance > 0.0f)
+	{
+		float radiusA = b2GetShapeRadius( shapeA );
+		float radiusB = b2GetShapeRadius( shapeB );
+		float maxRadius = b2MaxFloat( radiusA, radiusB );
+		contactSim->rollingResistance = b2MaxFloat( shapeA->rollingResistance, shapeB->rollingResistance ) * maxRadius;
+	}
+	else
+	{
+		contactSim->rollingResistance = 0.0f;
+	}
+
+	contactSim->tangentSpeed = shapeB->tangentSpeed - shapeA->tangentSpeed;
+
 	int pointCount = contactSim->manifold.pointCount;
 	bool touching = pointCount > 0;
 
@@ -534,6 +549,11 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	else
 	{
 		contactSim->simFlags &= ~b2_simEnableHitEvent;
+	}
+
+	if (pointCount > 0)
+	{
+		contactSim->manifold.rollingImpulse = oldManifold.rollingImpulse;
 	}
 
 	// Match old contact ids to new contact ids and copy the

@@ -5,10 +5,9 @@
 
 #include "box2d/id.h"
 #include "box2d/types.h"
+#include "settings.h"
 
 #define ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
-
-struct Settings;
 
 namespace enki
 {
@@ -43,6 +42,8 @@ public:
 	explicit Sample( Settings& settings );
 	virtual ~Sample();
 
+	void CreateWorld( );
+
 	void DrawTitle( const char* string );
 	virtual void Step( Settings& settings );
 	virtual void UpdateUI()
@@ -66,9 +67,9 @@ public:
 	static constexpr int m_maxTasks = 64;
 	static constexpr int m_maxThreads = 64;
 
+	const Settings* m_settings;
 	enki::TaskScheduler* m_scheduler;
 	class SampleTask* m_tasks;
-
 	int m_taskCount;
 	int m_threadCount;
 

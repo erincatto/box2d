@@ -29,6 +29,10 @@ typedef struct b2ContactConstraint
 	float invIA, invIB;
 	float friction;
 	float restitution;
+	float tangentSpeed;
+	float rollingResistance;
+	float rollingMass;
+	float rollingImpulse;
 	b2Softness softness;
 	int pointCount;
 } b2ContactConstraint;

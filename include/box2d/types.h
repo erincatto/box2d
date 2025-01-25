@@ -346,8 +346,10 @@ typedef struct b2ShapeDef
 	float restitution;
 
 	/// The rolling resistance usually in the range [0,1].
-	/// todo
 	float rollingResistance;
+
+	/// The tangent speed for conveyor belts
+	float tangentSpeed;
 
 	/// User material identifier. This is passed with query results and to friction and restitution
 	/// combining functions. It is not used internally.
