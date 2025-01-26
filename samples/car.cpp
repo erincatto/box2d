@@ -53,6 +53,7 @@ void Car::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz, f
 
 	shapeDef.density = 2.0f / scale;
 	shapeDef.friction = 1.5f;
+	shapeDef.rollingResistance = 0.1f;
 
 	bodyDef.position = b2Add( { -1.0f * scale, 0.35f * scale }, position );
 	bodyDef.allowFastRotation = true;

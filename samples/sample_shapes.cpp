@@ -967,6 +967,7 @@ public:
 		}
 
 		m_lift = 0.0f;
+		m_resistScale = 0.02f;
 		CreateScene();
 	}
 
@@ -990,7 +991,7 @@ public:
 			bodyDef.linearVelocity = { 5.0f, 0.0f };
 
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
-			shapeDef.rollingResistance = 0.1f * i;
+			shapeDef.rollingResistance = m_resistScale * i;
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		}
 	}
@@ -1029,7 +1030,7 @@ public:
 
 		for ( int i = 0; i < 20; ++i )
 		{
-			g_draw.DrawString( { -41.5f, 2.0f * i + 1.0f }, "%.2f", 0.1f * i );
+			g_draw.DrawString( { -41.5f, 2.0f * i + 1.0f }, "%.2f", m_resistScale * i );
 		}
 	}
 
@@ -1038,6 +1039,7 @@ public:
 		return new RollingResistance( settings );
 	}
 
+	float m_resistScale;
 	float m_lift;
 };
 

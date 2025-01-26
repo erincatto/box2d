@@ -221,6 +221,7 @@ public:
 				{
 					m_bodies[index] = b2CreateBody( m_worldId, &bodyDef );
 					circle.radius = RandomFloatRange( 0.25f, 0.75f );
+					shapeDef.rollingResistance = 0.2f;
 					b2CreateCircleShape( m_bodies[index], &shapeDef, &circle );
 				}
 				else if ( m_shapeType == e_capsuleShape )
@@ -230,6 +231,7 @@ public:
 					float length = RandomFloatRange( 0.25f, 1.0f );
 					capsule.center1 = { 0.0f, -0.5f * length };
 					capsule.center2 = { 0.0f, 0.5f * length };
+					shapeDef.rollingResistance = 0.2f;
 					b2CreateCapsuleShape( m_bodies[index], &shapeDef, &capsule );
 				}
 				else if ( m_shapeType == e_mixShape )
