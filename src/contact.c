@@ -506,7 +506,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 		contactSim->rollingResistance = 0.0f;
 	}
 
-	contactSim->tangentSpeed = shapeB->tangentSpeed - shapeA->tangentSpeed;
+	contactSim->tangentSpeed = shapeA->tangentSpeed + shapeB->tangentSpeed;
 
 	int pointCount = contactSim->manifold.pointCount;
 	bool touching = pointCount > 0;

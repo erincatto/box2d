@@ -23,7 +23,7 @@
 // cause horrible cache stalls. To make this feasible I would need a way to block these writes.
 
 // This is used for debugging by making all constraints be assigned to overflow.
-#define B2_FORCE_OVERFLOW 0
+#define B2_FORCE_OVERFLOW 1
 
 _Static_assert( B2_GRAPH_COLOR_COUNT == 12, "graph color count assumed to be 12" );
 

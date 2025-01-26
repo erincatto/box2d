@@ -326,7 +326,11 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 			// relative tangent velocity at contact
 			b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
 			b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
-			float vt = b2Dot( b2Sub( vrB, vrA ), tangent ) + constraint->tangentSpeed;
+
+			// vt = dot(vrB - sB * tangent - (vrA + sA * tangent), tangent)
+			//    = dot(vrB - vrA, tangent) - (sA + sB)
+
+			float vt = b2Dot( b2Sub( vrB, vrA ), tangent ) - constraint->tangentSpeed;
 
 			// incremental tangent impulse
 			float impulse = cp->tangentMass * ( -vt );
