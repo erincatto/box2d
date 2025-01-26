@@ -981,6 +981,7 @@ typedef struct b2ContactConstraintSIMD
 	b2FloatW invIA, invIB;
 	b2Vec2W normal;
 	b2FloatW friction;
+	b2FloatW tangentSpeed;
 	b2FloatW rollingResistance;
 	b2FloatW rollingMass;
 	b2FloatW rollingImpulse;
@@ -1456,6 +1457,7 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 				( (float*)&constraint->normal.Y )[j] = normal.y;
 
 				( (float*)&constraint->friction )[j] = contactSim->friction;
+				( (float*)&constraint->tangentSpeed )[j] = contactSim->tangentSpeed;
 				( (float*)&constraint->restitution )[j] = contactSim->restitution;
 				( (float*)&constraint->rollingResistance )[j] = contactSim->rollingResistance;
 				( (float*)&constraint->rollingImpulse )[j] = warmStartScale * manifold->rollingImpulse;
@@ -1565,6 +1567,10 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 				( (float*)&constraint->normal.X )[j] = 0.0f;
 				( (float*)&constraint->normal.Y )[j] = 0.0f;
 				( (float*)&constraint->friction )[j] = 0.0f;
+				( (float*)&constraint->tangentSpeed )[j] = 0.0f;
+				( (float*)&constraint->rollingResistance )[j] = 0.0f;
+				( (float*)&constraint->rollingMass )[j] = 0.0f;
+				( (float*)&constraint->rollingImpulse )[j] = 0.0f;
 				( (float*)&constraint->biasRate )[j] = 0.0f;
 				( (float*)&constraint->massScale )[j] = 0.0f;
 				( (float*)&constraint->impulseScale )[j] = 0.0f;
@@ -1808,6 +1814,9 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW dvy = b2SubW( b2AddW( bB.v.Y, b2MulW( bB.w, rB.X ) ), b2AddW( bA.v.Y, b2MulW( bA.w, rA.X ) ) );
 			b2FloatW vt = b2AddW( b2MulW( dvx, tangentX ), b2MulW( dvy, tangentY ) );
 
+			// Tangent speed (conveyor belt)
+			vt = b2SubW( vt, c->tangentSpeed );
+
 			// Compute tangent force
 			b2FloatW negImpulse = b2MulW( c->tangentMass1, vt );
 
@@ -1841,6 +1850,9 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW dvx = b2SubW( b2SubW( bB.v.X, b2MulW( bB.w, rB.Y ) ), b2SubW( bA.v.X, b2MulW( bA.w, rA.Y ) ) );
 			b2FloatW dvy = b2SubW( b2AddW( bB.v.Y, b2MulW( bB.w, rB.X ) ), b2AddW( bA.v.Y, b2MulW( bA.w, rA.X ) ) );
 			b2FloatW vt = b2AddW( b2MulW( dvx, tangentX ), b2MulW( dvy, tangentY ) );
+
+			// Tangent speed (conveyor belt)
+			vt = b2SubW( vt, c->tangentSpeed );
 
 			// Compute tangent force
 			b2FloatW negImpulse = b2MulW( c->tangentMass2, vt );
