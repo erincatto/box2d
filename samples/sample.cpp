@@ -16,7 +16,7 @@
 
 #include <GLFW/glfw3.h>
 #include <stdio.h>
-#include <string.h>
+#include <ctype.h>
 
 class SampleTask : public enki::ITaskSet
 {
@@ -505,10 +505,9 @@ void Sample::ShiftOrigin( b2Vec2 newOrigin )
 	// m_world->ShiftOrigin(newOrigin);
 }
 
-// const char* path =
+// Parse an SVG path element with only straight lines. Example:
 // "M 47.625004,185.20833 H 161.39585 l 29.10417,-2.64583 26.45834,-7.9375 26.45833,-13.22917 23.81251,-21.16666 h "
-// "13.22916 v 44.97916 H 592.66669 V 0 h 21.16671 v 206.375 l -566.208398,-1e-5";
-
+// "13.22916 v 44.97916 H 592.66669 V 0 h 21.16671 v 206.375 l -566.208398,-1e-5 z"
 int Sample::ParsePath( const char* svgPath, b2Vec2 offset, b2Vec2* points, int capacity, float scale, bool reverseOrder )
 {
 	int pointCount = 0;
