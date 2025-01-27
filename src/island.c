@@ -964,7 +964,7 @@ void b2ValidateIsland( b2World* world, int islandId )
 
 void b2ValidateIsland( b2World* world, int islandId )
 {
-	B2_MAYBE_UNUSED( world );
-	B2_MAYBE_UNUSED( islandId );
+	B2_UNUSED( world );
+	B2_UNUSED( islandId );
 }
 #endif

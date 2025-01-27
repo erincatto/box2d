@@ -513,10 +513,10 @@ void b2ValidateNoEnlarged( const b2BroadPhase* bp )
 #if B2_VALIDATE == 1
 	for ( int j = 0; j < b2_bodyTypeCount; ++j )
 	{
-		const b2DynamicTree* tree = bp->trees + j;
+		const b2DynamicTree* tree = bp->trees + j;f
 		b2DynamicTree_ValidateNoEnlarged( tree );
 	}
 #else
-	B2_MAYBE_UNUSED( bp );
+	B2_UNUSED( bp );
 #endif
 }

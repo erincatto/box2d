@@ -3230,17 +3230,17 @@ void b2ValidateContacts( b2World* world )
 
 void b2ValidateConnectivity( b2World* world )
 {
-	B2_MAYBE_UNUSED( world );
+	B2_UNUSED( world );
 }
 
 void b2ValidateSolverSets( b2World* world )
 {
-	B2_MAYBE_UNUSED( world );
+	B2_UNUSED( world );
 }
 
 void b2ValidateContacts( b2World* world )
 {
-	B2_MAYBE_UNUSED( world );
+	B2_UNUSED( world );
 }
 
 #endif

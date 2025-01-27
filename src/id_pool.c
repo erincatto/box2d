@@ -64,8 +64,8 @@ void b2ValidateFreeId( b2IdPool* pool, int id )
 
 void b2ValidateFreeId( b2IdPool* pool, int id )
 {
-	B2_MAYBE_UNUSED( pool );
-	B2_MAYBE_UNUSED( id );
+	B2_UNUSED( pool );
+	B2_UNUSED( id );
 }
 
 #endif

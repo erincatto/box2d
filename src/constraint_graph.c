@@ -260,7 +260,7 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 		}
 	}
 #else
-	B2_MAYBE_UNUSED( graph, bodyIdA, bodyIdB );
+	B2_UNUSED( graph, bodyIdA, bodyIdB );
 #endif
 
 	return B2_OVERFLOW_INDEX;

@@ -1025,7 +1025,7 @@ void b2DynamicTree_Validate( const b2DynamicTree* tree )
 
 	B2_ASSERT( tree->nodeCount + freeCount == tree->nodeCapacity );
 #else
-	B2_MAYBE_UNUSED( tree );
+	B2_UNUSED( tree );
 #endif
 }
 
@@ -1043,7 +1043,7 @@ void b2DynamicTree_ValidateNoEnlarged(const b2DynamicTree* tree)
 		}
 	}
 #else
-	B2_MAYBE_UNUSED( tree );
+	B2_UNUSED( tree );
 #endif
 }
 
