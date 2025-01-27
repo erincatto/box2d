@@ -74,7 +74,13 @@ b2SurfaceMaterial b2DefaultSurfaceMaterial( void )
 
 b2ChainDef b2DefaultChainDef( void )
 {
+	static b2SurfaceMaterial defaultMaterial = {
+		.friction = 0.6f,
+	};
+
 	b2ChainDef def = { 0 };
+	def.materials = &defaultMaterial;
+	def.materialCount = 1;
 	def.filter = b2DefaultFilter();
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;
