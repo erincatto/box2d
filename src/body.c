@@ -396,8 +396,7 @@ void b2DestroyBody( b2BodyId bodyId )
 	{
 		b2ChainShape* chain = b2ChainShapeArray_Get( &world->chainShapes, chainId );
 
-		b2Free( chain->shapeIndices, chain->count * sizeof( int ) );
-		chain->shapeIndices = NULL;
+		b2FreeChainData( chain );
 
 		// Return chain to free list.
 		b2FreeId( &world->chainIdPool, chainId );
