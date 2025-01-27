@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "sample.h"
 
 #include "TaskScheduler.h"
@@ -118,7 +120,7 @@ Sample::Sample( Settings& settings )
 
 	m_settings = &settings;
 
-	CreateWorld( );
+	CreateWorld();
 	TestMathCpp();
 }
 
@@ -131,7 +133,7 @@ Sample::~Sample()
 	delete[] m_tasks;
 }
 
-void Sample::CreateWorld(  )
+void Sample::CreateWorld()
 {
 	if ( B2_IS_NON_NULL( m_worldId ) )
 	{
@@ -501,6 +503,145 @@ void Sample::Step( Settings& settings )
 void Sample::ShiftOrigin( b2Vec2 newOrigin )
 {
 	// m_world->ShiftOrigin(newOrigin);
+}
+
+// const char* path =
+// "M 47.625004,185.20833 H 161.39585 l 29.10417,-2.64583 26.45834,-7.9375 26.45833,-13.22917 23.81251,-21.16666 h "
+// "13.22916 v 44.97916 H 592.66669 V 0 h 21.16671 v 206.375 l -566.208398,-1e-5";
+
+int Sample::ParsePath( const char* svgPath, b2Vec2 offset, b2Vec2* points, int capacity, float scale, bool reverseOrder )
+{
+	int pointCount = 0;
+	b2Vec2 currentPoint = {};
+	const char* ptr = svgPath;
+	char command = *ptr;
+
+	while ( *ptr != '\0' )
+	{
+		if ( isdigit( *ptr ) == 0 && *ptr != '-' )
+		{
+			// note: command can be implicitly repeated
+			command = *ptr;
+
+			if ( command == 'M' || command == 'L' || command == 'H' || command == 'V' || command == 'm' || command == 'l' ||
+				 command == 'h' || command == 'v' )
+			{
+				ptr += 2; // Skip the command character and space
+			}
+
+			if ( command == 'z' )
+			{
+				break;
+			}
+		}
+
+		assert( isdigit( *ptr ) != 0 || *ptr == '-' );
+
+		float x = 0.0f, y = 0.0f;
+		switch ( command )
+		{
+			case 'M':
+			case 'L':
+				if ( sscanf( ptr, "%f,%f", &x, &y ) == 2 )
+				{
+					currentPoint.x = x;
+					currentPoint.y = y;
+				}
+				else
+				{
+					assert( false );
+				}
+				break;
+			case 'H':
+				if ( sscanf( ptr, "%f", &x ) == 1 )
+				{
+					currentPoint.x = x;
+				}
+				else
+				{
+					assert( false );
+				}
+				break;
+			case 'V':
+				if ( sscanf( ptr, "%f", &y ) == 1 )
+				{
+					currentPoint.y = y;
+				}
+				else
+				{
+					assert( false );
+				}
+				break;
+			case 'm':
+			case 'l':
+				if ( sscanf( ptr, "%f,%f", &x, &y ) == 2 )
+				{
+					currentPoint.x += x;
+					currentPoint.y += y;
+				}
+				else
+				{
+					assert( false );
+				}
+				break;
+			case 'h':
+				if ( sscanf( ptr, "%f", &x ) == 1 )
+				{
+					currentPoint.x += x;
+				}
+				else
+				{
+					assert( false );
+				}
+				break;
+			case 'v':
+				if ( sscanf( ptr, "%f", &y ) == 1 )
+				{
+					currentPoint.y += y;
+				}
+				else
+				{
+					assert( false );
+				}
+				break;
+
+			default:
+				assert( false );
+				break;
+		}
+
+		points[pointCount] = { scale * ( currentPoint.x + offset.x ), -scale * ( currentPoint.y + offset.y ) };
+		pointCount += 1;
+		if ( pointCount == capacity )
+		{
+			break;
+		}
+
+		// Move to the next space or end of string
+		while ( *ptr != '\0' && isspace( *ptr ) == 0 )
+		{
+			ptr++;
+		}
+
+		// Skip contiguous spaces
+		while ( isspace( *ptr ) )
+		{
+			ptr++;
+		}
+
+		ptr += 0;
+	}
+
+	if ( pointCount == 0 )
+	{
+		return 0;
+	}
+
+	if ( reverseOrder )
+	{
+
+	}
+	return pointCount;
 }
 
 SampleEntry g_sampleEntries[MAX_SAMPLES] = {};

@@ -56,10 +56,9 @@ typedef struct b2ChainShape
 	int bodyId;
 	int nextChainId;
 	int count;
+	int materialCount;
 	int* shapeIndices;
-	float friction;
-	float restitution;
-	int material;
+	b2SurfaceMaterial* materials;
 	uint16_t generation;
 } b2ChainShape;
 

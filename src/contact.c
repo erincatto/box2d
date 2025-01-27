@@ -69,70 +69,70 @@ static bool s_initialized = false;
 static b2Manifold b2CircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 									b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollideCircles( &shapeA->circle, xfA, &shapeB->circle, xfB );
 }
 
 static b2Manifold b2CapsuleAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 											  b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollideCapsuleAndCircle( &shapeA->capsule, xfA, &shapeB->circle, xfB );
 }
 
 static b2Manifold b2CapsuleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 									 b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollideCapsules( &shapeA->capsule, xfA, &shapeB->capsule, xfB );
 }
 
 static b2Manifold b2PolygonAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 											  b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollidePolygonAndCircle( &shapeA->polygon, xfA, &shapeB->circle, xfB );
 }
 
 static b2Manifold b2PolygonAndCapsuleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 											   b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollidePolygonAndCapsule( &shapeA->polygon, xfA, &shapeB->capsule, xfB );
 }
 
 static b2Manifold b2PolygonManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 									 b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollidePolygons( &shapeA->polygon, xfA, &shapeB->polygon, xfB );
 }
 
 static b2Manifold b2SegmentAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 											  b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollideSegmentAndCircle( &shapeA->segment, xfA, &shapeB->circle, xfB );
 }
 
 static b2Manifold b2SegmentAndCapsuleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 											   b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollideSegmentAndCapsule( &shapeA->segment, xfA, &shapeB->capsule, xfB );
 }
 
 static b2Manifold b2SegmentAndPolygonManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 											   b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollideSegmentAndPolygon( &shapeA->segment, xfA, &shapeB->polygon, xfB );
 }
 
 static b2Manifold b2ChainSegmentAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 												   b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollideChainSegmentAndCircle( &shapeA->chainSegment, xfA, &shapeB->circle, xfB );
 }
 
@@ -595,7 +595,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 		unmatchedCount += mp2->persisted ? 0 : 1;
 	}
 
-	B2_MAYBE_UNUSED( unmatchedCount );
+	B2_UNUSED( unmatchedCount );
 
 #if 0
 		// todo I haven't found an improvement from this yet

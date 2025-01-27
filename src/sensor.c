@@ -46,7 +46,7 @@ struct b2SensorQueryContext
 
 static bool b2SensorQueryCallback( int proxyId, int shapeId, void* context )
 {
-	B2_MAYBE_UNUSED( proxyId );
+	B2_UNUSED( proxyId );
 
 	struct b2SensorQueryContext* queryContext = context;
 	b2Shape* sensorShape = queryContext->sensorShape;

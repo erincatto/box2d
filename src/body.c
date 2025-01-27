@@ -325,7 +325,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 
 bool b2IsBodyAwake( b2World* world, b2Body* body )
 {
-	B2_MAYBE_UNUSED( world );
+	B2_UNUSED( world );
 	return body->setIndex == b2_awakeSet;
 }
 
@@ -425,7 +425,7 @@ void b2DestroyBody( b2BodyId bodyId )
 	if ( body->setIndex == b2_awakeSet )
 	{
 		int result = b2BodyStateArray_RemoveSwap( &set->bodyStates, body->localIndex );
-		B2_MAYBE_UNUSED( result );
+		B2_UNUSED( result );
 		B2_ASSERT( result == movedIndex );
 	}
 	else if ( set->setIndex >= b2_firstSleepingSet && set->bodySims.count == 0 )

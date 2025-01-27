@@ -396,6 +396,35 @@ typedef struct b2ShapeDef
 /// @ingroup shape
 B2_API b2ShapeDef b2DefaultShapeDef( void );
 
+/// Surface materials allow chain shapes to have per segment surface properties.
+/// @ingroup shape
+typedef struct b2SurfaceMaterial
+{
+	/// The Coulomb (dry) friction coefficient, usually in the range [0,1].
+	float friction;
+
+	/// The coefficient of restitution (bounce) usually in the range [0,1].
+	/// https://en.wikipedia.org/wiki/Coefficient_of_restitution
+	float restitution;
+
+	/// The rolling resistance usually in the range [0,1].
+	float rollingResistance;
+
+	/// The tangent speed for conveyor belts
+	float tangentSpeed;
+
+	/// User material identifier. This is passed with query results and to friction and restitution
+	/// combining functions. It is not used internally.
+	int material;
+
+	/// Custom debug draw color.
+	uint32_t customColor;
+} b2SurfaceMaterial;
+
+/// Use this to initialize your surface material
+/// @ingroup shape
+B2_API b2SurfaceMaterial b2DefaultSurfaceMaterial( void );
+
 /// Used to create a chain of line segments. This is designed to eliminate ghost collisions with some limitations.
 /// - chains are one-sided
 /// - chains have no mass and should be used on static bodies
@@ -422,27 +451,18 @@ typedef struct b2ChainDef
 	/// The point count, must be 4 or more.
 	int count;
 
-	/// The friction coefficient, usually in the range [0,1].
-	float friction;
+	/// Surface materials for each segment. These are cloned.
+	const b2SurfaceMaterial* materials;
 
-	/// The restitution (elasticity) usually in the range [0,1].
-	float restitution;
-
-	/// User material identifier. This is passed with query results and to friction and restitution
-	/// combining functions. It is not used internally.
-	int material;
+	/// The material count. Must be 1 or count. This allows you to provide one
+	/// material for all segments or a unique material per segment.
+	int materialCount;
 
 	/// Contact filtering data.
 	b2Filter filter;
 
-	/// Custom debug draw color.
-	uint32_t customColor;
-
 	/// Indicates a closed chain formed by connecting the first and last points
 	bool isLoop;
-
-	/// Generate events when a sensor overlaps this chain
-	bool enableSensorEvents;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;

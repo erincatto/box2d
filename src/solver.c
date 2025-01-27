@@ -207,7 +207,7 @@ struct b2ContinuousContext
 // This is called from b2DynamicTree_Query for continuous collision
 static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 {
-	B2_MAYBE_UNUSED( proxyId );
+	B2_UNUSED( proxyId );
 
 	struct b2ContinuousContext* continuousContext = context;
 	b2Shape* fastShape = continuousContext->fastShape;
@@ -916,11 +916,9 @@ static void b2ExecuteMainStage( b2SolverStage* stage, b2StepContext* context, ui
 }
 
 // This should not use the thread index because thread 0 can be called twice by enkiTS.
-static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDontUse, void* taskContext )
+static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgnore, void* taskContext )
 {
-	B2_MAYBE_UNUSED( startIndex );
-	B2_MAYBE_UNUSED( endIndex );
-	B2_MAYBE_UNUSED( threadIndexDontUse );
+	B2_UNUSED( startIndex, endIndex, threadIndexIgnore );
 
 	b2WorkerContext* workerContext = taskContext;
 	int workerIndex = workerContext->workerIndex;
@@ -1146,7 +1144,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexDont
 
 static void b2BulletBodyTask( int startIndex, int endIndex, uint32_t threadIndex, void* taskContext )
 {
-	B2_MAYBE_UNUSED( threadIndex );
+	B2_UNUSED( threadIndex );
 
 	b2TracyCZoneNC( bullet_body_task, "Bullet", b2_colorLightSkyBlue, true );
 

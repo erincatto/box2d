@@ -60,6 +60,8 @@ public:
 	void ResetProfile();
 	void ShiftOrigin( b2Vec2 newOrigin );
 
+	static int ParsePath( const char* svgPath, b2Vec2 offset, b2Vec2* points, int capacity, float scale, bool reverseOrder );
+
 	friend class DestructionListener;
 	friend class BoundaryListener;
 	friend class ContactListener;

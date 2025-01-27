@@ -356,11 +356,15 @@ void CreateSpinner( b2WorldId worldId )
 			p = b2RotateVector( q, p );
 		}
 
+		b2SurfaceMaterial material = {0};
+		material.friction = 0.1f;
+
 		b2ChainDef chainDef = b2DefaultChainDef();
 		chainDef.points = points;
 		chainDef.count = SPINNER_POINT_COUNT;
 		chainDef.isLoop = true;
-		chainDef.friction = 0.1f;
+		chainDef.materials = &material;
+		chainDef.materialCount = 1;
 
 		b2CreateChain( groundId, &chainDef );
 	}

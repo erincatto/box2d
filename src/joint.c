@@ -121,7 +121,7 @@ b2JointSim* b2GetJointSim( b2World* world, b2Joint* joint )
 
 b2JointSim* b2GetJointSimCheckType( b2JointId jointId, b2JointType type )
 {
-	B2_MAYBE_UNUSED( type );
+	B2_UNUSED( type );
 
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_ASSERT( world->locked == false );
