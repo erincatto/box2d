@@ -501,6 +501,15 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 	return id;
 }
 
+void b2FreeChainData(b2ChainShape* chain)
+{
+	b2Free( chain->shapeIndices, chain->count * sizeof( int ) );
+	chain->shapeIndices = NULL;
+
+	b2Free( chain->materials, chain->materialCount * sizeof( b2SurfaceMaterial ) );
+	chain->materials = NULL;
+}
+
 void b2DestroyChain( b2ChainId chainId )
 {
 	b2World* world = b2GetWorldLocked( chainId.world0 );
@@ -543,10 +552,7 @@ void b2DestroyChain( b2ChainId chainId )
 		b2DestroyShapeInternal( world, shape, body, wakeBodies );
 	}
 
-	b2Free( chain->shapeIndices, chain->count * sizeof( int ) );
-	chain->shapeIndices = NULL;
-
-	b2Free( chain->materials, chain->materialCount * sizeof( b2SurfaceMaterial ) );
+	b2FreeChainData( chain );
 
 	// Return chain to free list.
 	b2FreeId( &world->chainIdPool, chain->id );

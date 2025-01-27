@@ -296,11 +296,12 @@ void b2DestroyWorld( b2WorldId worldId )
 		b2ChainShape* chain = world->chainShapes.data + i;
 		if ( chain->id != B2_NULL_INDEX )
 		{
-			b2Free( chain->shapeIndices, chain->count * sizeof( int ) );
+			b2FreeChainData( chain );
 		}
 		else
 		{
 			B2_ASSERT( chain->shapeIndices == NULL );
+			B2_ASSERT( chain->materials == NULL );
 		}
 	}
 

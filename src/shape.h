@@ -83,6 +83,8 @@ typedef struct
 void b2CreateShapeProxy( b2Shape* shape, b2BroadPhase* bp, b2BodyType type, b2Transform transform, bool forcePairCreation );
 void b2DestroyShapeProxy( b2Shape* shape, b2BroadPhase* bp );
 
+void b2FreeChainData( b2ChainShape* chain );
+
 b2MassData b2ComputeShapeMass( const b2Shape* shape );
 b2ShapeExtent b2ComputeShapeExtent( const b2Shape* shape, b2Vec2 localCenter );
 b2AABB b2ComputeShapeAABB( const b2Shape* shape, b2Transform transform );
