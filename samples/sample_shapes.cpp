@@ -1167,6 +1167,9 @@ public:
 			chainDef.materialCount = count;
 
 			b2CreateChain( groundId, &chainDef );
+
+			m_friction = 0.6f;
+			m_rollingResistance = 0.3f;
 		}
 	}
 
@@ -1180,21 +1183,54 @@ public:
 		b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.rollingResistance = 0.3f;
+		shapeDef.friction = m_friction;
+		shapeDef.rollingResistance = m_rollingResistance;
 		b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		return bodyId;
 	}
 
+	void Reset()
+	{
+		int count = m_bodyIds.size();
+		for (int i = 0; i < count; ++i)
+		{
+			b2DestroyBody( m_bodyIds[i] );
+		}
+
+		m_bodyIds.clear();
+	}
+
+	void UpdateUI() override
+	{
+		float height = 80.0f;
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 260.0f, height ) );
+
+		ImGui::Begin( "Ball Parameters", nullptr, ImGuiWindowFlags_NoResize );
+		ImGui::PushItemWidth( 140.0f );
+
+		if ( ImGui::SliderFloat( "Friction", &m_friction, 0.0f, 2.0f, "%.2f" ) )
+		{
+			Reset();
+		}
+
+		if ( ImGui::SliderFloat( "Rolling Resistance", &m_rollingResistance, 0.0f, 1.0f, "%.2f" ) )
+		{
+			Reset();
+		}
+
+		ImGui::End();
+	}
+
 	void Step( Settings& settings ) override
 	{
-		if ( m_stepCount % 25 == 0 && m_count < m_totalCount && settings.pause == false)
+		if ( m_stepCount % 25 == 0 && m_bodyIds.size() < m_totalCount && settings.pause == false)
 		{
-			DropBall();
-			m_count += 1;
+			b2BodyId id = DropBall();
+			m_bodyIds.push_back( id );
 		}
 
 		Sample::Step( settings );
-
 	}
 
 	static Sample* Create( Settings& settings )
@@ -1203,7 +1239,9 @@ public:
 	}
 
 	static constexpr int m_totalCount = 200;
-	int m_count = 0;
+	std::vector<b2BodyId> m_bodyIds;
+	float m_friction;
+	float m_rollingResistance;
 };
 
 static int sampleTangentSpeed = RegisterSample( "Shapes", "Tangent Speed", TangentSpeed::Create );
