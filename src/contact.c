@@ -69,70 +69,70 @@ static bool s_initialized = false;
 static b2Manifold b2CircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 									b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollideCircles( &shapeA->circle, xfA, &shapeB->circle, xfB );
 }
 
 static b2Manifold b2CapsuleAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 											  b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollideCapsuleAndCircle( &shapeA->capsule, xfA, &shapeB->circle, xfB );
 }
 
 static b2Manifold b2CapsuleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 									 b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollideCapsules( &shapeA->capsule, xfA, &shapeB->capsule, xfB );
 }
 
 static b2Manifold b2PolygonAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 											  b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollidePolygonAndCircle( &shapeA->polygon, xfA, &shapeB->circle, xfB );
 }
 
 static b2Manifold b2PolygonAndCapsuleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 											   b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollidePolygonAndCapsule( &shapeA->polygon, xfA, &shapeB->capsule, xfB );
 }
 
 static b2Manifold b2PolygonManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 									 b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollidePolygons( &shapeA->polygon, xfA, &shapeB->polygon, xfB );
 }
 
 static b2Manifold b2SegmentAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 											  b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollideSegmentAndCircle( &shapeA->segment, xfA, &shapeB->circle, xfB );
 }
 
 static b2Manifold b2SegmentAndCapsuleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 											   b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollideSegmentAndCapsule( &shapeA->segment, xfA, &shapeB->capsule, xfB );
 }
 
 static b2Manifold b2SegmentAndPolygonManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 											   b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollideSegmentAndPolygon( &shapeA->segment, xfA, &shapeB->polygon, xfB );
 }
 
 static b2Manifold b2ChainSegmentAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
 												   b2SimplexCache* cache )
 {
-	B2_MAYBE_UNUSED( cache );
+	B2_UNUSED( cache );
 	return b2CollideChainSegmentAndCircle( &shapeA->chainSegment, xfA, &shapeB->circle, xfB );
 }
 
@@ -493,6 +493,21 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	contactSim->friction = world->frictionCallback( shapeA->friction, shapeA->material, shapeB->friction, shapeB->material );
 	contactSim->restitution = world->restitutionCallback( shapeA->restitution, shapeA->material, shapeB->restitution, shapeB->material );
 
+	// todo branch improves perf?
+	if (shapeA->rollingResistance > 0.0f || shapeB->rollingResistance > 0.0f)
+	{
+		float radiusA = b2GetShapeRadius( shapeA );
+		float radiusB = b2GetShapeRadius( shapeB );
+		float maxRadius = b2MaxFloat( radiusA, radiusB );
+		contactSim->rollingResistance = b2MaxFloat( shapeA->rollingResistance, shapeB->rollingResistance ) * maxRadius;
+	}
+	else
+	{
+		contactSim->rollingResistance = 0.0f;
+	}
+
+	contactSim->tangentSpeed = shapeA->tangentSpeed + shapeB->tangentSpeed;
+
 	int pointCount = contactSim->manifold.pointCount;
 	bool touching = pointCount > 0;
 
@@ -536,6 +551,11 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 		contactSim->simFlags &= ~b2_simEnableHitEvent;
 	}
 
+	if (pointCount > 0)
+	{
+		contactSim->manifold.rollingImpulse = oldManifold.rollingImpulse;
+	}
+
 	// Match old contact ids to new contact ids and copy the
 	// stored impulses to warm start the solver.
 	int unmatchedCount = 0;
@@ -575,7 +595,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 		unmatchedCount += mp2->persisted ? 0 : 1;
 	}
 
-	B2_MAYBE_UNUSED( unmatchedCount );
+	B2_UNUSED( unmatchedCount );
 
 #if 0
 		// todo I haven't found an improvement from this yet

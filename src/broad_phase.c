@@ -313,7 +313,7 @@ static void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex,
 {
 	b2TracyCZoneNC( pair_task, "Pair", b2_colorMediumSlateBlue, true );
 
-	B2_MAYBE_UNUSED( threadIndex );
+	B2_UNUSED( threadIndex );
 
 	b2World* world = context;
 	b2BroadPhase* bp = &world->broadPhase;
@@ -517,6 +517,6 @@ void b2ValidateNoEnlarged( const b2BroadPhase* bp )
 		b2DynamicTree_ValidateNoEnlarged( tree );
 	}
 #else
-	B2_MAYBE_UNUSED( bp );
+	B2_UNUSED( bp );
 #endif
 }

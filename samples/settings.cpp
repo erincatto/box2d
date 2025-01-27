@@ -35,7 +35,7 @@ static bool ReadFile( char*& data, int& size, const char* filename )
 
 	data = (char*)malloc( size + 1 );
 	size_t count = fread( data, size, 1, file );
-	B2_MAYBE_UNUSED( count );
+	B2_UNUSED( count );
 	fclose( file );
 	data[size] = 0;
 

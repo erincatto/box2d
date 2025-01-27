@@ -32,16 +32,17 @@ public:
 
 		float groundWidth = 66.0f * extent;
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.friction = 0.5f;
+		//shapeDef.friction = 0.5f;
 
 		b2Segment segment = { { -0.5f * 2.0f * groundWidth, 0.0f }, { 0.5f * 2.0f * groundWidth, 0.0f } };
 		b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		bodyDef.type = b2_dynamicBody;
 
 		b2Polygon box = b2MakeBox( extent, extent );
-		bodyDef.position = { 0.0f, 4.0f };
-		b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
-		b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		bodyDef.position = { 0.0f, 1.0f };
+		bodyDef.linearVelocity = { 5.0f, 0.0f };
+		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
+		b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
 	}
 
 	void Step( Settings& settings ) override
@@ -49,12 +50,17 @@ public:
 		Sample::Step( settings );
 
 		// g_draw.DrawCircle({0.0f, 2.0f}, 1.0f, b2_colorWhite);
+
+		b2Vec2 position = b2Body_GetPosition( m_bodyId );
+		DrawTextLine( "(x, y) = (%.2g, %.2g)", position.x, position.y );
 	}
 
 	static Sample* Create( Settings& settings )
 	{
 		return new SingleBox( settings );
 	}
+
+	b2BodyId m_bodyId;
 };
 
 static int sampleSingleBox = RegisterSample( "Stacking", "Single Box", SingleBox::Create );
@@ -425,13 +431,14 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.enableHitEvents = true;
+		shapeDef.rollingResistance = 0.2f;
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 
 		float y = 0.5f;
 
-		for ( int i = 0; i < 8; ++i )
+		for ( int i = 0; i < 1; ++i )
 		{
 			bodyDef.position.y = y;
 

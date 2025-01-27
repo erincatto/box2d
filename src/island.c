@@ -843,9 +843,7 @@ void b2SplitIslandTask( int startIndex, int endIndex, uint32_t threadIndex, void
 {
 	b2TracyCZoneNC( split, "Split Island", b2_colorOlive, true );
 
-	B2_MAYBE_UNUSED( startIndex );
-	B2_MAYBE_UNUSED( endIndex );
-	B2_MAYBE_UNUSED( threadIndex );
+	B2_UNUSED( startIndex, endIndex, threadIndex );
 
 	uint64_t ticks = b2GetTicks();
 	b2World* world = context;
@@ -966,7 +964,7 @@ void b2ValidateIsland( b2World* world, int islandId )
 
 void b2ValidateIsland( b2World* world, int islandId )
 {
-	B2_MAYBE_UNUSED( world );
-	B2_MAYBE_UNUSED( islandId );
+	B2_UNUSED( world );
+	B2_UNUSED( islandId );
 }
 #endif

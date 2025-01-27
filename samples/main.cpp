@@ -640,8 +640,6 @@ int main( int, char** )
 
 	float frameTime = 0.0;
 
-	// int32_t frame = 0;
-
 	while ( !glfwWindowShouldClose( g_mainWindow ) )
 	{
 		double time1 = glfwGetTime();
@@ -754,21 +752,14 @@ int main( int, char** )
 
 		// Limit frame rate to 60Hz
 		double time2 = glfwGetTime();
-		double targetTime = time1 + 1.0f / 60.0f;
-		// int loopCount = 0;
+		double targetTime = time1 + 1.0 / 60.0;
 		while ( time2 < targetTime )
 		{
 			b2Yield();
 			time2 = glfwGetTime();
-			//++loopCount;
 		}
 
-		frameTime = (float)( time2 - time1 );
-		// if (frame % 17 == 0)
-		//{
-		//	printf("loop count = %d, frame time = %.1f\n", loopCount, 1000.0f * frameTime);
-		// }
-		//++frame;
+		frameTime = float( time2 - time1 );
 	}
 
 	delete s_sample;

@@ -92,11 +92,15 @@ public:
 			// }
 			// printf("};\n");
 
+			b2SurfaceMaterial material = {};
+			material.friction = 0.2f;
+
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
 			chainDef.count = count;
 			chainDef.isLoop = true;
-			chainDef.friction = 0.2f;
+			chainDef.materials = &material;
+			chainDef.materialCount = 1;
 			b2CreateChain( groundId, &chainDef );
 
 			float sign = 1.0f;

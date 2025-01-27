@@ -107,7 +107,7 @@ static void b2AddKeyHaveCapacity( b2HashSet* set, uint64_t key, uint32_t hash )
 static void b2GrowTable( b2HashSet* set )
 {
 	uint32_t oldCount = set->count;
-	B2_MAYBE_UNUSED( oldCount );
+	B2_UNUSED( oldCount );
 
 	uint32_t oldCapacity = set->capacity;
 	b2SetItem* oldItems = set->items;

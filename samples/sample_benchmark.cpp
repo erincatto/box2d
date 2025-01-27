@@ -221,6 +221,7 @@ public:
 				{
 					m_bodies[index] = b2CreateBody( m_worldId, &bodyDef );
 					circle.radius = RandomFloatRange( 0.25f, 0.75f );
+					shapeDef.rollingResistance = 0.2f;
 					b2CreateCircleShape( m_bodies[index], &shapeDef, &circle );
 				}
 				else if ( m_shapeType == e_capsuleShape )
@@ -230,6 +231,7 @@ public:
 					float length = RandomFloatRange( 0.25f, 1.0f );
 					capsule.center1 = { 0.0f, -0.5f * length };
 					capsule.center2 = { 0.0f, 0.5f * length };
+					shapeDef.rollingResistance = 0.2f;
 					b2CreateCapsuleShape( m_bodies[index], &shapeDef, &capsule );
 				}
 				else if ( m_shapeType == e_mixShape )
@@ -557,7 +559,7 @@ public:
 			settings.enableSleep = false;
 		}
 
-		CreateLargePyramid(m_worldId);
+		CreateLargePyramid( m_worldId );
 	}
 
 	static Sample* Create( Settings& settings )
@@ -624,6 +626,9 @@ public:
 			m_bodies[i] = b2_nullBodyId;
 		}
 
+		m_createTime = 0.0f;
+		m_destroyTime = 0.0f;
+
 		m_baseCount = g_sampleDebug ? 40 : 100;
 		m_iterations = g_sampleDebug ? 1 : 10;
 		m_bodyCount = 0;
@@ -631,6 +636,8 @@ public:
 
 	void CreateScene()
 	{
+		uint64_t ticks = b2GetTicks();
+
 		for ( int i = 0; i < e_maxBodyCount; ++i )
 		{
 			if ( B2_IS_NON_NULL( m_bodies[i] ) )
@@ -639,6 +646,8 @@ public:
 				m_bodies[i] = b2_nullBodyId;
 			}
 		}
+
+		m_destroyTime += b2GetMillisecondsAndReset( &ticks );
 
 		int count = m_baseCount;
 		float rad = 0.5f;
@@ -675,22 +684,28 @@ public:
 			}
 		}
 
+		m_createTime += b2GetMilliseconds( ticks );
+
 		m_bodyCount = index;
+
+		b2World_Step( m_worldId, 1.0f / 60.0f, 4 );
 	}
 
 	void Step( Settings& settings ) override
 	{
-		uint64_t ticks = b2GetTicks();
+		m_createTime = 0.0f;
+		m_destroyTime = 0.0f;
 
 		for ( int i = 0; i < m_iterations; ++i )
 		{
 			CreateScene();
 		}
 
-		float ms = b2GetMilliseconds( ticks );
+		DrawTextLine( "total: create = %g ms, destroy = %g ms", m_createTime, m_destroyTime );
 
-		g_draw.DrawString( 5, m_textLine, "milliseconds = %g", ms );
-		m_textLine += m_textIncrement;
+		float createPerBody = 1000.0f * m_createTime / m_iterations / m_bodyCount;
+		float destroyPerBody = 1000.0f * m_destroyTime / m_iterations / m_bodyCount;
+		DrawTextLine( "body: create = %g us, destroy = %g us", createPerBody, destroyPerBody );
 
 		Sample::Step( settings );
 	}
@@ -700,6 +715,8 @@ public:
 		return new BenchmarkCreateDestroy( settings );
 	}
 
+	float m_createTime;
+	float m_destroyTime;
 	b2BodyId m_bodies[e_maxBodyCount];
 	int m_bodyCount;
 	int m_baseCount;
@@ -1529,14 +1546,14 @@ public:
 
 	void Step( Settings& settings ) override
 	{
-		if (settings.pause == false || settings.singleStep == true)
+		if ( settings.pause == false || settings.singleStep == true )
 		{
 			StepRain( m_worldId, m_stepCount );
 		}
 
 		Sample::Step( settings );
 
-		if (m_stepCount % 1000 == 0)
+		if ( m_stepCount % 1000 == 0 )
 		{
 			m_stepCount += 0;
 		}

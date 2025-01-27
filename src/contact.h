@@ -121,8 +121,7 @@ typedef struct b2ContactSim
 	// Mixed friction and restitution
 	float friction;
 	float restitution;
-
-	// todo for conveyor belts
+	float rollingResistance;
 	float tangentSpeed;
 
 	// b2ContactSimFlags

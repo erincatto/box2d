@@ -110,7 +110,7 @@
 #define B2_ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
 
 // Used to prevent the compiler from warning about unused variables
-#define B2_MAYBE_UNUSED( x ) ( (void)( x ) )
+#define B2_UNUSED( ... ) (void)sizeof( ( __VA_ARGS__, 0 ) )
 
 // Use to validate definitions. Do not take my cookie.
 #define B2_SECRET_COOKIE 1152023

@@ -667,11 +667,15 @@ public:
 			points[18] = b2Add( points[17], { -2.0f * hx, 0.0f } );
 			points[19] = b2Add( points[18], { -2.0f * hx, 0.0f } );
 
+			b2SurfaceMaterial material = {};
+			material.friction = m_friction;
+
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
 			chainDef.count = 20;
 			chainDef.isLoop = true;
-			chainDef.friction = m_friction;
+			chainDef.materials = &material;
+			chainDef.materialCount = 1;
 
 			b2CreateChain( m_groundId, &chainDef );
 		}

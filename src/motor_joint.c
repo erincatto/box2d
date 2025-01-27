@@ -186,7 +186,7 @@ void b2WarmStartMotorJoint( b2JointSim* base, b2StepContext* context )
 
 void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 {
-	B2_MAYBE_UNUSED( useBias );
+	B2_UNUSED( useBias );
 	B2_ASSERT( base->type == b2_motorJoint );
 
 	float mA = base->invMassA;
