@@ -808,7 +808,7 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2He
 			b2Capsule* capsule = &shape->capsule;
 			b2Vec2 p1 = b2TransformPoint( xf, capsule->center1 );
 			b2Vec2 p2 = b2TransformPoint( xf, capsule->center2 );
-			draw->DrawSolidCapsule( p1, p2, capsule->radius, color, draw->context );
+			draw->DrawSolidCapsuleFcn( p1, p2, capsule->radius, color, draw->context );
 		}
 		break;
 
@@ -816,14 +816,14 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2He
 		{
 			b2Circle* circle = &shape->circle;
 			xf.p = b2TransformPoint( xf, circle->center );
-			draw->DrawSolidCircle( xf, circle->radius, color, draw->context );
+			draw->DrawSolidCircleFcn( xf, circle->radius, color, draw->context );
 		}
 		break;
 
 		case b2_polygonShape:
 		{
 			b2Polygon* poly = &shape->polygon;
-			draw->DrawSolidPolygon( xf, poly->vertices, poly->count, poly->radius, color, draw->context );
+			draw->DrawSolidPolygonFcn( xf, poly->vertices, poly->count, poly->radius, color, draw->context );
 		}
 		break;
 
@@ -832,7 +832,7 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2He
 			b2Segment* segment = &shape->segment;
 			b2Vec2 p1 = b2TransformPoint( xf, segment->point1 );
 			b2Vec2 p2 = b2TransformPoint( xf, segment->point2 );
-			draw->DrawSegment( p1, p2, color, draw->context );
+			draw->DrawSegmentFcn( p1, p2, color, draw->context );
 		}
 		break;
 
@@ -841,9 +841,9 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2He
 			b2Segment* segment = &shape->chainSegment.segment;
 			b2Vec2 p1 = b2TransformPoint( xf, segment->point1 );
 			b2Vec2 p2 = b2TransformPoint( xf, segment->point2 );
-			draw->DrawSegment( p1, p2, color, draw->context );
-			draw->DrawPoint( p2, 4.0f, color, draw->context );
-			draw->DrawSegment( p1, b2Lerp( p1, p2, 0.1f ), b2_colorPaleGreen, draw->context );
+			draw->DrawSegmentFcn( p1, p2, color, draw->context );
+			draw->DrawPointFcn( p2, 4.0f, color, draw->context );
+			draw->DrawSegmentFcn( p1, b2Lerp( p1, p2, 0.1f ), b2_colorPaleGreen, draw->context );
 		}
 		break;
 
@@ -936,7 +936,7 @@ static bool DrawQueryCallback( int proxyId, int shapeId, void* context )
 						 { aabb.upperBound.x, aabb.upperBound.y },
 						 { aabb.lowerBound.x, aabb.upperBound.y } };
 
-		draw->DrawPolygon( vs, 4, b2_colorGold, draw->context );
+		draw->DrawPolygonFcn( vs, 4, b2_colorGold, draw->context );
 	}
 
 	return true;
@@ -996,11 +996,11 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
 				b2Transform transform = { bodySim->center, bodySim->transform.q };
-				draw->DrawTransform( transform, draw->context );
+				draw->DrawTransformFcn( transform, draw->context );
 
 				b2Vec2 p = b2TransformPoint( transform, offset );
 
-				draw->DrawString( p, body->name, b2_colorBlueViolet, draw->context );
+				draw->DrawStringFcn( p, body->name, b2_colorBlueViolet, draw->context );
 			}
 
 			if ( draw->drawMass && body->type == b2_dynamicBody )
@@ -1009,13 +1009,13 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
 				b2Transform transform = { bodySim->center, bodySim->transform.q };
-				draw->DrawTransform( transform, draw->context );
+				draw->DrawTransformFcn( transform, draw->context );
 
 				b2Vec2 p = b2TransformPoint( transform, offset );
 
 				char buffer[32];
 				snprintf( buffer, 32, "  %.2f", body->mass );
-				draw->DrawString( p, buffer, b2_colorWhite, draw->context );
+				draw->DrawStringFcn( p, buffer, b2_colorWhite, draw->context );
 			}
 
 			if ( draw->drawJoints )
@@ -1078,38 +1078,38 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 							{
 								// graph color
 								float pointSize = contact->colorIndex == B2_OVERFLOW_INDEX ? 7.5f : 5.0f;
-								draw->DrawPoint( point->point, pointSize, graphColors[contact->colorIndex], draw->context );
+								draw->DrawPointFcn( point->point, pointSize, graphColors[contact->colorIndex], draw->context );
 								// g_draw.DrawString(point->position, "%d", point->color);
 							}
 							else if ( point->separation > linearSlop )
 							{
 								// Speculative
-								draw->DrawPoint( point->point, 5.0f, speculativeColor, draw->context );
+								draw->DrawPointFcn( point->point, 5.0f, speculativeColor, draw->context );
 							}
 							else if ( point->persisted == false )
 							{
 								// Add
-								draw->DrawPoint( point->point, 10.0f, addColor, draw->context );
+								draw->DrawPointFcn( point->point, 10.0f, addColor, draw->context );
 							}
 							else if ( point->persisted == true )
 							{
 								// Persist
-								draw->DrawPoint( point->point, 5.0f, persistColor, draw->context );
+								draw->DrawPointFcn( point->point, 5.0f, persistColor, draw->context );
 							}
 
 							if ( draw->drawContactNormals )
 							{
 								b2Vec2 p1 = point->point;
 								b2Vec2 p2 = b2MulAdd( p1, k_axisScale, normal );
-								draw->DrawSegment( p1, p2, normalColor, draw->context );
+								draw->DrawSegmentFcn( p1, p2, normalColor, draw->context );
 							}
 							else if ( draw->drawContactImpulses )
 							{
 								b2Vec2 p1 = point->point;
 								b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->normalImpulse, normal );
-								draw->DrawSegment( p1, p2, impulseColor, draw->context );
+								draw->DrawSegmentFcn( p1, p2, impulseColor, draw->context );
 								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", 1000.0f * point->normalImpulse );
-								draw->DrawString( p1, buffer, b2_colorWhite, draw->context );
+								draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 							}
 
 							if ( draw->drawFrictionImpulses )
@@ -1117,9 +1117,9 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 								b2Vec2 tangent = b2RightPerp( normal );
 								b2Vec2 p1 = point->point;
 								b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->tangentImpulse, tangent );
-								draw->DrawSegment( p1, p2, frictionColor, draw->context );
+								draw->DrawSegmentFcn( p1, p2, frictionColor, draw->context );
 								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", 1000.0f * point->tangentImpulse );
-								draw->DrawString( p1, buffer, b2_colorWhite, draw->context );
+								draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 							}
 						}
 
@@ -1260,7 +1260,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 				char buffer[32];
 				snprintf( buffer, 32, "%d", bodySim->bodyId );
-				draw->DrawString( bodySim->center, buffer, b2_colorWhite, draw->context );
+				draw->DrawStringFcn( bodySim->center, buffer, b2_colorWhite, draw->context );
 
 				b2Body* body = b2BodyArray_Get( &world->bodies, bodySim->bodyId );
 				B2_ASSERT( body->setIndex == setIndex );
@@ -1276,7 +1276,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 									 { aabb.upperBound.x, aabb.upperBound.y },
 									 { aabb.lowerBound.x, aabb.upperBound.y } };
 
-					draw->DrawPolygon( vs, 4, color, draw->context );
+					draw->DrawPolygonFcn( vs, 4, color, draw->context );
 
 					shapeId = shape->nextShapeId;
 				}
@@ -1304,7 +1304,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 			b2Transform transform = b2GetBodyTransformQuick( world, body );
 			b2Vec2 p = b2TransformPoint( transform, offset );
 
-			draw->DrawString( p, body->name, b2_colorBlueViolet, draw->context );
+			draw->DrawStringFcn( p, body->name, b2_colorBlueViolet, draw->context );
 		}
 	}
 
@@ -1321,14 +1321,14 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				b2BodySim* bodySim = set->bodySims.data + bodyIndex;
 
 				b2Transform transform = { bodySim->center, bodySim->transform.q };
-				draw->DrawTransform( transform, draw->context );
+				draw->DrawTransformFcn( transform, draw->context );
 
 				b2Vec2 p = b2TransformPoint( transform, offset );
 
 				char buffer[32];
 				float mass = bodySim->invMass > 0.0f ? 1.0f / bodySim->invMass : 0.0f;
 				snprintf( buffer, 32, "  %.2f", mass );
-				draw->DrawString( p, buffer, b2_colorWhite, draw->context );
+				draw->DrawStringFcn( p, buffer, b2_colorWhite, draw->context );
 			}
 		}
 	}
@@ -1370,38 +1370,38 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 					{
 						// graph color
 						float pointSize = colorIndex == B2_OVERFLOW_INDEX ? 7.5f : 5.0f;
-						draw->DrawPoint( point->point, pointSize, colors[colorIndex], draw->context );
+						draw->DrawPointFcn( point->point, pointSize, colors[colorIndex], draw->context );
 						// g_draw.DrawString(point->position, "%d", point->color);
 					}
 					else if ( point->separation > linearSlop )
 					{
 						// Speculative
-						draw->DrawPoint( point->point, 5.0f, speculativeColor, draw->context );
+						draw->DrawPointFcn( point->point, 5.0f, speculativeColor, draw->context );
 					}
 					else if ( point->persisted == false )
 					{
 						// Add
-						draw->DrawPoint( point->point, 10.0f, addColor, draw->context );
+						draw->DrawPointFcn( point->point, 10.0f, addColor, draw->context );
 					}
 					else if ( point->persisted == true )
 					{
 						// Persist
-						draw->DrawPoint( point->point, 5.0f, persistColor, draw->context );
+						draw->DrawPointFcn( point->point, 5.0f, persistColor, draw->context );
 					}
 
 					if ( draw->drawContactNormals )
 					{
 						b2Vec2 p1 = point->point;
 						b2Vec2 p2 = b2MulAdd( p1, k_axisScale, normal );
-						draw->DrawSegment( p1, p2, normalColor, draw->context );
+						draw->DrawSegmentFcn( p1, p2, normalColor, draw->context );
 					}
 					else if ( draw->drawContactImpulses )
 					{
 						b2Vec2 p1 = point->point;
 						b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->normalImpulse, normal );
-						draw->DrawSegment( p1, p2, impulseColor, draw->context );
+						draw->DrawSegmentFcn( p1, p2, impulseColor, draw->context );
 						snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.2f", 1000.0f * point->normalImpulse );
-						draw->DrawString( p1, buffer, b2_colorWhite, draw->context );
+						draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 					}
 
 					if ( draw->drawFrictionImpulses )
@@ -1409,9 +1409,9 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 						b2Vec2 tangent = b2RightPerp( normal );
 						b2Vec2 p1 = point->point;
 						b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->tangentImpulse, tangent );
-						draw->DrawSegment( p1, p2, frictionColor, draw->context );
-						snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.2f", point->normalImpulse );
-						draw->DrawString( p1, buffer, b2_colorWhite, draw->context );
+						draw->DrawSegmentFcn( p1, p2, frictionColor, draw->context );
+						snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.2f", point->tangentImpulse );
+						draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 					}
 				}
 			}

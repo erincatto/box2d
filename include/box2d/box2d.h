@@ -177,7 +177,7 @@ B2_API void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinea
 B2_API float b2World_GetMaximumLinearSpeed( b2WorldId worldId );
 
 /// Enable/disable constraint warm starting. Advanced feature for testing. Disabling
-/// sleeping greatly reduces stability and provides no performance gain.
+/// warm starting greatly reduces stability and provides no performance gain.
 B2_API void b2World_EnableWarmStarting( b2WorldId worldId, bool flag );
 
 /// Is constraint warm starting enabled?

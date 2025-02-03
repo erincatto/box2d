@@ -60,6 +60,18 @@ void b2ValidateFreeId( b2IdPool* pool, int id )
 	B2_ASSERT( 0 );
 }
 
+void b2ValidateNonFreeId( b2IdPool* pool, int id )
+{
+	int freeCount = pool->freeArray.count;
+	for ( int i = 0; i < freeCount; ++i )
+	{
+		if ( pool->freeArray.data[i] == id )
+		{
+			B2_ASSERT( 0 );
+		}
+	}
+}
+
 #else
 
 void b2ValidateFreeId( b2IdPool* pool, int id )

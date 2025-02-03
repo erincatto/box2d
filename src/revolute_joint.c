@@ -500,21 +500,21 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 	const float L = drawSize;
 	// draw->drawPoint(pA, 3.0f, b2_colorGray40, draw->context);
 	// draw->drawPoint(pB, 3.0f, b2_colorLightBlue, draw->context);
-	draw->DrawCircle( pB, L, c1, draw->context );
+	draw->DrawCircleFcn( pB, L, c1, draw->context );
 
 	float angle = b2RelativeAngle( transformB.q, transformA.q );
 
 	b2Rot rot = b2MakeRot( angle );
 	b2Vec2 r = { L * rot.c, L * rot.s };
 	b2Vec2 pC = b2Add( pB, r );
-	draw->DrawSegment( pB, pC, c1, draw->context );
+	draw->DrawSegmentFcn( pB, pC, c1, draw->context );
 
 	if ( draw->drawJointExtras )
 	{
 		float jointAngle = b2UnwindAngle( angle - joint->referenceAngle );
 		char buffer[32];
 		snprintf( buffer, 32, " %.1f deg", 180.0f * jointAngle / B2_PI );
-		draw->DrawString( pC, buffer, b2_colorWhite, draw->context );
+		draw->DrawStringFcn( pC, buffer, b2_colorWhite, draw->context );
 	}
 
 	float lowerAngle = joint->lowerAngle + joint->referenceAngle;
@@ -528,18 +528,18 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 		b2Rot rotHi = b2MakeRot( upperAngle );
 		b2Vec2 rhi = { L * rotHi.c, L * rotHi.s };
 
-		draw->DrawSegment( pB, b2Add( pB, rlo ), c2, draw->context );
-		draw->DrawSegment( pB, b2Add( pB, rhi ), c3, draw->context );
+		draw->DrawSegmentFcn( pB, b2Add( pB, rlo ), c2, draw->context );
+		draw->DrawSegmentFcn( pB, b2Add( pB, rhi ), c3, draw->context );
 
 		b2Rot rotRef = b2MakeRot( joint->referenceAngle );
 		b2Vec2 ref = ( b2Vec2 ){ L * rotRef.c, L * rotRef.s };
-		draw->DrawSegment( pB, b2Add( pB, ref ), b2_colorBlue, draw->context );
+		draw->DrawSegmentFcn( pB, b2Add( pB, ref ), b2_colorBlue, draw->context );
 	}
 
 	b2HexColor color = b2_colorGold;
-	draw->DrawSegment( transformA.p, pA, color, draw->context );
-	draw->DrawSegment( pA, pB, color, draw->context );
-	draw->DrawSegment( transformB.p, pB, color, draw->context );
+	draw->DrawSegmentFcn( transformA.p, pA, color, draw->context );
+	draw->DrawSegmentFcn( pA, pB, color, draw->context );
+	draw->DrawSegmentFcn( transformB.p, pB, color, draw->context );
 
 	// char buffer[32];
 	// sprintf(buffer, "%.1f", b2Length(joint->impulse));

@@ -426,29 +426,31 @@ public:
 		b2World_SetGravity( m_worldId, { 0.0f, -20.0f } );
 		b2World_SetContactTuning( m_worldId, 0.25f * 360.0f, 10.0f, 3.0f );
 
-		b2Circle circle = {};
-		circle.radius = 0.25f;
-
-		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.enableHitEvents = true;
-		shapeDef.rollingResistance = 0.2f;
-
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 
-		float y = 0.5f;
+		b2Circle circle = {};
+		circle.radius = 0.5f;
 
-		for ( int i = 0; i < 1; ++i )
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.enableHitEvents = true;
+		//shapeDef.rollingResistance = 0.2f;
+		shapeDef.friction = 0.0f;
+
+		float y = 0.75f;
+
+		for ( int i = 0; i < 2; ++i )
 		{
 			bodyDef.position.y = y;
 
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			shapeDef.userData = reinterpret_cast<void*>( intptr_t( shapeIndex ) );
+			shapeDef.density = 1.0f + 4.0f * i;
 			shapeIndex += 1;
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 
-			y += 2.0f;
+			y += 1.25f;
 		}
 	}
 
@@ -488,6 +490,64 @@ public:
 };
 
 static int sampleCircleStack = RegisterSample( "Stacking", "Circle Stack", CircleStack::Create );
+
+// A simple circle stack that also shows how to collect hit events
+class CapsuleStack : public Sample
+{
+public:
+	struct Event
+	{
+		int indexA, indexB;
+	};
+
+	explicit CapsuleStack( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 5.0f };
+			g_camera.m_zoom = 6.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Segment segment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+
+		b2Capsule capsule = { { -5.0f, 0.0f }, { 5.0f, 0.0f }, 0.5f };
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		// shapeDef.rollingResistance = 0.2f;
+		shapeDef.friction = 0.0f;
+
+		float y = 0.5f;
+
+		for ( int i = 0; i < 1; ++i )
+		{
+			bodyDef.position.y = y;
+			bodyDef.linearVelocity = { 0.0f, -10.0f };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
+
+			y += 1.25f;
+		}
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new CapsuleStack( settings );
+	}
+};
+
+static int sampleCapsuleStack = RegisterSample( "Stacking", "Capsule Stack", CapsuleStack::Create );
 
 class Cliff : public Sample
 {

@@ -57,6 +57,11 @@ b2Island* b2CreateIsland( b2World* world, int setIndex )
 
 void b2DestroyIsland( b2World* world, int islandId )
 {
+	if (world->splitIslandId == islandId)
+	{
+		world->splitIslandId = B2_NULL_INDEX;
+	}
+
 	// assume island is empty
 	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
 	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, island->setIndex );
