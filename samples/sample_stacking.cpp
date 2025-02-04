@@ -511,11 +511,12 @@ public:
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 0.0f, -1.0f };
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Segment segment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
-			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+			b2Polygon polygon = b2MakeBox( 10.0f, 1.0f );
+			b2CreatePolygonShape( groundId, &shapeDef, &polygon );
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();

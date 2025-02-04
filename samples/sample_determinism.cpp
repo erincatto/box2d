@@ -91,13 +91,13 @@ public:
 
 				bodyDef.position.x = x + offset * i;
 				bodyDef.position.y = h + 2.0f * h * i;
-				
+
 				// this tests the deterministic cosine and sine functions
 				bodyDef.rotation = b2MakeRot( 0.1f * i - 1.0f );
 
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
-				if ((i & 1) == 0)
+				if ( ( i & 1 ) == 0 )
 				{
 					prevBodyId = bodyId;
 				}
@@ -121,7 +121,7 @@ public:
 		m_hash = 0;
 		m_sleepStep = -1;
 
-		//PrintTransforms();
+		// PrintTransforms();
 	}
 
 	void PrintTransforms()
@@ -138,11 +138,11 @@ public:
 		printf( "hash = 0x%08x\n", hash );
 	}
 
-	void Step(Settings& settings) override
+	void Step( Settings& settings ) override
 	{
 		Sample::Step( settings );
 
-		if (m_hash == 0)
+		if ( m_hash == 0 )
 		{
 			b2BodyEvents bodyEvents = b2World_GetBodyEvents( m_worldId );
 
@@ -153,10 +153,10 @@ public:
 				for ( int i = 0; i < bodyCount; ++i )
 				{
 					b2Transform xf = b2Body_GetTransform( m_bodies[i] );
-					//printf( "%d %.9f %.9f %.9f %.9f\n", i, xf.p.x, xf.p.y, xf.q.c, xf.q.s );
+					// printf( "%d %.9f %.9f %.9f %.9f\n", i, xf.p.x, xf.p.y, xf.q.c, xf.q.s );
 					hash = b2Hash( hash, reinterpret_cast<uint8_t*>( &xf ), sizeof( b2Transform ) );
 				}
-			
+
 				m_sleepStep = m_stepCount - 1;
 				m_hash = hash;
 				printf( "sleep step = %d, hash = 0x%08x\n", m_sleepStep, m_hash );
@@ -178,3 +178,420 @@ public:
 };
 
 static int sampleFallingHinges = RegisterSample( "Determinism", "Falling Hinges", FallingHinges::Create );
+
+#include <stdlib.h>
+
+#define WALL_THICKNESS 4.0f
+#define STANDARD_WALL_RESTITUTION 0.01f
+#define WALL_DENSITY 4.0f
+
+#define DRONE_RADIUS 1.0f
+#define DRONE_DENSITY 1.25f
+#define DRONE_LINEAR_DAMPING 1.0f
+
+enum entityType
+{
+	STANDARD_WALL_ENTITY,
+	PROJECTILE_ENTITY,
+	DRONE_ENTITY,
+};
+
+enum shapeCategory
+{
+	WALL_SHAPE = 1,
+	PROJECTILE_SHAPE = 4,
+	DRONE_SHAPE = 16,
+};
+
+typedef struct entity
+{
+	enum entityType type;
+	void* entityPtr;
+} entity;
+
+typedef struct wallEntity
+{
+	b2BodyId bodyID;
+	b2ShapeId shapeID;
+	b2Vec2 pos;
+	b2Rot rot;
+	b2Vec2 velocity;
+	b2Vec2 extent;
+	int16_t mapCellIdx;
+	bool isFloating;
+	enum entityType type;
+	bool isSuddenDeath;
+} wallEntity;
+
+typedef struct weaponInformation
+{
+	const float fireMagnitude;
+	const float recoilMagnitude;
+	const float charge;
+	const float coolDown;
+	const float maxDistance;
+	const float radius;
+	const float density;
+	const float invMass;
+	const uint8_t maxBounces;
+} weaponInformation;
+
+typedef struct droneEntity
+{
+	b2BodyId bodyID;
+	b2ShapeId shapeID;
+	weaponInformation* weaponInfo;
+	int8_t ammo;
+	float weaponCooldown;
+
+	uint8_t idx;
+	b2Vec2 initalPos;
+	b2Vec2 pos;
+	b2Vec2 lastPos;
+	b2Vec2 lastMove;
+	b2Vec2 lastAim;
+	b2Vec2 velocity;
+	b2Vec2 lastVelocity;
+	bool dead;
+} droneEntity;
+
+typedef struct projectileEntity
+{
+	uint8_t droneIdx;
+
+	b2BodyId bodyID;
+	b2ShapeId shapeID;
+	weaponInformation* weaponInfo;
+	b2Vec2 pos;
+	b2Vec2 lastPos;
+	b2Vec2 velocity;
+	float lastSpeed;
+	float distance;
+	uint8_t bounces;
+} projectileEntity;
+
+#ifndef PI
+#define PI 3.14159265358979323846f
+#endif
+
+#define INV_MASS( density, radius ) ( 1.0f / ( density * PI * radius * radius ) )
+
+#define MACHINEGUN_RADIUS 0.15f
+#define MACHINEGUN_DENSITY 3.0f
+
+weaponInformation machineGun = {
+	25.0f,
+	12.8f,
+	0.0f,
+	0.07f,
+	225.0f,
+	MACHINEGUN_RADIUS,
+	MACHINEGUN_DENSITY,
+	INV_MASS( MACHINEGUN_DENSITY, MACHINEGUN_RADIUS ),
+	2,
+};
+
+// clang-format off
+
+const char boringLayout[] = {
+    'W','W','W','W','W','W','W','W','W','W','W','W','W','W','W','W','W','W','W','W','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','O','W',
+    'W','W','W','W','W','W','W','W','W','W','W','W','W','W','W','W','W','W','W','W','W',
+};
+
+// clang-format on
+
+static inline bool b2VecEqual( const b2Vec2 v1, const b2Vec2 v2 )
+{
+	return v1.x == v2.x && v1.y == v2.y;
+}
+
+entity* createWall( b2WorldId worldID, const float posX, const float posY, uint16_t cellIdx )
+{
+	const b2Vec2 pos = { posX, posY };
+	b2BodyDef wallBodyDef = b2DefaultBodyDef();
+	wallBodyDef.position = pos;
+	b2BodyId wallBodyID = b2CreateBody( worldID, &wallBodyDef );
+	b2Vec2 extent = { WALL_THICKNESS / 2.0f, WALL_THICKNESS / 2.0f };
+	b2ShapeDef wallShapeDef = b2DefaultShapeDef();
+	wallShapeDef.density = WALL_DENSITY;
+	wallShapeDef.restitution = STANDARD_WALL_RESTITUTION;
+	wallShapeDef.filter.categoryBits = WALL_SHAPE;
+	wallShapeDef.filter.maskBits = PROJECTILE_SHAPE | DRONE_SHAPE;
+
+	wallEntity* wall = (wallEntity*)calloc( 1, sizeof( wallEntity ) );
+	wall->bodyID = wallBodyID;
+	wall->pos = pos;
+	wall->rot = b2Rot_identity;
+	wall->velocity = b2Vec2_zero;
+	wall->extent = extent;
+	wall->mapCellIdx = cellIdx;
+
+	entity* ent = (entity*)calloc( 1, sizeof( entity ) );
+	ent->type = STANDARD_WALL_ENTITY;
+	ent->entityPtr = wall;
+
+	wallShapeDef.userData = ent;
+	const b2Polygon wallPolygon = b2MakeBox( extent.x, extent.y );
+	wall->shapeID = b2CreatePolygonShape( wallBodyID, &wallShapeDef, &wallPolygon );
+	b2Body_SetUserData( wall->bodyID, ent );
+
+	return ent;
+}
+
+void setupMap( b2WorldId worldID )
+{
+	const uint8_t columns = 21;
+	const uint8_t rows = 21;
+	const char* layout = boringLayout;
+
+	uint16_t cellIdx = 0;
+	for ( int row = 0; row < rows; row++ )
+	{
+		for ( int col = 0; col < columns; col++ )
+		{
+			char cellType = layout[col + ( row * columns )];
+			if ( cellType == 'O' )
+			{
+				continue;
+			}
+
+			const float x = ( col - ( ( columns - 1 ) / 2.0f ) ) * WALL_THICKNESS;
+			const float y = ( row - ( rows - 1 ) / 2.0f ) * WALL_THICKNESS;
+
+			createWall( worldID, x, y, cellIdx );
+			cellIdx++;
+		}
+	}
+}
+
+droneEntity* createDrone( b2WorldId worldID )
+{
+	b2BodyDef droneBodyDef = b2DefaultBodyDef();
+	droneBodyDef.type = b2_dynamicBody;
+	droneBodyDef.position = b2Vec2_zero;
+	droneBodyDef.fixedRotation = true;
+	droneBodyDef.linearDamping = DRONE_LINEAR_DAMPING;
+	b2BodyId droneBodyID = b2CreateBody( worldID, &droneBodyDef );
+	b2ShapeDef droneShapeDef = b2DefaultShapeDef();
+	droneShapeDef.density = DRONE_DENSITY;
+	droneShapeDef.friction = 0.0f;
+	droneShapeDef.restitution = 0.3f;
+	droneShapeDef.filter.categoryBits = DRONE_SHAPE;
+	droneShapeDef.filter.maskBits = WALL_SHAPE | PROJECTILE_SHAPE | DRONE_SHAPE;
+	droneShapeDef.enableContactEvents = true;
+	// droneShapeDef.enableSensorEvents = true;
+	const b2Circle droneCircle = { b2Vec2_zero, DRONE_RADIUS };
+
+	droneEntity* drone = (droneEntity*)calloc( 1, sizeof( droneEntity ) );
+	drone->bodyID = droneBodyID;
+	drone->weaponInfo = &machineGun;
+	drone->ammo = -1;
+	drone->weaponCooldown = 0.0f;
+	drone->initalPos = droneBodyDef.position;
+	drone->pos = droneBodyDef.position;
+	drone->lastPos = b2Vec2_zero;
+	drone->lastMove = b2Vec2_zero;
+	drone->lastAim = { 0.0f, -1.0f };
+	drone->velocity = b2Vec2_zero;
+	drone->lastVelocity = b2Vec2_zero;
+	drone->dead = false;
+
+	entity* ent = (entity*)calloc( 1, sizeof( entity ) );
+	ent->type = DRONE_ENTITY;
+	ent->entityPtr = drone;
+
+	droneShapeDef.userData = ent;
+	drone->shapeID = b2CreateCircleShape( droneBodyID, &droneShapeDef, &droneCircle );
+	b2Body_SetUserData( drone->bodyID, ent );
+
+	return drone;
+}
+
+void createProjectile( b2WorldId worldID, droneEntity* drone, const b2Vec2 normAim )
+{
+	b2BodyDef projectileBodyDef = b2DefaultBodyDef();
+	projectileBodyDef.type = b2_dynamicBody;
+	projectileBodyDef.fixedRotation = true;
+	projectileBodyDef.isBullet = true;
+	projectileBodyDef.enableSleep = false;
+	float radius = drone->weaponInfo->radius;
+	projectileBodyDef.position = b2MulAdd( drone->pos, 1.0f + ( radius * 1.5f ), normAim );
+	b2BodyId projectileBodyID = b2CreateBody( worldID, &projectileBodyDef );
+	b2ShapeDef projectileShapeDef = b2DefaultShapeDef();
+	projectileShapeDef.enableContactEvents = true;
+	projectileShapeDef.density = drone->weaponInfo->density;
+	projectileShapeDef.friction = 0.0f;
+	projectileShapeDef.restitution = 1.0f;
+	projectileShapeDef.filter.categoryBits = PROJECTILE_SHAPE;
+	projectileShapeDef.filter.maskBits = WALL_SHAPE | PROJECTILE_SHAPE | DRONE_SHAPE;
+	const b2Circle projectileCircle = { b2Vec2_zero, radius };
+
+	b2ShapeId projectileShapeID = b2CreateCircleShape( projectileBodyID, &projectileShapeDef, &projectileCircle );
+
+	b2Vec2 fire = b2MulSV( machineGun.fireMagnitude, normAim );
+	b2Body_ApplyLinearImpulseToCenter( projectileBodyID, fire, true );
+
+	projectileEntity* projectile = (projectileEntity*)calloc( 1, sizeof( projectileEntity ) );
+	projectile->droneIdx = drone->idx;
+	projectile->bodyID = projectileBodyID;
+	projectile->shapeID = projectileShapeID;
+	projectile->weaponInfo = drone->weaponInfo;
+	projectile->pos = projectileBodyDef.position;
+	projectile->lastPos = projectileBodyDef.position;
+	projectile->velocity = b2Body_GetLinearVelocity( projectileBodyID );
+	projectile->lastSpeed = b2Length( projectile->velocity );
+	projectile->distance = 0.0f;
+	projectile->bounces = 0;
+
+	entity* ent = (entity*)calloc( 1, sizeof( entity ) );
+	ent->type = PROJECTILE_ENTITY;
+	ent->entityPtr = projectile;
+
+	b2Body_SetUserData( projectile->bodyID, ent );
+	b2Shape_SetUserData( projectile->shapeID, ent );
+}
+
+void droneShoot( b2WorldId worldID, droneEntity* drone, const b2Vec2 aim )
+{
+	if ( drone->weaponCooldown != 0.0f )
+	{
+		return;
+	}
+
+	drone->weaponCooldown = drone->weaponInfo->coolDown;
+
+	b2Vec2 normAim = drone->lastAim;
+	if ( !b2VecEqual( aim, b2Vec2_zero ) )
+	{
+		normAim = b2Normalize( aim );
+	}
+	b2Vec2 recoil = b2MulSV( -drone->weaponInfo->recoilMagnitude, normAim );
+	b2Body_ApplyLinearImpulseToCenter( drone->bodyID, recoil, true );
+
+	createProjectile( worldID, drone, normAim );
+}
+
+#if 0
+int main( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.gravity = ( b2Vec2 ){ .x = 0.0f, .y = 0.0f };
+	b2WorldId worldID = b2CreateWorld( &worldDef );
+
+	setupMap( worldID );
+	droneEntity* drone = createDrone( worldID );
+
+	while ( true )
+	{
+		float aimX = tanhf( rand() / (float)RAND_MAX );
+		float aimY = tanhf( rand() / (float)RAND_MAX );
+
+		droneShoot( worldID, drone, ( b2Vec2 ){ .x = aimX, .y = aimY } );
+
+		b2World_Step( worldID, 1.0f / 10.0f, 1 );
+
+		b2BodyEvents events = b2World_GetBodyEvents( worldID );
+		for ( int i = 0; i < events.moveCount; i++ )
+		{
+			const b2BodyMoveEvent* event = events.moveEvents + i;
+			assert( b2Body_IsValid( event->bodyId ) );
+			entity* ent = (entity*)event->userData;
+			if ( ent == NULL )
+			{
+				continue;
+			}
+
+			const b2Vec2 pos = event->transform.p;
+			// check if the body is beyond the outside bounds of map
+			if ( pos.x < -48.0f || pos.x > 48.0f || pos.y < -48.0f || pos.y > 48.0f )
+			{
+				printf( "body is outside of wall bounds: (%f, %f)\n", pos.x, pos.y );
+				exit( 1 );
+			}
+		}
+	}
+}
+#endif
+
+class BulletBug : public Sample
+{
+public:
+	explicit BulletBug( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 0.0f };
+			g_camera.m_zoom = 80.0f;
+		}
+
+		b2World_SetGravity( m_worldId, b2Vec2_zero );
+
+		setupMap( m_worldId );
+		m_drone = createDrone( m_worldId );
+	}
+
+	void Step( Settings& settings ) override
+	{
+		float aimX = tanhf( rand() / (float)RAND_MAX );
+		float aimY = tanhf( rand() / (float)RAND_MAX );
+
+		droneShoot( m_worldId, m_drone, { aimX, aimY } );
+
+		settings.hertz = 10.0f;
+		settings.subStepCount = 1;
+
+		Sample::Step( settings );
+
+		//b2World_Step( m_worldId, 1.0f / 10.0f, 1 );
+
+		b2BodyEvents events = b2World_GetBodyEvents( m_worldId );
+		for ( int i = 0; i < events.moveCount; i++ )
+		{
+			const b2BodyMoveEvent* event = events.moveEvents + i;
+			assert( b2Body_IsValid( event->bodyId ) );
+			entity* ent = (entity*)event->userData;
+			if ( ent == NULL )
+			{
+				continue;
+			}
+
+			const b2Vec2 pos = event->transform.p;
+			// check if the body is beyond the outside bounds of map
+			if ( pos.x < -58.0f || pos.x > 58.0f || pos.y < -58.0f || pos.y > 58.0f )
+			{
+				printf( "body is outside of wall bounds: (%f, %f)\n", pos.x, pos.y );
+				settings.pause = true;
+				//exit( 1 );
+			}
+		}
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new BulletBug( settings );
+	}
+
+	droneEntity* m_drone;
+};
+
+static int sampleBulletBug = RegisterSample( "Bugs", "Bullet Bug", BulletBug::Create );

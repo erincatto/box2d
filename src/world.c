@@ -2488,6 +2488,107 @@ b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2
 	return treeStats;
 }
 
+static b2AABB b2ComputerShapeBounds( const b2ShapeProxy* shape, b2Transform xf )
+{
+	B2_ASSERT( shape->count > 0 );
+	b2Vec2 lower = b2TransformPoint( xf, shape->points[0] );
+	b2Vec2 upper = lower;
+
+	for ( int i = 1; i < shape->count; ++i )
+	{
+		b2Vec2 v = b2TransformPoint( xf, shape->points[i] );
+		lower = b2Min( lower, v );
+		upper = b2Max( upper, v );
+	}
+
+	b2Vec2 r = { shape->radius, shape->radius };
+	lower = b2Sub( lower, r );
+	upper = b2Add( upper, r );
+
+	b2AABB aabb = { lower, upper };
+	return aabb;
+}
+
+typedef struct b2CharacterCallbackContext
+{
+	b2World* world;
+	b2QueryFilter filter;
+	b2ShapeProxy proxy;
+	b2Transform transform;
+	void* userContext;
+} b2CharacterCallbackContext;
+
+static bool b2CharacterOverlapCallback( int proxyId, int shapeId, void* context )
+{
+	B2_UNUSED( proxyId );
+
+	WorldOverlapContext* worldContext = context;
+	b2World* world = worldContext->world;
+
+	b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+
+	b2Filter shapeFilter = shape->filter;
+	b2QueryFilter queryFilter = worldContext->filter;
+
+	if ( ( shapeFilter.categoryBits & queryFilter.maskBits ) == 0 || ( shapeFilter.maskBits & queryFilter.categoryBits ) == 0 )
+	{
+		return true;
+	}
+
+	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
+	b2Transform transform = b2GetBodyTransformQuick( world, body );
+
+	b2DistanceInput input;
+	input.proxyA = worldContext->proxy;
+	input.proxyB = b2MakeShapeDistanceProxy( shape );
+	input.transformA = worldContext->transform;
+	input.transformB = transform;
+	input.useRadii = true;
+
+	b2SimplexCache cache = { 0 };
+	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
+
+	if ( output.distance > 0.0f )
+	{
+		return true;
+	}
+
+	b2ShapeId id = { shape->id + 1, world->worldId, shape->generation };
+	bool result = worldContext->fcn( id, worldContext->userContext );
+	return result;
+}
+
+b2Vec2 b2World_MoveCharacter( b2WorldId worldId, const b2ShapeProxy* shapeProxy, b2Transform originTransform, b2Vec2 translation,
+							  b2QueryFilter filter )
+{
+	B2_ASSERT( b2IsValidVec2( originTransform.p ) );
+	B2_ASSERT( b2IsValidRotation( originTransform.q ) );
+	B2_ASSERT( b2IsValidVec2( translation ) );
+
+	b2Vec2 position = originTransform.p;
+
+	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return position;
+	}
+
+	b2AABB aabb = b2ComputerShapeBounds( shapeProxy, originTransform );
+	b2CharacterCallbackContext context = {
+		world, filter, *shapeProxy, originTransform,
+	};
+
+	for ( int i = 0; i < b2_bodyTypeCount; ++i )
+	{
+		b2TreeStats treeResult =
+			b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, b2CharacterOverlapCallback, &context );
+		B2_UNUSED( treeResult );
+	}
+
+	return originTransform.p;
+}
+
 #if 0
 
 void b2World_ShiftOrigin(b2WorldId worldId, b2Vec2 newOrigin)

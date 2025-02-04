@@ -52,23 +52,23 @@ B2_API b2ContactEvents b2World_GetContactEvents( b2WorldId worldId );
 
 /// Overlap test for all shapes that *potentially* overlap the provided AABB
 B2_API b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter filter, b2OverlapResultFcn* fcn,
-											  void* context );
+										void* context );
 
 /// Overlap test for for all shapes that overlap the provided point.
-B2_API b2TreeStats b2World_OverlapPoint( b2WorldId worldId, b2Vec2 point, b2Transform transform,
-												b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_OverlapPoint( b2WorldId worldId, b2Vec2 point, b2Transform transform, b2QueryFilter filter,
+										 b2OverlapResultFcn* fcn, void* context );
 
 /// Overlap test for for all shapes that overlap the provided circle. A zero radius may be used for a point query.
-B2_API b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2Transform transform,
-												b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2Transform transform, b2QueryFilter filter,
+										  b2OverlapResultFcn* fcn, void* context );
 
 /// Overlap test for all shapes that overlap the provided capsule
 B2_API b2TreeStats b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transform transform,
-												 b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
+										   b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
 
 /// Overlap test for all shapes that overlap the provided polygon
 B2_API b2TreeStats b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform transform,
-												 b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
+										   b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
 
 /// Cast a ray into the world to collect shapes in the path of the ray.
 /// Your callback function controls whether you get the closest point, any point, or n-points.
@@ -82,7 +82,7 @@ B2_API b2TreeStats b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* p
 /// @param context A user context that is passed along to the callback function
 ///	@return traversal performance counters
 B2_API b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter,
-										  b2CastResultFcn* fcn, void* context );
+									b2CastResultFcn* fcn, void* context );
 
 /// Cast a ray into the world to collect the closest hit. This is a convenience function.
 /// This is less general than b2World_CastRay() and does not allow for custom filtering.
@@ -90,18 +90,24 @@ B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2V
 
 /// Cast a circle through the world. Similar to a cast ray except that a circle is cast instead of a point.
 ///	@see b2World_CastRay
-B2_API b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Transform originTransform,
-											 b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Transform originTransform, b2Vec2 translation,
+									   b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
 
 /// Cast a capsule through the world. Similar to a cast ray except that a capsule is cast instead of a point.
 ///	@see b2World_CastRay
 B2_API b2TreeStats b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transform originTransform,
-											  b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
+										b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
 
 /// Cast a polygon through the world. Similar to a cast ray except that a polygon is cast instead of a point.
 ///	@see b2World_CastRay
 B2_API b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform originTransform,
-											  b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
+										b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
+
+/// Cast a character through the world. This resolves initial overlap then attempts to reach the target. The character can be
+/// an arbitrary rounded polygon. It is recommended to use a capsule. The minimum radius is 0.02m (2 centimeters).
+/// Returns the final position.
+B2_API b2Vec2 b2World_MoveCharacter( b2WorldId worldId, const b2ShapeProxy* shapeProxy, b2Transform originTransform,
+									 b2Vec2 translation, b2QueryFilter filter );
 
 /// Enable/disable sleep. If your application does not need sleeping, you can gain some performance
 /// by disabling sleep completely at the world level.
@@ -562,7 +568,7 @@ B2_API float b2Shape_GetRestitution( b2ShapeId shapeId );
 /// @see b2ShapeDef::material
 B2_API void b2Shape_SetMaterial( b2ShapeId shapeId, int material );
 
-/// Get the shape material identifier 
+/// Get the shape material identifier
 B2_API int b2Shape_GetMaterial( b2ShapeId shapeId );
 
 /// Get the shape filter

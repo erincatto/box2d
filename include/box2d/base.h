@@ -117,7 +117,8 @@ B2_API uint64_t b2GetTicks( void );
 /// Get the milliseconds passed from an initial tick value.
 B2_API float b2GetMilliseconds( uint64_t ticks );
 
-/// Get the milliseconds passed from an initial tick value.
+/// Get the milliseconds passed from an initial tick value. Resets the passed in
+/// value to the current tick value.
 B2_API float b2GetMillisecondsAndReset( uint64_t* ticks );
 
 /// Yield to be used in a busy loop.
