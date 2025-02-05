@@ -458,6 +458,10 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 		fastBodySim->rotation0 = q;
 		fastBodySim->center0 = c;
 
+		// Update body move event
+		b2BodyMoveEvent* event = b2BodyMoveEventArray_Get( &world->bodyMoveEvents, bodySimIndex );
+		event->transform = transform;
+
 		// Prepare AABBs for broad-phase.
 		// Even though a body is fast, it may not move much. So the
 		// AABB may not need enlargement.

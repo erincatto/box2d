@@ -183,23 +183,6 @@ float b2GetRevoluteJointTorque( b2World* world, b2JointSim* base )
 // J = [0 0 -1 0 0 1]
 // K = invI1 + invI2
 
-// Body State
-// The solver operates on the body state. The body state array does not hold static bodies. Static bodies are shared
-// across worker threads. It would be okay to read their states, but writing to them would cause cache thrashing across
-// workers, even if the values don't change.
-// This causes some trouble when computing anchors. I rotate the anchors using the body rotation every sub-step. For static
-// bodies the anchor doesn't rotate. Body A or B could be static and this can lead to lots of branching. This branching
-// should be minimized.
-//
-// Solution 1:
-// Use delta rotations. This means anchors need to be prepared in world space. The delta rotation for static bodies will be
-// identity. Base separation and angles need to be computed. Manifolds will be behind a frame, but that is probably best if bodies
-// move fast.
-//
-// Solution 2:
-// Use full rotation. The anchors for static bodies will be in world space while the anchors for dynamic bodies will be in local
-// space. Potentially confusing and bug prone.
-
 void b2PrepareRevoluteJoint( b2JointSim* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_revoluteJoint );

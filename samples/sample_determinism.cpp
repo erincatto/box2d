@@ -434,7 +434,10 @@ void createProjectile( b2WorldId worldID, droneEntity* drone, const b2Vec2 normA
 	projectileBodyDef.isBullet = true;
 	projectileBodyDef.enableSleep = false;
 	float radius = drone->weaponInfo->radius;
+
 	projectileBodyDef.position = b2MulAdd( drone->pos, 1.0f + ( radius * 1.5f ), normAim );
+	printf( "projectile: %g %g\n", projectileBodyDef.position.x, projectileBodyDef.position.y );
+
 	b2BodyId projectileBodyID = b2CreateBody( worldID, &projectileBodyDef );
 	b2ShapeDef projectileShapeDef = b2DefaultShapeDef();
 	projectileShapeDef.enableContactEvents = true;
@@ -560,6 +563,16 @@ public:
 		settings.hertz = 10.0f;
 		settings.subStepCount = 1;
 
+		g_draw.DrawPoint( { -40.0f, -40.0f }, 5.0f, b2_colorViolet );
+		g_draw.DrawPoint( { 40.0f, -40.0f }, 5.0f, b2_colorViolet );
+		g_draw.DrawPoint( { -40.0f, 40.0f }, 5.0f, b2_colorViolet );
+		g_draw.DrawPoint( { 40.0f, 40.0f }, 5.0f, b2_colorViolet );
+
+		if (m_wasOut)
+		{
+			g_draw.DrawPoint( m_pos, 5.0f, b2_colorLightBlue );
+		}
+
 		Sample::Step( settings );
 
 		//b2World_Step( m_worldId, 1.0f / 10.0f, 1 );
@@ -576,14 +589,20 @@ public:
 			}
 
 			const b2Vec2 pos = event->transform.p;
+			m_pos = pos;
+
 			// check if the body is beyond the outside bounds of map
-			if ( pos.x < -58.0f || pos.x > 58.0f || pos.y < -58.0f || pos.y > 58.0f )
+			if ( pos.x < -48.0f || pos.x > 48.0f || pos.y < -48.0f || pos.y > 48.0f )
 			{
 				printf( "body is outside of wall bounds: (%f, %f)\n", pos.x, pos.y );
+				m_wasOut = true;
+				m_pos = pos;
 				settings.pause = true;
 				//exit( 1 );
 			}
 		}
+
+		g_draw.DrawPoint( m_pos, 10.0f, b2_colorWhite );
 	}
 
 	static Sample* Create( Settings& settings )
@@ -591,6 +610,8 @@ public:
 		return new BulletBug( settings );
 	}
 
+	b2Vec2 m_pos = {0.0f, 0.0f};
+	bool m_wasOut = false;
 	droneEntity* m_drone;
 };
 
