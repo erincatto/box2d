@@ -292,13 +292,12 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 				// speculative bias
 				velocityBias = s * inv_h;
 			}
-			//else if ( useBias )
-			//{
-			//	velocityBias = b2MaxFloat( softness.biasRate * s, -pushout );
-			//	massScale = softness.massScale;
-			//	impulseScale = softness.impulseScale;
-			//}
-			B2_UNUSED( useBias, pushout, softness );
+			else if ( useBias )
+			{
+				velocityBias = b2MaxFloat( softness.biasRate * s, -pushout );
+				massScale = softness.massScale;
+				impulseScale = softness.impulseScale;
+			}
 
 			// relative normal velocity at contact
 			b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );

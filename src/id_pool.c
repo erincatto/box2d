@@ -60,7 +60,7 @@ void b2ValidateFreeId( b2IdPool* pool, int id )
 	B2_ASSERT( 0 );
 }
 
-void b2ValidateNonFreeId( b2IdPool* pool, int id )
+void b2ValidateUsedId( b2IdPool* pool, int id )
 {
 	int freeCount = pool->freeArray.count;
 	for ( int i = 0; i < freeCount; ++i )
@@ -76,8 +76,11 @@ void b2ValidateNonFreeId( b2IdPool* pool, int id )
 
 void b2ValidateFreeId( b2IdPool* pool, int id )
 {
-	B2_UNUSED( pool );
-	B2_UNUSED( id );
+	B2_UNUSED( pool, id );
 }
 
+void b2ValidateUsedId( b2IdPool* pool, int id )
+{
+	B2_UNUSED( pool, id );
+}
 #endif

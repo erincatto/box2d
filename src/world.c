@@ -2879,6 +2879,8 @@ void b2ValidateConnectivity( b2World* world )
 			continue;
 		}
 
+		b2ValidateUsedId( &world->bodyIdPool, bodyIndex );
+
 		B2_ASSERT( bodyIndex == body->id );
 
 		// Need to get the root island because islands are not merged until the next time step
