@@ -2576,7 +2576,10 @@ b2Vec2 b2World_MoveCharacter( b2WorldId worldId, const b2ShapeProxy* shapeProxy,
 
 	b2AABB aabb = b2ComputerShapeBounds( shapeProxy, originTransform );
 	b2CharacterCallbackContext context = {
-		world, filter, *shapeProxy, originTransform,
+		world,
+		filter,
+		*shapeProxy,
+		originTransform,
 	};
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
@@ -2586,7 +2589,7 @@ b2Vec2 b2World_MoveCharacter( b2WorldId worldId, const b2ShapeProxy* shapeProxy,
 		B2_UNUSED( treeResult );
 	}
 
-	return originTransform.p;
+	return b2Add( originTransform.p, translation );
 }
 
 #if 0
