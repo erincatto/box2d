@@ -1429,6 +1429,12 @@ public:
 			const b2BodyMoveEvent* event = events.moveEvents + i;
 			g_draw.DrawTransform( event->transform );
 
+			b2Transform transform = b2Body_GetTransform( event->bodyId );
+			B2_ASSERT( transform.p.x == event->transform.p.x );
+			B2_ASSERT( transform.p.y == event->transform.p.y );
+			B2_ASSERT( transform.q.c == event->transform.q.c );
+			B2_ASSERT( transform.q.s == event->transform.q.s );
+
 			// this shows a somewhat contrived way to track body sleeping
 			b2BodyId* bodyId = static_cast<b2BodyId*>( event->userData );
 			ptrdiff_t diff = bodyId - m_bodyIds;

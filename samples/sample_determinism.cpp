@@ -560,9 +560,6 @@ public:
 
 		droneShoot( m_worldId, m_drone, { aimX, aimY } );
 
-		settings.hertz = 10.0f;
-		settings.subStepCount = 1;
-
 		g_draw.DrawPoint( { -40.0f, -40.0f }, 5.0f, b2_colorViolet );
 		g_draw.DrawPoint( { 40.0f, -40.0f }, 5.0f, b2_colorViolet );
 		g_draw.DrawPoint( { -40.0f, 40.0f }, 5.0f, b2_colorViolet );
