@@ -400,7 +400,7 @@ public:
 
 	void UpdateUI() override
 	{
-		float height = 90.0f;
+		float height = 160.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
 
@@ -421,6 +421,18 @@ public:
 				m_visitorBodyId = b2_nullBodyId;
 				m_visitorShapeId = b2_nullShapeId;
 			}
+			else
+			{
+				bool enabled = b2Body_IsEnabled( m_visitorBodyId );
+				if ( enabled == true && ImGui::Button( "disable visitor" ) )
+				{
+					b2Body_Disable( m_visitorBodyId );
+				}
+				else if ( enabled == false && ImGui::Button( "enable visitor" ) )
+				{
+					b2Body_Enable( m_visitorBodyId );
+				}
+			}
 		}
 
 		if ( B2_IS_NULL( m_sensorBodyId ) )
@@ -437,6 +449,18 @@ public:
 				b2DestroyBody( m_sensorBodyId );
 				m_sensorBodyId = b2_nullBodyId;
 				m_sensorShapeId = b2_nullShapeId;
+			}
+			else
+			{
+				bool enabled = b2Body_IsEnabled( m_sensorBodyId );
+				if ( enabled == true && ImGui::Button( "disable sensor" ) )
+				{
+					b2Body_Disable( m_sensorBodyId );
+				}
+				else if ( enabled == false && ImGui::Button( "enable sensor" ) )
+				{
+					b2Body_Enable( m_sensorBodyId );
+				}
 			}
 		}
 
@@ -1360,6 +1384,7 @@ public:
 		for ( int32_t i = 0; i < 10 && m_count < e_count; ++i )
 		{
 			bodyDef.position = { x, y };
+			bodyDef.isBullet = (m_count % 12 == 0);
 			bodyDef.userData = m_bodyIds + m_count;
 			m_bodyIds[m_count] = b2CreateBody( m_worldId, &bodyDef );
 			m_sleeping[m_count] = false;
@@ -1466,8 +1491,8 @@ public:
 		return new BodyMove( settings );
 	}
 
-	b2BodyId m_bodyIds[e_count];
-	bool m_sleeping[e_count];
+	b2BodyId m_bodyIds[e_count] = {};
+	bool m_sleeping[e_count] = {};
 	int m_count;
 	int m_sleepCount;
 	b2Vec2 m_explosionPosition;

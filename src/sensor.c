@@ -146,7 +146,17 @@ static void b2SensorTask( int startIndex, int endIndex, uint32_t threadIndex, vo
 		sensor->overlaps2 = temp;
 		b2ShapeRefArray_Clear( &sensor->overlaps2 );
 
-		b2Transform transform = b2GetBodyTransform( world, sensorShape->bodyId );
+		b2Body* body = b2BodyArray_Get( &world->bodies, sensorShape->bodyId );
+		if (body->setIndex == b2_disabledSet)
+		{
+			if (sensor->overlaps1.count != 0)
+			{
+				b2SetBit( &taskContext->eventBits, sensorIndex );
+			}
+			continue;
+		}
+
+		b2Transform transform = b2GetBodyTransformQuick( world, body );
 
 		struct b2SensorQueryContext queryContext = {
 			.world = world,
