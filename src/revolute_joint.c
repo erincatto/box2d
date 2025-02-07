@@ -350,9 +350,9 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 			}
 
 			float Cdot = wB - wA;
-			float impulse = -massScale * joint->axialMass * ( Cdot + bias ) - impulseScale * joint->lowerImpulse;
 			float oldImpulse = joint->lowerImpulse;
-			joint->lowerImpulse = b2MaxFloat( joint->lowerImpulse + impulse, 0.0f );
+			float impulse = -massScale * joint->axialMass * ( Cdot + bias ) - impulseScale * oldImpulse;
+			joint->lowerImpulse = b2MaxFloat( oldImpulse + impulse, 0.0f );
 			impulse = joint->lowerImpulse - oldImpulse;
 
 			wA -= iA * impulse;
@@ -381,9 +381,9 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 
 			// sign flipped on Cdot
 			float Cdot = wA - wB;
-			float impulse = -massScale * joint->axialMass * ( Cdot + bias ) - impulseScale * joint->lowerImpulse;
 			float oldImpulse = joint->upperImpulse;
-			joint->upperImpulse = b2MaxFloat( joint->upperImpulse + impulse, 0.0f );
+			float impulse = -massScale * joint->axialMass * ( Cdot + bias ) - impulseScale * oldImpulse;
+			joint->upperImpulse = b2MaxFloat( oldImpulse + impulse, 0.0f );
 			impulse = joint->upperImpulse - oldImpulse;
 
 			// sign flipped on applied impulse
