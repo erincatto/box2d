@@ -526,6 +526,7 @@ static void UpdateUI()
 int main( int, char** )
 {
 #if defined( _WIN32 )
+#if defined( _MSC_VER )
 	// Enable memory-leak reports
 	_CrtSetReportMode( _CRT_WARN, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_FILE );
 	_CrtSetReportFile( _CRT_WARN, _CRTDBG_FILE_STDOUT );
@@ -534,6 +535,7 @@ int main( int, char** )
 	// How to break at the leaking allocation, in the watch window enter this variable
 	// and set it to the allocation number in {}. Do this at the first line in main.
 	// {,,ucrtbased.dll}_crtBreakAlloc = <allocation number>
+#endif
 #endif
 
 	// Install memory hooks
@@ -773,7 +775,9 @@ int main( int, char** )
 	s_settings.Save();
 
 #if defined( _WIN32 )
+#if defined( _MSC_VER )
 	_CrtDumpMemoryLeaks();
+#endif
 #endif
 
 	return 0;
