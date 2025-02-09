@@ -614,14 +614,6 @@ public:
 
 static int sampleBulletBug = RegisterSample( "Bugs", "Bullet Bug", BulletBug::Create );
 
-bool hit = false;
-bool callback( b2ShapeId id, void* context )
-{
-	printf( "hit" );
-	hit = true;
-	return false;
-}
-
 class OverlapBug : public Sample
 {
 public:
@@ -637,11 +629,18 @@ public:
 		float boxSize = 0.5f;
 		b2BodyDef body_def = b2DefaultBodyDef();
 		body_def.type = b2_staticBody;
-		body_def.position = { x, y };
+		body_def.position = { m_x, m_y };
 		b2BodyId body_id = b2CreateBody( m_worldId, &body_def );
 		b2Polygon polygon = b2MakeSquare( boxSize );
 		b2ShapeDef shape_def = b2DefaultShapeDef();
 		b2CreatePolygonShape( body_id, &shape_def, &polygon );
+	}
+
+	static bool Callback( b2ShapeId id, void* context )
+	{
+		OverlapBug* self = static_cast<OverlapBug*>( context );
+		self->m_overlap = true;
+		return false;
 	}
 
 	void Step( Settings& settings ) override
@@ -650,8 +649,8 @@ public:
 
 		float testSize = 0.4f;
 		b2Polygon test_polygon = b2MakeSquare( testSize );
-		b2Transform tfm = { { x, y }, { 1.0f, 0.0f } };
-		b2World_OverlapPolygon( m_worldId, &test_polygon, tfm, b2DefaultQueryFilter(), callback, nullptr );
+		b2Transform tfm = { { m_x, m_y }, { 1.0f, 0.0f } };
+		b2World_OverlapPolygon( m_worldId, &test_polygon, tfm, b2DefaultQueryFilter(), OverlapBug::Callback, this );
 
 		b2Vec2 vertices[4];
 		vertices[0] = b2TransformPoint(tfm, test_polygon.vertices[0]);
@@ -659,6 +658,15 @@ public:
 		vertices[2] = b2TransformPoint(tfm, test_polygon.vertices[2]);
 		vertices[3] = b2TransformPoint(tfm, test_polygon.vertices[3]);
 		g_draw.DrawPolygon(vertices, 4, b2_colorOrange);
+
+		if ( m_overlap )
+		{
+			DrawTextLine( "overlap" );
+		}
+		else
+		{
+			DrawTextLine( "no overlap" );
+		}
 	}
 
 	static Sample* Create( Settings& settings )
@@ -666,8 +674,9 @@ public:
 		return new OverlapBug( settings );
 	}
 
-	float x = 3.0f;
-	float y = 5.0f;
+	float m_x = 3.0f;
+	float m_y = 5.0f;
+	bool m_overlap = false;
 };
 
 static int sampleSingleBox = RegisterSample( "Bugs", "Overlap", OverlapBug::Create );
