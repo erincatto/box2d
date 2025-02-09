@@ -519,7 +519,7 @@ static void UpdateUI()
 
 		ImGui::End();
 
-		s_sample->UpdateUI();
+		s_sample->UpdateGui();
 	}
 }
 

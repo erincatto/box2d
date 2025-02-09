@@ -172,7 +172,7 @@ public:
 		m_stepCount = 0;
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 155.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -404,7 +404,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 100.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -521,7 +521,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 240.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -855,7 +855,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 100.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -1200,7 +1200,7 @@ public:
 		m_bodyIds.clear();
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 80.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -1324,7 +1324,7 @@ public:
 		b2Body_ApplyMassFromShapes( bodyId );
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 230.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -1668,7 +1668,7 @@ public:
 		m_impulse = 10.0f;
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 160.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );

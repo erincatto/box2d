@@ -613,3 +613,61 @@ public:
 };
 
 static int sampleBulletBug = RegisterSample( "Bugs", "Bullet Bug", BulletBug::Create );
+
+bool hit = false;
+bool callback( b2ShapeId id, void* context )
+{
+	printf( "hit" );
+	hit = true;
+	return false;
+}
+
+class OverlapBug : public Sample
+{
+public:
+	explicit OverlapBug( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 2.5f };
+			g_camera.m_zoom = 3.5f;
+		}
+
+		float boxSize = 0.5f;
+		b2BodyDef body_def = b2DefaultBodyDef();
+		body_def.type = b2_staticBody;
+		body_def.position = { x, y };
+		b2BodyId body_id = b2CreateBody( m_worldId, &body_def );
+		b2Polygon polygon = b2MakeSquare( boxSize );
+		b2ShapeDef shape_def = b2DefaultShapeDef();
+		b2CreatePolygonShape( body_id, &shape_def, &polygon );
+	}
+
+	void Step( Settings& settings ) override
+	{
+		Sample::Step( settings );
+
+		float testSize = 0.4f;
+		b2Polygon test_polygon = b2MakeSquare( testSize );
+		b2Transform tfm = { { x, y }, { 1.0f, 0.0f } };
+		b2World_OverlapPolygon( m_worldId, &test_polygon, tfm, b2DefaultQueryFilter(), callback, nullptr );
+
+		b2Vec2 vertices[4];
+		vertices[0] = b2TransformPoint(tfm, test_polygon.vertices[0]);
+		vertices[1] = b2TransformPoint(tfm, test_polygon.vertices[1]);
+		vertices[2] = b2TransformPoint(tfm, test_polygon.vertices[2]);
+		vertices[3] = b2TransformPoint(tfm, test_polygon.vertices[3]);
+		g_draw.DrawPolygon(vertices, 4, b2_colorOrange);
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new OverlapBug( settings );
+	}
+
+	float x = 3.0f;
+	float y = 5.0f;
+};
+
+static int sampleSingleBox = RegisterSample( "Bugs", "Overlap", OverlapBug::Create );

@@ -2073,14 +2073,15 @@ static bool TreeOverlapCallback( int proxyId, int shapeId, void* context )
 	b2DistanceInput input;
 	input.proxyA = worldContext->proxy;
 	input.proxyB = b2MakeShapeDistanceProxy( shape );
-	input.transformA = worldContext->transform;
-	input.transformB = transform;
+	input.transformA = b2Transform_identity;
+	input.transformB = b2InvMulTransforms(worldContext->transform, transform);
 	input.useRadii = true;
 
 	b2SimplexCache cache = { 0 };
 	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
 
-	if ( output.distance > 0.0f )
+	float tolerance = 0.1f * B2_LINEAR_SLOP;
+	if ( output.distance > tolerance )
 	{
 		return true;
 	}

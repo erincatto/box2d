@@ -46,7 +46,7 @@ public:
 
 	void DrawTitle( const char* string );
 	virtual void Step( Settings& settings );
-	virtual void UpdateUI()
+	virtual void UpdateGui()
 	{
 	}
 	virtual void Keyboard( int )
