@@ -1682,6 +1682,7 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 	b2ContactConstraintSIMD* constraints = context->graph->colors[colorIndex].simdConstraints;
 	b2FloatW inv_h = b2SplatW( context->inv_h );
 	b2FloatW minBiasVel = b2SplatW( -context->world->contactMaxPushSpeed );
+	b2FloatW oneW = b2SplatW( 1.0f );
 
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
@@ -1700,7 +1701,7 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 		else
 		{
 			biasRate = b2ZeroW();
-			massScale = b2SplatW( 1.0f );
+			massScale = oneW;
 			impulseScale = b2ZeroW();
 		}
 
@@ -1726,6 +1727,9 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW softBias = b2MaxW( b2MulW( biasRate, s ), minBiasVel );
 			b2FloatW bias = b2BlendW( softBias, specBias, mask );
 
+			b2FloatW pointMassScale = b2BlendW( massScale, oneW, mask );
+			b2FloatW pointImpulseScale = b2BlendW( impulseScale, b2ZeroW(), mask );
+
 			// fixed anchors for Jacobians
 			b2Vec2W rA = c->anchorA1;
 			b2Vec2W rB = c->anchorB1;
@@ -1736,8 +1740,8 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW vn = b2AddW( b2MulW( dvx, c->normal.X ), b2MulW( dvy, c->normal.Y ) );
 
 			// Compute normal impulse
-			b2FloatW negImpulse = b2AddW( b2MulW( c->normalMass1, b2MulW( massScale, b2AddW( vn, bias ) ) ),
-										  b2MulW( impulseScale, c->normalImpulse1 ) );
+			b2FloatW negImpulse = b2AddW( b2MulW( c->normalMass1, b2MulW( pointMassScale, b2AddW( vn, bias ) ) ),
+										  b2MulW( pointImpulseScale, c->normalImpulse1 ) );
 
 			// Clamp the accumulated impulse
 			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse1, negImpulse ), b2ZeroW() );
@@ -1775,6 +1779,9 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW softBias = b2MaxW( b2MulW( biasRate, s ), minBiasVel );
 			b2FloatW bias = b2BlendW( softBias, specBias, mask );
 
+			b2FloatW pointMassScale = b2BlendW( massScale, oneW, mask );
+			b2FloatW pointImpulseScale = b2BlendW( impulseScale, b2ZeroW(), mask );
+
 			// fixed anchors for Jacobians
 			b2Vec2W rA = c->anchorA2;
 			b2Vec2W rB = c->anchorB2;
@@ -1785,8 +1792,8 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW vn = b2AddW( b2MulW( dvx, c->normal.X ), b2MulW( dvy, c->normal.Y ) );
 
 			// Compute normal impulse
-			b2FloatW negImpulse = b2AddW( b2MulW( c->normalMass2, b2MulW( massScale, b2AddW( vn, bias ) ) ),
-										  b2MulW( impulseScale, c->normalImpulse2 ) );
+			b2FloatW negImpulse = b2AddW( b2MulW( c->normalMass2, b2MulW( pointMassScale, b2AddW( vn, bias ) ) ),
+										  b2MulW( pointImpulseScale, c->normalImpulse2 ) );
 
 			// Clamp the accumulated impulse
 			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse2, negImpulse ), b2ZeroW() );

@@ -393,7 +393,9 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 			}
 		}
 
-		if ( separationA >= separationB )
+		// biased to avoid feature flip-flop
+		// todo more testing?
+		if ( separationA + 0.1f * B2_LINEAR_SLOP >= separationB )
 		{
 			manifold.normal = normalA;
 

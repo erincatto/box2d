@@ -1441,6 +1441,9 @@ typedef struct b2DebugDraw
 	/// Option to draw contact normal impulses
 	bool drawContactImpulses;
 
+	/// Option to draw contact feature ids
+	bool drawContactFeatures;
+
 	/// Option to draw contact friction impulses
 	bool drawFrictionImpulses;
 

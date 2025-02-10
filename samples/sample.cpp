@@ -325,6 +325,7 @@ void Sample::Step( Settings& settings )
 	g_draw.m_debugDraw.drawGraphColors = settings.drawGraphColors;
 	g_draw.m_debugDraw.drawContactNormals = settings.drawContactNormals;
 	g_draw.m_debugDraw.drawContactImpulses = settings.drawContactImpulses;
+	g_draw.m_debugDraw.drawContactFeatures = settings.drawContactFeatures;
 	g_draw.m_debugDraw.drawFrictionImpulses = settings.drawFrictionImpulses;
 
 	b2World_EnableSleeping( m_worldId, settings.enableSleep );

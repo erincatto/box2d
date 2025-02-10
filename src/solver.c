@@ -346,7 +346,9 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 	{
 		// fallback to TOI of a small circle around the fast shape centroid
 		b2Vec2 centroid = b2GetShapeCentroid( fastShape );
-		input.proxyB = b2MakeProxy( &centroid, 1, B2_SPECULATIVE_DISTANCE );
+		b2ShapeExtent extent = b2ComputeShapeExtent( fastShape, centroid );
+		float radius = 0.25f * extent.minExtent;
+		input.proxyB = b2MakeProxy( &centroid, 1, radius );
 		output = b2TimeOfImpact( &input );
 		if ( 0.0f < output.fraction && output.fraction < continuousContext->fraction )
 		{

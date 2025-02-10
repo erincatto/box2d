@@ -439,7 +439,7 @@ public:
 
 		float y = 0.75f;
 
-		for ( int i = 0; i < 2; ++i )
+		for ( int i = 0; i < 10; ++i )
 		{
 			bodyDef.position.y = y;
 
@@ -491,7 +491,6 @@ public:
 
 static int sampleCircleStack = RegisterSample( "Stacking", "Circle Stack", CircleStack::Create );
 
-// A simple circle stack that also shows how to collect hit events
 class CapsuleStack : public Sample
 {
 public:
@@ -522,23 +521,26 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 
-		b2Capsule capsule = { { -5.0f, 0.0f }, { 5.0f, 0.0f }, 0.5f };
+		float a = 0.25f;
+		b2Capsule capsule = { { -4.0f * a, 0.0f }, { 4.0f * a, 0.0f }, a };
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		// shapeDef.rollingResistance = 0.2f;
-		shapeDef.friction = 0.0f;
 
-		float y = 0.5f;
+		// rolling resistance increases stacking stability
+		//shapeDef.rollingResistance = 0.2f;
 
-		for ( int i = 0; i < 1; ++i )
+		float y = 2.0f * a;
+
+		for ( int i = 0; i < 20; ++i )
 		{
 			bodyDef.position.y = y;
-			bodyDef.linearVelocity = { 0.0f, -10.0f };
+			//bodyDef.position.x += ( i & 1 ) == 1 ? -0.5f * a : 0.5f * a;
+			//bodyDef.linearVelocity = { 0.0f, -10.0f };
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
 
-			y += 1.25f;
+			y += 3.0f * a;
 		}
 	}
 

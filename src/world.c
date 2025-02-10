@@ -368,9 +368,9 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 
 	B2_ASSERT( startIndex < endIndex );
 
-	for ( int i = startIndex; i < endIndex; ++i )
+	for ( int contactIndex = startIndex; contactIndex < endIndex; ++contactIndex )
 	{
-		b2ContactSim* contactSim = contactSims[i];
+		b2ContactSim* contactSim = contactSims[contactIndex];
 
 		int contactId = contactSim->contactId;
 
@@ -425,6 +425,19 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 				contactSim->simFlags |= b2_simStoppedTouching;
 				b2SetBit( &taskContext->contactStateBitSet, contactId );
 			}
+
+			// To make this work, the time of impact code needs to adjust the target
+			// distance based on the number of TOI events for a body.
+			// if (touching && bodySimB->isFast)
+			//{
+			//	b2Manifold* manifold = &contactSim->manifold;
+			//	int pointCount = manifold->pointCount;
+			//	for (int i = 0; i < pointCount; ++i)
+			//	{
+			//		// trick the solver into pushing the fast shapes apart
+			//		manifold->points[i].separation -= 0.25f * B2_SPECULATIVE_DISTANCE;
+			//	}
+			//}
 		}
 	}
 
@@ -1112,6 +1125,12 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 								draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 							}
 
+							if ( draw->drawContactFeatures )
+							{
+								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%d", point->id );
+								draw->DrawStringFcn( point->point, buffer, b2_colorOrange, draw->context );
+							}
+
 							if ( draw->drawFrictionImpulses )
 							{
 								b2Vec2 tangent = b2RightPerp( normal );
@@ -1402,6 +1421,12 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 						draw->DrawSegmentFcn( p1, p2, impulseColor, draw->context );
 						snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.2f", 1000.0f * point->normalImpulse );
 						draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
+					}
+
+					if ( draw->drawContactFeatures )
+					{
+						snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%d", point->id );
+						draw->DrawStringFcn( point->point, buffer, b2_colorOrange, draw->context );
 					}
 
 					if ( draw->drawFrictionImpulses )
@@ -2074,7 +2099,7 @@ static bool TreeOverlapCallback( int proxyId, int shapeId, void* context )
 	input.proxyA = worldContext->proxy;
 	input.proxyB = b2MakeShapeDistanceProxy( shape );
 	input.transformA = b2Transform_identity;
-	input.transformB = b2InvMulTransforms(worldContext->transform, transform);
+	input.transformB = b2InvMulTransforms( worldContext->transform, transform );
 	input.useRadii = true;
 
 	b2SimplexCache cache = { 0 };

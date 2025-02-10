@@ -179,6 +179,8 @@ public:
 
 static int sampleFallingHinges = RegisterSample( "Determinism", "Falling Hinges", FallingHinges::Create );
 
+#if 0
+
 #include <stdlib.h>
 
 #define WALL_THICKNESS 4.0f
@@ -473,7 +475,7 @@ void createProjectile( b2WorldId worldID, droneEntity* drone, const b2Vec2 normA
 	b2Shape_SetUserData( projectile->shapeID, ent );
 }
 
-void droneShoot( b2WorldId worldID, droneEntity* drone, const b2Vec2 aim )
+static void droneShoot( b2WorldId worldID, droneEntity* drone, const b2Vec2 aim )
 {
 	if ( drone->weaponCooldown != 0.0f )
 	{
@@ -492,48 +494,6 @@ void droneShoot( b2WorldId worldID, droneEntity* drone, const b2Vec2 aim )
 
 	createProjectile( worldID, drone, normAim );
 }
-
-#if 0
-int main( void )
-{
-	b2WorldDef worldDef = b2DefaultWorldDef();
-	worldDef.gravity = ( b2Vec2 ){ .x = 0.0f, .y = 0.0f };
-	b2WorldId worldID = b2CreateWorld( &worldDef );
-
-	setupMap( worldID );
-	droneEntity* drone = createDrone( worldID );
-
-	while ( true )
-	{
-		float aimX = tanhf( rand() / (float)RAND_MAX );
-		float aimY = tanhf( rand() / (float)RAND_MAX );
-
-		droneShoot( worldID, drone, ( b2Vec2 ){ .x = aimX, .y = aimY } );
-
-		b2World_Step( worldID, 1.0f / 10.0f, 1 );
-
-		b2BodyEvents events = b2World_GetBodyEvents( worldID );
-		for ( int i = 0; i < events.moveCount; i++ )
-		{
-			const b2BodyMoveEvent* event = events.moveEvents + i;
-			assert( b2Body_IsValid( event->bodyId ) );
-			entity* ent = (entity*)event->userData;
-			if ( ent == NULL )
-			{
-				continue;
-			}
-
-			const b2Vec2 pos = event->transform.p;
-			// check if the body is beyond the outside bounds of map
-			if ( pos.x < -48.0f || pos.x > 48.0f || pos.y < -48.0f || pos.y > 48.0f )
-			{
-				printf( "body is outside of wall bounds: (%f, %f)\n", pos.x, pos.y );
-				exit( 1 );
-			}
-		}
-	}
-}
-#endif
 
 class BulletBug : public Sample
 {
@@ -680,3 +640,4 @@ public:
 };
 
 static int sampleSingleBox = RegisterSample( "Bugs", "Overlap", OverlapBug::Create );
+#endif

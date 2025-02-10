@@ -386,7 +386,7 @@ typedef struct b2DistanceOutput
 	b2Vec2 pointB; ///< Closest point on shapeB
 	// todo_erin implement this
 	// b2Vec2 normal;			///< Normal vector that points from A to B
-	float distance;		  ///< The final distance, zero if overlapped
+	float distance;	  ///< The final distance, zero if overlapped
 	int iterations;	  ///< Number of GJK iterations used
 	int simplexCount; ///< The number of simplexes stored in the simplex array
 } b2DistanceOutput;
@@ -394,10 +394,10 @@ typedef struct b2DistanceOutput
 /// Simplex vertex for debugging the GJK algorithm
 typedef struct b2SimplexVertex
 {
-	b2Vec2 wA;		///< support point in proxyA
-	b2Vec2 wB;		///< support point in proxyB
-	b2Vec2 w;		///< wB - wA
-	float a;		///< barycentric coordinate for closest point
+	b2Vec2 wA;	///< support point in proxyA
+	b2Vec2 wB;	///< support point in proxyB
+	b2Vec2 w;	///< wB - wA
+	float a;	///< barycentric coordinate for closest point
 	int indexA; ///< wA index
 	int indexB; ///< wB index
 } b2SimplexVertex;
@@ -406,7 +406,7 @@ typedef struct b2SimplexVertex
 typedef struct b2Simplex
 {
 	b2SimplexVertex v1, v2, v3; ///< vertices
-	int count;				///< number of valid vertices
+	int count;					///< number of valid vertices
 } b2Simplex;
 
 /// Compute the closest points between two shapes represented as point clouds.
@@ -759,7 +759,5 @@ B2_API void b2DynamicTree_Validate( const b2DynamicTree* tree );
 
 /// Validate this tree has no enlarged AABBs. For testing.
 B2_API void b2DynamicTree_ValidateNoEnlarged( const b2DynamicTree* tree );
-
-
 
 /**@}*/

@@ -56,6 +56,7 @@ void Settings::Save()
 	fprintf( file, "  \"drawContactPoints\": %s,\n", drawContactPoints ? "true" : "false" );
 	fprintf( file, "  \"drawContactNormals\": %s,\n", drawContactNormals ? "true" : "false" );
 	fprintf( file, "  \"drawContactImpulses\": %s,\n", drawContactImpulses ? "true" : "false" );
+	fprintf( file, "  \"drawContactFeatures\": %s,\n", drawContactFeatures ? "true" : "false" );
 	fprintf( file, "  \"drawFrictionImpulse\": %s,\n", drawFrictionImpulses ? "true" : "false" );
 	fprintf( file, "  \"drawMass\": %s,\n", drawMass ? "true" : "false" );
 	fprintf( file, "  \"drawCounters\": %s,\n", drawCounters ? "true" : "false" );

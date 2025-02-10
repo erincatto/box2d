@@ -23,6 +23,7 @@ struct Settings
 	bool drawContactPoints = false;
 	bool drawContactNormals = false;
 	bool drawContactImpulses = false;
+	bool drawContactFeatures = false;
 	bool drawFrictionImpulses = false;
 	bool drawMass = false;
 	bool drawBodyNames = false;

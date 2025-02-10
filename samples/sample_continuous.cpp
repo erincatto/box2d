@@ -463,6 +463,66 @@ public:
 
 static int sampleChainSlide = RegisterSample( "Continuous", "Chain Slide", ChainSlide::Create );
 
+class SegmentSlide : public Sample
+{
+public:
+	explicit SegmentSlide( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 10.0f };
+			g_camera.m_zoom = 15.0f;
+		}
+
+#ifndef NDEBUG
+		b2_toiHitCount = 0;
+#endif
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
+			segment = { { 40.0f, 0.0f }, { 40.0f, 10.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.linearVelocity = { 100.0f, 0.0f };
+			bodyDef.position = { -20.0f, 0.7f };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			//shapeDef.friction = 0.0f;
+			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
+		}
+	}
+
+	void Step( Settings& settings ) override
+	{
+		Sample::Step( settings );
+
+#ifndef NDEBUG
+		g_draw.DrawString( 5, m_textLine, "toi hits = %d", b2_toiHitCount );
+		m_textLine += m_textIncrement;
+#endif
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new SegmentSlide( settings );
+	}
+};
+
+static int sampleSegmentSlide = RegisterSample( "Continuous", "Segment Slide", SegmentSlide::Create );
+
 class SkinnyBox : public Sample
 {
 public:
@@ -936,6 +996,50 @@ public:
 };
 
 static int sampleSpeculativeFallback = RegisterSample( "Continuous", "Speculative Fallback", SpeculativeFallback::Create );
+
+class SpeculativeSliver : public Sample
+{
+public:
+	explicit SpeculativeSliver( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 1.75f };
+			g_camera.m_zoom = 2.5f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Segment segment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { 0.0f, 12.0f };
+			bodyDef.linearVelocity = { 0.0f, -100.0f };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Vec2 points[3] = { { -2.0f, 0.0f }, { -1.0f, 0.0f }, { 2.0f, 0.5f }};
+			b2Hull hull = b2ComputeHull( points, 3 );
+			b2Polygon poly = b2MakePolygon( &hull, 0.0f );
+			b2CreatePolygonShape( bodyId, &shapeDef, &poly );
+		}
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new SpeculativeSliver( settings );
+	}
+};
+
+static int sampleSpeculativeSliver = RegisterSample( "Continuous", "Speculative Sliver", SpeculativeSliver::Create );
 
 // This shows that while Box2D uses speculative collision, it does not lead to speculative ghost collisions at small distances
 class SpeculativeGhost : public Sample

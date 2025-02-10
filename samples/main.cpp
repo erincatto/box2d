@@ -426,6 +426,7 @@ static void UpdateUI()
 				ImGui::Checkbox( "Contact Points", &s_settings.drawContactPoints );
 				ImGui::Checkbox( "Contact Normals", &s_settings.drawContactNormals );
 				ImGui::Checkbox( "Contact Impulses", &s_settings.drawContactImpulses );
+				ImGui::Checkbox( "Contact Features", &s_settings.drawContactFeatures );
 				ImGui::Checkbox( "Friction Impulses", &s_settings.drawFrictionImpulses );
 				ImGui::Checkbox( "Center of Masses", &s_settings.drawMass );
 				ImGui::Checkbox( "Body Names", &s_settings.drawBodyNames );
