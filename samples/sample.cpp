@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#if defined( _MSC_VER ) && !defined( _CRT_SECURE_NO_WARNINGS )
 #define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #include "sample.h"
 
@@ -323,6 +325,7 @@ void Sample::Step( Settings& settings )
 	g_draw.m_debugDraw.drawGraphColors = settings.drawGraphColors;
 	g_draw.m_debugDraw.drawContactNormals = settings.drawContactNormals;
 	g_draw.m_debugDraw.drawContactImpulses = settings.drawContactImpulses;
+	g_draw.m_debugDraw.drawContactFeatures = settings.drawContactFeatures;
 	g_draw.m_debugDraw.drawFrictionImpulses = settings.drawFrictionImpulses;
 
 	b2World_EnableSleeping( m_worldId, settings.enableSleep );

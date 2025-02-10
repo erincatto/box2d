@@ -16,6 +16,22 @@
 
 constexpr int SIMPLEX_CAPACITY = 20;
 
+/*
+-		input	0x0000008f63efcee0 {proxyA={points=0x0000008f63efcee0 {{...}, {...}, {...}, {...}, {...}, {...}, {...}, ...} ...} ...}	const b2DistanceInput *
++		[0]	{x=-0.400000006 y=-0.400000006 }	b2Vec2
++		[1]	{x=0.400000006 y=-0.400000006 }	b2Vec2
++		[2]	{x=0.400000006 y=0.400000006 }	b2Vec2
++		[3]	{x=-0.400000006 y=0.400000006 }	b2Vec2
+
++		[0]	{x=-0.500000000 y=-0.500000000 }	b2Vec2
++		[1]	{x=0.500000000 y=-0.500000000 }	b2Vec2
++		[2]	{x=0.500000000 y=0.500000000 }	b2Vec2
++		[3]	{x=-0.500000000 y=0.500000000 }	b2Vec2
+
++		transformA	{p={x=3.00000000 y=5.00000000 } q={c=1.00000000 s=0.00000000 } }	b2Transform
++		transformB	{p={x=3.00000000 y=5.00000000 } q={c=1.00000000 s=0.00000000 } }	b2Transform
+		useRadii	true	bool
+ */
 class ShapeDistance : public Sample
 {
 public:
@@ -43,11 +59,14 @@ public:
 			b2Vec2 points[3] = { { -0.5f, 0.0f }, { 0.5f, 0.0f }, { 0.0f, 1.0f } };
 			b2Hull hull = b2ComputeHull( points, 3 );
 			m_triangle = b2MakePolygon( &hull, 0.0f );
+
+			m_triangle = b2MakeSquare( 0.4f );
 		}
 
-		m_box = b2MakeBox( 0.5f, 0.5f );
+		m_box = b2MakeSquare( 0.5f );
 
-		m_transform = { { 1.5f, -1.5f }, b2Rot_identity };
+		//m_transform = { { 1.5f, -1.5f }, b2Rot_identity };
+		m_transform = { { 0.0f, 0.0f }, b2Rot_identity };
 		m_angle = 0.0f;
 
 		m_cache = b2_emptySimplexCache;
@@ -90,10 +109,11 @@ public:
 				break;
 
 			case e_triangle:
-				proxy.points[0] = m_triangle.vertices[0];
-				proxy.points[1] = m_triangle.vertices[1];
-				proxy.points[2] = m_triangle.vertices[2];
-				proxy.count = 3;
+				for (int i = 0; i < m_triangle.count; ++i)
+				{
+					proxy.points[i] = m_triangle.vertices[i];
+				}
+				proxy.count = m_triangle.count;
 				break;
 
 			case e_box:
@@ -146,11 +166,11 @@ public:
 			break;
 
 			case e_triangle:
-				g_draw.DrawSolidPolygon( transform, m_triangle.vertices, 3, radius, color );
+				g_draw.DrawSolidPolygon( transform, m_triangle.vertices, m_triangle.count, radius, color );
 				break;
 
 			case e_box:
-				g_draw.DrawSolidPolygon( transform, m_box.vertices, 4, radius, color );
+				g_draw.DrawSolidPolygon( transform, m_box.vertices, m_box.count, radius, color );
 				break;
 
 			default:
@@ -158,7 +178,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 310.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -311,7 +331,7 @@ public:
 		input.proxyB = m_proxyB;
 		input.transformA = b2Transform_identity;
 		input.transformB = m_transform;
-		input.useRadii = m_radiusA > 0.0f || m_radiusB > 0.0f;
+		input.useRadii = true || m_radiusA > 0.0f || m_radiusB > 0.0f;
 
 		if ( m_useCache == false )
 		{
@@ -567,7 +587,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 320.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -912,7 +932,7 @@ public:
 		m_showFraction = false;
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 230.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -1580,7 +1600,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 300.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -2066,7 +2086,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 330.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -2272,7 +2292,7 @@ public:
 		m_wedge = b2ComputeHull( points, 3 );
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 300.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -2963,7 +2983,7 @@ public:
 		free( m_segments );
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 290.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );

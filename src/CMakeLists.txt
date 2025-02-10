@@ -147,6 +147,10 @@ if (MSVC)
 		target_compile_options(box2d PRIVATE /arch:AVX2)
 	endif()
 
+	if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+		target_compile_options(box2d PRIVATE -Wmissing-prototypes)
+	endif()
+
 elseif (MINGW)
 	message(STATUS "Box2D on MinGW")
 	if (BOX2D_AVX2)

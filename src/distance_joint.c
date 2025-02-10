@@ -529,28 +529,28 @@ void b2DrawDistanceJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 		if ( joint->minLength > B2_LINEAR_SLOP )
 		{
 			// draw->DrawPoint(pMin, 4.0f, c2, draw->context);
-			draw->DrawSegment( b2Sub( pMin, offset ), b2Add( pMin, offset ), b2_colorLightGreen, draw->context );
+			draw->DrawSegmentFcn( b2Sub( pMin, offset ), b2Add( pMin, offset ), b2_colorLightGreen, draw->context );
 		}
 
 		if ( joint->maxLength < B2_HUGE )
 		{
 			// draw->DrawPoint(pMax, 4.0f, c3, draw->context);
-			draw->DrawSegment( b2Sub( pMax, offset ), b2Add( pMax, offset ), b2_colorRed, draw->context );
+			draw->DrawSegmentFcn( b2Sub( pMax, offset ), b2Add( pMax, offset ), b2_colorRed, draw->context );
 		}
 
 		if ( joint->minLength > B2_LINEAR_SLOP && joint->maxLength < B2_HUGE )
 		{
-			draw->DrawSegment( pMin, pMax, b2_colorGray, draw->context );
+			draw->DrawSegmentFcn( pMin, pMax, b2_colorGray, draw->context );
 		}
 	}
 
-	draw->DrawSegment( pA, pB, b2_colorWhite, draw->context );
-	draw->DrawPoint( pA, 4.0f, b2_colorWhite, draw->context );
-	draw->DrawPoint( pB, 4.0f, b2_colorWhite, draw->context );
+	draw->DrawSegmentFcn( pA, pB, b2_colorWhite, draw->context );
+	draw->DrawPointFcn( pA, 4.0f, b2_colorWhite, draw->context );
+	draw->DrawPointFcn( pB, 4.0f, b2_colorWhite, draw->context );
 
 	if ( joint->hertz > 0.0f && joint->enableSpring )
 	{
 		b2Vec2 pRest = b2MulAdd( pA, joint->length, axis );
-		draw->DrawPoint( pRest, 4.0f, b2_colorBlue, draw->context );
+		draw->DrawPointFcn( pRest, 4.0f, b2_colorBlue, draw->context );
 	}
 }

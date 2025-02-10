@@ -12,6 +12,15 @@
 
 #include <stddef.h>
 
+// contact separation for sub-stepping
+// s = s0 + dot(cB + rB - cA - rA, normal)
+// normal is held constant
+// body positions c can translation and anchors r can rotate
+// s(t) = s0 + dot(cB(t) + rB(t) - cA(t) - rA(t), normal)
+// s(t) = s0 + dot(cB0 + dpB + rot(dqB, rB0) - cA0 - dpA - rot(dqA, rA0), normal)
+// s(t) = s0 + dot(cB0 - cA0, normal) + dot(dpB - dpA + rot(dqB, rB0) - rot(dqA, rA0), normal)
+// s_base = s0 + dot(cB0 - cA0, normal)
+
 void b2PrepareOverflowContacts( b2StepContext* context )
 {
 	b2TracyCZoneNC( prepare_overflow_contact, "Prepare Overflow Contact", b2_colorYellow, true );
@@ -266,10 +275,14 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 		{
 			b2ContactConstraintPoint* cp = constraint->points + j;
 
+			// fixed anchor points
+			b2Vec2 rA = cp->anchorA;
+			b2Vec2 rB = cp->anchorB;
+
 			// compute current separation
 			// this is subject to round-off error if the anchor is far from the body center of mass
-			b2Vec2 ds = b2Add( dp, b2Sub( b2RotateVector( dqB, cp->anchorB ), b2RotateVector( dqA, cp->anchorA ) ) );
-			float s = b2Dot( ds, normal ) + cp->baseSeparation;
+			b2Vec2 ds = b2Add( dp, b2Sub( b2RotateVector( dqB, rB ), b2RotateVector( dqA, rA ) ) );
+			float s = cp->baseSeparation + b2Dot( ds, normal );
 
 			float velocityBias = 0.0f;
 			float massScale = 1.0f;
@@ -285,10 +298,6 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 				massScale = softness.massScale;
 				impulseScale = softness.impulseScale;
 			}
-
-			// fixed anchor points
-			b2Vec2 rA = cp->anchorA;
-			b2Vec2 rB = cp->anchorB;
 
 			// relative normal velocity at contact
 			b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
@@ -1673,6 +1682,7 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 	b2ContactConstraintSIMD* constraints = context->graph->colors[colorIndex].simdConstraints;
 	b2FloatW inv_h = b2SplatW( context->inv_h );
 	b2FloatW minBiasVel = b2SplatW( -context->world->contactMaxPushSpeed );
+	b2FloatW oneW = b2SplatW( 1.0f );
 
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
@@ -1691,7 +1701,7 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 		else
 		{
 			biasRate = b2ZeroW();
-			massScale = b2SplatW( 1.0f );
+			massScale = oneW;
 			impulseScale = b2ZeroW();
 		}
 
@@ -1717,6 +1727,9 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW softBias = b2MaxW( b2MulW( biasRate, s ), minBiasVel );
 			b2FloatW bias = b2BlendW( softBias, specBias, mask );
 
+			b2FloatW pointMassScale = b2BlendW( massScale, oneW, mask );
+			b2FloatW pointImpulseScale = b2BlendW( impulseScale, b2ZeroW(), mask );
+
 			// fixed anchors for Jacobians
 			b2Vec2W rA = c->anchorA1;
 			b2Vec2W rB = c->anchorB1;
@@ -1727,8 +1740,8 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW vn = b2AddW( b2MulW( dvx, c->normal.X ), b2MulW( dvy, c->normal.Y ) );
 
 			// Compute normal impulse
-			b2FloatW negImpulse = b2AddW( b2MulW( c->normalMass1, b2MulW( massScale, b2AddW( vn, bias ) ) ),
-										  b2MulW( impulseScale, c->normalImpulse1 ) );
+			b2FloatW negImpulse = b2AddW( b2MulW( c->normalMass1, b2MulW( pointMassScale, b2AddW( vn, bias ) ) ),
+										  b2MulW( pointImpulseScale, c->normalImpulse1 ) );
 
 			// Clamp the accumulated impulse
 			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse1, negImpulse ), b2ZeroW() );
@@ -1766,6 +1779,9 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW softBias = b2MaxW( b2MulW( biasRate, s ), minBiasVel );
 			b2FloatW bias = b2BlendW( softBias, specBias, mask );
 
+			b2FloatW pointMassScale = b2BlendW( massScale, oneW, mask );
+			b2FloatW pointImpulseScale = b2BlendW( impulseScale, b2ZeroW(), mask );
+
 			// fixed anchors for Jacobians
 			b2Vec2W rA = c->anchorA2;
 			b2Vec2W rB = c->anchorB2;
@@ -1776,8 +1792,8 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW vn = b2AddW( b2MulW( dvx, c->normal.X ), b2MulW( dvy, c->normal.Y ) );
 
 			// Compute normal impulse
-			b2FloatW negImpulse = b2AddW( b2MulW( c->normalMass2, b2MulW( massScale, b2AddW( vn, bias ) ) ),
-										  b2MulW( impulseScale, c->normalImpulse2 ) );
+			b2FloatW negImpulse = b2AddW( b2MulW( c->normalMass2, b2MulW( pointMassScale, b2AddW( vn, bias ) ) ),
+										  b2MulW( pointImpulseScale, c->normalImpulse2 ) );
 
 			// Clamp the accumulated impulse
 			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse2, negImpulse ), b2ZeroW() );

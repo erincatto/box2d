@@ -325,7 +325,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 230.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -426,29 +426,31 @@ public:
 		b2World_SetGravity( m_worldId, { 0.0f, -20.0f } );
 		b2World_SetContactTuning( m_worldId, 0.25f * 360.0f, 10.0f, 3.0f );
 
-		b2Circle circle = {};
-		circle.radius = 0.25f;
-
-		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.enableHitEvents = true;
-		shapeDef.rollingResistance = 0.2f;
-
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 
-		float y = 0.5f;
+		b2Circle circle = {};
+		circle.radius = 0.5f;
 
-		for ( int i = 0; i < 1; ++i )
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.enableHitEvents = true;
+		//shapeDef.rollingResistance = 0.2f;
+		shapeDef.friction = 0.0f;
+
+		float y = 0.75f;
+
+		for ( int i = 0; i < 10; ++i )
 		{
 			bodyDef.position.y = y;
 
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			shapeDef.userData = reinterpret_cast<void*>( intptr_t( shapeIndex ) );
+			shapeDef.density = 1.0f + 4.0f * i;
 			shapeIndex += 1;
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 
-			y += 2.0f;
+			y += 1.25f;
 		}
 	}
 
@@ -488,6 +490,67 @@ public:
 };
 
 static int sampleCircleStack = RegisterSample( "Stacking", "Circle Stack", CircleStack::Create );
+
+class CapsuleStack : public Sample
+{
+public:
+	struct Event
+	{
+		int indexA, indexB;
+	};
+
+	explicit CapsuleStack( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 5.0f };
+			g_camera.m_zoom = 6.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 0.0f, -1.0f };
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Polygon polygon = b2MakeBox( 10.0f, 1.0f );
+			b2CreatePolygonShape( groundId, &shapeDef, &polygon );
+		}
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+
+		float a = 0.25f;
+		b2Capsule capsule = { { -4.0f * a, 0.0f }, { 4.0f * a, 0.0f }, a };
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+		// rolling resistance increases stacking stability
+		//shapeDef.rollingResistance = 0.2f;
+
+		float y = 2.0f * a;
+
+		for ( int i = 0; i < 20; ++i )
+		{
+			bodyDef.position.y = y;
+			//bodyDef.position.x += ( i & 1 ) == 1 ? -0.5f * a : 0.5f * a;
+			//bodyDef.linearVelocity = { 0.0f, -10.0f };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
+
+			y += 3.0f * a;
+		}
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new CapsuleStack( settings );
+	}
+};
+
+static int sampleCapsuleStack = RegisterSample( "Stacking", "Capsule Stack", CapsuleStack::Create );
 
 class Cliff : public Sample
 {
@@ -609,7 +672,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 60.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );

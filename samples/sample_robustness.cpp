@@ -274,7 +274,7 @@ public:
 		assert( bodyIndex == m_bodyCount );
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 210.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );

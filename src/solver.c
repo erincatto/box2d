@@ -346,7 +346,9 @@ static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
 	{
 		// fallback to TOI of a small circle around the fast shape centroid
 		b2Vec2 centroid = b2GetShapeCentroid( fastShape );
-		input.proxyB = b2MakeProxy( &centroid, 1, B2_SPECULATIVE_DISTANCE );
+		b2ShapeExtent extent = b2ComputeShapeExtent( fastShape, centroid );
+		float radius = 0.25f * extent.minExtent;
+		input.proxyB = b2MakeProxy( &centroid, 1, radius );
 		output = b2TimeOfImpact( &input );
 		if ( 0.0f < output.fraction && output.fraction < continuousContext->fraction )
 		{
@@ -457,6 +459,10 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 		fastBodySim->center = c;
 		fastBodySim->rotation0 = q;
 		fastBodySim->center0 = c;
+
+		// Update body move event
+		b2BodyMoveEvent* event = b2BodyMoveEventArray_Get( &world->bodyMoveEvents, bodySimIndex );
+		event->transform = transform;
 
 		// Prepare AABBs for broad-phase.
 		// Even though a body is fast, it may not move much. So the

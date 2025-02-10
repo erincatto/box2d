@@ -1055,6 +1055,21 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 		distanceInput.transformB = xfB;
 		b2DistanceOutput distanceOutput = b2ShapeDistance( &cache, &distanceInput, NULL, 0 );
 
+		// Progressive time of impact. This handles slender geometry well but introduces
+		// significant time loss.
+		//if (distanceIterations == 0)
+		//{
+		//	if ( distanceOutput.distance > totalRadius + B2_SPECULATIVE_DISTANCE )
+		//	{
+		//		target = totalRadius + B2_SPECULATIVE_DISTANCE - tolerance;
+		//	}
+		//	else
+		//	{
+		//		target = distanceOutput.distance - 1.5f * tolerance;
+		//		target = b2MaxFloat( target, 2.0f * tolerance );
+		//	}
+		//}
+
 		distanceIterations += 1;
 #if B2_SNOOP_TOI_COUNTERS
 		b2_toiDistanceIterations += 1;

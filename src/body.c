@@ -232,11 +232,6 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	bodySim->center = def->position;
 	bodySim->rotation0 = bodySim->transform.q;
 	bodySim->center0 = bodySim->center;
-	bodySim->localCenter = b2Vec2_zero;
-	bodySim->force = b2Vec2_zero;
-	bodySim->torque = 0.0f;
-	bodySim->invMass = 0.0f;
-	bodySim->invInertia = 0.0f;
 	bodySim->minExtent = B2_HUGE;
 	bodySim->maxExtent = 0.0f;
 	bodySim->linearDamping = def->linearDamping;
@@ -245,9 +240,6 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	bodySim->bodyId = bodyId;
 	bodySim->isBullet = def->isBullet;
 	bodySim->allowFastRotation = def->allowFastRotation;
-	bodySim->enlargeAABB = false;
-	bodySim->isFast = false;
-	bodySim->isSpeedCapped = false;
 
 	if ( setId == b2_awakeSet )
 	{
@@ -457,8 +449,6 @@ int b2Body_GetContactCapacity( b2BodyId bodyId )
 	return body->contactCount;
 }
 
-// todo what about sensors?
-// todo sample needed
 int b2Body_GetContactData( b2BodyId bodyId, b2ContactData* contactData, int capacity )
 {
 	b2World* world = b2GetWorldLocked( bodyId.world0 );

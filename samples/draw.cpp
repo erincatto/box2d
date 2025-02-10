@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <vector>
 
-#if defined( _WIN32 )
+#if defined( _MSC_VER )
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
 #include <stdlib.h>
@@ -1368,15 +1368,15 @@ void Draw::Create()
 
 	m_debugDraw = {};
 
-	m_debugDraw.DrawPolygon = DrawPolygonFcn;
-	m_debugDraw.DrawSolidPolygon = DrawSolidPolygonFcn;
-	m_debugDraw.DrawCircle = DrawCircleFcn;
-	m_debugDraw.DrawSolidCircle = DrawSolidCircleFcn;
-	m_debugDraw.DrawSolidCapsule = DrawSolidCapsuleFcn;
-	m_debugDraw.DrawSegment = DrawSegmentFcn;
-	m_debugDraw.DrawTransform = DrawTransformFcn;
-	m_debugDraw.DrawPoint = DrawPointFcn;
-	m_debugDraw.DrawString = DrawStringFcn;
+	m_debugDraw.DrawPolygonFcn = DrawPolygonFcn;
+	m_debugDraw.DrawSolidPolygonFcn = DrawSolidPolygonFcn;
+	m_debugDraw.DrawCircleFcn = DrawCircleFcn;
+	m_debugDraw.DrawSolidCircleFcn = DrawSolidCircleFcn;
+	m_debugDraw.DrawSolidCapsuleFcn = DrawSolidCapsuleFcn;
+	m_debugDraw.DrawSegmentFcn = DrawSegmentFcn;
+	m_debugDraw.DrawTransformFcn = DrawTransformFcn;
+	m_debugDraw.DrawPointFcn = DrawPointFcn;
+	m_debugDraw.DrawStringFcn = DrawStringFcn;
 	m_debugDraw.drawingBounds = bounds;
 
 	m_debugDraw.useDrawingBounds = false;
@@ -1389,6 +1389,7 @@ void Draw::Create()
 	m_debugDraw.drawGraphColors = false;
 	m_debugDraw.drawContactNormals = false;
 	m_debugDraw.drawContactImpulses = false;
+	m_debugDraw.drawContactFeatures = false;
 	m_debugDraw.drawFrictionImpulses = false;
 
 	m_debugDraw.context = this;

@@ -368,9 +368,9 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 
 	B2_ASSERT( startIndex < endIndex );
 
-	for ( int i = startIndex; i < endIndex; ++i )
+	for ( int contactIndex = startIndex; contactIndex < endIndex; ++contactIndex )
 	{
-		b2ContactSim* contactSim = contactSims[i];
+		b2ContactSim* contactSim = contactSims[contactIndex];
 
 		int contactId = contactSim->contactId;
 
@@ -425,6 +425,19 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 				contactSim->simFlags |= b2_simStoppedTouching;
 				b2SetBit( &taskContext->contactStateBitSet, contactId );
 			}
+
+			// To make this work, the time of impact code needs to adjust the target
+			// distance based on the number of TOI events for a body.
+			// if (touching && bodySimB->isFast)
+			//{
+			//	b2Manifold* manifold = &contactSim->manifold;
+			//	int pointCount = manifold->pointCount;
+			//	for (int i = 0; i < pointCount; ++i)
+			//	{
+			//		// trick the solver into pushing the fast shapes apart
+			//		manifold->points[i].separation -= 0.25f * B2_SPECULATIVE_DISTANCE;
+			//	}
+			//}
 		}
 	}
 
@@ -808,7 +821,7 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2He
 			b2Capsule* capsule = &shape->capsule;
 			b2Vec2 p1 = b2TransformPoint( xf, capsule->center1 );
 			b2Vec2 p2 = b2TransformPoint( xf, capsule->center2 );
-			draw->DrawSolidCapsule( p1, p2, capsule->radius, color, draw->context );
+			draw->DrawSolidCapsuleFcn( p1, p2, capsule->radius, color, draw->context );
 		}
 		break;
 
@@ -816,14 +829,14 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2He
 		{
 			b2Circle* circle = &shape->circle;
 			xf.p = b2TransformPoint( xf, circle->center );
-			draw->DrawSolidCircle( xf, circle->radius, color, draw->context );
+			draw->DrawSolidCircleFcn( xf, circle->radius, color, draw->context );
 		}
 		break;
 
 		case b2_polygonShape:
 		{
 			b2Polygon* poly = &shape->polygon;
-			draw->DrawSolidPolygon( xf, poly->vertices, poly->count, poly->radius, color, draw->context );
+			draw->DrawSolidPolygonFcn( xf, poly->vertices, poly->count, poly->radius, color, draw->context );
 		}
 		break;
 
@@ -832,7 +845,7 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2He
 			b2Segment* segment = &shape->segment;
 			b2Vec2 p1 = b2TransformPoint( xf, segment->point1 );
 			b2Vec2 p2 = b2TransformPoint( xf, segment->point2 );
-			draw->DrawSegment( p1, p2, color, draw->context );
+			draw->DrawSegmentFcn( p1, p2, color, draw->context );
 		}
 		break;
 
@@ -841,9 +854,9 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2He
 			b2Segment* segment = &shape->chainSegment.segment;
 			b2Vec2 p1 = b2TransformPoint( xf, segment->point1 );
 			b2Vec2 p2 = b2TransformPoint( xf, segment->point2 );
-			draw->DrawSegment( p1, p2, color, draw->context );
-			draw->DrawPoint( p2, 4.0f, color, draw->context );
-			draw->DrawSegment( p1, b2Lerp( p1, p2, 0.1f ), b2_colorPaleGreen, draw->context );
+			draw->DrawSegmentFcn( p1, p2, color, draw->context );
+			draw->DrawPointFcn( p2, 4.0f, color, draw->context );
+			draw->DrawSegmentFcn( p1, b2Lerp( p1, p2, 0.1f ), b2_colorPaleGreen, draw->context );
 		}
 		break;
 
@@ -936,7 +949,7 @@ static bool DrawQueryCallback( int proxyId, int shapeId, void* context )
 						 { aabb.upperBound.x, aabb.upperBound.y },
 						 { aabb.lowerBound.x, aabb.upperBound.y } };
 
-		draw->DrawPolygon( vs, 4, b2_colorGold, draw->context );
+		draw->DrawPolygonFcn( vs, 4, b2_colorGold, draw->context );
 	}
 
 	return true;
@@ -996,11 +1009,11 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
 				b2Transform transform = { bodySim->center, bodySim->transform.q };
-				draw->DrawTransform( transform, draw->context );
+				draw->DrawTransformFcn( transform, draw->context );
 
 				b2Vec2 p = b2TransformPoint( transform, offset );
 
-				draw->DrawString( p, body->name, b2_colorBlueViolet, draw->context );
+				draw->DrawStringFcn( p, body->name, b2_colorBlueViolet, draw->context );
 			}
 
 			if ( draw->drawMass && body->type == b2_dynamicBody )
@@ -1009,13 +1022,13 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
 				b2Transform transform = { bodySim->center, bodySim->transform.q };
-				draw->DrawTransform( transform, draw->context );
+				draw->DrawTransformFcn( transform, draw->context );
 
 				b2Vec2 p = b2TransformPoint( transform, offset );
 
 				char buffer[32];
 				snprintf( buffer, 32, "  %.2f", body->mass );
-				draw->DrawString( p, buffer, b2_colorWhite, draw->context );
+				draw->DrawStringFcn( p, buffer, b2_colorWhite, draw->context );
 			}
 
 			if ( draw->drawJoints )
@@ -1078,38 +1091,44 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 							{
 								// graph color
 								float pointSize = contact->colorIndex == B2_OVERFLOW_INDEX ? 7.5f : 5.0f;
-								draw->DrawPoint( point->point, pointSize, graphColors[contact->colorIndex], draw->context );
+								draw->DrawPointFcn( point->point, pointSize, graphColors[contact->colorIndex], draw->context );
 								// g_draw.DrawString(point->position, "%d", point->color);
 							}
 							else if ( point->separation > linearSlop )
 							{
 								// Speculative
-								draw->DrawPoint( point->point, 5.0f, speculativeColor, draw->context );
+								draw->DrawPointFcn( point->point, 5.0f, speculativeColor, draw->context );
 							}
 							else if ( point->persisted == false )
 							{
 								// Add
-								draw->DrawPoint( point->point, 10.0f, addColor, draw->context );
+								draw->DrawPointFcn( point->point, 10.0f, addColor, draw->context );
 							}
 							else if ( point->persisted == true )
 							{
 								// Persist
-								draw->DrawPoint( point->point, 5.0f, persistColor, draw->context );
+								draw->DrawPointFcn( point->point, 5.0f, persistColor, draw->context );
 							}
 
 							if ( draw->drawContactNormals )
 							{
 								b2Vec2 p1 = point->point;
 								b2Vec2 p2 = b2MulAdd( p1, k_axisScale, normal );
-								draw->DrawSegment( p1, p2, normalColor, draw->context );
+								draw->DrawSegmentFcn( p1, p2, normalColor, draw->context );
 							}
 							else if ( draw->drawContactImpulses )
 							{
 								b2Vec2 p1 = point->point;
 								b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->normalImpulse, normal );
-								draw->DrawSegment( p1, p2, impulseColor, draw->context );
+								draw->DrawSegmentFcn( p1, p2, impulseColor, draw->context );
 								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", 1000.0f * point->normalImpulse );
-								draw->DrawString( p1, buffer, b2_colorWhite, draw->context );
+								draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
+							}
+
+							if ( draw->drawContactFeatures )
+							{
+								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%d", point->id );
+								draw->DrawStringFcn( point->point, buffer, b2_colorOrange, draw->context );
 							}
 
 							if ( draw->drawFrictionImpulses )
@@ -1117,9 +1136,9 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 								b2Vec2 tangent = b2RightPerp( normal );
 								b2Vec2 p1 = point->point;
 								b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->tangentImpulse, tangent );
-								draw->DrawSegment( p1, p2, frictionColor, draw->context );
+								draw->DrawSegmentFcn( p1, p2, frictionColor, draw->context );
 								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", 1000.0f * point->tangentImpulse );
-								draw->DrawString( p1, buffer, b2_colorWhite, draw->context );
+								draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 							}
 						}
 
@@ -1260,7 +1279,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 				char buffer[32];
 				snprintf( buffer, 32, "%d", bodySim->bodyId );
-				draw->DrawString( bodySim->center, buffer, b2_colorWhite, draw->context );
+				draw->DrawStringFcn( bodySim->center, buffer, b2_colorWhite, draw->context );
 
 				b2Body* body = b2BodyArray_Get( &world->bodies, bodySim->bodyId );
 				B2_ASSERT( body->setIndex == setIndex );
@@ -1276,7 +1295,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 									 { aabb.upperBound.x, aabb.upperBound.y },
 									 { aabb.lowerBound.x, aabb.upperBound.y } };
 
-					draw->DrawPolygon( vs, 4, color, draw->context );
+					draw->DrawPolygonFcn( vs, 4, color, draw->context );
 
 					shapeId = shape->nextShapeId;
 				}
@@ -1304,7 +1323,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 			b2Transform transform = b2GetBodyTransformQuick( world, body );
 			b2Vec2 p = b2TransformPoint( transform, offset );
 
-			draw->DrawString( p, body->name, b2_colorBlueViolet, draw->context );
+			draw->DrawStringFcn( p, body->name, b2_colorBlueViolet, draw->context );
 		}
 	}
 
@@ -1321,14 +1340,14 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				b2BodySim* bodySim = set->bodySims.data + bodyIndex;
 
 				b2Transform transform = { bodySim->center, bodySim->transform.q };
-				draw->DrawTransform( transform, draw->context );
+				draw->DrawTransformFcn( transform, draw->context );
 
 				b2Vec2 p = b2TransformPoint( transform, offset );
 
 				char buffer[32];
 				float mass = bodySim->invMass > 0.0f ? 1.0f / bodySim->invMass : 0.0f;
 				snprintf( buffer, 32, "  %.2f", mass );
-				draw->DrawString( p, buffer, b2_colorWhite, draw->context );
+				draw->DrawStringFcn( p, buffer, b2_colorWhite, draw->context );
 			}
 		}
 	}
@@ -1370,38 +1389,44 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 					{
 						// graph color
 						float pointSize = colorIndex == B2_OVERFLOW_INDEX ? 7.5f : 5.0f;
-						draw->DrawPoint( point->point, pointSize, colors[colorIndex], draw->context );
+						draw->DrawPointFcn( point->point, pointSize, colors[colorIndex], draw->context );
 						// g_draw.DrawString(point->position, "%d", point->color);
 					}
 					else if ( point->separation > linearSlop )
 					{
 						// Speculative
-						draw->DrawPoint( point->point, 5.0f, speculativeColor, draw->context );
+						draw->DrawPointFcn( point->point, 5.0f, speculativeColor, draw->context );
 					}
 					else if ( point->persisted == false )
 					{
 						// Add
-						draw->DrawPoint( point->point, 10.0f, addColor, draw->context );
+						draw->DrawPointFcn( point->point, 10.0f, addColor, draw->context );
 					}
 					else if ( point->persisted == true )
 					{
 						// Persist
-						draw->DrawPoint( point->point, 5.0f, persistColor, draw->context );
+						draw->DrawPointFcn( point->point, 5.0f, persistColor, draw->context );
 					}
 
 					if ( draw->drawContactNormals )
 					{
 						b2Vec2 p1 = point->point;
 						b2Vec2 p2 = b2MulAdd( p1, k_axisScale, normal );
-						draw->DrawSegment( p1, p2, normalColor, draw->context );
+						draw->DrawSegmentFcn( p1, p2, normalColor, draw->context );
 					}
 					else if ( draw->drawContactImpulses )
 					{
 						b2Vec2 p1 = point->point;
 						b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->normalImpulse, normal );
-						draw->DrawSegment( p1, p2, impulseColor, draw->context );
+						draw->DrawSegmentFcn( p1, p2, impulseColor, draw->context );
 						snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.2f", 1000.0f * point->normalImpulse );
-						draw->DrawString( p1, buffer, b2_colorWhite, draw->context );
+						draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
+					}
+
+					if ( draw->drawContactFeatures )
+					{
+						snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%d", point->id );
+						draw->DrawStringFcn( point->point, buffer, b2_colorOrange, draw->context );
 					}
 
 					if ( draw->drawFrictionImpulses )
@@ -1409,9 +1434,9 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 						b2Vec2 tangent = b2RightPerp( normal );
 						b2Vec2 p1 = point->point;
 						b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->tangentImpulse, tangent );
-						draw->DrawSegment( p1, p2, frictionColor, draw->context );
-						snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.2f", point->normalImpulse );
-						draw->DrawString( p1, buffer, b2_colorWhite, draw->context );
+						draw->DrawSegmentFcn( p1, p2, frictionColor, draw->context );
+						snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.2f", point->tangentImpulse );
+						draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 					}
 				}
 			}
@@ -2073,14 +2098,15 @@ static bool TreeOverlapCallback( int proxyId, int shapeId, void* context )
 	b2DistanceInput input;
 	input.proxyA = worldContext->proxy;
 	input.proxyB = b2MakeShapeDistanceProxy( shape );
-	input.transformA = worldContext->transform;
-	input.transformB = transform;
+	input.transformA = b2Transform_identity;
+	input.transformB = b2InvMulTransforms( worldContext->transform, transform );
 	input.useRadii = true;
 
 	b2SimplexCache cache = { 0 };
 	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
 
-	if ( output.distance > 0.0f )
+	float tolerance = 0.1f * B2_LINEAR_SLOP;
+	if ( output.distance > tolerance )
 	{
 		return true;
 	}
@@ -2488,6 +2514,110 @@ b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2
 	return treeStats;
 }
 
+static b2AABB b2ComputerShapeBounds( const b2ShapeProxy* shape, b2Transform xf )
+{
+	B2_ASSERT( shape->count > 0 );
+	b2Vec2 lower = b2TransformPoint( xf, shape->points[0] );
+	b2Vec2 upper = lower;
+
+	for ( int i = 1; i < shape->count; ++i )
+	{
+		b2Vec2 v = b2TransformPoint( xf, shape->points[i] );
+		lower = b2Min( lower, v );
+		upper = b2Max( upper, v );
+	}
+
+	b2Vec2 r = { shape->radius, shape->radius };
+	lower = b2Sub( lower, r );
+	upper = b2Add( upper, r );
+
+	b2AABB aabb = { lower, upper };
+	return aabb;
+}
+
+typedef struct b2CharacterCallbackContext
+{
+	b2World* world;
+	b2QueryFilter filter;
+	b2ShapeProxy proxy;
+	b2Transform transform;
+	void* userContext;
+} b2CharacterCallbackContext;
+
+static bool b2CharacterOverlapCallback( int proxyId, int shapeId, void* context )
+{
+	B2_UNUSED( proxyId );
+
+	WorldOverlapContext* worldContext = context;
+	b2World* world = worldContext->world;
+
+	b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+
+	b2Filter shapeFilter = shape->filter;
+	b2QueryFilter queryFilter = worldContext->filter;
+
+	if ( ( shapeFilter.categoryBits & queryFilter.maskBits ) == 0 || ( shapeFilter.maskBits & queryFilter.categoryBits ) == 0 )
+	{
+		return true;
+	}
+
+	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
+	b2Transform transform = b2GetBodyTransformQuick( world, body );
+
+	b2DistanceInput input;
+	input.proxyA = worldContext->proxy;
+	input.proxyB = b2MakeShapeDistanceProxy( shape );
+	input.transformA = worldContext->transform;
+	input.transformB = transform;
+	input.useRadii = true;
+
+	b2SimplexCache cache = { 0 };
+	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
+
+	if ( output.distance > 0.0f )
+	{
+		return true;
+	}
+
+	b2ShapeId id = { shape->id + 1, world->worldId, shape->generation };
+	bool result = worldContext->fcn( id, worldContext->userContext );
+	return result;
+}
+
+b2Vec2 b2World_MoveCharacter( b2WorldId worldId, const b2ShapeProxy* shapeProxy, b2Transform originTransform, b2Vec2 translation,
+							  b2QueryFilter filter )
+{
+	B2_ASSERT( b2IsValidVec2( originTransform.p ) );
+	B2_ASSERT( b2IsValidRotation( originTransform.q ) );
+	B2_ASSERT( b2IsValidVec2( translation ) );
+
+	b2Vec2 position = originTransform.p;
+
+	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return position;
+	}
+
+	b2AABB aabb = b2ComputerShapeBounds( shapeProxy, originTransform );
+	b2CharacterCallbackContext context = {
+		world,
+		filter,
+		*shapeProxy,
+		originTransform,
+	};
+
+	for ( int i = 0; i < b2_bodyTypeCount; ++i )
+	{
+		b2TreeStats treeResult =
+			b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, b2CharacterOverlapCallback, &context );
+		B2_UNUSED( treeResult );
+	}
+
+	return b2Add( originTransform.p, translation );
+}
+
 #if 0
 
 void b2World_ShiftOrigin(b2WorldId worldId, b2Vec2 newOrigin)
@@ -2777,6 +2907,8 @@ void b2ValidateConnectivity( b2World* world )
 			b2ValidateFreeId( &world->bodyIdPool, bodyIndex );
 			continue;
 		}
+
+		b2ValidateUsedId( &world->bodyIdPool, bodyIndex );
 
 		B2_ASSERT( bodyIndex == body->id );
 
