@@ -1410,7 +1410,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 						b2Vec2 p1 = point->point;
 						b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->tangentImpulse, tangent );
 						draw->DrawSegment( p1, p2, frictionColor, draw->context );
-						snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.2f", point->normalImpulse );
+						snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.2f", point->tangentImpulse );
 						draw->DrawString( p1, buffer, b2_colorWhite, draw->context );
 					}
 				}
