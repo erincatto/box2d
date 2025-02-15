@@ -339,6 +339,7 @@ static int TestSensor( void )
 	b2BodyId wallId = b2CreateBody( worldId, &bodyDef );
 	b2Polygon box = b2MakeBox( 0.5f, 10.0f );
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	shapeDef.enableSensorEvents = true;
 	b2CreatePolygonShape( wallId, &shapeDef, &box );
 
 	// Bullet fired towards the wall
@@ -351,6 +352,7 @@ static int TestSensor( void )
 	b2BodyId bulletId = b2CreateBody( worldId, &bodyDef );
 	shapeDef = b2DefaultShapeDef();
 	shapeDef.isSensor = true;
+	shapeDef.enableSensorEvents = true;
 	b2Circle circle = { { 0.0f, 0.0f }, 0.1f };
 	b2CreateCircleShape( bulletId, &shapeDef, &circle );
 

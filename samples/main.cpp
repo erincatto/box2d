@@ -422,13 +422,13 @@ static void UpdateUI()
 				ImGui::Checkbox( "Shapes", &s_settings.drawShapes );
 				ImGui::Checkbox( "Joints", &s_settings.drawJoints );
 				ImGui::Checkbox( "Joint Extras", &s_settings.drawJointExtras );
-				ImGui::Checkbox( "AABBs", &s_settings.drawAABBs );
+				ImGui::Checkbox( "Bounds", &s_settings.drawBounds );
 				ImGui::Checkbox( "Contact Points", &s_settings.drawContactPoints );
 				ImGui::Checkbox( "Contact Normals", &s_settings.drawContactNormals );
 				ImGui::Checkbox( "Contact Impulses", &s_settings.drawContactImpulses );
 				ImGui::Checkbox( "Contact Features", &s_settings.drawContactFeatures );
 				ImGui::Checkbox( "Friction Impulses", &s_settings.drawFrictionImpulses );
-				ImGui::Checkbox( "Center of Masses", &s_settings.drawMass );
+				ImGui::Checkbox( "Mass", &s_settings.drawMass );
 				ImGui::Checkbox( "Body Names", &s_settings.drawBodyNames );
 				ImGui::Checkbox( "Graph Colors", &s_settings.drawGraphColors );
 				ImGui::Checkbox( "Counters", &s_settings.drawCounters );

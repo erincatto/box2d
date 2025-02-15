@@ -237,7 +237,7 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 	b2BodyState* states = awakeSet->bodyStates.data;
 
 	float inv_h = context->inv_h;
-	const float pushout = context->world->contactMaxPushSpeed;
+	const float pushout = context->world->maxContactPushSpeed;
 
 	// This is a dummy body to represent a static body since static bodies don't have a solver body.
 	b2BodyState dummyState = b2_identityBodyState;
@@ -602,7 +602,7 @@ static inline b2FloatW b2MaxW( b2FloatW a, b2FloatW b )
 }
 
 // a = clamp(a, -b, b)
-static inline b2FloatW b2ClampSymW( b2FloatW a, b2FloatW b )
+static inline b2FloatW b2SymClampW( b2FloatW a, b2FloatW b )
 {
 	b2FloatW nb = _mm256_sub_ps( _mm256_setzero_ps(), b );
 	return _mm256_max_ps(nb, _mm256_min_ps( a, b ));
@@ -683,7 +683,7 @@ static inline b2FloatW b2MaxW( b2FloatW a, b2FloatW b )
 }
 
 // a = clamp(a, -b, b)
-static inline b2FloatW b2ClampSymW( b2FloatW a, b2FloatW b )
+static inline b2FloatW b2SymClampW( b2FloatW a, b2FloatW b )
 {
 	b2FloatW nb = vnegq_f32( b );
 	return vmaxq_f32( nb, vminq_f32( a, b ) );
@@ -798,7 +798,7 @@ static inline b2FloatW b2MaxW( b2FloatW a, b2FloatW b )
 }
 
 // a = clamp(a, -b, b)
-static inline b2FloatW b2ClampSymW( b2FloatW a, b2FloatW b )
+static inline b2FloatW b2SymClampW( b2FloatW a, b2FloatW b )
 {
 	// Create a mask with the sign bit set for each element
 	__m128 mask = _mm_set1_ps( -0.0f );
@@ -908,7 +908,7 @@ static inline b2FloatW b2MaxW( b2FloatW a, b2FloatW b )
 }
 
 // a = clamp(a, -b, b)
-static inline b2FloatW b2ClampSymW( b2FloatW a, b2FloatW b )
+static inline b2FloatW b2SymClampW( b2FloatW a, b2FloatW b )
 {
 	b2FloatW r;
 	r.x = b2ClampFloat(a.x, -b.x, b.x);
@@ -1681,7 +1681,7 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 	b2BodyState* states = context->states;
 	b2ContactConstraintSIMD* constraints = context->graph->colors[colorIndex].simdConstraints;
 	b2FloatW inv_h = b2SplatW( context->inv_h );
-	b2FloatW minBiasVel = b2SplatW( -context->world->contactMaxPushSpeed );
+	b2FloatW minBiasVel = b2SplatW( -context->world->maxContactPushSpeed );
 	b2FloatW oneW = b2SplatW( 1.0f );
 
 	for ( int i = startIndex; i < endIndex; ++i )
@@ -1711,9 +1711,13 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 
 		// point1 non-penetration constraint
 		{
-			// moving anchors for current separation
-			b2Vec2W rsA = b2RotateVectorW( bA.dq, c->anchorA1 );
-			b2Vec2W rsB = b2RotateVectorW( bB.dq, c->anchorB1 );
+			// Fixed anchors for impulses
+			b2Vec2W rA = c->anchorA1;
+			b2Vec2W rB = c->anchorB1;
+
+			// Moving anchors for current separation
+			b2Vec2W rsA = b2RotateVectorW( bA.dq, rA );
+			b2Vec2W rsB = b2RotateVectorW( bB.dq, rB );
 
 			// compute current separation
 			// this is subject to round-off error if the anchor is far from the body center of mass
@@ -1725,14 +1729,12 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW mask = b2GreaterThanW( s, b2ZeroW() );
 			b2FloatW specBias = b2MulW( s, inv_h );
 			b2FloatW softBias = b2MaxW( b2MulW( biasRate, s ), minBiasVel );
+
+			// todo try b2MaxW(softBias, specBias);
 			b2FloatW bias = b2BlendW( softBias, specBias, mask );
 
 			b2FloatW pointMassScale = b2BlendW( massScale, oneW, mask );
 			b2FloatW pointImpulseScale = b2BlendW( impulseScale, b2ZeroW(), mask );
-
-			// fixed anchors for Jacobians
-			b2Vec2W rA = c->anchorA1;
-			b2Vec2W rB = c->anchorB1;
 
 			// Relative velocity at contact
 			b2FloatW dvx = b2SubW( b2SubW( bB.v.X, b2MulW( bB.w, rB.Y ) ), b2SubW( bA.v.X, b2MulW( bA.w, rA.Y ) ) );
@@ -1898,7 +1900,7 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW deltaLambda = b2MulW( c->rollingMass, b2SubW( bA.w, bB.w ));
 			b2FloatW lambda = c->rollingImpulse;
 			b2FloatW maxLambda = b2MulW( c->rollingResistance, totalNormalImpulse );
-			c->rollingImpulse = b2ClampSymW( b2AddW(lambda, deltaLambda), maxLambda );
+			c->rollingImpulse = b2SymClampW( b2AddW(lambda, deltaLambda), maxLambda );
 			deltaLambda = b2SubW(c->rollingImpulse, lambda);
 
 			bA.w = b2MulSubW( bA.w, c->invIA, deltaLambda );

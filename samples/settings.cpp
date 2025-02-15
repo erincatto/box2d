@@ -52,7 +52,7 @@ void Settings::Save()
 	fprintf( file, "  \"sampleIndex\": %d,\n", sampleIndex );
 	fprintf( file, "  \"drawShapes\": %s,\n", drawShapes ? "true" : "false" );
 	fprintf( file, "  \"drawJoints\": %s,\n", drawJoints ? "true" : "false" );
-	fprintf( file, "  \"drawAABBs\": %s,\n", drawAABBs ? "true" : "false" );
+	fprintf( file, "  \"drawBounds\": %s,\n", drawBounds ? "true" : "false" );
 	fprintf( file, "  \"drawContactPoints\": %s,\n", drawContactPoints ? "true" : "false" );
 	fprintf( file, "  \"drawContactNormals\": %s,\n", drawContactNormals ? "true" : "false" );
 	fprintf( file, "  \"drawContactImpulses\": %s,\n", drawContactImpulses ? "true" : "false" );

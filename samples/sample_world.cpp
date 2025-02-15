@@ -116,7 +116,7 @@ public:
 				for ( int i = 0; i < 5; ++i )
 				{
 					Human human = {};
-					CreateHuman(&human, m_worldId, position, 1.5f, 0.05f, 0.0f, 0.0f, humanIndex + 1, NULL, false );
+					CreateHuman(&human, m_worldId, position, 1.5f, 0.05f, 0.0f, 0.0f, humanIndex + 1, nullptr, false );
 					humanIndex += 1;
 					position.x += 1.0f;
 				}
@@ -128,7 +128,7 @@ public:
 				for ( int i = 0; i < 5; ++i )
 				{
 					Donut donut;
-					donut.Spawn( m_worldId, position, 0.75f, 0, NULL );
+					donut.Create( m_worldId, position, 0.75f, 0, false, nullptr );
 					position.x += 2.0f;
 				}
 			}

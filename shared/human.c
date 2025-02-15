@@ -10,8 +10,8 @@
 
 #include <assert.h>
 
-void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale, float frictionTorque, float hertz, float dampingRatio,
-						   int groupIndex, void* userData, bool colorize )
+void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale, float frictionTorque, float hertz,
+				  float dampingRatio, int groupIndex, void* userData, bool colorize )
 {
 	assert( human->isSpawned == false );
 
@@ -584,5 +584,18 @@ void Human_SetJointDampingRatio( Human* human, float dampingRatio )
 	for ( int i = 1; i < bone_count; ++i )
 	{
 		b2RevoluteJoint_SetSpringDampingRatio( human->bones[i].jointId, dampingRatio );
+	}
+}
+
+void Human_EnableSensorEvents( Human* human, bool enable )
+{
+	assert( human->isSpawned == true );
+	b2BodyId bodyId = human->bones[bone_torso].bodyId;
+
+	b2ShapeId shapeId;
+	int count = b2Body_GetShapes( bodyId, &shapeId, 1 );
+	if ( count == 1 )
+	{
+		b2Shape_EnableSensorEvents( shapeId, enable );
 	}
 }

@@ -612,6 +612,7 @@ public:
 
 			b2Segment segment = { { -20.0f, 0.0f }, { 20.0f, 0.0f } };
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.enableSensorEvents = true;
 			m_groundShapeId = b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
@@ -630,6 +631,7 @@ public:
 			b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
 
 			shapeDef.isSensor = true;
+			shapeDef.enableSensorEvents = true;
 			capsule.radius = 1.0f;
 			m_sensorIds[i] = b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
 			m_sensorTouching[i] = false;

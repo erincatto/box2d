@@ -44,6 +44,7 @@ typedef struct b2Shape
 	};
 
 	uint16_t generation;
+	bool enableSensorEvents;
 	bool enableContactEvents;
 	bool enableHitEvents;
 	bool enablePreSolveEvents;

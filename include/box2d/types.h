@@ -97,7 +97,7 @@ typedef struct b2WorldDef
 	/// This parameter controls how fast overlap is resolved and usually has units of meters per second. This only
 	/// puts a cap on the resolution speed. The resolution speed is increased by increasing the hertz and/or
 	/// decreasing the damping ratio.
-	float contactPushMaxSpeed;
+	float maxContactPushSpeed;
 
 	/// Joint stiffness. Cycles per second.
 	float jointHertz;
@@ -365,15 +365,19 @@ typedef struct b2ShapeDef
 	uint32_t customColor;
 
 	/// A sensor shape generates overlap events but never generates a collision response.
-	/// Sensors do not collide with other sensors and do not have continuous collision.
-	/// Instead, use a ray or shape cast for those scenarios.
+	/// Sensors do not have continuous collision. Instead, use a ray or shape cast for those scenarios.
 	/// Sensors still contribute to the body mass if they have non-zero density.
+	/// @note Sensor events are disabled by default.
+	/// @see enableSensorEvents
 	bool isSensor;
 
-	/// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors.
+	/// Enable sensor events for this shape. This applies to sensors and non-sensors. False by default, even for sensors.
+	bool enableSensorEvents;
+
+	/// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors. False by default.
 	bool enableContactEvents;
 
-	/// Enable hit events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors.
+	/// Enable hit events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors. False by default.
 	bool enableHitEvents;
 
 	/// Enable pre-solve contact events for this shape. Only applies to dynamic bodies. These are expensive
@@ -464,6 +468,9 @@ typedef struct b2ChainDef
 
 	/// Indicates a closed chain formed by connecting the first and last points
 	bool isLoop;
+
+	/// Enable sensors to detect this chain. False by default.
+	bool enableSensorEvents;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;

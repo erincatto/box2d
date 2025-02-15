@@ -34,7 +34,7 @@ struct b2SensorQueryContext
 // - maintain an active list of overlaps for query
 
 // Assumption
-// - sensors don't detect other sensors
+// - sensors don't detect shapes on the same body
 
 // Algorithm
 // Query all sensors for overlaps
@@ -60,8 +60,14 @@ static bool b2SensorQueryCallback( int proxyId, int shapeId, void* context )
 	b2World* world = queryContext->world;
 	b2Shape* otherShape = b2ShapeArray_Get( &world->shapes, shapeId );
 
-	// Sensors don't overlap with other sensors
-	if ( otherShape->sensorIndex != B2_NULL_INDEX )
+	// Are sensor events enabled on the other shape?
+	if ( otherShape->enableSensorEvents == false )
+	{
+		return true;
+	}
+
+	// Skip shapes on the same body
+	if ( otherShape->bodyId == sensorShape->bodyId )
 	{
 		return true;
 	}
@@ -147,9 +153,9 @@ static void b2SensorTask( int startIndex, int endIndex, uint32_t threadIndex, vo
 		b2ShapeRefArray_Clear( &sensor->overlaps2 );
 
 		b2Body* body = b2BodyArray_Get( &world->bodies, sensorShape->bodyId );
-		if (body->setIndex == b2_disabledSet)
+		if ( body->setIndex == b2_disabledSet || sensorShape->enableSensorEvents == false )
 		{
-			if (sensor->overlaps1.count != 0)
+			if ( sensor->overlaps1.count != 0 )
 			{
 				b2SetBit( &taskContext->eventBits, sensorIndex );
 			}
@@ -273,7 +279,10 @@ void b2OverlapSensors( b2World* world )
 					{
 						// end
 						b2ShapeId visitorId = { r1->shapeId + 1, world->worldId, r1->generation };
-						b2SensorEndTouchEvent event = { sensorId, visitorId };
+						b2SensorEndTouchEvent event = {
+							.sensorShapeId = sensorId,
+							.visitorShapeId = visitorId,
+						};
 						b2SensorEndTouchEventArray_Push( &world->sensorEndEvents[world->endEventArrayIndex], event );
 						index1 += 1;
 					}

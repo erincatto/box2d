@@ -116,6 +116,7 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	shape->userData = def->userData;
 	shape->customColor = def->customColor;
 	shape->enlargedAABB = false;
+	shape->enableSensorEvents = def->enableSensorEvents;
 	shape->enableContactEvents = def->enableContactEvents;
 	shape->enableHitEvents = def->enableHitEvents;
 	shape->enablePreSolveEvents = def->enablePreSolveEvents;
@@ -391,6 +392,7 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
 	shapeDef.userData = def->userData;
 	shapeDef.filter = def->filter;
+	shapeDef.enableSensorEvents = def->enableSensorEvents;
 	shapeDef.enableContactEvents = false;
 	shapeDef.enableHitEvents = false;
 
@@ -1219,6 +1221,25 @@ void b2Shape_SetFilter( b2ShapeId shapeId, b2Filter filter )
 
 	// note: this does not immediately update sensor overlaps. Instead sensor
 	// overlaps are updated the next time step
+}
+
+void b2Shape_EnableSensorEvents( b2ShapeId shapeId, bool flag )
+{
+	b2World* world = b2GetWorldLocked( shapeId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
+
+	b2Shape* shape = b2GetShape( world, shapeId );
+	shape->enableSensorEvents = flag;
+}
+
+bool b2Shape_AreSensorEventsEnabled( b2ShapeId shapeId )
+{
+	b2World* world = b2GetWorld( shapeId.world0 );
+	b2Shape* shape = b2GetShape( world, shapeId );
+	return shape->enableSensorEvents;
 }
 
 void b2Shape_EnableContactEvents( b2ShapeId shapeId, bool flag )

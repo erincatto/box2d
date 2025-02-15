@@ -17,8 +17,8 @@
 #include "box2d/math_functions.h"
 
 #include <GLFW/glfw3.h>
+//#include <ctype.h>
 #include <stdio.h>
-#include <ctype.h>
 
 class SampleTask : public enki::ITaskSet
 {
@@ -149,7 +149,6 @@ void Sample::CreateWorld()
 	worldDef.finishTask = FinishTask;
 	worldDef.userTaskContext = this;
 	worldDef.enableSleep = m_settings->enableSleep;
-
 	m_worldId = b2CreateWorld( &worldDef );
 }
 
@@ -318,7 +317,7 @@ void Sample::Step( Settings& settings )
 	g_draw.m_debugDraw.drawShapes = settings.drawShapes;
 	g_draw.m_debugDraw.drawJoints = settings.drawJoints;
 	g_draw.m_debugDraw.drawJointExtras = settings.drawJointExtras;
-	g_draw.m_debugDraw.drawAABBs = settings.drawAABBs;
+	g_draw.m_debugDraw.drawAABBs = settings.drawBounds;
 	g_draw.m_debugDraw.drawMass = settings.drawMass;
 	g_draw.m_debugDraw.drawBodyNames = settings.drawBodyNames;
 	g_draw.m_debugDraw.drawContacts = settings.drawContactPoints;
@@ -349,36 +348,25 @@ void Sample::Step( Settings& settings )
 	{
 		b2Counters s = b2World_GetCounters( m_worldId );
 
-		g_draw.DrawString( 5, m_textLine, "bodies/shapes/contacts/joints = %d/%d/%d/%d", s.bodyCount, s.shapeCount,
-						   s.contactCount, s.jointCount );
-		m_textLine += m_textIncrement;
-
-		g_draw.DrawString( 5, m_textLine, "islands/tasks = %d/%d", s.islandCount, s.taskCount );
-		m_textLine += m_textIncrement;
-
-		g_draw.DrawString( 5, m_textLine, "tree height static/movable = %d/%d", s.staticTreeHeight, s.treeHeight );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "bodies/shapes/contacts/joints = %d/%d/%d/%d", s.bodyCount, s.shapeCount, s.contactCount, s.jointCount );
+		DrawTextLine( "islands/tasks = %d/%d", s.islandCount, s.taskCount );
+		DrawTextLine( "tree height static/movable = %d/%d", s.staticTreeHeight, s.treeHeight );
 
 		int totalCount = 0;
 		char buffer[256] = { 0 };
-		static_assert( std::size( s.colorCounts ) == 12 );
+		int colorCount = sizeof( s.colorCounts ) / sizeof( s.colorCounts[0] );
 
 		// todo fix this
 		int offset = snprintf( buffer, 256, "colors: " );
-		for ( int i = 0; i < 12; ++i )
+		for ( int i = 0; i < colorCount; ++i )
 		{
 			offset += snprintf( buffer + offset, 256 - offset, "%d/", s.colorCounts[i] );
 			totalCount += s.colorCounts[i];
 		}
 		snprintf( buffer + offset, 256 - offset, "[%d]", totalCount );
-		g_draw.DrawString( 5, m_textLine, buffer );
-		m_textLine += m_textIncrement;
-
-		g_draw.DrawString( 5, m_textLine, "stack allocator size = %d K", s.stackUsed / 1024 );
-		m_textLine += m_textIncrement;
-
-		g_draw.DrawString( 5, m_textLine, "total allocation = %d K", s.byteCount / 1024 );
-		m_textLine += m_textIncrement;
+		DrawTextLine( buffer );
+		DrawTextLine( "stack allocator size = %d K", s.stackUsed / 1024 );
+		DrawTextLine( "total allocation = %d K", s.byteCount / 1024 );
 	}
 
 	// Track maximum profile times
@@ -641,7 +629,6 @@ int Sample::ParsePath( const char* svgPath, b2Vec2 offset, b2Vec2* points, int c
 
 	if ( reverseOrder )
 	{
-
 	}
 	return pointCount;
 }

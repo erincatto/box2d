@@ -19,7 +19,7 @@ Donut::Donut()
 	m_isSpawned = false;
 }
 
-void Donut::Spawn( b2WorldId worldId, b2Vec2 position, float scale, int groupIndex, void* userData )
+void Donut::Create( b2WorldId worldId, b2Vec2 position, float scale, int groupIndex, bool enableSensorEvents, void* userData )
 {
 	assert( m_isSpawned == false );
 
@@ -42,7 +42,7 @@ void Donut::Spawn( b2WorldId worldId, b2Vec2 position, float scale, int groupInd
 	bodyDef.userData = userData;
 
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
-	shapeDef.density = 1.0f;
+	shapeDef.enableSensorEvents = enableSensorEvents;
 	shapeDef.filter.groupIndex = -groupIndex;
 	shapeDef.friction = 0.3f;
 
@@ -81,7 +81,7 @@ void Donut::Spawn( b2WorldId worldId, b2Vec2 position, float scale, int groupInd
 	m_isSpawned = true;
 }
 
-void Donut::Despawn()
+void Donut::Destroy()
 {
 	assert( m_isSpawned == true );
 

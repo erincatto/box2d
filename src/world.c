@@ -32,6 +32,7 @@
 #include <string.h>
 
 _Static_assert( B2_MAX_WORLDS > 0, "must be 1 or more" );
+_Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B3_MAX_WORLDS limit exceeded" );
 b2World b2_worlds[B2_MAX_WORLDS];
 
 B2_ARRAY_SOURCE( b2BodyMoveEvent, b2BodyMoveEvent );
@@ -128,7 +129,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->generation = generation;
 	world->inUse = true;
 
-	world->stackAllocator = b2CreateArenaAllocator( 2048 );
+	world->arena = b2CreateArenaAllocator( 2048 );
 	b2CreateBroadPhase( &world->broadPhase );
 	b2CreateGraph( &world->constraintGraph, 16 );
 
@@ -191,7 +192,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->hitEventThreshold = def->hitEventThreshold;
 	world->restitutionThreshold = def->restitutionThreshold;
 	world->maxLinearSpeed = def->maximumLinearSpeed;
-	world->contactMaxPushSpeed = def->contactPushMaxSpeed;
+	world->maxContactPushSpeed = def->maxContactPushSpeed;
 	world->contactHertz = def->contactHertz;
 	world->contactDampingRatio = def->contactDampingRatio;
 	world->jointHertz = def->jointHertz;
@@ -345,7 +346,7 @@ void b2DestroyWorld( b2WorldId worldId )
 	b2DestroyIdPool( &world->islandIdPool );
 	b2DestroyIdPool( &world->solverSetIdPool );
 
-	b2DestroyArenaAllocator( &world->stackAllocator );
+	b2DestroyArenaAllocator( &world->arena );
 
 	// Wipe world but preserve generation
 	uint16_t generation = world->generation;
@@ -518,7 +519,7 @@ static void b2Collide( b2StepContext* context )
 	}
 
 	b2ContactSim** contactSims =
-		b2AllocateArenaItem( &world->stackAllocator, contactCount * sizeof( b2ContactSim* ), "contacts" );
+		b2AllocateArenaItem( &world->arena, contactCount * sizeof( b2ContactSim* ), "contacts" );
 
 	int contactIndex = 0;
 	for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
@@ -562,7 +563,7 @@ static void b2Collide( b2StepContext* context )
 		world->finishTaskFcn( userCollideTask, world->userTaskContext );
 	}
 
-	b2FreeArenaItem( &world->stackAllocator, contactSims );
+	b2FreeArenaItem( &world->arena, contactSims );
 	context->contacts = NULL;
 	contactSims = NULL;
 
@@ -795,10 +796,10 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 
 	world->profile.step = b2GetMilliseconds( stepTicks );
 
-	B2_ASSERT( b2GetArenaAllocation( &world->stackAllocator ) == 0 );
+	B2_ASSERT( b2GetArenaAllocation( &world->arena ) == 0 );
 
 	// Ensure stack is large enough
-	b2GrowArena( &world->stackAllocator );
+	b2GrowArena( &world->arena );
 
 	// Make sure all tasks that were started were also finished
 	B2_ASSERT( world->activeTaskCount == 0 );
@@ -1789,7 +1790,7 @@ void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRati
 
 	world->contactHertz = b2ClampFloat( hertz, 0.0f, FLT_MAX );
 	world->contactDampingRatio = b2ClampFloat( dampingRatio, 0.0f, FLT_MAX );
-	world->contactMaxPushSpeed = b2ClampFloat( pushSpeed, 0.0f, FLT_MAX );
+	world->maxContactPushSpeed = b2ClampFloat( pushSpeed, 0.0f, FLT_MAX );
 }
 
 void b2World_SetJointTuning( b2WorldId worldId, float hertz, float dampingRatio )
@@ -1848,7 +1849,7 @@ b2Counters b2World_GetCounters( b2WorldId worldId )
 	b2DynamicTree* kinematicTree = world->broadPhase.trees + b2_kinematicBody;
 	s.treeHeight = b2MaxInt( b2DynamicTree_GetHeight( dynamicTree ), b2DynamicTree_GetHeight( kinematicTree ) );
 
-	s.stackUsed = b2GetMaxArenaAllocation( &world->stackAllocator );
+	s.stackUsed = b2GetMaxArenaAllocation( &world->arena );
 	s.byteCount = b2GetByteCount();
 	s.taskCount = world->taskCount;
 
@@ -2000,7 +2001,7 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	fprintf( file, "\n" );
 
 	// stack allocator
-	fprintf( file, "stack allocator: %d\n\n", world->stackAllocator.capacity );
+	fprintf( file, "stack allocator: %d\n\n", world->arena.capacity );
 
 	// chain shapes
 	// todo

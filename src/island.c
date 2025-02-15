@@ -619,7 +619,7 @@ void b2SplitIsland( b2World* world, int baseId )
 	int bodyCount = baseIsland->bodyCount;
 
 	b2Body* bodies = world->bodies.data;
-	b2ArenaAllocator* alloc = &world->stackAllocator;
+	b2ArenaAllocator* alloc = &world->arena;
 
 	// No lock is needed because I ensure the allocator is not used while this task is active.
 	int* stack = b2AllocateArenaItem( alloc, bodyCount * sizeof( int ), "island stack" );

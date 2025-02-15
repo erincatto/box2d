@@ -1061,6 +1061,10 @@ Sensor events should be processed after the world step and before other game log
 help you avoid processing stale data.
 
 ### Contact Events
+
+todo discuss the expected number of events and how this can change with the time step.
+see https://www.iforce2d.net/b2dtut/collision-anatomy
+
 Contact events are available after each world step. Like sensor events these should be
 retrieved and processed before performing other game logic. Otherwise
 you may be accessing orphaned/invalid data.

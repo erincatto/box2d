@@ -51,6 +51,7 @@ void Human_ApplyRandomAngularImpulse( Human* human, float magnitude );
 void Human_SetJointFrictionTorque( Human* human, float torque );
 void Human_SetJointSpringHertz( Human* human, float hertz );
 void Human_SetJointDampingRatio( Human* human, float dampingRatio );
+void Human_EnableSensorEvents( Human* human, bool enable );
 
 #ifdef __cplusplus
 }
