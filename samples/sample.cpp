@@ -17,7 +17,7 @@
 #include "box2d/math_functions.h"
 
 #include <GLFW/glfw3.h>
-//#include <ctype.h>
+#include <ctype.h>
 #include <stdio.h>
 
 class SampleTask : public enki::ITaskSet
