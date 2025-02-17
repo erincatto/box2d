@@ -41,7 +41,7 @@ void DumpInfoGL()
 	printf( "-------------------------------------------------------------\n" );
 }
 
-void CheckErrorGL()
+void CheckOpenGL()
 {
 	GLenum errCode = glGetError();
 	if ( errCode != GL_NO_ERROR )

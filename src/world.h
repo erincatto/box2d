@@ -114,6 +114,7 @@ typedef struct b2World
 	b2BitSet debugBodySet;
 	b2BitSet debugJointSet;
 	b2BitSet debugContactSet;
+	b2BitSet debugIslandSet;
 
 	// Id that is incremented every time step
 	uint64_t stepIndex;

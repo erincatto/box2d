@@ -29,6 +29,7 @@ struct Settings
 	bool drawContactImpulses = false;
 	bool drawContactFeatures = false;
 	bool drawFrictionImpulses = false;
+	bool drawIslands = false;
 	bool drawGraphColors = false;
 	bool drawCounters = false;
 	bool drawProfile = false;

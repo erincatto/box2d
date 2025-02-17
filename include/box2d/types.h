@@ -1428,7 +1428,7 @@ typedef struct b2DebugDraw
 	bool drawJointExtras;
 
 	/// Option to draw the bounding boxes for shapes
-	bool drawAABBs;
+	bool drawBounds;
 
 	/// Option to draw the mass and center of mass of dynamic bodies
 	bool drawMass;
@@ -1453,6 +1453,9 @@ typedef struct b2DebugDraw
 
 	/// Option to draw contact friction impulses
 	bool drawFrictionImpulses;
+
+	/// Option to draw islands as bounding boxes
+	bool drawIslands;
 
 	/// User context that is passed as an argument to drawing callback functions
 	void* context;

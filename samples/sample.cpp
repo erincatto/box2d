@@ -317,7 +317,7 @@ void Sample::Step( Settings& settings )
 	g_draw.m_debugDraw.drawShapes = settings.drawShapes;
 	g_draw.m_debugDraw.drawJoints = settings.drawJoints;
 	g_draw.m_debugDraw.drawJointExtras = settings.drawJointExtras;
-	g_draw.m_debugDraw.drawAABBs = settings.drawBounds;
+	g_draw.m_debugDraw.drawBounds = settings.drawBounds;
 	g_draw.m_debugDraw.drawMass = settings.drawMass;
 	g_draw.m_debugDraw.drawBodyNames = settings.drawBodyNames;
 	g_draw.m_debugDraw.drawContacts = settings.drawContactPoints;
@@ -326,6 +326,7 @@ void Sample::Step( Settings& settings )
 	g_draw.m_debugDraw.drawContactImpulses = settings.drawContactImpulses;
 	g_draw.m_debugDraw.drawContactFeatures = settings.drawContactFeatures;
 	g_draw.m_debugDraw.drawFrictionImpulses = settings.drawFrictionImpulses;
+	g_draw.m_debugDraw.drawIslands = settings.drawIslands;
 
 	b2World_EnableSleeping( m_worldId, settings.enableSleep );
 	b2World_EnableWarmStarting( m_worldId, settings.enableWarmStarting );

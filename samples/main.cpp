@@ -431,6 +431,7 @@ static void UpdateUI()
 				ImGui::Checkbox( "Mass", &s_settings.drawMass );
 				ImGui::Checkbox( "Body Names", &s_settings.drawBodyNames );
 				ImGui::Checkbox( "Graph Colors", &s_settings.drawGraphColors );
+				ImGui::Checkbox( "Islands", &s_settings.drawIslands );
 				ImGui::Checkbox( "Counters", &s_settings.drawCounters );
 				ImGui::Checkbox( "Profile", &s_settings.drawProfile );
 

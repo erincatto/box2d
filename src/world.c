@@ -257,6 +257,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->debugBodySet = b2CreateBitSet( 256 );
 	world->debugJointSet = b2CreateBitSet( 256 );
 	world->debugContactSet = b2CreateBitSet( 256 );
+	world->debugIslandSet = b2CreateBitSet( 256 );
 
 	// add one to worldId so that 0 represents a null b2WorldId
 	return ( b2WorldId ){ (uint16_t)( worldId + 1 ), world->generation };
@@ -269,6 +270,7 @@ void b2DestroyWorld( b2WorldId worldId )
 	b2DestroyBitSet( &world->debugBodySet );
 	b2DestroyBitSet( &world->debugJointSet );
 	b2DestroyBitSet( &world->debugContactSet );
+	b2DestroyBitSet( &world->debugIslandSet );
 
 	for ( int i = 0; i < world->workerCount; ++i )
 	{
@@ -941,7 +943,7 @@ static bool DrawQueryCallback( int proxyId, int shapeId, void* context )
 		b2DrawShape( draw, shape, bodySim->transform, color );
 	}
 
-	if ( draw->drawAABBs )
+	if ( draw->drawBounds )
 	{
 		b2AABB aabb = shape->fatAABB;
 
@@ -1265,7 +1267,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 		}
 	}
 
-	if ( draw->drawAABBs )
+	if ( draw->drawBounds )
 	{
 		b2HexColor color = b2_colorGold;
 
@@ -1440,6 +1442,53 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 						draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 					}
 				}
+			}
+		}
+	}
+
+	if ( draw->drawIslands )
+	{
+		int count = world->islands.count;
+		for ( int i = 0; i < count; ++i )
+		{
+			b2Island* island = world->islands.data + i;
+			if ( island->setIndex == B2_NULL_INDEX )
+			{
+				continue;
+			}
+
+			int shapeCount = 0;
+			b2AABB aabb = {
+				.lowerBound = { FLT_MAX, FLT_MAX },
+				.upperBound = { -FLT_MAX, -FLT_MAX },
+			};
+
+			island->bodyCount;
+
+			int bodyId = island->headBody;
+			while (bodyId != B2_NULL_INDEX)
+			{
+				b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
+				int shapeId = body->headShapeId;
+				while (shapeId != B2_NULL_INDEX)
+				{
+					b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+					aabb = b2AABB_Union( aabb, shape->fatAABB );
+					shapeCount += 1;
+					shapeId = shape->nextShapeId;
+				}
+
+				bodyId = body->islandNext;
+			}
+
+			if (shapeCount > 0)
+			{
+				b2Vec2 vs[4] = { { aabb.lowerBound.x, aabb.lowerBound.y },
+								 { aabb.upperBound.x, aabb.lowerBound.y },
+								 { aabb.upperBound.x, aabb.upperBound.y },
+								 { aabb.lowerBound.x, aabb.upperBound.y } };
+
+				draw->DrawPolygonFcn( vs, 4, b2_colorOrangeRed, draw->context );
 			}
 		}
 	}
