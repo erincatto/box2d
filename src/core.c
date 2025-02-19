@@ -158,6 +158,21 @@ void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn )
 // Use 32 byte alignment for everything. Works with 256bit SIMD.
 #define B2_ALIGNMENT 32
 
+// handle missing aligned_alloc on macOS versions before 10.15
+#if defined ( B2_PLATFORM_MACOS )
+__attribute__((weak_import)) void *aligned_alloc(size_t alignment, size_t size);
+void* (*aligned_alloc_ptr)() = &aligned_alloc;
+void *aligned_alloc_macos_lt_10_15(size_t alignment, size_t size) {
+    void* ptr = NULL;
+    if ( posix_memalign( &ptr, alignment, size ) != 0 )
+    {
+        // allocation failed, exit the application
+        exit( EXIT_FAILURE );
+    }
+    return ptr;
+}
+#endif
+
 void* b2Alloc( int size )
 {
 	if ( size == 0 )
@@ -192,6 +207,8 @@ void* b2Alloc( int size )
 		// allocation failed, exit the application
 		exit( EXIT_FAILURE );
 	}
+#elif defined( B2_PLATFORM_MACOS )
+	void* ptr = aligned_alloc_ptr ? aligned_alloc( B2_ALIGNMENT, size32 ) : aligned_alloc_macos_lt_10_15( B2_ALIGNMENT, size32 );
 #else
 	void* ptr = aligned_alloc( B2_ALIGNMENT, size32 );
 #endif
