@@ -372,9 +372,11 @@ public:
 		}
 		else
 		{
-			g_draw.DrawSegment( output.pointA, output.pointB, b2_colorWhite );
+			g_draw.DrawSegment( output.pointA, output.pointB, b2_colorDimGray );
 			g_draw.DrawPoint( output.pointA, 5.0f, b2_colorWhite );
 			g_draw.DrawPoint( output.pointB, 5.0f, b2_colorWhite );
+
+			g_draw.DrawSegment( output.pointA, output.pointA + 0.5f * output.normal, b2_colorYellow );
 		}
 
 		if ( m_showIndices )
