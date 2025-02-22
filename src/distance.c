@@ -480,14 +480,16 @@ b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* 
 
 	// Get simplex vertices as an array.
 	b2SimplexVertex* vertices[] = { &simplex.v1, &simplex.v2, &simplex.v3 };
-	const int k_maxIters = 20;
+	const int maxIterations = 20;
+
+	b2Vec2 normal = b2Vec2_zero;
 
 	// These store the vertices of the last simplex so that we can check for duplicates and prevent cycling.
 	int saveA[3], saveB[3];
 
 	// Main iteration loop.
-	int iter = 0;
-	while ( iter < k_maxIters )
+	int iteration = 0;
+	while ( iteration < maxIterations )
 	{
 		// Copy simplex so we can identify duplicates.
 		int saveCount = simplex.count;
@@ -528,6 +530,7 @@ b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* 
 
 		// Get search direction.
 		b2Vec2 d = b2ComputeSimplexSearchDirection( &simplex );
+		normal = b2Neg( d );
 
 		// Ensure the search direction is numerically fit.
 		if ( b2Dot( d, d ) < FLT_EPSILON * FLT_EPSILON )
@@ -551,7 +554,7 @@ b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* 
 		vertex->w = b2Sub( vertex->wB, vertex->wA );
 
 		// Iteration count is equated to the number of support point calls.
-		++iter;
+		++iteration;
 
 		// Check for duplicate support points. This is the main termination criteria.
 		bool duplicate = false;
@@ -582,8 +585,9 @@ b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* 
 
 	// Prepare output
 	b2ComputeSimplexWitnessPoints( &output.pointA, &output.pointB, &simplex );
+	output.normal = normal;
 	output.distance = b2Distance( output.pointA, output.pointB );
-	output.iterations = iter;
+	output.iterations = iteration;
 	output.simplexCount = simplexIndex;
 
 	// Cache the simplex
@@ -592,27 +596,13 @@ b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* 
 	// Apply radii if requested
 	if ( input->useRadii )
 	{
-		if ( output.distance < FLT_EPSILON )
-		{
-			// Shapes are too close to safely compute normal
-			b2Vec2 p = ( b2Vec2 ){ 0.5f * ( output.pointA.x + output.pointB.x ), 0.5f * ( output.pointA.y + output.pointB.y ) };
-			output.pointA = p;
-			output.pointB = p;
-			output.distance = 0.0f;
-		}
-		else
-		{
-			// Keep closest points on perimeter even if overlapped, this way
-			// the points move smoothly.
-			float rA = proxyA->radius;
-			float rB = proxyB->radius;
-			output.distance = b2MaxFloat( 0.0f, output.distance - rA - rB );
-			b2Vec2 normal = b2Normalize( b2Sub( output.pointB, output.pointA ) );
-			b2Vec2 offsetA = ( b2Vec2 ){ rA * normal.x, rA * normal.y };
-			b2Vec2 offsetB = ( b2Vec2 ){ rB * normal.x, rB * normal.y };
-			output.pointA = b2Add( output.pointA, offsetA );
-			output.pointB = b2Sub( output.pointB, offsetB );
-		}
+		float rA = input->proxyA.radius;
+		float rB = input->proxyB.radius;
+		output.distance = b2MaxFloat( 0.0f, output.distance - rA - rB );
+
+		// Keep closest points on perimeter even if overlapped, this way the points move smoothly.
+		output.pointA = b2MulAdd( output.pointA, rA, normal);
+		output.pointB = b2MulSub( output.pointB, rB, normal);
 	}
 
 	return output;

@@ -1016,7 +1016,7 @@ public:
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							g_draw.DrawSegment( point.point, point.point + point.maxNormalImpulse * normal, b2_colorBlueViolet );
+							g_draw.DrawSegment( point.point, point.point + point.totalNormalImpulse * normal, b2_colorBlueViolet );
 							g_draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
 						}
 					}
@@ -1046,7 +1046,7 @@ public:
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							g_draw.DrawSegment( point.point, point.point + point.maxNormalImpulse * normal, b2_colorYellowGreen );
+							g_draw.DrawSegment( point.point, point.point + point.totalNormalImpulse * normal, b2_colorYellowGreen );
 							g_draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
 						}
 					}

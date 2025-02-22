@@ -382,10 +382,9 @@ typedef struct b2DistanceInput
 /// Output for b2ShapeDistance
 typedef struct b2DistanceOutput
 {
-	b2Vec2 pointA; ///< Closest point on shapeA
-	b2Vec2 pointB; ///< Closest point on shapeB
-	// todo_erin implement this
-	// b2Vec2 normal;			///< Normal vector that points from A to B
+	b2Vec2 pointA;	  ///< Closest point on shapeA
+	b2Vec2 pointB;	  ///< Closest point on shapeB
+	b2Vec2 normal;	  ///< Normal vector that points from A to B
 	float distance;	  ///< The final distance, zero if overlapped
 	int iterations;	  ///< Number of GJK iterations used
 	int simplexCount; ///< The number of simplexes stored in the simplex array
@@ -491,7 +490,7 @@ B2_API b2TOIOutput b2TimeOfImpact( const b2TOIInput* input );
 /// A manifold point is a contact point belonging to a contact manifold.
 /// It holds details related to the geometry and dynamics of the contact points.
 /// Box2D uses speculative collision so some contact points may be separated.
-/// You may use the maxNormalImpulse to determine if there was an interaction during
+/// You may use the totalNormalImpulse to determine if there was an interaction during
 /// the time step.
 typedef struct b2ManifoldPoint
 {
@@ -516,9 +515,9 @@ typedef struct b2ManifoldPoint
 	/// The friction impulse
 	float tangentImpulse;
 
-	/// The maximum normal impulse applied during sub-stepping. This is important
+	/// The total normal impulse applied across sub-stepping and restitution. This is important
 	/// to identify speculative contact points that had an interaction in the time step.
-	float maxNormalImpulse;
+	float totalNormalImpulse;
 
 	/// Relative normal velocity pre-solve. Used for hit events. If the normal impulse is
 	/// zero then there was no hit. Negative means shapes are approaching.

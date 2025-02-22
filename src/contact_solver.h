@@ -14,7 +14,7 @@ typedef struct b2ContactConstraintPoint
 	float relativeVelocity;
 	float normalImpulse;
 	float tangentImpulse;
-	float maxNormalImpulse;
+	float totalNormalImpulse;
 	float normalMass;
 	float tangentMass;
 } b2ContactConstraintPoint;

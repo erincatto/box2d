@@ -700,6 +700,9 @@ static void b2Collide( b2StepContext* context )
 
 void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 {
+	B2_ASSERT( b2IsValidFloat( timeStep ) );
+	B2_ASSERT( 0 < subStepCount );
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )

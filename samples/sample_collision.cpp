@@ -1229,7 +1229,7 @@ struct ShapeUserData
 };
 
 // Context for ray cast callbacks. Do what you want with this.
-struct RayCastContext
+struct CastContext
 {
 	b2Vec2 points[3];
 	b2Vec2 normals[3];
@@ -1240,7 +1240,7 @@ struct RayCastContext
 // This callback finds the closest hit. This is the most common callback used in games.
 static float RayCastClosestCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
 {
-	RayCastContext* rayContext = (RayCastContext*)context;
+	CastContext* rayContext = (CastContext*)context;
 
 	ShapeUserData* userData = (ShapeUserData*)b2Shape_GetUserData( shapeId );
 	if ( userData != nullptr && userData->ignore )
@@ -1266,7 +1266,7 @@ static float RayCastClosestCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 nor
 // NOTE: shape hits are not ordered, so this may not return the closest hit
 static float RayCastAnyCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
 {
-	RayCastContext* rayContext = (RayCastContext*)context;
+	CastContext* rayContext = (CastContext*)context;
 
 	ShapeUserData* userData = (ShapeUserData*)b2Shape_GetUserData( shapeId );
 	if ( userData != nullptr && userData->ignore )
@@ -1294,7 +1294,7 @@ static float RayCastAnyCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal,
 // behavior in the sample.
 static float RayCastMultipleCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
 {
-	RayCastContext* rayContext = (RayCastContext*)context;
+	CastContext* rayContext = (CastContext*)context;
 
 	ShapeUserData* userData = (ShapeUserData*)b2Shape_GetUserData( shapeId );
 	if ( userData != nullptr && userData->ignore )
@@ -1326,7 +1326,7 @@ static float RayCastMultipleCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 no
 // This ray cast collects multiple hits along the ray and sorts them.
 static float RayCastSortedCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
 {
-	RayCastContext* rayContext = (RayCastContext*)context;
+	CastContext* rayContext = (CastContext*)context;
 
 	ShapeUserData* userData = (ShapeUserData*)b2Shape_GetUserData( shapeId );
 	if ( userData != nullptr && userData->ignore )
@@ -1380,7 +1380,7 @@ static float RayCastSortedCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 norm
 	return 1.0f;
 }
 
-class RayCastWorld : public Sample
+class CastWorld : public Sample
 {
 public:
 	enum Mode
@@ -1404,7 +1404,7 @@ public:
 		e_maxCount = 64
 	};
 
-	explicit RayCastWorld( Settings& settings )
+	explicit CastWorld( Settings& settings )
 		: Sample( settings )
 	{
 		if ( settings.restart == false )
@@ -1602,7 +1602,7 @@ public:
 
 	void UpdateGui() override
 	{
-		float height = 300.0f;
+		float height = 320.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
 
@@ -1739,6 +1739,10 @@ public:
 				case e_sorted:
 					g_draw.DrawString( 5, m_textLine, "Cast mode: sorted - gather up to 3 shapes sorted by closeness" );
 					break;
+
+				default:
+					assert( false );
+					break;
 			}
 
 			m_textLine += m_textIncrement;
@@ -1747,7 +1751,7 @@ public:
 										RayCastSortedCallback };
 			b2CastResultFcn* modeFcn = fcns[m_mode];
 
-			RayCastContext context = { };
+			CastContext context = { };
 
 			// Must initialize fractions for sorting
 			context.fractions[0] = FLT_MAX;
@@ -1847,7 +1851,7 @@ public:
 
 	static Sample* Create( Settings& settings )
 	{
-		return new RayCastWorld( settings );
+		return new CastWorld( settings );
 	}
 
 	int m_bodyIndex;
@@ -1876,7 +1880,7 @@ public:
 	bool m_dragging;
 };
 
-static int sampleRayCastWorld = RegisterSample( "Collision", "Ray Cast World", RayCastWorld::Create );
+static int sampleRayCastWorld = RegisterSample( "Collision", "Ray Cast World", CastWorld::Create );
 
 class OverlapWorld : public Sample
 {

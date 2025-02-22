@@ -1772,8 +1772,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					b2ManifoldPoint* mp = contactSim->manifold.points + k;
 					float approachSpeed = -mp->normalVelocity;
 
-					// Need to check max impulse because the point may be speculative and not colliding
-					if ( approachSpeed > event.approachSpeed && mp->maxNormalImpulse > 0.0f )
+					// Need to check total impulse because the point may be speculative and not colliding
+					if ( approachSpeed > event.approachSpeed && mp->totalNormalImpulse > 0.0f )
 					{
 						event.approachSpeed = approachSpeed;
 						event.point = mp->point;
