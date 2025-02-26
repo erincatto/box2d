@@ -769,7 +769,7 @@ b2CastOutput b2RayCastSegment( const b2RayCastInput* input, const b2Segment* sha
 	}
 
 	output.fraction = t;
-	output.point = b2MulAdd( p1, t, d );
+	output.point = p;
 	output.normal = normal;
 	output.hit = true;
 

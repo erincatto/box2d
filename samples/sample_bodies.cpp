@@ -514,7 +514,6 @@ public:
 
 			b2Capsule capsule = { { 0.0f, -1.0f }, { 0.0f, 1.0f }, 1.0f };
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.density = 1.0f;
 			b2CreateCapsuleShape( m_weebleId, &shapeDef, &capsule );
 
 			float mass = b2Body_GetMass( m_weebleId );
