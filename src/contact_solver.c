@@ -455,6 +455,8 @@ void b2ApplyOverflowRestitution( b2StepContext* context )
 				float newImpulse = b2MaxFloat( cp->normalImpulse + impulse, 0.0f );
 				impulse = newImpulse - cp->normalImpulse;
 				cp->normalImpulse = newImpulse;
+
+				// Add the incremental impulse rather than the full impulse because this is not a sub-step
 				cp->totalNormalImpulse += impulse;
 
 				// apply contact impulse
@@ -857,8 +859,8 @@ static inline b2FloatW b2EqualsW( b2FloatW a, b2FloatW b )
 static inline bool b2AllZeroW( b2FloatW a )
 {
 	// Compare each element with zero
-	__m128 zero = _mm_setzero_ps();
-	__m128 cmp = _mm_cmpeq_ps( a, zero );
+	b2FloatW zero = _mm_setzero_ps();
+	b2FloatW cmp = _mm_cmpeq_ps( a, zero );
 
 	// Create a mask from the comparison results
 	int mask = _mm_movemask_ps( cmp );
@@ -1985,7 +1987,7 @@ void b2ApplyRestitutionTask( int startIndex, int endIndex, b2StepContext* contex
 
 		// Create a mask based on restitution so that lanes with no restitution are not affected
 		// by the calculations below.
-		b2FloatW restitutionMask = b2GreaterThanW( c->restitution, zero );
+		b2FloatW restitutionMask = b2EqualsW( c->restitution, zero );
 
 		b2BodyStateW bA = b2GatherBodies( states, c->indexA );
 		b2BodyStateW bB = b2GatherBodies( states, c->indexB );
@@ -1995,9 +1997,8 @@ void b2ApplyRestitutionTask( int startIndex, int endIndex, b2StepContext* contex
 			// Set effective mass to zero if restitution should not be applied
 			b2FloatW mask1 = b2GreaterThanW( b2AddW( c->relativeVelocity1, threshold ), zero );
 			b2FloatW mask2 = b2EqualsW( c->totalNormalImpulse1, zero );
-			b2FloatW mask = b2OrW( mask1, mask2 );
+			b2FloatW mask = b2OrW( b2OrW( mask1, mask2 ), restitutionMask );
 			b2FloatW mass = b2BlendW( c->normalMass1, zero, mask );
-			mass = b2BlendW( zero, mass, restitutionMask );
 
 			// fixed anchors for Jacobians
 			b2Vec2W rA = c->anchorA1;
@@ -2034,9 +2035,8 @@ void b2ApplyRestitutionTask( int startIndex, int endIndex, b2StepContext* contex
 			// Set effective mass to zero if restitution should not be applied
 			b2FloatW mask1 = b2GreaterThanW( b2AddW( c->relativeVelocity2, threshold ), zero );
 			b2FloatW mask2 = b2EqualsW( c->totalNormalImpulse2, zero );
-			b2FloatW mask = b2OrW( mask1, mask2 );
+			b2FloatW mask = b2OrW( b2OrW( mask1, mask2 ), restitutionMask );
 			b2FloatW mass = b2BlendW( c->normalMass2, zero, mask );
-			mass = b2BlendW( zero, mass, restitutionMask );
 
 			// fixed anchors for Jacobians
 			b2Vec2W rA = c->anchorA2;
