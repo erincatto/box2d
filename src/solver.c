@@ -205,9 +205,11 @@ struct b2ContinuousContext
 };
 
 // This is called from b2DynamicTree_Query for continuous collision
-static bool b2ContinuousQueryCallback( int proxyId, int shapeId, void* context )
+static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
+
+	int shapeId = (int)userData;
 
 	struct b2ContinuousContext* continuousContext = context;
 	b2Shape* fastShape = continuousContext->fastShape;

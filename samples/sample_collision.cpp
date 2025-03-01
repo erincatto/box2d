@@ -475,8 +475,8 @@ struct Proxy
 	bool moved;
 };
 
-static bool QueryCallback( int32_t proxyId, int32_t userData, void* context );
-static float RayCallback( const b2RayCastInput* input, int32_t proxyId, int32_t userData, void* context );
+static bool QueryCallback( int32_t proxyId, uint64_t userData, void* context );
+static float RayCallback( const b2RayCastInput* input, int32_t proxyId, uint64_t userData, void* context );
 
 // Tests the Box2D bounding volume hierarchy (BVH). The dynamic tree
 // can be used independently as a spatial data structure.
@@ -875,7 +875,7 @@ public:
 	bool m_validate;
 };
 
-static bool QueryCallback( int proxyId, int userData, void* context )
+static bool QueryCallback( int proxyId, uint64_t userData, void* context )
 {
 	DynamicTree* sample = static_cast<DynamicTree*>( context );
 	Proxy* proxy = sample->m_proxies + userData;
@@ -884,7 +884,7 @@ static bool QueryCallback( int proxyId, int userData, void* context )
 	return true;
 }
 
-static float RayCallback( const b2RayCastInput* input, int proxyId, int userData, void* context )
+static float RayCallback( const b2RayCastInput* input, int proxyId, uint64_t userData, void* context )
 {
 	DynamicTree* sample = static_cast<DynamicTree*>( context );
 	Proxy* proxy = sample->m_proxies + userData;

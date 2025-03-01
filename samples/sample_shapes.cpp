@@ -767,11 +767,6 @@ static int sampleCustomFilter = RegisterSample( "Shapes", "Custom Filter", Custo
 class Restitution : public Sample
 {
 public:
-	enum
-	{
-		e_count = 40
-	};
-
 	enum ShapeType
 	{
 		e_circleShape = 0,
@@ -791,15 +786,10 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
-			float h = 1.0f * e_count;
+			float h = 1.0f * m_count;
 			b2Segment segment = { { -h, 0.0f }, { h, 0.0f } };
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
-		}
-
-		for ( int i = 0; i < e_count; ++i )
-		{
-			m_bodyIds[i] = b2_nullBodyId;
 		}
 
 		m_shapeType = e_circleShape;
@@ -809,7 +799,7 @@ public:
 
 	void CreateBodies()
 	{
-		for ( int i = 0; i < e_count; ++i )
+		for ( int i = 0; i < m_count; ++i )
 		{
 			if ( B2_IS_NON_NULL( m_bodyIds[i] ) )
 			{
@@ -830,11 +820,11 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 
-		float dr = 1.0f / ( e_count > 1 ? e_count - 1 : 1 );
-		float x = -1.0f * ( e_count - 1 );
+		float dr = 1.0f / ( m_count > 1 ? m_count - 1 : 1 );
+		float x = -1.0f * ( m_count - 1 );
 		float dx = 2.0f;
 
-		for ( int i = 0; i < e_count; ++i )
+		for ( int i = 0; i < m_count; ++i )
 		{
 			bodyDef.position = { x, 40.0f };
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
@@ -885,7 +875,9 @@ public:
 		return new Restitution( settings );
 	}
 
-	b2BodyId m_bodyIds[e_count];
+	static constexpr int m_count = 40;
+
+	b2BodyId m_bodyIds[m_count] = {};
 	ShapeType m_shapeType;
 };
 

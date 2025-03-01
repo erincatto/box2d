@@ -668,7 +668,7 @@ B2_API b2DynamicTree b2DynamicTree_Create( void );
 B2_API void b2DynamicTree_Destroy( b2DynamicTree* tree );
 
 /// Create a proxy. Provide an AABB and a userData value.
-B2_API int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, int userData );
+B2_API int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData );
 
 /// Destroy a proxy. This asserts if the id is invalid.
 B2_API void b2DynamicTree_DestroyProxy( b2DynamicTree* tree, int proxyId );
@@ -681,7 +681,7 @@ B2_API void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int proxyId, b2AABB
 
 /// This function receives proxies found in the AABB query.
 /// @return true if the query should continue
-typedef bool b2TreeQueryCallbackFcn( int proxyId, int userData, void* context );
+typedef bool b2TreeQueryCallbackFcn( int proxyId, uint64_t userData, void* context );
 
 /// Query an AABB for overlapping proxies. The callback class is called for each proxy that overlaps the supplied AABB.
 ///	@return performance data
@@ -693,7 +693,7 @@ B2_API b2TreeStats b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, 
 /// - return a value of 0 to terminate the ray cast
 /// - return a value less than input->maxFraction to clip the ray
 /// - return a value of input->maxFraction to continue the ray cast without clipping
-typedef float b2TreeRayCastCallbackFcn( const b2RayCastInput* input, int proxyId, int userData, void* context );
+typedef float b2TreeRayCastCallbackFcn( const b2RayCastInput* input, int proxyId, uint64_t userData, void* context );
 
 /// Ray cast against the proxies in the tree. This relies on the callback
 /// to perform a exact ray cast in the case were the proxy contains a shape.
@@ -716,7 +716,7 @@ B2_API b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2Ray
 /// - return a value of 0 to terminate the ray cast
 /// - return a value less than input->maxFraction to clip the ray
 /// - return a value of input->maxFraction to continue the ray cast without clipping
-typedef float b2TreeShapeCastCallbackFcn( const b2ShapeCastInput* input, int proxyId, int userData, void* context );
+typedef float b2TreeShapeCastCallbackFcn( const b2ShapeCastInput* input, int proxyId, uint64_t userData, void* context );
 
 /// Ray cast against the proxies in the tree. This relies on the callback
 /// to perform a exact ray cast in the case were the proxy contains a shape.
@@ -748,7 +748,7 @@ B2_API int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild );
 B2_API int b2DynamicTree_GetByteCount( const b2DynamicTree* tree );
 
 /// Get proxy user data
-B2_API int b2DynamicTree_GetUserData( const b2DynamicTree* tree, int proxyId );
+B2_API uint64_t b2DynamicTree_GetUserData( const b2DynamicTree* tree, int proxyId );
 
 /// Get the AABB of a proxy
 B2_API b2AABB b2DynamicTree_GetAABB( const b2DynamicTree* tree, int proxyId );

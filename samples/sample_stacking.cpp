@@ -169,11 +169,15 @@ public:
 			bodyDef.position = { 0.0f, -1.0f };
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Polygon box = b2MakeBox( 100.0f, 1.0f );
+			//b2Polygon box = b2MakeBox( 100.0f, 1.0f );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			//b2CreatePolygonShape( groundId, &shapeDef, &box );
 
 			b2Segment segment = { { 10.0f, 1.0f }, { 10.0f, 21.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
+
+			segment = { { -30.0f, 0.0f }, { 30.0f, 0.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
@@ -188,8 +192,8 @@ public:
 		}
 
 		m_shapeType = e_boxShape;
-		m_rowCount = e_maxRows;
-		m_columnCount = 5;
+		m_rowCount = 2;
+		m_columnCount = 1;
 		m_bulletCount = 1;
 		m_bulletType = e_circleShape;
 
@@ -210,7 +214,7 @@ public:
 		b2Circle circle = { };
 		circle.radius = 0.5f;
 
-		b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+		b2Polygon box = b2MakeSquare( 0.25f );
 		// b2Polygon box = b2MakeRoundedBox(0.45f, 0.45f, 0.05f);
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();

@@ -44,9 +44,11 @@ struct b2SensorQueryContext
 // Each sensor has an double buffered array of overlaps
 // These overlaps use a shape reference with index and generation
 
-static bool b2SensorQueryCallback( int proxyId, int shapeId, void* context )
+static bool b2SensorQueryCallback( int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
+
+	int shapeId = (int)userData;
 
 	struct b2SensorQueryContext* queryContext = context;
 	b2Shape* sensorShape = queryContext->sensorShape;

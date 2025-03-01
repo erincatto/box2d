@@ -877,9 +877,11 @@ struct DrawContext
 	b2DebugDraw* draw;
 };
 
-static bool DrawQueryCallback( int proxyId, int shapeId, void* context )
+static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
+
+	int shapeId = (int)userData;
 
 	struct DrawContext* drawContext = context;
 	b2World* world = drawContext->world;
@@ -2069,9 +2071,11 @@ typedef struct WorldQueryContext
 	void* userContext;
 } WorldQueryContext;
 
-static bool TreeQueryCallback( int proxyId, int shapeId, void* context )
+static bool TreeQueryCallback( int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
+
+	int shapeId = (int)userData;
 
 	WorldQueryContext* worldContext = context;
 	b2World* world = worldContext->world;
@@ -2128,9 +2132,11 @@ typedef struct WorldOverlapContext
 	void* userContext;
 } WorldOverlapContext;
 
-static bool TreeOverlapCallback( int proxyId, int shapeId, void* context )
+static bool TreeOverlapCallback( int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
+
+	int shapeId = (int)userData;
 
 	WorldOverlapContext* worldContext = context;
 	b2World* world = worldContext->world;
@@ -2281,9 +2287,11 @@ typedef struct WorldRayCastContext
 	void* userContext;
 } WorldRayCastContext;
 
-static float RayCastCallback( const b2RayCastInput* input, int proxyId, int shapeId, void* context )
+static float RayCastCallback( const b2RayCastInput* input, int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
+
+	int shapeId = (int)userData;
 
 	WorldRayCastContext* worldContext = context;
 	b2World* world = worldContext->world;
@@ -2402,9 +2410,11 @@ b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 tra
 	return result;
 }
 
-static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, int shapeId, void* context )
+static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
+
+	int shapeId = (int)userData;
 
 	WorldRayCastContext* worldContext = context;
 	b2World* world = worldContext->world;
@@ -2597,9 +2607,11 @@ typedef struct b2CharacterCallbackContext
 	void* userContext;
 } b2CharacterCallbackContext;
 
-static bool b2CharacterOverlapCallback( int proxyId, int shapeId, void* context )
+static bool b2CharacterOverlapCallback( int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
+
+	int shapeId = (int)userData;
 
 	WorldOverlapContext* worldContext = context;
 	b2World* world = worldContext->world;
@@ -2796,9 +2808,11 @@ struct ExplosionContext
 	float impulsePerLength;
 };
 
-static bool ExplosionCallback( int proxyId, int shapeId, void* context )
+static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
+
+	int shapeId = (int)userData;
 
 	struct ExplosionContext* explosionContext = context;
 	b2World* world = explosionContext->world;
