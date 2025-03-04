@@ -13,6 +13,8 @@
 
 #define B2_TREE_STACK_SIZE 1024
 
+// todo externalize this to visualize internal nodes and speed up FindPairs
+
 // A node in the dynamic tree.
 typedef struct b2TreeNode
 {
@@ -841,21 +843,21 @@ void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb )
 	nodes[proxyId].aabb = aabb;
 
 	int parentIndex = nodes[proxyId].parent;
-	while ( parentIndex != B2_NULL_INDEX )
+	while (parentIndex != B2_NULL_INDEX)
 	{
 		bool changed = b2EnlargeAABB( &nodes[parentIndex].aabb, aabb );
 		nodes[parentIndex].flags |= b2_enlargedNode;
 		parentIndex = nodes[parentIndex].parent;
 
-		if ( changed == false )
+		if (changed == false)
 		{
 			break;
 		}
 	}
 
-	while ( parentIndex != B2_NULL_INDEX )
+	while (parentIndex != B2_NULL_INDEX)
 	{
-		if ( nodes[parentIndex].flags & b2_enlargedNode )
+		if (nodes[parentIndex].flags & b2_enlargedNode)
 		{
 			// early out because this ancestor was previously ascended and marked as enlarged
 			break;
@@ -864,6 +866,37 @@ void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb )
 		nodes[parentIndex].flags |= b2_enlargedNode;
 		parentIndex = nodes[parentIndex].parent;
 	}
+}
+
+void b2DynamicTree_SetCategoryBits( b2DynamicTree* tree, int proxyId, uint64_t categoryBits )
+{
+	b2TreeNode* nodes = tree->nodes;
+
+	B2_ASSERT( nodes[proxyId].children.child1 == B2_NULL_INDEX );
+	B2_ASSERT( nodes[proxyId].children.child2 == B2_NULL_INDEX );
+	B2_ASSERT( (nodes[proxyId].flags & b2_leafNode) == b2_leafNode );
+
+	nodes[proxyId].categoryBits = categoryBits;
+
+	// Fix up category bits in ancestor internal nodes
+	int nodeIndex = nodes[proxyId].parent;
+	while ( nodeIndex != B2_NULL_INDEX )
+	{
+		b2TreeNode* node = nodes + nodeIndex;
+		int child1 = node->children.child1;
+		B2_ASSERT( child1 != B2_NULL_INDEX );
+		int child2 = node->children.child2;
+		B2_ASSERT( child2 != B2_NULL_INDEX );
+		node->categoryBits = nodes[child1].categoryBits | nodes[child2].categoryBits;
+
+		nodeIndex = node->parent;
+	}
+}
+
+uint64_t b2DynamicTree_GetCategoryBits( b2DynamicTree* tree, int proxyId )
+{
+	B2_ASSERT( 0 <= proxyId && proxyId < tree->nodeCapacity );
+	return tree->nodes[proxyId].categoryBits;
 }
 
 int b2DynamicTree_GetHeight( const b2DynamicTree* tree )
@@ -899,6 +932,17 @@ float b2DynamicTree_GetAreaRatio( const b2DynamicTree* tree )
 	}
 
 	return totalArea / rootArea;
+}
+
+b2AABB b2DynamicTree_GetRootBounds( const b2DynamicTree* tree )
+{
+	if (tree->root != B2_NULL_INDEX)
+	{
+		return tree->nodes[tree->root].aabb;
+	}
+
+	b2AABB empty = { b2Vec2_zero, b2Vec2_zero };
+	return empty;
 }
 
 // Compute the height of a sub-tree.
@@ -1060,11 +1104,13 @@ int b2DynamicTree_GetByteCount( const b2DynamicTree* tree )
 
 uint64_t b2DynamicTree_GetUserData( const b2DynamicTree* tree, int proxyId )
 {
+	B2_ASSERT( 0 <= proxyId && proxyId < tree->nodeCapacity );
 	return tree->nodes[proxyId].userData;
 }
 
 b2AABB b2DynamicTree_GetAABB( const b2DynamicTree* tree, int proxyId )
 {
+	B2_ASSERT( 0 <= proxyId && proxyId < tree->nodeCapacity );
 	return tree->nodes[proxyId].aabb;
 }
 
@@ -1251,19 +1297,19 @@ b2TreeStats b2DynamicTree_ShapeCast( const b2DynamicTree* tree, const b2ShapeCas
 {
 	b2TreeStats stats = { 0 };
 
-	if ( tree->nodeCount == 0 || input->count == 0 )
+	if ( tree->nodeCount == 0 || input->proxy.count == 0 )
 	{
 		return stats;
 	}
 
-	b2AABB originAABB = { input->points[0], input->points[0] };
-	for ( int i = 1; i < input->count; ++i )
+	b2AABB originAABB = { input->proxy.points[0], input->proxy.points[0] };
+	for ( int i = 1; i < input->proxy.count; ++i )
 	{
-		originAABB.lowerBound = b2Min( originAABB.lowerBound, input->points[i] );
-		originAABB.upperBound = b2Max( originAABB.upperBound, input->points[i] );
+		originAABB.lowerBound = b2Min( originAABB.lowerBound, input->proxy.points[i] );
+		originAABB.upperBound = b2Max( originAABB.upperBound, input->proxy.points[i] );
 	}
 
-	b2Vec2 radius = { input->radius, input->radius };
+	b2Vec2 radius = { input->proxy.radius, input->proxy.radius };
 
 	originAABB.lowerBound = b2Sub( originAABB.lowerBound, radius );
 	originAABB.upperBound = b2Add( originAABB.upperBound, radius );

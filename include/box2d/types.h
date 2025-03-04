@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define B2_DEFAULT_CATEGORY_BITS 0x0001ULL
+#define B2_DEFAULT_CATEGORY_BITS 1
 #define B2_DEFAULT_MASK_BITS UINT64_MAX
 
 /// Task interface

@@ -36,25 +36,35 @@ typedef struct b2RayCastInput
 	float maxFraction;
 } b2RayCastInput;
 
-/// Low level shape cast input in generic form. This allows casting an arbitrary point
-/// cloud wrap with a radius. For example, a circle is a single point with a non-zero radius.
-/// A capsule is two points with a non-zero radius. A box is four points with a zero radius.
-typedef struct b2ShapeCastInput
+/// A distance proxy is used by the GJK algorithm. It encapsulates any shape.
+typedef struct b2ShapeProxy
 {
-	/// A point cloud to cast
+	/// The point cloud
 	b2Vec2 points[B2_MAX_POLYGON_VERTICES];
 
 	/// The number of points
 	int count;
 
-	/// The radius around the point cloud
+	/// The external radius of the point cloud
 	float radius;
+} b2ShapeProxy;
+
+/// Low level shape cast input in generic form. This allows casting an arbitrary point
+/// cloud wrap with a radius. For example, a circle is a single point with a non-zero radius.
+/// A capsule is two points with a non-zero radius. A box is four points with a zero radius.
+typedef struct b2ShapeCastInput
+{
+	/// A generic shape
+	b2ShapeProxy proxy;
 
 	/// The translation of the shape cast
 	b2Vec2 translation;
 
 	/// The maximum fraction of the translation to consider, typically 1
 	float maxFraction;
+
+	/// Allow shape cast to encroach when initially touching. This only works if the radius is greater than zero.
+	bool canEncroach;
 } b2ShapeCastInput;
 
 /// Low level ray cast or shape-cast output data
@@ -329,19 +339,6 @@ typedef struct b2SegmentDistanceResult
 /// Compute the distance between two line segments, clamping at the end points if needed.
 B2_API b2SegmentDistanceResult b2SegmentDistance( b2Vec2 p1, b2Vec2 q1, b2Vec2 p2, b2Vec2 q2 );
 
-/// A distance proxy is used by the GJK algorithm. It encapsulates any shape.
-typedef struct b2ShapeProxy
-{
-	/// The point cloud
-	b2Vec2 points[B2_MAX_POLYGON_VERTICES];
-
-	/// The number of points
-	int count;
-
-	/// The external radius of the point cloud
-	float radius;
-} b2ShapeProxy;
-
 /// Used to warm start the GJK simplex. If you call this function multiple times with nearby
 /// transforms this might improve performance. Otherwise you can zero initialize this.
 /// The distance cache must be initialized to zero on the first call.
@@ -423,6 +420,7 @@ typedef struct b2ShapeCastPairInput
 	b2Transform transformB; ///< The world transform for shape B
 	b2Vec2 translationB;	///< The translation of shape B
 	float maxFraction;		///< The fraction of the translation to consider, typically 1
+	bool canEncroach;		///< Allows shapes with a radius to move slightly closer if already touching
 } b2ShapeCastPairInput;
 
 /// Perform a linear shape cast of shape B moving and shape A fixed. Determines the hit point, normal, and translation fraction.
@@ -679,6 +677,12 @@ B2_API void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int proxyId, b2AABB aa
 /// Enlarge a proxy and enlarge ancestors as necessary.
 B2_API void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb );
 
+/// Modify the category bits on a proxy. This is an expensive operation.
+B2_API void b2DynamicTree_SetCategoryBits( b2DynamicTree* tree, int proxyId, uint64_t categoryBits );
+
+/// Get the category bits on a proxy.
+B2_API uint64_t b2DynamicTree_GetCategoryBits( b2DynamicTree* tree, int proxyId );
+
 /// This function receives proxies found in the AABB query.
 /// @return true if the query should continue
 typedef bool b2TreeQueryCallbackFcn( int proxyId, uint64_t userData, void* context );
@@ -737,6 +741,9 @@ B2_API int b2DynamicTree_GetHeight( const b2DynamicTree* tree );
 
 /// Get the ratio of the sum of the node areas to the root area.
 B2_API float b2DynamicTree_GetAreaRatio( const b2DynamicTree* tree );
+
+/// Get the bounding box that contains the entire tree
+B2_API b2AABB b2DynamicTree_GetRootBounds( const b2DynamicTree* tree );
 
 /// Get the number of proxies created
 B2_API int b2DynamicTree_GetProxyCount( const b2DynamicTree* tree );

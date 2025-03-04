@@ -637,7 +637,6 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 
 	float radius = proxyA.radius + proxyB.radius;
 
-	b2Vec2 r = b2RotateVector( xf.q, input->translationB );
 	float lambda = 0.0f;
 	float maxFraction = input->maxFraction;
 
@@ -649,22 +648,41 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	b2SimplexVertex* vertices[] = { &simplex.v1, &simplex.v2, &simplex.v3 };
 
 	// Get an initial point in A - B
+	b2Vec2 r = b2RotateVector( xf.q, input->translationB );
 	int indexA = b2FindSupport( &proxyA, b2Neg( r ) );
 	b2Vec2 wA = proxyA.points[indexA];
 	int indexB = b2FindSupport( &proxyB, r );
 	b2Vec2 wB = proxyB.points[indexB];
 	b2Vec2 v = b2Sub( wA, wB );
 
-	// Sigma is the target distance between proxies
-	const float linearSlop = B2_LINEAR_SLOP;
-	const float sigma = b2MaxFloat( linearSlop, radius - linearSlop );
+	// Set the target distance between proxies
+	float linearSlop = B2_LINEAR_SLOP;
+	float target = b2MaxFloat( linearSlop, radius - linearSlop );
+	float tolerance = 0.25f * linearSlop;
 
 	// Main iteration loop.
-	const int k_maxIters = 20;
-	int iter = 0;
-	while ( iter < k_maxIters && b2Length( v ) > sigma + 0.5f * linearSlop )
+	const int maxIterations = 20;
+	int iteration = 0;
+	while ( iteration < maxIterations )
 	{
 		B2_ASSERT( simplex.count < 3 );
+
+		float distance = b2Length( v );
+		if (distance < target + tolerance)
+		{
+			if (lambda == 0.0f)
+			{
+				
+			}
+			if ( iteration == 0 && input->canEncroach && distance > 2.0f * linearSlop )
+			{
+				target = distance - linearSlop;
+			}
+			else
+			{
+				break;
+			}
+		}
 
 		output.iterations += 1;
 
@@ -681,7 +699,7 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 		// Intersect ray with plane
 		float vp = b2Dot( v, p );
 		float vr = b2Dot( v, r );
-		if ( vp - sigma > lambda * vr )
+		if ( vp - target > lambda * vr )
 		{
 			if ( vr <= 0.0f )
 			{
@@ -689,7 +707,7 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 				return output;
 			}
 
-			lambda = ( vp - sigma ) / vr;
+			lambda = ( vp - target ) / vr;
 			if ( lambda > maxFraction )
 			{
 				// too far
@@ -742,10 +760,10 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 		v = b2ComputeSimplexClosestPoint( &simplex );
 
 		// Iteration count is equated to the number of support point calls.
-		++iter;
+		++iteration;
 	}
 
-	if ( iter == 0 || lambda == 0.0f )
+	if ( iteration == 0 || lambda == 0.0f )
 	{
 		// Initial overlap
 		return output;
@@ -761,7 +779,7 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	output.point = b2TransformPoint( xfA, point );
 	output.normal = b2RotateVector( xfA.q, n );
 	output.fraction = lambda;
-	output.iterations = iter;
+	output.iterations = iteration;
 	output.hit = true;
 	return output;
 }

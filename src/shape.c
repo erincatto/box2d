@@ -853,9 +853,9 @@ b2CastOutput b2ShapeCastShape( const b2ShapeCastInput* input, const b2Shape* sha
 {
 	b2ShapeCastInput localInput = *input;
 
-	for ( int i = 0; i < localInput.count; ++i )
+	for ( int i = 0; i < localInput.proxy.count; ++i )
 	{
-		localInput.points[i] = b2InvTransformPoint( transform, input->points[i] );
+		localInput.proxy.points[i] = b2InvTransformPoint( transform, input->proxy.points[i] );
 	}
 
 	localInput.translation = b2InvRotateVector( transform.q, input->translation );

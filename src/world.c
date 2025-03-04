@@ -2460,10 +2460,10 @@ b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Tra
 	B2_ASSERT( b2IsValidRotation( originTransform.q ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
-	b2ShapeCastInput input;
-	input.points[0] = b2TransformPoint( originTransform, circle->center );
-	input.count = 1;
-	input.radius = circle->radius;
+	b2ShapeCastInput input = {};
+	input.proxy.points[0] = b2TransformPoint( originTransform, circle->center );
+	input.proxy.count = 1;
+	input.proxy.radius = circle->radius;
 	input.translation = translation;
 	input.maxFraction = 1.0f;
 
@@ -2503,11 +2503,11 @@ b2TreeStats b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2
 	B2_ASSERT( b2IsValidRotation( originTransform.q ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
-	b2ShapeCastInput input;
-	input.points[0] = b2TransformPoint( originTransform, capsule->center1 );
-	input.points[1] = b2TransformPoint( originTransform, capsule->center2 );
-	input.count = 2;
-	input.radius = capsule->radius;
+	b2ShapeCastInput input = {};
+	input.proxy.points[0] = b2TransformPoint( originTransform, capsule->center1 );
+	input.proxy.points[1] = b2TransformPoint( originTransform, capsule->center2 );
+	input.proxy.count = 2;
+	input.proxy.radius = capsule->radius;
 	input.translation = translation;
 	input.maxFraction = 1.0f;
 
@@ -2547,13 +2547,13 @@ b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2
 	B2_ASSERT( b2IsValidRotation( originTransform.q ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
-	b2ShapeCastInput input;
+	b2ShapeCastInput input = {};
 	for ( int i = 0; i < polygon->count; ++i )
 	{
-		input.points[i] = b2TransformPoint( originTransform, polygon->vertices[i] );
+		input.proxy.points[i] = b2TransformPoint( originTransform, polygon->vertices[i] );
 	}
-	input.count = polygon->count;
-	input.radius = polygon->radius;
+	input.proxy.count = polygon->count;
+	input.proxy.radius = polygon->radius;
 	input.translation = translation;
 	input.maxFraction = 1.0f;
 
@@ -2577,7 +2577,7 @@ b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2
 	return treeStats;
 }
 
-static b2AABB b2ComputerShapeBounds( const b2ShapeProxy* shape, b2Transform xf )
+static b2AABB b2ComputeShapeBounds( const b2ShapeProxy* shape, b2Transform xf )
 {
 	B2_ASSERT( shape->count > 0 );
 	b2Vec2 lower = b2TransformPoint( xf, shape->points[0] );
@@ -2598,7 +2598,7 @@ static b2AABB b2ComputerShapeBounds( const b2ShapeProxy* shape, b2Transform xf )
 	return aabb;
 }
 
-typedef struct b2CharacterCallbackContext
+typedef struct b2MoverContext
 {
 	b2World* world;
 	b2QueryFilter filter;
@@ -2607,7 +2607,7 @@ typedef struct b2CharacterCallbackContext
 	void* userContext;
 } b2CharacterCallbackContext;
 
-static bool b2CharacterOverlapCallback( int proxyId, uint64_t userData, void* context )
+static bool b2CollideMoverCallback( int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
 
@@ -2649,64 +2649,83 @@ static bool b2CharacterOverlapCallback( int proxyId, uint64_t userData, void* co
 	return result;
 }
 
-b2Vec2 b2World_MoveCharacter( b2WorldId worldId, const b2ShapeProxy* shapeProxy, b2Transform originTransform, b2Vec2 translation,
-							  b2QueryFilter filter )
+typedef struct WorldMoverCastContext
 {
-	B2_ASSERT( b2IsValidVec2( originTransform.p ) );
-	B2_ASSERT( b2IsValidRotation( originTransform.q ) );
-	B2_ASSERT( b2IsValidVec2( translation ) );
+	b2World* world;
+	b2QueryFilter filter;
+	float fraction;
+} WorldMoverCastContext;
 
-	b2Vec2 position = originTransform.p;
+static float MoverCastCallback( const b2ShapeCastInput* input, int proxyId, uint64_t userData, void* context )
+{
+	B2_UNUSED( proxyId );
+
+	int shapeId = (int)userData;
+	WorldMoverCastContext* worldContext = context;
+	b2World* world = worldContext->world;
+
+	b2Shape* shape = b2ShapeArray_Get(&world->shapes, shapeId );
+	b2Filter shapeFilter = shape->filter;
+	b2QueryFilter queryFilter = worldContext->filter;
+
+	if ( ( shapeFilter.categoryBits & queryFilter.maskBits ) == 0 || ( shapeFilter.maskBits & queryFilter.categoryBits ) == 0 )
+	{
+		return worldContext->fraction;
+	}
+
+	b2Body* body = b2BodyArray_Get(&world->bodies, shape->bodyId );
+	b2Transform transform = b2GetBodyTransformQuick( world, body );
+
+	b2CastOutput output = b2ShapeCastShape( input, shape, transform );
+	if ( output.fraction == 0.0f )
+	{
+		// Ignore overlapping shapes
+		return worldContext->fraction;
+	}
+
+	worldContext->fraction = output.fraction;
+	return output.fraction;
+}
+
+
+float b3World_CastMover( b2WorldId worldId, const b2Capsule* mover, b2Vec2 translation, b2QueryFilter filter )
+{
+	B2_ASSERT( b2IsValidVec2( translation ) );
 
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
 	{
-		return position;
+		return 1.0f;
 	}
 
-	b2AABB aabb = b2ComputerShapeBounds( shapeProxy, originTransform );
-	b2CharacterCallbackContext context = {
-		world,
-		filter,
-		*shapeProxy,
-		originTransform,
-	};
+	b2ShapeCastInput input = {};
+	input.proxy.points[0] = mover->center1;
+	input.proxy.points[1] = mover->center2;
+	input.proxy.count = 2;
+	input.proxy.radius = mover->radius;
+	input.translation = translation;
+	input.maxFraction = 1.0f;
+	input.canEncroach = mover->radius > 0.0f;
+
+	WorldMoverCastContext worldContext = { world, filter, 1.0f };
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2TreeStats treeResult =
-			b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, b2CharacterOverlapCallback, &context );
-		B2_UNUSED( treeResult );
+		b2DynamicTree_ShapeCast( world->broadPhase.trees + i, &input, filter.maskBits, MoverCastCallback, &worldContext );
+
+		if ( worldContext.fraction == 0.0f )
+		{
+			return 0.0f;
+		}
+
+		input.maxFraction = worldContext.fraction;
 	}
 
-	return b2Add( originTransform.p, translation );
+	return worldContext.fraction;
 }
 
 #if 0
-
-void b2World_ShiftOrigin(b2WorldId worldId, b2Vec2 newOrigin)
-{
-	B2_ASSERT(m_locked == false);
-	if (m_locked)
-	{
-		return;
-	}
-
-	for (b2Body* b = m_bodyList; b; b = b->m_next)
-	{
-		b->m_xf.p -= newOrigin;
-		b->m_sweep.c0 -= newOrigin;
-		b->m_sweep.c -= newOrigin;
-	}
-
-	for (b2Joint* j = m_jointList; j; j = j->m_next)
-	{
-		j->ShiftOrigin(newOrigin);
-	}
-
-	m_contactManager.m_broadPhase.ShiftOrigin(newOrigin);
-}
 
 void b2World_Dump()
 {

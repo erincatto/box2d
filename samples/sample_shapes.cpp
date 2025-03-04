@@ -1116,7 +1116,7 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
-			//const char* path = "M 613.8334,185.20833 H 500.06255 L 470.95838,182.5625 444.50004,174.625 418.04171,161.39583 "
+			// const char* path = "M 613.8334,185.20833 H 500.06255 L 470.95838,182.5625 444.50004,174.625 418.04171,161.39583 "
 			//				   "394.2292,140.22917 h "
 			//				   "-13.22916 v 44.97916 H 68.791712 V 0 h -21.16671 v 206.375 l 566.208398,-1e-5 z";
 
@@ -1184,7 +1184,7 @@ public:
 	void Reset()
 	{
 		int count = m_bodyIds.size();
-		for (int i = 0; i < count; ++i)
+		for ( int i = 0; i < count; ++i )
 		{
 			b2DestroyBody( m_bodyIds[i] );
 		}
@@ -1216,7 +1216,7 @@ public:
 
 	void Step( Settings& settings ) override
 	{
-		if ( m_stepCount % 25 == 0 && m_bodyIds.size() < m_totalCount && settings.pause == false)
+		if ( m_stepCount % 25 == 0 && m_bodyIds.size() < m_totalCount && settings.pause == false )
 		{
 			b2BodyId id = DropBall();
 			m_bodyIds.push_back( id );
@@ -1519,6 +1519,7 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.rollingResistance = 0.3f;
 
 		float y = 2.0f;
 		int xcount = 10, ycount = 10;
@@ -1549,6 +1550,71 @@ public:
 };
 
 static int sampleRoundedShapes = RegisterSample( "Shapes", "Rounded", RoundedShapes::Create );
+
+class EllipseShape : public Sample
+{
+public:
+	explicit EllipseShape( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_zoom = 25.0f * 0.55f;
+			g_camera.m_center = { 2.0f, 8.0f };
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Polygon box = b2MakeOffsetBox( 20.0f, 1.0f, { 0.0f, -1.0f }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+
+			box = b2MakeOffsetBox( 1.0f, 5.0f, { 19.0f, 5.0f }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+
+			box = b2MakeOffsetBox( 1.0f, 5.0f, { -19.0f, 5.0f }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+		}
+
+		b2Vec2 points[6] = {
+			{ 0.0f, -0.25f }, { 0.0f, 0.25f }, { 0.05f, 0.075f }, { -0.05f, 0.075f }, { 0.05f, -0.075f }, { -0.05f, -0.075f },
+		};
+		b2Hull diamondHull = b2ComputeHull( points, 6 );
+		b2Polygon poly = b2MakePolygon( &diamondHull, 0.2f );
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.rollingResistance = 0.2f;
+
+		float y = 2.0f;
+		int xCount = 10, yCount = 10;
+
+		for ( int i = 0; i < yCount; ++i )
+		{
+			float x = -5.0f;
+			for ( int j = 0; j < xCount; ++j )
+			{
+				bodyDef.position = { x, y };
+				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+				b2CreatePolygonShape( bodyId, &shapeDef, &poly );
+
+				x += 1.0f;
+			}
+
+			y += 1.0f;
+		}
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new EllipseShape( settings );
+	}
+};
+
+static int sampleEllipseShape = RegisterSample( "Shapes", "Ellipse", EllipseShape::Create );
 
 class OffsetShapes : public Sample
 {

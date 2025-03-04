@@ -866,7 +866,7 @@ b2CastOutput b2ShapeCastCircle( const b2ShapeCastInput* input, const b2Circle* s
 {
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->center, 1, shape->radius );
-	pairInput.proxyB = b2MakeProxy( input->points, input->count, input->radius );
+	pairInput.proxyB = input->proxy;
 	pairInput.transformA = b2Transform_identity;
 	pairInput.transformB = b2Transform_identity;
 	pairInput.translationB = input->translation;
@@ -880,7 +880,7 @@ b2CastOutput b2ShapeCastCapsule( const b2ShapeCastInput* input, const b2Capsule*
 {
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->center1, 2, shape->radius );
-	pairInput.proxyB = b2MakeProxy( input->points, input->count, input->radius );
+	pairInput.proxyB = input->proxy;
 	pairInput.transformA = b2Transform_identity;
 	pairInput.transformB = b2Transform_identity;
 	pairInput.translationB = input->translation;
@@ -894,7 +894,7 @@ b2CastOutput b2ShapeCastSegment( const b2ShapeCastInput* input, const b2Segment*
 {
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->point1, 2, 0.0f );
-	pairInput.proxyB = b2MakeProxy( input->points, input->count, input->radius );
+	pairInput.proxyB = input->proxy;
 	pairInput.transformA = b2Transform_identity;
 	pairInput.transformB = b2Transform_identity;
 	pairInput.translationB = input->translation;
@@ -908,7 +908,7 @@ b2CastOutput b2ShapeCastPolygon( const b2ShapeCastInput* input, const b2Polygon*
 {
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( shape->vertices, shape->count, shape->radius );
-	pairInput.proxyB = b2MakeProxy( input->points, input->count, input->radius );
+	pairInput.proxyB = input->proxy;
 	pairInput.transformA = b2Transform_identity;
 	pairInput.transformB = b2Transform_identity;
 	pairInput.translationB = input->translation;

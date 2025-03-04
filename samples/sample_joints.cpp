@@ -251,12 +251,12 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { 0.0f, 8.0f };
-			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			m_bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2Polygon box = b2MakeBox( 2.0f, 0.5f );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.density = 1.0f;
-			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+			b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
 
 			m_maxForce = 500.0f;
 			m_maxTorque = 500.0f;
@@ -264,7 +264,7 @@ public:
 
 			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
 			jointDef.bodyIdA = groundId;
-			jointDef.bodyIdB = bodyId;
+			jointDef.bodyIdB = m_bodyId;
 			jointDef.maxForce = m_maxForce;
 			jointDef.maxTorque = m_maxTorque;
 			jointDef.correctionFactor = m_correctionFactor;
@@ -278,7 +278,7 @@ public:
 
 	void UpdateGui() override
 	{
-		float height = 140.0f;
+		float height = 180.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
@@ -301,6 +301,11 @@ public:
 		if ( ImGui::SliderFloat( "Correction", &m_correctionFactor, 0.0f, 1.0f, "%.1f" ) )
 		{
 			b2MotorJoint_SetCorrectionFactor( m_jointId, m_correctionFactor );
+		}
+
+		if ( ImGui::Button( "Apply Impulse") )
+		{
+			b2Body_ApplyLinearImpulseToCenter( m_bodyId, { 100.0f, 0.0f }, true );
 		}
 
 		ImGui::End();
@@ -339,6 +344,7 @@ public:
 		return new MotorJoint( settings );
 	}
 
+	b2BodyId m_bodyId;
 	b2JointId m_jointId;
 	float m_time;
 	float m_maxForce;

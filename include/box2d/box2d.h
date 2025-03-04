@@ -103,11 +103,9 @@ B2_API b2TreeStats b2World_CastCapsule( b2WorldId worldId, const b2Capsule* caps
 B2_API b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform originTransform,
 										b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
 
-/// Cast a character through the world. This resolves initial overlap then attempts to reach the target. The character can be
-/// an arbitrary rounded polygon. It is recommended to use a capsule. The minimum radius is 0.02m (2 centimeters).
-/// Returns the final position.
-B2_API b2Vec2 b2World_MoveCharacter( b2WorldId worldId, const b2ShapeProxy* shapeProxy, b2Transform originTransform,
-									 b2Vec2 translation, b2QueryFilter filter );
+/// Cast a capsule mover through the world. This is a special shape cast that handles sliding along other shapes while reducing
+/// clipping.
+B2_API float b2World_CastMover( b2WorldId worldId, const b2Capsule* mover, b2Vec2 translation, b2QueryFilter filter );
 
 /// Enable/disable sleep. If your application does not need sleeping, you can gain some performance
 /// by disabling sleep completely at the world level.
@@ -299,6 +297,11 @@ B2_API void b2Body_SetLinearVelocity( b2BodyId bodyId, b2Vec2 linearVelocity );
 
 /// Set the angular velocity of a body in radians per second
 B2_API void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity );
+
+/// Set the velocity to reach the given transform after a given time step.
+/// The result will be close but maybe not exact. This is meant for kinematic bodies.
+/// This will automatically wake the body if asleep.
+B2_API void b2Body_SetVelocityForTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep );
 
 /// Get the linear velocity of a local point attached to a body. Usually in meters per second.
 B2_API b2Vec2 b2Body_GetLocalPointVelocity( b2BodyId bodyId, b2Vec2 localPoint );
