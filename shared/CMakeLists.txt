@@ -3,6 +3,8 @@
 set(BOX2D_SHARED_FILES
 	benchmarks.c
 	benchmarks.h
+	determinism.c
+	determinism.h
 	human.c
 	human.h
 	random.c

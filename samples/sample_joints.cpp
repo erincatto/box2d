@@ -2049,8 +2049,8 @@ public:
 			bodyDef.type = b2_dynamicBody;
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.25f;
-			shapeDef.restitution = 0.25f;
+			shapeDef.material.friction = 0.25f;
+			shapeDef.material.restitution = 0.25f;
 			shapeDef.density = 0.25f;
 
 			bodyDef.position = { 230.0f, 0.5f };

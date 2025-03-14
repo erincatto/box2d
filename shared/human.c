@@ -31,13 +31,13 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 	bodyDef.userData = userData;
 
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
-	shapeDef.friction = 0.2f;
+	shapeDef.material.friction = 0.2f;
 	shapeDef.filter.groupIndex = -groupIndex;
 	shapeDef.filter.categoryBits = 2;
 	shapeDef.filter.maskBits = ( 1 | 2 );
 
 	b2ShapeDef footShapeDef = shapeDef;
-	footShapeDef.friction = 0.05f;
+	footShapeDef.material.friction = 0.05f;
 
 	// feet don't collide with ragdolls
 	footShapeDef.filter.categoryBits = 2;
@@ -45,7 +45,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 	if ( colorize )
 	{
-		footShapeDef.customColor = b2_colorSaddleBrown;
+		footShapeDef.material.customColor = b2_colorSaddleBrown;
 	}
 
 	float s = scale;
@@ -71,7 +71,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = pantColor;
+			shapeDef.material.customColor = pantColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.02f * s }, { 0.0f, 0.02f * s }, 0.095f * s };
@@ -92,7 +92,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = shirtColor;
+			shapeDef.material.customColor = shirtColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.135f * s }, { 0.0f, 0.135f * s }, 0.09f * s };
@@ -130,7 +130,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = skinColor;
+			shapeDef.material.customColor = skinColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.038f * s }, { 0.0f, 0.039f * s }, 0.075f * s };
@@ -171,7 +171,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = pantColor;
+			shapeDef.material.customColor = pantColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.06f * s };
@@ -218,7 +218,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = pantColor;
+			shapeDef.material.customColor = pantColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.155f * s }, { 0.0f, 0.125f * s }, 0.045f * s };
@@ -263,7 +263,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = pantColor;
+			shapeDef.material.customColor = pantColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.06f * s };
@@ -300,7 +300,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = pantColor;
+			shapeDef.material.customColor = pantColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.155f * s }, { 0.0f, 0.125f * s }, 0.045f * s };
@@ -345,7 +345,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = shirtColor;
+			shapeDef.material.customColor = shirtColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.035f * s };
@@ -382,7 +382,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = skinColor;
+			shapeDef.material.customColor = skinColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.03f * s };
@@ -420,7 +420,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = shirtColor;
+			shapeDef.material.customColor = shirtColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.035f * s };
@@ -457,7 +457,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = skinColor;
+			shapeDef.material.customColor = skinColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.03f * s };

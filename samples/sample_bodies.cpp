@@ -72,7 +72,6 @@ public:
 			b2Polygon box = b2MakeOffsetBox( 0.5f, 4.0f, { 4.0f, 0.0f }, b2MakeRot( 0.5f * B2_PI ) );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.6f;
 			shapeDef.density = 2.0f;
 			b2CreatePolygonShape( m_platformId, &shapeDef, &box );
 
@@ -124,7 +123,6 @@ public:
 			b2Polygon box = b2MakeBox( 0.75f, 0.75f );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.6f;
 			shapeDef.density = 2.0f;
 
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
@@ -141,7 +139,6 @@ public:
 			b2Polygon box = b2MakeBox( 0.75f, 0.75f );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.6f;
 			shapeDef.density = 2.0f;
 
 			b2CreatePolygonShape( m_secondPayloadId, &shapeDef, &box );
@@ -158,7 +155,6 @@ public:
 			b2Capsule capsule = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, 0.25f };
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.6f;
 			shapeDef.density = 2.0f;
 
 			b2CreateCapsuleShape( m_touchingBodyId, &shapeDef, &capsule );
@@ -176,7 +172,6 @@ public:
 			b2Circle circle = { { 0.0f, 0.5f }, 0.25f };
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.6f;
 			shapeDef.density = 2.0f;
 
 			b2CreateCircleShape( m_floatingBodyId, &shapeDef, &circle );
@@ -405,7 +400,7 @@ public:
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.density = 20.0f;
-			shapeDef.friction = 0.2f;
+			shapeDef.material.friction = 0.2f;
 			b2CreateCircleShape( m_circleCharacterId, &shapeDef, &circle );
 		}
 
@@ -423,7 +418,7 @@ public:
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.density = 20.0f;
-			shapeDef.friction = 0.2f;
+			shapeDef.material.friction = 0.2f;
 			b2CreateCapsuleShape( m_capsuleCharacterId, &shapeDef, &capsule );
 		}
 
@@ -441,7 +436,7 @@ public:
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.density = 20.0f;
-			shapeDef.friction = 0.2f;
+			shapeDef.material.friction = 0.2f;
 			b2CreatePolygonShape( m_boxCharacterId, &shapeDef, &box );
 		}
 	}

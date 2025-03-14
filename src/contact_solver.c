@@ -750,7 +750,7 @@ static inline b2FloatW b2LoadW( const float32_t* data )
 
 static inline void b2StoreW( float32_t* data, b2FloatW a )
 {
-	return vst1q_f32( data, a );
+	vst1q_f32( data, a );
 }
 
 static inline b2FloatW b2UnpackLoW( b2FloatW a, b2FloatW b )

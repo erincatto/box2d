@@ -159,7 +159,7 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
-		shapeDef.friction = 0.5f;
+		shapeDef.material.friction = 0.5f;
 
 		b2Capsule capsule = { { 0.0f, -0.25f }, { 0.0f, 0.25f }, rad };
 		b2Circle circle = { { 0.0f, 0.0f }, rad };
@@ -221,7 +221,7 @@ public:
 				{
 					m_bodies[index] = b2CreateBody( m_worldId, &bodyDef );
 					circle.radius = RandomFloatRange( 0.25f, 0.75f );
-					shapeDef.rollingResistance = 0.2f;
+					shapeDef.material.rollingResistance = 0.2f;
 					b2CreateCircleShape( m_bodies[index], &shapeDef, &circle );
 				}
 				else if ( m_shapeType == e_capsuleShape )
@@ -231,7 +231,7 @@ public:
 					float length = RandomFloatRange( 0.25f, 1.0f );
 					capsule.center1 = { 0.0f, -0.5f * length };
 					capsule.center2 = { 0.0f, 0.5f * length };
-					shapeDef.rollingResistance = 0.2f;
+					shapeDef.material.rollingResistance = 0.2f;
 					b2CreateCapsuleShape( m_bodies[index], &shapeDef, &capsule );
 				}
 				else if ( m_shapeType == e_mixShape )
@@ -660,7 +660,7 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
-		shapeDef.friction = 0.5f;
+		shapeDef.material.friction = 0.5f;
 
 		float h = 0.5f;
 		b2Polygon box = b2MakeRoundedBox( h, h, 0.0f );
@@ -793,7 +793,7 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
-		shapeDef.friction = 0.5f;
+		shapeDef.material.friction = 0.5f;
 
 		float h = 0.5f;
 		b2Polygon box = b2MakeRoundedBox( h, h, 0.0f );
@@ -1170,15 +1170,15 @@ public:
 					shapeDef.filter.categoryBits = 1 << category;
 					if ( category == 0 )
 					{
-						shapeDef.customColor = b2_colorBox2DBlue;
+						shapeDef.material.customColor = b2_colorBox2DBlue;
 					}
 					else if ( category == 1 )
 					{
-						shapeDef.customColor = b2_colorBox2DYellow;
+						shapeDef.material.customColor = b2_colorBox2DYellow;
 					}
 					else
 					{
-						shapeDef.customColor = b2_colorBox2DGreen;
+						shapeDef.material.customColor = b2_colorBox2DGreen;
 					}
 
 					b2CreatePolygonShape( bodyId, &shapeDef, &box );

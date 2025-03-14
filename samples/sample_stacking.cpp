@@ -102,7 +102,7 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
-		shapeDef.friction = 0.3f;
+		shapeDef.material.friction = 0.3f;
 
 		float offset = 0.2f;
 		float dx = 5.0f;
@@ -219,7 +219,7 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
-		shapeDef.friction = 0.3f;
+		shapeDef.material.friction = 0.3f;
 
 		float offset;
 
@@ -439,7 +439,7 @@ public:
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.enableHitEvents = true;
 		//shapeDef.rollingResistance = 0.2f;
-		shapeDef.friction = 0.0f;
+		shapeDef.material.friction = 0.0f;
 
 		float y = 0.75f;
 
@@ -619,7 +619,7 @@ public:
 
 		{
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.01f;
+			shapeDef.material.friction = 0.01f;
 			bodyDef.linearVelocity = { 2.0f * sign, 0.0f };
 
 			float offset = m_flip ? -4.0f : 0.0f;
@@ -639,7 +639,7 @@ public:
 
 		{
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.01f;
+			shapeDef.material.friction = 0.01f;
 			bodyDef.linearVelocity = { 2.5f * sign, 0.0f };
 
 			bodyDef.position = { -11.0f, 4.5f };
@@ -657,7 +657,7 @@ public:
 
 		{
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.2f;
+			shapeDef.material.friction = 0.2f;
 			bodyDef.linearVelocity = { 1.5f * sign, 0.0f };
 
 			float offset = m_flip ? 4.0f : 0.0f;
@@ -744,7 +744,7 @@ public:
 		}
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.friction = 0.6f;
+		shapeDef.material.friction = 0.6f;
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -827,7 +827,7 @@ public:
 		b2Polygon box = b2MakeBox( 0.125f, 0.5f );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.friction = 0.6f;
+		shapeDef.material.friction = 0.6f;
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 
@@ -949,7 +949,7 @@ public:
 		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.friction = 0.7f;
+		shapeDef.material.friction = 0.7f;
 
 		b2Polygon groundBox = b2MakeBox( 40.0f, 2.0f );
 		b2CreatePolygonShape( groundId, &shapeDef, &groundBox );

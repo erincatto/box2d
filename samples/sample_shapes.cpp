@@ -115,7 +115,7 @@ public:
 		b2SurfaceMaterial material = {};
 		material.friction = 0.2f;
 		material.customColor = b2_colorSteelBlue;
-		material.material = 42;
+		material.userMaterialId = 42;
 
 		b2ChainDef chainDef = b2DefaultChainDef();
 		chainDef.points = points;
@@ -144,8 +144,8 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
-		shapeDef.friction = m_friction;
-		shapeDef.restitution = m_restitution;
+		shapeDef.material.friction = m_friction;
+		shapeDef.material.restitution = m_restitution;
 
 		if ( m_shapeType == e_circleShape )
 		{
@@ -815,7 +815,7 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
-		shapeDef.restitution = 0.0f;
+		shapeDef.material.restitution = 0.0f;
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
@@ -840,7 +840,7 @@ public:
 				b2CreatePolygonShape( bodyId, &shapeDef, &box );
 			}
 
-			shapeDef.restitution += dr;
+			shapeDef.material.restitution += dr;
 			x += dx;
 		}
 	}
@@ -900,7 +900,7 @@ public:
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.2f;
+			shapeDef.material.friction = 0.2f;
 
 			b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
@@ -936,7 +936,7 @@ public:
 				bodyDef.position = { -15.0f + 4.0f * i, 28.0f };
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
-				shapeDef.friction = friction[i];
+				shapeDef.material.friction = friction[i];
 				b2CreatePolygonShape( bodyId, &shapeDef, &box );
 			}
 		}
@@ -987,7 +987,7 @@ public:
 			bodyDef.linearVelocity = { 5.0f, 0.0f };
 
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
-			shapeDef.rollingResistance = m_resistScale * i;
+			shapeDef.material.rollingResistance = m_resistScale * i;
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		}
 	}
@@ -1072,8 +1072,8 @@ public:
 			b2Polygon box = b2MakeRoundedBox( 10.0f, 0.25f, 0.25f );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.8f;
-			shapeDef.tangentSpeed = 2.0f;
+			shapeDef.material.friction = 0.8f;
+			shapeDef.material.tangentSpeed = 2.0f;
 
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 		}
@@ -1175,8 +1175,8 @@ public:
 		b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.friction = m_friction;
-		shapeDef.rollingResistance = m_rollingResistance;
+		shapeDef.material.friction = m_friction;
+		shapeDef.material.rollingResistance = m_rollingResistance;
 		b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		return bodyId;
 	}
@@ -1519,7 +1519,7 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.rollingResistance = 0.3f;
+		shapeDef.material.rollingResistance = 0.3f;
 
 		float y = 2.0f;
 		int xcount = 10, ycount = 10;
@@ -1587,7 +1587,7 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.rollingResistance = 0.2f;
+		shapeDef.material.rollingResistance = 0.2f;
 
 		float y = 2.0f;
 		int xCount = 10, yCount = 10;

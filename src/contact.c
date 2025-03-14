@@ -315,8 +315,8 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contactSim->manifold = ( b2Manifold ){ 0 };
 
 	// These also get updated in the narrow phase
-	contactSim->friction = world->frictionCallback(shapeA->friction, shapeA->material, shapeB->friction, shapeB->material);
-	contactSim->restitution = world->restitutionCallback(shapeA->restitution, shapeA->material, shapeB->restitution, shapeB->material);
+	contactSim->friction = world->frictionCallback(shapeA->friction, shapeA->userMaterialId, shapeB->friction, shapeB->userMaterialId);
+	contactSim->restitution = world->restitutionCallback(shapeA->restitution, shapeA->userMaterialId, shapeB->restitution, shapeB->userMaterialId);
 
 	contactSim->tangentSpeed = 0.0f;
 	contactSim->simFlags = 0;
@@ -490,8 +490,8 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	contactSim->manifold = fcn( shapeA, transformA, shapeB, transformB, &contactSim->cache );
 
 	// Keep these updated in case the values on the shapes are modified
-	contactSim->friction = world->frictionCallback( shapeA->friction, shapeA->material, shapeB->friction, shapeB->material );
-	contactSim->restitution = world->restitutionCallback( shapeA->restitution, shapeA->material, shapeB->restitution, shapeB->material );
+	contactSim->friction = world->frictionCallback( shapeA->friction, shapeA->userMaterialId, shapeB->friction, shapeB->userMaterialId );
+	contactSim->restitution = world->restitutionCallback( shapeA->restitution, shapeA->userMaterialId, shapeB->restitution, shapeB->userMaterialId );
 
 	// todo branch improves perf?
 	if (shapeA->rollingResistance > 0.0f || shapeB->rollingResistance > 0.0f)

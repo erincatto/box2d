@@ -41,7 +41,7 @@ void Car::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz, f
 
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
 	shapeDef.density = 1.0f / scale;
-	shapeDef.friction = 0.2f;
+	shapeDef.material.friction = 0.2f;
 
 	b2Circle circle = { { 0.0f, 0.0f }, 0.4f * scale };
 
@@ -52,8 +52,8 @@ void Car::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz, f
 	b2CreatePolygonShape( m_chassisId, &shapeDef, &chassis );
 
 	shapeDef.density = 2.0f / scale;
-	shapeDef.friction = 1.5f;
-	shapeDef.rollingResistance = 0.1f;
+	shapeDef.material.friction = 1.5f;
+	shapeDef.material.rollingResistance = 0.1f;
 
 	bodyDef.position = b2Add( { -1.0f * scale, 0.35f * scale }, position );
 	bodyDef.allowFastRotation = true;
@@ -184,8 +184,8 @@ void Truck::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz,
 
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
 	shapeDef.density = density;
-	shapeDef.friction = 0.2f;
-	shapeDef.customColor = b2_colorHotPink;
+	shapeDef.material.friction = 0.2f;
+	shapeDef.material.customColor = b2_colorHotPink;
 
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_dynamicBody;
@@ -202,8 +202,8 @@ void Truck::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz,
 	b2CreatePolygonShape( m_chassisId, &shapeDef, &box );
 
 	shapeDef.density = 2.0f * density;
-	shapeDef.friction = 2.5f;
-	shapeDef.customColor = b2_colorSilver;
+	shapeDef.material.friction = 2.5f;
+	shapeDef.material.customColor = b2_colorSilver;
 
 	b2Circle circle = { { 0.0f, 0.0f }, 0.4f * scale };
 	bodyDef.position = b2Add( { -2.75f * scale, 0.3f * scale }, position );

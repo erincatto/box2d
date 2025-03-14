@@ -59,10 +59,6 @@ static void b2UpdateShapeAABBs( b2Shape* shape, b2Transform transform, b2BodyTyp
 static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform transform, const b2ShapeDef* def,
 									   const void* geometry, b2ShapeType shapeType )
 {
-	B2_ASSERT( b2IsValidFloat( def->density ) && def->density >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( def->friction ) && def->friction >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( def->restitution ) && def->restitution >= 0.0f );
-
 	int shapeId = b2AllocId( &world->shapeIdPool );
 
 	if ( shapeId == world->shapes.count )
@@ -107,14 +103,14 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	shape->bodyId = body->id;
 	shape->type = shapeType;
 	shape->density = def->density;
-	shape->friction = def->friction;
-	shape->restitution = def->restitution;
-	shape->rollingResistance = def->rollingResistance;
-	shape->tangentSpeed = def->tangentSpeed;
-	shape->material = def->material;
+	shape->friction = def->material.friction;
+	shape->restitution = def->material.restitution;
+	shape->rollingResistance = def->material.rollingResistance;
+	shape->tangentSpeed = def->material.tangentSpeed;
+	shape->userMaterialId = def->material.userMaterialId;
 	shape->filter = def->filter;
 	shape->userData = def->userData;
-	shape->customColor = def->customColor;
+	shape->customColor = def->material.customColor;
 	shape->enlargedAABB = false;
 	shape->enableSensorEvents = def->enableSensorEvents;
 	shape->enableContactEvents = def->enableContactEvents;
@@ -168,8 +164,10 @@ static b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const vo
 {
 	B2_CHECK_DEF( def );
 	B2_ASSERT( b2IsValidFloat( def->density ) && def->density >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( def->friction ) && def->friction >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( def->restitution ) && def->restitution >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( def->material.friction ) && def->material.friction >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( def->material.restitution ) && def->material.restitution >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( def->material.rollingResistance ) && def->material.rollingResistance >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( def->material.tangentSpeed ) );
 
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
 	if ( world == NULL )
@@ -417,13 +415,7 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 			prevIndex = i;
 
 			int materialIndex = materialCount == 1 ? 0 : i;
-			const b2SurfaceMaterial* material = def->materials + materialIndex;
-			shapeDef.friction = material->friction;
-			shapeDef.restitution = material->restitution;
-			shapeDef.rollingResistance = material->rollingResistance;
-			shapeDef.tangentSpeed = material->tangentSpeed;
-			shapeDef.customColor = material->customColor;
-			shapeDef.material = material->material;
+			shapeDef.material = def->materials[materialIndex];
 
 			b2Shape* shape = b2CreateShapeInternal( world, body, transform, &shapeDef, &chainSegment, b2_chainSegmentShape );
 			chainShape->shapeIndices[i] = shape->id;
@@ -437,13 +429,7 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 			chainSegment.chainId = chainId;
 
 			int materialIndex = materialCount == 1 ? 0 : n - 2;
-			const b2SurfaceMaterial* material = def->materials + materialIndex;
-			shapeDef.friction = material->friction;
-			shapeDef.restitution = material->restitution;
-			shapeDef.rollingResistance = material->rollingResistance;
-			shapeDef.tangentSpeed = material->tangentSpeed;
-			shapeDef.customColor = material->customColor;
-			shapeDef.material = material->material;
+			shapeDef.material = def->materials[materialIndex];
 
 			b2Shape* shape = b2CreateShapeInternal( world, body, transform, &shapeDef, &chainSegment, b2_chainSegmentShape );
 			chainShape->shapeIndices[n - 2] = shape->id;
@@ -457,13 +443,7 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 			chainSegment.chainId = chainId;
 
 			int materialIndex = materialCount == 1 ? 0 : n - 1;
-			const b2SurfaceMaterial* material = def->materials + materialIndex;
-			shapeDef.friction = material->friction;
-			shapeDef.restitution = material->restitution;
-			shapeDef.rollingResistance = material->rollingResistance;
-			shapeDef.tangentSpeed = material->tangentSpeed;
-			shapeDef.customColor = material->customColor;
-			shapeDef.material = material->material;
+			shapeDef.material = def->materials[materialIndex];
 
 			b2Shape* shape = b2CreateShapeInternal( world, body, transform, &shapeDef, &chainSegment, b2_chainSegmentShape );
 			chainShape->shapeIndices[n - 1] = shape->id;
@@ -486,13 +466,7 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 
 			// Material is associated with leading point of solid segment
 			int materialIndex = materialCount == 1 ? 0 : i + 1;
-			const b2SurfaceMaterial* material = def->materials + materialIndex;
-			shapeDef.friction = material->friction;
-			shapeDef.restitution = material->restitution;
-			shapeDef.rollingResistance = material->rollingResistance;
-			shapeDef.tangentSpeed = material->tangentSpeed;
-			shapeDef.customColor = material->customColor;
-			shapeDef.material = material->material;
+			shapeDef.material = def->materials[materialIndex];
 
 			b2Shape* shape = b2CreateShapeInternal( world, body, transform, &shapeDef, &chainSegment, b2_chainSegmentShape );
 			chainShape->shapeIndices[i] = shape->id;
@@ -1128,14 +1102,14 @@ void b2Shape_SetMaterial( b2ShapeId shapeId, int material )
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
-	shape->material = material;
+	shape->userMaterialId = material;
 }
 
 int b2Shape_GetMaterial( b2ShapeId shapeId )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
-	return shape->material;
+	return shape->userMaterialId;
 }
 
 b2Filter b2Shape_GetFilter( b2ShapeId shapeId )
@@ -1518,7 +1492,7 @@ void b2Chain_SetMaterial( b2ChainId chainId, int material )
 	int materialCount = chainShape->materialCount;
 	for ( int i = 0; i < materialCount; ++i )
 	{
-		chainShape->materials[i].material = material;
+		chainShape->materials[i].userMaterialId = material;
 	}
 
 	int count = chainShape->count;
@@ -1527,7 +1501,7 @@ void b2Chain_SetMaterial( b2ChainId chainId, int material )
 	{
 		int shapeId = chainShape->shapeIndices[i];
 		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
-		shape->material = material;
+		shape->userMaterialId = material;
 	}
 }
 
@@ -1535,7 +1509,7 @@ int b2Chain_GetMaterial( b2ChainId chainId )
 {
 	b2World* world = b2GetWorld( chainId.world0 );
 	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
-	return chainShape->materials[0].material;
+	return chainShape->materials[0].userMaterialId;
 }
 
 int b2Shape_GetContactCapacity( b2ShapeId shapeId )

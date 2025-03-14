@@ -23,7 +23,7 @@ typedef struct b2Shape
 	float restitution;
 	float rollingResistance;
 	float tangentSpeed;
-	int material;
+	int userMaterialId;
 
 	b2AABB aabb;
 	b2AABB fatAABB;

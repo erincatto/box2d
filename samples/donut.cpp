@@ -44,7 +44,7 @@ void Donut::Create( b2WorldId worldId, b2Vec2 position, float scale, int groupIn
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
 	shapeDef.enableSensorEvents = enableSensorEvents;
 	shapeDef.filter.groupIndex = -groupIndex;
-	shapeDef.friction = 0.3f;
+	shapeDef.material.friction = 0.3f;
 
 	// Create bodies
 	float angle = 0.0f;

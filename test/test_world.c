@@ -59,7 +59,7 @@ int HelloWorld( void )
 	shapeDef.density = 1.0f;
 
 	// Override the default friction.
-	shapeDef.friction = 0.3f;
+	shapeDef.material.friction = 0.3f;
 
 	// Add the shape to the body.
 	b2CreatePolygonShape( bodyId, &shapeDef, &dynamicBox );

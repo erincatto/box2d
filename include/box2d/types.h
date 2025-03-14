@@ -52,12 +52,12 @@ typedef void b2FinishTaskCallback( void* userTask, void* userContext );
 /// Optional friction mixing callback. This intentionally provides no context objects because this is called
 /// from a worker thread.
 /// @warning This function should not attempt to modify Box2D state or user application state.
-typedef float b2FrictionCallback( float frictionA, int materialA, float frictionB, int materialB );
+typedef float b2FrictionCallback( float frictionA, int userMaterialIdA, float frictionB, int userMaterialIdB );
 
 /// Optional restitution mixing callback. This intentionally provides no context objects because this is called
 /// from a worker thread.
 /// @warning This function should not attempt to modify Box2D state or user application state.
-typedef float b2RestitutionCallback( float restitutionA, int materialA, float restitutionB, int materialB );
+typedef float b2RestitutionCallback( float restitutionA, int userMaterialIdA, float restitutionB, int userMaterialIdB );
 
 /// Result from b2World_RayCastClosest
 /// @ingroup world
@@ -328,16 +328,10 @@ typedef enum b2ShapeType
 	b2_shapeTypeCount
 } b2ShapeType;
 
-/// Used to create a shape.
-/// This is a temporary object used to bundle shape creation parameters. You may use
-/// the same shape definition to create multiple shapes.
-/// Must be initialized using b2DefaultShapeDef().
+/// Surface materials allow chain shapes to have per segment surface properties.
 /// @ingroup shape
-typedef struct b2ShapeDef
+typedef struct b2SurfaceMaterial
 {
-	/// Use this to store application specific shape data.
-	void* userData;
-
 	/// The Coulomb (dry) friction coefficient, usually in the range [0,1].
 	float friction;
 
@@ -353,16 +347,36 @@ typedef struct b2ShapeDef
 
 	/// User material identifier. This is passed with query results and to friction and restitution
 	/// combining functions. It is not used internally.
-	int material;
+	int userMaterialId;
+
+	/// Custom debug draw color.
+	uint32_t customColor;
+} b2SurfaceMaterial;
+
+/// Use this to initialize your surface material
+/// @ingroup shape
+B2_API b2SurfaceMaterial b2DefaultSurfaceMaterial( void );
+
+/// Used to create a shape.
+/// This is a temporary object used to bundle shape creation parameters. You may use
+/// the same shape definition to create multiple shapes.
+/// Must be initialized using b2DefaultShapeDef().
+/// @ingroup shape
+typedef struct b2ShapeDef
+{
+	/// Use this to store application specific shape data.
+	void* userData;
+
+	/// The surface material for this shape.
+	b2SurfaceMaterial material;
 
 	/// The density, usually in kg/m^2.
+	/// This is not part of the surface material because this is for the interior, which may have
+	/// other considerations, such as being hollow. For example a wood barrel may be hollow or full of water.
 	float density;
 
 	/// Collision filtering data.
 	b2Filter filter;
-
-	/// Custom debug draw color.
-	uint32_t customColor;
 
 	/// A sensor shape generates overlap events but never generates a collision response.
 	/// Sensors do not have continuous collision. Instead, use a ray or shape cast for those scenarios.
@@ -400,35 +414,6 @@ typedef struct b2ShapeDef
 /// Use this to initialize your shape definition
 /// @ingroup shape
 B2_API b2ShapeDef b2DefaultShapeDef( void );
-
-/// Surface materials allow chain shapes to have per segment surface properties.
-/// @ingroup shape
-typedef struct b2SurfaceMaterial
-{
-	/// The Coulomb (dry) friction coefficient, usually in the range [0,1].
-	float friction;
-
-	/// The coefficient of restitution (bounce) usually in the range [0,1].
-	/// https://en.wikipedia.org/wiki/Coefficient_of_restitution
-	float restitution;
-
-	/// The rolling resistance usually in the range [0,1].
-	float rollingResistance;
-
-	/// The tangent speed for conveyor belts
-	float tangentSpeed;
-
-	/// User material identifier. This is passed with query results and to friction and restitution
-	/// combining functions. It is not used internally.
-	int material;
-
-	/// Custom debug draw color.
-	uint32_t customColor;
-} b2SurfaceMaterial;
-
-/// Use this to initialize your surface material
-/// @ingroup shape
-B2_API b2SurfaceMaterial b2DefaultSurfaceMaterial( void );
 
 /// Used to create a chain of line segments. This is designed to eliminate ghost collisions with some limitations.
 /// - chains are one-sided
@@ -873,6 +858,7 @@ typedef struct b2WeldJointDef
 	b2Vec2 localAnchorB;
 
 	/// The bodyB angle minus bodyA angle in the reference state (radians)
+	/// todo maybe make this a b2Rot
 	float referenceAngle;
 
 	/// Linear stiffness expressed as Hertz (cycles per second). Use zero for maximum stiffness.
