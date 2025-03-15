@@ -599,6 +599,7 @@ void b2UpdateBodyMassData( b2World* world, b2Body* body )
 	b2Vec2 oldCenter = bodySim->center;
 	bodySim->localCenter = localCenter;
 	bodySim->center = b2TransformPoint( bodySim->transform, bodySim->localCenter );
+	bodySim->center0 = bodySim->center;
 
 	// Update center of mass velocity
 	b2BodyState* state = b2GetBodyState( world, body );
