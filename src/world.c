@@ -1468,8 +1468,6 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				.upperBound = { -FLT_MAX, -FLT_MAX },
 			};
 
-			island->bodyCount;
-
 			int bodyId = island->headBody;
 			while (bodyId != B2_NULL_INDEX)
 			{
@@ -2577,6 +2575,7 @@ b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2
 	return treeStats;
 }
 
+#if 0
 static b2AABB b2ComputeShapeBounds( const b2ShapeProxy* shape, b2Transform xf )
 {
 	B2_ASSERT( shape->count > 0 );
@@ -2597,6 +2596,7 @@ static b2AABB b2ComputeShapeBounds( const b2ShapeProxy* shape, b2Transform xf )
 	b2AABB aabb = { lower, upper };
 	return aabb;
 }
+#endif
 
 typedef struct b2MoverContext
 {
@@ -2607,6 +2607,7 @@ typedef struct b2MoverContext
 	void* userContext;
 } b2CharacterCallbackContext;
 
+#if 0
 static bool b2CollideMoverCallback( int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
@@ -2648,6 +2649,7 @@ static bool b2CollideMoverCallback( int proxyId, uint64_t userData, void* contex
 	bool result = worldContext->fcn( id, worldContext->userContext );
 	return result;
 }
+#endif
 
 typedef struct WorldMoverCastContext
 {
@@ -2688,7 +2690,7 @@ static float MoverCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 }
 
 
-float b3World_CastMover( b2WorldId worldId, const b2Capsule* mover, b2Vec2 translation, b2QueryFilter filter )
+float b2World_CastMover( b2WorldId worldId, const b2Capsule* mover, b2Vec2 translation, b2QueryFilter filter )
 {
 	B2_ASSERT( b2IsValidVec2( translation ) );
 

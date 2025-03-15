@@ -723,7 +723,7 @@ static inline bool b2AllZeroW( b2FloatW a )
 	b2FloatW zero = vdupq_n_f32( 0.0f );
 
 	// Compare the input vector with zero
-	uint32x4_t cmp_result = vceqq_f32( value, zero );
+	uint32x4_t cmp_result = vceqq_f32( a, zero );
 
 // Check if all comparison results are non-zero using vminvq
 #ifdef __ARM_FEATURE_SVE
