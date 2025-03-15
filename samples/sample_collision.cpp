@@ -17,11 +17,9 @@
 constexpr int SIMPLEX_CAPACITY = 20;
 
 /*
--		input	0x0000008f63efcee0 {proxyA={points=0x0000008f63efcee0 {{...}, {...}, {...}, {...}, {...}, {...}, {...}, ...} ...} ...}	const b2DistanceInput *
-+		[0]	{x=-0.400000006 y=-0.400000006 }	b2Vec2
-+		[1]	{x=0.400000006 y=-0.400000006 }	b2Vec2
-+		[2]	{x=0.400000006 y=0.400000006 }	b2Vec2
-+		[3]	{x=-0.400000006 y=0.400000006 }	b2Vec2
+-		input	0x0000008f63efcee0 {proxyA={points=0x0000008f63efcee0 {{...}, {...}, {...}, {...}, {...}, {...}, {...}, ...} ...}
+...}	const b2DistanceInput * +		[0]	{x=-0.400000006 y=-0.400000006 }	b2Vec2 +		[1]	{x=0.400000006 y=-0.400000006
+}	b2Vec2 +		[2]	{x=0.400000006 y=0.400000006 }	b2Vec2 +		[3]	{x=-0.400000006 y=0.400000006 }	b2Vec2
 
 +		[0]	{x=-0.500000000 y=-0.500000000 }	b2Vec2
 +		[1]	{x=0.500000000 y=-0.500000000 }	b2Vec2
@@ -65,7 +63,7 @@ public:
 
 		m_box = b2MakeSquare( 0.5f );
 
-		//m_transform = { { 1.5f, -1.5f }, b2Rot_identity };
+		// m_transform = { { 1.5f, -1.5f }, b2Rot_identity };
 		m_transform = { { 0.0f, 0.0f }, b2Rot_identity };
 		m_angle = 0.0f;
 
@@ -109,7 +107,7 @@ public:
 				break;
 
 			case e_triangle:
-				for (int i = 0; i < m_triangle.count; ++i)
+				for ( int i = 0; i < m_triangle.count; ++i )
 				{
 					proxy.points[i] = m_triangle.vertices[i];
 				}
@@ -1077,7 +1075,7 @@ public:
 
 		b2HexColor color1 = b2_colorYellow;
 
-		b2CastOutput output = { };
+		b2CastOutput output = {};
 		float maxFraction = 1.0f;
 
 		// circle
@@ -1753,7 +1751,7 @@ public:
 										RayCastSortedCallback };
 			b2CastResultFcn* modeFcn = fcns[m_mode];
 
-			CastContext context = { };
+			CastContext context = {};
 
 			// Must initialize fractions for sorting
 			context.fractions[0] = FLT_MAX;
@@ -2187,7 +2185,7 @@ public:
 		{
 			b2World_OverlapPolygon( m_worldId, &m_queryBox, transform, b2DefaultQueryFilter(), OverlapWorld::OverlapResultFcn,
 									this );
-			b2Vec2 points[B2_MAX_POLYGON_VERTICES] = { };
+			b2Vec2 points[B2_MAX_POLYGON_VERTICES] = {};
 			for ( int i = 0; i < m_queryBox.count; ++i )
 			{
 				points[i] = b2TransformPoint( transform, m_queryBox.vertices[i] );
@@ -3221,7 +3219,7 @@ public:
 		m_transformB.p = {-4.0f, 0.0f};
 		m_transformB.q = b2Rot_identity;
 		m_translationB = {8.0f, 0.0f};
-#elif 1
+#elif 0
 		// box swept against a segment
 		m_vAs[0] = { -2.0f, 0.0f };
 		m_vAs[1] = { 2.0f, 0.0f };
@@ -3258,20 +3256,21 @@ public:
 		m_transformB.p = { -1.0f, 0.0f };
 		m_transformB.q = b2Rot_identity;
 		m_translationB = { 1.0f, 0.0f };
-#elif 0
-		m_vAs[0] = { 0.0f, 0.0f };
-		m_countA = 1;
-		m_radiusA = 0.5f;
+#elif 1
+		m_vAs[0] = { -2.0f, 0.0f };
+		m_vAs[1] = { 2.0f, 0.0f };
+		m_countA = 2;
+		m_radiusA = 0.0f;
 
 		m_vBs[0] = { 0.0f, 0.0f };
 		m_countB = 1;
 		m_radiusB = 0.5f;
 
-		m_transformA.p = { 0.0f, 0.25f };
+		m_transformA.p = { 0.0f, 0.0f };
 		m_transformA.q = b2Rot_identity;
-		m_transformB.p = { -4.0f, 0.0f };
+		m_transformB.p = { 0.0f, 2.0f };
 		m_transformB.q = b2Rot_identity;
-		m_translationB = { 8.0f, 0.0f };
+		m_translationB = { 0.0f, -4.0f };
 #else
 		m_vAs[0] = { 0.0f, 0.0f };
 		m_vAs[1] = { 2.0f, 0.0f };
@@ -3327,13 +3326,14 @@ public:
 	{
 		Sample::Step( settings );
 
-		b2ShapeCastPairInput input = { };
+		b2ShapeCastPairInput input = {};
 		input.proxyA = b2MakeProxy( m_vAs, m_countA, m_radiusA );
 		input.proxyB = b2MakeProxy( m_vBs, m_countB, m_radiusB );
 		input.transformA = m_transformA;
 		input.transformB = m_transformB;
 		input.translationB = m_translationB;
 		input.maxFraction = 1.0f;
+		//input.canEncroach = true;
 
 		b2CastOutput output = b2ShapeCast( &input );
 
@@ -3351,9 +3351,8 @@ public:
 		distanceCache.count = 0;
 		b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceCache, &distanceInput, nullptr, 0 );
 
-		g_draw.DrawString( 5, m_textLine, "hit = %s, iters = %d, lambda = %g, distance = %g", output.hit ? "true" : "false",
-						   output.iterations, output.fraction, distanceOutput.distance );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "hit = %s, iterations = %d, lambda = %g, distance = %g", output.hit ? "true" : "false", output.iterations,
+					  output.fraction, distanceOutput.distance );
 
 		b2Vec2 vertices[B2_MAX_POLYGON_VERTICES];
 
