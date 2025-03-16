@@ -317,3 +317,58 @@ public:
 };
 
 static int sampleIndex4 = RegisterSample( "Robustness", "Overlap Recovery", OverlapRecovery::Create );
+
+class TinyPyramid : public Sample
+{
+public:
+	explicit TinyPyramid( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 0.8f };
+			g_camera.m_zoom = 1.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Polygon box = b2MakeOffsetBox( 5.0f, 1.0f, { 0.0f, -1.0f }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+		}
+
+		{
+			float extent = 0.025f;
+			int baseCount = 30;
+
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+			b2Polygon box = b2MakeSquare( extent );
+
+			for ( int i = 0; i < baseCount; ++i )
+			{
+				float y = ( 2.0f * i + 1.0f ) * extent;
+
+				for ( int j = i; j < baseCount; ++j )
+				{
+					float x = ( i + 1.0f ) * extent + 2.0f * ( j - i ) * extent - baseCount * extent;
+					bodyDef.position = { x, y };
+
+					b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+					b2CreatePolygonShape( bodyId, &shapeDef, &box );
+				}
+			}
+		}
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new TinyPyramid( settings );
+	}
+};
+
+static int sampleTinyPyramid = RegisterSample( "Robustness", "Tiny Pyramid", TinyPyramid::Create );
