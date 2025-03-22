@@ -122,12 +122,12 @@ b2ShapeProxy b2MakeProxy( const b2Vec2* vertices, int count, float radius )
 
 static b2Vec2 b2Weight2( float a1, b2Vec2 w1, float a2, b2Vec2 w2 )
 {
-	return ( b2Vec2 ){ a1 * w1.x + a2 * w2.x, a1 * w1.y + a2 * w2.y };
+	return (b2Vec2){ a1 * w1.x + a2 * w2.x, a1 * w1.y + a2 * w2.y };
 }
 
 static b2Vec2 b2Weight3( float a1, b2Vec2 w1, float a2, b2Vec2 w2, float a3, b2Vec2 w3 )
 {
-	return ( b2Vec2 ){ a1 * w1.x + a2 * w2.x + a3 * w3.x, a1 * w1.y + a2 * w2.y + a3 * w3.y };
+	return (b2Vec2){ a1 * w1.x + a2 * w2.x + a3 * w3.x, a1 * w1.y + a2 * w2.y + a3 * w3.y };
 }
 
 static int b2FindSupport( const b2ShapeProxy* proxy, b2Vec2 direction )
@@ -327,7 +327,7 @@ static b2Vec2 b2SolveSimplex2( b2Simplex* s )
 		// a2 <= 0, so we clamp it to 0
 		s->v1.a = 1.0f;
 		s->count = 1;
-		return b2Neg(w1);
+		return b2Neg( w1 );
 	}
 
 	// w2 region
@@ -397,7 +397,7 @@ static b2Vec2 b2SolveSimplex3( b2Simplex* s )
 	{
 		s->v1.a = 1.0f;
 		s->count = 1;
-		return b2Neg(w1);
+		return b2Neg( w1 );
 	}
 
 	// e12
@@ -459,8 +459,7 @@ static b2Vec2 b2SolveSimplex3( b2Simplex* s )
 	return b2Vec2_zero;
 }
 
-b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* input, b2Simplex* simplexes,
-								  int simplexCapacity )
+b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* input, b2Simplex* simplexes, int simplexCapacity )
 {
 	b2DistanceOutput output = { 0 };
 
@@ -603,8 +602,8 @@ b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* 
 		output.distance = b2MaxFloat( 0.0f, output.distance - rA - rB );
 
 		// Keep closest points on perimeter even if overlapped, this way the points move smoothly.
-		output.pointA = b2MulAdd( output.pointA, rA, normal);
-		output.pointB = b2MulSub( output.pointB, rB, normal);
+		output.pointA = b2MulAdd( output.pointA, rA, normal );
+		output.pointB = b2MulSub( output.pointB, rB, normal );
 	}
 
 	return output;
@@ -677,15 +676,15 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 		B2_ASSERT( simplex.count < 3 );
 
 		float distance2 = b2Length( d );
-		if (distance2 < target + tolerance)
+		if ( distance2 < target + tolerance )
 		{
-			if ( fraction  == 0.0f)
+			if ( fraction == 0.0f )
 			{
-				if (canEncroach)
+				if ( canEncroach )
 				{
-					if (distance2 >= distance1)
+					if ( distance2 >= distance1 )
 					{
-						if (distance2 > 2.0f * linearSlop)
+						if ( distance2 > 2.0f * linearSlop )
 						{
 							// Encroach
 							target = distance2 - linearSlop;
@@ -720,11 +719,11 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 		output.iterations += 1;
 
 		// Support in direction (B - A)
-		indexA = b2FindSupport( &proxyA, direction);
+		indexA = b2FindSupport( &proxyA, direction );
 		pointA = proxyA.points[indexA];
-		indexB = b2FindSupport( &proxyB, b2Neg(direction) );
+		indexB = b2FindSupport( &proxyB, b2Neg( direction ) );
 		pointB = proxyB.points[indexB];
-		b2Vec2 p = b2Sub( pointA, b2MulAdd(pointB, fraction, translation));
+		b2Vec2 p = b2Sub( pointA, b2MulAdd( pointB, fraction, translation ) );
 
 		// Normal vector at p
 		normal = b2Normalize( direction );
@@ -752,26 +751,26 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 		// Note that the support point p is not shifted because we want the plane equation
 		// to be formed in unshifted space.
 		bool duplicate = false;
-		b2Vec2 offset = b2MulSV(fraction, translation);
-		for (int i = 0; i < simplex.count; ++i)
+		b2Vec2 offset = b2MulSV( fraction, translation );
+		for ( int i = 0; i < simplex.count; ++i )
 		{
 			b2SimplexVertex* vertex = vertices + i;
-			vertex->wB = b2Add(proxyB.points[vertex->indexB], offset);
+			vertex->wB = b2Add( proxyB.points[vertex->indexB], offset );
 			vertex->w = b2Sub( vertex->wB, vertex->wA );
 
-			if (vertex->indexA == indexA && vertex->indexB == indexB)
+			if ( vertex->indexA == indexA && vertex->indexB == indexB )
 			{
 				duplicate = true;
 			}
 		}
 
-		if (duplicate == false)
+		if ( duplicate == false )
 		{
 			b2SimplexVertex* vertex = vertices + simplex.count;
 			vertex->indexA = indexA;
 			vertex->wA = pointA;
 			vertex->indexB = indexB;
-			vertex->wB = b2Add(pointB, offset);
+			vertex->wB = b2Add( pointB, offset );
 			vertex->w = b2Sub( vertex->wB, vertex->wA );
 			vertex->a = 1.0f;
 			simplex.count += 1;
@@ -783,11 +782,11 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 				break;
 
 			case 2:
-				direction = b2Neg(b2SolveSimplex2( &simplex ));
+				direction = b2Neg( b2SolveSimplex2( &simplex ) );
 				break;
 
 			case 3:
-				direction = b2Neg(b2SolveSimplex3( &simplex ));
+				direction = b2Neg( b2SolveSimplex3( &simplex ) );
 				break;
 
 			default:
@@ -853,8 +852,9 @@ typedef struct b2SeparationFunction
 	b2SeparationType type;
 } b2SeparationFunction;
 
-static b2SeparationFunction b2MakeSeparationFunction( const b2SimplexCache* cache, const b2ShapeProxy* proxyA, const b2Sweep* sweepA,
-											   const b2ShapeProxy* proxyB, const b2Sweep* sweepB, float t1 )
+static b2SeparationFunction b2MakeSeparationFunction( const b2SimplexCache* cache, const b2ShapeProxy* proxyA,
+													  const b2Sweep* sweepA, const b2ShapeProxy* proxyB, const b2Sweep* sweepB,
+													  float t1 )
 {
 	b2SeparationFunction f;
 
@@ -892,7 +892,7 @@ static b2SeparationFunction b2MakeSeparationFunction( const b2SimplexCache* cach
 		f.axis = b2Normalize( f.axis );
 		b2Vec2 normal = b2RotateVector( xfB.q, f.axis );
 
-		f.localPoint = ( b2Vec2 ){ 0.5f * ( localPointB1.x + localPointB2.x ), 0.5f * ( localPointB1.y + localPointB2.y ) };
+		f.localPoint = (b2Vec2){ 0.5f * ( localPointB1.x + localPointB2.x ), 0.5f * ( localPointB1.y + localPointB2.y ) };
 		b2Vec2 pointB = b2TransformPoint( xfB, f.localPoint );
 
 		b2Vec2 localPointA = proxyA->points[cache->indexA[0]];
@@ -915,7 +915,7 @@ static b2SeparationFunction b2MakeSeparationFunction( const b2SimplexCache* cach
 	f.axis = b2Normalize( f.axis );
 	b2Vec2 normal = b2RotateVector( xfA.q, f.axis );
 
-	f.localPoint = ( b2Vec2 ){ 0.5f * ( localPointA1.x + localPointA2.x ), 0.5f * ( localPointA1.y + localPointA2.y ) };
+	f.localPoint = (b2Vec2){ 0.5f * ( localPointA1.x + localPointA2.x ), 0.5f * ( localPointA1.y + localPointA2.y ) };
 	b2Vec2 pointA = b2TransformPoint( xfA, f.localPoint );
 
 	b2Vec2 localPointB = proxyB->points[cache->indexB[0]];
@@ -1106,7 +1106,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 
 		// Progressive time of impact. This handles slender geometry well but introduces
 		// significant time loss.
-		//if (distanceIterations == 0)
+		// if (distanceIterations == 0)
 		//{
 		//	if ( distanceOutput.distance > totalRadius + B2_SPECULATIVE_DISTANCE )
 		//	{

@@ -251,7 +251,11 @@ static int b2FindBestSibling( const b2DynamicTree* tree, b2AABB boxD )
 			// Child 1 is an internal node
 			area1 = b2Perimeter( box1 );
 
-			// Lower bound cost of inserting under child 1.
+			// Lower bound cost of inserting under child 1. The minimum accounts for two possibilities:
+			// 1. Child1 could be the sibling with cost1 = inheritedCost + directCost1
+			// 2. A descendent of child1 could be the sibling with the lower bound cost of
+			//       cost1 = inheritedCost + (directCost1 - area1) + areaD
+			// This minimum here leads to the minimum of these two costs.
 			lowerCost1 = inheritedCost + directCost1 + b2MinFloat( areaD - area1, 0.0f );
 		}
 
@@ -262,11 +266,8 @@ static int b2FindBestSibling( const b2DynamicTree* tree, b2AABB boxD )
 		float area2 = 0.0f;
 		if ( leaf2 )
 		{
-			// Child 2 is a leaf
-			// Cost of creating new node and increasing area of node P
 			float cost2 = directCost2 + inheritedCost;
 
-			// Need this here due to while condition above
 			if ( cost2 < bestCost )
 			{
 				bestSibling = child2;
@@ -275,11 +276,7 @@ static int b2FindBestSibling( const b2DynamicTree* tree, b2AABB boxD )
 		}
 		else
 		{
-			// Child 2 is an internal node
 			area2 = b2Perimeter( box2 );
-
-			// Lower bound cost of inserting under child 2. This is not the cost
-			// of child 2, it is the best we can hope for under child 2.
 			lowerCost2 = inheritedCost + directCost2 + b2MinFloat( areaD - area2, 0.0f );
 		}
 
