@@ -69,7 +69,7 @@ static int ShapeCastTest( void )
 	input.translationB = ( b2Vec2 ){ -2.0f, 0.0f };
 	input.maxFraction = 1.0f;
 
-	b2CastOutput output = b2ShapeCast( &input );
+	b2CastOutput output = b2ShapeCast( &input, NULL, 0 );
 
 	ENSURE( output.hit );
 	ENSURE_SMALL( output.fraction - 0.5f, 0.005f );

@@ -339,7 +339,7 @@ public:
 		}
 
 		{
-			float extent = 0.025f;
+			m_extent = 0.025f;
 			int baseCount = 30;
 
 			b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -347,15 +347,15 @@ public:
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 
-			b2Polygon box = b2MakeSquare( extent );
+			b2Polygon box = b2MakeSquare( m_extent );
 
 			for ( int i = 0; i < baseCount; ++i )
 			{
-				float y = ( 2.0f * i + 1.0f ) * extent;
+				float y = ( 2.0f * i + 1.0f ) * m_extent;
 
 				for ( int j = i; j < baseCount; ++j )
 				{
-					float x = ( i + 1.0f ) * extent + 2.0f * ( j - i ) * extent - baseCount * extent;
+					float x = ( i + 1.0f ) * m_extent + 2.0f * ( j - i ) * m_extent - baseCount * m_extent;
 					bodyDef.position = { x, y };
 
 					b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
@@ -365,10 +365,18 @@ public:
 		}
 	}
 
+	void Step( Settings& settings ) override
+	{
+		DrawTextLine( "%.1fcm squares", 200.0f * m_extent );
+		Sample::Step( settings );
+	}
+
 	static Sample* Create( Settings& settings )
 	{
 		return new TinyPyramid( settings );
 	}
+
+	float m_extent;
 };
 
 static int sampleTinyPyramid = RegisterSample( "Robustness", "Tiny Pyramid", TinyPyramid::Create );

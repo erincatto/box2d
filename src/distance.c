@@ -612,10 +612,240 @@ b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* 
 // GJK-raycast
 // Algorithm by Gino van den Bergen.
 // "Smooth Mesh Contacts with GJK" in Game Physics Pearls. 2010
-// todo this is failing when used to raycast a box
-// todo this converges slowly with a radius
-b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
+// This needs the simplex of A - B because the translation is for B and this
+// is how the relative motion works out when both shapes are translating.
+b2CastOutput b2ShapeCast2( const b2ShapeCastPairInput* input, b2ShapeCastData* debugData, int debugCapacity )
 {
+	B2_UNUSED( debugData, debugCapacity );
+
+	b2CastOutput output = { 0 };
+	output.fraction = input->maxFraction;
+
+	b2ShapeProxy proxyA = input->proxyA;
+	b2Transform xfA = input->transformA;
+	b2Transform xfB = input->transformB;
+	b2Transform xf = b2InvMulTransforms( xfA, xfB );
+
+	// Put proxyB in proxyA's frame to reduce round-off error
+	b2ShapeProxy proxyB;
+	proxyB.count = input->proxyB.count;
+	proxyB.radius = input->proxyB.radius;
+	B2_ASSERT( proxyB.count <= B2_MAX_POLYGON_VERTICES );
+
+	for ( int i = 0; i < proxyB.count; ++i )
+	{
+		proxyB.points[i] = b2TransformPoint( xf, input->proxyB.points[i] );
+	}
+
+	float radius = proxyA.radius + proxyB.radius;
+
+	float fraction = 0.0f;
+	float maxFraction = input->maxFraction;
+
+	// Local translation vector
+	b2Vec2 r = b2RotateVector( xf.q, input->translationB );
+
+	// Initial simplex
+	b2Simplex simplex = { 0 };
+
+	// Get simplex vertices as an array.
+	b2SimplexVertex* vertices = &simplex.v1;
+
+	// Get an initial point in A - B using translation vector
+	int indexA = b2FindSupport( &proxyA, b2Neg( r ) );
+	b2Vec2 pointA = proxyA.points[indexA];
+	int indexB = b2FindSupport( &proxyB, r );
+	b2Vec2 pointB = proxyB.points[indexB];
+	b2Vec2 v = b2Sub( pointA, pointB );
+
+	// Direction for support points (scaled normal vector)
+	b2Vec2 direction = b2Neg( v );
+
+	// Start with no normal
+	b2Vec2 normal = { 0 };
+
+	// Set the target distance between proxies
+	float linearSlop = B2_LINEAR_SLOP;
+	float target = b2MaxFloat( linearSlop, radius - linearSlop );
+	float tolerance = 0.25f * linearSlop;
+	bool canEncroach = input->canEncroach && radius > 4.0f * linearSlop;
+
+	// Main iteration loop.
+	const int maxIterations = 20;
+	int iteration = 0;
+	bool needInitialDistance = false;
+	float distance1 = FLT_MAX;
+
+	while ( iteration < maxIterations )
+	{
+		B2_ASSERT( simplex.count < 3 );
+
+		// Check for convergence
+		float distance2 = b2Length( v );
+		if ( distance2 < target + tolerance )
+		{
+			if ( fraction == 0.0f )
+			{
+				if ( canEncroach )
+				{
+					// This indicates that I have the initial distance for encroachment.
+					if ( distance2 >= distance1 )
+					{
+						if ( distance2 > 2.0f * linearSlop )
+						{
+							// Encroach
+							target = distance2 - linearSlop;
+							needInitialDistance = false;
+						}
+						else
+						{
+							// Too close, cannot encroach
+							// Initial overlap
+							return output;
+						}
+					}
+					else
+					{
+						// Still converging to get initial distance. This forces the algorithm into GJK
+						// mode to get the initial shape distance.
+						distance1 = distance2;
+						needInitialDistance = true;
+					}
+				}
+				else
+				{
+					// Initial overlap
+					return output;
+				}
+			}
+			else
+			{
+				// Converged
+				return output;
+			}
+		}
+
+		output.iterations += 1;
+
+		// Support point in (A - B)
+		indexA = b2FindSupport( &proxyA, direction );
+		pointA = proxyA.points[indexA];
+		indexB = b2FindSupport( &proxyB, b2Neg(direction));
+		pointB = proxyB.points[indexB];
+		b2Vec2 p = b2Sub( pointB, pointA );
+
+		// Normal vector at p
+		normal = b2Normalize( direction );
+
+		// Distance to plane
+		float d = b2Dot( normal, p );
+		if ( d > target && needInitialDistance == false )
+		{
+			// Travel distance
+			float h = -b2Dot( normal, r );
+			if ( h <= FLT_EPSILON )
+			{
+				// Miss due to parallel translation above plane
+				return output;
+			}
+
+			// Intersect with plane offset by target
+			fraction = ( d - target ) / h;
+
+			if ( fraction > maxFraction )
+			{
+				// Passed end of translation
+				return output;
+			}
+
+			// Otherwise the ray is progressing
+		}
+
+		// Shift the current simplex to the new origin
+		// origin = fraction * translation
+		bool duplicate = false;
+		b2Vec2 origin = b2MulSV( fraction, r );
+		for ( int i = 0; i < simplex.count; ++i )
+		{
+			b2SimplexVertex* vertex = vertices + i;
+			vertex->wA = b2Add( proxyB.points[vertex->indexB], origin );
+			vertex->w = b2Sub( vertex->wB, vertex->wA );
+
+			if ( vertex->indexA == indexA && vertex->indexB == indexB )
+			{
+				duplicate = true;
+			}
+		}
+
+		if ( duplicate == false )
+		{
+			// Reverse simplex since the simplex solver works with B - A
+			// but this algorithm works with A - B.
+			// Shift the origin to the current ray point so that the distance and search direction
+			// are computed relative to the ray point.
+			b2SimplexVertex* vertex = vertices + simplex.count;
+			vertex->indexA = indexB;
+			vertex->wA = b2Add(pointB, origin);
+			vertex->indexB = indexA;
+			vertex->wB = pointA;
+			vertex->w = b2Sub( vertex->wB, vertex->wA );
+			vertex->a = 1.0f;
+			simplex.count += 1;
+		}
+
+		switch ( simplex.count )
+		{
+			case 1:
+				direction = b2Neg( vertices[0].w );
+				break;
+
+			case 2:
+				direction = b2SolveSimplex2( &simplex ) ;
+				break;
+
+			case 3:
+				direction = b2SolveSimplex3( &simplex );
+				break;
+
+			default:
+				B2_ASSERT( false );
+		}
+
+		// If we have 3 points, then the origin is in the corresponding triangle.
+		if ( simplex.count == 3 )
+		{
+			// Overlap
+			return output;
+		}
+
+		v = b2ComputeSimplexClosestPoint( &simplex );
+
+		// Iteration count is equated to the number of support point calls.
+		++iteration;
+	}
+
+	if ( iteration == 0 || fraction == 0.0f )
+	{
+		// Initial overlap
+		return output;
+	}
+
+	// Prepare output.
+	b2ComputeSimplexWitnessPoints( &pointB, &pointA, &simplex );
+
+	b2Vec2 point = b2MulAdd( pointA, proxyA.radius, normal );
+	output.point = b2TransformPoint( xfA, point );
+	output.normal = b2RotateVector( xfA.q, normal );
+	output.fraction = fraction;
+	output.iterations = iteration;
+	output.hit = true;
+	return output;
+}
+
+b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input, b2ShapeCastData* debugData, int debugCapacity )
+{
+	B2_UNUSED( debugData, debugCapacity );
+
 	b2CastOutput output = { 0 };
 	output.fraction = input->maxFraction;
 
@@ -638,7 +868,8 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 
 	float radius = proxyA.radius + proxyB.radius;
 
-	float fraction = 0.0f;
+	b2Vec2 r = b2RotateVector( xf.q, input->translationB );
+	float lambda = 0.0f;
 	float maxFraction = input->maxFraction;
 
 	// Initial simplex
@@ -646,135 +877,72 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	simplex.count = 0;
 
 	// Get simplex vertices as an array.
-	b2SimplexVertex* vertices = &simplex.v1;
+	b2SimplexVertex* vertices[] = { &simplex.v1, &simplex.v2, &simplex.v3 };
 
 	// Get an initial point in A - B
-	b2Vec2 translation = b2RotateVector( xf.q, input->translationB );
-	int indexA = 0;
-	b2Vec2 pointA = proxyA.points[0];
-	int indexB = 0;
-	b2Vec2 pointB = proxyB.points[0];
-	b2Vec2 direction = b2Sub( pointB, pointA );
-	b2Vec2 d = direction;
+	int indexA = b2FindSupport( &proxyA, b2Neg( r ) );
+	b2Vec2 wA = proxyA.points[indexA];
+	int indexB = b2FindSupport( &proxyB, r );
+	b2Vec2 wB = proxyB.points[indexB];
+	b2Vec2 v = b2Sub( wA, wB );
 
-	b2Vec2 normal = {};
-
-	// Set the target distance between proxies
-	float linearSlop = B2_LINEAR_SLOP;
-	float target = b2MaxFloat( linearSlop, radius - linearSlop );
-	float tolerance = 0.25f * linearSlop;
-	bool canEncroach = input->canEncroach && radius > 4.0f * linearSlop;
+	// Sigma is the target distance between proxies
+	const float linearSlop = B2_LINEAR_SLOP;
+	const float sigma = b2MaxFloat( linearSlop, radius - linearSlop );
 
 	// Main iteration loop.
-	const int maxIterations = 20;
-	int iteration = 0;
-	bool waitingForInitialDistance = false;
-	float distance1 = FLT_MAX;
-
-	while ( iteration < maxIterations )
+	const int k_maxIters = 20;
+	int iter = 0;
+	while ( iter < k_maxIters && b2Length( v ) > sigma + 0.5f * linearSlop )
 	{
 		B2_ASSERT( simplex.count < 3 );
 
-		float distance2 = b2Length( d );
-		if ( distance2 < target + tolerance )
-		{
-			if ( fraction == 0.0f )
-			{
-				if ( canEncroach )
-				{
-					if ( distance2 >= distance1 )
-					{
-						if ( distance2 > 2.0f * linearSlop )
-						{
-							// Encroach
-							target = distance2 - linearSlop;
-							waitingForInitialDistance = false;
-						}
-						else
-						{
-							// Initial overlap
-							return output;
-						}
-					}
-					else
-					{
-						// Still converging to get initial distance
-						waitingForInitialDistance = true;
-						distance1 = distance2;
-					}
-				}
-				else
-				{
-					// Initial overlap
-					return output;
-				}
-			}
-		}
-		else
-		{
-			// Converged
-			return output;
-		}
-
 		output.iterations += 1;
 
-		// Support in direction (B - A)
-		indexA = b2FindSupport( &proxyA, direction );
-		pointA = proxyA.points[indexA];
-		indexB = b2FindSupport( &proxyB, b2Neg( direction ) );
-		pointB = proxyB.points[indexB];
-		b2Vec2 p = b2Sub( pointA, b2MulAdd( pointB, fraction, translation ) );
+		// Support in direction -v (A - B)
+		indexA = b2FindSupport( &proxyA, b2Neg( v ) );
+		wA = proxyA.points[indexA];
+		indexB = b2FindSupport( &proxyB, v );
+		wB = proxyB.points[indexB];
+		b2Vec2 p = b2Sub( wA, wB );
 
-		// Normal vector at p
-		normal = b2Normalize( direction );
+		// -v is a normal at p, normalize to work with sigma
+		v = b2Normalize( v );
 
 		// Intersect ray with plane
-		float distance = -b2Dot( normal, p );
-		float nnt = -b2Dot( normal, translation );
-		if ( distance > target && waitingForInitialDistance == false )
+		float vp = b2Dot( v, p );
+		float vr = b2Dot( v, r );
+		if ( vp - sigma > lambda * vr )
 		{
-			if ( nnt <= FLT_EPSILON )
+			if ( vr <= 0.0f )
 			{
-				// Miss
+				// miss
 				return output;
 			}
 
-			fraction += ( distance - target ) / nnt;
-			if ( fraction > maxFraction )
+			lambda = ( vp - sigma ) / vr;
+			if ( lambda > maxFraction )
 			{
 				// too far
 				return output;
 			}
+
+			// reset the simplex
+			simplex.count = 0;
 		}
 
-		// Shift by fraction * translation because we want the closest point to the current clip point.
+		// Reverse simplex since it works with B - A.
+		// Shift by lambda * r because we want the closest point to the current clip point.
 		// Note that the support point p is not shifted because we want the plane equation
 		// to be formed in unshifted space.
-		bool duplicate = false;
-		b2Vec2 offset = b2MulSV( fraction, translation );
-		for ( int i = 0; i < simplex.count; ++i )
-		{
-			b2SimplexVertex* vertex = vertices + i;
-			vertex->wB = b2Add( proxyB.points[vertex->indexB], offset );
-			vertex->w = b2Sub( vertex->wB, vertex->wA );
-
-			if ( vertex->indexA == indexA && vertex->indexB == indexB )
-			{
-				duplicate = true;
-			}
-		}
-
-		if ( duplicate == false )
-		{
-			b2SimplexVertex* vertex = vertices + simplex.count;
-			vertex->indexA = indexA;
-			vertex->wA = pointA;
-			vertex->indexB = indexB;
-			vertex->wB = b2Add( pointB, offset );
-			vertex->w = b2Sub( vertex->wB, vertex->wA );
-			vertex->a = 1.0f;
-			simplex.count += 1;
-		}
+		b2SimplexVertex* vertex = vertices[simplex.count];
+		vertex->indexA = indexB;
+		vertex->wA = (b2Vec2){ wB.x + lambda * r.x, wB.y + lambda * r.y };
+		vertex->indexB = indexA;
+		vertex->wB = wA;
+		vertex->w = b2Sub( vertex->wB, vertex->wA );
+		vertex->a = 1.0f;
+		simplex.count += 1;
 
 		switch ( simplex.count )
 		{
@@ -782,11 +950,11 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 				break;
 
 			case 2:
-				direction = b2Neg( b2SolveSimplex2( &simplex ) );
+				b2SolveSimplex2( &simplex );
 				break;
 
 			case 3:
-				direction = b2Neg( b2SolveSimplex3( &simplex ) );
+				b2SolveSimplex3( &simplex );
 				break;
 
 			default:
@@ -800,26 +968,31 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 			return output;
 		}
 
-		d = b2ComputeSimplexClosestPoint( &simplex );
+		// Get search direction.
+		// todo use more accurate segment perpendicular
+		v = b2ComputeSimplexClosestPoint( &simplex );
 
 		// Iteration count is equated to the number of support point calls.
-		++iteration;
+		++iter;
 	}
 
-	if ( iteration == 0 || fraction == 0.0f )
+	if ( iter == 0 || lambda == 0.0f )
 	{
 		// Initial overlap
 		return output;
 	}
 
 	// Prepare output.
+	b2Vec2 pointA, pointB;
 	b2ComputeSimplexWitnessPoints( &pointB, &pointA, &simplex );
 
-	b2Vec2 point = b2MulAdd( pointA, proxyA.radius, normal );
+	b2Vec2 n = b2Normalize( b2Neg( v ) );
+	b2Vec2 point = { pointA.x + proxyA.radius * n.x, pointA.y + proxyA.radius * n.y };
+
 	output.point = b2TransformPoint( xfA, point );
-	output.normal = b2RotateVector( xfA.q, normal );
-	output.fraction = fraction;
-	output.iterations = iteration;
+	output.normal = b2RotateVector( xfA.q, n );
+	output.fraction = lambda;
+	output.iterations = iter;
 	output.hit = true;
 	return output;
 }

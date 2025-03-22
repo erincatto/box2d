@@ -423,8 +423,15 @@ typedef struct b2ShapeCastPairInput
 	bool canEncroach;		///< Allows shapes with a radius to move slightly closer if already touching
 } b2ShapeCastPairInput;
 
+typedef struct b2ShapeCastData
+{
+	b2Simplex simplex;
+	b2Vec2 origin;
+} b2ShapeCastData;
+
 /// Perform a linear shape cast of shape B moving and shape A fixed. Determines the hit point, normal, and translation fraction.
-B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input );
+/// You may optionally supply an array to hold debug data.
+B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input, b2ShapeCastData* debugData, int debugCapacity );
 
 /// Make a proxy for use in GJK and related functions.
 B2_API b2ShapeProxy b2MakeProxy( const b2Vec2* vertices, int count, float radius );

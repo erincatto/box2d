@@ -272,8 +272,7 @@ public:
 	{
 		if ( m_dragging )
 		{
-			m_transform.p.x = m_basePosition.x + 0.5f * ( p.x - m_startPoint.x );
-			m_transform.p.y = m_basePosition.y + 0.5f * ( p.y - m_startPoint.y );
+			m_transform.p = m_basePosition + 0.5f * ( p - m_startPoint );
 		}
 		else if ( m_rotating )
 		{
@@ -3185,9 +3184,13 @@ static int sampleSmoothManifoldIndex = RegisterSample( "Collision", "Smooth Mani
 class ShapeCast : public Sample
 {
 public:
-	enum
+
+	enum ShapeType
 	{
-		e_vertexCount = 8
+		e_point,
+		e_segment,
+		e_triangle,
+		e_box
 	};
 
 	explicit ShapeCast( Settings& settings )
@@ -3195,114 +3198,161 @@ public:
 	{
 		if ( settings.restart == false )
 		{
-			g_camera.m_center = { -1.5f, 1.0f };
-			g_camera.m_zoom = 25.0f * 0.2f;
+			g_camera.m_center = { 0.0f, 0.25f };
+			g_camera.m_zoom = 1.75f;
 		}
 
-#if 0
-		// box swept against a triangle
-		m_vAs[0] = {-0.5f, 1.0f};
-		m_vAs[1] = {0.5f, 1.0f};
-		m_vAs[2] = {0.0f, 0.0f};
-		m_countA = 3;
-		m_radiusA = 0.0f;
+		m_point = b2Vec2_zero;
+		m_segment = { { -0.5f, 0.0f }, { 0.5f, 0.0f } };
 
-		m_vBs[0] = {-0.5f, -0.5f};
-		m_vBs[1] = {0.5f, -0.5f};
-		m_vBs[2] = {0.5f, 0.5f};
-		m_vBs[3] = {-0.5f, 0.5f};
-		m_countB = 4;
+		{
+			b2Vec2 points[3] = { { -0.5f, 0.0f }, { 0.5f, 0.0f }, { 0.0f, 1.0f } };
+			b2Hull hull = b2ComputeHull( points, 3 );
+			m_triangle = b2MakePolygon( &hull, 0.0f );
+
+			m_triangle = b2MakeSquare( 0.4f );
+		}
+
+		m_box = b2MakeSquare( 0.5f );
+
+		m_transform = { { -1.0f, 0.0f }, b2Rot_identity };
+		m_translation = {2.0f, 0.0f};
+		m_angle = 0.0f;
+		m_startPoint = { 0.0f, 0.0f };
+		m_basePosition = { 0.0f, 0.0f };
+		m_baseAngle = 0.0f;
+
+		m_dragging = false;
+		m_sweeping = false;
+		m_rotating = false;
+		m_showIndices = false;
+		m_drawSimplex = false;
+
+		m_typeA = e_box;
+		m_typeB = e_point;
+		m_radiusA = 0.0f;
 		m_radiusB = 0.0f;
 
-		m_transformA.p = {0.0f, 0.25f};
-		m_transformA.q = b2Rot_identity;
-		m_transformB.p = {-4.0f, 0.0f};
-		m_transformB.q = b2Rot_identity;
-		m_translationB = {8.0f, 0.0f};
-#elif 0
-		// box swept against a segment
-		m_vAs[0] = { -2.0f, 0.0f };
-		m_vAs[1] = { 2.0f, 0.0f };
-		m_countA = 2;
-		m_radiusA = 0.0f;
-
-		m_vBs[0] = { -0.25f, -0.25f };
-		m_vBs[1] = { 0.25f, -0.25f };
-		m_vBs[2] = { 0.25f, 0.25f };
-		m_vBs[3] = { -0.25f, 0.25f };
-		m_countB = 4;
-		m_radiusB = 0.25f;
-
-		m_transformA.p = { 0.0f, 0.0 };
-		m_transformA.q = b2MakeRot( 0.25f * B2_PI );
-		m_transformB.p = { -8.0f, 0.0f };
-		m_transformB.q = b2Rot_identity;
-		m_translationB = { 8.0f, 0.0f };
-#elif 0
-		// A point swept against a box
-		m_vAs[0] = { -0.5f, -0.5f };
-		m_vAs[1] = { 0.5f, -0.5f };
-		m_vAs[2] = { 0.5f, 0.5f };
-		m_vAs[3] = { -0.5f, 0.5f };
-		m_countA = 4;
-		m_radiusA = 0.0f;
-
-		m_vBs[0] = { 0.0f, 0.0f };
-		m_countB = 1;
-		m_radiusB = 0.0f;
-
-		m_transformA.p = { 0.0f, 0.0f };
-		m_transformA.q = b2Rot_identity;
-		m_transformB.p = { -1.0f, 0.0f };
-		m_transformB.q = b2Rot_identity;
-		m_translationB = { 1.0f, 0.0f };
-#elif 1
-		m_vAs[0] = { -2.0f, 0.0f };
-		m_vAs[1] = { 2.0f, 0.0f };
-		m_countA = 2;
-		m_radiusA = 0.0f;
-
-		m_vBs[0] = { 0.0f, 0.0f };
-		m_countB = 1;
-		m_radiusB = 0.5f;
-
-		m_transformA.p = { 0.0f, 0.0f };
-		m_transformA.q = b2Rot_identity;
-		m_transformB.p = { 0.0f, 2.0f };
-		m_transformB.q = b2Rot_identity;
-		m_translationB = { 0.0f, -4.0f };
-#else
-		m_vAs[0] = { 0.0f, 0.0f };
-		m_vAs[1] = { 2.0f, 0.0f };
-		m_countA = 2;
-		m_radiusA = 0.0f;
-
-		m_vBs[0] = { 0.0f, 0.0f };
-		m_countB = 1;
-		m_radiusB = 0.25f;
-
-		// Initial overlap
-		m_transformA.p = b2Vec2_zero;
-		m_transformA.q = b2Rot_identity;
-		m_transformB.p = { -0.244360745f, 0.05999358f };
-		m_transformB.q = b2Rot_identity;
-		m_translationB = { 0.0f, 0.0399999991f };
-#endif
-
-		m_rayDrag = false;
+		m_proxyA = MakeProxy( m_typeA, m_radiusA );
+		m_proxyB = MakeProxy( m_typeB, m_radiusB );
 	}
 
-	static Sample* Create( Settings& settings )
+	b2ShapeProxy MakeProxy( ShapeType type, float radius ) const
 	{
-		return new ShapeCast( settings );
+		b2ShapeProxy proxy = {};
+		proxy.radius = radius;
+
+		switch ( type )
+		{
+			case e_point:
+				proxy.points[0] = b2Vec2_zero;
+				proxy.count = 1;
+				break;
+
+			case e_segment:
+				proxy.points[0] = m_segment.point1;
+				proxy.points[1] = m_segment.point2;
+				proxy.count = 2;
+				break;
+
+			case e_triangle:
+				for ( int i = 0; i < m_triangle.count; ++i )
+				{
+					proxy.points[i] = m_triangle.vertices[i];
+				}
+				proxy.count = m_triangle.count;
+				break;
+
+			case e_box:
+				proxy.points[0] = m_box.vertices[0];
+				proxy.points[1] = m_box.vertices[1];
+				proxy.points[2] = m_box.vertices[2];
+				proxy.points[3] = m_box.vertices[3];
+				proxy.count = 4;
+				break;
+
+			default:
+				assert( false );
+		}
+
+		return proxy;
+	}
+
+	void DrawShape( ShapeType type, b2Transform transform, float radius, b2HexColor color )
+	{
+		switch ( type )
+		{
+			case e_point:
+			{
+				b2Vec2 p = b2TransformPoint( transform, m_point );
+				if ( radius > 0.0f )
+				{
+					g_draw.DrawSolidCircle( transform, m_point, radius, color );
+				}
+				else
+				{
+					g_draw.DrawPoint( p, 5.0f, color );
+				}
+			}
+			break;
+
+			case e_segment:
+			{
+				b2Vec2 p1 = b2TransformPoint( transform, m_segment.point1 );
+				b2Vec2 p2 = b2TransformPoint( transform, m_segment.point2 );
+
+				if ( radius > 0.0f )
+				{
+					g_draw.DrawSolidCapsule( p1, p2, radius, color );
+				}
+				else
+				{
+					g_draw.DrawSegment( p1, p2, color );
+				}
+			}
+			break;
+
+			case e_triangle:
+				g_draw.DrawSolidPolygon( transform, m_triangle.vertices, m_triangle.count, radius, color );
+				break;
+
+			case e_box:
+				g_draw.DrawSolidPolygon( transform, m_box.vertices, m_box.count, radius, color );
+				break;
+
+			default:
+				assert( false );
+		}
 	}
 
 	void MouseDown( b2Vec2 p, int button, int mods ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
-			m_transformB.p = p;
-			m_rayDrag = true;
+			if ( mods == 0 )
+			{
+				m_dragging = true;
+				m_sweeping = false;
+				m_rotating = false;
+				m_startPoint = p;
+				m_basePosition = m_transform.p;
+			}
+			else if ( mods == GLFW_MOD_SHIFT )
+			{
+				m_dragging = true;
+				m_sweeping = false;
+				m_rotating = true;
+				m_startPoint = p;
+				m_baseAngle = m_angle;
+			}
+			else if (mods == GLFW_MOD_CONTROL)
+			{
+				m_dragging = false;
+				m_sweeping = true;
+				m_rotating = false;
+				m_startPoint = p;
+				m_basePosition = b2Vec2_zero;
+			}
 		}
 	}
 
@@ -3310,16 +3360,91 @@ public:
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
-			m_rayDrag = false;
+			m_dragging = false;
+			m_sweeping = false;
+			m_rotating = false;
 		}
 	}
 
 	void MouseMove( b2Vec2 p ) override
 	{
-		if ( m_rayDrag )
+		if ( m_dragging )
 		{
-			m_translationB = b2Sub( p, m_transformB.p );
+			m_transform.p = m_basePosition + 0.5f * ( p - m_startPoint );
 		}
+		else if ( m_rotating )
+		{
+			float dx = p.x - m_startPoint.x;
+			m_angle = b2ClampFloat( m_baseAngle + 1.0f * dx, -B2_PI, B2_PI );
+			m_transform.q = b2MakeRot( m_angle );
+		}
+		else if (m_sweeping)
+		{
+			m_translation = p - m_startPoint;
+		}
+	}
+
+	void UpdateGui() override
+	{
+		float height = 280.0f;
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
+
+		ImGui::Begin( "Shape Distance", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
+
+		const char* shapeTypes[] = { "point", "segment", "triangle", "box" };
+		int shapeType = int( m_typeA );
+		if ( ImGui::Combo( "shape A", &shapeType, shapeTypes, IM_ARRAYSIZE( shapeTypes ) ) )
+		{
+			m_typeA = ShapeType( shapeType );
+			m_proxyA = MakeProxy( m_typeA, m_radiusA );
+		}
+
+		if ( ImGui::SliderFloat( "radius A", &m_radiusA, 0.0f, 0.5f, "%.2f" ) )
+		{
+			m_proxyA.radius = m_radiusA;
+		}
+
+		shapeType = int( m_typeB );
+		if ( ImGui::Combo( "shape B", &shapeType, shapeTypes, IM_ARRAYSIZE( shapeTypes ) ) )
+		{
+			m_typeB = ShapeType( shapeType );
+			m_proxyB = MakeProxy( m_typeB, m_radiusB );
+		}
+
+		if ( ImGui::SliderFloat( "radius B", &m_radiusB, 0.0f, 0.5f, "%.2f" ) )
+		{
+			m_proxyB.radius = m_radiusB;
+		}
+
+		ImGui::Separator();
+
+		ImGui::SliderFloat( "x offset", &m_transform.p.x, -2.0f, 2.0f, "%.2f" );
+		ImGui::SliderFloat( "y offset", &m_transform.p.y, -2.0f, 2.0f, "%.2f" );
+
+		if ( ImGui::SliderFloat( "angle", &m_angle, -B2_PI, B2_PI, "%.2f" ) )
+		{
+			m_transform.q = b2MakeRot( m_angle );
+		}
+
+		ImGui::Separator();
+
+		ImGui::Checkbox( "show indices", &m_showIndices );
+
+		ImGui::Separator();
+
+		if ( ImGui::Checkbox( "draw simplex", &m_drawSimplex ) )
+		{
+			m_debugIndex = 0;
+		}
+
+		if ( m_drawSimplex )
+		{
+			ImGui::SliderInt( "index", &m_debugIndex, 0, m_debugCount - 1 );
+			m_debugIndex = b2ClampInt( m_debugIndex, 0, m_debugCount - 1 );
+		}
+
+		ImGui::End();
 	}
 
 	void Step( Settings& settings ) override
@@ -3327,25 +3452,28 @@ public:
 		Sample::Step( settings );
 
 		b2ShapeCastPairInput input = {};
-		input.proxyA = b2MakeProxy( m_vAs, m_countA, m_radiusA );
-		input.proxyB = b2MakeProxy( m_vBs, m_countB, m_radiusB );
-		input.transformA = m_transformA;
-		input.transformB = m_transformB;
-		input.translationB = m_translationB;
+		input.proxyA = m_proxyA;
+		input.proxyB = m_proxyB;
+		input.transformA = b2Transform_identity;
+		input.transformB = m_transform;
+		input.translationB = m_translation;
 		input.maxFraction = 1.0f;
 		//input.canEncroach = true;
 
-		b2CastOutput output = b2ShapeCast( &input );
+		b2ShapeCastData debugData[20] = {};
 
-		b2Transform transformB2;
-		transformB2.q = m_transformB.q;
-		transformB2.p = b2MulAdd( m_transformB.p, output.fraction, input.translationB );
+		b2CastOutput output = b2ShapeCast( &input, debugData, 20 );
+		m_debugCount = output.iterations;
+
+		b2Transform transform;
+		transform.q = m_transform.q;
+		transform.p = b2MulAdd( m_transform.p, output.fraction, input.translationB );
 
 		b2DistanceInput distanceInput;
-		distanceInput.proxyA = b2MakeProxy( m_vAs, m_countA, m_radiusA );
-		distanceInput.proxyB = b2MakeProxy( m_vBs, m_countB, m_radiusB );
-		distanceInput.transformA = m_transformA;
-		distanceInput.transformB = transformB2;
+		distanceInput.proxyA = m_proxyA;
+		distanceInput.proxyB = m_proxyB;
+		distanceInput.transformA = b2Transform_identity;
+		distanceInput.transformB = transform;
 		distanceInput.useRadii = false;
 		b2SimplexCache distanceCache;
 		distanceCache.count = 0;
@@ -3354,6 +3482,7 @@ public:
 		DrawTextLine( "hit = %s, iterations = %d, lambda = %g, distance = %g", output.hit ? "true" : "false", output.iterations,
 					  output.fraction, distanceOutput.distance );
 
+		#if 0
 		b2Vec2 vertices[B2_MAX_POLYGON_VERTICES];
 
 		for ( int i = 0; i < m_countA; ++i )
@@ -3428,20 +3557,100 @@ public:
 		}
 
 		g_draw.DrawSegment( m_transformB.p, b2Add( m_transformB.p, m_translationB ), b2_colorGray );
+	#endif
+
+		DrawShape( m_typeA, b2Transform_identity, m_radiusA, b2_colorCyan );
+		DrawShape( m_typeB, m_transform, m_radiusB, b2_colorLightGreen );
+
+		b2Transform transform2 = { m_transform.p + m_translation, m_transform.q };
+		DrawShape( m_typeB, transform2, m_radiusB, b2_colorIndianRed );
+
+		if ( m_drawSimplex && m_debugCount > 0 )
+		{
+			b2Simplex* simplex = &m_debugData[m_debugIndex].simplex;
+			b2SimplexVertex* vertices[3] = { &simplex->v1, &simplex->v2, &simplex->v3 };
+
+			if ( m_debugIndex > 0 )
+			{
+				// The first recorded simplex does not have valid barycentric coordinates
+				//b2Vec2 pointA, pointB;
+				//ComputeSimplexWitnessPoints( &pointA, &pointB, simplex );
+
+				//g_draw.DrawSegment( pointA, pointB, b2_colorWhite );
+				//g_draw.DrawPoint( pointA, 5.0f, b2_colorWhite );
+				//g_draw.DrawPoint( pointB, 5.0f, b2_colorWhite );
+			}
+
+			b2HexColor colors[3] = { b2_colorRed, b2_colorGreen, b2_colorBlue };
+
+			for ( int i = 0; i < simplex->count; ++i )
+			{
+				b2SimplexVertex* vertex = vertices[i];
+				g_draw.DrawPoint( vertex->wA, 5.0f, colors[i] );
+				g_draw.DrawPoint( vertex->wB, 5.0f, colors[i] );
+			}
+		}
+		else
+		{
+			g_draw.DrawPoint( output.point, 5.0f, b2_colorWhite );
+			g_draw.DrawSegment( output.point, output.point + 0.5f * output.normal, b2_colorYellow );
+		}
+
+		if ( m_showIndices )
+		{
+			for ( int i = 0; i < m_proxyA.count; ++i )
+			{
+				b2Vec2 p = m_proxyA.points[i];
+				g_draw.DrawString( p, " %d", i );
+			}
+
+			for ( int i = 0; i < m_proxyB.count; ++i )
+			{
+				b2Vec2 p = b2TransformPoint( m_transform, m_proxyB.points[i] );
+				g_draw.DrawString( p, " %d", i );
+			}
+		}
+
+		DrawTextLine( "mouse button 1: drag" );
+		DrawTextLine( "mouse button 1 + shift: rotate" );
+		DrawTextLine( "mouse button 1 + control: sweep" );
+		DrawTextLine("distance = %.2f, iterations = %d", distanceOutput.distance, output.iterations );
 	}
 
-	b2Vec2 m_vAs[B2_MAX_POLYGON_VERTICES];
-	int m_countA;
+	static Sample* Create( Settings& settings )
+	{
+		return new ShapeCast( settings );
+	}
+
+	b2Polygon m_box;
+	b2Polygon m_triangle;
+	b2Vec2 m_point;
+	b2Segment m_segment;
+
+	ShapeType m_typeA;
+	ShapeType m_typeB;
 	float m_radiusA;
-
-	b2Vec2 m_vBs[B2_MAX_POLYGON_VERTICES];
-	int m_countB;
 	float m_radiusB;
+	b2ShapeProxy m_proxyA;
+	b2ShapeProxy m_proxyB;
 
-	b2Transform m_transformA;
-	b2Transform m_transformB;
-	b2Vec2 m_translationB;
-	bool m_rayDrag;
+	b2ShapeCastData m_debugData[20] = {};
+	int m_debugCount;
+	int m_debugIndex;
+
+	b2Transform m_transform;
+	float m_angle;
+	b2Vec2 m_translation;
+
+	b2Vec2 m_basePosition;
+	b2Vec2 m_startPoint;
+	float m_baseAngle;
+
+	bool m_dragging;
+	bool m_sweeping;
+	bool m_rotating;
+	bool m_showIndices;
+	bool m_drawSimplex;
 };
 
 static int sampleShapeCast = RegisterSample( "Collision", "Shape Cast", ShapeCast::Create );

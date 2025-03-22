@@ -860,7 +860,7 @@ b2CastOutput b2RayCastPolygon( const b2RayCastInput* input, const b2Polygon* sha
 	castInput.translationB = input->translation;
 	castInput.maxFraction = input->maxFraction;
 	castInput.canEncroach = false;
-	return b2ShapeCast( &castInput );
+	return b2ShapeCast( &castInput, NULL, 0);
 }
 
 b2CastOutput b2ShapeCastCircle( const b2ShapeCastInput* input, const b2Circle* shape )
@@ -874,7 +874,7 @@ b2CastOutput b2ShapeCastCircle( const b2ShapeCastInput* input, const b2Circle* s
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	b2CastOutput output = b2ShapeCast( &pairInput );
+	b2CastOutput output = b2ShapeCast( &pairInput, NULL, 0 );
 	return output;
 }
 
@@ -889,7 +889,7 @@ b2CastOutput b2ShapeCastCapsule( const b2ShapeCastInput* input, const b2Capsule*
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	b2CastOutput output = b2ShapeCast( &pairInput );
+	b2CastOutput output = b2ShapeCast( &pairInput, NULL, 0 );
 	return output;
 }
 
@@ -904,7 +904,7 @@ b2CastOutput b2ShapeCastSegment( const b2ShapeCastInput* input, const b2Segment*
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	b2CastOutput output = b2ShapeCast( &pairInput );
+	b2CastOutput output = b2ShapeCast( &pairInput, NULL, 0 );
 	return output;
 }
 
@@ -919,6 +919,6 @@ b2CastOutput b2ShapeCastPolygon( const b2ShapeCastInput* input, const b2Polygon*
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	b2CastOutput output = b2ShapeCast( &pairInput );
+	b2CastOutput output = b2ShapeCast( &pairInput, NULL, 0 );
 	return output;
 }
