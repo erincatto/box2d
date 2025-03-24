@@ -880,9 +880,10 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input, b2ShapeCastData* de
 	b2SimplexVertex* vertices[] = { &simplex.v1, &simplex.v2, &simplex.v3 };
 
 	// Get an initial point in A - B
-	int indexA = b2FindSupport( &proxyA, b2Neg( r ) );
+	// todo temp index for debugging
+	int indexA = 0;
 	b2Vec2 wA = proxyA.points[indexA];
-	int indexB = b2FindSupport( &proxyB, r );
+	int indexB = 0;
 	b2Vec2 wB = proxyB.points[indexB];
 	b2Vec2 v = b2Sub( wA, wB );
 

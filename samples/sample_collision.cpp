@@ -3213,10 +3213,10 @@ public:
 			m_triangle = b2MakeSquare( 0.4f );
 		}
 
-		m_box = b2MakeSquare( 0.5f );
+		m_box = b2MakeOffsetBox( 0.5f, 0.5f, {1.0f, 0.5f}, b2Rot_identity );
 
-		m_transform = { { -1.0f, 0.0f }, b2Rot_identity };
-		m_translation = {2.0f, 0.0f};
+		m_transform = { { 0.0f, 0.0f }, b2Rot_identity };
+		m_translation = {1.0f, 1.5f};
 		m_angle = 0.0f;
 		m_startPoint = { 0.0f, 0.0f };
 		m_basePosition = { 0.0f, 0.0f };
