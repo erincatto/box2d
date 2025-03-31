@@ -334,7 +334,6 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 // - a body changes type from dynamic to kinematic or static
 // - a shape is destroyed
 // - contact filtering is modified
-// - a shape becomes a sensor (check this!!!)
 void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 {
 	// Remove pair from set

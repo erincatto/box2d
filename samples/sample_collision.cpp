@@ -14,22 +14,6 @@
 #include <imgui.h>
 #include <stdlib.h>
 
-constexpr int SIMPLEX_CAPACITY = 20;
-
-/*
--		input	0x0000008f63efcee0 {proxyA={points=0x0000008f63efcee0 {{...}, {...}, {...}, {...}, {...}, {...}, {...}, ...} ...}
-...}	const b2DistanceInput * +		[0]	{x=-0.400000006 y=-0.400000006 }	b2Vec2 +		[1]	{x=0.400000006 y=-0.400000006
-}	b2Vec2 +		[2]	{x=0.400000006 y=0.400000006 }	b2Vec2 +		[3]	{x=-0.400000006 y=0.400000006 }	b2Vec2
-
-+		[0]	{x=-0.500000000 y=-0.500000000 }	b2Vec2
-+		[1]	{x=0.500000000 y=-0.500000000 }	b2Vec2
-+		[2]	{x=0.500000000 y=0.500000000 }	b2Vec2
-+		[3]	{x=-0.500000000 y=0.500000000 }	b2Vec2
-
-+		transformA	{p={x=3.00000000 y=5.00000000 } q={c=1.00000000 s=0.00000000 } }	b2Transform
-+		transformB	{p={x=3.00000000 y=5.00000000 } q={c=1.00000000 s=0.00000000 } }	b2Transform
-		useRadii	true	bool
- */
 class ShapeDistance : public Sample
 {
 public:
@@ -335,7 +319,7 @@ public:
 			m_cache.count = 0;
 		}
 
-		b2DistanceOutput output = b2ShapeDistance( &m_cache, &input, m_simplexes, SIMPLEX_CAPACITY );
+		b2DistanceOutput output = b2ShapeDistance( &m_cache, &input, m_simplexes, m_simplexCapacity );
 
 		m_simplexCount = output.simplexCount;
 
@@ -354,8 +338,8 @@ public:
 				ComputeSimplexWitnessPoints( &pointA, &pointB, simplex );
 
 				g_draw.DrawSegment( pointA, pointB, b2_colorWhite );
-				g_draw.DrawPoint( pointA, 5.0f, b2_colorWhite );
-				g_draw.DrawPoint( pointB, 5.0f, b2_colorWhite );
+				g_draw.DrawPoint( pointA, 10.0f, b2_colorWhite );
+				g_draw.DrawPoint( pointB, 10.0f, b2_colorWhite );
 			}
 
 			b2HexColor colors[3] = { b2_colorRed, b2_colorGreen, b2_colorBlue };
@@ -363,15 +347,15 @@ public:
 			for ( int i = 0; i < simplex->count; ++i )
 			{
 				b2SimplexVertex* vertex = vertices[i];
-				g_draw.DrawPoint( vertex->wA, 5.0f, colors[i] );
-				g_draw.DrawPoint( vertex->wB, 5.0f, colors[i] );
+				g_draw.DrawPoint( vertex->wA, 10.0f, colors[i] );
+				g_draw.DrawPoint( vertex->wB, 10.0f, colors[i] );
 			}
 		}
 		else
 		{
 			g_draw.DrawSegment( output.pointA, output.pointB, b2_colorDimGray );
-			g_draw.DrawPoint( output.pointA, 5.0f, b2_colorWhite );
-			g_draw.DrawPoint( output.pointB, 5.0f, b2_colorWhite );
+			g_draw.DrawPoint( output.pointA, 10.0f, b2_colorWhite );
+			g_draw.DrawPoint( output.pointB, 10.0f, b2_colorWhite );
 
 			g_draw.DrawSegment( output.pointA, output.pointA + 0.5f * output.normal, b2_colorYellow );
 		}
@@ -420,6 +404,8 @@ public:
 		return new ShapeDistance( settings );
 	}
 
+	static constexpr int m_simplexCapacity = 20;
+
 	b2Polygon m_box;
 	b2Polygon m_triangle;
 	b2Vec2 m_point;
@@ -433,7 +419,7 @@ public:
 	b2ShapeProxy m_proxyB;
 
 	b2SimplexCache m_cache;
-	b2Simplex m_simplexes[SIMPLEX_CAPACITY];
+	b2Simplex m_simplexes[m_simplexCapacity];
 	int m_simplexCount;
 	int m_simplexIndex;
 

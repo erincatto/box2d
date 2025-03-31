@@ -455,6 +455,11 @@ struct GLLines
 
 		assert( count % 2 == 0 );
 
+		glEnable( GL_LINE_SMOOTH );
+		glEnable( GL_BLEND );
+		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+		glLineWidth( 1.0f );
+
 		glUseProgram( m_programId );
 
 		float proj[16] = { 0.0f };
@@ -483,6 +488,8 @@ struct GLLines
 		glBindBuffer( GL_ARRAY_BUFFER, 0 );
 		glBindVertexArray( 0 );
 		glUseProgram( 0 );
+
+		glDisable( GL_BLEND );
 
 		m_points.clear();
 	}
