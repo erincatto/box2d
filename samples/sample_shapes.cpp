@@ -1183,7 +1183,7 @@ public:
 
 	void Reset()
 	{
-		int count = m_bodyIds.size();
+		int count = int(m_bodyIds.size());
 		for ( int i = 0; i < count; ++i )
 		{
 			b2DestroyBody( m_bodyIds[i] );

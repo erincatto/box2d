@@ -132,11 +132,14 @@ static inline b2Vec2 b2Weight3( float a1, b2Vec2 w1, float a2, b2Vec2 w2, float 
 
 static inline int b2FindSupport( const b2ShapeProxy* proxy, b2Vec2 direction )
 {
+	const b2Vec2* points = proxy->points;
+	int count = proxy->count;
+
 	int bestIndex = 0;
-	float bestValue = b2Dot( proxy->points[0], direction );
-	for ( int i = 1; i < proxy->count; ++i )
+	float bestValue = b2Dot( points[0], direction );
+	for ( int i = 1; i < count; ++i )
 	{
-		float value = b2Dot( proxy->points[i], direction );
+		float value = b2Dot( points[i], direction );
 		if ( value > bestValue )
 		{
 			bestIndex = i;
@@ -163,7 +166,7 @@ static b2Simplex b2MakeSimplexFromCache( const b2SimplexCache* cache, const b2Sh
 		v->indexB = cache->indexB[i];
 		v->wA = proxyA->points[v->indexA];
 		v->wB = proxyB->points[v->indexB];
-		v->w = b2Sub( v->wB, v->wA );
+		v->w = b2Sub( v->wA, v->wB );
 
 		// invalid
 		v->a = -1.0f;
@@ -177,7 +180,7 @@ static b2Simplex b2MakeSimplexFromCache( const b2SimplexCache* cache, const b2Sh
 		v->indexB = 0;
 		v->wA = proxyA->points[0];
 		v->wB = proxyB->points[0];
-		v->w = b2Sub( v->wB, v->wA );
+		v->w = b2Sub( v->wA, v->wB );
 		v->a = 1.0f;
 		s.count = 1;
 	}
@@ -196,27 +199,19 @@ static void b2MakeSimplexCache( b2SimplexCache* cache, const b2Simplex* simplex 
 	}
 }
 
-static b2Vec2 b2ComputeSimplexClosestPoint( const b2Simplex* s )
+static inline b2Vec2 b2ComputeSimplexClosestPoint( const b2Simplex* s )
 {
-	switch ( s->count )
+	if ( s->count == 1 )
 	{
-		case 0:
-			B2_ASSERT( false );
-			return b2Vec2_zero;
-
-		case 1:
-			return s->v1.w;
-
-		case 2:
-			return b2Weight2( s->v1.a, s->v1.w, s->v2.a, s->v2.w );
-
-		case 3:
-			return b2Vec2_zero;
-
-		default:
-			B2_ASSERT( false );
-			return b2Vec2_zero;
+		return s->v1.w;
 	}
+
+	if ( s->count == 2 )
+	{
+		return b2Weight2( s->v1.a, s->v1.w, s->v2.a, s->v2.w );
+	}
+
+	return b2Vec2_zero;
 }
 
 static void b2ComputeSimplexWitnessPoints( b2Vec2* a, b2Vec2* b, const b2Simplex* s )
@@ -422,8 +417,10 @@ static b2Vec2 b2SolveSimplex3( b2Simplex* s )
 	return b2Vec2_zero;
 }
 
-b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* input, b2Simplex* simplexes,
-								   int simplexCapacity )
+// Uses GJK for computing the distance between convex shapes.
+// https://box2d.org/files/ErinCatto_GJK_GDC2010.pdf
+// I spent time optimizing this and could find no further significant gains 3/30/2025
+b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* cache, b2Simplex* simplexes, int simplexCapacity )
 {
 	B2_UNUSED( simplexes, simplexCapacity );
 
@@ -456,7 +453,6 @@ b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* 
 
 	// Get simplex vertices as an array.
 	b2SimplexVertex* vertices[] = { &simplex.v1, &simplex.v2, &simplex.v3 };
-	const int maxIterations = 20;
 
 	b2Vec2 nonUnitNormal = b2Vec2_zero;
 
@@ -464,6 +460,7 @@ b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* 
 	int saveA[3], saveB[3];
 
 	// Main iteration loop. All computations are done in frame A.
+	const int maxIterations = 20;
 	int iteration = 0;
 	while ( iteration < maxIterations )
 	{
@@ -508,12 +505,15 @@ b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* 
 		}
 #endif
 
-		// Get search direction.
-		nonUnitNormal = b2Neg( d );
+		// Save the normal
+		nonUnitNormal = d;
 
 		// Ensure the search direction is numerically fit.
 		if ( b2Dot( d, d ) < FLT_EPSILON * FLT_EPSILON )
 		{
+			// This is unlikely but could lead to bad cycling.
+			// The branch predictor seems to make this check have low cost.
+
 			// The origin is probably contained by a line segment
 			// or triangle. Thus the shapes are overlapped.
 
@@ -524,13 +524,13 @@ b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* 
 		}
 
 		// Compute a tentative new simplex vertex using support points.
-		// support = support(b, d) - support(a, -d)
+		// support = support(a, d) - support(b, -d)
 		b2SimplexVertex* vertex = vertices[simplex.count];
-		vertex->indexA = b2FindSupport( proxyA, b2Neg( d ) );
+		vertex->indexA = b2FindSupport( proxyA, d );
 		vertex->wA = proxyA->points[vertex->indexA];
-		vertex->indexB = b2FindSupport( &localProxyB, d );
+		vertex->indexB = b2FindSupport( &localProxyB, b2Neg( d ) );
 		vertex->wB = localProxyB.points[vertex->indexB];
-		vertex->w = b2Sub( vertex->wB, vertex->wA );
+		vertex->w = b2Sub( vertex->wA, vertex->wB );
 
 		// Iteration count is equated to the number of support point calls.
 		++iteration;
@@ -552,8 +552,8 @@ b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* 
 			break;
 		}
 
-		// New vertex is ok and needed.
-		++simplex.count;
+		// New vertex is valid and needed.
+		simplex.count += 1;
 	}
 
 #ifndef NDEBUG
@@ -595,240 +595,126 @@ b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* 
 	return output;
 }
 
-// GJK-raycast
-// Algorithm by Gino van den Bergen.
-// "Smooth Mesh Contacts with GJK" in Game Physics Pearls. 2010
-// This needs the simplex of A - B because the translation is for B and this
-// is how the relative motion works out when both shapes are translating.
-b2CastOutput b2ShapeCast2( const b2ShapeCastPairInput* input, b2ShapeCastData* debugData, int debugCapacity )
+// Shape cast using conservative advancement
+b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 {
-	B2_UNUSED( debugData, debugCapacity );
-
-	b2CastOutput output = { 0 };
-	output.fraction = input->maxFraction;
-
-	b2ShapeProxy proxyA = input->proxyA;
-	b2Transform xfA = input->transformA;
-	b2Transform xfB = input->transformB;
-	b2Transform xf = b2InvMulTransforms( xfA, xfB );
-
-	// Put proxyB in proxyA's frame to reduce round-off error
-	b2ShapeProxy proxyB;
-	proxyB.count = input->proxyB.count;
-	proxyB.radius = input->proxyB.radius;
-	B2_ASSERT( proxyB.count <= B2_MAX_POLYGON_VERTICES );
-
-	for ( int i = 0; i < proxyB.count; ++i )
-	{
-		proxyB.points[i] = b2TransformPoint( xf, input->proxyB.points[i] );
-	}
-
-	float radius = proxyA.radius + proxyB.radius;
-
-	float fraction = 0.0f;
-	float maxFraction = input->maxFraction;
-
-	// Local translation vector
-	b2Vec2 r = b2RotateVector( xf.q, input->translationB );
-
-	// Initial simplex
-	b2Simplex simplex = { 0 };
-
-	// Get simplex vertices as an array.
-	b2SimplexVertex* vertices = &simplex.v1;
-
-	// Get an initial point in A - B using translation vector
-	int indexA = b2FindSupport( &proxyA, b2Neg( r ) );
-	b2Vec2 pointA = proxyA.points[indexA];
-	int indexB = b2FindSupport( &proxyB, r );
-	b2Vec2 pointB = proxyB.points[indexB];
-	b2Vec2 v = b2Sub( pointA, pointB );
-
-	// Direction for support points (scaled normal vector)
-	b2Vec2 direction = b2Neg( v );
-
-	// Start with no normal
-	b2Vec2 normal = { 0 };
-
-	// Set the target distance between proxies
+	// Compute tolerance
 	float linearSlop = B2_LINEAR_SLOP;
-	float target = b2MaxFloat( linearSlop, radius - linearSlop );
+	float totalRadius = input->proxyA.radius + input->proxyB.radius;
+	float target = b2MaxFloat( linearSlop, totalRadius - linearSlop );
 	float tolerance = 0.25f * linearSlop;
-	bool canEncroach = input->canEncroach && radius > 4.0f * linearSlop;
 
-	// Main iteration loop.
-	const int maxIterations = 20;
+	B2_ASSERT( target > tolerance );
+
+	// Prepare input for distance query
+	b2SimplexCache cache = {};
+
+	float alpha = 0.0f;
+
+	b2DistanceInput distanceInput = {};
+	distanceInput.proxyA = input->proxyA;
+	distanceInput.proxyB = input->proxyB;
+	distanceInput.transformA = input->transformA;
+	distanceInput.transformB = input->transformB;
+	distanceInput.useRadii = false;
+
+	b2Vec2 delta2 = input->translationB;
+	b2DistanceOutput distanceOutput = {};
+	b2CastOutput output = {};
+
 	int iteration = 0;
-	bool needInitialDistance = false;
-	float distance1 = FLT_MAX;
-
-	while ( iteration < maxIterations )
+	int maxIterations = 20;
+	for ( ; iteration < maxIterations; ++iteration )
 	{
-		B2_ASSERT( simplex.count < 3 );
+		output.iterations += 1;
 
-		// Check for convergence
-		float distance2 = b2Length( v );
-		if ( distance2 < target + tolerance )
+		distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
+
+		if ( distanceOutput.distance < target + tolerance )
 		{
-			if ( fraction == 0.0f )
+			if ( iteration == 0 )
 			{
-				if ( canEncroach )
+				if ( input->canEncroach && distanceOutput.distance > 2.0f * linearSlop )
 				{
-					// This indicates that I have the initial distance for encroachment.
-					if ( distance2 >= distance1 )
-					{
-						if ( distance2 > 2.0f * linearSlop )
-						{
-							// Encroach
-							target = distance2 - linearSlop;
-							needInitialDistance = false;
-						}
-						else
-						{
-							// Too close, cannot encroach
-							// Initial overlap
-							return output;
-						}
-					}
-					else
-					{
-						// Still converging to get initial distance. This forces the algorithm into GJK
-						// mode to get the initial shape distance.
-						distance1 = distance2;
-						needInitialDistance = true;
-					}
+					target = distanceOutput.distance - linearSlop;
 				}
 				else
 				{
-					// Initial overlap
+					if ( distanceOutput.distance == 0.0f )
+					{
+						// Normal may be invalid
+						return output;
+					}
+
+					// Initial overlap but distance is non-zero due to radius
+					B2_ASSERT( b2IsNormalized( distanceOutput.normal ) );
+					output.fraction = alpha;
+					output.point = b2MulAdd( distanceOutput.pointA, input->proxyA.radius, distanceOutput.normal );
+					output.normal = distanceOutput.normal;
+					output.hit = true;
 					return output;
 				}
 			}
 			else
 			{
-				// Converged
+				// Regular hit
+				B2_ASSERT( distanceOutput.distance > 0.0f && b2IsNormalized( distanceOutput.normal ) );
+				output.fraction = alpha;
+				output.point = b2MulAdd( distanceOutput.pointA, input->proxyA.radius, distanceOutput.normal );
+				output.normal = distanceOutput.normal;
+				output.hit = true;
 				return output;
 			}
 		}
 
-		output.iterations += 1;
+		B2_ASSERT( distanceOutput.distance > 0.0f );
+		B2_ASSERT( b2IsNormalized( distanceOutput.normal ) );
 
-		// Support point in (A - B)
-		indexA = b2FindSupport( &proxyA, direction );
-		pointA = proxyA.points[indexA];
-		indexB = b2FindSupport( &proxyB, b2Neg( direction ) );
-		pointB = proxyB.points[indexB];
-		b2Vec2 p = b2Sub( pointB, pointA );
-
-		// Normal vector at p
-		normal = b2Normalize( direction );
-
-		// Distance to plane
-		float d = b2Dot( normal, p );
-		if ( d > target && needInitialDistance == false )
+		// Check if shapes are approaching each other
+		float denominator = b2Dot( delta2, distanceOutput.normal );
+		if ( denominator >= 0.0f )
 		{
-			// Travel distance
-			float h = -b2Dot( normal, r );
-			if ( h <= FLT_EPSILON )
-			{
-				// Miss due to parallel translation above plane
-				return output;
-			}
-
-			// Intersect with plane offset by target
-			fraction = ( d - target ) / h;
-
-			if ( fraction > maxFraction )
-			{
-				// Passed end of translation
-				return output;
-			}
-
-			// Otherwise the ray is progressing
-		}
-
-		// Shift the current simplex to the new origin
-		// origin = fraction * translation
-		bool duplicate = false;
-		b2Vec2 origin = b2MulSV( fraction, r );
-		for ( int i = 0; i < simplex.count; ++i )
-		{
-			b2SimplexVertex* vertex = vertices + i;
-			vertex->wA = b2Add( proxyB.points[vertex->indexB], origin );
-			vertex->w = b2Sub( vertex->wB, vertex->wA );
-
-			if ( vertex->indexA == indexA && vertex->indexB == indexB )
-			{
-				duplicate = true;
-			}
-		}
-
-		if ( duplicate == false )
-		{
-			// Reverse simplex since the simplex solver works with B - A
-			// but this algorithm works with A - B.
-			// Shift the origin to the current ray point so that the distance and search direction
-			// are computed relative to the ray point.
-			b2SimplexVertex* vertex = vertices + simplex.count;
-			vertex->indexA = indexB;
-			vertex->wA = b2Add( pointB, origin );
-			vertex->indexB = indexA;
-			vertex->wB = pointA;
-			vertex->w = b2Sub( vertex->wB, vertex->wA );
-			vertex->a = 1.0f;
-			simplex.count += 1;
-		}
-
-		switch ( simplex.count )
-		{
-			case 1:
-				direction = b2Neg( vertices[0].w );
-				break;
-
-			case 2:
-				direction = b2SolveSimplex2( &simplex );
-				break;
-
-			case 3:
-				direction = b2SolveSimplex3( &simplex );
-				break;
-
-			default:
-				B2_ASSERT( false );
-		}
-
-		// If we have 3 points, then the origin is in the corresponding triangle.
-		if ( simplex.count == 3 )
-		{
-			// Overlap
+			// Miss
+			output.fraction = 1.0f;
 			return output;
 		}
 
-		v = b2ComputeSimplexClosestPoint( &simplex );
+		// Advance sweep
+		alpha += ( target - distanceOutput.distance ) / denominator;
+		if ( alpha >= input->maxFraction )
+		{
+			// Miss
+			output.fraction = 1.0f;
+			return output;
+		}
 
-		// Iteration count is equated to the number of support point calls.
-		++iteration;
+		distanceInput.transformB.p = b2MulAdd( input->transformB.p, alpha, delta2 );
 	}
 
-	if ( iteration == 0 || fraction == 0.0f )
-	{
-		// Initial overlap
-		return output;
-	}
-
-	// Prepare output.
-	b2ComputeSimplexWitnessPoints( &pointB, &pointA, &simplex );
-
-	b2Vec2 point = b2MulAdd( pointA, proxyA.radius, normal );
-	output.point = b2TransformPoint( xfA, point );
-	output.normal = b2RotateVector( xfA.q, normal );
-	output.fraction = fraction;
-	output.iterations = iteration;
-	output.hit = true;
+	// Failure!
 	return output;
 }
 
-b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input, b2ShapeCastData* debugData, int debugCapacity )
+#if 0
+typedef struct b2ShapeCastData
+{
+	b2Simplex simplex;
+	b2Vec2 closestA, closestB;
+	b2Vec2 normal;
+	b2Vec2 p0;
+	float fraction;
+} b2ShapeCastData;
+
+// GJK-raycast
+// Algorithm by Gino van den Bergen.
+// "Smooth Mesh Contacts with GJK" in Game Physics Pearls. 2010
+// This needs the simplex of A - B because the translation is for B and this
+// is how the relative motion works out when both shapes are translating.
+// This is similar to ray vs polygon and involves plane clipping. See b2RayCastPolygon.
+// In this case the polygon is just points and there are no planes. This uses a modified
+// version of GJK to generate planes for clipping.
+// Note: this algorithm is difficult to debug and not worth the effort in my opinion 4/1/2025
+b2CastOutput b2ShapeCastMerged( const b2ShapeCastPairInput* input, b2ShapeCastData* debugData, int debugCapacity )
 {
 	B2_UNUSED( debugData, debugCapacity );
 
@@ -837,9 +723,7 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input, b2ShapeCastData* de
 
 	b2ShapeProxy proxyA = input->proxyA;
 
-	b2Transform xfA = input->transformA;
-	b2Transform xfB = input->transformB;
-	b2Transform xf = b2InvMulTransforms( xfA, xfB );
+	b2Transform xf = b2InvMulTransforms( input->transformA, input->transformB );
 
 	// Put proxyB in proxyA's frame to reduce round-off error
 	b2ShapeProxy proxyB;
@@ -866,48 +750,53 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input, b2ShapeCastData* de
 	b2SimplexVertex* vertices[] = { &simplex.v1, &simplex.v2, &simplex.v3 };
 
 	// Get an initial point in A - B
-	// todo temp index for debugging
-	int indexA = 0;
-	b2Vec2 wA = proxyA.points[indexA];
-	int indexB = 0;
-	b2Vec2 wB = proxyB.points[indexB];
+	b2Vec2 wA = proxyA.points[0];
+	b2Vec2 wB = proxyB.points[0];
 	b2Vec2 v = b2Sub( wA, wB );
+	b2Vec2 d = b2Neg( v );
 
 	// Sigma is the target distance between proxies
 	const float linearSlop = B2_LINEAR_SLOP;
 	const float sigma = b2MaxFloat( linearSlop, radius - linearSlop );
+	float tolerance = 0.5f * linearSlop;
+	float stolSquared = ( sigma + tolerance ) * ( sigma + tolerance );
 
 	// Main iteration loop.
-	const int k_maxIters = 20;
-	int iter = 0;
-	while ( iter < k_maxIters && b2Length( v ) > sigma + 0.5f * linearSlop )
+	const int maxIterations = 20;
+	int iteration = 0;
+	while ( iteration < maxIterations && b2LengthSquared( v ) > stolSquared )
 	{
 		B2_ASSERT( simplex.count < 3 );
 
-		output.iterations += 1;
-
-		// Support in direction -v (A - B)
-		indexA = b2FindSupport( &proxyA, b2Neg( v ) );
+		// Support in direction d (A - B)
+		int indexA = b2FindSupport( &proxyA, d );
 		wA = proxyA.points[indexA];
-		indexB = b2FindSupport( &proxyB, v );
+		int indexB = b2FindSupport( &proxyB, b2Neg( d ) );
 		wB = proxyB.points[indexB];
-		b2Vec2 p = b2Sub( wA, wB );
+		b2Vec2 p0 = b2Sub( wA, wB );
 
-		// -v is a normal at p, normalize to work with sigma
-		v = b2Normalize( v );
+		// d is a normal at p, normalize to work with sigma
+		b2Vec2 normal = b2Normalize( d );
 
 		// Intersect ray with plane
-		float vp = b2Dot( v, p );
-		float vr = b2Dot( v, r );
-		if ( vp - sigma > lambda * vr )
+		// p = origin + t * r
+		// dot(n, p - p0) = sigma
+		// dot(n, origin - p0) + t * dot(n, r) = sigma
+		// t = ( dot(n, p0) + sigma) / dot(n, r)
+		// if t < (dot(n, p0) + sigma) / dot(n, r) then t can be increased
+		// or (flipping sign because dot(n,r) < 0)
+		// dot(n, p0) + sigma < t * dot(n, r) && dot(n, r) < 0
+		float np0 = b2Dot( normal, p0 );
+		float nr = b2Dot( normal, r );
+		if ( np0 + sigma < lambda * nr )
 		{
-			if ( vr <= 0.0f )
+			if ( nr >= 0.0f )
 			{
 				// miss
 				return output;
 			}
 
-			lambda = ( vp - sigma ) / vr;
+			lambda = ( np0 + sigma ) / nr;
 			if ( lambda > maxFraction )
 			{
 				// too far
@@ -918,35 +807,51 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input, b2ShapeCastData* de
 			simplex.count = 0;
 		}
 
-		// Reverse simplex since it works with B - A.
 		// Shift by lambda * r because we want the closest point to the current clip point.
 		// Note that the support point p is not shifted because we want the plane equation
-		// to be formed in unshifted space.
+		// to be formed in un-shifted space.
 		b2SimplexVertex* vertex = vertices[simplex.count];
 		vertex->indexA = indexB;
-		vertex->wA = (b2Vec2){ wB.x + lambda * r.x, wB.y + lambda * r.y };
+		vertex->wA = wA;
 		vertex->indexB = indexA;
-		vertex->wB = wA;
-		vertex->w = b2Sub( vertex->wB, vertex->wA );
+		vertex->wB = (b2Vec2){ wB.x + lambda * r.x, wB.y + lambda * r.y };
+		vertex->w = b2Sub( vertex->wA, vertex->wB );
 		vertex->a = 1.0f;
 		simplex.count += 1;
 
 		switch ( simplex.count )
 		{
 			case 1:
+				d = b2Neg( simplex.v1.w );
 				break;
 
 			case 2:
-				b2SolveSimplex2( &simplex );
+				d = b2SolveSimplex2( &simplex );
 				break;
 
 			case 3:
-				b2SolveSimplex3( &simplex );
+				d = b2SolveSimplex3( &simplex );
 				break;
 
 			default:
 				B2_ASSERT( false );
 		}
+
+#ifndef NDEBUG
+		if ( debugData != NULL && output.iterations < debugCapacity )
+		{
+			debugData[output.iterations].simplex = simplex;
+			debugData[output.iterations].normal = normal;
+			debugData[output.iterations].p0 = p0;
+			b2Vec2 cA, cB;
+			b2ComputeSimplexWitnessPoints( &cA, &cB, &simplex );
+			debugData[output.iterations].closestA = cA;
+			debugData[output.iterations].closestB = cB;
+			debugData[output.iterations].fraction = lambda;
+		}
+#endif
+
+		output.iterations += 1;
 
 		// If we have 3 points, then the origin is in the corresponding triangle.
 		if ( simplex.count == 3 )
@@ -955,15 +860,14 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input, b2ShapeCastData* de
 			return output;
 		}
 
-		// Get search direction.
-		// todo use more accurate segment perpendicular
+		// Get distance vector
 		v = b2ComputeSimplexClosestPoint( &simplex );
 
 		// Iteration count is equated to the number of support point calls.
-		++iter;
+		++iteration;
 	}
 
-	if ( iter == 0 || lambda == 0.0f )
+	if ( iteration == 0 || lambda == 0.0f )
 	{
 		// Initial overlap
 		return output;
@@ -976,13 +880,14 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input, b2ShapeCastData* de
 	b2Vec2 n = b2Normalize( b2Neg( v ) );
 	b2Vec2 point = { pointA.x + proxyA.radius * n.x, pointA.y + proxyA.radius * n.y };
 
-	output.point = b2TransformPoint( xfA, point );
-	output.normal = b2RotateVector( xfA.q, n );
+	output.point = b2TransformPoint( input->transformA, point );
+	output.normal = b2RotateVector( input->transformA.q, n );
 	output.fraction = lambda;
-	output.iterations = iter;
+	output.iterations = iteration;
 	output.hit = true;
 	return output;
 }
+#endif
 
 // Warning: writing to these globals significantly slows multithreading performance
 #if B2_SNOOP_TOI_COUNTERS
@@ -1221,8 +1126,8 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 
 	b2Sweep sweepA = input->sweepA;
 	b2Sweep sweepB = input->sweepB;
-	B2_ASSERT( b2IsNormalized( sweepA.q1 ) && b2IsNormalized( sweepA.q2 ) );
-	B2_ASSERT( b2IsNormalized( sweepB.q1 ) && b2IsNormalized( sweepB.q2 ) );
+	B2_ASSERT( b2IsNormalizedRot( sweepA.q1 ) && b2IsNormalizedRot( sweepA.q2 ) );
+	B2_ASSERT( b2IsNormalizedRot( sweepB.q1 ) && b2IsNormalizedRot( sweepB.q2 ) );
 
 	// todo_erin
 	// c1 can be at the origin yet the points are far away
@@ -1262,7 +1167,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 		// to get a separating axis.
 		distanceInput.transformA = xfA;
 		distanceInput.transformB = xfB;
-		b2DistanceOutput distanceOutput = b2ShapeDistance( &cache, &distanceInput, NULL, 0 );
+		b2DistanceOutput distanceOutput = b2ShapeDistance(&distanceInput, &cache, NULL, 0 );
 
 		// Progressive time of impact. This handles slender geometry well but introduces
 		// significant time loss.

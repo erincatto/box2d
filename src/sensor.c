@@ -89,7 +89,7 @@ static bool b2SensorQueryCallback( int proxyId, uint64_t userData, void* context
 	input.transformB = otherTransform;
 	input.useRadii = true;
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
+	b2DistanceOutput output = b2ShapeDistance(&input, &cache, NULL, 0 );
 
 	bool overlaps = output.distance < 10.0f * FLT_EPSILON;
 	if ( overlaps == false )

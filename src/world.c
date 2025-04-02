@@ -2160,7 +2160,7 @@ static bool TreeOverlapCallback( int proxyId, uint64_t userData, void* context )
 	input.useRadii = true;
 
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
+	b2DistanceOutput output = b2ShapeDistance( &input, &cache, NULL, 0 );
 
 	float tolerance = 0.1f * B2_LINEAR_SLOP;
 	if ( output.distance > tolerance )
@@ -2853,7 +2853,7 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 	input.useRadii = true;
 
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
+	b2DistanceOutput output = b2ShapeDistance( &input, &cache, NULL, 0 );
 
 	float radius = explosionContext->radius;
 	float falloff = explosionContext->falloff;

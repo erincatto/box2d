@@ -408,7 +408,7 @@ typedef struct b2Simplex
 /// Compute the closest points between two shapes represented as point clouds.
 /// b2SimplexCache cache is input/output. On the first call set b2SimplexCache.count to zero.
 /// The underlying GJK algorithm may be debugged by passing in debug simplexes and capacity. You may pass in NULL and 0 for these.
-B2_API b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* input, b2Simplex* simplexes,
+B2_API b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* cache, b2Simplex* simplexes,
 										 int simplexCapacity );
 
 /// Input parameters for b2ShapeCast
@@ -423,15 +423,9 @@ typedef struct b2ShapeCastPairInput
 	bool canEncroach;		///< Allows shapes with a radius to move slightly closer if already touching
 } b2ShapeCastPairInput;
 
-typedef struct b2ShapeCastData
-{
-	b2Simplex simplex;
-	b2Vec2 origin;
-} b2ShapeCastData;
-
 /// Perform a linear shape cast of shape B moving and shape A fixed. Determines the hit point, normal, and translation fraction.
 /// You may optionally supply an array to hold debug data.
-B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input, b2ShapeCastData* debugData, int debugCapacity );
+B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input);
 
 /// Make a proxy for use in GJK and related functions.
 B2_API b2ShapeProxy b2MakeProxy( const b2Vec2* vertices, int count, float radius );

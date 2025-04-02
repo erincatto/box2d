@@ -777,7 +777,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 
 	if ( separationA > B2_SPECULATIVE_DISTANCE + radius || separationB > B2_SPECULATIVE_DISTANCE + radius )
 	{
-		return ( b2Manifold ){ 0 };
+		return (b2Manifold){ 0 };
 	}
 
 	// Find incident edge
@@ -1037,7 +1037,7 @@ b2Manifold b2CollideChainSegmentAndCircle( const b2ChainSegment* segmentA, b2Tra
 	else
 	{
 		float ee = b2Dot( e, e );
-		pA = ( b2Vec2 ){ u * p1.x + v * p2.x, u * p1.y + v * p2.y };
+		pA = (b2Vec2){ u * p1.x + v * p2.x, u * p1.y + v * p2.y };
 		pA = ee > 0.0f ? b2MulSV( 1.0f / ee, pA ) : p1;
 	}
 
@@ -1275,7 +1275,7 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 	input.transformB = b2Transform_identity;
 	input.useRadii = false;
 
-	b2DistanceOutput output = b2ShapeDistance( cache, &input, NULL, 0 );
+	b2DistanceOutput output = b2ShapeDistance( &input, cache, NULL, 0 );
 
 	if ( output.distance > radiusB + B2_SPECULATIVE_DISTANCE )
 	{

@@ -42,7 +42,7 @@ public:
 			b2Hull hull = b2ComputeHull( points, 3 );
 			m_triangle = b2MakePolygon( &hull, 0.0f );
 
-			m_triangle = b2MakeSquare( 0.4f );
+			// m_triangle = b2MakeSquare( 0.4f );
 		}
 
 		m_box = b2MakeSquare( 0.5f );
@@ -319,7 +319,7 @@ public:
 			m_cache.count = 0;
 		}
 
-		b2DistanceOutput output = b2ShapeDistance( &m_cache, &input, m_simplexes, m_simplexCapacity );
+		b2DistanceOutput output = b2ShapeDistance( &input, &m_cache, m_simplexes, m_simplexCapacity );
 
 		m_simplexCount = output.simplexCount;
 
@@ -3170,7 +3170,6 @@ static int sampleSmoothManifoldIndex = RegisterSample( "Collision", "Smooth Mani
 class ShapeCast : public Sample
 {
 public:
-
 	enum ShapeType
 	{
 		e_point,
@@ -3185,24 +3184,22 @@ public:
 		if ( settings.restart == false )
 		{
 			g_camera.m_center = { 0.0f, 0.25f };
-			g_camera.m_zoom = 1.75f;
+			g_camera.m_zoom = 3.0f;
 		}
 
 		m_point = b2Vec2_zero;
-		m_segment = { { -0.5f, 0.0f }, { 0.5f, 0.0f } };
+		m_segment = { { 0.0f, 0.0f }, { 0.5f, 0.0f } };
 
 		{
 			b2Vec2 points[3] = { { -0.5f, 0.0f }, { 0.5f, 0.0f }, { 0.0f, 1.0f } };
 			b2Hull hull = b2ComputeHull( points, 3 );
 			m_triangle = b2MakePolygon( &hull, 0.0f );
-
-			m_triangle = b2MakeSquare( 0.4f );
 		}
 
-		m_box = b2MakeOffsetBox( 0.5f, 0.5f, {1.0f, 0.5f}, b2Rot_identity );
+		m_box = b2MakeOffsetBox( 0.5f, 0.5f, { 1.0f, 0.0f }, b2Rot_identity );
 
 		m_transform = { { 0.0f, 0.0f }, b2Rot_identity };
-		m_translation = {1.0f, 1.5f};
+		m_translation = { 1.0f, 0.0f };
 		m_angle = 0.0f;
 		m_startPoint = { 0.0f, 0.0f };
 		m_basePosition = { 0.0f, 0.0f };
@@ -3213,11 +3210,12 @@ public:
 		m_rotating = false;
 		m_showIndices = false;
 		m_drawSimplex = false;
+		m_encroach = false;
 
 		m_typeA = e_box;
 		m_typeB = e_point;
 		m_radiusA = 0.0f;
-		m_radiusB = 0.0f;
+		m_radiusB = 0.1f;
 
 		m_proxyA = MakeProxy( m_typeA, m_radiusA );
 		m_proxyB = MakeProxy( m_typeB, m_radiusB );
@@ -3325,13 +3323,13 @@ public:
 			}
 			else if ( mods == GLFW_MOD_SHIFT )
 			{
-				m_dragging = true;
+				m_dragging = false;
 				m_sweeping = false;
 				m_rotating = true;
 				m_startPoint = p;
 				m_baseAngle = m_angle;
 			}
-			else if (mods == GLFW_MOD_CONTROL)
+			else if ( mods == GLFW_MOD_CONTROL )
 			{
 				m_dragging = false;
 				m_sweeping = true;
@@ -3364,7 +3362,7 @@ public:
 			m_angle = b2ClampFloat( m_baseAngle + 1.0f * dx, -B2_PI, B2_PI );
 			m_transform.q = b2MakeRot( m_angle );
 		}
-		else if (m_sweeping)
+		else if ( m_sweeping )
 		{
 			m_translation = p - m_startPoint;
 		}
@@ -3372,7 +3370,7 @@ public:
 
 	void UpdateGui() override
 	{
-		float height = 280.0f;
+		float height = 300.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
@@ -3416,19 +3414,7 @@ public:
 		ImGui::Separator();
 
 		ImGui::Checkbox( "show indices", &m_showIndices );
-
-		ImGui::Separator();
-
-		if ( ImGui::Checkbox( "draw simplex", &m_drawSimplex ) )
-		{
-			m_debugIndex = 0;
-		}
-
-		if ( m_drawSimplex )
-		{
-			ImGui::SliderInt( "index", &m_debugIndex, 0, m_debugCount - 1 );
-			m_debugIndex = b2ClampInt( m_debugIndex, 0, m_debugCount - 1 );
-		}
+		ImGui::Checkbox( "encroach", &m_encroach );
 
 		ImGui::End();
 	}
@@ -3444,12 +3430,9 @@ public:
 		input.transformB = m_transform;
 		input.translationB = m_translation;
 		input.maxFraction = 1.0f;
-		//input.canEncroach = true;
+		input.canEncroach = m_encroach;
 
-		b2ShapeCastData debugData[20] = {};
-
-		b2CastOutput output = b2ShapeCast( &input, debugData, 20 );
-		m_debugCount = output.iterations;
+		b2CastOutput output = b2ShapeCast( &input );
 
 		b2Transform transform;
 		transform.q = m_transform.q;
@@ -3463,121 +3446,19 @@ public:
 		distanceInput.useRadii = false;
 		b2SimplexCache distanceCache;
 		distanceCache.count = 0;
-		b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceCache, &distanceInput, nullptr, 0 );
+		b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &distanceCache, nullptr, 0 );
 
 		DrawTextLine( "hit = %s, iterations = %d, lambda = %g, distance = %g", output.hit ? "true" : "false", output.iterations,
 					  output.fraction, distanceOutput.distance );
 
-		#if 0
-		b2Vec2 vertices[B2_MAX_POLYGON_VERTICES];
-
-		for ( int i = 0; i < m_countA; ++i )
-		{
-			vertices[i] = b2TransformPoint( m_transformA, m_vAs[i] );
-		}
-
-		if ( m_countA == 1 )
-		{
-			if ( m_radiusA > 0.0f )
-			{
-				g_draw.DrawSolidCircle( b2Transform_identity, vertices[0], m_radiusA, b2_colorLightGray );
-			}
-			else
-			{
-				g_draw.DrawPoint( vertices[0], 5.0f, b2_colorLightGray );
-			}
-		}
-		else
-		{
-			g_draw.DrawSolidPolygon( b2Transform_identity, vertices, m_countA, m_radiusA, b2_colorLightGray );
-		}
-
-		for ( int i = 0; i < m_countB; ++i )
-		{
-			vertices[i] = b2TransformPoint( m_transformB, m_vBs[i] );
-		}
-
-		if ( m_countB == 1 )
-		{
-			if ( m_radiusB > 0.0f )
-			{
-				g_draw.DrawSolidCircle( b2Transform_identity, vertices[0], m_radiusB, b2_colorGreen );
-			}
-			else
-			{
-				g_draw.DrawPoint( vertices[0], 5.0f, b2_colorGreen );
-			}
-		}
-		else
-		{
-			g_draw.DrawSolidPolygon( b2Transform_identity, vertices, m_countB, m_radiusB, b2_colorGreen );
-		}
-
-		for ( int i = 0; i < m_countB; ++i )
-		{
-			vertices[i] = b2TransformPoint( transformB2, m_vBs[i] );
-		}
-
-		if ( m_countB == 1 )
-		{
-			if ( m_radiusB > 0.0f )
-			{
-				g_draw.DrawSolidCircle( b2Transform_identity, vertices[0], m_radiusB, b2_colorOrange );
-			}
-			else
-			{
-				g_draw.DrawPoint( vertices[0], 5.0f, b2_colorOrange );
-			}
-		}
-		else
-		{
-			g_draw.DrawSolidPolygon( b2Transform_identity, vertices, m_countB, m_radiusB, b2_colorOrange );
-		}
-
-		if ( output.hit )
-		{
-			b2Vec2 p1 = output.point;
-			g_draw.DrawPoint( p1, 10.0f, b2_colorRed );
-			b2Vec2 p2 = b2MulAdd( p1, 1.0f, output.normal );
-			g_draw.DrawSegment( p1, p2, b2_colorRed );
-		}
-
-		g_draw.DrawSegment( m_transformB.p, b2Add( m_transformB.p, m_translationB ), b2_colorGray );
-	#endif
-
 		DrawShape( m_typeA, b2Transform_identity, m_radiusA, b2_colorCyan );
 		DrawShape( m_typeB, m_transform, m_radiusB, b2_colorLightGreen );
-
 		b2Transform transform2 = { m_transform.p + m_translation, m_transform.q };
 		DrawShape( m_typeB, transform2, m_radiusB, b2_colorIndianRed );
 
-		if ( m_drawSimplex && m_debugCount > 0 )
+		if (output.hit)
 		{
-			b2Simplex* simplex = &m_debugData[m_debugIndex].simplex;
-			b2SimplexVertex* vertices[3] = { &simplex->v1, &simplex->v2, &simplex->v3 };
-
-			if ( m_debugIndex > 0 )
-			{
-				// The first recorded simplex does not have valid barycentric coordinates
-				//b2Vec2 pointA, pointB;
-				//ComputeSimplexWitnessPoints( &pointA, &pointB, simplex );
-
-				//g_draw.DrawSegment( pointA, pointB, b2_colorWhite );
-				//g_draw.DrawPoint( pointA, 5.0f, b2_colorWhite );
-				//g_draw.DrawPoint( pointB, 5.0f, b2_colorWhite );
-			}
-
-			b2HexColor colors[3] = { b2_colorRed, b2_colorGreen, b2_colorBlue };
-
-			for ( int i = 0; i < simplex->count; ++i )
-			{
-				b2SimplexVertex* vertex = vertices[i];
-				g_draw.DrawPoint( vertex->wA, 5.0f, colors[i] );
-				g_draw.DrawPoint( vertex->wB, 5.0f, colors[i] );
-			}
-		}
-		else
-		{
+			DrawShape( m_typeB, transform, m_radiusB, b2_colorPlum );
 			g_draw.DrawPoint( output.point, 5.0f, b2_colorWhite );
 			g_draw.DrawSegment( output.point, output.point + 0.5f * output.normal, b2_colorYellow );
 		}
@@ -3600,7 +3481,7 @@ public:
 		DrawTextLine( "mouse button 1: drag" );
 		DrawTextLine( "mouse button 1 + shift: rotate" );
 		DrawTextLine( "mouse button 1 + control: sweep" );
-		DrawTextLine("distance = %.2f, iterations = %d", distanceOutput.distance, output.iterations );
+		DrawTextLine( "distance = %.2f, iterations = %d", distanceOutput.distance, output.iterations );
 	}
 
 	static Sample* Create( Settings& settings )
@@ -3620,10 +3501,6 @@ public:
 	b2ShapeProxy m_proxyA;
 	b2ShapeProxy m_proxyB;
 
-	b2ShapeCastData m_debugData[20] = {};
-	int m_debugCount;
-	int m_debugIndex;
-
 	b2Transform m_transform;
 	float m_angle;
 	b2Vec2 m_translation;
@@ -3637,6 +3514,7 @@ public:
 	bool m_rotating;
 	bool m_showIndices;
 	bool m_drawSimplex;
+	bool m_encroach;
 };
 
 static int sampleShapeCast = RegisterSample( "Collision", "Shape Cast", ShapeCast::Create );
@@ -3736,7 +3614,7 @@ public:
 			distanceInput.transformB = b2GetSweepTransform( &sweepB, output.fraction );
 			distanceInput.useRadii = false;
 			b2SimplexCache cache = { 0 };
-			b2DistanceOutput distanceOutput = b2ShapeDistance( &cache, &distanceInput, nullptr, 0 );
+			b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, nullptr, 0 );
 			g_draw.DrawString( 5, m_textLine, "distance = %g", distanceOutput.distance );
 			m_textLine += m_textIncrement;
 		}

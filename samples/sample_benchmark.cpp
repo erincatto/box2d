@@ -1659,7 +1659,7 @@ public:
 			input.proxyA = b2MakeProxy( m_polygonA.vertices, m_polygonA.count, m_polygonA.radius );
 			input.proxyB = b2MakeProxy( m_polygonB.vertices, m_polygonB.count, m_polygonB.radius );
 			input.useRadii = true;
-			float totalDistance = 0.0f;
+			int totalIterations = 0;
 
 			uint64_t start = b2GetTicks();
 			uint64_t startCycles = GET_CYCLES;
@@ -1668,8 +1668,8 @@ public:
 				b2SimplexCache cache = {};
 				input.transformA = m_transformAs[i];
 				input.transformB = m_transformBs[i];
-				m_outputs[i] = b2ShapeDistance( &cache, &input, nullptr, 0 );
-				totalDistance += m_outputs[i].distance;
+				m_outputs[i] = b2ShapeDistance(&input,  &cache, nullptr, 0 );
+				totalIterations += m_outputs[i].iterations;
 			}
 			uint64_t endCycles = GET_CYCLES;
 
@@ -1681,7 +1681,7 @@ public:
 			DrawTextLine( "min cycles = %d", m_minCycles );
 			DrawTextLine( "ave cycles = %g", float( m_minCycles ) / float( m_count ) );
 			DrawTextLine( "min ms = %g, ave us = %g", m_minMilliseconds, 1000.0f * m_minMilliseconds / float(m_count) );
-			DrawTextLine( "total distance = %g", totalDistance);
+			DrawTextLine( "average iterations = %g", totalIterations / float(m_count));
 		}
 
 		b2Transform xfA = m_transformAs[m_drawIndex];

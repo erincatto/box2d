@@ -283,6 +283,12 @@ B2_INLINE b2Vec2 b2Normalize( b2Vec2 v )
 	return n;
 }
 
+B2_INLINE bool b2IsNormalized(b2Vec2 a)
+{
+	float aa = b2Dot( a, a );
+	return b2AbsFloat( 1.0f - aa ) < 10.0f * FLT_EPSILON;
+}
+
 /// Convert a vector into a unit vector if possible, otherwise returns the zero vector. Also
 /// outputs the length.
 B2_INLINE b2Vec2 b2GetLengthAndNormalize( float* length, b2Vec2 v )
@@ -347,7 +353,7 @@ B2_INLINE b2Rot b2MakeRot( float radians )
 B2_API b2Rot b2ComputeRotationBetweenUnitVectors( b2Vec2 v1, b2Vec2 v2 );
 
 /// Is this rotation normalized?
-B2_INLINE bool b2IsNormalized( b2Rot q )
+B2_INLINE bool b2IsNormalizedRot( b2Rot q )
 {
 	// larger tolerance due to failure on mingw 32-bit
 	float qq = q.s * q.s + q.c * q.c;

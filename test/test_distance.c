@@ -45,7 +45,7 @@ static int ShapeDistanceTest( void )
 	input.useRadii = false;
 
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
+	b2DistanceOutput output = b2ShapeDistance(&input,  &cache, NULL, 0 );
 
 	ENSURE_SMALL( output.distance - 1.0f, FLT_EPSILON );
 
@@ -69,7 +69,7 @@ static int ShapeCastTest( void )
 	input.translationB = ( b2Vec2 ){ -2.0f, 0.0f };
 	input.maxFraction = 1.0f;
 
-	b2CastOutput output = b2ShapeCast( &input, NULL, 0 );
+	b2CastOutput output = b2ShapeCast( &input );
 
 	ENSURE( output.hit );
 	ENSURE_SMALL( output.fraction - 0.5f, 0.005f );

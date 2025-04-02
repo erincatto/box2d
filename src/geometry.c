@@ -14,8 +14,8 @@ _Static_assert( B2_MAX_POLYGON_VERTICES > 2, "must be 3 or more" );
 
 bool b2IsValidRay( const b2RayCastInput* input )
 {
-	bool isValid = b2IsValidVec2( input->origin ) && b2IsValidVec2( input->translation ) && b2IsValidFloat( input->maxFraction ) &&
-				   0.0f <= input->maxFraction && input->maxFraction < B2_HUGE;
+	bool isValid = b2IsValidVec2( input->origin ) && b2IsValidVec2( input->translation ) &&
+				   b2IsValidFloat( input->maxFraction ) && 0.0f <= input->maxFraction && input->maxFraction < B2_HUGE;
 	return isValid;
 }
 
@@ -142,14 +142,14 @@ b2Polygon b2MakeBox( float halfWidth, float halfHeight )
 
 	b2Polygon shape = { 0 };
 	shape.count = 4;
-	shape.vertices[0] = ( b2Vec2 ){ -halfWidth, -halfHeight };
-	shape.vertices[1] = ( b2Vec2 ){ halfWidth, -halfHeight };
-	shape.vertices[2] = ( b2Vec2 ){ halfWidth, halfHeight };
-	shape.vertices[3] = ( b2Vec2 ){ -halfWidth, halfHeight };
-	shape.normals[0] = ( b2Vec2 ){ 0.0f, -1.0f };
-	shape.normals[1] = ( b2Vec2 ){ 1.0f, 0.0f };
-	shape.normals[2] = ( b2Vec2 ){ 0.0f, 1.0f };
-	shape.normals[3] = ( b2Vec2 ){ -1.0f, 0.0f };
+	shape.vertices[0] = (b2Vec2){ -halfWidth, -halfHeight };
+	shape.vertices[1] = (b2Vec2){ halfWidth, -halfHeight };
+	shape.vertices[2] = (b2Vec2){ halfWidth, halfHeight };
+	shape.vertices[3] = (b2Vec2){ -halfWidth, halfHeight };
+	shape.normals[0] = (b2Vec2){ 0.0f, -1.0f };
+	shape.normals[1] = (b2Vec2){ 1.0f, 0.0f };
+	shape.normals[2] = (b2Vec2){ 0.0f, 1.0f };
+	shape.normals[3] = (b2Vec2){ -1.0f, 0.0f };
 	shape.radius = 0.0f;
 	shape.centroid = b2Vec2_zero;
 	return shape;
@@ -169,14 +169,14 @@ b2Polygon b2MakeOffsetBox( float halfWidth, float halfHeight, b2Vec2 center, b2R
 
 	b2Polygon shape = { 0 };
 	shape.count = 4;
-	shape.vertices[0] = b2TransformPoint( xf, ( b2Vec2 ){ -halfWidth, -halfHeight } );
-	shape.vertices[1] = b2TransformPoint( xf, ( b2Vec2 ){ halfWidth, -halfHeight } );
-	shape.vertices[2] = b2TransformPoint( xf, ( b2Vec2 ){ halfWidth, halfHeight } );
-	shape.vertices[3] = b2TransformPoint( xf, ( b2Vec2 ){ -halfWidth, halfHeight } );
-	shape.normals[0] = b2RotateVector( xf.q, ( b2Vec2 ){ 0.0f, -1.0f } );
-	shape.normals[1] = b2RotateVector( xf.q, ( b2Vec2 ){ 1.0f, 0.0f } );
-	shape.normals[2] = b2RotateVector( xf.q, ( b2Vec2 ){ 0.0f, 1.0f } );
-	shape.normals[3] = b2RotateVector( xf.q, ( b2Vec2 ){ -1.0f, 0.0f } );
+	shape.vertices[0] = b2TransformPoint( xf, (b2Vec2){ -halfWidth, -halfHeight } );
+	shape.vertices[1] = b2TransformPoint( xf, (b2Vec2){ halfWidth, -halfHeight } );
+	shape.vertices[2] = b2TransformPoint( xf, (b2Vec2){ halfWidth, halfHeight } );
+	shape.vertices[3] = b2TransformPoint( xf, (b2Vec2){ -halfWidth, halfHeight } );
+	shape.normals[0] = b2RotateVector( xf.q, (b2Vec2){ 0.0f, -1.0f } );
+	shape.normals[1] = b2RotateVector( xf.q, (b2Vec2){ 1.0f, 0.0f } );
+	shape.normals[2] = b2RotateVector( xf.q, (b2Vec2){ 0.0f, 1.0f } );
+	shape.normals[3] = b2RotateVector( xf.q, (b2Vec2){ -1.0f, 0.0f } );
 	shape.radius = 0.0f;
 	shape.centroid = xf.p;
 	return shape;
@@ -189,14 +189,14 @@ b2Polygon b2MakeOffsetRoundedBox( float halfWidth, float halfHeight, b2Vec2 cent
 
 	b2Polygon shape = { 0 };
 	shape.count = 4;
-	shape.vertices[0] = b2TransformPoint( xf, ( b2Vec2 ){ -halfWidth, -halfHeight } );
-	shape.vertices[1] = b2TransformPoint( xf, ( b2Vec2 ){ halfWidth, -halfHeight } );
-	shape.vertices[2] = b2TransformPoint( xf, ( b2Vec2 ){ halfWidth, halfHeight } );
-	shape.vertices[3] = b2TransformPoint( xf, ( b2Vec2 ){ -halfWidth, halfHeight } );
-	shape.normals[0] = b2RotateVector( xf.q, ( b2Vec2 ){ 0.0f, -1.0f } );
-	shape.normals[1] = b2RotateVector( xf.q, ( b2Vec2 ){ 1.0f, 0.0f } );
-	shape.normals[2] = b2RotateVector( xf.q, ( b2Vec2 ){ 0.0f, 1.0f } );
-	shape.normals[3] = b2RotateVector( xf.q, ( b2Vec2 ){ -1.0f, 0.0f } );
+	shape.vertices[0] = b2TransformPoint( xf, (b2Vec2){ -halfWidth, -halfHeight } );
+	shape.vertices[1] = b2TransformPoint( xf, (b2Vec2){ halfWidth, -halfHeight } );
+	shape.vertices[2] = b2TransformPoint( xf, (b2Vec2){ halfWidth, halfHeight } );
+	shape.vertices[3] = b2TransformPoint( xf, (b2Vec2){ -halfWidth, halfHeight } );
+	shape.normals[0] = b2RotateVector( xf.q, (b2Vec2){ 0.0f, -1.0f } );
+	shape.normals[1] = b2RotateVector( xf.q, (b2Vec2){ 1.0f, 0.0f } );
+	shape.normals[2] = b2RotateVector( xf.q, (b2Vec2){ 0.0f, 1.0f } );
+	shape.normals[3] = b2RotateVector( xf.q, (b2Vec2){ -1.0f, 0.0f } );
 	shape.radius = radius;
 	shape.centroid = xf.p;
 	return shape;
@@ -496,7 +496,7 @@ bool b2PointInPolygon( b2Vec2 point, const b2Polygon* shape )
 	input.useRadii = false;
 
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
+	b2DistanceOutput output = b2ShapeDistance( &input, &cache, NULL, 0 );
 
 	return output.distance <= shape->radius;
 }
@@ -860,7 +860,7 @@ b2CastOutput b2RayCastPolygon( const b2RayCastInput* input, const b2Polygon* sha
 	castInput.translationB = input->translation;
 	castInput.maxFraction = input->maxFraction;
 	castInput.canEncroach = false;
-	return b2ShapeCast( &castInput, NULL, 0);
+	return b2ShapeCast( &castInput );
 }
 
 b2CastOutput b2ShapeCastCircle( const b2ShapeCastInput* input, const b2Circle* shape )
@@ -874,7 +874,7 @@ b2CastOutput b2ShapeCastCircle( const b2ShapeCastInput* input, const b2Circle* s
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	b2CastOutput output = b2ShapeCast( &pairInput, NULL, 0 );
+	b2CastOutput output = b2ShapeCast( &pairInput );
 	return output;
 }
 
@@ -889,7 +889,7 @@ b2CastOutput b2ShapeCastCapsule( const b2ShapeCastInput* input, const b2Capsule*
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	b2CastOutput output = b2ShapeCast( &pairInput, NULL, 0 );
+	b2CastOutput output = b2ShapeCast( &pairInput );
 	return output;
 }
 
@@ -904,7 +904,7 @@ b2CastOutput b2ShapeCastSegment( const b2ShapeCastInput* input, const b2Segment*
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	b2CastOutput output = b2ShapeCast( &pairInput, NULL, 0 );
+	b2CastOutput output = b2ShapeCast( &pairInput );
 	return output;
 }
 
@@ -919,6 +919,6 @@ b2CastOutput b2ShapeCastPolygon( const b2ShapeCastInput* input, const b2Polygon*
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	b2CastOutput output = b2ShapeCast( &pairInput, NULL, 0 );
+	b2CastOutput output = b2ShapeCast( &pairInput );
 	return output;
 }
