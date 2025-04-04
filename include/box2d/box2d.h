@@ -107,6 +107,11 @@ B2_API b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* poly
 /// clipping.
 B2_API float b2World_CastMover( b2WorldId worldId, const b2Capsule* mover, b2Vec2 translation, b2QueryFilter filter );
 
+/// Collide a capsule mover with the world, gathering collision planes that can be fed to b2SolvePlanes. Useful for
+/// kinematic character movement.
+B2_API void b2World_CollideMover( b2WorldId worldId, const b2Capsule* mover, b2QueryFilter filter, b2PlaneResultFcn* fcn,
+								  void* context );
+
 /// Enable/disable sleep. If your application does not need sleeping, you can gain some performance
 /// by disabling sleep completely at the world level.
 /// @see b2WorldDef

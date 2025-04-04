@@ -861,6 +861,45 @@ b2CastOutput b2ShapeCastShape( const b2ShapeCastInput* input, const b2Shape* sha
 	return output;
 }
 
+b2PlaneResult b2CollideMover( const b2Shape* shape, b2Transform transform, const b2Capsule* mover )
+{
+	b2Capsule localMover;
+	localMover.center1 = b2InvTransformPoint( transform, mover->center1 );
+	localMover.center2 = b2InvTransformPoint( transform, mover->center2 );
+	localMover.radius = mover->radius;
+
+	b2PlaneResult result = { 0 };
+	switch ( shape->type )
+	{
+		case b2_capsuleShape:
+			result = b2CollideMoverAndCapsule( &shape->capsule, &localMover );
+			break;
+		case b2_circleShape:
+			result = b2CollideMoverAndCircle( &shape->circle, &localMover );
+			break;
+		case b2_polygonShape:
+			result = b2CollideMoverAndPolygon( &shape->polygon, &localMover );
+			break;
+		case b2_segmentShape:
+			result = b2CollideMoverAndSegment( &shape->segment, &localMover );
+			break;
+		case b2_chainSegmentShape:
+			result = b2CollideMoverAndSegment( &shape->chainSegment.segment, &localMover );
+			break;
+		default:
+			return result;
+	}
+
+	if (result.hit == false)
+	{
+		return result;
+	}
+
+	result.plane.normal = b2RotateVector( transform.q, result.plane.normal );
+	result.point = b2TransformPoint( transform, result.point );
+	return result;
+}
+
 void b2CreateShapeProxy( b2Shape* shape, b2BroadPhase* bp, b2BodyType type, b2Transform transform, bool forcePairCreation )
 {
 	B2_ASSERT( shape->proxyKey == B2_NULL_INDEX );

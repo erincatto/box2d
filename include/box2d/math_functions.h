@@ -61,6 +61,13 @@ typedef struct b2AABB
 	b2Vec2 upperBound;
 } b2AABB;
 
+/// separation = dot(normal, point) - offset
+typedef struct b2Plane
+{
+	b2Vec2 normal;
+	float offset;
+} b2Plane;
+
 /**@}*/
 
 /**
@@ -611,6 +618,12 @@ B2_INLINE b2AABB b2AABB_Union( b2AABB a, b2AABB b )
 	return c;
 }
 
+/// Signed separation of a point from a plane
+B2_INLINE float b2PlaneSeparation( b2Plane plane, b2Vec2 point )
+{
+	return b2Dot( plane.normal, point ) - plane.offset;
+}
+
 /// Is this a valid number? Not NaN or infinity.
 B2_API bool b2IsValidFloat( float a );
 
@@ -622,6 +635,9 @@ B2_API bool b2IsValidRotation( b2Rot q );
 
 /// Is this a valid bounding box? Not Nan or infinity. Upper bound greater than or equal to lower bound.
 B2_API bool b2IsValidAABB( b2AABB aabb );
+
+/// Is this a valid plane? Normal is a unit vector. Not Nan or infinity.
+B2_API bool b2IsValidPlane( b2Plane a );
 
 /// Box2D bases all length units on meters, but you may need different units for your game.
 /// You can set this value to use different units. This should be done at application startup

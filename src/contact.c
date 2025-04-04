@@ -49,7 +49,7 @@ B2_ARRAY_SOURCE( b2ContactSim, b2ContactSim );
 // has world space vectors yet retains precision.
 //
 // Second:
-// b3ManifoldPoint::point is very useful for debugging and it is in world space.
+// b2ManifoldPoint::point is very useful for debugging and it is in world space.
 //
 // Third:
 // The user may call the manifold functions directly and they should be easy to use and have easy to use

@@ -619,7 +619,6 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	distanceInput.useRadii = false;
 
 	b2Vec2 delta2 = input->translationB;
-	b2DistanceOutput distanceOutput = {};
 	b2CastOutput output = {};
 
 	int iteration = 0;
@@ -628,7 +627,7 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	{
 		output.iterations += 1;
 
-		distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
+		b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
 
 		if ( distanceOutput.distance < target + tolerance )
 		{
@@ -713,6 +712,11 @@ typedef struct b2ShapeCastData
 // This is similar to ray vs polygon and involves plane clipping. See b2RayCastPolygon.
 // In this case the polygon is just points and there are no planes. This uses a modified
 // version of GJK to generate planes for clipping.
+// The algorithm works by incrementally building clipping planes using GJK. Once a valid
+// clip plane is found the simplex origin is moved to the current fraction on the ray.
+// This resets the simplex after every clip. Later I should compare performance.
+// However, adapting this to work with encroachment is tricky and confusing because encroachment
+// needs distance.
 // Note: this algorithm is difficult to debug and not worth the effort in my opinion 4/1/2025
 b2CastOutput b2ShapeCastMerged( const b2ShapeCastPairInput* input, b2ShapeCastData* debugData, int debugCapacity )
 {

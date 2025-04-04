@@ -768,3 +768,35 @@ B2_API void b2DynamicTree_Validate( const b2DynamicTree* tree );
 B2_API void b2DynamicTree_ValidateNoEnlarged( const b2DynamicTree* tree );
 
 /**@}*/
+
+/**
+ * @defgroup character
+ * Experimental character movement solver
+ * @{
+ */
+
+typedef struct b2PlaneResult
+{
+	b2Plane plane;
+	b2Vec2 point;
+	bool hit;
+} b2PlaneResult;
+
+typedef struct b2CollisionPlane
+{
+	b2Plane plane;
+	float pushLimit;
+	float push;
+	bool clipVelocity;
+} b2CollisionPlane;
+
+typedef struct b2PlaneSolverResult
+{
+	b2Vec2 position;
+	int iterationCount;
+} b2PlaneSolverResult;
+
+B2_API b2PlaneSolverResult b2SolvePlanes( b2Vec2 initialPosition, b2CollisionPlane* planes, int count );
+B2_API b2Vec2 b2ClipVector( b2Vec2 vector, const b2CollisionPlane* planes, int count );
+
+/**@}*/

@@ -37,6 +37,7 @@ set(BOX2D_SOURCE_FILES
 	math_functions.c
 	motor_joint.c
 	mouse_joint.c
+	mover.c
 	prismatic_joint.c
 	revolute_joint.c
 	sensor.c

@@ -74,6 +74,7 @@ set(BOX2D_SAMPLE_FILES
 	sample.h
 	sample_benchmark.cpp
 	sample_bodies.cpp
+	sample_character.cpp
 	sample_collision.cpp
 	sample_continuous.cpp
 	sample_determinism.cpp
