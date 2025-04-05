@@ -1368,17 +1368,16 @@ public:
 		{
 			uint64_t ticks = b2GetTicks();
 
-			b2Circle circle = { { 0.0f, 0.0f }, m_radius };
 			CastResult drawResult = {};
 
 			for ( int i = 0; i < sampleCount; ++i )
 			{
-				b2Transform origin = { m_origins[i], { 1.0f, 0.0f } };
+				b2Circle circle = { m_origins[i], m_radius };
 				b2Vec2 translation = m_translations[i];
 
 				CastResult result;
 				b2TreeStats traversalResult =
-					b2World_CastCircle( m_worldId, &circle, origin, translation, filter, CastCallback, &result );
+					b2World_CastCircle( m_worldId, &circle, translation, filter, CastCallback, &result );
 
 				if ( i == m_drawIndex )
 				{

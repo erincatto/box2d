@@ -417,7 +417,7 @@ B2_API b2ShapeDef b2DefaultShapeDef( void );
 /// Used to create a chain of line segments. This is designed to eliminate ghost collisions with some limitations.
 /// - chains are one-sided
 /// - chains have no mass and should be used on static bodies
-/// - chains have a counter-clockwise winding order
+/// - chains have a counter-clockwise winding order (normal points right of segment direction)
 /// - chains are either a loop or open
 /// - a chain must have at least 4 points
 /// - the distance between any two points must be greater than B2_LINEAR_SLOP

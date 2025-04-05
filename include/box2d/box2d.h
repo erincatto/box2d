@@ -90,18 +90,18 @@ B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2V
 
 /// Cast a circle through the world. Similar to a cast ray except that a circle is cast instead of a point.
 ///	@see b2World_CastRay
-B2_API b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Transform originTransform, b2Vec2 translation,
-									   b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Vec2 translation, b2QueryFilter filter,
+									   b2CastResultFcn* fcn, void* context );
 
 /// Cast a capsule through the world. Similar to a cast ray except that a capsule is cast instead of a point.
 ///	@see b2World_CastRay
-B2_API b2TreeStats b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transform originTransform,
-										b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Vec2 translation, b2QueryFilter filter,
+										b2CastResultFcn* fcn, void* context );
 
 /// Cast a polygon through the world. Similar to a cast ray except that a polygon is cast instead of a point.
 ///	@see b2World_CastRay
-B2_API b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform originTransform,
-										b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Vec2 translation, b2QueryFilter filter,
+										b2CastResultFcn* fcn, void* context );
 
 /// Cast a capsule mover through the world. This is a special shape cast that handles sliding along other shapes while reducing
 /// clipping.

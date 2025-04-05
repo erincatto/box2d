@@ -26,6 +26,22 @@ enum CollisionBits : uint64_t
 	AllBits = ~0u,
 };
 
+struct CastResult
+{
+	b2Vec2 point;
+	float fraction;
+	bool hit;
+};
+
+static float CastCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
+{
+	CastResult* result = (CastResult*)context;
+	result->point = point;
+	result->fraction = fraction;
+	result->hit = true;
+	return fraction;
+}
+
 class Mover : public Sample
 {
 public:
@@ -34,73 +50,48 @@ public:
 	{
 		if ( settings.restart == false )
 		{
-			g_camera.m_center = { 2.0f, 20.0f };
-			g_camera.m_zoom = 21.0f;
+			g_camera.m_center = { 20.0f, 9.0f };
+			g_camera.m_zoom = 10.0f;
 		}
 
-		m_transform = { { 7.5f, 5.75f}, b2Rot_identity };
+		m_transform = { { 2.0f, 8.0f }, b2Rot_identity };
 
 		m_velocity = { 0.0f, 0.0f };
 		m_capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.3f };
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
-			bodyDef.position = { 0.0f, -6.0f };
+			bodyDef.position = { 0.0f, 0.0f };
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Vec2 points[36];
-			points[0] = { -20.58325, 14.54175 };
-			points[1] = { -21.90625, 15.8645 };
-			points[2] = { -24.552, 17.1875 };
-			points[3] = { -27.198, 11.89575 };
-			points[4] = { -29.84375, 15.8645 };
-			points[5] = { -29.84375, 21.15625 };
-			points[6] = { -25.875, 23.802 };
-			points[7] = { -20.58325, 25.125 };
-			points[8] = { -25.875, 29.09375 };
-			points[9] = { -20.58325, 31.7395 };
-			points[10] = { -11.0089998, 23.2290001 };
-			points[11] = { -8.67700005, 21.15625 };
-			points[12] = { -6.03125, 21.15625 };
-			points[13] = { -7.35424995, 29.09375 };
-			points[14] = { -3.38549995, 29.09375 };
-			points[15] = { 1.90625, 30.41675 };
-			points[16] = { 5.875, 17.1875 };
-			points[17] = { 11.16675, 25.125 };
-			points[18] = { 9.84375, 29.09375 };
-			points[19] = { 13.8125, 31.7395 };
-			points[20] = { 21.75, 30.41675 };
-			points[21] = { 28.3644981, 26.448 };
-			points[22] = { 25.71875, 18.5105 };
-			points[23] = { 24.3957481, 13.21875 };
-			points[24] = { 17.78125, 11.89575 };
-			points[25] = { 15.1355, 7.92700005 };
-			points[26] = { 5.875, 9.25 };
-			points[27] = { 1.90625, 11.89575 };
-			points[28] = { -2.25, 11.89575 };
-			points[29] = { -3.25, 9.9375 };
-			points[30] = { -4.70825005, 9.25 };
-			points[31] = { -8.67700005, 9.25 };
-			points[32] = { -11.323, 11.89575 };
-			points[33] = { -13.96875, 11.89575 };
-			points[34] = { -15.29175, 14.54175 };
-			points[35] = { -19.2605, 14.54175 };
+			const char* path =
+				"M 2.6458333,201.08333 H 293.68751 l -10e-6,-55.5625 h -2.64584 l 2e-5,52.91667 h -23.8125 l -39.68751,-13.22917 "
+				"h -26.45833 l -23.8125,10.58333 H 142.875 v -5.29167 h -5.29166 v 5.29167 H 119.0625 v -2.64583 h -2.64583 v "
+				"-2.64584 h -2.64584 v -2.64583 H 111.125 v -2.64583 H 84.666668 v -2.64583 h -5.291666 v -2.64584 h -5.291667 v "
+				"-2.64583 H 68.791668 V 174.625 h -5.291666 v -2.64584 H 52.916669 L 39.6875,177.27083 H 34.395833 L "
+				"23.8125,185.20833 H 15.875 L 5.2916669,187.85416 V 153.45833 H 2.6458333 v 47.625";
+
+			b2Vec2 points[64];
+
+			b2Vec2 offset = { -50.0f, -200.0f };
+			float scale = 0.2f;
+
+			int count = ParsePath( path, offset, points, 64, scale, false );
 
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
-			chainDef.count = 36;
+			chainDef.count = count;
 			chainDef.isLoop = true;
-			chainDef.filter = { StaticBit, AllBits, 0 };
 
 			b2CreateChain( groundId, &chainDef );
 		}
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
-			bodyDef.position = { 0.0f, 7.4f };
+			bodyDef.position = { 32.0f, 4.0f };
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			m_friendlyShape.maxPush = 0.02f;
+			m_friendlyShape.maxPush = 0.05f;
 			m_friendlyShape.clipVelocity = false;
 
 			shapeDef.filter = { MoverBit, AllBits, 0 };
@@ -183,22 +174,24 @@ public:
 
 		float pogoRestLength = 3.0f * m_capsule.radius;
 		float rayLength = pogoRestLength + m_capsule.radius;
-		b2Vec2 rayOrigin = b2TransformPoint( m_transform, m_capsule.center1 );
-		b2Vec2 rayTranslation = { 0.0f, -rayLength };
+		b2Circle circle = { b2TransformPoint( m_transform, m_capsule.center1 ), 0.5f * m_capsule.radius };
+		b2Vec2 translation = { 0.0f, -rayLength + circle.radius };
 		b2QueryFilter skipTeamFilter = { 1, ~2u };
-		b2RayResult rayResult = b2World_CastRayClosest( m_worldId, rayOrigin, rayTranslation, skipTeamFilter );
+		CastResult result = {};
+		b2World_CastCircle( m_worldId, &circle, translation, skipTeamFilter, CastCallback, &result );
 
-		if ( rayResult.hit == false )
+		if ( result.hit == false )
 		{
 			m_onGround = false;
 			m_pogoVelocity = 0.0f;
 
-			g_draw.DrawSegment( rayOrigin, rayOrigin + rayTranslation, b2_colorGray );
+			g_draw.DrawSegment( circle.center, circle.center + translation, b2_colorGray );
+			g_draw.DrawCircle( circle.center + translation, circle.radius, b2_colorGray );
 		}
 		else
 		{
 			m_onGround = true;
-			float pogoCurrentLength = rayResult.fraction * rayLength;
+			float pogoCurrentLength = result.fraction * rayLength;
 
 			float zeta = 0.7f;
 			float hertz = 6.0f;
@@ -207,7 +200,10 @@ public:
 
 			m_pogoVelocity = ( m_pogoVelocity - omega * omegaH * ( pogoCurrentLength - pogoRestLength ) ) /
 							 ( 1.0f + 2.0f * zeta * omegaH + omegaH * omegaH );
-			g_draw.DrawSegment(rayOrigin, rayResult.point, b2_colorGreen );
+
+			b2Vec2 delta = result.fraction * translation;
+			g_draw.DrawSegment( circle.center, circle.center + delta, b2_colorPlum );
+			g_draw.DrawCircle( circle.center + delta, circle.radius, b2_colorPlum );
 		}
 
 		b2Vec2 target = m_transform.p + timeStep * m_velocity + timeStep * m_pogoVelocity * b2Vec2{ 0.0f, 1.0f };
@@ -327,7 +323,7 @@ public:
 
 		b2Vec2 p1 = b2TransformPoint( m_transform, m_capsule.center1 );
 		b2Vec2 p2 = b2TransformPoint( m_transform, m_capsule.center2 );
-		g_draw.DrawSolidCapsule(p1, p2, m_capsule.radius, b2_colorOrange );
+		g_draw.DrawSolidCapsule( p1, p2, m_capsule.radius, b2_colorOrange );
 		g_draw.DrawSegment( m_transform.p, m_transform.p + m_velocity, b2_colorPurple );
 
 		b2Vec2 p = m_transform.p;
@@ -335,6 +331,8 @@ public:
 		DrawTextLine( "velocity %.2f %.2f", m_velocity.x, m_velocity.y );
 		DrawTextLine( "iterations %d", m_totalIterations );
 		DrawTextLine( "deltaX = %d, deltaY = %d", m_deltaX, m_deltaY );
+
+		g_camera.m_center.x = m_transform.p.x;
 	}
 
 	static Sample* Create( Settings& settings )
@@ -344,12 +342,12 @@ public:
 
 	static constexpr int m_planeCapacity = 8;
 	static constexpr float m_jumpSpeed = 10.0f;
-	static constexpr float m_maxSpeed = 6.0f;
+	static constexpr float m_maxSpeed = 4.0f;
 	static constexpr float m_minSpeed = 0.01f;
 	static constexpr float m_stopSpeed = 1.0f;
-	static constexpr float m_accelerate = 30.0f;
-	static constexpr float m_friction = 4.0f;
-	static constexpr float m_gravity = 20.0f;
+	static constexpr float m_accelerate = 20.0f;
+	static constexpr float m_friction = 2.0f;
+	static constexpr float m_gravity = 15.0f;
 
 	b2Transform m_transform;
 	b2Vec2 m_velocity;

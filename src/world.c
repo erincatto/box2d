@@ -2441,8 +2441,8 @@ static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 	return input->maxFraction;
 }
 
-b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Transform originTransform, b2Vec2 translation,
-								b2QueryFilter filter, b2CastResultFcn* fcn, void* context )
+b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Vec2 translation, b2QueryFilter filter,
+								b2CastResultFcn* fcn, void* context )
 {
 	b2TreeStats treeStats = { 0 };
 
@@ -2453,12 +2453,10 @@ b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Tra
 		return treeStats;
 	}
 
-	B2_ASSERT( b2IsValidVec2( originTransform.p ) );
-	B2_ASSERT( b2IsValidRotation( originTransform.q ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
 	b2ShapeCastInput input = {};
-	input.proxy.points[0] = b2TransformPoint( originTransform, circle->center );
+	input.proxy.points[0] = circle->center;
 	input.proxy.count = 1;
 	input.proxy.radius = circle->radius;
 	input.translation = translation;
@@ -2484,7 +2482,7 @@ b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Tra
 	return treeStats;
 }
 
-b2TreeStats b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transform originTransform, b2Vec2 translation,
+b2TreeStats b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Vec2 translation,
 								 b2QueryFilter filter, b2CastResultFcn* fcn, void* context )
 {
 	b2TreeStats treeStats = { 0 };
@@ -2496,13 +2494,12 @@ b2TreeStats b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2
 		return treeStats;
 	}
 
-	B2_ASSERT( b2IsValidVec2( originTransform.p ) );
-	B2_ASSERT( b2IsValidRotation( originTransform.q ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
 	b2ShapeCastInput input = {};
-	input.proxy.points[0] = b2TransformPoint( originTransform, capsule->center1 );
-	input.proxy.points[1] = b2TransformPoint( originTransform, capsule->center2 );
+	// Note: these world space points get transformed into local space in b2ShapeCastShape
+	input.proxy.points[0] = capsule->center1;
+	input.proxy.points[1] = capsule->center2;
 	input.proxy.count = 2;
 	input.proxy.radius = capsule->radius;
 	input.translation = translation;
@@ -2528,7 +2525,7 @@ b2TreeStats b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2
 	return treeStats;
 }
 
-b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform originTransform, b2Vec2 translation,
+b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Vec2 translation,
 								 b2QueryFilter filter, b2CastResultFcn* fcn, void* context )
 {
 	b2TreeStats treeStats = { 0 };
@@ -2540,14 +2537,13 @@ b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2
 		return treeStats;
 	}
 
-	B2_ASSERT( b2IsValidVec2( originTransform.p ) );
-	B2_ASSERT( b2IsValidRotation( originTransform.q ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
 	b2ShapeCastInput input = {};
+	// Note: these world space points get transformed into local space in b2ShapeCastShape
 	for ( int i = 0; i < polygon->count; ++i )
 	{
-		input.proxy.points[i] = b2TransformPoint( originTransform, polygon->vertices[i] );
+		input.proxy.points[i] = polygon->vertices[i];
 	}
 	input.proxy.count = polygon->count;
 	input.proxy.radius = polygon->radius;
@@ -2574,29 +2570,6 @@ b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2
 	return treeStats;
 }
 
-#if 0
-static b2AABB b2ComputeShapeBounds( const b2ShapeProxy* shape, b2Transform xf )
-{
-	B2_ASSERT( shape->count > 0 );
-	b2Vec2 lower = b2TransformPoint( xf, shape->points[0] );
-	b2Vec2 upper = lower;
-
-	for ( int i = 1; i < shape->count; ++i )
-	{
-		b2Vec2 v = b2TransformPoint( xf, shape->points[i] );
-		lower = b2Min( lower, v );
-		upper = b2Max( upper, v );
-	}
-
-	b2Vec2 r = { shape->radius, shape->radius };
-	lower = b2Sub( lower, r );
-	upper = b2Add( upper, r );
-
-	b2AABB aabb = { lower, upper };
-	return aabb;
-}
-#endif
-
 typedef struct b2MoverContext
 {
 	b2World* world;
@@ -2605,50 +2578,6 @@ typedef struct b2MoverContext
 	b2Transform transform;
 	void* userContext;
 } b2CharacterCallbackContext;
-
-#if 0
-static bool b2CollideMoverCallback( int proxyId, uint64_t userData, void* context )
-{
-	B2_UNUSED( proxyId );
-
-	int shapeId = (int)userData;
-
-	WorldOverlapContext* worldContext = context;
-	b2World* world = worldContext->world;
-
-	b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
-
-	b2Filter shapeFilter = shape->filter;
-	b2QueryFilter queryFilter = worldContext->filter;
-
-	if ( ( shapeFilter.categoryBits & queryFilter.maskBits ) == 0 || ( shapeFilter.maskBits & queryFilter.categoryBits ) == 0 )
-	{
-		return true;
-	}
-
-	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
-
-	b2DistanceInput input;
-	input.proxyA = worldContext->proxy;
-	input.proxyB = b2MakeShapeDistanceProxy( shape );
-	input.transformA = worldContext->transform;
-	input.transformB = transform;
-	input.useRadii = true;
-
-	b2SimplexCache cache = { 0 };
-	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
-
-	if ( output.distance > 0.0f )
-	{
-		return true;
-	}
-
-	b2ShapeId id = { shape->id + 1, world->worldId, shape->generation };
-	bool result = worldContext->fcn( id, worldContext->userContext );
-	return result;
-}
-#endif
 
 typedef struct WorldMoverCastContext
 {

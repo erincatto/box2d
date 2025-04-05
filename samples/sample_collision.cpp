@@ -1743,10 +1743,10 @@ public:
 			context.fractions[1] = FLT_MAX;
 			context.fractions[2] = FLT_MAX;
 
-			b2Circle circle = { { 0.0f, 0.0f }, m_castRadius };
-			b2Capsule capsule = { { -0.25f, 0.0f }, { 0.25f, 0.0f }, m_castRadius };
-			b2Polygon box = b2MakeRoundedBox( 0.25f, 0.5f, m_castRadius );
 			b2Transform transform = { m_rayStart, b2MakeRot( m_angle ) };
+			b2Circle circle = { m_rayStart, m_castRadius };
+			b2Capsule capsule = { b2TransformPoint(transform, { -0.25f, 0.0f }), b2TransformPoint(transform, { 0.25f, 0.0f }), m_castRadius };
+			b2Polygon box = b2MakeOffsetRoundedBox( 0.25f, 0.5f, transform.p, transform.q, m_castRadius );
 
 			switch ( m_castType )
 			{
@@ -1755,17 +1755,17 @@ public:
 					break;
 
 				case e_circleCast:
-					b2World_CastCircle( m_worldId, &circle, transform, rayTranslation, b2DefaultQueryFilter(), modeFcn,
+					b2World_CastCircle( m_worldId, &circle, rayTranslation, b2DefaultQueryFilter(), modeFcn,
 										&context );
 					break;
 
 				case e_capsuleCast:
-					b2World_CastCapsule( m_worldId, &capsule, transform, rayTranslation, b2DefaultQueryFilter(), modeFcn,
+					b2World_CastCapsule( m_worldId, &capsule, rayTranslation, b2DefaultQueryFilter(), modeFcn,
 										 &context );
 					break;
 
 				case e_polygonCast:
-					b2World_CastPolygon( m_worldId, &box, transform, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
+					b2World_CastPolygon( m_worldId, &box, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
 					break;
 			}
 
@@ -1784,16 +1784,16 @@ public:
 					g_draw.DrawSegment( p, head, color3 );
 
 					b2Vec2 t = b2MulSV( context.fractions[i], rayTranslation );
-					b2Transform shiftedTransform = { b2Add( transform.p, t ), transform.q };
+					b2Transform shiftedTransform = { t, b2Rot_identity };
 
 					if ( m_castType == e_circleCast )
 					{
-						g_draw.DrawSolidCircle( shiftedTransform, b2Vec2_zero, m_castRadius, b2_colorYellow );
+						g_draw.DrawSolidCircle( shiftedTransform, circle.center, m_castRadius, b2_colorYellow );
 					}
 					else if ( m_castType == e_capsuleCast )
 					{
-						b2Vec2 p1 = b2Add( b2TransformPoint( transform, capsule.center1 ), t );
-						b2Vec2 p2 = b2Add( b2TransformPoint( transform, capsule.center2 ), t );
+						b2Vec2 p1 = capsule.center1 + t;
+						b2Vec2 p2 = capsule.center2 + t;
 						g_draw.DrawSolidCapsule( p1, p2, m_castRadius, b2_colorYellow );
 					}
 					else if ( m_castType == e_polygonCast )
