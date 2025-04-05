@@ -34,13 +34,6 @@ void b2FreeId( b2IdPool* pool, int id )
 {
 	B2_ASSERT( pool->nextIndex > 0 );
 	B2_ASSERT( 0 <= id && id < pool->nextIndex );
-
-	if ( id == pool->nextIndex )
-	{
-		pool->nextIndex -= 1;
-		return;
-	}
-
 	b2IntArray_Push( &pool->freeArray, id );
 }
 
