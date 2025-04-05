@@ -68,10 +68,6 @@ static int sampleSingleBox = RegisterSample( "Stacking", "Single Box", SingleBox
 class TiltedStack : public Sample
 {
 public:
-	enum
-	{
-	};
-
 	explicit TiltedStack( Settings& settings )
 		: Sample( settings )
 	{
@@ -859,10 +855,6 @@ static int sampleDoubleDomino = RegisterSample( "Stacking", "Double Domino", Dou
 class Confined : public Sample
 {
 public:
-	enum
-	{
-	};
-
 	explicit Confined( Settings& settings )
 		: Sample( settings )
 	{
