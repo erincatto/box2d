@@ -112,7 +112,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 240.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -251,12 +251,12 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { 0.0f, 8.0f };
-			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			m_bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2Polygon box = b2MakeBox( 2.0f, 0.5f );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.density = 1.0f;
-			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+			b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
 
 			m_maxForce = 500.0f;
 			m_maxTorque = 500.0f;
@@ -264,7 +264,7 @@ public:
 
 			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
 			jointDef.bodyIdA = groundId;
-			jointDef.bodyIdB = bodyId;
+			jointDef.bodyIdB = m_bodyId;
 			jointDef.maxForce = m_maxForce;
 			jointDef.maxTorque = m_maxTorque;
 			jointDef.correctionFactor = m_correctionFactor;
@@ -276,9 +276,9 @@ public:
 		m_time = 0.0f;
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
-		float height = 140.0f;
+		float height = 180.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
@@ -301,6 +301,11 @@ public:
 		if ( ImGui::SliderFloat( "Correction", &m_correctionFactor, 0.0f, 1.0f, "%.1f" ) )
 		{
 			b2MotorJoint_SetCorrectionFactor( m_jointId, m_correctionFactor );
+		}
+
+		if ( ImGui::Button( "Apply Impulse") )
+		{
+			b2Body_ApplyLinearImpulseToCenter( m_bodyId, { 100.0f, 0.0f }, true );
 		}
 
 		ImGui::End();
@@ -339,6 +344,7 @@ public:
 		return new MotorJoint( settings );
 	}
 
+	b2BodyId m_bodyId;
 	b2JointId m_jointId;
 	float m_time;
 	float m_maxForce;
@@ -509,7 +515,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 220.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -663,7 +669,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 220.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -814,7 +820,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 220.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -896,11 +902,6 @@ static int sampleWheel = RegisterSample( "Joints", "Wheel", WheelJoint::Create )
 class Bridge : public Sample
 {
 public:
-	enum
-	{
-		e_count = 160
-	};
-
 	explicit Bridge( Settings& settings )
 		: Sample( settings )
 	{
@@ -929,7 +930,7 @@ public:
 			float xbase = -80.0f;
 
 			b2BodyId prevBodyId = groundId;
-			for ( int i = 0; i < e_count; ++i )
+			for ( int i = 0; i < m_count; ++i )
 			{
 				b2BodyDef bodyDef = b2DefaultBodyDef();
 				bodyDef.type = b2_dynamicBody;
@@ -951,7 +952,7 @@ public:
 				prevBodyId = m_bodyIds[i];
 			}
 
-			b2Vec2 pivot = { xbase + 1.0f * e_count, 20.0f };
+			b2Vec2 pivot = { xbase + 1.0f * m_count, 20.0f };
 			jointDef.bodyIdA = prevBodyId;
 			jointDef.bodyIdB = groundId;
 			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
@@ -960,7 +961,7 @@ public:
 			jointDef.maxMotorTorque = m_frictionTorque;
 			m_jointIds[jointIndex++] = b2CreateRevoluteJoint( m_worldId, &jointDef );
 
-			assert( jointIndex == e_count + 1 );
+			assert( jointIndex == m_count + 1 );
 		}
 
 		for ( int i = 0; i < 2; ++i )
@@ -995,7 +996,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 80.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -1008,7 +1009,7 @@ public:
 		bool updateFriction = ImGui::SliderFloat( "Joint Friction", &m_frictionTorque, 0.0f, 1000.0f, "%2.f" );
 		if ( updateFriction )
 		{
-			for ( int i = 0; i <= e_count; ++i )
+			for ( int i = 0; i <= m_count; ++i )
 			{
 				b2RevoluteJoint_SetMaxMotorTorque( m_jointIds[i], m_frictionTorque );
 			}
@@ -1016,7 +1017,7 @@ public:
 
 		if ( ImGui::SliderFloat( "Gravity scale", &m_gravityScale, -1.0f, 1.0f, "%.1f" ) )
 		{
-			for ( int i = 0; i < e_count; ++i )
+			for ( int i = 0; i < m_count; ++i )
 			{
 				b2Body_SetGravityScale( m_bodyIds[i], m_gravityScale );
 			}
@@ -1030,8 +1031,9 @@ public:
 		return new Bridge( settings );
 	}
 
-	b2BodyId m_bodyIds[e_count];
-	b2JointId m_jointIds[e_count + 1];
+	static constexpr int m_count = 160;
+	b2BodyId m_bodyIds[m_count];
+	b2JointId m_jointIds[m_count + 1];
 	float m_frictionTorque;
 	float m_gravityScale;
 };
@@ -1041,11 +1043,6 @@ static int sampleBridgeIndex = RegisterSample( "Joints", "Bridge", Bridge::Creat
 class BallAndChain : public Sample
 {
 public:
-	enum
-	{
-		e_count = 30
-	};
-
 	explicit BallAndChain( Settings& settings )
 		: Sample( settings )
 	{
@@ -1075,15 +1072,15 @@ public:
 			int jointIndex = 0;
 
 			b2BodyId prevBodyId = groundId;
-			for ( int i = 0; i < e_count; ++i )
+			for ( int i = 0; i < m_count; ++i )
 			{
 				b2BodyDef bodyDef = b2DefaultBodyDef();
 				bodyDef.type = b2_dynamicBody;
-				bodyDef.position = { ( 1.0f + 2.0f * i ) * hx, e_count * hx };
+				bodyDef.position = { ( 1.0f + 2.0f * i ) * hx, m_count * hx };
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 				b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
 
-				b2Vec2 pivot = { ( 2.0f * i ) * hx, e_count * hx };
+				b2Vec2 pivot = { ( 2.0f * i ) * hx, m_count * hx };
 				jointDef.bodyIdA = prevBodyId;
 				jointDef.bodyIdB = bodyId;
 				jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
@@ -1099,12 +1096,12 @@ public:
 
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
-			bodyDef.position = { ( 1.0f + 2.0f * e_count ) * hx + circle.radius - hx, e_count * hx };
+			bodyDef.position = { ( 1.0f + 2.0f * m_count ) * hx + circle.radius - hx, m_count * hx };
 
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 
-			b2Vec2 pivot = { ( 2.0f * e_count ) * hx, e_count * hx };
+			b2Vec2 pivot = { ( 2.0f * m_count ) * hx, m_count * hx };
 			jointDef.bodyIdA = prevBodyId;
 			jointDef.bodyIdB = bodyId;
 			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
@@ -1112,11 +1109,11 @@ public:
 			jointDef.enableMotor = true;
 			jointDef.maxMotorTorque = m_frictionTorque;
 			m_jointIds[jointIndex++] = b2CreateRevoluteJoint( m_worldId, &jointDef );
-			assert( jointIndex == e_count + 1 );
+			assert( jointIndex == m_count + 1 );
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 60.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -1127,7 +1124,7 @@ public:
 		bool updateFriction = ImGui::SliderFloat( "Joint Friction", &m_frictionTorque, 0.0f, 1000.0f, "%2.f" );
 		if ( updateFriction )
 		{
-			for ( int i = 0; i <= e_count; ++i )
+			for ( int i = 0; i <= m_count; ++i )
 			{
 				b2RevoluteJoint_SetMaxMotorTorque( m_jointIds[i], m_frictionTorque );
 			}
@@ -1141,7 +1138,8 @@ public:
 		return new BallAndChain( settings );
 	}
 
-	b2JointId m_jointIds[e_count + 1];
+	static constexpr int m_count = 30;
+	b2JointId m_jointIds[m_count + 1];
 	float m_frictionTorque;
 };
 
@@ -1217,7 +1215,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 180.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -1506,7 +1504,7 @@ public:
 		++index;
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 60.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -1722,7 +1720,7 @@ public:
 		m_breakForce = 1000.0f;
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 100.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -2043,8 +2041,8 @@ public:
 			bodyDef.type = b2_dynamicBody;
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.25f;
-			shapeDef.restitution = 0.25f;
+			shapeDef.material.friction = 0.25f;
+			shapeDef.material.restitution = 0.25f;
 			shapeDef.density = 0.25f;
 
 			bodyDef.position = { 230.0f, 0.5f };
@@ -2079,7 +2077,7 @@ public:
 		m_car.Spawn( m_worldId, { 0.0f, 0.0f }, 1.0f, m_hertz, m_dampingRatio, m_torque, nullptr );
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 140.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -2201,7 +2199,7 @@ public:
 		Human_ApplyRandomAngularImpulse( &m_human, 10.0f );
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 140.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -2267,7 +2265,7 @@ public:
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
-		m_donut.Spawn( m_worldId, { 0.0f, 10.0f }, 2.0f, 0, nullptr );
+		m_donut.Create( m_worldId, { 0.0f, 10.0f }, 2.0f, 0, false, nullptr );
 	}
 
 	static Sample* Create( Settings& settings )
@@ -2494,7 +2492,7 @@ public:
 		car.Spawn( m_worldId, { 0.0f, y + 2.0f }, 1.0f, 3.0f, 0.7f, 0.0f, nullptr );
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 140.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );

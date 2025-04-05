@@ -37,6 +37,7 @@ set(BOX2D_SOURCE_FILES
 	math_functions.c
 	motor_joint.c
 	mouse_joint.c
+	mover.c
 	prismatic_joint.c
 	revolute_joint.c
 	sensor.c
@@ -90,7 +91,7 @@ target_include_directories(box2d
 
 set(CMAKE_DEBUG_POSTFIX "d")
 
-# Box2D uses C17
+# Box2D uses C17 for _Static_assert and anonymous unions
 set_target_properties(box2d PROPERTIES
 	C_STANDARD 17
     C_STANDARD_REQUIRED YES
@@ -145,6 +146,10 @@ if (MSVC)
 		message(STATUS "Box2D using AVX2")	
 		target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
 		target_compile_options(box2d PRIVATE /arch:AVX2)
+	endif()
+
+	if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+		target_compile_options(box2d PRIVATE -Wmissing-prototypes)
 	endif()
 
 elseif (MINGW)

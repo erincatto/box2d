@@ -34,7 +34,7 @@ struct b2SensorQueryContext
 // - maintain an active list of overlaps for query
 
 // Assumption
-// - sensors don't detect other sensors
+// - sensors don't detect shapes on the same body
 
 // Algorithm
 // Query all sensors for overlaps
@@ -44,9 +44,11 @@ struct b2SensorQueryContext
 // Each sensor has an double buffered array of overlaps
 // These overlaps use a shape reference with index and generation
 
-static bool b2SensorQueryCallback( int proxyId, int shapeId, void* context )
+static bool b2SensorQueryCallback( int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
+
+	int shapeId = (int)userData;
 
 	struct b2SensorQueryContext* queryContext = context;
 	b2Shape* sensorShape = queryContext->sensorShape;
@@ -60,8 +62,14 @@ static bool b2SensorQueryCallback( int proxyId, int shapeId, void* context )
 	b2World* world = queryContext->world;
 	b2Shape* otherShape = b2ShapeArray_Get( &world->shapes, shapeId );
 
-	// Sensors don't overlap with other sensors
-	if ( otherShape->sensorIndex != B2_NULL_INDEX )
+	// Are sensor events enabled on the other shape?
+	if ( otherShape->enableSensorEvents == false )
+	{
+		return true;
+	}
+
+	// Skip shapes on the same body
+	if ( otherShape->bodyId == sensorShape->bodyId )
 	{
 		return true;
 	}
@@ -81,7 +89,7 @@ static bool b2SensorQueryCallback( int proxyId, int shapeId, void* context )
 	input.transformB = otherTransform;
 	input.useRadii = true;
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
+	b2DistanceOutput output = b2ShapeDistance(&input, &cache, NULL, 0 );
 
 	bool overlaps = output.distance < 10.0f * FLT_EPSILON;
 	if ( overlaps == false )
@@ -146,7 +154,17 @@ static void b2SensorTask( int startIndex, int endIndex, uint32_t threadIndex, vo
 		sensor->overlaps2 = temp;
 		b2ShapeRefArray_Clear( &sensor->overlaps2 );
 
-		b2Transform transform = b2GetBodyTransform( world, sensorShape->bodyId );
+		b2Body* body = b2BodyArray_Get( &world->bodies, sensorShape->bodyId );
+		if ( body->setIndex == b2_disabledSet || sensorShape->enableSensorEvents == false )
+		{
+			if ( sensor->overlaps1.count != 0 )
+			{
+				b2SetBit( &taskContext->eventBits, sensorIndex );
+			}
+			continue;
+		}
+
+		b2Transform transform = b2GetBodyTransformQuick( world, body );
 
 		struct b2SensorQueryContext queryContext = {
 			.world = world,
@@ -263,7 +281,10 @@ void b2OverlapSensors( b2World* world )
 					{
 						// end
 						b2ShapeId visitorId = { r1->shapeId + 1, world->worldId, r1->generation };
-						b2SensorEndTouchEvent event = { sensorId, visitorId };
+						b2SensorEndTouchEvent event = {
+							.sensorShapeId = sensorId,
+							.visitorShapeId = visitorId,
+						};
 						b2SensorEndTouchEventArray_Push( &world->sensorEndEvents[world->endEventArrayIndex], event );
 						index1 += 1;
 					}

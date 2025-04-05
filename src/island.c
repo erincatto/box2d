@@ -57,6 +57,11 @@ b2Island* b2CreateIsland( b2World* world, int setIndex )
 
 void b2DestroyIsland( b2World* world, int islandId )
 {
+	if (world->splitIslandId == islandId)
+	{
+		world->splitIslandId = B2_NULL_INDEX;
+	}
+
 	// assume island is empty
 	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
 	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, island->setIndex );
@@ -208,6 +213,8 @@ void b2LinkContact( b2World* world, b2Contact* contact )
 	{
 		b2AddContactToIsland( world, islandIdB, contact );
 	}
+
+	// todo why not merge the islands right here?
 }
 
 // This is called when a contact no longer has contact points or when a contact is destroyed.
@@ -614,7 +621,7 @@ void b2SplitIsland( b2World* world, int baseId )
 	int bodyCount = baseIsland->bodyCount;
 
 	b2Body* bodies = world->bodies.data;
-	b2ArenaAllocator* alloc = &world->stackAllocator;
+	b2ArenaAllocator* alloc = &world->arena;
 
 	// No lock is needed because I ensure the allocator is not used while this task is active.
 	int* stack = b2AllocateArenaItem( alloc, bodyCount * sizeof( int ), "island stack" );

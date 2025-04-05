@@ -115,7 +115,7 @@ public:
 		b2SurfaceMaterial material = {};
 		material.friction = 0.2f;
 		material.customColor = b2_colorSteelBlue;
-		material.material = 42;
+		material.userMaterialId = 42;
 
 		b2ChainDef chainDef = b2DefaultChainDef();
 		chainDef.points = points;
@@ -144,8 +144,8 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
-		shapeDef.friction = m_friction;
-		shapeDef.restitution = m_restitution;
+		shapeDef.material.friction = m_friction;
+		shapeDef.material.restitution = m_restitution;
 
 		if ( m_shapeType == e_circleShape )
 		{
@@ -172,7 +172,7 @@ public:
 		m_stepCount = 0;
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 155.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -404,7 +404,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 100.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -521,7 +521,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 240.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -767,11 +767,6 @@ static int sampleCustomFilter = RegisterSample( "Shapes", "Custom Filter", Custo
 class Restitution : public Sample
 {
 public:
-	enum
-	{
-		e_count = 40
-	};
-
 	enum ShapeType
 	{
 		e_circleShape = 0,
@@ -791,15 +786,10 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
-			float h = 1.0f * e_count;
+			float h = 1.0f * m_count;
 			b2Segment segment = { { -h, 0.0f }, { h, 0.0f } };
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
-		}
-
-		for ( int i = 0; i < e_count; ++i )
-		{
-			m_bodyIds[i] = b2_nullBodyId;
 		}
 
 		m_shapeType = e_circleShape;
@@ -809,7 +799,7 @@ public:
 
 	void CreateBodies()
 	{
-		for ( int i = 0; i < e_count; ++i )
+		for ( int i = 0; i < m_count; ++i )
 		{
 			if ( B2_IS_NON_NULL( m_bodyIds[i] ) )
 			{
@@ -825,16 +815,16 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
-		shapeDef.restitution = 0.0f;
+		shapeDef.material.restitution = 0.0f;
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 
-		float dr = 1.0f / ( e_count > 1 ? e_count - 1 : 1 );
-		float x = -1.0f * ( e_count - 1 );
+		float dr = 1.0f / ( m_count > 1 ? m_count - 1 : 1 );
+		float x = -1.0f * ( m_count - 1 );
 		float dx = 2.0f;
 
-		for ( int i = 0; i < e_count; ++i )
+		for ( int i = 0; i < m_count; ++i )
 		{
 			bodyDef.position = { x, 40.0f };
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
@@ -850,12 +840,12 @@ public:
 				b2CreatePolygonShape( bodyId, &shapeDef, &box );
 			}
 
-			shapeDef.restitution += dr;
+			shapeDef.material.restitution += dr;
 			x += dx;
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 100.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -885,7 +875,9 @@ public:
 		return new Restitution( settings );
 	}
 
-	b2BodyId m_bodyIds[e_count];
+	static constexpr int m_count = 40;
+
+	b2BodyId m_bodyIds[m_count] = {};
 	ShapeType m_shapeType;
 };
 
@@ -908,7 +900,7 @@ public:
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.2f;
+			shapeDef.material.friction = 0.2f;
 
 			b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
@@ -944,7 +936,7 @@ public:
 				bodyDef.position = { -15.0f + 4.0f * i, 28.0f };
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
-				shapeDef.friction = friction[i];
+				shapeDef.material.friction = friction[i];
 				b2CreatePolygonShape( bodyId, &shapeDef, &box );
 			}
 		}
@@ -995,7 +987,7 @@ public:
 			bodyDef.linearVelocity = { 5.0f, 0.0f };
 
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
-			shapeDef.rollingResistance = m_resistScale * i;
+			shapeDef.material.rollingResistance = m_resistScale * i;
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		}
 	}
@@ -1080,8 +1072,8 @@ public:
 			b2Polygon box = b2MakeRoundedBox( 10.0f, 0.25f, 0.25f );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.8f;
-			shapeDef.tangentSpeed = 2.0f;
+			shapeDef.material.friction = 0.8f;
+			shapeDef.material.tangentSpeed = 2.0f;
 
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 		}
@@ -1124,7 +1116,7 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
-			//const char* path = "M 613.8334,185.20833 H 500.06255 L 470.95838,182.5625 444.50004,174.625 418.04171,161.39583 "
+			// const char* path = "M 613.8334,185.20833 H 500.06255 L 470.95838,182.5625 444.50004,174.625 418.04171,161.39583 "
 			//				   "394.2292,140.22917 h "
 			//				   "-13.22916 v 44.97916 H 68.791712 V 0 h -21.16671 v 206.375 l 566.208398,-1e-5 z";
 
@@ -1167,6 +1159,9 @@ public:
 			chainDef.materialCount = count;
 
 			b2CreateChain( groundId, &chainDef );
+
+			m_friction = 0.6f;
+			m_rollingResistance = 0.3f;
 		}
 	}
 
@@ -1180,21 +1175,54 @@ public:
 		b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.rollingResistance = 0.3f;
+		shapeDef.material.friction = m_friction;
+		shapeDef.material.rollingResistance = m_rollingResistance;
 		b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		return bodyId;
 	}
 
+	void Reset()
+	{
+		int count = int(m_bodyIds.size());
+		for ( int i = 0; i < count; ++i )
+		{
+			b2DestroyBody( m_bodyIds[i] );
+		}
+
+		m_bodyIds.clear();
+	}
+
+	void UpdateGui() override
+	{
+		float height = 80.0f;
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 260.0f, height ) );
+
+		ImGui::Begin( "Ball Parameters", nullptr, ImGuiWindowFlags_NoResize );
+		ImGui::PushItemWidth( 140.0f );
+
+		if ( ImGui::SliderFloat( "Friction", &m_friction, 0.0f, 2.0f, "%.2f" ) )
+		{
+			Reset();
+		}
+
+		if ( ImGui::SliderFloat( "Rolling Resistance", &m_rollingResistance, 0.0f, 1.0f, "%.2f" ) )
+		{
+			Reset();
+		}
+
+		ImGui::End();
+	}
+
 	void Step( Settings& settings ) override
 	{
-		if ( m_stepCount % 25 == 0 && m_count < m_totalCount && settings.pause == false)
+		if ( m_stepCount % 25 == 0 && m_bodyIds.size() < m_totalCount && settings.pause == false )
 		{
-			DropBall();
-			m_count += 1;
+			b2BodyId id = DropBall();
+			m_bodyIds.push_back( id );
 		}
 
 		Sample::Step( settings );
-
 	}
 
 	static Sample* Create( Settings& settings )
@@ -1203,7 +1231,9 @@ public:
 	}
 
 	static constexpr int m_totalCount = 200;
-	int m_count = 0;
+	std::vector<b2BodyId> m_bodyIds;
+	float m_friction;
+	float m_rollingResistance;
 };
 
 static int sampleTangentSpeed = RegisterSample( "Shapes", "Tangent Speed", TangentSpeed::Create );
@@ -1286,7 +1316,7 @@ public:
 		b2Body_ApplyMassFromShapes( bodyId );
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 230.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -1489,6 +1519,7 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.material.rollingResistance = 0.3f;
 
 		float y = 2.0f;
 		int xcount = 10, ycount = 10;
@@ -1519,6 +1550,71 @@ public:
 };
 
 static int sampleRoundedShapes = RegisterSample( "Shapes", "Rounded", RoundedShapes::Create );
+
+class EllipseShape : public Sample
+{
+public:
+	explicit EllipseShape( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_zoom = 25.0f * 0.55f;
+			g_camera.m_center = { 2.0f, 8.0f };
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Polygon box = b2MakeOffsetBox( 20.0f, 1.0f, { 0.0f, -1.0f }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+
+			box = b2MakeOffsetBox( 1.0f, 5.0f, { 19.0f, 5.0f }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+
+			box = b2MakeOffsetBox( 1.0f, 5.0f, { -19.0f, 5.0f }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+		}
+
+		b2Vec2 points[6] = {
+			{ 0.0f, -0.25f }, { 0.0f, 0.25f }, { 0.05f, 0.075f }, { -0.05f, 0.075f }, { 0.05f, -0.075f }, { -0.05f, -0.075f },
+		};
+		b2Hull diamondHull = b2ComputeHull( points, 6 );
+		b2Polygon poly = b2MakePolygon( &diamondHull, 0.2f );
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.material.rollingResistance = 0.2f;
+
+		float y = 2.0f;
+		int xCount = 10, yCount = 10;
+
+		for ( int i = 0; i < yCount; ++i )
+		{
+			float x = -5.0f;
+			for ( int j = 0; j < xCount; ++j )
+			{
+				bodyDef.position = { x, y };
+				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+				b2CreatePolygonShape( bodyId, &shapeDef, &poly );
+
+				x += 1.0f;
+			}
+
+			y += 1.0f;
+		}
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new EllipseShape( settings );
+	}
+};
+
+static int sampleEllipseShape = RegisterSample( "Shapes", "Ellipse", EllipseShape::Create );
 
 class OffsetShapes : public Sample
 {
@@ -1630,7 +1726,7 @@ public:
 		m_impulse = 10.0f;
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 160.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );

@@ -23,7 +23,7 @@ typedef struct b2Shape
 	float restitution;
 	float rollingResistance;
 	float tangentSpeed;
-	int material;
+	int userMaterialId;
 
 	b2AABB aabb;
 	b2AABB fatAABB;
@@ -44,6 +44,7 @@ typedef struct b2Shape
 	};
 
 	uint16_t generation;
+	bool enableSensorEvents;
 	bool enableContactEvents;
 	bool enableHitEvents;
 	bool enablePreSolveEvents;
@@ -75,7 +76,7 @@ typedef struct b2ShapeExtent
 // The sensor overlaps don't get cleared until the next time step regardless of the overlapped
 // shapes being destroyed.
 // When a sensor is destroyed.
-typedef struct 
+typedef struct
 {
 	b2IntArray overlaps;
 } b2SensorOverlaps;
@@ -97,7 +98,13 @@ b2ShapeProxy b2MakeShapeDistanceProxy( const b2Shape* shape );
 b2CastOutput b2RayCastShape( const b2RayCastInput* input, const b2Shape* shape, b2Transform transform );
 b2CastOutput b2ShapeCastShape( const b2ShapeCastInput* input, const b2Shape* shape, b2Transform transform );
 
-static inline float b2GetShapeRadius(const b2Shape* shape)
+b2PlaneResult b2CollideMoverAndCircle( const b2Circle* shape, const b2Capsule* mover );
+b2PlaneResult b2CollideMoverAndCapsule( const b2Capsule* shape, const b2Capsule* mover );
+b2PlaneResult b2CollideMoverAndPolygon( const b2Polygon* shape, const b2Capsule* mover );
+b2PlaneResult b2CollideMoverAndSegment( const b2Segment* shape, const b2Capsule* mover );
+b2PlaneResult b2CollideMover( const b2Shape* shape, b2Transform transform, const b2Capsule* mover );
+
+static inline float b2GetShapeRadius( const b2Shape* shape )
 {
 	switch ( shape->type )
 	{

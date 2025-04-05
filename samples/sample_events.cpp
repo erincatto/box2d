@@ -114,8 +114,8 @@ public:
 
 				b2Polygon box = b2MakeBox( 6.0f, 0.5f );
 				b2ShapeDef shapeDef = b2DefaultShapeDef();
-				shapeDef.friction = 0.1f;
-				shapeDef.restitution = 1.0f;
+				shapeDef.material.friction = 0.1f;
+				shapeDef.material.restitution = 1.0f;
 				shapeDef.density = 1.0f;
 
 				b2CreatePolygonShape( bodyId, &shapeDef, &box );
@@ -139,6 +139,8 @@ public:
 				b2Polygon box = b2MakeOffsetBox( 4.0f, 1.0f, { 0.0f, -30.5f }, b2Rot_identity );
 				b2ShapeDef shapeDef = b2DefaultShapeDef();
 				shapeDef.isSensor = true;
+				shapeDef.enableSensorEvents = true;
+
 				b2CreatePolygonShape( groundId, &shapeDef, &box );
 			}
 		}
@@ -179,8 +181,7 @@ public:
 		if ( m_type == e_donut )
 		{
 			Donut* donut = m_donuts + index;
-			// donut->Spawn(m_worldId, center, index + 1, donut);
-			donut->Spawn( m_worldId, center, 1.0f, 0, donut );
+			donut->Create( m_worldId, center, 1.0f, 0, true, donut );
 		}
 		else
 		{
@@ -191,6 +192,7 @@ public:
 			float jointDamping = 0.5f;
 			bool colorize = true;
 			CreateHuman( human, m_worldId, center, scale, jointFriction, jointHertz, jointDamping, index + 1, human, colorize );
+			Human_EnableSensorEvents( human, true );
 		}
 
 		m_isSpawned[index] = true;
@@ -202,7 +204,7 @@ public:
 		if ( m_type == e_donut )
 		{
 			Donut* donut = m_donuts + index;
-			donut->Despawn();
+			donut->Destroy();
 		}
 		else
 		{
@@ -221,7 +223,7 @@ public:
 			{
 				if ( m_type == e_donut )
 				{
-					m_donuts[i].Despawn();
+					m_donuts[i].Destroy();
 				}
 				else
 				{
@@ -233,7 +235,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 90.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -266,7 +268,7 @@ public:
 		Sample::Step( settings );
 
 		// Discover rings that touch the bottom sensor
-		bool deferredDestructions[e_count] = {};
+		bool deferredDestruction[e_count] = {};
 		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
 		for ( int i = 0; i < sensorEvents.beginCount; ++i )
 		{
@@ -283,7 +285,7 @@ public:
 					assert( 0 <= index && index < e_count );
 
 					// Defer destruction to avoid double destruction and event invalidation (orphaned shape ids)
-					deferredDestructions[index] = true;
+					deferredDestruction[index] = true;
 				}
 			}
 			else
@@ -295,7 +297,7 @@ public:
 					assert( 0 <= index && index < e_count );
 
 					// Defer destruction to avoid double destruction and event invalidation (orphaned shape ids)
-					deferredDestructions[index] = true;
+					deferredDestruction[index] = true;
 				}
 			}
 		}
@@ -305,7 +307,7 @@ public:
 		// Safely destroy rings that hit the bottom sensor
 		for ( int i = 0; i < e_count; ++i )
 		{
-			if ( deferredDestructions[i] )
+			if ( deferredDestruction[i] )
 			{
 				DestroyElement( i );
 			}
@@ -363,25 +365,50 @@ public:
 			groundSegment = { { 10.0f, 0.0f }, { 10.0f, 10.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &groundSegment );
 
-			m_isVisiting = false;
+			m_isVisiting1 = false;
+			m_isVisiting2 = false;
+			m_sensorsOverlapCount = 0;
 		}
 
-		CreateSensor();
-
+		CreateSensor1();
+		CreateSensor2();
 		CreateVisitor();
 	}
 
-	void CreateSensor()
+	void CreateSensor1()
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 
-		bodyDef.position = { 0.0f, 1.0f };
-		m_sensorBodyId = b2CreateBody( m_worldId, &bodyDef );
+		bodyDef.position = { -2.0f, 1.0f };
+		m_sensorBodyId1 = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.isSensor = true;
+		shapeDef.enableSensorEvents = true;
+
 		b2Polygon box = b2MakeSquare( 1.0f );
-		m_sensorShapeId = b2CreatePolygonShape( m_sensorBodyId, &shapeDef, &box );
+		m_sensorShapeId1 = b2CreatePolygonShape( m_sensorBodyId1, &shapeDef, &box );
+	}
+
+	void CreateSensor2()
+	{
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.position = { 2.0f, 1.0f };
+		m_sensorBodyId2 = b2CreateBody( m_worldId, &bodyDef );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.isSensor = true;
+		shapeDef.enableSensorEvents = true;
+
+		b2Polygon box = b2MakeRoundedBox( 0.5f, 0.5f, 0.5f );
+		m_sensorShapeId2 = b2CreatePolygonShape( m_sensorBodyId2, &shapeDef, &box );
+
+		// Solid middle
+		shapeDef.isSensor = false;
+		shapeDef.enableSensorEvents = false;
+		box = b2MakeSquare( 0.5f );
+		b2CreatePolygonShape( m_sensorBodyId2, &shapeDef, &box );
 	}
 
 	void CreateVisitor()
@@ -393,16 +420,17 @@ public:
 		m_visitorBodyId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.enableSensorEvents = true;
 
 		b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
 		m_visitorShapeId = b2CreateCircleShape( m_visitorBodyId, &shapeDef, &circle );
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
-		float height = 90.0f;
+		float height = 260.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
+		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
 
 		ImGui::Begin( "Sensor Bookend", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 
@@ -419,24 +447,108 @@ public:
 			{
 				b2DestroyBody( m_visitorBodyId );
 				m_visitorBodyId = b2_nullBodyId;
-				m_visitorShapeId = b2_nullShapeId;
+				// Retain m_visitorShapeId for end events.
+			}
+			else
+			{
+				bool enabledEvents = b2Shape_AreSensorEventsEnabled( m_visitorShapeId );
+				if ( ImGui::Checkbox( "visitor events", &enabledEvents ) )
+				{
+					b2Shape_EnableSensorEvents( m_visitorShapeId, enabledEvents );
+				}
+
+				bool enabledBody = b2Body_IsEnabled( m_visitorBodyId );
+				if ( ImGui::Checkbox( "enable visitor body", &enabledBody ) )
+				{
+					if (enabledBody)
+					{
+						b2Body_Enable( m_visitorBodyId );
+					}
+					else
+					{
+						b2Body_Disable( m_visitorBodyId );
+					}
+				}
 			}
 		}
 
-		if ( B2_IS_NULL( m_sensorBodyId ) )
+		ImGui::Separator();
+
+		if ( B2_IS_NULL( m_sensorBodyId1 ) )
 		{
-			if ( ImGui::Button( "create sensor" ) )
+			if ( ImGui::Button( "create sensor1" ) )
 			{
-				CreateSensor();
+				CreateSensor1();
 			}
 		}
 		else
 		{
-			if ( ImGui::Button( "destroy sensor" ) )
+			if ( ImGui::Button( "destroy sensor1" ) )
 			{
-				b2DestroyBody( m_sensorBodyId );
-				m_sensorBodyId = b2_nullBodyId;
-				m_sensorShapeId = b2_nullShapeId;
+				b2DestroyBody( m_sensorBodyId1 );
+				m_sensorBodyId1 = b2_nullBodyId;
+				// Retain m_sensorShapeId1 for end events.
+			}
+			else
+			{
+				bool enabledEvents = b2Shape_AreSensorEventsEnabled( m_sensorShapeId1 );
+				if ( ImGui::Checkbox( "sensor 1 events", &enabledEvents ) )
+				{
+					b2Shape_EnableSensorEvents( m_sensorShapeId1, enabledEvents );
+				}
+
+				bool enabledBody = b2Body_IsEnabled( m_sensorBodyId1 );
+				if ( ImGui::Checkbox( "enable sensor1 body", &enabledBody ) )
+				{
+					if ( enabledBody )
+					{
+						b2Body_Enable( m_sensorBodyId1 );
+					}
+					else
+					{
+						b2Body_Disable( m_sensorBodyId1 );
+					}
+				}
+			}
+		}
+
+		ImGui::Separator();
+
+		if ( B2_IS_NULL( m_sensorBodyId2 ) )
+		{
+			if ( ImGui::Button( "create sensor2" ) )
+			{
+				CreateSensor2();
+			}
+		}
+		else
+		{
+			if ( ImGui::Button( "destroy sensor2" ) )
+			{
+				b2DestroyBody( m_sensorBodyId2 );
+				m_sensorBodyId2 = b2_nullBodyId;
+				// Retain m_sensorShapeId2 for end events.
+			}
+			else
+			{
+				bool enabledEvents = b2Shape_AreSensorEventsEnabled( m_sensorShapeId2 );
+				if ( ImGui::Checkbox( "sensor2 events", &enabledEvents ) )
+				{
+					b2Shape_EnableSensorEvents( m_sensorShapeId2, enabledEvents );
+				}
+
+				bool enabledBody = b2Body_IsEnabled( m_sensorBodyId2 );
+				if ( ImGui::Checkbox( "enable sensor2 body", &enabledBody ) )
+				{
+					if ( enabledBody )
+					{
+						b2Body_Enable( m_sensorBodyId2 );
+					}
+					else
+					{
+						b2Body_Disable( m_sensorBodyId2 );
+					}
+				}
 			}
 		}
 
@@ -452,27 +564,93 @@ public:
 		{
 			b2SensorBeginTouchEvent event = sensorEvents.beginEvents[i];
 
-			if ( B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ) )
+			if ( B2_ID_EQUALS( event.sensorShapeId, m_sensorShapeId1 ) )
 			{
-				assert( m_isVisiting == false );
-				m_isVisiting = true;
+				if ( B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ) )
+				{
+					assert( m_isVisiting1 == false );
+					m_isVisiting1 = true;
+				}
+				else
+				{
+					assert( B2_ID_EQUALS( event.visitorShapeId, m_sensorShapeId2 ) );
+					m_sensorsOverlapCount += 1;
+				}
+			}
+			else
+			{
+				assert( B2_ID_EQUALS( event.sensorShapeId, m_sensorShapeId2 ) );
+
+				if ( B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ) )
+				{
+					assert( m_isVisiting2 == false );
+					m_isVisiting2 = true;
+				}
+				else
+				{
+					assert( B2_ID_EQUALS( event.visitorShapeId, m_sensorShapeId1 ) );
+					m_sensorsOverlapCount += 1;
+				}
 			}
 		}
+
+		assert( m_sensorsOverlapCount == 0 || m_sensorsOverlapCount == 2 );
 
 		for ( int i = 0; i < sensorEvents.endCount; ++i )
 		{
 			b2SensorEndTouchEvent event = sensorEvents.endEvents[i];
 
-			bool wasVisitorDestroyed = b2Shape_IsValid( event.visitorShapeId ) == false;
-			if ( B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ) || wasVisitorDestroyed )
+			if ( B2_ID_EQUALS( event.sensorShapeId, m_sensorShapeId1 ) )
 			{
-				assert( m_isVisiting == true );
-				m_isVisiting = false;
+				if ( B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ))
+				{
+					assert( m_isVisiting1 == true );
+					m_isVisiting1 = false;
+				}
+				else
+				{
+					assert( B2_ID_EQUALS( event.visitorShapeId, m_sensorShapeId2 ) );
+					m_sensorsOverlapCount -= 1;
+				}
+			}
+			else
+			{
+				assert( B2_ID_EQUALS( event.sensorShapeId, m_sensorShapeId2 ) );
+
+				if ( B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ) )
+				{
+					assert( m_isVisiting2 == true );
+					m_isVisiting2 = false;
+				}
+				else
+				{
+					assert( B2_ID_EQUALS( event.visitorShapeId, m_sensorShapeId1 ) );
+					m_sensorsOverlapCount -= 1;
+				}
 			}
 		}
 
-		g_draw.DrawString( 5, m_textLine, "visiting == %s", m_isVisiting ? "true" : "false" );
-		m_textLine += m_textIncrement;
+		assert( m_sensorsOverlapCount == 0 || m_sensorsOverlapCount == 2 );
+
+		// Nullify invalid shape ids after end events are processed.
+		if (b2Shape_IsValid(m_visitorShapeId) == false)
+		{
+			m_visitorShapeId = b2_nullShapeId;
+		}
+
+		if (b2Shape_IsValid(m_sensorShapeId1) == false)
+		{
+			m_sensorShapeId1 = b2_nullShapeId;
+		}
+
+		if (b2Shape_IsValid(m_sensorShapeId2) == false)
+		{
+			m_sensorShapeId2 = b2_nullShapeId;
+		}
+
+		DrawTextLine( "visiting 1 == %s", m_isVisiting1 ? "true" : "false" );
+		DrawTextLine( "visiting 2 == %s", m_isVisiting2 ? "true" : "false" );
+		DrawTextLine( "sensors overlap count == %d", m_sensorsOverlapCount );
 	}
 
 	static Sample* Create( Settings& settings )
@@ -480,12 +658,18 @@ public:
 		return new SensorBookend( settings );
 	}
 
-	b2BodyId m_sensorBodyId;
-	b2ShapeId m_sensorShapeId;
+	b2BodyId m_sensorBodyId1;
+	b2ShapeId m_sensorShapeId1;
+
+	b2BodyId m_sensorBodyId2;
+	b2ShapeId m_sensorShapeId2;
 
 	b2BodyId m_visitorBodyId;
 	b2ShapeId m_visitorShapeId;
-	bool m_isVisiting;
+
+	bool m_isVisiting1;
+	bool m_isVisiting2;
+	int m_sensorsOverlapCount;
 };
 
 static int sampleSensorBookendEvent = RegisterSample( "Events", "Sensor Bookend", SensorBookend::Create );
@@ -529,6 +713,7 @@ public:
 			chainDef.filter.categoryBits = GROUND;
 			chainDef.filter.maskBits = FOOT | PLAYER;
 			chainDef.isLoop = false;
+			chainDef.enableSensorEvents = true;
 
 			b2CreateChain( groundId, &chainDef );
 		}
@@ -542,7 +727,7 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.filter.categoryBits = PLAYER;
 			shapeDef.filter.maskBits = GROUND;
-			shapeDef.friction = 0.3f;
+			shapeDef.material.friction = 0.3f;
 			b2Capsule capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.5f };
 			b2CreateCapsuleShape( m_playerId, &shapeDef, &capsule );
 
@@ -550,6 +735,7 @@ public:
 			shapeDef.filter.categoryBits = FOOT;
 			shapeDef.filter.maskBits = GROUND;
 			shapeDef.isSensor = true;
+			shapeDef.enableSensorEvents = true;
 			m_sensorId = b2CreatePolygonShape( m_playerId, &shapeDef, &box );
 		}
 
@@ -718,7 +904,7 @@ public:
 		m_debrisIds[index] = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.restitution = 0.8f;
+		shapeDef.material.restitution = 0.8f;
 
 		// No events when debris hits debris
 		shapeDef.enableContactEvents = false;
@@ -740,7 +926,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 60.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -830,7 +1016,7 @@ public:
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							g_draw.DrawSegment( point.point, point.point + point.maxNormalImpulse * normal, b2_colorBlueViolet );
+							g_draw.DrawSegment( point.point, point.point + point.totalNormalImpulse * normal, b2_colorBlueViolet );
 							g_draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
 						}
 					}
@@ -860,7 +1046,7 @@ public:
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							g_draw.DrawSegment( point.point, point.point + point.maxNormalImpulse * normal, b2_colorYellowGreen );
+							g_draw.DrawSegment( point.point, point.point + point.totalNormalImpulse * normal, b2_colorYellowGreen );
 							g_draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
 						}
 					}
@@ -1112,7 +1298,7 @@ public:
 			m_radius = 0.5f;
 			b2Capsule capsule = { { 0.0f, 0.0f }, { 0.0f, 1.0f }, m_radius };
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.1f;
+			shapeDef.material.friction = 0.1f;
 
 			m_playerShapeId = b2CreateCapsuleShape( m_playerId, &shapeDef, &capsule );
 		}
@@ -1175,7 +1361,7 @@ public:
 		return false;
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 100.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -1318,7 +1504,7 @@ public:
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.1f;
+			shapeDef.material.friction = 0.1f;
 
 			b2Polygon box = b2MakeOffsetBox( 12.0f, 0.1f, { -10.0f, -0.1f }, b2MakeRot( -0.15f * B2_PI ) );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
@@ -1326,7 +1512,7 @@ public:
 			box = b2MakeOffsetBox( 12.0f, 0.1f, { 10.0f, -0.1f }, b2MakeRot( 0.15f * B2_PI ) );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 
-			shapeDef.restitution = 0.8f;
+			shapeDef.material.restitution = 0.8f;
 
 			box = b2MakeOffsetBox( 0.1f, 10.0f, { 19.9f, 10.0f }, b2Rot_identity );
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
@@ -1360,6 +1546,7 @@ public:
 		for ( int32_t i = 0; i < 10 && m_count < e_count; ++i )
 		{
 			bodyDef.position = { x, y };
+			bodyDef.isBullet = ( m_count % 12 == 0 );
 			bodyDef.userData = m_bodyIds + m_count;
 			m_bodyIds[m_count] = b2CreateBody( m_worldId, &bodyDef );
 			m_sleeping[m_count] = false;
@@ -1389,7 +1576,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 100.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -1429,6 +1616,12 @@ public:
 			const b2BodyMoveEvent* event = events.moveEvents + i;
 			g_draw.DrawTransform( event->transform );
 
+			b2Transform transform = b2Body_GetTransform( event->bodyId );
+			B2_ASSERT( transform.p.x == event->transform.p.x );
+			B2_ASSERT( transform.p.y == event->transform.p.y );
+			B2_ASSERT( transform.q.c == event->transform.q.c );
+			B2_ASSERT( transform.q.s == event->transform.q.s );
+
 			// this shows a somewhat contrived way to track body sleeping
 			b2BodyId* bodyId = static_cast<b2BodyId*>( event->userData );
 			ptrdiff_t diff = bodyId - m_bodyIds;
@@ -1460,8 +1653,8 @@ public:
 		return new BodyMove( settings );
 	}
 
-	b2BodyId m_bodyIds[e_count];
-	bool m_sleeping[e_count];
+	b2BodyId m_bodyIds[e_count] = {};
+	bool m_sleeping[e_count] = {};
 	int m_count;
 	int m_sleepCount;
 	b2Vec2 m_explosionPosition;
@@ -1498,8 +1691,11 @@ public:
 
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+			// Enable sensor events, but filter them out as a test
 			shapeDef.filter.categoryBits = GROUND;
-			shapeDef.filter.maskBits = SENSOR | DEFAULT;
+			shapeDef.filter.maskBits = DEFAULT;
+			shapeDef.enableSensorEvents = true;
 
 			b2Segment groundSegment = { { -6.0f, 0.0f }, { 6.0f, 0.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &groundSegment );
@@ -1521,6 +1717,7 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.filter.categoryBits = SENSOR;
 			shapeDef.isSensor = true;
+			shapeDef.enableSensorEvents = true;
 			b2Polygon box = b2MakeSquare( 1.0f );
 			m_staticSensorId = b2CreatePolygonShape( bodyId, &shapeDef, &box );
 		}
@@ -1536,6 +1733,7 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.filter.categoryBits = SENSOR;
 			shapeDef.isSensor = true;
+			shapeDef.enableSensorEvents = true;
 			b2Polygon box = b2MakeSquare( 1.0f );
 			m_kinematicSensorId = b2CreatePolygonShape( m_kinematicBodyId, &shapeDef, &box );
 		}
@@ -1550,12 +1748,14 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.filter.categoryBits = SENSOR;
 			shapeDef.isSensor = true;
+			shapeDef.enableSensorEvents = true;
 			b2Polygon box = b2MakeSquare( 1.0f );
 			m_dynamicSensorId = b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
 			// Add some real collision so the dynamic body is valid
 			shapeDef.filter.categoryBits = DEFAULT;
 			shapeDef.isSensor = false;
+			shapeDef.enableSensorEvents = false;
 			box = b2MakeSquare( 0.8f );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 		}
@@ -1571,6 +1771,7 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.filter.categoryBits = DEFAULT;
 			shapeDef.filter.maskBits = GROUND | DEFAULT | SENSOR;
+			shapeDef.enableSensorEvents = true;
 
 			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
@@ -1615,12 +1816,12 @@ public:
 	void Step( Settings& settings ) override
 	{
 		b2Vec2 position = b2Body_GetPosition( m_kinematicBodyId );
-		if (position.y < 0.0f)
+		if ( position.y < 0.0f )
 		{
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { 0.0f, 1.0f } );
-			//b2Body_SetKinematicTarget( m_kinematicBodyId );
+			// b2Body_SetKinematicTarget( m_kinematicBodyId );
 		}
-		else if (position.y > 3.0f)
+		else if ( position.y > 3.0f )
 		{
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { 0.0f, -1.0f } );
 		}
@@ -1636,7 +1837,7 @@ public:
 		b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, b2DefaultQueryFilter() );
 		g_draw.DrawSegment( origin, origin + translation, b2_colorDimGray );
 
-		if (result.hit)
+		if ( result.hit )
 		{
 			g_draw.DrawPoint( result.point, 10.0f, b2_colorCyan );
 		}

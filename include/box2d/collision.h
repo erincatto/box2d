@@ -36,25 +36,35 @@ typedef struct b2RayCastInput
 	float maxFraction;
 } b2RayCastInput;
 
-/// Low level shape cast input in generic form. This allows casting an arbitrary point
-/// cloud wrap with a radius. For example, a circle is a single point with a non-zero radius.
-/// A capsule is two points with a non-zero radius. A box is four points with a zero radius.
-typedef struct b2ShapeCastInput
+/// A distance proxy is used by the GJK algorithm. It encapsulates any shape.
+typedef struct b2ShapeProxy
 {
-	/// A point cloud to cast
+	/// The point cloud
 	b2Vec2 points[B2_MAX_POLYGON_VERTICES];
 
 	/// The number of points
 	int count;
 
-	/// The radius around the point cloud
+	/// The external radius of the point cloud
 	float radius;
+} b2ShapeProxy;
+
+/// Low level shape cast input in generic form. This allows casting an arbitrary point
+/// cloud wrap with a radius. For example, a circle is a single point with a non-zero radius.
+/// A capsule is two points with a non-zero radius. A box is four points with a zero radius.
+typedef struct b2ShapeCastInput
+{
+	/// A generic shape
+	b2ShapeProxy proxy;
 
 	/// The translation of the shape cast
 	b2Vec2 translation;
 
 	/// The maximum fraction of the translation to consider, typically 1
 	float maxFraction;
+
+	/// Allow shape cast to encroach when initially touching. This only works if the radius is greater than zero.
+	bool canEncroach;
 } b2ShapeCastInput;
 
 /// Low level ray cast or shape-cast output data
@@ -329,19 +339,6 @@ typedef struct b2SegmentDistanceResult
 /// Compute the distance between two line segments, clamping at the end points if needed.
 B2_API b2SegmentDistanceResult b2SegmentDistance( b2Vec2 p1, b2Vec2 q1, b2Vec2 p2, b2Vec2 q2 );
 
-/// A distance proxy is used by the GJK algorithm. It encapsulates any shape.
-typedef struct b2ShapeProxy
-{
-	/// The point cloud
-	b2Vec2 points[B2_MAX_POLYGON_VERTICES];
-
-	/// The number of points
-	int count;
-
-	/// The external radius of the point cloud
-	float radius;
-} b2ShapeProxy;
-
 /// Used to warm start the GJK simplex. If you call this function multiple times with nearby
 /// transforms this might improve performance. Otherwise you can zero initialize this.
 /// The distance cache must be initialized to zero on the first call.
@@ -382,11 +379,10 @@ typedef struct b2DistanceInput
 /// Output for b2ShapeDistance
 typedef struct b2DistanceOutput
 {
-	b2Vec2 pointA; ///< Closest point on shapeA
-	b2Vec2 pointB; ///< Closest point on shapeB
-	// todo_erin implement this
-	// b2Vec2 normal;			///< Normal vector that points from A to B
-	float distance;		  ///< The final distance, zero if overlapped
+	b2Vec2 pointA;	  ///< Closest point on shapeA
+	b2Vec2 pointB;	  ///< Closest point on shapeB
+	b2Vec2 normal;	  ///< Normal vector that points from A to B
+	float distance;	  ///< The final distance, zero if overlapped
 	int iterations;	  ///< Number of GJK iterations used
 	int simplexCount; ///< The number of simplexes stored in the simplex array
 } b2DistanceOutput;
@@ -394,10 +390,10 @@ typedef struct b2DistanceOutput
 /// Simplex vertex for debugging the GJK algorithm
 typedef struct b2SimplexVertex
 {
-	b2Vec2 wA;		///< support point in proxyA
-	b2Vec2 wB;		///< support point in proxyB
-	b2Vec2 w;		///< wB - wA
-	float a;		///< barycentric coordinate for closest point
+	b2Vec2 wA;	///< support point in proxyA
+	b2Vec2 wB;	///< support point in proxyB
+	b2Vec2 w;	///< wB - wA
+	float a;	///< barycentric coordinate for closest point
 	int indexA; ///< wA index
 	int indexB; ///< wB index
 } b2SimplexVertex;
@@ -406,13 +402,13 @@ typedef struct b2SimplexVertex
 typedef struct b2Simplex
 {
 	b2SimplexVertex v1, v2, v3; ///< vertices
-	int count;				///< number of valid vertices
+	int count;					///< number of valid vertices
 } b2Simplex;
 
 /// Compute the closest points between two shapes represented as point clouds.
 /// b2SimplexCache cache is input/output. On the first call set b2SimplexCache.count to zero.
 /// The underlying GJK algorithm may be debugged by passing in debug simplexes and capacity. You may pass in NULL and 0 for these.
-B2_API b2DistanceOutput b2ShapeDistance( b2SimplexCache* cache, const b2DistanceInput* input, b2Simplex* simplexes,
+B2_API b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* cache, b2Simplex* simplexes,
 										 int simplexCapacity );
 
 /// Input parameters for b2ShapeCast
@@ -424,10 +420,12 @@ typedef struct b2ShapeCastPairInput
 	b2Transform transformB; ///< The world transform for shape B
 	b2Vec2 translationB;	///< The translation of shape B
 	float maxFraction;		///< The fraction of the translation to consider, typically 1
+	bool canEncroach;		///< Allows shapes with a radius to move slightly closer if already touching
 } b2ShapeCastPairInput;
 
 /// Perform a linear shape cast of shape B moving and shape A fixed. Determines the hit point, normal, and translation fraction.
-B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input );
+/// You may optionally supply an array to hold debug data.
+B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input);
 
 /// Make a proxy for use in GJK and related functions.
 B2_API b2ShapeProxy b2MakeProxy( const b2Vec2* vertices, int count, float radius );
@@ -491,7 +489,7 @@ B2_API b2TOIOutput b2TimeOfImpact( const b2TOIInput* input );
 /// A manifold point is a contact point belonging to a contact manifold.
 /// It holds details related to the geometry and dynamics of the contact points.
 /// Box2D uses speculative collision so some contact points may be separated.
-/// You may use the maxNormalImpulse to determine if there was an interaction during
+/// You may use the totalNormalImpulse to determine if there was an interaction during
 /// the time step.
 typedef struct b2ManifoldPoint
 {
@@ -516,9 +514,9 @@ typedef struct b2ManifoldPoint
 	/// The friction impulse
 	float tangentImpulse;
 
-	/// The maximum normal impulse applied during sub-stepping. This is important
+	/// The total normal impulse applied across sub-stepping and restitution. This is important
 	/// to identify speculative contact points that had an interaction in the time step.
-	float maxNormalImpulse;
+	float totalNormalImpulse;
 
 	/// Relative normal velocity pre-solve. Used for hit events. If the normal impulse is
 	/// zero then there was no hit. Negative means shapes are approaching.
@@ -669,7 +667,7 @@ B2_API b2DynamicTree b2DynamicTree_Create( void );
 B2_API void b2DynamicTree_Destroy( b2DynamicTree* tree );
 
 /// Create a proxy. Provide an AABB and a userData value.
-B2_API int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, int userData );
+B2_API int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData );
 
 /// Destroy a proxy. This asserts if the id is invalid.
 B2_API void b2DynamicTree_DestroyProxy( b2DynamicTree* tree, int proxyId );
@@ -680,9 +678,15 @@ B2_API void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int proxyId, b2AABB aa
 /// Enlarge a proxy and enlarge ancestors as necessary.
 B2_API void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb );
 
+/// Modify the category bits on a proxy. This is an expensive operation.
+B2_API void b2DynamicTree_SetCategoryBits( b2DynamicTree* tree, int proxyId, uint64_t categoryBits );
+
+/// Get the category bits on a proxy.
+B2_API uint64_t b2DynamicTree_GetCategoryBits( b2DynamicTree* tree, int proxyId );
+
 /// This function receives proxies found in the AABB query.
 /// @return true if the query should continue
-typedef bool b2TreeQueryCallbackFcn( int proxyId, int userData, void* context );
+typedef bool b2TreeQueryCallbackFcn( int proxyId, uint64_t userData, void* context );
 
 /// Query an AABB for overlapping proxies. The callback class is called for each proxy that overlaps the supplied AABB.
 ///	@return performance data
@@ -694,7 +698,7 @@ B2_API b2TreeStats b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, 
 /// - return a value of 0 to terminate the ray cast
 /// - return a value less than input->maxFraction to clip the ray
 /// - return a value of input->maxFraction to continue the ray cast without clipping
-typedef float b2TreeRayCastCallbackFcn( const b2RayCastInput* input, int proxyId, int userData, void* context );
+typedef float b2TreeRayCastCallbackFcn( const b2RayCastInput* input, int proxyId, uint64_t userData, void* context );
 
 /// Ray cast against the proxies in the tree. This relies on the callback
 /// to perform a exact ray cast in the case were the proxy contains a shape.
@@ -717,7 +721,7 @@ B2_API b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2Ray
 /// - return a value of 0 to terminate the ray cast
 /// - return a value less than input->maxFraction to clip the ray
 /// - return a value of input->maxFraction to continue the ray cast without clipping
-typedef float b2TreeShapeCastCallbackFcn( const b2ShapeCastInput* input, int proxyId, int userData, void* context );
+typedef float b2TreeShapeCastCallbackFcn( const b2ShapeCastInput* input, int proxyId, uint64_t userData, void* context );
 
 /// Ray cast against the proxies in the tree. This relies on the callback
 /// to perform a exact ray cast in the case were the proxy contains a shape.
@@ -739,6 +743,9 @@ B2_API int b2DynamicTree_GetHeight( const b2DynamicTree* tree );
 /// Get the ratio of the sum of the node areas to the root area.
 B2_API float b2DynamicTree_GetAreaRatio( const b2DynamicTree* tree );
 
+/// Get the bounding box that contains the entire tree
+B2_API b2AABB b2DynamicTree_GetRootBounds( const b2DynamicTree* tree );
+
 /// Get the number of proxies created
 B2_API int b2DynamicTree_GetProxyCount( const b2DynamicTree* tree );
 
@@ -749,7 +756,7 @@ B2_API int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild );
 B2_API int b2DynamicTree_GetByteCount( const b2DynamicTree* tree );
 
 /// Get proxy user data
-B2_API int b2DynamicTree_GetUserData( const b2DynamicTree* tree, int proxyId );
+B2_API uint64_t b2DynamicTree_GetUserData( const b2DynamicTree* tree, int proxyId );
 
 /// Get the AABB of a proxy
 B2_API b2AABB b2DynamicTree_GetAABB( const b2DynamicTree* tree, int proxyId );
@@ -760,6 +767,36 @@ B2_API void b2DynamicTree_Validate( const b2DynamicTree* tree );
 /// Validate this tree has no enlarged AABBs. For testing.
 B2_API void b2DynamicTree_ValidateNoEnlarged( const b2DynamicTree* tree );
 
+/**@}*/
 
+/**
+ * @defgroup character
+ * Experimental character movement solver
+ * @{
+ */
+
+typedef struct b2PlaneResult
+{
+	b2Plane plane;
+	b2Vec2 point;
+	bool hit;
+} b2PlaneResult;
+
+typedef struct b2CollisionPlane
+{
+	b2Plane plane;
+	float pushLimit;
+	float push;
+	bool clipVelocity;
+} b2CollisionPlane;
+
+typedef struct b2PlaneSolverResult
+{
+	b2Vec2 position;
+	int iterationCount;
+} b2PlaneSolverResult;
+
+B2_API b2PlaneSolverResult b2SolvePlanes( b2Vec2 initialPosition, b2CollisionPlane* planes, int count );
+B2_API b2Vec2 b2ClipVector( b2Vec2 vector, const b2CollisionPlane* planes, int count );
 
 /**@}*/

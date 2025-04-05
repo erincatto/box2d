@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <vector>
 
-#if defined( _WIN32 )
+#if defined( _MSC_VER )
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
 #include <stdlib.h>
@@ -157,7 +157,7 @@ struct GLBackground
 		glBufferData( GL_ARRAY_BUFFER, sizeof( vertices ), vertices, GL_STATIC_DRAW );
 		glVertexAttribPointer( vertexAttribute, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( 0 ) );
 
-		CheckErrorGL();
+		CheckOpenGL();
 
 		// Cleanup
 		glBindBuffer( GL_ARRAY_BUFFER, 0 );
@@ -186,8 +186,8 @@ struct GLBackground
 		glUseProgram( m_programId );
 
 		float time = (float)glfwGetTime();
-		time = fmodf(time, 100.0f);
-		
+		time = fmodf( time, 100.0f );
+
 		glUniform1f( m_timeUniform, time );
 		glUniform2f( m_resolutionUniform, (float)g_camera.m_width, (float)g_camera.m_height );
 
@@ -270,7 +270,7 @@ struct GLPoints
 		glVertexAttribPointer( colorAttribute, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof( PointData ),
 							   (void*)offsetof( PointData, rgba ) );
 
-		CheckErrorGL();
+		CheckOpenGL();
 
 		// Cleanup
 		glBindBuffer( GL_ARRAY_BUFFER, 0 );
@@ -329,7 +329,7 @@ struct GLPoints
 			glBufferSubData( GL_ARRAY_BUFFER, 0, batchCount * sizeof( PointData ), &m_points[base] );
 			glDrawArrays( GL_POINTS, 0, batchCount );
 
-			CheckErrorGL();
+			CheckOpenGL();
 
 			count -= e_batchSize;
 			base += e_batchSize;
@@ -366,24 +366,30 @@ struct GLLines
 {
 	void Create()
 	{
-		const char* vs = "#version 330\n"
-						 "uniform mat4 projectionMatrix;\n"
-						 "layout(location = 0) in vec2 v_position;\n"
-						 "layout(location = 1) in vec4 v_color;\n"
-						 "out vec4 f_color;\n"
-						 "void main(void)\n"
-						 "{\n"
-						 "	f_color = v_color;\n"
-						 "	gl_Position = projectionMatrix * vec4(v_position, 0.0f, 1.0f);\n"
-						 "}\n";
+		const char* vs =
+			R"(
+			#version 330
+			uniform mat4 projectionMatrix;
+			layout(location = 0) in vec2 v_position;
+			layout(location = 1) in vec4 v_color;
+			out vec4 f_color;
+			void main(void)
+			{
+				f_color = v_color;
+				gl_Position = projectionMatrix * vec4(v_position, 0.0f, 1.0f);
+			}
+			)";
 
-		const char* fs = "#version 330\n"
-						 "in vec4 f_color;\n"
-						 "out vec4 color;\n"
-						 "void main(void)\n"
-						 "{\n"
-						 "	color = f_color;\n"
-						 "}\n";
+		const char* fs =
+			R"(
+			#version 330
+			in vec4 f_color;
+			out vec4 color;
+			void main(void)
+			{
+				color = f_color;
+			}
+			)";
 
 		m_programId = CreateProgramFromStrings( vs, fs );
 		m_projectionUniform = glGetUniformLocation( m_programId, "projectionMatrix" );
@@ -408,7 +414,7 @@ struct GLLines
 		glVertexAttribPointer( colorAttribute, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof( VertexData ),
 							   (void*)offsetof( VertexData, rgba ) );
 
-		CheckErrorGL();
+		CheckOpenGL();
 
 		// Cleanup
 		glBindBuffer( GL_ARRAY_BUFFER, 0 );
@@ -449,6 +455,11 @@ struct GLLines
 
 		assert( count % 2 == 0 );
 
+		glEnable( GL_LINE_SMOOTH );
+		glEnable( GL_BLEND );
+		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+		glLineWidth( 1.0f );
+
 		glUseProgram( m_programId );
 
 		float proj[16] = { 0.0f };
@@ -468,7 +479,7 @@ struct GLLines
 
 			glDrawArrays( GL_LINES, 0, batchCount );
 
-			CheckErrorGL();
+			CheckOpenGL();
 
 			count -= e_batchSize;
 			base += e_batchSize;
@@ -477,6 +488,8 @@ struct GLLines
 		glBindBuffer( GL_ARRAY_BUFFER, 0 );
 		glBindVertexArray( 0 );
 		glUseProgram( 0 );
+
+		glDisable( GL_BLEND );
 
 		m_points.clear();
 	}
@@ -487,145 +500,6 @@ struct GLLines
 	{
 		// must be multiple of 2
 		e_batchSize = 2 * 2048
-	};
-
-	std::vector<VertexData> m_points;
-
-	GLuint m_vaoId;
-	GLuint m_vboId;
-	GLuint m_programId;
-	GLint m_projectionUniform;
-};
-
-// todo this is not used anymore and has untested changes
-struct GLTriangles
-{
-	void Create()
-	{
-		const char* vs = "#version 330\n"
-						 "uniform mat4 projectionMatrix;\n"
-						 "layout(location = 0) in vec2 v_position;\n"
-						 "layout(location = 1) in vec4 v_color;\n"
-						 "out vec4 f_color;\n"
-						 "void main(void)\n"
-						 "{\n"
-						 "	f_color = v_color;\n"
-						 "	gl_Position = projectionMatrix * vec4(v_position, 0.0f, 1.0f);\n"
-						 "}\n";
-
-		const char* fs = "#version 330\n"
-						 "in vec4 f_color;\n"
-						 "out vec4 color;\n"
-						 "void main(void)\n"
-						 "{\n"
-						 "	color = f_color;\n"
-						 "}\n";
-
-		m_programId = CreateProgramFromStrings( vs, fs );
-		m_projectionUniform = glGetUniformLocation( m_programId, "projectionMatrix" );
-		int vertexAttribute = 0;
-		int colorAttribute = 1;
-
-		// Generate
-		glGenVertexArrays( 1, &m_vaoId );
-		glGenBuffers( 1, &m_vboId );
-
-		glBindVertexArray( m_vaoId );
-		glEnableVertexAttribArray( vertexAttribute );
-		glEnableVertexAttribArray( colorAttribute );
-
-		// Vertex buffer
-		glBindBuffer( GL_ARRAY_BUFFER, m_vboId );
-		glBufferData( GL_ARRAY_BUFFER, e_batchSize * sizeof( VertexData ), nullptr, GL_DYNAMIC_DRAW );
-
-		glVertexAttribPointer( vertexAttribute, 2, GL_FLOAT, GL_FALSE, sizeof( VertexData ),
-							   (void*)offsetof( VertexData, position ) );
-		// color will get automatically expanded to floats in the shader
-		glVertexAttribPointer( colorAttribute, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof( VertexData ),
-							   (void*)offsetof( VertexData, rgba ) );
-
-		CheckErrorGL();
-
-		// Cleanup
-		glBindBuffer( GL_ARRAY_BUFFER, 0 );
-		glBindVertexArray( 0 );
-	}
-
-	void Destroy()
-	{
-		if ( m_vaoId )
-		{
-			glDeleteVertexArrays( 1, &m_vaoId );
-			glDeleteBuffers( 1, &m_vboId );
-			m_vaoId = 0;
-			m_vboId = 0;
-		}
-
-		if ( m_programId )
-		{
-			glDeleteProgram( m_programId );
-			m_programId = 0;
-		}
-	}
-
-	void AddTriangle( b2Vec2 p1, b2Vec2 p2, b2Vec2 p3, b2HexColor c )
-	{
-		RGBA8 rgba = MakeRGBA8( c, 1.0f );
-		m_points.push_back( { p1, rgba } );
-		m_points.push_back( { p2, rgba } );
-		m_points.push_back( { p3, rgba } );
-	}
-
-	void Flush()
-	{
-		int count = (int)m_points.size();
-		if ( count == 0 )
-		{
-			return;
-		}
-
-		assert( count % 3 == 0 );
-
-		glUseProgram( m_programId );
-
-		float proj[16] = { 0.0f };
-		g_camera.BuildProjectionMatrix( proj, 0.2f );
-
-		glUniformMatrix4fv( m_projectionUniform, 1, GL_FALSE, proj );
-
-		glBindVertexArray( m_vaoId );
-
-		glBindBuffer( GL_ARRAY_BUFFER, m_vboId );
-		glEnable( GL_BLEND );
-		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
-		int base = 0;
-		while ( count > 0 )
-		{
-			int batchCount = b2MinInt( count, e_batchSize );
-
-			glBufferSubData( GL_ARRAY_BUFFER, 0, batchCount * sizeof( VertexData ), &m_points[base] );
-			glDrawArrays( GL_TRIANGLES, 0, batchCount );
-
-			CheckErrorGL();
-
-			count -= e_batchSize;
-			base += e_batchSize;
-		}
-
-		glDisable( GL_BLEND );
-
-		glBindBuffer( GL_ARRAY_BUFFER, 0 );
-		glBindVertexArray( 0 );
-		glUseProgram( 0 );
-
-		m_points.clear();
-	}
-
-	enum
-	{
-		// must be multiple of 3
-		e_batchSize = 3 * 512
 	};
 
 	std::vector<VertexData> m_points;
@@ -687,7 +561,7 @@ struct GLCircles
 		glVertexAttribDivisor( radiusInstance, 1 );
 		glVertexAttribDivisor( colorInstance, 1 );
 
-		CheckErrorGL();
+		CheckOpenGL();
 
 		// Cleanup
 		glBindBuffer( GL_ARRAY_BUFFER, 0 );
@@ -748,7 +622,7 @@ struct GLCircles
 			glBufferSubData( GL_ARRAY_BUFFER, 0, batchCount * sizeof( CircleData ), &m_circles[base] );
 			glDrawArraysInstanced( GL_TRIANGLES, 0, 6, batchCount );
 
-			CheckErrorGL();
+			CheckOpenGL();
 
 			count -= e_batchSize;
 			base += e_batchSize;
@@ -832,7 +706,7 @@ struct GLSolidCircles
 		glVertexAttribDivisor( radiusInstance, 1 );
 		glVertexAttribDivisor( colorInstance, 1 );
 
-		CheckErrorGL();
+		CheckOpenGL();
 
 		// Cleanup
 		glBindBuffer( GL_ARRAY_BUFFER, 0 );
@@ -893,7 +767,7 @@ struct GLSolidCircles
 			glBufferSubData( GL_ARRAY_BUFFER, 0, batchCount * sizeof( SolidCircleData ), &m_circles[base] );
 			glDrawArraysInstanced( GL_TRIANGLES, 0, 6, batchCount );
 
-			CheckErrorGL();
+			CheckOpenGL();
 
 			count -= e_batchSize;
 			base += e_batchSize;
@@ -982,7 +856,7 @@ struct GLSolidCapsules
 		glVertexAttribDivisor( lengthInstance, 1 );
 		glVertexAttribDivisor( colorInstance, 1 );
 
-		CheckErrorGL();
+		CheckOpenGL();
 
 		// Cleanup
 		glBindBuffer( GL_ARRAY_BUFFER, 0 );
@@ -1058,7 +932,7 @@ struct GLSolidCapsules
 			glBufferSubData( GL_ARRAY_BUFFER, 0, batchCount * sizeof( CapsuleData ), &m_capsules[base] );
 			glDrawArraysInstanced( GL_TRIANGLES, 0, 6, batchCount );
 
-			CheckErrorGL();
+			CheckOpenGL();
 
 			count -= e_batchSize;
 			base += e_batchSize;
@@ -1169,7 +1043,7 @@ struct GLSolidPolygons
 		glVertexAttribDivisor( instanceRadius, 1 );
 		glVertexAttribDivisor( instanceColor, 1 );
 
-		CheckErrorGL();
+		CheckOpenGL();
 
 		// Cleanup
 		glBindBuffer( GL_ARRAY_BUFFER, 0 );
@@ -1240,7 +1114,7 @@ struct GLSolidPolygons
 
 			glBufferSubData( GL_ARRAY_BUFFER, 0, batchCount * sizeof( PolygonData ), &m_polygons[base] );
 			glDrawArraysInstanced( GL_TRIANGLES, 0, 6, batchCount );
-			CheckErrorGL();
+			CheckOpenGL();
 
 			count -= e_batchSize;
 			base += e_batchSize;
@@ -1320,7 +1194,6 @@ Draw::Draw()
 	m_showUI = true;
 	m_points = nullptr;
 	m_lines = nullptr;
-	m_triangles = nullptr;
 	m_circles = nullptr;
 	m_solidCircles = nullptr;
 	m_solidCapsules = nullptr;
@@ -1337,7 +1210,6 @@ Draw::~Draw()
 {
 	assert( m_points == nullptr );
 	assert( m_lines == nullptr );
-	assert( m_triangles == nullptr );
 	assert( m_circles == nullptr );
 	assert( m_solidCircles == nullptr );
 	assert( m_solidCapsules == nullptr );
@@ -1353,8 +1225,6 @@ void Draw::Create()
 	m_points->Create();
 	m_lines = new GLLines;
 	m_lines->Create();
-	m_triangles = new GLTriangles;
-	m_triangles->Create();
 	m_circles = new GLCircles;
 	m_circles->Create();
 	m_solidCircles = new GLSolidCircles;
@@ -1368,28 +1238,30 @@ void Draw::Create()
 
 	m_debugDraw = {};
 
-	m_debugDraw.DrawPolygon = DrawPolygonFcn;
-	m_debugDraw.DrawSolidPolygon = DrawSolidPolygonFcn;
-	m_debugDraw.DrawCircle = DrawCircleFcn;
-	m_debugDraw.DrawSolidCircle = DrawSolidCircleFcn;
-	m_debugDraw.DrawSolidCapsule = DrawSolidCapsuleFcn;
-	m_debugDraw.DrawSegment = DrawSegmentFcn;
-	m_debugDraw.DrawTransform = DrawTransformFcn;
-	m_debugDraw.DrawPoint = DrawPointFcn;
-	m_debugDraw.DrawString = DrawStringFcn;
+	m_debugDraw.DrawPolygonFcn = DrawPolygonFcn;
+	m_debugDraw.DrawSolidPolygonFcn = DrawSolidPolygonFcn;
+	m_debugDraw.DrawCircleFcn = DrawCircleFcn;
+	m_debugDraw.DrawSolidCircleFcn = DrawSolidCircleFcn;
+	m_debugDraw.DrawSolidCapsuleFcn = DrawSolidCapsuleFcn;
+	m_debugDraw.DrawSegmentFcn = DrawSegmentFcn;
+	m_debugDraw.DrawTransformFcn = DrawTransformFcn;
+	m_debugDraw.DrawPointFcn = DrawPointFcn;
+	m_debugDraw.DrawStringFcn = DrawStringFcn;
 	m_debugDraw.drawingBounds = bounds;
 
 	m_debugDraw.useDrawingBounds = false;
 	m_debugDraw.drawShapes = true;
 	m_debugDraw.drawJoints = true;
 	m_debugDraw.drawJointExtras = false;
-	m_debugDraw.drawAABBs = false;
+	m_debugDraw.drawBounds = false;
 	m_debugDraw.drawMass = false;
 	m_debugDraw.drawContacts = false;
 	m_debugDraw.drawGraphColors = false;
 	m_debugDraw.drawContactNormals = false;
 	m_debugDraw.drawContactImpulses = false;
+	m_debugDraw.drawContactFeatures = false;
 	m_debugDraw.drawFrictionImpulses = false;
+	m_debugDraw.drawIslands = false;
 
 	m_debugDraw.context = this;
 }
@@ -1407,10 +1279,6 @@ void Draw::Destroy()
 	m_lines->Destroy();
 	delete m_lines;
 	m_lines = nullptr;
-
-	m_triangles->Destroy();
-	delete m_triangles;
-	m_triangles = nullptr;
 
 	m_circles->Destroy();
 	delete m_circles;
@@ -1536,11 +1404,10 @@ void Draw::Flush()
 	m_solidCircles->Flush();
 	m_solidCapsules->Flush();
 	m_solidPolygons->Flush();
-	m_triangles->Flush();
 	m_circles->Flush();
 	m_lines->Flush();
 	m_points->Flush();
-	CheckErrorGL();
+	CheckOpenGL();
 }
 
 void Draw::DrawBackground()

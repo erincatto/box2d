@@ -43,7 +43,7 @@ typedef struct b2TaskContext
 // The world also contains efficient memory management facilities.
 typedef struct b2World
 {
-	b2ArenaAllocator stackAllocator;
+	b2ArenaAllocator arena;
 	b2BroadPhase broadPhase;
 	b2ConstraintGraph constraintGraph;
 
@@ -114,6 +114,7 @@ typedef struct b2World
 	b2BitSet debugBodySet;
 	b2BitSet debugJointSet;
 	b2BitSet debugContactSet;
+	b2BitSet debugIslandSet;
 
 	// Id that is incremented every time step
 	uint64_t stepIndex;
@@ -131,7 +132,7 @@ typedef struct b2World
 	float hitEventThreshold;
 	float restitutionThreshold;
 	float maxLinearSpeed;
-	float contactMaxPushSpeed;
+	float maxContactPushSpeed;
 	float contactHertz;
 	float contactDampingRatio;
 	float jointHertz;

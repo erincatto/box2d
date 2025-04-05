@@ -97,8 +97,8 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
-		shapeDef.restitution = 1.2f;
-		shapeDef.friction = 0.3f;
+		shapeDef.material.restitution = 1.2f;
+		shapeDef.material.friction = 0.3f;
 		shapeDef.enableHitEvents = m_enableHitEvents;
 
 		if ( m_shapeType == e_circleShape )
@@ -119,7 +119,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 100.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -208,8 +208,8 @@ public:
 		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.restitution = 1.3f;
-		shapeDef.friction = 0.1f;
+		shapeDef.material.restitution = 1.3f;
+		shapeDef.material.friction = 0.1f;
 
 		{
 			b2Segment segment = { { -10.0f, -10.0f }, { 10.0f, -10.0f } };
@@ -232,7 +232,7 @@ public:
 		}
 
 		b2Circle circle = { { 0.0f, 0.0f }, 2.0f };
-		shapeDef.restitution = 2.0f;
+		shapeDef.material.restitution = 2.0f;
 		b2CreateCircleShape( groundId, &shapeDef, &circle );
 	}
 
@@ -341,7 +341,7 @@ public:
 		//m_shapeId = b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 140.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -439,7 +439,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.0f;
+			shapeDef.material.friction = 0.0f;
 			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		}
@@ -463,6 +463,66 @@ public:
 
 static int sampleChainSlide = RegisterSample( "Continuous", "Chain Slide", ChainSlide::Create );
 
+class SegmentSlide : public Sample
+{
+public:
+	explicit SegmentSlide( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 10.0f };
+			g_camera.m_zoom = 15.0f;
+		}
+
+#ifndef NDEBUG
+		b2_toiHitCount = 0;
+#endif
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
+			segment = { { 40.0f, 0.0f }, { 40.0f, 10.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.linearVelocity = { 100.0f, 0.0f };
+			bodyDef.position = { -20.0f, 0.7f };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			//shapeDef.friction = 0.0f;
+			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
+		}
+	}
+
+	void Step( Settings& settings ) override
+	{
+		Sample::Step( settings );
+
+#ifndef NDEBUG
+		g_draw.DrawString( 5, m_textLine, "toi hits = %d", b2_toiHitCount );
+		m_textLine += m_textIncrement;
+#endif
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new SegmentSlide( settings );
+	}
+};
+
+static int sampleSegmentSlide = RegisterSample( "Continuous", "Segment Slide", SegmentSlide::Create );
+
 class SkinnyBox : public Sample
 {
 public:
@@ -481,7 +541,7 @@ public:
 
 			b2Segment segment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.9f;
+			shapeDef.material.friction = 0.9f;
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 
 			b2Polygon box = b2MakeOffsetBox( 0.1f, 1.0f, { 0.0f, 1.0f }, b2Rot_identity );
@@ -521,7 +581,7 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
-		shapeDef.friction = 0.9f;
+		shapeDef.material.friction = 0.9f;
 
 		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
 
@@ -547,7 +607,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 110.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -682,7 +742,7 @@ public:
 		else
 		{
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = m_friction;
+			shapeDef.material.friction = m_friction;
 
 			b2Hull hull = { };
 
@@ -796,7 +856,7 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
-		shapeDef.friction = m_friction;
+		shapeDef.material.friction = m_friction;
 
 		if ( m_shapeType == e_circleShape )
 		{
@@ -816,7 +876,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 140.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -937,6 +997,50 @@ public:
 
 static int sampleSpeculativeFallback = RegisterSample( "Continuous", "Speculative Fallback", SpeculativeFallback::Create );
 
+class SpeculativeSliver : public Sample
+{
+public:
+	explicit SpeculativeSliver( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 1.75f };
+			g_camera.m_zoom = 2.5f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Segment segment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { 0.0f, 12.0f };
+			bodyDef.linearVelocity = { 0.0f, -100.0f };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Vec2 points[3] = { { -2.0f, 0.0f }, { -1.0f, 0.0f }, { 2.0f, 0.5f }};
+			b2Hull hull = b2ComputeHull( points, 3 );
+			b2Polygon poly = b2MakePolygon( &hull, 0.0f );
+			b2CreatePolygonShape( bodyId, &shapeDef, &poly );
+		}
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new SpeculativeSliver( settings );
+	}
+};
+
+static int sampleSpeculativeSliver = RegisterSample( "Continuous", "Speculative Sliver", SpeculativeSliver::Create );
+
 // This shows that while Box2D uses speculative collision, it does not lead to speculative ghost collisions at small distances
 class SpeculativeGhost : public Sample
 {
@@ -1008,7 +1112,7 @@ public:
 			b2BodyId block4BodyId = b2CreateBody( m_worldId, &block4BodyDef );
 			b2Polygon block4Shape = b2MakeBox( 20.f / pixelsPerMeter, 10.f / pixelsPerMeter );
 			b2ShapeDef block4ShapeDef = b2DefaultShapeDef();
-			block4ShapeDef.friction = 0.f;
+			block4ShapeDef.material.friction = 0.f;
 			b2CreatePolygonShape( block4BodyId, &block4ShapeDef, &block4Shape );
 		}
 
@@ -1023,7 +1127,7 @@ public:
 			//b2Polygon ballShape = b2MakeBox( 5.f / pixelsPerMeter, 5.f / pixelsPerMeter );
 			b2Polygon ballShape = b2MakeRoundedBox( 4.0f / pixelsPerMeter, 4.0f / pixelsPerMeter, 0.9f / pixelsPerMeter );
 			b2ShapeDef ballShapeDef = b2DefaultShapeDef();
-			ballShapeDef.friction = 0.f;
+			ballShapeDef.material.friction = 0.f;
 			//ballShapeDef.restitution = 1.f;
 			b2CreatePolygonShape( m_ballId, &ballShapeDef, &ballShape );
 			b2Body_SetLinearVelocity( m_ballId, { 0.f, -5.0f } );
@@ -1079,7 +1183,7 @@ public:
 			b2BodyId block0BodyId = b2CreateBody( m_worldId, &block0BodyDef );
 			b2Polygon block0Shape = b2MakeBox( 50.f / pixelsPerMeter, 5.f / pixelsPerMeter );
 			b2ShapeDef block0ShapeDef = b2DefaultShapeDef();
-			block0ShapeDef.friction = 0.f;
+			block0ShapeDef.material.friction = 0.f;
 			b2CreatePolygonShape( block0BodyId, &block0ShapeDef, &block0Shape );
 		}
 
@@ -1093,8 +1197,8 @@ public:
 			b2Circle ballShape = {};
 			ballShape.radius = 5.f / pixelsPerMeter;
 			b2ShapeDef ballShapeDef = b2DefaultShapeDef();
-			ballShapeDef.friction = 0.f;
-			ballShapeDef.restitution = 1.f;
+			ballShapeDef.material.friction = 0.f;
+			ballShapeDef.material.restitution = 1.f;
 			b2CreateCircleShape( m_ballId, &ballShapeDef, &ballShape );
 
 			b2Body_SetLinearVelocity( m_ballId, { 0.f, -2.9f } ); // Initial velocity
@@ -1578,7 +1682,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.restitution = 1.5f;
+			shapeDef.material.restitution = 1.5f;
 
 			b2Circle circle = { { 0.0f, 0.0f }, 1.0f };
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
@@ -1666,7 +1770,7 @@ public:
 			b2Circle circle = {};
 			circle.radius = 0.3f;
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.2f;
+			shapeDef.material.friction = 0.2f;
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		}
 	}

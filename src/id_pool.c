@@ -34,13 +34,6 @@ void b2FreeId( b2IdPool* pool, int id )
 {
 	B2_ASSERT( pool->nextIndex > 0 );
 	B2_ASSERT( 0 <= id && id < pool->nextIndex );
-
-	if ( id == pool->nextIndex )
-	{
-		pool->nextIndex -= 1;
-		return;
-	}
-
 	b2IntArray_Push( &pool->freeArray, id );
 }
 
@@ -60,12 +53,27 @@ void b2ValidateFreeId( b2IdPool* pool, int id )
 	B2_ASSERT( 0 );
 }
 
+void b2ValidateUsedId( b2IdPool* pool, int id )
+{
+	int freeCount = pool->freeArray.count;
+	for ( int i = 0; i < freeCount; ++i )
+	{
+		if ( pool->freeArray.data[i] == id )
+		{
+			B2_ASSERT( 0 );
+		}
+	}
+}
+
 #else
 
 void b2ValidateFreeId( b2IdPool* pool, int id )
 {
-	B2_UNUSED( pool );
-	B2_UNUSED( id );
+	B2_UNUSED( pool, id );
 }
 
+void b2ValidateUsedId( b2IdPool* pool, int id )
+{
+	B2_UNUSED( pool, id );
+}
 #endif

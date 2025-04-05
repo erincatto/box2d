@@ -69,3 +69,10 @@ B2_INLINE b2Vec2 RandomVec2( float lo, float hi )
 	v.y = RandomFloatRange( lo, hi );
 	return v;
 }
+
+// Random rotation with angle in range [-pi, pi]
+B2_INLINE b2Rot RandomRot( void )
+{
+	float angle = RandomFloatRange( -B2_PI, B2_PI );
+	return b2MakeRot( angle );
+}

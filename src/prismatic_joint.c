@@ -421,12 +421,12 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 		float impulseScale = joint->springSoftness.impulseScale;
 
 		float Cdot = b2Dot( axisA, b2Sub( vB, vA ) ) + a2 * wB - a1 * wA;
-		float impulse = -massScale * joint->axialMass * ( Cdot + bias ) - impulseScale * joint->springImpulse;
-		joint->springImpulse += impulse;
+		float deltaImpulse = -massScale * joint->axialMass * ( Cdot + bias ) - impulseScale * joint->springImpulse;
+		joint->springImpulse += deltaImpulse;
 
-		b2Vec2 P = b2MulSV( impulse, axisA );
-		float LA = impulse * a1;
-		float LB = impulse * a2;
+		b2Vec2 P = b2MulSV( deltaImpulse, axisA );
+		float LA = deltaImpulse * a1;
+		float LB = deltaImpulse * a2;
 
 		vA = b2MulSub( vA, mA, P );
 		wA -= iA * LA;
@@ -633,22 +633,22 @@ void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform tran
 	b2HexColor c4 = b2_colorBlue;
 	b2HexColor c5 = b2_colorDimGray;
 
-	draw->DrawSegment( pA, pB, c5, draw->context );
+	draw->DrawSegmentFcn( pA, pB, c5, draw->context );
 
 	if ( joint->enableLimit )
 	{
 		b2Vec2 lower = b2MulAdd( pA, joint->lowerTranslation, axis );
 		b2Vec2 upper = b2MulAdd( pA, joint->upperTranslation, axis );
 		b2Vec2 perp = b2LeftPerp( axis );
-		draw->DrawSegment( lower, upper, c1, draw->context );
-		draw->DrawSegment( b2MulSub( lower, 0.1f, perp ), b2MulAdd( lower, 0.1f, perp ), c2, draw->context );
-		draw->DrawSegment( b2MulSub( upper, 0.1f, perp ), b2MulAdd( upper, 0.1f, perp ), c3, draw->context );
+		draw->DrawSegmentFcn( lower, upper, c1, draw->context );
+		draw->DrawSegmentFcn( b2MulSub( lower, 0.1f, perp ), b2MulAdd( lower, 0.1f, perp ), c2, draw->context );
+		draw->DrawSegmentFcn( b2MulSub( upper, 0.1f, perp ), b2MulAdd( upper, 0.1f, perp ), c3, draw->context );
 	}
 	else
 	{
-		draw->DrawSegment( b2MulSub( pA, 1.0f, axis ), b2MulAdd( pA, 1.0f, axis ), c1, draw->context );
+		draw->DrawSegmentFcn( b2MulSub( pA, 1.0f, axis ), b2MulAdd( pA, 1.0f, axis ), c1, draw->context );
 	}
 
-	draw->DrawPoint( pA, 5.0f, c1, draw->context );
-	draw->DrawPoint( pB, 5.0f, c4, draw->context );
+	draw->DrawPointFcn( pA, 5.0f, c1, draw->context );
+	draw->DrawPointFcn( pB, 5.0f, c4, draw->context );
 }

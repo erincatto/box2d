@@ -116,7 +116,7 @@ public:
 				for ( int i = 0; i < 5; ++i )
 				{
 					Human human = {};
-					CreateHuman(&human, m_worldId, position, 1.5f, 0.05f, 0.0f, 0.0f, humanIndex + 1, NULL, false );
+					CreateHuman(&human, m_worldId, position, 1.5f, 0.05f, 0.0f, 0.0f, humanIndex + 1, nullptr, false );
 					humanIndex += 1;
 					position.x += 1.0f;
 				}
@@ -128,7 +128,7 @@ public:
 				for ( int i = 0; i < 5; ++i )
 				{
 					Donut donut;
-					donut.Spawn( m_worldId, position, 0.75f, 0, NULL );
+					donut.Create( m_worldId, position, 0.75f, 0, false, nullptr );
 					position.x += 2.0f;
 				}
 			}
@@ -143,7 +143,7 @@ public:
 		m_followCar = false;
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 160.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );

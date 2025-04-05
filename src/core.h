@@ -122,16 +122,6 @@
 
 #define B2_CHECK_DEF( DEF ) B2_ASSERT( DEF->internalValue == B2_SECRET_COOKIE )
 
-void* b2Alloc( int size );
-#define B2_ALLOC_STRUCT( type ) b2Alloc(sizeof(type))
-#define B2_ALLOC_ARRAY( count, type ) b2Alloc(count * sizeof(type))
-
-void b2Free( void* mem, int size );
-#define B2_FREE_STRUCT( mem, type ) b2Free( mem, sizeof(type));
-#define B2_FREE_ARRAY( mem, count, type ) b2Free(mem, count * sizeof(type))
-
-void* b2GrowAlloc( void* oldMem, int oldSize, int newSize );
-
 typedef struct b2AtomicInt
 {
 	int value;
@@ -142,12 +132,12 @@ typedef struct b2AtomicU32
 	uint32_t value;
 } b2AtomicU32;
 
-#if 0
-void b2AtomicStoreInt( b2AtomicInt* a, int value );
-int b2AtomicLoadInt( b2AtomicInt* a );
-int b2AtomicFetchAddInt( b2AtomicInt* a, int increment );
-bool b2AtomicCompareExchangeInt( b2AtomicInt* obj, int expected, int desired );
+void* b2Alloc( int size );
+#define B2_ALLOC_STRUCT( type ) b2Alloc(sizeof(type))
+#define B2_ALLOC_ARRAY( count, type ) b2Alloc(count * sizeof(type))
 
-void b2AtomicStoreU32( b2AtomicU32* a, uint32_t value );
-uint32_t b2AtomicLoadU32( b2AtomicU32* a );
-#endif
+void b2Free( void* mem, int size );
+#define B2_FREE_STRUCT( mem, type ) b2Free( mem, sizeof(type));
+#define B2_FREE_ARRAY( mem, count, type ) b2Free(mem, count * sizeof(type))
+
+void* b2GrowAlloc( void* oldMem, int oldSize, int newSize );

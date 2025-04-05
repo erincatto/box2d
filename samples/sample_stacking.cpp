@@ -68,12 +68,6 @@ static int sampleSingleBox = RegisterSample( "Stacking", "Single Box", SingleBox
 class TiltedStack : public Sample
 {
 public:
-	enum
-	{
-		e_columns = 10,
-		e_rows = 10,
-	};
-
 	explicit TiltedStack( Settings& settings )
 		: Sample( settings )
 	{
@@ -93,7 +87,7 @@ public:
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 
-		for ( int i = 0; i < e_rows * e_columns; ++i )
+		for ( int i = 0; i < m_rows * m_columns; ++i )
 		{
 			m_bodies[i] = b2_nullBodyId;
 		}
@@ -102,22 +96,22 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
-		shapeDef.friction = 0.3f;
+		shapeDef.material.friction = 0.3f;
 
 		float offset = 0.2f;
 		float dx = 5.0f;
-		float xroot = -0.5f * dx * ( e_columns - 1.0f );
+		float xroot = -0.5f * dx * ( m_columns - 1.0f );
 
-		for ( int j = 0; j < e_columns; ++j )
+		for ( int j = 0; j < m_columns; ++j )
 		{
 			float x = xroot + j * dx;
 
-			for ( int i = 0; i < e_rows; ++i )
+			for ( int i = 0; i < m_rows; ++i )
 			{
 				b2BodyDef bodyDef = b2DefaultBodyDef();
 				bodyDef.type = b2_dynamicBody;
 
-				int n = j * e_rows + i;
+				int n = j * m_rows + i;
 
 				bodyDef.position = { x + offset * i, 0.5f + 1.0f * i };
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
@@ -134,7 +128,10 @@ public:
 		return new TiltedStack( settings );
 	}
 
-	b2BodyId m_bodies[e_rows * e_columns];
+	static constexpr int m_columns = 10;
+	static constexpr int m_rows = 10;
+
+	b2BodyId m_bodies[m_rows * m_columns];
 };
 
 static int sampleTiltedStack = RegisterSample( "Stacking", "Tilted Stack", TiltedStack::Create );
@@ -169,11 +166,15 @@ public:
 			bodyDef.position = { 0.0f, -1.0f };
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Polygon box = b2MakeBox( 100.0f, 1.0f );
+			//b2Polygon box = b2MakeBox( 100.0f, 1.0f );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			//b2CreatePolygonShape( groundId, &shapeDef, &box );
 
 			b2Segment segment = { { 10.0f, 1.0f }, { 10.0f, 21.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
+
+			segment = { { -30.0f, 0.0f }, { 30.0f, 0.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
@@ -188,8 +189,8 @@ public:
 		}
 
 		m_shapeType = e_boxShape;
-		m_rowCount = e_maxRows;
-		m_columnCount = 5;
+		m_rowCount = 2;
+		m_columnCount = 1;
 		m_bulletCount = 1;
 		m_bulletType = e_circleShape;
 
@@ -210,12 +211,12 @@ public:
 		b2Circle circle = { };
 		circle.radius = 0.5f;
 
-		b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+		b2Polygon box = b2MakeSquare( 0.25f );
 		// b2Polygon box = b2MakeRoundedBox(0.45f, 0.45f, 0.05f);
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
-		shapeDef.friction = 0.3f;
+		shapeDef.material.friction = 0.3f;
 
 		float offset;
 
@@ -325,7 +326,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 230.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -426,29 +427,31 @@ public:
 		b2World_SetGravity( m_worldId, { 0.0f, -20.0f } );
 		b2World_SetContactTuning( m_worldId, 0.25f * 360.0f, 10.0f, 3.0f );
 
-		b2Circle circle = {};
-		circle.radius = 0.25f;
-
-		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.enableHitEvents = true;
-		shapeDef.rollingResistance = 0.2f;
-
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 
-		float y = 0.5f;
+		b2Circle circle = {};
+		circle.radius = 0.5f;
 
-		for ( int i = 0; i < 1; ++i )
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.enableHitEvents = true;
+		//shapeDef.rollingResistance = 0.2f;
+		shapeDef.material.friction = 0.0f;
+
+		float y = 0.75f;
+
+		for ( int i = 0; i < 10; ++i )
 		{
 			bodyDef.position.y = y;
 
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			shapeDef.userData = reinterpret_cast<void*>( intptr_t( shapeIndex ) );
+			shapeDef.density = 1.0f + 4.0f * i;
 			shapeIndex += 1;
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 
-			y += 2.0f;
+			y += 1.25f;
 		}
 	}
 
@@ -488,6 +491,67 @@ public:
 };
 
 static int sampleCircleStack = RegisterSample( "Stacking", "Circle Stack", CircleStack::Create );
+
+class CapsuleStack : public Sample
+{
+public:
+	struct Event
+	{
+		int indexA, indexB;
+	};
+
+	explicit CapsuleStack( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 5.0f };
+			g_camera.m_zoom = 6.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 0.0f, -1.0f };
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Polygon polygon = b2MakeBox( 10.0f, 1.0f );
+			b2CreatePolygonShape( groundId, &shapeDef, &polygon );
+		}
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+
+		float a = 0.25f;
+		b2Capsule capsule = { { -4.0f * a, 0.0f }, { 4.0f * a, 0.0f }, a };
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+		// rolling resistance increases stacking stability
+		//shapeDef.rollingResistance = 0.2f;
+
+		float y = 2.0f * a;
+
+		for ( int i = 0; i < 20; ++i )
+		{
+			bodyDef.position.y = y;
+			//bodyDef.position.x += ( i & 1 ) == 1 ? -0.5f * a : 0.5f * a;
+			//bodyDef.linearVelocity = { 0.0f, -10.0f };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
+
+			y += 3.0f * a;
+		}
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new CapsuleStack( settings );
+	}
+};
+
+static int sampleCapsuleStack = RegisterSample( "Stacking", "Capsule Stack", CapsuleStack::Create );
 
 class Cliff : public Sample
 {
@@ -552,7 +616,7 @@ public:
 
 		{
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.01f;
+			shapeDef.material.friction = 0.01f;
 			bodyDef.linearVelocity = { 2.0f * sign, 0.0f };
 
 			float offset = m_flip ? -4.0f : 0.0f;
@@ -572,7 +636,7 @@ public:
 
 		{
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.01f;
+			shapeDef.material.friction = 0.01f;
 			bodyDef.linearVelocity = { 2.5f * sign, 0.0f };
 
 			bodyDef.position = { -11.0f, 4.5f };
@@ -590,7 +654,7 @@ public:
 
 		{
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.friction = 0.2f;
+			shapeDef.material.friction = 0.2f;
 			bodyDef.linearVelocity = { 1.5f * sign, 0.0f };
 
 			float offset = m_flip ? 4.0f : 0.0f;
@@ -609,7 +673,7 @@ public:
 		}
 	}
 
-	void UpdateUI() override
+	void UpdateGui() override
 	{
 		float height = 60.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
@@ -677,7 +741,7 @@ public:
 		}
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.friction = 0.6f;
+		shapeDef.material.friction = 0.6f;
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -760,7 +824,7 @@ public:
 		b2Polygon box = b2MakeBox( 0.125f, 0.5f );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.friction = 0.6f;
+		shapeDef.material.friction = 0.6f;
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 
@@ -791,12 +855,6 @@ static int sampleDoubleDomino = RegisterSample( "Stacking", "Double Domino", Dou
 class Confined : public Sample
 {
 public:
-	enum
-	{
-		e_gridCount = 25,
-		e_maxCount = e_gridCount * e_gridCount
-	};
-
 	explicit Confined( Settings& settings )
 		: Sample( settings )
 	{
@@ -833,13 +891,13 @@ public:
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
 
-		while ( m_count < e_maxCount )
+		while ( m_count < m_maxCount )
 		{
 			m_row = 0;
-			for ( int i = 0; i < e_gridCount; ++i )
+			for ( int i = 0; i < m_gridCount; ++i )
 			{
-				float x = -8.75f + m_column * 18.0f / e_gridCount;
-				float y = 1.5f + m_row * 18.0f / e_gridCount;
+				float x = -8.75f + m_column * 18.0f / m_gridCount;
+				float y = 1.5f + m_row * 18.0f / m_gridCount;
 
 				bodyDef.position = { x, y };
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
@@ -857,6 +915,8 @@ public:
 		return new Confined( settings );
 	}
 
+	static constexpr int m_gridCount = 25;
+	static constexpr int m_maxCount = m_gridCount * m_gridCount;
 	int m_row;
 	int m_column;
 	int m_count;
@@ -882,7 +942,7 @@ public:
 		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.friction = 0.7f;
+		shapeDef.material.friction = 0.7f;
 
 		b2Polygon groundBox = b2MakeBox( 40.0f, 2.0f );
 		b2CreatePolygonShape( groundId, &shapeDef, &groundBox );

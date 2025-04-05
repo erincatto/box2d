@@ -12,20 +12,24 @@ struct Settings
 	int sampleIndex = 0;
 	int windowWidth = 1920;
 	int windowHeight = 1080;
+
 	float hertz = 60.0f;
 	int subStepCount = 4;
 	int workerCount = 1;
+
 	bool useCameraBounds = false;
 	bool drawShapes = true;
 	bool drawJoints = true;
 	bool drawJointExtras = false;
-	bool drawAABBs = false;
+	bool drawBounds = false;
+	bool drawMass = false;
+	bool drawBodyNames = false;
 	bool drawContactPoints = false;
 	bool drawContactNormals = false;
 	bool drawContactImpulses = false;
+	bool drawContactFeatures = false;
 	bool drawFrictionImpulses = false;
-	bool drawMass = false;
-	bool drawBodyNames = false;
+	bool drawIslands = false;
 	bool drawGraphColors = false;
 	bool drawCounters = false;
 	bool drawProfile = false;

@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: 2024 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#if defined( _MSC_VER ) && !defined( _CRT_SECURE_NO_WARNINGS )
 #define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #include "shader.h"
 
@@ -11,7 +13,7 @@
 #include <glad/glad.h>
 #include <stdio.h>
 
-#if defined( _WIN32 )
+#if defined( _MSC_VER )
 	#define _CRTDBG_MAP_ALLOC
 	#include <crtdbg.h>
 	#include <stdlib.h>
@@ -39,7 +41,7 @@ void DumpInfoGL()
 	printf( "-------------------------------------------------------------\n" );
 }
 
-void CheckErrorGL()
+void CheckOpenGL()
 {
 	GLenum errCode = glGetError();
 	if ( errCode != GL_NO_ERROR )

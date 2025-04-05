@@ -53,6 +53,11 @@ add_library(imgui STATIC
 target_link_libraries(imgui PUBLIC glfw glad)
 target_include_directories(imgui PUBLIC ${IMGUI_DIR} ${IMGUI_DIR}/backends)
 target_compile_definitions(imgui PUBLIC IMGUI_DISABLE_OBSOLETE_FUNCTIONS)
+set_target_properties(imgui PROPERTIES
+	CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
+)
 
 # jsmn for json
 set(JSMN_DIR ${CMAKE_SOURCE_DIR}/extern/jsmn)
@@ -74,6 +79,7 @@ set(BOX2D_SAMPLE_FILES
 	sample.h
 	sample_benchmark.cpp
 	sample_bodies.cpp
+	sample_character.cpp
 	sample_collision.cpp
 	sample_continuous.cpp
 	sample_determinism.cpp
@@ -92,7 +98,7 @@ set(BOX2D_SAMPLE_FILES
 add_executable(samples ${BOX2D_SAMPLE_FILES})
 
 set_target_properties(samples PROPERTIES
-	CXX_STANDARD 17
+	CXX_STANDARD 20
     CXX_STANDARD_REQUIRED YES
     CXX_EXTENSIONS NO
 )

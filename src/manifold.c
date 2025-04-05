@@ -393,7 +393,9 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 			}
 		}
 
-		if ( separationA >= separationB )
+		// biased to avoid feature flip-flop
+		// todo more testing?
+		if ( separationA + 0.1f * B2_LINEAR_SLOP >= separationB )
 		{
 			manifold.normal = normalA;
 
@@ -775,7 +777,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 
 	if ( separationA > B2_SPECULATIVE_DISTANCE + radius || separationB > B2_SPECULATIVE_DISTANCE + radius )
 	{
-		return ( b2Manifold ){ 0 };
+		return (b2Manifold){ 0 };
 	}
 
 	// Find incident edge
@@ -1035,7 +1037,7 @@ b2Manifold b2CollideChainSegmentAndCircle( const b2ChainSegment* segmentA, b2Tra
 	else
 	{
 		float ee = b2Dot( e, e );
-		pA = ( b2Vec2 ){ u * p1.x + v * p2.x, u * p1.y + v * p2.y };
+		pA = (b2Vec2){ u * p1.x + v * p2.x, u * p1.y + v * p2.y };
 		pA = ee > 0.0f ? b2MulSV( 1.0f / ee, pA ) : p1;
 	}
 
@@ -1273,7 +1275,7 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 	input.transformB = b2Transform_identity;
 	input.useRadii = false;
 
-	b2DistanceOutput output = b2ShapeDistance( cache, &input, NULL, 0 );
+	b2DistanceOutput output = b2ShapeDistance( &input, cache, NULL, 0 );
 
 	if ( output.distance > radiusB + B2_SPECULATIVE_DISTANCE )
 	{
@@ -1386,14 +1388,19 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 
 					manifold =
 						b2ClipSegments( b1, b2, p1, p2, normalB, radiusB, 0.0f, B2_MAKE_ID( ib1, 1 ), B2_MAKE_ID( ib2, 0 ) );
-					manifold.normal = b2RotateVector( xfA.q, b2Neg( normalB ) );
-					manifold.points[0].anchorA = b2RotateVector( xfA.q, manifold.points[0].anchorA );
-					manifold.points[1].anchorA = b2RotateVector( xfA.q, manifold.points[1].anchorA );
-					b2Vec2 pAB = b2Sub( xfA.p, xfB.p );
-					manifold.points[0].anchorB = b2Add( manifold.points[0].anchorA, pAB );
-					manifold.points[1].anchorB = b2Add( manifold.points[1].anchorA, pAB );
-					manifold.points[0].point = b2Add( xfA.p, manifold.points[0].anchorA );
-					manifold.points[1].point = b2Add( xfA.p, manifold.points[1].anchorA );
+
+					B2_ASSERT( manifold.pointCount == 0 || manifold.pointCount == 2 );
+					if ( manifold.pointCount == 2 )
+					{
+						manifold.normal = b2RotateVector( xfA.q, b2Neg( normalB ) );
+						manifold.points[0].anchorA = b2RotateVector( xfA.q, manifold.points[0].anchorA );
+						manifold.points[1].anchorA = b2RotateVector( xfA.q, manifold.points[1].anchorA );
+						b2Vec2 pAB = b2Sub( xfA.p, xfB.p );
+						manifold.points[0].anchorB = b2Add( manifold.points[0].anchorA, pAB );
+						manifold.points[1].anchorB = b2Add( manifold.points[1].anchorA, pAB );
+						manifold.points[0].point = b2Add( xfA.p, manifold.points[0].anchorA );
+						manifold.points[1].point = b2Add( xfA.p, manifold.points[1].anchorA );
+					}
 					return manifold;
 				}
 
@@ -1530,14 +1537,21 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 			}
 
 			manifold = b2ClipSegments( a1, a2, p1, p2, normals[ia1], radiusB, 0.0f, B2_MAKE_ID( ia1, 1 ), B2_MAKE_ID( ia2, 0 ) );
-			manifold.normal = b2RotateVector( xfA.q, b2Neg( normals[ia1] ) );
-			manifold.points[0].anchorA = b2RotateVector( xfA.q, manifold.points[0].anchorA );
-			manifold.points[1].anchorA = b2RotateVector( xfA.q, manifold.points[1].anchorA );
-			b2Vec2 pAB = b2Sub( xfA.p, xfB.p );
-			manifold.points[0].anchorB = b2Add( manifold.points[0].anchorA, pAB );
-			manifold.points[1].anchorB = b2Add( manifold.points[1].anchorA, pAB );
-			manifold.points[0].point = b2Add( xfA.p, manifold.points[0].anchorA );
-			manifold.points[1].point = b2Add( xfA.p, manifold.points[1].anchorA );
+
+			B2_ASSERT( manifold.pointCount == 0 || manifold.pointCount == 2 );
+			if ( manifold.pointCount == 2 )
+			{
+
+				manifold.normal = b2RotateVector( xfA.q, b2Neg( normals[ia1] ) );
+				manifold.points[0].anchorA = b2RotateVector( xfA.q, manifold.points[0].anchorA );
+				manifold.points[1].anchorA = b2RotateVector( xfA.q, manifold.points[1].anchorA );
+				b2Vec2 pAB = b2Sub( xfA.p, xfB.p );
+				manifold.points[0].anchorB = b2Add( manifold.points[0].anchorA, pAB );
+				manifold.points[1].anchorB = b2Add( manifold.points[1].anchorA, pAB );
+				manifold.points[0].point = b2Add( xfA.p, manifold.points[0].anchorA );
+				manifold.points[1].point = b2Add( xfA.p, manifold.points[1].anchorA );
+			}
+
 			return manifold;
 		}
 
@@ -1586,14 +1600,20 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 	}
 
 	manifold = b2ClipSegments( p1, p2, b1, b2, normal1, 0.0f, radiusB, B2_MAKE_ID( 0, ib2 ), B2_MAKE_ID( 1, ib1 ) );
-	manifold.normal = b2RotateVector( xfA.q, manifold.normal );
-	manifold.points[0].anchorA = b2RotateVector( xfA.q, manifold.points[0].anchorA );
-	manifold.points[1].anchorA = b2RotateVector( xfA.q, manifold.points[1].anchorA );
-	b2Vec2 pAB = b2Sub( xfA.p, xfB.p );
-	manifold.points[0].anchorB = b2Add( manifold.points[0].anchorA, pAB );
-	manifold.points[1].anchorB = b2Add( manifold.points[1].anchorA, pAB );
-	manifold.points[0].point = b2Add( xfA.p, manifold.points[0].anchorA );
-	manifold.points[1].point = b2Add( xfA.p, manifold.points[1].anchorA );
+
+	B2_ASSERT( manifold.pointCount == 0 || manifold.pointCount == 2 );
+	if ( manifold.pointCount == 2 )
+	{
+		// There may be no points c
+		manifold.normal = b2RotateVector( xfA.q, manifold.normal );
+		manifold.points[0].anchorA = b2RotateVector( xfA.q, manifold.points[0].anchorA );
+		manifold.points[1].anchorA = b2RotateVector( xfA.q, manifold.points[1].anchorA );
+		b2Vec2 pAB = b2Sub( xfA.p, xfB.p );
+		manifold.points[0].anchorB = b2Add( manifold.points[0].anchorA, pAB );
+		manifold.points[1].anchorB = b2Add( manifold.points[1].anchorA, pAB );
+		manifold.points[0].point = b2Add( xfA.p, manifold.points[0].anchorA );
+		manifold.points[1].point = b2Add( xfA.p, manifold.points[1].anchorA );
+	}
 
 	return manifold;
 }

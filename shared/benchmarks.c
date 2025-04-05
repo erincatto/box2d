@@ -379,7 +379,7 @@ void CreateSpinner( b2WorldId worldId )
 
 		b2Polygon box = b2MakeRoundedBox( 0.4f, 20.0f, 0.2f );
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.friction = 0.0f;
+		shapeDef.material.friction = 0.0f;
 		b2CreatePolygonShape( spinnerId, &shapeDef, &box );
 
 		float motorSpeed = 5.0f;
@@ -402,8 +402,8 @@ void CreateSpinner( b2WorldId worldId )
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_dynamicBody;
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
-	shapeDef.friction = 0.1f;
-	shapeDef.restitution = 0.1f;
+	shapeDef.material.friction = 0.1f;
+	shapeDef.material.restitution = 0.1f;
 	shapeDef.density = 0.25f;
 
 	int bodyCount = BENCHMARK_DEBUG ? 499 : 3038;

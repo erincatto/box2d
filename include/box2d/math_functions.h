@@ -61,6 +61,13 @@ typedef struct b2AABB
 	b2Vec2 upperBound;
 } b2AABB;
 
+/// separation = dot(normal, point) - offset
+typedef struct b2Plane
+{
+	b2Vec2 normal;
+	float offset;
+} b2Plane;
+
 /**@}*/
 
 /**
@@ -283,6 +290,12 @@ B2_INLINE b2Vec2 b2Normalize( b2Vec2 v )
 	return n;
 }
 
+B2_INLINE bool b2IsNormalized(b2Vec2 a)
+{
+	float aa = b2Dot( a, a );
+	return b2AbsFloat( 1.0f - aa ) < 10.0f * FLT_EPSILON;
+}
+
 /// Convert a vector into a unit vector if possible, otherwise returns the zero vector. Also
 /// outputs the length.
 B2_INLINE b2Vec2 b2GetLengthAndNormalize( float* length, b2Vec2 v )
@@ -347,7 +360,7 @@ B2_INLINE b2Rot b2MakeRot( float radians )
 B2_API b2Rot b2ComputeRotationBetweenUnitVectors( b2Vec2 v1, b2Vec2 v2 );
 
 /// Is this rotation normalized?
-B2_INLINE bool b2IsNormalized( b2Rot q )
+B2_INLINE bool b2IsNormalizedRot( b2Rot q )
 {
 	// larger tolerance due to failure on mingw 32-bit
 	float qq = q.s * q.s + q.c * q.c;
@@ -605,6 +618,12 @@ B2_INLINE b2AABB b2AABB_Union( b2AABB a, b2AABB b )
 	return c;
 }
 
+/// Signed separation of a point from a plane
+B2_INLINE float b2PlaneSeparation( b2Plane plane, b2Vec2 point )
+{
+	return b2Dot( plane.normal, point ) - plane.offset;
+}
+
 /// Is this a valid number? Not NaN or infinity.
 B2_API bool b2IsValidFloat( float a );
 
@@ -616,6 +635,9 @@ B2_API bool b2IsValidRotation( b2Rot q );
 
 /// Is this a valid bounding box? Not Nan or infinity. Upper bound greater than or equal to lower bound.
 B2_API bool b2IsValidAABB( b2AABB aabb );
+
+/// Is this a valid plane? Normal is a unit vector. Not Nan or infinity.
+B2_API bool b2IsValidPlane( b2Plane a );
 
 /// Box2D bases all length units on meters, but you may need different units for your game.
 /// You can set this value to use different units. This should be done at application startup

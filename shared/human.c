@@ -10,12 +10,12 @@
 
 #include <assert.h>
 
-void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale, float frictionTorque, float hertz, float dampingRatio,
-						   int groupIndex, void* userData, bool colorize )
+void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale, float frictionTorque, float hertz,
+				  float dampingRatio, int groupIndex, void* userData, bool colorize )
 {
 	assert( human->isSpawned == false );
 
-	for ( int i = 0; i < boneId_count; ++i )
+	for ( int i = 0; i < bone_count; ++i )
 	{
 		human->bones[i].bodyId = b2_nullBodyId;
 		human->bones[i].jointId = b2_nullJointId;
@@ -31,13 +31,13 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 	bodyDef.userData = userData;
 
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
-	shapeDef.friction = 0.2f;
+	shapeDef.material.friction = 0.2f;
 	shapeDef.filter.groupIndex = -groupIndex;
 	shapeDef.filter.categoryBits = 2;
 	shapeDef.filter.maskBits = ( 1 | 2 );
 
 	b2ShapeDef footShapeDef = shapeDef;
-	footShapeDef.friction = 0.05f;
+	footShapeDef.material.friction = 0.05f;
 
 	// feet don't collide with ragdolls
 	footShapeDef.filter.categoryBits = 2;
@@ -45,7 +45,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 	if ( colorize )
 	{
-		footShapeDef.customColor = b2_colorSaddleBrown;
+		footShapeDef.material.customColor = b2_colorSaddleBrown;
 	}
 
 	float s = scale;
@@ -62,7 +62,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 	// hip
 	{
-		Bone* bone = human->bones + boneId_hip;
+		Bone* bone = human->bones + bone_hip;
 		bone->parentIndex = -1;
 
 		bodyDef.position = b2Add( ( b2Vec2 ){ 0.0f, 0.95f * s }, position );
@@ -71,7 +71,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = pantColor;
+			shapeDef.material.customColor = pantColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.02f * s }, { 0.0f, 0.02f * s }, 0.095f * s };
@@ -80,8 +80,8 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 	// torso
 	{
-		Bone* bone = human->bones + boneId_torso;
-		bone->parentIndex = boneId_hip;
+		Bone* bone = human->bones + bone_torso;
+		bone->parentIndex = bone_hip;
 
 		bodyDef.position = b2Add( ( b2Vec2 ){ 0.0f, 1.2f * s }, position );
 		bodyDef.linearDamping = 0.0f;
@@ -92,7 +92,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = shirtColor;
+			shapeDef.material.customColor = shirtColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.135f * s }, { 0.0f, 0.135f * s }, 0.09f * s };
@@ -119,8 +119,8 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 	// head
 	{
-		Bone* bone = human->bones + boneId_head;
-		bone->parentIndex = boneId_torso;
+		Bone* bone = human->bones + bone_head;
+		bone->parentIndex = bone_torso;
 
 		bodyDef.position = b2Add( ( b2Vec2 ){ 0.0f * s, 1.475f * s }, position );
 		bodyDef.linearDamping = 0.1f;
@@ -130,7 +130,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = skinColor;
+			shapeDef.material.customColor = skinColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.038f * s }, { 0.0f, 0.039f * s }, 0.075f * s };
@@ -161,8 +161,8 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 	// upper left leg
 	{
-		Bone* bone = human->bones + boneId_upperLeftLeg;
-		bone->parentIndex = boneId_hip;
+		Bone* bone = human->bones + bone_upperLeftLeg;
+		bone->parentIndex = bone_hip;
 
 		bodyDef.position = b2Add( ( b2Vec2 ){ 0.0f, 0.775f * s }, position );
 		bodyDef.linearDamping = 0.0f;
@@ -171,7 +171,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = pantColor;
+			shapeDef.material.customColor = pantColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.06f * s };
@@ -208,8 +208,8 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 	// lower left leg
 	{
-		Bone* bone = human->bones + boneId_lowerLeftLeg;
-		bone->parentIndex = boneId_upperLeftLeg;
+		Bone* bone = human->bones + bone_lowerLeftLeg;
+		bone->parentIndex = bone_upperLeftLeg;
 
 		bodyDef.position = b2Add( ( b2Vec2 ){ 0.0f, 0.475f * s }, position );
 		bodyDef.linearDamping = 0.0f;
@@ -218,7 +218,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = pantColor;
+			shapeDef.material.customColor = pantColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.155f * s }, { 0.0f, 0.125f * s }, 0.045f * s };
@@ -253,8 +253,8 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 	// upper right leg
 	{
-		Bone* bone = human->bones + boneId_upperRightLeg;
-		bone->parentIndex = boneId_hip;
+		Bone* bone = human->bones + bone_upperRightLeg;
+		bone->parentIndex = bone_hip;
 
 		bodyDef.position = b2Add( ( b2Vec2 ){ 0.0f, 0.775f * s }, position );
 		bodyDef.linearDamping = 0.0f;
@@ -263,7 +263,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = pantColor;
+			shapeDef.material.customColor = pantColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.06f * s };
@@ -290,8 +290,8 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 	// lower right leg
 	{
-		Bone* bone = human->bones + boneId_lowerRightLeg;
-		bone->parentIndex = boneId_upperRightLeg;
+		Bone* bone = human->bones + bone_lowerRightLeg;
+		bone->parentIndex = bone_upperRightLeg;
 
 		bodyDef.position = b2Add( ( b2Vec2 ){ 0.0f, 0.475f * s }, position );
 		bodyDef.linearDamping = 0.0f;
@@ -300,7 +300,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = pantColor;
+			shapeDef.material.customColor = pantColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.155f * s }, { 0.0f, 0.125f * s }, 0.045f * s };
@@ -335,8 +335,8 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 	// upper left arm
 	{
-		Bone* bone = human->bones + boneId_upperLeftArm;
-		bone->parentIndex = boneId_torso;
+		Bone* bone = human->bones + bone_upperLeftArm;
+		bone->parentIndex = bone_torso;
 		bone->frictionScale = 0.5f;
 
 		bodyDef.position = b2Add( ( b2Vec2 ){ 0.0f, 1.225f * s }, position );
@@ -345,7 +345,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = shirtColor;
+			shapeDef.material.customColor = shirtColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.035f * s };
@@ -372,8 +372,8 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 	// lower left arm
 	{
-		Bone* bone = human->bones + boneId_lowerLeftArm;
-		bone->parentIndex = boneId_upperLeftArm;
+		Bone* bone = human->bones + bone_lowerLeftArm;
+		bone->parentIndex = bone_upperLeftArm;
 
 		bodyDef.position = b2Add( ( b2Vec2 ){ 0.0f, 0.975f * s }, position );
 		bodyDef.linearDamping = 0.1f;
@@ -382,7 +382,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = skinColor;
+			shapeDef.material.customColor = skinColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.03f * s };
@@ -410,8 +410,8 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 	// upper right arm
 	{
-		Bone* bone = human->bones + boneId_upperRightArm;
-		bone->parentIndex = boneId_torso;
+		Bone* bone = human->bones + bone_upperRightArm;
+		bone->parentIndex = bone_torso;
 
 		bodyDef.position = b2Add( ( b2Vec2 ){ 0.0f, 1.225f * s }, position );
 		bodyDef.linearDamping = 0.0f;
@@ -420,7 +420,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = shirtColor;
+			shapeDef.material.customColor = shirtColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.035f * s };
@@ -447,8 +447,8 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 	// lower right arm
 	{
-		Bone* bone = human->bones + boneId_lowerRightArm;
-		bone->parentIndex = boneId_upperRightArm;
+		Bone* bone = human->bones + bone_lowerRightArm;
+		bone->parentIndex = bone_upperRightArm;
 
 		bodyDef.position = b2Add( ( b2Vec2 ){ 0.0f, 0.975f * s }, position );
 		bodyDef.linearDamping = 0.1f;
@@ -457,7 +457,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		if ( colorize )
 		{
-			shapeDef.customColor = skinColor;
+			shapeDef.material.customColor = skinColor;
 		}
 
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.03f * s };
@@ -490,7 +490,7 @@ void DestroyHuman( Human* human )
 {
 	assert( human->isSpawned == true );
 
-	for ( int i = 0; i < boneId_count; ++i )
+	for ( int i = 0; i < bone_count; ++i )
 	{
 		if ( B2_IS_NULL( human->bones[i].jointId ) )
 		{
@@ -501,7 +501,7 @@ void DestroyHuman( Human* human )
 		human->bones[i].jointId = b2_nullJointId;
 	}
 
-	for ( int i = 0; i < boneId_count; ++i )
+	for ( int i = 0; i < bone_count; ++i )
 	{
 		if ( B2_IS_NULL( human->bones[i].bodyId ) )
 		{
@@ -517,7 +517,7 @@ void DestroyHuman( Human* human )
 
 void Human_SetVelocity( Human* human, b2Vec2 velocity )
 {
-	for ( int i = 0; i < boneId_count; ++i )
+	for ( int i = 0; i < bone_count; ++i )
 	{
 		b2BodyId bodyId = human->bones[i].bodyId;
 
@@ -534,7 +534,7 @@ void Human_ApplyRandomAngularImpulse( Human* human, float magnitude )
 {
 	assert( human->isSpawned == true );
 	float impulse = RandomFloatRange( -magnitude, magnitude );
-	b2Body_ApplyAngularImpulse( human->bones[boneId_torso].bodyId, impulse, true );
+	b2Body_ApplyAngularImpulse( human->bones[bone_torso].bodyId, impulse, true );
 }
 
 void Human_SetJointFrictionTorque( Human* human, float torque )
@@ -542,14 +542,14 @@ void Human_SetJointFrictionTorque( Human* human, float torque )
 	assert( human->isSpawned == true );
 	if ( torque == 0.0f )
 	{
-		for ( int i = 1; i < boneId_count; ++i )
+		for ( int i = 1; i < bone_count; ++i )
 		{
 			b2RevoluteJoint_EnableMotor( human->bones[i].jointId, false );
 		}
 	}
 	else
 	{
-		for ( int i = 1; i < boneId_count; ++i )
+		for ( int i = 1; i < bone_count; ++i )
 		{
 			b2RevoluteJoint_EnableMotor( human->bones[i].jointId, true );
 			float scale = human->scale * human->bones[i].frictionScale;
@@ -563,14 +563,14 @@ void Human_SetJointSpringHertz( Human* human, float hertz )
 	assert( human->isSpawned == true );
 	if ( hertz == 0.0f )
 	{
-		for ( int i = 1; i < boneId_count; ++i )
+		for ( int i = 1; i < bone_count; ++i )
 		{
 			b2RevoluteJoint_EnableSpring( human->bones[i].jointId, false );
 		}
 	}
 	else
 	{
-		for ( int i = 1; i < boneId_count; ++i )
+		for ( int i = 1; i < bone_count; ++i )
 		{
 			b2RevoluteJoint_EnableSpring( human->bones[i].jointId, true );
 			b2RevoluteJoint_SetSpringHertz( human->bones[i].jointId, hertz );
@@ -581,8 +581,21 @@ void Human_SetJointSpringHertz( Human* human, float hertz )
 void Human_SetJointDampingRatio( Human* human, float dampingRatio )
 {
 	assert( human->isSpawned == true );
-	for ( int i = 1; i < boneId_count; ++i )
+	for ( int i = 1; i < bone_count; ++i )
 	{
 		b2RevoluteJoint_SetSpringDampingRatio( human->bones[i].jointId, dampingRatio );
+	}
+}
+
+void Human_EnableSensorEvents( Human* human, bool enable )
+{
+	assert( human->isSpawned == true );
+	b2BodyId bodyId = human->bones[bone_torso].bodyId;
+
+	b2ShapeId shapeId;
+	int count = b2Body_GetShapes( bodyId, &shapeId, 1 );
+	if ( count == 1 )
+	{
+		b2Shape_EnableSensorEvents( shapeId, enable );
 	}
 }

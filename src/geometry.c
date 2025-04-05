@@ -14,8 +14,8 @@ _Static_assert( B2_MAX_POLYGON_VERTICES > 2, "must be 3 or more" );
 
 bool b2IsValidRay( const b2RayCastInput* input )
 {
-	bool isValid = b2IsValidVec2( input->origin ) && b2IsValidVec2( input->translation ) && b2IsValidFloat( input->maxFraction ) &&
-				   0.0f <= input->maxFraction && input->maxFraction < B2_HUGE;
+	bool isValid = b2IsValidVec2( input->origin ) && b2IsValidVec2( input->translation ) &&
+				   b2IsValidFloat( input->maxFraction ) && 0.0f <= input->maxFraction && input->maxFraction < B2_HUGE;
 	return isValid;
 }
 
@@ -142,14 +142,14 @@ b2Polygon b2MakeBox( float halfWidth, float halfHeight )
 
 	b2Polygon shape = { 0 };
 	shape.count = 4;
-	shape.vertices[0] = ( b2Vec2 ){ -halfWidth, -halfHeight };
-	shape.vertices[1] = ( b2Vec2 ){ halfWidth, -halfHeight };
-	shape.vertices[2] = ( b2Vec2 ){ halfWidth, halfHeight };
-	shape.vertices[3] = ( b2Vec2 ){ -halfWidth, halfHeight };
-	shape.normals[0] = ( b2Vec2 ){ 0.0f, -1.0f };
-	shape.normals[1] = ( b2Vec2 ){ 1.0f, 0.0f };
-	shape.normals[2] = ( b2Vec2 ){ 0.0f, 1.0f };
-	shape.normals[3] = ( b2Vec2 ){ -1.0f, 0.0f };
+	shape.vertices[0] = (b2Vec2){ -halfWidth, -halfHeight };
+	shape.vertices[1] = (b2Vec2){ halfWidth, -halfHeight };
+	shape.vertices[2] = (b2Vec2){ halfWidth, halfHeight };
+	shape.vertices[3] = (b2Vec2){ -halfWidth, halfHeight };
+	shape.normals[0] = (b2Vec2){ 0.0f, -1.0f };
+	shape.normals[1] = (b2Vec2){ 1.0f, 0.0f };
+	shape.normals[2] = (b2Vec2){ 0.0f, 1.0f };
+	shape.normals[3] = (b2Vec2){ -1.0f, 0.0f };
 	shape.radius = 0.0f;
 	shape.centroid = b2Vec2_zero;
 	return shape;
@@ -169,14 +169,14 @@ b2Polygon b2MakeOffsetBox( float halfWidth, float halfHeight, b2Vec2 center, b2R
 
 	b2Polygon shape = { 0 };
 	shape.count = 4;
-	shape.vertices[0] = b2TransformPoint( xf, ( b2Vec2 ){ -halfWidth, -halfHeight } );
-	shape.vertices[1] = b2TransformPoint( xf, ( b2Vec2 ){ halfWidth, -halfHeight } );
-	shape.vertices[2] = b2TransformPoint( xf, ( b2Vec2 ){ halfWidth, halfHeight } );
-	shape.vertices[3] = b2TransformPoint( xf, ( b2Vec2 ){ -halfWidth, halfHeight } );
-	shape.normals[0] = b2RotateVector( xf.q, ( b2Vec2 ){ 0.0f, -1.0f } );
-	shape.normals[1] = b2RotateVector( xf.q, ( b2Vec2 ){ 1.0f, 0.0f } );
-	shape.normals[2] = b2RotateVector( xf.q, ( b2Vec2 ){ 0.0f, 1.0f } );
-	shape.normals[3] = b2RotateVector( xf.q, ( b2Vec2 ){ -1.0f, 0.0f } );
+	shape.vertices[0] = b2TransformPoint( xf, (b2Vec2){ -halfWidth, -halfHeight } );
+	shape.vertices[1] = b2TransformPoint( xf, (b2Vec2){ halfWidth, -halfHeight } );
+	shape.vertices[2] = b2TransformPoint( xf, (b2Vec2){ halfWidth, halfHeight } );
+	shape.vertices[3] = b2TransformPoint( xf, (b2Vec2){ -halfWidth, halfHeight } );
+	shape.normals[0] = b2RotateVector( xf.q, (b2Vec2){ 0.0f, -1.0f } );
+	shape.normals[1] = b2RotateVector( xf.q, (b2Vec2){ 1.0f, 0.0f } );
+	shape.normals[2] = b2RotateVector( xf.q, (b2Vec2){ 0.0f, 1.0f } );
+	shape.normals[3] = b2RotateVector( xf.q, (b2Vec2){ -1.0f, 0.0f } );
 	shape.radius = 0.0f;
 	shape.centroid = xf.p;
 	return shape;
@@ -189,14 +189,14 @@ b2Polygon b2MakeOffsetRoundedBox( float halfWidth, float halfHeight, b2Vec2 cent
 
 	b2Polygon shape = { 0 };
 	shape.count = 4;
-	shape.vertices[0] = b2TransformPoint( xf, ( b2Vec2 ){ -halfWidth, -halfHeight } );
-	shape.vertices[1] = b2TransformPoint( xf, ( b2Vec2 ){ halfWidth, -halfHeight } );
-	shape.vertices[2] = b2TransformPoint( xf, ( b2Vec2 ){ halfWidth, halfHeight } );
-	shape.vertices[3] = b2TransformPoint( xf, ( b2Vec2 ){ -halfWidth, halfHeight } );
-	shape.normals[0] = b2RotateVector( xf.q, ( b2Vec2 ){ 0.0f, -1.0f } );
-	shape.normals[1] = b2RotateVector( xf.q, ( b2Vec2 ){ 1.0f, 0.0f } );
-	shape.normals[2] = b2RotateVector( xf.q, ( b2Vec2 ){ 0.0f, 1.0f } );
-	shape.normals[3] = b2RotateVector( xf.q, ( b2Vec2 ){ -1.0f, 0.0f } );
+	shape.vertices[0] = b2TransformPoint( xf, (b2Vec2){ -halfWidth, -halfHeight } );
+	shape.vertices[1] = b2TransformPoint( xf, (b2Vec2){ halfWidth, -halfHeight } );
+	shape.vertices[2] = b2TransformPoint( xf, (b2Vec2){ halfWidth, halfHeight } );
+	shape.vertices[3] = b2TransformPoint( xf, (b2Vec2){ -halfWidth, halfHeight } );
+	shape.normals[0] = b2RotateVector( xf.q, (b2Vec2){ 0.0f, -1.0f } );
+	shape.normals[1] = b2RotateVector( xf.q, (b2Vec2){ 1.0f, 0.0f } );
+	shape.normals[2] = b2RotateVector( xf.q, (b2Vec2){ 0.0f, 1.0f } );
+	shape.normals[3] = b2RotateVector( xf.q, (b2Vec2){ -1.0f, 0.0f } );
 	shape.radius = radius;
 	shape.centroid = xf.p;
 	return shape;
@@ -496,7 +496,7 @@ bool b2PointInPolygon( b2Vec2 point, const b2Polygon* shape )
 	input.useRadii = false;
 
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput output = b2ShapeDistance( &cache, &input, NULL, 0 );
+	b2DistanceOutput output = b2ShapeDistance( &input, &cache, NULL, 0 );
 
 	return output.distance <= shape->radius;
 }
@@ -769,7 +769,7 @@ b2CastOutput b2RayCastSegment( const b2RayCastInput* input, const b2Segment* sha
 	}
 
 	output.fraction = t;
-	output.point = b2MulAdd( p1, t, d );
+	output.point = p;
 	output.normal = normal;
 	output.hit = true;
 
@@ -859,6 +859,7 @@ b2CastOutput b2RayCastPolygon( const b2RayCastInput* input, const b2Polygon* sha
 	castInput.transformB = b2Transform_identity;
 	castInput.translationB = input->translation;
 	castInput.maxFraction = input->maxFraction;
+	castInput.canEncroach = false;
 	return b2ShapeCast( &castInput );
 }
 
@@ -866,11 +867,12 @@ b2CastOutput b2ShapeCastCircle( const b2ShapeCastInput* input, const b2Circle* s
 {
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->center, 1, shape->radius );
-	pairInput.proxyB = b2MakeProxy( input->points, input->count, input->radius );
+	pairInput.proxyB = input->proxy;
 	pairInput.transformA = b2Transform_identity;
 	pairInput.transformB = b2Transform_identity;
 	pairInput.translationB = input->translation;
 	pairInput.maxFraction = input->maxFraction;
+	pairInput.canEncroach = input->canEncroach;
 
 	b2CastOutput output = b2ShapeCast( &pairInput );
 	return output;
@@ -880,11 +882,12 @@ b2CastOutput b2ShapeCastCapsule( const b2ShapeCastInput* input, const b2Capsule*
 {
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->center1, 2, shape->radius );
-	pairInput.proxyB = b2MakeProxy( input->points, input->count, input->radius );
+	pairInput.proxyB = input->proxy;
 	pairInput.transformA = b2Transform_identity;
 	pairInput.transformB = b2Transform_identity;
 	pairInput.translationB = input->translation;
 	pairInput.maxFraction = input->maxFraction;
+	pairInput.canEncroach = input->canEncroach;
 
 	b2CastOutput output = b2ShapeCast( &pairInput );
 	return output;
@@ -894,11 +897,12 @@ b2CastOutput b2ShapeCastSegment( const b2ShapeCastInput* input, const b2Segment*
 {
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->point1, 2, 0.0f );
-	pairInput.proxyB = b2MakeProxy( input->points, input->count, input->radius );
+	pairInput.proxyB = input->proxy;
 	pairInput.transformA = b2Transform_identity;
 	pairInput.transformB = b2Transform_identity;
 	pairInput.translationB = input->translation;
 	pairInput.maxFraction = input->maxFraction;
+	pairInput.canEncroach = input->canEncroach;
 
 	b2CastOutput output = b2ShapeCast( &pairInput );
 	return output;
@@ -908,12 +912,121 @@ b2CastOutput b2ShapeCastPolygon( const b2ShapeCastInput* input, const b2Polygon*
 {
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( shape->vertices, shape->count, shape->radius );
-	pairInput.proxyB = b2MakeProxy( input->points, input->count, input->radius );
+	pairInput.proxyB = input->proxy;
 	pairInput.transformA = b2Transform_identity;
 	pairInput.transformB = b2Transform_identity;
 	pairInput.translationB = input->translation;
 	pairInput.maxFraction = input->maxFraction;
+	pairInput.canEncroach = input->canEncroach;
 
 	b2CastOutput output = b2ShapeCast( &pairInput );
 	return output;
+}
+
+b2PlaneResult b2CollideMoverAndCircle( const b2Circle* shape, const b2Capsule* mover )
+{
+	b2DistanceInput distanceInput;
+	distanceInput.proxyA = b2MakeProxy( &shape->center, 1, 0.0f );
+	distanceInput.proxyB = b2MakeProxy( &mover->center1, 2, mover->radius );
+	distanceInput.transformA = b2Transform_identity;
+	distanceInput.transformB = b2Transform_identity;
+	distanceInput.useRadii = false;
+
+	float totalRadius = mover->radius + shape->radius;
+
+	b2SimplexCache cache = {};
+	b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
+
+	if ( distanceOutput.distance <= totalRadius )
+	{
+		b2Plane plane = { distanceOutput.normal, totalRadius - distanceOutput.distance };
+		return (b2PlaneResult){
+			.plane = plane,
+			.point = distanceOutput.pointA,
+			.hit = true,
+		};
+	}
+
+	return (b2PlaneResult){ 0 };
+}
+
+b2PlaneResult b2CollideMoverAndCapsule( const b2Capsule* shape, const b2Capsule* mover )
+{
+	b2DistanceInput distanceInput;
+	distanceInput.proxyA = b2MakeProxy( &shape->center1, 2, 0.0f );
+	distanceInput.proxyB = b2MakeProxy( &mover->center1, 2, mover->radius );
+	distanceInput.transformA = b2Transform_identity;
+	distanceInput.transformB = b2Transform_identity;
+	distanceInput.useRadii = false;
+
+	float totalRadius = mover->radius + shape->radius;
+
+	b2SimplexCache cache = {};
+	b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
+
+	if ( distanceOutput.distance <= totalRadius )
+	{
+		b2Plane plane = { distanceOutput.normal, totalRadius - distanceOutput.distance };
+		return (b2PlaneResult){
+			.plane = plane,
+			.point = distanceOutput.pointA,
+			.hit = true,
+		};
+	}
+
+	return (b2PlaneResult){ 0 };
+}
+
+b2PlaneResult b2CollideMoverAndPolygon( const b2Polygon* shape, const b2Capsule* mover )
+{
+	b2DistanceInput distanceInput;
+	distanceInput.proxyA = b2MakeProxy( shape->vertices, shape->count, shape->radius );
+	distanceInput.proxyB = b2MakeProxy( &mover->center1, 2, mover->radius );
+	distanceInput.transformA = b2Transform_identity;
+	distanceInput.transformB = b2Transform_identity;
+	distanceInput.useRadii = false;
+
+	float totalRadius = mover->radius + shape->radius;
+
+	b2SimplexCache cache = {};
+	b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
+
+	if ( distanceOutput.distance <= totalRadius )
+	{
+		b2Plane plane = { distanceOutput.normal, totalRadius - distanceOutput.distance };
+		return (b2PlaneResult){
+			.plane = plane,
+			.point = distanceOutput.pointA,
+			.hit = true,
+		};
+	}
+
+	return (b2PlaneResult){ 0 };
+}
+
+b2PlaneResult b2CollideMoverAndSegment( const b2Segment* shape, const b2Capsule* mover )
+{
+	b2DistanceInput distanceInput;
+	distanceInput.proxyA = b2MakeProxy( &shape->point1, 2, 0.0f );
+	distanceInput.proxyB = b2MakeProxy( &mover->center1, 2, mover->radius );
+	distanceInput.transformA = b2Transform_identity;
+	distanceInput.transformB = b2Transform_identity;
+	distanceInput.useRadii = false;
+
+	float totalRadius = mover->radius;
+
+	b2SimplexCache cache = {};
+	b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
+
+	if ( distanceOutput.distance <= totalRadius )
+	{
+		b2Plane plane = { distanceOutput.normal, totalRadius - distanceOutput.distance };
+		return (b2PlaneResult){
+			.plane = plane,
+			.point = distanceOutput.pointA,
+			.hit = true,
+		};
+	}
+
+	return (b2PlaneResult){ 0 };
 }

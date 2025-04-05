@@ -49,7 +49,12 @@ bool b2IsValidRotation( b2Rot q )
 		return false;
 	}
 
-	return b2IsNormalized( q );
+	return b2IsNormalizedRot( q );
+}
+
+bool b2IsValidPlane( b2Plane a )
+{
+	return b2IsValidVec2( a.normal ) && b2IsNormalized( a.normal ) && b2IsValidFloat( a.offset );
 }
 
 // https://stackoverflow.com/questions/46210708/atan2-approximation-with-11bits-in-mantissa-on-x86with-sse2-and-armwith-vfpv4

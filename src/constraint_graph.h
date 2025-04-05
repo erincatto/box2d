@@ -26,6 +26,7 @@ typedef struct b2GraphColor
 	// This bitset is indexed by bodyId so this is over-sized to encompass static bodies
 	// however I never traverse these bits or use the bit count for anything
 	// This bitset is unused on the overflow color.
+	// todo consider having a uint_16 per body that tracks the graph color membership
 	b2BitSet bodySet;
 
 	// cache friendly arrays
