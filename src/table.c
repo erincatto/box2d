@@ -60,17 +60,15 @@ void b2ClearSet( b2HashSet* set )
 // todo try: https://probablydance.com/2018/06/16/fibonacci-hashing-the-optimization-that-the-world-forgot-or-a-better-alternative-to-integer-modulo/
 static uint32_t b2KeyHash( uint64_t key )
 {
+	// Murmur hash
 	uint64_t h = key;
 	h ^= h >> 33;
-	h *= 0xff51afd7ed558ccdL;
+	h *= 0xff51afd7ed558ccduLL;
 	h ^= h >> 33;
-	h *= 0xc4ceb9fe1a85ec53L;
+	h *= 0xc4ceb9fe1a85ec53uLL;
 	h ^= h >> 33;
 
 	return (uint32_t)h;
-
-	// todo_erin 
-	// return 11400714819323198485ull * key;
 }
 
 static int b2FindSlot( const b2HashSet* set, uint64_t key, uint32_t hash )

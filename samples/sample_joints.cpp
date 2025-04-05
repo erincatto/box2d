@@ -355,12 +355,12 @@ public:
 
 static int sampleMotorJoint = RegisterSample( "Joints", "Motor Joint", MotorJoint::Create );
 
-// This sample shows how to use a null joint to prevent collision between two bodies.
-// This is more specific than filters. It also shows that sleeping is coupled by the null joint.
-class NullJoint : public Sample
+// This sample shows how to use a filter joint to prevent collision between two bodies.
+// This is more specific than shape filters. It also shows that sleeping is coupled by the filter joint.
+class FilterJoint : public Sample
 {
 public:
-	explicit NullJoint( Settings& settings )
+	explicit FilterJoint( Settings& settings )
 		: Sample( settings )
 	{
 		if ( settings.restart == false )
@@ -392,21 +392,21 @@ public:
 			b2BodyId bodyId2 = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId2, &shapeDef, &box );
 
-			b2NullJointDef jointDef = b2DefaultNullJointDef();
+			b2FilterJointDef jointDef = b2DefaultFilterJointDef();
 			jointDef.bodyIdA = bodyId1;
 			jointDef.bodyIdB = bodyId2;
 
-			b2CreateNullJoint( m_worldId, &jointDef );
+			b2CreateFilterJoint( m_worldId, &jointDef );
 		}
 	}
 
 	static Sample* Create( Settings& settings )
 	{
-		return new NullJoint( settings );
+		return new FilterJoint( settings );
 	}
 };
 
-static int sampleNullJoint = RegisterSample( "Joints", "Null Joint", NullJoint::Create );
+static int sampleFilterJoint = RegisterSample( "Joints", "Filter Joint", FilterJoint::Create );
 
 class RevoluteJoint : public Sample
 {

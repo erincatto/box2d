@@ -206,6 +206,11 @@ install(
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/box2d"
 )
 
+install(
+  FILES ${BOX2D_API_FILES}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/box2d
+)
+
 include(CMakePackageConfigHelpers)
 
 write_basic_package_version_file(
@@ -217,4 +222,3 @@ install(
   FILES "${CMAKE_CURRENT_BINARY_DIR}/box2dConfigVersion.cmake"
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/box2d"
 )
-
