@@ -306,7 +306,7 @@ B2_API void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity );
 /// Set the velocity to reach the given transform after a given time step.
 /// The result will be close but maybe not exact. This is meant for kinematic bodies.
 /// This will automatically wake the body if asleep.
-B2_API void b2Body_SetVelocityForTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep );
+B2_API void b2Body_SetKinematicTarget( b2BodyId bodyId, b2Transform target, float timeStep );
 
 /// Get the linear velocity of a local point attached to a body. Usually in meters per second.
 B2_API b2Vec2 b2Body_GetLocalPointVelocity( b2BodyId bodyId, b2Vec2 localPoint );
