@@ -10,7 +10,7 @@
 
 Donut::Donut()
 {
-	for ( int i = 0; i < e_sides; ++i )
+	for ( int i = 0; i < m_sides; ++i )
 	{
 		m_bodyIds[i] = b2_nullBodyId;
 		m_jointIds[i] = b2_nullJointId;
@@ -23,15 +23,15 @@ void Donut::Create( b2WorldId worldId, b2Vec2 position, float scale, int groupIn
 {
 	assert( m_isSpawned == false );
 
-	for ( int i = 0; i < e_sides; ++i )
+	for ( int i = 0; i < m_sides; ++i )
 	{
 		assert( B2_IS_NULL( m_bodyIds[i] ) );
 		assert( B2_IS_NULL( m_jointIds[i] ) );
 	}
 
 	float radius = 1.0f * scale;
-	float deltaAngle = 2.0f * B2_PI / e_sides;
-	float length = 2.0f * B2_PI * radius / e_sides;
+	float deltaAngle = 2.0f * B2_PI / m_sides;
+	float length = 2.0f * B2_PI * radius / m_sides;
 
 	b2Capsule capsule = { { 0.0f, -0.5f * length }, { 0.0f, 0.5f * length }, 0.25f * scale };
 
@@ -48,7 +48,7 @@ void Donut::Create( b2WorldId worldId, b2Vec2 position, float scale, int groupIn
 
 	// Create bodies
 	float angle = 0.0f;
-	for ( int i = 0; i < e_sides; ++i )
+	for ( int i = 0; i < m_sides; ++i )
 	{
 		bodyDef.position = { radius * cosf( angle ) + center.x, radius * sinf( angle ) + center.y };
 		bodyDef.rotation = b2MakeRot( angle );
@@ -66,8 +66,8 @@ void Donut::Create( b2WorldId worldId, b2Vec2 position, float scale, int groupIn
 	weldDef.localAnchorA = { 0.0f, 0.5f * length };
 	weldDef.localAnchorB = { 0.0f, -0.5f * length };
 
-	b2BodyId prevBodyId = m_bodyIds[e_sides - 1];
-	for ( int i = 0; i < e_sides; ++i )
+	b2BodyId prevBodyId = m_bodyIds[m_sides - 1];
+	for ( int i = 0; i < m_sides; ++i )
 	{
 		weldDef.bodyIdA = prevBodyId;
 		weldDef.bodyIdB = m_bodyIds[i];
@@ -85,7 +85,7 @@ void Donut::Destroy()
 {
 	assert( m_isSpawned == true );
 
-	for ( int i = 0; i < e_sides; ++i )
+	for ( int i = 0; i < m_sides; ++i )
 	{
 		b2DestroyBody( m_bodyIds[i] );
 		m_bodyIds[i] = b2_nullBodyId;

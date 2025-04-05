@@ -91,7 +91,7 @@ target_include_directories(box2d
 
 set(CMAKE_DEBUG_POSTFIX "d")
 
-# Box2D uses C17
+# Box2D uses C17 for _Static_assert and anonymous unions
 set_target_properties(box2d PROPERTIES
 	C_STANDARD 17
     C_STANDARD_REQUIRED YES

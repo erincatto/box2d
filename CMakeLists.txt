@@ -58,10 +58,7 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
 	cmake_dependent_option(BOX2D_AVX2 "Enable AVX2" OFF "BOX2D_ENABLE_SIMD" OFF)
 endif()
 
-# C++17 needed for imgui
-set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -89,9 +86,6 @@ if(PROJECT_IS_TOP_LEVEL)
 	)
 
 	if(MSVC AND WIN32)
-		# Enable edit and continue only in debug due to perf hit in release
-		# add_link_options($<$<CONFIG:Debug>:/INCREMENTAL>)
-		# add_compile_options($<$<CONFIG:Debug>:/ZI>)
 		# add_compile_options(/fsanitize=address)
 		# set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/GS- /Gy /O2 /Oi /Ot")
 		# set(CMAKE_CXX_FLAGS_RELEASE "/GS- /Gy /O2 /Oi /Ot")

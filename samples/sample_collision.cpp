@@ -1744,7 +1744,7 @@ public:
 			context.fractions[2] = FLT_MAX;
 
 			b2Transform transform = { m_rayStart, b2MakeRot( m_angle ) };
-			b2Circle circle = { m_rayStart, m_castRadius };
+			b2Circle circle = { .center = m_rayStart, .radius = m_castRadius };
 			b2Capsule capsule = { b2TransformPoint(transform, { -0.25f, 0.0f }), b2TransformPoint(transform, { 0.25f, 0.0f }), m_castRadius };
 			b2Polygon box = b2MakeOffsetRoundedBox( 0.25f, 0.5f, transform.p, transform.q, m_castRadius );
 
