@@ -70,8 +70,6 @@ class TiltedStack : public Sample
 public:
 	enum
 	{
-		e_columns = 10,
-		e_rows = 10,
 	};
 
 	explicit TiltedStack( Settings& settings )
@@ -93,7 +91,7 @@ public:
 			b2CreatePolygonShape( groundId, &shapeDef, &box );
 		}
 
-		for ( int i = 0; i < e_rows * e_columns; ++i )
+		for ( int i = 0; i < m_rows * m_columns; ++i )
 		{
 			m_bodies[i] = b2_nullBodyId;
 		}
@@ -106,18 +104,18 @@ public:
 
 		float offset = 0.2f;
 		float dx = 5.0f;
-		float xroot = -0.5f * dx * ( e_columns - 1.0f );
+		float xroot = -0.5f * dx * ( m_columns - 1.0f );
 
-		for ( int j = 0; j < e_columns; ++j )
+		for ( int j = 0; j < m_columns; ++j )
 		{
 			float x = xroot + j * dx;
 
-			for ( int i = 0; i < e_rows; ++i )
+			for ( int i = 0; i < m_rows; ++i )
 			{
 				b2BodyDef bodyDef = b2DefaultBodyDef();
 				bodyDef.type = b2_dynamicBody;
 
-				int n = j * e_rows + i;
+				int n = j * m_rows + i;
 
 				bodyDef.position = { x + offset * i, 0.5f + 1.0f * i };
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
@@ -134,7 +132,10 @@ public:
 		return new TiltedStack( settings );
 	}
 
-	b2BodyId m_bodies[e_rows * e_columns];
+	static constexpr int m_columns = 10;
+	static constexpr int m_rows = 10;
+
+	b2BodyId m_bodies[m_rows * m_columns];
 };
 
 static int sampleTiltedStack = RegisterSample( "Stacking", "Tilted Stack", TiltedStack::Create );
@@ -860,8 +861,6 @@ class Confined : public Sample
 public:
 	enum
 	{
-		e_gridCount = 25,
-		e_maxCount = e_gridCount * e_gridCount
 	};
 
 	explicit Confined( Settings& settings )
@@ -900,13 +899,13 @@ public:
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
 
-		while ( m_count < e_maxCount )
+		while ( m_count < m_maxCount )
 		{
 			m_row = 0;
-			for ( int i = 0; i < e_gridCount; ++i )
+			for ( int i = 0; i < m_gridCount; ++i )
 			{
-				float x = -8.75f + m_column * 18.0f / e_gridCount;
-				float y = 1.5f + m_row * 18.0f / e_gridCount;
+				float x = -8.75f + m_column * 18.0f / m_gridCount;
+				float y = 1.5f + m_row * 18.0f / m_gridCount;
 
 				bodyDef.position = { x, y };
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
@@ -924,6 +923,8 @@ public:
 		return new Confined( settings );
 	}
 
+	static constexpr int m_gridCount = 25;
+	static constexpr int m_maxCount = m_gridCount * m_gridCount;
 	int m_row;
 	int m_column;
 	int m_count;
