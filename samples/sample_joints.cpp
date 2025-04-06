@@ -2569,10 +2569,15 @@ public:
 			float scale = 0.2f;
 			int count = ParsePath( path, offset, points, 64, scale, false );
 
+			b2SurfaceMaterial material = b2DefaultSurfaceMaterial();
+			material.customColor = b2_colorDarkSeaGreen;
+
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
 			chainDef.count = count;
 			chainDef.isLoop = true;
+			chainDef.materials = &material;
+			chainDef.materialCount = 1;
 
 			b2CreateChain( groundId, &chainDef );
 		}
@@ -2601,6 +2606,7 @@ public:
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.material.friction = 0.1f;
+			shapeDef.material.customColor = b2_colorSaddleBrown;
 			b2Circle circle = { b2Vec2_zero, gearRadius };
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 
@@ -2613,6 +2619,7 @@ public:
 			for ( int i = 0; i < count; ++i )
 			{
 				b2Polygon tooth = b2MakeOffsetRoundedBox( toothHalfWidth, toothHalfHeight, center, rotation, toothRadius );
+				shapeDef.material.customColor = b2_colorGray;
 				b2CreatePolygonShape( bodyId, &shapeDef, &tooth );
 
 				rotation = b2MulRot( dq, rotation );
@@ -2647,6 +2654,7 @@ public:
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.material.friction = 0.1f;
+			shapeDef.material.customColor = b2_colorSaddleBrown;
 			b2Circle circle = { b2Vec2_zero, gearRadius };
 			b2CreateCircleShape( followerId, &shapeDef, &circle );
 
@@ -2659,6 +2667,7 @@ public:
 			for ( int i = 0; i < count; ++i )
 			{
 				b2Polygon tooth = b2MakeOffsetRoundedBox( toothHalfWidth, toothHalfHeight, center, rotation, toothRadius );
+				shapeDef.material.customColor = b2_colorGray;
 				b2CreatePolygonShape( followerId, &shapeDef, &tooth );
 
 				rotation = b2MulRot( dq, rotation );
@@ -2686,6 +2695,7 @@ public:
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.density = 2.0f;
+			shapeDef.material.customColor = b2_colorLightSteelBlue;
 
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.maxMotorTorque = 0.05f;
@@ -2704,7 +2714,7 @@ public:
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 				b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
 
-				b2Vec2 pivot = {position.x, position.y + linkHalfLength};
+				b2Vec2 pivot = { position.x, position.y + linkHalfLength };
 				jointDef.bodyIdA = prevBodyId;
 				jointDef.bodyIdB = bodyId;
 				jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
@@ -2728,6 +2738,7 @@ public:
 			b2Polygon box = b2MakeBox( 0.15f, doorHalfHeight );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.material.friction = 0.1f;
+			shapeDef.material.customColor = b2_colorDarkCyan;
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
 			{
@@ -2762,6 +2773,10 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.material.rollingResistance = 0.3f;
 
+			b2HexColor colors[5] = {
+				b2_colorGray, b2_colorGainsboro, b2_colorLightGray, b2_colorLightSlateGray, b2_colorDarkGray,
+			};
+
 			float y = 4.25f;
 			int xCount = 10, yCount = 20;
 			for ( int i = 0; i < yCount; ++i )
@@ -2773,6 +2788,10 @@ public:
 					b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 					b2Polygon poly = RandomPolygon( 0.1f );
 					poly.radius = RandomFloatRange( 0.01f, 0.02f );
+
+					int colorIndex = RandomIntRange( 0, 4 );
+					shapeDef.material.customColor = colors[colorIndex];
+
 					b2CreatePolygonShape( bodyId, &shapeDef, &poly );
 					x += 0.2f;
 				}
@@ -2784,8 +2803,8 @@ public:
 
 	void UpdateGui() override
 	{
-		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		float height = 120.0f;
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 25.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Gear Lift", nullptr, ImGuiWindowFlags_NoResize );
@@ -2813,6 +2832,20 @@ public:
 
 	void Step( Settings& settings ) override
 	{
+		if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) )
+		{
+			m_motorSpeed = b2MaxFloat(-0.3f, m_motorSpeed - 0.001f);
+			b2RevoluteJoint_SetMotorSpeed( m_driverId, m_motorSpeed );
+			b2Joint_WakeBodies( m_driverId );
+		}
+
+		if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) )
+		{
+			m_motorSpeed = b2MinFloat( 0.3f, m_motorSpeed + 0.001f );
+			b2RevoluteJoint_SetMotorSpeed( m_driverId, m_motorSpeed );
+			b2Joint_WakeBodies( m_driverId );
+		}
+
 		Sample::Step( settings );
 	}
 
