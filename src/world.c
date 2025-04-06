@@ -2434,7 +2434,13 @@ static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 	{
 		b2ShapeId id = { shapeId + 1, world->worldId, shape->generation };
 		float fraction = worldContext->fcn( id, output.point, output.normal, output.fraction, worldContext->userContext );
-		worldContext->fraction = fraction;
+
+		// The user may return -1 to skip this shape
+		if ( 0.0f <= fraction && fraction <= 1.0f )
+		{
+			worldContext->fraction = fraction;
+		}
+
 		return fraction;
 	}
 

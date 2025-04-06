@@ -1864,7 +1864,7 @@ public:
 	bool m_dragging;
 };
 
-static int sampleRayCastWorld = RegisterSample( "Collision", "Ray Cast World", CastWorld::Create );
+static int sampleRayCastWorld = RegisterSample( "Collision", "Cast World", CastWorld::Create );
 
 class OverlapWorld : public Sample
 {

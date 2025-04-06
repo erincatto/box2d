@@ -91,7 +91,7 @@ public:
 			bodyDef.position = { 32.0f, 4.0f };
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			m_friendlyShape.maxPush = 0.05f;
+			m_friendlyShape.maxPush = 0.025f;
 			m_friendlyShape.clipVelocity = false;
 
 			shapeDef.filter = { MoverBit, AllBits, 0 };
