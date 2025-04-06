@@ -2461,7 +2461,7 @@ b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Vec
 
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
-	b2ShapeCastInput input = {};
+	b2ShapeCastInput input = { 0 };
 	input.proxy.points[0] = circle->center;
 	input.proxy.count = 1;
 	input.proxy.radius = circle->radius;
@@ -2502,7 +2502,7 @@ b2TreeStats b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2
 
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
-	b2ShapeCastInput input = {};
+	b2ShapeCastInput input = { 0 };
 	// Note: these world space points get transformed into local space in b2ShapeCastShape
 	input.proxy.points[0] = capsule->center1;
 	input.proxy.points[1] = capsule->center2;
@@ -2545,7 +2545,7 @@ b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2
 
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
-	b2ShapeCastInput input = {};
+	b2ShapeCastInput input = { 0 };
 	// Note: these world space points get transformed into local space in b2ShapeCastShape
 	for ( int i = 0; i < polygon->count; ++i )
 	{
@@ -2635,7 +2635,7 @@ float b2World_CastMover( b2WorldId worldId, const b2Capsule* mover, b2Vec2 trans
 		return 1.0f;
 	}
 
-	b2ShapeCastInput input = {};
+	b2ShapeCastInput input = { 0 };
 	input.proxy.points[0] = mover->center1;
 	input.proxy.points[1] = mover->center2;
 	input.proxy.count = 2;
