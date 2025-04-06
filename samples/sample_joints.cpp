@@ -6,6 +6,7 @@
 #include "doohickey.h"
 #include "draw.h"
 #include "human.h"
+#include "random.h"
 #include "sample.h"
 #include "settings.h"
 
@@ -303,7 +304,7 @@ public:
 			b2MotorJoint_SetCorrectionFactor( m_jointId, m_correctionFactor );
 		}
 
-		if ( ImGui::Button( "Apply Impulse") )
+		if ( ImGui::Button( "Apply Impulse" ) )
 		{
 			b2Body_ApplyLinearImpulseToCenter( m_bodyId, { 100.0f, 0.0f }, true );
 		}
@@ -473,7 +474,7 @@ public:
 		}
 
 		{
-			b2Circle circle = { };
+			b2Circle circle = {};
 			circle.radius = 2.0f;
 
 			b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -2547,164 +2548,238 @@ public:
 	{
 		if ( settings.restart == false )
 		{
-			g_camera.m_center = { 0.0f, 9.0f };
-			g_camera.m_zoom = 25.0f * 0.4f;
+			g_camera.m_center = { 0.0f, 6.0f };
+			g_camera.m_zoom = 7.0f;
 		}
-
-		// Need 8 sub-steps for smoother operation
-		//settings.subStepCount = 8;
 
 		b2BodyId groundId;
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			groundId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Segment segment = { { -20.0f, 0.0f }, { 20.0f, 0.0f } };
-			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+			const char* path =
+				"m 63.500002,201.08333 103.187498,0 1e-5,-37.04166 h -2.64584 l 0,34.39583 h -42.33333 v -2.64583 l "
+				"-2.64584,-1e-5 v -2.64583 h -2.64583 v -2.64584 h -2.64584 v -2.64583 H 111.125 v -2.64583 h -2.64583 v "
+				"-2.64583 h -2.64583 v -2.64584 l -2.64584,1e-5 v -2.64583 l -2.64583,-1e-5 V 174.625 h -2.645834 v -2.64584 l "
+				"-2.645833,1e-5 v -2.64584 H 92.60417 v -2.64583 h -2.645834 v -2.64583 l -26.458334,0 0,37.04166";
+
+			b2Vec2 points[128];
+
+			b2Vec2 offset = { -120.0f, -200.0f };
+			float scale = 0.2f;
+			int count = ParsePath( path, offset, points, 64, scale, false );
+
+			b2ChainDef chainDef = b2DefaultChainDef();
+			chainDef.points = points;
+			chainDef.count = count;
+			chainDef.isLoop = true;
+
+			b2CreateChain( groundId, &chainDef );
 		}
 
-		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.type = b2_dynamicBody;
-		bodyDef.sleepThreshold = 0.01f;
+		float gearRadius = 1.0f;
+		float toothHalfWidth = 0.09f;
+		float toothHalfHeight = 0.06f;
+		float toothRadius = 0.03f;
+		float linkHalfLength = 0.07f;
+		float linkRadius = 0.05f;
+		float linkCount = 40;
+		float doorHalfHeight = 1.5f;
 
-		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		b2Capsule capsule = { { -2.5f, 0.0f }, { 2.5f, 0.0f }, 0.15f };
+		b2Vec2 gearPosition1 = { -4.25f, 10.25f };
+		b2Vec2 gearPosition2 = gearPosition1 + b2Vec2{ 2.0f, 1.0f };
+		b2Vec2 linkAttachPosition = gearPosition2 + b2Vec2{ gearRadius + 2.0f * toothHalfWidth + toothRadius, 0.0f };
+		b2Vec2 doorPosition = linkAttachPosition - b2Vec2{ 0.0f, 2.0f * linkCount * linkHalfLength + doorHalfHeight };
 
-		b2BodyId baseId1 = groundId;
-		b2BodyId baseId2 = groundId;
-		b2Vec2 baseAnchor1 = { -2.5f, 0.2f };
-		b2Vec2 baseAnchor2 = { 2.5f, 0.2f };
-		float y = 0.5f;
-
-		b2BodyId linkId1;
-		int N = 3;
-
-		for ( int i = 0; i < N; ++i )
 		{
-			bodyDef.position = { 0.0f, y };
-			bodyDef.rotation = b2MakeRot( 0.15f );
-			b2BodyId bodyId1 = b2CreateBody( m_worldId, &bodyDef );
-			b2CreateCapsuleShape( bodyId1, &shapeDef, &capsule );
+			b2Vec2 position = gearPosition1;
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = position;
 
-			bodyDef.position = { 0.0f, y };
-			bodyDef.rotation = b2MakeRot( -0.15f );
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2BodyId bodyId2 = b2CreateBody( m_worldId, &bodyDef );
-			b2CreateCapsuleShape( bodyId2, &shapeDef, &capsule );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.material.friction = 0.1f;
+			b2Circle circle = { b2Vec2_zero, gearRadius };
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 
-			if ( i == 1 )
+			int count = 16;
+			float deltaAngle = 2.0f * B2_PI / 16;
+			b2Rot dq = b2MakeRot( deltaAngle );
+			b2Vec2 center = { gearRadius + toothHalfHeight, 0.0f };
+			b2Rot rotation = b2Rot_identity;
+
+			for ( int i = 0; i < count; ++i )
 			{
-				linkId1 = bodyId2;
+				b2Polygon tooth = b2MakeOffsetRoundedBox( toothHalfWidth, toothHalfHeight, center, rotation, toothRadius );
+				b2CreatePolygonShape( bodyId, &shapeDef, &tooth );
+
+				rotation = b2MulRot( dq, rotation );
+				center = b2RotateVector( rotation, { gearRadius + toothHalfHeight, 0.0f } );
 			}
 
 			b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
 
-			// left pin
-			revoluteDef.bodyIdA = baseId1;
-			revoluteDef.bodyIdB = bodyId1;
-			revoluteDef.localAnchorA = baseAnchor1;
-			revoluteDef.localAnchorB = { -2.5f, 0.0f };
-			revoluteDef.enableMotor = false;
-			revoluteDef.maxMotorTorque = 1.0f;
-			revoluteDef.collideConnected = ( i == 0 ) ? true : false;
+			m_motorTorque = 80.0f;
+			m_motorSpeed = 0.0f;
+			m_enableMotor = true;
 
-			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
+			revoluteDef.bodyIdA = groundId;
+			revoluteDef.bodyIdB = bodyId;
+			revoluteDef.localAnchorA = b2Body_GetLocalPoint( groundId, position );
+			revoluteDef.localAnchorB = b2Vec2_zero;
+			revoluteDef.enableMotor = m_enableMotor;
+			revoluteDef.maxMotorTorque = m_motorTorque;
+			revoluteDef.motorSpeed = m_motorSpeed;
+			m_driverId = b2CreateRevoluteJoint( m_worldId, &revoluteDef );
+		}
 
-			// right pin
-			if ( i == 0 )
+		b2BodyId followerId;
+
+		{
+			b2Vec2 position = gearPosition2;
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = position;
+
+			followerId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.material.friction = 0.1f;
+			b2Circle circle = { b2Vec2_zero, gearRadius };
+			b2CreateCircleShape( followerId, &shapeDef, &circle );
+
+			int count = 16;
+			float deltaAngle = 2.0f * B2_PI / 16;
+			b2Rot dq = b2MakeRot( deltaAngle );
+			b2Vec2 center = { gearRadius + toothHalfWidth, 0.0f };
+			b2Rot rotation = b2Rot_identity;
+
+			for ( int i = 0; i < count; ++i )
 			{
-				b2WheelJointDef wheelDef = b2DefaultWheelJointDef();
-				wheelDef.bodyIdA = baseId2;
-				wheelDef.bodyIdB = bodyId2;
-				wheelDef.localAxisA = { 1.0f, 0.0f };
-				wheelDef.localAnchorA = baseAnchor2;
-				wheelDef.localAnchorB = { 2.5f, 0.0f };
-				wheelDef.enableSpring = false;
-				wheelDef.collideConnected = true;
+				b2Polygon tooth = b2MakeOffsetRoundedBox( toothHalfWidth, toothHalfHeight, center, rotation, toothRadius );
+				b2CreatePolygonShape( followerId, &shapeDef, &tooth );
 
-				b2CreateWheelJoint( m_worldId, &wheelDef );
+				rotation = b2MulRot( dq, rotation );
+				center = b2RotateVector( rotation, { gearRadius + toothHalfWidth, 0.0f } );
 			}
-			else
-			{
-				revoluteDef.bodyIdA = baseId2;
-				revoluteDef.bodyIdB = bodyId2;
-				revoluteDef.localAnchorA = baseAnchor2;
-				revoluteDef.localAnchorB = { 2.5f, 0.0f };
-				revoluteDef.enableMotor = false;
-				revoluteDef.maxMotorTorque = 1.0f;
-				revoluteDef.collideConnected = false;
 
+			b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
+
+			revoluteDef.bodyIdA = groundId;
+			revoluteDef.bodyIdB = followerId;
+			revoluteDef.localAnchorA = b2Body_GetLocalPoint( groundId, position );
+			revoluteDef.localAnchorB = b2Vec2_zero;
+			revoluteDef.enableMotor = true;
+			revoluteDef.maxMotorTorque = 0.5f;
+			revoluteDef.referenceAngle = 0.25f * B2_PI;
+			revoluteDef.lowerAngle = -0.3f * B2_PI;
+			revoluteDef.upperAngle = 0.8f * B2_PI;
+			revoluteDef.enableLimit = true;
+			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
+		}
+
+		b2BodyId lastLinkId;
+		{
+			b2Capsule capsule = { { 0.0f, -linkHalfLength }, { 0.0f, linkHalfLength }, linkRadius };
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.density = 2.0f;
+
+			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+			jointDef.maxMotorTorque = 0.05f;
+			jointDef.enableMotor = true;
+
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			b2Vec2 position = linkAttachPosition + b2Vec2{ 0.0f, -linkHalfLength };
+
+			int count = 40;
+			b2BodyId prevBodyId = followerId;
+			for ( int i = 0; i < count; ++i )
+			{
+				bodyDef.position = position;
+
+				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+				b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
+
+				b2Vec2 pivot = {position.x, position.y + linkHalfLength};
+				jointDef.bodyIdA = prevBodyId;
+				jointDef.bodyIdB = bodyId;
+				jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
+				jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+				b2CreateRevoluteJoint( m_worldId, &jointDef );
+
+				position.y -= 2.0f * linkHalfLength;
+				prevBodyId = bodyId;
+			}
+
+			lastLinkId = prevBodyId;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = doorPosition;
+
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Polygon box = b2MakeBox( 0.15f, doorHalfHeight );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.material.friction = 0.1f;
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			{
+				b2Vec2 pivot = doorPosition + b2Vec2{ 0.0f, doorHalfHeight };
+				b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
+				revoluteDef.bodyIdA = lastLinkId;
+				revoluteDef.bodyIdB = bodyId;
+				revoluteDef.localAnchorA = b2Body_GetLocalPoint( lastLinkId, pivot );
+				revoluteDef.localAnchorB = { 0.0f, doorHalfHeight };
+				revoluteDef.enableMotor = true;
+				revoluteDef.maxMotorTorque = 0.05f;
 				b2CreateRevoluteJoint( m_worldId, &revoluteDef );
 			}
 
-			// middle pin
-			revoluteDef.bodyIdA = bodyId1;
-			revoluteDef.bodyIdB = bodyId2;
-			revoluteDef.localAnchorA = { 0.0f, 0.0f };
-			revoluteDef.localAnchorB = { 0.0f, 0.0f };
-			revoluteDef.enableMotor = false;
-			revoluteDef.maxMotorTorque = 1.0f;
-			revoluteDef.collideConnected = false;
-
-			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
-
-			baseId1 = bodyId2;
-			baseId2 = bodyId1;
-			baseAnchor1 = { -2.5f, 0.0f };
-			baseAnchor2 = { 2.5f, 0.0f };
-			y += 1.0f;
+			{
+				b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
+				jointDef.bodyIdA = groundId;
+				jointDef.bodyIdB = bodyId;
+				jointDef.localAnchorA = b2Body_GetLocalPoint( groundId, doorPosition );
+				jointDef.localAnchorB = b2Vec2_zero;
+				jointDef.localAxisA = { 0.0f, 1.0f };
+				jointDef.maxMotorForce = 0.2f;
+				jointDef.enableMotor = true;
+				jointDef.collideConnected = true;
+				b2CreatePrismaticJoint( m_worldId, &jointDef );
+			}
 		}
 
-		bodyDef.position = { 0.0f, y };
-		bodyDef.rotation = b2Rot_identity;
-		b2BodyId platformId = b2CreateBody( m_worldId, &bodyDef );
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.material.rollingResistance = 0.3f;
 
-		b2Polygon box = b2MakeBox( 3.0f, 0.2f );
-		b2CreatePolygonShape( platformId, &shapeDef, &box );
+			float y = 4.25f;
+			int xCount = 10, yCount = 20;
+			for ( int i = 0; i < yCount; ++i )
+			{
+				float x = -3.15f;
+				for ( int j = 0; j < xCount; ++j )
+				{
+					bodyDef.position = { x, y };
+					b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+					b2Polygon poly = RandomPolygon( 0.1f );
+					poly.radius = RandomFloatRange( 0.01f, 0.02f );
+					b2CreatePolygonShape( bodyId, &shapeDef, &poly );
+					x += 0.2f;
+				}
 
-		// left pin
-		b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
-		revoluteDef.bodyIdA = platformId;
-		revoluteDef.bodyIdB = baseId1;
-		revoluteDef.localAnchorA = { -2.5f, -0.4f };
-		revoluteDef.localAnchorB = baseAnchor1;
-		revoluteDef.enableMotor = false;
-		revoluteDef.maxMotorTorque = 1.0f;
-		revoluteDef.collideConnected = true;
-		b2CreateRevoluteJoint( m_worldId, &revoluteDef );
-
-		// right pin
-		b2WheelJointDef wheelDef = b2DefaultWheelJointDef();
-		wheelDef.bodyIdA = platformId;
-		wheelDef.bodyIdB = baseId2;
-		wheelDef.localAxisA = { 1.0f, 0.0f };
-		wheelDef.localAnchorA = { 2.5f, -0.4f };
-		wheelDef.localAnchorB = baseAnchor2;
-		wheelDef.enableSpring = false;
-		wheelDef.collideConnected = true;
-		b2CreateWheelJoint( m_worldId, &wheelDef );
-
-		m_enableMotor = false;
-		m_motorSpeed = 0.25f;
-		m_motorForce = 2000.0f;
-
-		b2DistanceJointDef distanceDef = b2DefaultDistanceJointDef();
-		distanceDef.bodyIdA = groundId;
-		distanceDef.bodyIdB = linkId1;
-		distanceDef.localAnchorA = { -2.5f, 0.2f };
-		distanceDef.localAnchorB = { 0.5f, 0.0f };
-		distanceDef.enableSpring = true;
-		distanceDef.minLength = 0.2f;
-		distanceDef.maxLength = 5.5f;
-		distanceDef.enableLimit = true;
-		distanceDef.enableMotor = m_enableMotor;
-		distanceDef.motorSpeed = m_motorSpeed;
-		distanceDef.maxMotorForce = m_motorForce;
-		m_liftJointId = b2CreateDistanceJoint( m_worldId, &distanceDef );
-
-		Car car;
-		car.Spawn( m_worldId, { 0.0f, y + 2.0f }, 1.0f, 3.0f, 0.7f, 0.0f, nullptr );
+				y += 0.2f;
+			}
+		}
 	}
 
 	void UpdateGui() override
@@ -2717,20 +2792,20 @@ public:
 
 		if ( ImGui::Checkbox( "Motor", &m_enableMotor ) )
 		{
-			b2DistanceJoint_EnableMotor( m_liftJointId, m_enableMotor );
-			b2Joint_WakeBodies( m_liftJointId );
+			b2RevoluteJoint_EnableMotor( m_driverId, m_enableMotor );
+			b2Joint_WakeBodies( m_driverId );
 		}
 
-		if ( ImGui::SliderFloat( "Max Force", &m_motorForce, 0.0f, 3000.0f, "%.0f" ) )
+		if ( ImGui::SliderFloat( "Max Torque", &m_motorTorque, 0.0f, 100.0f, "%.0f" ) )
 		{
-			b2DistanceJoint_SetMaxMotorForce( m_liftJointId, m_motorForce );
-			b2Joint_WakeBodies( m_liftJointId );
+			b2RevoluteJoint_SetMaxMotorTorque( m_driverId, m_motorTorque );
+			b2Joint_WakeBodies( m_driverId );
 		}
 
 		if ( ImGui::SliderFloat( "Speed", &m_motorSpeed, -0.3f, 0.3f, "%.2f" ) )
 		{
-			b2DistanceJoint_SetMotorSpeed( m_liftJointId, m_motorSpeed );
-			b2Joint_WakeBodies( m_liftJointId );
+			b2RevoluteJoint_SetMotorSpeed( m_driverId, m_motorSpeed );
+			b2Joint_WakeBodies( m_driverId );
 		}
 
 		ImGui::End();
@@ -2746,8 +2821,8 @@ public:
 		return new GearLift( settings );
 	}
 
-	b2JointId m_liftJointId;
-	float m_motorForce;
+	b2JointId m_driverId;
+	float m_motorTorque;
 	float m_motorSpeed;
 	bool m_enableMotor;
 };

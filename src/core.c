@@ -68,7 +68,11 @@ int b2InternalAssertFcn( const char* condition, const char* fileName, int lineNu
 
 b2Version b2GetVersion( void )
 {
-	return ( b2Version ){ 3, 1, 0 };
+	return (b2Version){
+		.major = 3,
+		.minor = 1,
+		.revision = 0,
+	};
 }
 
 static b2AllocFcn* b2_allocFcn = NULL;
