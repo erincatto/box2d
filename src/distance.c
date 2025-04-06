@@ -607,11 +607,11 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	B2_ASSERT( target > tolerance );
 
 	// Prepare input for distance query
-	b2SimplexCache cache = {};
+	b2SimplexCache cache = { 0 };
 
 	float alpha = 0.0f;
 
-	b2DistanceInput distanceInput = {};
+	b2DistanceInput distanceInput = { 0 };
 	distanceInput.proxyA = input->proxyA;
 	distanceInput.proxyB = input->proxyB;
 	distanceInput.transformA = input->transformA;
@@ -619,7 +619,7 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	distanceInput.useRadii = false;
 
 	b2Vec2 delta2 = input->translationB;
-	b2CastOutput output = {};
+	b2CastOutput output = { 0 };
 
 	int iteration = 0;
 	int maxIterations = 20;
@@ -1171,7 +1171,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 		// to get a separating axis.
 		distanceInput.transformA = xfA;
 		distanceInput.transformB = xfB;
-		b2DistanceOutput distanceOutput = b2ShapeDistance(&distanceInput, &cache, NULL, 0 );
+		b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
 
 		// Progressive time of impact. This handles slender geometry well but introduces
 		// significant time loss.

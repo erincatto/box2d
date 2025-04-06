@@ -50,9 +50,9 @@ b2MouseJointDef b2DefaultMouseJointDef( void )
 	return def;
 }
 
-b2NullJointDef b2DefaultNullJointDef( void )
+b2FilterJointDef b2DefaultFilterJointDef( void )
 {
-	b2NullJointDef def = { 0 };
+	b2FilterJointDef def = { 0 };
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;
 }
@@ -469,7 +469,7 @@ b2JointId b2CreateMouseJoint( b2WorldId worldId, const b2MouseJointDef* def )
 	return jointId;
 }
 
-b2JointId b2CreateNullJoint( b2WorldId worldId, const b2NullJointDef* def )
+b2JointId b2CreateFilterJoint( b2WorldId worldId, const b2FilterJointDef* def )
 {
 	B2_CHECK_DEF( def );
 	b2World* world = b2GetWorldFromId( worldId );
@@ -485,10 +485,10 @@ b2JointId b2CreateNullJoint( b2WorldId worldId, const b2NullJointDef* def )
 	b2Body* bodyB = b2GetBodyFullId( world, def->bodyIdB );
 
 	bool collideConnected = false;
-	b2JointPair pair = b2CreateJoint( world, bodyA, bodyB, def->userData, 1.0f, b2_nullJoint, collideConnected);
+	b2JointPair pair = b2CreateJoint( world, bodyA, bodyB, def->userData, 1.0f, b2_filterJoint, collideConnected);
 
 	b2JointSim* joint = pair.jointSim;
-	joint->type = b2_nullJoint;
+	joint->type = b2_filterJoint;
 	joint->localOriginAnchorA = b2Vec2_zero;
 	joint->localOriginAnchorB = b2Vec2_zero;
 
@@ -959,7 +959,7 @@ b2Vec2 b2Joint_GetConstraintForce( b2JointId jointId )
 		case b2_mouseJoint:
 			return b2GetMouseJointForce( world, base );
 
-		case b2_nullJoint:
+		case b2_filterJoint:
 			return b2Vec2_zero;
 
 		case b2_prismaticJoint:
@@ -997,7 +997,7 @@ float b2Joint_GetConstraintTorque( b2JointId jointId )
 		case b2_mouseJoint:
 			return b2GetMouseJointTorque( world, base );
 
-		case b2_nullJoint:
+		case b2_filterJoint:
 			return 0.0f;
 
 		case b2_prismaticJoint:
@@ -1034,7 +1034,7 @@ void b2PrepareJoint( b2JointSim* joint, b2StepContext* context )
 			b2PrepareMouseJoint( joint, context );
 			break;
 
-		case b2_nullJoint:
+		case b2_filterJoint:
 			break;
 
 		case b2_prismaticJoint:
@@ -1074,7 +1074,7 @@ void b2WarmStartJoint( b2JointSim* joint, b2StepContext* context )
 			b2WarmStartMouseJoint( joint, context );
 			break;
 
-		case b2_nullJoint:
+		case b2_filterJoint:
 			break;
 
 		case b2_prismaticJoint:
@@ -1114,7 +1114,7 @@ void b2SolveJoint( b2JointSim* joint, b2StepContext* context, bool useBias )
 			b2SolveMouseJoint( joint, context );
 			break;
 
-		case b2_nullJoint:
+		case b2_filterJoint:
 			break;
 
 		case b2_prismaticJoint:
@@ -1226,7 +1226,7 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 		}
 		break;
 
-		case b2_nullJoint:
+		case b2_filterJoint:
 		{
 			draw->DrawSegmentFcn( pA, pB, b2_colorGold, draw->context );
 		}

@@ -306,7 +306,7 @@ B2_API void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity );
 /// Set the velocity to reach the given transform after a given time step.
 /// The result will be close but maybe not exact. This is meant for kinematic bodies.
 /// This will automatically wake the body if asleep.
-B2_API void b2Body_SetVelocityForTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep );
+B2_API void b2Body_SetKinematicTarget( b2BodyId bodyId, b2Transform target, float timeStep );
 
 /// Get the linear velocity of a local point attached to a body. Usually in meters per second.
 B2_API b2Vec2 b2Body_GetLocalPointVelocity( b2BodyId bodyId, b2Vec2 localPoint );
@@ -956,17 +956,17 @@ B2_API float b2MouseJoint_GetMaxForce( b2JointId jointId );
 /**@}*/
 
 /**
- * @defgroup null_joint Null Joint
- * @brief Functions for the null joint.
+ * @defgroup filter_joint Filter Joint
+ * @brief Functions for the filter joint.
  *
- * The null joint is used to disable collision between two bodies. As a side effect of being a joint, it also
+ * The filter joint is used to disable collision between two bodies. As a side effect of being a joint, it also
  * keeps the two bodies in the same simulation island.
  * @{
  */
 
-/// Create a null joint.
-/// @see b2NullJointDef for details
-B2_API b2JointId b2CreateNullJoint( b2WorldId worldId, const b2NullJointDef* def );
+/// Create a filter joint.
+/// @see b2FilterJointDef for details
+B2_API b2JointId b2CreateFilterJoint( b2WorldId worldId, const b2FilterJointDef* def );
 
 /**@}*/
 

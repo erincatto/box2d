@@ -517,9 +517,9 @@ typedef struct b2Counters
 typedef enum b2JointType
 {
 	b2_distanceJoint,
+	b2_filterJoint,
 	b2_motorJoint,
 	b2_mouseJoint,
-	b2_nullJoint,
 	b2_prismaticJoint,
 	b2_revoluteJoint,
 	b2_weldJoint,
@@ -672,10 +672,10 @@ typedef struct b2MouseJointDef
 /// @ingroup mouse_joint
 B2_API b2MouseJointDef b2DefaultMouseJointDef( void );
 
-/// A null joint is used to disable collision between two specific bodies.
+/// A filter joint is used to disable collision between two specific bodies.
 ///
-/// @ingroup null_joint
-typedef struct b2NullJointDef
+/// @ingroup filter_joint
+typedef struct b2FilterJointDef
 {
 	/// The first attached body.
 	b2BodyId bodyIdA;
@@ -688,11 +688,11 @@ typedef struct b2NullJointDef
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
-} b2NullJointDef;
+} b2FilterJointDef;
 
 /// Use this to initialize your joint definition
-/// @ingroup null_joint
-B2_API b2NullJointDef b2DefaultNullJointDef( void );
+/// @ingroup filter_joint
+B2_API b2FilterJointDef b2DefaultFilterJointDef( void );
 
 /// Prismatic joint definition
 ///
