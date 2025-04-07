@@ -1582,7 +1582,7 @@ bool b2World_IsValid( b2WorldId id )
 
 bool b2Body_IsValid( b2BodyId id )
 {
-	if ( id.world0 < 0 || B2_MAX_WORLDS <= id.world0 )
+	if ( B2_MAX_WORLDS <= id.world0 )
 	{
 		// invalid world
 		return false;
@@ -1653,7 +1653,7 @@ bool b2Shape_IsValid( b2ShapeId id )
 
 bool b2Chain_IsValid( b2ChainId id )
 {
-	if ( id.world0 < 0 || B2_MAX_WORLDS <= id.world0 )
+	if ( B2_MAX_WORLDS <= id.world0 )
 	{
 		return false;
 	}
@@ -1685,7 +1685,7 @@ bool b2Chain_IsValid( b2ChainId id )
 
 bool b2Joint_IsValid( b2JointId id )
 {
-	if ( id.world0 < 0 || B2_MAX_WORLDS <= id.world0 )
+	if ( B2_MAX_WORLDS <= id.world0 )
 	{
 		return false;
 	}
