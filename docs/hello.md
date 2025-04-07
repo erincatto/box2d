@@ -80,7 +80,7 @@ meters, kilograms, and seconds. So you can consider the extents to be in
 meters. Box2D generally works best when objects are the size of typical
 real world objects. For example, a barrel is about 1 meter tall. Due to
 the limitations of floating point arithmetic, using Box2D to model the
-movement of glaciers or dust particles is not a good idea.
+movement of glaciers or dust particles might not work well.
 
 I'll finish the ground body in step 4 by creating the shape. For this step
 I need to create a shape definition which works fine with the default value.
@@ -104,8 +104,8 @@ don't move a shape around on the body. Moving or modifying a shape that
 is on a body is possible with certain functions, but it should not be part
 of normal simulation. The reason is simple: a body with
 morphing shapes is not a rigid body, but Box2D is a rigid body engine.
-Many of the algorithms in Box2D are based on the rigid body model.
-If this is violated you may get unexpected behavior.
+Many of the algorithms in Box2D are based on the rigid body model and optimized with
+that in mind. If this is violated you may get unexpected behavior.
 
 ## Creating a Dynamic Body
 I can use the same technique to create a
@@ -139,12 +139,12 @@ b2Polygon dynamicBox = b2MakeBox(1.0f, 1.0f);
 
 Next I create a shape definition for the box. Notice that I set
 density to 1. The default density is 1, so this is unnecessary. Also,
-the friction on the shape is set to 0.3.
+the friction on the surface material is set to 0.3.
 
 ```c
 b2ShapeDef shapeDef = b2DefaultShapeDef();
 shapeDef.density = 1.0f;
-shapeDef.friction = 0.3f;
+shapeDef.material.friction = 0.3f;
 ```
 
 > **Caution**:
@@ -204,10 +204,10 @@ simulation. For this example, I will use 4 sub-steps.
 int subStepCount = 4;
 ```
 
-Note that the time step and the sub-step count are related. As the time-step
+Note that the time step and the sub-step count are related. As the time step
 decreases, the size of the sub-steps also decreases. For example, at 60Hz
 time step and 4 sub-steps, the sub-steps operate at 240Hz. With 8 sub-steps
-the sub-step is 480Hz!
+the sub-step is 480Hz.
 
 We are now ready to begin the simulation loop. In your game the
 simulation loop can be merged with your game loop. In each pass through
@@ -230,6 +230,10 @@ for (int i = 0; i < 90; ++i)
     printf("%4.2f %4.2f %4.2f\n", position.x, position.y, b2Rot_GetAngle(rotation));
 }
 ```
+
+Notice that the rotation of the body is returned in a `b2Rot` struct (short for rotation). This
+struct holds the rotation in a format that is fast for simulation. You may use `b2Rot_GetAngle`
+to get the rotation in radians.
 
 The output shows the box falling and landing on the ground box. Your
 output should look like this:
