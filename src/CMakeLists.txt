@@ -170,7 +170,7 @@ elseif (EMSCRIPTEN)
 	endif()
 elseif (UNIX)
 	message(STATUS "Box2D using Unix")
-	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wmissing-prototypes -Wall -Wextra -pedantic -Werror)
+	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wall -Wextra -pedantic -Werror -Wnounused-value)
 	if ("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
 		# raspberry pi
 		# -mfpu=neon
