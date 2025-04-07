@@ -45,4 +45,4 @@ int b2GetArenaCapacity( b2ArenaAllocator* alloc );
 int b2GetArenaAllocation( b2ArenaAllocator* alloc );
 int b2GetMaxArenaAllocation( b2ArenaAllocator* alloc );
 
-B2_ARRAY_INLINE( b2ArenaEntry, b2ArenaEntry );
+B2_ARRAY_INLINE( b2ArenaEntry, b2ArenaEntry )

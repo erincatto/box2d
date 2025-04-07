@@ -18,8 +18,8 @@
 #include <math.h>
 #include <stddef.h>
 
-B2_ARRAY_SOURCE( b2Contact, b2Contact );
-B2_ARRAY_SOURCE( b2ContactSim, b2ContactSim );
+B2_ARRAY_SOURCE( b2Contact, b2Contact )
+B2_ARRAY_SOURCE( b2ContactSim, b2ContactSim )
 
 // Contacts and determinism
 // A deterministic simulation requires contacts to exist in the same order in b2Island no matter the thread count.

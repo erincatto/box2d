@@ -54,4 +54,4 @@ void b2MergeSolverSets( b2World* world, int setIndex1, int setIndex2 );
 void b2TransferBody( b2World* world, b2SolverSet* targetSet, b2SolverSet* sourceSet, b2Body* body );
 void b2TransferJoint( b2World* world, b2SolverSet* targetSet, b2SolverSet* sourceSet, b2Joint* joint );
 
-B2_ARRAY_INLINE( b2SolverSet, b2SolverSet );
+B2_ARRAY_INLINE( b2SolverSet, b2SolverSet )

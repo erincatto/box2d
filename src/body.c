@@ -23,9 +23,9 @@
 #include <string.h>
 
 // Implement functions for b2BodyArray
-B2_ARRAY_SOURCE( b2Body, b2Body );
-B2_ARRAY_SOURCE( b2BodySim, b2BodySim );
-B2_ARRAY_SOURCE( b2BodyState, b2BodyState );
+B2_ARRAY_SOURCE( b2Body, b2Body )
+B2_ARRAY_SOURCE( b2BodySim, b2BodySim )
+B2_ARRAY_SOURCE( b2BodyState, b2BodyState )
 
 // Get a validated body from a world using an id.
 b2Body* b2GetBodyFullId( b2World* world, b2BodyId bodyId )

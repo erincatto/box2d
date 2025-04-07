@@ -12,8 +12,8 @@
 
 #include <stddef.h>
 
-B2_ARRAY_SOURCE( b2Island, b2Island );
-B2_ARRAY_SOURCE( b2IslandSim, b2IslandSim );
+B2_ARRAY_SOURCE( b2Island, b2Island )
+B2_ARRAY_SOURCE( b2IslandSim, b2IslandSim )
 
 b2Island* b2CreateIsland( b2World* world, int setIndex )
 {
