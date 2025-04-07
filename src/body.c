@@ -316,12 +316,6 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	return id;
 }
 
-bool b2IsBodyAwake( b2World* world, b2Body* body )
-{
-	B2_UNUSED( world );
-	return body->setIndex == b2_awakeSet;
-}
-
 bool b2WakeBody( b2World* world, b2Body* body )
 {
 	if ( body->setIndex >= b2_firstSleepingSet )

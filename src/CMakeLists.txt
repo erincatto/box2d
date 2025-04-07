@@ -140,7 +140,7 @@ if (MSVC)
 	target_compile_definitions(box2d PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:B2_ENABLE_ASSERT>")
 
 	# All warnings
-	target_compile_options(box2d PRIVATE /Wall /wd4820 /wd5045 /wd4061)
+	target_compile_options(box2d PRIVATE /Wall /wd4820 /wd5045 /wd4061 /wd4711 /wd4710)
 
 	if (BOX2D_AVX2)
 		message(STATUS "Box2D using AVX2")	

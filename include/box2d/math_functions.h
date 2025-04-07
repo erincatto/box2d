@@ -277,12 +277,13 @@ B2_INLINE float b2Distance( b2Vec2 a, b2Vec2 b )
 }
 
 /// Convert a vector into a unit vector if possible, otherwise returns the zero vector.
+/// todo MSVC is not inlining this function in several places per warning 4710
 B2_INLINE b2Vec2 b2Normalize( b2Vec2 v )
 {
 	float length = sqrtf( v.x * v.x + v.y * v.y );
 	if ( length < FLT_EPSILON )
 	{
-		return b2Vec2_zero;
+		return B2_LITERAL(b2Vec2){0.0f, 0.0f};
 	}
 
 	float invLength = 1.0f / length;
@@ -301,10 +302,10 @@ B2_INLINE bool b2IsNormalized(b2Vec2 a)
 /// outputs the length.
 B2_INLINE b2Vec2 b2GetLengthAndNormalize( float* length, b2Vec2 v )
 {
-	*length = b2Length( v );
+	*length = sqrtf( v.x * v.x + v.y * v.y );
 	if ( *length < FLT_EPSILON )
 	{
-		return b2Vec2_zero;
+		return B2_LITERAL( b2Vec2 ){ 0.0f, 0.0f };
 	}
 
 	float invLength = 1.0f / *length;
@@ -379,7 +380,10 @@ B2_INLINE b2Rot b2NLerp( b2Rot q1, b2Rot q2, float t )
 		omt * q1.s + t * q2.s,
 	};
 
-	return b2NormalizeRot( q );
+	float mag = sqrtf( q.s * q.s + q.c * q.c );
+	float invMag = mag > 0.0 ? 1.0f / mag : 0.0f;
+	b2Rot qn = { q.c * invMag, q.s * invMag };
+	return qn;
 }
 
 /// Compute the angular velocity necessary to rotate between two rotations over a give time

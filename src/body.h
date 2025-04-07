@@ -168,7 +168,6 @@ b2Transform b2GetBodyTransform( b2World* world, int bodyId );
 b2BodyId b2MakeBodyId( b2World* world, int bodyId );
 
 bool b2ShouldBodiesCollide( b2World* world, b2Body* bodyA, b2Body* bodyB );
-bool b2IsBodyAwake( b2World* world, b2Body* body );
 
 b2BodySim* b2GetBodySim( b2World* world, b2Body* body );
 b2BodyState* b2GetBodyState( b2World* world, b2Body* body );
