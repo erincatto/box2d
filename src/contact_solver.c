@@ -779,7 +779,7 @@ static inline b2FloatW b2UnpackHiW( b2FloatW a, b2FloatW b )
 
 #elif defined( B2_SIMD_SSE2 )
 
-static inline b2FloatW b2ZeroW()
+static inline b2FloatW b2ZeroW( void )
 {
 	return _mm_setzero_ps();
 }

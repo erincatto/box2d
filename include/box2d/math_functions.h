@@ -290,6 +290,7 @@ B2_INLINE b2Vec2 b2Normalize( b2Vec2 v )
 	return n;
 }
 
+/// Determines if the provided vector is normalized (norm(a) == 1).
 B2_INLINE bool b2IsNormalized(b2Vec2 a)
 {
 	float aa = b2Dot( a, a );

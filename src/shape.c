@@ -896,7 +896,6 @@ b2PlaneResult b2CollideMover( const b2Shape* shape, b2Transform transform, const
 	}
 
 	result.plane.normal = b2RotateVector( transform.q, result.plane.normal );
-	result.point = b2TransformPoint( transform, result.point );
 	return result;
 }
 

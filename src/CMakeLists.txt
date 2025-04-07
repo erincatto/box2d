@@ -140,7 +140,7 @@ if (MSVC)
 	target_compile_definitions(box2d PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:B2_ENABLE_ASSERT>")
 
 	# All warnings
-	target_compile_options(box2d PRIVATE /W4)
+	target_compile_options(box2d PRIVATE /Wall /wd4820 /wd5045 /wd4061)
 
 	if (BOX2D_AVX2)
 		message(STATUS "Box2D using AVX2")	
@@ -162,7 +162,7 @@ elseif (MINGW)
 	endif()
 elseif (APPLE)
 	message(STATUS "Box2D on Apple")
-	target_compile_options(box2d PRIVATE -Wmissing-prototypes)
+	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wall -Wextra -pedantic -Werror)
 elseif (EMSCRIPTEN)
 	message(STATUS "Box2D on Emscripten")
 	if (BOX2D_ENABLE_SIMD)
@@ -170,7 +170,7 @@ elseif (EMSCRIPTEN)
 	endif()
 elseif (UNIX)
 	message(STATUS "Box2D using Unix")
-	target_compile_options(box2d PRIVATE -Wmissing-prototypes)
+	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wmissing-prototypes -Wall -Wextra -pedantic -Werror)
 	if ("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
 		# raspberry pi
 		# -mfpu=neon
