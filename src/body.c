@@ -411,8 +411,8 @@ void b2DestroyBody( b2BodyId bodyId )
 	if ( body->setIndex == b2_awakeSet )
 	{
 		int result = b2BodyStateArray_RemoveSwap( &set->bodyStates, body->localIndex );
-		B2_UNUSED( result );
 		B2_ASSERT( result == movedIndex );
+		(void)result;
 	}
 	else if ( set->setIndex >= b2_firstSleepingSet && set->bodySims.count == 0 )
 	{
