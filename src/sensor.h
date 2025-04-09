@@ -31,6 +31,6 @@ void b2OverlapSensors( b2World* world );
 
 void b2DestroySensor( b2World* world, b2Shape* sensorShape );
 
-B2_ARRAY_INLINE( b2ShapeRef, b2ShapeRef );
-B2_ARRAY_INLINE( b2Sensor, b2Sensor );
-B2_ARRAY_INLINE( b2SensorTaskContext, b2SensorTaskContext );
+B2_ARRAY_INLINE( b2ShapeRef, b2ShapeRef )
+B2_ARRAY_INLINE( b2Sensor, b2Sensor )
+B2_ARRAY_INLINE( b2SensorTaskContext, b2SensorTaskContext )

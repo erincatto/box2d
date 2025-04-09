@@ -14,8 +14,8 @@
 
 #include <stddef.h>
 
-B2_ARRAY_SOURCE( b2ChainShape, b2ChainShape );
-B2_ARRAY_SOURCE( b2Shape, b2Shape );
+B2_ARRAY_SOURCE( b2ChainShape, b2ChainShape )
+B2_ARRAY_SOURCE( b2Shape, b2Shape )
 
 static b2Shape* b2GetShape( b2World* world, b2ShapeId shapeId )
 {
@@ -896,7 +896,6 @@ b2PlaneResult b2CollideMover( const b2Shape* shape, b2Transform transform, const
 	}
 
 	result.plane.normal = b2RotateVector( transform.q, result.plane.normal );
-	result.point = b2TransformPoint( transform, result.point );
 	return result;
 }
 

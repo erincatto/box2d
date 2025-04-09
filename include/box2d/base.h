@@ -66,6 +66,27 @@ B2_API int b2GetByteCount( void );
 /// @param assertFcn a non-null assert callback
 B2_API void b2SetAssertFcn( b2AssertFcn* assertFcn );
 
+/// Version numbering scheme.
+/// See https://semver.org/
+typedef struct b2Version
+{
+	/// Significant changes
+	int major;
+
+	/// Incremental changes
+	int minor;
+
+	/// Bug fixes
+	int revision;
+} b2Version;
+
+/// Get the current version of Box2D
+B2_API b2Version b2GetVersion( void );
+
+/**@}*/
+
+//! @cond
+
 // see https://github.com/scottt/debugbreak
 #if defined( _MSC_VER )
 #define B2_BREAKPOINT __debugbreak()
@@ -89,27 +110,6 @@ B2_API int b2InternalAssertFcn( const char* condition, const char* fileName, int
 #else
 #define B2_ASSERT( ... ) ( (void)0 )
 #endif
-
-/// Version numbering scheme.
-/// See https://semver.org/
-typedef struct b2Version
-{
-	/// Significant changes
-	int major;
-
-	/// Incremental changes
-	int minor;
-
-	/// Bug fixes
-	int revision;
-} b2Version;
-
-/// Get the current version of Box2D
-B2_API b2Version b2GetVersion( void );
-
-/**@}*/
-
-//! @cond
 
 /// Get the absolute number of system ticks. The value is platform specific.
 B2_API uint64_t b2GetTicks( void );

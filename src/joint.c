@@ -18,8 +18,8 @@
 #include <stddef.h>
 #include <string.h>
 
-B2_ARRAY_SOURCE( b2Joint, b2Joint );
-B2_ARRAY_SOURCE( b2JointSim, b2JointSim );
+B2_ARRAY_SOURCE( b2Joint, b2Joint )
+B2_ARRAY_SOURCE( b2JointSim, b2JointSim )
 
 b2DistanceJointDef b2DefaultDistanceJointDef( void )
 {

@@ -31,7 +31,7 @@
 	} PREFIX##Array;                                                                                                             \
 	PREFIX##Array PREFIX##Array_Create( int capacity );                                                                          \
 	void PREFIX##Array_Reserve( PREFIX##Array* a, int newCapacity );                                                             \
-	void PREFIX##Array_Destroy( PREFIX##Array* a );
+	void PREFIX##Array_Destroy( PREFIX##Array* a )
 
 #define B2_DECLARE_ARRAY_NATIVE( T, PREFIX )                                                                                     \
 	typedef struct                                                                                                               \
@@ -43,7 +43,7 @@
 	/* Create array with initial capacity. Zero initialization is also supported */                                              \
 	PREFIX##Array PREFIX##Array_Create( int capacity );                                                                          \
 	void PREFIX##Array_Reserve( PREFIX##Array* a, int newCapacity );                                                             \
-	void PREFIX##Array_Destroy( PREFIX##Array* a );
+	void PREFIX##Array_Destroy( PREFIX##Array* a )
 
 // Inline array functions that need the type T to be defined
 #define B2_ARRAY_INLINE( T, PREFIX )                                                                                             \
@@ -152,7 +152,7 @@
 	}
 
 B2_DECLARE_ARRAY_NATIVE( int, b2Int );
-B2_ARRAY_INLINE( int, b2Int );
+B2_ARRAY_INLINE( int, b2Int )
 
 // Declare all the arrays
 B2_ARRAY_DECLARE( b2Body, b2Body );

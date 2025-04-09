@@ -144,5 +144,5 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 
 b2Manifold b2ComputeManifold( b2Shape* shapeA, b2Transform transformA, b2Shape* shapeB, b2Transform transformB );
 
-B2_ARRAY_INLINE( b2Contact, b2Contact );
-B2_ARRAY_INLINE( b2ContactSim, b2ContactSim );
+B2_ARRAY_INLINE( b2Contact, b2Contact )
+B2_ARRAY_INLINE( b2ContactSim, b2ContactSim )

@@ -771,32 +771,53 @@ B2_API void b2DynamicTree_ValidateNoEnlarged( const b2DynamicTree* tree );
 
 /**
  * @defgroup character
- * Experimental character movement solver
+ * Character movement solver
  * @{
  */
 
+/// These are the collision planes returned from b2World_CollideMover
 typedef struct b2PlaneResult
 {
+	/// The collision plane between the mover and a convex shape
 	b2Plane plane;
-	b2Vec2 point;
+
+	/// Did the collision register a hit? If not this plane should be ignored.
 	bool hit;
 } b2PlaneResult;
 
+/// These are collision planes that can be fed to b2SolvePlanes. Normally
+/// this is assembled by the user from plane results in b2PlaneResult
 typedef struct b2CollisionPlane
 {
+	/// The collision plane between the mover and some shape
 	b2Plane plane;
+
+	/// Setting this to FLT_MAX makes the plane as rigid as possible. Lower values can
+	/// make the plane collision soft. Usually in meters.
 	float pushLimit;
+
+	/// The push on the mover determined by b2SolvePlanes. Usually in meters.
 	float push;
+
+	/// Indicates if b2ClipVector should clip against this plane. Should be false for soft collision.
 	bool clipVelocity;
 } b2CollisionPlane;
 
+/// Result returned by b2SolvePlanes
 typedef struct b2PlaneSolverResult
 {
+	/// The final position of the mover
 	b2Vec2 position;
+
+	/// The number of iterations used by the plane solver. For diagnostics.
 	int iterationCount;
 } b2PlaneSolverResult;
 
+/// Solves the position of a mover that satisfies the given collision planes.
 B2_API b2PlaneSolverResult b2SolvePlanes( b2Vec2 initialPosition, b2CollisionPlane* planes, int count );
+
+/// Clips the velocity against the given collision planes. Planes with clipVelocity set to
+/// true are skipped.
 B2_API b2Vec2 b2ClipVector( b2Vec2 vector, const b2CollisionPlane* planes, int count );
 
 /**@}*/

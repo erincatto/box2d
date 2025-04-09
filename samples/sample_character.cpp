@@ -198,6 +198,7 @@ public:
 		m_totalIterations = 0;
 		m_pogoVelocity = 0.0f;
 		m_onGround = false;
+		m_jumpReleased = true;
 		m_lockCamera = true;
 		m_planeCount = 0;
 	}
@@ -263,27 +264,36 @@ public:
 		b2Polygon box = b2MakeOffsetBox( boxHalfWidth, boxHalfHeight, origin, b2Rot_identity );
 		b2Vec2 translation;
 		b2QueryFilter skipTeamFilter = { 1, ~2u };
-		CastResult result = {};
+		CastResult castResult = {};
 
 		if ( m_pogoShape == PogoPoint )
 		{
 			translation = { 0.0f, -rayLength };
-			b2World_CastRay( m_worldId, origin, translation, skipTeamFilter, CastCallback, &result );
+			b2World_CastRay( m_worldId, origin, translation, skipTeamFilter, CastCallback, &castResult );
 		}
 		else if ( m_pogoShape == PogoCircle )
 		{
 			translation = { 0.0f, -rayLength + circle.radius };
-			b2World_CastCircle( m_worldId, &circle, translation, skipTeamFilter, CastCallback, &result );
+			b2World_CastCircle( m_worldId, &circle, translation, skipTeamFilter, CastCallback, &castResult );
 		}
 		else
 		{
 			translation = { 0.0f, -rayLength + boxHalfHeight };
-			b2World_CastPolygon( m_worldId, &box, translation, skipTeamFilter, CastCallback, &result );
+			b2World_CastPolygon( m_worldId, &box, translation, skipTeamFilter, CastCallback, &castResult );
 		}
 
-		if ( result.hit == false )
+		// Avoid snapping to ground if still going up
+		if ( m_onGround == false )
 		{
-			m_onGround = false;
+			m_onGround = castResult.hit && m_velocity.y <= 0.01f;
+		}
+		else
+		{
+			m_onGround = castResult.hit;
+		}
+
+		if ( castResult.hit == false )
+		{
 			m_pogoVelocity = 0.0f;
 
 			b2Vec2 delta = translation;
@@ -305,8 +315,7 @@ public:
 		}
 		else
 		{
-			m_onGround = true;
-			float pogoCurrentLength = result.fraction * rayLength;
+			float pogoCurrentLength = castResult.fraction * rayLength;
 
 			float zeta = m_pogoDampingRatio;
 			float hertz = m_pogoHertz;
@@ -316,7 +325,7 @@ public:
 			m_pogoVelocity = ( m_pogoVelocity - omega * omegaH * ( pogoCurrentLength - pogoRestLength ) ) /
 							 ( 1.0f + 2.0f * zeta * omegaH + omegaH * omegaH );
 
-			b2Vec2 delta = result.fraction * translation;
+			b2Vec2 delta = castResult.fraction * translation;
 			g_draw.DrawSegment( origin, origin + delta, b2_colorGray );
 
 			if ( m_pogoShape == PogoPoint )
@@ -333,7 +342,7 @@ public:
 				g_draw.DrawSolidPolygon( xf, box.vertices, box.count, 0.0f, b2_colorPlum );
 			}
 
-			b2Body_ApplyForce( result.bodyId, { 0.0f, -50.0f }, result.point, true );
+			b2Body_ApplyForce( castResult.bodyId, { 0.0f, -50.0f }, castResult.point, true );
 		}
 
 		b2Vec2 target = m_transform.p + timeStep * m_velocity + timeStep * m_pogoVelocity * b2Vec2{ 0.0f, 1.0f };
@@ -440,29 +449,46 @@ public:
 
 	void Step( Settings& settings ) override
 	{
+		bool pause = false;
+		if ( settings.pause )
+		{
+			pause = settings.singleStep != true;
+		}
+
 		Sample::Step( settings );
 
-		float throttle = 0.0f;
-
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) )
+		if ( pause == false )
 		{
-			throttle -= 1.0f;
+			float throttle = 0.0f;
+
+			if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) )
+			{
+				throttle -= 1.0f;
+			}
+
+			if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) )
+			{
+				throttle += 1.0f;
+			}
+
+			if ( glfwGetKey( g_mainWindow, GLFW_KEY_SPACE ) )
+			{
+				if ( m_onGround == true && m_jumpReleased )
+				{
+					m_velocity.y = m_jumpSpeed;
+					m_onGround = false;
+					m_jumpReleased = false;
+				}
+			}
+			else
+			{
+				m_jumpReleased = true;
+			}
+
+			float timeStep = settings.hertz > 0.0f ? 1.0f / settings.hertz : 0.0f;
+
+			SolveMove( timeStep, throttle );
 		}
-
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) )
-		{
-			throttle += 1.0f;
-		}
-
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_SPACE ) && m_onGround == true )
-		{
-			m_velocity.y = m_jumpSpeed;
-			m_onGround = false;
-		}
-
-		float timeStep = settings.hertz > 0.0f ? 1.0f / settings.hertz : 0.0f;
-
-		SolveMove( timeStep, throttle );
 
 		int count = m_planeCount;
 		for ( int i = 0; i < count; ++i )
@@ -476,7 +502,9 @@ public:
 
 		b2Vec2 p1 = b2TransformPoint( m_transform, m_capsule.center1 );
 		b2Vec2 p2 = b2TransformPoint( m_transform, m_capsule.center2 );
-		g_draw.DrawSolidCapsule( p1, p2, m_capsule.radius, b2_colorOrange );
+
+		b2HexColor color = m_onGround ? b2_colorOrange : b2_colorAquamarine;
+		g_draw.DrawSolidCapsule( p1, p2, m_capsule.radius, color );
 		g_draw.DrawSegment( m_transform.p, m_transform.p + m_velocity, b2_colorPurple );
 
 		b2Vec2 p = m_transform.p;
@@ -517,6 +545,7 @@ public:
 	int m_totalIterations;
 	float m_pogoVelocity;
 	bool m_onGround;
+	bool m_jumpReleased;
 	bool m_lockCamera;
 };
 

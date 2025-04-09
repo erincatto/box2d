@@ -13,7 +13,7 @@
 
 #include <string.h>
 
-B2_ARRAY_SOURCE( b2SolverSet, b2SolverSet );
+B2_ARRAY_SOURCE( b2SolverSet, b2SolverSet )
 
 void b2DestroySolverSet( b2World* world, int setIndex )
 {

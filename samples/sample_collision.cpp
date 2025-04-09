@@ -1953,10 +1953,6 @@ public:
 
 		m_shapeType = e_circleShape;
 
-		m_queryCircle = { { 0.0f, 0.0f }, 1.0f };
-		m_queryCapsule = { { -1.0f, 0.0f }, { 1.0f, 0.0f }, 0.5f };
-		m_queryBox = b2MakeBox( 2.0f, 0.5f );
-
 		m_position = { 0.0f, 10.0f };
 		m_angle = 0.0f;
 		m_dragging = false;
@@ -2153,28 +2149,27 @@ public:
 
 		if ( m_shapeType == e_circleShape )
 		{
-			b2World_OverlapCircle( m_worldId, &m_queryCircle, transform, b2DefaultQueryFilter(), OverlapWorld::OverlapResultFcn,
-								   this );
-			g_draw.DrawSolidCircle( transform, b2Vec2_zero, m_queryCircle.radius, b2_colorWhite );
+			b2Circle circle = { .center = transform.p, .radius = 1.0f, };
+			b2World_OverlapCircle( m_worldId, &circle, b2DefaultQueryFilter(), OverlapResultFcn, this );
+			g_draw.DrawSolidCircle( b2Transform_identity, circle.center, circle.radius, b2_colorWhite );
 		}
 		else if ( m_shapeType == e_capsuleShape )
 		{
-			b2World_OverlapCapsule( m_worldId, &m_queryCapsule, transform, b2DefaultQueryFilter(), OverlapWorld::OverlapResultFcn,
-									this );
-			b2Vec2 p1 = b2TransformPoint( transform, m_queryCapsule.center1 );
-			b2Vec2 p2 = b2TransformPoint( transform, m_queryCapsule.center2 );
-			g_draw.DrawSolidCapsule( p1, p2, m_queryCapsule.radius, b2_colorWhite );
+			b2Capsule capsule = {
+				.center1 = b2TransformPoint( transform, { -1.0f, 0.0f } ),
+				.center2 = b2TransformPoint( transform, { 1.0f, 0.0f } ),
+				.radius = 0.5f,
+			};
+
+			b2World_OverlapCapsule( m_worldId, &capsule, b2DefaultQueryFilter(), OverlapResultFcn, this );
+			g_draw.DrawSolidCapsule( capsule.center1, capsule.center2, capsule.radius, b2_colorWhite );
 		}
 		else if ( m_shapeType == e_boxShape )
 		{
-			b2World_OverlapPolygon( m_worldId, &m_queryBox, transform, b2DefaultQueryFilter(), OverlapWorld::OverlapResultFcn,
+			b2Polygon box = b2MakeOffsetBox( 2.0f, 0.5f, transform.p, transform.q );
+			b2World_OverlapPolygon( m_worldId, &box, b2DefaultQueryFilter(), OverlapWorld::OverlapResultFcn,
 									this );
-			b2Vec2 points[B2_MAX_POLYGON_VERTICES] = {};
-			for ( int i = 0; i < m_queryBox.count; ++i )
-			{
-				points[i] = b2TransformPoint( transform, m_queryBox.vertices[i] );
-			}
-			g_draw.DrawPolygon( points, m_queryBox.count, b2_colorWhite );
+			g_draw.DrawPolygon( box.vertices, box.count, b2_colorWhite );
 		}
 
 		if ( B2_IS_NON_NULL( m_bodyIds[m_ignoreIndex] ) )
@@ -2218,10 +2213,6 @@ public:
 
 	b2ShapeId m_doomIds[e_maxDoomed];
 	int m_doomCount;
-
-	b2Circle m_queryCircle;
-	b2Capsule m_queryCapsule;
-	b2Polygon m_queryBox;
 
 	int m_shapeType;
 	b2Transform m_transform;

@@ -15,9 +15,9 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-B2_ARRAY_SOURCE( b2ShapeRef, b2ShapeRef );
-B2_ARRAY_SOURCE( b2Sensor, b2Sensor );
-B2_ARRAY_SOURCE( b2SensorTaskContext, b2SensorTaskContext );
+B2_ARRAY_SOURCE( b2ShapeRef, b2ShapeRef )
+B2_ARRAY_SOURCE( b2Sensor, b2Sensor )
+B2_ARRAY_SOURCE( b2SensorTaskContext, b2SensorTaskContext )
 
 struct b2SensorQueryContext
 {

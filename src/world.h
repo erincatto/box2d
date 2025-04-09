@@ -183,10 +183,10 @@ void b2ValidateConnectivity( b2World* world );
 void b2ValidateSolverSets( b2World* world );
 void b2ValidateContacts( b2World* world );
 
-B2_ARRAY_INLINE( b2BodyMoveEvent, b2BodyMoveEvent );
-B2_ARRAY_INLINE( b2ContactBeginTouchEvent, b2ContactBeginTouchEvent );
-B2_ARRAY_INLINE( b2ContactEndTouchEvent, b2ContactEndTouchEvent );
-B2_ARRAY_INLINE( b2ContactHitEvent, b2ContactHitEvent );
-B2_ARRAY_INLINE( b2SensorBeginTouchEvent, b2SensorBeginTouchEvent );
-B2_ARRAY_INLINE( b2SensorEndTouchEvent, b2SensorEndTouchEvent );
-B2_ARRAY_INLINE( b2TaskContext, b2TaskContext );
+B2_ARRAY_INLINE( b2BodyMoveEvent, b2BodyMoveEvent )
+B2_ARRAY_INLINE( b2ContactBeginTouchEvent, b2ContactBeginTouchEvent )
+B2_ARRAY_INLINE( b2ContactEndTouchEvent, b2ContactEndTouchEvent )
+B2_ARRAY_INLINE( b2ContactHitEvent, b2ContactHitEvent )
+B2_ARRAY_INLINE( b2SensorBeginTouchEvent, b2SensorBeginTouchEvent )
+B2_ARRAY_INLINE( b2SensorEndTouchEvent, b2SensorEndTouchEvent )
+B2_ARRAY_INLINE( b2TaskContext, b2TaskContext )

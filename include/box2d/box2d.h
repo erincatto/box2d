@@ -55,20 +55,20 @@ B2_API b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryF
 										void* context );
 
 /// Overlap test for for all shapes that overlap the provided point.
-B2_API b2TreeStats b2World_OverlapPoint( b2WorldId worldId, b2Vec2 point, b2Transform transform, b2QueryFilter filter,
-										 b2OverlapResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_OverlapPoint( b2WorldId worldId, b2Vec2 point, b2QueryFilter filter, b2OverlapResultFcn* fcn,
+										 void* context );
 
 /// Overlap test for for all shapes that overlap the provided circle. A zero radius may be used for a point query.
-B2_API b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2Transform transform, b2QueryFilter filter,
+B2_API b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2QueryFilter filter,
 										  b2OverlapResultFcn* fcn, void* context );
 
 /// Overlap test for all shapes that overlap the provided capsule
-B2_API b2TreeStats b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transform transform,
-										   b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule, b2QueryFilter filter,
+										   b2OverlapResultFcn* fcn, void* context );
 
 /// Overlap test for all shapes that overlap the provided polygon
-B2_API b2TreeStats b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform transform,
-										   b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon, b2QueryFilter filter,
+										   b2OverlapResultFcn* fcn, void* context );
 
 /// Cast a ray into the world to collect shapes in the path of the ray.
 /// Your callback function controls whether you get the closest point, any point, or n-points.
@@ -392,6 +392,7 @@ B2_API b2MassData b2Body_GetMassData( b2BodyId bodyId );
 /// the mass and you later want to reset the mass.
 /// You may also use this when automatic mass computation has been disabled.
 /// You should call this regardless of body type.
+/// Note that sensor shapes may have mass.
 B2_API void b2Body_ApplyMassFromShapes( b2BodyId bodyId );
 
 /// Adjust the linear damping. Normally this is set in b2BodyDef before creation.
@@ -540,7 +541,9 @@ B2_API b2BodyId b2Shape_GetBody( b2ShapeId shapeId );
 /// Get the world that owns this shape
 B2_API b2WorldId b2Shape_GetWorld( b2ShapeId shapeId );
 
-/// Returns true If the shape is a sensor
+/// Returns true if the shape is a sensor. It is not possible to change a shape
+/// from sensor to solid dynamically because this breaks the contract for
+/// sensor events.
 B2_API bool b2Shape_IsSensor( b2ShapeId shapeId );
 
 /// Set the user data for a shape

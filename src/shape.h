@@ -119,5 +119,5 @@ static inline float b2GetShapeRadius( const b2Shape* shape )
 	}
 }
 
-B2_ARRAY_INLINE( b2ChainShape, b2ChainShape );
-B2_ARRAY_INLINE( b2Shape, b2Shape );
+B2_ARRAY_INLINE( b2ChainShape, b2ChainShape )
+B2_ARRAY_INLINE( b2Shape, b2Shape )

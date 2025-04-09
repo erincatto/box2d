@@ -78,7 +78,7 @@ The polygon members are public, but you should use initialization
 functions to create a polygon. The initialization functions create
 normal vectors and perform validation.
 
-Polygons in Box2D have a maximum of 8 vertices, as controlled by #b2_maxPolygonVertices.
+Polygons in Box2D have a maximum of 8 vertices, as controlled by #B2_MAX_POLYGON_VERTICES.
 If you have more complex shapes, I recommend to use multiple polygons.
 
 There are a few ways to create polygons. You can attempt to create them manually,

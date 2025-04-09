@@ -553,7 +553,7 @@ typedef struct b2RotW
 
 #if defined( B2_SIMD_AVX2 )
 
-static inline b2FloatW b2ZeroW()
+static inline b2FloatW b2ZeroW( void )
 {
 	return _mm256_setzero_ps();
 }
@@ -644,7 +644,7 @@ static inline b2FloatW b2BlendW( b2FloatW a, b2FloatW b, b2FloatW mask )
 
 #elif defined( B2_SIMD_NEON )
 
-static inline b2FloatW b2ZeroW()
+static inline b2FloatW b2ZeroW( void )
 {
 	return vdupq_n_f32( 0.0f );
 }
@@ -779,7 +779,7 @@ static inline b2FloatW b2UnpackHiW( b2FloatW a, b2FloatW b )
 
 #elif defined( B2_SIMD_SSE2 )
 
-static inline b2FloatW b2ZeroW()
+static inline b2FloatW b2ZeroW( void )
 {
 	return _mm_setzero_ps();
 }
@@ -897,7 +897,7 @@ static inline b2FloatW b2UnpackHiW( b2FloatW a, b2FloatW b )
 
 #else
 
-static inline b2FloatW b2ZeroW()
+static inline b2FloatW b2ZeroW( void )
 {
 	return (b2FloatW){ 0.0f, 0.0f, 0.0f, 0.0f };
 }

@@ -35,13 +35,13 @@ _Static_assert( B2_MAX_WORLDS > 0, "must be 1 or more" );
 _Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B2_MAX_WORLDS limit exceeded" );
 b2World b2_worlds[B2_MAX_WORLDS];
 
-B2_ARRAY_SOURCE( b2BodyMoveEvent, b2BodyMoveEvent );
-B2_ARRAY_SOURCE( b2ContactBeginTouchEvent, b2ContactBeginTouchEvent );
-B2_ARRAY_SOURCE( b2ContactEndTouchEvent, b2ContactEndTouchEvent );
-B2_ARRAY_SOURCE( b2ContactHitEvent, b2ContactHitEvent );
-B2_ARRAY_SOURCE( b2SensorBeginTouchEvent, b2SensorBeginTouchEvent );
-B2_ARRAY_SOURCE( b2SensorEndTouchEvent, b2SensorEndTouchEvent );
-B2_ARRAY_SOURCE( b2TaskContext, b2TaskContext );
+B2_ARRAY_SOURCE( b2BodyMoveEvent, b2BodyMoveEvent )
+B2_ARRAY_SOURCE( b2ContactBeginTouchEvent, b2ContactBeginTouchEvent )
+B2_ARRAY_SOURCE( b2ContactEndTouchEvent, b2ContactEndTouchEvent )
+B2_ARRAY_SOURCE( b2ContactHitEvent, b2ContactHitEvent )
+B2_ARRAY_SOURCE( b2SensorBeginTouchEvent, b2SensorBeginTouchEvent )
+B2_ARRAY_SOURCE( b2SensorEndTouchEvent, b2SensorEndTouchEvent )
+B2_ARRAY_SOURCE( b2TaskContext, b2TaskContext )
 
 b2World* b2GetWorldFromId( b2WorldId id )
 {
@@ -1582,7 +1582,7 @@ bool b2World_IsValid( b2WorldId id )
 
 bool b2Body_IsValid( b2BodyId id )
 {
-	if ( id.world0 < 0 || B2_MAX_WORLDS <= id.world0 )
+	if ( B2_MAX_WORLDS <= id.world0 )
 	{
 		// invalid world
 		return false;
@@ -1653,7 +1653,7 @@ bool b2Shape_IsValid( b2ShapeId id )
 
 bool b2Chain_IsValid( b2ChainId id )
 {
-	if ( id.world0 < 0 || B2_MAX_WORLDS <= id.world0 )
+	if ( B2_MAX_WORLDS <= id.world0 )
 	{
 		return false;
 	}
@@ -1685,7 +1685,7 @@ bool b2Chain_IsValid( b2ChainId id )
 
 bool b2Joint_IsValid( b2JointId id )
 {
-	if ( id.world0 < 0 || B2_MAX_WORLDS <= id.world0 )
+	if ( B2_MAX_WORLDS <= id.world0 )
 	{
 		return false;
 	}
@@ -2125,7 +2125,6 @@ typedef struct WorldOverlapContext
 	b2OverlapResultFcn* fcn;
 	b2QueryFilter filter;
 	b2ShapeProxy proxy;
-	b2Transform transform;
 	void* userContext;
 } WorldOverlapContext;
 
@@ -2155,7 +2154,7 @@ static bool TreeOverlapCallback( int proxyId, uint64_t userData, void* context )
 	input.proxyA = worldContext->proxy;
 	input.proxyB = b2MakeShapeDistanceProxy( shape );
 	input.transformA = b2Transform_identity;
-	input.transformB = b2InvMulTransforms( worldContext->transform, transform );
+	input.transformB = transform;
 	input.useRadii = true;
 
 	b2SimplexCache cache = { 0 };
@@ -2172,14 +2171,14 @@ static bool TreeOverlapCallback( int proxyId, uint64_t userData, void* context )
 	return result;
 }
 
-b2TreeStats b2World_OverlapPoint( b2WorldId worldId, b2Vec2 point, b2Transform transform, b2QueryFilter filter,
+b2TreeStats b2World_OverlapPoint( b2WorldId worldId, b2Vec2 point, b2QueryFilter filter,
 								  b2OverlapResultFcn* fcn, void* context )
 {
 	b2Circle circle = { point, 0.0f };
-	return b2World_OverlapCircle( worldId, &circle, transform, filter, fcn, context );
+	return b2World_OverlapCircle( worldId, &circle, filter, fcn, context );
 }
 
-b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2Transform transform, b2QueryFilter filter,
+b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2QueryFilter filter,
 								   b2OverlapResultFcn* fcn, void* context )
 {
 	b2TreeStats treeStats = { 0 };
@@ -2191,12 +2190,9 @@ b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2
 		return treeStats;
 	}
 
-	B2_ASSERT( b2IsValidVec2( transform.p ) );
-	B2_ASSERT( b2IsValidRotation( transform.q ) );
-
-	b2AABB aabb = b2ComputeCircleAABB( circle, transform );
+	b2AABB aabb = b2ComputeCircleAABB( circle, b2Transform_identity );
 	WorldOverlapContext worldContext = {
-		world, fcn, filter, b2MakeProxy( &circle->center, 1, circle->radius ), transform, context,
+		world, fcn, filter, b2MakeProxy( &circle->center, 1, circle->radius ), context,
 	};
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
@@ -2211,7 +2207,7 @@ b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2
 	return treeStats;
 }
 
-b2TreeStats b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transform transform, b2QueryFilter filter,
+b2TreeStats b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule, b2QueryFilter filter,
 									b2OverlapResultFcn* fcn, void* context )
 {
 	b2TreeStats treeStats = { 0 };
@@ -2223,12 +2219,9 @@ b2TreeStats b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule,
 		return treeStats;
 	}
 
-	B2_ASSERT( b2IsValidVec2( transform.p ) );
-	B2_ASSERT( b2IsValidRotation( transform.q ) );
-
-	b2AABB aabb = b2ComputeCapsuleAABB( capsule, transform );
+	b2AABB aabb = b2ComputeCapsuleAABB( capsule, b2Transform_identity );
 	WorldOverlapContext worldContext = {
-		world, fcn, filter, b2MakeProxy( &capsule->center1, 2, capsule->radius ), transform, context,
+		world, fcn, filter, b2MakeProxy( &capsule->center1, 2, capsule->radius ), context,
 	};
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
@@ -2243,7 +2236,7 @@ b2TreeStats b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule,
 	return treeStats;
 }
 
-b2TreeStats b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform transform, b2QueryFilter filter,
+b2TreeStats b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon, b2QueryFilter filter,
 									b2OverlapResultFcn* fcn, void* context )
 {
 	b2TreeStats treeStats = { 0 };
@@ -2255,12 +2248,9 @@ b2TreeStats b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon,
 		return treeStats;
 	}
 
-	B2_ASSERT( b2IsValidVec2( transform.p ) );
-	B2_ASSERT( b2IsValidRotation( transform.q ) );
-
-	b2AABB aabb = b2ComputePolygonAABB( polygon, transform );
+	b2AABB aabb = b2ComputePolygonAABB( polygon, b2Transform_identity );
 	WorldOverlapContext worldContext = {
-		world, fcn, filter, b2MakeProxy( polygon->vertices, polygon->count, polygon->radius ), transform, context,
+		world, fcn, filter, b2MakeProxy( polygon->vertices, polygon->count, polygon->radius ), context,
 	};
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )

@@ -85,5 +85,5 @@ void b2SplitIslandTask( int startIndex, int endIndex, uint32_t threadIndex, void
 
 void b2ValidateIsland( b2World* world, int islandId );
 
-B2_ARRAY_INLINE( b2Island, b2Island );
-B2_ARRAY_INLINE( b2IslandSim, b2IslandSim );
+B2_ARRAY_INLINE( b2Island, b2Island )
+B2_ARRAY_INLINE( b2IslandSim, b2IslandSim )

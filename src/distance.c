@@ -199,21 +199,6 @@ static void b2MakeSimplexCache( b2SimplexCache* cache, const b2Simplex* simplex 
 	}
 }
 
-static inline b2Vec2 b2ComputeSimplexClosestPoint( const b2Simplex* s )
-{
-	if ( s->count == 1 )
-	{
-		return s->v1.w;
-	}
-
-	if ( s->count == 2 )
-	{
-		return b2Weight2( s->v1.a, s->v1.w, s->v2.a, s->v2.w );
-	}
-
-	return b2Vec2_zero;
-}
-
 static void b2ComputeSimplexWitnessPoints( b2Vec2* a, b2Vec2* b, const b2Simplex* s )
 {
 	switch ( s->count )
@@ -695,6 +680,21 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 }
 
 #if 0
+static inline b2Vec2 b2ComputeSimplexClosestPoint( const b2Simplex* s )
+{
+	if ( s->count == 1 )
+	{
+		return s->v1.w;
+	}
+
+	if ( s->count == 2 )
+	{
+		return b2Weight2( s->v1.a, s->v1.w, s->v2.a, s->v2.w );
+	}
+
+	return b2Vec2_zero;
+}
+
 typedef struct b2ShapeCastData
 {
 	b2Simplex simplex;

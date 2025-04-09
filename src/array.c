@@ -5,4 +5,4 @@
 
 #include <stddef.h>
 
-B2_ARRAY_SOURCE( int, b2Int );
+B2_ARRAY_SOURCE( int, b2Int )
