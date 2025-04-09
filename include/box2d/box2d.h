@@ -55,20 +55,20 @@ B2_API b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryF
 										void* context );
 
 /// Overlap test for for all shapes that overlap the provided point.
-B2_API b2TreeStats b2World_OverlapPoint( b2WorldId worldId, b2Vec2 point, b2Transform transform, b2QueryFilter filter,
-										 b2OverlapResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_OverlapPoint( b2WorldId worldId, b2Vec2 point, b2QueryFilter filter, b2OverlapResultFcn* fcn,
+										 void* context );
 
 /// Overlap test for for all shapes that overlap the provided circle. A zero radius may be used for a point query.
-B2_API b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2Transform transform, b2QueryFilter filter,
+B2_API b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2QueryFilter filter,
 										  b2OverlapResultFcn* fcn, void* context );
 
 /// Overlap test for all shapes that overlap the provided capsule
-B2_API b2TreeStats b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transform transform,
-										   b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule, b2QueryFilter filter,
+										   b2OverlapResultFcn* fcn, void* context );
 
 /// Overlap test for all shapes that overlap the provided polygon
-B2_API b2TreeStats b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform transform,
-										   b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon, b2QueryFilter filter,
+										   b2OverlapResultFcn* fcn, void* context );
 
 /// Cast a ray into the world to collect shapes in the path of the ray.
 /// Your callback function controls whether you get the closest point, any point, or n-points.

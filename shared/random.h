@@ -38,7 +38,7 @@ B2_INLINE int RandomInt()
 }
 
 // Random integer in range [lo, hi]
-B2_INLINE float RandomIntRange( int lo, int hi )
+B2_INLINE int RandomIntRange( int lo, int hi )
 {
 	return lo + RandomInt() % ( hi - lo + 1 );
 }

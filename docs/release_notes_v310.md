@@ -4,7 +4,7 @@
 - 64-bit filter categories and masks
 - 64-bit dynamic tree user data
 - Renamed `b2SmoothSegment` to `b2ChainSegment`
-- Cast and overlap function clean up
+- Cast and overlap functions modified for argument consistency
 - Contact begin events now provide the manifold
 - More consistent functions to make polygons
 - Contact events are now disabled by default
