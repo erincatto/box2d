@@ -54,21 +54,9 @@ B2_API b2ContactEvents b2World_GetContactEvents( b2WorldId worldId );
 B2_API b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter filter, b2OverlapResultFcn* fcn,
 										void* context );
 
-/// Overlap test for for all shapes that overlap the provided point.
-B2_API b2TreeStats b2World_OverlapPoint( b2WorldId worldId, b2Vec2 point, b2QueryFilter filter, b2OverlapResultFcn* fcn,
-										 void* context );
-
-/// Overlap test for for all shapes that overlap the provided circle. A zero radius may be used for a point query.
-B2_API b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2QueryFilter filter,
-										  b2OverlapResultFcn* fcn, void* context );
-
-/// Overlap test for all shapes that overlap the provided capsule
-B2_API b2TreeStats b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule, b2QueryFilter filter,
-										   b2OverlapResultFcn* fcn, void* context );
-
-/// Overlap test for all shapes that overlap the provided polygon
-B2_API b2TreeStats b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon, b2QueryFilter filter,
-										   b2OverlapResultFcn* fcn, void* context );
+/// Overlap test for all shapes that overlap the provided shape proxy.
+B2_API b2TreeStats b2World_OverlapShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2QueryFilter filter,
+										 b2OverlapResultFcn* fcn, void* context );
 
 /// Cast a ray into the world to collect shapes in the path of the ray.
 /// Your callback function controls whether you get the closest point, any point, or n-points.
@@ -88,20 +76,10 @@ B2_API b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 tra
 /// This is less general than b2World_CastRay() and does not allow for custom filtering.
 B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter );
 
-/// Cast a circle through the world. Similar to a cast ray except that a circle is cast instead of a point.
+/// Cast a shape through the world. Similar to a cast ray except that a shape is cast instead of a point.
 ///	@see b2World_CastRay
-B2_API b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Vec2 translation, b2QueryFilter filter,
-									   b2CastResultFcn* fcn, void* context );
-
-/// Cast a capsule through the world. Similar to a cast ray except that a capsule is cast instead of a point.
-///	@see b2World_CastRay
-B2_API b2TreeStats b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Vec2 translation, b2QueryFilter filter,
-										b2CastResultFcn* fcn, void* context );
-
-/// Cast a polygon through the world. Similar to a cast ray except that a polygon is cast instead of a point.
-///	@see b2World_CastRay
-B2_API b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Vec2 translation, b2QueryFilter filter,
-										b2CastResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_CastShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2Vec2 translation, b2QueryFilter filter,
+									  b2CastResultFcn* fcn, void* context );
 
 /// Cast a capsule mover through the world. This is a special shape cast that handles sliding along other shapes while reducing
 /// clipping.

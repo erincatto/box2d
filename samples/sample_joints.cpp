@@ -506,7 +506,7 @@ public:
 			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
 			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
 			jointDef.lowerAngle = -0.25f * B2_PI;
-			jointDef.upperAngle = 0.0f * B2_PI;
+			jointDef.upperAngle = 0.5f * B2_PI;
 			jointDef.enableLimit = true;
 			jointDef.enableMotor = true;
 			jointDef.motorSpeed = 0.0f;
@@ -2834,14 +2834,14 @@ public:
 	{
 		if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) )
 		{
-			m_motorSpeed = b2MaxFloat(-0.3f, m_motorSpeed - 0.001f);
+			m_motorSpeed = b2MaxFloat(-0.3f, m_motorSpeed - 0.01f);
 			b2RevoluteJoint_SetMotorSpeed( m_driverId, m_motorSpeed );
 			b2Joint_WakeBodies( m_driverId );
 		}
 
 		if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) )
 		{
-			m_motorSpeed = b2MinFloat( 0.3f, m_motorSpeed + 0.001f );
+			m_motorSpeed = b2MinFloat( 0.3f, m_motorSpeed + 0.01f );
 			b2RevoluteJoint_SetMotorSpeed( m_driverId, m_motorSpeed );
 			b2Joint_WakeBodies( m_driverId );
 		}

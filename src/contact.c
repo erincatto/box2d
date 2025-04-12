@@ -349,9 +349,10 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 	b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
 
 	uint32_t flags = contact->flags;
+	bool touching = ( flags & b2_contactTouchingFlag ) != 0;
 
 	// End touch event
-	if ( ( flags & b2_contactTouchingFlag ) != 0 && ( flags & b2_contactEnableContactEvents ) != 0 )
+	if ( touching && ( flags & b2_contactEnableContactEvents ) != 0 )
 	{
 		uint16_t worldId = world->worldId;
 		const b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contact->shapeIdA );
@@ -444,7 +445,7 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 
 	b2FreeId( &world->contactIdPool, contactId );
 
-	if ( wakeBodies )
+	if ( wakeBodies && touching )
 	{
 		b2WakeBody( world, bodyA );
 		b2WakeBody( world, bodyB );

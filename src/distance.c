@@ -105,15 +105,13 @@ b2SegmentDistanceResult b2SegmentDistance( b2Vec2 p1, b2Vec2 q1, b2Vec2 p2, b2Ve
 	return result;
 }
 
-// GJK using Voronoi regions (Christer Ericson) and Barycentric coordinates.
-// todo try not copying
-b2ShapeProxy b2MakeProxy( const b2Vec2* vertices, int count, float radius )
+b2ShapeProxy b2MakeProxy( const b2Vec2* points, int count, float radius )
 {
 	count = b2MinInt( count, B2_MAX_POLYGON_VERTICES );
 	b2ShapeProxy proxy;
 	for ( int i = 0; i < count; ++i )
 	{
-		proxy.points[i] = vertices[i];
+		proxy.points[i] = points[i];
 	}
 	proxy.count = count;
 	proxy.radius = radius;
@@ -408,6 +406,9 @@ static b2Vec2 b2SolveSimplex3( b2Simplex* s )
 b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* cache, b2Simplex* simplexes, int simplexCapacity )
 {
 	B2_UNUSED( simplexes, simplexCapacity );
+	B2_ASSERT( input->proxyA.count > 0 && input->proxyB.count > 0 );
+	B2_ASSERT( input->proxyA.radius >= 0.0f );
+	B2_ASSERT( input->proxyB.radius >= 0.0f );
 
 	b2DistanceOutput output = { 0 };
 

@@ -9,6 +9,7 @@ Box2D provides geometric types and functions. These include:
 - generic shape cast
 - time of impact
 - dynamic bounding volume tree
+- character movement solver
 
 The collision interface is designed to be usable outside of rigid body simulation.
 For example, you can use the dynamic tree for other aspects of your game besides physics.
@@ -25,7 +26,7 @@ primitives that can be later attached to rigid bodies.
 Box2D shape primitives support several operations:
 - Test a point for overlap with the primitive
 - Perform a ray cast against the primitive
-- Compute the primitive's AABB
+- Compute the primitive's bounding box
 - Compute the mass properties of the primitive
 
 ### Circles
@@ -97,7 +98,8 @@ This corresponds with circles and capsules using radii instead of diameters.
 Box2D also supports rounded polygons. These are convex polygons with a thick rounded skin.
 
 ```c
-b2Polygon roundedBox = b2MakeRoundedBox(0.5f, 1.0f, 0.25f);
+float radius = 0.25f;
+b2Polygon roundedBox = b2MakeRoundedBox(0.5f, 1.0f, radius);
 ```
 
 If you want a box that is not centered on the body origin, you can use an offset box.
@@ -105,11 +107,12 @@ If you want a box that is not centered on the body origin, you can use an offset
 ```c
 b2Vec2 center = {1.0f, 0.0f};
 float angle = b2_pi / 4.0f;
-b2Polygon offsetBox = b2MakeOffsetBox(0.5f, 1.0f, center, angle);
+b2Rot rotation = b2MakeRot(angle);
+b2Polygon offsetBox = b2MakeOffsetBox(0.5f, 1.0f, center, rotation);
 ```
 
 If you want a more general convex polygon, you can compute the hull using `b2ComputeHull()`. Then you can
-create a polygon from the hull. You can make this rounded or not.
+create a polygon from the hull. You can make this rounded as well.
 
 ```c
 b2Vec2 points[] = {{-1.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 1.0f}};

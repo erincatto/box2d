@@ -30,7 +30,7 @@ enum PogoShape
 {
 	PogoPoint,
 	PogoCircle,
-	PogoBox
+	PogoSegment
 };
 
 struct CastResult
@@ -259,28 +259,34 @@ public:
 		float rayLength = pogoRestLength + m_capsule.radius;
 		b2Vec2 origin = b2TransformPoint( m_transform, m_capsule.center1 );
 		b2Circle circle = { origin, 0.5f * m_capsule.radius };
-		float boxHalfWidth = 0.75f * m_capsule.radius;
-		float boxHalfHeight = 0.05f * m_capsule.radius;
-		b2Polygon box = b2MakeOffsetBox( boxHalfWidth, boxHalfHeight, origin, b2Rot_identity );
+		b2Vec2 segmentOffset = { 0.75f * m_capsule.radius, 0.0f };
+		b2Segment segment = {
+			.point1 = origin - segmentOffset,
+			.point2 = origin + segmentOffset,
+		};
+
+		b2ShapeProxy proxy = {};
 		b2Vec2 translation;
 		b2QueryFilter skipTeamFilter = { 1, ~2u };
 		CastResult castResult = {};
 
 		if ( m_pogoShape == PogoPoint )
 		{
+			proxy = b2MakeProxy( &origin, 1, 0.0f );
 			translation = { 0.0f, -rayLength };
-			b2World_CastRay( m_worldId, origin, translation, skipTeamFilter, CastCallback, &castResult );
 		}
 		else if ( m_pogoShape == PogoCircle )
 		{
+			proxy = b2MakeProxy( &origin, 1, circle.radius );
 			translation = { 0.0f, -rayLength + circle.radius };
-			b2World_CastCircle( m_worldId, &circle, translation, skipTeamFilter, CastCallback, &castResult );
 		}
 		else
 		{
-			translation = { 0.0f, -rayLength + boxHalfHeight };
-			b2World_CastPolygon( m_worldId, &box, translation, skipTeamFilter, CastCallback, &castResult );
+			proxy = b2MakeProxy( &segment.point1, 2, 0.0f );
+			translation = { 0.0f, -rayLength };
 		}
+
+		b2World_CastShape( m_worldId, &proxy, translation, skipTeamFilter, CastCallback, &castResult );
 
 		// Avoid snapping to ground if still going up
 		if ( m_onGround == false )
@@ -309,8 +315,7 @@ public:
 			}
 			else
 			{
-				b2Transform xf = { delta, b2Rot_identity };
-				g_draw.DrawSolidPolygon( xf, box.vertices, box.count, 0.0f, b2_colorGray );
+				g_draw.DrawSegment( segment.point1 + delta, segment.point2 + delta, b2_colorGray );
 			}
 		}
 		else
@@ -338,8 +343,7 @@ public:
 			}
 			else
 			{
-				b2Transform xf = { delta, b2Rot_identity };
-				g_draw.DrawSolidPolygon( xf, box.vertices, box.count, 0.0f, b2_colorPlum );
+				g_draw.DrawSegment( segment.point1 + delta, segment.point2 + delta, b2_colorPlum );
 			}
 
 			b2Body_ApplyForce( castResult.bodyId, { 0.0f, -50.0f }, castResult.point, true );
@@ -416,7 +420,7 @@ public:
 		ImGui::SameLine();
 		ImGui::RadioButton( "Circle", &m_pogoShape, PogoCircle );
 		ImGui::SameLine();
-		ImGui::RadioButton( "Box", &m_pogoShape, PogoBox );
+		ImGui::RadioButton( "Segment", &m_pogoShape, PogoSegment );
 
 		ImGui::Checkbox( "Lock Camera", &m_lockCamera );
 
@@ -535,7 +539,7 @@ public:
 	float m_pogoHertz = 5.0f;
 	float m_pogoDampingRatio = 0.8f;
 
-	int m_pogoShape = PogoBox;
+	int m_pogoShape = PogoSegment;
 	b2Transform m_transform;
 	b2Vec2 m_velocity;
 	b2Capsule m_capsule;

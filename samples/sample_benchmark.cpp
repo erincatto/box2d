@@ -1372,12 +1372,12 @@ public:
 
 			for ( int i = 0; i < sampleCount; ++i )
 			{
-				b2Circle circle = { m_origins[i], m_radius };
+				b2ShapeProxy proxy = b2MakeProxy( &m_origins[i], 1, m_radius );
 				b2Vec2 translation = m_translations[i];
 
 				CastResult result;
 				b2TreeStats traversalResult =
-					b2World_CastCircle( m_worldId, &circle, translation, filter, CastCallback, &result );
+					b2World_CastShape( m_worldId, &proxy, translation, filter, CastCallback, &result );
 
 				if ( i == m_drawIndex )
 				{

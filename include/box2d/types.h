@@ -804,10 +804,10 @@ typedef struct b2RevoluteJointDef
 	/// A flag to enable joint limits
 	bool enableLimit;
 
-	/// The lower angle for the joint limit in radians
+	/// The lower angle for the joint limit in radians. Minimum of -0.95*pi radians.
 	float lowerAngle;
 
-	/// The upper angle for the joint limit in radians
+	/// The upper angle for the joint limit in radians. Maximum of 0.95*pi radians.
 	float upperAngle;
 
 	/// A flag to enable the joint motor

@@ -37,15 +37,16 @@ typedef struct b2RayCastInput
 } b2RayCastInput;
 
 /// A distance proxy is used by the GJK algorithm. It encapsulates any shape.
+/// You can provide between 1 and B2_MAX_POLYGON_VERTICES and a radius.
 typedef struct b2ShapeProxy
 {
 	/// The point cloud
 	b2Vec2 points[B2_MAX_POLYGON_VERTICES];
 
-	/// The number of points
+	/// The number of points. Must be greater than 0.
 	int count;
 
-	/// The external radius of the point cloud
+	/// The external radius of the point cloud. May be zero.
 	float radius;
 } b2ShapeProxy;
 
@@ -427,8 +428,8 @@ typedef struct b2ShapeCastPairInput
 /// You may optionally supply an array to hold debug data.
 B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input);
 
-/// Make a proxy for use in GJK and related functions.
-B2_API b2ShapeProxy b2MakeProxy( const b2Vec2* vertices, int count, float radius );
+/// Make a proxy for use in GJK and related functions. This is a deep copy of the points.
+B2_API b2ShapeProxy b2MakeProxy( const b2Vec2* points, int count, float radius );
 
 /// This describes the motion of a body/shape for TOI computation. Shapes are defined with respect to the body origin,
 /// which may not coincide with the center of mass. However, to support dynamics we must interpolate the center of mass

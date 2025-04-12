@@ -140,6 +140,7 @@ if (MSVC)
 	target_compile_definitions(box2d PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:B2_ENABLE_ASSERT>")
 
 	# All warnings
+	# 4710 - warn about inline functions that are not inlined
 	target_compile_options(box2d PRIVATE /Wall /wd4820 /wd5045 /wd4061 /wd4711 /wd4710)
 
 	if (BOX2D_AVX2)

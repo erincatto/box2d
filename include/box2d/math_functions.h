@@ -623,6 +623,25 @@ B2_INLINE b2AABB b2AABB_Union( b2AABB a, b2AABB b )
 	return c;
 }
 
+/// Compute the bounding box of an array of circles
+B2_INLINE b2AABB b2MakeAABB( const b2Vec2* points, int count, float radius )
+{
+	B2_ASSERT( count > 0 );
+	b2AABB a = { points[0], points[0] };
+	for ( int i = 1; i < count; ++i )
+	{
+		a.lowerBound = b2Min( a.lowerBound, points[i] );
+		a.upperBound = b2Max( a.upperBound, points[i] );
+	}
+
+	b2Vec2 r = { radius, radius };
+	a.lowerBound = b2Sub( a.lowerBound, r );
+	a.upperBound = b2Add( a.upperBound, r );
+
+	return a;
+}
+
+
 /// Signed separation of a point from a plane
 B2_INLINE float b2PlaneSeparation( b2Plane plane, b2Vec2 point )
 {

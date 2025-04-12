@@ -2124,7 +2124,7 @@ typedef struct WorldOverlapContext
 	b2World* world;
 	b2OverlapResultFcn* fcn;
 	b2QueryFilter filter;
-	b2ShapeProxy proxy;
+	const b2ShapeProxy* proxy;
 	void* userContext;
 } WorldOverlapContext;
 
@@ -2151,7 +2151,7 @@ static bool TreeOverlapCallback( int proxyId, uint64_t userData, void* context )
 	b2Transform transform = b2GetBodyTransformQuick( world, body );
 
 	b2DistanceInput input;
-	input.proxyA = worldContext->proxy;
+	input.proxyA = *worldContext->proxy;
 	input.proxyB = b2MakeShapeDistanceProxy( shape );
 	input.transformA = b2Transform_identity;
 	input.transformB = transform;
@@ -2171,15 +2171,8 @@ static bool TreeOverlapCallback( int proxyId, uint64_t userData, void* context )
 	return result;
 }
 
-b2TreeStats b2World_OverlapPoint( b2WorldId worldId, b2Vec2 point, b2QueryFilter filter,
-								  b2OverlapResultFcn* fcn, void* context )
-{
-	b2Circle circle = { point, 0.0f };
-	return b2World_OverlapCircle( worldId, &circle, filter, fcn, context );
-}
-
-b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2QueryFilter filter,
-								   b2OverlapResultFcn* fcn, void* context )
+b2TreeStats b2World_OverlapShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2QueryFilter filter, b2OverlapResultFcn* fcn,
+								  void* context )
 {
 	b2TreeStats treeStats = { 0 };
 
@@ -2190,67 +2183,9 @@ b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2
 		return treeStats;
 	}
 
-	b2AABB aabb = b2ComputeCircleAABB( circle, b2Transform_identity );
+	b2AABB aabb = b2MakeAABB( proxy->points, proxy->count, proxy->radius );
 	WorldOverlapContext worldContext = {
-		world, fcn, filter, b2MakeProxy( &circle->center, 1, circle->radius ), context,
-	};
-
-	for ( int i = 0; i < b2_bodyTypeCount; ++i )
-	{
-		b2TreeStats treeResult =
-			b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, TreeOverlapCallback, &worldContext );
-
-		treeStats.nodeVisits += treeResult.nodeVisits;
-		treeStats.leafVisits += treeResult.leafVisits;
-	}
-
-	return treeStats;
-}
-
-b2TreeStats b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule, b2QueryFilter filter,
-									b2OverlapResultFcn* fcn, void* context )
-{
-	b2TreeStats treeStats = { 0 };
-
-	b2World* world = b2GetWorldFromId( worldId );
-	B2_ASSERT( world->locked == false );
-	if ( world->locked )
-	{
-		return treeStats;
-	}
-
-	b2AABB aabb = b2ComputeCapsuleAABB( capsule, b2Transform_identity );
-	WorldOverlapContext worldContext = {
-		world, fcn, filter, b2MakeProxy( &capsule->center1, 2, capsule->radius ), context,
-	};
-
-	for ( int i = 0; i < b2_bodyTypeCount; ++i )
-	{
-		b2TreeStats treeResult =
-			b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, TreeOverlapCallback, &worldContext );
-
-		treeStats.nodeVisits += treeResult.nodeVisits;
-		treeStats.leafVisits += treeResult.leafVisits;
-	}
-
-	return treeStats;
-}
-
-b2TreeStats b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon, b2QueryFilter filter,
-									b2OverlapResultFcn* fcn, void* context )
-{
-	b2TreeStats treeStats = { 0 };
-
-	b2World* world = b2GetWorldFromId( worldId );
-	B2_ASSERT( world->locked == false );
-	if ( world->locked )
-	{
-		return treeStats;
-	}
-
-	b2AABB aabb = b2ComputePolygonAABB( polygon, b2Transform_identity );
-	WorldOverlapContext worldContext = {
-		world, fcn, filter, b2MakeProxy( polygon->vertices, polygon->count, polygon->radius ), context,
+		world, fcn, filter, proxy, context,
 	};
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
@@ -2437,7 +2372,7 @@ static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 	return input->maxFraction;
 }
 
-b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Vec2 translation, b2QueryFilter filter,
+b2TreeStats b2World_CastShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2Vec2 translation, b2QueryFilter filter,
 								b2CastResultFcn* fcn, void* context )
 {
 	b2TreeStats treeStats = { 0 };
@@ -2452,97 +2387,7 @@ b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Vec
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
 	b2ShapeCastInput input = { 0 };
-	input.proxy.points[0] = circle->center;
-	input.proxy.count = 1;
-	input.proxy.radius = circle->radius;
-	input.translation = translation;
-	input.maxFraction = 1.0f;
-
-	WorldRayCastContext worldContext = { world, fcn, filter, 1.0f, context };
-
-	for ( int i = 0; i < b2_bodyTypeCount; ++i )
-	{
-		b2TreeStats treeResult =
-			b2DynamicTree_ShapeCast( world->broadPhase.trees + i, &input, filter.maskBits, ShapeCastCallback, &worldContext );
-		treeStats.nodeVisits += treeResult.nodeVisits;
-		treeStats.leafVisits += treeResult.leafVisits;
-
-		if ( worldContext.fraction == 0.0f )
-		{
-			return treeStats;
-		}
-
-		input.maxFraction = worldContext.fraction;
-	}
-
-	return treeStats;
-}
-
-b2TreeStats b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Vec2 translation,
-								 b2QueryFilter filter, b2CastResultFcn* fcn, void* context )
-{
-	b2TreeStats treeStats = { 0 };
-
-	b2World* world = b2GetWorldFromId( worldId );
-	B2_ASSERT( world->locked == false );
-	if ( world->locked )
-	{
-		return treeStats;
-	}
-
-	B2_ASSERT( b2IsValidVec2( translation ) );
-
-	b2ShapeCastInput input = { 0 };
-	// Note: these world space points get transformed into local space in b2ShapeCastShape
-	input.proxy.points[0] = capsule->center1;
-	input.proxy.points[1] = capsule->center2;
-	input.proxy.count = 2;
-	input.proxy.radius = capsule->radius;
-	input.translation = translation;
-	input.maxFraction = 1.0f;
-
-	WorldRayCastContext worldContext = { world, fcn, filter, 1.0f, context };
-
-	for ( int i = 0; i < b2_bodyTypeCount; ++i )
-	{
-		b2TreeStats treeResult =
-			b2DynamicTree_ShapeCast( world->broadPhase.trees + i, &input, filter.maskBits, ShapeCastCallback, &worldContext );
-		treeStats.nodeVisits += treeResult.nodeVisits;
-		treeStats.leafVisits += treeResult.leafVisits;
-
-		if ( worldContext.fraction == 0.0f )
-		{
-			return treeStats;
-		}
-
-		input.maxFraction = worldContext.fraction;
-	}
-
-	return treeStats;
-}
-
-b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Vec2 translation,
-								 b2QueryFilter filter, b2CastResultFcn* fcn, void* context )
-{
-	b2TreeStats treeStats = { 0 };
-
-	b2World* world = b2GetWorldFromId( worldId );
-	B2_ASSERT( world->locked == false );
-	if ( world->locked )
-	{
-		return treeStats;
-	}
-
-	B2_ASSERT( b2IsValidVec2( translation ) );
-
-	b2ShapeCastInput input = { 0 };
-	// Note: these world space points get transformed into local space in b2ShapeCastShape
-	for ( int i = 0; i < polygon->count; ++i )
-	{
-		input.proxy.points[i] = polygon->vertices[i];
-	}
-	input.proxy.count = polygon->count;
-	input.proxy.radius = polygon->radius;
+	input.proxy = *proxy;
 	input.translation = translation;
 	input.maxFraction = 1.0f;
 
