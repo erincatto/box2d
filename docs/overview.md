@@ -39,6 +39,10 @@ application included with Box2D to learn more.
 This manual is only updated with new releases. The latest version of
 Box2D may be out of sync with this manual.
 
+> **Caution**:
+> This manual applies to the associated release and not necessarily the
+> latest version on the main branch.
+
 ## Feedback and Bugs
 Please file bugs and feature requests here:
 [Box2D Issues](https://github.com/erincatto/box2d/issues)

@@ -61,7 +61,7 @@ In a multithreaded environment you must be careful to avoid [race conditions](ht
 
 It *is safe* to do ray-casts, shape-casts, and overlap tests from multiple threads outside of `b2World_Step()`. Generally, any read-only operation is safe to do multithreaded outside of `b2World_Step()`. This can be very useful if you have multithreaded game logic.
 
-## Multiple Worlds
+## Multithreading Multiple Worlds
 Some applications may wish to create multiple Box2D worlds and simulate them on different threads. This works fine because Box2D has very limited use of globals.
 
 There are a few caveats:

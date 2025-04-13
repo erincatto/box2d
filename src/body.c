@@ -799,7 +799,7 @@ void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity )
 	state->angularVelocity = angularVelocity;
 }
 
-void b2Body_SetKinematicTarget( b2BodyId bodyId, b2Transform target, float timeStep )
+void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
@@ -828,7 +828,7 @@ void b2Body_SetKinematicTarget( b2BodyId bodyId, b2Transform target, float timeS
 	}
 
 	// Return if velocity would be zero
-	if ( b2LengthSquared( linearVelocity ) == 0.0f || b2AbsFloat( angularVelocity ) == 0.0f )
+	if ( b2LengthSquared( linearVelocity ) == 0.0f && b2AbsFloat( angularVelocity ) == 0.0f )
 	{
 		return;
 	}

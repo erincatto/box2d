@@ -283,7 +283,7 @@ B2_INLINE b2Vec2 b2Normalize( b2Vec2 v )
 	float length = sqrtf( v.x * v.x + v.y * v.y );
 	if ( length < FLT_EPSILON )
 	{
-		return B2_LITERAL(b2Vec2){0.0f, 0.0f};
+		return B2_LITERAL( b2Vec2 ){ 0.0f, 0.0f };
 	}
 
 	float invLength = 1.0f / length;
@@ -292,7 +292,7 @@ B2_INLINE b2Vec2 b2Normalize( b2Vec2 v )
 }
 
 /// Determines if the provided vector is normalized (norm(a) == 1).
-B2_INLINE bool b2IsNormalized(b2Vec2 a)
+B2_INLINE bool b2IsNormalized( b2Vec2 a )
 {
 	float aa = b2Dot( a, a );
 	return b2AbsFloat( 1.0f - aa ) < 10.0f * FLT_EPSILON;
@@ -640,7 +640,6 @@ B2_INLINE b2AABB b2MakeAABB( const b2Vec2* points, int count, float radius )
 
 	return a;
 }
-
 
 /// Signed separation of a point from a plane
 B2_INLINE float b2PlaneSeparation( b2Plane plane, b2Vec2 point )

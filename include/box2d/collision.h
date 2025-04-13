@@ -428,8 +428,11 @@ typedef struct b2ShapeCastPairInput
 /// You may optionally supply an array to hold debug data.
 B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input);
 
-/// Make a proxy for use in GJK and related functions. This is a deep copy of the points.
+/// Make a proxy for use in overlap, shape cast, and related functions. This is a deep copy of the points.
 B2_API b2ShapeProxy b2MakeProxy( const b2Vec2* points, int count, float radius );
+
+/// Make a proxy with a transform. This is a deep copy of the points.
+B2_API b2ShapeProxy b2MakeOffsetProxy( const b2Vec2* points, int count, float radius, b2Vec2 position, b2Rot rotation );
 
 /// This describes the motion of a body/shape for TOI computation. Shapes are defined with respect to the body origin,
 /// which may not coincide with the center of mass. However, to support dynamics we must interpolate the center of mass

@@ -118,6 +118,23 @@ b2ShapeProxy b2MakeProxy( const b2Vec2* points, int count, float radius )
 	return proxy;
 }
 
+b2ShapeProxy b2MakeOffsetProxy( const b2Vec2* points, int count, float radius, b2Vec2 position, b2Rot rotation )
+{
+	count = b2MinInt( count, B2_MAX_POLYGON_VERTICES );
+	b2Transform transform = {
+		.p = position,
+		.q = rotation,
+	};
+	b2ShapeProxy proxy;
+	for ( int i = 0; i < count; ++i )
+	{
+		proxy.points[i] = b2TransformPoint( transform, points[i] );
+	}
+	proxy.count = count;
+	proxy.radius = radius;
+	return proxy;
+}
+
 static inline b2Vec2 b2Weight2( float a1, b2Vec2 w1, float a2, b2Vec2 w2 )
 {
 	return (b2Vec2){ a1 * w1.x + a2 * w2.x, a1 * w1.y + a2 * w2.y };

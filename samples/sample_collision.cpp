@@ -1732,9 +1732,13 @@ public:
 
 			m_textLine += m_textIncrement;
 
-			b2CastResultFcn* fcns[] = { RayCastAnyCallback, RayCastClosestCallback, RayCastMultipleCallback,
-										RayCastSortedCallback };
-			b2CastResultFcn* modeFcn = fcns[m_mode];
+			b2CastResultFcn* functions[] = {
+				RayCastAnyCallback,
+				RayCastClosestCallback,
+				RayCastMultipleCallback,
+				RayCastSortedCallback,
+			};
+			b2CastResultFcn* modeFcn = functions[m_mode];
 
 			CastContext context = {};
 
@@ -1750,17 +1754,17 @@ public:
 			b2Polygon box = b2MakeOffsetRoundedBox( 0.25f, 0.5f, transform.p, transform.q, m_castRadius );
 			b2ShapeProxy proxy = {};
 
-			if (m_castType == e_rayCast)
+			if ( m_castType == e_rayCast )
 			{
 				b2World_CastRay( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
 			}
 			else
 			{
-				if (m_castType == e_circleCast)
+				if ( m_castType == e_circleCast )
 				{
 					proxy = b2MakeProxy( &circle.center, 1, circle.radius );
 				}
-				else if (m_castType == e_capsuleCast)
+				else if ( m_castType == e_capsuleCast )
 				{
 					proxy = b2MakeProxy( &capsule.center1, 2, capsule.radius );
 				}
@@ -2154,7 +2158,10 @@ public:
 
 		if ( m_shapeType == e_circleShape )
 		{
-			b2Circle circle = { .center = transform.p, .radius = 1.0f, };
+			b2Circle circle = {
+				.center = transform.p,
+				.radius = 1.0f,
+			};
 			proxy = b2MakeProxy( &circle.center, 1, circle.radius );
 			g_draw.DrawSolidCircle( b2Transform_identity, circle.center, circle.radius, b2_colorWhite );
 		}

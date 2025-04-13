@@ -1,12 +1,11 @@
 # Collision
 Box2D provides geometric types and functions. These include:
-- raw geometry: circles, capsules, segments, and convex polygons
+- primitives: circles, capsules, segments, and convex polygons
 - convex hull and related helper functions
 - mass and bounding box computation
 - local ray and shape casts
 - contact manifolds
 - shape distance
-- generic shape cast
 - time of impact
 - dynamic bounding volume tree
 - character movement solver
@@ -213,7 +212,7 @@ You can cast a ray at a shape to get the point of first intersection and normal 
 > consistent with Box2D treating convex shapes as solid. 
 
 ```c
-b2RayCastInput input;
+b2RayCastInput input = {0};
 input.origin = (b2Vec2){0.0f, 0.0f};
 input.translation = (b2Vec2){1.0f, 0.0f};
 input.maxFraction = 1.0f;
@@ -229,7 +228,7 @@ if (output.hit == true)
 You can also cast a shape at another shape. This uses an abstract way of describing the moving shape. It is represented as a point cloud with a radius. This implies a convex shape even if the input data is not convex. The internal algorithm (GJK) will essentially only use the convex portion.
 
 ```c
-b2ShapeCastInput input;
+b2ShapeCastInput input = {0};
 input.points[0] = (b2Vec2){1.0f, 0.0f};
 input.points[1] = (b2Vec2){2.0f, -3.0f};
 input.radius = 0.2f;

@@ -282,7 +282,6 @@ public:
 
 static int sampleBodyType = RegisterSample( "Bodies", "Body Type", BodyType::Create );
 
-
 float FrictionCallback( float, int, float, int )
 {
 	return 0.1f;
@@ -534,13 +533,13 @@ public:
 
 	void ToggleInvoker()
 	{
-		if (B2_IS_NULL(m_staticBodyId))
+		if ( B2_IS_NULL( m_staticBodyId ) )
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.position = { -10.5f, 3.0f };
 			m_staticBodyId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Polygon box = b2MakeOffsetBox( 2.0f, 0.1f, { 0.0f, 0.0f }, b2MakeRot(0.25f * B2_PI) );
+			b2Polygon box = b2MakeOffsetBox( 2.0f, 0.1f, { 0.0f, 0.0f }, b2MakeRot( 0.25f * B2_PI ) );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.invokeContactCreation = true;
 			b2CreatePolygonShape( m_staticBodyId, &shapeDef, &box );
@@ -580,7 +579,7 @@ public:
 
 		ImGui::Separator();
 
-		if ( B2_IS_NULL(m_staticBodyId))
+		if ( B2_IS_NULL( m_staticBodyId ) )
 		{
 			if ( ImGui::Button( "Create" ) )
 			{
@@ -594,7 +593,6 @@ public:
 				ToggleInvoker();
 			}
 		}
-
 
 		ImGui::End();
 	}
@@ -846,28 +844,25 @@ public:
 		float timeStep = settings.hertz > 0.0f ? 1.0f / settings.hertz : 0.0f;
 		if ( settings.pause )
 		{
-			if ( settings.singleStep )
-			{
-				settings.singleStep = false;
-			}
-			else
+			if ( settings.singleStep == false )
 			{
 				timeStep = 0.0f;
 			}
 		}
 
-		if (timeStep > 0.0f)
+		if ( timeStep > 0.0f )
 		{
-			b2Vec2 point;
-			point.x = 2.0f * m_amplitude * cosf( m_time );
-			point.y = m_amplitude * sinf( 2.0f * m_time );
+			b2Vec2 point = {
+				.x = 2.0f * m_amplitude * cosf( m_time ),
+				.y = m_amplitude * sinf( 2.0f * m_time ),
+			};
 			b2Rot rotation = b2MakeRot( 2.0f * m_time );
 
 			b2Vec2 axis = b2RotateVector( rotation, { 0.0f, 1.0f } );
 			g_draw.DrawSegment( point - 0.5f * axis, point + 0.5f * axis, b2_colorPlum );
 			g_draw.DrawPoint( point, 10.0f, b2_colorPlum );
 
-			b2Body_SetKinematicTarget( m_bodyId, { point, rotation }, timeStep );
+			b2Body_SetTargetTransform( m_bodyId, { point, rotation }, timeStep );
 		}
 
 		Sample::Step( settings );
