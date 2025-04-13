@@ -45,6 +45,7 @@ doxygen_add_docs(doc
                 "collision.md"
                 "simulation.md"
                 "loose_ends.md"
+                "character.md"
                 "reading.md"
                 "faq.md"
                 "migration.md"
