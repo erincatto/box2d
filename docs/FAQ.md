@@ -9,23 +9,23 @@ should be included if possible. Support is [appreciated](https://github.com/spon
 Box2D [logo](https://box2d.org/images/logo.svg).
 
 ## What platforms does Box2D support?
-Box2D is developed using C17. Ports and bindings are likely available for most languages and platforms.
+Box2D is developed using C. Ports and bindings are likely available for most languages and platforms.
 
-Erin Catto maintains the C17 version, but provides no support for other languages. Other languages are supported
+Erin Catto maintains the C version, but provides no support for other languages. Other languages are supported
 by the community and possibly by the authors of those ports.
 
 ## Who makes it?
-Erin Catto is the creator and sole contributor of the C17 version of Box2D, with various others supporting the ports. Box2D is an open source project, and accepts community feedback.
+Erin Catto is the creator and sole contributor of the C version of Box2D, with various others supporting the ports. Box2D is an open source project, and accepts community feedback.
 
 ## How do I get help?
 You should read the documentation and the rest of this FAQ first. Also, you should study the examples included in the source distribution. Then you can visit the [Discord](https://discord.gg/aM4mRKxW) to ask any remaining questions.
 
-Please to not message or email Erin Catto for support. It is best to ask questions on the Discord server so that everyone can benefit from the discussion.
+Please to not message or email Erin Catto directly for support. It is best to ask questions on the Discord server so that everyone can benefit from the discussion.
 
 ## Documentation
 
 ### Why isn't a feature documented?
-If you grab the latest code from the git master branch you will likely find features that are not documented in the manual. New features are added to the manual after they are mature and a new point release is imminent. However, all major features added to Box2D are accompanied by example code in the samples application to test the feature and show the intended usage.
+If you grab the latest code from the git main branch you will likely find features that are not documented in the manual. New features are added to the manual after they are mature and a new point release is imminent. However, all major features added to Box2D are accompanied by example code in the samples application to test the feature and show the intended usage.
 
 ## Prerequisites
 
@@ -106,9 +106,9 @@ For the same input, and same binary, Box2D will reproduce any simulation. Box2D 
 
 Box2D is also deterministic under multithreading. A simulation using two threads will give the same result as eight threads.
 
-However, people often want more stringent determinism. People often want to know if Box2D can produce identical results on different binaries and on different platforms. Currently this is not provided, but the situation may improve in a future update.
+Box2D has cross-platform determinism as of version 3.1.
 
-todo update here on cross-platform determinism
+However, Box2D does not have rollback determinism.
 
 ### But I really want determinism
 This naturally leads to the question of fixed-point math. Box2D does not support fixed-point math. In the past Box2D was ported to the NDS in fixed-point and apparently it worked okay. Fixed-point math is slower and more tedious to develop, so I have chosen not to use fixed-point for the development of Box2D.

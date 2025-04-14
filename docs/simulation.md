@@ -1,8 +1,7 @@
 # Simulation
 Rigid body simulation is the primary feature of Box2D. It is the most complex part of
 Box2D and is the part you will likely interact with the most. Simulation sits on top of
-the foundation and collision types and functions, so you should be somewhat familiar
-with those by now.
+the foundation and collision layers, so you should be somewhat familiar with those by now.
 
 Rigid body simulation contains:
 - worlds
@@ -23,12 +22,11 @@ Box2D has a C interface. Typically in a C/C++ library when you create an object 
 you will keep a pointer (or smart pointer) to the object.
 
 Box2D works differently. Instead of pointers, you are given an *id* when you create an object.
-This *id* acts as a [handle](https://en.wikipedia.org/wiki/Handle_(computing)) and help avoid
+This *id* acts as a [handle](https://en.wikipedia.org/wiki/Handle_(computing)) which helps avoid
 problems with [dangling pointers](https://en.wikipedia.org/wiki/Dangling_pointer).
 
 This also allows Box2D to use [data-oriented design](https://en.wikipedia.org/wiki/Data-oriented_design) internally.
-This helps to reduce cache misses drastically and also allows for [SIMD](https://en.wikipedia.org/wiki/Single_instruction,_multiple_data)
-optimizations.
+This helps to reduce cache misses drastically and also allows for [SIMD](https://en.wikipedia.org/wiki/Single_instruction,_multiple_data) optimizations.
 
 So you will be dealing with `b2WorldId`, `b2BodyId`, etc. These are small opaque structures that you
 will pass around by value, just like pointers. Box2D creation functions return an id. Functions
@@ -45,6 +43,27 @@ This makes debugging easier than using dangling pointers.
 if (b2Body_IsValid(myBodyId) == false)
 {
     // oops
+}
+```
+
+Null ids can be established in a couple ways. You can use predefined constants or zero initialization.
+```c
+b2BodyId myNullBodyId = b2_nullBodyId;
+b2BodyId otherNullBodyId = {0};
+```
+
+You can test if an id is null using some helper macros:
+```c
+if (B2_IS_NULL(myBodyId))
+{
+    // do something
+}
+```
+
+```c
+if (B2_IS_NON_NULL(myShapeId))
+{
+    // do something
 }
 ```
 
@@ -111,7 +130,7 @@ and a sub-step count. For example:
 
 ```c
 float timeStep = 1.0f / 60.f;
-int32_t subSteps = 10;
+int32_t subSteps = 4;
 b2World_Step(myWorldId, timeStep, subSteps);
 ```
 
@@ -127,9 +146,8 @@ frame.
 
 As I discussed in the [HelloWorld tutorial](#hello), you should use a fixed
 time step. By using a larger time step you can improve performance in
-low frame rate scenarios. But generally you should use a time step no
-larger than 1/30 seconds (30Hz). A time step of 1/60 seconds (60Hz) will usually
-deliver a high quality simulation.
+low frame rate scenarios. But generally you should use a time steps 1/30 seconds (30Hz) or smaller.
+A time step of 1/60 seconds (60Hz) will usually deliver a high quality simulation.
 
 The sub-step count is used to increase accuracy. By sub-stepping the solver
 divides up time into small increments and the bodies move by a small amount.
@@ -168,12 +186,11 @@ finite, non-zero mass.
 
 > **Caution**:
 > Generally you should not set the transform on bodies after creation.
-> Box2D treats this as a teleport and may result in undesirable behavior.
+> Box2D treats this as a teleport and may result in undesirable behavior and/or performance problems.
 
 Bodies carry shapes and moves them around in the world. Bodies are always
 rigid bodies in Box2D. That means that two shapes attached to the same rigid body never move
-relative to each other and shapes attached to the same body don't
-collide.
+relative to each other and shapes attached to the same body don't collide.
 
 Shapes have collision geometry and density. Normally, bodies acquire
 their mass properties from the shapes. However, you can override the
@@ -227,7 +244,7 @@ A body has two main points of interest. The first point is the body's
 origin. Shapes and joints are attached relative to the body's origin.
 The second point of interest is the center of mass. The center of mass
 is determined from the mass distribution of the attached shapes or is
-explicitly set with `b2MassData`. Much of Box2D's internal computations
+explicitly set using `b2MassData`. Much of Box2D's internal computations
 use the center of mass position. For example the body stores the linear
 velocity for the center of mass, not the body origin.
 
@@ -358,7 +375,7 @@ stack of dynamic bricks. Without CCD, the bullet might tunnel through
 the bricks.
 
 Fast moving objects in Box2D can be configured as *bullets*. Bullets will
-perform CCD with all body types, but not other bullets. You should decide what
+perform CCD with all body types, but **not** other bullets. You should decide what
 bodies should be bullets based on your game design. If you decide a body
 should be treated as a bullet, use the following setting.
 
@@ -535,6 +552,16 @@ b2Vec2 linearVelocity = b2Body_GetLinearVelocity(myBodyId);
 float angularVelocity = b2Body_GetAngularVelocity(myBodyId);
 ```
 
+You can drive a body to a specific transform. This is useful for kinematic bodies.
+
+```c
+b2Vec2 targetPosition = {42.0f, -100.0f};
+b2Rot targetRotation = b2MakeRot(B2_PI);
+b2Transform target = {targetPosition, targetRotation};
+float timeStep = 1.0f / 60.0f;
+b2Body_SetTargetTransform(myBodyId, target, timeStep);
+```
+
 ### Forces and Impulses
 You can apply forces, torques, and impulses to a body. When you apply a
 force or an impulse, you can provide a world point where the load is
@@ -645,7 +672,7 @@ These are passed to a creation function specific to each shape type.
 ```c
 b2ShapeDef shapeDef = b2DefaultShapeDef();
 shapeDef.density = 10.0f;
-shapeDef.friction = 0.7f;
+shapeDef.material.friction = 0.7f;
 
 b2Polygon box = b2MakeBox(0.5f, 1.0f);
 b2ShapeId myShapeId = b2CreatePolygonShape(myBodyId, &shapeDef, &box);
@@ -727,6 +754,26 @@ approximately. This is because Box2D uses a sequential solver. Box2D
 also uses inelastic collisions when the collision velocity is small.
 This is done to prevent jitter. See `b2WorldDef::restitutionThreshold`.
 
+### Friction and restitution callbacks
+Advanced users can override friction and restitution mixing using b2FrictionCallback
+and b2RestitutionCallback. These should be very light weight functions because they
+are called frequently. See the API reference for details.
+
+```c
+float MyFrictionCallback(float frictionA, int userMaterialIdA, float frictionB, int userMaterialIdB)
+{
+    if (userMaterialIdA > userMaterialIdB)
+    {
+        return frictionA;
+    }
+
+    return frictionB;
+}
+
+b2WorldDef worldDef = b2DefaultWorldDef();
+worldDef.frictionCallback = MyFrictionCallback;
+```
+
 ### Filtering {#filtering}
 Collision filtering allows you to efficiently prevent collision between shapes.
 For example, say you make a character that rides a bicycle. You want the
@@ -735,7 +782,7 @@ the terrain, but you don't want the character to collide with the
 bicycle (because they must overlap). Box2D supports such collision
 filtering using categories, masks, and groups.
 
-Box2D supports 32 collision categories. For each shape you can specify
+Box2D supports 64 collision categories. For each shape you can specify
 which category it belongs to. You can also specify what other categories
 this shape can collide with. For example, you could specify in a
 multiplayer game that players don't collide with each other. Rather
@@ -767,10 +814,10 @@ monsterShapeDef.filter.maskBits = PLAYER | MONSTER;
 Here is the rule for a collision to occur:
 
 ```c
-uint32_t catA = shapeA.filter.categoryBits;
-uint32_t maskA = shapeA.filter.maskBits;
-uint32_t catB = shapeB.filter.categoryBits;
-uint32_t maskB = shapeB.filter.maskBits;
+uint64_t catA = shapeA.filter.categoryBits;
+uint64_t maskA = shapeA.filter.maskBits;
+uint64_t catB = shapeB.filter.categoryBits;
+uint64_t maskB = shapeB.filter.maskBits;
 
 if ((catA & maskB) != 0 && (catB & maskA) != 0)
 {
@@ -877,8 +924,20 @@ is a shape that detects overlap but does not produce a response.
 
 You can flag any shape as being a sensor. Sensors may be static,
 kinematic, or dynamic. Remember that you may have multiple shapes per
-body and you can have any mix of sensors and solid shapes. Sensors do not
+body and you can have any mix of sensors and solid shapes. Sensors can also
 detect other sensors.
+
+```c
+b2ShapeDef shapeDef = b2DefaultShapeDef();
+shapeDef.isSensor = true;
+```
+
+For both sensors and non-sensors, sensor events must also be enabled. There is a
+performance cost to generate sensor events, so they are disabled by default.
+
+```c
+shapeDef.enableSensorEvents = true;
+```
 
 Sensors are processed at the end of the world step and generate begin and end
 events without delay. User operations may cause overlaps to begin or end. These
@@ -887,10 +946,12 @@ are processed the next time step. Such operations include:
 - changing a shape filter
 - disabling or enabling a body
 - setting a body transform
+- disabling or enabling sensor events on a shape
 
 Sensors do not detect objects that pass through the sensor shape within 
-one time step. If you have fast moving object and/or small sensors then you
-should use a ray or shape cast to detect these events.
+one time step. So sensors do not have continuous collision detection.
+If you have fast moving object and/or small sensors then you should use a
+ray or shape cast to detect these events.
 
 You can access the current sensor overlaps. Be careful because some shape ids may
 be invalid due to a shape being destroyed. Use `b2Shape_IsValid` to ensure an
@@ -920,7 +981,47 @@ for ( int i = 0; i < count; ++i )
 }
 ```
 
-Sensor overlap can also be achieved using events, which are described below.
+Sensor overlap can also be determined using events, which are described below.
+
+### Sensor Events
+Sensor events are available after every call to `b2World_Step()`.
+Sensor events are the best way to get information about sensors overlaps. There are
+events for when a shape begins to overlap with a sensor.
+
+```c
+b2SensorEvents sensorEvents = b2World_GetSensorEvents(myWorldId);
+for (int i = 0; i < sensorEvents.beginCount; ++i)
+{
+    b2SensorBeginTouchEvent* beginTouch = sensorEvents.beginEvents + i;
+    void* myUserData = b2Shape_GetUserData(beginTouch->visitorShapeId);
+    // process begin event
+}
+```
+
+And there are events when a shape stops overlapping with a sensor. Be careful with end
+touch events because they may be generated when shapes are destroyed. Test the shape
+ids with `b2Shape_IsValid`.
+
+```c
+for (int i = 0; i < sensorEvents.endCount; ++i)
+{
+    b2SensorEndTouchEvent* endTouch = sensorEvents.endEvents + i;
+    if (b2Shape_IsValid(endTouch->visitorShapeId))
+    {
+        void* myUserData = b2Shape_GetUserData(endTouch->visitorShapeId);
+        // process end event
+    }
+}
+```
+
+Sensor events should be processed after the world step and before other game logic. This should
+help you avoid processing stale data.
+
+Sensor events are only enabled for shapes and sensors if b2ShapeDef::enableSensorEvents is set to true.
+
+> **Note**:
+> A shape cannot start or stop being a sensor. Such a feature would break
+> sensor events, potentially causing bugs in game logic.
 
 ## Contacts
 Contacts are internal objects created by Box2D to manage collision between pairs of
@@ -972,7 +1073,7 @@ collision to improve behavior. Speculative contact points have positive
 separation.
 
 ### Contact Lifetime
-Contacts are created when two shape's AABBs begin to overlap. Sometimes
+Contacts are created when two shape's AABBs (bounding boxes) begin to overlap. Sometimes
 collision filtering will prevent the creation of contacts. Contacts are
 destroyed with the AABBs cease to overlap.
 
@@ -1026,44 +1127,7 @@ for (int i = 0; i < bodyContactCount; ++i)
 Getting contact data off shapes and bodies is not the most efficient
 way to handle contact data. Instead you should use contact events.
 
-### Sensor Events
-Sensor events are available after every call to `b2World_Step()`.
-Sensor events are the best way to get information about sensors overlaps. There are
-events for when a shape begins to overlap with a sensor.
-
-```c
-b2SensorEvents sensorEvents = b2World_GetSensorEvents(myWorldId);
-for (int i = 0; i < sensorEvents.beginCount; ++i)
-{
-    b2SensorBeginTouchEvent* beginTouch = sensorEvents.beginEvents + i;
-    void* myUserData = b2Shape_GetUserData(beginTouch->visitorShapeId);
-    // process begin event
-}
-```
-
-And there are events when a shape stops overlapping with a sensor. Be careful with end
-touch events because they may be generated when shapes are destroyed. Test the shape
-ids with `b2Shape_IsValid`.
-
-```c
-for (int i = 0; i < sensorEvents.endCount; ++i)
-{
-    b2SensorEndTouchEvent* endTouch = sensorEvents.endEvents + i;
-    if (b2Shape_IsValid(endTouch->visitorShapeId))
-    {
-        void* myUserData = b2Shape_GetUserData(endTouch->visitorShapeId);
-        // process end event
-    }
-}
-```
-
-Sensor events should be processed after the world step and before other game logic. This should
-help you avoid processing stale data.
-
 ### Contact Events
-
-todo discuss the expected number of events and how this can change with the time step.
-see https://www.iforce2d.net/b2dtut/collision-anatomy
 
 Contact events are available after each world step. Like sensor events these should be
 retrieved and processed before performing other game logic. Otherwise
@@ -1076,7 +1140,8 @@ than using functions like `b2Body_GetContactData()`.
 b2ContactEvents contactEvents = b2World_GetContactEvents(myWorldId);
 ```
 
-None of this data applies to sensors. All events involve at least one dynamic body.
+None of this data applies to sensors because they are handled separately. All events involve
+at least one dynamic body.
 
 There are three kinds of contact events:
 1. Begin touch events
@@ -1097,6 +1162,8 @@ for (int i = 0; i < contactEvents.beginCount; ++i)
 
 `b2ContactEndTouchEvent` is recorded when two shapes stop touching. These only
 contain the two shape ids.
+
+
 
 ```c
 for (int i = 0; i < contactEvents.endCount; ++i)
@@ -1588,9 +1655,7 @@ Sometimes you want to determine all the shapes in a region. The world has a fast
 log(N) method for this using the broad-phase data structure. Box2D provides these
 overlap tests:
 - axis-aligned bound box (AABB) overlap
-- circle overlap
-- capsule overlap
-- polygon overlap
+- shape proxy overlap
 
 #### Query Filtering
 A basic understanding of query filtering is needed before considering the specific queries.
@@ -1659,12 +1724,21 @@ are returned to your callback may seem arbitrary.
 #### Shape Overlap
 The AABB overlap is very fast but not very accurate because it only considers
 the shape bounding box. If you want an accurate overlap test, you can use a shape
-overlap query. For example, here is how you can get all shapes that overlap
-with a query circle.
+overlap query.
+
+The overlap function uses a `b2ShapeProxy` which is an abstract shape consisting
+of some points and a radius. You can think of it as a cloud of circles that has been
+_shrink wrapped_. This can represent a point, a circle, a line segment, a capsule, a polygon,
+a rounded rectangle, and so on. The helper function `b2MakeProxy` takes an array of points
+and a radius.
+
+In this example, I'm creating a shape proxy from a circle and then calling `b2World_OverlapShape()`.
+This takes a `b2OverlapResultFcn()` to receive results and control the search progress.
 
 ```c
 b2Circle circle = {b2Vec2_zero, 0.2f};
-b2World_OverlapCircle(myWorldId, &circle, b2Transform_identity, grenadeFilter, MyOverlapCallback, &myGame);
+b2ShapeProxy proxy = b2MakeProxy(&circle.center, 1, circle.radius);
+b2World_OverlapShape(myWorldId, &proxy, grenadeFilter, MyOverlapCallback, &myGame);
 ```
 
 ### Ray-casts
@@ -1719,11 +1793,12 @@ b2Vec2 translation = b2Sub(end, origin);
 b2World_CastRay(myWorldId, origin, translation, viewFilter, MyCastCallback, &context);
 ```
 
-Ray-cast results may be delivered in an arbitrary order. This doesn't affect the result for closest point ray-casts (except in ties). When you are collecting multiple hits along the ray, you may want to sort them according to the hit fraction. See the `RayCastWorld` sample for details.
+Ray-cast results may be delivered in an arbitrary order. This doesn't affect the result for closest point ray-casts (except in ties). When you are collecting multiple hits along the ray, you may want to sort them according to the hit fraction. See the `CastWorld` sample for details.
 
 ### Shape-casts
 Shape-casts are similar to ray-casts. You can view a ray-cast as tracing a point along a line. A shape-cast
-allows you to trace a shape along a line. Since shapes can have rotation, you provide an origin transform instead of an origin point.
+allows you to trace a shape along a line. Like the shape overlap query, the shape cast uses a `b2ShapeProxy`
+to represent an arbitrary shape.
 
 ```c
 // This struct captures the closest hit shape
@@ -1747,15 +1822,125 @@ float MyCastCallback(b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fract
 
 // Elsewhere ...
 MyRayCastContext context = {0};
-b2Circle circle = {b2Vec2_zero, {0.05f}};
-b2Transform originTransform;
-originTransform.p = (b2Vec2){-1.0f, 0.0f};
-originTransform.q = b2Rot_identity;
+b2Circle circle = {{-1.0f, 0.0f}, 0.05f};
+b2ShapeProxy proxy = b2MakeProxy(&circle.center, 1, circle.radius);
 b2Vec2 translation = {10.0f, -5.0f};
-b2World_CastCircle(myWorldId, &circle, originTransform, translation, grenadeFilter, MyCastCallback, &context);
+b2World_CastCircle(myWorldId, &proxy, translation, grenadeFilter, MyCastCallback, &context);
 ```
 
-Otherwise, shape-casts are setup identically to ray-casts. You can expect shape-casts to generally be slower
+Otherwise, shape-casts are setup similarly to ray-casts. You can expect shape-casts to generally be slower
 than ray-casts. So only use a shape-cast if a ray-cast won't do.
 
 Just like ray-casts, shape-casts results may be sent to the callback in any order. If you need multiple sorted results, you will need to write some code to collect and sort the results.
+
+## Simulation Loop
+
+![Simulation Loop](images/simulation_loop.svg)
+
+The Box2D simulation loop can be useful to understand when you process results.
+
+Multithreading is represented in the diagram.
+- rectangles are parallel-for work
+- rounded rectangles are single-threaded work, but may be in parallel with other work
+
+Let's review each of these stages.
+
+### time step
+The game starts the simulation by calling `b2World_Step` supplying the time step.
+
+### find pairs
+Box2D maintains a record of every shape that has moved. For each of these shapes the broad-phase
+(BVH) is queried for overlaps. New overlaps are recorded for processing in the next step. I avoid reporting
+existing overlaps by using a hash table that records all existing shape pairs. This operation is a parallel-for.
+
+### create contacts
+This takes the pair results and creates the internal contact pair structure (`b2Contact`). This
+structure is persistent across time steps. It is used for the island graph and holding contact
+manifolds. This operation is single-threaded but most of the work is done in `find pairs`.
+
+### rebuild BVH
+After the new shape pairs are known the BVH is not considered until later in the time step. Therefore the BVH
+for dynamic and kinematic shapes may be optimized. This involves identifying the part of the collision tree that
+is stale from refitting and then performing a rebuild of that sub-tree. This is a single-single threaded operation
+that is done concurrently with other work.
+
+### narrow phase
+This is where the contact manifolds and points are computed. Each active contact pair is confirmed as touching
+or non-touching. If the touching state changes then contact begin and end events are generated. This is a
+parallel-for operation.
+
+Notice that contact points are computed at the beginning of the time step, before bodies have moved and before impulses
+are known. This is necessary for obtaining good simulation results efficiently. If contacts were computed at the end
+of the time step then new contact points would not be known to the constraint solver and shapes would sink into each
+other.
+
+The `b2PreSolveFcn` is called within the parallel-for so it should be efficient and thread-safe. This is only called for
+shapes that have `enablePreSolveEvents == true`.
+
+### merge islands
+Simulation islands are merged when shapes begin touching. Existing islands that have shapes that stop touching
+are flagged as candidates for splitting. This stage is single-threaded.
+
+### split island
+A split island task may be generated if:
+- there is an island that has shapes that stopped touching
+- this island has a body that is moving slow enough to sleep
+Splitting an island may result in several new islands being created.
+Only a single island will be split per time step because it is expensive. Delaying the split may delay some
+bodies from sleeping. This is a single-single threaded operation that is done concurrently with other work.
+
+### solve constraints
+This solves contact and joint constraints and applies restitution. This a parallel-for with multiple internal stages.
+
+### update transforms
+This stage does several tasks:
+- updates body transforms
+- updates the body sleeping status
+- generates body move events
+- generates island splitting candidates
+- resets forces and torques
+- updates shape bounding boxes
+- performs continuous collision between dynamic and static bodies
+This stage is parallel-for.
+
+Note that continuous collision does not generate events. Instead they are generated the next time step. However, continuous collision will issue a `b2PreSolveFcn` callback.
+
+### hit events
+Active contacts are scanned for fast approach velocities and added to a buffer. This considers contact points that
+have an impulse. This includes touching contacts and speculative contacts that generated an impulse (they are confirmed).
+So you may get hit events for contact points that have a positive separation. This is a single-threaded operation.
+
+### refit BVH
+This updates the BVH for shapes that have moved significantly. This is done by enlarging the shapes bounding box and all ancestor bounding boxes in the BVH. This is a single-threaded operation.
+
+This can result in an inefficient BVH. This is the reason for the `rebuild BVH` stage. Refitting is faster than rebuilding the
+BVH but is necessary to ensure the BVH is valid for subsequent queries, such as ray casts.
+
+### bullets
+This is where bullets are processed. Not that this comes after hit events because continuous collision in Box2D does not
+generate events until the next time step.
+
+### island sleep
+When an island goes to sleep the simulation data associated with that island is moved to separate stored. This keeps the active simulation data contiguous and cache friendly.
+
+### sensors
+Sensor overlaps are checked in the final stage. The overlap state reflects the final body transform. Sensors do not consider sleep so they may react to the user setting a body transform or creating a sleeping body. This is a parallel-for operation. The cost is roughly proportional to the number of sensors.
+
+## Determinism
+Box2D is designed to be determinism across thread counts and platforms. I believe this is important for debugging and game design.
+
+Multithreaded determinism is achieved by basing simulation order on creation order. This includes bodies, shapes, and joint creation order. Determinism includes results reported to users (events). These events must be in deterministic order.
+
+Cross-platform determinism is achieved on 64-bit platforms by using compiler flags and by avoiding non-deterministic library functions.
+- precise math is used on MSVC
+- floating point contraction is disabled on clang and GCC
+- Box2D has custom implementations of atan2, cosine, and sine.
+
+Determinism is on by default and there is no explicit option to disable it. However, you can break determinism by choosing different compiler flags. Box2D was designed to provide determinism with minimal cost. So there is no advantage to attempting
+to disable determinism.
+
+I maintain a unit test for determinism that is run for every pull request. Determinism is easy to break, so it is important to have regular validation.
+
+> **Caution**:
+> Box2D determinism does not mean your application will be deterministic. Consider using similar strategies to make your
+> application deterministic as I have used for Box2D.

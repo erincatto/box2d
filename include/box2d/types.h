@@ -52,11 +52,13 @@ typedef void b2FinishTaskCallback( void* userTask, void* userContext );
 /// Optional friction mixing callback. This intentionally provides no context objects because this is called
 /// from a worker thread.
 /// @warning This function should not attempt to modify Box2D state or user application state.
+/// @ingroup world
 typedef float b2FrictionCallback( float frictionA, int userMaterialIdA, float frictionB, int userMaterialIdB );
 
 /// Optional restitution mixing callback. This intentionally provides no context objects because this is called
 /// from a worker thread.
 /// @warning This function should not attempt to modify Box2D state or user application state.
+/// @ingroup world
 typedef float b2RestitutionCallback( float restitutionA, int userMaterialIdA, float restitutionB, int userMaterialIdB );
 
 /// Result from b2World_RayCastClosest
@@ -804,10 +806,10 @@ typedef struct b2RevoluteJointDef
 	/// A flag to enable joint limits
 	bool enableLimit;
 
-	/// The lower angle for the joint limit in radians
+	/// The lower angle for the joint limit in radians. Minimum of -0.95*pi radians.
 	float lowerAngle;
 
-	/// The upper angle for the joint limit in radians
+	/// The upper angle for the joint limit in radians. Maximum of 0.95*pi radians.
 	float upperAngle;
 
 	/// A flag to enable the joint motor

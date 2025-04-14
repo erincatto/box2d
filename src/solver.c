@@ -551,7 +551,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 
 	uint16_t worldId = world->worldId;
 
-	// The body move event array has should already have the correct size
+	// The body move event array should already have the correct size
 	B2_ASSERT( endIndex <= world->bodyMoveEvents.count );
 	b2BodyMoveEvent* moveEvents = world->bodyMoveEvents.data;
 

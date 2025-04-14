@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-B2_ARRAY_SOURCE( b2ArenaEntry, b2ArenaEntry );
+B2_ARRAY_SOURCE( b2ArenaEntry, b2ArenaEntry )
 
 b2ArenaAllocator b2CreateArenaAllocator( int capacity )
 {

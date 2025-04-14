@@ -5,14 +5,14 @@
 
 #include "box2d/collision.h"
 
-b2PlaneSolverResult b2SolvePlanes( b2Vec2 initialPosition, b2CollisionPlane* planes, int count )
+b2PlaneSolverResult b2SolvePlanes( b2Vec2 position, b2CollisionPlane* planes, int count )
 {
 	for ( int i = 0; i < count; ++i )
 	{
 		planes[i].push = 0.0f;
 	}
 
-	b2Vec2 position = { 0 };
+	b2Vec2 delta = b2Vec2_zero;
 	float tolerance = B2_LINEAR_SLOP;
 
 	int iteration;
@@ -24,7 +24,7 @@ b2PlaneSolverResult b2SolvePlanes( b2Vec2 initialPosition, b2CollisionPlane* pla
 			b2CollisionPlane* plane = planes + planeIndex;
 
 			// Add slop to prevent jitter
-			float separation = b2PlaneSeparation( plane->plane, position ) + B2_LINEAR_SLOP;
+			float separation = b2PlaneSeparation( plane->plane, delta ) + B2_LINEAR_SLOP;
 			// if (separation > 0.0f)
 			//{
 			//	continue;
@@ -36,7 +36,7 @@ b2PlaneSolverResult b2SolvePlanes( b2Vec2 initialPosition, b2CollisionPlane* pla
 			float accumulatedPush = plane->push;
 			plane->push = b2ClampFloat( plane->push + push, 0.0f, plane->pushLimit );
 			push = plane->push - accumulatedPush;
-			position = b2MulAdd( position, push, plane->plane.normal );
+			delta = b2MulAdd( delta, push, plane->plane.normal );
 
 			// Track maximum push for convergence
 			totalPush += b2AbsFloat( push );
@@ -49,7 +49,7 @@ b2PlaneSolverResult b2SolvePlanes( b2Vec2 initialPosition, b2CollisionPlane* pla
 	}
 
 	return (b2PlaneSolverResult){
-		.position = b2Add( position, initialPosition ),
+		.position = b2Add( delta, position ),
 		.iterationCount = iteration,
 	};
 }

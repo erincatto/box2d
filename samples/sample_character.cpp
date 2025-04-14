@@ -22,6 +22,7 @@ enum CollisionBits : uint64_t
 	StaticBit = 0x0001,
 	MoverBit = 0x0002,
 	DynamicBit = 0x0004,
+	DebrisBit = 0x0008,
 
 	AllBits = ~0u,
 };
@@ -30,7 +31,7 @@ enum PogoShape
 {
 	PogoPoint,
 	PogoCircle,
-	PogoBox
+	PogoSegment
 };
 
 struct CastResult
@@ -171,7 +172,7 @@ public:
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
-			bodyDef.position = { 32.0f, 4.0f };
+			bodyDef.position = { 32.0f, 4.5f };
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			m_friendlyShape.maxPush = 0.025f;
@@ -179,27 +180,50 @@ public:
 
 			shapeDef.filter = { MoverBit, AllBits, 0 };
 			shapeDef.userData = &m_friendlyShape;
-			b2BodyId body = b2CreateBody( m_worldId, &bodyDef );
-			b2CreateCapsuleShape( body, &shapeDef, &m_capsule );
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreateCapsuleShape( bodyId, &shapeDef, &m_capsule );
 		}
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { 7.0f, 7.0f };
-			b2BodyId body = b2CreateBody( m_worldId, &bodyDef );
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.filter = { DebrisBit, AllBits, 0 };
+			shapeDef.material.restitution = 0.7f;
+			shapeDef.material.rollingResistance = 0.2f;
+
+			b2Circle circle = { b2Vec2_zero, 0.3f };
+			m_ballId = b2CreateCircleShape( bodyId, &shapeDef, &circle );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_kinematicBody;
+			bodyDef.position = { m_elevatorBase.x, m_elevatorBase.y - m_elevatorAmplitude };
+			m_elevatorId = b2CreateBody( m_worldId, &bodyDef );
+
+			m_elevatorShape = {
+				.maxPush = 0.1f,
+				.clipVelocity = true,
+			};
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.filter = { DynamicBit, AllBits, 0 };
-			b2Circle circle = { b2Vec2_zero, 0.5f };
-			b2CreateCircleShape( body, &shapeDef, &circle );
+			shapeDef.userData = &m_elevatorShape;
+
+			b2Polygon box = b2MakeBox( 2.0f, 0.1f );
+			b2CreatePolygonShape( m_elevatorId, &shapeDef, &box );
 		}
 
 		m_totalIterations = 0;
 		m_pogoVelocity = 0.0f;
 		m_onGround = false;
+		m_jumpReleased = true;
 		m_lockCamera = true;
 		m_planeCount = 0;
+		m_time = 0.0f;
 	}
 
 	// https://github.com/id-Software/Quake/blob/master/QW/client/pmove.c#L390
@@ -258,32 +282,47 @@ public:
 		float rayLength = pogoRestLength + m_capsule.radius;
 		b2Vec2 origin = b2TransformPoint( m_transform, m_capsule.center1 );
 		b2Circle circle = { origin, 0.5f * m_capsule.radius };
-		float boxHalfWidth = 0.75f * m_capsule.radius;
-		float boxHalfHeight = 0.05f * m_capsule.radius;
-		b2Polygon box = b2MakeOffsetBox( boxHalfWidth, boxHalfHeight, origin, b2Rot_identity );
+		b2Vec2 segmentOffset = { 0.75f * m_capsule.radius, 0.0f };
+		b2Segment segment = {
+			.point1 = origin - segmentOffset,
+			.point2 = origin + segmentOffset,
+		};
+
+		b2ShapeProxy proxy = {};
 		b2Vec2 translation;
-		b2QueryFilter skipTeamFilter = { 1, ~2u };
-		CastResult result = {};
+		b2QueryFilter pogoFilter = { MoverBit, StaticBit | DynamicBit };
+		CastResult castResult = {};
 
 		if ( m_pogoShape == PogoPoint )
 		{
+			proxy = b2MakeProxy( &origin, 1, 0.0f );
 			translation = { 0.0f, -rayLength };
-			b2World_CastRay( m_worldId, origin, translation, skipTeamFilter, CastCallback, &result );
 		}
 		else if ( m_pogoShape == PogoCircle )
 		{
+			proxy = b2MakeProxy( &origin, 1, circle.radius );
 			translation = { 0.0f, -rayLength + circle.radius };
-			b2World_CastCircle( m_worldId, &circle, translation, skipTeamFilter, CastCallback, &result );
 		}
 		else
 		{
-			translation = { 0.0f, -rayLength + boxHalfHeight };
-			b2World_CastPolygon( m_worldId, &box, translation, skipTeamFilter, CastCallback, &result );
+			proxy = b2MakeProxy( &segment.point1, 2, 0.0f );
+			translation = { 0.0f, -rayLength };
 		}
 
-		if ( result.hit == false )
+		b2World_CastShape( m_worldId, &proxy, translation, pogoFilter, CastCallback, &castResult );
+
+		// Avoid snapping to ground if still going up
+		if ( m_onGround == false )
 		{
-			m_onGround = false;
+			m_onGround = castResult.hit && m_velocity.y <= 0.01f;
+		}
+		else
+		{
+			m_onGround = castResult.hit;
+		}
+
+		if ( castResult.hit == false )
+		{
 			m_pogoVelocity = 0.0f;
 
 			b2Vec2 delta = translation;
@@ -299,14 +338,12 @@ public:
 			}
 			else
 			{
-				b2Transform xf = { delta, b2Rot_identity };
-				g_draw.DrawSolidPolygon( xf, box.vertices, box.count, 0.0f, b2_colorGray );
+				g_draw.DrawSegment( segment.point1 + delta, segment.point2 + delta, b2_colorGray );
 			}
 		}
 		else
 		{
-			m_onGround = true;
-			float pogoCurrentLength = result.fraction * rayLength;
+			float pogoCurrentLength = castResult.fraction * rayLength;
 
 			float zeta = m_pogoDampingRatio;
 			float hertz = m_pogoHertz;
@@ -316,7 +353,7 @@ public:
 			m_pogoVelocity = ( m_pogoVelocity - omega * omegaH * ( pogoCurrentLength - pogoRestLength ) ) /
 							 ( 1.0f + 2.0f * zeta * omegaH + omegaH * omegaH );
 
-			b2Vec2 delta = result.fraction * translation;
+			b2Vec2 delta = castResult.fraction * translation;
 			g_draw.DrawSegment( origin, origin + delta, b2_colorGray );
 
 			if ( m_pogoShape == PogoPoint )
@@ -329,17 +366,16 @@ public:
 			}
 			else
 			{
-				b2Transform xf = { delta, b2Rot_identity };
-				g_draw.DrawSolidPolygon( xf, box.vertices, box.count, 0.0f, b2_colorPlum );
+				g_draw.DrawSegment( segment.point1 + delta, segment.point2 + delta, b2_colorPlum );
 			}
 
-			b2Body_ApplyForce( result.bodyId, { 0.0f, -50.0f }, result.point, true );
+			b2Body_ApplyForce( castResult.bodyId, { 0.0f, -50.0f }, castResult.point, true );
 		}
 
 		b2Vec2 target = m_transform.p + timeStep * m_velocity + timeStep * m_pogoVelocity * b2Vec2{ 0.0f, 1.0f };
 
-		// Movers collide with every thing
-		b2QueryFilter collideFilter = { MoverBit, AllBits };
+		// Mover overlap filter
+		b2QueryFilter collideFilter = { MoverBit, StaticBit | DynamicBit | MoverBit };
 
 		// Movers don't sweep against other movers, allows for soft collision
 		b2QueryFilter castFilter = { MoverBit, StaticBit | DynamicBit };
@@ -407,7 +443,7 @@ public:
 		ImGui::SameLine();
 		ImGui::RadioButton( "Circle", &m_pogoShape, PogoCircle );
 		ImGui::SameLine();
-		ImGui::RadioButton( "Box", &m_pogoShape, PogoBox );
+		ImGui::RadioButton( "Segment", &m_pogoShape, PogoSegment );
 
 		ImGui::Checkbox( "Lock Camera", &m_lockCamera );
 
@@ -438,31 +474,98 @@ public:
 		return true;
 	}
 
+	static bool Kick( b2ShapeId shapeId, void* context )
+	{
+		Mover* self = (Mover*)context;
+		b2BodyId bodyId = b2Shape_GetBody( shapeId );
+		b2BodyType type = b2Body_GetType( bodyId );
+
+		if ( type != b2_dynamicBody )
+		{
+			return true;
+		}
+
+		b2Vec2 center = b2Body_GetWorldCenterOfMass( bodyId );
+		b2Vec2 direction = b2Normalize( center - self->m_transform.p );
+		b2Vec2 impulse = b2Vec2{ 2.0f * direction.x, 2.0f };
+		b2Body_ApplyLinearImpulseToCenter( bodyId, impulse, true );
+
+		return true;
+	}
+
+	void Keyboard( int key ) override
+	{
+		if ( key == 'K' )
+		{
+			b2Vec2 point = b2TransformPoint( m_transform, { 0.0f, m_capsule.center1.y - 3.0f * m_capsule.radius } );
+			b2Circle circle = { point, 0.5f };
+			b2ShapeProxy proxy = b2MakeProxy( &circle.center, 1, circle.radius );
+			b2QueryFilter filter = { MoverBit, DebrisBit };
+			b2World_OverlapShape( m_worldId, &proxy, filter, Kick, this );
+			g_draw.DrawCircle( circle.center, circle.radius, b2_colorGoldenRod );
+		}
+
+		Sample::Keyboard( key );
+	}
+
 	void Step( Settings& settings ) override
 	{
-		Sample::Step( settings );
-
-		float throttle = 0.0f;
-
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) )
+		bool pause = false;
+		if ( settings.pause )
 		{
-			throttle -= 1.0f;
-		}
-
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) )
-		{
-			throttle += 1.0f;
-		}
-
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_SPACE ) && m_onGround == true )
-		{
-			m_velocity.y = m_jumpSpeed;
-			m_onGround = false;
+			pause = settings.singleStep != true;
 		}
 
 		float timeStep = settings.hertz > 0.0f ? 1.0f / settings.hertz : 0.0f;
+		if ( pause )
+		{
+			timeStep = 0.0f;
+		}
 
-		SolveMove( timeStep, throttle );
+		if ( timeStep > 0.0f )
+		{
+			b2Vec2 point = {
+				.x = m_elevatorBase.x,
+				.y = m_elevatorAmplitude * cosf( 1.0f * m_time + B2_PI ) + m_elevatorBase.y,
+			};
+
+			b2Body_SetTargetTransform( m_elevatorId, { point, b2Rot_identity }, timeStep );
+		}
+
+		m_time += timeStep;
+
+		Sample::Step( settings );
+
+		if ( pause == false )
+		{
+			float throttle = 0.0f;
+
+			if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) )
+			{
+				throttle -= 1.0f;
+			}
+
+			if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) )
+			{
+				throttle += 1.0f;
+			}
+
+			if ( glfwGetKey( g_mainWindow, GLFW_KEY_SPACE ) )
+			{
+				if ( m_onGround == true && m_jumpReleased )
+				{
+					m_velocity.y = m_jumpSpeed;
+					m_onGround = false;
+					m_jumpReleased = false;
+				}
+			}
+			else
+			{
+				m_jumpReleased = true;
+			}
+
+			SolveMove( timeStep, throttle );
+		}
 
 		int count = m_planeCount;
 		for ( int i = 0; i < count; ++i )
@@ -476,7 +579,9 @@ public:
 
 		b2Vec2 p1 = b2TransformPoint( m_transform, m_capsule.center1 );
 		b2Vec2 p2 = b2TransformPoint( m_transform, m_capsule.center2 );
-		g_draw.DrawSolidCapsule( p1, p2, m_capsule.radius, b2_colorOrange );
+
+		b2HexColor color = m_onGround ? b2_colorOrange : b2_colorAquamarine;
+		g_draw.DrawSolidCapsule( p1, p2, m_capsule.radius, color );
 		g_draw.DrawSegment( m_transform.p, m_transform.p + m_velocity, b2_colorPurple );
 
 		b2Vec2 p = m_transform.p;
@@ -496,6 +601,9 @@ public:
 	}
 
 	static constexpr int m_planeCapacity = 8;
+	static constexpr b2Vec2 m_elevatorBase = { 112.0f, 10.0f };
+	static constexpr float m_elevatorAmplitude = 4.0f;
+
 	float m_jumpSpeed = 10.0f;
 	float m_maxSpeed = 6.0f;
 	float m_minSpeed = 0.1f;
@@ -507,16 +615,21 @@ public:
 	float m_pogoHertz = 5.0f;
 	float m_pogoDampingRatio = 0.8f;
 
-	int m_pogoShape = PogoBox;
+	int m_pogoShape = PogoSegment;
 	b2Transform m_transform;
 	b2Vec2 m_velocity;
 	b2Capsule m_capsule;
+	b2BodyId m_elevatorId;
+	b2ShapeId m_ballId;
 	ShapeUserData m_friendlyShape;
+	ShapeUserData m_elevatorShape;
 	b2CollisionPlane m_planes[m_planeCapacity] = {};
 	int m_planeCount;
 	int m_totalIterations;
 	float m_pogoVelocity;
+	float m_time;
 	bool m_onGround;
+	bool m_jumpReleased;
 	bool m_lockCamera;
 };
 

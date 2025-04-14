@@ -7,13 +7,11 @@
 Language: Cpp
 BasedOnStyle: Microsoft
 
-# BreakBeforeBraces: Allman 
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterCaseLabel: true
   AfterUnion: true
   BeforeWhile: true
-# BreakBeforeBinaryOperators: All
 
 ColumnLimit: 130
 PointerAlignment: Left
@@ -33,12 +31,8 @@ IncludeCategories:
 
 IndentExternBlock: NoIndent
 IndentCaseLabels: true
-#IndentPPDirectives: None
 IndentAccessModifiers: false
 AccessModifierOffset: -4
-
-# AlignArrayOfStructures: Left
-# AlignAfterOpenBracket: BlockIndent
 
 SpacesInParens: Custom
 SpacesInParensOptions:

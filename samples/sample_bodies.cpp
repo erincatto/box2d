@@ -282,7 +282,6 @@ public:
 
 static int sampleBodyType = RegisterSample( "Bodies", "Body Type", BodyType::Create );
 
-
 float FrictionCallback( float, int, float, int )
 {
 	return 0.1f;
@@ -424,7 +423,7 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			groundId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Segment segment = { { -20.0f, 0.0f }, { 20.0f, 0.0f } };
+			b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.enableSensorEvents = true;
 			m_groundShapeId = b2CreateSegmentShape( groundId, &shapeDef, &segment );
@@ -514,11 +513,47 @@ public:
 			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
+
+		// A sleeping body to test waking on contact destroyed
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { -10.0f, 1.0f };
+			bodyDef.isAwake = false;
+			bodyDef.enableSleep = true;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Polygon box = b2MakeSquare( 1.0f );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		}
+
+		m_staticBodyId = b2_nullBodyId;
+	}
+
+	void ToggleInvoker()
+	{
+		if ( B2_IS_NULL( m_staticBodyId ) )
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { -10.5f, 3.0f };
+			m_staticBodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Polygon box = b2MakeOffsetBox( 2.0f, 0.1f, { 0.0f, 0.0f }, b2MakeRot( 0.25f * B2_PI ) );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.invokeContactCreation = true;
+			b2CreatePolygonShape( m_staticBodyId, &shapeDef, &box );
+		}
+		else
+		{
+			b2DestroyBody( m_staticBodyId );
+			m_staticBodyId = b2_nullBodyId;
+		}
 	}
 
 	void UpdateGui() override
 	{
-		float height = 100.0f;
+		float height = 160.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 		ImGui::Begin( "Sleep", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -541,6 +576,23 @@ public:
 		}
 
 		ImGui::PopItemWidth();
+
+		ImGui::Separator();
+
+		if ( B2_IS_NULL( m_staticBodyId ) )
+		{
+			if ( ImGui::Button( "Create" ) )
+			{
+				ToggleInvoker();
+			}
+		}
+		else
+		{
+			if ( ImGui::Button( "Destroy" ) )
+			{
+				ToggleInvoker();
+			}
+		}
 
 		ImGui::End();
 	}
@@ -597,6 +649,7 @@ public:
 	}
 
 	b2BodyId m_pendulumId;
+	b2BodyId m_staticBodyId;
 	b2ShapeId m_groundShapeId;
 	b2ShapeId m_sensorIds[2];
 	bool m_sensorTouching[2];
@@ -789,30 +842,24 @@ public:
 	void Step( Settings& settings ) override
 	{
 		float timeStep = settings.hertz > 0.0f ? 1.0f / settings.hertz : 0.0f;
-		if ( settings.pause )
+		if ( settings.pause && settings.singleStep == false )
 		{
-			if ( settings.singleStep )
-			{
-				settings.singleStep = false;
-			}
-			else
-			{
-				timeStep = 0.0f;
-			}
+			timeStep = 0.0f;
 		}
 
-		if (timeStep > 0.0f)
+		if ( timeStep > 0.0f )
 		{
-			b2Vec2 point;
-			point.x = 2.0f * m_amplitude * cosf( m_time );
-			point.y = m_amplitude * sinf( 2.0f * m_time );
+			b2Vec2 point = {
+				.x = 2.0f * m_amplitude * cosf( m_time ),
+				.y = m_amplitude * sinf( 2.0f * m_time ),
+			};
 			b2Rot rotation = b2MakeRot( 2.0f * m_time );
 
 			b2Vec2 axis = b2RotateVector( rotation, { 0.0f, 1.0f } );
 			g_draw.DrawSegment( point - 0.5f * axis, point + 0.5f * axis, b2_colorPlum );
 			g_draw.DrawPoint( point, 10.0f, b2_colorPlum );
 
-			b2Body_SetKinematicTarget( m_bodyId, { point, rotation }, timeStep );
+			b2Body_SetTargetTransform( m_bodyId, { point, rotation }, timeStep );
 		}
 
 		Sample::Step( settings );

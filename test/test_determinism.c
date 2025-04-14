@@ -141,7 +141,7 @@ static int MultithreadingTest( void )
 	return 0;
 }
 
-// Test cross platform determinism.
+// Test cross-platform determinism.
 static int CrossPlatformTest( void )
 {
 	b2WorldDef worldDef = b2DefaultWorldDef();

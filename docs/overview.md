@@ -2,9 +2,14 @@
 Box2D is a 2D rigid body simulation library for games. Programmers can
 use it in their games to make objects move in realistic ways and make
 the game world more interactive. From the game engine's point of view,
-a physics engine is just a system for procedural animation.
+a physics engine is a system for procedural animation.
 
-Box2D is written in portable C11. Most of the types defined in the
+Box2D also provides many collision routines that can be used even when
+rigid body simulation is not used. There are functions for overlap and
+cast queries. There is also a bounding volume hierarchy (dynamic tree)
+that can be used for game specific spatial sorting needs.
+
+Box2D is written in portable C17. Most of the types defined in the
 engine begin with the b2 prefix. Hopefully this is sufficient to avoid
 name clashing with your application.
 
@@ -18,7 +23,7 @@ Conference. You can get these tutorials from the publications section of
 [box2d.org](https://box2d.org/publications/).
 
 Since Box2D is written in C, you are expected to be experienced in C
-programming. Box2D should not be your first C programming project! You
+programming. Box2D should not be your first C programming project. You
 should be comfortable with compiling, linking, and debugging.
 
 > **Caution**:
@@ -34,6 +39,10 @@ application included with Box2D to learn more.
 This manual is only updated with new releases. The latest version of
 Box2D may be out of sync with this manual.
 
+> **Caution**:
+> This manual applies to the associated release and not necessarily the
+> latest version on the main branch.
+
 ## Feedback and Bugs
 Please file bugs and feature requests here:
 [Box2D Issues](https://github.com/erincatto/box2d/issues)
@@ -43,7 +52,8 @@ detail. A testbed example that reproduces the problem is ideal. You can
 read about the testbed later in this document.
 
 There is also a [Discord server](https://discord.gg/NKYgCBP) and a
-[subreddit](https://reddit.com/r/box2d) for Box2D.
+[subreddit](https://reddit.com/r/box2d) for Box2D. You may also use
+[GitHub Discussions](https://github.com/erincatto/box2d/discussions).
 
 ## Core Concepts
 Box2D works with several fundamental concepts and objects. I briefly
@@ -136,7 +146,9 @@ in the `include` directory is considered public, while everything in the `src`
 directory is consider internal.
 
 Public features are supported and you can get help with these on the Discord
-server. Using internal code directly is not supported.
+server. Using internal code directly is not supported. However, feel free to
+study the code and ask questions. I'm happy to share all the details of how
+Box2D works internally.
 
 ## Units
 Box2D works with floating point numbers and tolerances have to be used
@@ -144,8 +156,10 @@ to make Box2D perform well. These tolerances have been tuned to work
 well with meters-kilogram-second (MKS) units. In particular, Box2D has
 been tuned to work well with moving shapes between 0.1 and 10 meters. So
 this means objects between soup cans and buses in size should work well.
+
 Static shapes may be up to 50 meters long without trouble. If you have a
-large world, you should split it up into multiple static bodies.
+large world, you should split it up into multiple static bodies. This will
+improve precision and simulation behavior.
 
 Being a 2D physics engine, it is tempting to use pixels as your units.
 Unfortunately this will lead to a poor simulation and possibly weird
@@ -186,10 +200,9 @@ at application startup. If you keep Box2D in a shared library, you will need
 to call this if the shared library is reloaded.
 
 If you change the length units to pixels you will need to decide how many pixels
-represent a meter. You will also
-need to figure out reasonable values for gravity, density, force, and torque.
-One of the benefits of using MKS units for physics simulation is that you
-can use real world values to get reasonable results.
+represent a meter. You will also need to figure out reasonable values for gravity,
+density, force, and torque. One of the benefits of using MKS units for physics
+simulation is that you can use real world values to get reasonable results.
 
 It is also harder to get support for using Box2D if you change the unit
 system, because values are harder to communicate and may become non-intuitive.
@@ -217,9 +230,8 @@ bodyDef.position = (b2Vec2){10.0f, 5.0f};
 b2BodyId myBodyId = b2CreateBody(myWorldId, &bodyDef);
 ```
 
-Notice the body definition is initialize by calling `b2DefaultBodyDef()`. This is needed
-because C does not have constructors and zero initialization is not suitable for the definitions
-used in Box2D.
+Notice the body definition is initialized by calling `b2DefaultBodyDef()`. This is needed
+because C does not have constructors and zero initialization is generally not suitable for the definitions used in Box2D.
 
 Also notice that the body definition is a temporary object that is fully copied into the internal
 body data structures. Definitions should usually be created on the stack as temporaries.
@@ -239,7 +251,7 @@ Shapes are created in a similar way. For example, here is how a box shape is cre
 
 ```c
 b2ShapeDef shapeDef = b2DefaultShapeDef();
-shapeDef.friction = 0.42f;
+shapeDef.material.friction = 0.42f;
 b2Polygon box = b2MakeBox(0.5f, 0.25f);
 b2ShapeId myShapeId = b2CreatePolygonShape(myBodyId, &shapeDef, &box);
 ```
@@ -251,5 +263,4 @@ b2DestroyShape(myShapeId);
 myShapeId = b2_nullShapeId;
 ```
 
-For convenience, Box2D will destroy all shapes on a body when the body is destroyed.
-Therefore, you may not need to store the shape id.
+For convenience, Box2D will destroy all shapes on a body when the body is destroyed. You don't need to store the shape id.

@@ -54,21 +54,9 @@ B2_API b2ContactEvents b2World_GetContactEvents( b2WorldId worldId );
 B2_API b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter filter, b2OverlapResultFcn* fcn,
 										void* context );
 
-/// Overlap test for for all shapes that overlap the provided point.
-B2_API b2TreeStats b2World_OverlapPoint( b2WorldId worldId, b2Vec2 point, b2Transform transform, b2QueryFilter filter,
+/// Overlap test for all shapes that overlap the provided shape proxy.
+B2_API b2TreeStats b2World_OverlapShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2QueryFilter filter,
 										 b2OverlapResultFcn* fcn, void* context );
-
-/// Overlap test for for all shapes that overlap the provided circle. A zero radius may be used for a point query.
-B2_API b2TreeStats b2World_OverlapCircle( b2WorldId worldId, const b2Circle* circle, b2Transform transform, b2QueryFilter filter,
-										  b2OverlapResultFcn* fcn, void* context );
-
-/// Overlap test for all shapes that overlap the provided capsule
-B2_API b2TreeStats b2World_OverlapCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Transform transform,
-										   b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
-
-/// Overlap test for all shapes that overlap the provided polygon
-B2_API b2TreeStats b2World_OverlapPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Transform transform,
-										   b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context );
 
 /// Cast a ray into the world to collect shapes in the path of the ray.
 /// Your callback function controls whether you get the closest point, any point, or n-points.
@@ -88,20 +76,10 @@ B2_API b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 tra
 /// This is less general than b2World_CastRay() and does not allow for custom filtering.
 B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter );
 
-/// Cast a circle through the world. Similar to a cast ray except that a circle is cast instead of a point.
+/// Cast a shape through the world. Similar to a cast ray except that a shape is cast instead of a point.
 ///	@see b2World_CastRay
-B2_API b2TreeStats b2World_CastCircle( b2WorldId worldId, const b2Circle* circle, b2Vec2 translation, b2QueryFilter filter,
-									   b2CastResultFcn* fcn, void* context );
-
-/// Cast a capsule through the world. Similar to a cast ray except that a capsule is cast instead of a point.
-///	@see b2World_CastRay
-B2_API b2TreeStats b2World_CastCapsule( b2WorldId worldId, const b2Capsule* capsule, b2Vec2 translation, b2QueryFilter filter,
-										b2CastResultFcn* fcn, void* context );
-
-/// Cast a polygon through the world. Similar to a cast ray except that a polygon is cast instead of a point.
-///	@see b2World_CastRay
-B2_API b2TreeStats b2World_CastPolygon( b2WorldId worldId, const b2Polygon* polygon, b2Vec2 translation, b2QueryFilter filter,
-										b2CastResultFcn* fcn, void* context );
+B2_API b2TreeStats b2World_CastShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2Vec2 translation, b2QueryFilter filter,
+									  b2CastResultFcn* fcn, void* context );
 
 /// Cast a capsule mover through the world. This is a special shape cast that handles sliding along other shapes while reducing
 /// clipping.
@@ -306,7 +284,7 @@ B2_API void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity );
 /// Set the velocity to reach the given transform after a given time step.
 /// The result will be close but maybe not exact. This is meant for kinematic bodies.
 /// This will automatically wake the body if asleep.
-B2_API void b2Body_SetKinematicTarget( b2BodyId bodyId, b2Transform target, float timeStep );
+B2_API void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep );
 
 /// Get the linear velocity of a local point attached to a body. Usually in meters per second.
 B2_API b2Vec2 b2Body_GetLocalPointVelocity( b2BodyId bodyId, b2Vec2 localPoint );
@@ -392,6 +370,7 @@ B2_API b2MassData b2Body_GetMassData( b2BodyId bodyId );
 /// the mass and you later want to reset the mass.
 /// You may also use this when automatic mass computation has been disabled.
 /// You should call this regardless of body type.
+/// Note that sensor shapes may have mass.
 B2_API void b2Body_ApplyMassFromShapes( b2BodyId bodyId );
 
 /// Adjust the linear damping. Normally this is set in b2BodyDef before creation.
@@ -540,7 +519,9 @@ B2_API b2BodyId b2Shape_GetBody( b2ShapeId shapeId );
 /// Get the world that owns this shape
 B2_API b2WorldId b2Shape_GetWorld( b2ShapeId shapeId );
 
-/// Returns true If the shape is a sensor
+/// Returns true if the shape is a sensor. It is not possible to change a shape
+/// from sensor to solid dynamically because this breaks the contract for
+/// sensor events.
 B2_API bool b2Shape_IsSensor( b2ShapeId shapeId );
 
 /// Set the user data for a shape

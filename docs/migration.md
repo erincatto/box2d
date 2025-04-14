@@ -1,6 +1,10 @@
 # Migration Guide
 
+> **Caution**:
+> This guide only covers the transition from 2.4 to 3.0. Please see the release notes for future version changes.
+
 ## Version 2.4 to Version 3.0
+
 Box2D version 3.0 is a full rewrite. You can read some background information [here](https://box2d.org/posts/2023/01/starting-box2d-3.0/).
 
 Here are the highlights that affect the API:

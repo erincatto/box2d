@@ -23,9 +23,9 @@
 #include <string.h>
 
 // Implement functions for b2BodyArray
-B2_ARRAY_SOURCE( b2Body, b2Body );
-B2_ARRAY_SOURCE( b2BodySim, b2BodySim );
-B2_ARRAY_SOURCE( b2BodyState, b2BodyState );
+B2_ARRAY_SOURCE( b2Body, b2Body )
+B2_ARRAY_SOURCE( b2BodySim, b2BodySim )
+B2_ARRAY_SOURCE( b2BodyState, b2BodyState )
 
 // Get a validated body from a world using an id.
 b2Body* b2GetBodyFullId( b2World* world, b2BodyId bodyId )
@@ -316,12 +316,6 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	return id;
 }
 
-bool b2IsBodyAwake( b2World* world, b2Body* body )
-{
-	B2_UNUSED( world );
-	return body->setIndex == b2_awakeSet;
-}
-
 bool b2WakeBody( b2World* world, b2Body* body )
 {
 	if ( body->setIndex >= b2_firstSleepingSet )
@@ -417,8 +411,8 @@ void b2DestroyBody( b2BodyId bodyId )
 	if ( body->setIndex == b2_awakeSet )
 	{
 		int result = b2BodyStateArray_RemoveSwap( &set->bodyStates, body->localIndex );
-		B2_UNUSED( result );
 		B2_ASSERT( result == movedIndex );
+		B2_UNUSED( result );
 	}
 	else if ( set->setIndex >= b2_firstSleepingSet && set->bodySims.count == 0 )
 	{
@@ -805,7 +799,7 @@ void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity )
 	state->angularVelocity = angularVelocity;
 }
 
-void b2Body_SetKinematicTarget( b2BodyId bodyId, b2Transform target, float timeStep )
+void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
@@ -825,7 +819,7 @@ void b2Body_SetKinematicTarget( b2BodyId bodyId, b2Transform target, float timeS
 
 	// Compute angular velocity
 	float angularVelocity = 0.0f;
-	if (body->fixedRotation == false)
+	if ( body->fixedRotation == false )
 	{
 		b2Rot q1 = sim->transform.q;
 		b2Rot q2 = target.q;
@@ -834,7 +828,7 @@ void b2Body_SetKinematicTarget( b2BodyId bodyId, b2Transform target, float timeS
 	}
 
 	// Return if velocity would be zero
-	if ( b2LengthSquared( linearVelocity ) == 0.0f || b2AbsFloat( angularVelocity ) == 0.0f )
+	if ( b2LengthSquared( linearVelocity ) == 0.0f && b2AbsFloat( angularVelocity ) == 0.0f )
 	{
 		return;
 	}

@@ -23,7 +23,7 @@ b2Polygon RandomPolygon( float extent );
 }
 #endif
 
-// Simple random number generator. Using this instead of rand() for cross platform determinism.
+// Simple random number generator. Using this instead of rand() for cross-platform determinism.
 B2_INLINE int RandomInt()
 {
 	// XorShift32 algorithm
@@ -38,7 +38,7 @@ B2_INLINE int RandomInt()
 }
 
 // Random integer in range [lo, hi]
-B2_INLINE float RandomIntRange( int lo, int hi )
+B2_INLINE int RandomIntRange( int lo, int hi )
 {
 	return lo + RandomInt() % ( hi - lo + 1 );
 }

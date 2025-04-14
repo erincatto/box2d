@@ -73,7 +73,7 @@ typedef struct b2Contact
 // Shifted to be distinct from b2ContactFlags
 enum b2ContactSimFlags
 {
-	// Set when the shapes are touching, including sensors
+	// Set when the shapes are touching
 	b2_simTouchingFlag = 0x00010000,
 
 	// This contact no longer has overlapping AABBs
@@ -144,5 +144,5 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 
 b2Manifold b2ComputeManifold( b2Shape* shapeA, b2Transform transformA, b2Shape* shapeB, b2Transform transformB );
 
-B2_ARRAY_INLINE( b2Contact, b2Contact );
-B2_ARRAY_INLINE( b2ContactSim, b2ContactSim );
+B2_ARRAY_INLINE( b2Contact, b2Contact )
+B2_ARRAY_INLINE( b2ContactSim, b2ContactSim )

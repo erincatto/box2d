@@ -1732,9 +1732,13 @@ public:
 
 			m_textLine += m_textIncrement;
 
-			b2CastResultFcn* fcns[] = { RayCastAnyCallback, RayCastClosestCallback, RayCastMultipleCallback,
-										RayCastSortedCallback };
-			b2CastResultFcn* modeFcn = fcns[m_mode];
+			b2CastResultFcn* functions[] = {
+				RayCastAnyCallback,
+				RayCastClosestCallback,
+				RayCastMultipleCallback,
+				RayCastSortedCallback,
+			};
+			b2CastResultFcn* modeFcn = functions[m_mode];
 
 			CastContext context = {};
 
@@ -1748,24 +1752,28 @@ public:
 			b2Capsule capsule = { b2TransformPoint( transform, { -0.25f, 0.0f } ), b2TransformPoint( transform, { 0.25f, 0.0f } ),
 								  m_castRadius };
 			b2Polygon box = b2MakeOffsetRoundedBox( 0.25f, 0.5f, transform.p, transform.q, m_castRadius );
+			b2ShapeProxy proxy = {};
 
-			switch ( m_castType )
+			if ( m_castType == e_rayCast )
 			{
-				case e_rayCast:
-					b2World_CastRay( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
-					break;
+				b2World_CastRay( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
+			}
+			else
+			{
+				if ( m_castType == e_circleCast )
+				{
+					proxy = b2MakeProxy( &circle.center, 1, circle.radius );
+				}
+				else if ( m_castType == e_capsuleCast )
+				{
+					proxy = b2MakeProxy( &capsule.center1, 2, capsule.radius );
+				}
+				else
+				{
+					proxy = b2MakeProxy( box.vertices, box.count, box.radius );
+				}
 
-				case e_circleCast:
-					b2World_CastCircle( m_worldId, &circle, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
-					break;
-
-				case e_capsuleCast:
-					b2World_CastCapsule( m_worldId, &capsule, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
-					break;
-
-				case e_polygonCast:
-					b2World_CastPolygon( m_worldId, &box, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
-					break;
+				b2World_CastShape( m_worldId, &proxy, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
 			}
 
 			if ( context.count > 0 )
@@ -1952,10 +1960,6 @@ public:
 		m_ignoreIndex = 7;
 
 		m_shapeType = e_circleShape;
-
-		m_queryCircle = { { 0.0f, 0.0f }, 1.0f };
-		m_queryCapsule = { { -1.0f, 0.0f }, { 1.0f, 0.0f }, 0.5f };
-		m_queryBox = b2MakeBox( 2.0f, 0.5f );
 
 		m_position = { 0.0f, 10.0f };
 		m_angle = 0.0f;
@@ -2150,32 +2154,35 @@ public:
 		m_doomCount = 0;
 
 		b2Transform transform = { m_position, b2MakeRot( m_angle ) };
+		b2ShapeProxy proxy = {};
 
 		if ( m_shapeType == e_circleShape )
 		{
-			b2World_OverlapCircle( m_worldId, &m_queryCircle, transform, b2DefaultQueryFilter(), OverlapWorld::OverlapResultFcn,
-								   this );
-			g_draw.DrawSolidCircle( transform, b2Vec2_zero, m_queryCircle.radius, b2_colorWhite );
+			b2Circle circle = {
+				.center = transform.p,
+				.radius = 1.0f,
+			};
+			proxy = b2MakeProxy( &circle.center, 1, circle.radius );
+			g_draw.DrawSolidCircle( b2Transform_identity, circle.center, circle.radius, b2_colorWhite );
 		}
 		else if ( m_shapeType == e_capsuleShape )
 		{
-			b2World_OverlapCapsule( m_worldId, &m_queryCapsule, transform, b2DefaultQueryFilter(), OverlapWorld::OverlapResultFcn,
-									this );
-			b2Vec2 p1 = b2TransformPoint( transform, m_queryCapsule.center1 );
-			b2Vec2 p2 = b2TransformPoint( transform, m_queryCapsule.center2 );
-			g_draw.DrawSolidCapsule( p1, p2, m_queryCapsule.radius, b2_colorWhite );
+			b2Capsule capsule = {
+				.center1 = b2TransformPoint( transform, { -1.0f, 0.0f } ),
+				.center2 = b2TransformPoint( transform, { 1.0f, 0.0f } ),
+				.radius = 0.5f,
+			};
+			proxy = b2MakeProxy( &capsule.center1, 2, capsule.radius );
+			g_draw.DrawSolidCapsule( capsule.center1, capsule.center2, capsule.radius, b2_colorWhite );
 		}
 		else if ( m_shapeType == e_boxShape )
 		{
-			b2World_OverlapPolygon( m_worldId, &m_queryBox, transform, b2DefaultQueryFilter(), OverlapWorld::OverlapResultFcn,
-									this );
-			b2Vec2 points[B2_MAX_POLYGON_VERTICES] = {};
-			for ( int i = 0; i < m_queryBox.count; ++i )
-			{
-				points[i] = b2TransformPoint( transform, m_queryBox.vertices[i] );
-			}
-			g_draw.DrawPolygon( points, m_queryBox.count, b2_colorWhite );
+			b2Polygon box = b2MakeOffsetBox( 2.0f, 0.5f, transform.p, transform.q );
+			proxy = b2MakeProxy( box.vertices, box.count, box.radius );
+			g_draw.DrawPolygon( box.vertices, box.count, b2_colorWhite );
 		}
+
+		b2World_OverlapShape( m_worldId, &proxy, b2DefaultQueryFilter(), OverlapResultFcn, this );
 
 		if ( B2_IS_NON_NULL( m_bodyIds[m_ignoreIndex] ) )
 		{
@@ -2218,10 +2225,6 @@ public:
 
 	b2ShapeId m_doomIds[e_maxDoomed];
 	int m_doomCount;
-
-	b2Circle m_queryCircle;
-	b2Capsule m_queryCapsule;
-	b2Polygon m_queryBox;
 
 	int m_shapeType;
 	b2Transform m_transform;

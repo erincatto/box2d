@@ -105,15 +105,30 @@ b2SegmentDistanceResult b2SegmentDistance( b2Vec2 p1, b2Vec2 q1, b2Vec2 p2, b2Ve
 	return result;
 }
 
-// GJK using Voronoi regions (Christer Ericson) and Barycentric coordinates.
-// todo try not copying
-b2ShapeProxy b2MakeProxy( const b2Vec2* vertices, int count, float radius )
+b2ShapeProxy b2MakeProxy( const b2Vec2* points, int count, float radius )
 {
 	count = b2MinInt( count, B2_MAX_POLYGON_VERTICES );
 	b2ShapeProxy proxy;
 	for ( int i = 0; i < count; ++i )
 	{
-		proxy.points[i] = vertices[i];
+		proxy.points[i] = points[i];
+	}
+	proxy.count = count;
+	proxy.radius = radius;
+	return proxy;
+}
+
+b2ShapeProxy b2MakeOffsetProxy( const b2Vec2* points, int count, float radius, b2Vec2 position, b2Rot rotation )
+{
+	count = b2MinInt( count, B2_MAX_POLYGON_VERTICES );
+	b2Transform transform = {
+		.p = position,
+		.q = rotation,
+	};
+	b2ShapeProxy proxy;
+	for ( int i = 0; i < count; ++i )
+	{
+		proxy.points[i] = b2TransformPoint( transform, points[i] );
 	}
 	proxy.count = count;
 	proxy.radius = radius;
@@ -197,21 +212,6 @@ static void b2MakeSimplexCache( b2SimplexCache* cache, const b2Simplex* simplex 
 		cache->indexA[i] = (uint8_t)vertices[i]->indexA;
 		cache->indexB[i] = (uint8_t)vertices[i]->indexB;
 	}
-}
-
-static inline b2Vec2 b2ComputeSimplexClosestPoint( const b2Simplex* s )
-{
-	if ( s->count == 1 )
-	{
-		return s->v1.w;
-	}
-
-	if ( s->count == 2 )
-	{
-		return b2Weight2( s->v1.a, s->v1.w, s->v2.a, s->v2.w );
-	}
-
-	return b2Vec2_zero;
 }
 
 static void b2ComputeSimplexWitnessPoints( b2Vec2* a, b2Vec2* b, const b2Simplex* s )
@@ -423,6 +423,9 @@ static b2Vec2 b2SolveSimplex3( b2Simplex* s )
 b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* cache, b2Simplex* simplexes, int simplexCapacity )
 {
 	B2_UNUSED( simplexes, simplexCapacity );
+	B2_ASSERT( input->proxyA.count > 0 && input->proxyB.count > 0 );
+	B2_ASSERT( input->proxyA.radius >= 0.0f );
+	B2_ASSERT( input->proxyB.radius >= 0.0f );
 
 	b2DistanceOutput output = { 0 };
 
@@ -695,6 +698,21 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 }
 
 #if 0
+static inline b2Vec2 b2ComputeSimplexClosestPoint( const b2Simplex* s )
+{
+	if ( s->count == 1 )
+	{
+		return s->v1.w;
+	}
+
+	if ( s->count == 2 )
+	{
+		return b2Weight2( s->v1.a, s->v1.w, s->v2.a, s->v2.w );
+	}
+
+	return b2Vec2_zero;
+}
+
 typedef struct b2ShapeCastData
 {
 	b2Simplex simplex;

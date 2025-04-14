@@ -20,7 +20,7 @@ body {
 }
 
 div.contents {
-    max-width: 900px;
+    max-width: 1000px;
 }
 
 /* this works with doxygen /image */

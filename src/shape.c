@@ -14,8 +14,8 @@
 
 #include <stddef.h>
 
-B2_ARRAY_SOURCE( b2ChainShape, b2ChainShape );
-B2_ARRAY_SOURCE( b2Shape, b2Shape );
+B2_ARRAY_SOURCE( b2ChainShape, b2ChainShape )
+B2_ARRAY_SOURCE( b2Shape, b2Shape )
 
 static b2Shape* b2GetShape( b2World* world, b2ShapeId shapeId )
 {
@@ -327,7 +327,6 @@ void b2DestroyShape( b2ShapeId shapeId, bool updateBodyMass )
 
 	// need to wake bodies because this might be a static body
 	bool wakeBodies = true;
-
 	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
 	b2DestroyShapeInternal( world, shape, body, wakeBodies );
 
@@ -495,7 +494,6 @@ void b2DestroyChain( b2ChainId chainId )
 	}
 
 	b2ChainShape* chain = b2GetChainShape( world, chainId );
-	bool wakeBodies = true;
 
 	b2Body* body = b2BodyArray_Get( &world->bodies, chain->bodyId );
 
@@ -525,6 +523,7 @@ void b2DestroyChain( b2ChainId chainId )
 	{
 		int shapeId = chain->shapeIndices[i];
 		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+		bool wakeBodies = true;
 		b2DestroyShapeInternal( world, shape, body, wakeBodies );
 	}
 
@@ -896,7 +895,6 @@ b2PlaneResult b2CollideMover( const b2Shape* shape, b2Transform transform, const
 	}
 
 	result.plane.normal = b2RotateVector( transform.q, result.plane.normal );
-	result.point = b2TransformPoint( transform, result.point );
 	return result;
 }
 

@@ -168,7 +168,6 @@ b2Transform b2GetBodyTransform( b2World* world, int bodyId );
 b2BodyId b2MakeBodyId( b2World* world, int bodyId );
 
 bool b2ShouldBodiesCollide( b2World* world, b2Body* bodyA, b2Body* bodyB );
-bool b2IsBodyAwake( b2World* world, b2Body* body );
 
 b2BodySim* b2GetBodySim( b2World* world, b2Body* body );
 b2BodyState* b2GetBodyState( b2World* world, b2Body* body );
@@ -190,6 +189,6 @@ static inline b2Sweep b2MakeSweep( const b2BodySim* bodySim )
 }
 
 // Define inline functions for arrays
-B2_ARRAY_INLINE( b2Body, b2Body );
-B2_ARRAY_INLINE( b2BodySim, b2BodySim );
-B2_ARRAY_INLINE( b2BodyState, b2BodyState );
+B2_ARRAY_INLINE( b2Body, b2Body )
+B2_ARRAY_INLINE( b2BodySim, b2BodySim )
+B2_ARRAY_INLINE( b2BodyState, b2BodyState )

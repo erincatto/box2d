@@ -37,15 +37,16 @@ typedef struct b2RayCastInput
 } b2RayCastInput;
 
 /// A distance proxy is used by the GJK algorithm. It encapsulates any shape.
+/// You can provide between 1 and B2_MAX_POLYGON_VERTICES and a radius.
 typedef struct b2ShapeProxy
 {
 	/// The point cloud
 	b2Vec2 points[B2_MAX_POLYGON_VERTICES];
 
-	/// The number of points
+	/// The number of points. Must be greater than 0.
 	int count;
 
-	/// The external radius of the point cloud
+	/// The external radius of the point cloud. May be zero.
 	float radius;
 } b2ShapeProxy;
 
@@ -427,8 +428,11 @@ typedef struct b2ShapeCastPairInput
 /// You may optionally supply an array to hold debug data.
 B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input);
 
-/// Make a proxy for use in GJK and related functions.
-B2_API b2ShapeProxy b2MakeProxy( const b2Vec2* vertices, int count, float radius );
+/// Make a proxy for use in overlap, shape cast, and related functions. This is a deep copy of the points.
+B2_API b2ShapeProxy b2MakeProxy( const b2Vec2* points, int count, float radius );
+
+/// Make a proxy with a transform. This is a deep copy of the points.
+B2_API b2ShapeProxy b2MakeOffsetProxy( const b2Vec2* points, int count, float radius, b2Vec2 position, b2Rot rotation );
 
 /// This describes the motion of a body/shape for TOI computation. Shapes are defined with respect to the body origin,
 /// which may not coincide with the center of mass. However, to support dynamics we must interpolate the center of mass
@@ -771,32 +775,56 @@ B2_API void b2DynamicTree_ValidateNoEnlarged( const b2DynamicTree* tree );
 
 /**
  * @defgroup character
- * Experimental character movement solver
+ * Character movement solver
  * @{
  */
 
+/// These are the collision planes returned from b2World_CollideMover
 typedef struct b2PlaneResult
 {
+	/// The collision plane between the mover and a convex shape
 	b2Plane plane;
-	b2Vec2 point;
+
+	/// Did the collision register a hit? If not this plane should be ignored.
 	bool hit;
 } b2PlaneResult;
 
+/// These are collision planes that can be fed to b2SolvePlanes. Normally
+/// this is assembled by the user from plane results in b2PlaneResult
 typedef struct b2CollisionPlane
 {
+	/// The collision plane between the mover and some shape
 	b2Plane plane;
+
+	/// Setting this to FLT_MAX makes the plane as rigid as possible. Lower values can
+	/// make the plane collision soft. Usually in meters.
 	float pushLimit;
+
+	/// The push on the mover determined by b2SolvePlanes. Usually in meters.
 	float push;
+
+	/// Indicates if b2ClipVector should clip against this plane. Should be false for soft collision.
 	bool clipVelocity;
 } b2CollisionPlane;
 
+/// Result returned by b2SolvePlanes
 typedef struct b2PlaneSolverResult
 {
+	/// The final position of the mover
 	b2Vec2 position;
+
+	/// The number of iterations used by the plane solver. For diagnostics.
 	int iterationCount;
 } b2PlaneSolverResult;
 
-B2_API b2PlaneSolverResult b2SolvePlanes( b2Vec2 initialPosition, b2CollisionPlane* planes, int count );
+/// Solves the position of a mover that satisfies the given collision planes.
+/// @param position this must be the position used to generate the collision planes
+/// @param planes the collision planes
+/// @param count the number of collision planes
+B2_API b2PlaneSolverResult b2SolvePlanes( b2Vec2 position, b2CollisionPlane* planes, int count );
+
+/// Clips the velocity against the given collision planes. Planes with clipVelocity set to
+/// true are skipped.
 B2_API b2Vec2 b2ClipVector( b2Vec2 vector, const b2CollisionPlane* planes, int count );
 
 /**@}*/
