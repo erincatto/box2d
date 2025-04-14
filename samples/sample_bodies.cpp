@@ -842,12 +842,9 @@ public:
 	void Step( Settings& settings ) override
 	{
 		float timeStep = settings.hertz > 0.0f ? 1.0f / settings.hertz : 0.0f;
-		if ( settings.pause )
+		if ( settings.pause && settings.singleStep == false )
 		{
-			if ( settings.singleStep == false )
-			{
-				timeStep = 0.0f;
-			}
+			timeStep = 0.0f;
 		}
 
 		if ( timeStep > 0.0f )

@@ -1655,9 +1655,7 @@ Sometimes you want to determine all the shapes in a region. The world has a fast
 log(N) method for this using the broad-phase data structure. Box2D provides these
 overlap tests:
 - axis-aligned bound box (AABB) overlap
-- circle overlap
-- capsule overlap
-- polygon overlap
+- shape proxy overlap
 
 #### Query Filtering
 A basic understanding of query filtering is needed before considering the specific queries.
@@ -1726,12 +1724,21 @@ are returned to your callback may seem arbitrary.
 #### Shape Overlap
 The AABB overlap is very fast but not very accurate because it only considers
 the shape bounding box. If you want an accurate overlap test, you can use a shape
-overlap query. For example, here is how you can get all shapes that overlap
-with a query circle.
+overlap query.
+
+The overlap function uses a `b2ShapeProxy` which is an abstract shape consisting
+of some points and a radius. You can think of it as a cloud of circles that has been
+_shrink wrapped_. This can represent a point, a circle, a line segment, a capsule, a polygon,
+a rounded rectangle, and so on. The helper function `b2MakeProxy` takes an array of points
+and a radius.
+
+In this example, I'm creating a shape proxy from a circle and then calling `b2World_OverlapShape()`.
+This takes a `b2OverlapResultFcn()` to receive results and control the search progress.
 
 ```c
 b2Circle circle = {b2Vec2_zero, 0.2f};
-b2World_OverlapCircle(myWorldId, &circle, b2Transform_identity, grenadeFilter, MyOverlapCallback, &myGame);
+b2ShapeProxy proxy = b2MakeProxy(&circle.center, 1, circle.radius);
+b2World_OverlapShape(myWorldId, &proxy, grenadeFilter, MyOverlapCallback, &myGame);
 ```
 
 ### Ray-casts
@@ -1786,11 +1793,12 @@ b2Vec2 translation = b2Sub(end, origin);
 b2World_CastRay(myWorldId, origin, translation, viewFilter, MyCastCallback, &context);
 ```
 
-Ray-cast results may be delivered in an arbitrary order. This doesn't affect the result for closest point ray-casts (except in ties). When you are collecting multiple hits along the ray, you may want to sort them according to the hit fraction. See the `RayCastWorld` sample for details.
+Ray-cast results may be delivered in an arbitrary order. This doesn't affect the result for closest point ray-casts (except in ties). When you are collecting multiple hits along the ray, you may want to sort them according to the hit fraction. See the `CastWorld` sample for details.
 
 ### Shape-casts
 Shape-casts are similar to ray-casts. You can view a ray-cast as tracing a point along a line. A shape-cast
-allows you to trace a shape along a line. Since shapes can have rotation, you provide an origin transform instead of an origin point.
+allows you to trace a shape along a line. Like the shape overlap query, the shape cast uses a `b2ShapeProxy`
+to represent an arbitrary shape.
 
 ```c
 // This struct captures the closest hit shape
@@ -1814,15 +1822,13 @@ float MyCastCallback(b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fract
 
 // Elsewhere ...
 MyRayCastContext context = {0};
-b2Circle circle = {b2Vec2_zero, {0.05f}};
-b2Transform originTransform;
-originTransform.p = (b2Vec2){-1.0f, 0.0f};
-originTransform.q = b2Rot_identity;
+b2Circle circle = {{-1.0f, 0.0f}, 0.05f};
+b2ShapeProxy proxy = b2MakeProxy(&circle.center, 1, circle.radius);
 b2Vec2 translation = {10.0f, -5.0f};
-b2World_CastCircle(myWorldId, &circle, originTransform, translation, grenadeFilter, MyCastCallback, &context);
+b2World_CastCircle(myWorldId, &proxy, translation, grenadeFilter, MyCastCallback, &context);
 ```
 
-Otherwise, shape-casts are setup identically to ray-casts. You can expect shape-casts to generally be slower
+Otherwise, shape-casts are setup similarly to ray-casts. You can expect shape-casts to generally be slower
 than ray-casts. So only use a shape-cast if a ray-cast won't do.
 
 Just like ray-casts, shape-casts results may be sent to the callback in any order. If you need multiple sorted results, you will need to write some code to collect and sort the results.
