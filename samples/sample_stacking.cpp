@@ -938,59 +938,80 @@ public:
 			g_camera.m_zoom = 25.0f * 0.05f;
 		}
 
-		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.position = { 0.0f, -2.0f };
-		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
-
-		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.material.friction = 0.7f;
-
-		b2Polygon groundBox = b2MakeBox( 40.0f, 2.0f );
-		b2CreatePolygonShape( groundId, &shapeDef, &groundBox );
-
-		float cardHeight = 0.2f;
-		float cardThickness = 0.001f;
-
-		float angle0 = 25.0f * B2_PI / 180.0f;
-		float angle1 = -25.0f * B2_PI / 180.0f;
-		float angle2 = 0.5f * B2_PI;
-
-		b2Polygon cardBox = b2MakeBox( cardThickness, cardHeight );
-		bodyDef.type = b2_dynamicBody;
-
-		int Nb = 5;
-		float z0 = 0.0f;
-		float y = cardHeight - 0.02f;
-		while ( Nb )
+#if 1
 		{
-			float z = z0;
-			for ( int i = 0; i < Nb; i++ )
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 10000.0f, -5000.0f };
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.material.friction = 0.7f;
+
+			b2Polygon groundBox = b2MakeBox( 30000.0f, 5000.0f );
+			b2CreatePolygonShape( groundId, &shapeDef, &groundBox );
+		}
+#else
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 0.0f, -2.0f };
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.material.friction = 0.7f;
+
+			b2Polygon groundBox = b2MakeBox( 40.0f, 2.0f );
+			b2CreatePolygonShape( groundId, &shapeDef, &groundBox );
+		}
+#endif
+		{
+			float cardHeight = 0.2f;
+			float cardThickness = 0.001f;
+
+			float angle0 = 25.0f * B2_PI / 180.0f;
+			float angle1 = -25.0f * B2_PI / 180.0f;
+			float angle2 = 0.5f * B2_PI;
+
+			b2Polygon cardBox = b2MakeBox( cardThickness, cardHeight );
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.material.friction = 0.7f;
+
+			int Nb = 5;
+			float z0 = 0.0f;
+			float y = cardHeight - 0.02f;
+			while ( Nb )
 			{
-				if ( i != Nb - 1 )
+				float z = z0;
+				for ( int i = 0; i < Nb; i++ )
 				{
-					bodyDef.position = { z + 0.25f, y + cardHeight - 0.015f };
-					bodyDef.rotation = b2MakeRot( angle2 );
+					if ( i != Nb - 1 )
+					{
+						bodyDef.position = { z + 0.25f, y + cardHeight - 0.015f };
+						bodyDef.rotation = b2MakeRot( angle2 );
+						b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+						b2CreatePolygonShape( bodyId, &shapeDef, &cardBox );
+					}
+
+					bodyDef.position = { z, y };
+					bodyDef.rotation = b2MakeRot( angle1 );
 					b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 					b2CreatePolygonShape( bodyId, &shapeDef, &cardBox );
+
+					z += 0.175f;
+
+					bodyDef.position = { z, y };
+					bodyDef.rotation = b2MakeRot( angle0 );
+					bodyId = b2CreateBody( m_worldId, &bodyDef );
+					b2CreatePolygonShape( bodyId, &shapeDef, &cardBox );
+
+					z += 0.175f;
 				}
-
-				bodyDef.position = { z, y };
-				bodyDef.rotation = b2MakeRot( angle1 );
-				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
-				b2CreatePolygonShape( bodyId, &shapeDef, &cardBox );
-
-				z += 0.175f;
-
-				bodyDef.position = { z, y };
-				bodyDef.rotation = b2MakeRot( angle0 );
-				bodyId = b2CreateBody( m_worldId, &bodyDef );
-				b2CreatePolygonShape( bodyId, &shapeDef, &cardBox );
-
-				z += 0.175f;
+				y += cardHeight * 2.0f - 0.03f;
+				z0 += 0.175f;
+				Nb--;
 			}
-			y += cardHeight * 2.0f - 0.03f;
-			z0 += 0.175f;
-			Nb--;
 		}
 	}
 
