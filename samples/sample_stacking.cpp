@@ -938,20 +938,6 @@ public:
 			g_camera.m_zoom = 25.0f * 0.05f;
 		}
 
-#if 1
-		{
-			b2BodyDef bodyDef = b2DefaultBodyDef();
-			bodyDef.position = { 10000.0f, -5000.0f };
-			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
-
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.material.friction = 0.7f;
-
-			b2Polygon groundBox = b2MakeBox( 30000.0f, 5000.0f );
-			b2CreatePolygonShape( groundId, &shapeDef, &groundBox );
-		}
-#else
-		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.position = { 0.0f, -2.0f };
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
@@ -961,9 +947,7 @@ public:
 
 			b2Polygon groundBox = b2MakeBox( 40.0f, 2.0f );
 			b2CreatePolygonShape( groundId, &shapeDef, &groundBox );
-		}
-#endif
-		{
+
 			float cardHeight = 0.2f;
 			float cardThickness = 0.001f;
 
@@ -972,11 +956,7 @@ public:
 			float angle2 = 0.5f * B2_PI;
 
 			b2Polygon cardBox = b2MakeBox( cardThickness, cardHeight );
-			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
-
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.material.friction = 0.7f;
 
 			int Nb = 5;
 			float z0 = 0.0f;
@@ -1013,7 +993,6 @@ public:
 				Nb--;
 			}
 		}
-	}
 
 	static Sample* Create( Settings& settings )
 	{
