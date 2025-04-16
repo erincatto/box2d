@@ -32,7 +32,7 @@ public:
 
 		float groundWidth = 66.0f * extent;
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		//shapeDef.friction = 0.5f;
+		// shapeDef.friction = 0.5f;
 
 		b2Segment segment = { { -0.5f * 2.0f * groundWidth, 0.0f }, { 0.5f * 2.0f * groundWidth, 0.0f } };
 		b2CreateSegmentShape( groundId, &shapeDef, &segment );
@@ -210,10 +210,10 @@ public:
 			}
 		}
 
-		b2Circle circle = { };
+		b2Circle circle = {};
 		circle.radius = 0.5f;
 
-		b2Polygon box = b2MakeRoundedBox(0.45f, 0.45f, 0.05f);
+		b2Polygon box = b2MakeRoundedBox( 0.45f, 0.45f, 0.05f );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
@@ -436,7 +436,7 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.enableHitEvents = true;
-		//shapeDef.rollingResistance = 0.2f;
+		// shapeDef.rollingResistance = 0.2f;
 		shapeDef.material.friction = 0.0f;
 
 		float y = 0.75f;
@@ -529,15 +529,15 @@ public:
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 
 		// rolling resistance increases stacking stability
-		//shapeDef.rollingResistance = 0.2f;
+		// shapeDef.rollingResistance = 0.2f;
 
 		float y = 2.0f * a;
 
 		for ( int i = 0; i < 20; ++i )
 		{
 			bodyDef.position.y = y;
-			//bodyDef.position.x += ( i & 1 ) == 1 ? -0.5f * a : 0.5f * a;
-			//bodyDef.linearVelocity = { 0.0f, -10.0f };
+			// bodyDef.position.x += ( i & 1 ) == 1 ? -0.5f * a : 0.5f * a;
+			// bodyDef.linearVelocity = { 0.0f, -10.0f };
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
@@ -938,61 +938,61 @@ public:
 			g_camera.m_zoom = 25.0f * 0.05f;
 		}
 
-			b2BodyDef bodyDef = b2DefaultBodyDef();
-			bodyDef.position = { 0.0f, -2.0f };
-			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.position = { 0.0f, -2.0f };
+		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.material.friction = 0.7f;
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.material.friction = 0.7f;
 
-			b2Polygon groundBox = b2MakeBox( 40.0f, 2.0f );
-			b2CreatePolygonShape( groundId, &shapeDef, &groundBox );
+		b2Polygon groundBox = b2MakeBox( 40.0f, 2.0f );
+		b2CreatePolygonShape( groundId, &shapeDef, &groundBox );
 
-			float cardHeight = 0.2f;
-			float cardThickness = 0.001f;
+		float cardHeight = 0.2f;
+		float cardThickness = 0.001f;
 
-			float angle0 = 25.0f * B2_PI / 180.0f;
-			float angle1 = -25.0f * B2_PI / 180.0f;
-			float angle2 = 0.5f * B2_PI;
+		float angle0 = 25.0f * B2_PI / 180.0f;
+		float angle1 = -25.0f * B2_PI / 180.0f;
+		float angle2 = 0.5f * B2_PI;
 
-			b2Polygon cardBox = b2MakeBox( cardThickness, cardHeight );
-			bodyDef.type = b2_dynamicBody;
+		b2Polygon cardBox = b2MakeBox( cardThickness, cardHeight );
+		bodyDef.type = b2_dynamicBody;
 
-			int Nb = 5;
-			float z0 = 0.0f;
-			float y = cardHeight - 0.02f;
-			while ( Nb )
+		int Nb = 5;
+		float z0 = 0.0f;
+		float y = cardHeight - 0.02f;
+		while ( Nb )
+		{
+			float z = z0;
+			for ( int i = 0; i < Nb; i++ )
 			{
-				float z = z0;
-				for ( int i = 0; i < Nb; i++ )
+				if ( i != Nb - 1 )
 				{
-					if ( i != Nb - 1 )
-					{
-						bodyDef.position = { z + 0.25f, y + cardHeight - 0.015f };
-						bodyDef.rotation = b2MakeRot( angle2 );
-						b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
-						b2CreatePolygonShape( bodyId, &shapeDef, &cardBox );
-					}
-
-					bodyDef.position = { z, y };
-					bodyDef.rotation = b2MakeRot( angle1 );
+					bodyDef.position = { z + 0.25f, y + cardHeight - 0.015f };
+					bodyDef.rotation = b2MakeRot( angle2 );
 					b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 					b2CreatePolygonShape( bodyId, &shapeDef, &cardBox );
-
-					z += 0.175f;
-
-					bodyDef.position = { z, y };
-					bodyDef.rotation = b2MakeRot( angle0 );
-					bodyId = b2CreateBody( m_worldId, &bodyDef );
-					b2CreatePolygonShape( bodyId, &shapeDef, &cardBox );
-
-					z += 0.175f;
 				}
-				y += cardHeight * 2.0f - 0.03f;
-				z0 += 0.175f;
-				Nb--;
+
+				bodyDef.position = { z, y };
+				bodyDef.rotation = b2MakeRot( angle1 );
+				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+				b2CreatePolygonShape( bodyId, &shapeDef, &cardBox );
+
+				z += 0.175f;
+
+				bodyDef.position = { z, y };
+				bodyDef.rotation = b2MakeRot( angle0 );
+				bodyId = b2CreateBody( m_worldId, &bodyDef );
+				b2CreatePolygonShape( bodyId, &shapeDef, &cardBox );
+
+				z += 0.175f;
 			}
+			y += cardHeight * 2.0f - 0.03f;
+			z0 += 0.175f;
+			Nb--;
 		}
+	}
 
 	static Sample* Create( Settings& settings )
 	{
