@@ -32,6 +32,7 @@
 - Faster continuous collision
 - Each segment of a chain shape may have a different surface material
 - Reduced overhead of restitution when not used
+- Implemented atomic platform wrappers eliminating the `experimental:c11atomics` flag
 
 ## Bugs Fixes
 - Many bug fixes based on user testing
@@ -49,4 +50,3 @@
 - CMake install
 - imgui and glfw versions are now pinned in FetchContent
 - Initial Emscripten support
-- Implemented atomic platform wrappers eliminating the `experimental:c11atomics` flag

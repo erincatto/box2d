@@ -426,7 +426,7 @@ typedef struct b2ShapeCastPairInput
 
 /// Perform a linear shape cast of shape B moving and shape A fixed. Determines the hit point, normal, and translation fraction.
 /// You may optionally supply an array to hold debug data.
-B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input);
+B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input );
 
 /// Make a proxy for use in overlap, shape cast, and related functions. This is a deep copy of the points.
 B2_API b2ShapeProxy b2MakeProxy( const b2Vec2* points, int count, float radius );
@@ -823,8 +823,8 @@ typedef struct b2PlaneSolverResult
 /// @param count the number of collision planes
 B2_API b2PlaneSolverResult b2SolvePlanes( b2Vec2 position, b2CollisionPlane* planes, int count );
 
-/// Clips the velocity against the given collision planes. Planes with clipVelocity set to
-/// true are skipped.
+/// Clips the velocity against the given collision planes. Planes with zero push or clipVelocity
+/// set to false are skipped.
 B2_API b2Vec2 b2ClipVector( b2Vec2 vector, const b2CollisionPlane* planes, int count );
 
 /**@}*/
