@@ -85,7 +85,7 @@ jobs:
       run: ./bin/${{env.BUILD_TYPE}}/test
       
   samples-windows-static:
-    name: samples-windows
+    name: samples-windows-static
     runs-on: windows-latest
     steps:
 
@@ -103,7 +103,7 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config Release
 
   samples-windows-dynamic:
-    name: samples-windows
+    name: samples-windows-dynamic
     runs-on: windows-latest
     steps:
 
@@ -121,7 +121,7 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config Release
 
   samples-macos-static:
-    name: samples-macos
+    name: samples-macos-static
     runs-on: macos-latest
 
     steps:
@@ -134,7 +134,7 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config Release
 
   samples-macos-dynamic:
-    name: samples-macos
+    name: samples-macos-dynamic
     runs-on: macos-latest
 
     steps:
