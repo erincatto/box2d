@@ -556,6 +556,8 @@ b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJointDef* de
 b2JointId b2CreatePrismaticJoint( b2WorldId worldId, const b2PrismaticJointDef* def )
 {
 	B2_CHECK_DEF( def );
+	B2_ASSERT( def->lowerTranslation <= def->upperTranslation );
+
 	b2World* world = b2GetWorldFromId( worldId );
 
 	B2_ASSERT( world->locked == false );
@@ -651,6 +653,8 @@ b2JointId b2CreateWeldJoint( b2WorldId worldId, const b2WeldJointDef* def )
 b2JointId b2CreateWheelJoint( b2WorldId worldId, const b2WheelJointDef* def )
 {
 	B2_CHECK_DEF( def );
+	B2_ASSERT( def->lowerTranslation <= def->upperTranslation );
+
 	b2World* world = b2GetWorldFromId( worldId );
 
 	B2_ASSERT( world->locked == false );

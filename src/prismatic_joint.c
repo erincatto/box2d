@@ -84,6 +84,8 @@ float b2PrismaticJoint_GetUpperLimit( b2JointId jointId )
 
 void b2PrismaticJoint_SetLimits( b2JointId jointId, float lower, float upper )
 {
+	B2_ASSERT( lower <= upper );
+
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
 	if ( lower != joint->prismaticJoint.lowerTranslation || upper != joint->prismaticJoint.upperTranslation )
 	{

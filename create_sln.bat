@@ -3,5 +3,3 @@ rmdir /s /q build
 mkdir build
 cd build
 cmake ..
-cmake --build .
-start box2d.sln

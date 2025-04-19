@@ -84,8 +84,8 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: ./bin/${{env.BUILD_TYPE}}/test
       
-  samples-windows:
-    name: samples-windows
+  samples-windows-static:
+    name: samples-windows-static
     runs-on: windows-latest
     steps:
 
@@ -101,9 +101,27 @@ jobs:
       
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release
+
+  samples-windows-dynamic:
+    name: samples-windows-dynamic
+    runs-on: windows-latest
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Setup MSVC dev command prompt
+      uses: TheMrMilchmann/setup-msvc-dev@v3
+      with:
+        arch: x64
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DBOX2D_SAMPLES=ON -DBUILD_SHARED_LIBS=ON -DBOX2D_UNIT_TESTS=OFF
       
-  samples-macos:
-    name: samples-macos
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Release
+
+  samples-macos-static:
+    name: samples-macos-static
     runs-on: macos-latest
 
     steps:
@@ -111,6 +129,19 @@ jobs:
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DBOX2D_SAMPLES=ON -DBUILD_SHARED_LIBS=OFF -DBOX2D_UNIT_TESTS=OFF
+      
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Release
+
+  samples-macos-dynamic:
+    name: samples-macos-dynamic
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DBOX2D_SAMPLES=ON -DBUILD_SHARED_LIBS=ON -DBOX2D_UNIT_TESTS=OFF
       
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release

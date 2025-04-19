@@ -31,8 +31,6 @@ if (MSVC OR APPLE)
 			add_compile_options("$<$<CONFIG:Debug>:/fsanitize=address>")
 			add_link_options("$<$<CONFIG:Debug>:/INCREMENTAL:NO>")
 		elseif(APPLE)
-			# more sanitizers on Apple clang
-			# add_compile_options(-fsanitize=thread -fno-omit-frame-pointer)
 			add_compile_options(-fsanitize=address -fsanitize-address-use-after-scope -fsanitize=undefined)
 			add_link_options(-fsanitize=address -fsanitize-address-use-after-scope -fsanitize=undefined)
 		endif()
@@ -47,21 +45,23 @@ endif()
 
 # Deterministic math
 # https://box2d.org/posts/2024/08/determinism/
-# todo make this apply to ClangCL
 if (MINGW OR APPLE OR UNIX)
 	add_compile_options(-ffp-contract=off)
 endif()
 
-option(BOX2D_ENABLE_SIMD "Enable SIMD math (faster)" ON)
+option(BOX2D_DISABLE_SIMD "Disable SIMD math (slower)" OFF)
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
-	cmake_dependent_option(BOX2D_AVX2 "Enable AVX2" OFF "BOX2D_ENABLE_SIMD" OFF)
+	cmake_dependent_option(BOX2D_AVX2 "Enable AVX2" OFF "NOT BOX2D_DISABLE_SIMD" OFF)
 endif()
 
-set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
+
+# Needed for samples.exe to find box2d.dll
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
 
 add_subdirectory(src)
 
@@ -73,17 +73,6 @@ if(PROJECT_IS_TOP_LEVEL)
 	option(BOX2D_PROFILE "Enable profiling with Tracy" OFF)
 	option(BOX2D_VALIDATE "Enable heavy validation" ON)
 	option(BOX2D_UNIT_TESTS "Build the Box2D unit tests" ON)
-
-	# Needed for samples.exe to find box2d.dll
-	# set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
-
-	include(GNUInstallDirs)
-
-	install(
-		DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/box2d"
-		DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-	)
 
 	if(MSVC AND WIN32)
 		# add_compile_options(/fsanitize=address)

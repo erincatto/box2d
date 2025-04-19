@@ -266,12 +266,18 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 
 	if ( def->name )
 	{
-		for ( int i = 0; i < 31; ++i )
+		int i = 0;
+		while ( i < 31 && def->name[i] != 0 )
 		{
 			body->name[i] = def->name[i];
+			i += 1;
 		}
 
-		body->name[31] = 0;
+		while ( i < 32)
+		{
+			body->name[i] = 0;
+			i += 1;
+		}
 	}
 	else
 	{

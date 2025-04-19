@@ -100,6 +100,10 @@ float b2RevoluteJoint_GetUpperLimit( b2JointId jointId )
 
 void b2RevoluteJoint_SetLimits( b2JointId jointId, float lower, float upper )
 {
+	B2_ASSERT( lower <= upper );
+	B2_ASSERT( lower >= -0.95f * B2_PI );
+	B2_ASSERT( upper <= 0.95f * B2_PI );
+
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_revoluteJoint );
 	if ( lower != joint->revoluteJoint.lowerAngle || upper != joint->revoluteJoint.upperAngle )
 	{
@@ -193,8 +197,8 @@ void b2PrepareRevoluteJoint( b2JointSim* base, b2StepContext* context )
 
 	b2World* world = context->world;
 
-	b2Body* bodyA = b2BodyArray_Get(&world->bodies, idA);
-	b2Body* bodyB = b2BodyArray_Get(&world->bodies, idB);
+	b2Body* bodyA = b2BodyArray_Get( &world->bodies, idA );
+	b2Body* bodyB = b2BodyArray_Get( &world->bodies, idB );
 
 	B2_ASSERT( bodyA->setIndex == b2_awakeSet || bodyB->setIndex == b2_awakeSet );
 	b2SolverSet* setA = b2SolverSetArray_Get( &world->solverSets, bodyA->setIndex );
@@ -515,7 +519,7 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 		draw->DrawSegmentFcn( pB, b2Add( pB, rhi ), c3, draw->context );
 
 		b2Rot rotRef = b2MakeRot( joint->referenceAngle );
-		b2Vec2 ref = ( b2Vec2 ){ L * rotRef.c, L * rotRef.s };
+		b2Vec2 ref = (b2Vec2){ L * rotRef.c, L * rotRef.s };
 		draw->DrawSegmentFcn( pB, b2Add( pB, ref ), b2_colorBlue, draw->context );
 	}
 
