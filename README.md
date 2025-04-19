@@ -60,6 +60,13 @@ Box2D is a 2D physics engine for games.
 - Select the samples scheme
 - Build and run the samples
 
+## Building and installing
+- mkdir build
+- cd build
+- cmake ..
+- cmake --build . --config Release
+- cmake --install .
+
 ## Compatibility
 The Box2D library and samples build and run on Windows, Linux, and Mac.
 

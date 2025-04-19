@@ -74,13 +74,6 @@ if(PROJECT_IS_TOP_LEVEL)
 	option(BOX2D_VALIDATE "Enable heavy validation" ON)
 	option(BOX2D_UNIT_TESTS "Build the Box2D unit tests" ON)
 
-	include(GNUInstallDirs)
-
-	install(
-		DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/box2d"
-		DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-	)
-
 	if(MSVC AND WIN32)
 		# add_compile_options(/fsanitize=address)
 		# set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/GS- /Gy /O2 /Oi /Ot")
