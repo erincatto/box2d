@@ -11,7 +11,7 @@ set(BOX2D_SHARED_FILES
 	random.h
 )
 
-add_library(shared ${BOX2D_SHARED_FILES})
+add_library(shared STATIC ${BOX2D_SHARED_FILES})
 
 set_target_properties(shared PROPERTIES
 	C_STANDARD 17

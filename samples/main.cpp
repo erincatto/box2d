@@ -626,17 +626,17 @@ int main( int, char** )
 	}
 
 	{
-		float temp1[2] = {};
-		glGetFloatv( GL_ALIASED_LINE_WIDTH_RANGE, temp1 );
+		//float temp1[2] = {};
+		//glGetFloatv( GL_ALIASED_LINE_WIDTH_RANGE, temp1 );
 
-		float temp2[2] = {};
-		glGetFloatv( GL_SMOOTH_LINE_WIDTH_RANGE, temp2 );
+		//float temp2[2] = {};
+		//glGetFloatv( GL_SMOOTH_LINE_WIDTH_RANGE, temp2 );
 
 		const char* glVersionString = (const char*)glGetString( GL_VERSION );
 		const char* glslVersionString = (const char*)glGetString( GL_SHADING_LANGUAGE_VERSION );
 		printf( "OpenGL %s, GLSL %s\n", glVersionString, glslVersionString );
-		printf( "OpenGL aliased line width range : [%g, %g]\n", temp1[0], temp1[1] );
-		printf( "OpenGL smooth line width range : [%g, %g]\n", temp2[0], temp2[1] );
+		//printf( "OpenGL aliased line width range : [%g, %g]\n", temp1[0], temp1[1] );
+		//printf( "OpenGL smooth line width range : [%g, %g]\n", temp2[0], temp2[1] );
 	}
 
 	glfwSetWindowSizeCallback( g_mainWindow, ResizeWindowCallback );

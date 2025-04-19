@@ -127,12 +127,21 @@ static void MinProfile( b2Profile* p1, const b2Profile* p2 )
 	p1->sleepIslands = b2MinFloat( p1->sleepIslands, p2->sleepIslands );
 }
 
-// Box2D benchmark application. On Windows I recommend running this in an administrator command prompt. Don't use Windows
-// Terminal. Or use affinity. [0x01 0x02 0x04 0x08 0x10 0x20 0x40 0x80]
-// Examples:
-// start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=4 -w=4
+// Box2D benchmark application. On Windows it is important to use affinity avoid cross CCD
+// usage or efficiency cores. Also on Windows create a power plan with Processor power management
+// Min/Max of 99%. This prevents boosting and makes the benchmarks more repeatable.
+// Affinity [0x01 0x02 0x04 0x08 0x10 0x20 0x40 0x80]
+
+// Run all benchmarks with 1 to 8 threads.
 // start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=8
+
+// Run all benchmarks with 4 workers only.
+// start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=4 -w=4
+
+// Run benchmark 3 with 4 workers and repeat 20 times. Record the step times.
 // start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=4 -w=4 -b=3 -r=20 -s
+
+// Run benchmark 3 with 4 workers and run once. Disable continuous collision. Record the step times.
 // start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=4 -w=4 -b=3 -r=1 -nc -s
 
 int main( int argc, char** argv )

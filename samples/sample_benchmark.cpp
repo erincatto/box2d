@@ -23,10 +23,9 @@
 #define GET_CYCLES b2GetTicks()
 #endif
 
-#ifndef NDEBUG
-extern "C" int b2_toiCalls;
-extern "C" int b2_toiHitCount;
-#endif
+// these are not accessible in some build types
+//extern "C" int b2_toiCalls;
+//extern "C" int b2_toiHitCount;
 
 // Note: resetting the scene is non-deterministic because the world uses freelists
 class BenchmarkBarrel : public Sample
@@ -1500,10 +1499,8 @@ public:
 			g_camera.m_zoom = 42.0f;
 		}
 
-#ifndef NDEBUG
-		b2_toiCalls = 0;
-		b2_toiHitCount = 0;
-#endif
+		//b2_toiCalls = 0;
+		//b2_toiHitCount = 0;
 
 		CreateSpinner( m_worldId );
 	}
@@ -1520,9 +1517,7 @@ public:
 			settings.pause = true;
 		}
 
-#ifndef NDEBUG
-		DrawTextLine( "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
-#endif
+		//DrawTextLine( "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
 	}
 
 	static Sample* Create( Settings& settings )

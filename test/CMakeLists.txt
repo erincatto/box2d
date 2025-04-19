@@ -20,6 +20,7 @@ set_target_properties(test PROPERTIES
     C_STANDARD 17
     C_STANDARD_REQUIRED YES
     C_EXTENSIONS NO
+	COMPILE_WARNING_AS_ERROR ON
 )
 
 # Special access to Box2D internals for testing

@@ -14,9 +14,7 @@
 #include <imgui.h>
 #include <vector>
 
-#ifndef NDEBUG
-extern "C" int b2_toiHitCount;
-#endif
+// extern "C" int b2_toiHitCount;
 
 class BounceHouse : public Sample
 {
@@ -290,8 +288,8 @@ public:
 			g_camera.m_zoom = 25.0f * 0.35f;
 		}
 
-		// 
-		//b2World_SetContactTuning( m_worldId, 30.0f, 1.0f, 100.0f );
+		//
+		// b2World_SetContactTuning( m_worldId, 30.0f, 1.0f, 100.0f );
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.position = { 0.0f, -6.0f };
@@ -333,12 +331,12 @@ public:
 		b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
 		m_shapeId = b2CreateCircleShape( m_bodyId, &shapeDef, &circle );
 
-		//b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0 }, 0.25f };
-		//m_shapeId = b2CreateCapsuleShape( m_bodyId, &shapeDef, &capsule );
+		// b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0 }, 0.25f };
+		// m_shapeId = b2CreateCapsuleShape( m_bodyId, &shapeDef, &capsule );
 
-		//float h = 0.5f;
-		//b2Polygon box = b2MakeBox( h, h );
-		//m_shapeId = b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
+		// float h = 0.5f;
+		// b2Polygon box = b2MakeBox( h, h );
+		// m_shapeId = b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
 	}
 
 	void UpdateGui() override
@@ -385,9 +383,7 @@ public:
 			g_camera.m_zoom = 15.0f;
 		}
 
-#ifndef NDEBUG
-		b2_toiHitCount = 0;
-#endif
+		// b2_toiHitCount = 0;
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -399,25 +395,25 @@ public:
 			float w = 2.0f;
 			float h = 1.0f;
 			float x = 20.0f, y = 0.0f;
-			for (int i = 0; i < 20; ++i)
+			for ( int i = 0; i < 20; ++i )
 			{
 				points[i] = { x, y };
 				x -= w;
 			}
 
-			for (int i = 20; i < 40; ++i)
+			for ( int i = 20; i < 40; ++i )
 			{
 				points[i] = { x, y };
 				y += h;
 			}
 
-			for (int i = 40; i < 60; ++i)
+			for ( int i = 40; i < 60; ++i )
 			{
 				points[i] = { x, y };
 				x += w;
 			}
 
-			for (int i = 60; i < 80; ++i)
+			for ( int i = 60; i < 80; ++i )
 			{
 				points[i] = { x, y };
 				y -= h;
@@ -449,10 +445,7 @@ public:
 	{
 		Sample::Step( settings );
 
-#ifndef NDEBUG
-		g_draw.DrawString( 5, m_textLine, "toi hits = %d", b2_toiHitCount );
-		m_textLine += m_textIncrement;
-#endif
+		// DrawTextLine( "toi hits = %d", b2_toiHitCount );
 	}
 
 	static Sample* Create( Settings& settings )
@@ -475,9 +468,7 @@ public:
 			g_camera.m_zoom = 15.0f;
 		}
 
-#ifndef NDEBUG
-		b2_toiHitCount = 0;
-#endif
+		// b2_toiHitCount = 0;
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -499,7 +490,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			//shapeDef.friction = 0.0f;
+			// shapeDef.friction = 0.0f;
 			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		}
@@ -509,10 +500,7 @@ public:
 	{
 		Sample::Step( settings );
 
-#ifndef NDEBUG
-		g_draw.DrawString( 5, m_textLine, "toi hits = %d", b2_toiHitCount );
-		m_textLine += m_textIncrement;
-#endif
+		// DrawTextLine("toi hits = %d", b2_toiHitCount );
 	}
 
 	static Sample* Create( Settings& settings )
@@ -744,7 +732,7 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.material.friction = m_friction;
 
-			b2Hull hull = { };
+			b2Hull hull = {};
 
 			if ( m_bevel > 0.0f )
 			{
@@ -1026,7 +1014,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Vec2 points[3] = { { -2.0f, 0.0f }, { -1.0f, 0.0f }, { 2.0f, 0.5f }};
+			b2Vec2 points[3] = { { -2.0f, 0.0f }, { -1.0f, 0.0f }, { 2.0f, 0.5f } };
 			b2Hull hull = b2ComputeHull( points, 3 );
 			b2Polygon poly = b2MakePolygon( &hull, 0.0f );
 			b2CreatePolygonShape( bodyId, &shapeDef, &poly );
@@ -1124,11 +1112,11 @@ public:
 
 			m_ballId = b2CreateBody( m_worldId, &ballBodyDef );
 			// Ball shape
-			//b2Polygon ballShape = b2MakeBox( 5.f / pixelsPerMeter, 5.f / pixelsPerMeter );
+			// b2Polygon ballShape = b2MakeBox( 5.f / pixelsPerMeter, 5.f / pixelsPerMeter );
 			b2Polygon ballShape = b2MakeRoundedBox( 4.0f / pixelsPerMeter, 4.0f / pixelsPerMeter, 0.9f / pixelsPerMeter );
 			b2ShapeDef ballShapeDef = b2DefaultShapeDef();
 			ballShapeDef.material.friction = 0.f;
-			//ballShapeDef.restitution = 1.f;
+			// ballShapeDef.restitution = 1.f;
 			b2CreatePolygonShape( m_ballId, &ballShapeDef, &ballShape );
 			b2Body_SetLinearVelocity( m_ballId, { 0.f, -5.0f } );
 			b2Body_SetFixedRotation( m_ballId, true );
@@ -1202,7 +1190,7 @@ public:
 			b2CreateCircleShape( m_ballId, &ballShapeDef, &ballShape );
 
 			b2Body_SetLinearVelocity( m_ballId, { 0.f, -2.9f } ); // Initial velocity
-			b2Body_SetFixedRotation( m_ballId, true );						// Do not rotate a ball
+			b2Body_SetFixedRotation( m_ballId, true );			  // Do not rotate a ball
 		}
 	}
 
@@ -1528,11 +1516,11 @@ public:
 		ImGui::End();
 #endif
 
-		//if (m_frameCount == 165)
+		// if (m_frameCount == 165)
 		//{
 		//	settings.pause = true;
 		//	m_frameSkip = 30;
-		//}
+		// }
 
 		settings.enableContinuous = m_continuous;
 

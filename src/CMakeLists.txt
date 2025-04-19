@@ -68,17 +68,11 @@ set(BOX2D_API_FILES
 )
 
 # Hide internal functions
-# todo need to investigate this more
 # https://gcc.gnu.org/wiki/Visibility
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 
 add_library(box2d ${BOX2D_SOURCE_FILES} ${BOX2D_API_FILES})
-
-# Generate box2d_export.h to handles shared library builds
-# turned this off to make Box2D easier to use without cmake
-# include(GenerateExportHeader)
-# generate_export_header(box2d)
 
 target_include_directories(box2d
   PUBLIC
@@ -96,6 +90,7 @@ set_target_properties(box2d PROPERTIES
 	C_STANDARD 17
     C_STANDARD_REQUIRED YES
     C_EXTENSIONS YES
+	COMPILE_WARNING_AS_ERROR ON
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
 	DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX}
@@ -121,9 +116,9 @@ if (BOX2D_VALIDATE)
 	target_compile_definitions(box2d PRIVATE BOX2D_VALIDATE)
 endif()
 
-if (BOX2D_ENABLE_SIMD)
-	message(STATUS "Box2D SIMD enabled")	
-	target_compile_definitions(box2d PRIVATE BOX2D_ENABLE_SIMD)
+if (BOX2D_DISABLE_SIMD)
+	message(STATUS "Box2D SIMD disabled")	
+	target_compile_definitions(box2d PRIVATE BOX2D_DISABLE_SIMD)
 endif()
 
 if (MSVC)
@@ -166,7 +161,7 @@ elseif (APPLE)
 	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wall -Wextra -pedantic -Werror)
 elseif (EMSCRIPTEN)
 	message(STATUS "Box2D on Emscripten")
-	if (BOX2D_ENABLE_SIMD)
+	if (BOX2D_DISABLE_SIMD OFF)
 		target_compile_options(box2d PRIVATE -msimd128 -msse2)
 	endif()
 elseif (UNIX)
