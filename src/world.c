@@ -1016,10 +1016,7 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
 				b2Transform transform = { bodySim->center, bodySim->transform.q };
-				draw->DrawTransformFcn( transform, draw->context );
-
 				b2Vec2 p = b2TransformPoint( transform, offset );
-
 				draw->DrawStringFcn( p, body->name, b2_colorBlueViolet, draw->context );
 			}
 
@@ -1312,7 +1309,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 	if ( draw->drawBodyNames )
 	{
-		b2Vec2 offset = { 0.1f, 0.2f };
+		b2Vec2 offset = { 0.05f, 0.05f };
 		int count = world->bodies.count;
 		for ( int i = 0; i < count; ++i )
 		{
@@ -1327,9 +1324,10 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				continue;
 			}
 
-			b2Transform transform = b2GetBodyTransformQuick( world, body );
-			b2Vec2 p = b2TransformPoint( transform, offset );
+			b2BodySim* bodySim = b2GetBodySim( world, body );
 
+			b2Transform transform = { bodySim->center, bodySim->transform.q };
+			b2Vec2 p = b2TransformPoint( transform, offset );
 			draw->DrawStringFcn( p, body->name, b2_colorBlueViolet, draw->context );
 		}
 	}

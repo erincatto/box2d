@@ -13,10 +13,8 @@
 #include <imgui.h>
 #include <vector>
 
-#ifndef NDEBUG
-extern "C" int b2_toiCalls;
-extern "C" int b2_toiHitCount;
-#endif
+// extern "C" int b2_toiCalls;
+// extern "C" int b2_toiHitCount;
 
 class ChainShape : public Sample
 {
@@ -164,10 +162,8 @@ public:
 			m_shapeId = b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
 		}
 
-#ifndef NDEBUG
-		b2_toiCalls = 0;
-		b2_toiHitCount = 0;
-#endif
+		// b2_toiCalls = 0;
+		// b2_toiHitCount = 0;
 
 		m_stepCount = 0;
 	}
@@ -214,9 +210,7 @@ public:
 		g_draw.DrawSegment( b2Vec2_zero, { 0.5f, 0.0f }, b2_colorRed );
 		g_draw.DrawSegment( b2Vec2_zero, { 0.0f, 0.5f }, b2_colorGreen );
 
-#ifndef NDEBUG
-		DrawTextLine( "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
-#endif
+		// DrawTextLine( "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
 	}
 
 	static Sample* Create( Settings& settings )
@@ -1183,7 +1177,7 @@ public:
 
 	void Reset()
 	{
-		int count = int(m_bodyIds.size());
+		int count = int( m_bodyIds.size() );
 		for ( int i = 0; i < count; ++i )
 		{
 			b2DestroyBody( m_bodyIds[i] );

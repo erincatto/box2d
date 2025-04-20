@@ -1075,7 +1075,8 @@ B2_API float b2RevoluteJoint_GetLowerLimit( b2JointId jointId );
 /// Get the revolute joint upper limit in radians
 B2_API float b2RevoluteJoint_GetUpperLimit( b2JointId jointId );
 
-/// Set the revolute joint limits in radians
+/// Set the revolute joint limits in radians. It is expected that lower <= upper
+/// and that -0.95 * B2_PI <= lower && upper <= -0.95 * B2_PI.
 B2_API void b2RevoluteJoint_SetLimits( b2JointId jointId, float lower, float upper );
 
 /// Enable/disable a revolute joint motor

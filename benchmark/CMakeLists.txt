@@ -5,7 +5,12 @@ set(BOX2D_BENCHMARK_FILES
 )
 add_executable(benchmark ${BOX2D_BENCHMARK_FILES})
 
-set_target_properties(benchmark PROPERTIES C_STANDARD 17)
+set_target_properties(benchmark PROPERTIES
+    C_STANDARD 17
+    C_STANDARD_REQUIRED YES
+    C_EXTENSIONS NO
+	COMPILE_WARNING_AS_ERROR ON
+)
 
 target_link_libraries(benchmark PRIVATE box2d shared enkiTS)
 

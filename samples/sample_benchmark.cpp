@@ -11,9 +11,9 @@
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
 
-#include <GLFW/glfw3.h>
 #include <imgui.h>
-#include <inttypes.h>
+#include <limits.h>
+#include <stdint.h>
 #include <vector>
 
 #if defined( _MSC_VER )
@@ -23,10 +23,9 @@
 #define GET_CYCLES b2GetTicks()
 #endif
 
-#ifndef NDEBUG
-extern "C" int b2_toiCalls;
-extern "C" int b2_toiHitCount;
-#endif
+// these are not accessible in some build types
+// extern "C" int b2_toiCalls;
+// extern "C" int b2_toiHitCount;
 
 // Note: resetting the scene is non-deterministic because the world uses freelists
 class BenchmarkBarrel : public Sample
@@ -1376,8 +1375,7 @@ public:
 				b2Vec2 translation = m_translations[i];
 
 				CastResult result;
-				b2TreeStats traversalResult =
-					b2World_CastShape( m_worldId, &proxy, translation, filter, CastCallback, &result );
+				b2TreeStats traversalResult = b2World_CastShape( m_worldId, &proxy, translation, filter, CastCallback, &result );
 
 				if ( i == m_drawIndex )
 				{
@@ -1500,10 +1498,8 @@ public:
 			g_camera.m_zoom = 42.0f;
 		}
 
-#ifndef NDEBUG
-		b2_toiCalls = 0;
-		b2_toiHitCount = 0;
-#endif
+		// b2_toiCalls = 0;
+		// b2_toiHitCount = 0;
 
 		CreateSpinner( m_worldId );
 	}
@@ -1520,9 +1516,7 @@ public:
 			settings.pause = true;
 		}
 
-#ifndef NDEBUG
-		DrawTextLine( "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
-#endif
+		// DrawTextLine( "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
 	}
 
 	static Sample* Create( Settings& settings )
@@ -1667,7 +1661,7 @@ public:
 				b2SimplexCache cache = {};
 				input.transformA = m_transformAs[i];
 				input.transformB = m_transformBs[i];
-				m_outputs[i] = b2ShapeDistance(&input,  &cache, nullptr, 0 );
+				m_outputs[i] = b2ShapeDistance( &input, &cache, nullptr, 0 );
 				totalIterations += m_outputs[i].iterations;
 			}
 			uint64_t endCycles = GET_CYCLES;
@@ -1679,8 +1673,8 @@ public:
 			DrawTextLine( "count = %d", m_count );
 			DrawTextLine( "min cycles = %d", m_minCycles );
 			DrawTextLine( "ave cycles = %g", float( m_minCycles ) / float( m_count ) );
-			DrawTextLine( "min ms = %g, ave us = %g", m_minMilliseconds, 1000.0f * m_minMilliseconds / float(m_count) );
-			DrawTextLine( "average iterations = %g", totalIterations / float(m_count));
+			DrawTextLine( "min ms = %g, ave us = %g", m_minMilliseconds, 1000.0f * m_minMilliseconds / float( m_count ) );
+			DrawTextLine( "average iterations = %g", totalIterations / float( m_count ) );
 		}
 
 		b2Transform xfA = m_transformAs[m_drawIndex];
