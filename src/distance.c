@@ -218,10 +218,6 @@ static void b2ComputeSimplexWitnessPoints( b2Vec2* a, b2Vec2* b, const b2Simplex
 {
 	switch ( s->count )
 	{
-		case 0:
-			B2_ASSERT( false );
-			break;
-
 		case 1:
 			*a = s->v1.wA;
 			*b = s->v1.wB;
@@ -240,6 +236,8 @@ static void b2ComputeSimplexWitnessPoints( b2Vec2* a, b2Vec2* b, const b2Simplex
 			break;
 
 		default:
+			*a = b2Vec2_zero;
+			*b = b2Vec2_zero;
 			B2_ASSERT( false );
 			break;
 	}
