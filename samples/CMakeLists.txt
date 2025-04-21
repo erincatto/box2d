@@ -103,6 +103,10 @@ set_target_properties(samples PROPERTIES
     CXX_EXTENSIONS NO
 )
 
+if (BOX2D_COMPILE_WARNING_AS_ERROR)
+	set_target_properties(samples PROPERTIES COMPILE_WARNING_AS_ERROR ON)
+endif()
+
 target_include_directories(samples PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${JSMN_DIR})
 target_link_libraries(samples PUBLIC box2d shared imgui glfw glad enkiTS)
 

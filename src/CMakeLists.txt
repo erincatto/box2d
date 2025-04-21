@@ -92,11 +92,14 @@ set_target_properties(box2d PROPERTIES
 	C_STANDARD 17
     C_STANDARD_REQUIRED YES
     C_EXTENSIONS YES
-	COMPILE_WARNING_AS_ERROR ON
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
 	DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX}
 )
+
+if (BOX2D_COMPILE_WARNING_AS_ERROR)
+	set_target_properties(box2d PROPERTIES COMPILE_WARNING_AS_ERROR ON)
+endif()
 
 if (BOX2D_PROFILE)
 	target_compile_definitions(box2d PRIVATE BOX2D_PROFILE)
@@ -160,15 +163,15 @@ elseif (MINGW)
 	endif()
 elseif (APPLE)
 	message(STATUS "Box2D on Apple")
-	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wall -Wextra -pedantic -Werror)
+	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wall -Wextra -pedantic)
 elseif (EMSCRIPTEN)
 	message(STATUS "Box2D on Emscripten")
-	if (BOX2D_DISABLE_SIMD OFF)
+	if (NOT BOX2D_DISABLE_SIMD)
 		target_compile_options(box2d PRIVATE -msimd128 -msse2)
 	endif()
 elseif (UNIX)
 	message(STATUS "Box2D using Unix")
-	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wall -Wextra -pedantic -Werror -Wno-unused-value)
+	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wall -Wextra -pedantic -Wno-unused-value)
 	if ("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
 		# raspberry pi
 		# -mfpu=neon

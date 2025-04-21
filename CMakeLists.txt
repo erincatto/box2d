@@ -73,7 +73,8 @@ if(PROJECT_IS_TOP_LEVEL)
 	option(BOX2D_PROFILE "Enable profiling with Tracy" OFF)
 	option(BOX2D_VALIDATE "Enable heavy validation" ON)
 	option(BOX2D_UNIT_TESTS "Build the Box2D unit tests" ON)
-
+	option(BOX2D_COMPILE_WARNING_AS_ERROR "Compile warnings as errors" OFF)
+	
 	if(MSVC AND WIN32)
 		# add_compile_options(/fsanitize=address)
 		# set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/GS- /Gy /O2 /Oi /Ot")

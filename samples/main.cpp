@@ -75,7 +75,7 @@ void* AllocFcn( uint32_t size, int32_t alignment )
 	size_t sizeAligned = ( ( size - 1 ) | ( alignment - 1 ) ) + 1;
 	assert( ( sizeAligned & ( alignment - 1 ) ) == 0 );
 
-#if defined( _MSC_VER )
+#if defined( _MSC_VER ) || defined( __MINGW32__ ) || defined( __MINGW64__ )
 	void* ptr = _aligned_malloc( sizeAligned, alignment );
 #else
 	void* ptr = aligned_alloc( alignment, sizeAligned );

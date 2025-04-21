@@ -9,8 +9,11 @@ set_target_properties(benchmark PROPERTIES
     C_STANDARD 17
     C_STANDARD_REQUIRED YES
     C_EXTENSIONS NO
-	COMPILE_WARNING_AS_ERROR ON
 )
+
+if (BOX2D_COMPILE_WARNING_AS_ERROR)
+	set_target_properties(benchmark PROPERTIES COMPILE_WARNING_AS_ERROR ON)
+endif()
 
 target_link_libraries(benchmark PRIVATE box2d shared enkiTS)
 
