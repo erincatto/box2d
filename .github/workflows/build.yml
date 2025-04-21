@@ -146,10 +146,10 @@ jobs:
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release
 
-  samples-linux-static:
-    name: samples-macos-static
-    runs-on: macos-latest
-
+  samples-ubuntu-gcc-static:
+    name: samples-ubuntu-gcc-static
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
     steps:
     - uses: actions/checkout@v4
 
