@@ -144,5 +144,16 @@ int MathTest( void )
 		}
 	}
 
+	b2Rot q1 = b2Rot_identity;
+	b2Rot q2 = b2MakeRot(0.5f * B2_PI);
+	int N = 20;
+	for (int i = 0; i < N; ++i)
+	{
+		float alpha = (float)i / (float)N;
+		b2Rot q = b2NLerp(q1, q2, alpha);
+		float angle = b2Rot_GetAngle(q);
+		printf("angle = [%g %g]\n", alpha * 0.5f * B2_PI, alpha);
+	}
+	
 	return 0;
 }
