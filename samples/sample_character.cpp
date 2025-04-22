@@ -280,6 +280,9 @@ public:
 
 		float pogoRestLength = 3.0f * m_capsule.radius;
 		float rayLength = pogoRestLength + m_capsule.radius;
+
+		// todo extend rayLength when on the ground according to velocity to stick onto downward slopes
+
 		b2Vec2 origin = b2TransformPoint( m_transform, m_capsule.center1 );
 		b2Circle circle = { origin, 0.5f * m_capsule.radius };
 		b2Vec2 segmentOffset = { 0.75f * m_capsule.radius, 0.0f };
