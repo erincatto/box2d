@@ -327,9 +327,10 @@ public:
 		m_velocity.y -= m_gravity * timeStep;
 
 		// This ray extension keeps you glued to the ground when walking down slopes
-		float rayExtensionScale = 2.0f;
-		float rayExtension = m_onGround ? rayExtensionScale * b2Length( m_velocity ) * timeStep : 0.0f;
-		rayExtension = b2MaxFloat( rayExtension, m_capsule.radius );
+		// todo this needs some work
+		float rayExtension = m_onGround ? m_capsule.radius * b2Length( m_velocity ) * timeStep : 0.0f;
+		rayExtension += 0.5f * m_capsule.radius;
+
 		float rayLength = m_pogoRestLength + m_capsule.radius + rayExtension;
 
 		DrawTextLine( "extension = %.3f", rayExtension );
@@ -554,7 +555,7 @@ public:
 	{
 		if ( key == 'K' )
 		{
-			b2Vec2 point = b2TransformPoint( m_transform, { 0.0f, m_capsule.center1.y - 3.0f * m_capsule.radius } );
+			b2Vec2 point = b2TransformPoint( m_transform, { 0.0f, m_capsule.center1.y - m_capsuleRadius } );
 			b2Circle circle = { point, 0.5f };
 			b2ShapeProxy proxy = b2MakeProxy( &circle.center, 1, circle.radius );
 			b2QueryFilter filter = { MoverBit, DebrisBit };
