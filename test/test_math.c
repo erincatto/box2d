@@ -144,15 +144,18 @@ int MathTest( void )
 		}
 	}
 
+	// NLerp of b2Rot has an error of over 4 degrees.
+	// 2D quaternions should have an error under 1 degree.
 	b2Rot q1 = b2Rot_identity;
 	b2Rot q2 = b2MakeRot(0.5f * B2_PI);
-	int N = 20;
-	for (int i = 0; i < N; ++i)
+	int n = 100;
+	for (int i = 0; i <= n; ++i)
 	{
-		float alpha = (float)i / (float)N;
+		float alpha = (float)i / (float)n;
 		b2Rot q = b2NLerp(q1, q2, alpha);
 		float angle = b2Rot_GetAngle(q);
-		printf("angle = [%g %g]\n", alpha * 0.5f * B2_PI, alpha);
+		ENSURE_SMALL( alpha * 0.5f * B2_PI - angle, 5.0f * B2_PI / 180.0f );
+		//printf("angle = [%g %g %g]\n", alpha, alpha * 0.5f * B2_PI, angle);
 	}
 	
 	return 0;

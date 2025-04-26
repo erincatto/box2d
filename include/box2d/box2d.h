@@ -560,6 +560,12 @@ B2_API void b2Shape_SetMaterial( b2ShapeId shapeId, int material );
 /// Get the shape material identifier
 B2_API int b2Shape_GetMaterial( b2ShapeId shapeId );
 
+/// Get the shape surface material
+B2_API b2SurfaceMaterial b2Shape_GetSurfaceMaterial( b2ShapeId shapeId );
+
+/// Set the shape surface material
+B2_API void b2Shape_SetSurfaceMaterial( b2ShapeId shapeId, b2SurfaceMaterial surfaceMaterial );
+
 /// Get the shape filter
 B2_API b2Filter b2Shape_GetFilter( b2ShapeId shapeId );
 
@@ -1076,7 +1082,7 @@ B2_API float b2RevoluteJoint_GetLowerLimit( b2JointId jointId );
 B2_API float b2RevoluteJoint_GetUpperLimit( b2JointId jointId );
 
 /// Set the revolute joint limits in radians. It is expected that lower <= upper
-/// and that -0.95 * B2_PI <= lower && upper <= -0.95 * B2_PI.
+/// and that -0.99 * B2_PI <= lower && upper <= -0.99 * B2_PI.
 B2_API void b2RevoluteJoint_SetLimits( b2JointId jointId, float lower, float upper );
 
 /// Enable/disable a revolute joint motor

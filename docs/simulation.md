@@ -1927,7 +1927,7 @@ When an island goes to sleep the simulation data associated with that island is 
 Sensor overlaps are checked in the final stage. The overlap state reflects the final body transform. Sensors do not consider sleep so they may react to the user setting a body transform or creating a sleeping body. This is a parallel-for operation. The cost is roughly proportional to the number of sensors.
 
 ## Determinism
-Box2D is designed to be determinism across thread counts and platforms. I believe this is important for debugging and game design.
+Box2D is designed to be deterministic across thread counts and platforms. I believe this is important for debugging and game design.
 
 Multithreaded determinism is achieved by basing simulation order on creation order. This includes bodies, shapes, and joint creation order. Determinism includes results reported to users (events). These events must be in deterministic order.
 

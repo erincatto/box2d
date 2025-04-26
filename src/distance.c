@@ -506,9 +506,6 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 		}
 #endif
 
-		// Save the normal
-		nonUnitNormal = d;
-
 		// Ensure the search direction is numerically fit.
 		if ( b2Dot( d, d ) < FLT_EPSILON * FLT_EPSILON )
 		{
@@ -518,11 +515,12 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 			// The origin is probably contained by a line segment
 			// or triangle. Thus the shapes are overlapped.
 
-			// We can't return zero here even though there may be overlap.
-			// In case the simplex is a point, segment, or triangle it is difficult
-			// to determine if the origin is contained in the CSO or very close to it.
-			break;
+			// Must return overlap due to invalid normal.
+			return output;
 		}
+
+		// Save the normal
+		nonUnitNormal = d;
 
 		// Compute a tentative new simplex vertex using support points.
 		// support = support(a, d) - support(b, -d)
@@ -567,6 +565,7 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 
 	// Prepare output
 	b2Vec2 normal = b2Normalize( nonUnitNormal );
+	B2_ASSERT( b2IsNormalized( normal ) );
 	normal = b2RotateVector( input->transformA.q, normal );
 
 	b2Vec2 localPointA, localPointB;
@@ -640,13 +639,14 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 				}
 				else
 				{
-					if ( distanceOutput.distance == 0.0f )
+					if ( distanceOutput.distance < FLT_EPSILON )
 					{
 						// Normal may be invalid
 						return output;
 					}
 
-					// Initial overlap but distance is non-zero due to radius
+					// Initial overlap but distance is non-zero due to radius.
+					// Note: this can result in initial hits for shapes with a radius
 					B2_ASSERT( b2IsNormalized( distanceOutput.normal ) );
 					output.fraction = alpha;
 					output.point = b2MulAdd( distanceOutput.pointA, input->proxyA.radius, distanceOutput.normal );

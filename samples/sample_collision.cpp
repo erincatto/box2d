@@ -3220,10 +3220,42 @@ public:
 			m_triangle = b2MakePolygon( &hull, 0.0f );
 		}
 
-		m_box = b2MakeOffsetBox( 0.5f, 0.5f, { 1.0f, 0.0f }, b2Rot_identity );
+#if 0
+		{
+			b2Vec2 points[4] = {};
+			points[0].x = -0.599999964;
+			points[0].y = -0.700000048;
+			points[1].x = 0.449999988;
+			points[1].y = -0.700000048;
+			points[2].x = 0.449999988;
+			points[2].y = 0.350000024;
+			points[3].x = -0.599999964;
+			points[3].y = 0.350000024;
+			b2Hull hull = b2ComputeHull( points, 4 );
+			m_triangle = b2MakePolygon( &hull, 0.0f );
+		}
+#endif
 
-		m_transform = { { 0.0f, 0.0f }, b2Rot_identity };
-		m_translation = { 1.0f, 0.0f };
+		m_box = b2MakeOffsetBox( 0.5f, 0.5f, { 0.0f, 0.0f }, b2Rot_identity );
+
+#if 0
+		{
+			b2Vec2 points[4] = {};
+			points[0].x = 0.449999988;
+			points[0].y = -0.100000001;
+			points[1].x = 0.550000012;
+			points[1].y = -0.100000001;
+			points[2].x = 0.550000012;
+			points[2].y = 0.100000001;
+			points[3].x = 0.449999988;
+			points[3].y = 0.100000001;
+			b2Hull hull = b2ComputeHull( points, 4 );
+			m_box = b2MakePolygon( &hull, 0.0f );
+		}
+#endif
+
+		m_transform = { { -0.6f, 0.0f }, b2Rot_identity };
+		m_translation = { 2.0f, 0.0f };
 		m_angle = 0.0f;
 		m_startPoint = { 0.0f, 0.0f };
 		m_basePosition = { 0.0f, 0.0f };
@@ -3239,7 +3271,7 @@ public:
 		m_typeA = e_box;
 		m_typeB = e_point;
 		m_radiusA = 0.0f;
-		m_radiusB = 0.1f;
+		m_radiusB = 0.2f;
 
 		m_proxyA = MakeProxy( m_typeA, m_radiusA );
 		m_proxyB = MakeProxy( m_typeB, m_radiusB );
