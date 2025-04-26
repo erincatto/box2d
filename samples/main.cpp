@@ -151,7 +151,7 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 		assert( false );
 	}
 
-	const char* fontPath = "samples/data/droid_sans.ttf";
+	const char* fontPath = "data/droid_sans.ttf";
 	FILE* file = fopen( fontPath, "rb" );
 
 	if ( file != nullptr )
@@ -162,6 +162,7 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 		g_draw.m_regularFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 18.0f, &fontConfig );
 		g_draw.m_mediumFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 40.0f, &fontConfig );
 		g_draw.m_largeFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 64.0f, &fontConfig );
+        fclose( file );
 	}
 	else
 	{
