@@ -235,7 +235,7 @@ public:
 	// https://github.com/id-Software/Quake/blob/master/QW/client/pmove.c#L390
 	void SolveMove( float timeStep, float throttle )
 	{
-		bool walkable = m_groundNormal.y > 0.7f;
+		bool walkable = m_groundNormal.y > 0.71f;
 
 		// Friction
 		float speed = b2Length( m_velocity );
@@ -326,18 +326,18 @@ public:
 
 		m_velocity.y -= m_gravity * timeStep;
 
-		// This ray extension keeps you glued to the ground when walking down slopes
-		// todo this needs some work
-		float rayExtension = m_onGround ? m_capsule.radius * b2Length( m_velocity ) * timeStep : 0.0f;
-		rayExtension += 0.5f * m_capsule.radius;
+		// This ray extension keeps you glued to the ground when walking down slopes.
+		// The extension increases with velocity.
+		float rayExtension = m_stepDownHeight;
+		rayExtension += m_onGround ? b2Length( m_velocity ) * timeStep : 0.0f;
 
 		float rayLength = m_pogoRestLength + m_capsule.radius + rayExtension;
 
 		DrawTextLine( "extension = %.3f", rayExtension );
 
 		b2Vec2 origin = b2TransformPoint( m_transform, m_capsule.center1 );
-		b2Circle circle = { origin, 0.5f * m_capsule.radius };
-		b2Vec2 segmentOffset = { 0.75f * m_capsule.radius, 0.0f };
+		b2Circle circle = { origin, 0.9f * m_capsule.radius };
+		b2Vec2 segmentOffset = { 0.9f * m_capsule.radius, 0.0f };
 		b2Segment segment = {
 			.point1 = origin - segmentOffset,
 			.point2 = origin + segmentOffset,
@@ -676,6 +676,7 @@ public:
 	float m_gravity = 30.0f;
 	float m_pogoHertz = 5.0f;
 	float m_pogoDampingRatio = 0.8f;
+	float m_stepDownHeight = 0.5f;
 
 	int m_pogoShape = PogoSegment;
 	b2Transform m_transform;
