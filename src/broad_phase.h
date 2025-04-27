@@ -26,7 +26,6 @@ typedef struct b2World b2World;
 typedef struct b2BroadPhase
 {
 	b2DynamicTree trees[b2_bodyTypeCount];
-	int proxyCount;
 
 	// The move set and array are used to track shapes that have moved significantly
 	// and need a pair query for new contacts. The array has a deterministic order.

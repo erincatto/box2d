@@ -101,8 +101,8 @@ float b2RevoluteJoint_GetUpperLimit( b2JointId jointId )
 void b2RevoluteJoint_SetLimits( b2JointId jointId, float lower, float upper )
 {
 	B2_ASSERT( lower <= upper );
-	B2_ASSERT( lower >= -0.95f * B2_PI );
-	B2_ASSERT( upper <= 0.95f * B2_PI );
+	B2_ASSERT( lower >= -0.99f * B2_PI );
+	B2_ASSERT( upper <= 0.99f * B2_PI );
 
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_revoluteJoint );
 	if ( lower != joint->revoluteJoint.lowerAngle || upper != joint->revoluteJoint.upperAngle )

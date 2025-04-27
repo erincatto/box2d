@@ -47,10 +47,3 @@ static inline bool b2EnlargeAABB( b2AABB* a, b2AABB b )
 
 	return changed;
 }
-
-/// Do a and b overlap
-static inline bool b2AABB_Overlaps( b2AABB a, b2AABB b )
-{
-	return !( b.lowerBound.x > a.upperBound.x || b.lowerBound.y > a.upperBound.y || a.lowerBound.x > b.upperBound.x ||
-			  a.lowerBound.y > b.upperBound.y );
-}

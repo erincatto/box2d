@@ -354,7 +354,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		bodyDef.position = b2Add( ( b2Vec2 ){ 0.0f, 1.225f * s }, position );
 		bodyDef.linearDamping = 0.0f;
-		bodyDef.name = "lower_left_leg";
+		bodyDef.name = "upper_left_arm";
 
 		bone->bodyId = b2CreateBody( worldId, &bodyDef );
 

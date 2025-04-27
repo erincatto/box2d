@@ -177,10 +177,8 @@ elseif (UNIX)
 		# -mfpu=neon
 		# target_compile_options(box2d PRIVATE)
 	else()
-		# x64
 		if (BOX2D_AVX2)
 			message(STATUS "Box2D using AVX2")
-			# FMA -mfma -mavx -march=native
 			target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
 			target_compile_options(box2d PRIVATE -mavx2)
 		else()

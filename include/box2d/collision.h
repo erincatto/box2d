@@ -382,7 +382,7 @@ typedef struct b2DistanceOutput
 {
 	b2Vec2 pointA;	  ///< Closest point on shapeA
 	b2Vec2 pointB;	  ///< Closest point on shapeB
-	b2Vec2 normal;	  ///< Normal vector that points from A to B
+	b2Vec2 normal;	  ///< Normal vector that points from A to B. Invalid if distance is zero.
 	float distance;	  ///< The final distance, zero if overlapped
 	int iterations;	  ///< Number of GJK iterations used
 	int simplexCount; ///< The number of simplexes stored in the simplex array
@@ -425,7 +425,7 @@ typedef struct b2ShapeCastPairInput
 } b2ShapeCastPairInput;
 
 /// Perform a linear shape cast of shape B moving and shape A fixed. Determines the hit point, normal, and translation fraction.
-/// You may optionally supply an array to hold debug data.
+/// Initially touching shapes are treated as a miss.
 B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input );
 
 /// Make a proxy for use in overlap, shape cast, and related functions. This is a deep copy of the points.
