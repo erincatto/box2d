@@ -295,7 +295,7 @@ B2_INLINE b2Vec2 b2Normalize( b2Vec2 v )
 B2_INLINE bool b2IsNormalized( b2Vec2 a )
 {
 	float aa = b2Dot( a, a );
-	return b2AbsFloat( 1.0f - aa ) < 10.0f * FLT_EPSILON;
+	return b2AbsFloat( 1.0f - aa ) < 100.0f * FLT_EPSILON;
 }
 
 /// Convert a vector into a unit vector if possible, otherwise returns the zero vector. Also
@@ -621,6 +621,13 @@ B2_INLINE b2AABB b2AABB_Union( b2AABB a, b2AABB b )
 	c.upperBound.x = b2MaxFloat( a.upperBound.x, b.upperBound.x );
 	c.upperBound.y = b2MaxFloat( a.upperBound.y, b.upperBound.y );
 	return c;
+}
+
+/// Do a and b overlap
+B2_INLINE bool b2AABB_Overlaps( b2AABB a, b2AABB b )
+{
+	return !( b.lowerBound.x > a.upperBound.x || b.lowerBound.y > a.upperBound.y || a.lowerBound.x > b.upperBound.x ||
+			  a.lowerBound.y > b.upperBound.y );
 }
 
 /// Compute the bounding box of an array of circles

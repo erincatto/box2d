@@ -500,8 +500,8 @@ b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJointDef* de
 {
 	B2_CHECK_DEF( def );
 	B2_ASSERT( def->lowerAngle <= def->upperAngle );
-	B2_ASSERT( def->lowerAngle >= -0.95f * B2_PI );
-	B2_ASSERT( def->upperAngle <= 0.95f * B2_PI );
+	B2_ASSERT( def->lowerAngle >= -0.99f * B2_PI );
+	B2_ASSERT( def->upperAngle <= 0.99f * B2_PI );
 
 	b2World* world = b2GetWorldFromId( worldId );
 

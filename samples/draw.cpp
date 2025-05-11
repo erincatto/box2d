@@ -455,10 +455,8 @@ struct GLLines
 
 		assert( count % 2 == 0 );
 
-		glEnable( GL_LINE_SMOOTH );
 		glEnable( GL_BLEND );
 		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-		glLineWidth( 1.0f );
 
 		glUseProgram( m_programId );
 

@@ -34,7 +34,6 @@ void b2CreateBroadPhase( b2BroadPhase* bp )
 	//	fprintf(s_file, "============\n\n");
 	// }
 
-	bp->proxyCount = 0;
 	bp->moveSet = b2CreateSet( 16 );
 	bp->moveArray = b2IntArray_Create( 16 );
 	bp->moveResults = NULL;
@@ -106,8 +105,6 @@ void b2BroadPhase_DestroyProxy( b2BroadPhase* bp, int proxyKey )
 {
 	B2_ASSERT( bp->moveArray.count == (int)bp->moveSet.count );
 	b2UnBufferMove( bp, proxyKey );
-
-	--bp->proxyCount;
 
 	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
 	int proxyId = B2_PROXY_ID( proxyKey );
