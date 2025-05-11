@@ -10,12 +10,10 @@
 #include "id_pool.h"
 #include "island.h"
 #include "joint.h"
+#include "sensor.h"
 #include "shape.h"
 #include "solver_set.h"
 #include "world.h"
-
-// needed for dll export
-#include "sensor.h"
 
 #include "box2d/box2d.h"
 #include "box2d/id.h"
@@ -273,7 +271,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 			i += 1;
 		}
 
-		while ( i < 32)
+		while ( i < 32 )
 		{
 			body->name[i] = 0;
 			i += 1;
@@ -833,8 +831,10 @@ void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeS
 		angularVelocity = invTimeStep * deltaAngle;
 	}
 
-	// Return if velocity would be zero
-	if ( b2LengthSquared( linearVelocity ) == 0.0f && b2AbsFloat( angularVelocity ) == 0.0f )
+	float maxVelocity = b2Length( linearVelocity ) + b2AbsFloat( angularVelocity ) * sim->maxExtent;
+
+	// Return if velocity would be sleepy
+	if ( maxVelocity < body->sleepThreshold )
 	{
 		return;
 	}

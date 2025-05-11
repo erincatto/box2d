@@ -4,7 +4,6 @@
 #include "draw.h"
 #include "random.h"
 #include "sample.h"
-#include "settings.h"
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
@@ -26,13 +25,13 @@ public:
 		e_boxShape
 	};
 
-	explicit ChainShape( Settings& settings )
-		: Sample( settings )
+	explicit ChainShape( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 0.0f };
-			g_camera.m_zoom = 25.0f * 1.75f;
+			m_context->camera.m_center = { 0.0f, 0.0f };
+			m_context->camera.m_zoom = 25.0f * 1.75f;
 		}
 
 		m_groundId = b2_nullBodyId;
@@ -171,7 +170,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 155.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Chain Shape", nullptr, ImGuiWindowFlags_NoResize );
@@ -203,19 +202,19 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
-		g_draw.DrawSegment( b2Vec2_zero, { 0.5f, 0.0f }, b2_colorRed );
-		g_draw.DrawSegment( b2Vec2_zero, { 0.0f, 0.5f }, b2_colorGreen );
+		m_context->draw.DrawSegment( b2Vec2_zero, { 0.5f, 0.0f }, b2_colorRed );
+		m_context->draw.DrawSegment( b2Vec2_zero, { 0.0f, 0.5f }, b2_colorGreen );
 
 		// DrawTextLine( "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new ChainShape( settings );
+		return new ChainShape( context );
 	}
 
 	b2BodyId m_groundId;
@@ -235,13 +234,13 @@ static int sampleChainShape = RegisterSample( "Shapes", "Chain Shape", ChainShap
 class CompoundShapes : public Sample
 {
 public:
-	explicit CompoundShapes( Settings& settings )
-		: Sample( settings )
+	explicit CompoundShapes( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 6.0f };
-			g_camera.m_zoom = 25.0f * 0.5f;
+			m_context->camera.m_center = { 0.0f, 6.0f };
+			m_context->camera.m_zoom = 25.0f * 0.5f;
 		}
 
 		{
@@ -401,7 +400,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
 
 		ImGui::Begin( "Compound Shapes", nullptr, ImGuiWindowFlags_NoResize );
@@ -416,29 +415,29 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
 		if ( m_drawBodyAABBs )
 		{
 			b2AABB aabb = b2Body_ComputeAABB( m_table1Id );
-			g_draw.DrawAABB( aabb, b2_colorYellow );
+			m_context->draw.DrawAABB( aabb, b2_colorYellow );
 
 			aabb = b2Body_ComputeAABB( m_table2Id );
-			g_draw.DrawAABB( aabb, b2_colorYellow );
+			m_context->draw.DrawAABB( aabb, b2_colorYellow );
 
 			aabb = b2Body_ComputeAABB( m_ship1Id );
-			g_draw.DrawAABB( aabb, b2_colorYellow );
+			m_context->draw.DrawAABB( aabb, b2_colorYellow );
 
 			aabb = b2Body_ComputeAABB( m_ship2Id );
-			g_draw.DrawAABB( aabb, b2_colorYellow );
+			m_context->draw.DrawAABB( aabb, b2_colorYellow );
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new CompoundShapes( settings );
+		return new CompoundShapes( context );
 	}
 
 	b2BodyId m_table1Id;
@@ -463,13 +462,13 @@ public:
 		ALL_BITS = ( ~0u )
 	};
 
-	explicit ShapeFilter( Settings& settings )
-		: Sample( settings )
+	explicit ShapeFilter( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_zoom = 25.0f * 0.5f;
-			g_camera.m_center = { 0.0f, 5.0f };
+			m_context->camera.m_zoom = 25.0f * 0.5f;
+			m_context->camera.m_center = { 0.0f, 5.0f };
 		}
 
 		{
@@ -518,7 +517,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 240.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Shape Filter", nullptr, ImGuiWindowFlags_NoResize );
@@ -632,23 +631,23 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
 		b2Vec2 p1 = b2Body_GetPosition( m_player1Id );
-		g_draw.DrawString( { p1.x - 0.5f, p1.y }, "player 1" );
+		m_context->draw.DrawString( { p1.x - 0.5f, p1.y }, "player 1" );
 
 		b2Vec2 p2 = b2Body_GetPosition( m_player2Id );
-		g_draw.DrawString( { p2.x - 0.5f, p2.y }, "player 2" );
+		m_context->draw.DrawString( { p2.x - 0.5f, p2.y }, "player 2" );
 
 		b2Vec2 p3 = b2Body_GetPosition( m_player3Id );
-		g_draw.DrawString( { p3.x - 0.5f, p3.y }, "player 3" );
+		m_context->draw.DrawString( { p3.x - 0.5f, p3.y }, "player 3" );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new ShapeFilter( settings );
+		return new ShapeFilter( context );
 	}
 
 	b2BodyId m_player1Id;
@@ -671,13 +670,13 @@ public:
 		e_count = 10
 	};
 
-	explicit CustomFilter( Settings& settings )
-		: Sample( settings )
+	explicit CustomFilter( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 5.0f };
-			g_camera.m_zoom = 10.0f;
+			m_context->camera.m_center = { 0.0f, 5.0f };
+			m_context->camera.m_zoom = 10.0f;
 		}
 
 		// Register custom filter
@@ -710,17 +709,16 @@ public:
 		}
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		g_draw.DrawString( 5, m_textLine, "Custom filter disables collision between odd and even shapes" );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "Custom filter disables collision between odd and even shapes" );
 
-		Sample::Step( settings );
+		Sample::Step();
 
 		for ( int i = 0; i < e_count; ++i )
 		{
 			b2Vec2 p = b2Body_GetPosition( m_bodyIds[i] );
-			g_draw.DrawString( { p.x, p.y }, "%d", i );
+			m_context->draw.DrawString( { p.x, p.y }, "%d", i );
 		}
 	}
 
@@ -746,9 +744,9 @@ public:
 		return customFilter->ShouldCollide( shapeIdA, shapeIdB );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new CustomFilter( settings );
+		return new CustomFilter( context );
 	}
 
 	b2BodyId m_bodyIds[e_count];
@@ -767,13 +765,13 @@ public:
 		e_boxShape
 	};
 
-	explicit Restitution( Settings& settings )
-		: Sample( settings )
+	explicit Restitution( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 4.0f, 17.0f };
-			g_camera.m_zoom = 27.5f;
+			m_context->camera.m_center = { 4.0f, 17.0f };
+			m_context->camera.m_zoom = 27.5f;
 		}
 
 		{
@@ -842,7 +840,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Restitution", nullptr, ImGuiWindowFlags_NoResize );
@@ -864,9 +862,9 @@ public:
 		ImGui::End();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new Restitution( settings );
+		return new Restitution( context );
 	}
 
 	static constexpr int m_count = 40;
@@ -880,13 +878,13 @@ static int sampleIndex = RegisterSample( "Shapes", "Restitution", Restitution::C
 class Friction : public Sample
 {
 public:
-	explicit Friction( Settings& settings )
-		: Sample( settings )
+	explicit Friction( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 14.0f };
-			g_camera.m_zoom = 25.0f * 0.6f;
+			m_context->camera.m_center = { 0.0f, 14.0f };
+			m_context->camera.m_zoom = 25.0f * 0.6f;
 		}
 
 		{
@@ -936,9 +934,9 @@ public:
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new Friction( settings );
+		return new Friction( context );
 	}
 };
 
@@ -947,13 +945,13 @@ static int sampleFriction = RegisterSample( "Shapes", "Friction", Friction::Crea
 class RollingResistance : public Sample
 {
 public:
-	explicit RollingResistance( Settings& settings )
-		: Sample( settings )
+	explicit RollingResistance( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 5.0f, 20.0f };
-			g_camera.m_zoom = 27.5f;
+			m_context->camera.m_center = { 5.0f, 20.0f };
+			m_context->camera.m_zoom = 27.5f;
 		}
 
 		m_lift = 0.0f;
@@ -1014,19 +1012,19 @@ public:
 		}
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
 		for ( int i = 0; i < 20; ++i )
 		{
-			g_draw.DrawString( { -41.5f, 2.0f * i + 1.0f }, "%.2f", m_resistScale * i );
+			m_context->draw.DrawString( { -41.5f, 2.0f * i + 1.0f }, "%.2f", m_resistScale * i );
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new RollingResistance( settings );
+		return new RollingResistance( context );
 	}
 
 	float m_resistScale;
@@ -1038,13 +1036,13 @@ static int sampleRollingResistance = RegisterSample( "Shapes", "Rolling Resistan
 class ConveyorBelt : public Sample
 {
 public:
-	explicit ConveyorBelt( Settings& settings )
-		: Sample( settings )
+	explicit ConveyorBelt( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 2.0f, 7.5f };
-			g_camera.m_zoom = 12.0f;
+			m_context->camera.m_center = { 2.0f, 7.5f };
+			m_context->camera.m_zoom = 12.0f;
 		}
 
 		// Ground
@@ -1086,9 +1084,9 @@ public:
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new ConveyorBelt( settings );
+		return new ConveyorBelt( context );
 	}
 };
 
@@ -1097,13 +1095,13 @@ static int sampleConveyorBelt = RegisterSample( "Shapes", "Conveyor Belt", Conve
 class TangentSpeed : public Sample
 {
 public:
-	explicit TangentSpeed( Settings& settings )
-		: Sample( settings )
+	explicit TangentSpeed( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 60.0f, -15.0f };
-			g_camera.m_zoom = 38.0f;
+			m_context->camera.m_center = { 60.0f, -15.0f };
+			m_context->camera.m_zoom = 38.0f;
 		}
 
 		{
@@ -1189,7 +1187,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 80.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 260.0f, height ) );
 
 		ImGui::Begin( "Ball Parameters", nullptr, ImGuiWindowFlags_NoResize );
@@ -1208,20 +1206,20 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		if ( m_stepCount % 25 == 0 && m_bodyIds.size() < m_totalCount && settings.pause == false )
+		if ( m_stepCount % 25 == 0 && m_bodyIds.size() < m_totalCount && m_context->pause == false )
 		{
 			b2BodyId id = DropBall();
 			m_bodyIds.push_back( id );
 		}
 
-		Sample::Step( settings );
+		Sample::Step();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new TangentSpeed( settings );
+		return new TangentSpeed( context );
 	}
 
 	static constexpr int m_totalCount = 200;
@@ -1237,13 +1235,13 @@ static int sampleTangentSpeed = RegisterSample( "Shapes", "Tangent Speed", Tange
 class ModifyGeometry : public Sample
 {
 public:
-	explicit ModifyGeometry( Settings& settings )
-		: Sample( settings )
+	explicit ModifyGeometry( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_zoom = 25.0f * 0.25f;
-			g_camera.m_center = { 0.0f, 5.0f };
+			m_context->camera.m_zoom = 25.0f * 0.25f;
+			m_context->camera.m_center = { 0.0f, 5.0f };
 		}
 
 		{
@@ -1313,7 +1311,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 230.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
 
 		ImGui::Begin( "Modify Geometry", nullptr, ImGuiWindowFlags_NoResize );
@@ -1368,14 +1366,14 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new ModifyGeometry( settings );
+		return new ModifyGeometry( context );
 	}
 
 	b2ShapeId m_shapeId;
@@ -1397,13 +1395,13 @@ static int sampleModifyGeometry = RegisterSample( "Shapes", "Modify Geometry", M
 class ChainLink : public Sample
 {
 public:
-	explicit ChainLink( Settings& settings )
-		: Sample( settings )
+	explicit ChainLink( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 5.0f };
-			g_camera.m_zoom = 25.0f * 0.5f;
+			m_context->camera.m_center = { 0.0f, 5.0f };
+			m_context->camera.m_zoom = 25.0f * 0.5f;
 		}
 
 		b2Vec2 points1[] = { { 40.0f, 1.0f },	{ 0.0f, 0.0f },	 { -40.0f, 0.0f },
@@ -1459,17 +1457,16 @@ public:
 		}
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
-		g_draw.DrawString( 5, m_textLine, "This shows how to link together two chain shapes" );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "This shows how to link together two chain shapes" );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new ChainLink( settings );
+		return new ChainLink( context );
 	}
 };
 
@@ -1478,13 +1475,13 @@ static int sampleChainLink = RegisterSample( "Shapes", "Chain Link", ChainLink::
 class RoundedShapes : public Sample
 {
 public:
-	explicit RoundedShapes( Settings& settings )
-		: Sample( settings )
+	explicit RoundedShapes( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_zoom = 25.0f * 0.55f;
-			g_camera.m_center = { 2.0f, 8.0f };
+			m_context->camera.m_zoom = 25.0f * 0.55f;
+			m_context->camera.m_center = { 2.0f, 8.0f };
 		}
 
 		{
@@ -1537,9 +1534,9 @@ public:
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new RoundedShapes( settings );
+		return new RoundedShapes( context );
 	}
 };
 
@@ -1548,13 +1545,13 @@ static int sampleRoundedShapes = RegisterSample( "Shapes", "Rounded", RoundedSha
 class EllipseShape : public Sample
 {
 public:
-	explicit EllipseShape( Settings& settings )
-		: Sample( settings )
+	explicit EllipseShape( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_zoom = 25.0f * 0.55f;
-			g_camera.m_center = { 2.0f, 8.0f };
+			m_context->camera.m_zoom = 25.0f * 0.55f;
+			m_context->camera.m_center = { 2.0f, 8.0f };
 		}
 
 		{
@@ -1602,9 +1599,9 @@ public:
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new EllipseShape( settings );
+		return new EllipseShape( context );
 	}
 };
 
@@ -1613,13 +1610,13 @@ static int sampleEllipseShape = RegisterSample( "Shapes", "Ellipse", EllipseShap
 class OffsetShapes : public Sample
 {
 public:
-	explicit OffsetShapes( Settings& settings )
-		: Sample( settings )
+	explicit OffsetShapes( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_zoom = 25.0f * 0.55f;
-			g_camera.m_center = { 2.0f, 8.0f };
+			m_context->camera.m_zoom = 25.0f * 0.55f;
+			m_context->camera.m_center = { 2.0f, 8.0f };
 		}
 
 		{
@@ -1653,16 +1650,16 @@ public:
 		}
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
-		g_draw.DrawTransform( b2Transform_identity );
+		m_context->draw.DrawTransform( b2Transform_identity );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new OffsetShapes( settings );
+		return new OffsetShapes( context );
 	}
 };
 
@@ -1672,13 +1669,13 @@ static int sampleOffsetShapes = RegisterSample( "Shapes", "Offset", OffsetShapes
 class Explosion : public Sample
 {
 public:
-	explicit Explosion( Settings& settings )
-		: Sample( settings )
+	explicit Explosion( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 0.0f };
-			g_camera.m_zoom = 14.0f;
+			m_context->camera.m_center = { 0.0f, 0.0f };
+			m_context->camera.m_zoom = 14.0f;
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -1723,7 +1720,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 160.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Explosion", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1745,11 +1742,11 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		if ( settings.pause == false || settings.singleStep == true )
+		if ( m_context->pause == false || m_context->singleStep == true )
 		{
-			m_referenceAngle += settings.hertz > 0.0f ? 60.0f * B2_PI / 180.0f / settings.hertz : 0.0f;
+			m_referenceAngle += m_context->hertz > 0.0f ? 60.0f * B2_PI / 180.0f / m_context->hertz : 0.0f;
 			m_referenceAngle = b2UnwindAngle( m_referenceAngle );
 
 			int count = (int)m_jointIds.size();
@@ -1759,18 +1756,17 @@ public:
 			}
 		}
 
-		Sample::Step( settings );
+		Sample::Step();
 
-		g_draw.DrawString( 5, m_textLine, "reference angle = %g", m_referenceAngle );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "reference angle = %g", m_referenceAngle );
 
-		g_draw.DrawCircle( b2Vec2_zero, m_radius + m_falloff, b2_colorBox2DBlue );
-		g_draw.DrawCircle( b2Vec2_zero, m_radius, b2_colorBox2DYellow );
+		m_context->draw.DrawCircle( b2Vec2_zero, m_radius + m_falloff, b2_colorBox2DBlue );
+		m_context->draw.DrawCircle( b2Vec2_zero, m_radius, b2_colorBox2DYellow );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new Explosion( settings );
+		return new Explosion( context );
 	}
 
 	std::vector<b2JointId> m_jointIds;
@@ -1786,13 +1782,13 @@ static int sampleExplosion = RegisterSample( "Shapes", "Explosion", Explosion::C
 class RecreateStatic : public Sample
 {
 public:
-	explicit RecreateStatic( Settings& settings )
-		: Sample( settings )
+	explicit RecreateStatic( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 2.5f };
-			g_camera.m_zoom = 3.5f;
+			m_context->camera.m_center = { 0.0f, 2.5f };
+			m_context->camera.m_zoom = 3.5f;
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -1807,7 +1803,7 @@ public:
 		m_groundId = {};
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
 		if ( B2_IS_NON_NULL( m_groundId ) )
 		{
@@ -1827,12 +1823,12 @@ public:
 		b2Segment segment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
 		b2CreateSegmentShape( m_groundId, &shapeDef, &segment );
 
-		Sample::Step( settings );
+		Sample::Step();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new RecreateStatic( settings );
+		return new RecreateStatic( context );
 	}
 
 	b2BodyId m_groundId;

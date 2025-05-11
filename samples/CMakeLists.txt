@@ -92,8 +92,6 @@ set(BOX2D_SAMPLE_FILES
 	sample_shapes.cpp
 	sample_stacking.cpp
 	sample_world.cpp
-	settings.cpp
-	settings.h
 	shader.cpp
 	shader.h)
 

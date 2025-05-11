@@ -280,14 +280,14 @@ static void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body
 				.sensorShapeId =
 					{
 						.index1 = shapeId + 1,
-						.generation = shape->generation,
 						.world0 = world->worldId,
+						.generation = shape->generation,
 					},
 				.visitorShapeId =
 					{
 						.index1 = ref->shapeId + 1,
-						.generation = ref->generation,
 						.world0 = world->worldId,
+						.generation = ref->generation,
 					},
 			};
 
@@ -1682,8 +1682,8 @@ int b2Shape_GetSensorOverlaps( b2ShapeId shapeId, b2ShapeId* overlaps, int capac
 	{
 		overlaps[i] = (b2ShapeId){
 			.index1 = refs[i].shapeId + 1,
-			.generation = refs[i].generation,
 			.world0 = shapeId.world0,
+			.generation = refs[i].generation,
 		};
 	}
 

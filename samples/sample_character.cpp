@@ -3,7 +3,6 @@
 
 #include "draw.h"
 #include "sample.h"
-#include "settings.h"
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
@@ -58,16 +57,16 @@ static float CastCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float
 class Mover : public Sample
 {
 public:
-	explicit Mover( Settings& settings )
-		: Sample( settings )
+	explicit Mover( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 20.0f, 9.0f };
-			g_camera.m_zoom = 10.0f;
+			m_context->camera.m_center = { 20.0f, 9.0f };
+			m_context->camera.m_zoom = 10.0f;
 		}
 
-		settings.drawJoints = false;
+		m_context->drawJoints = false;
 		m_transform = { { 2.0f, 8.0f }, b2Rot_identity };
 		m_velocity = { 0.0f, 0.0f };
 		m_capsule = { { 0.0f, -0.5f * m_capsuleInteriorLength }, { 0.0f, 0.5f * m_capsuleInteriorLength }, m_capsuleRadius };
@@ -383,19 +382,19 @@ public:
 			m_groundNormal = b2Vec2_zero;
 
 			b2Vec2 delta = translation;
-			g_draw.DrawSegment( origin, origin + delta, b2_colorGray );
+			m_context->draw.DrawSegment( origin, origin + delta, b2_colorGray );
 
 			if ( m_pogoShape == PogoPoint )
 			{
-				g_draw.DrawPoint( origin + delta, 10.0f, b2_colorGray );
+				m_context->draw.DrawPoint( origin + delta, 10.0f, b2_colorGray );
 			}
 			else if ( m_pogoShape == PogoCircle )
 			{
-				g_draw.DrawCircle( origin + delta, circle.radius, b2_colorGray );
+				m_context->draw.DrawCircle( origin + delta, circle.radius, b2_colorGray );
 			}
 			else
 			{
-				g_draw.DrawSegment( segment.point1 + delta, segment.point2 + delta, b2_colorGray );
+				m_context->draw.DrawSegment( segment.point1 + delta, segment.point2 + delta, b2_colorGray );
 			}
 		}
 		else
@@ -413,19 +412,19 @@ public:
 							 ( 1.0f + 2.0f * zeta * omegaH + omegaH * omegaH );
 
 			b2Vec2 delta = castResult.fraction * translation;
-			g_draw.DrawSegment( origin, origin + delta, b2_colorGray );
+			m_context->draw.DrawSegment( origin, origin + delta, b2_colorGray );
 
 			if ( m_pogoShape == PogoPoint )
 			{
-				g_draw.DrawPoint( origin + delta, 10.0f, b2_colorPlum );
+				m_context->draw.DrawPoint( origin + delta, 10.0f, b2_colorPlum );
 			}
 			else if ( m_pogoShape == PogoCircle )
 			{
-				g_draw.DrawCircle( origin + delta, circle.radius, b2_colorPlum );
+				m_context->draw.DrawCircle( origin + delta, circle.radius, b2_colorPlum );
 			}
 			else
 			{
-				g_draw.DrawSegment( segment.point1 + delta, segment.point2 + delta, b2_colorPlum );
+				m_context->draw.DrawSegment( segment.point1 + delta, segment.point2 + delta, b2_colorPlum );
 			}
 
 			b2Body_ApplyForce( castResult.bodyId, { 0.0f, -50.0f }, castResult.point, true );
@@ -475,7 +474,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 350.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 25.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 25.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 340.0f, height ) );
 
 		ImGui::Begin( "Mover", nullptr, 0 );
@@ -561,21 +560,21 @@ public:
 			b2ShapeProxy proxy = b2MakeProxy( &circle.center, 1, circle.radius );
 			b2QueryFilter filter = { MoverBit, DebrisBit };
 			b2World_OverlapShape( m_worldId, &proxy, filter, Kick, this );
-			g_draw.DrawCircle( circle.center, circle.radius, b2_colorGoldenRod );
+			m_context->draw.DrawCircle( circle.center, circle.radius, b2_colorGoldenRod );
 		}
 
 		Sample::Keyboard( key );
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
 		bool pause = false;
-		if ( settings.pause )
+		if ( m_context->pause )
 		{
-			pause = settings.singleStep != true;
+			pause = m_context->singleStep != true;
 		}
 
-		float timeStep = settings.hertz > 0.0f ? 1.0f / settings.hertz : 0.0f;
+		float timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
 		if ( pause )
 		{
 			timeStep = 0.0f;
@@ -593,23 +592,23 @@ public:
 
 		m_time += timeStep;
 
-		Sample::Step( settings );
+		Sample::Step();
 
 		if ( pause == false )
 		{
 			float throttle = 0.0f;
 
-			if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) )
+			if ( glfwGetKey( m_context->window, GLFW_KEY_A ) )
 			{
 				throttle -= 1.0f;
 			}
 
-			if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) )
+			if ( glfwGetKey( m_context->window, GLFW_KEY_D ) )
 			{
 				throttle += 1.0f;
 			}
 
-			if ( glfwGetKey( g_mainWindow, GLFW_KEY_SPACE ) )
+			if ( glfwGetKey( m_context->window, GLFW_KEY_SPACE ) )
 			{
 				bool walkable = m_groundNormal.y > 0.71f;
 				if ( m_onGround == true && walkable && m_jumpReleased )
@@ -633,16 +632,16 @@ public:
 			b2Plane plane = m_planes[i].plane;
 			b2Vec2 p1 = m_transform.p + ( plane.offset - m_capsule.radius ) * plane.normal;
 			b2Vec2 p2 = p1 + 0.1f * plane.normal;
-			g_draw.DrawPoint( p1, 5.0f, b2_colorYellow );
-			g_draw.DrawSegment( p1, p2, b2_colorYellow );
+			m_context->draw.DrawPoint( p1, 5.0f, b2_colorYellow );
+			m_context->draw.DrawSegment( p1, p2, b2_colorYellow );
 		}
 
 		b2Vec2 p1 = b2TransformPoint( m_transform, m_capsule.center1 );
 		b2Vec2 p2 = b2TransformPoint( m_transform, m_capsule.center2 );
 
 		b2HexColor color = m_onGround ? b2_colorOrange : b2_colorAquamarine;
-		g_draw.DrawSolidCapsule( p1, p2, m_capsule.radius, color );
-		g_draw.DrawSegment( m_transform.p, m_transform.p + m_velocity, b2_colorPurple );
+		m_context->draw.DrawSolidCapsule( p1, p2, m_capsule.radius, color );
+		m_context->draw.DrawSegment( m_transform.p, m_transform.p + m_velocity, b2_colorPurple );
 
 		b2Vec2 p = m_transform.p;
 		DrawTextLine( "position %.2f %.2f", p.x, p.y );
@@ -651,13 +650,13 @@ public:
 
 		if ( m_lockCamera )
 		{
-			g_camera.m_center.x = m_transform.p.x;
+			m_context->camera.m_center.x = m_transform.p.x;
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new Mover( settings );
+		return new Mover( context );
 	}
 
 	static constexpr int m_planeCapacity = 8;
@@ -715,13 +714,13 @@ enum MoverMode
 class Mover2 : public Sample
 {
 public:
-	explicit Mover( Settings& settings )
-		: Sample( settings )
+	explicit Mover( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 20.0f, 9.0f };
-			g_camera.m_zoom = 10.0f;
+			m_context->camera.m_center = { 20.0f, 9.0f };
+			m_context->camera.m_zoom = 10.0f;
 		}
 
 		settings.drawJoints = false;
@@ -1182,7 +1181,7 @@ public:
 		ComputeVelocity(timeStep, true);
 		m_velocity.y = 0.0f;
 
-		if ( m_canJump && glfwGetKey( g_mainWindow, GLFW_KEY_SPACE ) )
+		if ( m_canJump && glfwGetKey( m_context->window, GLFW_KEY_SPACE ) )
 		{
 			m_velocity.y = m_jumpSpeed;
 			SetMode( e_fallingMode );
@@ -1339,19 +1338,19 @@ public:
 			m_groundNormal = b2Vec2_zero;
 
 			b2Vec2 delta = translation;
-			g_draw.DrawSegment( origin, origin + delta, b2_colorGray );
+			m_context->draw.DrawSegment( origin, origin + delta, b2_colorGray );
 
 			if ( m_pogoShape == e_pogoPoint )
 			{
-				g_draw.DrawPoint( origin + delta, 10.0f, b2_colorGray );
+				m_context->draw.DrawPoint( origin + delta, 10.0f, b2_colorGray );
 			}
 			else if ( m_pogoShape == PogoCircle )
 			{
-				g_draw.DrawCircle( origin + delta, circle.radius, b2_colorGray );
+				m_context->draw.DrawCircle( origin + delta, circle.radius, b2_colorGray );
 			}
 			else
 			{
-				g_draw.DrawSegment( segment.point1 + delta, segment.point2 + delta, b2_colorGray );
+				m_context->draw.DrawSegment( segment.point1 + delta, segment.point2 + delta, b2_colorGray );
 			}
 		}
 		else
@@ -1369,19 +1368,19 @@ public:
 							 ( 1.0f + 2.0f * zeta * omegaH + omegaH * omegaH );
 
 			b2Vec2 delta = castResult.fraction * translation;
-			g_draw.DrawSegment( origin, origin + delta, b2_colorGray );
+			m_context->draw.DrawSegment( origin, origin + delta, b2_colorGray );
 
 			if ( m_pogoShape == e_pogoPoint )
 			{
-				g_draw.DrawPoint( origin + delta, 10.0f, b2_colorPlum );
+				m_context->draw.DrawPoint( origin + delta, 10.0f, b2_colorPlum );
 			}
 			else if ( m_pogoShape == PogoCircle )
 			{
-				g_draw.DrawCircle( origin + delta, circle.radius, b2_colorPlum );
+				m_context->draw.DrawCircle( origin + delta, circle.radius, b2_colorPlum );
 			}
 			else
 			{
-				g_draw.DrawSegment( segment.point1 + delta, segment.point2 + delta, b2_colorPlum );
+				m_context->draw.DrawSegment( segment.point1 + delta, segment.point2 + delta, b2_colorPlum );
 			}
 
 			b2Body_ApplyForce( castResult.bodyId, { 0.0f, -50.0f }, castResult.point, true );
@@ -1431,7 +1430,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 350.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 25.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 25.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 340.0f, height ) );
 
 		ImGui::Begin( "Mover", nullptr, 0 );
@@ -1510,13 +1509,13 @@ public:
 			b2ShapeProxy proxy = b2MakeProxy( &circle.center, 1, circle.radius );
 			b2QueryFilter filter = { MoverBit, DebrisBit };
 			b2World_OverlapShape( m_worldId, &proxy, filter, Kick, this );
-			g_draw.DrawCircle( circle.center, circle.radius, b2_colorGoldenRod );
+			m_context->draw.DrawCircle( circle.center, circle.radius, b2_colorGoldenRod );
 		}
 
 		Sample::Keyboard( key );
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
 		bool pause = false;
 		if ( settings.pause )
@@ -1542,23 +1541,23 @@ public:
 
 		m_time += timeStep;
 
-		Sample::Step( settings );
+		Sample::Step();
 
 		if ( pause == false )
 		{
 			float throttle = 0.0f;
 
-			if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) )
+			if ( glfwGetKey( m_context->window, GLFW_KEY_A ) )
 			{
 				throttle -= 1.0f;
 			}
 
-			if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) )
+			if ( glfwGetKey( m_context->window, GLFW_KEY_D ) )
 			{
 				throttle += 1.0f;
 			}
 
-			if ( glfwGetKey( g_mainWindow, GLFW_KEY_SPACE ) )
+			if ( glfwGetKey( m_context->window, GLFW_KEY_SPACE ) )
 			{
 				bool walkable = m_groundNormal.y > 0.71f;
 				if ( m_onGround == true && walkable && m_jumpReleased )
@@ -1582,16 +1581,16 @@ public:
 			b2Plane plane = m_planes[i].plane;
 			b2Vec2 p1 = m_transform.p + ( plane.offset - m_capsule.radius ) * plane.normal;
 			b2Vec2 p2 = p1 + 0.1f * plane.normal;
-			g_draw.DrawPoint( p1, 5.0f, b2_colorYellow );
-			g_draw.DrawSegment( p1, p2, b2_colorYellow );
+			m_context->draw.DrawPoint( p1, 5.0f, b2_colorYellow );
+			m_context->draw.DrawSegment( p1, p2, b2_colorYellow );
 		}
 
 		b2Vec2 p1 = b2TransformPoint( m_transform, m_capsule.center1 );
 		b2Vec2 p2 = b2TransformPoint( m_transform, m_capsule.center2 );
 
 		b2HexColor color = m_onGround ? b2_colorOrange : b2_colorAquamarine;
-		g_draw.DrawSolidCapsule( p1, p2, m_capsule.radius, color );
-		g_draw.DrawSegment( m_transform.p, m_transform.p + m_velocity, b2_colorPurple );
+		m_context->draw.DrawSolidCapsule( p1, p2, m_capsule.radius, color );
+		m_context->draw.DrawSegment( m_transform.p, m_transform.p + m_velocity, b2_colorPurple );
 
 		b2Vec2 p = m_transform.p;
 		DrawTextLine( "position %.2f %.2f", p.x, p.y );
@@ -1600,13 +1599,13 @@ public:
 
 		if ( m_lockCamera )
 		{
-			g_camera.m_center.x = m_transform.p.x;
+			m_context->camera.m_center.x = m_transform.p.x;
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new Mover( settings );
+		return new Mover( context );
 	}
 
 	static constexpr int m_planeCapacity = 8;

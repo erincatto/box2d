@@ -6,7 +6,6 @@
 #include "draw.h"
 #include "human.h"
 #include "sample.h"
-#include "settings.h"
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
@@ -17,8 +16,8 @@
 class LargeWorld : public Sample
 {
 public:
-	explicit LargeWorld( Settings& settings )
-		: Sample( settings )
+	explicit LargeWorld( SampleContext* context )
+		: Sample( context )
 	{
 		m_period = 40.0f;
 		float omega = 2.0 * B2_PI / m_period;
@@ -30,12 +29,12 @@ public:
 
 		m_viewPosition = { xStart, 15.0f };
 
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = m_viewPosition;
-			g_camera.m_zoom = 25.0f * 1.0f;
-			settings.drawJoints = false;
-			settings.useCameraBounds = true;
+			m_context->camera.m_center = m_viewPosition;
+			m_context->camera.m_zoom = 25.0f * 1.0f;
+			m_context->drawJoints = false;
+			m_context->useCameraBounds = true;
 		}
 
 		{
@@ -146,7 +145,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 160.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Large World", nullptr, ImGuiWindowFlags_NoResize );
@@ -164,12 +163,12 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
 		float span = 0.5f * ( m_period * m_cycleCount );
-		float timeStep = settings.hertz > 0.0f ? 1.0f / settings.hertz : 0.0f;
+		float timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
 
-		if ( settings.pause )
+		if ( m_context->pause )
 		{
 			timeStep = 0.0f;
 		}
@@ -179,12 +178,12 @@ public:
 
 		if ( m_speed != 0.0f )
 		{
-			g_camera.m_center = m_viewPosition;
+			m_context->camera.m_center = m_viewPosition;
 		}
 
 		if ( m_followCar )
 		{
-			g_camera.m_center.x = b2Body_GetPosition( m_car.m_chassisId ).x;
+			m_context->camera.m_center.x = b2Body_GetPosition( m_car.m_chassisId ).x;
 		}
 
 		float radius = 2.0f;
@@ -204,30 +203,30 @@ public:
 
 		if ( m_explode )
 		{
-			g_draw.DrawCircle( m_explosionPosition, radius, b2_colorAzure );
+			m_context->draw.DrawCircle( m_explosionPosition, radius, b2_colorAzure );
 		}
 
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) == GLFW_PRESS )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS )
 		{
 			m_car.SetSpeed( 20.0f );
 		}
 
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_S ) == GLFW_PRESS )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_S ) == GLFW_PRESS )
 		{
 			m_car.SetSpeed( 0.0f );
 		}
 
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) == GLFW_PRESS )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_D ) == GLFW_PRESS )
 		{
 			m_car.SetSpeed( -5.0f );
 		}
 
-		Sample::Step( settings );
+		Sample::Step();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new LargeWorld( settings );
+		return new LargeWorld( context );
 	}
 
 	Car m_car;

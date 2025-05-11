@@ -3,7 +3,6 @@
 
 #include "draw.h"
 #include "sample.h"
-#include "settings.h"
 
 #include "box2d/box2d.h"
 
@@ -15,13 +14,13 @@
 class HighMassRatio1 : public Sample
 {
 public:
-	explicit HighMassRatio1( Settings& settings )
-		: Sample( settings )
+	explicit HighMassRatio1( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 3.0f, 14.0f };
-			g_camera.m_zoom = 25.0f;
+			m_context->camera.m_center = { 3.0f, 14.0f };
+			m_context->camera.m_zoom = 25.0f;
 		}
 
 		float extent = 1.0f;
@@ -66,9 +65,9 @@ public:
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new HighMassRatio1( settings );
+		return new HighMassRatio1( context );
 	}
 };
 
@@ -78,13 +77,13 @@ static int sampleIndex1 = RegisterSample( "Robustness", "HighMassRatio1", HighMa
 class HighMassRatio2 : public Sample
 {
 public:
-	explicit HighMassRatio2( Settings& settings )
-		: Sample( settings )
+	explicit HighMassRatio2( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 16.5f };
-			g_camera.m_zoom = 25.0f;
+			m_context->camera.m_center = { 0.0f, 16.5f };
+			m_context->camera.m_zoom = 25.0f;
 		}
 
 		{
@@ -124,9 +123,9 @@ public:
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new HighMassRatio2( settings );
+		return new HighMassRatio2( context );
 	}
 };
 
@@ -136,13 +135,13 @@ static int sampleIndex2 = RegisterSample( "Robustness", "HighMassRatio2", HighMa
 class HighMassRatio3 : public Sample
 {
 public:
-	explicit HighMassRatio3( Settings& settings )
-		: Sample( settings )
+	explicit HighMassRatio3( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 16.5f };
-			g_camera.m_zoom = 25.0f;
+			m_context->camera.m_center = { 0.0f, 16.5f };
+			m_context->camera.m_zoom = 25.0f;
 		}
 
 		{
@@ -184,9 +183,9 @@ public:
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new HighMassRatio3( settings );
+		return new HighMassRatio3( context );
 	}
 };
 
@@ -195,13 +194,13 @@ static int sampleIndex3 = RegisterSample( "Robustness", "HighMassRatio3", HighMa
 class OverlapRecovery : public Sample
 {
 public:
-	explicit OverlapRecovery( Settings& settings )
-		: Sample( settings )
+	explicit OverlapRecovery( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 2.5f };
-			g_camera.m_zoom = 25.0f * 0.15f;
+			m_context->camera.m_center = { 0.0f, 2.5f };
+			m_context->camera.m_zoom = 25.0f * 0.15f;
 		}
 
 		m_bodyIds = nullptr;
@@ -277,7 +276,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 210.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 220.0f, height ) );
 
 		ImGui::Begin( "Overlap Recovery", nullptr, ImGuiWindowFlags_NoResize );
@@ -301,9 +300,9 @@ public:
 		ImGui::End();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new OverlapRecovery( settings );
+		return new OverlapRecovery( context );
 	}
 
 	b2BodyId* m_bodyIds;
@@ -321,13 +320,13 @@ static int sampleIndex4 = RegisterSample( "Robustness", "Overlap Recovery", Over
 class TinyPyramid : public Sample
 {
 public:
-	explicit TinyPyramid( Settings& settings )
-		: Sample( settings )
+	explicit TinyPyramid( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 0.8f };
-			g_camera.m_zoom = 1.0f;
+			m_context->camera.m_center = { 0.0f, 0.8f };
+			m_context->camera.m_zoom = 1.0f;
 		}
 
 		{
@@ -365,15 +364,15 @@ public:
 		}
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
 		DrawTextLine( "%.1fcm squares", 200.0f * m_extent );
-		Sample::Step( settings );
+		Sample::Step();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new TinyPyramid( settings );
+		return new TinyPyramid( context );
 	}
 
 	float m_extent;

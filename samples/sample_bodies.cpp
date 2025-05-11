@@ -3,7 +3,6 @@
 
 #include "draw.h"
 #include "sample.h"
-#include "settings.h"
 
 #include "box2d/box2d.h"
 
@@ -12,13 +11,13 @@
 class BodyType : public Sample
 {
 public:
-	explicit BodyType( Settings& settings )
-		: Sample( settings )
+	explicit BodyType( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.8f, 6.4f };
-			g_camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.m_center = { 0.8f, 6.4f };
+			m_context->camera.m_zoom = 25.0f * 0.4f;
 		}
 
 		m_type = b2_dynamicBody;
@@ -181,7 +180,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
 		ImGui::Begin( "Body Type", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 
@@ -246,7 +245,7 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
 		// Drive the kinematic body.
 		if ( m_type == b2_kinematicBody )
@@ -261,12 +260,12 @@ public:
 			}
 		}
 
-		Sample::Step( settings );
+		Sample::Step();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new BodyType( settings );
+		return new BodyType( context );
 	}
 
 	b2BodyId m_attachmentId;
@@ -295,13 +294,13 @@ float RestitutionCallback( float, int, float, int )
 class Weeble : public Sample
 {
 public:
-	explicit Weeble( Settings& settings )
-		: Sample( settings )
+	explicit Weeble( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 2.3f, 10.0f };
-			g_camera.m_zoom = 25.0f * 0.5f;
+			m_context->camera.m_center = { 2.3f, 10.0f };
+			m_context->camera.m_zoom = 25.0f * 0.5f;
 		}
 
 		// Test friction and restitution callbacks
@@ -350,7 +349,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 120.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
 		ImGui::Begin( "Weeble", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 		if ( ImGui::Button( "Teleport" ) )
@@ -375,11 +374,11 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
-		g_draw.DrawCircle( m_explosionPosition, m_explosionRadius, b2_colorAzure );
+		m_context->draw.DrawCircle( m_explosionPosition, m_explosionRadius, b2_colorAzure );
 
 		// This shows how to get the velocity of a point on a body
 		b2Vec2 localPoint = { 0.0f, 2.0f };
@@ -389,13 +388,13 @@ public:
 		b2Vec2 v2 = b2Body_GetWorldPointVelocity( m_weebleId, worldPoint );
 
 		b2Vec2 offset = { 0.05f, 0.0f };
-		g_draw.DrawSegment( worldPoint, worldPoint + v1, b2_colorRed );
-		g_draw.DrawSegment( worldPoint + offset, worldPoint + v2 + offset, b2_colorGreen );
+		m_context->draw.DrawSegment( worldPoint, worldPoint + v1, b2_colorRed );
+		m_context->draw.DrawSegment( worldPoint + offset, worldPoint + v2 + offset, b2_colorGreen );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new Weeble( settings );
+		return new Weeble( context );
 	}
 
 	b2BodyId m_weebleId;
@@ -409,13 +408,13 @@ static int sampleWeeble = RegisterSample( "Bodies", "Weeble", Weeble::Create );
 class Sleep : public Sample
 {
 public:
-	explicit Sleep( Settings& settings )
-		: Sample( settings )
+	explicit Sleep( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 3.0f, 50.0f };
-			g_camera.m_zoom = 25.0f * 2.2f;
+			m_context->camera.m_center = { 3.0f, 50.0f };
+			m_context->camera.m_zoom = 25.0f * 2.2f;
 		}
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -554,7 +553,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 160.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 		ImGui::Begin( "Sleep", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 
@@ -597,9 +596,9 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
 		// Detect sensors touching the ground
 		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
@@ -638,14 +637,13 @@ public:
 
 		for ( int i = 0; i < 2; ++i )
 		{
-			g_draw.DrawString( 5, m_textLine, "sensor touch %d = %s", i, m_sensorTouching[i] ? "true" : "false" );
-			m_textLine += m_textIncrement;
+			DrawTextLine( "sensor touch %d = %s", i, m_sensorTouching[i] ? "true" : "false" );
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new Sleep( settings );
+		return new Sleep( context );
 	}
 
 	b2BodyId m_pendulumId;
@@ -660,13 +658,13 @@ static int sampleSleep = RegisterSample( "Bodies", "Sleep", Sleep::Create );
 class BadBody : public Sample
 {
 public:
-	explicit BadBody( Settings& settings )
-		: Sample( settings )
+	explicit BadBody( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 2.3f, 10.0f };
-			g_camera.m_zoom = 25.0f * 0.5f;
+			m_context->camera.m_center = { 2.3f, 10.0f };
+			m_context->camera.m_zoom = 25.0f * 0.5f;
 		}
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -713,23 +711,20 @@ public:
 		}
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
-		g_draw.DrawString( 5, m_textLine, "A bad body is a dynamic body with no mass and behaves like a kinematic body." );
-		m_textLine += m_textIncrement;
-
-		g_draw.DrawString( 5, m_textLine, "Bad bodies are considered invalid and a user bug. Behavior is not guaranteed." );
-		m_textLine += m_textIncrement;
+		DrawTextLine("A bad body is a dynamic body with no mass and behaves like a kinematic body." );
+		DrawTextLine( "Bad bodies are considered invalid and a user bug. Behavior is not guaranteed." );
 
 		// For science
 		b2Body_ApplyForceToCenter( m_badBodyId, { 0.0f, 10.0f }, true );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new BadBody( settings );
+		return new BadBody( context );
 	}
 
 	b2BodyId m_badBodyId;
@@ -741,13 +736,13 @@ static int sampleBadBody = RegisterSample( "Bodies", "Bad", BadBody::Create );
 class Pivot : public Sample
 {
 public:
-	explicit Pivot( Settings& settings )
-		: Sample( settings )
+	explicit Pivot( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.8f, 6.4f };
-			g_camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.m_center = { 0.8f, 6.4f };
+			m_context->camera.m_zoom = 25.0f * 0.4f;
 		}
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -785,22 +780,21 @@ public:
 		}
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
 		b2Vec2 v = b2Body_GetLinearVelocity( m_bodyId );
 		float omega = b2Body_GetAngularVelocity( m_bodyId );
 		b2Vec2 r = b2Body_GetWorldVector( m_bodyId, { 0.0f, -m_lever } );
 
 		b2Vec2 vp = v + b2CrossSV( omega, r );
-		g_draw.DrawString( 5, m_textLine, "pivot velocity = (%g, %g)", vp.x, vp.y );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "pivot velocity = (%g, %g)", vp.x, vp.y );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new Pivot( settings );
+		return new Pivot( context );
 	}
 
 	b2BodyId m_bodyId;
@@ -813,13 +807,13 @@ static int samplePivot = RegisterSample( "Bodies", "Pivot", Pivot::Create );
 class Kinematic : public Sample
 {
 public:
-	explicit Kinematic( Settings& settings )
-		: Sample( settings )
+	explicit Kinematic( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 0.0f };
-			g_camera.m_zoom = 4.0f;
+			m_context->camera.m_center = { 0.0f, 0.0f };
+			m_context->camera.m_zoom = 4.0f;
 		}
 
 		m_amplitude = 2.0f;
@@ -839,10 +833,10 @@ public:
 		m_time = 0.0f;
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		float timeStep = settings.hertz > 0.0f ? 1.0f / settings.hertz : 0.0f;
-		if ( settings.pause && settings.singleStep == false )
+		float timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
+		if ( m_context->pause && m_context->singleStep == false )
 		{
 			timeStep = 0.0f;
 		}
@@ -856,20 +850,20 @@ public:
 			b2Rot rotation = b2MakeRot( 2.0f * m_time );
 
 			b2Vec2 axis = b2RotateVector( rotation, { 0.0f, 1.0f } );
-			g_draw.DrawSegment( point - 0.5f * axis, point + 0.5f * axis, b2_colorPlum );
-			g_draw.DrawPoint( point, 10.0f, b2_colorPlum );
+			m_context->draw.DrawSegment( point - 0.5f * axis, point + 0.5f * axis, b2_colorPlum );
+			m_context->draw.DrawPoint( point, 10.0f, b2_colorPlum );
 
 			b2Body_SetTargetTransform( m_bodyId, { point, rotation }, timeStep );
 		}
 
-		Sample::Step( settings );
+		Sample::Step();
 
 		m_time += timeStep;
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new Kinematic( settings );
+		return new Kinematic( context );
 	}
 
 	b2BodyId m_bodyId;

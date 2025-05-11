@@ -8,7 +8,6 @@
 #include "human.h"
 #include "random.h"
 #include "sample.h"
-#include "settings.h"
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
@@ -25,13 +24,13 @@ public:
 		e_maxCount = 10
 	};
 
-	explicit DistanceJoint( Settings& settings )
-		: Sample( settings )
+	explicit DistanceJoint( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 12.0f };
-			g_camera.m_zoom = 25.0f * 0.35f;
+			m_context->camera.m_center = { 0.0f, 12.0f };
+			m_context->camera.m_zoom = 25.0f * 0.35f;
 		}
 
 		{
@@ -116,7 +115,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 240.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
 
 		ImGui::Begin( "Distance Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -201,9 +200,9 @@ public:
 		ImGui::End();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new DistanceJoint( settings );
+		return new DistanceJoint( context );
 	}
 
 	b2BodyId m_groundId;
@@ -229,13 +228,13 @@ static int sampleDistanceJoint = RegisterSample( "Joints", "Distance Joint", Dis
 class MotorJoint : public Sample
 {
 public:
-	explicit MotorJoint( Settings& settings )
-		: Sample( settings )
+	explicit MotorJoint( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 7.0f };
-			g_camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.m_center = { 0.0f, 7.0f };
+			m_context->camera.m_zoom = 25.0f * 0.4f;
 		}
 
 		b2BodyId groundId;
@@ -280,7 +279,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 180.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Motor Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -312,11 +311,11 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		if ( m_go && settings.hertz > 0.0f )
+		if ( m_go && m_context->hertz > 0.0f )
 		{
-			m_time += 1.0f / settings.hertz;
+			m_time += 1.0f / m_context->hertz;
 		}
 
 		b2Vec2 linearOffset;
@@ -329,20 +328,19 @@ public:
 		b2MotorJoint_SetAngularOffset( m_jointId, angularOffset );
 
 		b2Transform transform = { linearOffset, b2MakeRot( angularOffset ) };
-		g_draw.DrawTransform( transform );
+		m_context->draw.DrawTransform( transform );
 
-		Sample::Step( settings );
+		Sample::Step();
 
 		b2Vec2 force = b2Joint_GetConstraintForce( m_jointId );
 		float torque = b2Joint_GetConstraintTorque( m_jointId );
 
-		g_draw.DrawString( 5, m_textLine, "force = {%3.f, %3.f}, torque = %3.f", force.x, force.y, torque );
-		m_textLine += 15;
+		DrawTextLine( "force = {%3.f, %3.f}, torque = %3.f", force.x, force.y, torque );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new MotorJoint( settings );
+		return new MotorJoint( context );
 	}
 
 	b2BodyId m_bodyId;
@@ -361,13 +359,13 @@ static int sampleMotorJoint = RegisterSample( "Joints", "Motor Joint", MotorJoin
 class FilterJoint : public Sample
 {
 public:
-	explicit FilterJoint( Settings& settings )
-		: Sample( settings )
+	explicit FilterJoint( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 7.0f };
-			g_camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.m_center = { 0.0f, 7.0f };
+			m_context->camera.m_zoom = 25.0f * 0.4f;
 		}
 
 		{
@@ -401,9 +399,9 @@ public:
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new FilterJoint( settings );
+		return new FilterJoint( context );
 	}
 };
 
@@ -412,13 +410,13 @@ static int sampleFilterJoint = RegisterSample( "Joints", "Filter Joint", FilterJ
 class RevoluteJoint : public Sample
 {
 public:
-	explicit RevoluteJoint( Settings& settings )
-		: Sample( settings )
+	explicit RevoluteJoint( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 15.5f };
-			g_camera.m_zoom = 25.0f * 0.7f;
+			m_context->camera.m_center = { 0.0f, 15.5f };
+			m_context->camera.m_zoom = 25.0f * 0.7f;
 		}
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -506,7 +504,7 @@ public:
 			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
 			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
 			jointDef.lowerAngle = -0.25f * B2_PI;
-			jointDef.upperAngle = 0.5f * B2_PI;
+			jointDef.upperAngle = 0.1f * B2_PI;
 			jointDef.enableLimit = true;
 			jointDef.enableMotor = true;
 			jointDef.motorSpeed = 0.0f;
@@ -519,7 +517,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 220.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Revolute Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -575,26 +573,23 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
 		float angle1 = b2RevoluteJoint_GetAngle( m_jointId1 );
-		g_draw.DrawString( 5, m_textLine, "Angle (Deg) 1 = %2.1f", angle1 );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "Angle (Deg) 1 = %2.1f", angle1 );
 
 		float torque1 = b2RevoluteJoint_GetMotorTorque( m_jointId1 );
-		g_draw.DrawString( 5, m_textLine, "Motor Torque 1 = %4.1f", torque1 );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "Motor Torque 1 = %4.1f", torque1 );
 
 		float torque2 = b2RevoluteJoint_GetMotorTorque( m_jointId2 );
-		g_draw.DrawString( 5, m_textLine, "Motor Torque 2 = %4.1f", torque2 );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "Motor Torque 2 = %4.1f", torque2 );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new RevoluteJoint( settings );
+		return new RevoluteJoint( context );
 	}
 
 	b2BodyId m_ball;
@@ -614,13 +609,13 @@ static int sampleRevolute = RegisterSample( "Joints", "Revolute", RevoluteJoint:
 class PrismaticJoint : public Sample
 {
 public:
-	explicit PrismaticJoint( Settings& settings )
-		: Sample( settings )
+	explicit PrismaticJoint( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 8.0f };
-			g_camera.m_zoom = 25.0f * 0.5f;
+			m_context->camera.m_center = { 0.0f, 8.0f };
+			m_context->camera.m_zoom = 25.0f * 0.5f;
 		}
 
 		b2BodyId groundId;
@@ -673,7 +668,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 220.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Prismatic Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -729,26 +724,23 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
 		float force = b2PrismaticJoint_GetMotorForce( m_jointId );
-		g_draw.DrawString( 5, m_textLine, "Motor Force = %4.1f", force );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "Motor Force = %4.1f", force );
 
 		float translation = b2PrismaticJoint_GetTranslation( m_jointId );
-		g_draw.DrawString( 5, m_textLine, "Translation = %4.1f", translation );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "Translation = %4.1f", translation );
 
 		float speed = b2PrismaticJoint_GetSpeed( m_jointId );
-		g_draw.DrawString( 5, m_textLine, "Speed = %4.8f", speed );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "Speed = %4.8f", speed );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new PrismaticJoint( settings );
+		return new PrismaticJoint( context );
 	}
 
 	b2JointId m_jointId;
@@ -766,13 +758,13 @@ static int samplePrismatic = RegisterSample( "Joints", "Prismatic", PrismaticJoi
 class WheelJoint : public Sample
 {
 public:
-	explicit WheelJoint( Settings& settings )
-		: Sample( settings )
+	explicit WheelJoint( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 10.0f };
-			g_camera.m_zoom = 25.0f * 0.15f;
+			m_context->camera.m_center = { 0.0f, 10.0f };
+			m_context->camera.m_zoom = 25.0f * 0.15f;
 		}
 
 		b2BodyId groundId;
@@ -824,7 +816,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 220.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Wheel Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -873,18 +865,17 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
 		float torque = b2WheelJoint_GetMotorTorque( m_jointId );
-		g_draw.DrawString( 5, m_textLine, "Motor Torque = %4.1f", torque );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "Motor Torque = %4.1f", torque );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new WheelJoint( settings );
+		return new WheelJoint( context );
 	}
 
 	b2JointId m_jointId;
@@ -903,12 +894,12 @@ static int sampleWheel = RegisterSample( "Joints", "Wheel", WheelJoint::Create )
 class Bridge : public Sample
 {
 public:
-	explicit Bridge( Settings& settings )
-		: Sample( settings )
+	explicit Bridge( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_zoom = 25.0f * 2.5f;
+			m_context->camera.m_zoom = 25.0f * 2.5f;
 		}
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -1000,7 +991,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 80.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Bridge", nullptr, ImGuiWindowFlags_NoResize );
@@ -1027,9 +1018,9 @@ public:
 		ImGui::End();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new Bridge( settings );
+		return new Bridge( context );
 	}
 
 	static constexpr int m_count = 160;
@@ -1044,13 +1035,13 @@ static int sampleBridgeIndex = RegisterSample( "Joints", "Bridge", Bridge::Creat
 class BallAndChain : public Sample
 {
 public:
-	explicit BallAndChain( Settings& settings )
-		: Sample( settings )
+	explicit BallAndChain( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, -8.0f };
-			g_camera.m_zoom = 27.5f;
+			m_context->camera.m_center = { 0.0f, -8.0f };
+			m_context->camera.m_zoom = 27.5f;
 		}
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -1117,7 +1108,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 60.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Ball and Chain", nullptr, ImGuiWindowFlags_NoResize );
@@ -1134,9 +1125,9 @@ public:
 		ImGui::End();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new BallAndChain( settings );
+		return new BallAndChain( context );
 	}
 
 	static constexpr int m_count = 30;
@@ -1156,13 +1147,13 @@ public:
 		e_count = 8
 	};
 
-	explicit Cantilever( Settings& settings )
-		: Sample( settings )
+	explicit Cantilever( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 0.0f };
-			g_camera.m_zoom = 25.0f * 0.35f;
+			m_context->camera.m_center = { 0.0f, 0.0f };
+			m_context->camera.m_zoom = 25.0f * 0.35f;
 		}
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -1219,7 +1210,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 180.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Cantilever", nullptr, ImGuiWindowFlags_NoResize );
@@ -1277,18 +1268,17 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
 		b2Vec2 tipPosition = b2Body_GetPosition( m_tipId );
-		g_draw.DrawString( 5, m_textLine, "tip-y = %.2f", tipPosition.y );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "tip-y = %.2f", tipPosition.y );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new Cantilever( settings );
+		return new Cantilever( context );
 	}
 
 	float m_linearHertz;
@@ -1313,13 +1303,13 @@ public:
 		e_count = 6
 	};
 
-	explicit FixedRotation( Settings& settings )
-		: Sample( settings )
+	explicit FixedRotation( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 8.0f };
-			g_camera.m_zoom = 25.0f * 0.7f;
+			m_context->camera.m_center = { 0.0f, 8.0f };
+			m_context->camera.m_zoom = 25.0f * 0.7f;
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -1508,7 +1498,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 60.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
 
 		ImGui::Begin( "Fixed Rotation", nullptr, ImGuiWindowFlags_NoResize );
@@ -1524,9 +1514,9 @@ public:
 		ImGui::End();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new FixedRotation( settings );
+		return new FixedRotation( context );
 	}
 
 	b2BodyId m_groundId;
@@ -1546,13 +1536,13 @@ public:
 		e_count = 6
 	};
 
-	explicit BreakableJoint( Settings& settings )
-		: Sample( settings )
+	explicit BreakableJoint( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 8.0f };
-			g_camera.m_zoom = 25.0f * 0.7f;
+			m_context->camera.m_center = { 0.0f, 8.0f };
+			m_context->camera.m_zoom = 25.0f * 0.7f;
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -1724,7 +1714,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Breakable Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -1740,7 +1730,7 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
 		for ( int i = 0; i < e_count; ++i )
 		{
@@ -1758,16 +1748,16 @@ public:
 			else
 			{
 				b2Vec2 point = b2Joint_GetLocalAnchorA( m_jointIds[i] );
-				g_draw.DrawString( point, "(%.1f, %.1f)", force.x, force.y );
+				m_context->draw.DrawString( point, "(%.1f, %.1f)", force.x, force.y );
 			}
 		}
 
-		Sample::Step( settings );
+		Sample::Step();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new BreakableJoint( settings );
+		return new BreakableJoint( context );
 	}
 
 	b2JointId m_jointIds[e_count];
@@ -1780,13 +1770,13 @@ static int sampleBreakableJoint = RegisterSample( "Joints", "Breakable", Breakab
 class UserConstraint : public Sample
 {
 public:
-	explicit UserConstraint( Settings& settings )
-		: Sample( settings )
+	explicit UserConstraint( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 3.0f, -1.0f };
-			g_camera.m_zoom = 25.0f * 0.15f;
+			m_context->camera.m_center = { 3.0f, -1.0f };
+			m_context->camera.m_zoom = 25.0f * 0.15f;
 		}
 
 		b2Polygon box = b2MakeBox( 1.0f, 0.5f );
@@ -1806,25 +1796,25 @@ public:
 		m_impulses[1] = 0.0f;
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
 		b2Transform axes = b2Transform_identity;
-		g_draw.DrawTransform( axes );
+		m_context->draw.DrawTransform( axes );
 
-		if ( settings.pause )
+		if ( m_context->pause )
 		{
 			return;
 		}
 
-		float timeStep = settings.hertz > 0.0f ? 1.0f / settings.hertz : 0.0f;
+		float timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
 		if ( timeStep == 0.0f )
 		{
 			return;
 		}
 
-		float invTimeStep = settings.hertz;
+		float invTimeStep = m_context->hertz;
 
 		static float hertz = 3.0f;
 		static float zeta = 0.7f;
@@ -1858,12 +1848,12 @@ public:
 			float C = length - slackLength;
 			if ( C < 0.0f || length < 0.001f )
 			{
-				g_draw.DrawSegment( anchorA, anchorB, b2_colorLightCyan );
+				m_context->draw.DrawSegment( anchorA, anchorB, b2_colorLightCyan );
 				m_impulses[i] = 0.0f;
 				continue;
 			}
 
-			g_draw.DrawSegment( anchorA, anchorB, b2_colorViolet );
+			m_context->draw.DrawSegment( anchorA, anchorB, b2_colorViolet );
 			b2Vec2 axis = b2Normalize( deltaAnchor );
 
 			b2Vec2 rB = b2Sub( anchorB, pB );
@@ -1884,13 +1874,12 @@ public:
 		b2Body_SetLinearVelocity( m_bodyId, vB );
 		b2Body_SetAngularVelocity( m_bodyId, omegaB );
 
-		g_draw.DrawString( 5, m_textLine, "forces = %g, %g", m_impulses[0] * invTimeStep, m_impulses[1] * invTimeStep );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "forces = %g, %g", m_impulses[0] * invTimeStep, m_impulses[1] * invTimeStep );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new UserConstraint( settings );
+		return new UserConstraint( context );
 	}
 
 	b2BodyId m_bodyId;
@@ -1903,14 +1892,14 @@ static int sampleUserConstraintIndex = RegisterSample( "Joints", "User Constrain
 class Driving : public Sample
 {
 public:
-	explicit Driving( Settings& settings )
-		: Sample( settings )
+	explicit Driving( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center.y = 5.0f;
-			g_camera.m_zoom = 25.0f * 0.4f;
-			settings.drawJoints = false;
+			m_context->camera.m_center.y = 5.0f;
+			m_context->camera.m_zoom = 25.0f * 0.4f;
+			m_context->drawJoints = false;
 		}
 
 		b2BodyId groundId;
@@ -2081,7 +2070,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
 
 		ImGui::Begin( "Driving", nullptr, ImGuiWindowFlags_NoResize );
@@ -2111,43 +2100,41 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) == GLFW_PRESS )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS )
 		{
 			m_throttle = 1.0f;
 			m_car.SetSpeed( m_speed );
 		}
 
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_S ) == GLFW_PRESS )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_S ) == GLFW_PRESS )
 		{
 			m_throttle = 0.0f;
 			m_car.SetSpeed( 0.0f );
 		}
 
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) == GLFW_PRESS )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_D ) == GLFW_PRESS )
 		{
 			m_throttle = -1.0f;
 			m_car.SetSpeed( -m_speed );
 		}
 
-		g_draw.DrawString( 5, m_textLine, "Keys: left = a, brake = s, right = d" );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "Keys: left = a, brake = s, right = d" );
 
 		b2Vec2 linearVelocity = b2Body_GetLinearVelocity( m_car.m_chassisId );
 		float kph = linearVelocity.x * 3.6f;
-		g_draw.DrawString( 5, m_textLine, "speed in kph: %.2g", kph );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "speed in kph: %.2g", kph );
 
 		b2Vec2 carPosition = b2Body_GetPosition( m_car.m_chassisId );
-		g_camera.m_center.x = carPosition.x;
+		m_context->camera.m_center.x = carPosition.x;
 
-		Sample::Step( settings );
+		Sample::Step();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new Driving( settings );
+		return new Driving( context );
 	}
 
 	Car m_car;
@@ -2164,16 +2151,16 @@ static int sampleDriving = RegisterSample( "Joints", "Driving", Driving::Create 
 class Ragdoll : public Sample
 {
 public:
-	explicit Ragdoll( Settings& settings )
-		: Sample( settings )
+	explicit Ragdoll( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 12.0f };
-			g_camera.m_zoom = 16.0f;
+			m_context->camera.m_center = { 0.0f, 12.0f };
+			m_context->camera.m_zoom = 16.0f;
 
-			// g_camera.m_center = { 0.0f, 26.0f };
-			// g_camera.m_zoom = 1.0f;
+			// m_context->camera.m_center = { 0.0f, 26.0f };
+			// m_context->camera.m_zoom = 1.0f;
 		}
 
 		{
@@ -2203,7 +2190,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
 
 		ImGui::Begin( "Ragdoll", nullptr, ImGuiWindowFlags_NoResize );
@@ -2233,9 +2220,9 @@ public:
 		ImGui::End();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new Ragdoll( settings );
+		return new Ragdoll( context );
 	}
 
 	Human m_human;
@@ -2249,13 +2236,13 @@ static int sampleRagdoll = RegisterSample( "Joints", "Ragdoll", Ragdoll::Create 
 class SoftBody : public Sample
 {
 public:
-	explicit SoftBody( Settings& settings )
-		: Sample( settings )
+	explicit SoftBody( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 5.0f };
-			g_camera.m_zoom = 25.0f * 0.25f;
+			m_context->camera.m_center = { 0.0f, 5.0f };
+			m_context->camera.m_zoom = 25.0f * 0.25f;
 		}
 
 		{
@@ -2269,9 +2256,9 @@ public:
 		m_donut.Create( m_worldId, { 0.0f, 10.0f }, 2.0f, 0, false, nullptr );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new SoftBody( settings );
+		return new SoftBody( context );
 	}
 
 	Donut m_donut;
@@ -2282,13 +2269,13 @@ static int sampleDonut = RegisterSample( "Joints", "Soft Body", SoftBody::Create
 class DoohickeyFarm : public Sample
 {
 public:
-	explicit DoohickeyFarm( Settings& settings )
-		: Sample( settings )
+	explicit DoohickeyFarm( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 5.0f };
-			g_camera.m_zoom = 25.0f * 0.35f;
+			m_context->camera.m_center = { 0.0f, 5.0f };
+			m_context->camera.m_zoom = 25.0f * 0.35f;
 		}
 
 		{
@@ -2312,14 +2299,14 @@ public:
 		}
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new DoohickeyFarm( settings );
+		return new DoohickeyFarm( context );
 	}
 };
 
@@ -2328,17 +2315,17 @@ static int sampleDoohickey = RegisterSample( "Joints", "Doohickey", DoohickeyFar
 class ScissorLift : public Sample
 {
 public:
-	explicit ScissorLift( Settings& settings )
-		: Sample( settings )
+	explicit ScissorLift( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 9.0f };
-			g_camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.m_center = { 0.0f, 9.0f };
+			m_context->camera.m_zoom = 25.0f * 0.4f;
 		}
 
 		// Need 8 sub-steps for smoother operation
-		settings.subStepCount = 8;
+		m_context->subStepCount = 8;
 
 		b2BodyId groundId;
 		{
@@ -2496,7 +2483,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Scissor Lift", nullptr, ImGuiWindowFlags_NoResize );
@@ -2522,14 +2509,14 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new ScissorLift( settings );
+		return new ScissorLift( context );
 	}
 
 	b2JointId m_liftJointId;
@@ -2543,13 +2530,13 @@ static int sampleScissorLift = RegisterSample( "Joints", "Scissor Lift", Scissor
 class GearLift : public Sample
 {
 public:
-	explicit GearLift( Settings& settings )
-		: Sample( settings )
+	explicit GearLift( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 6.0f };
-			g_camera.m_zoom = 7.0f;
+			m_context->camera.m_center = { 0.0f, 6.0f };
+			m_context->camera.m_zoom = 7.0f;
 		}
 
 		b2BodyId groundId;
@@ -2804,7 +2791,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 120.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 25.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 25.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Gear Lift", nullptr, ImGuiWindowFlags_NoResize );
@@ -2830,28 +2817,28 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) )
 		{
 			m_motorSpeed = b2MaxFloat(-0.3f, m_motorSpeed - 0.01f);
 			b2RevoluteJoint_SetMotorSpeed( m_driverId, m_motorSpeed );
 			b2Joint_WakeBodies( m_driverId );
 		}
 
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_D ) )
 		{
 			m_motorSpeed = b2MinFloat( 0.3f, m_motorSpeed + 0.01f );
 			b2RevoluteJoint_SetMotorSpeed( m_driverId, m_motorSpeed );
 			b2Joint_WakeBodies( m_driverId );
 		}
 
-		Sample::Step( settings );
+		Sample::Step();
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new GearLift( settings );
+		return new GearLift( context );
 	}
 
 	b2JointId m_driverId;

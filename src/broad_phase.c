@@ -184,7 +184,7 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 	// I had an optimization here to skip checking the move set if this is a query into
 	// the static tree. The assumption is that the static proxies are never in the move set
 	// so there is no risk of duplication. However, this is not true with
-	// b2ShapeDef::forceContactCreation, b2ShapeDef::isSensor, or when a static shape is modified.
+	// b2ShapeDef::invokeContactCreation or when a static shape is modified.
 	// There can easily be scenarios where the static proxy is in the moveSet but the dynamic proxy is not.
 	// I could have some flag to indicate that there are any static bodies in the moveSet.
 	

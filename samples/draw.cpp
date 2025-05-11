@@ -41,13 +41,10 @@ static RGBA8 MakeRGBA8( b2HexColor c, float alpha )
 	return { uint8_t( ( c >> 16 ) & 0xFF ), uint8_t( ( c >> 8 ) & 0xFF ), uint8_t( c & 0xFF ), uint8_t( 0xFF * alpha ) };
 }
 
-Draw g_draw;
-Camera g_camera;
-
 Camera::Camera()
 {
-	m_width = 1280;
-	m_height = 800;
+	m_width = 1920;
+	m_height = 1080;
 	ResetView();
 }
 
@@ -181,7 +178,7 @@ struct GLBackground
 		}
 	}
 
-	void Draw()
+	void Draw( Camera* camera )
 	{
 		glUseProgram( m_programId );
 
@@ -189,7 +186,7 @@ struct GLBackground
 		time = fmodf( time, 100.0f );
 
 		glUniform1f( m_timeUniform, time );
-		glUniform2f( m_resolutionUniform, (float)g_camera.m_width, (float)g_camera.m_height );
+		glUniform2f( m_resolutionUniform, (float)camera->m_width, (float)camera->m_height );
 
 		// struct RGBA8 c8 = MakeRGBA8( b2_colorGray2, 1.0f );
 		// glUniform3f(m_baseColorUniform, c8.r/255.0f, c8.g/255.0f, c8.b/255.0f);
@@ -303,7 +300,7 @@ struct GLPoints
 		m_points.push_back( { v, size, rgba } );
 	}
 
-	void Flush()
+	void Flush( Camera* camera )
 	{
 		int count = (int)m_points.size();
 		if ( count == 0 )
@@ -314,7 +311,7 @@ struct GLPoints
 		glUseProgram( m_programId );
 
 		float proj[16] = { 0.0f };
-		g_camera.BuildProjectionMatrix( proj, 0.0f );
+		camera->BuildProjectionMatrix( proj, 0.0f );
 
 		glUniformMatrix4fv( m_projectionUniform, 1, GL_FALSE, proj );
 		glBindVertexArray( m_vaoId );
@@ -445,7 +442,7 @@ struct GLLines
 		m_points.push_back( { p2, rgba } );
 	}
 
-	void Flush()
+	void Flush( Camera* camera )
 	{
 		int count = (int)m_points.size();
 		if ( count == 0 )
@@ -461,7 +458,7 @@ struct GLLines
 		glUseProgram( m_programId );
 
 		float proj[16] = { 0.0f };
-		g_camera.BuildProjectionMatrix( proj, 0.1f );
+		camera->BuildProjectionMatrix( proj, 0.1f );
 
 		glUniformMatrix4fv( m_projectionUniform, 1, GL_FALSE, proj );
 
@@ -590,7 +587,7 @@ struct GLCircles
 		m_circles.push_back( { center, radius, rgba } );
 	}
 
-	void Flush()
+	void Flush( Camera* camera )
 	{
 		int count = (int)m_circles.size();
 		if ( count == 0 )
@@ -601,10 +598,10 @@ struct GLCircles
 		glUseProgram( m_programId );
 
 		float proj[16] = { 0.0f };
-		g_camera.BuildProjectionMatrix( proj, 0.2f );
+		camera->BuildProjectionMatrix( proj, 0.2f );
 
 		glUniformMatrix4fv( m_projectionUniform, 1, GL_FALSE, proj );
-		glUniform1f( m_pixelScaleUniform, g_camera.m_height / g_camera.m_zoom );
+		glUniform1f( m_pixelScaleUniform, camera->m_height / camera->m_zoom );
 
 		glBindVertexArray( m_vaoId );
 
@@ -735,7 +732,7 @@ struct GLSolidCircles
 		m_circles.push_back( { transform, radius, rgba } );
 	}
 
-	void Flush()
+	void Flush( Camera* camera )
 	{
 		int count = (int)m_circles.size();
 		if ( count == 0 )
@@ -746,10 +743,10 @@ struct GLSolidCircles
 		glUseProgram( m_programId );
 
 		float proj[16] = { 0.0f };
-		g_camera.BuildProjectionMatrix( proj, 0.2f );
+		camera->BuildProjectionMatrix( proj, 0.2f );
 
 		glUniformMatrix4fv( m_projectionUniform, 1, GL_FALSE, proj );
-		glUniform1f( m_pixelScaleUniform, g_camera.m_height / g_camera.m_zoom );
+		glUniform1f( m_pixelScaleUniform, camera->m_height / camera->m_zoom );
 
 		glBindVertexArray( m_vaoId );
 
@@ -900,7 +897,7 @@ struct GLSolidCapsules
 		m_capsules.push_back( { transform, radius, length, rgba } );
 	}
 
-	void Flush()
+	void Flush( Camera* camera )
 	{
 		int count = (int)m_capsules.size();
 		if ( count == 0 )
@@ -911,10 +908,10 @@ struct GLSolidCapsules
 		glUseProgram( m_programId );
 
 		float proj[16] = { 0.0f };
-		g_camera.BuildProjectionMatrix( proj, 0.2f );
+		camera->BuildProjectionMatrix( proj, 0.2f );
 
 		glUniformMatrix4fv( m_projectionUniform, 1, GL_FALSE, proj );
-		glUniform1f( m_pixelScaleUniform, g_camera.m_height / g_camera.m_zoom );
+		glUniform1f( m_pixelScaleUniform, camera->m_height / camera->m_zoom );
 
 		glBindVertexArray( m_vaoId );
 
@@ -1083,7 +1080,7 @@ struct GLSolidPolygons
 		m_polygons.push_back( data );
 	}
 
-	void Flush()
+	void Flush( Camera* camera )
 	{
 		int count = (int)m_polygons.size();
 		if ( count == 0 )
@@ -1094,10 +1091,10 @@ struct GLSolidPolygons
 		glUseProgram( m_programId );
 
 		float proj[16] = { 0.0f };
-		g_camera.BuildProjectionMatrix( proj, 0.2f );
+		camera->BuildProjectionMatrix( proj, 0.2f );
 
 		glUniformMatrix4fv( m_projectionUniform, 1, GL_FALSE, proj );
-		glUniform1f( m_pixelScaleUniform, g_camera.m_height / g_camera.m_zoom );
+		glUniform1f( m_pixelScaleUniform, camera->m_height / camera->m_zoom );
 
 		glBindVertexArray( m_vaoId );
 		glBindBuffer( GL_ARRAY_BUFFER, m_vboIds[1] );
@@ -1189,6 +1186,7 @@ void DrawStringFcn( b2Vec2 p, const char* s, b2HexColor color, void* context )
 
 Draw::Draw()
 {
+	m_camera = nullptr;
 	m_showUI = true;
 	m_points = nullptr;
 	m_lines = nullptr;
@@ -1215,8 +1213,9 @@ Draw::~Draw()
 	assert( m_background == nullptr );
 }
 
-void Draw::Create()
+void Draw::Create( Camera* camera )
 {
+	m_camera = camera;
 	m_background = new GLBackground;
 	m_background->Create();
 	m_points = new GLPoints;
@@ -1361,7 +1360,7 @@ void Draw::DrawString( int x, int y, const char* string, ... )
 	ImGui::Begin( "Overlay", nullptr,
 				  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
 					  ImGuiWindowFlags_NoScrollbar );
-	ImGui::PushFont( g_draw.m_regularFont );
+	ImGui::PushFont( m_regularFont );
 	ImGui::SetCursorPos( ImVec2( float( x ), float( y ) ) );
 	ImGui::TextColoredV( ImColor( 230, 153, 153, 255 ), string, arg );
 	ImGui::PopFont();
@@ -1371,7 +1370,7 @@ void Draw::DrawString( int x, int y, const char* string, ... )
 
 void Draw::DrawString( b2Vec2 p, const char* string, ... )
 {
-	b2Vec2 ps = g_camera.ConvertWorldToScreen( p );
+	b2Vec2 ps = m_camera->ConvertWorldToScreen( p );
 
 	va_list arg;
 	va_start( arg, string );
@@ -1399,16 +1398,16 @@ void Draw::DrawAABB( b2AABB aabb, b2HexColor c )
 
 void Draw::Flush()
 {
-	m_solidCircles->Flush();
-	m_solidCapsules->Flush();
-	m_solidPolygons->Flush();
-	m_circles->Flush();
-	m_lines->Flush();
-	m_points->Flush();
+	m_solidCircles->Flush( m_camera );
+	m_solidCapsules->Flush( m_camera );
+	m_solidPolygons->Flush( m_camera );
+	m_circles->Flush( m_camera );
+	m_lines->Flush( m_camera );
+	m_points->Flush( m_camera );
 	CheckOpenGL();
 }
 
 void Draw::DrawBackground()
 {
-	m_background->Draw();
+	m_background->Draw( m_camera );
 }

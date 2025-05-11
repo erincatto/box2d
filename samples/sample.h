@@ -5,7 +5,7 @@
 
 #include "box2d/id.h"
 #include "box2d/types.h"
-#include "settings.h"
+#include "draw.h"
 
 #define ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
 
@@ -14,32 +14,54 @@ namespace enki
 class TaskScheduler;
 };
 
-constexpr int k_maxContactPoints = 12 * 2048;
-
-struct ContactPoint
+struct SampleContext
 {
-	b2ShapeId shapeIdA;
-	b2ShapeId shapeIdB;
-	b2Vec2 normal;
-	b2Vec2 position;
-	bool persisted;
-	float normalImpulse;
-	float tangentImpulse;
-	float separation;
-	int constraintIndex;
-	int color;
+	void Save();
+	void Load();
+
+	struct GLFWwindow* window = nullptr;
+	Camera camera;
+	Draw draw;
+	float hertz = 60.0f;
+	int subStepCount = 4;
+	int workerCount = 1;
+	bool restart = false;
+	bool pause = false;
+	bool singleStep = false;
+	bool useCameraBounds = false;
+	bool drawJointExtras = false;
+	bool drawBounds = false;
+	bool drawMass = false;
+	bool drawBodyNames = false;
+	bool drawContactPoints = false;
+	bool drawContactNormals = false;
+	bool drawContactImpulses = false;
+	bool drawContactFeatures = false;
+	bool drawFrictionImpulses = false;
+	bool drawIslands = false;
+	bool drawGraphColors = false;
+	bool drawCounters = false;
+	bool drawProfile = false;
+	bool enableWarmStarting = true;
+	bool enableContinuous = true;
+	bool enableSleep = true;
+
+	// These are persisted
+	int sampleIndex = 0;
+	bool drawShapes = true;
+	bool drawJoints = true;
 };
 
 class Sample
 {
 public:
-	explicit Sample( Settings& settings );
+	explicit Sample( SampleContext* context );
 	virtual ~Sample();
 
 	void CreateWorld( );
 
 	void DrawTitle( const char* string );
-	virtual void Step( Settings& settings );
+	virtual void Step( );
 	virtual void UpdateGui()
 	{
 	}
@@ -69,7 +91,7 @@ public:
 	static constexpr bool m_isDebug = true;
 #endif
 
-	const Settings* m_settings;
+	SampleContext* m_context;
 	enki::TaskScheduler* m_scheduler;
 	class SampleTask* m_tasks;
 	int m_taskCount;
@@ -77,17 +99,18 @@ public:
 
 	b2BodyId m_groundBodyId;
 
-	// DestructionListener m_destructionListener;
-	int m_textLine;
 	b2WorldId m_worldId;
 	b2JointId m_mouseJointId;
 	int m_stepCount;
-	int m_textIncrement;
 	b2Profile m_maxProfile;
 	b2Profile m_totalProfile;
+
+private:
+	int m_textLine;
+	int m_textIncrement;
 };
 
-typedef Sample* SampleCreateFcn( Settings& settings );
+typedef Sample* SampleCreateFcn( SampleContext* context );
 
 int RegisterSample( const char* category, const char* name, SampleCreateFcn* fcn );
 
