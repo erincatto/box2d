@@ -4,7 +4,6 @@
 #include "determinism.h"
 #include "draw.h"
 #include "sample.h"
-#include "settings.h"
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
@@ -25,13 +24,13 @@ class FallingHinges : public Sample
 {
 public:
 
-	explicit FallingHinges( Settings& settings )
-		: Sample( settings )
+	explicit FallingHinges( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 7.5f };
-			g_camera.m_zoom = 10.0f;
+			m_context->camera.m_center = { 0.0f, 7.5f };
+			m_context->camera.m_zoom = 10.0f;
 		}
 
 		m_data = CreateFallingHinges( m_worldId );
@@ -43,9 +42,9 @@ public:
 		DestroyFallingHinges( &m_data );
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
 		if (m_done == false)
 		{
@@ -53,14 +52,13 @@ public:
 		}
 		else
 		{
-			g_draw.DrawString( 5, m_textLine, "sleep step = %d, hash = 0x%08x", m_data.sleepStep, m_data.hash );
-			m_textLine += m_textIncrement;
+			DrawTextLine( "sleep step = %d, hash = 0x%08x", m_data.sleepStep, m_data.hash );
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new FallingHinges( settings );
+		return new FallingHinges( context );
 	}
 
 	FallingHingeData m_data;

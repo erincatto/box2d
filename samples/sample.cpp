@@ -11,7 +11,9 @@
 #include "draw.h"
 #include "imgui.h"
 #include "random.h"
-#include "settings.h"
+
+// consider using https://github.com/skeeto/pdjson
+#include "jsmn.h"
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
@@ -19,6 +21,120 @@
 #include <GLFW/glfw3.h>
 #include <ctype.h>
 #include <stdio.h>
+
+static const char* fileName = "settings.ini";
+
+// Load a file. You must free the character array.
+static bool ReadFile( char*& data, int& size, const char* filename )
+{
+	FILE* file = fopen( filename, "rb" );
+	if ( file == nullptr )
+	{
+		return false;
+	}
+
+	fseek( file, 0, SEEK_END );
+	size = (int)ftell( file );
+	fseek( file, 0, SEEK_SET );
+
+	if ( size == 0 )
+	{
+		return false;
+	}
+
+	data = (char*)malloc( size + 1 );
+	size_t count = fread( data, size, 1, file );
+	(void)count;
+	fclose( file );
+	data[size] = 0;
+
+	return true;
+}
+
+void SampleContext::Save()
+{
+	FILE* file = fopen( fileName, "w" );
+	fprintf( file, "{\n" );
+	fprintf( file, "  \"sampleIndex\": %d,\n", sampleIndex );
+	fprintf( file, "  \"drawShapes\": %s,\n", drawShapes ? "true" : "false" );
+	fprintf( file, "  \"drawJoints\": %s,\n", drawJoints ? "true" : "false" );
+	fprintf( file, "}\n" );
+	fclose( file );
+}
+
+static int jsoneq( const char* json, jsmntok_t* tok, const char* s )
+{
+	if ( tok->type == JSMN_STRING && (int)strlen( s ) == tok->end - tok->start &&
+		 strncmp( json + tok->start, s, tok->end - tok->start ) == 0 )
+	{
+		return 0;
+	}
+	return -1;
+}
+
+#define MAX_TOKENS 32
+
+void SampleContext::Load()
+{
+	char* data = nullptr;
+	int size = 0;
+	bool found = ReadFile( data, size, fileName );
+	if ( found == false )
+	{
+		return;
+	}
+
+	jsmn_parser parser;
+	jsmntok_t tokens[MAX_TOKENS];
+
+	jsmn_init( &parser );
+
+	// js - pointer to JSON string
+	// tokens - an array of tokens available
+	// 10 - number of tokens available
+	int tokenCount = jsmn_parse( &parser, data, size, tokens, MAX_TOKENS );
+	char buffer[32];
+
+	for ( int i = 0; i < tokenCount; ++i )
+	{
+		if ( jsoneq( data, &tokens[i], "sampleIndex" ) == 0 )
+		{
+			int count = tokens[i + 1].end - tokens[i + 1].start;
+			assert( count < 32 );
+			const char* s = data + tokens[i + 1].start;
+			strncpy( buffer, s, count );
+			buffer[count] = 0;
+			char* dummy;
+			sampleIndex = (int)strtol( buffer, &dummy, 10 );
+		}
+		else if ( jsoneq( data, &tokens[i], "drawShapes" ) == 0 )
+		{
+			const char* s = data + tokens[i + 1].start;
+			if ( strncmp( s, "true", 4 ) == 0 )
+			{
+				drawShapes = true;
+			}
+			else if ( strncmp( s, "false", 5 ) == 0 )
+			{
+				drawShapes = false;
+			}
+		}
+		else if ( jsoneq( data, &tokens[i], "drawJoints" ) == 0 )
+		{
+			const char* s = data + tokens[i + 1].start;
+			if ( strncmp( s, "true", 4 ) == 0 )
+			{
+				drawJoints = true;
+			}
+			else if ( strncmp( s, "false", 5 ) == 0 )
+			{
+				drawJoints = false;
+			}
+		}
+	}
+
+	free( data );
+}
 
 class SampleTask : public enki::ITaskSet
 {
@@ -95,15 +211,16 @@ static void TestMathCpp()
 	c += c;
 }
 
-Sample::Sample( Settings& settings )
+Sample::Sample( SampleContext* context )
 {
+	m_context = context;
 	m_scheduler = new enki::TaskScheduler;
-	m_scheduler->Initialize( settings.workerCount );
+	m_scheduler->Initialize( m_context->workerCount );
 
 	m_tasks = new SampleTask[m_maxTasks];
 	m_taskCount = 0;
 
-	m_threadCount = 1 + settings.workerCount;
+	m_threadCount = 1 + m_context->workerCount;
 
 	m_worldId = b2_nullWorldId;
 
@@ -118,9 +235,7 @@ Sample::Sample( Settings& settings )
 	m_maxProfile = {};
 	m_totalProfile = {};
 
-	g_seed = RAND_SEED;
-
-	m_settings = &settings;
+	g_randomSeed = RAND_SEED;
 
 	CreateWorld();
 	TestMathCpp();
@@ -144,17 +259,17 @@ void Sample::CreateWorld()
 	}
 
 	b2WorldDef worldDef = b2DefaultWorldDef();
-	worldDef.workerCount = m_settings->workerCount;
+	worldDef.workerCount = m_context->workerCount;
 	worldDef.enqueueTask = EnqueueTask;
 	worldDef.finishTask = FinishTask;
 	worldDef.userTaskContext = this;
-	worldDef.enableSleep = m_settings->enableSleep;
+	worldDef.enableSleep = m_context->enableSleep;
 	m_worldId = b2CreateWorld( &worldDef );
 }
 
 void Sample::DrawTitle( const char* string )
 {
-	g_draw.DrawString( 5, 5, string );
+	m_context->draw.DrawString( 5, 5, string );
 	m_textLine = int( 26.0f );
 }
 
@@ -266,7 +381,7 @@ void Sample::DrawTextLine( const char* text, ... )
 	ImGui::Begin( "Overlay", nullptr,
 				  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
 					  ImGuiWindowFlags_NoScrollbar );
-	ImGui::PushFont( g_draw.m_regularFont );
+	ImGui::PushFont( m_context->draw.m_regularFont );
 	ImGui::SetCursorPos( ImVec2( 5.0f, float( m_textLine ) ) );
 	ImGui::TextColoredV( ImColor( 230, 153, 153, 255 ), text, arg );
 	ImGui::PopFont();
@@ -283,69 +398,69 @@ void Sample::ResetProfile()
 	m_stepCount = 0;
 }
 
-void Sample::Step( Settings& settings )
+void Sample::Step(  )
 {
-	float timeStep = settings.hertz > 0.0f ? 1.0f / settings.hertz : 0.0f;
+	float timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
 
-	if ( settings.pause )
+	if ( m_context->pause )
 	{
-		if ( settings.singleStep )
+		if ( m_context->singleStep )
 		{
-			settings.singleStep = false;
+			m_context->singleStep = false;
 		}
 		else
 		{
 			timeStep = 0.0f;
 		}
 
-		if ( g_draw.m_showUI )
+		if ( m_context->draw.m_showUI )
 		{
-			g_draw.DrawString( 5, m_textLine, "****PAUSED****" );
+			DrawTextLine( "****PAUSED****" );
 			m_textLine += m_textIncrement;
 		}
 	}
 
-	g_draw.m_debugDraw.drawingBounds = g_camera.GetViewBounds();
-	g_draw.m_debugDraw.useDrawingBounds = settings.useCameraBounds;
+	m_context->draw.m_debugDraw.drawingBounds = m_context->camera.GetViewBounds();
+	m_context->draw.m_debugDraw.useDrawingBounds = m_context->useCameraBounds;
 
 	// todo testing
-	// b2Transform t1 = {g_draw.m_debugDraw.drawingBounds.lowerBound, b2Rot_identity};
-	// b2Transform t2 = {g_draw.m_debugDraw.drawingBounds.upperBound, b2Rot_identity};
-	// g_draw.DrawSolidCircle(t1, b2Vec2_zero, 1.0f, {1.0f, 0.0f, 0.0f, 1.0f});
-	// g_draw.DrawSolidCircle(t2, b2Vec2_zero, 1.0f, {1.0f, 0.0f, 0.0f, 1.0f});
+	// b2Transform t1 = {m_context->draw.m_debugDraw.drawingBounds.lowerBound, b2Rot_identity};
+	// b2Transform t2 = {m_context->draw.m_debugDraw.drawingBounds.upperBound, b2Rot_identity};
+	// m_context->draw.DrawSolidCircle(t1, b2Vec2_zero, 1.0f, {1.0f, 0.0f, 0.0f, 1.0f});
+	// m_context->draw.DrawSolidCircle(t2, b2Vec2_zero, 1.0f, {1.0f, 0.0f, 0.0f, 1.0f});
 
-	g_draw.m_debugDraw.drawShapes = settings.drawShapes;
-	g_draw.m_debugDraw.drawJoints = settings.drawJoints;
-	g_draw.m_debugDraw.drawJointExtras = settings.drawJointExtras;
-	g_draw.m_debugDraw.drawBounds = settings.drawBounds;
-	g_draw.m_debugDraw.drawMass = settings.drawMass;
-	g_draw.m_debugDraw.drawBodyNames = settings.drawBodyNames;
-	g_draw.m_debugDraw.drawContacts = settings.drawContactPoints;
-	g_draw.m_debugDraw.drawGraphColors = settings.drawGraphColors;
-	g_draw.m_debugDraw.drawContactNormals = settings.drawContactNormals;
-	g_draw.m_debugDraw.drawContactImpulses = settings.drawContactImpulses;
-	g_draw.m_debugDraw.drawContactFeatures = settings.drawContactFeatures;
-	g_draw.m_debugDraw.drawFrictionImpulses = settings.drawFrictionImpulses;
-	g_draw.m_debugDraw.drawIslands = settings.drawIslands;
+	m_context->draw.m_debugDraw.drawShapes = m_context->drawShapes;
+	m_context->draw.m_debugDraw.drawJoints = m_context->drawJoints;
+	m_context->draw.m_debugDraw.drawJointExtras = m_context->drawJointExtras;
+	m_context->draw.m_debugDraw.drawBounds = m_context->drawBounds;
+	m_context->draw.m_debugDraw.drawMass = m_context->drawMass;
+	m_context->draw.m_debugDraw.drawBodyNames = m_context->drawBodyNames;
+	m_context->draw.m_debugDraw.drawContacts = m_context->drawContactPoints;
+	m_context->draw.m_debugDraw.drawGraphColors = m_context->drawGraphColors;
+	m_context->draw.m_debugDraw.drawContactNormals = m_context->drawContactNormals;
+	m_context->draw.m_debugDraw.drawContactImpulses = m_context->drawContactImpulses;
+	m_context->draw.m_debugDraw.drawContactFeatures = m_context->drawContactFeatures;
+	m_context->draw.m_debugDraw.drawFrictionImpulses = m_context->drawFrictionImpulses;
+	m_context->draw.m_debugDraw.drawIslands = m_context->drawIslands;
 
-	b2World_EnableSleeping( m_worldId, settings.enableSleep );
-	b2World_EnableWarmStarting( m_worldId, settings.enableWarmStarting );
-	b2World_EnableContinuous( m_worldId, settings.enableContinuous );
+	b2World_EnableSleeping( m_worldId, m_context->enableSleep );
+	b2World_EnableWarmStarting( m_worldId, m_context->enableWarmStarting );
+	b2World_EnableContinuous( m_worldId, m_context->enableContinuous );
 
 	for ( int i = 0; i < 1; ++i )
 	{
-		b2World_Step( m_worldId, timeStep, settings.subStepCount );
+		b2World_Step( m_worldId, timeStep, m_context->subStepCount );
 		m_taskCount = 0;
 	}
 
-	b2World_Draw( m_worldId, &g_draw.m_debugDraw );
+	b2World_Draw( m_worldId, &m_context->draw.m_debugDraw );
 
 	if ( timeStep > 0.0f )
 	{
 		++m_stepCount;
 	}
 
-	if ( settings.drawCounters )
+	if ( m_context->drawCounters )
 	{
 		b2Counters s = b2World_GetCounters( m_worldId );
 
@@ -420,7 +535,7 @@ void Sample::Step( Settings& settings )
 		m_totalProfile.sensors += p.sensors;
 	}
 
-	if ( settings.drawProfile )
+	if ( m_context->drawProfile )
 	{
 		b2Profile p = b2World_GetProfile( m_worldId );
 

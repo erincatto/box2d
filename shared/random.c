@@ -3,7 +3,7 @@
 
 #include "random.h"
 
-uint32_t g_seed = RAND_SEED;
+uint32_t g_randomSeed = RAND_SEED;
 
 b2Polygon RandomPolygon( float extent )
 {

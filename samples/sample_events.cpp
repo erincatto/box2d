@@ -6,7 +6,6 @@
 #include "human.h"
 #include "random.h"
 #include "sample.h"
-#include "settings.h"
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
@@ -26,16 +25,16 @@ public:
 		e_count = 32
 	};
 
-	explicit SensorFunnel( Settings& settings )
-		: Sample( settings )
+	explicit SensorFunnel( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 0.0f };
-			g_camera.m_zoom = 25.0f * 1.333f;
+			m_context->camera.m_center = { 0.0f, 0.0f };
+			m_context->camera.m_zoom = 25.0f * 1.333f;
 		}
 
-		settings.drawJoints = false;
+		m_context->drawJoints = false;
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -238,7 +237,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 90.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
 
 		ImGui::Begin( "Sensor Event", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -258,14 +257,14 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
 		if ( m_stepCount == 832 )
 		{
 			m_stepCount += 0;
 		}
 
-		Sample::Step( settings );
+		Sample::Step();
 
 		// Discover rings that touch the bottom sensor
 		bool deferredDestruction[e_count] = {};
@@ -313,9 +312,9 @@ public:
 			}
 		}
 
-		if ( settings.hertz > 0.0f && settings.pause == false )
+		if ( m_context->hertz > 0.0f && m_context->pause == false )
 		{
-			m_wait -= 1.0f / settings.hertz;
+			m_wait -= 1.0f / m_context->hertz;
 			if ( m_wait < 0.0f )
 			{
 				CreateElement();
@@ -324,9 +323,9 @@ public:
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new SensorFunnel( settings );
+		return new SensorFunnel( context );
 	}
 
 	Human m_humans[e_count];
@@ -342,13 +341,13 @@ static int sampleSensorBeginEvent = RegisterSample( "Events", "Sensor Funnel", S
 class SensorBookend : public Sample
 {
 public:
-	explicit SensorBookend( Settings& settings )
-		: Sample( settings )
+	explicit SensorBookend( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 6.0f };
-			g_camera.m_zoom = 7.5f;
+			m_context->camera.m_center = { 0.0f, 6.0f };
+			m_context->camera.m_zoom = 7.5f;
 		}
 
 		{
@@ -429,7 +428,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 260.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
 
 		ImGui::Begin( "Sensor Bookend", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -460,7 +459,7 @@ public:
 				bool enabledBody = b2Body_IsEnabled( m_visitorBodyId );
 				if ( ImGui::Checkbox( "enable visitor body", &enabledBody ) )
 				{
-					if (enabledBody)
+					if ( enabledBody )
 					{
 						b2Body_Enable( m_visitorBodyId );
 					}
@@ -555,9 +554,9 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
 		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
 		for ( int i = 0; i < sensorEvents.beginCount; ++i )
@@ -602,7 +601,7 @@ public:
 
 			if ( B2_ID_EQUALS( event.sensorShapeId, m_sensorShapeId1 ) )
 			{
-				if ( B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ))
+				if ( B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ) )
 				{
 					assert( m_isVisiting1 == true );
 					m_isVisiting1 = false;
@@ -633,17 +632,17 @@ public:
 		assert( m_sensorsOverlapCount == 0 || m_sensorsOverlapCount == 2 );
 
 		// Nullify invalid shape ids after end events are processed.
-		if (b2Shape_IsValid(m_visitorShapeId) == false)
+		if ( b2Shape_IsValid( m_visitorShapeId ) == false )
 		{
 			m_visitorShapeId = b2_nullShapeId;
 		}
 
-		if (b2Shape_IsValid(m_sensorShapeId1) == false)
+		if ( b2Shape_IsValid( m_sensorShapeId1 ) == false )
 		{
 			m_sensorShapeId1 = b2_nullShapeId;
 		}
 
-		if (b2Shape_IsValid(m_sensorShapeId2) == false)
+		if ( b2Shape_IsValid( m_sensorShapeId2 ) == false )
 		{
 			m_sensorShapeId2 = b2_nullShapeId;
 		}
@@ -653,9 +652,9 @@ public:
 		DrawTextLine( "sensors overlap count == %d", m_sensorsOverlapCount );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new SensorBookend( settings );
+		return new SensorBookend( context );
 	}
 
 	b2BodyId m_sensorBodyId1;
@@ -686,13 +685,13 @@ public:
 		ALL_BITS = ( ~0u )
 	};
 
-	explicit FootSensor( Settings& settings )
-		: Sample( settings )
+	explicit FootSensor( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 6.0f };
-			g_camera.m_zoom = 7.5f;
+			m_context->camera.m_center = { 0.0f, 6.0f };
+			m_context->camera.m_zoom = 7.5f;
 		}
 
 		{
@@ -742,19 +741,19 @@ public:
 		m_overlapCount = 0;
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) == GLFW_PRESS )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS )
 		{
 			b2Body_ApplyForceToCenter( m_playerId, { -50.0f, 0.0f }, true );
 		}
 
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) == GLFW_PRESS )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_D ) == GLFW_PRESS )
 		{
 			b2Body_ApplyForceToCenter( m_playerId, { 50.0f, 0.0f }, true );
 		}
 
-		Sample::Step( settings );
+		Sample::Step();
 
 		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
 		for ( int i = 0; i < sensorEvents.beginCount; ++i )
@@ -781,8 +780,7 @@ public:
 			}
 		}
 
-		g_draw.DrawString( 5, m_textLine, "count == %d", m_overlapCount );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "count == %d", m_overlapCount );
 
 		int capacity = b2Shape_GetSensorCapacity( m_sensorId );
 		m_overlaps.clear();
@@ -793,13 +791,13 @@ public:
 			b2ShapeId shapeId = m_overlaps[i];
 			b2AABB aabb = b2Shape_GetAABB( shapeId );
 			b2Vec2 point = b2AABB_Center( aabb );
-			g_draw.DrawPoint( point, 10.0f, b2_colorWhite );
+			m_context->draw.DrawPoint( point, 10.0f, b2_colorWhite );
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new FootSensor( settings );
+		return new FootSensor( context );
 	}
 
 	b2BodyId m_playerId;
@@ -823,13 +821,13 @@ public:
 		e_count = 20
 	};
 
-	explicit ContactEvent( Settings& settings )
-		: Sample( settings )
+	explicit ContactEvent( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 0.0f };
-			g_camera.m_zoom = 25.0f * 1.75f;
+			m_context->camera.m_center = { 0.0f, 0.0f };
+			m_context->camera.m_zoom = 25.0f * 1.75f;
 		}
 
 		{
@@ -929,7 +927,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 60.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Contact Event", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -939,34 +937,33 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		g_draw.DrawString( 5, m_textLine, "move using WASD" );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "move using WASD" );
 
 		b2Vec2 position = b2Body_GetPosition( m_playerId );
 
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) == GLFW_PRESS )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS )
 		{
 			b2Body_ApplyForce( m_playerId, { -m_force, 0.0f }, position, true );
 		}
 
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) == GLFW_PRESS )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_D ) == GLFW_PRESS )
 		{
 			b2Body_ApplyForce( m_playerId, { m_force, 0.0f }, position, true );
 		}
 
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_W ) == GLFW_PRESS )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_W ) == GLFW_PRESS )
 		{
 			b2Body_ApplyForce( m_playerId, { 0.0f, m_force }, position, true );
 		}
 
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_S ) == GLFW_PRESS )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_S ) == GLFW_PRESS )
 		{
 			b2Body_ApplyForce( m_playerId, { 0.0f, -m_force }, position, true );
 		}
 
-		Sample::Step( settings );
+		Sample::Step();
 
 		// Discover rings that touch the bottom sensor
 		int debrisToAttach[e_count] = {};
@@ -1016,8 +1013,9 @@ public:
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							g_draw.DrawSegment( point.point, point.point + point.totalNormalImpulse * normal, b2_colorBlueViolet );
-							g_draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
+							m_context->draw.DrawSegment( point.point, point.point + point.totalNormalImpulse * normal,
+														 b2_colorBlueViolet );
+							m_context->draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
 						}
 					}
 				}
@@ -1046,8 +1044,9 @@ public:
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							g_draw.DrawSegment( point.point, point.point + point.totalNormalImpulse * normal, b2_colorYellowGreen );
-							g_draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
+							m_context->draw.DrawSegment( point.point, point.point + point.totalNormalImpulse * normal,
+														 b2_colorYellowGreen );
+							m_context->draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
 						}
 					}
 				}
@@ -1201,9 +1200,9 @@ public:
 			b2Body_ApplyMassFromShapes( m_playerId );
 		}
 
-		if ( settings.hertz > 0.0f && settings.pause == false )
+		if ( m_context->hertz > 0.0f && m_context->pause == false )
 		{
-			m_wait -= 1.0f / settings.hertz;
+			m_wait -= 1.0f / m_context->hertz;
 			if ( m_wait < 0.0f )
 			{
 				SpawnDebris();
@@ -1212,9 +1211,9 @@ public:
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new ContactEvent( settings );
+		return new ContactEvent( context );
 	}
 
 	b2BodyId m_playerId;
@@ -1232,13 +1231,13 @@ static int sampleWeeble = RegisterSample( "Events", "Contact", ContactEvent::Cre
 class Platformer : public Sample
 {
 public:
-	explicit Platformer( Settings& settings )
-		: Sample( settings )
+	explicit Platformer( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.5f, 7.5f };
-			g_camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.m_center = { 0.5f, 7.5f };
+			m_context->camera.m_zoom = 25.0f * 0.4f;
 		}
 
 		b2World_SetPreSolveCallback( m_worldId, PreSolveStatic, this );
@@ -1364,7 +1363,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "One-Sided Platform", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1375,7 +1374,7 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
 		bool canJump = false;
 		b2Vec2 velocity = b2Body_GetLinearVelocity( m_playerId );
@@ -1419,17 +1418,17 @@ public:
 			b2Body_SetLinearVelocity( m_movingPlatformId, { -2.0f, 0.0f } );
 		}
 
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_A ) == GLFW_PRESS )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS )
 		{
 			b2Body_ApplyForceToCenter( m_playerId, { -m_force, 0.0f }, true );
 		}
 
-		if ( glfwGetKey( g_mainWindow, GLFW_KEY_D ) == GLFW_PRESS )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_D ) == GLFW_PRESS )
 		{
 			b2Body_ApplyForceToCenter( m_playerId, { m_force, 0.0f }, true );
 		}
 
-		int keyState = glfwGetKey( g_mainWindow, GLFW_KEY_SPACE );
+		int keyState = glfwGetKey( m_context->window, GLFW_KEY_SPACE );
 		if ( keyState == GLFW_PRESS )
 		{
 			if ( canJump )
@@ -1444,29 +1443,23 @@ public:
 			m_jumping = false;
 		}
 
-		Sample::Step( settings );
+		Sample::Step();
 
 		b2ContactData contactData = {};
 		int contactCount = b2Body_GetContactData( m_movingPlatformId, &contactData, 1 );
-		g_draw.DrawString( 5, m_textLine, "Platform contact count = %d, point count = %d", contactCount,
-						   contactData.manifold.pointCount );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "Platform contact count = %d, point count = %d", contactCount, contactData.manifold.pointCount );
+		DrawTextLine( "Movement: A/D/Space" );
+		DrawTextLine( "Can jump = %s", canJump ? "true" : "false" );
 
-		g_draw.DrawString( 5, m_textLine, "Movement: A/D/Space" );
-		m_textLine += m_textIncrement;
-
-		g_draw.DrawString( 5, m_textLine, "Can jump = %s", canJump ? "true" : "false" );
-		m_textLine += m_textIncrement;
-
-		if ( settings.hertz > 0.0f )
+		if ( m_context->hertz > 0.0f )
 		{
-			m_jumpDelay = b2MaxFloat( 0.0f, m_jumpDelay - 1.0f / settings.hertz );
+			m_jumpDelay = b2MaxFloat( 0.0f, m_jumpDelay - 1.0f / m_context->hertz );
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new Platformer( settings );
+		return new Platformer( context );
 	}
 
 	bool m_jumping;
@@ -1490,13 +1483,13 @@ public:
 		e_count = 50
 	};
 
-	explicit BodyMove( Settings& settings )
-		: Sample( settings )
+	explicit BodyMove( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 2.0f, 8.0f };
-			g_camera.m_zoom = 25.0f * 0.55f;
+			m_context->camera.m_center = { 2.0f, 8.0f };
+			m_context->camera.m_zoom = 25.0f * 0.55f;
 		}
 
 		{
@@ -1579,7 +1572,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Body Move", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1599,14 +1592,14 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		if ( settings.pause == false && ( m_stepCount & 15 ) == 15 && m_count < e_count )
+		if ( m_context->pause == false && ( m_stepCount & 15 ) == 15 && m_count < e_count )
 		{
 			CreateBodies();
 		}
 
-		Sample::Step( settings );
+		Sample::Step();
 
 		// Process body events
 		b2BodyEvents events = b2World_GetBodyEvents( m_worldId );
@@ -1614,7 +1607,7 @@ public:
 		{
 			// draw the transform of every body that moved (not sleeping)
 			const b2BodyMoveEvent* event = events.moveEvents + i;
-			g_draw.DrawTransform( event->transform );
+			m_context->draw.DrawTransform( event->transform );
 
 			b2Transform transform = b2Body_GetTransform( event->bodyId );
 			B2_ASSERT( transform.p.x == event->transform.p.x );
@@ -1642,15 +1635,14 @@ public:
 			}
 		}
 
-		g_draw.DrawCircle( m_explosionPosition, m_explosionRadius, b2_colorAzure );
+		m_context->draw.DrawCircle( m_explosionPosition, m_explosionRadius, b2_colorAzure );
 
-		g_draw.DrawString( 5, m_textLine, "sleep count: %d", m_sleepCount );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "sleep count: %d", m_sleepCount );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new BodyMove( settings );
+		return new BodyMove( context );
 	}
 
 	b2BodyId m_bodyIds[e_count] = {};
@@ -1676,13 +1668,13 @@ public:
 		ALL_BITS = ( ~0u )
 	};
 
-	explicit SensorTypes( Settings& settings )
-		: Sample( settings )
+	explicit SensorTypes( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 3.0f };
-			g_camera.m_zoom = 4.5f;
+			m_context->camera.m_center = { 0.0f, 3.0f };
+			m_context->camera.m_zoom = 4.5f;
 		}
 
 		{
@@ -1813,7 +1805,7 @@ public:
 		DrawTextLine( buffer );
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
 		b2Vec2 position = b2Body_GetPosition( m_kinematicBodyId );
 		if ( position.y < 0.0f )
@@ -1826,7 +1818,7 @@ public:
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { 0.0f, -1.0f } );
 		}
 
-		Sample::Step( settings );
+		Sample::Step();
 
 		PrintOverlaps( m_staticSensorId, "static" );
 		PrintOverlaps( m_kinematicSensorId, "kinematic" );
@@ -1835,17 +1827,17 @@ public:
 		b2Vec2 origin = { 5.0f, 1.0f };
 		b2Vec2 translation = { -10.0f, 0.0f };
 		b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, b2DefaultQueryFilter() );
-		g_draw.DrawSegment( origin, origin + translation, b2_colorDimGray );
+		m_context->draw.DrawSegment( origin, origin + translation, b2_colorDimGray );
 
 		if ( result.hit )
 		{
-			g_draw.DrawPoint( result.point, 10.0f, b2_colorCyan );
+			m_context->draw.DrawPoint( result.point, 10.0f, b2_colorCyan );
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new SensorTypes( settings );
+		return new SensorTypes( context );
 	}
 
 	b2ShapeId m_staticSensorId;

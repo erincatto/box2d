@@ -30,7 +30,7 @@ public:
 	Draw();
 	~Draw();
 
-	void Create();
+	void Create( Camera* camera );
 	void Destroy();
 
 	void DrawPolygon( const b2Vec2* vertices, int32_t vertexCount, b2HexColor color );
@@ -56,6 +56,7 @@ public:
 	void Flush();
 	void DrawBackground();
 
+	Camera* m_camera;
 	bool m_showUI;
 	struct GLBackground* m_background;
 	struct GLPoints* m_points;
@@ -71,7 +72,3 @@ public:
 	ImFont* m_mediumFont;
 	ImFont* m_largeFont;
 };
-
-extern Draw g_draw;
-extern Camera g_camera;
-extern struct GLFWwindow* g_mainWindow;

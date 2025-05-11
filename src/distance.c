@@ -495,7 +495,8 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 		// If we have 3 points, then the origin is in the corresponding triangle.
 		if ( simplex.count == 3 )
 		{
-			break;
+			// Overlap
+			return output;
 		}
 
 #ifndef NDEBUG

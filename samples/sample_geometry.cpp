@@ -4,7 +4,6 @@
 #include "draw.h"
 #include "random.h"
 #include "sample.h"
-#include "settings.h"
 
 #include "box2d/math_functions.h"
 
@@ -18,13 +17,13 @@ public:
 		e_count = B2_MAX_POLYGON_VERTICES
 	};
 
-	explicit ConvexHull( Settings& settings )
-		: Sample( settings )
+	explicit ConvexHull( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.5f, 0.0f };
-			g_camera.m_zoom = 25.0f * 0.3f;
+			m_context->camera.m_center = { 0.5f, 0.0f };
+			m_context->camera.m_zoom = 25.0f * 0.3f;
 		}
 
 		m_generation = 0;
@@ -110,12 +109,11 @@ public:
 		}
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
-		g_draw.DrawString( 5, m_textLine, "Options: generate(g), auto(a), bulk(b)" );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "Options: generate(g), auto(a), bulk(b)" );
 
 		b2Hull hull;
 		bool valid = false;
@@ -175,40 +173,35 @@ public:
 
 		if ( valid == false )
 		{
-			g_draw.DrawString( 5, m_textLine, "generation = %d, FAILED", m_generation );
-			m_textLine += m_textIncrement;
+			DrawTextLine( "generation = %d, FAILED", m_generation );
 		}
 		else
 		{
-			g_draw.DrawString( 5, m_textLine, "generation = %d, count = %d", m_generation, hull.count );
-			m_textLine += m_textIncrement;
+			DrawTextLine( "generation = %d, count = %d", m_generation, hull.count );
 		}
 
 		if ( milliseconds > 0.0f )
 		{
-			g_draw.DrawString( 5, m_textLine, "milliseconds = %g", milliseconds );
-			m_textLine += m_textIncrement;
+			DrawTextLine( "milliseconds = %g", milliseconds );
 		}
 
-		m_textLine += m_textIncrement;
-
-		g_draw.DrawPolygon( hull.points, hull.count, b2_colorGray );
+		m_context->draw.DrawPolygon( hull.points, hull.count, b2_colorGray );
 
 		for ( int32_t i = 0; i < m_count; ++i )
 		{
-			g_draw.DrawPoint( m_points[i], 5.0f, b2_colorBlue );
-			g_draw.DrawString( b2Add( m_points[i], { 0.1f, 0.1f } ), "%d", i );
+			m_context->draw.DrawPoint( m_points[i], 5.0f, b2_colorBlue );
+			m_context->draw.DrawString( b2Add( m_points[i], { 0.1f, 0.1f } ), "%d", i );
 		}
 
 		for ( int32_t i = 0; i < hull.count; ++i )
 		{
-			g_draw.DrawPoint( hull.points[i], 6.0f, b2_colorGreen );
+			m_context->draw.DrawPoint( hull.points[i], 6.0f, b2_colorGreen );
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new ConvexHull( settings );
+		return new ConvexHull( context );
 	}
 
 	b2Vec2 m_points[B2_MAX_POLYGON_VERTICES];

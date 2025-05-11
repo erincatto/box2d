@@ -7,7 +7,6 @@
 
 #include "world.h"
 
-#include "aabb.h"
 #include "arena_allocator.h"
 #include "array.h"
 #include "bitset.h"
@@ -413,11 +412,11 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 			b2Vec2 centerOffsetA = b2RotateVector( transformA.q, bodySimA->localCenter );
 			b2Vec2 centerOffsetB = b2RotateVector( transformB.q, bodySimB->localCenter );
 
-			// This updates solid contacts and sensors
+			// This updates solid contacts
 			bool touching =
 				b2UpdateContact( world, contactSim, shapeA, transformA, centerOffsetA, shapeB, transformB, centerOffsetB );
 
-			// State changes that affect island connectivity. Also affects contact and sensor events.
+			// State changes that affect island connectivity. Also affects contact events.
 			if ( touching == true && wasTouching == false )
 			{
 				contactSim->simFlags |= b2_simStartedTouching;
@@ -631,7 +630,7 @@ static void b2Collide( b2StepContext* context )
 			else if ( simFlags & b2_simStartedTouching )
 			{
 				B2_ASSERT( contact->islandId == B2_NULL_INDEX );
-				// Contact is solid
+
 				if ( flags & b2_contactEnableContactEvents )
 				{
 					b2ContactBeginTouchEvent event = { shapeIdA, shapeIdB, contactSim->manifold };
@@ -663,8 +662,6 @@ static void b2Collide( b2StepContext* context )
 			else if ( simFlags & b2_simStoppedTouching )
 			{
 				contactSim->simFlags &= ~b2_simStoppedTouching;
-
-				// Contact is solid
 				contact->flags &= ~b2_contactTouchingFlag;
 
 				if ( contact->flags & b2_contactEnableContactEvents )
@@ -1096,7 +1093,7 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 								// graph color
 								float pointSize = contact->colorIndex == B2_OVERFLOW_INDEX ? 7.5f : 5.0f;
 								draw->DrawPointFcn( point->point, pointSize, graphColors[contact->colorIndex], draw->context );
-								// g_draw.DrawString(point->position, "%d", point->color);
+								// m_context->draw.DrawString(point->position, "%d", point->color);
 							}
 							else if ( point->separation > linearSlop )
 							{
@@ -1395,7 +1392,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 						// graph color
 						float pointSize = colorIndex == B2_OVERFLOW_INDEX ? 7.5f : 5.0f;
 						draw->DrawPointFcn( point->point, pointSize, colors[colorIndex], draw->context );
-						// g_draw.DrawString(point->position, "%d", point->color);
+						// m_context->draw.DrawString(point->position, "%d", point->color);
 					}
 					else if ( point->separation > linearSlop )
 					{
@@ -3244,7 +3241,6 @@ void b2ValidateContacts( b2World* world )
 
 		if ( setId == b2_awakeSet )
 		{
-			// If touching and not a sensor
 			if ( touching )
 			{
 				B2_ASSERT( 0 <= contact->colorIndex && contact->colorIndex < B2_GRAPH_COLOR_COUNT );
@@ -3261,7 +3257,7 @@ void b2ValidateContacts( b2World* world )
 		}
 		else
 		{
-			// Sleeping and non-touching contacts or sensor contacts belong in the disabled set
+			// Sleeping and non-touching contacts belong in the disabled set
 			B2_ASSERT( touching == false && setId == b2_disabledSet );
 		}
 
@@ -3270,7 +3266,6 @@ void b2ValidateContacts( b2World* world )
 		B2_ASSERT( contactSim->bodyIdA == contact->edges[0].bodyId );
 		B2_ASSERT( contactSim->bodyIdB == contact->edges[1].bodyId );
 
-		// Sim touching is true for solid and sensor contacts
 		bool simTouching = ( contactSim->simFlags & b2_simTouchingFlag ) != 0;
 		B2_ASSERT( touching == simTouching );
 

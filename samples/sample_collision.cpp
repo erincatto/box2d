@@ -4,7 +4,6 @@
 #include "draw.h"
 #include "random.h"
 #include "sample.h"
-#include "settings.h"
 
 #include "box2d/box2d.h"
 #include "box2d/collision.h"
@@ -25,13 +24,13 @@ public:
 		e_box
 	};
 
-	explicit ShapeDistance( Settings& settings )
-		: Sample( settings )
+	explicit ShapeDistance( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 0.0f };
-			g_camera.m_zoom = 3.0f;
+			m_context->camera.m_center = { 0.0f, 0.0f };
+			m_context->camera.m_zoom = 3.0f;
 		}
 
 		m_point = b2Vec2_zero;
@@ -122,11 +121,11 @@ public:
 				b2Vec2 p = b2TransformPoint( transform, m_point );
 				if ( radius > 0.0f )
 				{
-					g_draw.DrawSolidCircle( transform, m_point, radius, color );
+					m_context->draw.DrawSolidCircle( transform, m_point, radius, color );
 				}
 				else
 				{
-					g_draw.DrawPoint( p, 5.0f, color );
+					m_context->draw.DrawPoint( p, 5.0f, color );
 				}
 			}
 			break;
@@ -138,21 +137,21 @@ public:
 
 				if ( radius > 0.0f )
 				{
-					g_draw.DrawSolidCapsule( p1, p2, radius, color );
+					m_context->draw.DrawSolidCapsule( p1, p2, radius, color );
 				}
 				else
 				{
-					g_draw.DrawSegment( p1, p2, color );
+					m_context->draw.DrawSegment( p1, p2, color );
 				}
 			}
 			break;
 
 			case e_triangle:
-				g_draw.DrawSolidPolygon( transform, m_triangle.vertices, m_triangle.count, radius, color );
+				m_context->draw.DrawSolidPolygon( transform, m_triangle.vertices, m_triangle.count, radius, color );
 				break;
 
 			case e_box:
-				g_draw.DrawSolidPolygon( transform, m_box.vertices, m_box.count, radius, color );
+				m_context->draw.DrawSolidPolygon( transform, m_box.vertices, m_box.count, radius, color );
 				break;
 
 			default:
@@ -163,7 +162,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 310.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Shape Distance", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -305,7 +304,7 @@ public:
 		}
 	}
 
-	void Step( Settings& ) override
+	void Step() override
 	{
 		b2DistanceInput input;
 		input.proxyA = m_proxyA;
@@ -337,9 +336,9 @@ public:
 				b2Vec2 pointA, pointB;
 				ComputeSimplexWitnessPoints( &pointA, &pointB, simplex );
 
-				g_draw.DrawSegment( pointA, pointB, b2_colorWhite );
-				g_draw.DrawPoint( pointA, 10.0f, b2_colorWhite );
-				g_draw.DrawPoint( pointB, 10.0f, b2_colorWhite );
+				m_context->draw.DrawSegment( pointA, pointB, b2_colorWhite );
+				m_context->draw.DrawPoint( pointA, 10.0f, b2_colorWhite );
+				m_context->draw.DrawPoint( pointB, 10.0f, b2_colorWhite );
 			}
 
 			b2HexColor colors[3] = { b2_colorRed, b2_colorGreen, b2_colorBlue };
@@ -347,17 +346,17 @@ public:
 			for ( int i = 0; i < simplex->count; ++i )
 			{
 				b2SimplexVertex* vertex = vertices[i];
-				g_draw.DrawPoint( vertex->wA, 10.0f, colors[i] );
-				g_draw.DrawPoint( vertex->wB, 10.0f, colors[i] );
+				m_context->draw.DrawPoint( vertex->wA, 10.0f, colors[i] );
+				m_context->draw.DrawPoint( vertex->wB, 10.0f, colors[i] );
 			}
 		}
 		else
 		{
-			g_draw.DrawSegment( output.pointA, output.pointB, b2_colorDimGray );
-			g_draw.DrawPoint( output.pointA, 10.0f, b2_colorWhite );
-			g_draw.DrawPoint( output.pointB, 10.0f, b2_colorWhite );
+			m_context->draw.DrawSegment( output.pointA, output.pointB, b2_colorDimGray );
+			m_context->draw.DrawPoint( output.pointA, 10.0f, b2_colorWhite );
+			m_context->draw.DrawPoint( output.pointB, 10.0f, b2_colorWhite );
 
-			g_draw.DrawSegment( output.pointA, output.pointA + 0.5f * output.normal, b2_colorYellow );
+			m_context->draw.DrawSegment( output.pointA, output.pointA + 0.5f * output.normal, b2_colorYellow );
 		}
 
 		if ( m_showIndices )
@@ -365,43 +364,39 @@ public:
 			for ( int i = 0; i < m_proxyA.count; ++i )
 			{
 				b2Vec2 p = m_proxyA.points[i];
-				g_draw.DrawString( p, " %d", i );
+				m_context->draw.DrawString( p, " %d", i );
 			}
 
 			for ( int i = 0; i < m_proxyB.count; ++i )
 			{
 				b2Vec2 p = b2TransformPoint( m_transform, m_proxyB.points[i] );
-				g_draw.DrawString( p, " %d", i );
+				m_context->draw.DrawString( p, " %d", i );
 			}
 		}
 
-		g_draw.DrawString( 5, m_textLine, "mouse button 1: drag" );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, "mouse button 1 + shift: rotate" );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, "distance = %.2f, iterations = %d", output.distance, output.iterations );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "mouse button 1: drag" );
+		DrawTextLine( "mouse button 1 + shift: rotate" );
+		DrawTextLine( "distance = %.2f, iterations = %d", output.distance, output.iterations );
 
 		if ( m_cache.count == 1 )
 		{
-			g_draw.DrawString( 5, m_textLine, "cache = {%d}, {%d}", m_cache.indexA[0], m_cache.indexB[0] );
+			DrawTextLine( "cache = {%d}, {%d}", m_cache.indexA[0], m_cache.indexB[0] );
 		}
 		else if ( m_cache.count == 2 )
 		{
-			g_draw.DrawString( 5, m_textLine, "cache = {%d, %d}, {%d, %d}", m_cache.indexA[0], m_cache.indexA[1],
-							   m_cache.indexB[0], m_cache.indexB[1] );
+			DrawTextLine( "cache = {%d, %d}, {%d, %d}", m_cache.indexA[0], m_cache.indexA[1], m_cache.indexB[0],
+						  m_cache.indexB[1] );
 		}
 		else if ( m_cache.count == 3 )
 		{
-			g_draw.DrawString( 5, m_textLine, "cache = {%d, %d, %d}, {%d, %d, %d}", m_cache.indexA[0], m_cache.indexA[1],
-							   m_cache.indexA[2], m_cache.indexB[0], m_cache.indexB[1], m_cache.indexB[2] );
+			DrawTextLine( "cache = {%d, %d, %d}, {%d, %d, %d}", m_cache.indexA[0], m_cache.indexA[1], m_cache.indexA[2],
+						  m_cache.indexB[0], m_cache.indexB[1], m_cache.indexB[2] );
 		}
-		m_textLine += m_textIncrement;
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new ShapeDistance( settings );
+		return new ShapeDistance( context );
 	}
 
 	static constexpr int m_simplexCapacity = 20;
@@ -466,13 +461,13 @@ static float RayCallback( const b2RayCastInput* input, int32_t proxyId, uint64_t
 class DynamicTree : public Sample
 {
 public:
-	explicit DynamicTree( Settings& settings )
-		: Sample( settings )
+	explicit DynamicTree( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 500.0f, 500.0f };
-			g_camera.m_zoom = 25.0f * 21.0f;
+			m_context->camera.m_center = { 500.0f, 500.0f };
+			m_context->camera.m_zoom = 25.0f * 21.0f;
 		}
 
 		m_fill = 0.25f;
@@ -575,7 +570,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 320.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
 
 		ImGui::Begin( "Dynamic Tree", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -681,14 +676,14 @@ public:
 		m_endPoint = p;
 	}
 
-	void Step( Settings& ) override
+	void Step() override
 	{
 		if ( m_queryDrag )
 		{
 			b2AABB box = { b2Min( m_startPoint, m_endPoint ), b2Max( m_startPoint, m_endPoint ) };
 			b2DynamicTree_Query( &m_tree, box, B2_DEFAULT_MASK_BITS, QueryCallback, this );
 
-			g_draw.DrawAABB( box, b2_colorWhite );
+			m_context->draw.DrawAABB( box, b2_colorWhite );
 		}
 
 		// m_startPoint = {-1.0f, 0.5f};
@@ -699,12 +694,11 @@ public:
 			b2RayCastInput input = { m_startPoint, b2Sub( m_endPoint, m_startPoint ), 1.0f };
 			b2TreeStats result = b2DynamicTree_RayCast( &m_tree, &input, B2_DEFAULT_MASK_BITS, RayCallback, this );
 
-			g_draw.DrawSegment( m_startPoint, m_endPoint, b2_colorWhite );
-			g_draw.DrawPoint( m_startPoint, 5.0f, b2_colorGreen );
-			g_draw.DrawPoint( m_endPoint, 5.0f, b2_colorRed );
+			m_context->draw.DrawSegment( m_startPoint, m_endPoint, b2_colorWhite );
+			m_context->draw.DrawPoint( m_startPoint, 5.0f, b2_colorGreen );
+			m_context->draw.DrawPoint( m_endPoint, 5.0f, b2_colorRed );
 
-			g_draw.DrawString( 5, m_textLine, "node visits = %d, leaf visits = %d", result.nodeVisits, result.leafVisits );
-			m_textLine += m_textIncrement;
+			DrawTextLine( "node visits = %d, leaf visits = %d", result.nodeVisits, result.leafVisits );
 		}
 
 		b2HexColor c = b2_colorBlue;
@@ -718,11 +712,11 @@ public:
 
 			if ( p->queryStamp == m_timeStamp || p->rayStamp == m_timeStamp )
 			{
-				g_draw.DrawAABB( p->box, qc );
+				m_context->draw.DrawAABB( p->box, qc );
 			}
 			else
 			{
-				g_draw.DrawAABB( p->box, c );
+				m_context->draw.DrawAABB( p->box, c );
 			}
 
 			float moveTest = RandomFloatRange( 0.0f, 1.0f );
@@ -770,8 +764,7 @@ public:
 					}
 				}
 				float ms = b2GetMilliseconds( ticks );
-				g_draw.DrawString( 5, m_textLine, "incremental : %.3f ms", ms );
-				m_textLine += m_textIncrement;
+				DrawTextLine( "incremental : %.3f ms", ms );
 			}
 			break;
 
@@ -789,8 +782,7 @@ public:
 				uint64_t ticks = b2GetTicks();
 				int boxCount = b2DynamicTree_Rebuild( &m_tree, true );
 				float ms = b2GetMilliseconds( ticks );
-				g_draw.DrawString( 5, m_textLine, "full build %d : %.3f ms", boxCount, ms );
-				m_textLine += m_textIncrement;
+				DrawTextLine( "full build %d : %.3f ms", boxCount, ms );
 			}
 			break;
 
@@ -808,8 +800,7 @@ public:
 				uint64_t ticks = b2GetTicks();
 				int boxCount = b2DynamicTree_Rebuild( &m_tree, false );
 				float ms = b2GetMilliseconds( ticks );
-				g_draw.DrawString( 5, m_textLine, "partial rebuild %d : %.3f ms", boxCount, ms );
-				m_textLine += m_textIncrement;
+				DrawTextLine( "partial rebuild %d : %.3f ms", boxCount, ms );
 			}
 			break;
 
@@ -821,18 +812,16 @@ public:
 		float areaRatio = b2DynamicTree_GetAreaRatio( &m_tree );
 
 		int hmin = (int)( ceilf( logf( (float)m_proxyCount ) / logf( 2.0f ) - 1.0f ) );
-		g_draw.DrawString( 5, m_textLine, "proxies = %d, height = %d, hmin = %d, area ratio = %.1f", m_proxyCount, height, hmin,
-						   areaRatio );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "proxies = %d, height = %d, hmin = %d, area ratio = %.1f", m_proxyCount, height, hmin, areaRatio );
 
 		b2DynamicTree_Validate( &m_tree );
 
 		m_timeStamp += 1;
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new DynamicTree( settings );
+		return new DynamicTree( context );
 	}
 
 	b2DynamicTree m_tree;
@@ -881,13 +870,13 @@ static int sampleDynamicTree = RegisterSample( "Collision", "Dynamic Tree", Dyna
 class RayCast : public Sample
 {
 public:
-	explicit RayCast( Settings& settings )
-		: Sample( settings )
+	explicit RayCast( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 20.0f };
-			g_camera.m_zoom = 17.5f;
+			m_context->camera.m_center = { 0.0f, 20.0f };
+			m_context->camera.m_zoom = 17.5f;
 		}
 
 		m_circle = { { 0.0f, 0.0f }, 2.0f };
@@ -920,7 +909,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 230.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
 
 		ImGui::Begin( "Ray-cast", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1020,40 +1009,40 @@ public:
 		if ( output->hit )
 		{
 			b2Vec2 p = b2MulAdd( p1, output->fraction, d );
-			g_draw.DrawSegment( p1, p, b2_colorWhite );
-			g_draw.DrawPoint( p1, 5.0f, b2_colorGreen );
-			g_draw.DrawPoint( output->point, 5.0f, b2_colorWhite );
+			m_context->draw.DrawSegment( p1, p, b2_colorWhite );
+			m_context->draw.DrawPoint( p1, 5.0f, b2_colorGreen );
+			m_context->draw.DrawPoint( output->point, 5.0f, b2_colorWhite );
 
 			b2Vec2 n = b2MulAdd( p, 1.0f, output->normal );
-			g_draw.DrawSegment( p, n, b2_colorViolet );
+			m_context->draw.DrawSegment( p, n, b2_colorViolet );
 
 			// if (m_rayRadius > 0.0f)
 			//{
-			//	g_draw.DrawCircle(p1, m_rayRadius, b2_colorGreen);
-			//	g_draw.DrawCircle(p, m_rayRadius, b2_colorRed);
+			//	m_context->draw.DrawCircle(p1, m_rayRadius, b2_colorGreen);
+			//	m_context->draw.DrawCircle(p, m_rayRadius, b2_colorRed);
 			// }
 
 			if ( m_showFraction )
 			{
 				b2Vec2 ps = { p.x + 0.05f, p.y - 0.02f };
-				g_draw.DrawString( ps, "%.2f", output->fraction );
+				m_context->draw.DrawString( ps, "%.2f", output->fraction );
 			}
 		}
 		else
 		{
-			g_draw.DrawSegment( p1, p2, b2_colorWhite );
-			g_draw.DrawPoint( p1, 5.0f, b2_colorGreen );
-			g_draw.DrawPoint( p2, 5.0f, b2_colorRed );
+			m_context->draw.DrawSegment( p1, p2, b2_colorWhite );
+			m_context->draw.DrawPoint( p1, 5.0f, b2_colorGreen );
+			m_context->draw.DrawPoint( p2, 5.0f, b2_colorRed );
 
 			// if (m_rayRadius > 0.0f)
 			//{
-			//	g_draw.DrawCircle(p1, m_rayRadius, b2_colorGreen);
-			//	g_draw.DrawCircle(p2, m_rayRadius, b2_colorRed);
+			//	m_context->draw.DrawCircle(p1, m_rayRadius, b2_colorGreen);
+			//	m_context->draw.DrawCircle(p2, m_rayRadius, b2_colorRed);
 			// }
 		}
 	}
 
-	void Step( Settings& ) override
+	void Step() override
 	{
 		b2Vec2 offset = { -20.0f, 20.0f };
 		b2Vec2 increment = { 10.0f, 0.0f };
@@ -1066,7 +1055,7 @@ public:
 		// circle
 		{
 			b2Transform transform = { b2Add( m_transform.p, offset ), m_transform.q };
-			g_draw.DrawSolidCircle( transform, m_circle.center, m_circle.radius, color1 );
+			m_context->draw.DrawSolidCircle( transform, m_circle.center, m_circle.radius, color1 );
 
 			b2Vec2 start = b2InvTransformPoint( transform, m_rayStart );
 			b2Vec2 translation = b2InvRotateVector( transform.q, b2Sub( m_rayEnd, m_rayStart ) );
@@ -1089,7 +1078,7 @@ public:
 			b2Transform transform = { b2Add( m_transform.p, offset ), m_transform.q };
 			b2Vec2 v1 = b2TransformPoint( transform, m_capsule.center1 );
 			b2Vec2 v2 = b2TransformPoint( transform, m_capsule.center2 );
-			g_draw.DrawSolidCapsule( v1, v2, m_capsule.radius, color1 );
+			m_context->draw.DrawSolidCapsule( v1, v2, m_capsule.radius, color1 );
 
 			b2Vec2 start = b2InvTransformPoint( transform, m_rayStart );
 			b2Vec2 translation = b2InvRotateVector( transform.q, b2Sub( m_rayEnd, m_rayStart ) );
@@ -1110,7 +1099,7 @@ public:
 		// box
 		{
 			b2Transform transform = { b2Add( m_transform.p, offset ), m_transform.q };
-			g_draw.DrawSolidPolygon( transform, m_box.vertices, m_box.count, 0.0f, color1 );
+			m_context->draw.DrawSolidPolygon( transform, m_box.vertices, m_box.count, 0.0f, color1 );
 
 			b2Vec2 start = b2InvTransformPoint( transform, m_rayStart );
 			b2Vec2 translation = b2InvRotateVector( transform.q, b2Sub( m_rayEnd, m_rayStart ) );
@@ -1131,7 +1120,7 @@ public:
 		// triangle
 		{
 			b2Transform transform = { b2Add( m_transform.p, offset ), m_transform.q };
-			g_draw.DrawSolidPolygon( transform, m_triangle.vertices, m_triangle.count, 0.0f, color1 );
+			m_context->draw.DrawSolidPolygon( transform, m_triangle.vertices, m_triangle.count, 0.0f, color1 );
 
 			b2Vec2 start = b2InvTransformPoint( transform, m_rayStart );
 			b2Vec2 translation = b2InvRotateVector( transform.q, b2Sub( m_rayEnd, m_rayStart ) );
@@ -1155,7 +1144,7 @@ public:
 
 			b2Vec2 p1 = b2TransformPoint( transform, m_segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform, m_segment.point2 );
-			g_draw.DrawSegment( p1, p2, color1 );
+			m_context->draw.DrawSegment( p1, p2, color1 );
 
 			b2Vec2 start = b2InvTransformPoint( transform, m_rayStart );
 			b2Vec2 translation = b2InvRotateVector( transform.q, b2Sub( m_rayEnd, m_rayStart ) );
@@ -1176,9 +1165,9 @@ public:
 		DrawRay( &output );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new RayCast( settings );
+		return new RayCast( context );
 	}
 
 	b2Polygon m_box;
@@ -1389,13 +1378,13 @@ public:
 		e_maxCount = 64
 	};
 
-	explicit CastWorld( Settings& settings )
-		: Sample( settings )
+	explicit CastWorld( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 2.0f, 14.0f };
-			g_camera.m_zoom = 25.0f * 0.75f;
+			m_context->camera.m_center = { 2.0f, 14.0f };
+			m_context->camera.m_zoom = 25.0f * 0.75f;
 		}
 
 		// Ground body
@@ -1588,7 +1577,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 320.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
 
 		ImGui::Begin( "Ray-cast World", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1667,16 +1656,12 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
-		g_draw.DrawString( 5, m_textLine, "Click left mouse button and drag to modify ray cast" );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, "Shape 7 is intentionally ignored by the ray" );
-		m_textLine += m_textIncrement;
-
-		m_textLine += m_textIncrement;
+		DrawTextLine( "Click left mouse button and drag to modify ray cast" );
+		DrawTextLine( "Shape 7 is intentionally ignored by the ray" );
 
 		b2HexColor color1 = b2_colorGreen;
 		b2HexColor color2 = b2_colorLightGray;
@@ -1686,8 +1671,7 @@ public:
 
 		if ( m_simple )
 		{
-			g_draw.DrawString( 5, m_textLine, "Simple closest point ray cast" );
-			m_textLine += m_textIncrement;
+			DrawTextLine( "Simple closest point ray cast" );
 
 			// This version doesn't have a callback, but it doesn't skip the ignored shape
 			b2RayResult result = b2World_CastRayClosest( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter() );
@@ -1695,14 +1679,14 @@ public:
 			if ( result.hit == true )
 			{
 				b2Vec2 c = b2MulAdd( m_rayStart, result.fraction, rayTranslation );
-				g_draw.DrawPoint( result.point, 5.0f, color1 );
-				g_draw.DrawSegment( m_rayStart, c, color2 );
+				m_context->draw.DrawPoint( result.point, 5.0f, color1 );
+				m_context->draw.DrawSegment( m_rayStart, c, color2 );
 				b2Vec2 head = b2MulAdd( result.point, 0.5f, result.normal );
-				g_draw.DrawSegment( result.point, head, color3 );
+				m_context->draw.DrawSegment( result.point, head, color3 );
 			}
 			else
 			{
-				g_draw.DrawSegment( m_rayStart, m_rayEnd, color2 );
+				m_context->draw.DrawSegment( m_rayStart, m_rayEnd, color2 );
 			}
 		}
 		else
@@ -1710,27 +1694,25 @@ public:
 			switch ( m_mode )
 			{
 				case e_any:
-					g_draw.DrawString( 5, m_textLine, "Cast mode: any - check for obstruction - unsorted" );
+					DrawTextLine( "Cast mode: any - check for obstruction - unsorted" );
 					break;
 
 				case e_closest:
-					g_draw.DrawString( 5, m_textLine, "Cast mode: closest - find closest shape along the cast" );
+					DrawTextLine( "Cast mode: closest - find closest shape along the cast" );
 					break;
 
 				case e_multiple:
-					g_draw.DrawString( 5, m_textLine, "Cast mode: multiple - gather up to 3 shapes - unsorted" );
+					DrawTextLine( "Cast mode: multiple - gather up to 3 shapes - unsorted" );
 					break;
 
 				case e_sorted:
-					g_draw.DrawString( 5, m_textLine, "Cast mode: sorted - gather up to 3 shapes sorted by closeness" );
+					DrawTextLine( "Cast mode: sorted - gather up to 3 shapes sorted by closeness" );
 					break;
 
 				default:
 					assert( false );
 					break;
 			}
-
-			m_textLine += m_textIncrement;
 
 			b2CastResultFcn* functions[] = {
 				RayCastAnyCallback,
@@ -1785,65 +1767,65 @@ public:
 					b2Vec2 c = b2MulAdd( m_rayStart, context.fractions[i], rayTranslation );
 					b2Vec2 p = context.points[i];
 					b2Vec2 n = context.normals[i];
-					g_draw.DrawPoint( p, 5.0f, colors[i] );
-					g_draw.DrawSegment( m_rayStart, c, color2 );
+					m_context->draw.DrawPoint( p, 5.0f, colors[i] );
+					m_context->draw.DrawSegment( m_rayStart, c, color2 );
 					b2Vec2 head = b2MulAdd( p, 0.5f, n );
-					g_draw.DrawSegment( p, head, color3 );
+					m_context->draw.DrawSegment( p, head, color3 );
 
 					b2Vec2 t = b2MulSV( context.fractions[i], rayTranslation );
 					b2Transform shiftedTransform = { t, b2Rot_identity };
 
 					if ( m_castType == e_circleCast )
 					{
-						g_draw.DrawSolidCircle( shiftedTransform, circle.center, m_castRadius, b2_colorYellow );
+						m_context->draw.DrawSolidCircle( shiftedTransform, circle.center, m_castRadius, b2_colorYellow );
 					}
 					else if ( m_castType == e_capsuleCast )
 					{
 						b2Vec2 p1 = capsule.center1 + t;
 						b2Vec2 p2 = capsule.center2 + t;
-						g_draw.DrawSolidCapsule( p1, p2, m_castRadius, b2_colorYellow );
+						m_context->draw.DrawSolidCapsule( p1, p2, m_castRadius, b2_colorYellow );
 					}
 					else if ( m_castType == e_polygonCast )
 					{
-						g_draw.DrawSolidPolygon( shiftedTransform, box.vertices, box.count, box.radius, b2_colorYellow );
+						m_context->draw.DrawSolidPolygon( shiftedTransform, box.vertices, box.count, box.radius, b2_colorYellow );
 					}
 				}
 			}
 			else
 			{
 				b2Transform shiftedTransform = { b2Add( transform.p, rayTranslation ), transform.q };
-				g_draw.DrawSegment( m_rayStart, m_rayEnd, color2 );
+				m_context->draw.DrawSegment( m_rayStart, m_rayEnd, color2 );
 
 				if ( m_castType == e_circleCast )
 				{
-					g_draw.DrawSolidCircle( shiftedTransform, b2Vec2_zero, m_castRadius, b2_colorGray );
+					m_context->draw.DrawSolidCircle( shiftedTransform, b2Vec2_zero, m_castRadius, b2_colorGray );
 				}
 				else if ( m_castType == e_capsuleCast )
 				{
 					b2Vec2 p1 = b2Add( b2TransformPoint( transform, capsule.center1 ), rayTranslation );
 					b2Vec2 p2 = b2Add( b2TransformPoint( transform, capsule.center2 ), rayTranslation );
-					g_draw.DrawSolidCapsule( p1, p2, m_castRadius, b2_colorYellow );
+					m_context->draw.DrawSolidCapsule( p1, p2, m_castRadius, b2_colorYellow );
 				}
 				else if ( m_castType == e_polygonCast )
 				{
-					g_draw.DrawSolidPolygon( shiftedTransform, box.vertices, box.count, box.radius, b2_colorYellow );
+					m_context->draw.DrawSolidPolygon( shiftedTransform, box.vertices, box.count, box.radius, b2_colorYellow );
 				}
 			}
 		}
 
-		g_draw.DrawPoint( m_rayStart, 5.0f, b2_colorGreen );
+		m_context->draw.DrawPoint( m_rayStart, 5.0f, b2_colorGreen );
 
 		if ( B2_IS_NON_NULL( m_bodyIds[m_ignoreIndex] ) )
 		{
 			b2Vec2 p = b2Body_GetPosition( m_bodyIds[m_ignoreIndex] );
 			p.x -= 0.2f;
-			g_draw.DrawString( p, "ign" );
+			m_context->draw.DrawString( p, "ign" );
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new CastWorld( settings );
+		return new CastWorld( context );
 	}
 
 	int m_bodyIndex;
@@ -1912,13 +1894,13 @@ public:
 		return true;
 	}
 
-	explicit OverlapWorld( Settings& settings )
-		: Sample( settings )
+	explicit OverlapWorld( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 10.0f };
-			g_camera.m_zoom = 25.0f * 0.7f;
+			m_context->camera.m_center = { 0.0f, 10.0f };
+			m_context->camera.m_zoom = 25.0f * 0.7f;
 		}
 
 		{
@@ -2081,7 +2063,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 330.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
 
 		ImGui::Begin( "Overlap World", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -2142,14 +2124,12 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
-		g_draw.DrawString( 5, m_textLine, "left mouse button: drag query shape" );
-		m_textLine += m_textIncrement;
-		g_draw.DrawString( 5, m_textLine, "left mouse button + shift: rotate query shape" );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "left mouse button: drag query shape" );
+		DrawTextLine( "left mouse button + shift: rotate query shape" );
 
 		m_doomCount = 0;
 
@@ -2163,7 +2143,7 @@ public:
 				.radius = 1.0f,
 			};
 			proxy = b2MakeProxy( &circle.center, 1, circle.radius );
-			g_draw.DrawSolidCircle( b2Transform_identity, circle.center, circle.radius, b2_colorWhite );
+			m_context->draw.DrawSolidCircle( b2Transform_identity, circle.center, circle.radius, b2_colorWhite );
 		}
 		else if ( m_shapeType == e_capsuleShape )
 		{
@@ -2173,13 +2153,13 @@ public:
 				.radius = 0.5f,
 			};
 			proxy = b2MakeProxy( &capsule.center1, 2, capsule.radius );
-			g_draw.DrawSolidCapsule( capsule.center1, capsule.center2, capsule.radius, b2_colorWhite );
+			m_context->draw.DrawSolidCapsule( capsule.center1, capsule.center2, capsule.radius, b2_colorWhite );
 		}
 		else if ( m_shapeType == e_boxShape )
 		{
 			b2Polygon box = b2MakeOffsetBox( 2.0f, 0.5f, transform.p, transform.q );
 			proxy = b2MakeProxy( box.vertices, box.count, box.radius );
-			g_draw.DrawPolygon( box.vertices, box.count, b2_colorWhite );
+			m_context->draw.DrawPolygon( box.vertices, box.count, b2_colorWhite );
 		}
 
 		b2World_OverlapShape( m_worldId, &proxy, b2DefaultQueryFilter(), OverlapResultFcn, this );
@@ -2188,7 +2168,7 @@ public:
 		{
 			b2Vec2 p = b2Body_GetPosition( m_bodyIds[m_ignoreIndex] );
 			p.x -= 0.2f;
-			g_draw.DrawString( p, "skip" );
+			m_context->draw.DrawString( p, "skip" );
 		}
 
 		for ( int i = 0; i < m_doomCount; ++i )
@@ -2209,9 +2189,9 @@ public:
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new OverlapWorld( settings );
+		return new OverlapWorld( context );
 	}
 
 	int m_bodyIndex;
@@ -2246,14 +2226,14 @@ static int sampleOverlapWorld = RegisterSample( "Collision", "Overlap World", Ov
 class Manifold : public Sample
 {
 public:
-	explicit Manifold( Settings& settings )
-		: Sample( settings )
+	explicit Manifold( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			// g_camera.m_center = {1.8f, 15.0f};
-			g_camera.m_center = { 1.8f, 0.0f };
-			g_camera.m_zoom = 25.0f * 0.45f;
+			// m_context->camera.m_center = {1.8f, 15.0f};
+			m_context->camera.m_center = { 1.8f, 0.0f };
+			m_context->camera.m_zoom = 25.0f * 0.45f;
 		}
 
 		m_smgroxCache1 = b2_emptySimplexCache;
@@ -2287,7 +2267,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 320.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 340.0f, height ) );
 
 		ImGui::Begin( "Manifold", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -2376,7 +2356,7 @@ public:
 		if ( m_showCount )
 		{
 			b2Vec2 p = 0.5f * ( origin1 + origin2 );
-			g_draw.DrawString( p, "%d", manifold->pointCount );
+			m_context->draw.DrawString( p, "%d", manifold->pointCount );
 		}
 
 		for ( int i = 0; i < manifold->pointCount; ++i )
@@ -2385,16 +2365,16 @@ public:
 
 			b2Vec2 p1 = mp->point;
 			b2Vec2 p2 = b2MulAdd( p1, 0.5f, manifold->normal );
-			g_draw.DrawSegment( p1, p2, b2_colorViolet );
+			m_context->draw.DrawSegment( p1, p2, b2_colorViolet );
 
 			if ( m_showAnchors )
 			{
-				g_draw.DrawPoint( b2Add( origin1, mp->anchorA ), 5.0f, b2_colorRed );
-				g_draw.DrawPoint( b2Add( origin2, mp->anchorB ), 5.0f, b2_colorGreen );
+				m_context->draw.DrawPoint( b2Add( origin1, mp->anchorA ), 5.0f, b2_colorRed );
+				m_context->draw.DrawPoint( b2Add( origin2, mp->anchorB ), 5.0f, b2_colorGreen );
 			}
 			else
 			{
-				g_draw.DrawPoint( p1, 10.0f, b2_colorBlue );
+				m_context->draw.DrawPoint( p1, 10.0f, b2_colorBlue );
 			}
 
 			if ( m_showIds )
@@ -2402,18 +2382,18 @@ public:
 				// uint32_t indexA = mp->id >> 8;
 				// uint32_t indexB = 0xFF & mp->id;
 				b2Vec2 p = { p1.x + 0.05f, p1.y - 0.02f };
-				g_draw.DrawString( p, "0x%04x", mp->id );
+				m_context->draw.DrawString( p, "0x%04x", mp->id );
 			}
 
 			if ( m_showSeparation )
 			{
 				b2Vec2 p = { p1.x + 0.05f, p1.y + 0.03f };
-				g_draw.DrawString( p, "%.3f", mp->separation );
+				m_context->draw.DrawString( p, "%.3f", mp->separation );
 			}
 		}
 	}
 
-	void Step( Settings& ) override
+	void Step() override
 	{
 		b2Vec2 offset = { -10.0f, -5.0f };
 		b2Vec2 increment = { 4.0f, 0.0f };
@@ -2440,8 +2420,8 @@ public:
 
 			b2Manifold m = b2CollideCircles( &circle1, transform1, &circle2, transform2 );
 
-			g_draw.DrawSolidCircle( transform1, circle1.center, circle1.radius, color1 );
-			g_draw.DrawSolidCircle( transform2, circle2.center, circle2.radius, color2 );
+			m_context->draw.DrawSolidCircle( transform1, circle1.center, circle1.radius, color1 );
+			m_context->draw.DrawSolidCircle( transform2, circle2.center, circle2.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2460,9 +2440,9 @@ public:
 
 			b2Vec2 v1 = b2TransformPoint( transform1, capsule.center1 );
 			b2Vec2 v2 = b2TransformPoint( transform1, capsule.center2 );
-			g_draw.DrawSolidCapsule( v1, v2, capsule.radius, color1 );
+			m_context->draw.DrawSolidCapsule( v1, v2, capsule.radius, color1 );
 
-			g_draw.DrawSolidCircle( transform2, circle.center, circle.radius, color2 );
+			m_context->draw.DrawSolidCircle( transform2, circle.center, circle.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2481,9 +2461,9 @@ public:
 
 			b2Vec2 p1 = b2TransformPoint( transform1, segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment.point2 );
-			g_draw.DrawSegment( p1, p2, color1 );
+			m_context->draw.DrawSegment( p1, p2, color1 );
 
-			g_draw.DrawSolidCircle( transform2, circle.center, circle.radius, color2 );
+			m_context->draw.DrawSolidCircle( transform2, circle.center, circle.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2501,8 +2481,8 @@ public:
 
 			b2Manifold m = b2CollidePolygonAndCircle( &box, transform1, &circle, transform2 );
 
-			g_draw.DrawSolidPolygon( transform1, box.vertices, box.count, m_round, color1 );
-			g_draw.DrawSolidCircle( transform2, circle.center, circle.radius, color2 );
+			m_context->draw.DrawSolidPolygon( transform1, box.vertices, box.count, m_round, color1 );
+			m_context->draw.DrawSolidCircle( transform2, circle.center, circle.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2521,11 +2501,11 @@ public:
 
 			b2Vec2 v1 = b2TransformPoint( transform1, capsule1.center1 );
 			b2Vec2 v2 = b2TransformPoint( transform1, capsule1.center2 );
-			g_draw.DrawSolidCapsule( v1, v2, capsule1.radius, color1 );
+			m_context->draw.DrawSolidCapsule( v1, v2, capsule1.radius, color1 );
 
 			v1 = b2TransformPoint( transform2, capsule2.center1 );
 			v2 = b2TransformPoint( transform2, capsule2.center2 );
-			g_draw.DrawSolidCapsule( v1, v2, capsule2.radius, color2 );
+			m_context->draw.DrawSolidCapsule( v1, v2, capsule2.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2542,11 +2522,11 @@ public:
 
 			b2Manifold m = b2CollidePolygonAndCapsule( &box, transform1, &capsule, transform2 );
 
-			g_draw.DrawSolidPolygon( transform1, box.vertices, box.count, box.radius, color1 );
+			m_context->draw.DrawSolidPolygon( transform1, box.vertices, box.count, box.radius, color1 );
 
 			b2Vec2 v1 = b2TransformPoint( transform2, capsule.center1 );
 			b2Vec2 v2 = b2TransformPoint( transform2, capsule.center2 );
-			g_draw.DrawSolidCapsule( v1, v2, capsule.radius, color2 );
+			m_context->draw.DrawSolidCapsule( v1, v2, capsule.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2565,11 +2545,11 @@ public:
 
 			b2Vec2 p1 = b2TransformPoint( transform1, segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment.point2 );
-			g_draw.DrawSegment( p1, p2, color1 );
+			m_context->draw.DrawSegment( p1, p2, color1 );
 
 			p1 = b2TransformPoint( transform2, capsule.center1 );
 			p2 = b2TransformPoint( transform2, capsule.center2 );
-			g_draw.DrawSolidCapsule( p1, p2, capsule.radius, color2 );
+			m_context->draw.DrawSolidCapsule( p1, p2, capsule.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2590,8 +2570,8 @@ public:
 
 			b2Manifold m = b2CollidePolygons( &box1, transform1, &box, transform2 );
 
-			g_draw.DrawSolidPolygon( transform1, box1.vertices, box1.count, box1.radius, color1 );
-			g_draw.DrawSolidPolygon( transform2, box.vertices, box.count, box.radius, color2 );
+			m_context->draw.DrawSolidPolygon( transform1, box1.vertices, box1.count, box1.radius, color1 );
+			m_context->draw.DrawSolidPolygon( transform2, box.vertices, box.count, box.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2609,8 +2589,8 @@ public:
 
 			b2Manifold m = b2CollidePolygons( &box1, transform1, &box, transform2 );
 
-			g_draw.DrawSolidPolygon( transform1, box1.vertices, box1.count, box1.radius, color1 );
-			g_draw.DrawSolidPolygon( transform2, box.vertices, box.count, box.radius, color2 );
+			m_context->draw.DrawSolidPolygon( transform1, box1.vertices, box1.count, box1.radius, color1 );
+			m_context->draw.DrawSolidPolygon( transform2, box.vertices, box.count, box.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2629,8 +2609,8 @@ public:
 
 			b2Manifold m = b2CollidePolygons( &box, transform1, &rox, transform2 );
 
-			g_draw.DrawSolidPolygon( transform1, box.vertices, box.count, box.radius, color1 );
-			g_draw.DrawSolidPolygon( transform2, rox.vertices, rox.count, rox.radius, color2 );
+			m_context->draw.DrawSolidPolygon( transform1, box.vertices, box.count, box.radius, color1 );
+			m_context->draw.DrawSolidPolygon( transform2, rox.vertices, rox.count, rox.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2649,8 +2629,8 @@ public:
 
 			b2Manifold m = b2CollidePolygons( &rox, transform1, &rox, transform2 );
 
-			g_draw.DrawSolidPolygon( transform1, rox.vertices, rox.count, rox.radius, color1 );
-			g_draw.DrawSolidPolygon( transform2, rox.vertices, rox.count, rox.radius, color2 );
+			m_context->draw.DrawSolidPolygon( transform1, rox.vertices, rox.count, rox.radius, color1 );
+			m_context->draw.DrawSolidPolygon( transform2, rox.vertices, rox.count, rox.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2671,8 +2651,8 @@ public:
 
 			b2Vec2 p1 = b2TransformPoint( transform1, segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment.point2 );
-			g_draw.DrawSegment( p1, p2, color1 );
-			g_draw.DrawSolidPolygon( transform2, rox.vertices, rox.count, rox.radius, color2 );
+			m_context->draw.DrawSegment( p1, p2, color1 );
+			m_context->draw.DrawSolidPolygon( transform2, rox.vertices, rox.count, rox.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2690,10 +2670,10 @@ public:
 
 			b2Manifold m = b2CollidePolygons( &wox, transform1, &wox, transform2 );
 
-			g_draw.DrawSolidPolygon( transform1, wox.vertices, wox.count, wox.radius, color1 );
-			g_draw.DrawSolidPolygon( transform1, wox.vertices, wox.count, 0.0f, color1 );
-			g_draw.DrawSolidPolygon( transform2, wox.vertices, wox.count, wox.radius, color2 );
-			g_draw.DrawSolidPolygon( transform2, wox.vertices, wox.count, 0.0f, color2 );
+			m_context->draw.DrawSolidPolygon( transform1, wox.vertices, wox.count, wox.radius, color1 );
+			m_context->draw.DrawSolidPolygon( transform1, wox.vertices, wox.count, 0.0f, color1 );
+			m_context->draw.DrawSolidPolygon( transform2, wox.vertices, wox.count, wox.radius, color2 );
+			m_context->draw.DrawSolidPolygon( transform2, wox.vertices, wox.count, 0.0f, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2717,10 +2697,10 @@ public:
 
 			b2Manifold m = b2CollidePolygons( &w1, transform1, &w2, transform2 );
 
-			g_draw.DrawSolidPolygon( transform1, w1.vertices, w1.count, w1.radius, color1 );
-			g_draw.DrawSolidPolygon( transform1, w1.vertices, w1.count, 0.0f, color1 );
-			g_draw.DrawSolidPolygon( transform2, w2.vertices, w2.count, w2.radius, color2 );
-			g_draw.DrawSolidPolygon( transform2, w2.vertices, w2.count, 0.0f, color2 );
+			m_context->draw.DrawSolidPolygon( transform1, w1.vertices, w1.count, w1.radius, color1 );
+			m_context->draw.DrawSolidPolygon( transform1, w1.vertices, w1.count, 0.0f, color1 );
+			m_context->draw.DrawSolidPolygon( transform2, w2.vertices, w2.count, w2.radius, color2 );
+			m_context->draw.DrawSolidPolygon( transform2, w2.vertices, w2.count, 0.0f, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2742,8 +2722,8 @@ public:
 
 			b2Manifold m = b2CollidePolygons( &box, transform1, &tri, transform2 );
 
-			g_draw.DrawSolidPolygon( transform1, box.vertices, box.count, 0.0f, color1 );
-			g_draw.DrawSolidPolygon( transform2, tri.vertices, tri.count, 0.0f, color2 );
+			m_context->draw.DrawSolidPolygon( transform1, box.vertices, box.count, 0.0f, color1 );
+			m_context->draw.DrawSolidPolygon( transform2, tri.vertices, tri.count, 0.0f, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2764,10 +2744,10 @@ public:
 			b2Vec2 g2 = b2TransformPoint( transform1, segment.ghost2 );
 			b2Vec2 p1 = b2TransformPoint( transform1, segment.segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment.segment.point2 );
-			g_draw.DrawSegment( g1, p1, b2_colorLightGray );
-			g_draw.DrawSegment( p1, p2, color1 );
-			g_draw.DrawSegment( p2, g2, b2_colorLightGray );
-			g_draw.DrawSolidCircle( transform2, circle.center, circle.radius, color2 );
+			m_context->draw.DrawSegment( g1, p1, b2_colorLightGray );
+			m_context->draw.DrawSegment( p1, p2, color1 );
+			m_context->draw.DrawSegment( p2, g2, b2_colorLightGray );
+			m_context->draw.DrawSolidCircle( transform2, circle.center, circle.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2795,24 +2775,24 @@ public:
 				b2Vec2 g2 = b2TransformPoint( transform1, segment1.ghost2 );
 				b2Vec2 p1 = b2TransformPoint( transform1, segment1.segment.point1 );
 				b2Vec2 p2 = b2TransformPoint( transform1, segment1.segment.point2 );
-				g_draw.DrawSegment( p1, p2, color1 );
-				g_draw.DrawPoint( p1, 4.0f, color1 );
-				g_draw.DrawPoint( p2, 4.0f, color1 );
-				g_draw.DrawSegment( p2, g2, b2_colorLightGray );
+				m_context->draw.DrawSegment( p1, p2, color1 );
+				m_context->draw.DrawPoint( p1, 4.0f, color1 );
+				m_context->draw.DrawPoint( p2, 4.0f, color1 );
+				m_context->draw.DrawSegment( p2, g2, b2_colorLightGray );
 			}
 
 			{
 				b2Vec2 g1 = b2TransformPoint( transform1, segment2.ghost1 );
 				b2Vec2 p1 = b2TransformPoint( transform1, segment2.segment.point1 );
 				b2Vec2 p2 = b2TransformPoint( transform1, segment2.segment.point2 );
-				g_draw.DrawSegment( g1, p1, b2_colorLightGray );
-				g_draw.DrawSegment( p1, p2, color1 );
-				g_draw.DrawPoint( p1, 4.0f, color1 );
-				g_draw.DrawPoint( p2, 4.0f, color1 );
+				m_context->draw.DrawSegment( g1, p1, b2_colorLightGray );
+				m_context->draw.DrawSegment( p1, p2, color1 );
+				m_context->draw.DrawPoint( p1, 4.0f, color1 );
+				m_context->draw.DrawPoint( p2, 4.0f, color1 );
 			}
 
-			g_draw.DrawSolidPolygon( transform2, rox.vertices, rox.count, rox.radius, color2 );
-			g_draw.DrawPoint( b2TransformPoint( transform2, rox.centroid ), 5.0f, b2_colorGainsboro );
+			m_context->draw.DrawSolidPolygon( transform2, rox.vertices, rox.count, rox.radius, color2 );
+			m_context->draw.DrawPoint( b2TransformPoint( transform2, rox.centroid ), 5.0f, b2_colorGainsboro );
 
 			DrawManifold( &m1, transform1.p, transform2.p );
 			DrawManifold( &m2, transform1.p, transform2.p );
@@ -2836,29 +2816,29 @@ public:
 				b2Vec2 g2 = b2TransformPoint( transform1, segment1.ghost2 );
 				b2Vec2 p1 = b2TransformPoint( transform1, segment1.segment.point1 );
 				b2Vec2 p2 = b2TransformPoint( transform1, segment1.segment.point2 );
-				// g_draw.DrawSegment(g1, p1, b2_colorLightGray);
-				g_draw.DrawSegment( p1, p2, color1 );
-				g_draw.DrawPoint( p1, 4.0f, color1 );
-				g_draw.DrawPoint( p2, 4.0f, color1 );
-				g_draw.DrawSegment( p2, g2, b2_colorLightGray );
+				// m_context->draw.DrawSegment(g1, p1, b2_colorLightGray);
+				m_context->draw.DrawSegment( p1, p2, color1 );
+				m_context->draw.DrawPoint( p1, 4.0f, color1 );
+				m_context->draw.DrawPoint( p2, 4.0f, color1 );
+				m_context->draw.DrawSegment( p2, g2, b2_colorLightGray );
 			}
 
 			{
 				b2Vec2 g1 = b2TransformPoint( transform1, segment2.ghost1 );
 				b2Vec2 p1 = b2TransformPoint( transform1, segment2.segment.point1 );
 				b2Vec2 p2 = b2TransformPoint( transform1, segment2.segment.point2 );
-				g_draw.DrawSegment( g1, p1, b2_colorLightGray );
-				g_draw.DrawSegment( p1, p2, color1 );
-				g_draw.DrawPoint( p1, 4.0f, color1 );
-				g_draw.DrawPoint( p2, 4.0f, color1 );
-				// g_draw.DrawSegment(p2, g2, b2_colorLightGray);
+				m_context->draw.DrawSegment( g1, p1, b2_colorLightGray );
+				m_context->draw.DrawSegment( p1, p2, color1 );
+				m_context->draw.DrawPoint( p1, 4.0f, color1 );
+				m_context->draw.DrawPoint( p2, 4.0f, color1 );
+				// m_context->draw.DrawSegment(p2, g2, b2_colorLightGray);
 			}
 
 			b2Vec2 p1 = b2TransformPoint( transform2, capsule.center1 );
 			b2Vec2 p2 = b2TransformPoint( transform2, capsule.center2 );
-			g_draw.DrawSolidCapsule( p1, p2, capsule.radius, color2 );
+			m_context->draw.DrawSolidCapsule( p1, p2, capsule.radius, color2 );
 
-			g_draw.DrawPoint( b2Lerp( p1, p2, 0.5f ), 5.0f, b2_colorGainsboro );
+			m_context->draw.DrawPoint( b2Lerp( p1, p2, 0.5f ), 5.0f, b2_colorGainsboro );
 
 			DrawManifold( &m1, transform1.p, transform2.p );
 			DrawManifold( &m2, transform1.p, transform2.p );
@@ -2868,9 +2848,9 @@ public:
 #endif
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new Manifold( settings );
+		return new Manifold( context );
 	}
 
 	b2SimplexCache m_smgroxCache1;
@@ -2908,13 +2888,13 @@ public:
 		e_boxShape
 	};
 
-	explicit SmoothManifold( Settings& settings )
-		: Sample( settings )
+	explicit SmoothManifold( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 2.0f, 20.0f };
-			g_camera.m_zoom = 21.0f;
+			m_context->camera.m_center = { 2.0f, 20.0f };
+			m_context->camera.m_zoom = 21.0f;
 		}
 
 		m_shapeType = e_boxShape;
@@ -2999,7 +2979,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 290.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
 
 		ImGui::Begin( "Smooth Manifold", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -3091,15 +3071,15 @@ public:
 
 			b2Vec2 p1 = mp->point;
 			b2Vec2 p2 = b2MulAdd( p1, 0.5f, manifold->normal );
-			g_draw.DrawSegment( p1, p2, b2_colorWhite );
+			m_context->draw.DrawSegment( p1, p2, b2_colorWhite );
 
 			if ( m_showAnchors )
 			{
-				g_draw.DrawPoint( p1, 5.0f, b2_colorGreen );
+				m_context->draw.DrawPoint( p1, 5.0f, b2_colorGreen );
 			}
 			else
 			{
-				g_draw.DrawPoint( p1, 5.0f, b2_colorGreen );
+				m_context->draw.DrawPoint( p1, 5.0f, b2_colorGreen );
 			}
 
 			if ( m_showIds )
@@ -3107,18 +3087,18 @@ public:
 				// uint32_t indexA = mp->id >> 8;
 				// uint32_t indexB = 0xFF & mp->id;
 				b2Vec2 p = { p1.x + 0.05f, p1.y - 0.02f };
-				g_draw.DrawString( p, "0x%04x", mp->id );
+				m_context->draw.DrawString( p, "0x%04x", mp->id );
 			}
 
 			if ( m_showSeparation )
 			{
 				b2Vec2 p = { p1.x + 0.05f, p1.y + 0.03f };
-				g_draw.DrawString( p, "%.3f", mp->separation );
+				m_context->draw.DrawString( p, "%.3f", mp->separation );
 			}
 		}
 	}
 
-	void Step( Settings& ) override
+	void Step() override
 	{
 		b2HexColor color1 = b2_colorYellow;
 		b2HexColor color2 = b2_colorMagenta;
@@ -3131,15 +3111,15 @@ public:
 			const b2ChainSegment* segment = m_segments + i;
 			b2Vec2 p1 = b2TransformPoint( transform1, segment->segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment->segment.point2 );
-			g_draw.DrawSegment( p1, p2, color1 );
-			g_draw.DrawPoint( p1, 4.0f, color1 );
+			m_context->draw.DrawSegment( p1, p2, color1 );
+			m_context->draw.DrawPoint( p1, 4.0f, color1 );
 		}
 
 		// chain-segment vs circle
 		if ( m_shapeType == e_circleShape )
 		{
 			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
-			g_draw.DrawSolidCircle( transform2, circle.center, circle.radius, color2 );
+			m_context->draw.DrawSolidCircle( transform2, circle.center, circle.radius, color2 );
 
 			for ( int i = 0; i < m_count; ++i )
 			{
@@ -3152,7 +3132,7 @@ public:
 		{
 			float h = 0.5f - m_round;
 			b2Polygon rox = b2MakeRoundedBox( h, h, m_round );
-			g_draw.DrawSolidPolygon( transform2, rox.vertices, rox.count, rox.radius, color2 );
+			m_context->draw.DrawSolidPolygon( transform2, rox.vertices, rox.count, rox.radius, color2 );
 
 			for ( int i = 0; i < m_count; ++i )
 			{
@@ -3164,9 +3144,9 @@ public:
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new SmoothManifold( settings );
+		return new SmoothManifold( context );
 	}
 
 	ShapeType m_shapeType;
@@ -3202,13 +3182,13 @@ public:
 		e_box
 	};
 
-	explicit ShapeCast( Settings& settings )
-		: Sample( settings )
+	explicit ShapeCast( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.0f, 0.25f };
-			g_camera.m_zoom = 3.0f;
+			m_context->camera.m_center = { 0.0f, 0.25f };
+			m_context->camera.m_zoom = 3.0f;
 		}
 
 		m_point = b2Vec2_zero;
@@ -3327,11 +3307,11 @@ public:
 				b2Vec2 p = b2TransformPoint( transform, m_point );
 				if ( radius > 0.0f )
 				{
-					g_draw.DrawSolidCircle( transform, m_point, radius, color );
+					m_context->draw.DrawSolidCircle( transform, m_point, radius, color );
 				}
 				else
 				{
-					g_draw.DrawPoint( p, 5.0f, color );
+					m_context->draw.DrawPoint( p, 5.0f, color );
 				}
 			}
 			break;
@@ -3343,21 +3323,21 @@ public:
 
 				if ( radius > 0.0f )
 				{
-					g_draw.DrawSolidCapsule( p1, p2, radius, color );
+					m_context->draw.DrawSolidCapsule( p1, p2, radius, color );
 				}
 				else
 				{
-					g_draw.DrawSegment( p1, p2, color );
+					m_context->draw.DrawSegment( p1, p2, color );
 				}
 			}
 			break;
 
 			case e_triangle:
-				g_draw.DrawSolidPolygon( transform, m_triangle.vertices, m_triangle.count, radius, color );
+				m_context->draw.DrawSolidPolygon( transform, m_triangle.vertices, m_triangle.count, radius, color );
 				break;
 
 			case e_box:
-				g_draw.DrawSolidPolygon( transform, m_box.vertices, m_box.count, radius, color );
+				m_context->draw.DrawSolidPolygon( transform, m_box.vertices, m_box.count, radius, color );
 				break;
 
 			default:
@@ -3427,7 +3407,7 @@ public:
 	void UpdateGui() override
 	{
 		float height = 300.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, g_camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Shape Distance", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -3475,9 +3455,9 @@ public:
 		ImGui::End();
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
 		b2ShapeCastPairInput input = {};
 		input.proxyA = m_proxyA;
@@ -3515,8 +3495,8 @@ public:
 		if ( output.hit )
 		{
 			DrawShape( m_typeB, transform, m_radiusB, b2_colorPlum );
-			g_draw.DrawPoint( output.point, 5.0f, b2_colorWhite );
-			g_draw.DrawSegment( output.point, output.point + 0.5f * output.normal, b2_colorYellow );
+			m_context->draw.DrawPoint( output.point, 5.0f, b2_colorWhite );
+			m_context->draw.DrawSegment( output.point, output.point + 0.5f * output.normal, b2_colorYellow );
 		}
 
 		if ( m_showIndices )
@@ -3524,13 +3504,13 @@ public:
 			for ( int i = 0; i < m_proxyA.count; ++i )
 			{
 				b2Vec2 p = m_proxyA.points[i];
-				g_draw.DrawString( p, " %d", i );
+				m_context->draw.DrawString( p, " %d", i );
 			}
 
 			for ( int i = 0; i < m_proxyB.count; ++i )
 			{
 				b2Vec2 p = b2TransformPoint( m_transform, m_proxyB.points[i] );
-				g_draw.DrawString( p, " %d", i );
+				m_context->draw.DrawString( p, " %d", i );
 			}
 		}
 
@@ -3540,9 +3520,9 @@ public:
 		DrawTextLine( "distance = %.2f, iterations = %d", distanceOutput.distance, output.iterations );
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new ShapeCast( settings );
+		return new ShapeCast( context );
 	}
 
 	b2Polygon m_box;
@@ -3578,25 +3558,25 @@ static int sampleShapeCast = RegisterSample( "Collision", "Shape Cast", ShapeCas
 class TimeOfImpact : public Sample
 {
 public:
-	explicit TimeOfImpact( Settings& settings )
-		: Sample( settings )
+	explicit TimeOfImpact( SampleContext* context )
+		: Sample( context )
 	{
-		if ( settings.restart == false )
+		if ( m_context->restart == false )
 		{
-			g_camera.m_center = { 0.6f, 2.0f };
-			g_camera.m_center = { -16, 45 };
-			g_camera.m_zoom = 5.0f;
+			m_context->camera.m_center = { 0.6f, 2.0f };
+			m_context->camera.m_center = { -16, 45 };
+			m_context->camera.m_zoom = 5.0f;
 		}
 	}
 
-	static Sample* Create( Settings& settings )
+	static Sample* Create( SampleContext* context )
 	{
-		return new TimeOfImpact( settings );
+		return new TimeOfImpact( context );
 	}
 
-	void Step( Settings& settings ) override
+	void Step() override
 	{
-		Sample::Step( settings );
+		Sample::Step();
 
 		b2Sweep sweepA = {
 			b2Vec2_zero, { 0.0f, 0.0f }, { 0.0f, 0.0f }, b2Rot_identity, b2Rot_identity,
@@ -3618,12 +3598,10 @@ public:
 
 		b2TOIOutput output = b2TimeOfImpact( &input );
 
-		g_draw.DrawString( 5, m_textLine, "toi = %g", output.fraction );
-		m_textLine += m_textIncrement;
+		DrawTextLine( "toi = %g", output.fraction );
 
-		// g_draw.DrawString(5, m_textLine, "max toi iters = %d, max root iters = %d", b2_toiMaxIters,
+		// m_context->draw.DrawString(5, m_textLine, "max toi iters = %d, max root iters = %d", b2_toiMaxIters,
 		//                        b2_toiMaxRootIters);
-		m_textLine += m_textIncrement;
 
 		b2Vec2 vertices[B2_MAX_POLYGON_VERTICES];
 
@@ -3633,7 +3611,7 @@ public:
 		{
 			vertices[i] = b2TransformPoint( transformA, m_verticesA[i] );
 		}
-		g_draw.DrawPolygon( vertices, m_countA, b2_colorGray );
+		m_context->draw.DrawPolygon( vertices, m_countA, b2_colorGray );
 
 		// Draw B at t = 0
 		b2Transform transformB = b2GetSweepTransform( &sweepB, 0.0f );
@@ -3641,8 +3619,8 @@ public:
 		{
 			vertices[i] = b2TransformPoint( transformB, m_verticesB[i] );
 		}
-		g_draw.DrawSolidCapsule( vertices[0], vertices[1], m_radiusB, b2_colorGreen );
-		// g_draw.DrawPolygon( vertices, m_countB, b2_colorGreen );
+		m_context->draw.DrawSolidCapsule( vertices[0], vertices[1], m_radiusB, b2_colorGreen );
+		// m_context->draw.DrawPolygon( vertices, m_countB, b2_colorGreen );
 
 		// Draw B at t = hit_time
 		transformB = b2GetSweepTransform( &sweepB, output.fraction );
@@ -3650,7 +3628,7 @@ public:
 		{
 			vertices[i] = b2TransformPoint( transformB, m_verticesB[i] );
 		}
-		g_draw.DrawPolygon( vertices, m_countB, b2_colorOrange );
+		m_context->draw.DrawPolygon( vertices, m_countB, b2_colorOrange );
 
 		// Draw B at t = 1
 		transformB = b2GetSweepTransform( &sweepB, 1.0f );
@@ -3658,8 +3636,8 @@ public:
 		{
 			vertices[i] = b2TransformPoint( transformB, m_verticesB[i] );
 		}
-		g_draw.DrawSolidCapsule( vertices[0], vertices[1], m_radiusB, b2_colorRed );
-		// g_draw.DrawPolygon( vertices, m_countB, b2_colorRed );
+		m_context->draw.DrawSolidCapsule( vertices[0], vertices[1], m_radiusB, b2_colorRed );
+		// m_context->draw.DrawPolygon( vertices, m_countB, b2_colorRed );
 
 		if ( output.state == b2_toiStateHit )
 		{
@@ -3671,8 +3649,7 @@ public:
 			distanceInput.useRadii = false;
 			b2SimplexCache cache = { 0 };
 			b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, nullptr, 0 );
-			g_draw.DrawString( 5, m_textLine, "distance = %g", distanceOutput.distance );
-			m_textLine += m_textIncrement;
+			DrawTextLine( "distance = %g", distanceOutput.distance );
 		}
 
 #if 0
@@ -3683,7 +3660,7 @@ public:
 			{
 				vertices[i] = b2TransformPoint(transformB, m_verticesB[i]);
 			}
-			g_draw.DrawPolygon(vertices, m_countB, {0.3f, 0.3f, 0.3f});
+			m_context->draw.DrawPolygon(vertices, m_countB, {0.3f, 0.3f, 0.3f});
 		}
 #endif
 	}

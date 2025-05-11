@@ -283,6 +283,7 @@ B2_API void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity );
 
 /// Set the velocity to reach the given transform after a given time step.
 /// The result will be close but maybe not exact. This is meant for kinematic bodies.
+/// The target is not applied if the velocity would be below the sleep threshold.
 /// This will automatically wake the body if asleep.
 B2_API void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep );
 
@@ -560,11 +561,11 @@ B2_API void b2Shape_SetMaterial( b2ShapeId shapeId, int material );
 /// Get the shape material identifier
 B2_API int b2Shape_GetMaterial( b2ShapeId shapeId );
 
-/// Get the shape surface material
-B2_API b2SurfaceMaterial b2Shape_GetSurfaceMaterial( b2ShapeId shapeId );
-
 /// Set the shape surface material
 B2_API void b2Shape_SetSurfaceMaterial( b2ShapeId shapeId, b2SurfaceMaterial surfaceMaterial );
+
+/// Get the shape surface material
+B2_API b2SurfaceMaterial b2Shape_GetSurfaceMaterial( b2ShapeId shapeId );
 
 /// Get the shape filter
 B2_API b2Filter b2Shape_GetFilter( b2ShapeId shapeId );
