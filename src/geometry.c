@@ -942,6 +942,7 @@ b2PlaneResult b2CollideMoverAndCircle( const b2Circle* shape, const b2Capsule* m
 		b2Plane plane = { distanceOutput.normal, totalRadius - distanceOutput.distance };
 		return (b2PlaneResult){
 			.plane = plane,
+			.point = distanceOutput.pointA,
 			.hit = true,
 		};
 	}
@@ -968,6 +969,7 @@ b2PlaneResult b2CollideMoverAndCapsule( const b2Capsule* shape, const b2Capsule*
 		b2Plane plane = { distanceOutput.normal, totalRadius - distanceOutput.distance };
 		return (b2PlaneResult){
 			.plane = plane,
+			.point = distanceOutput.pointA,
 			.hit = true,
 		};
 	}
@@ -994,6 +996,7 @@ b2PlaneResult b2CollideMoverAndPolygon( const b2Polygon* shape, const b2Capsule*
 		b2Plane plane = { distanceOutput.normal, totalRadius - distanceOutput.distance };
 		return (b2PlaneResult){
 			.plane = plane,
+			.point = distanceOutput.pointA,
 			.hit = true,
 		};
 	}
@@ -1020,6 +1023,7 @@ b2PlaneResult b2CollideMoverAndSegment( const b2Segment* shape, const b2Capsule*
 		b2Plane plane = { distanceOutput.normal, totalRadius - distanceOutput.distance };
 		return (b2PlaneResult){
 			.plane = plane,
+			.point = distanceOutput.pointA,
 			.hit = true,
 		};
 	}

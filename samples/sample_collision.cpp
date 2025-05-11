@@ -487,8 +487,8 @@ public:
 		m_moveBuffer = nullptr;
 		m_moveCount = 0;
 
-		m_rowCount = g_sampleDebug ? 100 : 1000;
-		m_columnCount = g_sampleDebug ? 100 : 1000;
+		m_rowCount = m_isDebug ? 100 : 1000;
+		m_columnCount = m_isDebug ? 100 : 1000;
 		memset( &m_tree, 0, sizeof( m_tree ) );
 		BuildTree();
 		m_timeStamp = 0;

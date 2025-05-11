@@ -14,12 +14,6 @@ namespace enki
 class TaskScheduler;
 };
 
-#ifdef NDEBUG
-constexpr bool g_sampleDebug = false;
-#else
-constexpr bool g_sampleDebug = true;
-#endif
-
 constexpr int k_maxContactPoints = 12 * 2048;
 
 struct ContactPoint
@@ -68,6 +62,12 @@ public:
 
 	static constexpr int m_maxTasks = 64;
 	static constexpr int m_maxThreads = 64;
+
+#ifdef NDEBUG
+	static constexpr bool m_isDebug = false;
+#else
+	static constexpr bool m_isDebug = true;
+#endif
 
 	const Settings* m_settings;
 	enki::TaskScheduler* m_scheduler;

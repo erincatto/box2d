@@ -15,6 +15,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <vector>
+#include <set>
 
 #if defined( _MSC_VER )
 #include <intrin.h>
@@ -22,6 +23,13 @@
 #else
 #define GET_CYCLES b2GetTicks()
 #endif
+
+inline bool operator<(b2BodyId a, b2BodyId b)
+{
+	uint64_t ua = b2StoreBodyId( a );
+	uint64_t ub = b2StoreBodyId( b );
+	return ua < ub;
+}
 
 // these are not accessible in some build types
 // extern "C" int b2_toiCalls;
@@ -126,19 +134,19 @@ public:
 			}
 		}
 
-		m_columnCount = g_sampleDebug ? 10 : e_maxColumns;
-		m_rowCount = g_sampleDebug ? 40 : e_maxRows;
+		m_columnCount = m_isDebug ? 10 : e_maxColumns;
+		m_rowCount = m_isDebug ? 40 : e_maxRows;
 
 		if ( m_shapeType == e_compoundShape )
 		{
-			if constexpr ( g_sampleDebug == false )
+			if constexpr ( m_isDebug == false )
 			{
 				m_columnCount = 20;
 			}
 		}
 		else if ( m_shapeType == e_humanShape )
 		{
-			if constexpr ( g_sampleDebug )
+			if constexpr ( m_isDebug )
 			{
 				m_rowCount = 5;
 				m_columnCount = 10;
@@ -380,8 +388,8 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		m_groundId = b2CreateBody( m_worldId, &bodyDef );
 
-		m_rowCount = g_sampleDebug ? 2 : 19;
-		m_columnCount = g_sampleDebug ? 2 : 19;
+		m_rowCount = m_isDebug ? 2 : 19;
+		m_columnCount = m_isDebug ? 2 : 19;
 
 		m_tumblerIds = nullptr;
 		m_positions = nullptr;
@@ -466,7 +474,7 @@ public:
 
 		free( m_bodyIds );
 
-		int bodiesPerTumbler = g_sampleDebug ? 8 : 50;
+		int bodiesPerTumbler = m_isDebug ? 8 : 50;
 		m_bodyCount = bodiesPerTumbler * m_tumblerCount;
 
 		m_bodyIds = static_cast<b2BodyId*>( malloc( m_bodyCount * sizeof( b2BodyId ) ) );
@@ -636,8 +644,8 @@ public:
 		m_createTime = 0.0f;
 		m_destroyTime = 0.0f;
 
-		m_baseCount = g_sampleDebug ? 40 : 100;
-		m_iterations = g_sampleDebug ? 1 : 10;
+		m_baseCount = m_isDebug ? 40 : 100;
+		m_iterations = m_isDebug ? 1 : 10;
 		m_bodyCount = 0;
 	}
 
@@ -764,8 +772,8 @@ public:
 			m_bodies[i] = b2_nullBodyId;
 		}
 
-		m_baseCount = g_sampleDebug ? 40 : 100;
-		m_iterations = g_sampleDebug ? 1 : 41;
+		m_baseCount = m_isDebug ? 40 : 100;
+		m_iterations = m_isDebug ? 1 : 41;
 		m_bodyCount = 0;
 		m_awake = false;
 
@@ -1100,15 +1108,15 @@ public:
 		{
 			g_camera.m_center = { 500.0f, 500.0f };
 			g_camera.m_zoom = 25.0f * 21.0f;
-			// settings.drawShapes = g_sampleDebug;
+			// settings.drawShapes = m_isDebug;
 		}
 
 		m_queryType = e_circleCast;
 		m_ratio = 5.0f;
 		m_grid = 1.0f;
 		m_fill = 0.1f;
-		m_rowCount = g_sampleDebug ? 100 : 1000;
-		m_columnCount = g_sampleDebug ? 100 : 1000;
+		m_rowCount = m_isDebug ? 100 : 1000;
+		m_columnCount = m_isDebug ? 100 : 1000;
 		m_minTime = 1e6f;
 		m_drawIndex = 0;
 		m_topDown = false;
@@ -1116,7 +1124,7 @@ public:
 		m_radius = 0.1f;
 
 		g_seed = 1234;
-		int sampleCount = g_sampleDebug ? 100 : 10000;
+		int sampleCount = m_isDebug ? 100 : 10000;
 		m_origins.resize( sampleCount );
 		m_translations.resize( sampleCount );
 		float extent = m_rowCount * m_grid;
@@ -1696,7 +1704,7 @@ public:
 		return new BenchmarkShapeDistance( settings );
 	}
 
-	static constexpr int m_count = g_sampleDebug ? 100 : 10000;
+	static constexpr int m_count = m_isDebug ? 100 : 10000;
 	b2Transform* m_transformAs;
 	b2Transform* m_transformBs;
 	b2DistanceOutput* m_outputs;
@@ -1708,3 +1716,179 @@ public:
 };
 
 static int benchmarkShapeDistance = RegisterSample( "Benchmark", "Shape Distance", BenchmarkShapeDistance::Create );
+
+struct ShapeUserData
+{
+	bool shouldDestroyVisitors;
+};
+
+class BenchmarkSensor : public Sample
+{
+public:
+	explicit BenchmarkSensor( Settings& settings )
+		: Sample( settings )
+	{
+		if ( settings.restart == false )
+		{
+			g_camera.m_center = { 0.0f, 110.0f };
+			g_camera.m_zoom = 115.0f;
+		}
+
+		m_passiveSensor.shouldDestroyVisitors = false;
+		m_activeSensor.shouldDestroyVisitors = true;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+		{
+			float gridSize = 3.0f;
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.isSensor = true;
+			shapeDef.enableSensorEvents = true;
+			shapeDef.userData = &m_activeSensor;
+
+			float y = 0.0f;
+			float x = -40.0f * gridSize;
+			for ( int i = 0; i < 81; ++i )
+			{
+				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, { x, y }, b2Rot_identity );
+				b2CreatePolygonShape( groundId, &shapeDef, &box );
+				x += gridSize;
+			}
+		}
+
+		g_seed = 42;
+
+		float shift = 5.0f;
+		float xCenter = 0.5f * shift * m_columnCount;
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.isSensor = true;
+		shapeDef.enableSensorEvents = true;
+		shapeDef.userData = &m_passiveSensor;
+
+		float yStart = 10.0f;
+
+		for ( int j = 0; j < m_rowCount; ++j )
+		{
+			float y = j * shift + yStart;
+			for ( int i = 0; i < m_columnCount; ++i )
+			{
+				float x = i * shift - xCenter;
+				float yOffset = RandomFloatRange( -1.0f, 1.0f );
+				b2Polygon box = b2MakeOffsetRoundedBox( 0.5f, 0.5f, { x, y + yOffset}, RandomRot(), 0.1f );
+				b2CreatePolygonShape( groundId, &shapeDef, &box );
+			}
+		}
+
+		m_maxBeginCount = 0;
+		m_maxEndCount = 0;
+		m_lastStepCount = 0;
+	}
+
+	void CreateRow(float y)
+	{
+		float shift = 5.0f;
+		float xCenter = 0.5f * shift * m_columnCount;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.gravityScale = 0.0f;
+		bodyDef.linearVelocity = { 0.0f, -5.0f };
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.enableSensorEvents = true;
+
+		b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+		for ( int i = 0; i < m_columnCount; ++i )
+		{
+			bodyDef.position = { shift * i - xCenter, y };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
+		}
+	}
+
+	void Step( Settings& settings ) override
+	{
+		Sample::Step( settings );
+
+		if ( m_stepCount == m_lastStepCount )
+		{
+			return;
+		}
+
+		std::set<b2BodyId> zombies;
+
+		b2SensorEvents events = b2World_GetSensorEvents( m_worldId );
+		for ( int i = 0; i < events.beginCount; ++i )
+		{
+			b2SensorBeginTouchEvent* event = events.beginEvents + i;
+
+			// shapes on begin touch are always valid
+
+			ShapeUserData* userData = static_cast<ShapeUserData*>( b2Shape_GetUserData( event->sensorShapeId ) );
+			if (userData->shouldDestroyVisitors)
+			{
+				zombies.emplace( b2Shape_GetBody( event->visitorShapeId ) );
+			}
+			else
+			{
+				// Modify color while overlapped with a sensor
+				b2SurfaceMaterial surfaceMaterial = b2Shape_GetSurfaceMaterial( event->visitorShapeId );
+				surfaceMaterial.customColor = b2_colorLime;
+				b2Shape_SetSurfaceMaterial( event->visitorShapeId, surfaceMaterial );
+			}
+		}
+
+		for ( int i = 0; i < events.endCount; ++i )
+		{
+			b2SensorEndTouchEvent* event = events.endEvents + i;
+
+			if (b2Shape_IsValid(event->visitorShapeId) == false)
+			{
+				continue;
+			}
+
+			// Restore color to default
+			b2SurfaceMaterial surfaceMaterial = b2Shape_GetSurfaceMaterial( event->visitorShapeId );
+			surfaceMaterial.customColor = 0;
+			b2Shape_SetSurfaceMaterial( event->visitorShapeId, surfaceMaterial );
+		}
+
+		for (b2BodyId bodyId : zombies)
+		{
+			b2DestroyBody( bodyId );
+		}
+
+		int delay = 0x1F;
+
+		if ( ( m_stepCount & delay ) == 0 )
+		{
+			CreateRow( 10.0f + m_rowCount * 5.0f );
+		}
+
+		m_lastStepCount = m_stepCount;
+
+		m_maxBeginCount = b2MaxInt(events.beginCount, m_maxBeginCount);
+		m_maxEndCount = b2MaxInt( events.endCount, m_maxEndCount );
+		DrawTextLine( "max begin touch events = %d", m_maxBeginCount );
+		DrawTextLine( "max end touch events = %d", m_maxEndCount );
+	}
+
+	static Sample* Create( Settings& settings )
+	{
+		return new BenchmarkSensor( settings );
+	}
+
+	static constexpr int m_columnCount = 40;
+	static constexpr int m_rowCount = 40;
+	int m_maxBeginCount;
+	int m_maxEndCount;
+	ShapeUserData m_passiveSensor;
+	ShapeUserData m_activeSensor;
+	int m_lastStepCount;
+};
+
+static int benchmarkSensor = RegisterSample( "Benchmark", "Sensor", BenchmarkSensor::Create );

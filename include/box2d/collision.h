@@ -785,6 +785,9 @@ typedef struct b2PlaneResult
 	/// The collision plane between the mover and a convex shape
 	b2Plane plane;
 
+	// The collision point on the shape.
+	b2Vec2 point;
+
 	/// Did the collision register a hit? If not this plane should be ignored.
 	bool hit;
 } b2PlaneResult;
