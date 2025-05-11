@@ -561,11 +561,11 @@ B2_API void b2Shape_SetMaterial( b2ShapeId shapeId, int material );
 /// Get the shape material identifier
 B2_API int b2Shape_GetMaterial( b2ShapeId shapeId );
 
-/// Get the shape surface material
-B2_API b2SurfaceMaterial b2Shape_GetSurfaceMaterial( b2ShapeId shapeId );
-
 /// Set the shape surface material
 B2_API void b2Shape_SetSurfaceMaterial( b2ShapeId shapeId, b2SurfaceMaterial surfaceMaterial );
+
+/// Get the shape surface material
+B2_API b2SurfaceMaterial b2Shape_GetSurfaceMaterial( b2ShapeId shapeId );
 
 /// Get the shape filter
 B2_API b2Filter b2Shape_GetFilter( b2ShapeId shapeId );
