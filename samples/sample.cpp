@@ -235,7 +235,7 @@ Sample::Sample( SampleContext* context )
 	m_maxProfile = {};
 	m_totalProfile = {};
 
-	g_seed = RAND_SEED;
+	g_randomSeed = RAND_SEED;
 
 	CreateWorld();
 	TestMathCpp();

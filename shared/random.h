@@ -16,7 +16,7 @@ extern "C"
 {
 #endif
 
-extern uint32_t g_seed;
+extern uint32_t g_randomSeed;
 b2Polygon RandomPolygon( float extent );
 
 #ifdef __cplusplus
@@ -27,11 +27,11 @@ b2Polygon RandomPolygon( float extent );
 B2_INLINE int RandomInt()
 {
 	// XorShift32 algorithm
-	uint32_t x = g_seed;
+	uint32_t x = g_randomSeed;
 	x ^= x << 13;
 	x ^= x >> 17;
 	x ^= x << 5;
-	g_seed = x;
+	g_randomSeed = x;
 
 	// Map the 32-bit value to the range 0 to RAND_LIMIT
 	return (int)( x % ( RAND_LIMIT + 1 ) );

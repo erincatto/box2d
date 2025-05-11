@@ -117,7 +117,7 @@ public:
 
 	void CreateScene()
 	{
-		g_seed = 42;
+		g_randomSeed = 42;
 
 		for ( int i = 0; i < e_maxRows * e_maxColumns; ++i )
 		{
@@ -1120,7 +1120,7 @@ public:
 		m_buildTime = 0.0f;
 		m_radius = 0.1f;
 
-		g_seed = 1234;
+		g_randomSeed = 1234;
 		int sampleCount = m_isDebug ? 100 : 10000;
 		m_origins.resize( sampleCount );
 		m_translations.resize( sampleCount );
@@ -1141,7 +1141,7 @@ public:
 
 	void BuildScene()
 	{
-		g_seed = 1234;
+		g_randomSeed = 1234;
 		b2DestroyWorld( m_worldId );
 		b2WorldDef worldDef = b2DefaultWorldDef();
 		m_worldId = b2CreateWorld( &worldDef );
@@ -1609,7 +1609,7 @@ public:
 		m_transformBs = (b2Transform*)malloc( m_count * sizeof( b2Transform ) );
 		m_outputs = (b2DistanceOutput*)calloc( m_count, sizeof( b2DistanceOutput ) );
 
-		g_seed = 42;
+		g_randomSeed = 42;
 		for ( int i = 0; i < m_count; ++i )
 		{
 			m_transformAs[i] = { RandomVec2( -0.1f, 0.1f ), RandomRot() };
@@ -1746,7 +1746,7 @@ public:
 			}
 		}
 
-		g_seed = 42;
+		g_randomSeed = 42;
 
 		float shift = 5.0f;
 		float xCenter = 0.5f * shift * m_columnCount;
