@@ -135,7 +135,7 @@ struct GLBackground
 {
 	void Create()
 	{
-		m_programId = CreateProgramFromFiles( "samples/data/background.vs", "samples/data/background.fs" );
+		m_programId = CreateProgramFromFiles( "data/background.vs", "data/background.fs" );
 		m_timeUniform = glGetUniformLocation( m_programId, "time" );
 		m_resolutionUniform = glGetUniformLocation( m_programId, "resolution" );
 		m_baseColorUniform = glGetUniformLocation( m_programId, "baseColor" );
@@ -516,7 +516,7 @@ struct GLCircles
 {
 	void Create()
 	{
-		m_programId = CreateProgramFromFiles( "samples/data/circle.vs", "samples/data/circle.fs" );
+		m_programId = CreateProgramFromFiles( "data/circle.vs", "data/circle.fs" );
 		m_projectionUniform = glGetUniformLocation( m_programId, "projectionMatrix" );
 		m_pixelScaleUniform = glGetUniformLocation( m_programId, "pixelScale" );
 		int vertexAttribute = 0;
@@ -660,7 +660,7 @@ struct GLSolidCircles
 {
 	void Create()
 	{
-		m_programId = CreateProgramFromFiles( "samples/data/solid_circle.vs", "samples/data/solid_circle.fs" );
+		m_programId = CreateProgramFromFiles( "data/solid_circle.vs", "data/solid_circle.fs" );
 		m_projectionUniform = glGetUniformLocation( m_programId, "projectionMatrix" );
 		m_pixelScaleUniform = glGetUniformLocation( m_programId, "pixelScale" );
 
@@ -804,7 +804,7 @@ struct GLSolidCapsules
 {
 	void Create()
 	{
-		m_programId = CreateProgramFromFiles( "samples/data/solid_capsule.vs", "samples/data/solid_capsule.fs" );
+		m_programId = CreateProgramFromFiles( "data/solid_capsule.vs", "data/solid_capsule.fs" );
 
 		m_projectionUniform = glGetUniformLocation( m_programId, "projectionMatrix" );
 		m_pixelScaleUniform = glGetUniformLocation( m_programId, "pixelScale" );
@@ -972,7 +972,7 @@ struct GLSolidPolygons
 {
 	void Create()
 	{
-		m_programId = CreateProgramFromFiles( "samples/data/solid_polygon.vs", "samples/data/solid_polygon.fs" );
+		m_programId = CreateProgramFromFiles( "data/solid_polygon.vs", "data/solid_polygon.fs" );
 
 		m_projectionUniform = glGetUniformLocation( m_programId, "projectionMatrix" );
 		m_pixelScaleUniform = glGetUniformLocation( m_programId, "pixelScale" );
