@@ -115,7 +115,6 @@ if(PROJECT_IS_TOP_LEVEL)
 		# default startup project for Visual Studio
 		if(MSVC)
 			set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT samples)
-			# set_property(TARGET samples PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 		endif()
 
 		if(APPLE)
