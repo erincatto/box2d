@@ -1149,6 +1149,23 @@ int b2Shape_GetMaterial( b2ShapeId shapeId )
 	return shape->userMaterialId;
 }
 
+void b2Shape_SetSurfaceMaterial( b2ShapeId shapeId, b2SurfaceMaterial surfaceMaterial )
+{
+	B2_ASSERT( b2IsValidFloat( surfaceMaterial.friction ) && surfaceMaterial.friction >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( surfaceMaterial.restitution ) && surfaceMaterial.restitution >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( surfaceMaterial.rollingResistance ) && surfaceMaterial.rollingResistance >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( surfaceMaterial.tangentSpeed ) );
+
+	b2World* world = b2GetWorld( shapeId.world0 );
+	b2Shape* shape = b2GetShape( world, shapeId );
+	shape->friction = surfaceMaterial.friction;
+	shape->restitution = surfaceMaterial.restitution;
+	shape->rollingResistance = surfaceMaterial.rollingResistance;
+	shape->tangentSpeed = surfaceMaterial.tangentSpeed;
+	shape->userMaterialId = surfaceMaterial.userMaterialId;
+	shape->customColor = surfaceMaterial.customColor;
+}
+
 b2SurfaceMaterial b2Shape_GetSurfaceMaterial( b2ShapeId shapeId )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
@@ -1161,18 +1178,6 @@ b2SurfaceMaterial b2Shape_GetSurfaceMaterial( b2ShapeId shapeId )
 		.userMaterialId = shape->userMaterialId,
 		.customColor = shape->customColor,
 	};
-}
-
-void b2Shape_SetSurfaceMaterial( b2ShapeId shapeId, b2SurfaceMaterial surfaceMaterial )
-{
-	b2World* world = b2GetWorld( shapeId.world0 );
-	b2Shape* shape = b2GetShape( world, shapeId );
-	shape->friction = surfaceMaterial.friction;
-	shape->restitution = surfaceMaterial.restitution;
-	shape->rollingResistance = surfaceMaterial.rollingResistance;
-	shape->tangentSpeed = surfaceMaterial.tangentSpeed;
-	shape->userMaterialId = surfaceMaterial.userMaterialId;
-	shape->customColor = surfaceMaterial.customColor;
 }
 
 b2Filter b2Shape_GetFilter( b2ShapeId shapeId )

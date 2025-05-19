@@ -286,6 +286,8 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 		B2_ASSERT( joint->setIndex == setIndex );
 	}
 
+	jointSim->enabled = true;
+
 	B2_ASSERT( jointSim->jointId == jointId );
 	B2_ASSERT( jointSim->bodyIdA == bodyIdA );
 	B2_ASSERT( jointSim->bodyIdB == bodyIdB );
@@ -1024,6 +1026,22 @@ float b2Joint_GetConstraintTorque( b2JointId jointId )
 	}
 }
 
+void b2Joint_SetEnabled(b2JointId jointId, bool enabled)
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* base = b2GetJointSim( world, joint );
+	base->enabled = enabled;
+}
+
+bool b2Joint_GetEnabled(b2JointId jointId)
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* base = b2GetJointSim( world, joint );
+	return base->enabled;
+}
+
 void b2PrepareJoint( b2JointSim* joint, b2StepContext* context )
 {
 	switch ( joint->type )
@@ -1205,6 +1223,11 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 	}
 
 	b2JointSim* jointSim = b2GetJointSim( world, joint );
+
+	if ( jointSim->enabled == false )
+	{
+		return;
+	}
 
 	b2Transform transformA = b2GetBodyTransformQuick( world, bodyA );
 	b2Transform transformB = b2GetBodyTransformQuick( world, bodyB );

@@ -268,6 +268,8 @@ typedef struct b2JointSim
 		b2WeldJoint weldJoint;
 		b2WheelJoint wheelJoint;
 	};
+
+	bool enabled;
 } b2JointSim;
 
 void b2DestroyJointInternal( b2World* world, b2Joint* joint, bool wakeBodies );

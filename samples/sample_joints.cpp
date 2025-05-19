@@ -1766,6 +1766,229 @@ public:
 
 static int sampleBreakableJoint = RegisterSample( "Joints", "Breakable", BreakableJoint::Create );
 
+// This sample shows how to disable joints.
+class DisableJoint : public Sample
+{
+public:
+	enum
+	{
+		e_count = 6
+	};
+
+	explicit DisableJoint( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 8.0f };
+			m_context->camera.m_zoom = 25.0f * 0.7f;
+		}
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
+		b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
+		for ( int i = 0; i < e_count; ++i )
+		{
+			m_jointIds[i] = b2_nullJointId;
+		}
+
+		b2Vec2 position = { -12.5f, 10.0f };
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.enableSleep = false;
+
+		b2Polygon box = b2MakeBox( 1.0f, 1.0f );
+
+		int index = 0;
+
+		// distance joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			float length = 2.0f;
+			b2Vec2 pivot1 = { position.x, position.y + 1.0f + length };
+			b2Vec2 pivot2 = { position.x, position.y + 1.0f };
+			b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
+			jointDef.bodyIdA = groundId;
+			jointDef.bodyIdB = bodyId;
+			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot1 );
+			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot2 );
+			jointDef.length = length;
+			jointDef.collideConnected = true;
+			m_jointIds[index] = b2CreateDistanceJoint( m_worldId, &jointDef );
+		}
+
+		position.x += 5.0f;
+		++index;
+
+		// motor joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
+			jointDef.bodyIdA = groundId;
+			jointDef.bodyIdB = bodyId;
+			jointDef.linearOffset = position;
+			jointDef.maxForce = 1000.0f;
+			jointDef.maxTorque = 20.0f;
+			jointDef.collideConnected = true;
+			m_jointIds[index] = b2CreateMotorJoint( m_worldId, &jointDef );
+		}
+
+		position.x += 5.0f;
+		++index;
+
+		// prismatic joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			b2Vec2 pivot = { position.x - 1.0f, position.y };
+			b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
+			jointDef.bodyIdA = groundId;
+			jointDef.bodyIdB = bodyId;
+			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
+			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+			jointDef.localAxisA = b2Body_GetLocalVector( jointDef.bodyIdA, { 1.0f, 0.0f } );
+			jointDef.collideConnected = true;
+			m_jointIds[index] = b2CreatePrismaticJoint( m_worldId, &jointDef );
+		}
+
+		position.x += 5.0f;
+		++index;
+
+		// revolute joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			b2Vec2 pivot = { position.x - 1.0f, position.y };
+			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+			jointDef.bodyIdA = groundId;
+			jointDef.bodyIdB = bodyId;
+			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
+			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+			jointDef.collideConnected = true;
+			m_jointIds[index] = b2CreateRevoluteJoint( m_worldId, &jointDef );
+		}
+
+		position.x += 5.0f;
+		++index;
+
+		// weld joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			b2Vec2 pivot = { position.x - 1.0f, position.y };
+			b2WeldJointDef jointDef = b2DefaultWeldJointDef();
+			jointDef.bodyIdA = groundId;
+			jointDef.bodyIdB = bodyId;
+			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
+			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+			jointDef.angularHertz = 2.0f;
+			jointDef.angularDampingRatio = 0.5f;
+			jointDef.linearHertz = 2.0f;
+			jointDef.linearDampingRatio = 0.5f;
+			jointDef.collideConnected = true;
+			m_jointIds[index] = b2CreateWeldJoint( m_worldId, &jointDef );
+		}
+
+		position.x += 5.0f;
+		++index;
+
+		// wheel joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			b2Vec2 pivot = { position.x - 1.0f, position.y };
+			b2WheelJointDef jointDef = b2DefaultWheelJointDef();
+			jointDef.bodyIdA = groundId;
+			jointDef.bodyIdB = bodyId;
+			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
+			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+			jointDef.localAxisA = b2Body_GetLocalVector( jointDef.bodyIdA, { 1.0f, 0.0f } );
+			jointDef.hertz = 1.0f;
+			jointDef.dampingRatio = 0.7f;
+			jointDef.lowerTranslation = -1.0f;
+			jointDef.upperTranslation = 1.0f;
+			jointDef.enableLimit = true;
+			jointDef.enableMotor = true;
+			jointDef.maxMotorTorque = 10.0f;
+			jointDef.motorSpeed = 1.0f;
+			jointDef.collideConnected = true;
+			m_jointIds[index] = b2CreateWheelJoint( m_worldId, &jointDef );
+		}
+
+		position.x += 5.0f;
+		++index;
+
+		m_enabled = true;
+	}
+
+	void UpdateGui() override
+	{
+		float height = 100.0f;
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
+
+		ImGui::Begin( "Disable Joint", nullptr, ImGuiWindowFlags_NoResize );
+
+		if ( ImGui::Button( "Toggle" ) )
+		{
+			m_enabled = !m_enabled;
+
+			for (int i = 0; i < e_count; ++i)
+			{
+				b2Joint_SetEnabled( m_jointIds[i], m_enabled );
+			}
+		}
+
+		ImGui::End();
+	}
+
+	void Step() override
+	{
+		DrawTextLine( m_enabled ? "Enabled" : "Disabled" );
+
+		Sample::Step();
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new DisableJoint( context );
+	}
+
+	b2JointId m_jointIds[e_count];
+	bool m_enabled;
+};
+
+static int sampleDisableJoint = RegisterSample( "Joints", "Disable", DisableJoint::Create );
+
 // This shows how you can implement a constraint outside of Box2D
 class UserConstraint : public Sample
 {

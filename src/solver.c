@@ -133,6 +133,11 @@ static void b2PrepareJointsTask( int startIndex, int endIndex, b2StepContext* co
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
 		b2JointSim* joint = joints[i];
+		if (joint->enabled == false)
+		{
+			continue;
+		}
+
 		b2PrepareJoint( joint, context );
 	}
 
@@ -151,6 +156,11 @@ static void b2WarmStartJointsTask( int startIndex, int endIndex, b2StepContext* 
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
 		b2JointSim* joint = joints + i;
+		if ( joint->enabled == false )
+		{
+			continue;
+		}
+
 		b2WarmStartJoint( joint, context );
 	}
 
@@ -169,6 +179,11 @@ static void b2SolveJointsTask( int startIndex, int endIndex, b2StepContext* cont
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
 		b2JointSim* joint = joints + i;
+		if ( joint->enabled == false )
+		{
+			continue;
+		}
+
 		b2SolveJoint( joint, context, useBias );
 	}
 
@@ -360,7 +375,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 		}
 	}
 
-	if ( didHit && ( shape->enablePreSolveEvents || fastShape->enablePreSolveEvents ) )
+	if ( didHit && ( shape->enablePreSolveEvents || fastShape->enablePreSolveEvents ) && world->preSolveFcn != NULL )
 	{
 		// Pre-solve is expensive because I need to compute a temporary manifold
 		b2Transform transformA = b2GetSweepTransform( &input.sweepA, hitFraction );
