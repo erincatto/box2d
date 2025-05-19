@@ -512,7 +512,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	int pointCount = contactSim->manifold.pointCount;
 	bool touching = pointCount > 0;
 
-	if ( touching && world->preSolveFcn && ( contactSim->simFlags & b2_simEnablePreSolveEvents ) != 0 )
+	if ( touching && world->preSolveFcn != NULL && ( contactSim->simFlags & b2_simEnablePreSolveEvents ) != 0 )
 	{
 		b2ShapeId shapeIdA = { shapeA->id + 1, world->worldId, shapeA->generation };
 		b2ShapeId shapeIdB = { shapeB->id + 1, world->worldId, shapeB->generation };

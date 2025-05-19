@@ -137,6 +137,7 @@ typedef struct b2PrismaticJoint
 	float upperImpulse;
 	float hertz;
 	float dampingRatio;
+	float targetTranslation;
 	float maxMotorForce;
 	float motorSpeed;
 	float referenceAngle;
@@ -167,6 +168,7 @@ typedef struct b2RevoluteJoint
 	float upperImpulse;
 	float hertz;
 	float dampingRatio;
+	float targetAngle;
 	float maxMotorTorque;
 	float motorSpeed;
 	float referenceAngle;

@@ -214,6 +214,9 @@ static void TestMathCpp()
 Sample::Sample( SampleContext* context )
 {
 	m_context = context;
+	m_camera = &context->camera;
+	m_draw = &context->draw;
+
 	m_scheduler = new enki::TaskScheduler;
 	m_scheduler->Initialize( m_context->workerCount );
 

@@ -991,6 +991,12 @@ B2_API void b2PrismaticJoint_SetSpringDampingRatio( b2JointId jointId, float dam
 /// Get the prismatic spring damping ratio (non-dimensional)
 B2_API float b2PrismaticJoint_GetSpringDampingRatio( b2JointId jointId );
 
+/// Set the prismatic joint spring target angle, usually in meters
+B2_API void b2PrismaticJoint_SetTargetTranslation( b2JointId jointId, float translation );
+
+/// Get the prismatic joint spring target translation, usually in meters
+B2_API float b2PrismaticJoint_GetTargetTranslation( b2JointId jointId );
+
 /// Enable/disable a prismatic joint limit
 B2_API void b2PrismaticJoint_EnableLimit( b2JointId jointId, bool enableLimit );
 
@@ -1065,6 +1071,12 @@ B2_API void b2RevoluteJoint_SetSpringDampingRatio( b2JointId jointId, float damp
 
 /// Get the revolute joint spring damping ratio, non-dimensional
 B2_API float b2RevoluteJoint_GetSpringDampingRatio( b2JointId jointId );
+
+/// Set the revolute joint spring target angle, radians
+B2_API void b2RevoluteJoint_SetTargetAngle( b2JointId jointId, float angle );
+
+/// Get the revolute joint spring target angle, radians
+B2_API float b2RevoluteJoint_GetTargetAngle( b2JointId jointId );
 
 /// Get the revolute joint current angle in radians relative to the reference angle
 /// @see b2RevoluteJointDef::referenceAngle

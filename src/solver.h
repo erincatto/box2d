@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include "box2d/math_functions.h"
-
 #include "core.h"
+
+#include "box2d/math_functions.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -142,14 +142,23 @@ static inline b2Softness b2MakeSoft( float hertz, float zeta, float h )
 {
 	if ( hertz == 0.0f )
 	{
-		return ( b2Softness ){ 0.0f, 1.0f, 0.0f };
+		return (b2Softness){
+			.biasRate = 0.0f,
+			.massScale = 0.0f,
+			.impulseScale = 0.0f,
+		};
 	}
 
 	float omega = 2.0f * B2_PI * hertz;
 	float a1 = 2.0f * zeta + h * omega;
 	float a2 = h * omega * a1;
 	float a3 = 1.0f / ( 1.0f + a2 );
-	return ( b2Softness ){ omega / a1, a2 * a3, a3 };
+
+	return (b2Softness){
+		.biasRate = omega / a1,
+		.massScale = a2 * a3,
+		.impulseScale = a3,
+	};
 }
 
 void b2Solve( b2World* world, b2StepContext* stepContext );
