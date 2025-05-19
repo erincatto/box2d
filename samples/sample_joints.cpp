@@ -436,6 +436,7 @@ public:
 		m_enableMotor = false;
 		m_hertz = 1.0f;
 		m_dampingRatio = 0.5f;
+		m_targetAngle = 0.0f;
 		m_motorSpeed = 1.0f;
 		m_motorTorque = 1000.0f;
 
@@ -557,7 +558,7 @@ public:
 
 		if ( m_enableSpring )
 		{
-			if ( ImGui::SliderFloat( "Hertz", &m_hertz, 0.0f, 10.0f, "%.1f" ) )
+			if ( ImGui::SliderFloat( "Hertz", &m_hertz, 0.0f, 30.0f, "%.1f" ) )
 			{
 				b2RevoluteJoint_SetSpringHertz( m_jointId1, m_hertz );
 				b2Joint_WakeBodies( m_jointId1 );
@@ -566,6 +567,12 @@ public:
 			if ( ImGui::SliderFloat( "Damping", &m_dampingRatio, 0.0f, 2.0f, "%.1f" ) )
 			{
 				b2RevoluteJoint_SetSpringDampingRatio( m_jointId1, m_dampingRatio );
+				b2Joint_WakeBodies( m_jointId1 );
+			}
+
+			if ( ImGui::SliderFloat( "Degrees", &m_targetAngle, -180.0f, 180.0f, "%.0f" ) )
+			{
+				b2RevoluteJoint_SetTargetAngle( m_jointId1, B2_PI * m_targetAngle / 180.0f );
 				b2Joint_WakeBodies( m_jointId1 );
 			}
 		}
@@ -599,6 +606,7 @@ public:
 	float m_motorTorque;
 	float m_hertz;
 	float m_dampingRatio;
+	float m_targetAngle;
 	bool m_enableSpring;
 	bool m_enableMotor;
 	bool m_enableLimit;
@@ -631,6 +639,7 @@ public:
 		m_motorForce = 25.0f;
 		m_hertz = 1.0f;
 		m_dampingRatio = 0.5f;
+		m_translation = 0.0f;
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -667,7 +676,7 @@ public:
 
 	void UpdateGui() override
 	{
-		float height = 220.0f;
+		float height = 240.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
@@ -719,6 +728,12 @@ public:
 				b2PrismaticJoint_SetSpringDampingRatio( m_jointId, m_dampingRatio );
 				b2Joint_WakeBodies( m_jointId );
 			}
+
+			if ( ImGui::SliderFloat( "Translation", &m_translation, -5.0f, 5.0f, "%.1f" ) )
+			{
+				b2PrismaticJoint_SetTargetTranslation( m_jointId, m_translation );
+				b2Joint_WakeBodies( m_jointId );
+			}
 		}
 
 		ImGui::End();
@@ -748,6 +763,7 @@ public:
 	float m_motorForce;
 	float m_hertz;
 	float m_dampingRatio;
+	float m_translation;
 	bool m_enableSpring;
 	bool m_enableMotor;
 	bool m_enableLimit;
@@ -2821,7 +2837,7 @@ public:
 	{
 		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) )
 		{
-			m_motorSpeed = b2MaxFloat(-0.3f, m_motorSpeed - 0.01f);
+			m_motorSpeed = b2MaxFloat( -0.3f, m_motorSpeed - 0.01f );
 			b2RevoluteJoint_SetMotorSpeed( m_driverId, m_motorSpeed );
 			b2Joint_WakeBodies( m_driverId );
 		}

@@ -360,7 +360,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 		}
 	}
 
-	if ( didHit && ( shape->enablePreSolveEvents || fastShape->enablePreSolveEvents ) )
+	if ( didHit && ( shape->enablePreSolveEvents || fastShape->enablePreSolveEvents ) && world->preSolveFcn != NULL )
 	{
 		// Pre-solve is expensive because I need to compute a temporary manifold
 		b2Transform transformA = b2GetSweepTransform( &input.sweepA, hitFraction );

@@ -92,6 +92,9 @@ public:
 #endif
 
 	SampleContext* m_context;
+	Camera* m_camera;
+	Draw* m_draw;
+
 	enki::TaskScheduler* m_scheduler;
 	class SampleTask* m_tasks;
 	int m_taskCount;
