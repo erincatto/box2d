@@ -780,6 +780,9 @@ B2_API b2Vec2 b2Joint_GetConstraintForce( b2JointId jointId );
 /// Get the current constraint torque for this joint. Usually in Newton * meters.
 B2_API float b2Joint_GetConstraintTorque( b2JointId jointId );
 
+/// Get the current translation error this joint. Usually in meters. Used for testing.
+B2_API float b2Joint_GetTranslationError( b2JointId jointId );
+
 /**
  * @defgroup distance_joint Distance Joint
  * @brief Functions for the distance joint.

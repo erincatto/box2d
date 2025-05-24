@@ -527,6 +527,7 @@ b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJointDef* de
 	joint->revoluteJoint = empty;
 
 	joint->revoluteJoint.referenceAngle = b2ClampFloat( def->referenceAngle, -B2_PI, B2_PI );
+	joint->revoluteJoint.targetAngle = b2ClampFloat( def->targetAngle, -B2_PI, B2_PI );
 	joint->revoluteJoint.hertz = def->hertz;
 	joint->revoluteJoint.dampingRatio = def->dampingRatio;
 	joint->revoluteJoint.lowerAngle = def->lowerAngle;
@@ -576,12 +577,7 @@ b2JointId b2CreatePrismaticJoint( b2WorldId worldId, const b2PrismaticJointDef* 
 
 	joint->prismaticJoint.localAxisA = b2Normalize( def->localAxisA );
 	joint->prismaticJoint.referenceAngle = def->referenceAngle;
-	joint->prismaticJoint.impulse = b2Vec2_zero;
-	joint->prismaticJoint.axialMass = 0.0f;
-	joint->prismaticJoint.springImpulse = 0.0f;
-	joint->prismaticJoint.motorImpulse = 0.0f;
-	joint->prismaticJoint.lowerImpulse = 0.0f;
-	joint->prismaticJoint.upperImpulse = 0.0f;
+	joint->prismaticJoint.targetTranslation = def->targetTranslation;
 	joint->prismaticJoint.hertz = def->hertz;
 	joint->prismaticJoint.dampingRatio = def->dampingRatio;
 	joint->prismaticJoint.lowerTranslation = def->lowerTranslation;
@@ -1016,6 +1012,21 @@ float b2Joint_GetConstraintTorque( b2JointId jointId )
 			B2_ASSERT( false );
 			return 0.0f;
 	}
+}
+
+float b2Joint_GetTranslationError(b2JointId jointId)
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* base = b2GetJointSim( world, joint );
+
+	b2Transform xfA = b2GetBodyTransform( world, joint->edges[0].bodyId );
+	b2Transform xfB = b2GetBodyTransform( world, joint->edges[1].bodyId );
+
+	b2Vec2 pA = b2TransformPoint(xfA, base->localOriginAnchorA);
+	b2Vec2 pB = b2TransformPoint(xfB, base->localOriginAnchorB);
+	b2Vec2 dp = b2Sub( pB, pA );
+	return b2Length( dp );
 }
 
 void b2PrepareJoint( b2JointSim* joint, b2StepContext* context )

@@ -723,6 +723,10 @@ typedef struct b2PrismaticJointDef
 	/// The constrained angle between the bodies: bodyB_angle - bodyA_angle
 	float referenceAngle;
 
+	/// The target translation for the joint in meters. The spring-damper will drive
+	/// to this translation.
+	float targetTranslation;
+
 	/// Enable a linear spring along the prismatic joint axis
 	bool enableSpring;
 
@@ -793,6 +797,10 @@ typedef struct b2RevoluteJointDef
 	/// The bodyB angle minus bodyA angle in the reference state (radians).
 	/// This defines the zero angle for the joint limit.
 	float referenceAngle;
+
+	/// The target angle for the joint in radians. The spring-damper will drive
+	/// to this angle.
+	float targetAngle;
 
 	/// Enable a rotational spring on the revolute hinge axis
 	bool enableSpring;
