@@ -886,7 +886,8 @@ B2_API void b2MotorJoint_SetLinearOffset( b2JointId jointId, b2Vec2 linearOffset
 /// Get the motor joint linear offset target
 B2_API b2Vec2 b2MotorJoint_GetLinearOffset( b2JointId jointId );
 
-/// Set the motor joint angular offset target in radians
+/// Set the motor joint angular offset target in radians. This angle will be unwound
+/// so the motor will drive along the shortest arc.
 B2_API void b2MotorJoint_SetAngularOffset( b2JointId jointId, float angularOffset );
 
 /// Get the motor joint angular offset target in radians

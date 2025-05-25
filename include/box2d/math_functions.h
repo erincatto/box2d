@@ -462,35 +462,10 @@ B2_INLINE float b2RelativeAngle( b2Rot b, b2Rot a )
 	return b2Atan2( s, c );
 }
 
-/// Convert an angle in the range [-2*pi, 2*pi] into the range [-pi, pi]
+/// Convert any angle into the range [-pi, pi]
 B2_INLINE float b2UnwindAngle( float radians )
 {
-	if ( radians < -B2_PI )
-	{
-		return radians + 2.0f * B2_PI;
-	}
-	else if ( radians > B2_PI )
-	{
-		return radians - 2.0f * B2_PI;
-	}
-
-	return radians;
-}
-
-/// Convert any into the range [-pi, pi] (slow)
-B2_INLINE float b2UnwindLargeAngle( float radians )
-{
-	while ( radians > B2_PI )
-	{
-		radians -= 2.0f * B2_PI;
-	}
-
-	while ( radians < -B2_PI )
-	{
-		radians += 2.0f * B2_PI;
-	}
-
-	return radians;
+	return remainderf( radians, 2.0f * B2_PI );
 }
 
 /// Rotate a vector

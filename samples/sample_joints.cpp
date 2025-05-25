@@ -288,12 +288,12 @@ public:
 		{
 		}
 
-		if ( ImGui::SliderFloat( "Max Force", &m_maxForce, 0.0f, 1000.0f, "%.0f" ) )
+		if ( ImGui::SliderFloat( "Max Force", &m_maxForce, 0.0f, 10000.0f, "%.0f" ) )
 		{
 			b2MotorJoint_SetMaxForce( m_jointId, m_maxForce );
 		}
 
-		if ( ImGui::SliderFloat( "Max Torque", &m_maxTorque, 0.0f, 1000.0f, "%.0f" ) )
+		if ( ImGui::SliderFloat( "Max Torque", &m_maxTorque, 0.0f, 10000.0f, "%.0f" ) )
 		{
 			b2MotorJoint_SetMaxTorque( m_jointId, m_maxTorque );
 		}
@@ -322,7 +322,7 @@ public:
 		linearOffset.x = 6.0f * sinf( 2.0f * m_time );
 		linearOffset.y = 8.0f + 4.0f * sinf( 1.0f * m_time );
 
-		float angularOffset = B2_PI * sinf( -0.5f * m_time );
+		float angularOffset = 2.0f * m_time;
 
 		b2MotorJoint_SetLinearOffset( m_jointId, linearOffset );
 		b2MotorJoint_SetAngularOffset( m_jointId, angularOffset );

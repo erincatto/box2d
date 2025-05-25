@@ -26,7 +26,7 @@ b2Vec2 b2MotorJoint_GetLinearOffset( b2JointId jointId )
 void b2MotorJoint_SetAngularOffset( b2JointId jointId, float angularOffset )
 {
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
-	joint->motorJoint.angularOffset = b2ClampFloat( angularOffset, -B2_PI, B2_PI );
+	joint->motorJoint.angularOffset = angularOffset;
 }
 
 float b2MotorJoint_GetAngularOffset( b2JointId jointId )
@@ -138,7 +138,6 @@ void b2PrepareMotorJoint( b2JointSim* base, b2StepContext* context )
 	joint->anchorB = b2RotateVector( bodySimB->transform.q, b2Sub( base->localOriginAnchorB, bodySimB->localCenter ) );
 	joint->deltaCenter = b2Sub( b2Sub( bodySimB->center, bodySimA->center ), joint->linearOffset );
 	joint->deltaAngle = b2RelativeAngle( bodySimB->transform.q, bodySimA->transform.q ) - joint->angularOffset;
-	joint->deltaAngle = b2UnwindAngle( joint->deltaAngle );
 
 	b2Vec2 rA = joint->anchorA;
 	b2Vec2 rB = joint->anchorB;
@@ -208,10 +207,10 @@ void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 
 	// angular constraint
 	{
-		float angularSeperation = b2RelativeAngle( bodyB->deltaRotation, bodyA->deltaRotation ) + joint->deltaAngle;
-		angularSeperation = b2UnwindAngle( angularSeperation );
+		float angularSeparation = b2RelativeAngle( bodyB->deltaRotation, bodyA->deltaRotation ) + joint->deltaAngle;
+		angularSeparation = b2UnwindAngle( angularSeparation );
 
-		float angularBias = context->inv_h * joint->correctionFactor * angularSeperation;
+		float angularBias = context->inv_h * joint->correctionFactor * angularSeparation;
 
 		float Cdot = wB - wA;
 		float impulse = -joint->angularMass * ( Cdot + angularBias );
