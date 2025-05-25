@@ -83,6 +83,21 @@ static const b2Rot b2Rot_identity = { 1.0f, 0.0f };
 static const b2Transform b2Transform_identity = { { 0.0f, 0.0f }, { 1.0f, 0.0f } };
 static const b2Mat22 b2Mat22_zero = { { 0.0f, 0.0f }, { 0.0f, 0.0f } };
 
+/// Is this a valid number? Not NaN or infinity.
+B2_API bool b2IsValidFloat( float a );
+
+/// Is this a valid vector? Not NaN or infinity.
+B2_API bool b2IsValidVec2( b2Vec2 v );
+
+/// Is this a valid rotation? Not NaN or infinity. Is normalized.
+B2_API bool b2IsValidRotation( b2Rot q );
+
+/// Is this a valid bounding box? Not Nan or infinity. Upper bound greater than or equal to lower bound.
+B2_API bool b2IsValidAABB( b2AABB aabb );
+
+/// Is this a valid plane? Normal is a unit vector. Not Nan or infinity.
+B2_API bool b2IsValidPlane( b2Plane a );
+
 /// @return the minimum of two integers
 B2_INLINE int b2MinInt( int a, int b )
 {
@@ -465,6 +480,7 @@ B2_INLINE float b2RelativeAngle( b2Rot b, b2Rot a )
 /// Convert any angle into the range [-pi, pi]
 B2_INLINE float b2UnwindAngle( float radians )
 {
+	// Assuming this is deterministic
 	return remainderf( radians, 2.0f * B2_PI );
 }
 
@@ -628,21 +644,6 @@ B2_INLINE float b2PlaneSeparation( b2Plane plane, b2Vec2 point )
 {
 	return b2Dot( plane.normal, point ) - plane.offset;
 }
-
-/// Is this a valid number? Not NaN or infinity.
-B2_API bool b2IsValidFloat( float a );
-
-/// Is this a valid vector? Not NaN or infinity.
-B2_API bool b2IsValidVec2( b2Vec2 v );
-
-/// Is this a valid rotation? Not NaN or infinity. Is normalized.
-B2_API bool b2IsValidRotation( b2Rot q );
-
-/// Is this a valid bounding box? Not Nan or infinity. Upper bound greater than or equal to lower bound.
-B2_API bool b2IsValidAABB( b2AABB aabb );
-
-/// Is this a valid plane? Normal is a unit vector. Not Nan or infinity.
-B2_API bool b2IsValidPlane( b2Plane a );
 
 /// Box2D bases all length units on meters, but you may need different units for your game.
 /// You can set this value to use different units. This should be done at application startup
