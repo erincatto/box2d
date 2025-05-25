@@ -62,6 +62,7 @@ typedef float b2FrictionCallback( float frictionA, int userMaterialIdA, float fr
 typedef float b2RestitutionCallback( float restitutionA, int userMaterialIdA, float restitutionB, int userMaterialIdB );
 
 /// Result from b2World_RayCastClosest
+/// If there is initial overlap the fraction and normal will be zero while the point is an arbitrary point in the overlap region.
 /// @ingroup world
 typedef struct b2RayResult
 {
@@ -723,6 +724,10 @@ typedef struct b2PrismaticJointDef
 	/// The constrained angle between the bodies: bodyB_angle - bodyA_angle
 	float referenceAngle;
 
+	/// The target translation for the joint in meters. The spring-damper will drive
+	/// to this translation.
+	float targetTranslation;
+
 	/// Enable a linear spring along the prismatic joint axis
 	bool enableSpring;
 
@@ -793,6 +798,10 @@ typedef struct b2RevoluteJointDef
 	/// The bodyB angle minus bodyA angle in the reference state (radians).
 	/// This defines the zero angle for the joint limit.
 	float referenceAngle;
+
+	/// The target angle for the joint in radians. The spring-damper will drive
+	/// to this angle.
+	float targetAngle;
 
 	/// Enable a rotational spring on the revolute hinge axis
 	bool enableSpring;
@@ -1198,17 +1207,18 @@ typedef bool b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* 
 /// @ingroup world
 typedef bool b2OverlapResultFcn( b2ShapeId shapeId, void* context );
 
-/// Prototype callback for ray casts.
+/// Prototype callback for ray and shape casts.
 /// Called for each shape found in the query. You control how the ray cast
 /// proceeds by returning a float:
 /// return -1: ignore this shape and continue
 /// return 0: terminate the ray cast
 /// return fraction: clip the ray to this point
 /// return 1: don't clip the ray and continue
+/// A cast with initial overlap will return a zero fraction and a zero normal.
 /// @param shapeId the shape hit by the ray
 /// @param point the point of initial intersection
-/// @param normal the normal vector at the point of intersection
-/// @param fraction the fraction along the ray at the point of intersection
+/// @param normal the normal vector at the point of intersection, zero for a shape cast with initial overlap
+/// @param fraction the fraction along the ray at the point of intersection, zero for a shape cast with initial overlap
 /// @param context the user context
 /// @return -1 to filter, 0 to terminate, fraction to clip the ray for closest hit, 1 to continue
 /// @see b2World_CastRay

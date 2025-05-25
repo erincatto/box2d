@@ -186,6 +186,13 @@ float b2GetRevoluteJointTorque( b2World* world, b2JointSim* base )
 	return torque;
 }
 
+float b2GetRevoluteJointTranslationError( b2World* world, b2JointSim* base )
+{
+	const b2RevoluteJoint* revolute = &base->revoluteJoint;
+	float torque = world->inv_h * ( revolute->motorImpulse + revolute->lowerImpulse - revolute->upperImpulse );
+	return torque;
+}
+
 // Point-to-point constraint
 // C = p2 - p1
 // Cdot = v2 - v1

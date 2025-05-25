@@ -434,9 +434,9 @@ public:
 		m_enableSpring = false;
 		m_enableLimit = true;
 		m_enableMotor = false;
-		m_hertz = 1.0f;
+		m_hertz = 2.0f;
 		m_dampingRatio = 0.5f;
-		m_targetAngle = 0.0f;
+		m_targetDegrees = 45.0f;
 		m_motorSpeed = 1.0f;
 		m_motorTorque = 1000.0f;
 
@@ -458,6 +458,7 @@ public:
 			jointDef.bodyIdB = bodyId;
 			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
 			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+			jointDef.targetAngle = B2_PI * m_targetDegrees / 180.0f;
 			jointDef.enableSpring = m_enableSpring;
 			jointDef.hertz = m_hertz;
 			jointDef.dampingRatio = m_dampingRatio;
@@ -570,9 +571,9 @@ public:
 				b2Joint_WakeBodies( m_jointId1 );
 			}
 
-			if ( ImGui::SliderFloat( "Degrees", &m_targetAngle, -180.0f, 180.0f, "%.0f" ) )
+			if ( ImGui::SliderFloat( "Degrees", &m_targetDegrees, -180.0f, 180.0f, "%.0f" ) )
 			{
-				b2RevoluteJoint_SetTargetAngle( m_jointId1, B2_PI * m_targetAngle / 180.0f );
+				b2RevoluteJoint_SetTargetAngle( m_jointId1, B2_PI * m_targetDegrees / 180.0f );
 				b2Joint_WakeBodies( m_jointId1 );
 			}
 		}
@@ -606,7 +607,7 @@ public:
 	float m_motorTorque;
 	float m_hertz;
 	float m_dampingRatio;
-	float m_targetAngle;
+	float m_targetDegrees;
 	bool m_enableSpring;
 	bool m_enableMotor;
 	bool m_enableLimit;
@@ -2864,3 +2865,118 @@ public:
 };
 
 static int sampleGearLift = RegisterSample( "Joints", "Gear Lift", GearLift::Create );
+
+// A top down door
+class Door : public Sample
+{
+public:
+	explicit Door( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 0.0f };
+			m_context->camera.m_zoom = 4.0f;
+		}
+
+		b2BodyId groundId = b2_nullBodyId;
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 0.0f, 0.0f };
+			groundId = b2CreateBody( m_worldId, &bodyDef );
+		}
+
+		m_enableLimit = true;
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { 0.0f, 1.5f };
+			bodyDef.gravityScale = 0.0f;
+
+			m_doorId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.density = 1000.0f;
+
+			b2Polygon box = b2MakeBox(0.1f, 1.5f);
+			b2CreatePolygonShape( m_doorId, &shapeDef, &box );
+
+			b2Vec2 pivot = { 0.0f, 0.0f };
+			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+			jointDef.bodyIdA = groundId;
+			jointDef.bodyIdB = m_doorId;
+			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
+			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+			jointDef.targetAngle = 0.0f;
+			jointDef.enableSpring = true;
+			jointDef.hertz = 1.0f;
+			jointDef.dampingRatio = 0.5f;
+			jointDef.motorSpeed = 0.0f;
+			jointDef.maxMotorTorque = 0.0f;
+			jointDef.enableMotor = false;
+			jointDef.referenceAngle = 0.0f;
+			jointDef.lowerAngle = -0.5f * B2_PI;
+			jointDef.upperAngle = 0.5f * B2_PI;
+			jointDef.enableLimit = m_enableLimit;
+
+			m_jointId = b2CreateRevoluteJoint( m_worldId, &jointDef );
+		}
+
+		m_magnitude = 50000.0f;
+		m_translationError = 0.0f;
+	}
+
+	void UpdateGui() override
+	{
+		float height = 220.0f;
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
+
+		ImGui::Begin( "Door", nullptr, ImGuiWindowFlags_NoResize );
+
+		if (ImGui::Button( "impulse" ))
+		{
+			b2Vec2 p = b2Body_GetWorldPoint( m_doorId, { 0.0f, 1.5f } );
+			b2Body_ApplyLinearImpulse( m_doorId, { m_magnitude, 0.0f }, p, true );
+			m_translationError = 0.0f;
+		}
+
+		ImGui::SliderFloat( "magnitude", &m_magnitude, 1000.0f, 100000.0f, "%.0f" );
+
+		if ( ImGui::Checkbox( "limit", &m_enableLimit ) )
+		{
+			b2RevoluteJoint_EnableLimit( m_jointId, m_enableLimit );
+		}
+
+		ImGui::End();
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		b2Vec2 p = b2Body_GetWorldPoint( m_doorId, { 0.0f, 1.5f } );
+		m_draw->DrawPoint( p, 5.0f, b2_colorDarkKhaki );
+
+		m_draw->DrawTransform( b2Transform_identity );
+
+		float translationError = b2Joint_GetTranslationError( m_jointId );
+		m_translationError = b2MaxFloat( m_translationError, translationError );
+
+		DrawTextLine( "translation error = %g", m_translationError );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new Door( context );
+	}
+
+	b2BodyId m_doorId;
+	b2JointId m_jointId;
+	float m_magnitude;
+	float m_translationError;
+	bool m_enableLimit;
+};
+
+static int sampleDoor = RegisterSample( "Joints", "Door", Door::Create );

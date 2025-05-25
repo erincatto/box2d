@@ -303,6 +303,8 @@ float b2GetRevoluteJointTorque( b2World* world, b2JointSim* base );
 float b2GetWeldJointTorque( b2World* world, b2JointSim* base );
 float b2GetWheelJointTorque( b2World* world, b2JointSim* base );
 
+float b2GetRevoluteJointTranslationError( b2World* world, b2JointSim* base );
+
 void b2PrepareDistanceJoint( b2JointSim* base, b2StepContext* context );
 void b2PrepareMotorJoint( b2JointSim* base, b2StepContext* context );
 void b2PrepareMouseJoint( b2JointSim* base, b2StepContext* context );

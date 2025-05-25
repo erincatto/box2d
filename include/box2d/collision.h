@@ -68,7 +68,7 @@ typedef struct b2ShapeCastInput
 	bool canEncroach;
 } b2ShapeCastInput;
 
-/// Low level ray cast or shape-cast output data
+/// Low level ray cast or shape-cast output data. Returns a zero fraction and normal in the case of initial overlap.
 typedef struct b2CastOutput
 {
 	/// The surface normal at the hit point
