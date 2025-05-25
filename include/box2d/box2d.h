@@ -60,7 +60,6 @@ B2_API b2TreeStats b2World_OverlapShape( b2WorldId worldId, const b2ShapeProxy* 
 
 /// Cast a ray into the world to collect shapes in the path of the ray.
 /// Your callback function controls whether you get the closest point, any point, or n-points.
-/// The ray-cast ignores shapes that contain the starting point.
 /// @note The callback function may receive shapes in any order
 /// @param worldId The world to cast the ray against
 /// @param origin The start point of the ray
@@ -72,7 +71,7 @@ B2_API b2TreeStats b2World_OverlapShape( b2WorldId worldId, const b2ShapeProxy* 
 B2_API b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter,
 									b2CastResultFcn* fcn, void* context );
 
-/// Cast a ray into the world to collect the closest hit. This is a convenience function.
+/// Cast a ray into the world to collect the closest hit. This is a convenience function. It is stopped by initial overlap.
 /// This is less general than b2World_CastRay() and does not allow for custom filtering.
 B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter );
 
@@ -753,8 +752,14 @@ B2_API b2BodyId b2Joint_GetBodyB( b2JointId jointId );
 /// Get the world that owns this joint
 B2_API b2WorldId b2Joint_GetWorld( b2JointId jointId );
 
+/// Set the local anchor on bodyA
+B2_API void b2Joint_SetLocalAnchorA( b2JointId jointId, b2Vec2 localAnchor );
+
 /// Get the local anchor on bodyA
 B2_API b2Vec2 b2Joint_GetLocalAnchorA( b2JointId jointId );
+
+/// Set the local anchor on bodyB
+B2_API void b2Joint_SetLocalAnchorB( b2JointId jointId, b2Vec2 localAnchor );
 
 /// Get the local anchor on bodyB
 B2_API b2Vec2 b2Joint_GetLocalAnchorB( b2JointId jointId );

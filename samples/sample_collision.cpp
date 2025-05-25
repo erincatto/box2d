@@ -1008,13 +1008,24 @@ public:
 
 		if ( output->hit )
 		{
-			b2Vec2 p = b2MulAdd( p1, output->fraction, d );
-			m_context->draw.DrawSegment( p1, p, b2_colorWhite );
-			m_context->draw.DrawPoint( p1, 5.0f, b2_colorGreen );
-			m_context->draw.DrawPoint( output->point, 5.0f, b2_colorWhite );
+			b2Vec2 p;
 
-			b2Vec2 n = b2MulAdd( p, 1.0f, output->normal );
-			m_context->draw.DrawSegment( p, n, b2_colorViolet );
+			if (output->fraction == 0.0f)
+			{
+				assert(output->normal.x == 0.0f && output->normal.y == 0.0f);
+				p = output->point;
+				m_draw->DrawPoint(output->point, 5.0, b2_colorPeru);
+			}
+			else
+			{
+				p = b2MulAdd( p1, output->fraction, d );
+				m_draw->DrawSegment( p1, p, b2_colorWhite );
+				m_draw->DrawPoint( p1, 5.0f, b2_colorGreen );
+				m_draw->DrawPoint( output->point, 5.0f, b2_colorWhite );
+
+				b2Vec2 n = b2MulAdd( p, 1.0f, output->normal );
+				m_draw->DrawSegment( p, n, b2_colorViolet );
+			}
 
 			// if (m_rayRadius > 0.0f)
 			//{
@@ -1025,14 +1036,14 @@ public:
 			if ( m_showFraction )
 			{
 				b2Vec2 ps = { p.x + 0.05f, p.y - 0.02f };
-				m_context->draw.DrawString( ps, "%.2f", output->fraction );
+				m_draw->DrawString( ps, "%.2f", output->fraction );
 			}
 		}
 		else
 		{
-			m_context->draw.DrawSegment( p1, p2, b2_colorWhite );
-			m_context->draw.DrawPoint( p1, 5.0f, b2_colorGreen );
-			m_context->draw.DrawPoint( p2, 5.0f, b2_colorRed );
+			m_draw->DrawSegment( p1, p2, b2_colorWhite );
+			m_draw->DrawPoint( p1, 5.0f, b2_colorGreen );
+			m_draw->DrawPoint( p2, 5.0f, b2_colorRed );
 
 			// if (m_rayRadius > 0.0f)
 			//{
@@ -3484,7 +3495,7 @@ public:
 		distanceCache.count = 0;
 		b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &distanceCache, nullptr, 0 );
 
-		DrawTextLine( "hit = %s, iterations = %d, lambda = %g, distance = %g", output.hit ? "true" : "false", output.iterations,
+		DrawTextLine( "hit = %s, iterations = %d, fraction = %g, distance = %g", output.hit ? "true" : "false", output.iterations,
 					  output.fraction, distanceOutput.distance );
 
 		DrawShape( m_typeA, b2Transform_identity, m_radiusA, b2_colorCyan );

@@ -840,12 +840,32 @@ b2WorldId b2Joint_GetWorld( b2JointId jointId )
 	return (b2WorldId){ jointId.world0 + 1, world->generation };
 }
 
+void b2Joint_SetLocalAnchorA( b2JointId jointId, b2Vec2 localAnchor )
+{
+	B2_ASSERT(b2IsValidVec2(localAnchor));
+	
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* jointSim = b2GetJointSim( world, joint );
+	jointSim->localOriginAnchorA = localAnchor;
+}
+
 b2Vec2 b2Joint_GetLocalAnchorA( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* jointSim = b2GetJointSim( world, joint );
 	return jointSim->localOriginAnchorA;
+}
+
+void b2Joint_SetLocalAnchorB( b2JointId jointId, b2Vec2 localAnchor )
+{
+	B2_ASSERT(b2IsValidVec2(localAnchor));
+	
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* jointSim = b2GetJointSim( world, joint );
+	jointSim->localOriginAnchorB = localAnchor;
 }
 
 b2Vec2 b2Joint_GetLocalAnchorB( b2JointId jointId )
