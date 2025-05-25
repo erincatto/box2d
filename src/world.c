@@ -2074,10 +2074,7 @@ static bool TreeQueryCallback( int proxyId, uint64_t userData, void* context )
 
 	b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
 
-	b2Filter shapeFilter = shape->filter;
-	b2QueryFilter queryFilter = worldContext->filter;
-
-	if ( ( shapeFilter.categoryBits & queryFilter.maskBits ) == 0 || ( shapeFilter.maskBits & queryFilter.categoryBits ) == 0 )
+	if ( b2ShouldQueryCollide( shape->filter, worldContext->filter ) == false )
 	{
 		return true;
 	}
@@ -2134,10 +2131,7 @@ static bool TreeOverlapCallback( int proxyId, uint64_t userData, void* context )
 
 	b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
 
-	b2Filter shapeFilter = shape->filter;
-	b2QueryFilter queryFilter = worldContext->filter;
-
-	if ( ( shapeFilter.categoryBits & queryFilter.maskBits ) == 0 || ( shapeFilter.maskBits & queryFilter.categoryBits ) == 0 )
+	if ( b2ShouldQueryCollide( shape->filter, worldContext->filter ) == false )
 	{
 		return true;
 	}
@@ -2214,10 +2208,8 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, uint64_t
 	b2World* world = worldContext->world;
 
 	b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
-	b2Filter shapeFilter = shape->filter;
-	b2QueryFilter queryFilter = worldContext->filter;
 
-	if ( ( shapeFilter.categoryBits & queryFilter.maskBits ) == 0 || ( shapeFilter.maskBits & queryFilter.categoryBits ) == 0 )
+	if ( b2ShouldQueryCollide( shape->filter, worldContext->filter ) == false )
 	{
 		return input->maxFraction;
 	}
@@ -2343,10 +2335,8 @@ static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 	b2World* world = worldContext->world;
 
 	b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
-	b2Filter shapeFilter = shape->filter;
-	b2QueryFilter queryFilter = worldContext->filter;
 
-	if ( ( shapeFilter.categoryBits & queryFilter.maskBits ) == 0 || ( shapeFilter.maskBits & queryFilter.categoryBits ) == 0 )
+	if ( b2ShouldQueryCollide( shape->filter, worldContext->filter ) == false )
 	{
 		return input->maxFraction;
 	}
@@ -2437,10 +2427,8 @@ static float MoverCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 	b2World* world = worldContext->world;
 
 	b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
-	b2Filter shapeFilter = shape->filter;
-	b2QueryFilter queryFilter = worldContext->filter;
 
-	if ( ( shapeFilter.categoryBits & queryFilter.maskBits ) == 0 || ( shapeFilter.maskBits & queryFilter.categoryBits ) == 0 )
+	if ( b2ShouldQueryCollide( shape->filter, worldContext->filter ) == false )
 	{
 		return worldContext->fraction;
 	}
@@ -2516,10 +2504,7 @@ static bool TreeCollideCallback( int proxyId, uint64_t userData, void* context )
 
 	b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
 
-	b2Filter shapeFilter = shape->filter;
-	b2QueryFilter queryFilter = worldContext->filter;
-
-	if ( ( shapeFilter.categoryBits & queryFilter.maskBits ) == 0 || ( shapeFilter.maskBits & queryFilter.categoryBits ) == 0 )
+	if ( b2ShouldQueryCollide( shape->filter, worldContext->filter ) == false )
 	{
 		return true;
 	}

@@ -467,17 +467,6 @@ b2ContactSim* b2GetContactSim( b2World* world, b2Contact* contact )
 	return b2ContactSimArray_Get( &set->contactSims, contact->localIndex );
 }
 
-bool b2ShouldShapesCollide( b2Filter filterA, b2Filter filterB )
-{
-	if ( filterA.groupIndex == filterB.groupIndex && filterA.groupIndex != 0 )
-	{
-		return filterA.groupIndex > 0;
-	}
-
-	bool collide = ( filterA.maskBits & filterB.categoryBits ) != 0 && ( filterA.categoryBits & filterB.maskBits ) != 0;
-	return collide;
-}
-
 // Update the contact manifold and touching status.
 // Note: do not assume the shape AABBs are overlapping or are valid.
 bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA, b2Transform transformA, b2Vec2 centerOffsetA,
