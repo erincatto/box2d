@@ -2980,3 +2980,70 @@ public:
 };
 
 static int sampleDoor = RegisterSample( "Joints", "Door", Door::Create );
+
+class ScaleRagdoll : public Sample
+{
+public:
+	explicit ScaleRagdoll( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 4.5f };
+			m_context->camera.m_zoom = 6.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+			b2Polygon box = b2MakeOffsetBox( 20.0f, 1.0f, { 0.0f, -1.0f }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+		}
+
+		m_scale = 1.0f;
+
+		m_human = {};
+
+		Spawn();
+	}
+
+	void Spawn()
+	{
+		float jointFrictionTorque = 0.03f;
+		float jointHertz = 1.0f;
+		float jointDampingRatio = 0.5f;
+		CreateHuman( &m_human, m_worldId, { 0.0f, 5.0f }, m_scale, jointFrictionTorque, jointHertz, jointDampingRatio, 1,
+					 nullptr, false );
+		Human_ApplyRandomAngularImpulse( &m_human, 10.0f );
+	}
+
+	void UpdateGui() override
+	{
+		float height = 60.0f;
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 260.0f, height ) );
+
+		ImGui::Begin( "Scale Ragdoll", nullptr, ImGuiWindowFlags_NoResize );
+		ImGui::PushItemWidth( 200.0f );
+
+		if ( ImGui::SliderFloat( "Scale", &m_scale, 0.1f, 10.0f, "%3.2f", ImGuiSliderFlags_ClampOnInput ) )
+		{
+			Human_SetScale( &m_human, m_scale );
+		}
+
+		ImGui::PopItemWidth();
+		ImGui::End();
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new ScaleRagdoll( context );
+	}
+
+	Human m_human;
+	float m_scale;
+};
+
+static int sampleScaleRagdoll = RegisterSample( "Joints", "Scale Ragdoll", ScaleRagdoll::Create );

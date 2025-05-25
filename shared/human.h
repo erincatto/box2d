@@ -26,12 +26,15 @@ typedef struct Bone
 	b2BodyId bodyId;
 	b2JointId jointId;
 	float frictionScale;
+	float maxTorque;
 	int parentIndex;
 } Bone;
 
 typedef struct Human
 {
 	Bone bones[bone_count];
+	float frictionTorque;
+	float originalScale;
 	float scale;
 	bool isSpawned;
 } Human;
@@ -52,6 +55,7 @@ void Human_SetJointFrictionTorque( Human* human, float torque );
 void Human_SetJointSpringHertz( Human* human, float hertz );
 void Human_SetJointDampingRatio( Human* human, float dampingRatio );
 void Human_EnableSensorEvents( Human* human, bool enable );
+void Human_SetScale( Human* human, float scale );
 
 #ifdef __cplusplus
 }
