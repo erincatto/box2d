@@ -71,7 +71,7 @@ B2_API b2TreeStats b2World_OverlapShape( b2WorldId worldId, const b2ShapeProxy* 
 B2_API b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter,
 									b2CastResultFcn* fcn, void* context );
 
-/// Cast a ray into the world to collect the closest hit. This is a convenience function. It is stopped by initial overlap.
+/// Cast a ray into the world to collect the closest hit. This is a convenience function. Ignores initial overlap.
 /// This is less general than b2World_CastRay() and does not allow for custom filtering.
 B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter );
 

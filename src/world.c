@@ -2283,6 +2283,12 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translatio
 // This callback finds the closest hit. This is the most common callback used in games.
 static float b2RayCastClosestFcn( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
 {
+	// Ignore initial overlap
+	if (fraction == 0.0f)
+	{
+		return -1.0f;
+	}
+	
 	b2RayResult* rayResult = (b2RayResult*)context;
 	rayResult->shapeId = shapeId;
 	rayResult->point = point;

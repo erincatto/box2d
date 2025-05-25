@@ -1228,7 +1228,9 @@ static float RayCastClosestCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 nor
 	CastContext* rayContext = (CastContext*)context;
 
 	ShapeUserData* userData = (ShapeUserData*)b2Shape_GetUserData( shapeId );
-	if ( userData != nullptr && userData->ignore )
+
+	// Ignore a specific shape. Also ignore initial overlap.
+	if ( (userData != nullptr && userData->ignore) || fraction == 0.0f )
 	{
 		// By returning -1, we instruct the calling code to ignore this shape and
 		// continue the ray-cast to the next shape.
@@ -1254,7 +1256,9 @@ static float RayCastAnyCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal,
 	CastContext* rayContext = (CastContext*)context;
 
 	ShapeUserData* userData = (ShapeUserData*)b2Shape_GetUserData( shapeId );
-	if ( userData != nullptr && userData->ignore )
+
+	// Ignore a specific shape. Also ignore initial overlap.
+	if ( (userData != nullptr && userData->ignore) || fraction == 0.0f )
 	{
 		// By returning -1, we instruct the calling code to ignore this shape and
 		// continue the ray-cast to the next shape.
@@ -1282,7 +1286,9 @@ static float RayCastMultipleCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 no
 	CastContext* rayContext = (CastContext*)context;
 
 	ShapeUserData* userData = (ShapeUserData*)b2Shape_GetUserData( shapeId );
-	if ( userData != nullptr && userData->ignore )
+
+	// Ignore a specific shape. Also ignore initial overlap.
+	if ( (userData != nullptr && userData->ignore) || fraction == 0.0f )
 	{
 		// By returning -1, we instruct the calling code to ignore this shape and
 		// continue the ray-cast to the next shape.
@@ -1314,7 +1320,9 @@ static float RayCastSortedCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 norm
 	CastContext* rayContext = (CastContext*)context;
 
 	ShapeUserData* userData = (ShapeUserData*)b2Shape_GetUserData( shapeId );
-	if ( userData != nullptr && userData->ignore )
+	
+	// Ignore a specific shape. Also ignore initial overlap.
+	if ( (userData != nullptr && userData->ignore) || fraction == 0.0f )
 	{
 		// By returning -1, we instruct the calling code to ignore this shape and
 		// continue the ray-cast to the next shape.
@@ -1365,6 +1373,8 @@ static float RayCastSortedCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 norm
 	return 1.0f;
 }
 
+// This sample shows how to use the ray and shape cast functions on a b2World. This
+// sample is configured to ignore initial overlap.
 class CastWorld : public Sample
 {
 public:
@@ -1687,7 +1697,7 @@ public:
 			// This version doesn't have a callback, but it doesn't skip the ignored shape
 			b2RayResult result = b2World_CastRayClosest( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter() );
 
-			if ( result.hit == true )
+			if ( result.hit == true && result.fraction > 0.0f )
 			{
 				b2Vec2 c = b2MulAdd( m_rayStart, result.fraction, rayTranslation );
 				m_context->draw.DrawPoint( result.point, 5.0f, color1 );
@@ -1780,7 +1790,7 @@ public:
 					b2Vec2 n = context.normals[i];
 					m_context->draw.DrawPoint( p, 5.0f, colors[i] );
 					m_context->draw.DrawSegment( m_rayStart, c, color2 );
-					b2Vec2 head = b2MulAdd( p, 0.5f, n );
+					b2Vec2 head = b2MulAdd( p, 1.0f, n );
 					m_context->draw.DrawSegment( p, head, color3 );
 
 					b2Vec2 t = b2MulSV( context.fractions[i], rayTranslation );
@@ -3506,8 +3516,16 @@ public:
 		if ( output.hit )
 		{
 			DrawShape( m_typeB, transform, m_radiusB, b2_colorPlum );
-			m_context->draw.DrawPoint( output.point, 5.0f, b2_colorWhite );
-			m_context->draw.DrawSegment( output.point, output.point + 0.5f * output.normal, b2_colorYellow );
+			
+			if (output.fraction > 0.0f)
+			{
+				m_context->draw.DrawPoint( output.point, 5.0f, b2_colorWhite );
+				m_context->draw.DrawSegment( output.point, output.point + 0.5f * output.normal, b2_colorYellow );
+			}
+			else
+			{
+				m_context->draw.DrawPoint( output.point, 5.0f, b2_colorPeru );
+			}
 		}
 
 		if ( m_showIndices )
