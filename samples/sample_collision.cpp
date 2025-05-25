@@ -1027,12 +1027,6 @@ public:
 				m_draw->DrawSegment( p, n, b2_colorViolet );
 			}
 
-			// if (m_rayRadius > 0.0f)
-			//{
-			//	m_context->draw.DrawCircle(p1, m_rayRadius, b2_colorGreen);
-			//	m_context->draw.DrawCircle(p, m_rayRadius, b2_colorRed);
-			// }
-
 			if ( m_showFraction )
 			{
 				b2Vec2 ps = { p.x + 0.05f, p.y - 0.02f };
@@ -1044,12 +1038,6 @@ public:
 			m_draw->DrawSegment( p1, p2, b2_colorWhite );
 			m_draw->DrawPoint( p1, 5.0f, b2_colorGreen );
 			m_draw->DrawPoint( p2, 5.0f, b2_colorRed );
-
-			// if (m_rayRadius > 0.0f)
-			//{
-			//	m_context->draw.DrawCircle(p1, m_rayRadius, b2_colorGreen);
-			//	m_context->draw.DrawCircle(p2, m_rayRadius, b2_colorRed);
-			// }
 		}
 	}
 
