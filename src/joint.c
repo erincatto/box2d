@@ -1124,6 +1124,7 @@ float b2Joint_GetLinearSeparation(b2JointId jointId)
 		}
 
 		case b2_wheelJoint:
+		{
 			b2WheelJoint* wheelJoint = &base->wheelJoint;
 			b2Vec2 axisA = b2RotateVector( xfA.q, wheelJoint->localAxisA );
 			b2Vec2 perpA = b2LeftPerp( axisA );
@@ -1145,6 +1146,7 @@ float b2Joint_GetLinearSeparation(b2JointId jointId)
 			}
 
 			return sqrtf( perpendicularSeparation * perpendicularSeparation + limitSeparation * limitSeparation );
+		}
 
 		default:
 			B2_ASSERT( false );
