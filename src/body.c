@@ -25,6 +25,15 @@ B2_ARRAY_SOURCE( b2Body, b2Body )
 B2_ARRAY_SOURCE( b2BodySim, b2BodySim )
 B2_ARRAY_SOURCE( b2BodyState, b2BodyState )
 
+void b2LimitVelocity( b2BodyState* state, float maxLinearSpeed )
+{
+	float v2 = b2LengthSquared( state->linearVelocity );
+	if ( v2 > maxLinearSpeed * maxLinearSpeed )
+	{
+		state->linearVelocity = b2MulSV( maxLinearSpeed / sqrtf( v2 ), state->linearVelocity );
+	}
+}
+
 // Get a validated body from a world using an id.
 b2Body* b2GetBodyFullId( b2World* world, b2BodyId bodyId )
 {
@@ -958,6 +967,8 @@ void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Vec2 point, b
 		b2BodySim* bodySim = b2BodySimArray_Get( &set->bodySims, localIndex );
 		state->linearVelocity = b2MulAdd( state->linearVelocity, bodySim->invMass, impulse );
 		state->angularVelocity += bodySim->invInertia * b2Cross( b2Sub( point, bodySim->center ), impulse );
+
+		b2LimitVelocity(state, world->maxLinearSpeed );
 	}
 }
 
@@ -978,6 +989,8 @@ void b2Body_ApplyLinearImpulseToCenter( b2BodyId bodyId, b2Vec2 impulse, bool wa
 		b2BodyState* state = b2BodyStateArray_Get( &set->bodyStates, localIndex );
 		b2BodySim* bodySim = b2BodySimArray_Get( &set->bodySims, localIndex );
 		state->linearVelocity = b2MulAdd( state->linearVelocity, bodySim->invMass, impulse );
+
+		b2LimitVelocity( state, world->maxLinearSpeed );
 	}
 }
 

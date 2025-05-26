@@ -1783,6 +1783,215 @@ public:
 
 static int sampleBreakableJoint = RegisterSample( "Joints", "Breakable", BreakableJoint::Create );
 
+// This sample shows how to measure joint separation. This is the unresolved constraint error.
+class JointSeparation : public Sample
+{
+public:
+	enum
+	{
+		e_count = 5
+	};
+
+	explicit JointSeparation( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 8.0f };
+			m_context->camera.m_zoom = 25.0f;
+		}
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
+		b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
+		b2Vec2 position = { -20.0f, 10.0f };
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.enableSleep = false;
+
+		b2Polygon box = b2MakeBox( 1.0f, 1.0f );
+
+		int index = 0;
+
+		// distance joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
+
+			float length = 2.0f;
+			b2Vec2 pivot1 = { position.x, position.y + 1.0f + length };
+			b2Vec2 pivot2 = { position.x, position.y + 1.0f };
+			b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
+			jointDef.bodyIdA = groundId;
+			jointDef.bodyIdB = m_bodyIds[index];
+			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot1 );
+			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot2 );
+			jointDef.length = length;
+			jointDef.collideConnected = true;
+			m_jointIds[index] = b2CreateDistanceJoint( m_worldId, &jointDef );
+		}
+
+		position.x += 10.0f;
+		++index;
+
+		// prismatic joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
+
+			b2Vec2 pivot = { position.x - 1.0f, position.y };
+			b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
+			jointDef.bodyIdA = groundId;
+			jointDef.bodyIdB = m_bodyIds[index];
+			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
+			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+			jointDef.localAxisA = b2Body_GetLocalVector( jointDef.bodyIdA, { 1.0f, 0.0f } );
+			jointDef.collideConnected = true;
+			m_jointIds[index] = b2CreatePrismaticJoint( m_worldId, &jointDef );
+		}
+
+		position.x += 10.0f;
+		++index;
+
+		// revolute joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
+
+			b2Vec2 pivot = { position.x - 1.0f, position.y };
+			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+			jointDef.bodyIdA = groundId;
+			jointDef.bodyIdB = m_bodyIds[index];
+			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
+			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+			jointDef.collideConnected = true;
+			m_jointIds[index] = b2CreateRevoluteJoint( m_worldId, &jointDef );
+		}
+
+		position.x += 10.0f;
+		++index;
+
+		// weld joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
+
+			b2Vec2 pivot = { position.x - 1.0f, position.y };
+			b2WeldJointDef jointDef = b2DefaultWeldJointDef();
+			jointDef.bodyIdA = groundId;
+			jointDef.bodyIdB = m_bodyIds[index];
+			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
+			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+			jointDef.collideConnected = true;
+			m_jointIds[index] = b2CreateWeldJoint( m_worldId, &jointDef );
+		}
+
+		position.x += 10.0f;
+		++index;
+
+		// wheel joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
+
+			b2Vec2 pivot = { position.x - 1.0f, position.y };
+			b2WheelJointDef jointDef = b2DefaultWheelJointDef();
+			jointDef.bodyIdA = groundId;
+			jointDef.bodyIdB = m_bodyIds[index];
+			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
+			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+			jointDef.localAxisA = b2Body_GetLocalVector( jointDef.bodyIdA, { 1.0f, 0.0f } );
+			jointDef.hertz = 1.0f;
+			jointDef.dampingRatio = 0.7f;
+			jointDef.lowerTranslation = -1.0f;
+			jointDef.upperTranslation = 1.0f;
+			jointDef.enableLimit = true;
+			jointDef.enableMotor = true;
+			jointDef.maxMotorTorque = 10.0f;
+			jointDef.motorSpeed = 1.0f;
+			jointDef.collideConnected = true;
+			m_jointIds[index] = b2CreateWheelJoint( m_worldId, &jointDef );
+		}
+
+		m_impulse = 500.0f;
+	}
+
+	void UpdateGui() override
+	{
+		float height = 120.0f;
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 260.0f, height ) );
+
+		ImGui::Begin( "Joint Separation", nullptr, ImGuiWindowFlags_NoResize );
+
+		b2Vec2 gravity = b2World_GetGravity( m_worldId );
+		if ( ImGui::SliderFloat( "gravity", &gravity.y, -500.0f, 500.0f, "%.0f" ) )
+		{
+			b2World_SetGravity( m_worldId, gravity );
+		}
+
+		if ( ImGui::Button( "impulse" ) )
+		{
+			for (int i = 0; i < e_count; ++i)
+			{
+				b2Vec2 p = b2Body_GetWorldPoint( m_bodyIds[i], { 1.0f, 1.0f } );
+				b2Body_ApplyLinearImpulse( m_bodyIds[i], { m_impulse, -m_impulse }, p, true );
+			}
+		}
+
+		ImGui::SliderFloat( "magnitude", &m_impulse, 0.0f, 1000.0f, "%.0f" );
+
+		ImGui::End();
+	}
+
+	void Step() override
+	{
+		for ( int i = 0; i < e_count; ++i )
+		{
+			if ( B2_IS_NULL( m_jointIds[i] ) )
+			{
+				continue;
+			}
+
+			float linear = b2Joint_GetLinearSeparation( m_jointIds[i] );
+			float angular = b2Joint_GetAngularSeparation( m_jointIds[i] );
+			b2Vec2 point = b2Joint_GetLocalAnchorA( m_jointIds[i] );
+			m_context->draw.DrawString( point, "%.2f m, %.1f deg", linear, 180.0f * angular / B2_PI );
+		}
+
+		Sample::Step();
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new JointSeparation( context );
+	}
+
+	b2BodyId m_bodyIds[e_count];
+	b2JointId m_jointIds[e_count];
+	float m_impulse;
+};
+
+static int sampleJointSeparation = RegisterSample( "Joints", "Separation", JointSeparation::Create );
+
 // This shows how you can implement a constraint outside of Box2D
 class UserConstraint : public Sample
 {
@@ -2899,7 +3108,7 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.density = 1000.0f;
 
-			b2Polygon box = b2MakeBox(0.1f, 1.5f);
+			b2Polygon box = b2MakeBox( 0.1f, 1.5f );
 			b2CreatePolygonShape( m_doorId, &shapeDef, &box );
 
 			b2Vec2 pivot = { 0.0f, 0.0f };
@@ -2923,7 +3132,7 @@ public:
 			m_jointId = b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 
-		m_magnitude = 50000.0f;
+		m_impulse = 50000.0f;
 		m_translationError = 0.0f;
 	}
 
@@ -2935,14 +3144,14 @@ public:
 
 		ImGui::Begin( "Door", nullptr, ImGuiWindowFlags_NoResize );
 
-		if (ImGui::Button( "impulse" ))
+		if ( ImGui::Button( "impulse" ) )
 		{
 			b2Vec2 p = b2Body_GetWorldPoint( m_doorId, { 0.0f, 1.5f } );
-			b2Body_ApplyLinearImpulse( m_doorId, { m_magnitude, 0.0f }, p, true );
+			b2Body_ApplyLinearImpulse( m_doorId, { m_impulse, 0.0f }, p, true );
 			m_translationError = 0.0f;
 		}
 
-		ImGui::SliderFloat( "magnitude", &m_magnitude, 1000.0f, 100000.0f, "%.0f" );
+		ImGui::SliderFloat( "magnitude", &m_impulse, 1000.0f, 100000.0f, "%.0f" );
 
 		if ( ImGui::Checkbox( "limit", &m_enableLimit ) )
 		{
@@ -2961,7 +3170,7 @@ public:
 
 		m_draw->DrawTransform( b2Transform_identity );
 
-		float translationError = b2Joint_GetTranslationError( m_jointId );
+		float translationError = b2Joint_GetLinearSeparation( m_jointId );
 		m_translationError = b2MaxFloat( m_translationError, translationError );
 
 		DrawTextLine( "translation error = %g", m_translationError );
@@ -2974,7 +3183,7 @@ public:
 
 	b2BodyId m_doorId;
 	b2JointId m_jointId;
-	float m_magnitude;
+	float m_impulse;
 	float m_translationError;
 	bool m_enableLimit;
 };
@@ -3014,8 +3223,8 @@ public:
 		float jointFrictionTorque = 0.03f;
 		float jointHertz = 1.0f;
 		float jointDampingRatio = 0.5f;
-		CreateHuman( &m_human, m_worldId, { 0.0f, 5.0f }, m_scale, jointFrictionTorque, jointHertz, jointDampingRatio, 1,
-					 nullptr, false );
+		CreateHuman( &m_human, m_worldId, { 0.0f, 5.0f }, m_scale, jointFrictionTorque, jointHertz, jointDampingRatio, 1, nullptr,
+					 false );
 		Human_ApplyRandomAngularImpulse( &m_human, 10.0f );
 	}
 
