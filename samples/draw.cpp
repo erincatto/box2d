@@ -1345,6 +1345,9 @@ void Draw::DrawTransform( b2Transform transform )
 
 void Draw::DrawPoint( b2Vec2 p, float size, b2HexColor color )
 {
+#ifdef __APPLE__
+	size *= 2.0f;
+#endif
 	m_points->AddPoint( p, size, color );
 }
 

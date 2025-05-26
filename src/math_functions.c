@@ -106,7 +106,7 @@ float b2Atan2( float y, float x )
 // https://en.wikipedia.org/wiki/Bh%C4%81skara_I%27s_sine_approximation_formula
 b2CosSin b2ComputeCosSin( float radians )
 {
-	float x = b2UnwindLargeAngle( radians );
+	float x = b2UnwindAngle( radians );
 	float pi2 = B2_PI * B2_PI;
 
 	// cosine needs angle in [-pi/2, pi/2]

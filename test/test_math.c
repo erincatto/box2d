@@ -25,7 +25,9 @@ int MathTest( void )
 		ENSURE_SMALL( r.c - c, 0.002f );
 		ENSURE_SMALL( r.s - s, 0.002f );
 
-		float xn = b2UnwindLargeAngle( angle );
+		float xn = b2UnwindAngle( angle );
+		ENSURE( -B2_PI <= xn && xn <= B2_PI );
+
 		float a = b2Atan2( s, c );
 		ENSURE( b2IsValidFloat( a ) );
 
