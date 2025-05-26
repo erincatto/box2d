@@ -25,7 +25,7 @@ B2_ARRAY_SOURCE( b2Body, b2Body )
 B2_ARRAY_SOURCE( b2BodySim, b2BodySim )
 B2_ARRAY_SOURCE( b2BodyState, b2BodyState )
 
-void b2LimitVelocity( b2BodyState* state, float maxLinearSpeed )
+static void b2LimitVelocity( b2BodyState* state, float maxLinearSpeed )
 {
 	float v2 = b2LengthSquared( state->linearVelocity );
 	if ( v2 > maxLinearSpeed * maxLinearSpeed )
