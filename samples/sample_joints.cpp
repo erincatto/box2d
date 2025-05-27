@@ -1003,19 +1003,24 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		}
+
+		m_jointHertz = 60.0f;
+		m_jointDampingRatio = 0.0f;
+
+		b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
 	}
 
 	void UpdateGui() override
 	{
-		float height = 80.0f;
+		float height = 140.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
+		ImGui::SetNextWindowSize( ImVec2( 300.0f, height ) );
 
 		ImGui::Begin( "Bridge", nullptr, ImGuiWindowFlags_NoResize );
 
-		// Slider takes half the window
-		ImGui::PushItemWidth( ImGui::GetWindowWidth() * 0.5f );
-		bool updateFriction = ImGui::SliderFloat( "Joint Friction", &m_frictionTorque, 0.0f, 1000.0f, "%2.f" );
+		ImGui::PushItemWidth( ImGui::GetWindowWidth() * 0.6f );
+
+		bool updateFriction = ImGui::SliderFloat( "Joint Friction", &m_frictionTorque, 0.0f, 10000.0f, "%2.f" );
 		if ( updateFriction )
 		{
 			for ( int i = 0; i <= m_count; ++i )
@@ -1032,6 +1037,18 @@ public:
 			}
 		}
 
+		if ( ImGui::SliderFloat( "hertz", &m_jointHertz, 15.0f, 120.0f, "%.0f" ) )
+		{
+			b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
+		}
+
+		if ( ImGui::SliderFloat( "damping", &m_jointDampingRatio, 0.0f, 100.0f, "%.1f" ) )
+		{
+			b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
+		}
+
+		ImGui::PopItemWidth();
+
 		ImGui::End();
 	}
 
@@ -1045,6 +1062,8 @@ public:
 	b2JointId m_jointIds[m_count + 1];
 	float m_frictionTorque;
 	float m_gravityScale;
+	float m_jointHertz;
+	float m_jointDampingRatio;
 };
 
 static int sampleBridgeIndex = RegisterSample( "Joints", "Bridge", Bridge::Create );
@@ -1075,7 +1094,8 @@ public:
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.density = 20.0f;
-
+			shapeDef.filter.categoryBits = 0x1;
+			shapeDef.filter.maskBits = 0x2;
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 
 			int jointIndex = 0;
@@ -1106,8 +1126,10 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { ( 1.0f + 2.0f * m_count ) * hx + circle.radius - hx, m_count * hx };
-
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			shapeDef.filter.categoryBits = 0x2;
+			shapeDef.filter.maskBits = 0x1;
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 
 			b2Vec2 pivot = { ( 2.0f * m_count ) * hx, m_count * hx };
@@ -2810,7 +2832,7 @@ public:
 		float linkCount = 40;
 		float doorHalfHeight = 1.5f;
 
-		b2Vec2 gearPosition1 = { -4.25f, 10.25f };
+		b2Vec2 gearPosition1 = { -4.25f, 9.75f };
 		b2Vec2 gearPosition2 = gearPosition1 + b2Vec2{ 2.0f, 1.0f };
 		b2Vec2 linkAttachPosition = gearPosition2 + b2Vec2{ gearRadius + 2.0f * toothHalfWidth + toothRadius, 0.0f };
 		b2Vec2 doorPosition = linkAttachPosition - b2Vec2{ 0.0f, 2.0f * linkCount * linkHalfLength + doorHalfHeight };
