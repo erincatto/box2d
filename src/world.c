@@ -763,7 +763,9 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 
 	// Hertz values get reduced for large time steps
 	float contactHertz = b2MinFloat( world->contactHertz, 0.25f * context.inv_h );
-	float jointHertz = b2MinFloat( world->jointHertz, 0.125f * context.inv_h );
+
+	// There is no increase in stiffness beyond this value
+	float jointHertz = b2MinFloat( world->jointHertz, 0.5f * context.inv_h );
 
 	context.contactSoftness = b2MakeSoft( contactHertz, world->contactDampingRatio, context.h );
 	context.staticSoftness = b2MakeSoft( 2.0f * contactHertz, world->contactDampingRatio, context.h );

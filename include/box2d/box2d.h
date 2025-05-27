@@ -151,8 +151,8 @@ B2_API void b2World_SetContactTuning( b2WorldId worldId, float hertz, float damp
 
 /// Adjust joint tuning parameters
 /// @param worldId The world id
-/// @param hertz The contact stiffness (cycles per second)
-/// @param dampingRatio The contact bounciness with 1 being critical damping (non-dimensional)
+/// @param hertz The joint stiffness (cycles per second)
+/// @param dampingRatio The joint bounciness with 1 being critical damping (non-dimensional)
 /// @note Advanced feature
 B2_API void b2World_SetJointTuning( b2WorldId worldId, float hertz, float dampingRatio );
 
@@ -764,6 +764,18 @@ B2_API void b2Joint_SetLocalAnchorB( b2JointId jointId, b2Vec2 localAnchor );
 /// Get the local anchor on bodyB
 B2_API b2Vec2 b2Joint_GetLocalAnchorB( b2JointId jointId );
 
+/// Get the weld joint reference angle in radians (revolute, prismatic, and weld)
+B2_API float b2Joint_GetReferenceAngle( b2JointId jointId );
+
+/// Set the weld joint reference angle in radians, must be in [-pi,pi]. (revolute, prismatic, and weld)
+B2_API void b2Joint_SetReferenceAngle( b2JointId jointId, float angleInRadians );
+
+/// Set the local axis on bodyA (prismatic and wheel)
+B2_API void b2Joint_SetLocalAxisA( b2JointId jointId, b2Vec2 localAxis );
+
+/// Get the local axis on bodyA (prismatic and wheel)
+B2_API b2Vec2 b2Joint_GetLocalAxisA( b2JointId jointId );
+
 /// Toggle collision between connected bodies
 B2_API void b2Joint_SetCollideConnected( b2JointId jointId, bool shouldCollide );
 
@@ -1147,12 +1159,6 @@ B2_API float b2RevoluteJoint_GetMaxMotorTorque( b2JointId jointId );
 /// Create a weld joint
 /// @see b2WeldJointDef for details
 B2_API b2JointId b2CreateWeldJoint( b2WorldId worldId, const b2WeldJointDef* def );
-
-/// Get the weld joint reference angle in radians
-B2_API float b2WeldJoint_GetReferenceAngle( b2JointId jointId );
-
-/// Set the weld joint reference angle in radians, must be in [-pi,pi].
-B2_API void b2WeldJoint_SetReferenceAngle( b2JointId jointId, float angleInRadians );
 
 /// Set the weld joint linear stiffness in Hertz. 0 is rigid.
 B2_API void b2WeldJoint_SetLinearHertz( b2JointId jointId, float hertz );

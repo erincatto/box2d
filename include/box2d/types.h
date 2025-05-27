@@ -836,6 +836,9 @@ typedef struct b2RevoluteJointDef
 	/// Set this flag to true if the attached bodies should collide
 	bool collideConnected;
 
+	/// todo testing
+	bool stiffSolver;
+
 	/// User data pointer
 	void* userData;
 

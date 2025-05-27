@@ -22,6 +22,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+// todo testing
+#define ITERATIONS 1
+
 // Compare to SDL_CPUPauseInstruction
 #if ( defined( __GNUC__ ) || defined( __clang__ ) ) && ( defined( __i386__ ) || defined( __x86_64__ ) )
 static inline void b2Pause( void )
@@ -1020,17 +1023,21 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 
 			// solve constraints
 			bool useBias = true;
-			b2SolveOverflowJoints( context, useBias );
-			b2SolveOverflowContacts( context, useBias );
 
-			for ( int colorIndex = 0; colorIndex < activeColorCount; ++colorIndex )
+			for ( int j = 0; j < ITERATIONS; ++j )
 			{
-				syncBits = ( graphSyncIndex << 16 ) | iterStageIndex;
-				B2_ASSERT( stages[iterStageIndex].type == b2_stageSolve );
-				b2ExecuteMainStage( stages + iterStageIndex, context, syncBits );
-				iterStageIndex += 1;
+				b2SolveOverflowJoints( context, useBias );
+				b2SolveOverflowContacts( context, useBias );
+
+				for ( int colorIndex = 0; colorIndex < activeColorCount; ++colorIndex )
+				{
+					syncBits = ( graphSyncIndex << 16 ) | iterStageIndex;
+					B2_ASSERT( stages[iterStageIndex].type == b2_stageSolve );
+					b2ExecuteMainStage( stages + iterStageIndex, context, syncBits );
+					iterStageIndex += 1;
+				}
+				graphSyncIndex += 1;
 			}
-			graphSyncIndex += 1;
 
 			profile->solveImpulses += b2GetMillisecondsAndReset( &ticks );
 
@@ -1045,24 +1052,27 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 
 			// relax constraints
 			useBias = false;
-			b2SolveOverflowJoints( context, useBias );
-			b2SolveOverflowContacts( context, useBias );
-
-			for ( int colorIndex = 0; colorIndex < activeColorCount; ++colorIndex )
+			for ( int j = 0; j < ITERATIONS; ++j )
 			{
-				syncBits = ( graphSyncIndex << 16 ) | iterStageIndex;
-				B2_ASSERT( stages[iterStageIndex].type == b2_stageRelax );
-				b2ExecuteMainStage( stages + iterStageIndex, context, syncBits );
-				iterStageIndex += 1;
+				b2SolveOverflowJoints( context, useBias );
+				b2SolveOverflowContacts( context, useBias );
+
+				for ( int colorIndex = 0; colorIndex < activeColorCount; ++colorIndex )
+				{
+					syncBits = ( graphSyncIndex << 16 ) | iterStageIndex;
+					B2_ASSERT( stages[iterStageIndex].type == b2_stageRelax );
+					b2ExecuteMainStage( stages + iterStageIndex, context, syncBits );
+					iterStageIndex += 1;
+				}
+				graphSyncIndex += 1;
 			}
-			graphSyncIndex += 1;
 
 			profile->relaxImpulses += b2GetMillisecondsAndReset( &ticks );
 		}
 
 		// advance the stage according to the sub-stepping tasks just completed
 		// integrate velocities / warm start / solve / integrate positions / relax
-		stageIndex += 1 + activeColorCount + activeColorCount + 1 + activeColorCount;
+		stageIndex += 1 + activeColorCount + ITERATIONS * activeColorCount + 1 + activeColorCount;
 
 		// Restitution
 		{
@@ -1442,11 +1452,11 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// b2_stageWarmStart
 		stageCount += activeColorCount;
 		// b2_stageSolve
-		stageCount += activeColorCount;
+		stageCount += ITERATIONS * activeColorCount;
 		// b2_stageIntegratePositions
 		stageCount += 1;
 		// b2_stageRelax
-		stageCount += activeColorCount;
+		stageCount += ITERATIONS * activeColorCount;
 		// b2_stageRestitution
 		stageCount += activeColorCount;
 		// b2_stageStoreImpulses
@@ -1603,14 +1613,17 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		}
 
 		// Solve graph
-		for ( int i = 0; i < activeColorCount; ++i )
+		for (int j = 0; j < ITERATIONS; ++j)
 		{
-			stage->type = b2_stageSolve;
-			stage->blocks = graphColorBlocks[i];
-			stage->blockCount = colorJointBlockCounts[i] + colorContactBlockCounts[i];
-			stage->colorIndex = activeColorIndices[i];
-			b2AtomicStoreInt( &stage->completionCount, 0 );
-			stage += 1;
+			for ( int i = 0; i < activeColorCount; ++i )
+			{
+				stage->type = b2_stageSolve;
+				stage->blocks = graphColorBlocks[i];
+				stage->blockCount = colorJointBlockCounts[i] + colorContactBlockCounts[i];
+				stage->colorIndex = activeColorIndices[i];
+				b2AtomicStoreInt( &stage->completionCount, 0 );
+				stage += 1;
+			}
 		}
 
 		// Integrate positions
@@ -1622,14 +1635,17 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stage += 1;
 
 		// Relax constraints
-		for ( int i = 0; i < activeColorCount; ++i )
+		for ( int j = 0; j < ITERATIONS; ++j )
 		{
-			stage->type = b2_stageRelax;
-			stage->blocks = graphColorBlocks[i];
-			stage->blockCount = colorJointBlockCounts[i] + colorContactBlockCounts[i];
-			stage->colorIndex = activeColorIndices[i];
-			b2AtomicStoreInt( &stage->completionCount, 0 );
-			stage += 1;
+			for ( int i = 0; i < activeColorCount; ++i )
+			{
+				stage->type = b2_stageRelax;
+				stage->blocks = graphColorBlocks[i];
+				stage->blockCount = colorJointBlockCounts[i] + colorContactBlockCounts[i];
+				stage->colorIndex = activeColorIndices[i];
+				b2AtomicStoreInt( &stage->completionCount, 0 );
+				stage += 1;
+			}
 		}
 
 		// Restitution

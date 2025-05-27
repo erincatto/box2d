@@ -1932,6 +1932,8 @@ public:
 		}
 
 		m_impulse = 500.0f;
+		m_jointHertz = 60.0f;
+		m_jointDampingRatio = 2.0f;
 	}
 
 	void UpdateGui() override
@@ -1958,6 +1960,16 @@ public:
 		}
 
 		ImGui::SliderFloat( "magnitude", &m_impulse, 0.0f, 1000.0f, "%.0f" );
+
+		if ( ImGui::SliderFloat( "hertz", &m_jointHertz, 15.0f, 120.0f, "%.0f" ) )
+		{
+			b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
+		}
+
+		if ( ImGui::SliderFloat( "damping", &m_jointDampingRatio, 0.0f, 10.0f, "%.1f" ) )
+		{
+			b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
+		}
 
 		ImGui::End();
 	}
@@ -1988,6 +2000,8 @@ public:
 	b2BodyId m_bodyIds[e_count];
 	b2JointId m_jointIds[e_count];
 	float m_impulse;
+	float m_jointHertz;
+	float m_jointDampingRatio;
 };
 
 static int sampleJointSeparation = RegisterSample( "Joints", "Separation", JointSeparation::Create );
@@ -2604,8 +2618,6 @@ public:
 			revoluteDef.bodyIdB = bodyId1;
 			revoluteDef.localAnchorA = baseAnchor1;
 			revoluteDef.localAnchorB = { -2.5f, 0.0f };
-			revoluteDef.enableMotor = false;
-			revoluteDef.maxMotorTorque = 1.0f;
 			revoluteDef.collideConnected = ( i == 0 ) ? true : false;
 
 			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
@@ -2630,8 +2642,6 @@ public:
 				revoluteDef.bodyIdB = bodyId2;
 				revoluteDef.localAnchorA = baseAnchor2;
 				revoluteDef.localAnchorB = { 2.5f, 0.0f };
-				revoluteDef.enableMotor = false;
-				revoluteDef.maxMotorTorque = 1.0f;
 				revoluteDef.collideConnected = false;
 
 				b2CreateRevoluteJoint( m_worldId, &revoluteDef );
@@ -2642,8 +2652,6 @@ public:
 			revoluteDef.bodyIdB = bodyId2;
 			revoluteDef.localAnchorA = { 0.0f, 0.0f };
 			revoluteDef.localAnchorB = { 0.0f, 0.0f };
-			revoluteDef.enableMotor = false;
-			revoluteDef.maxMotorTorque = 1.0f;
 			revoluteDef.collideConnected = false;
 
 			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
@@ -2668,8 +2676,6 @@ public:
 		revoluteDef.bodyIdB = baseId1;
 		revoluteDef.localAnchorA = { -2.5f, -0.4f };
 		revoluteDef.localAnchorB = baseAnchor1;
-		revoluteDef.enableMotor = false;
-		revoluteDef.maxMotorTorque = 1.0f;
 		revoluteDef.collideConnected = true;
 		b2CreateRevoluteJoint( m_worldId, &revoluteDef );
 
@@ -3111,12 +3117,11 @@ public:
 			b2Polygon box = b2MakeBox( 0.1f, 1.5f );
 			b2CreatePolygonShape( m_doorId, &shapeDef, &box );
 
-			b2Vec2 pivot = { 0.0f, 0.0f };
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.bodyIdA = groundId;
 			jointDef.bodyIdB = m_doorId;
-			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
-			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+			jointDef.localAnchorA = {0.0f, 0.0f};
+			jointDef.localAnchorB = {0.0f, -1.5f};
 			jointDef.targetAngle = 0.0f;
 			jointDef.enableSpring = true;
 			jointDef.hertz = 1.0f;
@@ -3134,6 +3139,10 @@ public:
 
 		m_impulse = 50000.0f;
 		m_translationError = 0.0f;
+		m_jointHertz = 120.0f;
+		m_jointDampingRatio = 1.0f;
+
+		b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
 	}
 
 	void UpdateGui() override
@@ -3156,6 +3165,16 @@ public:
 		if ( ImGui::Checkbox( "limit", &m_enableLimit ) )
 		{
 			b2RevoluteJoint_EnableLimit( m_jointId, m_enableLimit );
+		}
+
+		if ( ImGui::SliderFloat( "hertz", &m_jointHertz, 15.0f, 480.0f, "%.0f" ) )
+		{
+			b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
+		}
+
+		if ( ImGui::SliderFloat( "damping", &m_jointDampingRatio, 0.0f, 10.0f, "%.1f" ) )
+		{
+			b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
 		}
 
 		ImGui::End();
@@ -3185,6 +3204,8 @@ public:
 	b2JointId m_jointId;
 	float m_impulse;
 	float m_translationError;
+	float m_jointHertz;
+	float m_jointDampingRatio;
 	bool m_enableLimit;
 };
 
