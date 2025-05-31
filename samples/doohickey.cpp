@@ -30,6 +30,8 @@ void Doohickey::Spawn( b2WorldId worldId, b2Vec2 position, float scale )
 	bodyDef.type = b2_dynamicBody;
 
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	shapeDef.material.rollingResistance = 0.1f;
+
 	b2Circle circle = { { 0.0f, 0.0f }, 1.0f * scale };
 	b2Capsule capsule = { { -3.5f * scale, 0.0f }, { 3.5f * scale, 0.0f }, 0.15f * scale };
 

@@ -645,6 +645,18 @@ B2_INLINE float b2PlaneSeparation( b2Plane plane, b2Vec2 point )
 	return b2Dot( plane.normal, point ) - plane.offset;
 }
 
+/// One-dimensional mass-spring-damper simulation. Returns the new velocity given the position and time step.
+/// You can then compute the new position using:
+/// position += timeStep * newVelocity
+/// This drives towards a zero position. By using implicit integration we get a stable solution
+/// that doesn't require transcendental functions.
+B2_INLINE float b2SpringDamper( float hertz, float dampingRatio, float position, float velocity, float timeStep )
+{
+	float omega = 2.0f * B2_PI * hertz;
+	float omegaH = omega * timeStep;
+	return ( velocity - omega * omegaH * position ) / ( 1.0f + 2.0f * dampingRatio * omegaH + omegaH * omegaH );
+}
+
 /// Box2D bases all length units on meters, but you may need different units for your game.
 /// You can set this value to use different units. This should be done at application startup
 /// and only modified once. Default value is 1.

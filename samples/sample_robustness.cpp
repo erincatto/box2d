@@ -208,7 +208,7 @@ public:
 		m_baseCount = 4;
 		m_overlap = 0.25f;
 		m_extent = 0.5f;
-		m_pushout = 3.0f;
+		m_pushOut = 3.0f;
 		m_hertz = 30.0f;
 		m_dampingRatio = 10.0f;
 
@@ -237,7 +237,7 @@ public:
 			b2DestroyBody( m_bodyIds[i] );
 		}
 
-		b2World_SetContactTuning( m_worldId, m_hertz, m_dampingRatio, m_pushout );
+		b2World_SetContactTuning( m_worldId, m_hertz, m_dampingRatio, m_pushOut );
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
@@ -286,7 +286,7 @@ public:
 		changed = changed || ImGui::SliderFloat( "Extent", &m_extent, 0.1f, 1.0f, "%.1f" );
 		changed = changed || ImGui::SliderInt( "Base Count", &m_baseCount, 1, 10 );
 		changed = changed || ImGui::SliderFloat( "Overlap", &m_overlap, 0.0f, 1.0f, "%.2f" );
-		changed = changed || ImGui::SliderFloat( "Pushout", &m_pushout, 0.0f, 10.0f, "%.1f" );
+		changed = changed || ImGui::SliderFloat( "Pushout", &m_pushOut, 0.0f, 10.0f, "%.1f" );
 		changed = changed || ImGui::SliderFloat( "Hertz", &m_hertz, 0.0f, 120.0f, "%.f" );
 		changed = changed || ImGui::SliderFloat( "Damping Ratio", &m_dampingRatio, 0.0f, 20.0f, "%.1f" );
 		changed = changed || ImGui::Button( "Reset Scene" );
@@ -310,7 +310,7 @@ public:
 	int32_t m_baseCount;
 	float m_overlap;
 	float m_extent;
-	float m_pushout;
+	float m_pushOut;
 	float m_hertz;
 	float m_dampingRatio;
 };
@@ -379,3 +379,61 @@ public:
 };
 
 static int sampleTinyPyramid = RegisterSample( "Robustness", "Tiny Pyramid", TinyPyramid::Create );
+
+class JointBounce : public Sample
+{
+public:
+	explicit JointBounce( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 5.0f };
+			m_context->camera.m_zoom = 20.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		{
+			b2Vec2 base = { 0.0f, 20.0f };
+
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+
+			b2Circle circle = {};
+			circle.radius = 0.5f;
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+			bodyDef.position = b2Vec2{ 0.0f, 0.5f } + base;
+			b2BodyId bodyId1 = b2CreateBody( m_worldId, &bodyDef );
+			b2CreateCircleShape( bodyId1, &shapeDef, &circle );
+
+			bodyDef.position = b2Vec2{ 0.25f, 0.75f } + base;
+			bodyDef.rotation = b2MakeRot( -0.5f * B2_PI );
+			b2BodyId bodyId2 = b2CreateBody( m_worldId, &bodyDef );
+			b2CreateCircleShape( bodyId2, &shapeDef, &circle );
+
+			b2WeldJointDef weldDef = b2DefaultWeldJointDef();
+
+			weldDef.bodyIdA = bodyId1;
+			weldDef.bodyIdB = bodyId2;
+			weldDef.localAnchorA = { 0.0f, 0.5f };
+			weldDef.localAnchorA = { 0.0f, -0.5f };
+			b2CreateWeldJoint( m_worldId, &weldDef );
+		}
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new JointBounce( context );
+	}
+};
+
+static int sampleJointBounce = RegisterSample( "Robustness", "Joint Bounce", JointBounce::Create );

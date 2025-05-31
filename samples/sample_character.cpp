@@ -346,13 +346,8 @@ public:
 		{
 			float pogoCurrentLength = castResult.fraction * rayLength;
 
-			float zeta = m_pogoDampingRatio;
-			float hertz = m_pogoHertz;
-			float omega = 2.0f * B2_PI * hertz;
-			float omegaH = omega * timeStep;
-
-			m_pogoVelocity = ( m_pogoVelocity - omega * omegaH * ( pogoCurrentLength - pogoRestLength ) ) /
-							 ( 1.0f + 2.0f * zeta * omegaH + omegaH * omegaH );
+			float offset = pogoCurrentLength - pogoRestLength;
+			m_pogoVelocity = b2SpringDamper( m_pogoHertz, m_pogoDampingRatio, offset, m_pogoVelocity, timeStep );
 
 			b2Vec2 delta = castResult.fraction * translation;
 			m_draw->DrawSegment( origin, origin + delta, b2_colorGray );
@@ -394,15 +389,13 @@ public:
 			mover.radius = m_capsule.radius;
 
 			b2World_CollideMover( m_worldId, &mover, collideFilter, PlaneResultFcn, this );
-			b2PlaneSolverResult result = b2SolvePlanes( target, m_planes, m_planeCount );
+			b2PlaneSolverResult result = b2SolvePlanes( target - m_transform.p, m_planes, m_planeCount );
 
 			m_totalIterations += result.iterationCount;
 
-			b2Vec2 moverTranslation = result.position - m_transform.p;
+			float fraction = b2World_CastMover( m_worldId, &mover, result.translation, castFilter );
 
-			float fraction = b2World_CastMover( m_worldId, &mover, moverTranslation, castFilter );
-
-			b2Vec2 delta = fraction * moverTranslation;
+			b2Vec2 delta = fraction * result.translation;
 			m_transform.p += delta;
 
 			if ( b2LengthSquared( delta ) < tolerance * tolerance )
@@ -509,7 +502,7 @@ public:
 		Sample::Keyboard( key );
 	}
 
-	void Step( ) override
+	void Step() override
 	{
 		bool pause = false;
 		if ( m_context->pause )
@@ -535,7 +528,7 @@ public:
 
 		m_time += timeStep;
 
-		Sample::Step( );
+		Sample::Step();
 
 		if ( pause == false )
 		{

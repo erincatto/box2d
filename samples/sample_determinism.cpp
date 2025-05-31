@@ -2,15 +2,9 @@
 // SPDX-License-Identifier: MIT
 
 #include "determinism.h"
-#include "draw.h"
 #include "sample.h"
 
-#include "box2d/box2d.h"
 #include "box2d/math_functions.h"
-
-#include <GLFW/glfw3.h>
-#include <imgui.h>
-#include <stdio.h>
 
 // This sample provides a visual representation of the cross platform determinism unit test.
 // The scenario is designed to produce a chaotic result engaging:
@@ -46,7 +40,7 @@ public:
 	{
 		Sample::Step();
 
-		if (m_done == false)
+		if (m_context->pause == false && m_done == false)
 		{
 			m_done = UpdateFallingHinges( m_worldId, &m_data );
 		}

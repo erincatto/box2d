@@ -876,6 +876,98 @@ b2Vec2 b2Joint_GetLocalAnchorB( b2JointId jointId )
 	return jointSim->localOriginAnchorB;
 }
 
+void b2Joint_SetReferenceAngle( b2JointId jointId, float angleInRadians )
+{
+	B2_ASSERT( b2IsValidFloat( angleInRadians ) );
+
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* jointSim = b2GetJointSim( world, joint );
+
+	switch ( joint->type )
+	{
+		case b2_prismaticJoint:
+			jointSim->prismaticJoint.referenceAngle = angleInRadians;
+			break;
+
+		case b2_revoluteJoint:
+			jointSim->revoluteJoint.referenceAngle = angleInRadians;
+			break;
+
+		case b2_weldJoint:
+			jointSim->weldJoint.referenceAngle = angleInRadians;
+			break;
+
+		default:
+			break;
+	}
+}
+
+float b2Joint_GetReferenceAngle( b2JointId jointId )
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* jointSim = b2GetJointSim( world, joint );
+
+	switch ( joint->type )
+	{
+		case b2_prismaticJoint:
+			return jointSim->prismaticJoint.referenceAngle;
+
+		case b2_revoluteJoint:
+			return jointSim->revoluteJoint.referenceAngle;
+
+		case b2_weldJoint:
+			return jointSim->weldJoint.referenceAngle;
+
+		default:
+			return 0.0f;
+	}
+}
+
+void b2Joint_SetLocalAxisA( b2JointId jointId, b2Vec2 localAxis )
+{
+	B2_ASSERT( b2IsValidVec2( localAxis ) );
+	B2_ASSERT( b2IsNormalized( localAxis ) );
+
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* jointSim = b2GetJointSim( world, joint );
+
+	switch ( joint->type )
+	{
+		case b2_prismaticJoint:
+			jointSim->prismaticJoint.localAxisA = localAxis;
+			break;
+
+		case b2_wheelJoint:
+			jointSim->wheelJoint.localAxisA = localAxis;
+			break;
+
+		default:
+			break;
+	}
+}
+
+b2Vec2 b2Joint_GetLocalAxisA( b2JointId jointId )
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* jointSim = b2GetJointSim( world, joint );
+
+	switch ( joint->type )
+	{
+		case b2_prismaticJoint:
+			return jointSim->prismaticJoint.localAxisA;
+
+		case b2_wheelJoint:
+			return jointSim->wheelJoint.localAxisA;
+
+		default:
+			return b2Vec2_zero;
+	}
+}
+
 void b2Joint_SetCollideConnected( b2JointId jointId, bool shouldCollide )
 {
 	b2World* world = b2GetWorldLocked( jointId.world0 );
