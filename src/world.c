@@ -763,9 +763,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 
 	// Hertz values get reduced for large time steps
 	float contactHertz = b2MinFloat( world->contactHertz, 0.25f * context.inv_h );
-
-	// There is no increase in stiffness beyond this value
-	float jointHertz = b2MinFloat( world->jointHertz, 0.5f * context.inv_h );
+	float jointHertz = b2MinFloat( world->jointHertz, 0.25f * context.inv_h );
 
 	context.contactSoftness = b2MakeSoft( contactHertz, world->contactDampingRatio, context.h );
 	context.staticSoftness = b2MakeSoft( 2.0f * contactHertz, world->contactDampingRatio, context.h );
@@ -2516,7 +2514,8 @@ static bool TreeCollideCallback( int proxyId, uint64_t userData, void* context )
 
 	b2PlaneResult result = b2CollideMover( shape, transform, &worldContext->mover );
 
-	if ( result.hit )
+	// todo handle deep overlap
+	if ( result.hit && b2IsNormalized(result.plane.normal) )
 	{
 		b2ShapeId id = { shape->id + 1, world->worldId, shape->generation };
 		return worldContext->fcn( id, &result, worldContext->userContext );

@@ -397,8 +397,8 @@ static void UpdateUI()
 			if ( ImGui::BeginTabItem( "Controls" ) )
 			{
 				ImGui::PushItemWidth( 100.0f );
-				ImGui::SliderInt( "Sub-steps", &s_context.subStepCount, 1, 50 );
-				ImGui::SliderFloat( "Hertz", &s_context.hertz, 5.0f, 120.0f, "%.0f hz" );
+				ImGui::SliderInt( "Sub-steps", &s_context.subStepCount, 1, 64 );
+				ImGui::SliderFloat( "Hertz", &s_context.hertz, 5.0f, 480.0f, "%.0f hz" );
 
 				if ( ImGui::SliderInt( "Workers", &s_context.workerCount, 1, maxWorkers ) )
 				{

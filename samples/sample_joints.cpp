@@ -956,6 +956,9 @@ public:
 				jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
 				jointDef.enableMotor = true;
 				jointDef.maxMotorTorque = m_frictionTorque;
+				jointDef.enableSpring = true;
+				jointDef.hertz = 4.0f;
+				jointDef.dampingRatio = 0.7f;
 				m_jointIds[jointIndex++] = b2CreateRevoluteJoint( m_worldId, &jointDef );
 
 				prevBodyId = m_bodyIds[i];
@@ -968,6 +971,9 @@ public:
 			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
 			jointDef.enableMotor = true;
 			jointDef.maxMotorTorque = m_frictionTorque;
+			jointDef.enableSpring = true;
+			jointDef.hertz = 4.0f;
+			jointDef.dampingRatio = 0.7f;
 			m_jointIds[jointIndex++] = b2CreateRevoluteJoint( m_worldId, &jointDef );
 
 			assert( jointIndex == m_count + 1 );
@@ -1004,8 +1010,8 @@ public:
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		}
 
-		m_jointHertz = 60.0f;
-		m_jointDampingRatio = 0.0f;
+		m_jointHertz = 240.0f;
+		m_jointDampingRatio = 2.0f;
 
 		b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
 	}
@@ -1037,12 +1043,12 @@ public:
 			}
 		}
 
-		if ( ImGui::SliderFloat( "hertz", &m_jointHertz, 15.0f, 120.0f, "%.0f" ) )
+		if ( ImGui::SliderFloat( "hertz", &m_jointHertz, 15.0f, 240.0f, "%.0f" ) )
 		{
 			b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
 		}
 
-		if ( ImGui::SliderFloat( "damping", &m_jointDampingRatio, 0.0f, 100.0f, "%.1f" ) )
+		if ( ImGui::SliderFloat( "damping", &m_jointDampingRatio, 0.0f, 10.0f, "%.1f" ) )
 		{
 			b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
 		}
@@ -1114,8 +1120,10 @@ public:
 				jointDef.bodyIdB = bodyId;
 				jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
 				jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
-				// jointDef.enableMotor = true;
+				jointDef.enableMotor = true;
 				jointDef.maxMotorTorque = m_frictionTorque;
+				jointDef.enableSpring = i > 0;
+				jointDef.hertz = 4.0f;
 				m_jointIds[jointIndex++] = b2CreateRevoluteJoint( m_worldId, &jointDef );
 
 				prevBodyId = bodyId;
@@ -1139,6 +1147,8 @@ public:
 			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
 			jointDef.enableMotor = true;
 			jointDef.maxMotorTorque = m_frictionTorque;
+			jointDef.enableSpring = true;
+			jointDef.hertz = 4.0f;
 			m_jointIds[jointIndex++] = b2CreateRevoluteJoint( m_worldId, &jointDef );
 			assert( jointIndex == m_count + 1 );
 		}
@@ -2440,13 +2450,15 @@ public:
 		m_human = {};
 
 		Spawn();
+
+		//b2World_SetJointTuning( m_worldId, 120.0f, 1.0f );
 	}
 
 	void Spawn()
 	{
 		CreateHuman( &m_human, m_worldId, { 0.0f, 25.0f }, 1.0f, m_jointFrictionTorque, m_jointHertz, m_jointDampingRatio, 1,
 					 nullptr, false );
-		Human_ApplyRandomAngularImpulse( &m_human, 10.0f );
+		//Human_ApplyRandomAngularImpulse( &m_human, 10.0f );
 	}
 
 	void UpdateGui() override
@@ -3161,7 +3173,7 @@ public:
 
 		m_impulse = 50000.0f;
 		m_translationError = 0.0f;
-		m_jointHertz = 120.0f;
+		m_jointHertz = 240.0f;
 		m_jointDampingRatio = 1.0f;
 
 		b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );

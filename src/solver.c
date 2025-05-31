@@ -24,6 +24,7 @@
 
 // todo testing
 #define ITERATIONS 1
+#define RELAX_ITERATIONS 1
 
 // Compare to SDL_CPUPauseInstruction
 #if ( defined( __GNUC__ ) || defined( __clang__ ) ) && ( defined( __i386__ ) || defined( __x86_64__ ) )
@@ -1052,7 +1053,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 
 			// relax constraints
 			useBias = false;
-			for ( int j = 0; j < ITERATIONS; ++j )
+			for ( int j = 0; j < RELAX_ITERATIONS; ++j )
 			{
 				b2SolveOverflowJoints( context, useBias );
 				b2SolveOverflowContacts( context, useBias );
@@ -1072,7 +1073,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 
 		// advance the stage according to the sub-stepping tasks just completed
 		// integrate velocities / warm start / solve / integrate positions / relax
-		stageIndex += 1 + activeColorCount + ITERATIONS * activeColorCount + 1 + activeColorCount;
+		stageIndex += 1 + activeColorCount + ITERATIONS * activeColorCount + 1 + RELAX_ITERATIONS * activeColorCount;
 
 		// Restitution
 		{
@@ -1456,7 +1457,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// b2_stageIntegratePositions
 		stageCount += 1;
 		// b2_stageRelax
-		stageCount += ITERATIONS * activeColorCount;
+		stageCount += RELAX_ITERATIONS * activeColorCount;
 		// b2_stageRestitution
 		stageCount += activeColorCount;
 		// b2_stageStoreImpulses
@@ -1635,7 +1636,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stage += 1;
 
 		// Relax constraints
-		for ( int j = 0; j < ITERATIONS; ++j )
+		for ( int j = 0; j < RELAX_ITERATIONS; ++j )
 		{
 			for ( int i = 0; i < activeColorCount; ++i )
 			{
