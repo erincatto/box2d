@@ -194,7 +194,6 @@ typedef struct b2RevoluteJoint
 	bool enableSpring;
 	bool enableMotor;
 	bool enableLimit;
-	bool stiffSolver;
 } b2RevoluteJoint;
 
 typedef struct b2WeldJoint

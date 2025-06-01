@@ -762,12 +762,14 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	world->inv_h = context.inv_h;
 
 	// Hertz values get reduced for large time steps
-	float contactHertz = b2MinFloat( world->contactHertz, 0.25f * context.inv_h );
-	float jointHertz = b2MinFloat( world->jointHertz, 0.25f * context.inv_h );
+	float contactHertz = b2MinFloat( world->contactHertz, 0.125f * context.inv_h );
+	float jointHertz = b2MinFloat( world->jointHertz, 0.125f * context.inv_h );
 
 	context.contactSoftness = b2MakeSoft( contactHertz, world->contactDampingRatio, context.h );
 	context.staticSoftness = b2MakeSoft( 2.0f * contactHertz, world->contactDampingRatio, context.h );
 	context.jointSoftness = b2MakeSoft( jointHertz, world->jointDampingRatio, context.h );
+
+	world->contactSpeed = world->maxContactPushSpeed / context.staticSoftness.massScale;
 
 	context.restitutionThreshold = world->restitutionThreshold;
 	context.maxLinearVelocity = world->maxLinearSpeed;
@@ -1419,9 +1421,9 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 					else if ( draw->drawContactImpulses )
 					{
 						b2Vec2 p1 = point->point;
-						b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->normalImpulse, normal );
+						b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->totalNormalImpulse, normal );
 						draw->DrawSegmentFcn( p1, p2, impulseColor, draw->context );
-						snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.2f", 1000.0f * point->normalImpulse );
+						snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.2f", 1000.0f * point->totalNormalImpulse );
 						draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 					}
 

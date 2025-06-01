@@ -2451,7 +2451,8 @@ public:
 
 		Spawn();
 
-		//b2World_SetJointTuning( m_worldId, 120.0f, 1.0f );
+		b2World_SetContactTuning( m_worldId, 240.0f, 0.0f, 2.0f );
+		b2World_SetJointTuning( m_worldId, 60.0f, 0.0f );
 	}
 
 	void Spawn()
@@ -3311,3 +3312,4 @@ public:
 };
 
 static int sampleScaleRagdoll = RegisterSample( "Joints", "Scale Ragdoll", ScaleRagdoll::Create );
+

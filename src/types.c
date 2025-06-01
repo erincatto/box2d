@@ -14,7 +14,7 @@ b2WorldDef b2DefaultWorldDef( void )
 	def.hitEventThreshold = 1.0f * b2_lengthUnitsPerMeter;
 	def.restitutionThreshold = 1.0f * b2_lengthUnitsPerMeter;
 	def.maxContactPushSpeed = 3.0f * b2_lengthUnitsPerMeter;
-	def.contactHertz = 30.0f;
+	def.contactHertz = 240.0f;
 	def.contactDampingRatio = 10.0f;
 	def.jointHertz = 240.0f;
 	def.jointDampingRatio = 1.0f;

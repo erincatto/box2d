@@ -830,14 +830,14 @@ typedef struct b2RevoluteJointDef
 	/// The desired motor speed in radians per second
 	float motorSpeed;
 
+	/// The constraint stiffness in hertz
+	float constraintHertz;
+
 	/// Scale the debug draw
 	float drawSize;
 
 	/// Set this flag to true if the attached bodies should collide
 	bool collideConnected;
-
-	/// todo testing
-	bool stiffSolver;
 
 	/// User data pointer
 	void* userData;

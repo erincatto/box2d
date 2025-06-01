@@ -1460,7 +1460,8 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 
 	float warmStartScale = world->enableWarmStarting ? 1.0f : 0.0f;
 
-	warmStartScale = 0.0f;
+	// todo_erin testing
+	//warmStartScale = 0.0f;
 
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
@@ -1700,7 +1701,8 @@ void b2WarmStartContactsTask( int startIndex, int endIndex, b2StepContext* conte
 	b2ContactConstraintSIMD* constraints = context->graph->colors[colorIndex].simdConstraints;
 
 	// todo_erin testing
-	//b2FloatW ease = b2SplatW(1.0f * context->h);
+	//b2FloatW ease = b2SplatW(0.1f * context->h);
+	//b2FloatW ease = b2SplatW(0.9f);
 	//b2FloatW flipEase = b2SubW( b2SplatW( 1.0f ), ease );
 
 	for ( int i = startIndex; i < endIndex; ++i )
@@ -1714,10 +1716,10 @@ void b2WarmStartContactsTask( int startIndex, int endIndex, b2StepContext* conte
 		//c->normalImpulse2 = b2AddW( b2MulW( flipEase, c->previousNormalImpulse2 ), b2MulW( ease, c->normalImpulse2 ) );
 		//c->tangentImpulse1 = b2AddW( b2MulW( flipEase, c->previousTangentImpulse1 ), b2MulW( ease, c->tangentImpulse1 ) );
 		//c->tangentImpulse2 = b2AddW( b2MulW( flipEase, c->previousTangentImpulse2 ), b2MulW( ease, c->tangentImpulse2 ) );
-		c->previousNormalImpulse1 = c->normalImpulse1;
-		c->previousNormalImpulse2 = c->normalImpulse2;
-		c->previousTangentImpulse1 = c->tangentImpulse1;
-		c->previousTangentImpulse2 = c->tangentImpulse2;
+		//c->previousNormalImpulse1 = c->normalImpulse1;
+		//c->previousNormalImpulse2 = c->normalImpulse2;
+		//c->previousTangentImpulse1 = c->tangentImpulse1;
+		//c->previousTangentImpulse2 = c->tangentImpulse2;
 
 		b2FloatW tangentX = c->normal.Y;
 		b2FloatW tangentY = b2SubW( b2ZeroW(), c->normal.X );
@@ -1771,7 +1773,7 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 	b2BodyState* states = context->states;
 	b2ContactConstraintSIMD* constraints = context->graph->colors[colorIndex].simdConstraints;
 	b2FloatW inv_h = b2SplatW( context->inv_h );
-	b2FloatW minBiasVel = b2SplatW( -context->world->maxContactPushSpeed );
+	b2FloatW minBiasVel = b2SplatW( -context->world->contactSpeed );
 	b2FloatW oneW = b2SplatW( 1.0f );
 
 	for ( int i = startIndex; i < endIndex; ++i )

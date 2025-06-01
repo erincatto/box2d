@@ -771,16 +771,13 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 			break;
 
 		case b2_stageWarmStart:
-			if ( context->world->enableWarmStarting )
+			if ( blockType == b2_graphContactBlock )
 			{
-				if ( blockType == b2_graphContactBlock )
-				{
-					b2WarmStartContactsTask( startIndex, endIndex, context, stage->colorIndex );
-				}
-				else if ( blockType == b2_graphJointBlock )
-				{
-					b2WarmStartJointsTask( startIndex, endIndex, context, stage->colorIndex );
-				}
+				b2WarmStartContactsTask( startIndex, endIndex, context, stage->colorIndex );
+			}
+			else if ( blockType == b2_graphJointBlock )
+			{
+				b2WarmStartJointsTask( startIndex, endIndex, context, stage->colorIndex );
 			}
 			break;
 

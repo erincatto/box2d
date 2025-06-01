@@ -248,7 +248,7 @@ void b2PrepareRevoluteJoint( b2JointSim* base, b2StepContext* context )
 
 	joint->springSoftness = b2MakeSoft( joint->hertz, joint->dampingRatio, context->h );
 
-	if ( context->enableWarmStarting == false )
+	if ( context->enableWarmStarting == false || k > 0.0f )
 	{
 		joint->linearImpulse = b2Vec2_zero;
 		joint->springImpulse = 0.0f;
@@ -287,9 +287,9 @@ void b2WarmStartRevoluteJoint( b2JointSim* base, b2StepContext* context )
 	b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->anchorA );
 	b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->anchorB );
 
-#if 1
+#if 0
 	// todo_erin testing
-	float hertz = 1.0f;
+	float hertz = 0.01f;
 	float zeta = 0.7f;
 	float dt = context->h;
 
@@ -309,6 +309,20 @@ void b2WarmStartRevoluteJoint( b2JointSim* base, b2StepContext* context )
 												  joint->upperImpulseVelocity, dt );
 	joint->upperImpulse = joint->previousUpperImpulse + dt * joint->upperImpulseVelocity;
 	joint->previousUpperImpulse = joint->upperImpulse;
+#elif 0
+	float easing = 0.01f * context->dt;
+	joint->linearImpulse = b2Lerp( joint->previousLinearImpulse, joint->linearImpulse, easing );
+	joint->lowerImpulse = ( 1.0f - easing ) * joint->previousLowerImpulse + easing * joint->lowerImpulse;
+	joint->upperImpulse = ( 1.0f - easing ) * joint->previousUpperImpulse + easing * joint->upperImpulse;
+	joint->previousLinearImpulse = joint->linearImpulse;
+	joint->previousLowerImpulse = joint->lowerImpulse;
+	joint->previousUpperImpulse = joint->upperImpulse;
+#elif 0
+	joint->linearImpulse = b2Vec2_zero;
+	joint->lowerImpulse = 0.0f;
+	joint->upperImpulse = 0.0f;
+	joint->motorImpulse = 0.0f;
+	joint->springImpulse = 0.0f;
 #endif
 
 	float axialImpulse = joint->springImpulse + joint->motorImpulse + joint->lowerImpulse - joint->upperImpulse;
