@@ -573,7 +573,6 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 			{
 				mp2->normalImpulse = mp1->normalImpulse;
 				mp2->tangentImpulse = mp1->tangentImpulse;
-
 				mp2->persisted = true;
 
 				// clear old impulse

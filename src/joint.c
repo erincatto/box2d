@@ -1342,7 +1342,7 @@ void b2Joint_SetConstraintTuning(b2JointId jointId, float hertz, float dampingRa
 
 void b2PrepareJoint( b2JointSim* joint, b2StepContext* context )
 {
-	float hertz = b2MinFloat( joint->constraintHertz, 0.5f * context->inv_h );
+	float hertz = b2MinFloat( joint->constraintHertz, 0.25f * context->inv_h );
 	joint->constraintSoftness = b2MakeSoft( hertz, joint->constraintDampingRatio, context->h );
 
 	switch ( joint->type )
