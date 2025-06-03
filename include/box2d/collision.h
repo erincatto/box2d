@@ -518,10 +518,6 @@ typedef struct b2ManifoldPoint
 	/// The friction impulse
 	float tangentImpulse;
 
-	/// todo_erin testing
-	float previousNormalImpulse;
-	float previousTangentImpulse;
-
 	/// The total normal impulse applied across sub-stepping and restitution. This is important
 	/// to identify speculative contact points that had an interaction in the time step.
 	float totalNormalImpulse;

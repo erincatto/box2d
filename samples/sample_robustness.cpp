@@ -471,7 +471,6 @@ public:
 
 		m_jointHertz = 60.0f;
 		m_jointDampingRatio = 1.0f;
-		b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
 
 		m_chassisId = {};
 		m_wheelId1 = {};
@@ -529,14 +528,16 @@ public:
 		jointDef.localAnchorA = { -0.4f, -0.15f };
 		jointDef.localAnchorB = { 0.0f, 0.0f };
 
-		b2CreateRevoluteJoint( m_worldId, &jointDef );
+		m_jointId1 = b2CreateRevoluteJoint( m_worldId, &jointDef );
+		b2Joint_SetConstraintTuning( m_jointId1, m_jointHertz, m_jointDampingRatio );
 
 		jointDef.bodyIdA = m_chassisId;
 		jointDef.bodyIdB = m_wheelId2;
 		jointDef.localAnchorA = { 0.4f, -0.15f };
 		jointDef.localAnchorB = { 0.0f, 0.0f };
 
-		b2CreateRevoluteJoint( m_worldId, &jointDef );
+		m_jointId2 = b2CreateRevoluteJoint( m_worldId, &jointDef );
+		b2Joint_SetConstraintTuning( m_jointId2, m_jointHertz, m_jointDampingRatio );
 	}
 
 	void UpdateGui() override
@@ -573,7 +574,8 @@ public:
 
 		if ( changed )
 		{
-			b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
+			b2Joint_SetConstraintTuning( m_jointId1, m_jointHertz, m_jointDampingRatio );
+			b2Joint_SetConstraintTuning( m_jointId2, m_jointHertz, m_jointDampingRatio );
 			CreateScene();
 		}
 
@@ -589,6 +591,8 @@ public:
 	b2BodyId m_chassisId;
 	b2BodyId m_wheelId1;
 	b2BodyId m_wheelId2;
+	b2JointId m_jointId1;
+	b2JointId m_jointId2;
 
 	float m_contactHertz;
 	float m_contactDampingRatio;

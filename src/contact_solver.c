@@ -1557,9 +1557,6 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 					( (float*)&constraint->tangentImpulse1 )[j] = warmStartScale * mp->tangentImpulse;
 					( (float*)&constraint->totalNormalImpulse1 )[j] = 0.0f;
 
-					( (float*)&constraint->previousNormalImpulse1 )[j] = warmStartScale * mp->previousNormalImpulse;
-					( (float*)&constraint->previousTangentImpulse1 )[j] = warmStartScale * mp->previousTangentImpulse;
-
 					float rnA = b2Cross( rA, normal );
 					float rnB = b2Cross( rB, normal );
 					float kNormal = mA + mB + iA * rnA * rnA + iB * rnB * rnB;
@@ -1596,9 +1593,6 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 					( (float*)&constraint->normalImpulse2 )[j] = warmStartScale * mp->normalImpulse;
 					( (float*)&constraint->tangentImpulse2 )[j] = warmStartScale * mp->tangentImpulse;
 					( (float*)&constraint->totalNormalImpulse2 )[j] = 0.0f;
-
-					( (float*)&constraint->previousNormalImpulse2 )[j] = warmStartScale * mp->previousNormalImpulse;
-					( (float*)&constraint->previousTangentImpulse2 )[j] = warmStartScale * mp->previousTangentImpulse;
 
 					float rnA = b2Cross( rA, normal );
 					float rnB = b2Cross( rB, normal );
@@ -2137,11 +2131,6 @@ void b2StoreImpulsesTask( int startIndex, int endIndex, b2StepContext* context )
 		const float* normalVelocity1 = (float*)&c->relativeVelocity1;
 		const float* normalVelocity2 = (float*)&c->relativeVelocity2;
 
-		const float* previousNormalImpulse1 = (float*)&c->previousNormalImpulse1;
-		const float* previousNormalImpulse2 = (float*)&c->previousNormalImpulse2;
-		const float* previousTangentImpulse1 = (float*)&c->previousTangentImpulse1;
-		const float* previousTangentImpulse2 = (float*)&c->previousTangentImpulse2;
-
 		int baseIndex = B2_SIMD_WIDTH * constraintIndex;
 
 		for ( int laneIndex = 0; laneIndex < B2_SIMD_WIDTH; ++laneIndex )
@@ -2158,11 +2147,6 @@ void b2StoreImpulsesTask( int startIndex, int endIndex, b2StepContext* context )
 			m->points[1].tangentImpulse = tangentImpulse2[laneIndex];
 			m->points[1].totalNormalImpulse = totalNormalImpulse2[laneIndex];
 			m->points[1].normalVelocity = normalVelocity2[laneIndex];
-
-			m->points[0].previousNormalImpulse = previousNormalImpulse1[laneIndex];
-			m->points[0].previousTangentImpulse = previousTangentImpulse1[laneIndex];
-			m->points[1].previousNormalImpulse = previousNormalImpulse2[laneIndex];
-			m->points[1].previousTangentImpulse = previousTangentImpulse2[laneIndex];
 		}
 	}
 

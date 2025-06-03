@@ -194,8 +194,6 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->maxContactPushSpeed = def->maxContactPushSpeed;
 	world->contactHertz = def->contactHertz;
 	world->contactDampingRatio = def->contactDampingRatio;
-	world->jointHertz = def->jointHertz;
-	world->jointDampingRatio = def->jointDampingRatio;
 
 	if ( def->frictionCallback == NULL )
 	{
@@ -763,11 +761,8 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 
 	// Hertz values get reduced for large time steps
 	float contactHertz = b2MinFloat( world->contactHertz, 0.125f * context.inv_h );
-	float jointHertz = b2MinFloat( world->jointHertz, 0.125f * context.inv_h );
-
 	context.contactSoftness = b2MakeSoft( contactHertz, world->contactDampingRatio, context.h );
 	context.staticSoftness = b2MakeSoft( 2.0f * contactHertz, world->contactDampingRatio, context.h );
-	context.jointSoftness = b2MakeSoft( jointHertz, world->jointDampingRatio, context.h );
 
 	world->contactSpeed = world->maxContactPushSpeed / context.staticSoftness.massScale;
 
@@ -1839,19 +1834,6 @@ void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRati
 	world->contactHertz = b2ClampFloat( hertz, 0.0f, FLT_MAX );
 	world->contactDampingRatio = b2ClampFloat( dampingRatio, 0.0f, FLT_MAX );
 	world->maxContactPushSpeed = b2ClampFloat( pushSpeed, 0.0f, FLT_MAX );
-}
-
-void b2World_SetJointTuning( b2WorldId worldId, float hertz, float dampingRatio )
-{
-	b2World* world = b2GetWorldFromId( worldId );
-	B2_ASSERT( world->locked == false );
-	if ( world->locked )
-	{
-		return;
-	}
-
-	world->jointHertz = b2ClampFloat( hertz, 0.0f, FLT_MAX );
-	world->jointDampingRatio = b2ClampFloat( dampingRatio, 0.0f, FLT_MAX );
 }
 
 void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearSpeed )

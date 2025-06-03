@@ -149,13 +149,6 @@ B2_API void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionD
 /// @note Advanced feature
 B2_API void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushSpeed );
 
-/// Adjust joint tuning parameters
-/// @param worldId The world id
-/// @param hertz The joint stiffness (cycles per second)
-/// @param dampingRatio The joint bounciness with 1 being critical damping (non-dimensional)
-/// @note Advanced feature
-B2_API void b2World_SetJointTuning( b2WorldId worldId, float hertz, float dampingRatio );
-
 /// Set the maximum linear speed. Usually in m/s.
 B2_API void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearSpeed );
 
@@ -802,6 +795,15 @@ B2_API float b2Joint_GetLinearSeparation( b2JointId jointId );
 
 /// Get the current angular separation error for this joint. Does not consider admissible movement. Usually in meters.
 B2_API float b2Joint_GetAngularSeparation( b2JointId jointId );
+
+/// Get the joint constraint tuning. Advanced feature.
+B2_API void b2Joint_GetConstraintTuning( b2JointId jointId, float* hertz, float* dampingRatio );
+
+/// Set the joint constraint tuning. Advanced feature.
+/// @param jointId the joint
+/// @param hertz the stiffness in Hertz (cycles per second)
+/// @param dampingRatio the non-dimensional damping ratio (one for critical damping)
+B2_API void b2Joint_SetConstraintTuning( b2JointId jointId, float hertz, float dampingRatio );
 
 /**
  * @defgroup distance_joint Distance Joint

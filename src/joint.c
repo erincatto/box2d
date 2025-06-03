@@ -286,6 +286,9 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 		B2_ASSERT( joint->setIndex == setIndex );
 	}
 
+	jointSim->constraintHertz = B2_JOINT_CONSTRAINT_HERTZ;
+	jointSim->constraintDampingRatio = B2_JOINT_CONSTRAINT_DAMPING_RATIO;
+
 	B2_ASSERT( jointSim->jointId == jointId );
 	B2_ASSERT( jointSim->bodyIdA == bodyIdA );
 	B2_ASSERT( jointSim->bodyIdB == bodyIdB );
@@ -1316,8 +1319,32 @@ float b2Joint_GetAngularSeparation( b2JointId jointId )
 	}
 }
 
+void b2Joint_GetConstraintTuning(b2JointId jointId, float* hertz, float* dampingRatio)
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* base = b2GetJointSim( world, joint );
+	*hertz = base->constraintHertz;
+	*dampingRatio = base->constraintDampingRatio;
+}
+
+void b2Joint_SetConstraintTuning(b2JointId jointId, float hertz, float dampingRatio)
+{
+	B2_ASSERT( b2IsValidFloat( hertz ) && hertz >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( dampingRatio ) && dampingRatio >= 0.0f );
+
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* base = b2GetJointSim( world, joint );
+	base->constraintHertz = hertz;
+	base->constraintDampingRatio = dampingRatio;
+}
+
 void b2PrepareJoint( b2JointSim* joint, b2StepContext* context )
 {
+	float hertz = b2MinFloat( joint->constraintHertz, 0.5f * context->inv_h );
+	joint->constraintSoftness = b2MakeSoft( hertz, joint->constraintDampingRatio, context->h );
+
 	switch ( joint->type )
 	{
 		case b2_distanceJoint:

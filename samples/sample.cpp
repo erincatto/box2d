@@ -333,7 +333,7 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 			mouseDef.bodyIdA = m_groundBodyId;
 			mouseDef.bodyIdB = queryContext.bodyId;
 			mouseDef.target = p;
-			mouseDef.hertz = 15.0f;
+			mouseDef.hertz = 10.0f;
 			mouseDef.dampingRatio = 0.7f;
 			mouseDef.maxForce = 1000.0f * b2Body_GetMass( queryContext.bodyId ) * b2Length(b2World_GetGravity(m_worldId));
 			m_mouseJointId = b2CreateMouseJoint( m_worldId, &mouseDef );

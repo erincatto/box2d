@@ -86,7 +86,6 @@ typedef struct b2StepContext
 
 	int subStepCount;
 
-	b2Softness jointSoftness;
 	b2Softness contactSoftness;
 	b2Softness staticSoftness;
 

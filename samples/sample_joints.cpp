@@ -1009,11 +1009,6 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		}
-
-		m_jointHertz = 240.0f;
-		m_jointDampingRatio = 2.0f;
-
-		b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
 	}
 
 	void UpdateGui() override
@@ -1045,12 +1040,18 @@ public:
 
 		if ( ImGui::SliderFloat( "hertz", &m_jointHertz, 15.0f, 240.0f, "%.0f" ) )
 		{
-			b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
+			for ( int i = 0; i <= m_count; ++i )
+			{
+				b2Joint_SetConstraintTuning( m_jointIds[i], m_jointHertz, m_jointDampingRatio );
+			}
 		}
 
 		if ( ImGui::SliderFloat( "damping", &m_jointDampingRatio, 0.0f, 10.0f, "%.1f" ) )
 		{
-			b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
+			for ( int i = 0; i <= m_count; ++i )
+			{
+				b2Joint_SetConstraintTuning( m_jointIds[i], m_jointHertz, m_jointDampingRatio );
+			}
 		}
 
 		ImGui::PopItemWidth();
@@ -1995,12 +1996,18 @@ public:
 
 		if ( ImGui::SliderFloat( "hertz", &m_jointHertz, 15.0f, 120.0f, "%.0f" ) )
 		{
-			b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
+			for ( int i = 0; i < e_count; ++i )
+			{
+				b2Joint_SetConstraintTuning( m_jointIds[i], m_jointHertz, m_jointDampingRatio );
+			}
 		}
 
 		if ( ImGui::SliderFloat( "damping", &m_jointDampingRatio, 0.0f, 10.0f, "%.1f" ) )
 		{
-			b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
+			for ( int i = 0; i < e_count; ++i )
+			{
+				b2Joint_SetConstraintTuning( m_jointIds[i], m_jointHertz, m_jointDampingRatio );
+			}
 		}
 
 		ImGui::End();
@@ -2452,7 +2459,6 @@ public:
 		Spawn();
 
 		b2World_SetContactTuning( m_worldId, 240.0f, 0.0f, 2.0f );
-		b2World_SetJointTuning( m_worldId, 60.0f, 0.0f );
 	}
 
 	void Spawn()
@@ -3137,6 +3143,10 @@ public:
 		}
 
 		m_enableLimit = true;
+		m_impulse = 50000.0f;
+		m_translationError = 0.0f;
+		m_jointHertz = 240.0f;
+		m_jointDampingRatio = 1.0f;
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -3170,14 +3180,8 @@ public:
 			jointDef.enableLimit = m_enableLimit;
 
 			m_jointId = b2CreateRevoluteJoint( m_worldId, &jointDef );
+			b2Joint_SetConstraintTuning( m_jointId, m_jointHertz, m_jointDampingRatio );
 		}
-
-		m_impulse = 50000.0f;
-		m_translationError = 0.0f;
-		m_jointHertz = 240.0f;
-		m_jointDampingRatio = 1.0f;
-
-		b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
 	}
 
 	void UpdateGui() override
@@ -3204,12 +3208,12 @@ public:
 
 		if ( ImGui::SliderFloat( "hertz", &m_jointHertz, 15.0f, 480.0f, "%.0f" ) )
 		{
-			b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
+			b2Joint_SetConstraintTuning( m_jointId, m_jointHertz, m_jointDampingRatio );
 		}
 
 		if ( ImGui::SliderFloat( "damping", &m_jointDampingRatio, 0.0f, 10.0f, "%.1f" ) )
 		{
-			b2World_SetJointTuning( m_worldId, m_jointHertz, m_jointDampingRatio );
+			b2Joint_SetConstraintTuning( m_jointId, m_jointHertz, m_jointDampingRatio );
 		}
 
 		ImGui::End();

@@ -484,9 +484,9 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 			}
 			else if ( useBias )
 			{
-				bias = context->jointSoftness.biasRate * C;
-				massScale = context->jointSoftness.massScale;
-				impulseScale = context->jointSoftness.impulseScale;
+				bias = base->constraintSoftness.biasRate * C;
+				massScale = base->constraintSoftness.massScale;
+				impulseScale = base->constraintSoftness.impulseScale;
 			}
 
 			float oldImpulse = joint->lowerImpulse;
@@ -522,9 +522,9 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 			}
 			else if ( useBias )
 			{
-				bias = context->jointSoftness.biasRate * C;
-				massScale = context->jointSoftness.massScale;
-				impulseScale = context->jointSoftness.impulseScale;
+				bias = base->constraintSoftness.biasRate * C;
+				massScale = base->constraintSoftness.massScale;
+				impulseScale = base->constraintSoftness.impulseScale;
 			}
 
 			float oldImpulse = joint->upperImpulse;
@@ -567,9 +567,9 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 			C.x = b2Dot( perpA, d );
 			C.y = b2RelativeAngle( stateB->deltaRotation, stateA->deltaRotation ) + joint->deltaAngle;
 
-			bias = b2MulSV( context->jointSoftness.biasRate, C );
-			massScale = context->jointSoftness.massScale;
-			impulseScale = context->jointSoftness.impulseScale;
+			bias = b2MulSV( base->constraintSoftness.biasRate, C );
+			massScale = base->constraintSoftness.massScale;
+			impulseScale = base->constraintSoftness.impulseScale;
 		}
 
 		float k11 = mA + mB + iA * s1 * s1 + iB * s2 * s2;

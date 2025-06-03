@@ -139,7 +139,7 @@ void b2PrepareWeldJoint( b2JointSim* base, b2StepContext* context )
 
 	if ( joint->linearHertz == 0.0f )
 	{
-		joint->linearSoftness = context->jointSoftness;
+		joint->linearSoftness = base->constraintSoftness;
 	}
 	else
 	{
@@ -148,7 +148,7 @@ void b2PrepareWeldJoint( b2JointSim* base, b2StepContext* context )
 
 	if ( joint->angularHertz == 0.0f )
 	{
-		joint->angularSoftness = context->jointSoftness;
+		joint->angularSoftness = base->constraintSoftness;
 	}
 	else
 	{
