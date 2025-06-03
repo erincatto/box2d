@@ -194,8 +194,6 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->maxContactPushSpeed = def->maxContactPushSpeed;
 	world->contactHertz = def->contactHertz;
 	world->contactDampingRatio = def->contactDampingRatio;
-	world->jointHertz = def->jointHertz;
-	world->jointDampingRatio = def->jointDampingRatio;
 
 	if ( def->frictionCallback == NULL )
 	{
@@ -762,12 +760,11 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	world->inv_h = context.inv_h;
 
 	// Hertz values get reduced for large time steps
-	float contactHertz = b2MinFloat( world->contactHertz, 0.25f * context.inv_h );
-	float jointHertz = b2MinFloat( world->jointHertz, 0.125f * context.inv_h );
-
+	float contactHertz = b2MinFloat( world->contactHertz, 0.125f * context.inv_h );
 	context.contactSoftness = b2MakeSoft( contactHertz, world->contactDampingRatio, context.h );
 	context.staticSoftness = b2MakeSoft( 2.0f * contactHertz, world->contactDampingRatio, context.h );
-	context.jointSoftness = b2MakeSoft( jointHertz, world->jointDampingRatio, context.h );
+
+	world->contactSpeed = world->maxContactPushSpeed / context.staticSoftness.massScale;
 
 	context.restitutionThreshold = world->restitutionThreshold;
 	context.maxLinearVelocity = world->maxLinearSpeed;
@@ -1419,9 +1416,9 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 					else if ( draw->drawContactImpulses )
 					{
 						b2Vec2 p1 = point->point;
-						b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->normalImpulse, normal );
+						b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->totalNormalImpulse, normal );
 						draw->DrawSegmentFcn( p1, p2, impulseColor, draw->context );
-						snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.2f", 1000.0f * point->normalImpulse );
+						snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.2f", 1000.0f * point->totalNormalImpulse );
 						draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 					}
 
@@ -1837,19 +1834,6 @@ void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRati
 	world->contactHertz = b2ClampFloat( hertz, 0.0f, FLT_MAX );
 	world->contactDampingRatio = b2ClampFloat( dampingRatio, 0.0f, FLT_MAX );
 	world->maxContactPushSpeed = b2ClampFloat( pushSpeed, 0.0f, FLT_MAX );
-}
-
-void b2World_SetJointTuning( b2WorldId worldId, float hertz, float dampingRatio )
-{
-	b2World* world = b2GetWorldFromId( worldId );
-	B2_ASSERT( world->locked == false );
-	if ( world->locked )
-	{
-		return;
-	}
-
-	world->jointHertz = b2ClampFloat( hertz, 0.0f, FLT_MAX );
-	world->jointDampingRatio = b2ClampFloat( dampingRatio, 0.0f, FLT_MAX );
 }
 
 void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearSpeed )
@@ -2514,7 +2498,8 @@ static bool TreeCollideCallback( int proxyId, uint64_t userData, void* context )
 
 	b2PlaneResult result = b2CollideMover( shape, transform, &worldContext->mover );
 
-	if ( result.hit )
+	// todo handle deep overlap
+	if ( result.hit && b2IsNormalized(result.plane.normal) )
 	{
 		b2ShapeId id = { shape->id + 1, world->worldId, shape->generation };
 		return worldContext->fcn( id, &result, worldContext->userContext );

@@ -1752,7 +1752,7 @@ public:
 			int count = (int)m_jointIds.size();
 			for ( int i = 0; i < count; ++i )
 			{
-				b2WeldJoint_SetReferenceAngle( m_jointIds[i], m_referenceAngle );
+				b2Joint_SetReferenceAngle( m_jointIds[i], m_referenceAngle );
 			}
 		}
 

@@ -89,6 +89,19 @@ static const b2JointId b2_nullJointId = B2_ZERO_INIT;
 /// Compare two ids for equality. Doesn't work for b2WorldId.
 #define B2_ID_EQUALS( id1, id2 ) ( id1.index1 == id2.index1 && id1.world0 == id2.world0 && id1.generation == id2.generation )
 
+/// Store a world id into a uint32_t.
+B2_INLINE uint32_t b2StoreWorldId( b2WorldId id )
+{
+	return ( (uint32_t)id.index1 << 16 ) | (uint32_t)id.generation;
+}
+
+/// Load a uint32_t into a world id.
+B2_INLINE b2WorldId b2LoadWorldId( uint32_t x )
+{
+	b2WorldId id = { (uint16_t)( x >> 16 ), (uint16_t)( x ) };
+	return id;
+}
+
 /// Store a body id into a uint64_t.
 B2_INLINE uint64_t b2StoreBodyId( b2BodyId id )
 {

@@ -813,18 +813,18 @@ typedef struct b2CollisionPlane
 /// Result returned by b2SolvePlanes
 typedef struct b2PlaneSolverResult
 {
-	/// The final position of the mover
-	b2Vec2 position;
+	/// The translation of the mover
+	b2Vec2 translation;
 
 	/// The number of iterations used by the plane solver. For diagnostics.
 	int iterationCount;
 } b2PlaneSolverResult;
 
 /// Solves the position of a mover that satisfies the given collision planes.
-/// @param position this must be the position used to generate the collision planes
+/// @param targetDelta the desired movement from the position used to generate the collision planes
 /// @param planes the collision planes
 /// @param count the number of collision planes
-B2_API b2PlaneSolverResult b2SolvePlanes( b2Vec2 position, b2CollisionPlane* planes, int count );
+B2_API b2PlaneSolverResult b2SolvePlanes( b2Vec2 targetDelta, b2CollisionPlane* planes, int count );
 
 /// Clips the velocity against the given collision planes. Planes with zero push or clipVelocity
 /// set to false are skipped.

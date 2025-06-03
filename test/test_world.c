@@ -302,7 +302,6 @@ int TestWorldCoverage( void )
 	b2World_Explode( worldId, &explosionDef );
 
 	b2World_SetContactTuning( worldId, 10.0f, 2.0f, 4.0f );
-	b2World_SetJointTuning( worldId, 10.0f, 2.0f );
 
 	b2World_SetMaximumLinearSpeed( worldId, 10.0f );
 	value = b2World_GetMaximumLinearSpeed( worldId );

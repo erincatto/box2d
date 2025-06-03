@@ -102,12 +102,6 @@ typedef struct b2WorldDef
 	/// decreasing the damping ratio.
 	float maxContactPushSpeed;
 
-	/// Joint stiffness. Cycles per second.
-	float jointHertz;
-
-	/// Joint bounciness. Non-dimensional.
-	float jointDampingRatio;
-
 	/// Maximum linear speed. Usually meters per second.
 	float maximumLinearSpeed;
 

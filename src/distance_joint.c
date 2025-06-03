@@ -385,9 +385,9 @@ void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBia
 				}
 				else if ( useBias )
 				{
-					bias = context->jointSoftness.biasRate * C;
-					massCoeff = context->jointSoftness.massScale;
-					impulseCoeff = context->jointSoftness.impulseScale;
+					bias = base->constraintSoftness.biasRate * C;
+					massCoeff = base->constraintSoftness.massScale;
+					impulseCoeff = base->constraintSoftness.impulseScale;
 				}
 
 				float impulse = -massCoeff * joint->axialMass * ( Cdot + bias ) - impulseCoeff * joint->lowerImpulse;
@@ -419,9 +419,9 @@ void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBia
 				}
 				else if ( useBias )
 				{
-					bias = context->jointSoftness.biasRate * C;
-					massScale = context->jointSoftness.massScale;
-					impulseScale = context->jointSoftness.impulseScale;
+					bias = base->constraintSoftness.biasRate * C;
+					massScale = base->constraintSoftness.massScale;
+					impulseScale = base->constraintSoftness.impulseScale;
 				}
 
 				float impulse = -massScale * joint->axialMass * ( Cdot + bias ) - impulseScale * joint->upperImpulse;
@@ -467,9 +467,9 @@ void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBia
 		float impulseScale = 0.0f;
 		if ( useBias )
 		{
-			bias = context->jointSoftness.biasRate * C;
-			massScale = context->jointSoftness.massScale;
-			impulseScale = context->jointSoftness.impulseScale;
+			bias = base->constraintSoftness.biasRate * C;
+			massScale = base->constraintSoftness.massScale;
+			impulseScale = base->constraintSoftness.impulseScale;
 		}
 
 		float impulse = -massScale * joint->axialMass * ( Cdot + bias ) - impulseScale * joint->impulse;

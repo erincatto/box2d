@@ -260,6 +260,11 @@ typedef struct b2JointSim
 	float invMassA, invMassB;
 	float invIA, invIB;
 
+	float constraintHertz;
+	float constraintDampingRatio;
+
+	b2Softness constraintSoftness;
+
 	union
 	{
 		b2DistanceJoint distanceJoint;

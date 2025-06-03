@@ -286,6 +286,14 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 		B2_ASSERT( joint->setIndex == setIndex );
 	}
 
+	jointSim->constraintHertz = B2_JOINT_CONSTRAINT_HERTZ;
+	jointSim->constraintDampingRatio = B2_JOINT_CONSTRAINT_DAMPING_RATIO;
+	jointSim->constraintSoftness = (b2Softness){
+		.biasRate = 0.0f,
+		.massScale = 1.0f,
+		.impulseScale = 0.0f,
+	};
+
 	B2_ASSERT( jointSim->jointId == jointId );
 	B2_ASSERT( jointSim->bodyIdA == bodyIdA );
 	B2_ASSERT( jointSim->bodyIdB == bodyIdB );
@@ -842,8 +850,8 @@ b2WorldId b2Joint_GetWorld( b2JointId jointId )
 
 void b2Joint_SetLocalAnchorA( b2JointId jointId, b2Vec2 localAnchor )
 {
-	B2_ASSERT(b2IsValidVec2(localAnchor));
-	
+	B2_ASSERT( b2IsValidVec2( localAnchor ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* jointSim = b2GetJointSim( world, joint );
@@ -860,8 +868,8 @@ b2Vec2 b2Joint_GetLocalAnchorA( b2JointId jointId )
 
 void b2Joint_SetLocalAnchorB( b2JointId jointId, b2Vec2 localAnchor )
 {
-	B2_ASSERT(b2IsValidVec2(localAnchor));
-	
+	B2_ASSERT( b2IsValidVec2( localAnchor ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* jointSim = b2GetJointSim( world, joint );
@@ -874,6 +882,98 @@ b2Vec2 b2Joint_GetLocalAnchorB( b2JointId jointId )
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* jointSim = b2GetJointSim( world, joint );
 	return jointSim->localOriginAnchorB;
+}
+
+void b2Joint_SetReferenceAngle( b2JointId jointId, float angleInRadians )
+{
+	B2_ASSERT( b2IsValidFloat( angleInRadians ) );
+
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* jointSim = b2GetJointSim( world, joint );
+
+	switch ( joint->type )
+	{
+		case b2_prismaticJoint:
+			jointSim->prismaticJoint.referenceAngle = angleInRadians;
+			break;
+
+		case b2_revoluteJoint:
+			jointSim->revoluteJoint.referenceAngle = angleInRadians;
+			break;
+
+		case b2_weldJoint:
+			jointSim->weldJoint.referenceAngle = angleInRadians;
+			break;
+
+		default:
+			break;
+	}
+}
+
+float b2Joint_GetReferenceAngle( b2JointId jointId )
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* jointSim = b2GetJointSim( world, joint );
+
+	switch ( joint->type )
+	{
+		case b2_prismaticJoint:
+			return jointSim->prismaticJoint.referenceAngle;
+
+		case b2_revoluteJoint:
+			return jointSim->revoluteJoint.referenceAngle;
+
+		case b2_weldJoint:
+			return jointSim->weldJoint.referenceAngle;
+
+		default:
+			return 0.0f;
+	}
+}
+
+void b2Joint_SetLocalAxisA( b2JointId jointId, b2Vec2 localAxis )
+{
+	B2_ASSERT( b2IsValidVec2( localAxis ) );
+	B2_ASSERT( b2IsNormalized( localAxis ) );
+
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* jointSim = b2GetJointSim( world, joint );
+
+	switch ( joint->type )
+	{
+		case b2_prismaticJoint:
+			jointSim->prismaticJoint.localAxisA = localAxis;
+			break;
+
+		case b2_wheelJoint:
+			jointSim->wheelJoint.localAxisA = localAxis;
+			break;
+
+		default:
+			break;
+	}
+}
+
+b2Vec2 b2Joint_GetLocalAxisA( b2JointId jointId )
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* jointSim = b2GetJointSim( world, joint );
+
+	switch ( joint->type )
+	{
+		case b2_prismaticJoint:
+			return jointSim->prismaticJoint.localAxisA;
+
+		case b2_wheelJoint:
+			return jointSim->wheelJoint.localAxisA;
+
+		default:
+			return b2Vec2_zero;
+	}
 }
 
 void b2Joint_SetCollideConnected( b2JointId jointId, bool shouldCollide )
@@ -1034,7 +1134,7 @@ float b2Joint_GetConstraintTorque( b2JointId jointId )
 	}
 }
 
-float b2Joint_GetLinearSeparation(b2JointId jointId)
+float b2Joint_GetLinearSeparation( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
 	b2Joint* joint = b2GetJointFullId( world, jointId );
@@ -1043,8 +1143,8 @@ float b2Joint_GetLinearSeparation(b2JointId jointId)
 	b2Transform xfA = b2GetBodyTransform( world, joint->edges[0].bodyId );
 	b2Transform xfB = b2GetBodyTransform( world, joint->edges[1].bodyId );
 
-	b2Vec2 pA = b2TransformPoint(xfA, base->localOriginAnchorA);
-	b2Vec2 pB = b2TransformPoint(xfB, base->localOriginAnchorB);
+	b2Vec2 pA = b2TransformPoint( xfA, base->localOriginAnchorA );
+	b2Vec2 pB = b2TransformPoint( xfB, base->localOriginAnchorB );
 	b2Vec2 dp = b2Sub( pB, pA );
 
 	switch ( joint->type )
@@ -1053,15 +1153,15 @@ float b2Joint_GetLinearSeparation(b2JointId jointId)
 		{
 			b2DistanceJoint* distanceJoint = &base->distanceJoint;
 			float length = b2Length( dp );
-			if (distanceJoint->enableSpring)
+			if ( distanceJoint->enableSpring )
 			{
-				if (distanceJoint->enableLimit)
+				if ( distanceJoint->enableLimit )
 				{
-					if (length < distanceJoint->minLength)
+					if ( length < distanceJoint->minLength )
 					{
 						return distanceJoint->minLength - length;
 					}
-					else if (length > distanceJoint->maxLength)
+					else if ( length > distanceJoint->maxLength )
 					{
 						return length - distanceJoint->maxLength;
 					}
@@ -1089,18 +1189,18 @@ float b2Joint_GetLinearSeparation(b2JointId jointId)
 			b2PrismaticJoint* prismaticJoint = &base->prismaticJoint;
 			b2Vec2 axisA = b2RotateVector( xfA.q, prismaticJoint->localAxisA );
 			b2Vec2 perpA = b2LeftPerp( axisA );
-			float perpendicularSeparation = b2AbsFloat(b2Dot( perpA, dp ));
+			float perpendicularSeparation = b2AbsFloat( b2Dot( perpA, dp ) );
 			float limitSeparation = 0.0f;
 
-			if (prismaticJoint->enableLimit)
+			if ( prismaticJoint->enableLimit )
 			{
 				float translation = b2Dot( axisA, dp );
-				if (translation < prismaticJoint->lowerTranslation)
+				if ( translation < prismaticJoint->lowerTranslation )
 				{
 					limitSeparation = prismaticJoint->lowerTranslation - translation;
 				}
 
-				if (prismaticJoint->upperTranslation < translation)
+				if ( prismaticJoint->upperTranslation < translation )
 				{
 					limitSeparation = translation - prismaticJoint->upperTranslation;
 				}
@@ -1187,15 +1287,15 @@ float b2Joint_GetAngularSeparation( b2JointId jointId )
 		case b2_revoluteJoint:
 		{
 			b2RevoluteJoint* revoluteJoint = &base->revoluteJoint;
-			if (revoluteJoint->enableLimit)
+			if ( revoluteJoint->enableLimit )
 			{
 				float angle = b2UnwindAngle( relativeAngle - revoluteJoint->referenceAngle );
-				if (angle < revoluteJoint->lowerAngle)
+				if ( angle < revoluteJoint->lowerAngle )
 				{
 					return revoluteJoint->lowerAngle - angle;
 				}
 
-				if (revoluteJoint->upperAngle < angle)
+				if ( revoluteJoint->upperAngle < angle )
 				{
 					return angle - revoluteJoint->upperAngle;
 				}
@@ -1224,8 +1324,33 @@ float b2Joint_GetAngularSeparation( b2JointId jointId )
 	}
 }
 
+void b2Joint_GetConstraintTuning( b2JointId jointId, float* hertz, float* dampingRatio )
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* base = b2GetJointSim( world, joint );
+	*hertz = base->constraintHertz;
+	*dampingRatio = base->constraintDampingRatio;
+}
+
+void b2Joint_SetConstraintTuning( b2JointId jointId, float hertz, float dampingRatio )
+{
+	B2_ASSERT( b2IsValidFloat( hertz ) && hertz >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( dampingRatio ) && dampingRatio >= 0.0f );
+
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* base = b2GetJointSim( world, joint );
+	base->constraintHertz = hertz;
+	base->constraintDampingRatio = dampingRatio;
+}
+
 void b2PrepareJoint( b2JointSim* joint, b2StepContext* context )
 {
+	// Clamp joint hertz based on the time step to reduce jitter.
+	float hertz = b2MinFloat( joint->constraintHertz, 0.25f * context->inv_h );
+	joint->constraintSoftness = b2MakeSoft( hertz, joint->constraintDampingRatio, context->h );
+
 	switch ( joint->type )
 	{
 		case b2_distanceJoint:

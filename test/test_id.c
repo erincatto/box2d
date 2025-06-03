@@ -7,6 +7,14 @@
 
 int IdTest( void )
 {
+	uint32_t a = 0x01234567;
+
+	{
+		b2WorldId id = b2LoadWorldId( a );
+		uint32_t b = b2StoreWorldId( id );
+		ENSURE( b == a );
+	}
+
 	uint64_t x = 0x0123456789ABCDEFull;
 
 	{

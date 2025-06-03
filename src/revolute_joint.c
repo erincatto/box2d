@@ -308,8 +308,10 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 	b2Vec2 vB = stateB->linearVelocity;
 	float wB = stateB->angularVelocity;
 
+	const b2Rot dqA = stateA->deltaRotation;
+	const b2Rot dqB = stateB->deltaRotation;
+
 	bool fixedRotation = ( iA + iB == 0.0f );
-	// const float maxBias = context->maxBiasVelocity;
 
 	// Solve spring.
 	if ( joint->enableSpring && fixedRotation == false )
@@ -346,8 +348,7 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 
 	if ( joint->enableLimit && fixedRotation == false )
 	{
-		float jointAngle =
-			b2RelativeAngle( stateB->deltaRotation, stateA->deltaRotation ) + joint->deltaAngle - joint->referenceAngle;
+		float jointAngle = b2RelativeAngle( dqB, dqA ) + joint->deltaAngle - joint->referenceAngle;
 		jointAngle = b2UnwindAngle( jointAngle );
 
 		// Lower limit
@@ -363,9 +364,9 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 			}
 			else if ( useBias )
 			{
-				bias = context->jointSoftness.biasRate * C;
-				massScale = context->jointSoftness.massScale;
-				impulseScale = context->jointSoftness.impulseScale;
+				bias = base->constraintSoftness.biasRate * C;
+				massScale = base->constraintSoftness.massScale;
+				impulseScale = base->constraintSoftness.impulseScale;
 			}
 
 			float Cdot = wB - wA;
@@ -393,9 +394,9 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 			}
 			else if ( useBias )
 			{
-				bias = context->jointSoftness.biasRate * C;
-				massScale = context->jointSoftness.massScale;
-				impulseScale = context->jointSoftness.impulseScale;
+				bias = base->constraintSoftness.biasRate * C;
+				massScale = base->constraintSoftness.massScale;
+				impulseScale = base->constraintSoftness.impulseScale;
 			}
 
 			// sign flipped on Cdot
@@ -433,9 +434,9 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 			b2Vec2 dcB = stateB->deltaPosition;
 
 			b2Vec2 separation = b2Add( b2Add( b2Sub( dcB, dcA ), b2Sub( rB, rA ) ), joint->deltaCenter );
-			bias = b2MulSV( context->jointSoftness.biasRate, separation );
-			massScale = context->jointSoftness.massScale;
-			impulseScale = context->jointSoftness.impulseScale;
+			bias = b2MulSV( base->constraintSoftness.biasRate, separation );
+			massScale = base->constraintSoftness.massScale;
+			impulseScale = base->constraintSoftness.impulseScale;
 		}
 
 		b2Mat22 K;

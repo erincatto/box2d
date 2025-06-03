@@ -11,19 +11,6 @@
 // needed for dll export
 #include "box2d/box2d.h"
 
-float b2WeldJoint_GetReferenceAngle( b2JointId jointId )
-{
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
-	return joint->weldJoint.referenceAngle;
-}
-
-void b2WeldJoint_SetReferenceAngle( b2JointId jointId, float angleInRadians )
-{
-	B2_ASSERT( b2IsValidFloat( angleInRadians ) );
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
-	joint->weldJoint.referenceAngle = b2ClampFloat(angleInRadians, -B2_PI, B2_PI);
-}
-
 void b2WeldJoint_SetLinearHertz( b2JointId jointId, float hertz )
 {
 	B2_ASSERT( b2IsValidFloat( hertz ) && hertz >= 0.0f );
@@ -152,7 +139,7 @@ void b2PrepareWeldJoint( b2JointSim* base, b2StepContext* context )
 
 	if ( joint->linearHertz == 0.0f )
 	{
-		joint->linearSoftness = context->jointSoftness;
+		joint->linearSoftness = base->constraintSoftness;
 	}
 	else
 	{
@@ -161,7 +148,7 @@ void b2PrepareWeldJoint( b2JointSim* base, b2StepContext* context )
 
 	if ( joint->angularHertz == 0.0f )
 	{
-		joint->angularSoftness = context->jointSoftness;
+		joint->angularSoftness = base->constraintSoftness;
 	}
 	else
 	{
