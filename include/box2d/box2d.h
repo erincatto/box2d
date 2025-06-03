@@ -757,10 +757,10 @@ B2_API void b2Joint_SetLocalAnchorB( b2JointId jointId, b2Vec2 localAnchor );
 /// Get the local anchor on bodyB
 B2_API b2Vec2 b2Joint_GetLocalAnchorB( b2JointId jointId );
 
-/// Get the weld joint reference angle in radians (revolute, prismatic, and weld)
+/// Get the joint reference angle in radians (revolute, prismatic, and weld)
 B2_API float b2Joint_GetReferenceAngle( b2JointId jointId );
 
-/// Set the weld joint reference angle in radians, must be in [-pi,pi]. (revolute, prismatic, and weld)
+/// Set the joint reference angle in radians, must be in [-pi,pi]. (revolute, prismatic, and weld)
 B2_API void b2Joint_SetReferenceAngle( b2JointId jointId, float angleInRadians );
 
 /// Set the local axis on bodyA (prismatic and wheel)
