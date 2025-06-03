@@ -824,9 +824,6 @@ typedef struct b2RevoluteJointDef
 	/// The desired motor speed in radians per second
 	float motorSpeed;
 
-	/// The constraint stiffness in hertz. Ignored if -1. Advanced feature.
-	float constraintHertz;
-
 	/// Scale the debug draw
 	float drawSize;
 

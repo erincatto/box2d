@@ -380,64 +380,6 @@ public:
 
 static int sampleTinyPyramid = RegisterSample( "Robustness", "Tiny Pyramid", TinyPyramid::Create );
 
-class JointBounce : public Sample
-{
-public:
-	explicit JointBounce( SampleContext* context )
-		: Sample( context )
-	{
-		if ( m_context->restart == false )
-		{
-			m_context->camera.m_center = { 0.0f, 5.0f };
-			m_context->camera.m_zoom = 20.0f;
-		}
-
-		{
-			b2BodyDef bodyDef = b2DefaultBodyDef();
-			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
-
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
-			b2CreateSegmentShape( groundId, &shapeDef, &segment );
-		}
-
-		{
-			b2Vec2 base = { 0.0f, 20.0f };
-
-			b2BodyDef bodyDef = b2DefaultBodyDef();
-			bodyDef.type = b2_dynamicBody;
-
-			b2Circle circle = {};
-			circle.radius = 0.5f;
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-
-			bodyDef.position = b2Vec2{ 0.0f, 0.5f } + base;
-			b2BodyId bodyId1 = b2CreateBody( m_worldId, &bodyDef );
-			b2CreateCircleShape( bodyId1, &shapeDef, &circle );
-
-			bodyDef.position = b2Vec2{ 0.25f, 0.75f } + base;
-			bodyDef.rotation = b2MakeRot( -0.5f * B2_PI );
-			b2BodyId bodyId2 = b2CreateBody( m_worldId, &bodyDef );
-			b2CreateCircleShape( bodyId2, &shapeDef, &circle );
-
-			b2WeldJointDef weldDef = b2DefaultWeldJointDef();
-
-			weldDef.bodyIdA = bodyId1;
-			weldDef.bodyIdB = bodyId2;
-			weldDef.localAnchorA = { 0.0f, 0.5f };
-			weldDef.localAnchorA = { 0.0f, -0.5f };
-			b2CreateWeldJoint( m_worldId, &weldDef );
-		}
-	}
-
-	static Sample* Create( SampleContext* context )
-	{
-		return new JointBounce( context );
-	}
-};
-
-static int sampleJointBounce = RegisterSample( "Robustness", "Joint Bounce", JointBounce::Create );
-
 // High gravity and high mass ratio
 class Cart : public Sample
 {
