@@ -288,6 +288,11 @@ static b2JointPair b2CreateJoint( b2World* world, b2Body* bodyA, b2Body* bodyB, 
 
 	jointSim->constraintHertz = B2_JOINT_CONSTRAINT_HERTZ;
 	jointSim->constraintDampingRatio = B2_JOINT_CONSTRAINT_DAMPING_RATIO;
+	jointSim->constraintSoftness = (b2Softness){
+		.biasRate = 0.0f,
+		.massScale = 1.0f,
+		.impulseScale = 0.0f,
+	};
 
 	B2_ASSERT( jointSim->jointId == jointId );
 	B2_ASSERT( jointSim->bodyIdA == bodyIdA );
@@ -845,8 +850,8 @@ b2WorldId b2Joint_GetWorld( b2JointId jointId )
 
 void b2Joint_SetLocalAnchorA( b2JointId jointId, b2Vec2 localAnchor )
 {
-	B2_ASSERT(b2IsValidVec2(localAnchor));
-	
+	B2_ASSERT( b2IsValidVec2( localAnchor ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* jointSim = b2GetJointSim( world, joint );
@@ -863,8 +868,8 @@ b2Vec2 b2Joint_GetLocalAnchorA( b2JointId jointId )
 
 void b2Joint_SetLocalAnchorB( b2JointId jointId, b2Vec2 localAnchor )
 {
-	B2_ASSERT(b2IsValidVec2(localAnchor));
-	
+	B2_ASSERT( b2IsValidVec2( localAnchor ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* jointSim = b2GetJointSim( world, joint );
@@ -1129,7 +1134,7 @@ float b2Joint_GetConstraintTorque( b2JointId jointId )
 	}
 }
 
-float b2Joint_GetLinearSeparation(b2JointId jointId)
+float b2Joint_GetLinearSeparation( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
 	b2Joint* joint = b2GetJointFullId( world, jointId );
@@ -1138,8 +1143,8 @@ float b2Joint_GetLinearSeparation(b2JointId jointId)
 	b2Transform xfA = b2GetBodyTransform( world, joint->edges[0].bodyId );
 	b2Transform xfB = b2GetBodyTransform( world, joint->edges[1].bodyId );
 
-	b2Vec2 pA = b2TransformPoint(xfA, base->localOriginAnchorA);
-	b2Vec2 pB = b2TransformPoint(xfB, base->localOriginAnchorB);
+	b2Vec2 pA = b2TransformPoint( xfA, base->localOriginAnchorA );
+	b2Vec2 pB = b2TransformPoint( xfB, base->localOriginAnchorB );
 	b2Vec2 dp = b2Sub( pB, pA );
 
 	switch ( joint->type )
@@ -1148,15 +1153,15 @@ float b2Joint_GetLinearSeparation(b2JointId jointId)
 		{
 			b2DistanceJoint* distanceJoint = &base->distanceJoint;
 			float length = b2Length( dp );
-			if (distanceJoint->enableSpring)
+			if ( distanceJoint->enableSpring )
 			{
-				if (distanceJoint->enableLimit)
+				if ( distanceJoint->enableLimit )
 				{
-					if (length < distanceJoint->minLength)
+					if ( length < distanceJoint->minLength )
 					{
 						return distanceJoint->minLength - length;
 					}
-					else if (length > distanceJoint->maxLength)
+					else if ( length > distanceJoint->maxLength )
 					{
 						return length - distanceJoint->maxLength;
 					}
@@ -1184,18 +1189,18 @@ float b2Joint_GetLinearSeparation(b2JointId jointId)
 			b2PrismaticJoint* prismaticJoint = &base->prismaticJoint;
 			b2Vec2 axisA = b2RotateVector( xfA.q, prismaticJoint->localAxisA );
 			b2Vec2 perpA = b2LeftPerp( axisA );
-			float perpendicularSeparation = b2AbsFloat(b2Dot( perpA, dp ));
+			float perpendicularSeparation = b2AbsFloat( b2Dot( perpA, dp ) );
 			float limitSeparation = 0.0f;
 
-			if (prismaticJoint->enableLimit)
+			if ( prismaticJoint->enableLimit )
 			{
 				float translation = b2Dot( axisA, dp );
-				if (translation < prismaticJoint->lowerTranslation)
+				if ( translation < prismaticJoint->lowerTranslation )
 				{
 					limitSeparation = prismaticJoint->lowerTranslation - translation;
 				}
 
-				if (prismaticJoint->upperTranslation < translation)
+				if ( prismaticJoint->upperTranslation < translation )
 				{
 					limitSeparation = translation - prismaticJoint->upperTranslation;
 				}
@@ -1282,15 +1287,15 @@ float b2Joint_GetAngularSeparation( b2JointId jointId )
 		case b2_revoluteJoint:
 		{
 			b2RevoluteJoint* revoluteJoint = &base->revoluteJoint;
-			if (revoluteJoint->enableLimit)
+			if ( revoluteJoint->enableLimit )
 			{
 				float angle = b2UnwindAngle( relativeAngle - revoluteJoint->referenceAngle );
-				if (angle < revoluteJoint->lowerAngle)
+				if ( angle < revoluteJoint->lowerAngle )
 				{
 					return revoluteJoint->lowerAngle - angle;
 				}
 
-				if (revoluteJoint->upperAngle < angle)
+				if ( revoluteJoint->upperAngle < angle )
 				{
 					return angle - revoluteJoint->upperAngle;
 				}
@@ -1319,7 +1324,7 @@ float b2Joint_GetAngularSeparation( b2JointId jointId )
 	}
 }
 
-void b2Joint_GetConstraintTuning(b2JointId jointId, float* hertz, float* dampingRatio)
+void b2Joint_GetConstraintTuning( b2JointId jointId, float* hertz, float* dampingRatio )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
 	b2Joint* joint = b2GetJointFullId( world, jointId );
@@ -1328,7 +1333,7 @@ void b2Joint_GetConstraintTuning(b2JointId jointId, float* hertz, float* damping
 	*dampingRatio = base->constraintDampingRatio;
 }
 
-void b2Joint_SetConstraintTuning(b2JointId jointId, float hertz, float dampingRatio)
+void b2Joint_SetConstraintTuning( b2JointId jointId, float hertz, float dampingRatio )
 {
 	B2_ASSERT( b2IsValidFloat( hertz ) && hertz >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( dampingRatio ) && dampingRatio >= 0.0f );
@@ -1342,6 +1347,7 @@ void b2Joint_SetConstraintTuning(b2JointId jointId, float hertz, float dampingRa
 
 void b2PrepareJoint( b2JointSim* joint, b2StepContext* context )
 {
+	// Clamp joint hertz based on the time step to reduce jitter.
 	float hertz = b2MinFloat( joint->constraintHertz, 0.25f * context->inv_h );
 	joint->constraintSoftness = b2MakeSoft( hertz, joint->constraintDampingRatio, context->h );
 

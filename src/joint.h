@@ -175,13 +175,6 @@ typedef struct b2RevoluteJoint
 	float lowerAngle;
 	float upperAngle;
 
-	b2Vec2 previousLinearImpulse;
-	float previousLowerImpulse;
-	float previousUpperImpulse;
-	b2Vec2 linearImpulseVelocity;
-	float lowerImpulseVelocity;
-	float upperImpulseVelocity;
-
 	int indexA;
 	int indexB;
 	b2Vec2 anchorA;

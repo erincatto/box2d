@@ -504,14 +504,14 @@ public:
 		m_chassisId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.density = 1.0;
+		shapeDef.density = 100.0f;
 
 		b2Polygon box = b2MakeOffsetBox( 0.5f, 0.25f, { 0.0f, 0.25f }, b2Rot_identity );
 		b2CreatePolygonShape( m_chassisId, &shapeDef, &box );
 
 		shapeDef = b2DefaultShapeDef();
 		shapeDef.material.rollingResistance = 0.02f;
-		shapeDef.density = 2.0f;
+		shapeDef.density = 10.0f;
 
 		b2Circle circle = { b2Vec2_zero, 0.1f };
 		bodyDef.position = { -0.4f, yBase - 0.15f };

@@ -926,15 +926,25 @@ public:
 		}
 
 		{
+			m_constraintHertz = 60.0f;
+			m_constraintDampingRatio = 0.0f;
+			m_springHertz = 2.0f;
+			m_springDampingRatio = 0.7f;
+			m_frictionTorque = 200.0f;
+
 			b2Polygon box = b2MakeBox( 0.5f, 0.125f );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.density = 20.0f;
 
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+			jointDef.enableMotor = true;
+			jointDef.maxMotorTorque = m_frictionTorque;
+			jointDef.enableSpring = true;
+			jointDef.hertz = m_springHertz;
+			jointDef.dampingRatio = m_springDampingRatio;
+
 			int jointIndex = 0;
-			m_frictionTorque = 200.0f;
-			m_gravityScale = 1.0f;
 
 			float xbase = -80.0f;
 
@@ -946,7 +956,9 @@ public:
 				bodyDef.position = { xbase + 0.5f + 1.0f * i, 20.0f };
 				bodyDef.linearDamping = 0.1f;
 				bodyDef.angularDamping = 0.1f;
+
 				m_bodyIds[i] = b2CreateBody( m_worldId, &bodyDef );
+
 				b2CreatePolygonShape( m_bodyIds[i], &shapeDef, &box );
 
 				b2Vec2 pivot = { xbase + 1.0f * i, 20.0f };
@@ -954,11 +966,6 @@ public:
 				jointDef.bodyIdB = m_bodyIds[i];
 				jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
 				jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
-				jointDef.enableMotor = true;
-				jointDef.maxMotorTorque = m_frictionTorque;
-				jointDef.enableSpring = true;
-				jointDef.hertz = 4.0f;
-				jointDef.dampingRatio = 0.7f;
 				m_jointIds[jointIndex++] = b2CreateRevoluteJoint( m_worldId, &jointDef );
 
 				prevBodyId = m_bodyIds[i];
@@ -969,11 +976,6 @@ public:
 			jointDef.bodyIdB = groundId;
 			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
 			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
-			jointDef.enableMotor = true;
-			jointDef.maxMotorTorque = m_frictionTorque;
-			jointDef.enableSpring = true;
-			jointDef.hertz = 4.0f;
-			jointDef.dampingRatio = 0.7f;
 			m_jointIds[jointIndex++] = b2CreateRevoluteJoint( m_worldId, &jointDef );
 
 			assert( jointIndex == m_count + 1 );
@@ -1013,9 +1015,9 @@ public:
 
 	void UpdateGui() override
 	{
-		float height = 140.0f;
+		float height = 180.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 300.0f, height ) );
+		ImGui::SetNextWindowSize( ImVec2( 320.0f, height ) );
 
 		ImGui::Begin( "Bridge", nullptr, ImGuiWindowFlags_NoResize );
 
@@ -1030,27 +1032,35 @@ public:
 			}
 		}
 
-		if ( ImGui::SliderFloat( "Gravity scale", &m_gravityScale, -1.0f, 1.0f, "%.1f" ) )
-		{
-			for ( int i = 0; i < m_count; ++i )
-			{
-				b2Body_SetGravityScale( m_bodyIds[i], m_gravityScale );
-			}
-		}
-
-		if ( ImGui::SliderFloat( "hertz", &m_jointHertz, 15.0f, 240.0f, "%.0f" ) )
+		if ( ImGui::SliderFloat( "Spring hertz", &m_springHertz, 0.0f, 30.0f, "%.0f" ) )
 		{
 			for ( int i = 0; i <= m_count; ++i )
 			{
-				b2Joint_SetConstraintTuning( m_jointIds[i], m_jointHertz, m_jointDampingRatio );
+				b2RevoluteJoint_SetSpringHertz( m_jointIds[i], m_springHertz );
 			}
 		}
 
-		if ( ImGui::SliderFloat( "damping", &m_jointDampingRatio, 0.0f, 10.0f, "%.1f" ) )
+		if ( ImGui::SliderFloat( "Spring damping", &m_springDampingRatio, 0.0f, 2.0f, "%.1f" ) )
 		{
 			for ( int i = 0; i <= m_count; ++i )
 			{
-				b2Joint_SetConstraintTuning( m_jointIds[i], m_jointHertz, m_jointDampingRatio );
+				b2RevoluteJoint_SetSpringDampingRatio( m_jointIds[i], m_springDampingRatio );
+			}
+		}
+
+		if ( ImGui::SliderFloat( "Constraint hertz", &m_constraintHertz, 15.0f, 240.0f, "%.0f" ) )
+		{
+			for ( int i = 0; i <= m_count; ++i )
+			{
+				b2Joint_SetConstraintTuning( m_jointIds[i], m_constraintHertz, m_constraintDampingRatio );
+			}
+		}
+
+		if ( ImGui::SliderFloat( "Constraint damping", &m_constraintDampingRatio, 0.0f, 10.0f, "%.1f" ) )
+		{
+			for ( int i = 0; i <= m_count; ++i )
+			{
+				b2Joint_SetConstraintTuning( m_jointIds[i], m_constraintHertz, m_constraintDampingRatio );
 			}
 		}
 
@@ -1068,9 +1078,10 @@ public:
 	b2BodyId m_bodyIds[m_count];
 	b2JointId m_jointIds[m_count + 1];
 	float m_frictionTorque;
-	float m_gravityScale;
-	float m_jointHertz;
-	float m_jointDampingRatio;
+	float m_constraintHertz;
+	float m_constraintDampingRatio;
+	float m_springHertz;
+	float m_springDampingRatio;
 };
 
 static int sampleBridgeIndex = RegisterSample( "Joints", "Bridge", Bridge::Create );
@@ -1971,7 +1982,7 @@ public:
 
 	void UpdateGui() override
 	{
-		float height = 120.0f;
+		float height = 180.0f;
 		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 260.0f, height ) );
 
