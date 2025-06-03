@@ -95,7 +95,7 @@ B2_INLINE uint32_t b2StoreWorldId( b2WorldId id )
 	return ( (uint32_t)id.index1 << 16 ) | (uint32_t)id.generation;
 }
 
-/// Load a uint32_t into a body id.
+/// Load a uint32_t into a world id.
 B2_INLINE b2WorldId b2LoadWorldId( uint32_t x )
 {
 	b2WorldId id = { (uint16_t)( x >> 16 ), (uint16_t)( x ) };
