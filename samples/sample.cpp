@@ -329,14 +329,14 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			m_groundBodyId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2MouseJointDef mouseDef = b2DefaultMouseJointDef();
-			mouseDef.bodyIdA = m_groundBodyId;
-			mouseDef.bodyIdB = queryContext.bodyId;
-			mouseDef.target = p;
-			mouseDef.hertz = 10.0f;
-			mouseDef.dampingRatio = 0.7f;
-			mouseDef.maxForce = 1000.0f * b2Body_GetMass( queryContext.bodyId ) * b2Length(b2World_GetGravity(m_worldId));
-			m_mouseJointId = b2CreateMouseJoint( m_worldId, &mouseDef );
+			b2MouseJointDef jointDef = b2DefaultMouseJointDef();
+			jointDef.base.bodyIdA = m_groundBodyId;
+			jointDef.base.bodyIdB = queryContext.bodyId;
+			jointDef.target = p;
+			jointDef.hertz = 10.0f;
+			jointDef.dampingRatio = 0.7f;
+			jointDef.maxForce = 1000.0f * b2Body_GetMass( queryContext.bodyId ) * b2Length(b2World_GetGravity(m_worldId));
+			m_mouseJointId = b2CreateMouseJoint( m_worldId, &jointDef );
 
 			b2Body_SetAwake( queryContext.bodyId, true );
 		}
@@ -508,6 +508,7 @@ void Sample::Step(  )
 		m_maxProfile.storeImpulses = b2MaxFloat( m_maxProfile.storeImpulses, p.storeImpulses );
 		m_maxProfile.transforms = b2MaxFloat( m_maxProfile.transforms, p.transforms );
 		m_maxProfile.splitIslands = b2MaxFloat( m_maxProfile.splitIslands, p.splitIslands );
+		m_maxProfile.jointEvents = b2MaxFloat( m_maxProfile.jointEvents, p.jointEvents );
 		m_maxProfile.hitEvents = b2MaxFloat( m_maxProfile.hitEvents, p.hitEvents );
 		m_maxProfile.refit = b2MaxFloat( m_maxProfile.refit, p.refit );
 		m_maxProfile.bullets = b2MaxFloat( m_maxProfile.bullets, p.bullets );
@@ -531,6 +532,7 @@ void Sample::Step(  )
 		m_totalProfile.storeImpulses += p.storeImpulses;
 		m_totalProfile.transforms += p.transforms;
 		m_totalProfile.splitIslands += p.splitIslands;
+		m_totalProfile.jointEvents += p.jointEvents;
 		m_totalProfile.hitEvents += p.hitEvents;
 		m_totalProfile.refit += p.refit;
 		m_totalProfile.bullets += p.bullets;
@@ -563,6 +565,7 @@ void Sample::Step(  )
 			aveProfile.storeImpulses = scale * m_totalProfile.storeImpulses;
 			aveProfile.transforms = scale * m_totalProfile.transforms;
 			aveProfile.splitIslands = scale * m_totalProfile.splitIslands;
+			aveProfile.jointEvents = scale * m_totalProfile.jointEvents;
 			aveProfile.hitEvents = scale * m_totalProfile.hitEvents;
 			aveProfile.refit = scale * m_totalProfile.refit;
 			aveProfile.bullets = scale * m_totalProfile.bullets;
@@ -600,6 +603,8 @@ void Sample::Step(  )
 					  m_maxProfile.splitIslands );
 		DrawTextLine( "> update transforms [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.transforms, aveProfile.transforms,
 					  m_maxProfile.transforms );
+		DrawTextLine( "> joint events [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.jointEvents, aveProfile.jointEvents,
+					  m_maxProfile.jointEvents );
 		DrawTextLine( "> hit events [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.hitEvents, aveProfile.hitEvents,
 					  m_maxProfile.hitEvents );
 		DrawTextLine( "> refit BVH [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.refit, aveProfile.refit, m_maxProfile.refit );

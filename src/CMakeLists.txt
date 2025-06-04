@@ -40,6 +40,8 @@ set(BOX2D_SOURCE_FILES
 	motor_joint.c
 	mouse_joint.c
 	mover.c
+	physics_world.c
+	physics_world.h
 	prismatic_joint.c
 	revolute_joint.c
 	sensor.c
@@ -56,8 +58,6 @@ set(BOX2D_SOURCE_FILES
 	types.c
 	weld_joint.c
 	wheel_joint.c
-	world.c
-	world.h
 )
 
 set(BOX2D_API_FILES

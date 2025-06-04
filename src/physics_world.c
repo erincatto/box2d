@@ -5,7 +5,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include "world.h"
+#include "physics_world.h"
 
 #include "arena_allocator.h"
 #include "array.h"
@@ -181,6 +181,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->contactEndEvents[0] = b2ContactEndTouchEventArray_Create( 4 );
 	world->contactEndEvents[1] = b2ContactEndTouchEventArray_Create( 4 );
 	world->contactHitEvents = b2ContactHitEventArray_Create( 4 );
+	world->jointEvents = b2JointEventArray_Create( 4 );
 	world->endEventArrayIndex = 0;
 
 	world->stepIndex = 0;
@@ -245,6 +246,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	for ( int i = 0; i < world->workerCount; ++i )
 	{
 		world->taskContexts.data[i].contactStateBitSet = b2CreateBitSet( 1024 );
+		world->taskContexts.data[i].jointStateBitSet = b2CreateBitSet( 1024 );
 		world->taskContexts.data[i].enlargedSimBitSet = b2CreateBitSet( 256 );
 		world->taskContexts.data[i].awakeIslandBitSet = b2CreateBitSet( 256 );
 
@@ -272,6 +274,7 @@ void b2DestroyWorld( b2WorldId worldId )
 	for ( int i = 0; i < world->workerCount; ++i )
 	{
 		b2DestroyBitSet( &world->taskContexts.data[i].contactStateBitSet );
+		b2DestroyBitSet( &world->taskContexts.data[i].jointStateBitSet );
 		b2DestroyBitSet( &world->taskContexts.data[i].enlargedSimBitSet );
 		b2DestroyBitSet( &world->taskContexts.data[i].awakeIslandBitSet );
 
@@ -289,6 +292,7 @@ void b2DestroyWorld( b2WorldId worldId )
 	b2ContactEndTouchEventArray_Destroy( world->contactEndEvents + 0 );
 	b2ContactEndTouchEventArray_Destroy( world->contactEndEvents + 1 );
 	b2ContactHitEventArray_Destroy( &world->contactHitEvents );
+	b2JointEventArray_Destroy( &world->jointEvents );
 
 	int chainCapacity = world->chainShapes.count;
 	for ( int i = 0; i < chainCapacity; ++i )
@@ -710,6 +714,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	b2SensorBeginTouchEventArray_Clear( &world->sensorBeginEvents );
 	b2ContactBeginTouchEventArray_Clear( &world->contactBeginEvents );
 	b2ContactHitEventArray_Clear( &world->contactHitEvents );
+	b2JointEventArray_Clear( &world->jointEvents );
 
 	world->profile = (b2Profile){ 0 };
 
@@ -1551,6 +1556,20 @@ b2ContactEvents b2World_GetContactEvents( b2WorldId worldId )
 		.hitCount = hitCount,
 	};
 
+	return events;
+}
+
+b2JointEvents b2World_GetJointEvents(b2WorldId worldId)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return (b2JointEvents){ 0 };
+	}
+
+	int count = world->jointEvents.count;
+	b2JointEvents events = { world->jointEvents.data, count };
 	return events;
 }
 

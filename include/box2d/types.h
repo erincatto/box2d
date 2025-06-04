@@ -482,6 +482,7 @@ typedef struct b2Profile
 	float storeImpulses;
 	float splitIslands;
 	float transforms;
+	float jointEvents;
 	float hitEvents;
 	float refit;
 	float bullets;
@@ -523,6 +524,31 @@ typedef enum b2JointType
 	b2_wheelJoint,
 } b2JointType;
 
+typedef struct b2JointDef
+{
+	/// User data pointer
+	void* userData;
+
+	/// The first attached body
+	b2BodyId bodyIdA;
+
+	/// The second attached body
+	b2BodyId bodyIdB;
+
+	/// Force threshold for joint events
+	float forceThreshold;
+
+	/// Torque threshold for joint events
+	float torqueThreshold;
+
+	/// Debug draw size
+	float drawSize;
+
+	/// Set this flag to true if the attached bodies should collide
+	bool collideConnected;
+
+} b2JointDef;
+
 /// Distance joint definition
 ///
 /// This requires defining an anchor point on both
@@ -532,11 +558,8 @@ typedef enum b2JointType
 /// @ingroup distance_joint
 typedef struct b2DistanceJointDef
 {
-	/// The first attached body
-	b2BodyId bodyIdA;
-
-	/// The second attached body
-	b2BodyId bodyIdB;
+	/// Base joint definition
+	b2JointDef base;
 
 	/// The local anchor point relative to bodyA's origin
 	b2Vec2 localAnchorA;
@@ -575,12 +598,6 @@ typedef struct b2DistanceJointDef
 	/// The desired motor speed, usually in meters per second
 	float motorSpeed;
 
-	/// Set this flag to true if the attached bodies should collide
-	bool collideConnected;
-
-	/// User data pointer
-	void* userData;
-
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
 } b2DistanceJointDef;
@@ -595,11 +612,8 @@ B2_API b2DistanceJointDef b2DefaultDistanceJointDef( void );
 /// @ingroup motor_joint
 typedef struct b2MotorJointDef
 {
-	/// The first attached body
-	b2BodyId bodyIdA;
-
-	/// The second attached body
-	b2BodyId bodyIdB;
+	/// Base joint definition
+	b2JointDef base;
 
 	/// Position of bodyB minus the position of bodyA, in bodyA's frame
 	b2Vec2 linearOffset;
@@ -616,12 +630,6 @@ typedef struct b2MotorJointDef
 	/// Position correction factor in the range [0,1]
 	float correctionFactor;
 
-	/// Set this flag to true if the attached bodies should collide
-	bool collideConnected;
-
-	/// User data pointer
-	void* userData;
-
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
 } b2MotorJointDef;
@@ -637,11 +645,8 @@ B2_API b2MotorJointDef b2DefaultMotorJointDef( void );
 /// @ingroup mouse_joint
 typedef struct b2MouseJointDef
 {
-	/// The first attached body. This is assumed to be static.
-	b2BodyId bodyIdA;
-
-	/// The second attached body.
-	b2BodyId bodyIdB;
+	/// Base joint definition
+	b2JointDef base;
 
 	/// The initial target point in world space
 	b2Vec2 target;
@@ -654,12 +659,6 @@ typedef struct b2MouseJointDef
 
 	/// Maximum force, typically in newtons
 	float maxForce;
-
-	/// Set this flag to true if the attached bodies should collide.
-	bool collideConnected;
-
-	/// User data pointer
-	void* userData;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
@@ -674,14 +673,8 @@ B2_API b2MouseJointDef b2DefaultMouseJointDef( void );
 /// @ingroup filter_joint
 typedef struct b2FilterJointDef
 {
-	/// The first attached body.
-	b2BodyId bodyIdA;
-
-	/// The second attached body.
-	b2BodyId bodyIdB;
-
-	/// User data pointer
-	void* userData;
+	/// Base joint definition
+	b2JointDef base;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
@@ -700,11 +693,8 @@ B2_API b2FilterJointDef b2DefaultFilterJointDef( void );
 /// @ingroup prismatic_joint
 typedef struct b2PrismaticJointDef
 {
-	/// The first attached body
-	b2BodyId bodyIdA;
-
-	/// The second attached body
-	b2BodyId bodyIdB;
+	/// Base joint definition
+	b2JointDef base;
 
 	/// The local anchor point relative to bodyA's origin
 	b2Vec2 localAnchorA;
@@ -749,12 +739,6 @@ typedef struct b2PrismaticJointDef
 	/// The desired motor speed, typically in meters per second
 	float motorSpeed;
 
-	/// Set this flag to true if the attached bodies should collide
-	bool collideConnected;
-
-	/// User data pointer
-	void* userData;
-
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
 } b2PrismaticJointDef;
@@ -777,11 +761,8 @@ B2_API b2PrismaticJointDef b2DefaultPrismaticJointDef( void );
 /// @ingroup revolute_joint
 typedef struct b2RevoluteJointDef
 {
-	/// The first attached body
-	b2BodyId bodyIdA;
-
-	/// The second attached body
-	b2BodyId bodyIdB;
+	/// Base joint definition
+	b2JointDef base;
 
 	/// The local anchor point relative to bodyA's origin
 	b2Vec2 localAnchorA;
@@ -824,15 +805,6 @@ typedef struct b2RevoluteJointDef
 	/// The desired motor speed in radians per second
 	float motorSpeed;
 
-	/// Scale the debug draw
-	float drawSize;
-
-	/// Set this flag to true if the attached bodies should collide
-	bool collideConnected;
-
-	/// User data pointer
-	void* userData;
-
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
 } b2RevoluteJointDef;
@@ -849,6 +821,9 @@ B2_API b2RevoluteJointDef b2DefaultRevoluteJointDef( void );
 /// @ingroup weld_joint
 typedef struct b2WeldJointDef
 {
+	/// Base joint definition
+	b2JointDef base;
+
 	/// The first attached body
 	b2BodyId bodyIdA;
 
@@ -900,6 +875,9 @@ B2_API b2WeldJointDef b2DefaultWeldJointDef( void );
 /// @ingroup wheel_joint
 typedef struct b2WheelJointDef
 {
+	/// Base joint definition
+	b2JointDef base;
+
 	/// The first attached body
 	b2BodyId bodyIdA;
 
@@ -1152,6 +1130,26 @@ typedef struct b2BodyEvents
 	/// Number of move events
 	int moveCount;
 } b2BodyEvents;
+
+/// Joint events report joints that are awake and have a force and/or torque exceeding the threshold
+/// The observed forces and torques are not returned for efficiency reasons.
+typedef struct b2JointEvent
+{
+	b2JointId jointId;
+	void* userData;
+} b2JointEvent;
+
+/// Joint events are buffered in the Box2D world and are available
+/// as event arrays after the time step is complete.
+/// Note: this data becomes invalid if joints are destroyed
+typedef struct b2JointEvents
+{
+	/// Array of events
+	b2JointEvent* jointEvents;
+
+	/// Number of events
+	int count;
+} b2JointEvents;
 
 /// The contact data for two shapes. By convention the manifold normal points
 /// from shape A to shape B.

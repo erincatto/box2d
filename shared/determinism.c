@@ -46,7 +46,7 @@ FallingHingeData CreateFallingHinges( b2WorldId worldId )
 	jointDef.dampingRatio = 0.5f;
 	jointDef.localAnchorA = (b2Vec2){ h, h };
 	jointDef.localAnchorB = (b2Vec2){ offset, -h };
-	jointDef.drawSize = 0.1f;
+	jointDef.base.drawSize = 0.1f;
 
 	int bodyIndex = 0;
 
@@ -75,8 +75,8 @@ FallingHingeData CreateFallingHinges( b2WorldId worldId )
 			}
 			else
 			{
-				jointDef.bodyIdA = prevBodyId;
-				jointDef.bodyIdB = bodyId;
+				jointDef.base.bodyIdA = prevBodyId;
+				jointDef.base.bodyIdB = bodyId;
 				b2CreateRevoluteJoint( worldId, &jointDef );
 				prevBodyId = b2_nullBodyId;
 			}

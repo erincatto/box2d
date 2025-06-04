@@ -50,6 +50,9 @@ B2_API b2SensorEvents b2World_GetSensorEvents( b2WorldId worldId );
 /// Get contact events for this current time step. The event data is transient. Do not store a reference to this data.
 B2_API b2ContactEvents b2World_GetContactEvents( b2WorldId worldId );
 
+/// Get the joint events for the current time step. The event data is transient. Do not store a reference to this data.
+B2_API b2JointEvents b2World_GetJointEvents( b2WorldId worldId );
+
 /// Overlap test for all shapes that *potentially* overlap the provided AABB
 B2_API b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter filter, b2OverlapResultFcn* fcn,
 										void* context );

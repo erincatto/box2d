@@ -9,7 +9,7 @@
 #include "contact.h"
 #include "joint.h"
 #include "solver_set.h"
-#include "world.h"
+#include "physics_world.h"
 
 #include <string.h>
 

@@ -120,8 +120,8 @@ public:
 				b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
 				b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
-				revoluteDef.bodyIdA = groundId;
-				revoluteDef.bodyIdB = bodyId;
+				revoluteDef.base.bodyIdA = groundId;
+				revoluteDef.base.bodyIdB = bodyId;
 				revoluteDef.localAnchorA = bodyDef.position;
 				revoluteDef.localAnchorB = b2Vec2_zero;
 				revoluteDef.maxMotorTorque = 200.0f;

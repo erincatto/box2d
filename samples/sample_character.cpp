@@ -154,20 +154,20 @@ public:
 				b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
 				b2Vec2 pivot = { xBase + 1.0f * i, yBase };
-				jointDef.bodyIdA = prevBodyId;
-				jointDef.bodyIdB = bodyId;
-				jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
-				jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+				jointDef.base.bodyIdA = prevBodyId;
+				jointDef.base.bodyIdB = bodyId;
+				jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+				jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 				b2CreateRevoluteJoint( m_worldId, &jointDef );
 
 				prevBodyId = bodyId;
 			}
 
 			b2Vec2 pivot = { xBase + 1.0f * count, yBase };
-			jointDef.bodyIdA = prevBodyId;
-			jointDef.bodyIdB = groundId2;
-			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
-			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+			jointDef.base.bodyIdA = prevBodyId;
+			jointDef.base.bodyIdB = groundId2;
+			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 
@@ -739,20 +739,20 @@ public:
 				b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
 				b2Vec2 pivot = { xBase + 1.0f * i, yBase };
-				jointDef.bodyIdA = prevBodyId;
-				jointDef.bodyIdB = bodyId;
-				jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
-				jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+				jointDef.base.bodyIdA = prevBodyId;
+				jointDef.base.bodyIdB = bodyId;
+				jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+				jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 				b2CreateRevoluteJoint( m_worldId, &jointDef );
 
 				prevBodyId = bodyId;
 			}
 
 			b2Vec2 pivot = { xBase + 1.0f * count, yBase };
-			jointDef.bodyIdA = prevBodyId;
-			jointDef.bodyIdB = groundId2;
-			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
-			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+			jointDef.base.bodyIdA = prevBodyId;
+			jointDef.base.bodyIdB = groundId2;
+			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 

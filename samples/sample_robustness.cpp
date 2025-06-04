@@ -465,16 +465,16 @@ public:
 		b2CreateCircleShape( m_wheelId2, &shapeDef, &circle );
 
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
-		jointDef.bodyIdA = m_chassisId;
-		jointDef.bodyIdB = m_wheelId1;
+		jointDef.base.bodyIdA = m_chassisId;
+		jointDef.base.bodyIdB = m_wheelId1;
 		jointDef.localAnchorA = { -0.4f, -0.15f };
 		jointDef.localAnchorB = { 0.0f, 0.0f };
 
 		m_jointId1 = b2CreateRevoluteJoint( m_worldId, &jointDef );
 		b2Joint_SetConstraintTuning( m_jointId1, m_jointHertz, m_jointDampingRatio );
 
-		jointDef.bodyIdA = m_chassisId;
-		jointDef.bodyIdB = m_wheelId2;
+		jointDef.base.bodyIdA = m_chassisId;
+		jointDef.base.bodyIdB = m_wheelId2;
 		jointDef.localAnchorA = { 0.4f, -0.15f };
 		jointDef.localAnchorB = { 0.0f, 0.0f };
 

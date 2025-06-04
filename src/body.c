@@ -13,7 +13,7 @@
 #include "sensor.h"
 #include "shape.h"
 #include "solver_set.h"
-#include "world.h"
+#include "physics_world.h"
 
 #include "box2d/box2d.h"
 #include "box2d/id.h"

@@ -10,7 +10,7 @@
 #include "joint.h"
 #include "solver.h"
 #include "solver_set.h"
-#include "world.h"
+#include "physics_world.h"
 
 // needed for dll export
 #include "box2d/box2d.h"

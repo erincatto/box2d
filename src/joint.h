@@ -265,6 +265,9 @@ typedef struct b2JointSim
 
 	b2Softness constraintSoftness;
 
+	float forceThreshold;
+	float torqueThreshold;
+
 	union
 	{
 		b2DistanceJoint distanceJoint;
@@ -290,6 +293,13 @@ void b2SolveJoint( b2JointSim* joint, b2StepContext* context, bool useBias );
 void b2PrepareOverflowJoints( b2StepContext* context );
 void b2WarmStartOverflowJoints( b2StepContext* context );
 void b2SolveOverflowJoints( b2StepContext* context, bool useBias );
+
+float b2GetJointConstraintForceMagnitude( b2JointSim* jointSim, float invTimeStep );
+float b2GetJointConstraintTorqueMagnitude( b2JointSim* jointSim, float invTimeStep );
+
+void b2GetJointReaction( b2JointSim* sim, float invTimeStep, float* force, float* torque );
+b2Vec2 b2GetJointConstraintForce( b2World* world, b2Joint* joint );
+float b2GetJointConstraintTorque( b2World* world, b2Joint* joint );
 
 void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint );
 

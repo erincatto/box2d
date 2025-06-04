@@ -1605,7 +1605,7 @@ public:
 			b2CreatePolygonShape( rightFlipperId, &shapeDef, &box );
 
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
-			jointDef.bodyIdA = groundId;
+			jointDef.base.bodyIdA = groundId;
 			jointDef.localAnchorB = b2Vec2_zero;
 			jointDef.enableMotor = true;
 			jointDef.maxMotorTorque = 1000.0f;
@@ -1613,14 +1613,14 @@ public:
 
 			jointDef.motorSpeed = 0.0f;
 			jointDef.localAnchorA = p1;
-			jointDef.bodyIdB = leftFlipperId;
+			jointDef.base.bodyIdB = leftFlipperId;
 			jointDef.lowerAngle = -30.0f * B2_PI / 180.0f;
 			jointDef.upperAngle = 5.0f * B2_PI / 180.0f;
 			m_leftJointId = b2CreateRevoluteJoint( m_worldId, &jointDef );
 
 			jointDef.motorSpeed = 0.0f;
 			jointDef.localAnchorA = p2;
-			jointDef.bodyIdB = rightFlipperId;
+			jointDef.base.bodyIdB = rightFlipperId;
 			jointDef.lowerAngle = -5.0f * B2_PI / 180.0f;
 			jointDef.upperAngle = 30.0f * B2_PI / 180.0f;
 			m_rightJointId = b2CreateRevoluteJoint( m_worldId, &jointDef );
@@ -1642,8 +1642,8 @@ public:
 			b2CreatePolygonShape( bodyId, &shapeDef, &box2 );
 
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
-			jointDef.bodyIdA = groundId;
-			jointDef.bodyIdB = bodyId;
+			jointDef.base.bodyIdA = groundId;
+			jointDef.base.bodyIdB = bodyId;
 			jointDef.localAnchorA = bodyDef.position;
 			jointDef.localAnchorB = b2Vec2_zero;
 			jointDef.enableMotor = true;
@@ -1655,7 +1655,7 @@ public:
 			b2CreatePolygonShape( bodyId, &shapeDef, &box1 );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box2 );
 			jointDef.localAnchorA = bodyDef.position;
-			jointDef.bodyIdB = bodyId;
+			jointDef.base.bodyIdB = bodyId;
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 
