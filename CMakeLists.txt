@@ -18,9 +18,6 @@ message(STATUS "CMake C++ compiler: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "CMake system name: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "CMake host system processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 
-# static link
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
 if (MSVC OR APPLE)
 	option(BOX2D_SANITIZE "Enable sanitizers for some builds" OFF)
 	if(BOX2D_SANITIZE)
@@ -33,12 +30,6 @@ if (MSVC OR APPLE)
 		elseif(APPLE)
 			add_compile_options(-fsanitize=address -fsanitize-address-use-after-scope -fsanitize=undefined)
 			add_link_options(-fsanitize=address -fsanitize-address-use-after-scope -fsanitize=undefined)
-		endif()
-	else()
-		if(MSVC)
-			# enable hot reloading
-			add_compile_options("$<$<CONFIG:Debug>:/ZI>")
-			add_link_options("$<$<CONFIG:Debug>:/INCREMENTAL>")
 		endif()
 	endif()
 endif()
@@ -76,6 +67,12 @@ if(PROJECT_IS_TOP_LEVEL)
 	option(BOX2D_UNIT_TESTS "Build the Box2D unit tests" ON)
 	
 	if(BOX2D_UNIT_TESTS OR BOX2D_SAMPLES OR BOX2D_BENCHMARKS)
+
+		if(MSVC AND NOT BOX2D_SANITIZE)
+			# enable hot reloading
+			add_compile_options("$<$<CONFIG:Debug>:/ZI>")
+			add_link_options("$<$<CONFIG:Debug>:/INCREMENTAL>")
+		endif()
 
 		# Emscripten pthread support for enkiTS
 		if(EMSCRIPTEN)
