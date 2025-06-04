@@ -824,12 +824,6 @@ typedef struct b2WeldJointDef
 	/// Base joint definition
 	b2JointDef base;
 
-	/// The first attached body
-	b2BodyId bodyIdA;
-
-	/// The second attached body
-	b2BodyId bodyIdB;
-
 	/// The local anchor point relative to bodyA's origin
 	b2Vec2 localAnchorA;
 
@@ -851,12 +845,6 @@ typedef struct b2WeldJointDef
 
 	/// Linear damping ratio, non-dimensional. Use 1 for critical damping.
 	float angularDampingRatio;
-
-	/// Set this flag to true if the attached bodies should collide
-	bool collideConnected;
-
-	/// User data pointer
-	void* userData;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
@@ -919,12 +907,6 @@ typedef struct b2WheelJointDef
 
 	/// The desired motor speed in radians per second
 	float motorSpeed;
-
-	/// Set this flag to true if the attached bodies should collide
-	bool collideConnected;
-
-	/// User data pointer
-	void* userData;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;

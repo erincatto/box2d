@@ -1258,7 +1258,7 @@ public:
 				jointDef.linearDampingRatio = m_linearDampingRatio;
 				jointDef.angularHertz = m_angularHertz;
 				jointDef.angularDampingRatio = m_angularDampingRatio;
-				jointDef.collideConnected = m_collideConnected;
+				jointDef.base.collideConnected = m_collideConnected;
 				m_jointIds[i] = b2CreateWeldJoint( m_worldId, &jointDef );
 
 				prevBodyId = m_bodyIds[i];
@@ -1732,7 +1732,7 @@ public:
 			jointDef.angularDampingRatio = 0.5f;
 			jointDef.linearHertz = 2.0f;
 			jointDef.linearDampingRatio = 0.5f;
-			jointDef.collideConnected = true;
+			jointDef.base.collideConnected = true;
 			m_jointIds[index] = b2CreateWeldJoint( m_worldId, &jointDef );
 		}
 
@@ -1762,7 +1762,7 @@ public:
 			jointDef.enableMotor = true;
 			jointDef.maxMotorTorque = 10.0f;
 			jointDef.motorSpeed = 1.0f;
-			jointDef.collideConnected = true;
+			jointDef.base.collideConnected = true;
 			m_jointIds[index] = b2CreateWheelJoint( m_worldId, &jointDef );
 		}
 
@@ -1941,7 +1941,7 @@ public:
 			jointDef.base.bodyIdB = m_bodyIds[index];
 			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
 			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
-			jointDef.collideConnected = true;
+			jointDef.base.collideConnected = true;
 			m_jointIds[index] = b2CreateWeldJoint( m_worldId, &jointDef );
 		}
 
@@ -1971,7 +1971,7 @@ public:
 			jointDef.enableMotor = true;
 			jointDef.maxMotorTorque = 10.0f;
 			jointDef.motorSpeed = 1.0f;
-			jointDef.collideConnected = true;
+			jointDef.base.collideConnected = true;
 			m_jointIds[index] = b2CreateWheelJoint( m_worldId, &jointDef );
 		}
 
@@ -2684,7 +2684,7 @@ public:
 				wheelDef.localAnchorA = baseAnchor2;
 				wheelDef.localAnchorB = { 2.5f, 0.0f };
 				wheelDef.enableSpring = false;
-				wheelDef.collideConnected = true;
+				wheelDef.base.collideConnected = true;
 
 				b2CreateWheelJoint( m_worldId, &wheelDef );
 			}
@@ -2739,7 +2739,7 @@ public:
 		wheelDef.localAnchorA = { 2.5f, -0.4f };
 		wheelDef.localAnchorB = baseAnchor2;
 		wheelDef.enableSpring = false;
-		wheelDef.collideConnected = true;
+		wheelDef.base.collideConnected = true;
 		b2CreateWheelJoint( m_worldId, &wheelDef );
 
 		m_enableMotor = false;

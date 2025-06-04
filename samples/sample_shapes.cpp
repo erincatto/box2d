@@ -1693,7 +1693,7 @@ public:
 		weldDef.angularDampingRatio = 0.7f;
 		weldDef.linearHertz = 0.5f;
 		weldDef.linearDampingRatio = 0.7f;
-		weldDef.bodyIdA = groundId;
+		weldDef.base.bodyIdA = groundId;
 		weldDef.localAnchorB = b2Vec2_zero;
 
 		float r = 8.0f;
@@ -1707,7 +1707,7 @@ public:
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
 			weldDef.localAnchorA = bodyDef.position;
-			weldDef.bodyIdB = bodyId;
+			weldDef.base.bodyIdB = bodyId;
 			b2JointId jointId = b2CreateWeldJoint( m_worldId, &weldDef );
 			m_jointIds.push_back( jointId );
 		}

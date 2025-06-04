@@ -69,13 +69,13 @@ void Donut::Create( b2WorldId worldId, b2Vec2 position, float scale, int groupIn
 	b2BodyId prevBodyId = m_bodyIds[m_sides - 1];
 	for ( int i = 0; i < m_sides; ++i )
 	{
-		weldDef.bodyIdA = prevBodyId;
-		weldDef.bodyIdB = m_bodyIds[i];
+		weldDef.base.bodyIdA = prevBodyId;
+		weldDef.base.bodyIdB = m_bodyIds[i];
 		b2Rot rotA = b2Body_GetRotation( prevBodyId );
 		b2Rot rotB = b2Body_GetRotation( m_bodyIds[i] );
 		weldDef.referenceAngle = b2RelativeAngle( rotB, rotA );
 		m_jointIds[i] = b2CreateWeldJoint( worldId, &weldDef );
-		prevBodyId = weldDef.bodyIdB;
+		prevBodyId = weldDef.base.bodyIdB;
 	}
 
 	m_isSpawned = true;
