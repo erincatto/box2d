@@ -78,8 +78,8 @@ public:
 			b2Vec2 pivot = { -2.0f, 5.0f };
 			revoluteDef.base.bodyIdA = m_attachmentId;
 			revoluteDef.base.bodyIdB = m_platformId;
-			revoluteDef.localAnchorA = b2Body_GetLocalPoint( m_attachmentId, pivot );
-			revoluteDef.localAnchorB = b2Body_GetLocalPoint( m_platformId, pivot );
+			revoluteDef.base.localFrameA.p = b2Body_GetLocalPoint( m_attachmentId, pivot );
+			revoluteDef.base.localFrameB.p = b2Body_GetLocalPoint( m_platformId, pivot );
 			revoluteDef.maxMotorTorque = 50.0f;
 			revoluteDef.enableMotor = true;
 			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
@@ -87,8 +87,8 @@ public:
 			pivot = { 3.0f, 5.0f };
 			revoluteDef.base.bodyIdA = m_secondAttachmentId;
 			revoluteDef.base.bodyIdB = m_platformId;
-			revoluteDef.localAnchorA = b2Body_GetLocalPoint( m_secondAttachmentId, pivot );
-			revoluteDef.localAnchorB = b2Body_GetLocalPoint( m_platformId, pivot );
+			revoluteDef.base.localFrameA.p = b2Body_GetLocalPoint( m_secondAttachmentId, pivot );
+			revoluteDef.base.localFrameB.p = b2Body_GetLocalPoint( m_platformId, pivot );
 			revoluteDef.maxMotorTorque = 50.0f;
 			revoluteDef.enableMotor = true;
 			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
@@ -97,9 +97,8 @@ public:
 			b2Vec2 anchor = { 0.0f, 5.0f };
 			prismaticDef.base.bodyIdA = groundId;
 			prismaticDef.base.bodyIdB = m_platformId;
-			prismaticDef.localAnchorA = b2Body_GetLocalPoint( groundId, anchor );
-			prismaticDef.localAnchorB = b2Body_GetLocalPoint( m_platformId, anchor );
-			prismaticDef.localAxisA = { 1.0f, 0.0f };
+			prismaticDef.base.localFrameA.p = b2Body_GetLocalPoint( groundId, anchor );
+			prismaticDef.base.localFrameB.p = b2Body_GetLocalPoint( m_platformId, anchor );
 			prismaticDef.maxMotorForce = 1000.0f;
 			prismaticDef.motorSpeed = 0.0f;
 			prismaticDef.enableMotor = true;
@@ -508,8 +507,8 @@ public:
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_pendulumId;
-			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
-			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 

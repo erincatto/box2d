@@ -535,6 +535,12 @@ typedef struct b2JointDef
 	/// The second attached body
 	b2BodyId bodyIdB;
 
+	/// The first local joint frame
+	b2Transform localFrameA;
+
+	/// The second local joint frame
+	b2Transform localFrameB;
+
 	/// Force threshold for joint events
 	float forceThreshold;
 
@@ -560,12 +566,6 @@ typedef struct b2DistanceJointDef
 {
 	/// Base joint definition
 	b2JointDef base;
-
-	/// The local anchor point relative to bodyA's origin
-	b2Vec2 localAnchorA;
-
-	/// The local anchor point relative to bodyB's origin
-	b2Vec2 localAnchorB;
 
 	/// The rest length of this joint. Clamped to a stable minimum value.
 	float length;
@@ -615,12 +615,6 @@ typedef struct b2MotorJointDef
 	/// Base joint definition
 	b2JointDef base;
 
-	/// Position of bodyB minus the position of bodyA, in bodyA's frame
-	b2Vec2 linearOffset;
-
-	/// The bodyB angle minus bodyA angle in radians
-	float angularOffset;
-
 	/// The maximum motor force in newtons
 	float maxForce;
 
@@ -647,9 +641,6 @@ typedef struct b2MouseJointDef
 {
 	/// Base joint definition
 	b2JointDef base;
-
-	/// The initial target point in world space
-	b2Vec2 target;
 
 	/// Stiffness in hertz
 	float hertz;
@@ -695,18 +686,6 @@ typedef struct b2PrismaticJointDef
 {
 	/// Base joint definition
 	b2JointDef base;
-
-	/// The local anchor point relative to bodyA's origin
-	b2Vec2 localAnchorA;
-
-	/// The local anchor point relative to bodyB's origin
-	b2Vec2 localAnchorB;
-
-	/// The local translation unit axis in bodyA
-	b2Vec2 localAxisA;
-
-	/// The constrained angle between the bodies: bodyB_angle - bodyA_angle
-	float referenceAngle;
 
 	/// The target translation for the joint in meters. The spring-damper will drive
 	/// to this translation.
@@ -764,16 +743,6 @@ typedef struct b2RevoluteJointDef
 	/// Base joint definition
 	b2JointDef base;
 
-	/// The local anchor point relative to bodyA's origin
-	b2Vec2 localAnchorA;
-
-	/// The local anchor point relative to bodyB's origin
-	b2Vec2 localAnchorB;
-
-	/// The bodyB angle minus bodyA angle in the reference state (radians).
-	/// This defines the zero angle for the joint limit.
-	float referenceAngle;
-
 	/// The target angle for the joint in radians. The spring-damper will drive
 	/// to this angle.
 	float targetAngle;
@@ -824,16 +793,6 @@ typedef struct b2WeldJointDef
 	/// Base joint definition
 	b2JointDef base;
 
-	/// The local anchor point relative to bodyA's origin
-	b2Vec2 localAnchorA;
-
-	/// The local anchor point relative to bodyB's origin
-	b2Vec2 localAnchorB;
-
-	/// The bodyB angle minus bodyA angle in the reference state (radians)
-	/// todo maybe make this a b2Rot
-	float referenceAngle;
-
 	/// Linear stiffness expressed as Hertz (cycles per second). Use zero for maximum stiffness.
 	float linearHertz;
 
@@ -865,21 +824,6 @@ typedef struct b2WheelJointDef
 {
 	/// Base joint definition
 	b2JointDef base;
-
-	/// The first attached body
-	b2BodyId bodyIdA;
-
-	/// The second attached body
-	b2BodyId bodyIdB;
-
-	/// The local anchor point relative to bodyA's origin
-	b2Vec2 localAnchorA;
-
-	/// The local anchor point relative to bodyB's origin
-	b2Vec2 localAnchorB;
-
-	/// The local translation unit axis in bodyA
-	b2Vec2 localAxisA;
 
 	/// Enable a linear spring along the local axis
 	bool enableSpring;

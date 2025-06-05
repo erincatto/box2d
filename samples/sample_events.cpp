@@ -122,8 +122,8 @@ public:
 				b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
 				revoluteDef.base.bodyIdA = groundId;
 				revoluteDef.base.bodyIdB = bodyId;
-				revoluteDef.localAnchorA = bodyDef.position;
-				revoluteDef.localAnchorB = b2Vec2_zero;
+				revoluteDef.base.localFrameA.p = bodyDef.position;
+				revoluteDef.base.localFrameB.p = b2Vec2_zero;
 				revoluteDef.maxMotorTorque = 200.0f;
 				revoluteDef.motorSpeed = 2.0f * sign;
 				revoluteDef.enableMotor = true;
@@ -1889,8 +1889,8 @@ public:
 
 		int index = 0;
 
-		float forceThreshold = 10000.0f;
-		float torqueThreshold = 100.0f;
+		float forceThreshold = 20000.0f;
+		float torqueThreshold = 10000.0f;
 
 		// distance joint
 		{
@@ -1906,8 +1906,8 @@ public:
 			b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
-			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot1 );
-			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot2 );
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot1 );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot2 );
 			jointDef.length = length;
 			jointDef.base.forceThreshold = forceThreshold;
 			jointDef.base.torqueThreshold = torqueThreshold;
@@ -1930,7 +1930,7 @@ public:
 			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
-			jointDef.linearOffset = position;
+			jointDef.base.localFrameA.p = position;
 			jointDef.maxForce = 1000.0f;
 			jointDef.maxTorque = 20.0f;
 			jointDef.base.forceThreshold = forceThreshold;
@@ -1955,9 +1955,8 @@ public:
 			b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
-			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
-			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
-			jointDef.localAxisA = b2Body_GetLocalVector( jointDef.base.bodyIdA, { 1.0f, 0.0f } );
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 			jointDef.base.forceThreshold = forceThreshold;
 			jointDef.base.torqueThreshold = torqueThreshold;
 			jointDef.base.collideConnected = true;
@@ -1980,8 +1979,8 @@ public:
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
-			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
-			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 			jointDef.base.forceThreshold = forceThreshold;
 			jointDef.base.torqueThreshold = torqueThreshold;
 			jointDef.base.collideConnected = true;
@@ -2004,8 +2003,8 @@ public:
 			b2WeldJointDef jointDef = b2DefaultWeldJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
-			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
-			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 			jointDef.angularHertz = 2.0f;
 			jointDef.angularDampingRatio = 0.5f;
 			jointDef.linearHertz = 2.0f;
@@ -2032,9 +2031,8 @@ public:
 			b2WheelJointDef jointDef = b2DefaultWheelJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
-			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
-			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
-			jointDef.localAxisA = b2Body_GetLocalVector( jointDef.base.bodyIdA, { 1.0f, 0.0f } );
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 			jointDef.hertz = 1.0f;
 			jointDef.dampingRatio = 0.7f;
 			jointDef.lowerTranslation = -1.0f;

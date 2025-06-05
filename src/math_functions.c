@@ -52,6 +52,16 @@ bool b2IsValidRotation( b2Rot q )
 	return b2IsNormalizedRot( q );
 }
 
+bool b2IsValidTransform(b2Transform t)
+{
+	if (b2IsValidVec2(t.p) == false)
+	{
+		return false;
+	}
+
+	return b2IsValidRotation( t.q );
+}
+
 bool b2IsValidPlane( b2Plane a )
 {
 	return b2IsValidVec2( a.normal ) && b2IsNormalized( a.normal ) && b2IsValidFloat( a.offset );

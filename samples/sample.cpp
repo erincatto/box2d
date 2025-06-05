@@ -332,8 +332,9 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 			b2MouseJointDef jointDef = b2DefaultMouseJointDef();
 			jointDef.base.bodyIdA = m_groundBodyId;
 			jointDef.base.bodyIdB = queryContext.bodyId;
-			jointDef.target = p;
-			jointDef.hertz = 10.0f;
+			jointDef.base.localFrameA.p = p;
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( queryContext.bodyId, p );
+			jointDef.hertz = 7.5f;
 			jointDef.dampingRatio = 0.7f;
 			jointDef.maxForce = 1000.0f * b2Body_GetMass( queryContext.bodyId ) * b2Length(b2World_GetGravity(m_worldId));
 			m_mouseJointId = b2CreateMouseJoint( m_worldId, &jointDef );
@@ -371,7 +372,8 @@ void Sample::MouseMove( b2Vec2 p )
 
 	if ( B2_IS_NON_NULL( m_mouseJointId ) )
 	{
-		b2MouseJoint_SetTarget( m_mouseJointId, p );
+		b2Transform localFrameA = { p, b2Rot_identity };
+		b2Joint_SetLocalFrameA( m_mouseJointId, localFrameA );
 		b2BodyId bodyIdB = b2Joint_GetBodyB( m_mouseJointId );
 		b2Body_SetAwake( bodyIdB, true );
 	}

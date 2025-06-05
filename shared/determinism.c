@@ -44,8 +44,8 @@ FallingHingeData CreateFallingHinges( b2WorldId worldId )
 	jointDef.enableSpring = true;
 	jointDef.hertz = 0.5f;
 	jointDef.dampingRatio = 0.5f;
-	jointDef.localAnchorA = (b2Vec2){ h, h };
-	jointDef.localAnchorB = (b2Vec2){ offset, -h };
+	jointDef.base.localFrameA.p = (b2Vec2){ h, h };
+	jointDef.base.localFrameB.p = (b2Vec2){ offset, -h };
 	jointDef.base.drawSize = 0.1f;
 
 	int bodyIndex = 0;

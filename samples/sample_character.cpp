@@ -156,8 +156,8 @@ public:
 				b2Vec2 pivot = { xBase + 1.0f * i, yBase };
 				jointDef.base.bodyIdA = prevBodyId;
 				jointDef.base.bodyIdB = bodyId;
-				jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
-				jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+				jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+				jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 				b2CreateRevoluteJoint( m_worldId, &jointDef );
 
 				prevBodyId = bodyId;
@@ -166,8 +166,8 @@ public:
 			b2Vec2 pivot = { xBase + 1.0f * count, yBase };
 			jointDef.base.bodyIdA = prevBodyId;
 			jointDef.base.bodyIdB = groundId2;
-			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
-			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 
@@ -741,8 +741,8 @@ public:
 				b2Vec2 pivot = { xBase + 1.0f * i, yBase };
 				jointDef.base.bodyIdA = prevBodyId;
 				jointDef.base.bodyIdB = bodyId;
-				jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
-				jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+				jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+				jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 				b2CreateRevoluteJoint( m_worldId, &jointDef );
 
 				prevBodyId = bodyId;
@@ -751,8 +751,8 @@ public:
 			b2Vec2 pivot = { xBase + 1.0f * count, yBase };
 			jointDef.base.bodyIdA = prevBodyId;
 			jointDef.base.bodyIdB = groundId2;
-			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
-			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 

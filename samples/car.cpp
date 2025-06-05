@@ -78,9 +78,9 @@ void Car::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz, f
 
 	jointDef.base.bodyIdA = m_chassisId;
 	jointDef.base.bodyIdB = m_rearWheelId;
-	jointDef.localAxisA = b2Body_GetLocalVector( jointDef.base.bodyIdA, axis );
-	jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
-	jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+	jointDef.base.localFrameA.q = b2MakeRot( 0.5f * B2_PI );
+	jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+	jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 	jointDef.motorSpeed = 0.0f;
 	jointDef.maxMotorTorque = torque;
 	jointDef.enableMotor = true;
@@ -94,9 +94,9 @@ void Car::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz, f
 	pivot = b2Body_GetPosition( m_frontWheelId );
 	jointDef.base.bodyIdA = m_chassisId;
 	jointDef.base.bodyIdB = m_frontWheelId;
-	jointDef.localAxisA = b2Body_GetLocalVector( jointDef.base.bodyIdA, axis );
-	jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
-	jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+	jointDef.base.localFrameA.q = b2MakeRot( 0.5f * B2_PI );
+	jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+	jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 	jointDef.motorSpeed = 0.0f;
 	jointDef.maxMotorTorque = torque;
 	jointDef.enableMotor = true;
@@ -227,9 +227,9 @@ void Truck::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz,
 
 	jointDef.base.bodyIdA = m_chassisId;
 	jointDef.base.bodyIdB = m_rearWheelId;
-	jointDef.localAxisA = b2Body_GetLocalVector( jointDef.base.bodyIdA, axis );
-	jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
-	jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+	jointDef.base.localFrameA.q = b2MakeRot( 0.5f * B2_PI );
+	jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+	jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 	jointDef.motorSpeed = 0.0f;
 	jointDef.maxMotorTorque = torque;
 	jointDef.enableMotor = true;
@@ -243,9 +243,9 @@ void Truck::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz,
 	pivot = b2Body_GetPosition( m_frontWheelId );
 	jointDef.base.bodyIdA = m_chassisId;
 	jointDef.base.bodyIdB = m_frontWheelId;
-	jointDef.localAxisA = b2Body_GetLocalVector( jointDef.base.bodyIdA, axis );
-	jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
-	jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+	jointDef.base.localFrameA.q = b2MakeRot( 0.5f * B2_PI );
+	jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+	jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 	jointDef.motorSpeed = 0.0f;
 	jointDef.maxMotorTorque = torque;
 	jointDef.enableMotor = true;

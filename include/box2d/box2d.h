@@ -748,29 +748,17 @@ B2_API b2BodyId b2Joint_GetBodyB( b2JointId jointId );
 /// Get the world that owns this joint
 B2_API b2WorldId b2Joint_GetWorld( b2JointId jointId );
 
-/// Set the local anchor on bodyA
-B2_API void b2Joint_SetLocalAnchorA( b2JointId jointId, b2Vec2 localAnchor );
+/// Set the local frame on bodyA
+B2_API void b2Joint_SetLocalFrameA( b2JointId jointId, b2Transform localFrame );
 
-/// Get the local anchor on bodyA
-B2_API b2Vec2 b2Joint_GetLocalAnchorA( b2JointId jointId );
+/// Get the local frame on bodyA
+B2_API b2Transform b2Joint_GetLocalFrameA( b2JointId jointId );
 
-/// Set the local anchor on bodyB
-B2_API void b2Joint_SetLocalAnchorB( b2JointId jointId, b2Vec2 localAnchor );
+/// Set the local frame on bodyB
+B2_API void b2Joint_SetLocalFrameB( b2JointId jointId, b2Transform localFrame );
 
-/// Get the local anchor on bodyB
-B2_API b2Vec2 b2Joint_GetLocalAnchorB( b2JointId jointId );
-
-/// Get the joint reference angle in radians (revolute, prismatic, and weld)
-B2_API float b2Joint_GetReferenceAngle( b2JointId jointId );
-
-/// Set the joint reference angle in radians, must be in [-pi,pi]. (revolute, prismatic, and weld)
-B2_API void b2Joint_SetReferenceAngle( b2JointId jointId, float angleInRadians );
-
-/// Set the local axis on bodyA (prismatic and wheel)
-B2_API void b2Joint_SetLocalAxisA( b2JointId jointId, b2Vec2 localAxis );
-
-/// Get the local axis on bodyA (prismatic and wheel)
-B2_API b2Vec2 b2Joint_GetLocalAxisA( b2JointId jointId );
+/// Get the local frame on bodyB
+B2_API b2Transform b2Joint_GetLocalFrameB( b2JointId jointId );
 
 /// Toggle collision between connected bodies
 B2_API void b2Joint_SetCollideConnected( b2JointId jointId, bool shouldCollide );
@@ -890,28 +878,14 @@ B2_API float b2DistanceJoint_GetMotorForce( b2JointId jointId );
  * @defgroup motor_joint Motor Joint
  * @brief Functions for the motor joint.
  *
- * The motor joint is used to drive the relative transform between two bodies. It takes
- * a relative position and rotation and applies the forces and torques needed to achieve
- * that relative transform over time.
+ * The motor joint is used to drive the relative transform between two bodies. The target
+ * is set by updating the local frames using b2Joint_SetLocalFrameA or b2Joint_SetLocalFrameB.
  * @{
  */
 
 /// Create a motor joint
 /// @see b2MotorJointDef for details
 B2_API b2JointId b2CreateMotorJoint( b2WorldId worldId, const b2MotorJointDef* def );
-
-/// Set the motor joint linear offset target
-B2_API void b2MotorJoint_SetLinearOffset( b2JointId jointId, b2Vec2 linearOffset );
-
-/// Get the motor joint linear offset target
-B2_API b2Vec2 b2MotorJoint_GetLinearOffset( b2JointId jointId );
-
-/// Set the motor joint angular offset target in radians. This angle will be unwound
-/// so the motor will drive along the shortest arc.
-B2_API void b2MotorJoint_SetAngularOffset( b2JointId jointId, float angularOffset );
-
-/// Get the motor joint angular offset target in radians
-B2_API float b2MotorJoint_GetAngularOffset( b2JointId jointId );
 
 /// Set the motor joint maximum force, usually in newtons
 B2_API void b2MotorJoint_SetMaxForce( b2JointId jointId, float maxForce );
@@ -945,12 +919,6 @@ B2_API float b2MotorJoint_GetCorrectionFactor( b2JointId jointId );
 /// Create a mouse joint
 /// @see b2MouseJointDef for details
 B2_API b2JointId b2CreateMouseJoint( b2WorldId worldId, const b2MouseJointDef* def );
-
-/// Set the mouse joint target
-B2_API void b2MouseJoint_SetTarget( b2JointId jointId, b2Vec2 target );
-
-/// Get the mouse joint target
-B2_API b2Vec2 b2MouseJoint_GetTarget( b2JointId jointId );
 
 /// Set the mouse joint spring stiffness in Hertz
 B2_API void b2MouseJoint_SetSpringHertz( b2JointId jointId, float hertz );

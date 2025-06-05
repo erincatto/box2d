@@ -90,8 +90,8 @@ float b2DistanceJoint_GetCurrentLength( b2JointId jointId )
 	b2Transform transformA = b2GetBodyTransform( world, base->bodyIdA );
 	b2Transform transformB = b2GetBodyTransform( world, base->bodyIdB );
 
-	b2Vec2 pA = b2TransformPoint( transformA, base->localOriginAnchorA );
-	b2Vec2 pB = b2TransformPoint( transformB, base->localOriginAnchorB );
+	b2Vec2 pA = b2TransformPoint( transformA, base->localFrameA.p );
+	b2Vec2 pB = b2TransformPoint( transformB, base->localFrameB.p );
 	b2Vec2 d = b2Sub( pB, pA );
 	float length = b2Length( d );
 	return length;
@@ -189,8 +189,8 @@ b2Vec2 b2GetDistanceJointForce( b2World* world, b2JointSim* base )
 	b2Transform transformA = b2GetBodyTransform( world, base->bodyIdA );
 	b2Transform transformB = b2GetBodyTransform( world, base->bodyIdB );
 
-	b2Vec2 pA = b2TransformPoint( transformA, base->localOriginAnchorA );
-	b2Vec2 pB = b2TransformPoint( transformB, base->localOriginAnchorB );
+	b2Vec2 pA = b2TransformPoint( transformA, base->localFrameA.p );
+	b2Vec2 pB = b2TransformPoint( transformB, base->localFrameB.p );
 	b2Vec2 d = b2Sub( pB, pA );
 	b2Vec2 axis = b2Normalize( d );
 	float force = ( joint->impulse + joint->lowerImpulse - joint->upperImpulse + joint->motorImpulse ) * world->inv_h;
@@ -251,8 +251,8 @@ void b2PrepareDistanceJoint( b2JointSim* base, b2StepContext* context )
 	joint->indexB = bodyB->setIndex == b2_awakeSet ? localIndexB : B2_NULL_INDEX;
 
 	// initial anchors in world space
-	joint->anchorA = b2RotateVector( bodySimA->transform.q, b2Sub( base->localOriginAnchorA, bodySimA->localCenter ) );
-	joint->anchorB = b2RotateVector( bodySimB->transform.q, b2Sub( base->localOriginAnchorB, bodySimB->localCenter ) );
+	joint->anchorA = b2RotateVector( bodySimA->transform.q, b2Sub( base->localFrameA.p, bodySimA->localCenter ) );
+	joint->anchorB = b2RotateVector( bodySimB->transform.q, b2Sub( base->localFrameB.p, bodySimB->localCenter ) );
 	joint->deltaCenter = b2Sub( bodySimB->center, bodySimA->center );
 
 	b2Vec2 rA = joint->anchorA;
@@ -515,8 +515,8 @@ void b2DrawDistanceJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 
 	b2DistanceJoint* joint = &base->distanceJoint;
 
-	b2Vec2 pA = b2TransformPoint( transformA, base->localOriginAnchorA );
-	b2Vec2 pB = b2TransformPoint( transformB, base->localOriginAnchorB );
+	b2Vec2 pA = b2TransformPoint( transformA, base->localFrameA.p );
+	b2Vec2 pB = b2TransformPoint( transformB, base->localFrameB.p );
 
 	b2Vec2 axis = b2Normalize( b2Sub( pB, pA ) );
 

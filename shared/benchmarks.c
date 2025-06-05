@@ -63,8 +63,8 @@ void CreateJointGrid( b2WorldId worldId )
 			{
 				jointDef.base.bodyIdA = bodies[index - 1];
 				jointDef.base.bodyIdB = body;
-				jointDef.localAnchorA = ( b2Vec2 ){ 0.0f, -0.5f };
-				jointDef.localAnchorB = ( b2Vec2 ){ 0.0f, 0.5f };
+				jointDef.base.localFrameA.p = ( b2Vec2 ){ 0.0f, -0.5f };
+				jointDef.base.localFrameB.p = ( b2Vec2 ){ 0.0f, 0.5f };
 				b2CreateRevoluteJoint( worldId, &jointDef );
 			}
 
@@ -72,8 +72,8 @@ void CreateJointGrid( b2WorldId worldId )
 			{
 				jointDef.base.bodyIdA = bodies[index - N];
 				jointDef.base.bodyIdB = body;
-				jointDef.localAnchorA = ( b2Vec2 ){ 0.5f, 0.0f };
-				jointDef.localAnchorB = ( b2Vec2 ){ -0.5f, 0.0f };
+				jointDef.base.localFrameA.p = ( b2Vec2 ){ 0.5f, 0.0f };
+				jointDef.base.localFrameB.p = ( b2Vec2 ){ -0.5f, 0.0f };
 				b2CreateRevoluteJoint( worldId, &jointDef );
 			}
 
@@ -387,7 +387,7 @@ void CreateSpinner( b2WorldId worldId )
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 		jointDef.base.bodyIdA = groundId;
 		jointDef.base.bodyIdB = spinnerId;
-		jointDef.localAnchorA = bodyDef.position;
+		jointDef.base.localFrameA.p = bodyDef.position;
 		jointDef.enableMotor = true;
 		jointDef.motorSpeed = motorSpeed;
 		jointDef.maxMotorTorque = maxMotorTorque;
@@ -520,9 +520,8 @@ void CreateTumbler( b2WorldId worldId )
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 		jointDef.base.bodyIdA = groundId;
 		jointDef.base.bodyIdB = bodyId;
-		jointDef.localAnchorA = ( b2Vec2 ){ 0.0f, 10.0f };
-		jointDef.localAnchorB = ( b2Vec2 ){ 0.0f, 0.0f };
-		jointDef.referenceAngle = 0.0f;
+		jointDef.base.localFrameA.p = ( b2Vec2 ){ 0.0f, 10.0f };
+		jointDef.base.localFrameB.p = ( b2Vec2 ){ 0.0f, 0.0f };
 		jointDef.motorSpeed = ( B2_PI / 180.0f ) * motorSpeed;
 		jointDef.maxMotorTorque = 1e8f;
 		jointDef.enableMotor = true;
