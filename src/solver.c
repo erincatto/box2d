@@ -184,8 +184,11 @@ static void b2SolveJointsTask( int startIndex, int endIndex, b2StepContext* cont
 		{
 			float force, torque;
 			b2GetJointReaction( joint, context->inv_h, &force, &torque );
-			if (force > joint->forceThreshold || torque > joint->torqueThreshold)
+
+			// Check thresholds. A zero threshold means all awake joints get reported.
+			if (force >= joint->forceThreshold || torque >= joint->torqueThreshold)
 			{
+				// Flag this joint for processing.
 				b2SetBit( jointStateBitSet, joint->jointId );
 			}
 		}
