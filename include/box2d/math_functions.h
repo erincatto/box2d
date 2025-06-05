@@ -376,7 +376,7 @@ B2_INLINE b2Rot b2MakeRot( float radians )
 	return B2_LITERAL( b2Rot ){ cs.cosine, cs.sine };
 }
 
-/// Make a rotation using an unit vector
+/// Make a rotation using a unit vector
 B2_INLINE b2Rot b2MakeRotFromUnitVector( b2Vec2 unitVector )
 {
 	B2_ASSERT( b2IsNormalized( unitVector ) );
