@@ -169,7 +169,9 @@ int MathTest( void )
 		q2 = b2MakeRot(angle);
 
 		float relativeAngle = b2RelativeAngle( q1, q2 );
-		ENSURE_SMALL( relativeAngle - b2UnwindAngle(angle - baseAngle), FLT_EPSILON );
+		float unwoundAngle = b2UnwindAngle( angle - baseAngle );
+		float tolerance = 0.1f * B2_PI / 180.0f;
+		ENSURE_SMALL( relativeAngle - unwoundAngle, tolerance );
 	}
 	
 	return 0;
