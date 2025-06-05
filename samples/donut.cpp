@@ -63,19 +63,20 @@ void Donut::Create( b2WorldId worldId, b2Vec2 position, float scale, int groupIn
 	b2WeldJointDef weldDef = b2DefaultWeldJointDef();
 	weldDef.angularHertz = 5.0f;
 	weldDef.angularDampingRatio = 0.0f;
-	weldDef.localAnchorA = { 0.0f, 0.5f * length };
-	weldDef.localAnchorB = { 0.0f, -0.5f * length };
+	weldDef.base.localFrameA.p = { 0.0f, 0.5f * length };
+	weldDef.base.localFrameB.p = { 0.0f, -0.5f * length };
+	weldDef.base.drawSize = 0.5f * scale;
 
 	b2BodyId prevBodyId = m_bodyIds[m_sides - 1];
 	for ( int i = 0; i < m_sides; ++i )
 	{
-		weldDef.bodyIdA = prevBodyId;
-		weldDef.bodyIdB = m_bodyIds[i];
-		b2Rot rotA = b2Body_GetRotation( prevBodyId );
-		b2Rot rotB = b2Body_GetRotation( m_bodyIds[i] );
-		weldDef.referenceAngle = b2RelativeAngle( rotB, rotA );
+		weldDef.base.bodyIdA = prevBodyId;
+		weldDef.base.bodyIdB = m_bodyIds[i];
+		b2Rot qA = b2Body_GetRotation( prevBodyId );
+		b2Rot qB = b2Body_GetRotation( m_bodyIds[i] );
+		weldDef.base.localFrameA.q = b2InvMulRot( qA, qB );
 		m_jointIds[i] = b2CreateWeldJoint( worldId, &weldDef );
-		prevBodyId = weldDef.bodyIdB;
+		prevBodyId = weldDef.base.bodyIdB;
 	}
 
 	m_isSpawned = true;

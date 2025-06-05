@@ -76,30 +76,29 @@ public:
 
 			b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
 			b2Vec2 pivot = { -2.0f, 5.0f };
-			revoluteDef.bodyIdA = m_attachmentId;
-			revoluteDef.bodyIdB = m_platformId;
-			revoluteDef.localAnchorA = b2Body_GetLocalPoint( m_attachmentId, pivot );
-			revoluteDef.localAnchorB = b2Body_GetLocalPoint( m_platformId, pivot );
+			revoluteDef.base.bodyIdA = m_attachmentId;
+			revoluteDef.base.bodyIdB = m_platformId;
+			revoluteDef.base.localFrameA.p = b2Body_GetLocalPoint( m_attachmentId, pivot );
+			revoluteDef.base.localFrameB.p = b2Body_GetLocalPoint( m_platformId, pivot );
 			revoluteDef.maxMotorTorque = 50.0f;
 			revoluteDef.enableMotor = true;
 			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
 
 			pivot = { 3.0f, 5.0f };
-			revoluteDef.bodyIdA = m_secondAttachmentId;
-			revoluteDef.bodyIdB = m_platformId;
-			revoluteDef.localAnchorA = b2Body_GetLocalPoint( m_secondAttachmentId, pivot );
-			revoluteDef.localAnchorB = b2Body_GetLocalPoint( m_platformId, pivot );
+			revoluteDef.base.bodyIdA = m_secondAttachmentId;
+			revoluteDef.base.bodyIdB = m_platformId;
+			revoluteDef.base.localFrameA.p = b2Body_GetLocalPoint( m_secondAttachmentId, pivot );
+			revoluteDef.base.localFrameB.p = b2Body_GetLocalPoint( m_platformId, pivot );
 			revoluteDef.maxMotorTorque = 50.0f;
 			revoluteDef.enableMotor = true;
 			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
 
 			b2PrismaticJointDef prismaticDef = b2DefaultPrismaticJointDef();
 			b2Vec2 anchor = { 0.0f, 5.0f };
-			prismaticDef.bodyIdA = groundId;
-			prismaticDef.bodyIdB = m_platformId;
-			prismaticDef.localAnchorA = b2Body_GetLocalPoint( groundId, anchor );
-			prismaticDef.localAnchorB = b2Body_GetLocalPoint( m_platformId, anchor );
-			prismaticDef.localAxisA = { 1.0f, 0.0f };
+			prismaticDef.base.bodyIdA = groundId;
+			prismaticDef.base.bodyIdB = m_platformId;
+			prismaticDef.base.localFrameA.p = b2Body_GetLocalPoint( groundId, anchor );
+			prismaticDef.base.localFrameB.p = b2Body_GetLocalPoint( m_platformId, anchor );
 			prismaticDef.maxMotorForce = 1000.0f;
 			prismaticDef.motorSpeed = 0.0f;
 			prismaticDef.enableMotor = true;
@@ -506,10 +505,10 @@ public:
 
 			b2Vec2 pivot = bodyDef.position;
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
-			jointDef.bodyIdA = groundId;
-			jointDef.bodyIdB = m_pendulumId;
-			jointDef.localAnchorA = b2Body_GetLocalPoint( jointDef.bodyIdA, pivot );
-			jointDef.localAnchorB = b2Body_GetLocalPoint( jointDef.bodyIdB, pivot );
+			jointDef.base.bodyIdA = groundId;
+			jointDef.base.bodyIdB = m_pendulumId;
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 

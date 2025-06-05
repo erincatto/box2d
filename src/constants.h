@@ -50,7 +50,7 @@ extern float b2_lengthUnitsPerMeter;
 #define B2_JOINT_CONSTRAINT_HERTZ 60.0f
 
 // The default joint constraint damping ratio
-#define B2_JOINT_CONSTRAINT_DAMPING_RATIO 2.0f
+#define B2_JOINT_CONSTRAINT_DAMPING_RATIO 0.0f
 
 enum b2TreeNodeFlags
 {

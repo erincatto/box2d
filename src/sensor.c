@@ -8,7 +8,7 @@
 #include "contact.h"
 #include "ctz.h"
 #include "shape.h"
-#include "world.h"
+#include "physics_world.h"
 
 #include "box2d/collision.h"
 

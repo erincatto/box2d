@@ -23,8 +23,11 @@ enum b2SetType
 // Per thread task storage
 typedef struct b2TaskContext
 {
-	// These bits align with the b2ConstraintGraph::contactBlocks and signal a change in contact status
+	// These bits align with the contact id capacity and signal a change in contact status
 	b2BitSet contactStateBitSet;
+
+	// These bits align with the joint id capacity and signal a change in contact status
+	b2BitSet jointStateBitSet;
 
 	// Used to track bodies with shapes that have enlarged AABBs. This avoids having a bit array
 	// that is very large when there are many static shapes.
@@ -102,6 +105,7 @@ typedef struct b2World
 	b2BodyMoveEventArray bodyMoveEvents;
 	b2SensorBeginTouchEventArray sensorBeginEvents;
 	b2ContactBeginTouchEventArray contactBeginEvents;
+	b2JointEventArray jointEvents;
 
 	// End events are double buffered so that the user doesn't need to flush events
 	b2SensorEndTouchEventArray sensorEndEvents[2];
@@ -186,6 +190,7 @@ B2_ARRAY_INLINE( b2BodyMoveEvent, b2BodyMoveEvent )
 B2_ARRAY_INLINE( b2ContactBeginTouchEvent, b2ContactBeginTouchEvent )
 B2_ARRAY_INLINE( b2ContactEndTouchEvent, b2ContactEndTouchEvent )
 B2_ARRAY_INLINE( b2ContactHitEvent, b2ContactHitEvent )
+B2_ARRAY_INLINE( b2JointEvent, b2JointEvent )
 B2_ARRAY_INLINE( b2SensorBeginTouchEvent, b2SensorBeginTouchEvent )
 B2_ARRAY_INLINE( b2SensorEndTouchEvent, b2SensorEndTouchEvent )
 B2_ARRAY_INLINE( b2TaskContext, b2TaskContext )

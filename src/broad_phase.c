@@ -15,7 +15,7 @@
 #include "core.h"
 #include "shape.h"
 #include "arena_allocator.h"
-#include "world.h"
+#include "physics_world.h"
 
 #include <stdbool.h>
 #include <string.h>

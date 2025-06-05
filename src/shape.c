@@ -6,8 +6,8 @@
 #include "body.h"
 #include "broad_phase.h"
 #include "contact.h"
+#include "physics_world.h"
 #include "sensor.h"
-#include "world.h"
 
 // needed for dll export
 #include "box2d/box2d.h"

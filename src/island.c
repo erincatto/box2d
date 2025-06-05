@@ -8,7 +8,7 @@
 #include "core.h"
 #include "joint.h"
 #include "solver_set.h"
-#include "world.h"
+#include "physics_world.h"
 
 #include <stddef.h>
 

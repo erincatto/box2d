@@ -160,5 +160,19 @@ int MathTest( void )
 		//printf("angle = [%g %g %g]\n", alpha, alpha * 0.5f * B2_PI, angle);
 	}
 	
+	// Test relative angle
+	float baseAngle = 0.75f * B2_PI;
+	q1 = b2MakeRot(baseAngle);
+	for ( float t = -10.0f; t < 10.0f; t += 0.01f )
+	{
+		float angle = B2_PI * t;
+		q2 = b2MakeRot(angle);
+
+		float relativeAngle = b2RelativeAngle( q1, q2 );
+		float unwoundAngle = b2UnwindAngle( angle - baseAngle );
+		float tolerance = 0.1f * B2_PI / 180.0f;
+		ENSURE_SMALL( relativeAngle - unwoundAngle, tolerance );
+	}
+	
 	return 0;
 }

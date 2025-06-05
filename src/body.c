@@ -13,7 +13,7 @@
 #include "sensor.h"
 #include "shape.h"
 #include "solver_set.h"
-#include "world.h"
+#include "physics_world.h"
 
 #include "box2d/box2d.h"
 #include "box2d/id.h"
@@ -836,7 +836,7 @@ void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeS
 	{
 		b2Rot q1 = sim->transform.q;
 		b2Rot q2 = target.q;
-		float deltaAngle = b2RelativeAngle( q2, q1 );
+		float deltaAngle = b2RelativeAngle( q1, q2 );
 		angularVelocity = invTimeStep * deltaAngle;
 	}
 

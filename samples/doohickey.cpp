@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2022 Erin Catto
+// SPDX-FileCopyrightText: 2025 Erin Catto
 // SPDX-License-Identifier: MIT
 
 #include "doohickey.h"
@@ -53,28 +53,27 @@ void Doohickey::Spawn( b2WorldId worldId, b2Vec2 position, float scale )
 
 	b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
 
-	revoluteDef.bodyIdA = m_wheelId1;
-	revoluteDef.bodyIdB = m_barId1;
-	revoluteDef.localAnchorA = { 0.0f, 0.0f };
-	revoluteDef.localAnchorB = { -3.5f * scale, 0.0f };
+	revoluteDef.base.bodyIdA = m_wheelId1;
+	revoluteDef.base.bodyIdB = m_barId1;
+	revoluteDef.base.localFrameA.p = { 0.0f, 0.0f };
+	revoluteDef.base.localFrameB.p = { -3.5f * scale, 0.0f };
 	revoluteDef.enableMotor = true;
 	revoluteDef.maxMotorTorque = 2.0f * scale;
 	b2CreateRevoluteJoint( worldId, &revoluteDef );
 
-	revoluteDef.bodyIdA = m_wheelId2;
-	revoluteDef.bodyIdB = m_barId2;
-	revoluteDef.localAnchorA = { 0.0f, 0.0f };
-	revoluteDef.localAnchorB = { 3.5f * scale, 0.0f };
+	revoluteDef.base.bodyIdA = m_wheelId2;
+	revoluteDef.base.bodyIdB = m_barId2;
+	revoluteDef.base.localFrameA.p = { 0.0f, 0.0f };
+	revoluteDef.base.localFrameB.p = { 3.5f * scale, 0.0f };
 	revoluteDef.enableMotor = true;
 	revoluteDef.maxMotorTorque = 2.0f * scale;
 	b2CreateRevoluteJoint( worldId, &revoluteDef );
 
 	b2PrismaticJointDef prismaticDef = b2DefaultPrismaticJointDef();
-	prismaticDef.bodyIdA = m_barId1;
-	prismaticDef.bodyIdB = m_barId2;
-	prismaticDef.localAxisA = { 1.0f, 0.0f };
-	prismaticDef.localAnchorA = { 2.0f * scale, 0.0f };
-	prismaticDef.localAnchorB = { -2.0f * scale, 0.0f };
+	prismaticDef.base.bodyIdA = m_barId1;
+	prismaticDef.base.bodyIdB = m_barId2;
+	prismaticDef.base.localFrameA.p = { 2.0f * scale, 0.0f };
+	prismaticDef.base.localFrameB.p = { -2.0f * scale, 0.0f };
 	prismaticDef.lowerTranslation = -2.0f * scale;
 	prismaticDef.upperTranslation = 2.0f * scale;
 	prismaticDef.enableLimit = true;

@@ -120,10 +120,10 @@ public:
 				b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
 				b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
-				revoluteDef.bodyIdA = groundId;
-				revoluteDef.bodyIdB = bodyId;
-				revoluteDef.localAnchorA = bodyDef.position;
-				revoluteDef.localAnchorB = b2Vec2_zero;
+				revoluteDef.base.bodyIdA = groundId;
+				revoluteDef.base.bodyIdB = bodyId;
+				revoluteDef.base.localFrameA.p = bodyDef.position;
+				revoluteDef.base.localFrameB.p = b2Vec2_zero;
 				revoluteDef.maxMotorTorque = 200.0f;
 				revoluteDef.motorSpeed = 2.0f * sign;
 				revoluteDef.enableMotor = true;
@@ -1850,3 +1850,235 @@ public:
 };
 
 static int sampleSensorTypes = RegisterSample( "Events", "Sensor Types", SensorTypes::Create );
+
+// This sample shows how to break joints when the internal reaction force becomes large. Instead of polling, this uses events.
+class JointEvent : public Sample
+{
+public:
+	enum
+	{
+		e_count = 6
+	};
+
+	explicit JointEvent( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 8.0f };
+			m_context->camera.m_zoom = 25.0f * 0.7f;
+		}
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
+		b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
+		for ( int i = 0; i < e_count; ++i )
+		{
+			m_jointIds[i] = b2_nullJointId;
+		}
+
+		b2Vec2 position = { -12.5f, 10.0f };
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.enableSleep = false;
+
+		b2Polygon box = b2MakeBox( 1.0f, 1.0f );
+
+		int index = 0;
+
+		float forceThreshold = 20000.0f;
+		float torqueThreshold = 10000.0f;
+
+		// distance joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			float length = 2.0f;
+			b2Vec2 pivot1 = { position.x, position.y + 1.0f + length };
+			b2Vec2 pivot2 = { position.x, position.y + 1.0f };
+			b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
+			jointDef.base.bodyIdA = groundId;
+			jointDef.base.bodyIdB = bodyId;
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot1 );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot2 );
+			jointDef.length = length;
+			jointDef.base.forceThreshold = forceThreshold;
+			jointDef.base.torqueThreshold = torqueThreshold;
+			jointDef.base.collideConnected = true;
+			jointDef.base.userData = (void*)(intptr_t)index;
+			m_jointIds[index] = b2CreateDistanceJoint( m_worldId, &jointDef );
+		}
+
+		position.x += 5.0f;
+		++index;
+
+		// motor joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
+			jointDef.base.bodyIdA = groundId;
+			jointDef.base.bodyIdB = bodyId;
+			jointDef.base.localFrameA.p = position;
+			jointDef.maxForce = 1000.0f;
+			jointDef.maxTorque = 20.0f;
+			jointDef.base.forceThreshold = forceThreshold;
+			jointDef.base.torqueThreshold = torqueThreshold;
+			jointDef.base.collideConnected = true;
+			jointDef.base.userData = (void*)(intptr_t)index;
+			m_jointIds[index] = b2CreateMotorJoint( m_worldId, &jointDef );
+		}
+
+		position.x += 5.0f;
+		++index;
+
+		// prismatic joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			b2Vec2 pivot = { position.x - 1.0f, position.y };
+			b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
+			jointDef.base.bodyIdA = groundId;
+			jointDef.base.bodyIdB = bodyId;
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+			jointDef.base.forceThreshold = forceThreshold;
+			jointDef.base.torqueThreshold = torqueThreshold;
+			jointDef.base.collideConnected = true;
+			jointDef.base.userData = (void*)(intptr_t)index;
+			m_jointIds[index] = b2CreatePrismaticJoint( m_worldId, &jointDef );
+		}
+
+		position.x += 5.0f;
+		++index;
+
+		// revolute joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			b2Vec2 pivot = { position.x - 1.0f, position.y };
+			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+			jointDef.base.bodyIdA = groundId;
+			jointDef.base.bodyIdB = bodyId;
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+			jointDef.base.forceThreshold = forceThreshold;
+			jointDef.base.torqueThreshold = torqueThreshold;
+			jointDef.base.collideConnected = true;
+			jointDef.base.userData = (void*)(intptr_t)index;
+			m_jointIds[index] = b2CreateRevoluteJoint( m_worldId, &jointDef );
+		}
+
+		position.x += 5.0f;
+		++index;
+
+		// weld joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			b2Vec2 pivot = { position.x - 1.0f, position.y };
+			b2WeldJointDef jointDef = b2DefaultWeldJointDef();
+			jointDef.base.bodyIdA = groundId;
+			jointDef.base.bodyIdB = bodyId;
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+			jointDef.angularHertz = 2.0f;
+			jointDef.angularDampingRatio = 0.5f;
+			jointDef.linearHertz = 2.0f;
+			jointDef.linearDampingRatio = 0.5f;
+			jointDef.base.forceThreshold = forceThreshold;
+			jointDef.base.torqueThreshold = torqueThreshold;
+			jointDef.base.collideConnected = true;
+			jointDef.base.userData = (void*)(intptr_t)index;
+			m_jointIds[index] = b2CreateWeldJoint( m_worldId, &jointDef );
+		}
+
+		position.x += 5.0f;
+		++index;
+
+		// wheel joint
+		{
+			assert( index < e_count );
+
+			bodyDef.position = position;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			b2Vec2 pivot = { position.x - 1.0f, position.y };
+			b2WheelJointDef jointDef = b2DefaultWheelJointDef();
+			jointDef.base.bodyIdA = groundId;
+			jointDef.base.bodyIdB = bodyId;
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+			jointDef.hertz = 1.0f;
+			jointDef.dampingRatio = 0.7f;
+			jointDef.lowerTranslation = -1.0f;
+			jointDef.upperTranslation = 1.0f;
+			jointDef.enableLimit = true;
+			jointDef.enableMotor = true;
+			jointDef.maxMotorTorque = 10.0f;
+			jointDef.motorSpeed = 1.0f;
+			jointDef.base.forceThreshold = forceThreshold;
+			jointDef.base.torqueThreshold = torqueThreshold;
+			jointDef.base.collideConnected = true;
+			jointDef.base.userData = (void*)(intptr_t)index;
+			m_jointIds[index] = b2CreateWheelJoint( m_worldId, &jointDef );
+		}
+
+		position.x += 5.0f;
+		++index;
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		// Process joint events
+		b2JointEvents events = b2World_GetJointEvents( m_worldId );
+		for ( int i = 0; i < events.count; ++i )
+		{
+			// Destroy the joint if it is still valid
+			const b2JointEvent* event = events.jointEvents + i;
+
+			if (b2Joint_IsValid(event->jointId))
+			{
+				int index = (int)(intptr_t)event->userData;
+				assert( 0 <= index && index < e_count );
+				b2DestroyJoint( event->jointId );
+				m_jointIds[index] = b2_nullJointId;
+			}
+		}
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new JointEvent( context );
+	}
+
+	b2JointId m_jointIds[e_count];
+};
+
+static int sampleBreakableJoint = RegisterSample( "Events", "Joint", JointEvent::Create );

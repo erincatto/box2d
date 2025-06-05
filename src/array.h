@@ -168,6 +168,7 @@ B2_ARRAY_DECLARE( b2ContactSim, b2ContactSim );
 B2_ARRAY_DECLARE( b2Island, b2Island );
 B2_ARRAY_DECLARE( b2IslandSim, b2IslandSim );
 B2_ARRAY_DECLARE( b2Joint, b2Joint );
+B2_ARRAY_DECLARE( b2JointEvent, b2JointEvent );
 B2_ARRAY_DECLARE( b2JointSim, b2JointSim );
 B2_ARRAY_DECLARE( b2Sensor, b2Sensor );
 B2_ARRAY_DECLARE( b2SensorBeginTouchEvent, b2SensorBeginTouchEvent );
