@@ -959,8 +959,13 @@ typedef struct b2ContactBeginTouchEvent
 	/// Id of the second shape
 	b2ShapeId shapeIdB;
 
+	/// The transient contact id. This contact maybe destroyed automatically by Box2D when the world is modified or simulated.
+	/// Used b2Contact_IsValid before using this id.
+	b2ContactId contactId;
+
 	/// The initial contact manifold. This is recorded before the solver is called,
-	/// so all the impulses will be zero.
+	/// so all the impulses will be zero. You can use the contact id to access the manifold impulses
+	/// using b2Contact_GetManifold.
 	b2Manifold manifold;
 } b2ContactBeginTouchEvent;
 
@@ -979,6 +984,9 @@ typedef struct b2ContactEndTouchEvent
 	///	@warning this shape may have been destroyed
 	///	@see b2Shape_IsValid
 	b2ShapeId shapeIdB;
+
+	/// Id of the contact
+	b2ContactId contactId;
 } b2ContactEndTouchEvent;
 
 /// A hit touch event is generated when two shapes collide with a speed faster than the hit speed threshold.

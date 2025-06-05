@@ -72,6 +72,15 @@ typedef struct b2JointId
 	uint16_t generation;
 } b2JointId;
 
+/// Contact id references a contact instance. This should be treated as an opaque handled.
+typedef struct b2ContactId
+{
+	int32_t index1;
+	uint16_t world0;
+	int16_t padding;
+	uint32_t generation;
+} b2ContactId;
+
 /// Use these to make your identifiers null.
 /// You may also use zero initialization to get null.
 static const b2WorldId b2_nullWorldId = B2_ZERO_INIT;
@@ -79,6 +88,7 @@ static const b2BodyId b2_nullBodyId = B2_ZERO_INIT;
 static const b2ShapeId b2_nullShapeId = B2_ZERO_INIT;
 static const b2ChainId b2_nullChainId = B2_ZERO_INIT;
 static const b2JointId b2_nullJointId = B2_ZERO_INIT;
+static const b2ContactId b2_nullContactId = B2_ZERO_INIT;
 
 /// Macro to determine if any id is null.
 #define B2_IS_NULL( id ) ( id.index1 == 0 )
@@ -86,7 +96,7 @@ static const b2JointId b2_nullJointId = B2_ZERO_INIT;
 /// Macro to determine if any id is non-null.
 #define B2_IS_NON_NULL( id ) ( id.index1 != 0 )
 
-/// Compare two ids for equality. Doesn't work for b2WorldId.
+/// Compare two ids for equality. Doesn't work for b2WorldId. Don't mix types.
 #define B2_ID_EQUALS( id1, id2 ) ( id1.index1 == id2.index1 && id1.world0 == id2.world0 && id1.generation == id2.generation )
 
 /// Store a world id into a uint32_t.
@@ -151,6 +161,25 @@ B2_INLINE uint64_t b2StoreJointId( b2JointId id )
 B2_INLINE b2JointId b2LoadJointId( uint64_t x )
 {
 	b2JointId id = { (int32_t)( x >> 32 ), (uint16_t)( x >> 16 ), (uint16_t)( x ) };
+	return id;
+}
+
+/// Store a contact id into 16 bytes
+B2_INLINE void b2StoreContactId( b2ContactId id, uint32_t values[3] )
+{
+	values[0] = (uint32_t)id.index1;
+	values[1] = (uint32_t)id.world0;
+	values[2] = (uint32_t)id.generation;
+}
+
+/// Load a two uint64_t into a contact id.
+B2_INLINE b2ContactId b2LoadContactId( uint32_t values[3] )
+{
+	b2ContactId id;
+	id.index1 = (int32_t)values[0];
+	id.world0 = (uint16_t)values[1];
+	id.padding = 0;
+	id.generation = (uint32_t)values[2];
 	return id;
 }
 

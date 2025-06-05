@@ -1230,3 +1230,20 @@ B2_API float b2WheelJoint_GetMotorTorque( b2JointId jointId );
 /**@}*/
 
 /**@}*/
+
+/**
+ * @defgroup contact Contact
+ * Access to contacts
+ * @{
+ */
+
+/// Contact identifier validation. Provides validation for up to 2^32 allocations.
+B2_API bool b2Contact_IsValid( b2ContactId id );
+
+/// Get manifold for a contact. The manifold may have no points if the contact is not touching.
+B2_API b2Manifold b2Contact_GetManifold( b2ContactId contactId );
+
+/// Get the shapes associated with a contact.
+B2_API void b2Contact_GetShapeIds( b2ContactId contactId, b2ShapeId* shapeIdA, b2ShapeId* shapeIdB );
+
+/**@}*/
