@@ -619,6 +619,12 @@ static void b2Collide( b2StepContext* context )
 			const b2Shape* shapeB = shapes + contact->shapeIdB;
 			b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->generation };
 			b2ShapeId shapeIdB = { shapeB->id + 1, worldId, shapeB->generation };
+			b2ContactId contactFullId = {
+				.index1 = contactId + 1,
+				.world0 = worldId,
+				.padding = 0,
+				.generation = contact->generation,
+			};
 			uint32_t flags = contact->flags;
 			uint32_t simFlags = contactSim->simFlags;
 
@@ -635,7 +641,7 @@ static void b2Collide( b2StepContext* context )
 
 				if ( flags & b2_contactEnableContactEvents )
 				{
-					b2ContactBeginTouchEvent event = { shapeIdA, shapeIdB, contactSim->manifold };
+					b2ContactBeginTouchEvent event = { shapeIdA, shapeIdB, contactFullId, contactSim->manifold };
 					b2ContactBeginTouchEventArray_Push( &world->contactBeginEvents, event );
 				}
 
@@ -668,7 +674,7 @@ static void b2Collide( b2StepContext* context )
 
 				if ( contact->flags & b2_contactEnableContactEvents )
 				{
-					b2ContactEndTouchEvent event = { shapeIdA, shapeIdB };
+					b2ContactEndTouchEvent event = { shapeIdA, shapeIdB, contactFullId };
 					b2ContactEndTouchEventArray_Push( world->contactEndEvents + endEventArrayIndex, event );
 				}
 
@@ -1559,7 +1565,7 @@ b2ContactEvents b2World_GetContactEvents( b2WorldId worldId )
 	return events;
 }
 
-b2JointEvents b2World_GetJointEvents(b2WorldId worldId)
+b2JointEvents b2World_GetJointEvents( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
@@ -1724,6 +1730,38 @@ bool b2Joint_IsValid( b2JointId id )
 	B2_ASSERT( joint->jointId == jointId );
 
 	return id.generation == joint->generation;
+}
+
+bool b2Contact_IsValid( b2ContactId id )
+{
+	if ( B2_MAX_WORLDS <= id.world0 )
+	{
+		return false;
+	}
+
+	b2World* world = b2_worlds + id.world0;
+	if ( world->worldId != id.world0 )
+	{
+		// world is free
+		return false;
+	}
+
+	int contactId = id.index1 - 1;
+	if ( contactId < 0 || world->contacts.count <= contactId )
+	{
+		return false;
+	}
+
+	b2Contact* contact = world->contacts.data + contactId;
+	if ( contact->contactId == B2_NULL_INDEX )
+	{
+		// contact is free
+		return false;
+	}
+
+	B2_ASSERT( contact->contactId == contactId );
+
+	return id.generation == contact->generation;
 }
 
 void b2World_EnableSleeping( b2WorldId worldId, bool flag )
@@ -2279,11 +2317,11 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translatio
 static float b2RayCastClosestFcn( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
 {
 	// Ignore initial overlap
-	if (fraction == 0.0f)
+	if ( fraction == 0.0f )
 	{
 		return -1.0f;
 	}
-	
+
 	b2RayResult* rayResult = (b2RayResult*)context;
 	rayResult->shapeId = shapeId;
 	rayResult->point = point;
@@ -2367,7 +2405,7 @@ static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 }
 
 b2TreeStats b2World_CastShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2Vec2 translation, b2QueryFilter filter,
-								b2CastResultFcn* fcn, void* context )
+							   b2CastResultFcn* fcn, void* context )
 {
 	b2TreeStats treeStats = { 0 };
 
@@ -2518,7 +2556,7 @@ static bool TreeCollideCallback( int proxyId, uint64_t userData, void* context )
 	b2PlaneResult result = b2CollideMover( shape, transform, &worldContext->mover );
 
 	// todo handle deep overlap
-	if ( result.hit && b2IsNormalized(result.plane.normal) )
+	if ( result.hit && b2IsNormalized( result.plane.normal ) )
 	{
 		b2ShapeId id = { shape->id + 1, world->worldId, shape->generation };
 		return worldContext->fcn( id, &result, worldContext->userContext );

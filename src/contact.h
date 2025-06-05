@@ -67,6 +67,10 @@ typedef struct b2Contact
 	// b2ContactFlags
 	uint32_t flags;
 
+	// This is monotonically advanced when a contact is allocated in this slot
+	// Used to check for invalid b2ContactId
+	uint32_t generation;
+
 	bool isMarked;
 } b2Contact;
 
