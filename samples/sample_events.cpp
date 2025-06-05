@@ -806,7 +806,7 @@ public:
 	int m_overlapCount;
 };
 
-static int sampleCharacterSensor = RegisterSample( "Events", "Foot Sensor", FootSensor::Create );
+static int sampleFootSensor = RegisterSample( "Events", "Foot Sensor", FootSensor::Create );
 
 struct BodyUserData
 {
@@ -2082,3 +2082,106 @@ public:
 };
 
 static int sampleBreakableJoint = RegisterSample( "Events", "Joint", JointEvent::Create );
+
+class PersistentContact : public Sample
+{
+public:
+	explicit PersistentContact( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 6.0f };
+			m_context->camera.m_zoom = 7.5f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Vec2 points[22];
+			float x = 10.0f;
+			for ( int i = 0; i < 20; ++i )
+			{
+				points[i] = { x, 0.0f };
+				x -= 1.0f;
+			}
+
+			points[20] = { -9.0f, 10.0f };
+			points[21] = { 10.0f, 10.0f };
+
+			b2ChainDef chainDef = b2DefaultChainDef();
+			chainDef.points = points;
+			chainDef.count = 22;
+			chainDef.isLoop = true;
+
+			b2CreateChain( groundId, &chainDef );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { -8.0f, 1.0f };
+			bodyDef.linearVelocity = { 2.0f, 0.0f };
+
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.enableContactEvents = true;
+			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
+		}
+
+		m_contactId = b2_nullContactId;
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		b2ContactEvents events = b2World_GetContactEvents( m_worldId );
+		for ( int i = 0; i < events.beginCount && i < 1; ++i )
+		{
+			b2ContactBeginTouchEvent event = events.beginEvents[i];
+			m_contactId = events.beginEvents[i].contactId;
+		}
+
+		for ( int i = 0; i < events.endCount; ++i )
+		{
+			if ( B2_ID_EQUALS( m_contactId, events.endEvents[i].contactId ) )
+			{
+				m_contactId = b2_nullContactId;
+				break;
+			}
+		}
+
+		if (B2_IS_NON_NULL(m_contactId) && b2Contact_IsValid(m_contactId))
+		{
+			b2Manifold manifold = b2Contact_GetManifold( m_contactId );
+
+			for (int i = 0; i < manifold.pointCount; ++i)
+			{
+				const b2ManifoldPoint* manifoldPoint = manifold.points + i;
+				b2Vec2 p1 = manifoldPoint->point;
+				b2Vec2 p2 = p1 + manifoldPoint->totalNormalImpulse * manifold.normal;
+				m_draw->DrawSegment( p1, p2, b2_colorCrimson );
+				m_draw->DrawPoint( p1, 6.0f, b2_colorCrimson );
+				m_draw->DrawString( p1, "%.2f", manifoldPoint->totalNormalImpulse );
+			}
+		}
+		else
+		{
+			m_contactId = b2_nullContactId;
+		}
+
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new PersistentContact( context );
+	}
+
+	b2ContactId m_contactId;
+};
+
+static int samplePersistentContact = RegisterSample( "Events", "Persistent Contact", PersistentContact::Create );

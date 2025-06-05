@@ -1829,7 +1829,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		}
 
 		world->profile.jointEvents = b2GetMilliseconds( jointEventTicks );
-		b2TracyCZoneEnd( joint_event );
+		b2TracyCZoneEnd( joint_events );
 	}
 
 	// Report hit events
