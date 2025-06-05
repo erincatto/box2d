@@ -607,7 +607,7 @@ typedef struct b2DistanceJointDef
 B2_API b2DistanceJointDef b2DefaultDistanceJointDef( void );
 
 /// A motor joint is used to control the relative motion between two bodies
-///
+/// You may move local frame A to change the target transform.
 /// A typical usage is to control the movement of a dynamic body with respect to the ground.
 /// @ingroup motor_joint
 typedef struct b2MotorJointDef
@@ -633,7 +633,7 @@ typedef struct b2MotorJointDef
 B2_API b2MotorJointDef b2DefaultMotorJointDef( void );
 
 /// A mouse joint is used to make a point on a body track a specified world point.
-///
+/// You may move local frame A to change the target point.
 /// This a soft constraint and allows the constraint to stretch without
 /// applying huge forces. This also applies rotation constraint heuristic to improve control.
 /// @ingroup mouse_joint
@@ -677,10 +677,8 @@ B2_API b2FilterJointDef b2DefaultFilterJointDef( void );
 
 /// Prismatic joint definition
 ///
-/// This requires defining a line of motion using an axis and an anchor point.
-/// The definition uses local anchor points and a local axis so that the initial
-/// configuration can violate the constraint slightly. The joint translation is zero
-/// when the local anchor points coincide in world space.
+/// Body B may slide along the x-axis in local frame A. Body B cannot rotate relative to body A.
+/// The joint translation is zero when the local frame origins coincide in world space.
 /// @ingroup prismatic_joint
 typedef struct b2PrismaticJointDef
 {
@@ -733,8 +731,7 @@ B2_API b2PrismaticJointDef b2DefaultPrismaticJointDef( void );
 /// initial configuration can violate the constraint slightly. You also need to
 /// specify the initial relative angle for joint limits. This helps when saving
 /// and loading a game.
-/// The local anchor points are measured from the body's origin
-/// rather than the center of mass because:
+/// The local anchor points are measured from the body's origin rather than the center of mass because:
 /// 1. you might not know where the center of mass will be
 /// 2. if you add/remove shapes from a body and recompute the mass, the joints will be broken
 /// @ingroup revolute_joint
@@ -815,10 +812,8 @@ B2_API b2WeldJointDef b2DefaultWeldJointDef( void );
 
 /// Wheel joint definition
 ///
-/// This requires defining a line of motion using an axis and an anchor point.
-/// The definition uses local  anchor points and a local axis so that the initial
-/// configuration can violate the constraint slightly. The joint translation is zero
-/// when the local anchor points coincide in world space.
+/// Body B is a wheel that may rotate freely and slide along the local x-axis in frame A.
+/// The joint translation is zero when the local frame origins coincide in world space.
 /// @ingroup wheel_joint
 typedef struct b2WheelJointDef
 {
