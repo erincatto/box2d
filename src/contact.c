@@ -7,16 +7,17 @@
 #include "body.h"
 #include "core.h"
 #include "island.h"
-//#include "joint.h"
+// #include "joint.h"
 #include "physics_world.h"
 #include "shape.h"
 #include "solver_set.h"
 #include "table.h"
 
-#include "box2d/collision.h"
+// needed for dll export
+#include "box2d/box2d.h"
 
-//#include <float.h>
-//#include <math.h>
+// #include <float.h>
+// #include <math.h>
 #include <stddef.h>
 
 B2_ARRAY_SOURCE( b2Contact, b2Contact )
@@ -399,7 +400,19 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 		b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->generation };
 		b2ShapeId shapeIdB = { shapeB->id + 1, worldId, shapeB->generation };
 
-		b2ContactEndTouchEvent event = { shapeIdA, shapeIdB };
+		b2ContactId contactId = {
+			.index1 = contact->contactId + 1,
+			.world0 = world->worldId,
+			.padding = 0,
+			.generation = contact->generation,
+		};
+
+		b2ContactEndTouchEvent event = {
+			.shapeIdA = shapeIdA,
+			.shapeIdB = shapeIdB,
+			.contactId = contactId,
+		};
+
 		b2ContactEndTouchEventArray_Push( world->contactEndEvents + world->endEventArrayIndex, event );
 	}
 
