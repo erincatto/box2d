@@ -562,25 +562,28 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 		b2ShapeId shapeIdA = { shapeA->id + 1, world->worldId, shapeA->generation };
 		b2ShapeId shapeIdB = { shapeB->id + 1, world->worldId, shapeB->generation };
 
-		float bestSeparation = contactSim->manifold.points[0].separation;
-		b2Vec2 bestPoint = contactSim->manifold.points[0].point;
-		for ( int i = 1; i < contactSim->manifold.pointCount; ++i )
+		b2Manifold* manifold = &contactSim->manifold;
+		float bestSeparation = manifold->points[0].separation;
+		b2Vec2 bestPoint = manifold->points[0].point;
+
+		// Get deepest point
+		for ( int i = 1; i < manifold->pointCount; ++i )
 		{
-			float separation = contactSim->manifold.points[i].separation;
+			float separation = manifold->points[i].separation;
 			if ( separation < bestSeparation )
 			{
 				bestSeparation = separation;
-				bestPoint = contactSim->manifold.points[i].point;
+				bestPoint = manifold->points[i].point;
 			}
 		}
 
 		// this call assumes thread safety
-		touching = world->preSolveFcn( shapeIdA, shapeIdB, bestPoint, contactSim->manifold.normal, world->preSolveContext );
+		touching = world->preSolveFcn( shapeIdA, shapeIdB, bestPoint, manifold->normal, world->preSolveContext );
 		if ( touching == false )
 		{
 			// disable contact
 			pointCount = 0;
-			contactSim->manifold.pointCount = 0;
+			manifold->pointCount = 0;
 		}
 	}
 

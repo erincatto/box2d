@@ -257,7 +257,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 		return true;
 	}
 
-	// Skip sensors except if the body wants sensor sweeps
+	// Skip sensors except if the body wants sensor hits
 	bool isSensor = shape->sensorIndex != B2_NULL_INDEX;
 	if ( isSensor && fastBodySim->enableSensorHits == false )
 	{
@@ -364,13 +364,10 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	input.sweepB = continuousContext->sweep;
 	input.maxFraction = continuousContext->fraction;
 
-	float hitFraction = continuousContext->fraction;
-
-	bool didHit = false;
 	b2TOIOutput output = b2TimeOfImpact( &input );
 	if ( isSensor )
 	{
-		// Only accept a sensor hit sooner that is sooner than the current solid hit.
+		// Only accept a sensor hit that is sooner than the current solid hit.
 		if ( output.fraction <= continuousContext->fraction && continuousContext->sensorCount < B2_MAX_CONTINUOUS_SENSOR_HITS )
 		{
 			int index = continuousContext->sensorCount;
@@ -387,6 +384,9 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	}
 	else
 	{
+		float hitFraction = continuousContext->fraction;
+		bool didHit = false;
+
 		if ( 0.0f < output.fraction && output.fraction < continuousContext->fraction )
 		{
 			hitFraction = output.fraction;
@@ -406,20 +406,21 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 				didHit = true;
 			}
 		}
+
+		if ( didHit && ( shape->enablePreSolveEvents || fastShape->enablePreSolveEvents ) && world->preSolveFcn != NULL )
+		{
+			b2ShapeId shapeIdA = { shape->id + 1, world->worldId, shape->generation };
+			b2ShapeId shapeIdB = { fastShape->id + 1, world->worldId, fastShape->generation };
+			didHit = world->preSolveFcn( shapeIdA, shapeIdB, output.point, output.normal, world->preSolveContext );
+		}
+
+		if ( didHit )
+		{
+			continuousContext->fraction = hitFraction;
+		}
 	}
 
-	if ( didHit && ( shape->enablePreSolveEvents || fastShape->enablePreSolveEvents ) && world->preSolveFcn != NULL )
-	{
-		b2ShapeId shapeIdA = { shape->id + 1, world->worldId, shape->generation };
-		b2ShapeId shapeIdB = { fastShape->id + 1, world->worldId, fastShape->generation };
-		didHit = world->preSolveFcn( shapeIdA, shapeIdB, output.point, output.normal, world->preSolveContext );
-	}
-
-	if ( didHit )
-	{
-		continuousContext->fraction = hitFraction;
-	}
-
+	// Continue query
 	return true;
 }
 

@@ -450,7 +450,7 @@ typedef struct b2Sweep
 /// Evaluate the transform sweep at a specific time.
 B2_API b2Transform b2GetSweepTransform( const b2Sweep* sweep, float time );
 
-/// Input parameters for b2TimeOfImpact
+/// Time of impact input
 typedef struct b2TOIInput
 {
 	b2ShapeProxy proxyA; ///< The proxy for shape A
@@ -470,7 +470,7 @@ typedef enum b2TOIState
 	b2_toiStateSeparated
 } b2TOIState;
 
-/// Output parameters for b2TimeOfImpact.
+/// Time of impact output
 typedef struct b2TOIOutput
 {
 	/// The type of result
