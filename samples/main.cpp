@@ -57,7 +57,7 @@ static int32_t s_selection = 0;
 static Sample* s_sample = nullptr;
 static bool s_rightMouseDown = false;
 static b2Vec2 s_clickPointWS = b2Vec2_zero;
-static float s_windowScale = 1.0f;
+static float s_fontScale = 1.0f;
 static float s_framebufferScale = 1.0f;
 
 inline bool IsPowerOfTwo( int32_t x )
@@ -155,11 +155,13 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 	if ( file != nullptr )
 	{
 		ImFontConfig fontConfig;
-		fontConfig.RasterizerMultiply = s_windowScale * s_framebufferScale;
-		s_context.draw.m_smallFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 14.0f, &fontConfig );
-		s_context.draw.m_regularFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 18.0f, &fontConfig );
-		s_context.draw.m_mediumFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 40.0f, &fontConfig );
-		s_context.draw.m_largeFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 64.0f, &fontConfig );
+		fontConfig.RasterizerMultiply = s_fontScale * s_framebufferScale;
+		s_context.draw.m_smallFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 14.0f * s_fontScale, &fontConfig );
+		s_context.draw.m_regularFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 18.0f * s_fontScale, &fontConfig );
+		s_context.draw.m_mediumFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 40.0f * s_fontScale, &fontConfig );
+		s_context.draw.m_largeFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 64.0f * s_fontScale, &fontConfig );
+
+		ImGui::GetIO().FontDefault = s_context.draw.m_smallFont;
 	}
 	else
 	{
@@ -177,8 +179,8 @@ static void DestroyUI()
 
 static void ResizeWindowCallback( GLFWwindow*, int width, int height )
 {
-	s_context.camera.m_width = int( width / s_windowScale );
-	s_context.camera.m_height = int( height / s_windowScale );
+	s_context.camera.m_width = float( width );
+	s_context.camera.m_height = float( height );
 }
 
 static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, int mods )
@@ -312,7 +314,7 @@ static void MouseButtonCallback( GLFWwindow* window, int button, int action, int
 
 	double xd, yd;
 	glfwGetCursorPos( window, &xd, &yd );
-	b2Vec2 ps = { float( xd ) / s_windowScale, float( yd ) / s_windowScale };
+	b2Vec2 ps = { float( xd ), float( yd ) };
 
 	// Use the mouse to move things around.
 	if ( button == GLFW_MOUSE_BUTTON_1 )
@@ -345,7 +347,7 @@ static void MouseButtonCallback( GLFWwindow* window, int button, int action, int
 
 static void MouseMotionCallback( GLFWwindow* window, double xd, double yd )
 {
-	b2Vec2 ps = { float( xd ) / s_windowScale, float( yd ) / s_windowScale };
+	b2Vec2 ps = { float( xd ), float( yd ) };
 
 	ImGui_ImplGlfw_CursorPosCallback( window, ps.x, ps.y );
 
@@ -579,20 +581,19 @@ int main( int, char** )
 #ifdef __APPLE__
 		glfwGetMonitorContentScale( primaryMonitor, &s_framebufferScale, &s_framebufferScale );
 #else
-		glfwGetMonitorContentScale( primaryMonitor, &s_windowScale, &s_windowScale );
+		glfwGetMonitorContentScale( primaryMonitor, &s_fontScale, &s_fontScale );
 #endif
 	}
 
 	bool fullscreen = false;
 	if ( fullscreen )
 	{
-		s_context.window = glfwCreateWindow( int( 1920 * s_windowScale ), int( 1080 * s_windowScale ), buffer,
-											 glfwGetPrimaryMonitor(), nullptr );
+		s_context.window = glfwCreateWindow( int( 1920 ), int( 1080 ), buffer, glfwGetPrimaryMonitor(), nullptr );
 	}
 	else
 	{
-		s_context.window = glfwCreateWindow( int( s_context.camera.m_width * s_windowScale ),
-											 int( s_context.camera.m_height * s_windowScale ), buffer, nullptr, nullptr );
+		s_context.window =
+			glfwCreateWindow( int( s_context.camera.m_width ), int( s_context.camera.m_height ), buffer, nullptr, nullptr );
 	}
 
 	if ( s_context.window == nullptr )
@@ -605,7 +606,7 @@ int main( int, char** )
 #ifdef __APPLE__
 	glfwGetWindowContentScale( s_context.window, &s_framebufferScale, &s_framebufferScale );
 #else
-	glfwGetWindowContentScale( s_context.window, &s_windowScale, &s_windowScale );
+	glfwGetWindowContentScale( s_context.window, &s_fontScale, &s_fontScale );
 #endif
 
 	glfwMakeContextCurrent( s_context.window );
@@ -633,7 +634,7 @@ int main( int, char** )
 
 	// todo put this in s_context
 	CreateUI( s_context.window, glslVersion );
-	s_context.draw.Create(&s_context.camera);
+	s_context.draw.Create( &s_context.camera );
 
 	s_context.sampleIndex = b2ClampInt( s_context.sampleIndex, 0, g_sampleCount - 1 );
 	s_selection = s_context.sampleIndex;
@@ -657,9 +658,10 @@ int main( int, char** )
 			s_context.camera.m_zoom = b2MaxFloat( 0.995f * s_context.camera.m_zoom, 0.5f );
 		}
 
-		glfwGetWindowSize( s_context.window, &s_context.camera.m_width, &s_context.camera.m_height );
-		s_context.camera.m_width = int( s_context.camera.m_width / s_windowScale );
-		s_context.camera.m_height = int( s_context.camera.m_height / s_windowScale );
+		int width, height;
+		glfwGetWindowSize( s_context.window, &width, &height );
+		s_context.camera.m_width = width;
+		s_context.camera.m_height = height;
 
 		int bufferWidth, bufferHeight;
 		glfwGetFramebufferSize( s_context.window, &bufferWidth, &bufferHeight );
@@ -669,23 +671,23 @@ int main( int, char** )
 
 		// s_context.draw.DrawBackground();
 
-		double cursorPosX = 0, cursorPosY = 0;
-		glfwGetCursorPos( s_context.window, &cursorPosX, &cursorPosY );
-		ImGui_ImplGlfw_CursorPosCallback( s_context.window, cursorPosX / s_windowScale, cursorPosY / s_windowScale );
+		// double cursorPosX = 0, cursorPosY = 0;
+		// glfwGetCursorPos( s_context.window, &cursorPosX, &cursorPosY );
+		// ImGui_ImplGlfw_CursorPosCallback( s_context.window, cursorPosX / s_windowScale, cursorPosY / s_windowScale );
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
-		ImGui_ImplGlfw_CursorPosCallback( s_context.window, cursorPosX / s_windowScale, cursorPosY / s_windowScale );
+		// ImGui_ImplGlfw_CursorPosCallback( s_context.window, cursorPosX / s_windowScale, cursorPosY / s_windowScale );
 
 		ImGuiIO& io = ImGui::GetIO();
-		io.DisplaySize.x = float( s_context.camera.m_width );
-		io.DisplaySize.y = float( s_context.camera.m_height );
-		io.DisplayFramebufferScale.x = bufferWidth / float( s_context.camera.m_width );
-		io.DisplayFramebufferScale.y = bufferHeight / float( s_context.camera.m_height );
+		io.DisplaySize.x = s_context.camera.m_width;
+		io.DisplaySize.y = s_context.camera.m_height;
+		io.DisplayFramebufferScale.x = bufferWidth / s_context.camera.m_width;
+		io.DisplayFramebufferScale.y = bufferHeight / s_context.camera.m_height;
 
 		ImGui::NewFrame();
 
 		ImGui::SetNextWindowPos( ImVec2( 0.0f, 0.0f ) );
-		ImGui::SetNextWindowSize( ImVec2( float( s_context.camera.m_width ), float( s_context.camera.m_height ) ) );
+		ImGui::SetNextWindowSize( ImVec2( s_context.camera.m_width, s_context.camera.m_height ) );
 		ImGui::SetNextWindowBgAlpha( 0.0f );
 		ImGui::Begin( "Overlay", nullptr,
 					  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |

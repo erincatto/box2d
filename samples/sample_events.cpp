@@ -2192,21 +2192,22 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 3.0f };
-			m_context->camera.m_zoom = 15.0f;
+			m_context->camera.m_center = { 0.0f, 5.0f };
+			m_context->camera.m_zoom = 7.5f;
 		}
 
+		b2BodyId groundId;
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.name = "ground";
 
-			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+			groundId = b2CreateBody( m_worldId, &bodyDef );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 
-			b2Segment groundSegment = { { -20.0f, 0.0f }, { 20.0f, 0.0f } };
+			b2Segment groundSegment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &groundSegment );
 
-			groundSegment = { { 20.0f, 0.0f }, { 20.0f, 10.0f } };
+			groundSegment = { { 10.0f, 0.0f }, { 10.0f, 10.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &groundSegment );
 		}
 
@@ -2214,6 +2215,7 @@ public:
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.name = "static sensor";
+			bodyDef.position = { -4.0f, 1.0f };
 
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -2224,8 +2226,53 @@ public:
 			m_staticSensorId = b2CreateSegmentShape( bodyId, &shapeDef, &segment );
 		}
 
-		m_kinematicSensorId = {};
-		m_dynamicSensorId = {};
+		// Kinematic sensor
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.name = "kinematic sensor";
+			bodyDef.type = b2_kinematicBody;
+			bodyDef.position = { 0.0f, 1.0f };
+			bodyDef.linearVelocity = { 0.5f, 0.0f };
+
+			m_kinematicBodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.isSensor = true;
+			shapeDef.enableSensorEvents = true;
+
+			b2Segment segment = { { 0.0f, 0.0f }, { 0.0f, 10.0f } };
+			m_kinematicSensorId = b2CreateSegmentShape( m_kinematicBodyId, &shapeDef, &segment );
+		}
+
+		// Dynamic sensor
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.name = "dynamic sensor";
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { 4.0f, 1.0f };
+
+			m_dynamicBodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.isSensor = true;
+			shapeDef.enableSensorEvents = true;
+
+			b2Capsule capsule = { { 0.0f, 1.0f }, { 0.0f, 9.0f }, 0.1f };
+			m_dynamicSensorId = b2CreateCapsuleShape( m_dynamicBodyId, &shapeDef, &capsule );
+
+			b2Vec2 pivot = bodyDef.position + b2Vec2{ 0.0f, 6.0f };
+			b2Vec2 axis = { 1.0f, 0.0f };
+			b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
+			jointDef.base.bodyIdA = groundId;
+			jointDef.base.bodyIdB = m_dynamicBodyId;
+			jointDef.base.localFrameA.q = b2MakeRotFromUnitVector( axis );
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( groundId, pivot );
+			jointDef.base.localFrameB.q = b2MakeRotFromUnitVector( axis );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( m_dynamicBodyId, pivot );
+			jointDef.enableMotor = true;
+			jointDef.maxMotorForce = 1000.0f;
+			jointDef.motorSpeed = 0.5f;
+
+			m_jointId = b2CreatePrismaticJoint( m_worldId, &jointDef );
+		}
 
 		m_beginCount = 0;
 		m_endCount = 0;
@@ -2285,11 +2332,16 @@ public:
 		ImGui::End();
 	}
 
-	void CollectOverlapTransforms( b2ShapeId sensorShapeId )
+	void CollectTransforms( b2ShapeId sensorShapeId )
 	{
 		constexpr int capacity = 5;
 		b2SensorData sensorData[capacity];
 		int count = b2Shape_GetSensorOverlaps( sensorShapeId, sensorData, capacity );
+
+		if (count > 1)
+		{
+			count += 0;
+		}
 
 		for ( int i = 0; i < count && m_transformCount < m_transformCapacity; ++i )
 		{
@@ -2300,11 +2352,27 @@ public:
 
 	void Step() override
 	{
-		Sample::Step();
+		b2Vec2 p = b2Body_GetPosition( m_kinematicBodyId );
+		if (p.x > 1.0f)
+		{
+			b2Body_SetLinearVelocity( m_kinematicBodyId, { -0.5f, 0.0f } );
+		}
+		else if (p.x < -1.0f)
+		{
+			b2Body_SetLinearVelocity( m_kinematicBodyId, { 0.5f, 0.0f } );
+		}
 
-		CollectOverlapTransforms( m_staticSensorId );
-		//PrintOverlaps( m_kinematicSensorId );
-		//PrintOverlaps( m_dynamicSensorId );
+		float x = b2PrismaticJoint_GetTranslation( m_jointId );
+		if (x > 1.0f)
+		{
+			b2PrismaticJoint_SetMotorSpeed( m_jointId, -0.5f );
+		}
+		else if (x < -1.0f)
+		{
+			b2PrismaticJoint_SetMotorSpeed( m_jointId, 0.5f );
+		}
+
+		Sample::Step();
 
 		for (int i = 0; i < m_transformCount; ++i)
 		{
@@ -2314,6 +2382,12 @@ public:
 		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
 		m_beginCount += sensorEvents.beginCount;
 		m_endCount += sensorEvents.endCount;
+
+		for (int i = 0; i < sensorEvents.beginCount; ++i)
+		{
+			const b2SensorBeginTouchEvent* event = sensorEvents.beginEvents + i;
+			CollectTransforms( event->sensorShapeId );
+		}
 
 		DrawTextLine( "begin touch count = %d", m_beginCount );
 		DrawTextLine( "end touch count = %d", m_endCount );
@@ -2327,6 +2401,10 @@ public:
 	b2ShapeId m_staticSensorId;
 	b2ShapeId m_kinematicSensorId;
 	b2ShapeId m_dynamicSensorId;
+
+	b2BodyId m_kinematicBodyId;
+	b2BodyId m_dynamicBodyId;
+	b2JointId m_jointId;
 
 	b2BodyId m_bodyId;
 	b2ShapeId m_shapeId;
