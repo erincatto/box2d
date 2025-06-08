@@ -489,6 +489,7 @@ typedef struct b2Profile
 	float storeImpulses;
 	float splitIslands;
 	float transforms;
+	float sensorHits;
 	float jointEvents;
 	float hitEvents;
 	float refit;

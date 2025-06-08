@@ -7,8 +7,8 @@
 #include "body.h"
 #include "contact.h"
 #include "ctz.h"
-#include "shape.h"
 #include "physics_world.h"
+#include "shape.h"
 
 #include "box2d/collision.h"
 
@@ -18,6 +18,7 @@
 B2_ARRAY_SOURCE( b2ShapeRef, b2ShapeRef )
 B2_ARRAY_SOURCE( b2Sensor, b2Sensor )
 B2_ARRAY_SOURCE( b2SensorTaskContext, b2SensorTaskContext )
+B2_ARRAY_SOURCE( b2SensorHit, b2SensorHit )
 
 struct b2SensorQueryContext
 {
@@ -102,7 +103,7 @@ static bool b2SensorQueryCallback( int proxyId, uint64_t userData, void* context
 	input.transformB = otherTransform;
 	input.useRadii = true;
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput output = b2ShapeDistance(&input, &cache, NULL, 0 );
+	b2DistanceOutput output = b2ShapeDistance( &input, &cache, NULL, 0 );
 
 	bool overlaps = output.distance < 10.0f * FLT_EPSILON;
 	if ( overlaps == false )
@@ -161,11 +162,21 @@ static void b2SensorTask( int startIndex, int endIndex, uint32_t threadIndex, vo
 		b2Sensor* sensor = b2SensorArray_Get( &world->sensors, sensorIndex );
 		b2Shape* sensorShape = b2ShapeArray_Get( &world->shapes, sensor->shapeId );
 
-		// swap overlap arrays
+		// Swap overlap arrays
 		b2ShapeRefArray temp = sensor->overlaps1;
 		sensor->overlaps1 = sensor->overlaps2;
 		sensor->overlaps2 = temp;
 		b2ShapeRefArray_Clear( &sensor->overlaps2 );
+
+		// Append sensor hits
+		int hitCount = sensor->hits.count;
+		for ( int i = 0; i < hitCount; ++i )
+		{
+			b2ShapeRefArray_Push( &sensor->overlaps2, sensor->hits.data[i] );
+		}
+
+		// Clear the hits
+		b2ShapeRefArray_Clear( &sensor->hits );
 
 		b2Body* body = b2BodyArray_Get( &world->bodies, sensorShape->bodyId );
 		if ( body->setIndex == b2_disabledSet || sensorShape->enableSensorEvents == false )
@@ -198,6 +209,21 @@ static void b2SensorTask( int startIndex, int endIndex, uint32_t threadIndex, vo
 
 		// Sort the overlaps to enable finding begin and end events.
 		qsort( sensor->overlaps2.data, sensor->overlaps2.count, sizeof( b2ShapeRef ), b2CompareShapeRefs );
+
+		// Remove duplicates from overlaps2 (sorted). Duplicates are possible due to the hit events appended earlier.
+		int uniqueCount = 0;
+		int overlapCount = sensor->overlaps2.count;
+		b2ShapeRef* overlapData = sensor->overlaps2.data;
+		for ( int i = 0; i < overlapCount; ++i )
+		{
+			if ( uniqueCount == 0 || overlapData[i].shapeId != overlapData[uniqueCount - 1].shapeId ||
+				 overlapData[i].generation != overlapData[uniqueCount - 1].generation )
+			{
+				overlapData[uniqueCount] = overlapData[i];
+				uniqueCount += 1;
+			}
+		}
+		sensor->overlaps2.count = uniqueCount;
 
 		int count1 = sensor->overlaps1.count;
 		int count2 = sensor->overlaps2.count;

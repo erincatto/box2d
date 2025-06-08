@@ -245,7 +245,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 
 	for ( int i = 0; i < world->workerCount; ++i )
 	{
-		world->taskContexts.data[i].sensorContinuousHits = b2SensorContinuousHitArray_Create( 8 );
+		world->taskContexts.data[i].sensorHits = b2SensorHitArray_Create( 8 );
 		world->taskContexts.data[i].contactStateBitSet = b2CreateBitSet( 1024 );
 		world->taskContexts.data[i].jointStateBitSet = b2CreateBitSet( 1024 );
 		world->taskContexts.data[i].enlargedSimBitSet = b2CreateBitSet( 256 );
@@ -274,7 +274,7 @@ void b2DestroyWorld( b2WorldId worldId )
 
 	for ( int i = 0; i < world->workerCount; ++i )
 	{
-		b2SensorContinuousHitArray_Destroy( &world->taskContexts.data[i].sensorContinuousHits );
+		b2SensorHitArray_Destroy( &world->taskContexts.data[i].sensorHits );
 		b2DestroyBitSet( &world->taskContexts.data[i].contactStateBitSet );
 		b2DestroyBitSet( &world->taskContexts.data[i].jointStateBitSet );
 		b2DestroyBitSet( &world->taskContexts.data[i].enlargedSimBitSet );

@@ -225,7 +225,7 @@ struct b2ContinuousContext
 	b2Vec2 centroid1, centroid2;
 	b2Sweep sweep;
 	float fraction;
-	b2SensorContinuousHit sensorHits[B2_MAX_CONTINUOUS_SENSOR_HITS];
+	b2SensorHit sensorHits[B2_MAX_CONTINUOUS_SENSOR_HITS];
 	float sensorFractions[B2_MAX_CONTINUOUS_SENSOR_HITS];
 	int sensorCount;
 };
@@ -374,7 +374,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 		if ( output.fraction <= continuousContext->fraction && continuousContext->sensorCount < B2_MAX_CONTINUOUS_SENSOR_HITS )
 		{
 			int index = continuousContext->sensorCount;
-			b2SensorContinuousHit sensorHit = { .sensorId = shape->id, .visitorId = fastShape->id };
+			b2SensorHit sensorHit = { .sensorId = shape->id, .visitorId = fastShape->id };
 			continuousContext->sensorHits[index] = sensorHit;
 			continuousContext->sensorFractions[index] = output.fraction;
 			continuousContext->sensorCount += 1;
@@ -577,11 +577,11 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 	}
 
 	// Push sensor hits on the the task context for serial processing.
-	for ( int i = 0; i < context.sensorCount; ++i)
+	for ( int i = 0; i < context.sensorCount; ++i )
 	{
-		if ( context.sensorFractions[i] < context.fraction)
+		if ( context.sensorFractions[i] < context.fraction )
 		{
-			b2SensorContinuousHitArray_Push( &taskContext->sensorContinuousHits, context.sensorHits[i] );
+			b2SensorHitArray_Push( &taskContext->sensorHits, context.sensorHits[i] );
 		}
 	}
 
@@ -1209,20 +1209,21 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 	}
 }
 
-static void b2BulletBodyTask( int startIndex, int endIndex, uint32_t threadIndex, void* taskContext )
+static void b2BulletBodyTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
 {
 	B2_UNUSED( threadIndex );
 
 	b2TracyCZoneNC( bullet_body_task, "Bullet", b2_colorLightSkyBlue, true );
 
-	b2StepContext* stepContext = taskContext;
+	b2StepContext* stepContext = context;
+	b2TaskContext* taskContext = b2TaskContextArray_Get( &stepContext->world->taskContexts, threadIndex );
 
 	B2_ASSERT( startIndex <= endIndex );
 
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
 		int simIndex = stepContext->bulletBodies[i];
-		b2SolveContinuous( stepContext->world, simIndex );
+		b2SolveContinuous( stepContext->world, simIndex, taskContext );
 	}
 
 	b2TracyCZoneEnd( bullet_body_task );
@@ -1739,7 +1740,9 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		int jointIdCapacity = b2GetIdCapacity( &world->jointIdPool );
 		for ( int i = 0; i < workerCount; ++i )
 		{
-			b2SetBitCountAndClear( &world->taskContexts.data[i].jointStateBitSet, jointIdCapacity );
+			b2TaskContext* taskContext = b2TaskContextArray_Get( &world->taskContexts, i );
+			b2SensorHitArray_Clear( &taskContext->sensorHits );
+			b2SetBitCountAndClear( &taskContext->jointStateBitSet, jointIdCapacity );
 
 			workerContext[i].context = stepContext;
 			workerContext[i].workerIndex = i;
@@ -1804,6 +1807,36 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		world->profile.transforms = b2GetMilliseconds( transformTicks );
 		b2TracyCZoneEnd( update_transforms );
+	}
+
+	// Report sensor hits
+	{
+		b2TracyCZoneNC( sensor_hits, "Sensor Hits", b2_colorPowderBlue, true );
+		uint64_t sensorHitTicks = b2GetTicks();
+
+		int workerCount = world->workerCount;
+		B2_ASSERT( workerCount == world->taskContexts.count );
+
+		for ( int i = 0; i < workerCount; ++i )
+		{
+			b2TaskContext* taskContext = world->taskContexts.data + i;
+			int hitCount = taskContext->sensorHits.count;
+			b2SensorHit* hits = taskContext->sensorHits.data;
+
+			for ( int j = 0; j < hitCount; ++j )
+			{
+				b2SensorHit hit = hits[j];
+				b2Shape* sensorShape = b2ShapeArray_Get( &world->shapes, hit.sensorId );
+				b2Shape* visitor = b2ShapeArray_Get( &world->shapes, hit.visitorId );
+
+				b2Sensor* sensor = b2SensorArray_Get( &world->sensors, sensorShape->sensorIndex );
+				b2ShapeRef shapeRef = { hit.visitorId, visitor->generation };
+				b2ShapeRefArray_Push( &sensor->hits, shapeRef );
+			}
+		}
+
+		world->profile.sensorHits = b2GetMilliseconds( sensorHitTicks );
+		b2TracyCZoneEnd( sensor_hits );
 	}
 
 	// Report joint events

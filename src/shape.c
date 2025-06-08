@@ -144,7 +144,7 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	{
 		shape->sensorIndex = world->sensors.count;
 		b2Sensor sensor = {
-			.continuousHits = b2ShapeRefArray_Create( 4 ),
+			.hits = b2ShapeRefArray_Create( 4 ),
 			.overlaps1 = b2ShapeRefArray_Create( 16 ),
 			.overlaps2 = b2ShapeRefArray_Create( 16 ),
 			.shapeId = shapeId,

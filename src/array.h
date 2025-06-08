@@ -178,4 +178,4 @@ B2_ARRAY_DECLARE( b2Shape, b2Shape );
 B2_ARRAY_DECLARE( b2ShapeRef, b2ShapeRef );
 B2_ARRAY_DECLARE( b2SolverSet, b2SolverSet );
 B2_ARRAY_DECLARE( b2TaskContext, b2TaskContext );
-B2_ARRAY_DECLARE( b2SensorContinuousHit, b2SensorContinuousHit );
+B2_ARRAY_DECLARE( b2SensorHit, b2SensorHit );

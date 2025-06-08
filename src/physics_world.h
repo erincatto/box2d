@@ -24,7 +24,7 @@ enum b2SetType
 typedef struct b2TaskContext
 {
 	// Collect per thread sensor continuous hit events.
-	b2SensorContinuousHitArray sensorContinuousHits;
+	b2SensorHitArray sensorHits;
 
 	// These bits align with the contact id capacity and signal a change in contact status
 	b2BitSet contactStateBitSet;
