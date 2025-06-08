@@ -65,30 +65,32 @@ static b2Contact* b2GetContactFullId( b2World* world, b2ContactId contactId )
 	return contact;
 }
 
-b2Manifold b2Contact_GetManifold( b2ContactId contactId )
+b2ContactData b2Contact_GetData( b2ContactId contactId )
 {
 	b2World* world = b2GetWorld( contactId.world0 );
 	b2Contact* contact = b2GetContactFullId( world, contactId );
 	b2ContactSim* contactSim = b2GetContactSim( world, contact );
-	return contactSim->manifold;
-}
-
-void b2Contact_GetShapeIds( b2ContactId contactId, b2ShapeId* shapeIdA, b2ShapeId* shapeIdB )
-{
-	b2World* world = b2GetWorld( contactId.world0 );
-	b2Contact* contact = b2GetContactFullId( world, contactId );
 	const b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contact->shapeIdA );
 	const b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contact->shapeIdB );
-	*shapeIdA = (b2ShapeId){
-		.index1 = shapeA->id + 1,
-		.world0 = (uint16_t)contactId.world0,
-		.generation = shapeA->generation,
+
+	b2ContactData data = {
+		.contactId = contactId,
+		.shapeIdA =
+			{
+				.index1 = shapeA->id + 1,
+				.world0 = (uint16_t)contactId.world0,
+				.generation = shapeA->generation,
+			},
+		.shapeIdB =
+			{
+				.index1 = shapeB->id + 1,
+				.world0 = (uint16_t)contactId.world0,
+				.generation = shapeB->generation,
+			},
+		.manifold = contactSim->manifold,
 	};
-	*shapeIdB = (b2ShapeId){
-		.index1 = shapeB->id + 1,
-		.world0 = (uint16_t)contactId.world0,
-		.generation = shapeB->generation,
-	};
+
+	return data;
 }
 
 typedef b2Manifold b2ManifoldFcn( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,

@@ -70,8 +70,8 @@ b2Version b2GetVersion( void )
 {
 	return (b2Version){
 		.major = 3,
-		.minor = 1,
-		.revision = 1,
+		.minor = 2,
+		.revision = 0,
 	};
 }
 

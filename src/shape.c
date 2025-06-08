@@ -144,6 +144,7 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	{
 		shape->sensorIndex = world->sensors.count;
 		b2Sensor sensor = {
+			.continuousHits = b2ShapeRefArray_Create( 4 ),
 			.overlaps1 = b2ShapeRefArray_Create( 16 ),
 			.overlaps2 = b2ShapeRefArray_Create( 16 ),
 			.shapeId = shapeId,
@@ -799,19 +800,19 @@ b2CastOutput b2RayCastShape( const b2RayCastInput* input, const b2Shape* shape, 
 	switch ( shape->type )
 	{
 		case b2_capsuleShape:
-			output = b2RayCastCapsule( &localInput, &shape->capsule );
+			output = b2RayCastCapsule( &shape->capsule, &localInput );
 			break;
 		case b2_circleShape:
-			output = b2RayCastCircle( &localInput, &shape->circle );
+			output = b2RayCastCircle( &shape->circle, &localInput );
 			break;
 		case b2_polygonShape:
-			output = b2RayCastPolygon( &localInput, &shape->polygon );
+			output = b2RayCastPolygon( &shape->polygon, &localInput );
 			break;
 		case b2_segmentShape:
-			output = b2RayCastSegment( &localInput, &shape->segment, false );
+			output = b2RayCastSegment( &shape->segment, &localInput, false );
 			break;
 		case b2_chainSegmentShape:
-			output = b2RayCastSegment( &localInput, &shape->chainSegment.segment, true );
+			output = b2RayCastSegment( &shape->chainSegment.segment, &localInput, true );
 			break;
 		default:
 			return output;
@@ -837,19 +838,19 @@ b2CastOutput b2ShapeCastShape( const b2ShapeCastInput* input, const b2Shape* sha
 	switch ( shape->type )
 	{
 		case b2_capsuleShape:
-			output = b2ShapeCastCapsule( &localInput, &shape->capsule );
+			output = b2ShapeCastCapsule( &shape->capsule, &localInput );
 			break;
 		case b2_circleShape:
-			output = b2ShapeCastCircle( &localInput, &shape->circle );
+			output = b2ShapeCastCircle( &shape->circle, &localInput );
 			break;
 		case b2_polygonShape:
-			output = b2ShapeCastPolygon( &localInput, &shape->polygon );
+			output = b2ShapeCastPolygon( &shape->polygon, &localInput );
 			break;
 		case b2_segmentShape:
-			output = b2ShapeCastSegment( &localInput, &shape->segment );
+			output = b2ShapeCastSegment( &shape->segment, &localInput );
 			break;
 		case b2_chainSegmentShape:
-			output = b2ShapeCastSegment( &localInput, &shape->chainSegment.segment );
+			output = b2ShapeCastSegment( &shape->chainSegment.segment, &localInput );
 			break;
 		default:
 			return output;
@@ -860,7 +861,7 @@ b2CastOutput b2ShapeCastShape( const b2ShapeCastInput* input, const b2Shape* sha
 	return output;
 }
 
-b2PlaneResult b2CollideMover( const b2Shape* shape, b2Transform transform, const b2Capsule* mover )
+b2PlaneResult b2CollideMover( const b2Capsule* mover, const b2Shape* shape, b2Transform transform )
 {
 	b2Capsule localMover;
 	localMover.center1 = b2InvTransformPoint( transform, mover->center1 );
@@ -871,19 +872,19 @@ b2PlaneResult b2CollideMover( const b2Shape* shape, b2Transform transform, const
 	switch ( shape->type )
 	{
 		case b2_capsuleShape:
-			result = b2CollideMoverAndCapsule( &shape->capsule, &localMover );
+			result = b2CollideMoverAndCapsule( &localMover, &shape->capsule );
 			break;
 		case b2_circleShape:
-			result = b2CollideMoverAndCircle( &shape->circle, &localMover );
+			result = b2CollideMoverAndCircle( &localMover, &shape->circle );
 			break;
 		case b2_polygonShape:
-			result = b2CollideMoverAndPolygon( &shape->polygon, &localMover );
+			result = b2CollideMoverAndPolygon( &localMover, &shape->polygon );
 			break;
 		case b2_segmentShape:
-			result = b2CollideMoverAndSegment( &shape->segment, &localMover );
+			result = b2CollideMoverAndSegment( &localMover, &shape->segment );
 			break;
 		case b2_chainSegmentShape:
-			result = b2CollideMoverAndSegment( &shape->chainSegment.segment, &localMover );
+			result = b2CollideMoverAndSegment( &localMover, &shape->chainSegment.segment );
 			break;
 		default:
 			return result;
@@ -987,13 +988,13 @@ bool b2Shape_TestPoint( b2ShapeId shapeId, b2Vec2 point )
 	switch ( shape->type )
 	{
 		case b2_capsuleShape:
-			return b2PointInCapsule( localPoint, &shape->capsule );
+			return b2PointInCapsule( &shape->capsule, localPoint );
 
 		case b2_circleShape:
-			return b2PointInCircle( localPoint, &shape->circle );
+			return b2PointInCircle( &shape->circle, localPoint );
 
 		case b2_polygonShape:
-			return b2PointInPolygon( localPoint, &shape->polygon );
+			return b2PointInPolygon( &shape->polygon, localPoint );
 
 		default:
 			return false;
@@ -1018,23 +1019,23 @@ b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, const b2RayCastInput* input )
 	switch ( shape->type )
 	{
 		case b2_capsuleShape:
-			output = b2RayCastCapsule( &localInput, &shape->capsule );
+			output = b2RayCastCapsule( &shape->capsule, &localInput );
 			break;
 
 		case b2_circleShape:
-			output = b2RayCastCircle( &localInput, &shape->circle );
+			output = b2RayCastCircle( &shape->circle, &localInput );
 			break;
 
 		case b2_segmentShape:
-			output = b2RayCastSegment( &localInput, &shape->segment, false );
+			output = b2RayCastSegment( &shape->segment, &localInput, false );
 			break;
 
 		case b2_polygonShape:
-			output = b2RayCastPolygon( &localInput, &shape->polygon );
+			output = b2RayCastPolygon( &shape->polygon, &localInput );
 			break;
 
 		case b2_chainSegmentShape:
-			output = b2RayCastSegment( &localInput, &shape->chainSegment.segment, true );
+			output = b2RayCastSegment( &shape->chainSegment.segment, &localInput, true );
 			break;
 
 		default:
@@ -1626,6 +1627,7 @@ int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData, int c
 			b2Shape* shapeA = world->shapes.data + contact->shapeIdA;
 			b2Shape* shapeB = world->shapes.data + contact->shapeIdB;
 
+			contactData[index].contactId = (b2ContactId){ contact->contactId + 1, shapeId.world0, 0, contact->generation };
 			contactData[index].shapeIdA = (b2ShapeId){ shapeA->id + 1, shapeId.world0, shapeA->generation };
 			contactData[index].shapeIdB = (b2ShapeId){ shapeB->id + 1, shapeId.world0, shapeB->generation };
 
@@ -1702,7 +1704,7 @@ b2AABB b2Shape_GetAABB( b2ShapeId shapeId )
 	return shape->aabb;
 }
 
-b2MassData b2Shape_GetMassData( b2ShapeId shapeId )
+b2MassData b2Shape_ComputeMassData( b2ShapeId shapeId )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
 	if ( world == NULL )

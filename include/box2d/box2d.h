@@ -229,7 +229,7 @@ B2_API void b2Body_SetType( b2BodyId bodyId, b2BodyType type );
 /// Set the body name. Up to 31 characters excluding 0 termination.
 B2_API void b2Body_SetName( b2BodyId bodyId, const char* name );
 
-/// Get the body name. May be null.
+/// Get the body name.
 B2_API const char* b2Body_GetName( b2BodyId bodyId );
 
 /// Set the user data for a body
@@ -249,7 +249,7 @@ B2_API b2Transform b2Body_GetTransform( b2BodyId bodyId );
 
 /// Set the world transform of a body. This acts as a teleport and is fairly expensive.
 /// @note Generally you should create a body with then intended transform.
-/// @see b2BodyDef::position and b2BodyDef::angle
+/// @see b2BodyDef::position and b2BodyDef::rotation
 B2_API void b2Body_SetTransform( b2BodyId bodyId, b2Vec2 position, b2Rot rotation );
 
 /// Get a local point on a body given a world point
@@ -672,8 +672,8 @@ B2_API int b2Shape_GetSensorOverlaps( b2ShapeId shapeId, b2ShapeId* overlaps, in
 /// Get the current world AABB
 B2_API b2AABB b2Shape_GetAABB( b2ShapeId shapeId );
 
-/// Get the mass data for a shape
-B2_API b2MassData b2Shape_GetMassData( b2ShapeId shapeId );
+/// Compute the mass data for a shape
+B2_API b2MassData b2Shape_ComputeMassData( b2ShapeId shapeId );
 
 /// Get the closest point on a shape to a target point. Target and result are in world space.
 /// todo need sample
@@ -1240,10 +1240,7 @@ B2_API float b2WheelJoint_GetMotorTorque( b2JointId jointId );
 /// Contact identifier validation. Provides validation for up to 2^32 allocations.
 B2_API bool b2Contact_IsValid( b2ContactId id );
 
-/// Get manifold for a contact. The manifold may have no points if the contact is not touching.
-B2_API b2Manifold b2Contact_GetManifold( b2ContactId contactId );
-
-/// Get the shapes associated with a contact.
-B2_API void b2Contact_GetShapeIds( b2ContactId contactId, b2ShapeId* shapeIdA, b2ShapeId* shapeIdB );
+/// Get the data for a contact. The manifold may have no points if the contact is not touching.
+B2_API b2ContactData b2Contact_GetData( b2ContactId contactId );
 
 /**@}*/

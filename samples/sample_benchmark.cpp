@@ -1360,7 +1360,7 @@ public:
 
 			b2Vec2 p1 = m_origins[m_drawIndex];
 			b2Vec2 p2 = p1 + m_translations[m_drawIndex];
-			m_context->draw.DrawSegment( p1, p2, b2_colorWhite );
+			m_context->draw.DrawLine( p1, p2, b2_colorWhite );
 			m_context->draw.DrawPoint( p1, 5.0f, b2_colorGreen );
 			m_context->draw.DrawPoint( p2, 5.0f, b2_colorRed );
 			if ( drawResult.hit )
@@ -1398,7 +1398,7 @@ public:
 
 			b2Vec2 p1 = m_origins[m_drawIndex];
 			b2Vec2 p2 = p1 + m_translations[m_drawIndex];
-			m_context->draw.DrawSegment( p1, p2, b2_colorWhite );
+			m_context->draw.DrawLine( p1, p2, b2_colorWhite );
 			m_context->draw.DrawPoint( p1, 5.0f, b2_colorGreen );
 			m_context->draw.DrawPoint( p2, 5.0f, b2_colorRed );
 			if ( drawResult.hit )
@@ -1441,7 +1441,7 @@ public:
 			b2Vec2 origin = m_origins[m_drawIndex];
 			b2AABB aabb = { origin - extent, origin + extent };
 
-			m_context->draw.DrawAABB( aabb, b2_colorWhite );
+			m_context->draw.DrawBounds( aabb, b2_colorWhite );
 
 			for ( int i = 0; i < drawResult.count; ++i )
 			{
@@ -1678,10 +1678,10 @@ public:
 		b2DistanceOutput output = m_outputs[m_drawIndex];
 		m_context->draw.DrawSolidPolygon( xfA, m_polygonA.vertices, m_polygonA.count, m_polygonA.radius, b2_colorBox2DGreen );
 		m_context->draw.DrawSolidPolygon( xfB, m_polygonB.vertices, m_polygonB.count, m_polygonB.radius, b2_colorBox2DBlue );
-		m_context->draw.DrawSegment( output.pointA, output.pointB, b2_colorDimGray );
+		m_context->draw.DrawLine( output.pointA, output.pointB, b2_colorDimGray );
 		m_context->draw.DrawPoint( output.pointA, 10.0f, b2_colorWhite );
 		m_context->draw.DrawPoint( output.pointB, 10.0f, b2_colorWhite );
-		m_context->draw.DrawSegment( output.pointA, output.pointA + 0.5f * output.normal, b2_colorYellow );
+		m_context->draw.DrawLine( output.pointA, output.pointA + 0.5f * output.normal, b2_colorYellow );
 		DrawTextLine( "distance = %g", output.distance );
 
 		Sample::Step();
@@ -1707,7 +1707,8 @@ static int benchmarkShapeDistance = RegisterSample( "Benchmark", "Shape Distance
 
 struct ShapeUserData
 {
-	bool shouldDestroyVisitors;
+	int row;
+	bool active;
 };
 
 class BenchmarkSensor : public Sample
@@ -1722,8 +1723,10 @@ public:
 			m_context->camera.m_zoom = 125.0f;
 		}
 
-		m_passiveSensor.shouldDestroyVisitors = false;
-		m_activeSensor.shouldDestroyVisitors = true;
+		b2World_SetCustomFilterCallback( m_worldId, FilterFcn, this );
+
+		m_activeSensor.row = 0;
+		m_activeSensor.active = true;
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
@@ -1754,18 +1757,20 @@ public:
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.isSensor = true;
 		shapeDef.enableSensorEvents = true;
-		shapeDef.userData = &m_passiveSensor;
 
 		float yStart = 10.0f;
 
 		for ( int j = 0; j < m_rowCount; ++j )
 		{
+			m_passiveSensors[j].row = j;
+			m_passiveSensors[j].active = false;
+			shapeDef.userData = m_passiveSensors + j;
+
 			float y = j * shift + yStart;
 			for ( int i = 0; i < m_columnCount; ++i )
 			{
 				float x = i * shift - xCenter;
-				float yOffset = RandomFloatRange( -1.0f, 1.0f );
-				b2Polygon box = b2MakeOffsetRoundedBox( 0.5f, 0.5f, { x, y + yOffset }, RandomRot(), 0.1f );
+				b2Polygon box = b2MakeOffsetRoundedBox( 0.5f, 0.5f, { x, y }, b2Rot_identity, 0.1f );
 				b2CreatePolygonShape( groundId, &shapeDef, &box );
 			}
 		}
@@ -1773,6 +1778,7 @@ public:
 		m_maxBeginCount = 0;
 		m_maxEndCount = 0;
 		m_lastStepCount = 0;
+		m_filterRow = m_rowCount >> 1;
 	}
 
 	void CreateRow( float y )
@@ -1791,9 +1797,10 @@ public:
 		b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
 		for ( int i = 0; i < m_columnCount; ++i )
 		{
-			bodyDef.position = { shift * i - xCenter, y };
+			// stagger bodies to avoid bunching up events into a single update
+			float yOffset = RandomFloatRange( -1.0f, 1.0f );
+			bodyDef.position = { shift * i - xCenter, y + yOffset };
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
-
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		}
 	}
@@ -1817,12 +1824,16 @@ public:
 			// shapes on begin touch are always valid
 
 			ShapeUserData* userData = static_cast<ShapeUserData*>( b2Shape_GetUserData( event->sensorShapeId ) );
-			if ( userData->shouldDestroyVisitors )
+
+			if ( userData->active )
 			{
 				zombies.emplace( b2Shape_GetBody( event->visitorShapeId ) );
 			}
 			else
 			{
+				// Check custom filter correctness
+				assert( userData->row != m_filterRow );
+
 				// Modify color while overlapped with a sensor
 				b2SurfaceMaterial surfaceMaterial = b2Shape_GetSurfaceMaterial( event->visitorShapeId );
 				surfaceMaterial.customColor = b2_colorLime;
@@ -1865,6 +1876,32 @@ public:
 		DrawTextLine( "max end touch events = %d", m_maxEndCount );
 	}
 
+	bool Filter( b2ShapeId idA, b2ShapeId idB )
+	{
+		ShapeUserData* userData = nullptr;
+		if ( b2Shape_IsSensor( idA ) )
+		{
+			userData = (ShapeUserData*)b2Shape_GetUserData( idA );
+		}
+		else if ( b2Shape_IsSensor( idB ) )
+		{
+			userData = (ShapeUserData*)b2Shape_GetUserData( idB );
+		}
+
+		if ( userData != nullptr )
+		{
+			return userData->active == true || userData->row != m_filterRow;
+		}
+
+		return true;
+	}
+
+	static bool FilterFcn( b2ShapeId idA, b2ShapeId idB, void* context )
+	{
+		BenchmarkSensor* self = (BenchmarkSensor*)context;
+		return self->Filter( idA, idB );
+	}
+
 	static Sample* Create( SampleContext* context )
 	{
 		return new BenchmarkSensor( context );
@@ -1874,9 +1911,10 @@ public:
 	static constexpr int m_rowCount = 40;
 	int m_maxBeginCount;
 	int m_maxEndCount;
-	ShapeUserData m_passiveSensor;
+	ShapeUserData m_passiveSensors[m_rowCount];
 	ShapeUserData m_activeSensor;
 	int m_lastStepCount;
+	int m_filterRow;
 };
 
 static int benchmarkSensor = RegisterSample( "Benchmark", "Sensor", BenchmarkSensor::Create );

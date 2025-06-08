@@ -1166,7 +1166,7 @@ void DrawSolidCapsuleFcn( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, 
 
 void DrawSegmentFcn( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context )
 {
-	static_cast<Draw*>( context )->DrawSegment( p1, p2, color );
+	static_cast<Draw*>( context )->DrawLine( p1, p2, color );
 }
 
 void DrawTransformFcn( b2Transform transform, void* context )
@@ -1326,7 +1326,7 @@ void Draw::DrawSolidCapsule( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor colo
 	m_solidCapsules->AddCapsule( p1, p2, radius, color );
 }
 
-void Draw::DrawSegment( b2Vec2 p1, b2Vec2 p2, b2HexColor color )
+void Draw::DrawLine( b2Vec2 p1, b2Vec2 p2, b2HexColor color )
 {
 	m_lines->AddLine( p1, p2, color );
 }
@@ -1386,7 +1386,7 @@ void Draw::DrawString( b2Vec2 p, const char* string, ... )
 	va_end( arg );
 }
 
-void Draw::DrawAABB( b2AABB aabb, b2HexColor c )
+void Draw::DrawBounds( b2AABB aabb, b2HexColor c )
 {
 	b2Vec2 p1 = aabb.lowerBound;
 	b2Vec2 p2 = { aabb.upperBound.x, aabb.lowerBound.y };

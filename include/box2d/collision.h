@@ -16,6 +16,7 @@ typedef struct b2Hull b2Hull;
  * @brief Geometry types and algorithms
  *
  * Definitions of circles, capsules, segments, and polygons. Various algorithms to compute hulls, mass properties, and so on.
+ * Functions should take the shape as the first argument to assist editor auto-complete.
  * @{
  */
 
@@ -246,38 +247,38 @@ B2_API b2AABB b2ComputePolygonAABB( const b2Polygon* shape, b2Transform transfor
 B2_API b2AABB b2ComputeSegmentAABB( const b2Segment* shape, b2Transform transform );
 
 /// Test a point for overlap with a circle in local space
-B2_API bool b2PointInCircle( b2Vec2 point, const b2Circle* shape );
+B2_API bool b2PointInCircle( const b2Circle* shape, b2Vec2 point );
 
 /// Test a point for overlap with a capsule in local space
-B2_API bool b2PointInCapsule( b2Vec2 point, const b2Capsule* shape );
+B2_API bool b2PointInCapsule( const b2Capsule* shape, b2Vec2 point );
 
 /// Test a point for overlap with a convex polygon in local space
-B2_API bool b2PointInPolygon( b2Vec2 point, const b2Polygon* shape );
+B2_API bool b2PointInPolygon( const b2Polygon* shape, b2Vec2 point );
 
-/// Ray cast versus circle shape in local space. Initial overlap is treated as a miss.
-B2_API b2CastOutput b2RayCastCircle( const b2RayCastInput* input, const b2Circle* shape );
+/// Ray cast versus circle shape in local space.
+B2_API b2CastOutput b2RayCastCircle( const b2Circle* shape, const b2RayCastInput* input );
 
-/// Ray cast versus capsule shape in local space. Initial overlap is treated as a miss.
-B2_API b2CastOutput b2RayCastCapsule( const b2RayCastInput* input, const b2Capsule* shape );
+/// Ray cast versus capsule shape in local space.
+B2_API b2CastOutput b2RayCastCapsule( const b2Capsule* shape, const b2RayCastInput* input );
 
 /// Ray cast versus segment shape in local space. Optionally treat the segment as one-sided with hits from
 /// the left side being treated as a miss.
-B2_API b2CastOutput b2RayCastSegment( const b2RayCastInput* input, const b2Segment* shape, bool oneSided );
+B2_API b2CastOutput b2RayCastSegment( const b2Segment* shape, const b2RayCastInput* input, bool oneSided );
 
-/// Ray cast versus polygon shape in local space. Initial overlap is treated as a miss.
-B2_API b2CastOutput b2RayCastPolygon( const b2RayCastInput* input, const b2Polygon* shape );
+/// Ray cast versus polygon shape in local space.
+B2_API b2CastOutput b2RayCastPolygon( const b2Polygon* shape, const b2RayCastInput* input );
 
-/// Shape cast versus a circle. Initial overlap is treated as a miss.
-B2_API b2CastOutput b2ShapeCastCircle( const b2ShapeCastInput* input, const b2Circle* shape );
+/// Shape cast versus a circle.
+B2_API b2CastOutput b2ShapeCastCircle(const b2Circle* shape,  const b2ShapeCastInput* input );
 
-/// Shape cast versus a capsule. Initial overlap is treated as a miss.
-B2_API b2CastOutput b2ShapeCastCapsule( const b2ShapeCastInput* input, const b2Capsule* shape );
+/// Shape cast versus a capsule.
+B2_API b2CastOutput b2ShapeCastCapsule( const b2Capsule* shape, const b2ShapeCastInput* input);
 
-/// Shape cast versus a line segment. Initial overlap is treated as a miss.
-B2_API b2CastOutput b2ShapeCastSegment( const b2ShapeCastInput* input, const b2Segment* shape );
+/// Shape cast versus a line segment.
+B2_API b2CastOutput b2ShapeCastSegment( const b2Segment* shape, const b2ShapeCastInput* input );
 
-/// Shape cast versus a convex polygon. Initial overlap is treated as a miss.
-B2_API b2CastOutput b2ShapeCastPolygon( const b2ShapeCastInput* input, const b2Polygon* shape );
+/// Shape cast versus a convex polygon.
+B2_API b2CastOutput b2ShapeCastPolygon( const b2Polygon* shape, const b2ShapeCastInput* input );
 
 /// A convex hull. Used to create convex polygons.
 /// @warning Do not modify these values directly, instead use b2ComputeHull()

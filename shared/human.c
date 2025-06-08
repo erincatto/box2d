@@ -118,7 +118,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		jointDef.enableSpring = hertz > 0.0f;
 		jointDef.hertz = hertz;
 		jointDef.dampingRatio = dampingRatio;
-		jointDef.base.drawSize = drawSize;
+		jointDef.base.drawScale = drawSize;
 
 		bone->jointId = b2CreateRevoluteJoint( worldId, &jointDef );
 	}
@@ -161,7 +161,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		jointDef.enableSpring = hertz > 0.0f;
 		jointDef.hertz = hertz;
 		jointDef.dampingRatio = dampingRatio;
-		jointDef.base.drawSize = drawSize;
+		jointDef.base.drawScale = drawSize;
 
 		bone->jointId = b2CreateRevoluteJoint( worldId, &jointDef );
 	}
@@ -200,7 +200,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		jointDef.enableSpring = hertz > 0.0f;
 		jointDef.hertz = hertz;
 		jointDef.dampingRatio = dampingRatio;
-		jointDef.base.drawSize = drawSize;
+		jointDef.base.drawScale = drawSize;
 
 		bone->jointId = b2CreateRevoluteJoint( worldId, &jointDef );
 	}
@@ -257,7 +257,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		jointDef.enableSpring = hertz > 0.0f;
 		jointDef.hertz = hertz;
 		jointDef.dampingRatio = dampingRatio;
-		jointDef.base.drawSize = drawSize;
+		jointDef.base.drawScale = drawSize;
 
 		bone->jointId = b2CreateRevoluteJoint( worldId, &jointDef );
 	}
@@ -296,7 +296,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		jointDef.enableSpring = hertz > 0.0f;
 		jointDef.hertz = hertz;
 		jointDef.dampingRatio = dampingRatio;
-		jointDef.base.drawSize = drawSize;
+		jointDef.base.drawScale = drawSize;
 
 		bone->jointId = b2CreateRevoluteJoint( worldId, &jointDef );
 	}
@@ -343,7 +343,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		jointDef.enableSpring = hertz > 0.0f;
 		jointDef.hertz = hertz;
 		jointDef.dampingRatio = dampingRatio;
-		jointDef.base.drawSize = drawSize;
+		jointDef.base.drawScale = drawSize;
 
 		bone->jointId = b2CreateRevoluteJoint( worldId, &jointDef );
 	}
@@ -382,7 +382,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		jointDef.enableSpring = hertz > 0.0f;
 		jointDef.hertz = hertz;
 		jointDef.dampingRatio = dampingRatio;
-		jointDef.base.drawSize = drawSize;
+		jointDef.base.drawScale = drawSize;
 
 		bone->jointId = b2CreateRevoluteJoint( worldId, &jointDef );
 	}
@@ -422,7 +422,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		jointDef.enableSpring = hertz > 0.0f;
 		jointDef.hertz = hertz;
 		jointDef.dampingRatio = dampingRatio;
-		jointDef.base.drawSize = drawSize;
+		jointDef.base.drawScale = drawSize;
 
 		bone->jointId = b2CreateRevoluteJoint( worldId, &jointDef );
 	}
@@ -461,7 +461,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		jointDef.enableSpring = hertz > 0.0f;
 		jointDef.hertz = hertz;
 		jointDef.dampingRatio = dampingRatio;
-		jointDef.base.drawSize = drawSize;
+		jointDef.base.drawScale = drawSize;
 
 		bone->jointId = b2CreateRevoluteJoint( worldId, &jointDef );
 	}
@@ -501,7 +501,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		jointDef.enableSpring = hertz > 0.0f;
 		jointDef.hertz = hertz;
 		jointDef.dampingRatio = dampingRatio;
-		jointDef.base.drawSize = drawSize;
+		jointDef.base.drawScale = drawSize;
 
 		bone->jointId = b2CreateRevoluteJoint( worldId, &jointDef );
 	}

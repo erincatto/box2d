@@ -631,7 +631,8 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	b2CastOutput output = { 0 };
 
 	int iteration = 0;
-	int maxIterations = 20;
+	const int maxIterations = 20;
+
 	for ( ; iteration < maxIterations; ++iteration )
 	{
 		output.iterations += 1;

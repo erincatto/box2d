@@ -15,6 +15,7 @@
 #include "island.h"
 #include "joint.h"
 #include "physics_world.h"
+#include "sensor.h"
 #include "shape.h"
 #include "solver_set.h"
 
@@ -38,7 +39,6 @@ static inline void b2Pause( void )
 	__asm__ __volatile__( "yield" ::: "memory" );
 }
 #elif defined( _MSC_VER ) && ( defined( _M_IX86 ) || defined( _M_X64 ) )
-// #include <immintrin.h>
 static inline void b2Pause( void )
 {
 	_mm_pause();
@@ -178,15 +178,14 @@ static void b2SolveJointsTask( int startIndex, int endIndex, b2StepContext* cont
 		b2JointSim* joint = joints + i;
 		b2SolveJoint( joint, context, useBias );
 
-		if ( useBias &&
-			(joint->forceThreshold < FLT_MAX || joint->torqueThreshold < FLT_MAX) &&
-			b2GetBit(jointStateBitSet, joint->jointId) == false )
+		if ( useBias && ( joint->forceThreshold < FLT_MAX || joint->torqueThreshold < FLT_MAX ) &&
+			 b2GetBit( jointStateBitSet, joint->jointId ) == false )
 		{
 			float force, torque;
 			b2GetJointReaction( joint, context->inv_h, &force, &torque );
 
 			// Check thresholds. A zero threshold means all awake joints get reported.
-			if (force >= joint->forceThreshold || torque >= joint->torqueThreshold)
+			if ( force >= joint->forceThreshold || torque >= joint->torqueThreshold )
 			{
 				// Flag this joint for processing.
 				b2SetBit( jointStateBitSet, joint->jointId );
@@ -216,6 +215,8 @@ static void b2IntegratePositionsTask( int startIndex, int endIndex, b2StepContex
 	b2TracyCZoneEnd( integrate_positions );
 }
 
+#define B2_MAX_CONTINUOUS_SENSOR_HITS 8
+
 struct b2ContinuousContext
 {
 	b2World* world;
@@ -224,6 +225,9 @@ struct b2ContinuousContext
 	b2Vec2 centroid1, centroid2;
 	b2Sweep sweep;
 	float fraction;
+	b2SensorContinuousHit sensorHits[B2_MAX_CONTINUOUS_SENSOR_HITS];
+	float sensorFractions[B2_MAX_CONTINUOUS_SENSOR_HITS];
+	int sensorCount;
 };
 
 // This is called from b2DynamicTree_Query for continuous collision
@@ -253,8 +257,9 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 		return true;
 	}
 
-	// Skip sensors
-	if ( shape->sensorIndex != B2_NULL_INDEX )
+	// Skip sensors except if the body wants sensor sweeps
+	bool isSensor = shape->sensorIndex != B2_NULL_INDEX;
+	if ( isSensor && fastBodySim->enableSensorSweeps == false )
 	{
 		return true;
 	}
@@ -298,8 +303,9 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 		}
 	}
 
-	// Prevent pausing on chain segment junctions
-	if ( shape->type == b2_chainSegmentShape )
+	// Early out on fast parallel movement over a chain shape.
+	// No early out for sensor sweeps.
+	if ( shape->type == b2_chainSegmentShape && isSensor == false )
 	{
 		b2Transform transform = bodySim->transform;
 		b2Vec2 p1 = b2TransformPoint( transform, shape->chainSegment.segment.point1 );
@@ -362,23 +368,38 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 
 	bool didHit = false;
 	b2TOIOutput output = b2TimeOfImpact( &input );
-	if ( 0.0f < output.fraction && output.fraction < continuousContext->fraction )
+	if ( isSensor )
 	{
-		hitFraction = output.fraction;
-		didHit = true;
+		// Only accept a sensor hit sooner that is sooner than the current solid hit.
+		if ( output.fraction <= continuousContext->fraction && continuousContext->sensorCount < B2_MAX_CONTINUOUS_SENSOR_HITS )
+		{
+			int index = continuousContext->sensorCount;
+			b2SensorContinuousHit sensorHit = { .sensorId = shape->id, .visitorId = fastShape->id };
+			continuousContext->sensorHits[index] = sensorHit;
+			continuousContext->sensorFractions[index] = output.fraction;
+			continuousContext->sensorCount += 1;
+		}
 	}
-	else if ( 0.0f == output.fraction )
+	else
 	{
-		// fallback to TOI of a small circle around the fast shape centroid
-		b2Vec2 centroid = b2GetShapeCentroid( fastShape );
-		b2ShapeExtent extent = b2ComputeShapeExtent( fastShape, centroid );
-		float radius = 0.25f * extent.minExtent;
-		input.proxyB = b2MakeProxy( &centroid, 1, radius );
-		output = b2TimeOfImpact( &input );
 		if ( 0.0f < output.fraction && output.fraction < continuousContext->fraction )
 		{
 			hitFraction = output.fraction;
 			didHit = true;
+		}
+		else if ( 0.0f == output.fraction )
+		{
+			// fallback to TOI of a small circle around the fast shape centroid
+			b2Vec2 centroid = b2GetShapeCentroid( fastShape );
+			b2ShapeExtent extent = b2ComputeShapeExtent( fastShape, centroid );
+			float radius = 0.25f * extent.minExtent;
+			input.proxyB = b2MakeProxy( &centroid, 1, radius );
+			output = b2TimeOfImpact( &input );
+			if ( 0.0f < output.fraction && output.fraction < continuousContext->fraction )
+			{
+				hitFraction = output.fraction;
+				didHit = true;
+			}
 		}
 	}
 
@@ -391,6 +412,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 		b2ShapeId shapeIdA = { shape->id + 1, world->worldId, shape->generation };
 		b2ShapeId shapeIdB = { fastShape->id + 1, world->worldId, fastShape->generation };
 
+		// The user may need the manifold geometry to judge whether this TOI should skip.
 		// The user may modify the temporary manifold here but it doesn't matter. They will be able to
 		// modify the real manifold in the discrete solver.
 		didHit = world->preSolveFcn( shapeIdA, shapeIdB, &manifold, world->preSolveContext );
@@ -404,8 +426,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	return true;
 }
 
-// Continuous collision of dynamic versus static
-static void b2SolveContinuous( b2World* world, int bodySimIndex )
+static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* taskContext )
 {
 	b2TracyCZoneNC( ccd, "CCD", b2_colorDarkGoldenRod, true );
 
@@ -428,7 +449,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 	b2DynamicTree* dynamicTree = world->broadPhase.trees + b2_dynamicBody;
 	b2Body* fastBody = b2BodyArray_Get( &world->bodies, fastBodySim->bodyId );
 
-	struct b2ContinuousContext context;
+	struct b2ContinuousContext context = { 0 };
 	context.world = world;
 	context.sweep = sweep;
 	context.fastBodySim = fastBodySim;
@@ -448,7 +469,6 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 
 		b2AABB box1 = fastShape->aabb;
 		b2AABB box2 = b2ComputeShapeAABB( fastShape, xf2 );
-		b2AABB box = b2AABB_Union( box1, box2 );
 
 		// Store this to avoid double computation in the case there is no impact event
 		fastShape->aabb = box2;
@@ -459,12 +479,14 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 			continue;
 		}
 
-		b2DynamicTree_Query( staticTree, box, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
+		b2AABB sweptBox = b2AABB_Union( box1, box2 );
+
+		b2DynamicTree_Query( staticTree, sweptBox, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
 
 		if ( isBullet )
 		{
-			b2DynamicTree_Query( kinematicTree, box, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
-			b2DynamicTree_Query( dynamicTree, box, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
+			b2DynamicTree_Query( kinematicTree, sweptBox, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
+			b2DynamicTree_Query( dynamicTree, sweptBox, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
 		}
 	}
 
@@ -490,8 +512,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 		event->transform = transform;
 
 		// Prepare AABBs for broad-phase.
-		// Even though a body is fast, it may not move much. So the
-		// AABB may not need enlargement.
+		// Even though a body is fast, it may not move much. So the AABB may not need enlargement.
 
 		shapeId = fastBody->headShapeId;
 		while ( shapeId != B2_NULL_INDEX )
@@ -552,6 +573,15 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex )
 			}
 
 			shapeId = shape->nextShapeId;
+		}
+	}
+
+	// Push sensor hits on the the task context for serial processing.
+	for ( int i = 0; i < context.sensorCount; ++i)
+	{
+		if ( context.sensorFractions[i] < context.fraction)
+		{
+			b2SensorContinuousHitArray_Push( &taskContext->sensorContinuousHits, context.sensorHits[i] );
 		}
 	}
 
@@ -655,7 +685,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 				}
 				else
 				{
-					b2SolveContinuous( world, simIndex );
+					b2SolveContinuous( world, simIndex, taskContext );
 				}
 			}
 			else
@@ -1802,7 +1832,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				while ( word != 0 )
 				{
 					uint32_t ctz = b2CTZ64( word );
-					int jointId = (int)(64 * k + ctz);
+					int jointId = (int)( 64 * k + ctz );
 
 					B2_ASSERT( jointId < jointCapacity );
 

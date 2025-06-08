@@ -663,7 +663,7 @@ public:
 			jointDef.base.localFrameA.q = b2MakeRotFromUnitVector( axis );
 			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 			jointDef.base.localFrameB.q = b2MakeRotFromUnitVector( axis );
-			jointDef.base.drawSize = 2.0f;
+			jointDef.base.drawScale = 2.0f;
 			jointDef.motorSpeed = m_motorSpeed;
 			jointDef.maxMotorForce = m_motorForce;
 			jointDef.enableMotor = m_enableMotor;
@@ -2134,12 +2134,12 @@ public:
 			float C = length - slackLength;
 			if ( C < 0.0f || length < 0.001f )
 			{
-				m_context->draw.DrawSegment( anchorA, anchorB, b2_colorLightCyan );
+				m_context->draw.DrawLine( anchorA, anchorB, b2_colorLightCyan );
 				m_impulses[i] = 0.0f;
 				continue;
 			}
 
-			m_context->draw.DrawSegment( anchorA, anchorB, b2_colorViolet );
+			m_context->draw.DrawLine( anchorA, anchorB, b2_colorViolet );
 			b2Vec2 axis = b2Normalize( deltaAnchor );
 
 			b2Vec2 rB = b2Sub( anchorB, pB );
@@ -2985,7 +2985,7 @@ public:
 				jointDef.base.bodyIdB = bodyId;
 				jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
 				jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
-				jointDef.base.drawSize = 0.2f;
+				jointDef.base.drawScale = 0.2f;
 				b2CreateRevoluteJoint( m_worldId, &jointDef );
 
 				position.y -= 2.0f * linkHalfLength;

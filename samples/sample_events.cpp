@@ -1013,7 +1013,7 @@ public:
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							m_context->draw.DrawSegment( point.point, point.point + point.totalNormalImpulse * normal,
+							m_context->draw.DrawLine( point.point, point.point + point.totalNormalImpulse * normal,
 														 b2_colorBlueViolet );
 							m_context->draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
 						}
@@ -1044,7 +1044,7 @@ public:
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							m_context->draw.DrawSegment( point.point, point.point + point.totalNormalImpulse * normal,
+							m_context->draw.DrawLine( point.point, point.point + point.totalNormalImpulse * normal,
 														 b2_colorYellowGreen );
 							m_context->draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
 						}
@@ -1827,7 +1827,7 @@ public:
 		b2Vec2 origin = { 5.0f, 1.0f };
 		b2Vec2 translation = { -10.0f, 0.0f };
 		b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, b2DefaultQueryFilter() );
-		m_context->draw.DrawSegment( origin, origin + translation, b2_colorDimGray );
+		m_context->draw.DrawLine( origin, origin + translation, b2_colorDimGray );
 
 		if ( result.hit )
 		{
@@ -2007,8 +2007,6 @@ public:
 			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 			jointDef.angularHertz = 2.0f;
 			jointDef.angularDampingRatio = 0.5f;
-			jointDef.linearHertz = 2.0f;
-			jointDef.linearDampingRatio = 0.5f;
 			jointDef.base.forceThreshold = forceThreshold;
 			jointDef.base.torqueThreshold = torqueThreshold;
 			jointDef.base.collideConnected = true;
@@ -2081,7 +2079,7 @@ public:
 	b2JointId m_jointIds[e_count];
 };
 
-static int sampleBreakableJoint = RegisterSample( "Events", "Joint", JointEvent::Create );
+static int sampleJointEvent = RegisterSample( "Events", "Joint", JointEvent::Create );
 
 class PersistentContact : public Sample
 {
@@ -2157,14 +2155,14 @@ public:
 
 		if (B2_IS_NON_NULL(m_contactId) && b2Contact_IsValid(m_contactId))
 		{
-			b2Manifold manifold = b2Contact_GetManifold( m_contactId );
+			b2ContactData data = b2Contact_GetData( m_contactId );
 
-			for (int i = 0; i < manifold.pointCount; ++i)
+			for ( int i = 0; i < data.manifold.pointCount; ++i )
 			{
-				const b2ManifoldPoint* manifoldPoint = manifold.points + i;
+				const b2ManifoldPoint* manifoldPoint = data.manifold.points + i;
 				b2Vec2 p1 = manifoldPoint->point;
-				b2Vec2 p2 = p1 + manifoldPoint->totalNormalImpulse * manifold.normal;
-				m_draw->DrawSegment( p1, p2, b2_colorCrimson );
+				b2Vec2 p2 = p1 + manifoldPoint->totalNormalImpulse * data.manifold.normal;
+				m_draw->DrawLine( p1, p2, b2_colorCrimson );
 				m_draw->DrawPoint( p1, 6.0f, b2_colorCrimson );
 				m_draw->DrawString( p1, "%.2f", manifoldPoint->totalNormalImpulse );
 			}

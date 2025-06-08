@@ -80,6 +80,19 @@ static bool b2SensorQueryCallback( int proxyId, uint64_t userData, void* context
 		return true;
 	}
 
+	// Custom user filter
+	b2CustomFilterFcn* customFilterFcn = queryContext->world->customFilterFcn;
+	if ( customFilterFcn != NULL )
+	{
+		b2ShapeId idA = { sensorShapeId + 1, world->worldId, sensorShape->generation };
+		b2ShapeId idB = { shapeId + 1, world->worldId, otherShape->generation };
+		bool shouldCollide = customFilterFcn( idA, idB, queryContext->world->customFilterContext );
+		if ( shouldCollide == false )
+		{
+			return true;
+		}
+	}
+
 	b2Transform otherTransform = b2GetBodyTransform( world, otherShape->bodyId );
 
 	b2DistanceInput input;
@@ -159,6 +172,7 @@ static void b2SensorTask( int startIndex, int endIndex, uint32_t threadIndex, vo
 		{
 			if ( sensor->overlaps1.count != 0 )
 			{
+				// This sensor is dropping all overlaps because it has been disabled.
 				b2SetBit( &taskContext->eventBits, sensorIndex );
 			}
 			continue;
@@ -247,7 +261,7 @@ void b2OverlapSensors( b2World* world )
 	}
 
 	// Iterate sensors bits and publish events
-	// Process contact state changes. Iterate over set bits
+	// Process sensor state changes. Iterate over set bits
 	uint64_t* bits = bitSet->bits;
 	uint32_t blockCount = bitSet->blockCount;
 

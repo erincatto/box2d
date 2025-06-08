@@ -192,7 +192,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->hitEventThreshold = def->hitEventThreshold;
 	world->restitutionThreshold = def->restitutionThreshold;
 	world->maxLinearSpeed = def->maximumLinearSpeed;
-	world->maxContactPushSpeed = def->maxContactPushSpeed;
+	world->contactSpeed = def->contactSpeed;
 	world->contactHertz = def->contactHertz;
 	world->contactDampingRatio = def->contactDampingRatio;
 
@@ -245,6 +245,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 
 	for ( int i = 0; i < world->workerCount; ++i )
 	{
+		world->taskContexts.data[i].sensorContinuousHits = b2SensorContinuousHitArray_Create( 8 );
 		world->taskContexts.data[i].contactStateBitSet = b2CreateBitSet( 1024 );
 		world->taskContexts.data[i].jointStateBitSet = b2CreateBitSet( 1024 );
 		world->taskContexts.data[i].enlargedSimBitSet = b2CreateBitSet( 256 );
@@ -273,6 +274,7 @@ void b2DestroyWorld( b2WorldId worldId )
 
 	for ( int i = 0; i < world->workerCount; ++i )
 	{
+		b2SensorContinuousHitArray_Destroy( &world->taskContexts.data[i].sensorContinuousHits );
 		b2DestroyBitSet( &world->taskContexts.data[i].contactStateBitSet );
 		b2DestroyBitSet( &world->taskContexts.data[i].jointStateBitSet );
 		b2DestroyBitSet( &world->taskContexts.data[i].enlargedSimBitSet );
@@ -774,8 +776,6 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	float contactHertz = b2MinFloat( world->contactHertz, 0.125f * context.inv_h );
 	context.contactSoftness = b2MakeSoft( contactHertz, world->contactDampingRatio, context.h );
 	context.staticSoftness = b2MakeSoft( 2.0f * contactHertz, world->contactDampingRatio, context.h );
-
-	world->contactSpeed = world->maxContactPushSpeed / context.staticSoftness.massScale;
 
 	context.restitutionThreshold = world->restitutionThreshold;
 	context.maxLinearVelocity = world->maxLinearSpeed;
@@ -1890,7 +1890,7 @@ void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRati
 
 	world->contactHertz = b2ClampFloat( hertz, 0.0f, FLT_MAX );
 	world->contactDampingRatio = b2ClampFloat( dampingRatio, 0.0f, FLT_MAX );
-	world->maxContactPushSpeed = b2ClampFloat( pushSpeed, 0.0f, FLT_MAX );
+	world->contactSpeed = b2ClampFloat( pushSpeed, 0.0f, FLT_MAX );
 }
 
 void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearSpeed )
@@ -2553,7 +2553,7 @@ static bool TreeCollideCallback( int proxyId, uint64_t userData, void* context )
 	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
 	b2Transform transform = b2GetBodyTransformQuick( world, body );
 
-	b2PlaneResult result = b2CollideMover( shape, transform, &worldContext->mover );
+	b2PlaneResult result = b2CollideMover( &worldContext->mover, shape, transform );
 
 	// todo handle deep overlap
 	if ( result.hit && b2IsNormalized( result.plane.normal ) )

@@ -153,6 +153,7 @@ typedef struct b2BodySim
 	bool isFast;
 
 	bool isBullet;
+	bool enableSensorSweeps;
 	bool isSpeedCapped;
 	bool allowFastRotation;
 	bool enlargeAABB;

@@ -46,12 +46,6 @@ extern float b2_lengthUnitsPerMeter;
 // The time that a body must be still before it will go to sleep. In seconds.
 #define B2_TIME_TO_SLEEP 0.5f
 
-// The default joint constraint hertz
-#define B2_JOINT_CONSTRAINT_HERTZ 60.0f
-
-// The default joint constraint damping ratio
-#define B2_JOINT_CONSTRAINT_DAMPING_RATIO 0.0f
-
 enum b2TreeNodeFlags
 {
 	b2_allocatedNode = 0x0001,
