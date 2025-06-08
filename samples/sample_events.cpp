@@ -783,12 +783,12 @@ public:
 		DrawTextLine( "count == %d", m_overlapCount );
 
 		int capacity = b2Shape_GetSensorCapacity( m_sensorId );
-		m_overlaps.clear();
-		m_overlaps.resize( capacity );
-		int count = b2Shape_GetSensorOverlaps( m_sensorId, m_overlaps.data(), capacity );
+		m_sensorData.clear();
+		m_sensorData.resize( capacity );
+		int count = b2Shape_GetSensorOverlaps( m_sensorId, m_sensorData.data(), capacity );
 		for ( int i = 0; i < count; ++i )
 		{
-			b2ShapeId shapeId = m_overlaps[i];
+			b2ShapeId shapeId = m_sensorData[i].visitorId;
 			b2AABB aabb = b2Shape_GetAABB( shapeId );
 			b2Vec2 point = b2AABB_Center( aabb );
 			m_context->draw.DrawPoint( point, 10.0f, b2_colorWhite );
@@ -802,7 +802,7 @@ public:
 
 	b2BodyId m_playerId;
 	b2ShapeId m_sensorId;
-	std::vector<b2ShapeId> m_overlaps;
+	std::vector<b2SensorData> m_sensorData;
 	int m_overlapCount;
 };
 
@@ -1014,7 +1014,7 @@ public:
 						{
 							b2ManifoldPoint point = manifold.points[k];
 							m_context->draw.DrawLine( point.point, point.point + point.totalNormalImpulse * normal,
-														 b2_colorBlueViolet );
+													  b2_colorBlueViolet );
 							m_context->draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
 						}
 					}
@@ -1045,7 +1045,7 @@ public:
 						{
 							b2ManifoldPoint point = manifold.points[k];
 							m_context->draw.DrawLine( point.point, point.point + point.totalNormalImpulse * normal,
-														 b2_colorYellowGreen );
+													  b2_colorYellowGreen );
 							m_context->draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
 						}
 					}
@@ -1776,16 +1776,16 @@ public:
 
 		// Determine the necessary capacity
 		int capacity = b2Shape_GetSensorCapacity( sensorShapeId );
-		m_overlaps.resize( capacity );
+		m_sensorData.resize( capacity );
 
 		// Get all overlaps and record the actual count
-		int count = b2Shape_GetSensorOverlaps( sensorShapeId, m_overlaps.data(), capacity );
-		m_overlaps.resize( count );
+		int count = b2Shape_GetSensorOverlaps( sensorShapeId, m_sensorData.data(), capacity );
+		m_sensorData.resize( count );
 
 		int start = snprintf( buffer, sizeof( buffer ), "%s: ", prefix );
 		for ( int i = 0; i < count && start < sizeof( buffer ); ++i )
 		{
-			b2ShapeId visitorId = m_overlaps[i];
+			b2ShapeId visitorId = m_sensorData[i].visitorId;
 			if ( b2Shape_IsValid( visitorId ) == false )
 			{
 				continue;
@@ -1846,7 +1846,7 @@ public:
 
 	b2BodyId m_kinematicBodyId;
 
-	std::vector<b2ShapeId> m_overlaps;
+	std::vector<b2SensorData> m_sensorData;
 };
 
 static int sampleSensorTypes = RegisterSample( "Events", "Sensor Types", SensorTypes::Create );
@@ -2061,7 +2061,7 @@ public:
 			// Destroy the joint if it is still valid
 			const b2JointEvent* event = events.jointEvents + i;
 
-			if (b2Joint_IsValid(event->jointId))
+			if ( b2Joint_IsValid( event->jointId ) )
 			{
 				int index = (int)(intptr_t)event->userData;
 				assert( 0 <= index && index < e_count );
@@ -2153,7 +2153,7 @@ public:
 			}
 		}
 
-		if (B2_IS_NON_NULL(m_contactId) && b2Contact_IsValid(m_contactId))
+		if ( B2_IS_NON_NULL( m_contactId ) && b2Contact_IsValid( m_contactId ) )
 		{
 			b2ContactData data = b2Contact_GetData( m_contactId );
 
@@ -2171,7 +2171,6 @@ public:
 		{
 			m_contactId = b2_nullContactId;
 		}
-
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -2183,3 +2182,163 @@ public:
 };
 
 static int samplePersistentContact = RegisterSample( "Events", "Persistent Contact", PersistentContact::Create );
+
+class SensorHits : public Sample
+{
+public:
+	explicit SensorHits( SampleContext* context )
+		: Sample( context )
+		, m_transforms{}
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 3.0f };
+			m_context->camera.m_zoom = 15.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.name = "ground";
+
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+			b2Segment groundSegment = { { -20.0f, 0.0f }, { 20.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &groundSegment );
+
+			groundSegment = { { 20.0f, 0.0f }, { 20.0f, 10.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &groundSegment );
+		}
+
+		// Static sensor
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.name = "static sensor";
+
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.isSensor = true;
+			shapeDef.enableSensorEvents = true;
+
+			b2Segment segment = { { 0.0f, 0.0f }, { 0.0f, 10.0f } };
+			m_staticSensorId = b2CreateSegmentShape( bodyId, &shapeDef, &segment );
+		}
+
+		m_kinematicSensorId = {};
+		m_dynamicSensorId = {};
+
+		m_beginCount = 0;
+		m_endCount = 0;
+		m_bodyId = {};
+		m_shapeId = {};
+		m_transformCount = 0;
+		m_enableSensorHits = true;
+		m_isBullet = true;
+
+		Launch();
+	}
+
+	void Launch()
+	{
+		if ( B2_IS_NON_NULL( m_bodyId ) )
+		{
+			b2DestroyBody( m_bodyId );
+		}
+
+		m_transformCount = 0;
+		m_beginCount = 0;
+		m_endCount = 0;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.position = { -26.7f, 6.0f };
+		float speed = RandomFloatRange( 200.0f, 300.0f );
+		bodyDef.linearVelocity = { speed, 0.0f };
+		bodyDef.isBullet = m_isBullet;
+		bodyDef.enableSensorHits = m_enableSensorHits;
+		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.enableSensorEvents = true;
+		shapeDef.material.friction = 0.8f;
+		shapeDef.material.rollingResistance = 0.01f;
+		b2Circle circle = { { 0.0f, 0.0f }, 0.25f };
+		m_shapeId = b2CreateCircleShape( m_bodyId, &shapeDef, &circle );
+	}
+
+	void UpdateGui() override
+	{
+		float height = 120.0f;
+		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 120.0f, height ) );
+
+		ImGui::Begin( "Sensor Hit", nullptr, ImGuiWindowFlags_NoResize );
+
+		ImGui::Checkbox( "Enable Hits", &m_enableSensorHits );
+		ImGui::Checkbox( "Bullet", &m_isBullet );
+
+		if ( ImGui::Button( "Launch" ) || glfwGetKey( m_context->window, GLFW_KEY_B ) == GLFW_PRESS )
+		{
+			Launch();
+		}
+
+		ImGui::End();
+	}
+
+	void CollectOverlapTransforms( b2ShapeId sensorShapeId )
+	{
+		constexpr int capacity = 5;
+		b2SensorData sensorData[capacity];
+		int count = b2Shape_GetSensorOverlaps( sensorShapeId, sensorData, capacity );
+
+		for ( int i = 0; i < count && m_transformCount < m_transformCapacity; ++i )
+		{
+			m_transforms[m_transformCount] = sensorData[i].visitTransform;
+			m_transformCount += 1;
+		}
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		CollectOverlapTransforms( m_staticSensorId );
+		//PrintOverlaps( m_kinematicSensorId );
+		//PrintOverlaps( m_dynamicSensorId );
+
+		for (int i = 0; i < m_transformCount; ++i)
+		{
+			m_draw->DrawTransform( m_transforms[i] );
+		}
+
+		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
+		m_beginCount += sensorEvents.beginCount;
+		m_endCount += sensorEvents.endCount;
+
+		DrawTextLine( "begin touch count = %d", m_beginCount );
+		DrawTextLine( "end touch count = %d", m_endCount );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new SensorHits( context );
+	}
+
+	b2ShapeId m_staticSensorId;
+	b2ShapeId m_kinematicSensorId;
+	b2ShapeId m_dynamicSensorId;
+
+	b2BodyId m_bodyId;
+	b2ShapeId m_shapeId;
+
+	static constexpr int m_transformCapacity = 20;
+	int m_transformCount;
+	b2Transform m_transforms[m_transformCapacity];
+
+	bool m_isBullet;
+	bool m_enableSensorHits;
+	int m_beginCount;
+	int m_endCount;
+};
+
+static int sampleSensorHits = RegisterSample( "Events", "Sensor Hits", SensorHits::Create );

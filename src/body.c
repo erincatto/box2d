@@ -247,7 +247,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	bodySim->gravityScale = def->gravityScale;
 	bodySim->bodyId = bodyId;
 	bodySim->isBullet = def->isBullet;
-	bodySim->enableSensorSweeps = def->enableSensorSweeps;
+	bodySim->enableSensorHits = def->enableSensorHits;
 	bodySim->allowFastRotation = def->allowFastRotation;
 
 	if ( setId == b2_awakeSet )

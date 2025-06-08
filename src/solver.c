@@ -259,7 +259,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 
 	// Skip sensors except if the body wants sensor sweeps
 	bool isSensor = shape->sensorIndex != B2_NULL_INDEX;
-	if ( isSensor && fastBodySim->enableSensorSweeps == false )
+	if ( isSensor && fastBodySim->enableSensorHits == false )
 	{
 		return true;
 	}
@@ -374,7 +374,12 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 		if ( output.fraction <= continuousContext->fraction && continuousContext->sensorCount < B2_MAX_CONTINUOUS_SENSOR_HITS )
 		{
 			int index = continuousContext->sensorCount;
-			b2SensorHit sensorHit = { .sensorId = shape->id, .visitorId = fastShape->id };
+			b2Transform hitTransform = b2GetSweepTransform( &continuousContext->sweep, output.fraction );
+			b2SensorHit sensorHit = {
+				.sensorId = shape->id,
+				.visitorId = fastShape->id,
+				.visitorTransform = hitTransform,
+			};
 			continuousContext->sensorHits[index] = sensorHit;
 			continuousContext->sensorFractions[index] = output.fraction;
 			continuousContext->sensorCount += 1;
@@ -1741,7 +1746,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		for ( int i = 0; i < workerCount; ++i )
 		{
 			b2TaskContext* taskContext = b2TaskContextArray_Get( &world->taskContexts, i );
-			b2SensorHitArray_Clear( &taskContext->sensorHits );
 			b2SetBitCountAndClear( &taskContext->jointStateBitSet, jointIdCapacity );
 
 			workerContext[i].context = stepContext;
@@ -1780,6 +1784,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		for ( int i = 0; i < world->workerCount; ++i )
 		{
 			b2TaskContext* taskContext = world->taskContexts.data + i;
+			b2SensorHitArray_Clear( &taskContext->sensorHits );
 			b2SetBitCountAndClear( &taskContext->enlargedSimBitSet, awakeBodyCount );
 			b2SetBitCountAndClear( &taskContext->awakeIslandBitSet, awakeIslandCount );
 			taskContext->splitIslandId = B2_NULL_INDEX;
@@ -1807,36 +1812,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		world->profile.transforms = b2GetMilliseconds( transformTicks );
 		b2TracyCZoneEnd( update_transforms );
-	}
-
-	// Report sensor hits
-	{
-		b2TracyCZoneNC( sensor_hits, "Sensor Hits", b2_colorPowderBlue, true );
-		uint64_t sensorHitTicks = b2GetTicks();
-
-		int workerCount = world->workerCount;
-		B2_ASSERT( workerCount == world->taskContexts.count );
-
-		for ( int i = 0; i < workerCount; ++i )
-		{
-			b2TaskContext* taskContext = world->taskContexts.data + i;
-			int hitCount = taskContext->sensorHits.count;
-			b2SensorHit* hits = taskContext->sensorHits.data;
-
-			for ( int j = 0; j < hitCount; ++j )
-			{
-				b2SensorHit hit = hits[j];
-				b2Shape* sensorShape = b2ShapeArray_Get( &world->shapes, hit.sensorId );
-				b2Shape* visitor = b2ShapeArray_Get( &world->shapes, hit.visitorId );
-
-				b2Sensor* sensor = b2SensorArray_Get( &world->sensors, sensorShape->sensorIndex );
-				b2ShapeRef shapeRef = { hit.visitorId, visitor->generation };
-				b2ShapeRefArray_Push( &sensor->hits, shapeRef );
-			}
-		}
-
-		world->profile.sensorHits = b2GetMilliseconds( sensorHitTicks );
-		b2TracyCZoneEnd( sensor_hits );
 	}
 
 	// Report joint events
@@ -2131,6 +2106,40 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	b2FreeArenaItem( &world->arena, stepContext->bulletBodies );
 	stepContext->bulletBodies = NULL;
 	b2AtomicStoreInt( &stepContext->bulletBodyCount, 0 );
+
+	// Report sensor hits. This may include bullets sensor hits.
+	{
+		b2TracyCZoneNC( sensor_hits, "Sensor Hits", b2_colorPowderBlue, true );
+		uint64_t sensorHitTicks = b2GetTicks();
+
+		int workerCount = world->workerCount;
+		B2_ASSERT( workerCount == world->taskContexts.count );
+
+		for ( int i = 0; i < workerCount; ++i )
+		{
+			b2TaskContext* taskContext = world->taskContexts.data + i;
+			int hitCount = taskContext->sensorHits.count;
+			b2SensorHit* hits = taskContext->sensorHits.data;
+
+			for ( int j = 0; j < hitCount; ++j )
+			{
+				b2SensorHit hit = hits[j];
+				b2Shape* sensorShape = b2ShapeArray_Get( &world->shapes, hit.sensorId );
+				b2Shape* visitor = b2ShapeArray_Get( &world->shapes, hit.visitorId );
+
+				b2Sensor* sensor = b2SensorArray_Get( &world->sensors, sensorShape->sensorIndex );
+				b2ShapeRef shapeRef = {
+					.transform = hit.visitorTransform,
+					.shapeId = hit.visitorId,
+					.generation = visitor->generation,
+				};
+				b2ShapeRefArray_Push( &sensor->hits, shapeRef );
+			}
+		}
+
+		world->profile.sensorHits = b2GetMilliseconds( sensorHitTicks );
+		b2TracyCZoneEnd( sensor_hits );
+	}
 
 	// Island sleeping
 	// This must be done last because putting islands to sleep invalidates the enlarged body bits.

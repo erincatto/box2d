@@ -14,10 +14,12 @@ typedef struct b2SensorHit
 {
 	int sensorId;
 	int visitorId;
+	b2Transform visitorTransform;
 } b2SensorHit;
 
 typedef struct b2ShapeRef
 {
+	b2Transform transform;
 	int shapeId;
 	uint16_t generation;
 } b2ShapeRef;

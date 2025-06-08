@@ -1662,7 +1662,7 @@ int b2Shape_GetSensorCapacity( b2ShapeId shapeId )
 	return sensor->overlaps2.count;
 }
 
-int b2Shape_GetSensorOverlaps( b2ShapeId shapeId, b2ShapeId* overlaps, int capacity )
+int b2Shape_GetSensorOverlaps( b2ShapeId shapeId, b2SensorData* sensorData, int capacity )
 {
 	b2World* world = b2GetWorldLocked( shapeId.world0 );
 	if ( world == NULL )
@@ -1682,10 +1682,15 @@ int b2Shape_GetSensorOverlaps( b2ShapeId shapeId, b2ShapeId* overlaps, int capac
 	b2ShapeRef* refs = sensor->overlaps2.data;
 	for ( int i = 0; i < count; ++i )
 	{
-		overlaps[i] = (b2ShapeId){
+		b2ShapeId visitorId = {
 			.index1 = refs[i].shapeId + 1,
 			.world0 = shapeId.world0,
 			.generation = refs[i].generation,
+		};
+
+		sensorData[i] = (b2SensorData){
+			.visitorId = visitorId,
+			.visitTransform = refs[i].transform,
 		};
 	}
 

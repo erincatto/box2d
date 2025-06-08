@@ -314,6 +314,7 @@ void b2DestroyWorld( b2WorldId worldId )
 	int sensorCount = world->sensors.count;
 	for ( int i = 0; i < sensorCount; ++i )
 	{
+		b2ShapeRefArray_Destroy( &world->sensors.data[i].hits );
 		b2ShapeRefArray_Destroy( &world->sensors.data[i].overlaps1 );
 		b2ShapeRefArray_Destroy( &world->sensors.data[i].overlaps2 );
 	}
@@ -643,7 +644,7 @@ static void b2Collide( b2StepContext* context )
 
 				if ( flags & b2_contactEnableContactEvents )
 				{
-					b2ContactBeginTouchEvent event = { shapeIdA, shapeIdB, contactFullId, contactSim->manifold };
+					b2ContactBeginTouchEvent event = { shapeIdA, shapeIdB, contactFullId };
 					b2ContactBeginTouchEventArray_Push( &world->contactBeginEvents, event );
 				}
 

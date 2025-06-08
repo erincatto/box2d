@@ -228,12 +228,11 @@ typedef struct b2BodyDef
 	/// continuous collision.
 	bool isBullet;
 
-	/// Allows the sensors to detect the shapes on this body under fast movement. This only applies to dynamic bodies.
+	/// Option to perform continuous collision checks with sensors. This only applies to dynamic bodies.
 	/// This is expensive and should be used sparingly. You still need to enable sensor events on the child shapes
 	/// for this to work. This only works if the body is awake. This will use a time of impact calculation to
 	/// generate sensor begin touch events, but not end events. End events are handled using regular overlap checks.
-	/// It is possible to get a begin and end touch event in the same time step.
-	bool enableSensorSweeps;
+	bool enableSensorHits;
 
 	/// Used to disable a body. A disabled body does not move or collide.
 	bool isEnabled;
@@ -903,6 +902,7 @@ B2_API b2ExplosionDef b2DefaultExplosionDef( void );
  * @{
  */
 
+// todo remove this?
 ///// The reason a visitor was detected to touch a sensor
 //typedef enum b2SensorBeginTouchReason
 //{
@@ -971,11 +971,6 @@ typedef struct b2ContactBeginTouchEvent
 	/// The transient contact id. This contact maybe destroyed automatically when the world is modified or simulated.
 	/// Used b2Contact_IsValid before using this id.
 	b2ContactId contactId;
-
-	/// The initial contact manifold. This is recorded before the solver is called,
-	/// so all the impulses will be zero. You can use the contact id to access the manifold impulses
-	/// using b2Contact_GetManifold.
-	b2Manifold manifold;
 } b2ContactBeginTouchEvent;
 
 /// An end touch event is generated when two shapes stop touching.
@@ -1098,6 +1093,20 @@ typedef struct b2JointEvents
 	/// Number of events
 	int count;
 } b2JointEvents;
+
+/// The contact data for two shapes. By convention the manifold normal points
+/// from shape A to shape B.
+/// @see b2Shape_GetContactData() and b2Body_GetContactData()
+typedef struct b2SensorData
+{
+	/// The visiting shape
+	b2ShapeId visitorId;
+
+	/// The transform of the body of the visiting shape. This is normally
+	/// the current transform of the body. However, for a sensor hit, this is
+	/// the transform of the visiting body when it hit.
+	b2Transform visitTransform;
+} b2SensorData;
 
 /// The contact data for two shapes. By convention the manifold normal points
 /// from shape A to shape B.

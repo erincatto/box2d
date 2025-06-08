@@ -114,6 +114,7 @@ static bool b2SensorQueryCallback( int proxyId, uint64_t userData, void* context
 	// Record the overlap
 	b2Sensor* sensor = queryContext->sensor;
 	b2ShapeRef* shapeRef = b2ShapeRefArray_Add( &sensor->overlaps2 );
+	shapeRef->transform = otherTransform;
 	shapeRef->shapeId = shapeId;
 	shapeRef->generation = otherShape->generation;
 
@@ -128,19 +129,6 @@ static int b2CompareShapeRefs( const void* a, const void* b )
 	if ( sa->shapeId < sb->shapeId )
 	{
 		return -1;
-	}
-
-	if ( sa->shapeId == sb->shapeId )
-	{
-		if ( sa->generation < sb->generation )
-		{
-			return -1;
-		}
-
-		if ( sa->generation == sb->generation )
-		{
-			return 0;
-		}
 	}
 
 	return 1;
@@ -216,8 +204,7 @@ static void b2SensorTask( int startIndex, int endIndex, uint32_t threadIndex, vo
 		b2ShapeRef* overlapData = sensor->overlaps2.data;
 		for ( int i = 0; i < overlapCount; ++i )
 		{
-			if ( uniqueCount == 0 || overlapData[i].shapeId != overlapData[uniqueCount - 1].shapeId ||
-				 overlapData[i].generation != overlapData[uniqueCount - 1].generation )
+			if ( uniqueCount == 0 || overlapData[i].shapeId != overlapData[uniqueCount - 1].shapeId )
 			{
 				overlapData[uniqueCount] = overlapData[i];
 				uniqueCount += 1;
