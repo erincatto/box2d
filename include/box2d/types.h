@@ -902,14 +902,6 @@ B2_API b2ExplosionDef b2DefaultExplosionDef( void );
  * @{
  */
 
-// todo remove this?
-///// The reason a visitor was detected to touch a sensor
-//typedef enum b2SensorBeginTouchReason
-//{
-//	b2_sensorContinuousHit = 0,
-//	b2_sensorBeginOverlap = 1,
-//} b2SensorBeginTouchReason;
-
 /// A begin touch event is generated when a shape starts to overlap a sensor shape.
 typedef struct b2SensorBeginTouchEvent
 {
@@ -918,9 +910,6 @@ typedef struct b2SensorBeginTouchEvent
 
 	/// The id of the shape that began touching the sensor shape
 	b2ShapeId visitorShapeId;
-
-	///// The reason these shapes begin touching
-	//b2SensorBeginTouchReason reason;
 } b2SensorBeginTouchEvent;
 
 /// An end touch event is generated when a shape stops overlapping a sensor shape.
@@ -1028,7 +1017,7 @@ typedef struct b2ContactEvents
 	/// Array of end touch events
 	b2ContactEndTouchEvent* endEvents;
 
-	/// Array of end touch events
+	/// Array of hit events
 	b2ContactHitEvent* hitEvents;
 
 	/// Number of begin touch events
@@ -1148,7 +1137,7 @@ typedef bool b2CustomFilterFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* co
 /// Return false if you want to disable the contact this step
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
-typedef bool b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context );
+typedef bool b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Vec2 point, b2Vec2 normal, void* context );
 
 /// Prototype callback for overlap queries.
 /// Called for each shape found in the query.

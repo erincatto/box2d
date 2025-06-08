@@ -296,6 +296,7 @@ static void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body
 		}
 
 		// Destroy sensor
+		b2ShapeRefArray_Destroy( &sensor->hits );
 		b2ShapeRefArray_Destroy( &sensor->overlaps1 );
 		b2ShapeRefArray_Destroy( &sensor->overlaps2 );
 
@@ -1662,7 +1663,7 @@ int b2Shape_GetSensorCapacity( b2ShapeId shapeId )
 	return sensor->overlaps2.count;
 }
 
-int b2Shape_GetSensorOverlaps( b2ShapeId shapeId, b2SensorData* sensorData, int capacity )
+int b2Shape_GetSensorData( b2ShapeId shapeId, b2SensorData* sensorData, int capacity )
 {
 	b2World* world = b2GetWorldLocked( shapeId.world0 );
 	if ( world == NULL )

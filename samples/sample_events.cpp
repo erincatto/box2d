@@ -785,7 +785,7 @@ public:
 		int capacity = b2Shape_GetSensorCapacity( m_sensorId );
 		m_sensorData.clear();
 		m_sensorData.resize( capacity );
-		int count = b2Shape_GetSensorOverlaps( m_sensorId, m_sensorData.data(), capacity );
+		int count = b2Shape_GetSensorData( m_sensorId, m_sensorData.data(), capacity );
 		for ( int i = 0; i < count; ++i )
 		{
 			b2ShapeId shapeId = m_sensorData[i].visitorId;
@@ -1228,10 +1228,10 @@ static int sampleWeeble = RegisterSample( "Events", "Contact", ContactEvent::Cre
 
 // Shows how to make a rigid body character mover and use the pre-solve callback. In this
 // case the platform should get the pre-solve event, not the player.
-class Platformer : public Sample
+class Platform : public Sample
 {
 public:
-	explicit Platformer( SampleContext* context )
+	explicit Platform( SampleContext* context )
 		: Sample( context )
 	{
 		if ( m_context->restart == false )
@@ -1308,16 +1308,16 @@ public:
 		m_jumping = false;
 	}
 
-	static bool PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context )
+	static bool PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Vec2 point, b2Vec2 normal, void* context )
 	{
-		Platformer* platformer = static_cast<Platformer*>( context );
-		return platformer->PreSolve( shapeIdA, shapeIdB, manifold );
+		Platform* self = static_cast<Platform*>( context );
+		return self->PreSolve( shapeIdA, shapeIdB, point, normal );
 	}
 
 	// This callback must be thread-safe. It may be called multiple times simultaneously.
 	// Notice how this method is constant and doesn't change any data. It also
 	// does not try to access any values in the world that may be changing, such as contact data.
-	bool PreSolve( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold ) const
+	bool PreSolve( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Vec2 point, b2Vec2 normal ) const
 	{
 		assert( b2Shape_IsValid( shapeIdA ) );
 		assert( b2Shape_IsValid( shapeIdB ) );
@@ -1337,22 +1337,8 @@ public:
 			return true;
 		}
 
-		b2Vec2 normal = manifold->normal;
 		if ( sign * normal.y > 0.95f )
 		{
-			return true;
-		}
-
-		float separation = 0.0f;
-		for ( int i = 0; i < manifold->pointCount; ++i )
-		{
-			float s = manifold->points[i].separation;
-			separation = separation < s ? separation : s;
-		}
-
-		if ( separation > 0.1f * m_radius )
-		{
-			// shallow overlap
 			return true;
 		}
 
@@ -1459,7 +1445,7 @@ public:
 
 	static Sample* Create( SampleContext* context )
 	{
-		return new Platformer( context );
+		return new Platform( context );
 	}
 
 	bool m_jumping;
@@ -1472,7 +1458,7 @@ public:
 	b2BodyId m_movingPlatformId;
 };
 
-static int samplePlatformer = RegisterSample( "Events", "Platformer", Platformer::Create );
+static int samplePlatformer = RegisterSample( "Events", "Platformer", Platform::Create );
 
 // This shows how to process body events.
 class BodyMove : public Sample
@@ -1779,7 +1765,7 @@ public:
 		m_sensorData.resize( capacity );
 
 		// Get all overlaps and record the actual count
-		int count = b2Shape_GetSensorOverlaps( sensorShapeId, m_sensorData.data(), capacity );
+		int count = b2Shape_GetSensorData( sensorShapeId, m_sensorData.data(), capacity );
 		m_sensorData.resize( count );
 
 		int start = snprintf( buffer, sizeof( buffer ), "%s: ", prefix );
@@ -2336,12 +2322,7 @@ public:
 	{
 		constexpr int capacity = 5;
 		b2SensorData sensorData[capacity];
-		int count = b2Shape_GetSensorOverlaps( sensorShapeId, sensorData, capacity );
-
-		if (count > 1)
-		{
-			count += 0;
-		}
+		int count = b2Shape_GetSensorData( sensorShapeId, sensorData, capacity );
 
 		for ( int i = 0; i < count && m_transformCount < m_transformCapacity; ++i )
 		{

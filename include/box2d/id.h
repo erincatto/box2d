@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 
+// Note: this file should be stand-alone
+
 /**
  * @defgroup id Ids
  * These ids serve as handles to internal Box2D objects.

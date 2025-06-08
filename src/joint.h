@@ -47,7 +47,7 @@ typedef struct b2Joint
 	int islandPrev;
 	int islandNext;
 
-	float drawSize;
+	float drawScale;
 
 	b2JointType type;
 

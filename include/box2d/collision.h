@@ -473,8 +473,17 @@ typedef enum b2TOIState
 /// Output parameters for b2TimeOfImpact.
 typedef struct b2TOIOutput
 {
-	b2TOIState state; ///< The type of result
-	float fraction;	  ///< The sweep time of the collision
+	/// The type of result
+	b2TOIState state;
+
+	/// The hit point
+	b2Vec2 point;
+
+	/// The hit normal
+	b2Vec2 normal;
+
+	/// The sweep time of the collision 
+	float fraction;
 } b2TOIOutput;
 
 /// Compute the upper bound on time before two shapes penetrate. Time is represented as

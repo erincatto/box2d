@@ -410,17 +410,9 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 
 	if ( didHit && ( shape->enablePreSolveEvents || fastShape->enablePreSolveEvents ) && world->preSolveFcn != NULL )
 	{
-		// Pre-solve is expensive because I need to compute a temporary manifold
-		b2Transform transformA = b2GetSweepTransform( &input.sweepA, hitFraction );
-		b2Transform transformB = b2GetSweepTransform( &input.sweepB, hitFraction );
-		b2Manifold manifold = b2ComputeManifold( shape, transformA, fastShape, transformB );
 		b2ShapeId shapeIdA = { shape->id + 1, world->worldId, shape->generation };
 		b2ShapeId shapeIdB = { fastShape->id + 1, world->worldId, fastShape->generation };
-
-		// The user may need the manifold geometry to judge whether this TOI should skip.
-		// The user may modify the temporary manifold here but it doesn't matter. They will be able to
-		// modify the real manifold in the discrete solver.
-		didHit = world->preSolveFcn( shapeIdA, shapeIdB, &manifold, world->preSolveContext );
+		didHit = world->preSolveFcn( shapeIdA, shapeIdB, output.point, output.normal, world->preSolveContext );
 	}
 
 	if ( didHit )

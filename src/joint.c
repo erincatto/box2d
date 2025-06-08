@@ -232,7 +232,7 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 	joint->islandId = B2_NULL_INDEX;
 	joint->islandPrev = B2_NULL_INDEX;
 	joint->islandNext = B2_NULL_INDEX;
-	joint->drawSize = def->drawScale;
+	joint->drawScale = def->drawScale;
 	joint->type = type;
 	joint->collideConnected = def->collideConnected;
 	joint->isMarked = false;
@@ -1490,15 +1490,15 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 			break;
 
 		case b2_prismaticJoint:
-			b2DrawPrismaticJoint( draw, jointSim, transformA, transformB, joint->drawSize );
+			b2DrawPrismaticJoint( draw, jointSim, transformA, transformB, joint->drawScale );
 			break;
 
 		case b2_revoluteJoint:
-			b2DrawRevoluteJoint( draw, jointSim, transformA, transformB, joint->drawSize );
+			b2DrawRevoluteJoint( draw, jointSim, transformA, transformB, joint->drawScale );
 			break;
 
 		case b2_weldJoint:
-			b2DrawWeldJoint( draw, jointSim, transformA, transformB, joint->drawSize );
+			b2DrawWeldJoint( draw, jointSim, transformA, transformB, joint->drawScale );
 			break;
 
 		case b2_wheelJoint:
