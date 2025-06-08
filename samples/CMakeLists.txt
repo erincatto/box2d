@@ -120,5 +120,10 @@ add_custom_command(
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
 			${CMAKE_CURRENT_SOURCE_DIR}/data/
 			${CMAKE_CURRENT_BINARY_DIR}/data/)
+add_custom_command(
+	TARGET samples POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_directory
+			${CMAKE_CURRENT_SOURCE_DIR}/data/
+			$<TARGET_FILE_DIR:samples>/data/)
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${BOX2D_SAMPLE_FILES})
