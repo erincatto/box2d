@@ -23,6 +23,9 @@ enum b2SetType
 // Per thread task storage
 typedef struct b2TaskContext
 {
+	// Collect per thread sensor continuous hit events.
+	b2SensorHitArray sensorHits;
+
 	// These bits align with the contact id capacity and signal a change in contact status
 	b2BitSet contactStateBitSet;
 
@@ -105,7 +108,6 @@ typedef struct b2World
 	b2BodyMoveEventArray bodyMoveEvents;
 	b2SensorBeginTouchEventArray sensorBeginEvents;
 	b2ContactBeginTouchEventArray contactBeginEvents;
-	b2JointEventArray jointEvents;
 
 	// End events are double buffered so that the user doesn't need to flush events
 	b2SensorEndTouchEventArray sensorEndEvents[2];
@@ -113,6 +115,7 @@ typedef struct b2World
 	int endEventArrayIndex;
 
 	b2ContactHitEventArray contactHitEvents;
+	b2JointEventArray jointEvents;
 
 	// Used to track debug draw
 	b2BitSet debugBodySet;
@@ -136,7 +139,6 @@ typedef struct b2World
 	float hitEventThreshold;
 	float restitutionThreshold;
 	float maxLinearSpeed;
-	float maxContactPushSpeed;
 	float contactSpeed;
 	float contactHertz;
 	float contactDampingRatio;

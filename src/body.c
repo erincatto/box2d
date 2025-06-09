@@ -247,6 +247,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	bodySim->gravityScale = def->gravityScale;
 	bodySim->bodyId = bodyId;
 	bodySim->isBullet = def->isBullet;
+	bodySim->enableSensorHits = def->enableSensorHits;
 	bodySim->allowFastRotation = def->allowFastRotation;
 
 	if ( setId == b2_awakeSet )
@@ -482,6 +483,7 @@ int b2Body_GetContactData( b2BodyId bodyId, b2ContactData* contactData, int capa
 			b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contact->shapeIdA );
 			b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contact->shapeIdB );
 
+			contactData[index].contactId = (b2ContactId){ contact->contactId + 1, bodyId.world0, 0, contact->generation };
 			contactData[index].shapeIdA = (b2ShapeId){ shapeA->id + 1, bodyId.world0, shapeA->generation };
 			contactData[index].shapeIdB = (b2ShapeId){ shapeB->id + 1, bodyId.world0, shapeB->generation };
 

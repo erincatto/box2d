@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include "base.h"
-
 #include <stdint.h>
+
+// Note: this file should be stand-alone
 
 /**
  * @defgroup id Ids
@@ -81,14 +81,22 @@ typedef struct b2ContactId
 	uint32_t generation;
 } b2ContactId;
 
+#ifdef __cplusplus
+	#define B2_NULL_ID {}
+	#define B2_ID_INLINE inline
+#else
+	#define B2_NULL_ID { 0 }
+	#define B2_ID_INLINE static inline
+#endif
+
 /// Use these to make your identifiers null.
 /// You may also use zero initialization to get null.
-static const b2WorldId b2_nullWorldId = B2_ZERO_INIT;
-static const b2BodyId b2_nullBodyId = B2_ZERO_INIT;
-static const b2ShapeId b2_nullShapeId = B2_ZERO_INIT;
-static const b2ChainId b2_nullChainId = B2_ZERO_INIT;
-static const b2JointId b2_nullJointId = B2_ZERO_INIT;
-static const b2ContactId b2_nullContactId = B2_ZERO_INIT;
+static const b2WorldId b2_nullWorldId = B2_NULL_ID;
+static const b2BodyId b2_nullBodyId = B2_NULL_ID;
+static const b2ShapeId b2_nullShapeId = B2_NULL_ID;
+static const b2ChainId b2_nullChainId = B2_NULL_ID;
+static const b2JointId b2_nullJointId = B2_NULL_ID;
+static const b2ContactId b2_nullContactId = B2_NULL_ID;
 
 /// Macro to determine if any id is null.
 #define B2_IS_NULL( id ) ( id.index1 == 0 )
@@ -100,72 +108,72 @@ static const b2ContactId b2_nullContactId = B2_ZERO_INIT;
 #define B2_ID_EQUALS( id1, id2 ) ( id1.index1 == id2.index1 && id1.world0 == id2.world0 && id1.generation == id2.generation )
 
 /// Store a world id into a uint32_t.
-B2_INLINE uint32_t b2StoreWorldId( b2WorldId id )
+B2_ID_INLINE uint32_t b2StoreWorldId( b2WorldId id )
 {
 	return ( (uint32_t)id.index1 << 16 ) | (uint32_t)id.generation;
 }
 
 /// Load a uint32_t into a world id.
-B2_INLINE b2WorldId b2LoadWorldId( uint32_t x )
+B2_ID_INLINE b2WorldId b2LoadWorldId( uint32_t x )
 {
 	b2WorldId id = { (uint16_t)( x >> 16 ), (uint16_t)( x ) };
 	return id;
 }
 
 /// Store a body id into a uint64_t.
-B2_INLINE uint64_t b2StoreBodyId( b2BodyId id )
+B2_ID_INLINE uint64_t b2StoreBodyId( b2BodyId id )
 {
 	return ( (uint64_t)id.index1 << 32 ) | ( (uint64_t)id.world0 ) << 16 | (uint64_t)id.generation;
 }
 
 /// Load a uint64_t into a body id.
-B2_INLINE b2BodyId b2LoadBodyId( uint64_t x )
+B2_ID_INLINE b2BodyId b2LoadBodyId( uint64_t x )
 {
 	b2BodyId id = { (int32_t)( x >> 32 ), (uint16_t)( x >> 16 ), (uint16_t)( x ) };
 	return id;
 }
 
 /// Store a shape id into a uint64_t.
-B2_INLINE uint64_t b2StoreShapeId( b2ShapeId id )
+B2_ID_INLINE uint64_t b2StoreShapeId( b2ShapeId id )
 {
 	return ( (uint64_t)id.index1 << 32 ) | ( (uint64_t)id.world0 ) << 16 | (uint64_t)id.generation;
 }
 
 /// Load a uint64_t into a shape id.
-B2_INLINE b2ShapeId b2LoadShapeId( uint64_t x )
+B2_ID_INLINE b2ShapeId b2LoadShapeId( uint64_t x )
 {
 	b2ShapeId id = { (int32_t)( x >> 32 ), (uint16_t)( x >> 16 ), (uint16_t)( x ) };
 	return id;
 }
 
 /// Store a chain id into a uint64_t.
-B2_INLINE uint64_t b2StoreChainId( b2ChainId id )
+B2_ID_INLINE uint64_t b2StoreChainId( b2ChainId id )
 {
 	return ( (uint64_t)id.index1 << 32 ) | ( (uint64_t)id.world0 ) << 16 | (uint64_t)id.generation;
 }
 
 /// Load a uint64_t into a chain id.
-B2_INLINE b2ChainId b2LoadChainId( uint64_t x )
+B2_ID_INLINE b2ChainId b2LoadChainId( uint64_t x )
 {
 	b2ChainId id = { (int32_t)( x >> 32 ), (uint16_t)( x >> 16 ), (uint16_t)( x ) };
 	return id;
 }
 
 /// Store a joint id into a uint64_t.
-B2_INLINE uint64_t b2StoreJointId( b2JointId id )
+B2_ID_INLINE uint64_t b2StoreJointId( b2JointId id )
 {
 	return ( (uint64_t)id.index1 << 32 ) | ( (uint64_t)id.world0 ) << 16 | (uint64_t)id.generation;
 }
 
 /// Load a uint64_t into a joint id.
-B2_INLINE b2JointId b2LoadJointId( uint64_t x )
+B2_ID_INLINE b2JointId b2LoadJointId( uint64_t x )
 {
 	b2JointId id = { (int32_t)( x >> 32 ), (uint16_t)( x >> 16 ), (uint16_t)( x ) };
 	return id;
 }
 
 /// Store a contact id into 16 bytes
-B2_INLINE void b2StoreContactId( b2ContactId id, uint32_t values[3] )
+B2_ID_INLINE void b2StoreContactId( b2ContactId id, uint32_t values[3] )
 {
 	values[0] = (uint32_t)id.index1;
 	values[1] = (uint32_t)id.world0;
@@ -173,7 +181,7 @@ B2_INLINE void b2StoreContactId( b2ContactId id, uint32_t values[3] )
 }
 
 /// Load a two uint64_t into a contact id.
-B2_INLINE b2ContactId b2LoadContactId( uint32_t values[3] )
+B2_ID_INLINE b2ContactId b2LoadContactId( uint32_t values[3] )
 {
 	b2ContactId id;
 	id.index1 = (int32_t)values[0];

@@ -65,7 +65,7 @@ void Donut::Create( b2WorldId worldId, b2Vec2 position, float scale, int groupIn
 	weldDef.angularDampingRatio = 0.0f;
 	weldDef.base.localFrameA.p = { 0.0f, 0.5f * length };
 	weldDef.base.localFrameB.p = { 0.0f, -0.5f * length };
-	weldDef.base.drawSize = 0.5f * scale;
+	weldDef.base.drawScale = 0.5f * scale;
 
 	b2BodyId prevBodyId = m_bodyIds[m_sides - 1];
 	for ( int i = 0; i < m_sides; ++i )

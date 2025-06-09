@@ -141,7 +141,7 @@ public:
 				}
 				else
 				{
-					m_context->draw.DrawSegment( p1, p2, color );
+					m_context->draw.DrawLine( p1, p2, color );
 				}
 			}
 			break;
@@ -336,7 +336,7 @@ public:
 				b2Vec2 pointA, pointB;
 				ComputeSimplexWitnessPoints( &pointA, &pointB, simplex );
 
-				m_context->draw.DrawSegment( pointA, pointB, b2_colorWhite );
+				m_context->draw.DrawLine( pointA, pointB, b2_colorWhite );
 				m_context->draw.DrawPoint( pointA, 10.0f, b2_colorWhite );
 				m_context->draw.DrawPoint( pointB, 10.0f, b2_colorWhite );
 			}
@@ -352,11 +352,11 @@ public:
 		}
 		else
 		{
-			m_context->draw.DrawSegment( output.pointA, output.pointB, b2_colorDimGray );
+			m_context->draw.DrawLine( output.pointA, output.pointB, b2_colorDimGray );
 			m_context->draw.DrawPoint( output.pointA, 10.0f, b2_colorWhite );
 			m_context->draw.DrawPoint( output.pointB, 10.0f, b2_colorWhite );
 
-			m_context->draw.DrawSegment( output.pointA, output.pointA + 0.5f * output.normal, b2_colorYellow );
+			m_context->draw.DrawLine( output.pointA, output.pointA + 0.5f * output.normal, b2_colorYellow );
 		}
 
 		if ( m_showIndices )
@@ -683,7 +683,7 @@ public:
 			b2AABB box = { b2Min( m_startPoint, m_endPoint ), b2Max( m_startPoint, m_endPoint ) };
 			b2DynamicTree_Query( &m_tree, box, B2_DEFAULT_MASK_BITS, QueryCallback, this );
 
-			m_context->draw.DrawAABB( box, b2_colorWhite );
+			m_context->draw.DrawBounds( box, b2_colorWhite );
 		}
 
 		// m_startPoint = {-1.0f, 0.5f};
@@ -694,7 +694,7 @@ public:
 			b2RayCastInput input = { m_startPoint, b2Sub( m_endPoint, m_startPoint ), 1.0f };
 			b2TreeStats result = b2DynamicTree_RayCast( &m_tree, &input, B2_DEFAULT_MASK_BITS, RayCallback, this );
 
-			m_context->draw.DrawSegment( m_startPoint, m_endPoint, b2_colorWhite );
+			m_context->draw.DrawLine( m_startPoint, m_endPoint, b2_colorWhite );
 			m_context->draw.DrawPoint( m_startPoint, 5.0f, b2_colorGreen );
 			m_context->draw.DrawPoint( m_endPoint, 5.0f, b2_colorRed );
 
@@ -712,11 +712,11 @@ public:
 
 			if ( p->queryStamp == m_timeStamp || p->rayStamp == m_timeStamp )
 			{
-				m_context->draw.DrawAABB( p->box, qc );
+				m_context->draw.DrawBounds( p->box, qc );
 			}
 			else
 			{
-				m_context->draw.DrawAABB( p->box, c );
+				m_context->draw.DrawBounds( p->box, c );
 			}
 
 			float moveTest = RandomFloatRange( 0.0f, 1.0f );
@@ -1010,21 +1010,21 @@ public:
 		{
 			b2Vec2 p;
 
-			if (output->fraction == 0.0f)
+			if ( output->fraction == 0.0f )
 			{
-				assert(output->normal.x == 0.0f && output->normal.y == 0.0f);
+				assert( output->normal.x == 0.0f && output->normal.y == 0.0f );
 				p = output->point;
-				m_draw->DrawPoint(output->point, 5.0, b2_colorPeru);
+				m_draw->DrawPoint( output->point, 5.0, b2_colorPeru );
 			}
 			else
 			{
 				p = b2MulAdd( p1, output->fraction, d );
-				m_draw->DrawSegment( p1, p, b2_colorWhite );
+				m_draw->DrawLine( p1, p, b2_colorWhite );
 				m_draw->DrawPoint( p1, 5.0f, b2_colorGreen );
 				m_draw->DrawPoint( output->point, 5.0f, b2_colorWhite );
 
 				b2Vec2 n = b2MulAdd( p, 1.0f, output->normal );
-				m_draw->DrawSegment( p, n, b2_colorViolet );
+				m_draw->DrawLine( p, n, b2_colorViolet );
 			}
 
 			if ( m_showFraction )
@@ -1035,7 +1035,7 @@ public:
 		}
 		else
 		{
-			m_draw->DrawSegment( p1, p2, b2_colorWhite );
+			m_draw->DrawLine( p1, p2, b2_colorWhite );
 			m_draw->DrawPoint( p1, 5.0f, b2_colorGreen );
 			m_draw->DrawPoint( p2, 5.0f, b2_colorRed );
 		}
@@ -1060,7 +1060,7 @@ public:
 			b2Vec2 translation = b2InvRotateVector( transform.q, b2Sub( m_rayEnd, m_rayStart ) );
 			b2RayCastInput input = { start, translation, maxFraction };
 
-			b2CastOutput localOutput = b2RayCastCircle( &input, &m_circle );
+			b2CastOutput localOutput = b2RayCastCircle( &m_circle, &input );
 			if ( localOutput.hit )
 			{
 				output = localOutput;
@@ -1083,7 +1083,7 @@ public:
 			b2Vec2 translation = b2InvRotateVector( transform.q, b2Sub( m_rayEnd, m_rayStart ) );
 			b2RayCastInput input = { start, translation, maxFraction };
 
-			b2CastOutput localOutput = b2RayCastCapsule( &input, &m_capsule );
+			b2CastOutput localOutput = b2RayCastCapsule( &m_capsule, &input );
 			if ( localOutput.hit )
 			{
 				output = localOutput;
@@ -1104,7 +1104,7 @@ public:
 			b2Vec2 translation = b2InvRotateVector( transform.q, b2Sub( m_rayEnd, m_rayStart ) );
 			b2RayCastInput input = { start, translation, maxFraction };
 
-			b2CastOutput localOutput = b2RayCastPolygon( &input, &m_box );
+			b2CastOutput localOutput = b2RayCastPolygon( &m_box, &input );
 			if ( localOutput.hit )
 			{
 				output = localOutput;
@@ -1125,7 +1125,7 @@ public:
 			b2Vec2 translation = b2InvRotateVector( transform.q, b2Sub( m_rayEnd, m_rayStart ) );
 			b2RayCastInput input = { start, translation, maxFraction };
 
-			b2CastOutput localOutput = b2RayCastPolygon( &input, &m_triangle );
+			b2CastOutput localOutput = b2RayCastPolygon( &m_triangle, &input );
 			if ( localOutput.hit )
 			{
 				output = localOutput;
@@ -1143,13 +1143,13 @@ public:
 
 			b2Vec2 p1 = b2TransformPoint( transform, m_segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform, m_segment.point2 );
-			m_context->draw.DrawSegment( p1, p2, color1 );
+			m_context->draw.DrawLine( p1, p2, color1 );
 
 			b2Vec2 start = b2InvTransformPoint( transform, m_rayStart );
 			b2Vec2 translation = b2InvRotateVector( transform.q, b2Sub( m_rayEnd, m_rayStart ) );
 			b2RayCastInput input = { start, translation, maxFraction };
 
-			b2CastOutput localOutput = b2RayCastSegment( &input, &m_segment, false );
+			b2CastOutput localOutput = b2RayCastSegment( &m_segment, &input, false );
 			if ( localOutput.hit )
 			{
 				output = localOutput;
@@ -1218,7 +1218,7 @@ static float RayCastClosestCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 nor
 	ShapeUserData* userData = (ShapeUserData*)b2Shape_GetUserData( shapeId );
 
 	// Ignore a specific shape. Also ignore initial overlap.
-	if ( (userData != nullptr && userData->ignore) || fraction == 0.0f )
+	if ( ( userData != nullptr && userData->ignore ) || fraction == 0.0f )
 	{
 		// By returning -1, we instruct the calling code to ignore this shape and
 		// continue the ray-cast to the next shape.
@@ -1246,7 +1246,7 @@ static float RayCastAnyCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal,
 	ShapeUserData* userData = (ShapeUserData*)b2Shape_GetUserData( shapeId );
 
 	// Ignore a specific shape. Also ignore initial overlap.
-	if ( (userData != nullptr && userData->ignore) || fraction == 0.0f )
+	if ( ( userData != nullptr && userData->ignore ) || fraction == 0.0f )
 	{
 		// By returning -1, we instruct the calling code to ignore this shape and
 		// continue the ray-cast to the next shape.
@@ -1276,7 +1276,7 @@ static float RayCastMultipleCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 no
 	ShapeUserData* userData = (ShapeUserData*)b2Shape_GetUserData( shapeId );
 
 	// Ignore a specific shape. Also ignore initial overlap.
-	if ( (userData != nullptr && userData->ignore) || fraction == 0.0f )
+	if ( ( userData != nullptr && userData->ignore ) || fraction == 0.0f )
 	{
 		// By returning -1, we instruct the calling code to ignore this shape and
 		// continue the ray-cast to the next shape.
@@ -1308,9 +1308,9 @@ static float RayCastSortedCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 norm
 	CastContext* rayContext = (CastContext*)context;
 
 	ShapeUserData* userData = (ShapeUserData*)b2Shape_GetUserData( shapeId );
-	
+
 	// Ignore a specific shape. Also ignore initial overlap.
-	if ( (userData != nullptr && userData->ignore) || fraction == 0.0f )
+	if ( ( userData != nullptr && userData->ignore ) || fraction == 0.0f )
 	{
 		// By returning -1, we instruct the calling code to ignore this shape and
 		// continue the ray-cast to the next shape.
@@ -1689,13 +1689,13 @@ public:
 			{
 				b2Vec2 c = b2MulAdd( m_rayStart, result.fraction, rayTranslation );
 				m_context->draw.DrawPoint( result.point, 5.0f, color1 );
-				m_context->draw.DrawSegment( m_rayStart, c, color2 );
+				m_context->draw.DrawLine( m_rayStart, c, color2 );
 				b2Vec2 head = b2MulAdd( result.point, 0.5f, result.normal );
-				m_context->draw.DrawSegment( result.point, head, color3 );
+				m_context->draw.DrawLine( result.point, head, color3 );
 			}
 			else
 			{
-				m_context->draw.DrawSegment( m_rayStart, m_rayEnd, color2 );
+				m_context->draw.DrawLine( m_rayStart, m_rayEnd, color2 );
 			}
 		}
 		else
@@ -1777,9 +1777,9 @@ public:
 					b2Vec2 p = context.points[i];
 					b2Vec2 n = context.normals[i];
 					m_context->draw.DrawPoint( p, 5.0f, colors[i] );
-					m_context->draw.DrawSegment( m_rayStart, c, color2 );
+					m_context->draw.DrawLine( m_rayStart, c, color2 );
 					b2Vec2 head = b2MulAdd( p, 1.0f, n );
-					m_context->draw.DrawSegment( p, head, color3 );
+					m_context->draw.DrawLine( p, head, color3 );
 
 					b2Vec2 t = b2MulSV( context.fractions[i], rayTranslation );
 					b2Transform shiftedTransform = { t, b2Rot_identity };
@@ -1803,7 +1803,7 @@ public:
 			else
 			{
 				b2Transform shiftedTransform = { b2Add( transform.p, rayTranslation ), transform.q };
-				m_context->draw.DrawSegment( m_rayStart, m_rayEnd, color2 );
+				m_context->draw.DrawLine( m_rayStart, m_rayEnd, color2 );
 
 				if ( m_castType == e_circleCast )
 				{
@@ -2374,7 +2374,7 @@ public:
 
 			b2Vec2 p1 = mp->point;
 			b2Vec2 p2 = b2MulAdd( p1, 0.5f, manifold->normal );
-			m_context->draw.DrawSegment( p1, p2, b2_colorViolet );
+			m_context->draw.DrawLine( p1, p2, b2_colorViolet );
 
 			if ( m_showAnchors )
 			{
@@ -2470,7 +2470,7 @@ public:
 
 			b2Vec2 p1 = b2TransformPoint( transform1, segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment.point2 );
-			m_context->draw.DrawSegment( p1, p2, color1 );
+			m_context->draw.DrawLine( p1, p2, color1 );
 
 			m_context->draw.DrawSolidCircle( transform2, circle.center, circle.radius, color2 );
 
@@ -2554,7 +2554,7 @@ public:
 
 			b2Vec2 p1 = b2TransformPoint( transform1, segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment.point2 );
-			m_context->draw.DrawSegment( p1, p2, color1 );
+			m_context->draw.DrawLine( p1, p2, color1 );
 
 			p1 = b2TransformPoint( transform2, capsule.center1 );
 			p2 = b2TransformPoint( transform2, capsule.center2 );
@@ -2660,7 +2660,7 @@ public:
 
 			b2Vec2 p1 = b2TransformPoint( transform1, segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment.point2 );
-			m_context->draw.DrawSegment( p1, p2, color1 );
+			m_context->draw.DrawLine( p1, p2, color1 );
 			m_context->draw.DrawSolidPolygon( transform2, rox.vertices, rox.count, rox.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
@@ -2753,9 +2753,9 @@ public:
 			b2Vec2 g2 = b2TransformPoint( transform1, segment.ghost2 );
 			b2Vec2 p1 = b2TransformPoint( transform1, segment.segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment.segment.point2 );
-			m_context->draw.DrawSegment( g1, p1, b2_colorLightGray );
-			m_context->draw.DrawSegment( p1, p2, color1 );
-			m_context->draw.DrawSegment( p2, g2, b2_colorLightGray );
+			m_context->draw.DrawLine( g1, p1, b2_colorLightGray );
+			m_context->draw.DrawLine( p1, p2, color1 );
+			m_context->draw.DrawLine( p2, g2, b2_colorLightGray );
 			m_context->draw.DrawSolidCircle( transform2, circle.center, circle.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
@@ -2784,18 +2784,18 @@ public:
 				b2Vec2 g2 = b2TransformPoint( transform1, segment1.ghost2 );
 				b2Vec2 p1 = b2TransformPoint( transform1, segment1.segment.point1 );
 				b2Vec2 p2 = b2TransformPoint( transform1, segment1.segment.point2 );
-				m_context->draw.DrawSegment( p1, p2, color1 );
+				m_context->draw.DrawLine( p1, p2, color1 );
 				m_context->draw.DrawPoint( p1, 4.0f, color1 );
 				m_context->draw.DrawPoint( p2, 4.0f, color1 );
-				m_context->draw.DrawSegment( p2, g2, b2_colorLightGray );
+				m_context->draw.DrawLine( p2, g2, b2_colorLightGray );
 			}
 
 			{
 				b2Vec2 g1 = b2TransformPoint( transform1, segment2.ghost1 );
 				b2Vec2 p1 = b2TransformPoint( transform1, segment2.segment.point1 );
 				b2Vec2 p2 = b2TransformPoint( transform1, segment2.segment.point2 );
-				m_context->draw.DrawSegment( g1, p1, b2_colorLightGray );
-				m_context->draw.DrawSegment( p1, p2, color1 );
+				m_context->draw.DrawLine( g1, p1, b2_colorLightGray );
+				m_context->draw.DrawLine( p1, p2, color1 );
 				m_context->draw.DrawPoint( p1, 4.0f, color1 );
 				m_context->draw.DrawPoint( p2, 4.0f, color1 );
 			}
@@ -2826,18 +2826,18 @@ public:
 				b2Vec2 p1 = b2TransformPoint( transform1, segment1.segment.point1 );
 				b2Vec2 p2 = b2TransformPoint( transform1, segment1.segment.point2 );
 				// m_context->draw.DrawSegment(g1, p1, b2_colorLightGray);
-				m_context->draw.DrawSegment( p1, p2, color1 );
+				m_context->draw.DrawLine( p1, p2, color1 );
 				m_context->draw.DrawPoint( p1, 4.0f, color1 );
 				m_context->draw.DrawPoint( p2, 4.0f, color1 );
-				m_context->draw.DrawSegment( p2, g2, b2_colorLightGray );
+				m_context->draw.DrawLine( p2, g2, b2_colorLightGray );
 			}
 
 			{
 				b2Vec2 g1 = b2TransformPoint( transform1, segment2.ghost1 );
 				b2Vec2 p1 = b2TransformPoint( transform1, segment2.segment.point1 );
 				b2Vec2 p2 = b2TransformPoint( transform1, segment2.segment.point2 );
-				m_context->draw.DrawSegment( g1, p1, b2_colorLightGray );
-				m_context->draw.DrawSegment( p1, p2, color1 );
+				m_context->draw.DrawLine( g1, p1, b2_colorLightGray );
+				m_context->draw.DrawLine( p1, p2, color1 );
 				m_context->draw.DrawPoint( p1, 4.0f, color1 );
 				m_context->draw.DrawPoint( p2, 4.0f, color1 );
 				// m_context->draw.DrawSegment(p2, g2, b2_colorLightGray);
@@ -3080,7 +3080,7 @@ public:
 
 			b2Vec2 p1 = mp->point;
 			b2Vec2 p2 = b2MulAdd( p1, 0.5f, manifold->normal );
-			m_context->draw.DrawSegment( p1, p2, b2_colorWhite );
+			m_context->draw.DrawLine( p1, p2, b2_colorWhite );
 
 			if ( m_showAnchors )
 			{
@@ -3120,7 +3120,7 @@ public:
 			const b2ChainSegment* segment = m_segments + i;
 			b2Vec2 p1 = b2TransformPoint( transform1, segment->segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment->segment.point2 );
-			m_context->draw.DrawSegment( p1, p2, color1 );
+			m_context->draw.DrawLine( p1, p2, color1 );
 			m_context->draw.DrawPoint( p1, 4.0f, color1 );
 		}
 
@@ -3336,7 +3336,7 @@ public:
 				}
 				else
 				{
-					m_context->draw.DrawSegment( p1, p2, color );
+					m_context->draw.DrawLine( p1, p2, color );
 				}
 			}
 			break;
@@ -3504,11 +3504,11 @@ public:
 		if ( output.hit )
 		{
 			DrawShape( m_typeB, transform, m_radiusB, b2_colorPlum );
-			
-			if (output.fraction > 0.0f)
+
+			if ( output.fraction > 0.0f )
 			{
 				m_context->draw.DrawPoint( output.point, 5.0f, b2_colorWhite );
-				m_context->draw.DrawSegment( output.point, output.point + 0.5f * output.normal, b2_colorYellow );
+				m_context->draw.DrawLine( output.point, output.point + 0.5f * output.normal, b2_colorYellow );
 			}
 			else
 			{

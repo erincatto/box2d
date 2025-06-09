@@ -427,13 +427,6 @@ void Sample::Step(  )
 
 	m_context->draw.m_debugDraw.drawingBounds = m_context->camera.GetViewBounds();
 	m_context->draw.m_debugDraw.useDrawingBounds = m_context->useCameraBounds;
-
-	// todo testing
-	// b2Transform t1 = {m_context->draw.m_debugDraw.drawingBounds.lowerBound, b2Rot_identity};
-	// b2Transform t2 = {m_context->draw.m_debugDraw.drawingBounds.upperBound, b2Rot_identity};
-	// m_context->draw.DrawSolidCircle(t1, b2Vec2_zero, 1.0f, {1.0f, 0.0f, 0.0f, 1.0f});
-	// m_context->draw.DrawSolidCircle(t2, b2Vec2_zero, 1.0f, {1.0f, 0.0f, 0.0f, 1.0f});
-
 	m_context->draw.m_debugDraw.drawShapes = m_context->drawShapes;
 	m_context->draw.m_debugDraw.drawJoints = m_context->drawJoints;
 	m_context->draw.m_debugDraw.drawJointExtras = m_context->drawJointExtras;

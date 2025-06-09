@@ -65,30 +65,32 @@ static b2Contact* b2GetContactFullId( b2World* world, b2ContactId contactId )
 	return contact;
 }
 
-b2Manifold b2Contact_GetManifold( b2ContactId contactId )
+b2ContactData b2Contact_GetData( b2ContactId contactId )
 {
 	b2World* world = b2GetWorld( contactId.world0 );
 	b2Contact* contact = b2GetContactFullId( world, contactId );
 	b2ContactSim* contactSim = b2GetContactSim( world, contact );
-	return contactSim->manifold;
-}
-
-void b2Contact_GetShapeIds( b2ContactId contactId, b2ShapeId* shapeIdA, b2ShapeId* shapeIdB )
-{
-	b2World* world = b2GetWorld( contactId.world0 );
-	b2Contact* contact = b2GetContactFullId( world, contactId );
 	const b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contact->shapeIdA );
 	const b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contact->shapeIdB );
-	*shapeIdA = (b2ShapeId){
-		.index1 = shapeA->id + 1,
-		.world0 = (uint16_t)contactId.world0,
-		.generation = shapeA->generation,
+
+	b2ContactData data = {
+		.contactId = contactId,
+		.shapeIdA =
+			{
+				.index1 = shapeA->id + 1,
+				.world0 = (uint16_t)contactId.world0,
+				.generation = shapeA->generation,
+			},
+		.shapeIdB =
+			{
+				.index1 = shapeB->id + 1,
+				.world0 = (uint16_t)contactId.world0,
+				.generation = shapeB->generation,
+			},
+		.manifold = contactSim->manifold,
 	};
-	*shapeIdB = (b2ShapeId){
-		.index1 = shapeB->id + 1,
-		.world0 = (uint16_t)contactId.world0,
-		.generation = shapeB->generation,
-	};
+
+	return data;
 }
 
 typedef b2Manifold b2ManifoldFcn( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
@@ -560,13 +562,28 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 		b2ShapeId shapeIdA = { shapeA->id + 1, world->worldId, shapeA->generation };
 		b2ShapeId shapeIdB = { shapeB->id + 1, world->worldId, shapeB->generation };
 
+		b2Manifold* manifold = &contactSim->manifold;
+		float bestSeparation = manifold->points[0].separation;
+		b2Vec2 bestPoint = manifold->points[0].point;
+
+		// Get deepest point
+		for ( int i = 1; i < manifold->pointCount; ++i )
+		{
+			float separation = manifold->points[i].separation;
+			if ( separation < bestSeparation )
+			{
+				bestSeparation = separation;
+				bestPoint = manifold->points[i].point;
+			}
+		}
+
 		// this call assumes thread safety
-		touching = world->preSolveFcn( shapeIdA, shapeIdB, &contactSim->manifold, world->preSolveContext );
+		touching = world->preSolveFcn( shapeIdA, shapeIdB, bestPoint, manifold->normal, world->preSolveContext );
 		if ( touching == false )
 		{
 			// disable contact
 			pointCount = 0;
-			contactSim->manifold.pointCount = 0;
+			manifold->pointCount = 0;
 		}
 	}
 

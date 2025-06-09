@@ -19,8 +19,8 @@ struct Camera
 
 	b2Vec2 m_center;
 	float m_zoom;
-	int m_width;
-	int m_height;
+	float m_width;
+	float m_height;
 };
 
 // This class implements Box2D debug drawing callbacks
@@ -41,7 +41,7 @@ public:
 
 	void DrawSolidCapsule( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color );
 
-	void DrawSegment( b2Vec2 p1, b2Vec2 p2, b2HexColor color );
+	void DrawLine( b2Vec2 p1, b2Vec2 p2, b2HexColor color );
 
 	void DrawTransform( b2Transform transform );
 
@@ -51,7 +51,7 @@ public:
 
 	void DrawString( b2Vec2 p, const char* string, ... );
 
-	void DrawAABB( b2AABB aabb, b2HexColor color );
+	void DrawBounds( b2AABB aabb, b2HexColor color );
 
 	void Flush();
 	void DrawBackground();

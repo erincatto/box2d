@@ -631,7 +631,8 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	b2CastOutput output = { 0 };
 
 	int iteration = 0;
-	int maxIterations = 20;
+	const int maxIterations = 20;
+
 	for ( ; iteration < maxIterations; ++iteration )
 	{
 		output.iterations += 1;
@@ -1160,8 +1161,6 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 	float tMax = input->maxFraction;
 
 	float totalRadius = proxyA->radius + proxyB->radius;
-	// todo_erin consider different target
-	// float target = b2MaxFloat( B2_LINEAR_SLOP, totalRadius );
 	float target = b2MaxFloat( B2_LINEAR_SLOP, totalRadius - B2_LINEAR_SLOP );
 	float tolerance = 0.25f * B2_LINEAR_SLOP;
 	B2_ASSERT( target > tolerance );
@@ -1229,6 +1228,11 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 #if B2_SNOOP_TOI_COUNTERS
 			b2_toiHitCount += 1;
 #endif
+			// Averaged hit point
+			b2Vec2 pA = b2MulAdd( distanceOutput.pointA, proxyA->radius, distanceOutput.normal );
+			b2Vec2 pB = b2MulAdd( distanceOutput.pointB, -proxyB->radius, distanceOutput.normal );
+			output.point = b2Lerp( pA, pB, 0.5f );
+			output.normal = distanceOutput.normal;
 			output.fraction = t1;
 			break;
 		}
@@ -1317,6 +1321,11 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 #if B2_SNOOP_TOI_COUNTERS
 				b2_toiHitCount += 1;
 #endif
+				// Averaged hit point
+				b2Vec2 pA = b2MulAdd( distanceOutput.pointA, proxyA->radius, distanceOutput.normal );
+				b2Vec2 pB = b2MulAdd( distanceOutput.pointB, -proxyB->radius, distanceOutput.normal );
+				output.point = b2Lerp( pA, pB, 0.5f );
+				output.normal = distanceOutput.normal;
 				output.fraction = t1;
 				done = true;
 				break;
@@ -1397,6 +1406,11 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 #if B2_SNOOP_TOI_COUNTERS
 			b2_toiFailedCount += 1;
 #endif
+			// Averaged hit point
+			b2Vec2 pA = b2MulAdd( distanceOutput.pointA, proxyA->radius, distanceOutput.normal );
+			b2Vec2 pB = b2MulAdd( distanceOutput.pointB, -proxyB->radius, distanceOutput.normal );
+			output.point = b2Lerp( pA, pB, 0.5f );
+			output.normal = distanceOutput.normal;
 			output.fraction = t1;
 			break;
 		}

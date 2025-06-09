@@ -453,13 +453,13 @@ b2AABB b2ComputeSegmentAABB( const b2Segment* shape, b2Transform xf )
 	return aabb;
 }
 
-bool b2PointInCircle( b2Vec2 point, const b2Circle* shape )
+bool b2PointInCircle( const b2Circle* shape, b2Vec2 point )
 {
 	b2Vec2 center = shape->center;
 	return b2DistanceSquared( point, center ) <= shape->radius * shape->radius;
 }
 
-bool b2PointInCapsule( b2Vec2 point, const b2Capsule* shape )
+bool b2PointInCapsule( const b2Capsule* shape, b2Vec2 point )
 {
 	float rr = shape->radius * shape->radius;
 	b2Vec2 p1 = shape->center1;
@@ -486,7 +486,7 @@ bool b2PointInCapsule( b2Vec2 point, const b2Capsule* shape )
 	return b2DistanceSquared( point, c ) <= rr;
 }
 
-bool b2PointInPolygon( b2Vec2 point, const b2Polygon* shape )
+bool b2PointInPolygon( const b2Polygon* shape, b2Vec2 point )
 {
 	b2DistanceInput input = { 0 };
 	input.proxyA = b2MakeProxy( shape->vertices, shape->count, 0.0f );
@@ -503,17 +503,17 @@ bool b2PointInPolygon( b2Vec2 point, const b2Polygon* shape )
 
 // Precision Improvements for Ray / Sphere Intersection - Ray Tracing Gems 2019
 // http://www.codercorner.com/blog/?p=321
-b2CastOutput b2RayCastCircle( const b2RayCastInput* input, const b2Circle* shape )
+b2CastOutput b2RayCastCircle( const b2Circle* shape, const b2RayCastInput* input )
 {
 	B2_ASSERT( b2IsValidRay( input ) );
 
 	b2Vec2 p = shape->center;
 
 	b2CastOutput output = { 0 };
-	
+
 	// Shift ray so circle center is the origin
 	b2Vec2 s = b2Sub( input->origin, p );
-	
+
 	float r = shape->radius;
 	float rr = r * r;
 
@@ -522,14 +522,14 @@ b2CastOutput b2RayCastCircle( const b2RayCastInput* input, const b2Circle* shape
 	if ( length == 0.0f )
 	{
 		// zero length ray
-		
-		if (b2LengthSquared(s) < rr)
+
+		if ( b2LengthSquared( s ) < rr )
 		{
 			// initial overlap
 			output.point = input->origin;
 			output.hit = true;
 		}
-		
+
 		return output;
 	}
 
@@ -557,14 +557,14 @@ b2CastOutput b2RayCastCircle( const b2RayCastInput* input, const b2Circle* shape
 	if ( fraction < 0.0f || input->maxFraction * length < fraction )
 	{
 		// intersection is point outside the range of the ray segment
-		
-		if (b2LengthSquared(s) < rr)
+
+		if ( b2LengthSquared( s ) < rr )
 		{
 			// initial overlap
 			output.point = input->origin;
 			output.hit = true;
 		}
-		
+
 		return output;
 	}
 
@@ -579,7 +579,7 @@ b2CastOutput b2RayCastCircle( const b2RayCastInput* input, const b2Circle* shape
 	return output;
 }
 
-b2CastOutput b2RayCastCapsule( const b2RayCastInput* input, const b2Capsule* shape )
+b2CastOutput b2RayCastCapsule( const b2Capsule* shape, const b2RayCastInput* input )
 {
 	B2_ASSERT( b2IsValidRay( input ) );
 
@@ -597,7 +597,7 @@ b2CastOutput b2RayCastCapsule( const b2RayCastInput* input, const b2Capsule* sha
 	{
 		// Capsule is really a circle
 		b2Circle circle = { v1, shape->radius };
-		return b2RayCastCircle( input, &circle );
+		return b2RayCastCircle( &circle, input );
 	}
 
 	b2Vec2 p1 = input->origin;
@@ -619,14 +619,14 @@ b2CastOutput b2RayCastCapsule( const b2RayCastInput* input, const b2Capsule* sha
 		{
 			// start point behind capsule segment
 			b2Circle circle = { v1, shape->radius };
-			return b2RayCastCircle( input, &circle );
+			return b2RayCastCircle( &circle, input );
 		}
 
 		if ( qa > capsuleLength )
 		{
 			// start point ahead of capsule segment
 			b2Circle circle = { v2, shape->radius };
-			return b2RayCastCircle( input, &circle );
+			return b2RayCastCircle( &circle, input );
 		}
 
 		// ray starts inside capsule -> no hit
@@ -695,13 +695,13 @@ b2CastOutput b2RayCastCapsule( const b2RayCastInput* input, const b2Capsule* sha
 	{
 		// ray passes behind capsule segment
 		b2Circle circle = { v1, shape->radius };
-		return b2RayCastCircle( input, &circle );
+		return b2RayCastCircle( &circle, input );
 	}
 	else if ( capsuleLength < s1 )
 	{
 		// ray passes ahead of capsule segment
 		b2Circle circle = { v2, shape->radius };
-		return b2RayCastCircle( input, &circle );
+		return b2RayCastCircle( &circle, input );
 	}
 	else
 	{
@@ -715,7 +715,7 @@ b2CastOutput b2RayCastCapsule( const b2RayCastInput* input, const b2Capsule* sha
 }
 
 // Ray vs line segment
-b2CastOutput b2RayCastSegment( const b2RayCastInput* input, const b2Segment* shape, bool oneSided )
+b2CastOutput b2RayCastSegment( const b2Segment* shape, const b2RayCastInput* input, bool oneSided )
 {
 	if ( oneSided )
 	{
@@ -796,7 +796,7 @@ b2CastOutput b2RayCastSegment( const b2RayCastInput* input, const b2Segment* sha
 	return output;
 }
 
-b2CastOutput b2RayCastPolygon( const b2RayCastInput* input, const b2Polygon* shape )
+b2CastOutput b2RayCastPolygon( const b2Polygon* shape, const b2RayCastInput* input )
 {
 	B2_ASSERT( b2IsValidRay( input ) );
 
@@ -805,8 +805,8 @@ b2CastOutput b2RayCastPolygon( const b2RayCastInput* input, const b2Polygon* sha
 		// Shift all math to first vertex since the polygon may be far
 		// from the origin.
 		b2Vec2 base = shape->vertices[0];
-		
-		b2Vec2 p1 = b2Sub(input->origin, base);
+
+		b2Vec2 p1 = b2Sub( input->origin, base );
 		b2Vec2 d = input->translation;
 
 		float lower = 0.0f, upper = input->maxFraction;
@@ -815,17 +815,18 @@ b2CastOutput b2RayCastPolygon( const b2RayCastInput* input, const b2Polygon* sha
 
 		b2CastOutput output = { 0 };
 
-		for ( int i = 0; i < shape->count; ++i )
+		for ( int edgeIndex = 0; edgeIndex < shape->count; ++edgeIndex )
 		{
 			// p = p1 + a * d
 			// dot(normal, p - v) = 0
 			// dot(normal, p1 - v) + a * dot(normal, d) = 0
-			b2Vec2 vertex = b2Sub(shape->vertices[i], base);
-			float numerator = b2Dot( shape->normals[i], b2Sub( vertex, p1 ) );
-			float denominator = b2Dot( shape->normals[i], d );
+			b2Vec2 vertex = b2Sub( shape->vertices[edgeIndex], base );
+			float numerator = b2Dot( shape->normals[edgeIndex], b2Sub( vertex, p1 ) );
+			float denominator = b2Dot( shape->normals[edgeIndex], d );
 
 			if ( denominator == 0.0f )
 			{
+				// Parallel and runs outside edge
 				if ( numerator < 0.0f )
 				{
 					return output;
@@ -842,7 +843,7 @@ b2CastOutput b2RayCastPolygon( const b2RayCastInput* input, const b2Polygon* sha
 					// Increase lower.
 					// The segment enters this half-space.
 					lower = numerator / denominator;
-					index = i;
+					index = edgeIndex;
 				}
 				else if ( denominator > 0.0f && numerator < upper * denominator )
 				{
@@ -878,7 +879,6 @@ b2CastOutput b2RayCastPolygon( const b2RayCastInput* input, const b2Polygon* sha
 		return output;
 	}
 
-	// TODO_ERIN this is not working for ray vs box (zero radii)
 	b2ShapeCastPairInput castInput;
 	castInput.proxyA = b2MakeProxy( shape->vertices, shape->count, shape->radius );
 	castInput.proxyB = b2MakeProxy( &input->origin, 1, 0.0f );
@@ -890,7 +890,7 @@ b2CastOutput b2RayCastPolygon( const b2RayCastInput* input, const b2Polygon* sha
 	return b2ShapeCast( &castInput );
 }
 
-b2CastOutput b2ShapeCastCircle( const b2ShapeCastInput* input, const b2Circle* shape )
+b2CastOutput b2ShapeCastCircle( const b2Circle* shape, const b2ShapeCastInput* input )
 {
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->center, 1, shape->radius );
@@ -905,7 +905,7 @@ b2CastOutput b2ShapeCastCircle( const b2ShapeCastInput* input, const b2Circle* s
 	return output;
 }
 
-b2CastOutput b2ShapeCastCapsule( const b2ShapeCastInput* input, const b2Capsule* shape )
+b2CastOutput b2ShapeCastCapsule( const b2Capsule* shape, const b2ShapeCastInput* input )
 {
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->center1, 2, shape->radius );
@@ -920,7 +920,7 @@ b2CastOutput b2ShapeCastCapsule( const b2ShapeCastInput* input, const b2Capsule*
 	return output;
 }
 
-b2CastOutput b2ShapeCastSegment( const b2ShapeCastInput* input, const b2Segment* shape )
+b2CastOutput b2ShapeCastSegment( const b2Segment* shape, const b2ShapeCastInput* input )
 {
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->point1, 2, 0.0f );
@@ -935,7 +935,7 @@ b2CastOutput b2ShapeCastSegment( const b2ShapeCastInput* input, const b2Segment*
 	return output;
 }
 
-b2CastOutput b2ShapeCastPolygon( const b2ShapeCastInput* input, const b2Polygon* shape )
+b2CastOutput b2ShapeCastPolygon( const b2Polygon* shape, const b2ShapeCastInput* input )
 {
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( shape->vertices, shape->count, shape->radius );
@@ -950,7 +950,7 @@ b2CastOutput b2ShapeCastPolygon( const b2ShapeCastInput* input, const b2Polygon*
 	return output;
 }
 
-b2PlaneResult b2CollideMoverAndCircle( const b2Circle* shape, const b2Capsule* mover )
+b2PlaneResult b2CollideMoverAndCircle( const b2Capsule* mover, const b2Circle* shape )
 {
 	b2DistanceInput distanceInput;
 	distanceInput.proxyA = b2MakeProxy( &shape->center, 1, 0.0f );
@@ -977,7 +977,7 @@ b2PlaneResult b2CollideMoverAndCircle( const b2Circle* shape, const b2Capsule* m
 	return (b2PlaneResult){ 0 };
 }
 
-b2PlaneResult b2CollideMoverAndCapsule( const b2Capsule* shape, const b2Capsule* mover )
+b2PlaneResult b2CollideMoverAndCapsule( const b2Capsule* mover, const b2Capsule* shape )
 {
 	b2DistanceInput distanceInput;
 	distanceInput.proxyA = b2MakeProxy( &shape->center1, 2, 0.0f );
@@ -1004,7 +1004,7 @@ b2PlaneResult b2CollideMoverAndCapsule( const b2Capsule* shape, const b2Capsule*
 	return (b2PlaneResult){ 0 };
 }
 
-b2PlaneResult b2CollideMoverAndPolygon( const b2Polygon* shape, const b2Capsule* mover )
+b2PlaneResult b2CollideMoverAndPolygon( const b2Capsule* mover, const b2Polygon* shape )
 {
 	b2DistanceInput distanceInput;
 	distanceInput.proxyA = b2MakeProxy( shape->vertices, shape->count, shape->radius );
@@ -1031,7 +1031,7 @@ b2PlaneResult b2CollideMoverAndPolygon( const b2Polygon* shape, const b2Capsule*
 	return (b2PlaneResult){ 0 };
 }
 
-b2PlaneResult b2CollideMoverAndSegment( const b2Segment* shape, const b2Capsule* mover )
+b2PlaneResult b2CollideMoverAndSegment( const b2Capsule* mover, const b2Segment* shape )
 {
 	b2DistanceInput distanceInput;
 	distanceInput.proxyA = b2MakeProxy( &shape->point1, 2, 0.0f );

@@ -30,7 +30,9 @@ static b2JointDef b2DefaultJointDef( void )
 	def.localFrameB.q = b2Rot_identity;
 	def.forceThreshold = FLT_MAX;
 	def.torqueThreshold = FLT_MAX;
-	def.drawSize = 1.0f;
+	def.constraintHertz = 60.0f;
+	def.constraintDampingRatio = 0.0f;
+	def.drawScale = 1.0f;
 	return def;
 }
 
@@ -230,7 +232,7 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 	joint->islandId = B2_NULL_INDEX;
 	joint->islandPrev = B2_NULL_INDEX;
 	joint->islandNext = B2_NULL_INDEX;
-	joint->drawSize = def->drawSize;
+	joint->drawScale = def->drawScale;
 	joint->type = type;
 	joint->collideConnected = def->collideConnected;
 	joint->isMarked = false;
@@ -353,8 +355,8 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 	jointSim->localFrameA = def->localFrameA;
 	jointSim->localFrameB = def->localFrameB;
 	jointSim->type = type;
-	jointSim->constraintHertz = B2_JOINT_CONSTRAINT_HERTZ;
-	jointSim->constraintDampingRatio = B2_JOINT_CONSTRAINT_DAMPING_RATIO;
+	jointSim->constraintHertz = def->constraintHertz;
+	jointSim->constraintDampingRatio = def->constraintDampingRatio;
 	jointSim->constraintSoftness = (b2Softness){
 		.biasRate = 0.0f,
 		.massScale = 1.0f,
@@ -498,6 +500,40 @@ b2JointId b2CreateFilterJoint( b2WorldId worldId, const b2FilterJointDef* def )
 	return jointId;
 }
 
+b2JointId b2CreatePrismaticJoint( b2WorldId worldId, const b2PrismaticJointDef* def )
+{
+	B2_CHECK_DEF( def );
+	B2_ASSERT( def->lowerTranslation <= def->upperTranslation );
+
+	b2World* world = b2GetWorldFromId( worldId );
+
+	B2_ASSERT( world->locked == false );
+
+	if ( world->locked )
+	{
+		return (b2JointId){ 0 };
+	}
+
+	b2JointPair pair = b2CreateJoint( world, &def->base, b2_prismaticJoint );
+
+	b2JointSim* joint = pair.jointSim;
+
+	joint->prismaticJoint = (b2PrismaticJoint){ 0 };
+	joint->prismaticJoint.hertz = def->hertz;
+	joint->prismaticJoint.dampingRatio = def->dampingRatio;
+	joint->prismaticJoint.targetTranslation = def->targetTranslation;
+	joint->prismaticJoint.lowerTranslation = def->lowerTranslation;
+	joint->prismaticJoint.upperTranslation = def->upperTranslation;
+	joint->prismaticJoint.maxMotorForce = def->maxMotorForce;
+	joint->prismaticJoint.motorSpeed = def->motorSpeed;
+	joint->prismaticJoint.enableSpring = def->enableSpring;
+	joint->prismaticJoint.enableLimit = def->enableLimit;
+	joint->prismaticJoint.enableMotor = def->enableMotor;
+
+	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
+	return jointId;
+}
+
 b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJointDef* def )
 {
 	B2_CHECK_DEF( def );
@@ -531,42 +567,6 @@ b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJointDef* de
 	joint->revoluteJoint.enableSpring = def->enableSpring;
 	joint->revoluteJoint.enableLimit = def->enableLimit;
 	joint->revoluteJoint.enableMotor = def->enableMotor;
-
-	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
-	return jointId;
-}
-
-b2JointId b2CreatePrismaticJoint( b2WorldId worldId, const b2PrismaticJointDef* def )
-{
-	B2_CHECK_DEF( def );
-	B2_ASSERT( def->lowerTranslation <= def->upperTranslation );
-
-	b2World* world = b2GetWorldFromId( worldId );
-
-	B2_ASSERT( world->locked == false );
-
-	if ( world->locked )
-	{
-		return (b2JointId){ 0 };
-	}
-
-	b2JointPair pair = b2CreateJoint( world, &def->base, b2_prismaticJoint );
-
-	b2JointSim* joint = pair.jointSim;
-
-	b2PrismaticJoint empty = { 0 };
-	joint->prismaticJoint = empty;
-
-	joint->prismaticJoint.targetTranslation = def->targetTranslation;
-	joint->prismaticJoint.hertz = def->hertz;
-	joint->prismaticJoint.dampingRatio = def->dampingRatio;
-	joint->prismaticJoint.lowerTranslation = def->lowerTranslation;
-	joint->prismaticJoint.upperTranslation = def->upperTranslation;
-	joint->prismaticJoint.maxMotorForce = def->maxMotorForce;
-	joint->prismaticJoint.motorSpeed = def->motorSpeed;
-	joint->prismaticJoint.enableSpring = def->enableSpring;
-	joint->prismaticJoint.enableLimit = def->enableLimit;
-	joint->prismaticJoint.enableMotor = def->enableMotor;
 
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 	return jointId;
@@ -983,7 +983,7 @@ void b2GetJointReaction( b2JointSim* sim, float invTimeStep, float* force, float
 
 float b2GetJointConstraintTorqueMagnitude( b2JointSim* jointSim, float invTimeStep );
 
-b2Vec2 b2GetJointConstraintForce( b2World* world, b2Joint* joint )
+static b2Vec2 b2GetJointConstraintForce( b2World* world, b2Joint* joint )
 {
 	b2JointSim* base = b2GetJointSim( world, joint );
 
@@ -1019,7 +1019,7 @@ b2Vec2 b2GetJointConstraintForce( b2World* world, b2Joint* joint )
 	}
 }
 
-float b2GetJointConstraintTorque( b2World* world, b2Joint* joint )
+static float b2GetJointConstraintTorque( b2World* world, b2Joint* joint )
 {
 	b2JointSim* base = b2GetJointSim( world, joint );
 
@@ -1096,7 +1096,8 @@ float b2Joint_GetLinearSeparation( b2JointId jointId )
 					{
 						return distanceJoint->minLength - length;
 					}
-					else if ( length > distanceJoint->maxLength )
+
+					if ( length > distanceJoint->maxLength )
 					{
 						return length - distanceJoint->maxLength;
 					}
@@ -1489,15 +1490,15 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 			break;
 
 		case b2_prismaticJoint:
-			b2DrawPrismaticJoint( draw, jointSim, transformA, transformB, joint->drawSize );
+			b2DrawPrismaticJoint( draw, jointSim, transformA, transformB, joint->drawScale );
 			break;
 
 		case b2_revoluteJoint:
-			b2DrawRevoluteJoint( draw, jointSim, transformA, transformB, joint->drawSize );
+			b2DrawRevoluteJoint( draw, jointSim, transformA, transformB, joint->drawScale );
 			break;
 
 		case b2_weldJoint:
-			b2DrawWeldJoint( draw, jointSim, transformA, transformB, joint->drawSize );
+			b2DrawWeldJoint( draw, jointSim, transformA, transformB, joint->drawScale );
 			break;
 
 		case b2_wheelJoint:
@@ -1508,6 +1509,7 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 			draw->DrawSegmentFcn( transformA.p, pA, color, draw->context );
 			draw->DrawSegmentFcn( pA, pB, color, draw->context );
 			draw->DrawSegmentFcn( transformB.p, pB, color, draw->context );
+			break;
 	}
 
 	if ( draw->drawGraphColors )

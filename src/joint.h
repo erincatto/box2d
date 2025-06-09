@@ -47,7 +47,7 @@ typedef struct b2Joint
 	int islandPrev;
 	int islandNext;
 
-	float drawSize;
+	float drawScale;
 
 	b2JointType type;
 
@@ -125,7 +125,7 @@ typedef struct b2MouseJoint
 	b2Transform frameB;
 	b2Vec2 deltaCenter;
 	b2Mat22 linearMass;
-	float axialMass;
+	float angularMass;
 } b2MouseJoint;
 
 typedef struct b2PrismaticJoint
@@ -288,8 +288,6 @@ float b2GetJointConstraintForceMagnitude( b2JointSim* jointSim, float invTimeSte
 float b2GetJointConstraintTorqueMagnitude( b2JointSim* jointSim, float invTimeStep );
 
 void b2GetJointReaction( b2JointSim* sim, float invTimeStep, float* force, float* torque );
-b2Vec2 b2GetJointConstraintForce( b2World* world, b2Joint* joint );
-float b2GetJointConstraintTorque( b2World* world, b2Joint* joint );
 
 void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint );
 

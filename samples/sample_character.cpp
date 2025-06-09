@@ -327,7 +327,7 @@ public:
 			m_pogoVelocity = 0.0f;
 
 			b2Vec2 delta = translation;
-			m_draw->DrawSegment( origin, origin + delta, b2_colorGray );
+			m_draw->DrawLine( origin, origin + delta, b2_colorGray );
 
 			if ( m_pogoShape == PogoPoint )
 			{
@@ -339,7 +339,7 @@ public:
 			}
 			else
 			{
-				m_draw->DrawSegment( segment.point1 + delta, segment.point2 + delta, b2_colorGray );
+				m_draw->DrawLine( segment.point1 + delta, segment.point2 + delta, b2_colorGray );
 			}
 		}
 		else
@@ -350,7 +350,7 @@ public:
 			m_pogoVelocity = b2SpringDamper( m_pogoHertz, m_pogoDampingRatio, offset, m_pogoVelocity, timeStep );
 
 			b2Vec2 delta = castResult.fraction * translation;
-			m_draw->DrawSegment( origin, origin + delta, b2_colorGray );
+			m_draw->DrawLine( origin, origin + delta, b2_colorGray );
 
 			if ( m_pogoShape == PogoPoint )
 			{
@@ -362,7 +362,7 @@ public:
 			}
 			else
 			{
-				m_draw->DrawSegment( segment.point1 + delta, segment.point2 + delta, b2_colorPlum );
+				m_draw->DrawLine( segment.point1 + delta, segment.point2 + delta, b2_colorPlum );
 			}
 
 			b2Body_ApplyForce( castResult.bodyId, { 0.0f, -50.0f }, castResult.point, true );
@@ -568,7 +568,7 @@ public:
 			b2Vec2 p1 = m_transform.p + ( plane.offset - m_capsule.radius ) * plane.normal;
 			b2Vec2 p2 = p1 + 0.1f * plane.normal;
 			m_draw->DrawPoint( p1, 5.0f, b2_colorYellow );
-			m_draw->DrawSegment( p1, p2, b2_colorYellow );
+			m_draw->DrawLine( p1, p2, b2_colorYellow );
 		}
 
 		b2Vec2 p1 = b2TransformPoint( m_transform, m_capsule.center1 );
@@ -576,7 +576,7 @@ public:
 
 		b2HexColor color = m_onGround ? b2_colorOrange : b2_colorAquamarine;
 		m_draw->DrawSolidCapsule( p1, p2, m_capsule.radius, color );
-		m_draw->DrawSegment( m_transform.p, m_transform.p + m_velocity, b2_colorPurple );
+		m_draw->DrawLine( m_transform.p, m_transform.p + m_velocity, b2_colorPurple );
 
 		b2Vec2 p = m_transform.p;
 		DrawTextLine( "position %.2f %.2f", p.x, p.y );

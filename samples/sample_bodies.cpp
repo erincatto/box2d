@@ -387,8 +387,8 @@ public:
 		b2Vec2 v2 = b2Body_GetWorldPointVelocity( m_weebleId, worldPoint );
 
 		b2Vec2 offset = { 0.05f, 0.0f };
-		m_context->draw.DrawSegment( worldPoint, worldPoint + v1, b2_colorRed );
-		m_context->draw.DrawSegment( worldPoint + offset, worldPoint + v2 + offset, b2_colorGreen );
+		m_context->draw.DrawLine( worldPoint, worldPoint + v1, b2_colorRed );
+		m_context->draw.DrawLine( worldPoint + offset, worldPoint + v2 + offset, b2_colorGreen );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -849,7 +849,7 @@ public:
 			b2Rot rotation = b2MakeRot( 2.0f * m_time );
 
 			b2Vec2 axis = b2RotateVector( rotation, { 0.0f, 1.0f } );
-			m_context->draw.DrawSegment( point - 0.5f * axis, point + 0.5f * axis, b2_colorPlum );
+			m_context->draw.DrawLine( point - 0.5f * axis, point + 0.5f * axis, b2_colorPlum );
 			m_context->draw.DrawPoint( point, 10.0f, b2_colorPlum );
 
 			b2Body_SetTargetTransform( m_bodyId, { point, rotation }, timeStep );

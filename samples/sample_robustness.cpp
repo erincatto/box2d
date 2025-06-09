@@ -6,7 +6,6 @@
 
 #include "box2d/box2d.h"
 
-#include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <stdlib.h>
 
@@ -71,7 +70,7 @@ public:
 	}
 };
 
-static int sampleIndex1 = RegisterSample( "Robustness", "HighMassRatio1", HighMassRatio1::Create );
+static int sampleHighMassRatio1 = RegisterSample( "Robustness", "HighMassRatio1", HighMassRatio1::Create );
 
 // Big box on small boxes
 class HighMassRatio2 : public Sample
@@ -129,7 +128,7 @@ public:
 	}
 };
 
-static int sampleIndex2 = RegisterSample( "Robustness", "HighMassRatio2", HighMassRatio2::Create );
+static int sampleHighMassRatio2 = RegisterSample( "Robustness", "HighMassRatio2", HighMassRatio2::Create );
 
 // Big box on small triangles
 class HighMassRatio3 : public Sample
@@ -189,7 +188,7 @@ public:
 	}
 };
 
-static int sampleIndex3 = RegisterSample( "Robustness", "HighMassRatio3", HighMassRatio3::Create );
+static int sampleHighMassRatio3 = RegisterSample( "Robustness", "HighMassRatio3", HighMassRatio3::Create );
 
 class OverlapRecovery : public Sample
 {
@@ -208,18 +207,14 @@ public:
 		m_baseCount = 4;
 		m_overlap = 0.25f;
 		m_extent = 0.5f;
-		m_pushOut = 3.0f;
+		m_speed = 3.0f;
 		m_hertz = 30.0f;
 		m_dampingRatio = 10.0f;
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
-
-		float groundWidth = 40.0f;
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.density = 1.0f;
-
-		b2Segment segment = { { -groundWidth, 0.0f }, { groundWidth, 0.0f } };
+		b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
 		b2CreateSegmentShape( groundId, &shapeDef, &segment );
 
 		CreateScene();
@@ -232,12 +227,12 @@ public:
 
 	void CreateScene()
 	{
-		for ( int32_t i = 0; i < m_bodyCount; ++i )
+		for ( int i = 0; i < m_bodyCount; ++i )
 		{
 			b2DestroyBody( m_bodyIds[i] );
 		}
 
-		b2World_SetContactTuning( m_worldId, m_hertz, m_dampingRatio, m_pushOut );
+		b2World_SetContactTuning( m_worldId, m_hertz, m_dampingRatio, m_speed );
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
@@ -249,13 +244,13 @@ public:
 		m_bodyCount = m_baseCount * ( m_baseCount + 1 ) / 2;
 		m_bodyIds = (b2BodyId*)realloc( m_bodyIds, m_bodyCount * sizeof( b2BodyId ) );
 
-		int32_t bodyIndex = 0;
+		int bodyIndex = 0;
 		float fraction = 1.0f - m_overlap;
 		float y = m_extent;
-		for ( int32_t i = 0; i < m_baseCount; ++i )
+		for ( int i = 0; i < m_baseCount; ++i )
 		{
 			float x = fraction * m_extent * ( i - m_baseCount );
-			for ( int32_t j = i; j < m_baseCount; ++j )
+			for ( int j = i; j < m_baseCount; ++j )
 			{
 				bodyDef.position = { x, y };
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
@@ -286,7 +281,7 @@ public:
 		changed = changed || ImGui::SliderFloat( "Extent", &m_extent, 0.1f, 1.0f, "%.1f" );
 		changed = changed || ImGui::SliderInt( "Base Count", &m_baseCount, 1, 10 );
 		changed = changed || ImGui::SliderFloat( "Overlap", &m_overlap, 0.0f, 1.0f, "%.2f" );
-		changed = changed || ImGui::SliderFloat( "Speed", &m_pushOut, 0.0f, 10.0f, "%.1f" );
+		changed = changed || ImGui::SliderFloat( "Speed", &m_speed, 0.0f, 10.0f, "%.1f" );
 		changed = changed || ImGui::SliderFloat( "Hertz", &m_hertz, 0.0f, 240.0f, "%.f" );
 		changed = changed || ImGui::SliderFloat( "Damping Ratio", &m_dampingRatio, 0.0f, 20.0f, "%.1f" );
 		changed = changed || ImGui::Button( "Reset Scene" );
@@ -306,16 +301,16 @@ public:
 	}
 
 	b2BodyId* m_bodyIds;
-	int32_t m_bodyCount;
-	int32_t m_baseCount;
+	int m_bodyCount;
+	int m_baseCount;
 	float m_overlap;
 	float m_extent;
-	float m_pushOut;
+	float m_speed;
 	float m_hertz;
 	float m_dampingRatio;
 };
 
-static int sampleIndex4 = RegisterSample( "Robustness", "Overlap Recovery", OverlapRecovery::Create );
+static int sampleOverlapRecovery = RegisterSample( "Robustness", "Overlap Recovery", OverlapRecovery::Create );
 
 class TinyPyramid : public Sample
 {
@@ -380,7 +375,9 @@ public:
 
 static int sampleTinyPyramid = RegisterSample( "Robustness", "Tiny Pyramid", TinyPyramid::Create );
 
-// High gravity and high mass ratio
+// High gravity and high mass ratio. This shows how to tune contact and joint stiffness values to
+// achieve an improved result at a high sub-step count.
+// There is still a fair bit of bounce with some settings.
 class Cart : public Sample
 {
 public:
@@ -391,32 +388,34 @@ public:
 		{
 			m_context->camera.m_center = { 0.0f, 1.0f };
 			m_context->camera.m_zoom = 1.5f;
+			m_context->subStepCount = 12;
 		}
 
-		b2BodyId groundId;
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.position = { 0.0f, -1.0f };
-			groundId = b2CreateBody( m_worldId, &bodyDef );
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2Polygon groundBox = b2MakeBox( 20.0f, 1.0f );
 			b2CreatePolygonShape( groundId, &shapeDef, &groundBox );
 		}
 
-		b2World_SetGravity( m_worldId, { 0, -22 } );
+		b2World_SetGravity( m_worldId, { 0, -22.0f } );
 
-		m_contactHertz = 30.0f;
+		m_contactHertz = 240.0f;
 		m_contactDampingRatio = 10.0f;
-		m_contactSpeed = 3.0f;
+		m_contactSpeed = 0.5f;
 		b2World_SetContactTuning( m_worldId, m_contactHertz, m_contactDampingRatio, m_contactSpeed );
 
-		m_jointHertz = 60.0f;
-		m_jointDampingRatio = 1.0f;
+		m_constraintHertz = 240.0f;
+		m_constraintDampingRatio = 0.0f;
 
 		m_chassisId = {};
 		m_wheelId1 = {};
 		m_wheelId2 = {};
+		m_jointId1 = {};
+		m_jointId2 = {};
 
 		CreateScene();
 	}
@@ -446,40 +445,43 @@ public:
 		m_chassisId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.density = 100.0f;
+		shapeDef.density = 1000.0f;
 
-		b2Polygon box = b2MakeOffsetBox( 0.5f, 0.25f, { 0.0f, 0.25f }, b2Rot_identity );
+		b2Polygon box = b2MakeOffsetBox( 1.0f, 0.25f, { 0.0f, 0.25f }, b2Rot_identity );
 		b2CreatePolygonShape( m_chassisId, &shapeDef, &box );
 
 		shapeDef = b2DefaultShapeDef();
 		shapeDef.material.rollingResistance = 0.02f;
-		shapeDef.density = 10.0f;
+		shapeDef.density = 50.0f;
 
 		b2Circle circle = { b2Vec2_zero, 0.1f };
-		bodyDef.position = { -0.4f, yBase - 0.15f };
+		bodyDef.position = { -0.9f, yBase - 0.15f };
 		m_wheelId1 = b2CreateBody( m_worldId, &bodyDef );
 		b2CreateCircleShape( m_wheelId1, &shapeDef, &circle );
 
-		bodyDef.position = { 0.4f, yBase - 0.15f };
+		bodyDef.position = { 0.9f, yBase - 0.15f };
 		m_wheelId2 = b2CreateBody( m_worldId, &bodyDef );
 		b2CreateCircleShape( m_wheelId2, &shapeDef, &circle );
 
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+		jointDef.base.constraintHertz = 120.0f;
+		jointDef.base.constraintDampingRatio = 0.0f;
+
 		jointDef.base.bodyIdA = m_chassisId;
 		jointDef.base.bodyIdB = m_wheelId1;
-		jointDef.base.localFrameA.p = { -0.4f, -0.15f };
+		jointDef.base.localFrameA.p = { -0.9f, -0.15f };
 		jointDef.base.localFrameB.p = { 0.0f, 0.0f };
 
 		m_jointId1 = b2CreateRevoluteJoint( m_worldId, &jointDef );
-		b2Joint_SetConstraintTuning( m_jointId1, m_jointHertz, m_jointDampingRatio );
+		b2Joint_SetConstraintTuning( m_jointId1, m_constraintHertz, m_constraintDampingRatio );
 
 		jointDef.base.bodyIdA = m_chassisId;
 		jointDef.base.bodyIdB = m_wheelId2;
-		jointDef.base.localFrameA.p = { 0.4f, -0.15f };
+		jointDef.base.localFrameA.p = { 0.9f, -0.15f };
 		jointDef.base.localFrameB.p = { 0.0f, 0.0f };
 
 		m_jointId2 = b2CreateRevoluteJoint( m_worldId, &jointDef );
-		b2Joint_SetConstraintTuning( m_jointId2, m_jointHertz, m_jointDampingRatio );
+		b2Joint_SetConstraintTuning( m_jointId2, m_constraintHertz, m_constraintDampingRatio );
 	}
 
 	void UpdateGui() override
@@ -494,7 +496,7 @@ public:
 		bool changed = false;
 		ImGui::Text( "Contact" );
 		changed = changed || ImGui::SliderFloat( "Hertz##contact", &m_contactHertz, 0.0f, 240.0f, "%.f" );
-		changed = changed || ImGui::SliderFloat( "Damping Ratio##contact", &m_contactDampingRatio, 0.0f, 1000.0f, "%.f" );
+		changed = changed || ImGui::SliderFloat( "Damping Ratio##contact", &m_contactDampingRatio, 0.0f, 100.0f, "%.f" );
 		changed = changed || ImGui::SliderFloat( "Speed", &m_contactSpeed, 0.0f, 5.0f, "%.1f" );
 
 		if ( changed )
@@ -507,8 +509,8 @@ public:
 
 		changed = false;
 		ImGui::Text( "Joint" );
-		changed = changed || ImGui::SliderFloat( "Hertz##joint", &m_jointHertz, 0.0f, 240.0f, "%.f" );
-		changed = changed || ImGui::SliderFloat( "Damping Ratio##joint", &m_jointDampingRatio, 0.0f, 1000.0f, "%.f" );
+		changed = changed || ImGui::SliderFloat( "Hertz##joint", &m_constraintHertz, 0.0f, 240.0f, "%.f" );
+		changed = changed || ImGui::SliderFloat( "Damping Ratio##joint", &m_constraintDampingRatio, 0.0f, 20.0f, "%.f" );
 
 		ImGui::Separator();
 
@@ -516,8 +518,8 @@ public:
 
 		if ( changed )
 		{
-			b2Joint_SetConstraintTuning( m_jointId1, m_jointHertz, m_jointDampingRatio );
-			b2Joint_SetConstraintTuning( m_jointId2, m_jointHertz, m_jointDampingRatio );
+			b2Joint_SetConstraintTuning( m_jointId1, m_constraintHertz, m_constraintDampingRatio );
+			b2Joint_SetConstraintTuning( m_jointId2, m_constraintHertz, m_constraintDampingRatio );
 			CreateScene();
 		}
 
@@ -539,8 +541,8 @@ public:
 	float m_contactHertz;
 	float m_contactDampingRatio;
 	float m_contactSpeed;
-	float m_jointHertz;
-	float m_jointDampingRatio;
+	float m_constraintHertz;
+	float m_constraintDampingRatio;
 };
 
 static int sampleCart = RegisterSample( "Robustness", "Cart", Cart::Create );

@@ -206,8 +206,8 @@ public:
 	{
 		Sample::Step();
 
-		m_context->draw.DrawSegment( b2Vec2_zero, { 0.5f, 0.0f }, b2_colorRed );
-		m_context->draw.DrawSegment( b2Vec2_zero, { 0.0f, 0.5f }, b2_colorGreen );
+		m_context->draw.DrawLine( b2Vec2_zero, { 0.5f, 0.0f }, b2_colorRed );
+		m_context->draw.DrawLine( b2Vec2_zero, { 0.0f, 0.5f }, b2_colorGreen );
 
 		// DrawTextLine( "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
 	}
@@ -422,16 +422,16 @@ public:
 		if ( m_drawBodyAABBs )
 		{
 			b2AABB aabb = b2Body_ComputeAABB( m_table1Id );
-			m_context->draw.DrawAABB( aabb, b2_colorYellow );
+			m_context->draw.DrawBounds( aabb, b2_colorYellow );
 
 			aabb = b2Body_ComputeAABB( m_table2Id );
-			m_context->draw.DrawAABB( aabb, b2_colorYellow );
+			m_context->draw.DrawBounds( aabb, b2_colorYellow );
 
 			aabb = b2Body_ComputeAABB( m_ship1Id );
-			m_context->draw.DrawAABB( aabb, b2_colorYellow );
+			m_context->draw.DrawBounds( aabb, b2_colorYellow );
 
 			aabb = b2Body_ComputeAABB( m_ship2Id );
-			m_context->draw.DrawAABB( aabb, b2_colorYellow );
+			m_context->draw.DrawBounds( aabb, b2_colorYellow );
 		}
 	}
 
@@ -727,7 +727,7 @@ public:
 		void* userDataA = b2Shape_GetUserData( shapeIdA );
 		void* userDataB = b2Shape_GetUserData( shapeIdB );
 
-		if ( userDataA == NULL || userDataB == NULL )
+		if ( userDataA == nullptr || userDataB == nullptr )
 		{
 			return true;
 		}

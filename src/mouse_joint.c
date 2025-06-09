@@ -65,7 +65,6 @@ void b2PrepareMouseJoint( b2JointSim* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_mouseJoint );
 
-	// chase body id to the solver set where the body lives
 	int idA = base->bodyIdA;
 	int idB = base->bodyIdB;
 
@@ -128,7 +127,7 @@ void b2PrepareMouseJoint( b2JointSim* base, b2StepContext* context )
 	joint->linearMass = b2GetInverse22( K );
 
 	float ka = iA + iB;
-	joint->axialMass = ka > 0.0f ? 1.0f / ka : 0.0f;
+	joint->angularMass = ka > 0.0f ? 1.0f / ka : 0.0f;
 
 	if ( context->enableWarmStarting == false )
 	{
@@ -190,7 +189,7 @@ void b2SolveMouseJoint( b2JointSim* base, b2StepContext* context )
 		float impulseScale = joint->angularSoftness.impulseScale;
 
 		float Cdot = wB - wA;
-		float impulse = -massScale * joint->axialMass * Cdot - impulseScale * joint->angularImpulse;
+		float impulse = -massScale * joint->angularMass * Cdot - impulseScale * joint->angularImpulse;
 		joint->angularImpulse += impulse;
 
 		wA -= iA * impulse;

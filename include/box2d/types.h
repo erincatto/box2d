@@ -100,7 +100,7 @@ typedef struct b2WorldDef
 	/// This parameter controls how fast overlap is resolved and usually has units of meters per second. This only
 	/// puts a cap on the resolution speed. The resolution speed is increased by increasing the hertz and/or
 	/// decreasing the damping ratio.
-	float maxContactPushSpeed;
+	float contactSpeed;
 
 	/// Maximum linear speed. Usually meters per second.
 	float maximumLinearSpeed;
@@ -225,8 +225,14 @@ typedef struct b2BodyDef
 	/// Treat this body as high speed object that performs continuous collision detection
 	/// against dynamic and kinematic bodies, but not other bullet bodies.
 	/// @warning Bullets should be used sparingly. They are not a solution for general dynamic-versus-dynamic
-	/// continuous collision. They may interfere with joint constraints.
+	/// continuous collision.
 	bool isBullet;
+
+	/// Option to perform continuous collision checks with sensors. This only applies to dynamic bodies.
+	/// This is expensive and should be used sparingly. You still need to enable sensor events on the child shapes
+	/// for this to work. This only works if the body is awake. This will use a time of impact calculation to
+	/// generate sensor begin touch events, but not end events. End events are handled using regular overlap checks.
+	bool enableSensorHits;
 
 	/// Used to disable a body. A disabled body does not move or collide.
 	bool isEnabled;
@@ -392,7 +398,7 @@ typedef struct b2ShapeDef
 	bool enableHitEvents;
 
 	/// Enable pre-solve contact events for this shape. Only applies to dynamic bodies. These are expensive
-	/// and must be carefully handled due to threading. Ignored for sensors.
+	/// and must be carefully handled due to multithreading. Ignored for sensors.
 	bool enablePreSolveEvents;
 
 	/// When shapes are created they will scan the environment for collision the next time step. This can significantly slow down
@@ -482,6 +488,7 @@ typedef struct b2Profile
 	float storeImpulses;
 	float splitIslands;
 	float transforms;
+	float sensorHits;
 	float jointEvents;
 	float hitEvents;
 	float refit;
@@ -524,6 +531,10 @@ typedef enum b2JointType
 	b2_wheelJoint,
 } b2JointType;
 
+/// Base joint definition used by all joint types.
+/// The local frames are measured from the body's origin rather than the center of mass because:
+/// 1. you might not know where the center of mass will be
+/// 2. if you add/remove shapes from a body and recompute the mass, the joints will be broken
 typedef struct b2JointDef
 {
 	/// User data pointer
@@ -547,8 +558,14 @@ typedef struct b2JointDef
 	/// Torque threshold for joint events
 	float torqueThreshold;
 
-	/// Debug draw size
-	float drawSize;
+	/// Constraint hertz (advanced feature)
+	float constraintHertz;
+
+	/// Constraint damping ratio (advanced feature)
+	float constraintDampingRatio;
+
+	/// Debug draw scale
+	float drawScale;
 
 	/// Set this flag to true if the attached bodies should collide
 	bool collideConnected;
@@ -556,11 +573,8 @@ typedef struct b2JointDef
 } b2JointDef;
 
 /// Distance joint definition
-///
-/// This requires defining an anchor point on both
-/// bodies and the non-zero distance of the distance joint. The definition uses
-/// local anchor points so that the initial configuration can violate the
-/// constraint slightly. This helps when saving and loading a game.
+/// Connects a point on body A with a point on body B by a segment.
+/// Useful for ropes and springs.
 /// @ingroup distance_joint
 typedef struct b2DistanceJointDef
 {
@@ -632,7 +646,7 @@ typedef struct b2MotorJointDef
 /// @ingroup motor_joint
 B2_API b2MotorJointDef b2DefaultMotorJointDef( void );
 
-/// A mouse joint is used to make a point on a body track a specified world point.
+/// A mouse joint is used to make a point on body B track a point on body A.
 /// You may move local frame A to change the target point.
 /// This a soft constraint and allows the constraint to stretch without
 /// applying huge forces. This also applies rotation constraint heuristic to improve control.
@@ -676,7 +690,6 @@ typedef struct b2FilterJointDef
 B2_API b2FilterJointDef b2DefaultFilterJointDef( void );
 
 /// Prismatic joint definition
-///
 /// Body B may slide along the x-axis in local frame A. Body B cannot rotate relative to body A.
 /// The joint translation is zero when the local frame origins coincide in world space.
 /// @ingroup prismatic_joint
@@ -684,10 +697,6 @@ typedef struct b2PrismaticJointDef
 {
 	/// Base joint definition
 	b2JointDef base;
-
-	/// The target translation for the joint in meters. The spring-damper will drive
-	/// to this translation.
-	float targetTranslation;
 
 	/// Enable a linear spring along the prismatic joint axis
 	bool enableSpring;
@@ -697,6 +706,10 @@ typedef struct b2PrismaticJointDef
 
 	/// The spring damping ratio, non-dimensional
 	float dampingRatio;
+
+	/// The target translation for the joint in meters. The spring-damper will drive
+	/// to this translation.
+	float targetTranslation;
 
 	/// Enable/disable the joint limit
 	bool enableLimit;
@@ -725,15 +738,7 @@ typedef struct b2PrismaticJointDef
 B2_API b2PrismaticJointDef b2DefaultPrismaticJointDef( void );
 
 /// Revolute joint definition
-///
-/// This requires defining an anchor point where the bodies are joined.
-/// The definition uses local anchor points so that the
-/// initial configuration can violate the constraint slightly. You also need to
-/// specify the initial relative angle for joint limits. This helps when saving
-/// and loading a game.
-/// The local anchor points are measured from the body's origin rather than the center of mass because:
-/// 1. you might not know where the center of mass will be
-/// 2. if you add/remove shapes from a body and recompute the mass, the joints will be broken
+/// A point on body B is fixed to a point on body A. Allows relative rotation.
 /// @ingroup revolute_joint
 typedef struct b2RevoluteJointDef
 {
@@ -780,8 +785,7 @@ typedef struct b2RevoluteJointDef
 B2_API b2RevoluteJointDef b2DefaultRevoluteJointDef( void );
 
 /// Weld joint definition
-///
-/// A weld joint connect to bodies together rigidly. This constraint provides springs to mimic
+/// Connects two bodies together rigidly. This constraint provides springs to mimic
 /// soft-body simulation.
 /// @note The approximate solver in Box2D cannot hold many bodies together rigidly
 /// @ingroup weld_joint
@@ -811,7 +815,6 @@ typedef struct b2WeldJointDef
 B2_API b2WeldJointDef b2DefaultWeldJointDef( void );
 
 /// Wheel joint definition
-///
 /// Body B is a wheel that may rotate freely and slide along the local x-axis in frame A.
 /// The joint translation is zero when the local frame origins coincide in world space.
 /// @ingroup wheel_joint
@@ -905,7 +908,7 @@ typedef struct b2SensorBeginTouchEvent
 	/// The id of the sensor shape
 	b2ShapeId sensorShapeId;
 
-	/// The id of the dynamic shape that began touching the sensor shape
+	/// The id of the shape that began touching the sensor shape
 	b2ShapeId visitorShapeId;
 } b2SensorBeginTouchEvent;
 
@@ -920,14 +923,14 @@ typedef struct b2SensorEndTouchEvent
 	///	@see b2Shape_IsValid
 	b2ShapeId sensorShapeId;
 
-	/// The id of the dynamic shape that stopped touching the sensor shape
+	/// The id of the shape that stopped touching the sensor shape
 	///	@warning this shape may have been destroyed
 	///	@see b2Shape_IsValid
 	b2ShapeId visitorShapeId;
 
 } b2SensorEndTouchEvent;
 
-/// Sensor events are buffered in the Box2D world and are available
+/// Sensor events are buffered in the world and are available
 /// as begin/end overlap event arrays after the time step is complete.
 /// Note: these may become invalid if bodies and/or shapes are destroyed
 typedef struct b2SensorEvents
@@ -954,14 +957,9 @@ typedef struct b2ContactBeginTouchEvent
 	/// Id of the second shape
 	b2ShapeId shapeIdB;
 
-	/// The transient contact id. This contact maybe destroyed automatically by Box2D when the world is modified or simulated.
+	/// The transient contact id. This contact maybe destroyed automatically when the world is modified or simulated.
 	/// Used b2Contact_IsValid before using this id.
 	b2ContactId contactId;
-
-	/// The initial contact manifold. This is recorded before the solver is called,
-	/// so all the impulses will be zero. You can use the contact id to access the manifold impulses
-	/// using b2Contact_GetManifold.
-	b2Manifold manifold;
 } b2ContactBeginTouchEvent;
 
 /// An end touch event is generated when two shapes stop touching.
@@ -980,7 +978,9 @@ typedef struct b2ContactEndTouchEvent
 	///	@see b2Shape_IsValid
 	b2ShapeId shapeIdB;
 
-	/// Id of the contact
+	/// Id of the contact.
+	///	@warning this contact may have been destroyed
+	///	@see b2Contact_IsValid
 	b2ContactId contactId;
 } b2ContactEndTouchEvent;
 
@@ -1042,9 +1042,9 @@ typedef struct b2ContactEvents
 /// @note If sleeping is disabled all dynamic and kinematic bodies will trigger move events.
 typedef struct b2BodyMoveEvent
 {
+	void* userData;
 	b2Transform transform;
 	b2BodyId bodyId;
-	void* userData;
 	bool fellAsleep;
 } b2BodyMoveEvent;
 
@@ -1064,11 +1064,14 @@ typedef struct b2BodyEvents
 /// The observed forces and torques are not returned for efficiency reasons.
 typedef struct b2JointEvent
 {
+	/// The joint id
 	b2JointId jointId;
+
+	/// The user data from the joint for convenience
 	void* userData;
 } b2JointEvent;
 
-/// Joint events are buffered in the Box2D world and are available
+/// Joint events are buffered in the world and are available
 /// as event arrays after the time step is complete.
 /// Note: this data becomes invalid if joints are destroyed
 typedef struct b2JointEvents
@@ -1083,8 +1086,23 @@ typedef struct b2JointEvents
 /// The contact data for two shapes. By convention the manifold normal points
 /// from shape A to shape B.
 /// @see b2Shape_GetContactData() and b2Body_GetContactData()
+typedef struct b2SensorData
+{
+	/// The visiting shape
+	b2ShapeId visitorId;
+
+	/// The transform of the body of the visiting shape. This is normally
+	/// the current transform of the body. However, for a sensor hit, this is
+	/// the transform of the visiting body when it hit.
+	b2Transform visitTransform;
+} b2SensorData;
+
+/// The contact data for two shapes. By convention the manifold normal points
+/// from shape A to shape B.
+/// @see b2Shape_GetContactData() and b2Body_GetContactData()
 typedef struct b2ContactData
 {
+	b2ContactId contactId;
 	b2ShapeId shapeIdA;
 	b2ShapeId shapeIdB;
 	b2Manifold manifold;
@@ -1119,7 +1137,7 @@ typedef bool b2CustomFilterFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* co
 /// Return false if you want to disable the contact this step
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
-typedef bool b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context );
+typedef bool b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Vec2 point, b2Vec2 normal, void* context );
 
 /// Prototype callback for overlap queries.
 /// Called for each shape found in the query.
