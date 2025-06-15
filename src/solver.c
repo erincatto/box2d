@@ -84,21 +84,6 @@ static void b2IntegrateVelocitiesTask( int startIndex, int endIndex, b2StepConte
 		b2Vec2 v = state->linearVelocity;
 		float w = state->angularVelocity;
 
-		if ( sim->flags & b2_lockLinearX )
-		{
-			v.x = 0.0f;
-		}
-
-		if ( sim->flags & b2_lockLinearY )
-		{
-			v.y = 0.0f;
-		}
-
-		if ( sim->flags & b2_lockAngularZ )
-		{
-			w = 0.0f;
-		}
-
 		// Apply forces, torque, gravity, and damping
 		// Apply damping.
 		// Differential equation: dv/dt + c * v = 0
@@ -138,6 +123,21 @@ static void b2IntegrateVelocitiesTask( int startIndex, int endIndex, b2StepConte
 			float ratio = maxAngularSpeed / b2AbsFloat( w );
 			w *= ratio;
 			sim->flags |= b2_isSpeedCapped;
+		}
+
+		if ( state->flags & b2_lockLinearX )
+		{
+			v.x = 0.0f;
+		}
+
+		if ( state->flags & b2_lockLinearY )
+		{
+			v.y = 0.0f;
+		}
+
+		if ( state->flags & b2_lockAngularZ )
+		{
+			w = 0.0f;
 		}
 
 		state->linearVelocity = v;
@@ -227,8 +227,24 @@ static void b2IntegratePositionsTask( int startIndex, int endIndex, b2StepContex
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
 		b2BodyState* state = states + i;
-		state->deltaRotation = b2IntegrateRotation( state->deltaRotation, h * state->angularVelocity );
+
+		if ( state->flags & b2_lockLinearX )
+		{
+			state->linearVelocity.x = 0.0f;
+		}
+
+		if ( state->flags & b2_lockLinearY )
+		{
+			state->linearVelocity.y = 0.0f;
+		}
+
+		if ( state->flags & b2_lockAngularZ )
+		{
+			state->angularVelocity = 0.0f;
+		}
+
 		state->deltaPosition = b2MulAdd( state->deltaPosition, h, state->linearVelocity );
+		state->deltaRotation = b2IntegrateRotation( state->deltaRotation, h * state->angularVelocity );
 	}
 
 	b2TracyCZoneEnd( integrate_positions );
@@ -639,6 +655,21 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 	{
 		b2BodyState* state = states + simIndex;
 		b2BodySim* sim = sims + simIndex;
+
+		if ( state->flags & b2_lockLinearX )
+		{
+			state->linearVelocity.x = 0.0f;
+		}
+
+		if ( state->flags & b2_lockLinearY )
+		{
+			state->linearVelocity.y = 0.0f;
+		}
+
+		if ( state->flags & b2_lockAngularZ )
+		{
+			state->angularVelocity = 0.0f;
+		}
 
 		b2Vec2 v = state->linearVelocity;
 		float w = state->angularVelocity;

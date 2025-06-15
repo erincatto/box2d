@@ -183,15 +183,6 @@ typedef struct b2BodySim
 	int bodyId;
 
 	uint32_t flags;
-
-	// This flag is used for debug draw
-	//bool isFast;
-
-	//bool isBullet;
-	//bool enableSensorHits;
-	//bool isSpeedCapped;
-	//bool allowFastRotation;
-	//bool enlargeAABB;
 } b2BodySim;
 
 // Get a validated body from a world using an id.

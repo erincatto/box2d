@@ -265,6 +265,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 		bodyState->linearVelocity = def->linearVelocity;
 		bodyState->angularVelocity = def->angularVelocity;
 		bodyState->deltaRotation = b2Rot_identity;
+		bodyState->flags = lockFlags;
 	}
 
 	if ( bodyId == world->bodies.count )
@@ -1797,10 +1798,24 @@ void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks )
 		body->flags |= newFlags;
 
 		b2BodyState* state = b2GetBodyState( world, body );
+		state->flags = body->flags;
 
 		if ( state != NULL )
 		{
-			state->angularVelocity = 0.0f;
+			if (locks.linearX)
+			{
+				state->linearVelocity.x = 0.0f;
+			}
+
+			if (locks.linearY)
+			{
+				state->linearVelocity.y = 0.0f;
+			}
+
+			if (locks.angularZ)
+			{
+				state->angularVelocity = 0.0f;
+			}
 		}
 
 		b2UpdateBodyMassData( world, body );
