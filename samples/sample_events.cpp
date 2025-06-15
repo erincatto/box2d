@@ -238,7 +238,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 90.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
 
 		ImGui::Begin( "Sensor Event", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -429,9 +429,9 @@ public:
 	void UpdateGui() override
 	{
 		float fontSize = ImGui::GetFontSize();
-		float height = 260.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
+		float height = 19.0f * fontSize;
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 12.0f * fontSize, height ) );
 
 		ImGui::Begin( "Sensor Bookend", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 
@@ -930,7 +930,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 60.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Contact Event", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1353,7 +1353,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "One-Sided Platform", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1563,7 +1563,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Body Move", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -2308,7 +2308,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 120.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 120.0f, height ) );
 
 		ImGui::Begin( "Sensor Hit", nullptr, ImGuiWindowFlags_NoResize );

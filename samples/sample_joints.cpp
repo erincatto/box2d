@@ -116,7 +116,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 240.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
 
 		ImGui::Begin( "Distance Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -281,7 +281,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 180.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Motor Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -522,9 +522,9 @@ public:
 	void UpdateGui() override
 	{
 		float fontSize = ImGui::GetFontSize();
-		float height = 220.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
+		float height = 8.0f * fontSize;
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize }, ImGuiCond_Once );
+		ImGui::SetNextWindowSize( { 8.0f * fontSize, height } );
 
 		ImGui::Begin( "Revolute Joint", nullptr, ImGuiWindowFlags_NoResize );
 
@@ -595,8 +595,8 @@ public:
 		float torque1 = b2RevoluteJoint_GetMotorTorque( m_jointId1 );
 		DrawTextLine( "Motor Torque 1 = %4.1f", torque1 );
 
-		//float torque2 = b2RevoluteJoint_GetMotorTorque( m_jointId2 );
-		//DrawTextLine( "Motor Torque 2 = %4.1f", torque2 );
+		// float torque2 = b2RevoluteJoint_GetMotorTorque( m_jointId2 );
+		// DrawTextLine( "Motor Torque 2 = %4.1f", torque2 );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -685,7 +685,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 240.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Prismatic Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -841,7 +841,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 220.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Wheel Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -1025,7 +1025,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 180.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 320.0f, height ) );
 
 		ImGui::Begin( "Bridge", nullptr, ImGuiWindowFlags_NoResize );
@@ -1179,7 +1179,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 60.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Ball and Chain", nullptr, ImGuiWindowFlags_NoResize );
@@ -1285,7 +1285,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 14.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 19.0f * fontSize, height ) );
 
 		ImGui::Begin( "Cantilever", nullptr, ImGuiWindowFlags_NoResize );
@@ -1572,7 +1572,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 8.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
 
 		ImGui::Begin( "Motion Locks", nullptr, ImGuiWindowFlags_NoResize );
@@ -1807,7 +1807,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Breakable Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -2013,9 +2013,9 @@ public:
 	void UpdateGui() override
 	{
 		float fontSize = ImGui::GetFontSize();
-		float height = 180.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 260.0f, height ) );
+		float height = 14.0f * fontSize;
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize }, ImGuiCond_Once );
+		ImGui::SetNextWindowSize( { 20.0f * fontSize, height } );
 
 		ImGui::Begin( "Joint Separation", nullptr, ImGuiWindowFlags_NoResize );
 
@@ -2027,7 +2027,7 @@ public:
 
 		if ( ImGui::Button( "impulse" ) )
 		{
-			for (int i = 0; i < e_count; ++i)
+			for ( int i = 0; i < e_count; ++i )
 			{
 				b2Vec2 p = b2Body_GetWorldPoint( m_bodyIds[i], { 1.0f, 1.0f } );
 				b2Body_ApplyLinearImpulse( m_bodyIds[i], { m_impulse, -m_impulse }, p, true );
@@ -2391,13 +2391,13 @@ public:
 	void UpdateGui() override
 	{
 		float fontSize = ImGui::GetFontSize();
-		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
+		float height = 10.0f * fontSize;
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize }, ImGuiCond_Once );
+		ImGui::SetNextWindowSize( { 16.0f * fontSize, height } );
 
 		ImGui::Begin( "Driving", nullptr, ImGuiWindowFlags_NoResize );
 
-		ImGui::PushItemWidth( 100.0f );
+		ImGui::PushItemWidth( 8.0f * fontSize );
 		if ( ImGui::SliderFloat( "Spring Hertz", &m_hertz, 0.0f, 20.0f, "%.0f" ) )
 		{
 			m_car.SetHertz( m_hertz );
@@ -2508,18 +2508,18 @@ public:
 	{
 		CreateHuman( &m_human, m_worldId, { 0.0f, 25.0f }, 1.0f, m_jointFrictionTorque, m_jointHertz, m_jointDampingRatio, 1,
 					 nullptr, false );
-		//Human_ApplyRandomAngularImpulse( &m_human, 10.0f );
+		// Human_ApplyRandomAngularImpulse( &m_human, 10.0f );
 	}
 
 	void UpdateGui() override
 	{
 		float fontSize = ImGui::GetFontSize();
-		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
+		float height = 10.0f * fontSize;
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize }, ImGuiCond_Once );
+		ImGui::SetNextWindowSize( { 14.0f * fontSize, height } );
 
 		ImGui::Begin( "Ragdoll", nullptr, ImGuiWindowFlags_NoResize );
-		ImGui::PushItemWidth( 100.0f );
+		ImGui::PushItemWidth( 8.0f * fontSize );
 
 		if ( ImGui::SliderFloat( "Friction", &m_jointFrictionTorque, 0.0f, 1.0f, "%3.2f" ) )
 		{
@@ -2799,7 +2799,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Scissor Lift", nullptr, ImGuiWindowFlags_NoResize );
@@ -3112,7 +3112,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 120.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 25.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 25.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Gear Lift", nullptr, ImGuiWindowFlags_NoResize );
@@ -3213,8 +3213,8 @@ public:
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_doorId;
-			jointDef.base.localFrameA.p = {0.0f, 0.0f};
-			jointDef.base.localFrameB.p = {0.0f, -1.5f};
+			jointDef.base.localFrameA.p = { 0.0f, 0.0f };
+			jointDef.base.localFrameB.p = { 0.0f, -1.5f };
 			jointDef.targetAngle = 0.0f;
 			jointDef.enableSpring = true;
 			jointDef.hertz = 1.0f;
@@ -3235,7 +3235,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 220.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Door", nullptr, ImGuiWindowFlags_NoResize );
@@ -3337,12 +3337,12 @@ public:
 	void UpdateGui() override
 	{
 		float fontSize = ImGui::GetFontSize();
-		float height = 60.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 260.0f, height ) );
+		float height = 4.0f * fontSize;
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize }, ImGuiCond_Once );
+		ImGui::SetNextWindowSize( { 20.0f * fontSize, height } );
 
 		ImGui::Begin( "Scale Ragdoll", nullptr, ImGuiWindowFlags_NoResize );
-		ImGui::PushItemWidth( 200.0f );
+		ImGui::PushItemWidth( 15.0f * fontSize );
 
 		if ( ImGui::SliderFloat( "Scale", &m_scale, 0.1f, 10.0f, "%3.2f", ImGuiSliderFlags_ClampOnInput ) )
 		{
@@ -3363,4 +3363,3 @@ public:
 };
 
 static int sampleScaleRagdoll = RegisterSample( "Joints", "Scale Ragdoll", ScaleRagdoll::Create );
-

@@ -120,7 +120,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Bounce House", nullptr, ImGuiWindowFlags_NoResize );
@@ -343,7 +343,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Chain Drop", nullptr, ImGuiWindowFlags_NoResize );
@@ -600,7 +600,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 110.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
 
 		ImGui::Begin( "Skinny Box", nullptr, ImGuiWindowFlags_NoResize );
@@ -870,7 +870,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
 
 		ImGui::Begin( "Ghost Bumps", nullptr, ImGuiWindowFlags_NoResize );
@@ -1497,7 +1497,7 @@ public:
 	{
 #if 0
 		ImGui::SetNextWindowPos( ImVec2( 0.0f, 0.0f ) );
-		ImGui::SetNextWindowSize( ImVec2( float( m_context->camera.m_width ), float( m_context->camera.m_height ) ) );
+		ImGui::SetNextWindowSize( ImVec2( float( m_context->camera.m_width ), float( m_camera->m_height ) ) );
 		ImGui::SetNextWindowBgAlpha( 0.0f );
 		ImGui::Begin( "DropBackground", nullptr,
 					  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |

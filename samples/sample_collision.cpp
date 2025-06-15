@@ -164,7 +164,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 310.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Shape Distance", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -573,7 +573,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 320.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
 
 		ImGui::Begin( "Dynamic Tree", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -913,7 +913,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 230.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
 
 		ImGui::Begin( "Ray-cast", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1591,7 +1591,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 320.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
 
 		ImGui::Begin( "Ray-cast World", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -2078,7 +2078,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 330.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
 
 		ImGui::Begin( "Overlap World", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -2283,7 +2283,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 24.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 20.0f * fontSize, height ) );
 
 		ImGui::Begin( "Manifold", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -2996,7 +2996,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 290.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
 
 		ImGui::Begin( "Smooth Manifold", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -3425,7 +3425,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 300.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Shape Distance", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );

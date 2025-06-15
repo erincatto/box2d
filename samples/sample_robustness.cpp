@@ -272,7 +272,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 210.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 220.0f, height ) );
 
 		ImGui::Begin( "Overlap Recovery", nullptr, ImGuiWindowFlags_NoResize );
@@ -423,17 +423,17 @@ public:
 
 	void CreateScene()
 	{
-		if (B2_IS_NON_NULL(m_chassisId))
+		if ( B2_IS_NON_NULL( m_chassisId ) )
 		{
 			b2DestroyBody( m_chassisId );
 		}
 
-		if (B2_IS_NON_NULL(m_wheelId1))
+		if ( B2_IS_NON_NULL( m_wheelId1 ) )
 		{
 			b2DestroyBody( m_wheelId1 );
 		}
 
-		if (B2_IS_NON_NULL(m_wheelId2))
+		if ( B2_IS_NON_NULL( m_wheelId2 ) )
 		{
 			b2DestroyBody( m_wheelId2 );
 		}
@@ -489,7 +489,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 240.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 320.0f, height ) );
 
 		ImGui::Begin( "Cart", nullptr, ImGuiWindowFlags_NoResize );

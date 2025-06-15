@@ -145,9 +145,9 @@ public:
 	void UpdateGui() override
 	{
 		float fontSize = ImGui::GetFontSize();
-		float height = 160.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
+		float height = 13.0f * fontSize;
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 18.0f * fontSize, height ) );
 
 		ImGui::Begin( "Large World", nullptr, ImGuiWindowFlags_NoResize );
 

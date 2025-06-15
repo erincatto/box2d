@@ -546,7 +546,7 @@ void b2UpdateBodyMassData( b2World* world, b2Body* body )
 	bodySim->flags &= ~b2_allLocks;
 	bodySim->flags |= ( body->flags & b2_allLocks );
 
-	bodySim->invMass = (b2Vec2){ 0.0f, 0.0f };
+	bodySim->invMass = 0.0f;
 	bodySim->invInertia = 0.0f;
 	bodySim->localCenter = b2Vec2_zero;
 	bodySim->minExtent = B2_HUGE;
@@ -598,21 +598,11 @@ void b2UpdateBodyMassData( b2World* world, b2Body* body )
 	// Compute center of mass.
 	if ( body->mass > 0.0f )
 	{
-		float invMass = 1.0f / body->mass;
-		if ( ( bodySim->flags & b2_lockLinearX ) == 0 )
-		{
-			bodySim->invMass.x = invMass;
-		}
-
-		if ( ( bodySim->flags & b2_lockLinearY ) == 0 )
-		{
-			bodySim->invMass.y = invMass;
-		}
-
-		localCenter = b2MulSV( invMass, localCenter );
+		bodySim->invMass = 1.0f / body->mass;
+		localCenter = b2MulSV( bodySim->invMass, localCenter );
 	}
 
-	if ( body->inertia > 0.0f && ( bodySim->flags & b2_lockAngularZ ) == 0 )
+	if ( body->inertia > 0.0f )
 	{
 		// Center the inertia about the center of mass.
 		body->inertia -= body->mass * b2Dot( localCenter, localCenter );
@@ -1013,7 +1003,7 @@ void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Vec2 point, b
 		b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
 		b2BodyState* state = b2BodyStateArray_Get( &set->bodyStates, localIndex );
 		b2BodySim* bodySim = b2BodySimArray_Get( &set->bodySims, localIndex );
-		state->linearVelocity = b2MulAddV( state->linearVelocity, bodySim->invMass, impulse );
+		state->linearVelocity = b2MulAdd( state->linearVelocity, bodySim->invMass, impulse );
 		state->angularVelocity += bodySim->invInertia * b2Cross( b2Sub( point, bodySim->center ), impulse );
 
 		b2LimitVelocity( state, world->maxLinearSpeed );
@@ -1041,7 +1031,7 @@ void b2Body_ApplyLinearImpulseToCenter( b2BodyId bodyId, b2Vec2 impulse, bool wa
 		b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
 		b2BodyState* state = b2BodyStateArray_Get( &set->bodyStates, localIndex );
 		b2BodySim* bodySim = b2BodySimArray_Get( &set->bodySims, localIndex );
-		state->linearVelocity = b2MulAddV( state->linearVelocity, bodySim->invMass, impulse );
+		state->linearVelocity = b2MulAdd( state->linearVelocity, bodySim->invMass, impulse );
 
 		b2LimitVelocity( state, world->maxLinearSpeed );
 	}
@@ -1432,12 +1422,8 @@ void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData )
 	bodySim->center = center;
 	bodySim->center0 = center;
 
-	float invMass = body->mass > 0.0f ? 1.0f / body->mass : 0.0f;
-	bodySim->invMass.x = ( body->flags & b2_lockLinearX ) ? 0.0f : invMass;
-	bodySim->invMass.y = ( body->flags & b2_lockLinearY ) ? 0.0f : invMass;
-
-	float invInertia = body->inertia > 0.0f ? 1.0f / body->inertia : 0.0f;
-	bodySim->invInertia = ( body->flags & b2_lockAngularZ ) ? 0.0f : invInertia;
+	bodySim->invMass = body->mass > 0.0f ? 1.0f / body->mass : 0.0f;
+	bodySim->invInertia = body->inertia > 0.0f ? 1.0f / body->inertia : 0.0f;
 }
 
 b2MassData b2Body_GetMassData( b2BodyId bodyId )
@@ -1798,10 +1784,11 @@ void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks )
 		body->flags |= newFlags;
 
 		b2BodyState* state = b2GetBodyState( world, body );
-		state->flags = body->flags;
 
 		if ( state != NULL )
 		{
+			state->flags = body->flags;
+
 			if (locks.linearX)
 			{
 				state->linearVelocity.x = 0.0f;
