@@ -164,6 +164,19 @@ typedef enum b2BodyType
 	b2_bodyTypeCount,
 } b2BodyType;
 
+/// Motion locks to restrict the body movement
+typedef struct b2MotionLocks
+{
+	/// Prevent translation along the x-axis
+	bool linearX;
+
+	/// Prevent translation along the y-axis
+	bool linearY;
+
+	/// Prevent rotation around the z-axis
+	bool angularZ;
+} b2MotionLocks;
+
 /// A body definition holds all the data needed to construct a rigid body.
 /// You can safely re-use body definitions. Shapes are added to a body after construction.
 /// Body definitions are temporary objects used to bundle creation parameters.
@@ -213,14 +226,14 @@ typedef struct b2BodyDef
 	/// Use this to store application specific body data.
 	void* userData;
 
+	/// Motions locks to restrict linear and angular movement
+	b2MotionLocks motionLocks;
+
 	/// Set this flag to false if this body should never fall asleep.
 	bool enableSleep;
 
 	/// Is this body initially awake or sleeping?
 	bool isAwake;
-
-	/// Should this body be prevented from rotating? Useful for characters.
-	bool fixedRotation;
 
 	/// Treat this body as high speed object that performs continuous collision detection
 	/// against dynamic and kinematic bodies, but not other bullet bodies.

@@ -1195,10 +1195,9 @@ Draw::Draw()
 	m_solidCapsules = nullptr;
 	m_solidPolygons = nullptr;
 	m_debugDraw = {};
-	m_smallFont = nullptr;
+	m_regularFont = nullptr;
 	m_mediumFont = nullptr;
 	m_largeFont = nullptr;
-	m_regularFont = nullptr;
 	m_background = nullptr;
 }
 

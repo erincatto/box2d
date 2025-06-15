@@ -284,9 +284,6 @@ void b2PrepareOverflowJoints( b2StepContext* context );
 void b2WarmStartOverflowJoints( b2StepContext* context );
 void b2SolveOverflowJoints( b2StepContext* context, bool useBias );
 
-float b2GetJointConstraintForceMagnitude( b2JointSim* jointSim, float invTimeStep );
-float b2GetJointConstraintTorqueMagnitude( b2JointSim* jointSim, float invTimeStep );
-
 void b2GetJointReaction( b2JointSim* sim, float invTimeStep, float* force, float* torque );
 
 void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint );

@@ -57,7 +57,6 @@ static int32_t s_selection = 0;
 static Sample* s_sample = nullptr;
 static bool s_rightMouseDown = false;
 static b2Vec2 s_clickPointWS = b2Vec2_zero;
-static float s_fontScale = 1.0f;
 static float s_framebufferScale = 1.0f;
 
 inline bool IsPowerOfTwo( int32_t x )
@@ -149,19 +148,27 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 		assert( false );
 	}
 
+	ImGui::GetFontSize();
+	ImGui::GetStyle().ScaleAllSizes( s_context.uiScale );
+
 	const char* fontPath = "samples/data/droid_sans.ttf";
 	FILE* file = fopen( fontPath, "rb" );
 
 	if ( file != nullptr )
 	{
 		ImFontConfig fontConfig;
-		fontConfig.RasterizerMultiply = s_fontScale * s_framebufferScale;
-		s_context.draw.m_smallFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 14.0f * s_fontScale, &fontConfig );
-		s_context.draw.m_regularFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 18.0f * s_fontScale, &fontConfig );
-		s_context.draw.m_mediumFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 40.0f * s_fontScale, &fontConfig );
-		s_context.draw.m_largeFont = ImGui::GetIO().Fonts->AddFontFromFileTTF( fontPath, 64.0f * s_fontScale, &fontConfig );
+		fontConfig.RasterizerMultiply = s_context.uiScale * s_framebufferScale;
 
-		ImGui::GetIO().FontDefault = s_context.draw.m_smallFont;
+		float regularSize = floorf( 13.0f * s_context.uiScale );
+		float mediumSize = floorf( 40.0f * s_context.uiScale );
+		float largeSize = floorf( 64.0f * s_context.uiScale );
+
+		ImGuiIO& io = ImGui::GetIO();
+		s_context.draw.m_regularFont = io.Fonts->AddFontFromFileTTF( fontPath, regularSize, &fontConfig );
+		s_context.draw.m_mediumFont = io.Fonts->AddFontFromFileTTF( fontPath, mediumSize, &fontConfig );
+		s_context.draw.m_largeFont = io.Fonts->AddFontFromFileTTF( fontPath, largeSize, &fontConfig );
+
+		ImGui::GetIO().FontDefault = s_context.draw.m_regularFont;
 	}
 	else
 	{
@@ -385,11 +392,12 @@ static void UpdateUI()
 {
 	int maxWorkers = enki::GetNumHardwareThreads();
 
-	float menuWidth = 180.0f;
+	float fontSize = ImGui::GetFontSize();
+	float menuWidth = 13.0f * fontSize;
 	if ( s_context.draw.m_showUI )
 	{
-		ImGui::SetNextWindowPos( { s_context.camera.m_width - menuWidth - 10.0f, 10.0f } );
-		ImGui::SetNextWindowSize( { menuWidth, s_context.camera.m_height - 20.0f } );
+		ImGui::SetNextWindowPos( { s_context.camera.m_width - menuWidth - 0.5f * fontSize, 0.5f * fontSize } );
+		ImGui::SetNextWindowSize( { menuWidth, s_context.camera.m_height - fontSize } );
 
 		ImGui::Begin( "Tools", &s_context.draw.m_showUI,
 					  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse );
@@ -581,14 +589,16 @@ int main( int, char** )
 #ifdef __APPLE__
 		glfwGetMonitorContentScale( primaryMonitor, &s_framebufferScale, &s_framebufferScale );
 #else
-		glfwGetMonitorContentScale( primaryMonitor, &s_fontScale, &s_fontScale );
+		float uiScale = 1.0f;
+		glfwGetMonitorContentScale( primaryMonitor, &uiScale, &uiScale );
+		s_context.uiScale = uiScale;
 #endif
 	}
 
 	bool fullscreen = false;
 	if ( fullscreen )
 	{
-		s_context.window = glfwCreateWindow( int( 1920 ), int( 1080 ), buffer, glfwGetPrimaryMonitor(), nullptr );
+		s_context.window = glfwCreateWindow( 1920, 1080, buffer, glfwGetPrimaryMonitor(), nullptr );
 	}
 	else
 	{
@@ -602,12 +612,6 @@ int main( int, char** )
 		glfwTerminate();
 		return -1;
 	}
-
-#ifdef __APPLE__
-	glfwGetWindowContentScale( s_context.window, &s_framebufferScale, &s_framebufferScale );
-#else
-	glfwGetWindowContentScale( s_context.window, &s_fontScale, &s_fontScale );
-#endif
 
 	glfwMakeContextCurrent( s_context.window );
 
@@ -745,7 +749,9 @@ int main( int, char** )
 			// #todo restore all drawing settings that may have been overridden by a sample
 			s_context.subStepCount = 4;
 			s_context.drawJoints = true;
-			s_context.useCameraBounds = false;
+
+			// todo testing always using bounds
+			s_context.useCameraBounds = true;
 
 			delete s_sample;
 			s_sample = nullptr;

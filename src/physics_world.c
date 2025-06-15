@@ -921,7 +921,7 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 		{
 			color = b2_colorWheat;
 		}
-		else if ( bodySim->isBullet && body->setIndex == b2_awakeSet )
+		else if ( ( bodySim->flags & b2_isBullet ) && body->setIndex == b2_awakeSet )
 		{
 			color = b2_colorTurquoise;
 		}
@@ -929,7 +929,7 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 		{
 			color = b2_colorYellow;
 		}
-		else if ( bodySim->isFast )
+		else if ( bodySim->flags & b2_isFast )
 		{
 			color = b2_colorSalmon;
 		}
@@ -1223,7 +1223,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 					{
 						color = b2_colorWheat;
 					}
-					else if ( bodySim->isBullet && body->setIndex == b2_awakeSet )
+					else if ( ( bodySim->flags & b2_isBullet ) && body->setIndex == b2_awakeSet )
 					{
 						color = b2_colorTurquoise;
 					}
@@ -1231,7 +1231,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 					{
 						color = b2_colorYellow;
 					}
-					else if ( bodySim->isFast )
+					else if ( bodySim->flags & b2_isFast )
 					{
 						color = b2_colorSalmon;
 					}
@@ -1357,8 +1357,8 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 				char buffer[32];
 				float mass = bodySim->invMass > 0.0f ? 1.0f / bodySim->invMass : 0.0f;
-				snprintf( buffer, 32, "  %.2f", mass );
-				draw->DrawStringFcn( p, buffer, b2_colorWhite, draw->context );
+					snprintf( buffer, 32, "  %.2f", mass );
+					draw->DrawStringFcn( p, buffer, b2_colorWhite, draw->context );
 			}
 		}
 	}

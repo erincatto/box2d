@@ -568,12 +568,12 @@ B2_INLINE b2Mat22 b2GetInverse22( b2Mat22 A )
 		det = 1.0f / det;
 	}
 
-	b2Mat22 B = {
-		{ det * d, -det * c },
-		{ -det * b, det * a },
-	};
-	return B;
-}
+		b2Mat22 B = {
+			{ det * d, -det * c },
+			{ -det * b, det * a },
+		};
+		return B;
+	}
 
 /// Solve A * x = b, where b is a column vector. This is more efficient
 /// than computing the inverse in one-shot cases.

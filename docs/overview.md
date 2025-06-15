@@ -264,3 +264,11 @@ myShapeId = b2_nullShapeId;
 ```
 
 For convenience, Box2D will destroy all shapes on a body when the body is destroyed. You don't need to store the shape id.
+
+There are some macros to assist using ids in logical operations.
+
+```c
+bool isNull = B2_IS_NULL(myBodyId);
+bool isNonNull = B2_IS_NON_NULL(myJointId);
+bool areEqual = B2_ID_EQUALS(myShapeIdA, myShapeIdB);
+```
