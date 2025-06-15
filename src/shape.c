@@ -826,6 +826,13 @@ b2CastOutput b2RayCastShape( const b2RayCastInput* input, const b2Shape* shape, 
 
 b2CastOutput b2ShapeCastShape( const b2ShapeCastInput* input, const b2Shape* shape, b2Transform transform )
 {
+	b2CastOutput output = { 0 };
+
+	if ( input->proxy.count == 0 )
+	{
+		return output;
+	}
+
 	b2ShapeCastInput localInput = *input;
 
 	for ( int i = 0; i < localInput.proxy.count; ++i )
@@ -835,7 +842,6 @@ b2CastOutput b2ShapeCastShape( const b2ShapeCastInput* input, const b2Shape* sha
 
 	localInput.translation = b2InvRotateVector( transform.q, input->translation );
 
-	b2CastOutput output = { 0 };
 	switch ( shape->type )
 	{
 		case b2_capsuleShape:
@@ -851,8 +857,28 @@ b2CastOutput b2ShapeCastShape( const b2ShapeCastInput* input, const b2Shape* sha
 			output = b2ShapeCastSegment( &shape->segment, &localInput );
 			break;
 		case b2_chainSegmentShape:
+		{
+			// Check for back side collision
+			b2Vec2 approximateCentroid = localInput.proxy.points[0];
+			for ( int i = 1; i < localInput.proxy.count; ++i )
+			{
+				approximateCentroid = b2Add( approximateCentroid, localInput.proxy.points[i] );
+			}
+
+			approximateCentroid = b2MulSV( 1.0f / localInput.proxy.count, approximateCentroid );
+
+			b2Vec2 edge = b2Sub( shape->chainSegment.segment.point2, shape->chainSegment.segment.point1 );
+			b2Vec2 r = b2Sub( approximateCentroid, shape->chainSegment.segment.point1 );
+
+			if ( b2Cross( r, edge ) < 0.0f )
+			{
+				// Shape cast starts behind
+				return output;
+			}
+
 			output = b2ShapeCastSegment( &shape->chainSegment.segment, &localInput );
-			break;
+		}
+		break;
 		default:
 			return output;
 	}
