@@ -22,6 +22,7 @@ struct SampleContext
 	struct GLFWwindow* window = nullptr;
 	Camera camera;
 	Draw draw;
+	float uiScale = 1.0f;
 	float hertz = 60.0f;
 	int subStepCount = 4;
 	int workerCount = 1;

@@ -207,6 +207,9 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 {
 	B2_ASSERT( b2IsValidTransform( def->localFrameA ) );
 	B2_ASSERT( b2IsValidTransform( def->localFrameB ) );
+	B2_ASSERT( world->worldId == def->bodyIdA.world0 );
+	B2_ASSERT( world->worldId == def->bodyIdB.world0 );
+	B2_ASSERT( B2_ID_EQUALS( def->bodyIdA, def->bodyIdB ) == false );
 
 	b2Body* bodyA = b2GetBodyFullId( world, def->bodyIdA );
 	b2Body* bodyB = b2GetBodyFullId( world, def->bodyIdB );
@@ -980,8 +983,6 @@ void b2GetJointReaction( b2JointSim* sim, float invTimeStep, float* force, float
 	*force = linearImpulse * invTimeStep;
 	*torque = angularImpulse * invTimeStep;
 }
-
-float b2GetJointConstraintTorqueMagnitude( b2JointSim* jointSim, float invTimeStep );
 
 static b2Vec2 b2GetJointConstraintForce( b2World* world, b2Joint* joint )
 {

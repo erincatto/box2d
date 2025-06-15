@@ -270,8 +270,9 @@ public:
 
 	void UpdateGui() override
 	{
+		float fontSize = ImGui::GetFontSize();
 		float height = 210.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 220.0f, height ) );
 
 		ImGui::Begin( "Overlap Recovery", nullptr, ImGuiWindowFlags_NoResize );
@@ -486,8 +487,9 @@ public:
 
 	void UpdateGui() override
 	{
+		float fontSize = ImGui::GetFontSize();
 		float height = 240.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 320.0f, height ) );
 
 		ImGui::Begin( "Cart", nullptr, ImGuiWindowFlags_NoResize );

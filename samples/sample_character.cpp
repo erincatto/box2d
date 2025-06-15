@@ -409,8 +409,9 @@ public:
 
 	void UpdateGui() override
 	{
+		float fontSize = ImGui::GetFontSize();
 		float height = 350.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_camera->m_height - height - 25.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 25.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 340.0f, height ) );
 
 		ImGui::Begin( "Mover", nullptr, 0 );
@@ -1356,8 +1357,9 @@ public:
 
 	void UpdateGui() override
 	{
+		float fontSize = ImGui::GetFontSize();
 		float height = 350.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 25.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 25.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 340.0f, height ) );
 
 		ImGui::Begin( "Mover", nullptr, 0 );

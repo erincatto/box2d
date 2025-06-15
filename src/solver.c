@@ -84,6 +84,21 @@ static void b2IntegrateVelocitiesTask( int startIndex, int endIndex, b2StepConte
 		b2Vec2 v = state->linearVelocity;
 		float w = state->angularVelocity;
 
+		if ( sim->flags & b2_lockLinearX )
+		{
+			v.x = 0.0f;
+		}
+
+		if ( sim->flags & b2_lockLinearY )
+		{
+			v.y = 0.0f;
+		}
+
+		if ( sim->flags & b2_lockAngularZ )
+		{
+			w = 0.0f;
+		}
+
 		// Apply forces, torque, gravity, and damping
 		// Apply damping.
 		// Differential equation: dv/dt + c * v = 0
@@ -96,10 +111,14 @@ static void b2IntegrateVelocitiesTask( int startIndex, int endIndex, b2StepConte
 		float angularDamping = 1.0f / ( 1.0f + h * sim->angularDamping );
 
 		// Gravity scale will be zero for kinematic bodies
-		float gravityScale = sim->invMass > 0.0f ? sim->gravityScale : 0.0f;
+		b2Vec2 gravityScale = {
+			.x = sim->invMass.x > 0.0f ? sim->gravityScale : 0.0f,
+			.y = sim->invMass.y > 0.0f ? sim->gravityScale : 0.0f,
+		};
 
 		// lvd = h * im * f + h * g
-		b2Vec2 linearVelocityDelta = b2Add( b2MulSV( h * sim->invMass, sim->force ), b2MulSV( h * gravityScale, gravity ) );
+		b2Vec2 linearVelocityDelta =
+			b2Add( b2MulSV( h, b2Mul( sim->invMass, sim->force ) ), b2MulSV( h, b2Mul( gravityScale, gravity ) ) );
 		float angularVelocityDelta = h * sim->invInertia * sim->torque;
 
 		v = b2MulAdd( linearVelocityDelta, linearDamping, v );
@@ -110,15 +129,15 @@ static void b2IntegrateVelocitiesTask( int startIndex, int endIndex, b2StepConte
 		{
 			float ratio = maxLinearSpeed / b2Length( v );
 			v = b2MulSV( ratio, v );
-			sim->isSpeedCapped = true;
+			sim->flags |= b2_isSpeedCapped;
 		}
 
 		// Clamp to max angular speed
-		if ( w * w > maxAngularSpeedSquared && sim->allowFastRotation == false )
+		if ( w * w > maxAngularSpeedSquared && ( sim->flags & b2_allowFastRotation ) == 0 )
 		{
 			float ratio = maxAngularSpeed / b2AbsFloat( w );
 			w *= ratio;
-			sim->isSpeedCapped = true;
+			sim->flags |= b2_isSpeedCapped;
 		}
 
 		state->linearVelocity = v;
@@ -259,7 +278,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 
 	// Skip sensors except if the body wants sensor hits
 	bool isSensor = shape->sensorIndex != B2_NULL_INDEX;
-	if ( isSensor && fastBodySim->enableSensorHits == false )
+	if ( isSensor && ( fastBodySim->flags & b2_enableSensorHits ) == 0 )
 	{
 		return true;
 	}
@@ -274,10 +293,10 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
 
 	b2BodySim* bodySim = b2GetBodySim( world, body );
-	B2_ASSERT( body->type == b2_staticBody || fastBodySim->isBullet );
+	B2_ASSERT( body->type == b2_staticBody || ( fastBodySim->flags & b2_isBullet ) );
 
 	// Skip bullets
-	if ( bodySim->isBullet )
+	if ( bodySim->flags & b2_isBullet )
 	{
 		return true;
 	}
@@ -430,7 +449,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
 	b2BodySim* fastBodySim = b2BodySimArray_Get( &awakeSet->bodySims, bodySimIndex );
-	B2_ASSERT( fastBodySim->isFast );
+	B2_ASSERT( fastBodySim->flags & b2_isFast );
 
 	b2Sweep sweep = b2MakeSweep( fastBodySim );
 
@@ -453,7 +472,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 	context.fastBodySim = fastBodySim;
 	context.fraction = 1.0f;
 
-	bool isBullet = fastBodySim->isBullet;
+	bool isBullet = ( fastBodySim->flags & b2_isBullet ) != 0;
 
 	int shapeId = fastBody->headShapeId;
 	while ( shapeId != B2_NULL_INDEX )
@@ -535,7 +554,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 				shape->fatAABB = fatAABB;
 
 				shape->enlargedAABB = true;
-				fastBodySim->enlargeAABB = true;
+				fastBodySim->flags |= b2_enlargeBounds;
 			}
 
 			shapeId = shape->nextShapeId;
@@ -567,7 +586,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 				shape->fatAABB = fatAABB;
 
 				shape->enlargedAABB = true;
-				fastBodySim->enlargeAABB = true;
+				fastBodySim->flags |= b2_enlargeBounds;
 			}
 
 			shapeId = shape->nextShapeId;
@@ -659,10 +678,8 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		sim->force = b2Vec2_zero;
 		sim->torque = 0.0f;
 
-		body->isSpeedCapped = sim->isSpeedCapped;
-		sim->isSpeedCapped = false;
-
-		sim->isFast = false;
+		body->isSpeedCapped = ( sim->flags & b2_isSpeedCapped ) != 0;
+		sim->flags &= ~( b2_isFast | b2_isSpeedCapped );
 
 		if ( enableSleep == false || body->enableSleep == false || sleepVelocity > body->sleepThreshold )
 		{
@@ -672,11 +689,11 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 			if ( body->type == b2_dynamicBody && enableContinuous && maxVelocity * timeStep > 0.5f * sim->minExtent )
 			{
 				// This flag is only retained for debug draw
-				sim->isFast = true;
+				sim->flags |= b2_isFast;
 
 				// Store in fast array for the continuous collision stage
 				// This is deterministic because the order of TOI sweeps doesn't matter
-				if ( sim->isBullet )
+				if ( sim->flags & b2_isBullet )
 				{
 					int bulletIndex = b2AtomicFetchAddInt( &stepContext->bulletBodyCount, 1 );
 					stepContext->bulletBodies[bulletIndex] = simIndex;
@@ -722,7 +739,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 
 		// Update shapes AABBs
 		b2Transform transform = sim->transform;
-		bool isFast = sim->isFast;
+		bool isFast = ( sim->flags & b2_isFast ) != 0;
 		int shapeId = body->headShapeId;
 		while ( shapeId != B2_NULL_INDEX )
 		{
@@ -1974,7 +1991,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					b2Body* body = bodyArray + bodySim->bodyId;
 
 					int shapeId = body->headShapeId;
-					if ( bodySim->isBullet && bodySim->isFast )
+					if ( ( bodySim->flags & ( b2_isBullet | b2_isFast ) ) == ( b2_isBullet | b2_isFast ) )
 					{
 						// Fast bullet bodies don't have their final AABB yet
 						while ( shapeId != B2_NULL_INDEX )
@@ -2053,13 +2070,13 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		for ( int i = 0; i < bulletBodyCount; ++i )
 		{
 			b2BodySim* bulletBodySim = bodySimArray + bulletBodySimIndices[i];
-			if ( bulletBodySim->enlargeAABB == false )
+			if ((bulletBodySim->flags & b2_enlargeBounds) == 0)
 			{
 				continue;
 			}
 
-			// clear flag
-			bulletBodySim->enlargeAABB = false;
+			// Clear flag
+			bulletBodySim->flags &= ~b2_enlargeBounds;
 
 			int bodyId = bulletBodySim->bodyId;
 			B2_ASSERT( 0 <= bodyId && bodyId < world->bodies.count );
@@ -2075,7 +2092,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					continue;
 				}
 
-				// clear flag
+				// Clear flag
 				shape->enlargedAABB = false;
 
 				int proxyKey = shape->proxyKey;

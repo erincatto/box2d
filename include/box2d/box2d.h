@@ -418,10 +418,10 @@ B2_API void b2Body_Disable( b2BodyId bodyId );
 B2_API void b2Body_Enable( b2BodyId bodyId );
 
 /// Set this body to have fixed rotation. This causes the mass to be reset in all cases.
-B2_API void b2Body_SetFixedRotation( b2BodyId bodyId, bool flag );
+B2_API void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks );
 
 /// Does this body have fixed rotation?
-B2_API bool b2Body_IsFixedRotation( b2BodyId bodyId );
+B2_API b2MotionLocks b2Body_GetMotionLocks( b2BodyId bodyId );
 
 /// Set this body to be a bullet. A bullet does continuous collision detection
 /// against dynamic bodies (but not other bullets).

@@ -118,8 +118,9 @@ public:
 
 	void UpdateGui() override
 	{
+		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Bounce House", nullptr, ImGuiWindowFlags_NoResize );
@@ -322,7 +323,7 @@ public:
 		bodyDef.linearVelocity = { 0.0f, m_speed };
 		bodyDef.position = { 0.0f, 10.0f + m_yOffset };
 		bodyDef.rotation = b2MakeRot( 0.5f * B2_PI );
-		bodyDef.fixedRotation = true;
+		bodyDef.motionLocks.angularZ = true;
 		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -340,8 +341,9 @@ public:
 
 	void UpdateGui() override
 	{
+		float fontSize = ImGui::GetFontSize();
 		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Chain Drop", nullptr, ImGuiWindowFlags_NoResize );
@@ -596,8 +598,9 @@ public:
 
 	void UpdateGui() override
 	{
+		float fontSize = ImGui::GetFontSize();
 		float height = 110.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
 
 		ImGui::Begin( "Skinny Box", nullptr, ImGuiWindowFlags_NoResize );
@@ -865,8 +868,9 @@ public:
 
 	void UpdateGui() override
 	{
+		float fontSize = ImGui::GetFontSize();
 		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 10.0f, m_context->camera.m_height - height - 50.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_context->camera.m_height - height - 3.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
 
 		ImGui::Begin( "Ghost Bumps", nullptr, ImGuiWindowFlags_NoResize );
@@ -1118,7 +1122,7 @@ public:
 			// ballShapeDef.restitution = 1.f;
 			b2CreatePolygonShape( m_ballId, &ballShapeDef, &ballShape );
 			b2Body_SetLinearVelocity( m_ballId, { 0.f, -5.0f } );
-			b2Body_SetFixedRotation( m_ballId, true );
+			b2Body_SetMotionLocks( m_ballId, { false, false, true } );
 		}
 	}
 
@@ -1188,7 +1192,7 @@ public:
 			b2CreateCircleShape( m_ballId, &ballShapeDef, &ballShape );
 
 			b2Body_SetLinearVelocity( m_ballId, { 0.f, -2.9f } ); // Initial velocity
-			b2Body_SetFixedRotation( m_ballId, true );			  // Do not rotate a ball
+			b2Body_SetMotionLocks( m_ballId, { false, false, true } ); // Do not rotate a ball
 		}
 	}
 

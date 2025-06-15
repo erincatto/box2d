@@ -83,9 +83,9 @@ void b2PrepareMouseJoint( b2JointSim* base, b2StepContext* context )
 	b2BodySim* bodySimA = b2BodySimArray_Get( &setA->bodySims, localIndexA );
 	b2BodySim* bodySimB = b2BodySimArray_Get( &setB->bodySims, localIndexB );
 
-	float mA = bodySimA->invMass;
+	b2Vec2 mA = bodySimA->invMass;
 	float iA = bodySimA->invInertia;
-	float mB = bodySimB->invMass;
+	b2Vec2 mB = bodySimB->invMass;
 	float iB = bodySimB->invInertia;
 
 	base->invMassA = mA;
@@ -120,10 +120,10 @@ void b2PrepareMouseJoint( b2JointSim* base, b2StepContext* context )
 	//   = [1/m1+1/m2     0    ] + invI1 * [r1.y*r1.y -r1.x*r1.y] + invI2 * [r1.y*r1.y -r1.x*r1.y]
 	//     [    0     1/m1+1/m2]           [-r1.x*r1.y r1.x*r1.x]           [-r1.x*r1.y r1.x*r1.x]
 	b2Mat22 K;
-	K.cx.x = mA + mB + rA.y * rA.y * iA + rB.y * rB.y * iB;
+	K.cx.x = mA.x + mB.x + rA.y * rA.y * iA + rB.y * rB.y * iB;
 	K.cx.y = -rA.y * rA.x * iA - rB.y * rB.x * iB;
 	K.cy.x = K.cx.y;
-	K.cy.y = mA + mB + rA.x * rA.x * iA + rB.x * rB.x * iB;
+	K.cy.y = mA.y + mB.y + rA.x * rA.x * iA + rB.x * rB.x * iB;
 	joint->linearMass = b2GetInverse22( K );
 
 	float ka = iA + iB;
@@ -140,8 +140,8 @@ void b2WarmStartMouseJoint( b2JointSim* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_mouseJoint );
 
-	float mA = base->invMassA;
-	float mB = base->invMassB;
+	b2Vec2 mA = base->invMassA;
+	b2Vec2 mB = base->invMassB;
 	float iA = base->invIA;
 	float iB = base->invIB;
 
@@ -156,9 +156,9 @@ void b2WarmStartMouseJoint( b2JointSim* base, b2StepContext* context )
 	b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
 	b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
 
-	stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, joint->linearImpulse );
+	stateA->linearVelocity = b2MulSubV( stateA->linearVelocity, mA, joint->linearImpulse );
 	stateA->angularVelocity -= iA * ( b2Cross( rA, joint->linearImpulse ) + joint->angularImpulse );
-	stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, joint->linearImpulse );
+	stateB->linearVelocity = b2MulAddV( stateB->linearVelocity, mB, joint->linearImpulse );
 	stateB->angularVelocity += iB * ( b2Cross( rB, joint->linearImpulse ) + joint->angularImpulse );
 }
 
@@ -166,8 +166,8 @@ void b2SolveMouseJoint( b2JointSim* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_mouseJoint );
 
-	float mA = base->invMassA;
-	float mB = base->invMassB;
+	b2Vec2 mA = base->invMassA;
+	b2Vec2 mB = base->invMassB;
 	float iA = base->invIA;
 	float iB = base->invIB;
 
@@ -231,9 +231,9 @@ void b2SolveMouseJoint( b2JointSim* base, b2StepContext* context )
 		impulse.x = joint->linearImpulse.x - oldImpulse.x;
 		impulse.y = joint->linearImpulse.y - oldImpulse.y;
 
-		vA = b2MulSub( vA, mA, impulse );
+		vA = b2MulSubV( vA, mA, impulse );
 		wA -= iA * b2Cross( rA, impulse );
-		vB = b2MulAdd( vB, mB, impulse );
+		vB = b2MulAddV( vB, mB, impulse );
 		wB += iB * b2Cross( rB, impulse );
 	}
 

@@ -247,7 +247,7 @@ typedef struct b2JointSim
 	b2Transform localFrameA;
 	b2Transform localFrameB;
 
-	float invMassA, invMassB;
+	b2Vec2 invMassA, invMassB;
 	float invIA, invIB;
 
 	float constraintHertz;
@@ -283,9 +283,6 @@ void b2SolveJoint( b2JointSim* joint, b2StepContext* context, bool useBias );
 void b2PrepareOverflowJoints( b2StepContext* context );
 void b2WarmStartOverflowJoints( b2StepContext* context );
 void b2SolveOverflowJoints( b2StepContext* context, bool useBias );
-
-float b2GetJointConstraintForceMagnitude( b2JointSim* jointSim, float invTimeStep );
-float b2GetJointConstraintTorqueMagnitude( b2JointSim* jointSim, float invTimeStep );
 
 void b2GetJointReaction( b2JointSim* sim, float invTimeStep, float* force, float* torque );
 

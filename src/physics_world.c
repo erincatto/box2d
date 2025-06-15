@@ -921,7 +921,7 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 		{
 			color = b2_colorWheat;
 		}
-		else if ( bodySim->isBullet && body->setIndex == b2_awakeSet )
+		else if ( ( bodySim->flags & b2_isBullet ) && body->setIndex == b2_awakeSet )
 		{
 			color = b2_colorTurquoise;
 		}
@@ -929,7 +929,7 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 		{
 			color = b2_colorYellow;
 		}
-		else if ( bodySim->isFast )
+		else if ( bodySim->flags & b2_isFast )
 		{
 			color = b2_colorSalmon;
 		}
@@ -1223,7 +1223,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 					{
 						color = b2_colorWheat;
 					}
-					else if ( bodySim->isBullet && body->setIndex == b2_awakeSet )
+					else if ( ( bodySim->flags & b2_isBullet ) && body->setIndex == b2_awakeSet )
 					{
 						color = b2_colorTurquoise;
 					}
@@ -1231,7 +1231,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 					{
 						color = b2_colorYellow;
 					}
-					else if ( bodySim->isFast )
+					else if ( bodySim->flags & b2_isFast )
 					{
 						color = b2_colorSalmon;
 					}
@@ -1356,9 +1356,19 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				b2Vec2 p = b2TransformPoint( transform, offset );
 
 				char buffer[32];
-				float mass = bodySim->invMass > 0.0f ? 1.0f / bodySim->invMass : 0.0f;
-				snprintf( buffer, 32, "  %.2f", mass );
-				draw->DrawStringFcn( p, buffer, b2_colorWhite, draw->context );
+				if ( bodySim->invMass.x == bodySim->invMass.y )
+				{
+					float mass = bodySim->invMass.x > 0.0f ? 1.0f / bodySim->invMass.x : 0.0f;
+					snprintf( buffer, 32, "  %.2f", mass );
+					draw->DrawStringFcn( p, buffer, b2_colorWhite, draw->context );
+				}
+				else
+				{
+					float massX = bodySim->invMass.x > 0.0f ? 1.0f / bodySim->invMass.x : 0.0f;
+					float massY = bodySim->invMass.y > 0.0f ? 1.0f / bodySim->invMass.y : 0.0f;
+					snprintf( buffer, 32, "  %.2f, %.2f", massX, massY );
+					draw->DrawStringFcn( p, buffer, b2_colorWhite, draw->context );
+				}
 			}
 		}
 	}
@@ -2767,7 +2777,7 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
 	b2BodyState* state = b2BodyStateArray_Get( &set->bodyStates, localIndex );
 	b2BodySim* bodySim = b2BodySimArray_Get( &set->bodySims, localIndex );
-	state->linearVelocity = b2MulAdd( state->linearVelocity, bodySim->invMass, impulse );
+	state->linearVelocity = b2MulAddV( state->linearVelocity, bodySim->invMass, impulse );
 	state->angularVelocity += bodySim->invInertia * b2Cross( b2Sub( closestPoint, bodySim->center ), impulse );
 
 	return true;

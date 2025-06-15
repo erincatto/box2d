@@ -65,8 +65,9 @@ typedef struct b2Body
 	// Used to check for invalid b2BodyId
 	uint16_t generation;
 
+	uint32_t flags;
+
 	bool enableSleep;
-	bool fixedRotation;
 	bool isSpeedCapped;
 	bool isMarked;
 } b2Body;
@@ -115,11 +116,43 @@ typedef struct b2BodyState
 // Identity body state, notice the deltaRotation is {1, 0}
 static const b2BodyState b2_identityBodyState = { { 0.0f, 0.0f }, 0.0f, 0, { 0.0f, 0.0f }, { 1.0f, 0.0f } };
 
+enum b2BodySimFlags
+{
+	// This body has fixed rotation
+	b2_lockAngularZ = 0x0000'0001,
+
+	// This body has fixed translation along the x-axis
+	b2_lockLinearX = 0x0000'0002,
+
+	// This body has fixed translation along the y-axis
+	b2_lockLinearY = 0x0000'0004,
+
+	// This flag is used for debug draw
+	b2_isFast = 0x0000'0008,
+
+	// This dynamic body does a final CCD pass against all body types, but not other bullets
+	b2_isBullet = 0x0000'0010,
+
+	// This body does a CCD pass against sensors
+	b2_enableSensorHits = 0x0000'0020,
+
+	// This body has hit the maximum linear or angular velocity
+	b2_isSpeedCapped = 0x0000'0040,
+
+	// This body has no limit on angular velocity
+	b2_allowFastRotation = 0x0000'0080,
+
+	// This body need's to have its AABB increased
+	b2_enlargeBounds = 0x0000'0100,
+
+	// All lock flags
+	b2_allLocks = b2_lockAngularZ | b2_lockLinearX | b2_lockLinearY,
+};
+
 // Body simulation data used for integration of position and velocity
 // Transform data used for collision and solver preparation.
 typedef struct b2BodySim
 {
-	// todo better to have transform in sim or in base body? Try both!
 	// transform for body origin
 	b2Transform transform;
 
@@ -137,7 +170,7 @@ typedef struct b2BodySim
 	float torque;
 
 	// inverse inertia
-	float invMass;
+	b2Vec2 invMass;
 	float invInertia;
 
 	float minExtent;
@@ -149,14 +182,16 @@ typedef struct b2BodySim
 	// body data can be moved around, the id is stable (used in b2BodyId)
 	int bodyId;
 
-	// This flag is used for debug draw
-	bool isFast;
+	uint32_t flags;
 
-	bool isBullet;
-	bool enableSensorHits;
-	bool isSpeedCapped;
-	bool allowFastRotation;
-	bool enlargeAABB;
+	// This flag is used for debug draw
+	//bool isFast;
+
+	//bool isBullet;
+	//bool enableSensorHits;
+	//bool isSpeedCapped;
+	//bool allowFastRotation;
+	//bool enlargeAABB;
 } b2BodySim;
 
 // Get a validated body from a world using an id.

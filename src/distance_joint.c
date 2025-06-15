@@ -235,9 +235,9 @@ void b2PrepareDistanceJoint( b2JointSim* base, b2StepContext* context )
 	b2BodySim* bodySimA = b2BodySimArray_Get( &setA->bodySims, localIndexA );
 	b2BodySim* bodySimB = b2BodySimArray_Get( &setB->bodySims, localIndexB );
 
-	float mA = bodySimA->invMass;
+	b2Vec2 mA = bodySimA->invMass;
 	float iA = bodySimA->invInertia;
-	float mB = bodySimB->invMass;
+	b2Vec2 mB = bodySimB->invMass;
 	float iB = bodySimB->invInertia;
 
 	base->invMassA = mA;
@@ -263,7 +263,8 @@ void b2PrepareDistanceJoint( b2JointSim* base, b2StepContext* context )
 	// compute effective mass
 	float crA = b2Cross( rA, axis );
 	float crB = b2Cross( rB, axis );
-	float k = mA + mB + iA * crA * crA + iB * crB * crB;
+	b2Vec2 m = b2Add( mA, mB );
+	float k = b2Dot(axis, b2Mul(m, axis)) + iA * crA * crA + iB * crB * crB;
 	joint->axialMass = k > 0.0f ? 1.0f / k : 0.0f;
 
 	joint->distanceSoftness = b2MakeSoft( joint->hertz, joint->dampingRatio, context->h );
@@ -281,8 +282,8 @@ void b2WarmStartDistanceJoint( b2JointSim* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_distanceJoint );
 
-	float mA = base->invMassA;
-	float mB = base->invMassB;
+	b2Vec2 mA = base->invMassA;
+	b2Vec2 mB = base->invMassB;
 	float iA = base->invIA;
 	float iB = base->invIB;
 
@@ -303,9 +304,9 @@ void b2WarmStartDistanceJoint( b2JointSim* base, b2StepContext* context )
 	float axialImpulse = joint->impulse + joint->lowerImpulse - joint->upperImpulse + joint->motorImpulse;
 	b2Vec2 P = b2MulSV( axialImpulse, axis );
 
-	stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, P );
+	stateA->linearVelocity = b2MulSubV( stateA->linearVelocity, mA, P );
 	stateA->angularVelocity -= iA * b2Cross( rA, P );
-	stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, P );
+	stateB->linearVelocity = b2MulAddV( stateB->linearVelocity, mB, P );
 	stateB->angularVelocity += iB * b2Cross( rB, P );
 }
 
@@ -313,8 +314,8 @@ void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBia
 {
 	B2_ASSERT( base->type == b2_distanceJoint );
 
-	float mA = base->invMassA;
-	float mB = base->invMassB;
+	b2Vec2 mA = base->invMassA;
+	b2Vec2 mB = base->invMassB;
 	float iA = base->invIA;
 	float iB = base->invIB;
 
@@ -360,9 +361,9 @@ void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBia
 			joint->impulse += impulse;
 
 			b2Vec2 P = b2MulSV( impulse, axis );
-			vA = b2MulSub( vA, mA, P );
+			vA = b2MulSubV( vA, mA, P );
 			wA -= iA * b2Cross( rA, P );
-			vB = b2MulAdd( vB, mB, P );
+			vB = b2MulAddV( vB, mB, P );
 			wB += iB * b2Cross( rB, P );
 		}
 
@@ -396,9 +397,9 @@ void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBia
 				joint->lowerImpulse = newImpulse;
 
 				b2Vec2 P = b2MulSV( impulse, axis );
-				vA = b2MulSub( vA, mA, P );
+				vA = b2MulSubV( vA, mA, P );
 				wA -= iA * b2Cross( rA, P );
-				vB = b2MulAdd( vB, mB, P );
+				vB = b2MulAddV( vB, mB, P );
 				wB += iB * b2Cross( rB, P );
 			}
 
@@ -430,9 +431,9 @@ void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBia
 				joint->upperImpulse = newImpulse;
 
 				b2Vec2 P = b2MulSV( -impulse, axis );
-				vA = b2MulSub( vA, mA, P );
+				vA = b2MulSubV( vA, mA, P );
 				wA -= iA * b2Cross( rA, P );
-				vB = b2MulAdd( vB, mB, P );
+				vB = b2MulAddV( vB, mB, P );
 				wB += iB * b2Cross( rB, P );
 			}
 		}
@@ -448,9 +449,9 @@ void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBia
 			impulse = joint->motorImpulse - oldImpulse;
 
 			b2Vec2 P = b2MulSV( impulse, axis );
-			vA = b2MulSub( vA, mA, P );
+			vA = b2MulSubV( vA, mA, P );
 			wA -= iA * b2Cross( rA, P );
-			vB = b2MulAdd( vB, mB, P );
+			vB = b2MulAddV( vB, mB, P );
 			wB += iB * b2Cross( rB, P );
 		}
 	}
@@ -476,9 +477,9 @@ void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBia
 		joint->impulse += impulse;
 
 		b2Vec2 P = b2MulSV( impulse, axis );
-		vA = b2MulSub( vA, mA, P );
+		vA = b2MulSubV( vA, mA, P );
 		wA -= iA * b2Cross( rA, P );
-		vB = b2MulAdd( vB, mB, P );
+		vB = b2MulAddV( vB, mB, P );
 		wB += iB * b2Cross( rB, P );
 	}
 
