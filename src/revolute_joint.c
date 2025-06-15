@@ -223,9 +223,9 @@ void b2PrepareRevoluteJoint( b2JointSim* base, b2StepContext* context )
 	b2BodySim* bodySimA = b2BodySimArray_Get( &setA->bodySims, localIndexA );
 	b2BodySim* bodySimB = b2BodySimArray_Get( &setB->bodySims, localIndexB );
 
-	b2Vec2 mA = bodySimA->invMass;
+	float mA = bodySimA->invMass;
 	float iA = bodySimA->invInertia;
-	b2Vec2 mB = bodySimB->invMass;
+	float mB = bodySimB->invMass;
 	float iB = bodySimB->invInertia;
 
 	base->invMassA = mA;
@@ -270,8 +270,8 @@ void b2WarmStartRevoluteJoint( b2JointSim* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_revoluteJoint );
 
-	b2Vec2 mA = base->invMassA;
-	b2Vec2 mB = base->invMassB;
+	float mA = base->invMassA;
+	float mB = base->invMassB;
 	float iA = base->invIA;
 	float iB = base->invIB;
 
@@ -287,10 +287,10 @@ void b2WarmStartRevoluteJoint( b2JointSim* base, b2StepContext* context )
 
 	float axialImpulse = joint->springImpulse + joint->motorImpulse + joint->lowerImpulse - joint->upperImpulse;
 
-	stateA->linearVelocity = b2MulSubV( stateA->linearVelocity, mA, joint->linearImpulse );
+	stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, joint->linearImpulse );
 	stateA->angularVelocity -= iA * ( b2Cross( rA, joint->linearImpulse ) + axialImpulse );
 
-	stateB->linearVelocity = b2MulAddV( stateB->linearVelocity, mB, joint->linearImpulse );
+	stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, joint->linearImpulse );
 	stateB->angularVelocity += iB * ( b2Cross( rB, joint->linearImpulse ) + axialImpulse );
 }
 
@@ -298,8 +298,8 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 {
 	B2_ASSERT( base->type == b2_revoluteJoint );
 
-	b2Vec2 mA = base->invMassA;
-	b2Vec2 mB = base->invMassB;
+	float mA = base->invMassA;
+	float mB = base->invMassB;
 	float iA = base->invIA;
 	float iB = base->invIB;
 
@@ -448,10 +448,10 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 		}
 
 		b2Mat22 K;
-		K.cx.x = mA.x + mB.x + rA.y * rA.y * iA + rB.y * rB.y * iB;
+		K.cx.x = mA + mB + rA.y * rA.y * iA + rB.y * rB.y * iB;
 		K.cy.x = -rA.y * rA.x * iA - rB.y * rB.x * iB;
 		K.cx.y = K.cy.x;
-		K.cy.y = mA.y + mB.y + rA.x * rA.x * iA + rB.x * rB.x * iB;
+		K.cy.y = mA + mB + rA.x * rA.x * iA + rB.x * rB.x * iB;
 		b2Vec2 b = b2Solve22( K, b2Add( Cdot, bias ) );
 
 		b2Vec2 impulse;
@@ -460,9 +460,9 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 		joint->linearImpulse.x += impulse.x;
 		joint->linearImpulse.y += impulse.y;
 
-		vA = b2MulSubV( vA, mA, impulse );
+		vA = b2MulSub( vA, mA, impulse );
 		wA -= iA * b2Cross( rA, impulse );
-		vB = b2MulAddV( vB, mB, impulse );
+		vB = b2MulAdd( vB, mB, impulse );
 		wB += iB * b2Cross( rB, impulse );
 	}
 

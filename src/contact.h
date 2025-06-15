@@ -114,10 +114,10 @@ typedef struct b2ContactSim
 	int shapeIdA;
 	int shapeIdB;
 
-	b2Vec2 invMassA;
+	float invMassA;
 	float invIA;
 
-	b2Vec2 invMassB;
+	float invMassB;
 	float invIB;
 
 	b2Manifold manifold;

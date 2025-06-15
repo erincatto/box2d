@@ -147,4 +147,3 @@ void b2Free( void* mem, int size );
 #define B2_FREE_ARRAY( mem, count, type ) b2Free(mem, count * sizeof(type))
 
 void* b2GrowAlloc( void* oldMem, int oldSize, int newSize );
-

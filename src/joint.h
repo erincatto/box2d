@@ -247,7 +247,7 @@ typedef struct b2JointSim
 	b2Transform localFrameA;
 	b2Transform localFrameB;
 
-	b2Vec2 invMassA, invMassB;
+	float invMassA, invMassB;
 	float invIA, invIB;
 
 	float constraintHertz;

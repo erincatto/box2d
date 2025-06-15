@@ -116,7 +116,7 @@ typedef struct b2BodyState
 // Identity body state, notice the deltaRotation is {1, 0}
 static const b2BodyState b2_identityBodyState = { { 0.0f, 0.0f }, 0.0f, 0, { 0.0f, 0.0f }, { 1.0f, 0.0f } };
 
-enum b2BodySimFlags
+enum b2BodyFlags
 {
 	// This body has fixed rotation
 	b2_lockAngularZ = 0x0000'0001,
@@ -170,7 +170,7 @@ typedef struct b2BodySim
 	float torque;
 
 	// inverse inertia
-	b2Vec2 invMass;
+	float invMass;
 	float invInertia;
 
 	float minExtent;

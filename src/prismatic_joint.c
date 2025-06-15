@@ -300,9 +300,9 @@ void b2PreparePrismaticJoint( b2JointSim* base, b2StepContext* context )
 	b2BodySim* bodySimA = b2BodySimArray_Get( &setA->bodySims, localIndexA );
 	b2BodySim* bodySimB = b2BodySimArray_Get( &setB->bodySims, localIndexB );
 
-	b2Vec2 mA = bodySimA->invMass;
+	float mA = bodySimA->invMass;
 	float iA = bodySimA->invInertia;
-	b2Vec2 mB = bodySimB->invMass;
+	float mB = bodySimB->invMass;
 	float iB = bodySimB->invInertia;
 
 	base->invMassA = mA;
@@ -333,8 +333,7 @@ void b2PreparePrismaticJoint( b2JointSim* base, b2StepContext* context )
 	float a2 = b2Cross( rB, axisA );
 
 	// effective masses
-	b2Vec2 m = b2Add( mA, mB );
-	float k = b2Dot( axisA, b2Mul( m, axisA ) ) + iA * a1 * a1 + iB * a2 * a2;
+	float k = mA + mB + iA * a1 * a1 + iB * a2 * a2;
 	joint->axialMass = k > 0.0f ? 1.0f / k : 0.0f;
 
 	joint->springSoftness = b2MakeSoft( joint->hertz, joint->dampingRatio, context->h );
@@ -353,8 +352,8 @@ void b2WarmStartPrismaticJoint( b2JointSim* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_prismaticJoint );
 
-	b2Vec2 mA = base->invMassA;
-	b2Vec2 mB = base->invMassB;
+	float mA = base->invMassA;
+	float mB = base->invMassB;
 	float iA = base->invIA;
 	float iB = base->invIB;
 
@@ -390,9 +389,9 @@ void b2WarmStartPrismaticJoint( b2JointSim* base, b2StepContext* context )
 	float LA = axialImpulse * a1 + perpImpulse * s1 + angleImpulse;
 	float LB = axialImpulse * a2 + perpImpulse * s2 + angleImpulse;
 
-	stateA->linearVelocity = b2MulSubV( stateA->linearVelocity, mA, P );
+	stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, P );
 	stateA->angularVelocity -= iA * LA;
-	stateB->linearVelocity = b2MulAddV( stateB->linearVelocity, mB, P );
+	stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, P );
 	stateB->angularVelocity += iB * LB;
 }
 
@@ -400,8 +399,8 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 {
 	B2_ASSERT( base->type == b2_prismaticJoint );
 
-	b2Vec2 mA = base->invMassA;
-	b2Vec2 mB = base->invMassB;
+	float mA = base->invMassA;
+	float mB = base->invMassB;
 	float iA = base->invIA;
 	float iB = base->invIB;
 
@@ -453,9 +452,9 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 		float LA = deltaImpulse * a1;
 		float LB = deltaImpulse * a2;
 
-		vA = b2MulSubV( vA, mA, P );
+		vA = b2MulSub( vA, mA, P );
 		wA -= iA * LA;
-		vB = b2MulAddV( vB, mB, P );
+		vB = b2MulAdd( vB, mB, P );
 		wB += iB * LB;
 	}
 
@@ -473,9 +472,9 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 		float LA = impulse * a1;
 		float LB = impulse * a2;
 
-		vA = b2MulSubV( vA, mA, P );
+		vA = b2MulSub( vA, mA, P );
 		wA -= iA * LA;
-		vB = b2MulAddV( vB, mB, P );
+		vB = b2MulAdd( vB, mB, P );
 		wB += iB * LB;
 	}
 
@@ -510,9 +509,9 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 			float LA = impulse * a1;
 			float LB = impulse * a2;
 
-			vA = b2MulSubV( vA, mA, P );
+			vA = b2MulSub( vA, mA, P );
 			wA -= iA * LA;
-			vB = b2MulAddV( vB, mB, P );
+			vB = b2MulAdd( vB, mB, P );
 			wB += iB * LB;
 		}
 
@@ -550,9 +549,9 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 			float LB = impulse * a2;
 
 			// sign flipped
-			vA = b2MulAddV( vA, mA, P );
+			vA = b2MulAdd( vA, mA, P );
 			wA += iA * LA;
-			vB = b2MulSubV( vB, mB, P );
+			vB = b2MulSub( vB, mB, P );
 			wB -= iB * LB;
 		}
 	}
@@ -583,8 +582,7 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 			impulseScale = base->constraintSoftness.impulseScale;
 		}
 
-		b2Vec2 m = b2Add( mA, mB );
-		float k11 = b2Dot( perpA, b2Mul( m, perpA ) ) + iA * s1 * s1 + iB * s2 * s2;
+		float k11 = mA + mB + iA * s1 * s1 + iB * s2 * s2;
 		float k12 = iA * s1 + iB * s2;
 		float k22 = iA + iB;
 		if ( k22 == 0.0f )
@@ -607,9 +605,9 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 		float LA = impulse.x * s1 + impulse.y;
 		float LB = impulse.x * s2 + impulse.y;
 
-		vA = b2MulSubV( vA, mA, P );
+		vA = b2MulSub( vA, mA, P );
 		wA -= iA * LA;
-		vB = b2MulAddV( vB, mB, P );
+		vB = b2MulAdd( vB, mB, P );
 		wB += iB * LB;
 	}
 
@@ -669,7 +667,7 @@ void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform tran
 		draw->DrawSegmentFcn( b2MulSub( frameA.p, 1.0f, axisA ), b2MulAdd( frameA.p, 1.0f, axisA ), b2_colorGray, draw->context );
 	}
 
-	if ( joint->enableSpring )
+	if ( joint->enableSpring)
 	{
 		b2Vec2 p = b2MulAdd( frameA.p, joint->targetTranslation, axisA );
 		draw->DrawPointFcn( p, 8.0f, b2_colorViolet, draw->context );

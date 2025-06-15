@@ -78,7 +78,7 @@ void b2PrepareOverflowContacts( b2StepContext* context )
 
 		b2Vec2 vA = b2Vec2_zero;
 		float wA = 0.0f;
-		b2Vec2 mA = contactSim->invMassA;
+		float mA = contactSim->invMassA;
 		float iA = contactSim->invIA;
 		if ( indexA != B2_NULL_INDEX )
 		{
@@ -89,7 +89,7 @@ void b2PrepareOverflowContacts( b2StepContext* context )
 
 		b2Vec2 vB = b2Vec2_zero;
 		float wB = 0.0f;
-		b2Vec2 mB = contactSim->invMassB;
+		float mB = contactSim->invMassB;
 		float iB = contactSim->invIB;
 		if ( indexB != B2_NULL_INDEX )
 		{
@@ -121,8 +121,6 @@ void b2PrepareOverflowContacts( b2StepContext* context )
 		b2Vec2 normal = constraint->normal;
 		b2Vec2 tangent = b2RightPerp( constraint->normal );
 
-		b2Vec2 m = b2Add( mA, mB );
-
 		for ( int j = 0; j < pointCount; ++j )
 		{
 			const b2ManifoldPoint* mp = manifold->points + j;
@@ -141,12 +139,12 @@ void b2PrepareOverflowContacts( b2StepContext* context )
 
 			float rnA = b2Cross( rA, normal );
 			float rnB = b2Cross( rB, normal );
-			float kNormal = b2Dot( normal, b2Mul( m, normal ) ) + iA * rnA * rnA + iB * rnB * rnB;
+			float kNormal = mA + mB + iA * rnA * rnA + iB * rnB * rnB;
 			cp->normalMass = kNormal > 0.0f ? 1.0f / kNormal : 0.0f;
 
 			float rtA = b2Cross( rA, tangent );
 			float rtB = b2Cross( rB, tangent );
-			float kTangent = b2Dot( tangent, b2Mul( m, tangent ) ) + iA * rtA * rtA + iB * rtB * rtB;
+			float kTangent = mA + mB + iA * rtA * rtA + iB * rtB * rtB;
 			cp->tangentMass = kTangent > 0.0f ? 1.0f / kTangent : 0.0f;
 
 			// Save relative velocity for restitution
@@ -189,9 +187,9 @@ void b2WarmStartOverflowContacts( b2StepContext* context )
 		b2Vec2 vB = stateB->linearVelocity;
 		float wB = stateB->angularVelocity;
 
-		b2Vec2 mA = constraint->invMassA;
+		float mA = constraint->invMassA;
 		float iA = constraint->invIA;
-		b2Vec2 mB = constraint->invMassB;
+		float mB = constraint->invMassB;
 		float iB = constraint->invIB;
 
 		// Stiffer for static contacts to avoid bodies getting pushed through the ground
@@ -209,9 +207,9 @@ void b2WarmStartOverflowContacts( b2StepContext* context )
 
 			b2Vec2 P = b2Add( b2MulSV( cp->normalImpulse, normal ), b2MulSV( cp->tangentImpulse, tangent ) );
 			wA -= iA * b2Cross( rA, P );
-			vA = b2MulSubV( vA, mA, P );
+			vA = b2MulAdd( vA, -mA, P );
 			wB += iB * b2Cross( rB, P );
-			vB = b2MulAddV( vB, mB, P );
+			vB = b2MulAdd( vB, mB, P );
 		}
 
 		wA -= iA * constraint->rollingImpulse;
@@ -247,9 +245,9 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 	for ( int i = 0; i < contactCount; ++i )
 	{
 		b2ContactConstraint* constraint = constraints + i;
-		b2Vec2 mA = constraint->invMassA;
+		float mA = constraint->invMassA;
 		float iA = constraint->invIA;
-		b2Vec2 mB = constraint->invMassB;
+		float mB = constraint->invMassB;
 		float iB = constraint->invIB;
 
 		b2BodyState* stateA = constraint->indexA == B2_NULL_INDEX ? &dummyState : states + constraint->indexA;
@@ -318,10 +316,10 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 
 			// apply normal impulse
 			b2Vec2 P = b2MulSV( impulse, normal );
-			vA = b2MulSubV( vA, mA, P );
+			vA = b2MulSub( vA, mA, P );
 			wA -= iA * b2Cross( rA, P );
 
-			vB = b2MulAddV( vB, mB, P );
+			vB = b2MulAdd( vB, mB, P );
 			wB += iB * b2Cross( rB, P );
 		}
 
@@ -354,9 +352,9 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 
 			// apply tangent impulse
 			b2Vec2 P = b2MulSV( impulse, tangent );
-			vA = b2MulSubV( vA, mA, P );
+			vA = b2MulSub( vA, mA, P );
 			wA -= iA * b2Cross( rA, P );
-			vB = b2MulAddV( vB, mB, P );
+			vB = b2MulAdd( vB, mB, P );
 			wB += iB * b2Cross( rB, P );
 		}
 
@@ -408,9 +406,9 @@ void b2ApplyOverflowRestitution( b2StepContext* context )
 			continue;
 		}
 
-		b2Vec2 mA = constraint->invMassA;
+		float mA = constraint->invMassA;
 		float iA = constraint->invIA;
-		b2Vec2 mB = constraint->invMassB;
+		float mB = constraint->invMassB;
 		float iB = constraint->invIB;
 
 		b2BodyState* stateA = constraint->indexA == B2_NULL_INDEX ? &dummyState : states + constraint->indexA;
@@ -463,9 +461,9 @@ void b2ApplyOverflowRestitution( b2StepContext* context )
 
 				// apply contact impulse
 				b2Vec2 P = b2MulSV( impulse, normal );
-				vA = b2MulSubV( vA, mA, P );
+				vA = b2MulSub( vA, mA, P );
 				wA -= iA * b2Cross( rA, P );
-				vB = b2MulAddV( vB, mB, P );
+				vB = b2MulAdd( vB, mB, P );
 				wB += iB * b2Cross( rB, P );
 			}
 		}
@@ -1038,7 +1036,7 @@ typedef struct b2ContactConstraintSIMD
 	int indexA[B2_SIMD_WIDTH];
 	int indexB[B2_SIMD_WIDTH];
 
-	b2Vec2W invMassA, invMassB;
+	b2FloatW invMassA, invMassB;
 	b2FloatW invIA, invIB;
 	b2Vec2W normal;
 	b2FloatW friction;
@@ -1483,7 +1481,7 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 
 				b2Vec2 vA = b2Vec2_zero;
 				float wA = 0.0f;
-				b2Vec2 mA = contactSim->invMassA;
+				float mA = contactSim->invMassA;
 				float iA = contactSim->invIA;
 				if ( indexA != B2_NULL_INDEX )
 				{
@@ -1494,7 +1492,7 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 
 				b2Vec2 vB = b2Vec2_zero;
 				float wB = 0.0f;
-				b2Vec2 mB = contactSim->invMassB;
+				float mB = contactSim->invMassB;
 				float iB = contactSim->invIB;
 				if ( indexB != B2_NULL_INDEX )
 				{
@@ -1503,12 +1501,8 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 					wB = stateB->angularVelocity;
 				}
 
-				b2Vec2 m = b2Add( mA, mB );
-
-				( (float*)&constraint->invMassA.X )[j] = mA.x;
-				( (float*)&constraint->invMassA.Y )[j] = mA.y;
-				( (float*)&constraint->invMassB.X )[j] = mB.x;
-				( (float*)&constraint->invMassB.Y )[j] = mB.y;
+				( (float*)&constraint->invMassA )[j] = mA;
+				( (float*)&constraint->invMassB )[j] = mB;
 				( (float*)&constraint->invIA )[j] = iA;
 				( (float*)&constraint->invIB )[j] = iB;
 
@@ -1554,12 +1548,12 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 
 					float rnA = b2Cross( rA, normal );
 					float rnB = b2Cross( rB, normal );
-					float kNormal = b2Dot( normal, b2Mul( m, normal ) ) + iA * rnA * rnA + iB * rnB * rnB;
+					float kNormal = mA + mB + iA * rnA * rnA + iB * rnB * rnB;
 					( (float*)&constraint->normalMass1 )[j] = kNormal > 0.0f ? 1.0f / kNormal : 0.0f;
 
 					float rtA = b2Cross( rA, tangent );
 					float rtB = b2Cross( rB, tangent );
-					float kTangent = b2Dot( tangent, b2Mul( m, tangent ) ) + iA * rtA * rtA + iB * rtB * rtB;
+					float kTangent = mA + mB + iA * rtA * rtA + iB * rtB * rtB;
 					( (float*)&constraint->tangentMass1 )[j] = kTangent > 0.0f ? 1.0f / kTangent : 0.0f;
 
 					// relative velocity for restitution
@@ -1591,12 +1585,12 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 
 					float rnA = b2Cross( rA, normal );
 					float rnB = b2Cross( rB, normal );
-					float kNormal = b2Dot( normal, b2Mul( m, normal ) ) + iA * rnA * rnA + iB * rnB * rnB;
+					float kNormal = mA + mB + iA * rnA * rnA + iB * rnB * rnB;
 					( (float*)&constraint->normalMass2 )[j] = kNormal > 0.0f ? 1.0f / kNormal : 0.0f;
 
 					float rtA = b2Cross( rA, tangent );
 					float rtB = b2Cross( rB, tangent );
-					float kTangent = b2Dot( tangent, b2Mul( m, tangent ) ) + iA * rtA * rtA + iB * rtB * rtB;
+					float kTangent = mA + mB + iA * rtA * rtA + iB * rtB * rtB;
 					( (float*)&constraint->tangentMass2 )[j] = kTangent > 0.0f ? 1.0f / kTangent : 0.0f;
 
 					// relative velocity for restitution
@@ -1699,11 +1693,11 @@ void b2WarmStartContactsTask( int startIndex, int endIndex, b2StepContext* conte
 			P.X = b2AddW( b2MulW( c->normalImpulse1, c->normal.X ), b2MulW( c->tangentImpulse1, tangentX ) );
 			P.Y = b2AddW( b2MulW( c->normalImpulse1, c->normal.Y ), b2MulW( c->tangentImpulse1, tangentY ) );
 			bA.w = b2MulSubW( bA.w, c->invIA, b2CrossW( rA, P ) );
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA.X, P.X );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA.Y, P.Y );
+			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, P.X );
+			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, P.Y );
 			bB.w = b2MulAddW( bB.w, c->invIB, b2CrossW( rB, P ) );
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB.X, P.X );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB.Y, P.Y );
+			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, P.X );
+			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, P.Y );
 		}
 
 		{
@@ -1715,11 +1709,11 @@ void b2WarmStartContactsTask( int startIndex, int endIndex, b2StepContext* conte
 			P.X = b2AddW( b2MulW( c->normalImpulse2, c->normal.X ), b2MulW( c->tangentImpulse2, tangentX ) );
 			P.Y = b2AddW( b2MulW( c->normalImpulse2, c->normal.Y ), b2MulW( c->tangentImpulse2, tangentY ) );
 			bA.w = b2MulSubW( bA.w, c->invIA, b2CrossW( rA, P ) );
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA.X, P.X );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA.Y, P.Y );
+			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, P.X );
+			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, P.Y );
 			bB.w = b2MulAddW( bB.w, c->invIB, b2CrossW( rB, P ) );
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB.X, P.X );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB.Y, P.Y );
+			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, P.X );
+			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, P.Y );
 		}
 
 		bA.w = b2MulSubW( bA.w, c->invIA, c->rollingImpulse );
@@ -1815,12 +1809,12 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW Px = b2MulW( impulse, c->normal.X );
 			b2FloatW Py = b2MulW( impulse, c->normal.Y );
 
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA.X, Px );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA.Y, Py );
+			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
+			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
 			bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
 
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB.X, Px );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB.Y, Py );
+			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
+			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
 			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
 		}
 
@@ -1867,12 +1861,12 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW Px = b2MulW( impulse, c->normal.X );
 			b2FloatW Py = b2MulW( impulse, c->normal.Y );
 
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA.X, Px );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA.Y, Py );
+			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
+			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
 			bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
 
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB.X, Px );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB.Y, Py );
+			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
+			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
 			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
 		}
 
@@ -1907,12 +1901,12 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW Px = b2MulW( impulse, tangentX );
 			b2FloatW Py = b2MulW( impulse, tangentY );
 
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA.X, Px );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA.Y, Py );
+			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
+			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
 			bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
 
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB.X, Px );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB.Y, Py );
+			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
+			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
 			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
 		}
 
@@ -1944,12 +1938,12 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW Px = b2MulW( impulse, tangentX );
 			b2FloatW Py = b2MulW( impulse, tangentY );
 
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA.X, Px );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA.Y, Py );
+			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
+			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
 			bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
 
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB.X, Px );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB.Y, Py );
+			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
+			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
 			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
 		}
 
@@ -2027,12 +2021,12 @@ void b2ApplyRestitutionTask( int startIndex, int endIndex, b2StepContext* contex
 			b2FloatW Px = b2MulW( impulse, c->normal.X );
 			b2FloatW Py = b2MulW( impulse, c->normal.Y );
 
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA.X, Px );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA.Y, Py );
+			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
+			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
 			bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
 
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB.X, Px );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB.Y, Py );
+			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
+			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
 			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
 		}
 
@@ -2065,12 +2059,12 @@ void b2ApplyRestitutionTask( int startIndex, int endIndex, b2StepContext* contex
 			b2FloatW Px = b2MulW( impulse, c->normal.X );
 			b2FloatW Py = b2MulW( impulse, c->normal.Y );
 
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA.X, Px );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA.Y, Py );
+			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
+			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
 			bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
 
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB.X, Px );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB.Y, Py );
+			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
+			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
 			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
 		}
 

@@ -145,7 +145,7 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	if ( staticA )
 	{
 		newContact->bodySimIndexA = B2_NULL_INDEX;
-		newContact->invMassA = b2Vec2_zero;
+		newContact->invMassA = 0.0f;
 		newContact->invIA = 0.0f;
 	}
 	else
@@ -164,7 +164,7 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	if ( staticB )
 	{
 		newContact->bodySimIndexB = B2_NULL_INDEX;
-		newContact->invMassB = b2Vec2_zero;
+		newContact->invMassB = 0.0f;
 		newContact->invIB = 0.0f;
 	}
 	else

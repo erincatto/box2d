@@ -244,18 +244,6 @@ B2_INLINE b2Vec2 b2MulSub( b2Vec2 a, float s, b2Vec2 b )
 	return B2_LITERAL( b2Vec2 ){ a.x - s * b.x, a.y - s * b.y };
 }
 
-/// a + b * c
-B2_INLINE b2Vec2 b2MulAddV( b2Vec2 a, b2Vec2 b, b2Vec2 c )
-{
-	return B2_LITERAL( b2Vec2 ){ a.x + b.x * c.x, a.y + b.y * c.y };
-}
-
-/// a - b * c
-B2_INLINE b2Vec2 b2MulSubV( b2Vec2 a, b2Vec2 b, b2Vec2 c )
-{
-	return B2_LITERAL( b2Vec2 ){ a.x - b.x * c.x, a.y - b.y * c.y };
-}
-
 /// Component-wise absolute vector
 B2_INLINE b2Vec2 b2Abs( b2Vec2 a )
 {
@@ -575,48 +563,17 @@ B2_INLINE b2Mat22 b2GetInverse22( b2Mat22 A )
 {
 	float a = A.cx.x, b = A.cy.x, c = A.cx.y, d = A.cy.y;
 	float det = a * d - b * c;
-
-	float tolerance = FLT_EPSILON;
-
-	if ( det > tolerance )
+	if ( det != 0.0f )
 	{
 		det = 1.0f / det;
+	}
+
 		b2Mat22 B = {
 			{ det * d, -det * c },
 			{ -det * b, det * a },
 		};
 		return B;
 	}
-
-	// Singular case: rank 1 or 0
-	// Find the largest column (in norm)
-	float col1Norm2 = a * a + c * c;
-	float col2Norm2 = b * b + d * d;
-
-	if ( col1Norm2 >= col2Norm2 && col1Norm2 > tolerance )
-	{
-		// Use column 0
-		float invNorm2 = 1.0f / col1Norm2;
-		b2Mat22 B = { { a * invNorm2, c * invNorm2 }, { b * invNorm2, d * invNorm2 } };
-		// Only the first column is nonzero
-		B.cy.x = 0.0f;
-		B.cy.y = 0.0f;
-		return B;
-	}
-
-	if ( col2Norm2 > tolerance )
-	{
-		// Use column 1
-		float invNorm2 = 1.0f / col2Norm2;
-		b2Mat22 B = { { a * invNorm2, c * invNorm2 }, { b * invNorm2, d * invNorm2 } };
-		// Only the second column is nonzero
-		B.cx.x = 0.0f;
-		B.cx.y = 0.0f;
-		return B;
-	}
-
-	return b2Mat22_zero;
-}
 
 /// Solve A * x = b, where b is a column vector. This is more efficient
 /// than computing the inverse in one-shot cases.

@@ -206,9 +206,9 @@ void b2PrepareWheelJoint( b2JointSim* base, b2StepContext* context )
 	b2BodySim* bodySimA = b2BodySimArray_Get( &setA->bodySims, localIndexA );
 	b2BodySim* bodySimB = b2BodySimArray_Get( &setB->bodySims, localIndexB );
 
-	b2Vec2 mA = bodySimA->invMass;
+	float mA = bodySimA->invMass;
 	float iA = bodySimA->invInertia;
-	b2Vec2 mB = bodySimB->invMass;
+	float mB = bodySimB->invMass;
 	float iB = bodySimB->invInertia;
 
 	base->invMassA = mA;
@@ -241,15 +241,14 @@ void b2PrepareWheelJoint( b2JointSim* base, b2StepContext* context )
 	float s1 = b2Cross( b2Add( d, rA ), perpA );
 	float s2 = b2Cross( rB, perpA );
 
-	b2Vec2 m = b2Add( mA, mB );
-	float kp = b2Dot( perpA, b2Mul( m, perpA ) ) + iA * s1 * s1 + iB * s2 * s2;
+	float kp = mA + mB + iA * s1 * s1 + iB * s2 * s2;
 	joint->perpMass = kp > 0.0f ? 1.0f / kp : 0.0f;
 
 	// spring constraint
 	float a1 = b2Cross( b2Add( d, rA ), axisA );
 	float a2 = b2Cross( rB, axisA );
 
-	float ka = b2Dot( axisA, b2Mul( m, axisA ) ) + iA * a1 * a1 + iB * a2 * a2;
+	float ka = mA + mB + iA * a1 * a1 + iB * a2 * a2;
 	joint->axialMass = ka > 0.0f ? 1.0f / ka : 0.0f;
 
 	joint->springSoftness = b2MakeSoft( joint->hertz, joint->dampingRatio, context->h );
@@ -271,8 +270,8 @@ void b2WarmStartWheelJoint( b2JointSim* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_wheelJoint );
 
-	b2Vec2 mA = base->invMassA;
-	b2Vec2 mB = base->invMassB;
+	float mA = base->invMassA;
+	float mB = base->invMassB;
 	float iA = base->invIA;
 	float iB = base->invIB;
 
@@ -303,9 +302,9 @@ void b2WarmStartWheelJoint( b2JointSim* base, b2StepContext* context )
 	float LA = axialImpulse * a1 + joint->perpImpulse * s1 + joint->motorImpulse;
 	float LB = axialImpulse * a2 + joint->perpImpulse * s2 + joint->motorImpulse;
 
-	stateA->linearVelocity = b2MulSubV( stateA->linearVelocity, mA, P );
+	stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, P );
 	stateA->angularVelocity -= iA * LA;
-	stateB->linearVelocity = b2MulAddV( stateB->linearVelocity, mB, P );
+	stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, P );
 	stateB->angularVelocity += iB * LB;
 }
 
@@ -313,8 +312,8 @@ void b2SolveWheelJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 {
 	B2_ASSERT( base->type == b2_wheelJoint );
 
-	b2Vec2 mA = base->invMassA;
-	b2Vec2 mB = base->invMassB;
+	float mA = base->invMassA;
+	float mB = base->invMassB;
 	float iA = base->invIA;
 	float iB = base->invIB;
 
@@ -376,9 +375,9 @@ void b2SolveWheelJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 		float LA = impulse * a1;
 		float LB = impulse * a2;
 
-		vA = b2MulSubV( vA, mA, P );
+		vA = b2MulSub( vA, mA, P );
 		wA -= iA * LA;
-		vB = b2MulAddV( vB, mB, P );
+		vB = b2MulAdd( vB, mB, P );
 		wB += iB * LB;
 	}
 
@@ -413,9 +412,9 @@ void b2SolveWheelJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 			float LA = impulse * a1;
 			float LB = impulse * a2;
 
-			vA = b2MulSubV( vA, mA, P );
+			vA = b2MulSub( vA, mA, P );
 			wA -= iA * LA;
-			vB = b2MulAddV( vB, mB, P );
+			vB = b2MulAdd( vB, mB, P );
 			wB += iB * LB;
 		}
 
@@ -453,9 +452,9 @@ void b2SolveWheelJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 			float LB = impulse * a2;
 
 			// sign flipped on applied impulse
-			vA = b2MulAddV( vA, mA, P );
+			vA = b2MulAdd( vA, mA, P );
 			wA += iA * LA;
-			vB = b2MulSubV( vB, mB, P );
+			vB = b2MulSub( vB, mB, P );
 			wB -= iB * LB;
 		}
 	}
@@ -486,9 +485,9 @@ void b2SolveWheelJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 		float LA = impulse * s1;
 		float LB = impulse * s2;
 
-		vA = b2MulSubV( vA, mA, P );
+		vA = b2MulSub( vA, mA, P );
 		wA -= iA * LA;
-		vB = b2MulAddV( vB, mB, P );
+		vB = b2MulAdd( vB, mB, P );
 		wB += iB * LB;
 	}
 

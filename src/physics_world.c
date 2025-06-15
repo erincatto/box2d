@@ -1356,19 +1356,9 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				b2Vec2 p = b2TransformPoint( transform, offset );
 
 				char buffer[32];
-				if ( bodySim->invMass.x == bodySim->invMass.y )
-				{
-					float mass = bodySim->invMass.x > 0.0f ? 1.0f / bodySim->invMass.x : 0.0f;
+				float mass = bodySim->invMass > 0.0f ? 1.0f / bodySim->invMass : 0.0f;
 					snprintf( buffer, 32, "  %.2f", mass );
 					draw->DrawStringFcn( p, buffer, b2_colorWhite, draw->context );
-				}
-				else
-				{
-					float massX = bodySim->invMass.x > 0.0f ? 1.0f / bodySim->invMass.x : 0.0f;
-					float massY = bodySim->invMass.y > 0.0f ? 1.0f / bodySim->invMass.y : 0.0f;
-					snprintf( buffer, 32, "  %.2f, %.2f", massX, massY );
-					draw->DrawStringFcn( p, buffer, b2_colorWhite, draw->context );
-				}
 			}
 		}
 	}
@@ -2777,7 +2767,7 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
 	b2BodyState* state = b2BodyStateArray_Get( &set->bodyStates, localIndex );
 	b2BodySim* bodySim = b2BodySimArray_Get( &set->bodySims, localIndex );
-	state->linearVelocity = b2MulAddV( state->linearVelocity, bodySim->invMass, impulse );
+	state->linearVelocity = b2MulAdd( state->linearVelocity, bodySim->invMass, impulse );
 	state->angularVelocity += bodySim->invInertia * b2Cross( b2Sub( closestPoint, bodySim->center ), impulse );
 
 	return true;
