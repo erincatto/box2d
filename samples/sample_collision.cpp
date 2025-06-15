@@ -1411,16 +1411,10 @@ public:
 		}
 
 		{
-			b2Vec2 vertices[3] = { { -0.5f, 0.0f }, { 0.5f, 0.0f }, { 0.0f, 1.5f } };
-			b2Hull hull = b2ComputeHull( vertices, 3 );
-			m_polygons[0] = b2MakePolygon( &hull, 0.0f );
-		}
-
-		{
 			b2Vec2 vertices[3] = { { -0.1f, 0.0f }, { 0.1f, 0.0f }, { 0.0f, 1.5f } };
 			b2Hull hull = b2ComputeHull( vertices, 3 );
-			m_polygons[1] = b2MakePolygon( &hull, 0.0f );
-			m_polygons[1].radius = 0.5f;
+			m_polygons[0] = b2MakePolygon( &hull, 0.0f );
+			m_polygons[0].radius = 0.5f;
 		}
 
 		{
@@ -1432,10 +1426,10 @@ public:
 								   { -0.5f * s, w },   { -0.5f * w, b + s }, { -0.5f * w, b },	  { -0.5f * s, 0.0f } };
 
 			b2Hull hull = b2ComputeHull( vertices, 8 );
-			m_polygons[2] = b2MakePolygon( &hull, 0.0f );
+			m_polygons[1] = b2MakePolygon( &hull, 0.0f );
 		}
 
-		m_polygons[3] = b2MakeBox( 0.5f, 0.5f );
+		m_box = b2MakeBox( 0.5f, 0.5f );
 		m_capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0f }, 0.25f };
 		m_circle = { { 0.0f, 0.0f }, 0.5f };
 		m_segment = { { -1.0f, 0.0f }, { 1.0f, 0.0f } };
@@ -1505,21 +1499,35 @@ public:
 			m_userData[m_bodyIndex].ignore = true;
 		}
 
-		if ( index < 4 )
+		if ( index == 0 )
 		{
-			b2CreatePolygonShape( m_bodyIds[m_bodyIndex], &shapeDef, m_polygons + index );
+			int polygonIndex = ( m_bodyIndex & 1 );
+			b2CreatePolygonShape( m_bodyIds[m_bodyIndex], &shapeDef, m_polygons + polygonIndex );
 		}
-		else if ( index == 4 )
+		else if ( index == 1 )
+		{
+			b2CreatePolygonShape( m_bodyIds[m_bodyIndex], &shapeDef, &m_box );
+		}
+		else if ( index == 2 )
 		{
 			b2CreateCircleShape( m_bodyIds[m_bodyIndex], &shapeDef, &m_circle );
 		}
-		else if ( index == 5 )
+		else if ( index == 3 )
 		{
 			b2CreateCapsuleShape( m_bodyIds[m_bodyIndex], &shapeDef, &m_capsule );
 		}
-		else
+		else if ( index == 4 )
 		{
 			b2CreateSegmentShape( m_bodyIds[m_bodyIndex], &shapeDef, &m_segment );
+		}
+		else
+		{
+			b2Vec2 points[4] = { { 1.0f, 0.0f }, { -1.0f, 0.0f }, { -1.0f, -1.0f }, { 1.0f, -1.0f } };
+			b2ChainDef chainDef = b2DefaultChainDef();
+			chainDef.points = points;
+			chainDef.count = 4;
+			chainDef.isLoop = true;
+			b2CreateChain( m_bodyIds[m_bodyIndex], &chainDef );
 		}
 
 		m_bodyIndex = ( m_bodyIndex + 1 ) % e_maxCount;
@@ -1620,47 +1628,41 @@ public:
 			}
 		}
 
-		if ( ImGui::Button( "Polygon 1" ) )
+		if ( ImGui::Button( "Polygon" ) )
 			Create( 0 );
 		ImGui::SameLine();
-		if ( ImGui::Button( "10x##Poly1" ) )
+		if ( ImGui::Button( "10x##Poly" ) )
 			CreateN( 0, 10 );
 
-		if ( ImGui::Button( "Polygon 2" ) )
+		if ( ImGui::Button( "Box" ) )
 			Create( 1 );
 		ImGui::SameLine();
-		if ( ImGui::Button( "10x##Poly2" ) )
+		if ( ImGui::Button( "10x##Box" ) )
 			CreateN( 1, 10 );
 
-		if ( ImGui::Button( "Polygon 3" ) )
+		if ( ImGui::Button( "Circle" ) )
 			Create( 2 );
 		ImGui::SameLine();
-		if ( ImGui::Button( "10x##Poly3" ) )
+		if ( ImGui::Button( "10x##Circle" ) )
 			CreateN( 2, 10 );
 
-		if ( ImGui::Button( "Box" ) )
+		if ( ImGui::Button( "Capsule" ) )
 			Create( 3 );
 		ImGui::SameLine();
-		if ( ImGui::Button( "10x##Box" ) )
+		if ( ImGui::Button( "10x##Capsule" ) )
 			CreateN( 3, 10 );
 
-		if ( ImGui::Button( "Circle" ) )
+		if ( ImGui::Button( "Segment" ) )
 			Create( 4 );
 		ImGui::SameLine();
-		if ( ImGui::Button( "10x##Circle" ) )
+		if ( ImGui::Button( "10x##Segment" ) )
 			CreateN( 4, 10 );
 
-		if ( ImGui::Button( "Capsule" ) )
+		if ( ImGui::Button( "Chain" ) )
 			Create( 5 );
 		ImGui::SameLine();
-		if ( ImGui::Button( "10x##Capsule" ) )
+		if ( ImGui::Button( "10x##Chain" ) )
 			CreateN( 5, 10 );
-
-		if ( ImGui::Button( "Segment" ) )
-			Create( 6 );
-		ImGui::SameLine();
-		if ( ImGui::Button( "10x##Segment" ) )
-			CreateN( 6, 10 );
 
 		if ( ImGui::Button( "Destroy Shape" ) )
 		{
@@ -1747,7 +1749,7 @@ public:
 			b2Circle circle = { .center = m_rayStart, .radius = m_castRadius };
 			b2Capsule capsule = { b2TransformPoint( transform, { -0.25f, 0.0f } ), b2TransformPoint( transform, { 0.25f, 0.0f } ),
 								  m_castRadius };
-			b2Polygon box = b2MakeOffsetRoundedBox( 0.25f, 0.5f, transform.p, transform.q, m_castRadius );
+			b2Polygon box = b2MakeOffsetRoundedBox( 0.125f, 0.25f, transform.p, transform.q, m_castRadius );
 			b2ShapeProxy proxy = {};
 
 			if ( m_castType == e_rayCast )
@@ -1807,17 +1809,17 @@ public:
 			}
 			else
 			{
-				b2Transform shiftedTransform = { b2Add( transform.p, rayTranslation ), transform.q };
 				m_context->draw.DrawLine( m_rayStart, m_rayEnd, color2 );
+				b2Transform shiftedTransform = { rayTranslation, b2Rot_identity };
 
 				if ( m_castType == e_circleCast )
 				{
-					m_context->draw.DrawSolidCircle( shiftedTransform, b2Vec2_zero, m_castRadius, b2_colorGray );
+					m_context->draw.DrawSolidCircle( shiftedTransform, circle.center, m_castRadius, b2_colorGray );
 				}
 				else if ( m_castType == e_capsuleCast )
 				{
-					b2Vec2 p1 = b2Add( b2TransformPoint( transform, capsule.center1 ), rayTranslation );
-					b2Vec2 p2 = b2Add( b2TransformPoint( transform, capsule.center2 ), rayTranslation );
+					b2Vec2 p1 = capsule.center1 + rayTranslation;
+					b2Vec2 p2 = capsule.center2 + rayTranslation;
 					m_context->draw.DrawSolidCapsule( p1, p2, m_castRadius, b2_colorYellow );
 				}
 				else if ( m_castType == e_polygonCast )
@@ -1845,7 +1847,8 @@ public:
 	int m_bodyIndex;
 	b2BodyId m_bodyIds[e_maxCount] = {};
 	ShapeUserData m_userData[e_maxCount] = {};
-	b2Polygon m_polygons[4] = {};
+	b2Polygon m_polygons[2] = {};
+	b2Polygon m_box;
 	b2Capsule m_capsule;
 	b2Circle m_circle;
 	b2Segment m_segment;

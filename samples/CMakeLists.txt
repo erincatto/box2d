@@ -87,6 +87,7 @@ set(BOX2D_SAMPLE_FILES
 	sample_determinism.cpp
 	sample_events.cpp
 	sample_geometry.cpp
+	sample_issues.cpp
 	sample_joints.cpp
 	sample_robustness.cpp
 	sample_shapes.cpp
