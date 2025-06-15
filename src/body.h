@@ -13,31 +13,31 @@ typedef struct b2World b2World;
 enum b2BodyFlags
 {
 	// This body has fixed rotation
-	b2_lockAngularZ = 0x0000'0001,
+	b2_lockAngularZ = 0x00000001,
 
 	// This body has fixed translation along the x-axis
-	b2_lockLinearX = 0x0000'0002,
+	b2_lockLinearX = 0x00000002,
 
 	// This body has fixed translation along the y-axis
-	b2_lockLinearY = 0x0000'0004,
+	b2_lockLinearY = 0x00000004,
 
 	// This flag is used for debug draw
-	b2_isFast = 0x0000'0008,
+	b2_isFast = 0x00000008,
 
 	// This dynamic body does a final CCD pass against all body types, but not other bullets
-	b2_isBullet = 0x0000'0010,
+	b2_isBullet = 0x00000010,
 
 	// This body does a CCD pass against sensors
-	b2_enableSensorHits = 0x0000'0020,
+	b2_enableSensorHits = 0x00000020,
 
 	// This body has hit the maximum linear or angular velocity
-	b2_isSpeedCapped = 0x0000'0040,
+	b2_isSpeedCapped = 0x00000040,
 
 	// This body has no limit on angular velocity
-	b2_allowFastRotation = 0x0000'0080,
+	b2_allowFastRotation = 0x00000080,
 
 	// This body need's to have its AABB increased
-	b2_enlargeBounds = 0x0000'0100,
+	b2_enlargeBounds = 0x00000100,
 
 	// All lock flags
 	b2_allLocks = b2_lockAngularZ | b2_lockLinearX | b2_lockLinearY,
