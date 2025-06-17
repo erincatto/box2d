@@ -12,14 +12,14 @@ typedef struct b2World b2World;
 
 enum b2BodyFlags
 {
-	// This body has fixed rotation
-	b2_lockAngularZ = 0x00000001,
-
 	// This body has fixed translation along the x-axis
-	b2_lockLinearX = 0x00000002,
+	b2_lockLinearX = 0x00000001,
 
 	// This body has fixed translation along the y-axis
-	b2_lockLinearY = 0x00000004,
+	b2_lockLinearY = 0x00000002,
+
+	// This body has fixed rotation
+	b2_lockAngularZ = 0x00000004,
 
 	// This flag is used for debug draw
 	b2_isFast = 0x00000008,
@@ -92,14 +92,16 @@ typedef struct b2Body
 
 	int id;
 
+	// b2BodyFlags
+	uint32_t flags;
+
 	b2BodyType type;
 
 	// This is monotonically advanced when a body is allocated in this slot
 	// Used to check for invalid b2BodyId
 	uint16_t generation;
 
-	uint32_t flags;
-
+	// todo move into flags
 	bool enableSleep;
 	bool isSpeedCapped;
 	bool isMarked;
@@ -136,7 +138,9 @@ typedef struct b2BodyState
 {
 	b2Vec2 linearVelocity; // 8
 	float angularVelocity; // 4
-	int flags;			   // 4
+
+	// b2BodyFlags
+	uint32_t flags; // 4
 
 	// Using delta position reduces round-off error far from the origin
 	b2Vec2 deltaPosition; // 8
@@ -179,9 +183,10 @@ typedef struct b2BodySim
 	float angularDamping;
 	float gravityScale;
 
-	// body data can be moved around, the id is stable (used in b2BodyId)
+	// Index of b2Body
 	int bodyId;
 
+	// b2BodyFlags
 	uint32_t flags;
 } b2BodySim;
 

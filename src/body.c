@@ -542,10 +542,6 @@ void b2UpdateBodyMassData( b2World* world, b2Body* body )
 	body->mass = 0.0f;
 	body->inertia = 0.0f;
 
-	// Copy lock flags from body to sim body
-	bodySim->flags &= ~b2_allLocks;
-	bodySim->flags |= ( body->flags & b2_allLocks );
-
 	bodySim->invMass = 0.0f;
 	bodySim->invInertia = 0.0f;
 	bodySim->localCenter = b2Vec2_zero;
@@ -847,15 +843,12 @@ void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeS
 	b2Vec2 center2 = b2TransformPoint( target, sim->localCenter );
 	float invTimeStep = 1.0f / timeStep;
 	b2Vec2 linearVelocity = b2MulSV( invTimeStep, b2Sub( center2, center1 ) );
-	linearVelocity.x = ( body->flags & b2_lockLinearX ) ? 0.0f : linearVelocity.x;
-	linearVelocity.y = ( body->flags & b2_lockLinearY ) ? 0.0f : linearVelocity.y;
 
 	// Compute angular velocity
 	b2Rot q1 = sim->transform.q;
 	b2Rot q2 = target.q;
 	float deltaAngle = b2RelativeAngle( q1, q2 );
 	float angularVelocity = invTimeStep * deltaAngle;
-	angularVelocity = ( body->flags & b2_lockAngularZ ) ? 0.0f : angularVelocity;
 
 	// Early out if the body is asleep already and the desired movement is small
 	if ( body->setIndex != b2_awakeSet )
@@ -1783,6 +1776,10 @@ void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks )
 		body->flags &= ~b2_allLocks;
 		body->flags |= newFlags;
 
+		b2BodySim* bodySim = b2GetBodySim( world, body );
+		bodySim->flags &= ~b2_allLocks;
+		bodySim->flags |= newFlags;
+
 		b2BodyState* state = b2GetBodyState( world, body );
 
 		if ( state != NULL )
@@ -1804,8 +1801,6 @@ void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks )
 				state->angularVelocity = 0.0f;
 			}
 		}
-
-		b2UpdateBodyMassData( world, body );
 	}
 }
 

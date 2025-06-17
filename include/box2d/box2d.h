@@ -417,10 +417,10 @@ B2_API void b2Body_Disable( b2BodyId bodyId );
 /// Enable a body by adding it to the simulation. This is expensive.
 B2_API void b2Body_Enable( b2BodyId bodyId );
 
-/// Set this body to have fixed rotation. This causes the mass to be reset in all cases.
+/// Set the motion locks on this body.
 B2_API void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks );
 
-/// Does this body have fixed rotation?
+/// Get the motion locks for this body.
 B2_API b2MotionLocks b2Body_GetMotionLocks( b2BodyId bodyId );
 
 /// Set this body to be a bullet. A bullet does continuous collision detection
