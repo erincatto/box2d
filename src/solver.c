@@ -289,7 +289,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	}
 
 	// Skip sensors except if the body wants sensor hits
-	bool isSensor = shape->sensorIndex != B2_NULL_INDEX;
+	bool isSensor = shape->sensorIndex != B2_NULL_INDEX || fastShape->sensorIndex != B2_NULL_INDEX;
 	if ( isSensor && ( fastBodySim->flags & b2_enableSensorHits ) == 0 )
 	{
 		return true;
@@ -501,12 +501,6 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 		// Store this to avoid double computation in the case there is no impact event
 		fastShape->aabb = box2;
-
-		// No continuous collision for sensors (but still need the updated bounds)
-		if ( fastShape->sensorIndex != B2_NULL_INDEX )
-		{
-			continue;
-		}
 
 		b2AABB sweptBox = b2AABB_Union( box1, box2 );
 

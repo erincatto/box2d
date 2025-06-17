@@ -26,6 +26,7 @@ typedef struct b2ShapeRef
 
 typedef struct b2Sensor
 {
+	// todo find a way to pool these
 	b2ShapeRefArray hits;
 	b2ShapeRefArray overlaps1;
 	b2ShapeRefArray overlaps2;

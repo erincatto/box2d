@@ -402,6 +402,7 @@ void b2DestroySensor( b2World* world, b2Shape* sensorShape )
 	}
 
 	// Destroy sensor
+	b2ShapeRefArray_Destroy( &sensor->hits );
 	b2ShapeRefArray_Destroy( &sensor->overlaps1 );
 	b2ShapeRefArray_Destroy( &sensor->overlaps2 );
 

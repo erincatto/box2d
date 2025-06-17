@@ -2340,28 +2340,28 @@ public:
 	void Step() override
 	{
 		b2Vec2 p = b2Body_GetPosition( m_kinematicBodyId );
-		if (p.x > 1.0f)
+		if ( p.x > 1.0f )
 		{
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { -0.5f, 0.0f } );
 		}
-		else if (p.x < -1.0f)
+		else if ( p.x < -1.0f )
 		{
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { 0.5f, 0.0f } );
 		}
 
 		float x = b2PrismaticJoint_GetTranslation( m_jointId );
-		if (x > 1.0f)
+		if ( x > 1.0f )
 		{
 			b2PrismaticJoint_SetMotorSpeed( m_jointId, -0.5f );
 		}
-		else if (x < -1.0f)
+		else if ( x < -1.0f )
 		{
 			b2PrismaticJoint_SetMotorSpeed( m_jointId, 0.5f );
 		}
 
 		Sample::Step();
 
-		for (int i = 0; i < m_transformCount; ++i)
+		for ( int i = 0; i < m_transformCount; ++i )
 		{
 			m_draw->DrawTransform( m_transforms[i] );
 		}
@@ -2370,7 +2370,7 @@ public:
 		m_beginCount += sensorEvents.beginCount;
 		m_endCount += sensorEvents.endCount;
 
-		for (int i = 0; i < sensorEvents.beginCount; ++i)
+		for ( int i = 0; i < sensorEvents.beginCount; ++i )
 		{
 			const b2SensorBeginTouchEvent* event = sensorEvents.beginEvents + i;
 			CollectTransforms( event->sensorShapeId );
@@ -2407,3 +2407,160 @@ public:
 };
 
 static int sampleSensorHits = RegisterSample( "Events", "Sensor Hits", SensorHits::Create );
+
+// This shows how to use a sensor as a projectile
+class SensorProjectile : public Sample
+{
+public:
+	explicit SensorProjectile( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { -7.0f, 9.0f };
+			m_context->camera.m_zoom = 14.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 0.0f, 0.0f };
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.enableSensorEvents = true;
+
+			b2Segment segment = { { 10.0f, 0.0f }, { 10.0f, 20.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
+			segment = { { -30.0f, 0.0f }, { 30.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		m_projectileId = {};
+		m_dragging = false;
+		m_point1 = b2Vec2_zero;
+		m_point2 = b2Vec2_zero;
+
+		b2Polygon box = b2MakeRoundedBox( 0.45f, 0.45f, 0.05f );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.enableSensorEvents = true;
+
+		float offset = 0.01f;
+
+		float x = 8.0f;
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+
+		for ( int i = 0; i < 8; ++i )
+		{
+			float shift = ( i % 2 == 0 ? -offset : offset );
+			bodyDef.position = { x + shift, 0.5f + 1.0f * i };
+
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		}
+	}
+
+	void FireProjectile()
+	{
+		if ( B2_IS_NON_NULL( m_projectileId ) )
+		{
+			b2DestroyBody( m_projectileId );
+		}
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.position = m_point1;
+		bodyDef.linearVelocity = 2.0f * ( m_point2 - m_point1 );
+		bodyDef.isBullet = true;
+		bodyDef.enableSensorHits = true;
+
+		m_projectileId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2Circle circle = { { 0.0f, 0.0f }, 0.25f };
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.isSensor = true;
+		shapeDef.enableSensorEvents = true;
+		b2CreateCircleShape( m_projectileId, &shapeDef, &circle );
+	}
+
+	void MouseDown( b2Vec2 p, int button, int mods ) override
+	{
+		if ( button == GLFW_MOUSE_BUTTON_1 )
+		{
+			if ( mods == GLFW_MOD_CONTROL )
+			{
+				m_dragging = true;
+				m_point1 = p;
+			}
+		}
+	}
+
+	void MouseUp( b2Vec2, int button ) override
+	{
+		if ( button == GLFW_MOUSE_BUTTON_1 )
+		{
+			if (m_dragging)
+			{
+				m_dragging = false;
+				FireProjectile();
+			}
+		}
+	}
+
+	void MouseMove( b2Vec2 p ) override
+	{
+		if ( m_dragging )
+		{
+			m_point2 = p;
+		}
+	}
+
+	void Step() override
+	{
+		DrawTextLine( "Use Ctrl + Left Mouse to drag and shoot a projectile" );
+
+		Sample::Step();
+
+		if ( m_dragging )
+		{
+			m_draw->DrawLine( m_point1, m_point2, b2_colorWhite );
+			m_draw->DrawPoint( m_point1, 5.0f, b2_colorGreen );
+			m_draw->DrawPoint( m_point2, 5.0f, b2_colorRed );
+		}
+
+		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
+		for ( int i = 0; i < sensorEvents.beginCount; ++i )
+		{
+			const b2SensorBeginTouchEvent* event = sensorEvents.beginEvents + i;
+			(void)event;
+
+			if ( B2_IS_NON_NULL( m_projectileId ) )
+			{
+				b2ExplosionDef explosionDef = b2DefaultExplosionDef();
+				explosionDef.position = b2Body_GetPosition( m_projectileId );
+				explosionDef.radius = 1.0f;
+				explosionDef.impulsePerLength = 20.0f;
+				b2World_Explode( m_worldId, &explosionDef );
+
+				b2DestroyBody( m_projectileId );
+				m_projectileId = b2_nullBodyId;
+				break;
+			}
+		}
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new SensorProjectile( context );
+	}
+
+	b2BodyId m_projectileId;
+	b2Vec2 m_point1;
+	b2Vec2 m_point2;
+	bool m_dragging;
+};
+
+static int sampleSensorProjectile = RegisterSample( "Events", "Sensor Projectile", SensorProjectile::Create );
