@@ -226,7 +226,8 @@ typedef struct b2BodyDef
 	/// Use this to store application specific body data.
 	void* userData;
 
-	/// Motions locks to restrict linear and angular movement
+	/// Motions locks to restrict linear and angular movement.
+	/// Caution: may lead to softer constraints along the locked direction
 	b2MotionLocks motionLocks;
 
 	/// Set this flag to false if this body should never fall asleep.

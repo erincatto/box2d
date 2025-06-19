@@ -337,7 +337,7 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( queryContext.bodyId, p );
 			jointDef.hertz = 7.5f;
 			jointDef.dampingRatio = 0.7f;
-			jointDef.maxForce = 1000.0f * b2Body_GetMass( queryContext.bodyId ) * b2Length(b2World_GetGravity(m_worldId));
+			jointDef.maxForce = 100.0f * b2Body_GetMass( queryContext.bodyId ) * b2Length(b2World_GetGravity(m_worldId));
 			m_mouseJointId = b2CreateMouseJoint( m_worldId, &jointDef );
 
 			b2Body_SetAwake( queryContext.bodyId, true );
