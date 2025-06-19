@@ -331,7 +331,7 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 		jointSim = b2JointSimArray_Add( &set->jointSims );
 		memset( jointSim, 0, sizeof( b2JointSim ) );
 
-		// These must be set to accomodate the merge below
+		// These must be set to accommodate the merge below
 		jointSim->jointId = jointId;
 		jointSim->bodyIdA = bodyIdA;
 		jointSim->bodyIdB = bodyIdB;

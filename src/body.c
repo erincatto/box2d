@@ -341,6 +341,7 @@ bool b2WakeBody( b2World* world, b2Body* body )
 	if ( body->setIndex >= b2_firstSleepingSet )
 	{
 		b2WakeSolverSet( world, body->setIndex );
+		b2ValidateSolverSets( world );
 		return true;
 	}
 

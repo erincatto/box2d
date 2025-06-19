@@ -874,3 +874,113 @@ public:
 };
 
 static int sampleKinematic = RegisterSample( "Bodies", "Kinematic", Kinematic::Create );
+
+// Motion locking can be a bit squishy
+class MixedLocks : public Sample
+{
+public:
+	explicit MixedLocks( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 2.5f };
+			m_context->camera.m_zoom = 3.5f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Segment segment = { { -40.0, 0.0f }, { 40.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		b2Polygon box = b2MakeSquare( 0.5f );
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 2.0f, 1.0f };
+			bodyDef.name = "static";
+
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { 1.0f, 1.0f };
+			bodyDef.name = "free";
+
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { 1.0f, 3.0f };
+			bodyDef.name = "free";
+
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { -1.0f, 1.0f };
+			bodyDef.motionLocks.angularZ = true;
+			bodyDef.name = "angular z";
+
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { -2.0f, 2.0f };
+			bodyDef.motionLocks.linearX = true;
+			bodyDef.name = "linear x";
+
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { -1.0f, 2.5f };
+			bodyDef.motionLocks.linearY = true;
+			bodyDef.motionLocks.angularZ = true;
+			bodyDef.name = "lin y ang z";
+
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { 0.0f, 1.0f };
+			bodyDef.motionLocks.linearX = true;
+			bodyDef.motionLocks.linearY = true;
+			bodyDef.motionLocks.angularZ = true;
+			bodyDef.name = "full";
+
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		}
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new MixedLocks( context );
+	}
+};
+
+static int sampleMixedLocks = RegisterSample( "Bodies", "Mixed Locks", MixedLocks::Create );
