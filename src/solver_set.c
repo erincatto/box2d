@@ -150,8 +150,6 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 
 	// destroy the sleeping set
 	b2DestroySolverSet( world, setIndex );
-
-	b2ValidateSolverSets( world );
 }
 
 void b2TrySleepIsland( b2World* world, int islandId )
