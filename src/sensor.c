@@ -120,7 +120,7 @@ static bool b2SensorQueryCallback( int proxyId, uint64_t userData, void* context
 	return true;
 }
 
-static int b2CompareShapeRefs( const void* a, const void* b )
+static int b2CompareVisitors( const void* a, const void* b )
 {
 	const b2Visitor* sa = a;
 	const b2Visitor* sb = b;
@@ -195,7 +195,7 @@ static void b2SensorTask( int startIndex, int endIndex, uint32_t threadIndex, vo
 		b2DynamicTree_Query( trees + 2, queryBounds, sensorShape->filter.maskBits, b2SensorQueryCallback, &queryContext );
 
 		// Sort the overlaps to enable finding begin and end events.
-		qsort( sensor->overlaps2.data, sensor->overlaps2.count, sizeof( b2Visitor ), b2CompareShapeRefs );
+		qsort( sensor->overlaps2.data, sensor->overlaps2.count, sizeof( b2Visitor ), b2CompareVisitors );
 
 		// Remove duplicates from overlaps2 (sorted). Duplicates are possible due to the hit events appended earlier.
 		int uniqueCount = 0;

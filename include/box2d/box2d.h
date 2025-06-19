@@ -337,8 +337,8 @@ B2_API void b2Body_ApplyLinearImpulseToCenter( b2BodyId bodyId, b2Vec2 impulse, 
 /// @param bodyId The body id
 /// @param impulse the angular impulse, usually in units of kg*m*m/s
 /// @param wake also wake up the body
-/// @warning This should be used for one-shot impulses. If you need a steady force,
-/// use a force instead, which will work better with the sub-stepping solver.
+/// @warning This should be used for one-shot impulses. If you need a steady torque,
+/// use a torque instead, which will work better with the sub-stepping solver.
 B2_API void b2Body_ApplyAngularImpulse( b2BodyId bodyId, float impulse, bool wake );
 
 /// Get the mass of the body, usually in kilograms
