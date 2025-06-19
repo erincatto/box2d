@@ -1260,15 +1260,6 @@ float b2Joint_GetAngularSeparation( b2JointId jointId )
 	}
 }
 
-void b2Joint_GetConstraintTuning( b2JointId jointId, float* hertz, float* dampingRatio )
-{
-	b2World* world = b2GetWorld( jointId.world0 );
-	b2Joint* joint = b2GetJointFullId( world, jointId );
-	b2JointSim* base = b2GetJointSim( world, joint );
-	*hertz = base->constraintHertz;
-	*dampingRatio = base->constraintDampingRatio;
-}
-
 void b2Joint_SetConstraintTuning( b2JointId jointId, float hertz, float dampingRatio )
 {
 	B2_ASSERT( b2IsValidFloat( hertz ) && hertz >= 0.0f );
@@ -1279,6 +1270,51 @@ void b2Joint_SetConstraintTuning( b2JointId jointId, float hertz, float dampingR
 	b2JointSim* base = b2GetJointSim( world, joint );
 	base->constraintHertz = hertz;
 	base->constraintDampingRatio = dampingRatio;
+}
+
+void b2Joint_GetConstraintTuning( b2JointId jointId, float* hertz, float* dampingRatio )
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* base = b2GetJointSim( world, joint );
+	*hertz = base->constraintHertz;
+	*dampingRatio = base->constraintDampingRatio;
+}
+
+void b2Joint_SetForceThreshold( b2JointId jointId, float threshold )
+{
+	B2_ASSERT( b2IsValidFloat( threshold ) && threshold >= 0.0f );
+
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* base = b2GetJointSim( world, joint );
+	base->forceThreshold = threshold;
+}
+
+float b2Joint_GetForceThreshold( b2JointId jointId )
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* base = b2GetJointSim( world, joint );
+	return base->forceThreshold;
+}
+
+void b2Joint_SetTorqueThreshold( b2JointId jointId, float threshold )
+{
+	B2_ASSERT( b2IsValidFloat( threshold ) && threshold >= 0.0f );
+
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* base = b2GetJointSim( world, joint );
+	base->torqueThreshold = threshold;
+}
+
+float b2Joint_GetTorqueThreshold( b2JointId jointId )
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2Joint* joint = b2GetJointFullId( world, jointId );
+	b2JointSim* base = b2GetJointSim( world, joint );
+	return base->torqueThreshold;
 }
 
 void b2PrepareJoint( b2JointSim* joint, b2StepContext* context )

@@ -787,14 +787,27 @@ B2_API float b2Joint_GetLinearSeparation( b2JointId jointId );
 /// Get the current angular separation error for this joint. Does not consider admissible movement. Usually in meters.
 B2_API float b2Joint_GetAngularSeparation( b2JointId jointId );
 
-/// Get the joint constraint tuning. Advanced feature.
-B2_API void b2Joint_GetConstraintTuning( b2JointId jointId, float* hertz, float* dampingRatio );
-
 /// Set the joint constraint tuning. Advanced feature.
 /// @param jointId the joint
 /// @param hertz the stiffness in Hertz (cycles per second)
 /// @param dampingRatio the non-dimensional damping ratio (one for critical damping)
 B2_API void b2Joint_SetConstraintTuning( b2JointId jointId, float hertz, float dampingRatio );
+
+/// Get the joint constraint tuning. Advanced feature.
+B2_API void b2Joint_GetConstraintTuning( b2JointId jointId, float* hertz, float* dampingRatio );
+
+/// Set the force threshold for joint events (Newtons)
+B2_API void b2Joint_SetForceThreshold( b2JointId jointId, float threshold );
+
+/// Get the force threshold for joint events (Newtons)
+B2_API float b2Joint_GetForceThreshold( b2JointId jointId );
+
+/// Set the torque threshold for joint events (N-m)
+B2_API void b2Joint_SetTorqueThreshold( b2JointId jointId, float threshold );
+
+/// Get the torque threshold for joint events (N-m)
+B2_API float b2Joint_GetTorqueThreshold( b2JointId jointId );
+
 
 /**
  * @defgroup distance_joint Distance Joint
