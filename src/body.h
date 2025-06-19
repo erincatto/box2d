@@ -27,17 +27,14 @@ enum b2BodyFlags
 	// This dynamic body does a final CCD pass against all body types, but not other bullets
 	b2_isBullet = 0x00000010,
 
-	// This body does a CCD pass against sensors
-	b2_enableSensorHits = 0x00000020,
-
 	// This body has hit the maximum linear or angular velocity
-	b2_isSpeedCapped = 0x00000040,
+	b2_isSpeedCapped = 0x00000020,
 
 	// This body has no limit on angular velocity
-	b2_allowFastRotation = 0x00000080,
+	b2_allowFastRotation = 0x00000040,
 
 	// This body need's to have its AABB increased
-	b2_enlargeBounds = 0x00000100,
+	b2_enlargeBounds = 0x00000080,
 
 	// All lock flags
 	b2_allLocks = b2_lockAngularZ | b2_lockLinearX | b2_lockLinearY,

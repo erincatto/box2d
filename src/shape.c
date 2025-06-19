@@ -144,9 +144,9 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	{
 		shape->sensorIndex = world->sensors.count;
 		b2Sensor sensor = {
-			.hits = b2ShapeRefArray_Create( 4 ),
-			.overlaps1 = b2ShapeRefArray_Create( 16 ),
-			.overlaps2 = b2ShapeRefArray_Create( 16 ),
+			.hits = b2VisitorArray_Create( 4 ),
+			.overlaps1 = b2VisitorArray_Create( 16 ),
+			.overlaps2 = b2VisitorArray_Create( 16 ),
 			.shapeId = shapeId,
 		};
 		b2SensorArray_Push( &world->sensors, sensor );
@@ -276,7 +276,7 @@ static void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body
 		b2Sensor* sensor = b2SensorArray_Get( &world->sensors, shape->sensorIndex );
 		for ( int i = 0; i < sensor->overlaps2.count; ++i )
 		{
-			b2ShapeRef* ref = sensor->overlaps2.data + i;
+			b2Visitor* ref = sensor->overlaps2.data + i;
 			b2SensorEndTouchEvent event = {
 				.sensorShapeId =
 					{
@@ -296,9 +296,9 @@ static void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body
 		}
 
 		// Destroy sensor
-		b2ShapeRefArray_Destroy( &sensor->hits );
-		b2ShapeRefArray_Destroy( &sensor->overlaps1 );
-		b2ShapeRefArray_Destroy( &sensor->overlaps2 );
+		b2VisitorArray_Destroy( &sensor->hits );
+		b2VisitorArray_Destroy( &sensor->overlaps1 );
+		b2VisitorArray_Destroy( &sensor->overlaps2 );
 
 		int movedIndex = b2SensorArray_RemoveSwap( &world->sensors, shape->sensorIndex );
 		if ( movedIndex != B2_NULL_INDEX )
@@ -1689,7 +1689,7 @@ int b2Shape_GetSensorCapacity( b2ShapeId shapeId )
 	return sensor->overlaps2.count;
 }
 
-int b2Shape_GetSensorData( b2ShapeId shapeId, b2SensorData* sensorData, int capacity )
+int b2Shape_GetSensorData( b2ShapeId shapeId, b2ShapeId* visitorIds, int capacity )
 {
 	b2World* world = b2GetWorldLocked( shapeId.world0 );
 	if ( world == NULL )
@@ -1706,7 +1706,7 @@ int b2Shape_GetSensorData( b2ShapeId shapeId, b2SensorData* sensorData, int capa
 	b2Sensor* sensor = b2SensorArray_Get( &world->sensors, shape->sensorIndex );
 
 	int count = b2MinInt( sensor->overlaps2.count, capacity );
-	b2ShapeRef* refs = sensor->overlaps2.data;
+	b2Visitor* refs = sensor->overlaps2.data;
 	for ( int i = 0; i < count; ++i )
 	{
 		b2ShapeId visitorId = {
@@ -1715,10 +1715,7 @@ int b2Shape_GetSensorData( b2ShapeId shapeId, b2SensorData* sensorData, int capa
 			.generation = refs[i].generation,
 		};
 
-		sensorData[i] = (b2SensorData){
-			.visitorId = visitorId,
-			.visitTransform = refs[i].transform,
-		};
+		visitorIds[i] = visitorId;
 	}
 
 	return count;

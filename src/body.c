@@ -253,7 +253,6 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	bodySim->bodyId = bodyId;
 	bodySim->flags = lockFlags;
 	bodySim->flags |= def->isBullet ? b2_isBullet : 0;
-	bodySim->flags |= def->enableSensorHits ? b2_enableSensorHits : 0;
 	bodySim->flags |= def->allowFastRotation ? b2_allowFastRotation : 0;
 
 	if ( setId == b2_awakeSet )

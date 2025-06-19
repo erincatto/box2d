@@ -314,9 +314,9 @@ void b2DestroyWorld( b2WorldId worldId )
 	int sensorCount = world->sensors.count;
 	for ( int i = 0; i < sensorCount; ++i )
 	{
-		b2ShapeRefArray_Destroy( &world->sensors.data[i].hits );
-		b2ShapeRefArray_Destroy( &world->sensors.data[i].overlaps1 );
-		b2ShapeRefArray_Destroy( &world->sensors.data[i].overlaps2 );
+		b2VisitorArray_Destroy( &world->sensors.data[i].hits );
+		b2VisitorArray_Destroy( &world->sensors.data[i].overlaps1 );
+		b2VisitorArray_Destroy( &world->sensors.data[i].overlaps2 );
 	}
 
 	b2SensorArray_Destroy( &world->sensors );

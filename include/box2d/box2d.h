@@ -662,12 +662,12 @@ B2_API int b2Shape_GetSensorCapacity( b2ShapeId shapeId );
 
 /// Get the overlap data for a sensor shape.
 /// @param shapeId the id of a sensor shape
-/// @param sensorData a user allocated array that is filled with the overlapping shapes (visitors)
+/// @param visitorIds a user allocated array that is filled with the overlapping shapes (visitors)
 /// @param capacity the capacity of overlappedShapes
 /// @returns the number of elements filled in the provided array
 /// @warning do not ignore the return value, it specifies the valid number of elements
 /// @warning overlaps may contain destroyed shapes so use b2Shape_IsValid to confirm each overlap
-B2_API int b2Shape_GetSensorData( b2ShapeId shapeId, b2SensorData* sensorData, int capacity );
+B2_API int b2Shape_GetSensorData( b2ShapeId shapeId, b2ShapeId* visitorIds, int capacity );
 
 /// Get the current world AABB
 B2_API b2AABB b2Shape_GetAABB( b2ShapeId shapeId );

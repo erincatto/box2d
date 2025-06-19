@@ -785,12 +785,12 @@ public:
 		DrawTextLine( "count == %d", m_overlapCount );
 
 		int capacity = b2Shape_GetSensorCapacity( m_sensorId );
-		m_sensorData.clear();
-		m_sensorData.resize( capacity );
-		int count = b2Shape_GetSensorData( m_sensorId, m_sensorData.data(), capacity );
+		m_visitorIds.clear();
+		m_visitorIds.resize( capacity );
+		int count = b2Shape_GetSensorData( m_sensorId, m_visitorIds.data(), capacity );
 		for ( int i = 0; i < count; ++i )
 		{
-			b2ShapeId shapeId = m_sensorData[i].visitorId;
+			b2ShapeId shapeId = m_visitorIds[i];
 			b2AABB aabb = b2Shape_GetAABB( shapeId );
 			b2Vec2 point = b2AABB_Center( aabb );
 			m_context->draw.DrawPoint( point, 10.0f, b2_colorWhite );
@@ -804,7 +804,7 @@ public:
 
 	b2BodyId m_playerId;
 	b2ShapeId m_sensorId;
-	std::vector<b2SensorData> m_sensorData;
+	std::vector<b2ShapeId> m_visitorIds;
 	int m_overlapCount;
 };
 
@@ -1767,16 +1767,16 @@ public:
 
 		// Determine the necessary capacity
 		int capacity = b2Shape_GetSensorCapacity( sensorShapeId );
-		m_sensorData.resize( capacity );
+		m_visitorIds.resize( capacity );
 
 		// Get all overlaps and record the actual count
-		int count = b2Shape_GetSensorData( sensorShapeId, m_sensorData.data(), capacity );
-		m_sensorData.resize( count );
+		int count = b2Shape_GetSensorData( sensorShapeId, m_visitorIds.data(), capacity );
+		m_visitorIds.resize( count );
 
 		int start = snprintf( buffer, sizeof( buffer ), "%s: ", prefix );
 		for ( int i = 0; i < count && start < sizeof( buffer ); ++i )
 		{
-			b2ShapeId visitorId = m_sensorData[i].visitorId;
+			b2ShapeId visitorId = m_visitorIds[i];
 			if ( b2Shape_IsValid( visitorId ) == false )
 			{
 				continue;
@@ -1837,7 +1837,7 @@ public:
 
 	b2BodyId m_kinematicBodyId;
 
-	std::vector<b2SensorData> m_sensorData;
+	std::vector<b2ShapeId> m_visitorIds;
 };
 
 static int sampleSensorTypes = RegisterSample( "Events", "Sensor Types", SensorTypes::Create );
@@ -2270,7 +2270,6 @@ public:
 		m_bodyId = {};
 		m_shapeId = {};
 		m_transformCount = 0;
-		m_enableSensorHits = true;
 		m_isBullet = true;
 
 		Launch();
@@ -2293,7 +2292,6 @@ public:
 		float speed = RandomFloatRange( 200.0f, 300.0f );
 		bodyDef.linearVelocity = { speed, 0.0f };
 		bodyDef.isBullet = m_isBullet;
-		bodyDef.enableSensorHits = m_enableSensorHits;
 		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -2313,7 +2311,6 @@ public:
 
 		ImGui::Begin( "Sensor Hit", nullptr, ImGuiWindowFlags_NoResize );
 
-		ImGui::Checkbox( "Enable Hits", &m_enableSensorHits );
 		ImGui::Checkbox( "Bullet", &m_isBullet );
 
 		if ( ImGui::Button( "Launch" ) || glfwGetKey( m_context->window, GLFW_KEY_B ) == GLFW_PRESS )
@@ -2327,12 +2324,13 @@ public:
 	void CollectTransforms( b2ShapeId sensorShapeId )
 	{
 		constexpr int capacity = 5;
-		b2SensorData sensorData[capacity];
-		int count = b2Shape_GetSensorData( sensorShapeId, sensorData, capacity );
+		b2ShapeId visitorIds[capacity];
+		int count = b2Shape_GetSensorData( sensorShapeId, visitorIds, capacity );
 
 		for ( int i = 0; i < count && m_transformCount < m_transformCapacity; ++i )
 		{
-			m_transforms[m_transformCount] = sensorData[i].visitTransform;
+			b2BodyId sensorBodyId = b2Shape_GetBody( sensorShapeId );
+			m_transforms[m_transformCount] = b2Body_GetTransform( sensorBodyId );
 			m_transformCount += 1;
 		}
 	}
@@ -2373,7 +2371,10 @@ public:
 		for ( int i = 0; i < sensorEvents.beginCount; ++i )
 		{
 			const b2SensorBeginTouchEvent* event = sensorEvents.beginEvents + i;
-			CollectTransforms( event->sensorShapeId );
+			if ( b2Shape_IsValid( event->sensorShapeId ) == true )
+			{
+				CollectTransforms( event->sensorShapeId );
+			}
 		}
 
 		DrawTextLine( "begin touch count = %d", m_beginCount );
@@ -2401,18 +2402,17 @@ public:
 	b2Transform m_transforms[m_transformCapacity];
 
 	bool m_isBullet;
-	bool m_enableSensorHits;
 	int m_beginCount;
 	int m_endCount;
 };
 
 static int sampleSensorHits = RegisterSample( "Events", "Sensor Hits", SensorHits::Create );
 
-// This shows how to use a sensor as a projectile
-class SensorProjectile : public Sample
+// This shows how to create a projectile that explodes on impact
+class ProjectileEvent : public Sample
 {
 public:
-	explicit SensorProjectile( SampleContext* context )
+	explicit ProjectileEvent( SampleContext* context )
 		: Sample( context )
 	{
 		if ( m_context->restart == false )
@@ -2437,6 +2437,7 @@ public:
 		}
 
 		m_projectileId = {};
+		m_projectileShapeId = {};
 		m_dragging = false;
 		m_point1 = b2Vec2_zero;
 		m_point2 = b2Vec2_zero;
@@ -2473,17 +2474,15 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 		bodyDef.position = m_point1;
-		bodyDef.linearVelocity = 2.0f * ( m_point2 - m_point1 );
+		bodyDef.linearVelocity = 4.0f * ( m_point2 - m_point1 );
 		bodyDef.isBullet = true;
-		bodyDef.enableSensorHits = true;
 
 		m_projectileId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2Circle circle = { { 0.0f, 0.0f }, 0.25f };
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.isSensor = true;
-		shapeDef.enableSensorEvents = true;
-		b2CreateCircleShape( m_projectileId, &shapeDef, &circle );
+		shapeDef.enableContactEvents = true;
+		m_projectileShapeId = b2CreateCircleShape( m_projectileId, &shapeDef, &circle );
 	}
 
 	void MouseDown( b2Vec2 p, int button, int mods ) override
@@ -2502,7 +2501,7 @@ public:
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
-			if (m_dragging)
+			if ( m_dragging )
 			{
 				m_dragging = false;
 				FireProjectile();
@@ -2531,22 +2530,30 @@ public:
 			m_draw->DrawPoint( m_point2, 5.0f, b2_colorRed );
 		}
 
-		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
-		for ( int i = 0; i < sensorEvents.beginCount; ++i )
+		b2ContactEvents contactEvents = b2World_GetContactEvents( m_worldId );
+		for ( int i = 0; i < contactEvents.beginCount; ++i )
 		{
-			const b2SensorBeginTouchEvent* event = sensorEvents.beginEvents + i;
-			(void)event;
+			const b2ContactBeginTouchEvent* event = contactEvents.beginEvents + i;
 
-			if ( B2_IS_NON_NULL( m_projectileId ) )
+			if ( B2_ID_EQUALS( event->shapeIdA, m_projectileShapeId ) || B2_ID_EQUALS( event->shapeIdB, m_projectileShapeId ) )
 			{
-				b2ExplosionDef explosionDef = b2DefaultExplosionDef();
-				explosionDef.position = b2Body_GetPosition( m_projectileId );
-				explosionDef.radius = 1.0f;
-				explosionDef.impulsePerLength = 20.0f;
-				b2World_Explode( m_worldId, &explosionDef );
+				if (b2Contact_IsValid(event->contactId))
+				{
+					b2ContactData data = b2Contact_GetData( event->contactId );
 
-				b2DestroyBody( m_projectileId );
-				m_projectileId = b2_nullBodyId;
+					if (data.manifold.pointCount > 0)
+					{
+						b2ExplosionDef explosionDef = b2DefaultExplosionDef();
+						explosionDef.position = data.manifold.points[0].point;
+						explosionDef.radius = 1.0f;
+						explosionDef.impulsePerLength = 20.0f;
+						b2World_Explode( m_worldId, &explosionDef );
+
+						b2DestroyBody( m_projectileId );
+						m_projectileId = b2_nullBodyId;
+					}
+				}
+
 				break;
 			}
 		}
@@ -2554,13 +2561,14 @@ public:
 
 	static Sample* Create( SampleContext* context )
 	{
-		return new SensorProjectile( context );
+		return new ProjectileEvent( context );
 	}
 
 	b2BodyId m_projectileId;
+	b2ShapeId m_projectileShapeId;
 	b2Vec2 m_point1;
 	b2Vec2 m_point2;
 	bool m_dragging;
 };
 
-static int sampleSensorProjectile = RegisterSample( "Events", "Sensor Projectile", SensorProjectile::Create );
+static int sampleProjectileEvent = RegisterSample( "Events", "Projectile Event", ProjectileEvent::Create );

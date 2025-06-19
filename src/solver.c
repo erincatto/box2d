@@ -272,6 +272,8 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	b2Shape* fastShape = continuousContext->fastShape;
 	b2BodySim* fastBodySim = continuousContext->fastBodySim;
 
+	B2_ASSERT( fastShape->sensorIndex == B2_NULL_INDEX );
+
 	// Skip same shape
 	if ( shapeId == fastShape->id )
 	{
@@ -288,9 +290,10 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 		return true;
 	}
 
-	// Skip sensors except if the body wants sensor hits
-	bool isSensor = shape->sensorIndex != B2_NULL_INDEX || fastShape->sensorIndex != B2_NULL_INDEX;
-	if ( isSensor && ( fastBodySim->flags & b2_enableSensorHits ) == 0 )
+	bool isSensor = shape->sensorIndex != B2_NULL_INDEX;
+
+	// Skip sensors unless the shapes want sensor events
+	if ( isSensor && ( shape->enableSensorEvents == false || fastShape->enableSensorEvents == false ) )
 	{
 		return true;
 	}
@@ -335,8 +338,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	}
 
 	// Early out on fast parallel movement over a chain shape.
-	// No early out for sensor sweeps.
-	if ( shape->type == b2_chainSegmentShape && isSensor == false )
+	if ( shape->type == b2_chainSegmentShape )
 	{
 		b2Transform transform = bodySim->transform;
 		b2Vec2 p1 = b2TransformPoint( transform, shape->chainSegment.segment.point1 );
@@ -402,12 +404,13 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 		if ( output.fraction <= continuousContext->fraction && continuousContext->sensorCount < B2_MAX_CONTINUOUS_SENSOR_HITS )
 		{
 			int index = continuousContext->sensorCount;
-			b2Transform hitTransform = b2GetSweepTransform( &continuousContext->sweep, output.fraction );
+
+			// The hit shape is a sensor
 			b2SensorHit sensorHit = {
 				.sensorId = shape->id,
 				.visitorId = fastShape->id,
-				.visitorTransform = hitTransform,
 			};
+
 			continuousContext->sensorHits[index] = sensorHit;
 			continuousContext->sensorFractions[index] = output.fraction;
 			continuousContext->sensorCount += 1;
@@ -501,6 +504,12 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 		// Store this to avoid double computation in the case there is no impact event
 		fastShape->aabb = box2;
+
+		// No continuous collision for sensors (but still need the updated bounds)
+		if ( fastShape->sensorIndex != B2_NULL_INDEX )
+		{
+			continue;
+		}
 
 		b2AABB sweptBox = b2AABB_Union( box1, box2 );
 
@@ -602,6 +611,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 	// Push sensor hits on the the task context for serial processing.
 	for ( int i = 0; i < context.sensorCount; ++i )
 	{
+		// Skip any sensor hits that occurred after a solid hit
 		if ( context.sensorFractions[i] < context.fraction )
 		{
 			b2SensorHitArray_Push( &taskContext->sensorHits, context.sensorHits[i] );
@@ -2091,7 +2101,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		for ( int i = 0; i < bulletBodyCount; ++i )
 		{
 			b2BodySim* bulletBodySim = bodySimArray + bulletBodySimIndices[i];
-			if ((bulletBodySim->flags & b2_enlargeBounds) == 0)
+			if ( ( bulletBodySim->flags & b2_enlargeBounds ) == 0 )
 			{
 				continue;
 			}
@@ -2159,12 +2169,11 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				b2Shape* visitor = b2ShapeArray_Get( &world->shapes, hit.visitorId );
 
 				b2Sensor* sensor = b2SensorArray_Get( &world->sensors, sensorShape->sensorIndex );
-				b2ShapeRef shapeRef = {
-					.transform = hit.visitorTransform,
+				b2Visitor shapeRef = {
 					.shapeId = hit.visitorId,
 					.generation = visitor->generation,
 				};
-				b2ShapeRefArray_Push( &sensor->hits, shapeRef );
+				b2VisitorArray_Push( &sensor->hits, shapeRef );
 			}
 		}
 
