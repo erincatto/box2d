@@ -218,6 +218,17 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 	int bodyIdB = bodyB->id;
 	int maxSetIndex = b2MaxInt( bodyA->setIndex, bodyB->setIndex );
 
+	// If the joint connects an awake body to a sleeping body then wake the sleeping body
+	// before creating the joint.
+	if ( bodyA->setIndex == b2_awakeSet || bodyB->setIndex == b2_awakeSet )
+	{
+		// if either body is sleeping, wake it
+		if ( maxSetIndex >= b2_firstSleepingSet )
+		{
+			b2WakeSolverSet( world, maxSetIndex );
+		}
+	}
+
 	// Create joint id and joint
 	int jointId = b2AllocId( &world->jointIdPool );
 	if ( jointId == world->joints.count )
@@ -302,11 +313,8 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 	}
 	else if ( bodyA->setIndex == b2_awakeSet || bodyB->setIndex == b2_awakeSet )
 	{
-		// if either body is sleeping, wake it
-		if ( maxSetIndex >= b2_firstSleepingSet )
-		{
-			b2WakeSolverSet( world, maxSetIndex );
-		}
+		B2_ASSERT( bodyA->setIndex == b2_awakeSet || bodyA->setIndex == b2_staticSet );
+		B2_ASSERT( bodyB->setIndex == b2_awakeSet || bodyB->setIndex == b2_staticSet );
 
 		joint->setIndex = b2_awakeSet;
 
@@ -331,7 +339,7 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 		jointSim = b2JointSimArray_Add( &set->jointSims );
 		memset( jointSim, 0, sizeof( b2JointSim ) );
 
-		// These must be set to accomodate the merge below
+		// These must be set to accommodate the merge below
 		jointSim->jointId = jointId;
 		jointSim->bodyIdA = bodyIdA;
 		jointSim->bodyIdB = bodyIdB;

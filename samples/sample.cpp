@@ -327,6 +327,7 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 		if ( B2_IS_NON_NULL( queryContext.bodyId ) )
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_kinematicBody;
 			m_groundBodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2MouseJointDef jointDef = b2DefaultMouseJointDef();
