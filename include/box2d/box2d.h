@@ -337,8 +337,8 @@ B2_API void b2Body_ApplyLinearImpulseToCenter( b2BodyId bodyId, b2Vec2 impulse, 
 /// @param bodyId The body id
 /// @param impulse the angular impulse, usually in units of kg*m*m/s
 /// @param wake also wake up the body
-/// @warning This should be used for one-shot impulses. If you need a steady force,
-/// use a force instead, which will work better with the sub-stepping solver.
+/// @warning This should be used for one-shot impulses. If you need a steady torque,
+/// use a torque instead, which will work better with the sub-stepping solver.
 B2_API void b2Body_ApplyAngularImpulse( b2BodyId bodyId, float impulse, bool wake );
 
 /// Get the mass of the body, usually in kilograms
@@ -417,10 +417,10 @@ B2_API void b2Body_Disable( b2BodyId bodyId );
 /// Enable a body by adding it to the simulation. This is expensive.
 B2_API void b2Body_Enable( b2BodyId bodyId );
 
-/// Set this body to have fixed rotation. This causes the mass to be reset in all cases.
+/// Set the motion locks on this body.
 B2_API void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks );
 
-/// Does this body have fixed rotation?
+/// Get the motion locks for this body.
 B2_API b2MotionLocks b2Body_GetMotionLocks( b2BodyId bodyId );
 
 /// Set this body to be a bullet. A bullet does continuous collision detection
@@ -662,12 +662,12 @@ B2_API int b2Shape_GetSensorCapacity( b2ShapeId shapeId );
 
 /// Get the overlap data for a sensor shape.
 /// @param shapeId the id of a sensor shape
-/// @param sensorData a user allocated array that is filled with the overlapping shapes (visitors)
+/// @param visitorIds a user allocated array that is filled with the overlapping shapes (visitors)
 /// @param capacity the capacity of overlappedShapes
 /// @returns the number of elements filled in the provided array
 /// @warning do not ignore the return value, it specifies the valid number of elements
 /// @warning overlaps may contain destroyed shapes so use b2Shape_IsValid to confirm each overlap
-B2_API int b2Shape_GetSensorData( b2ShapeId shapeId, b2SensorData* sensorData, int capacity );
+B2_API int b2Shape_GetSensorData( b2ShapeId shapeId, b2ShapeId* visitorIds, int capacity );
 
 /// Get the current world AABB
 B2_API b2AABB b2Shape_GetAABB( b2ShapeId shapeId );
@@ -787,14 +787,27 @@ B2_API float b2Joint_GetLinearSeparation( b2JointId jointId );
 /// Get the current angular separation error for this joint. Does not consider admissible movement. Usually in meters.
 B2_API float b2Joint_GetAngularSeparation( b2JointId jointId );
 
-/// Get the joint constraint tuning. Advanced feature.
-B2_API void b2Joint_GetConstraintTuning( b2JointId jointId, float* hertz, float* dampingRatio );
-
 /// Set the joint constraint tuning. Advanced feature.
 /// @param jointId the joint
 /// @param hertz the stiffness in Hertz (cycles per second)
 /// @param dampingRatio the non-dimensional damping ratio (one for critical damping)
 B2_API void b2Joint_SetConstraintTuning( b2JointId jointId, float hertz, float dampingRatio );
+
+/// Get the joint constraint tuning. Advanced feature.
+B2_API void b2Joint_GetConstraintTuning( b2JointId jointId, float* hertz, float* dampingRatio );
+
+/// Set the force threshold for joint events (Newtons)
+B2_API void b2Joint_SetForceThreshold( b2JointId jointId, float threshold );
+
+/// Get the force threshold for joint events (Newtons)
+B2_API float b2Joint_GetForceThreshold( b2JointId jointId );
+
+/// Set the torque threshold for joint events (N-m)
+B2_API void b2Joint_SetTorqueThreshold( b2JointId jointId, float threshold );
+
+/// Get the torque threshold for joint events (N-m)
+B2_API float b2Joint_GetTorqueThreshold( b2JointId jointId );
+
 
 /**
  * @defgroup distance_joint Distance Joint

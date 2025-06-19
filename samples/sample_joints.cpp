@@ -1388,37 +1388,16 @@ public:
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
-		m_groundId = b2CreateBody( m_worldId, &bodyDef );
+		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
 		m_motionLocks = { false, false, true };
 
 		for ( int i = 0; i < e_count; ++i )
 		{
 			m_bodyIds[i] = b2_nullBodyId;
-			m_jointIds[i] = b2_nullJointId;
-		}
-
-		CreateScene();
-	}
-
-	void CreateScene()
-	{
-		for ( int i = 0; i < e_count; ++i )
-		{
-			if ( B2_IS_NON_NULL( m_jointIds[i] ) )
-			{
-				b2DestroyJoint( m_jointIds[i] );
-				m_jointIds[i] = b2_nullJointId;
-			}
-
-			if ( B2_IS_NON_NULL( m_bodyIds[i] ) )
-			{
-				b2DestroyBody( m_bodyIds[i] );
-				m_bodyIds[i] = b2_nullBodyId;
-			}
 		}
 
 		b2Vec2 position = { -12.5f, 10.0f };
-		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 		bodyDef.motionLocks = m_motionLocks;
 
@@ -1439,12 +1418,12 @@ public:
 			b2Vec2 pivot1 = { position.x, position.y + 1.0f + length };
 			b2Vec2 pivot2 = { position.x, position.y + 1.0f };
 			b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
-			jointDef.base.bodyIdA = m_groundId;
+			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
 			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot1 );
 			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot2 );
 			jointDef.length = length;
-			m_jointIds[index] = b2CreateDistanceJoint( m_worldId, &jointDef );
+			b2CreateDistanceJoint( m_worldId, &jointDef );
 		}
 
 		position.x += 5.0f;
@@ -1460,12 +1439,12 @@ public:
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 
 			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
-			jointDef.base.bodyIdA = m_groundId;
+			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
 			jointDef.base.localFrameA.p = position;
 			jointDef.maxForce = 200.0f;
 			jointDef.maxTorque = 200.0f;
-			m_jointIds[index] = b2CreateMotorJoint( m_worldId, &jointDef );
+			b2CreateMotorJoint( m_worldId, &jointDef );
 		}
 
 		position.x += 5.0f;
@@ -1482,11 +1461,11 @@ public:
 
 			b2Vec2 pivot = { position.x - 1.0f, position.y };
 			b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
-			jointDef.base.bodyIdA = m_groundId;
+			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
 			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
 			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
-			m_jointIds[index] = b2CreatePrismaticJoint( m_worldId, &jointDef );
+			b2CreatePrismaticJoint( m_worldId, &jointDef );
 		}
 
 		position.x += 5.0f;
@@ -1503,11 +1482,11 @@ public:
 
 			b2Vec2 pivot = { position.x - 1.0f, position.y };
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
-			jointDef.base.bodyIdA = m_groundId;
+			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
 			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
 			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
-			m_jointIds[index] = b2CreateRevoluteJoint( m_worldId, &jointDef );
+			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 
 		position.x += 5.0f;
@@ -1524,7 +1503,7 @@ public:
 
 			b2Vec2 pivot = { position.x - 1.0f, position.y };
 			b2WeldJointDef jointDef = b2DefaultWeldJointDef();
-			jointDef.base.bodyIdA = m_groundId;
+			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
 			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
 			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
@@ -1532,7 +1511,7 @@ public:
 			jointDef.angularDampingRatio = 0.5f;
 			jointDef.linearHertz = 1.0f;
 			jointDef.linearDampingRatio = 0.5f;
-			m_jointIds[index] = b2CreateWeldJoint( m_worldId, &jointDef );
+			b2CreateWeldJoint( m_worldId, &jointDef );
 		}
 
 		position.x += 5.0f;
@@ -1549,7 +1528,7 @@ public:
 
 			b2Vec2 pivot = { position.x - 1.0f, position.y };
 			b2WheelJointDef jointDef = b2DefaultWheelJointDef();
-			jointDef.base.bodyIdA = m_groundId;
+			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
 			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
 			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
@@ -1561,7 +1540,7 @@ public:
 			jointDef.enableMotor = true;
 			jointDef.maxMotorTorque = 10.0f;
 			jointDef.motorSpeed = 1.0f;
-			m_jointIds[index] = b2CreateWheelJoint( m_worldId, &jointDef );
+			b2CreateWheelJoint( m_worldId, &jointDef );
 		}
 
 		position.x += 5.0f;
@@ -1573,7 +1552,7 @@ public:
 		float fontSize = ImGui::GetFontSize();
 		float height = 8.0f * fontSize;
 		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
+		ImGui::SetNextWindowSize( ImVec2( 14.0f * fontSize, height ) );
 
 		ImGui::Begin( "Motion Locks", nullptr, ImGuiWindowFlags_NoResize );
 
@@ -1617,9 +1596,7 @@ public:
 		return new MotionLocks( context );
 	}
 
-	b2BodyId m_groundId;
 	b2BodyId m_bodyIds[e_count];
-	b2JointId m_jointIds[e_count];
 	b2MotionLocks m_motionLocks;
 };
 
