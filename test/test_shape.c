@@ -21,7 +21,7 @@ static int ShapeMassTest( void )
 		b2MassData md = b2ComputeCircleMass( &circle, 1.0f );
 		ENSURE_SMALL( md.mass - B2_PI, FLT_EPSILON );
 		ENSURE( md.center.x == 1.0f && md.center.y == 0.0f );
-		ENSURE_SMALL( md.rotationalInertia - 1.5f * B2_PI, FLT_EPSILON );
+		ENSURE_SMALL( md.rotationalInertia - 0.5f * B2_PI, FLT_EPSILON );
 	}
 
 	{
