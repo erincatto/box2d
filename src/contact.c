@@ -539,7 +539,6 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	contactSim->restitution =
 		world->restitutionCallback( shapeA->restitution, shapeA->userMaterialId, shapeB->restitution, shapeB->userMaterialId );
 
-	// todo branch improves perf?
 	if ( shapeA->rollingResistance > 0.0f || shapeB->rollingResistance > 0.0f )
 	{
 		float radiusA = b2GetShapeRadius( shapeA );
