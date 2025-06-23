@@ -11,6 +11,8 @@
 #define WIN32_LEAN_AND_MEAN 1
 #endif
 
+#include "core.h"
+
 #include <windows.h>
 
 static double s_invFrequency = 0.0;
@@ -65,6 +67,35 @@ void b2Yield( void )
 	SwitchToThread();
 }
 
+typedef struct b2Mutex
+{
+	CRITICAL_SECTION cs;
+} b2Mutex;
+
+b2Mutex* b2CreateMutex( void )
+{
+	b2Mutex* m = b2Alloc( sizeof( b2Mutex ) );
+	InitializeCriticalSection( &m->cs );
+	return m;
+}
+
+void b2Mutex_Destroy( b2Mutex* m )
+{
+	DeleteCriticalSection( &m->cs );
+	*m = (b2Mutex){ 0 };
+	b2Free( m, sizeof( b2Mutex ) );
+}
+
+void b2LockMutex( b2Mutex* m )
+{
+	EnterCriticalSection( &m->cs );
+}
+
+void b2UnlockMutex( b2Mutex* m )
+{
+	LeaveCriticalSection( &m->cs );
+}
+
 #elif defined( __linux__ ) || defined( __EMSCRIPTEN__ )
 
 #include <sched.h>
@@ -94,6 +125,36 @@ float b2GetMillisecondsAndReset( uint64_t* ticks )
 void b2Yield( void )
 {
 	sched_yield();
+}
+
+#include <pthread.h>
+typedef struct b2Mutex
+{
+	pthread_mutex_t mtx;
+} b2Mutex;
+
+b2Mutex* b2CreateMutex( void )
+{
+	b2Mutex* m = b2Alloc( sizeof( b2Mutex ) );
+	pthread_mutex_init( &m->mtx, NULL );
+	return m;
+}
+
+void b2DestroyMutex( b2Mutex* m )
+{
+	pthread_mutex_destroy( &m->mtx );
+	*m = (b2Mutex){ 0 };
+	b2Free( m, sizeof(b2Mutex) );
+}
+
+void b2LockMutex( b2Mutex* m )
+{
+	pthread_mutex_lock( &m->mtx );
+}
+
+void b2UnlockMutex( b2Mutex* m )
+{
+	pthread_mutex_unlock( &m->mtx );
 }
 
 #elif defined( __APPLE__ )
@@ -146,6 +207,36 @@ void b2Yield( void )
 	sched_yield();
 }
 
+#include <pthread.h>
+typedef struct b2Mutex
+{
+	pthread_mutex_t mtx;
+} b2Mutex;
+
+b2Mutex* b2CreateMutex( void )
+{
+	b2Mutex* m = b2Alloc( sizeof( b2Mutex ) );
+	pthread_mutex_init( &m->mtx, NULL );
+	return m;
+}
+
+void b2DestroyMutex( b2Mutex* m )
+{
+	pthread_mutex_destroy( &m->mtx );
+	*m = (b2Mutex){ 0 };
+	b2Free( m, sizeof( b2Mutex ) );
+}
+
+void b2LockMutex( b2Mutex* m )
+{
+	pthread_mutex_lock( &m->mtx );
+}
+
+void b2UnlockMutex( b2Mutex* m )
+{
+	pthread_mutex_unlock( &m->mtx );
+}
+
 #else
 
 uint64_t b2GetTicks( void )
@@ -167,6 +258,34 @@ float b2GetMillisecondsAndReset( uint64_t* ticks )
 
 void b2Yield( void )
 {
+}
+
+typedef struct b2Mutex
+{
+	int dummy;
+} b2Mutex;
+
+b2Mutex* b2CreateMutex( void )
+{
+	b2Mutex* m = b2Alloc( sizeof( b2Mutex ) );
+	m->dummy = 42;
+	return m;
+}
+
+void b2DestroyMutex( b2Mutex* m )
+{
+	*m = (b2Mutex){ 0 };
+	b2Free( m, sizeof( b2Mutex ) );
+}
+
+void b2LockMutex( b2Mutex* m )
+{
+	(void)m;
+}
+
+void b2UnlockMutex( b2Mutex* m )
+{
+	(void)m;
 }
 
 #endif
