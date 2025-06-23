@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#include "core.h"
+
 #include "box2d/base.h"
 
 #include <stddef.h>
@@ -10,8 +12,6 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN 1
 #endif
-
-#include "core.h"
 
 #include <windows.h>
 
@@ -111,13 +111,13 @@ uint64_t b2GetTicks( void )
 float b2GetMilliseconds( uint64_t ticks )
 {
 	uint64_t ticksNow = b2GetTicks();
-	return (float)( (ticksNow - ticks) / 1000000.0 );
+	return (float)( ( ticksNow - ticks ) / 1000000.0 );
 }
 
 float b2GetMillisecondsAndReset( uint64_t* ticks )
 {
 	uint64_t ticksNow = b2GetTicks();
-	float ms = (float)( (ticksNow - *ticks) / 1000000.0 );
+	float ms = (float)( ( ticksNow - *ticks ) / 1000000.0 );
 	*ticks = ticksNow;
 	return ms;
 }
@@ -144,7 +144,7 @@ void b2DestroyMutex( b2Mutex* m )
 {
 	pthread_mutex_destroy( &m->mtx );
 	*m = (b2Mutex){ 0 };
-	b2Free( m, sizeof(b2Mutex) );
+	b2Free( m, sizeof( b2Mutex ) );
 }
 
 void b2LockMutex( b2Mutex* m )
@@ -182,7 +182,7 @@ float b2GetMilliseconds( uint64_t ticks )
 	}
 
 	uint64_t ticksNow = b2GetTicks();
-	return (float)( s_invFrequency * (ticksNow - ticks) );
+	return (float)( s_invFrequency * ( ticksNow - ticks ) );
 }
 
 float b2GetMillisecondsAndReset( uint64_t* ticks )
