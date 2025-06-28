@@ -335,7 +335,7 @@ B2_INLINE b2Vec2 b2GetLengthAndNormalize( float* length, b2Vec2 v )
 B2_INLINE b2Rot b2NormalizeRot( b2Rot q )
 {
 	float mag = sqrtf( q.s * q.s + q.c * q.c );
-	float invMag = mag > 0.0 ? 1.0f / mag : 0.0f;
+	float invMag = mag > 0.0f ? 1.0f / mag : 0.0f;
 	b2Rot qn = { q.c * invMag, q.s * invMag };
 	return qn;
 }
@@ -351,7 +351,7 @@ B2_INLINE b2Rot b2IntegrateRotation( b2Rot q1, float deltaAngle )
 	// s2 = s1 + omega * h * c1
 	b2Rot q2 = { q1.c - deltaAngle * q1.s, q1.s + deltaAngle * q1.c };
 	float mag = sqrtf( q2.s * q2.s + q2.c * q2.c );
-	float invMag = mag > 0.0 ? 1.0f / mag : 0.0f;
+	float invMag = mag > 0.0f ? 1.0f / mag : 0.0f;
 	b2Rot qn = { q2.c * invMag, q2.s * invMag };
 	return qn;
 }
@@ -406,7 +406,7 @@ B2_INLINE b2Rot b2NLerp( b2Rot q1, b2Rot q2, float t )
 	};
 
 	float mag = sqrtf( q.s * q.s + q.c * q.c );
-	float invMag = mag > 0.0 ? 1.0f / mag : 0.0f;
+	float invMag = mag > 0.0f ? 1.0f / mag : 0.0f;
 	b2Rot qn = { q.c * invMag, q.s * invMag };
 	return qn;
 }
