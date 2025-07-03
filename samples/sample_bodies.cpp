@@ -220,7 +220,8 @@ public:
 		{
 			if ( m_isEnabled )
 			{
-				b2Body_Enable( m_platformId );
+				//b2Body_Enable( m_platformId );
+				b2Body_Enable( m_attachmentId );
 				b2Body_Enable( m_secondAttachmentId );
 				b2Body_Enable( m_secondPayloadId );
 				b2Body_Enable( m_touchingBodyId );
@@ -234,7 +235,8 @@ public:
 			}
 			else
 			{
-				b2Body_Disable( m_platformId );
+				//b2Body_Disable( m_platformId );
+				b2Body_Disable( m_attachmentId );
 				b2Body_Disable( m_secondAttachmentId );
 				b2Body_Disable( m_secondPayloadId );
 				b2Body_Disable( m_touchingBodyId );

@@ -518,7 +518,7 @@ typedef struct b2Counters
 	int treeHeight;
 	int byteCount;
 	int taskCount;
-	int colorCounts[12];
+	int colorCounts[24];
 } b2Counters;
 //! @endcond
 
