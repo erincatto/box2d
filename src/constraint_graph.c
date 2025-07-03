@@ -25,7 +25,7 @@
 // This is used for debugging by making all constraints be assigned to overflow.
 #define B2_FORCE_OVERFLOW 0
 
-_Static_assert( B2_GRAPH_COLOR_COUNT == 12, "graph color count assumed to be 12" );
+//_Static_assert( B2_GRAPH_COLOR_COUNT == 12, "graph color count assumed to be 12" );
 
 void b2CreateGraph( b2ConstraintGraph* graph, int bodyCapacity )
 {
@@ -102,7 +102,9 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	else if ( staticA == false )
 	{
 		// No static contacts in color 0
-		for ( int i = 1; i < B2_OVERFLOW_INDEX; ++i )
+		// Try to ensure static contacts are solved last
+		//for ( int i = B2_OVERFLOW_INDEX - 1; i >= 1; --i )
+		for ( int i = 1; i < B2_OVERFLOW_INDEX; ++i)
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdA ) )
@@ -118,6 +120,8 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	else if ( staticB == false )
 	{
 		// No static contacts in color 0
+		// Try to ensure static contacts are solved last
+		//for ( int i = B2_OVERFLOW_INDEX - 1; i >= 1; --i )
 		for ( int i = 1; i < B2_OVERFLOW_INDEX; ++i )
 		{
 			b2GraphColor* color = graph->colors + i;

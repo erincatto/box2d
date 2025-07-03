@@ -383,7 +383,7 @@ void CreateSpinner( b2WorldId worldId )
 		b2CreatePolygonShape( spinnerId, &shapeDef, &box );
 
 		float motorSpeed = 5.0f;
-		float maxMotorTorque = 40000.0f;
+		float maxMotorTorque = 10.0f * 40000.0f;
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 		jointDef.base.bodyIdA = groundId;
 		jointDef.base.bodyIdB = spinnerId;
@@ -406,7 +406,7 @@ void CreateSpinner( b2WorldId worldId )
 	shapeDef.material.restitution = 0.1f;
 	shapeDef.density = 0.25f;
 
-	int bodyCount = BENCHMARK_DEBUG ? 499 : 3038;
+	int bodyCount = BENCHMARK_DEBUG ? 499 : 2 * 3038;
 
 	float x = -24.0f, y = 2.0f;
 	for ( int i = 0; i < bodyCount; ++i )

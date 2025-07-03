@@ -803,6 +803,7 @@ public:
 	}
 
 	b2BodyId m_playerId;
+	int foo = 10;
 	b2ShapeId m_sensorId;
 	std::vector<b2ShapeId> m_visitorIds;
 	int m_overlapCount;
