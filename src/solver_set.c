@@ -519,7 +519,10 @@ void b2MergeSolverSets( b2World* world, int setId1, int setId2 )
 
 void b2TransferBody( b2World* world, b2SolverSet* targetSet, b2SolverSet* sourceSet, b2Body* body )
 {
-	B2_ASSERT( targetSet != sourceSet );
+	if (targetSet == sourceSet)
+	{
+		return;
+	}
 
 	int sourceIndex = body->localIndex;
 	b2BodySim* sourceSim = b2BodySimArray_Get( &sourceSet->bodySims, sourceIndex );
@@ -527,6 +530,9 @@ void b2TransferBody( b2World* world, b2SolverSet* targetSet, b2SolverSet* source
 	int targetIndex = targetSet->bodySims.count;
 	b2BodySim* targetSim = b2BodySimArray_Add( &targetSet->bodySims );
 	memcpy( targetSim, sourceSim, sizeof( b2BodySim ) );
+
+	// Clear transient body flags
+	targetSim->flags &= ~(b2_isFast | b2_isSpeedCapped);
 
 	// Remove body sim from solver set that owns it
 	int movedIndex = b2BodySimArray_RemoveSwap( &sourceSet->bodySims, sourceIndex );
@@ -557,7 +563,10 @@ void b2TransferBody( b2World* world, b2SolverSet* targetSet, b2SolverSet* source
 
 void b2TransferJoint( b2World* world, b2SolverSet* targetSet, b2SolverSet* sourceSet, b2Joint* joint )
 {
-	B2_ASSERT( targetSet != sourceSet );
+	if (targetSet == sourceSet)
+	{
+		return;
+	}
 
 	int localIndex = joint->localIndex;
 	int colorIndex = joint->colorIndex;

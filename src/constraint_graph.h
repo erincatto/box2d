@@ -26,7 +26,11 @@ typedef struct b2GraphColor
 	// This bitset is indexed by bodyId so this is over-sized to encompass static bodies
 	// however I never traverse these bits or use the bit count for anything
 	// This bitset is unused on the overflow color.
-	// todo consider having a uint_16 per body that tracks the graph color membership
+	//
+	// Dirk suggested having a uint64_t per body that tracks the graph color membership
+	// but I think this would make debugging harder and be less flexible. With the bitset
+	// I can trivially increase the number of graph colors beyond 64. See usage of b2CountSetBits
+	// for validation.
 	b2BitSet bodySet;
 
 	// cache friendly arrays

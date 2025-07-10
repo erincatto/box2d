@@ -4,6 +4,7 @@
 #include "table.h"
 
 #include "atomic.h"
+#include "bitset.h"
 #include "core.h"
 #include "ctz.h"
 
@@ -235,4 +236,18 @@ bool b2RemoveKey( b2HashSet* set, uint64_t key )
 	}
 
 	return true;
+}
+
+// This function is here because ctz.h is included by
+// this file but not in bitset.c
+int b2CountSetBits( b2BitSet* set )
+{
+	int popCount = 0;
+	uint32_t blockCount = set->blockCount;
+	for ( uint32_t i = 0; i < blockCount; ++i )
+	{
+		popCount += b2PopCount64(set->bits[i]);
+	}
+
+	return popCount;
 }

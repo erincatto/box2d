@@ -2959,15 +2959,15 @@ void b2ValidateSolverSets( b2World* world )
 				B2_ASSERT( set->islandSims.count == 0 );
 				B2_ASSERT( set->bodyStates.count == 0 );
 			}
-			else if ( setIndex == b2_awakeSet )
-			{
-				B2_ASSERT( set->bodySims.count == set->bodyStates.count );
-				B2_ASSERT( set->jointSims.count == 0 );
-			}
 			else if ( setIndex == b2_disabledSet )
 			{
 				B2_ASSERT( set->islandSims.count == 0 );
 				B2_ASSERT( set->bodyStates.count == 0 );
+			}
+			else if ( setIndex == b2_awakeSet )
+			{
+				B2_ASSERT( set->bodySims.count == set->bodyStates.count );
+				B2_ASSERT( set->jointSims.count == 0 );
 			}
 			else
 			{
@@ -3146,7 +3146,8 @@ void b2ValidateSolverSets( b2World* world )
 	for ( int colorIndex = 0; colorIndex < B2_GRAPH_COLOR_COUNT; ++colorIndex )
 	{
 		b2GraphColor* color = world->constraintGraph.colors + colorIndex;
-		{
+			int bitCount = 0;
+			
 			B2_ASSERT( color->contactSims.count >= 0 );
 			totalContactCount += color->contactSims.count;
 			for ( int i = 0; i < color->contactSims.count; ++i )
@@ -3169,12 +3170,13 @@ void b2ValidateSolverSets( b2World* world )
 					b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
 					B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type != b2_staticBody ) );
 					B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type != b2_staticBody ) );
+					
+					bitCount += bodyA->type == b2_staticBody ? 0 : 1;
+					bitCount += bodyB->type == b2_staticBody ? 0 : 1;
 				}
 			}
-		}
 
-		{
-			B2_ASSERT( color->jointSims.count >= 0 );
+		B2_ASSERT( color->jointSims.count >= 0 );
 			totalJointCount += color->jointSims.count;
 			for ( int i = 0; i < color->jointSims.count; ++i )
 			{
@@ -3193,9 +3195,14 @@ void b2ValidateSolverSets( b2World* world )
 					b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
 					B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type != b2_staticBody ) );
 					B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type != b2_staticBody ) );
+					
+					bitCount += bodyA->type == b2_staticBody ? 0 : 1;
+					bitCount += bodyB->type == b2_staticBody ? 0 : 1;
 				}
 			}
-		}
+		
+		// Validate the bit population for this graph color
+		B2_ASSERT(bitCount == b2CountSetBits(&color->bodySet));
 	}
 
 	int contactIdCount = b2GetIdCount( &world->contactIdPool );

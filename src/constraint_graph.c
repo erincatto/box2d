@@ -78,8 +78,8 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	int bodyIdB = contact->edges[1].bodyId;
 	b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
 	b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
-	bool staticA = bodyA->setIndex == b2_staticSet;
-	bool staticB = bodyB->setIndex == b2_staticSet;
+	bool staticA = bodyA->type == b2_staticBody;
+	bool staticB = bodyB->type == b2_staticBody;
 	B2_ASSERT( staticA == false || staticB == false );
 
 #if B2_FORCE_OVERFLOW == 0
@@ -278,8 +278,8 @@ b2JointSim* b2CreateJointInGraph( b2World* world, b2Joint* joint )
 	int bodyIdB = joint->edges[1].bodyId;
 	b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
 	b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
-	bool staticA = bodyA->setIndex == b2_staticSet;
-	bool staticB = bodyB->setIndex == b2_staticSet;
+	bool staticA = bodyA->type == b2_staticBody;
+	bool staticB = bodyB->type == b2_staticBody;
 
 	int colorIndex = b2AssignJointColor( graph, bodyIdA, bodyIdB, staticA, staticB );
 
