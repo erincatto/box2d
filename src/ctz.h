@@ -70,7 +70,7 @@ static inline uint32_t b2CTZ64( uint64_t block )
 
 static inline int b2PopCount64( uint64_t block )
 {
-	return __popcnt64( block );
+	return (int)__popcnt64( block );
 }
 #else
 
