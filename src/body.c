@@ -321,7 +321,6 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	body->type = def->type;
 	body->flags = lockFlags;
 	body->enableSleep = def->enableSleep;
-	body->isSpeedCapped = false;
 	body->isMarked = false;
 
 	// dynamic and kinematic bodies that are enabled need a island
@@ -1088,13 +1087,202 @@ b2BodyType b2Body_GetType( b2BodyId bodyId )
 	return body->type;
 }
 
-// Changing the body type is quite complex mainly due to joints.
-// Considerations:
-// - body and joints must be moved to the correct set
-// - islands must be updated
-// - graph coloring must be correct
-// - any body connected to a joint may be disabled
-// - joints between static bodies must go into the static set
+// This should follow similar steps as you would get destroying and recreating the body, shapes, and joints.
+// Contacts are difficult to preserve because the broad-phase pairs change, so I just destroy them.
+// todo with a bit more effort I could support an option to let the body sleep
+//
+// Revised steps:
+// 1 Skip disabled bodies
+// 2 Destroy all contacts on the body
+// 3 Wake the body
+// 4 For all joints attached to the body
+//  - wake attached bodies
+//  - remove from island
+//  - move to static set temporarily
+// 5 Change the body type and transfer the body
+// 6 If the body was static
+//   - create an island for the body
+//   Else if the body is becoming static
+//   - remove it from the island
+// 7 For all joints
+//  - if either body is non-static
+//    - link into island
+//    - transfer to constraint graph
+// 8 For all shapes
+//  - Destroy proxy in old tree
+//  - Create proxy in new tree
+// Notes:
+// - the implementation below tries to minimize the number of predicates, so some
+//   operations may have no effect, such as transfering a joint to the same set
+#if 1
+void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+
+	b2BodyType originalType = body->type;
+	if ( originalType == type )
+	{
+		return;
+	}
+
+	// Stage 1: skip disabled bodies
+	if ( body->setIndex == b2_disabledSet )
+	{
+		// Disabled bodies don't change solver sets or islands when they change type.
+		body->type = type;
+
+		// Body type affects the mass properties
+		b2UpdateBodyMassData( world, body );
+		return;
+	}
+
+	// Stage 2: destroy all contacts but don't wake bodies (because we don't need to)
+	bool wakeBodies = false;
+	b2DestroyBodyContacts( world, body, wakeBodies );
+
+	// Stage 3: wake this body (does nothing if body is static), otherwise it will also wake
+	// all bodies in the same sleeping solver set.
+	b2WakeBody( world, body );
+
+	// Stage 4: move joints to temporary storage
+	b2SolverSet* staticSet = b2SolverSetArray_Get( &world->solverSets, b2_staticSet );
+	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
+
+	int jointKey = body->headJointKey;
+	while ( jointKey != B2_NULL_INDEX )
+	{
+		int jointId = jointKey >> 1;
+		int edgeIndex = jointKey & 1;
+		
+		b2Joint* joint = b2JointArray_Get( &world->joints, jointId );
+		jointKey = joint->edges[edgeIndex].nextKey;
+
+		// Joint may be disabled by other body
+		if ( joint->setIndex == b2_disabledSet )
+		{
+			continue;
+		}
+
+		// Wake attached bodies. The b2WakeBody call above does not wake bodies
+		// attached to a static body. But it is necessary because the body may have
+		// no joints.
+		b2Body* bodyA = b2BodyArray_Get( &world->bodies, joint->edges[0].bodyId );
+		b2Body* bodyB = b2BodyArray_Get( &world->bodies, joint->edges[1].bodyId );
+		b2WakeBody( world, bodyA );
+		b2WakeBody( world, bodyB );
+
+		// Remove joint from island
+		b2UnlinkJoint( world, joint );
+
+		// It is necessary to transfer all joints to the static set
+		// so they can be added to the constraint graph below and acquire consistent colors.
+		b2SolverSet* jointSourceSet = b2SolverSetArray_Get( &world->solverSets, joint->setIndex );
+		b2TransferJoint( world, staticSet, jointSourceSet, joint );
+	}
+
+	// Stage 5: change the body type and transfer body
+	body->type = type;
+
+	b2SolverSet* sourceSet = b2SolverSetArray_Get(&world->solverSets, body->setIndex);
+	b2SolverSet* targetSet = type == b2_staticBody ? staticSet : awakeSet;
+	
+	// Transfer body
+	b2TransferBody( world, targetSet, sourceSet, body );
+
+	// Stage 6: update island participation for the body
+	if ( originalType == b2_staticBody )
+	{
+		// Create island for body
+		b2CreateIslandForBody( world, b2_awakeSet, body );
+	}
+	else if ( type == b2_staticBody )
+	{
+		// Remove body from island.
+		b2RemoveBodyFromIsland( world, body );
+	}
+
+	// Stage 7: Transfer joints to the target set
+	jointKey = body->headJointKey;
+	while ( jointKey != B2_NULL_INDEX )
+	{
+		int jointId = jointKey >> 1;
+		int edgeIndex = jointKey & 1;
+
+		b2Joint* joint = b2JointArray_Get( &world->joints, jointId );
+
+		jointKey = joint->edges[edgeIndex].nextKey;
+
+		// Joint may be disabled by other body
+		if (joint->setIndex == b2_disabledSet)
+		{
+			continue;
+		}
+		
+		// All joints were transfered to the static set in an earlier stage
+		B2_ASSERT ( joint->setIndex == b2_staticSet );
+		
+		b2Body* bodyA = b2BodyArray_Get( &world->bodies, joint->edges[0].bodyId );
+		b2Body* bodyB = b2BodyArray_Get( &world->bodies, joint->edges[1].bodyId );
+		B2_ASSERT(bodyA->setIndex == b2_staticSet || bodyA->setIndex == b2_awakeSet);
+		B2_ASSERT(bodyB->setIndex == b2_staticSet || bodyB->setIndex == b2_awakeSet);
+		
+		if (bodyA->setIndex == b2_awakeSet || bodyB->setIndex == b2_awakeSet)
+		{
+			b2TransferJoint( world, awakeSet, staticSet, joint );
+		}
+	}
+
+	// Recreate shape proxies in broadphase
+   b2Transform transform = b2GetBodyTransformQuick( world, body );
+   int shapeId = body->headShapeId;
+   while ( shapeId != B2_NULL_INDEX )
+   {
+	   b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+	   shapeId = shape->nextShapeId;
+	   b2DestroyShapeProxy( shape, &world->broadPhase );
+	   bool forcePairCreation = true;
+	   b2CreateShapeProxy( shape, &world->broadPhase, type, transform, forcePairCreation );
+   }
+
+	// Relink all joints
+	jointKey = body->headJointKey;
+	while ( jointKey != B2_NULL_INDEX )
+	{
+		int jointId = jointKey >> 1;
+		int edgeIndex = jointKey & 1;
+
+		b2Joint* joint = b2JointArray_Get( &world->joints, jointId );
+		jointKey = joint->edges[edgeIndex].nextKey;
+
+		int otherEdgeIndex = edgeIndex ^ 1;
+		int otherBodyId = joint->edges[otherEdgeIndex].bodyId;
+		b2Body* otherBody = b2BodyArray_Get( &world->bodies, otherBodyId );
+
+		if ( otherBody->setIndex == b2_disabledSet )
+		{
+			continue;
+		}
+
+		if ( body->type == b2_staticBody && otherBody->type == b2_staticBody )
+		{
+			continue;
+		}
+
+		bool mergeIslands = false;
+		b2LinkJoint( world, joint, mergeIslands );
+	}
+
+	b2MergeAwakeIslands( world );
+
+	// Body type affects the mass
+	b2UpdateBodyMassData( world, body );
+
+	b2ValidateSolverSets( world );
+	b2ValidateIsland(world, body->islandId);
+}
+#else
+// todo keeping this buggy old version for reference
 void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
@@ -1183,6 +1371,13 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 			{
 				// In this case the joint must be re-inserted into the constraint graph to ensure the correct
 				// graph color.
+				
+				// BUG BUG BUG
+				// This has a subtle bug where the joint transfer below can clear a color occupied by another
+				// joint attached to this body.
+				// This can happen when a body was previously static.
+				// For this reason, all joints must first be moved to the static set before being added to
+				// the constraint graph
 
 				// First transfer to the static set.
 				b2TransferJoint( world, staticSet, awakeSet, joint );
@@ -1344,6 +1539,7 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 
 	b2ValidateSolverSets( world );
 }
+#endif
 
 void b2Body_SetName( b2BodyId bodyId, const char* name )
 {
@@ -1615,7 +1811,7 @@ void b2Body_EnableSleep( b2BodyId bodyId, bool enableSleep )
 }
 
 // Disabling a body requires a lot of detailed bookkeeping, but it is a valuable feature.
-// The most challenging aspect that joints may connect to bodies that are not disabled.
+// The most challenging aspect is that joints may connect to bodies that are not disabled.
 void b2Body_Disable( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
@@ -1635,26 +1831,13 @@ void b2Body_Disable( b2BodyId bodyId )
 	bool wakeBodies = true;
 	b2DestroyBodyContacts( world, body, wakeBodies );
 
-	// Disabled bodies are not in an island.
-	b2RemoveBodyFromIsland( world, body );
-
-	// Remove shapes from broad-phase
-	int shapeId = body->headShapeId;
-	while ( shapeId != B2_NULL_INDEX )
-	{
-		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
-		shapeId = shape->nextShapeId;
-		b2DestroyShapeProxy( shape, &world->broadPhase );
-	}
-
-	// Transfer simulation data to disabled set
+	// The current solver set of the body
 	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, body->setIndex );
+
+	// Disabled bodies and connected joints are moved to the disabled set
 	b2SolverSet* disabledSet = b2SolverSetArray_Get( &world->solverSets, b2_disabledSet );
 
-	// Transfer body sim
-	b2TransferBody( world, disabledSet, set, body );
-
-	// Unlink joints and transfer
+	// Unlink joints and transfer them to the disabled set
 	int jointKey = body->headJointKey;
 	while ( jointKey != B2_NULL_INDEX )
 	{
@@ -1673,15 +1856,27 @@ void b2Body_Disable( b2BodyId bodyId )
 		B2_ASSERT( joint->setIndex == set->setIndex || set->setIndex == b2_staticSet );
 
 		// Remove joint from island
-		if ( joint->islandId != B2_NULL_INDEX )
-		{
-			b2UnlinkJoint( world, joint );
-		}
+		b2UnlinkJoint( world, joint );
 
 		// Transfer joint to disabled set
 		b2SolverSet* jointSet = b2SolverSetArray_Get( &world->solverSets, joint->setIndex );
 		b2TransferJoint( world, disabledSet, jointSet, joint );
 	}
+	
+	// Remove shapes from broad-phase
+	int shapeId = body->headShapeId;
+	while ( shapeId != B2_NULL_INDEX )
+	{
+		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+		shapeId = shape->nextShapeId;
+		b2DestroyShapeProxy( shape, &world->broadPhase );
+	}
+
+	// Disabled bodies are not in an island. If the island becomes empty it will be destroyed.
+	b2RemoveBodyFromIsland( world, body );
+
+	// Transfer body sim
+	b2TransferBody( world, disabledSet, set, body );
 
 	b2ValidateConnectivity( world );
 	b2ValidateSolverSets( world );

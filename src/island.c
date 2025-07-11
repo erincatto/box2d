@@ -383,7 +383,10 @@ void b2LinkJoint( b2World* world, b2Joint* joint, bool mergeIslands )
 
 void b2UnlinkJoint( b2World* world, b2Joint* joint )
 {
-	B2_ASSERT( joint->islandId != B2_NULL_INDEX );
+	if (joint->islandId == B2_NULL_INDEX)
+	{
+		return;
+	}
 
 	// remove from island
 	int islandId = joint->islandId;
@@ -866,6 +869,11 @@ void b2SplitIslandTask( int startIndex, int endIndex, uint32_t threadIndex, void
 #if B2_VALIDATE
 void b2ValidateIsland( b2World* world, int islandId )
 {
+	if (islandId == B2_NULL_INDEX)
+	{
+		return;
+	}
+	
 	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
 	B2_ASSERT( island->islandId == islandId );
 	B2_ASSERT( island->setIndex != B2_NULL_INDEX );

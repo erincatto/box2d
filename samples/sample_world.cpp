@@ -34,7 +34,6 @@ public:
 			m_context->camera.m_center = m_viewPosition;
 			m_context->camera.m_zoom = 25.0f * 1.0f;
 			m_context->drawJoints = false;
-			m_context->useCameraBounds = true;
 		}
 
 		{

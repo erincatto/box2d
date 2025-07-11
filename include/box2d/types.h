@@ -518,7 +518,7 @@ typedef struct b2Counters
 	int treeHeight;
 	int byteCount;
 	int taskCount;
-	int colorCounts[12];
+	int colorCounts[24];
 } b2Counters;
 //! @endcond
 
@@ -1351,9 +1351,6 @@ typedef struct b2DebugDraw
 
 	/// Bounds to use if restricting drawing to a rectangular region
 	b2AABB drawingBounds;
-
-	/// Option to restrict drawing to a rectangular region. May suffer from unstable depth sorting.
-	bool useDrawingBounds;
 
 	/// Option to draw shapes
 	bool drawShapes;

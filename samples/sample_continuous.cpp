@@ -65,7 +65,7 @@ public:
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
-		m_shapeType = e_boxShape;
+		m_shapeType = e_circleShape;
 		m_bodyId = b2_nullBodyId;
 		m_enableHitEvents = true;
 
@@ -86,6 +86,7 @@ public:
 		bodyDef.linearVelocity = { 10.0f, 20.0f };
 		bodyDef.position = { 0.0f, 0.0f };
 		bodyDef.gravityScale = 0.0f;
+		bodyDef.isBullet = true;
 
 		// Circle shapes centered on the body can spin fast without risk of tunnelling.
 		bodyDef.allowFastRotation = m_shapeType == e_circleShape;
@@ -94,8 +95,8 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
-		shapeDef.material.restitution = 1.2f;
-		shapeDef.material.friction = 0.3f;
+		shapeDef.material.restitution = 1.0f;
+		shapeDef.material.friction = 0.0f;
 		shapeDef.enableHitEvents = m_enableHitEvents;
 
 		if ( m_shapeType == e_circleShape )

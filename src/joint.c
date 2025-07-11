@@ -1551,15 +1551,43 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 
 	if ( draw->drawGraphColors )
 	{
-		b2HexColor colors[B2_GRAPH_COLOR_COUNT] = { b2_colorRed,	   b2_colorOrange,	  b2_colorYellow, b2_colorGreen,
-													b2_colorCyan,	   b2_colorBlue,	  b2_colorViolet, b2_colorPink,
-													b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,  b2_colorBlack };
-
+		b2HexColor graphColors[B2_GRAPH_COLOR_COUNT] = {
+			b2_colorRed,
+			b2_colorOrange,
+			b2_colorYellow,
+			b2_colorGreen,
+			
+			b2_colorCyan,
+			b2_colorBlue,
+			b2_colorViolet,
+			b2_colorPink,
+			
+			b2_colorChocolate,
+			b2_colorGoldenRod,
+			b2_colorCoral,
+			b2_colorRosyBrown,
+			
+			b2_colorAqua,
+			b2_colorPeru,
+			b2_colorLime,
+			b2_colorGold,
+			
+			b2_colorPlum,
+			b2_colorSnow,
+			b2_colorTeal,
+			b2_colorKhaki,
+			
+			b2_colorSalmon,
+			b2_colorPeachPuff,
+			b2_colorHoneyDew,
+			b2_colorBlack,
+		};
+		
 		int colorIndex = joint->colorIndex;
 		if ( colorIndex != B2_NULL_INDEX )
 		{
 			b2Vec2 p = b2Lerp( pA, pB, 0.5f );
-			draw->DrawPointFcn( p, 5.0f, colors[colorIndex], draw->context );
+			draw->DrawPointFcn( p, 5.0f, graphColors[colorIndex], draw->context );
 		}
 	}
 

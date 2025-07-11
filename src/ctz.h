@@ -7,7 +7,8 @@
 #include <stdint.h>
 
 #if defined( _MSC_VER ) && !defined( __clang__ )
-	#include <intrin.h>
+
+#include <intrin.h>
 
 // https://en.wikipedia.org/wiki/Find_first_set
 
@@ -67,6 +68,10 @@ static inline uint32_t b2CTZ64( uint64_t block )
 	return index;
 }
 
+static inline int b2PopCount64( uint64_t block )
+{
+	return (int)__popcnt64( block );
+}
 #else
 
 static inline uint32_t b2CTZ32( uint32_t block )
@@ -84,6 +89,10 @@ static inline uint32_t b2CTZ64( uint64_t block )
 	return __builtin_ctzll( block );
 }
 
+static inline int b2PopCount64( uint64_t block )
+{
+	return __builtin_popcountll( block );
+}
 #endif
 
 static inline bool b2IsPowerOf2( int x )
