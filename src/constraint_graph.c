@@ -31,6 +31,7 @@ void b2CreateGraph( b2ConstraintGraph* graph, int bodyCapacity )
 {
 	_Static_assert( B2_GRAPH_COLOR_COUNT >= 2, "must have at least two constraint graph colors" );
 	_Static_assert( B2_OVERFLOW_INDEX == B2_GRAPH_COLOR_COUNT - 1, "bad over flow index" );
+	_Static_assert( B2_DYNAMIC_COLOR_COUNT >= 2, "need more dynamic colors" );
 
 	*graph = ( b2ConstraintGraph ){ 0 };
 
@@ -85,7 +86,8 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 #if B2_FORCE_OVERFLOW == 0
 	if ( staticA == false && staticB == false )
 	{
-		for ( int i = 0; i < B2_OVERFLOW_INDEX; ++i )
+		// Dynamic constraint colors cannot encroach on colors reserved for static constraints
+		for ( int i = 0; i < B2_DYNAMIC_COLOR_COUNT; ++i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdA ) || b2GetBit( &color->bodySet, bodyIdB ) )
@@ -101,10 +103,8 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	}
 	else if ( staticA == false )
 	{
-		// No static contacts in color 0
-		// Try to ensure static contacts are solved last
-		//for ( int i = B2_OVERFLOW_INDEX - 1; i >= 1; --i )
-		for ( int i = 1; i < B2_OVERFLOW_INDEX; ++i)
+		// Static constraint colors build from the end to get higher priority than dyn-dyn constraints
+		for ( int i = B2_OVERFLOW_INDEX - 1; i >= 1; --i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdA ) )
@@ -119,10 +119,8 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	}
 	else if ( staticB == false )
 	{
-		// No static contacts in color 0
-		// Try to ensure static contacts are solved last
-		//for ( int i = B2_OVERFLOW_INDEX - 1; i >= 1; --i )
-		for ( int i = 1; i < B2_OVERFLOW_INDEX; ++i )
+		// Static constraint colors build from the end to get higher priority than dyn-dyn constraints
+		for ( int i = B2_OVERFLOW_INDEX - 1; i >= 1; --i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdB ) )
@@ -222,7 +220,8 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 #if B2_FORCE_OVERFLOW == 0
 	if ( staticA == false && staticB == false )
 	{
-		for ( int i = 0; i < B2_OVERFLOW_INDEX; ++i )
+		// Dynamic constraint colors cannot encroach on colors reserved for static constraints
+		for ( int i = 0; i < B2_DYNAMIC_COLOR_COUNT; ++i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdA ) || b2GetBit( &color->bodySet, bodyIdB ) )
@@ -237,7 +236,8 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 	}
 	else if ( staticA == false )
 	{
-		for ( int i = 0; i < B2_OVERFLOW_INDEX; ++i )
+		// Static constraint colors build from the end to get higher priority than dyn-dyn constraints
+		for ( int i = B2_OVERFLOW_INDEX - 1; i >= 1; --i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdA ) )
@@ -251,7 +251,8 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 	}
 	else if ( staticB == false )
 	{
-		for ( int i = 0; i < B2_OVERFLOW_INDEX; ++i )
+		// Static constraint colors build from the end to get higher priority than dyn-dyn constraints
+		for ( int i = B2_OVERFLOW_INDEX - 1; i >= 1; --i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdB ) )

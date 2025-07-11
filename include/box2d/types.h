@@ -1352,9 +1352,6 @@ typedef struct b2DebugDraw
 	/// Bounds to use if restricting drawing to a rectangular region
 	b2AABB drawingBounds;
 
-	/// Option to restrict drawing to a rectangular region. May suffer from unstable depth sorting.
-	bool useDrawingBounds;
-
 	/// Option to draw shapes
 	bool drawShapes;
 

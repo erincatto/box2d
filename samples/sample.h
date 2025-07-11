@@ -29,7 +29,6 @@ struct SampleContext
 	bool restart = false;
 	bool pause = false;
 	bool singleStep = false;
-	bool useCameraBounds = false;
 	bool drawJointExtras = false;
 	bool drawBounds = false;
 	bool drawMass = false;

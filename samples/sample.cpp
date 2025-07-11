@@ -427,7 +427,6 @@ void Sample::Step(  )
 	}
 
 	m_context->draw.m_debugDraw.drawingBounds = m_context->camera.GetViewBounds();
-	m_context->draw.m_debugDraw.useDrawingBounds = m_context->useCameraBounds;
 	m_context->draw.m_debugDraw.drawShapes = m_context->drawShapes;
 	m_context->draw.m_debugDraw.drawJoints = m_context->drawJoints;
 	m_context->draw.m_debugDraw.drawJointExtras = m_context->drawJointExtras;

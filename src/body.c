@@ -321,7 +321,6 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	body->type = def->type;
 	body->flags = lockFlags;
 	body->enableSleep = def->enableSleep;
-	body->isSpeedCapped = false;
 	body->isMarked = false;
 
 	// dynamic and kinematic bodies that are enabled need a island

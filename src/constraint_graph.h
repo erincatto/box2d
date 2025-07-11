@@ -21,6 +21,10 @@ typedef struct b2World b2World;
 // is touching many other bodies.
 #define B2_OVERFLOW_INDEX (B2_GRAPH_COLOR_COUNT - 1)
 
+// This keeps constraints involving two dynamic bodies at a lower solver priority than constraints
+// involving a dynamic and static bodies. This reduces tunneling due to push through.
+#define B2_DYNAMIC_COLOR_COUNT (B2_GRAPH_COLOR_COUNT - 4)
+
 typedef struct b2GraphColor
 {
 	// This bitset is indexed by bodyId so this is over-sized to encompass static bodies

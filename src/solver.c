@@ -261,6 +261,8 @@ struct b2ContinuousContext
 	int sensorCount;
 };
 
+#define B2_CORE_FRACTION 0.25f
+
 // This is called from b2DynamicTree_Query for continuous collision
 static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* context )
 {
@@ -349,13 +351,14 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 		if ( length > B2_LINEAR_SLOP )
 		{
 			b2Vec2 c1 = continuousContext->centroid1;
-			float offset1 = b2Cross( b2Sub( c1, p1 ), e );
+			float separation1 = b2Cross( b2Sub( c1, p1 ), e );
 			b2Vec2 c2 = continuousContext->centroid2;
-			float offset2 = b2Cross( b2Sub( c2, p1 ), e );
+			float separation2 = b2Cross( b2Sub( c2, p1 ), e );
 
-			// todo this should use the min extent of the fast shape, not the body
-			const float allowedFraction = 0.25f;
-			if ( offset1 < 0.0f || offset1 - offset2 < allowedFraction * fastBodySim->minExtent )
+			float coreDistance = B2_CORE_FRACTION * fastBodySim->minExtent;
+			
+			if ( separation1 < 0.0f ||
+				 (separation1 - separation2 < coreDistance && separation2 > coreDistance) )
 			{
 				// Minimal clipping
 				return true;
@@ -431,7 +434,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 			// fallback to TOI of a small circle around the fast shape centroid
 			b2Vec2 centroid = b2GetShapeCentroid( fastShape );
 			b2ShapeExtent extent = b2ComputeShapeExtent( fastShape, centroid );
-			float radius = 0.25f * extent.minExtent;
+			float radius = B2_CORE_FRACTION * extent.minExtent;
 			input.proxyB = b2MakeProxy( &centroid, 1, radius );
 			output = b2TimeOfImpact( &input );
 			if ( 0.0f < output.fraction && output.fraction < continuousContext->fraction )
@@ -450,6 +453,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 
 		if ( didHit )
 		{
+			fastBodySim->flags |= b2_hadTimeOfImpact;
 			continuousContext->fraction = hitFraction;
 		}
 	}
@@ -709,8 +713,9 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		sim->force = b2Vec2_zero;
 		sim->torque = 0.0f;
 
-		body->isSpeedCapped = ( sim->flags & b2_isSpeedCapped ) != 0;
-		sim->flags &= ~( b2_isFast | b2_isSpeedCapped );
+		body->flags &= ~( b2_isFast | b2_isSpeedCapped | b2_hadTimeOfImpact );
+		body->flags |= (sim->flags & (b2_isSpeedCapped | b2_hadTimeOfImpact));
+		sim->flags &= ~( b2_isFast | b2_isSpeedCapped | b2_hadTimeOfImpact );
 
 		if ( enableSleep == false || body->enableSleep == false || sleepVelocity > body->sleepThreshold )
 		{
@@ -1120,6 +1125,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 
 			for ( int j = 0; j < ITERATIONS; ++j )
 			{
+				// Overflow constraints have lower priority
 				b2SolveOverflowJoints( context, useBias );
 				b2SolveOverflowContacts( context, useBias );
 
@@ -1872,7 +1878,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			uint64_t* bits = jointStateBitSet->bits;
 
 			b2Joint* jointArray = world->joints.data;
-			int jointCapacity = world->joints.capacity;
 			uint16_t worldIndex0 = world->worldId;
 
 			for ( uint32_t k = 0; k < wordCount; ++k )
@@ -1883,7 +1888,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					uint32_t ctz = b2CTZ64( word );
 					int jointId = (int)( 64 * k + ctz );
 
-					B2_ASSERT( jointId < jointCapacity );
+					B2_ASSERT( jointId < world->joints.capacity );
 
 					b2Joint* joint = jointArray + jointId;
 

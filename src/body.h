@@ -27,14 +27,17 @@ enum b2BodyFlags
 	// This dynamic body does a final CCD pass against all body types, but not other bullets
 	b2_isBullet = 0x00000010,
 
-	// This body has hit the maximum linear or angular velocity
+	// This body was speed capped in the current time step
 	b2_isSpeedCapped = 0x00000020,
+	
+	// This body had a time of impact event in the current time step
+	b2_hadTimeOfImpact = 0x00000040,
 
 	// This body has no limit on angular velocity
-	b2_allowFastRotation = 0x00000040,
+	b2_allowFastRotation = 0x00000080,
 
 	// This body need's to have its AABB increased
-	b2_enlargeBounds = 0x00000080,
+	b2_enlargeBounds = 0x00000100,
 
 	// All lock flags
 	b2_allLocks = b2_lockAngularZ | b2_lockLinearX | b2_lockLinearY,
@@ -100,7 +103,6 @@ typedef struct b2Body
 
 	// todo move into flags
 	bool enableSleep;
-	bool isSpeedCapped;
 	bool isMarked;
 } b2Body;
 

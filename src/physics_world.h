@@ -120,6 +120,8 @@ typedef struct b2World
 	// todo consider deferred waking and impulses to make it possible
 	// to apply forces and impulses from multiple threads
 	// impulses must be deferred because sleeping bodies have no velocity state
+	// Problems:
+	// - multiple forces applied to the same body from multiple threads
 	// Deferred wake
 	//b2BitSet bodyWakeSet;
 	//b2ImpulseArray deferredImpulses;
