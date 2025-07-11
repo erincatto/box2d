@@ -79,7 +79,7 @@ b2Mutex* b2CreateMutex( void )
 	return m;
 }
 
-void b2Mutex_Destroy( b2Mutex* m )
+void b2DestroyMutex( b2Mutex* m )
 {
 	DeleteCriticalSection( &m->cs );
 	*m = (b2Mutex){ 0 };

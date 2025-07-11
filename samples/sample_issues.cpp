@@ -347,7 +347,7 @@ public:
 		float winY =m_camera->m_height - height - 2.0f * fontSize ;
 		ImGui::SetNextWindowPos( {winX, winY}, ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 9.0f * fontSize, height ) );
-		ImGui::Begin( "Diable Crash", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
+		ImGui::Begin( "Disable Crash", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 
 		if ( ImGui::Checkbox( "Enable", &m_isEnabled ) )
 		{
