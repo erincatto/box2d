@@ -152,7 +152,7 @@ b2CosSin b2ComputeCosSin( float radians )
 	}
 
 	float mag = sqrtf( s * s + c * c );
-	float invMag = mag > 0.0 ? 1.0f / mag : 0.0f;
+	float invMag = mag > 0.0f ? 1.0f / mag : 0.0f;
 	b2CosSin cs = { c * invMag, s * invMag };
 	return cs;
 }

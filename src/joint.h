@@ -97,7 +97,6 @@ typedef struct b2MotorJoint
 	float angularImpulse;
 	float maxForce;
 	float maxTorque;
-	float correctionFactor;
 
 	int indexA;
 	int indexB;

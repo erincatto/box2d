@@ -52,7 +52,6 @@ b2MotorJointDef b2DefaultMotorJointDef( void )
 	def.base = b2DefaultJointDef();
 	def.maxForce = 1.0f;
 	def.maxTorque = 1.0f;
-	def.correctionFactor = 0.3f;
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;
 }
@@ -379,8 +378,8 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 	if ( joint->setIndex > b2_disabledSet )
 	{
 		// Add edge to island graph
-		bool mergeIslands = true;
-		b2LinkJoint( world, joint, mergeIslands );
+		//bool mergeIslands = true;
+		b2LinkJoint( world, joint );
 	}
 
 	// If the joint prevents collisions, then destroy all contacts between attached bodies
@@ -451,7 +450,6 @@ b2JointId b2CreateMotorJoint( b2WorldId worldId, const b2MotorJointDef* def )
 	joint->motorJoint = (b2MotorJoint){ 0 };
 	joint->motorJoint.maxForce = def->maxForce;
 	joint->motorJoint.maxTorque = def->maxTorque;
-	joint->motorJoint.correctionFactor = b2ClampFloat( def->correctionFactor, 0.0f, 1.0f );
 
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 	return jointId;
@@ -1552,37 +1550,12 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 	if ( draw->drawGraphColors )
 	{
 		b2HexColor graphColors[B2_GRAPH_COLOR_COUNT] = {
-			b2_colorRed,
-			b2_colorOrange,
-			b2_colorYellow,
-			b2_colorGreen,
-			
-			b2_colorCyan,
-			b2_colorBlue,
-			b2_colorViolet,
-			b2_colorPink,
-			
-			b2_colorChocolate,
-			b2_colorGoldenRod,
-			b2_colorCoral,
-			b2_colorRosyBrown,
-			
-			b2_colorAqua,
-			b2_colorPeru,
-			b2_colorLime,
-			b2_colorGold,
-			
-			b2_colorPlum,
-			b2_colorSnow,
-			b2_colorTeal,
-			b2_colorKhaki,
-			
-			b2_colorSalmon,
-			b2_colorPeachPuff,
-			b2_colorHoneyDew,
-			b2_colorBlack,
+			b2_colorRed,	b2_colorOrange, b2_colorYellow,	   b2_colorGreen,	  b2_colorCyan,		b2_colorBlue,
+			b2_colorViolet, b2_colorPink,	b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,	b2_colorRosyBrown,
+			b2_colorAqua,	b2_colorPeru,	b2_colorLime,	   b2_colorGold,	  b2_colorPlum,		b2_colorSnow,
+			b2_colorTeal,	b2_colorKhaki,	b2_colorSalmon,	   b2_colorPeachPuff, b2_colorHoneyDew, b2_colorBlack,
 		};
-		
+
 		int colorIndex = joint->colorIndex;
 		if ( colorIndex != B2_NULL_INDEX )
 		{

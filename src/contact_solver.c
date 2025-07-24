@@ -425,7 +425,7 @@ void b2ApplyOverflowRestitution( b2StepContext* context )
 
 		// it is possible to get more accurate restitution by iterating
 		// this only makes a difference if there are two contact points
-		// for (int iter = 0; iter < 10; ++iter)
+		for (int iter = 0; iter < 2; ++iter)
 		{
 			for ( int j = 0; j < pointCount; ++j )
 			{
@@ -1151,6 +1151,8 @@ static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT i
 
 	// I don't use any dummy body in the body array because this will lead to multithreaded sharing and the
 	// associated cache flushing.
+	// todo could add a check for kinematic bodies here
+
 	if ( indices[0] != B2_NULL_INDEX )
 		_mm256_store_ps( (float*)( states + indices[0] ), _mm256_permute2f128_ps( tt0, tt4, 0x20 ) );
 	if ( indices[1] != B2_NULL_INDEX )

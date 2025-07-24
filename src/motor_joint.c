@@ -35,18 +35,6 @@ float b2MotorJoint_GetMaxTorque( b2JointId jointId )
 	return joint->motorJoint.maxTorque;
 }
 
-void b2MotorJoint_SetCorrectionFactor( b2JointId jointId, float correctionFactor )
-{
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
-	joint->motorJoint.correctionFactor = b2ClampFloat( correctionFactor, 0.0f, 1.0f );
-}
-
-float b2MotorJoint_GetCorrectionFactor( b2JointId jointId )
-{
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
-	return joint->motorJoint.correctionFactor;
-}
-
 b2Vec2 b2GetMotorJointForce( b2World* world, b2JointSim* base )
 {
 	b2Vec2 force = b2MulSV( world->inv_h, base->motorJoint.linearImpulse );
@@ -188,15 +176,8 @@ void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context )
 
 	// angular constraint
 	{
-		b2Rot qA = b2MulRot( stateA->deltaRotation, joint->frameA.q );
-		b2Rot qB = b2MulRot( stateB->deltaRotation, joint->frameB.q );
-		b2Rot relQ = b2InvMulRot( qA, qB );
-
-		float jointAngle = b2Rot_GetAngle( relQ );
-		float angularBias = context->inv_h * joint->correctionFactor * jointAngle;
-
 		float Cdot = wB - wA;
-		float impulse = -joint->angularMass * ( Cdot + angularBias );
+		float impulse = -joint->angularMass * Cdot;
 
 		float oldImpulse = joint->angularImpulse;
 		float maxImpulse = context->h * joint->maxTorque;
@@ -212,12 +193,8 @@ void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context )
 		b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
 		b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
 
-		b2Vec2 ds = b2Add( b2Sub( stateB->deltaPosition, stateA->deltaPosition ), b2Sub( rB, rA ) );
-		b2Vec2 linearSeparation = b2Add( joint->deltaCenter, ds );
-		b2Vec2 linearBias = b2MulSV( context->inv_h * joint->correctionFactor, linearSeparation );
-
 		b2Vec2 Cdot = b2Sub( b2Add( vB, b2CrossSV( wB, rB ) ), b2Add( vA, b2CrossSV( wA, rA ) ) );
-		b2Vec2 b = b2MulMV( joint->linearMass, b2Add( Cdot, linearBias ) );
+		b2Vec2 b = b2MulMV( joint->linearMass, Cdot );
 		b2Vec2 impulse = { -b.x, -b.y };
 
 		b2Vec2 oldImpulse = joint->linearImpulse;

@@ -1294,17 +1294,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 {
 	world->stepIndex += 1;
 
-	// Merge islands
-	{
-		b2TracyCZoneNC( merge, "Merge", b2_colorLightGoldenRodYellow, true );
-		uint64_t mergeTicks = b2GetTicks();
-
-		b2MergeAwakeIslands( world );
-
-		world->profile.mergeIslands = b2GetMilliseconds( mergeTicks );
-		b2TracyCZoneEnd( merge );
-	}
-
 	// Are there any awake bodies? This scenario should not be important for profiling.
 	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
 	int awakeBodyCount = awakeSet->bodySims.count;

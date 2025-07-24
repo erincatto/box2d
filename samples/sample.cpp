@@ -490,7 +490,6 @@ void Sample::Step(  )
 		m_maxProfile.pairs = b2MaxFloat( m_maxProfile.pairs, p.pairs );
 		m_maxProfile.collide = b2MaxFloat( m_maxProfile.collide, p.collide );
 		m_maxProfile.solve = b2MaxFloat( m_maxProfile.solve, p.solve );
-		m_maxProfile.mergeIslands = b2MaxFloat( m_maxProfile.mergeIslands, p.mergeIslands );
 		m_maxProfile.prepareStages = b2MaxFloat( m_maxProfile.prepareStages, p.prepareStages );
 		m_maxProfile.solveConstraints = b2MaxFloat( m_maxProfile.solveConstraints, p.solveConstraints );
 		m_maxProfile.prepareConstraints = b2MaxFloat( m_maxProfile.prepareConstraints, p.prepareConstraints );
@@ -514,7 +513,6 @@ void Sample::Step(  )
 		m_totalProfile.pairs += p.pairs;
 		m_totalProfile.collide += p.collide;
 		m_totalProfile.solve += p.solve;
-		m_totalProfile.mergeIslands += p.mergeIslands;
 		m_totalProfile.prepareStages += p.prepareStages;
 		m_totalProfile.solveConstraints += p.solveConstraints;
 		m_totalProfile.prepareConstraints += p.prepareConstraints;
@@ -547,7 +545,6 @@ void Sample::Step(  )
 			aveProfile.pairs = scale * m_totalProfile.pairs;
 			aveProfile.collide = scale * m_totalProfile.collide;
 			aveProfile.solve = scale * m_totalProfile.solve;
-			aveProfile.mergeIslands = scale * m_totalProfile.mergeIslands;
 			aveProfile.prepareStages = scale * m_totalProfile.prepareStages;
 			aveProfile.solveConstraints = scale * m_totalProfile.solveConstraints;
 			aveProfile.prepareConstraints = scale * m_totalProfile.prepareConstraints;
@@ -572,8 +569,6 @@ void Sample::Step(  )
 		DrawTextLine( "pairs [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.pairs, aveProfile.pairs, m_maxProfile.pairs );
 		DrawTextLine( "collide [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.collide, aveProfile.collide, m_maxProfile.collide );
 		DrawTextLine( "solve [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solve, aveProfile.solve, m_maxProfile.solve );
-		DrawTextLine( "> merge islands [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.mergeIslands, aveProfile.mergeIslands,
-					  m_maxProfile.mergeIslands );
 		DrawTextLine( "> prepare tasks [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.prepareStages, aveProfile.prepareStages,
 					  m_maxProfile.prepareStages );
 		DrawTextLine( "> solve constraints [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveConstraints, aveProfile.solveConstraints,

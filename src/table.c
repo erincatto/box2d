@@ -58,7 +58,8 @@ void b2ClearSet( b2HashSet* set )
 // https://lemire.me/blog/2018/08/15/fast-strongly-universal-64-bit-hashing-everywhere/
 // https://preshing.com/20130107/this-hash-set-is-faster-than-a-judy-array/
 // todo try: https://www.jandrewrogers.com/2019/02/12/fast-perfect-hashing/
-// todo try: https://probablydance.com/2018/06/16/fibonacci-hashing-the-optimization-that-the-world-forgot-or-a-better-alternative-to-integer-modulo/
+// todo try:
+// https://probablydance.com/2018/06/16/fibonacci-hashing-the-optimization-that-the-world-forgot-or-a-better-alternative-to-integer-modulo/
 static uint32_t b2KeyHash( uint64_t key )
 {
 	// Murmur hash
@@ -74,8 +75,8 @@ static uint32_t b2KeyHash( uint64_t key )
 
 static int b2FindSlot( const b2HashSet* set, uint64_t key, uint32_t hash )
 {
-#if B2_SNOOP_TABLE_COUNTERS 
-		b2AtomicFetchAddInt( &b2_findCount, 1 );
+#if B2_SNOOP_TABLE_COUNTERS
+	b2AtomicFetchAddInt( &b2_findCount, 1 );
 #endif
 
 	uint32_t capacity = set->capacity;
@@ -240,13 +241,13 @@ bool b2RemoveKey( b2HashSet* set, uint64_t key )
 
 // This function is here because ctz.h is included by
 // this file but not in bitset.c
-int b2CountSetBits( b2BitSet* set )
+int b2CountSetBits( b2BitSet* bitSet )
 {
 	int popCount = 0;
-	uint32_t blockCount = set->blockCount;
+	uint32_t blockCount = bitSet->blockCount;
 	for ( uint32_t i = 0; i < blockCount; ++i )
 	{
-		popCount += b2PopCount64(set->bits[i]);
+		popCount += b2PopCount64( bitSet->bits[i] );
 	}
 
 	return popCount;

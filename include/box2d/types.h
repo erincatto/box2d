@@ -483,7 +483,6 @@ typedef struct b2Profile
 	float pairs;
 	float collide;
 	float solve;
-	float mergeIslands;
 	float prepareStages;
 	float solveConstraints;
 	float prepareConstraints;
@@ -602,6 +601,9 @@ typedef struct b2DistanceJointDef
 	/// The spring linear damping ratio, non-dimensional
 	float dampingRatio;
 
+	/// The spring has no resistance to compression below the rest length
+	bool isRubberBand;
+
 	/// Enable/disable the joint limit
 	bool enableLimit;
 
@@ -628,23 +630,25 @@ typedef struct b2DistanceJointDef
 /// @ingroup distance_joint
 B2_API b2DistanceJointDef b2DefaultDistanceJointDef( void );
 
-/// A motor joint is used to control the relative motion between two bodies
-/// You may move local frame A to change the target transform.
-/// A typical usage is to control the movement of a dynamic body with respect to the ground.
+/// A motor joint is used to control the relative velocity between two bodies.
+/// With a velocity of zero this acts like top-down friction.
 /// @ingroup motor_joint
 typedef struct b2MotorJointDef
 {
 	/// Base joint definition
 	b2JointDef base;
 
+	/// The desired linear velocity
+	b2Vec2 linearVelocity;
+
 	/// The maximum motor force in newtons
 	float maxForce;
 
+	/// The desired angular velocity
+	float angularVelocity;
+
 	/// The maximum motor torque in newton-meters
 	float maxTorque;
-
-	/// Position correction factor in the range [0,1]
-	float correctionFactor;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;

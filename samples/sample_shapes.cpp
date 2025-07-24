@@ -151,7 +151,7 @@ public:
 		}
 		else if ( m_shapeType == e_capsuleShape )
 		{
-			b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0 }, 0.25f };
+			b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0f }, 0.25f };
 			m_shapeId = b2CreateCapsuleShape( m_bodyId, &shapeDef, &capsule );
 		}
 		else
@@ -1450,7 +1450,7 @@ public:
 		{
 			bodyDef.position = { 0.0f, 2.0f };
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
-			b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0 }, 0.25f };
+			b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0f }, 0.25f };
 			b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
 		}
 
@@ -1845,3 +1845,70 @@ public:
 };
 
 static int sampleSingleBox = RegisterSample( "Shapes", "Recreate Static", RecreateStatic::Create );
+
+class BoxRestitution : public Sample
+{
+public:
+
+	explicit BoxRestitution( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 5.0f };
+			m_context->camera.m_zoom = 10.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			float h = 2.0f * m_count;
+			b2Segment segment = { { -h, 0.0f }, { h, 0.0f } };
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.density = 1.0f;
+		shapeDef.material.restitution = 0.0f;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+
+		float dr = 1.0f / ( m_count > 1 ? m_count - 1 : 1 );
+		float x = -1.0f * ( m_count - 1 );
+		float dx = 2.0f;
+
+		for ( int i = 0; i < m_count; ++i )
+		{
+			char buffer[32];
+			snprintf( buffer, 32, "%.2f", shapeDef.material.restitution );
+
+			bodyDef.position = { x, 1.0f };
+			bodyDef.name = buffer;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			bodyDef.position = { x, 4.0f };
+			bodyDef.name = buffer;
+			bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			shapeDef.material.restitution += dr;
+			x += dx;
+		}
+	}
+	static Sample* Create( SampleContext* context )
+	{
+		return new BoxRestitution( context );
+	}
+
+	static constexpr int m_count = 10;
+};
+
+static int sampleBoxRestitution = RegisterSample( "Shapes", "Box Restitution", BoxRestitution::Create );

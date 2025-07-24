@@ -216,7 +216,8 @@ B2_API b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def );
 /// Do not keep references to the associated shapes and joints.
 B2_API void b2DestroyBody( b2BodyId bodyId );
 
-/// Body identifier validation. Can be used to detect orphaned ids. Provides validation for up to 64K allocations.
+/// Body identifier validation. A valid body exists in a world and is non-null.
+/// This can be used to detect orphaned ids. Provides validation for up to 64K allocations.
 B2_API bool b2Body_IsValid( b2BodyId id );
 
 /// Get the body type: static, kinematic, or dynamic

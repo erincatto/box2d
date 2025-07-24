@@ -261,14 +261,12 @@ public:
 
 			m_maxForce = 500.0f;
 			m_maxTorque = 500.0f;
-			m_correctionFactor = 0.3f;
 
 			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyId;
 			jointDef.maxForce = m_maxForce;
 			jointDef.maxTorque = m_maxTorque;
-			jointDef.correctionFactor = m_correctionFactor;
 
 			m_jointId = b2CreateMotorJoint( m_worldId, &jointDef );
 		}
@@ -298,11 +296,6 @@ public:
 		if ( ImGui::SliderFloat( "Max Torque", &m_maxTorque, 0.0f, 10000.0f, "%.0f" ) )
 		{
 			b2MotorJoint_SetMaxTorque( m_jointId, m_maxTorque );
-		}
-
-		if ( ImGui::SliderFloat( "Correction", &m_correctionFactor, 0.0f, 1.0f, "%.1f" ) )
-		{
-			b2MotorJoint_SetCorrectionFactor( m_jointId, m_correctionFactor );
 		}
 
 		if ( ImGui::Button( "Apply Impulse" ) )
@@ -349,7 +342,6 @@ public:
 	float m_time;
 	float m_maxForce;
 	float m_maxTorque;
-	float m_correctionFactor;
 	bool m_go;
 };
 
