@@ -630,7 +630,7 @@ typedef struct b2DistanceJointDef
 /// @ingroup distance_joint
 B2_API b2DistanceJointDef b2DefaultDistanceJointDef( void );
 
-/// A motor joint is used to control the relative velocity between two bodies.
+/// A motor joint is used to control the relative velocity and or transform between two bodies.
 /// With a velocity of zero this acts like top-down friction.
 /// @ingroup motor_joint
 typedef struct b2MotorJointDef
@@ -642,13 +642,34 @@ typedef struct b2MotorJointDef
 	b2Vec2 linearVelocity;
 
 	/// The maximum motor force in newtons
-	float maxForce;
+	float maxVelocityForce;
 
 	/// The desired angular velocity
 	float angularVelocity;
 
 	/// The maximum motor torque in newton-meters
-	float maxTorque;
+	float maxVelocityTorque;
+
+	/// Linear spring hertz for position control
+	float linearHertz;
+
+	/// Linear spring damping ratio
+	float linearDampingRatio;
+
+	/// Maximum spring force in newtons
+	float maxSpringForce;
+
+	/// Angular spring hertz for position control
+	float angularHertz;
+
+	/// Angular spring damping ratio
+	float angularDampingRatio;
+
+	/// Maximum spring torque in newton-meters
+	float maxSpringTorque;
+
+	/// The desired relative transform. Body B relative to bodyA.
+	b2Transform relativeTransform;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;

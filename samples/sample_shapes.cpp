@@ -10,6 +10,7 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <stdio.h>
 #include <vector>
 
 // extern "C" int b2_toiCalls;
@@ -1695,7 +1696,7 @@ public:
 
 		b2WeldJointDef weldDef = b2DefaultWeldJointDef();
 		weldDef.base.bodyIdA = groundId;
-		weldDef.base.localFrameA.q = b2MakeRot(m_referenceAngle);
+		weldDef.base.localFrameA.q = b2MakeRot( m_referenceAngle );
 		weldDef.base.localFrameB.p = b2Vec2_zero;
 		weldDef.angularHertz = 0.5f;
 		weldDef.angularDampingRatio = 0.7f;
@@ -1849,7 +1850,6 @@ static int sampleSingleBox = RegisterSample( "Shapes", "Recreate Static", Recrea
 class BoxRestitution : public Sample
 {
 public:
-
 	explicit BoxRestitution( SampleContext* context )
 		: Sample( context )
 	{

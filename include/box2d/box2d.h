@@ -901,23 +901,53 @@ B2_API float b2DistanceJoint_GetMotorForce( b2JointId jointId );
 /// @see b2MotorJointDef for details
 B2_API b2JointId b2CreateMotorJoint( b2WorldId worldId, const b2MotorJointDef* def );
 
+B2_API void b2MotorJoint_SetLinearVelocity( b2JointId jointId, b2Vec2 velocity );
+
+B2_API b2Vec2 b2MotorJoint_GetLinearVelocity( b2JointId jointId );
+
+B2_API void b2MotorJoint_SetAngularVelocity( b2JointId jointId, float velocity );
+
+B2_API float b2MotorJoint_GetAngularVelocity( b2JointId jointId );
+
 /// Set the motor joint maximum force, usually in newtons
-B2_API void b2MotorJoint_SetMaxForce( b2JointId jointId, float maxForce );
+B2_API void b2MotorJoint_SetMaxVelocityForce( b2JointId jointId, float maxForce );
 
 /// Get the motor joint maximum force, usually in newtons
-B2_API float b2MotorJoint_GetMaxForce( b2JointId jointId );
+B2_API float b2MotorJoint_GetMaxVelocityForce( b2JointId jointId );
 
 /// Set the motor joint maximum torque, usually in newton-meters
-B2_API void b2MotorJoint_SetMaxTorque( b2JointId jointId, float maxTorque );
+B2_API void b2MotorJoint_SetMaxVelocityTorque( b2JointId jointId, float maxTorque );
 
 /// Get the motor joint maximum torque, usually in newton-meters
-B2_API float b2MotorJoint_GetMaxTorque( b2JointId jointId );
+B2_API float b2MotorJoint_GetMaxVelocityTorque( b2JointId jointId );
 
-/// Set the motor joint correction factor, usually in [0, 1]
-B2_API void b2MotorJoint_SetCorrectionFactor( b2JointId jointId, float correctionFactor );
+B2_API void b2MotorJoint_SetRelativeTransform( b2JointId jointId, b2Transform transform );
 
-/// Get the motor joint correction factor, usually in [0, 1]
-B2_API float b2MotorJoint_GetCorrectionFactor( b2JointId jointId );
+B2_API b2Transform b2MotorJoint_GetRelativeTransform( b2JointId jointId );
+
+B2_API void b2MotorJoint_SetLinearHertz( b2JointId jointId, float hertz );
+
+B2_API float b2MotorJoint_GetLinearHertz( b2JointId jointId );
+
+B2_API void b2MotorJoint_SetLinearDampingRatio( b2JointId jointId, float damping );
+
+B2_API float b2MotorJoint_GetLinearDampingRatio( b2JointId jointId );
+
+B2_API void b2MotorJoint_SetAngularHertz( b2JointId jointId, float hertz );
+
+B2_API float b2MotorJoint_GetAngularHertz( b2JointId jointId );
+
+B2_API void b2MotorJoint_SetAngularDampingRatio( b2JointId jointId, float damping );
+
+B2_API float b2MotorJoint_GetAngularDampingRatio( b2JointId jointId );
+
+B2_API void b2MotorJoint_SetMaxSpringForce( b2JointId jointId, float maxForce );
+
+B2_API float b2MotorJoint_GetMaxSpringForce( b2JointId jointId );
+
+B2_API void b2MotorJoint_SetMaxSpringTorque( b2JointId jointId, float maxTorque );
+
+B2_API float b2MotorJoint_GetMaxSpringTorque( b2JointId jointId );
 
 /**@}*/
 

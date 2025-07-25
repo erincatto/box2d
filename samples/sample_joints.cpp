@@ -265,8 +265,12 @@ public:
 			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyId;
-			jointDef.maxForce = m_maxForce;
-			jointDef.maxTorque = m_maxTorque;
+			jointDef.linearHertz = 4.0f;
+			jointDef.linearDampingRatio = 0.7f;
+			jointDef.angularHertz = 4.0f;
+			jointDef.angularDampingRatio = 0.7f;
+			jointDef.maxSpringForce = m_maxForce;
+			jointDef.maxSpringTorque = m_maxTorque;
 
 			m_jointId = b2CreateMotorJoint( m_worldId, &jointDef );
 		}
@@ -288,14 +292,14 @@ public:
 		{
 		}
 
-		if ( ImGui::SliderFloat( "Max Force", &m_maxForce, 0.0f, 10000.0f, "%.0f" ) )
+		if ( ImGui::SliderFloat( "Max Force", &m_maxForce, 0.0f, 1000.0f, "%.0f" ) )
 		{
-			b2MotorJoint_SetMaxForce( m_jointId, m_maxForce );
+			b2MotorJoint_SetMaxSpringForce( m_jointId, m_maxForce );
 		}
 
-		if ( ImGui::SliderFloat( "Max Torque", &m_maxTorque, 0.0f, 10000.0f, "%.0f" ) )
+		if ( ImGui::SliderFloat( "Max Torque", &m_maxTorque, 0.0f, 1000.0f, "%.0f" ) )
 		{
-			b2MotorJoint_SetMaxTorque( m_jointId, m_maxTorque );
+			b2MotorJoint_SetMaxSpringTorque( m_jointId, m_maxTorque );
 		}
 
 		if ( ImGui::Button( "Apply Impulse" ) )
@@ -308,10 +312,20 @@ public:
 
 	void Step() override
 	{
-		if ( m_go && m_context->hertz > 0.0f )
+		float timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
+
+		if ( m_go )
 		{
-			m_time += 1.0f / m_context->hertz;
+			if ( m_context->pause )
+			{
+				if ( m_context->singleStep == false )
+				{
+					timeStep = 0.0f;
+				}
+			}
 		}
+
+		m_time += timeStep;
 
 		b2Vec2 linearOffset;
 		linearOffset.x = 6.0f * sinf( 2.0f * m_time );
@@ -1434,8 +1448,8 @@ public:
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
 			jointDef.base.localFrameA.p = position;
-			jointDef.maxForce = 200.0f;
-			jointDef.maxTorque = 200.0f;
+			jointDef.maxVelocityForce = 200.0f;
+			jointDef.maxVelocityTorque = 200.0f;
 			b2CreateMotorJoint( m_worldId, &jointDef );
 		}
 
@@ -1668,8 +1682,8 @@ public:
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
 			jointDef.base.localFrameA.p = position;
-			jointDef.maxForce = 1000.0f;
-			jointDef.maxTorque = 20.0f;
+			jointDef.maxVelocityForce = 1000.0f;
+			jointDef.maxVelocityTorque = 20.0f;
 			jointDef.base.collideConnected = true;
 			m_jointIds[index] = b2CreateMotorJoint( m_worldId, &jointDef );
 		}

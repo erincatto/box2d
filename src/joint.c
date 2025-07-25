@@ -50,8 +50,7 @@ b2MotorJointDef b2DefaultMotorJointDef( void )
 {
 	b2MotorJointDef def = { 0 };
 	def.base = b2DefaultJointDef();
-	def.maxForce = 1.0f;
-	def.maxTorque = 1.0f;
+	def.relativeTransform.q = b2Rot_identity;
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;
 }
@@ -448,8 +447,17 @@ b2JointId b2CreateMotorJoint( b2WorldId worldId, const b2MotorJointDef* def )
 	b2JointSim* joint = pair.jointSim;
 
 	joint->motorJoint = (b2MotorJoint){ 0 };
-	joint->motorJoint.maxForce = def->maxForce;
-	joint->motorJoint.maxTorque = def->maxTorque;
+	joint->motorJoint.linearVelocity = def->linearVelocity;
+	joint->motorJoint.maxVelocityForce = def->maxVelocityForce;
+	joint->motorJoint.angularVelocity = def->angularVelocity;
+	joint->motorJoint.maxVelocityTorque = def->maxVelocityTorque;
+	joint->motorJoint.linearHertz = def->linearHertz;
+	joint->motorJoint.linearDampingRatio = def->linearDampingRatio;
+	joint->motorJoint.maxSpringForce = def->maxSpringForce;
+	joint->motorJoint.angularHertz = def->angularHertz;
+	joint->motorJoint.angularDampingRatio = def->angularDampingRatio;
+	joint->motorJoint.maxSpringTorque = def->maxSpringTorque;
+	joint->motorJoint.relativeTransform = def->relativeTransform;
 
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 	return jointId;
@@ -924,8 +932,8 @@ void b2GetJointReaction( b2JointSim* sim, float invTimeStep, float* force, float
 		case b2_motorJoint:
 		{
 			b2MotorJoint* joint = &sim->motorJoint;
-			linearImpulse = b2Length( joint->linearImpulse );
-			angularImpulse = b2AbsFloat( joint->angularImpulse );
+			linearImpulse = b2Length( b2Add(joint->linearVelocityImpulse, joint->linearSpringImpulse) );
+			angularImpulse = b2AbsFloat( joint->angularVelocityImpulse + joint->angularSpringImpulse );
 		}
 		break;
 

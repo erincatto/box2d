@@ -1922,8 +1922,8 @@ public:
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
 			jointDef.base.localFrameA.p = position;
-			jointDef.maxForce = 1000.0f;
-			jointDef.maxTorque = 20.0f;
+			jointDef.maxVelocityForce = 1000.0f;
+			jointDef.maxVelocityTorque = 20.0f;
 			jointDef.base.forceThreshold = forceThreshold;
 			jointDef.base.torqueThreshold = torqueThreshold;
 			jointDef.base.collideConnected = true;

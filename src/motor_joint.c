@@ -4,46 +4,154 @@
 #include "body.h"
 #include "core.h"
 #include "joint.h"
+#include "physics_world.h"
 #include "solver.h"
 #include "solver_set.h"
-#include "physics_world.h"
 
 // needed for dll export
 #include "box2d/box2d.h"
 
-void b2MotorJoint_SetMaxForce( b2JointId jointId, float maxForce )
+void b2MotorJoint_SetLinearVelocity( b2JointId jointId, b2Vec2 velocity )
 {
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
-	joint->motorJoint.maxForce = b2MaxFloat( 0.0f, maxForce );
+	joint->motorJoint.linearVelocity = velocity;
 }
 
-float b2MotorJoint_GetMaxForce( b2JointId jointId )
+b2Vec2 b2MotorJoint_GetLinearVelocity( b2JointId jointId )
 {
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
-	return joint->motorJoint.maxForce;
+	return joint->motorJoint.linearVelocity;
 }
 
-void b2MotorJoint_SetMaxTorque( b2JointId jointId, float maxTorque )
+void b2MotorJoint_SetAngularVelocity( b2JointId jointId, float velocity )
 {
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
-	joint->motorJoint.maxTorque = b2MaxFloat( 0.0f, maxTorque );
+	joint->motorJoint.angularVelocity = velocity;
 }
 
-float b2MotorJoint_GetMaxTorque( b2JointId jointId )
+float b2MotorJoint_GetAngularVelocity( b2JointId jointId )
 {
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
-	return joint->motorJoint.maxTorque;
+	return joint->motorJoint.angularVelocity;
+}
+
+void b2MotorJoint_SetMaxVelocityTorque( b2JointId jointId, float maxTorque )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	joint->motorJoint.maxVelocityTorque = maxTorque;
+}
+
+float b2MotorJoint_GetMaxVelocityTorque( b2JointId jointId )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	return joint->motorJoint.maxVelocityTorque;
+}
+
+void b2MotorJoint_SetMaxVelocityForce( b2JointId jointId, float maxForce )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	joint->motorJoint.maxVelocityForce = maxForce;
+}
+
+float b2MotorJoint_GetMaxVelocityForce( b2JointId jointId )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	return joint->motorJoint.maxVelocityForce;
+}
+
+void b2MotorJoint_SetRelativeTransform( b2JointId jointId, b2Transform transform )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	joint->motorJoint.relativeTransform = transform;
+}
+
+b2Transform b2MotorJoint_GetRelativeTransform( b2JointId jointId )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	return joint->motorJoint.relativeTransform;
+}
+
+void b2MotorJoint_SetLinearHertz( b2JointId jointId, float hertz )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	joint->motorJoint.linearHertz = hertz;
+}
+
+float b2MotorJoint_GetLinearHertz( b2JointId jointId )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	return joint->motorJoint.linearHertz;
+}
+
+void b2MotorJoint_SetLinearDampingRatio( b2JointId jointId, float damping )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	joint->motorJoint.linearDampingRatio = damping;
+}
+
+float b2MotorJoint_GetLinearDampingRatio( b2JointId jointId )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	return joint->motorJoint.linearDampingRatio;
+}
+
+void b2MotorJoint_SetAngularHertz( b2JointId jointId, float hertz )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	joint->motorJoint.angularHertz = hertz;
+}
+
+float b2MotorJoint_GetAngularHertz( b2JointId jointId )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	return joint->motorJoint.angularHertz;
+}
+
+void b2MotorJoint_SetAngularDampingRatio( b2JointId jointId, float damping )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	joint->motorJoint.angularDampingRatio = damping;
+}
+
+float b2MotorJoint_GetAngularDampingRatio( b2JointId jointId )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	return joint->motorJoint.angularDampingRatio;
+}
+
+void b2MotorJoint_SetMaxSpringForce( b2JointId jointId, float maxForce )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	joint->motorJoint.maxSpringForce = b2MaxFloat( 0.0f, maxForce );
+}
+
+float b2MotorJoint_GetMaxSpringForce( b2JointId jointId )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	return joint->motorJoint.maxSpringForce;
+}
+
+void b2MotorJoint_SetMaxSpringTorque( b2JointId jointId, float maxTorque )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	joint->motorJoint.maxSpringTorque = b2MaxFloat( 0.0f, maxTorque );
+}
+
+float b2MotorJoint_GetMaxSpringTorque( b2JointId jointId )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	return joint->motorJoint.maxSpringTorque;
 }
 
 b2Vec2 b2GetMotorJointForce( b2World* world, b2JointSim* base )
 {
-	b2Vec2 force = b2MulSV( world->inv_h, base->motorJoint.linearImpulse );
+	b2Vec2 force = b2MulSV( world->inv_h, b2Add( base->motorJoint.linearVelocityImpulse, base->motorJoint.linearSpringImpulse ) );
 	return force;
 }
 
 float b2GetMotorJointTorque( b2World* world, b2JointSim* base )
 {
-	return world->inv_h * base->motorJoint.angularImpulse;
+	return world->inv_h * ( base->motorJoint.angularVelocityImpulse + base->motorJoint.angularSpringImpulse );
 }
 
 // Point-to-point constraint
@@ -110,20 +218,25 @@ void b2PrepareMotorJoint( b2JointSim* base, b2StepContext* context )
 	b2Vec2 rA = joint->frameA.p;
 	b2Vec2 rB = joint->frameB.p;
 
-	b2Mat22 K;
-	K.cx.x = mA + mB + rA.y * rA.y * iA + rB.y * rB.y * iB;
-	K.cx.y = -rA.y * rA.x * iA - rB.y * rB.x * iB;
-	K.cy.x = K.cx.y;
-	K.cy.y = mA + mB + rA.x * rA.x * iA + rB.x * rB.x * iB;
-	joint->linearMass = b2GetInverse22( K );
+	joint->linearSpring = b2MakeSoft( joint->linearHertz, joint->linearDampingRatio, context->h );
+	joint->angularSpring = b2MakeSoft( joint->angularHertz, joint->angularDampingRatio, context->h );
+
+	b2Mat22 kl;
+	kl.cx.x = mA + mB + rA.y * rA.y * iA + rB.y * rB.y * iB;
+	kl.cx.y = -rA.y * rA.x * iA - rB.y * rB.x * iB;
+	kl.cy.x = kl.cx.y;
+	kl.cy.y = mA + mB + rA.x * rA.x * iA + rB.x * rB.x * iB;
+	joint->linearMass = b2GetInverse22( kl );
 
 	float ka = iA + iB;
 	joint->angularMass = ka > 0.0f ? 1.0f / ka : 0.0f;
 
 	if ( context->enableWarmStarting == false )
 	{
-		joint->linearImpulse = b2Vec2_zero;
-		joint->angularImpulse = 0.0f;
+		joint->linearVelocityImpulse = b2Vec2_zero;
+		joint->angularVelocityImpulse = 0.0f;
+		joint->linearSpringImpulse = b2Vec2_zero;
+		joint->angularSpringImpulse = 0.0f;
 	}
 }
 
@@ -147,10 +260,13 @@ void b2WarmStartMotorJoint( b2JointSim* base, b2StepContext* context )
 	b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
 	b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
 
-	stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, joint->linearImpulse );
-	stateA->angularVelocity -= iA * ( b2Cross( rA, joint->linearImpulse ) + joint->angularImpulse );
-	stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, joint->linearImpulse );
-	stateB->angularVelocity += iB * ( b2Cross( rB, joint->linearImpulse ) + joint->angularImpulse );
+	b2Vec2 linearImpulse = b2Add( joint->linearVelocityImpulse, joint->linearSpringImpulse );
+	float angularImpulse = joint->angularVelocityImpulse + joint->angularSpringImpulse;
+
+	stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, linearImpulse );
+	stateA->angularVelocity -= iA * ( b2Cross( rA, linearImpulse ) + angularImpulse );
+	stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, linearImpulse );
+	stateB->angularVelocity += iB * ( b2Cross( rB, linearImpulse ) + angularImpulse );
 }
 
 void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context )
@@ -174,41 +290,112 @@ void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context )
 	b2Vec2 vB = stateB->linearVelocity;
 	float wB = stateB->angularVelocity;
 
-	// angular constraint
+	// angular spring
+	if ( joint->maxSpringTorque > 0.0f && joint->angularHertz > 0.0f )
 	{
-		float Cdot = wB - wA;
-		float impulse = -joint->angularMass * Cdot;
+		b2Rot qA = b2MulRot( stateA->deltaRotation, joint->frameA.q );
+		b2Rot qB = b2MulRot( stateB->deltaRotation, joint->frameB.q );
+		b2Rot relQ = b2InvMulRot( qA, qB );
+		b2Rot deltaQ = b2InvMulRot( joint->relativeTransform.q, relQ );
 
-		float oldImpulse = joint->angularImpulse;
-		float maxImpulse = context->h * joint->maxTorque;
-		joint->angularImpulse = b2ClampFloat( joint->angularImpulse + impulse, -maxImpulse, maxImpulse );
-		impulse = joint->angularImpulse - oldImpulse;
+		float c = b2Rot_GetAngle( deltaQ );
+		float bias = joint->angularSpring.biasRate * c;
+		float massScale = joint->angularSpring.massScale;
+		float impulseScale = joint->angularSpring.impulseScale;
+
+		float cdot = wB - wA;
+
+		float maxImpulse = context->h * joint->maxSpringTorque;
+		float oldImpulse = joint->angularSpringImpulse;
+		float impulse = -massScale * joint->angularMass * ( cdot + bias ) - impulseScale * oldImpulse;
+		joint->angularSpringImpulse = b2ClampFloat( oldImpulse + impulse, -maxImpulse, maxImpulse );
+		impulse = joint->angularSpringImpulse - oldImpulse;
 
 		wA -= iA * impulse;
 		wB += iB * impulse;
 	}
 
-	// linear constraint
+	// angular velocity
+	if ( joint->maxVelocityTorque > 0.0 )
+	{
+		float cdot = wB - wA - joint->angularVelocity;
+		float impulse = -joint->angularMass * cdot;
+
+		float maxImpulse = context->h * joint->maxVelocityTorque;
+		float oldImpulse = joint->angularVelocityImpulse;
+		joint->angularVelocityImpulse = b2ClampFloat( oldImpulse + impulse, -maxImpulse, maxImpulse );
+		impulse = joint->angularVelocityImpulse - oldImpulse;
+
+		wA -= iA * impulse;
+		wB += iB * impulse;
+	}
+
+	// linear spring
+	if ( joint->maxSpringForce > 0.0f && joint->linearHertz > 0.0f )
 	{
 		b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
 		b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
 
-		b2Vec2 Cdot = b2Sub( b2Add( vB, b2CrossSV( wB, rB ) ), b2Add( vA, b2CrossSV( wA, rA ) ) );
-		b2Vec2 b = b2MulMV( joint->linearMass, Cdot );
-		b2Vec2 impulse = { -b.x, -b.y };
+		b2Vec2 dcA = stateA->deltaPosition;
+		b2Vec2 dcB = stateB->deltaPosition;
+		b2Vec2 c = b2Add( b2Add( b2Sub( dcB, dcA ), b2Sub( rB, rA ) ), joint->deltaCenter );
+		c = b2Sub( c, joint->relativeTransform.p );
 
-		b2Vec2 oldImpulse = joint->linearImpulse;
-		float maxImpulse = context->h * joint->maxForce;
-		joint->linearImpulse = b2Add( joint->linearImpulse, impulse );
+		b2Vec2 bias = b2MulSV( joint->linearSpring.biasRate, c );
+		float massScale = joint->linearSpring.massScale;
+		float impulseScale = joint->linearSpring.impulseScale;
 
-		if ( b2LengthSquared( joint->linearImpulse ) > maxImpulse * maxImpulse )
+		b2Vec2 cdot = b2Sub( b2Add( vB, b2CrossSV( wB, rB ) ), b2Add( vA, b2CrossSV( wA, rA ) ) );
+		cdot = b2Add( cdot, bias );
+		b2Vec2 b = b2MulMV( joint->linearMass, cdot );
+
+		b2Vec2 oldImpulse = joint->linearVelocityImpulse;
+		b2Vec2 impulse = {
+			-massScale * b.x - impulseScale * oldImpulse.x,
+			-massScale * b.y - impulseScale * oldImpulse.y,
+		};
+
+		float maxImpulse = context->h * joint->maxSpringForce;
+		joint->linearSpringImpulse = b2Add( joint->linearSpringImpulse, impulse );
+
+		if ( b2LengthSquared( joint->linearSpringImpulse ) > maxImpulse * maxImpulse )
 		{
-			joint->linearImpulse = b2Normalize( joint->linearImpulse );
-			joint->linearImpulse.x *= maxImpulse;
-			joint->linearImpulse.y *= maxImpulse;
+			joint->linearSpringImpulse = b2Normalize( joint->linearSpringImpulse );
+			joint->linearSpringImpulse.x *= maxImpulse;
+			joint->linearSpringImpulse.y *= maxImpulse;
 		}
 
-		impulse = b2Sub( joint->linearImpulse, oldImpulse );
+		impulse = b2Sub( joint->linearSpringImpulse, oldImpulse );
+
+		vA = b2MulSub( vA, mA, impulse );
+		wA -= iA * b2Cross( rA, impulse );
+		vB = b2MulAdd( vB, mB, impulse );
+		wB += iB * b2Cross( rB, impulse );
+	}
+
+	// linear velocity
+	if ( joint->maxVelocityForce > 0.0f )
+	{
+		b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
+		b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
+
+		b2Vec2 cdot = b2Sub( b2Add( vB, b2CrossSV( wB, rB ) ), b2Add( vA, b2CrossSV( wA, rA ) ) );
+		cdot = b2Sub( cdot, joint->linearVelocity );
+		b2Vec2 b = b2MulMV( joint->linearMass, cdot );
+		b2Vec2 impulse = { -b.x, -b.y };
+
+		b2Vec2 oldImpulse = joint->linearVelocityImpulse;
+		float maxImpulse = context->h * joint->maxVelocityForce;
+		joint->linearVelocityImpulse = b2Add( joint->linearVelocityImpulse, impulse );
+
+		if ( b2LengthSquared( joint->linearVelocityImpulse ) > maxImpulse * maxImpulse )
+		{
+			joint->linearVelocityImpulse = b2Normalize( joint->linearVelocityImpulse );
+			joint->linearVelocityImpulse.x *= maxImpulse;
+			joint->linearVelocityImpulse.y *= maxImpulse;
+		}
+
+		impulse = b2Sub( joint->linearVelocityImpulse, oldImpulse );
 
 		vA = b2MulSub( vA, mA, impulse );
 		wA -= iA * b2Cross( rA, impulse );
