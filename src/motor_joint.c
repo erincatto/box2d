@@ -317,12 +317,12 @@ void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context )
 		wB += iB * impulse;
 	}
 
+	b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
+	b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
+
 	// linear spring
 	if ( joint->maxSpringForce > 0.0f && joint->linearHertz > 0.0f )
 	{
-		b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
-		b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
-
 		b2Vec2 dcA = stateA->deltaPosition;
 		b2Vec2 dcB = stateB->deltaPosition;
 		b2Vec2 c = b2Add( b2Add( b2Sub( dcB, dcA ), b2Sub( rB, rA ) ), joint->deltaCenter );
@@ -333,9 +333,18 @@ void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context )
 
 		b2Vec2 cdot = b2Sub( b2Add( vB, b2CrossSV( wB, rB ) ), b2Add( vA, b2CrossSV( wA, rA ) ) );
 		cdot = b2Add( cdot, bias );
+
+		// Updating the effective mass here may be overkill
+		b2Mat22 kl;
+		kl.cx.x = mA + mB + rA.y * rA.y * iA + rB.y * rB.y * iB;
+		kl.cx.y = -rA.y * rA.x * iA - rB.y * rB.x * iB;
+		kl.cy.x = kl.cx.y;
+		kl.cy.y = mA + mB + rA.x * rA.x * iA + rB.x * rB.x * iB;
+		joint->linearMass = b2GetInverse22( kl );
+
 		b2Vec2 b = b2MulMV( joint->linearMass, cdot );
 
-		b2Vec2 oldImpulse = joint->linearVelocityImpulse;
+		b2Vec2 oldImpulse = joint->linearSpringImpulse;
 		b2Vec2 impulse = {
 			-massScale * b.x - impulseScale * oldImpulse.x,
 			-massScale * b.y - impulseScale * oldImpulse.y,
@@ -362,9 +371,6 @@ void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context )
 	// linear velocity
 	if ( joint->maxVelocityForce > 0.0f )
 	{
-		b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
-		b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
-
 		b2Vec2 cdot = b2Sub( b2Add( vB, b2CrossSV( wB, rB ) ), b2Add( vA, b2CrossSV( wA, rA ) ) );
 		cdot = b2Sub( cdot, joint->linearVelocity );
 		b2Vec2 b = b2MulMV( joint->linearMass, cdot );

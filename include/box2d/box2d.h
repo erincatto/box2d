@@ -834,8 +834,11 @@ B2_API void b2DistanceJoint_EnableSpring( b2JointId jointId, bool enableSpring )
 /// Is the distance joint spring enabled?
 B2_API bool b2DistanceJoint_IsSpringEnabled( b2JointId jointId );
 
-/// Enable/disable spring compression. If false the spring does not resist compression.
-B2_API void b2DistanceJoint_EnableCompression( b2JointId jointId, bool flag );
+/// Set the force range for the spring.
+B2_API void b2DistanceJoint_SetSpringForceRange( b2JointId jointId, float lowerForce, float upperForce );
+
+/// Get the force range for the spring.
+B2_API void b2DistanceJoint_GetSpringForceRange( b2JointId jointId, float* lowerForce, float* upperForce );
 
 /// The the spring resist compression?
 B2_API bool b2DistanceJoint_IsCompressionEnabled( b2JointId jointId );

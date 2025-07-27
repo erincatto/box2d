@@ -233,7 +233,8 @@ Sample::Sample( SampleContext* context )
 
 	m_stepCount = 0;
 
-	m_groundBodyId = b2_nullBodyId;
+	m_mouseBodyId = b2_nullBodyId;
+	m_mousePoint = {};
 
 	m_maxProfile = {};
 	m_totalProfile = {};
@@ -320,6 +321,8 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 		box.lowerBound = b2Sub( p, d );
 		box.upperBound = b2Add( p, d );
 
+		m_mousePoint = p;
+
 		// Query the world for overlapping shapes.
 		QueryContext queryContext = { p, b2_nullBodyId };
 		b2World_OverlapAABB( m_worldId, box, b2DefaultQueryFilter(), QueryCallback, &queryContext );
@@ -328,38 +331,43 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_kinematicBody;
-			m_groundBodyId = b2CreateBody( m_worldId, &bodyDef );
+			bodyDef.position = p;
+			bodyDef.enableSleep = false;
+			m_mouseBodyId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2MouseJointDef jointDef = b2DefaultMouseJointDef();
-			jointDef.base.bodyIdA = m_groundBodyId;
+			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
+			jointDef.base.bodyIdA = m_mouseBodyId;
 			jointDef.base.bodyIdB = queryContext.bodyId;
-			jointDef.base.localFrameA.p = p;
 			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( queryContext.bodyId, p );
-			jointDef.hertz = 7.5f;
-			jointDef.dampingRatio = 0.7f;
-			jointDef.maxForce = 100.0f * b2Body_GetMass( queryContext.bodyId ) * b2Length(b2World_GetGravity(m_worldId));
-			m_mouseJointId = b2CreateMouseJoint( m_worldId, &jointDef );
+			jointDef.linearHertz = 7.5f;
+			jointDef.linearDampingRatio = 0.7f;
 
-			b2Body_SetAwake( queryContext.bodyId, true );
+			b2MassData massData = b2Body_GetMassData( queryContext.bodyId );
+			float g = b2Length( b2World_GetGravity( m_worldId ) );
+			float mg = massData.mass * g;
+			jointDef.maxSpringForce = 100.0f * mg;
+
+			if (massData.mass > 0.0f)
+			{
+				// This acts like angular friction
+				float lever = sqrtf( massData.rotationalInertia / massData.mass );
+				jointDef.maxVelocityTorque = 1.0f * lever * mg;
+			}
+
+			m_mouseJointId = b2CreateMotorJoint( m_worldId, &jointDef );
 		}
 	}
 }
 
 void Sample::MouseUp( b2Vec2 p, int button )
 {
-	if ( b2Joint_IsValid( m_mouseJointId ) == false )
-	{
-		// The world or attached body was destroyed.
-		m_mouseJointId = b2_nullJointId;
-	}
-
 	if ( B2_IS_NON_NULL( m_mouseJointId ) && button == GLFW_MOUSE_BUTTON_1 )
 	{
 		b2DestroyJoint( m_mouseJointId );
 		m_mouseJointId = b2_nullJointId;
 
-		b2DestroyBody( m_groundBodyId );
-		m_groundBodyId = b2_nullBodyId;
+		b2DestroyBody( m_mouseBodyId );
+		m_mouseBodyId = b2_nullBodyId;
 	}
 }
 
@@ -371,13 +379,7 @@ void Sample::MouseMove( b2Vec2 p )
 		m_mouseJointId = b2_nullJointId;
 	}
 
-	if ( B2_IS_NON_NULL( m_mouseJointId ) )
-	{
-		b2Transform localFrameA = { p, b2Rot_identity };
-		b2Joint_SetLocalFrameA( m_mouseJointId, localFrameA );
-		b2BodyId bodyIdB = b2Joint_GetBodyB( m_mouseJointId );
-		b2Body_SetAwake( bodyIdB, true );
-	}
+	m_mousePoint = p;
 }
 
 void Sample::DrawTextLine( const char* text, ... )
@@ -404,7 +406,7 @@ void Sample::ResetProfile()
 	m_stepCount = 0;
 }
 
-void Sample::Step(  )
+void Sample::Step()
 {
 	float timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
 
@@ -424,6 +426,23 @@ void Sample::Step(  )
 			DrawTextLine( "****PAUSED****" );
 			m_textLine += m_textIncrement;
 		}
+	}
+
+	if ( B2_IS_NON_NULL( m_mouseJointId ) && b2Joint_IsValid( m_mouseJointId ) == false )
+	{
+		// The world or attached body was destroyed.
+		m_mouseJointId = b2_nullJointId;
+
+		if (B2_IS_NON_NULL(m_mouseBodyId))
+		{
+			b2DestroyBody( m_mouseBodyId );
+			m_mouseBodyId = b2_nullBodyId;
+		}
+	}
+
+	if (B2_IS_NON_NULL(m_mouseBodyId) && timeStep > 0.0f)
+	{
+		b2Body_SetTargetTransform( m_mouseBodyId, { m_mousePoint, b2Rot_identity }, timeStep );
 	}
 
 	m_context->draw.m_debugDraw.drawingBounds = m_context->camera.GetViewBounds();

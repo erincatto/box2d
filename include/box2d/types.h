@@ -598,8 +598,11 @@ typedef struct b2DistanceJointDef
 	/// then the distance joint will be rigid, overriding the limit and motor.
 	bool enableSpring;
 
-	/// The spring resists compression. If false the spring behaves like a rubber band.
-	bool enableCompression;
+	/// The lower spring force controls how much tension it can sustain
+	float lowerSpringForce;
+
+	/// The upper spring force controls how much compression it an sustain
+	float upperSpringForce;
 
 	/// The spring linear stiffness Hertz, cycles per second
 	float hertz;

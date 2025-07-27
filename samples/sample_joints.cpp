@@ -39,13 +39,14 @@ public:
 		}
 
 		m_count = 0;
-		m_hertz = 2.0f;
+		m_hertz = 5.0f;
 		m_dampingRatio = 0.5f;
 		m_length = 1.0f;
 		m_minLength = m_length;
 		m_maxLength = m_length;
+		m_tensionForce = 2000.0f;
+		m_compressionForce = 100.0f;
 		m_enableSpring = false;
-		m_enableCompression = true;
 		m_enableLimit = false;
 
 		for ( int i = 0; i < e_maxCount; ++i )
@@ -86,10 +87,11 @@ public:
 		jointDef.hertz = m_hertz;
 		jointDef.dampingRatio = m_dampingRatio;
 		jointDef.length = m_length;
+		jointDef.lowerSpringForce = -m_tensionForce;
+		jointDef.upperSpringForce = m_compressionForce;
 		jointDef.minLength = m_minLength;
 		jointDef.maxLength = m_maxLength;
 		jointDef.enableSpring = m_enableSpring;
-		jointDef.enableCompression = m_enableCompression;
 		jointDef.enableLimit = m_enableLimit;
 
 		b2BodyId prevBodyId = m_groundId;
@@ -97,7 +99,7 @@ public:
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
-			bodyDef.angularDamping = 0.1f;
+			bodyDef.angularDamping = 1.0f;
 			bodyDef.position = { m_length * ( i + 1.0f ), yOffset };
 			m_bodyIds[i] = b2CreateBody( m_worldId, &bodyDef );
 			b2CreateCircleShape( m_bodyIds[i], &shapeDef, &circle );
@@ -117,12 +119,12 @@ public:
 	void UpdateGui() override
 	{
 		float fontSize = ImGui::GetFontSize();
-		float height = 240.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
+		float height = 20.0f * fontSize;
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize }, ImGuiCond_Once );
+		ImGui::SetNextWindowSize( { 18.0f * fontSize, height } );
 
 		ImGui::Begin( "Distance Joint", nullptr, ImGuiWindowFlags_NoResize );
-		ImGui::PushItemWidth( 100.0f );
+		ImGui::PushItemWidth( 10.0f * fontSize );
 
 		if ( ImGui::SliderFloat( "Length", &m_length, 0.1f, 4.0f, "%3.1f" ) )
 		{
@@ -144,6 +146,24 @@ public:
 
 		if ( m_enableSpring )
 		{
+			if ( ImGui::SliderFloat( "Tension", &m_tensionForce, 0.0f, 4000.0f ) )
+			{
+				for ( int i = 0; i < m_count; ++i )
+				{
+					b2DistanceJoint_SetSpringForceRange( m_jointIds[i], -m_tensionForce, m_compressionForce );
+					b2Joint_WakeBodies( m_jointIds[i] );
+				}
+			}
+
+			if ( ImGui::SliderFloat( "Compression", &m_compressionForce, 0.0f, 200.0f ) )
+			{
+				for ( int i = 0; i < m_count; ++i )
+				{
+					b2DistanceJoint_SetSpringForceRange( m_jointIds[i], -m_tensionForce, m_compressionForce );
+					b2Joint_WakeBodies( m_jointIds[i] );
+				}
+			}
+
 			if ( ImGui::SliderFloat( "Hertz", &m_hertz, 0.0f, 15.0f, "%3.1f" ) )
 			{
 				for ( int i = 0; i < m_count; ++i )
@@ -158,15 +178,6 @@ public:
 				for ( int i = 0; i < m_count; ++i )
 				{
 					b2DistanceJoint_SetSpringDampingRatio( m_jointIds[i], m_dampingRatio );
-					b2Joint_WakeBodies( m_jointIds[i] );
-				}
-			}
-
-		if ( ImGui::Checkbox( "Compression", &m_enableCompression ) )
-			{
-				for ( int i = 0; i < m_count; ++i )
-				{
-					b2DistanceJoint_EnableCompression( m_jointIds[i], m_enableCompression );
 					b2Joint_WakeBodies( m_jointIds[i] );
 				}
 			}
@@ -224,10 +235,11 @@ public:
 	float m_hertz;
 	float m_dampingRatio;
 	float m_length;
+	float m_tensionForce;
+	float m_compressionForce;
 	float m_minLength;
 	float m_maxLength;
 	bool m_enableSpring;
-	bool m_enableCompression;
 	bool m_enableLimit;
 };
 
@@ -257,23 +269,32 @@ public:
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
+		m_transform = { .p = { 0.0f, 8.0f }, .q = b2Rot_identity };
+
+		// Define a target body
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_kinematicBody;
+			bodyDef.position = m_transform.p;
+			m_targetId = b2CreateBody( m_worldId, &bodyDef );
+		}
+
 		// Define motorized body
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
-			bodyDef.position = { 0.0f, 8.0f };
+			bodyDef.position = m_transform.p;
 			m_bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2Polygon box = b2MakeBox( 2.0f, 0.5f );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.density = 1.0f;
 			b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
 
-			m_maxForce = 500.0f;
+			m_maxForce = 5000.0f;
 			m_maxTorque = 500.0f;
 
 			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
-			jointDef.base.bodyIdA = groundId;
+			jointDef.base.bodyIdA = m_targetId;
 			jointDef.base.bodyIdB = m_bodyId;
 			jointDef.linearHertz = 4.0f;
 			jointDef.linearDampingRatio = 0.7f;
@@ -285,6 +306,33 @@ public:
 			m_jointId = b2CreateMotorJoint( m_worldId, &jointDef );
 		}
 
+		// Define spring body
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { -2.0f, 2.0f };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Polygon box = b2MakeSquare( 0.5f );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
+			jointDef.base.bodyIdA = groundId;
+			jointDef.base.bodyIdB = bodyId;
+			jointDef.base.localFrameA.p = b2Add( bodyDef.position, { 0.25f, 0.25f } );
+			jointDef.base.localFrameB.p = { 0.25f, 0.25f };
+			jointDef.linearHertz = 7.5f;
+			jointDef.linearDampingRatio = 0.7f;
+			jointDef.angularHertz = 7.5f;
+			jointDef.angularDampingRatio = 0.7f;
+			jointDef.maxSpringForce = 500.0f;
+			jointDef.maxSpringTorque = 10.0f;
+
+			b2CreateMotorJoint( m_worldId, &jointDef );
+		}
+
+		m_speed = 1.0f;
 		m_go = true;
 		m_time = 0.0f;
 	}
@@ -298,16 +346,16 @@ public:
 
 		ImGui::Begin( "Motor Joint", nullptr, ImGuiWindowFlags_NoResize );
 
-		if ( ImGui::Checkbox( "Go", &m_go ) )
+		if ( ImGui::SliderFloat( "Speed", &m_speed, -5.0f, 5.0f, "%.0f" ) )
 		{
 		}
 
-		if ( ImGui::SliderFloat( "Max Force", &m_maxForce, 0.0f, 1000.0f, "%.0f" ) )
+		if ( ImGui::SliderFloat( "Max Force", &m_maxForce, 0.0f, 10000.0f, "%.0f" ) )
 		{
 			b2MotorJoint_SetMaxSpringForce( m_jointId, m_maxForce );
 		}
 
-		if ( ImGui::SliderFloat( "Max Torque", &m_maxTorque, 0.0f, 1000.0f, "%.0f" ) )
+		if ( ImGui::SliderFloat( "Max Torque", &m_maxTorque, 0.0f, 10000.0f, "%.0f" ) )
 		{
 			b2MotorJoint_SetMaxSpringTorque( m_jointId, m_maxTorque );
 		}
@@ -324,29 +372,29 @@ public:
 	{
 		float timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
 
-		if ( m_go )
+		if ( m_context->pause )
 		{
-			if ( m_context->pause )
+			if ( m_context->singleStep == false )
 			{
-				if ( m_context->singleStep == false )
-				{
-					timeStep = 0.0f;
-				}
+				timeStep = 0.0f;
 			}
 		}
 
-		m_time += timeStep;
+		if ( timeStep > 0.0f )
+		{
+			m_time += m_speed * timeStep;
 
-		b2Vec2 linearOffset;
-		linearOffset.x = 6.0f * sinf( 2.0f * m_time );
-		linearOffset.y = 8.0f + 4.0f * sinf( 1.0f * m_time );
+			b2Vec2 linearOffset;
+			linearOffset.x = 6.0f * sinf( 2.0f * m_time );
+			linearOffset.y = 8.0f + 4.0f * sinf( 1.0f * m_time );
 
-		float angularOffset = 2.0f * m_time;
-		b2Transform transform = { linearOffset, b2MakeRot( angularOffset ) };
+			float angularOffset = 2.0f * m_time;
+			m_transform = { linearOffset, b2MakeRot( angularOffset ) };
 
-		b2Joint_SetLocalFrameA( m_jointId, transform );
+			b2Body_SetTargetTransform( m_targetId, m_transform, timeStep );
+		}
 
-		m_context->draw.DrawTransform( transform );
+		m_context->draw.DrawTransform( m_transform );
 
 		Sample::Step();
 
@@ -361,9 +409,12 @@ public:
 		return new MotorJoint( context );
 	}
 
+	b2BodyId m_targetId;
 	b2BodyId m_bodyId;
 	b2JointId m_jointId;
+	b2Transform m_transform;
 	float m_time;
+	float m_speed;
 	float m_maxForce;
 	float m_maxTorque;
 	bool m_go;
@@ -426,7 +477,7 @@ public:
 				bodyDef.position = { x, y };
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
-				int remainder = (n * i + j) % 4;
+				int remainder = ( n * i + j ) % 4;
 				if ( remainder == 0 )
 				{
 					b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
@@ -469,7 +520,7 @@ public:
 		if ( ImGui::Button( "Explode" ) )
 		{
 			b2ExplosionDef def = b2DefaultExplosionDef();
-			def.position = {0.0f, 10.0f};
+			def.position = { 0.0f, 10.0f };
 			def.radius = 10.0f;
 			def.falloff = 5.0f;
 			def.impulsePerLength = 10.0f;

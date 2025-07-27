@@ -65,6 +65,8 @@ typedef struct b2DistanceJoint
 	float length;
 	float hertz;
 	float dampingRatio;
+	float lowerSpringForce;
+	float upperSpringForce;
 	float minLength;
 	float maxLength;
 
@@ -85,7 +87,6 @@ typedef struct b2DistanceJoint
 	float axialMass;
 
 	bool enableSpring;
-	bool enableCompression;
 	bool enableLimit;
 	bool enableMotor;
 } b2DistanceJoint;

@@ -109,16 +109,19 @@ bool b2DistanceJoint_IsSpringEnabled( b2JointId jointId )
 	return base->distanceJoint.enableSpring;
 }
 
-void b2DistanceJoint_EnableCompression( b2JointId jointId, bool flag )
+void b2DistanceJoint_SetSpringForceRange( b2JointId jointId, float lowerForce, float upperForce )
 {
+	B2_ASSERT( lowerForce <= upperForce );
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
-	base->distanceJoint.enableCompression = flag;
+	base->distanceJoint.lowerSpringForce = lowerForce;
+	base->distanceJoint.upperSpringForce = upperForce;
 }
 
-bool b2DistanceJoint_IsCompressionEnabled( b2JointId jointId )
+void b2DistanceJoint_GetSpringForceRange( b2JointId jointId, float* lowerForce, float* upperForce )
 {
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
-	return base->distanceJoint.enableCompression;
+	*lowerForce = base->distanceJoint.lowerSpringForce;
+	*upperForce = base->distanceJoint.upperSpringForce;
 }
 
 void b2DistanceJoint_SetSpringHertz( b2JointId jointId, float hertz )
@@ -371,15 +374,9 @@ void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBia
 			float oldImpulse = joint->impulse;
 			float impulse = -m * ( Cdot + bias ) - joint->distanceSoftness.impulseScale * oldImpulse;
 
-			if (joint->enableCompression )
-			{
-				joint->impulse += impulse;
-			}
-			else
-			{
-				joint->impulse = b2MinFloat( joint->impulse + impulse, 0.0f );
-				impulse = joint->impulse - oldImpulse;
-			}
+			float h = context->h;
+			joint->impulse = b2ClampFloat( joint->impulse + impulse, joint->lowerSpringForce * h, joint->upperSpringForce * h );
+			impulse = joint->impulse - oldImpulse;
 
 			b2Vec2 P = b2MulSV( impulse, axis );
 			vA = b2MulSub( vA, mA, P );

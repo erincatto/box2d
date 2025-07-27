@@ -40,7 +40,8 @@ b2DistanceJointDef b2DefaultDistanceJointDef( void )
 {
 	b2DistanceJointDef def = { 0 };
 	def.base = b2DefaultJointDef();
-	def.enableCompression = true;
+	def.lowerSpringForce = -FLT_MAX;
+	def.upperSpringForce = FLT_MAX;
 	def.length = 1.0f;
 	def.maxLength = B2_HUGE;
 	def.internalValue = B2_SECRET_COOKIE;
@@ -405,6 +406,7 @@ b2JointId b2CreateDistanceJoint( b2WorldId worldId, const b2DistanceJointDef* de
 	}
 
 	B2_ASSERT( b2IsValidFloat( def->length ) && def->length > 0.0f );
+	B2_ASSERT( def->lowerSpringForce <= def->upperSpringForce );
 
 	b2JointPair pair = b2CreateJoint( world, &def->base, b2_distanceJoint );
 
@@ -420,7 +422,8 @@ b2JointId b2CreateDistanceJoint( b2WorldId worldId, const b2DistanceJointDef* de
 	joint->distanceJoint.maxMotorForce = def->maxMotorForce;
 	joint->distanceJoint.motorSpeed = def->motorSpeed;
 	joint->distanceJoint.enableSpring = def->enableSpring;
-	joint->distanceJoint.enableCompression = def->enableCompression;
+	joint->distanceJoint.lowerSpringForce = def->lowerSpringForce;
+	joint->distanceJoint.upperSpringForce = def->upperSpringForce;
 	joint->distanceJoint.enableLimit = def->enableLimit;
 	joint->distanceJoint.enableMotor = def->enableMotor;
 	joint->distanceJoint.impulse = 0.0f;
@@ -1533,6 +1536,8 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 			break;
 
 		case b2_motorJoint:
+			draw->DrawPointFcn( pA, 8.0f, b2_colorYellowGreen, draw->context );
+			draw->DrawPointFcn( pB, 8.0f, b2_colorPlum, draw->context );
 			break;
 
 		case b2_prismaticJoint:
