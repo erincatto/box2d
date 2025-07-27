@@ -607,9 +607,6 @@ typedef struct b2DistanceJointDef
 	/// The spring linear damping ratio, non-dimensional
 	float dampingRatio;
 
-	/// The spring has no resistance to compression below the rest length
-	bool isRubberBand;
-
 	/// Enable/disable the joint limit
 	bool enableLimit;
 

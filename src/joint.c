@@ -378,7 +378,6 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 	if ( joint->setIndex > b2_disabledSet )
 	{
 		// Add edge to island graph
-		//bool mergeIslands = true;
 		b2LinkJoint( world, joint );
 	}
 

@@ -425,7 +425,7 @@ void b2ApplyOverflowRestitution( b2StepContext* context )
 
 		// it is possible to get more accurate restitution by iterating
 		// this only makes a difference if there are two contact points
-		for (int iter = 0; iter < 2; ++iter)
+		// for (int iter = 0; iter < 10; ++iter)
 		{
 			for ( int j = 0; j < pointCount; ++j )
 			{

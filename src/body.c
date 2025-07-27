@@ -1114,11 +1114,6 @@ b2BodyType b2Body_GetType( b2BodyId bodyId )
 // Notes:
 // - the implementation below tries to minimize the number of predicates, so some
 //   operations may have no effect, such as transferring a joint to the same set
-/**
- * 
- * @param bodyId 
- * @param type 
- */
 void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
@@ -1273,11 +1268,8 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 			continue;
 		}
 
-		//bool mergeIslands = false;
 		b2LinkJoint( world, joint );
 	}
-
-	//b2MergeAwakeIslands( world );
 
 	// Body type affects the mass
 	b2UpdateBodyMassData( world, body );
@@ -1668,7 +1660,6 @@ void b2Body_Enable( b2BodyId bodyId )
 
 	// Transfer joints. If the other body is disabled, don't transfer.
 	// If the other body is sleeping, wake it.
-	//bool mergeIslands = false;
 	int jointKey = body->headJointKey;
 	while ( jointKey != B2_NULL_INDEX )
 	{
@@ -1714,9 +1705,6 @@ void b2Body_Enable( b2BodyId bodyId )
 			b2LinkJoint( world, joint );
 		}
 	}
-
-	// Now merge islands
-	//b2MergeAwakeIslands( world );
 
 	b2ValidateSolverSets( world );
 }

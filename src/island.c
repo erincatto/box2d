@@ -46,7 +46,6 @@ b2Island* b2CreateIsland( b2World* world, int setIndex )
 	island->headJoint = B2_NULL_INDEX;
 	island->tailJoint = B2_NULL_INDEX;
 	island->jointCount = 0;
-	//island->parentIsland = B2_NULL_INDEX;
 	island->constraintRemoveCount = 0;
 
 	b2IslandSim* islandSim = b2IslandSimArray_Add( &set->islandSims );

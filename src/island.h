@@ -48,10 +48,6 @@ typedef struct b2Island
 	int tailJoint;
 	int jointCount;
 
-	// Union find
-	// todo this could go away if islands are merged immediately with b2LinkJoint and b2LinkContact
-	//int parentIsland;
-
 	// Keeps track of how many contacts have been removed from this island.
 	// This is used to determine if an island is a candidate for splitting.
 	int constraintRemoveCount;
