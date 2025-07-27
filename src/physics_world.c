@@ -988,35 +988,10 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 	b2HexColor frictionColor = b2_colorYellow;
 
 	b2HexColor graphColors[B2_GRAPH_COLOR_COUNT] = {
-		b2_colorRed,
-		b2_colorOrange,
-		b2_colorYellow,
-		b2_colorGreen,
-		
-		b2_colorCyan,
-		b2_colorBlue,
-		b2_colorViolet,
-		b2_colorPink,
-		
-		b2_colorChocolate,
-		b2_colorGoldenRod,
-		b2_colorCoral,
-		b2_colorRosyBrown,
-		
-		b2_colorAqua,
-		b2_colorPeru,
-		b2_colorLime,
-		b2_colorGold,
-		
-		b2_colorPlum,
-		b2_colorSnow,
-		b2_colorTeal,
-		b2_colorKhaki,
-		
-		b2_colorSalmon,
-		b2_colorPeachPuff,
-		b2_colorHoneyDew,
-		b2_colorBlack,
+		b2_colorRed,	b2_colorOrange, b2_colorYellow,	   b2_colorGreen,	  b2_colorCyan,		b2_colorBlue,
+		b2_colorViolet, b2_colorPink,	b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,	b2_colorRosyBrown,
+		b2_colorAqua,	b2_colorPeru,	b2_colorLime,	   b2_colorGold,	  b2_colorPlum,		b2_colorSnow,
+		b2_colorTeal,	b2_colorKhaki,	b2_colorSalmon,	   b2_colorPeachPuff, b2_colorHoneyDew, b2_colorBlack,
 	};
 
 	int bodyCapacity = b2GetIdCapacity( &world->bodyIdPool );
@@ -2538,6 +2513,7 @@ void b2World_EnableSpeculative( b2WorldId worldId, bool flag )
 }
 
 #if B2_VALIDATE
+#if 0
 // When validating islands ids I have to compare the root island
 // ids because islands are not merged until the next time step.
 static int b2GetRootIslandId( b2World* world, int islandId )
@@ -2560,6 +2536,7 @@ static int b2GetRootIslandId( b2World* world, int islandId )
 
 	return rootId;
 }
+#endif
 
 // This validates island graph connectivity for each body
 void b2ValidateConnectivity( b2World* world )
@@ -2581,7 +2558,8 @@ void b2ValidateConnectivity( b2World* world )
 		B2_ASSERT( bodyIndex == body->id );
 
 		// Need to get the root island because islands are not merged until the next time step
-		int bodyIslandId = b2GetRootIslandId( world, body->islandId );
+		//int bodyIslandId = b2GetRootIslandId( world, body->islandId );
+		int bodyIslandId = body->islandId;
 		int bodySetIndex = body->setIndex;
 
 		int contactKey = body->headContactKey;
@@ -2597,7 +2575,8 @@ void b2ValidateConnectivity( b2World* world )
 			{
 				if ( bodySetIndex != b2_staticSet )
 				{
-					int contactIslandId = b2GetRootIslandId( world, contact->islandId );
+					//int contactIslandId = b2GetRootIslandId( world, contact->islandId );
+					int contactIslandId = contact->islandId;
 					B2_ASSERT( contactIslandId == bodyIslandId );
 				}
 			}
@@ -2634,7 +2613,8 @@ void b2ValidateConnectivity( b2World* world )
 			}
 			else
 			{
-				int jointIslandId = b2GetRootIslandId( world, joint->islandId );
+				//int jointIslandId = b2GetRootIslandId( world, joint->islandId );
+				int jointIslandId = joint->islandId;
 				B2_ASSERT( jointIslandId == bodyIslandId );
 			}
 
@@ -2860,63 +2840,63 @@ void b2ValidateSolverSets( b2World* world )
 	for ( int colorIndex = 0; colorIndex < B2_GRAPH_COLOR_COUNT; ++colorIndex )
 	{
 		b2GraphColor* color = world->constraintGraph.colors + colorIndex;
-			int bitCount = 0;
-			
-			B2_ASSERT( color->contactSims.count >= 0 );
-			totalContactCount += color->contactSims.count;
-			for ( int i = 0; i < color->contactSims.count; ++i )
+		int bitCount = 0;
+
+		B2_ASSERT( color->contactSims.count >= 0 );
+		totalContactCount += color->contactSims.count;
+		for ( int i = 0; i < color->contactSims.count; ++i )
+		{
+			b2ContactSim* contactSim = color->contactSims.data + i;
+			b2Contact* contact = b2ContactArray_Get( &world->contacts, contactSim->contactId );
+			// contact should be touching in the constraint graph or awaiting transfer to non-touching
+			B2_ASSERT( contactSim->manifold.pointCount > 0 ||
+					   ( contactSim->simFlags & ( b2_simStoppedTouching | b2_simDisjoint ) ) != 0 );
+			B2_ASSERT( contact->setIndex == b2_awakeSet );
+			B2_ASSERT( contact->colorIndex == colorIndex );
+			B2_ASSERT( contact->localIndex == i );
+
+			int bodyIdA = contact->edges[0].bodyId;
+			int bodyIdB = contact->edges[1].bodyId;
+
+			if ( colorIndex < B2_OVERFLOW_INDEX )
 			{
-				b2ContactSim* contactSim = color->contactSims.data + i;
-				b2Contact* contact = b2ContactArray_Get( &world->contacts, contactSim->contactId );
-				// contact should be touching in the constraint graph or awaiting transfer to non-touching
-				B2_ASSERT( contactSim->manifold.pointCount > 0 ||
-						   ( contactSim->simFlags & ( b2_simStoppedTouching | b2_simDisjoint ) ) != 0 );
-				B2_ASSERT( contact->setIndex == b2_awakeSet );
-				B2_ASSERT( contact->colorIndex == colorIndex );
-				B2_ASSERT( contact->localIndex == i );
+				b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
+				b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
+				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type != b2_staticBody ) );
+				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type != b2_staticBody ) );
 
-				int bodyIdA = contact->edges[0].bodyId;
-				int bodyIdB = contact->edges[1].bodyId;
-
-				if ( colorIndex < B2_OVERFLOW_INDEX )
-				{
-					b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
-					b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
-					B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type != b2_staticBody ) );
-					B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type != b2_staticBody ) );
-					
-					bitCount += bodyA->type == b2_staticBody ? 0 : 1;
-					bitCount += bodyB->type == b2_staticBody ? 0 : 1;
-				}
+				bitCount += bodyA->type == b2_staticBody ? 0 : 1;
+				bitCount += bodyB->type == b2_staticBody ? 0 : 1;
 			}
+		}
 
 		B2_ASSERT( color->jointSims.count >= 0 );
-			totalJointCount += color->jointSims.count;
-			for ( int i = 0; i < color->jointSims.count; ++i )
+		totalJointCount += color->jointSims.count;
+		for ( int i = 0; i < color->jointSims.count; ++i )
+		{
+			b2JointSim* jointSim = color->jointSims.data + i;
+			b2Joint* joint = b2JointArray_Get( &world->joints, jointSim->jointId );
+			B2_ASSERT( joint->setIndex == b2_awakeSet );
+			B2_ASSERT( joint->colorIndex == colorIndex );
+			B2_ASSERT( joint->localIndex == i );
+
+			int bodyIdA = joint->edges[0].bodyId;
+			int bodyIdB = joint->edges[1].bodyId;
+
+			if ( colorIndex < B2_OVERFLOW_INDEX )
 			{
-				b2JointSim* jointSim = color->jointSims.data + i;
-				b2Joint* joint = b2JointArray_Get( &world->joints, jointSim->jointId );
-				B2_ASSERT( joint->setIndex == b2_awakeSet );
-				B2_ASSERT( joint->colorIndex == colorIndex );
-				B2_ASSERT( joint->localIndex == i );
+				b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
+				b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
+				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type != b2_staticBody ) );
+				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type != b2_staticBody ) );
 
-				int bodyIdA = joint->edges[0].bodyId;
-				int bodyIdB = joint->edges[1].bodyId;
-
-				if ( colorIndex < B2_OVERFLOW_INDEX )
-				{
-					b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
-					b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
-					B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type != b2_staticBody ) );
-					B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type != b2_staticBody ) );
-					
-					bitCount += bodyA->type == b2_staticBody ? 0 : 1;
-					bitCount += bodyB->type == b2_staticBody ? 0 : 1;
-				}
+				bitCount += bodyA->type == b2_staticBody ? 0 : 1;
+				bitCount += bodyB->type == b2_staticBody ? 0 : 1;
 			}
-		
+		}
+
 		// Validate the bit population for this graph color
-		B2_ASSERT(bitCount == b2CountSetBits(&color->bodySet));
+		B2_ASSERT( bitCount == b2CountSetBits( &color->bodySet ) );
 	}
 
 	int contactIdCount = b2GetIdCount( &world->contactIdPool );

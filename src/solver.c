@@ -327,15 +327,18 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	}
 
 	// Custom user filtering
-	b2CustomFilterFcn* customFilterFcn = world->customFilterFcn;
-	if ( customFilterFcn != NULL )
+	if ( shape->enableCustomFiltering || fastShape->enableCustomFiltering )
 	{
-		b2ShapeId idA = { shape->id + 1, world->worldId, shape->generation };
-		b2ShapeId idB = { fastShape->id + 1, world->worldId, fastShape->generation };
-		canCollide = customFilterFcn( idA, idB, world->customFilterContext );
-		if ( canCollide == false )
+		b2CustomFilterFcn* customFilterFcn = world->customFilterFcn;
+		if ( customFilterFcn != NULL )
 		{
-			return true;
+			b2ShapeId idA = { shape->id + 1, world->worldId, shape->generation };
+			b2ShapeId idB = { fastShape->id + 1, world->worldId, fastShape->generation };
+			canCollide = customFilterFcn( idA, idB, world->customFilterContext );
+			if ( canCollide == false )
+			{
+				return true;
+			}
 		}
 	}
 
@@ -1293,17 +1296,6 @@ static void b2BulletBodyTask( int startIndex, int endIndex, uint32_t threadIndex
 void b2Solve( b2World* world, b2StepContext* stepContext )
 {
 	world->stepIndex += 1;
-
-	// Merge islands
-	{
-		b2TracyCZoneNC( merge, "Merge", b2_colorLightGoldenRodYellow, true );
-		uint64_t mergeTicks = b2GetTicks();
-
-		b2MergeAwakeIslands( world );
-
-		world->profile.mergeIslands = b2GetMilliseconds( mergeTicks );
-		b2TracyCZoneEnd( merge );
-	}
 
 	// Are there any awake bodies? This scenario should not be important for profiling.
 	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );

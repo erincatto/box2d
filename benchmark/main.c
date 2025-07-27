@@ -169,7 +169,6 @@ int main( int argc, char** argv )
 		.pairs = FLT_MAX,
 		.collide = FLT_MAX,
 		.solve = FLT_MAX,
-		.mergeIslands = FLT_MAX,
 		.prepareStages = FLT_MAX,
 		.solveConstraints = FLT_MAX,
 		.prepareConstraints = FLT_MAX,

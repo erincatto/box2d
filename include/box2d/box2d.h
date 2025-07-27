@@ -216,7 +216,8 @@ B2_API b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def );
 /// Do not keep references to the associated shapes and joints.
 B2_API void b2DestroyBody( b2BodyId bodyId );
 
-/// Body identifier validation. Can be used to detect orphaned ids. Provides validation for up to 64K allocations.
+/// Body identifier validation. A valid body exists in a world and is non-null.
+/// This can be used to detect orphaned ids. Provides validation for up to 64K allocations.
 B2_API bool b2Body_IsValid( b2BodyId id );
 
 /// Get the body type: static, kinematic, or dynamic
@@ -833,6 +834,15 @@ B2_API void b2DistanceJoint_EnableSpring( b2JointId jointId, bool enableSpring )
 /// Is the distance joint spring enabled?
 B2_API bool b2DistanceJoint_IsSpringEnabled( b2JointId jointId );
 
+/// Set the force range for the spring.
+B2_API void b2DistanceJoint_SetSpringForceRange( b2JointId jointId, float lowerForce, float upperForce );
+
+/// Get the force range for the spring.
+B2_API void b2DistanceJoint_GetSpringForceRange( b2JointId jointId, float* lowerForce, float* upperForce );
+
+/// The the spring resist compression?
+B2_API bool b2DistanceJoint_IsCompressionEnabled( b2JointId jointId );
+
 /// Set the spring stiffness in Hertz
 B2_API void b2DistanceJoint_SetSpringHertz( b2JointId jointId, float hertz );
 
@@ -900,23 +910,65 @@ B2_API float b2DistanceJoint_GetMotorForce( b2JointId jointId );
 /// @see b2MotorJointDef for details
 B2_API b2JointId b2CreateMotorJoint( b2WorldId worldId, const b2MotorJointDef* def );
 
+/// Set the desired relative linear velocity in meters per second
+B2_API void b2MotorJoint_SetLinearVelocity( b2JointId jointId, b2Vec2 velocity );
+
+/// Get the desired relative linear velocity in meters per second
+B2_API b2Vec2 b2MotorJoint_GetLinearVelocity( b2JointId jointId );
+
+/// Set the desired relative angular velocity in radians per second
+B2_API void b2MotorJoint_SetAngularVelocity( b2JointId jointId, float velocity );
+
+/// Get the desired relative angular velocity in radians per second
+B2_API float b2MotorJoint_GetAngularVelocity( b2JointId jointId );
+
 /// Set the motor joint maximum force, usually in newtons
-B2_API void b2MotorJoint_SetMaxForce( b2JointId jointId, float maxForce );
+B2_API void b2MotorJoint_SetMaxVelocityForce( b2JointId jointId, float maxForce );
 
 /// Get the motor joint maximum force, usually in newtons
-B2_API float b2MotorJoint_GetMaxForce( b2JointId jointId );
+B2_API float b2MotorJoint_GetMaxVelocityForce( b2JointId jointId );
 
 /// Set the motor joint maximum torque, usually in newton-meters
-B2_API void b2MotorJoint_SetMaxTorque( b2JointId jointId, float maxTorque );
+B2_API void b2MotorJoint_SetMaxVelocityTorque( b2JointId jointId, float maxTorque );
 
 /// Get the motor joint maximum torque, usually in newton-meters
-B2_API float b2MotorJoint_GetMaxTorque( b2JointId jointId );
+B2_API float b2MotorJoint_GetMaxVelocityTorque( b2JointId jointId );
 
-/// Set the motor joint correction factor, usually in [0, 1]
-B2_API void b2MotorJoint_SetCorrectionFactor( b2JointId jointId, float correctionFactor );
+/// Set the spring linear hertz stiffness
+B2_API void b2MotorJoint_SetLinearHertz( b2JointId jointId, float hertz );
 
-/// Get the motor joint correction factor, usually in [0, 1]
-B2_API float b2MotorJoint_GetCorrectionFactor( b2JointId jointId );
+/// Get the spring linear hertz stiffness
+B2_API float b2MotorJoint_GetLinearHertz( b2JointId jointId );
+
+/// Set the spring linear damping ratio. Use 1.0 for critical damping.
+B2_API void b2MotorJoint_SetLinearDampingRatio( b2JointId jointId, float damping );
+
+/// Get the spring linear damping ratio.
+B2_API float b2MotorJoint_GetLinearDampingRatio( b2JointId jointId );
+
+/// Set the spring angular hertz stiffness
+B2_API void b2MotorJoint_SetAngularHertz( b2JointId jointId, float hertz );
+
+/// Get the spring angular hertz stiffness
+B2_API float b2MotorJoint_GetAngularHertz( b2JointId jointId );
+
+/// Set the spring angular damping ratio. Use 1.0 for critical damping.
+B2_API void b2MotorJoint_SetAngularDampingRatio( b2JointId jointId, float damping );
+
+/// Get the spring angular damping ratio.
+B2_API float b2MotorJoint_GetAngularDampingRatio( b2JointId jointId );
+
+/// Set the maximum spring force in newtons.
+B2_API void b2MotorJoint_SetMaxSpringForce( b2JointId jointId, float maxForce );
+
+/// Get the maximum spring force in newtons.
+B2_API float b2MotorJoint_GetMaxSpringForce( b2JointId jointId );
+
+/// Set the maximum spring torque in newtons * meters
+B2_API void b2MotorJoint_SetMaxSpringTorque( b2JointId jointId, float maxTorque );
+
+/// Get the maximum spring torque in newtons * meters
+B2_API float b2MotorJoint_GetMaxSpringTorque( b2JointId jointId );
 
 /**@}*/
 

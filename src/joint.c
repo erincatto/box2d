@@ -40,6 +40,8 @@ b2DistanceJointDef b2DefaultDistanceJointDef( void )
 {
 	b2DistanceJointDef def = { 0 };
 	def.base = b2DefaultJointDef();
+	def.lowerSpringForce = -FLT_MAX;
+	def.upperSpringForce = FLT_MAX;
 	def.length = 1.0f;
 	def.maxLength = B2_HUGE;
 	def.internalValue = B2_SECRET_COOKIE;
@@ -50,9 +52,7 @@ b2MotorJointDef b2DefaultMotorJointDef( void )
 {
 	b2MotorJointDef def = { 0 };
 	def.base = b2DefaultJointDef();
-	def.maxForce = 1.0f;
-	def.maxTorque = 1.0f;
-	def.correctionFactor = 0.3f;
+	def.relativeTransform.q = b2Rot_identity;
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;
 }
@@ -379,8 +379,7 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 	if ( joint->setIndex > b2_disabledSet )
 	{
 		// Add edge to island graph
-		bool mergeIslands = true;
-		b2LinkJoint( world, joint, mergeIslands );
+		b2LinkJoint( world, joint );
 	}
 
 	// If the joint prevents collisions, then destroy all contacts between attached bodies
@@ -407,6 +406,7 @@ b2JointId b2CreateDistanceJoint( b2WorldId worldId, const b2DistanceJointDef* de
 	}
 
 	B2_ASSERT( b2IsValidFloat( def->length ) && def->length > 0.0f );
+	B2_ASSERT( def->lowerSpringForce <= def->upperSpringForce );
 
 	b2JointPair pair = b2CreateJoint( world, &def->base, b2_distanceJoint );
 
@@ -422,6 +422,8 @@ b2JointId b2CreateDistanceJoint( b2WorldId worldId, const b2DistanceJointDef* de
 	joint->distanceJoint.maxMotorForce = def->maxMotorForce;
 	joint->distanceJoint.motorSpeed = def->motorSpeed;
 	joint->distanceJoint.enableSpring = def->enableSpring;
+	joint->distanceJoint.lowerSpringForce = def->lowerSpringForce;
+	joint->distanceJoint.upperSpringForce = def->upperSpringForce;
 	joint->distanceJoint.enableLimit = def->enableLimit;
 	joint->distanceJoint.enableMotor = def->enableMotor;
 	joint->distanceJoint.impulse = 0.0f;
@@ -449,9 +451,16 @@ b2JointId b2CreateMotorJoint( b2WorldId worldId, const b2MotorJointDef* def )
 	b2JointSim* joint = pair.jointSim;
 
 	joint->motorJoint = (b2MotorJoint){ 0 };
-	joint->motorJoint.maxForce = def->maxForce;
-	joint->motorJoint.maxTorque = def->maxTorque;
-	joint->motorJoint.correctionFactor = b2ClampFloat( def->correctionFactor, 0.0f, 1.0f );
+	joint->motorJoint.linearVelocity = def->linearVelocity;
+	joint->motorJoint.maxVelocityForce = def->maxVelocityForce;
+	joint->motorJoint.angularVelocity = def->angularVelocity;
+	joint->motorJoint.maxVelocityTorque = def->maxVelocityTorque;
+	joint->motorJoint.linearHertz = def->linearHertz;
+	joint->motorJoint.linearDampingRatio = def->linearDampingRatio;
+	joint->motorJoint.maxSpringForce = def->maxSpringForce;
+	joint->motorJoint.angularHertz = def->angularHertz;
+	joint->motorJoint.angularDampingRatio = def->angularDampingRatio;
+	joint->motorJoint.maxSpringTorque = def->maxSpringTorque;
 
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 	return jointId;
@@ -926,8 +935,8 @@ void b2GetJointReaction( b2JointSim* sim, float invTimeStep, float* force, float
 		case b2_motorJoint:
 		{
 			b2MotorJoint* joint = &sim->motorJoint;
-			linearImpulse = b2Length( joint->linearImpulse );
-			angularImpulse = b2AbsFloat( joint->angularImpulse );
+			linearImpulse = b2Length( b2Add(joint->linearVelocityImpulse, joint->linearSpringImpulse) );
+			angularImpulse = b2AbsFloat( joint->angularVelocityImpulse + joint->angularSpringImpulse );
 		}
 		break;
 
@@ -1526,6 +1535,11 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 			draw->DrawSegmentFcn( pA, pB, b2_colorGold, draw->context );
 			break;
 
+		case b2_motorJoint:
+			draw->DrawPointFcn( pA, 8.0f, b2_colorYellowGreen, draw->context );
+			draw->DrawPointFcn( pB, 8.0f, b2_colorPlum, draw->context );
+			break;
+
 		case b2_prismaticJoint:
 			b2DrawPrismaticJoint( draw, jointSim, transformA, transformB, joint->drawScale );
 			break;
@@ -1552,37 +1566,12 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 	if ( draw->drawGraphColors )
 	{
 		b2HexColor graphColors[B2_GRAPH_COLOR_COUNT] = {
-			b2_colorRed,
-			b2_colorOrange,
-			b2_colorYellow,
-			b2_colorGreen,
-			
-			b2_colorCyan,
-			b2_colorBlue,
-			b2_colorViolet,
-			b2_colorPink,
-			
-			b2_colorChocolate,
-			b2_colorGoldenRod,
-			b2_colorCoral,
-			b2_colorRosyBrown,
-			
-			b2_colorAqua,
-			b2_colorPeru,
-			b2_colorLime,
-			b2_colorGold,
-			
-			b2_colorPlum,
-			b2_colorSnow,
-			b2_colorTeal,
-			b2_colorKhaki,
-			
-			b2_colorSalmon,
-			b2_colorPeachPuff,
-			b2_colorHoneyDew,
-			b2_colorBlack,
+			b2_colorRed,	b2_colorOrange, b2_colorYellow,	   b2_colorGreen,	  b2_colorCyan,		b2_colorBlue,
+			b2_colorViolet, b2_colorPink,	b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,	b2_colorRosyBrown,
+			b2_colorAqua,	b2_colorPeru,	b2_colorLime,	   b2_colorGold,	  b2_colorPlum,		b2_colorSnow,
+			b2_colorTeal,	b2_colorKhaki,	b2_colorSalmon,	   b2_colorPeachPuff, b2_colorHoneyDew, b2_colorBlack,
 		};
-		
+
 		int colorIndex = joint->colorIndex;
 		if ( colorIndex != B2_NULL_INDEX )
 		{

@@ -82,15 +82,18 @@ static bool b2SensorQueryCallback( int proxyId, uint64_t userData, void* context
 	}
 
 	// Custom user filter
-	b2CustomFilterFcn* customFilterFcn = queryContext->world->customFilterFcn;
-	if ( customFilterFcn != NULL )
+	if ( sensorShape->enableCustomFiltering || otherShape->enableCustomFiltering )
 	{
-		b2ShapeId idA = { sensorShapeId + 1, world->worldId, sensorShape->generation };
-		b2ShapeId idB = { shapeId + 1, world->worldId, otherShape->generation };
-		bool shouldCollide = customFilterFcn( idA, idB, queryContext->world->customFilterContext );
-		if ( shouldCollide == false )
+		b2CustomFilterFcn* customFilterFcn = queryContext->world->customFilterFcn;
+		if ( customFilterFcn != NULL )
 		{
-			return true;
+			b2ShapeId idA = { sensorShapeId + 1, world->worldId, sensorShape->generation };
+			b2ShapeId idB = { shapeId + 1, world->worldId, otherShape->generation };
+			bool shouldCollide = customFilterFcn( idA, idB, queryContext->world->customFilterContext );
+			if ( shouldCollide == false )
+			{
+				return true;
+			}
 		}
 	}
 

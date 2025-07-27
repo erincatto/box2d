@@ -39,11 +39,13 @@ public:
 		}
 
 		m_count = 0;
-		m_hertz = 2.0f;
+		m_hertz = 5.0f;
 		m_dampingRatio = 0.5f;
 		m_length = 1.0f;
 		m_minLength = m_length;
 		m_maxLength = m_length;
+		m_tensionForce = 2000.0f;
+		m_compressionForce = 100.0f;
 		m_enableSpring = false;
 		m_enableLimit = false;
 
@@ -85,6 +87,8 @@ public:
 		jointDef.hertz = m_hertz;
 		jointDef.dampingRatio = m_dampingRatio;
 		jointDef.length = m_length;
+		jointDef.lowerSpringForce = -m_tensionForce;
+		jointDef.upperSpringForce = m_compressionForce;
 		jointDef.minLength = m_minLength;
 		jointDef.maxLength = m_maxLength;
 		jointDef.enableSpring = m_enableSpring;
@@ -95,7 +99,7 @@ public:
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
-			bodyDef.angularDamping = 0.1f;
+			bodyDef.angularDamping = 1.0f;
 			bodyDef.position = { m_length * ( i + 1.0f ), yOffset };
 			m_bodyIds[i] = b2CreateBody( m_worldId, &bodyDef );
 			b2CreateCircleShape( m_bodyIds[i], &shapeDef, &circle );
@@ -115,12 +119,12 @@ public:
 	void UpdateGui() override
 	{
 		float fontSize = ImGui::GetFontSize();
-		float height = 240.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
+		float height = 20.0f * fontSize;
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize }, ImGuiCond_Once );
+		ImGui::SetNextWindowSize( { 18.0f * fontSize, height } );
 
 		ImGui::Begin( "Distance Joint", nullptr, ImGuiWindowFlags_NoResize );
-		ImGui::PushItemWidth( 100.0f );
+		ImGui::PushItemWidth( 10.0f * fontSize );
 
 		if ( ImGui::SliderFloat( "Length", &m_length, 0.1f, 4.0f, "%3.1f" ) )
 		{
@@ -142,6 +146,24 @@ public:
 
 		if ( m_enableSpring )
 		{
+			if ( ImGui::SliderFloat( "Tension", &m_tensionForce, 0.0f, 4000.0f ) )
+			{
+				for ( int i = 0; i < m_count; ++i )
+				{
+					b2DistanceJoint_SetSpringForceRange( m_jointIds[i], -m_tensionForce, m_compressionForce );
+					b2Joint_WakeBodies( m_jointIds[i] );
+				}
+			}
+
+			if ( ImGui::SliderFloat( "Compression", &m_compressionForce, 0.0f, 200.0f ) )
+			{
+				for ( int i = 0; i < m_count; ++i )
+				{
+					b2DistanceJoint_SetSpringForceRange( m_jointIds[i], -m_tensionForce, m_compressionForce );
+					b2Joint_WakeBodies( m_jointIds[i] );
+				}
+			}
+
 			if ( ImGui::SliderFloat( "Hertz", &m_hertz, 0.0f, 15.0f, "%3.1f" ) )
 			{
 				for ( int i = 0; i < m_count; ++i )
@@ -213,6 +235,8 @@ public:
 	float m_hertz;
 	float m_dampingRatio;
 	float m_length;
+	float m_tensionForce;
+	float m_compressionForce;
 	float m_minLength;
 	float m_maxLength;
 	bool m_enableSpring;
@@ -224,8 +248,6 @@ static int sampleDistanceJoint = RegisterSample( "Joints", "Distance Joint", Dis
 /// This test shows how to use a motor joint. A motor joint
 /// can be used to animate a dynamic body. With finite motor forces
 /// the body can be blocked by collision with other bodies.
-/// By setting the correction factor to zero, the motor joint acts
-/// like top-down dry friction.
 class MotorJoint : public Sample
 {
 public:
@@ -247,32 +269,70 @@ public:
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
+		m_transform = { .p = { 0.0f, 8.0f }, .q = b2Rot_identity };
+
+		// Define a target body
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_kinematicBody;
+			bodyDef.position = m_transform.p;
+			m_targetId = b2CreateBody( m_worldId, &bodyDef );
+		}
+
 		// Define motorized body
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
-			bodyDef.position = { 0.0f, 8.0f };
+			bodyDef.position = m_transform.p;
 			m_bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2Polygon box = b2MakeBox( 2.0f, 0.5f );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.density = 1.0f;
 			b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
 
-			m_maxForce = 500.0f;
+			m_maxForce = 5000.0f;
 			m_maxTorque = 500.0f;
-			m_correctionFactor = 0.3f;
 
 			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
-			jointDef.base.bodyIdA = groundId;
+			jointDef.base.bodyIdA = m_targetId;
 			jointDef.base.bodyIdB = m_bodyId;
-			jointDef.maxForce = m_maxForce;
-			jointDef.maxTorque = m_maxTorque;
-			jointDef.correctionFactor = m_correctionFactor;
+			jointDef.linearHertz = 4.0f;
+			jointDef.linearDampingRatio = 0.7f;
+			jointDef.angularHertz = 4.0f;
+			jointDef.angularDampingRatio = 0.7f;
+			jointDef.maxSpringForce = m_maxForce;
+			jointDef.maxSpringTorque = m_maxTorque;
 
 			m_jointId = b2CreateMotorJoint( m_worldId, &jointDef );
 		}
 
+		// Define spring body
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { -2.0f, 2.0f };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Polygon box = b2MakeSquare( 0.5f );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
+			jointDef.base.bodyIdA = groundId;
+			jointDef.base.bodyIdB = bodyId;
+			jointDef.base.localFrameA.p = b2Add( bodyDef.position, { 0.25f, 0.25f } );
+			jointDef.base.localFrameB.p = { 0.25f, 0.25f };
+			jointDef.linearHertz = 7.5f;
+			jointDef.linearDampingRatio = 0.7f;
+			jointDef.angularHertz = 7.5f;
+			jointDef.angularDampingRatio = 0.7f;
+			jointDef.maxSpringForce = 500.0f;
+			jointDef.maxSpringTorque = 10.0f;
+
+			b2CreateMotorJoint( m_worldId, &jointDef );
+		}
+
+		m_speed = 1.0f;
 		m_go = true;
 		m_time = 0.0f;
 	}
@@ -286,23 +346,18 @@ public:
 
 		ImGui::Begin( "Motor Joint", nullptr, ImGuiWindowFlags_NoResize );
 
-		if ( ImGui::Checkbox( "Go", &m_go ) )
+		if ( ImGui::SliderFloat( "Speed", &m_speed, -5.0f, 5.0f, "%.0f" ) )
 		{
 		}
 
 		if ( ImGui::SliderFloat( "Max Force", &m_maxForce, 0.0f, 10000.0f, "%.0f" ) )
 		{
-			b2MotorJoint_SetMaxForce( m_jointId, m_maxForce );
+			b2MotorJoint_SetMaxSpringForce( m_jointId, m_maxForce );
 		}
 
 		if ( ImGui::SliderFloat( "Max Torque", &m_maxTorque, 0.0f, 10000.0f, "%.0f" ) )
 		{
-			b2MotorJoint_SetMaxTorque( m_jointId, m_maxTorque );
-		}
-
-		if ( ImGui::SliderFloat( "Correction", &m_correctionFactor, 0.0f, 1.0f, "%.1f" ) )
-		{
-			b2MotorJoint_SetCorrectionFactor( m_jointId, m_correctionFactor );
+			b2MotorJoint_SetMaxSpringTorque( m_jointId, m_maxTorque );
 		}
 
 		if ( ImGui::Button( "Apply Impulse" ) )
@@ -315,21 +370,31 @@ public:
 
 	void Step() override
 	{
-		if ( m_go && m_context->hertz > 0.0f )
+		float timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
+
+		if ( m_context->pause )
 		{
-			m_time += 1.0f / m_context->hertz;
+			if ( m_context->singleStep == false )
+			{
+				timeStep = 0.0f;
+			}
 		}
 
-		b2Vec2 linearOffset;
-		linearOffset.x = 6.0f * sinf( 2.0f * m_time );
-		linearOffset.y = 8.0f + 4.0f * sinf( 1.0f * m_time );
+		if ( timeStep > 0.0f )
+		{
+			m_time += m_speed * timeStep;
 
-		float angularOffset = 2.0f * m_time;
-		b2Transform transform = { linearOffset, b2MakeRot( angularOffset ) };
+			b2Vec2 linearOffset;
+			linearOffset.x = 6.0f * sinf( 2.0f * m_time );
+			linearOffset.y = 8.0f + 4.0f * sinf( 1.0f * m_time );
 
-		b2Joint_SetLocalFrameA( m_jointId, transform );
+			float angularOffset = 2.0f * m_time;
+			m_transform = { linearOffset, b2MakeRot( angularOffset ) };
 
-		m_context->draw.DrawTransform( transform );
+			b2Body_SetTargetTransform( m_targetId, m_transform, timeStep );
+		}
+
+		m_context->draw.DrawTransform( m_transform );
 
 		Sample::Step();
 
@@ -344,16 +409,136 @@ public:
 		return new MotorJoint( context );
 	}
 
+	b2BodyId m_targetId;
 	b2BodyId m_bodyId;
 	b2JointId m_jointId;
+	b2Transform m_transform;
 	float m_time;
+	float m_speed;
 	float m_maxForce;
 	float m_maxTorque;
-	float m_correctionFactor;
 	bool m_go;
 };
 
 static int sampleMotorJoint = RegisterSample( "Joints", "Motor Joint", MotorJoint::Create );
+
+class TopDownFriction : public Sample
+{
+public:
+	explicit TopDownFriction( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 7.0f };
+			m_context->camera.m_zoom = 25.0f * 0.4f;
+		}
+
+		b2BodyId groundId;
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			groundId = b2CreateBody( m_worldId, &bodyDef );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Segment segment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
+			segment = { { -10.0f, 0.0f }, { -10.0f, 20.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
+			segment = { { 10.0f, 0.0f }, { 10.0f, 20.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
+			segment = { { -10.0f, 20.0f }, { 10.0f, 20.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		b2MotorJointDef jointDef = b2DefaultMotorJointDef();
+		jointDef.base.bodyIdA = groundId;
+		jointDef.base.collideConnected = true;
+		jointDef.maxVelocityForce = 10.0f;
+		jointDef.maxVelocityTorque = 10.0f;
+
+		b2Capsule capsule = { { -0.25f, 0.0f }, { 0.25f, 0.0f }, 0.25f };
+		b2Circle circle = { { 0.0f, 0.0f }, 0.35f };
+		b2Polygon square = b2MakeSquare( 0.35f );
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.gravityScale = 0.0f;
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.material.restitution = 0.8f;
+
+		int n = 10;
+		float x = -5.0f, y = 15.0f;
+		for ( int i = 0; i < n; ++i )
+		{
+			for ( int j = 0; j < n; ++j )
+			{
+				bodyDef.position = { x, y };
+				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+				int remainder = ( n * i + j ) % 4;
+				if ( remainder == 0 )
+				{
+					b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
+				}
+				else if ( remainder == 1 )
+				{
+					b2CreateCircleShape( bodyId, &shapeDef, &circle );
+				}
+				else if ( remainder == 2 )
+				{
+					b2CreatePolygonShape( bodyId, &shapeDef, &square );
+				}
+				else
+				{
+					b2Polygon poly = RandomPolygon( 0.75f );
+					poly.radius = 0.1f;
+					b2CreatePolygonShape( bodyId, &shapeDef, &poly );
+				}
+
+				jointDef.base.bodyIdB = bodyId;
+				b2CreateMotorJoint( m_worldId, &jointDef );
+
+				x += 1.0f;
+			}
+
+			x = -5.0f;
+			y -= 1.0f;
+		}
+	}
+
+	void UpdateGui() override
+	{
+		float fontSize = ImGui::GetFontSize();
+		float height = 180.0f;
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
+
+		ImGui::Begin( "Top Down Friction", nullptr, ImGuiWindowFlags_NoResize );
+
+		if ( ImGui::Button( "Explode" ) )
+		{
+			b2ExplosionDef def = b2DefaultExplosionDef();
+			def.position = { 0.0f, 10.0f };
+			def.radius = 10.0f;
+			def.falloff = 5.0f;
+			def.impulsePerLength = 10.0f;
+			b2World_Explode( m_worldId, &def );
+
+			m_draw->DrawCircle( def.position, 10.0f, b2_colorWhite );
+		}
+
+		ImGui::End();
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new TopDownFriction( context );
+	}
+};
+
+static int sampleTopDownFriction = RegisterSample( "Joints", "Top Down Friction", TopDownFriction::Create );
 
 // This sample shows how to use a filter joint to prevent collision between two bodies.
 // This is more specific than shape filters. It also shows that sleeping is coupled by the filter joint.
@@ -1442,8 +1627,8 @@ public:
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
 			jointDef.base.localFrameA.p = position;
-			jointDef.maxForce = 200.0f;
-			jointDef.maxTorque = 200.0f;
+			jointDef.maxVelocityForce = 200.0f;
+			jointDef.maxVelocityTorque = 200.0f;
 			b2CreateMotorJoint( m_worldId, &jointDef );
 		}
 
@@ -1676,8 +1861,8 @@ public:
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
 			jointDef.base.localFrameA.p = position;
-			jointDef.maxForce = 1000.0f;
-			jointDef.maxTorque = 20.0f;
+			jointDef.maxVelocityForce = 1000.0f;
+			jointDef.maxVelocityTorque = 20.0f;
 			jointDef.base.collideConnected = true;
 			m_jointIds[index] = b2CreateMotorJoint( m_worldId, &jointDef );
 		}

@@ -389,6 +389,9 @@ typedef struct b2ShapeDef
 	/// Collision filtering data.
 	b2Filter filter;
 
+	/// Enable custom filtering. Only one of the two shapes needs to enable custom filtering. See b2WorldDef.
+	bool enableCustomFiltering;
+
 	/// A sensor shape generates overlap events but never generates a collision response.
 	/// Sensors do not have continuous collision. Instead, use a ray or shape cast for those scenarios.
 	/// Sensors still contribute to the body mass if they have non-zero density.
@@ -483,7 +486,6 @@ typedef struct b2Profile
 	float pairs;
 	float collide;
 	float solve;
-	float mergeIslands;
 	float prepareStages;
 	float solveConstraints;
 	float prepareConstraints;
@@ -596,6 +598,12 @@ typedef struct b2DistanceJointDef
 	/// then the distance joint will be rigid, overriding the limit and motor.
 	bool enableSpring;
 
+	/// The lower spring force controls how much tension it can sustain
+	float lowerSpringForce;
+
+	/// The upper spring force controls how much compression it an sustain
+	float upperSpringForce;
+
 	/// The spring linear stiffness Hertz, cycles per second
 	float hertz;
 
@@ -628,23 +636,46 @@ typedef struct b2DistanceJointDef
 /// @ingroup distance_joint
 B2_API b2DistanceJointDef b2DefaultDistanceJointDef( void );
 
-/// A motor joint is used to control the relative motion between two bodies
-/// You may move local frame A to change the target transform.
-/// A typical usage is to control the movement of a dynamic body with respect to the ground.
+/// A motor joint is used to control the relative velocity and or transform between two bodies.
+/// With a velocity of zero this acts like top-down friction.
 /// @ingroup motor_joint
 typedef struct b2MotorJointDef
 {
 	/// Base joint definition
 	b2JointDef base;
 
+	/// The desired linear velocity
+	b2Vec2 linearVelocity;
+
 	/// The maximum motor force in newtons
-	float maxForce;
+	float maxVelocityForce;
+
+	/// The desired angular velocity
+	float angularVelocity;
 
 	/// The maximum motor torque in newton-meters
-	float maxTorque;
+	float maxVelocityTorque;
 
-	/// Position correction factor in the range [0,1]
-	float correctionFactor;
+	/// Linear spring hertz for position control
+	float linearHertz;
+
+	/// Linear spring damping ratio
+	float linearDampingRatio;
+
+	/// Maximum spring force in newtons
+	float maxSpringForce;
+
+	/// Angular spring hertz for position control
+	float angularHertz;
+
+	/// Angular spring damping ratio
+	float angularDampingRatio;
+
+	/// Maximum spring torque in newton-meters
+	float maxSpringTorque;
+
+	/// The desired relative transform. Body B relative to bodyA.
+	b2Transform relativeTransform;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
@@ -1111,7 +1142,7 @@ typedef struct b2ContactData
 /// Notes:
 /// - this function must be thread-safe
 /// - this is only called if one of the two shapes has enabled custom filtering
-/// - this is called only for awake dynamic bodies
+/// - this may be called for awake dynamic bodies and sensors
 /// Return false if you want to disable the collision
 /// @see b2ShapeDef
 /// @warning Do not attempt to modify the world inside this callback

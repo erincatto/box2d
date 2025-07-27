@@ -100,10 +100,11 @@ public:
 	int m_taskCount;
 	int m_threadCount;
 
-	b2BodyId m_groundBodyId;
+	b2BodyId m_mouseBodyId;
 
 	b2WorldId m_worldId;
 	b2JointId m_mouseJointId;
+	b2Vec2 m_mousePoint;
 	int m_stepCount;
 	b2Profile m_maxProfile;
 	b2Profile m_totalProfile;
