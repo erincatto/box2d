@@ -1526,7 +1526,7 @@ public:
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 
 		float x = -5.0f, y = 10.0f;
-		for ( int32_t i = 0; i < 10 && m_count < e_count; ++i )
+		for ( int i = 0; i < 10 && m_count < e_count; ++i )
 		{
 			bodyDef.position = { x, y };
 			bodyDef.isBullet = ( m_count % 12 == 0 );

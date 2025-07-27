@@ -28,7 +28,7 @@ at run-time using `b2GetVersion()`.
 
 ```c
 b2Version version = b2GetVersion();
-printf("Box2D version %d.%d.%d\n", version.major, version.minor, version.patch);
+printf("Box2D version %d.%d.%d\n", version.major, version.minor, version.revision);
 ```
 
 ## Vector Math

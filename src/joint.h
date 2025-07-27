@@ -85,6 +85,7 @@ typedef struct b2DistanceJoint
 	float axialMass;
 
 	bool enableSpring;
+	bool enableCompression;
 	bool enableLimit;
 	bool enableMotor;
 } b2DistanceJoint;
@@ -101,8 +102,6 @@ typedef struct b2MotorJoint
 	float angularHertz;
 	float angularDampingRatio;
 	float maxSpringTorque;
-
-	b2Transform relativeTransform;
 
 	b2Vec2 linearVelocityImpulse;
 	float angularVelocityImpulse;

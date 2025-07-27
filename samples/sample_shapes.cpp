@@ -699,6 +699,7 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.enableCustomFiltering = true;
 		b2Polygon box = b2MakeSquare( 1.0f );
 		float x = -e_count;
 

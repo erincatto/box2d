@@ -389,6 +389,9 @@ typedef struct b2ShapeDef
 	/// Collision filtering data.
 	b2Filter filter;
 
+	/// Enable custom filtering. Only one of the two shapes needs to enable custom filtering. See b2WorldDef.
+	bool enableCustomFiltering;
+
 	/// A sensor shape generates overlap events but never generates a collision response.
 	/// Sensors do not have continuous collision. Instead, use a ray or shape cast for those scenarios.
 	/// Sensors still contribute to the body mass if they have non-zero density.
@@ -594,6 +597,9 @@ typedef struct b2DistanceJointDef
 	/// Enable the distance constraint to behave like a spring. If false
 	/// then the distance joint will be rigid, overriding the limit and motor.
 	bool enableSpring;
+
+	/// The spring resists compression. If false the spring behaves like a rubber band.
+	bool enableCompression;
 
 	/// The spring linear stiffness Hertz, cycles per second
 	float hertz;
@@ -1136,7 +1142,7 @@ typedef struct b2ContactData
 /// Notes:
 /// - this function must be thread-safe
 /// - this is only called if one of the two shapes has enabled custom filtering
-/// - this is called only for awake dynamic bodies
+/// - this may be called for awake dynamic bodies and sensors
 /// Return false if you want to disable the collision
 /// @see b2ShapeDef
 /// @warning Do not attempt to modify the world inside this callback

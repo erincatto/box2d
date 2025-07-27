@@ -59,18 +59,6 @@ float b2MotorJoint_GetMaxVelocityForce( b2JointId jointId )
 	return joint->motorJoint.maxVelocityForce;
 }
 
-void b2MotorJoint_SetRelativeTransform( b2JointId jointId, b2Transform transform )
-{
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
-	joint->motorJoint.relativeTransform = transform;
-}
-
-b2Transform b2MotorJoint_GetRelativeTransform( b2JointId jointId )
-{
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
-	return joint->motorJoint.relativeTransform;
-}
-
 void b2MotorJoint_SetLinearHertz( b2JointId jointId, float hertz )
 {
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
@@ -296,9 +284,8 @@ void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context )
 		b2Rot qA = b2MulRot( stateA->deltaRotation, joint->frameA.q );
 		b2Rot qB = b2MulRot( stateB->deltaRotation, joint->frameB.q );
 		b2Rot relQ = b2InvMulRot( qA, qB );
-		b2Rot deltaQ = b2InvMulRot( joint->relativeTransform.q, relQ );
 
-		float c = b2Rot_GetAngle( deltaQ );
+		float c = b2Rot_GetAngle( relQ );
 		float bias = joint->angularSpring.biasRate * c;
 		float massScale = joint->angularSpring.massScale;
 		float impulseScale = joint->angularSpring.impulseScale;
@@ -339,7 +326,6 @@ void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context )
 		b2Vec2 dcA = stateA->deltaPosition;
 		b2Vec2 dcB = stateB->deltaPosition;
 		b2Vec2 c = b2Add( b2Add( b2Sub( dcB, dcA ), b2Sub( rB, rA ) ), joint->deltaCenter );
-		c = b2Sub( c, joint->relativeTransform.p );
 
 		b2Vec2 bias = b2MulSV( joint->linearSpring.biasRate, c );
 		float massScale = joint->linearSpring.massScale;

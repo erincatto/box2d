@@ -114,6 +114,7 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	shape->enlargedAABB = false;
 	shape->enableSensorEvents = def->enableSensorEvents;
 	shape->enableContactEvents = def->enableContactEvents;
+	shape->enableCustomFiltering = def->enableCustomFiltering;
 	shape->enableHitEvents = def->enableHitEvents;
 	shape->enablePreSolveEvents = def->enablePreSolveEvents;
 	shape->proxyKey = B2_NULL_INDEX;

@@ -40,6 +40,7 @@ b2DistanceJointDef b2DefaultDistanceJointDef( void )
 {
 	b2DistanceJointDef def = { 0 };
 	def.base = b2DefaultJointDef();
+	def.enableCompression = true;
 	def.length = 1.0f;
 	def.maxLength = B2_HUGE;
 	def.internalValue = B2_SECRET_COOKIE;
@@ -420,6 +421,7 @@ b2JointId b2CreateDistanceJoint( b2WorldId worldId, const b2DistanceJointDef* de
 	joint->distanceJoint.maxMotorForce = def->maxMotorForce;
 	joint->distanceJoint.motorSpeed = def->motorSpeed;
 	joint->distanceJoint.enableSpring = def->enableSpring;
+	joint->distanceJoint.enableCompression = def->enableCompression;
 	joint->distanceJoint.enableLimit = def->enableLimit;
 	joint->distanceJoint.enableMotor = def->enableMotor;
 	joint->distanceJoint.impulse = 0.0f;
@@ -457,7 +459,6 @@ b2JointId b2CreateMotorJoint( b2WorldId worldId, const b2MotorJointDef* def )
 	joint->motorJoint.angularHertz = def->angularHertz;
 	joint->motorJoint.angularDampingRatio = def->angularDampingRatio;
 	joint->motorJoint.maxSpringTorque = def->maxSpringTorque;
-	joint->motorJoint.relativeTransform = def->relativeTransform;
 
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 	return jointId;
@@ -1530,6 +1531,9 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 
 		case b2_filterJoint:
 			draw->DrawSegmentFcn( pA, pB, b2_colorGold, draw->context );
+			break;
+
+		case b2_motorJoint:
 			break;
 
 		case b2_prismaticJoint:

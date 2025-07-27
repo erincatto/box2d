@@ -327,15 +327,18 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	}
 
 	// Custom user filtering
-	b2CustomFilterFcn* customFilterFcn = world->customFilterFcn;
-	if ( customFilterFcn != NULL )
+	if ( shape->enableCustomFiltering || fastShape->enableCustomFiltering )
 	{
-		b2ShapeId idA = { shape->id + 1, world->worldId, shape->generation };
-		b2ShapeId idB = { fastShape->id + 1, world->worldId, fastShape->generation };
-		canCollide = customFilterFcn( idA, idB, world->customFilterContext );
-		if ( canCollide == false )
+		b2CustomFilterFcn* customFilterFcn = world->customFilterFcn;
+		if ( customFilterFcn != NULL )
 		{
-			return true;
+			b2ShapeId idA = { shape->id + 1, world->worldId, shape->generation };
+			b2ShapeId idB = { fastShape->id + 1, world->worldId, fastShape->generation };
+			canCollide = customFilterFcn( idA, idB, world->customFilterContext );
+			if ( canCollide == false )
+			{
+				return true;
+			}
 		}
 	}
 

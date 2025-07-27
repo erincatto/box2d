@@ -1847,12 +1847,24 @@ public:
 		shapeDef.enableSensorEvents = true;
 
 		float yStart = 10.0f;
+		m_filterRow = m_rowCount >> 1;
 
 		for ( int j = 0; j < m_rowCount; ++j )
 		{
 			m_passiveSensors[j].row = j;
 			m_passiveSensors[j].active = false;
 			shapeDef.userData = m_passiveSensors + j;
+
+			if ( j == m_filterRow )
+			{
+				shapeDef.enableCustomFiltering = true;
+				shapeDef.material.customColor = b2_colorFuchsia;
+			}
+			else
+			{
+				shapeDef.enableCustomFiltering = false;
+				shapeDef.material.customColor = 0;
+			}
 
 			float y = j * shift + yStart;
 			for ( int i = 0; i < m_columnCount; ++i )
@@ -1866,7 +1878,6 @@ public:
 		m_maxBeginCount = 0;
 		m_maxEndCount = 0;
 		m_lastStepCount = 0;
-		m_filterRow = m_rowCount >> 1;
 	}
 
 	void CreateRow( float y )
@@ -2044,7 +2055,7 @@ public:
 		if ( profile.step > millisecondLimit )
 		{
 			m_reachCount += 1;
-			if (m_reachCount > 60)
+			if ( m_reachCount > 60 )
 			{
 				// Hit the millisecond limit 60 times in a row
 				m_done = true;
@@ -2060,7 +2071,7 @@ public:
 			return;
 		}
 
-		if ((m_stepCount & 0x1F) != 0x1F)
+		if ( ( m_stepCount & 0x1F ) != 0x1F )
 		{
 			return;
 		}
