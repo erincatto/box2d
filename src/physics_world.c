@@ -974,8 +974,15 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 
 // todo this has varying order for moving shapes, causing flicker when overlapping shapes are moving
 // solution: display order by shape id modulus 3, keep 3 buckets in GLSolid* and flush in 3 passes.
-static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
+void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 {
+	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return;
+	}
+
 	B2_ASSERT( b2IsValidAABB( draw->drawingBounds ) );
 
 	const float k_impulseScale = 1.0f;
@@ -1002,6 +1009,9 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 
 	int contactCapacity = b2GetIdCapacity( &world->contactIdPool );
 	b2SetBitCountAndClear( &world->debugContactSet, contactCapacity );
+
+	int islandCapacity = b2GetIdCapacity( &world->islandIdPool );
+	b2SetBitCountAndClear( &world->debugIslandSet, islandCapacity );
 
 	struct DrawContext drawContext = { world, draw };
 
@@ -1062,11 +1072,6 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 					{
 						b2DrawJoint( draw, world, joint );
 						b2SetBit( &world->debugJointSet, jointId );
-					}
-					else
-					{
-						// todo testing
-						edgeIndex += 0;
 					}
 
 					jointKey = joint->edges[edgeIndex].nextKey;
@@ -1161,13 +1166,55 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 
 						b2SetBit( &world->debugContactSet, contactId );
 					}
-					else
-					{
-						// todo testing
-						edgeIndex += 0;
-					}
 
 					contactKey = contact->edges[edgeIndex].nextKey;
+				}
+			}
+
+			if ( draw->drawIslands )
+			{
+				int islandId = body->islandId;
+				if ( islandId != B2_NULL_INDEX && b2GetBit( &world->debugIslandSet, islandId ) == false )
+				{
+					b2Island* island = world->islands.data + islandId;
+					if ( island->setIndex == B2_NULL_INDEX )
+					{
+						continue;
+					}
+
+					int shapeCount = 0;
+					b2AABB aabb = {
+						.lowerBound = { FLT_MAX, FLT_MAX },
+						.upperBound = { -FLT_MAX, -FLT_MAX },
+					};
+
+					int islandBodyId = island->headBody;
+					while ( islandBodyId != B2_NULL_INDEX )
+					{
+						b2Body* islandBody = b2BodyArray_Get( &world->bodies, islandBodyId );
+						int shapeId = islandBody->headShapeId;
+						while ( shapeId != B2_NULL_INDEX )
+						{
+							b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+							aabb = b2AABB_Union( aabb, shape->fatAABB );
+							shapeCount += 1;
+							shapeId = shape->nextShapeId;
+						}
+
+						islandBodyId = islandBody->islandNext;
+					}
+
+					if ( shapeCount > 0 )
+					{
+						b2Vec2 vs[4] = { { aabb.lowerBound.x, aabb.lowerBound.y },
+										 { aabb.upperBound.x, aabb.lowerBound.y },
+										 { aabb.upperBound.x, aabb.upperBound.y },
+										 { aabb.lowerBound.x, aabb.upperBound.y } };
+
+						draw->DrawPolygonFcn( vs, 4, b2_colorOrangeRed, draw->context );
+					}
+
+					b2SetBit( &world->debugIslandSet, islandId );
 				}
 			}
 
@@ -1175,18 +1222,6 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 			word = word & ( word - 1 );
 		}
 	}
-}
-
-void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
-{
-	b2World* world = b2GetWorldFromId( worldId );
-	B2_ASSERT( world->locked == false );
-	if ( world->locked )
-	{
-		return;
-	}
-
-	b2DrawWithBounds( world, draw );
 }
 
 b2BodyEvents b2World_GetBodyEvents( b2WorldId worldId )
@@ -2513,31 +2548,6 @@ void b2World_EnableSpeculative( b2WorldId worldId, bool flag )
 }
 
 #if B2_VALIDATE
-#if 0
-// When validating islands ids I have to compare the root island
-// ids because islands are not merged until the next time step.
-static int b2GetRootIslandId( b2World* world, int islandId )
-{
-	if ( islandId == B2_NULL_INDEX )
-	{
-		return B2_NULL_INDEX;
-	}
-
-	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
-
-	int rootId = islandId;
-	b2Island* rootIsland = island;
-	while ( rootIsland->parentIsland != B2_NULL_INDEX )
-	{
-		b2Island* parent = b2IslandArray_Get( &world->islands, rootIsland->parentIsland );
-		rootId = rootIsland->parentIsland;
-		rootIsland = parent;
-	}
-
-	return rootId;
-}
-#endif
-
 // This validates island graph connectivity for each body
 void b2ValidateConnectivity( b2World* world )
 {
@@ -2558,7 +2568,6 @@ void b2ValidateConnectivity( b2World* world )
 		B2_ASSERT( bodyIndex == body->id );
 
 		// Need to get the root island because islands are not merged until the next time step
-		//int bodyIslandId = b2GetRootIslandId( world, body->islandId );
 		int bodyIslandId = body->islandId;
 		int bodySetIndex = body->setIndex;
 
@@ -2575,7 +2584,6 @@ void b2ValidateConnectivity( b2World* world )
 			{
 				if ( bodySetIndex != b2_staticSet )
 				{
-					//int contactIslandId = b2GetRootIslandId( world, contact->islandId );
 					int contactIslandId = contact->islandId;
 					B2_ASSERT( contactIslandId == bodyIslandId );
 				}
@@ -2613,7 +2621,6 @@ void b2ValidateConnectivity( b2World* world )
 			}
 			else
 			{
-				//int jointIslandId = b2GetRootIslandId( world, joint->islandId );
 				int jointIslandId = joint->islandId;
 				B2_ASSERT( jointIslandId == bodyIslandId );
 			}

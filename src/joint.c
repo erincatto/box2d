@@ -52,7 +52,6 @@ b2MotorJointDef b2DefaultMotorJointDef( void )
 {
 	b2MotorJointDef def = { 0 };
 	def.base = b2DefaultJointDef();
-	def.relativeTransform.q = b2Rot_identity;
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;
 }

@@ -333,7 +333,6 @@ public:
 		}
 
 		m_speed = 1.0f;
-		m_go = true;
 		m_time = 0.0f;
 	}
 
@@ -417,7 +416,6 @@ public:
 	float m_speed;
 	float m_maxForce;
 	float m_maxTorque;
-	bool m_go;
 };
 
 static int sampleMotorJoint = RegisterSample( "Joints", "Motor Joint", MotorJoint::Create );

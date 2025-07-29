@@ -674,9 +674,6 @@ typedef struct b2MotorJointDef
 	/// Maximum spring torque in newton-meters
 	float maxSpringTorque;
 
-	/// The desired relative transform. Body B relative to bodyA.
-	b2Transform relativeTransform;
-
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
 } b2MotorJointDef;

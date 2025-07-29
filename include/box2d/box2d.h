@@ -840,9 +840,6 @@ B2_API void b2DistanceJoint_SetSpringForceRange( b2JointId jointId, float lowerF
 /// Get the force range for the spring.
 B2_API void b2DistanceJoint_GetSpringForceRange( b2JointId jointId, float* lowerForce, float* upperForce );
 
-/// The the spring resist compression?
-B2_API bool b2DistanceJoint_IsCompressionEnabled( b2JointId jointId );
-
 /// Set the spring stiffness in Hertz
 B2_API void b2DistanceJoint_SetSpringHertz( b2JointId jointId, float hertz );
 
@@ -901,8 +898,11 @@ B2_API float b2DistanceJoint_GetMotorForce( b2JointId jointId );
  * @defgroup motor_joint Motor Joint
  * @brief Functions for the motor joint.
  *
- * The motor joint is used to drive the relative transform between two bodies. The target
- * is set by updating the local frames using b2Joint_SetLocalFrameA or b2Joint_SetLocalFrameB.
+ * The motor joint is designed to control the movement of a body while still being
+ * responsive to collisions. A spring controls the position and rotation. A velocity motor
+ * can be used to control velocity and allows for friction in top-down games. Both types
+ * of control can be combined. For example, you can have a spring with friction.
+ * Position and velocity control have force and torque limits.
  * @{
  */
 
