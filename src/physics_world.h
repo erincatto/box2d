@@ -117,6 +117,15 @@ typedef struct b2World
 	b2ContactHitEventArray contactHitEvents;
 	b2JointEventArray jointEvents;
 
+	// todo consider deferred waking and impulses to make it possible
+	// to apply forces and impulses from multiple threads
+	// impulses must be deferred because sleeping bodies have no velocity state
+	// Problems:
+	// - multiple forces applied to the same body from multiple threads
+	// Deferred wake
+	//b2BitSet bodyWakeSet;
+	//b2ImpulseArray deferredImpulses;
+
 	// Used to track debug draw
 	b2BitSet debugBodySet;
 	b2BitSet debugJointSet;

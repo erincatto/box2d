@@ -347,7 +347,7 @@ static int TestSensor( void )
 	bodyDef.type = b2_dynamicBody;
 	bodyDef.isBullet = true;
 	bodyDef.gravityScale = 0.0f;
-	bodyDef.position = (b2Vec2){ 7.39814, 4.0 };
+	bodyDef.position = (b2Vec2){ 7.39814f, 4.0f };
 	bodyDef.linearVelocity = (b2Vec2){ -20.0f, 0.0f };
 	b2BodyId bulletId = b2CreateBody( worldId, &bodyDef );
 	shapeDef = b2DefaultShapeDef();

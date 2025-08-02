@@ -493,15 +493,15 @@ static void b2RotateNodes( b2DynamicTree* tree, int iA )
 		int iF = C->children.child1;
 		int iG = C->children.child2;
 
-		b2TreeNode* D = nodes + iD;
-		b2TreeNode* E = nodes + iE;
-		b2TreeNode* F = nodes + iF;
-		b2TreeNode* G = nodes + iG;
-
 		B2_ASSERT( 0 <= iD && iD < tree->nodeCapacity );
 		B2_ASSERT( 0 <= iE && iE < tree->nodeCapacity );
 		B2_ASSERT( 0 <= iF && iF < tree->nodeCapacity );
 		B2_ASSERT( 0 <= iG && iG < tree->nodeCapacity );
+
+		b2TreeNode* D = nodes + iD;
+		b2TreeNode* E = nodes + iE;
+		b2TreeNode* F = nodes + iF;
+		b2TreeNode* G = nodes + iG;
 
 		// Base cost
 		float areaB = b2Perimeter( B->aabb );

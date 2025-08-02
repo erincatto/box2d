@@ -21,6 +21,7 @@ void b2DestroyBitSet( b2BitSet* bitSet );
 void b2SetBitCountAndClear( b2BitSet* bitSet, uint32_t bitCount );
 void b2InPlaceUnion( b2BitSet* setA, const b2BitSet* setB );
 void b2GrowBitSet( b2BitSet* bitSet, uint32_t blockCount );
+int b2CountSetBits( b2BitSet* bitSet );
 
 static inline void b2SetBit( b2BitSet* bitSet, uint32_t bitIndex )
 {

@@ -20,7 +20,7 @@ public:
 		: Sample( context )
 	{
 		m_period = 40.0f;
-		float omega = 2.0 * B2_PI / m_period;
+		float omega = 2.0f * B2_PI / m_period;
 		m_cycleCount = m_isDebug ? 10 : 600;
 		m_gridSize = 1.0f;
 		m_gridCount = (int)( m_cycleCount * m_period / m_gridSize );
@@ -34,7 +34,6 @@ public:
 			m_context->camera.m_center = m_viewPosition;
 			m_context->camera.m_zoom = 25.0f * 1.0f;
 			m_context->drawJoints = false;
-			m_context->useCameraBounds = true;
 		}
 
 		{

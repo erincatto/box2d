@@ -147,3 +147,10 @@ void b2Free( void* mem, int size );
 #define B2_FREE_ARRAY( mem, count, type ) b2Free(mem, count * sizeof(type))
 
 void* b2GrowAlloc( void* oldMem, int oldSize, int newSize );
+
+typedef struct b2Mutex b2Mutex;
+
+b2Mutex* b2CreateMutex( void );
+void b2DestroyMutex( b2Mutex* m );
+void b2LockMutex( b2Mutex* m );
+void b2UnlockMutex( b2Mutex* m );

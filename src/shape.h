@@ -46,6 +46,7 @@ typedef struct b2Shape
 	uint16_t generation;
 	bool enableSensorEvents;
 	bool enableContactEvents;
+	bool enableCustomFiltering;
 	bool enableHitEvents;
 	bool enablePreSolveEvents;
 	bool enlargedAABB;

@@ -2,7 +2,8 @@
 
 #include "box2d/box2d.h"
 
-#include <GLFW/glfw3.h>
+#include "GLFW/glfw3.h"
+#include "imgui.h"
 
 struct PhysicsHitQueryResult2D
 {
@@ -287,3 +288,227 @@ public:
 };
 
 static int sampleBadSteiner = RegisterSample( "Issues", "Bad Steiner", BadSteiner::Create );
+
+class DisableCrash : public Sample
+{
+public:
+	explicit DisableCrash( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.8f, 6.4f };
+			m_context->camera.m_zoom = 25.0f * 0.4f;
+		}
+
+		m_isEnabled = true;
+
+		// Define attachment
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { -2.0f, 3.0f };
+			bodyDef.isEnabled = m_isEnabled;
+			m_attachmentId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Polygon box = b2MakeBox( 0.5f, 2.0f );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreatePolygonShape( m_attachmentId, &shapeDef, &box );
+		}
+
+		// Define platform
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { -4.0f, 5.0f };
+			m_platformId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Polygon box = b2MakeOffsetBox( 0.5f, 4.0f, { 4.0f, 0.0f }, b2MakeRot( 0.5f * B2_PI ) );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreatePolygonShape( m_platformId, &shapeDef, &box );
+
+			b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
+			b2Vec2 pivot = { -2.0f, 5.0f };
+			revoluteDef.base.bodyIdA = m_attachmentId;
+			revoluteDef.base.bodyIdB = m_platformId;
+			revoluteDef.base.localFrameA.p = b2Body_GetLocalPoint( m_attachmentId, pivot );
+			revoluteDef.base.localFrameB.p = b2Body_GetLocalPoint( m_platformId, pivot );
+			revoluteDef.maxMotorTorque = 50.0f;
+			revoluteDef.enableMotor = true;
+			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
+		}
+	}
+
+	void UpdateGui() override
+	{
+		float fontSize = ImGui::GetFontSize();
+		float height = 11.0f * fontSize;
+		float winX = 0.5f * fontSize;
+		float winY =m_camera->m_height - height - 2.0f * fontSize ;
+		ImGui::SetNextWindowPos( {winX, winY}, ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 9.0f * fontSize, height ) );
+		ImGui::Begin( "Disable Crash", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
+
+		if ( ImGui::Checkbox( "Enable", &m_isEnabled ) )
+		{
+			if ( m_isEnabled )
+			{
+				b2Body_Enable( m_attachmentId );
+			}
+			else
+			{
+				b2Body_Disable( m_attachmentId );
+			}
+		}
+
+		ImGui::End();
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new DisableCrash( context );
+	}
+
+	b2BodyId m_attachmentId;
+	b2BodyId m_platformId;
+	bool m_isEnabled;
+};
+
+static int sampleDisableCrash = RegisterSample( "Issues", "Disable", DisableCrash::Create );
+
+class Crash01 : public Sample
+{
+public:
+	explicit Crash01( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.8f, 6.4f };
+			m_context->camera.m_zoom = 25.0f * 0.4f;
+		}
+
+		m_type = b2_dynamicBody;
+		m_isEnabled = true;
+
+		b2BodyId groundId = b2_nullBodyId;
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.name = "ground";
+			groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Segment segment = { { -20.0f, 0.0f }, { 20.0f, 0.0f } };
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		// Define attachment
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { -2.0f, 3.0f };
+			bodyDef.name = "attach1";
+			m_attachmentId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Polygon box = b2MakeBox( 0.5f, 2.0f );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.density = 1.0f;
+			b2CreatePolygonShape( m_attachmentId, &shapeDef, &box );
+		}
+
+		// Define platform
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = m_type;
+			bodyDef.isEnabled = m_isEnabled;
+			bodyDef.position = { -4.0f, 5.0f };
+			bodyDef.name = "platform";
+			m_platformId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Polygon box = b2MakeOffsetBox( 0.5f, 4.0f, { 4.0f, 0.0f }, b2MakeRot( 0.5f * B2_PI ) );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.density = 2.0f;
+			b2CreatePolygonShape( m_platformId, &shapeDef, &box );
+
+			b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
+			b2Vec2 pivot = { -2.0f, 5.0f };
+			revoluteDef.base.bodyIdA = m_attachmentId;
+			revoluteDef.base.bodyIdB = m_platformId;
+			revoluteDef.base.localFrameA.p = b2Body_GetLocalPoint( m_attachmentId, pivot );
+			revoluteDef.base.localFrameB.p = b2Body_GetLocalPoint( m_platformId, pivot );
+			revoluteDef.maxMotorTorque = 50.0f;
+			revoluteDef.enableMotor = true;
+			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
+
+			b2PrismaticJointDef prismaticDef = b2DefaultPrismaticJointDef();
+			b2Vec2 anchor = { 0.0f, 5.0f };
+			prismaticDef.base.bodyIdA = groundId;
+			prismaticDef.base.bodyIdB = m_platformId;
+			prismaticDef.base.localFrameA.p = b2Body_GetLocalPoint( groundId, anchor );
+			prismaticDef.base.localFrameB.p = b2Body_GetLocalPoint( m_platformId, anchor );
+			prismaticDef.maxMotorForce = 1000.0f;
+			prismaticDef.motorSpeed = 0.0f;
+			prismaticDef.enableMotor = true;
+			prismaticDef.lowerTranslation = -10.0f;
+			prismaticDef.upperTranslation = 10.0f;
+			prismaticDef.enableLimit = true;
+
+			b2CreatePrismaticJoint( m_worldId, &prismaticDef );
+		}
+	}
+
+	void UpdateGui() override
+	{
+		float fontSize = ImGui::GetFontSize();
+		float height = 11.0f * fontSize;
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 9.0f * fontSize, height ) );
+		ImGui::Begin( "Crash 01", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
+
+		if ( ImGui::RadioButton( "Static", m_type == b2_staticBody ) )
+		{
+			m_type = b2_staticBody;
+			b2Body_SetType( m_platformId, b2_staticBody );
+		}
+
+		if ( ImGui::RadioButton( "Kinematic", m_type == b2_kinematicBody ) )
+		{
+			m_type = b2_kinematicBody;
+			b2Body_SetType( m_platformId, b2_kinematicBody );
+			b2Body_SetLinearVelocity( m_platformId, { -0.1f, 0.0f } );
+		}
+
+		if ( ImGui::RadioButton( "Dynamic", m_type == b2_dynamicBody ) )
+		{
+			m_type = b2_dynamicBody;
+			b2Body_SetType( m_platformId, b2_dynamicBody );
+		}
+
+		if ( ImGui::Checkbox( "Enable", &m_isEnabled ) )
+		{
+			if ( m_isEnabled )
+			{
+				b2Body_Enable( m_attachmentId );
+			}
+			else
+			{
+				b2Body_Disable( m_attachmentId );
+			}
+		}
+
+		ImGui::End();
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new Crash01( context );
+	}
+
+	b2BodyId m_attachmentId;
+	b2BodyId m_platformId;
+	b2BodyType m_type;
+	bool m_isEnabled;
+};
+
+static int sampleBodyType = RegisterSample( "Issues", "Crash01", Crash01::Create );

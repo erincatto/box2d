@@ -750,9 +750,6 @@ int main( int, char** )
 			s_context.subStepCount = 4;
 			s_context.drawJoints = true;
 
-			// todo testing always using bounds
-			s_context.useCameraBounds = true;
-
 			delete s_sample;
 			s_sample = nullptr;
 			s_sample = g_sampleEntries[s_context.sampleIndex].createFcn( &s_context );

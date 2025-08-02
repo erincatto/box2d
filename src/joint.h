@@ -65,6 +65,8 @@ typedef struct b2DistanceJoint
 	float length;
 	float hertz;
 	float dampingRatio;
+	float lowerSpringForce;
+	float upperSpringForce;
 	float minLength;
 	float maxLength;
 
@@ -91,13 +93,24 @@ typedef struct b2DistanceJoint
 
 typedef struct b2MotorJoint
 {
-	b2Vec2 linearOffset;
-	float angularOffset;
-	b2Vec2 linearImpulse;
-	float angularImpulse;
-	float maxForce;
-	float maxTorque;
-	float correctionFactor;
+	b2Vec2 linearVelocity;
+	float maxVelocityForce;
+	float angularVelocity;
+	float maxVelocityTorque;
+	float linearHertz;
+	float linearDampingRatio;
+	float maxSpringForce;
+	float angularHertz;
+	float angularDampingRatio;
+	float maxSpringTorque;
+
+	b2Vec2 linearVelocityImpulse;
+	float angularVelocityImpulse;
+	b2Vec2 linearSpringImpulse;
+	float angularSpringImpulse;
+
+	b2Softness linearSpring;
+	b2Softness angularSpring;
 
 	int indexA;
 	int indexB;
@@ -191,8 +204,8 @@ typedef struct b2WeldJoint
 	float angularHertz;
 	float angularDampingRatio;
 
-	b2Softness linearSoftness;
-	b2Softness angularSoftness;
+	b2Softness linearSpring;
+	b2Softness angularSpring;
 	b2Vec2 linearImpulse;
 	float angularImpulse;
 

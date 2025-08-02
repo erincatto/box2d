@@ -21,16 +21,16 @@
 // body for kinematic bodies. We cannot access a kinematic body from multiple threads efficiently because the SIMD solver body
 // scatter would write to the same kinematic body from multiple threads. Even if these writes don't modify the body, they will
 // cause horrible cache stalls. To make this feasible I would need a way to block these writes.
+// todo should be possible to branch on the scatters to avoid writing to kinematic bodies
 
 // This is used for debugging by making all constraints be assigned to overflow.
 #define B2_FORCE_OVERFLOW 0
-
-_Static_assert( B2_GRAPH_COLOR_COUNT == 12, "graph color count assumed to be 12" );
 
 void b2CreateGraph( b2ConstraintGraph* graph, int bodyCapacity )
 {
 	_Static_assert( B2_GRAPH_COLOR_COUNT >= 2, "must have at least two constraint graph colors" );
 	_Static_assert( B2_OVERFLOW_INDEX == B2_GRAPH_COLOR_COUNT - 1, "bad over flow index" );
+	_Static_assert( B2_DYNAMIC_COLOR_COUNT >= 2, "need more dynamic colors" );
 
 	*graph = ( b2ConstraintGraph ){ 0 };
 
@@ -78,14 +78,15 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	int bodyIdB = contact->edges[1].bodyId;
 	b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
 	b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
-	bool staticA = bodyA->setIndex == b2_staticSet;
-	bool staticB = bodyB->setIndex == b2_staticSet;
+	bool staticA = bodyA->type == b2_staticBody;
+	bool staticB = bodyB->type == b2_staticBody;
 	B2_ASSERT( staticA == false || staticB == false );
 
 #if B2_FORCE_OVERFLOW == 0
 	if ( staticA == false && staticB == false )
 	{
-		for ( int i = 0; i < B2_OVERFLOW_INDEX; ++i )
+		// Dynamic constraint colors cannot encroach on colors reserved for static constraints
+		for ( int i = 0; i < B2_DYNAMIC_COLOR_COUNT; ++i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdA ) || b2GetBit( &color->bodySet, bodyIdB ) )
@@ -101,8 +102,8 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	}
 	else if ( staticA == false )
 	{
-		// No static contacts in color 0
-		for ( int i = 1; i < B2_OVERFLOW_INDEX; ++i )
+		// Static constraint colors build from the end to get higher priority than dyn-dyn constraints
+		for ( int i = B2_OVERFLOW_INDEX - 1; i >= 1; --i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdA ) )
@@ -117,8 +118,8 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	}
 	else if ( staticB == false )
 	{
-		// No static contacts in color 0
-		for ( int i = 1; i < B2_OVERFLOW_INDEX; ++i )
+		// Static constraint colors build from the end to get higher priority than dyn-dyn constraints
+		for ( int i = B2_OVERFLOW_INDEX - 1; i >= 1; --i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdB ) )
@@ -218,7 +219,8 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 #if B2_FORCE_OVERFLOW == 0
 	if ( staticA == false && staticB == false )
 	{
-		for ( int i = 0; i < B2_OVERFLOW_INDEX; ++i )
+		// Dynamic constraint colors cannot encroach on colors reserved for static constraints
+		for ( int i = 0; i < B2_DYNAMIC_COLOR_COUNT; ++i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdA ) || b2GetBit( &color->bodySet, bodyIdB ) )
@@ -233,7 +235,8 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 	}
 	else if ( staticA == false )
 	{
-		for ( int i = 0; i < B2_OVERFLOW_INDEX; ++i )
+		// Static constraint colors build from the end to get higher priority than dyn-dyn constraints
+		for ( int i = B2_OVERFLOW_INDEX - 1; i >= 1; --i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdA ) )
@@ -247,7 +250,8 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 	}
 	else if ( staticB == false )
 	{
-		for ( int i = 0; i < B2_OVERFLOW_INDEX; ++i )
+		// Static constraint colors build from the end to get higher priority than dyn-dyn constraints
+		for ( int i = B2_OVERFLOW_INDEX - 1; i >= 1; --i )
 		{
 			b2GraphColor* color = graph->colors + i;
 			if ( b2GetBit( &color->bodySet, bodyIdB ) )
@@ -274,8 +278,8 @@ b2JointSim* b2CreateJointInGraph( b2World* world, b2Joint* joint )
 	int bodyIdB = joint->edges[1].bodyId;
 	b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
 	b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
-	bool staticA = bodyA->setIndex == b2_staticSet;
-	bool staticB = bodyB->setIndex == b2_staticSet;
+	bool staticA = bodyA->type == b2_staticBody;
+	bool staticB = bodyB->type == b2_staticBody;
 
 	int colorIndex = b2AssignJointColor( graph, bodyIdA, bodyIdB, staticA, staticB );
 

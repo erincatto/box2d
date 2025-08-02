@@ -890,7 +890,7 @@ public:
 		b2Hull hull = b2ComputeHull( vertices, 3 );
 		m_triangle = b2MakePolygon( &hull, 0.0f );
 
-		m_segment = { { -3.0f, 0.0f }, { 3.0f, 0.0 } };
+		m_segment = { { -3.0f, 0.0f }, { 3.0f, 0.0f } };
 
 		m_transform = b2Transform_identity;
 		m_angle = 0.0f;
@@ -2449,7 +2449,7 @@ public:
 
 		// capsule-circle
 		{
-			b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0 }, 0.25f };
+			b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0f }, 0.25f };
 			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
 
 			b2Transform transform1 = { offset, b2Rot_identity };
@@ -2470,7 +2470,7 @@ public:
 
 		// segment-circle
 		{
-			b2Segment segment = { { -1.0f, 0.0f }, { 1.0f, 0.0 } };
+			b2Segment segment = { { -1.0f, 0.0f }, { 1.0f, 0.0f } };
 			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
 
 			b2Transform transform1 = { offset, b2Rot_identity };
@@ -2510,8 +2510,8 @@ public:
 
 		// capsule-capsule
 		{
-			b2Capsule capsule1 = { { -0.5f, 0.0f }, { 0.5f, 0.0 }, 0.25f };
-			b2Capsule capsule2 = { { 0.25f, 0.0f }, { 1.0f, 0.0 }, 0.1f };
+			b2Capsule capsule1 = { { -0.5f, 0.0f }, { 0.5f, 0.0f }, 0.25f };
+			b2Capsule capsule2 = { { 0.25f, 0.0f }, { 1.0f, 0.0f }, 0.1f };
 
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
@@ -2554,8 +2554,8 @@ public:
 
 		// segment-capsule
 		{
-			b2Segment segment = { { -1.0f, 0.0f }, { 1.0f, 0.0 } };
-			b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0 }, 0.25f };
+			b2Segment segment = { { -1.0f, 0.0f }, { 1.0f, 0.0f } };
+			b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0f }, 0.25f };
 
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
@@ -2658,7 +2658,7 @@ public:
 
 		// segment-rox
 		{
-			b2Segment segment = { { -1.0f, 0.0f }, { 1.0f, 0.0 } };
+			b2Segment segment = { { -1.0f, 0.0f }, { 1.0f, 0.0f } };
 			float h = 0.5f - m_round;
 			b2Polygon rox = b2MakeRoundedBox( h, h, m_round );
 
@@ -2823,7 +2823,7 @@ public:
 		{
 			b2ChainSegment segment1 = { { 2.0f, 1.0f }, { { 1.0f, 1.0f }, { -1.0f, 0.0f } }, { -2.0f, 0.0f }, -1 };
 			b2ChainSegment segment2 = { { 3.0f, 1.0f }, { { 2.0f, 1.0f }, { 1.0f, 1.0f } }, { -1.0f, 0.0f }, -1 };
-			b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0 }, 0.25f };
+			b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0f }, 0.25f };
 
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };

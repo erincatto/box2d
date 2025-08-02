@@ -17,6 +17,20 @@
 
 #include <stdio.h>
 
+// Point-to-point constraint
+// C = pB - pA
+// Cdot = vB - vA
+//      = vB + cross(wB, rB) - vA - cross(wA, rA)
+// J = [-E -skew(rA) E skew(rB) ]
+
+// Identity used:
+// w k % (rx i + ry j) = w * (-ry i + rx j)
+
+// Motor constraint
+// Cdot = wB - wA
+// J = [0 0 -1 0 0 1]
+// K = invIA + invIB
+
 void b2RevoluteJoint_EnableSpring( b2JointId jointId, bool enableSpring )
 {
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_revoluteJoint );
@@ -186,19 +200,6 @@ float b2GetRevoluteJointTorque( b2World* world, b2JointSim* base )
 	float torque = world->inv_h * ( revolute->motorImpulse + revolute->lowerImpulse - revolute->upperImpulse );
 	return torque;
 }
-
-// Point-to-point constraint
-// C = p2 - p1
-// Cdot = v2 - v1
-//      = v2 + cross(w2, r2) - v1 - cross(w1, r1)
-// J = [-I -r1_skew I r2_skew ]
-// Identity used:
-// w k % (rx i + ry j) = w * (-ry i + rx j)
-
-// Motor constraint
-// Cdot = w2 - w1
-// J = [0 0 -1 0 0 1]
-// K = invI1 + invI2
 
 void b2PrepareRevoluteJoint( b2JointSim* base, b2StepContext* context )
 {

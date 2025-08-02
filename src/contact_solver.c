@@ -312,6 +312,7 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 			impulse = newImpulse - cp->normalImpulse;
 			cp->normalImpulse = newImpulse;
 			cp->totalNormalImpulse += newImpulse;
+
 			totalNormalImpulse += newImpulse;
 
 			// apply normal impulse
@@ -1150,6 +1151,8 @@ static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT i
 
 	// I don't use any dummy body in the body array because this will lead to multithreaded sharing and the
 	// associated cache flushing.
+	// todo could add a check for kinematic bodies here
+
 	if ( indices[0] != B2_NULL_INDEX )
 		_mm256_store_ps( (float*)( states + indices[0] ), _mm256_permute2f128_ps( tt0, tt4, 0x20 ) );
 	if ( indices[1] != B2_NULL_INDEX )
@@ -2014,12 +2017,15 @@ void b2ApplyRestitutionTask( int startIndex, int endIndex, b2StepContext* contex
 
 			// Clamp the accumulated impulse
 			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse1, negImpulse ), b2ZeroW() );
-			b2FloatW impulse = b2SubW( newImpulse, c->normalImpulse1 );
+			b2FloatW deltaImpulse = b2SubW( newImpulse, c->normalImpulse1 );
 			c->normalImpulse1 = newImpulse;
 
+			// Add the incremental impulse rather than the full impulse because this is not a sub-step
+			c->totalNormalImpulse1 = b2AddW( c->totalNormalImpulse1, deltaImpulse );
+
 			// Apply contact impulse
-			b2FloatW Px = b2MulW( impulse, c->normal.X );
-			b2FloatW Py = b2MulW( impulse, c->normal.Y );
+			b2FloatW Px = b2MulW( deltaImpulse, c->normal.X );
+			b2FloatW Py = b2MulW( deltaImpulse, c->normal.Y );
 
 			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
 			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
@@ -2052,12 +2058,15 @@ void b2ApplyRestitutionTask( int startIndex, int endIndex, b2StepContext* contex
 
 			// Clamp the accumulated impulse
 			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse2, negImpulse ), b2ZeroW() );
-			b2FloatW impulse = b2SubW( newImpulse, c->normalImpulse2 );
+			b2FloatW deltaImpulse = b2SubW( newImpulse, c->normalImpulse2 );
 			c->normalImpulse2 = newImpulse;
 
+			// Add the incremental impulse rather than the full impulse because this is not a sub-step
+			c->totalNormalImpulse2 = b2AddW( c->totalNormalImpulse2, deltaImpulse );
+
 			// Apply contact impulse
-			b2FloatW Px = b2MulW( impulse, c->normal.X );
-			b2FloatW Py = b2MulW( impulse, c->normal.Y );
+			b2FloatW Px = b2MulW( deltaImpulse, c->normal.X );
+			b2FloatW Py = b2MulW( deltaImpulse, c->normal.Y );
 
 			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
 			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );

@@ -17,8 +17,8 @@
 #define TracyCFrameMark
 #endif
 
-#define EXPECTED_SLEEP_STEP 244
-#define EXPECTED_HASH 0xfcb96059
+#define EXPECTED_SLEEP_STEP 320
+#define EXPECTED_HASH 0x948FDA81
 
 enum
 {

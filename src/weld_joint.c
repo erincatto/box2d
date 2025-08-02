@@ -139,20 +139,20 @@ void b2PrepareWeldJoint( b2JointSim* base, b2StepContext* context )
 
 	if ( joint->linearHertz == 0.0f )
 	{
-		joint->linearSoftness = base->constraintSoftness;
+		joint->linearSpring = base->constraintSoftness;
 	}
 	else
 	{
-		joint->linearSoftness = b2MakeSoft( joint->linearHertz, joint->linearDampingRatio, context->h );
+		joint->linearSpring = b2MakeSoft( joint->linearHertz, joint->linearDampingRatio, context->h );
 	}
 
 	if ( joint->angularHertz == 0.0f )
 	{
-		joint->angularSoftness = base->constraintSoftness;
+		joint->angularSpring = base->constraintSoftness;
 	}
 	else
 	{
-		joint->angularSoftness = b2MakeSoft( joint->angularHertz, joint->angularDampingRatio, context->h );
+		joint->angularSpring = b2MakeSoft( joint->angularHertz, joint->angularDampingRatio, context->h );
 	}
 
 	if ( context->enableWarmStarting == false )
@@ -222,9 +222,9 @@ void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 		if ( useBias || joint->angularHertz > 0.0f )
 		{
 			float C = jointAngle;
-			bias = joint->angularSoftness.biasRate * C;
-			massScale = joint->angularSoftness.massScale;
-			impulseScale = joint->angularSoftness.impulseScale;
+			bias = joint->angularSpring.biasRate * C;
+			massScale = joint->angularSpring.massScale;
+			impulseScale = joint->angularSpring.impulseScale;
 		}
 
 		float Cdot = wB - wA;
@@ -249,9 +249,9 @@ void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 			b2Vec2 dcB = stateB->deltaPosition;
 			b2Vec2 C = b2Add( b2Add( b2Sub( dcB, dcA ), b2Sub( rB, rA ) ), joint->deltaCenter );
 
-			bias = b2MulSV( joint->linearSoftness.biasRate, C );
-			massScale = joint->linearSoftness.massScale;
-			impulseScale = joint->linearSoftness.impulseScale;
+			bias = b2MulSV( joint->linearSpring.biasRate, C );
+			massScale = joint->linearSpring.massScale;
+			impulseScale = joint->linearSpring.impulseScale;
 		}
 
 		b2Vec2 Cdot = b2Sub( b2Add( vB, b2CrossSV( wB, rB ) ), b2Add( vA, b2CrossSV( wA, rA ) ) );

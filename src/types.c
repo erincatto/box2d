@@ -150,7 +150,8 @@ b2DebugDraw b2DefaultDebugDraw( void )
 
 	draw.drawingBounds.lowerBound = (b2Vec2){ -FLT_MAX, -FLT_MAX };
 	draw.drawingBounds.upperBound = (b2Vec2){ FLT_MAX, FLT_MAX };
-	draw.useDrawingBounds = true;
 
+	draw.drawShapes = true;
+	
 	return draw;
 }

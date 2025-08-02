@@ -48,10 +48,6 @@ typedef struct b2Island
 	int tailJoint;
 	int jointCount;
 
-	// Union find
-	// todo this could go away if islands are merged immediately with b2LinkJoint and b2LinkContact
-	int parentIsland;
-
 	// Keeps track of how many contacts have been removed from this island.
 	// This is used to determine if an island is a candidate for splitting.
 	int constraintRemoveCount;
@@ -73,12 +69,10 @@ void b2LinkContact( b2World* world, b2Contact* contact );
 void b2UnlinkContact( b2World* world, b2Contact* contact );
 
 // Link a joint into the island graph when it is created
-void b2LinkJoint( b2World* world, b2Joint* joint, bool mergeIslands );
+void b2LinkJoint( b2World* world, b2Joint* joint );
 
 // Unlink a joint from the island graph when it is destroyed
 void b2UnlinkJoint( b2World* world, b2Joint* joint );
-
-void b2MergeAwakeIslands( b2World* world );
 
 void b2SplitIsland( b2World* world, int baseId );
 void b2SplitIslandTask( int startIndex, int endIndex, uint32_t threadIndex, void* context );

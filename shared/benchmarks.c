@@ -35,6 +35,8 @@ void CreateJointGrid( b2WorldId worldId )
 	b2Circle circle = { { 0.0f, 0.0f }, 0.4f };
 
 	b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+	jointDef.base.drawScale = 0.4f;
+	
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 
 	for ( int k = 0; k < N; ++k )
@@ -107,10 +109,10 @@ void CreateLargePyramid( b2WorldId worldId )
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
 	shapeDef.density = 1.0f;
 
-	float h = 0.5f;
-	b2Polygon box = b2MakeSquare( h );
+	float a = 0.5f;
+	b2Polygon box = b2MakeSquare( a );
 
-	float shift = 1.0f * h;
+	float shift = 1.0f * a;
 
 	for ( int i = 0; i < baseCount; ++i )
 	{
@@ -118,7 +120,7 @@ void CreateLargePyramid( b2WorldId worldId )
 
 		for ( int j = i; j < baseCount; ++j )
 		{
-			float x = ( i + 1.0f ) * shift + 2.0f * ( j - i ) * shift - h * baseCount;
+			float x = ( i + 1.0f ) * shift + 2.0f * ( j - i ) * shift - a * baseCount;
 
 			bodyDef.position = ( b2Vec2 ){ x, y };
 
@@ -383,7 +385,8 @@ void CreateSpinner( b2WorldId worldId )
 		b2CreatePolygonShape( spinnerId, &shapeDef, &box );
 
 		float motorSpeed = 5.0f;
-		float maxMotorTorque = 40000.0f;
+		//float maxMotorTorque = 100.0f * 40000.0f;
+		float maxMotorTorque = FLT_MAX;
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 		jointDef.base.bodyIdA = groundId;
 		jointDef.base.bodyIdB = spinnerId;
@@ -406,9 +409,9 @@ void CreateSpinner( b2WorldId worldId )
 	shapeDef.material.restitution = 0.1f;
 	shapeDef.density = 0.25f;
 
-	int bodyCount = BENCHMARK_DEBUG ? 499 : 3038;
+	int bodyCount = BENCHMARK_DEBUG ? 499 : 2 * 3038;
 
-	float x = -24.0f, y = 2.0f;
+	float x = -23.0f, y = 2.0f;
 	for ( int i = 0; i < bodyCount; ++i )
 	{
 		bodyDef.position = ( b2Vec2 ){ x, y };
@@ -428,12 +431,12 @@ void CreateSpinner( b2WorldId worldId )
 			b2CreatePolygonShape( bodyId, &shapeDef, &square );
 		}
 
-		x += 1.0f;
+		x += 0.5f;
 
-		if ( x > 24.0f )
+		if ( x >= 23.0f )
 		{
-			x = -24.0f;
-			y += 1.0f;
+			x = -23.0f;
+			y += 0.5f;
 		}
 	}
 }

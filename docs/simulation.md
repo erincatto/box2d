@@ -287,7 +287,7 @@ values the damping effect is mostly independent of the time step. At
 larger damping values, the damping effect will vary with the time step.
 This is not an issue if you use a fixed time step (recommended).
 
-Here's some math for the curious. A first-order different equation for velocity damping is:
+Here's some math for the curious. A first-order differential equation for velocity damping is:
 
 \f[
 \frac{dv}{dt} + c v = 0
