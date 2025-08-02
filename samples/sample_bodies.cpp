@@ -283,12 +283,12 @@ public:
 
 static int sampleBodyType = RegisterSample( "Bodies", "Body Type", BodyType::Create );
 
-float FrictionCallback( float, int, float, int )
+float FrictionCallback( float, uint64_t, float, uint64_t )
 {
 	return 0.1f;
 }
 
-float RestitutionCallback( float, int, float, int )
+float RestitutionCallback( float, uint64_t, float, uint64_t )
 {
 	return 1.0f;
 }

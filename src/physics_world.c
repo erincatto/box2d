@@ -85,13 +85,13 @@ static void b2DefaultFinishTaskFcn( void* userTask, void* userContext )
 	B2_UNUSED( userTask, userContext );
 }
 
-static float b2DefaultFrictionCallback( float frictionA, int materialA, float frictionB, int materialB )
+static float b2DefaultFrictionCallback( float frictionA, uint64_t materialA, float frictionB, uint64_t materialB )
 {
 	B2_UNUSED( materialA, materialB );
 	return sqrtf( frictionA * frictionB );
 }
 
-static float b2DefaultRestitutionCallback( float restitutionA, int materialA, float restitutionB, int materialB )
+static float b2DefaultRestitutionCallback( float restitutionA, uint64_t materialA, float restitutionB, uint64_t materialB )
 {
 	B2_UNUSED( materialA, materialB );
 	return b2MaxFloat( restitutionA, restitutionB );
@@ -904,9 +904,9 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 
 		b2HexColor color;
 
-		if ( shape->customColor != 0 )
+		if ( shape->material.customColor != 0 )
 		{
-			color = shape->customColor;
+			color = shape->material.customColor;
 		}
 		else if ( body->type == b2_dynamicBody && body->mass == 0.0f )
 		{

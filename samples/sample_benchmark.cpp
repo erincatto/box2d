@@ -1936,7 +1936,7 @@ public:
 				// Modify color while overlapped with a sensor
 				b2SurfaceMaterial surfaceMaterial = b2Shape_GetSurfaceMaterial( event->visitorShapeId );
 				surfaceMaterial.customColor = b2_colorLime;
-				b2Shape_SetSurfaceMaterial( event->visitorShapeId, surfaceMaterial );
+				b2Shape_SetSurfaceMaterial( event->visitorShapeId, &surfaceMaterial );
 			}
 		}
 
@@ -1952,7 +1952,7 @@ public:
 			// Restore color to default
 			b2SurfaceMaterial surfaceMaterial = b2Shape_GetSurfaceMaterial( event->visitorShapeId );
 			surfaceMaterial.customColor = 0;
-			b2Shape_SetSurfaceMaterial( event->visitorShapeId, surfaceMaterial );
+			b2Shape_SetSurfaceMaterial( event->visitorShapeId, &surfaceMaterial );
 		}
 
 		for ( b2BodyId bodyId : zombies )

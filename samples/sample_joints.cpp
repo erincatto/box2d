@@ -651,12 +651,12 @@ public:
 			jointDef.maxMotorTorque = m_motorTorque;
 			jointDef.enableMotor = m_enableMotor;
 			jointDef.lowerAngle = -0.5f * B2_PI;
-			jointDef.upperAngle = 0.75f * B2_PI;
+			jointDef.upperAngle = 0.05f * B2_PI;
 			jointDef.enableLimit = m_enableLimit;
 
 			m_jointId1 = b2CreateRevoluteJoint( m_worldId, &jointDef );
 
-			b2Joint_SetConstraintTuning( m_jointId1, 120.0f, 0.0f );
+			b2Joint_SetConstraintTuning( m_jointId1, 60.0f, 20.0f );
 		}
 
 		{
@@ -698,7 +698,7 @@ public:
 			jointDef.motorSpeed = 0.0f;
 			jointDef.maxMotorTorque = m_motorTorque;
 
-			m_jointId2 = b2CreateRevoluteJoint( m_worldId, &jointDef );
+			//m_jointId2 = b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 	}
 

@@ -446,6 +446,10 @@ void b2UnlinkJoint( b2World* world, b2Joint* joint )
 
 #define B2_CONTACT_REMOVE_THRESHOLD 1
 
+// Possible optimizations:
+// 1. use the body island id as the mark
+// 2. start from the sleepy bodies and stop processing if a sleep body is connected to a non-sleepy body
+// 3. use a sleepy flag on bodies to avoid velocity access
 void b2SplitIsland( b2World* world, int baseId )
 {
 	b2Island* baseIsland = b2IslandArray_Get( &world->islands, baseId );

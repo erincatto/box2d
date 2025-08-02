@@ -18,12 +18,8 @@ typedef struct b2Shape
 	int nextShapeId;
 	int sensorIndex;
 	b2ShapeType type;
+	b2SurfaceMaterial material;
 	float density;
-	float friction;
-	float restitution;
-	float rollingResistance;
-	float tangentSpeed;
-	int userMaterialId;
 
 	b2AABB aabb;
 	b2AABB fatAABB;
@@ -32,7 +28,6 @@ typedef struct b2Shape
 
 	b2Filter filter;
 	void* userData;
-	uint32_t customColor;
 
 	union
 	{

@@ -103,14 +103,9 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	shape->bodyId = body->id;
 	shape->type = shapeType;
 	shape->density = def->density;
-	shape->friction = def->material.friction;
-	shape->restitution = def->material.restitution;
-	shape->rollingResistance = def->material.rollingResistance;
-	shape->tangentSpeed = def->material.tangentSpeed;
-	shape->userMaterialId = def->material.userMaterialId;
+	shape->material = def->material;
 	shape->filter = def->filter;
 	shape->userData = def->userData;
-	shape->customColor = def->material.customColor;
 	shape->enlargedAABB = false;
 	shape->enableSensorEvents = def->enableSensorEvents;
 	shape->enableContactEvents = def->enableContactEvents;
@@ -1126,14 +1121,14 @@ void b2Shape_SetFriction( b2ShapeId shapeId, float friction )
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
-	shape->friction = friction;
+	shape->material.friction = friction;
 }
 
 float b2Shape_GetFriction( b2ShapeId shapeId )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
-	return shape->friction;
+	return shape->material.friction;
 }
 
 void b2Shape_SetRestitution( b2ShapeId shapeId, float restitution )
@@ -1148,17 +1143,17 @@ void b2Shape_SetRestitution( b2ShapeId shapeId, float restitution )
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
-	shape->restitution = restitution;
+	shape->material.restitution = restitution;
 }
 
 float b2Shape_GetRestitution( b2ShapeId shapeId )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
-	return shape->restitution;
+	return shape->material.restitution;
 }
 
-void b2Shape_SetMaterial( b2ShapeId shapeId, int material )
+void b2Shape_SetUserMaterial( b2ShapeId shapeId, uint64_t material )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
 	B2_ASSERT( world->locked == false );
@@ -1168,40 +1163,28 @@ void b2Shape_SetMaterial( b2ShapeId shapeId, int material )
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
-	shape->userMaterialId = material;
+	shape->material.userMaterialId = material;
 }
 
-int b2Shape_GetMaterial( b2ShapeId shapeId )
+uint64_t b2Shape_GetUserMaterial( b2ShapeId shapeId )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
-	return shape->userMaterialId;
+	return shape->material.userMaterialId;
 }
 
 b2SurfaceMaterial b2Shape_GetSurfaceMaterial( b2ShapeId shapeId )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
-	return (b2SurfaceMaterial){
-		.friction = shape->friction,
-		.restitution = shape->restitution,
-		.rollingResistance = shape->rollingResistance,
-		.tangentSpeed = shape->tangentSpeed,
-		.userMaterialId = shape->userMaterialId,
-		.customColor = shape->customColor,
-	};
+	return shape->material;
 }
 
-void b2Shape_SetSurfaceMaterial( b2ShapeId shapeId, b2SurfaceMaterial surfaceMaterial )
+void b2Shape_SetSurfaceMaterial( b2ShapeId shapeId, const b2SurfaceMaterial* surfaceMaterial )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
-	shape->friction = surfaceMaterial.friction;
-	shape->restitution = surfaceMaterial.restitution;
-	shape->rollingResistance = surfaceMaterial.rollingResistance;
-	shape->tangentSpeed = surfaceMaterial.tangentSpeed;
-	shape->userMaterialId = surfaceMaterial.userMaterialId;
-	shape->customColor = surfaceMaterial.customColor;
+	shape->material = *surfaceMaterial;
 }
 
 b2Filter b2Shape_GetFilter( b2ShapeId shapeId )
@@ -1502,77 +1485,7 @@ b2ChainId b2Shape_GetParentChain( b2ShapeId shapeId )
 	return (b2ChainId){ 0 };
 }
 
-void b2Chain_SetFriction( b2ChainId chainId, float friction )
-{
-	B2_ASSERT( b2IsValidFloat( friction ) && friction >= 0.0f );
-
-	b2World* world = b2GetWorldLocked( chainId.world0 );
-	if ( world == NULL )
-	{
-		return;
-	}
-
-	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
-
-	int materialCount = chainShape->materialCount;
-	for ( int i = 0; i < materialCount; ++i )
-	{
-		chainShape->materials[i].friction = friction;
-	}
-
-	int count = chainShape->count;
-
-	for ( int i = 0; i < count; ++i )
-	{
-		int shapeId = chainShape->shapeIndices[i];
-		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
-		shape->friction = friction;
-	}
-}
-
-float b2Chain_GetFriction( b2ChainId chainId )
-{
-	b2World* world = b2GetWorld( chainId.world0 );
-	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
-	return chainShape->materials[0].friction;
-}
-
-void b2Chain_SetRestitution( b2ChainId chainId, float restitution )
-{
-	B2_ASSERT( b2IsValidFloat( restitution ) );
-
-	b2World* world = b2GetWorldLocked( chainId.world0 );
-	if ( world == NULL )
-	{
-		return;
-	}
-
-	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
-
-	int materialCount = chainShape->materialCount;
-	for ( int i = 0; i < materialCount; ++i )
-	{
-		chainShape->materials[i].restitution = restitution;
-	}
-
-	int count = chainShape->count;
-
-	for ( int i = 0; i < count; ++i )
-	{
-		int shapeId = chainShape->shapeIndices[i];
-		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
-		shape->restitution = restitution;
-	}
-}
-
-float b2Chain_GetRestitution( b2ChainId chainId )
-{
-	b2World* world = b2GetWorld( chainId.world0 );
-	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
-	return chainShape->materials[0].restitution;
-}
-
-void b2Chain_SetMaterial( b2ChainId chainId, int material )
+void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* material, int materialIndex )
 {
 	b2World* world = b2GetWorldLocked( chainId.world0 );
 	if ( world == NULL )
@@ -1581,27 +1494,35 @@ void b2Chain_SetMaterial( b2ChainId chainId, int material )
 	}
 
 	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
-	int materialCount = chainShape->materialCount;
-	for ( int i = 0; i < materialCount; ++i )
-	{
-		chainShape->materials[i].userMaterialId = material;
-	}
+	B2_ASSERT( 0 <= materialIndex && materialIndex < chainShape->materialCount );
+	chainShape->materials[materialIndex] = *material;
 
+	B2_ASSERT( chainShape->materialCount == 1 || chainShape->materialCount == chainShape->count );
 	int count = chainShape->count;
 
-	for ( int i = 0; i < count; ++i )
+	if (chainShape->materialCount == 1)
 	{
-		int shapeId = chainShape->shapeIndices[i];
+		for ( int i = 0; i < count; ++i )
+		{
+			int shapeId = chainShape->shapeIndices[i];
+			b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+			shape->material = *material;
+		}
+	}
+	else
+	{
+		int shapeId = chainShape->shapeIndices[materialIndex];
 		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
-		shape->userMaterialId = material;
+		shape->material = *material;
 	}
 }
 
-int b2Chain_GetMaterial( b2ChainId chainId )
+b2SurfaceMaterial b2Chain_GetSurfaceMaterial( b2ChainId chainId, int segmentIndex )
 {
 	b2World* world = b2GetWorld( chainId.world0 );
 	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
-	return chainShape->materials[0].userMaterialId;
+	B2_ASSERT( 0 <= segmentIndex && segmentIndex < chainShape->count );
+	return chainShape->materials[segmentIndex];
 }
 
 int b2Shape_GetContactCapacity( b2ShapeId shapeId )
