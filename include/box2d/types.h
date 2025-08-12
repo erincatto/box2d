@@ -534,7 +534,6 @@ typedef enum b2JointType
 	b2_distanceJoint,
 	b2_filterJoint,
 	b2_motorJoint,
-	b2_mouseJoint,
 	b2_prismaticJoint,
 	b2_revoluteJoint,
 	b2_weldJoint,
@@ -681,33 +680,6 @@ typedef struct b2MotorJointDef
 /// Use this to initialize your joint definition
 /// @ingroup motor_joint
 B2_API b2MotorJointDef b2DefaultMotorJointDef( void );
-
-/// A mouse joint is used to make a point on body B track a point on body A.
-/// You may move local frame A to change the target point.
-/// This a soft constraint and allows the constraint to stretch without
-/// applying huge forces. This also applies rotation constraint heuristic to improve control.
-/// @ingroup mouse_joint
-typedef struct b2MouseJointDef
-{
-	/// Base joint definition
-	b2JointDef base;
-
-	/// Stiffness in hertz
-	float hertz;
-
-	/// Damping ratio, non-dimensional
-	float dampingRatio;
-
-	/// Maximum force, typically in newtons
-	float maxForce;
-
-	/// Used internally to detect a valid definition. DO NOT SET.
-	int internalValue;
-} b2MouseJointDef;
-
-/// Use this to initialize your joint definition
-/// @ingroup mouse_joint
-B2_API b2MouseJointDef b2DefaultMouseJointDef( void );
 
 /// A filter joint is used to disable collision between two specific bodies.
 ///

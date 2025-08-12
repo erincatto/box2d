@@ -2838,6 +2838,9 @@ public:
 		b2BodyId linkId1;
 		int N = 3;
 
+		float constraintDampingRatio = 20.0f;
+		float constraintHertz = 240.0f;
+
 		for ( int i = 0; i < N; ++i )
 		{
 			bodyDef.position = { 0.0f, y };
@@ -2864,6 +2867,8 @@ public:
 			revoluteDef.base.localFrameA.p = baseAnchor1;
 			revoluteDef.base.localFrameB.p = { -2.5f, 0.0f };
 			revoluteDef.base.collideConnected = ( i == 0 ) ? true : false;
+			revoluteDef.base.constraintDampingRatio = constraintDampingRatio;
+			revoluteDef.base.constraintHertz = constraintHertz;
 
 			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
 
@@ -2877,6 +2882,8 @@ public:
 				wheelDef.base.localFrameB.p = { 2.5f, 0.0f };
 				wheelDef.enableSpring = false;
 				wheelDef.base.collideConnected = true;
+				wheelDef.base.constraintDampingRatio = constraintDampingRatio;
+				wheelDef.base.constraintHertz = constraintHertz;
 
 				b2CreateWheelJoint( m_worldId, &wheelDef );
 			}
@@ -2887,6 +2894,8 @@ public:
 				revoluteDef.base.localFrameA.p = baseAnchor2;
 				revoluteDef.base.localFrameB.p = { 2.5f, 0.0f };
 				revoluteDef.base.collideConnected = false;
+				revoluteDef.base.constraintDampingRatio = constraintDampingRatio;
+				revoluteDef.base.constraintHertz = constraintHertz;
 
 				b2CreateRevoluteJoint( m_worldId, &revoluteDef );
 			}
@@ -2897,6 +2906,8 @@ public:
 			revoluteDef.base.localFrameA.p = { 0.0f, 0.0f };
 			revoluteDef.base.localFrameB.p = { 0.0f, 0.0f };
 			revoluteDef.base.collideConnected = false;
+			revoluteDef.base.constraintDampingRatio = constraintDampingRatio;
+			revoluteDef.base.constraintHertz = constraintHertz;
 
 			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
 
@@ -2921,6 +2932,8 @@ public:
 		revoluteDef.base.localFrameA.p = { -2.5f, -0.4f };
 		revoluteDef.base.localFrameB.p = baseAnchor1;
 		revoluteDef.base.collideConnected = true;
+		revoluteDef.base.constraintDampingRatio = constraintDampingRatio;
+		revoluteDef.base.constraintHertz = constraintHertz;
 		b2CreateRevoluteJoint( m_worldId, &revoluteDef );
 
 		// right pin
@@ -2931,6 +2944,8 @@ public:
 		wheelDef.base.localFrameB.p = baseAnchor2;
 		wheelDef.enableSpring = false;
 		wheelDef.base.collideConnected = true;
+		wheelDef.base.constraintDampingRatio = constraintDampingRatio;
+		wheelDef.base.constraintHertz = constraintHertz;
 		b2CreateWheelJoint( m_worldId, &wheelDef );
 
 		m_enableMotor = false;

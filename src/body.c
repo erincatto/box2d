@@ -551,6 +551,7 @@ void b2UpdateBodyMassData( b2World* world, b2Body* body )
 	if ( body->type != b2_dynamicBody )
 	{
 		bodySim->center = bodySim->transform.p;
+		bodySim->center0 = bodySim->center;
 
 		// Need extents for kinematic bodies for sleeping to work correctly.
 		if ( body->type == b2_kinematicBody )

@@ -1,9 +1,8 @@
+#include "GLFW/glfw3.h"
+#include "imgui.h"
 #include "sample.h"
 
 #include "box2d/box2d.h"
-
-#include "GLFW/glfw3.h"
-#include "imgui.h"
 
 struct PhysicsHitQueryResult2D
 {
@@ -344,8 +343,8 @@ public:
 		float fontSize = ImGui::GetFontSize();
 		float height = 11.0f * fontSize;
 		float winX = 0.5f * fontSize;
-		float winY =m_camera->m_height - height - 2.0f * fontSize ;
-		ImGui::SetNextWindowPos( {winX, winY}, ImGuiCond_Once );
+		float winY = m_camera->m_height - height - 2.0f * fontSize;
+		ImGui::SetNextWindowPos( { winX, winY }, ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 9.0f * fontSize, height ) );
 		ImGui::Begin( "Disable Crash", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 
@@ -512,3 +511,65 @@ public:
 };
 
 static int sampleBodyType = RegisterSample( "Issues", "Crash01", Crash01::Create );
+
+class StaticVsBulletBug : public Sample
+{
+public:
+	explicit StaticVsBulletBug( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 48.8525391, 68.1518555 };
+			m_context->camera.m_zoom = 100.0f * 0.5f;
+		}
+
+		{
+			b2BodyDef bd = b2DefaultBodyDef();
+			bd.type = b2_dynamicBody; // NOTE(bug): Changing this to b2_staticBody fixes the issue
+			b2BodyId staticBodyId = b2CreateBody( m_worldId, &bd );
+
+			const b2Vec2 verts[] = {
+				{ 48.8525391, 68.1518555 }, { 49.1821289, 68.1152344 }, { 68.8476562, 68.1152344 },
+				{ 68.8476562, 70.2392578 }, { 48.8525391, 70.2392578 },
+			};
+
+			const b2Hull hull = b2ComputeHull( verts, ARRAY_COUNT( verts ) );
+			const b2Polygon poly = b2MakePolygon( &hull, 0.0f );
+
+			b2ShapeDef sd = b2DefaultShapeDef();
+			sd.density = 1.0f;
+			sd.material.friction = 0.5f;
+			sd.material.restitution = 0.1f;
+
+			b2CreatePolygonShape( staticBodyId, &sd, &poly );
+			b2Body_SetType( staticBodyId, b2_staticBody );
+		}
+
+		{
+			b2BodyDef bd = b2DefaultBodyDef();
+			bd.position = { 58.9243050, 77.5401459 };
+			bd.type = b2_dynamicBody;
+			bd.motionLocks.angularZ = true;
+			bd.linearVelocity = { 104.868881, -281.073883 };
+			bd.isBullet = true;
+
+			b2BodyId ballBodyId = b2CreateBody( m_worldId, &bd );
+			const b2Circle ball = { .center = {}, .radius = 0.3f };
+
+			b2ShapeDef ballShape = b2DefaultShapeDef();
+			ballShape.density = 3.0f;
+			ballShape.material.friction = 0.2f;
+			ballShape.material.restitution = 0.9f;
+
+			b2CreateCircleShape( ballBodyId, &ballShape, &ball );
+		}
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new StaticVsBulletBug( context );
+	}
+};
+
+static int staticVsBulletBug = RegisterSample( "Issues", "StaticVsBulletBug", StaticVsBulletBug::Create );

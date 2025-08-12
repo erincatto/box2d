@@ -38,7 +38,6 @@ set(BOX2D_SOURCE_FILES
 	manifold.c
 	math_functions.c
 	motor_joint.c
-	mouse_joint.c
 	mover.c
 	physics_world.c
 	physics_world.h

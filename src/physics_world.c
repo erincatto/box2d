@@ -1017,8 +1017,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_Query( world->broadPhase.trees + i, draw->drawingBounds, B2_DEFAULT_MASK_BITS, DrawQueryCallback,
-							 &drawContext );
+		b2DynamicTree_QueryAll( world->broadPhase.trees + i, draw->drawingBounds, DrawQueryCallback, &drawContext );
 	}
 
 	uint32_t wordCount = world->debugBodySet.blockCount;
@@ -1049,10 +1048,10 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
 				b2Transform transform = { bodySim->center, bodySim->transform.q };
+				draw->DrawSegmentFcn( bodySim->center0, bodySim->center, b2_colorWhiteSmoke, draw->context );
 				draw->DrawTransformFcn( transform, draw->context );
 
 				b2Vec2 p = b2TransformPoint( transform, offset );
-
 				char buffer[32];
 				snprintf( buffer, 32, "  %.2f", body->mass );
 				draw->DrawStringFcn( p, buffer, b2_colorWhite, draw->context );
@@ -1079,7 +1078,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 			}
 
 			const float linearSlop = B2_LINEAR_SLOP;
-			if ( draw->drawContacts && body->type == b2_dynamicBody && body->setIndex == b2_awakeSet )
+			if ( draw->drawContacts && body->type == b2_dynamicBody )
 			{
 				int contactKey = body->headContactKey;
 				while ( contactKey != B2_NULL_INDEX )
@@ -1089,18 +1088,11 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 					b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
 					contactKey = contact->edges[edgeIndex].nextKey;
 
-					if ( contact->setIndex != b2_awakeSet || contact->colorIndex == B2_NULL_INDEX )
-					{
-						continue;
-					}
-
 					// avoid double draw
 					if ( b2GetBit( &world->debugContactSet, contactId ) == false )
 					{
-						B2_ASSERT( 0 <= contact->colorIndex && contact->colorIndex < B2_GRAPH_COLOR_COUNT );
+						b2ContactSim* contactSim = b2GetContactSim( world, contact );
 
-						b2GraphColor* gc = world->constraintGraph.colors + contact->colorIndex;
-						b2ContactSim* contactSim = b2ContactSimArray_Get( &gc->contactSims, contact->localIndex );
 						int pointCount = contactSim->manifold.pointCount;
 						b2Vec2 normal = contactSim->manifold.normal;
 						char buffer[32];
@@ -1109,7 +1101,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 						{
 							b2ManifoldPoint* point = contactSim->manifold.points + j;
 
-							if ( draw->drawGraphColors )
+							if ( draw->drawGraphColors && contact->colorIndex != B2_NULL_INDEX)
 							{
 								// graph color
 								float pointSize = contact->colorIndex == B2_OVERFLOW_INDEX ? 7.5f : 5.0f;
@@ -1141,9 +1133,9 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 							else if ( draw->drawContactImpulses )
 							{
 								b2Vec2 p1 = point->point;
-								b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->normalImpulse, normal );
+								b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->totalNormalImpulse, normal );
 								draw->DrawSegmentFcn( p1, p2, impulseColor, draw->context );
-								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", 1000.0f * point->normalImpulse );
+								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", 1000.0f * point->totalNormalImpulse );
 								draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 							}
 

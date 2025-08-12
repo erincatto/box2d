@@ -959,39 +959,6 @@ B2_API float b2MotorJoint_GetMaxSpringTorque( b2JointId jointId );
 /**@}*/
 
 /**
- * @defgroup mouse_joint Mouse Joint
- * @brief Functions for the mouse joint.
- *
- * The mouse joint is designed for use in the samples application, but you may find it useful in applications where
- * the user moves a rigid body with a cursor.
- * @{
- */
-
-/// Create a mouse joint
-/// @see b2MouseJointDef for details
-B2_API b2JointId b2CreateMouseJoint( b2WorldId worldId, const b2MouseJointDef* def );
-
-/// Set the mouse joint spring stiffness in Hertz
-B2_API void b2MouseJoint_SetSpringHertz( b2JointId jointId, float hertz );
-
-/// Get the mouse joint spring stiffness in Hertz
-B2_API float b2MouseJoint_GetSpringHertz( b2JointId jointId );
-
-/// Set the mouse joint spring damping ratio, non-dimensional
-B2_API void b2MouseJoint_SetSpringDampingRatio( b2JointId jointId, float dampingRatio );
-
-/// Get the mouse joint damping ratio, non-dimensional
-B2_API float b2MouseJoint_GetSpringDampingRatio( b2JointId jointId );
-
-/// Set the mouse joint maximum force, usually in newtons
-B2_API void b2MouseJoint_SetMaxForce( b2JointId jointId, float maxForce );
-
-/// Get the mouse joint maximum force, usually in newtons
-B2_API float b2MouseJoint_GetMaxForce( b2JointId jointId );
-
-/**@}*/
-
-/**
  * @defgroup filter_joint Filter Joint
  * @brief Functions for the filter joint.
  *
