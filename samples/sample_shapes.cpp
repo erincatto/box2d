@@ -40,8 +40,11 @@ public:
 		m_chainId = b2_nullChainId;
 		m_shapeId = b2_nullShapeId;
 		m_shapeType = e_circleShape;
-		m_restitution = 0.0f;
-		m_friction = 0.2f;
+
+		m_material = b2DefaultSurfaceMaterial();
+		m_material.friction = 0.2f;
+		m_material.customColor = b2_colorSteelBlue;
+		m_material.userMaterialId = 42;
 
 		CreateScene();
 		Launch();
@@ -110,15 +113,10 @@ public:
 		// }
 		// printf("};\n");
 
-		b2SurfaceMaterial material = {};
-		material.friction = 0.2f;
-		material.customColor = b2_colorSteelBlue;
-		material.userMaterialId = 42;
-
 		b2ChainDef chainDef = b2DefaultChainDef();
 		chainDef.points = points;
 		chainDef.count = count;
-		chainDef.materials = &material;
+		chainDef.materials = &m_material;
 		chainDef.materialCount = 1;
 		chainDef.isLoop = true;
 
@@ -141,9 +139,7 @@ public:
 		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.density = 1.0f;
-		shapeDef.material.friction = m_friction;
-		shapeDef.material.restitution = m_restitution;
+		shapeDef.material = m_material;
 
 		if ( m_shapeType == e_circleShape )
 		{
@@ -185,15 +181,15 @@ public:
 			Launch();
 		}
 
-		if ( ImGui::SliderFloat( "Friction", &m_friction, 0.0f, 1.0f, "%.2f" ) )
+		if ( ImGui::SliderFloat( "Friction", &m_material.friction, 0.0f, 1.0f, "%.2f" ) )
 		{
-			b2Shape_SetFriction( m_shapeId, m_friction );
-			b2Chain_SetFriction( m_chainId, m_friction );
+			b2Shape_SetSurfaceMaterial( m_shapeId, &m_material );
+			b2Chain_SetSurfaceMaterial( m_chainId, &m_material, 1 );
 		}
 
-		if ( ImGui::SliderFloat( "Restitution", &m_restitution, 0.0f, 2.0f, "%.1f" ) )
+		if ( ImGui::SliderFloat( "Restitution", &m_material.restitution, 0.0f, 2.0f, "%.1f" ) )
 		{
-			b2Shape_SetRestitution( m_shapeId, m_restitution );
+			b2Shape_SetSurfaceMaterial( m_shapeId, &m_material );
 		}
 
 		if ( ImGui::Button( "Launch" ) )
@@ -224,8 +220,7 @@ public:
 	b2ChainId m_chainId;
 	ShapeType m_shapeType;
 	b2ShapeId m_shapeId;
-	float m_restitution;
-	float m_friction;
+	b2SurfaceMaterial m_material;
 };
 
 static int sampleChainShape = RegisterSample( "Shapes", "Chain Shape", ChainShape::Create );

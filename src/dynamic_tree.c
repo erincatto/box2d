@@ -1128,17 +1128,63 @@ b2TreeStats b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_
 	while ( stackCount > 0 )
 	{
 		int nodeId = stack[--stackCount];
-		if ( nodeId == B2_NULL_INDEX )
-		{
-			// todo huh?
-			B2_ASSERT( false );
-			continue;
-		}
 
 		const b2TreeNode* node = tree->nodes + nodeId;
 		result.nodeVisits += 1;
 
 		if ( b2AABB_Overlaps( node->aabb, aabb ) && ( node->categoryBits & maskBits ) != 0 )
+		{
+			if ( b2IsLeaf( node ) )
+			{
+				// callback to user code with proxy id
+				bool proceed = callback( nodeId, node->userData, context );
+				result.leafVisits += 1;
+
+				if ( proceed == false )
+				{
+					return result;
+				}
+			}
+			else
+			{
+				if ( stackCount < B2_TREE_STACK_SIZE - 1 )
+				{
+					stack[stackCount++] = node->children.child1;
+					stack[stackCount++] = node->children.child2;
+				}
+				else
+				{
+					B2_ASSERT( stackCount < B2_TREE_STACK_SIZE - 1 );
+				}
+			}
+		}
+	}
+
+	return result;
+}
+
+b2TreeStats b2DynamicTree_QueryAll( const b2DynamicTree* tree, b2AABB aabb, b2TreeQueryCallbackFcn* callback,
+								 void* context )
+{
+	b2TreeStats result = { 0 };
+
+	if ( tree->nodeCount == 0 )
+	{
+		return result;
+	}
+
+	int stack[B2_TREE_STACK_SIZE];
+	int stackCount = 0;
+	stack[stackCount++] = tree->root;
+
+	while ( stackCount > 0 )
+	{
+		int nodeId = stack[--stackCount];
+
+		const b2TreeNode* node = tree->nodes + nodeId;
+		result.nodeVisits += 1;
+
+		if ( b2AABB_Overlaps( node->aabb, aabb ) )
 		{
 			if ( b2IsLeaf( node ) )
 			{

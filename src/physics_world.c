@@ -85,13 +85,13 @@ static void b2DefaultFinishTaskFcn( void* userTask, void* userContext )
 	B2_UNUSED( userTask, userContext );
 }
 
-static float b2DefaultFrictionCallback( float frictionA, int materialA, float frictionB, int materialB )
+static float b2DefaultFrictionCallback( float frictionA, uint64_t materialA, float frictionB, uint64_t materialB )
 {
 	B2_UNUSED( materialA, materialB );
 	return sqrtf( frictionA * frictionB );
 }
 
-static float b2DefaultRestitutionCallback( float restitutionA, int materialA, float restitutionB, int materialB )
+static float b2DefaultRestitutionCallback( float restitutionA, uint64_t materialA, float restitutionB, uint64_t materialB )
 {
 	B2_UNUSED( materialA, materialB );
 	return b2MaxFloat( restitutionA, restitutionB );
@@ -904,9 +904,9 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 
 		b2HexColor color;
 
-		if ( shape->customColor != 0 )
+		if ( shape->material.customColor != 0 )
 		{
-			color = shape->customColor;
+			color = shape->material.customColor;
 		}
 		else if ( body->type == b2_dynamicBody && body->mass == 0.0f )
 		{
@@ -974,8 +974,15 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 
 // todo this has varying order for moving shapes, causing flicker when overlapping shapes are moving
 // solution: display order by shape id modulus 3, keep 3 buckets in GLSolid* and flush in 3 passes.
-static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
+void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 {
+	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return;
+	}
+
 	B2_ASSERT( b2IsValidAABB( draw->drawingBounds ) );
 
 	const float k_impulseScale = 1.0f;
@@ -1003,12 +1010,14 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 	int contactCapacity = b2GetIdCapacity( &world->contactIdPool );
 	b2SetBitCountAndClear( &world->debugContactSet, contactCapacity );
 
+	int islandCapacity = b2GetIdCapacity( &world->islandIdPool );
+	b2SetBitCountAndClear( &world->debugIslandSet, islandCapacity );
+
 	struct DrawContext drawContext = { world, draw };
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_Query( world->broadPhase.trees + i, draw->drawingBounds, B2_DEFAULT_MASK_BITS, DrawQueryCallback,
-							 &drawContext );
+		b2DynamicTree_QueryAll( world->broadPhase.trees + i, draw->drawingBounds, DrawQueryCallback, &drawContext );
 	}
 
 	uint32_t wordCount = world->debugBodySet.blockCount;
@@ -1039,10 +1048,10 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
 				b2Transform transform = { bodySim->center, bodySim->transform.q };
+				draw->DrawSegmentFcn( bodySim->center0, bodySim->center, b2_colorWhiteSmoke, draw->context );
 				draw->DrawTransformFcn( transform, draw->context );
 
 				b2Vec2 p = b2TransformPoint( transform, offset );
-
 				char buffer[32];
 				snprintf( buffer, 32, "  %.2f", body->mass );
 				draw->DrawStringFcn( p, buffer, b2_colorWhite, draw->context );
@@ -1063,18 +1072,13 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 						b2DrawJoint( draw, world, joint );
 						b2SetBit( &world->debugJointSet, jointId );
 					}
-					else
-					{
-						// todo testing
-						edgeIndex += 0;
-					}
 
 					jointKey = joint->edges[edgeIndex].nextKey;
 				}
 			}
 
 			const float linearSlop = B2_LINEAR_SLOP;
-			if ( draw->drawContacts && body->type == b2_dynamicBody && body->setIndex == b2_awakeSet )
+			if ( draw->drawContacts && body->type == b2_dynamicBody )
 			{
 				int contactKey = body->headContactKey;
 				while ( contactKey != B2_NULL_INDEX )
@@ -1084,18 +1088,11 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 					b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
 					contactKey = contact->edges[edgeIndex].nextKey;
 
-					if ( contact->setIndex != b2_awakeSet || contact->colorIndex == B2_NULL_INDEX )
-					{
-						continue;
-					}
-
 					// avoid double draw
 					if ( b2GetBit( &world->debugContactSet, contactId ) == false )
 					{
-						B2_ASSERT( 0 <= contact->colorIndex && contact->colorIndex < B2_GRAPH_COLOR_COUNT );
+						b2ContactSim* contactSim = b2GetContactSim( world, contact );
 
-						b2GraphColor* gc = world->constraintGraph.colors + contact->colorIndex;
-						b2ContactSim* contactSim = b2ContactSimArray_Get( &gc->contactSims, contact->localIndex );
 						int pointCount = contactSim->manifold.pointCount;
 						b2Vec2 normal = contactSim->manifold.normal;
 						char buffer[32];
@@ -1104,7 +1101,7 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 						{
 							b2ManifoldPoint* point = contactSim->manifold.points + j;
 
-							if ( draw->drawGraphColors )
+							if ( draw->drawGraphColors && contact->colorIndex != B2_NULL_INDEX )
 							{
 								// graph color
 								float pointSize = contact->colorIndex == B2_OVERFLOW_INDEX ? 7.5f : 5.0f;
@@ -1136,9 +1133,9 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 							else if ( draw->drawContactImpulses )
 							{
 								b2Vec2 p1 = point->point;
-								b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->normalImpulse, normal );
+								b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->totalNormalImpulse, normal );
 								draw->DrawSegmentFcn( p1, p2, impulseColor, draw->context );
-								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", 1000.0f * point->normalImpulse );
+								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", 1000.0f * point->totalNormalImpulse );
 								draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 							}
 
@@ -1161,13 +1158,55 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 
 						b2SetBit( &world->debugContactSet, contactId );
 					}
-					else
-					{
-						// todo testing
-						edgeIndex += 0;
-					}
 
 					contactKey = contact->edges[edgeIndex].nextKey;
+				}
+			}
+
+			if ( draw->drawIslands )
+			{
+				int islandId = body->islandId;
+				if ( islandId != B2_NULL_INDEX && b2GetBit( &world->debugIslandSet, islandId ) == false )
+				{
+					b2Island* island = world->islands.data + islandId;
+					if ( island->setIndex == B2_NULL_INDEX )
+					{
+						continue;
+					}
+
+					int shapeCount = 0;
+					b2AABB aabb = {
+						.lowerBound = { FLT_MAX, FLT_MAX },
+						.upperBound = { -FLT_MAX, -FLT_MAX },
+					};
+
+					int islandBodyId = island->headBody;
+					while ( islandBodyId != B2_NULL_INDEX )
+					{
+						b2Body* islandBody = b2BodyArray_Get( &world->bodies, islandBodyId );
+						int shapeId = islandBody->headShapeId;
+						while ( shapeId != B2_NULL_INDEX )
+						{
+							b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+							aabb = b2AABB_Union( aabb, shape->fatAABB );
+							shapeCount += 1;
+							shapeId = shape->nextShapeId;
+						}
+
+						islandBodyId = islandBody->islandNext;
+					}
+
+					if ( shapeCount > 0 )
+					{
+						b2Vec2 vs[4] = { { aabb.lowerBound.x, aabb.lowerBound.y },
+										 { aabb.upperBound.x, aabb.lowerBound.y },
+										 { aabb.upperBound.x, aabb.upperBound.y },
+										 { aabb.lowerBound.x, aabb.upperBound.y } };
+
+						draw->DrawPolygonFcn( vs, 4, b2_colorOrangeRed, draw->context );
+					}
+
+					b2SetBit( &world->debugIslandSet, islandId );
 				}
 			}
 
@@ -1175,18 +1214,6 @@ static void b2DrawWithBounds( b2World* world, b2DebugDraw* draw )
 			word = word & ( word - 1 );
 		}
 	}
-}
-
-void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
-{
-	b2World* world = b2GetWorldFromId( worldId );
-	B2_ASSERT( world->locked == false );
-	if ( world->locked )
-	{
-		return;
-	}
-
-	b2DrawWithBounds( world, draw );
 }
 
 b2BodyEvents b2World_GetBodyEvents( b2WorldId worldId )
@@ -2513,31 +2540,6 @@ void b2World_EnableSpeculative( b2WorldId worldId, bool flag )
 }
 
 #if B2_VALIDATE
-#if 0
-// When validating islands ids I have to compare the root island
-// ids because islands are not merged until the next time step.
-static int b2GetRootIslandId( b2World* world, int islandId )
-{
-	if ( islandId == B2_NULL_INDEX )
-	{
-		return B2_NULL_INDEX;
-	}
-
-	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
-
-	int rootId = islandId;
-	b2Island* rootIsland = island;
-	while ( rootIsland->parentIsland != B2_NULL_INDEX )
-	{
-		b2Island* parent = b2IslandArray_Get( &world->islands, rootIsland->parentIsland );
-		rootId = rootIsland->parentIsland;
-		rootIsland = parent;
-	}
-
-	return rootId;
-}
-#endif
-
 // This validates island graph connectivity for each body
 void b2ValidateConnectivity( b2World* world )
 {
@@ -2558,7 +2560,6 @@ void b2ValidateConnectivity( b2World* world )
 		B2_ASSERT( bodyIndex == body->id );
 
 		// Need to get the root island because islands are not merged until the next time step
-		//int bodyIslandId = b2GetRootIslandId( world, body->islandId );
 		int bodyIslandId = body->islandId;
 		int bodySetIndex = body->setIndex;
 
@@ -2575,7 +2576,6 @@ void b2ValidateConnectivity( b2World* world )
 			{
 				if ( bodySetIndex != b2_staticSet )
 				{
-					//int contactIslandId = b2GetRootIslandId( world, contact->islandId );
 					int contactIslandId = contact->islandId;
 					B2_ASSERT( contactIslandId == bodyIslandId );
 				}
@@ -2606,14 +2606,18 @@ void b2ValidateConnectivity( b2World* world )
 			}
 			else if ( bodySetIndex == b2_staticSet )
 			{
+				// Intentional nesting
 				if ( otherBody->setIndex == b2_staticSet )
 				{
 					B2_ASSERT( joint->islandId == B2_NULL_INDEX );
 				}
 			}
+			else if ( body->type != b2_dynamicBody && otherBody->type != b2_dynamicBody )
+			{
+				B2_ASSERT( joint->islandId == B2_NULL_INDEX );
+			}
 			else
 			{
-				//int jointIslandId = b2GetRootIslandId( world, joint->islandId );
 				int jointIslandId = joint->islandId;
 				B2_ASSERT( jointIslandId == bodyIslandId );
 			}
@@ -2750,6 +2754,10 @@ void b2ValidateSolverSets( b2World* world )
 						{
 							B2_ASSERT( joint->setIndex == b2_staticSet );
 						}
+						else if ( body->type != b2_dynamicBody && otherBody->type != b2_dynamicBody )
+						{
+							B2_ASSERT( joint->setIndex == b2_staticSet );
+						}
 						else if ( setIndex == b2_awakeSet )
 						{
 							B2_ASSERT( joint->setIndex == b2_awakeSet );
@@ -2862,11 +2870,11 @@ void b2ValidateSolverSets( b2World* world )
 			{
 				b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
 				b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
-				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type != b2_staticBody ) );
-				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type != b2_staticBody ) );
+				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type == b2_dynamicBody ) );
+				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type == b2_dynamicBody ) );
 
-				bitCount += bodyA->type == b2_staticBody ? 0 : 1;
-				bitCount += bodyB->type == b2_staticBody ? 0 : 1;
+				bitCount += bodyA->type == b2_dynamicBody ? 1 : 0;
+				bitCount += bodyB->type == b2_dynamicBody ? 1 : 0;
 			}
 		}
 
@@ -2887,11 +2895,11 @@ void b2ValidateSolverSets( b2World* world )
 			{
 				b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
 				b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
-				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type != b2_staticBody ) );
-				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type != b2_staticBody ) );
+				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type == b2_dynamicBody ) );
+				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type == b2_dynamicBody ) );
 
-				bitCount += bodyA->type == b2_staticBody ? 0 : 1;
-				bitCount += bodyB->type == b2_staticBody ? 0 : 1;
+				bitCount += bodyA->type == b2_dynamicBody ? 1 : 0;
+				bitCount += bodyB->type == b2_dynamicBody ? 1 : 0;
 			}
 		}
 

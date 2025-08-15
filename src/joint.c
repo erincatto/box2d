@@ -31,7 +31,7 @@ static b2JointDef b2DefaultJointDef( void )
 	def.forceThreshold = FLT_MAX;
 	def.torqueThreshold = FLT_MAX;
 	def.constraintHertz = 60.0f;
-	def.constraintDampingRatio = 0.0f;
+	def.constraintDampingRatio = 2.0f;
 	def.drawScale = 1.0f;
 	return def;
 }
@@ -52,18 +52,6 @@ b2MotorJointDef b2DefaultMotorJointDef( void )
 {
 	b2MotorJointDef def = { 0 };
 	def.base = b2DefaultJointDef();
-	def.relativeTransform.q = b2Rot_identity;
-	def.internalValue = B2_SECRET_COOKIE;
-	return def;
-}
-
-b2MouseJointDef b2DefaultMouseJointDef( void )
-{
-	b2MouseJointDef def = { 0 };
-	def.base = b2DefaultJointDef();
-	def.hertz = 4.0f;
-	def.dampingRatio = 1.0f;
-	def.maxForce = 1.0f;
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;
 }
@@ -238,7 +226,7 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 	joint->drawScale = def->drawScale;
 	joint->type = type;
 	joint->collideConnected = def->collideConnected;
-	joint->isMarked = false;
+	//joint->isMarked = false;
 
 	// Doubly linked list on bodyA
 	joint->edges[0].bodyId = bodyIdA;
@@ -286,9 +274,9 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 		jointSim->bodyIdA = bodyIdA;
 		jointSim->bodyIdB = bodyIdB;
 	}
-	else if ( bodyA->setIndex == b2_staticSet && bodyB->setIndex == b2_staticSet )
+	else if ( bodyA->type != b2_dynamicBody && bodyB->type != b2_dynamicBody )
 	{
-		// joint is connecting static bodies
+		// joint is not attached to a dynamic body
 		b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, b2_staticSet );
 		joint->setIndex = b2_staticSet;
 		joint->localIndex = set->jointSims.count;
@@ -461,32 +449,6 @@ b2JointId b2CreateMotorJoint( b2WorldId worldId, const b2MotorJointDef* def )
 	joint->motorJoint.angularHertz = def->angularHertz;
 	joint->motorJoint.angularDampingRatio = def->angularDampingRatio;
 	joint->motorJoint.maxSpringTorque = def->maxSpringTorque;
-
-	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
-	return jointId;
-}
-
-b2JointId b2CreateMouseJoint( b2WorldId worldId, const b2MouseJointDef* def )
-{
-	B2_CHECK_DEF( def );
-	b2World* world = b2GetWorldFromId( worldId );
-
-	B2_ASSERT( world->locked == false );
-
-	if ( world->locked )
-	{
-		return (b2JointId){ 0 };
-	}
-
-	b2JointPair pair = b2CreateJoint( world, &def->base, b2_mouseJoint );
-
-	b2JointSim* joint = pair.jointSim;
-
-	b2MouseJoint empty = { 0 };
-	joint->mouseJoint = empty;
-	joint->mouseJoint.hertz = def->hertz;
-	joint->mouseJoint.dampingRatio = def->dampingRatio;
-	joint->mouseJoint.maxForce = def->maxForce;
 
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 	return jointId;
@@ -940,14 +902,6 @@ void b2GetJointReaction( b2JointSim* sim, float invTimeStep, float* force, float
 		}
 		break;
 
-		case b2_mouseJoint:
-		{
-			b2MouseJoint* joint = &sim->mouseJoint;
-			linearImpulse = b2Length( joint->linearImpulse );
-			angularImpulse = b2AbsFloat( joint->angularImpulse );
-		}
-		break;
-
 		case b2_prismaticJoint:
 		{
 			b2PrismaticJoint* joint = &sim->prismaticJoint;
@@ -1005,9 +959,6 @@ static b2Vec2 b2GetJointConstraintForce( b2World* world, b2Joint* joint )
 		case b2_motorJoint:
 			return b2GetMotorJointForce( world, base );
 
-		case b2_mouseJoint:
-			return b2GetMouseJointForce( world, base );
-
 		case b2_filterJoint:
 			return b2Vec2_zero;
 
@@ -1040,9 +991,6 @@ static float b2GetJointConstraintTorque( b2World* world, b2Joint* joint )
 
 		case b2_motorJoint:
 			return b2GetMotorJointTorque( world, base );
-
-		case b2_mouseJoint:
-			return b2GetMouseJointTorque( world, base );
 
 		case b2_filterJoint:
 			return 0.0f;
@@ -1122,9 +1070,6 @@ float b2Joint_GetLinearSeparation( b2JointId jointId )
 		}
 
 		case b2_motorJoint:
-			return 0.0f;
-
-		case b2_mouseJoint:
 			return 0.0f;
 
 		case b2_filterJoint:
@@ -1216,9 +1161,6 @@ float b2Joint_GetAngularSeparation( b2JointId jointId )
 			return 0.0f;
 
 		case b2_motorJoint:
-			return 0.0f;
-
-		case b2_mouseJoint:
 			return 0.0f;
 
 		case b2_filterJoint:
@@ -1342,10 +1284,6 @@ void b2PrepareJoint( b2JointSim* joint, b2StepContext* context )
 			b2PrepareMotorJoint( joint, context );
 			break;
 
-		case b2_mouseJoint:
-			b2PrepareMouseJoint( joint, context );
-			break;
-
 		case b2_filterJoint:
 			break;
 
@@ -1382,10 +1320,6 @@ void b2WarmStartJoint( b2JointSim* joint, b2StepContext* context )
 			b2WarmStartMotorJoint( joint, context );
 			break;
 
-		case b2_mouseJoint:
-			b2WarmStartMouseJoint( joint, context );
-			break;
-
 		case b2_filterJoint:
 			break;
 
@@ -1420,10 +1354,6 @@ void b2SolveJoint( b2JointSim* joint, b2StepContext* context, bool useBias )
 
 		case b2_motorJoint:
 			b2SolveMotorJoint( joint, context );
-			break;
-
-		case b2_mouseJoint:
-			b2SolveMouseJoint( joint, context );
 			break;
 
 		case b2_filterJoint:
@@ -1525,12 +1455,6 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 			b2DrawDistanceJoint( draw, jointSim, transformA, transformB );
 			break;
 
-		case b2_mouseJoint:
-			draw->DrawPointFcn( pA, 8.0f, b2_colorYellowGreen, draw->context );
-			draw->DrawPointFcn( pB, 8.0f, b2_colorYellowGreen, draw->context );
-			draw->DrawSegmentFcn( pA, pB, b2_colorLightGray, draw->context );
-			break;
-
 		case b2_filterJoint:
 			draw->DrawSegmentFcn( pA, pB, b2_colorGold, draw->context );
 			break;
@@ -1538,6 +1462,7 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 		case b2_motorJoint:
 			draw->DrawPointFcn( pA, 8.0f, b2_colorYellowGreen, draw->context );
 			draw->DrawPointFcn( pB, 8.0f, b2_colorPlum, draw->context );
+			draw->DrawSegmentFcn( pA, pB, b2_colorLightGray, draw->context );
 			break;
 
 		case b2_prismaticJoint:

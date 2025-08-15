@@ -333,7 +333,6 @@ public:
 		}
 
 		m_speed = 1.0f;
-		m_go = true;
 		m_time = 0.0f;
 	}
 
@@ -417,7 +416,6 @@ public:
 	float m_speed;
 	float m_maxForce;
 	float m_maxTorque;
-	bool m_go;
 };
 
 static int sampleMotorJoint = RegisterSample( "Joints", "Motor Joint", MotorJoint::Create );
@@ -653,12 +651,12 @@ public:
 			jointDef.maxMotorTorque = m_motorTorque;
 			jointDef.enableMotor = m_enableMotor;
 			jointDef.lowerAngle = -0.5f * B2_PI;
-			jointDef.upperAngle = 0.75f * B2_PI;
+			jointDef.upperAngle = 0.05f * B2_PI;
 			jointDef.enableLimit = m_enableLimit;
 
 			m_jointId1 = b2CreateRevoluteJoint( m_worldId, &jointDef );
 
-			b2Joint_SetConstraintTuning( m_jointId1, 120.0f, 0.0f );
+			b2Joint_SetConstraintTuning( m_jointId1, 60.0f, 20.0f );
 		}
 
 		{
@@ -780,8 +778,8 @@ public:
 		float torque1 = b2RevoluteJoint_GetMotorTorque( m_jointId1 );
 		DrawTextLine( "Motor Torque 1 = %4.1f", torque1 );
 
-		// float torque2 = b2RevoluteJoint_GetMotorTorque( m_jointId2 );
-		// DrawTextLine( "Motor Torque 2 = %4.1f", torque2 );
+		float torque2 = b2RevoluteJoint_GetMotorTorque( m_jointId2 );
+		DrawTextLine( "Motor Torque 2 = %4.1f", torque2 );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -2840,6 +2838,9 @@ public:
 		b2BodyId linkId1;
 		int N = 3;
 
+		float constraintDampingRatio = 20.0f;
+		float constraintHertz = 240.0f;
+
 		for ( int i = 0; i < N; ++i )
 		{
 			bodyDef.position = { 0.0f, y };
@@ -2866,6 +2867,8 @@ public:
 			revoluteDef.base.localFrameA.p = baseAnchor1;
 			revoluteDef.base.localFrameB.p = { -2.5f, 0.0f };
 			revoluteDef.base.collideConnected = ( i == 0 ) ? true : false;
+			revoluteDef.base.constraintDampingRatio = constraintDampingRatio;
+			revoluteDef.base.constraintHertz = constraintHertz;
 
 			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
 
@@ -2879,6 +2882,8 @@ public:
 				wheelDef.base.localFrameB.p = { 2.5f, 0.0f };
 				wheelDef.enableSpring = false;
 				wheelDef.base.collideConnected = true;
+				wheelDef.base.constraintDampingRatio = constraintDampingRatio;
+				wheelDef.base.constraintHertz = constraintHertz;
 
 				b2CreateWheelJoint( m_worldId, &wheelDef );
 			}
@@ -2889,6 +2894,8 @@ public:
 				revoluteDef.base.localFrameA.p = baseAnchor2;
 				revoluteDef.base.localFrameB.p = { 2.5f, 0.0f };
 				revoluteDef.base.collideConnected = false;
+				revoluteDef.base.constraintDampingRatio = constraintDampingRatio;
+				revoluteDef.base.constraintHertz = constraintHertz;
 
 				b2CreateRevoluteJoint( m_worldId, &revoluteDef );
 			}
@@ -2899,6 +2906,8 @@ public:
 			revoluteDef.base.localFrameA.p = { 0.0f, 0.0f };
 			revoluteDef.base.localFrameB.p = { 0.0f, 0.0f };
 			revoluteDef.base.collideConnected = false;
+			revoluteDef.base.constraintDampingRatio = constraintDampingRatio;
+			revoluteDef.base.constraintHertz = constraintHertz;
 
 			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
 
@@ -2923,6 +2932,8 @@ public:
 		revoluteDef.base.localFrameA.p = { -2.5f, -0.4f };
 		revoluteDef.base.localFrameB.p = baseAnchor1;
 		revoluteDef.base.collideConnected = true;
+		revoluteDef.base.constraintDampingRatio = constraintDampingRatio;
+		revoluteDef.base.constraintHertz = constraintHertz;
 		b2CreateRevoluteJoint( m_worldId, &revoluteDef );
 
 		// right pin
@@ -2933,6 +2944,8 @@ public:
 		wheelDef.base.localFrameB.p = baseAnchor2;
 		wheelDef.enableSpring = false;
 		wheelDef.base.collideConnected = true;
+		wheelDef.base.constraintDampingRatio = constraintDampingRatio;
+		wheelDef.base.constraintHertz = constraintHertz;
 		b2CreateWheelJoint( m_worldId, &wheelDef );
 
 		m_enableMotor = false;
@@ -3377,6 +3390,8 @@ public:
 			jointDef.base.bodyIdB = m_doorId;
 			jointDef.base.localFrameA.p = { 0.0f, 0.0f };
 			jointDef.base.localFrameB.p = { 0.0f, -1.5f };
+			jointDef.base.constraintHertz = m_jointHertz;
+			jointDef.base.constraintDampingRatio = m_jointDampingRatio;
 			jointDef.targetAngle = 0.0f;
 			jointDef.enableSpring = true;
 			jointDef.hertz = 1.0f;
@@ -3389,7 +3404,6 @@ public:
 			jointDef.enableLimit = m_enableLimit;
 
 			m_jointId = b2CreateRevoluteJoint( m_worldId, &jointDef );
-			b2Joint_SetConstraintTuning( m_jointId, m_jointHertz, m_jointDampingRatio );
 		}
 	}
 

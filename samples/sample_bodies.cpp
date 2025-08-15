@@ -283,12 +283,12 @@ public:
 
 static int sampleBodyType = RegisterSample( "Bodies", "Body Type", BodyType::Create );
 
-float FrictionCallback( float, int, float, int )
+float FrictionCallback( float, uint64_t, float, uint64_t )
 {
 	return 0.1f;
 }
 
-float RestitutionCallback( float, int, float, int )
+float RestitutionCallback( float, uint64_t, float, uint64_t )
 {
 	return 1.0f;
 }
@@ -986,3 +986,57 @@ public:
 };
 
 static int sampleMixedLocks = RegisterSample( "Bodies", "Mixed Locks", MixedLocks::Create );
+
+class SetVelocity : public Sample
+{
+public:
+	explicit SetVelocity( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 2.5f };
+			m_context->camera.m_zoom = 3.5f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 0.0f, -0.25f };
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Polygon box = b2MakeBox( 20.0f, 0.25f );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Polygon box = b2MakeSquare( 0.5f );
+			bodyDef.position = { 0.0f, 0.5f };
+			m_bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
+		}
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		b2Body_SetLinearVelocity( m_bodyId, { 0.0f, -20.0f } );
+
+		b2Vec2 position = b2Body_GetPosition( m_bodyId );
+		DrawTextLine( "(x, y) = (%.2g, %.2g)", position.x, position.y );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new SetVelocity( context );
+	}
+
+	b2BodyId m_bodyId;
+};
+
+static int sampleSetVelocity = RegisterSample( "Bodies", "Set Velocity", SetVelocity::Create );

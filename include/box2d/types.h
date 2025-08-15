@@ -53,13 +53,13 @@ typedef void b2FinishTaskCallback( void* userTask, void* userContext );
 /// from a worker thread.
 /// @warning This function should not attempt to modify Box2D state or user application state.
 /// @ingroup world
-typedef float b2FrictionCallback( float frictionA, int userMaterialIdA, float frictionB, int userMaterialIdB );
+typedef float b2FrictionCallback( float frictionA, uint64_t userMaterialIdA, float frictionB, uint64_t userMaterialIdB );
 
 /// Optional restitution mixing callback. This intentionally provides no context objects because this is called
 /// from a worker thread.
 /// @warning This function should not attempt to modify Box2D state or user application state.
 /// @ingroup world
-typedef float b2RestitutionCallback( float restitutionA, int userMaterialIdA, float restitutionB, int userMaterialIdB );
+typedef float b2RestitutionCallback( float restitutionA, uint64_t userMaterialIdA, float restitutionB, uint64_t userMaterialIdB );
 
 /// Result from b2World_RayCastClosest
 /// If there is initial overlap the fraction and normal will be zero while the point is an arbitrary point in the overlap region.
@@ -358,7 +358,7 @@ typedef struct b2SurfaceMaterial
 
 	/// User material identifier. This is passed with query results and to friction and restitution
 	/// combining functions. It is not used internally.
-	int userMaterialId;
+	uint64_t userMaterialId;
 
 	/// Custom debug draw color.
 	uint32_t customColor;
@@ -534,7 +534,6 @@ typedef enum b2JointType
 	b2_distanceJoint,
 	b2_filterJoint,
 	b2_motorJoint,
-	b2_mouseJoint,
 	b2_prismaticJoint,
 	b2_revoluteJoint,
 	b2_weldJoint,
@@ -674,9 +673,6 @@ typedef struct b2MotorJointDef
 	/// Maximum spring torque in newton-meters
 	float maxSpringTorque;
 
-	/// The desired relative transform. Body B relative to bodyA.
-	b2Transform relativeTransform;
-
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
 } b2MotorJointDef;
@@ -684,33 +680,6 @@ typedef struct b2MotorJointDef
 /// Use this to initialize your joint definition
 /// @ingroup motor_joint
 B2_API b2MotorJointDef b2DefaultMotorJointDef( void );
-
-/// A mouse joint is used to make a point on body B track a point on body A.
-/// You may move local frame A to change the target point.
-/// This a soft constraint and allows the constraint to stretch without
-/// applying huge forces. This also applies rotation constraint heuristic to improve control.
-/// @ingroup mouse_joint
-typedef struct b2MouseJointDef
-{
-	/// Base joint definition
-	b2JointDef base;
-
-	/// Stiffness in hertz
-	float hertz;
-
-	/// Damping ratio, non-dimensional
-	float dampingRatio;
-
-	/// Maximum force, typically in newtons
-	float maxForce;
-
-	/// Used internally to detect a valid definition. DO NOT SET.
-	int internalValue;
-} b2MouseJointDef;
-
-/// Use this to initialize your joint definition
-/// @ingroup mouse_joint
-B2_API b2MouseJointDef b2DefaultMouseJointDef( void );
 
 /// A filter joint is used to disable collision between two specific bodies.
 ///

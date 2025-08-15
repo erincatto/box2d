@@ -331,7 +331,7 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_kinematicBody;
-			bodyDef.position = p;
+			bodyDef.position = m_mousePoint;
 			bodyDef.enableSleep = false;
 			m_mouseBodyId = b2CreateBody( m_worldId, &bodyDef );
 
@@ -340,7 +340,7 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 			jointDef.base.bodyIdB = queryContext.bodyId;
 			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( queryContext.bodyId, p );
 			jointDef.linearHertz = 7.5f;
-			jointDef.linearDampingRatio = 0.7f;
+			jointDef.linearDampingRatio = 1.0f;
 
 			b2MassData massData = b2Body_GetMassData( queryContext.bodyId );
 			float g = b2Length( b2World_GetGravity( m_worldId ) );

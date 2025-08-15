@@ -125,6 +125,12 @@ void Camera::BuildProjectionMatrix( float* m, float zBias )
 
 b2AABB Camera::GetViewBounds()
 {
+	if (m_height == 0.0f || m_width == 0.0f)
+	{
+		b2AABB bounds = { .lowerBound = b2Vec2_zero, .upperBound = b2Vec2_zero };
+		return bounds;
+	}
+
 	b2AABB bounds;
 	bounds.lowerBound = ConvertScreenToWorld( { 0.0f, (float)m_height } );
 	bounds.upperBound = ConvertScreenToWorld( { (float)m_width, 0.0f } );

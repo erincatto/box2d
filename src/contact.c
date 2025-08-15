@@ -285,7 +285,7 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contact->islandNext = B2_NULL_INDEX;
 	contact->shapeIdA = shapeIdA;
 	contact->shapeIdB = shapeIdB;
-	contact->isMarked = false;
+	//contact->isMarked = false;
 	contact->flags = 0;
 
 	B2_ASSERT( shapeA->sensorIndex == B2_NULL_INDEX && shapeB->sensorIndex == B2_NULL_INDEX );
@@ -355,10 +355,10 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contactSim->manifold = (b2Manifold){ 0 };
 
 	// These also get updated in the narrow phase
-	contactSim->friction =
-		world->frictionCallback( shapeA->friction, shapeA->userMaterialId, shapeB->friction, shapeB->userMaterialId );
-	contactSim->restitution =
-		world->restitutionCallback( shapeA->restitution, shapeA->userMaterialId, shapeB->restitution, shapeB->userMaterialId );
+	contactSim->friction = world->frictionCallback( shapeA->material.friction, shapeA->material.userMaterialId,
+													shapeB->material.friction, shapeB->material.userMaterialId );
+	contactSim->restitution = world->restitutionCallback( shapeA->material.restitution, shapeA->material.userMaterialId,
+														  shapeB->material.restitution, shapeB->material.userMaterialId );
 
 	contactSim->tangentSpeed = 0.0f;
 	contactSim->simFlags = 0;
@@ -534,24 +534,25 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	contactSim->manifold = fcn( shapeA, transformA, shapeB, transformB, &contactSim->cache );
 
 	// Keep these updated in case the values on the shapes are modified
-	contactSim->friction =
-		world->frictionCallback( shapeA->friction, shapeA->userMaterialId, shapeB->friction, shapeB->userMaterialId );
-	contactSim->restitution =
-		world->restitutionCallback( shapeA->restitution, shapeA->userMaterialId, shapeB->restitution, shapeB->userMaterialId );
+	contactSim->friction = world->frictionCallback( shapeA->material.friction, shapeA->material.userMaterialId,
+													shapeB->material.friction, shapeB->material.userMaterialId );
+	contactSim->restitution = world->restitutionCallback( shapeA->material.restitution, shapeA->material.userMaterialId,
+														  shapeB->material.restitution, shapeB->material.userMaterialId );
 
-	if ( shapeA->rollingResistance > 0.0f || shapeB->rollingResistance > 0.0f )
+	if ( shapeA->material.rollingResistance > 0.0f || shapeB->material.rollingResistance > 0.0f )
 	{
 		float radiusA = b2GetShapeRadius( shapeA );
 		float radiusB = b2GetShapeRadius( shapeB );
 		float maxRadius = b2MaxFloat( radiusA, radiusB );
-		contactSim->rollingResistance = b2MaxFloat( shapeA->rollingResistance, shapeB->rollingResistance ) * maxRadius;
+		contactSim->rollingResistance =
+			b2MaxFloat( shapeA->material.rollingResistance, shapeB->material.rollingResistance ) * maxRadius;
 	}
 	else
 	{
 		contactSim->rollingResistance = 0.0f;
 	}
 
-	contactSim->tangentSpeed = shapeA->tangentSpeed + shapeB->tangentSpeed;
+	contactSim->tangentSpeed = shapeA->material.tangentSpeed + shapeB->material.tangentSpeed;
 
 	int pointCount = contactSim->manifold.pointCount;
 	bool touching = pointCount > 0;

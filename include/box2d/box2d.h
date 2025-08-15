@@ -537,28 +537,25 @@ B2_API void b2Shape_SetDensity( b2ShapeId shapeId, float density, bool updateBod
 B2_API float b2Shape_GetDensity( b2ShapeId shapeId );
 
 /// Set the friction on a shape
-/// @see b2ShapeDef::friction
 B2_API void b2Shape_SetFriction( b2ShapeId shapeId, float friction );
 
 /// Get the friction of a shape
 B2_API float b2Shape_GetFriction( b2ShapeId shapeId );
 
 /// Set the shape restitution (bounciness)
-/// @see b2ShapeDef::restitution
 B2_API void b2Shape_SetRestitution( b2ShapeId shapeId, float restitution );
 
 /// Get the shape restitution
 B2_API float b2Shape_GetRestitution( b2ShapeId shapeId );
 
-/// Set the shape material identifier
-/// @see b2ShapeDef::material
-B2_API void b2Shape_SetMaterial( b2ShapeId shapeId, int material );
+/// Set the user material identifier
+B2_API void b2Shape_SetUserMaterial( b2ShapeId shapeId, uint64_t material );
 
-/// Get the shape material identifier
-B2_API int b2Shape_GetMaterial( b2ShapeId shapeId );
+/// Get the user material identifier
+B2_API uint64_t b2Shape_GetUserMaterial( b2ShapeId shapeId );
 
 /// Set the shape surface material
-B2_API void b2Shape_SetSurfaceMaterial( b2ShapeId shapeId, b2SurfaceMaterial surfaceMaterial );
+B2_API void b2Shape_SetSurfaceMaterial( b2ShapeId shapeId, const b2SurfaceMaterial* surfaceMaterial );
 
 /// Get the shape surface material
 B2_API b2SurfaceMaterial b2Shape_GetSurfaceMaterial( b2ShapeId shapeId );
@@ -699,26 +696,15 @@ B2_API int b2Chain_GetSegmentCount( b2ChainId chainId );
 /// the actual number of segments returned.
 B2_API int b2Chain_GetSegments( b2ChainId chainId, b2ShapeId* segmentArray, int capacity );
 
-/// Set the chain friction
-/// @see b2ChainDef::friction
-B2_API void b2Chain_SetFriction( b2ChainId chainId, float friction );
+/// Get the number of materials used on this chain. Must be 1 or the number of segments.
+B2_API int b2Chain_GetSurfaceMaterialCount( b2ChainId chainId );
 
-/// Get the chain friction
-B2_API float b2Chain_GetFriction( b2ChainId chainId );
+/// Set a chain material. If the chain has only one material, this material is applied to all
+/// segments. Otherwise it is applied to a single segment.
+B2_API void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* material, int materialIndex );
 
-/// Set the chain restitution (bounciness)
-/// @see b2ChainDef::restitution
-B2_API void b2Chain_SetRestitution( b2ChainId chainId, float restitution );
-
-/// Get the chain restitution
-B2_API float b2Chain_GetRestitution( b2ChainId chainId );
-
-/// Set the chain material
-/// @see b2ChainDef::material
-B2_API void b2Chain_SetMaterial( b2ChainId chainId, int material );
-
-/// Get the chain material
-B2_API int b2Chain_GetMaterial( b2ChainId chainId );
+/// Get a chain material by index.
+B2_API b2SurfaceMaterial b2Chain_GetSurfaceMaterial( b2ChainId chainId, int materialIndex );
 
 /// Chain identifier validation. Provides validation for up to 64K allocations.
 B2_API bool b2Chain_IsValid( b2ChainId id );
@@ -840,9 +826,6 @@ B2_API void b2DistanceJoint_SetSpringForceRange( b2JointId jointId, float lowerF
 /// Get the force range for the spring.
 B2_API void b2DistanceJoint_GetSpringForceRange( b2JointId jointId, float* lowerForce, float* upperForce );
 
-/// The the spring resist compression?
-B2_API bool b2DistanceJoint_IsCompressionEnabled( b2JointId jointId );
-
 /// Set the spring stiffness in Hertz
 B2_API void b2DistanceJoint_SetSpringHertz( b2JointId jointId, float hertz );
 
@@ -901,8 +884,11 @@ B2_API float b2DistanceJoint_GetMotorForce( b2JointId jointId );
  * @defgroup motor_joint Motor Joint
  * @brief Functions for the motor joint.
  *
- * The motor joint is used to drive the relative transform between two bodies. The target
- * is set by updating the local frames using b2Joint_SetLocalFrameA or b2Joint_SetLocalFrameB.
+ * The motor joint is designed to control the movement of a body while still being
+ * responsive to collisions. A spring controls the position and rotation. A velocity motor
+ * can be used to control velocity and allows for friction in top-down games. Both types
+ * of control can be combined. For example, you can have a spring with friction.
+ * Position and velocity control have force and torque limits.
  * @{
  */
 
@@ -969,39 +955,6 @@ B2_API void b2MotorJoint_SetMaxSpringTorque( b2JointId jointId, float maxTorque 
 
 /// Get the maximum spring torque in newtons * meters
 B2_API float b2MotorJoint_GetMaxSpringTorque( b2JointId jointId );
-
-/**@}*/
-
-/**
- * @defgroup mouse_joint Mouse Joint
- * @brief Functions for the mouse joint.
- *
- * The mouse joint is designed for use in the samples application, but you may find it useful in applications where
- * the user moves a rigid body with a cursor.
- * @{
- */
-
-/// Create a mouse joint
-/// @see b2MouseJointDef for details
-B2_API b2JointId b2CreateMouseJoint( b2WorldId worldId, const b2MouseJointDef* def );
-
-/// Set the mouse joint spring stiffness in Hertz
-B2_API void b2MouseJoint_SetSpringHertz( b2JointId jointId, float hertz );
-
-/// Get the mouse joint spring stiffness in Hertz
-B2_API float b2MouseJoint_GetSpringHertz( b2JointId jointId );
-
-/// Set the mouse joint spring damping ratio, non-dimensional
-B2_API void b2MouseJoint_SetSpringDampingRatio( b2JointId jointId, float dampingRatio );
-
-/// Get the mouse joint damping ratio, non-dimensional
-B2_API float b2MouseJoint_GetSpringDampingRatio( b2JointId jointId );
-
-/// Set the mouse joint maximum force, usually in newtons
-B2_API void b2MouseJoint_SetMaxForce( b2JointId jointId, float maxForce );
-
-/// Get the mouse joint maximum force, usually in newtons
-B2_API float b2MouseJoint_GetMaxForce( b2JointId jointId );
 
 /**@}*/
 
