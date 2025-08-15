@@ -8,9 +8,9 @@
 #include "body.h"
 #include "core.h"
 #include "joint.h"
+#include "physics_world.h"
 #include "solver.h"
 #include "solver_set.h"
-#include "physics_world.h"
 
 // needed for dll export
 #include "box2d/box2d.h"
@@ -318,10 +318,17 @@ void b2WarmStartDistanceJoint( b2JointSim* base, b2StepContext* context )
 	float axialImpulse = joint->impulse + joint->lowerImpulse - joint->upperImpulse + joint->motorImpulse;
 	b2Vec2 P = b2MulSV( axialImpulse, axis );
 
-	stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, P );
-	stateA->angularVelocity -= iA * b2Cross( rA, P );
-	stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, P );
-	stateB->angularVelocity += iB * b2Cross( rB, P );
+	if ( stateA->flags & b2_dynamicFlag )
+	{
+		stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, P );
+		stateA->angularVelocity -= iA * b2Cross( rA, P );
+	}
+
+	if ( stateB->flags & b2_dynamicFlag )
+	{
+		stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, P );
+		stateB->angularVelocity += iB * b2Cross( rB, P );
+	}
 }
 
 void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBias )
@@ -501,10 +508,17 @@ void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBia
 		wB += iB * b2Cross( rB, P );
 	}
 
-	stateA->linearVelocity = vA;
-	stateA->angularVelocity = wA;
-	stateB->linearVelocity = vB;
-	stateB->angularVelocity = wB;
+	if ( stateA->flags & b2_dynamicFlag )
+	{
+		stateA->linearVelocity = vA;
+		stateA->angularVelocity = wA;
+	}
+
+	if ( stateB->flags & b2_dynamicFlag )
+	{
+		stateB->linearVelocity = vB;
+		stateB->angularVelocity = wB;
+	}
 }
 
 #if 0

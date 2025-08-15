@@ -226,7 +226,7 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 	joint->drawScale = def->drawScale;
 	joint->type = type;
 	joint->collideConnected = def->collideConnected;
-	joint->isMarked = false;
+	//joint->isMarked = false;
 
 	// Doubly linked list on bodyA
 	joint->edges[0].bodyId = bodyIdA;
@@ -274,9 +274,9 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 		jointSim->bodyIdA = bodyIdA;
 		jointSim->bodyIdB = bodyIdB;
 	}
-	else if ( bodyA->setIndex == b2_staticSet && bodyB->setIndex == b2_staticSet )
+	else if ( bodyA->type != b2_dynamicBody && bodyB->type != b2_dynamicBody )
 	{
-		// joint is connecting static bodies
+		// joint is not attached to a dynamic body
 		b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, b2_staticSet );
 		joint->setIndex = b2_staticSet;
 		joint->localIndex = set->jointSims.count;

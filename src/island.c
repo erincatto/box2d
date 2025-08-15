@@ -7,8 +7,8 @@
 #include "contact.h"
 #include "core.h"
 #include "joint.h"
-#include "solver_set.h"
 #include "physics_world.h"
+#include "solver_set.h"
 
 #include <stddef.h>
 
@@ -56,7 +56,7 @@ b2Island* b2CreateIsland( b2World* world, int setIndex )
 
 void b2DestroyIsland( b2World* world, int islandId )
 {
-	if (world->splitIslandId == islandId)
+	if ( world->splitIslandId == islandId )
 	{
 		world->splitIslandId = B2_NULL_INDEX;
 	}
@@ -84,18 +84,18 @@ void b2DestroyIsland( b2World* world, int islandId )
 
 static int b2MergeIslands( b2World* world, int islandIdA, int islandIdB )
 {
-	if (islandIdA == islandIdB)
+	if ( islandIdA == islandIdB )
 	{
 		return islandIdA;
 	}
 
-	if (islandIdA == B2_NULL_INDEX)
+	if ( islandIdA == B2_NULL_INDEX )
 	{
 		B2_ASSERT( islandIdB != B2_NULL_INDEX );
 		return islandIdB;
 	}
 
-	if (islandIdB == B2_NULL_INDEX)
+	if ( islandIdB == B2_NULL_INDEX )
 	{
 		B2_ASSERT( islandIdA != B2_NULL_INDEX );
 		return islandIdA;
@@ -244,7 +244,7 @@ static void b2AddContactToIsland( b2World* world, int islandId, b2Contact* conta
 	if ( island->headContact != B2_NULL_INDEX )
 	{
 		contact->islandNext = island->headContact;
-		b2Contact* headContact = b2ContactArray_Get( &world->contacts, island->headContact);
+		b2Contact* headContact = b2ContactArray_Get( &world->contacts, island->headContact );
 		headContact->islandPrev = contact->contactId;
 	}
 
@@ -312,7 +312,7 @@ void b2UnlinkContact( b2World* world, b2Contact* contact )
 
 	if ( contact->islandPrev != B2_NULL_INDEX )
 	{
-		b2Contact* prevContact = b2ContactArray_Get( &world->contacts, contact->islandPrev);
+		b2Contact* prevContact = b2ContactArray_Get( &world->contacts, contact->islandPrev );
 		B2_ASSERT( prevContact->islandNext == contact->contactId );
 		prevContact->islandNext = contact->islandNext;
 	}
@@ -377,6 +377,8 @@ void b2LinkJoint( b2World* world, b2Joint* joint )
 	b2Body* bodyA = b2BodyArray_Get( &world->bodies, joint->edges[0].bodyId );
 	b2Body* bodyB = b2BodyArray_Get( &world->bodies, joint->edges[1].bodyId );
 
+	B2_ASSERT( bodyA->type == b2_dynamicBody || bodyB->type == b2_dynamicBody );
+
 	if ( bodyA->setIndex == b2_awakeSet && bodyB->setIndex >= b2_firstSleepingSet )
 	{
 		b2WakeSolverSet( world, bodyB->setIndex );
@@ -400,7 +402,7 @@ void b2LinkJoint( b2World* world, b2Joint* joint )
 
 void b2UnlinkJoint( b2World* world, b2Joint* joint )
 {
-	if (joint->islandId == B2_NULL_INDEX)
+	if ( joint->islandId == B2_NULL_INDEX )
 	{
 		return;
 	}
@@ -487,34 +489,9 @@ void b2SplitIsland( b2World* world, int baseId )
 		bodyIds[index++] = nextBody;
 		b2Body* body = bodies + nextBody;
 
-		// Clear visitation mark
-		body->isMarked = false;
-
 		nextBody = body->islandNext;
 	}
 	B2_ASSERT( index == bodyCount );
-
-	// Clear contact island flags. Only need to consider contacts
-	// already in the base island.
-	int nextContactId = baseIsland->headContact;
-	while ( nextContactId != B2_NULL_INDEX )
-	{
-		b2Contact* contact = b2ContactArray_Get( &world->contacts, nextContactId );
-		contact->isMarked = false;
-		nextContactId = contact->islandNext;
-	}
-
-	// Clear joint island flags.
-	int nextJoint = baseIsland->headJoint;
-	while ( nextJoint != B2_NULL_INDEX )
-	{
-		b2Joint* joint = b2JointArray_Get( &world->joints, nextJoint );
-		joint->isMarked = false;
-		nextJoint = joint->islandNext;
-	}
-
-	// Done with the base split island.
-	b2DestroyIsland( world, baseId );
 
 	// Each island is found as a depth first search starting from a seed body
 	for ( int i = 0; i < bodyCount; ++i )
@@ -523,7 +500,7 @@ void b2SplitIsland( b2World* world, int baseId )
 		b2Body* seed = bodies + seedIndex;
 		B2_ASSERT( seed->setIndex == setIndex );
 
-		if ( seed->isMarked == true )
+		if ( seed->islandId != baseId )
 		{
 			// The body has already been visited
 			continue;
@@ -531,7 +508,6 @@ void b2SplitIsland( b2World* world, int baseId )
 
 		int stackCount = 0;
 		stack[stackCount++] = seedIndex;
-		seed->isMarked = true;
 
 		// Create new island
 		// No lock needed because only a single island can split per time step. No islands are being used during the constraint
@@ -539,6 +515,7 @@ void b2SplitIsland( b2World* world, int baseId )
 		b2Island* island = b2CreateIsland( world, setIndex );
 
 		int islandId = island->islandId;
+		seed->islandId = islandId;
 
 		// Perform a depth first search (DFS) on the constraint graph.
 		while ( stackCount > 0 )
@@ -547,10 +524,9 @@ void b2SplitIsland( b2World* world, int baseId )
 			int bodyId = stack[--stackCount];
 			b2Body* body = bodies + bodyId;
 			B2_ASSERT( body->setIndex == b2_awakeSet );
-			B2_ASSERT( body->isMarked == true );
+			B2_ASSERT( body->islandId == islandId );
 
 			// Add body to island
-			body->islandId = islandId;
 			if ( island->tailBody != B2_NULL_INDEX )
 			{
 				bodies[island->tailBody].islandNext = bodyId;
@@ -580,7 +556,7 @@ void b2SplitIsland( b2World* world, int baseId )
 				contactKey = contact->edges[edgeIndex].nextKey;
 
 				// Has this contact already been added to this island?
-				if ( contact->isMarked )
+				if ( contact->islandId == islandId )
 				{
 					continue;
 				}
@@ -591,18 +567,18 @@ void b2SplitIsland( b2World* world, int baseId )
 					continue;
 				}
 
-				contact->isMarked = true;
-
 				int otherEdgeIndex = edgeIndex ^ 1;
 				int otherBodyId = contact->edges[otherEdgeIndex].bodyId;
 				b2Body* otherBody = bodies + otherBodyId;
 
 				// Maybe add other body to stack
-				if ( otherBody->isMarked == false && otherBody->setIndex != b2_staticSet )
+				if ( otherBody->islandId != islandId && otherBody->setIndex != b2_staticSet )
 				{
 					B2_ASSERT( stackCount < bodyCount );
 					stack[stackCount++] = otherBodyId;
-					otherBody->isMarked = true;
+
+					// Need to update the body's island id immediately so it is not traversed again
+					otherBody->islandId = islandId;
 				}
 
 				// Add contact to island
@@ -638,12 +614,15 @@ void b2SplitIsland( b2World* world, int baseId )
 				jointKey = joint->edges[edgeIndex].nextKey;
 
 				// Has this joint already been added to this island?
-				if ( joint->isMarked )
+				if ( joint->islandId == islandId )
 				{
 					continue;
 				}
 
-				joint->isMarked = true;
+				if ( joint->setIndex == b2_disabledSet )
+				{
+					continue;
+				}
 
 				int otherEdgeIndex = edgeIndex ^ 1;
 				int otherBodyId = joint->edges[otherEdgeIndex].bodyId;
@@ -655,12 +634,20 @@ void b2SplitIsland( b2World* world, int baseId )
 					continue;
 				}
 
+				// At least one body must be dynamic
+				if ( body->type != b2_dynamicBody && otherBody->type != b2_dynamicBody )
+				{
+					continue;
+				}
+
 				// Maybe add other body to stack
-				if ( otherBody->isMarked == false && otherBody->setIndex == b2_awakeSet )
+				if ( otherBody->islandId != islandId && otherBody->setIndex == b2_awakeSet )
 				{
 					B2_ASSERT( stackCount < bodyCount );
 					stack[stackCount++] = otherBodyId;
-					otherBody->isMarked = true;
+
+					// Need to update the body's island id immediately so it is not traversed again
+					otherBody->islandId = islandId;
 				}
 
 				// Add joint to island
@@ -685,6 +672,10 @@ void b2SplitIsland( b2World* world, int baseId )
 
 		b2ValidateIsland( world, islandId );
 	}
+
+	// Done with the base split island. This is delayed because the baseId is used as a marker and it
+	// should not be recycled in while splitting.
+	b2DestroyIsland( world, baseId );
 
 	b2FreeArenaItem( alloc, bodyIds );
 	b2FreeArenaItem( alloc, stack );
@@ -717,11 +708,11 @@ void b2SplitIslandTask( int startIndex, int endIndex, uint32_t threadIndex, void
 #if B2_VALIDATE
 void b2ValidateIsland( b2World* world, int islandId )
 {
-	if (islandId == B2_NULL_INDEX)
+	if ( islandId == B2_NULL_INDEX )
 	{
 		return;
 	}
-	
+
 	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
 	B2_ASSERT( island->islandId == islandId );
 	B2_ASSERT( island->setIndex != B2_NULL_INDEX );
@@ -740,7 +731,7 @@ void b2ValidateIsland( b2World* world, int islandId )
 		int bodyId = island->headBody;
 		while ( bodyId != B2_NULL_INDEX )
 		{
-			b2Body* body = b2BodyArray_Get(&world->bodies, bodyId);
+			b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
 			B2_ASSERT( body->islandId == islandId );
 			B2_ASSERT( body->setIndex == island->setIndex );
 			count += 1;

@@ -251,10 +251,17 @@ void b2WarmStartMotorJoint( b2JointSim* base, b2StepContext* context )
 	b2Vec2 linearImpulse = b2Add( joint->linearVelocityImpulse, joint->linearSpringImpulse );
 	float angularImpulse = joint->angularVelocityImpulse + joint->angularSpringImpulse;
 
-	stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, linearImpulse );
-	stateA->angularVelocity -= iA * ( b2Cross( rA, linearImpulse ) + angularImpulse );
-	stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, linearImpulse );
-	stateB->angularVelocity += iB * ( b2Cross( rB, linearImpulse ) + angularImpulse );
+	if ( stateA->flags & b2_dynamicFlag )
+	{
+		stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, linearImpulse );
+		stateA->angularVelocity -= iA * ( b2Cross( rA, linearImpulse ) + angularImpulse );
+	}
+
+	if ( stateB->flags & b2_dynamicFlag )
+	{
+		stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, linearImpulse );
+		stateB->angularVelocity += iB * ( b2Cross( rB, linearImpulse ) + angularImpulse );
+	}
 }
 
 void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context )
@@ -395,10 +402,17 @@ void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context )
 		wB += iB * b2Cross( rB, impulse );
 	}
 
-	stateA->linearVelocity = vA;
-	stateA->angularVelocity = wA;
-	stateB->linearVelocity = vB;
-	stateB->angularVelocity = wB;
+	if ( stateA->flags & b2_dynamicFlag )
+	{
+		stateA->linearVelocity = vA;
+		stateA->angularVelocity = wA;
+	}
+
+	if ( stateB->flags & b2_dynamicFlag )
+	{
+		stateB->linearVelocity = vB;
+		stateB->angularVelocity = wB;
+	}
 }
 
 #if 0

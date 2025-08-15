@@ -55,7 +55,6 @@ typedef struct b2Joint
 	// Used to check for invalid b2JointId
 	uint16_t generation;
 
-	bool isMarked;
 	bool collideConnected;
 
 } b2Joint;

@@ -285,7 +285,7 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contact->islandNext = B2_NULL_INDEX;
 	contact->shapeIdA = shapeIdA;
 	contact->shapeIdB = shapeIdB;
-	contact->isMarked = false;
+	//contact->isMarked = false;
 	contact->flags = 0;
 
 	B2_ASSERT( shapeA->sensorIndex == B2_NULL_INDEX && shapeB->sensorIndex == B2_NULL_INDEX );

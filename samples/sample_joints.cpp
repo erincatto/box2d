@@ -698,7 +698,7 @@ public:
 			jointDef.motorSpeed = 0.0f;
 			jointDef.maxMotorTorque = m_motorTorque;
 
-			//m_jointId2 = b2CreateRevoluteJoint( m_worldId, &jointDef );
+			m_jointId2 = b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 	}
 
@@ -778,8 +778,8 @@ public:
 		float torque1 = b2RevoluteJoint_GetMotorTorque( m_jointId1 );
 		DrawTextLine( "Motor Torque 1 = %4.1f", torque1 );
 
-		// float torque2 = b2RevoluteJoint_GetMotorTorque( m_jointId2 );
-		// DrawTextLine( "Motor Torque 2 = %4.1f", torque2 );
+		float torque2 = b2RevoluteJoint_GetMotorTorque( m_jointId2 );
+		DrawTextLine( "Motor Torque 2 = %4.1f", torque2 );
 	}
 
 	static Sample* Create( SampleContext* context )

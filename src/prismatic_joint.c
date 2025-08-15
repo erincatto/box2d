@@ -389,10 +389,17 @@ void b2WarmStartPrismaticJoint( b2JointSim* base, b2StepContext* context )
 	float LA = axialImpulse * a1 + perpImpulse * s1 + angleImpulse;
 	float LB = axialImpulse * a2 + perpImpulse * s2 + angleImpulse;
 
-	stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, P );
-	stateA->angularVelocity -= iA * LA;
-	stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, P );
-	stateB->angularVelocity += iB * LB;
+	if ( stateA->flags & b2_dynamicFlag )
+	{
+		stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, P );
+		stateA->angularVelocity -= iA * LA;
+	}
+
+	if ( stateB->flags & b2_dynamicFlag )
+	{
+		stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, P );
+		stateB->angularVelocity += iB * LB;
+	}
 }
 
 void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBias )
@@ -611,10 +618,17 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 		wB += iB * LB;
 	}
 
-	stateA->linearVelocity = vA;
-	stateA->angularVelocity = wA;
-	stateB->linearVelocity = vB;
-	stateB->angularVelocity = wB;
+	if ( stateA->flags & b2_dynamicFlag )
+	{
+		stateA->linearVelocity = vA;
+		stateA->angularVelocity = wA;
+	}
+
+	if ( stateB->flags & b2_dynamicFlag )
+	{
+		stateB->linearVelocity = vB;
+		stateB->angularVelocity = wB;
+	}
 }
 
 #if 0
@@ -667,7 +681,7 @@ void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform tran
 		draw->DrawSegmentFcn( b2MulSub( frameA.p, 1.0f, axisA ), b2MulAdd( frameA.p, 1.0f, axisA ), b2_colorGray, draw->context );
 	}
 
-	if ( joint->enableSpring)
+	if ( joint->enableSpring )
 	{
 		b2Vec2 p = b2MulAdd( frameA.p, joint->targetTranslation, axisA );
 		draw->DrawPointFcn( p, 8.0f, b2_colorViolet, draw->context );

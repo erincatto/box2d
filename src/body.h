@@ -39,6 +39,12 @@ enum b2BodyFlags
 	// This body need's to have its AABB increased
 	b2_enlargeBounds = 0x00000100,
 
+	// This body is dynamic so the solver should write to it.
+	// This prevents writing to kinematic bodies that causes a multithreaded sharing
+	// cache coherence problem even when the values are not changing.
+	// Used for b2BodyState flags.
+	b2_dynamicFlag = 0x00000200,
+
 	// All lock flags
 	b2_allLocks = b2_lockAngularZ | b2_lockLinearX | b2_lockLinearY,
 };
@@ -103,7 +109,6 @@ typedef struct b2Body
 
 	// todo move into flags
 	bool enableSleep;
-	bool isMarked;
 } b2Body;
 
 // Body State
@@ -139,6 +144,7 @@ typedef struct b2BodyState
 	float angularVelocity; // 4
 
 	// b2BodyFlags
+	// Important flags: locking, dynamic
 	uint32_t flags; // 4
 
 	// Using delta position reduces round-off error far from the origin

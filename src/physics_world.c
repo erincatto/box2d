@@ -1101,7 +1101,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 						{
 							b2ManifoldPoint* point = contactSim->manifold.points + j;
 
-							if ( draw->drawGraphColors && contact->colorIndex != B2_NULL_INDEX)
+							if ( draw->drawGraphColors && contact->colorIndex != B2_NULL_INDEX )
 							{
 								// graph color
 								float pointSize = contact->colorIndex == B2_OVERFLOW_INDEX ? 7.5f : 5.0f;
@@ -2606,10 +2606,15 @@ void b2ValidateConnectivity( b2World* world )
 			}
 			else if ( bodySetIndex == b2_staticSet )
 			{
+				// Intentional nesting
 				if ( otherBody->setIndex == b2_staticSet )
 				{
 					B2_ASSERT( joint->islandId == B2_NULL_INDEX );
 				}
+			}
+			else if ( body->type != b2_dynamicBody && otherBody->type != b2_dynamicBody )
+			{
+				B2_ASSERT( joint->islandId == B2_NULL_INDEX );
 			}
 			else
 			{
@@ -2749,6 +2754,10 @@ void b2ValidateSolverSets( b2World* world )
 						{
 							B2_ASSERT( joint->setIndex == b2_staticSet );
 						}
+						else if ( body->type != b2_dynamicBody && otherBody->type != b2_dynamicBody )
+						{
+							B2_ASSERT( joint->setIndex == b2_staticSet );
+						}
 						else if ( setIndex == b2_awakeSet )
 						{
 							B2_ASSERT( joint->setIndex == b2_awakeSet );
@@ -2861,11 +2870,11 @@ void b2ValidateSolverSets( b2World* world )
 			{
 				b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
 				b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
-				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type != b2_staticBody ) );
-				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type != b2_staticBody ) );
+				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type == b2_dynamicBody ) );
+				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type == b2_dynamicBody ) );
 
-				bitCount += bodyA->type == b2_staticBody ? 0 : 1;
-				bitCount += bodyB->type == b2_staticBody ? 0 : 1;
+				bitCount += bodyA->type == b2_dynamicBody ? 1 : 0;
+				bitCount += bodyB->type == b2_dynamicBody ? 1 : 0;
 			}
 		}
 
@@ -2886,11 +2895,11 @@ void b2ValidateSolverSets( b2World* world )
 			{
 				b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
 				b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
-				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type != b2_staticBody ) );
-				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type != b2_staticBody ) );
+				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type == b2_dynamicBody ) );
+				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type == b2_dynamicBody ) );
 
-				bitCount += bodyA->type == b2_staticBody ? 0 : 1;
-				bitCount += bodyB->type == b2_staticBody ? 0 : 1;
+				bitCount += bodyA->type == b2_dynamicBody ? 1 : 0;
+				bitCount += bodyB->type == b2_dynamicBody ? 1 : 0;
 			}
 		}
 
