@@ -3390,6 +3390,8 @@ public:
 			jointDef.base.bodyIdB = m_doorId;
 			jointDef.base.localFrameA.p = { 0.0f, 0.0f };
 			jointDef.base.localFrameB.p = { 0.0f, -1.5f };
+			jointDef.base.constraintHertz = m_jointHertz;
+			jointDef.base.constraintDampingRatio = m_jointDampingRatio;
 			jointDef.targetAngle = 0.0f;
 			jointDef.enableSpring = true;
 			jointDef.hertz = 1.0f;
@@ -3402,7 +3404,6 @@ public:
 			jointDef.enableLimit = m_enableLimit;
 
 			m_jointId = b2CreateRevoluteJoint( m_worldId, &jointDef );
-			b2Joint_SetConstraintTuning( m_jointId, m_jointHertz, m_jointDampingRatio );
 		}
 	}
 

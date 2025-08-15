@@ -46,6 +46,8 @@ FallingHingeData CreateFallingHinges( b2WorldId worldId )
 	jointDef.dampingRatio = 0.5f;
 	jointDef.base.localFrameA.p = (b2Vec2){ h, h };
 	jointDef.base.localFrameB.p = (b2Vec2){ offset, -h };
+	jointDef.base.constraintHertz = 60.0f;
+	jointDef.base.constraintDampingRatio = 0.0f;
 	jointDef.base.drawScale = 0.5f;
 
 	int bodyIndex = 0;

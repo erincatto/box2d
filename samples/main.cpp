@@ -555,7 +555,7 @@ int main( int, char** )
 	char buffer[128];
 
 	s_context.Load();
-	s_context.workerCount = b2MinInt( 6, (int)enki::GetNumHardwareThreads() / 2 );
+	s_context.workerCount = b2MinInt( 8, (int)enki::GetNumHardwareThreads() / 2 );
 
 	SortSamples();
 
