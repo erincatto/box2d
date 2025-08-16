@@ -161,6 +161,7 @@ void write_source_header( FILE* f )
 				"#include \"sensor.h\"\n"
 				"#include \"shape.h\"\n"
 				"#include \"solver_set.h\"\n"
+				"#include <stddef.h>\n"
 				"\n" );
 }
 

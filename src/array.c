@@ -13,6 +13,7 @@
 #include "sensor.h"
 #include "shape.h"
 #include "solver_set.h"
+#include <stddef.h>
 
 // =============================================================================
 // b2Int
