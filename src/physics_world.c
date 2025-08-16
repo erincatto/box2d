@@ -24,6 +24,15 @@
 #include "solver.h"
 #include "solver_set.h"
 
+#include "array_body.inl"
+#include "array_contact.inl"
+#include "array_joint.inl"
+#include "array_island.inl"
+#include "array_sensor.inl"
+#include "array_shape.inl"
+#include "array_solver.inl"
+#include "array_world.inl"
+
 #include "box2d/box2d.h"
 
 #include <float.h>
@@ -33,14 +42,6 @@
 _Static_assert( B2_MAX_WORLDS > 0, "must be 1 or more" );
 _Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B2_MAX_WORLDS limit exceeded" );
 b2World b2_worlds[B2_MAX_WORLDS];
-
-B2_ARRAY_SOURCE( b2BodyMoveEvent, b2BodyMoveEvent )
-B2_ARRAY_SOURCE( b2ContactBeginTouchEvent, b2ContactBeginTouchEvent )
-B2_ARRAY_SOURCE( b2ContactEndTouchEvent, b2ContactEndTouchEvent )
-B2_ARRAY_SOURCE( b2ContactHitEvent, b2ContactHitEvent )
-B2_ARRAY_SOURCE( b2SensorBeginTouchEvent, b2SensorBeginTouchEvent )
-B2_ARRAY_SOURCE( b2SensorEndTouchEvent, b2SensorEndTouchEvent )
-B2_ARRAY_SOURCE( b2TaskContext, b2TaskContext )
 
 b2World* b2GetWorldFromId( b2WorldId id )
 {
@@ -2687,6 +2688,11 @@ void b2ValidateSolverSets( b2World* world )
 					B2_ASSERT( body->setIndex == setIndex );
 					B2_ASSERT( body->localIndex == i );
 					B2_ASSERT( body->generation == body->generation );
+
+					if (body->type == b2_dynamicBody)
+					{
+						B2_ASSERT( body->flags & b2_dynamicFlag );
+					}
 
 					if ( setIndex == b2_disabledSet )
 					{

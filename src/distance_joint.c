@@ -12,6 +12,9 @@
 #include "solver.h"
 #include "solver_set.h"
 
+#include "array_body.inl"
+#include "array_solver.inl"
+
 // needed for dll export
 #include "box2d/box2d.h"
 

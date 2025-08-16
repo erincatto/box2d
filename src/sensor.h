@@ -40,7 +40,7 @@ void b2OverlapSensors( b2World* world );
 
 void b2DestroySensor( b2World* world, b2Shape* sensorShape );
 
-B2_ARRAY_INLINE( b2Sensor, b2Sensor )
-B2_ARRAY_INLINE( b2SensorHit, b2SensorHit )
-B2_ARRAY_INLINE( b2SensorTaskContext, b2SensorTaskContext )
-B2_ARRAY_INLINE( b2Visitor, b2Visitor )
+//B2_ARRAY_INLINE( b2Sensor, b2Sensor )
+//B2_ARRAY_INLINE( b2SensorHit, b2SensorHit )
+//B2_ARRAY_INLINE( b2SensorTaskContext, b2SensorTaskContext )
+//B2_ARRAY_INLINE( b2Visitor, b2Visitor )

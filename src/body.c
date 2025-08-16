@@ -15,15 +15,22 @@
 #include "shape.h"
 #include "solver_set.h"
 
+#include "array_body.inl"
+#include "array_contact.inl"
+#include "array_joint.inl"
+#include "array_island.inl"
+#include "array_shape.inl"
+#include "array_solver.inl"
+
 #include "box2d/box2d.h"
 #include "box2d/id.h"
 
 #include <string.h>
 
 // Implement functions for b2BodyArray
-B2_ARRAY_SOURCE( b2Body, b2Body )
-B2_ARRAY_SOURCE( b2BodySim, b2BodySim )
-B2_ARRAY_SOURCE( b2BodyState, b2BodyState )
+// B2_ARRAY_SOURCE( b2Body, b2Body )
+// B2_ARRAY_SOURCE( b2BodySim, b2BodySim )
+// B2_ARRAY_SOURCE( b2BodyState, b2BodyState )
 
 static void b2LimitVelocity( b2BodyState* state, float maxLinearSpeed )
 {
@@ -322,7 +329,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	body->type = def->type;
 	body->flags = bodySim->flags;
 	body->enableSleep = def->enableSleep;
-	//body->isMarked = false;
+	// body->isMarked = false;
 
 	// dynamic and kinematic bodies that are enabled need a island
 	if ( setId >= b2_awakeSet )
@@ -1127,20 +1134,20 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 		return;
 	}
 
-	if ( type == b2_dynamicBody )
-	{
-		body->flags |= b2_dynamicFlag;
-	}
-	else
-	{
-		body->flags &= ~b2_dynamicFlag;
-	}
-
 	// Stage 1: skip disabled bodies
 	if ( body->setIndex == b2_disabledSet )
 	{
 		// Disabled bodies don't change solver sets or islands when they change type.
 		body->type = type;
+
+		if ( type == b2_dynamicBody )
+		{
+			body->flags |= b2_dynamicFlag;
+		}
+		else
+		{
+			body->flags &= ~b2_dynamicFlag;
+		}
 
 		// Body type affects the mass properties
 		b2UpdateBodyMassData( world, body );
@@ -1192,6 +1199,15 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 
 	// Stage 5: change the body type and transfer body
 	body->type = type;
+
+	if ( type == b2_dynamicBody )
+	{
+		body->flags |= b2_dynamicFlag;
+	}
+	else
+	{
+		body->flags &= ~b2_dynamicFlag;
+	}
 
 	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
 	b2SolverSet* sourceSet = b2SolverSetArray_Get( &world->solverSets, body->setIndex );

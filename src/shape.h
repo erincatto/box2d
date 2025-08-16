@@ -130,5 +130,5 @@ static inline bool b2ShouldQueryCollide( b2Filter shapeFilter, b2QueryFilter que
 	return ( shapeFilter.categoryBits & queryFilter.maskBits ) != 0 && ( shapeFilter.maskBits & queryFilter.categoryBits ) != 0;
 }
 
-B2_ARRAY_INLINE( b2ChainShape, b2ChainShape )
-B2_ARRAY_INLINE( b2Shape, b2Shape )
+//B2_ARRAY_INLINE( b2ChainShape, b2ChainShape )
+//B2_ARRAY_INLINE( b2Shape, b2Shape )

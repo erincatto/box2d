@@ -19,6 +19,15 @@
 #include "shape.h"
 #include "solver_set.h"
 
+#include "array_body.inl"
+#include "array_contact.inl"
+#include "array_joint.inl"
+#include "array_island.inl"
+#include "array_sensor.inl"
+#include "array_shape.inl"
+#include "array_solver.inl"
+#include "array_world.inl"
+
 #include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -359,9 +368,8 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 			float separation2 = b2Cross( b2Sub( c2, p1 ), e );
 
 			float coreDistance = B2_CORE_FRACTION * fastBodySim->minExtent;
-			
-			if ( separation1 < 0.0f ||
-				 (separation1 - separation2 < coreDistance && separation2 > coreDistance) )
+
+			if ( separation1 < 0.0f || ( separation1 - separation2 < coreDistance && separation2 > coreDistance ) )
 			{
 				// Minimal clipping
 				return true;
@@ -717,7 +725,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		sim->torque = 0.0f;
 
 		body->flags &= ~( b2_isFast | b2_isSpeedCapped | b2_hadTimeOfImpact );
-		body->flags |= (sim->flags & (b2_isSpeedCapped | b2_hadTimeOfImpact));
+		body->flags |= ( sim->flags & ( b2_isSpeedCapped | b2_hadTimeOfImpact ) );
 		sim->flags &= ~( b2_isFast | b2_isSpeedCapped | b2_hadTimeOfImpact );
 
 		if ( enableSleep == false || body->enableSleep == false || sleepVelocity > body->sleepThreshold )

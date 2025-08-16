@@ -23,11 +23,13 @@ IncludeBlocks: Regroup
 
 IncludeCategories:
   - Regex:           '^"(box2d\/)'
-    Priority:        2
-  - Regex:           '^<.*'
     Priority:        3
-  - Regex:           '^".*'
+  - Regex:           '^<.*'
+    Priority:        4
+  - Regex:           '^"[^.]*\.h"'
     Priority:        1
+  - Regex:           '^"[^.]*\.inl"'
+    Priority:        2
 
 IndentExternBlock: NoIndent
 IndentCaseLabels: true
