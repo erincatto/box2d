@@ -10,10 +10,13 @@
 #include "physics_world.h"
 #include "solver_set.h"
 
-#include <stddef.h>
+#include "array_body.inl"
+#include "array_contact.inl"
+#include "array_joint.inl"
+#include "array_island.inl"
+#include "array_solver.inl"
 
-B2_ARRAY_SOURCE( b2Island, b2Island )
-B2_ARRAY_SOURCE( b2IslandSim, b2IslandSim )
+#include <stddef.h>
 
 b2Island* b2CreateIsland( b2World* world, int setIndex )
 {
@@ -449,7 +452,6 @@ void b2UnlinkJoint( b2World* world, b2Joint* joint )
 #define B2_CONTACT_REMOVE_THRESHOLD 1
 
 // Possible optimizations:
-// 1. use the body island id as the mark
 // 2. start from the sleepy bodies and stop processing if a sleep body is connected to a non-sleepy body
 // 3. use a sleepy flag on bodies to avoid velocity access
 void b2SplitIsland( b2World* world, int baseId )
@@ -619,6 +621,7 @@ void b2SplitIsland( b2World* world, int baseId )
 					continue;
 				}
 
+				// todo redundant with test below?
 				if ( joint->setIndex == b2_disabledSet )
 				{
 					continue;

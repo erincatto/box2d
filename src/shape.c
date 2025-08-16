@@ -9,13 +9,16 @@
 #include "physics_world.h"
 #include "sensor.h"
 
+#include "array_body.inl"
+#include "array_contact.inl"
+#include "array_sensor.inl"
+#include "array_shape.inl"
+#include "array_world.inl"
+
 // needed for dll export
 #include "box2d/box2d.h"
 
 #include <stddef.h>
-
-B2_ARRAY_SOURCE( b2ChainShape, b2ChainShape )
-B2_ARRAY_SOURCE( b2Shape, b2Shape )
 
 static b2Shape* b2GetShape( b2World* world, b2ShapeId shapeId )
 {
@@ -1500,7 +1503,7 @@ void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* mat
 	B2_ASSERT( chainShape->materialCount == 1 || chainShape->materialCount == chainShape->count );
 	int count = chainShape->count;
 
-	if (chainShape->materialCount == 1)
+	if ( chainShape->materialCount == 1 )
 	{
 		for ( int i = 0; i < count; ++i )
 		{

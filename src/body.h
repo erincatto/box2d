@@ -226,6 +226,6 @@ static inline b2Sweep b2MakeSweep( const b2BodySim* bodySim )
 }
 
 // Define inline functions for arrays
-B2_ARRAY_INLINE( b2Body, b2Body )
-B2_ARRAY_INLINE( b2BodySim, b2BodySim )
-B2_ARRAY_INLINE( b2BodyState, b2BodyState )
+//B2_ARRAY_INLINE( b2Body, b2Body )
+//B2_ARRAY_INLINE( b2BodySim, b2BodySim )
+//B2_ARRAY_INLINE( b2BodyState, b2BodyState )

@@ -10,6 +10,8 @@
 #include "physics_world.h"
 #include "solver_set.h"
 
+#include "array_solver.inl"
+
 #include <stddef.h>
 
 // contact separation for sub-stepping
@@ -1453,8 +1455,6 @@ static b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT states, int* 
 // This writes only the velocities back to the solver bodies
 static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT indices, const b2BodyStateW* B2_RESTRICT simdBody )
 {
-	// todo somehow skip writing to kinematic bodies
-
 	if ( indices[0] != B2_NULL_INDEX && ( states[indices[0]].flags & b2_dynamicFlag ) != 0 )
 	{
 		b2BodyState* state = states + indices[0];

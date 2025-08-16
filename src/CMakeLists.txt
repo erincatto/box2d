@@ -7,6 +7,15 @@ set(BOX2D_SOURCE_FILES
 	arena_allocator.h
 	array.c
 	array.h
+	array_arena.inl	
+	array_body.inl
+	array_contact.inl	
+	array_island.inl	
+	array_joint.inl
+	array_sensor.inl	
+	array_shape.inl
+	array_solver.inl
+	array_world.inl	
 	atomic.h
 	bitset.c
 	bitset.h

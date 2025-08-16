@@ -132,6 +132,8 @@ if(PROJECT_IS_TOP_LEVEL)
 	if(BOX2D_DOCS)
 		add_subdirectory(docs)
 	endif()
+
+	add_subdirectory(code_gen)
 endif()
 
 # # Building on clang in windows

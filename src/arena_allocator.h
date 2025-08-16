@@ -5,8 +5,6 @@
 
 #include "array.h"
 
-B2_ARRAY_DECLARE( b2ArenaEntry, b2ArenaEntry );
-
 typedef struct b2ArenaEntry
 {
 	char* data;
@@ -44,5 +42,3 @@ void b2GrowArena( b2ArenaAllocator* alloc );
 int b2GetArenaCapacity( b2ArenaAllocator* alloc );
 int b2GetArenaAllocation( b2ArenaAllocator* alloc );
 int b2GetMaxArenaAllocation( b2ArenaAllocator* alloc );
-
-B2_ARRAY_INLINE( b2ArenaEntry, b2ArenaEntry )

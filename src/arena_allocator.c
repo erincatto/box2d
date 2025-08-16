@@ -3,13 +3,12 @@
 
 #include "arena_allocator.h"
 
-#include "array.h"
 #include "core.h"
+
+#include "array_arena.inl"
 
 #include <stdbool.h>
 #include <stddef.h>
-
-B2_ARRAY_SOURCE( b2ArenaEntry, b2ArenaEntry )
 
 b2ArenaAllocator b2CreateArenaAllocator( int capacity )
 {

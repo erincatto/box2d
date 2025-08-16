@@ -10,15 +10,15 @@
 #include "physics_world.h"
 #include "shape.h"
 
+#include "array_body.inl"
+#include "array_sensor.inl"
+#include "array_shape.inl"
+#include "array_world.inl"
+
 #include "box2d/collision.h"
 
 #include <stddef.h>
 #include <stdlib.h>
-
-B2_ARRAY_SOURCE( b2Visitor, b2Visitor )
-B2_ARRAY_SOURCE( b2Sensor, b2Sensor )
-B2_ARRAY_SOURCE( b2SensorTaskContext, b2SensorTaskContext )
-B2_ARRAY_SOURCE( b2SensorHit, b2SensorHit )
 
 struct b2SensorQueryContext
 {
