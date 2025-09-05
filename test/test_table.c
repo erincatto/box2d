@@ -34,11 +34,12 @@ int TableTest( void )
 			for ( int32_t j = i + 1; j < N; ++j )
 			{
 				uint64_t key = B2_SHAPE_PAIR_KEY( i, j );
-				b2AddKey( &set, key );
+				bool found = b2AddKey( &set, key );
+				ENSURE( found == false );
 			}
 		}
 
-		ENSURE( set.count == itemCount );
+		ENSURE( b2GetSetCount( &set ) == itemCount );
 
 		// Remove a portion of the set
 		int32_t k = 0;
@@ -50,7 +51,11 @@ int TableTest( void )
 				if ( j == i + 1 )
 				{
 					uint64_t key = B2_SHAPE_PAIR_KEY( i, j );
-					b2RemoveKey( &set, key );
+					int size1 = b2GetSetCount( &set );
+					bool found = b2RemoveKey( &set, key );
+					ENSURE( found );
+					int size2 = b2GetSetCount( &set );
+					ENSURE( size2 == size1 - 1 );
 					removed[k++] = true;
 					removeCount += 1;
 				}
@@ -61,7 +66,7 @@ int TableTest( void )
 			}
 		}
 
-		ENSURE( set.count == ( itemCount - removeCount ) );
+		ENSURE( b2GetSetCount( &set ) == ( itemCount - removeCount ) );
 
 #if B2_SNOOP_TABLE_COUNTERS
 		extern b2AtomicInt b2_probeCount;
@@ -78,7 +83,8 @@ int TableTest( void )
 			for ( int32_t j = i + 1; j < N; ++j )
 			{
 				uint64_t key = B2_SHAPE_PAIR_KEY( j, i );
-				ENSURE( b2ContainsKey( &set, key ) || removed[k] );
+				bool found = b2ContainsKey( &set, key );
+				ENSURE( found || removed[k] );
 				k += 1;
 			}
 		}
@@ -105,7 +111,7 @@ int TableTest( void )
 			}
 		}
 
-		ENSURE( set.count == 0 );
+		ENSURE( b2GetSetCount( &set ) == 0 );
 
 		b2DestroySet( &set );
 	}

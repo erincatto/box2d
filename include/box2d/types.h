@@ -117,6 +117,9 @@ typedef struct b2WorldDef
 	/// Enable continuous collision
 	bool enableContinuous;
 
+	/// Contact softening when mass ratios are large. Experimental.
+	bool enableContactSoftening;
+
 	/// Number of workers to use with the provided task system. Box2D performs best when using only
 	/// performance cores and accessing a single L2 cache. Efficiency cores and hyper-threading provide
 	/// little benefit and may even harm performance.

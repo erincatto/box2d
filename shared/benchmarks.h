@@ -22,7 +22,7 @@ void CreateSpinner( b2WorldId worldId );
 float StepSpinner( b2WorldId worldId, int stepCount );
 void CreateSmash( b2WorldId worldId );
 void CreateTumbler( b2WorldId worldId );
-void CreateWasher( b2WorldId worldId, bool kinematic );
+void CreateWasher( b2WorldId worldId );
 
 #ifdef __cplusplus
 }

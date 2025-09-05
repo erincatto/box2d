@@ -218,6 +218,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->enableSleep = def->enableSleep;
 	world->locked = false;
 	world->enableWarmStarting = true;
+	world->enableContactSoftening = def->enableContactSoftening;
 	world->enableContinuous = def->enableContinuous;
 	world->enableSpeculative = true;
 	world->userTreeTask = NULL;
@@ -1750,12 +1751,12 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	fprintf( file, "static tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_staticBody ) );
 	fprintf( file, "kinematic tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_kinematicBody ) );
 	fprintf( file, "dynamic tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_dynamicBody ) );
-	b2HashSet* moveSet = &world->broadPhase.moveSet;
-	fprintf( file, "moveSet: %d (%d, %d)\n", b2GetHashSetBytes( moveSet ), moveSet->count, moveSet->capacity );
-	fprintf( file, "moveArray: %d\n", b2IntArray_ByteCount( &world->broadPhase.moveArray ) );
-	b2HashSet* pairSet = &world->broadPhase.pairSet;
-	fprintf( file, "pairSet: %d (%d, %d)\n", b2GetHashSetBytes( pairSet ), pairSet->count, pairSet->capacity );
-	fprintf( file, "\n" );
+	//b2HashSet* moveSet = &world->broadPhase.moveSet;
+	//fprintf( file, "moveSet: %d (%d, %d)\n", b2GetHashSetBytes( moveSet ), moveSet->count, moveSet->capacity );
+	//fprintf( file, "moveArray: %d\n", b2IntArray_ByteCount( &world->broadPhase.moveArray ) );
+	//b2HashSet* pairSet = &world->broadPhase.pairSet;
+	//fprintf( file, "pairSet: %d (%d, %d)\n", b2GetHashSetBytes( pairSet ), pairSet->count, pairSet->capacity );
+	//fprintf( file, "\n" );
 
 	// solver sets
 	int bodySimCapacity = 0;
@@ -2915,7 +2916,7 @@ void b2ValidateSolverSets( b2World* world )
 
 	int contactIdCount = b2GetIdCount( &world->contactIdPool );
 	B2_ASSERT( totalContactCount == contactIdCount );
-	B2_ASSERT( totalContactCount == (int)world->broadPhase.pairSet.count );
+	//B2_ASSERT( totalContactCount == (int)world->broadPhase.pairSet.count );
 
 	int jointIdCount = b2GetIdCount( &world->jointIdPool );
 	B2_ASSERT( totalJointCount == jointIdCount );

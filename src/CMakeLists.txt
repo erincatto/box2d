@@ -64,6 +64,7 @@ set(BOX2D_SOURCE_FILES
 	table.h
 	timer.c
 	types.c
+	verstable.h
 	weld_joint.c
 	wheel_joint.c
 )

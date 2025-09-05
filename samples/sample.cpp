@@ -268,6 +268,10 @@ void Sample::CreateWorld()
 	worldDef.finishTask = FinishTask;
 	worldDef.userTaskContext = this;
 	worldDef.enableSleep = m_context->enableSleep;
+
+	// todo experimental
+	// worldDef.enableContactSoftening = true;
+
 	m_worldId = b2CreateWorld( &worldDef );
 }
 

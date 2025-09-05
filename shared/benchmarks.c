@@ -558,8 +558,10 @@ void CreateTumbler( b2WorldId worldId )
 	}
 }
 
-void CreateWasher( b2WorldId worldId, bool kinematic )
+void CreateWasher( b2WorldId worldId )
 {
+	bool kinematic = true;
+
 	b2BodyId groundId;
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();

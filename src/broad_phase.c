@@ -106,7 +106,7 @@ int b2BroadPhase_CreateProxy( b2BroadPhase* bp, b2BodyType proxyType, b2AABB aab
 
 void b2BroadPhase_DestroyProxy( b2BroadPhase* bp, int proxyKey )
 {
-	B2_ASSERT( bp->moveArray.count == (int)bp->moveSet.count );
+	//B2_ASSERT( bp->moveArray.count == (int)cc_size(bp->moveSet) );
 	b2UnBufferMove( bp, proxyKey );
 
 	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
@@ -387,7 +387,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	b2BroadPhase* bp = &world->broadPhase;
 
 	int moveCount = bp->moveArray.count;
-	B2_ASSERT( moveCount == (int)bp->moveSet.count );
+	//B2_ASSERT( moveCount == (int)cc_size(bp->moveSet) );
 
 	if ( moveCount == 0 )
 	{

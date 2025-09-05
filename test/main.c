@@ -50,6 +50,7 @@ int main( void )
 	printf( "Starting Box2D unit tests\n" );
 	printf( "======================================\n" );
 
+	RUN_TEST( TableTest );
 	RUN_TEST( MathTest );
 	RUN_TEST( BitSetTest );
 	RUN_TEST( CollisionTest );
@@ -57,7 +58,6 @@ int main( void )
 	RUN_TEST( DistanceTest );
 	RUN_TEST( IdTest );
 	RUN_TEST( ShapeTest );
-	RUN_TEST( TableTest );
 	RUN_TEST( WorldTest );
 
 	printf( "======================================\n" );
