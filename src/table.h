@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include <stdalign.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -12,7 +11,10 @@
 typedef struct b2SetItem
 {
 	uint64_t key;
-	uint64_t hash;
+	// storing lower 32 bits of hash
+	// this is wasteful because I just need to know if the item is occupied
+	// I could require the key to be non-zero and use 0 to indicate an empty slot
+	uint32_t hash;
 } b2SetItem;
 
 typedef struct b2HashSet

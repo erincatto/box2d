@@ -75,7 +75,7 @@ static uint64_t b2KeyHash( uint64_t key )
 	return key;
 }
 #elif 1
-static uint32_t b2KeyHash( uint64_t key )
+static uint64_t b2KeyHash( uint64_t key )
 {
 	// Murmur hash
 	uint64_t h = key;
@@ -84,8 +84,7 @@ static uint32_t b2KeyHash( uint64_t key )
 	h ^= h >> 33;
 	h *= 0xc4ceb9fe1a85ec53uLL;
 	h ^= h >> 33;
-
-	return (uint32_t)h;
+	return h;
 }
 #endif
 
@@ -116,7 +115,7 @@ static void b2AddKeyHaveCapacity( b2HashSet* set, uint64_t key, uint64_t hash )
 	B2_ASSERT( items[index].hash == 0 );
 
 	items[index].key = key;
-	items[index].hash = hash;
+	items[index].hash = (uint32_t)hash;
 	set->count += 1;
 }
 

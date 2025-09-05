@@ -384,7 +384,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	b2BroadPhase* bp = &world->broadPhase;
 
 	int moveCount = bp->moveArray.count;
-	//B2_ASSERT( moveCount == (int)cc_size(bp->moveSet) );
+	B2_ASSERT( moveCount == (int)bp->moveSet.count );
 
 	if ( moveCount == 0 )
 	{
