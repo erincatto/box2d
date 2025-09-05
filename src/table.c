@@ -16,8 +16,6 @@ b2AtomicInt b2_findCount;
 b2AtomicInt b2_probeCount;
 #endif
 
-// todo compare with https://github.com/skeeto/scratch/blob/master/set32/set32.h
-
 b2HashSet b2CreateSet( int capacity )
 {
 	b2HashSet set = { 0 };
@@ -60,7 +58,24 @@ void b2ClearSet( b2HashSet* set )
 // todo try: https://www.jandrewrogers.com/2019/02/12/fast-perfect-hashing/
 // todo try:
 // https://probablydance.com/2018/06/16/fibonacci-hashing-the-optimization-that-the-world-forgot-or-a-better-alternative-to-integer-modulo/
-static uint32_t b2KeyHash( uint64_t key )
+
+// I compared with CC on https://jacksonallan.github.io/c_cpp_hash_tables_benchmark/ and got slightly better performance
+// in the washer benchmark.
+// I compared with verstable across 8 benchmarks and the performance was similar.
+
+#if 0
+// Fast-hash
+// https://jonkagstrom.com/bit-mixer-construction
+// https://code.google.com/archive/p/fast-hash
+static uint64_t b2KeyHash( uint64_t key )
+{
+	key ^= key >> 23;
+	key *= 0x2127599BF4325C37ULL;
+	key ^= key >> 47;
+	return key;
+}
+#elif 1
+static uint64_t b2KeyHash( uint64_t key )
 {
 	// Murmur hash
 	uint64_t h = key;
@@ -69,11 +84,11 @@ static uint32_t b2KeyHash( uint64_t key )
 	h ^= h >> 33;
 	h *= 0xc4ceb9fe1a85ec53uLL;
 	h ^= h >> 33;
-
-	return (uint32_t)h;
+	return h;
 }
+#endif
 
-static int b2FindSlot( const b2HashSet* set, uint64_t key, uint32_t hash )
+static int b2FindSlot( const b2HashSet* set, uint64_t key, uint64_t hash )
 {
 #if B2_SNOOP_TABLE_COUNTERS
 	b2AtomicFetchAddInt( &b2_findCount, 1 );
@@ -93,14 +108,14 @@ static int b2FindSlot( const b2HashSet* set, uint64_t key, uint32_t hash )
 	return index;
 }
 
-static void b2AddKeyHaveCapacity( b2HashSet* set, uint64_t key, uint32_t hash )
+static void b2AddKeyHaveCapacity( b2HashSet* set, uint64_t key, uint64_t hash )
 {
 	int index = b2FindSlot( set, key, hash );
 	b2SetItem* items = set->items;
 	B2_ASSERT( items[index].hash == 0 );
 
 	items[index].key = key;
-	items[index].hash = hash;
+	items[index].hash = (uint32_t)hash;
 	set->count += 1;
 }
 
@@ -140,7 +155,7 @@ bool b2ContainsKey( const b2HashSet* set, uint64_t key )
 {
 	// key of zero is a sentinel
 	B2_ASSERT( key != 0 );
-	uint32_t hash = b2KeyHash( key );
+	uint64_t hash = b2KeyHash( key );
 	int index = b2FindSlot( set, key, hash );
 	return set->items[index].key == key;
 }
@@ -155,7 +170,7 @@ bool b2AddKey( b2HashSet* set, uint64_t key )
 	// key of zero is a sentinel
 	B2_ASSERT( key != 0 );
 
-	uint32_t hash = b2KeyHash( key );
+	uint64_t hash = b2KeyHash( key );
 	B2_ASSERT( hash != 0 );
 
 	int index = b2FindSlot( set, key, hash );
@@ -178,7 +193,7 @@ bool b2AddKey( b2HashSet* set, uint64_t key )
 // See https://en.wikipedia.org/wiki/Open_addressing
 bool b2RemoveKey( b2HashSet* set, uint64_t key )
 {
-	uint32_t hash = b2KeyHash( key );
+	uint64_t hash = b2KeyHash( key );
 	int i = b2FindSlot( set, key, hash );
 	b2SetItem* items = set->items;
 	if ( items[i].hash == 0 )

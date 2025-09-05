@@ -1500,7 +1500,7 @@ void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* mat
 	B2_ASSERT( chainShape->materialCount == 1 || chainShape->materialCount == chainShape->count );
 	int count = chainShape->count;
 
-	if (chainShape->materialCount == 1)
+	if ( chainShape->materialCount == 1 )
 	{
 		for ( int i = 0; i < count; ++i )
 		{

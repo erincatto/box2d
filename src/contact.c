@@ -7,7 +7,6 @@
 #include "body.h"
 #include "core.h"
 #include "island.h"
-// #include "joint.h"
 #include "physics_world.h"
 #include "shape.h"
 #include "solver_set.h"
@@ -16,8 +15,6 @@
 // needed for dll export
 #include "box2d/box2d.h"
 
-// #include <float.h>
-// #include <math.h>
 #include <stddef.h>
 
 B2_ARRAY_SOURCE( b2Contact, b2Contact )

@@ -1453,8 +1453,6 @@ static b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT states, int* 
 // This writes only the velocities back to the solver bodies
 static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT indices, const b2BodyStateW* B2_RESTRICT simdBody )
 {
-	// todo somehow skip writing to kinematic bodies
-
 	if ( indices[0] != B2_NULL_INDEX && ( states[indices[0]].flags & b2_dynamicFlag ) != 0 )
 	{
 		b2BodyState* state = states + indices[0];
@@ -1504,6 +1502,7 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 	// Stiffer for static contacts to avoid bodies getting pushed through the ground
 	b2Softness contactSoftness = context->contactSoftness;
 	b2Softness staticSoftness = context->staticSoftness;
+	bool enableSoftening = world->enableContactSoftening;
 
 	float warmStartScale = world->enableWarmStarting ? 1.0f : 0.0f;
 
@@ -1566,7 +1565,26 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 					( (float*)&constraint->rollingMass )[j] = k > 0.0f ? 1.0f / k : 0.0f;
 				}
 
-				b2Softness soft = ( indexA == B2_NULL_INDEX || indexB == B2_NULL_INDEX ) ? staticSoftness : contactSoftness;
+				b2Softness soft = contactSoftness;
+				if (indexA == B2_NULL_INDEX || indexB == B2_NULL_INDEX)
+				{
+					soft = staticSoftness;
+				}
+				else if (enableSoftening)
+				{
+					// todo experimental feature
+					float contactHertz = b2MinFloat( world->contactHertz, 0.125f * context->inv_h );
+					float ratio = 1.0f;
+					if ( mA < mB )
+					{
+						ratio = b2MaxFloat( 0.5f, mA / mB );
+					}
+					else if ( mB < mA )
+					{
+						ratio = b2MaxFloat( 0.5f, mB / mA );
+					}
+					soft = b2MakeSoft( ratio * contactHertz, ratio * world->contactDampingRatio, context->h );
+				}
 
 				b2Vec2 normal = manifold->normal;
 				( (float*)&constraint->normal.X )[j] = normal.x;

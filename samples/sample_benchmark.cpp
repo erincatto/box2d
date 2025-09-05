@@ -467,7 +467,7 @@ public:
 			m_context->camera.m_zoom = 20.0f;
 		}
 
-		CreateWasher( m_worldId, true );
+		CreateWasher( m_worldId );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -2012,6 +2012,10 @@ public:
 
 static int benchmarkSensor = RegisterSample( "Benchmark", "Sensor", BenchmarkSensor::Create );
 
+// This benchmark pushes Box2D to the limit for a large pile. It terminates once simulation is deemed to be slow.
+// The higher the body count achieved, the better.
+// Note: this benchmark stresses the sleep system more than any other benchmark. Better results are achieved if sleeping
+// is disabled.
 class BenchmarkCapacity : public Sample
 {
 public:
@@ -2023,6 +2027,8 @@ public:
 			m_context->camera.m_center = { 0.0f, 150.0f };
 			m_context->camera.m_zoom = 200.0f;
 		}
+
+		m_context->enableSleep = false;
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();

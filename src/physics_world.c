@@ -217,6 +217,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->enableSleep = def->enableSleep;
 	world->locked = false;
 	world->enableWarmStarting = true;
+	world->enableContactSoftening = def->enableContactSoftening;
 	world->enableContinuous = def->enableContinuous;
 	world->enableSpeculative = true;
 	world->userTreeTask = NULL;
@@ -2687,6 +2688,11 @@ void b2ValidateSolverSets( b2World* world )
 					B2_ASSERT( body->setIndex == setIndex );
 					B2_ASSERT( body->localIndex == i );
 					B2_ASSERT( body->generation == body->generation );
+
+					if (body->type == b2_dynamicBody)
+					{
+						B2_ASSERT( body->flags & b2_dynamicFlag );
+					}
 
 					if ( setIndex == b2_disabledSet )
 					{
