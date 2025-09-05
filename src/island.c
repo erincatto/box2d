@@ -10,13 +10,10 @@
 #include "physics_world.h"
 #include "solver_set.h"
 
-#include "array_body.inl"
-#include "array_contact.inl"
-#include "array_joint.inl"
-#include "array_island.inl"
-#include "array_solver.inl"
-
 #include <stddef.h>
+
+B2_ARRAY_SOURCE( b2Island, b2Island )
+B2_ARRAY_SOURCE( b2IslandSim, b2IslandSim )
 
 b2Island* b2CreateIsland( b2World* world, int setIndex )
 {

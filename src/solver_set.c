@@ -11,14 +11,9 @@
 #include "joint.h"
 #include "physics_world.h"
 
-#include "array_body.inl"
-#include "array_contact.inl"
-#include "array_island.inl"
-#include "array_joint.inl"
-#include "array_solver.inl"
-#include "array_world.inl"
-
 #include <string.h>
+
+B2_ARRAY_SOURCE( b2SolverSet, b2SolverSet )
 
 void b2DestroySolverSet( b2World* world, int setIndex )
 {

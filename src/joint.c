@@ -12,18 +12,16 @@
 #include "solver.h"
 #include "solver_set.h"
 
-#include "array_body.inl"
-#include "array_contact.inl"
-#include "array_joint.inl"
-#include "array_shape.inl"
-#include "array_solver.inl"
-
 // needed for dll export
 #include "box2d/box2d.h"
 
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+
+B2_ARRAY_SOURCE( b2Joint, b2Joint )
+B2_ARRAY_SOURCE( b2JointSim, b2JointSim )
+B2_ARRAY_SOURCE( b2JointEvent, b2JointEvent )
 
 static b2JointDef b2DefaultJointDef( void )
 {

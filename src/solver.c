@@ -19,15 +19,6 @@
 #include "shape.h"
 #include "solver_set.h"
 
-#include "array_body.inl"
-#include "array_contact.inl"
-#include "array_joint.inl"
-#include "array_island.inl"
-#include "array_sensor.inl"
-#include "array_shape.inl"
-#include "array_solver.inl"
-#include "array_world.inl"
-
 #include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>

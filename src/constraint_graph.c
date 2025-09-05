@@ -11,11 +11,6 @@
 #include "physics_world.h"
 #include "solver_set.h"
 
-#include "array_body.inl"
-#include "array_contact.inl"
-#include "array_joint.inl"
-#include "array_solver.inl"
-
 #include <string.h>
 
 // Solver using graph coloring. Islands are only used for sleep.

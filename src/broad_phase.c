@@ -8,17 +8,14 @@
 #include "broad_phase.h"
 
 #include "aabb.h"
-#include "arena_allocator.h"
 #include "array.h"
 #include "atomic.h"
 #include "body.h"
 #include "contact.h"
 #include "core.h"
-#include "physics_world.h"
 #include "shape.h"
-
-#include "array_body.inl"
-#include "array_shape.inl"
+#include "arena_allocator.h"
+#include "physics_world.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -106,7 +103,7 @@ int b2BroadPhase_CreateProxy( b2BroadPhase* bp, b2BodyType proxyType, b2AABB aab
 
 void b2BroadPhase_DestroyProxy( b2BroadPhase* bp, int proxyKey )
 {
-	//B2_ASSERT( bp->moveArray.count == (int)cc_size(bp->moveSet) );
+	B2_ASSERT( bp->moveArray.count == (int)bp->moveSet.count );
 	b2UnBufferMove( bp, proxyKey );
 
 	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );

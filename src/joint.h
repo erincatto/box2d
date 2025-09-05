@@ -320,5 +320,5 @@ void b2DrawWeldJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transform
 void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB );
 
 // Define inline functions for arrays
-//B2_ARRAY_INLINE( b2Joint, b2Joint )
-//B2_ARRAY_INLINE( b2JointSim, b2JointSim )
+B2_ARRAY_INLINE( b2Joint, b2Joint )
+B2_ARRAY_INLINE( b2JointSim, b2JointSim )

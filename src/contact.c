@@ -12,16 +12,13 @@
 #include "solver_set.h"
 #include "table.h"
 
-#include "array_body.inl"
-#include "array_contact.inl"
-#include "array_shape.inl"
-#include "array_solver.inl"
-#include "array_world.inl"
-
 // needed for dll export
 #include "box2d/box2d.h"
 
 #include <stddef.h>
+
+B2_ARRAY_SOURCE( b2Contact, b2Contact )
+B2_ARRAY_SOURCE( b2ContactSim, b2ContactSim )
 
 // Contacts and determinism
 // A deterministic simulation requires contacts to exist in the same order in b2Island no matter the thread count.

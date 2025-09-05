@@ -16,7 +16,6 @@ b2AtomicInt b2_findCount;
 b2AtomicInt b2_probeCount;
 #endif
 
-#if 0
 b2HashSet b2CreateSet( int capacity )
 {
 	b2HashSet set = { 0 };
@@ -62,6 +61,7 @@ void b2ClearSet( b2HashSet* set )
 
 // I compared with CC on https://jacksonallan.github.io/c_cpp_hash_tables_benchmark/ and got slightly better performance
 // in the washer benchmark.
+// I compared with verstable across 8 benchmarks and the performance was similar.
 
 #if 0
 // Fast-hash
@@ -254,7 +254,6 @@ bool b2RemoveKey( b2HashSet* set, uint64_t key )
 
 	return true;
 }
-#endif
 
 // This function is here because ctz.h is included by
 // this file but not in bitset.c

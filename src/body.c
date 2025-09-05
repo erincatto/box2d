@@ -15,22 +15,15 @@
 #include "shape.h"
 #include "solver_set.h"
 
-#include "array_body.inl"
-#include "array_contact.inl"
-#include "array_joint.inl"
-#include "array_island.inl"
-#include "array_shape.inl"
-#include "array_solver.inl"
-
 #include "box2d/box2d.h"
 #include "box2d/id.h"
 
 #include <string.h>
 
 // Implement functions for b2BodyArray
-// B2_ARRAY_SOURCE( b2Body, b2Body )
-// B2_ARRAY_SOURCE( b2BodySim, b2BodySim )
-// B2_ARRAY_SOURCE( b2BodyState, b2BodyState )
+B2_ARRAY_SOURCE( b2Body, b2Body )
+B2_ARRAY_SOURCE( b2BodySim, b2BodySim )
+B2_ARRAY_SOURCE( b2BodyState, b2BodyState )
 
 static void b2LimitVelocity( b2BodyState* state, float maxLinearSpeed )
 {
@@ -329,7 +322,6 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	body->type = def->type;
 	body->flags = bodySim->flags;
 	body->enableSleep = def->enableSleep;
-	// body->isMarked = false;
 
 	// dynamic and kinematic bodies that are enabled need a island
 	if ( setId >= b2_awakeSet )

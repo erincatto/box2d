@@ -10,8 +10,6 @@
 #include "physics_world.h"
 #include "solver_set.h"
 
-#include "array_solver.inl"
-
 #include <stddef.h>
 
 // contact separation for sub-stepping

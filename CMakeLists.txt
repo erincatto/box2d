@@ -133,7 +133,6 @@ if(PROJECT_IS_TOP_LEVEL)
 		add_subdirectory(docs)
 	endif()
 
-	add_subdirectory(code_gen)
 endif()
 
 # # Building on clang in windows
