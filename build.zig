@@ -11,33 +11,33 @@ comptime {
 }
 
 fn compileBox2d(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
-    var box2d_flags_arr = std.ArrayList([]const u8).init(b.allocator);
-    defer box2d_flags_arr.deinit();
+    var box2d_flags_arr = std.ArrayList([]const u8).empty;
+    defer box2d_flags_arr.deinit(b.allocator);
 
-    try box2d_flags_arr.appendSlice(&[_][]const u8{
+    try box2d_flags_arr.appendSlice(b.allocator, &[_][]const u8{
         "-std=gnu99",
         "-D_GNU_SOURCE",
     });
 
     if (options.shared) {
-        try box2d_flags_arr.appendSlice(&[_][]const u8{
+        try box2d_flags_arr.appendSlice(b.allocator, &[_][]const u8{
             "-fPIC",
             "-DBUILD_LIBTYPE_SHARED",
         });
     }
 
-    const box2d = if (options.shared)
-        b.addSharedLibrary(.{
-            .name = "box2d",
-            .target = target,
-            .optimize = optimize,
-        })
-    else
-        b.addStaticLibrary(.{
-            .name = "box2d",
-            .target = target,
-            .optimize = optimize,
-        });
+    const module = b.addModule("box2d", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const linkage: std.builtin.LinkMode = if (options.shared) .dynamic else .static;
+    const box2d = b.addLibrary(.{
+        .root_module = module,
+        .name = "box2d",
+        .linkage = linkage,
+    });
+
     box2d.linkLibC();
 
     const c_source_files = &[_][]const u8{
@@ -78,8 +78,9 @@ fn compileBox2d(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.b
         "src/manifold.c",
         "src/math_functions.c",
         "src/motor_joint.c",
-        "src/mouse_joint.c",
         "src/mover.c",
+        "src/physics_world.c",
+        "src/physics_world.h",
         "src/prismatic_joint.c",
         "src/revolute_joint.c",
         "src/sensor.c",
@@ -96,8 +97,6 @@ fn compileBox2d(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.b
         "src/types.c",
         "src/weld_joint.c",
         "src/wheel_joint.c",
-        "src/world.c",
-        "src/world.h",
     };
 
     box2d.addIncludePath(b.path("include"));
