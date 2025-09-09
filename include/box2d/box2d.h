@@ -677,6 +677,8 @@ B2_API b2MassData b2Shape_ComputeMassData( b2ShapeId shapeId );
 /// todo need sample
 B2_API b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target );
 
+B2_API void b2Shape_ApplyWindForce( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, bool wake );
+
 /// Chain Shape
 
 /// Create a chain shape

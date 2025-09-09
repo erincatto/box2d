@@ -1908,3 +1908,132 @@ public:
 };
 
 static int sampleBoxRestitution = RegisterSample( "Shapes", "Box Restitution", BoxRestitution::Create );
+
+class Wind : public Sample
+{
+public:
+	enum ShapeType
+	{
+		e_circleShape = 0,
+		e_capsuleShape,
+		e_boxShape
+	};
+
+	explicit Wind( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 2.0f };
+			m_context->camera.m_zoom = 4.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			m_groundId = b2CreateBody( m_worldId, &bodyDef );
+		}
+
+		m_shapeType = e_circleShape;
+		m_bodyId = b2_nullBodyId;
+		m_wind = { 1.0f, 0.0f };
+		m_drag = 0.5f;
+		m_lift = 0.5f;
+
+		CreateScene();
+	}
+
+	void CreateScene()
+	{
+		if ( B2_IS_NON_NULL( m_bodyId ) )
+		{
+			b2DestroyBody( m_bodyId );
+			m_bodyId = b2_nullBodyId;
+		}
+
+		float radius = 0.25f;
+		b2Circle circle = { { 0.0f, 0.0f }, radius };
+		b2Capsule capsule = { { 0.0f, -0.5f }, { 0.0f, 0.0f }, 0.5f * radius };
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.density = 20.0f;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.enableSleep = false;
+		bodyDef.position = { 0.0f, 2.0f };
+		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+		if (m_shapeType == e_circleShape)
+		{
+			b2CreateCircleShape( m_bodyId, &shapeDef, &circle );
+		}
+		else
+		{
+			b2CreateCapsuleShape( m_bodyId, &shapeDef, &capsule );
+		}
+
+		b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
+		jointDef.length = 1.0f;
+		jointDef.base.bodyIdA = m_groundId;
+		jointDef.base.bodyIdB = m_bodyId;
+		jointDef.base.localFrameA.p = {0.0f, 3.0f};
+		b2CreateDistanceJoint( m_worldId, &jointDef );
+	}
+
+	void UpdateGui() override
+	{
+		float fontSize = ImGui::GetFontSize();
+		float height = 10.0f * fontSize;
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize }, ImGuiCond_Once );
+		ImGui::SetNextWindowSize( { 22.0f * fontSize, height } );
+
+		ImGui::Begin( "Wind", nullptr, ImGuiWindowFlags_NoResize );
+		ImGui::PushItemWidth( 18.0f * fontSize );
+
+		const char* shapeTypes[] = { "Circle", "Capsule", "Box" };
+		int shapeType = int( m_shapeType );
+		if ( ImGui::Combo( "Shape", &shapeType, shapeTypes, IM_ARRAYSIZE( shapeTypes ) ) )
+		{
+			m_shapeType = ShapeType( shapeType );
+			CreateScene();
+		}
+
+		ImGui::SliderFloat2( "Wind", &m_wind.x, -10.0f, 10.0f, "%.2f" );
+		ImGui::SliderFloat( "Drag", &m_drag, 0.0f, 1.0f, "%.2f" );
+		ImGui::SliderFloat( "Lift", &m_lift, 0.0f, 1.0f, "%.2f" );
+
+		ImGui::PopItemWidth();
+		ImGui::End();
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		if (m_context->pause == false && m_context->singleStep == false)
+		{
+			b2ShapeId shapeIds[1];
+			int count = b2Body_GetShapes( m_bodyId, shapeIds, 1 );
+			for (int i = 0; i < count; ++i)
+			{
+				b2Shape_ApplyWindForce( shapeIds[0], m_wind, m_drag, m_lift, true );
+			}
+		}
+
+		m_draw->DrawLine( b2Vec2_zero, b2MulSV(0.2f, m_wind), b2_colorFuchsia );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new Wind( context );
+	}
+
+	ShapeType m_shapeType;
+	b2Vec2 m_wind;
+	float m_drag;
+	float m_lift;
+	b2BodyId m_groundId;
+	b2BodyId m_bodyId;
+};
+
+static int sampleWind = RegisterSample( "Shapes", "Wind", Wind::Create );

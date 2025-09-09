@@ -355,7 +355,7 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 			{
 				// This acts like angular friction
 				float lever = sqrtf( massData.rotationalInertia / massData.mass );
-				jointDef.maxVelocityTorque = 1.0f * lever * mg;
+				jointDef.maxVelocityTorque = 0.25f * lever * mg;
 			}
 
 			m_mouseJointId = b2CreateMotorJoint( m_worldId, &jointDef );

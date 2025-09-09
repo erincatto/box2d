@@ -1691,3 +1691,103 @@ b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target )
 
 	return output.pointA;
 }
+
+#if 1
+void b2Shape_ApplyWindForce( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, bool wake )
+{
+	B2_UNUSED( wind, drag, lift );
+
+	b2World* world = b2GetWorld( shapeId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
+
+	b2Shape* shape = b2GetShape( world, shapeId );
+
+	b2ShapeType shapeType = shape->type;
+	if ( shapeType != b2_circleShape && shapeType != b2_capsuleShape && shapeType != b2_polygonShape )
+	{
+		return;
+	}
+
+	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
+
+	if ( body->type != b2_dynamicBody )
+	{
+		return;
+	}
+
+	if ( body->setIndex >= b2_firstSleepingSet && wake == false )
+	{
+		return;
+	}
+
+	b2BodySim* sim = b2GetBodySim( world, body );
+
+	if ( body->setIndex != b2_awakeSet )
+	{
+		// Must wake for state to exist
+		b2WakeBody( world, body );
+	}
+
+	B2_ASSERT( body->setIndex == b2_awakeSet );
+
+	b2BodyState* state = b2GetBodyState( world, body );
+	b2Transform transform = sim->transform;
+
+	float lengthUnits = b2_lengthUnitsPerMeter;
+	float volumeUnits = lengthUnits * lengthUnits * lengthUnits;
+
+	// https://en.wikipedia.org/wiki/Density_of_air
+	float airDensity = 1.2250f / ( volumeUnits );
+
+	// https://www.engineeringtoolbox.com/wind-load-d_1775.html
+	// force = 0.5 * air_density * velocity^2 * area
+
+	// In 2D I'm assuming unit depth
+
+	switch ( shape->type )
+	{
+		case b2_circleShape:
+		{
+			b2Vec2 centroid = shape->circle.center;
+			b2Vec2 lever = b2RotateVector( transform.q, b2Sub( centroid, sim->localCenter ) );
+			b2Vec2 shapeVelocity = b2Add( state->linearVelocity, b2CrossSV( state->angularVelocity, lever ) );
+			b2Vec2 relativeVelocity = b2MulSub( wind, drag, shapeVelocity );
+			float speed;
+			b2Vec2 direction = b2GetLengthAndNormalize( &speed, relativeVelocity );
+			float projectedArea = 2.0f * shape->circle.radius;
+			b2Vec2 force = b2MulSV( 0.5f * airDensity * projectedArea * speed * speed, direction );
+			sim->force = b2Add( sim->force, force );
+			sim->torque += b2Cross( lever, force );
+		}
+		break;
+
+		case b2_capsuleShape:
+		{
+			b2Vec2 centroid = b2Lerp( shape->capsule.center1, shape->capsule.center2, 0.5f );
+			b2Vec2 lever = b2RotateVector( transform.q, b2Sub( centroid, sim->localCenter ) );
+			b2Vec2 shapeVelocity = b2Add( state->linearVelocity, b2CrossSV( state->angularVelocity, lever ) );
+			b2Vec2 relativeVelocity = b2MulSub( wind, drag, shapeVelocity );
+			float speed;
+			b2Vec2 direction = b2GetLengthAndNormalize( &speed, relativeVelocity );
+			b2Vec2 d = b2Sub( shape->capsule.center2, shape->capsule.center1 );
+			b2Vec2 axis = b2RotateVector(transform.q, d);
+			axis = b2Normalize( axis );
+
+			b2Vec2 perp = b2MulSub( direction, b2Dot( direction, axis ), axis );
+
+			float projectedArea = 2.0f * shape->circle.radius + b2AbsFloat(b2Cross(direction, d));
+			float pressure = 0.5f * airDensity * projectedArea * speed * speed;
+			b2Vec2 force = b2MulSV( pressure, b2MulAdd( direction, lift, perp ) );
+			sim->force = b2Add( sim->force, force );
+			sim->torque += b2Cross( lever, force );
+		}
+		break;
+
+		default:
+			break;
+	}
+}
+#endif
