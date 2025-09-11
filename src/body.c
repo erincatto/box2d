@@ -1528,6 +1528,36 @@ void b2Body_SetAwake( b2BodyId bodyId, bool awake )
 	}
 }
 
+void b2Body_WakeTouching(b2BodyId bodyId)
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+
+	int contactKey = body->headContactKey;
+	while ( contactKey != B2_NULL_INDEX )
+	{
+		int contactId = contactKey >> 1;
+		int edgeIndex = contactKey & 1;
+
+		b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
+		b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contact->shapeIdA );
+		b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contact->shapeIdB );
+
+		if (shapeA->bodyId == bodyId.index1 - 1)
+		{
+			b2Body* otherBody = b2BodyArray_Get( &world->bodies, shapeB->bodyId );
+			b2WakeBody( world, otherBody );
+		}
+		else
+		{
+			b2Body* otherBody = b2BodyArray_Get( &world->bodies, shapeA->bodyId );
+			b2WakeBody( world, otherBody );
+		}
+
+		contactKey = contact->edges[edgeIndex].nextKey;
+	}
+}
+
 bool b2Body_IsEnabled( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );

@@ -520,7 +520,7 @@ void DestroyHuman( Human* human )
 			continue;
 		}
 
-		b2DestroyJoint( human->bones[i].jointId );
+		b2DestroyJoint( human->bones[i].jointId, false );
 		human->bones[i].jointId = b2_nullJointId;
 	}
 
