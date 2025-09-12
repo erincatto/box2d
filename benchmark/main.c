@@ -140,7 +140,7 @@ static void MinProfile( b2Profile* p1, const b2Profile* p2 )
 
 // Run benchmark 3 with 4 workers and repeat 20 times. Record the step times.
 // start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=4 -w=4 -b=3 -r=20 -s
-// start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=8 -b=5
+// start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=8 -b=7
 
 // Run benchmark 3 with 4 workers and run once. Disable continuous collision. Record the step times.
 // start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=4 -w=4 -b=3 -r=1 -nc -s

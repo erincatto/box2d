@@ -60,10 +60,9 @@ public:
 
 	void CreateScene( int newCount )
 	{
-		// Must destroy joints before bodies
 		for ( int i = 0; i < m_count; ++i )
 		{
-			b2DestroyJoint( m_jointIds[i] );
+			b2DestroyJoint( m_jointIds[i], false );
 			m_jointIds[i] = b2_nullJointId;
 		}
 
@@ -962,6 +961,76 @@ public:
 
 static int samplePrismatic = RegisterSample( "Joints", "Prismatic", PrismaticJoint::Create );
 
+class MultiplePrismatic : public Sample
+{
+public:
+	explicit MultiplePrismatic( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 8.0f };
+			m_context->camera.m_zoom = 25.0f * 0.5f;
+		}
+
+		b2BodyId groundId;
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Polygon box = b2MakeOffsetBox( 20.0f, 1.0f, { 0.0f, -1.0f }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+
+			box = b2MakeOffsetBox( 1.0f, 5.0f, { 19.0f, 5.0f }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+
+			box = b2MakeOffsetBox( 1.0f, 5.0f, { -19.0f, 5.0f }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+		}
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2Polygon box = b2MakeBox( 3.0f, 0.5f );
+		b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
+		jointDef.base.bodyIdA = groundId;
+		jointDef.base.localFrameA.p = {0.0f, 0.0f};
+		jointDef.base.localFrameB.p = {0.0f, -0.6f};
+		jointDef.base.drawScale = 1.0f;
+		jointDef.motorSpeed = 0.0f;
+		jointDef.maxMotorForce = 25.0f;
+		jointDef.enableMotor = true;
+		jointDef.lowerTranslation = -3.0f;
+		jointDef.upperTranslation = 3.0f;
+		jointDef.enableLimit = true;
+		jointDef.hertz = 1.0f;
+		jointDef.dampingRatio = 0.5f;
+		jointDef.enableSpring = true;
+
+		for (int i = 0; i < 3; ++i)
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 0.0f, 0.6f + 1.2f * i };
+			bodyDef.type = b2_dynamicBody;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			jointDef.base.bodyIdB = bodyId;
+			b2CreatePrismaticJoint( m_worldId, &jointDef );
+
+			jointDef.base.bodyIdA = bodyId;
+			jointDef.base.localFrameA.p = { 0.0f, 0.6f };
+			jointDef.base.localFrameB.p = { 0.0f, -0.6f };
+		}
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new MultiplePrismatic( context );
+	}
+};
+
+static int sampleMultiplePrismatic = RegisterSample( "Joints", "Multiple Prismatic", MultiplePrismatic::Create );
+
 class WheelJoint : public Sample
 {
 public:
@@ -989,6 +1058,7 @@ public:
 		m_hertz = 1.0f;
 		m_dampingRatio = 0.7f;
 
+		for (int i = 0; i < 2; ++i)
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.position = { 0.0f, 10.25f };
@@ -1995,7 +2065,7 @@ public:
 			b2Vec2 force = b2Joint_GetConstraintForce( m_jointIds[i] );
 			if ( b2LengthSquared( force ) > m_breakForce * m_breakForce )
 			{
-				b2DestroyJoint( m_jointIds[i] );
+				b2DestroyJoint( m_jointIds[i], true );
 				m_jointIds[i] = b2_nullJointId;
 			}
 			else

@@ -397,6 +397,9 @@ B2_API bool b2Body_IsAwake( b2BodyId bodyId );
 /// which can be expensive and possibly unintuitive.
 B2_API void b2Body_SetAwake( b2BodyId bodyId, bool awake );
 
+/// Wake bodies touching this body. Works for static bodies.
+B2_API void b2Body_WakeTouching( b2BodyId bodyId );
+
 /// Enable or disable sleeping for this body. If sleeping is disabled the body will wake.
 B2_API void b2Body_EnableSleep( b2BodyId bodyId, bool enableSleep );
 
@@ -677,6 +680,8 @@ B2_API b2MassData b2Shape_ComputeMassData( b2ShapeId shapeId );
 /// todo need sample
 B2_API b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target );
 
+B2_API void b2Shape_ApplyWindForce( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, bool wake );
+
 /// Chain Shape
 
 /// Create a chain shape
@@ -717,8 +722,8 @@ B2_API bool b2Chain_IsValid( b2ChainId id );
  * @{
  */
 
-/// Destroy a joint
-B2_API void b2DestroyJoint( b2JointId jointId );
+/// Destroy a joint. Optionally wake attached bodies.
+B2_API void b2DestroyJoint( b2JointId jointId, bool wakeAttached );
 
 /// Joint identifier validation. Provides validation for up to 64K allocations.
 B2_API bool b2Joint_IsValid( b2JointId id );

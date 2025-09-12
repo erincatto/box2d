@@ -95,9 +95,9 @@ static int b2FindSlot( const b2HashSet* set, uint64_t key, uint64_t hash )
 #endif
 
 	uint32_t capacity = set->capacity;
-	int index = hash & ( capacity - 1 );
+	uint32_t index = (uint32_t)hash & ( capacity - 1 );
 	const b2SetItem* items = set->items;
-	while ( items[index].hash != 0 && items[index].key != key )
+	while ( items[index].key != 0 && items[index].key != key )
 	{
 #if B2_SNOOP_TABLE_COUNTERS
 		b2AtomicFetchAddInt( &b2_probeCount, 1 );
@@ -112,10 +112,9 @@ static void b2AddKeyHaveCapacity( b2HashSet* set, uint64_t key, uint64_t hash )
 {
 	int index = b2FindSlot( set, key, hash );
 	b2SetItem* items = set->items;
-	B2_ASSERT( items[index].hash == 0 );
 
+	B2_ASSERT( items[index].key == 0 );
 	items[index].key = key;
-	items[index].hash = (uint32_t)hash;
 	set->count += 1;
 }
 
@@ -137,13 +136,14 @@ static void b2GrowTable( b2HashSet* set )
 	for ( uint32_t i = 0; i < oldCapacity; ++i )
 	{
 		b2SetItem* item = oldItems + i;
-		if ( item->hash == 0 )
+		if ( item->key == 0 )
 		{
 			// this item was empty
 			continue;
 		}
 
-		b2AddKeyHaveCapacity( set, item->key, item->hash );
+		uint64_t hash = b2KeyHash( item->key );
+		b2AddKeyHaveCapacity( set, item->key, hash );
 	}
 
 	B2_ASSERT( set->count == oldCount );
@@ -174,10 +174,10 @@ bool b2AddKey( b2HashSet* set, uint64_t key )
 	B2_ASSERT( hash != 0 );
 
 	int index = b2FindSlot( set, key, hash );
-	if ( set->items[index].hash != 0 )
+	if ( set->items[index].key != 0 )
 	{
 		// Already in set
-		B2_ASSERT( set->items[index].hash == hash && set->items[index].key == key );
+		B2_ASSERT( set->items[index].key == key );
 		return true;
 	}
 
@@ -196,7 +196,7 @@ bool b2RemoveKey( b2HashSet* set, uint64_t key )
 	uint64_t hash = b2KeyHash( key );
 	int i = b2FindSlot( set, key, hash );
 	b2SetItem* items = set->items;
-	if ( items[i].hash == 0 )
+	if ( items[i].key == 0 )
 	{
 		// Not in set
 		return false;
@@ -204,7 +204,6 @@ bool b2RemoveKey( b2HashSet* set, uint64_t key )
 
 	// Mark item i as unoccupied
 	items[i].key = 0;
-	items[i].hash = 0;
 
 	B2_ASSERT( set->count > 0 );
 	set->count -= 1;
@@ -215,13 +214,14 @@ bool b2RemoveKey( b2HashSet* set, uint64_t key )
 	for ( ;; )
 	{
 		j = ( j + 1 ) & ( capacity - 1 );
-		if ( items[j].hash == 0 )
+		if ( items[j].key == 0 )
 		{
 			break;
 		}
 
 		// k is the first item for the hash of j
-		int k = items[j].hash & ( capacity - 1 );
+		uint64_t hash_j = b2KeyHash( items[j].key );
+		int k = hash_j & ( capacity - 1 );
 
 		// determine if k lies cyclically in (i,j]
 		// i <= j: | i..k..j |
@@ -246,7 +246,6 @@ bool b2RemoveKey( b2HashSet* set, uint64_t key )
 
 		// Mark item j as unoccupied
 		items[j].key = 0;
-		items[j].hash = 0;
 
 		i = j;
 	}

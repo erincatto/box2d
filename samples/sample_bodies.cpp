@@ -1040,3 +1040,72 @@ public:
 };
 
 static int sampleSetVelocity = RegisterSample( "Bodies", "Set Velocity", SetVelocity::Create );
+
+class WakeTouching : public Sample
+{
+public:
+	explicit WakeTouching( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 4.0f };
+			m_context->camera.m_zoom = 8.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			m_groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Segment segment = { { -20.0f, 0.0f }, { 20.0f, 0.0f } };
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreateSegmentShape( m_groundId, &shapeDef, &segment );
+		}
+
+		b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.density = 1.0f;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+
+		float x = -1.0f * ( m_count - 1 );
+
+		for ( int i = 0; i < m_count; ++i )
+		{
+			bodyDef.position = { x, 4.0f };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+			x += 2.0f;
+		}
+	}
+
+	void UpdateGui() override
+	{
+		float fontSize = ImGui::GetFontSize();
+		float height = 5.0f * fontSize;
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 10.0f * fontSize, height ) );
+
+		ImGui::Begin( "Wake Touching", nullptr, ImGuiWindowFlags_NoResize );
+
+		if ( ImGui::Button( "Wake Touching" ) )
+		{
+			b2Body_WakeTouching( m_groundId );
+		}
+
+		ImGui::End();
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new WakeTouching( context );
+	}
+
+	static constexpr int m_count = 10;
+
+	b2BodyId m_groundId;
+};
+
+static int sampleWakeTouching = RegisterSample( "Bodies", "Wake Touching", WakeTouching::Create );

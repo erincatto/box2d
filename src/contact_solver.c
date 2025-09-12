@@ -1919,7 +1919,7 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW vn = b2AddW( b2MulW( dvx, c->normal.X ), b2MulW( dvy, c->normal.Y ) );
 
 			// Compute normal impulse
-			b2FloatW negImpulse = b2AddW( b2MulW( c->normalMass2, b2MulW( pointMassScale, b2AddW( vn, bias ) ) ),
+			b2FloatW negImpulse = b2AddW( b2MulW( c->normalMass2, b2AddW( b2MulW( pointMassScale, vn ), bias ) ),
 										  b2MulW( pointImpulseScale, c->normalImpulse2 ) );
 
 			// Clamp the accumulated impulse

@@ -46,7 +46,7 @@ public:
 		}
 		else
 		{
-			DrawTextLine( "sleep step = %d, hash = 0x%08x", m_data.sleepStep, m_data.hash );
+			DrawTextLine( "sleep step = %d, hash = 0x%08X", m_data.sleepStep, m_data.hash );
 		}
 	}
 

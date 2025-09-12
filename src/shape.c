@@ -1691,3 +1691,160 @@ b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target )
 
 	return output.pointA;
 }
+
+// https://en.wikipedia.org/wiki/Density_of_air
+// https://www.engineeringtoolbox.com/wind-load-d_1775.html
+// force = 0.5 * air_density * velocity^2 * area
+// https://en.wikipedia.org/wiki/Lift_(force)
+void b2Shape_ApplyWindForce( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, bool wake )
+{
+	// B2_UNUSED( wind, drag, lift );
+
+	b2World* world = b2GetWorld( shapeId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
+
+	b2Shape* shape = b2GetShape( world, shapeId );
+
+	b2ShapeType shapeType = shape->type;
+	if ( shapeType != b2_circleShape && shapeType != b2_capsuleShape && shapeType != b2_polygonShape )
+	{
+		return;
+	}
+
+	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
+
+	if ( body->type != b2_dynamicBody )
+	{
+		return;
+	}
+
+	if ( body->setIndex >= b2_firstSleepingSet && wake == false )
+	{
+		return;
+	}
+
+	b2BodySim* sim = b2GetBodySim( world, body );
+
+	if ( body->setIndex != b2_awakeSet )
+	{
+		// Must wake for state to exist
+		b2WakeBody( world, body );
+	}
+
+	B2_ASSERT( body->setIndex == b2_awakeSet );
+
+	b2BodyState* state = b2GetBodyState( world, body );
+	b2Transform transform = sim->transform;
+
+	float lengthUnits = b2_lengthUnitsPerMeter;
+	float volumeUnits = lengthUnits * lengthUnits * lengthUnits;
+
+	// In 2D I'm assuming unit depth
+	float airDensity = 1.2250f / ( volumeUnits );
+
+	b2Vec2 force = { 0 };
+	float torque = 0.0f;
+
+	switch ( shape->type )
+	{
+		case b2_circleShape:
+		{
+			float radius = shape->circle.radius;
+			b2Vec2 centroid = shape->localCentroid;
+			b2Vec2 lever = b2RotateVector( transform.q, b2Sub( centroid, sim->localCenter ) );
+			b2Vec2 shapeVelocity = b2Add( state->linearVelocity, b2CrossSV( state->angularVelocity, lever ) );
+			b2Vec2 relativeVelocity = b2MulSub( wind, drag, shapeVelocity );
+			float speed;
+			b2Vec2 direction = b2GetLengthAndNormalize( &speed, relativeVelocity );
+			float projectedArea = 2.0f * radius;
+			force = b2MulSV( 0.5f * airDensity * projectedArea * speed * speed, direction );
+			torque = b2Cross( lever, force );
+		}
+		break;
+
+		case b2_capsuleShape:
+		{
+			b2Vec2 centroid = shape->localCentroid;
+			b2Vec2 lever = b2RotateVector( transform.q, b2Sub( centroid, sim->localCenter ) );
+			b2Vec2 shapeVelocity = b2Add( state->linearVelocity, b2CrossSV( state->angularVelocity, lever ) );
+			b2Vec2 relativeVelocity = b2MulSub( wind, drag, shapeVelocity );
+			float speed;
+			b2Vec2 direction = b2GetLengthAndNormalize( &speed, relativeVelocity );
+
+			b2Vec2 d = b2Sub( shape->capsule.center2, shape->capsule.center1 );
+			d = b2RotateVector( transform.q, d );
+
+			float radius = shape->capsule.radius;
+			float projectedArea = 2.0f * radius + b2AbsFloat( b2Cross(d, direction) );
+
+			// Normal that opposes the wind
+			b2Vec2 normal = b2LeftPerp( b2Normalize(d) );
+			normal = b2Dot( normal, direction ) > 0.0f ? b2Neg( normal ) : normal;
+
+			// portion of wind that is perpendicular to surface
+			b2Vec2 liftDirection = b2CrossSV( b2Cross( normal, direction ), direction );
+
+			float forceMagnitude = 0.5f * airDensity * projectedArea * speed * speed;
+			force = b2MulSV( forceMagnitude, b2MulAdd( direction, lift, liftDirection ) );
+
+			b2Vec2 edgeLever = b2MulAdd( lever, radius, normal );
+			torque = b2Cross( edgeLever, force );
+		}
+		break;
+
+		case b2_polygonShape:
+		{
+			b2Vec2 centroid = shape->localCentroid;
+			b2Vec2 lever = b2RotateVector( transform.q, b2Sub( centroid, sim->localCenter ) );
+			b2Vec2 shapeVelocity = b2Add( state->linearVelocity, b2CrossSV( state->angularVelocity, lever ) );
+			b2Vec2 relativeVelocity = b2MulSub( wind, drag, shapeVelocity );
+			float speed;
+			b2Vec2 direction = b2GetLengthAndNormalize( &speed, relativeVelocity );
+
+			// polygon radius is ignored for simplicity
+			int count = shape->polygon.count;
+			b2Vec2* vertices = shape->polygon.vertices;
+
+			b2Vec2 v1 = vertices[count - 1];
+			for ( int i = 0; i < count; ++i )
+			{
+				b2Vec2 v2 = vertices[i];
+				b2Vec2 d = b2Sub( v2, v1 );
+				b2Vec2 edgeCenter = b2Lerp( v1, v2, 0.5f );
+				v1 = v2;
+
+				d = b2RotateVector( transform.q, d );
+
+				float projectedArea = b2Cross( d, direction );
+				if ( projectedArea <= 0.0f )
+				{
+					// back facing
+					continue;
+				}
+
+				b2Vec2 normal = b2RightPerp( b2Normalize( d ) );
+
+				// portion of wind that is perpendicular to surface
+				b2Vec2 liftDirection = b2CrossSV( b2Cross( normal, direction ), direction );
+
+				float forceMagnitude = 0.5f * airDensity * projectedArea * speed * speed;
+				b2Vec2 f = b2MulSV( forceMagnitude, b2MulAdd( direction, lift, liftDirection ) );
+
+				b2Vec2 edgeLever = b2RotateVector( transform.q, b2Sub( edgeCenter, sim->localCenter ) );
+
+				force = b2Add( force, f );
+				torque += b2Cross( edgeLever, f );
+			}
+		}
+		break;
+
+		default:
+			break;
+	}
+
+	sim->force = b2Add( sim->force, force );
+	sim->torque += torque;
+}

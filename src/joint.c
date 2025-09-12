@@ -720,7 +720,7 @@ void b2DestroyJointInternal( b2World* world, b2Joint* joint, bool wakeBodies )
 	b2ValidateSolverSets( world );
 }
 
-void b2DestroyJoint( b2JointId jointId )
+void b2DestroyJoint( b2JointId jointId, bool wakeAttached )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_ASSERT( world->locked == false );
@@ -732,7 +732,7 @@ void b2DestroyJoint( b2JointId jointId )
 
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 
-	b2DestroyJointInternal( world, joint, true );
+	b2DestroyJointInternal( world, joint, wakeAttached );
 }
 
 b2JointType b2Joint_GetType( b2JointId jointId )

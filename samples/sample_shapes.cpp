@@ -1908,3 +1908,174 @@ public:
 };
 
 static int sampleBoxRestitution = RegisterSample( "Shapes", "Box Restitution", BoxRestitution::Create );
+
+class Wind : public Sample
+{
+public:
+	enum ShapeType
+	{
+		e_circleShape = 0,
+		e_capsuleShape,
+		e_boxShape
+	};
+
+	explicit Wind( SampleContext* context )
+		: Sample( context )
+		, m_bodyIds{}
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 1.0f };
+			m_context->camera.m_zoom = 2.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			m_groundId = b2CreateBody( m_worldId, &bodyDef );
+		}
+
+		m_shapeType = e_capsuleShape;
+		m_wind = { 6.0f, 0.0f };
+		m_drag = 1.0f;
+		m_lift = 0.75f;
+		m_count = 10;
+		m_noise = {0.0f, 0.0f};
+
+		CreateScene();
+	}
+
+	void CreateScene()
+	{
+		for ( int i = 0; i < m_maxCount; ++i )
+		{
+			if ( B2_IS_NON_NULL( m_bodyIds[i] ) )
+			{
+				b2DestroyBody( m_bodyIds[i] );
+				m_bodyIds[i] = b2_nullBodyId;
+			}
+		}
+
+		float radius = 0.1f;
+		b2Circle circle = { { 0.0f, 0.0f }, radius };
+		b2Capsule capsule = { { 0.0f, -radius }, { 0.0f, radius }, 0.25f * radius };
+		b2Polygon box = b2MakeBox( 0.25f * radius, 1.25f * radius);
+
+		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+		jointDef.base.bodyIdA = m_groundId;
+		jointDef.base.localFrameA.p = { 0.0f, 2.0f + radius };
+		jointDef.base.drawScale = 0.1f;
+		jointDef.hertz = 0.1f;
+		jointDef.dampingRatio = 0.0f;
+		jointDef.enableSpring = true;
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.density = 20.0f;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.gravityScale = 0.5f;
+		bodyDef.enableSleep = false;
+
+		for ( int i = 0; i < m_count; ++i )
+		{
+			bodyDef.position = { 0.0f, 2.0f - 2.0f * radius * i };
+			m_bodyIds[i] = b2CreateBody( m_worldId, &bodyDef );
+
+			if ( m_shapeType == e_circleShape )
+			{
+				b2CreateCircleShape( m_bodyIds[i], &shapeDef, &circle );
+			}
+			else if ( m_shapeType == e_capsuleShape )
+			{
+				b2CreateCapsuleShape( m_bodyIds[i], &shapeDef, &capsule );
+			}
+			else
+			{
+				b2CreatePolygonShape( m_bodyIds[i], &shapeDef, &box );
+			}
+
+			jointDef.base.bodyIdB = m_bodyIds[i];
+			jointDef.base.localFrameB.p = { 0.0f, radius };
+			b2CreateRevoluteJoint( m_worldId, &jointDef );
+
+			jointDef.base.bodyIdA = m_bodyIds[i];
+			jointDef.base.localFrameA.p = { 0.0f, -radius };
+		}
+	}
+
+	void UpdateGui() override
+	{
+		float fontSize = ImGui::GetFontSize();
+		float height = 15.0f * fontSize;
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize }, ImGuiCond_Once );
+		ImGui::SetNextWindowSize( { 24.0f * fontSize, height } );
+
+		ImGui::Begin( "Wind", nullptr, ImGuiWindowFlags_NoResize );
+		ImGui::PushItemWidth( 18.0f * fontSize );
+
+		const char* shapeTypes[] = { "Circle", "Capsule", "Box" };
+		int shapeType = int( m_shapeType );
+		if ( ImGui::Combo( "Shape", &shapeType, shapeTypes, IM_ARRAYSIZE( shapeTypes ) ) )
+		{
+			m_shapeType = ShapeType( shapeType );
+			CreateScene();
+		}
+
+		ImGui::SliderFloat2( "Wind", &m_wind.x, -20.0f, 20.0f, "%.1f" );
+		ImGui::SliderFloat( "Drag", &m_drag, 0.0f, 1.0f, "%.2f" );
+		ImGui::SliderFloat( "Lift", &m_lift, 0.0f, 4.0f, "%.2f" );
+		if (ImGui::SliderInt( "Count", &m_count, 1, m_maxCount, "%d" ))
+		{
+			CreateScene();
+		}
+
+		ImGui::PopItemWidth();
+		ImGui::End();
+	}
+
+	void Step() override
+	{
+		if ( m_context->pause == false || m_context->singleStep == true )
+		{
+			float speed;
+			b2Vec2 direction = b2GetLengthAndNormalize( &speed, m_wind );
+			b2Vec2 wind = b2MulSV( speed, b2Add( direction, m_noise ) );
+
+			for ( int i = 0; i < m_count; ++i )
+			{
+				b2ShapeId shapeIds[1];
+				int count = b2Body_GetShapes( m_bodyIds[i], shapeIds, 1 );
+				for ( int j = 0; j < count; ++j )
+				{
+					b2Shape_ApplyWindForce( shapeIds[j], wind, m_drag, m_lift, true );
+				}
+			}
+
+			b2Vec2 rand = RandomVec2( -0.3f, 0.3f );
+			m_noise = b2Lerp( m_noise, rand, 0.05f );
+
+			m_draw->DrawLine( b2Vec2_zero, b2MulSV( 0.2f, wind ), b2_colorFuchsia );
+		}
+
+
+		Sample::Step();
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new Wind( context );
+	}
+
+	static constexpr int m_maxCount = 60;
+
+	ShapeType m_shapeType;
+	b2Vec2 m_wind;
+	float m_drag;
+	float m_lift;
+	b2Vec2 m_noise;
+	b2BodyId m_groundId;
+	b2BodyId m_bodyIds[m_maxCount];
+	int m_count;
+};
+
+static int sampleWind = RegisterSample( "Shapes", "Wind", Wind::Create );

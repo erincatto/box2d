@@ -699,10 +699,3 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 
 	return touching;
 }
-
-b2Manifold b2ComputeManifold( b2Shape* shapeA, b2Transform transformA, b2Shape* shapeB, b2Transform transformB )
-{
-	b2ManifoldFcn* fcn = s_registers[shapeA->type][shapeB->type].fcn;
-	b2SimplexCache cache = { 0 };
-	return fcn( shapeA, transformA, shapeB, transformB, &cache );
-}
