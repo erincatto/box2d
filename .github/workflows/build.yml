@@ -161,4 +161,53 @@ jobs:
       
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release
-      
+
+  build-ubuntu-zig-static:
+    name: ubuntu-zig-static
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.15.1
+      - name: Build
+        run: zig build -Dunit_tests=true
+
+      - name: Test
+        run: ./zig-out/bin/test
+    
+  build-ubuntu-zig-dynamic:
+    name: ubuntu-zig-dynamic
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.15.1
+      - name: Build
+        run: zig build -Dshared=true
+
+  build-windows-zig-static:
+    name: windows-zig-static
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.15.1
+      - name: Build
+        run: zig build -Dunit_tests=true
+
+      - name: Test
+        run: .\zig-out\bin\test.exe
+
+  build-windows-zig-dynamic:
+    name: windows-zig-dynamic
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.15.1
+      - name: Build
+        run: zig build -Dshared=true
