@@ -961,10 +961,10 @@ public:
 
 static int samplePrismatic = RegisterSample( "Joints", "Prismatic", PrismaticJoint::Create );
 
-class DynamicPrismatic : public Sample
+class MultiplePrismatic : public Sample
 {
 public:
-	explicit DynamicPrismatic( SampleContext* context )
+	explicit MultiplePrismatic( SampleContext* context )
 		: Sample( context )
 	{
 		if ( m_context->restart == false )
@@ -977,149 +977,59 @@ public:
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			groundId = b2CreateBody( m_worldId, &bodyDef );
-		}
-
-		m_enableSpring = false;
-		m_enableLimit = true;
-		m_enableMotor = false;
-		m_motorSpeed = 2.0f;
-		m_motorForce = 25.0f;
-		m_hertz = 1.0f;
-		m_dampingRatio = 0.5f;
-		m_translation = 0.0f;
-
-		{
-			b2BodyDef bodyDef = b2DefaultBodyDef();
-			bodyDef.position = { 0.0f, 10.0f };
-			bodyDef.type = b2_dynamicBody;
-			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Polygon box = b2MakeBox( 0.5f, 2.0f );
+			b2Polygon box = b2MakeOffsetBox( 20.0f, 1.0f, { 0.0f, -1.0f }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+
+			box = b2MakeOffsetBox( 1.0f, 5.0f, { 19.0f, 5.0f }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+
+			box = b2MakeOffsetBox( 1.0f, 5.0f, { -19.0f, 5.0f }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+		}
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2Polygon box = b2MakeBox( 3.0f, 0.5f );
+		b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
+		jointDef.base.bodyIdA = groundId;
+		jointDef.base.localFrameA.p = {0.0f, 0.0f};
+		jointDef.base.localFrameB.p = {0.0f, -0.6f};
+		jointDef.base.drawScale = 1.0f;
+		jointDef.motorSpeed = 0.0f;
+		jointDef.maxMotorForce = 25.0f;
+		jointDef.enableMotor = true;
+		jointDef.lowerTranslation = -3.0f;
+		jointDef.upperTranslation = 3.0f;
+		jointDef.enableLimit = true;
+		jointDef.hertz = 1.0f;
+		jointDef.dampingRatio = 0.5f;
+		jointDef.enableSpring = true;
+
+		for (int i = 0; i < 3; ++i)
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 0.0f, 0.6f + 1.2f * i };
+			bodyDef.type = b2_dynamicBody;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			b2Vec2 pivot = { 0.0f, 9.0f };
-			// b2Vec2 axis = b2Normalize({1.0f, 0.0f});
-			b2Vec2 axis = b2Normalize( { 1.0f, 1.0f } );
-			b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
-			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
-			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
-			jointDef.base.localFrameA.q = b2MakeRotFromUnitVector( axis );
-			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
-			jointDef.base.localFrameB.q = b2MakeRotFromUnitVector( axis );
-			jointDef.base.drawScale = 2.0f;
-			jointDef.motorSpeed = m_motorSpeed;
-			jointDef.maxMotorForce = m_motorForce;
-			jointDef.enableMotor = m_enableMotor;
-			jointDef.lowerTranslation = -10.0f;
-			jointDef.upperTranslation = 10.0f;
-			jointDef.enableLimit = m_enableLimit;
-			jointDef.enableSpring = m_enableSpring;
-			jointDef.hertz = m_hertz;
-			jointDef.dampingRatio = m_dampingRatio;
+			b2CreatePrismaticJoint( m_worldId, &jointDef );
 
-			m_jointId = b2CreatePrismaticJoint( m_worldId, &jointDef );
+			jointDef.base.bodyIdA = bodyId;
+			jointDef.base.localFrameA.p = { 0.0f, 0.6f };
+			jointDef.base.localFrameB.p = { 0.0f, -0.6f };
 		}
-	}
-
-	void UpdateGui() override
-	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 240.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
-
-		ImGui::Begin( "Prismatic Joint", nullptr, ImGuiWindowFlags_NoResize );
-
-		if ( ImGui::Checkbox( "Limit", &m_enableLimit ) )
-		{
-			b2PrismaticJoint_EnableLimit( m_jointId, m_enableLimit );
-			b2Joint_WakeBodies( m_jointId );
-		}
-
-		if ( ImGui::Checkbox( "Motor", &m_enableMotor ) )
-		{
-			b2PrismaticJoint_EnableMotor( m_jointId, m_enableMotor );
-			b2Joint_WakeBodies( m_jointId );
-		}
-
-		if ( m_enableMotor )
-		{
-			if ( ImGui::SliderFloat( "Max Force", &m_motorForce, 0.0f, 200.0f, "%.0f" ) )
-			{
-				b2PrismaticJoint_SetMaxMotorForce( m_jointId, m_motorForce );
-				b2Joint_WakeBodies( m_jointId );
-			}
-
-			if ( ImGui::SliderFloat( "Speed", &m_motorSpeed, -40.0f, 40.0f, "%.0f" ) )
-			{
-				b2PrismaticJoint_SetMotorSpeed( m_jointId, m_motorSpeed );
-				b2Joint_WakeBodies( m_jointId );
-			}
-		}
-
-		if ( ImGui::Checkbox( "Spring", &m_enableSpring ) )
-		{
-			b2PrismaticJoint_EnableSpring( m_jointId, m_enableSpring );
-			b2Joint_WakeBodies( m_jointId );
-		}
-
-		if ( m_enableSpring )
-		{
-			if ( ImGui::SliderFloat( "Hertz", &m_hertz, 0.0f, 10.0f, "%.1f" ) )
-			{
-				b2PrismaticJoint_SetSpringHertz( m_jointId, m_hertz );
-				b2Joint_WakeBodies( m_jointId );
-			}
-
-			if ( ImGui::SliderFloat( "Damping", &m_dampingRatio, 0.0f, 2.0f, "%.1f" ) )
-			{
-				b2PrismaticJoint_SetSpringDampingRatio( m_jointId, m_dampingRatio );
-				b2Joint_WakeBodies( m_jointId );
-			}
-
-			if ( ImGui::SliderFloat( "Translation", &m_translation, -15.0f, 15.0f, "%.1f" ) )
-			{
-				b2PrismaticJoint_SetTargetTranslation( m_jointId, m_translation );
-				b2Joint_WakeBodies( m_jointId );
-			}
-		}
-
-		ImGui::End();
-	}
-
-	void Step() override
-	{
-		Sample::Step();
-
-		float force = b2PrismaticJoint_GetMotorForce( m_jointId );
-		DrawTextLine( "Motor Force = %4.1f", force );
-
-		float translation = b2PrismaticJoint_GetTranslation( m_jointId );
-		DrawTextLine( "Translation = %4.1f", translation );
-
-		float speed = b2PrismaticJoint_GetSpeed( m_jointId );
-		DrawTextLine( "Speed = %4.8f", speed );
 	}
 
 	static Sample* Create( SampleContext* context )
 	{
-		return new DynamicPrismatic( context );
+		return new MultiplePrismatic( context );
 	}
-
-	b2JointId m_jointId;
-	float m_motorSpeed;
-	float m_motorForce;
-	float m_hertz;
-	float m_dampingRatio;
-	float m_translation;
-	bool m_enableSpring;
-	bool m_enableMotor;
-	bool m_enableLimit;
 };
 
-static int sampleDynamicPrismatic = RegisterSample( "Joints", "Dynamic Prismatic", DynamicPrismatic::Create );
+static int sampleMultiplePrismatic = RegisterSample( "Joints", "Multiple Prismatic", MultiplePrismatic::Create );
 
 class WheelJoint : public Sample
 {
