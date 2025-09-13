@@ -990,7 +990,7 @@ public:
 		}
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		b2Polygon box = b2MakeBox( 3.0f, 0.5f );
+		b2Polygon box = b2MakeBox( 0.5f, 0.5f );
 		b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
 		jointDef.base.bodyIdA = groundId;
 		jointDef.base.localFrameA.p = {0.0f, 0.0f};
@@ -998,13 +998,13 @@ public:
 		jointDef.base.drawScale = 1.0f;
 		jointDef.motorSpeed = 0.0f;
 		jointDef.maxMotorForce = 25.0f;
-		jointDef.enableMotor = true;
-		jointDef.lowerTranslation = -3.0f;
-		jointDef.upperTranslation = 3.0f;
+		jointDef.enableMotor = false;
+		jointDef.lowerTranslation = -6.0f;
+		jointDef.upperTranslation = 6.0f;
 		jointDef.enableLimit = true;
 		jointDef.hertz = 1.0f;
 		jointDef.dampingRatio = 0.5f;
-		jointDef.enableSpring = true;
+		jointDef.enableSpring = false;
 
 		for (int i = 0; i < 3; ++i)
 		{
@@ -1012,10 +1012,15 @@ public:
 			bodyDef.position = { 0.0f, 0.6f + 1.2f * i };
 			bodyDef.type = b2_dynamicBody;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			shapeDef.density = i == 0 ? 1000.0f : 1.0f;
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			jointDef.base.bodyIdB = bodyId;
-			b2CreatePrismaticJoint( m_worldId, &jointDef );
+			if (i > 0)
+			{
+				jointDef.base.bodyIdB = bodyId;
+				b2CreatePrismaticJoint( m_worldId, &jointDef );
+			}
 
 			jointDef.base.bodyIdA = bodyId;
 			jointDef.base.localFrameA.p = { 0.0f, 0.6f };
