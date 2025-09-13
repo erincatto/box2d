@@ -233,29 +233,29 @@ float b2GetPrismaticJointTorque( b2World* world, b2JointSim* base )
 }
 
 // Linear constraint (point-to-line)
-// d = p2 - p1 = x2 + r2 - x1 - r1
+// d = pB - pA = xB + rB - xA - rA
 // C = dot(perp, d)
-// Cdot = dot(d, cross(w1, perp)) + dot(perp, v2 + cross(w2, r2) - v1 - cross(w1, r1))
-//      = -dot(perp, v1) - dot(cross(d + r1, perp), w1) + dot(perp, v2) + dot(cross(r2, perp), v2)
-// J = [-perp, -cross(d + r1, perp), perp, cross(r2,perp)]
+// Cdot = dot(d, cross(wA, perp)) + dot(perp, vB + cross(wB, rB) - vA - cross(wA, rA))
+//      = -dot(perp, vA) - dot(cross(rA + d, perp), wA) + dot(perp, vB) + dot(cross(rB, perp), vB)
+// J = [-perp, -cross(rA + d, perp), perp, cross(rB, perp)]
 //
 // Angular constraint
-// C = a2 - a1 + a_initial
-// Cdot = w2 - w1
+// C = aB - aA + a_initial
+// Cdot = wB - wA
 // J = [0 0 -1 0 0 1]
 //
 // K = J * invM * JT
 //
-// J = [-a -s1 a s2]
+// J = [-a -sA a sB]
 //     [0  -1  0  1]
 // a = perp
-// s1 = cross(d + r1, a) = cross(p2 - x1, a)
-// s2 = cross(r2, a) = cross(p2 - x2, a)
+// sA = cross(rA + d, a) = cross(pB - xA, a)
+// sB = cross(rB, a) = cross(pB - xB, a)
 
 // Motor/Limit linear constraint
-// C = dot(ax1, d)
-// Cdot = -dot(ax1, v1) - dot(cross(d + r1, ax1), w1) + dot(ax1, v2) + dot(cross(r2, ax1), v2)
-// J = [-ax1 -cross(d+r1,ax1) ax1 cross(r2,ax1)]
+// C = dot(axA, d)
+// Cdot = -dot(axA, vA) - dot(cross(rA + d, axA), wA) + dot(axA, vB) + dot(cross(rB, axA), vB)
+// J = [-axA -cross(rA + d, axA) axA cross(rB, ax1)]
 
 // Predictive limit is applied even when the limit is not active.
 // Prevents a constraint speed that can lead to a constraint error in one time step.
@@ -329,7 +329,7 @@ void b2PreparePrismaticJoint( b2JointSim* base, b2StepContext* context )
 	b2Vec2 axisA = b2RotateVector( joint->frameA.q, (b2Vec2){ 1.0f, 0.0f } );
 
 	b2Vec2 d = b2Add( joint->deltaCenter, b2Sub( rB, rA ) );
-	float a1 = b2Cross( b2Add( d, rA ), axisA );
+	float a1 = b2Cross( b2Add( rA, d ), axisA );
 	float a2 = b2Cross( rB, axisA );
 
 	// effective masses
@@ -374,7 +374,7 @@ void b2WarmStartPrismaticJoint( b2JointSim* base, b2StepContext* context )
 	axisA = b2RotateVector( stateA->deltaRotation, axisA );
 
 	// impulse is applied at anchor point on body B
-	float a1 = b2Cross( b2Add( d, rA ), axisA );
+	float a1 = b2Cross( b2Add( rA, d ), axisA );
 	float a2 = b2Cross( rB, axisA );
 	float axialImpulse = joint->springImpulse + joint->motorImpulse + joint->lowerImpulse - joint->upperImpulse;
 
