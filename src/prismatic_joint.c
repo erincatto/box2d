@@ -508,13 +508,18 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 
 			float oldImpulse = joint->lowerImpulse;
 			float Cdot = b2Dot( axisA, b2Sub( vB, vA ) ) + a2 * wB - a1 * wA;
-			float impulse = -joint->axialMass * massScale * ( Cdot + bias ) - impulseScale * oldImpulse;
-			joint->lowerImpulse = b2MaxFloat( oldImpulse + impulse, 0.0f );
-			impulse = joint->lowerImpulse - oldImpulse;
+			float deltaImpulse = -joint->axialMass * massScale * ( Cdot + bias ) - impulseScale * oldImpulse;
+			joint->lowerImpulse = b2MaxFloat( oldImpulse + deltaImpulse, 0.0f );
+			deltaImpulse = joint->lowerImpulse - oldImpulse;
 
-			b2Vec2 P = b2MulSV( impulse, axisA );
-			float LA = impulse * a1;
-			float LB = impulse * a2;
+			b2Vec2 P = b2MulSV( deltaImpulse, axisA );
+			float LA = deltaImpulse * a1;
+			float LB = deltaImpulse * a2;
+			
+			if (deltaImpulse < -1e4f || 1e4f < deltaImpulse)
+			{
+				deltaImpulse += 0.0f;
+			}
 
 			vA = b2MulSub( vA, mA, P );
 			wA -= iA * LA;
@@ -547,13 +552,18 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 			float oldImpulse = joint->upperImpulse;
 			// sign flipped
 			float Cdot = b2Dot( axisA, b2Sub( vA, vB ) ) + a1 * wA - a2 * wB;
-			float impulse = -joint->axialMass * massScale * ( Cdot + bias ) - impulseScale * oldImpulse;
-			joint->upperImpulse = b2MaxFloat( oldImpulse + impulse, 0.0f );
-			impulse = joint->upperImpulse - oldImpulse;
+			float deltaImpulse = -joint->axialMass * massScale * ( Cdot + bias ) - impulseScale * oldImpulse;
+			joint->upperImpulse = b2MaxFloat( oldImpulse + deltaImpulse, 0.0f );
+			deltaImpulse = joint->upperImpulse - oldImpulse;
 
-			b2Vec2 P = b2MulSV( impulse, axisA );
-			float LA = impulse * a1;
-			float LB = impulse * a2;
+			b2Vec2 P = b2MulSV( deltaImpulse, axisA );
+			float LA = deltaImpulse * a1;
+			float LB = deltaImpulse * a2;
+
+			if (deltaImpulse < -1e4f || 1e4f < deltaImpulse)
+			{
+				deltaImpulse += 0.0f;
+			}
 
 			// sign flipped
 			vA = b2MulAdd( vA, mA, P );
