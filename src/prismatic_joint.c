@@ -323,19 +323,6 @@ void b2PreparePrismaticJoint( b2JointSim* base, b2StepContext* context )
 	// Compute the initial center delta. Incremental position updates are relative to this.
 	joint->deltaCenter = b2Sub( bodySimB->center, bodySimA->center );
 
-	b2Vec2 rA = joint->frameA.p;
-	b2Vec2 rB = joint->frameB.p;
-
-	b2Vec2 axisA = b2RotateVector( joint->frameA.q, (b2Vec2){ 1.0f, 0.0f } );
-
-	b2Vec2 d = b2Add( joint->deltaCenter, b2Sub( rB, rA ) );
-	float a1 = b2Cross( b2Add( rA, d ), axisA );
-	float a2 = b2Cross( rB, axisA );
-
-	// effective masses
-	float k = mA + mB + iA * a1 * a1 + iB * a2 * a2;
-	joint->axialMass = k > 0.0f ? 1.0f / k : 0.0f;
-
 	joint->springSoftness = b2MakeSoft( joint->hertz, joint->dampingRatio, context->h );
 
 	if ( context->enableWarmStarting == false )
@@ -442,7 +429,11 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 	float a1 = b2Cross( b2Add( rA, d ), axisA );
 	float a2 = b2Cross( rB, axisA );
 
+	float k = mA + mB + iA * a1 * a1 + iB * a2 * a2;
+	float axialMass = k > 0.0f ? 1.0f / k : 0.0f;
+
 	b2Softness softness = base->constraintSoftness;
+
 	// spring constraint
 	if ( joint->enableSpring )
 	{
@@ -453,7 +444,7 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 		float impulseScale = joint->springSoftness.impulseScale;
 
 		float Cdot = b2Dot( axisA, b2Sub( vB, vA ) ) + a2 * wB - a1 * wA;
-		float deltaImpulse = -massScale * joint->axialMass * ( Cdot + bias ) - impulseScale * joint->springImpulse;
+		float deltaImpulse = -massScale * axialMass * ( Cdot + bias ) - impulseScale * joint->springImpulse;
 		joint->springImpulse += deltaImpulse;
 
 		b2Vec2 P = b2MulSV( deltaImpulse, axisA );
@@ -470,7 +461,7 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 	if ( joint->enableMotor )
 	{
 		float Cdot = b2Dot( axisA, b2Sub( vB, vA ) ) + a2 * wB - a1 * wA;
-		float impulse = joint->axialMass * ( joint->motorSpeed - Cdot );
+		float impulse = axialMass * ( joint->motorSpeed - Cdot );
 		float oldImpulse = joint->motorImpulse;
 		float maxImpulse = context->h * joint->maxMotorForce;
 		joint->motorImpulse = b2ClampFloat( joint->motorImpulse + impulse, -maxImpulse, maxImpulse );
@@ -488,15 +479,14 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 
 	if ( joint->enableLimit )
 	{
-		// These constants help maintain stability if the joint becomes highly distorted.
-		float limitSpeed = 4.0f * context->world->contactSpeed;
-		float limitSpeculativeDistance = 0.25f * ( joint->upperTranslation - joint->lowerTranslation );
+		// Clamp the speculative distance to a reasonable value
+		float speculativeDistance = 0.25f * ( joint->upperTranslation - joint->lowerTranslation );
 
 		// Lower limit
 		{
 			float C = translation - joint->lowerTranslation;
 
-			if ( C < limitSpeculativeDistance )
+			if ( C < speculativeDistance )
 			{
 				float bias = 0.0f;
 				float massScale = 1.0f;
@@ -510,26 +500,20 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 				}
 				else if ( useBias )
 				{
-					bias = b2MaxFloat( softness.biasRate * C, -limitSpeed );
+					bias = softness.biasRate * C;
 					massScale = softness.massScale;
 					impulseScale = softness.impulseScale;
 				}
 
 				float oldImpulse = joint->lowerImpulse;
 				float Cdot = b2Dot( axisA, b2Sub( vB, vA ) ) + a2 * wB - a1 * wA;
-				float deltaImpulse = -joint->axialMass * massScale * ( Cdot + bias ) - impulseScale * oldImpulse;
+				float deltaImpulse = -axialMass * massScale * ( Cdot + bias ) - impulseScale * oldImpulse;
 				joint->lowerImpulse = b2MaxFloat( oldImpulse + deltaImpulse, 0.0f );
 				deltaImpulse = joint->lowerImpulse - oldImpulse;
 
 				b2Vec2 P = b2MulSV( deltaImpulse, axisA );
 				float LA = deltaImpulse * a1;
 				float LB = deltaImpulse * a2;
-
-				// todo testing
-				if ( deltaImpulse < -1e4f || 1e4f < deltaImpulse )
-				{
-					deltaImpulse += 0.0f;
-				}
 
 				vA = b2MulSub( vA, mA, P );
 				wA -= iA * LA;
@@ -549,7 +533,7 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 			// sign flipped
 			float C = joint->upperTranslation - translation;
 
-			if ( C < limitSpeculativeDistance )
+			if ( C < speculativeDistance )
 			{
 				float bias = 0.0f;
 				float massScale = 1.0f;
@@ -563,27 +547,22 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 				}
 				else if ( useBias )
 				{
-					bias = b2MaxFloat( softness.biasRate * C, -limitSpeed );
+					bias = softness.biasRate * C;
 					massScale = softness.massScale;
 					impulseScale = softness.impulseScale;
 				}
 
 				float oldImpulse = joint->upperImpulse;
+
 				// sign flipped
 				float Cdot = b2Dot( axisA, b2Sub( vA, vB ) ) + a1 * wA - a2 * wB;
-				float deltaImpulse = -joint->axialMass * massScale * ( Cdot + bias ) - impulseScale * oldImpulse;
+				float deltaImpulse = -axialMass * massScale * ( Cdot + bias ) - impulseScale * oldImpulse;
 				joint->upperImpulse = b2MaxFloat( oldImpulse + deltaImpulse, 0.0f );
 				deltaImpulse = joint->upperImpulse - oldImpulse;
 
 				b2Vec2 P = b2MulSV( deltaImpulse, axisA );
 				float LA = deltaImpulse * a1;
 				float LB = deltaImpulse * a2;
-
-				// todo testing
-				if ( deltaImpulse < -1e4f || 1e4f < deltaImpulse )
-				{
-					deltaImpulse += 0.0f;
-				}
 
 				// sign flipped
 				vA = b2MulAdd( vA, mA, P );
@@ -652,6 +631,11 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 		vB = b2MulAdd( vB, mB, P );
 		wB += iB * LB;
 	}
+
+	B2_ASSERT( b2IsValidVec2( vA ) );
+	B2_ASSERT( b2IsValidFloat( wA ) );
+	B2_ASSERT( b2IsValidVec2( vB ) );
+	B2_ASSERT( b2IsValidFloat( wB ) );
 
 	if ( stateA->flags & b2_dynamicFlag )
 	{

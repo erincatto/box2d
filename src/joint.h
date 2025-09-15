@@ -140,7 +140,6 @@ typedef struct b2PrismaticJoint
 	b2Transform frameA;
 	b2Transform frameB;
 	b2Vec2 deltaCenter;
-	float axialMass;
 	b2Softness springSoftness;
 
 	bool enableSpring;
