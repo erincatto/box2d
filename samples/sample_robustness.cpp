@@ -548,3 +548,62 @@ public:
 };
 
 static int sampleCart = RegisterSample( "Robustness", "Cart", Cart::Create );
+
+// Ensure prismatic joint stability when highly distorted
+class MultiplePrismatic : public Sample
+{
+public:
+	explicit MultiplePrismatic( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 8.0f };
+			m_context->camera.m_zoom = 25.0f * 0.5f;
+		}
+
+		b2BodyId groundId;
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			groundId = b2CreateBody( m_worldId, &bodyDef );
+		}
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+		b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
+		jointDef.base.bodyIdA = groundId;
+		jointDef.base.localFrameA.p = { 0.0f, 0.0f };
+		jointDef.base.localFrameB.p = { 0.0f, -0.6f };
+		jointDef.base.drawScale = 1.0f;
+		jointDef.base.constraintHertz = 240.0f;
+		jointDef.lowerTranslation = -6.0f;
+		jointDef.upperTranslation = 6.0f;
+		jointDef.enableLimit = true;
+
+		for ( int i = 0; i < 6; ++i )
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 0.0f, 0.6f + 1.2f * i };
+			bodyDef.type = b2_dynamicBody;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			jointDef.base.bodyIdB = bodyId;
+			b2CreatePrismaticJoint( m_worldId, &jointDef );
+
+			jointDef.base.bodyIdA = bodyId;
+			jointDef.base.localFrameA.p = { 0.0f, 0.6f };
+		}
+
+		// Increase the mouse force
+		m_mouseForceScale = 100000.0f;
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new MultiplePrismatic( context );
+	}
+};
+
+static int sampleMultiplePrismatic = RegisterSample( "Robustness", "Multiple Prismatic", MultiplePrismatic::Create );

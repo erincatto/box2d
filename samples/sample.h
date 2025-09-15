@@ -105,6 +105,7 @@ public:
 	b2WorldId m_worldId;
 	b2JointId m_mouseJointId;
 	b2Vec2 m_mousePoint;
+	float m_mouseForceScale;
 	int m_stepCount;
 	b2Profile m_maxProfile;
 	b2Profile m_totalProfile;

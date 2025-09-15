@@ -235,6 +235,7 @@ Sample::Sample( SampleContext* context )
 
 	m_mouseBodyId = b2_nullBodyId;
 	m_mousePoint = {};
+	m_mouseForceScale = 100.0f;
 
 	m_maxProfile = {};
 	m_totalProfile = {};
@@ -349,7 +350,8 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 			b2MassData massData = b2Body_GetMassData( queryContext.bodyId );
 			float g = b2Length( b2World_GetGravity( m_worldId ) );
 			float mg = massData.mass * g;
-			jointDef.maxSpringForce = 100.0f * mg;
+
+			jointDef.maxSpringForce = m_mouseForceScale * mg;
 
 			if (massData.mass > 0.0f)
 			{

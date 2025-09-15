@@ -573,3 +573,5 @@ public:
 };
 
 static int staticVsBulletBug = RegisterSample( "Issues", "StaticVsBulletBug", StaticVsBulletBug::Create );
+
+
