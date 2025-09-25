@@ -209,15 +209,21 @@ install(
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/box2d
 )
 
+export(
+  EXPORT box2dConfig
+  NAMESPACE box2d::
+  FILE "${PROJECT_BINARY_DIR}/box2dConfig.cmake"
+)
+
 include(CMakePackageConfigHelpers)
 
 write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/box2dConfigVersion.cmake"
+  "${PROJECT_BINARY_DIR}/box2dConfigVersion.cmake"
   VERSION ${BOX2D_VERSION}
   COMPATIBILITY SameMajorVersion
 )
 
 install(
-  FILES "${CMAKE_CURRENT_BINARY_DIR}/box2dConfigVersion.cmake"
+  FILES "${PROJECT_BINARY_DIR}/box2dConfigVersion.cmake"
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/box2d"
 )
