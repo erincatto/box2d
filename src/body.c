@@ -999,6 +999,15 @@ void b2Body_ApplyTorque( b2BodyId bodyId, float torque, bool wake )
 	}
 }
 
+void b2Body_ClearForces( b2BodyId bodyId )
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	b2BodySim* bodySim = b2GetBodySim( world, body );
+	bodySim->force = b2Vec2_zero;
+	bodySim->torque = 0.0f;
+}
+
 void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Vec2 point, bool wake )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
