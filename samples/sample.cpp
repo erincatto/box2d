@@ -461,9 +461,9 @@ void Sample::Step()
 	m_context->draw.m_debugDraw.drawContacts = m_context->drawContactPoints;
 	m_context->draw.m_debugDraw.drawGraphColors = m_context->drawGraphColors;
 	m_context->draw.m_debugDraw.drawContactNormals = m_context->drawContactNormals;
-	m_context->draw.m_debugDraw.drawContactImpulses = m_context->drawContactImpulses;
+	m_context->draw.m_debugDraw.drawContactForces = m_context->drawContactImpulses;
 	m_context->draw.m_debugDraw.drawContactFeatures = m_context->drawContactFeatures;
-	m_context->draw.m_debugDraw.drawFrictionImpulses = m_context->drawFrictionImpulses;
+	m_context->draw.m_debugDraw.drawFrictionForces = m_context->drawFrictionImpulses;
 	m_context->draw.m_debugDraw.drawIslands = m_context->drawIslands;
 
 	b2World_EnableSleeping( m_worldId, m_context->enableSleep );

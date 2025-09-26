@@ -191,6 +191,9 @@ typedef struct b2BodySim
 	// Index of b2Body
 	int bodyId;
 
+	// todo testing
+	int clusterIndex;
+
 	// b2BodyFlags
 	uint32_t flags;
 } b2BodySim;

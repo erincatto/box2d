@@ -575,3 +575,165 @@ public:
 static int staticVsBulletBug = RegisterSample( "Issues", "StaticVsBulletBug", StaticVsBulletBug::Create );
 
 
+class UnstableJoints : public Sample
+{
+public:
+	explicit UnstableJoints( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 1.75f };
+			m_context->camera.m_zoom = 32.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Segment segment = { { -100.0f, 0.0f }, { 100.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		b2Filter filter = b2DefaultFilter();
+		filter.groupIndex = -1;
+
+		b2BodyId torsoId;
+		{
+			b2BodyDef bd = b2DefaultBodyDef();
+			bd.type = b2_dynamicBody;
+
+			// todo
+			//bd.type = b2_staticBody;
+			torsoId = b2CreateBody( m_worldId, &bd );
+
+			b2ShapeDef sd = b2DefaultShapeDef();
+			//sd.density = 1.0f;
+			//sd.material.friction = 0.5f;
+			//sd.material.restitution = 0.1f;
+			//sd.filter = filter;
+
+			const b2Vec2 vertices[] = { { -1, 0 }, { 1, 0 }, { 1, 4 }, { -1, 4 } };
+
+			const b2Hull hull = b2ComputeHull( vertices, ARRAY_COUNT( vertices ) );
+			const b2Polygon polygon = b2MakePolygon( &hull, 0 );
+
+			b2CreatePolygonShape( torsoId, &sd, &polygon );
+		}
+
+		b2BodyId centerId;
+		{
+			b2BodyDef bd = b2DefaultBodyDef();
+			bd.type = b2_dynamicBody;
+			bd.position = { 0, 3 };
+			centerId = b2CreateBody( m_worldId, &bd );
+
+			b2ShapeDef sd = b2DefaultShapeDef();
+			//sd.density = 1.0f;
+			//sd.material.friction = 0.5f;
+			//sd.material.restitution = 0.1f;
+			//sd.filter = filter;
+
+			b2Circle circle;
+			circle.center = { 0, 0 };
+						
+			// Note: this will crash due to divergence (inf/nan) with a radius of 0.1
+			circle.radius = 0.1f;
+			//circle.radius = 0.2f;
+
+			b2CreateCircleShape( centerId, &sd, &circle );
+		}
+
+		b2JointId weldCenter;
+		{
+			b2WeldJointDef jd = b2DefaultWeldJointDef();
+			jd.base.bodyIdA = torsoId;
+			jd.base.bodyIdB = centerId;
+			jd.base.localFrameA.p = { 0, 3 };
+			weldCenter = b2CreateWeldJoint( m_worldId, &jd );
+		}
+
+		b2BodyId leftId;
+		{
+			b2BodyDef bd = b2DefaultBodyDef();
+			bd.type = b2_dynamicBody;
+			bd.position = { -3.5, 3 };
+
+			leftId = b2CreateBody( m_worldId, &bd );
+
+			b2ShapeDef sd = b2DefaultShapeDef();
+			//sd.density = 1.0f;
+			//sd.material.friction = 0.5f;
+			//sd.material.restitution = 0.1f;
+			//sd.filter = filter;
+
+			b2Circle circle;
+			circle.center = { 0, 0 };
+			circle.radius = 2;
+
+			b2CreateCircleShape( leftId, &sd, &circle );
+		}
+		b2JointId leftPrism;
+		{
+			b2PrismaticJointDef jd = b2DefaultPrismaticJointDef();
+			jd.base.bodyIdA = centerId;
+			jd.base.bodyIdB = leftId;
+			jd.base.localFrameA.p = { 0, 0 };
+			jd.base.localFrameA.q = b2MakeRot( 0 );
+			jd.enableSpring = true;
+			jd.enableLimit = true;
+			jd.hertz = 10;
+			jd.dampingRatio = 2;
+
+			jd.upperTranslation = 4;
+			jd.lowerTranslation = -4;
+			jd.targetTranslation = -3;
+			leftPrism = b2CreatePrismaticJoint( m_worldId, &jd );
+		}
+
+		b2BodyId rightId;
+		{
+			b2BodyDef bd = b2DefaultBodyDef();
+			bd.type = b2_dynamicBody;
+			bd.position = { 3.5, 3 };
+			rightId = b2CreateBody( m_worldId, &bd );
+
+			b2ShapeDef sd = b2DefaultShapeDef();
+			//sd.density = 1.0f;
+			//sd.material.friction = 0.5f;
+			//sd.material.restitution = 0.1f;
+			//sd.filter = filter;
+
+			b2Circle circle;
+			circle.center = { 0, 0 };
+			circle.radius = 2;
+
+			b2CreateCircleShape( rightId, &sd, &circle );
+		}
+		b2JointId rightPrism;
+		{
+			b2PrismaticJointDef jd = b2DefaultPrismaticJointDef();
+			jd.base.bodyIdA = centerId;
+			jd.base.bodyIdB = rightId;
+			jd.base.localFrameA.p = { 0, 0 };
+			jd.base.localFrameA.q = b2MakeRot( 0 );
+			jd.enableSpring = true;
+			jd.enableLimit = true;
+			jd.hertz = 10;
+			jd.dampingRatio = 2;
+
+			jd.upperTranslation = 4;
+			jd.lowerTranslation = -4;
+			jd.targetTranslation = 3;
+			rightPrism = b2CreatePrismaticJoint( m_worldId, &jd );
+		}
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new UnstableJoints( context );
+	}
+};
+
+static int samplePrismaticJointCrash = RegisterSample( "Issues", "Unstable Joints", UnstableJoints::Create );

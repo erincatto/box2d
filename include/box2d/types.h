@@ -1355,6 +1355,9 @@ typedef struct b2DebugDraw
 	/// Bounds to use if restricting drawing to a rectangular region
 	b2AABB drawingBounds;
 
+	/// Scale to use when drawing forces
+	float forceScale;
+
 	/// Option to draw shapes
 	bool drawShapes;
 
@@ -1382,14 +1385,14 @@ typedef struct b2DebugDraw
 	/// Option to draw contact normals
 	bool drawContactNormals;
 
-	/// Option to draw contact normal impulses
-	bool drawContactImpulses;
+	/// Option to draw contact normal forces
+	bool drawContactForces;
 
 	/// Option to draw contact feature ids
 	bool drawContactFeatures;
 
 	/// Option to draw contact friction impulses
-	bool drawFrictionImpulses;
+	bool drawFrictionForces;
 
 	/// Option to draw islands as bounding boxes
 	bool drawIslands;
