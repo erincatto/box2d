@@ -32,7 +32,7 @@ static b2JointDef b2DefaultJointDef( void )
 	def.torqueThreshold = FLT_MAX;
 	def.constraintHertz = 60.0f;
 	def.constraintDampingRatio = 2.0f;
-	def.drawScale = 1.0f;
+	def.drawScale = b2_lengthUnitsPerMeter;
 	return def;
 }
 
