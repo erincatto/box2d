@@ -1343,6 +1343,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// prepare for move events
 		b2BodyMoveEventArray_Resize( &world->bodyMoveEvents, awakeBodyCount );
 
+		// A block is a range of tasks, a start index and count as a sub-array.
 		// Each worker receives at most M blocks of work. The workers may receive less blocks if there is not sufficient work.
 		// Each block of work has a minimum number of elements (block size). This in turn may limit the number of blocks.
 		// If there are many elements then the block size is increased so there are still at most M blocks of work per worker.
@@ -1352,7 +1353,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// The block size is a power of two to make math efficient.
 
 		int workerCount = world->workerCount;
+
+		// todo 4 seems good but more benchmarking would be good
 		const int blocksPerWorker = 4;
+
 		const int maxBlockCount = blocksPerWorker * workerCount;
 
 		// Configure blocks for tasks that parallel-for bodies
@@ -1366,6 +1370,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		}
 		else
 		{
+			// Divide by bodyBlockSize (32) and ensure there is at least one block
 			bodyBlockCount = ( ( awakeBodyCount - 1 ) >> 5 ) + 1;
 		}
 
@@ -1403,7 +1408,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				// determine the number of contact work blocks for this color
 				if ( colorContactCountSIMD > blocksPerWorker * maxBlockCount )
 				{
-					// too many contact blocks
+					// too many contact blocks per worker, so make bigger blocks
 					colorContactBlockSizes[c] = colorContactCountSIMD / maxBlockCount;
 					colorContactBlockCounts[c] = maxBlockCount;
 				}
@@ -1411,7 +1416,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				{
 					// dividing by blocksPerWorker (4)
 					colorContactBlockSizes[c] = blocksPerWorker;
-					colorContactBlockCounts[c] = ( ( colorContactCountSIMD - 1 ) >> 2 ) + 1;
+
+					// This math makes sure there is at least one block
+					//colorContactBlockCounts[c] = ( ( colorContactCountSIMD - 1 ) >> 2 ) + 1;
+					colorContactBlockCounts[c] = ( ( colorContactCountSIMD - 1 ) / blocksPerWorker ) + 1;
 				}
 				else
 				{
@@ -1433,7 +1441,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				{
 					// dividing by blocksPerWorker (4)
 					colorJointBlockSizes[c] = blocksPerWorker;
-					colorJointBlockCounts[c] = ( ( colorJointCount - 1 ) >> 2 ) + 1;
+					//colorJointBlockCounts[c] = ( ( colorJointCount - 1 ) >> 2 ) + 1;
+					colorJointBlockCounts[c] = ( ( colorJointCount - 1 ) / 4 ) + 1;
 				}
 				else
 				{
@@ -1514,7 +1523,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		// Define work blocks for preparing contacts and storing contact impulses
 		int contactBlockSize = blocksPerWorker;
-		int contactBlockCount = simdContactCount > 0 ? ( ( simdContactCount - 1 ) >> 2 ) + 1 : 0;
+		//int contactBlockCount = simdContactCount > 0 ? ( ( simdContactCount - 1 ) >> 2 ) + 1 : 0;
+		int contactBlockCount = simdContactCount > 0 ? ( ( simdContactCount - 1 ) / blocksPerWorker ) + 1 : 0;
 		if ( simdContactCount > contactBlockSize * maxBlockCount )
 		{
 			// Too many blocks, increase block size
@@ -1524,7 +1534,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		// Define work blocks for preparing joints
 		int jointBlockSize = blocksPerWorker;
-		int jointBlockCount = awakeJointCount > 0 ? ( ( awakeJointCount - 1 ) >> 2 ) + 1 : 0;
+		//int jointBlockCount = awakeJointCount > 0 ? ( ( awakeJointCount - 1 ) >> 2 ) + 1 : 0;
+		int jointBlockCount = awakeJointCount > 0 ? ( ( awakeJointCount - 1 ) / blocksPerWorker ) + 1 : 0;
 		if ( awakeJointCount > jointBlockSize * maxBlockCount )
 		{
 			// Too many blocks, increase block size
@@ -1619,7 +1630,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		}
 
 		// Prepare graph work blocks
-		b2SolverBlock* graphColorBlocks[B2_GRAPH_COLOR_COUNT];
+		b2SolverBlock* graphColorBlocks[B2_GRAPH_COLOR_COUNT] = {0};
 		b2SolverBlock* baseGraphBlock = graphBlocks;
 
 		for ( int i = 0; i < activeColorCount; ++i )

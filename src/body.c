@@ -282,13 +282,13 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	if ( def->name )
 	{
 		int i = 0;
-		while ( i < 31 && def->name[i] != 0 )
+		while ( i < B2_NAME_LENGTH - 1 && def->name[i] != 0 )
 		{
 			body->name[i] = def->name[i];
 			i += 1;
 		}
 
-		while ( i < 32 )
+		while ( i < B2_NAME_LENGTH )
 		{
 			body->name[i] = 0;
 			i += 1;
@@ -296,7 +296,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	}
 	else
 	{
-		memset( body->name, 0, 32 * sizeof( char ) );
+		memset( body->name, 0, B2_NAME_LENGTH * sizeof( char ) );
 	}
 
 	body->userData = def->userData;
@@ -999,6 +999,15 @@ void b2Body_ApplyTorque( b2BodyId bodyId, float torque, bool wake )
 	}
 }
 
+void b2Body_ClearForces( b2BodyId bodyId )
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	b2BodySim* bodySim = b2GetBodySim( world, body );
+	bodySim->force = b2Vec2_zero;
+	bodySim->torque = 0.0f;
+}
+
 void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Vec2 point, bool wake )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
@@ -1309,18 +1318,24 @@ void b2Body_SetName( b2BodyId bodyId, const char* name )
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
-	if ( name != NULL )
+	if ( name )
 	{
-		for ( int i = 0; i < 31; ++i )
+		int i = 0;
+		while ( i < B2_NAME_LENGTH - 1 && name[i] != 0 )
 		{
 			body->name[i] = name[i];
+			i += 1;
 		}
 
-		body->name[31] = 0;
+		while ( i < B2_NAME_LENGTH )
+		{
+			body->name[i] = 0;
+			i += 1;
+		}
 	}
 	else
 	{
-		memset( body->name, 0, 32 * sizeof( char ) );
+		memset( body->name, 0, B2_NAME_LENGTH * sizeof( char ) );
 	}
 }
 

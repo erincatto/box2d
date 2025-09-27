@@ -574,4 +574,96 @@ public:
 
 static int staticVsBulletBug = RegisterSample( "Issues", "StaticVsBulletBug", StaticVsBulletBug::Create );
 
+class UnstableJoints : public Sample
+{
+public:
+	explicit UnstableJoints( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 1.75f };
+			m_context->camera.m_zoom = 32.0f;
+		}
 
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Segment segment = { { -100.0f, 0.0f }, { 100.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		b2BodyId centerId;
+		{
+			b2BodyDef bd = b2DefaultBodyDef();
+			bd.type = b2_dynamicBody;
+			bd.position = { 0, 3 };
+			centerId = b2CreateBody( m_worldId, &bd );
+
+			b2ShapeDef sd = b2DefaultShapeDef();
+
+			b2Circle circle;
+			circle.center = { 0, 0 };
+
+			// Note: this will crash due to divergence (inf/nan) with a radius of 0.1
+			//circle.radius = 0.1f;
+			circle.radius = 0.5f;
+
+			b2CreateCircleShape( centerId, &sd, &circle );
+		}
+
+		b2PrismaticJointDef jd = b2DefaultPrismaticJointDef();
+		jd.enableSpring = true;
+		jd.hertz = 10.0f;
+		jd.dampingRatio = 2.0f;
+
+		{
+			b2BodyDef bd = b2DefaultBodyDef();
+			bd.type = b2_dynamicBody;
+			bd.position = { -3.5, 3 };
+
+			b2BodyId leftId = b2CreateBody( m_worldId, &bd );
+
+			b2ShapeDef sd = b2DefaultShapeDef();
+
+			b2Circle circle;
+			circle.center = { 0, 0 };
+			circle.radius = 2.0f;
+			b2CreateCircleShape( leftId, &sd, &circle );
+
+			jd.base.bodyIdA = centerId;
+			jd.base.bodyIdB = leftId;
+			jd.targetTranslation = -3.0f;
+			b2CreatePrismaticJoint( m_worldId, &jd );
+		}
+
+		{
+			b2BodyDef bd = b2DefaultBodyDef();
+			bd.type = b2_dynamicBody;
+			bd.position = { 3.5, 3 };
+			b2BodyId rightId = b2CreateBody( m_worldId, &bd );
+
+			b2ShapeDef sd = b2DefaultShapeDef();
+
+			b2Circle circle;
+			circle.center = { 0, 0 };
+			circle.radius = 2.0f;
+
+			b2CreateCircleShape( rightId, &sd, &circle );
+
+			jd.base.bodyIdA = centerId;
+			jd.base.bodyIdB = rightId;
+			jd.targetTranslation = 3.0f;
+			b2CreatePrismaticJoint( m_worldId, &jd );
+		}
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new UnstableJoints( context );
+	}
+};
+
+static int samplePrismaticJointCrash = RegisterSample( "Issues", "Unstable Joints", UnstableJoints::Create );

@@ -8,6 +8,9 @@
 #include "box2d/math_functions.h"
 #include "box2d/types.h"
 
+// Length of body debug name
+#define B2_NAME_LENGTH 32
+
 typedef struct b2World b2World;
 
 enum b2BodyFlags
@@ -52,7 +55,7 @@ enum b2BodyFlags
 // Body organizational details that are not used in the solver.
 typedef struct b2Body
 {
-	char name[32];
+	char name[B2_NAME_LENGTH];
 
 	void* userData;
 

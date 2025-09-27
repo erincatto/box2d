@@ -174,7 +174,11 @@ typedef struct b2World
 	void* userData;
 
 	// Remember type step used for reporting forces and torques
+	// inverse sub-step
 	float inv_h;
+
+	// inverse full-step
+	float inv_dt;
 
 	int activeTaskCount;
 	int taskCount;

@@ -534,7 +534,7 @@ void b2WheelJoint_Dump()
 }
 #endif
 
-void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB )
+void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale )
 {
 	B2_ASSERT( base->type == b2_wheelJoint );
 
@@ -558,8 +558,10 @@ void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transfor
 		b2Vec2 upper = b2MulAdd( frameA.p, joint->upperTranslation, axisA );
 		b2Vec2 perp = b2LeftPerp( axisA );
 		draw->DrawSegmentFcn( lower, upper, c1, draw->context );
-		draw->DrawSegmentFcn( b2MulSub( lower, 0.1f, perp ), b2MulAdd( lower, 0.1f, perp ), c2, draw->context );
-		draw->DrawSegmentFcn( b2MulSub( upper, 0.1f, perp ), b2MulAdd( upper, 0.1f, perp ), c3, draw->context );
+		draw->DrawSegmentFcn( b2MulSub( lower, 0.1f * drawScale, perp ), b2MulAdd( lower, 0.1f * drawScale, perp ), c2,
+							  draw->context );
+		draw->DrawSegmentFcn( b2MulSub( upper, 0.1f * drawScale, perp ), b2MulAdd( upper, 0.1f * drawScale, perp ), c3,
+							  draw->context );
 	}
 	else
 	{

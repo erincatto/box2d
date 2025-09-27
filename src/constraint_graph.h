@@ -7,6 +7,8 @@
 #include "bitset.h"
 #include "constants.h"
 
+#include "box2d/types.h"
+
 typedef struct b2Body b2Body;
 typedef struct b2ContactSim b2ContactSim;
 typedef struct b2Contact b2Contact;
@@ -64,3 +66,5 @@ void b2RemoveContactFromGraph( b2World* world, int bodyIdA, int bodyIdB, int col
 b2JointSim* b2CreateJointInGraph( b2World* world, b2Joint* joint );
 void b2AddJointToGraph( b2World* world, b2JointSim* jointSim, b2Joint* joint );
 void b2RemoveJointFromGraph( b2World* world, int bodyIdA, int bodyIdB, int colorIndex, int localIndex );
+
+extern b2HexColor b2_graphColors[B2_GRAPH_COLOR_COUNT];

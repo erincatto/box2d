@@ -1259,9 +1259,9 @@ void Draw::Create( Camera* camera )
 	m_debugDraw.drawContacts = false;
 	m_debugDraw.drawGraphColors = false;
 	m_debugDraw.drawContactNormals = false;
-	m_debugDraw.drawContactImpulses = false;
+	m_debugDraw.drawContactForces = false;
 	m_debugDraw.drawContactFeatures = false;
-	m_debugDraw.drawFrictionImpulses = false;
+	m_debugDraw.drawFrictionForces = false;
 	m_debugDraw.drawIslands = false;
 
 	m_debugDraw.context = this;

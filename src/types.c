@@ -150,7 +150,7 @@ b2DebugDraw b2DefaultDebugDraw( void )
 
 	draw.drawingBounds.lowerBound = (b2Vec2){ -FLT_MAX, -FLT_MAX };
 	draw.drawingBounds.upperBound = (b2Vec2){ FLT_MAX, FLT_MAX };
-
+	draw.forceScale = 1.0f;
 	draw.drawShapes = true;
 	
 	return draw;

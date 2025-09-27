@@ -312,7 +312,13 @@ B2_API void b2Body_ApplyForceToCenter( b2BodyId bodyId, b2Vec2 force, bool wake 
 /// @param wake also wake up the body
 B2_API void b2Body_ApplyTorque( b2BodyId bodyId, float torque, bool wake );
 
-/// Apply an impulse at a point. This immediately modifies the velocity.
+/// Clear the force and torque on this body. Forces and torques are automatically cleared after each world
+/// step. So this only needs to be called if the application wants to remove the effect of previous
+/// calls to apply forces and torques before the world step is called.
+/// @param bodyId The body id
+void b2Body_ClearForces( b2BodyId bodyId );
+
+	/// Apply an impulse at a point. This immediately modifies the velocity.
 /// It also modifies the angular velocity if the point of application
 /// is not at the center of mass. This optionally wakes the body.
 /// The impulse is ignored if the body is not awake.

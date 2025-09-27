@@ -24,6 +24,8 @@ struct SampleContext
 	Draw draw;
 	float uiScale = 1.0f;
 	float hertz = 60.0f;
+	float jointScale = 1.0f;
+	float forceScale = 1.0f;
 	int subStepCount = 4;
 	int workerCount = 1;
 	bool restart = false;
@@ -35,9 +37,9 @@ struct SampleContext
 	bool drawBodyNames = false;
 	bool drawContactPoints = false;
 	bool drawContactNormals = false;
-	bool drawContactImpulses = false;
 	bool drawContactFeatures = false;
-	bool drawFrictionImpulses = false;
+	bool drawContactForces = false;
+	bool drawFrictionForces = false;
 	bool drawIslands = false;
 	bool drawGraphColors = false;
 	bool drawCounters = false;

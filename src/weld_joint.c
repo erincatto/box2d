@@ -282,6 +282,11 @@ void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 		wB += iB * b2Cross( rB, impulse );
 	}
 
+	B2_ASSERT( b2IsValidVec2( vA ) );
+	B2_ASSERT( b2IsValidFloat( wA ) );
+	B2_ASSERT( b2IsValidVec2( vB ) );
+	B2_ASSERT( b2IsValidFloat( wB ) );
+
 	if ( stateA->flags & b2_dynamicFlag )
 	{
 		stateA->linearVelocity = vA;
@@ -314,14 +319,14 @@ void b2DumpWeldJoint()
 }
 #endif
 
-void b2DrawWeldJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawSize )
+void b2DrawWeldJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale )
 {
 	B2_ASSERT( base->type == b2_weldJoint );
 
 	b2Transform frameA = b2MulTransforms( transformA, base->localFrameA );
 	b2Transform frameB = b2MulTransforms( transformB, base->localFrameB );
 
-	b2Polygon box = b2MakeBox( 0.25f * drawSize, 0.125f * drawSize );
+	b2Polygon box = b2MakeBox( 0.25f * drawScale, 0.125f * drawScale );
 
 	b2Vec2 points[4];
 
