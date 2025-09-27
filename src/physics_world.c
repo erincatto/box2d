@@ -12,7 +12,6 @@
 #include "bitset.h"
 #include "body.h"
 #include "broad_phase.h"
-#include "cluster.h"
 #include "constants.h"
 #include "constraint_graph.h"
 #include "contact.h"
@@ -132,9 +131,6 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->arena = b2CreateArenaAllocator( 2048 );
 	b2CreateBroadPhase( &world->broadPhase );
 	b2CreateGraph( &world->constraintGraph, 16 );
-
-	// todo testing
-	b2CreateClusters( &world->clusterManager );
 
 	// pools
 	world->bodyIdPool = b2CreateIdPool();
@@ -346,9 +342,6 @@ void b2DestroyWorld( b2WorldId worldId )
 
 	b2SolverSetArray_Destroy( &world->solverSets );
 
-	// todo testing
-	b2DestroyClusters( &world->clusterManager );
-
 	b2DestroyGraph( &world->constraintGraph );
 	b2DestroyBroadPhase( &world->broadPhase );
 
@@ -517,10 +510,10 @@ static void b2Collide( b2StepContext* context )
 
 	// gather contacts into a single array for easier parallel-for
 	int contactCount = 0;
-	b2GraphColor* b2_graphColors = world->constraintGraph.colors;
+	b2GraphColor* graphColors = world->constraintGraph.colors;
 	for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
 	{
-		contactCount += b2_graphColors[i].contactSims.count;
+		contactCount += graphColors[i].contactSims.count;
 	}
 
 	int nonTouchingCount = world->solverSets.data[b2_awakeSet].contactSims.count;
@@ -537,7 +530,7 @@ static void b2Collide( b2StepContext* context )
 	int contactIndex = 0;
 	for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
 	{
-		b2GraphColor* color = b2_graphColors + i;
+		b2GraphColor* color = graphColors + i;
 		int count = color->contactSims.count;
 		b2ContactSim* base = color->contactSims.data;
 		for ( int j = 0; j < count; ++j )
@@ -618,7 +611,7 @@ static void b2Collide( b2StepContext* context )
 			{
 				// contact lives in constraint graph
 				B2_ASSERT( 0 <= colorIndex && colorIndex < B2_GRAPH_COLOR_COUNT );
-				b2GraphColor* color = b2_graphColors + colorIndex;
+				b2GraphColor* color = graphColors + colorIndex;
 				contactSim = b2ContactSimArray_Get( &color->contactSims, localIndex );
 			}
 			else
@@ -780,6 +773,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	}
 
 	world->inv_h = context.inv_h;
+	world->inv_dt = context.inv_dt;
 
 	// Hertz values get reduced for large time steps
 	float contactHertz = b2MinFloat( world->contactHertz, 0.125f * context.inv_h );
@@ -828,9 +822,6 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	world->endEventArrayIndex = 1 - world->endEventArrayIndex;
 	b2SensorEndTouchEventArray_Clear( world->sensorEndEvents + world->endEventArrayIndex );
 	b2ContactEndTouchEventArray_Clear( world->contactEndEvents + world->endEventArrayIndex );
-
-	//b2ComputeClusters( world );
-
 	world->locked = false;
 }
 
@@ -893,35 +884,6 @@ struct DrawContext
 	b2DebugDraw* draw;
 };
 
-static const b2HexColor b2_graphColors[B2_GRAPH_COLOR_COUNT] = {
-	b2_colorRed,		b2_colorOrange, b2_colorYellow,	   b2_colorGreen,	  b2_colorCyan,		b2_colorBlue,
-	b2_colorViolet,		b2_colorPink,	b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,	b2_colorRosyBrown,
-	b2_colorLightCoral, b2_colorPeru,	b2_colorLime,	   b2_colorGold,	  b2_colorPlum,		b2_colorSnow,
-	b2_colorTeal,		b2_colorKhaki,	b2_colorSalmon,	   b2_colorPeachPuff, b2_colorHoneyDew, b2_colorBlack,
-};
-
-#if B2_CLUSTER_COUNT == 16
-static const b2HexColor b2_clusterColors[B2_CLUSTER_COUNT] = {
-	b2_colorRed,		b2_colorOrange, b2_colorYellow,	   b2_colorGreen,	  b2_colorCyan,	 b2_colorBlue,
-	b2_colorViolet,		b2_colorPink,	b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral, b2_colorRosyBrown,
-	b2_colorLightCoral, b2_colorPeru,	b2_colorLime,	   b2_colorGold,
-};
-#else
-static const b2HexColor b2_clusterColors[B2_CLUSTER_COUNT] = {
-	b2_colorRed,		b2_colorOrange,		   b2_colorYellow,
-	b2_colorGreen,		b2_colorCyan,		   b2_colorBlue,
-	b2_colorViolet,		b2_colorPink,		   b2_colorChocolate,
-	b2_colorGoldenRod,	b2_colorCoral,		   b2_colorRosyBrown,
-	b2_colorLightCoral, b2_colorPeru,		   b2_colorLime,
-	b2_colorGold,		b2_colorPlum,		   b2_colorSnow,
-	b2_colorTeal,		b2_colorKhaki,		   b2_colorSalmon,
-	b2_colorPeachPuff,	b2_colorHoneyDew,	   b2_colorOlive,
-	b2_colorLawnGreen,	b2_colorLightSkyBlue,  b2_colorMediumTurquoise,
-	b2_colorNavy,		b2_colorPaleVioletRed, b2_colorSienna,
-	b2_colorSilver,		b2_colorSpringGreen,
-};
-#endif
-
 static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
@@ -944,13 +906,6 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 
 		b2HexColor color;
 
-		//bool drawClusterColor = true;
-		//if ( drawClusterColor )
-		//{
-		//	B2_ASSERT( 0 <= bodySim->clusterIndex && bodySim->clusterIndex < B2_CLUSTER_COUNT );
-		//	color = b2_clusterColors[bodySim->clusterIndex];
-		//}
-		//else
 		if ( shape->material.customColor != 0 )
 		{
 			color = shape->material.customColor;
@@ -1032,7 +987,6 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 	B2_ASSERT( b2IsValidAABB( draw->drawingBounds ) );
 
-	const float k_impulseScale = 1.0f;
 	const float k_axisScale = 0.3f;
 	b2HexColor speculativeColor = b2_colorGainsboro;
 	b2HexColor addColor = b2_colorGreen;
@@ -1172,10 +1126,12 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 							}
 							else if ( draw->drawContactForces )
 							{
+								// multiply by one-half due to relax iteration
+								float force = 0.5f * point->totalNormalImpulse * world->inv_dt;
 								b2Vec2 p1 = point->point;
-								b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->totalNormalImpulse, normal );
+								b2Vec2 p2 = b2MulAdd( p1, draw->forceScale * force, normal );
 								draw->DrawSegmentFcn( p1, p2, impulseColor, draw->context );
-								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", 1000.0f * point->totalNormalImpulse );
+								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", force );
 								draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 							}
 
@@ -1187,11 +1143,12 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 							if ( draw->drawFrictionForces )
 							{
+								float force = 0.5f * point->tangentImpulse * world->inv_h;
 								b2Vec2 tangent = b2RightPerp( normal );
 								b2Vec2 p1 = point->point;
-								b2Vec2 p2 = b2MulAdd( p1, k_impulseScale * point->tangentImpulse, tangent );
+								b2Vec2 p2 = b2MulAdd( p1, draw->forceScale * force, tangent );
 								draw->DrawSegmentFcn( p1, p2, frictionColor, draw->context );
-								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", 1000.0f * point->tangentImpulse );
+								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", force );
 								draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 							}
 						}

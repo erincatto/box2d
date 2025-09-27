@@ -431,15 +431,19 @@ static void UpdateUI()
 				ImGui::Checkbox( "Bounds", &s_context.drawBounds );
 				ImGui::Checkbox( "Contact Points", &s_context.drawContactPoints );
 				ImGui::Checkbox( "Contact Normals", &s_context.drawContactNormals );
-				ImGui::Checkbox( "Contact Impulses", &s_context.drawContactImpulses );
 				ImGui::Checkbox( "Contact Features", &s_context.drawContactFeatures );
-				ImGui::Checkbox( "Friction Impulses", &s_context.drawFrictionImpulses );
+				ImGui::Checkbox( "Contact Forces", &s_context.drawContactForces );
+				ImGui::Checkbox( "Friction Forces", &s_context.drawFrictionForces );
 				ImGui::Checkbox( "Mass", &s_context.drawMass );
 				ImGui::Checkbox( "Body Names", &s_context.drawBodyNames );
 				ImGui::Checkbox( "Graph Colors", &s_context.drawGraphColors );
 				ImGui::Checkbox( "Islands", &s_context.drawIslands );
 				ImGui::Checkbox( "Counters", &s_context.drawCounters );
 				ImGui::Checkbox( "Profile", &s_context.drawProfile );
+
+				ImGui::PushItemWidth( 80.0f );
+				ImGui::InputFloat( "Force Scale", &s_context.forceScale );
+				ImGui::PopItemWidth();
 
 				ImVec2 button_sz = ImVec2( -1, 0 );
 				if ( ImGui::Button( "Pause (P)", button_sz ) )

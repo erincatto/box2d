@@ -35,9 +35,10 @@ struct SampleContext
 	bool drawBodyNames = false;
 	bool drawContactPoints = false;
 	bool drawContactNormals = false;
-	bool drawContactImpulses = false;
 	bool drawContactFeatures = false;
-	bool drawFrictionImpulses = false;
+	bool drawContactForces = false;
+	bool drawFrictionForces = false;
+	float forceScale = 1.0f;
 	bool drawIslands = false;
 	bool drawGraphColors = false;
 	bool drawCounters = false;

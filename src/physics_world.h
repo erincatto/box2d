@@ -9,7 +9,6 @@
 #include "constraint_graph.h"
 #include "id_pool.h"
 #include "arena_allocator.h"
-#include "cluster.h"
 
 #include "box2d/types.h"
 
@@ -53,7 +52,6 @@ typedef struct b2World
 	b2ArenaAllocator arena;
 	b2BroadPhase broadPhase;
 	b2ConstraintGraph constraintGraph;
-	b2ClusterManager clusterManager;
 
 	// The body id pool is used to allocate and recycle body ids. Body ids
 	// provide a stable identifier for users, but incur caches misses when used
@@ -176,7 +174,11 @@ typedef struct b2World
 	void* userData;
 
 	// Remember type step used for reporting forces and torques
+	// inverse sub-step
 	float inv_h;
+
+	// inverse full-step
+	float inv_dt;
 
 	int activeTaskCount;
 	int taskCount;

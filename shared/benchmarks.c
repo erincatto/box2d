@@ -90,8 +90,7 @@ void CreateLargePyramid( b2WorldId worldId )
 {
 	b2World_EnableSleeping( worldId, false );
 
-	//int baseCount = BENCHMARK_DEBUG ? 20 : 100;
-	int baseCount = 100;
+	int baseCount = BENCHMARK_DEBUG ? 20 : 100;
 
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
