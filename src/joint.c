@@ -1449,6 +1449,8 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 
 	b2HexColor color = b2_colorDarkSeaGreen;
 
+	float scale = b2MaxFloat( 0.0001f, draw->jointScale * joint->drawScale );
+
 	switch ( joint->type )
 	{
 		case b2_distanceJoint:
@@ -1466,19 +1468,19 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 			break;
 
 		case b2_prismaticJoint:
-			b2DrawPrismaticJoint( draw, jointSim, transformA, transformB, joint->drawScale );
+			b2DrawPrismaticJoint( draw, jointSim, transformA, transformB, scale );
 			break;
 
 		case b2_revoluteJoint:
-			b2DrawRevoluteJoint( draw, jointSim, transformA, transformB, joint->drawScale );
+			b2DrawRevoluteJoint( draw, jointSim, transformA, transformB, scale );
 			break;
 
 		case b2_weldJoint:
-			b2DrawWeldJoint( draw, jointSim, transformA, transformB, joint->drawScale );
+			b2DrawWeldJoint( draw, jointSim, transformA, transformB, scale );
 			break;
 
 		case b2_wheelJoint:
-			b2DrawWheelJoint( draw, jointSim, transformA, transformB );
+			b2DrawWheelJoint( draw, jointSim, transformA, transformB, scale );
 			break;
 
 		default:

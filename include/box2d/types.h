@@ -1352,11 +1352,14 @@ typedef struct b2DebugDraw
 	/// Draw a string in world space
 	void ( *DrawStringFcn )( b2Vec2 p, const char* s, b2HexColor color, void* context );
 
-	/// Bounds to use if restricting drawing to a rectangular region
+	/// World bounds to use for debug draw
 	b2AABB drawingBounds;
 
 	/// Scale to use when drawing forces
 	float forceScale;
+
+	/// Global scaling for joint drawing
+	float jointScale;
 
 	/// Option to draw shapes
 	bool drawShapes;
@@ -1382,16 +1385,16 @@ typedef struct b2DebugDraw
 	/// Option to visualize the graph coloring used for contacts and joints
 	bool drawGraphColors;
 
+	/// Option to draw contact feature ids
+	bool drawContactFeatures;
+
 	/// Option to draw contact normals
 	bool drawContactNormals;
 
 	/// Option to draw contact normal forces
 	bool drawContactForces;
 
-	/// Option to draw contact feature ids
-	bool drawContactFeatures;
-
-	/// Option to draw contact friction impulses
+	/// Option to draw contact friction forces
 	bool drawFrictionForces;
 
 	/// Option to draw islands as bounding boxes

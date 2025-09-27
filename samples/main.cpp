@@ -442,6 +442,7 @@ static void UpdateUI()
 				ImGui::Checkbox( "Profile", &s_context.drawProfile );
 
 				ImGui::PushItemWidth( 80.0f );
+				ImGui::InputFloat( "Joint Scale", &s_context.jointScale );
 				ImGui::InputFloat( "Force Scale", &s_context.forceScale );
 				ImGui::PopItemWidth();
 

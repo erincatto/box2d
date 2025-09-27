@@ -452,6 +452,8 @@ void Sample::Step()
 	}
 
 	m_context->draw.m_debugDraw.drawingBounds = m_context->camera.GetViewBounds();
+	m_context->draw.m_debugDraw.jointScale = m_context->jointScale;
+	m_context->draw.m_debugDraw.forceScale = m_context->forceScale;
 	m_context->draw.m_debugDraw.drawShapes = m_context->drawShapes;
 	m_context->draw.m_debugDraw.drawJoints = m_context->drawJoints;
 	m_context->draw.m_debugDraw.drawJointExtras = m_context->drawJointExtras;
@@ -464,7 +466,6 @@ void Sample::Step()
 	m_context->draw.m_debugDraw.drawContactForces = m_context->drawContactForces;
 	m_context->draw.m_debugDraw.drawContactFeatures = m_context->drawContactFeatures;
 	m_context->draw.m_debugDraw.drawFrictionForces = m_context->drawFrictionForces;
-	m_context->draw.m_debugDraw.forceScale = m_context->forceScale;
 	m_context->draw.m_debugDraw.drawIslands = m_context->drawIslands;
 
 	b2World_EnableSleeping( m_worldId, m_context->enableSleep );

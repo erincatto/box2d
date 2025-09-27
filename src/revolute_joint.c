@@ -509,7 +509,7 @@ void b2RevoluteJoint::Dump()
 }
 #endif
 
-void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawSize )
+void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale )
 {
 	B2_ASSERT( base->type == b2_revoluteJoint );
 
@@ -518,7 +518,7 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 	b2Transform frameA = b2MulTransforms( transformA, base->localFrameA );
 	b2Transform frameB = b2MulTransforms( transformB, base->localFrameB );
 
-	const float radius = 0.25f * drawSize;
+	const float radius = 0.25f * drawScale;
 	draw->DrawCircleFcn( frameB.p, radius, b2_colorGray, draw->context );
 
 	b2Vec2 rx = { radius, 0.0f };

@@ -673,7 +673,7 @@ void b2PrismaticJoint::Dump()
 }
 #endif
 
-void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawSize )
+void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale )
 {
 	B2_ASSERT( base->type == b2_prismaticJoint );
 
@@ -687,7 +687,7 @@ void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform tran
 
 	if ( joint->enableLimit )
 	{
-		float b = 0.25f * drawSize;
+		float b = 0.25f * drawScale;
 		b2Vec2 lower = b2MulAdd( frameA.p, joint->lowerTranslation, axisA );
 		b2Vec2 upper = b2MulAdd( frameA.p, joint->upperTranslation, axisA );
 		b2Vec2 perp = b2LeftPerp( axisA );
