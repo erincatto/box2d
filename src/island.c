@@ -446,6 +446,7 @@ void b2UnlinkJoint( b2World* world, b2Joint* joint )
 	b2ValidateIsland( world, islandId );
 }
 
+// Unused
 #define B2_CONTACT_REMOVE_THRESHOLD 1
 
 // Possible optimizations:

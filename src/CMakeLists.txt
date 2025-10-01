@@ -77,11 +77,11 @@ add_library(box2d ${BOX2D_SOURCE_FILES} ${BOX2D_API_FILES})
 
 target_include_directories(box2d
   PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 set(CMAKE_DEBUG_POSTFIX "d")
@@ -89,10 +89,10 @@ set(CMAKE_DEBUG_POSTFIX "d")
 # Box2D uses C17 for _Static_assert and anonymous unions
 set_target_properties(box2d PROPERTIES
 	C_STANDARD 17
-    C_STANDARD_REQUIRED YES
-    C_EXTENSIONS YES
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
+	C_STANDARD_REQUIRED YES
+	C_EXTENSIONS YES
+	VERSION ${PROJECT_VERSION}
+	SOVERSION ${PROJECT_VERSION_MAJOR}
 	DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX}
 )
 
@@ -141,6 +141,24 @@ if (MSVC)
 	# Warnings
 	# 4710 - warn about inline functions that are not inlined
 	target_compile_options(box2d PRIVATE /Wall /wd4820 /wd5045 /wd4061 /wd4711 /wd4710)
+
+	# Add suppressions for clang-cl -Wall, seem safe for codebase.
+	target_compile_options(box2d PRIVATE
+		-Wno-declaration-after-statement
+		-Wno-extra-semi-stmt # Macros with semicolon
+		-Wno-sign-conversion
+		-Wno-implicit-int-conversion
+		-Wno-implicit-int-float-conversion
+		-Wno-cast-qual
+		-Wno-float-equal
+		-Wno-comma
+		-Wno-unsafe-buffer-usage
+		-Wno-switch-enum
+		-Wno-covered-switch-default
+		-Wno-switch-default
+		-Wno-unused-macros # B2_CONTACT_REMOVE_THRESHOLD
+		-Wno-pre-c11-compat # _Static_assert
+	)
 
 	if (BOX2D_AVX2)
 		message(STATUS "Box2D using AVX2")	

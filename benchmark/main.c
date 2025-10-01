@@ -18,7 +18,7 @@
 #include <string.h>
 
 #if defined( _WIN64 )
-#include <windows.h>
+#include <Windows.h>
 #elif defined( __APPLE__ )
 #include <unistd.h>
 #elif defined( __linux__ )
