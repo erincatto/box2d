@@ -32,7 +32,7 @@
 
 _Static_assert( B2_MAX_WORLDS > 0, "must be 1 or more" );
 _Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B2_MAX_WORLDS limit exceeded" );
-b2World b2_worlds[B2_MAX_WORLDS];
+static b2World b2_worlds[B2_MAX_WORLDS];
 
 B2_ARRAY_SOURCE( b2BodyMoveEvent, b2BodyMoveEvent )
 B2_ARRAY_SOURCE( b2ContactBeginTouchEvent, b2ContactBeginTouchEvent )
