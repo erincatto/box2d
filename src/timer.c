@@ -13,7 +13,7 @@
 #define WIN32_LEAN_AND_MEAN 1
 #endif
 
-#include <windows.h>
+#include <Windows.h>
 
 static double s_invFrequency = 0.0;
 
