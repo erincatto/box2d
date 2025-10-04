@@ -142,6 +142,26 @@ if (MSVC)
 	# 4710 - warn about inline functions that are not inlined
 	target_compile_options(box2d PRIVATE /Wall /wd4820 /wd5045 /wd4061 /wd4711 /wd4710)
 
+	# Add warning suppressions for clang-cl -Wall
+	if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+		target_compile_options(box2d PRIVATE
+			-Wno-declaration-after-statement
+			-Wno-extra-semi-stmt # Macros with semicolon
+			-Wno-sign-conversion
+			-Wno-implicit-int-conversion
+			-Wno-implicit-int-float-conversion
+			-Wno-cast-qual
+			-Wno-float-equal
+			-Wno-comma
+			-Wno-unsafe-buffer-usage
+			-Wno-switch-enum
+			-Wno-covered-switch-default
+			-Wno-switch-default
+			-Wno-unused-macros # B2_CONTACT_REMOVE_THRESHOLD
+			-Wno-pre-c11-compat # _Static_assert
+		)
+	endif()
+
 	if (BOX2D_AVX2)
 		message(STATUS "Box2D using AVX2")	
 		target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
