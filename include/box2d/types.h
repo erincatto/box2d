@@ -745,7 +745,7 @@ typedef struct b2PrismaticJointDef
 } b2PrismaticJointDef;
 
 /// Use this to initialize your joint definition
-/// @ingroupd prismatic_joint
+/// @ingroup prismatic_joint
 B2_API b2PrismaticJointDef b2DefaultPrismaticJointDef( void );
 
 /// Revolute joint definition
