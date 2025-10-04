@@ -1747,10 +1747,10 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	fprintf( file, "kinematic tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_kinematicBody ) );
 	fprintf( file, "dynamic tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_dynamicBody ) );
 	b2HashSet* moveSet = &world->broadPhase.moveSet;
-	fprintf( file, "moveSet: %d (%d, %d)\n", b2GetHashSetBytes( moveSet ), moveSet->count, moveSet->capacity );
+	fprintf( file, "moveSet: %d (%u, %u)\n", b2GetHashSetBytes( moveSet ), moveSet->count, moveSet->capacity );
 	fprintf( file, "moveArray: %d\n", b2IntArray_ByteCount( &world->broadPhase.moveArray ) );
 	b2HashSet* pairSet = &world->broadPhase.pairSet;
-	fprintf( file, "pairSet: %d (%d, %d)\n", b2GetHashSetBytes( pairSet ), pairSet->count, pairSet->capacity );
+	fprintf( file, "pairSet: %d (%u, %u)\n", b2GetHashSetBytes( pairSet ), pairSet->count, pairSet->capacity );
 	fprintf( file, "\n" );
 
 	// solver sets
