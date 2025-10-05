@@ -162,52 +162,24 @@ jobs:
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release
 
-  build-ubuntu-zig-static:
-    name: ubuntu-zig-static
-    runs-on: ubuntu-latest
+  zig-matrix:
+    strategy:
+      fail-fast: false
+      matrix:
+        zig: [0.15.1]
+        os: [ubuntu-latest, windows-latest]
+        shared: [false]
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: mlugg/setup-zig@v2
-        with:
-          version: 0.15.1
-      - name: Build
-        run: zig build -Dunit_tests=true
+    - uses: actions/checkout@v4
 
-      - name: Test
-        run: ./zig-out/bin/test
-    
-  build-ubuntu-zig-dynamic:
-    name: ubuntu-zig-dynamic
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: mlugg/setup-zig@v2
-        with:
-          version: 0.15.1
-      - name: Build
-        run: zig build -Dshared=true
+    - name: Setup zig
+      uses: mlugg/setup-zig@v2
+      with:
+        version: ${{ matrix.zig }}
 
-  build-windows-zig-static:
-    name: windows-zig-static
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: mlugg/setup-zig@v2
-        with:
-          version: 0.15.1
-      - name: Build
-        run: zig build -Dunit_tests=true
+    - name: Build lib and unit tests
+      run: zig build -Dshared=${{ matrix.shared }} -Dunit_tests=true
 
-      - name: Test
-        run: .\zig-out\bin\test.exe
-
-  build-windows-zig-dynamic:
-    name: windows-zig-dynamic
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: mlugg/setup-zig@v2
-        with:
-          version: 0.15.1
-      - name: Build
-        run: zig build -Dshared=true
+    - name: Test
+      run: ${{github.workspace}}/zig-out/bin/test
