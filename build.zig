@@ -1,8 +1,11 @@
 const std = @import("std");
+const Build = std.Build;
+const Compile = Build.Step.Compile;
+const ResolvedTarget = Build.ResolvedTarget;
+const OptimizeMode = std.builtin.OptimizeMode;
 const builtin = @import("builtin");
 
 const min_supported_ver = "0.15.0";
-
 comptime {
     const order = std.SemanticVersion.order;
     const parse = std.SemanticVersion.parse;
@@ -13,48 +16,62 @@ comptime {
 pub const Options = struct {
     shared: bool,
     unit_tests: bool,
+    disable_simd: bool,
+    avx2: bool,
 
     const defaults = Options{
         .shared = false,
         .unit_tests = false,
+        .disable_simd = false,
+        .avx2 = true,
     };
 
-    pub fn getOptions(b: *std.Build) Options {
+    pub fn getOptions(b: *Build, target: ResolvedTarget) Options {
+        const disable_simd = b.option(bool, "disable_simd", "Disable SIMD math (slower)") orelse defaults.disable_simd;
+
+        const avx2 = avx2_option_blk: {
+            const has_avx2 = target.result.cpu.has(.x86, .avx2);
+            if (has_avx2 and disable_simd == false) {
+                break :avx2_option_blk b.option(bool, "avx2", "Enable AVX2") orelse defaults.avx2;
+            }
+
+            break :avx2_option_blk false;
+        };
+
         return .{
             .shared = b.option(bool, "shared", "Compile as shared library") orelse defaults.shared,
             .unit_tests = b.option(bool, "unit_tests", "Compile units tests") orelse defaults.unit_tests,
+            .disable_simd = disable_simd,
+            .avx2 = avx2,
         };
     }
 };
 
-pub fn build(b: *std.Build) !void {
+pub fn build(b: *Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-    const options = Options.getOptions(b);
-    const lib = try compileBox2d(b, target, optimize, options.shared);
+    const options = Options.getOptions(b, target);
+    const lib = try compileBox2d(b, target, optimize, options);
 
     b.installArtifact(lib);
 
-    var shared_lib: ?*std.Build.Step.Compile = null;
+    var test_sample_deps: ?TestAndSamplesDeps = null;
     if (options.unit_tests) {
-        shared_lib = buildShared(b, target, optimize, lib);
+        test_sample_deps = .init(b, target, optimize, lib);
     }
 
     if (options.unit_tests) {
-        // link with enkiTS c headers
-        const enki_ts = get_enki_ts_artifact: {
-            const enki_ts_dep = b.dependency("enkiTS", .{
-                .shared = false,
-            });
-
-            break :get_enki_ts_artifact enki_ts_dep.artifact("enki_ts");
-        };
-
-        buildTests(b, target, optimize, lib, enki_ts, shared_lib.?);
+        buildTests(b, target, optimize, lib, test_sample_deps.?);
     }
 }
 
-fn compileBox2d(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, shared: bool) !*std.Build.Step.Compile {
+fn compileBox2d(b: *Build, target: ResolvedTarget, optimize: OptimizeMode, options: Options) !*Compile {
+    const module = b.addModule("box2d", .{
+        .target = target,
+        .optimize = optimize,
+        .link_libc = true,
+    });
+
     var box2d_flags_arr = std.ArrayList([]const u8).empty;
     defer box2d_flags_arr.deinit(b.allocator);
 
@@ -64,20 +81,32 @@ fn compileBox2d(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.b
         "-ffp-contract=off",
     });
 
-    if (shared) {
+    if (options.shared) {
         try box2d_flags_arr.appendSlice(b.allocator, &[_][]const u8{
             "-fPIC",
             "-DBUILD_LIBTYPE_SHARED",
         });
     }
 
-    const module = b.addModule("box2d", .{
-        .target = target,
-        .optimize = optimize,
-        .link_libc = true,
-    });
+    if (options.disable_simd) {
+        module.addCMacro("BOX2D_DISABLE_SIMD", "");
+    } else {
+        if (target.result.os.tag == .emscripten) {
+            try box2d_flags_arr.appendSlice(b.allocator, &[_][]const u8{
+                "-msimd128",
+                "-msse2",
+            });
+        }
+    }
 
-    const linkage: std.builtin.LinkMode = if (shared) .dynamic else .static;
+    if (options.avx2) {
+        module.addCMacro("BOX2D_AVX2", "");
+        try box2d_flags_arr.appendSlice(b.allocator, &[_][]const u8{
+            "-mavx2",
+        });
+    }
+
+    const linkage: std.builtin.LinkMode = if (options.shared) .dynamic else .static;
     const box2d = b.addLibrary(.{
         .root_module = module,
         .name = "box2d",
@@ -156,12 +185,11 @@ fn compileBox2d(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.b
 }
 
 pub fn buildTests(
-    b: *std.Build,
-    target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
-    box2d_lib: *std.Build.Step.Compile,
-    enki_ts_lib: *std.Build.Step.Compile,
-    box2d_shared_lib: *std.Build.Step.Compile,
+    b: *Build,
+    target: ResolvedTarget,
+    optimize: OptimizeMode,
+    box2d_lib: *Compile,
+    test_deps: TestAndSamplesDeps,
 ) void {
     const module = b.createModule(.{
         .target = target,
@@ -197,18 +225,18 @@ pub fn buildTests(
     exe.root_module.addIncludePath(b.path("shared"));
 
     exe.root_module.linkLibrary(box2d_lib);
-    exe.root_module.linkLibrary(box2d_shared_lib);
-    exe.root_module.linkLibrary(enki_ts_lib);
+    exe.root_module.linkLibrary(test_deps.shared_lib.?);
+    exe.root_module.linkLibrary(test_deps.enki_ts);
 
     b.installArtifact(exe);
 }
 
 pub fn buildShared(
-    b: *std.Build,
-    target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
-    box2d_lib: *std.Build.Step.Compile,
-) *std.Build.Step.Compile {
+    b: *Build,
+    target: ResolvedTarget,
+    optimize: OptimizeMode,
+    box2d_lib: *Compile,
+) *Compile {
     const module = b.createModule(.{
         .target = target,
         .optimize = optimize,
@@ -239,3 +267,23 @@ pub fn buildShared(
         .linkage = .static,
     });
 }
+
+const TestAndSamplesDeps = struct {
+    shared_lib: ?*Compile,
+    enki_ts: *Compile,
+
+    pub fn init(b: *Build, target: ResolvedTarget, optimize: OptimizeMode, box2d_lib: *Compile) TestAndSamplesDeps {
+        const enki_ts = get_enki_ts_artifact: {
+            const enki_ts_dep = b.dependency("enkiTS", .{
+                .shared = false,
+            });
+
+            break :get_enki_ts_artifact enki_ts_dep.artifact("enki_ts");
+        };
+
+        return TestAndSamplesDeps{
+            .shared_lib = buildShared(b, target, optimize, box2d_lib),
+            .enki_ts = enki_ts,
+        };
+    }
+};

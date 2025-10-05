@@ -7,8 +7,8 @@
 
     .dependencies = .{
         .enkiTS = .{
-            .url = "git+https://github.com/Avokadoen/enkiTS?ref=zig-build#9147a704e095849a08db1c2879f0059c71e3036b",
-            .hash = "enkiTS-1.11.0-SlhBp-h6AgAvYOsbAaFfuCtsRQsX2a5cAAAyY8kdMCdu",
+            .url = "git+https://github.com/dougbinks/enkiTS#d0e74e1b0ed5886d600c09809d572fcdee418f27",
+            .hash = "enkiTS-1.11.0-SlhBpzV8AgBFq7N6lqhX78C2XO5mr8GJUgNuW9fazCiv",
         },
     },
 
