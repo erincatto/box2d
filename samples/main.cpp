@@ -295,6 +295,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 
 			case GLFW_KEY_TAB:
 				s_context.draw.m_showUI = !s_context.draw.m_showUI;
+				break;
 
 			default:
 				if ( s_sample )

@@ -93,7 +93,7 @@ set(BOX2D_SAMPLE_FILES
 	sample_shapes.cpp
 	sample_stacking.cpp
 	sample_world.cpp
-	shader.cpp
+	shader.c
 	shader.h)
 
 add_executable(samples ${BOX2D_SAMPLE_FILES})

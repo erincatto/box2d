@@ -574,10 +574,12 @@ public:
 
 static int staticVsBulletBug = RegisterSample( "Issues", "StaticVsBulletBug", StaticVsBulletBug::Create );
 
-class UnstableJoints : public Sample
+// This simulations stresses the solver by putting a light mass between two bodies on a prismatic joint with a stiff spring.
+// This can be made stable by increasing the size of the middle circle and/or increasing the number of sub-steps.
+class UnstablePrismaticJoints : public Sample
 {
 public:
-	explicit UnstableJoints( SampleContext* context )
+	explicit UnstablePrismaticJoints( SampleContext* context )
 		: Sample( context )
 	{
 		if ( m_context->restart == false )
@@ -662,8 +664,90 @@ public:
 
 	static Sample* Create( SampleContext* context )
 	{
-		return new UnstableJoints( context );
+		return new UnstablePrismaticJoints( context );
 	}
 };
 
-static int samplePrismaticJointCrash = RegisterSample( "Issues", "Unstable Joints", UnstableJoints::Create );
+static int sampleUnstablePrismaticJoints = RegisterSample( "Issues", "Unstable Prismatic Joints", UnstablePrismaticJoints::Create );
+
+class UnstableWindmill : public Sample
+{
+public:
+	explicit UnstableWindmill( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.m_center = { 0.0f, 1.75f };
+			m_context->camera.m_zoom = 32.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Segment segment = { { -100.0f, -10.0f }, { 100.0f, -10.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		b2BodyDef bdef = b2DefaultBodyDef();
+		bdef.gravityScale = 0.0f;
+		bdef.type = b2_dynamicBody;
+		b2ShapeDef sdef = b2DefaultShapeDef();
+		sdef.material = b2DefaultSurfaceMaterial();
+		sdef.material.friction = 0.1f;
+
+		// center
+		bdef.position = { 10, 10 };
+		b2BodyId center = b2CreateBody( m_worldId, &bdef );
+		b2Circle circle = { .center = { 0, 0 }, .radius = 5 };
+		b2CreateCircleShape( center, &sdef, &circle );
+
+		// rotors
+		b2WeldJointDef wjdef = b2DefaultWeldJointDef();
+		//wjdef.base.constraintHertz = 30.0f;
+		wjdef.base.bodyIdA = center;
+
+		b2Polygon polygon;
+
+		bdef.position = { 10, 0 };
+		b2BodyId body = b2CreateBody( m_worldId, &bdef );
+		b2CreatePolygonShape( body, &sdef, &( polygon = b2MakeBox( 4, 5 ) ) );
+		wjdef.base.localFrameA = { .p = { 0, -5 }, .q = b2Rot_identity };
+		wjdef.base.bodyIdB = body;
+		wjdef.base.localFrameB = { .p = { 0, 5 }, .q = b2Rot_identity };
+		b2CreateWeldJoint( m_worldId, &wjdef );
+
+		bdef.position = { 20, 10 };
+		body = b2CreateBody( m_worldId, &bdef );
+		b2CreatePolygonShape( body, &sdef, &( polygon = b2MakeBox( 5, 4 ) ) );
+		wjdef.base.localFrameA = { .p = { 5, 0 }, .q = b2Rot_identity };
+		wjdef.base.bodyIdB = body;
+		wjdef.base.localFrameB = { .p = { -5, 0 }, .q = b2Rot_identity };
+		b2CreateWeldJoint( m_worldId, &wjdef );
+
+		bdef.position = { 10, 20 };
+		body = b2CreateBody( m_worldId, &bdef );
+		b2CreatePolygonShape( body, &sdef, &( polygon = b2MakeBox( 4, 5 ) ) );
+		wjdef.base.localFrameA = { .p = { 0, 5 }, .q = b2Rot_identity };
+		wjdef.base.bodyIdB = body;
+		wjdef.base.localFrameB = { .p = { 0, -5 }, .q = b2Rot_identity };
+		b2CreateWeldJoint( m_worldId, &wjdef );
+
+		bdef.position = { 0, 10 };
+		body = b2CreateBody( m_worldId, &bdef );
+		b2CreatePolygonShape( body, &sdef, &( polygon = b2MakeBox( 5, 4 ) ) );
+		wjdef.base.localFrameA = { .p = { -5, 0 }, .q = b2Rot_identity };
+		wjdef.base.bodyIdB = body;
+		wjdef.base.localFrameB = { .p = { 5, 0 }, .q = b2Rot_identity };
+		b2CreateWeldJoint( m_worldId, &wjdef );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new UnstableWindmill( context );
+	}
+};
+
+static int sampleUnstableWindmill = RegisterSample( "Issues", "Unstable Windmill", UnstableWindmill::Create );

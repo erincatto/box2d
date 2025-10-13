@@ -1698,8 +1698,6 @@ b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target )
 // https://en.wikipedia.org/wiki/Lift_(force)
 void b2Shape_ApplyWindForce( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, bool wake )
 {
-	// B2_UNUSED( wind, drag, lift );
-
 	b2World* world = b2GetWorld( shapeId.world0 );
 	if ( world == NULL )
 	{
