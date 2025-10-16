@@ -3,7 +3,9 @@
 
 #pragma once
 
-// Array declaration that doesn't need the type T to be defined
+#define NULL_INDEX -1
+
+// Array declaration that doesn't need the TYPE to be defined
 #define ARRAY_DECLARE( TYPE )                                                                                                    \
 	typedef struct                                                                                                               \
 	{                                                                                                                            \
@@ -15,7 +17,7 @@
 	void TYPE##_Array_Reserve( TYPE##_Array* a, int newCapacity );                                                               \
 	void TYPE##_Array_Destroy( TYPE##_Array* a )
 
-// Inline array functions that need the type T to be defined
+// Inline array functions that need the TYPE to be defined
 #define ARRAY_INLINE( TYPE )                                                                                                     \
 	/* Resize */                                                                                                                 \
 	static inline void TYPE##_Array_Resize( TYPE##_Array* a, int count )                                                         \
@@ -61,7 +63,7 @@
 	static inline int TYPE##_Array_RemoveSwap( TYPE##_Array* a, int index )                                                      \
 	{                                                                                                                            \
 		assert( 0 <= index && index < a->count );                                                                                \
-		int movedIndex = B2_NULL_INDEX;                                                                                          \
+		int movedIndex = NULL_INDEX;                                                                                          \
 		if ( index != a->count - 1 )                                                                                             \
 		{                                                                                                                        \
 			movedIndex = a->count - 1;                                                                                           \
@@ -71,10 +73,10 @@
 		return movedIndex;                                                                                                       \
 	}                                                                                                                            \
 	/* Pop */                                                                                                                    \
-	static inline T TYPE##_Array_Pop( TYPE##_Array* a )                                                                          \
+	static inline TYPE TYPE##_Array_Pop( TYPE##_Array* a )                                                                          \
 	{                                                                                                                            \
 		assert( a->count > 0 );                                                                                                  \
-		T value = a->data[a->count - 1];                                                                                         \
+		TYPE value = a->data[a->count - 1];                                                                                         \
 		a->count -= 1;                                                                                                           \
 		return value;                                                                                                            \
 	}                                                                                                                            \
@@ -86,7 +88,7 @@
 	/* ByteCount */                                                                                                              \
 	static inline int TYPE##_Array_ByteCount( TYPE##_Array* a )                                                                  \
 	{                                                                                                                            \
-		return (int)( a->capacity * sizeof( T ) );                                                                               \
+		return (int)( a->capacity * sizeof( TYPE ) );                                                                               \
 	}
 
 #define ARRAY_SOURCE( TYPE )                                                                                                     \

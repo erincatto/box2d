@@ -524,15 +524,18 @@ typedef struct
 	RGBA8 rgba;
 } PointData;
 
-struct GLPoints
-{
-	std::vector<PointData> m_points;
+ARRAY_DECLARE( PointData );
+ARRAY_INLINE( PointData );
+ARRAY_SOURCE( PointData );
 
+typedef struct 
+{
+	PointData_Array m_points;
 	GLuint m_vaoId;
 	GLuint m_vboId;
 	GLuint m_programId;
 	GLint m_projectionUniform;
-};
+} GLPoints;
 
 void Create()
 {
@@ -557,8 +560,9 @@ void Create()
 					 "	color = f_color;\n"
 					 "}\n";
 
-	m_programId = CreateProgramFromStrings( vs, fs );
-	m_projectionUniform = glGetUniformLocation( m_programId, "projectionMatrix" );
+	GLPoints points = {0};
+	points.m_programId = CreateProgramFromStrings( vs, fs );
+	points.m_projectionUniform = glGetUniformLocation( points.m_programId, "projectionMatrix" );
 	int vertexAttribute = 0;
 	int sizeAttribute = 1;
 	int colorAttribute = 2;
