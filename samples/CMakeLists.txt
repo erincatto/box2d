@@ -70,11 +70,13 @@ target_include_directories(jsmn INTERFACE ${JSMN_DIR})
 set(BOX2D_SAMPLE_FILES
 	car.cpp
 	car.h
+	container.c
+	container.h
 	donut.cpp
 	donut.h
 	doohickey.cpp
 	doohickey.h
-	draw.cpp
+	draw.c
 	draw.h
 	main.cpp
 	sample.cpp

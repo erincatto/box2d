@@ -6,22 +6,28 @@
 #include "box2d/types.h"
 
 struct ImFont;
-
-struct Camera
+typedef struct Camera
 {
-	Camera();
-
-	void ResetView();
-	b2Vec2 ConvertScreenToWorld( b2Vec2 screenPoint );
-	b2Vec2 ConvertWorldToScreen( b2Vec2 worldPoint );
-	void BuildProjectionMatrix( float* m, float zBias );
-	b2AABB GetViewBounds();
-
 	b2Vec2 m_center;
 	float m_zoom;
 	float m_width;
 	float m_height;
-};
+} Camera;
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+Camera GetDefaultCamera(void);
+void ResetView( Camera* camera );
+b2Vec2 ConvertScreenToWorld(Camera* camera, b2Vec2 screenPoint );
+b2Vec2 ConvertWorldToScreen( Camera* camera, b2Vec2 worldPoint );
+void BuildProjectionMatrix( Camera* camera, float* m, float zBias );
+b2AABB GetViewBounds( Camera* camera);
+
+
 
 // This class implements Box2D debug drawing callbacks
 class Draw
@@ -66,8 +72,4 @@ public:
 	struct GLSolidCapsules* m_solidCapsules;
 	struct GLSolidPolygons* m_solidPolygons;
 	b2DebugDraw m_debugDraw;
-
-	ImFont* m_regularFont;
-	ImFont* m_mediumFont;
-	ImFont* m_largeFont;
 };

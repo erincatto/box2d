@@ -2047,7 +2047,7 @@ public:
 				int count = b2Body_GetShapes( m_bodyIds[i], shapeIds, 1 );
 				for ( int j = 0; j < count; ++j )
 				{
-					b2Shape_ApplyWindForce( shapeIds[j], wind, m_drag, m_lift, true );
+					b2Shape_ApplyWind( shapeIds[j], wind, m_drag, m_lift, true );
 				}
 			}
 
