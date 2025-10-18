@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 Erin Catto
+// SPDX-FileCopyrightText: 2025 Erin Catto
 // SPDX-License-Identifier: MIT
 
 #if defined( _MSC_VER ) && !defined( _CRT_SECURE_NO_WARNINGS )
@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void* b2GrowAlloc( void* oldMem, int oldSize, int newSize )
+void* GrowAlloc( void* oldMem, int oldSize, int newSize )
 {
 	assert( newSize > oldSize );
 	void* newMem = malloc( newSize );
