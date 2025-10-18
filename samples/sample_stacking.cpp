@@ -48,7 +48,7 @@ public:
 	{
 		Sample::Step();
 
-		// m_context->draw.DrawCircle({0.0f, 2.0f}, 1.0f, b2_colorWhite);
+		// DrawCircle({0.0f, 2.0f}, 1.0f, b2_colorWhite);
 
 		b2Vec2 position = b2Body_GetPosition( m_bodyId );
 		DrawTextLine( "(x, y) = (%.2g, %.2g)", position.x, position.y );
@@ -470,7 +470,7 @@ public:
 			int indexA = static_cast<int>( reinterpret_cast<intptr_t>( userDataA ) );
 			int indexB = static_cast<int>( reinterpret_cast<intptr_t>( userDataB ) );
 
-			m_context->draw.DrawPoint( event->point, 10.0f, b2_colorWhite );
+			DrawPoint( m_draw, event->point, 10.0f, b2_colorWhite );
 
 			m_events.push_back( { indexA, indexB } );
 		}

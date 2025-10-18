@@ -392,7 +392,7 @@ public:
 			b2Body_SetTargetTransform( m_targetId, m_transform, timeStep );
 		}
 
-		m_context->draw.DrawTransform( m_transform );
+		DrawTransform( m_draw, m_transform, 1.0f );
 
 		Sample::Step();
 
@@ -523,7 +523,7 @@ public:
 			def.impulsePerLength = 10.0f;
 			b2World_Explode( m_worldId, &def );
 
-			m_draw->DrawCircle( def.position, 10.0f, b2_colorWhite );
+			DrawCircle( m_draw, def.position, 10.0f, b2_colorWhite );
 		}
 
 		ImGui::End();
@@ -988,7 +988,7 @@ public:
 		m_hertz = 1.0f;
 		m_dampingRatio = 0.7f;
 
-		for (int i = 0; i < 2; ++i)
+		for ( int i = 0; i < 2; ++i )
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.position = { 0.0f, 10.25f };
@@ -2001,7 +2001,7 @@ public:
 			else
 			{
 				b2Transform localFrame = b2Joint_GetLocalFrameA( m_jointIds[i] );
-				m_context->draw.DrawString( localFrame.p, "(%.1f, %.1f)", force.x, force.y );
+				DrawWorldString( m_draw, m_camera, localFrame.p, b2_colorWhite, "(%.1f, %.1f)", force.x, force.y );
 			}
 		}
 
@@ -2227,7 +2227,8 @@ public:
 			float linear = b2Joint_GetLinearSeparation( m_jointIds[i] );
 			float angular = b2Joint_GetAngularSeparation( m_jointIds[i] );
 			b2Transform localFrame = b2Joint_GetLocalFrameA( m_jointIds[i] );
-			m_context->draw.DrawString( localFrame.p, "%.2f m, %.1f deg", linear, 180.0f * angular / B2_PI );
+			DrawWorldString( m_draw, m_camera, localFrame.p, b2_colorWhite, "%.2f m, %.1f deg", linear,
+							 180.0f * angular / B2_PI );
 		}
 
 		Sample::Step();
@@ -2282,7 +2283,7 @@ public:
 		Sample::Step();
 
 		b2Transform axes = b2Transform_identity;
-		m_context->draw.DrawTransform( axes );
+		DrawTransform( m_draw, axes, 1.0f );
 
 		if ( m_context->pause )
 		{
@@ -2329,12 +2330,12 @@ public:
 			float C = length - slackLength;
 			if ( C < 0.0f || length < 0.001f )
 			{
-				m_context->draw.DrawLine( anchorA, anchorB, b2_colorLightCyan );
+				DrawLine( m_draw, anchorA, anchorB, b2_colorLightCyan );
 				m_impulses[i] = 0.0f;
 				continue;
 			}
 
-			m_context->draw.DrawLine( anchorA, anchorB, b2_colorViolet );
+			DrawLine( m_draw, anchorA, anchorB, b2_colorViolet );
 			b2Vec2 axis = b2Normalize( deltaAnchor );
 
 			b2Vec2 rB = b2Sub( anchorB, pB );
@@ -2380,7 +2381,7 @@ public:
 		{
 			m_context->camera.m_center.y = 5.0f;
 			m_context->camera.m_zoom = 25.0f * 0.4f;
-			m_context->drawJoints = false;
+			m_context->debugDraw.drawJoints = false;
 		}
 
 		b2BodyId groundId;
@@ -3028,7 +3029,7 @@ public:
 		{
 			m_context->camera.m_center = { 0.0f, 6.0f };
 			m_context->camera.m_zoom = 7.0f;
-			m_context->drawJoints = false;
+			m_context->debugDraw.drawJoints = false;
 		}
 
 		b2BodyId groundId;
@@ -3448,7 +3449,7 @@ public:
 		Sample::Step();
 
 		b2Vec2 p = b2Body_GetWorldPoint( m_doorId, { 0.0f, 1.5f } );
-		m_draw->DrawPoint( p, 5.0f, b2_colorDarkKhaki );
+		DrawPoint( m_draw, p, 5.0f, b2_colorDarkKhaki );
 
 		float translationError = b2Joint_GetLinearSeparation( m_jointId );
 		m_translationError = b2MaxFloat( m_translationError, translationError );

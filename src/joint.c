@@ -1458,13 +1458,13 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 			break;
 
 		case b2_filterJoint:
-			draw->DrawSegmentFcn( pA, pB, b2_colorGold, draw->context );
+			draw->DrawLineFcn( pA, pB, b2_colorGold, draw->context );
 			break;
 
 		case b2_motorJoint:
 			draw->DrawPointFcn( pA, 8.0f, b2_colorYellowGreen, draw->context );
 			draw->DrawPointFcn( pB, 8.0f, b2_colorPlum, draw->context );
-			draw->DrawSegmentFcn( pA, pB, b2_colorLightGray, draw->context );
+			draw->DrawLineFcn( pA, pB, b2_colorLightGray, draw->context );
 			break;
 
 		case b2_prismaticJoint:
@@ -1484,9 +1484,9 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 			break;
 
 		default:
-			draw->DrawSegmentFcn( transformA.p, pA, color, draw->context );
-			draw->DrawSegmentFcn( pA, pB, color, draw->context );
-			draw->DrawSegmentFcn( transformB.p, pB, color, draw->context );
+			draw->DrawLineFcn( transformA.p, pA, color, draw->context );
+			draw->DrawLineFcn( pA, pB, color, draw->context );
+			draw->DrawLineFcn( transformB.p, pB, color, draw->context );
 			break;
 	}
 
@@ -1506,7 +1506,7 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 		float torque = b2GetJointConstraintTorque( world, joint );
 		b2Vec2 p = b2Lerp( pA, pB, 0.5f );
 
-		draw->DrawSegmentFcn( p, b2MulAdd( p, 0.001f, force ), b2_colorAzure, draw->context );
+		draw->DrawLineFcn( p, b2MulAdd( p, 0.001f, force ), b2_colorAzure, draw->context );
 
 		char buffer[64];
 		snprintf( buffer, 64, "f = [%g, %g], t = %g", force.x, force.y, torque );

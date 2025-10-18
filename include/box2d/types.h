@@ -1341,7 +1341,7 @@ typedef struct b2DebugDraw
 	void ( *DrawSolidCapsuleFcn )( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context );
 
 	/// Draw a line segment.
-	void ( *DrawSegmentFcn )( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context );
+	void ( *DrawLineFcn )( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context );
 
 	/// Draw a transform. Choose your own length scale.
 	void ( *DrawTransformFcn )( b2Transform transform, void* context );
@@ -1380,7 +1380,7 @@ typedef struct b2DebugDraw
 	bool drawBodyNames;
 
 	/// Option to draw contact points
-	bool drawContacts;
+	bool drawContactPoints;
 
 	/// Option to visualize the graph coloring used for contacts and joints
 	bool drawGraphColors;

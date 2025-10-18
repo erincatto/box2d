@@ -1486,7 +1486,7 @@ void DrawScreenString( Draw* draw, int x, int y, const char* string, ... )
 	AddText( &draw->font, (float)x, (float)y, b2_colorWhite, buffer );
 }
 
-void DrawWorldString( Draw* draw, Camera* camera, b2Vec2 p, const char* string, ... )
+void DrawWorldString( Draw* draw, Camera* camera, b2Vec2 p, b2HexColor color, const char* string, ... )
 {
 	b2Vec2 ps = ConvertWorldToScreen( camera, p );
 
@@ -1497,18 +1497,18 @@ void DrawWorldString( Draw* draw, Camera* camera, b2Vec2 p, const char* string, 
 	va_end( arg );
 
 	buffer[255] = 0;
-	AddText( &draw->font, ps.x, ps.y, b2_colorWhite, buffer );
+	AddText( &draw->font, ps.x, ps.y, color, buffer );
 }
 
 void FlushDraw( Draw* draw, Camera* camera )
 {
 	// order matters
-	FlushSolidCircles(&draw->m_circles, camera );
-	FlushCapsules(&draw->m_capsules, camera );
-	FlushPolygons(&draw->m_polygons, camera );
-	FlushCircles(&draw->m_hollowCircles, camera );
-	FlushLines(&draw->m_lines, camera );
-	FlushPoints(&draw->m_points, camera );
+	FlushSolidCircles( &draw->m_circles, camera );
+	FlushCapsules( &draw->m_capsules, camera );
+	FlushPolygons( &draw->m_polygons, camera );
+	FlushCircles( &draw->m_hollowCircles, camera );
+	FlushLines( &draw->m_lines, camera );
+	FlushPoints( &draw->m_points, camera );
 	CheckOpenGL();
 }
 

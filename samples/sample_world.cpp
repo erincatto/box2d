@@ -33,7 +33,7 @@ public:
 		{
 			m_context->camera.m_center = m_viewPosition;
 			m_context->camera.m_zoom = 25.0f * 1.0f;
-			m_context->drawJoints = false;
+			m_context->debugDraw.drawJoints = false;
 		}
 
 		{
@@ -69,7 +69,7 @@ public:
 
 				for ( int j = 0; j < ycount; ++j )
 				{
-					b2Polygon square = b2MakeOffsetBox( 0.4f * m_gridSize, 0.4f * m_gridSize,  { xShape, y }, b2Rot_identity  );
+					b2Polygon square = b2MakeOffsetBox( 0.4f * m_gridSize, 0.4f * m_gridSize, { xShape, y }, b2Rot_identity );
 					square.radius = 0.1f;
 					b2CreatePolygonShape( groundId, &shapeDef, &square );
 
@@ -114,7 +114,7 @@ public:
 				for ( int i = 0; i < 5; ++i )
 				{
 					Human human = {};
-					CreateHuman(&human, m_worldId, position, 1.5f, 0.05f, 0.0f, 0.0f, humanIndex + 1, nullptr, false );
+					CreateHuman( &human, m_worldId, position, 1.5f, 0.05f, 0.0f, 0.0f, humanIndex + 1, nullptr, false );
 					humanIndex += 1;
 					position.x += 1.0f;
 				}
@@ -203,7 +203,7 @@ public:
 
 		if ( m_explode )
 		{
-			m_context->draw.DrawCircle( m_explosionPosition, radius, b2_colorAzure );
+			DrawCircle( m_draw, m_explosionPosition, radius, b2_colorAzure );
 		}
 
 		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS )

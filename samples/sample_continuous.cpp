@@ -170,8 +170,8 @@ public:
 			HitEvent* e = m_hitEvents + i;
 			if ( e->stepIndex > 0 && m_stepCount <= e->stepIndex + 30 )
 			{
-				m_context->draw.DrawCircle( e->point, 0.1f, b2_colorOrangeRed );
-				m_context->draw.DrawString( e->point, "%.1f", e->speed );
+				DrawCircle(m_draw, e->point, 0.1f, b2_colorOrangeRed );
+				DrawWorldString( m_draw, m_camera, e->point, b2_colorWhite, "%.1f", e->speed );
 			}
 		}
 
@@ -256,7 +256,7 @@ public:
 		b2CosSin cs2 = b2ComputeCosSin( m_time );
 		float gravity = 10.0f;
 		b2Vec2 gravityVec = { gravity * cs1.sine, gravity * cs2.cosine };
-		m_context->draw.DrawLine( b2Vec2_zero, b2Vec2{ 3.0f * cs1.sine, 3.0f * cs2.cosine }, b2_colorWhite );
+		DrawLine( m_draw, b2Vec2_zero, b2Vec2{ 3.0f * cs1.sine, 3.0f * cs2.cosine }, b2_colorWhite );
 		m_time += timeStep;
 		m_countDown -= timeStep;
 		b2World_SetGravity( m_worldId, gravityVec );
@@ -1230,7 +1230,7 @@ public:
 			m_context->camera.m_center = { 0.0f, 1.5f };
 			m_context->camera.m_zoom = 3.0f;
 			m_context->enableSleep = false;
-			m_context->drawJoints = false;
+			m_context->debugDraw.drawJoints = false;
 		}
 
 #if 0
@@ -1507,11 +1507,11 @@ public:
 		ImDrawList* drawList = ImGui::GetWindowDrawList();
 
 		const char* ContinuousText = m_continuous && m_speculative ? "Continuous ON" : "Continuous OFF";
-		drawList->AddText( m_context->draw.m_largeFont, m_context->draw.m_largeFont->FontSize, { 40.0f, 40.0f }, IM_COL32_WHITE, ContinuousText );
+		drawList->AddText( m_largeFont, m_largeFont->FontSize, { 40.0f, 40.0f }, IM_COL32_WHITE, ContinuousText );
 
 		if ( m_frameSkip > 0 )
 		{
-			drawList->AddText( m_context->draw.m_mediumFont, m_context->draw.m_mediumFont->FontSize, { 40.0f, 40.0f + 64.0f + 20.0f },
+			drawList->AddText( m_mediumFont, m_mediumFont->FontSize, { 40.0f, 40.0f + 64.0f + 20.0f },
 							   IM_COL32( 200, 200, 200, 255 ), "Slow Time" );
 		}
 
@@ -1571,7 +1571,7 @@ public:
 			m_context->camera.m_zoom = 25.0f * 0.5f;
 		}
 
-		m_context->drawJoints = false;
+		m_context->debugDraw.drawJoints = false;
 
 		// Ground body
 		b2BodyId groundId = {};

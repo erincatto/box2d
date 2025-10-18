@@ -197,7 +197,7 @@ public:
 			hitNormal = hitResult.normal;
 		}
 
-		m_draw->DrawLine( hitPos, { hitPos.x + hitNormal.x, hitPos.y + hitNormal.y }, b2_colorRed );
+		DrawLine( m_draw, hitPos, { hitPos.x + hitNormal.x, hitPos.y + hitNormal.y }, b2_colorRed );
 
 		Sample::Step();
 	}
@@ -610,7 +610,7 @@ public:
 			circle.center = { 0, 0 };
 
 			// Note: this will crash due to divergence (inf/nan) with a radius of 0.1
-			//circle.radius = 0.1f;
+			// circle.radius = 0.1f;
 			circle.radius = 0.5f;
 
 			b2CreateCircleShape( centerId, &sd, &circle );
@@ -668,7 +668,8 @@ public:
 	}
 };
 
-static int sampleUnstablePrismaticJoints = RegisterSample( "Issues", "Unstable Prismatic Joints", UnstablePrismaticJoints::Create );
+static int sampleUnstablePrismaticJoints =
+	RegisterSample( "Issues", "Unstable Prismatic Joints", UnstablePrismaticJoints::Create );
 
 class UnstableWindmill : public Sample
 {
@@ -706,7 +707,7 @@ public:
 
 		// rotors
 		b2WeldJointDef wjdef = b2DefaultWeldJointDef();
-		//wjdef.base.constraintHertz = 30.0f;
+		// wjdef.base.constraintHertz = 30.0f;
 		wjdef.base.bodyIdA = center;
 
 		b2Polygon polygon;

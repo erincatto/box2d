@@ -164,11 +164,11 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 		float largeSize = floorf( 64.0f * s_context.uiScale );
 
 		ImGuiIO& io = ImGui::GetIO();
-		s_context.draw.m_regularFont = io.Fonts->AddFontFromFileTTF( fontPath, regularSize, &fontConfig );
-		s_context.draw.m_mediumFont = io.Fonts->AddFontFromFileTTF( fontPath, mediumSize, &fontConfig );
-		s_context.draw.m_largeFont = io.Fonts->AddFontFromFileTTF( fontPath, largeSize, &fontConfig );
+		s_context.regularFont = io.Fonts->AddFontFromFileTTF( fontPath, regularSize, &fontConfig );
+		s_context.mediumFont = io.Fonts->AddFontFromFileTTF( fontPath, mediumSize, &fontConfig );
+		s_context.largeFont = io.Fonts->AddFontFromFileTTF( fontPath, largeSize, &fontConfig );
 
-		ImGui::GetIO().FontDefault = s_context.draw.m_regularFont;
+		ImGui::GetIO().FontDefault = s_context.regularFont;
 	}
 	else
 	{
@@ -260,7 +260,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				break;
 
 			case GLFW_KEY_HOME:
-				s_context.camera.ResetView();
+				ResetView( &s_context.camera );
 				break;
 
 			case GLFW_KEY_R:
@@ -294,7 +294,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				break;
 
 			case GLFW_KEY_TAB:
-				s_context.draw.m_showUI = !s_context.draw.m_showUI;
+				s_context.showUI = !s_context.showUI;
 				break;
 
 			default:
@@ -327,7 +327,7 @@ static void MouseButtonCallback( GLFWwindow* window, int button, int action, int
 	// Use the mouse to move things around.
 	if ( button == GLFW_MOUSE_BUTTON_1 )
 	{
-		b2Vec2 pw = s_context.camera.ConvertScreenToWorld( ps );
+		b2Vec2 pw = ConvertScreenToWorld( &s_context.camera, ps );
 		if ( action == GLFW_PRESS )
 		{
 			s_sample->MouseDown( pw, button, modifiers );
@@ -342,7 +342,7 @@ static void MouseButtonCallback( GLFWwindow* window, int button, int action, int
 	{
 		if ( action == GLFW_PRESS )
 		{
-			s_clickPointWS = s_context.camera.ConvertScreenToWorld( ps );
+			s_clickPointWS = ConvertScreenToWorld( &s_context.camera, ps );
 			s_rightMouseDown = true;
 		}
 
@@ -359,7 +359,7 @@ static void MouseMotionCallback( GLFWwindow* window, double xd, double yd )
 
 	ImGui_ImplGlfw_CursorPosCallback( window, ps.x, ps.y );
 
-	b2Vec2 pw = s_context.camera.ConvertScreenToWorld( ps );
+	b2Vec2 pw = ConvertScreenToWorld( &s_context.camera, ps );
 	s_sample->MouseMove( pw );
 
 	if ( s_rightMouseDown )
@@ -367,7 +367,7 @@ static void MouseMotionCallback( GLFWwindow* window, double xd, double yd )
 		b2Vec2 diff = b2Sub( pw, s_clickPointWS );
 		s_context.camera.m_center.x -= diff.x;
 		s_context.camera.m_center.y -= diff.y;
-		s_clickPointWS = s_context.camera.ConvertScreenToWorld( ps );
+		s_clickPointWS = ConvertScreenToWorld( &s_context.camera, ps );
 	}
 }
 
@@ -395,12 +395,12 @@ static void UpdateUI()
 
 	float fontSize = ImGui::GetFontSize();
 	float menuWidth = 13.0f * fontSize;
-	if ( s_context.draw.m_showUI )
+	if ( s_context.showUI )
 	{
 		ImGui::SetNextWindowPos( { s_context.camera.m_width - menuWidth - 0.5f * fontSize, 0.5f * fontSize } );
 		ImGui::SetNextWindowSize( { menuWidth, s_context.camera.m_height - fontSize } );
 
-		ImGui::Begin( "Tools", &s_context.draw.m_showUI,
+		ImGui::Begin( "Tools", &s_context.showUI,
 					  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse );
 
 		if ( ImGui::BeginTabBar( "ControlTabs", ImGuiTabBarFlags_None ) )
@@ -426,25 +426,25 @@ static void UpdateUI()
 
 				ImGui::Separator();
 
-				ImGui::Checkbox( "Shapes", &s_context.drawShapes );
-				ImGui::Checkbox( "Joints", &s_context.drawJoints );
-				ImGui::Checkbox( "Joint Extras", &s_context.drawJointExtras );
-				ImGui::Checkbox( "Bounds", &s_context.drawBounds );
-				ImGui::Checkbox( "Contact Points", &s_context.drawContactPoints );
-				ImGui::Checkbox( "Contact Normals", &s_context.drawContactNormals );
-				ImGui::Checkbox( "Contact Features", &s_context.drawContactFeatures );
-				ImGui::Checkbox( "Contact Forces", &s_context.drawContactForces );
-				ImGui::Checkbox( "Friction Forces", &s_context.drawFrictionForces );
-				ImGui::Checkbox( "Mass", &s_context.drawMass );
-				ImGui::Checkbox( "Body Names", &s_context.drawBodyNames );
-				ImGui::Checkbox( "Graph Colors", &s_context.drawGraphColors );
-				ImGui::Checkbox( "Islands", &s_context.drawIslands );
+				ImGui::Checkbox( "Shapes", &s_context.debugDraw.drawShapes );
+				ImGui::Checkbox( "Joints", &s_context.debugDraw.drawJoints );
+				ImGui::Checkbox( "Joint Extras", &s_context.debugDraw.drawJointExtras );
+				ImGui::Checkbox( "Bounds", &s_context.debugDraw.drawBounds );
+				ImGui::Checkbox( "Contact Points", &s_context.debugDraw.drawContactPoints );
+				ImGui::Checkbox( "Contact Normals", &s_context.debugDraw.drawContactNormals );
+				ImGui::Checkbox( "Contact Features", &s_context.debugDraw.drawContactFeatures );
+				ImGui::Checkbox( "Contact Forces", &s_context.debugDraw.drawContactForces );
+				ImGui::Checkbox( "Friction Forces", &s_context.debugDraw.drawFrictionForces );
+				ImGui::Checkbox( "Mass", &s_context.debugDraw.drawMass );
+				ImGui::Checkbox( "Body Names", &s_context.debugDraw.drawBodyNames );
+				ImGui::Checkbox( "Graph Colors", &s_context.debugDraw.drawGraphColors );
+				ImGui::Checkbox( "Islands", &s_context.debugDraw.drawIslands );
 				ImGui::Checkbox( "Counters", &s_context.drawCounters );
 				ImGui::Checkbox( "Profile", &s_context.drawProfile );
 
 				ImGui::PushItemWidth( 80.0f );
-				ImGui::InputFloat( "Joint Scale", &s_context.jointScale );
-				ImGui::InputFloat( "Force Scale", &s_context.forceScale );
+				ImGui::InputFloat( "Joint Scale", &s_context.debugDraw.jointScale );
+				ImGui::InputFloat( "Force Scale", &s_context.debugDraw.forceScale );
 				ImGui::PopItemWidth();
 
 				ImVec2 button_sz = ImVec2( -1, 0 );
@@ -642,9 +642,8 @@ int main( int, char** )
 	glfwSetCursorPosCallback( s_context.window, MouseMotionCallback );
 	glfwSetScrollCallback( s_context.window, ScrollCallback );
 
-	// todo put this in s_context
 	CreateUI( s_context.window, glslVersion );
-	s_context.draw.Create( &s_context.camera );
+	s_context.draw = CreateDraw();
 
 	s_context.sampleIndex = b2ClampInt( s_context.sampleIndex, 0, g_sampleCount - 1 );
 	s_selection = s_context.sampleIndex;
@@ -710,7 +709,7 @@ int main( int, char** )
 			s_sample = g_sampleEntries[s_context.sampleIndex].createFcn( &s_context );
 		}
 
-		if ( s_context.draw.m_showUI )
+		if ( s_context.showUI )
 		{
 			const SampleEntry& entry = g_sampleEntries[s_context.sampleIndex];
 			snprintf( buffer, 128, "%s : %s", entry.category, entry.name );
@@ -719,13 +718,13 @@ int main( int, char** )
 
 		s_sample->Step();
 
-		s_context.draw.Flush();
+		FlushDraw( s_context.draw, &s_context.camera );
 
 		UpdateUI();
 
 		// ImGui::ShowDemoWindow();
 
-		if ( s_context.draw.m_showUI )
+		if ( s_context.showUI )
 		{
 			snprintf( buffer, 128, "%.1f ms - step %d - camera (%g, %g, %g)", 1000.0f * frameTime, s_sample->m_stepCount,
 					  s_context.camera.m_center.x, s_context.camera.m_center.y, s_context.camera.m_zoom );
@@ -749,12 +748,10 @@ int main( int, char** )
 
 		if ( s_selection != s_context.sampleIndex )
 		{
-			s_context.camera.ResetView();
+			ResetView( &s_context.camera );
 			s_context.sampleIndex = s_selection;
-
-			// #todo restore all drawing settings that may have been overridden by a sample
 			s_context.subStepCount = 4;
-			s_context.drawJoints = true;
+			s_context.debugDraw.drawJoints = true;
 
 			delete s_sample;
 			s_sample = nullptr;
@@ -778,7 +775,7 @@ int main( int, char** )
 	delete s_sample;
 	s_sample = nullptr;
 
-	s_context.draw.Destroy();
+	DestroyDraw( s_context.draw );
 
 	DestroyUI();
 	glfwTerminate();

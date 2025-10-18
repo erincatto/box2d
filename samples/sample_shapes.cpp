@@ -204,8 +204,8 @@ public:
 	{
 		Sample::Step();
 
-		m_context->draw.DrawLine( b2Vec2_zero, { 0.5f, 0.0f }, b2_colorRed );
-		m_context->draw.DrawLine( b2Vec2_zero, { 0.0f, 0.5f }, b2_colorGreen );
+		DrawLine( m_draw, b2Vec2_zero, { 0.5f, 0.0f }, b2_colorRed );
+		DrawLine( m_draw, b2Vec2_zero, { 0.0f, 0.5f }, b2_colorGreen );
 
 		// DrawTextLine( "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
 	}
@@ -420,16 +420,16 @@ public:
 		if ( m_drawBodyAABBs )
 		{
 			b2AABB aabb = b2Body_ComputeAABB( m_table1Id );
-			m_context->draw.DrawBounds( aabb, b2_colorYellow );
+			DrawBounds( m_draw, aabb, b2_colorYellow );
 
 			aabb = b2Body_ComputeAABB( m_table2Id );
-			m_context->draw.DrawBounds( aabb, b2_colorYellow );
+			DrawBounds( m_draw, aabb, b2_colorYellow );
 
 			aabb = b2Body_ComputeAABB( m_ship1Id );
-			m_context->draw.DrawBounds( aabb, b2_colorYellow );
+			DrawBounds( m_draw, aabb, b2_colorYellow );
 
 			aabb = b2Body_ComputeAABB( m_ship2Id );
-			m_context->draw.DrawBounds( aabb, b2_colorYellow );
+			DrawBounds( m_draw, aabb, b2_colorYellow );
 		}
 	}
 
@@ -635,13 +635,13 @@ public:
 		Sample::Step();
 
 		b2Vec2 p1 = b2Body_GetPosition( m_player1Id );
-		m_context->draw.DrawString( { p1.x - 0.5f, p1.y }, "player 1" );
+		DrawWorldString( m_draw, m_camera, { p1.x - 0.5f, p1.y }, b2_colorWhite, "player 1" );
 
 		b2Vec2 p2 = b2Body_GetPosition( m_player2Id );
-		m_context->draw.DrawString( { p2.x - 0.5f, p2.y }, "player 2" );
+		DrawWorldString( m_draw, m_camera, { p2.x - 0.5f, p2.y }, b2_colorWhite, "player 2" );
 
 		b2Vec2 p3 = b2Body_GetPosition( m_player3Id );
-		m_context->draw.DrawString( { p3.x - 0.5f, p3.y }, "player 3" );
+		DrawWorldString( m_draw, m_camera, { p3.x - 0.5f, p3.y }, b2_colorWhite, "player 3" );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -718,7 +718,7 @@ public:
 		for ( int i = 0; i < e_count; ++i )
 		{
 			b2Vec2 p = b2Body_GetPosition( m_bodyIds[i] );
-			m_context->draw.DrawString( { p.x, p.y }, "%d", i );
+			DrawWorldString( m_draw, m_camera, { p.x, p.y }, b2_colorWhite, "%d", i );
 		}
 	}
 
@@ -1019,7 +1019,7 @@ public:
 
 		for ( int i = 0; i < 20; ++i )
 		{
-			m_context->draw.DrawString( { -41.5f, 2.0f * i + 1.0f }, "%.2f", m_resistScale * i );
+			DrawWorldString( m_draw, m_camera, { -41.5f, 2.0f * i + 1.0f }, b2_colorWhite, "%.2f", m_resistScale * i );
 		}
 	}
 
@@ -1657,7 +1657,7 @@ public:
 	{
 		Sample::Step();
 
-		m_context->draw.DrawTransform( b2Transform_identity );
+		DrawTransform( m_draw, b2Transform_identity, 1.0f );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -1767,8 +1767,8 @@ public:
 
 		DrawTextLine( "reference angle = %g", m_referenceAngle );
 
-		m_context->draw.DrawCircle( b2Vec2_zero, m_radius + m_falloff, b2_colorBox2DBlue );
-		m_context->draw.DrawCircle( b2Vec2_zero, m_radius, b2_colorBox2DYellow );
+		DrawCircle( m_draw, b2Vec2_zero, m_radius + m_falloff, b2_colorBox2DBlue );
+		DrawCircle( m_draw, b2Vec2_zero, m_radius, b2_colorBox2DYellow );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -1939,7 +1939,7 @@ public:
 		m_drag = 1.0f;
 		m_lift = 0.75f;
 		m_count = 10;
-		m_noise = {0.0f, 0.0f};
+		m_noise = { 0.0f, 0.0f };
 
 		CreateScene();
 	}
@@ -1958,7 +1958,7 @@ public:
 		float radius = 0.1f;
 		b2Circle circle = { { 0.0f, 0.0f }, radius };
 		b2Capsule capsule = { { 0.0f, -radius }, { 0.0f, radius }, 0.25f * radius };
-		b2Polygon box = b2MakeBox( 0.25f * radius, 1.25f * radius);
+		b2Polygon box = b2MakeBox( 0.25f * radius, 1.25f * radius );
 
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 		jointDef.base.bodyIdA = m_groundId;
@@ -2024,7 +2024,7 @@ public:
 		ImGui::SliderFloat2( "Wind", &m_wind.x, -20.0f, 20.0f, "%.1f" );
 		ImGui::SliderFloat( "Drag", &m_drag, 0.0f, 1.0f, "%.2f" );
 		ImGui::SliderFloat( "Lift", &m_lift, 0.0f, 4.0f, "%.2f" );
-		if (ImGui::SliderInt( "Count", &m_count, 1, m_maxCount, "%d" ))
+		if ( ImGui::SliderInt( "Count", &m_count, 1, m_maxCount, "%d" ) )
 		{
 			CreateScene();
 		}
@@ -2054,9 +2054,8 @@ public:
 			b2Vec2 rand = RandomVec2( -0.3f, 0.3f );
 			m_noise = b2Lerp( m_noise, rand, 0.05f );
 
-			m_draw->DrawLine( b2Vec2_zero, b2MulSV( 0.2f, wind ), b2_colorFuchsia );
+			DrawLine( m_draw, b2Vec2_zero, b2MulSV( 0.2f, wind ), b2_colorFuchsia );
 		}
-
 
 		Sample::Step();
 	}

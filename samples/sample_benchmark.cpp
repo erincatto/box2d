@@ -62,7 +62,7 @@ public:
 			m_context->camera.m_zoom = 25.0f * 2.35f;
 		}
 
-		m_context->drawJoints = false;
+		m_context->debugDraw.drawJoints = false;
 
 		{
 			float gridSize = 1.0f;
@@ -489,7 +489,7 @@ public:
 		{
 			m_context->camera.m_center = { 1.0f, -5.5 };
 			m_context->camera.m_zoom = 25.0f * 3.4f;
-			m_context->drawJoints = false;
+			m_context->debugDraw.drawJoints = false;
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -924,7 +924,7 @@ public:
 	void Step() override
 	{
 		// These operations don't show up in b2Profile
-		if (m_stepCount > 20)
+		if ( m_stepCount > 20 )
 		{
 			// Creating and destroying a joint will engage the island splitter.
 			b2FilterJointDef jointDef = b2DefaultFilterJointDef();
@@ -1441,12 +1441,12 @@ public:
 
 			b2Vec2 p1 = m_origins[m_drawIndex];
 			b2Vec2 p2 = p1 + m_translations[m_drawIndex];
-			m_context->draw.DrawLine( p1, p2, b2_colorWhite );
-			m_context->draw.DrawPoint( p1, 5.0f, b2_colorGreen );
-			m_context->draw.DrawPoint( p2, 5.0f, b2_colorRed );
+			DrawLine( m_context->draw, p1, p2, b2_colorWhite );
+			DrawPoint( m_context->draw, p1, 5.0f, b2_colorGreen );
+			DrawPoint( m_context->draw, p2, 5.0f, b2_colorRed );
 			if ( drawResult.hit )
 			{
-				m_context->draw.DrawPoint( drawResult.point, 5.0f, b2_colorWhite );
+				DrawPoint( m_context->draw, drawResult.point, 5.0f, b2_colorWhite );
 			}
 		}
 		else if ( m_queryType == e_circleCast )
@@ -1479,14 +1479,14 @@ public:
 
 			b2Vec2 p1 = m_origins[m_drawIndex];
 			b2Vec2 p2 = p1 + m_translations[m_drawIndex];
-			m_context->draw.DrawLine( p1, p2, b2_colorWhite );
-			m_context->draw.DrawPoint( p1, 5.0f, b2_colorGreen );
-			m_context->draw.DrawPoint( p2, 5.0f, b2_colorRed );
+			DrawLine( m_context->draw, p1, p2, b2_colorWhite );
+			DrawPoint( m_context->draw, p1, 5.0f, b2_colorGreen );
+			DrawPoint( m_context->draw, p2, 5.0f, b2_colorRed );
 			if ( drawResult.hit )
 			{
 				b2Vec2 t = b2Lerp( p1, p2, drawResult.fraction );
-				m_context->draw.DrawCircle( t, m_radius, b2_colorWhite );
-				m_context->draw.DrawPoint( drawResult.point, 5.0f, b2_colorWhite );
+				DrawCircle( m_context->draw, t, m_radius, b2_colorWhite );
+				DrawPoint( m_context->draw, drawResult.point, 5.0f, b2_colorWhite );
 			}
 		}
 		else if ( m_queryType == e_overlap )
@@ -1522,11 +1522,11 @@ public:
 			b2Vec2 origin = m_origins[m_drawIndex];
 			b2AABB aabb = { origin - extent, origin + extent };
 
-			m_context->draw.DrawBounds( aabb, b2_colorWhite );
+			DrawBounds( m_context->draw, aabb, b2_colorWhite );
 
 			for ( int i = 0; i < drawResult.count; ++i )
 			{
-				m_context->draw.DrawPoint( drawResult.points[i], 5.0f, b2_colorHotPink );
+				DrawPoint( m_context->draw, drawResult.points[i], 5.0f, b2_colorHotPink );
 			}
 		}
 
@@ -1617,7 +1617,7 @@ public:
 			m_context->enableSleep = true;
 		}
 
-		m_context->drawJoints = false;
+		m_context->debugDraw.drawJoints = false;
 
 		CreateRain( m_worldId );
 	}
@@ -1758,12 +1758,12 @@ public:
 		b2Transform xfA = m_transformAs[m_drawIndex];
 		b2Transform xfB = m_transformBs[m_drawIndex];
 		b2DistanceOutput output = m_outputs[m_drawIndex];
-		m_context->draw.DrawSolidPolygon( xfA, m_polygonA.vertices, m_polygonA.count, m_polygonA.radius, b2_colorBox2DGreen );
-		m_context->draw.DrawSolidPolygon( xfB, m_polygonB.vertices, m_polygonB.count, m_polygonB.radius, b2_colorBox2DBlue );
-		m_context->draw.DrawLine( output.pointA, output.pointB, b2_colorDimGray );
-		m_context->draw.DrawPoint( output.pointA, 10.0f, b2_colorWhite );
-		m_context->draw.DrawPoint( output.pointB, 10.0f, b2_colorWhite );
-		m_context->draw.DrawLine( output.pointA, output.pointA + 0.5f * output.normal, b2_colorYellow );
+		DrawSolidPolygon( m_context->draw, xfA, m_polygonA.vertices, m_polygonA.count, m_polygonA.radius, b2_colorBox2DGreen );
+		DrawSolidPolygon( m_context->draw, xfB, m_polygonB.vertices, m_polygonB.count, m_polygonB.radius, b2_colorBox2DBlue );
+		DrawLine( m_context->draw, output.pointA, output.pointB, b2_colorDimGray );
+		DrawPoint( m_context->draw, output.pointA, 10.0f, b2_colorWhite );
+		DrawPoint( m_context->draw, output.pointB, 10.0f, b2_colorWhite );
+		DrawLine( m_context->draw, output.pointA, output.pointA + 0.5f * output.normal, b2_colorYellow );
 		DrawTextLine( "distance = %g", output.distance );
 
 		Sample::Step();

@@ -858,7 +858,7 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2He
 			b2Segment* segment = &shape->segment;
 			b2Vec2 p1 = b2TransformPoint( xf, segment->point1 );
 			b2Vec2 p2 = b2TransformPoint( xf, segment->point2 );
-			draw->DrawSegmentFcn( p1, p2, color, draw->context );
+			draw->DrawLineFcn( p1, p2, color, draw->context );
 		}
 		break;
 
@@ -867,9 +867,9 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2He
 			b2Segment* segment = &shape->chainSegment.segment;
 			b2Vec2 p1 = b2TransformPoint( xf, segment->point1 );
 			b2Vec2 p2 = b2TransformPoint( xf, segment->point2 );
-			draw->DrawSegmentFcn( p1, p2, color, draw->context );
+			draw->DrawLineFcn( p1, p2, color, draw->context );
 			draw->DrawPointFcn( p2, 4.0f, color, draw->context );
-			draw->DrawSegmentFcn( p1, b2Lerp( p1, p2, 0.1f ), b2_colorPaleGreen, draw->context );
+			draw->DrawLineFcn( p1, b2Lerp( p1, p2, 0.1f ), b2_colorPaleGreen, draw->context );
 		}
 		break;
 
@@ -1042,7 +1042,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
 				b2Transform transform = { bodySim->center, bodySim->transform.q };
-				draw->DrawSegmentFcn( bodySim->center0, bodySim->center, b2_colorWhiteSmoke, draw->context );
+				draw->DrawLineFcn( bodySim->center0, bodySim->center, b2_colorWhiteSmoke, draw->context );
 				draw->DrawTransformFcn( transform, draw->context );
 
 				b2Vec2 p = b2TransformPoint( transform, offset );
@@ -1072,7 +1072,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 			}
 
 			const float linearSlop = B2_LINEAR_SLOP;
-			if ( draw->drawContacts && body->type == b2_dynamicBody )
+			if ( draw->drawContactPoints && body->type == b2_dynamicBody )
 			{
 				int contactKey = body->headContactKey;
 				while ( contactKey != B2_NULL_INDEX )
@@ -1122,7 +1122,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 							{
 								b2Vec2 p1 = point->point;
 								b2Vec2 p2 = b2MulAdd( p1, k_axisScale, normal );
-								draw->DrawSegmentFcn( p1, p2, normalColor, draw->context );
+								draw->DrawLineFcn( p1, p2, normalColor, draw->context );
 							}
 							else if ( draw->drawContactForces )
 							{
@@ -1130,7 +1130,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 								float force = 0.5f * point->totalNormalImpulse * world->inv_dt;
 								b2Vec2 p1 = point->point;
 								b2Vec2 p2 = b2MulAdd( p1, draw->forceScale * force, normal );
-								draw->DrawSegmentFcn( p1, p2, impulseColor, draw->context );
+								draw->DrawLineFcn( p1, p2, impulseColor, draw->context );
 								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", force );
 								draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 							}
@@ -1147,7 +1147,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 								b2Vec2 tangent = b2RightPerp( normal );
 								b2Vec2 p1 = point->point;
 								b2Vec2 p2 = b2MulAdd( p1, draw->forceScale * force, tangent );
-								draw->DrawSegmentFcn( p1, p2, frictionColor, draw->context );
+								draw->DrawLineFcn( p1, p2, frictionColor, draw->context );
 								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", force );
 								draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 							}
