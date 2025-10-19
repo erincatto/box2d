@@ -633,6 +633,9 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 
 	b2StepContext* stepContext = context;
 	b2World* world = stepContext->world;
+
+	B2_ASSERT( (int)threadIndex < world->workerCount );
+
 	bool enableSleep = world->enableSleep;
 	b2BodyState* states = stepContext->states;
 	b2BodySim* sims = stepContext->sims;

@@ -550,22 +550,22 @@ void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transfor
 	b2HexColor c4 = b2_colorDimGray;
 	b2HexColor c5 = b2_colorBlue;
 
-	draw->DrawSegmentFcn( frameA.p, frameB.p, c5, draw->context );
+	draw->DrawLineFcn( frameA.p, frameB.p, c5, draw->context );
 
 	if ( joint->enableLimit )
 	{
 		b2Vec2 lower = b2MulAdd( frameA.p, joint->lowerTranslation, axisA );
 		b2Vec2 upper = b2MulAdd( frameA.p, joint->upperTranslation, axisA );
 		b2Vec2 perp = b2LeftPerp( axisA );
-		draw->DrawSegmentFcn( lower, upper, c1, draw->context );
-		draw->DrawSegmentFcn( b2MulSub( lower, 0.1f * drawScale, perp ), b2MulAdd( lower, 0.1f * drawScale, perp ), c2,
+		draw->DrawLineFcn( lower, upper, c1, draw->context );
+		draw->DrawLineFcn( b2MulSub( lower, 0.1f * drawScale, perp ), b2MulAdd( lower, 0.1f * drawScale, perp ), c2,
 							  draw->context );
-		draw->DrawSegmentFcn( b2MulSub( upper, 0.1f * drawScale, perp ), b2MulAdd( upper, 0.1f * drawScale, perp ), c3,
+		draw->DrawLineFcn( b2MulSub( upper, 0.1f * drawScale, perp ), b2MulAdd( upper, 0.1f * drawScale, perp ), c3,
 							  draw->context );
 	}
 	else
 	{
-		draw->DrawSegmentFcn( b2MulSub( frameA.p, 1.0f, axisA ), b2MulAdd( frameA.p, 1.0f, axisA ), c1, draw->context );
+		draw->DrawLineFcn( b2MulSub( frameA.p, 1.0f, axisA ), b2MulAdd( frameA.p, 1.0f, axisA ), c1, draw->context );
 	}
 
 	draw->DrawPointFcn( frameA.p, 5.0f, c1, draw->context );

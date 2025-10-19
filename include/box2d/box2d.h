@@ -318,7 +318,7 @@ B2_API void b2Body_ApplyTorque( b2BodyId bodyId, float torque, bool wake );
 /// @param bodyId The body id
 void b2Body_ClearForces( b2BodyId bodyId );
 
-	/// Apply an impulse at a point. This immediately modifies the velocity.
+/// Apply an impulse at a point. This immediately modifies the velocity.
 /// It also modifies the angular velocity if the point of application
 /// is not at the center of mass. This optionally wakes the body.
 /// The impulse is ignored if the body is not awake.
@@ -368,7 +368,7 @@ B2_API void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData );
 /// Get the mass data for a body
 B2_API b2MassData b2Body_GetMassData( b2BodyId bodyId );
 
-/// This update the mass properties to the sum of the mass properties of the shapes.
+/// This updates the mass properties to the sum of the mass properties of the shapes.
 /// This normally does not need to be called unless you called SetMassData to override
 /// the mass and you later want to reset the mass.
 /// You may also use this when automatic mass computation has been disabled.
@@ -686,7 +686,15 @@ B2_API b2MassData b2Shape_ComputeMassData( b2ShapeId shapeId );
 /// todo need sample
 B2_API b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target );
 
-B2_API void b2Shape_ApplyWindForce( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, bool wake );
+/// Apply a wind force to the body for this shape using the density of air. This considers
+/// the projected area of the shape in the wind direction. This also considers
+/// the relative velocity of the shape.
+/// @param shapeId the shape id
+/// @param wind the wind velocity in world space
+/// @param drag the drag coefficient, the force that opposes the relative velocity
+/// @param lift the lift coefficient, the force that is perpendicular to the relative velocity
+/// @param wake should this wake the body
+B2_API void b2Shape_ApplyWind( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, bool wake );
 
 /// Chain Shape
 
@@ -805,7 +813,6 @@ B2_API void b2Joint_SetTorqueThreshold( b2JointId jointId, float threshold );
 
 /// Get the torque threshold for joint events (N-m)
 B2_API float b2Joint_GetTorqueThreshold( b2JointId jointId );
-
 
 /**
  * @defgroup distance_joint Distance Joint

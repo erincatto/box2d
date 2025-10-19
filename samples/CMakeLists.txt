@@ -70,11 +70,13 @@ target_include_directories(jsmn INTERFACE ${JSMN_DIR})
 set(BOX2D_SAMPLE_FILES
 	car.cpp
 	car.h
+	container.c
+	container.h
 	donut.cpp
 	donut.h
 	doohickey.cpp
 	doohickey.h
-	draw.cpp
+	draw.c
 	draw.h
 	main.cpp
 	sample.cpp
@@ -93,8 +95,11 @@ set(BOX2D_SAMPLE_FILES
 	sample_shapes.cpp
 	sample_stacking.cpp
 	sample_world.cpp
-	shader.cpp
-	shader.h)
+	shader.c
+	shader.h
+	stb_image_write.h
+	stb_truetype.h
+)
 
 add_executable(samples ${BOX2D_SAMPLE_FILES})
 

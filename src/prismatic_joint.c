@@ -683,7 +683,7 @@ void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform tran
 	b2Transform frameB = b2MulTransforms( transformB, base->localFrameB );
 	b2Vec2 axisA = b2RotateVector( frameA.q, (b2Vec2){ 1.0f, 0.0f } );
 
-	draw->DrawSegmentFcn( frameA.p, frameB.p, b2_colorDimGray, draw->context );
+	draw->DrawLineFcn( frameA.p, frameB.p, b2_colorDimGray, draw->context );
 
 	if ( joint->enableLimit )
 	{
@@ -691,13 +691,13 @@ void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform tran
 		b2Vec2 lower = b2MulAdd( frameA.p, joint->lowerTranslation, axisA );
 		b2Vec2 upper = b2MulAdd( frameA.p, joint->upperTranslation, axisA );
 		b2Vec2 perp = b2LeftPerp( axisA );
-		draw->DrawSegmentFcn( lower, upper, b2_colorGray, draw->context );
-		draw->DrawSegmentFcn( b2MulSub( lower, b, perp ), b2MulAdd( lower, b, perp ), b2_colorGreen, draw->context );
-		draw->DrawSegmentFcn( b2MulSub( upper, b, perp ), b2MulAdd( upper, b, perp ), b2_colorRed, draw->context );
+		draw->DrawLineFcn( lower, upper, b2_colorGray, draw->context );
+		draw->DrawLineFcn( b2MulSub( lower, b, perp ), b2MulAdd( lower, b, perp ), b2_colorGreen, draw->context );
+		draw->DrawLineFcn( b2MulSub( upper, b, perp ), b2MulAdd( upper, b, perp ), b2_colorRed, draw->context );
 	}
 	else
 	{
-		draw->DrawSegmentFcn( b2MulSub( frameA.p, 1.0f, axisA ), b2MulAdd( frameA.p, 1.0f, axisA ), b2_colorGray, draw->context );
+		draw->DrawLineFcn( b2MulSub( frameA.p, 1.0f, axisA ), b2MulAdd( frameA.p, 1.0f, axisA ), b2_colorGray, draw->context );
 	}
 
 	if ( joint->enableSpring )

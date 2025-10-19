@@ -22,8 +22,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.5f, 0.0f };
-			m_context->camera.m_zoom = 25.0f * 0.3f;
+			m_context->camera.center = { 0.5f, 0.0f };
+			m_context->camera.zoom = 25.0f * 0.3f;
 		}
 
 		m_generation = 0;
@@ -185,17 +185,17 @@ public:
 			DrawTextLine( "milliseconds = %g", milliseconds );
 		}
 
-		m_context->draw.DrawPolygon( hull.points, hull.count, b2_colorGray );
+		DrawPolygon( m_draw, hull.points, hull.count, b2_colorGray );
 
 		for ( int32_t i = 0; i < m_count; ++i )
 		{
-			m_context->draw.DrawPoint( m_points[i], 5.0f, b2_colorBlue );
-			m_context->draw.DrawString( b2Add( m_points[i], { 0.1f, 0.1f } ), "%d", i );
+			DrawPoint( m_draw, m_points[i], 5.0f, b2_colorBlue );
+			DrawWorldString( m_draw, m_camera, b2Add( m_points[i], { 0.1f, 0.1f } ), b2_colorWhite, "%d", i );
 		}
 
 		for ( int32_t i = 0; i < hull.count; ++i )
 		{
-			m_context->draw.DrawPoint( hull.points[i], 6.0f, b2_colorGreen );
+			DrawPoint( m_draw, hull.points[i], 6.0f, b2_colorGreen );
 		}
 	}
 

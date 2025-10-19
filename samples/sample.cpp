@@ -56,8 +56,8 @@ void SampleContext::Save()
 	FILE* file = fopen( fileName, "w" );
 	fprintf( file, "{\n" );
 	fprintf( file, "  \"sampleIndex\": %d,\n", sampleIndex );
-	fprintf( file, "  \"drawShapes\": %s,\n", drawShapes ? "true" : "false" );
-	fprintf( file, "  \"drawJoints\": %s,\n", drawJoints ? "true" : "false" );
+	fprintf( file, "  \"drawShapes\": %s,\n", debugDraw.drawShapes ? "true" : "false" );
+	fprintf( file, "  \"drawJoints\": %s,\n", debugDraw.drawJoints ? "true" : "false" );
 	fprintf( file, "}\n" );
 	fclose( file );
 }
@@ -72,10 +72,78 @@ static int jsoneq( const char* json, jsmntok_t* tok, const char* s )
 	return -1;
 }
 
+void DrawPolygonFcn( const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context )
+{
+	SampleContext* sampleContext = static_cast<SampleContext*>( context );
+	DrawPolygon( sampleContext->draw, vertices, vertexCount, color );
+}
+
+void DrawSolidPolygonFcn( b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color,
+						  void* context )
+{
+	SampleContext* sampleContext = static_cast<SampleContext*>( context );
+	DrawSolidPolygon( sampleContext->draw, transform, vertices, vertexCount, radius, color );
+}
+
+void DrawCircleFcn( b2Vec2 center, float radius, b2HexColor color, void* context )
+{
+	SampleContext* sampleContext = static_cast<SampleContext*>( context );
+	DrawCircle( sampleContext->draw, center, radius, color );
+}
+
+void DrawSolidCircleFcn( b2Transform transform, float radius, b2HexColor color, void* context )
+{
+	SampleContext* sampleContext = static_cast<SampleContext*>( context );
+	DrawSolidCircle( sampleContext->draw, transform, radius, color );
+}
+
+void DrawSolidCapsuleFcn( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context )
+{
+	SampleContext* sampleContext = static_cast<SampleContext*>( context );
+	DrawSolidCapsule( sampleContext->draw, p1, p2, radius, color );
+}
+
+void DrawLineFcn( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context )
+{
+	SampleContext* sampleContext = static_cast<SampleContext*>( context );
+	DrawLine( sampleContext->draw, p1, p2, color );
+}
+
+void DrawTransformFcn( b2Transform transform, void* context )
+{
+	SampleContext* sampleContext = static_cast<SampleContext*>( context );
+	DrawTransform( sampleContext->draw, transform, 1.0f );
+}
+
+void DrawPointFcn( b2Vec2 p, float size, b2HexColor color, void* context )
+{
+	SampleContext* sampleContext = static_cast<SampleContext*>( context );
+	DrawPoint( sampleContext->draw, p, size, color );
+}
+
+void DrawStringFcn( b2Vec2 p, const char* s, b2HexColor color, void* context )
+{
+	SampleContext* sampleContext = static_cast<SampleContext*>( context );
+	DrawWorldString( sampleContext->draw, &sampleContext->camera, p, color, s );
+}
+
 #define MAX_TOKENS 32
 
 void SampleContext::Load()
 {
+	camera = GetDefaultCamera();
+	debugDraw = b2DefaultDebugDraw();
+	debugDraw.DrawPolygonFcn = DrawPolygonFcn;
+	debugDraw.DrawSolidPolygonFcn = DrawSolidPolygonFcn;
+	debugDraw.DrawCircleFcn = DrawCircleFcn;
+	debugDraw.DrawSolidCircleFcn = DrawSolidCircleFcn;
+	debugDraw.DrawSolidCapsuleFcn = DrawSolidCapsuleFcn;
+	debugDraw.DrawLineFcn = DrawLineFcn;
+	debugDraw.DrawTransformFcn = DrawTransformFcn;
+	debugDraw.DrawPointFcn = DrawPointFcn;
+	debugDraw.DrawStringFcn = DrawStringFcn;
+	debugDraw.context = this;
+
 	char* data = nullptr;
 	int size = 0;
 	bool found = ReadFile( data, size, fileName );
@@ -112,11 +180,11 @@ void SampleContext::Load()
 			const char* s = data + tokens[i + 1].start;
 			if ( strncmp( s, "true", 4 ) == 0 )
 			{
-				drawShapes = true;
+				debugDraw.drawShapes = true;
 			}
 			else if ( strncmp( s, "false", 5 ) == 0 )
 			{
-				drawShapes = false;
+				debugDraw.drawShapes = false;
 			}
 		}
 		else if ( jsoneq( data, &tokens[i], "drawJoints" ) == 0 )
@@ -124,11 +192,11 @@ void SampleContext::Load()
 			const char* s = data + tokens[i + 1].start;
 			if ( strncmp( s, "true", 4 ) == 0 )
 			{
-				drawJoints = true;
+				debugDraw.drawJoints = true;
 			}
 			else if ( strncmp( s, "false", 5 ) == 0 )
 			{
-				drawJoints = false;
+				debugDraw.drawJoints = false;
 			}
 		}
 	}
@@ -215,7 +283,7 @@ Sample::Sample( SampleContext* context )
 {
 	m_context = context;
 	m_camera = &context->camera;
-	m_draw = &context->draw;
+	m_draw = context->draw;
 
 	m_scheduler = new enki::TaskScheduler;
 	m_scheduler->Initialize( m_context->workerCount );
@@ -227,8 +295,8 @@ Sample::Sample( SampleContext* context )
 
 	m_worldId = b2_nullWorldId;
 
-	m_textLine = 30;
-	m_textIncrement = 22;
+	m_textIncrement = 26;
+	m_textLine = m_textIncrement;
 	m_mouseJointId = b2_nullJointId;
 
 	m_stepCount = 0;
@@ -276,10 +344,9 @@ void Sample::CreateWorld()
 	m_worldId = b2CreateWorld( &worldDef );
 }
 
-void Sample::DrawTitle( const char* string )
+void Sample::ResetText()
 {
-	m_context->draw.DrawString( 5, 5, string );
-	m_textLine = int( 26.0f );
+	m_textLine = m_textIncrement;
 }
 
 struct QueryContext
@@ -353,7 +420,7 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 
 			jointDef.maxSpringForce = m_mouseForceScale * mg;
 
-			if (massData.mass > 0.0f)
+			if ( massData.mass > 0.0f )
 			{
 				// This acts like angular friction
 				float lever = sqrtf( massData.rotationalInertia / massData.mass );
@@ -388,20 +455,37 @@ void Sample::MouseMove( b2Vec2 p )
 	m_mousePoint = p;
 }
 
-void Sample::DrawTextLine( const char* text, ... )
+void Sample::DrawColoredTextLine( b2HexColor color, const char* text,... )
 {
+	if (m_context->showUI == false)
+	{
+		return;
+	}
+
+	char buffer[256];
 	va_list arg;
 	va_start( arg, text );
-	ImGui::Begin( "Overlay", nullptr,
-				  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
-					  ImGuiWindowFlags_NoScrollbar );
-	ImGui::PushFont( m_context->draw.m_regularFont );
-	ImGui::SetCursorPos( ImVec2( 5.0f, float( m_textLine ) ) );
-	ImGui::TextColoredV( ImColor( 230, 153, 153, 255 ), text, arg );
-	ImGui::PopFont();
-	ImGui::End();
+	vsnprintf( buffer, 256, text, arg );
 	va_end( arg );
+	buffer[255] = 0;
+	DrawScreenString( m_draw, 5, m_textLine, color, buffer );
+	m_textLine += m_textIncrement;
+}
 
+void Sample::DrawTextLine( const char* text, ... )
+{
+	if (m_context->showUI == false)
+	{
+		return;
+	}
+
+	char buffer[256];
+	va_list arg;
+	va_start( arg, text );
+	vsnprintf( buffer, 256, text, arg );
+	va_end( arg );
+	buffer[255] = 0;
+	DrawScreenString( m_draw, 5, m_textLine, b2_colorWhite, buffer );
 	m_textLine += m_textIncrement;
 }
 
@@ -427,7 +511,7 @@ void Sample::Step()
 			timeStep = 0.0f;
 		}
 
-		if ( m_context->draw.m_showUI )
+		if ( m_context->showUI )
 		{
 			DrawTextLine( "****PAUSED****" );
 			m_textLine += m_textIncrement;
@@ -439,35 +523,19 @@ void Sample::Step()
 		// The world or attached body was destroyed.
 		m_mouseJointId = b2_nullJointId;
 
-		if (B2_IS_NON_NULL(m_mouseBodyId))
+		if ( B2_IS_NON_NULL( m_mouseBodyId ) )
 		{
 			b2DestroyBody( m_mouseBodyId );
 			m_mouseBodyId = b2_nullBodyId;
 		}
 	}
 
-	if (B2_IS_NON_NULL(m_mouseBodyId) && timeStep > 0.0f)
+	if ( B2_IS_NON_NULL( m_mouseBodyId ) && timeStep > 0.0f )
 	{
 		b2Body_SetTargetTransform( m_mouseBodyId, { m_mousePoint, b2Rot_identity }, timeStep );
 	}
 
-	m_context->draw.m_debugDraw.drawingBounds = m_context->camera.GetViewBounds();
-	m_context->draw.m_debugDraw.jointScale = m_context->jointScale;
-	m_context->draw.m_debugDraw.forceScale = m_context->forceScale;
-	m_context->draw.m_debugDraw.drawShapes = m_context->drawShapes;
-	m_context->draw.m_debugDraw.drawJoints = m_context->drawJoints;
-	m_context->draw.m_debugDraw.drawJointExtras = m_context->drawJointExtras;
-	m_context->draw.m_debugDraw.drawBounds = m_context->drawBounds;
-	m_context->draw.m_debugDraw.drawMass = m_context->drawMass;
-	m_context->draw.m_debugDraw.drawBodyNames = m_context->drawBodyNames;
-	m_context->draw.m_debugDraw.drawContacts = m_context->drawContactPoints;
-	m_context->draw.m_debugDraw.drawGraphColors = m_context->drawGraphColors;
-	m_context->draw.m_debugDraw.drawContactNormals = m_context->drawContactNormals;
-	m_context->draw.m_debugDraw.drawContactForces = m_context->drawContactForces;
-	m_context->draw.m_debugDraw.drawContactFeatures = m_context->drawContactFeatures;
-	m_context->draw.m_debugDraw.drawFrictionForces = m_context->drawFrictionForces;
-	m_context->draw.m_debugDraw.drawIslands = m_context->drawIslands;
-
+	m_context->debugDraw.drawingBounds = GetViewBounds( &m_context->camera );
 	b2World_EnableSleeping( m_worldId, m_context->enableSleep );
 	b2World_EnableWarmStarting( m_worldId, m_context->enableWarmStarting );
 	b2World_EnableContinuous( m_worldId, m_context->enableContinuous );
@@ -478,7 +546,7 @@ void Sample::Step()
 		m_taskCount = 0;
 	}
 
-	b2World_Draw( m_worldId, &m_context->draw.m_debugDraw );
+	b2World_Draw( m_worldId, &m_context->debugDraw );
 
 	if ( timeStep > 0.0f )
 	{

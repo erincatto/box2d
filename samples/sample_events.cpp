@@ -30,11 +30,11 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 25.0f * 1.333f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 25.0f * 1.333f;
 		}
 
-		m_context->drawJoints = false;
+		m_context->debugDraw.drawJoints = false;
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -238,7 +238,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 90.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
 
 		ImGui::Begin( "Sensor Event", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -347,8 +347,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 6.0f };
-			m_context->camera.m_zoom = 7.5f;
+			m_context->camera.center = { 0.0f, 6.0f };
+			m_context->camera.zoom = 7.5f;
 		}
 
 		{
@@ -430,7 +430,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 19.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 12.0f * fontSize, height ) );
 
 		ImGui::Begin( "Sensor Bookend", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -692,8 +692,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 6.0f };
-			m_context->camera.m_zoom = 7.5f;
+			m_context->camera.center = { 0.0f, 6.0f };
+			m_context->camera.zoom = 7.5f;
 		}
 
 		{
@@ -793,7 +793,7 @@ public:
 			b2ShapeId shapeId = m_visitorIds[i];
 			b2AABB aabb = b2Shape_GetAABB( shapeId );
 			b2Vec2 point = b2AABB_Center( aabb );
-			m_context->draw.DrawPoint( point, 10.0f, b2_colorWhite );
+			DrawPoint( m_draw, point, 10.0f, b2_colorWhite );
 		}
 	}
 
@@ -828,8 +828,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 25.0f * 1.75f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 25.0f * 1.75f;
 		}
 
 		{
@@ -930,7 +930,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 60.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Contact Event", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1016,9 +1016,8 @@ public:
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							m_context->draw.DrawLine( point.point, point.point + point.totalNormalImpulse * normal,
-													  b2_colorBlueViolet );
-							m_context->draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
+							DrawLine( m_draw, point.point, point.point + point.totalNormalImpulse * normal, b2_colorBlueViolet );
+							DrawPoint( m_draw, point.point, 10.0f, b2_colorWhite );
 						}
 					}
 				}
@@ -1047,9 +1046,8 @@ public:
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							m_context->draw.DrawLine( point.point, point.point + point.totalNormalImpulse * normal,
-													  b2_colorYellowGreen );
-							m_context->draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
+							DrawLine( m_draw, point.point, point.point + point.totalNormalImpulse * normal, b2_colorYellowGreen );
+							DrawPoint( m_draw, point.point, 10.0f, b2_colorWhite );
 						}
 					}
 				}
@@ -1239,8 +1237,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.5f, 7.5f };
-			m_context->camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.center = { 0.5f, 7.5f };
+			m_context->camera.zoom = 25.0f * 0.4f;
 		}
 
 		b2World_SetPreSolveCallback( m_worldId, PreSolveStatic, this );
@@ -1353,7 +1351,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "One-Sided Platform", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1478,8 +1476,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 2.0f, 8.0f };
-			m_context->camera.m_zoom = 25.0f * 0.55f;
+			m_context->camera.center = { 2.0f, 8.0f };
+			m_context->camera.zoom = 25.0f * 0.55f;
 		}
 
 		{
@@ -1563,7 +1561,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Body Move", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1598,7 +1596,7 @@ public:
 		{
 			// draw the transform of every body that moved (not sleeping)
 			const b2BodyMoveEvent* event = events.moveEvents + i;
-			m_context->draw.DrawTransform( event->transform );
+			DrawTransform( m_draw, event->transform, 1.0f );
 
 			b2Transform transform = b2Body_GetTransform( event->bodyId );
 			B2_ASSERT( transform.p.x == event->transform.p.x );
@@ -1626,7 +1624,7 @@ public:
 			}
 		}
 
-		m_context->draw.DrawCircle( m_explosionPosition, m_explosionRadius, b2_colorAzure );
+		DrawCircle( m_draw, m_explosionPosition, m_explosionRadius, b2_colorAzure );
 
 		DrawTextLine( "sleep count: %d", m_sleepCount );
 	}
@@ -1664,8 +1662,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 3.0f };
-			m_context->camera.m_zoom = 4.5f;
+			m_context->camera.center = { 0.0f, 3.0f };
+			m_context->camera.zoom = 4.5f;
 		}
 
 		{
@@ -1818,11 +1816,11 @@ public:
 		b2Vec2 origin = { 5.0f, 1.0f };
 		b2Vec2 translation = { -10.0f, 0.0f };
 		b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, b2DefaultQueryFilter() );
-		m_context->draw.DrawLine( origin, origin + translation, b2_colorDimGray );
+		DrawLine( m_draw, origin, origin + translation, b2_colorDimGray );
 
 		if ( result.hit )
 		{
-			m_context->draw.DrawPoint( result.point, 10.0f, b2_colorCyan );
+			DrawPoint( m_draw, result.point, 10.0f, b2_colorCyan );
 		}
 	}
 
@@ -1856,8 +1854,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 8.0f };
-			m_context->camera.m_zoom = 25.0f * 0.7f;
+			m_context->camera.center = { 0.0f, 8.0f };
+			m_context->camera.zoom = 25.0f * 0.7f;
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -2080,8 +2078,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 6.0f };
-			m_context->camera.m_zoom = 7.5f;
+			m_context->camera.center = { 0.0f, 6.0f };
+			m_context->camera.zoom = 7.5f;
 		}
 
 		{
@@ -2153,9 +2151,9 @@ public:
 				const b2ManifoldPoint* manifoldPoint = data.manifold.points + i;
 				b2Vec2 p1 = manifoldPoint->point;
 				b2Vec2 p2 = p1 + manifoldPoint->totalNormalImpulse * data.manifold.normal;
-				m_draw->DrawLine( p1, p2, b2_colorCrimson );
-				m_draw->DrawPoint( p1, 6.0f, b2_colorCrimson );
-				m_draw->DrawString( p1, "%.2f", manifoldPoint->totalNormalImpulse );
+				DrawLine( m_draw, p1, p2, b2_colorCrimson );
+				DrawPoint( m_draw, p1, 6.0f, b2_colorCrimson );
+				DrawWorldString( m_draw, m_camera, p1, b2_colorWhite, "%.2f", manifoldPoint->totalNormalImpulse );
 			}
 		}
 		else
@@ -2183,8 +2181,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 5.0f };
-			m_context->camera.m_zoom = 7.5f;
+			m_context->camera.center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 7.5f;
 		}
 
 		b2BodyId groundId;
@@ -2306,7 +2304,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 120.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 120.0f, height ) );
 
 		ImGui::Begin( "Sensor Hit", nullptr, ImGuiWindowFlags_NoResize );
@@ -2361,7 +2359,7 @@ public:
 
 		for ( int i = 0; i < m_transformCount; ++i )
 		{
-			m_draw->DrawTransform( m_transforms[i] );
+			DrawTransform( m_draw, m_transforms[i], 1.0f );
 		}
 
 		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
@@ -2417,8 +2415,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { -7.0f, 9.0f };
-			m_context->camera.m_zoom = 14.0f;
+			m_context->camera.center = { -7.0f, 9.0f };
+			m_context->camera.zoom = 14.0f;
 		}
 
 		{
@@ -2525,9 +2523,9 @@ public:
 
 		if ( m_dragging )
 		{
-			m_draw->DrawLine( m_point1, m_point2, b2_colorWhite );
-			m_draw->DrawPoint( m_point1, 5.0f, b2_colorGreen );
-			m_draw->DrawPoint( m_point2, 5.0f, b2_colorRed );
+			DrawLine( m_draw, m_point1, m_point2, b2_colorWhite );
+			DrawPoint( m_draw, m_point1, 5.0f, b2_colorGreen );
+			DrawPoint( m_draw, m_point2, 5.0f, b2_colorRed );
 		}
 
 		b2ContactEvents contactEvents = b2World_GetContactEvents( m_worldId );
@@ -2537,11 +2535,11 @@ public:
 
 			if ( B2_ID_EQUALS( event->shapeIdA, m_projectileShapeId ) || B2_ID_EQUALS( event->shapeIdB, m_projectileShapeId ) )
 			{
-				if (b2Contact_IsValid(event->contactId))
+				if ( b2Contact_IsValid( event->contactId ) )
 				{
 					b2ContactData data = b2Contact_GetData( event->contactId );
 
-					if (data.manifold.pointCount > 0)
+					if ( data.manifold.pointCount > 0 )
 					{
 						b2ExplosionDef explosionDef = b2DefaultExplosionDef();
 						explosionDef.position = data.manifold.points[0].point;
