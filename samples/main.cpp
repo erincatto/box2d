@@ -695,48 +695,28 @@ int main( int, char** )
 
 		ImGui::NewFrame();
 
-		ImGui::SetNextWindowPos( ImVec2( 0.0f, 0.0f ) );
-		ImGui::SetNextWindowSize( ImVec2( s_context.camera.m_width, s_context.camera.m_height ) );
-		ImGui::SetNextWindowBgAlpha( 0.0f );
-		ImGui::Begin( "Overlay", nullptr,
-					  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
-						  ImGuiWindowFlags_NoScrollbar );
-		ImGui::End();
-
 		if ( s_sample == nullptr )
 		{
 			// delayed creation because imgui doesn't create fonts until NewFrame() is called
 			s_sample = g_sampleEntries[s_context.sampleIndex].createFcn( &s_context );
 		}
 
-		if ( s_context.showUI )
-		{
-			const SampleEntry& entry = g_sampleEntries[s_context.sampleIndex];
-			snprintf( buffer, 128, "%s : %s", entry.category, entry.name );
-			s_sample->DrawTitle( buffer );
-		}
+		s_sample->ResetText();
+
+		const SampleEntry& entry = g_sampleEntries[s_context.sampleIndex];
+		s_sample->DrawColoredTextLine(b2_colorYellow, "%s : %s", entry.category, entry.name );
 
 		s_sample->Step();
+
+		DrawScreenString( s_context.draw, 5.0f, s_context.camera.m_height - 10.0f, b2_colorSeaGreen,
+						  "%.1f ms - step %d - camera (%g, %g, %g)", 1000.0f * frameTime, s_sample->m_stepCount,
+						  s_context.camera.m_center.x, s_context.camera.m_center.y, s_context.camera.m_zoom );
 
 		FlushDraw( s_context.draw, &s_context.camera );
 
 		UpdateUI();
 
 		// ImGui::ShowDemoWindow();
-
-		if ( s_context.showUI )
-		{
-			snprintf( buffer, 128, "%.1f ms - step %d - camera (%g, %g, %g)", 1000.0f * frameTime, s_sample->m_stepCount,
-					  s_context.camera.m_center.x, s_context.camera.m_center.y, s_context.camera.m_zoom );
-			// snprintf( buffer, 128, "%.1f ms", 1000.0f * frameTime );
-
-			ImGui::Begin( "Overlay", nullptr,
-						  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
-							  ImGuiWindowFlags_NoScrollbar );
-			ImGui::SetCursorPos( ImVec2( 5.0f, s_context.camera.m_height - 20.0f ) );
-			ImGui::TextColored( ImColor( 153, 230, 153, 255 ), "%s", buffer );
-			ImGui::End();
-		}
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );

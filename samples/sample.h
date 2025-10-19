@@ -55,7 +55,7 @@ public:
 
 	void CreateWorld( );
 
-	void DrawTitle( const char* string );
+	void ResetText();
 	virtual void Step( );
 	virtual void UpdateGui()
 	{
@@ -68,6 +68,7 @@ public:
 	virtual void MouseMove( b2Vec2 p );
 
 	void DrawTextLine( const char* text, ... );
+	void DrawColoredTextLine( b2HexColor color, const char* text, ... );
 	void ResetProfile();
 	void ShiftOrigin( b2Vec2 newOrigin );
 

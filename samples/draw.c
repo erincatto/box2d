@@ -109,7 +109,7 @@ b2Vec2 ConvertWorldToScreen( Camera* camera, b2Vec2 worldPoint )
 // Convert from world coordinates to normalized device coordinates.
 // http://www.songho.ca/opengl/gl_projectionmatrix.html
 // This also includes the view transform
-void BuildProjectionMatrix( Camera* camera, float* m, float zBias )
+static void BuildProjectionMatrix( Camera* camera, float* m, float zBias )
 {
 	float ratio = camera->m_width / camera->m_height;
 	b2Vec2 extents = { camera->m_zoom * ratio, camera->m_zoom };
@@ -140,26 +140,26 @@ void BuildProjectionMatrix( Camera* camera, float* m, float zBias )
 	m[15] = 1.0f;
 }
 
-void BuildProjectionMatrixNoZoom( Camera* camera, float* m )
+static void MakeOrthographicMatrix( float* m, float left, float right, float bottom, float top, float near, float far )
 {
-	m[0] = camera->m_height / camera->m_width;
+	m[0] = 2.0f / (right - left);
 	m[1] = 0.0f;
 	m[2] = 0.0f;
 	m[3] = 0.0f;
 
 	m[4] = 0.0f;
-	m[5] = 1.0f;
+	m[5] = 2.0f / (top - bottom);
 	m[6] = 0.0f;
 	m[7] = 0.0f;
 
 	m[8] = 0.0f;
 	m[9] = 0.0f;
-	m[10] = -1.0f;
+	m[10] = -2.0f / (far - near);
 	m[11] = 0.0f;
 
-	m[12] = 0.0f;
-	m[13] = 0.0f;
-	m[14] = 0.0f;
+	m[12] = -( right + left ) / ( right - left );
+	m[13] = -( top + bottom ) / ( top - bottom );
+	m[14] = -( far + near ) / ( far - near );
 	m[15] = 1.0f;
 }
 
@@ -207,7 +207,7 @@ typedef struct
 	uint32_t m_programId;
 } Font;
 
-Font CreateFont( int fontSize, const char* trueTypeFile )
+Font CreateFont( const char* trueTypeFile, float fontSize )
 {
 	Font font = { 0 };
 
@@ -342,13 +342,13 @@ void AddText( Font* font, float x, float y, b2HexColor color, const char* text )
 void FlushText( Font* font, Camera* camera )
 {
 	float projectionMatrix[16];
-	BuildProjectionMatrixNoZoom( camera, projectionMatrix );
+	MakeOrthographicMatrix( projectionMatrix, 0.0f, camera->m_width, camera->m_height, 0.0f, -1.0f, 1.0f );
 
 	glUseProgram( font->m_programId );
 
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-	glDisable( GL_DEPTH_TEST );
+	//glDisable( GL_DEPTH_TEST );
 
 	int slot = 0;
 	glActiveTexture( GL_TEXTURE0 + slot );
@@ -389,7 +389,7 @@ void FlushText( Font* font, Camera* camera )
 	glBindTexture( GL_TEXTURE_2D, 0 );
 
 	glDisable( GL_BLEND );
-	glEnable( GL_DEPTH_TEST );
+	//glEnable( GL_DEPTH_TEST );
 
 	CheckOpenGL();
 
@@ -1391,7 +1391,7 @@ Draw* CreateDraw( void )
 	draw->m_circles = CreateSolidCircles();
 	draw->m_capsules = CreateCapsules();
 	draw->m_polygons = CreatePolygons();
-	draw->font = CreateFont( 13, "samples/data/droid_sans.ttf" );
+	draw->font = CreateFont( "samples/data/droid_sans.ttf", 18.0f );
 	return draw;
 }
 
@@ -1474,7 +1474,7 @@ void DrawBounds( Draw* draw, b2AABB aabb, b2HexColor color )
 	AddLine( &draw->m_lines, p4, p1, color );
 }
 
-void DrawScreenString( Draw* draw, int x, int y, const char* string, ... )
+void DrawScreenString( Draw* draw, float x, float y, b2HexColor color, const char* string, ... )
 {
 	char buffer[256];
 	va_list arg;
@@ -1483,7 +1483,7 @@ void DrawScreenString( Draw* draw, int x, int y, const char* string, ... )
 	va_end( arg );
 
 	buffer[255] = 0;
-	AddText( &draw->font, (float)x, (float)y, b2_colorWhite, buffer );
+	AddText( &draw->font, x, y, color, buffer );
 }
 
 void DrawWorldString( Draw* draw, Camera* camera, b2Vec2 p, b2HexColor color, const char* string, ... )
@@ -1509,6 +1509,7 @@ void FlushDraw( Draw* draw, Camera* camera )
 	FlushCircles( &draw->m_hollowCircles, camera );
 	FlushLines( &draw->m_lines, camera );
 	FlushPoints( &draw->m_points, camera );
+	FlushText( &draw->font, camera );
 	CheckOpenGL();
 }
 
@@ -1516,278 +1517,3 @@ void DrawBackground( Draw* draw, Camera* camera )
 {
 	RenderBackground( &draw->m_background, camera );
 }
-
-#if 0
-void DrawPolygonFcn( const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context )
-{
-	static_cast<Draw*>( context )->DrawPolygon( vertices, vertexCount, color );
-}
-
-void DrawSolidPolygonFcn( b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color,
-						  void* context )
-{
-	static_cast<Draw*>( context )->DrawSolidPolygon( transform, vertices, vertexCount, radius, color );
-}
-
-void DrawCircleFcn( b2Vec2 center, float radius, b2HexColor color, void* context )
-{
-	static_cast<Draw*>( context )->DrawCircle( center, radius, color );
-}
-
-void DrawSolidCircleFcn( b2Transform transform, float radius, b2HexColor color, void* context )
-{
-	static_cast<Draw*>( context )->DrawSolidCircle( transform, b2Vec2_zero, radius, color );
-}
-
-void DrawSolidCapsuleFcn( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context )
-{
-	static_cast<Draw*>( context )->DrawSolidCapsule( p1, p2, radius, color );
-}
-
-void DrawSegmentFcn( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context )
-{
-	static_cast<Draw*>( context )->DrawLine( p1, p2, color );
-}
-
-void DrawTransformFcn( b2Transform transform, void* context )
-{
-	static_cast<Draw*>( context )->DrawTransform( transform );
-}
-
-void DrawPointFcn( b2Vec2 p, float size, b2HexColor color, void* context )
-{
-	static_cast<Draw*>( context )->DrawPoint( p, size, color );
-}
-
-void DrawStringFcn( b2Vec2 p, const char* s, b2HexColor color, void* context )
-{
-	static_cast<Draw*>( context )->DrawString( p, s );
-}
-
-Draw::Draw()
-{
-	m_camera = NULL;
-	m_showUI = true;
-	m_points = NULL;
-	m_lines = NULL;
-	m_circles = NULL;
-	m_solidCircles = NULL;
-	m_solidCapsules = NULL;
-	m_solidPolygons = NULL;
-	m_debugDraw = {};
-	m_regularFont = NULL;
-	m_mediumFont = NULL;
-	m_largeFont = NULL;
-	m_background = NULL;
-}
-
-Draw::~Draw()
-{
-	assert( m_points == NULL );
-	assert( m_lines == NULL );
-	assert( m_circles == NULL );
-	assert( m_solidCircles == NULL );
-	assert( m_solidCapsules == NULL );
-	assert( m_solidPolygons == NULL );
-	assert( m_background == NULL );
-}
-
-void Draw::Create( Camera* camera )
-{
-	m_camera = camera;
-	m_background = new Background;
-	m_background->Create();
-	m_points = new PointRender;
-	m_points->Create();
-	m_lines = new GLLines;
-	m_lines->Create();
-	m_circles = new CircleRender;
-	m_circles->Create();
-	m_solidCircles = new GLSolidCircles;
-	m_solidCircles->Create();
-	m_solidCapsules = new GLSolidCapsules;
-	m_solidCapsules->Create();
-	m_solidPolygons = new GLSolidPolygons;
-	m_solidPolygons->Create();
-
-	b2AABB bounds = { { -FLT_MAX, -FLT_MAX }, { FLT_MAX, FLT_MAX } };
-
-	m_debugDraw = {};
-
-	m_debugDraw.DrawPolygonFcn = DrawPolygonFcn;
-	m_debugDraw.DrawSolidPolygonFcn = DrawSolidPolygonFcn;
-	m_debugDraw.DrawCircleFcn = DrawCircleFcn;
-	m_debugDraw.DrawSolidCircleFcn = DrawSolidCircleFcn;
-	m_debugDraw.DrawSolidCapsuleFcn = DrawSolidCapsuleFcn;
-	m_debugDraw.DrawSegmentFcn = DrawSegmentFcn;
-	m_debugDraw.DrawTransformFcn = DrawTransformFcn;
-	m_debugDraw.DrawPointFcn = DrawPointFcn;
-	m_debugDraw.DrawStringFcn = DrawStringFcn;
-	m_debugDraw.drawingBounds = bounds;
-
-	m_debugDraw.drawShapes = true;
-	m_debugDraw.drawJoints = true;
-	m_debugDraw.drawJointExtras = false;
-	m_debugDraw.drawBounds = false;
-	m_debugDraw.drawMass = false;
-	m_debugDraw.drawContacts = false;
-	m_debugDraw.drawGraphColors = false;
-	m_debugDraw.drawContactNormals = false;
-	m_debugDraw.drawContactForces = false;
-	m_debugDraw.drawContactFeatures = false;
-	m_debugDraw.drawFrictionForces = false;
-	m_debugDraw.drawIslands = false;
-
-	m_debugDraw.context = this;
-}
-
-void Draw::Destroy()
-{
-	m_background->Destroy();
-	delete m_background;
-	m_background = NULL;
-
-	m_points->Destroy();
-	delete m_points;
-	m_points = NULL;
-
-	m_lines->Destroy();
-	delete m_lines;
-	m_lines = NULL;
-
-	m_circles->Destroy();
-	delete m_circles;
-	m_circles = NULL;
-
-	m_solidCircles->Destroy();
-	delete m_solidCircles;
-	m_solidCircles = NULL;
-
-	m_solidCapsules->Destroy();
-	delete m_solidCapsules;
-	m_solidCapsules = NULL;
-
-	m_solidPolygons->Destroy();
-	delete m_solidPolygons;
-	m_solidPolygons = NULL;
-}
-
-void Draw::DrawPolygon( const b2Vec2* vertices, int vertexCount, b2HexColor color )
-{
-	b2Vec2 p1 = vertices[vertexCount - 1];
-	for ( int i = 0; i < vertexCount; ++i )
-	{
-		b2Vec2 p2 = vertices[i];
-		m_lines->AddLine( p1, p2, color );
-		p1 = p2;
-	}
-}
-
-void Draw::DrawSolidPolygon( b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color )
-{
-	m_solidPolygons->AddPolygon( transform, vertices, vertexCount, radius, color );
-}
-
-void Draw::DrawCircle( b2Vec2 center, float radius, b2HexColor color )
-{
-	m_circles->AddCircle( center, radius, color );
-}
-
-void Draw::DrawSolidCircle( b2Transform transform, b2Vec2 center, float radius, b2HexColor color )
-{
-	transform.p = b2TransformPoint( transform, center );
-	m_solidCircles->AddCircle( transform, radius, color );
-}
-
-void Draw::DrawSolidCapsule( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color )
-{
-	m_solidCapsules->AddCapsule( p1, p2, radius, color );
-}
-
-void Draw::DrawLine( b2Vec2 p1, b2Vec2 p2, b2HexColor color )
-{
-	m_lines->AddLine( p1, p2, color );
-}
-
-void Draw::DrawTransform( b2Transform transform )
-{
-	const float k_axisScale = 0.2f;
-	b2Vec2 p1 = transform.p;
-
-	b2Vec2 p2 = b2MulAdd( p1, k_axisScale, b2Rot_GetXAxis( transform.q ) );
-	m_lines->AddLine( p1, p2, b2_colorRed );
-
-	p2 = b2MulAdd( p1, k_axisScale, b2Rot_GetYAxis( transform.q ) );
-	m_lines->AddLine( p1, p2, b2_colorGreen );
-}
-
-void Draw::DrawPoint( b2Vec2 p, float size, b2HexColor color )
-{
-#ifdef __APPLE__
-	size *= 2.0f;
-#endif
-	m_points->AddPoint( p, size, color );
-}
-
-void Draw::DrawString( int x, int y, const char* string, ... )
-{
-	// if (m_showUI == false)
-	//{
-	//	return;
-	// }
-
-	va_list arg;
-	va_start( arg, string );
-	ImGui::Begin( "Overlay", NULL,
-				  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
-					  ImGuiWindowFlags_NoScrollbar );
-	ImGui::SetCursorPos( ImVec2( float( x ), float( y ) ) );
-	ImGui::TextColoredV( ImColor( 230, 153, 153, 255 ), string, arg );
-	ImGui::End();
-	va_end( arg );
-}
-
-void Draw::DrawString( b2Vec2 p, const char* string, ... )
-{
-	b2Vec2 ps = m_camera->ConvertWorldToScreen( p );
-
-	va_list arg;
-	va_start( arg, string );
-	ImGui::Begin( "Overlay", NULL,
-				  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
-					  ImGuiWindowFlags_NoScrollbar );
-	ImGui::SetCursorPos( ImVec2( ps.x, ps.y ) );
-	ImGui::TextColoredV( ImColor( 230, 230, 230, 255 ), string, arg );
-	ImGui::End();
-	va_end( arg );
-}
-
-void Draw::DrawBounds( b2AABB aabb, b2HexColor c )
-{
-	b2Vec2 p1 = aabb.lowerBound;
-	b2Vec2 p2 = { aabb.upperBound.x, aabb.lowerBound.y };
-	b2Vec2 p3 = aabb.upperBound;
-	b2Vec2 p4 = { aabb.lowerBound.x, aabb.upperBound.y };
-
-	m_lines->AddLine( p1, p2, c );
-	m_lines->AddLine( p2, p3, c );
-	m_lines->AddLine( p3, p4, c );
-	m_lines->AddLine( p4, p1, c );
-}
-
-void Draw::Flush()
-{
-	m_solidCircles->Flush( m_camera );
-	m_solidCapsules->Flush( m_camera );
-	m_solidPolygons->Flush( m_camera );
-	m_circles->Flush( m_camera );
-	m_lines->Flush( m_camera );
-	m_points->Flush( m_camera );
-	CheckOpenGL();
-}
-
-void Draw::DrawBackground()
-{
-	m_background->Draw( m_camera );
-}
-#endif

@@ -45,7 +45,7 @@ void DrawSolidPolygon( Draw* draw, b2Transform transform, const b2Vec2* vertices
 void DrawTransform( Draw* draw, b2Transform transform, float scale );
 void DrawBounds( Draw* draw, b2AABB aabb, b2HexColor color );
 
-void DrawScreenString( Draw* draw, int x, int y, const char* string, ... );
+void DrawScreenString( Draw* draw, float x, float y, b2HexColor color, const char* string, ... );
 void DrawWorldString( Draw* draw, Camera* camera, b2Vec2 p, b2HexColor color, const char* string, ... );
 
 

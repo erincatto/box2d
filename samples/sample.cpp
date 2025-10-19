@@ -131,7 +131,10 @@ void DrawStringFcn( b2Vec2 p, const char* s, b2HexColor color, void* context )
 
 void SampleContext::Load()
 {
+	camera = GetDefaultCamera();
 	debugDraw = b2DefaultDebugDraw();
+	debugDraw.DrawPolygonFcn = DrawPolygonFcn;
+	debugDraw.DrawSolidPolygonFcn = DrawSolidPolygonFcn;
 	debugDraw.DrawCircleFcn = DrawCircleFcn;
 	debugDraw.DrawSolidCircleFcn = DrawSolidCircleFcn;
 	debugDraw.DrawSolidCapsuleFcn = DrawSolidCapsuleFcn;
@@ -139,6 +142,7 @@ void SampleContext::Load()
 	debugDraw.DrawTransformFcn = DrawTransformFcn;
 	debugDraw.DrawPointFcn = DrawPointFcn;
 	debugDraw.DrawStringFcn = DrawStringFcn;
+	debugDraw.context = this;
 
 	char* data = nullptr;
 	int size = 0;
@@ -291,8 +295,8 @@ Sample::Sample( SampleContext* context )
 
 	m_worldId = b2_nullWorldId;
 
-	m_textLine = 30;
-	m_textIncrement = 22;
+	m_textIncrement = 26;
+	m_textLine = m_textIncrement;
 	m_mouseJointId = b2_nullJointId;
 
 	m_stepCount = 0;
@@ -340,10 +344,9 @@ void Sample::CreateWorld()
 	m_worldId = b2CreateWorld( &worldDef );
 }
 
-void Sample::DrawTitle( const char* string )
+void Sample::ResetText()
 {
-	DrawScreenString( m_context->draw, 5, 5, string );
-	m_textLine = int( 26.0f );
+	m_textLine = m_textIncrement;
 }
 
 struct QueryContext
@@ -452,15 +455,37 @@ void Sample::MouseMove( b2Vec2 p )
 	m_mousePoint = p;
 }
 
-void Sample::DrawTextLine( const char* text, ... )
+void Sample::DrawColoredTextLine( b2HexColor color, const char* text,... )
 {
+	if (m_context->showUI == false)
+	{
+		return;
+	}
+
 	char buffer[256];
 	va_list arg;
 	va_start( arg, text );
 	vsnprintf( buffer, 256, text, arg );
 	va_end( arg );
 	buffer[255] = 0;
-	DrawScreenString( m_draw, 5, m_textLine, buffer );
+	DrawScreenString( m_draw, 5, m_textLine, color, buffer );
+	m_textLine += m_textIncrement;
+}
+
+void Sample::DrawTextLine( const char* text, ... )
+{
+	if (m_context->showUI == false)
+	{
+		return;
+	}
+
+	char buffer[256];
+	va_list arg;
+	va_start( arg, text );
+	vsnprintf( buffer, 256, text, arg );
+	va_end( arg );
+	buffer[255] = 0;
+	DrawScreenString( m_draw, 5, m_textLine, b2_colorWhite, buffer );
 	m_textLine += m_textIncrement;
 }
 
