@@ -112,7 +112,7 @@ public:
 		characterBox_ = b2MakeBox( 0.1f, 0.1f );
 		b2CreatePolygonShape( characterBodyId_, &characterShapeDef, &characterBox_ );
 
-		context->camera.m_center = b2Vec2_zero;
+		context->camera.center = b2Vec2_zero;
 	}
 
 	void Step() override
@@ -247,8 +247,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 1.75f };
-			m_context->camera.m_zoom = 2.5f;
+			m_context->camera.center = { 0.0f, 1.75f };
+			m_context->camera.zoom = 2.5f;
 		}
 
 		{
@@ -296,8 +296,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.8f, 6.4f };
-			m_context->camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.center = { 0.8f, 6.4f };
+			m_context->camera.zoom = 25.0f * 0.4f;
 		}
 
 		m_isEnabled = true;
@@ -343,7 +343,7 @@ public:
 		float fontSize = ImGui::GetFontSize();
 		float height = 11.0f * fontSize;
 		float winX = 0.5f * fontSize;
-		float winY = m_camera->m_height - height - 2.0f * fontSize;
+		float winY = m_camera->height - height - 2.0f * fontSize;
 		ImGui::SetNextWindowPos( { winX, winY }, ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 9.0f * fontSize, height ) );
 		ImGui::Begin( "Disable Crash", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -383,8 +383,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.8f, 6.4f };
-			m_context->camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.center = { 0.8f, 6.4f };
+			m_context->camera.zoom = 25.0f * 0.4f;
 		}
 
 		m_type = b2_dynamicBody;
@@ -461,7 +461,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 11.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 9.0f * fontSize, height ) );
 		ImGui::Begin( "Crash 01", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 
@@ -520,8 +520,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 48.8525391, 68.1518555 };
-			m_context->camera.m_zoom = 100.0f * 0.5f;
+			m_context->camera.center = { 48.8525391, 68.1518555 };
+			m_context->camera.zoom = 100.0f * 0.5f;
 		}
 
 		{
@@ -584,8 +584,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 1.75f };
-			m_context->camera.m_zoom = 32.0f;
+			m_context->camera.center = { 0.0f, 1.75f };
+			m_context->camera.zoom = 32.0f;
 		}
 
 		{
@@ -679,8 +679,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 1.75f };
-			m_context->camera.m_zoom = 32.0f;
+			m_context->camera.center = { 0.0f, 1.75f };
+			m_context->camera.zoom = 32.0f;
 		}
 
 		{

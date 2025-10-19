@@ -29,8 +29,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 12.0f };
-			m_context->camera.m_zoom = 25.0f * 0.35f;
+			m_context->camera.center = { 0.0f, 12.0f };
+			m_context->camera.zoom = 25.0f * 0.35f;
 		}
 
 		{
@@ -119,7 +119,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 20.0f * fontSize;
-		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize }, ImGuiCond_Once );
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize }, ImGuiCond_Once );
 		ImGui::SetNextWindowSize( { 18.0f * fontSize, height } );
 
 		ImGui::Begin( "Distance Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -255,8 +255,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 7.0f };
-			m_context->camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.center = { 0.0f, 7.0f };
+			m_context->camera.zoom = 25.0f * 0.4f;
 		}
 
 		b2BodyId groundId;
@@ -339,7 +339,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 180.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Motor Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -427,8 +427,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 7.0f };
-			m_context->camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.center = { 0.0f, 7.0f };
+			m_context->camera.zoom = 25.0f * 0.4f;
 		}
 
 		b2BodyId groundId;
@@ -509,7 +509,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 180.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Top Down Friction", nullptr, ImGuiWindowFlags_NoResize );
@@ -547,8 +547,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 7.0f };
-			m_context->camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.center = { 0.0f, 7.0f };
+			m_context->camera.zoom = 25.0f * 0.4f;
 		}
 
 		{
@@ -598,8 +598,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 15.5f };
-			m_context->camera.m_zoom = 25.0f * 0.7f;
+			m_context->camera.center = { 0.0f, 15.5f };
+			m_context->camera.zoom = 25.0f * 0.7f;
 		}
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -705,7 +705,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 8.0f * fontSize;
-		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize }, ImGuiCond_Once );
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize }, ImGuiCond_Once );
 		ImGui::SetNextWindowSize( { 8.0f * fontSize, height } );
 
 		ImGui::Begin( "Revolute Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -809,8 +809,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 8.0f };
-			m_context->camera.m_zoom = 25.0f * 0.5f;
+			m_context->camera.center = { 0.0f, 8.0f };
+			m_context->camera.zoom = 25.0f * 0.5f;
 		}
 
 		b2BodyId groundId;
@@ -867,7 +867,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 240.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Prismatic Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -969,8 +969,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 10.0f };
-			m_context->camera.m_zoom = 25.0f * 0.15f;
+			m_context->camera.center = { 0.0f, 10.0f };
+			m_context->camera.zoom = 25.0f * 0.15f;
 		}
 
 		b2BodyId groundId;
@@ -1024,7 +1024,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 220.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Wheel Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -1107,7 +1107,7 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_zoom = 25.0f * 2.5f;
+			m_context->camera.zoom = 25.0f * 2.5f;
 		}
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -1208,7 +1208,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 180.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 320.0f, height ) );
 
 		ImGui::Begin( "Bridge", nullptr, ImGuiWindowFlags_NoResize );
@@ -1286,8 +1286,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, -8.0f };
-			m_context->camera.m_zoom = 27.5f;
+			m_context->camera.center = { 0.0f, -8.0f };
+			m_context->camera.zoom = 27.5f;
 		}
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -1362,7 +1362,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 60.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Ball and Chain", nullptr, ImGuiWindowFlags_NoResize );
@@ -1406,8 +1406,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 25.0f * 0.35f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 25.0f * 0.35f;
 		}
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -1468,7 +1468,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 14.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 19.0f * fontSize, height ) );
 
 		ImGui::Begin( "Cantilever", nullptr, ImGuiWindowFlags_NoResize );
@@ -1566,8 +1566,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 8.0f };
-			m_context->camera.m_zoom = 25.0f * 0.7f;
+			m_context->camera.center = { 0.0f, 8.0f };
+			m_context->camera.zoom = 25.0f * 0.7f;
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -1734,7 +1734,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 8.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 14.0f * fontSize, height ) );
 
 		ImGui::Begin( "Motion Locks", nullptr, ImGuiWindowFlags_NoResize );
@@ -1799,8 +1799,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 8.0f };
-			m_context->camera.m_zoom = 25.0f * 0.7f;
+			m_context->camera.center = { 0.0f, 8.0f };
+			m_context->camera.zoom = 25.0f * 0.7f;
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -1967,7 +1967,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Breakable Joint", nullptr, ImGuiWindowFlags_NoResize );
@@ -2033,8 +2033,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 8.0f };
-			m_context->camera.m_zoom = 25.0f;
+			m_context->camera.center = { 0.0f, 8.0f };
+			m_context->camera.zoom = 25.0f;
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -2174,7 +2174,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 14.0f * fontSize;
-		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize }, ImGuiCond_Once );
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize }, ImGuiCond_Once );
 		ImGui::SetNextWindowSize( { 20.0f * fontSize, height } );
 
 		ImGui::Begin( "Joint Separation", nullptr, ImGuiWindowFlags_NoResize );
@@ -2257,8 +2257,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 3.0f, -1.0f };
-			m_context->camera.m_zoom = 25.0f * 0.15f;
+			m_context->camera.center = { 3.0f, -1.0f };
+			m_context->camera.zoom = 25.0f * 0.15f;
 		}
 
 		b2Polygon box = b2MakeBox( 1.0f, 0.5f );
@@ -2379,8 +2379,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center.y = 5.0f;
-			m_context->camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.center.y = 5.0f;
+			m_context->camera.zoom = 25.0f * 0.4f;
 			m_context->debugDraw.drawJoints = false;
 		}
 
@@ -2553,7 +2553,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 10.0f * fontSize;
-		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize }, ImGuiCond_Once );
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize }, ImGuiCond_Once );
 		ImGui::SetNextWindowSize( { 16.0f * fontSize, height } );
 
 		ImGui::Begin( "Driving", nullptr, ImGuiWindowFlags_NoResize );
@@ -2610,7 +2610,7 @@ public:
 		DrawTextLine( "speed in kph: %.2g", kph );
 
 		b2Vec2 carPosition = b2Body_GetPosition( m_car.m_chassisId );
-		m_context->camera.m_center.x = carPosition.x;
+		m_context->camera.center.x = carPosition.x;
 
 		Sample::Step();
 	}
@@ -2639,8 +2639,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 12.0f };
-			m_context->camera.m_zoom = 16.0f;
+			m_context->camera.center = { 0.0f, 12.0f };
+			m_context->camera.zoom = 16.0f;
 
 			// m_context->camera.m_center = { 0.0f, 26.0f };
 			// m_context->camera.m_zoom = 1.0f;
@@ -2676,7 +2676,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 10.0f * fontSize;
-		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize }, ImGuiCond_Once );
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize }, ImGuiCond_Once );
 		ImGui::SetNextWindowSize( { 14.0f * fontSize, height } );
 
 		ImGui::Begin( "Ragdoll", nullptr, ImGuiWindowFlags_NoResize );
@@ -2727,8 +2727,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 5.0f };
-			m_context->camera.m_zoom = 25.0f * 0.25f;
+			m_context->camera.center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 25.0f * 0.25f;
 		}
 
 		{
@@ -2760,8 +2760,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 5.0f };
-			m_context->camera.m_zoom = 25.0f * 0.35f;
+			m_context->camera.center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 25.0f * 0.35f;
 		}
 
 		{
@@ -2806,8 +2806,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 9.0f };
-			m_context->camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.center = { 0.0f, 9.0f };
+			m_context->camera.zoom = 25.0f * 0.4f;
 		}
 
 		// Need 8 sub-steps for smoother operation
@@ -2975,7 +2975,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Scissor Lift", nullptr, ImGuiWindowFlags_NoResize );
@@ -3027,8 +3027,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 6.0f };
-			m_context->camera.m_zoom = 7.0f;
+			m_context->camera.center = { 0.0f, 6.0f };
+			m_context->camera.zoom = 7.0f;
 			m_context->debugDraw.drawJoints = false;
 		}
 
@@ -3288,7 +3288,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 120.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 25.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 25.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Gear Lift", nullptr, ImGuiWindowFlags_NoResize );
@@ -3355,8 +3355,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 4.0f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 4.0f;
 		}
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -3412,7 +3412,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 220.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Door", nullptr, ImGuiWindowFlags_NoResize );
@@ -3481,8 +3481,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 4.5f };
-			m_context->camera.m_zoom = 6.0f;
+			m_context->camera.center = { 0.0f, 4.5f };
+			m_context->camera.zoom = 6.0f;
 		}
 
 		{
@@ -3515,7 +3515,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 4.0f * fontSize;
-		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize }, ImGuiCond_Once );
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize }, ImGuiCond_Once );
 		ImGui::SetNextWindowSize( { 20.0f * fontSize, height } );
 
 		ImGui::Begin( "Scale Ragdoll", nullptr, ImGuiWindowFlags_NoResize );

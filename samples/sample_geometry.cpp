@@ -22,8 +22,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.5f, 0.0f };
-			m_context->camera.m_zoom = 25.0f * 0.3f;
+			m_context->camera.center = { 0.5f, 0.0f };
+			m_context->camera.zoom = 25.0f * 0.3f;
 		}
 
 		m_generation = 0;

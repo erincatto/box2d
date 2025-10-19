@@ -58,8 +58,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 8.0f, 53.0f };
-			m_context->camera.m_zoom = 25.0f * 2.35f;
+			m_context->camera.center = { 8.0f, 53.0f };
+			m_context->camera.zoom = 25.0f * 2.35f;
 		}
 
 		m_context->debugDraw.drawJoints = false;
@@ -312,7 +312,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 6.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 15.0f * fontSize, height ) );
 		ImGui::Begin( "Benchmark: Barrel", nullptr, ImGuiWindowFlags_NoResize );
 
@@ -357,8 +357,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 8.0f, 53.0f };
-			m_context->camera.m_zoom = 25.0f * 2.35f;
+			m_context->camera.center = { 8.0f, 53.0f };
+			m_context->camera.zoom = 25.0f * 2.35f;
 		}
 
 		float groundSize = 25.0f;
@@ -440,8 +440,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 1.5f, 10.0f };
-			m_context->camera.m_zoom = 15.0f;
+			m_context->camera.center = { 1.5f, 10.0f };
+			m_context->camera.zoom = 15.0f;
 		}
 
 		CreateTumbler( m_worldId );
@@ -463,8 +463,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 1.5f, 10.0f };
-			m_context->camera.m_zoom = 20.0f;
+			m_context->camera.center = { 1.5f, 10.0f };
+			m_context->camera.zoom = 20.0f;
 		}
 
 		CreateWasher( m_worldId );
@@ -487,8 +487,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 1.0f, -5.5 };
-			m_context->camera.m_zoom = 25.0f * 3.4f;
+			m_context->camera.center = { 1.0f, -5.5 };
+			m_context->camera.zoom = 25.0f * 3.4f;
 			m_context->debugDraw.drawJoints = false;
 		}
 
@@ -594,7 +594,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 8.5f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 15.5f * fontSize, height ) );
 		ImGui::Begin( "Benchmark: Many Tumblers", nullptr, ImGuiWindowFlags_NoResize );
 		ImGui::PushItemWidth( 8.0f * fontSize );
@@ -677,8 +677,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 50.0f };
-			m_context->camera.m_zoom = 25.0f * 2.2f;
+			m_context->camera.center = { 0.0f, 50.0f };
+			m_context->camera.zoom = 25.0f * 2.2f;
 			m_context->enableSleep = false;
 		}
 
@@ -701,8 +701,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 16.0f, 110.0f };
-			m_context->camera.m_zoom = 25.0f * 5.0f;
+			m_context->camera.center = { 16.0f, 110.0f };
+			m_context->camera.zoom = 25.0f * 5.0f;
 			m_context->enableSleep = false;
 		}
 
@@ -731,8 +731,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 50.0f };
-			m_context->camera.m_zoom = 25.0f * 2.2f;
+			m_context->camera.center = { 0.0f, 50.0f };
+			m_context->camera.zoom = 25.0f * 2.2f;
 		}
 
 		float groundSize = 100.0f;
@@ -862,8 +862,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 50.0f };
-			m_context->camera.m_zoom = 25.0f * 2.2f;
+			m_context->camera.center = { 0.0f, 50.0f };
+			m_context->camera.zoom = 25.0f * 2.2f;
 		}
 
 		{
@@ -973,8 +973,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 60.0f, -57.0f };
-			m_context->camera.m_zoom = 25.0f * 2.5f;
+			m_context->camera.center = { 60.0f, -57.0f };
+			m_context->camera.zoom = 25.0f * 2.5f;
 			m_context->enableSleep = false;
 		}
 
@@ -997,8 +997,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 60.0f, 6.0f };
-			m_context->camera.m_zoom = 25.0f * 1.6f;
+			m_context->camera.center = { 60.0f, 6.0f };
+			m_context->camera.zoom = 25.0f * 1.6f;
 		}
 
 		CreateSmash( m_worldId );
@@ -1020,8 +1020,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 18.0f, 115.0f };
-			m_context->camera.m_zoom = 25.0f * 5.5f;
+			m_context->camera.center = { 18.0f, 115.0f };
+			m_context->camera.zoom = 25.0f * 5.5f;
 		}
 
 		float grid = 1.0f;
@@ -1120,8 +1120,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 150.0f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 150.0f;
 		}
 
 		float grid = 1.0f;
@@ -1183,8 +1183,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 500.0f, 500.0f };
-			m_context->camera.m_zoom = 25.0f * 21.0f;
+			m_context->camera.center = { 500.0f, 500.0f };
+			m_context->camera.zoom = 25.0f * 21.0f;
 			// settings.drawShapes = m_isDebug;
 		}
 
@@ -1295,7 +1295,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 17.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 13.0f * fontSize, height ) );
 
 		ImGui::Begin( "Cast", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1571,8 +1571,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 32.0f };
-			m_context->camera.m_zoom = 42.0f;
+			m_context->camera.center = { 0.0f, 32.0f };
+			m_context->camera.zoom = 42.0f;
 		}
 
 		// b2_toiCalls = 0;
@@ -1612,8 +1612,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 110.0f };
-			m_context->camera.m_zoom = 125.0f;
+			m_context->camera.center = { 0.0f, 110.0f };
+			m_context->camera.zoom = 125.0f;
 			m_context->enableSleep = true;
 		}
 
@@ -1653,8 +1653,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 3.0f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 3.0f;
 		}
 
 		{
@@ -1713,7 +1713,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 5.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 17.0f * fontSize, height ) );
 		ImGui::Begin( "Benchmark: Shape Distance", nullptr, ImGuiWindowFlags_NoResize );
 
@@ -1801,8 +1801,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 105.0f };
-			m_context->camera.m_zoom = 125.0f;
+			m_context->camera.center = { 0.0f, 105.0f };
+			m_context->camera.zoom = 125.0f;
 		}
 
 		b2World_SetCustomFilterCallback( m_worldId, FilterFcn, this );
@@ -2024,8 +2024,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 150.0f };
-			m_context->camera.m_zoom = 200.0f;
+			m_context->camera.center = { 0.0f, 150.0f };
+			m_context->camera.zoom = 200.0f;
 		}
 
 		m_context->enableSleep = false;

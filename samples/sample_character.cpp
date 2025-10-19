@@ -61,8 +61,8 @@ public:
 	{
 		if ( context->restart == false )
 		{
-			m_camera->m_center = { 20.0f, 9.0f };
-			m_camera->m_zoom = 10.0f;
+			m_camera->center = { 20.0f, 9.0f };
+			m_camera->zoom = 10.0f;
 		}
 
 		context->debugDraw.drawJoints = false;
@@ -411,7 +411,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 350.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 25.0f ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 25.0f ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 340.0f, height ) );
 
 		ImGui::Begin( "Mover", nullptr, 0 );
@@ -586,7 +586,7 @@ public:
 
 		if ( m_lockCamera )
 		{
-			m_camera->m_center.x = m_transform.p.x;
+			m_camera->center.x = m_transform.p.x;
 		}
 	}
 
@@ -647,8 +647,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 20.0f, 9.0f };
-			m_context->camera.m_zoom = 10.0f;
+			m_context->camera.center = { 20.0f, 9.0f };
+			m_context->camera.zoom = 10.0f;
 		}
 
 		settings.drawJoints = false;

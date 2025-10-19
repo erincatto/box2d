@@ -31,8 +31,8 @@ public:
 
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = m_viewPosition;
-			m_context->camera.m_zoom = 25.0f * 1.0f;
+			m_context->camera.center = m_viewPosition;
+			m_context->camera.zoom = 25.0f * 1.0f;
 			m_context->debugDraw.drawJoints = false;
 		}
 
@@ -145,7 +145,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 13.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 18.0f * fontSize, height ) );
 
 		ImGui::Begin( "Large World", nullptr, ImGuiWindowFlags_NoResize );
@@ -178,12 +178,12 @@ public:
 
 		if ( m_speed != 0.0f )
 		{
-			m_context->camera.m_center = m_viewPosition;
+			m_context->camera.center = m_viewPosition;
 		}
 
 		if ( m_followCar )
 		{
-			m_context->camera.m_center.x = b2Body_GetPosition( m_car.m_chassisId ).x;
+			m_context->camera.center.x = b2Body_GetPosition( m_car.m_chassisId ).x;
 		}
 
 		float radius = 2.0f;

@@ -186,8 +186,8 @@ static void DestroyUI()
 
 static void ResizeWindowCallback( GLFWwindow*, int width, int height )
 {
-	s_context.camera.m_width = float( width );
-	s_context.camera.m_height = float( height );
+	s_context.camera.width = float( width );
+	s_context.camera.height = float( height );
 }
 
 static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, int mods )
@@ -216,7 +216,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				}
 				else
 				{
-					s_context.camera.m_center.x -= 0.5f;
+					s_context.camera.center.x -= 0.5f;
 				}
 				break;
 
@@ -229,7 +229,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				}
 				else
 				{
-					s_context.camera.m_center.x += 0.5f;
+					s_context.camera.center.x += 0.5f;
 				}
 				break;
 
@@ -242,7 +242,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				}
 				else
 				{
-					s_context.camera.m_center.y -= 0.5f;
+					s_context.camera.center.y -= 0.5f;
 				}
 				break;
 
@@ -255,7 +255,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				}
 				else
 				{
-					s_context.camera.m_center.y += 0.5f;
+					s_context.camera.center.y += 0.5f;
 				}
 				break;
 
@@ -365,8 +365,8 @@ static void MouseMotionCallback( GLFWwindow* window, double xd, double yd )
 	if ( s_rightMouseDown )
 	{
 		b2Vec2 diff = b2Sub( pw, s_clickPointWS );
-		s_context.camera.m_center.x -= diff.x;
-		s_context.camera.m_center.y -= diff.y;
+		s_context.camera.center.x -= diff.x;
+		s_context.camera.center.y -= diff.y;
 		s_clickPointWS = ConvertScreenToWorld( &s_context.camera, ps );
 	}
 }
@@ -381,11 +381,11 @@ static void ScrollCallback( GLFWwindow* window, double dx, double dy )
 
 	if ( dy > 0 )
 	{
-		s_context.camera.m_zoom /= 1.1f;
+		s_context.camera.zoom /= 1.1f;
 	}
 	else
 	{
-		s_context.camera.m_zoom *= 1.1f;
+		s_context.camera.zoom *= 1.1f;
 	}
 }
 
@@ -397,8 +397,8 @@ static void UpdateUI()
 	float menuWidth = 13.0f * fontSize;
 	if ( s_context.showUI )
 	{
-		ImGui::SetNextWindowPos( { s_context.camera.m_width - menuWidth - 0.5f * fontSize, 0.5f * fontSize } );
-		ImGui::SetNextWindowSize( { menuWidth, s_context.camera.m_height - fontSize } );
+		ImGui::SetNextWindowPos( { s_context.camera.width - menuWidth - 0.5f * fontSize, 0.5f * fontSize } );
+		ImGui::SetNextWindowSize( { menuWidth, s_context.camera.height - fontSize } );
 
 		ImGui::Begin( "Tools", &s_context.showUI,
 					  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse );
@@ -609,7 +609,7 @@ int main( int, char** )
 	else
 	{
 		s_context.window =
-			glfwCreateWindow( int( s_context.camera.m_width ), int( s_context.camera.m_height ), buffer, nullptr, nullptr );
+			glfwCreateWindow( int( s_context.camera.width ), int( s_context.camera.height ), buffer, nullptr, nullptr );
 	}
 
 	if ( s_context.window == nullptr )
@@ -659,18 +659,18 @@ int main( int, char** )
 		if ( glfwGetKey( s_context.window, GLFW_KEY_Z ) == GLFW_PRESS )
 		{
 			// Zoom out
-			s_context.camera.m_zoom = b2MinFloat( 1.005f * s_context.camera.m_zoom, 100.0f );
+			s_context.camera.zoom = b2MinFloat( 1.005f * s_context.camera.zoom, 100.0f );
 		}
 		else if ( glfwGetKey( s_context.window, GLFW_KEY_X ) == GLFW_PRESS )
 		{
 			// Zoom in
-			s_context.camera.m_zoom = b2MaxFloat( 0.995f * s_context.camera.m_zoom, 0.5f );
+			s_context.camera.zoom = b2MaxFloat( 0.995f * s_context.camera.zoom, 0.5f );
 		}
 
 		int width, height;
 		glfwGetWindowSize( s_context.window, &width, &height );
-		s_context.camera.m_width = width;
-		s_context.camera.m_height = height;
+		s_context.camera.width = width;
+		s_context.camera.height = height;
 
 		int bufferWidth, bufferHeight;
 		glfwGetFramebufferSize( s_context.window, &bufferWidth, &bufferHeight );
@@ -688,10 +688,10 @@ int main( int, char** )
 		// ImGui_ImplGlfw_CursorPosCallback( s_context.window, cursorPosX / s_windowScale, cursorPosY / s_windowScale );
 
 		ImGuiIO& io = ImGui::GetIO();
-		io.DisplaySize.x = s_context.camera.m_width;
-		io.DisplaySize.y = s_context.camera.m_height;
-		io.DisplayFramebufferScale.x = bufferWidth / s_context.camera.m_width;
-		io.DisplayFramebufferScale.y = bufferHeight / s_context.camera.m_height;
+		io.DisplaySize.x = s_context.camera.width;
+		io.DisplaySize.y = s_context.camera.height;
+		io.DisplayFramebufferScale.x = bufferWidth / s_context.camera.width;
+		io.DisplayFramebufferScale.y = bufferHeight / s_context.camera.height;
 
 		ImGui::NewFrame();
 
@@ -708,9 +708,9 @@ int main( int, char** )
 
 		s_sample->Step();
 
-		DrawScreenString( s_context.draw, 5.0f, s_context.camera.m_height - 10.0f, b2_colorSeaGreen,
+		DrawScreenString( s_context.draw, 5.0f, s_context.camera.height - 10.0f, b2_colorSeaGreen,
 						  "%.1f ms - step %d - camera (%g, %g, %g)", 1000.0f * frameTime, s_sample->m_stepCount,
-						  s_context.camera.m_center.x, s_context.camera.m_center.y, s_context.camera.m_zoom );
+						  s_context.camera.center.x, s_context.camera.center.y, s_context.camera.zoom );
 
 		FlushDraw( s_context.draw, &s_context.camera );
 

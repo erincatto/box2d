@@ -30,8 +30,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 25.0f * 1.333f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 25.0f * 1.333f;
 		}
 
 		m_context->debugDraw.drawJoints = false;
@@ -238,7 +238,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 90.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
 
 		ImGui::Begin( "Sensor Event", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -347,8 +347,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 6.0f };
-			m_context->camera.m_zoom = 7.5f;
+			m_context->camera.center = { 0.0f, 6.0f };
+			m_context->camera.zoom = 7.5f;
 		}
 
 		{
@@ -430,7 +430,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 19.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 12.0f * fontSize, height ) );
 
 		ImGui::Begin( "Sensor Bookend", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -692,8 +692,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 6.0f };
-			m_context->camera.m_zoom = 7.5f;
+			m_context->camera.center = { 0.0f, 6.0f };
+			m_context->camera.zoom = 7.5f;
 		}
 
 		{
@@ -828,8 +828,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 25.0f * 1.75f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 25.0f * 1.75f;
 		}
 
 		{
@@ -930,7 +930,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 60.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Contact Event", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1237,8 +1237,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.5f, 7.5f };
-			m_context->camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.center = { 0.5f, 7.5f };
+			m_context->camera.zoom = 25.0f * 0.4f;
 		}
 
 		b2World_SetPreSolveCallback( m_worldId, PreSolveStatic, this );
@@ -1351,7 +1351,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "One-Sided Platform", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1476,8 +1476,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 2.0f, 8.0f };
-			m_context->camera.m_zoom = 25.0f * 0.55f;
+			m_context->camera.center = { 2.0f, 8.0f };
+			m_context->camera.zoom = 25.0f * 0.55f;
 		}
 
 		{
@@ -1561,7 +1561,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Body Move", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1662,8 +1662,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 3.0f };
-			m_context->camera.m_zoom = 4.5f;
+			m_context->camera.center = { 0.0f, 3.0f };
+			m_context->camera.zoom = 4.5f;
 		}
 
 		{
@@ -1854,8 +1854,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 8.0f };
-			m_context->camera.m_zoom = 25.0f * 0.7f;
+			m_context->camera.center = { 0.0f, 8.0f };
+			m_context->camera.zoom = 25.0f * 0.7f;
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -2078,8 +2078,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 6.0f };
-			m_context->camera.m_zoom = 7.5f;
+			m_context->camera.center = { 0.0f, 6.0f };
+			m_context->camera.zoom = 7.5f;
 		}
 
 		{
@@ -2181,8 +2181,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 5.0f };
-			m_context->camera.m_zoom = 7.5f;
+			m_context->camera.center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 7.5f;
 		}
 
 		b2BodyId groundId;
@@ -2304,7 +2304,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 120.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 120.0f, height ) );
 
 		ImGui::Begin( "Sensor Hit", nullptr, ImGuiWindowFlags_NoResize );
@@ -2415,8 +2415,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { -7.0f, 9.0f };
-			m_context->camera.m_zoom = 14.0f;
+			m_context->camera.center = { -7.0f, 9.0f };
+			m_context->camera.zoom = 14.0f;
 		}
 
 		{

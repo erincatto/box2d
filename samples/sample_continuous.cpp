@@ -37,8 +37,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 25.0f * 0.45f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 25.0f * 0.45f;
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -121,7 +121,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Bounce House", nullptr, ImGuiWindowFlags_NoResize );
@@ -200,8 +200,8 @@ public:
 	explicit BounceHumans( SampleContext* context )
 		: Sample( context )
 	{
-		m_context->camera.m_center = { 0.0f, 0.0f };
-		m_context->camera.m_zoom = 12.0f;
+		m_context->camera.center = { 0.0f, 0.0f };
+		m_context->camera.zoom = 12.0f;
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
@@ -285,8 +285,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 25.0f * 0.35f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 25.0f * 0.35f;
 		}
 
 		//
@@ -344,7 +344,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Chain Drop", nullptr, ImGuiWindowFlags_NoResize );
@@ -381,8 +381,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 10.0f };
-			m_context->camera.m_zoom = 15.0f;
+			m_context->camera.center = { 0.0f, 10.0f };
+			m_context->camera.zoom = 15.0f;
 		}
 
 		// b2_toiHitCount = 0;
@@ -466,8 +466,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 10.0f };
-			m_context->camera.m_zoom = 15.0f;
+			m_context->camera.center = { 0.0f, 10.0f };
+			m_context->camera.zoom = 15.0f;
 		}
 
 		// b2_toiHitCount = 0;
@@ -521,8 +521,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 1.0f, 5.0f };
-			m_context->camera.m_zoom = 25.0f * 0.25f;
+			m_context->camera.center = { 1.0f, 5.0f };
+			m_context->camera.zoom = 25.0f * 0.25f;
 		}
 
 		{
@@ -601,7 +601,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 110.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
 
 		ImGui::Begin( "Skinny Box", nullptr, ImGuiWindowFlags_NoResize );
@@ -659,8 +659,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 1.5f, 16.0f };
-			m_context->camera.m_zoom = 25.0f * 0.8f;
+			m_context->camera.center = { 1.5f, 16.0f };
+			m_context->camera.zoom = 25.0f * 0.8f;
 		}
 
 		m_groundId = b2_nullBodyId;
@@ -871,7 +871,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
 
 		ImGui::Begin( "Ghost Bumps", nullptr, ImGuiWindowFlags_NoResize );
@@ -948,8 +948,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 1.0f, 5.0f };
-			m_context->camera.m_zoom = 25.0f * 0.25f;
+			m_context->camera.center = { 1.0f, 5.0f };
+			m_context->camera.zoom = 25.0f * 0.25f;
 		}
 
 		{
@@ -997,8 +997,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 1.75f };
-			m_context->camera.m_zoom = 2.5f;
+			m_context->camera.center = { 0.0f, 1.75f };
+			m_context->camera.zoom = 2.5f;
 		}
 
 		{
@@ -1042,8 +1042,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 1.75f };
-			m_context->camera.m_zoom = 2.0f;
+			m_context->camera.center = { 0.0f, 1.75f };
+			m_context->camera.zoom = 2.0f;
 		}
 
 		{
@@ -1091,8 +1091,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 7.0f, 5.0f };
-			m_context->camera.m_zoom = 6.0f;
+			m_context->camera.center = { 7.0f, 5.0f };
+			m_context->camera.zoom = 6.0f;
 		}
 
 		float pixelsPerMeter = 30.f;
@@ -1157,8 +1157,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 7.0f, 5.0f };
-			m_context->camera.m_zoom = 6.0f;
+			m_context->camera.center = { 7.0f, 5.0f };
+			m_context->camera.zoom = 6.0f;
 		}
 
 		float pixelsPerMeter = 30.f;
@@ -1227,8 +1227,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 1.5f };
-			m_context->camera.m_zoom = 3.0f;
+			m_context->camera.center = { 0.0f, 1.5f };
+			m_context->camera.zoom = 3.0f;
 			m_context->enableSleep = false;
 			m_context->debugDraw.drawJoints = false;
 		}
@@ -1498,7 +1498,7 @@ public:
 	{
 #if 0
 		ImGui::SetNextWindowPos( ImVec2( 0.0f, 0.0f ) );
-		ImGui::SetNextWindowSize( ImVec2( float( m_context->camera.m_width ), float( m_camera->m_height ) ) );
+		ImGui::SetNextWindowSize( ImVec2( float( m_context->camera.width ), float( m_camera->height ) ) );
 		ImGui::SetNextWindowBgAlpha( 0.0f );
 		ImGui::Begin( "DropBackground", nullptr,
 					  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
@@ -1567,8 +1567,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 9.0f };
-			m_context->camera.m_zoom = 25.0f * 0.5f;
+			m_context->camera.center = { 0.0f, 9.0f };
+			m_context->camera.zoom = 25.0f * 0.5f;
 		}
 
 		m_context->debugDraw.drawJoints = false;
@@ -1735,8 +1735,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 5.5f };
-			m_context->camera.m_zoom = 6.0f;
+			m_context->camera.center = { 0.0f, 5.5f };
+			m_context->camera.zoom = 6.0f;
 		}
 
 		{
