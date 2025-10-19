@@ -3,6 +3,8 @@
 
 #include "core.h"
 
+#include "constants.h"
+
 #if defined( B2_COMPILER_MSVC )
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
@@ -51,7 +53,7 @@ static int b2DefaultAssertFcn( const char* condition, const char* fileName, int 
 	return 1;
 }
 
-b2AssertFcn* b2AssertHandler = b2DefaultAssertFcn;
+static b2AssertFcn* b2AssertHandler = b2DefaultAssertFcn;
 
 void b2SetAssertFcn( b2AssertFcn* assertFcn )
 {
@@ -78,7 +80,7 @@ b2Version b2GetVersion( void )
 static b2AllocFcn* b2_allocFcn = NULL;
 static b2FreeFcn* b2_freeFcn = NULL;
 
-b2AtomicInt b2_byteCount;
+static b2AtomicInt b2_byteCount;
 
 void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn )
 {
