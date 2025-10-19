@@ -126,7 +126,6 @@ if (BOX2D_DISABLE_SIMD)
 endif()
 
 if (MSVC)
-	message(STATUS "Box2D on MSVC")	
 	if (BUILD_SHARED_LIBS)
 		# this is needed by DLL users to import Box2D symbols
 		target_compile_definitions(box2d INTERFACE BOX2D_DLL)
@@ -139,17 +138,30 @@ if (MSVC)
 	target_compile_definitions(box2d PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:B2_ENABLE_ASSERT>")
 
 	# Warnings
-	# 4710 - warn about inline functions that are not inlined
-	target_compile_options(box2d PRIVATE /Wall /wd4820 /wd5045 /wd4061 /wd4711 /wd4710)
+	if (${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
+		message(STATUS "Box2D on MSVC with clang-cl")
+		target_compile_options(box2d PRIVATE 
+			/W4
+			-Wextra 
+			-Wmissing-prototypes 
+			-Wstrict-prototypes 
+			-Wshadow 
+			-Wmissing-variable-declarations 
+			-Wdouble-promotion 
+			-Wfloat-conversion 
+			-Wundef
+		)
+	else()
+		message(STATUS "Box2D on MSVC with cl")
+		# 4710 - warn about inline functions that are not inlined
+		target_compile_options(box2d PRIVATE /Wall /wd4820 /wd5045 /wd4061 /wd4711 /wd4710)
+	endif()
+
 
 	if (BOX2D_AVX2)
 		message(STATUS "Box2D using AVX2")	
 		target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
 		target_compile_options(box2d PRIVATE /arch:AVX2)
-	endif()
-
-	if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-		target_compile_options(box2d PRIVATE -Wmissing-prototypes)
 	endif()
 
 elseif (MINGW)
