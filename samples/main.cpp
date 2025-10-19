@@ -148,7 +148,6 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 		assert( false );
 	}
 
-	ImGui::GetFontSize();
 	ImGui::GetStyle().ScaleAllSizes( s_context.uiScale );
 
 	const char* fontPath = "samples/data/droid_sans.ttf";

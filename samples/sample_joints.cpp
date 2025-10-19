@@ -988,44 +988,41 @@ public:
 		m_hertz = 1.0f;
 		m_dampingRatio = 0.7f;
 
-		for ( int i = 0; i < 2; ++i )
-		{
-			b2BodyDef bodyDef = b2DefaultBodyDef();
-			bodyDef.position = { 0.0f, 10.25f };
-			bodyDef.type = b2_dynamicBody;
-			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.position = { 0.0f, 10.25f };
+		bodyDef.type = b2_dynamicBody;
+		b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2Capsule capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.5f };
-			b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2Capsule capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.5f };
+		b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
 
-			b2Vec2 pivot = { 0.0f, 10.0f };
-			b2Vec2 axis = b2Normalize( { 1.0f, 1.0f } );
-			b2WheelJointDef jointDef = b2DefaultWheelJointDef();
-			jointDef.base.bodyIdA = groundId;
-			jointDef.base.bodyIdB = bodyId;
-			jointDef.base.localFrameA.q = b2MakeRotFromUnitVector( axis );
-			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
-			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
-			jointDef.motorSpeed = m_motorSpeed;
-			jointDef.maxMotorTorque = m_motorTorque;
-			jointDef.enableMotor = m_enableMotor;
-			jointDef.lowerTranslation = -3.0f;
-			jointDef.upperTranslation = 3.0f;
-			jointDef.enableLimit = m_enableLimit;
-			jointDef.hertz = m_hertz;
-			jointDef.dampingRatio = m_dampingRatio;
+		b2Vec2 pivot = { 0.0f, 10.0f };
+		b2Vec2 axis = b2Normalize( { 1.0f, 1.0f } );
+		b2WheelJointDef jointDef = b2DefaultWheelJointDef();
+		jointDef.base.bodyIdA = groundId;
+		jointDef.base.bodyIdB = bodyId;
+		jointDef.base.localFrameA.q = b2MakeRotFromUnitVector( axis );
+		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+		jointDef.motorSpeed = m_motorSpeed;
+		jointDef.maxMotorTorque = m_motorTorque;
+		jointDef.enableMotor = m_enableMotor;
+		jointDef.lowerTranslation = -3.0f;
+		jointDef.upperTranslation = 3.0f;
+		jointDef.enableLimit = m_enableLimit;
+		jointDef.hertz = m_hertz;
+		jointDef.dampingRatio = m_dampingRatio;
 
-			m_jointId = b2CreateWheelJoint( m_worldId, &jointDef );
-		}
+		m_jointId = b2CreateWheelJoint( m_worldId, &jointDef );
 	}
 
 	void UpdateGui() override
 	{
 		float fontSize = ImGui::GetFontSize();
-		float height = 220.0f;
+		float height = 15.0f * fontSize;
 		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
+		ImGui::SetNextWindowSize( ImVec2( 18.0f * fontSize, height ) );
 
 		ImGui::Begin( "Wheel Joint", nullptr, ImGuiWindowFlags_NoResize );
 
