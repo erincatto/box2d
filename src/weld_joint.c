@@ -245,12 +245,6 @@ void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 {
 	B2_ASSERT( base->type == b2_weldJoint );
 
-	// todo testing
-	if (useBias == false)
-	{
-		return;
-	}
-
 	float mA = base->invMassA;
 	float mB = base->invMassB;
 	float iA = base->invIA;
