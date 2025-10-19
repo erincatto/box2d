@@ -96,7 +96,10 @@ set(BOX2D_SAMPLE_FILES
 	sample_stacking.cpp
 	sample_world.cpp
 	shader.c
-	shader.h)
+	shader.h
+	stb_image_write.h
+	stb_truetype.h
+)
 
 add_executable(samples ${BOX2D_SAMPLE_FILES})
 
