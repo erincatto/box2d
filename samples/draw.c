@@ -348,7 +348,6 @@ void FlushText( Font* font, Camera* camera )
 
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-	// glDisable( GL_DEPTH_TEST );
 
 	int slot = 0;
 	glActiveTexture( GL_TEXTURE0 + slot );
@@ -389,7 +388,6 @@ void FlushText( Font* font, Camera* camera )
 	glBindTexture( GL_TEXTURE_2D, 0 );
 
 	glDisable( GL_BLEND );
-	// glEnable( GL_DEPTH_TEST );
 
 	CheckOpenGL();
 

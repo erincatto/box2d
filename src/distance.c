@@ -590,7 +590,7 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 	b2MakeSimplexCache( cache, &simplex );
 
 	// Apply radii if requested
-	if ( input->useRadii && output.distance > 0.1f * B2_LINEAR_SLOP )
+	if ( input->useRadii )
 	{
 		float radiusA = input->proxyA.radius;
 		float radiusB = input->proxyB.radius;
