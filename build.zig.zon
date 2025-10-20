@@ -1,0 +1,22 @@
+.{
+    .name = .box2d,
+    .version = "3.0.0",
+    .minimum_zig_version = "0.15.1",
+
+    .fingerprint = 0xbbd8fcbd18ea5e0b, // Changing this has security and trust implications.
+
+    .dependencies = .{
+        .enkiTS = .{
+            .url = "git+https://github.com/dougbinks/enkiTS#d0e74e1b0ed5886d600c09809d572fcdee418f27",
+            .hash = "enkiTS-1.11.0-SlhBpzV8AgBFq7N6lqhX78C2XO5mr8GJUgNuW9fazCiv",
+        },
+    },
+
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "include/box2d",
+        "shared",
+        "src",
+    },
+}

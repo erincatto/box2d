@@ -8,3 +8,5 @@ settings.ini
 CMakeUserPresets.json
 .cache/
 .idea/
+zig-out
+.zig-cache
