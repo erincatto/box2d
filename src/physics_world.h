@@ -12,14 +12,6 @@
 
 #include "box2d/types.h"
 
-enum b2SetType
-{
-	b2_staticSet = 0,
-	b2_disabledSet = 1,
-	b2_awakeSet = 2,
-	b2_firstSleepingSet = 3,
-};
-
 // Per thread task storage
 typedef struct b2TaskContext
 {

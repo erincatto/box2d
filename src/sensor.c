@@ -9,6 +9,7 @@
 #include "ctz.h"
 #include "physics_world.h"
 #include "shape.h"
+#include "solver_set.h"
 
 #include "box2d/collision.h"
 

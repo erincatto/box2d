@@ -389,7 +389,8 @@ public:
 			float angularOffset = 2.0f * m_time;
 			m_transform = { linearOffset, b2MakeRot( angularOffset ) };
 
-			b2Body_SetTargetTransform( m_targetId, m_transform, timeStep );
+			bool wake = true;
+			b2Body_SetTargetTransform( m_targetId, m_transform, timeStep, wake );
 		}
 
 		DrawTransform( m_draw, m_transform, 1.0f );

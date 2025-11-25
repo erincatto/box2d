@@ -239,10 +239,20 @@ typedef struct b2BodyDef
 	/// Is this body initially awake or sleeping?
 	bool isAwake;
 
-	/// Treat this body as high speed object that performs continuous collision detection
+	/// Treat this body as a high speed object that performs continuous collision detection
 	/// against dynamic and kinematic bodies, but not other bullet bodies.
 	/// @warning Bullets should be used sparingly. They are not a solution for general dynamic-versus-dynamic
-	/// continuous collision.
+	/// continuous collision. They do not guarantee accurate collision if both bodies are fast moving because
+	/// the bullet does a continuous check after all non-bullet bodies have moved. You could get unlucky and have
+	/// the bullet body end a time step very close to a non-bullet body and the non-bullet body then moves over
+	/// the bullet body. In continuous collision, initial overlap is ignored to avoid freezing bodies in place.
+	/// I do not recommend using them for game projectiles if precise collision timing is needed. Instead consider
+	/// using a ray or shape cast. You can use a marching ray or shape cast for projectile that move over time.
+	/// If you want a fast moving projectile to collide with a fast moving target, you need to consider the relative
+	/// movement in your ray or shape cast. This is out of the scope of Box2D.
+	/// So what are good use cases for bullets? Pinball games or games with dynamic containers that hold other objects.
+	/// It should be a use case where it doesn't break the game if there is a collision missed, but the having them
+	/// captured improves the quality of the game.
 	bool isBullet;
 
 	/// Used to disable a body. A disabled body does not move or collide.
@@ -421,6 +431,7 @@ typedef struct b2ShapeDef
 	bool invokeContactCreation;
 
 	/// Should the body update the mass properties when this shape is created. Default is true.
+	/// Warning: if this is true, you MUST call b2Body_ApplyMassFromShapes before simulating the world.
 	bool updateBodyMass;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
@@ -461,7 +472,8 @@ typedef struct b2ChainDef
 	const b2SurfaceMaterial* materials;
 
 	/// The material count. Must be 1 or count. This allows you to provide one
-	/// material for all segments or a unique material per segment.
+	/// material for all segments or a unique material per segment. For open
+	/// chains, the material on the ghost segments are place holders.
 	int materialCount;
 
 	/// Contact filtering data.
@@ -1004,6 +1016,11 @@ typedef struct b2ContactHitEvent
 
 	/// Id of the second shape
 	b2ShapeId shapeIdB;
+
+	/// Id of the contact.
+	///	@warning this contact may have been destroyed
+	///	@see b2Contact_IsValid
+	b2ContactId contactId;
 
 	/// Point where the shapes hit at the beginning of the time step.
 	/// This is a mid-point between the two surfaces. It could be at speculative

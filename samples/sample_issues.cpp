@@ -4,6 +4,8 @@
 
 #include "box2d/box2d.h"
 
+#include <vector>
+
 struct PhysicsHitQueryResult2D
 {
 	b2ShapeId shapeId = b2_nullShapeId;
@@ -754,3 +756,207 @@ public:
 };
 
 static int sampleUnstableWindmill = RegisterSample( "Issues", "Unstable Windmill", UnstableWindmill::Create );
+
+class SetTransformBug : public Sample
+{
+public:
+	explicit SetTransformBug( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 10.0f;
+		}
+
+		{
+			b2BodyDef bd = b2DefaultBodyDef();
+			bd.type = b2_kinematicBody;
+			//bd.fixedRotation = true;
+			m_kinematicBodyId = b2CreateBody( m_worldId, &bd );
+			b2ShapeDef sd = b2DefaultShapeDef();
+			sd.density = 0.0;
+			sd.material.friction = 0.0;
+			b2Polygon box = b2MakeBox( 2.5, 12.0 );
+			b2CreatePolygonShape( m_kinematicBodyId, &sd, &box );
+			b2Body_SetLinearVelocity( m_kinematicBodyId, { -3.0f, 0.0f } );
+		}
+
+		{
+			b2BodyDef bd = b2DefaultBodyDef();
+			bd.type = b2_dynamicBody;
+			bd.gravityScale = 0.0f;
+			//bd.fixedRotation = true;
+			b2BodyId body = b2CreateBody( m_worldId, &bd );
+			b2ShapeDef sd = b2DefaultShapeDef();
+			sd.density = 1.0;
+			sd.material.friction = 0.2;
+			b2Circle circle = { { 0.0f, 0.0f }, 0.5 };
+			b2CreateCircleShape( body, &sd, &circle );
+		}
+	}
+
+	void Step() override
+	{
+		if (m_stepCount == 10)
+		{
+			b2Body_SetTransform( m_kinematicBodyId, { 45.0f, 5.0f }, b2Rot_identity );
+		}
+
+		Sample::Step();
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new SetTransformBug( context );
+	}
+
+	b2BodyId m_kinematicBodyId;
+};
+
+static int setTransformBug = RegisterSample( "Issues", "SetTransformBug", SetTransformBug::Create );
+
+
+class EventStuff : public Sample
+{
+public:
+	explicit EventStuff( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 10.0f;
+		}
+
+		b2BodyDef sensorBodyDef = b2DefaultBodyDef();
+		sensorBodyDef.type = b2_staticBody;
+		sensorBodyDef.position = { 5.0f, 5.0f };
+		m_sensorBodyId = b2CreateBody( m_worldId, &sensorBodyDef );
+
+		b2ShapeDef sensorShapeDef = b2DefaultShapeDef();
+		sensorShapeDef.isSensor = true;
+		sensorShapeDef.enableSensorEvents = true;
+
+		b2Polygon sensorBox = b2MakeBox( 1.0f, 1.0f );
+		b2CreatePolygonShape( m_sensorBodyId, &sensorShapeDef, &sensorBox );
+	}
+
+	struct SensorContact
+	{
+		b2BodyId sensor_id;
+		b2BodyId object_id;
+		bool is_in_contact;
+	};
+
+	std::vector<SensorContact> contacts;
+
+	void update_contact( b2BodyId sensor_id, b2BodyId object_id, bool is_in_contact )
+	{
+		for ( auto& contact : contacts )
+		{
+			if ( B2_ID_EQUALS( contact.sensor_id, sensor_id ) && B2_ID_EQUALS( contact.object_id, object_id ) )
+			{
+				contact.is_in_contact = is_in_contact;
+				return;
+			}
+		}
+		contacts.push_back( { sensor_id, object_id, is_in_contact } );
+	}
+
+	void remove_body_contacts( b2BodyId body_id )
+	{
+		contacts.erase( std::remove_if( contacts.begin(), contacts.end(),
+										[body_id]( const SensorContact& c ) {
+											return B2_ID_EQUALS( c.object_id, body_id ) || B2_ID_EQUALS( c.sensor_id, body_id );
+										} ),
+						contacts.end() );
+	}
+
+	void process_sensor_events( b2WorldId world_id )
+	{
+		b2SensorEvents sensor_events = b2World_GetSensorEvents( world_id );
+
+		printf( "Begin events: %d, End events: %d\n", sensor_events.beginCount, sensor_events.endCount );
+
+		for ( int i = 0; i < sensor_events.beginCount; ++i )
+		{
+			b2SensorBeginTouchEvent ev = sensor_events.beginEvents[i];
+
+			// user didn't check for valid shape id
+			if ( b2Shape_IsValid( ev.visitorShapeId ) )
+			{
+				update_contact( b2Shape_GetBody( ev.sensorShapeId ), b2Shape_GetBody( ev.visitorShapeId ), true );
+			}
+			printf( "  Begin touch detected!\n" );
+		}
+
+		for ( int i = 0; i < sensor_events.endCount; ++i )
+		{
+			b2SensorEndTouchEvent ev = sensor_events.endEvents[i];
+
+			// user didn't check for valid shape id
+			if (b2Shape_IsValid(ev.visitorShapeId))
+			{
+				update_contact( b2Shape_GetBody( ev.sensorShapeId ), b2Shape_GetBody( ev.visitorShapeId ), false );
+			}
+			printf( "  End touch detected!\n" );
+		}
+	}
+
+	bool is_on_sensor( b2BodyId test_id, b2BodyId sensor_id )
+	{
+		for ( const auto& contact : contacts )
+		{
+			if ( B2_ID_EQUALS( contact.sensor_id, sensor_id ) && B2_ID_EQUALS( contact.object_id, test_id ) )
+			{
+				return contact.is_in_contact;
+			}
+		}
+		return false;
+	}
+	void Step() override
+	{
+		if ( m_stepCount < 3 )
+		{
+			printf( "--- Frame %d ---\n", m_stepCount );
+
+			b2BodyDef testBodyDef = b2DefaultBodyDef();
+			testBodyDef.type = b2_dynamicBody;
+			testBodyDef.position = { 5.0f, 5.0f };
+			b2BodyId testBody = b2CreateBody( m_worldId, &testBodyDef );
+
+			b2ShapeDef testShapeDef = b2DefaultShapeDef();
+			testShapeDef.density = 1.0f;
+			testShapeDef.enableSensorEvents = true;
+			b2Polygon testBox = b2MakeBox( 0.5f, 0.5f );
+			auto id = b2CreatePolygonShape( testBody, &testShapeDef, &testBox );
+
+			printf( "Created test body\n" );
+
+			Sample::Step();
+
+			process_sensor_events( m_worldId );
+
+			bool detected = is_on_sensor( testBody, m_sensorBodyId );
+			printf( "Is on sensor: %s\n", detected ? "YES" : "NO" );
+
+			b2DestroyBody( testBody );
+			remove_body_contacts( testBody );
+			printf( "Destroyed test body\n\n" );
+		}
+		else
+		{
+			Sample::Step();
+		}
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new EventStuff( context );
+	}
+
+	b2BodyId m_sensorBodyId;
+};
+
+static int setEventStuff = RegisterSample( "Issues", "EventStuff", EventStuff::Create );

@@ -50,7 +50,8 @@ typedef void* b2AllocFcn( unsigned int size, int alignment );
 
 /// Prototype for user free function
 /// @param mem the memory previously allocated through `b2AllocFcn`
-typedef void b2FreeFcn( void* mem );
+/// @param size the allocation size in bytes
+typedef void b2FreeFcn( void* mem, unsigned int size );
 
 /// Prototype for the user assert callback. Return 0 to skip the debugger break.
 typedef int b2AssertFcn( const char* condition, const char* fileName, int lineNumber );

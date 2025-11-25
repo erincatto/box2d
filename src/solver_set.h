@@ -9,6 +9,25 @@ typedef struct b2Body b2Body;
 typedef struct b2Joint b2Joint;
 typedef struct b2World b2World;
 
+// The solver set type by index
+enum b2SolverSetType
+{
+	// Static set for static bodies and joints between static bodies
+	b2_staticSet = 0,
+
+	// Disabled set for disabled bodies and their joints
+	b2_disabledSet = 1,
+
+	// Awake set for awake bodies and awake non-touching contacts. Awake touching contacts
+	// and awake joints live in the constraint graph
+	b2_awakeSet = 2,
+
+	// The index of the first sleeping set. Each island that goes to sleep is put into
+	// a sleeping set. This holds all bodies, contacts, and joints from the sleeping island.
+	// A separate set for each sleeping island makes it very efficient to wake a single island.
+	b2_firstSleepingSet = 3,
+};
+
 // This holds solver set data. The following sets are used:
 // - static set for all static bodies and joints between static bodies
 // - active set for all active bodies with body states (no contacts or joints)

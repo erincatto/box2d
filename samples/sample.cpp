@@ -532,7 +532,8 @@ void Sample::Step()
 
 	if ( B2_IS_NON_NULL( m_mouseBodyId ) && timeStep > 0.0f )
 	{
-		b2Body_SetTargetTransform( m_mouseBodyId, { m_mousePoint, b2Rot_identity }, timeStep );
+		bool wake = true;
+		b2Body_SetTargetTransform( m_mouseBodyId, { m_mousePoint, b2Rot_identity }, timeStep, wake );
 	}
 
 	m_context->debugDraw.drawingBounds = GetViewBounds( &m_context->camera );

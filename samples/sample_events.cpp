@@ -1594,8 +1594,15 @@ public:
 		b2BodyEvents events = b2World_GetBodyEvents( m_worldId );
 		for ( int i = 0; i < events.moveCount; ++i )
 		{
-			// draw the transform of every body that moved (not sleeping)
 			const b2BodyMoveEvent* event = events.moveEvents + i;
+
+			if (event->userData == nullptr)
+			{
+				// The mouse joint body has no user data
+				continue;
+			}
+
+			// draw the transform of every body that moved (not sleeping)
 			DrawTransform( m_draw, event->transform, 1.0f );
 
 			b2Transform transform = b2Body_GetTransform( event->bodyId );

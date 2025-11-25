@@ -857,7 +857,8 @@ public:
 			DrawLine( m_context->draw, point - 0.5f * axis, point + 0.5f * axis, b2_colorPlum );
 			DrawPoint( m_context->draw, point, 10.0f, b2_colorPlum );
 
-			b2Body_SetTargetTransform( m_bodyId, { point, rotation }, timeStep );
+			bool wake = true;
+			b2Body_SetTargetTransform( m_bodyId, { point, rotation }, timeStep, wake );
 		}
 
 		Sample::Step();

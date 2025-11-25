@@ -64,7 +64,7 @@ inline bool IsPowerOfTwo( int32_t x )
 	return ( x != 0 ) && ( ( x & ( x - 1 ) ) == 0 );
 }
 
-void* AllocFcn( uint32_t size, int32_t alignment )
+void* AllocFcn( unsigned int size, int32_t alignment )
 {
 	// Allocation must be a multiple of alignment or risk a seg fault
 	// https://en.cppreference.com/w/c/memory/aligned_alloc
@@ -81,8 +81,10 @@ void* AllocFcn( uint32_t size, int32_t alignment )
 	return ptr;
 }
 
-void FreeFcn( void* mem )
+void FreeFcn( void* mem, unsigned int size )
 {
+	(void)size;
+
 #if defined( _MSC_VER ) || defined( __MINGW32__ ) || defined( __MINGW64__ )
 	_aligned_free( mem );
 #else

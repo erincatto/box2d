@@ -524,7 +524,8 @@ public:
 				.y = m_elevatorAmplitude * cosf( 1.0f * m_time + B2_PI ) + m_elevatorBase.y,
 			};
 
-			b2Body_SetTargetTransform( m_elevatorId, { point, b2Rot_identity }, timeStep );
+			bool wake = true;
+			b2Body_SetTargetTransform( m_elevatorId, { point, b2Rot_identity }, timeStep, wake );
 		}
 
 		m_time += timeStep;

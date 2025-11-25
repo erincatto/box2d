@@ -12,7 +12,7 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <imgui_internal.h>
-#include <stdlib.h>
+//#include <stdlib.h>
 
 class ShapeDistance : public Sample
 {
@@ -53,6 +53,7 @@ public:
 
 		m_cache = b2_emptySimplexCache;
 		m_simplexCount = 0;
+		m_simplexIndex = 0;
 		m_startPoint = { 0.0f, 0.0f };
 		m_basePosition = { 0.0f, 0.0f };
 		m_baseAngle = 0.0f;
@@ -216,7 +217,7 @@ public:
 			m_simplexIndex = 0;
 		}
 
-		if ( m_drawSimplex )
+		if ( m_drawSimplex && m_simplexCount > 0 )
 		{
 			ImGui::SliderInt( "index", &m_simplexIndex, 0, m_simplexCount - 1 );
 			m_simplexIndex = b2ClampInt( m_simplexIndex, 0, m_simplexCount - 1 );
@@ -313,7 +314,7 @@ public:
 		input.proxyB = m_proxyB;
 		input.transformA = b2Transform_identity;
 		input.transformB = m_transform;
-		input.useRadii = true || m_radiusA > 0.0f || m_radiusB > 0.0f;
+		input.useRadii = m_radiusA > 0.0f || m_radiusB > 0.0f;
 
 		if ( m_useCache == false )
 		{

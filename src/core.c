@@ -148,7 +148,7 @@ void b2Free( void* mem, int size )
 
 	if ( b2_freeFcn != NULL )
 	{
-		b2_freeFcn( mem );
+		b2_freeFcn( mem, size );
 	}
 	else
 	{

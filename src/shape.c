@@ -10,6 +10,7 @@
 #include "sensor.h"
 
 // needed for dll export
+#include "solver_set.h"
 #include "box2d/box2d.h"
 
 #include <stddef.h>
@@ -181,6 +182,10 @@ static b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const vo
 	{
 		b2UpdateBodyMassData( world, body );
 	}
+	else
+	{
+		body->flags |= b2_dirtyMass;
+	}
 
 	b2ValidateSolverSets( world );
 
@@ -198,8 +203,7 @@ b2ShapeId b2CreateCapsuleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2
 	float lengthSqr = b2DistanceSquared( capsule->center1, capsule->center2 );
 	if ( lengthSqr <= B2_LINEAR_SLOP * B2_LINEAR_SLOP )
 	{
-		b2Circle circle = { b2Lerp( capsule->center1, capsule->center2, 0.5f ), capsule->radius };
-		return b2CreateShape( bodyId, def, &circle, b2_circleShape );
+		return b2_nullShapeId;
 	}
 
 	return b2CreateShape( bodyId, def, capsule, b2_capsuleShape );
@@ -1417,6 +1421,12 @@ void b2Shape_SetCapsule( b2ShapeId shapeId, const b2Capsule* capsule )
 {
 	b2World* world = b2GetWorldLocked( shapeId.world0 );
 	if ( world == NULL )
+	{
+		return;
+	}
+
+	float lengthSqr = b2DistanceSquared( capsule->center1, capsule->center2 );
+	if ( lengthSqr <= B2_LINEAR_SLOP * B2_LINEAR_SLOP )
 	{
 		return;
 	}

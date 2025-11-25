@@ -214,7 +214,7 @@ static void b2MakeSimplexCache( b2SimplexCache* cache, const b2Simplex* simplex 
 	}
 }
 
-static void b2ComputeSimplexWitnessPoints( b2Vec2* a, b2Vec2* b, const b2Simplex* s )
+static void b2ComputeWitnessPoints( const b2Simplex* s, b2Vec2* a, b2Vec2* b )
 {
 	switch ( s->count )
 	{
@@ -497,7 +497,7 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 		{
 			// Overlap
 			b2Vec2 localPointA, localPointB;
-			b2ComputeSimplexWitnessPoints( &localPointA, &localPointB, &simplex );
+			b2ComputeWitnessPoints( &simplex, &localPointA, &localPointB );
 			output.pointA = b2TransformPoint( input->transformA, localPointA );
 			output.pointB = b2TransformPoint( input->transformA, localPointB );
 			return output;
@@ -522,7 +522,7 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 
 			// Must return overlap due to invalid normal.
 			b2Vec2 localPointA, localPointB;
-			b2ComputeSimplexWitnessPoints( &localPointA, &localPointB, &simplex );
+			b2ComputeWitnessPoints( &simplex, &localPointA, &localPointB );
 			output.pointA = b2TransformPoint( input->transformA, localPointA );
 			output.pointB = b2TransformPoint( input->transformA, localPointB );
 			return output;
@@ -578,7 +578,7 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 	normal = b2RotateVector( input->transformA.q, normal );
 
 	b2Vec2 localPointA, localPointB;
-	b2ComputeSimplexWitnessPoints( &localPointA, &localPointB, &simplex );
+	b2ComputeWitnessPoints( &simplex, &localPointA, &localPointB );
 	output.normal = normal;
 	output.distance = b2Distance( localPointA, localPointB );
 	output.pointA = b2TransformPoint( input->transformA, localPointA );
@@ -651,7 +651,7 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 				{
 					// Initial overlap
 					output.hit = true;
-					
+
 					// Compute a common point
 					b2Vec2 c1 = b2MulAdd( distanceOutput.pointA, input->proxyA.radius, distanceOutput.normal );
 					b2Vec2 c2 = b2MulAdd( distanceOutput.pointB, -input->proxyB.radius, distanceOutput.normal );

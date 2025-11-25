@@ -718,6 +718,9 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		sim->force = b2Vec2_zero;
 		sim->torque = 0.0f;
 
+		// If you hit this then it means you deferred mass computation but never called b2Body_ApplyMassFromShapes
+		B2_ASSERT( ( body->flags & b2_dirtyMass ) == 0 );
+
 		body->flags &= ~( b2_isFast | b2_isSpeedCapped | b2_hadTimeOfImpact );
 		body->flags |= ( sim->flags & ( b2_isSpeedCapped | b2_hadTimeOfImpact ) );
 		sim->flags &= ~( b2_isFast | b2_isSpeedCapped | b2_hadTimeOfImpact );
@@ -1973,6 +1976,15 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 					event.shapeIdA = (b2ShapeId){ shapeA->id + 1, world->worldId, shapeA->generation };
 					event.shapeIdB = (b2ShapeId){ shapeB->id + 1, world->worldId, shapeB->generation };
+
+					b2Contact* contact = b2ContactArray_Get( &world->contacts, contactSim->contactId );
+
+					event.contactId = (b2ContactId){
+						.index1 = contact->contactId + 1,
+						.world0 = world->worldId,
+						.padding = 0,
+						.generation = contact->generation,
+					};
 
 					b2ContactHitEventArray_Push( &world->contactHitEvents, event );
 				}

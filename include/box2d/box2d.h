@@ -279,9 +279,13 @@ B2_API void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity );
 
 /// Set the velocity to reach the given transform after a given time step.
 /// The result will be close but maybe not exact. This is meant for kinematic bodies.
-/// The target is not applied if the velocity would be below the sleep threshold.
-/// This will automatically wake the body if asleep.
-B2_API void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep );
+/// The target is not applied if the velocity would be below the sleep threshold and
+/// the body is currently asleep.
+/// @param bodyId The body id
+/// @param target The target transform for the body
+/// @param timeStep The time step of the next call to b2World_Step
+/// @param wake Option to wake the body or not
+B2_API void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep, bool wake );
 
 /// Get the linear velocity of a local point attached to a body. Usually in meters per second.
 B2_API b2Vec2 b2Body_GetLocalPointVelocity( b2BodyId bodyId, b2Vec2 localPoint );
@@ -500,7 +504,7 @@ B2_API b2ShapeId b2CreateSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, c
 
 /// Create a capsule shape and attach it to a body. The shape definition and geometry are fully cloned.
 /// Contacts are not created until the next time step.
-/// @return the shape id for accessing the shape
+/// @return the shape id for accessing the shape, this will be b2_nullShapeId if the length is too small.
 B2_API b2ShapeId b2CreateCapsuleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Capsule* capsule );
 
 /// Create a polygon shape and attach it to a body. The shape definition and geometry are fully cloned.
