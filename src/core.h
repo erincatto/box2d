@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "box2d/math_functions.h"
+#include "box2d/base.h"
 
 // clang-format off
 
@@ -98,10 +98,12 @@
 	#define b2TracyCZoneC( ctx, color, active ) TracyCZoneC( ctx, color, active )
 	#define b2TracyCZoneNC( ctx, name, color, active ) TracyCZoneNC( ctx, name, color, active )
 	#define b2TracyCZoneEnd( ctx ) TracyCZoneEnd( ctx )
+	#define b2TracyCFrame TracyCFrameMark
 #else
 	#define b2TracyCZoneC( ctx, color, active )
 	#define b2TracyCZoneNC( ctx, name, color, active )
 	#define b2TracyCZoneEnd( ctx )
+	#define b2TracyCFrame
 #endif
 
 // clang-format on
@@ -147,6 +149,8 @@ void b2Free( void* mem, int size );
 #define B2_FREE_ARRAY( mem, count, type ) b2Free(mem, count * sizeof(type))
 
 void* b2GrowAlloc( void* oldMem, int oldSize, int newSize );
+
+void b2Log( const char* format, ... );
 
 typedef struct b2Mutex b2Mutex;
 

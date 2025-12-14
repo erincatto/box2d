@@ -83,7 +83,7 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	B2_ASSERT( typeA == b2_dynamicBody || typeB == b2_dynamicBody );
 
 #if B2_FORCE_OVERFLOW == 0
-	if ( typeA != b2_staticBody && typeB != b2_staticBody )
+	if (typeA == b2_dynamicBody && typeB == b2_dynamicBody)
 	{
 		// Dynamic constraint colors cannot encroach on colors reserved for static constraints
 		for ( int i = 0; i < B2_DYNAMIC_COLOR_COUNT; ++i )
@@ -94,16 +94,8 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 				continue;
 			}
 
-			if ( typeA == b2_dynamicBody )
-			{
-				b2SetBitGrow( &color->bodySet, bodyIdA );
-			}
-
-			if ( typeB == b2_dynamicBody )
-			{
-				b2SetBitGrow( &color->bodySet, bodyIdB );
-			}
-
+			b2SetBitGrow( &color->bodySet, bodyIdA );
+			b2SetBitGrow( &color->bodySet, bodyIdB );
 			colorIndex = i;
 			break;
 		}
@@ -225,7 +217,7 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 	B2_ASSERT( typeA == b2_dynamicBody || typeB == b2_dynamicBody );
 
 #if B2_FORCE_OVERFLOW == 0
-	if ( typeA != b2_staticBody && typeB != b2_staticBody )
+	if ( typeA == b2_dynamicBody && typeB == b2_dynamicBody )
 	{
 		// Dynamic constraint colors cannot encroach on colors reserved for static constraints
 		for ( int i = 0; i < B2_DYNAMIC_COLOR_COUNT; ++i )
@@ -236,16 +228,8 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 				continue;
 			}
 
-			if (typeA == b2_dynamicBody)
-			{
-				b2SetBitGrow( &color->bodySet, bodyIdA );
-			}
-
-			if (typeB == b2_dynamicBody)
-			{
-				b2SetBitGrow( &color->bodySet, bodyIdB );
-			}
-
+			b2SetBitGrow( &color->bodySet, bodyIdA );
+			b2SetBitGrow( &color->bodySet, bodyIdB );
 			return i;
 		}
 	}
@@ -280,7 +264,7 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 		}
 	}
 #else
-	B2_UNUSED( graph, bodyIdA, bodyIdB, staticA, staticB );
+	B2_UNUSED( graph, bodyIdA, bodyIdB );
 #endif
 
 	return B2_OVERFLOW_INDEX;

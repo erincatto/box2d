@@ -3244,7 +3244,15 @@ public:
 			points[2].y = 0.350000024;
 			points[3].x = -0.599999964;
 			points[3].y = 0.350000024;
+
+			points[0] = { 3.0, -0.5 };
+			points[1] = { 3.0, 0.5 };
+			points[2] = { -3.0, 0.5 };
+			points[3] = { -3.0, -0.5 };
 			b2Hull hull = b2ComputeHull( points, 4 );
+			bool isValid = b2ValidateHull( &hull );
+			assert( isValid );
+
 			m_triangle = b2MakePolygon( &hull, 0.0f );
 		}
 #endif

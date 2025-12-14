@@ -20,7 +20,7 @@ public:
 			m_context->camera.zoom = 25.0f * 0.4f;
 		}
 
-		m_type = b2_dynamicBody;
+		m_type = b2_staticBody;
 		m_isEnabled = true;
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -163,6 +163,21 @@ public:
 			shapeDef.density = 2.0f;
 
 			b2CreateCapsuleShape( m_touchingBodyId, &shapeDef, &capsule );
+		}
+
+		// Create a separate body on the ground
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_staticBody;
+			bodyDef.isEnabled = m_isEnabled;
+			bodyDef.position = { 8.5f, 0.2f };
+			bodyDef.name = "debris";
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Capsule capsule = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, 0.5f };
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
 		}
 
 		// Create a separate floating body

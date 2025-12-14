@@ -253,7 +253,7 @@ static int b2FindBestSibling( const b2DynamicTree* tree, b2AABB boxD )
 
 			// Lower bound cost of inserting under child 1. The minimum accounts for two possibilities:
 			// 1. Child1 could be the sibling with cost1 = inheritedCost + directCost1
-			// 2. A descendent of child1 could be the sibling with the lower bound cost of
+			// 2. A descendant of child1 could be the sibling with the lower bound cost of
 			//       cost1 = inheritedCost + (directCost1 - area1) + areaD
 			// This minimum here leads to the minimum of these two costs.
 			lowerCost1 = inheritedCost + directCost1 + b2MinFloat( areaD - area1, 0.0f );
@@ -639,38 +639,35 @@ static void b2InsertLeaf( b2DynamicTree* tree, int leaf, bool shouldRotate )
 	int oldParent = tree->nodes[sibling].parent;
 	int newParent = b2AllocateNode( tree );
 
-	// warning: node pointer can change after allocation
+	// Warning: node pointer can change after allocation
 	b2TreeNode* nodes = tree->nodes;
 	nodes[newParent].parent = oldParent;
 	nodes[newParent].userData = UINT64_MAX;
 	nodes[newParent].aabb = b2AABB_Union( leafAABB, nodes[sibling].aabb );
 	nodes[newParent].categoryBits = nodes[leaf].categoryBits | nodes[sibling].categoryBits;
 	nodes[newParent].height = nodes[sibling].height + 1;
+	nodes[newParent].children.child1 = sibling;
+	nodes[newParent].children.child2 = leaf;
+	nodes[sibling].parent = newParent;
+	nodes[leaf].parent = newParent;
 
+	// Fix grandparent links
 	if ( oldParent != B2_NULL_INDEX )
 	{
-		// The sibling was not the root.
+		// The sibling was not the root
 		if ( nodes[oldParent].children.child1 == sibling )
 		{
 			nodes[oldParent].children.child1 = newParent;
 		}
 		else
 		{
+			B2_ASSERT( nodes[oldParent].children.child2 == sibling );
 			nodes[oldParent].children.child2 = newParent;
 		}
-
-		nodes[newParent].children.child1 = sibling;
-		nodes[newParent].children.child2 = leaf;
-		nodes[sibling].parent = newParent;
-		nodes[leaf].parent = newParent;
 	}
 	else
 	{
-		// The sibling was the root.
-		nodes[newParent].children.child1 = sibling;
-		nodes[newParent].children.child2 = leaf;
-		nodes[sibling].parent = newParent;
-		nodes[leaf].parent = newParent;
+		// The sibling was the root
 		tree->root = newParent;
 	}
 
@@ -840,21 +837,21 @@ void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb )
 	nodes[proxyId].aabb = aabb;
 
 	int parentIndex = nodes[proxyId].parent;
-	while (parentIndex != B2_NULL_INDEX)
+	while ( parentIndex != B2_NULL_INDEX )
 	{
 		bool changed = b2EnlargeAABB( &nodes[parentIndex].aabb, aabb );
 		nodes[parentIndex].flags |= b2_enlargedNode;
 		parentIndex = nodes[parentIndex].parent;
 
-		if (changed == false)
+		if ( changed == false )
 		{
 			break;
 		}
 	}
 
-	while (parentIndex != B2_NULL_INDEX)
+	while ( parentIndex != B2_NULL_INDEX )
 	{
-		if (nodes[parentIndex].flags & b2_enlargedNode)
+		if ( nodes[parentIndex].flags & b2_enlargedNode )
 		{
 			// early out because this ancestor was previously ascended and marked as enlarged
 			break;
@@ -871,7 +868,7 @@ void b2DynamicTree_SetCategoryBits( b2DynamicTree* tree, int proxyId, uint64_t c
 
 	B2_ASSERT( nodes[proxyId].children.child1 == B2_NULL_INDEX );
 	B2_ASSERT( nodes[proxyId].children.child2 == B2_NULL_INDEX );
-	B2_ASSERT( (nodes[proxyId].flags & b2_leafNode) == b2_leafNode );
+	B2_ASSERT( ( nodes[proxyId].flags & b2_leafNode ) == b2_leafNode );
 
 	nodes[proxyId].categoryBits = categoryBits;
 
@@ -920,7 +917,7 @@ float b2DynamicTree_GetAreaRatio( const b2DynamicTree* tree )
 	for ( int i = 0; i < tree->nodeCapacity; ++i )
 	{
 		const b2TreeNode* node = tree->nodes + i;
-		if ( b2IsAllocated(node) == false || b2IsLeaf( node ) || i == tree->root )
+		if ( b2IsAllocated( node ) == false || b2IsLeaf( node ) || i == tree->root )
 		{
 			continue;
 		}
@@ -933,7 +930,7 @@ float b2DynamicTree_GetAreaRatio( const b2DynamicTree* tree )
 
 b2AABB b2DynamicTree_GetRootBounds( const b2DynamicTree* tree )
 {
-	if (tree->root != B2_NULL_INDEX)
+	if ( tree->root != B2_NULL_INDEX )
 	{
 		return tree->nodes[tree->root].aabb;
 	}
@@ -1073,7 +1070,7 @@ void b2DynamicTree_Validate( const b2DynamicTree* tree )
 #endif
 }
 
-void b2DynamicTree_ValidateNoEnlarged(const b2DynamicTree* tree)
+void b2DynamicTree_ValidateNoEnlarged( const b2DynamicTree* tree )
 {
 #if B2_VALIDATE == 1
 	int capacity = tree->nodeCapacity;
@@ -1163,8 +1160,7 @@ b2TreeStats b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_
 	return result;
 }
 
-b2TreeStats b2DynamicTree_QueryAll( const b2DynamicTree* tree, b2AABB aabb, b2TreeQueryCallbackFcn* callback,
-								 void* context )
+b2TreeStats b2DynamicTree_QueryAll( const b2DynamicTree* tree, b2AABB aabb, b2TreeQueryCallbackFcn* callback, void* context )
 {
 	b2TreeStats result = { 0 };
 
@@ -1637,8 +1633,8 @@ static int b2PartitionSAH( int* indices, int* binIndices, b2AABB* boxes, int cou
 	// Initialize bin bounds and count
 	for ( int i = 0; i < B2_BIN_COUNT; ++i )
 	{
-		bins[i].aabb.lowerBound = ( b2Vec2 ){ FLT_MAX, FLT_MAX };
-		bins[i].aabb.upperBound = ( b2Vec2 ){ -FLT_MAX, -FLT_MAX };
+		bins[i].aabb.lowerBound = (b2Vec2){ FLT_MAX, FLT_MAX };
+		bins[i].aabb.upperBound = (b2Vec2){ -FLT_MAX, -FLT_MAX };
 		bins[i].count = 0;
 	}
 

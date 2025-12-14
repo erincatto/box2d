@@ -174,7 +174,7 @@ void b2WarmStartOverflowContacts( b2StepContext* context )
 
 	for ( int i = 0; i < contactCount; ++i )
 	{
-		const b2ContactConstraint* constraint = constraints + i;
+		b2ContactConstraint* constraint = constraints + i;
 
 		int indexA = constraint->indexA;
 		int indexB = constraint->indexB;
@@ -199,13 +199,16 @@ void b2WarmStartOverflowContacts( b2StepContext* context )
 
 		for ( int j = 0; j < pointCount; ++j )
 		{
-			const b2ContactConstraintPoint* cp = constraint->points + j;
+			b2ContactConstraintPoint* cp = constraint->points + j;
 
 			// fixed anchors
 			b2Vec2 rA = cp->anchorA;
 			b2Vec2 rB = cp->anchorB;
 
 			b2Vec2 P = b2Add( b2MulSV( cp->normalImpulse, normal ), b2MulSV( cp->tangentImpulse, tangent ) );
+
+			cp->totalNormalImpulse += cp->normalImpulse;
+
 			wA -= iA * b2Cross( rA, P );
 			vA = b2MulAdd( vA, -mA, P );
 			wB += iB * b2Cross( rB, P );
@@ -318,7 +321,9 @@ void b2SolveOverflowContacts( b2StepContext* context, bool useBias )
 			float newImpulse = b2MaxFloat( cp->normalImpulse + impulse, 0.0f );
 			impulse = newImpulse - cp->normalImpulse;
 			cp->normalImpulse = newImpulse;
-			cp->totalNormalImpulse += newImpulse;
+			cp->totalNormalImpulse += impulse;
+
+			// b2Log( "vn %g impulse %g bias %g", vn, newImpulse, velocityBias );
 
 			totalNormalImpulse += newImpulse;
 
@@ -1771,6 +1776,8 @@ void b2WarmStartContactsTask( int startIndex, int endIndex, b2StepContext* conte
 			bB.w = b2MulAddW( bB.w, c->invIB, b2CrossW( rB, P ) );
 			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, P.X );
 			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, P.Y );
+
+			c->totalNormalImpulse1 = b2AddW( c->totalNormalImpulse1, c->normalImpulse1 );
 		}
 
 		{
@@ -1787,6 +1794,8 @@ void b2WarmStartContactsTask( int startIndex, int endIndex, b2StepContext* conte
 			bB.w = b2MulAddW( bB.w, c->invIB, b2CrossW( rB, P ) );
 			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, P.X );
 			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, P.Y );
+
+			c->totalNormalImpulse2 = b2AddW( c->totalNormalImpulse2, c->normalImpulse2 );
 		}
 
 		bA.w = b2MulSubW( bA.w, c->invIA, c->rollingImpulse );
@@ -1874,7 +1883,7 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse1, negImpulse ), b2ZeroW() );
 			b2FloatW impulse = b2SubW( newImpulse, c->normalImpulse1 );
 			c->normalImpulse1 = newImpulse;
-			c->totalNormalImpulse1 = b2AddW( c->totalNormalImpulse1, newImpulse );
+			c->totalNormalImpulse1 = b2AddW( c->totalNormalImpulse1, impulse );
 
 			totalNormalImpulse = b2AddW( totalNormalImpulse, newImpulse );
 
@@ -1926,7 +1935,7 @@ void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, 
 			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse2, negImpulse ), b2ZeroW() );
 			b2FloatW impulse = b2SubW( newImpulse, c->normalImpulse2 );
 			c->normalImpulse2 = newImpulse;
-			c->totalNormalImpulse2 = b2AddW( c->totalNormalImpulse2, newImpulse );
+			c->totalNormalImpulse2 = b2AddW( c->totalNormalImpulse2, impulse );
 
 			totalNormalImpulse = b2AddW( totalNormalImpulse, newImpulse );
 
@@ -2090,7 +2099,6 @@ void b2ApplyRestitutionTask( int startIndex, int endIndex, b2StepContext* contex
 			b2FloatW deltaImpulse = b2SubW( newImpulse, c->normalImpulse1 );
 			c->normalImpulse1 = newImpulse;
 
-			// Add the incremental impulse rather than the full impulse because this is not a sub-step
 			c->totalNormalImpulse1 = b2AddW( c->totalNormalImpulse1, deltaImpulse );
 
 			// Apply contact impulse
@@ -2131,7 +2139,6 @@ void b2ApplyRestitutionTask( int startIndex, int endIndex, b2StepContext* contex
 			b2FloatW deltaImpulse = b2SubW( newImpulse, c->normalImpulse2 );
 			c->normalImpulse2 = newImpulse;
 
-			// Add the incremental impulse rather than the full impulse because this is not a sub-step
 			c->totalNormalImpulse2 = b2AddW( c->totalNormalImpulse2, deltaImpulse );
 
 			// Apply contact impulse

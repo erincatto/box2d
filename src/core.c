@@ -3,7 +3,7 @@
 
 #include "core.h"
 
-#include "constants.h"
+#include "box2d/math_functions.h"
 
 #if defined( B2_COMPILER_MSVC )
 #define _CRTDBG_MAP_ALLOC
@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #endif
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -67,6 +68,29 @@ int b2InternalAssertFcn( const char* condition, const char* fileName, int lineNu
 	return b2AssertHandler( condition, fileName, lineNumber );
 }
 #endif
+
+static void b2DefaultLogFcn( const char* message )
+{
+	printf( "Box2D: %s\n", message );
+}
+
+b2LogFcn* b2LogHandler = b2DefaultLogFcn;
+
+void b2SetLogFcn( b2LogFcn* logFcn )
+{
+	B2_ASSERT( logFcn != NULL );
+	b2LogHandler = logFcn;
+}
+
+void b2Log( const char* format, ... )
+{
+	va_list args;
+	va_start( args, format );
+	char buffer[512];
+	vsnprintf( buffer, sizeof( buffer ), format, args );
+	b2LogHandler( buffer );
+	va_end( args );
+}
 
 b2Version b2GetVersion( void )
 {

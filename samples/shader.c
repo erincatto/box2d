@@ -7,9 +7,8 @@
 
 #include "shader.h"
 
-#include "../src/core.h"
-
 #include <assert.h>
+#include <stdbool.h>
 #include <glad/glad.h>
 #include <stdio.h>
 
@@ -155,7 +154,7 @@ static GLuint sCreateShaderFromFile( const char* filename, GLenum type )
 
 	char* source = malloc( size + 1 );
 	size_t count = fread( source, size, 1, file );
-	B2_UNUSED( count );
+	(void) count;
 	fclose( file );
 
 	source[size] = 0;

@@ -22,6 +22,7 @@ extern int BitSetTest( void );
 extern int CollisionTest( void );
 extern int DeterminismTest( void );
 extern int DistanceTest( void );
+extern int DynamicTreeTest( void );
 extern int IdTest( void );
 extern int MathTest( void );
 extern int ShapeTest( void );
@@ -56,6 +57,7 @@ int main( void )
 	RUN_TEST( CollisionTest );
 	RUN_TEST( DeterminismTest );
 	RUN_TEST( DistanceTest );
+	RUN_TEST( DynamicTreeTest );
 	RUN_TEST( IdTest );
 	RUN_TEST( ShapeTest );
 	RUN_TEST( WorldTest );

@@ -715,6 +715,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
 	{
+		b2TracyCFrame;
 		return;
 	}
 
@@ -736,6 +737,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		b2ContactEndTouchEventArray_Clear( world->contactEndEvents + world->endEventArrayIndex );
 
 		// todo_erin would be useful to still process collision while paused
+		b2TracyCFrame;
 		return;
 	}
 
@@ -823,6 +825,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	b2SensorEndTouchEventArray_Clear( world->sensorEndEvents + world->endEventArrayIndex );
 	b2ContactEndTouchEventArray_Clear( world->contactEndEvents + world->endEventArrayIndex );
 	world->locked = false;
+	b2TracyCFrame;
 }
 
 static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2HexColor color )

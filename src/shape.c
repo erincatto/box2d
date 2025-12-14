@@ -1495,6 +1495,13 @@ b2ChainId b2Shape_GetParentChain( b2ShapeId shapeId )
 	return (b2ChainId){ 0 };
 }
 
+int b2Chain_GetSurfaceMaterialCount( b2ChainId chainId )
+{
+	b2World* world = b2GetWorld( chainId.world0 );
+	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
+	return chainShape->materialCount;
+}
+
 void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* material, int materialIndex )
 {
 	b2World* world = b2GetWorldLocked( chainId.world0 );

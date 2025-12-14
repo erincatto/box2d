@@ -56,6 +56,9 @@ typedef void b2FreeFcn( void* mem, unsigned int size );
 /// Prototype for the user assert callback. Return 0 to skip the debugger break.
 typedef int b2AssertFcn( const char* condition, const char* fileName, int lineNumber );
 
+/// Prototype for user log callback. Used to log warnings.
+typedef void b2LogFcn( const char* message );
+
 /// This allows the user to override the allocation functions. These should be
 /// set during application startup.
 B2_API void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn );
