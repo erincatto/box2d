@@ -299,7 +299,7 @@ B2_INLINE float b2Distance( b2Vec2 a, b2Vec2 b )
 B2_INLINE b2Vec2 b2Normalize( b2Vec2 v )
 {
 	float length = sqrtf( v.x * v.x + v.y * v.y );
-	if (length < FLT_EPSILON)
+	if ( length < FLT_EPSILON )
 	{
 		return B2_LITERAL( b2Vec2 ){ 0.0f, 0.0f };
 	}
@@ -321,7 +321,7 @@ B2_INLINE bool b2IsNormalized( b2Vec2 a )
 B2_INLINE b2Vec2 b2GetLengthAndNormalize( float* length, b2Vec2 v )
 {
 	*length = sqrtf( v.x * v.x + v.y * v.y );
-	if (*length < FLT_EPSILON)
+	if ( *length < FLT_EPSILON )
 	{
 		return B2_LITERAL( b2Vec2 ){ 0.0f, 0.0f };
 	}
@@ -572,7 +572,7 @@ B2_INLINE b2Mat22 b2GetInverse22( b2Mat22 A )
 {
 	float a = A.cx.x, b = A.cy.x, c = A.cx.y, d = A.cy.y;
 	float det = a * d - b * c;
-	if (det != 0.0f)
+	if ( det != 0.0f )
 	{
 		det = 1.0f / det;
 	}
@@ -590,7 +590,7 @@ B2_INLINE b2Vec2 b2Solve22( b2Mat22 A, b2Vec2 b )
 {
 	float a11 = A.cx.x, a12 = A.cy.x, a21 = A.cx.y, a22 = A.cy.y;
 	float det = a11 * a22 - a12 * a21;
-	if (det != 0.0f)
+	if ( det != 0.0f )
 	{
 		det = 1.0f / det;
 	}
@@ -646,7 +646,7 @@ B2_INLINE b2AABB b2MakeAABB( const b2Vec2* points, int count, float radius )
 {
 	B2_ASSERT( count > 0 );
 	b2AABB a = { points[0], points[0] };
-	for (int i = 1; i < count; ++i)
+	for ( int i = 1; i < count; ++i )
 	{
 		a.lowerBound = b2Min( a.lowerBound, points[i] );
 		a.upperBound = b2Max( a.upperBound, points[i] );

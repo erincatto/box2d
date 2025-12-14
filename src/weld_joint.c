@@ -182,8 +182,8 @@ void b2PrepareWeldJoint( b2JointSim* base, b2StepContext* context )
 	// Compute the initial center delta. Incremental position updates are relative to this.
 	joint->deltaCenter = b2Sub( bodySimB->center, bodySimA->center );
 
-	float k = iA + iB;
-	joint->axialMass = k > 0.0f ? 1.0f / k : 0.0f;
+	float ka = iA + iB;
+	joint->axialMass = ka > 0.0f ? 1.0f / ka : 0.0f;
 
 	if ( joint->linearHertz == 0.0f )
 	{
@@ -243,8 +243,6 @@ void b2WarmStartWeldJoint( b2JointSim* base, b2StepContext* context )
 
 void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 {
-	B2_UNUSED( useBias );
-
 	B2_ASSERT( base->type == b2_weldJoint );
 
 	float mA = base->invMassA;
@@ -369,14 +367,12 @@ void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 		float bias = 0.0f;
 		float massScale = 1.0f;
 		float impulseScale = 0.0f;
-		//if ( useBias || joint->angularHertz > 0.0f )
+		if ( useBias || joint->angularHertz > 0.0f )
 		{
 			float C = jointAngle;
-			//bias = joint->angularSpring.biasRate * C;
-			//massScale = joint->angularSpring.massScale;
-			//impulseScale = joint->angularSpring.impulseScale;
-
-			bias = 0.1f * context->inv_dt * C;
+			bias = joint->angularSpring.biasRate * C;
+			massScale = joint->angularSpring.massScale;
+			impulseScale = joint->angularSpring.impulseScale;
 		}
 
 		float Cdot = wB - wA;
@@ -395,17 +391,15 @@ void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 		b2Vec2 bias = b2Vec2_zero;
 		float massScale = 1.0f;
 		float impulseScale = 0.0f;
-		//if ( useBias || joint->linearHertz > 0.0f )
+		if ( useBias || joint->linearHertz > 0.0f )
 		{
 			b2Vec2 dcA = stateA->deltaPosition;
 			b2Vec2 dcB = stateB->deltaPosition;
 			b2Vec2 C = b2Add( b2Add( b2Sub( dcB, dcA ), b2Sub( rB, rA ) ), joint->deltaCenter );
 
-			//bias = b2MulSV( joint->linearSpring.biasRate, C );
-			//massScale = joint->linearSpring.massScale;
-			//impulseScale = joint->linearSpring.impulseScale;
-
-			bias = b2MulSV(0.1f * context->inv_dt, C);
+			bias = b2MulSV( joint->linearSpring.biasRate, C );
+			massScale = joint->linearSpring.massScale;
+			impulseScale = joint->linearSpring.impulseScale;
 		}
 
 		b2Vec2 Cdot = b2Sub( b2Add( vB, b2CrossSV( wB, rB ) ), b2Add( vA, b2CrossSV( wA, rA ) ) );

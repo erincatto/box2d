@@ -247,7 +247,7 @@ typedef struct b2BodyDef
 	/// the bullet body end a time step very close to a non-bullet body and the non-bullet body then moves over
 	/// the bullet body. In continuous collision, initial overlap is ignored to avoid freezing bodies in place.
 	/// I do not recommend using them for game projectiles if precise collision timing is needed. Instead consider
-	/// using a ray or shape cast. You can use a marching ray or shape cast for projectile that move over time.
+	/// using a ray or shape cast. You can use a marching ray or shape cast for projectile that moves over time.
 	/// If you want a fast moving projectile to collide with a fast moving target, you need to consider the relative
 	/// movement in your ray or shape cast. This is out of the scope of Box2D.
 	/// So what are good use cases for bullets? Pinball games or games with dynamic containers that hold other objects.
