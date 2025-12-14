@@ -66,9 +66,13 @@ B2_API void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn );
 /// @return the total bytes allocated by Box2D
 B2_API int b2GetByteCount( void );
 
-/// Override the default assert callback
+/// Override the default assert function
 /// @param assertFcn a non-null assert callback
 B2_API void b2SetAssertFcn( b2AssertFcn* assertFcn );
+
+/// Override the default log function
+/// @param logFcn a non-null log callback
+B2_API void b2SetLogFcn( b2LogFcn* logFcn );
 
 /// Version numbering scheme.
 /// See https://semver.org/
