@@ -1,7 +1,6 @@
 # Reference: https://clang.llvm.org/docs/ClangFormatStyleOptions.html
 # VS 2026 uses 20.1.8
 # https://releases.llvm.org/20.1.0/tools/clang/docs/ClangFormatStyleOptions.html
-# /c/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/bin
 # https://clang-format-configurator.site/
 # default values:
 # https://github.com/llvm/llvm-project/blob/main/clang/lib/Format/Format.cpp

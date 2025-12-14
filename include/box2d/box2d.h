@@ -320,7 +320,7 @@ B2_API void b2Body_ApplyTorque( b2BodyId bodyId, float torque, bool wake );
 /// step. So this only needs to be called if the application wants to remove the effect of previous
 /// calls to apply forces and torques before the world step is called.
 /// @param bodyId The body id
-void b2Body_ClearForces( b2BodyId bodyId );
+B2_API void b2Body_ClearForces( b2BodyId bodyId );
 
 /// Apply an impulse at a point. This immediately modifies the velocity.
 /// It also modifies the angular velocity if the point of application

@@ -9,7 +9,7 @@ static int TreeCreateDestroy( void )
 {
 	b2AABB a = {
 		.lowerBound = { -1.0f, -1.0f },
-		.upperBound = { -2.0f, -2.0f },
+		.upperBound = { 2.0f, 2.0f },
 	};
 
 	b2DynamicTree tree = b2DynamicTree_Create();
