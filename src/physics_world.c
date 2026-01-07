@@ -192,9 +192,8 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->hitEventThreshold = def->hitEventThreshold;
 	world->restitutionThreshold = def->restitutionThreshold;
 
-	// Initialize hit event optimization counters (Option A and B)
+	// Initialize hit event shape counter (Option A: early exit)
 	world->hitEventShapeCount = 0;
-	world->hitEventContactBitSet = b2CreateBitSet( 1024 );
 	world->maxLinearSpeed = def->maximumLinearSpeed;
 	world->contactSpeed = def->contactSpeed;
 	world->contactHertz = def->contactHertz;
@@ -271,9 +270,6 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 void b2DestroyWorld( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
-
-	// Destroy hit event optimization bitset
-	b2DestroyBitSet( &world->hitEventContactBitSet );
 
 	b2DestroyBitSet( &world->debugBodySet );
 	b2DestroyBitSet( &world->debugJointSet );

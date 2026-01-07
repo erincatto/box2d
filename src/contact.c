@@ -432,9 +432,6 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 
 	int contactId = contact->contactId;
 
-	// Clear bit in hit event contact bitset (Option B)
-	b2ClearBit( &world->hitEventContactBitSet, contactId );
-
 	int edgeKeyA = ( contactId << 1 ) | 0;
 	if ( bodyA->headContactKey == edgeKeyA )
 	{
@@ -606,16 +603,10 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	if ( touching && ( shapeA->enableHitEvents || shapeB->enableHitEvents ) )
 	{
 		contactSim->simFlags |= b2_simEnableHitEvent;
-
-		// Set bit in hit event contact bitset for fast iteration (Option B)
-		b2SetBitGrow( &world->hitEventContactBitSet, contactSim->contactId );
 	}
 	else
 	{
 		contactSim->simFlags &= ~b2_simEnableHitEvent;
-
-		// Clear bit in hit event contact bitset (Option B)
-		b2ClearBit( &world->hitEventContactBitSet, contactSim->contactId );
 	}
 
 	if ( pointCount > 0 )

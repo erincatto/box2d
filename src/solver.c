@@ -1319,6 +1319,12 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		return;
 	}
 
+	// Hit event contact collection (Alternative E: collect during solve preparation)
+	// These variables persist beyond the constraint solving block for use in hit events processing
+	b2ContactSim** hitEventContacts = NULL;
+	int hitEventContactCount = 0;
+	int hitEventContactCapacity = 0;
+
 	// Solve constraints using graph coloring
 	{
 		// Prepare buffers for bullets
@@ -1480,6 +1486,19 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		graph->colors[B2_OVERFLOW_INDEX].overflowConstraints = overflowContactConstraints;
 
+		// Allocate hit event contacts array (Alternative E: collect during solve preparation)
+		// Use total contact count as max capacity - actual count will be less
+		// Allocated with b2Alloc (not arena) so it persists beyond the constraint solving block
+		if ( world->hitEventShapeCount > 0 )
+		{
+			// Use total SIMD contact count as capacity (over-allocate is fine, we'll track actual count)
+			hitEventContactCapacity = B2_SIMD_WIDTH * simdContactCount;
+			if ( hitEventContactCapacity > 0 )
+			{
+				hitEventContacts = b2Alloc( hitEventContactCapacity * sizeof( b2ContactSim* ) );
+			}
+		}
+
 		// Distribute transient constraints to each graph color and build flat arrays of contact and joint pointers
 		{
 			int contactBase = 0;
@@ -1500,9 +1519,32 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					color->simdConstraints =
 						(b2ContactConstraintSIMD*)( (uint8_t*)simdContactConstraints + contactBase * simdConstraintSize );
 
-					for ( int k = 0; k < colorContactCount; ++k )
+					// Two code paths to avoid per-contact NULL check overhead
+					if ( hitEventContacts != NULL )
 					{
-						contacts[B2_SIMD_WIDTH * contactBase + k] = color->contactSims.data + k;
+						// Path with hit event collection
+						for ( int k = 0; k < colorContactCount; ++k )
+						{
+							b2ContactSim* contactSim = color->contactSims.data + k;
+							contacts[B2_SIMD_WIDTH * contactBase + k] = contactSim;
+
+							// Collect hit event contacts (Alternative E)
+							if ( contactSim->simFlags & b2_simEnableHitEvent )
+							{
+								B2_ASSERT( hitEventContactCount < hitEventContactCapacity );
+								hitEventContacts[hitEventContactCount] = contactSim;
+								hitEventContactCount += 1;
+							}
+						}
+					}
+					else
+					{
+						// Fast path when no shapes have hit events enabled
+						for ( int k = 0; k < colorContactCount; ++k )
+						{
+							b2ContactSim* contactSim = color->contactSims.data + k;
+							contacts[B2_SIMD_WIDTH * contactBase + k] = contactSim;
+						}
 					}
 
 					// remainder
@@ -1926,7 +1968,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 	// Report hit events
 	// Optimization A: Early exit if no shapes have hit events enabled
-	// Optimization B: Use bitset to only iterate contacts with hit events
+	// Optimization E: Use pre-collected array of hit event contacts
 	{
 		b2TracyCZoneNC( hit_events, "Hit Events", b2_colorRosyBrown, true );
 		uint64_t hitTicks = b2GetTicks();
@@ -1934,80 +1976,64 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		B2_ASSERT( world->contactHitEvents.count == 0 );
 
 		// Option A: Early exit when no shapes have hit events enabled
-		if ( world->hitEventShapeCount > 0 )
+		// Option E: hitEventContactCount will be 0 if no contacts have hit events
+		if ( hitEventContactCount > 0 )
 		{
 			float threshold = world->hitEventThreshold;
-			b2BitSet* hitEventBits = &world->hitEventContactBitSet;
-			uint32_t blockCount = hitEventBits->blockCount;
-			uint64_t* bits = hitEventBits->bits;
 
-			// Option B: Iterate only contacts with hit events using the bitset
-			for ( uint32_t blockIndex = 0; blockIndex < blockCount; ++blockIndex )
+			// Option E: Iterate the pre-collected hit event contacts array
+			for ( int i = 0; i < hitEventContactCount; ++i )
 			{
-				uint64_t block = bits[blockIndex];
-				while ( block != 0 )
+				b2ContactSim* contactSim = hitEventContacts[i];
+
+				b2ContactHitEvent event = { 0 };
+				event.approachSpeed = threshold;
+
+				bool hit = false;
+				int pointCount = contactSim->manifold.pointCount;
+				for ( int k = 0; k < pointCount; ++k )
 				{
-					uint32_t bitIndex = b2CTZ64( block );
-					uint32_t contactId = blockIndex * 64 + bitIndex;
+					b2ManifoldPoint* mp = contactSim->manifold.points + k;
+					float approachSpeed = -mp->normalVelocity;
 
-					// Clear the lowest set bit
-					block &= block - 1;
-
-					// Get the contact from the sparse array
-					b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
-					if ( contact->contactId == B2_NULL_INDEX )
+					// Need to check total impulse because the point may be speculative and not colliding
+					if ( approachSpeed > event.approachSpeed && mp->totalNormalImpulse > 0.0f )
 					{
-						// Contact has been destroyed, skip
-						continue;
-					}
-
-					// Get the contact sim
-					b2ContactSim* contactSim = b2GetContactSim( world, contact );
-					if ( contactSim == NULL || ( contactSim->simFlags & b2_simEnableHitEvent ) == 0 )
-					{
-						continue;
-					}
-
-					b2ContactHitEvent event = { 0 };
-					event.approachSpeed = threshold;
-
-					bool hit = false;
-					int pointCount = contactSim->manifold.pointCount;
-					for ( int k = 0; k < pointCount; ++k )
-					{
-						b2ManifoldPoint* mp = contactSim->manifold.points + k;
-						float approachSpeed = -mp->normalVelocity;
-
-						// Need to check total impulse because the point may be speculative and not colliding
-						if ( approachSpeed > event.approachSpeed && mp->totalNormalImpulse > 0.0f )
-						{
-							event.approachSpeed = approachSpeed;
-							event.point = mp->point;
-							hit = true;
-						}
-					}
-
-					if ( hit == true )
-					{
-						event.normal = contactSim->manifold.normal;
-
-						b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contactSim->shapeIdA );
-						b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contactSim->shapeIdB );
-
-						event.shapeIdA = (b2ShapeId){ shapeA->id + 1, world->worldId, shapeA->generation };
-						event.shapeIdB = (b2ShapeId){ shapeB->id + 1, world->worldId, shapeB->generation };
-
-						event.contactId = (b2ContactId){
-							.index1 = contact->contactId + 1,
-							.world0 = world->worldId,
-							.padding = 0,
-							.generation = contact->generation,
-						};
-
-						b2ContactHitEventArray_Push( &world->contactHitEvents, event );
+						event.approachSpeed = approachSpeed;
+						event.point = mp->point;
+						hit = true;
 					}
 				}
+
+				if ( hit == true )
+				{
+					event.normal = contactSim->manifold.normal;
+
+					b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contactSim->shapeIdA );
+					b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contactSim->shapeIdB );
+
+					event.shapeIdA = (b2ShapeId){ shapeA->id + 1, world->worldId, shapeA->generation };
+					event.shapeIdB = (b2ShapeId){ shapeB->id + 1, world->worldId, shapeB->generation };
+
+					// Get contact from contactSim for contactId
+					b2Contact* contact = b2ContactArray_Get( &world->contacts, contactSim->contactId );
+					event.contactId = (b2ContactId){
+						.index1 = contact->contactId + 1,
+						.world0 = world->worldId,
+						.padding = 0,
+						.generation = contact->generation,
+					};
+
+					b2ContactHitEventArray_Push( &world->contactHitEvents, event );
+				}
 			}
+		}
+
+		// Free hit event contacts array (allocated with b2Alloc)
+		if ( hitEventContacts != NULL )
+		{
+			b2Free( hitEventContacts, hitEventContactCapacity * sizeof( b2ContactSim* ) );
+			hitEventContacts = NULL;
 		}
 
 		world->profile.hitEvents = b2GetMilliseconds( hitTicks );
