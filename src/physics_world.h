@@ -140,7 +140,7 @@ typedef struct b2World
 	float hitEventThreshold;
 	float restitutionThreshold;
 
-	// Optimization: Count of shapes with hit events enabled (Option A: early exit)
+	// Count of shapes with hit events enabled for early exit optimization
 	int hitEventShapeCount;
 
 	float maxLinearSpeed;

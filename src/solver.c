@@ -1319,8 +1319,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		return;
 	}
 
-	// Hit event contact collection (Alternative E: collect during solve preparation)
-	// These variables persist beyond the constraint solving block for use in hit events processing
+	// Hit event contacts collected during solve preparation
 	b2ContactSim** hitEventContacts = NULL;
 	int hitEventContactCount = 0;
 	int hitEventContactCapacity = 0;
@@ -1486,9 +1485,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		graph->colors[B2_OVERFLOW_INDEX].overflowConstraints = overflowContactConstraints;
 
-		// Allocate hit event contacts array (Alternative E: collect during solve preparation)
-		// Use total contact count as max capacity - actual count will be less
-		// Allocated with b2Alloc (not arena) so it persists beyond the constraint solving block
+		// Allocate array for collecting contacts with hit events enabled
 		if ( world->hitEventShapeCount > 0 )
 		{
 			// Use total SIMD contact count as capacity (over-allocate is fine, we'll track actual count)
@@ -1528,7 +1525,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 							b2ContactSim* contactSim = color->contactSims.data + k;
 							contacts[B2_SIMD_WIDTH * contactBase + k] = contactSim;
 
-							// Collect hit event contacts (Alternative E)
 							if ( contactSim->simFlags & b2_simEnableHitEvent )
 							{
 								B2_ASSERT( hitEventContactCount < hitEventContactCapacity );
@@ -1967,21 +1963,17 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	}
 
 	// Report hit events
-	// Optimization A: Early exit if no shapes have hit events enabled
-	// Optimization E: Use pre-collected array of hit event contacts
+	// Early exit when no contacts have hit events enabled
 	{
 		b2TracyCZoneNC( hit_events, "Hit Events", b2_colorRosyBrown, true );
 		uint64_t hitTicks = b2GetTicks();
 
 		B2_ASSERT( world->contactHitEvents.count == 0 );
 
-		// Option A: Early exit when no shapes have hit events enabled
-		// Option E: hitEventContactCount will be 0 if no contacts have hit events
 		if ( hitEventContactCount > 0 )
 		{
 			float threshold = world->hitEventThreshold;
 
-			// Option E: Iterate the pre-collected hit event contacts array
 			for ( int i = 0; i < hitEventContactCount; ++i )
 			{
 				b2ContactSim* contactSim = hitEventContacts[i];
@@ -2009,16 +2001,17 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				{
 					event.normal = contactSim->manifold.normal;
 
-					b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contactSim->shapeIdA );
-					b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contactSim->shapeIdB );
+					// Direct array access to avoid function call overhead
+					b2Shape* shapeA = world->shapes.data + contactSim->shapeIdA;
+					b2Shape* shapeB = world->shapes.data + contactSim->shapeIdB;
 
-					event.shapeIdA = (b2ShapeId){ shapeA->id + 1, world->worldId, shapeA->generation };
-					event.shapeIdB = (b2ShapeId){ shapeB->id + 1, world->worldId, shapeB->generation };
+					event.shapeIdA = (b2ShapeId){ contactSim->shapeIdA + 1, world->worldId, shapeA->generation };
+					event.shapeIdB = (b2ShapeId){ contactSim->shapeIdB + 1, world->worldId, shapeB->generation };
 
-					// Get contact from contactSim for contactId
-					b2Contact* contact = b2ContactArray_Get( &world->contacts, contactSim->contactId );
+					// Direct array access - use contactSim->contactId directly (equals contact->contactId)
+					b2Contact* contact = world->contacts.data + contactSim->contactId;
 					event.contactId = (b2ContactId){
-						.index1 = contact->contactId + 1,
+						.index1 = contactSim->contactId + 1,
 						.world0 = world->worldId,
 						.padding = 0,
 						.generation = contact->generation,

@@ -192,7 +192,6 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->hitEventThreshold = def->hitEventThreshold;
 	world->restitutionThreshold = def->restitutionThreshold;
 
-	// Initialize hit event shape counter (Option A: early exit)
 	world->hitEventShapeCount = 0;
 	world->maxLinearSpeed = def->maximumLinearSpeed;
 	world->contactSpeed = def->contactSpeed;
