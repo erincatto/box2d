@@ -8,3 +8,4 @@ settings.ini
 CMakeUserPresets.json
 .cache/
 .idea/
+benchmark_results/

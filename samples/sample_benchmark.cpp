@@ -14,7 +14,11 @@
 #include <limits.h>
 #include <set>
 #include <stdint.h>
+#include <stdio.h>
+#include <time.h>
 #include <vector>
+
+#include <GLFW/glfw3.h>
 
 #if defined( _MSC_VER )
 #include <intrin.h>
@@ -2107,3 +2111,453 @@ public:
 };
 
 static int benchmarkCapacity = RegisterSample( "Benchmark", "Capacity", BenchmarkCapacity::Create );
+
+// Benchmark sample for Issue #797 - Optimize hit events
+// This sample measures hit events performance with varying percentages of shapes that have hit events enabled
+class BenchmarkHitEvents : public Sample
+{
+public:
+	enum
+	{
+		e_maxBodies = 5000,
+		e_historySize = 240,
+		e_benchmarkDuration = 10, // seconds
+	};
+
+	explicit BenchmarkHitEvents( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 50.0f };
+			m_context->camera.zoom = 25.0f * 2.5f;
+		}
+
+		m_context->drawProfile = false;
+
+		// Initialize history arrays
+		memset( m_hitEventTimeHistory, 0, sizeof( m_hitEventTimeHistory ) );
+		m_historyIndex = 0;
+		m_minHitEventTime = FLT_MAX;
+		m_maxHitEventTime = 0.0f;
+		m_totalHitEventTime = 0.0f;
+		m_sampleCount = 0;
+
+		// FPS tracking
+		m_minFps = FLT_MAX;
+		m_maxFps = 0.0f;
+		m_totalFps = 0.0f;
+		m_lastTime = 0.0;
+		m_startTime = 0.0;
+		m_benchmarkComplete = false;
+		m_resultsSaved = false;
+
+		m_running = false;
+		m_targetBodyCount = m_isDebug ? 500 : 3000;
+		m_hitEventPercentage = 0;
+		m_currentBodyCount = 0;
+
+		CreateScene();
+
+		// Start paused - no animation until user clicks Start
+		m_context->pause = true;
+	}
+
+	~BenchmarkHitEvents() override
+	{
+		// Re-enable vsync when leaving this sample
+		glfwSwapInterval( 1 );
+	}
+
+	void SaveResults()
+	{
+		// Get current time for filename
+		time_t now = time( nullptr );
+		struct tm* timeinfo = localtime( &now );
+		char timestamp[64];
+		strftime( timestamp, sizeof( timestamp ), "%Y%m%d_%H%M%S", timeinfo );
+
+		// Create filename
+		char filename[256];
+		snprintf( filename, sizeof( filename ), "benchmark_results/hit_events_%s.txt", timestamp );
+
+		FILE* file = fopen( filename, "w" );
+		if ( file == nullptr )
+		{
+			return;
+		}
+
+		// Calculate averages
+		float avgHitEventTime = m_sampleCount > 0 ? m_totalHitEventTime / m_sampleCount : 0.0f;
+		float avgFps = m_sampleCount > 0 ? m_totalFps / m_sampleCount : 0.0f;
+		int hitEventCount = ( m_targetBodyCount * m_hitEventPercentage ) / 100;
+
+		fprintf( file, "==============================================\n" );
+		fprintf( file, "Box2D Hit Events Benchmark Results (Issue #797)\n" );
+		fprintf( file, "==============================================\n\n" );
+
+		fprintf( file, "Date: %s\n", timestamp );
+		fprintf( file, "Duration: %d seconds\n\n", e_benchmarkDuration );
+
+		fprintf( file, "Configuration:\n" );
+		fprintf( file, "  Body Count: %d\n", m_targetBodyCount );
+		fprintf( file, "  Hit Event Percentage: %d%%\n", m_hitEventPercentage );
+		fprintf( file, "  Hit Event Shapes: %d\n\n", hitEventCount );
+
+		fprintf( file, "Hit Events Time (ms):\n" );
+		fprintf( file, "  Average: %.4f\n", avgHitEventTime );
+		fprintf( file, "  Min:     %.4f\n", m_minHitEventTime < FLT_MAX ? m_minHitEventTime : 0.0f );
+		fprintf( file, "  Max:     %.4f\n\n", m_maxHitEventTime );
+
+		fprintf( file, "Step Time FPS (potential):\n" );
+		fprintf( file, "  Average: %.0f\n", avgFps );
+		fprintf( file, "  Min:     %.0f\n", m_minFps < FLT_MAX ? m_minFps : 0.0f );
+		fprintf( file, "  Max:     %.0f\n\n", m_maxFps );
+
+		fprintf( file, "Total Samples: %d\n", m_sampleCount );
+
+		fclose( file );
+
+		m_resultsSaved = true;
+	}
+
+	void CreateScene()
+	{
+		// Reset stats
+		memset( m_hitEventTimeHistory, 0, sizeof( m_hitEventTimeHistory ) );
+		m_historyIndex = 0;
+		m_minHitEventTime = FLT_MAX;
+		m_maxHitEventTime = 0.0f;
+		m_totalHitEventTime = 0.0f;
+		m_sampleCount = 0;
+		m_currentBodyCount = 0;
+
+		// Reset FPS stats
+		m_minFps = FLT_MAX;
+		m_maxFps = 0.0f;
+		m_totalFps = 0.0f;
+		m_lastTime = 0.0;
+		m_startTime = 0.0;
+		m_benchmarkComplete = false;
+		m_resultsSaved = false;
+
+		// Destroy existing world and create a new one
+		b2DestroyWorld( m_worldId );
+		CreateWorld();
+
+		// Create ground
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+			// Floor
+			b2Segment floor = { { -100.0f, 0.0f }, { 100.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &floor );
+
+			// Left wall
+			b2Segment leftWall = { { -100.0f, 0.0f }, { -100.0f, 200.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &leftWall );
+
+			// Right wall
+			b2Segment rightWall = { { 100.0f, 0.0f }, { 100.0f, 200.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &rightWall );
+		}
+
+		// Create falling bodies
+		g_randomSeed = 42;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+
+		int hitEventCount = ( m_targetBodyCount * m_hitEventPercentage ) / 100;
+		int normalCount = m_targetBodyCount - hitEventCount;
+
+		float x = -90.0f;
+		float y = 5.0f;
+		int index = 0;
+
+		// Create normal shapes first (no hit events)
+		for ( int i = 0; i < normalCount; ++i )
+		{
+			bodyDef.position = { x + RandomFloatRange( -0.5f, 0.5f ), y + RandomFloatRange( -0.5f, 0.5f ) };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.enableHitEvents = false;
+
+			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
+
+			x += 2.0f;
+			if ( x > 90.0f )
+			{
+				x = -90.0f;
+				y += 2.0f;
+			}
+			index++;
+		}
+
+		// Create hit event shapes
+		for ( int i = 0; i < hitEventCount; ++i )
+		{
+			bodyDef.position = { x + RandomFloatRange( -0.5f, 0.5f ), y + RandomFloatRange( -0.5f, 0.5f ) };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.enableHitEvents = true;
+
+			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
+
+			x += 2.0f;
+			if ( x > 90.0f )
+			{
+				x = -90.0f;
+				y += 2.0f;
+			}
+			index++;
+		}
+
+		m_currentBodyCount = index;
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		if ( m_running && !m_benchmarkComplete )
+		{
+			// Get the profile data
+			b2Profile p = b2World_GetProfile( m_worldId );
+
+			// Update history
+			m_hitEventTimeHistory[m_historyIndex] = p.hitEvents;
+			m_historyIndex = ( m_historyIndex + 1 ) % e_historySize;
+
+			// Update statistics
+			m_sampleCount++;
+			m_totalHitEventTime += p.hitEvents;
+
+			if ( p.hitEvents < m_minHitEventTime && m_sampleCount > 10 )
+			{
+				m_minHitEventTime = p.hitEvents;
+			}
+			if ( p.hitEvents > m_maxHitEventTime )
+			{
+				m_maxHitEventTime = p.hitEvents;
+			}
+
+			// Track step time for FPS calculation
+			float stepTime = p.step;
+			if ( stepTime > 0.0f )
+			{
+				float fps = 1000.0f / stepTime; // step is in ms
+				m_totalFps += fps;
+
+				if ( fps < m_minFps && m_sampleCount > 10 )
+				{
+					m_minFps = fps;
+				}
+				if ( fps > m_maxFps )
+				{
+					m_maxFps = fps;
+				}
+			}
+
+			// Check if benchmark is complete (10 seconds)
+			double currentTime = glfwGetTime();
+			if ( m_startTime == 0.0 )
+			{
+				m_startTime = currentTime;
+			}
+			else if ( currentTime - m_startTime >= e_benchmarkDuration )
+			{
+				m_benchmarkComplete = true;
+				m_running = false;
+				m_context->pause = true;
+				glfwSwapInterval( 1 ); // Re-enable vsync
+			}
+			m_lastTime = currentTime;
+		}
+	}
+
+	void UpdateGui() override
+	{
+		float fontSize = ImGui::GetFontSize();
+		float height = 32.0f * fontSize;
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 22.0f * fontSize, height ) );
+		ImGui::Begin( "Hit Events Benchmark (#797)", nullptr, ImGuiWindowFlags_NoResize );
+
+		ImGui::Text( "Issue #797: Optimize hit events" );
+		ImGui::Separator();
+
+		ImGui::PushItemWidth( 12.0f * fontSize );
+
+		bool changed = false;
+		changed = changed || ImGui::SliderInt( "Body Count", &m_targetBodyCount, 100, e_maxBodies );
+		changed = changed || ImGui::SliderInt( "Hit Event %%", &m_hitEventPercentage, 0, 100 );
+
+		int hitEventCount = ( m_targetBodyCount * m_hitEventPercentage ) / 100;
+		ImGui::Text( "Hit event shapes: %d / %d", hitEventCount, m_targetBodyCount );
+
+		ImGui::PopItemWidth();
+
+		ImGui::Separator();
+
+		// Progress bar and status
+		if ( m_benchmarkComplete )
+		{
+			ImGui::TextColored( ImVec4( 0.0f, 1.0f, 0.0f, 1.0f ), "BENCHMARK COMPLETE!" );
+			ImGui::ProgressBar( 1.0f, ImVec2( 20.0f * fontSize, 0 ), "Done" );
+
+			// Save Results button
+			if ( m_resultsSaved )
+			{
+				ImGui::TextColored( ImVec4( 0.5f, 1.0f, 0.5f, 1.0f ), "Results saved to benchmark_results/" );
+			}
+			else
+			{
+				if ( ImGui::Button( "Save Results", ImVec2( 12.0f * fontSize, 0 ) ) )
+				{
+					SaveResults();
+				}
+			}
+		}
+		else if ( m_running )
+		{
+			double elapsed = m_startTime > 0.0 ? glfwGetTime() - m_startTime : 0.0;
+			float progress = (float)( elapsed / e_benchmarkDuration );
+			if ( progress > 1.0f ) progress = 1.0f;
+			char progressText[32];
+			snprintf( progressText, sizeof( progressText ), "%.1f / %d sec", elapsed, e_benchmarkDuration );
+			ImGui::TextColored( ImVec4( 1.0f, 1.0f, 0.0f, 1.0f ), "RUNNING..." );
+			ImGui::ProgressBar( progress, ImVec2( 20.0f * fontSize, 0 ), progressText );
+		}
+		else
+		{
+			ImGui::Text( "Ready" );
+			ImGui::ProgressBar( 0.0f, ImVec2( 20.0f * fontSize, 0 ), "Waiting" );
+		}
+
+		ImGui::Separator();
+
+		// Start/Stop button
+		if ( m_running )
+		{
+			if ( ImGui::Button( "Stop Benchmark", ImVec2( 12.0f * fontSize, 0 ) ) )
+			{
+				m_running = false;
+				m_context->pause = true;
+				glfwSwapInterval( 1 ); // Re-enable vsync
+			}
+		}
+		else
+		{
+			if ( ImGui::Button( "Start Benchmark", ImVec2( 12.0f * fontSize, 0 ) ) )
+			{
+				m_running = true;
+				m_context->pause = false;
+				glfwSwapInterval( 0 ); // Disable vsync for accurate timing
+			}
+		}
+
+		ImGui::SameLine();
+		if ( ImGui::Button( "Reset", ImVec2( 6.0f * fontSize, 0 ) ) )
+		{
+			CreateScene();
+			m_context->pause = true;
+			m_running = false;
+			glfwSwapInterval( 1 ); // Re-enable vsync
+		}
+
+		if ( changed && !m_running )
+		{
+			CreateScene();
+		}
+
+		ImGui::Separator();
+
+		// Statistics display
+		ImGui::Text( "Hit Events Time:" );
+
+		b2Profile p = b2World_GetProfile( m_worldId );
+		float avgTime = m_sampleCount > 0 ? m_totalHitEventTime / m_sampleCount : 0.0f;
+
+		ImGui::Text( "  Current: %.4f ms", p.hitEvents );
+		ImGui::Text( "  Average: %.4f ms", avgTime );
+		ImGui::Text( "  Min:     %.4f ms", m_minHitEventTime < FLT_MAX ? m_minHitEventTime : 0.0f );
+		ImGui::Text( "  Max:     %.4f ms", m_maxHitEventTime );
+
+		ImGui::Separator();
+
+		// Step time based FPS (potential frame rate)
+		ImGui::Text( "Step Time FPS (potential):" );
+		float avgFps = m_sampleCount > 0 ? m_totalFps / m_sampleCount : 0.0f;
+		b2Profile currentProfile = b2World_GetProfile( m_worldId );
+		float currentFps = currentProfile.step > 0.0f ? 1000.0f / currentProfile.step : 0.0f;
+		ImGui::Text( "  Current: %.0f", m_running ? currentFps : 0.0f );
+		ImGui::Text( "  Average: %.0f", avgFps );
+		ImGui::Text( "  Min:     %.0f", m_minFps < FLT_MAX ? m_minFps : 0.0f );
+		ImGui::Text( "  Max:     %.0f", m_maxFps );
+		ImGui::Text( "Samples: %d", m_sampleCount );
+
+		ImGui::Separator();
+
+		// Graph
+		ImGui::Text( "Hit Events Time (ms):" );
+
+		// Reorder history for proper display (oldest to newest)
+		float orderedHistory[e_historySize];
+		for ( int i = 0; i < e_historySize; ++i )
+		{
+			int idx = ( m_historyIndex + i ) % e_historySize;
+			orderedHistory[i] = m_hitEventTimeHistory[idx];
+		}
+
+		// Calculate scale max for the graph (use max value or reasonable default)
+		float scaleMax = m_maxHitEventTime > 0.0f ? m_maxHitEventTime * 1.2f : 1.0f;
+		if ( scaleMax < 0.01f )
+		{
+			scaleMax = 0.01f;
+		}
+
+		char overlay[64];
+		snprintf( overlay, sizeof( overlay ), "%.4f ms", p.hitEvents );
+
+		ImGui::PlotLines( "##hitevents", orderedHistory, e_historySize, 0, overlay, 0.0f, scaleMax,
+						  ImVec2( 20.0f * fontSize, 5.0f * fontSize ) );
+
+		ImGui::End();
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new BenchmarkHitEvents( context );
+	}
+
+	float m_hitEventTimeHistory[e_historySize];
+	int m_historyIndex;
+	float m_minHitEventTime;
+	float m_maxHitEventTime;
+	float m_totalHitEventTime;
+	int m_sampleCount;
+
+	// FPS tracking
+	float m_minFps;
+	float m_maxFps;
+	float m_totalFps;
+	double m_lastTime;
+	double m_startTime;
+	bool m_benchmarkComplete;
+	bool m_resultsSaved;
+
+	int m_targetBodyCount;
+	int m_hitEventPercentage;
+	int m_currentBodyCount;
+	bool m_running;
+};
+
+static int benchmarkHitEvents = RegisterSample( "Benchmark", "Hit Events #797", BenchmarkHitEvents::Create );
