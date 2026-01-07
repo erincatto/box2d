@@ -1898,6 +1898,19 @@ void b2Body_EnableHitEvents( b2BodyId bodyId, bool flag )
 	while ( shapeId != B2_NULL_INDEX )
 	{
 		b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+
+		// Track hit event shape count for early exit optimization
+		if ( flag && !shape->enableHitEvents )
+		{
+			// Enabling hit events
+			world->hitEventShapeCount += 1;
+		}
+		else if ( !flag && shape->enableHitEvents )
+		{
+			// Disabling hit events
+			world->hitEventShapeCount -= 1;
+		}
+
 		shape->enableHitEvents = flag;
 		shapeId = shape->nextShapeId;
 	}

@@ -113,6 +113,12 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	shape->enableCustomFiltering = def->enableCustomFiltering;
 	shape->enableHitEvents = def->enableHitEvents;
 	shape->enablePreSolveEvents = def->enablePreSolveEvents;
+
+	// Track hit event shape count for early exit optimization
+	if ( def->enableHitEvents )
+	{
+		world->hitEventShapeCount += 1;
+	}
 	shape->proxyKey = B2_NULL_INDEX;
 	shape->localCentroid = b2GetShapeCentroid( shape );
 	shape->aabb = (b2AABB){ b2Vec2_zero, b2Vec2_zero };
@@ -231,6 +237,12 @@ b2ShapeId b2CreateSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, const b2
 static void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body, bool wakeBodies )
 {
 	int shapeId = shape->id;
+
+	// Track hit event shape count for early exit optimization
+	if ( shape->enableHitEvents )
+	{
+		world->hitEventShapeCount -= 1;
+	}
 
 	// Remove the shape from the body's doubly linked list.
 	if ( shape->prevShapeId != B2_NULL_INDEX )
@@ -1342,6 +1354,19 @@ void b2Shape_EnableHitEvents( b2ShapeId shapeId, bool flag )
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
+
+	// Track hit event shape count for early exit optimization
+	if ( flag && !shape->enableHitEvents )
+	{
+		// Enabling hit events
+		world->hitEventShapeCount += 1;
+	}
+	else if ( !flag && shape->enableHitEvents )
+	{
+		// Disabling hit events
+		world->hitEventShapeCount -= 1;
+	}
+
 	shape->enableHitEvents = flag;
 }
 

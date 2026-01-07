@@ -1925,68 +1925,87 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	}
 
 	// Report hit events
-	// todo_erin perhaps optimize this with a bitset
-	// todo_erin perhaps do this in parallel with other work below
+	// Optimization A: Early exit if no shapes have hit events enabled
+	// Optimization B: Use bitset to only iterate contacts with hit events
 	{
 		b2TracyCZoneNC( hit_events, "Hit Events", b2_colorRosyBrown, true );
 		uint64_t hitTicks = b2GetTicks();
 
 		B2_ASSERT( world->contactHitEvents.count == 0 );
 
-		float threshold = world->hitEventThreshold;
-		b2GraphColor* colors = world->constraintGraph.colors;
-		for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
+		// Option A: Early exit when no shapes have hit events enabled
+		if ( world->hitEventShapeCount > 0 )
 		{
-			b2GraphColor* color = colors + i;
-			int contactCount = color->contactSims.count;
-			b2ContactSim* contactSims = color->contactSims.data;
-			for ( int j = 0; j < contactCount; ++j )
+			float threshold = world->hitEventThreshold;
+			b2BitSet* hitEventBits = &world->hitEventContactBitSet;
+			uint32_t blockCount = hitEventBits->blockCount;
+			uint64_t* bits = hitEventBits->bits;
+
+			// Option B: Iterate only contacts with hit events using the bitset
+			for ( uint32_t blockIndex = 0; blockIndex < blockCount; ++blockIndex )
 			{
-				b2ContactSim* contactSim = contactSims + j;
-				if ( ( contactSim->simFlags & b2_simEnableHitEvent ) == 0 )
+				uint64_t block = bits[blockIndex];
+				while ( block != 0 )
 				{
-					continue;
-				}
+					uint32_t bitIndex = b2CTZ64( block );
+					uint32_t contactId = blockIndex * 64 + bitIndex;
 
-				b2ContactHitEvent event = { 0 };
-				event.approachSpeed = threshold;
+					// Clear the lowest set bit
+					block &= block - 1;
 
-				bool hit = false;
-				int pointCount = contactSim->manifold.pointCount;
-				for ( int k = 0; k < pointCount; ++k )
-				{
-					b2ManifoldPoint* mp = contactSim->manifold.points + k;
-					float approachSpeed = -mp->normalVelocity;
-
-					// Need to check total impulse because the point may be speculative and not colliding
-					if ( approachSpeed > event.approachSpeed && mp->totalNormalImpulse > 0.0f )
+					// Get the contact from the sparse array
+					b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
+					if ( contact->contactId == B2_NULL_INDEX )
 					{
-						event.approachSpeed = approachSpeed;
-						event.point = mp->point;
-						hit = true;
+						// Contact has been destroyed, skip
+						continue;
 					}
-				}
 
-				if ( hit == true )
-				{
-					event.normal = contactSim->manifold.normal;
+					// Get the contact sim
+					b2ContactSim* contactSim = b2GetContactSim( world, contact );
+					if ( contactSim == NULL || ( contactSim->simFlags & b2_simEnableHitEvent ) == 0 )
+					{
+						continue;
+					}
 
-					b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contactSim->shapeIdA );
-					b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contactSim->shapeIdB );
+					b2ContactHitEvent event = { 0 };
+					event.approachSpeed = threshold;
 
-					event.shapeIdA = (b2ShapeId){ shapeA->id + 1, world->worldId, shapeA->generation };
-					event.shapeIdB = (b2ShapeId){ shapeB->id + 1, world->worldId, shapeB->generation };
+					bool hit = false;
+					int pointCount = contactSim->manifold.pointCount;
+					for ( int k = 0; k < pointCount; ++k )
+					{
+						b2ManifoldPoint* mp = contactSim->manifold.points + k;
+						float approachSpeed = -mp->normalVelocity;
 
-					b2Contact* contact = b2ContactArray_Get( &world->contacts, contactSim->contactId );
+						// Need to check total impulse because the point may be speculative and not colliding
+						if ( approachSpeed > event.approachSpeed && mp->totalNormalImpulse > 0.0f )
+						{
+							event.approachSpeed = approachSpeed;
+							event.point = mp->point;
+							hit = true;
+						}
+					}
 
-					event.contactId = (b2ContactId){
-						.index1 = contact->contactId + 1,
-						.world0 = world->worldId,
-						.padding = 0,
-						.generation = contact->generation,
-					};
+					if ( hit == true )
+					{
+						event.normal = contactSim->manifold.normal;
 
-					b2ContactHitEventArray_Push( &world->contactHitEvents, event );
+						b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contactSim->shapeIdA );
+						b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contactSim->shapeIdB );
+
+						event.shapeIdA = (b2ShapeId){ shapeA->id + 1, world->worldId, shapeA->generation };
+						event.shapeIdB = (b2ShapeId){ shapeB->id + 1, world->worldId, shapeB->generation };
+
+						event.contactId = (b2ContactId){
+							.index1 = contact->contactId + 1,
+							.world0 = world->worldId,
+							.padding = 0,
+							.generation = contact->generation,
+						};
+
+						b2ContactHitEventArray_Push( &world->contactHitEvents, event );
+					}
 				}
 			}
 		}

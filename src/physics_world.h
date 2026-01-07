@@ -139,6 +139,12 @@ typedef struct b2World
 	b2Vec2 gravity;
 	float hitEventThreshold;
 	float restitutionThreshold;
+
+	// Optimization: Count of shapes with hit events enabled (Option A: early exit)
+	int hitEventShapeCount;
+
+	// Optimization: BitSet tracking contacts with hit events (Option B: fast iteration)
+	b2BitSet hitEventContactBitSet;
 	float maxLinearSpeed;
 	float contactSpeed;
 	float contactHertz;
