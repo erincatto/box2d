@@ -33,7 +33,7 @@ typedef enum b2SolverStageType
 	b2_stageIntegratePositions,
 	b2_stageRelax,
 	b2_stageRestitution,
-	b2_stageStoreImpulses
+	//b2_stageStoreImpulses
 } b2SolverStageType;
 
 typedef enum b2SolverBlockType
@@ -54,6 +54,7 @@ typedef enum b2SolverBlockType
 typedef struct b2SolverBlock
 {
 	int startIndex;
+	// todo make this uint16_t
 	int16_t count;
 	int16_t blockType; // b2SolverBlockType
 	// todo consider false sharing of this atomic
@@ -127,8 +128,6 @@ typedef struct b2StepContext
 	b2SolverStage* stages;
 	int stageCount;
 	bool enableWarmStarting;
-
-	b2AtomicInt lastCall;
 
 	// todo padding to prevent false sharing
 	char dummy1[64];

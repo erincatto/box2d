@@ -326,11 +326,11 @@ public:
 		}
 	}
 
-	void Keyboard(int key) override
+	void Keyboard( int key ) override
 	{
 		bool consumed = false;
 
-		switch (key)
+		switch ( key )
 		{
 			case 'B':
 				FireBullets();
@@ -341,7 +341,7 @@ public:
 				break;
 		}
 
-		if (consumed == false)
+		if ( consumed == false )
 		{
 			Sample::Keyboard( key );
 		}
@@ -457,16 +457,16 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.enableHitEvents = true;
-		// shapeDef.rollingResistance = 0.2f;
-		//shapeDef.material.friction = 0.0f;
+		shapeDef.material.rollingResistance = 0.2f;
+		// shapeDef.material.friction = 0.0f;
 
 		float y = 0.75f;
 
 		// todo testing
-		for ( int i = 0; i < 1; ++i )
+		for ( int i = 0; i < 9; ++i )
 		{
 			bodyDef.position.y = y;
-
+			bodyDef.position.x += 0.05f * i;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			shapeDef.userData = reinterpret_cast<void*>( intptr_t( shapeIndex ) );
@@ -480,6 +480,12 @@ public:
 
 	void Step() override
 	{
+		// todo_testing
+		if ( m_stepCount == 118 )
+		{
+			m_stepCount += 1;
+		}
+
 		Sample::Step();
 
 		b2ContactEvents events = b2World_GetContactEvents( m_worldId );

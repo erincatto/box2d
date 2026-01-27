@@ -125,6 +125,13 @@ B2_INLINE int b2ClampInt( int a, int lower, int upper )
 	return a < lower ? lower : ( a > upper ? upper : a );
 }
 
+// https://en.wikipedia.org/wiki/Floor_and_ceiling_functions
+B2_INLINE int b2CeilingInt( int numerator, int denominator )
+{
+	B2_VALIDATE( denominator > 0 );
+	return ( numerator + denominator - 1 ) / denominator;
+}
+
 /// @return the minimum of two floats
 B2_INLINE float b2MinFloat( float a, float b )
 {
@@ -397,10 +404,7 @@ B2_INLINE bool b2IsNormalizedRot( b2Rot q )
 /// Get the inverse of a rotation
 B2_INLINE b2Rot b2InvertRot( b2Rot a )
 {
-	return B2_LITERAL( b2Rot ){
-		.c = a.c,
-		.s = -a.s,
-	};
+	return B2_LITERAL( b2Rot ){ a.c, -a.s };
 }
 
 /// Normalized linear interpolation

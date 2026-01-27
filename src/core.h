@@ -141,6 +141,7 @@ typedef struct b2AtomicU32
 } b2AtomicU32;
 
 void* b2Alloc( int size );
+void* b2AllocZeroInit( int size );
 #define B2_ALLOC_STRUCT( type ) b2Alloc(sizeof(type))
 #define B2_ALLOC_ARRAY( count, type ) b2Alloc(count * sizeof(type))
 
@@ -149,6 +150,7 @@ void b2Free( void* mem, int size );
 #define B2_FREE_ARRAY( mem, count, type ) b2Free(mem, count * sizeof(type))
 
 void* b2GrowAlloc( void* oldMem, int oldSize, int newSize );
+void* b2GrowAllocZeroInit( void* oldMem, int oldSize, int newSize );
 
 void b2Log( const char* format, ... );
 

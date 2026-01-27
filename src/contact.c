@@ -371,9 +371,6 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	{
 		contactSim->simFlags |= b2_simEnablePreSolveEvents;
 	}
-
-	contactSim->constraintIndex = B2_NULL_INDEX;
-	contactSim->colorIndex = B2_NULL_INDEX;
 }
 
 // A contact is destroyed when:
@@ -483,7 +480,7 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 	{
 		// contact is an active constraint
 		B2_ASSERT( contact->setIndex == b2_awakeSet );
-		b2RemoveContactFromGraph( world, bodyIdA, bodyIdB, contact->colorIndex, contact->localIndex );
+		b2RemoveContactFromGraph( world, bodyIdA, bodyIdB, contact );
 	}
 	else
 	{

@@ -894,8 +894,7 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 			if ( blockType == b2_graphContactBlock )
 			{
 				bool useBias = true;
-				bool lastCall = false;
-				b2SolveContactsTask( startIndex, endIndex, context, stage->colorIndex, useBias, lastCall );
+				b2SolveContactsTask( startIndex, endIndex, context, stage->colorIndex, useBias );
 			}
 			else if ( blockType == b2_graphJointBlock )
 			{
@@ -912,8 +911,7 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 			if ( blockType == b2_graphContactBlock )
 			{
 				bool useBias = false;
-				bool lastCall = b2AtomicLoadInt( &context->lastCall ) != 0;
-				b2SolveContactsTask( startIndex, endIndex, context, stage->colorIndex, useBias, lastCall );
+				b2SolveContactsTask( startIndex, endIndex, context, stage->colorIndex, useBias );
 			}
 			else if ( blockType == b2_graphJointBlock )
 			{
@@ -929,9 +927,9 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 			}
 			break;
 
-		case b2_stageStoreImpulses:
-			// b2StoreImpulsesTask( startIndex, endIndex, context );
-			break;
+		//case b2_stageStoreImpulses:
+		//	// b2StoreImpulsesTask( startIndex, endIndex, context );
+		//	break;
 	}
 }
 
@@ -1139,13 +1137,10 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 
 			// solve constraints
 			bool useBias = true;
-			bool lastCall = subStepIndex == subStepCount - 1;
 
 			// Overflow constraints have lower priority
 			b2SolveOverflowJoints( context, useBias );
 			b2SolveOverflowContacts( context, useBias );
-
-			b2AtomicStoreInt( &context->lastCall, (int)lastCall );
 
 			for ( int colorIndex = 0; colorIndex < activeColorCount; ++colorIndex )
 			{
@@ -1208,16 +1203,16 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 
 		b2StoreOverflowImpulses( context );
 
-		syncBits = ( contactSyncIndex << 16 ) | stageIndex;
-		B2_ASSERT( stages[stageIndex].type == b2_stageStoreImpulses );
-		b2ExecuteMainStage( stages + stageIndex, context, syncBits );
+		//syncBits = ( contactSyncIndex << 16 ) | stageIndex;
+		//B2_ASSERT( stages[stageIndex].type == b2_stageStoreImpulses );
+		//b2ExecuteMainStage( stages + stageIndex, context, syncBits );
 
 		profile->storeImpulses += b2GetMillisecondsAndReset( &ticks );
 
 		// Signal workers to finish
 		b2AtomicStoreU32( &context->atomicSyncBits, UINT_MAX );
 
-		B2_ASSERT( stageIndex + 1 == context->stageCount );
+		B2_ASSERT( stageIndex == context->stageCount );
 		return;
 	}
 
@@ -1536,11 +1531,11 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// Define work blocks for preparing contacts and storing contact impulses
 		int prepareBlockSize = blocksPerWorker;
 		int pendingCount = world->pendingContacts.count;
-		int prepareBlockCount = pendingCount > 0 ? ( ( pendingCount - 1 ) / blocksPerWorker ) + 1 : 0;
+		int prepareBlockCount = b2CeilingInt( pendingCount, blocksPerWorker );
 		if ( pendingCount > prepareBlockSize * maxBlockCount )
 		{
 			// Too many blocks, increase block size
-			prepareBlockSize = prepareBlockCount / maxBlockCount;
+			prepareBlockSize = pendingCount / maxBlockCount;
 			prepareBlockCount = maxBlockCount;
 		}
 
@@ -1585,14 +1580,14 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// b2_stageRestitution
 		stageCount += activeColorCount;
 		// b2_stageStoreImpulses
-		stageCount += 1;
+		//stageCount += 1;
 
 		b2SolverStage* stages = b2AllocateArenaItem( &world->arena, stageCount * sizeof( b2SolverStage ), "stages" );
 		b2SolverBlock* bodyBlocks = b2AllocateArenaItem( &world->arena, bodyBlockCount * sizeof( b2SolverBlock ), "body blocks" );
 		b2SolverBlock* prepareBlocks =
 			b2AllocateArenaItem( &world->arena, prepareBlockCount * sizeof( b2SolverBlock ), "prepare blocks" );
-		b2SolverBlock* contactBlocks =
-			b2AllocateArenaItem( &world->arena, contactBlockCount * sizeof( b2SolverBlock ), "contact blocks" );
+		//b2SolverBlock* contactBlocks =
+		//	b2AllocateArenaItem( &world->arena, contactBlockCount * sizeof( b2SolverBlock ), "contact blocks" );
 		b2SolverBlock* jointBlocks =
 			b2AllocateArenaItem( &world->arena, jointBlockCount * sizeof( b2SolverBlock ), "joint blocks" );
 		b2SolverBlock* graphBlocks =
@@ -1648,6 +1643,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			b2AtomicStoreInt( &block->syncIndex, 0 );
 		}
 
+#if 0
 		// Prepare contact work blocks
 		for ( int i = 0; i < contactBlockCount; ++i )
 		{
@@ -1663,6 +1659,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			contactBlocks[contactBlockCount - 1].count =
 				(int16_t)( simdContactCount - ( contactBlockCount - 1 ) * contactBlockSize );
 		}
+#endif
 
 		// Prepare graph work blocks
 		b2SolverBlock* graphColorBlocks[B2_GRAPH_COLOR_COUNT] = { 0 };
@@ -1791,12 +1788,12 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		}
 
 		// Store impulses
-		stage->type = b2_stageStoreImpulses;
-		stage->blocks = contactBlocks;
-		stage->blockCount = contactBlockCount;
-		stage->colorIndex = -1;
-		b2AtomicStoreInt( &stage->completionCount, 0 );
-		stage += 1;
+		//stage->type = b2_stageStoreImpulses;
+		//stage->blocks = contactBlocks;
+		//stage->blockCount = contactBlockCount;
+		//stage->colorIndex = -1;
+		//b2AtomicStoreInt( &stage->completionCount, 0 );
+		//stage += 1;
 
 		B2_ASSERT( (int)( stage - stages ) == stageCount );
 
@@ -1880,7 +1877,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		b2FreeArenaItem( &world->arena, graphBlocks );
 		b2FreeArenaItem( &world->arena, jointBlocks );
-		b2FreeArenaItem( &world->arena, contactBlocks );
+		//b2FreeArenaItem( &world->arena, contactBlocks );
 		b2FreeArenaItem( &world->arena, prepareBlocks );
 		b2FreeArenaItem( &world->arena, bodyBlocks );
 		b2FreeArenaItem( &world->arena, stages );

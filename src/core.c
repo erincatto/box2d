@@ -161,6 +161,13 @@ void* b2Alloc( int size )
 	return ptr;
 }
 
+void* b2AllocZeroInit( int size )
+{
+	void* memory = b2Alloc( size );
+	memset( memory, 0, size );
+	return memory;
+}
+
 void b2Free( void* mem, int size )
 {
 	if ( mem == NULL )
@@ -195,6 +202,20 @@ void* b2GrowAlloc( void* oldMem, int oldSize, int newSize )
 		memcpy( newMem, oldMem, oldSize );
 		b2Free( oldMem, oldSize );
 	}
+	return newMem;
+}
+
+void* b2GrowAllocZeroInit( void* oldMem, int oldSize, int newSize )
+{
+	B2_ASSERT( newSize > oldSize );
+	void* newMem = b2Alloc( newSize );
+	if ( oldSize > 0 )
+	{
+		memcpy( newMem, oldMem, oldSize );
+		b2Free( oldMem, oldSize );
+	}
+
+	memset( (char*)newMem + oldSize, 0, newSize - oldSize );
 	return newMem;
 }
 

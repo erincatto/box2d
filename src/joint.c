@@ -1416,7 +1416,7 @@ void b2WarmStartOverflowJoints( b2StepContext* context )
 
 void b2SolveOverflowJoints( b2StepContext* context, bool useBias )
 {
-	b2TracyCZoneNC( solve_joints, "SolveJoints", b2_colorLemonChiffon, true );
+	b2TracyCZoneNC( solve_joints, "Solve Overflow Joints", b2_colorLemonChiffon, true );
 
 	b2ConstraintGraph* graph = context->graph;
 	b2JointSim* joints = graph->colors[B2_OVERFLOW_INDEX].jointSims.data;

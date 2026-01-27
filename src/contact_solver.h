@@ -5,6 +5,7 @@
 
 #include "solver.h"
 
+typedef struct b2Contact b2Contact;
 typedef struct b2ContactSim b2ContactSim;
 typedef struct b2GraphColor b2GraphColor;
 
@@ -22,7 +23,13 @@ typedef struct b2ContactConstraintPoint
 
 typedef struct b2ContactConstraint
 {
+	// Base 1 indices so that 0 means null
+
+	// b2Contact index
+	// todo currently not used
 	int contactIndex;
+
+	// b2BodyState indices
 	int indexA;
 	int indexB;
 	b2Vec2 normal;
@@ -78,7 +85,13 @@ typedef struct b2Vec2W
 
 typedef struct b2ContactConstraintWide
 {
+	// Base 1 indices so that 0 means null
+
+	// b2Contact index
+	// Not the b2ContactSim index
 	int contactIndex[B2_SIMD_WIDTH];
+
+	// b2BodyState indices
 	int indexA[B2_SIMD_WIDTH];
 	int indexB[B2_SIMD_WIDTH];
 	b2FloatW invMassA, invMassB;
@@ -120,9 +133,9 @@ void b2StoreOverflowImpulses( b2StepContext* context );
 // Contacts that live within the constraint graph coloring
 //void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context );
 void b2WarmStartContactsTask( int startIndex, int endIndex, b2StepContext* context, int colorIndex );
-void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, int colorIndex, bool useBias, bool lastCall );
+void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, int colorIndex, bool useBias );
 void b2ApplyRestitutionTask( int startIndex, int endIndex, b2StepContext* context, int colorIndex );
 //void b2StoreImpulsesTask( int startIndex, int endIndex, b2StepContext* context );
 
-void b2PrepareContact( b2StepContext* context, int colorIndex, int contactIndex );
+void b2PrepareContact( b2StepContext* context, b2Contact* contact, bool copyImpulses );
 void b2PreparePendingContacts( int startIndex, int endIndex, b2StepContext* context );

@@ -52,6 +52,7 @@ typedef struct b2Contact
 	int colorIndex;
 
 	// contact index within set or graph color
+	// this is the persistent constraint index when touching and awake
 	// B2_NULL_INDEX when slot is free
 	int localIndex;
 
@@ -93,6 +94,9 @@ enum b2ContactSimFlags
 
 	// This contact wants pre-solve events
 	b2_simEnablePreSolveEvents = 0x00200000,
+
+	// This contact has a cached relative transform
+	b2_simRelativeTransformValid = 0x00400000,
 };
 
 /// The class manages contact between two shapes. A contact exists for each overlapping
@@ -101,6 +105,8 @@ enum b2ContactSimFlags
 typedef struct b2ContactSim
 {
 	int contactId;
+
+	b2Transform relativeTransform;
 
 #if B2_ENABLE_VALIDATION
 	int bodyIdA;
@@ -132,9 +138,6 @@ typedef struct b2ContactSim
 	uint32_t simFlags;
 
 	b2SimplexCache cache;
-
-	int constraintIndex;
-	int colorIndex;
 } b2ContactSim;
 
 void b2InitializeContactRegisters( void );
