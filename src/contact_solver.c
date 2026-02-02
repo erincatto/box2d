@@ -483,8 +483,6 @@ void b2ApplyOverflowRestitution( b2StepContext* context )
 				float newImpulse = b2MaxFloat( cp->normalImpulse + impulse, 0.0f );
 				impulse = newImpulse - cp->normalImpulse;
 				cp->normalImpulse = newImpulse;
-
-				// Add the incremental impulse rather than the full impulse because this is not a sub-step
 				cp->totalNormalImpulse += impulse;
 
 				// apply contact impulse

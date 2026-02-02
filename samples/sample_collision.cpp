@@ -3215,6 +3215,15 @@ public:
 		e_box
 	};
 
+	/*
+	 *b2ShapeCastPairInput:
+	 *canEncroach: true,
+	 *max fraction: 1.000000,
+	 *proxy A: count: 4, radius: 0.000000 :
+	 *proxy B: count: 2, radius: 0.300000, 
+	 *transformA: pos: (0.000000, 0.000000) rot: 1.000000, 0.000000,
+	 *transformB: pos: (0.000000, 0.000000) rot: 1.000000, 0.000000, TranslationB: (0.000000, 0.183332)
+	 */
 	explicit ShapeCast( SampleContext* context )
 		: Sample( context )
 	{
@@ -3257,7 +3266,8 @@ public:
 		}
 #endif
 
-		m_box = b2MakeOffsetBox( 0.5f, 0.5f, { 0.0f, 0.0f }, b2Rot_identity );
+		//m_box = b2MakeOffsetBox( 0.5f, 0.5f, { 0.0f, 0.0f }, b2Rot_identity );
+		m_box = b2MakeBox( 8.984375f, 0.5f );
 
 #if 0
 		{
