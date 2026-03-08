@@ -324,9 +324,6 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			}
 
 			int localIndex = contact->localIndex;
-
-			int movedConstraintIndex = b2RemoveContactConstraint( world, contact );
-
 			b2ContactSim* awakeContactSim = b2ContactSimArray_Get( &color->contactSims, localIndex );
 
 			int sleepContactIndex = sleepSet->contactSims.count;
@@ -334,18 +331,14 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			memcpy( sleepContactSim, awakeContactSim, sizeof( b2ContactSim ) );
 
 			int movedLocalIndex = b2ContactSimArray_RemoveSwap( &color->contactSims, localIndex );
-			(void)movedConstraintIndex;
-			(void)movedLocalIndex;
-			B2_ASSERT( movedConstraintIndex == movedLocalIndex );
-
-			//if ( movedLocalIndex != B2_NULL_INDEX )
-			//{
-			//	// fix moved element
-			//	b2ContactSim* movedContactSim = color->contactSims.data + localIndex;
-			//	b2Contact* movedContact = b2ContactArray_Get( &world->contacts, movedContactSim->contactId );
-			//	B2_ASSERT( movedContact->localIndex == movedLocalIndex );
-			//	movedContact->localIndex = localIndex;
-			//}
+			if ( movedLocalIndex != B2_NULL_INDEX )
+			{
+				// fix moved element
+				b2ContactSim* movedContactSim = color->contactSims.data + localIndex;
+				b2Contact* movedContact = b2ContactArray_Get( &world->contacts, movedContactSim->contactId );
+				B2_ASSERT( movedContact->localIndex == movedLocalIndex );
+				movedContact->localIndex = localIndex;
+			}
 
 			contact->setIndex = sleepSetId;
 			contact->colorIndex = B2_NULL_INDEX;

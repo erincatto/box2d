@@ -19,7 +19,6 @@
 
 B2_ARRAY_SOURCE( b2Contact, b2Contact )
 B2_ARRAY_SOURCE( b2ContactSim, b2ContactSim )
-B2_ARRAY_SOURCE( b2ContactId, b2ContactId )
 
 // Contacts and determinism
 // A deterministic simulation requires contacts to exist in the same order in b2Island no matter the thread count.
@@ -480,7 +479,7 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 	{
 		// contact is an active constraint
 		B2_ASSERT( contact->setIndex == b2_awakeSet );
-		b2RemoveContactFromGraph( world, bodyIdA, bodyIdB, contact );
+		b2RemoveContactFromGraph( world, bodyIdA, bodyIdB, contact->colorIndex, contact->localIndex );
 	}
 	else
 	{

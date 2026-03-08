@@ -1062,7 +1062,7 @@ static inline b2Vec2W b2RotateVectorW( b2RotW q, b2Vec2W v )
 // http://mmacklin.com/smallsteps.pdf
 // https://box2d.org/files/ErinCatto_SoftConstraints_GDC2011.pdf
 
-typedef struct b2ContactConstraintSIMD
+typedef struct b2ContactConstraintWide
 {
 	int indexA[B2_SIMD_WIDTH];
 	int indexB[B2_SIMD_WIDTH];
@@ -1092,11 +1092,11 @@ typedef struct b2ContactConstraintSIMD
 	b2FloatW normalMass2, tangentMass2;
 	b2FloatW restitution;
 	b2FloatW relativeVelocity1, relativeVelocity2;
-} b2ContactConstraintSIMD;
+} b2ContactConstraintWide;
 
 int b2GetContactConstraintSIMDByteCount( void )
 {
-	return sizeof( b2ContactConstraintSIMD );
+	return sizeof( b2ContactConstraintWide );
 }
 
 // wide version of b2BodyState
@@ -1547,7 +1547,7 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 	b2TracyCZoneNC( prepare_contact, "Prepare Contact", b2_colorYellow, true );
 	b2World* world = context->world;
 	b2ContactSim** contacts = context->contacts;
-	b2ContactConstraintWide* constraints = context->simdContactConstraints;
+	b2ContactConstraintWide* constraints = context->wideContactConstraints;
 	b2BodyState* awakeStates = context->states;
 #if B2_ENABLE_VALIDATION
 	b2Body* bodies = world->bodies.data;
@@ -2216,7 +2216,7 @@ void b2StoreImpulsesTask( int startIndex, int endIndex, b2StepContext* context )
 	b2TracyCZoneNC( store_impulses, "Store", b2_colorFireBrick, true );
 
 	b2ContactSim** contacts = context->contacts;
-	const b2ContactConstraintSIMD* constraints = context->simdContactConstraints;
+	const b2ContactConstraintWide* constraints = context->wideContactConstraints;
 
 	b2Manifold dummy = { 0 };
 

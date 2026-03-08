@@ -155,16 +155,8 @@ void* b2GrowAllocZeroInit( void* oldMem, int oldSize, int newSize );
 void b2Log( const char* format, ... );
 
 typedef struct b2Mutex b2Mutex;
-typedef struct b2ReaderWriterMutex b2ReaderWriterMutex;
 
 b2Mutex* b2CreateMutex( void );
 void b2DestroyMutex( b2Mutex* m );
 void b2LockMutex( b2Mutex* m );
 void b2UnlockMutex( b2Mutex* m );
-
-b2ReaderWriterMutex* b2CreateReaderWriterMutex( void );
-void b2DestroyReaderWriterMutex( b2ReaderWriterMutex* m );
-void b2LockRead( b2ReaderWriterMutex* m );
-void b2UnlockRead( b2ReaderWriterMutex* m );
-void b2LockWrite( b2ReaderWriterMutex* m );
-void b2UnlockWrite( b2ReaderWriterMutex* m );

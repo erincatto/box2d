@@ -15,7 +15,6 @@
 #include "constants.h"
 #include "constraint_graph.h"
 #include "contact.h"
-#include "contact_solver.h"
 #include "core.h"
 #include "ctz.h"
 #include "island.h"
@@ -183,7 +182,6 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->contactEndEvents[1] = b2ContactEndTouchEventArray_Create( 4 );
 	world->contactHitEvents = b2ContactHitEventArray_Create( 4 );
 	world->jointEvents = b2JointEventArray_Create( 4 );
-	world->pendingContacts = b2ContactIdArray_Create( 16 );
 	world->endEventArrayIndex = 0;
 
 	world->stepIndex = 0;
@@ -298,7 +296,6 @@ void b2DestroyWorld( b2WorldId worldId )
 	b2ContactEndTouchEventArray_Destroy( world->contactEndEvents + 1 );
 	b2ContactHitEventArray_Destroy( &world->contactHitEvents );
 	b2JointEventArray_Destroy( &world->jointEvents );
-	b2ContactIdArray_Destroy( &world->pendingContacts );
 
 	int chainCapacity = world->chainShapes.count;
 	for ( int i = 0; i < chainCapacity; ++i )
@@ -453,14 +450,19 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 				contactSim->simFlags |= b2_simStoppedTouching;
 				b2SetBit( &taskContext->contactStateBitSet, contactId );
 			}
-			else if ( touching == true && wasTouching == true )
-			{
-				b2Contact* contact = b2ContactArray_Get( &world->contacts, contactSim->contactId );
-				B2_ASSERT( contact->colorIndex != B2_NULL_INDEX );
-				B2_ASSERT( contact->localIndex != B2_NULL_INDEX );
 
-				b2PrepareContactTest( stepContext, contactSim, contact );
-			}
+			// To make this work, the time of impact code needs to adjust the target
+			// distance based on the number of TOI events for a body.
+			// if (touching && bodySimB->isFast)
+			//{
+			//	b2Manifold* manifold = &contactSim->manifold;
+			//	int pointCount = manifold->pointCount;
+			//	for (int i = 0; i < pointCount; ++i)
+			//	{
+			//		// trick the solver into pushing the fast shapes apart
+			//		manifold->points[i].separation -= 0.25f * B2_SPECULATIVE_DISTANCE;
+			//	}
+			//}
 		}
 	}
 
@@ -469,9 +471,11 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 
 static void b2AddNonTouchingContact( b2World* world, b2Contact* contact, b2ContactSim* contactSim )
 {
-	B2_UNUSED( contact );
 	B2_ASSERT( contact->setIndex == b2_awakeSet );
 	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
+	contact->colorIndex = B2_NULL_INDEX;
+	contact->localIndex = set->contactSims.count;
+
 	b2ContactSim* newContactSim = b2ContactSimArray_Add( &set->contactSims );
 	memcpy( newContactSim, contactSim, sizeof( b2ContactSim ) );
 }
@@ -686,16 +690,9 @@ static void b2Collide( b2StepContext* context )
 
 				// Add first for memcpy
 				b2AddNonTouchingContact( world, contact, contactSim );
-
-				// This destroys the contactSim
-				b2RemoveContactFromGraph( world, bodyIdA, bodyIdB, contact );
-				contactSim = NULL;
-				
-				// Fix up reference to contact sim
-				contact->colorIndex = B2_NULL_INDEX;
-				contact->localIndex = awakeSet->contactSims.count - 1;
-
+				b2RemoveContactFromGraph( world, bodyIdA, bodyIdB, colorIndex, localIndex );
 				contact = NULL;
+				contactSim = NULL;
 			}
 
 			// Clear the smallest set bit
@@ -805,9 +802,6 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		world->profile.solve = b2GetMilliseconds( solveTicks );
 	}
 
-	// Clear pending contacts
-	world->pendingContacts.count = 0;
-
 	// Update sensors
 	{
 		uint64_t sensorTicks = b2GetTicks();
@@ -832,7 +826,6 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	b2SensorEndTouchEventArray_Clear( world->sensorEndEvents + world->endEventArrayIndex );
 	b2ContactEndTouchEventArray_Clear( world->contactEndEvents + world->endEventArrayIndex );
 	world->locked = false;
-
 	b2TracyCFrame;
 }
 
@@ -2864,7 +2857,6 @@ void b2ValidateSolverSets( b2World* world )
 		int bitCount = 0;
 
 		B2_ASSERT( color->contactSims.count >= 0 );
-		B2_ASSERT( color->contactSims.count == color->contactCount );
 
 		totalContactCount += color->contactSims.count;
 		for ( int i = 0; i < color->contactSims.count; ++i )
@@ -2915,31 +2907,6 @@ void b2ValidateSolverSets( b2World* world )
 
 				bitCount += bodyA->type == b2_dynamicBody ? 1 : 0;
 				bitCount += bodyB->type == b2_dynamicBody ? 1 : 0;
-			}
-		}
-
-		// Validate persistent constraints
-		if ( colorIndex == B2_OVERFLOW_INDEX )
-		{
-			for ( int i = 0; i < color->contactCount; ++i )
-			{
-				int contactIndex = color->overflowConstraints[i].contactIndex - 1;
-				b2Contact* contact = b2ContactArray_Get( &world->contacts, contactIndex );
-				B2_ASSERT( contact->colorIndex == colorIndex );
-				B2_ASSERT( contact->localIndex == i );
-			}
-		}
-		else
-		{
-			for ( int i = 0; i < color->contactCount; ++i )
-			{
-				int wideIndex = i / B2_SIMD_WIDTH;
-				B2_ASSERT( 0 <= wideIndex && wideIndex < color->wideContactCapacity );
-				int laneIndex = i & ( B2_SIMD_WIDTH - 1 );
-				int contactIndex = color->wideConstraints[wideIndex].contactIndex[laneIndex] - 1;
-				b2Contact* contact = b2ContactArray_Get( &world->contacts, contactIndex );
-				B2_ASSERT( contact->colorIndex == colorIndex );
-				B2_ASSERT( contact->localIndex == i );
 			}
 		}
 

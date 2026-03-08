@@ -189,4 +189,3 @@ B2_ARRAY_DECLARE( b2Visitor, b2Visitor );
 B2_ARRAY_DECLARE( b2SolverSet, b2SolverSet );
 B2_ARRAY_DECLARE( b2TaskContext, b2TaskContext );
 B2_ARRAY_DECLARE( b2SensorHit, b2SensorHit );
-B2_ARRAY_DECLARE( b2ContactId, b2ContactId );

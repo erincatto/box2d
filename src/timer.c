@@ -96,44 +96,6 @@ void b2UnlockMutex( b2Mutex* m )
 	LeaveCriticalSection( &m->cs );
 }
 
-typedef struct b2ReaderWriterMutex
-{
-	SRWLOCK lock;
-} b2ReaderWriterMutex;
-
-b2ReaderWriterMutex* b2CreateReaderWriterMutex( void )
-{
-	b2ReaderWriterMutex* m = b2Alloc( sizeof( b2ReaderWriterMutex ) );
-	InitializeSRWLock( &m->lock );
-	return m;
-}
-
-void b2DestroyReaderWriterMutex( b2ReaderWriterMutex* m )
-{
-	*m = (b2ReaderWriterMutex){ 0 };
-	b2Free( m, sizeof( b2ReaderWriterMutex ) );
-}
-
-void b2LockRead( b2ReaderWriterMutex* m )
-{
-	AcquireSRWLockShared( &m->lock );
-}
-
-void b2UnlockRead( b2ReaderWriterMutex* m )
-{
-	ReleaseSRWLockShared( &m->lock );
-}
-
-void b2LockWrite( b2ReaderWriterMutex* m )
-{
-	AcquireSRWLockExclusive( &m->lock );
-}
-
-void b2UnlockWrite( b2ReaderWriterMutex* m )
-{
-	ReleaseSRWLockExclusive( &m->lock );
-}
-
 #elif defined( __linux__ ) || defined( __EMSCRIPTEN__ )
 
 #include <sched.h>
@@ -193,45 +155,6 @@ void b2LockMutex( b2Mutex* m )
 void b2UnlockMutex( b2Mutex* m )
 {
 	pthread_mutex_unlock( &m->mtx );
-}
-
-typedef struct b2ReaderWriterMutex
-{
-	pthread_rwlock_t rw;
-} b2ReaderWriterMutex;
-
-b2ReaderWriterMutex* b2CreateReaderWriterMutex( void )
-{
-	b2ReaderWriterMutex* m = b2Alloc( sizeof( b2ReaderWriterMutex ) );
-	pthread_rwlock_init( &m->rw, NULL );
-	return m;
-}
-
-void b2DestroyReaderWriterMutex( b2ReaderWriterMutex* m )
-{
-	pthread_rwlock_destroy( &m->rw );
-	*m = (b2ReaderWriterMutex){ 0 };
-	b2Free( m, sizeof( b2ReaderWriterMutex ) );
-}
-
-void b2LockRead( b2ReaderWriterMutex* m )
-{
-	pthread_rwlock_rdlock( &m->rw );
-}
-
-void b2UnlockRead( b2ReaderWriterMutex* m )
-{
-	pthread_rwlock_unlock( &m->rw );
-}
-
-void b2LockWrite( b2ReaderWriterMutex* m )
-{
-	pthread_rwlock_wrlock( &m->rw );
-}
-
-void b2UnlockWrite( b2ReaderWriterMutex* m )
-{
-	pthread_rwlock_unlock( &m->rw );
 }
 
 #elif defined( __APPLE__ )
@@ -314,45 +237,6 @@ void b2UnlockMutex( b2Mutex* m )
 	pthread_mutex_unlock( &m->mtx );
 }
 
-typedef struct b2ReaderWriterMutex
-{
-	pthread_rwlock_t rw;
-} b2ReaderWriterMutex;
-
-b2ReaderWriterMutex* b2CreateReaderWriterMutex( void )
-{
-	b2ReaderWriterMutex* m = b2Alloc( sizeof( b2ReaderWriterMutex ) );
-	pthread_rwlock_init( &m->rw, NULL );
-	return m;
-}
-
-void b2DestroyReaderWriterMutex( b2ReaderWriterMutex* m )
-{
-	pthread_rwlock_destroy( &m->rw );
-	*m = (b2ReaderWriterMutex){ 0 };
-	b2Free( m, sizeof( b2ReaderWriterMutex ) );
-}
-
-void b2LockRead( b2ReaderWriterMutex* m )
-{
-	pthread_rwlock_rdlock( &m->rw );
-}
-
-void b2UnlockRead( b2ReaderWriterMutex* m )
-{
-	pthread_rwlock_unlock( &m->rw );
-}
-
-void b2LockWrite( b2ReaderWriterMutex* m )
-{
-	pthread_rwlock_wrlock( &m->rw );
-}
-
-void b2UnlockWrite( b2ReaderWriterMutex* m )
-{
-	pthread_rwlock_unlock( &m->rw );
-}
-
 #else
 
 // Fallbacks for unknown platforms
@@ -402,44 +286,6 @@ void b2LockMutex( b2Mutex* m )
 }
 
 void b2UnlockMutex( b2Mutex* m )
-{
-	(void)m;
-}
-
-typedef struct b2ReaderWriterMutex
-{
-	int dummy;
-} b2ReaderWriterMutex;
-
-b2ReaderWriterMutex* b2CreateReaderWriterMutex( void )
-{
-	b2ReaderWriterMutex* m = b2Alloc( sizeof( b2ReaderWriterMutex ) );
-	m->dummy = 1;
-	return m;
-}
-
-void b2DestroyReaderWriterMutex( b2ReaderWriterMutex* m )
-{
-	*m = (b2ReaderWriterMutex){ 0 };
-	b2Free( m, sizeof( b2ReaderWriterMutex ) );
-}
-
-void b2LockRead( b2ReaderWriterMutex* m )
-{
-	(void)m;
-}
-
-void b2UnlockRead( b2ReaderWriterMutex* m )
-{
-	(void)m;
-}
-
-void b2LockWrite( b2ReaderWriterMutex* m )
-{
-	(void)m;
-}
-
-void b2UnlockWrite( b2ReaderWriterMutex* m )
 {
 	(void)m;
 }

@@ -120,7 +120,7 @@ typedef struct b2StepContext
 	// to constraint graph colors
 	b2ContactSim** contacts;
 
-	struct b2ContactConstraintWide* simdContactConstraints;
+	struct b2ContactConstraintWide* wideContactConstraints;
 	int activeColorCount;
 	int workerCount;
 
