@@ -52,7 +52,6 @@ typedef struct b2Contact
 	int colorIndex;
 
 	// contact index within set or graph color
-	// this is the persistent constraint index when touching and awake
 	// B2_NULL_INDEX when slot is free
 	int localIndex;
 

@@ -57,7 +57,6 @@ void b2DestroyBroadPhase( b2BroadPhase* bp )
 
 	b2DestroySet( &bp->moveSet );
 	b2IntArray_Destroy( &bp->moveArray );
-
 	b2DestroySet( &bp->pairSet );
 
 	memset( bp, 0, sizeof( b2BroadPhase ) );
