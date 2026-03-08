@@ -636,22 +636,22 @@ typedef struct b2DynamicTree
 	struct b2TreeNode* nodes;
 
 	/// The root index
-	int root;
+	int32_t root;
 
 	/// The number of nodes
-	int nodeCount;
+	int32_t nodeCount;
 
 	/// The allocated node space
-	int nodeCapacity;
+	int32_t nodeCapacity;
 
 	/// Node free list
-	int freeList;
+	int32_t freeList;
 
 	/// Number of proxies created
-	int proxyCount;
+	int32_t proxyCount;
 
 	/// Leaf indices for rebuild
-	int* leafIndices;
+	int32_t* leafIndices;
 
 	/// Leaf bounding boxes for rebuild
 	b2AABB* leafBoxes;
@@ -660,10 +660,10 @@ typedef struct b2DynamicTree
 	b2Vec2* leafCenters;
 
 	/// Bins for sorting during rebuild
-	int* binIndices;
+	int32_t* binIndices;
 
 	/// Allocated space for rebuilding
-	int rebuildCapacity;
+	int32_t rebuildCapacity;
 } b2DynamicTree;
 
 /// These are performance results returned by dynamic tree queries.
