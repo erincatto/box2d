@@ -67,6 +67,26 @@ Box2D is a 2D physics engine for games.
 - cmake --build . --config Release
 - cmake --install . (might need sudo)
 
+## Building with zig
+
+In your project using build.zig:
+
+ - zig fetch --save git+https://github.com/erincatto/box2d
+```zig
+// In your build.zig:
+// link with box2d c headers
+{
+    const box2d = b.dependency("box2d", .{
+        .shared = false,
+    });
+    const box2d_artifact = box2d.artifact("box2d");
+    exe.linkLibrary(box2d_artifact);
+}
+
+// In your zig code:
+const box2d_c = @cImport(@cInclude("box2d/box2d.h"));
+```
+
 ## Compatibility
 The Box2D library and samples build and run on Windows, Linux, and Mac.
 

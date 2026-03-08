@@ -161,4 +161,25 @@ jobs:
       
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release
-      
+
+  zig-matrix:
+    strategy:
+      fail-fast: false
+      matrix:
+        zig: [0.15.1]
+        os: [ubuntu-latest, windows-latest]
+        shared: [false]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup zig
+      uses: mlugg/setup-zig@v2
+      with:
+        version: ${{ matrix.zig }}
+
+    - name: Build lib and unit tests
+      run: zig build -Dshared=${{ matrix.shared }} -Dunit_tests=true
+
+    - name: Test
+      run: ${{github.workspace}}/zig-out/bin/test
