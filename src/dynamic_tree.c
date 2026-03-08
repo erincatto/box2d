@@ -80,6 +80,10 @@ static uint16_t b2MaxUInt16( uint16_t a, uint16_t b )
 b2DynamicTree b2DynamicTree_Create( void )
 {
 	b2DynamicTree tree;
+
+	// memset needed for deterministic serialization
+	memset( &tree, 0, sizeof( b2DynamicTree ) );
+
 	tree.root = B2_NULL_INDEX;
 
 	tree.nodeCapacity = 16;
