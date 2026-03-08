@@ -1346,6 +1346,7 @@ static b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT states, int* 
 {
 	_Static_assert( sizeof( b2BodyState ) == 32, "b2BodyState not 32 bytes" );
 	B2_ASSERT( ( (uintptr_t)states & 0x1F ) == 0 );
+	B2_VALIDATE( indices[0] >= 0 && indices[1] >= 0 && indices[2] >= 0 && indices[3] >= 0 );
 
 	// [vx vy w flags]
 	b2FloatW identityA = b2ZeroW();
@@ -1404,6 +1405,7 @@ static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT i
 {
 	_Static_assert( sizeof( b2BodyState ) == 32, "b2BodyState not 32 bytes" );
 	B2_ASSERT( ( (uintptr_t)states & 0x1F ) == 0 );
+	B2_VALIDATE( indices[0] >= 0 && indices[1] >= 0 && indices[2] >= 0 && indices[3] >= 0 );
 
 	// [vx1 vy1 vx2 vy2]
 	b2FloatW t1 = b2UnpackLoW( simdBody->v.X, simdBody->v.Y );
@@ -1482,6 +1484,8 @@ static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT i
 // This is a load and transpose
 static b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT states, int* B2_RESTRICT indices )
 {
+	B2_VALIDATE( indices[0] >= 0 && indices[1] >= 0 && indices[2] >= 0 && indices[3] >= 0 );
+
 	b2BodyState identity = b2_identityBodyState;
 
 	b2BodyState s1 = indices[0] == B2_NULL_INDEX ? identity : states[indices[0]];
@@ -1505,6 +1509,8 @@ static b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT states, int* 
 // This writes only the velocities back to the solver bodies
 static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT indices, const b2BodyStateW* B2_RESTRICT simdBody )
 {
+	B2_VALIDATE( indices[0] >= 0 && indices[1] >= 0 && indices[2] >= 0 && indices[3] >= 0 );
+
 	if ( indices[0] != B2_NULL_INDEX && ( states[indices[0]].flags & b2_dynamicFlag ) != 0 )
 	{
 		b2BodyState* state = states + indices[0];
@@ -1584,8 +1590,9 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 				B2_ASSERT( indexA == validIndexA );
 				B2_ASSERT( indexB == validIndexB );
 #endif
-				constraint->indexA[j] = indexA;
-				constraint->indexB[j] = indexB;
+				// 0 for null
+				constraint->indexA[j] = indexA + 1;
+				constraint->indexB[j] = indexB + 1;
 
 				b2Vec2 vA = b2Vec2_zero;
 				float wA = 0.0f;
@@ -1743,9 +1750,12 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 			}
 			else
 			{
-				// SIMD remainder
-				constraint->indexA[j] = B2_NULL_INDEX;
-				constraint->indexB[j] = B2_NULL_INDEX;
+				// Wide remainder
+				// todo set to zero with memset
+
+				// Zero for null
+				constraint->indexA[j] = 0;
+				constraint->indexB[j] = 0;
 
 				( (float*)&constraint->invMassA )[j] = 0.0f;
 				( (float*)&constraint->invMassB )[j] = 0.0f;

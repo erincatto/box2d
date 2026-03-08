@@ -17,8 +17,8 @@
 #define TracyCFrameMark
 #endif
 
-#define EXPECTED_SLEEP_STEP 300
-#define EXPECTED_HASH 0xD4F49FD3
+#define EXPECTED_SLEEP_STEP 324
+#define EXPECTED_HASH 0xE5ADB4EB
 
 enum
 {
@@ -101,15 +101,19 @@ static int SingleMultithreadingTest( int workerCount )
 	FallingHingeData data = CreateFallingHinges( worldId );
 
 	float timeStep = 1.0f / 60.0f;
-
-	bool done = false;
-	while ( done == false )
+	int stepLimit = 1000;
+	for ( int i = 0; i < stepLimit; ++i )
 	{
 		int subStepCount = 4;
 		b2World_Step( worldId, timeStep, subStepCount );
 		TracyCFrameMark;
 
-		done = UpdateFallingHinges( worldId, &data );
+		bool done = UpdateFallingHinges( worldId, &data );
+
+		if (done)
+		{
+			break;
+		}
 	}
 
 	b2DestroyWorld( worldId );

@@ -375,8 +375,8 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 	b2Body* bodies = world->bodies.data;
 
 	B2_ASSERT( startIndex < endIndex );
-	float linearSlop = B2_LINEAR_SLOP;
-	float squaredTol = 0.25f * 0.25f * linearSlop * linearSlop;
+	//float linearSlop = B2_LINEAR_SLOP;
+	//float squaredTol = 0.25f * 0.25f * linearSlop * linearSlop;
 
 	for ( int contactIndex = startIndex; contactIndex < endIndex; ++contactIndex )
 	{
@@ -404,8 +404,21 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 			b2Body* bodyB = bodies + shapeB->bodyId;
 			b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
 			b2BodySim* bodySimB = b2GetBodySim( world, bodyB );
+
+			// These may not be skipped by relative transform check below
+			contactSim->bodySimIndexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
+			contactSim->invMassA = bodySimA->invMass;
+			contactSim->invIA = bodySimA->invInertia;
+
+			contactSim->bodySimIndexB = bodyB->setIndex == b2_awakeSet ? bodyB->localIndex : B2_NULL_INDEX;
+			contactSim->invMassB = bodySimB->invMass;
+			contactSim->invIB = bodySimB->invInertia;
+
 			b2Transform xf = b2InvMulTransforms( bodySimA->transform, bodySimB->transform );
 
+#if 0
+			// Experimenting with skipping contact updates.
+			// Initial testing shows some jitter on falling hinges.
 			if (contactSim->simFlags & b2_simRelativeTransformValid)
 			{
 				float distanceSquared = b2DistanceSquared( xf.p, contactSim->relativeTransform.p );
@@ -416,18 +429,10 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 					continue;
 				}
 			}
+#endif
 
 			contactSim->relativeTransform = xf;
 			contactSim->simFlags |= b2_simRelativeTransformValid;
-
-			// avoid cache misses in b2PrepareContactsTask
-			contactSim->bodySimIndexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
-			contactSim->invMassA = bodySimA->invMass;
-			contactSim->invIA = bodySimA->invInertia;
-
-			contactSim->bodySimIndexB = bodyB->setIndex == b2_awakeSet ? bodyB->localIndex : B2_NULL_INDEX;
-			contactSim->invMassB = bodySimB->invMass;
-			contactSim->invIB = bodySimB->invInertia;
 
 			b2Transform transformA = bodySimA->transform;
 			b2Transform transformB = bodySimB->transform;

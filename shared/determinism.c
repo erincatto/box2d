@@ -15,13 +15,13 @@ FallingHingeData CreateFallingHinges( b2WorldId worldId )
 		bodyDef.position = (b2Vec2){ 0.0f, -1.0f };
 		b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
 
-		b2Polygon box = b2MakeBox( 20.0f, 1.0f );
+		b2Polygon box = b2MakeBox( 40.0f, 1.0f );
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		b2CreatePolygonShape( groundId, &shapeDef, &box );
 	}
 
 	int columnCount = 4;
-	int rowCount = 30;
+	int rowCount = 20;
 	int bodyCount = rowCount * columnCount;
 
 	b2BodyId* bodyIds = calloc( bodyCount, sizeof( b2BodyId ) );
@@ -31,30 +31,31 @@ FallingHingeData CreateFallingHinges( b2WorldId worldId )
 	b2Polygon box = b2MakeRoundedBox( h - r, h - r, r );
 
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
-	shapeDef.material.friction = 0.3f;
-
-	float offset = 0.4f * h;
-	float dx = 10.0f * h;
-	float xroot = -0.5f * dx * ( columnCount - 1.0f );
+	//shapeDef.material.friction = 0.3f;
 
 	b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 	jointDef.enableLimit = true;
 	jointDef.lowerAngle = -0.1f * B2_PI;
 	jointDef.upperAngle = 0.2f * B2_PI;
 	jointDef.enableSpring = true;
-	jointDef.hertz = 0.5f;
-	jointDef.dampingRatio = 0.5f;
-	jointDef.base.localFrameA.p = (b2Vec2){ h, h };
-	jointDef.base.localFrameB.p = (b2Vec2){ offset, -h };
+	jointDef.hertz = 1.0f;
+	jointDef.dampingRatio = 1.0f;
+	jointDef.enableMotor = true;
+	jointDef.maxMotorTorque = 0.25f;
+	jointDef.base.localFrameA.p = (b2Vec2){ -h, h };
+	jointDef.base.localFrameB.p = (b2Vec2){ -h, -h };
 	jointDef.base.constraintHertz = 60.0f;
 	jointDef.base.constraintDampingRatio = 0.0f;
 	jointDef.base.drawScale = 0.5f;
 
 	int bodyIndex = 0;
+	float offset = 0.4f * h;
+	float dx = 10.0f * h;
+	float xBase = -0.5f * dx * ( columnCount - 1.0f );
 
 	for ( int j = 0; j < columnCount; ++j )
 	{
-		float x = xroot + j * dx;
+		float x = xBase + j * dx;
 
 		b2BodyId prevBodyId = b2_nullBodyId;
 
@@ -67,7 +68,8 @@ FallingHingeData CreateFallingHinges( b2WorldId worldId )
 			bodyDef.position.y = h + 2.0f * h * i;
 
 			// this tests the deterministic cosine and sine functions
-			bodyDef.rotation = b2MakeRot( 0.1f * i - 1.0f );
+			float angle = ( i & 1 ) == 0 ? -0.1f : 0.1f;
+			bodyDef.rotation = b2MakeRot( angle );
 
 			b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
