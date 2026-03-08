@@ -63,7 +63,6 @@ void b2CreateGraph( b2ConstraintGraph* graph, int bodyCapacity );
 void b2DestroyGraph( b2ConstraintGraph* graph );
 
 void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* contact );
-int b2RemoveContactConstraint( b2World* world, b2Contact* contact );
 void b2RemoveContactFromGraph( b2World* world, int bodyIdA, int bodyIdB, b2Contact* contact );
 
 b2JointSim* b2CreateJointInGraph( b2World* world, b2Joint* joint );

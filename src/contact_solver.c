@@ -21,7 +21,6 @@
 // s(t) = s0 + dot(cB0 - cA0, normal) + dot(dpB - dpA + rot(dqB, rB0) - rot(dqA, rA0), normal)
 // s_base = s0 + dot(cB0 - cA0, normal)
 
-#if 0
 void b2PrepareOverflowContacts( b2StepContext* context )
 {
 	b2TracyCZoneNC( prepare_overflow_contact, "Prepare Overflow Contact", b2_colorYellow, true );
@@ -157,7 +156,6 @@ void b2PrepareOverflowContacts( b2StepContext* context )
 
 	b2TracyCZoneEnd( prepare_overflow_contact );
 }
-#endif
 
 void b2WarmStartOverflowContacts( b2StepContext* context )
 {
@@ -540,6 +538,43 @@ void b2StoreOverflowImpulses( b2StepContext* context )
 
 	b2TracyCZoneEnd( store_impulses );
 }
+
+#if defined( B2_SIMD_AVX2 )
+
+#include <immintrin.h>
+
+// wide float holds 8 numbers
+typedef __m256 b2FloatW;
+
+#elif defined( B2_SIMD_NEON )
+
+#include <arm_neon.h>
+
+// wide float holds 4 numbers
+typedef float32x4_t b2FloatW;
+
+#elif defined( B2_SIMD_SSE2 )
+
+#include <emmintrin.h>
+
+// wide float holds 4 numbers
+typedef __m128 b2FloatW;
+
+#else
+
+// scalar math
+typedef struct b2FloatW
+{
+	float x, y, z, w;
+} b2FloatW;
+
+#endif
+
+// Wide vec2
+typedef struct b2Vec2W
+{
+	b2FloatW X, Y;
+} b2Vec2W;
 
 // Wide rotation
 typedef struct b2RotW
@@ -1027,9 +1062,41 @@ static inline b2Vec2W b2RotateVectorW( b2RotW q, b2Vec2W v )
 // http://mmacklin.com/smallsteps.pdf
 // https://box2d.org/files/ErinCatto_SoftConstraints_GDC2011.pdf
 
+typedef struct b2ContactConstraintSIMD
+{
+	int indexA[B2_SIMD_WIDTH];
+	int indexB[B2_SIMD_WIDTH];
+
+	b2FloatW invMassA, invMassB;
+	b2FloatW invIA, invIB;
+	b2Vec2W normal;
+	b2FloatW friction;
+	b2FloatW tangentSpeed;
+	b2FloatW rollingResistance;
+	b2FloatW rollingMass;
+	b2FloatW rollingImpulse;
+	b2FloatW biasRate;
+	b2FloatW massScale;
+	b2FloatW impulseScale;
+	b2Vec2W anchorA1, anchorB1;
+	b2FloatW normalMass1, tangentMass1;
+	b2FloatW baseSeparation1;
+	b2FloatW normalImpulse1;
+	b2FloatW totalNormalImpulse1;
+	b2FloatW tangentImpulse1;
+	b2Vec2W anchorA2, anchorB2;
+	b2FloatW baseSeparation2;
+	b2FloatW normalImpulse2;
+	b2FloatW totalNormalImpulse2;
+	b2FloatW tangentImpulse2;
+	b2FloatW normalMass2, tangentMass2;
+	b2FloatW restitution;
+	b2FloatW relativeVelocity1, relativeVelocity2;
+} b2ContactConstraintSIMD;
+
 int b2GetContactConstraintSIMDByteCount( void )
 {
-	return sizeof( b2ContactConstraintWide );
+	return sizeof( b2ContactConstraintSIMD );
 }
 
 // wide version of b2BodyState
@@ -1473,7 +1540,8 @@ static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT i
 
 #endif
 
-#if 0
+// Note: Dirk suggested preparing contacts in the narrow phase. I tried this but it made Box2D slower.
+// The contact preparation is extremely fast in Box2D due to the data layout (b2ContactSim).
 void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context )
 {
 	b2TracyCZoneNC( prepare_contact, "Prepare Contact", b2_colorYellow, true );
@@ -1726,7 +1794,6 @@ void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context
 
 	b2TracyCZoneEnd( prepare_contact );
 }
-#endif
 
 void b2WarmStartContactsTask( int startIndex, int endIndex, b2StepContext* context, int colorIndex )
 {
@@ -2144,13 +2211,12 @@ void b2ApplyRestitutionTask( int startIndex, int endIndex, b2StepContext* contex
 	b2TracyCZoneEnd( restitution );
 }
 
-#if 0
 void b2StoreImpulsesTask( int startIndex, int endIndex, b2StepContext* context )
 {
 	b2TracyCZoneNC( store_impulses, "Store", b2_colorFireBrick, true );
 
 	b2ContactSim** contacts = context->contacts;
-	const b2ContactConstraintWide* constraints = context->simdContactConstraints;
+	const b2ContactConstraintSIMD* constraints = context->simdContactConstraints;
 
 	b2Manifold dummy = { 0 };
 
@@ -2187,348 +2253,4 @@ void b2StoreImpulsesTask( int startIndex, int endIndex, b2StepContext* context )
 	}
 
 	b2TracyCZoneEnd( store_impulses );
-}
-#endif
-
-void b2PrepareContact( b2StepContext* context, b2Contact* contact, bool copyImpulses )
-{
-	int colorIndex = contact->colorIndex;
-	int localIndex = contact->localIndex;
-	b2World* world = context->world;
-	b2GraphColor* color = world->constraintGraph.colors + colorIndex;
-	b2ContactSim* contactSim = b2ContactSimArray_Get( &color->contactSims, localIndex );
-	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
-	b2BodyState* states = awakeSet->bodyStates.data;
-
-	contactSim->simFlags;
-
-#if B2_ENABLE_VALIDATION
-	b2Body* bodies = world->bodies.data;
-#endif
-
-	// Stiffer for static contacts to avoid bodies getting pushed through the ground
-	b2Softness contactSoftness = context->contactSoftness;
-	b2Softness staticSoftness = context->staticSoftness;
-
-	float warmStartScale = world->enableWarmStarting ? 1.0f : 0.0f;
-
-	if ( colorIndex == B2_OVERFLOW_INDEX )
-	{
-		const b2Manifold* manifold = &contactSim->manifold;
-		int pointCount = manifold->pointCount;
-
-		B2_ASSERT( 0 < pointCount && pointCount <= 2 );
-
-		int indexA = contactSim->bodySimIndexA;
-		int indexB = contactSim->bodySimIndexB;
-
-#if B2_ENABLE_VALIDATION
-		b2Body* bodyA = bodies + contactSim->bodyIdA;
-		int validIndexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
-		B2_ASSERT( indexA == validIndexA );
-
-		b2Body* bodyB = bodies + contactSim->bodyIdB;
-		int validIndexB = bodyB->setIndex == b2_awakeSet ? bodyB->localIndex : B2_NULL_INDEX;
-		B2_ASSERT( indexB == validIndexB );
-#endif
-
-		B2_ASSERT( 0 <= localIndex && localIndex < color->contactCount );
-
-		b2ContactConstraint* constraint = color->overflowConstraints + localIndex;
-		B2_ASSERT( constraint->contactIndex == contact->contactId + 1 );
-		//constraint->contactIndex = contact->contactId + 1;
-		constraint->indexA = indexA + 1;
-		constraint->indexB = indexB + 1;
-		constraint->normal = manifold->normal;
-		constraint->friction = contactSim->friction;
-		constraint->restitution = contactSim->restitution;
-		constraint->rollingResistance = contactSim->rollingResistance;
-		constraint->tangentSpeed = contactSim->tangentSpeed;
-		constraint->pointCount = pointCount;
-
-		if (copyImpulses)
-		{
-			constraint->rollingImpulse = warmStartScale * manifold->rollingImpulse;
-		}
-
-		b2Vec2 vA = b2Vec2_zero;
-		float wA = 0.0f;
-		float mA = contactSim->invMassA;
-		float iA = contactSim->invIA;
-		if ( indexA != B2_NULL_INDEX )
-		{
-			b2BodyState* stateA = states + indexA;
-			vA = stateA->linearVelocity;
-			wA = stateA->angularVelocity;
-		}
-
-		b2Vec2 vB = b2Vec2_zero;
-		float wB = 0.0f;
-		float mB = contactSim->invMassB;
-		float iB = contactSim->invIB;
-		if ( indexB != B2_NULL_INDEX )
-		{
-			b2BodyState* stateB = states + indexB;
-			vB = stateB->linearVelocity;
-			wB = stateB->angularVelocity;
-		}
-
-		if ( indexA == B2_NULL_INDEX || indexB == B2_NULL_INDEX )
-		{
-			constraint->softness = staticSoftness;
-		}
-		else
-		{
-			constraint->softness = contactSoftness;
-		}
-
-		// copy mass into constraint to avoid cache misses during sub-stepping
-		constraint->invMassA = mA;
-		constraint->invIA = iA;
-		constraint->invMassB = mB;
-		constraint->invIB = iB;
-
-		{
-			float k = iA + iB;
-			constraint->rollingMass = k > 0.0f ? 1.0f / k : 0.0f;
-		}
-
-		b2Vec2 normal = constraint->normal;
-		b2Vec2 tangent = b2RightPerp( constraint->normal );
-
-		for ( int j = 0; j < pointCount; ++j )
-		{
-			const b2ManifoldPoint* mp = manifold->points + j;
-			b2ContactConstraintPoint* cp = constraint->points + j;
-
-			if (copyImpulses)
-			{
-				cp->normalImpulse = warmStartScale * mp->normalImpulse;
-				cp->tangentImpulse = warmStartScale * mp->tangentImpulse;
-			}
-
-			cp->totalNormalImpulse = 0.0f;
-
-			b2Vec2 rA = mp->anchorA;
-			b2Vec2 rB = mp->anchorB;
-
-			cp->anchorA = rA;
-			cp->anchorB = rB;
-			cp->baseSeparation = mp->separation - b2Dot( b2Sub( rB, rA ), normal );
-
-			float rnA = b2Cross( rA, normal );
-			float rnB = b2Cross( rB, normal );
-			float kNormal = mA + mB + iA * rnA * rnA + iB * rnB * rnB;
-			cp->normalMass = kNormal > 0.0f ? 1.0f / kNormal : 0.0f;
-
-			float rtA = b2Cross( rA, tangent );
-			float rtB = b2Cross( rB, tangent );
-			float kTangent = mA + mB + iA * rtA * rtA + iB * rtB * rtB;
-			cp->tangentMass = kTangent > 0.0f ? 1.0f / kTangent : 0.0f;
-
-			// Save relative velocity for restitution
-			b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
-			b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
-			cp->relativeVelocity = b2Dot( normal, b2Sub( vrB, vrA ) );
-		}
-	}
-	else
-	{
-		int wideIndex = localIndex / B2_SIMD_WIDTH;
-		int laneIndex = localIndex & ( B2_SIMD_WIDTH - 1 );
-
-		b2ContactConstraintWide* constraintBase = color->wideConstraints + wideIndex;
-
-		const b2Manifold* manifold = &contactSim->manifold;
-
-		int indexA = contactSim->bodySimIndexA;
-		int indexB = contactSim->bodySimIndexB;
-
-#if B2_ENABLE_VALIDATION
-		b2Body* bodyA = bodies + contactSim->bodyIdA;
-		int validIndexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
-		b2Body* bodyB = bodies + contactSim->bodyIdB;
-		int validIndexB = bodyB->setIndex == b2_awakeSet ? bodyB->localIndex : B2_NULL_INDEX;
-
-		B2_ASSERT( indexA == validIndexA );
-		B2_ASSERT( indexB == validIndexB );
-#endif
-
-		b2Vec2 vA = b2Vec2_zero;
-		float wA = 0.0f;
-		float mA = contactSim->invMassA;
-		float iA = contactSim->invIA;
-		if ( indexA != B2_NULL_INDEX )
-		{
-			b2BodyState* stateA = states + indexA;
-			vA = stateA->linearVelocity;
-			wA = stateA->angularVelocity;
-		}
-
-		b2Vec2 vB = b2Vec2_zero;
-		float wB = 0.0f;
-		float mB = contactSim->invMassB;
-		float iB = contactSim->invIB;
-		if ( indexB != B2_NULL_INDEX )
-		{
-			b2BodyState* stateB = states + indexB;
-			vB = stateB->linearVelocity;
-			wB = stateB->angularVelocity;
-		}
-
-		// Shift to bring lane to the first index
-		b2ContactConstraintWide* c = (b2ContactConstraintWide*)( (float*)constraintBase + laneIndex );
-
-		B2_ASSERT( c->contactIndex[0] == contact->contactId + 1 );
-		//c->contactIndex[0] = contact->contactId + 1;
-		c->indexA[0] = indexA + 1;
-		c->indexB[0] = indexB + 1;
-
-		( (float*)&c->invMassA )[0] = mA;
-		( (float*)&c->invMassB )[0] = mB;
-		( (float*)&c->invIA )[0] = iA;
-		( (float*)&c->invIB )[0] = iB;
-
-		{
-			float k = iA + iB;
-			( (float*)&c->rollingMass )[0] = k > 0.0f ? 1.0f / k : 0.0f;
-		}
-
-		b2Softness soft = contactSoftness;
-		if ( indexA == B2_NULL_INDEX || indexB == B2_NULL_INDEX )
-		{
-			soft = staticSoftness;
-		}
-		else if ( world->enableContactSoftening )
-		{
-			// todo experimental feature
-			float contactHertz = b2MinFloat( world->contactHertz, 0.125f * context->inv_h );
-			float ratio = 1.0f;
-			if ( mA < mB )
-			{
-				ratio = b2MaxFloat( 0.5f, mA / mB );
-			}
-			else if ( mB < mA )
-			{
-				ratio = b2MaxFloat( 0.5f, mB / mA );
-			}
-			soft = b2MakeSoft( ratio * contactHertz, ratio * world->contactDampingRatio, context->h );
-		}
-
-		b2Vec2 normal = manifold->normal;
-		( (float*)&c->normal.X )[0] = normal.x;
-		( (float*)&c->normal.Y )[0] = normal.y;
-		( (float*)&c->friction )[0] = contactSim->friction;
-		( (float*)&c->tangentSpeed )[0] = contactSim->tangentSpeed;
-		( (float*)&c->restitution )[0] = contactSim->restitution;
-		( (float*)&c->rollingResistance )[0] = contactSim->rollingResistance;
-
-		if (copyImpulses)
-		{
-			( (float*)&c->rollingImpulse )[0] = warmStartScale * manifold->rollingImpulse;
-		}
-
-		( (float*)&c->biasRate )[0] = soft.biasRate;
-		( (float*)&c->massScale )[0] = soft.massScale;
-		( (float*)&c->impulseScale )[0] = soft.impulseScale;
-
-		b2Vec2 tangent = b2RightPerp( normal );
-
-		{
-			const b2ManifoldPoint* mp = manifold->points + 0;
-
-			b2Vec2 rA = mp->anchorA;
-			b2Vec2 rB = mp->anchorB;
-
-			( (float*)&c->anchorA1.X )[0] = rA.x;
-			( (float*)&c->anchorA1.Y )[0] = rA.y;
-			( (float*)&c->anchorB1.X )[0] = rB.x;
-			( (float*)&c->anchorB1.Y )[0] = rB.y;
-
-			( (float*)&c->baseSeparation1 )[0] = mp->separation - b2Dot( b2Sub( rB, rA ), normal );
-
-			if (copyImpulses)
-			{
-				( (float*)&c->normalImpulse1 )[0] = warmStartScale * mp->normalImpulse;
-				( (float*)&c->tangentImpulse1 )[0] = warmStartScale * mp->tangentImpulse;
-			}
-
-			( (float*)&c->totalNormalImpulse1 )[0] = 0.0f;
-
-			float rnA = b2Cross( rA, normal );
-			float rnB = b2Cross( rB, normal );
-			float kNormal = mA + mB + iA * rnA * rnA + iB * rnB * rnB;
-			( (float*)&c->normalMass1 )[0] = kNormal > 0.0f ? 1.0f / kNormal : 0.0f;
-
-			float rtA = b2Cross( rA, tangent );
-			float rtB = b2Cross( rB, tangent );
-			float kTangent = mA + mB + iA * rtA * rtA + iB * rtB * rtB;
-			( (float*)&c->tangentMass1 )[0] = kTangent > 0.0f ? 1.0f / kTangent : 0.0f;
-
-			// relative velocity for restitution
-			b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
-			b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
-			( (float*)&c->relativeVelocity1 )[0] = b2Dot( normal, b2Sub( vrB, vrA ) );
-		}
-
-		int pointCount = manifold->pointCount;
-		B2_ASSERT( 0 < pointCount && pointCount <= 2 );
-
-		if ( pointCount == 2 )
-		{
-			const b2ManifoldPoint* mp = manifold->points + 1;
-
-			b2Vec2 rA = mp->anchorA;
-			b2Vec2 rB = mp->anchorB;
-
-			( (float*)&c->anchorA2.X )[0] = rA.x;
-			( (float*)&c->anchorA2.Y )[0] = rA.y;
-			( (float*)&c->anchorB2.X )[0] = rB.x;
-			( (float*)&c->anchorB2.Y )[0] = rB.y;
-
-			( (float*)&c->baseSeparation2 )[0] = mp->separation - b2Dot( b2Sub( rB, rA ), normal );
-
-			if (copyImpulses)
-			{
-				( (float*)&c->normalImpulse2 )[0] = warmStartScale * mp->normalImpulse;
-				( (float*)&c->tangentImpulse2 )[0] = warmStartScale * mp->tangentImpulse;
-			}
-
-			( (float*)&c->totalNormalImpulse2 )[0] = 0.0f;
-
-			float rnA = b2Cross( rA, normal );
-			float rnB = b2Cross( rB, normal );
-			float kNormal = mA + mB + iA * rnA * rnA + iB * rnB * rnB;
-			( (float*)&c->normalMass2 )[0] = kNormal > 0.0f ? 1.0f / kNormal : 0.0f;
-
-			float rtA = b2Cross( rA, tangent );
-			float rtB = b2Cross( rB, tangent );
-			float kTangent = mA + mB + iA * rtA * rtA + iB * rtB * rtB;
-			( (float*)&c->tangentMass2 )[0] = kTangent > 0.0f ? 1.0f / kTangent : 0.0f;
-
-			// relative velocity for restitution
-			b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
-			b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
-			( (float*)&c->relativeVelocity2 )[0] = b2Dot( normal, b2Sub( vrB, vrA ) );
-		}
-	}
-}
-
-void b2PreparePendingContacts( int startIndex, int endIndex, b2StepContext* context )
-{
-	b2World* world = context->world;
-	int clampedEndIndex = b2MinInt( endIndex, world->pendingContacts.count );
-	bool copyImpulses = true;
-
-	for ( int i = startIndex; i < clampedEndIndex; ++i )
-	{
-		b2ContactId id = world->pendingContacts.data[i];
-		b2Contact* contact = world->contacts.data + ( id.index1 - 1 );
-		if ( contact->contactId == B2_NULL_INDEX || contact->generation != id.generation )
-		{
-			continue;
-		}
-
-		b2PrepareContact( context, contact, copyImpulses );
-	}
 }

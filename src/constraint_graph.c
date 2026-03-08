@@ -7,7 +7,6 @@
 #include "bitset.h"
 #include "body.h"
 #include "contact.h"
-#include "contact_solver.h"
 #include "joint.h"
 #include "physics_world.h"
 #include "solver_set.h"
@@ -60,15 +59,6 @@ void b2DestroyGraph( b2ConstraintGraph* graph )
 
 		b2ContactSimArray_Destroy( &color->contactSims );
 		b2JointSimArray_Destroy( &color->jointSims );
-
-		if ( i == B2_OVERFLOW_INDEX )
-		{
-			b2Free( color->overflowConstraints, color->wideContactCapacity * sizeof( b2ContactConstraint ) );
-		}
-		else
-		{
-			b2Free( color->wideConstraints, color->wideContactCapacity * sizeof( b2ContactConstraintWide ) );
-		}
 	}
 }
 
@@ -190,196 +180,14 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 		newContact->invMassB = bodySimB->invMass;
 		newContact->invIB = bodySimB->invInertia;
 	}
-
-	// Allocate a contact constraint
-	if ( colorIndex == B2_OVERFLOW_INDEX )
-	{
-		if ( color->contactCount == color->wideContactCapacity )
-		{
-			int oldCapacity = color->wideContactCapacity;
-			int newCapacity = b2MaxInt( 8, 2 * oldCapacity );
-			int elementSize = (int)sizeof( b2ContactConstraint );
-			color->overflowConstraints =
-				b2GrowAllocZeroInit( color->overflowConstraints, oldCapacity * elementSize, newCapacity * elementSize );
-			color->wideContactCapacity = newCapacity;
-		}
-
-		color->overflowConstraints[color->contactCount].contactIndex = contact->contactId + 1;
-	}
-	else
-	{
-		// Initial space
-		if ( color->wideContactCapacity == 0 )
-		{
-			int capacity = 8;
-			color->wideContactCapacity = capacity;
-			color->wideConstraints = b2AllocZeroInit( 8 * (int)sizeof( b2ContactConstraintWide ) );
-			color->contactCount = 0;
-		}
-
-		// Did the lane roll over to the next wide constraint?
-		if ( color->contactCount > 0 && color->contactCount % B2_SIMD_WIDTH == 0 )
-		{
-			// Grow if needed
-			int capacity = color->wideContactCapacity;
-			if ( color->contactCount == B2_SIMD_WIDTH * capacity )
-			{
-				int newCapacity = b2MaxInt( 8, 2 * capacity );
-				int elementSize = (int)sizeof( b2ContactConstraintWide );
-				color->wideConstraints =
-					b2GrowAllocZeroInit( color->wideConstraints, capacity * elementSize, newCapacity * elementSize );
-				color->wideContactCapacity = newCapacity;
-			}
-		}
-
-		int wideIndex = color->contactCount / B2_SIMD_WIDTH;
-		int laneIndex = color->contactCount & ( B2_SIMD_WIDTH - 1 );
-		B2_VALIDATE( color->wideConstraints[wideIndex].contactIndex[laneIndex] == 0 );
-		color->wideConstraints[wideIndex].contactIndex[laneIndex] = contact->contactId + 1;
-
-#if B2_ENABLE_VALIDATION
-		{
-			int index = 0;
-			for ( int i = 0; i < color->wideContactCapacity; ++i )
-			{
-				b2ContactConstraintWide* c = color->wideConstraints + i;
-				for ( int j = 0; j < B2_SIMD_WIDTH; ++j )
-				{
-					if ( index < color->contactCount + 1 )
-					{
-						B2_VALIDATE( c->contactIndex[j] > 0 );
-					}
-					else
-					{
-						B2_VALIDATE( c->contactIndex[j] == 0 );
-					}
-
-					index += 1;
-				}
-			}
-		}
-#endif
-	}
-
-	b2ContactId id = {
-		.index1 = newContact->contactId + 1,
-		.world0 = world->worldId,
-		.padding = 0,
-		.generation = contact->generation,
-	};
-
-	b2ContactIdArray_Push( &world->pendingContacts, id );
-
-	color->contactCount += 1;
 }
 
-int b2RemoveContactConstraint( b2World* world, b2Contact* contact )
+void b2RemoveContactFromGraph( b2World* world, int bodyIdA, int bodyIdB, int colorIndex, int localIndex )
 {
-	int colorIndex = contact->colorIndex;
-	int localIndex = contact->localIndex;
-	b2GraphColor* color = world->constraintGraph.colors + colorIndex;
-	int constraintIndex = localIndex;
-	B2_ASSERT( 0 <= constraintIndex && constraintIndex < color->contactCount );
-	int result = B2_NULL_INDEX;
+	b2ConstraintGraph* graph = &world->constraintGraph;
 
-	if ( colorIndex == B2_OVERFLOW_INDEX )
-	{
-		int lastConstraintIndex = color->contactCount - 1;
-
-		// If this is not the last constraint, then swap the last constraint into this slot.
-		if ( constraintIndex != lastConstraintIndex )
-		{
-			b2ContactConstraint* source = color->overflowConstraints + lastConstraintIndex;
-			b2ContactConstraint* target = color->overflowConstraints + constraintIndex;
-
-			memcpy( target, source, sizeof( b2ContactConstraint ) );
-
-			source->contactIndex = 0;
-			source->indexA = 0;
-			source->indexB = 0;
-
-			int movedContactIndex = target->contactIndex - 1;
-			b2Contact* movedContact = b2ContactArray_Get( &world->contacts, movedContactIndex );
-			movedContact->localIndex = constraintIndex;
-			result = lastConstraintIndex;
-		}
-	}
-	else
-	{
-		int wideConstraintIndex = constraintIndex / B2_SIMD_WIDTH;
-		int laneIndex = constraintIndex & ( B2_SIMD_WIDTH - 1 );
-
-		int lastWideConstraintIndex = ( color->contactCount - 1 ) / B2_SIMD_WIDTH;
-		int lastLaneIndex = ( color->contactCount - 1 ) & ( B2_SIMD_WIDTH - 1 );
-
-		B2_ASSERT( B2_SIMD_WIDTH * lastWideConstraintIndex + lastLaneIndex == color->contactCount - 1 );
-
-		b2ContactConstraintWide* source = color->wideConstraints + lastWideConstraintIndex;
-		int sourceLane = lastLaneIndex;
-
-		// If this is not the last constraint, then swap the last constraint into this slot.
-		if ( constraintIndex != color->contactCount - 1 )
-		{
-			int targetLane = laneIndex;
-			b2ContactConstraintWide* target = color->wideConstraints + wideConstraintIndex;
-
-			// Copy lane by shifting the constraint start address by lane offset
-			static_assert( sizeof( b2ContactConstraintWide ) % (B2_SIMD_WIDTH * sizeof( float )) == 0 );
-			int floatCount = sizeof( b2ContactConstraintWide ) / (B2_SIMD_WIDTH * sizeof(float));
-			float* restrict sourceFloats = ((float*)source) + sourceLane;
-			float* restrict targetFloats = ((float*)target) + targetLane;
-			for ( int i = 0; i < B2_SIMD_WIDTH * floatCount; i += B2_SIMD_WIDTH )
-			{
-				targetFloats[i] = sourceFloats[i];
-			}
-
-			int movedContactIndex = target->contactIndex[targetLane] - 1;
-			b2Contact* movedContact = b2ContactArray_Get( &world->contacts, movedContactIndex );
-			movedContact->localIndex = constraintIndex;
-			result = color->contactCount - 1;
-		}
-
-		source->contactIndex[sourceLane] = 0;
-		source->indexA[sourceLane] = 0;
-		source->indexB[sourceLane] = 0;
-
-#if B2_ENABLE_VALIDATION
-		{
-			int index = 0;
-			for ( int i = 0; i < color->wideContactCapacity; ++i )
-			{
-				b2ContactConstraintWide* c = color->wideConstraints + i;
-				for ( int j = 0; j < B2_SIMD_WIDTH; ++j )
-				{
-					if ( index < color->contactCount - 1 )
-					{
-						B2_VALIDATE( c->contactIndex[j] > 0 );
-					}
-					else
-					{
-						B2_VALIDATE( c->contactIndex[j] == 0 );
-					}
-
-					index += 1;
-				}
-			}
-		}
-#endif
-	}
-
-	color->contactCount -= 1;
-	return result;
-}
-
-void b2RemoveContactFromGraph( b2World* world, int bodyIdA, int bodyIdB, b2Contact* contact )
-{
-	int colorIndex = contact->colorIndex;
-	int localIndex = contact->localIndex;
 	B2_ASSERT( 0 <= colorIndex && colorIndex < B2_GRAPH_COLOR_COUNT );
-	b2GraphColor* color = world->constraintGraph.colors + colorIndex;
-	B2_ASSERT( color->contactCount > 0 );
-
-	int constraintMovedIndex = b2RemoveContactConstraint( world, contact );
+	b2GraphColor* color = graph->colors + colorIndex;
 
 	if ( colorIndex != B2_OVERFLOW_INDEX )
 	{
@@ -389,11 +197,6 @@ void b2RemoveContactFromGraph( b2World* world, int bodyIdA, int bodyIdB, b2Conta
 	}
 
 	int movedIndex = b2ContactSimArray_RemoveSwap( &color->contactSims, localIndex );
-	(void)movedIndex;
-	(void)constraintMovedIndex;
-	B2_ASSERT( movedIndex == constraintMovedIndex );
-
-#if 0
 	if ( movedIndex != B2_NULL_INDEX )
 	{
 		// Fix index on swapped contact
@@ -407,7 +210,6 @@ void b2RemoveContactFromGraph( b2World* world, int bodyIdA, int bodyIdB, b2Conta
 		B2_ASSERT( movedContact->localIndex == movedIndex );
 		movedContact->localIndex = localIndex;
 	}
-#endif
 }
 
 // Notice that a joint cannot share the same color as a contact between the same two bodies. This means I can solve contacts and

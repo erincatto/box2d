@@ -23,6 +23,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+// these are useful for solver testing
+#define ITERATIONS 1
+#define RELAX_ITERATIONS 1
+
 // Compare to SDL_CPUPauseInstruction
 #if ( defined( __GNUC__ ) || defined( __clang__ ) ) && ( defined( __i386__ ) || defined( __x86_64__ ) )
 static inline void b2Pause( void )
@@ -872,7 +876,7 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 			break;
 
 		case b2_stagePrepareContacts:
-			b2PreparePendingContacts( startIndex, endIndex, context );
+			b2PrepareContactsTask( startIndex, endIndex, context );
 			break;
 
 		case b2_stageIntegrateVelocities:
@@ -927,9 +931,9 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 			}
 			break;
 
-		//case b2_stageStoreImpulses:
-		//	// b2StoreImpulsesTask( startIndex, endIndex, context );
-		//	break;
+		case b2_stageStoreImpulses:
+			b2StoreImpulsesTask( startIndex, endIndex, context );
+			break;
 	}
 }
 
@@ -1100,7 +1104,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 		// Single-threaded overflow work. These constraints don't fit in the graph coloring.
 		// todo these could be prepared in parallel
 		b2PrepareOverflowJoints( context );
-		// b2PrepareOverflowContacts( context );
+		b2PrepareOverflowContacts( context );
 
 		profile->prepareConstraints += b2GetMillisecondsAndReset( &ticks );
 
@@ -1138,6 +1142,8 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 			// solve constraints
 			bool useBias = true;
 
+			for ( int j = 0; j < ITERATIONS; ++j )
+			{
 			// Overflow constraints have lower priority
 			b2SolveOverflowJoints( context, useBias );
 			b2SolveOverflowContacts( context, useBias );
@@ -1150,6 +1156,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 				iterationStageIndex += 1;
 			}
 			graphSyncIndex += 1;
+			}
 
 			profile->solveImpulses += b2GetMillisecondsAndReset( &ticks );
 
@@ -1164,6 +1171,8 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 
 			// relax constraints
 			useBias = false;
+			for ( int j = 0; j < RELAX_ITERATIONS; ++j )
+			{
 			b2SolveOverflowJoints( context, useBias );
 			b2SolveOverflowContacts( context, useBias );
 
@@ -1175,13 +1184,14 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 				iterationStageIndex += 1;
 			}
 			graphSyncIndex += 1;
+			}
 
 			profile->relaxImpulses += b2GetMillisecondsAndReset( &ticks );
 		}
 
 		// advance the stage according to the sub-stepping tasks just completed
 		// integrate velocities / warm start / solve / integrate positions / relax
-		stageIndex += 1 + activeColorCount + activeColorCount + 1 + activeColorCount;
+		stageIndex += 1 + activeColorCount + ITERATIONS * activeColorCount + 1 + RELAX_ITERATIONS * activeColorCount;
 
 		// Restitution
 		{
@@ -1203,16 +1213,16 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 
 		b2StoreOverflowImpulses( context );
 
-		//syncBits = ( contactSyncIndex << 16 ) | stageIndex;
-		//B2_ASSERT( stages[stageIndex].type == b2_stageStoreImpulses );
-		//b2ExecuteMainStage( stages + stageIndex, context, syncBits );
+		syncBits = ( contactSyncIndex << 16 ) | stageIndex;
+		B2_ASSERT( stages[stageIndex].type == b2_stageStoreImpulses );
+		b2ExecuteMainStage( stages + stageIndex, context, syncBits );
 
 		profile->storeImpulses += b2GetMillisecondsAndReset( &ticks );
 
 		// Signal workers to finish
 		b2AtomicStoreU32( &context->atomicSyncBits, UINT_MAX );
 
-		B2_ASSERT( stageIndex == context->stageCount );
+		B2_ASSERT( stageIndex + 1 == context->stageCount );
 		return;
 	}
 
@@ -1471,15 +1481,15 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// Gather joint pointers for easy parallel-for traversal.
 		b2JointSim** joints = b2AllocateArenaItem( &world->arena, awakeJointCount * sizeof( b2JointSim* ), "joint pointers" );
 
-		// int simdConstraintSize = b2GetContactConstraintSIMDByteCount();
-		// b2ContactConstraintWide* simdContactConstraints =
-		//	b2AllocateArenaItem( &world->arena, simdContactCount * simdConstraintSize, "contact constraint" );
+		int simdConstraintSize = b2GetContactConstraintSIMDByteCount();
+		b2ContactConstraintSIMD* simdContactConstraints =
+			b2AllocateArenaItem( &world->arena, simdContactCount * simdConstraintSize, "contact constraint" );
 
-		// int overflowContactCount = colors[B2_OVERFLOW_INDEX].contactSims.count;
-		// b2ContactConstraint* overflowContactConstraints = b2AllocateArenaItem(
-		//	&world->arena, overflowContactCount * sizeof( b2ContactConstraint ), "overflow contact constraint" );
+		int overflowContactCount = colors[B2_OVERFLOW_INDEX].contactSims.count;
+		b2ContactConstraint* overflowContactConstraints = b2AllocateArenaItem(
+			&world->arena, overflowContactCount * sizeof( b2ContactConstraint ), "overflow contact constraint" );
 
-		// graph->colors[B2_OVERFLOW_INDEX].overflowConstraints = overflowContactConstraints;
+		graph->colors[B2_OVERFLOW_INDEX].overflowConstraints = overflowContactConstraints;
 
 		// Distribute transient constraints to each graph color and build flat arrays of contact and joint pointers
 		{
@@ -1494,12 +1504,12 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 				if ( colorContactCount == 0 )
 				{
-					// color->wideConstraints = NULL;
+					color->simdConstraints = NULL;
 				}
 				else
 				{
-					// color->wideConstraints =
-					//	(b2ContactConstraintWide*)( (uint8_t*)simdContactConstraints + contactBase * simdConstraintSize );
+					color->simdConstraints =
+						(b2ContactConstraintSIMD*)( (uint8_t*)simdContactConstraints + contactBase * simdConstraintSize );
 
 					for ( int k = 0; k < colorContactCount; ++k )
 					{

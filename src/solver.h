@@ -33,14 +33,13 @@ typedef enum b2SolverStageType
 	b2_stageIntegratePositions,
 	b2_stageRelax,
 	b2_stageRestitution,
-	//b2_stageStoreImpulses
+	b2_stageStoreImpulses
 } b2SolverStageType;
 
 typedef enum b2SolverBlockType
 {
 	b2_bodyBlock,
 	b2_jointBlock,
-	b2_contactPrepareBlock,
 	b2_contactBlock,
 	b2_graphJointBlock,
 	b2_graphContactBlock
@@ -121,7 +120,7 @@ typedef struct b2StepContext
 	// to constraint graph colors
 	b2ContactSim** contacts;
 
-	//struct b2ContactConstraintWide* simdContactConstraints;
+	struct b2ContactConstraintWide* simdContactConstraints;
 	int activeColorCount;
 	int workerCount;
 

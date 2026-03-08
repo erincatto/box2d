@@ -457,16 +457,15 @@ public:
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.enableHitEvents = true;
-		shapeDef.material.rollingResistance = 0.2f;
-		// shapeDef.material.friction = 0.0f;
+		// shapeDef.rollingResistance = 0.2f;
+		shapeDef.material.friction = 0.0f;
 
 		float y = 0.75f;
 
-		// todo testing
-		for ( int i = 0; i < 9; ++i )
+		for ( int i = 0; i < 10; ++i )
 		{
 			bodyDef.position.y = y;
-			bodyDef.position.x += 0.05f * i;
+
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			shapeDef.userData = reinterpret_cast<void*>( intptr_t( shapeIndex ) );
@@ -480,12 +479,6 @@ public:
 
 	void Step() override
 	{
-		// todo_testing
-		if ( m_stepCount == 118 )
-		{
-			m_stepCount += 1;
-		}
-
 		Sample::Step();
 
 		b2ContactEvents events = b2World_GetContactEvents( m_worldId );

@@ -158,16 +158,10 @@ void CreateManyPyramids( b2WorldId worldId )
 {
 	b2World_EnableSleeping( worldId, false );
 
-	// todo testing
 	 int baseCount = 10;
 	 float extent = 0.5f;
 	 int rowCount = BENCHMARK_DEBUG ? 5 : 20;
 	 int columnCount = BENCHMARK_DEBUG ? 5 : 20;
-
-	//int baseCount = 3;
-	//float extent = 0.5f;
-	//int rowCount = BENCHMARK_DEBUG ? 1 : 20;
-	//int columnCount = BENCHMARK_DEBUG ? 1 : 20;
 
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	b2BodyId groundId = b2CreateBody( worldId, &bodyDef );

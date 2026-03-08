@@ -3215,15 +3215,6 @@ public:
 		e_box
 	};
 
-	/*
-	 *b2ShapeCastPairInput:
-	 *canEncroach: true,
-	 *max fraction: 1.000000,
-	 *proxy A: count: 4, radius: 0.000000 :
-	 *proxy B: count: 2, radius: 0.300000, 
-	 *transformA: pos: (0.000000, 0.000000) rot: 1.000000, 0.000000,
-	 *transformB: pos: (0.000000, 0.000000) rot: 1.000000, 0.000000, TranslationB: (0.000000, 0.183332)
-	 */
 	explicit ShapeCast( SampleContext* context )
 		: Sample( context )
 	{

@@ -109,10 +109,6 @@ typedef struct b2World
 	b2ContactHitEventArray contactHitEvents;
 	b2JointEventArray jointEvents;
 
-	// These are contacts that need to be prepared. This includes
-	// all touching contacts that 
-	b2ContactIdArray pendingContacts;
-
 	// todo consider deferred waking and impulses to make it possible
 	// to apply forces and impulses from multiple threads
 	// impulses must be deferred because sleeping bodies have no velocity state
@@ -166,7 +162,6 @@ typedef struct b2World
 	b2FinishTaskCallback* finishTaskFcn;
 	void* userTaskContext;
 	void* userTreeTask;
-	//void* userPendingPairTask;
 
 	void* userData;
 
