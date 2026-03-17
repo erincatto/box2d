@@ -29,7 +29,8 @@ FallingHingeData CreateFallingHinges( b2WorldId worldId )
 	float h = 0.25f;
 	float r = 0.1f * h;
 	b2Polygon box = b2MakeRoundedBox( h - r, h - r, r );
-
+	box = b2MakeSquare(h);
+	
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
 	//shapeDef.material.friction = 0.3f;
 

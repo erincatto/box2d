@@ -375,8 +375,8 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 	b2Body* bodies = world->bodies.data;
 
 	B2_ASSERT( startIndex < endIndex );
-	//float linearSlop = B2_LINEAR_SLOP;
-	//float squaredTol = 0.25f * 0.25f * linearSlop * linearSlop;
+	//
+//	float tolSqr = tol * tol;
 
 	for ( int contactIndex = startIndex; contactIndex < endIndex; ++contactIndex )
 	{
@@ -416,17 +416,45 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 
 			b2Transform xf = b2InvMulTransforms( bodySimA->transform, bodySimB->transform );
 
-#if 0
+#if 1
 			// Experimenting with skipping contact updates.
 			// Initial testing shows some jitter on falling hinges.
 			if (contactSim->simFlags & b2_simRelativeTransformValid)
 			{
-				float distanceSquared = b2DistanceSquared( xf.p, contactSim->relativeTransform.p );
+				float maxExtentA = bodyA->type == b2_staticBody ? 0.0f : bodySimA->maxExtent;
+				float maxExtentB = bodyB->type == b2_staticBody ? 0.0f : bodySimB->maxExtent;
+				float maxExtent = b2MaxFloat(maxExtentA, maxExtentB);
+				float distance = b2Distance( xf.p, contactSim->relativeTransform.p );
 				b2Rot qr = b2InvMulRot( xf.q, contactSim->relativeTransform.q );
-				if ( distanceSquared < squaredTol && qr.c > 0.999f )
+				float tol = 0.25f * B2_LINEAR_SLOP;
+//				if ( distance + b2AbsFloat(qr.s) * maxExtent < tolSqr && b2AbsFloat(qr.c) > 0.999f )
+				if ( distance + maxExtent * b2AbsFloat(qr.s) < tol )
 				{
+					b2Rot dqA = b2MulRot(bodySimA->transform.q, b2InvertRot(bodySimA->rotation0));
+					b2Rot dqB = b2MulRot(bodySimB->transform.q, b2InvertRot(bodySimB->rotation0));
+			
+					for (int i = 0; i < contactSim->manifold.pointCount; ++i)
+					{
+						b2ManifoldPoint* mp = contactSim->manifold.points + i;
+						b2Vec2 anchorA = b2RotateVector(dqA, mp->anchorA);
+						b2Vec2 anchorB = b2RotateVector(dqB, mp->anchorB);
+						b2Vec2 pA1 = b2Add(bodySimA->center0, mp->anchorA);
+						b2Vec2 pB1 = b2Add(bodySimB->center0, mp->anchorB);
+						float s1 = b2Dot(b2Sub(pB1, pA1), contactSim->manifold.normal);
+						b2Vec2 pA2 = b2Add(bodySimA->center, anchorA);
+						b2Vec2 pB2 = b2Add(bodySimB->center, anchorB);
+						float s2 = b2Dot(b2Sub(pB2, pA2), contactSim->manifold.normal);
+						mp->separation += s2 - s1;
+						mp->anchorA = anchorA;
+						mp->anchorB = anchorB;
+					}
+					
 					// not much relative movement
 					continue;
+				}
+				else
+				{
+					xf.p.x += 0;
 				}
 			}
 #endif
