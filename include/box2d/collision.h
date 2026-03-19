@@ -567,10 +567,6 @@ typedef struct b2Manifold
 	/// The manifold points, up to two are possible in 2D
 	b2ManifoldPoint points[2];
 
-	b2Plane localPlane;
-	b2Vec2 localPoints[2];
-
-
 	/// The number of contacts points, will be 0, 1, or 2
 	int pointCount;
 

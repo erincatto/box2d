@@ -66,8 +66,10 @@ void b2PrepareOverflowContacts( b2StepContext* context )
 #endif
 
 		b2ContactConstraint* constraint = constraints + i;
-		constraint->indexA = indexA;
-		constraint->indexB = indexB;
+
+		// 0 is null
+		constraint->indexA = indexA + 1;
+		constraint->indexB = indexB + 1;
 		constraint->normal = manifold->normal;
 		constraint->friction = contactSim->friction;
 		constraint->restitution = contactSim->restitution;
@@ -1360,14 +1362,14 @@ static b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT states, int* 
 	int i3 = indices[2] - 1;
 	int i4 = indices[3] - 1;
 
-	b2FloatW b1a = i1 == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + i1) + 0 );
-	b2FloatW b1b = i1 == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + i1) + 4 );
-	b2FloatW b2a = i2 == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + i2) + 0 );
-	b2FloatW b2b = i2 == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + i2) + 4 );
-	b2FloatW b3a = i3 == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + i3) + 0 );
-	b2FloatW b3b = i3 == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + i3) + 4 );
-	b2FloatW b4a = i4 == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + i4) + 0 );
-	b2FloatW b4b = i4 == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + i4) + 4 );
+	b2FloatW b1a = i1 == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + i1 ) + 0 );
+	b2FloatW b1b = i1 == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + i1 ) + 4 );
+	b2FloatW b2a = i2 == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + i2 ) + 0 );
+	b2FloatW b2b = i2 == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + i2 ) + 4 );
+	b2FloatW b3a = i3 == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + i3 ) + 0 );
+	b2FloatW b3b = i3 == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + i3 ) + 4 );
+	b2FloatW b4a = i4 == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + i4 ) + 0 );
+	b2FloatW b4b = i4 == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + i4 ) + 4 );
 
 	// [vx1 vx3 vy1 vy3]
 	b2FloatW t1a = b2UnpackLoW( b1a, b3a );
@@ -1488,10 +1490,16 @@ static b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT states, int* 
 
 	b2BodyState identity = b2_identityBodyState;
 
-	b2BodyState s1 = indices[0] == B2_NULL_INDEX ? identity : states[indices[0]];
-	b2BodyState s2 = indices[1] == B2_NULL_INDEX ? identity : states[indices[1]];
-	b2BodyState s3 = indices[2] == B2_NULL_INDEX ? identity : states[indices[2]];
-	b2BodyState s4 = indices[3] == B2_NULL_INDEX ? identity : states[indices[3]];
+	// zero means null
+	int i1 = indices[0] - 1;
+	int i2 = indices[1] - 1;
+	int i3 = indices[2] - 1;
+	int i4 = indices[3] - 1;
+
+	b2BodyState s1 = i1 == B2_NULL_INDEX ? identity : states[i1];
+	b2BodyState s2 = i2 == B2_NULL_INDEX ? identity : states[i2];
+	b2BodyState s3 = i3 == B2_NULL_INDEX ? identity : states[i3];
+	b2BodyState s4 = i4 == B2_NULL_INDEX ? identity : states[i4];
 
 	b2BodyStateW simdBody;
 	simdBody.v.X = (b2FloatW){ s1.linearVelocity.x, s2.linearVelocity.x, s3.linearVelocity.x, s4.linearVelocity.x };
@@ -1511,33 +1519,39 @@ static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT i
 {
 	B2_VALIDATE( indices[0] >= 0 && indices[1] >= 0 && indices[2] >= 0 && indices[3] >= 0 );
 
-	if ( indices[0] != B2_NULL_INDEX && ( states[indices[0]].flags & b2_dynamicFlag ) != 0 )
+	// zero means null
+	int i1 = indices[0] - 1;
+	int i2 = indices[1] - 1;
+	int i3 = indices[2] - 1;
+	int i4 = indices[3] - 1;
+
+	if ( i1 != B2_NULL_INDEX && ( states[i1].flags & b2_dynamicFlag ) != 0 )
 	{
-		b2BodyState* state = states + indices[0];
+		b2BodyState* state = states + i1;
 		state->linearVelocity.x = simdBody->v.X.x;
 		state->linearVelocity.y = simdBody->v.Y.x;
 		state->angularVelocity = simdBody->w.x;
 	}
 
-	if ( indices[1] != B2_NULL_INDEX && ( states[indices[1]].flags & b2_dynamicFlag ) != 0 )
+	if ( i2 != B2_NULL_INDEX && ( states[i2].flags & b2_dynamicFlag ) != 0 )
 	{
-		b2BodyState* state = states + indices[1];
+		b2BodyState* state = states + i2;
 		state->linearVelocity.x = simdBody->v.X.y;
 		state->linearVelocity.y = simdBody->v.Y.y;
 		state->angularVelocity = simdBody->w.y;
 	}
 
-	if ( indices[2] != B2_NULL_INDEX && ( states[indices[2]].flags & b2_dynamicFlag ) != 0 )
+	if ( i3 != B2_NULL_INDEX && ( states[i3].flags & b2_dynamicFlag ) != 0 )
 	{
-		b2BodyState* state = states + indices[2];
+		b2BodyState* state = states + i3;
 		state->linearVelocity.x = simdBody->v.X.z;
 		state->linearVelocity.y = simdBody->v.Y.z;
 		state->angularVelocity = simdBody->w.z;
 	}
 
-	if ( indices[3] != B2_NULL_INDEX && ( states[indices[3]].flags & b2_dynamicFlag ) != 0 )
+	if ( i4 != B2_NULL_INDEX && ( states[i4].flags & b2_dynamicFlag ) != 0 )
 	{
-		b2BodyState* state = states + indices[3];
+		b2BodyState* state = states + i4;
 		state->linearVelocity.x = simdBody->v.X.w;
 		state->linearVelocity.y = simdBody->v.Y.w;
 		state->angularVelocity = simdBody->w.w;

@@ -446,7 +446,7 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 						mp->persisted = true;
 					}
 
-					// not much relative movement
+					// Contact is recycled
 					continue;
 				}
 			}
