@@ -3,11 +3,11 @@
 
 #pragma once
 
-extern float b2_lengthUnitsPerMeter;
+#include "box2d/math_functions.h"
 
 // Used to detect bad values. Positions greater than about 16km will have precision
 // problems, so 100km as a limit should be fine in all cases.
-#define B2_HUGE ( 100000.0f * b2_lengthUnitsPerMeter )
+#define B2_HUGE ( 100000.0f * b2GetLengthUnitsPerMeter() )
 
 // Maximum parallel workers. Used to size some static arrays.
 #define B2_MAX_WORKERS 64
@@ -21,7 +21,7 @@ extern float b2_lengthUnitsPerMeter;
 // chosen to be numerically significant, but visually insignificant. In meters.
 // Normally this is 0.5cm.
 // @warning modifying this can have a significant impact on stability
-#define B2_LINEAR_SLOP ( 0.005f * b2_lengthUnitsPerMeter )
+#define B2_LINEAR_SLOP ( 0.005f * b2GetLengthUnitsPerMeter() )
 
 // Maximum number of simultaneous worlds that can be allocated
 #ifndef B2_MAX_WORLDS
@@ -42,14 +42,7 @@ extern float b2_lengthUnitsPerMeter;
 // to move by a small amount without triggering a tree adjustment. This is in meters.
 // Normally this is 5cm.
 // @warning modifying this can have a significant impact on performance
-#define B2_AABB_MARGIN ( 0.05f * b2_lengthUnitsPerMeter )
+#define B2_AABB_MARGIN ( 0.05f * b2GetLengthUnitsPerMeter() )
 
 // The time that a body must be still before it will go to sleep. In seconds.
 #define B2_TIME_TO_SLEEP 0.5f
-
-enum b2TreeNodeFlags
-{
-	b2_allocatedNode = 0x0001,
-	b2_enlargedNode = 0x0002,
-	b2_leafNode = 0x0004,
-};

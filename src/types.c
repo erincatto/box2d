@@ -3,22 +3,26 @@
 
 #include "box2d/types.h"
 
-#include "constants.h"
 #include "core.h"
+
+#include "box2d/constants.h"
 
 b2WorldDef b2DefaultWorldDef( void )
 {
+	float lengthUnits = b2GetLengthUnitsPerMeter();
 	b2WorldDef def = { 0 };
 	def.gravity.x = 0.0f;
 	def.gravity.y = -10.0f;
-	def.hitEventThreshold = 1.0f * b2_lengthUnitsPerMeter;
-	def.restitutionThreshold = 1.0f * b2_lengthUnitsPerMeter;
-	def.contactSpeed = 3.0f * b2_lengthUnitsPerMeter;
+	def.hitEventThreshold = 1.0f * lengthUnits;
+	def.restitutionThreshold = 1.0f * lengthUnits;
+	def.contactSpeed = 3.0f * lengthUnits;
 	def.contactHertz = 30.0;
 	def.contactDampingRatio = 10.0f;
 
 	// 400 meters per second, faster than the speed of sound
-	def.maximumLinearSpeed = 400.0f * b2_lengthUnitsPerMeter;
+	def.maximumLinearSpeed = 400.0f * lengthUnits;
+
+	def.contactRecycleDistance = 10.0f * B2_LINEAR_SLOP;
 
 	def.enableSleep = true;
 	def.enableContinuous = true;
@@ -31,7 +35,7 @@ b2BodyDef b2DefaultBodyDef( void )
 	b2BodyDef def = { 0 };
 	def.type = b2_staticBody;
 	def.rotation = b2Rot_identity;
-	def.sleepThreshold = 0.05f * b2_lengthUnitsPerMeter;
+	def.sleepThreshold = 0.05f * b2GetLengthUnitsPerMeter();
 	def.gravityScale = 1.0f;
 	def.enableSleep = true;
 	def.isAwake = true;
@@ -153,6 +157,6 @@ b2DebugDraw b2DefaultDebugDraw( void )
 	draw.forceScale = 1.0f;
 	draw.jointScale = 1.0f;
 	draw.drawShapes = true;
-	
+
 	return draw;
 }

@@ -5,7 +5,7 @@
 
 #include "array.h"
 #include "bitset.h"
-#include "constants.h"
+#include "box2d/constants.h"
 
 #include "box2d/types.h"
 

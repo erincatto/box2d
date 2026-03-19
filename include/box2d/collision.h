@@ -521,6 +521,7 @@ typedef struct b2ManifoldPoint
 
 	/// The separation of the contact point, negative if penetrating
 	float separation;
+	float baseSeparation;
 
 	/// The impulse along the manifold normal vector.
 	float normalImpulse;
@@ -545,6 +546,14 @@ typedef struct b2ManifoldPoint
 	bool persisted;
 } b2ManifoldPoint;
 
+typedef enum b2ManifoldType
+{
+	b2_unknownManifoldType = 0,
+	b2_vertexManifoldType = 1,
+	b2_faceAManifoldType = 2,
+	b2_faceBManifoldType = 3,
+} b2ManifoldType;
+
 /// A contact manifold describes the contact points between colliding shapes.
 /// @note Box2D uses speculative collision so some contact points may be separated.
 typedef struct b2Manifold
@@ -557,6 +566,10 @@ typedef struct b2Manifold
 
 	/// The manifold points, up to two are possible in 2D
 	b2ManifoldPoint points[2];
+
+	b2Plane localPlane;
+	b2Vec2 localPoints[2];
+
 
 	/// The number of contacts points, will be 0, 1, or 2
 	int pointCount;

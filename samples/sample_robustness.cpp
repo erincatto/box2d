@@ -358,6 +358,8 @@ public:
 				}
 			}
 		}
+
+		b2World_SetContactRecycleDistance( m_worldId, 0.0f );
 	}
 
 	void Step() override

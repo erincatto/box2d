@@ -1754,7 +1754,7 @@ void b2Shape_ApplyWind( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, 
 	b2BodyState* state = b2GetBodyState( world, body );
 	b2Transform transform = sim->transform;
 
-	float lengthUnits = b2_lengthUnitsPerMeter;
+	float lengthUnits = b2GetLengthUnitsPerMeter();
 	float volumeUnits = lengthUnits * lengthUnits * lengthUnits;
 
 	// In 2D I'm assuming unit depth

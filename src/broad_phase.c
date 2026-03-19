@@ -436,7 +436,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	// todo these could be in the step context
 	bp->moveResults = b2AllocateArenaItem( alloc, moveCount * sizeof( b2MoveResult ), "move results" );
-	bp->movePairCapacity = 16 * moveCount;
+	bp->movePairCapacity = 32 * moveCount;
 	bp->movePairs = b2AllocateArenaItem( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
 	b2AtomicStoreInt( &bp->movePairIndex, 0 );
 

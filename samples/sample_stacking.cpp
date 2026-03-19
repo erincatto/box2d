@@ -459,10 +459,11 @@ public:
 		shapeDef.enableHitEvents = true;
 		// shapeDef.rollingResistance = 0.2f;
 		shapeDef.material.friction = 0.0f;
+		shapeDef.material.restitution = 0.8f;
 
 		float y = 0.75f;
 
-		for ( int i = 0; i < 10; ++i )
+		for ( int i = 0; i < 4; ++i )
 		{
 			bodyDef.position.y = y;
 

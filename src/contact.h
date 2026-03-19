@@ -105,7 +105,8 @@ typedef struct b2ContactSim
 {
 	int contactId;
 
-	b2Transform relativeTransform;
+	b2Transform cachedTransformA;
+	b2Transform cachedTransformB;
 
 #if B2_ENABLE_VALIDATION
 	int bodyIdA;

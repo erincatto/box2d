@@ -14,7 +14,6 @@ set(BOX2D_SOURCE_FILES
 	body.h
 	broad_phase.c
 	broad_phase.h
-	constants.h
 	constraint_graph.c
 	constraint_graph.h
 	contact.c
@@ -63,6 +62,7 @@ set(BOX2D_API_FILES
 	../include/box2d/base.h
 	../include/box2d/box2d.h
 	../include/box2d/collision.h
+	../include/box2d/constants.h
 	../include/box2d/id.h
 	../include/box2d/math_functions.h
 	../include/box2d/types.h

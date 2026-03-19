@@ -1,12 +1,11 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
-#include "constants.h"
-#include "core.h"
 #include "test_macros.h"
 
 #include "box2d/box2d.h"
 #include "box2d/collision.h"
+#include "box2d/constants.h"
 #include "box2d/math_functions.h"
 
 #include <stdio.h>
@@ -20,14 +19,14 @@ int HelloWorld( void )
 {
 	// Construct a world object, which will hold and simulate the rigid bodies.
 	b2WorldDef worldDef = b2DefaultWorldDef();
-	worldDef.gravity = ( b2Vec2 ){ 0.0f, -10.0f };
+	worldDef.gravity = (b2Vec2){ 0.0f, -10.0f };
 
 	b2WorldId worldId = b2CreateWorld( &worldDef );
 	ENSURE( b2World_IsValid( worldId ) );
 
 	// Define the ground body.
 	b2BodyDef groundBodyDef = b2DefaultBodyDef();
-	groundBodyDef.position = ( b2Vec2 ){ 0.0f, -10.0f };
+	groundBodyDef.position = (b2Vec2){ 0.0f, -10.0f };
 
 	// Call the body factory which allocates memory for the ground body
 	// from a pool and creates the ground box shape (also from a pool).
@@ -45,7 +44,7 @@ int HelloWorld( void )
 	// Define the dynamic body. We set its position and call the body factory.
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_dynamicBody;
-	bodyDef.position = ( b2Vec2 ){ 0.0f, 4.0f };
+	bodyDef.position = (b2Vec2){ 0.0f, 4.0f };
 
 	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
@@ -366,7 +365,7 @@ static int TestSensor( void )
 		b2World_Step( worldId, timeStep, subStepCount );
 
 		b2Vec2 bulletPos = b2Body_GetPosition( bulletId );
-		//printf( "Bullet pos: %g %g\n", bulletPos.x, bulletPos.y );
+		// printf( "Bullet pos: %g %g\n", bulletPos.x, bulletPos.y );
 
 		b2SensorEvents events = b2World_GetSensorEvents( worldId );
 

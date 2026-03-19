@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: MIT
 
 #include "aabb.h"
-#include "constants.h"
 #include "core.h"
 
 #include "box2d/collision.h"
+#include "box2d/constants.h"
 #include "box2d/math_functions.h"
 
 #include <float.h>
@@ -13,9 +13,15 @@
 
 #define B2_TREE_STACK_SIZE 1024
 
-// todo externalize this to visualize internal nodes and speed up FindPairs
+enum b2TreeNodeFlags
+{
+	b2_allocatedNode = 0x0001,
+	b2_enlargedNode = 0x0002,
+	b2_leafNode = 0x0004,
+};
 
 // A node in the dynamic tree.
+// todo externalize this to visualize internal nodes and speed up FindPairs
 typedef struct b2TreeNode
 {
 	// The node bounding box

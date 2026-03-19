@@ -12,7 +12,6 @@
 #include "bitset.h"
 #include "body.h"
 #include "broad_phase.h"
-#include "constants.h"
 #include "constraint_graph.h"
 #include "contact.h"
 #include "core.h"
@@ -25,6 +24,7 @@
 #include "solver_set.h"
 
 #include "box2d/box2d.h"
+#include "box2d/constants.h"
 
 #include <float.h>
 #include <stdio.h>
@@ -195,6 +195,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->contactSpeed = def->contactSpeed;
 	world->contactHertz = def->contactHertz;
 	world->contactDampingRatio = def->contactDampingRatio;
+	world->contactRecycleDistance = def->contactRecycleDistance;
 
 	if ( def->frictionCallback == NULL )
 	{
@@ -375,8 +376,8 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 	b2Body* bodies = world->bodies.data;
 
 	B2_ASSERT( startIndex < endIndex );
-	//
-//	float tolSqr = tol * tol;
+
+	float recycleDistance = world->contactRecycleDistance;
 
 	for ( int contactIndex = startIndex; contactIndex < endIndex; ++contactIndex )
 	{
@@ -404,6 +405,8 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 			b2Body* bodyB = bodies + shapeB->bodyId;
 			b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
 			b2BodySim* bodySimB = b2GetBodySim( world, bodyB );
+			b2Transform transformA = bodySimA->transform;
+			b2Transform transformB = bodySimB->transform;
 
 			// These may not be skipped by relative transform check below
 			contactSim->bodySimIndexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
@@ -414,56 +417,43 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 			contactSim->invMassB = bodySimB->invMass;
 			contactSim->invIB = bodySimB->invInertia;
 
-			b2Transform xf = b2InvMulTransforms( bodySimA->transform, bodySimB->transform );
-
-#if 1
-			// Experimenting with skipping contact updates.
-			// Initial testing shows some jitter on falling hinges.
-			if (contactSim->simFlags & b2_simRelativeTransformValid)
+			// Contact recycling optimization
+			if ( recycleDistance > 0.0f && contactSim->simFlags & b2_simRelativeTransformValid )
 			{
+				b2Transform xf = b2InvMulTransforms( transformA, transformB );
+				b2Transform xfc = b2InvMulTransforms( contactSim->cachedTransformA, contactSim->cachedTransformB );
 				float maxExtentA = bodyA->type == b2_staticBody ? 0.0f : bodySimA->maxExtent;
 				float maxExtentB = bodyB->type == b2_staticBody ? 0.0f : bodySimB->maxExtent;
-				float maxExtent = b2MaxFloat(maxExtentA, maxExtentB);
-				float distance = b2Distance( xf.p, contactSim->relativeTransform.p );
-				b2Rot qr = b2InvMulRot( xf.q, contactSim->relativeTransform.q );
-				float tol = 0.25f * B2_LINEAR_SLOP;
-//				if ( distance + b2AbsFloat(qr.s) * maxExtent < tolSqr && b2AbsFloat(qr.c) > 0.999f )
-				if ( distance + maxExtent * b2AbsFloat(qr.s) < tol )
+				float maxExtent = b2MaxFloat( maxExtentA, maxExtentB );
+				float distance = b2Distance( xf.p, xfc.p );
+				b2Rot qr = b2InvMulRot( xf.q, xfc.q );
+				if ( distance + maxExtent * b2AbsFloat( qr.s ) < recycleDistance )
 				{
-					b2Rot dqA = b2MulRot(bodySimA->transform.q, b2InvertRot(bodySimA->rotation0));
-					b2Rot dqB = b2MulRot(bodySimB->transform.q, b2InvertRot(bodySimB->rotation0));
-			
-					for (int i = 0; i < contactSim->manifold.pointCount; ++i)
+					b2Rot dqA = b2MulRot( transformA.q, b2InvertRot( contactSim->cachedTransformA.q ) );
+					b2Rot dqB = b2MulRot( transformB.q, b2InvertRot( contactSim->cachedTransformB.q ) );
+					b2Vec2 normal = contactSim->manifold.normal;
+
+					for ( int i = 0; i < contactSim->manifold.pointCount; ++i )
 					{
+						// Keep anchors but update separation, same as sub-stepping. This eliminates jitter.
 						b2ManifoldPoint* mp = contactSim->manifold.points + i;
-						b2Vec2 anchorA = b2RotateVector(dqA, mp->anchorA);
-						b2Vec2 anchorB = b2RotateVector(dqB, mp->anchorB);
-						b2Vec2 pA1 = b2Add(bodySimA->center0, mp->anchorA);
-						b2Vec2 pB1 = b2Add(bodySimB->center0, mp->anchorB);
-						float s1 = b2Dot(b2Sub(pB1, pA1), contactSim->manifold.normal);
-						b2Vec2 pA2 = b2Add(bodySimA->center, anchorA);
-						b2Vec2 pB2 = b2Add(bodySimB->center, anchorB);
-						float s2 = b2Dot(b2Sub(pB2, pA2), contactSim->manifold.normal);
-						mp->separation += s2 - s1;
-						mp->anchorA = anchorA;
-						mp->anchorB = anchorB;
+						b2Vec2 rA = b2RotateVector( dqA, mp->anchorA );
+						b2Vec2 rB = b2RotateVector( dqB, mp->anchorB );
+						b2Vec2 pA = b2Add( bodySimA->center, rA );
+						b2Vec2 pB = b2Add( bodySimB->center, rB );
+						b2Vec2 dp = b2Sub( pB, pA );
+						mp->separation = mp->baseSeparation + b2Dot( dp, normal );
+						mp->persisted = true;
 					}
-					
+
 					// not much relative movement
 					continue;
 				}
-				else
-				{
-					xf.p.x += 0;
-				}
 			}
-#endif
 
-			contactSim->relativeTransform = xf;
 			contactSim->simFlags |= b2_simRelativeTransformValid;
-
-			b2Transform transformA = bodySimA->transform;
-			b2Transform transformB = bodySimB->transform;
+			contactSim->cachedTransformA = transformA;
+			contactSim->cachedTransformB = transformB;
 
 			b2Vec2 centerOffsetA = b2RotateVector( transformA.q, bodySimA->localCenter );
 			b2Vec2 centerOffsetB = b2RotateVector( transformB.q, bodySimB->localCenter );
@@ -482,6 +472,12 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 			{
 				contactSim->simFlags |= b2_simStoppedTouching;
 				b2SetBit( &taskContext->contactStateBitSet, contactId );
+			}
+
+			for ( int i = 0; i < contactSim->manifold.pointCount; ++i )
+			{
+				b2ManifoldPoint* mp = contactSim->manifold.points + i;
+				mp->baseSeparation = mp->separation;
 			}
 
 			// To make this work, the time of impact code needs to adjust the target
@@ -1160,6 +1156,9 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 								b2Vec2 p1 = point->point;
 								b2Vec2 p2 = b2MulAdd( p1, k_axisScale, normal );
 								draw->DrawLineFcn( p1, p2, normalColor, draw->context );
+
+								snprintf( buffer, B2_ARRAY_COUNT( buffer ), " %.2f", point->separation );
+								draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 							}
 							else if ( draw->drawContactForces )
 							{
@@ -1643,6 +1642,24 @@ void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRati
 	world->contactHertz = b2ClampFloat( hertz, 0.0f, FLT_MAX );
 	world->contactDampingRatio = b2ClampFloat( dampingRatio, 0.0f, FLT_MAX );
 	world->contactSpeed = b2ClampFloat( pushSpeed, 0.0f, FLT_MAX );
+}
+
+void b2World_SetContactRecycleDistance( b2WorldId worldId, float recycleDistance )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return;
+	}
+
+	world->contactRecycleDistance = b2ClampFloat( recycleDistance, 0.0f, FLT_MAX );
+}
+
+float b2World_GetContactRecycleDistance( b2WorldId worldId )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	return world->contactRecycleDistance;
 }
 
 void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearSpeed )
