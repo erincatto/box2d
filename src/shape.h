@@ -20,7 +20,7 @@ typedef struct b2Shape
 	b2ShapeType type;
 	b2SurfaceMaterial material;
 	float density;
-
+	float aabbMargin;
 	b2AABB aabb;
 	b2AABB fatAABB;
 	b2Vec2 localCentroid;

@@ -128,7 +128,7 @@ B2_INLINE int b2ClampInt( int a, int lower, int upper )
 // https://en.wikipedia.org/wiki/Floor_and_ceiling_functions
 B2_INLINE int b2CeilingInt( int numerator, int denominator )
 {
-	B2_VALIDATE( denominator > 0 );
+	B2_VALIDATE( denominator > 0 && numerator >= 0 );
 	return ( numerator + denominator - 1 ) / denominator;
 }
 

@@ -184,7 +184,7 @@ public:
 		if ( ImGui::SliderFloat( "Friction", &m_material.friction, 0.0f, 1.0f, "%.2f" ) )
 		{
 			b2Shape_SetSurfaceMaterial( m_shapeId, &m_material );
-			b2Chain_SetSurfaceMaterial( m_chainId, &m_material, 1 );
+			b2Chain_SetSurfaceMaterial( m_chainId, &m_material, 0 );
 		}
 
 		if ( ImGui::SliderFloat( "Restitution", &m_material.restitution, 0.0f, 2.0f, "%.1f" ) )

@@ -35,6 +35,7 @@ struct SampleContext
 	bool drawProfile = false;
 	bool enableWarmStarting = true;
 	bool enableContinuous = true;
+	bool enableRecycling = true;
 	bool enableSleep = true;
 	bool showUI = true;
 

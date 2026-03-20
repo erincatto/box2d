@@ -16,6 +16,7 @@
 #include "jsmn.h"
 
 #include "box2d/box2d.h"
+#include "box2d/constants.h"
 #include "box2d/math_functions.h"
 
 #include <GLFW/glfw3.h>
@@ -540,6 +541,15 @@ void Sample::Step()
 	b2World_EnableSleeping( m_worldId, m_context->enableSleep );
 	b2World_EnableWarmStarting( m_worldId, m_context->enableWarmStarting );
 	b2World_EnableContinuous( m_worldId, m_context->enableContinuous );
+
+	if (m_context->enableRecycling)
+	{
+		b2World_SetContactRecycleDistance( m_worldId, B2_RECYCLING_DISTANCE );
+	}
+	else
+	{
+		b2World_SetContactRecycleDistance( m_worldId, 0.0f );
+	}
 
 	for ( int i = 0; i < 1; ++i )
 	{

@@ -313,6 +313,9 @@ public:
 
 static int sampleOverlapRecovery = RegisterSample( "Robustness", "Overlap Recovery", OverlapRecovery::Create );
 
+// A pyramid of 5cm squares. Stacking tiny objects is challenging for physics engines due to rotational effects.
+// This is also challenging for Box2D because of the AABB margin and linear slop are close to the shape size. This
+// leads to many collision pairs and some shape overlap.
 class TinyPyramid : public Sample
 {
 public:
@@ -358,8 +361,6 @@ public:
 				}
 			}
 		}
-
-		b2World_SetContactRecycleDistance( m_worldId, 0.0f );
 	}
 
 	void Step() override

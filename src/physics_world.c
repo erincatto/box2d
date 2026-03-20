@@ -195,7 +195,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->contactSpeed = def->contactSpeed;
 	world->contactHertz = def->contactHertz;
 	world->contactDampingRatio = def->contactDampingRatio;
-	world->contactRecycleDistance = def->contactRecycleDistance;
+	world->contactRecycleDistance = B2_RECYCLING_DISTANCE;
 
 	if ( def->frictionCallback == NULL )
 	{
@@ -427,11 +427,17 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 				float maxExtent = b2MaxFloat( maxExtentA, maxExtentB );
 				float distance = b2Distance( xf.p, xfc.p );
 				b2Rot qr = b2InvMulRot( xf.q, xfc.q );
+
+				// This metric is used for fast bodies and sleeping. It comes from conservative advancement.
+				// Note that qr.s == sin(theta) ~= theta for small angles.
 				if ( distance + maxExtent * b2AbsFloat( qr.s ) < recycleDistance )
 				{
 					b2Rot dqA = b2MulRot( transformA.q, b2InvertRot( contactSim->cachedTransformA.q ) );
 					b2Rot dqB = b2MulRot( transformB.q, b2InvertRot( contactSim->cachedTransformB.q ) );
 					b2Vec2 normal = contactSim->manifold.normal;
+
+					// Minimize round-off
+					b2Vec2 dc = b2Sub( bodySimB->center, bodySimA->center );
 
 					for ( int i = 0; i < contactSim->manifold.pointCount; ++i )
 					{
@@ -439,9 +445,7 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 						b2ManifoldPoint* mp = contactSim->manifold.points + i;
 						b2Vec2 rA = b2RotateVector( dqA, mp->anchorA );
 						b2Vec2 rB = b2RotateVector( dqB, mp->anchorB );
-						b2Vec2 pA = b2Add( bodySimA->center, rA );
-						b2Vec2 pB = b2Add( bodySimB->center, rB );
-						b2Vec2 dp = b2Sub( pB, pA );
+						b2Vec2 dp = b2Add( dc, b2Sub( rB, rA ) );
 						mp->separation = mp->baseSeparation + b2Dot( dp, normal );
 						mp->persisted = true;
 					}
@@ -452,8 +456,6 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 			}
 
 			contactSim->simFlags |= b2_simRelativeTransformValid;
-			contactSim->cachedTransformA = transformA;
-			contactSim->cachedTransformB = transformB;
 
 			b2Vec2 centerOffsetA = b2RotateVector( transformA.q, bodySimA->localCenter );
 			b2Vec2 centerOffsetB = b2RotateVector( transformB.q, bodySimB->localCenter );
@@ -474,6 +476,9 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 				b2SetBit( &taskContext->contactStateBitSet, contactId );
 			}
 
+			// Caching for contact recycling. Requires 40 bytes.
+			contactSim->cachedTransformA = transformA;
+			contactSim->cachedTransformB = transformB;
 			for ( int i = 0; i < contactSim->manifold.pointCount; ++i )
 			{
 				b2ManifoldPoint* mp = contactSim->manifold.points + i;
@@ -1132,28 +1137,28 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 							{
 								// graph color
 								float pointSize = contact->colorIndex == B2_OVERFLOW_INDEX ? 7.5f : 5.0f;
-								draw->DrawPointFcn( point->point, pointSize, b2_graphColors[contact->colorIndex], draw->context );
+								draw->DrawPointFcn( point->debugPoint, pointSize, b2_graphColors[contact->colorIndex], draw->context );
 								// m_context->draw.DrawString(point->position, "%d", point->color);
 							}
 							else if ( point->separation > linearSlop )
 							{
 								// Speculative
-								draw->DrawPointFcn( point->point, 5.0f, speculativeColor, draw->context );
+								draw->DrawPointFcn( point->debugPoint, 5.0f, speculativeColor, draw->context );
 							}
 							else if ( point->persisted == false )
 							{
 								// Add
-								draw->DrawPointFcn( point->point, 10.0f, addColor, draw->context );
+								draw->DrawPointFcn( point->debugPoint, 10.0f, addColor, draw->context );
 							}
 							else if ( point->persisted == true )
 							{
 								// Persist
-								draw->DrawPointFcn( point->point, 5.0f, persistColor, draw->context );
+								draw->DrawPointFcn( point->debugPoint, 5.0f, persistColor, draw->context );
 							}
 
 							if ( draw->drawContactNormals )
 							{
-								b2Vec2 p1 = point->point;
+								b2Vec2 p1 = point->debugPoint;
 								b2Vec2 p2 = b2MulAdd( p1, k_axisScale, normal );
 								draw->DrawLineFcn( p1, p2, normalColor, draw->context );
 
@@ -1165,7 +1170,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 								// todo validate
 								// multiply by one-half due to relax iteration
 								float force = 0.5f * point->totalNormalImpulse * world->inv_dt;
-								b2Vec2 p1 = point->point;
+								b2Vec2 p1 = point->debugPoint;
 								b2Vec2 p2 = b2MulAdd( p1, draw->forceScale * force, normal );
 								draw->DrawLineFcn( p1, p2, impulseColor, draw->context );
 								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", force );
@@ -1175,14 +1180,14 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 							if ( draw->drawContactFeatures )
 							{
 								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%d", point->id );
-								draw->DrawStringFcn( point->point, buffer, b2_colorOrange, draw->context );
+								draw->DrawStringFcn( point->debugPoint, buffer, b2_colorOrange, draw->context );
 							}
 
 							if ( draw->drawFrictionForces )
 							{
 								float force = 0.5f * point->tangentImpulse * world->inv_h;
 								b2Vec2 tangent = b2RightPerp( normal );
-								b2Vec2 p1 = point->point;
+								b2Vec2 p1 = point->debugPoint;
 								b2Vec2 p2 = b2MulAdd( p1, draw->forceScale * force, tangent );
 								draw->DrawLineFcn( p1, p2, frictionColor, draw->context );
 								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", force );

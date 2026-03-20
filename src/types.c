@@ -21,9 +21,6 @@ b2WorldDef b2DefaultWorldDef( void )
 
 	// 400 meters per second, faster than the speed of sound
 	def.maximumLinearSpeed = 400.0f * lengthUnits;
-
-	def.contactRecycleDistance = 10.0f * B2_LINEAR_SLOP;
-
 	def.enableSleep = true;
 	def.enableContinuous = true;
 	def.internalValue = B2_SECRET_COOKIE;

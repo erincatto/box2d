@@ -117,7 +117,7 @@ B2_API int b2InternalAssertFcn( const char* condition, const char* fileName, int
 #define B2_ASSERT( condition )                                                                                                   \
 	do                                                                                                                           \
 	{                                                                                                                            \
-		if ( !( condition ) && b2InternalAssertFcn( #condition, __FILE__, (int)__LINE__ ) )                                          \
+		if ( !( condition ) && b2InternalAssertFcn( #condition, __FILE__, (int)__LINE__ ) )                                      \
 			B2_BREAKPOINT;                                                                                                       \
 	}                                                                                                                            \
 	while ( 0 )
@@ -125,9 +125,22 @@ B2_API int b2InternalAssertFcn( const char* condition, const char* fileName, int
 #define B2_ASSERT( ... ) ( (void)0 )
 #endif
 
+// Validation is used in debug builds
 #if B2_ENABLE_VALIDATION
+// This behaves like a skippable assert.
 // Floating point tolerance checks should use this instead of the regular assertion
-#define B2_VALIDATE( condition ) B2_ASSERT( condition )
+#define B2_VALIDATE( condition )                                                                                                 \
+	do                                                                                                                           \
+	{                                                                                                                            \
+		static int b2_validateTriggered = 0;                                                                                     \
+		if ( b2_validateTriggered == 0 && !( condition ) )                                                                       \
+		{                                                                                                                        \
+			b2_validateTriggered = 1;                                                                                            \
+			if ( b2InternalAssertFcn( #condition, __FILE__, (int)__LINE__ ) )                                                    \
+				B2_BREAKPOINT;                                                                                                   \
+		}                                                                                                                        \
+	}                                                                                                                            \
+	while ( 0 )
 #else
 #define B2_VALIDATE( ... ) ( (void)0 )
 #endif

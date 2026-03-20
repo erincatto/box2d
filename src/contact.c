@@ -567,7 +567,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 
 		b2Manifold* manifold = &contactSim->manifold;
 		float bestSeparation = manifold->points[0].separation;
-		b2Vec2 bestPoint = manifold->points[0].point;
+		b2Vec2 bestPoint = manifold->points[0].debugPoint;
 
 		// Get deepest point
 		for ( int i = 1; i < manifold->pointCount; ++i )
@@ -576,7 +576,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 			if ( separation < bestSeparation )
 			{
 				bestSeparation = separation;
-				bestPoint = manifold->points[i].point;
+				bestPoint = manifold->points[i].debugPoint;
 			}
 		}
 

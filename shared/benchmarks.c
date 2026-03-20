@@ -158,10 +158,10 @@ void CreateManyPyramids( b2WorldId worldId )
 {
 	b2World_EnableSleeping( worldId, false );
 
-	 int baseCount = 10;
-	 float extent = 0.5f;
-	 int rowCount = BENCHMARK_DEBUG ? 5 : 20;
-	 int columnCount = BENCHMARK_DEBUG ? 5 : 20;
+	int baseCount = 10;
+	float extent = 0.5f;
+	int rowCount = BENCHMARK_DEBUG ? 5 : 20;
+	int columnCount = BENCHMARK_DEBUG ? 5 : 20;
 
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
@@ -574,7 +574,7 @@ void CreateWasher( b2WorldId worldId )
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.position = (b2Vec2){ 0.0f, 10.0f };
 
-		if (kinematic == true)
+		if ( kinematic == true )
 		{
 			bodyDef.type = b2_kinematicBody;
 			bodyDef.angularVelocity = ( B2_PI / 180.0f ) * motorSpeed;
@@ -594,13 +594,13 @@ void CreateWasher( b2WorldId worldId )
 		float r2 = 18.0f;
 
 		float angle = B2_PI / 18.0f;
-		b2Rot q = { cosf( angle ), sinf(angle) };
-		b2Rot qo = { cosf( 0.1f * angle ), sinf(0.1f * angle) };
+		b2Rot q = { cosf( angle ), sinf( angle ) };
+		b2Rot qo = { cosf( 0.1f * angle ), sinf( 0.1f * angle ) };
 		b2Vec2 u1 = { 1.0f, 0.0f };
 		for ( int i = 0; i < 36; ++i )
 		{
 			b2Vec2 u2;
-			if (i == 35)
+			if ( i == 35 )
 			{
 				u2 = (b2Vec2){ 1.0f, 0.0f };
 			}

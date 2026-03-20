@@ -529,7 +529,6 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 	}
 
 	const float speculativeDistance = B2_SPECULATIVE_DISTANCE;
-	const float aabbMargin = B2_AABB_MARGIN;
 
 	if ( context.fraction < 1.0f )
 	{
@@ -567,11 +566,12 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 			if ( b2AABB_Contains( shape->fatAABB, aabb ) == false )
 			{
+				float margin = shape->aabbMargin;
 				b2AABB fatAABB;
-				fatAABB.lowerBound.x = aabb.lowerBound.x - aabbMargin;
-				fatAABB.lowerBound.y = aabb.lowerBound.y - aabbMargin;
-				fatAABB.upperBound.x = aabb.upperBound.x + aabbMargin;
-				fatAABB.upperBound.y = aabb.upperBound.y + aabbMargin;
+				fatAABB.lowerBound.x = aabb.lowerBound.x - margin;
+				fatAABB.lowerBound.y = aabb.lowerBound.y - margin;
+				fatAABB.upperBound.x = aabb.upperBound.x + margin;
+				fatAABB.upperBound.y = aabb.upperBound.y + margin;
 				shape->fatAABB = fatAABB;
 
 				shape->enlargedAABB = true;
@@ -599,11 +599,12 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 			if ( b2AABB_Contains( shape->fatAABB, shape->aabb ) == false )
 			{
+				float margin = shape->aabbMargin;
 				b2AABB fatAABB;
-				fatAABB.lowerBound.x = shape->aabb.lowerBound.x - aabbMargin;
-				fatAABB.lowerBound.y = shape->aabb.lowerBound.y - aabbMargin;
-				fatAABB.upperBound.x = shape->aabb.upperBound.x + aabbMargin;
-				fatAABB.upperBound.y = shape->aabb.upperBound.y + aabbMargin;
+				fatAABB.lowerBound.x = shape->aabb.lowerBound.x - margin;
+				fatAABB.lowerBound.y = shape->aabb.lowerBound.y - margin;
+				fatAABB.upperBound.x = shape->aabb.upperBound.x + margin;
+				fatAABB.upperBound.y = shape->aabb.upperBound.y + margin;
 				shape->fatAABB = fatAABB;
 
 				shape->enlargedAABB = true;
@@ -656,7 +657,6 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 	bool enableContinuous = world->enableContinuous;
 
 	const float speculativeDistance = B2_SPECULATIVE_DISTANCE;
-	const float aabbMargin = B2_AABB_MARGIN;
 
 	B2_ASSERT( startIndex <= endIndex );
 
@@ -817,11 +817,12 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 
 				if ( b2AABB_Contains( shape->fatAABB, aabb ) == false )
 				{
+					float margin = shape->aabbMargin;
 					b2AABB fatAABB;
-					fatAABB.lowerBound.x = aabb.lowerBound.x - aabbMargin;
-					fatAABB.lowerBound.y = aabb.lowerBound.y - aabbMargin;
-					fatAABB.upperBound.x = aabb.upperBound.x + aabbMargin;
-					fatAABB.upperBound.y = aabb.upperBound.y + aabbMargin;
+					fatAABB.lowerBound.x = aabb.lowerBound.x - margin;
+					fatAABB.lowerBound.y = aabb.lowerBound.y - margin;
+					fatAABB.upperBound.x = aabb.upperBound.x + margin;
+					fatAABB.upperBound.y = aabb.upperBound.y + margin;
 					shape->fatAABB = fatAABB;
 
 					shape->enlargedAABB = true;
@@ -1973,7 +1974,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					if ( approachSpeed > event.approachSpeed && mp->totalNormalImpulse > 0.0f )
 					{
 						event.approachSpeed = approachSpeed;
-						event.point = mp->point;
+						event.point = mp->debugPoint;
 						hit = true;
 					}
 				}

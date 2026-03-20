@@ -259,7 +259,7 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 	if ( b2CanCollide( shapeA->type, shapeB->type ) == false )
 	{
 		// For example, no segment vs segment collision
-		return false;
+		return true;
 	}
 
 	// Does a joint override collision?
@@ -286,7 +286,10 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 		}
 	}
 
+	// Move pairs will be in shu
 	int pairIndex = b2AtomicFetchAddInt( &broadPhase->movePairIndex, 1 );
+	
+	// If you hit this, it means you have too many overlapping objects
 	B2_VALIDATE( pairIndex < broadPhase->movePairCapacity );
 
 	if ( pairIndex < broadPhase->movePairCapacity )
@@ -436,7 +439,11 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	// todo these could be in the step context
 	bp->moveResults = b2AllocateArenaItem( alloc, moveCount * sizeof( b2MoveResult ), "move results" );
-	bp->movePairCapacity = 32 * moveCount;
+
+	// The number of pairs that can be added is capped. So any highly overlapped scene will drop pairs.
+	// This multiplier of 8 is needed for the tiny pyramid sample because the bounding boxes are large
+	// relative to the size of the shapes. I have added B2_AABB_MARGIN_FRACTION to keep make the AABBs smaller.
+	bp->movePairCapacity = 16 * moveCount;
 	bp->movePairs = b2AllocateArenaItem( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
 	b2AtomicStoreInt( &bp->movePairIndex, 0 );
 

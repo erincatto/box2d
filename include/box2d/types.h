@@ -105,9 +105,6 @@ typedef struct b2WorldDef
 	/// Maximum linear speed. Usually meters per second.
 	float maximumLinearSpeed;
 
-	/// Contact point recycling distance. Setting this to zero disables contact point recycling. Usually in meters.
-	float contactRecycleDistance;
-
 	/// Optional mixing callback for friction. The default uses sqrt(frictionA * frictionB).
 	b2FrictionCallback* frictionCallback;
 

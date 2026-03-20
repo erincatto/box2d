@@ -508,8 +508,9 @@ B2_API b2TOIOutput b2TimeOfImpact( const b2TOIInput* input );
 typedef struct b2ManifoldPoint
 {
 	/// Location of the contact point in world space. Subject to precision loss at large coordinates.
-	/// @note Should only be used for debugging.
-	b2Vec2 point;
+	/// This point lags behind when contact recycling is used.
+	/// @note Should only be used for debugging. Use anchorA and anchorB for game logic.
+	b2Vec2 debugPoint;
 
 	/// Location of the contact point relative to shapeA's origin in world space
 	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
@@ -521,6 +522,8 @@ typedef struct b2ManifoldPoint
 
 	/// The separation of the contact point, negative if penetrating
 	float separation;
+
+	/// Cached separation used for contact recycling
 	float baseSeparation;
 
 	/// The impulse along the manifold normal vector.

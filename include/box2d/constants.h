@@ -38,11 +38,17 @@
 // @warning modifying this can have a significant impact on performance and stability
 #define B2_SPECULATIVE_DISTANCE ( 4.0f * B2_LINEAR_SLOP )
 
+// The default contact recycling distance.
+#define B2_RECYCLING_DISTANCE ( 10.0f * B2_LINEAR_SLOP )
+
 // This is used to fatten AABBs in the dynamic tree. This allows proxies
 // to move by a small amount without triggering a tree adjustment. This is in meters.
 // Normally this is 5cm.
 // @warning modifying this can have a significant impact on performance
-#define B2_AABB_MARGIN ( 0.05f * b2GetLengthUnitsPerMeter() )
+#define B2_MAX_AABB_MARGIN ( 0.05f * b2GetLengthUnitsPerMeter() )
+
+// For small objects the margin is limited to this fraction times the maximum extent
+#define B2_AABB_MARGIN_FRACTION 0.125f
 
 // The time that a body must be still before it will go to sleep. In seconds.
 #define B2_TIME_TO_SLEEP 0.5f

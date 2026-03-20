@@ -424,6 +424,7 @@ static void UpdateUI()
 				ImGui::Checkbox( "Sleep", &s_context.enableSleep );
 				ImGui::Checkbox( "Warm Starting", &s_context.enableWarmStarting );
 				ImGui::Checkbox( "Continuous", &s_context.enableContinuous );
+				ImGui::Checkbox( "Recycling", &s_context.enableRecycling );
 
 				ImGui::Separator();
 
