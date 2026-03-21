@@ -1124,9 +1124,9 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 					if ( b2GetBit( &world->debugContactSet, contactId ) == false )
 					{
 						b2ContactSim* contactSim = b2GetContactSim( world, contact );
-						b2Body* bodyA = b2BodyArray_Get(&world->bodies, contactSim->bodyIdA);
+						b2Body* bodyA = b2BodyArray_Get( &world->bodies, contact->edges[0].bodyId );
 						b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
-						b2Body* bodyB = b2BodyArray_Get(&world->bodies, contactSim->bodyIdB);
+						b2Body* bodyB = b2BodyArray_Get( &world->bodies, contact->edges[1].bodyId);
 						b2BodySim* bodySimB = b2GetBodySim( world, bodyB );
 						int pointCount = contactSim->manifold.pointCount;
 						b2Vec2 normal = contactSim->manifold.normal;
