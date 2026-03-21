@@ -288,9 +288,6 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 
 	// Move pairs will be in shu
 	int pairIndex = b2AtomicFetchAddInt( &broadPhase->movePairIndex, 1 );
-	
-	// If you hit this, it means you have too many overlapping objects
-	B2_VALIDATE( pairIndex < broadPhase->movePairCapacity );
 
 	if ( pairIndex < broadPhase->movePairCapacity )
 	{
@@ -299,6 +296,16 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 		pair->shapeIndexB = shapeIdB;
 		pair->next = queryContext->moveResult->pairList;
 		queryContext->moveResult->pairList = pair;
+	}
+	else
+	{
+		static bool once = false;
+		if ( once == false )
+		{
+			// This means you have too many overlapping objects.
+			b2Log( "Pair buffer capacity of %d exceeded (see B2_PAIR_BUFFER_LIMIT)", broadPhase->movePairCapacity );
+			once = true;
+		}
 	}
 
 	// continue the query
@@ -443,7 +450,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	// The number of pairs that can be added is capped. So any highly overlapped scene will drop pairs.
 	// This multiplier of 8 is needed for the tiny pyramid sample because the bounding boxes are large
 	// relative to the size of the shapes. I have added B2_AABB_MARGIN_FRACTION to keep make the AABBs smaller.
-	bp->movePairCapacity = 16 * moveCount;
+	bp->movePairCapacity = B2_PAIR_BUFFER_LIMIT * moveCount;
 	bp->movePairs = b2AllocateArenaItem( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
 	b2AtomicStoreInt( &bp->movePairIndex, 0 );
 

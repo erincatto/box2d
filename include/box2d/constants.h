@@ -52,3 +52,17 @@
 
 // The time that a body must be still before it will go to sleep. In seconds.
 #define B2_TIME_TO_SLEEP 0.5f
+
+// Contact pair generation uses fixed size buffers.
+// This buffer has size of K * movingShapeCount, where K is this constant. This buffer
+// can run out of space when there are many overlapping shapes and then collision will
+// be skipped for that pair on that time step. The collisions may occur in later time steps
+// since the buffer is only used for new pairs.
+// Keeping this constant small can help reduce performance spikes for troublesome shape and body
+// configurations at some loss of fidelity.
+// It is also possible to hit this limit if a large moving shape hits many non-moving small
+// shapes in the same time step, such as the Smash sample. But even in that sample, missed
+// pairs are picked up on sub-sequent time steps.
+#ifndef B2_PAIR_BUFFER_LIMIT
+#define B2_PAIR_BUFFER_LIMIT 32
+#endif

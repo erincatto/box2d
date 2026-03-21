@@ -1110,7 +1110,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 			}
 
 			const float linearSlop = B2_LINEAR_SLOP;
-			if ( draw->drawContactPoints && body->type == b2_dynamicBody )
+			if ( draw->contactDrawType != b2_drawContacts_None && body->type == b2_dynamicBody )
 			{
 				int contactKey = body->headContactKey;
 				while ( contactKey != B2_NULL_INDEX )
@@ -1124,53 +1124,72 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 					if ( b2GetBit( &world->debugContactSet, contactId ) == false )
 					{
 						b2ContactSim* contactSim = b2GetContactSim( world, contact );
-
+						b2Body* bodyA = b2BodyArray_Get(&world->bodies, contactSim->bodyIdA);
+						b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
+						b2Body* bodyB = b2BodyArray_Get(&world->bodies, contactSim->bodyIdB);
+						b2BodySim* bodySimB = b2GetBodySim( world, bodyB );
 						int pointCount = contactSim->manifold.pointCount;
 						b2Vec2 normal = contactSim->manifold.normal;
 						char buffer[32];
 
 						for ( int j = 0; j < pointCount; ++j )
 						{
-							b2ManifoldPoint* point = contactSim->manifold.points + j;
+							b2ManifoldPoint* mp = contactSim->manifold.points + j;
+
+							b2Vec2 p = mp->clipPoint;
+							if (draw->contactDrawType == b2_drawContacts_AnchorA)
+							{
+								p = b2Add( bodySimA->center, mp->anchorA );
+							}
+							else if (draw->contactDrawType == b2_drawContacts_AnchorB)
+							{
+								p = b2Add( bodySimB->center, mp->anchorB );
+							}
+							else if (draw->contactDrawType == b2_drawContacts_Average)
+							{
+								b2Vec2 pA = b2Add( bodySimA->center, mp->anchorA );
+								b2Vec2 pB = b2Add( bodySimB->center, mp->anchorB );
+								p = b2Lerp( pA, pB, 0.5f );
+							}
 
 							if ( draw->drawGraphColors && contact->colorIndex != B2_NULL_INDEX )
 							{
 								// graph color
 								float pointSize = contact->colorIndex == B2_OVERFLOW_INDEX ? 7.5f : 5.0f;
-								draw->DrawPointFcn( point->debugPoint, pointSize, b2_graphColors[contact->colorIndex], draw->context );
+								draw->DrawPointFcn( p, pointSize, b2_graphColors[contact->colorIndex], draw->context );
 								// m_context->draw.DrawString(point->position, "%d", point->color);
 							}
-							else if ( point->separation > linearSlop )
+							else if ( mp->separation > linearSlop )
 							{
 								// Speculative
-								draw->DrawPointFcn( point->debugPoint, 5.0f, speculativeColor, draw->context );
+								draw->DrawPointFcn( p, 5.0f, speculativeColor, draw->context );
 							}
-							else if ( point->persisted == false )
+							else if ( mp->persisted == false )
 							{
 								// Add
-								draw->DrawPointFcn( point->debugPoint, 10.0f, addColor, draw->context );
+								draw->DrawPointFcn( p, 10.0f, addColor, draw->context );
 							}
-							else if ( point->persisted == true )
+							else if ( mp->persisted == true )
 							{
 								// Persist
-								draw->DrawPointFcn( point->debugPoint, 5.0f, persistColor, draw->context );
+								draw->DrawPointFcn( p, 5.0f, persistColor, draw->context );
 							}
 
 							if ( draw->drawContactNormals )
 							{
-								b2Vec2 p1 = point->debugPoint;
+								b2Vec2 p1 = p;
 								b2Vec2 p2 = b2MulAdd( p1, k_axisScale, normal );
 								draw->DrawLineFcn( p1, p2, normalColor, draw->context );
 
-								snprintf( buffer, B2_ARRAY_COUNT( buffer ), " %.2f", point->separation );
+								snprintf( buffer, B2_ARRAY_COUNT( buffer ), " %.2f", mp->separation );
 								draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
 							}
 							else if ( draw->drawContactForces )
 							{
 								// todo validate
 								// multiply by one-half due to relax iteration
-								float force = 0.5f * point->totalNormalImpulse * world->inv_dt;
-								b2Vec2 p1 = point->debugPoint;
+								float force = 0.5f * mp->totalNormalImpulse * world->inv_dt;
+								b2Vec2 p1 = p;
 								b2Vec2 p2 = b2MulAdd( p1, draw->forceScale * force, normal );
 								draw->DrawLineFcn( p1, p2, impulseColor, draw->context );
 								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", force );
@@ -1179,15 +1198,15 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 							if ( draw->drawContactFeatures )
 							{
-								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%d", point->id );
-								draw->DrawStringFcn( point->debugPoint, buffer, b2_colorOrange, draw->context );
+								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%d", mp->id );
+								draw->DrawStringFcn( p, buffer, b2_colorOrange, draw->context );
 							}
 
 							if ( draw->drawFrictionForces )
 							{
-								float force = 0.5f * point->tangentImpulse * world->inv_h;
+								float force = 0.5f * mp->tangentImpulse * world->inv_h;
 								b2Vec2 tangent = b2RightPerp( normal );
-								b2Vec2 p1 = point->debugPoint;
+								b2Vec2 p1 = p;
 								b2Vec2 p2 = b2MulAdd( p1, draw->forceScale * force, tangent );
 								draw->DrawLineFcn( p1, p2, frictionColor, draw->context );
 								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", force );

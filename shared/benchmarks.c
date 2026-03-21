@@ -476,8 +476,8 @@ void CreateSmash( b2WorldId worldId )
 
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
 
-	int columns = BENCHMARK_DEBUG ? 20 : 120;
-	int rows = BENCHMARK_DEBUG ? 10 : 80;
+	int columns = BENCHMARK_DEBUG ? 120 : 120;
+	int rows = BENCHMARK_DEBUG ? 80 : 80;
 
 	for ( int i = 0; i < columns; ++i )
 	{
@@ -498,6 +498,9 @@ void CreateTumbler( b2WorldId worldId )
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		groundId = b2CreateBody( worldId, &bodyDef );
 	}
+
+	
+	int gridCount = BENCHMARK_DEBUG ? 45 : 45;
 
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -532,29 +535,29 @@ void CreateTumbler( b2WorldId worldId )
 		b2CreateRevoluteJoint( worldId, &jointDef );
 	}
 
-	int gridCount = BENCHMARK_DEBUG ? 20 : 45;
-
-	b2Polygon polygon = b2MakeBox( 0.125f, 0.125f );
-	b2BodyDef bodyDef = b2DefaultBodyDef();
-	bodyDef.type = b2_dynamicBody;
-	b2ShapeDef shapeDef = b2DefaultShapeDef();
-
-	float y = -0.2f * gridCount + 10.0f;
-	for ( int i = 0; i < gridCount; ++i )
 	{
-		float x = -0.2f * gridCount;
+		b2Polygon polygon = b2MakeBox( 0.125f, 0.125f );
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
 
-		for ( int j = 0; j < gridCount; ++j )
+		float y = -0.2f * gridCount + 10.0f;
+		for ( int i = 0; i < gridCount; ++i )
 		{
-			bodyDef.position = (b2Vec2){ x, y };
-			b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+			float x = -0.2f * gridCount;
 
-			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
+			for ( int j = 0; j < gridCount; ++j )
+			{
+				bodyDef.position = (b2Vec2){ x, y };
+				b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
-			x += 0.4f;
+				b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
+
+				x += 0.4f;
+			}
+
+			y += 0.4f;
 		}
-
-		y += 0.4f;
 	}
 }
 

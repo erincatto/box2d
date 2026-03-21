@@ -1974,7 +1974,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					if ( approachSpeed > event.approachSpeed && mp->totalNormalImpulse > 0.0f )
 					{
 						event.approachSpeed = approachSpeed;
-						event.point = mp->debugPoint;
+						event.point = mp->clipPoint;
 						hit = true;
 					}
 				}
