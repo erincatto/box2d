@@ -139,6 +139,7 @@ typedef struct b2MovePair
 	int shapeIndexA;
 	int shapeIndexB;
 	b2MovePair* next;
+	bool heap;
 } b2MovePair;
 
 typedef struct b2MoveResult
@@ -289,13 +290,11 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 	// Move pairs will be in shu
 	int pairIndex = b2AtomicFetchAddInt( &broadPhase->movePairIndex, 1 );
 
+	b2MovePair* pair;
 	if ( pairIndex < broadPhase->movePairCapacity )
 	{
-		b2MovePair* pair = broadPhase->movePairs + pairIndex;
-		pair->shapeIndexA = shapeIdA;
-		pair->shapeIndexB = shapeIdB;
-		pair->next = queryContext->moveResult->pairList;
-		queryContext->moveResult->pairList = pair;
+		pair = broadPhase->movePairs + pairIndex;
+		pair->heap = false;
 	}
 	else
 	{
@@ -303,40 +302,21 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 		if ( once == false )
 		{
 			// This means you have too many overlapping objects.
-			b2Log( "Pair buffer capacity of %d exceeded (see B2_PAIR_BUFFER_LIMIT)", broadPhase->movePairCapacity );
+			b2Log( "Pair buffer capacity of %d exceeded, too many overlaps", broadPhase->movePairCapacity );
 			once = true;
 		}
+
+		pair = b2Alloc( sizeof( b2MovePair ) );
+		pair->heap = true;
 	}
+
+	pair->shapeIndexA = shapeIdA;
+	pair->shapeIndexB = shapeIdB;
+	pair->next = queryContext->moveResult->pairList;
+	queryContext->moveResult->pairList = pair;
 
 	// continue the query
 	return true;
-}
-
-static void b2AddPairsTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
-{
-	B2_UNUSED( startIndex );
-	B2_UNUSED( endIndex );
-	B2_UNUSED( threadIndex );
-
-	b2TracyCZoneNC( add_pairs_task, "Add Pairs", b2_colorMediumSlateBlue, true );
-
-	b2BroadPhase* bp = context;
-	int moveCount = bp->moveArray.count;
-
-	b2HashSet* pairSet = &bp->pairSet;
-	for ( int i = 0; i < moveCount; ++i )
-	{
-		b2MoveResult* result = bp->moveResults + i;
-		b2MovePair* pair = result->pairList;
-		while ( pair != NULL )
-		{
-			uint64_t pairKey = B2_SHAPE_PAIR_KEY( pair->shapeIndexA, pair->shapeIndexB );
-			b2AddKey( pairSet, pairKey );
-			pair = pair->next;
-		}
-	}
-
-	b2TracyCZoneEnd( add_pairs_task );
 }
 
 // Warning: writing to these globals significantly slows multithreading performance
@@ -467,8 +447,6 @@ void b2UpdateBroadPhasePairs( b2World* world )
 		world->taskCount += 1;
 	}
 
-	// todo_erin could start tree rebuild here
-
 	b2TracyCZoneNC( create_contacts, "Create Contacts", b2_colorCoral, true );
 
 	// Task that can be done in parallel with the narrow-phase
@@ -476,12 +454,6 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	world->userTreeTask = world->enqueueTaskFcn( &b2UpdateTreesTask, 1, 1, world, world->userTaskContext );
 	world->taskCount += 1;
 	world->activeTaskCount += world->userTreeTask == NULL ? 0 : 1;
-
-#if B2_USE_ADD_PAIRS_TASK == 1
-	void* userAddPairsTask = world->enqueueTaskFcn( &b2AddPairsTask, 1, 1, bp, world->userTaskContext );
-	world->taskCount += 1;
-	world->activeTaskCount += userAddPairsTask == NULL ? 0 : 1;
-#endif
 
 	// Single-threaded work
 	// - Clear move flags
@@ -505,7 +477,21 @@ void b2UpdateBroadPhasePairs( b2World* world )
 			b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, shapeIdB );
 
 			b2CreateContact( world, shapeA, shapeB );
-			pair = pair->next;
+
+			if ( pair->heap )
+			{
+				// Note: I tried adding to the pair set in parallel with contact creation
+				// but that didn't work with with pair heap allocation. I could make it
+				// work with a task context bump allocator with heap fallback. The perf
+				// gain was small or zero.
+				b2MovePair* temp = pair;
+				pair = pair->next;
+				b2Free( temp, sizeof( b2MovePair ) );
+			}
+			else
+			{
+				pair = pair->next;
+			}
 		}
 
 		// if (s_file != NULL)
@@ -513,15 +499,6 @@ void b2UpdateBroadPhasePairs( b2World* world )
 		//	fprintf(s_file, "\n");
 		// }
 	}
-
-#if B2_USE_ADD_PAIRS_TASK == 1
-	if ( userAddPairsTask != NULL )
-	{
-		world->finishTaskFcn( userAddPairsTask, world->userTaskContext );
-		userAddPairsTask = NULL;
-		world->activeTaskCount -= 1;
-	}
-#endif
 
 	// if (s_file != NULL)
 	//{

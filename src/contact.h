@@ -9,8 +9,6 @@
 #include "box2d/collision.h"
 #include "box2d/types.h"
 
-#define B2_USE_ADD_PAIRS_TASK 1
-
 typedef struct b2Shape b2Shape;
 typedef struct b2World b2World;
 

@@ -327,14 +327,9 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 		bodyB->contactCount += 1;
 	}
 
-	// Add to pair set for fast lookup. Expensive.
-	// I tried updating this in parallel using a RW mutex and it was much slower.
-	// A regular mutex was even slower. Typically the number of pairs created
-	// per time step is low, so locking for read access has huge overhead.
-#if B2_USE_ADD_PAIRS_TASK == 0
+	// Add to pair set for fast lookup.
 	uint64_t pairKey = B2_SHAPE_PAIR_KEY( shapeIdA, shapeIdB );
 	b2AddKey( &world->broadPhase.pairSet, pairKey );
-#endif
 
 	// Contacts are created as non-touching. Later if they are found to be touching
 	// they will link islands and be moved into the constraint graph.
