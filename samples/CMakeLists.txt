@@ -67,6 +67,20 @@ set(JSMN_DIR ${CMAKE_SOURCE_DIR}/extern/jsmn)
 add_library(jsmn INTERFACE ${JSMN_DIR}/jsmn.h)
 target_include_directories(jsmn INTERFACE ${JSMN_DIR})
 
+# implot for drawing real time plots
+set(IMPLOT_DIR ${CMAKE_SOURCE_DIR}/extern/implot)
+
+add_library(
+	implot STATIC
+	${IMPLOT_DIR}/implot_demo.cpp
+	${IMPLOT_DIR}/implot.cpp
+	${IMPLOT_DIR}/implot_items.cpp
+	${IMPLOT_DIR}/implot_internal.h
+	${IMPLOT_DIR}/implot.h
+)
+target_link_libraries(implot PUBLIC imgui)
+target_include_directories(implot PUBLIC ${IMPLOT_DIR})
+
 set(BOX2D_SAMPLE_FILES
 	car.cpp
 	car.h
@@ -114,7 +128,7 @@ if (BOX2D_COMPILE_WARNING_AS_ERROR)
 endif()
 
 target_include_directories(samples PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${JSMN_DIR})
-target_link_libraries(samples PUBLIC box2d shared imgui glfw glad enkiTS)
+target_link_libraries(samples PUBLIC box2d shared imgui implot glfw glad enkiTS)
 
 # target_compile_definitions(samples PRIVATE "$<$<CONFIG:DEBUG>:SAMPLES_DEBUG>")
 # message(STATUS "runtime = ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")

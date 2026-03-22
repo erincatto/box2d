@@ -10,6 +10,7 @@
 #include "TaskScheduler.h"
 #include "draw.h"
 #include "imgui.h"
+#include "implot.h"
 #include "random.h"
 
 // consider using https://github.com/skeeto/pdjson
@@ -301,10 +302,16 @@ Sample::Sample( SampleContext* context )
 	m_mouseJointId = b2_nullJointId;
 
 	m_stepCount = 0;
+	m_didStep = false;
 
 	m_mouseBodyId = b2_nullBodyId;
 	m_mousePoint = {};
 	m_mouseForceScale = 100.0f;
+
+	memset( m_profiles, 0, sizeof( m_profiles ) );
+	m_currentProfileIndex = 0;
+	m_profileReadIndex = 0;
+	m_profileWriteIndex = 0;
 
 	m_maxProfile = {};
 	m_totalProfile = {};
@@ -499,6 +506,8 @@ void Sample::ResetProfile()
 
 void Sample::Step()
 {
+	m_didStep = false;
+
 	float timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
 
 	if ( m_context->pause )
@@ -561,7 +570,18 @@ void Sample::Step()
 
 	if ( timeStep > 0.0f )
 	{
-		++m_stepCount;
+		m_stepCount += 1;
+		m_didStep = true;
+
+		if ( m_profileWriteIndex - m_profileReadIndex == m_profileCapacity )
+		{
+			m_profileReadIndex += 1;
+		}
+
+		m_currentProfileIndex = m_profileWriteIndex & ( m_profileCapacity - 1 );
+		m_profiles[m_currentProfileIndex] = b2World_GetProfile( m_worldId );
+
+		m_profileWriteIndex += 1;
 	}
 
 	if ( m_context->drawCounters )
@@ -590,8 +610,9 @@ void Sample::Step()
 	}
 
 	// Track maximum profile times
+	if (m_didStep)
 	{
-		b2Profile p = b2World_GetProfile( m_worldId );
+		b2Profile p = m_profiles[m_currentProfileIndex];
 		m_maxProfile.step = b2MaxFloat( m_maxProfile.step, p.step );
 		m_maxProfile.pairs = b2MaxFloat( m_maxProfile.pairs, p.pairs );
 		m_maxProfile.collide = b2MaxFloat( m_maxProfile.collide, p.collide );
@@ -641,8 +662,6 @@ void Sample::Step()
 
 	if ( m_context->drawProfile )
 	{
-		b2Profile p = b2World_GetProfile( m_worldId );
-
 		b2Profile aveProfile = {};
 		if ( m_stepCount > 0 )
 		{
@@ -671,6 +690,7 @@ void Sample::Step()
 			aveProfile.sensors = scale * m_totalProfile.sensors;
 		}
 
+		const b2Profile& p = m_profiles[m_currentProfileIndex];
 		DrawTextLine( "step [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.step, aveProfile.step, m_maxProfile.step );
 		DrawTextLine( "pairs [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.pairs, aveProfile.pairs, m_maxProfile.pairs );
 		DrawTextLine( "collide [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.collide, aveProfile.collide, m_maxProfile.collide );
@@ -708,6 +728,54 @@ void Sample::Step()
 					  m_maxProfile.sleepIslands );
 		DrawTextLine( "> bullets [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.bullets, aveProfile.bullets, m_maxProfile.bullets );
 		DrawTextLine( "sensors [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.sensors, aveProfile.sensors, m_maxProfile.sensors );
+	}
+}
+
+void Sample::UpdateGui()
+{
+	if ( m_context->frameTime )
+	{
+		float frameTimeHeight = 400.0f;
+		float frameTimeWidth = 800.0f;
+
+		ImGui::SetNextWindowPos( { 30.0f, 30.0f }, ImGuiCond_FirstUseEver );
+		ImGui::SetNextWindowSize( { frameTimeWidth, frameTimeHeight }, ImGuiCond_FirstUseEver );
+
+		ImGui::Begin( "Frame Time", nullptr, ImGuiWindowFlags_NoCollapse );
+
+		ImGui::PushItemWidth( ImGui::GetWindowWidth() - 20.0f );
+
+		float maxValue = 0.0f;
+		float times[m_profileCapacity];
+		float stepTimes[m_profileCapacity];
+		float collideTimes[m_profileCapacity];
+		float solveTimes[m_profileCapacity];
+		int count = m_profileWriteIndex - m_profileReadIndex;
+		for ( int i = 0; i < count; ++i )
+		{
+			int index = ( m_profileReadIndex + i ) & ( m_profileCapacity - 1 );
+			times[i] = i / 60.0f;
+			stepTimes[i] = m_profiles[index].step;
+			collideTimes[i] = m_profiles[index].collide;
+			solveTimes[i] = m_profiles[index].solve;
+			maxValue = b2MaxFloat( stepTimes[i], maxValue );
+		}
+
+		// This is the pixel size, not the range.
+		ImVec2 plotSize = { -1, 22.0f * ImGui::GetTextLineHeight() };
+		if ( ImPlot::BeginPlot( "Profile", plotSize, ImPlotFlags_NoTitle ) )
+		{
+			ImPlot::SetupAxes( "t", "ms" );
+			// ImPlot::SetupAxes( "t", "ms", 0, ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit );
+			ImPlot::SetupAxesLimits( 0, m_profileCapacity / 60.0, 0.0, maxValue, ImPlotCond_Always );
+			ImPlot::PlotLine( "step", times, stepTimes, count );
+			ImPlot::PlotLine( "collide", times, collideTimes, count );
+			ImPlot::PlotLine( "solve", times, solveTimes, count );
+			ImPlot::EndPlot();
+		}
+
+		ImGui::PopItemWidth();
+		ImGui::End();
 	}
 }
 
