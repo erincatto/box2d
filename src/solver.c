@@ -23,7 +23,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-// todo testing
+// these are useful for solver testing
 #define ITERATIONS 1
 #define RELAX_ITERATIONS 1
 
@@ -529,7 +529,6 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 	}
 
 	const float speculativeDistance = B2_SPECULATIVE_DISTANCE;
-	const float aabbMargin = B2_AABB_MARGIN;
 
 	if ( context.fraction < 1.0f )
 	{
@@ -567,11 +566,12 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 			if ( b2AABB_Contains( shape->fatAABB, aabb ) == false )
 			{
+				float margin = shape->aabbMargin;
 				b2AABB fatAABB;
-				fatAABB.lowerBound.x = aabb.lowerBound.x - aabbMargin;
-				fatAABB.lowerBound.y = aabb.lowerBound.y - aabbMargin;
-				fatAABB.upperBound.x = aabb.upperBound.x + aabbMargin;
-				fatAABB.upperBound.y = aabb.upperBound.y + aabbMargin;
+				fatAABB.lowerBound.x = aabb.lowerBound.x - margin;
+				fatAABB.lowerBound.y = aabb.lowerBound.y - margin;
+				fatAABB.upperBound.x = aabb.upperBound.x + margin;
+				fatAABB.upperBound.y = aabb.upperBound.y + margin;
 				shape->fatAABB = fatAABB;
 
 				shape->enlargedAABB = true;
@@ -599,11 +599,12 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 			if ( b2AABB_Contains( shape->fatAABB, shape->aabb ) == false )
 			{
+				float margin = shape->aabbMargin;
 				b2AABB fatAABB;
-				fatAABB.lowerBound.x = shape->aabb.lowerBound.x - aabbMargin;
-				fatAABB.lowerBound.y = shape->aabb.lowerBound.y - aabbMargin;
-				fatAABB.upperBound.x = shape->aabb.upperBound.x + aabbMargin;
-				fatAABB.upperBound.y = shape->aabb.upperBound.y + aabbMargin;
+				fatAABB.lowerBound.x = shape->aabb.lowerBound.x - margin;
+				fatAABB.lowerBound.y = shape->aabb.lowerBound.y - margin;
+				fatAABB.upperBound.x = shape->aabb.upperBound.x + margin;
+				fatAABB.upperBound.y = shape->aabb.upperBound.y + margin;
 				shape->fatAABB = fatAABB;
 
 				shape->enlargedAABB = true;
@@ -629,7 +630,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
 {
-	b2TracyCZoneNC( finalize_transfprms, "Transforms", b2_colorMediumSeaGreen, true );
+	b2TracyCZoneNC( finalize_transforms, "Transforms", b2_colorMediumSeaGreen, true );
 
 	b2StepContext* stepContext = context;
 	b2World* world = stepContext->world;
@@ -656,7 +657,6 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 	bool enableContinuous = world->enableContinuous;
 
 	const float speculativeDistance = B2_SPECULATIVE_DISTANCE;
-	const float aabbMargin = B2_AABB_MARGIN;
 
 	B2_ASSERT( startIndex <= endIndex );
 
@@ -682,6 +682,12 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 
 		b2Vec2 v = state->linearVelocity;
 		float w = state->angularVelocity;
+
+		if ( b2IsValidVec2( v ) == false )
+		{
+			b2Body* debugBody = bodies + sim->bodyId;
+			b2Log( "bad body: %s\n", debugBody->name );
+		}
 
 		B2_ASSERT( b2IsValidVec2( v ) );
 		B2_ASSERT( b2IsValidFloat( w ) );
@@ -811,11 +817,12 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 
 				if ( b2AABB_Contains( shape->fatAABB, aabb ) == false )
 				{
+					float margin = shape->aabbMargin;
 					b2AABB fatAABB;
-					fatAABB.lowerBound.x = aabb.lowerBound.x - aabbMargin;
-					fatAABB.lowerBound.y = aabb.lowerBound.y - aabbMargin;
-					fatAABB.upperBound.x = aabb.upperBound.x + aabbMargin;
-					fatAABB.upperBound.y = aabb.upperBound.y + aabbMargin;
+					fatAABB.lowerBound.x = aabb.lowerBound.x - margin;
+					fatAABB.lowerBound.y = aabb.lowerBound.y - margin;
+					fatAABB.upperBound.x = aabb.upperBound.x + margin;
+					fatAABB.upperBound.y = aabb.upperBound.y + margin;
 					shape->fatAABB = fatAABB;
 
 					shape->enlargedAABB = true;
@@ -829,7 +836,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		}
 	}
 
-	b2TracyCZoneEnd( finalize_transfprms );
+	b2TracyCZoneEnd( finalize_transforms );
 }
 
 /*
@@ -891,11 +898,13 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 		case b2_stageSolve:
 			if ( blockType == b2_graphContactBlock )
 			{
-				b2SolveContactsTask( startIndex, endIndex, context, stage->colorIndex, true );
+				bool useBias = true;
+				b2SolveContactsTask( startIndex, endIndex, context, stage->colorIndex, useBias );
 			}
 			else if ( blockType == b2_graphJointBlock )
 			{
-				b2SolveJointsTask( startIndex, endIndex, context, stage->colorIndex, true, workerIndex );
+				bool useBias = true;
+				b2SolveJointsTask( startIndex, endIndex, context, stage->colorIndex, useBias, workerIndex );
 			}
 			break;
 
@@ -906,11 +915,13 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 		case b2_stageRelax:
 			if ( blockType == b2_graphContactBlock )
 			{
-				b2SolveContactsTask( startIndex, endIndex, context, stage->colorIndex, false );
+				bool useBias = false;
+				b2SolveContactsTask( startIndex, endIndex, context, stage->colorIndex, useBias );
 			}
 			else if ( blockType == b2_graphJointBlock )
 			{
-				b2SolveJointsTask( startIndex, endIndex, context, stage->colorIndex, false, workerIndex );
+				bool useBias = false;
+				b2SolveJointsTask( startIndex, endIndex, context, stage->colorIndex, useBias, workerIndex );
 			}
 			break;
 
@@ -1092,23 +1103,24 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 		int graphSyncIndex = 1;
 
 		// Single-threaded overflow work. These constraints don't fit in the graph coloring.
+		// todo these could be prepared in parallel
 		b2PrepareOverflowJoints( context );
 		b2PrepareOverflowContacts( context );
 
 		profile->prepareConstraints += b2GetMillisecondsAndReset( &ticks );
 
 		int subStepCount = context->subStepCount;
-		for ( int i = 0; i < subStepCount; ++i )
+		for ( int subStepIndex = 0; subStepIndex < subStepCount; ++subStepIndex )
 		{
 			// stage index restarted each iteration
 			// syncBits still increases monotonically because the upper bits increase each iteration
-			int iterStageIndex = stageIndex;
+			int iterationStageIndex = stageIndex;
 
 			// integrate velocities
-			syncBits = ( bodySyncIndex << 16 ) | iterStageIndex;
-			B2_ASSERT( stages[iterStageIndex].type == b2_stageIntegrateVelocities );
-			b2ExecuteMainStage( stages + iterStageIndex, context, syncBits );
-			iterStageIndex += 1;
+			syncBits = ( bodySyncIndex << 16 ) | iterationStageIndex;
+			B2_ASSERT( stages[iterationStageIndex].type == b2_stageIntegrateVelocities );
+			b2ExecuteMainStage( stages + iterationStageIndex, context, syncBits );
+			iterationStageIndex += 1;
 			bodySyncIndex += 1;
 
 			profile->integrateVelocities += b2GetMillisecondsAndReset( &ticks );
@@ -1119,10 +1131,10 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 
 			for ( int colorIndex = 0; colorIndex < activeColorCount; ++colorIndex )
 			{
-				syncBits = ( graphSyncIndex << 16 ) | iterStageIndex;
-				B2_ASSERT( stages[iterStageIndex].type == b2_stageWarmStart );
-				b2ExecuteMainStage( stages + iterStageIndex, context, syncBits );
-				iterStageIndex += 1;
+				syncBits = ( graphSyncIndex << 16 ) | iterationStageIndex;
+				B2_ASSERT( stages[iterationStageIndex].type == b2_stageWarmStart );
+				b2ExecuteMainStage( stages + iterationStageIndex, context, syncBits );
+				iterationStageIndex += 1;
 			}
 			graphSyncIndex += 1;
 
@@ -1139,10 +1151,10 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 
 				for ( int colorIndex = 0; colorIndex < activeColorCount; ++colorIndex )
 				{
-					syncBits = ( graphSyncIndex << 16 ) | iterStageIndex;
-					B2_ASSERT( stages[iterStageIndex].type == b2_stageSolve );
-					b2ExecuteMainStage( stages + iterStageIndex, context, syncBits );
-					iterStageIndex += 1;
+					syncBits = ( graphSyncIndex << 16 ) | iterationStageIndex;
+					B2_ASSERT( stages[iterationStageIndex].type == b2_stageSolve );
+					b2ExecuteMainStage( stages + iterationStageIndex, context, syncBits );
+					iterationStageIndex += 1;
 				}
 				graphSyncIndex += 1;
 			}
@@ -1150,10 +1162,10 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 			profile->solveImpulses += b2GetMillisecondsAndReset( &ticks );
 
 			// integrate positions
-			B2_ASSERT( stages[iterStageIndex].type == b2_stageIntegratePositions );
-			syncBits = ( bodySyncIndex << 16 ) | iterStageIndex;
-			b2ExecuteMainStage( stages + iterStageIndex, context, syncBits );
-			iterStageIndex += 1;
+			B2_ASSERT( stages[iterationStageIndex].type == b2_stageIntegratePositions );
+			syncBits = ( bodySyncIndex << 16 ) | iterationStageIndex;
+			b2ExecuteMainStage( stages + iterationStageIndex, context, syncBits );
+			iterationStageIndex += 1;
 			bodySyncIndex += 1;
 
 			profile->integratePositions += b2GetMillisecondsAndReset( &ticks );
@@ -1167,10 +1179,10 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 
 				for ( int colorIndex = 0; colorIndex < activeColorCount; ++colorIndex )
 				{
-					syncBits = ( graphSyncIndex << 16 ) | iterStageIndex;
-					B2_ASSERT( stages[iterStageIndex].type == b2_stageRelax );
-					b2ExecuteMainStage( stages + iterStageIndex, context, syncBits );
-					iterStageIndex += 1;
+					syncBits = ( graphSyncIndex << 16 ) | iterationStageIndex;
+					B2_ASSERT( stages[iterationStageIndex].type == b2_stageRelax );
+					b2ExecuteMainStage( stages + iterationStageIndex, context, syncBits );
+					iterationStageIndex += 1;
 				}
 				graphSyncIndex += 1;
 			}
@@ -1424,7 +1436,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					colorContactBlockSizes[c] = blocksPerWorker;
 
 					// This math makes sure there is at least one block
-					//colorContactBlockCounts[c] = ( ( colorContactCountSIMD - 1 ) >> 2 ) + 1;
+					// colorContactBlockCounts[c] = ( ( colorContactCountSIMD - 1 ) >> 2 ) + 1;
 					colorContactBlockCounts[c] = ( ( colorContactCountSIMD - 1 ) / blocksPerWorker ) + 1;
 				}
 				else
@@ -1447,7 +1459,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				{
 					// dividing by blocksPerWorker (4)
 					colorJointBlockSizes[c] = blocksPerWorker;
-					//colorJointBlockCounts[c] = ( ( colorJointCount - 1 ) >> 2 ) + 1;
+					// colorJointBlockCounts[c] = ( ( colorJointCount - 1 ) >> 2 ) + 1;
 					colorJointBlockCounts[c] = ( ( colorJointCount - 1 ) / 4 ) + 1;
 				}
 				else
@@ -1471,7 +1483,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2JointSim** joints = b2AllocateArenaItem( &world->arena, awakeJointCount * sizeof( b2JointSim* ), "joint pointers" );
 
 		int simdConstraintSize = b2GetContactConstraintSIMDByteCount();
-		b2ContactConstraintSIMD* simdContactConstraints =
+		struct b2ContactConstraintWide* wideContactConstraints =
 			b2AllocateArenaItem( &world->arena, simdContactCount * simdConstraintSize, "contact constraint" );
 
 		int overflowContactCount = colors[B2_OVERFLOW_INDEX].contactSims.count;
@@ -1493,12 +1505,12 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 				if ( colorContactCount == 0 )
 				{
-					color->simdConstraints = NULL;
+					color->wideConstraints = NULL;
 				}
 				else
 				{
-					color->simdConstraints =
-						(b2ContactConstraintSIMD*)( (uint8_t*)simdContactConstraints + contactBase * simdConstraintSize );
+					color->wideConstraints =
+						(struct b2ContactConstraintWide*)( (uint8_t*)wideContactConstraints + contactBase * simdConstraintSize );
 
 					for ( int k = 0; k < colorContactCount; ++k )
 					{
@@ -1529,7 +1541,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		// Define work blocks for preparing contacts and storing contact impulses
 		int contactBlockSize = blocksPerWorker;
-		//int contactBlockCount = simdContactCount > 0 ? ( ( simdContactCount - 1 ) >> 2 ) + 1 : 0;
+		// int contactBlockCount = simdContactCount > 0 ? ( ( simdContactCount - 1 ) >> 2 ) + 1 : 0;
 		int contactBlockCount = simdContactCount > 0 ? ( ( simdContactCount - 1 ) / blocksPerWorker ) + 1 : 0;
 		if ( simdContactCount > contactBlockSize * maxBlockCount )
 		{
@@ -1540,7 +1552,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		// Define work blocks for preparing joints
 		int jointBlockSize = blocksPerWorker;
-		//int jointBlockCount = awakeJointCount > 0 ? ( ( awakeJointCount - 1 ) >> 2 ) + 1 : 0;
+		// int jointBlockCount = awakeJointCount > 0 ? ( ( awakeJointCount - 1 ) >> 2 ) + 1 : 0;
 		int jointBlockCount = awakeJointCount > 0 ? ( ( awakeJointCount - 1 ) / blocksPerWorker ) + 1 : 0;
 		if ( awakeJointCount > jointBlockSize * maxBlockCount )
 		{
@@ -1636,7 +1648,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		}
 
 		// Prepare graph work blocks
-		b2SolverBlock* graphColorBlocks[B2_GRAPH_COLOR_COUNT] = {0};
+		b2SolverBlock* graphColorBlocks[B2_GRAPH_COLOR_COUNT] = { 0 };
 		b2SolverBlock* baseGraphBlock = graphBlocks;
 
 		for ( int i = 0; i < activeColorCount; ++i )
@@ -1783,7 +1795,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stepContext->graph = graph;
 		stepContext->joints = joints;
 		stepContext->contacts = contacts;
-		stepContext->simdContactConstraints = simdContactConstraints;
+		stepContext->wideContactConstraints = wideContactConstraints;
 		stepContext->activeColorCount = activeColorCount;
 		stepContext->workerCount = workerCount;
 		stepContext->stageCount = stageCount;
@@ -1861,7 +1873,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2FreeArenaItem( &world->arena, bodyBlocks );
 		b2FreeArenaItem( &world->arena, stages );
 		b2FreeArenaItem( &world->arena, overflowContactConstraints );
-		b2FreeArenaItem( &world->arena, simdContactConstraints );
+		b2FreeArenaItem( &world->arena, wideContactConstraints );
 		b2FreeArenaItem( &world->arena, joints );
 		b2FreeArenaItem( &world->arena, contacts );
 
@@ -1962,7 +1974,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					if ( approachSpeed > event.approachSpeed && mp->totalNormalImpulse > 0.0f )
 					{
 						event.approachSpeed = approachSpeed;
-						event.point = mp->point;
+						event.point = mp->clipPoint;
 						hit = true;
 					}
 				}

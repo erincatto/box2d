@@ -555,7 +555,7 @@ void b2DrawDistanceJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 	{
 		b2Vec2 pMin = b2MulAdd( pA, joint->minLength, axis );
 		b2Vec2 pMax = b2MulAdd( pA, joint->maxLength, axis );
-		b2Vec2 offset = b2MulSV( 0.05f * b2_lengthUnitsPerMeter, b2RightPerp( axis ) );
+		b2Vec2 offset = b2MulSV( 0.05f * b2GetLengthUnitsPerMeter(), b2RightPerp( axis ) );
 
 		if ( joint->minLength > B2_LINEAR_SLOP )
 		{

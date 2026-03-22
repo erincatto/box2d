@@ -42,6 +42,6 @@ SpacesInParensOptions:
   ExceptDoubleParentheses: false
   InConditionalStatements: true
   InCStyleCasts: false
-  InEmptyParentheses: true
+  InEmptyParentheses: false
   Other: true
   

@@ -53,6 +53,7 @@ typedef enum b2SolverBlockType
 typedef struct b2SolverBlock
 {
 	int startIndex;
+	// todo make this uint16_t
 	int16_t count;
 	int16_t blockType; // b2SolverBlockType
 	// todo consider false sharing of this atomic
@@ -119,7 +120,7 @@ typedef struct b2StepContext
 	// to constraint graph colors
 	b2ContactSim** contacts;
 
-	struct b2ContactConstraintSIMD* simdContactConstraints;
+	struct b2ContactConstraintWide* wideContactConstraints;
 	int activeColorCount;
 	int workerCount;
 

@@ -2,10 +2,10 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
-#include "constants.h"
 #include "core.h"
 
 #include "box2d/collision.h"
+#include "box2d/constants.h"
 #include "box2d/math_functions.h"
 
 #include <float.h>
@@ -165,20 +165,20 @@ static inline int b2FindSupport( const b2ShapeProxy* proxy, b2Vec2 direction )
 	return bestIndex;
 }
 
-static b2Simplex b2MakeSimplexFromCache( const b2SimplexCache* cache, const b2ShapeProxy* proxyA, const b2ShapeProxy* proxyB )
+static b2Simplex b2MakeSimplexFromCache( b2SimplexCache cache, const b2ShapeProxy* proxyA, const b2ShapeProxy* proxyB )
 {
-	B2_ASSERT( cache->count <= 3 );
+	B2_ASSERT( cache.count <= 3 );
 	b2Simplex s;
 
 	// Copy data from cache.
-	s.count = cache->count;
+	s.count = cache.count;
 
 	b2SimplexVertex* vertices[] = { &s.v1, &s.v2, &s.v3 };
 	for ( int i = 0; i < s.count; ++i )
 	{
 		b2SimplexVertex* v = vertices[i];
-		v->indexA = cache->indexA[i];
-		v->indexB = cache->indexB[i];
+		v->indexA = cache.indexA[i];
+		v->indexB = cache.indexB[i];
 		v->wA = proxyA->points[v->indexA];
 		v->wB = proxyB->points[v->indexB];
 		v->w = b2Sub( v->wA, v->wB );
@@ -203,15 +203,18 @@ static b2Simplex b2MakeSimplexFromCache( const b2SimplexCache* cache, const b2Sh
 	return s;
 }
 
-static void b2MakeSimplexCache( b2SimplexCache* cache, const b2Simplex* simplex )
+static b2SimplexCache b2MakeSimplexCache( const b2Simplex* simplex )
 {
-	cache->count = (uint16_t)simplex->count;
+	b2SimplexCache cache = { 0 };
+	cache.count = (uint16_t)simplex->count;
 	const b2SimplexVertex* vertices[] = { &simplex->v1, &simplex->v2, &simplex->v3 };
 	for ( int i = 0; i < simplex->count; ++i )
 	{
-		cache->indexA[i] = (uint8_t)vertices[i]->indexA;
-		cache->indexB[i] = (uint8_t)vertices[i]->indexB;
+		cache.indexA[i] = (uint8_t)vertices[i]->indexA;
+		cache.indexB[i] = (uint8_t)vertices[i]->indexB;
 	}
+
+	return cache;
 }
 
 static void b2ComputeWitnessPoints( const b2Simplex* s, b2Vec2* a, b2Vec2* b )
@@ -443,7 +446,7 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 	}
 
 	// Initialize the simplex.
-	b2Simplex simplex = b2MakeSimplexFromCache( cache, proxyA, &localProxyB );
+	b2Simplex simplex = b2MakeSimplexFromCache( *cache, proxyA, &localProxyB );
 
 	int simplexIndex = 0;
 	if ( simplexes != NULL && simplexIndex < simplexCapacity )
@@ -587,7 +590,7 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 	output.simplexCount = simplexIndex;
 
 	// Cache the simplex
-	b2MakeSimplexCache( cache, &simplex );
+	*cache = b2MakeSimplexCache( &simplex );
 
 	// Apply radii if requested
 	if ( input->useRadii )
@@ -939,15 +942,14 @@ typedef struct b2SeparationFunction
 	b2SeparationType type;
 } b2SeparationFunction;
 
-static b2SeparationFunction b2MakeSeparationFunction( const b2SimplexCache* cache, const b2ShapeProxy* proxyA,
-													  const b2Sweep* sweepA, const b2ShapeProxy* proxyB, const b2Sweep* sweepB,
-													  float t1 )
+static b2SeparationFunction b2MakeSeparationFunction( b2SimplexCache cache, const b2ShapeProxy* proxyA, const b2Sweep* sweepA,
+													  const b2ShapeProxy* proxyB, const b2Sweep* sweepB, float t1 )
 {
 	b2SeparationFunction f;
 
 	f.proxyA = proxyA;
 	f.proxyB = proxyB;
-	int count = cache->count;
+	int count = cache.count;
 	B2_ASSERT( 0 < count && count < 3 );
 
 	f.sweepA = *sweepA;
@@ -959,8 +961,8 @@ static b2SeparationFunction b2MakeSeparationFunction( const b2SimplexCache* cach
 	if ( count == 1 )
 	{
 		f.type = b2_pointsType;
-		b2Vec2 localPointA = proxyA->points[cache->indexA[0]];
-		b2Vec2 localPointB = proxyB->points[cache->indexB[0]];
+		b2Vec2 localPointA = proxyA->points[cache.indexA[0]];
+		b2Vec2 localPointB = proxyB->points[cache.indexB[0]];
 		b2Vec2 pointA = b2TransformPoint( xfA, localPointA );
 		b2Vec2 pointB = b2TransformPoint( xfB, localPointB );
 		f.axis = b2Normalize( b2Sub( pointB, pointA ) );
@@ -968,12 +970,12 @@ static b2SeparationFunction b2MakeSeparationFunction( const b2SimplexCache* cach
 		return f;
 	}
 
-	if ( cache->indexA[0] == cache->indexA[1] )
+	if ( cache.indexA[0] == cache.indexA[1] )
 	{
 		// Two points on B and one on A.
 		f.type = b2_faceBType;
-		b2Vec2 localPointB1 = proxyB->points[cache->indexB[0]];
-		b2Vec2 localPointB2 = proxyB->points[cache->indexB[1]];
+		b2Vec2 localPointB1 = proxyB->points[cache.indexB[0]];
+		b2Vec2 localPointB2 = proxyB->points[cache.indexB[1]];
 
 		f.axis = b2CrossVS( b2Sub( localPointB2, localPointB1 ), 1.0f );
 		f.axis = b2Normalize( f.axis );
@@ -982,7 +984,7 @@ static b2SeparationFunction b2MakeSeparationFunction( const b2SimplexCache* cach
 		f.localPoint = (b2Vec2){ 0.5f * ( localPointB1.x + localPointB2.x ), 0.5f * ( localPointB1.y + localPointB2.y ) };
 		b2Vec2 pointB = b2TransformPoint( xfB, f.localPoint );
 
-		b2Vec2 localPointA = proxyA->points[cache->indexA[0]];
+		b2Vec2 localPointA = proxyA->points[cache.indexA[0]];
 		b2Vec2 pointA = b2TransformPoint( xfA, localPointA );
 
 		float s = b2Dot( b2Sub( pointA, pointB ), normal );
@@ -995,8 +997,8 @@ static b2SeparationFunction b2MakeSeparationFunction( const b2SimplexCache* cach
 
 	// Two points on A and one or two points on B.
 	f.type = b2_faceAType;
-	b2Vec2 localPointA1 = proxyA->points[cache->indexA[0]];
-	b2Vec2 localPointA2 = proxyA->points[cache->indexA[1]];
+	b2Vec2 localPointA1 = proxyA->points[cache.indexA[0]];
+	b2Vec2 localPointA2 = proxyA->points[cache.indexA[1]];
 
 	f.axis = b2CrossVS( b2Sub( localPointA2, localPointA1 ), 1.0f );
 	f.axis = b2Normalize( f.axis );
@@ -1005,7 +1007,7 @@ static b2SeparationFunction b2MakeSeparationFunction( const b2SimplexCache* cach
 	f.localPoint = (b2Vec2){ 0.5f * ( localPointA1.x + localPointA2.x ), 0.5f * ( localPointA1.y + localPointA2.y ) };
 	b2Vec2 pointA = b2TransformPoint( xfA, f.localPoint );
 
-	b2Vec2 localPointB = proxyB->points[cache->indexB[0]];
+	b2Vec2 localPointB = proxyB->points[cache.indexB[0]];
 	b2Vec2 pointB = b2TransformPoint( xfB, localPointB );
 
 	float s = b2Dot( b2Sub( pointB, pointA ), normal );
@@ -1142,7 +1144,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 	++b2_toiCalls;
 #endif
 
-	b2TOIOutput output;
+	b2TOIOutput output = { 0 };
 	output.state = b2_toiStateUnknown;
 	output.fraction = input->maxFraction;
 
@@ -1160,6 +1162,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 
 	float tMax = input->maxFraction;
 
+	// Setup target distance and tolerance
 	float totalRadius = proxyA->radius + proxyB->radius;
 	float target = b2MaxFloat( B2_LINEAR_SLOP, totalRadius - B2_LINEAR_SLOP );
 	float tolerance = 0.25f * B2_LINEAR_SLOP;
@@ -1171,7 +1174,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 
 	// Prepare input for distance query.
 	b2SimplexCache cache = { 0 };
-	b2DistanceInput distanceInput;
+	b2DistanceInput distanceInput = { 0 };
 	distanceInput.proxyA = input->proxyA;
 	distanceInput.proxyB = input->proxyB;
 	distanceInput.useRadii = false;
@@ -1180,13 +1183,9 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 	// This loop terminates when an axis is repeated (no progress is made).
 	for ( ;; )
 	{
-		b2Transform xfA = b2GetSweepTransform( &sweepA, t1 );
-		b2Transform xfB = b2GetSweepTransform( &sweepB, t1 );
-
-		// Get the distance between shapes. We can also use the results
-		// to get a separating axis.
-		distanceInput.transformA = xfA;
-		distanceInput.transformB = xfB;
+		// Get the distance between shapes. We can also use the results to get a separating axis.
+		distanceInput.transformA = b2GetSweepTransform( &sweepA, t1 );
+		distanceInput.transformB = b2GetSweepTransform( &sweepB, t1 );
 		b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
 
 		// Progressive time of impact. This handles slender geometry well but introduces
@@ -1223,7 +1222,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 
 		if ( distanceOutput.distance <= target + tolerance )
 		{
-			// Victory!
+			// Success!
 			output.state = b2_toiStateHit;
 #if B2_SNOOP_TOI_COUNTERS
 			b2_toiHitCount += 1;
@@ -1238,7 +1237,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 		}
 
 		// Initialize the separating axis.
-		b2SeparationFunction fcn = b2MakeSeparationFunction( &cache, proxyA, &sweepA, proxyB, &sweepB, t1 );
+		b2SeparationFunction fcn = b2MakeSeparationFunction( cache, proxyA, &sweepA, proxyB, &sweepB, t1 );
 #if 0
 		// Dump the curve seen by the root finder
 		{
@@ -1300,8 +1299,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 			// Compute the initial separation of the witness points.
 			float s1 = b2EvaluateSeparation( &fcn, indexA, indexB, t1 );
 
-			// Check for initial overlap. This might happen if the root finder
-			// runs out of iterations.
+			// Check for initial overlap. This might happen if the root finder runs out of iterations.
 			if ( s1 < target - tolerance )
 			{
 				output.state = b2_toiStateFailed;
@@ -1316,7 +1314,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 			// Check for touching
 			if ( s1 <= target + tolerance )
 			{
-				// Victory! t1 should hold the TOI (could be 0.0).
+				// Success! t1 should hold the TOI (could be 0.0).
 				output.state = b2_toiStateHit;
 #if B2_SNOOP_TOI_COUNTERS
 				b2_toiHitCount += 1;
@@ -1336,11 +1334,11 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 			float a1 = t1, a2 = t2;
 			for ( ;; )
 			{
-				// Use a mix of the secant rule and bisection.
+				// Use a mix of false position and bisection.
 				float t;
 				if ( rootIterationCount & 1 )
 				{
-					// Secant rule to improve convergence.
+					// False position to improve convergence.
 					t = a1 + ( target - s1 ) * ( a2 - a1 ) / ( s2 - s1 );
 				}
 				else
@@ -1357,6 +1355,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 
 				float s = b2EvaluateSeparation( &fcn, indexA, indexB, t );
 
+				// Has the separation reached tolerance?
 				if ( b2AbsFloat( s - target ) < tolerance )
 				{
 					// t2 holds a tentative value for t1

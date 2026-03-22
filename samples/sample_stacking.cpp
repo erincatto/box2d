@@ -146,7 +146,7 @@ public:
 	enum
 	{
 		e_maxColumns = 10,
-		e_maxRows = 15,
+		e_maxRows = 80,
 		e_maxBullets = 8
 	};
 
@@ -326,16 +326,37 @@ public:
 		}
 	}
 
+	void Keyboard( int key ) override
+	{
+		bool consumed = false;
+
+		switch ( key )
+		{
+			case 'B':
+				FireBullets();
+				consumed = true;
+				break;
+
+			default:
+				break;
+		}
+
+		if ( consumed == false )
+		{
+			Sample::Keyboard( key );
+		}
+	}
+
 	void UpdateGui() override
 	{
 		float fontSize = ImGui::GetFontSize();
-		float height = 230.0f;
+		float height = 16.0f * fontSize;
 		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
+		ImGui::SetNextWindowSize( ImVec2( 20.0f * fontSize, height ) );
 
 		ImGui::Begin( "Vertical Stack", nullptr, ImGuiWindowFlags_NoResize );
 
-		ImGui::PushItemWidth( 120.0f );
+		ImGui::PushItemWidth( 13.0f * fontSize );
 
 		bool changed = false;
 		const char* shapeTypes[] = { "Circle", "Box" };
@@ -355,7 +376,7 @@ public:
 
 		ImGui::PopItemWidth();
 
-		if ( ImGui::Button( "Fire Bullets" ) || glfwGetKey( m_context->window, GLFW_KEY_B ) == GLFW_PRESS )
+		if ( ImGui::Button( "Fire Bullets" ) )
 		{
 			DestroyBullets();
 			FireBullets();
@@ -438,10 +459,11 @@ public:
 		shapeDef.enableHitEvents = true;
 		// shapeDef.rollingResistance = 0.2f;
 		shapeDef.material.friction = 0.0f;
+		shapeDef.material.restitution = 0.8f;
 
 		float y = 0.75f;
 
-		for ( int i = 0; i < 10; ++i )
+		for ( int i = 0; i < 4; ++i )
 		{
 			bodyDef.position.y = y;
 

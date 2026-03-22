@@ -32,7 +32,7 @@ static b2JointDef b2DefaultJointDef( void )
 	def.torqueThreshold = FLT_MAX;
 	def.constraintHertz = 60.0f;
 	def.constraintDampingRatio = 2.0f;
-	def.drawScale = b2_lengthUnitsPerMeter;
+	def.drawScale = b2GetLengthUnitsPerMeter();
 	return def;
 }
 
@@ -1416,7 +1416,7 @@ void b2WarmStartOverflowJoints( b2StepContext* context )
 
 void b2SolveOverflowJoints( b2StepContext* context, bool useBias )
 {
-	b2TracyCZoneNC( solve_joints, "SolveJoints", b2_colorLemonChiffon, true );
+	b2TracyCZoneNC( solve_joints, "Solve Overflow Joints", b2_colorLemonChiffon, true );
 
 	b2ConstraintGraph* graph = context->graph;
 	b2JointSim* joints = graph->colors[B2_OVERFLOW_INDEX].jointSims.data;

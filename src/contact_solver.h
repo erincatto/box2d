@@ -21,6 +21,7 @@ typedef struct b2ContactConstraintPoint
 
 typedef struct b2ContactConstraint
 {
+	// base-1, 0 for null
 	int indexA;
 	int indexB;
 	b2ContactConstraintPoint points[2];

@@ -6,6 +6,8 @@
 
 #include "box2d/math_functions.h"
 
+#include <stdio.h>
+
 // This sample provides a visual representation of the cross platform determinism unit test.
 // The scenario is designed to produce a chaotic result engaging:
 // - continuous collision
@@ -43,6 +45,11 @@ public:
 		if (m_context->pause == false && m_done == false)
 		{
 			m_done = UpdateFallingHinges( m_worldId, &m_data );
+
+			if (m_done)
+			{
+				printf( "sleep step = %d, hash = 0x%08X\n", m_data.sleepStep, m_data.hash );
+			}
 		}
 		else
 		{

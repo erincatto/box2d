@@ -37,6 +37,12 @@
 #endif
 // clang-format on
 
+#if defined( BOX2D_VALIDATE ) && !defined( NDEBUG )
+#define B2_ENABLE_VALIDATION 1
+#else
+#define B2_ENABLE_VALIDATION 0
+#endif
+
 /**
  * @defgroup base Base
  * Base functionality
@@ -111,12 +117,19 @@ B2_API int b2InternalAssertFcn( const char* condition, const char* fileName, int
 #define B2_ASSERT( condition )                                                                                                   \
 	do                                                                                                                           \
 	{                                                                                                                            \
-		if ( !( condition ) && b2InternalAssertFcn( #condition, __FILE__, (int)__LINE__ ) )                                          \
+		if ( !( condition ) && b2InternalAssertFcn( #condition, __FILE__, (int)__LINE__ ) )                                      \
 			B2_BREAKPOINT;                                                                                                       \
 	}                                                                                                                            \
 	while ( 0 )
 #else
 #define B2_ASSERT( ... ) ( (void)0 )
+#endif
+
+// Validation is used in debug builds
+#if B2_ENABLE_VALIDATION
+#define B2_VALIDATE( condition ) B2_ASSERT( condition )
+#else
+#define B2_VALIDATE( ... ) ( (void)0 )
 #endif
 
 /// Get the absolute number of system ticks. The value is platform specific.

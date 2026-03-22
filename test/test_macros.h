@@ -45,7 +45,6 @@
 		if ( ( C ) == false )                                                                                                    \
 		{                                                                                                                        \
 			printf( "condition false: " #C "\n" );                                                                               \
-			assert( false );                                                                                                     \
 			return 1;                                                                                                            \
 		}                                                                                                                        \
 	}                                                                                                                            \
@@ -57,7 +56,6 @@
 		if ( ( C ) < -( tol ) || ( tol ) < ( C ) )                                                                               \
 		{                                                                                                                        \
 			printf( "condition false: abs(" #C ") < %g\n", tol );                                                                \
-			assert( false );                                                                                                     \
 			return 1;                                                                                                            \
 		}                                                                                                                        \
 	}                                                                                                                            \

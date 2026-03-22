@@ -458,5 +458,7 @@ int DynamicTreeTest( void )
 	RUN_SUBTEST( TreeGridHeightTest );
 	RUN_SUBTEST( TreeGridMovementTest );
 
+	// todo test queries versus brute force
+
 	return 0;
 }

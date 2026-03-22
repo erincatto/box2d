@@ -36,15 +36,14 @@ typedef struct b2BroadPhase
 	b2IntArray moveArray;
 
 	// These are the results from the pair query and are used to create new contacts
-	// in deterministic order.
-	// todo these could be in the step context
+	// in deterministic order. There is a move result linked list for each moving shape and
+	// these follow the dynamic tree query order for determinism.
 	b2MoveResult* moveResults;
 	b2MovePair* movePairs;
 	int movePairCapacity;
 	b2AtomicInt movePairIndex;
 
 	// Tracks shape pairs that have a b2Contact
-	// todo pairSet can grow quite large on the first time step and remain large
 	b2HashSet pairSet;
 
 } b2BroadPhase;

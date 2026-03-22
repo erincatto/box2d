@@ -91,6 +91,9 @@ enum b2ContactSimFlags
 
 	// This contact wants pre-solve events
 	b2_simEnablePreSolveEvents = 0x00200000,
+
+	// This contact has a cached relative transform
+	b2_simRelativeTransformValid = 0x00400000,
 };
 
 /// The class manages contact between two shapes. A contact exists for each overlapping
@@ -100,7 +103,10 @@ typedef struct b2ContactSim
 {
 	int contactId;
 
-#if B2_VALIDATE
+	b2Transform cachedTransformA;
+	b2Transform cachedTransformB;
+
+#if B2_ENABLE_VALIDATION
 	int bodyIdA;
 	int bodyIdB;
 #endif
@@ -133,6 +139,7 @@ typedef struct b2ContactSim
 } b2ContactSim;
 
 void b2InitializeContactRegisters( void );
+bool b2CanCollide( b2ShapeType typeA, b2ShapeType typeB );
 
 void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB );
 void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies );

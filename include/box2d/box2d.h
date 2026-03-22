@@ -152,6 +152,13 @@ B2_API void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionD
 /// @note Advanced feature
 B2_API void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushSpeed );
 
+/// Set the contact point recycling distance. Setting this to zero disables contact point recycling.
+/// Usually in meters.
+B2_API void b2World_SetContactRecycleDistance( b2WorldId worldId, float recycleDistance );
+
+/// Get the contact point recycling distance. Usually in meters.
+B2_API float b2World_GetContactRecycleDistance( b2WorldId worldId );
+
 /// Set the maximum linear speed. Usually in m/s.
 B2_API void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearSpeed );
 
@@ -668,10 +675,10 @@ B2_API int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData
 /// Get the maximum capacity required for retrieving all the overlapped shapes on a sensor shape.
 /// This returns 0 if the provided shape is not a sensor.
 /// @param shapeId the id of a sensor shape
-/// @returns the required capacity to get all the overlaps in b2Shape_GetSensorOverlaps
+/// @returns the required capacity to get all the overlaps in b2Shape_GetSensorData
 B2_API int b2Shape_GetSensorCapacity( b2ShapeId shapeId );
 
-/// Get the overlap data for a sensor shape.
+/// Get the overlap data for a sensor shape computed the previous world step.
 /// @param shapeId the id of a sensor shape
 /// @param visitorIds a user allocated array that is filled with the overlapping shapes (visitors)
 /// @param capacity the capacity of overlappedShapes

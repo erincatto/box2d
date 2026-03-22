@@ -14,6 +14,7 @@ jobs:
     name: ubuntu-gcc
     runs-on: ubuntu-latest
     timeout-minutes: 4
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v4
 
@@ -30,12 +31,13 @@ jobs:
   build-ubuntu-clang:
     name: ubuntu-clang
     runs-on: ubuntu-latest
-
+    timeout-minutes: 4
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v4
     
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_COMPILER=clang -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_COMPILER=clang-18 -DCMAKE_C_FLAGS="-fsanitize=thread -fno-omit-frame-pointer" -DCMAKE_CXX_FLAGS="-fsanitize=thread -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
@@ -47,7 +49,8 @@ jobs:
   build-macos:
     name: macos
     runs-on: macos-latest
-
+    timeout-minutes: 4
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v4
 
@@ -64,6 +67,8 @@ jobs:
   build-windows:
     name: windows
     runs-on: windows-latest
+    timeout-minutes: 4
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
 
     - uses: actions/checkout@v4
@@ -87,6 +92,8 @@ jobs:
   samples-windows-static:
     name: samples-windows-static
     runs-on: windows-latest
+    timeout-minutes: 6
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
 
     - uses: actions/checkout@v4
@@ -105,6 +112,8 @@ jobs:
   samples-windows-dynamic:
     name: samples-windows-dynamic
     runs-on: windows-latest
+    timeout-minutes: 6
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
 
     - uses: actions/checkout@v4
@@ -123,7 +132,8 @@ jobs:
   samples-macos-static:
     name: samples-macos-static
     runs-on: macos-latest
-
+    timeout-minutes: 6
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v4
 
@@ -136,7 +146,8 @@ jobs:
   samples-macos-dynamic:
     name: samples-macos-dynamic
     runs-on: macos-latest
-
+    timeout-minutes: 6
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v4
 
@@ -149,7 +160,8 @@ jobs:
   samples-ubuntu-gcc-static:
     name: samples-ubuntu-gcc-static
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 6
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v4
 
@@ -161,4 +173,3 @@ jobs:
       
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release
-      

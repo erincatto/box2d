@@ -239,6 +239,8 @@ void b2UnlockMutex( b2Mutex* m )
 
 #else
 
+// Fallbacks for unknown platforms
+
 uint64_t b2GetTicks( void )
 {
 	return 0;

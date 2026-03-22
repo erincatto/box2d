@@ -412,13 +412,16 @@ typedef struct b2ShapeDef
 	/// @see enableSensorEvents
 	bool isSensor;
 
-	/// Enable sensor events for this shape. This applies to sensors and non-sensors. False by default, even for sensors.
+	/// Enable sensor events for this shape. This applies to sensors and non-sensors. Both shapes involved must have this flag set to true.
+	/// False by default, even for sensors.
 	bool enableSensorEvents;
 
-	/// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors. False by default.
+	/// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Only one shape involved needs this flag set to true.
+	/// Ignored for sensors. False by default.
 	bool enableContactEvents;
 
-	/// Enable hit events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors. False by default.
+	/// Enable hit events for this shape. Only applies to kinematic and dynamic bodies. Only one shape involved needs this flag set to true.
+	/// Ignored for sensors. False by default.
 	bool enableHitEvents;
 
 	/// Enable pre-solve contact events for this shape. Only applies to dynamic bodies. These are expensive
@@ -1336,6 +1339,16 @@ typedef enum b2HexColor
 	b2_colorBox2DYellow = 0xFFEE8C
 } b2HexColor;
 
+/// The type of contact point drawing
+typedef enum b2ContactDrawType
+{
+	b2_drawContacts_None = 0,
+	b2_drawContacts_Clip = 1,
+	b2_drawContacts_AnchorA = 2,
+	b2_drawContacts_AnchorB = 3,
+	b2_drawContacts_Average = 4,
+} b2ContactDrawType;
+
 /// This struct holds callbacks you can implement to draw a Box2D world.
 /// This structure should be zero initialized.
 /// @ingroup world
@@ -1378,6 +1391,9 @@ typedef struct b2DebugDraw
 	/// Global scaling for joint drawing
 	float jointScale;
 
+	/// Option to draw contact points
+	b2ContactDrawType contactDrawType;
+
 	/// Option to draw shapes
 	bool drawShapes;
 
@@ -1395,9 +1411,6 @@ typedef struct b2DebugDraw
 
 	/// Option to draw body names
 	bool drawBodyNames;
-
-	/// Option to draw contact points
-	bool drawContactPoints;
 
 	/// Option to visualize the graph coloring used for contacts and joints
 	bool drawGraphColors;

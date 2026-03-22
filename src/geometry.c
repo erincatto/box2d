@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
-#include "constants.h"
 #include "shape.h"
 
 #include "box2d/collision.h"
+#include "box2d/constants.h"
 #include "box2d/math_functions.h"
 
 #include <float.h>
@@ -226,7 +226,7 @@ b2MassData b2ComputeCircleMass( const b2Circle* shape, float density )
 	massData.center = shape->center;
 
 	// inertia about the center of mass
-	massData.rotationalInertia = massData.mass * 0.5f * rr ;
+	massData.rotationalInertia = massData.mass * 0.5f * rr;
 
 	return massData;
 }

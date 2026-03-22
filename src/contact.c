@@ -219,6 +219,12 @@ void b2InitializeContactRegisters( void )
 	}
 }
 
+bool b2CanCollide( b2ShapeType typeA, b2ShapeType typeB )
+{
+	return s_registers[typeA][typeB].fcn != NULL;
+}
+
+// WARNING: this should never fail to create a contact because the pair already exists in the pairSet.
 void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 {
 	b2ShapeType type1 = shapeA->type;
@@ -326,7 +332,7 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 		bodyB->contactCount += 1;
 	}
 
-	// Add to pair set for fast lookup
+	// Add to pair set for fast lookup.
 	uint64_t pairKey = B2_SHAPE_PAIR_KEY( shapeIdA, shapeIdB );
 	b2AddKey( &world->broadPhase.pairSet, pairKey );
 
@@ -335,7 +341,7 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	b2ContactSim* contactSim = b2ContactSimArray_Add( &set->contactSims );
 	contactSim->contactId = contactId;
 
-#if B2_VALIDATE
+#if B2_ENABLE_VALIDATION
 	contactSim->bodyIdA = shapeA->bodyId;
 	contactSim->bodyIdB = shapeB->bodyId;
 #endif
@@ -351,7 +357,7 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contactSim->cache = b2_emptySimplexCache;
 	contactSim->manifold = (b2Manifold){ 0 };
 
-	// These also get updated in the narrow phase
+	// These get updated in the narrow phase, but these are needed for first touch
 	contactSim->friction = world->frictionCallback( shapeA->material.friction, shapeA->material.userMaterialId,
 													shapeB->material.friction, shapeB->material.userMaterialId );
 	contactSim->restitution = world->restitutionCallback( shapeA->material.restitution, shapeA->material.userMaterialId,
@@ -561,7 +567,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 
 		b2Manifold* manifold = &contactSim->manifold;
 		float bestSeparation = manifold->points[0].separation;
-		b2Vec2 bestPoint = manifold->points[0].point;
+		b2Vec2 bestPoint = manifold->points[0].clipPoint;
 
 		// Get deepest point
 		for ( int i = 1; i < manifold->pointCount; ++i )
@@ -570,7 +576,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 			if ( separation < bestSeparation )
 			{
 				bestSeparation = separation;
-				bestPoint = manifold->points[i].point;
+				bestPoint = manifold->points[i].clipPoint;
 			}
 		}
 

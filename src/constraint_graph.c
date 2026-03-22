@@ -62,7 +62,7 @@ void b2DestroyGraph( b2ConstraintGraph* graph )
 	}
 }
 
-// Contacts are always created as non-touching. They get cloned into the constraint
+// Contacts are always created as non-touching. They get moved into the constraint
 // graph once they are found to be touching.
 void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* contact )
 {
@@ -83,7 +83,7 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	B2_ASSERT( typeA == b2_dynamicBody || typeB == b2_dynamicBody );
 
 #if B2_FORCE_OVERFLOW == 0
-	if (typeA == b2_dynamicBody && typeB == b2_dynamicBody)
+	if ( typeA == b2_dynamicBody && typeB == b2_dynamicBody )
 	{
 		// Dynamic constraint colors cannot encroach on colors reserved for static constraints
 		for ( int i = 0; i < B2_DYNAMIC_COLOR_COUNT; ++i )
@@ -212,6 +212,8 @@ void b2RemoveContactFromGraph( b2World* world, int bodyIdA, int bodyIdB, int col
 	}
 }
 
+// Notice that a joint cannot share the same color as a contact between the same two bodies. This means I can solve contacts and
+// joints in parallel with each other within each color.
 static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyIdB, b2BodyType typeA, b2BodyType typeB )
 {
 	B2_ASSERT( typeA == b2_dynamicBody || typeB == b2_dynamicBody );

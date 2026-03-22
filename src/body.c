@@ -743,7 +743,6 @@ void b2Body_SetTransform( b2BodyId bodyId, b2Vec2 position, b2Rot rotation )
 	b2BroadPhase* broadPhase = &world->broadPhase;
 
 	b2Transform transform = bodySim->transform;
-	const float margin = B2_AABB_MARGIN;
 	const float speculativeDistance = B2_SPECULATIVE_DISTANCE;
 
 	int shapeId = body->headShapeId;
@@ -759,6 +758,7 @@ void b2Body_SetTransform( b2BodyId bodyId, b2Vec2 position, b2Rot rotation )
 
 		if ( b2AABB_Contains( shape->fatAABB, aabb ) == false )
 		{
+			float margin = shape->aabbMargin;
 			b2AABB fatAABB;
 			fatAABB.lowerBound.x = aabb.lowerBound.x - margin;
 			fatAABB.lowerBound.y = aabb.lowerBound.y - margin;

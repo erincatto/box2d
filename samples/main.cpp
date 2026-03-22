@@ -424,6 +424,7 @@ static void UpdateUI()
 				ImGui::Checkbox( "Sleep", &s_context.enableSleep );
 				ImGui::Checkbox( "Warm Starting", &s_context.enableWarmStarting );
 				ImGui::Checkbox( "Continuous", &s_context.enableContinuous );
+				ImGui::Checkbox( "Contact Recycling", &s_context.enableRecycling );
 
 				ImGui::Separator();
 
@@ -431,17 +432,30 @@ static void UpdateUI()
 				ImGui::Checkbox( "Joints", &s_context.debugDraw.drawJoints );
 				ImGui::Checkbox( "Joint Extras", &s_context.debugDraw.drawJointExtras );
 				ImGui::Checkbox( "Bounds", &s_context.debugDraw.drawBounds );
-				ImGui::Checkbox( "Contact Points", &s_context.debugDraw.drawContactPoints );
-				ImGui::Checkbox( "Contact Normals", &s_context.debugDraw.drawContactNormals );
-				ImGui::Checkbox( "Contact Features", &s_context.debugDraw.drawContactFeatures );
-				ImGui::Checkbox( "Contact Forces", &s_context.debugDraw.drawContactForces );
-				ImGui::Checkbox( "Friction Forces", &s_context.debugDraw.drawFrictionForces );
 				ImGui::Checkbox( "Mass", &s_context.debugDraw.drawMass );
 				ImGui::Checkbox( "Body Names", &s_context.debugDraw.drawBodyNames );
 				ImGui::Checkbox( "Graph Colors", &s_context.debugDraw.drawGraphColors );
 				ImGui::Checkbox( "Islands", &s_context.debugDraw.drawIslands );
 				ImGui::Checkbox( "Counters", &s_context.drawCounters );
 				ImGui::Checkbox( "Profile", &s_context.drawProfile );
+				ImGui::Separator();
+
+				ImGui::Separator();
+
+				{
+					bool changed = false;
+					const char* drawTypes[] = { "None", "Clip", "AnchorA", "AnchorB", "Average" };
+					int drawType = int( s_context.debugDraw.contactDrawType );
+					changed = changed || ImGui::Combo( "Contact", &drawType, drawTypes, IM_ARRAYSIZE( drawTypes ) );
+					s_context.debugDraw.contactDrawType = b2ContactDrawType( drawType );
+				}
+
+				ImGui::Checkbox( "Contact Normals", &s_context.debugDraw.drawContactNormals );
+				ImGui::Checkbox( "Contact Features", &s_context.debugDraw.drawContactFeatures );
+				ImGui::Checkbox( "Contact Forces", &s_context.debugDraw.drawContactForces );
+				ImGui::Checkbox( "Friction Forces", &s_context.debugDraw.drawFrictionForces );
+
+				ImGui::Separator();
 
 				ImGui::PushItemWidth( 80.0f );
 				ImGui::InputFloat( "Joint Scale", &s_context.debugDraw.jointScale );

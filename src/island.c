@@ -705,7 +705,7 @@ void b2SplitIslandTask( int startIndex, int endIndex, uint32_t threadIndex, void
 	b2TracyCZoneEnd( split );
 }
 
-#if B2_VALIDATE
+#if B2_ENABLE_VALIDATION
 void b2ValidateIsland( b2World* world, int islandId )
 {
 	if ( islandId == B2_NULL_INDEX )

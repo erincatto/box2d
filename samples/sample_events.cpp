@@ -1016,8 +1016,8 @@ public:
 						for (int k = 0; k < manifold.pointCount; ++k)
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							DrawLine( m_draw, point.point, point.point + point.totalNormalImpulse * normal, b2_colorBlueViolet );
-							DrawPoint( m_draw, point.point, 10.0f, b2_colorWhite );
+							DrawLine( m_draw, point.clipPoint, point.clipPoint + point.totalNormalImpulse * normal, b2_colorBlueViolet );
+							DrawPoint( m_draw, point.clipPoint, 10.0f, b2_colorWhite );
 						}
 					}
 				}
@@ -1046,8 +1046,8 @@ public:
 						for (int k = 0; k < manifold.pointCount; ++k)
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							DrawLine( m_draw, point.point, point.point + point.totalNormalImpulse * normal, b2_colorYellowGreen );
-							DrawPoint( m_draw, point.point, 10.0f, b2_colorWhite );
+							DrawLine( m_draw, point.clipPoint, point.clipPoint + point.totalNormalImpulse * normal, b2_colorYellowGreen );
+							DrawPoint( m_draw, point.clipPoint, 10.0f, b2_colorWhite );
 						}
 					}
 				}
@@ -2156,7 +2156,7 @@ public:
 			for (int i = 0; i < data.manifold.pointCount; ++i)
 			{
 				const b2ManifoldPoint* manifoldPoint = data.manifold.points + i;
-				b2Vec2 p1 = manifoldPoint->point;
+				b2Vec2 p1 = manifoldPoint->clipPoint;
 				b2Vec2 p2 = p1 + manifoldPoint->totalNormalImpulse * data.manifold.normal;
 				DrawLine( m_draw, p1, p2, b2_colorCrimson );
 				DrawPoint( m_draw, p1, 6.0f, b2_colorCrimson );
@@ -2549,7 +2549,7 @@ public:
 					if (data.manifold.pointCount > 0)
 					{
 						b2ExplosionDef explosionDef = b2DefaultExplosionDef();
-						explosionDef.position = data.manifold.points[0].point;
+						explosionDef.position = data.manifold.points[0].clipPoint;
 						explosionDef.radius = 1.0f;
 						explosionDef.impulsePerLength = 20.0f;
 						b2World_Explode( m_worldId, &explosionDef );
