@@ -553,14 +553,6 @@ typedef struct b2ManifoldPoint
 	bool persisted;
 } b2ManifoldPoint;
 
-typedef enum b2ManifoldType
-{
-	b2_unknownManifoldType = 0,
-	b2_vertexManifoldType = 1,
-	b2_faceAManifoldType = 2,
-	b2_faceBManifoldType = 3,
-} b2ManifoldType;
-
 /// A contact manifold describes the contact points between colliding shapes.
 /// @note Box2D uses speculative collision so some contact points may be separated.
 typedef struct b2Manifold
