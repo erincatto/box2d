@@ -287,7 +287,6 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 		}
 	}
 
-	// Move pairs will be in shu
 	int pairIndex = b2AtomicFetchAddInt( &broadPhase->movePairIndex, 1 );
 
 	b2MovePair* pair;
@@ -298,12 +297,12 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 	}
 	else
 	{
-		static bool once = false;
-		if ( once == false )
+		static b2AtomicInt once = { 0 };
+		if ( b2AtomicLoadInt(&once) == 0 )
 		{
 			// This means you have too many overlapping objects.
 			b2Log( "Pair buffer capacity of %d exceeded, too many overlaps", broadPhase->movePairCapacity );
-			once = true;
+			b2AtomicStoreInt( &once, 1 );
 		}
 
 		pair = b2Alloc( sizeof( b2MovePair ) );
