@@ -427,10 +427,8 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	// todo these could be in the step context
 	bp->moveResults = b2AllocateArenaItem( alloc, moveCount * sizeof( b2MoveResult ), "move results" );
 
-	// The number of pairs that can be added is capped. So any highly overlapped scene will drop pairs.
-	// This multiplier of 8 is needed for the tiny pyramid sample because the bounding boxes are large
-	// relative to the size of the shapes. I have added B2_AABB_MARGIN_FRACTION to keep make the AABBs smaller.
-	bp->movePairCapacity = B2_PAIR_BUFFER_LIMIT * moveCount;
+	// This capacity can be exceeded if there are many overlapping pairs (e.g. all shapes at the origin)
+	bp->movePairCapacity = 8 * moveCount;
 	bp->movePairs = b2AllocateArenaItem( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
 	b2AtomicStoreInt( &bp->movePairIndex, 0 );
 

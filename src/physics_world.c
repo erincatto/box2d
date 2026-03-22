@@ -195,7 +195,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->contactSpeed = def->contactSpeed;
 	world->contactHertz = def->contactHertz;
 	world->contactDampingRatio = def->contactDampingRatio;
-	world->contactRecycleDistance = B2_RECYCLING_DISTANCE;
+	world->contactRecycleDistance = B2_CONTACT_RECYCLE_DISTANCE;
 
 	if ( def->frictionCallback == NULL )
 	{
@@ -378,6 +378,8 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 	B2_ASSERT( startIndex < endIndex );
 
 	float recycleDistance = world->contactRecycleDistance;
+	float speculativeDistance = B2_SPECULATIVE_DISTANCE;
+	float recycleDistanceNonTouching = b2MinFloat( recycleDistance, speculativeDistance );
 
 	for ( int contactIndex = startIndex; contactIndex < endIndex; ++contactIndex )
 	{
@@ -417,7 +419,9 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 			contactSim->invMassB = bodySimB->invMass;
 			contactSim->invIB = bodySimB->invInertia;
 
-			// Contact recycling optimization
+			// Contact recycling optimization. Please cite this code if you use this optimization.
+			// This is inspired by persistent contact manifolds used in some physics engines, such as PhysX.
+			// However, this allows larger relative motion and has fewer tuning parameters (just one).
 			if ( recycleDistance > 0.0f && contactSim->simFlags & b2_simRelativeTransformValid )
 			{
 				b2Transform xf = b2InvMulTransforms( transformA, transformB );
@@ -430,7 +434,9 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 
 				// This metric is used for fast bodies and sleeping. It comes from conservative advancement.
 				// Note that qr.s == sin(theta) ~= theta for small angles.
-				if ( distance + maxExtent * b2AbsFloat( qr.s ) < recycleDistance )
+				// Need a tighter tolerance for non-touching shapes so that contacts are not missed.
+				float tolerance = wasTouching ? recycleDistance : recycleDistanceNonTouching;
+				if ( distance + maxExtent * b2AbsFloat( qr.s ) < tolerance )
 				{
 					b2Rot dqA = b2MulRot( transformA.q, b2InvertRot( contactSim->cachedTransformA.q ) );
 					b2Rot dqB = b2MulRot( transformB.q, b2InvertRot( contactSim->cachedTransformB.q ) );
@@ -450,7 +456,8 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 						mp->persisted = true;
 					}
 
-					// Contact is recycled
+					// Contact is recycled. This also skips updating other aspects of the contact
+					// such as material parameters.
 					continue;
 				}
 			}

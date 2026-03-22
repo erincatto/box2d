@@ -544,7 +544,7 @@ void Sample::Step()
 
 	if (m_context->enableRecycling)
 	{
-		b2World_SetContactRecycleDistance( m_worldId, B2_RECYCLING_DISTANCE );
+		b2World_SetContactRecycleDistance( m_worldId, B2_CONTACT_RECYCLE_DISTANCE );
 	}
 	else
 	{

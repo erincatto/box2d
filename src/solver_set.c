@@ -152,7 +152,7 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 	b2DestroySolverSet( world, setIndex );
 }
 
-// Islands need to have a deterministic order because data is move to a sleeping set according
+// Islands need to have a deterministic order because data is moved to a sleeping set according
 // to island order.
 void b2TrySleepIsland( b2World* world, int islandId )
 {

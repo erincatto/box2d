@@ -232,7 +232,12 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 
 	B2_ASSERT( 0 <= type1 && type1 < b2_shapeTypeCount );
 	B2_ASSERT( 0 <= type2 && type2 < b2_shapeTypeCount );
-	B2_VALIDATE( b2CanCollide( type1, type2 ) );
+
+	if ( s_registers[type1][type2].fcn == NULL )
+	{
+		// For example, no segment vs segment collision
+		return;
+	}
 
 	if ( s_registers[type1][type2].primary == false )
 	{
