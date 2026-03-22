@@ -298,11 +298,10 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 	else
 	{
 		static b2AtomicInt once = { 0 };
-		if ( b2AtomicLoadInt(&once) == 0 )
+		if ( b2AtomicCompareExchangeInt( &once, 0, 1 ) == 0 )
 		{
 			// This means you have too many overlapping objects.
 			b2Log( "Pair buffer capacity of %d exceeded, too many overlaps", broadPhase->movePairCapacity );
-			b2AtomicStoreInt( &once, 1 );
 		}
 
 		pair = b2Alloc( sizeof( b2MovePair ) );
