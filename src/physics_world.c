@@ -169,7 +169,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->joints = b2JointArray_Create( 16 );
 
 	world->islandIdPool = b2CreateIdPool();
-	world->islands = b2IslandArray_Create( 8 );
+	b2Array_CreateN( world->islands, 8 );
 
 	world->sensors = b2SensorArray_Create( 4 );
 
@@ -1245,9 +1245,9 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 						.upperBound = { -FLT_MAX, -FLT_MAX },
 					};
 
-					int islandBodyId = island->headBody;
-					while ( islandBodyId != B2_NULL_INDEX )
+					for (int bodyIndex = 0; bodyIndex < island->bodies.count; ++bodyIndex)
 					{
+						int islandBodyId = island->bodies.data[bodyIndex];
 						b2Body* islandBody = b2BodyArray_Get( &world->bodies, islandBodyId );
 						int shapeId = islandBody->headShapeId;
 						while ( shapeId != B2_NULL_INDEX )
@@ -1257,8 +1257,6 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 							shapeCount += 1;
 							shapeId = shape->nextShapeId;
 						}
-
-						islandBodyId = islandBody->islandNext;
 					}
 
 					if ( shapeCount > 0 )

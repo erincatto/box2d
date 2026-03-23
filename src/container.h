@@ -31,6 +31,15 @@
 	}                                                                                                                            \
 	while ( 0 )
 
+#define b2Array_CreateN( a, n )                                                                                              \
+	do                                                                                                                           \
+	{                                                                                                                            \
+		( a ).data = (B2_TYPE_OF( ( a ).data ))b2GrowAlloc( NULL, 0, ( n ) );                                                    \
+		( a ).count = 0;                                                                                                         \
+		( a ).capacity = ( n );                                                                                                  \
+	}                                                                                                                            \
+	while ( 0 )
+
 #define b2Array_Destroy( a )                                                                                                     \
 	do                                                                                                                           \
 	{                                                                                                                            \
@@ -129,7 +138,7 @@
 #define b2StackArray_Reserve( a, n )                                                                                             \
 	do                                                                                                                           \
 	{                                                                                                                            \
-		B2_ASSERT( ( a ).data != NULL && (a).capacity > 0 );                                                                                         \
+		B2_ASSERT( ( a ).data != NULL && ( a ).capacity > 0 );                                                                   \
 		if ( ( a ).capacity < n )                                                                                                \
 		{                                                                                                                        \
 			int oldSize = ( a ).capacity * sizeof( *( a ).data );                                                                \
@@ -155,7 +164,7 @@
 		B2_ASSERT( ( a ).data != NULL && ( a ).capacity > 0 );                                                                   \
 		if ( ( a ).count >= ( a ).capacity )                                                                                     \
 		{                                                                                                                        \
-			b2StackArray_Reserve( ( a ), 2 * ( a ).capacity );                                                                          \
+			b2StackArray_Reserve( ( a ), 2 * ( a ).capacity );                                                                   \
 		}                                                                                                                        \
 		( a ).data[( a ).count++] = ( value );                                                                                   \
 	}                                                                                                                            \

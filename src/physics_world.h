@@ -4,6 +4,7 @@
 #pragma once
 
 #include "array.h"
+#include "container.h"
 #include "bitset.h"
 #include "broad_phase.h"
 #include "constraint_graph.h"
@@ -11,6 +12,9 @@
 #include "arena_allocator.h"
 
 #include "box2d/types.h"
+
+typedef struct b2Island b2Island;
+b2DeclareArray( b2Island );
 
 // Per thread task storage
 typedef struct b2TaskContext
@@ -80,8 +84,8 @@ typedef struct b2World
 	// Used to create stable ids for islands
 	b2IdPool islandIdPool;
 
-	// This is a sparse array that maps island ids to the island data stored in the solver sets.
-	b2IslandArray islands;
+	// Persistent islands
+	b2ArrayC(b2Island) islands;
 
 	b2IdPool shapeIdPool;
 	b2IdPool chainIdPool;

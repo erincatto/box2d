@@ -91,10 +91,6 @@ typedef struct b2Body
 	// Need this island index for faster union-find
 	int islandIndex;
 
-	// doubly-linked island list
-	int islandPrev;
-	int islandNext;
-
 	float mass;
 
 	// Rotational inertia about the center of mass.

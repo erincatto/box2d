@@ -37,9 +37,7 @@ b2Island* b2CreateIsland( b2World* world, int setIndex )
 	island->setIndex = setIndex;
 	island->localIndex = set->islandSims.count;
 	island->islandId = islandId;
-	island->headBody = B2_NULL_INDEX;
-	island->tailBody = B2_NULL_INDEX;
-	island->bodyCount = 0;
+	b2StackArray_Create(island->bodies);
 	island->headContact = B2_NULL_INDEX;
 	island->tailContact = B2_NULL_INDEX;
 	island->contactCount = 0;
@@ -105,18 +103,8 @@ static int b2MergeIslands( b2World* world, int islandIdA, int islandIdB )
 	b2Island* islandB = b2IslandArray_Get( &world->islands, islandIdB );
 
 	// Keep the biggest island to reduce cache misses
-	b2Island* big;
-	b2Island* small;
-	if ( islandA->bodyCount >= islandB->bodyCount )
-	{
-		big = islandA;
-		small = islandB;
-	}
-	else
-	{
-		big = islandB;
-		small = islandA;
-	}
+	b2Island* big = ( islandA->bodies.count >= islandB->bodies.count ) ? islandA : islandB;
+	b2Island* small = ( big == islandA ) ? islandB : islandA;
 
 	int bigId = big->islandId;
 
