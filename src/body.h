@@ -88,6 +88,9 @@ typedef struct b2Body
 	// All enabled dynamic and kinematic bodies are in an island.
 	int islandId;
 
+	// Need this island index for faster union-find
+	int islandIndex;
+
 	// doubly-linked island list
 	int islandPrev;
 	int islandNext;

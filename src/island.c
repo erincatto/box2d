@@ -681,6 +681,85 @@ void b2SplitIsland( b2World* world, int baseId )
 	b2FreeArenaItem( alloc, stack );
 }
 
+// Find parent with path halving
+static inline int b2IslandFindParent( int* parents, int node )
+{
+	while ( parents[node] != node )
+	{
+		// todo compare assembly
+		// int grandParent = parents[parents[node]];
+		// parents[node] = grandParent;
+		// node = grandParent;
+
+		parents[node] = parents[parents[node]];
+		node = parents[node];
+	}
+
+	return node;
+}
+
+static inline void b2IslandUnion( int* parents, int node1, int node2 )
+{
+	int root1 = b2IslandFindParent( parents, node1 );
+	int root2 = b2IslandFindParent( parents, node2 );
+	if ( root1 != root2 )
+	{
+		parents[root1] = root2;
+	}
+}
+
+// This uses union-find.
+// https://en.wikipedia.org/wiki/Disjoint-set_data_structure
+void b2SplitIsland2( b2World* world, int baseId )
+{
+	b2Island* baseIsland = b2IslandArray_Get( &world->islands, baseId );
+	B2_ASSERT( baseIsland->constraintRemoveCount > 0 );
+
+	int setIndex = baseIsland->setIndex;
+	B2_ASSERT( setIndex == b2_awakeSet );
+
+	b2ValidateIsland( world, baseId );
+
+	int bodyCount = baseIsland->bodyCount;
+
+	b2ArenaAllocator* alloc = &world->arena;
+
+	// No lock is needed because I ensure the allocator is not used while this task is active.
+	int* parents = b2AllocateArenaItem( alloc, bodyCount * sizeof( int ), "body ids" );
+	for ( int i = 0; i < bodyCount; ++i )
+	{
+		parents[i] = i;
+	}
+
+	int contactId = baseIsland->headContact;
+	while ( contactId != B2_NULL_INDEX )
+	{
+		b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
+		B2_ASSERT( contact->setIndex == b2_awakeSet );
+		B2_ASSERT( contact->islandId == baseId );
+		int colorIndex = contact->colorIndex;
+		B2_ASSERT( 0 <= colorIndex && colorIndex < B2_GRAPH_COLOR_COUNT );
+
+		b2Body* bodyA = b2BodyArray_Get( &world->bodies, contact->edges[0].bodyId );
+		b2Body* bodyB = b2BodyArray_Get( &world->bodies, contact->edges[1].bodyId );
+
+		if ( bodyA->islandIndex == B2_NULL_INDEX || bodyB->islandIndex == B2_NULL_INDEX )
+		{
+			continue;
+		}
+
+		b2IslandUnion( parents, bodyA->islandIndex, bodyB->islandIndex );
+
+		contactId = contact->islandNext;
+	}
+
+	// Done with the base split island. This is delayed because the baseId is used as a marker and it
+	// should not be recycled in while splitting.
+	b2DestroyIsland( world, baseId );
+
+	b2FreeArenaItem( alloc, parents );
+}
+
 // Split an island because some contacts and/or joints have been removed.
 // This is called during the constraint solve while islands are not being touched. This uses DFS and touches a lot of memory,
 // so it can be quite slow.

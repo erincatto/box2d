@@ -91,6 +91,7 @@ static void b2CreateIslandForBody( b2World* world, int setIndex, b2Body* body )
 	b2Island* island = b2CreateIsland( world, setIndex );
 
 	body->islandId = island->islandId;
+	body->islandIndex = 0;
 	island->headBody = body->id;
 	island->tailBody = body->id;
 	island->bodyCount = 1;
@@ -108,7 +109,7 @@ static void b2RemoveBodyFromIsland( b2World* world, b2Body* body )
 	int islandId = body->islandId;
 	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
 
-	// Fix the island's linked list of sims
+	// Fix the island's linked list of bodies
 	if ( body->islandPrev != B2_NULL_INDEX )
 	{
 		b2Body* prevBody = b2BodyArray_Get( &world->bodies, body->islandPrev );

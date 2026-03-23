@@ -4,6 +4,7 @@
 #pragma once
 
 #include "array.h"
+#include "container.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -11,6 +12,8 @@
 typedef struct b2Contact b2Contact;
 typedef struct b2Joint b2Joint;
 typedef struct b2World b2World;
+
+b2DeclareStackArray( int, 8 );
 
 // Deterministic solver
 //
@@ -36,6 +39,7 @@ typedef struct b2Island
 
 	int islandId;
 
+	b2StackArray( int, 8 ) bodies;
 	int headBody;
 	int tailBody;
 	int bodyCount;

@@ -20,6 +20,7 @@ set(BOX2D_SOURCE_FILES
 	contact.h
 	contact_solver.c
 	contact_solver.h
+	container.h
 	core.c
 	core.h
 	ctz.h

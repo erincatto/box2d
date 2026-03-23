@@ -113,14 +113,9 @@ B2_API b2Version b2GetVersion( void );
 #endif
 
 #if !defined( NDEBUG ) || defined( B2_ENABLE_ASSERT )
-B2_API int b2InternalAssertFcn( const char* condition, const char* fileName, int lineNumber );
+B2_API int b2InternalAssert( const char* condition, const char* fileName, int lineNumber );
 #define B2_ASSERT( condition )                                                                                                   \
-	do                                                                                                                           \
-	{                                                                                                                            \
-		if ( !( condition ) && b2InternalAssertFcn( #condition, __FILE__, (int)__LINE__ ) )                                      \
-			B2_BREAKPOINT;                                                                                                       \
-	}                                                                                                                            \
-	while ( 0 )
+	( (void)( ( !!( condition ) ) || ( b2InternalAssert( #condition, __FILE__, (int)( __LINE__ ) ), 0 ) ) )
 #else
 #define B2_ASSERT( ... ) ( (void)0 )
 #endif

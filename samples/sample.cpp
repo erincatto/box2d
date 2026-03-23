@@ -766,7 +766,6 @@ void Sample::UpdateGui()
 		if ( ImPlot::BeginPlot( "Profile", plotSize, ImPlotFlags_NoTitle ) )
 		{
 			ImPlot::SetupAxes( "t", "ms" );
-			// ImPlot::SetupAxes( "t", "ms", 0, ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit );
 			ImPlot::SetupAxesLimits( 0, m_profileCapacity / 60.0, 0.0, maxValue, ImPlotCond_Always );
 			ImPlot::PlotLine( "step", times, stepTimes, count );
 			ImPlot::PlotLine( "collide", times, collideTimes, count );

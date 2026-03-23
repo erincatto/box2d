@@ -159,8 +159,8 @@ void b2TrySleepIsland( b2World* world, int islandId )
 	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
 	B2_ASSERT( island->setIndex == b2_awakeSet );
 
-	// cannot put an island to sleep while it has a pending split
-	if ( island->constraintRemoveCount > 0 )
+	// Cannot put an island to sleep while it has a pending split and more than one body.
+	if ( island->constraintRemoveCount > 0 && island->bodyCount > 1 )
 	{
 		return;
 	}

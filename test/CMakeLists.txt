@@ -4,6 +4,7 @@ set(BOX2D_TEST_FILES
     main.c
     test_bitset.c
     test_collision.c
+	test_container.c
     test_determinism.c
     test_distance.c
 	test_dynamic_tree.c
