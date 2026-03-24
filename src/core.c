@@ -79,7 +79,7 @@ static void b2DefaultLogFcn( const char* message )
 	printf( "Box2D: %s\n", message );
 }
 
-b2LogFcn* b2LogHandler = b2DefaultLogFcn;
+static b2LogFcn* b2LogHandler = b2DefaultLogFcn;
 
 void b2SetLogFcn( b2LogFcn* logFcn )
 {
