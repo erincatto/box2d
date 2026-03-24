@@ -109,8 +109,8 @@ public:
 
 	b2Profile m_profiles[m_profileCapacity];
 	int m_currentProfileIndex;
-	int m_profileReadIndex;
-	int m_profileWriteIndex;
+	uint64_t m_profileReadIndex;
+	uint64_t m_profileWriteIndex;
 
 	b2Profile m_maxProfile;
 	b2Profile m_totalProfile;

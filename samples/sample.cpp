@@ -573,12 +573,12 @@ void Sample::Step()
 		m_stepCount += 1;
 		m_didStep = true;
 
-		if ( m_profileWriteIndex - m_profileReadIndex == m_profileCapacity )
+		if ( m_profileWriteIndex == m_profileCapacity + m_profileReadIndex )
 		{
 			m_profileReadIndex += 1;
 		}
 
-		m_currentProfileIndex = m_profileWriteIndex & ( m_profileCapacity - 1 );
+		m_currentProfileIndex = static_cast<int>(m_profileWriteIndex & ( m_profileCapacity - 1 ));
 		m_profiles[m_currentProfileIndex] = b2World_GetProfile( m_worldId );
 
 		m_profileWriteIndex += 1;
@@ -750,7 +750,7 @@ void Sample::UpdateGui()
 		float stepTimes[m_profileCapacity];
 		float collideTimes[m_profileCapacity];
 		float solveTimes[m_profileCapacity];
-		int count = m_profileWriteIndex - m_profileReadIndex;
+		int count = static_cast<int>(m_profileWriteIndex - m_profileReadIndex);
 		for ( int i = 0; i < count; ++i )
 		{
 			int index = ( m_profileReadIndex + i ) & ( m_profileCapacity - 1 );

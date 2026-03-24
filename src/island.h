@@ -40,6 +40,10 @@ typedef struct b2Island
 
 	int islandId;
 
+	// Keeps track of how many contacts have been removed from this island.
+	// This is used to determine if an island is a candidate for splitting.
+	int constraintRemoveCount;
+
 	// I tried using a stack array for this but the data pointer goes out of
 	// sync when the world island array grows.
 	b2ArrayC( int ) bodies;
@@ -52,9 +56,6 @@ typedef struct b2Island
 	int tailJoint;
 	int jointCount;
 
-	// Keeps track of how many contacts have been removed from this island.
-	// This is used to determine if an island is a candidate for splitting.
-	int constraintRemoveCount;
 } b2Island;
 
 // This is used to move islands across solver sets

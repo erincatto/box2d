@@ -168,16 +168,17 @@ static int TestArrayPop( void )
 {
 	b2ArrayC( uint8_t ) a = { 0 };
 
-	b2Array_Resize( a, 100 );
-	ENSURE( a.capacity == 100 && a.count == 100 );
+	int n = 100;
+	b2Array_Resize( a, n );
+	ENSURE( a.capacity == n && a.count == n );
 
-	for ( int i = 0; i < 100; ++i )
+	for ( int i = 0; i < n; ++i )
 	{
 		b2Array_Push( a, i );
 	}
 
 	int sum = 0;
-	for ( int i = 0; i < a.count; ++i )
+	for ( int i = 0; i < n; ++i )
 	{
 		sum += b2Array_Pop( a );
 	}
