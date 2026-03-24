@@ -103,6 +103,8 @@
 // B2_NULL_INDEX, otherwise it returns the index of the last element (which is now out of bounds).
 #define b2Array_RemoveSwap( a, index ) b2RemoveHelper( ( a ).data, &( a ).count, ( index ), sizeof( *( a ).data ) )
 
+// Typedef for a stack array. A stack array uses a fixed size buffer but can grow on the heap if necessary.
+// Unfortunately the data pointer can go out of sync with stackData if the stack array is a member of a growable array.
 #define b2DeclareStackArray( T, N )                                                                                              \
 	typedef struct b2StackArray_##T##N                                                                                           \
 	{                                                                                                                            \
@@ -112,7 +114,7 @@
 		int capacity;                                                                                                            \
 	} b2StackArray_##T##N
 
-// Define an array. Create must be called before using the array.
+// Used to define a stack array instance
 #define b2StackArray( T, N ) b2StackArray_##T##N
 
 #define b2StackArray_Create( a )                                                                                                 \

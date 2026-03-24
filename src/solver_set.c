@@ -418,6 +418,11 @@ void b2TrySleepIsland( b2World* world, int islandId )
 		island->localIndex = 0;
 	}
 
+	if (world->splitIslandId == islandId)
+	{
+		world->splitIslandId = B2_NULL_INDEX;
+	}
+
 	b2ValidateSolverSets( world );
 }
 

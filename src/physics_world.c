@@ -331,7 +331,7 @@ void b2DestroyWorld( b2WorldId worldId )
 
 	for (int i = 0; i < world->islands.count; ++i)
 	{
-		b2StackArray_Destroy( world->islands.data[i].bodies );
+		b2Array_Destroy( world->islands.data[i].bodies );
 	}
 	b2Array_Destroy( world->islands );
 

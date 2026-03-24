@@ -87,7 +87,7 @@ static void b2CreateIslandForBody( b2World* world, int setIndex, b2Body* body )
 	B2_ASSERT( setIndex != b2_disabledSet );
 
 	b2Island* island = b2CreateIsland( world, setIndex );
-	b2StackArray_Push( island->bodies, body->id );
+	b2Array_Push( island->bodies, body->id );
 	body->islandId = island->islandId;
 	body->islandIndex = 0;
 

@@ -13,7 +13,7 @@ typedef struct b2Contact b2Contact;
 typedef struct b2Joint b2Joint;
 typedef struct b2World b2World;
 
-b2DeclareStackArray( int, 8 );
+b2DeclareArray( int );
 
 // Deterministic solver
 //
@@ -23,10 +23,11 @@ b2DeclareStackArray( int, 8 );
 // - start touching: merge islands - temporary linked list - mark root island dirty - wake all - largest island is root
 // - stop touching: increment constraintRemoveCount
 
-// Persistent island for awake bodies, joints, and contacts
+// Persistent island for awake bodies, joints, and contacts.
+// Contacts are touching.
+// Contacts and joints may connect to static bodies, but static bodies are not in the island.
 // https://en.wikipedia.org/wiki/Component_(graph_theory)
 // https://en.wikipedia.org/wiki/Dynamic_connectivity
-// map from int to solver set and index
 typedef struct b2Island
 {
 	// index of solver set stored in b2World
@@ -39,7 +40,9 @@ typedef struct b2Island
 
 	int islandId;
 
-	b2StackArray( int, 8 ) bodies;
+	// I tried using a stack array for this but the data pointer goes out of
+	// sync when the world island array grows.
+	b2ArrayC( int ) bodies;
 
 	int headContact;
 	int tailContact;
