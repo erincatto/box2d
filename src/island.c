@@ -24,7 +24,7 @@ b2Island* b2CreateIsland( b2World* world, int setIndex )
 	if ( islandId == world->islands.count )
 	{
 		b2Island emptyIsland = { 0 };
-		b2IslandArray_Push( &world->islands, emptyIsland );
+		b2Array_Push( world->islands, emptyIsland );
 	}
 	else
 	{
@@ -33,7 +33,7 @@ b2Island* b2CreateIsland( b2World* world, int setIndex )
 
 	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, setIndex );
 
-	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
+	b2Island* island = b2Array_Get( world->islands, islandId );
 	island->setIndex = setIndex;
 	island->localIndex = set->islandSims.count;
 	island->islandId = islandId;
@@ -60,7 +60,7 @@ void b2DestroyIsland( b2World* world, int islandId )
 	}
 
 	// assume island is empty
-	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
+	b2Island* island = b2Array_Get( world->islands, islandId );
 	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, island->setIndex );
 	int movedIndex = b2IslandSimArray_RemoveSwap( &set->islandSims, island->localIndex );
 	if ( movedIndex != B2_NULL_INDEX )
@@ -68,7 +68,7 @@ void b2DestroyIsland( b2World* world, int islandId )
 		// Fix index on moved element
 		b2IslandSim* movedElement = set->islandSims.data + island->localIndex;
 		int movedId = movedElement->islandId;
-		b2Island* movedIsland = b2IslandArray_Get( &world->islands, movedId );
+		b2Island* movedIsland = b2Array_Get( world->islands, movedId );
 		B2_ASSERT( movedIsland->localIndex == movedIndex );
 		movedIsland->localIndex = island->localIndex;
 	}
@@ -99,126 +99,128 @@ static int b2MergeIslands( b2World* world, int islandIdA, int islandIdB )
 		return islandIdA;
 	}
 
-	b2Island* islandA = b2IslandArray_Get( &world->islands, islandIdA );
-	b2Island* islandB = b2IslandArray_Get( &world->islands, islandIdB );
-
-	// Keep the biggest island to reduce cache misses
-	b2Island* big = ( islandA->bodies.count >= islandB->bodies.count ) ? islandA : islandB;
-	b2Island* small = ( big == islandA ) ? islandB : islandA;
-
-	int bigId = big->islandId;
-
-	// remap island indices (cache misses)
-	int bodyId = small->headBody;
-	while ( bodyId != B2_NULL_INDEX )
+	b2Island* smallIsland;
+	b2Island* bigIsland;
 	{
-		b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
-		body->islandId = bigId;
-		bodyId = body->islandNext;
+		b2Island* islandA = b2Array_Get( world->islands, islandIdA );
+		b2Island* islandB = b2Array_Get( world->islands, islandIdB );
+
+		// Keep the biggest island to reduce cache misses
+		if (islandA->bodies.count >= islandB->bodies.count)
+		{
+			bigIsland = islandA;
+			smallIsland = islandB;
+		}
+		else
+		{
+			bigIsland = islandB;
+			smallIsland = islandA;
+		}
 	}
 
-	int contactId = small->headContact;
+	int bigIslandId = bigIsland->islandId;
+	b2StackArray_Reserve( bigIsland->bodies, bigIsland->bodies.count + smallIsland->bodies.count );
+
+	// Move bodies from smaller island to larger island
+	for ( int i = 0;  i < smallIsland->bodies.count; ++i)
+	{
+		int bodyId = smallIsland->bodies.data[i];
+		b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
+		B2_VALIDATE( body->islandId == smallIsland->islandId );
+		body->islandId = bigIslandId;
+		body->islandIndex = bigIsland->bodies.count;
+		b2StackArray_Push( bigIsland->bodies, bodyId );
+	}
+
+	// Migrate contacts
+	int contactId = smallIsland->headContact;
 	while ( contactId != B2_NULL_INDEX )
 	{
 		b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
-		contact->islandId = bigId;
+		contact->islandId = bigIslandId;
 		contactId = contact->islandNext;
 	}
 
-	int jointId = small->headJoint;
+	// Migrate joints
+	int jointId = smallIsland->headJoint;
 	while ( jointId != B2_NULL_INDEX )
 	{
 		b2Joint* joint = b2JointArray_Get( &world->joints, jointId );
-		joint->islandId = bigId;
+		joint->islandId = bigIslandId;
 		jointId = joint->islandNext;
 	}
 
-	// connect body lists
-	B2_ASSERT( big->tailBody != B2_NULL_INDEX );
-	b2Body* tailBody = b2BodyArray_Get( &world->bodies, big->tailBody );
-	B2_ASSERT( tailBody->islandNext == B2_NULL_INDEX );
-	tailBody->islandNext = small->headBody;
-
-	B2_ASSERT( small->headBody != B2_NULL_INDEX );
-	b2Body* headBody = b2BodyArray_Get( &world->bodies, small->headBody );
-	B2_ASSERT( headBody->islandPrev == B2_NULL_INDEX );
-	headBody->islandPrev = big->tailBody;
-
-	big->tailBody = small->tailBody;
-	big->bodyCount += small->bodyCount;
-
-	// connect contact lists
-	if ( big->headContact == B2_NULL_INDEX )
+	// Connect contacts
+	if ( bigIsland->headContact == B2_NULL_INDEX )
 	{
 		// Big island has no contacts
-		B2_ASSERT( big->tailContact == B2_NULL_INDEX && big->contactCount == 0 );
-		big->headContact = small->headContact;
-		big->tailContact = small->tailContact;
-		big->contactCount = small->contactCount;
+		B2_ASSERT( bigIsland->tailContact == B2_NULL_INDEX && bigIsland->contactCount == 0 );
+		bigIsland->headContact = smallIsland->headContact;
+		bigIsland->tailContact = smallIsland->tailContact;
+		bigIsland->contactCount = smallIsland->contactCount;
 	}
-	else if ( small->headContact != B2_NULL_INDEX )
+	else if ( smallIsland->headContact != B2_NULL_INDEX )
 	{
 		// Both islands have contacts
-		B2_ASSERT( small->tailContact != B2_NULL_INDEX && small->contactCount > 0 );
-		B2_ASSERT( big->tailContact != B2_NULL_INDEX && big->contactCount > 0 );
+		B2_ASSERT( smallIsland->tailContact != B2_NULL_INDEX && smallIsland->contactCount > 0 );
+		B2_ASSERT( bigIsland->tailContact != B2_NULL_INDEX && bigIsland->contactCount > 0 );
 
-		b2Contact* tailContact = b2ContactArray_Get( &world->contacts, big->tailContact );
+		b2Contact* tailContact = b2ContactArray_Get( &world->contacts, bigIsland->tailContact );
 		B2_ASSERT( tailContact->islandNext == B2_NULL_INDEX );
-		tailContact->islandNext = small->headContact;
+		tailContact->islandNext = smallIsland->headContact;
 
-		b2Contact* headContact = b2ContactArray_Get( &world->contacts, small->headContact );
+		b2Contact* headContact = b2ContactArray_Get( &world->contacts, smallIsland->headContact );
 		B2_ASSERT( headContact->islandPrev == B2_NULL_INDEX );
-		headContact->islandPrev = big->tailContact;
+		headContact->islandPrev = bigIsland->tailContact;
 
-		big->tailContact = small->tailContact;
-		big->contactCount += small->contactCount;
+		bigIsland->tailContact = smallIsland->tailContact;
+		bigIsland->contactCount += smallIsland->contactCount;
 	}
 
-	if ( big->headJoint == B2_NULL_INDEX )
+	// Connect joints
+	if ( smallIsland->headJoint == B2_NULL_INDEX )
 	{
 		// Root island has no joints
-		B2_ASSERT( big->tailJoint == B2_NULL_INDEX && big->jointCount == 0 );
-		big->headJoint = small->headJoint;
-		big->tailJoint = small->tailJoint;
-		big->jointCount = small->jointCount;
+		B2_ASSERT( bigIsland->tailJoint == B2_NULL_INDEX && bigIsland->jointCount == 0 );
+		bigIsland->headJoint = smallIsland->headJoint;
+		bigIsland->tailJoint = smallIsland->tailJoint;
+		bigIsland->jointCount = smallIsland->jointCount;
 	}
-	else if ( small->headJoint != B2_NULL_INDEX )
+	else if ( smallIsland->headJoint != B2_NULL_INDEX )
 	{
 		// Both islands have joints
-		B2_ASSERT( small->tailJoint != B2_NULL_INDEX && small->jointCount > 0 );
-		B2_ASSERT( big->tailJoint != B2_NULL_INDEX && big->jointCount > 0 );
+		B2_ASSERT( smallIsland->tailJoint != B2_NULL_INDEX && smallIsland->jointCount > 0 );
+		B2_ASSERT( bigIsland->tailJoint != B2_NULL_INDEX && bigIsland->jointCount > 0 );
 
-		b2Joint* tailJoint = b2JointArray_Get( &world->joints, big->tailJoint );
+		b2Joint* tailJoint = b2JointArray_Get( &world->joints, bigIsland->tailJoint );
 		B2_ASSERT( tailJoint->islandNext == B2_NULL_INDEX );
-		tailJoint->islandNext = small->headJoint;
+		tailJoint->islandNext = smallIsland->headJoint;
 
-		b2Joint* headJoint = b2JointArray_Get( &world->joints, small->headJoint );
+		b2Joint* headJoint = b2JointArray_Get( &world->joints, smallIsland->headJoint );
 		B2_ASSERT( headJoint->islandPrev == B2_NULL_INDEX );
-		headJoint->islandPrev = big->tailJoint;
+		headJoint->islandPrev = bigIsland->tailJoint;
 
-		big->tailJoint = small->tailJoint;
-		big->jointCount += small->jointCount;
+		bigIsland->tailJoint = smallIsland->tailJoint;
+		bigIsland->jointCount += smallIsland->jointCount;
 	}
 
 	// Track removed constraints
-	big->constraintRemoveCount += small->constraintRemoveCount;
+	bigIsland->constraintRemoveCount += smallIsland->constraintRemoveCount;
 
-	small->bodyCount = 0;
-	small->contactCount = 0;
-	small->jointCount = 0;
-	small->headBody = B2_NULL_INDEX;
-	small->headContact = B2_NULL_INDEX;
-	small->headJoint = B2_NULL_INDEX;
-	small->tailBody = B2_NULL_INDEX;
-	small->tailContact = B2_NULL_INDEX;
-	small->tailJoint = B2_NULL_INDEX;
-	small->constraintRemoveCount = 0;
+	b2StackArray_Destroy(smallIsland->bodies);
+	smallIsland->contactCount = 0;
+	smallIsland->jointCount = 0;
+	smallIsland->headContact = B2_NULL_INDEX;
+	smallIsland->headJoint = B2_NULL_INDEX;
+	smallIsland->tailContact = B2_NULL_INDEX;
+	smallIsland->tailJoint = B2_NULL_INDEX;
+	smallIsland->constraintRemoveCount = 0;
 
-	b2DestroyIsland( world, small->islandId );
+	b2DestroyIsland( world, smallIsland->islandId );
 
-	b2ValidateIsland( world, bigId );
+	b2ValidateIsland( world, bigIslandId );
 
-	return bigId;
+	return bigIslandId;
 }
 
 static void b2AddContactToIsland( b2World* world, int islandId, b2Contact* contact )
@@ -227,7 +229,7 @@ static void b2AddContactToIsland( b2World* world, int islandId, b2Contact* conta
 	B2_ASSERT( contact->islandPrev == B2_NULL_INDEX );
 	B2_ASSERT( contact->islandNext == B2_NULL_INDEX );
 
-	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
+	b2Island* island = b2Array_Get( world->islands, islandId );
 
 	if ( island->headContact != B2_NULL_INDEX )
 	{
@@ -296,7 +298,7 @@ void b2UnlinkContact( b2World* world, b2Contact* contact )
 
 	// remove from island
 	int islandId = contact->islandId;
-	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
+	b2Island* island = b2Array_Get( world->islands, islandId );
 
 	if ( contact->islandPrev != B2_NULL_INDEX )
 	{
@@ -339,7 +341,7 @@ static void b2AddJointToIsland( b2World* world, int islandId, b2Joint* joint )
 	B2_ASSERT( joint->islandPrev == B2_NULL_INDEX );
 	B2_ASSERT( joint->islandNext == B2_NULL_INDEX );
 
-	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
+	b2Island* island = b2Array_Get( world->islands, islandId );
 
 	if ( island->headJoint != B2_NULL_INDEX )
 	{
@@ -397,7 +399,7 @@ void b2UnlinkJoint( b2World* world, b2Joint* joint )
 
 	// remove from island
 	int islandId = joint->islandId;
-	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
+	b2Island* island = b2Array_Get( world->islands, islandId );
 
 	if ( joint->islandPrev != B2_NULL_INDEX )
 	{
@@ -435,6 +437,91 @@ void b2UnlinkJoint( b2World* world, b2Joint* joint )
 }
 
 #define B2_CONTACT_REMOVE_THRESHOLD 1
+
+#define B2_NEW_SPLIT 1
+
+#if B2_NEW_SPLIT == 1
+
+// Find parent with path halving
+static inline int b2IslandFindParent( int* parents, int node )
+{
+	while ( parents[node] != node )
+	{
+		// todo compare assembly
+		// int grandParent = parents[parents[node]];
+		// parents[node] = grandParent;
+		// node = grandParent;
+
+		parents[node] = parents[parents[node]];
+		node = parents[node];
+	}
+
+	return node;
+}
+
+static inline void b2IslandUnion( int* parents, int node1, int node2 )
+{
+	int root1 = b2IslandFindParent( parents, node1 );
+	int root2 = b2IslandFindParent( parents, node2 );
+	if ( root1 != root2 )
+	{
+		parents[root1] = root2;
+	}
+}
+
+// This uses union-find.
+// https://en.wikipedia.org/wiki/Disjoint-set_data_structure
+void b2SplitIsland( b2World* world, int baseId )
+{
+	b2Island* baseIsland = b2Array_Get( world->islands, baseId );
+	B2_ASSERT( baseIsland->constraintRemoveCount > 0 );
+
+	int setIndex = baseIsland->setIndex;
+	B2_ASSERT( setIndex == b2_awakeSet );
+
+	b2ValidateIsland( world, baseId );
+
+	int bodyCount = baseIsland->bodies.count;
+
+	b2ArenaAllocator* alloc = &world->arena;
+
+	// No lock is needed because I ensure the allocator is not used while this task is active.
+	int* parents = b2AllocateArenaItem( alloc, bodyCount * sizeof( int ), "body ids" );
+	for ( int i = 0; i < bodyCount; ++i )
+	{
+		parents[i] = i;
+	}
+
+	int contactId = baseIsland->headContact;
+	while ( contactId != B2_NULL_INDEX )
+	{
+		b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
+		B2_ASSERT( contact->setIndex == b2_awakeSet );
+		B2_ASSERT( contact->islandId == baseId );
+		int colorIndex = contact->colorIndex;
+		B2_ASSERT( 0 <= colorIndex && colorIndex < B2_GRAPH_COLOR_COUNT );
+
+		b2Body* bodyA = b2BodyArray_Get( &world->bodies, contact->edges[0].bodyId );
+		b2Body* bodyB = b2BodyArray_Get( &world->bodies, contact->edges[1].bodyId );
+
+		if ( bodyA->islandIndex == B2_NULL_INDEX || bodyB->islandIndex == B2_NULL_INDEX )
+		{
+			continue;
+		}
+
+		b2IslandUnion( parents, bodyA->islandIndex, bodyB->islandIndex );
+
+		contactId = contact->islandNext;
+	}
+
+	// Done with the base split island. This is delayed because the baseId is used as a marker and it
+	// should not be recycled in while splitting.
+	b2DestroyIsland( world, baseId );
+
+	b2FreeArenaItem( alloc, parents );
+}
+
+#else
 
 // Possible optimizations:
 // 2. start from the sleepy bodies and stop processing if a sleep body is connected to a non-sleepy body
@@ -669,84 +756,8 @@ void b2SplitIsland( b2World* world, int baseId )
 	b2FreeArenaItem( alloc, stack );
 }
 
-// Find parent with path halving
-static inline int b2IslandFindParent( int* parents, int node )
-{
-	while ( parents[node] != node )
-	{
-		// todo compare assembly
-		// int grandParent = parents[parents[node]];
-		// parents[node] = grandParent;
-		// node = grandParent;
+#endif
 
-		parents[node] = parents[parents[node]];
-		node = parents[node];
-	}
-
-	return node;
-}
-
-static inline void b2IslandUnion( int* parents, int node1, int node2 )
-{
-	int root1 = b2IslandFindParent( parents, node1 );
-	int root2 = b2IslandFindParent( parents, node2 );
-	if ( root1 != root2 )
-	{
-		parents[root1] = root2;
-	}
-}
-
-// This uses union-find.
-// https://en.wikipedia.org/wiki/Disjoint-set_data_structure
-void b2SplitIsland2( b2World* world, int baseId )
-{
-	b2Island* baseIsland = b2IslandArray_Get( &world->islands, baseId );
-	B2_ASSERT( baseIsland->constraintRemoveCount > 0 );
-
-	int setIndex = baseIsland->setIndex;
-	B2_ASSERT( setIndex == b2_awakeSet );
-
-	b2ValidateIsland( world, baseId );
-
-	int bodyCount = baseIsland->bodyCount;
-
-	b2ArenaAllocator* alloc = &world->arena;
-
-	// No lock is needed because I ensure the allocator is not used while this task is active.
-	int* parents = b2AllocateArenaItem( alloc, bodyCount * sizeof( int ), "body ids" );
-	for ( int i = 0; i < bodyCount; ++i )
-	{
-		parents[i] = i;
-	}
-
-	int contactId = baseIsland->headContact;
-	while ( contactId != B2_NULL_INDEX )
-	{
-		b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
-		B2_ASSERT( contact->setIndex == b2_awakeSet );
-		B2_ASSERT( contact->islandId == baseId );
-		int colorIndex = contact->colorIndex;
-		B2_ASSERT( 0 <= colorIndex && colorIndex < B2_GRAPH_COLOR_COUNT );
-
-		b2Body* bodyA = b2BodyArray_Get( &world->bodies, contact->edges[0].bodyId );
-		b2Body* bodyB = b2BodyArray_Get( &world->bodies, contact->edges[1].bodyId );
-
-		if ( bodyA->islandIndex == B2_NULL_INDEX || bodyB->islandIndex == B2_NULL_INDEX )
-		{
-			continue;
-		}
-
-		b2IslandUnion( parents, bodyA->islandIndex, bodyB->islandIndex );
-
-		contactId = contact->islandNext;
-	}
-
-	// Done with the base split island. This is delayed because the baseId is used as a marker and it
-	// should not be recycled in while splitting.
-	b2DestroyIsland( world, baseId );
-
-	b2FreeArenaItem( alloc, parents );
-}
 
 // Split an island because some contacts and/or joints have been removed.
 // This is called during the constraint solve while islands are not being touched. This uses DFS and touches a lot of memory,
@@ -780,37 +791,21 @@ void b2ValidateIsland( b2World* world, int islandId )
 		return;
 	}
 
-	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
+	b2Island* island = b2Array_Get( world->islands, islandId );
 	B2_ASSERT( island->islandId == islandId );
 	B2_ASSERT( island->setIndex != B2_NULL_INDEX );
-	B2_ASSERT( island->headBody != B2_NULL_INDEX );
 
 	{
-		B2_ASSERT( island->tailBody != B2_NULL_INDEX );
-		B2_ASSERT( island->bodyCount > 0 );
-		if ( island->bodyCount > 1 )
-		{
-			B2_ASSERT( island->tailBody != island->headBody );
-		}
-		B2_ASSERT( island->bodyCount <= b2GetIdCount( &world->bodyIdPool ) );
+		B2_ASSERT( island->bodies.count > 0 );
+		B2_ASSERT( island->bodies.count <= b2GetIdCount( &world->bodyIdPool ) );
 
-		int count = 0;
-		int bodyId = island->headBody;
-		while ( bodyId != B2_NULL_INDEX )
+		for ( int i = 0; i < island->bodies.count; ++i )
 		{
-			b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
+			b2Body* body = b2BodyArray_Get( &world->bodies, island->bodies.data[i] );
 			B2_ASSERT( body->islandId == islandId );
+			B2_ASSERT( body->islandIndex == i );
 			B2_ASSERT( body->setIndex == island->setIndex );
-			count += 1;
-
-			if ( count == island->bodyCount )
-			{
-				B2_ASSERT( bodyId == island->tailBody );
-			}
-
-			bodyId = body->islandNext;
 		}
-		B2_ASSERT( count == island->bodyCount );
 	}
 
 	if ( island->headContact != B2_NULL_INDEX )

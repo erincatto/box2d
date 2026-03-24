@@ -140,7 +140,7 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 		for ( int i = 0; i < islandCount; ++i )
 		{
 			b2IslandSim* islandSrc = set->islandSims.data + i;
-			b2Island* island = b2IslandArray_Get( &world->islands, islandSrc->islandId );
+			b2Island* island = b2Array_Get( world->islands, islandSrc->islandId );
 			island->setIndex = b2_awakeSet;
 			island->localIndex = awakeSet->islandSims.count;
 			b2IslandSim* islandDst = b2IslandSimArray_Add( &awakeSet->islandSims );
@@ -156,11 +156,11 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 // to island order.
 void b2TrySleepIsland( b2World* world, int islandId )
 {
-	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
+	b2Island* island = b2Array_Get( world->islands, islandId );
 	B2_ASSERT( island->setIndex == b2_awakeSet );
 
 	// Cannot put an island to sleep while it has a pending split and more than one body.
-	if ( island->constraintRemoveCount > 0 && island->bodyCount > 1 )
+	if ( island->constraintRemoveCount > 0 && island->bodies.count > 1 )
 	{
 		return;
 	}
@@ -187,7 +187,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 	B2_ASSERT( 0 <= island->localIndex && island->localIndex < awakeSet->islandSims.count );
 
 	sleepSet->setIndex = sleepSetId;
-	sleepSet->bodySims = b2BodySimArray_Create( island->bodyCount );
+	sleepSet->bodySims = b2BodySimArray_Create( island->bodies.count );
 	sleepSet->contactSims = b2ContactSimArray_Create( island->contactCount );
 	sleepSet->jointSims = b2JointSimArray_Create( island->jointCount );
 
@@ -195,12 +195,13 @@ void b2TrySleepIsland( b2World* world, int islandId )
 	// this shuffles around bodies in the awake set
 	{
 		b2SolverSet* disabledSet = b2SolverSetArray_Get( &world->solverSets, b2_disabledSet );
-		int bodyId = island->headBody;
-		while ( bodyId != B2_NULL_INDEX )
+		for (int i = 0; i < island->bodies.count; ++i)
 		{
+			int bodyId = island->bodies.data[i];
 			b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
 			B2_ASSERT( body->setIndex == b2_awakeSet );
 			B2_ASSERT( body->islandId == islandId );
+			B2_ASSERT( body->islandIndex == i );
 
 			// Update the body move event to indicate this body fell asleep
 			// It could happen the body is forced asleep before it ever moves.
@@ -296,8 +297,6 @@ void b2TrySleepIsland( b2World* world, int islandId )
 					movedContact->localIndex = localIndex;
 				}
 			}
-
-			bodyId = body->islandNext;
 		}
 	}
 
@@ -410,7 +409,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			// fix index on moved element
 			b2IslandSim* movedIslandSim = awakeSet->islandSims.data + islandIndex;
 			int movedIslandId = movedIslandSim->islandId;
-			b2Island* movedIsland = b2IslandArray_Get( &world->islands, movedIslandId );
+			b2Island* movedIsland = b2Array_Get( world->islands, movedIslandId );
 			B2_ASSERT( movedIsland->localIndex == movedIslandIndex );
 			movedIsland->localIndex = islandIndex;
 		}
@@ -504,7 +503,7 @@ void b2MergeSolverSets( b2World* world, int setId1, int setId2 )
 			b2IslandSim* islandSrc = set2->islandSims.data + i;
 			int islandId = islandSrc->islandId;
 
-			b2Island* island = b2IslandArray_Get( &world->islands, islandId );
+			b2Island* island = b2Array_Get( world->islands, islandId );
 			island->setIndex = setId1;
 			island->localIndex = set1->islandSims.count;
 

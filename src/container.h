@@ -31,10 +31,10 @@
 	}                                                                                                                            \
 	while ( 0 )
 
-#define b2Array_CreateN( a, n )                                                                                              \
+#define b2Array_CreateN( a, n )                                                                                                  \
 	do                                                                                                                           \
 	{                                                                                                                            \
-		( a ).data = (B2_TYPE_OF( ( a ).data ))b2GrowAlloc( NULL, 0, ( n ) );                                                    \
+		( a ).data = (B2_TYPE_OF( ( a ).data ))b2GrowAlloc( NULL, 0, ( n ) * sizeof( *( a ).data ) );                                                    \
 		( a ).count = 0;                                                                                                         \
 		( a ).capacity = ( n );                                                                                                  \
 	}                                                                                                                            \
@@ -75,15 +75,17 @@
 #define b2Array_Push( a, value )                                                                                                 \
 	do                                                                                                                           \
 	{                                                                                                                            \
+		int elementSize = sizeof( *( a ).data );                                                                                 \
 		if ( ( a ).count >= ( a ).capacity )                                                                                     \
 		{                                                                                                                        \
-			int oldSize = ( a ).capacity * sizeof( *( a ).data );                                                                \
+			int oldSize = ( a ).capacity * elementSize;                                                                          \
 			int newCapacity = ( a ).capacity == 0 ? 8 : 2 * ( a ).capacity;                                                      \
-			int newSize = newCapacity * sizeof( *( a ).data );                                                                   \
+			int newSize = newCapacity * elementSize;                                                                             \
 			( a ).data = (B2_TYPE_OF( ( a ).data ))b2GrowAlloc( ( a ).data, oldSize, newSize );                                  \
 			( a ).capacity = newCapacity;                                                                                        \
 		}                                                                                                                        \
-		( a ).data[( a ).count++] = ( value );                                                                                   \
+		( a ).data[( a ).count] = ( value );                                                                                     \
+		( a ).count += 1;                                                                                                        \
 	}                                                                                                                            \
 	while ( 0 )
 
@@ -95,9 +97,9 @@
 	( (B2_TYPE_OF( ( a ).data ))b2EmplaceHelper( (void**)&( a ).data, &( a ).count, &( a ).capacity, sizeof( *( a ).data ) ) )
 
 // Remove the last element and return it by value.
-#define b2Array_Pop( a ) ( B2_ASSERT( 0 < ( a ).count ), ( a ).data[-1 + a.count--] )
+#define b2Array_Pop( a ) ( B2_ASSERT( 0 < ( a ).count ), ( a ).data[-1 + (a).count--] )
 
-// Remove and element by swapping with the last element. If the index is the last element it returns
+// Remove an element by swapping with the last element. If the index is the last element it returns
 // B2_NULL_INDEX, otherwise it returns the index of the last element (which is now out of bounds).
 #define b2Array_RemoveSwap( a, index ) b2RemoveHelper( ( a ).data, &( a ).count, ( index ), sizeof( *( a ).data ) )
 
@@ -166,29 +168,46 @@
 		{                                                                                                                        \
 			b2StackArray_Reserve( ( a ), 2 * ( a ).capacity );                                                                   \
 		}                                                                                                                        \
-		( a ).data[( a ).count++] = ( value );                                                                                   \
+		( a ).data[( a ).count] = ( value );                                                                                     \
+		( a ).count += 1;                                                                                                        \
 	}                                                                                                                            \
 	while ( 0 )
 
 // Get a pointer to an element
 #define b2StackArray_Get( a, index ) ( B2_ASSERT( 0 <= index && index < ( a ).count ), ( a ).data + index )
 
-// Remove and element by swapping with the last element. If the index is the last element it returns
-// B2_NULL_INDEX, otherwise it returns the index of the last element (which is now out of bounds).
-#define b2StackArray_RemoveSwap( a, index ) b2RemoveHelper( ( a ).data, &( a ).count, ( index ), sizeof( *( a ).data ) )
+// Remove an element from an int arrayA by swapping with the last element. This updates the index contained
+// in the moved element in arrayB. Assumes the integers in arrayA index into arrayB. Assumes
+// the elements of arrayB have an indexName member that is the index in arrayA.
+#define b2RemoveUpdate( arrayA, arrayB, indexB, indexName )                                                                      \
+	do                                                                                                                           \
+	{                                                                                                                            \
+		int lastIndex = ( arrayA ).count - 1;                                                                                    \
+		B2_ASSERT( 0 <= ( indexB ) && ( indexB ) < ( arrayB ).count );                                                           \
+		int indexA = ( arrayB ).data[indexB].indexName;                                                                          \
+		B2_ASSERT( 0 <= indexA && indexA < ( arrayA ).count );                                                                   \
+		if ( indexA != lastIndex )                                                                                               \
+		{                                                                                                                        \
+			int movedIndex = ( arrayA ).data[lastIndex];                                                                         \
+			( arrayA ).data[indexA] = movedIndex;                                                                                \
+			( arrayB ).data[movedIndex].indexName = indexA;                                                                      \
+		}                                                                                                                        \
+		( arrayA ).count -= 1;                                                                                                   \
+	}                                                                                                                            \
+	while ( 0 )
 
-B2_INLINE void* b2EmplaceHelper( void** data, int* count, int* capacity, int elem_size )
+B2_INLINE void* b2EmplaceHelper( void** data, int* count, int* capacity, int elementSize )
 {
 	if ( *count >= *capacity )
 	{
 		int oldCapacity = *capacity;
-		int oldSize = oldCapacity * elem_size;
-		int newCapacity = ( oldCapacity == 0 ? 16 : 2 * oldCapacity );
-		int newSize = newCapacity * elem_size;
+		int oldSize = oldCapacity * elementSize;
+		int newCapacity = ( oldCapacity == 0 ? 8 : 2 * oldCapacity );
+		int newSize = newCapacity * elementSize;
 		*data = b2GrowAlloc( *data, oldSize, newSize );
 		*capacity = newCapacity;
 	}
-	return (char*)*data + ( *count )++ * elem_size;
+	return (char*)*data + ( *count )++ * elementSize;
 }
 
 B2_INLINE int b2RemoveHelper( void* data, int* count, int index, int elementSize )

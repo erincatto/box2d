@@ -328,7 +328,12 @@ void b2DestroyWorld( b2WorldId worldId )
 	b2ChainShapeArray_Destroy( &world->chainShapes );
 	b2ContactArray_Destroy( &world->contacts );
 	b2JointArray_Destroy( &world->joints );
-	b2IslandArray_Destroy( &world->islands );
+
+	for (int i = 0; i < world->islands.count; ++i)
+	{
+		b2StackArray_Destroy( world->islands.data[i].bodies );
+	}
+	b2Array_Destroy( world->islands );
 
 	// Destroy solver sets
 	int setCapacity = world->solverSets.count;
@@ -1820,7 +1825,7 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	fprintf( file, "solver sets: %d\n", b2SolverSetArray_ByteCount( &world->solverSets ) );
 	fprintf( file, "joints: %d\n", b2JointArray_ByteCount( &world->joints ) );
 	fprintf( file, "contacts: %d\n", b2ContactArray_ByteCount( &world->contacts ) );
-	fprintf( file, "islands: %d\n", b2IslandArray_ByteCount( &world->islands ) );
+	fprintf( file, "islands: %d\n", world->islands.capacity * (int)sizeof(b2Island) );
 	fprintf( file, "shapes: %d\n", b2ShapeArray_ByteCount( &world->shapes ) );
 	fprintf( file, "chains: %d\n", b2ChainShapeArray_ByteCount( &world->chainShapes ) );
 	fprintf( file, "\n" );
@@ -2904,7 +2909,7 @@ void b2ValidateSolverSets( b2World* world )
 				for ( int i = 0; i < set->islandSims.count; ++i )
 				{
 					b2IslandSim* islandSim = set->islandSims.data + i;
-					b2Island* island = b2IslandArray_Get( &world->islands, islandSim->islandId );
+					b2Island* island = b2Array_Get( world->islands, islandSim->islandId );
 					B2_ASSERT( island->setIndex == setIndex );
 					B2_ASSERT( island->localIndex == i );
 				}
