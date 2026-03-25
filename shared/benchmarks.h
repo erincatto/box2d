@@ -23,6 +23,8 @@ float StepSpinner( b2WorldId worldId, int stepCount );
 void CreateSmash( b2WorldId worldId );
 void CreateTumbler( b2WorldId worldId );
 void CreateWasher( b2WorldId worldId );
+void CreateJunkyard( b2WorldId worldId );
+float StepJunkyard( b2WorldId worldId, int stepCount );
 
 #ifdef __cplusplus
 }

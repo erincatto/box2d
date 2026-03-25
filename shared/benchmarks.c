@@ -683,3 +683,110 @@ void CreateWasher( b2WorldId worldId )
 		y += 2.1f * a;
 	}
 }
+
+typedef struct
+{
+	b2BodyId pusherId;
+} JunkyardData;
+
+static JunkyardData g_junkyardData;
+
+void CreateJunkyard( b2WorldId worldId )
+{
+	{
+		float gridSize = 1.0f;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+		float y = 0.0f;
+		float x = -80.0f * gridSize;
+		for ( int i = 0; i < 161; ++i )
+		{
+			b2Polygon box = b2MakeOffsetBox( 0.55f * gridSize, 0.5f * gridSize, (b2Vec2){ x, y }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			x += gridSize;
+		}
+
+		y = gridSize;
+		x = -80.0f * gridSize;
+		for ( int i = 0; i < 50; ++i )
+		{
+			b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.55f * gridSize, (b2Vec2){ x, y }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			y += gridSize;
+		}
+
+		y = gridSize;
+		x = 80.0f * gridSize;
+		for ( int i = 0; i < 50; ++i )
+		{
+			b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.55f * gridSize, (b2Vec2){ x, y }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			y += gridSize;
+		}
+	}
+
+	int columnCount = 200;
+	int rowCount = BENCHMARK_DEBUG ? 2 : 40;
+
+	float radius = 0.25f;
+	b2Polygon polygon;
+	{
+		// Fibonacci sphere algorithm
+		const float phi = B2_PI * ( sqrtf( 5.0f ) - 1.0f );
+		b2Vec2 points[5];
+
+		for ( int i = 0; i < 5; ++i )
+		{
+			float theta = phi * i;
+			b2CosSin cs = b2ComputeCosSin( theta );
+			points[i].x = radius * cs.cosine;
+			points[i].y = radius * cs.sine;
+		}
+
+		b2Hull hull = b2ComputeHull( points, 5 );
+		polygon = b2MakePolygon( &hull, 0.0f );
+	}
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+	float side = -0.1f;
+	float yStart = 15.0f;
+
+	for ( int i = 0; i < columnCount; ++i )
+	{
+		float x = 1.5f * ( 2.0f * i - columnCount ) * radius;
+
+		for ( int j = 0; j < rowCount; ++j )
+		{
+			float y = 4.0f * j * radius + yStart;
+
+			bodyDef.position = (b2Vec2){ x + side, y };
+			side = -side;
+
+			b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
+		}
+	}
+
+	bodyDef.type = b2_kinematicBody;
+	bodyDef.position = b2Vec2_zero;
+	g_junkyardData.pusherId = b2CreateBody( worldId, &bodyDef );
+	b2Polygon box = b2MakeOffsetBox( 2.0f, 4.0f, (b2Vec2){ 0.0f, 4.0f }, b2Rot_identity );
+	b2CreatePolygonShape( g_junkyardData.pusherId, &shapeDef, &box );
+}
+
+float StepJunkyard( b2WorldId worldId, int stepCount )
+{
+	float timeStep = 1.0f / 60.0f;
+	float time = timeStep * stepCount;
+	b2CosSin cs = b2ComputeCosSin( 0.2f * time );
+	b2Transform target = { (b2Vec2){ 60.0f * cs.sine, 0.0f }, b2Rot_identity };
+	b2Body_SetTargetTransform( g_junkyardData.pusherId, target, timeStep, true );
+	return 0.0f;
+}

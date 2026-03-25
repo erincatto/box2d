@@ -2109,3 +2109,36 @@ public:
 };
 
 static int benchmarkCapacity = RegisterSample( "Benchmark", "Capacity", BenchmarkCapacity::Create );
+
+class BenchmarkJunkyard : public Sample
+{
+public:
+	explicit BenchmarkJunkyard( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 8.0f, 25.0f };
+			m_context->camera.zoom = 60.0f;
+		}
+
+		CreateJunkyard( m_worldId );
+	}
+
+	void Step() override
+	{
+		if ( m_context->pause == false || m_context->singleStep == true )
+		{
+			StepJunkyard( m_worldId, m_stepCount );
+		}
+
+		Sample::Step();
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new BenchmarkJunkyard( context );
+	}
+};
+
+static int benchmarkJunkyard = RegisterSample( "Benchmark", "Junkyard", BenchmarkJunkyard::Create );

@@ -439,8 +439,7 @@ void b2UnlinkJoint( b2World* world, b2Joint* joint )
 // Find parent of a node. Use path halving to speed up further queries.
 static inline int b2IslandFindParent( int* parents, int node )
 {
-	// Walk the chain of parents to find the node that is
-	// its own parent (the root)
+	// Walk the chain of parents to find the node that is its own parent (the root)
 	while ( parents[node] != node )
 	{
 		int grandParent = parents[parents[node]];
@@ -504,6 +503,8 @@ void b2SplitIsland( b2World* world, int baseId )
 		ranks[i] = 0;
 	}
 
+	b2Body* bodies = world->bodies.data;
+
 	// Union over contacts
 	int contactId = baseHeadContact;
 	while ( contactId != B2_NULL_INDEX )
@@ -512,12 +513,20 @@ void b2SplitIsland( b2World* world, int baseId )
 		B2_VALIDATE( contact->setIndex == b2_awakeSet );
 		B2_VALIDATE( contact->islandId == baseId );
 
-		b2Body* bodyA = b2BodyArray_Get( &world->bodies, contact->edges[0].bodyId );
-		b2Body* bodyB = b2BodyArray_Get( &world->bodies, contact->edges[1].bodyId );
+		int bodyIdA = contact->edges[0].bodyId;
+		int bodyIdB = contact->edges[1].bodyId;
+		B2_VALIDATE( 0 <= bodyIdA && bodyIdA < world->bodies.count );
+		B2_VALIDATE( 0 <= bodyIdB && bodyIdB < world->bodies.count );
+		b2Body* bodyA = bodies + bodyIdA;
+		b2Body* bodyB = bodies + bodyIdB;
+		int islandIndexA = bodyA->islandIndex;
+		int islandIndexB = bodyB->islandIndex;
 
 		// Only connect non-static bodies
-		if ( bodyA->islandIndex != B2_NULL_INDEX && bodyB->islandIndex != B2_NULL_INDEX )
+		if ( islandIndexA != B2_NULL_INDEX && islandIndexB != B2_NULL_INDEX )
 		{
+			B2_VALIDATE( 0 <= islandIndexA && islandIndexA < baseBodyCount );
+			B2_VALIDATE( 0 <= islandIndexB && islandIndexB < baseBodyCount );
 			b2IslandUnion( parents, ranks, bodyA->islandIndex, bodyB->islandIndex );
 		}
 
@@ -532,12 +541,20 @@ void b2SplitIsland( b2World* world, int baseId )
 		B2_VALIDATE( joint->setIndex == b2_awakeSet );
 		B2_VALIDATE( joint->islandId == baseId );
 
-		b2Body* bodyA = b2BodyArray_Get( &world->bodies, joint->edges[0].bodyId );
-		b2Body* bodyB = b2BodyArray_Get( &world->bodies, joint->edges[1].bodyId );
+		int bodyIdA = joint->edges[0].bodyId;
+		int bodyIdB = joint->edges[1].bodyId;
+		B2_VALIDATE( 0 <= bodyIdA && bodyIdA < world->bodies.count );
+		B2_VALIDATE( 0 <= bodyIdB && bodyIdB < world->bodies.count );
+		b2Body* bodyA = bodies + bodyIdA;
+		b2Body* bodyB = bodies + bodyIdB;
+		int islandIndexA = bodyA->islandIndex;
+		int islandIndexB = bodyB->islandIndex;
 
 		// Only connect non-static bodies
-		if ( bodyA->islandIndex != B2_NULL_INDEX && bodyB->islandIndex != B2_NULL_INDEX )
+		if ( islandIndexA != B2_NULL_INDEX && islandIndexB != B2_NULL_INDEX )
 		{
+			B2_VALIDATE( 0 <= islandIndexA && islandIndexA < baseBodyCount );
+			B2_VALIDATE( 0 <= islandIndexB && islandIndexB < baseBodyCount );
 			b2IslandUnion( parents, ranks, bodyA->islandIndex, bodyB->islandIndex );
 		}
 
