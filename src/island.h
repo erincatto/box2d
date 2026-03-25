@@ -15,6 +15,27 @@ typedef struct b2World b2World;
 
 b2DeclareArray( int );
 
+// Cached contact data stored in the island for fast contiguous iteration.
+// Avoids touching b2Contact during union-find in b2SplitIsland.
+typedef struct b2ContactLink
+{
+	int contactId;
+	int bodyIdA;
+	int bodyIdB;
+} b2ContactLink;
+
+b2DeclareArray( b2ContactLink );
+
+// Cached joint data stored in the island for fast contiguous iteration.
+typedef struct b2JointLink
+{
+	int jointId;
+	int bodyIdA;
+	int bodyIdB;
+} b2JointLink;
+
+b2DeclareArray( b2JointLink );
+
 // Deterministic solver
 //
 // Collide all awake contacts
@@ -48,13 +69,12 @@ typedef struct b2Island
 	// sync when the world island array grows.
 	b2ArrayC( int ) bodies;
 
-	int headContact;
-	int tailContact;
-	int contactCount;
-
-	int headJoint;
-	int tailJoint;
-	int jointCount;
+	// Contacts and joints that belong to this island. May connect to static
+	// bodies not in the island.
+	// Each link has the two body ids so that b2SplitIsland's union-find pass
+	// never needs to touch b2Contact/b2Joint.
+	b2ArrayC( b2ContactLink ) contacts;
+	b2ArrayC( b2JointLink ) joints;
 
 } b2Island;
 

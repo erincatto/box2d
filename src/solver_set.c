@@ -188,8 +188,8 @@ void b2TrySleepIsland( b2World* world, int islandId )
 
 	sleepSet->setIndex = sleepSetId;
 	sleepSet->bodySims = b2BodySimArray_Create( island->bodies.count );
-	sleepSet->contactSims = b2ContactSimArray_Create( island->contactCount );
-	sleepSet->jointSims = b2JointSimArray_Create( island->jointCount );
+	sleepSet->contactSims = b2ContactSimArray_Create( island->contacts.count );
+	sleepSet->jointSims = b2JointSimArray_Create( island->joints.count );
 
 	// move awake bodies to sleeping set
 	// this shuffles around bodies in the awake set
@@ -303,10 +303,10 @@ void b2TrySleepIsland( b2World* world, int islandId )
 	// move touching contacts
 	// this shuffles contacts in the awake set
 	{
-		int contactId = island->headContact;
-		while ( contactId != B2_NULL_INDEX )
+		for ( int i = 0; i < island->contacts.count; ++i )
 		{
-			b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
+			b2ContactLink* link = island->contacts.data + i;
+			b2Contact* contact = b2ContactArray_Get( &world->contacts, link->contactId );
 			B2_ASSERT( contact->setIndex == b2_awakeSet );
 			B2_ASSERT( contact->islandId == islandId );
 			int colorIndex = contact->colorIndex;
@@ -342,18 +342,16 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			contact->setIndex = sleepSetId;
 			contact->colorIndex = B2_NULL_INDEX;
 			contact->localIndex = sleepContactIndex;
-
-			contactId = contact->islandNext;
 		}
 	}
 
 	// move joints
 	// this shuffles joints in the awake set
 	{
-		int jointId = island->headJoint;
-		while ( jointId != B2_NULL_INDEX )
+		for ( int i = 0; i < island->joints.count; ++i )
 		{
-			b2Joint* joint = b2JointArray_Get( &world->joints, jointId );
+			b2JointLink* link = island->joints.data + i;
+			b2Joint* joint = b2JointArray_Get( &world->joints, link->jointId );
 			B2_ASSERT( joint->setIndex == b2_awakeSet );
 			B2_ASSERT( joint->islandId == islandId );
 			int colorIndex = joint->colorIndex;
@@ -390,8 +388,6 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			joint->setIndex = sleepSetId;
 			joint->colorIndex = B2_NULL_INDEX;
 			joint->localIndex = sleepJointIndex;
-
-			jointId = joint->islandNext;
 		}
 	}
 

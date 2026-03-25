@@ -332,6 +332,8 @@ void b2DestroyWorld( b2WorldId worldId )
 	for (int i = 0; i < world->islands.count; ++i)
 	{
 		b2Array_Destroy( world->islands.data[i].bodies );
+		b2Array_Destroy( world->islands.data[i].contacts );
+		b2Array_Destroy( world->islands.data[i].joints );
 	}
 	b2Array_Destroy( world->islands );
 
@@ -1825,6 +1827,7 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	fprintf( file, "solver sets: %d\n", b2SolverSetArray_ByteCount( &world->solverSets ) );
 	fprintf( file, "joints: %d\n", b2JointArray_ByteCount( &world->joints ) );
 	fprintf( file, "contacts: %d\n", b2ContactArray_ByteCount( &world->contacts ) );
+	// todo account for body/contact/joint arrays in island
 	fprintf( file, "islands: %d\n", world->islands.capacity * (int)sizeof(b2Island) );
 	fprintf( file, "shapes: %d\n", b2ShapeArray_ByteCount( &world->shapes ) );
 	fprintf( file, "chains: %d\n", b2ChainShapeArray_ByteCount( &world->chainShapes ) );

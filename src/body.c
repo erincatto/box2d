@@ -110,8 +110,8 @@ static void b2RemoveBodyFromIsland( b2World* world, b2Body* body )
 	if (island->bodies.count == 0)
 	{
 		// Destroy empty island
-		B2_ASSERT( island->contactCount == 0 );
-		B2_ASSERT( island->jointCount == 0 );
+		B2_ASSERT( island->contacts.count == 0 );
+		B2_ASSERT( island->joints.count == 0 );
 
 		// Free the island
 		b2DestroyIsland( world, island->islandId );

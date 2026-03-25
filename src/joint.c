@@ -221,8 +221,7 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 	joint->colorIndex = B2_NULL_INDEX;
 	joint->localIndex = B2_NULL_INDEX;
 	joint->islandId = B2_NULL_INDEX;
-	joint->islandPrev = B2_NULL_INDEX;
-	joint->islandNext = B2_NULL_INDEX;
+	joint->islandIndex = B2_NULL_INDEX;
 	joint->drawScale = def->drawScale;
 	joint->type = type;
 	joint->collideConnected = def->collideConnected;
