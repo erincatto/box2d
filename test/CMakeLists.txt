@@ -4,10 +4,10 @@ set(BOX2D_TEST_FILES
     main.c
     test_bitset.c
     test_collision.c
-	test_container.c
+    test_container.c
     test_determinism.c
     test_distance.c
-	test_dynamic_tree.c
+    test_dynamic_tree.c
     test_id.c
     test_macros.h
     test_math.c
@@ -24,8 +24,8 @@ set_target_properties(test PROPERTIES
     C_EXTENSIONS NO
 )
 
-if (BOX2D_COMPILE_WARNING_AS_ERROR)
-	set_target_properties(test PROPERTIES COMPILE_WARNING_AS_ERROR ON)
+if(BOX2D_COMPILE_WARNING_AS_ERROR)
+    set_target_properties(test PROPERTIES COMPILE_WARNING_AS_ERROR ON)
 endif()
 
 # Special access to Box2D internals for testing
