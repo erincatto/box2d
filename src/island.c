@@ -359,8 +359,9 @@ static inline int b2IslandFindParent( int* parents, int node )
 }
 
 // Connect the components containing node1 and node2.
-// Uses rank to keep tree balanced.
-static inline void b2IslandUnion( int* parents, int* ranks, int node1, int node2 )
+// Uses rank to keep tree balanced. Tracks per-component contact and joint counts.
+static inline void b2IslandUnion( int* parents, int* ranks, int node1, int node2, int* contactCounts,
+										 int* jointCounts )
 {
 	int root1 = b2IslandFindParent( parents, node1 );
 	int root2 = b2IslandFindParent( parents, node2 );
@@ -369,15 +370,21 @@ static inline void b2IslandUnion( int* parents, int* ranks, int node1, int node2
 		if ( ranks[root1] < ranks[root2] )
 		{
 			parents[root1] = root2;
+			contactCounts[root2] += contactCounts[root1];
+			jointCounts[root2] += jointCounts[root1];
 		}
 		else if ( ranks[root1] > ranks[root2] )
 		{
 			parents[root2] = root1;
+			contactCounts[root1] += contactCounts[root2];
+			jointCounts[root1] += jointCounts[root2];
 		}
 		else
 		{
 			parents[root2] = root1;
 			ranks[root1] += 1;
+			contactCounts[root1] += contactCounts[root2];
+			jointCounts[root1] += jointCounts[root2];
 		}
 	}
 }
@@ -409,17 +416,22 @@ void b2SplitIsland( b2World* world, int baseId )
 	b2ArenaAllocator* alloc = &world->arena;
 
 	// No lock is needed because I ensure the allocator is not used while this task is active.
-	int* parents = b2AllocateArenaItem( alloc, baseBodyCount * sizeof( int ), "body ids" );
+	// Allocate contactCounts and jointCounts before ranks so ranks can be freed first (LIFO arena).
+	int* parents = b2AllocateArenaItem( alloc, baseBodyCount * sizeof( int ), "parents" );
+	int* contactCounts = b2AllocateArenaItem( alloc, baseBodyCount * sizeof( int ), "contact counts" );
+	int* jointCounts = b2AllocateArenaItem( alloc, baseBodyCount * sizeof( int ), "joint counts" );
 	int* ranks = b2AllocateArenaItem( alloc, baseBodyCount * sizeof( int ), "ranks" );
 	for ( int i = 0; i < baseBodyCount; ++i )
 	{
 		parents[i] = i;
 		ranks[i] = 0;
+		contactCounts[i] = 0;
+		jointCounts[i] = 0;
 	}
 
 	b2Body* bodies = world->bodies.data;
 
-	// Union over contacts
+	// Union over contacts, tracking per-component contact counts
 	for ( int i = 0; i < baseContactCount; ++i )
 	{
 		int bodyIdA = baseContacts[i].bodyIdA;
@@ -436,11 +448,19 @@ void b2SplitIsland( b2World* world, int baseId )
 		{
 			B2_VALIDATE( 0 <= islandIndexA && islandIndexA < baseBodyCount );
 			B2_VALIDATE( 0 <= islandIndexB && islandIndexB < baseBodyCount );
-			b2IslandUnion( parents, ranks, islandIndexA, islandIndexB );
+			b2IslandUnion( parents, ranks, islandIndexA, islandIndexB, contactCounts, jointCounts );
+			int root = b2IslandFindParent( parents, islandIndexA );
+			contactCounts[root] += 1;
+		}
+		else
+		{
+			int islandIndex = islandIndexA != B2_NULL_INDEX ? islandIndexA : islandIndexB;
+			int root = b2IslandFindParent( parents, islandIndex );
+			contactCounts[root] += 1;
 		}
 	}
 
-	// Union over joints
+	// Union over joints, tracking per-component joint counts
 	for ( int i = 0; i < baseJointCount; ++i )
 	{
 		int bodyIdA = baseJoints[i].bodyIdA;
@@ -457,7 +477,15 @@ void b2SplitIsland( b2World* world, int baseId )
 		{
 			B2_VALIDATE( 0 <= islandIndexA && islandIndexA < baseBodyCount );
 			B2_VALIDATE( 0 <= islandIndexB && islandIndexB < baseBodyCount );
-			b2IslandUnion( parents, ranks, islandIndexA, islandIndexB );
+			b2IslandUnion( parents, ranks, islandIndexA, islandIndexB, contactCounts, jointCounts );
+			int root = b2IslandFindParent( parents, islandIndexA );
+			jointCounts[root] += 1;
+		}
+		else
+		{
+			int islandIndex = islandIndexA != B2_NULL_INDEX ? islandIndexA : islandIndexB;
+			int root = b2IslandFindParent( parents, islandIndex );
+			jointCounts[root] += 1;
 		}
 	}
 
@@ -480,6 +508,8 @@ void b2SplitIsland( b2World* world, int baseId )
 	if ( componentCount == 1 )
 	{
 		baseIsland->constraintRemoveCount = 0;
+		b2FreeArenaItem( alloc, jointCounts );
+		b2FreeArenaItem( alloc, contactCounts );
 		b2FreeArenaItem( alloc, parents );
 		return;
 	}
@@ -508,9 +538,12 @@ void b2SplitIsland( b2World* world, int baseId )
 	}
 
 	int* componentBodyCounts = b2AllocateArenaItem( alloc, componentCount * sizeof( int ), "component body counts" );
+	int* componentContactCounts = b2AllocateArenaItem( alloc, componentCount * sizeof( int ), "component contact counts" );
+	int* componentJointCounts = b2AllocateArenaItem( alloc, componentCount * sizeof( int ), "component joint counts" );
 	int islandCount = 0;
 
-	// Find the root body for each body and create islands as needed
+	// Find the root body for each body and create islands as needed.
+	// Extract per-component counts from the root nodes' accumulated counts.
 	for ( int i = 0; i < baseBodyCount; ++i )
 	{
 		int rootIndex = parents[i];
@@ -518,6 +551,8 @@ void b2SplitIsland( b2World* world, int baseId )
 		{
 			rootMap[rootIndex] = islandCount;
 			componentBodyCounts[islandCount] = 0;
+			componentContactCounts[islandCount] = contactCounts[rootIndex];
+			componentJointCounts[islandCount] = jointCounts[rootIndex];
 			islandCount += 1;
 		}
 
@@ -529,13 +564,17 @@ void b2SplitIsland( b2World* world, int baseId )
 	// Map from new island index to island id
 	int* islandIds = b2AllocateArenaItem( alloc, islandCount * sizeof( int ), "island ids" );
 
-	// Create new islands and reserve body arrays
+	// Create new islands and reserve body/contact/joint arrays
 	for ( int i = 0; i < islandCount; ++i )
 	{
 		// WARNING: this invalidates baseIsland pointer
 		b2Island* newIsland = b2CreateIsland( world, b2_awakeSet );
 		islandIds[i] = newIsland->islandId;
+
+		// Reserve arrays to avoid wasteful growth and memcpy.
 		b2Array_Reserve( newIsland->bodies, componentBodyCounts[i] );
+		b2Array_Reserve( newIsland->contacts, componentContactCounts[i] );
+		b2Array_Reserve( newIsland->joints, componentJointCounts[i] );
 	}
 
 	// Assign bodies to new islands
@@ -550,6 +589,9 @@ void b2SplitIsland( b2World* world, int baseId )
 
 		body->islandId = newIslandId;
 		body->islandIndex = newIsland->bodies.count;
+
+		// Ensure the array has the correct capacity
+		B2_VALIDATE( newIsland->bodies.count < newIsland->bodies.capacity );
 		b2Array_Push( newIsland->bodies, bodyId );
 	}
 
@@ -567,6 +609,9 @@ void b2SplitIsland( b2World* world, int baseId )
 		b2Island* targetIsland = b2Array_Get( world->islands, targetIslandId );
 		contact->islandId = targetIslandId;
 		contact->islandIndex = targetIsland->contacts.count;
+
+		// Ensure the array has the correct capacity
+		B2_VALIDATE( targetIsland->contacts.count < targetIsland->contacts.capacity );
 		b2Array_Push( targetIsland->contacts, *link );
 	}
 
@@ -584,6 +629,9 @@ void b2SplitIsland( b2World* world, int baseId )
 		b2Island* targetIsland = b2Array_Get( world->islands, targetIslandId );
 		joint->islandId = targetIslandId;
 		joint->islandIndex = targetIsland->joints.count;
+
+		// Ensure the array has the correct capacity
+		B2_VALIDATE( targetIsland->joints.count < targetIsland->joints.capacity );
 		b2Array_Push( targetIsland->joints, *link );
 	}
 
@@ -595,9 +643,14 @@ void b2SplitIsland( b2World* world, int baseId )
 	b2Free( baseContacts, baseContactCapacity * sizeof( b2ContactLink ) );
 	b2Free( baseJoints, baseJointCapacity * sizeof( b2JointLink ) );
 
+	// Free arena items in LIFO order
 	b2FreeArenaItem( alloc, islandIds );
+	b2FreeArenaItem( alloc, componentJointCounts );
+	b2FreeArenaItem( alloc, componentContactCounts );
 	b2FreeArenaItem( alloc, componentBodyCounts );
 	b2FreeArenaItem( alloc, rootMap );
+	b2FreeArenaItem( alloc, jointCounts );
+	b2FreeArenaItem( alloc, contactCounts );
 	b2FreeArenaItem( alloc, parents );
 }
 

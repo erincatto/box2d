@@ -2030,8 +2030,6 @@ public:
 			m_context->camera.zoom = 200.0f;
 		}
 
-		m_context->enableSleep = false;
-
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.position.y = -5.0f;
