@@ -68,18 +68,24 @@ add_library(jsmn INTERFACE ${JSMN_DIR}/jsmn.h)
 target_include_directories(jsmn INTERFACE ${JSMN_DIR})
 
 # implot for drawing real time plots
-set(IMPLOT_DIR ${CMAKE_SOURCE_DIR}/extern/implot)
+FetchContent_Declare(
+	implot
+	GIT_REPOSITORY https://github.com/epezent/implot.git
+	GIT_TAG v0.17
+	GIT_SHALLOW TRUE
+	GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(implot)
 
-add_library(
-	implot STATIC
-	${IMPLOT_DIR}/implot_demo.cpp
-	${IMPLOT_DIR}/implot.cpp
-	${IMPLOT_DIR}/implot_items.cpp
-	${IMPLOT_DIR}/implot_internal.h
-	${IMPLOT_DIR}/implot.h
+add_library(implot STATIC
+	${implot_SOURCE_DIR}/implot.cpp
+	${implot_SOURCE_DIR}/implot_items.cpp
+	${implot_SOURCE_DIR}/implot_demo.cpp
+	${implot_SOURCE_DIR}/implot.h
+	${implot_SOURCE_DIR}/implot_internal.h
 )
 target_link_libraries(implot PUBLIC imgui)
-target_include_directories(implot PUBLIC ${IMPLOT_DIR})
+target_include_directories(implot PUBLIC ${implot_SOURCE_DIR})
 
 set(BOX2D_SAMPLE_FILES
 	car.cpp

@@ -34,7 +34,7 @@
 #define b2Array_CreateN( a, n )                                                                                                  \
 	do                                                                                                                           \
 	{                                                                                                                            \
-		( a ).data = (B2_TYPE_OF( ( a ).data ))b2GrowAlloc( NULL, 0, ( n ) * sizeof( *( a ).data ) );                                                    \
+		( a ).data = ( n ) > 0 ? b2GrowAlloc( NULL, 0, ( n ) * sizeof( *( a ).data ) ) : NULL;                                   \
 		( a ).count = 0;                                                                                                         \
 		( a ).capacity = ( n );                                                                                                  \
 	}                                                                                                                            \
@@ -57,7 +57,7 @@
 		{                                                                                                                        \
 			int oldSize = ( a ).capacity * sizeof( *( a ).data );                                                                \
 			int newSize = ( n ) * sizeof( *( a ).data );                                                                         \
-			( a ).data = (B2_TYPE_OF( ( a ).data ))b2GrowAlloc( ( a ).data, oldSize, newSize );                                  \
+			( a ).data = b2GrowAlloc( ( a ).data, oldSize, newSize );                                                            \
 			( a ).capacity = ( n );                                                                                              \
 		}                                                                                                                        \
 	}                                                                                                                            \
@@ -81,7 +81,7 @@
 			int oldSize = ( a ).capacity * elementSize;                                                                          \
 			int newCapacity = ( a ).capacity == 0 ? 8 : 2 * ( a ).capacity;                                                      \
 			int newSize = newCapacity * elementSize;                                                                             \
-			( a ).data = (B2_TYPE_OF( ( a ).data ))b2GrowAlloc( ( a ).data, oldSize, newSize );                                  \
+			( a ).data = b2GrowAlloc( ( a ).data, oldSize, newSize );                                                            \
 			( a ).capacity = newCapacity;                                                                                        \
 		}                                                                                                                        \
 		( a ).data[( a ).count] = ( value );                                                                                     \
@@ -94,10 +94,10 @@
 
 // Create a new uninitialized element and return a pointer to it
 #define b2Array_Emplace( a )                                                                                                     \
-	( (B2_TYPE_OF( ( a ).data ))b2EmplaceHelper( (void**)&( a ).data, &( a ).count, &( a ).capacity, sizeof( *( a ).data ) ) )
+	( b2EmplaceHelper( (void**)&( a ).data, &( a ).count, &( a ).capacity, sizeof( *( a ).data ) ) )
 
 // Remove the last element and return it by value.
-#define b2Array_Pop( a ) ( B2_ASSERT( 0 < ( a ).count ), ( a ).data[-1 + (a).count--] )
+#define b2Array_Pop( a ) ( B2_ASSERT( 0 < ( a ).count ), ( a ).data[-1 + ( a ).count--] )
 
 // Remove an element by swapping with the last element. If the index is the last element it returns
 // B2_NULL_INDEX, otherwise it returns the index of the last element (which is now out of bounds).
@@ -149,12 +149,12 @@
 			int newSize = ( n ) * sizeof( *( a ).data );                                                                         \
 			if ( ( a ).data == ( a ).stackData )                                                                                 \
 			{                                                                                                                    \
-				( a ).data = (B2_TYPE_OF( ( a ).data ))b2GrowAlloc( NULL, 0, newSize );                                          \
+				( a ).data = b2GrowAlloc( NULL, 0, newSize );                                                                    \
 				memcpy( ( a ).data, ( a ).stackData, oldSize );                                                                  \
 			}                                                                                                                    \
 			else                                                                                                                 \
 			{                                                                                                                    \
-				( a ).data = (B2_TYPE_OF( ( a ).data ))b2GrowAlloc( ( a ).data, oldSize, newSize );                              \
+				( a ).data = b2GrowAlloc( ( a ).data, oldSize, newSize );                                                        \
 			}                                                                                                                    \
 			( a ).capacity = ( n );                                                                                              \
 		}                                                                                                                        \
