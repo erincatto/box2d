@@ -63,9 +63,14 @@ void b2SetAssertFcn( b2AssertFcn* assertFcn )
 }
 
 #if !defined( NDEBUG ) || defined( B2_ENABLE_ASSERT )
-int b2InternalAssertFcn( const char* condition, const char* fileName, int lineNumber )
+int b2InternalAssert( const char* condition, const char* fileName, int lineNumber )
 {
-	return b2AssertHandler( condition, fileName, lineNumber );
+	int result = b2AssertHandler( condition, fileName, lineNumber );
+	if ( result )
+	{
+		B2_BREAKPOINT;
+	}
+	return result;
 }
 #endif
 
@@ -74,7 +79,7 @@ static void b2DefaultLogFcn( const char* message )
 	printf( "Box2D: %s\n", message );
 }
 
-b2LogFcn* b2LogHandler = b2DefaultLogFcn;
+static b2LogFcn* b2LogHandler = b2DefaultLogFcn;
 
 void b2SetLogFcn( b2LogFcn* logFcn )
 {

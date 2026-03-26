@@ -38,6 +38,7 @@ struct SampleContext
 	bool enableRecycling = true;
 	bool enableSleep = true;
 	bool showUI = true;
+	bool frameTime = false;
 
 	// These are persisted
 	int sampleIndex = 0;
@@ -58,9 +59,7 @@ public:
 
 	void ResetText();
 	virtual void Step( );
-	virtual void UpdateGui()
-	{
-	}
+	virtual void UpdateGui();
 	virtual void Keyboard( int )
 	{
 	}
@@ -81,6 +80,7 @@ public:
 
 	static constexpr int m_maxTasks = 64;
 	static constexpr int m_maxThreads = 64;
+	static constexpr int m_profileCapacity = 512;
 
 #ifdef NDEBUG
 	static constexpr bool m_isDebug = false;
@@ -104,12 +104,18 @@ public:
 	b2Vec2 m_mousePoint;
 	float m_mouseForceScale;
 	int m_stepCount;
+	int m_textLine;
+	int m_textIncrement;
+
+	b2Profile m_profiles[m_profileCapacity];
+	int m_currentProfileIndex;
+	uint64_t m_profileReadIndex;
+	uint64_t m_profileWriteIndex;
+
 	b2Profile m_maxProfile;
 	b2Profile m_totalProfile;
 
-private:
-	int m_textLine;
-	int m_textIncrement;
+	bool m_didStep;
 };
 
 typedef Sample* SampleCreateFcn( SampleContext* context );

@@ -84,77 +84,45 @@ b2BodyState* b2GetBodyState( b2World* world, b2Body* body )
 static void b2CreateIslandForBody( b2World* world, int setIndex, b2Body* body )
 {
 	B2_ASSERT( body->islandId == B2_NULL_INDEX );
-	B2_ASSERT( body->islandPrev == B2_NULL_INDEX );
-	B2_ASSERT( body->islandNext == B2_NULL_INDEX );
 	B2_ASSERT( setIndex != b2_disabledSet );
 
 	b2Island* island = b2CreateIsland( world, setIndex );
-
+	b2Array_Push( island->bodies, body->id );
 	body->islandId = island->islandId;
-	island->headBody = body->id;
-	island->tailBody = body->id;
-	island->bodyCount = 1;
+	body->islandIndex = 0;
+
+	b2ValidateIsland( world, island->islandId );
 }
 
 static void b2RemoveBodyFromIsland( b2World* world, b2Body* body )
 {
 	if ( body->islandId == B2_NULL_INDEX )
 	{
-		B2_ASSERT( body->islandPrev == B2_NULL_INDEX );
-		B2_ASSERT( body->islandNext == B2_NULL_INDEX );
+		B2_ASSERT( body->islandIndex == B2_NULL_INDEX );
 		return;
 	}
 
 	int islandId = body->islandId;
-	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
+	b2Island* island = b2Array_Get( world->islands, islandId );
 
-	// Fix the island's linked list of sims
-	if ( body->islandPrev != B2_NULL_INDEX )
+	b2RemoveUpdate( island->bodies, world->bodies, body->id, islandIndex );
+
+	if (island->bodies.count == 0)
 	{
-		b2Body* prevBody = b2BodyArray_Get( &world->bodies, body->islandPrev );
-		prevBody->islandNext = body->islandNext;
+		// Destroy empty island
+		B2_ASSERT( island->contacts.count == 0 );
+		B2_ASSERT( island->joints.count == 0 );
+
+		// Free the island
+		b2DestroyIsland( world, island->islandId );
 	}
-
-	if ( body->islandNext != B2_NULL_INDEX )
-	{
-		b2Body* nextBody = b2BodyArray_Get( &world->bodies, body->islandNext );
-		nextBody->islandPrev = body->islandPrev;
-	}
-
-	B2_ASSERT( island->bodyCount > 0 );
-	island->bodyCount -= 1;
-	bool islandDestroyed = false;
-
-	if ( island->headBody == body->id )
-	{
-		island->headBody = body->islandNext;
-
-		if ( island->headBody == B2_NULL_INDEX )
-		{
-			// Destroy empty island
-			B2_ASSERT( island->tailBody == body->id );
-			B2_ASSERT( island->bodyCount == 0 );
-			B2_ASSERT( island->contactCount == 0 );
-			B2_ASSERT( island->jointCount == 0 );
-
-			// Free the island
-			b2DestroyIsland( world, island->islandId );
-			islandDestroyed = true;
-		}
-	}
-	else if ( island->tailBody == body->id )
-	{
-		island->tailBody = body->islandPrev;
-	}
-
-	if ( islandDestroyed == false )
+	else
 	{
 		b2ValidateIsland( world, islandId );
 	}
 
 	body->islandId = B2_NULL_INDEX;
-	body->islandPrev = B2_NULL_INDEX;
-	body->islandNext = B2_NULL_INDEX;
+	body->islandIndex = B2_NULL_INDEX;
 }
 
 static void b2DestroyBodyContacts( b2World* world, b2Body* body, bool wakeBodies )
@@ -311,8 +279,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	body->headJointKey = B2_NULL_INDEX;
 	body->jointCount = 0;
 	body->islandId = B2_NULL_INDEX;
-	body->islandPrev = B2_NULL_INDEX;
-	body->islandNext = B2_NULL_INDEX;
+	body->islandIndex = B2_NULL_INDEX;
 	body->bodyMoveIndex = B2_NULL_INDEX;
 	body->id = bodyId;
 	body->mass = 0.0f;
@@ -1541,7 +1508,7 @@ void b2Body_SetAwake( b2BodyId bodyId, bool awake )
 	}
 	else if ( awake == false && body->setIndex == b2_awakeSet )
 	{
-		b2Island* island = b2IslandArray_Get( &world->islands, body->islandId );
+		b2Island* island = b2Array_Get( world->islands, body->islandId );
 		if ( island->constraintRemoveCount > 0 )
 		{
 			// Must split the island before sleeping. This is expensive.

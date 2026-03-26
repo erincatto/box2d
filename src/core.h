@@ -103,7 +103,7 @@
 // clang-format on
 
 // Returns the number of elements of an array
-#define B2_ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
+#define B2_ARRAY_COUNT( A ) ((int)( sizeof( A ) / sizeof( *A ) ))
 
 // Used to prevent the compiler from warning about unused variables
 #define B2_UNUSED( ... ) (void)sizeof( ( __VA_ARGS__, 0 ) )
@@ -121,6 +121,21 @@
 #define B2_SNOOP_PAIR_COUNTERS 0
 #define B2_SNOOP_TOI_COUNTERS 0
 #endif
+
+#ifdef __cplusplus
+#define B2_TYPE_OF( A ) decltype( A )
+#else
+#define B2_TYPE_OF( A ) __typeof__( A )
+#endif
+
+#define B2_SWAP( x, y )                                                                                                          \
+	do                                                                                                                           \
+	{                                                                                                                            \
+		B2_TYPE_OF( x ) B2_SWAP_TEMP = x;                                                                                        \
+		x = y;                                                                                                                   \
+		y = B2_SWAP_TEMP;                                                                                                        \
+	}                                                                                                                            \
+	while ( 0 )
 
 #define B2_CHECK_DEF( DEF ) B2_ASSERT( DEF->internalValue == B2_SECRET_COOKIE )
 

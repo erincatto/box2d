@@ -26,6 +26,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "implot.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -135,6 +136,7 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	ImPlot::CreateContext();
 
 	bool success = ImGui_ImplGlfw_InitForOpenGL( window, false );
 	if ( success == false )
@@ -182,6 +184,7 @@ static void DestroyUI()
 {
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
+	ImPlot::DestroyContext();
 	ImGui::DestroyContext();
 }
 
@@ -438,7 +441,7 @@ static void UpdateUI()
 				ImGui::Checkbox( "Islands", &s_context.debugDraw.drawIslands );
 				ImGui::Checkbox( "Counters", &s_context.drawCounters );
 				ImGui::Checkbox( "Profile", &s_context.drawProfile );
-				ImGui::Separator();
+				ImGui::Checkbox( "Frame Time", &s_context.frameTime );
 
 				ImGui::Separator();
 

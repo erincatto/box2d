@@ -40,6 +40,15 @@ typedef struct b2ContactEdge
 // connectivity.
 typedef struct b2Contact
 {
+	b2ContactEdge edges[2];
+
+	// A contact only belongs to an island if touching, otherwise B2_NULL_INDEX.
+	int islandId;
+
+	// Index into the island's contacts array for O(1) swap-removal.
+	// B2_NULL_INDEX when not in an island.
+	int islandIndex;
+
 	// index of simulation set stored in b2World
 	// B2_NULL_INDEX when slot is free
 	int setIndex;
@@ -56,12 +65,6 @@ typedef struct b2Contact
 	int shapeIdA;
 	int shapeIdB;
 	int contactId;
-
-	// A contact only belongs to an island if touching, otherwise B2_NULL_INDEX.
-	b2ContactEdge edges[2];
-	int islandPrev;
-	int islandNext;
-	int islandId;
 
 	// b2ContactFlags
 	uint32_t flags;

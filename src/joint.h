@@ -44,8 +44,10 @@ typedef struct b2Joint
 
 	int jointId;
 	int islandId;
-	int islandPrev;
-	int islandNext;
+
+	// Index into the island's joints array for O(1) swap-removal.
+	// B2_NULL_INDEX when not in an island.
+	int islandIndex;
 
 	float drawScale;
 

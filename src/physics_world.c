@@ -169,7 +169,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->joints = b2JointArray_Create( 16 );
 
 	world->islandIdPool = b2CreateIdPool();
-	world->islands = b2IslandArray_Create( 8 );
+	b2Array_CreateN( world->islands, 8 );
 
 	world->sensors = b2SensorArray_Create( 4 );
 
@@ -328,7 +328,14 @@ void b2DestroyWorld( b2WorldId worldId )
 	b2ChainShapeArray_Destroy( &world->chainShapes );
 	b2ContactArray_Destroy( &world->contacts );
 	b2JointArray_Destroy( &world->joints );
-	b2IslandArray_Destroy( &world->islands );
+
+	for (int i = 0; i < world->islands.count; ++i)
+	{
+		b2Array_Destroy( world->islands.data[i].bodies );
+		b2Array_Destroy( world->islands.data[i].contacts );
+		b2Array_Destroy( world->islands.data[i].joints );
+	}
+	b2Array_Destroy( world->islands );
 
 	// Destroy solver sets
 	int setCapacity = world->solverSets.count;
@@ -1245,9 +1252,9 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 						.upperBound = { -FLT_MAX, -FLT_MAX },
 					};
 
-					int islandBodyId = island->headBody;
-					while ( islandBodyId != B2_NULL_INDEX )
+					for (int bodyIndex = 0; bodyIndex < island->bodies.count; ++bodyIndex)
 					{
+						int islandBodyId = island->bodies.data[bodyIndex];
 						b2Body* islandBody = b2BodyArray_Get( &world->bodies, islandBodyId );
 						int shapeId = islandBody->headShapeId;
 						while ( shapeId != B2_NULL_INDEX )
@@ -1257,8 +1264,6 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 							shapeCount += 1;
 							shapeId = shape->nextShapeId;
 						}
-
-						islandBodyId = islandBody->islandNext;
 					}
 
 					if ( shapeCount > 0 )
@@ -1822,7 +1827,8 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	fprintf( file, "solver sets: %d\n", b2SolverSetArray_ByteCount( &world->solverSets ) );
 	fprintf( file, "joints: %d\n", b2JointArray_ByteCount( &world->joints ) );
 	fprintf( file, "contacts: %d\n", b2ContactArray_ByteCount( &world->contacts ) );
-	fprintf( file, "islands: %d\n", b2IslandArray_ByteCount( &world->islands ) );
+	// todo account for body/contact/joint arrays in island
+	fprintf( file, "islands: %d\n", world->islands.capacity * (int)sizeof(b2Island) );
 	fprintf( file, "shapes: %d\n", b2ShapeArray_ByteCount( &world->shapes ) );
 	fprintf( file, "chains: %d\n", b2ChainShapeArray_ByteCount( &world->chainShapes ) );
 	fprintf( file, "\n" );
@@ -2906,7 +2912,7 @@ void b2ValidateSolverSets( b2World* world )
 				for ( int i = 0; i < set->islandSims.count; ++i )
 				{
 					b2IslandSim* islandSim = set->islandSims.data + i;
-					b2Island* island = b2IslandArray_Get( &world->islands, islandSim->islandId );
+					b2Island* island = b2Array_Get( world->islands, islandSim->islandId );
 					B2_ASSERT( island->setIndex == setIndex );
 					B2_ASSERT( island->localIndex == i );
 				}

@@ -769,7 +769,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		}
 
 		// Any single body in an island can keep it awake
-		b2Island* island = b2IslandArray_Get( &world->islands, body->islandId );
+		b2Island* island = b2Array_Get( world->islands, body->islandId );
 		if ( body->sleepTime < B2_TIME_TO_SLEEP )
 		{
 			// keep island awake
