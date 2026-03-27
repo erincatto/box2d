@@ -710,12 +710,12 @@ static inline b2FloatW b2MulW( b2FloatW a, b2FloatW b )
 
 static inline b2FloatW b2MulAddW( b2FloatW a, b2FloatW b, b2FloatW c )
 {
-	return vmlaq_f32( a, b, c );
+	return vaddq_f32( a, vmulq_f32( b, c ) );
 }
 
 static inline b2FloatW b2MulSubW( b2FloatW a, b2FloatW b, b2FloatW c )
 {
-	return vmlsq_f32( a, b, c );
+	return vsubq_f32( a, vmulq_f32( b, c ) );
 }
 
 static inline b2FloatW b2MinW( b2FloatW a, b2FloatW b )
