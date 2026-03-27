@@ -58,15 +58,13 @@ void b2DestroyIsland( b2World* world, int islandId )
 	// assume island is empty
 	b2Island* island = b2Array_Get( world->islands, islandId );
 	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, island->setIndex );
-	int movedIndex = b2IslandSimArray_RemoveSwap( &set->islandSims, island->localIndex );
-	if ( movedIndex != B2_NULL_INDEX )
 	{
-		// Fix index on moved element
-		b2IslandSim* movedElement = set->islandSims.data + island->localIndex;
-		int movedId = movedElement->islandId;
-		b2Island* movedIsland = b2Array_Get( world->islands, movedId );
-		B2_ASSERT( movedIsland->localIndex == movedIndex );
-		movedIsland->localIndex = island->localIndex;
+		int localIndex = island->localIndex;
+		int lastIndex = set->islandSims.count - 1;
+		int moveIslandId = set->islandSims.data[lastIndex].islandId;
+		set->islandSims.data[localIndex] = set->islandSims.data[lastIndex];
+		world->islands.data[moveIslandId].localIndex = localIndex;
+		set->islandSims.count -= 1;                                                                                                   \
 	}
 
 	// Free island and id (preserve island revision)
@@ -74,9 +72,11 @@ void b2DestroyIsland( b2World* world, int islandId )
 	b2Array_Destroy( island->contacts );
 	b2Array_Destroy( island->joints );
 	island->constraintRemoveCount = 0;
+	island->localIndex = B2_NULL_INDEX;
 	island->islandId = B2_NULL_INDEX;
 	island->setIndex = B2_NULL_INDEX;
-	island->localIndex = B2_NULL_INDEX;
+
+	B2_VALIDATE( island->localIndex == B2_NULL_INDEX );
 
 	b2FreeId( &world->islandIdPool, islandId );
 }
@@ -260,6 +260,7 @@ void b2UnlinkContact( b2World* world, b2Contact* contact )
 
 	contact->islandId = B2_NULL_INDEX;
 	contact->islandIndex = B2_NULL_INDEX;
+	island->constraintRemoveCount += 1;
 
 	b2ValidateIsland( world, islandId );
 }
@@ -340,6 +341,7 @@ void b2UnlinkJoint( b2World* world, b2Joint* joint )
 
 	joint->islandId = B2_NULL_INDEX;
 	joint->islandIndex = B2_NULL_INDEX;
+	island->constraintRemoveCount += 1;
 
 	b2ValidateIsland( world, islandId );
 }
