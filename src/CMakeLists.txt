@@ -214,7 +214,7 @@ include(CMakePackageConfigHelpers)
 
 write_basic_package_version_file(
   "${CMAKE_CURRENT_BINARY_DIR}/box2dConfigVersion.cmake"
-  VERSION ${BOX2D_VERSION}
+  VERSION ${box2d_VERSION}
   COMPATIBILITY SameMajorVersion
 )
 

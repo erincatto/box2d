@@ -11,9 +11,6 @@ b2DeclareArray( int );
 b2DeclareArray( uint64_t );
 b2DeclareArray( int16_t );
 b2DeclareArray( uint8_t );
-b2DeclareStackArray( int, 8 );
-b2DeclareStackArray( int, 100 );
-b2DeclareStackArray( uint64_t, 100 );
 
 typedef struct Foo
 {
@@ -22,17 +19,11 @@ typedef struct Foo
 } Foo;
 
 b2DeclareArray( Foo );
-b2DeclareStackArray( Foo, 1 );
 
 typedef struct Bar
 {
 	b2ArrayC( int ) a;
 } Bar;
-
-typedef struct BarStack
-{
-	b2StackArray( int, 8 ) a;
-} BarStack;
 
 static int TestCreateDestroy( void )
 {
@@ -158,7 +149,7 @@ static int TestArrayRemove( void )
 		sum += temp;
 	}
 
-	ENSURE( sum == n * (n-1) / 2 - 1);
+	ENSURE( sum == n * ( n - 1 ) / 2 - 1 );
 
 	b2Array_Destroy( a );
 	return 0;
@@ -189,93 +180,6 @@ static int TestArrayPop( void )
 	return 0;
 }
 
-static int TestStackAccess( void )
-{
-	b2StackArray( int, 8 ) a = { 0 };
-	b2StackArray_Create( a );
-	b2StackArray_Push( a, 42 );
-	int* element = b2StackArray_Get( a, 0 );
-	ENSURE( *element == 42 );
-	b2StackArray_Destroy( a );
-	return 0;
-}
-
-static int TestStackIteration( void )
-{
-	b2StackArray( int, 8 ) a = { 0 };
-	b2StackArray_Create( a );
-	b2StackArray_Push( a, 1 );
-	b2StackArray_Push( a, 2 );
-	b2StackArray_Push( a, 3 );
-
-	int sum = 0;
-	for ( int i = 0; i < a.count; ++i )
-	{
-		sum += a.data[i];
-	}
-
-	ENSURE( sum == 6 );
-	b2StackArray_Destroy( a );
-	return 0;
-}
-
-static int TestStackArrayOfStruct( void )
-{
-	b2StackArray( Foo, 1 ) a = { 0 };
-	b2StackArray_Create( a );
-	b2StackArray_Push( a, ( (Foo){ .a = 1, .b = 5.0f } ) );
-	b2StackArray_Push( a, ( (Foo){ .a = 2, .b = 6.0f } ) );
-	b2StackArray_Push( a, ( (Foo){ .a = 3, .b = 7.0f } ) );
-
-	int sum1 = 0;
-	float sum2 = 0.0f;
-	for ( int i = 0; i < a.count; ++i )
-	{
-		sum1 += a.data[i].a;
-		sum2 += a.data[i].b;
-	}
-
-	ENSURE( sum1 == 6 );
-	ENSURE( sum2 == 18.0f );
-	b2StackArray_Destroy( a );
-	return 0;
-}
-
-static int TestStructWithStackArray( void )
-{
-	BarStack b = { 0 };
-	b2StackArray_Create( b.a );
-	b2StackArray_Push( b.a, 1 );
-	b2StackArray_Push( b.a, 2 );
-	b2StackArray_Push( b.a, 3 );
-
-	int sum = 0;
-	for ( int i = 0; i < b.a.count; ++i )
-	{
-		sum += b.a.data[i];
-	}
-
-	ENSURE( sum == 6 );
-	b2StackArray_Destroy( b.a );
-	return 0;
-}
-
-b2DeclareArray( BarStack );
-
-static int TestArrayOfStackArray( void )
-{
-	b2ArrayC( BarStack ) a = { 0 };
-	BarStack empty = { 0 };
-	b2Array_Push( a, empty );
-	BarStack* s = b2Array_Get( a, 0 );
-	b2StackArray_Create( s->a );
-	b2StackArray_Push( s->a, 42 );
-	ENSURE( *b2StackArray_Get( s->a, 0 ) == 42 );
-	b2StackArray_Destroy( s->a );
-	b2Array_Destroy( a );
-	return 0;
-}
-
 typedef struct
 {
 	int index;
@@ -283,54 +187,20 @@ typedef struct
 
 b2DeclareArray( Owner );
 
-static int TestRemoveUpdate( void )
+typedef struct Entity
 {
-	b2StackArray( int, 8 ) a;
-	b2StackArray_Create( a );
-	b2ArrayC( Owner ) owners = { 0 };
+	int bodyIndex;
+	int id;
+} Entity;
 
-	int n = 21;
-	for ( int i = 0; i < n; ++i )
-	{
-		Owner* owner = b2Array_Emplace( owners );
-		owner->index = i;
-		b2StackArray_Push( a, i );
-	}
+typedef struct Body
+{
+	int entityIndex;
+	float mass;
+} Body;
 
-	b2RemoveUpdate( a, owners, 0, index );
-	b2Array_Get( owners, 0 )->index = -1;
-	b2RemoveUpdate( a, owners, 3, index );
-	b2Array_Get( owners, 3 )->index = -1;
-	b2RemoveUpdate( a, owners, 8, index );
-	b2Array_Get( owners, 8 )->index = -1;
-	b2RemoveUpdate( a, owners, 5, index );
-	b2Array_Get( owners, 5 )->index = -1;
-	b2RemoveUpdate( a, owners, owners.count - 1, index );
-	b2Array_Get( owners, owners.count - 1 )->index = -1;
-
-	int count = 0;
-	for ( int i = 0; i < owners.count; ++i )
-	{
-		Owner* owner = b2Array_Get( owners, i );
-		if ( owner->index == -1 )
-		{
-			continue;
-		}
-
-		int indexA = *b2Array_Get( a, owner->index );
-		ENSURE( indexA == i );
-		count += 1;
-	}
-
-	ENSURE( count == a.count );
-
-	b2StackArray_Destroy( a );
-	b2Array_Destroy( owners );
-
-	return 0;
-}
-
-// === New coverage tests ===
+b2DeclareArray( Entity );
+b2DeclareArray( Body );
 
 static int TestEmptyArrayProperties( void )
 {
@@ -507,48 +377,6 @@ static int TestArrayEmplaceStruct( void )
 	return 0;
 }
 
-static int TestStackArrayFillExact( void )
-{
-	b2StackArray( int, 8 ) a = { 0 };
-	b2StackArray_Create( a );
-
-	// Fill to exactly the stack capacity
-	for ( int i = 0; i < 8; ++i )
-	{
-		b2StackArray_Push( a, ( i + 1 ) * 10 );
-	}
-
-	ENSURE( a.count == 8 );
-	for ( int i = 0; i < 8; ++i )
-	{
-		ENSURE( *b2StackArray_Get( a, i ) == ( i + 1 ) * 10 );
-	}
-
-	b2StackArray_Destroy( a );
-	return 0;
-}
-
-static int TestStackArrayOverflow( void )
-{
-	b2StackArray( int, 8 ) a = { 0 };
-	b2StackArray_Create( a );
-
-	// Push beyond the initial stack capacity of 8
-	for ( int i = 0; i < 20; ++i )
-	{
-		b2StackArray_Push( a, i );
-	}
-
-	ENSURE( a.count == 20 );
-	for ( int i = 0; i < 20; ++i )
-	{
-		ENSURE( *b2StackArray_Get( a, i ) == i );
-	}
-
-	b2StackArray_Destroy( a );
-	return 0;
-}
-
 static int TestArrayResizeUp( void )
 {
 	b2ArrayC( int ) a = { 0 };
@@ -645,72 +473,6 @@ static int TestArraySingleElement( void )
 	return 0;
 }
 
-static int TestStackArrayLargeIteration( void )
-{
-	b2StackArray( int, 100 ) a = { 0 };
-	b2StackArray_Create( a );
-
-	for ( int i = 0; i < 100; ++i )
-	{
-		b2StackArray_Push( a, i );
-	}
-
-	int sum = 0;
-	for ( int i = 0; i < a.count; ++i )
-	{
-		sum += a.data[i];
-	}
-
-	// sum of 0..99 = 4950
-	ENSURE( sum == 4950 );
-	b2StackArray_Destroy( a );
-	return 0;
-}
-
-static int TestRemoveUpdateAll( void )
-{
-	b2StackArray( int, 8 ) a;
-	b2StackArray_Create( a );
-	b2ArrayC( Owner ) owners = { 0 };
-
-	int n = 5;
-	for ( int i = 0; i < n; ++i )
-	{
-		Owner* owner = b2Array_Emplace( owners );
-		owner->index = i;
-		b2StackArray_Push( a, i );
-	}
-
-	// Remove all elements one by one
-	for ( int i = 0; i < n; ++i )
-	{
-		// Find a valid owner to remove
-		int removeIdx = -1;
-		for ( int j = 0; j < owners.count; ++j )
-		{
-			if ( b2Array_Get( owners, j )->index != -1 )
-			{
-				removeIdx = j;
-				break;
-			}
-		}
-
-		if ( removeIdx == -1 )
-		{
-			break;
-		}
-
-		b2RemoveUpdate( a, owners, removeIdx, index );
-		b2Array_Get( owners, removeIdx )->index = -1;
-	}
-
-	ENSURE( a.count == 0 );
-
-	b2StackArray_Destroy( a );
-	b2Array_Destroy( owners );
-	return 0;
-}
-
 static int TestArrayCreateN( void )
 {
 	b2ArrayC( int ) a;
@@ -745,15 +507,6 @@ int ContainerTest( void )
 	RUN_SUBTEST( TestArrayEmplace );
 	RUN_SUBTEST( TestArrayRemove );
 	RUN_SUBTEST( TestArrayPop );
-
-	RUN_SUBTEST( TestStackAccess );
-	RUN_SUBTEST( TestStackIteration );
-	RUN_SUBTEST( TestStackArrayOfStruct );
-	RUN_SUBTEST( TestStructWithStackArray );
-	RUN_SUBTEST( TestArrayOfStackArray );
-	RUN_SUBTEST( TestRemoveUpdate );
-
-	// New coverage tests
 	RUN_SUBTEST( TestEmptyArrayProperties );
 	RUN_SUBTEST( TestArrayReserveNoop );
 	RUN_SUBTEST( TestArrayResizeDown );
@@ -766,10 +519,6 @@ int ContainerTest( void )
 	RUN_SUBTEST( TestArrayEmplaceStruct );
 	RUN_SUBTEST( TestArrayPushAfterReserve );
 	RUN_SUBTEST( TestArraySingleElement );
-	RUN_SUBTEST( TestStackArrayFillExact );
-	RUN_SUBTEST( TestStackArrayOverflow );
-	RUN_SUBTEST( TestStackArrayLargeIteration );
-	RUN_SUBTEST( TestRemoveUpdateAll );
 	RUN_SUBTEST( TestArrayCreateN );
 
 	return 0;

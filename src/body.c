@@ -34,6 +34,17 @@ static void b2LimitVelocity( b2BodyState* state, float maxLinearSpeed )
 	}
 }
 
+void b2RemoveBodySim( b2BodySimArray* bodySims, b2BodyArray* bodies, int localIndex )
+{
+	B2_ASSERT( 0 <= localIndex && localIndex < bodySims->count );
+	int lastIndex = bodySims->count - 1;
+	bodySims->data[localIndex] = bodySims->data[lastIndex];
+	b2Body* movedBody = b2BodyArray_Get( bodies, bodySims->data[localIndex].bodyId );
+	B2_ASSERT( movedBody->localIndex == lastIndex );
+	movedBody->localIndex = localIndex;
+	bodySims->count -= 1;
+}
+
 // Get a validated body from a world using an id.
 b2Body* b2GetBodyFullId( b2World* world, b2BodyId bodyId )
 {
@@ -104,10 +115,16 @@ static void b2RemoveBodyFromIsland( b2World* world, b2Body* body )
 
 	int islandId = body->islandId;
 	b2Island* island = b2Array_Get( world->islands, islandId );
+	{
+		int localIndex = body->islandIndex;
+		int movedBodyId = island->bodies.data[island->bodies.count - 1];
+		island->bodies.data[localIndex] = movedBodyId;
+		B2_VALIDATE( world->bodies.data[movedBodyId].islandIndex == island->bodies.count - 1 );
+		world->bodies.data[movedBodyId].islandIndex = localIndex;
+		island->bodies.count -= 1;
+	}
 
-	b2RemoveUpdate( island->bodies, world->bodies, body->id, islandIndex );
-
-	if (island->bodies.count == 0)
+	if ( island->bodies.count == 0 )
 	{
 		// Destroy empty island
 		B2_ASSERT( island->contacts.count == 0 );
@@ -383,27 +400,16 @@ void b2DestroyBody( b2BodyId bodyId )
 
 	// Remove body sim from solver set that owns it
 	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, body->setIndex );
-	int movedIndex = b2BodySimArray_RemoveSwap( &set->bodySims, body->localIndex );
-	if ( movedIndex != B2_NULL_INDEX )
-	{
-		// Fix moved body index
-		b2BodySim* movedSim = set->bodySims.data + body->localIndex;
-		int movedId = movedSim->bodyId;
-		b2Body* movedBody = b2BodyArray_Get( &world->bodies, movedId );
-		B2_ASSERT( movedBody->localIndex == movedIndex );
-		movedBody->localIndex = body->localIndex;
-	}
+	b2RemoveBodySim( &set->bodySims, &world->bodies, body->localIndex );
 
 	// Remove body state from awake set
 	if ( body->setIndex == b2_awakeSet )
 	{
-		int result = b2BodyStateArray_RemoveSwap( &set->bodyStates, body->localIndex );
-		B2_ASSERT( result == movedIndex );
-		B2_UNUSED( result );
+		(void)b2BodyStateArray_RemoveSwap( &set->bodyStates, body->localIndex );
 	}
 	else if ( set->setIndex >= b2_firstSleepingSet && set->bodySims.count == 0 )
 	{
-		// Remove solver set if it's now an orphan.
+		// Remove solver set if it is empty
 		b2DestroySolverSet( world, set->setIndex );
 	}
 
@@ -1519,7 +1525,7 @@ void b2Body_SetAwake( b2BodyId bodyId, bool awake )
 	}
 }
 
-void b2Body_WakeTouching(b2BodyId bodyId)
+void b2Body_WakeTouching( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
@@ -1534,7 +1540,7 @@ void b2Body_WakeTouching(b2BodyId bodyId)
 		b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contact->shapeIdA );
 		b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contact->shapeIdB );
 
-		if (shapeA->bodyId == bodyId.index1 - 1)
+		if ( shapeA->bodyId == bodyId.index1 - 1 )
 		{
 			b2Body* otherBody = b2BodyArray_Get( &world->bodies, shapeB->bodyId );
 			b2WakeBody( world, otherBody );

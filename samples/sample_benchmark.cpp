@@ -16,13 +16,6 @@
 #include <stdint.h>
 #include <vector>
 
-#if defined( _MSC_VER )
-#include <intrin.h>
-#define GET_CYCLES __rdtsc()
-#else
-#define GET_CYCLES b2GetTicks()
-#endif
-
 inline bool operator<( b2BodyId a, b2BodyId b )
 {
 	uint64_t ua = b2StoreBodyId( a );
@@ -1700,7 +1693,6 @@ public:
 		}
 
 		m_drawIndex = 0;
-		m_minCycles = INT_MAX;
 		m_minMilliseconds = FLT_MAX;
 	}
 
@@ -1735,7 +1727,6 @@ public:
 			int totalIterations = 0;
 
 			uint64_t start = b2GetTicks();
-			uint64_t startCycles = GET_CYCLES;
 			for ( int i = 0; i < m_count; ++i )
 			{
 				b2SimplexCache cache = {};
@@ -1744,15 +1735,11 @@ public:
 				m_outputs[i] = b2ShapeDistance( &input, &cache, nullptr, 0 );
 				totalIterations += m_outputs[i].iterations;
 			}
-			uint64_t endCycles = GET_CYCLES;
 
 			float ms = b2GetMilliseconds( start );
-			m_minCycles = b2MinInt( m_minCycles, int( endCycles - startCycles ) );
 			m_minMilliseconds = b2MinFloat( m_minMilliseconds, ms );
 
 			DrawTextLine( "count = %d", m_count );
-			DrawTextLine( "min cycles = %d", m_minCycles );
-			DrawTextLine( "ave cycles = %g", float( m_minCycles ) / float( m_count ) );
 			DrawTextLine( "min ms = %g, ave us = %g", m_minMilliseconds, 1000.0f * m_minMilliseconds / float( m_count ) );
 			DrawTextLine( "average iterations = %g", totalIterations / float( m_count ) );
 		}
@@ -1784,7 +1771,6 @@ public:
 	b2Polygon m_polygonB;
 	float m_minMilliseconds;
 	int m_drawIndex;
-	int m_minCycles;
 };
 
 static int benchmarkShapeDistance = RegisterSample( "Benchmark", "Shape Distance", BenchmarkShapeDistance::Create );

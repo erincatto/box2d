@@ -710,12 +710,12 @@ static inline b2FloatW b2MulW( b2FloatW a, b2FloatW b )
 
 static inline b2FloatW b2MulAddW( b2FloatW a, b2FloatW b, b2FloatW c )
 {
-	return vmlaq_f32( a, b, c );
+	return vaddq_f32( a, vmulq_f32( b, c ) );
 }
 
 static inline b2FloatW b2MulSubW( b2FloatW a, b2FloatW b, b2FloatW c )
 {
-	return vmlsq_f32( a, b, c );
+	return vsubq_f32( a, vmulq_f32( b, c ) );
 }
 
 static inline b2FloatW b2MinW( b2FloatW a, b2FloatW b )
@@ -788,7 +788,7 @@ static inline void b2StoreW( float32_t* data, b2FloatW a )
 
 static inline b2FloatW b2UnpackLoW( b2FloatW a, b2FloatW b )
 {
-#if defined( __aarch64__ )
+#if defined( _M_ARM64 ) || defined( __aarch64__ )
 	return vzip1q_f32( a, b );
 #else
 	float32x2_t a1 = vget_low_f32( a );
@@ -800,7 +800,7 @@ static inline b2FloatW b2UnpackLoW( b2FloatW a, b2FloatW b )
 
 static inline b2FloatW b2UnpackHiW( b2FloatW a, b2FloatW b )
 {
-#if defined( __aarch64__ )
+#if defined( _M_ARM64 ) || defined( __aarch64__ )
 	return vzip2q_f32( a, b );
 #else
 	float32x2_t a1 = vget_high_f32( a );

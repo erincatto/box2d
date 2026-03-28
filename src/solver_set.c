@@ -222,19 +222,10 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			b2BodySim* sleepBodySim = b2BodySimArray_Add( &sleepSet->bodySims );
 			memcpy( sleepBodySim, awakeSim, sizeof( b2BodySim ) );
 
-			int movedIndex = b2BodySimArray_RemoveSwap( &awakeSet->bodySims, awakeBodyIndex );
-			if ( movedIndex != B2_NULL_INDEX )
-			{
-				// fix local index on moved element
-				b2BodySim* movedSim = awakeSet->bodySims.data + awakeBodyIndex;
-				int movedId = movedSim->bodyId;
-				b2Body* movedBody = b2BodyArray_Get( &world->bodies, movedId );
-				B2_ASSERT( movedBody->localIndex == movedIndex );
-				movedBody->localIndex = awakeBodyIndex;
-			}
+			b2RemoveBodySim( &awakeSet->bodySims, &world->bodies, awakeBodyIndex );
 
 			// destroy state, no need to clone
-			b2BodyStateArray_RemoveSwap( &awakeSet->bodyStates, awakeBodyIndex );
+			(void)b2BodyStateArray_RemoveSwap( &awakeSet->bodyStates, awakeBodyIndex );
 
 			body->setIndex = sleepSetId;
 			body->localIndex = sleepBodyIndex;
@@ -537,20 +528,11 @@ void b2TransferBody( b2World* world, b2SolverSet* targetSet, b2SolverSet* source
 	targetSim->flags &= ~(b2_isFast | b2_isSpeedCapped | b2_hadTimeOfImpact);
 
 	// Remove body sim from solver set that owns it
-	int movedIndex = b2BodySimArray_RemoveSwap( &sourceSet->bodySims, sourceIndex );
-	if ( movedIndex != B2_NULL_INDEX )
-	{
-		// Fix moved body index
-		b2BodySim* movedSim = sourceSet->bodySims.data + sourceIndex;
-		int movedId = movedSim->bodyId;
-		b2Body* movedBody = b2BodyArray_Get( &world->bodies, movedId );
-		B2_ASSERT( movedBody->localIndex == movedIndex );
-		movedBody->localIndex = sourceIndex;
-	}
+	b2RemoveBodySim( &sourceSet->bodySims, &world->bodies, sourceIndex );
 
 	if ( sourceSet->setIndex == b2_awakeSet )
 	{
-		b2BodyStateArray_RemoveSwap( &sourceSet->bodyStates, sourceIndex );
+		(void)b2BodyStateArray_RemoveSwap( &sourceSet->bodyStates, sourceIndex );
 	}
 	else if ( targetSet->setIndex == b2_awakeSet )
 	{
