@@ -4,10 +4,10 @@
 #pragma once
 
 #include "array.h"
+#include "box2d/constants.h"
+#include "box2d/math_functions.h"
 
 typedef struct b2World b2World;
-
-#define B2_CLUSTER_COUNT 16
 
 typedef struct b2Cluster
 {

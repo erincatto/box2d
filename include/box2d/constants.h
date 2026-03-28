@@ -17,6 +17,8 @@
 // The compound barrel benchmark has minor overflow with 24 colors 
 #define B2_GRAPH_COLOR_COUNT 24
 
+#define B2_CLUSTER_COUNT 16
+
 // A small length used as a collision and constraint tolerance. Usually it is
 // chosen to be numerically significant, but visually insignificant. In meters.
 // Normally this is 0.5cm.

@@ -5,6 +5,7 @@
 
 #include "base.h"
 #include "collision.h"
+#include "constants.h"
 #include "id.h"
 #include "math_functions.h"
 
@@ -539,6 +540,7 @@ typedef struct b2Counters
 	int byteCount;
 	int taskCount;
 	int colorCounts[24];
+	int clusterCounts[B2_CLUSTER_COUNT];
 } b2Counters;
 //! @endcond
 

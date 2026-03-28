@@ -562,10 +562,10 @@ static void b2Collide( b2StepContext* context )
 
 	// gather contacts into a single array for easier parallel-for
 	int contactCount = 0;
-	b2GraphColor* b2_graphColors = world->constraintGraph.colors;
+	b2GraphColor* graphColors = world->constraintGraph.colors;
 	for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
 	{
-		contactCount += b2_graphColors[i].contactSims.count;
+		contactCount += graphColors[i].contactSims.count;
 	}
 
 	int nonTouchingCount = world->solverSets.data[b2_awakeSet].contactSims.count;
@@ -582,7 +582,7 @@ static void b2Collide( b2StepContext* context )
 	int contactIndex = 0;
 	for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
 	{
-		b2GraphColor* color = b2_graphColors + i;
+		b2GraphColor* color = graphColors + i;
 		int count = color->contactSims.count;
 		b2ContactSim* base = color->contactSims.data;
 		for ( int j = 0; j < count; ++j )
@@ -663,7 +663,7 @@ static void b2Collide( b2StepContext* context )
 			{
 				// contact lives in constraint graph
 				B2_ASSERT( 0 <= colorIndex && colorIndex < B2_GRAPH_COLOR_COUNT );
-				b2GraphColor* color = b2_graphColors + colorIndex;
+				b2GraphColor* color = graphColors + colorIndex;
 				contactSim = b2ContactSimArray_Get( &color->contactSims, localIndex );
 			}
 			else
@@ -882,7 +882,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	b2SensorEndTouchEventArray_Clear( world->sensorEndEvents + world->endEventArrayIndex );
 	b2ContactEndTouchEventArray_Clear( world->contactEndEvents + world->endEventArrayIndex );
 
-	//b2ComputeClusters( world );
+	b2ComputeClusters( world );
 
 	world->locked = false;
 	b2TracyCFrame;
@@ -947,18 +947,18 @@ struct DrawContext
 	b2DebugDraw* draw;
 };
 
-static const b2HexColor b2_graphColors[B2_GRAPH_COLOR_COUNT] = {
-	b2_colorRed,		b2_colorOrange, b2_colorYellow,	   b2_colorGreen,	  b2_colorCyan,		b2_colorBlue,
-	b2_colorViolet,		b2_colorPink,	b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,	b2_colorRosyBrown,
-	b2_colorLightCoral, b2_colorPeru,	b2_colorLime,	   b2_colorGold,	  b2_colorPlum,		b2_colorSnow,
-	b2_colorTeal,		b2_colorKhaki,	b2_colorSalmon,	   b2_colorPeachPuff, b2_colorHoneyDew, b2_colorBlack,
-};
+//static const b2HexColor b2_graphColors[B2_GRAPH_COLOR_COUNT] = {
+//	b2_colorRed,		b2_colorOrange, b2_colorYellow,	   b2_colorGreen,	  b2_colorCyan,		b2_colorBlue,
+//	b2_colorViolet,		b2_colorPink,	b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,	b2_colorRosyBrown,
+//	b2_colorLightCoral, b2_colorPeru,	b2_colorLime,	   b2_colorGold,	  b2_colorPlum,		b2_colorSnow,
+//	b2_colorTeal,		b2_colorKhaki,	b2_colorSalmon,	   b2_colorPeachPuff, b2_colorHoneyDew, b2_colorBlack,
+//};
 
 #if B2_CLUSTER_COUNT == 16
 static const b2HexColor b2_clusterColors[B2_CLUSTER_COUNT] = {
-	b2_colorRed,		b2_colorOrange, b2_colorYellow,	   b2_colorGreen,	  b2_colorCyan,	 b2_colorBlue,
-	b2_colorViolet,		b2_colorPink,	b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral, b2_colorRosyBrown,
-	b2_colorLightCoral, b2_colorPeru,	b2_colorLime,	   b2_colorGold,
+	b2_colorRed,		b2_colorCyan,		 b2_colorYellow,	  b2_colorBlue,		   b2_colorLime,   b2_colorMagenta,
+	b2_colorDarkOrange, b2_colorTeal,		 b2_colorDeepPink,	  b2_colorChartreuse,  b2_colorIndigo, b2_colorGold,
+	b2_colorDarkViolet, b2_colorSpringGreen, b2_colorSaddleBrown, b2_colorDeepSkyBlue,
 };
 #else
 static const b2HexColor b2_clusterColors[B2_CLUSTER_COUNT] = {
@@ -998,13 +998,13 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 
 		b2HexColor color;
 
-		//bool drawClusterColor = true;
-		//if ( drawClusterColor )
-		//{
-		//	B2_ASSERT( 0 <= bodySim->clusterIndex && bodySim->clusterIndex < B2_CLUSTER_COUNT );
-		//	color = b2_clusterColors[bodySim->clusterIndex];
-		//}
-		//else
+		bool drawClusterColor = true;
+		if ( drawClusterColor )
+		{
+			B2_ASSERT( 0 <= bodySim->clusterIndex && bodySim->clusterIndex < B2_CLUSTER_COUNT );
+			color = b2_clusterColors[bodySim->clusterIndex];
+		}
+		else
 		if ( shape->material.customColor != 0 )
 		{
 			color = shape->material.customColor;
@@ -1796,6 +1796,12 @@ b2Counters b2World_GetCounters( b2WorldId worldId )
 	{
 		s.colorCounts[i] = world->constraintGraph.colors[i].contactSims.count + world->constraintGraph.colors[i].jointSims.count;
 	}
+
+	for (int i = 0; i < B2_CLUSTER_COUNT; ++i)
+	{
+		s.clusterCounts[i] = world->clusterManager.clusters[i].bodyIndices.count;
+	}
+
 	return s;
 }
 

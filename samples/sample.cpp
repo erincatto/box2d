@@ -594,17 +594,29 @@ void Sample::Step()
 
 		int totalCount = 0;
 		char buffer[256] = { 0 };
-		int colorCount = sizeof( s.colorCounts ) / sizeof( s.colorCounts[0] );
 
 		// todo fix this
 		int offset = snprintf( buffer, 256, "colors: " );
-		for ( int i = 0; i < colorCount; ++i )
+		for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
 		{
 			offset += snprintf( buffer + offset, 256 - offset, "%d/", s.colorCounts[i] );
 			totalCount += s.colorCounts[i];
 		}
 		snprintf( buffer + offset, 256 - offset, "[%d]", totalCount );
 		DrawTextLine( buffer );
+
+		totalCount = 0;
+		memset( buffer, 0, sizeof(buffer) );
+
+		offset = snprintf( buffer, 256, "clusters: " );
+		for ( int i = 0; i < B2_CLUSTER_COUNT; ++i )
+		{
+			offset += snprintf( buffer + offset, 256 - offset, "%d/", s.clusterCounts[i] );
+			totalCount += s.clusterCounts[i];
+		}
+		snprintf( buffer + offset, 256 - offset, "[%d]", totalCount );
+		DrawTextLine( buffer );
+
 		DrawTextLine( "stack allocator size = %d K", s.stackUsed / 1024 );
 		DrawTextLine( "total allocation = %d K", s.byteCount / 1024 );
 	}
