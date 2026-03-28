@@ -16,7 +16,7 @@
 #include <stdint.h>
 #include <vector>
 
-#if defined( _MSC_VER )
+#if defined( _MSC_VER ) && !defined( _M_ARM64 )
 #include <intrin.h>
 #define GET_CYCLES __rdtsc()
 #else

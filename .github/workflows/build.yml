@@ -88,6 +88,23 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}/build
       run: ./bin/${{env.BUILD_TYPE}}/test
+
+  build-windows-arm64:
+    name: windows-arm64
+    runs-on: windows-11-arm
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Configure CMake
+      run: cmake -A arm64 -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_DISABLE_SIMD=TRUE -DBOX2D_SAMPLES=OFF -DBOX2D_SANITIZE=ON -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ./bin/${{env.BUILD_TYPE}}/test
       
   samples-windows-static:
     name: samples-windows-static
