@@ -405,8 +405,7 @@ void b2DestroyBody( b2BodyId bodyId )
 	// Remove body state from awake set
 	if ( body->setIndex == b2_awakeSet )
 	{
-		int result = b2BodyStateArray_RemoveSwap( &set->bodyStates, body->localIndex );
-		B2_UNUSED( result );
+		(void)b2BodyStateArray_RemoveSwap( &set->bodyStates, body->localIndex );
 	}
 	else if ( set->setIndex >= b2_firstSleepingSet && set->bodySims.count == 0 )
 	{

@@ -225,7 +225,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			b2RemoveBodySim( &awakeSet->bodySims, &world->bodies, awakeBodyIndex );
 
 			// destroy state, no need to clone
-			b2BodyStateArray_RemoveSwap( &awakeSet->bodyStates, awakeBodyIndex );
+			(void)b2BodyStateArray_RemoveSwap( &awakeSet->bodyStates, awakeBodyIndex );
 
 			body->setIndex = sleepSetId;
 			body->localIndex = sleepBodyIndex;
@@ -532,7 +532,7 @@ void b2TransferBody( b2World* world, b2SolverSet* targetSet, b2SolverSet* source
 
 	if ( sourceSet->setIndex == b2_awakeSet )
 	{
-		b2BodyStateArray_RemoveSwap( &sourceSet->bodyStates, sourceIndex );
+		(void)b2BodyStateArray_RemoveSwap( &sourceSet->bodyStates, sourceIndex );
 	}
 	else if ( targetSet->setIndex == b2_awakeSet )
 	{

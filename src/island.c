@@ -61,10 +61,11 @@ void b2DestroyIsland( b2World* world, int islandId )
 	{
 		int localIndex = island->localIndex;
 		int lastIndex = set->islandSims.count - 1;
+		B2_ASSERT( 0 <= localIndex && localIndex <= lastIndex );
 		int moveIslandId = set->islandSims.data[lastIndex].islandId;
 		set->islandSims.data[localIndex] = set->islandSims.data[lastIndex];
 		world->islands.data[moveIslandId].localIndex = localIndex;
-		set->islandSims.count -= 1;                                                                                                   \
+		set->islandSims.count -= 1;
 	}
 
 	// Free island and id (preserve island revision)
@@ -256,8 +257,6 @@ void b2UnlinkContact( b2World* world, b2Contact* contact )
 		movedContact->islandIndex = removeIndex;
 	}
 
-	island->constraintRemoveCount += 1;
-
 	contact->islandId = B2_NULL_INDEX;
 	contact->islandIndex = B2_NULL_INDEX;
 	island->constraintRemoveCount += 1;
@@ -336,8 +335,6 @@ void b2UnlinkJoint( b2World* world, b2Joint* joint )
 		B2_ASSERT( movedJoint->islandIndex == movedIndex );
 		movedJoint->islandIndex = removeIndex;
 	}
-
-	island->constraintRemoveCount += 1;
 
 	joint->islandId = B2_NULL_INDEX;
 	joint->islandIndex = B2_NULL_INDEX;
