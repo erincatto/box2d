@@ -152,6 +152,13 @@ B2_API void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionD
 /// @note Advanced feature
 B2_API void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushSpeed );
 
+/// Set the contact point recycling distance. Setting this to zero disables contact point recycling.
+/// Usually in meters.
+B2_API void b2World_SetContactRecycleDistance( b2WorldId worldId, float recycleDistance );
+
+/// Get the contact point recycling distance. Usually in meters.
+B2_API float b2World_GetContactRecycleDistance( b2WorldId worldId );
+
 /// Set the maximum linear speed. Usually in m/s.
 B2_API void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearSpeed );
 
@@ -279,9 +286,13 @@ B2_API void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity );
 
 /// Set the velocity to reach the given transform after a given time step.
 /// The result will be close but maybe not exact. This is meant for kinematic bodies.
-/// The target is not applied if the velocity would be below the sleep threshold.
-/// This will automatically wake the body if asleep.
-B2_API void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep );
+/// The target is not applied if the velocity would be below the sleep threshold and
+/// the body is currently asleep.
+/// @param bodyId The body id
+/// @param target The target transform for the body
+/// @param timeStep The time step of the next call to b2World_Step
+/// @param wake Option to wake the body or not
+B2_API void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep, bool wake );
 
 /// Get the linear velocity of a local point attached to a body. Usually in meters per second.
 B2_API b2Vec2 b2Body_GetLocalPointVelocity( b2BodyId bodyId, b2Vec2 localPoint );
@@ -311,6 +322,12 @@ B2_API void b2Body_ApplyForceToCenter( b2BodyId bodyId, b2Vec2 force, bool wake 
 /// @param torque about the z-axis (out of the screen), usually in N*m.
 /// @param wake also wake up the body
 B2_API void b2Body_ApplyTorque( b2BodyId bodyId, float torque, bool wake );
+
+/// Clear the force and torque on this body. Forces and torques are automatically cleared after each world
+/// step. So this only needs to be called if the application wants to remove the effect of previous
+/// calls to apply forces and torques before the world step is called.
+/// @param bodyId The body id
+B2_API void b2Body_ClearForces( b2BodyId bodyId );
 
 /// Apply an impulse at a point. This immediately modifies the velocity.
 /// It also modifies the angular velocity if the point of application
@@ -362,7 +379,7 @@ B2_API void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData );
 /// Get the mass data for a body
 B2_API b2MassData b2Body_GetMassData( b2BodyId bodyId );
 
-/// This update the mass properties to the sum of the mass properties of the shapes.
+/// This updates the mass properties to the sum of the mass properties of the shapes.
 /// This normally does not need to be called unless you called SetMassData to override
 /// the mass and you later want to reset the mass.
 /// You may also use this when automatic mass computation has been disabled.
@@ -494,7 +511,7 @@ B2_API b2ShapeId b2CreateSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, c
 
 /// Create a capsule shape and attach it to a body. The shape definition and geometry are fully cloned.
 /// Contacts are not created until the next time step.
-/// @return the shape id for accessing the shape
+/// @return the shape id for accessing the shape, this will be b2_nullShapeId if the length is too small.
 B2_API b2ShapeId b2CreateCapsuleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Capsule* capsule );
 
 /// Create a polygon shape and attach it to a body. The shape definition and geometry are fully cloned.
@@ -658,10 +675,10 @@ B2_API int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData
 /// Get the maximum capacity required for retrieving all the overlapped shapes on a sensor shape.
 /// This returns 0 if the provided shape is not a sensor.
 /// @param shapeId the id of a sensor shape
-/// @returns the required capacity to get all the overlaps in b2Shape_GetSensorOverlaps
+/// @returns the required capacity to get all the overlaps in b2Shape_GetSensorData
 B2_API int b2Shape_GetSensorCapacity( b2ShapeId shapeId );
 
-/// Get the overlap data for a sensor shape.
+/// Get the overlap data for a sensor shape computed the previous world step.
 /// @param shapeId the id of a sensor shape
 /// @param visitorIds a user allocated array that is filled with the overlapping shapes (visitors)
 /// @param capacity the capacity of overlappedShapes
@@ -680,7 +697,15 @@ B2_API b2MassData b2Shape_ComputeMassData( b2ShapeId shapeId );
 /// todo need sample
 B2_API b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target );
 
-B2_API void b2Shape_ApplyWindForce( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, bool wake );
+/// Apply a wind force to the body for this shape using the density of air. This considers
+/// the projected area of the shape in the wind direction. This also considers
+/// the relative velocity of the shape.
+/// @param shapeId the shape id
+/// @param wind the wind velocity in world space
+/// @param drag the drag coefficient, the force that opposes the relative velocity
+/// @param lift the lift coefficient, the force that is perpendicular to the relative velocity
+/// @param wake should this wake the body
+B2_API void b2Shape_ApplyWind( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, bool wake );
 
 /// Chain Shape
 
@@ -799,7 +824,6 @@ B2_API void b2Joint_SetTorqueThreshold( b2JointId jointId, float threshold );
 
 /// Get the torque threshold for joint events (N-m)
 B2_API float b2Joint_GetTorqueThreshold( b2JointId jointId );
-
 
 /**
  * @defgroup distance_joint Distance Joint

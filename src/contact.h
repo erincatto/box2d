@@ -40,6 +40,15 @@ typedef struct b2ContactEdge
 // connectivity.
 typedef struct b2Contact
 {
+	b2ContactEdge edges[2];
+
+	// A contact only belongs to an island if touching, otherwise B2_NULL_INDEX.
+	int islandId;
+
+	// Index into the island's contacts array for O(1) swap-removal.
+	// B2_NULL_INDEX when not in an island.
+	int islandIndex;
+
 	// index of simulation set stored in b2World
 	// B2_NULL_INDEX when slot is free
 	int setIndex;
@@ -56,12 +65,6 @@ typedef struct b2Contact
 	int shapeIdA;
 	int shapeIdB;
 	int contactId;
-
-	// A contact only belongs to an island if touching, otherwise B2_NULL_INDEX.
-	b2ContactEdge edges[2];
-	int islandPrev;
-	int islandNext;
-	int islandId;
 
 	// b2ContactFlags
 	uint32_t flags;
@@ -91,6 +94,9 @@ enum b2ContactSimFlags
 
 	// This contact wants pre-solve events
 	b2_simEnablePreSolveEvents = 0x00200000,
+
+	// This contact has a cached relative transform
+	b2_simRelativeTransformValid = 0x00400000,
 };
 
 /// The class manages contact between two shapes. A contact exists for each overlapping
@@ -100,7 +106,10 @@ typedef struct b2ContactSim
 {
 	int contactId;
 
-#if B2_VALIDATE
+	b2Transform cachedTransformA;
+	b2Transform cachedTransformB;
+
+#if B2_ENABLE_VALIDATION
 	int bodyIdA;
 	int bodyIdB;
 #endif
@@ -133,6 +142,7 @@ typedef struct b2ContactSim
 } b2ContactSim;
 
 void b2InitializeContactRegisters( void );
+bool b2CanCollide( b2ShapeType typeA, b2ShapeType typeB );
 
 void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB );
 void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies );

@@ -5,13 +5,13 @@
 
 #include "array.h"
 #include "bitset.h"
-#include "constants.h"
+#include "box2d/constants.h"
+
+#include "box2d/types.h"
 
 typedef struct b2Body b2Body;
 typedef struct b2ContactSim b2ContactSim;
 typedef struct b2Contact b2Contact;
-typedef struct b2ContactConstraint b2ContactConstraint;
-typedef struct b2ContactConstraintSIMD b2ContactConstraintSIMD;
 typedef struct b2JointSim b2JointSim;
 typedef struct b2Joint b2Joint;
 typedef struct b2StepContext b2StepContext;
@@ -19,11 +19,11 @@ typedef struct b2World b2World;
 
 // This holds constraints that cannot fit the graph color limit. This happens when a single dynamic body
 // is touching many other bodies.
-#define B2_OVERFLOW_INDEX (B2_GRAPH_COLOR_COUNT - 1)
+#define B2_OVERFLOW_INDEX ( B2_GRAPH_COLOR_COUNT - 1 )
 
 // This keeps constraints involving two dynamic bodies at a lower solver priority than constraints
 // involving a dynamic and static bodies. This reduces tunneling due to push through.
-#define B2_DYNAMIC_COLOR_COUNT (B2_GRAPH_COLOR_COUNT - 4)
+#define B2_DYNAMIC_COLOR_COUNT ( B2_GRAPH_COLOR_COUNT - 4 )
 
 typedef struct b2GraphColor
 {
@@ -44,8 +44,8 @@ typedef struct b2GraphColor
 	// transient
 	union
 	{
-		b2ContactConstraintSIMD* simdConstraints;
-		b2ContactConstraint* overflowConstraints;
+		struct b2ContactConstraintWide* wideConstraints;
+		struct b2ContactConstraint* overflowConstraints;
 	};
 } b2GraphColor;
 
@@ -64,3 +64,5 @@ void b2RemoveContactFromGraph( b2World* world, int bodyIdA, int bodyIdB, int col
 b2JointSim* b2CreateJointInGraph( b2World* world, b2Joint* joint );
 void b2AddJointToGraph( b2World* world, b2JointSim* jointSim, b2Joint* joint );
 void b2RemoveJointFromGraph( b2World* world, int bodyIdA, int bodyIdB, int colorIndex, int localIndex );
+
+extern b2HexColor b2_graphColors[B2_GRAPH_COLOR_COUNT];

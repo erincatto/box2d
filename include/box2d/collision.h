@@ -507,20 +507,28 @@ B2_API b2TOIOutput b2TimeOfImpact( const b2TOIInput* input );
 /// the time step.
 typedef struct b2ManifoldPoint
 {
-	/// Location of the contact point in world space. Subject to precision loss at large coordinates.
-	/// @note Should only be used for debugging.
-	b2Vec2 point;
+	/// Location of the contact point in world space when first clipped. Subject to precision
+	/// loss at large coordinates. This point lags behind when contact recycling is used.
+	/// @note Should only be used for debugging. Use anchorA and/or anchorB for game logic.
+	b2Vec2 clipPoint;
 
-	/// Location of the contact point relative to shapeA's origin in world space
+	/// Location of the contact point relative to shapeA's origin in world space.
+	/// This can be converted to a world point using:
+	/// b2Vec2 worldPointA = b2Add(b2Body_GetCenter(myBodyIdA), anchorA);
 	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
 	b2Vec2 anchorA;
 
 	/// Location of the contact point relative to shapeB's origin in world space
+	/// This can be converted to a world point using:
+	/// b2Vec2 worldPointB = b2Add(b2Body_GetCenter(myBodyIdB), anchorB);
 	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
 	b2Vec2 anchorB;
 
 	/// The separation of the contact point, negative if penetrating
 	float separation;
+
+	/// Cached separation used for contact recycling
+	float baseSeparation;
 
 	/// The impulse along the manifold normal vector.
 	float normalImpulse;
@@ -530,6 +538,8 @@ typedef struct b2ManifoldPoint
 
 	/// The total normal impulse applied across sub-stepping and restitution. This is important
 	/// to identify speculative contact points that had an interaction in the time step.
+	/// This includes the warm starting impulse, the sub-step delta impulse, and the restitution
+	/// impulse.
 	float totalNormalImpulse;
 
 	/// Relative normal velocity pre-solve. Used for hit events. If the normal impulse is
@@ -634,22 +644,22 @@ typedef struct b2DynamicTree
 	struct b2TreeNode* nodes;
 
 	/// The root index
-	int root;
+	int32_t root;
 
 	/// The number of nodes
-	int nodeCount;
+	int32_t nodeCount;
 
 	/// The allocated node space
-	int nodeCapacity;
+	int32_t nodeCapacity;
 
 	/// Node free list
-	int freeList;
+	int32_t freeList;
 
 	/// Number of proxies created
-	int proxyCount;
+	int32_t proxyCount;
 
 	/// Leaf indices for rebuild
-	int* leafIndices;
+	int32_t* leafIndices;
 
 	/// Leaf bounding boxes for rebuild
 	b2AABB* leafBoxes;
@@ -658,10 +668,10 @@ typedef struct b2DynamicTree
 	b2Vec2* leafCenters;
 
 	/// Bins for sorting during rebuild
-	int* binIndices;
+	int32_t* binIndices;
 
 	/// Allocated space for rebuilding
-	int rebuildCapacity;
+	int32_t rebuildCapacity;
 } b2DynamicTree;
 
 /// These are performance results returned by dynamic tree queries.

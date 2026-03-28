@@ -310,7 +310,7 @@ void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context )
 	}
 
 	// angular velocity
-	if ( joint->maxVelocityTorque > 0.0 )
+	if ( joint->maxVelocityTorque > 0.0f )
 	{
 		float cdot = wB - wA - joint->angularVelocity;
 		float impulse = -joint->angularMass * cdot;

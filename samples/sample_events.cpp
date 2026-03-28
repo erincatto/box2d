@@ -28,13 +28,13 @@ public:
 	explicit SensorFunnel( SampleContext* context )
 		: Sample( context )
 	{
-		if ( m_context->restart == false )
+		if (m_context->restart == false)
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 25.0f * 1.333f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 25.0f * 1.333f;
 		}
 
-		m_context->drawJoints = false;
+		m_context->debugDraw.drawJoints = false;
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -104,7 +104,7 @@ public:
 
 			float sign = 1.0f;
 			float y = 14.0f;
-			for ( int i = 0; i < 3; ++i )
+			for (int i = 0; i < 3; ++i)
 			{
 				bodyDef.position = { 0.0f, y };
 				bodyDef.type = b2_dynamicBody;
@@ -148,7 +148,7 @@ public:
 		m_side = -15.0f;
 		m_type = e_human;
 
-		for ( int i = 0; i < e_count; ++i )
+		for (int i = 0; i < e_count; ++i)
 		{
 			m_isSpawned[i] = false;
 		}
@@ -161,23 +161,23 @@ public:
 	void CreateElement()
 	{
 		int index = -1;
-		for ( int i = 0; i < e_count; ++i )
+		for (int i = 0; i < e_count; ++i)
 		{
-			if ( m_isSpawned[i] == false )
+			if (m_isSpawned[i] == false)
 			{
 				index = i;
 				break;
 			}
 		}
 
-		if ( index == -1 )
+		if (index == -1)
 		{
 			return;
 		}
 
 		b2Vec2 center = { m_side, 29.5f };
 
-		if ( m_type == e_donut )
+		if (m_type == e_donut)
 		{
 			Donut* donut = m_donuts + index;
 			donut->Create( m_worldId, center, 1.0f, 0, true, donut );
@@ -200,7 +200,7 @@ public:
 
 	void DestroyElement( int index )
 	{
-		if ( m_type == e_donut )
+		if (m_type == e_donut)
 		{
 			Donut* donut = m_donuts + index;
 			donut->Destroy();
@@ -216,11 +216,11 @@ public:
 
 	void Clear()
 	{
-		for ( int i = 0; i < e_count; ++i )
+		for (int i = 0; i < e_count; ++i)
 		{
-			if ( m_isSpawned[i] == true )
+			if (m_isSpawned[i] == true)
 			{
-				if ( m_type == e_donut )
+				if (m_type == e_donut)
 				{
 					m_donuts[i].Destroy();
 				}
@@ -238,18 +238,18 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 90.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
 
 		ImGui::Begin( "Sensor Event", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 
-		if ( ImGui::RadioButton( "donut", m_type == e_donut ) )
+		if (ImGui::RadioButton( "donut", m_type == e_donut ))
 		{
 			Clear();
 			m_type = e_donut;
 		}
 
-		if ( ImGui::RadioButton( "human", m_type == e_human ) )
+		if (ImGui::RadioButton( "human", m_type == e_human ))
 		{
 			Clear();
 			m_type = e_human;
@@ -260,7 +260,7 @@ public:
 
 	void Step() override
 	{
-		if ( m_stepCount == 832 )
+		if (m_stepCount == 832)
 		{
 			m_stepCount += 0;
 		}
@@ -270,16 +270,16 @@ public:
 		// Discover rings that touch the bottom sensor
 		bool deferredDestruction[e_count] = {};
 		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
-		for ( int i = 0; i < sensorEvents.beginCount; ++i )
+		for (int i = 0; i < sensorEvents.beginCount; ++i)
 		{
 			b2SensorBeginTouchEvent event = sensorEvents.beginEvents[i];
 			b2ShapeId visitorId = event.visitorShapeId;
 			b2BodyId bodyId = b2Shape_GetBody( visitorId );
 
-			if ( m_type == e_donut )
+			if (m_type == e_donut)
 			{
 				Donut* donut = (Donut*)b2Body_GetUserData( bodyId );
-				if ( donut != nullptr )
+				if (donut != nullptr)
 				{
 					int index = (int)( donut - m_donuts );
 					assert( 0 <= index && index < e_count );
@@ -291,7 +291,7 @@ public:
 			else
 			{
 				Human* human = (Human*)b2Body_GetUserData( bodyId );
-				if ( human != nullptr )
+				if (human != nullptr)
 				{
 					int index = (int)( human - m_humans );
 					assert( 0 <= index && index < e_count );
@@ -305,18 +305,18 @@ public:
 		// todo destroy mouse joint if necessary
 
 		// Safely destroy rings that hit the bottom sensor
-		for ( int i = 0; i < e_count; ++i )
+		for (int i = 0; i < e_count; ++i)
 		{
-			if ( deferredDestruction[i] )
+			if (deferredDestruction[i])
 			{
 				DestroyElement( i );
 			}
 		}
 
-		if ( m_context->hertz > 0.0f && m_context->pause == false )
+		if (m_context->hertz > 0.0f && m_context->pause == false)
 		{
 			m_wait -= 1.0f / m_context->hertz;
-			if ( m_wait < 0.0f )
+			if (m_wait < 0.0f)
 			{
 				CreateElement();
 				m_wait += 0.5f;
@@ -345,10 +345,10 @@ public:
 	explicit SensorBookend( SampleContext* context )
 		: Sample( context )
 	{
-		if ( m_context->restart == false )
+		if (m_context->restart == false)
 		{
-			m_context->camera.m_center = { 0.0f, 6.0f };
-			m_context->camera.m_zoom = 7.5f;
+			m_context->camera.center = { 0.0f, 6.0f };
+			m_context->camera.zoom = 7.5f;
 		}
 
 		{
@@ -430,21 +430,21 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 19.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 12.0f * fontSize, height ) );
 
 		ImGui::Begin( "Sensor Bookend", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 
-		if ( B2_IS_NULL( m_visitorBodyId ) )
+		if (B2_IS_NULL( m_visitorBodyId ))
 		{
-			if ( ImGui::Button( "create visitor" ) )
+			if (ImGui::Button( "create visitor" ))
 			{
 				CreateVisitor();
 			}
 		}
 		else
 		{
-			if ( ImGui::Button( "destroy visitor" ) )
+			if (ImGui::Button( "destroy visitor" ))
 			{
 				b2DestroyBody( m_visitorBodyId );
 				m_visitorBodyId = b2_nullBodyId;
@@ -453,15 +453,15 @@ public:
 			else
 			{
 				bool enabledEvents = b2Shape_AreSensorEventsEnabled( m_visitorShapeId );
-				if ( ImGui::Checkbox( "visitor events", &enabledEvents ) )
+				if (ImGui::Checkbox( "visitor events", &enabledEvents ))
 				{
 					b2Shape_EnableSensorEvents( m_visitorShapeId, enabledEvents );
 				}
 
 				bool enabledBody = b2Body_IsEnabled( m_visitorBodyId );
-				if ( ImGui::Checkbox( "enable visitor body", &enabledBody ) )
+				if (ImGui::Checkbox( "enable visitor body", &enabledBody ))
 				{
-					if ( enabledBody )
+					if (enabledBody)
 					{
 						b2Body_Enable( m_visitorBodyId );
 					}
@@ -475,16 +475,16 @@ public:
 
 		ImGui::Separator();
 
-		if ( B2_IS_NULL( m_sensorBodyId1 ) )
+		if (B2_IS_NULL( m_sensorBodyId1 ))
 		{
-			if ( ImGui::Button( "create sensor1" ) )
+			if (ImGui::Button( "create sensor1" ))
 			{
 				CreateSensor1();
 			}
 		}
 		else
 		{
-			if ( ImGui::Button( "destroy sensor1" ) )
+			if (ImGui::Button( "destroy sensor1" ))
 			{
 				b2DestroyBody( m_sensorBodyId1 );
 				m_sensorBodyId1 = b2_nullBodyId;
@@ -493,15 +493,15 @@ public:
 			else
 			{
 				bool enabledEvents = b2Shape_AreSensorEventsEnabled( m_sensorShapeId1 );
-				if ( ImGui::Checkbox( "sensor 1 events", &enabledEvents ) )
+				if (ImGui::Checkbox( "sensor 1 events", &enabledEvents ))
 				{
 					b2Shape_EnableSensorEvents( m_sensorShapeId1, enabledEvents );
 				}
 
 				bool enabledBody = b2Body_IsEnabled( m_sensorBodyId1 );
-				if ( ImGui::Checkbox( "enable sensor1 body", &enabledBody ) )
+				if (ImGui::Checkbox( "enable sensor1 body", &enabledBody ))
 				{
-					if ( enabledBody )
+					if (enabledBody)
 					{
 						b2Body_Enable( m_sensorBodyId1 );
 					}
@@ -515,16 +515,16 @@ public:
 
 		ImGui::Separator();
 
-		if ( B2_IS_NULL( m_sensorBodyId2 ) )
+		if (B2_IS_NULL( m_sensorBodyId2 ))
 		{
-			if ( ImGui::Button( "create sensor2" ) )
+			if (ImGui::Button( "create sensor2" ))
 			{
 				CreateSensor2();
 			}
 		}
 		else
 		{
-			if ( ImGui::Button( "destroy sensor2" ) )
+			if (ImGui::Button( "destroy sensor2" ))
 			{
 				b2DestroyBody( m_sensorBodyId2 );
 				m_sensorBodyId2 = b2_nullBodyId;
@@ -533,15 +533,15 @@ public:
 			else
 			{
 				bool enabledEvents = b2Shape_AreSensorEventsEnabled( m_sensorShapeId2 );
-				if ( ImGui::Checkbox( "sensor2 events", &enabledEvents ) )
+				if (ImGui::Checkbox( "sensor2 events", &enabledEvents ))
 				{
 					b2Shape_EnableSensorEvents( m_sensorShapeId2, enabledEvents );
 				}
 
 				bool enabledBody = b2Body_IsEnabled( m_sensorBodyId2 );
-				if ( ImGui::Checkbox( "enable sensor2 body", &enabledBody ) )
+				if (ImGui::Checkbox( "enable sensor2 body", &enabledBody ))
 				{
-					if ( enabledBody )
+					if (enabledBody)
 					{
 						b2Body_Enable( m_sensorBodyId2 );
 					}
@@ -561,13 +561,13 @@ public:
 		Sample::Step();
 
 		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
-		for ( int i = 0; i < sensorEvents.beginCount; ++i )
+		for (int i = 0; i < sensorEvents.beginCount; ++i)
 		{
 			b2SensorBeginTouchEvent event = sensorEvents.beginEvents[i];
 
-			if ( B2_ID_EQUALS( event.sensorShapeId, m_sensorShapeId1 ) )
+			if (B2_ID_EQUALS( event.sensorShapeId, m_sensorShapeId1 ))
 			{
-				if ( B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ) )
+				if (B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ))
 				{
 					assert( m_isVisiting1 == false );
 					m_isVisiting1 = true;
@@ -582,7 +582,7 @@ public:
 			{
 				assert( B2_ID_EQUALS( event.sensorShapeId, m_sensorShapeId2 ) );
 
-				if ( B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ) )
+				if (B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ))
 				{
 					assert( m_isVisiting2 == false );
 					m_isVisiting2 = true;
@@ -597,13 +597,13 @@ public:
 
 		assert( m_sensorsOverlapCount == 0 || m_sensorsOverlapCount == 2 );
 
-		for ( int i = 0; i < sensorEvents.endCount; ++i )
+		for (int i = 0; i < sensorEvents.endCount; ++i)
 		{
 			b2SensorEndTouchEvent event = sensorEvents.endEvents[i];
 
-			if ( B2_ID_EQUALS( event.sensorShapeId, m_sensorShapeId1 ) )
+			if (B2_ID_EQUALS( event.sensorShapeId, m_sensorShapeId1 ))
 			{
-				if ( B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ) )
+				if (B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ))
 				{
 					assert( m_isVisiting1 == true );
 					m_isVisiting1 = false;
@@ -618,7 +618,7 @@ public:
 			{
 				assert( B2_ID_EQUALS( event.sensorShapeId, m_sensorShapeId2 ) );
 
-				if ( B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ) )
+				if (B2_ID_EQUALS( event.visitorShapeId, m_visitorShapeId ))
 				{
 					assert( m_isVisiting2 == true );
 					m_isVisiting2 = false;
@@ -634,17 +634,17 @@ public:
 		assert( m_sensorsOverlapCount == 0 || m_sensorsOverlapCount == 2 );
 
 		// Nullify invalid shape ids after end events are processed.
-		if ( b2Shape_IsValid( m_visitorShapeId ) == false )
+		if (b2Shape_IsValid( m_visitorShapeId ) == false)
 		{
 			m_visitorShapeId = b2_nullShapeId;
 		}
 
-		if ( b2Shape_IsValid( m_sensorShapeId1 ) == false )
+		if (b2Shape_IsValid( m_sensorShapeId1 ) == false)
 		{
 			m_sensorShapeId1 = b2_nullShapeId;
 		}
 
-		if ( b2Shape_IsValid( m_sensorShapeId2 ) == false )
+		if (b2Shape_IsValid( m_sensorShapeId2 ) == false)
 		{
 			m_sensorShapeId2 = b2_nullShapeId;
 		}
@@ -690,10 +690,10 @@ public:
 	explicit FootSensor( SampleContext* context )
 		: Sample( context )
 	{
-		if ( m_context->restart == false )
+		if (m_context->restart == false)
 		{
-			m_context->camera.m_center = { 0.0f, 6.0f };
-			m_context->camera.m_zoom = 7.5f;
+			m_context->camera.center = { 0.0f, 6.0f };
+			m_context->camera.zoom = 7.5f;
 		}
 
 		{
@@ -702,7 +702,7 @@ public:
 
 			b2Vec2 points[20];
 			float x = 10.0f;
-			for ( int i = 0; i < 20; ++i )
+			for (int i = 0; i < 20; ++i)
 			{
 				points[i] = { x, 0.0f };
 				x -= 1.0f;
@@ -745,12 +745,12 @@ public:
 
 	void Step() override
 	{
-		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS )
+		if (glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS)
 		{
 			b2Body_ApplyForceToCenter( m_playerId, { -50.0f, 0.0f }, true );
 		}
 
-		if ( glfwGetKey( m_context->window, GLFW_KEY_D ) == GLFW_PRESS )
+		if (glfwGetKey( m_context->window, GLFW_KEY_D ) == GLFW_PRESS)
 		{
 			b2Body_ApplyForceToCenter( m_playerId, { 50.0f, 0.0f }, true );
 		}
@@ -758,25 +758,25 @@ public:
 		Sample::Step();
 
 		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
-		for ( int i = 0; i < sensorEvents.beginCount; ++i )
+		for (int i = 0; i < sensorEvents.beginCount; ++i)
 		{
 			b2SensorBeginTouchEvent event = sensorEvents.beginEvents[i];
 
 			assert( B2_ID_EQUALS( event.visitorShapeId, m_sensorId ) == false );
 
-			if ( B2_ID_EQUALS( event.sensorShapeId, m_sensorId ) )
+			if (B2_ID_EQUALS( event.sensorShapeId, m_sensorId ))
 			{
 				m_overlapCount += 1;
 			}
 		}
 
-		for ( int i = 0; i < sensorEvents.endCount; ++i )
+		for (int i = 0; i < sensorEvents.endCount; ++i)
 		{
 			b2SensorEndTouchEvent event = sensorEvents.endEvents[i];
 
 			assert( B2_ID_EQUALS( event.visitorShapeId, m_sensorId ) == false );
 
-			if ( B2_ID_EQUALS( event.sensorShapeId, m_sensorId ) )
+			if (B2_ID_EQUALS( event.sensorShapeId, m_sensorId ))
 			{
 				m_overlapCount -= 1;
 			}
@@ -788,12 +788,12 @@ public:
 		m_visitorIds.clear();
 		m_visitorIds.resize( capacity );
 		int count = b2Shape_GetSensorData( m_sensorId, m_visitorIds.data(), capacity );
-		for ( int i = 0; i < count; ++i )
+		for (int i = 0; i < count; ++i)
 		{
 			b2ShapeId shapeId = m_visitorIds[i];
 			b2AABB aabb = b2Shape_GetAABB( shapeId );
 			b2Vec2 point = b2AABB_Center( aabb );
-			m_context->draw.DrawPoint( point, 10.0f, b2_colorWhite );
+			DrawPoint( m_draw, point, 10.0f, b2_colorWhite );
 		}
 	}
 
@@ -826,10 +826,10 @@ public:
 	explicit ContactEvent( SampleContext* context )
 		: Sample( context )
 	{
-		if ( m_context->restart == false )
+		if (m_context->restart == false)
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 25.0f * 1.75f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 25.0f * 1.75f;
 		}
 
 		{
@@ -865,7 +865,7 @@ public:
 			m_coreShapeId = b2CreateCircleShape( m_playerId, &shapeDef, &circle );
 		}
 
-		for ( int i = 0; i < e_count; ++i )
+		for (int i = 0; i < e_count; ++i)
 		{
 			m_debrisIds[i] = b2_nullBodyId;
 			m_bodyUserData[i].index = i;
@@ -878,16 +878,16 @@ public:
 	void SpawnDebris()
 	{
 		int index = -1;
-		for ( int i = 0; i < e_count; ++i )
+		for (int i = 0; i < e_count; ++i)
 		{
-			if ( B2_IS_NULL( m_debrisIds[i] ) )
+			if (B2_IS_NULL( m_debrisIds[i] ))
 			{
 				index = i;
 				break;
 			}
 		}
 
-		if ( index == -1 )
+		if (index == -1)
 		{
 			return;
 		}
@@ -909,12 +909,12 @@ public:
 		// No events when debris hits debris
 		shapeDef.enableContactEvents = false;
 
-		if ( ( index + 1 ) % 3 == 0 )
+		if (( index + 1 ) % 3 == 0)
 		{
 			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
 			b2CreateCircleShape( m_debrisIds[index], &shapeDef, &circle );
 		}
-		else if ( ( index + 1 ) % 2 == 0 )
+		else if (( index + 1 ) % 2 == 0)
 		{
 			b2Capsule capsule = { { 0.0f, -0.25f }, { 0.0f, 0.25f }, 0.25f };
 			b2CreateCapsuleShape( m_debrisIds[index], &shapeDef, &capsule );
@@ -930,7 +930,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 60.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Contact Event", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -946,22 +946,22 @@ public:
 
 		b2Vec2 position = b2Body_GetPosition( m_playerId );
 
-		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS )
+		if (glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS)
 		{
 			b2Body_ApplyForce( m_playerId, { -m_force, 0.0f }, position, true );
 		}
 
-		if ( glfwGetKey( m_context->window, GLFW_KEY_D ) == GLFW_PRESS )
+		if (glfwGetKey( m_context->window, GLFW_KEY_D ) == GLFW_PRESS)
 		{
 			b2Body_ApplyForce( m_playerId, { m_force, 0.0f }, position, true );
 		}
 
-		if ( glfwGetKey( m_context->window, GLFW_KEY_W ) == GLFW_PRESS )
+		if (glfwGetKey( m_context->window, GLFW_KEY_W ) == GLFW_PRESS)
 		{
 			b2Body_ApplyForce( m_playerId, { 0.0f, m_force }, position, true );
 		}
 
-		if ( glfwGetKey( m_context->window, GLFW_KEY_S ) == GLFW_PRESS )
+		if (glfwGetKey( m_context->window, GLFW_KEY_S ) == GLFW_PRESS)
 		{
 			b2Body_ApplyForce( m_playerId, { 0.0f, -m_force }, position, true );
 		}
@@ -978,7 +978,7 @@ public:
 
 		// Process contact begin touch events.
 		b2ContactEvents contactEvents = b2World_GetContactEvents( m_worldId );
-		for ( int i = 0; i < contactEvents.beginCount; ++i )
+		for (int i = 0; i < contactEvents.beginCount; ++i)
 		{
 			b2ContactBeginTouchEvent event = contactEvents.beginEvents[i];
 			b2BodyId bodyIdA = b2Shape_GetBody( event.shapeIdA );
@@ -993,7 +993,7 @@ public:
 			int capacityA = b2Shape_GetContactCapacity( event.shapeIdA );
 			int capacityB = b2Shape_GetContactCapacity( event.shapeIdB );
 
-			if ( capacityA < capacityB )
+			if (capacityA < capacityB)
 			{
 				contactData.resize( capacityA );
 
@@ -1001,11 +1001,11 @@ public:
 				int countA = b2Shape_GetContactData( event.shapeIdA, contactData.data(), capacityA );
 				assert( countA >= 1 );
 
-				for ( int j = 0; j < countA; ++j )
+				for (int j = 0; j < countA; ++j)
 				{
 					b2ShapeId idA = contactData[j].shapeIdA;
 					b2ShapeId idB = contactData[j].shapeIdB;
-					if ( B2_ID_EQUALS( idA, event.shapeIdB ) || B2_ID_EQUALS( idB, event.shapeIdB ) )
+					if (B2_ID_EQUALS( idA, event.shapeIdB ) || B2_ID_EQUALS( idB, event.shapeIdB ))
 					{
 						assert( B2_ID_EQUALS( idA, event.shapeIdA ) || B2_ID_EQUALS( idB, event.shapeIdA ) );
 
@@ -1013,12 +1013,11 @@ public:
 						b2Vec2 normal = manifold.normal;
 						assert( b2AbsFloat( b2Length( normal ) - 1.0f ) < 4.0f * FLT_EPSILON );
 
-						for ( int k = 0; k < manifold.pointCount; ++k )
+						for (int k = 0; k < manifold.pointCount; ++k)
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							m_context->draw.DrawLine( point.point, point.point + point.totalNormalImpulse * normal,
-													  b2_colorBlueViolet );
-							m_context->draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
+							DrawLine( m_draw, point.clipPoint, point.clipPoint + point.totalNormalImpulse * normal, b2_colorBlueViolet );
+							DrawPoint( m_draw, point.clipPoint, 10.0f, b2_colorWhite );
 						}
 					}
 				}
@@ -1031,12 +1030,12 @@ public:
 				int countB = b2Shape_GetContactData( event.shapeIdB, contactData.data(), capacityB );
 				assert( countB >= 1 );
 
-				for ( int j = 0; j < countB; ++j )
+				for (int j = 0; j < countB; ++j)
 				{
 					b2ShapeId idA = contactData[j].shapeIdA;
 					b2ShapeId idB = contactData[j].shapeIdB;
 
-					if ( B2_ID_EQUALS( idA, event.shapeIdA ) || B2_ID_EQUALS( idB, event.shapeIdA ) )
+					if (B2_ID_EQUALS( idA, event.shapeIdA ) || B2_ID_EQUALS( idB, event.shapeIdA ))
 					{
 						assert( B2_ID_EQUALS( idA, event.shapeIdB ) || B2_ID_EQUALS( idB, event.shapeIdB ) );
 
@@ -1044,30 +1043,29 @@ public:
 						b2Vec2 normal = manifold.normal;
 						assert( b2AbsFloat( b2Length( normal ) - 1.0f ) < 4.0f * FLT_EPSILON );
 
-						for ( int k = 0; k < manifold.pointCount; ++k )
+						for (int k = 0; k < manifold.pointCount; ++k)
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							m_context->draw.DrawLine( point.point, point.point + point.totalNormalImpulse * normal,
-													  b2_colorYellowGreen );
-							m_context->draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
+							DrawLine( m_draw, point.clipPoint, point.clipPoint + point.totalNormalImpulse * normal, b2_colorYellowGreen );
+							DrawPoint( m_draw, point.clipPoint, 10.0f, b2_colorWhite );
 						}
 					}
 				}
 			}
 
-			if ( B2_ID_EQUALS( bodyIdA, m_playerId ) )
+			if (B2_ID_EQUALS( bodyIdA, m_playerId ))
 			{
 				BodyUserData* userDataB = static_cast<BodyUserData*>( b2Body_GetUserData( bodyIdB ) );
-				if ( userDataB == nullptr )
+				if (userDataB == nullptr)
 				{
-					if ( B2_ID_EQUALS( event.shapeIdA, m_coreShapeId ) == false && destroyCount < e_count )
+					if (B2_ID_EQUALS( event.shapeIdA, m_coreShapeId ) == false && destroyCount < e_count)
 					{
 						// player non-core shape hit the wall
 
 						bool found = false;
-						for ( int j = 0; j < destroyCount; ++j )
+						for (int j = 0; j < destroyCount; ++j)
 						{
-							if ( B2_ID_EQUALS( event.shapeIdA, shapesToDestroy[j] ) )
+							if (B2_ID_EQUALS( event.shapeIdA, shapesToDestroy[j] ))
 							{
 								found = true;
 								break;
@@ -1075,14 +1073,14 @@ public:
 						}
 
 						// avoid double deletion
-						if ( found == false )
+						if (found == false)
 						{
 							shapesToDestroy[destroyCount] = event.shapeIdA;
 							destroyCount += 1;
 						}
 					}
 				}
-				else if ( attachCount < e_count )
+				else if (attachCount < e_count)
 				{
 					debrisToAttach[attachCount] = userDataB->index;
 					attachCount += 1;
@@ -1093,16 +1091,16 @@ public:
 				// Only expect events for the player
 				assert( B2_ID_EQUALS( bodyIdB, m_playerId ) );
 				BodyUserData* userDataA = static_cast<BodyUserData*>( b2Body_GetUserData( bodyIdA ) );
-				if ( userDataA == nullptr )
+				if (userDataA == nullptr)
 				{
-					if ( B2_ID_EQUALS( event.shapeIdB, m_coreShapeId ) == false && destroyCount < e_count )
+					if (B2_ID_EQUALS( event.shapeIdB, m_coreShapeId ) == false && destroyCount < e_count)
 					{
 						// player non-core shape hit the wall
 
 						bool found = false;
-						for ( int j = 0; j < destroyCount; ++j )
+						for (int j = 0; j < destroyCount; ++j)
 						{
-							if ( B2_ID_EQUALS( event.shapeIdB, shapesToDestroy[j] ) )
+							if (B2_ID_EQUALS( event.shapeIdB, shapesToDestroy[j] ))
 							{
 								found = true;
 								break;
@@ -1110,14 +1108,14 @@ public:
 						}
 
 						// avoid double deletion
-						if ( found == false )
+						if (found == false)
 						{
 							shapesToDestroy[destroyCount] = event.shapeIdB;
 							destroyCount += 1;
 						}
 					}
 				}
-				else if ( attachCount < e_count )
+				else if (attachCount < e_count)
 				{
 					debrisToAttach[attachCount] = userDataA->index;
 					attachCount += 1;
@@ -1126,11 +1124,11 @@ public:
 		}
 
 		// Attach debris to player body
-		for ( int i = 0; i < attachCount; ++i )
+		for (int i = 0; i < attachCount; ++i)
 		{
 			int index = debrisToAttach[i];
 			b2BodyId debrisId = m_debrisIds[index];
-			if ( B2_IS_NULL( debrisId ) )
+			if (B2_IS_NULL( debrisId ))
 			{
 				continue;
 			}
@@ -1140,7 +1138,7 @@ public:
 			b2Transform relativeTransform = b2InvMulTransforms( playerTransform, debrisTransform );
 
 			int shapeCount = b2Body_GetShapeCount( debrisId );
-			if ( shapeCount == 0 )
+			if (shapeCount == 0)
 			{
 				continue;
 			}
@@ -1153,7 +1151,7 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.enableContactEvents = true;
 
-			switch ( type )
+			switch (type)
 			{
 				case b2_circleShape:
 				{
@@ -1191,22 +1189,22 @@ public:
 			m_debrisIds[index] = b2_nullBodyId;
 		}
 
-		for ( int i = 0; i < destroyCount; ++i )
+		for (int i = 0; i < destroyCount; ++i)
 		{
 			bool updateMass = false;
 			b2DestroyShape( shapesToDestroy[i], updateMass );
 		}
 
-		if ( destroyCount > 0 )
+		if (destroyCount > 0)
 		{
 			// Update mass just once
 			b2Body_ApplyMassFromShapes( m_playerId );
 		}
 
-		if ( m_context->hertz > 0.0f && m_context->pause == false )
+		if (m_context->hertz > 0.0f && m_context->pause == false)
 		{
 			m_wait -= 1.0f / m_context->hertz;
-			if ( m_wait < 0.0f )
+			if (m_wait < 0.0f)
 			{
 				SpawnDebris();
 				m_wait += 0.5f;
@@ -1237,10 +1235,10 @@ public:
 	explicit Platform( SampleContext* context )
 		: Sample( context )
 	{
-		if ( m_context->restart == false )
+		if (m_context->restart == false)
 		{
-			m_context->camera.m_center = { 0.5f, 7.5f };
-			m_context->camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.center = { 0.5f, 7.5f };
+			m_context->camera.zoom = 25.0f * 0.4f;
 		}
 
 		b2World_SetPreSolveCallback( m_worldId, PreSolveStatic, this );
@@ -1326,11 +1324,11 @@ public:
 		assert( b2Shape_IsValid( shapeIdB ) );
 
 		float sign = 0.0f;
-		if ( B2_ID_EQUALS( shapeIdA, m_playerShapeId ) )
+		if (B2_ID_EQUALS( shapeIdA, m_playerShapeId ))
 		{
 			sign = -1.0f;
 		}
-		else if ( B2_ID_EQUALS( shapeIdB, m_playerShapeId ) )
+		else if (B2_ID_EQUALS( shapeIdB, m_playerShapeId ))
 		{
 			sign = 1.0f;
 		}
@@ -1340,7 +1338,7 @@ public:
 			return true;
 		}
 
-		if ( sign * normal.y > 0.95f )
+		if (sign * normal.y > 0.95f)
 		{
 			return true;
 		}
@@ -1353,7 +1351,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "One-Sided Platform", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1368,17 +1366,17 @@ public:
 	{
 		bool canJump = false;
 		b2Vec2 velocity = b2Body_GetLinearVelocity( m_playerId );
-		if ( m_jumpDelay == 0.0f && m_jumping == false && velocity.y < 0.01f )
+		if (m_jumpDelay == 0.0f && m_jumping == false && velocity.y < 0.01f)
 		{
 			int capacity = b2Body_GetContactCapacity( m_playerId );
 			capacity = b2MinInt( capacity, 4 );
 			b2ContactData contactData[4];
 			int count = b2Body_GetContactData( m_playerId, contactData, capacity );
-			for ( int i = 0; i < count; ++i )
+			for (int i = 0; i < count; ++i)
 			{
 				b2BodyId bodyIdA = b2Shape_GetBody( contactData[i].shapeIdA );
 				float sign = 0.0f;
-				if ( B2_ID_EQUALS( bodyIdA, m_playerId ) )
+				if (B2_ID_EQUALS( bodyIdA, m_playerId ))
 				{
 					// normal points from A to B
 					sign = -1.0f;
@@ -1388,7 +1386,7 @@ public:
 					sign = 1.0f;
 				}
 
-				if ( sign * contactData[i].manifold.normal.y > 0.9f )
+				if (sign * contactData[i].manifold.normal.y > 0.9f)
 				{
 					canJump = true;
 					break;
@@ -1399,29 +1397,29 @@ public:
 		// A kinematic body is moved by setting its velocity. This
 		// ensure friction works correctly.
 		b2Vec2 platformPosition = b2Body_GetPosition( m_movingPlatformId );
-		if ( platformPosition.x < -15.0f )
+		if (platformPosition.x < -15.0f)
 		{
 			b2Body_SetLinearVelocity( m_movingPlatformId, { 2.0f, 0.0f } );
 		}
-		else if ( platformPosition.x > 15.0f )
+		else if (platformPosition.x > 15.0f)
 		{
 			b2Body_SetLinearVelocity( m_movingPlatformId, { -2.0f, 0.0f } );
 		}
 
-		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS )
+		if (glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS)
 		{
 			b2Body_ApplyForceToCenter( m_playerId, { -m_force, 0.0f }, true );
 		}
 
-		if ( glfwGetKey( m_context->window, GLFW_KEY_D ) == GLFW_PRESS )
+		if (glfwGetKey( m_context->window, GLFW_KEY_D ) == GLFW_PRESS)
 		{
 			b2Body_ApplyForceToCenter( m_playerId, { m_force, 0.0f }, true );
 		}
 
 		int keyState = glfwGetKey( m_context->window, GLFW_KEY_SPACE );
-		if ( keyState == GLFW_PRESS )
+		if (keyState == GLFW_PRESS)
 		{
-			if ( canJump )
+			if (canJump)
 			{
 				b2Body_ApplyLinearImpulseToCenter( m_playerId, { 0.0f, m_impulse }, true );
 				m_jumpDelay = 0.5f;
@@ -1441,7 +1439,7 @@ public:
 		DrawTextLine( "Movement: A/D/Space" );
 		DrawTextLine( "Can jump = %s", canJump ? "true" : "false" );
 
-		if ( m_context->hertz > 0.0f )
+		if (m_context->hertz > 0.0f)
 		{
 			m_jumpDelay = b2MaxFloat( 0.0f, m_jumpDelay - 1.0f / m_context->hertz );
 		}
@@ -1476,10 +1474,10 @@ public:
 	explicit BodyMove( SampleContext* context )
 		: Sample( context )
 	{
-		if ( m_context->restart == false )
+		if (m_context->restart == false)
 		{
-			m_context->camera.m_center = { 2.0f, 8.0f };
-			m_context->camera.m_zoom = 25.0f * 0.55f;
+			m_context->camera.center = { 2.0f, 8.0f };
+			m_context->camera.zoom = 25.0f * 0.55f;
 		}
 
 		{
@@ -1526,7 +1524,7 @@ public:
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 
 		float x = -5.0f, y = 10.0f;
-		for ( int i = 0; i < 10 && m_count < e_count; ++i )
+		for (int i = 0; i < 10 && m_count < e_count; ++i)
 		{
 			bodyDef.position = { x, y };
 			bodyDef.isBullet = ( m_count % 12 == 0 );
@@ -1535,15 +1533,15 @@ public:
 			m_sleeping[m_count] = false;
 
 			int remainder = m_count % 4;
-			if ( remainder == 0 )
+			if (remainder == 0)
 			{
 				b2CreateCapsuleShape( m_bodyIds[m_count], &shapeDef, &capsule );
 			}
-			else if ( remainder == 1 )
+			else if (remainder == 1)
 			{
 				b2CreateCircleShape( m_bodyIds[m_count], &shapeDef, &circle );
 			}
-			else if ( remainder == 2 )
+			else if (remainder == 2)
 			{
 				b2CreatePolygonShape( m_bodyIds[m_count], &shapeDef, &square );
 			}
@@ -1563,12 +1561,12 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Body Move", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 
-		if ( ImGui::Button( "Explode" ) )
+		if (ImGui::Button( "Explode" ))
 		{
 			b2ExplosionDef def = b2DefaultExplosionDef();
 			def.position = m_explosionPosition;
@@ -1585,7 +1583,7 @@ public:
 
 	void Step() override
 	{
-		if ( m_context->pause == false && ( m_stepCount & 15 ) == 15 && m_count < e_count )
+		if (m_context->pause == false && ( m_stepCount & 15 ) == 15 && m_count < e_count)
 		{
 			CreateBodies();
 		}
@@ -1594,11 +1592,18 @@ public:
 
 		// Process body events
 		b2BodyEvents events = b2World_GetBodyEvents( m_worldId );
-		for ( int i = 0; i < events.moveCount; ++i )
+		for (int i = 0; i < events.moveCount; ++i)
 		{
-			// draw the transform of every body that moved (not sleeping)
 			const b2BodyMoveEvent* event = events.moveEvents + i;
-			m_context->draw.DrawTransform( event->transform );
+
+			if (event->userData == nullptr)
+			{
+				// The mouse joint body has no user data
+				continue;
+			}
+
+			// draw the transform of every body that moved (not sleeping)
+			DrawTransform( m_draw, event->transform, 1.0f );
 
 			b2Transform transform = b2Body_GetTransform( event->bodyId );
 			B2_ASSERT( transform.p.x == event->transform.p.x );
@@ -1611,14 +1616,14 @@ public:
 			ptrdiff_t diff = bodyId - m_bodyIds;
 			bool* sleeping = m_sleeping + diff;
 
-			if ( event->fellAsleep )
+			if (event->fellAsleep)
 			{
 				*sleeping = true;
 				m_sleepCount += 1;
 			}
 			else
 			{
-				if ( *sleeping )
+				if (*sleeping)
 				{
 					*sleeping = false;
 					m_sleepCount -= 1;
@@ -1626,7 +1631,7 @@ public:
 			}
 		}
 
-		m_context->draw.DrawCircle( m_explosionPosition, m_explosionRadius, b2_colorAzure );
+		DrawCircle( m_draw, m_explosionPosition, m_explosionRadius, b2_colorAzure );
 
 		DrawTextLine( "sleep count: %d", m_sleepCount );
 	}
@@ -1662,10 +1667,10 @@ public:
 	explicit SensorTypes( SampleContext* context )
 		: Sample( context )
 	{
-		if ( m_context->restart == false )
+		if (m_context->restart == false)
 		{
-			m_context->camera.m_center = { 0.0f, 3.0f };
-			m_context->camera.m_zoom = 4.5f;
+			m_context->camera.center = { 0.0f, 3.0f };
+			m_context->camera.zoom = 4.5f;
 		}
 
 		{
@@ -1774,17 +1779,17 @@ public:
 		m_visitorIds.resize( count );
 
 		int start = snprintf( buffer, sizeof( buffer ), "%s: ", prefix );
-		for ( int i = 0; i < count && start < sizeof( buffer ); ++i )
+		for (int i = 0; i < count && start < sizeof( buffer ); ++i)
 		{
 			b2ShapeId visitorId = m_visitorIds[i];
-			if ( b2Shape_IsValid( visitorId ) == false )
+			if (b2Shape_IsValid( visitorId ) == false)
 			{
 				continue;
 			}
 
 			b2BodyId bodyId = b2Shape_GetBody( visitorId );
 			const char* name = b2Body_GetName( bodyId );
-			if ( name == nullptr )
+			if (name == nullptr)
 			{
 				continue;
 			}
@@ -1799,12 +1804,12 @@ public:
 	void Step() override
 	{
 		b2Vec2 position = b2Body_GetPosition( m_kinematicBodyId );
-		if ( position.y < 0.0f )
+		if (position.y < 0.0f)
 		{
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { 0.0f, 1.0f } );
 			// b2Body_SetKinematicTarget( m_kinematicBodyId );
 		}
-		else if ( position.y > 3.0f )
+		else if (position.y > 3.0f)
 		{
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { 0.0f, -1.0f } );
 		}
@@ -1818,11 +1823,11 @@ public:
 		b2Vec2 origin = { 5.0f, 1.0f };
 		b2Vec2 translation = { -10.0f, 0.0f };
 		b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, b2DefaultQueryFilter() );
-		m_context->draw.DrawLine( origin, origin + translation, b2_colorDimGray );
+		DrawLine( m_draw, origin, origin + translation, b2_colorDimGray );
 
-		if ( result.hit )
+		if (result.hit)
 		{
-			m_context->draw.DrawPoint( result.point, 10.0f, b2_colorCyan );
+			DrawPoint( m_draw, result.point, 10.0f, b2_colorCyan );
 		}
 	}
 
@@ -1854,10 +1859,10 @@ public:
 	explicit JointEvent( SampleContext* context )
 		: Sample( context )
 	{
-		if ( m_context->restart == false )
+		if (m_context->restart == false)
 		{
-			m_context->camera.m_center = { 0.0f, 8.0f };
-			m_context->camera.m_zoom = 25.0f * 0.7f;
+			m_context->camera.center = { 0.0f, 8.0f };
+			m_context->camera.zoom = 25.0f * 0.7f;
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -1867,7 +1872,7 @@ public:
 		b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
 		b2CreateSegmentShape( groundId, &shapeDef, &segment );
 
-		for ( int i = 0; i < e_count; ++i )
+		for (int i = 0; i < e_count; ++i)
 		{
 			m_jointIds[i] = b2_nullJointId;
 		}
@@ -2047,12 +2052,12 @@ public:
 
 		// Process joint events
 		b2JointEvents events = b2World_GetJointEvents( m_worldId );
-		for ( int i = 0; i < events.count; ++i )
+		for (int i = 0; i < events.count; ++i)
 		{
 			// Destroy the joint if it is still valid
 			const b2JointEvent* event = events.jointEvents + i;
 
-			if ( b2Joint_IsValid( event->jointId ) )
+			if (b2Joint_IsValid( event->jointId ))
 			{
 				int index = (int)(intptr_t)event->userData;
 				assert( 0 <= index && index < e_count );
@@ -2078,10 +2083,10 @@ public:
 	explicit PersistentContact( SampleContext* context )
 		: Sample( context )
 	{
-		if ( m_context->restart == false )
+		if (m_context->restart == false)
 		{
-			m_context->camera.m_center = { 0.0f, 6.0f };
-			m_context->camera.m_zoom = 7.5f;
+			m_context->camera.center = { 0.0f, 6.0f };
+			m_context->camera.zoom = 7.5f;
 		}
 
 		{
@@ -2090,7 +2095,7 @@ public:
 
 			b2Vec2 points[22];
 			float x = 10.0f;
-			for ( int i = 0; i < 20; ++i )
+			for (int i = 0; i < 20; ++i)
 			{
 				points[i] = { x, 0.0f };
 				x -= 1.0f;
@@ -2129,33 +2134,33 @@ public:
 		Sample::Step();
 
 		b2ContactEvents events = b2World_GetContactEvents( m_worldId );
-		for ( int i = 0; i < events.beginCount && i < 1; ++i )
+		for (int i = 0; i < events.beginCount && i < 1; ++i)
 		{
 			b2ContactBeginTouchEvent event = events.beginEvents[i];
 			m_contactId = events.beginEvents[i].contactId;
 		}
 
-		for ( int i = 0; i < events.endCount; ++i )
+		for (int i = 0; i < events.endCount; ++i)
 		{
-			if ( B2_ID_EQUALS( m_contactId, events.endEvents[i].contactId ) )
+			if (B2_ID_EQUALS( m_contactId, events.endEvents[i].contactId ))
 			{
 				m_contactId = b2_nullContactId;
 				break;
 			}
 		}
 
-		if ( B2_IS_NON_NULL( m_contactId ) && b2Contact_IsValid( m_contactId ) )
+		if (B2_IS_NON_NULL( m_contactId ) && b2Contact_IsValid( m_contactId ))
 		{
 			b2ContactData data = b2Contact_GetData( m_contactId );
 
-			for ( int i = 0; i < data.manifold.pointCount; ++i )
+			for (int i = 0; i < data.manifold.pointCount; ++i)
 			{
 				const b2ManifoldPoint* manifoldPoint = data.manifold.points + i;
-				b2Vec2 p1 = manifoldPoint->point;
+				b2Vec2 p1 = manifoldPoint->clipPoint;
 				b2Vec2 p2 = p1 + manifoldPoint->totalNormalImpulse * data.manifold.normal;
-				m_draw->DrawLine( p1, p2, b2_colorCrimson );
-				m_draw->DrawPoint( p1, 6.0f, b2_colorCrimson );
-				m_draw->DrawString( p1, "%.2f", manifoldPoint->totalNormalImpulse );
+				DrawLine( m_draw, p1, p2, b2_colorCrimson );
+				DrawPoint( m_draw, p1, 6.0f, b2_colorCrimson );
+				DrawWorldString( m_draw, m_camera, p1, b2_colorWhite, "%.2f", manifoldPoint->totalNormalImpulse );
 			}
 		}
 		else
@@ -2181,10 +2186,10 @@ public:
 		: Sample( context )
 		, m_transforms{}
 	{
-		if ( m_context->restart == false )
+		if (m_context->restart == false)
 		{
-			m_context->camera.m_center = { 0.0f, 5.0f };
-			m_context->camera.m_zoom = 7.5f;
+			m_context->camera.center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 7.5f;
 		}
 
 		b2BodyId groundId;
@@ -2277,7 +2282,7 @@ public:
 
 	void Launch()
 	{
-		if ( B2_IS_NON_NULL( m_bodyId ) )
+		if (B2_IS_NON_NULL( m_bodyId ))
 		{
 			b2DestroyBody( m_bodyId );
 		}
@@ -2306,14 +2311,14 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 120.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 120.0f, height ) );
 
 		ImGui::Begin( "Sensor Hit", nullptr, ImGuiWindowFlags_NoResize );
 
 		ImGui::Checkbox( "Bullet", &m_isBullet );
 
-		if ( ImGui::Button( "Launch" ) || glfwGetKey( m_context->window, GLFW_KEY_B ) == GLFW_PRESS )
+		if (ImGui::Button( "Launch" ) || glfwGetKey( m_context->window, GLFW_KEY_B ) == GLFW_PRESS)
 		{
 			Launch();
 		}
@@ -2327,7 +2332,7 @@ public:
 		b2ShapeId visitorIds[capacity];
 		int count = b2Shape_GetSensorData( sensorShapeId, visitorIds, capacity );
 
-		for ( int i = 0; i < count && m_transformCount < m_transformCapacity; ++i )
+		for (int i = 0; i < count && m_transformCount < m_transformCapacity; ++i)
 		{
 			b2BodyId sensorBodyId = b2Shape_GetBody( sensorShapeId );
 			m_transforms[m_transformCount] = b2Body_GetTransform( sensorBodyId );
@@ -2338,40 +2343,40 @@ public:
 	void Step() override
 	{
 		b2Vec2 p = b2Body_GetPosition( m_kinematicBodyId );
-		if ( p.x > 1.0f )
+		if (p.x > 1.0f)
 		{
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { -0.5f, 0.0f } );
 		}
-		else if ( p.x < -1.0f )
+		else if (p.x < -1.0f)
 		{
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { 0.5f, 0.0f } );
 		}
 
 		float x = b2PrismaticJoint_GetTranslation( m_jointId );
-		if ( x > 1.0f )
+		if (x > 1.0f)
 		{
 			b2PrismaticJoint_SetMotorSpeed( m_jointId, -0.5f );
 		}
-		else if ( x < -1.0f )
+		else if (x < -1.0f)
 		{
 			b2PrismaticJoint_SetMotorSpeed( m_jointId, 0.5f );
 		}
 
 		Sample::Step();
 
-		for ( int i = 0; i < m_transformCount; ++i )
+		for (int i = 0; i < m_transformCount; ++i)
 		{
-			m_draw->DrawTransform( m_transforms[i] );
+			DrawTransform( m_draw, m_transforms[i], 1.0f );
 		}
 
 		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
 		m_beginCount += sensorEvents.beginCount;
 		m_endCount += sensorEvents.endCount;
 
-		for ( int i = 0; i < sensorEvents.beginCount; ++i )
+		for (int i = 0; i < sensorEvents.beginCount; ++i)
 		{
 			const b2SensorBeginTouchEvent* event = sensorEvents.beginEvents + i;
-			if ( b2Shape_IsValid( event->sensorShapeId ) == true )
+			if (b2Shape_IsValid( event->sensorShapeId ) == true)
 			{
 				CollectTransforms( event->sensorShapeId );
 			}
@@ -2415,10 +2420,10 @@ public:
 	explicit ProjectileEvent( SampleContext* context )
 		: Sample( context )
 	{
-		if ( m_context->restart == false )
+		if (m_context->restart == false)
 		{
-			m_context->camera.m_center = { -7.0f, 9.0f };
-			m_context->camera.m_zoom = 14.0f;
+			m_context->camera.center = { -7.0f, 9.0f };
+			m_context->camera.zoom = 14.0f;
 		}
 
 		{
@@ -2453,7 +2458,7 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 
-		for ( int i = 0; i < 8; ++i )
+		for (int i = 0; i < 8; ++i)
 		{
 			float shift = ( i % 2 == 0 ? -offset : offset );
 			bodyDef.position = { x + shift, 0.5f + 1.0f * i };
@@ -2466,7 +2471,7 @@ public:
 
 	void FireProjectile()
 	{
-		if ( B2_IS_NON_NULL( m_projectileId ) )
+		if (B2_IS_NON_NULL( m_projectileId ))
 		{
 			b2DestroyBody( m_projectileId );
 		}
@@ -2487,9 +2492,9 @@ public:
 
 	void MouseDown( b2Vec2 p, int button, int mods ) override
 	{
-		if ( button == GLFW_MOUSE_BUTTON_1 )
+		if (button == GLFW_MOUSE_BUTTON_1)
 		{
-			if ( mods == GLFW_MOD_CONTROL )
+			if (mods == GLFW_MOD_CONTROL)
 			{
 				m_dragging = true;
 				m_point1 = p;
@@ -2499,9 +2504,9 @@ public:
 
 	void MouseUp( b2Vec2, int button ) override
 	{
-		if ( button == GLFW_MOUSE_BUTTON_1 )
+		if (button == GLFW_MOUSE_BUTTON_1)
 		{
-			if ( m_dragging )
+			if (m_dragging)
 			{
 				m_dragging = false;
 				FireProjectile();
@@ -2511,7 +2516,7 @@ public:
 
 	void MouseMove( b2Vec2 p ) override
 	{
-		if ( m_dragging )
+		if (m_dragging)
 		{
 			m_point2 = p;
 		}
@@ -2523,28 +2528,28 @@ public:
 
 		Sample::Step();
 
-		if ( m_dragging )
+		if (m_dragging)
 		{
-			m_draw->DrawLine( m_point1, m_point2, b2_colorWhite );
-			m_draw->DrawPoint( m_point1, 5.0f, b2_colorGreen );
-			m_draw->DrawPoint( m_point2, 5.0f, b2_colorRed );
+			DrawLine( m_draw, m_point1, m_point2, b2_colorWhite );
+			DrawPoint( m_draw, m_point1, 5.0f, b2_colorGreen );
+			DrawPoint( m_draw, m_point2, 5.0f, b2_colorRed );
 		}
 
 		b2ContactEvents contactEvents = b2World_GetContactEvents( m_worldId );
-		for ( int i = 0; i < contactEvents.beginCount; ++i )
+		for (int i = 0; i < contactEvents.beginCount; ++i)
 		{
 			const b2ContactBeginTouchEvent* event = contactEvents.beginEvents + i;
 
-			if ( B2_ID_EQUALS( event->shapeIdA, m_projectileShapeId ) || B2_ID_EQUALS( event->shapeIdB, m_projectileShapeId ) )
+			if (B2_ID_EQUALS( event->shapeIdA, m_projectileShapeId ) || B2_ID_EQUALS( event->shapeIdB, m_projectileShapeId ))
 			{
-				if (b2Contact_IsValid(event->contactId))
+				if (b2Contact_IsValid( event->contactId ))
 				{
 					b2ContactData data = b2Contact_GetData( event->contactId );
 
 					if (data.manifold.pointCount > 0)
 					{
 						b2ExplosionDef explosionDef = b2DefaultExplosionDef();
-						explosionDef.position = data.manifold.points[0].point;
+						explosionDef.position = data.manifold.points[0].clipPoint;
 						explosionDef.radius = 1.0f;
 						explosionDef.impulsePerLength = 20.0f;
 						b2World_Explode( m_worldId, &explosionDef );
@@ -2572,3 +2577,151 @@ public:
 };
 
 static int sampleProjectileEvent = RegisterSample( "Events", "Projectile Event", ProjectileEvent::Create );
+
+class CircleImpulse : public Sample
+{
+public:
+	struct Event
+	{
+		float impulse;
+		float totalImpulse;
+		float speed;
+	};
+
+	explicit CircleImpulse( SampleContext* context )
+		: Sample( context )
+	{
+		if (m_context->restart == false)
+		{
+			m_context->camera.center = { 0.0f, 2.7f };
+			m_context->camera.zoom = 3.4f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+			b2Segment segment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		m_gravity = 10.0f;
+		m_restitution = 0.25f;
+		m_useGravity = false;
+		m_useRestitution = false;
+		m_mass = 1.0f;
+		m_bodyId = b2_nullBodyId;
+
+		Spawn();
+	}
+
+	void Spawn()
+	{
+		if (B2_IS_NON_NULL( m_bodyId ))
+		{
+			b2DestroyBody( m_bodyId );
+			m_bodyId = b2_nullBodyId;
+		}
+
+		m_events.clear();
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.gravityScale = m_useGravity ? 1.0f : 0.0f;
+		bodyDef.linearVelocity.y = -25.0f;
+		bodyDef.position.y = 5.5f;
+
+		b2Circle circle = {};
+		circle.radius = 0.25f;
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.enableHitEvents = true;
+		shapeDef.material.friction = 0.0f;
+		shapeDef.material.restitution = m_useRestitution ? m_restitution : 0.0f;
+
+		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2CreateCircleShape( m_bodyId, &shapeDef, &circle );
+
+		// Override mass
+		b2MassData massData = b2Body_GetMassData( m_bodyId );
+		float ratio = m_mass / massData.mass;
+		massData.mass = m_mass;
+		massData.rotationalInertia *= ratio;
+		b2Body_SetMassData( m_bodyId, massData );
+	}
+
+	void UpdateGui() override
+	{
+		float fontSize = ImGui::GetFontSize();
+		float height = 6.0f * fontSize;
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 10.0f * fontSize, height ) );
+
+		ImGui::Begin( "Circle Impulse", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
+
+		if (ImGui::Checkbox( "gravity", &m_useGravity ))
+		{
+			Spawn();
+		}
+
+		if (ImGui::Checkbox( "restitution", &m_useRestitution ))
+		{
+			Spawn();
+		}
+
+		ImGui::End();
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		b2ContactEvents events = b2World_GetContactEvents( m_worldId );
+		for (int i = 0; i < events.hitCount; ++i)
+		{
+			b2ContactHitEvent* event = events.hitEvents + i;
+
+			DrawPoint( m_draw, event->point, 10.0f, b2_colorWhite );
+
+			b2ContactData data = b2Contact_GetData( event->contactId );
+
+			Event e = {};
+			e.speed = event->approachSpeed;
+			if (data.manifold.pointCount > 0)
+			{
+				e.impulse = data.manifold.points[0].normalImpulse;
+				e.totalImpulse = data.manifold.points[0].totalNormalImpulse;
+			}
+			m_events.push_back( e );
+		}
+
+		DrawTextLine( "mass = %g, gravity = %g, restitution = %g", m_mass, m_useGravity ? 10.0f : 0.0f,
+					  m_useRestitution ? m_restitution : 0.0f );
+
+		int eventCount = (int)m_events.size();
+		for (int i = 0; i < eventCount; ++i)
+		{
+			const Event& e = m_events[i];
+			DrawTextLine( "hit speed = %g, hit momentum = %g, final impulse = %g, total impulse = %g", e.speed, m_mass * e.speed, e.impulse,
+						  e.totalImpulse );
+		}
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new CircleImpulse( context );
+	}
+
+	float m_mass;
+	std::vector<Event> m_events;
+	b2BodyId m_bodyId;
+	float m_gravity;
+	float m_restitution;
+	bool m_useGravity;
+	bool m_useRestitution;
+};
+
+static int sampleCircleImpulse = RegisterSample( "Stacking", "Circle Impulse", CircleImpulse::Create );

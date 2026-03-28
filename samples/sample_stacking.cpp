@@ -20,8 +20,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 2.5f };
-			m_context->camera.m_zoom = 3.5f;
+			m_context->camera.center = { 0.0f, 2.5f };
+			m_context->camera.zoom = 3.5f;
 		}
 
 		float extent = 1.0f;
@@ -48,7 +48,7 @@ public:
 	{
 		Sample::Step();
 
-		// m_context->draw.DrawCircle({0.0f, 2.0f}, 1.0f, b2_colorWhite);
+		// DrawCircle({0.0f, 2.0f}, 1.0f, b2_colorWhite);
 
 		b2Vec2 position = b2Body_GetPosition( m_bodyId );
 		DrawTextLine( "(x, y) = (%.2g, %.2g)", position.x, position.y );
@@ -72,8 +72,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 7.5f, 7.5f };
-			m_context->camera.m_zoom = 20.0f;
+			m_context->camera.center = { 7.5f, 7.5f };
+			m_context->camera.zoom = 20.0f;
 		}
 
 		{
@@ -146,7 +146,7 @@ public:
 	enum
 	{
 		e_maxColumns = 10,
-		e_maxRows = 15,
+		e_maxRows = 80,
 		e_maxBullets = 8
 	};
 
@@ -161,8 +161,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { -7.0f, 9.0f };
-			m_context->camera.m_zoom = 14.0f;
+			m_context->camera.center = { -7.0f, 9.0f };
+			m_context->camera.zoom = 14.0f;
 		}
 
 		{
@@ -326,16 +326,37 @@ public:
 		}
 	}
 
+	void Keyboard( int key ) override
+	{
+		bool consumed = false;
+
+		switch ( key )
+		{
+			case 'B':
+				FireBullets();
+				consumed = true;
+				break;
+
+			default:
+				break;
+		}
+
+		if ( consumed == false )
+		{
+			Sample::Keyboard( key );
+		}
+	}
+
 	void UpdateGui() override
 	{
 		float fontSize = ImGui::GetFontSize();
-		float height = 230.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
+		float height = 16.0f * fontSize;
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 20.0f * fontSize, height ) );
 
 		ImGui::Begin( "Vertical Stack", nullptr, ImGuiWindowFlags_NoResize );
 
-		ImGui::PushItemWidth( 120.0f );
+		ImGui::PushItemWidth( 13.0f * fontSize );
 
 		bool changed = false;
 		const char* shapeTypes[] = { "Circle", "Box" };
@@ -355,7 +376,7 @@ public:
 
 		ImGui::PopItemWidth();
 
-		if ( ImGui::Button( "Fire Bullets" ) || glfwGetKey( m_context->window, GLFW_KEY_B ) == GLFW_PRESS )
+		if ( ImGui::Button( "Fire Bullets" ) )
 		{
 			DestroyBullets();
 			FireBullets();
@@ -407,8 +428,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 5.0f };
-			m_context->camera.m_zoom = 6.0f;
+			m_context->camera.center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 6.0f;
 		}
 
 		int shapeIndex = 0;
@@ -438,10 +459,11 @@ public:
 		shapeDef.enableHitEvents = true;
 		// shapeDef.rollingResistance = 0.2f;
 		shapeDef.material.friction = 0.0f;
+		shapeDef.material.restitution = 0.8f;
 
 		float y = 0.75f;
 
-		for ( int i = 0; i < 10; ++i )
+		for ( int i = 0; i < 4; ++i )
 		{
 			bodyDef.position.y = y;
 
@@ -470,7 +492,7 @@ public:
 			int indexA = static_cast<int>( reinterpret_cast<intptr_t>( userDataA ) );
 			int indexB = static_cast<int>( reinterpret_cast<intptr_t>( userDataB ) );
 
-			m_context->draw.DrawPoint( event->point, 10.0f, b2_colorWhite );
+			DrawPoint( m_draw, event->point, 10.0f, b2_colorWhite );
 
 			m_events.push_back( { indexA, indexB } );
 		}
@@ -505,8 +527,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 5.0f };
-			m_context->camera.m_zoom = 6.0f;
+			m_context->camera.center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 6.0f;
 		}
 
 		{
@@ -561,8 +583,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_zoom = 25.0f * 0.5f;
-			m_context->camera.m_center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 25.0f * 0.5f;
+			m_context->camera.center = { 0.0f, 5.0f };
 		}
 
 		{
@@ -677,7 +699,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 60.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 160.0f, height ) );
 
 		ImGui::Begin( "Cliff", nullptr, ImGuiWindowFlags_NoResize );
@@ -710,8 +732,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 8.0f };
-			m_context->camera.m_zoom = 25.0f * 0.35f;
+			m_context->camera.center = { 0.0f, 8.0f };
+			m_context->camera.zoom = 25.0f * 0.35f;
 		}
 
 		b2Vec2 ps1[9] = { { 16.0f, 0.0f },
@@ -808,8 +830,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 4.0f };
-			m_context->camera.m_zoom = 25.0f * 0.25f;
+			m_context->camera.center = { 0.0f, 4.0f };
+			m_context->camera.zoom = 25.0f * 0.25f;
 		}
 
 		{
@@ -861,8 +883,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 10.0f };
-			m_context->camera.m_zoom = 25.0f * 0.5f;
+			m_context->camera.center = { 0.0f, 10.0f };
+			m_context->camera.zoom = 25.0f * 0.5f;
 		}
 
 		{
@@ -934,8 +956,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.75f, 0.9f };
-			m_context->camera.m_zoom = 25.0f * 0.05f;
+			m_context->camera.center = { 0.75f, 0.9f };
+			m_context->camera.zoom = 25.0f * 0.05f;
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();

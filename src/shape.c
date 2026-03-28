@@ -10,6 +10,7 @@
 #include "sensor.h"
 
 // needed for dll export
+#include "solver_set.h"
 #include "box2d/box2d.h"
 
 #include <stddef.h>
@@ -33,11 +34,64 @@ static b2ChainShape* b2GetChainShape( b2World* world, b2ChainId chainId )
 	return chain;
 }
 
-static void b2UpdateShapeAABBs( b2Shape* shape, b2Transform transform, b2BodyType proxyType )
+static float b2ComputeShapeMargin( b2Shape* shape )
 {
+	float margin = 0.0f;
+
+	switch ( shape->type )
+	{
+		case b2_capsuleShape:
+		{
+			margin = 0.5f * b2Distance( shape->capsule.center2, shape->capsule.center1 ) + shape->capsule.radius;
+		}
+		break;
+
+		case b2_circleShape:
+		{
+			margin = shape->circle.radius;
+		}
+		break;
+
+		case b2_polygonShape:
+		{
+			const b2Polygon* poly = &shape->polygon;
+			float maxExtentSqr = 0.0f;
+			int count = poly->count;
+			for ( int i = 0; i < count; ++i )
+			{
+				float distanceSqr = b2DistanceSquared( poly->vertices[i], poly->centroid );
+				maxExtentSqr = b2MaxFloat( maxExtentSqr, distanceSqr );
+			}
+
+			margin = sqrtf( maxExtentSqr );
+		}
+		break;
+
+		case b2_segmentShape:
+		{
+			margin = 0.5f * b2Distance( shape->segment.point1, shape->segment.point2 );
+		}
+		break;
+
+		case b2_chainSegmentShape:
+		{
+			margin = 0.5f * b2Distance( shape->chainSegment.segment.point1, shape->chainSegment.segment.point2 );
+		}
+		break;
+
+		default:
+			B2_VALIDATE( false );
+			return B2_MAX_AABB_MARGIN;
+	}
+
+	return b2MinFloat( B2_MAX_AABB_MARGIN, B2_AABB_MARGIN_FRACTION * margin );
+}
+
+static void b2UpdateShapeAABBs( b2Shape* shape, b2Transform transform, b2BodyType proxyType )
+	{
 	// Compute a bounding box with a speculative margin
 	const float speculativeDistance = B2_SPECULATIVE_DISTANCE;
-	const float aabbMargin = B2_AABB_MARGIN;
+	const float aabbMargin = shape->aabbMargin;
 
 	b2AABB aabb = b2ComputeShapeAABB( shape, transform );
 	aabb.lowerBound.x -= speculativeDistance;
@@ -114,6 +168,7 @@ static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform
 	shape->enablePreSolveEvents = def->enablePreSolveEvents;
 	shape->proxyKey = B2_NULL_INDEX;
 	shape->localCentroid = b2GetShapeCentroid( shape );
+	shape->aabbMargin = b2ComputeShapeMargin( shape );
 	shape->aabb = (b2AABB){ b2Vec2_zero, b2Vec2_zero };
 	shape->fatAABB = (b2AABB){ b2Vec2_zero, b2Vec2_zero };
 	shape->generation += 1;
@@ -181,6 +236,10 @@ static b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const vo
 	{
 		b2UpdateBodyMassData( world, body );
 	}
+	else
+	{
+		body->flags |= b2_dirtyMass;
+	}
 
 	b2ValidateSolverSets( world );
 
@@ -198,8 +257,7 @@ b2ShapeId b2CreateCapsuleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2
 	float lengthSqr = b2DistanceSquared( capsule->center1, capsule->center2 );
 	if ( lengthSqr <= B2_LINEAR_SLOP * B2_LINEAR_SLOP )
 	{
-		b2Circle circle = { b2Lerp( capsule->center1, capsule->center2, 0.5f ), capsule->radius };
-		return b2CreateShape( bodyId, def, &circle, b2_circleShape );
+		return b2_nullShapeId;
 	}
 
 	return b2CreateShape( bodyId, def, capsule, b2_capsuleShape );
@@ -1406,6 +1464,7 @@ void b2Shape_SetCircle( b2ShapeId shapeId, const b2Circle* circle )
 	b2Shape* shape = b2GetShape( world, shapeId );
 	shape->circle = *circle;
 	shape->type = b2_circleShape;
+	shape->aabbMargin = b2ComputeShapeMargin( shape );
 
 	// need to wake bodies so they can react to the shape change
 	bool wakeBodies = true;
@@ -1421,9 +1480,16 @@ void b2Shape_SetCapsule( b2ShapeId shapeId, const b2Capsule* capsule )
 		return;
 	}
 
+	float lengthSqr = b2DistanceSquared( capsule->center1, capsule->center2 );
+	if ( lengthSqr <= B2_LINEAR_SLOP * B2_LINEAR_SLOP )
+	{
+		return;
+	}
+
 	b2Shape* shape = b2GetShape( world, shapeId );
 	shape->capsule = *capsule;
 	shape->type = b2_capsuleShape;
+	shape->aabbMargin = b2ComputeShapeMargin( shape );
 
 	// need to wake bodies so they can react to the shape change
 	bool wakeBodies = true;
@@ -1442,6 +1508,7 @@ void b2Shape_SetSegment( b2ShapeId shapeId, const b2Segment* segment )
 	b2Shape* shape = b2GetShape( world, shapeId );
 	shape->segment = *segment;
 	shape->type = b2_segmentShape;
+	shape->aabbMargin = b2ComputeShapeMargin( shape );
 
 	// need to wake bodies so they can react to the shape change
 	bool wakeBodies = true;
@@ -1460,6 +1527,7 @@ void b2Shape_SetPolygon( b2ShapeId shapeId, const b2Polygon* polygon )
 	b2Shape* shape = b2GetShape( world, shapeId );
 	shape->polygon = *polygon;
 	shape->type = b2_polygonShape;
+	shape->aabbMargin = b2ComputeShapeMargin( shape );
 
 	// need to wake bodies so they can react to the shape change
 	bool wakeBodies = true;
@@ -1483,6 +1551,13 @@ b2ChainId b2Shape_GetParentChain( b2ShapeId shapeId )
 	}
 
 	return (b2ChainId){ 0 };
+}
+
+int b2Chain_GetSurfaceMaterialCount( b2ChainId chainId )
+{
+	b2World* world = b2GetWorld( chainId.world0 );
+	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
+	return chainShape->materialCount;
 }
 
 void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* material, int materialIndex )
@@ -1696,10 +1771,8 @@ b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target )
 // https://www.engineeringtoolbox.com/wind-load-d_1775.html
 // force = 0.5 * air_density * velocity^2 * area
 // https://en.wikipedia.org/wiki/Lift_(force)
-void b2Shape_ApplyWindForce( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, bool wake )
+void b2Shape_ApplyWind( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, bool wake )
 {
-	// B2_UNUSED( wind, drag, lift );
-
 	b2World* world = b2GetWorld( shapeId.world0 );
 	if ( world == NULL )
 	{
@@ -1739,7 +1812,7 @@ void b2Shape_ApplyWindForce( b2ShapeId shapeId, b2Vec2 wind, float drag, float l
 	b2BodyState* state = b2GetBodyState( world, body );
 	b2Transform transform = sim->transform;
 
-	float lengthUnits = b2_lengthUnitsPerMeter;
+	float lengthUnits = b2GetLengthUnitsPerMeter();
 	float volumeUnits = lengthUnits * lengthUnits * lengthUnits;
 
 	// In 2D I'm assuming unit depth

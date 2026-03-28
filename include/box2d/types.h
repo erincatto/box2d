@@ -239,10 +239,20 @@ typedef struct b2BodyDef
 	/// Is this body initially awake or sleeping?
 	bool isAwake;
 
-	/// Treat this body as high speed object that performs continuous collision detection
+	/// Treat this body as a high speed object that performs continuous collision detection
 	/// against dynamic and kinematic bodies, but not other bullet bodies.
 	/// @warning Bullets should be used sparingly. They are not a solution for general dynamic-versus-dynamic
-	/// continuous collision.
+	/// continuous collision. They do not guarantee accurate collision if both bodies are fast moving because
+	/// the bullet does a continuous check after all non-bullet bodies have moved. You could get unlucky and have
+	/// the bullet body end a time step very close to a non-bullet body and the non-bullet body then moves over
+	/// the bullet body. In continuous collision, initial overlap is ignored to avoid freezing bodies in place.
+	/// I do not recommend using them for game projectiles if precise collision timing is needed. Instead consider
+	/// using a ray or shape cast. You can use a marching ray or shape cast for projectile that moves over time.
+	/// If you want a fast moving projectile to collide with a fast moving target, you need to consider the relative
+	/// movement in your ray or shape cast. This is out of the scope of Box2D.
+	/// So what are good use cases for bullets? Pinball games or games with dynamic containers that hold other objects.
+	/// It should be a use case where it doesn't break the game if there is a collision missed, but the having them
+	/// captured improves the quality of the game.
 	bool isBullet;
 
 	/// Used to disable a body. A disabled body does not move or collide.
@@ -402,13 +412,16 @@ typedef struct b2ShapeDef
 	/// @see enableSensorEvents
 	bool isSensor;
 
-	/// Enable sensor events for this shape. This applies to sensors and non-sensors. False by default, even for sensors.
+	/// Enable sensor events for this shape. This applies to sensors and non-sensors. Both shapes involved must have this flag set to true.
+	/// False by default, even for sensors.
 	bool enableSensorEvents;
 
-	/// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors. False by default.
+	/// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Only one shape involved needs this flag set to true.
+	/// Ignored for sensors. False by default.
 	bool enableContactEvents;
 
-	/// Enable hit events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors. False by default.
+	/// Enable hit events for this shape. Only applies to kinematic and dynamic bodies. Only one shape involved needs this flag set to true.
+	/// Ignored for sensors. False by default.
 	bool enableHitEvents;
 
 	/// Enable pre-solve contact events for this shape. Only applies to dynamic bodies. These are expensive
@@ -421,6 +434,7 @@ typedef struct b2ShapeDef
 	bool invokeContactCreation;
 
 	/// Should the body update the mass properties when this shape is created. Default is true.
+	/// Warning: if this is true, you MUST call b2Body_ApplyMassFromShapes before simulating the world.
 	bool updateBodyMass;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
@@ -461,7 +475,8 @@ typedef struct b2ChainDef
 	const b2SurfaceMaterial* materials;
 
 	/// The material count. Must be 1 or count. This allows you to provide one
-	/// material for all segments or a unique material per segment.
+	/// material for all segments or a unique material per segment. For open
+	/// chains, the material on the ghost segments are place holders.
 	int materialCount;
 
 	/// Contact filtering data.
@@ -615,10 +630,10 @@ typedef struct b2DistanceJointDef
 	/// Enable/disable the joint limit
 	bool enableLimit;
 
-	/// Minimum length. Clamped to a stable minimum value.
+	/// Minimum length for limit. Clamped to a stable minimum value.
 	float minLength;
 
-	/// Maximum length. Must be greater than or equal to the minimum length.
+	/// Maximum length for limit. Must be greater than or equal to the minimum length.
 	float maxLength;
 
 	/// Enable/disable the joint motor
@@ -745,7 +760,7 @@ typedef struct b2PrismaticJointDef
 } b2PrismaticJointDef;
 
 /// Use this to initialize your joint definition
-/// @ingroupd prismatic_joint
+/// @ingroup prismatic_joint
 B2_API b2PrismaticJointDef b2DefaultPrismaticJointDef( void );
 
 /// Revolute joint definition
@@ -1004,6 +1019,11 @@ typedef struct b2ContactHitEvent
 
 	/// Id of the second shape
 	b2ShapeId shapeIdB;
+
+	/// Id of the contact.
+	///	@warning this contact may have been destroyed
+	///	@see b2Contact_IsValid
+	b2ContactId contactId;
 
 	/// Point where the shapes hit at the beginning of the time step.
 	/// This is a mid-point between the two surfaces. It could be at speculative
@@ -1319,6 +1339,16 @@ typedef enum b2HexColor
 	b2_colorBox2DYellow = 0xFFEE8C
 } b2HexColor;
 
+/// The type of contact point drawing
+typedef enum b2ContactDrawType
+{
+	b2_drawContacts_None = 0,
+	b2_drawContacts_Clip = 1,
+	b2_drawContacts_AnchorA = 2,
+	b2_drawContacts_AnchorB = 3,
+	b2_drawContacts_Average = 4,
+} b2ContactDrawType;
+
 /// This struct holds callbacks you can implement to draw a Box2D world.
 /// This structure should be zero initialized.
 /// @ingroup world
@@ -1341,7 +1371,7 @@ typedef struct b2DebugDraw
 	void ( *DrawSolidCapsuleFcn )( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context );
 
 	/// Draw a line segment.
-	void ( *DrawSegmentFcn )( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context );
+	void ( *DrawLineFcn )( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context );
 
 	/// Draw a transform. Choose your own length scale.
 	void ( *DrawTransformFcn )( b2Transform transform, void* context );
@@ -1352,11 +1382,17 @@ typedef struct b2DebugDraw
 	/// Draw a string in world space
 	void ( *DrawStringFcn )( b2Vec2 p, const char* s, b2HexColor color, void* context );
 
-	/// Bounds to use if restricting drawing to a rectangular region
+	/// World bounds to use for debug draw
 	b2AABB drawingBounds;
 
 	/// Scale to use when drawing forces
 	float forceScale;
+
+	/// Global scaling for joint drawing
+	float jointScale;
+
+	/// Option to draw contact points
+	b2ContactDrawType contactDrawType;
 
 	/// Option to draw shapes
 	bool drawShapes;
@@ -1376,11 +1412,11 @@ typedef struct b2DebugDraw
 	/// Option to draw body names
 	bool drawBodyNames;
 
-	/// Option to draw contact points
-	bool drawContacts;
-
 	/// Option to visualize the graph coloring used for contacts and joints
 	bool drawGraphColors;
+
+	/// Option to draw contact feature ids
+	bool drawContactFeatures;
 
 	/// Option to draw contact normals
 	bool drawContactNormals;
@@ -1388,10 +1424,7 @@ typedef struct b2DebugDraw
 	/// Option to draw contact normal forces
 	bool drawContactForces;
 
-	/// Option to draw contact feature ids
-	bool drawContactFeatures;
-
-	/// Option to draw contact friction impulses
+	/// Option to draw contact friction forces
 	bool drawFrictionForces;
 
 	/// Option to draw islands as bounding boxes

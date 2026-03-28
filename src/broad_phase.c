@@ -8,14 +8,14 @@
 #include "broad_phase.h"
 
 #include "aabb.h"
+#include "arena_allocator.h"
 #include "array.h"
 #include "atomic.h"
 #include "body.h"
 #include "contact.h"
 #include "core.h"
-#include "shape.h"
-#include "arena_allocator.h"
 #include "physics_world.h"
+#include "shape.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -213,7 +213,8 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 	}
 
 	uint64_t pairKey = B2_SHAPE_PAIR_KEY( shapeId, queryContext->queryShapeIndex );
-	if ( b2ContainsKey( &broadPhase->pairSet, pairKey ) )
+	bool pairExists = b2ContainsKey( &broadPhase->pairSet, pairKey );
+	if ( pairExists )
 	{
 		// contact exists
 		return true;
@@ -256,6 +257,12 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 		return true;
 	}
 
+	if ( b2CanCollide( shapeA->type, shapeB->type ) == false )
+	{
+		// For example, no segment vs segment collision
+		return true;
+	}
+
 	// Does a joint override collision?
 	b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
 	b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
@@ -280,7 +287,6 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 		}
 	}
 
-	// todo per thread to eliminate atomic?
 	int pairIndex = b2AtomicFetchAddInt( &broadPhase->movePairIndex, 1 );
 
 	b2MovePair* pair;
@@ -291,6 +297,13 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 	}
 	else
 	{
+		static b2AtomicInt once = { 0 };
+		if ( b2AtomicCompareExchangeInt( &once, 0, 1 ) == 0 )
+		{
+			// This means you have too many overlapping objects.
+			b2Log( "Pair buffer capacity of %d exceeded, too many overlaps", broadPhase->movePairCapacity );
+		}
+
 		pair = b2Alloc( sizeof( b2MovePair ) );
 		pair->heap = true;
 	}
@@ -379,6 +392,20 @@ static void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex,
 	b2TracyCZoneEnd( pair_task );
 }
 
+static void b2UpdateTreesTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
+{
+	B2_UNUSED( startIndex );
+	B2_UNUSED( endIndex );
+	B2_UNUSED( threadIndex );
+
+	b2TracyCZoneNC( tree_task, "Rebuild BVH", b2_colorFireBrick, true );
+
+	b2World* world = context;
+	b2BroadPhase_RebuildTrees( &world->broadPhase );
+
+	b2TracyCZoneEnd( tree_task );
+}
+
 void b2UpdateBroadPhasePairs( b2World* world )
 {
 	b2BroadPhase* bp = &world->broadPhase;
@@ -397,7 +424,9 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	// todo these could be in the step context
 	bp->moveResults = b2AllocateArenaItem( alloc, moveCount * sizeof( b2MoveResult ), "move results" );
-	bp->movePairCapacity = 16 * moveCount;
+
+	// This capacity can be exceeded if there are many overlapping pairs (e.g. all shapes at the origin)
+	bp->movePairCapacity = 8 * moveCount;
 	bp->movePairs = b2AllocateArenaItem( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
 	b2AtomicStoreInt( &bp->movePairIndex, 0 );
 
@@ -414,13 +443,18 @@ void b2UpdateBroadPhasePairs( b2World* world )
 		world->taskCount += 1;
 	}
 
-	// todo_erin could start tree rebuild here
-
 	b2TracyCZoneNC( create_contacts, "Create Contacts", b2_colorCoral, true );
+
+	// Task that can be done in parallel with the narrow-phase
+	// - rebuild the collision tree for dynamic and kinematic bodies to keep their query performance good
+	world->userTreeTask = world->enqueueTaskFcn( &b2UpdateTreesTask, 1, 1, world, world->userTaskContext );
+	world->taskCount += 1;
+	world->activeTaskCount += world->userTreeTask == NULL ? 0 : 1;
 
 	// Single-threaded work
 	// - Clear move flags
 	// - Create contacts in deterministic order
+	// This is deterministic because the results follow the order of b2BroadPhase::moveArray.
 	for ( int i = 0; i < moveCount; ++i )
 	{
 		b2MoveResult* result = bp->moveResults + i;
@@ -442,6 +476,10 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 			if ( pair->heap )
 			{
+				// Note: I tried adding to the pair set in parallel with contact creation
+				// but that didn't work with with pair heap allocation. I could make it
+				// work with a task context bump allocator with heap fallback. The perf
+				// gain was small or zero.
 				b2MovePair* temp = pair;
 				pair = pair->next;
 				b2Free( temp, sizeof( b2MovePair ) );
@@ -475,7 +513,6 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	b2ValidateSolverSets( world );
 
 	b2TracyCZoneEnd( create_contacts );
-
 	b2TracyCZoneEnd( update_pairs );
 }
 
@@ -515,7 +552,7 @@ void b2ValidateBroadphase( const b2BroadPhase* bp )
 
 void b2ValidateNoEnlarged( const b2BroadPhase* bp )
 {
-#if B2_VALIDATE == 1
+#if B2_ENABLE_VALIDATION == 1
 	for ( int j = 0; j < b2_bodyTypeCount; ++j )
 	{
 		const b2DynamicTree* tree = bp->trees + j;

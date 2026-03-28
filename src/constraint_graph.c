@@ -62,7 +62,7 @@ void b2DestroyGraph( b2ConstraintGraph* graph )
 	}
 }
 
-// Contacts are always created as non-touching. They get cloned into the constraint
+// Contacts are always created as non-touching. They get moved into the constraint
 // graph once they are found to be touching.
 void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* contact )
 {
@@ -83,7 +83,7 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	B2_ASSERT( typeA == b2_dynamicBody || typeB == b2_dynamicBody );
 
 #if B2_FORCE_OVERFLOW == 0
-	if ( typeA != b2_staticBody && typeB != b2_staticBody )
+	if ( typeA == b2_dynamicBody && typeB == b2_dynamicBody )
 	{
 		// Dynamic constraint colors cannot encroach on colors reserved for static constraints
 		for ( int i = 0; i < B2_DYNAMIC_COLOR_COUNT; ++i )
@@ -94,16 +94,8 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 				continue;
 			}
 
-			if ( typeA == b2_dynamicBody )
-			{
-				b2SetBitGrow( &color->bodySet, bodyIdA );
-			}
-
-			if ( typeB == b2_dynamicBody )
-			{
-				b2SetBitGrow( &color->bodySet, bodyIdB );
-			}
-
+			b2SetBitGrow( &color->bodySet, bodyIdA );
+			b2SetBitGrow( &color->bodySet, bodyIdB );
 			colorIndex = i;
 			break;
 		}
@@ -220,12 +212,14 @@ void b2RemoveContactFromGraph( b2World* world, int bodyIdA, int bodyIdB, int col
 	}
 }
 
+// Notice that a joint cannot share the same color as a contact between the same two bodies. This means I can solve contacts and
+// joints in parallel with each other within each color.
 static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyIdB, b2BodyType typeA, b2BodyType typeB )
 {
 	B2_ASSERT( typeA == b2_dynamicBody || typeB == b2_dynamicBody );
 
 #if B2_FORCE_OVERFLOW == 0
-	if ( typeA != b2_staticBody && typeB != b2_staticBody )
+	if ( typeA == b2_dynamicBody && typeB == b2_dynamicBody )
 	{
 		// Dynamic constraint colors cannot encroach on colors reserved for static constraints
 		for ( int i = 0; i < B2_DYNAMIC_COLOR_COUNT; ++i )
@@ -236,16 +230,8 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 				continue;
 			}
 
-			if (typeA == b2_dynamicBody)
-			{
-				b2SetBitGrow( &color->bodySet, bodyIdA );
-			}
-
-			if (typeB == b2_dynamicBody)
-			{
-				b2SetBitGrow( &color->bodySet, bodyIdB );
-			}
-
+			b2SetBitGrow( &color->bodySet, bodyIdA );
+			b2SetBitGrow( &color->bodySet, bodyIdB );
 			return i;
 		}
 	}
@@ -280,7 +266,7 @@ static int b2AssignJointColor( b2ConstraintGraph* graph, int bodyIdA, int bodyId
 		}
 	}
 #else
-	B2_UNUSED( graph, bodyIdA, bodyIdB, staticA, staticB );
+	B2_UNUSED( graph, bodyIdA, bodyIdB );
 #endif
 
 	return B2_OVERFLOW_INDEX;
@@ -338,3 +324,10 @@ void b2RemoveJointFromGraph( b2World* world, int bodyIdA, int bodyIdB, int color
 		movedJoint->localIndex = localIndex;
 	}
 }
+
+b2HexColor b2_graphColors[B2_GRAPH_COLOR_COUNT] = {
+	b2_colorRed,	b2_colorOrange, b2_colorYellow,	   b2_colorGreen,	  b2_colorCyan,		b2_colorBlue,
+	b2_colorViolet, b2_colorPink,	b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,	b2_colorRosyBrown,
+	b2_colorAqua,	b2_colorPeru,	b2_colorLime,	   b2_colorGold,	  b2_colorPlum,		b2_colorSnow,
+	b2_colorTeal,	b2_colorKhaki,	b2_colorSalmon,	   b2_colorPeachPuff, b2_colorHoneyDew, b2_colorBlack,
+};

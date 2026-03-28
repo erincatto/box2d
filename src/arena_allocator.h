@@ -5,6 +5,8 @@
 
 #include "array.h"
 
+#include <stdbool.h>
+
 B2_ARRAY_DECLARE( b2ArenaEntry, b2ArenaEntry );
 
 typedef struct b2ArenaEntry

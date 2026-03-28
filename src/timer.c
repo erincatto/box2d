@@ -13,7 +13,7 @@
 #define WIN32_LEAN_AND_MEAN 1
 #endif
 
-#include <windows.h>
+#include <Windows.h>
 
 static double s_invFrequency = 0.0;
 
@@ -238,6 +238,8 @@ void b2UnlockMutex( b2Mutex* m )
 }
 
 #else
+
+// Fallbacks for unknown platforms
 
 uint64_t b2GetTicks( void )
 {

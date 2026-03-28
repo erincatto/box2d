@@ -509,7 +509,7 @@ void b2RevoluteJoint::Dump()
 }
 #endif
 
-void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawSize )
+void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale )
 {
 	B2_ASSERT( base->type == b2_revoluteJoint );
 
@@ -518,15 +518,15 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 	b2Transform frameA = b2MulTransforms( transformA, base->localFrameA );
 	b2Transform frameB = b2MulTransforms( transformB, base->localFrameB );
 
-	const float radius = 0.25f * drawSize;
+	const float radius = 0.25f * drawScale;
 	draw->DrawCircleFcn( frameB.p, radius, b2_colorGray, draw->context );
 
 	b2Vec2 rx = { radius, 0.0f };
 	b2Vec2 r = b2RotateVector( frameA.q, rx );
-	draw->DrawSegmentFcn( frameA.p, b2Add( frameA.p, r ), b2_colorGray, draw->context );
+	draw->DrawLineFcn( frameA.p, b2Add( frameA.p, r ), b2_colorGray, draw->context );
 
 	r = b2RotateVector( frameB.q, rx );
-	draw->DrawSegmentFcn( frameB.p, b2Add( frameB.p, r ), b2_colorBlue, draw->context );
+	draw->DrawLineFcn( frameB.p, b2Add( frameB.p, r ), b2_colorBlue, draw->context );
 
 	if ( draw->drawJointExtras )
 	{
@@ -547,21 +547,21 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 		b2Rot rotHi = b2MulRot( frameA.q, b2MakeRot( upperAngle ) );
 		b2Vec2 rhi = b2RotateVector( rotHi, rx );
 
-		draw->DrawSegmentFcn( frameB.p, b2Add( frameB.p, rlo ), b2_colorGreen, draw->context );
-		draw->DrawSegmentFcn( frameB.p, b2Add( frameB.p, rhi ), b2_colorRed, draw->context );
+		draw->DrawLineFcn( frameB.p, b2Add( frameB.p, rlo ), b2_colorGreen, draw->context );
+		draw->DrawLineFcn( frameB.p, b2Add( frameB.p, rhi ), b2_colorRed, draw->context );
 	}
 
 	if ( joint->enableSpring )
 	{
 		b2Rot q = b2MulRot( frameA.q, b2MakeRot( joint->targetAngle ) );
 		b2Vec2 v = b2RotateVector( q, rx );
-		draw->DrawSegmentFcn( frameB.p, b2Add( frameB.p, v ), b2_colorViolet, draw->context );
+		draw->DrawLineFcn( frameB.p, b2Add( frameB.p, v ), b2_colorViolet, draw->context );
 	}
 
 	b2HexColor color = b2_colorGold;
-	draw->DrawSegmentFcn( transformA.p, frameA.p, color, draw->context );
-	draw->DrawSegmentFcn( frameA.p, frameB.p, color, draw->context );
-	draw->DrawSegmentFcn( transformB.p, frameB.p, color, draw->context );
+	draw->DrawLineFcn( transformA.p, frameA.p, color, draw->context );
+	draw->DrawLineFcn( frameA.p, frameB.p, color, draw->context );
+	draw->DrawLineFcn( transformB.p, frameB.p, color, draw->context );
 
 	// char buffer[32];
 	// sprintf(buffer, "%.1f", b2Length(joint->impulse));

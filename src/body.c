@@ -34,6 +34,17 @@ static void b2LimitVelocity( b2BodyState* state, float maxLinearSpeed )
 	}
 }
 
+void b2RemoveBodySim( b2BodySimArray* bodySims, b2BodyArray* bodies, int localIndex )
+{
+	B2_ASSERT( 0 <= localIndex && localIndex < bodySims->count );
+	int lastIndex = bodySims->count - 1;
+	bodySims->data[localIndex] = bodySims->data[lastIndex];
+	b2Body* movedBody = b2BodyArray_Get( bodies, bodySims->data[localIndex].bodyId );
+	B2_ASSERT( movedBody->localIndex == lastIndex );
+	movedBody->localIndex = localIndex;
+	bodySims->count -= 1;
+}
+
 // Get a validated body from a world using an id.
 b2Body* b2GetBodyFullId( b2World* world, b2BodyId bodyId )
 {
@@ -84,77 +95,51 @@ b2BodyState* b2GetBodyState( b2World* world, b2Body* body )
 static void b2CreateIslandForBody( b2World* world, int setIndex, b2Body* body )
 {
 	B2_ASSERT( body->islandId == B2_NULL_INDEX );
-	B2_ASSERT( body->islandPrev == B2_NULL_INDEX );
-	B2_ASSERT( body->islandNext == B2_NULL_INDEX );
 	B2_ASSERT( setIndex != b2_disabledSet );
 
 	b2Island* island = b2CreateIsland( world, setIndex );
-
+	b2Array_Push( island->bodies, body->id );
 	body->islandId = island->islandId;
-	island->headBody = body->id;
-	island->tailBody = body->id;
-	island->bodyCount = 1;
+	body->islandIndex = 0;
+
+	b2ValidateIsland( world, island->islandId );
 }
 
 static void b2RemoveBodyFromIsland( b2World* world, b2Body* body )
 {
 	if ( body->islandId == B2_NULL_INDEX )
 	{
-		B2_ASSERT( body->islandPrev == B2_NULL_INDEX );
-		B2_ASSERT( body->islandNext == B2_NULL_INDEX );
+		B2_ASSERT( body->islandIndex == B2_NULL_INDEX );
 		return;
 	}
 
 	int islandId = body->islandId;
-	b2Island* island = b2IslandArray_Get( &world->islands, islandId );
-
-	// Fix the island's linked list of sims
-	if ( body->islandPrev != B2_NULL_INDEX )
+	b2Island* island = b2Array_Get( world->islands, islandId );
 	{
-		b2Body* prevBody = b2BodyArray_Get( &world->bodies, body->islandPrev );
-		prevBody->islandNext = body->islandNext;
+		int localIndex = body->islandIndex;
+		int movedBodyId = island->bodies.data[island->bodies.count - 1];
+		island->bodies.data[localIndex] = movedBodyId;
+		B2_VALIDATE( world->bodies.data[movedBodyId].islandIndex == island->bodies.count - 1 );
+		world->bodies.data[movedBodyId].islandIndex = localIndex;
+		island->bodies.count -= 1;
 	}
 
-	if ( body->islandNext != B2_NULL_INDEX )
+	if ( island->bodies.count == 0 )
 	{
-		b2Body* nextBody = b2BodyArray_Get( &world->bodies, body->islandNext );
-		nextBody->islandPrev = body->islandPrev;
+		// Destroy empty island
+		B2_ASSERT( island->contacts.count == 0 );
+		B2_ASSERT( island->joints.count == 0 );
+
+		// Free the island
+		b2DestroyIsland( world, island->islandId );
 	}
-
-	B2_ASSERT( island->bodyCount > 0 );
-	island->bodyCount -= 1;
-	bool islandDestroyed = false;
-
-	if ( island->headBody == body->id )
-	{
-		island->headBody = body->islandNext;
-
-		if ( island->headBody == B2_NULL_INDEX )
-		{
-			// Destroy empty island
-			B2_ASSERT( island->tailBody == body->id );
-			B2_ASSERT( island->bodyCount == 0 );
-			B2_ASSERT( island->contactCount == 0 );
-			B2_ASSERT( island->jointCount == 0 );
-
-			// Free the island
-			b2DestroyIsland( world, island->islandId );
-			islandDestroyed = true;
-		}
-	}
-	else if ( island->tailBody == body->id )
-	{
-		island->tailBody = body->islandPrev;
-	}
-
-	if ( islandDestroyed == false )
+	else
 	{
 		b2ValidateIsland( world, islandId );
 	}
 
 	body->islandId = B2_NULL_INDEX;
-	body->islandPrev = B2_NULL_INDEX;
-	body->islandNext = B2_NULL_INDEX;
+	body->islandIndex = B2_NULL_INDEX;
 }
 
 static void b2DestroyBodyContacts( b2World* world, b2Body* body, bool wakeBodies )
@@ -282,13 +267,13 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	if ( def->name )
 	{
 		int i = 0;
-		while ( i < 31 && def->name[i] != 0 )
+		while ( i < B2_NAME_LENGTH - 1 && def->name[i] != 0 )
 		{
 			body->name[i] = def->name[i];
 			i += 1;
 		}
 
-		while ( i < 32 )
+		while ( i < B2_NAME_LENGTH )
 		{
 			body->name[i] = 0;
 			i += 1;
@@ -296,7 +281,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	}
 	else
 	{
-		memset( body->name, 0, 32 * sizeof( char ) );
+		memset( body->name, 0, B2_NAME_LENGTH * sizeof( char ) );
 	}
 
 	body->userData = def->userData;
@@ -311,8 +296,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	body->headJointKey = B2_NULL_INDEX;
 	body->jointCount = 0;
 	body->islandId = B2_NULL_INDEX;
-	body->islandPrev = B2_NULL_INDEX;
-	body->islandNext = B2_NULL_INDEX;
+	body->islandIndex = B2_NULL_INDEX;
 	body->bodyMoveIndex = B2_NULL_INDEX;
 	body->id = bodyId;
 	body->mass = 0.0f;
@@ -416,27 +400,16 @@ void b2DestroyBody( b2BodyId bodyId )
 
 	// Remove body sim from solver set that owns it
 	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, body->setIndex );
-	int movedIndex = b2BodySimArray_RemoveSwap( &set->bodySims, body->localIndex );
-	if ( movedIndex != B2_NULL_INDEX )
-	{
-		// Fix moved body index
-		b2BodySim* movedSim = set->bodySims.data + body->localIndex;
-		int movedId = movedSim->bodyId;
-		b2Body* movedBody = b2BodyArray_Get( &world->bodies, movedId );
-		B2_ASSERT( movedBody->localIndex == movedIndex );
-		movedBody->localIndex = body->localIndex;
-	}
+	b2RemoveBodySim( &set->bodySims, &world->bodies, body->localIndex );
 
 	// Remove body state from awake set
 	if ( body->setIndex == b2_awakeSet )
 	{
-		int result = b2BodyStateArray_RemoveSwap( &set->bodyStates, body->localIndex );
-		B2_ASSERT( result == movedIndex );
-		B2_UNUSED( result );
+		(void)b2BodyStateArray_RemoveSwap( &set->bodyStates, body->localIndex );
 	}
 	else if ( set->setIndex >= b2_firstSleepingSet && set->bodySims.count == 0 )
 	{
-		// Remove solver set if it's now an orphan.
+		// Remove solver set if it is empty
 		b2DestroySolverSet( world, set->setIndex );
 	}
 
@@ -537,6 +510,9 @@ void b2UpdateBodyMassData( b2World* world, b2Body* body )
 {
 	b2BodySim* bodySim = b2GetBodySim( world, body );
 
+	// Mass is no longer dirty
+	body->flags &= ~b2_dirtyMass;
+
 	// Compute mass data from shapes. Each shape has its own density.
 	body->mass = 0.0f;
 	body->inertia = 0.0f;
@@ -587,6 +563,7 @@ void b2UpdateBodyMassData( b2World* world, b2Body* body )
 		if ( s->density == 0.0f )
 		{
 			masses[shapeIndex] = (b2MassData){ 0 };
+			shapeIndex += 1;
 			continue;
 		}
 
@@ -739,7 +716,6 @@ void b2Body_SetTransform( b2BodyId bodyId, b2Vec2 position, b2Rot rotation )
 	b2BroadPhase* broadPhase = &world->broadPhase;
 
 	b2Transform transform = bodySim->transform;
-	const float margin = B2_AABB_MARGIN;
 	const float speculativeDistance = B2_SPECULATIVE_DISTANCE;
 
 	int shapeId = body->headShapeId;
@@ -755,6 +731,7 @@ void b2Body_SetTransform( b2BodyId bodyId, b2Vec2 position, b2Rot rotation )
 
 		if ( b2AABB_Contains( shape->fatAABB, aabb ) == false )
 		{
+			float margin = shape->aabbMargin;
 			b2AABB fatAABB;
 			fatAABB.lowerBound.x = aabb.lowerBound.x - margin;
 			fatAABB.lowerBound.y = aabb.lowerBound.y - margin;
@@ -845,7 +822,7 @@ void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity )
 	state->angularVelocity = angularVelocity;
 }
 
-void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep )
+void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep, bool wake )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
@@ -856,6 +833,11 @@ void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeS
 	}
 
 	if ( body->type == b2_staticBody || timeStep <= 0.0f )
+	{
+		return;
+	}
+
+	if ( body->setIndex != b2_awakeSet && wake == false )
 	{
 		return;
 	}
@@ -997,6 +979,15 @@ void b2Body_ApplyTorque( b2BodyId bodyId, float torque, bool wake )
 		b2BodySim* bodySim = b2GetBodySim( world, body );
 		bodySim->torque += torque;
 	}
+}
+
+void b2Body_ClearForces( b2BodyId bodyId )
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	b2BodySim* bodySim = b2GetBodySim( world, body );
+	bodySim->force = b2Vec2_zero;
+	bodySim->torque = 0.0f;
 }
 
 void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Vec2 point, bool wake )
@@ -1309,18 +1300,24 @@ void b2Body_SetName( b2BodyId bodyId, const char* name )
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
-	if ( name != NULL )
+	if ( name )
 	{
-		for ( int i = 0; i < 31; ++i )
+		int i = 0;
+		while ( i < B2_NAME_LENGTH - 1 && name[i] != 0 )
 		{
 			body->name[i] = name[i];
+			i += 1;
 		}
 
-		body->name[31] = 0;
+		while ( i < B2_NAME_LENGTH )
+		{
+			body->name[i] = 0;
+			i += 1;
+		}
 	}
 	else
 	{
-		memset( body->name, 0, 32 * sizeof( char ) );
+		memset( body->name, 0, B2_NAME_LENGTH * sizeof( char ) );
 	}
 }
 
@@ -1517,7 +1514,7 @@ void b2Body_SetAwake( b2BodyId bodyId, bool awake )
 	}
 	else if ( awake == false && body->setIndex == b2_awakeSet )
 	{
-		b2Island* island = b2IslandArray_Get( &world->islands, body->islandId );
+		b2Island* island = b2Array_Get( world->islands, body->islandId );
 		if ( island->constraintRemoveCount > 0 )
 		{
 			// Must split the island before sleeping. This is expensive.
@@ -1528,7 +1525,7 @@ void b2Body_SetAwake( b2BodyId bodyId, bool awake )
 	}
 }
 
-void b2Body_WakeTouching(b2BodyId bodyId)
+void b2Body_WakeTouching( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
@@ -1543,7 +1540,7 @@ void b2Body_WakeTouching(b2BodyId bodyId)
 		b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contact->shapeIdA );
 		b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contact->shapeIdB );
 
-		if (shapeA->bodyId == bodyId.index1 - 1)
+		if ( shapeA->bodyId == bodyId.index1 - 1 )
 		{
 			b2Body* otherBody = b2BodyArray_Get( &world->bodies, shapeB->bodyId );
 			b2WakeBody( world, otherBody );

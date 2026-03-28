@@ -24,6 +24,9 @@ I'm not going to cover all the details of v3.0 in this guide. That is the job of
 
 The surface area of the Box2D is smaller in v3.0 because C++ is not good at hiding details. So hopefully you find the new API easier to work with.
 
+### Should I upgrade to Version 3?
+Since the behavior changed from version 2 to version 3, I recommend to only use version 3 for new projects. Version 2 no longer receives updates, but it is already battle tested. Version 3 is good for projects that need high performance.
+
 ### Creating a world
 Version 2.4:
 ```cpp

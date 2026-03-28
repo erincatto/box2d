@@ -18,7 +18,7 @@
 #include <string.h>
 
 #if defined( _WIN64 )
-#include <windows.h>
+#include <Windows.h>
 #elif defined( __APPLE__ )
 #include <unistd.h>
 #elif defined( __linux__ )
@@ -149,6 +149,7 @@ int main( int argc, char** argv )
 {
 	Benchmark benchmarks[] = {
 		{ "joint_grid", CreateJointGrid, NULL, 500 },
+		{ "junkyard", CreateJunkyard, StepJunkyard, 800 },
 		{ "large_pyramid", CreateLargePyramid, NULL, 500 },
 		{ "many_pyramids", CreateManyPyramids, NULL, 200 },
 		{ "rain", CreateRain, StepRain, 1000 },

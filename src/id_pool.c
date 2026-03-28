@@ -37,7 +37,7 @@ void b2FreeId( b2IdPool* pool, int id )
 	b2IntArray_Push( &pool->freeArray, id );
 }
 
-#if B2_VALIDATE
+#if B2_ENABLE_VALIDATION
 
 void b2ValidateFreeId( b2IdPool* pool, int id )
 {

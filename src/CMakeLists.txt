@@ -18,13 +18,13 @@ set(BOX2D_SOURCE_FILES
 	cluster.c
 	cluster.h
 
-	constants.h
 	constraint_graph.c
 	constraint_graph.h
 	contact.c
 	contact.h
 	contact_solver.c
 	contact_solver.h
+	container.h
 	core.c
 	core.h
 	ctz.h
@@ -67,6 +67,7 @@ set(BOX2D_API_FILES
 	../include/box2d/base.h
 	../include/box2d/box2d.h
 	../include/box2d/collision.h
+	../include/box2d/constants.h
 	../include/box2d/id.h
 	../include/box2d/math_functions.h
 	../include/box2d/types.h
@@ -217,7 +218,7 @@ include(CMakePackageConfigHelpers)
 
 write_basic_package_version_file(
   "${CMAKE_CURRENT_BINARY_DIR}/box2dConfigVersion.cmake"
-  VERSION ${BOX2D_VERSION}
+  VERSION ${box2d_VERSION}
   COMPATIBILITY SameMajorVersion
 )
 

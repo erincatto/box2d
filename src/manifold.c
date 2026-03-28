@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
-#include "constants.h"
 #include "core.h"
 
 #include "box2d/collision.h"
+#include "box2d/constants.h"
 #include "box2d/math_functions.h"
 
 #include <float.h>
@@ -66,7 +66,7 @@ b2Manifold b2CollideCircles( const b2Circle* circleA, b2Transform xfA, const b2C
 	b2ManifoldPoint* mp = manifold.points + 0;
 	mp->anchorA = b2RotateVector( xfA.q, contactPointA );
 	mp->anchorB = b2Add( mp->anchorA, b2Sub( xfA.p, xfB.p ) );
-	mp->point = b2Add( mp->anchorA, xfA.p );
+	mp->clipPoint = b2Add( mp->anchorA, xfA.p );
 	mp->separation = separation;
 	mp->id = 0;
 	manifold.pointCount = 1;
@@ -131,7 +131,7 @@ b2Manifold b2CollideCapsuleAndCircle( const b2Capsule* capsuleA, b2Transform xfA
 	b2ManifoldPoint* mp = manifold.points + 0;
 	mp->anchorA = b2RotateVector( xfA.q, contactPointA );
 	mp->anchorB = b2Add( mp->anchorA, b2Sub( xfA.p, xfB.p ) );
-	mp->point = b2Add( xfA.p, mp->anchorA );
+	mp->clipPoint = b2Add( xfA.p, mp->anchorA );
 	mp->separation = separation;
 	mp->id = 0;
 	manifold.pointCount = 1;
@@ -201,7 +201,7 @@ b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2Transform xfA
 		b2ManifoldPoint* mp = manifold.points + 0;
 		mp->anchorA = b2RotateVector( xfA.q, contactPointA );
 		mp->anchorB = b2Add( mp->anchorA, b2Sub( xfA.p, xfB.p ) );
-		mp->point = b2Add( xfA.p, mp->anchorA );
+		mp->clipPoint = b2Add( xfA.p, mp->anchorA );
 		mp->separation = b2Dot( b2Sub( cB, cA ), normal );
 		mp->id = 0;
 		manifold.pointCount = 1;
@@ -224,7 +224,7 @@ b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2Transform xfA
 		b2ManifoldPoint* mp = manifold.points + 0;
 		mp->anchorA = b2RotateVector( xfA.q, contactPointA );
 		mp->anchorB = b2Add( mp->anchorA, b2Sub( xfA.p, xfB.p ) );
-		mp->point = b2Add( xfA.p, mp->anchorA );
+		mp->clipPoint = b2Add( xfA.p, mp->anchorA );
 		mp->separation = b2Dot( b2Sub( cB, cA ), normal );
 		mp->id = 0;
 		manifold.pointCount = 1;
@@ -247,7 +247,7 @@ b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2Transform xfA
 		b2ManifoldPoint* mp = manifold.points + 0;
 		mp->anchorA = b2RotateVector( xfA.q, contactPointA );
 		mp->anchorB = b2Add( mp->anchorA, b2Sub( xfA.p, xfB.p ) );
-		mp->point = b2Add( xfA.p, mp->anchorA );
+		mp->clipPoint = b2Add( xfA.p, mp->anchorA );
 		mp->separation = separation - radius;
 		mp->id = 0;
 		manifold.pointCount = 1;
@@ -523,7 +523,7 @@ b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const 
 		// anchor points relative to shape origin in world space
 		mp->anchorA = b2RotateVector( xfA.q, b2Add( mp->anchorA, origin ) );
 		mp->anchorB = b2Add( mp->anchorA, b2Sub( xfA.p, xfB.p ) );
-		mp->point = b2Add( xfA.p, mp->anchorA );
+		mp->clipPoint = b2Add( xfA.p, mp->anchorA );
 	}
 
 	return manifold;
@@ -1067,7 +1067,7 @@ b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const 
 			// anchor points relative to shape origin in world space
 			mp->anchorA = b2RotateVector( xfA.q, b2Add( mp->anchorA, origin ) );
 			mp->anchorB = b2Add( mp->anchorA, b2Sub( xfA.p, xfB.p ) );
-			mp->point = b2Add( xfA.p, mp->anchorA );
+			mp->clipPoint = b2Add( xfA.p, mp->anchorA );
 		}
 	}
 
@@ -1167,7 +1167,7 @@ b2Manifold b2CollideChainSegmentAndCircle( const b2ChainSegment* segmentA, b2Tra
 	b2ManifoldPoint* mp = manifold.points + 0;
 	mp->anchorA = b2RotateVector( xfA.q, contactPointA );
 	mp->anchorB = b2Add( mp->anchorA, b2Sub( xfA.p, xfB.p ) );
-	mp->point = b2Add( xfA.p, mp->anchorA );
+	mp->clipPoint = b2Add( xfA.p, mp->anchorA );
 	mp->separation = separation;
 	mp->id = 0;
 	manifold.pointCount = 1;
@@ -1422,7 +1422,7 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 				b2ManifoldPoint* cp = manifold.points + 0;
 				cp->anchorA = b2RotateVector( xfA.q, pA );
 				cp->anchorB = b2Add( cp->anchorA, b2Sub( xfA.p, xfB.p ) );
-				cp->point = b2Add( xfA.p, cp->anchorA );
+				cp->clipPoint = b2Add( xfA.p, cp->anchorA );
 				cp->separation = output.distance - radiusB;
 				cp->id = B2_MAKE_ID( cache->indexA[0], cache->indexB[0] );
 				manifold.pointCount = 1;
@@ -1505,8 +1505,8 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 						b2Vec2 pAB = b2Sub( xfA.p, xfB.p );
 						manifold.points[0].anchorB = b2Add( manifold.points[0].anchorA, pAB );
 						manifold.points[1].anchorB = b2Add( manifold.points[1].anchorA, pAB );
-						manifold.points[0].point = b2Add( xfA.p, manifold.points[0].anchorA );
-						manifold.points[1].point = b2Add( xfA.p, manifold.points[1].anchorA );
+						manifold.points[0].clipPoint = b2Add( xfA.p, manifold.points[0].anchorA );
+						manifold.points[1].clipPoint = b2Add( xfA.p, manifold.points[1].anchorA );
 					}
 					return manifold;
 				}
@@ -1655,8 +1655,8 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 				b2Vec2 pAB = b2Sub( xfA.p, xfB.p );
 				manifold.points[0].anchorB = b2Add( manifold.points[0].anchorA, pAB );
 				manifold.points[1].anchorB = b2Add( manifold.points[1].anchorA, pAB );
-				manifold.points[0].point = b2Add( xfA.p, manifold.points[0].anchorA );
-				manifold.points[1].point = b2Add( xfA.p, manifold.points[1].anchorA );
+				manifold.points[0].clipPoint = b2Add( xfA.p, manifold.points[0].anchorA );
+				manifold.points[1].clipPoint = b2Add( xfA.p, manifold.points[1].anchorA );
 			}
 
 			return manifold;
@@ -1718,8 +1718,8 @@ b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Tr
 		b2Vec2 pAB = b2Sub( xfA.p, xfB.p );
 		manifold.points[0].anchorB = b2Add( manifold.points[0].anchorA, pAB );
 		manifold.points[1].anchorB = b2Add( manifold.points[1].anchorA, pAB );
-		manifold.points[0].point = b2Add( xfA.p, manifold.points[0].anchorA );
-		manifold.points[1].point = b2Add( xfA.p, manifold.points[1].anchorA );
+		manifold.points[0].clipPoint = b2Add( xfA.p, manifold.points[0].anchorA );
+		manifold.points[1].clipPoint = b2Add( xfA.p, manifold.points[1].anchorA );
 	}
 
 	return manifold;

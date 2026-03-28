@@ -4,6 +4,7 @@
 #pragma once
 
 #include "array.h"
+#include "container.h"
 #include "bitset.h"
 #include "broad_phase.h"
 #include "constraint_graph.h"
@@ -13,13 +14,8 @@
 
 #include "box2d/types.h"
 
-enum b2SetType
-{
-	b2_staticSet = 0,
-	b2_disabledSet = 1,
-	b2_awakeSet = 2,
-	b2_firstSleepingSet = 3,
-};
+typedef struct b2Island b2Island;
+b2DeclareArray( b2Island );
 
 // Per thread task storage
 typedef struct b2TaskContext
@@ -90,8 +86,8 @@ typedef struct b2World
 	// Used to create stable ids for islands
 	b2IdPool islandIdPool;
 
-	// This is a sparse array that maps island ids to the island data stored in the solver sets.
-	b2IslandArray islands;
+	// Persistent islands
+	b2ArrayC(b2Island) islands;
 
 	b2IdPool shapeIdPool;
 	b2IdPool chainIdPool;
@@ -153,6 +149,7 @@ typedef struct b2World
 	float contactSpeed;
 	float contactHertz;
 	float contactDampingRatio;
+	float contactRecycleDistance;
 
 	b2FrictionCallback* frictionCallback;
 	b2RestitutionCallback* restitutionCallback;
@@ -176,7 +173,11 @@ typedef struct b2World
 	void* userData;
 
 	// Remember type step used for reporting forces and torques
+	// inverse sub-step
 	float inv_h;
+
+	// inverse full-step
+	float inv_dt;
 
 	int activeTaskCount;
 	int taskCount;

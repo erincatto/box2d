@@ -15,8 +15,6 @@
 // needed for dll export
 #include "box2d/box2d.h"
 
-#include <stdio.h>
-
 void b2DistanceJoint_SetLength( b2JointId jointId, float length )
 {
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
@@ -392,6 +390,23 @@ void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBia
 			wB += iB * b2Cross( rB, P );
 		}
 
+		if ( joint->enableMotor )
+		{
+			b2Vec2 vr = b2Add( b2Sub( vB, vA ), b2Sub( b2CrossSV( wB, rB ), b2CrossSV( wA, rA ) ) );
+			float Cdot = b2Dot( axis, vr );
+			float impulse = joint->axialMass * ( joint->motorSpeed - Cdot );
+			float oldImpulse = joint->motorImpulse;
+			float maxImpulse = context->h * joint->maxMotorForce;
+			joint->motorImpulse = b2ClampFloat( joint->motorImpulse + impulse, -maxImpulse, maxImpulse );
+			impulse = joint->motorImpulse - oldImpulse;
+
+			b2Vec2 P = b2MulSV( impulse, axis );
+			vA = b2MulSub( vA, mA, P );
+			wA -= iA * b2Cross( rA, P );
+			vB = b2MulAdd( vB, mB, P );
+			wB += iB * b2Cross( rB, P );
+		}
+
 		if ( joint->enableLimit )
 		{
 			// lower limit
@@ -461,23 +476,6 @@ void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBia
 				vB = b2MulAdd( vB, mB, P );
 				wB += iB * b2Cross( rB, P );
 			}
-		}
-
-		if ( joint->enableMotor )
-		{
-			b2Vec2 vr = b2Add( b2Sub( vB, vA ), b2Sub( b2CrossSV( wB, rB ), b2CrossSV( wA, rA ) ) );
-			float Cdot = b2Dot( axis, vr );
-			float impulse = joint->axialMass * ( joint->motorSpeed - Cdot );
-			float oldImpulse = joint->motorImpulse;
-			float maxImpulse = context->h * joint->maxMotorForce;
-			joint->motorImpulse = b2ClampFloat( joint->motorImpulse + impulse, -maxImpulse, maxImpulse );
-			impulse = joint->motorImpulse - oldImpulse;
-
-			b2Vec2 P = b2MulSV( impulse, axis );
-			vA = b2MulSub( vA, mA, P );
-			wA -= iA * b2Cross( rA, P );
-			vB = b2MulAdd( vB, mB, P );
-			wB += iB * b2Cross( rB, P );
 		}
 	}
 	else
@@ -557,27 +555,27 @@ void b2DrawDistanceJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 	{
 		b2Vec2 pMin = b2MulAdd( pA, joint->minLength, axis );
 		b2Vec2 pMax = b2MulAdd( pA, joint->maxLength, axis );
-		b2Vec2 offset = b2MulSV( 0.05f * b2_lengthUnitsPerMeter, b2RightPerp( axis ) );
+		b2Vec2 offset = b2MulSV( 0.05f * b2GetLengthUnitsPerMeter(), b2RightPerp( axis ) );
 
 		if ( joint->minLength > B2_LINEAR_SLOP )
 		{
 			// draw->DrawPoint(pMin, 4.0f, c2, draw->context);
-			draw->DrawSegmentFcn( b2Sub( pMin, offset ), b2Add( pMin, offset ), b2_colorLightGreen, draw->context );
+			draw->DrawLineFcn( b2Sub( pMin, offset ), b2Add( pMin, offset ), b2_colorLightGreen, draw->context );
 		}
 
 		if ( joint->maxLength < B2_HUGE )
 		{
 			// draw->DrawPoint(pMax, 4.0f, c3, draw->context);
-			draw->DrawSegmentFcn( b2Sub( pMax, offset ), b2Add( pMax, offset ), b2_colorRed, draw->context );
+			draw->DrawLineFcn( b2Sub( pMax, offset ), b2Add( pMax, offset ), b2_colorRed, draw->context );
 		}
 
 		if ( joint->minLength > B2_LINEAR_SLOP && joint->maxLength < B2_HUGE )
 		{
-			draw->DrawSegmentFcn( pMin, pMax, b2_colorGray, draw->context );
+			draw->DrawLineFcn( pMin, pMax, b2_colorGray, draw->context );
 		}
 	}
 
-	draw->DrawSegmentFcn( pA, pB, b2_colorWhite, draw->context );
+	draw->DrawLineFcn( pA, pB, b2_colorWhite, draw->context );
 	draw->DrawPointFcn( pA, 4.0f, b2_colorWhite, draw->context );
 	draw->DrawPointFcn( pB, 4.0f, b2_colorWhite, draw->context );
 

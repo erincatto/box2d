@@ -3,23 +3,24 @@
 
 #include "box2d/types.h"
 
-#include "constants.h"
 #include "core.h"
+
+#include "box2d/constants.h"
 
 b2WorldDef b2DefaultWorldDef( void )
 {
+	float lengthUnits = b2GetLengthUnitsPerMeter();
 	b2WorldDef def = { 0 };
 	def.gravity.x = 0.0f;
 	def.gravity.y = -10.0f;
-	def.hitEventThreshold = 1.0f * b2_lengthUnitsPerMeter;
-	def.restitutionThreshold = 1.0f * b2_lengthUnitsPerMeter;
-	def.contactSpeed = 3.0f * b2_lengthUnitsPerMeter;
+	def.hitEventThreshold = 1.0f * lengthUnits;
+	def.restitutionThreshold = 1.0f * lengthUnits;
+	def.contactSpeed = 3.0f * lengthUnits;
 	def.contactHertz = 30.0;
 	def.contactDampingRatio = 10.0f;
 
 	// 400 meters per second, faster than the speed of sound
-	def.maximumLinearSpeed = 400.0f * b2_lengthUnitsPerMeter;
-
+	def.maximumLinearSpeed = 400.0f * lengthUnits;
 	def.enableSleep = true;
 	def.enableContinuous = true;
 	def.internalValue = B2_SECRET_COOKIE;
@@ -31,7 +32,7 @@ b2BodyDef b2DefaultBodyDef( void )
 	b2BodyDef def = { 0 };
 	def.type = b2_staticBody;
 	def.rotation = b2Rot_identity;
-	def.sleepThreshold = 0.05f * b2_lengthUnitsPerMeter;
+	def.sleepThreshold = 0.05f * b2GetLengthUnitsPerMeter();
 	def.gravityScale = 1.0f;
 	def.enableSleep = true;
 	def.isAwake = true;
@@ -143,7 +144,7 @@ b2DebugDraw b2DefaultDebugDraw( void )
 	draw.DrawCircleFcn = b2EmptyDrawCircle;
 	draw.DrawSolidCircleFcn = b2EmptyDrawSolidCircle;
 	draw.DrawSolidCapsuleFcn = b2EmptyDrawSolidCapsule;
-	draw.DrawSegmentFcn = b2EmptyDrawSegment;
+	draw.DrawLineFcn = b2EmptyDrawSegment;
 	draw.DrawTransformFcn = b2EmptyDrawTransform;
 	draw.DrawPointFcn = b2EmptyDrawPoint;
 	draw.DrawStringFcn = b2EmptyDrawString;
@@ -151,7 +152,8 @@ b2DebugDraw b2DefaultDebugDraw( void )
 	draw.drawingBounds.lowerBound = (b2Vec2){ -FLT_MAX, -FLT_MAX };
 	draw.drawingBounds.upperBound = (b2Vec2){ FLT_MAX, FLT_MAX };
 	draw.forceScale = 1.0f;
+	draw.jointScale = 1.0f;
 	draw.drawShapes = true;
-	
+
 	return draw;
 }
