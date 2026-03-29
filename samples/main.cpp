@@ -383,6 +383,11 @@ static void ScrollCallback( GLFWwindow* window, double dx, double dy )
 		return;
 	}
 
+	double xd, yd;
+	glfwGetCursorPos( window, &xd, &yd );
+	b2Vec2 ps = { float( xd ), float( yd ) };
+	b2Vec2 pwBefore = ConvertScreenToWorld( &s_context.camera, ps );
+
 	if ( dy > 0 )
 	{
 		s_context.camera.zoom /= 1.1f;
@@ -391,6 +396,10 @@ static void ScrollCallback( GLFWwindow* window, double dx, double dy )
 	{
 		s_context.camera.zoom *= 1.1f;
 	}
+
+	b2Vec2 pwAfter = ConvertScreenToWorld( &s_context.camera, ps );
+	b2Vec2 delta = pwAfter - pwBefore;
+	s_context.camera.center -= delta;
 }
 
 static void UpdateUI()
