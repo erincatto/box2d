@@ -443,11 +443,13 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 
 	b2StepContext* stepContext = context;
 	b2World* world = stepContext->world;
+	b2ClusterManager* clusterManager = &world->clusterManager;
 
 	B2_ASSERT( (int)threadIndex < world->workerCount );
 
 	bool enableSleep = world->enableSleep;
 	b2BodyState* states = stepContext->states;
+	b2ClusterBody* clusterBodies = stepContext->clusterBodies;
 	b2Body* bodies = world->bodies.data;
 	float timeStep = stepContext->dt;
 	float invTimeStep = stepContext->inv_dt;
@@ -491,7 +493,8 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 
 		B2_VALIDATE( 0 <= state->bodyId && state->bodyId < world->bodies.count );
 		b2Body* body = bodies + state->bodyId;
-		body->bodyMoveIndex = stateIndex;
+		int awakeIndex = body->localIndex;
+		body->bodyMoveIndex = awakeIndex;
 
 		// Reset state index for safety
 		body->stateIndex = B2_NULL_INDEX;
@@ -507,6 +510,27 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		body->linearVelocity = v;
 		body->angularVelocity = w;
 		body->center = b2Add( body->center, state->deltaPosition );
+
+		// Find best cluster
+		int bestIndex = 0;
+		float minDistSqr = b2DistanceSquared( body->center, clusterManager->clusters[0].center );
+		for ( int clusterIndex = 1; clusterIndex < B2_CLUSTER_COUNT; ++clusterIndex )
+		{
+			float distSqr = b2DistanceSquared( body->center, clusterManager->clusters[clusterIndex].center );
+			if ( distSqr < minDistSqr )
+			{
+				bestIndex = clusterIndex;
+				minDistSqr = distSqr;
+			}
+		}
+
+		body->clusterIndex = (int16_t)bestIndex;
+
+		clusterBodies[stateIndex] = (b2ClusterBody){
+			.position = body->center,
+			.clusterIndex = (int16_t)bestIndex,
+		};
+
 		body->transform.q = b2NormalizeRot( b2MulRot( state->deltaRotation, body->transform.q ) );
 
 		// Use the velocity of the farthest point on the body to account for rotation.
@@ -523,10 +547,10 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		body->transform.p = b2Sub( body->center, b2RotateVector( body->transform.q, body->localCenter ) );
 
 		// cache miss here, however I need the shape list below
-		moveEvents[stateIndex].transform = body->transform;
-		moveEvents[stateIndex].bodyId = (b2BodyId){ state->bodyId + 1, worldId, body->generation };
-		moveEvents[stateIndex].userData = body->userData;
-		moveEvents[stateIndex].fellAsleep = false;
+		moveEvents[awakeIndex].transform = body->transform;
+		moveEvents[awakeIndex].bodyId = (b2BodyId){ state->bodyId + 1, worldId, body->generation };
+		moveEvents[awakeIndex].userData = body->userData;
+		moveEvents[awakeIndex].fellAsleep = false;
 
 		// reset applied force and torque
 		body->force = b2Vec2_zero;
@@ -794,6 +818,10 @@ static void b2PrepareWorkerClusters( b2StepContext* context, int workerIndex )
 	b2TracyCZoneNC( prepare_clusters, "Prepare Clusters", b2_colorDarkOrange, true );
 
 	b2ClusterSolveData* clusterData = context->clusterData;
+	b2World* world = context->world;
+	b2Cluster* clusters = world->clusterManager.clusters;
+
+	b2Vec2 g = world->gravity;
 
 	for ( int order = 0; order < 2; ++order )
 	{
@@ -809,6 +837,32 @@ static void b2PrepareWorkerClusters( b2StepContext* context, int workerIndex )
 
 			if ( b2AtomicCompareExchangeInt( &cd->prepareComplete, 0, 1 ) )
 			{
+				// Populate body state in cluster order
+				int stateIndex = clusters[c].stateOffset;
+				int clusterBodyCount = clusters[c].bodyIds.count;
+
+				for ( int j = 0; j < clusterBodyCount; ++j )
+				{
+					int bodyId = clusters[c].bodyIds.data[j];
+					b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
+
+					body->stateIndex = stateIndex;
+
+					b2BodyState* state = context->states + stateIndex;
+					state->linearVelocity = body->linearVelocity;
+					state->angularVelocity = body->angularVelocity;
+					state->force = b2MulAdd( body->force, body->gravityScale * body->mass, g );
+					state->torque = body->torque;
+					state->invMass = body->invMass;
+					state->invInertia = body->invInertia;
+					state->flags = body->flags;
+					state->bodyId = bodyId;
+					state->deltaPosition = b2Vec2_zero;
+					state->deltaRotation = b2Rot_identity;
+
+					stateIndex += 1;
+				}
+
 				if ( cd->contactCount > 0 )
 				{
 					// Pass bodySims to remap constraint indices to local cluster indices
@@ -1115,6 +1169,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 
 		profile->prepareConstraints += b2GetMillisecondsAndReset( &ticks );
 
+		// This is used to push the syncBits forward across substeps
 		int clusterSyncIndex = 1;
 
 		int subStepCount = context->subStepCount;
@@ -1169,7 +1224,7 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 
 		// Advance stage index past sub-step stages:
 		// warm start clusters + solve clusters + relax clusters
-		stageIndex += 1 + ITERATIONS + RELAX_ITERATIONS;
+		stageIndex += 3;
 
 		// Restitution
 		{
@@ -1242,7 +1297,10 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 
 			b2SolveWorkerClusters( context, workerIndex, useBias, isRestitution, stage );
 		}
-
+		else
+		{
+			B2_ASSERT( false );
+		}
 
 		lastSyncBits = syncBits;
 	}
@@ -1320,14 +1378,26 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stageCount += 1; // b2_stageRelaxClusters (reused per sub-step per iteration)
 		stageCount += 1; // b2_stageRestitutionClusters
 
-		b2SolverStage* stages = b2AllocateArenaItem( &world->arena, stageCount * sizeof( b2SolverStage ), "stages" );
+		// Body states
+		stepContext->states = b2AllocateArenaItem( &world->arena, awakeBodyCount * sizeof( b2BodyState ), "states" );
+		stepContext->clusterBodies =
+			b2AllocateArenaItem( &world->arena, awakeBodyCount * sizeof( b2ClusterBody ), "cluster body" );
+
+#if B2_ENABLE_VALIDATION
+		for (int i = 0; i < awakeBodyCount; ++i)
+		{
+			stepContext->clusterBodies[i].position = b2Vec2_zero;
+			stepContext->clusterBodies[i].clusterIndex = B2_NULL_INDEX;
+		}
+#endif
 
 		// Classify constraints into clusters and borders
-		// These allocations happen after stages/blocks so arena LIFO free order works
 		stepContext->clusterData =
 			b2AllocateArenaItem( &world->arena, B2_CLUSTER_COUNT * sizeof( b2ClusterSolveData ), "cluster solve data" );
 		memset( stepContext->clusterData, 0, B2_CLUSTER_COUNT * sizeof( b2ClusterSolveData ) );
 
+		// Compute spatial clusters before solving so constraint classification can read clusterIndex
+		b2ComputeClusters( world );
 		b2ClassifyConstraints( world, stepContext );
 
 		// Assign clusters to workers using LPT (Longest Processing Time) heuristic
@@ -1391,6 +1461,9 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				workerLoad[minWorker] += clusterWork[clusterIndex];
 			}
 		}
+
+		// Must do no arena allocations during split task
+		b2SolverStage* stages = b2AllocateArenaItem( &world->arena, stageCount * sizeof( b2SolverStage ), "stages" );
 
 		// Split an awake island
 		void* splitIslandTask = NULL;
@@ -1475,6 +1548,9 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			}
 		}
 
+		b2FreeArenaItem( &world->arena, stages );
+		stepContext->stages = NULL;
+
 		world->profile.solveConstraints = b2GetMillisecondsAndReset( &constraintTicks );
 		b2TracyCZoneEnd( solve_constraints );
 
@@ -1500,6 +1576,39 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		if ( finalizeBodiesTask != NULL )
 		{
 			world->finishTaskFcn( finalizeBodiesTask, world->userTaskContext );
+		}
+
+		// Update clusters. Bodies are assigned at the beginning of the solve to ensure they
+		// all exist and are awake. This just computes the new centers.
+		b2Cluster* clusters = world->clusterManager.clusters;
+		int clusterBodyCounts[B2_CLUSTER_COUNT] = {0};
+		for ( int i = 0; i < B2_CLUSTER_COUNT; ++i )
+		{
+			// Done with the bodies
+			clusters[i].bodyIds.count = 0;
+			clusters[i].accumulator = b2Vec2_zero;
+		}
+
+		// Serial for determinism
+		for ( int i = 0; i < awakeBodyCount; ++i )
+		{
+			b2ClusterBody* clusterBody = stepContext->clusterBodies + i;
+			int clusterIndex = clusterBody->clusterIndex;
+			B2_ASSERT( 0 <= clusterIndex && clusterIndex < B2_CLUSTER_COUNT );
+			b2Cluster* cluster = clusters + clusterIndex;
+			cluster->accumulator = b2Add( cluster->accumulator, clusterBody->position );
+			clusterBodyCounts[clusterIndex] += 1;
+		}
+
+		// Compute cluster centers
+		for ( int i = 0; i < B2_CLUSTER_COUNT; ++i )
+		{
+			if ( clusterBodyCounts[i] > 0 )
+			{
+				clusters[i].center = b2MulSV( 1.0f / clusterBodyCounts[i], clusters[i].accumulator );
+			}
+
+			clusters[i].accumulator = b2Vec2_zero;
 		}
 
 		// Free arena allocations in reverse order (LIFO)
@@ -1549,9 +1658,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			}
 
 			b2FreeArenaItem( &world->arena, clusterData );
+			stepContext->clusterData = NULL;
 		}
-
-		b2FreeArenaItem( &world->arena, stages );
 
 		world->profile.transforms = b2GetMilliseconds( transformTicks );
 		b2TracyCZoneEnd( update_transforms );
@@ -1710,6 +1818,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// Apply shape AABB changes to broad-phase. This also create the move array which must be
 		// in deterministic order. I'm tracking sim bodies because the number of shape ids can be huge.
 		// This has to happen before bullets are processed.
+		// Also collect moved body ids for lazy cluster reassignment next step.
 		{
 			b2BroadPhase* broadPhase = &world->broadPhase;
 			uint32_t wordCount = enlargedBodyBitSet->blockCount;
@@ -1730,7 +1839,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 					b2BodyState* state = states + stateIndex;
 					b2Body* body = bodyArray + state->bodyId;
-
 					int shapeId = body->headShapeId;
 					if ( ( body->flags & ( b2_isBullet | b2_isFast ) ) == ( b2_isBullet | b2_isFast ) )
 					{
@@ -1846,6 +1954,12 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		world->profile.bullets = b2GetMilliseconds( bulletTicks );
 		b2TracyCZoneEnd( bullets );
 	}
+
+	b2FreeArenaItem( &world->arena, stepContext->clusterBodies );
+	stepContext->clusterBodies = NULL;
+
+	b2FreeArenaItem( &world->arena, stepContext->states );
+	stepContext->states = NULL;
 
 	// Need to free this even if no bullets got processed.
 	b2FreeArenaItem( &world->arena, stepContext->bulletBodies );

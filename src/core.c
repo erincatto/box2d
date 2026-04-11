@@ -1,17 +1,19 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
-#include "core.h"
-
-#include "box2d/math_functions.h"
-
-#if defined( B2_COMPILER_MSVC )
+// clang-format off
+#if defined( _MSC_VER )
 #define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
 #include <stdlib.h>
+#include <crtdbg.h>
 #else
 #include <stdlib.h>
 #endif
+// clang-format on
+
+#include "core.h"
+
+#include "box2d/math_functions.h"
 
 #include <stdarg.h>
 #include <stdio.h>
