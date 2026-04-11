@@ -41,6 +41,12 @@ typedef struct b2SolverStage
 	bool integratePositions;
 } b2SolverStage;
 
+typedef struct b2ClusterBody
+{
+	b2Vec2 position;
+	int clusterIndex;
+} b2ClusterBody;
+
 // Context for a time step. Recreated each time step.
 typedef struct b2StepContext
 {
@@ -65,6 +71,7 @@ typedef struct b2StepContext
 	struct b2World* world;
 
 	struct b2BodyState* states;
+	b2ClusterBody* clusterBodies;
 
 	// array of all shape ids for shapes that have enlarged AABBs
 	int* enlargedShapes;

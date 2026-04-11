@@ -9,7 +9,6 @@
 
 #include <float.h>
 #include <stddef.h>
-#include <stdlib.h>
 
 #define B2_MAKE_ID( A, B ) ( (uint8_t)( A ) << 8 | (uint8_t)( B ) )
 

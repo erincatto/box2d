@@ -8,6 +8,7 @@
 #include "body.h"
 #include "contact.h"
 #include "contact_solver.h"
+#include "ctz.h"
 #include "joint.h"
 #include "physics_world.h"
 #include "solver.h"
@@ -35,182 +36,108 @@ void b2DestroyClusters( b2ClusterManager* manager )
 	}
 }
 
-void b2ComputeClusters( b2World* world, b2StepContext* context )
+void b2ComputeClusters( b2World* world )
 {
 	b2ClusterManager* manager = &world->clusterManager;
 	b2Cluster* clusters = manager->clusters;
 
 	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
 	int awakeCount = awakeSet->bodyIds.count;
-	int* bodyIds = awakeSet->bodyIds.data;
+	if ( awakeCount == 0 )
+	{
+		return;
+	}
+
+	if ( manager->initialized == false )
+	{
+		int seedCount = b2MinInt(awakeCount, B2_CLUSTER_COUNT);
+		for ( int i = 0; i < seedCount; ++i )
+		{
+			int bodyId = awakeSet->bodyIds.data[i];
+			b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
+			clusters[i].center = body->center;
+		}
+
+		manager->initialized = true;
+	}
 
 	for ( int i = 0; i < B2_CLUSTER_COUNT; ++i )
 	{
 		clusters[i].bodyIds.count = 0;
 	}
 
-	if ( awakeCount == 0 )
+	// Populate clusters
+	// Possible optimizations:
+	// 1. store the cluster index with the body ids
+	// 2. assign bodies to rolling clusters at creation, bumping to a new cluster after every N bodies created
+	int* bodyIds = awakeSet->bodyIds.data;
+	for ( int i = 0; i < awakeCount; ++i )
 	{
-		return;
-	}
+		b2Body* body = b2BodyArray_Get( &world->bodies, bodyIds[i] );
+		int clusterIndex = body->clusterIndex;
 
-	// First-time or too few bodies: full k-means with seeding
-	if ( manager->initialized == false || awakeCount < B2_CLUSTER_COUNT )
-	{
-		int seedCount = b2MinInt( awakeCount, B2_CLUSTER_COUNT );
-		for ( int i = 0; i < seedCount; ++i )
+		if (clusterIndex == B2_NULL_INDEX)
 		{
-			b2Body* body = b2BodyArray_Get( &world->bodies, bodyIds[i] );
-			clusters[i].center = body->center;
-			b2Array_Push( clusters[i].bodyIds, bodyIds[i] );
-			body->clusterIndex = (int16_t)i;
+			b2Vec2 center = body->center;
+			float minDistSqr = b2DistanceSquared( center, clusters[0].center );
+			clusterIndex = 0;
+
+			for ( int j = 1; j < B2_CLUSTER_COUNT; ++j )
+			{
+				float distSqr = b2DistanceSquared( center, clusters[j].center );
+				if ( distSqr < minDistSqr )
+				{
+					clusterIndex = j;
+					minDistSqr = distSqr;
+				}
+			}
+
+			body->clusterIndex = (int16_t)clusterIndex;
 		}
 
-		for ( int iteration = 0; iteration < 32; ++iteration )
-		{
-			// Reset
-			for ( int i = 0; i < B2_CLUSTER_COUNT; ++i )
-			{
-				clusters[i].accumulator = b2Vec2_zero;
-				clusters[i].bodyIds.count = 0;
-			}
-
-			for ( int i = 0; i < awakeCount; ++i )
-			{
-				int bodyId = bodyIds[i];
-				b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
-				b2Vec2 p = body->center;
-
-				float minDistanceSquared = b2DistanceSquared( p, clusters[0].center );
-				int bestIndex = 0;
-
-				for ( int j = 1; j < B2_CLUSTER_COUNT; ++j )
-				{
-					float distanceSquared = b2DistanceSquared( p, clusters[j].center );
-					if ( distanceSquared < minDistanceSquared )
-					{
-						minDistanceSquared = distanceSquared;
-						bestIndex = j;
-					}
-				}
-
-				body->clusterIndex = (int16_t)bestIndex;
-				b2Array_Push( clusters[bestIndex].bodyIds, bodyId );
-				clusters[bestIndex].accumulator = b2Add( clusters[bestIndex].accumulator, p );
-			}
-
-			for ( int i = 0; i < B2_CLUSTER_COUNT; ++i )
-			{
-				int clusterBodyCount = clusters[i].bodyIds.count;
-				if ( clusterBodyCount > 0 )
-				{
-					clusters[i].center = b2MulSV( 1.0f / clusterBodyCount, clusters[i].accumulator );
-				}
-			}
-		}
-
-		manager->initialized = true;
-	}
-	else
-	{
-		// Incremental: refine clusters using persistent centers
-		for ( int iteration = 0; iteration < 4; ++iteration )
-		{
-			for ( int i = 0; i < B2_CLUSTER_COUNT; ++i )
-			{
-				clusters[i].accumulator = b2Vec2_zero;
-				clusters[i].bodyIds.count = 0;
-			}
-
-			// Assign each body to nearest cluster center
-			for ( int i = 0; i < awakeCount; ++i )
-			{
-				int bodyId = bodyIds[i];
-				b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
-				b2Vec2 p = body->center;
-
-				float minDistanceSquared = b2DistanceSquared( p, clusters[0].center );
-				int bestIndex = 0;
-
-				for ( int j = 1; j < B2_CLUSTER_COUNT; ++j )
-				{
-					float distanceSquared = b2DistanceSquared( p, clusters[j].center );
-					if ( distanceSquared < minDistanceSquared )
-					{
-						minDistanceSquared = distanceSquared;
-						bestIndex = j;
-					}
-				}
-
-				body->clusterIndex = (int16_t)bestIndex;
-				b2Array_Push( clusters[bestIndex].bodyIds, bodyId );
-				clusters[bestIndex].accumulator = b2Add( clusters[bestIndex].accumulator, p );
-			}
-
-			// Update centers, handle empty clusters
-			for ( int i = 0; i < B2_CLUSTER_COUNT; ++i )
-			{
-				int clusterBodyCount = clusters[i].bodyIds.count;
-				if ( clusterBodyCount > 0 )
-				{
-					clusters[i].center = b2MulSV( 1.0f / clusterBodyCount, clusters[i].accumulator );
-				}
-				else
-				{
-					// Re-seed empty cluster from body furthest from its assigned center
-					float maxDistanceSquared = -1.0f;
-					b2Body* maxBody = NULL;
-					for ( int b = 0; b < awakeCount; ++b )
-					{
-						int bodyId = bodyIds[b];
-						b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
-
-						int ci = body->clusterIndex;
-						float d = b2DistanceSquared( body->center, clusters[ci].center );
-						if ( d > maxDistanceSquared )
-						{
-							maxDistanceSquared = d;
-							maxBody = body;
-						}
-					}
-					clusters[i].center = maxBody->center;
-				}
-			}
-		}
+		B2_ASSERT( 0 <= clusterIndex && clusterIndex < B2_CLUSTER_COUNT );
+		b2Array_Push( clusters[clusterIndex].bodyIds, body->id );
 	}
 
-	// Copy body state. Organize states according to clusters for improved caching
-	context->states = b2AllocateArenaItem( &world->arena, awakeCount * sizeof( b2BodyState ), "states" );
-	int stateIndex = 0;
-
-	b2Vec2 g = world->gravity;
+	// Re-seed empty clusters
 	for ( int i = 0; i < B2_CLUSTER_COUNT; ++i )
 	{
-		int clusterBodyCount = clusters[i].bodyIds.count;
-
-		for ( int j = 0; j < clusterBodyCount; ++j )
+		int count = clusters[i].bodyIds.count;
+		if ( count == 0 && awakeCount >= B2_CLUSTER_COUNT )
 		{
-			int bodyId = clusters[i].bodyIds.data[j];
-			b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
-			body->stateIndex = stateIndex;
+			// Re-seed empty cluster from the body furthest from its assigned center
+			// todo consider choosing an arbitrary yet deterministic body to avoid iteration
+			float maxDistanceSquared = -1.0f;
+			b2Body* maxBody = NULL;
+			for ( int b = 0; b < awakeCount; ++b )
+			{
+				int bodyId = bodyIds[b];
+				b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
+				int ci = body->clusterIndex;
+				float d = b2DistanceSquared( body->center, clusters[ci].center );
+				if ( d > maxDistanceSquared )
+				{
+					maxDistanceSquared = d;
+					maxBody = body;
+				}
+			}
 
-			b2BodyState* state = context->states + stateIndex;
-			state->linearVelocity = body->linearVelocity;
-			state->angularVelocity = body->angularVelocity;
-			state->force = b2MulAdd( body->force, body->gravityScale * body->mass, g );
-			state->torque = body->torque;
-			state->invMass = body->invMass;
-			state->invInertia = body->invInertia;
-			state->flags = body->flags;
-			state->bodyId = bodyId;
-			state->deltaPosition = b2Vec2_zero;
-			state->deltaRotation = b2Rot_identity;
-
-			stateIndex += 1;
+			if ( maxBody != NULL )
+			{
+				clusters[i].center = maxBody->center;
+			}
 		}
 	}
 
-	B2_ASSERT( stateIndex == awakeCount );
+	// Compute state offsets for each cluster. Aids in parallel state population.
+	int stateOffset = 0;
+	for ( int i = 0; i < B2_CLUSTER_COUNT; ++i )
+	{
+		clusters[i].stateOffset = stateOffset;
+		stateOffset += clusters[i].bodyIds.count;
+	}
+
+	B2_ASSERT( stateOffset == awakeCount );
 }
 
 // Convert a pair (a, b) with a < b into a linear border index

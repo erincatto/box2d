@@ -412,6 +412,7 @@ void b2SplitIsland( b2World* world, int baseId )
 	b2JointLink* baseJoints = baseIsland->joints.data;
 	int baseJointCapacity = baseIsland->joints.capacity;
 
+	// Assuming no usage of arena during this task
 	b2ArenaAllocator* alloc = &world->arena;
 
 	// No lock is needed because I ensure the allocator is not used while this task is active.

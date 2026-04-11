@@ -376,6 +376,12 @@ void b2DestroyBody( b2BodyId bodyId )
 
 	b2RemoveBodyFromIsland( world, body );
 
+	//// Clear cluster membership bitset
+	//if ( body->clusterIndex >= 0 && body->clusterIndex < B2_CLUSTER_COUNT )
+	//{
+	//	b2ClearBit( &world->clusterManager.clusters[body->clusterIndex].memberBits, (uint32_t)body->id );
+	//}
+
 	// Remove body sim from solver set that owns it
 	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, body->setIndex );
 	b2RemoveBodyFromSet( set, &world->bodies, body->localIndex );
@@ -392,6 +398,7 @@ void b2DestroyBody( b2BodyId bodyId )
 	body->setIndex = B2_NULL_INDEX;
 	body->localIndex = B2_NULL_INDEX;
 	body->id = B2_NULL_INDEX;
+	body->clusterIndex = B2_NULL_INDEX;
 
 	b2ValidateSolverSets( world );
 }
@@ -1099,11 +1106,16 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 	{
 		// Create island for body
 		b2CreateIslandForBody( world, b2_awakeSet, body );
+
+		B2_ASSERT( body->clusterIndex == B2_NULL_INDEX );
 	}
 	else if ( type == b2_staticBody )
 	{
 		// Remove body from island.
 		b2RemoveBodyFromIsland( world, body );
+
+		// The body may or may not have been in a cluster.
+		body->clusterIndex = B2_NULL_INDEX;
 	}
 
 	// Stage 7: Transfer joints to the target set

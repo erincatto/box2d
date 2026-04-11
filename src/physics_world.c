@@ -131,7 +131,6 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->arena = b2CreateArenaAllocator( 2048 );
 	b2CreateBroadPhase( &world->broadPhase );
 
-	// todo testing
 	b2CreateClusters( &world->clusterManager );
 
 	// pools
@@ -352,7 +351,6 @@ void b2DestroyWorld( b2WorldId worldId )
 
 	b2SolverSetArray_Destroy( &world->solverSets );
 
-	// todo testing
 	b2DestroyClusters( &world->clusterManager );
 
 	b2DestroyBroadPhase( &world->broadPhase );
@@ -784,21 +782,12 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		world->profile.collide = b2GetMilliseconds( collideTicks );
 	}
 
-	// Compute spatial clusters before solving so constraint classification can read clusterIndex
-	b2ComputeClusters( world, &context );
-
 	// Integrate velocities, solve velocity constraints, and integrate positions.
 	if ( timeStep > 0.0f )
 	{
 		uint64_t solveTicks = b2GetTicks();
 		b2Solve( world, &context );
 		world->profile.solve = b2GetMilliseconds( solveTicks );
-	}
-
-	if ( context.states != NULL )
-	{
-		b2FreeArenaItem( &world->arena, context.states );
-		context.states = NULL;
 	}
 
 	// Update sensors

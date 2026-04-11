@@ -203,6 +203,9 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			// It could happen the body is forced asleep before it ever moves.
 			if ( body->bodyMoveIndex != B2_NULL_INDEX )
 			{
+				// todo bodyMoveIndex is a bit wasteful
+				// Initially bodyMoveIndex == localIndex, but these become different with
+				// calls to b2RemoveBodyFromSet. A two pass approach would fix this or may a temporary buffer.
 				b2BodyMoveEvent* moveEvent = b2BodyMoveEventArray_Get( &world->bodyMoveEvents, body->bodyMoveIndex );
 				B2_ASSERT( moveEvent->bodyId.index1 - 1 == bodyId );
 				B2_ASSERT( moveEvent->bodyId.generation == body->generation );

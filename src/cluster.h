@@ -5,6 +5,7 @@
 
 #include "array.h"
 #include "atomic.h"
+#include "bitset.h"
 #include "container.h"
 
 #include "box2d/constants.h"
@@ -27,6 +28,7 @@ typedef struct b2Cluster
 	b2ArrayC( int ) bodyIds;
 	b2Vec2 center;
 	b2Vec2 accumulator;
+	int stateOffset;
 } b2Cluster;
 
 // Interior constraints for one cluster, allocated from the arena each step
@@ -77,12 +79,13 @@ typedef struct b2ClusterManager
 {
 	b2Cluster clusters[B2_CLUSTER_COUNT];
 	bool initialized;
+	int bitCapacity;
 } b2ClusterManager;
 
 void b2CreateClusters( b2ClusterManager* manager );
 void b2DestroyClusters( b2ClusterManager* manager );
 
-void b2ComputeClusters( b2World* world, b2StepContext* context );
+void b2ComputeClusters( b2World* world );
 
 // Classify all awake touching contacts and joints into cluster interiors and borders.
 // Allocates from the arena; data is transient for this step.
