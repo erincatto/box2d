@@ -510,6 +510,7 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 	b2TracyCZoneEnd( collide_task );
 }
 
+#if 0
 static void b2AddNonTouchingContact( b2World* world, b2Contact* contact, b2ContactSim* contactSim )
 {
 	B2_ASSERT( contact->setIndex == b2_awakeSet );
@@ -533,6 +534,7 @@ static void b2RemoveNonTouchingContact( b2World* world, int setIndex, int localI
 		movedContact->localIndex = localIndex;
 	}
 }
+#endif
 
 // Narrow-phase collision
 static void b2Collide( b2StepContext* context )
