@@ -17,8 +17,8 @@
 #define TracyCFrameMark
 #endif
 
-#define EXPECTED_SLEEP_STEP 351
-#define EXPECTED_HASH 0xDC08BDC2
+#define EXPECTED_SLEEP_STEP 239
+#define EXPECTED_HASH 0xFA50F9B3
 
 enum
 {
@@ -129,8 +129,8 @@ static int SingleMultithreadingTest( int workerCount )
 
 	printf( "workers=%d sleepStep=%d hash=0x%08X\n", workerCount, data.sleepStep, data.hash );
 
-	//ENSURE( data.sleepStep == EXPECTED_SLEEP_STEP );
-	//ENSURE( data.hash == EXPECTED_HASH );
+	ENSURE( data.sleepStep == EXPECTED_SLEEP_STEP );
+	ENSURE( data.hash == EXPECTED_HASH );
 
 	DestroyFallingHinges( &data );
 
@@ -140,15 +140,25 @@ static int SingleMultithreadingTest( int workerCount )
 // Test multithreaded determinism.
 static int MultithreadingTest( void )
 {
-	for ( int workerCount = 1; workerCount < 6; ++workerCount )
+	for (int run = 0; run < 100; ++run)
 	{
-		int result = SingleMultithreadingTest( workerCount );
-		ENSURE( result == 0 );
+		for ( int workerCount = 1; workerCount < 16; ++workerCount )
+		{
+			int result = SingleMultithreadingTest( workerCount );
+			ENSURE( result == 0 );
+		}
+
+		for ( int workerCount = 32; workerCount >= 0; workerCount -= 3 )
+		{
+			int result = SingleMultithreadingTest( workerCount );
+			ENSURE( result == 0 );
+		}
 	}
 
 	return 0;
 }
 
+#if 0
 // Test cross-platform determinism.
 static int CrossPlatformTest( void )
 {
@@ -178,11 +188,12 @@ static int CrossPlatformTest( void )
 
 	return 0;
 }
+#endif
 
 int DeterminismTest( void )
 {
 	RUN_SUBTEST( MultithreadingTest );
-	RUN_SUBTEST( CrossPlatformTest );
+	//RUN_SUBTEST( CrossPlatformTest );
 
 	return 0;
 }

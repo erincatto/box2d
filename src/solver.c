@@ -675,7 +675,8 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 // Solve borders in fixed index order, eagerly starting each border as soon as both its
 // adjacent clusters are done. Never skip ahead — this ensures deterministic solve order
 // even when borders share a cluster and modify overlapping body state.
-static void b2SolveBordersWhenReady( b2StepContext* context, bool useBias, bool isRestitution, b2SolverStage* stage )
+static void b2SolveBordersWhenReady( b2StepContext* context, bool useBias, bool isRestitution, b2SolverStage* stage,
+									 int epoch )
 {
 	b2TracyCZoneNC( solver_borders, "Solve Borders", b2_colorMintCream, true );
 
@@ -689,23 +690,15 @@ static void b2SolveBordersWhenReady( b2StepContext* context, bool useBias, bool 
 		return;
 	}
 
-	// todo_erin testing
-	// Spin-wait until ALL clusters have finished solving
-	for (int i = 0; i < B2_CLUSTER_COUNT; ++i)
-	{
-		while ( b2AtomicLoadInt( &clusterData[i].solveComplete ) < 2)
-		{
-			b2Pause();
-		}
-	}
+	int completeValue = 3 * epoch + 2;
 
 	for ( int bi = 0; bi < borderCount; ++bi )
 	{
 		b2BorderConstraints* border = borders + bi;
 
 		// Spin-wait until both adjacent clusters have finished solving
-		while ( b2AtomicLoadInt( &clusterData[border->clusterA].solveComplete ) < 2 ||
-				b2AtomicLoadInt( &clusterData[border->clusterB].solveComplete ) < 2 )
+		while ( b2AtomicLoadInt( &clusterData[border->clusterA].solveComplete ) < completeValue ||
+				b2AtomicLoadInt( &clusterData[border->clusterB].solveComplete ) < completeValue )
 		{
 			b2Pause();
 		}
@@ -742,7 +735,7 @@ static void b2SolveBordersWhenReady( b2StepContext* context, bool useBias, bool 
 }
 
 static void b2SolveWorkerClusters( b2StepContext* context, int workerIndex, bool useBias, bool isRestitution,
-								   b2SolverStage* stage )
+								   b2SolverStage* stage, int epoch )
 {
 	b2TracyCZoneNC( solver_clusters, "Solve Clusters", b2_colorLemonChiffon, true );
 
@@ -760,7 +753,7 @@ static void b2SolveWorkerClusters( b2StepContext* context, int workerIndex, bool
 
 			b2ClusterSolveData* cd = clusterData + c;
 
-			if ( b2AtomicCompareExchangeInt( &cd->solveComplete, 0, 1 ) )
+			if ( b2AtomicCompareExchangeInt( &cd->solveComplete, 3 * epoch, 3 * epoch + 1 ) )
 			{
 				if ( stage->integratePositions )
 				{
@@ -816,7 +809,7 @@ static void b2SolveWorkerClusters( b2StepContext* context, int workerIndex, bool
 					}
 				}
 
-				b2AtomicStoreInt( &cd->solveComplete, 2 );
+				b2AtomicStoreInt( &cd->solveComplete, 3 * epoch + 2 );
 			}
 		}
 	}
@@ -824,7 +817,7 @@ static void b2SolveWorkerClusters( b2StepContext* context, int workerIndex, bool
 	b2TracyCZoneEnd( solver_clusters );
 }
 
-static void b2PrepareWorkerClusters( b2StepContext* context, int workerIndex )
+static void b2PrepareWorkerClusters( b2StepContext* context, int workerIndex, int epoch )
 {
 	b2TracyCZoneNC( prepare_clusters, "Prepare Clusters", b2_colorDarkOrange, true );
 
@@ -839,14 +832,14 @@ static void b2PrepareWorkerClusters( b2StepContext* context, int workerIndex )
 		for ( int c = 0; c < B2_CLUSTER_COUNT; ++c )
 		{
 			bool assigned = ( context->clusterWorkerMap[c] == workerIndex );
-			if ( ( order == 0 && !assigned ) || ( order == 1 && assigned ) )
+			if ( ( order == 0 && assigned == false ) || ( order == 1 && assigned == true) )
 			{
 				continue;
 			}
 
 			b2ClusterSolveData* cd = clusterData + c;
 
-			if ( b2AtomicCompareExchangeInt( &cd->prepareComplete, 0, 1 ) )
+			if ( b2AtomicCompareExchangeInt( &cd->prepareComplete, 3 * epoch, 3 * epoch + 1 ) )
 			{
 				// Populate body state in cluster order
 				int stateIndex = clusters[c].stateOffset;
@@ -885,7 +878,7 @@ static void b2PrepareWorkerClusters( b2StepContext* context, int workerIndex )
 					b2PrepareJoint( cd->joints[j], context );
 				}
 
-				b2AtomicStoreInt( &cd->prepareComplete, 2 );
+				b2AtomicStoreInt( &cd->prepareComplete, 3 * epoch + 2 );
 			}
 		}
 	}
@@ -893,7 +886,7 @@ static void b2PrepareWorkerClusters( b2StepContext* context, int workerIndex )
 	b2TracyCZoneEnd( prepare_clusters );
 }
 
-static void b2PrepareBordersWhenReady( b2StepContext* context )
+static void b2PrepareBordersWhenReady( b2StepContext* context, int epoch )
 {
 	b2TracyCZoneNC( prepare_borders, "Prepare Borders", b2_colorMintCream, true );
 
@@ -907,13 +900,15 @@ static void b2PrepareBordersWhenReady( b2StepContext* context )
 		return;
 	}
 
+	int completeValue = 3 * epoch + 2;
+
 	for ( int bi = 0; bi < borderCount; ++bi )
 	{
 		b2BorderConstraints* border = borders + bi;
 
 		// Spin-wait until both adjacent clusters have finished preparation
-		while ( b2AtomicLoadInt( &clusterData[border->clusterA].prepareComplete ) < 2 ||
-				b2AtomicLoadInt( &clusterData[border->clusterB].prepareComplete ) < 2 )
+		while ( b2AtomicLoadInt( &clusterData[border->clusterA].prepareComplete ) < completeValue ||
+				b2AtomicLoadInt( &clusterData[border->clusterB].prepareComplete ) < completeValue )
 		{
 			b2Pause();
 		}
@@ -936,33 +931,35 @@ static void b2ExecuteClusterPreparePhase( b2StepContext* context, b2SolverStage*
 {
 	B2_UNUSED( stage );
 	b2ClusterSolveData* clusterData = context->clusterData;
+	int epoch = (int)( syncBits >> 16 );
+	int completeValue = 3 * epoch + 2;
 
 	// Reset cluster preparation flags
 	for ( int c = 0; c < B2_CLUSTER_COUNT; ++c )
 	{
-		b2AtomicStoreInt( &clusterData[c].prepareComplete, 0 );
+		b2AtomicStoreInt( &clusterData[c].prepareComplete, 3 * epoch );
 	}
 
 	// Signal workers
 	b2AtomicStoreU32( &context->atomicSyncBits, syncBits );
 
 	// Main thread prepares its own clusters
-	b2PrepareWorkerClusters( context, 0 );
+	b2PrepareWorkerClusters( context, 0, epoch );
 
 	// Main thread prepares borders as adjacent clusters complete
-	b2PrepareBordersWhenReady( context );
+	b2PrepareBordersWhenReady( context, epoch );
 
 	// Wait for all clusters to complete preparation
 	for ( int c = 0; c < B2_CLUSTER_COUNT; ++c )
 	{
-		while ( b2AtomicLoadInt( &clusterData[c].prepareComplete ) < 2 )
+		while ( b2AtomicLoadInt( &clusterData[c].prepareComplete ) < completeValue )
 		{
 			b2Pause();
 		}
 	}
 }
 
-static void b2WarmStartWorkerClusters( b2StepContext* context, int workerIndex )
+static void b2WarmStartWorkerClusters( b2StepContext* context, int workerIndex, int epoch )
 {
 	b2TracyCZoneNC( warm_start_clusters, "Warm Start Clusters", b2_colorNavy, true );
 
@@ -986,7 +983,7 @@ static void b2WarmStartWorkerClusters( b2StepContext* context, int workerIndex )
 
 			b2ClusterSolveData* cd = clusterData + c;
 
-			if ( b2AtomicCompareExchangeInt( &cd->warmStartComplete, 0, 1 ) )
+			if ( b2AtomicCompareExchangeInt( &cd->warmStartComplete, 3 * epoch, 3 * epoch + 1 ) )
 			{
 				// Integrate velocities for this cluster's bodies
 				for ( int i = 0; i < cd->bodyCount; ++i )
@@ -1043,7 +1040,7 @@ static void b2WarmStartWorkerClusters( b2StepContext* context, int workerIndex )
 					b2WarmStartJoint( cd->joints[k], context );
 				}
 
-				b2AtomicStoreInt( &cd->warmStartComplete, 2 );
+				b2AtomicStoreInt( &cd->warmStartComplete, 3 * epoch + 2 );
 			}
 		}
 	}
@@ -1051,7 +1048,7 @@ static void b2WarmStartWorkerClusters( b2StepContext* context, int workerIndex )
 	b2TracyCZoneEnd( warm_start_clusters );
 }
 
-static void b2WarmStartBordersWhenReady( b2StepContext* context )
+static void b2WarmStartBordersWhenReady( b2StepContext* context, int epoch )
 {
 	b2TracyCZoneNC( warm_start_borders, "Warm Start Borders", b2_colorNavy, true );
 
@@ -1065,13 +1062,15 @@ static void b2WarmStartBordersWhenReady( b2StepContext* context )
 		return;
 	}
 
+	int completeValue = 3 * epoch + 2;
+
 	for ( int bi = 0; bi < borderCount; ++bi )
 	{
 		b2BorderConstraints* border = borders + bi;
 
 		// Spin-wait until both adjacent clusters have finished warm start
-		while ( b2AtomicLoadInt( &clusterData[border->clusterA].warmStartComplete ) < 2 ||
-				b2AtomicLoadInt( &clusterData[border->clusterB].warmStartComplete ) < 2 )
+		while ( b2AtomicLoadInt( &clusterData[border->clusterA].warmStartComplete ) < completeValue ||
+				b2AtomicLoadInt( &clusterData[border->clusterB].warmStartComplete ) < completeValue )
 		{
 			b2Pause();
 		}
@@ -1094,26 +1093,28 @@ static void b2ExecuteClusterWarmStartPhase( b2StepContext* context, b2SolverStag
 {
 	B2_UNUSED( stage );
 	b2ClusterSolveData* clusterData = context->clusterData;
+	int epoch = (int)( syncBits >> 16 );
+	int completeValue = 3 * epoch + 2;
 
 	// Reset cluster warm start flags
 	for ( int c = 0; c < B2_CLUSTER_COUNT; ++c )
 	{
-		b2AtomicStoreInt( &clusterData[c].warmStartComplete, 0 );
+		b2AtomicStoreInt( &clusterData[c].warmStartComplete, 3 * epoch );
 	}
 
 	// Signal workers
 	b2AtomicStoreU32( &context->atomicSyncBits, syncBits );
 
 	// Main thread warm starts its own clusters
-	b2WarmStartWorkerClusters( context, 0 );
+	b2WarmStartWorkerClusters( context, 0, epoch );
 
 	// Main thread warm starts borders as adjacent clusters complete
-	b2WarmStartBordersWhenReady( context );
+	b2WarmStartBordersWhenReady( context, epoch );
 
 	// Wait for all clusters to complete warm start
 	for ( int c = 0; c < B2_CLUSTER_COUNT; ++c )
 	{
-		while ( b2AtomicLoadInt( &clusterData[c].warmStartComplete ) < 2 )
+		while ( b2AtomicLoadInt( &clusterData[c].warmStartComplete ) < completeValue )
 		{
 			b2Pause();
 		}
@@ -1126,26 +1127,28 @@ static void b2ExecuteClusterPhase( b2StepContext* context, b2SolverStage* stage,
 								   bool isRestitution )
 {
 	b2ClusterSolveData* clusterData = context->clusterData;
+	int epoch = (int)( syncBits >> 16 );
+	int completeValue = 3 * epoch + 2;
 
 	// Reset cluster completion flags
 	for ( int c = 0; c < B2_CLUSTER_COUNT; ++c )
 	{
-		b2AtomicStoreInt( &clusterData[c].solveComplete, 0 );
+		b2AtomicStoreInt( &clusterData[c].solveComplete, 3 * epoch );
 	}
 
 	// Signal workers
 	b2AtomicStoreU32( &context->atomicSyncBits, syncBits );
 
 	// Main thread solves its own clusters
-	b2SolveWorkerClusters( context, 0, useBias, isRestitution, stage );
+	b2SolveWorkerClusters( context, 0, useBias, isRestitution, stage, epoch );
 
 	// Main thread solves borders as adjacent clusters complete
-	b2SolveBordersWhenReady( context, useBias, isRestitution, stage );
+	b2SolveBordersWhenReady( context, useBias, isRestitution, stage, epoch );
 
 	// Wait for all clusters to complete their solve work
 	for ( int c = 0; c < B2_CLUSTER_COUNT; ++c )
 	{
-		while ( b2AtomicLoadInt( &clusterData[c].solveComplete ) < 2 )
+		while ( b2AtomicLoadInt( &clusterData[c].solveComplete ) < completeValue )
 		{
 			b2Pause();
 		}
@@ -1285,28 +1288,26 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 
 		int stageIndex = syncBits & 0xFFFF;
 		B2_ASSERT( stageIndex < context->stageCount );
+		int epoch = (int)( syncBits >> 16 );
 
 		b2SolverStage* stage = stages + stageIndex;
 
 		// Branch on stage type: cluster phases vs parallel-for phases
 		if ( stage->type == b2_stagePrepareClusters )
 		{
-			// Cluster prepare phase: prepare all clusters assigned to this worker
-			b2PrepareWorkerClusters( context, workerIndex );
+			b2PrepareWorkerClusters( context, workerIndex, epoch );
 		}
 		else if ( stage->type == b2_stageWarmStartClusters )
 		{
-			// Cluster warm start phase: warm start all clusters assigned to this worker
-			b2WarmStartWorkerClusters( context, workerIndex );
+			b2WarmStartWorkerClusters( context, workerIndex, epoch );
 		}
 		else if ( stage->type == b2_stageSolveClusters || stage->type == b2_stageRelaxClusters ||
 				  stage->type == b2_stageRestitutionClusters )
 		{
-			// Cluster phase: solve all clusters assigned to this worker
 			bool useBias = ( stage->type == b2_stageSolveClusters );
 			bool isRestitution = ( stage->type == b2_stageRestitutionClusters );
 
-			b2SolveWorkerClusters( context, workerIndex, useBias, isRestitution, stage );
+			b2SolveWorkerClusters( context, workerIndex, useBias, isRestitution, stage, epoch );
 		}
 		else
 		{
@@ -1336,15 +1337,6 @@ static void b2BulletBodyTask( int startIndex, int endIndex, uint32_t threadIndex
 	b2TracyCZoneEnd( bullet_body_task );
 }
 
-#if B2_SIMD_WIDTH == 8
-#define B2_SIMD_SHIFT 3
-#elif B2_SIMD_WIDTH == 4
-#define B2_SIMD_SHIFT 2
-#else
-#define B2_SIMD_SHIFT 0
-#endif
-
-// Solve with graph coloring
 void b2Solve( b2World* world, b2StepContext* stepContext )
 {
 	world->stepIndex += 1;
