@@ -689,6 +689,16 @@ static void b2SolveBordersWhenReady( b2StepContext* context, bool useBias, bool 
 		return;
 	}
 
+	// todo_erin testing
+	// Spin-wait until ALL clusters have finished solving
+	for (int i = 0; i < B2_CLUSTER_COUNT; ++i)
+	{
+		while ( b2AtomicLoadInt( &clusterData[i].solveComplete ) < 2)
+		{
+			b2Pause();
+		}
+	}
+
 	for ( int bi = 0; bi < borderCount; ++bi )
 	{
 		b2BorderConstraints* border = borders + bi;
@@ -715,6 +725,7 @@ static void b2SolveBordersWhenReady( b2StepContext* context, bool useBias, bool 
 				b2SolveContactConstraints( context, border->contactConstraints, border->contactCount, context->inv_h,
 										   context->world->contactSpeed, useBias );
 			}
+
 			for ( int k = 0; k < border->jointCount; ++k )
 			{
 				b2SolveJoint( border->joints[k], context, useBias );
@@ -1479,25 +1490,32 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		// Prepare clusters (cluster phase, runs once)
 		stage->type = b2_stagePrepareClusters;
+		stage->integratePositions = false;
+		stage->storeImpulses = false;
 		stage += 1;
 
 		// Warm start clusters (cluster phase, reused per sub-step; integrates velocities then warm starts)
 		stage->type = b2_stageWarmStartClusters;
+		stage->integratePositions = false;
+		stage->storeImpulses = false;
 		stage += 1;
 
 		// Solve clusters (cluster phase, reused per sub-step per iteration)
 		stage->type = b2_stageSolveClusters;
 		stage->integratePositions = false;
+		stage->storeImpulses = false;
 		stage += 1;
 
 		// Relax clusters (cluster phase, reused per sub-step per iteration)
 		stage->type = b2_stageRelaxClusters;
 		stage->integratePositions = false;
+		stage->storeImpulses = false;
 		stage += 1;
 
 		// Restitution clusters
 		stage->type = b2_stageRestitutionClusters;
 		stage->integratePositions = false;
+		stage->storeImpulses = false;
 		stage += 1;
 
 		B2_ASSERT( (int)( stage - stages ) == stageCount );
