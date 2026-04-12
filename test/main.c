@@ -52,17 +52,17 @@ int main( void )
 	printf( "Starting Box2D unit tests\n" );
 	printf( "======================================\n" );
 
-	//RUN_TEST( TableTest );
-	//RUN_TEST( MathTest );
-	//RUN_TEST( BitSetTest );
-	//RUN_TEST( CollisionTest );
-	//RUN_TEST( ContainerTest );
+	RUN_TEST( TableTest );
+	RUN_TEST( MathTest );
+	RUN_TEST( BitSetTest );
+	RUN_TEST( CollisionTest );
+	RUN_TEST( ContainerTest );
 	RUN_TEST( DeterminismTest );
-	//RUN_TEST( DistanceTest );
-	//RUN_TEST( DynamicTreeTest );
-	//RUN_TEST( IdTest );
-	//RUN_TEST( ShapeTest );
-	//RUN_TEST( WorldTest );
+	RUN_TEST( DistanceTest );
+	RUN_TEST( DynamicTreeTest );
+	RUN_TEST( IdTest );
+	RUN_TEST( ShapeTest );
+	RUN_TEST( WorldTest );
 
 	printf( "======================================\n" );
 	printf( "All Box2D tests passed!\n" );

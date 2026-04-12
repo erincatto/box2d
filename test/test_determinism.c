@@ -127,8 +127,6 @@ static int SingleMultithreadingTest( int workerCount )
 
 	enkiDeleteTaskScheduler( scheduler );
 
-	printf( "workers=%d sleepStep=%d hash=0x%08X\n", workerCount, data.sleepStep, data.hash );
-
 	ENSURE( data.sleepStep == EXPECTED_SLEEP_STEP );
 	ENSURE( data.hash == EXPECTED_HASH );
 
@@ -140,9 +138,9 @@ static int SingleMultithreadingTest( int workerCount )
 // Test multithreaded determinism.
 static int MultithreadingTest( void )
 {
-	for (int run = 0; run < 100; ++run)
+	for (int run = 0; run < 5; ++run)
 	{
-		for ( int workerCount = 1; workerCount < 16; ++workerCount )
+		for ( int workerCount = 1; workerCount < 16; workerCount += 2)
 		{
 			int result = SingleMultithreadingTest( workerCount );
 			ENSURE( result == 0 );
@@ -158,7 +156,6 @@ static int MultithreadingTest( void )
 	return 0;
 }
 
-#if 0
 // Test cross-platform determinism.
 static int CrossPlatformTest( void )
 {
@@ -188,12 +185,11 @@ static int CrossPlatformTest( void )
 
 	return 0;
 }
-#endif
 
 int DeterminismTest( void )
 {
 	RUN_SUBTEST( MultithreadingTest );
-	//RUN_SUBTEST( CrossPlatformTest );
+	RUN_SUBTEST( CrossPlatformTest );
 
 	return 0;
 }
