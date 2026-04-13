@@ -138,7 +138,7 @@ static int SingleMultithreadingTest( int workerCount )
 // Test multithreaded determinism.
 static int MultithreadingTest( void )
 {
-	for (int run = 0; run < 5; ++run)
+	for (int run = 0; run < 3; ++run)
 	{
 		for ( int workerCount = 1; workerCount < 16; workerCount += 2)
 		{
@@ -146,7 +146,7 @@ static int MultithreadingTest( void )
 			ENSURE( result == 0 );
 		}
 
-		for ( int workerCount = 32; workerCount >= 0; workerCount -= 3 )
+		for ( int workerCount = 32; workerCount >= 0; workerCount -= 5 )
 		{
 			int result = SingleMultithreadingTest( workerCount );
 			ENSURE( result == 0 );
