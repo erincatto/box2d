@@ -1921,7 +1921,7 @@ This can result in an inefficient BVH. This is the reason for the `rebuild BVH` 
 BVH but is necessary to ensure the BVH is valid for subsequent queries, such as ray casts.
 
 ### bullets
-This is where bullets are processed. Not that this comes after hit events because continuous collision in Box2D does not
+This is where bullets are processed. Note that this comes after hit events because continuous collision in Box2D does not
 generate events until the next time step.
 
 ### island sleep
