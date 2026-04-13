@@ -1655,8 +1655,7 @@ int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData, int c
 			contactData[index].shapeIdA = (b2ShapeId){ shapeA->id + 1, shapeId.world0, shapeA->generation };
 			contactData[index].shapeIdB = (b2ShapeId){ shapeB->id + 1, shapeId.world0, shapeB->generation };
 
-			b2ContactSim* contactSim = b2GetContactSim( world, contact );
-			contactData[index].manifold = contactSim->manifold;
+			contactData[index].manifold = contact->manifold;
 			index += 1;
 		}
 

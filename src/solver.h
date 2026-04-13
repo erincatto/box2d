@@ -12,8 +12,7 @@
 #include <stdint.h>
 
 typedef struct b2Body b2Body;
-typedef struct b2ContactSim b2ContactSim;
-typedef struct b2JointSim b2JointSim;
+typedef struct b2Contact b2Contact;
 typedef struct b2World b2World;
 
 typedef struct b2Softness
@@ -86,7 +85,7 @@ typedef struct b2StepContext
 	// - parallel-for prepare and store contacts with NULL gaps for SIMD remainders
 	// despite being an array of pointers, these are contiguous sub-arrays corresponding
 	// to constraint graph colors
-	b2ContactSim** contacts;
+	b2Contact** contacts;
 
 	int workerCount;
 

@@ -382,7 +382,7 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 	b2World* world = stepContext->world;
 	B2_ASSERT( (int)threadIndex < world->workerCount );
 	b2TaskContext* taskContext = world->taskContexts.data + threadIndex;
-	b2ContactSim** contactSims = stepContext->contacts;
+	b2Contact** contactSims = stepContext->contacts;
 	b2Shape* shapes = world->shapes.data;
 	b2Body* bodies = world->bodies.data;
 
@@ -394,7 +394,7 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 
 	for ( int contactIndex = startIndex; contactIndex < endIndex; ++contactIndex )
 	{
-		b2ContactSim* contactSim = contactSims[contactIndex];
+		b2Contact* contactSim = contactSims[contactIndex];
 
 		int contactId = contactSim->contactId;
 
@@ -547,7 +547,7 @@ static void b2Collide( b2StepContext* context )
 
 	// gather contacts into a single array for easier parallel-for
 	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
-	int contactCount = awakeSet->contactSims.count;
+	int contactCount = awakeSet->contactIds.count;
 
 	if ( contactCount == 0 )
 	{
@@ -555,14 +555,14 @@ static void b2Collide( b2StepContext* context )
 		return;
 	}
 
-	b2ContactSim** contactSims = b2AllocateArenaItem( &world->arena, contactCount * sizeof( b2ContactSim* ), "contacts" );
+	b2Contact** contactSims = b2AllocateArenaItem( &world->arena, contactCount * sizeof( b2Contact* ), "contacts" );
 
 	int contactIndex = 0;
 	{
-		b2ContactSim* base = awakeSet->contactSims.data;
 		for ( int i = 0; i < contactCount; ++i )
 		{
-			contactSims[contactIndex] = base + i;
+			int contactId = awakeSet->contactIds.data[i];
+			contactSims[contactIndex] = b2ContactArray_Get( &world->contacts, contactId );
 			contactIndex += 1;
 		}
 	}
@@ -621,7 +621,7 @@ static void b2Collide( b2StepContext* context )
 
 			int localIndex = contact->localIndex;
 
-			b2ContactSim* contactSim = b2ContactSimArray_Get( &awakeSet->contactSims, localIndex );
+			b2Contact* contactSim = b2ContactArray_Get( &world->contacts, contact->contactId );
 
 			const b2Shape* shapeA = shapes + contact->shapeIdA;
 			const b2Shape* shapeB = shapes + contact->shapeIdB;
@@ -665,7 +665,7 @@ static void b2Collide( b2StepContext* context )
 
 				// Contact sim pointer may have become orphaned due to awake set growth,
 				// so I just need to refresh it.
-				contactSim = b2ContactSimArray_Get( &awakeSet->contactSims, localIndex );
+				contactSim = contact;
 
 				contactSim->simFlags &= ~b2_simStartedTouching;
 			}
@@ -1113,16 +1113,15 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 					// avoid double draw
 					if ( b2GetBit( &world->debugContactSet, contactId ) == false )
 					{
-						b2ContactSim* contactSim = b2GetContactSim( world, contact );
 						b2Body* bodyA = b2BodyArray_Get( &world->bodies, contact->edges[0].bodyId );
 						b2Body* bodyB = b2BodyArray_Get( &world->bodies, contact->edges[1].bodyId );
-						int pointCount = contactSim->manifold.pointCount;
-						b2Vec2 normal = contactSim->manifold.normal;
+						int pointCount = contact->manifold.pointCount;
+						b2Vec2 normal = contact->manifold.normal;
 						char buffer[32];
 
 						for ( int j = 0; j < pointCount; ++j )
 						{
-							b2ManifoldPoint* mp = contactSim->manifold.points + j;
+							b2ManifoldPoint* mp = contact->manifold.points + j;
 
 							b2Vec2 p = mp->clipPoint;
 							if ( draw->contactDrawType == b2_drawContacts_AnchorA )
@@ -1828,15 +1827,15 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 		}
 
 		bodyIdCapacity += set->bodyIds.capacity;
-		jointSimCapacity += set->jointSims.capacity;
-		contactSimCapacity += set->contactSims.capacity;
+		jointSimCapacity += set->jointIds.capacity;
+		contactSimCapacity += set->contactIds.capacity;
 		islandSimCapacity += set->islandSims.capacity;
 	}
 
 	fprintf( file, "solver sets\n" );
 	fprintf( file, "body id: %d\n", bodyIdCapacity * (int)sizeof( int ) );
-	fprintf( file, "joint sim: %d\n", jointSimCapacity * (int)sizeof( b2JointSim ) );
-	fprintf( file, "contact sim: %d\n", contactSimCapacity * (int)sizeof( b2ContactSim ) );
+	fprintf( file, "joint sim: %d\n", jointSimCapacity * (int)sizeof( int ) );
+	fprintf( file, "contact id: %d\n", contactSimCapacity * (int)sizeof( int ) );
 	fprintf( file, "island sim: %d\n", islandSimCapacity * (int)sizeof( islandSimCapacity ) );
 	fprintf( file, "\n" );
 
@@ -2685,7 +2684,7 @@ void b2ValidateSolverSets( b2World* world )
 
 			if ( setIndex == b2_staticSet )
 			{
-				B2_ASSERT( set->contactSims.count == 0 );
+				B2_ASSERT( set->contactIds.count == 0 );
 				B2_ASSERT( set->islandSims.count == 0 );
 			}
 			else if ( setIndex == b2_disabledSet )
@@ -2791,11 +2790,6 @@ void b2ValidateSolverSets( b2World* world )
 							B2_ASSERT( joint->setIndex == setIndex );
 						}
 
-						b2JointSim* jointSim = b2GetJointSim( world, joint );
-						B2_ASSERT( jointSim->jointId == jointId );
-						B2_ASSERT( jointSim->bodyIdA == joint->edges[0].bodyId );
-						B2_ASSERT( jointSim->bodyIdB == joint->edges[1].bodyId );
-
 						jointKey = joint->edges[edgeIndex].nextKey;
 					}
 				}
@@ -2803,12 +2797,12 @@ void b2ValidateSolverSets( b2World* world )
 
 			// Validate contacts
 			{
-				B2_ASSERT( set->contactSims.count >= 0 );
-				totalContactCount += set->contactSims.count;
-				for ( int i = 0; i < set->contactSims.count; ++i )
+				B2_ASSERT( set->contactIds.count >= 0 );
+				totalContactCount += set->contactIds.count;
+				for ( int i = 0; i < set->contactIds.count; ++i )
 				{
-					b2ContactSim* contactSim = set->contactSims.data + i;
-					b2Contact* contact = b2ContactArray_Get( &world->contacts, contactSim->contactId );
+					int contactId = set->contactIds.data[i];
+					b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
 					B2_ASSERT( contact->setIndex == setIndex );
 					B2_ASSERT( contact->localIndex == i );
 				}
@@ -2816,12 +2810,12 @@ void b2ValidateSolverSets( b2World* world )
 
 			// Validate joints
 			{
-				B2_ASSERT( set->jointSims.count >= 0 );
-				totalJointCount += set->jointSims.count;
-				for ( int i = 0; i < set->jointSims.count; ++i )
+				B2_ASSERT( set->jointIds.count >= 0 );
+				totalJointCount += set->jointIds.count;
+				for ( int i = 0; i < set->jointIds.count; ++i )
 				{
-					b2JointSim* jointSim = set->jointSims.data + i;
-					b2Joint* joint = b2JointArray_Get( &world->joints, jointSim->jointId );
+					int jointId = set->jointIds.data[i];
+					b2Joint* joint = b2JointArray_Get( &world->joints, jointId );
 					B2_ASSERT( joint->setIndex == setIndex );
 					B2_ASSERT( joint->localIndex == i );
 				}
@@ -2843,8 +2837,8 @@ void b2ValidateSolverSets( b2World* world )
 		else
 		{
 			B2_ASSERT( set->bodyIds.count == 0 );
-			B2_ASSERT( set->contactSims.count == 0 );
-			B2_ASSERT( set->jointSims.count == 0 );
+			B2_ASSERT( set->contactIds.count == 0 );
+			B2_ASSERT( set->jointIds.count == 0 );
 			B2_ASSERT( set->islandSims.count == 0 );
 		}
 	}
@@ -2931,15 +2925,10 @@ void b2ValidateContacts( b2World* world )
 
 		bool touching = ( contact->flags & b2_contactTouchingFlag ) != 0;
 
-		b2ContactSim* contactSim = b2GetContactSim( world, contact );
-		B2_ASSERT( contactSim->contactId == contactIndex );
-		B2_ASSERT( contactSim->bodyIdA == contact->edges[0].bodyId );
-		B2_ASSERT( contactSim->bodyIdB == contact->edges[1].bodyId );
-
-		bool simTouching = ( contactSim->simFlags & b2_simTouchingFlag ) != 0;
+		bool simTouching = ( contact->simFlags & b2_simTouchingFlag ) != 0;
 		B2_ASSERT( touching == simTouching );
-		B2_ASSERT( touching == ( contactSim->manifold.pointCount > 0 ) );
-		B2_ASSERT( 0 <= contactSim->manifold.pointCount && contactSim->manifold.pointCount <= 2 );
+		B2_ASSERT( touching == ( contact->manifold.pointCount > 0 ) );
+		B2_ASSERT( 0 <= contact->manifold.pointCount && contact->manifold.pointCount <= 2 );
 	}
 
 	int contactIdCount = b2GetIdCount( &world->contactIdPool );

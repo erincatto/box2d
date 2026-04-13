@@ -6,7 +6,7 @@
 #include "solver.h"
 
 typedef struct b2BodyState b2BodyState;
-typedef struct b2ContactSim b2ContactSim;
+typedef struct b2World b2World;
 
 typedef struct b2ContactConstraintPoint
 {
@@ -35,9 +35,9 @@ typedef struct b2ContactConstraint
 	int pointCount;
 } b2ContactConstraint;
 
-void b2PrepareContactConstraints( b2StepContext* context, b2ContactSim** contacts, b2ContactConstraint* constraints, int count );
+void b2PrepareContactConstraints( b2StepContext* context, int* contactIds, b2ContactConstraint* constraints, int count );
 void b2WarmStartContactConstraints( b2StepContext* context, b2ContactConstraint* constraints, int count );
 void b2SolveContactConstraints( b2StepContext* context, b2ContactConstraint* constraints, int count, float inv_h,
 								float contactSpeed, bool useBias );
 void b2ApplyContactRestitution( b2StepContext* context, b2ContactConstraint* constraints, int count, float threshold );
-void b2StoreContactImpulses( b2ContactSim** contacts, b2ContactConstraint* constraints, int count );
+void b2StoreContactImpulses( b2World* world, int* contactIds, b2ContactConstraint* constraints, int count );

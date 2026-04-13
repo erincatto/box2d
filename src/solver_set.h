@@ -41,9 +41,9 @@ typedef struct b2SolverSet
 	// Body array.
 	b2ArrayC(int) bodyIds;
 
-	b2JointSimArray jointSims;
+	b2ArrayC(int) jointIds;
 
-	b2ContactSimArray contactSims;
+	b2ArrayC(int) contactIds;
 
 	// The awake set has an array of islands. Sleeping sets normally have a single islands. However, joints
 	// created between sleeping sets causes the sets to merge, leaving them with multiple islands. These sleeping

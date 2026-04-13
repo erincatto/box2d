@@ -512,33 +512,15 @@ void b2BuildSolveData( b2World* world, b2StepContext* context )
 		int cc = cluster->contactIds.count;
 		int jc = cluster->jointIds.count;
 
-		cd->contacts = ( cc > 0 ) ? b2AllocateArenaItem( &world->arena, cc * sizeof( b2ContactSim* ), "cluster contacts" ) : NULL;
+		cd->contactIds = cluster->contactIds.data;
 		cd->contactCount = cc;
 
-		cd->joints = ( jc > 0 ) ? b2AllocateArenaItem( &world->arena, jc * sizeof( b2JointSim* ), "cluster joints" ) : NULL;
+		cd->jointIds = cluster->jointIds.data;
 		cd->jointCount = jc;
 
 		cd->contactConstraints =
 			( cc > 0 ) ? b2AllocateArenaItem( &world->arena, cc * sizeof( b2ContactConstraint ), "cluster contact constraints" )
 					   : NULL;
-
-		// Populate contact sim pointers from persistent contact ids
-		for ( int j = 0; j < cc; ++j )
-		{
-			int contactId = cluster->contactIds.data[j];
-			b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
-			B2_ASSERT( contact->setIndex == b2_awakeSet );
-			cd->contacts[j] = b2ContactSimArray_Get( &awakeSet->contactSims, contact->localIndex );
-		}
-
-		// Populate joint sim pointers from persistent joint ids
-		for ( int j = 0; j < jc; ++j )
-		{
-			int jointId = cluster->jointIds.data[j];
-			b2Joint* joint = b2JointArray_Get( &world->joints, jointId );
-			B2_ASSERT( joint->setIndex == b2_awakeSet );
-			cd->joints[j] = b2JointSimArray_Get( &awakeSet->jointSims, joint->localIndex );
-		}
 
 		// Per-cluster body data
 		int bodyCount = cluster->bodyIds.count;
@@ -588,35 +570,15 @@ void b2BuildSolveData( b2World* world, b2StepContext* context )
 			border->clusterA = a;
 			border->clusterB = b;
 
-			border->contacts =
-				( cc > 0 ) ? b2AllocateArenaItem( &world->arena, cc * sizeof( b2ContactSim* ), "border contacts" ) : NULL;
+			border->contactIds = pb->contactIds.data;
 			border->contactCount = cc;
 
-			border->joints =
-				( jc > 0 ) ? b2AllocateArenaItem( &world->arena, jc * sizeof( b2JointSim* ), "border joints" ) : NULL;
+			border->jointIds = pb->jointIds.data;
 			border->jointCount = jc;
 
 			border->contactConstraints = ( cc > 0 ) ? b2AllocateArenaItem( &world->arena, cc * sizeof( b2ContactConstraint ),
 																		   "border contact constraints" )
 													: NULL;
-
-			// Populate contact sim pointers
-			for ( int j = 0; j < cc; ++j )
-			{
-				int contactId = pb->contactIds.data[j];
-				b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
-				B2_ASSERT( contact->setIndex == b2_awakeSet );
-				border->contacts[j] = b2ContactSimArray_Get( &awakeSet->contactSims, contact->localIndex );
-			}
-
-			// Populate joint sim pointers
-			for ( int j = 0; j < jc; ++j )
-			{
-				int jointId = pb->jointIds.data[j];
-				b2Joint* joint = b2JointArray_Get( &world->joints, jointId );
-				B2_ASSERT( joint->setIndex == b2_awakeSet );
-				border->joints[j] = b2JointSimArray_Get( &awakeSet->jointSims, joint->localIndex );
-			}
 
 			borderWriteIndex += 1;
 		}

@@ -10,7 +10,7 @@
 
 #include <stddef.h>
 
-void b2PrepareContactConstraints( b2StepContext* context, b2ContactSim** contacts, b2ContactConstraint* constraints, int count )
+void b2PrepareContactConstraints( b2StepContext* context, int* contactIds, b2ContactConstraint* constraints, int count )
 {
 	b2World* world = context->world;
 	b2Body* bodies = world->bodies.data;
@@ -18,9 +18,9 @@ void b2PrepareContactConstraints( b2StepContext* context, b2ContactSim** contact
 
 	for ( int i = 0; i < count; ++i )
 	{
-		b2ContactSim* contactSim = contacts[i];
-		b2Body* bodyA = bodies + contactSim->bodyIdA;
-		b2Body* bodyB = bodies + contactSim->bodyIdB;
+		b2Contact* contactSim = b2ContactArray_Get( &world->contacts, contactIds[i] );
+		b2Body* bodyA = bodies + contactSim->edges[0].bodyId;
+		b2Body* bodyB = bodies + contactSim->edges[1].bodyId;
 		int indexA = bodyA->stateIndex;
 		int indexB = bodyB->stateIndex;
 
@@ -386,12 +386,12 @@ void b2ApplyContactRestitution( b2StepContext* context, b2ContactConstraint* con
 	}
 }
 
-void b2StoreContactImpulses( b2ContactSim** contacts, b2ContactConstraint* constraints, int count )
+void b2StoreContactImpulses( b2World* world, int* contactIds, b2ContactConstraint* constraints, int count )
 {
 	for ( int i = 0; i < count; ++i )
 	{
 		const b2ContactConstraint* constraint = constraints + i;
-		b2ContactSim* contact = contacts[i];
+		b2Contact* contact = b2ContactArray_Get( &world->contacts, contactIds[i] );
 		b2Manifold* manifold = &contact->manifold;
 		int pointCount = manifold->pointCount;
 

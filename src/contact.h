@@ -36,8 +36,8 @@ typedef struct b2ContactEdge
 	int nextKey;
 } b2ContactEdge;
 
-// Cold contact data. Used as a persistent handle and for persistent island
-// connectivity.
+// Contact data. Used as a persistent handle, for persistent island
+// connectivity, and for simulation.
 typedef struct b2Contact
 {
 	b2ContactEdge edges[2];
@@ -72,6 +72,23 @@ typedef struct b2Contact
 	// This is monotonically advanced when a contact is allocated in this slot
 	// Used to check for invalid b2ContactId
 	uint32_t generation;
+
+	// Simulation data (merged from b2ContactSim)
+	b2Transform cachedTransformA;
+	b2Transform cachedTransformB;
+
+	b2Manifold manifold;
+
+	// Mixed friction and restitution
+	float friction;
+	float restitution;
+	float rollingResistance;
+	float tangentSpeed;
+
+	// b2ContactSimFlags
+	uint32_t simFlags;
+
+	b2SimplexCache cache;
 } b2Contact;
 
 // Shifted to be distinct from b2ContactFlags
@@ -99,46 +116,13 @@ enum b2ContactSimFlags
 	b2_simRelativeTransformValid = 0x00400000,
 };
 
-/// The class manages contact between two shapes. A contact exists for each overlapping
-/// AABB in the broad-phase (except if filtered). Therefore a contact object may exist
-/// that has no contact points.
-typedef struct b2ContactSim
-{
-	int contactId;
-
-	b2Transform cachedTransformA;
-	b2Transform cachedTransformB;
-
-	int bodyIdA;
-	int bodyIdB;
-
-	int shapeIdA;
-	int shapeIdB;
-
-	b2Manifold manifold;
-
-	// Mixed friction and restitution
-	float friction;
-	float restitution;
-	float rollingResistance;
-	float tangentSpeed;
-
-	// b2ContactSimFlags
-	uint32_t simFlags;
-
-	b2SimplexCache cache;
-} b2ContactSim;
-
 void b2InitializeContactRegisters( void );
 bool b2CanCollide( b2ShapeType typeA, b2ShapeType typeB );
 
 void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB );
 void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies );
 
-b2ContactSim* b2GetContactSim( b2World* world, b2Contact* contact );
-
-bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA, b2Transform transformA, b2Vec2 centerOffsetA,
+bool b2UpdateContact( b2World* world, b2Contact* contact, b2Shape* shapeA, b2Transform transformA, b2Vec2 centerOffsetA,
 					  b2Shape* shapeB, b2Transform transformB, b2Vec2 centerOffsetB );
 
 B2_ARRAY_INLINE( b2Contact, b2Contact )
-B2_ARRAY_INLINE( b2ContactSim, b2ContactSim )

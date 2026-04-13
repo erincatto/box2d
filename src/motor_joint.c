@@ -13,131 +13,131 @@
 
 void b2MotorJoint_SetLinearVelocity( b2JointId jointId, b2Vec2 velocity )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	joint->motorJoint.linearVelocity = velocity;
 }
 
 b2Vec2 b2MotorJoint_GetLinearVelocity( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	return joint->motorJoint.linearVelocity;
 }
 
 void b2MotorJoint_SetAngularVelocity( b2JointId jointId, float velocity )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	joint->motorJoint.angularVelocity = velocity;
 }
 
 float b2MotorJoint_GetAngularVelocity( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	return joint->motorJoint.angularVelocity;
 }
 
 void b2MotorJoint_SetMaxVelocityTorque( b2JointId jointId, float maxTorque )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	joint->motorJoint.maxVelocityTorque = maxTorque;
 }
 
 float b2MotorJoint_GetMaxVelocityTorque( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	return joint->motorJoint.maxVelocityTorque;
 }
 
 void b2MotorJoint_SetMaxVelocityForce( b2JointId jointId, float maxForce )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	joint->motorJoint.maxVelocityForce = maxForce;
 }
 
 float b2MotorJoint_GetMaxVelocityForce( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	return joint->motorJoint.maxVelocityForce;
 }
 
 void b2MotorJoint_SetLinearHertz( b2JointId jointId, float hertz )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	joint->motorJoint.linearHertz = hertz;
 }
 
 float b2MotorJoint_GetLinearHertz( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	return joint->motorJoint.linearHertz;
 }
 
 void b2MotorJoint_SetLinearDampingRatio( b2JointId jointId, float damping )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	joint->motorJoint.linearDampingRatio = damping;
 }
 
 float b2MotorJoint_GetLinearDampingRatio( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	return joint->motorJoint.linearDampingRatio;
 }
 
 void b2MotorJoint_SetAngularHertz( b2JointId jointId, float hertz )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	joint->motorJoint.angularHertz = hertz;
 }
 
 float b2MotorJoint_GetAngularHertz( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	return joint->motorJoint.angularHertz;
 }
 
 void b2MotorJoint_SetAngularDampingRatio( b2JointId jointId, float damping )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	joint->motorJoint.angularDampingRatio = damping;
 }
 
 float b2MotorJoint_GetAngularDampingRatio( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	return joint->motorJoint.angularDampingRatio;
 }
 
 void b2MotorJoint_SetMaxSpringForce( b2JointId jointId, float maxForce )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	joint->motorJoint.maxSpringForce = b2MaxFloat( 0.0f, maxForce );
 }
 
 float b2MotorJoint_GetMaxSpringForce( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	return joint->motorJoint.maxSpringForce;
 }
 
 void b2MotorJoint_SetMaxSpringTorque( b2JointId jointId, float maxTorque )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	joint->motorJoint.maxSpringTorque = b2MaxFloat( 0.0f, maxTorque );
 }
 
 float b2MotorJoint_GetMaxSpringTorque( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_motorJoint );
 	return joint->motorJoint.maxSpringTorque;
 }
 
-b2Vec2 b2GetMotorJointForce( b2World* world, b2JointSim* base )
+b2Vec2 b2GetMotorJointForce( b2World* world, b2Joint* base )
 {
 	b2Vec2 force = b2MulSV( world->inv_h, b2Add( base->motorJoint.linearVelocityImpulse, base->motorJoint.linearSpringImpulse ) );
 	return force;
 }
 
-float b2GetMotorJointTorque( b2World* world, b2JointSim* base )
+float b2GetMotorJointTorque( b2World* world, b2Joint* base )
 {
 	return world->inv_h * ( base->motorJoint.angularVelocityImpulse + base->motorJoint.angularSpringImpulse );
 }
@@ -156,13 +156,13 @@ float b2GetMotorJointTorque( b2World* world, b2JointSim* base )
 // J = [0 0 -1 0 0 1]
 // K = invI1 + invI2
 
-void b2PrepareMotorJoint( b2JointSim* base, b2StepContext* context )
+void b2PrepareMotorJoint( b2Joint* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_motorJoint );
 
 	// chase body id to the solver set where the body lives
-	int idA = base->bodyIdA;
-	int idB = base->bodyIdB;
+	int idA = base->edges[0].bodyId;
+	int idB = base->edges[1].bodyId;
 
 	b2World* world = context->world;
 
@@ -213,7 +213,7 @@ void b2PrepareMotorJoint( b2JointSim* base, b2StepContext* context )
 	}
 }
 
-void b2WarmStartMotorJoint( b2JointSim* base, b2StepContext* context )
+void b2WarmStartMotorJoint( b2Joint* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_motorJoint );
 
@@ -249,7 +249,7 @@ void b2WarmStartMotorJoint( b2JointSim* base, b2StepContext* context )
 	}
 }
 
-void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context )
+void b2SolveMotorJoint( b2Joint* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_motorJoint );
 

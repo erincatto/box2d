@@ -54,62 +54,62 @@ static inline b2Vec3 b2Solve33(const b2Mat33* m, b2Vec3 b )
 void b2WeldJoint_SetLinearHertz( b2JointId jointId, float hertz )
 {
 	B2_ASSERT( b2IsValidFloat( hertz ) && hertz >= 0.0f );
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.linearHertz = hertz;
 }
 
 float b2WeldJoint_GetLinearHertz( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_weldJoint );
 	return joint->weldJoint.linearHertz;
 }
 
 void b2WeldJoint_SetLinearDampingRatio( b2JointId jointId, float dampingRatio )
 {
 	B2_ASSERT( b2IsValidFloat( dampingRatio ) && dampingRatio >= 0.0f );
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.linearDampingRatio = dampingRatio;
 }
 
 float b2WeldJoint_GetLinearDampingRatio( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_weldJoint );
 	return joint->weldJoint.linearDampingRatio;
 }
 
 void b2WeldJoint_SetAngularHertz( b2JointId jointId, float hertz )
 {
 	B2_ASSERT( b2IsValidFloat( hertz ) && hertz >= 0.0f );
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.angularHertz = hertz;
 }
 
 float b2WeldJoint_GetAngularHertz( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_weldJoint );
 	return joint->weldJoint.angularHertz;
 }
 
 void b2WeldJoint_SetAngularDampingRatio( b2JointId jointId, float dampingRatio )
 {
 	B2_ASSERT( b2IsValidFloat( dampingRatio ) && dampingRatio >= 0.0f );
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.angularDampingRatio = dampingRatio;
 }
 
 float b2WeldJoint_GetAngularDampingRatio( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_weldJoint );
 	return joint->weldJoint.angularDampingRatio;
 }
 
-b2Vec2 b2GetWeldJointForce( b2World* world, b2JointSim* base )
+b2Vec2 b2GetWeldJointForce( b2World* world, b2Joint* base )
 {
 	b2Vec2 force = b2MulSV( world->inv_h, base->weldJoint.linearImpulse );
 	return force;
 }
 
-float b2GetWeldJointTorque( b2World* world, b2JointSim* base )
+float b2GetWeldJointTorque( b2World* world, b2Joint* base )
 {
 	return world->inv_h * base->weldJoint.angularImpulse;
 }
@@ -136,13 +136,13 @@ float b2GetWeldJointTorque( b2World* world, b2JointSim* base )
 //   = [J1 * invM * J1T J1 * invM * J2T]
 //     [J2 * invM * J1T J2 * invM * J2T]
 
-void b2PrepareWeldJoint( b2JointSim* base, b2StepContext* context )
+void b2PrepareWeldJoint( b2Joint* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_weldJoint );
 
 	// chase body id to the solver set where the body lives
-	int idA = base->bodyIdA;
-	int idB = base->bodyIdB;
+	int idA = base->edges[0].bodyId;
+	int idB = base->edges[1].bodyId;
 
 	b2World* world = context->world;
 
@@ -194,7 +194,7 @@ void b2PrepareWeldJoint( b2JointSim* base, b2StepContext* context )
 	}
 }
 
-void b2WarmStartWeldJoint( b2JointSim* base, b2StepContext* context )
+void b2WarmStartWeldJoint( b2Joint* base, b2StepContext* context )
 {
 	// dummy state for static bodies
 	b2BodyState dummyState = b2_identityBodyState;
@@ -225,7 +225,7 @@ void b2WarmStartWeldJoint( b2JointSim* base, b2StepContext* context )
 	}
 }
 
-void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias )
+void b2SolveWeldJoint( b2Joint* base, b2StepContext* context, bool useBias )
 {
 	B2_ASSERT( base->type == b2_weldJoint );
 
@@ -446,7 +446,7 @@ void b2DumpWeldJoint()
 }
 #endif
 
-void b2DrawWeldJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale )
+void b2DrawWeldJoint( b2DebugDraw* draw, b2Joint* base, b2Transform transformA, b2Transform transformB, float drawScale )
 {
 	B2_ASSERT( base->type == b2_weldJoint );
 

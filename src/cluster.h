@@ -13,8 +13,6 @@
 
 typedef struct b2BodyState b2BodyState;
 typedef struct b2ContactConstraint b2ContactConstraint;
-typedef struct b2ContactSim b2ContactSim;
-typedef struct b2JointSim b2JointSim;
 typedef struct b2StepContext b2StepContext;
 typedef struct b2World b2World;
 
@@ -46,11 +44,11 @@ typedef struct b2PersistentBorder
 // Interior constraints for one cluster, allocated from the arena each step
 typedef struct b2ClusterSolveData
 {
-	b2ContactSim** contacts;
+	int* contactIds;
 	b2ContactConstraint* contactConstraints;
 	int contactCount;
 
-	b2JointSim** joints;
+	int* jointIds;
 	int jointCount;
 
 	// Pointer to cluster's body ids
@@ -78,10 +76,10 @@ typedef struct b2BorderConstraints
 	int clusterA;
 	int clusterB;
 
-	b2ContactSim** contacts;
+	int* contactIds;
 	int contactCount;
 
-	b2JointSim** joints;
+	int* jointIds;
 	int jointCount;
 
 	b2ContactConstraint* contactConstraints;

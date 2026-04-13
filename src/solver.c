@@ -684,6 +684,7 @@ static void b2SolveBordersWhenReady( b2StepContext* context, bool useBias, bool 
 {
 	b2TracyCZoneNC( solver_borders, "Solve Borders", b2_colorMintCream, true );
 
+	b2World* world = context->world;
 	b2BorderConstraints* borders = context->borders;
 	int borderCount = context->borderCount;
 	b2ClusterSolveData* clusterData = context->clusterData;
@@ -712,7 +713,7 @@ static void b2SolveBordersWhenReady( b2StepContext* context, bool useBias, bool 
 			if ( border->contactCount > 0 )
 			{
 				b2ApplyContactRestitution( context, border->contactConstraints, border->contactCount,
-										   context->world->restitutionThreshold );
+										   world->restitutionThreshold );
 			}
 		}
 		else
@@ -720,17 +721,17 @@ static void b2SolveBordersWhenReady( b2StepContext* context, bool useBias, bool 
 			if ( border->contactCount > 0 )
 			{
 				b2SolveContactConstraints( context, border->contactConstraints, border->contactCount, context->inv_h,
-										   context->world->contactSpeed, useBias );
+										   world->contactSpeed, useBias );
 			}
 
 			for ( int k = 0; k < border->jointCount; ++k )
 			{
-				b2SolveJoint( border->joints[k], context, useBias );
+				b2SolveJoint( b2JointArray_Get( &world->joints, border->jointIds[k] ), context, useBias );
 			}
 
 			if ( stage->storeImpulses && border->contactCount > 0 )
 			{
-				b2StoreContactImpulses( border->contacts, border->contactConstraints, border->contactCount );
+				b2StoreContactImpulses( world, border->contactIds, border->contactConstraints, border->contactCount );
 			}
 		}
 	}
@@ -743,6 +744,7 @@ static void b2SolveWorkerClusters( b2StepContext* context, int workerIndex, bool
 {
 	b2TracyCZoneNC( solver_clusters, "Solve Clusters", b2_colorLemonChiffon, true );
 
+	b2World* world = context->world;
 	b2ClusterSolveData* clusterData = context->clusterData;
 
 	for ( int order = 0; order < 2; ++order )
@@ -804,12 +806,12 @@ static void b2SolveWorkerClusters( b2StepContext* context, int workerIndex, bool
 
 					for ( int k = 0; k < cd->jointCount; ++k )
 					{
-						b2SolveJoint( cd->joints[k], context, useBias );
+						b2SolveJoint( b2JointArray_Get( &world->joints, cd->jointIds[k] ), context, useBias );
 					}
 
 					if ( stage->storeImpulses && cd->contactCount > 0 )
 					{
-						b2StoreContactImpulses( cd->contacts, cd->contactConstraints, cd->contactCount );
+						b2StoreContactImpulses( world, cd->contactIds, cd->contactConstraints, cd->contactCount );
 					}
 				}
 
@@ -873,13 +875,12 @@ static void b2PrepareWorkerClusters( b2StepContext* context, int workerIndex, in
 
 				if ( cd->contactCount > 0 )
 				{
-					// Pass bodySims to remap constraint indices to local cluster indices
-					b2PrepareContactConstraints( context, cd->contacts, cd->contactConstraints, cd->contactCount );
+					b2PrepareContactConstraints( context, cd->contactIds, cd->contactConstraints, cd->contactCount );
 				}
 
 				for ( int j = 0; j < cd->jointCount; ++j )
 				{
-					b2PrepareJoint( cd->joints[j], context );
+					b2PrepareJoint( b2JointArray_Get( &world->joints, cd->jointIds[j] ), context );
 				}
 
 				b2AtomicStoreInt( &cd->prepareComplete, 3 * epoch + 2 );
@@ -894,6 +895,7 @@ static void b2PrepareBordersWhenReady( b2StepContext* context, int epoch )
 {
 	b2TracyCZoneNC( prepare_borders, "Prepare Borders", b2_colorMintCream, true );
 
+	b2World* world = context->world;
 	b2BorderConstraints* borders = context->borders;
 	int borderCount = context->borderCount;
 	b2ClusterSolveData* clusterData = context->clusterData;
@@ -920,12 +922,12 @@ static void b2PrepareBordersWhenReady( b2StepContext* context, int epoch )
 
 		if ( border->contactCount > 0 )
 		{
-			b2PrepareContactConstraints( context, border->contacts, border->contactConstraints, border->contactCount );
+			b2PrepareContactConstraints( context, border->contactIds, border->contactConstraints, border->contactCount );
 		}
 
 		for ( int j = 0; j < border->jointCount; ++j )
 		{
-			b2PrepareJoint( border->joints[j], context );
+			b2PrepareJoint( b2JointArray_Get( &world->joints, border->jointIds[j] ), context );
 		}
 	}
 
@@ -968,6 +970,7 @@ static void b2WarmStartWorkerClusters( b2StepContext* context, int workerIndex, 
 {
 	b2TracyCZoneNC( warm_start_clusters, "Warm Start Clusters", b2_colorNavy, true );
 
+	b2World* world = context->world;
 	b2ClusterSolveData* clusterData = context->clusterData;
 
 	float h = context->h;
@@ -1042,7 +1045,7 @@ static void b2WarmStartWorkerClusters( b2StepContext* context, int workerIndex, 
 
 				for ( int k = 0; k < cd->jointCount; ++k )
 				{
-					b2WarmStartJoint( cd->joints[k], context );
+					b2WarmStartJoint( b2JointArray_Get( &world->joints, cd->jointIds[k] ), context );
 				}
 
 				b2AtomicStoreInt( &cd->warmStartComplete, 3 * epoch + 2 );
@@ -1059,6 +1062,7 @@ static void b2WarmStartBordersWhenReady( b2StepContext* context, int epoch )
 {
 	b2TracyCZoneNC( warm_start_borders, "Warm Start Borders", b2_colorNavy, true );
 
+	b2World* world = context->world;
 	b2BorderConstraints* borders = context->borders;
 	int borderCount = context->borderCount;
 	b2ClusterSolveData* clusterData = context->clusterData;
@@ -1089,7 +1093,7 @@ static void b2WarmStartBordersWhenReady( b2StepContext* context, int epoch )
 
 		for ( int k = 0; k < border->jointCount; ++k )
 		{
-			b2WarmStartJoint( border->joints[k], context );
+			b2WarmStartJoint( b2JointArray_Get( &world->joints, border->jointIds[k] ), context );
 		}
 	}
 
@@ -1677,14 +1681,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				{
 					b2FreeArenaItem( &world->arena, border->contactConstraints );
 				}
-				if ( border->joints != NULL )
-				{
-					b2FreeArenaItem( &world->arena, border->joints );
-				}
-				if ( border->contacts != NULL )
-				{
-					b2FreeArenaItem( &world->arena, border->contacts );
-				}
 			}
 
 			if ( borders != NULL )
@@ -1698,14 +1694,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				if ( cd->contactConstraints != NULL )
 				{
 					b2FreeArenaItem( &world->arena, cd->contactConstraints );
-				}
-				if ( cd->joints != NULL )
-				{
-					b2FreeArenaItem( &world->arena, cd->joints );
-				}
-				if ( cd->contacts != NULL )
-				{
-					b2FreeArenaItem( &world->arena, cd->contacts );
 				}
 			}
 
@@ -1784,11 +1772,11 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		float threshold = world->hitEventThreshold;
 		b2SolverSet* awakeSet2 = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
-		int contactCount = awakeSet2->contactSims.count;
-		b2ContactSim* contactSims = awakeSet2->contactSims.data;
+		int contactCount = awakeSet2->contactIds.count;
 		for ( int j = 0; j < contactCount; ++j )
 		{
-			b2ContactSim* contactSim = contactSims + j;
+			int contactId = awakeSet2->contactIds.data[j];
+			b2Contact* contactSim = b2ContactArray_Get( &world->contacts, contactId );
 			if ( contactSim->manifold.pointCount == 0 )
 			{
 				continue;
@@ -1828,7 +1816,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				event.shapeIdA = (b2ShapeId){ shapeA->id + 1, world->worldId, shapeA->generation };
 				event.shapeIdB = (b2ShapeId){ shapeB->id + 1, world->worldId, shapeB->generation };
 
-				b2Contact* contact = b2ContactArray_Get( &world->contacts, contactSim->contactId );
+				b2Contact* contact = contactSim;
 
 				event.contactId = (b2ContactId){
 					.index1 = contact->contactId + 1,
