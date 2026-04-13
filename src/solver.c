@@ -671,12 +671,9 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 	b2TracyCZoneEnd( finalize_transforms );
 }
 
-// Helper: main thread solves borders whose adjacent clusters are both complete.
-// Solve borders in fixed index order, eagerly starting each border as soon as both its
-// adjacent clusters are done. Never skip ahead — this ensures deterministic solve order
-// even when borders share a cluster and modify overlapping body state.
-static void b2SolveBordersWhenReady( b2StepContext* context, bool useBias, bool isRestitution, b2SolverStage* stage,
-									 int epoch )
+// Borders must be solved in deterministic order because some borders can affect the same body states.
+// This solves borders serially as they become available.
+static void b2SolveBordersWhenReady( b2StepContext* context, bool useBias, bool isRestitution, b2SolverStage* stage, int epoch )
 {
 	b2TracyCZoneNC( solver_borders, "Solve Borders", b2_colorMintCream, true );
 
@@ -832,7 +829,7 @@ static void b2PrepareWorkerClusters( b2StepContext* context, int workerIndex, in
 		for ( int c = 0; c < B2_CLUSTER_COUNT; ++c )
 		{
 			bool assigned = ( context->clusterWorkerMap[c] == workerIndex );
-			if ( ( order == 0 && assigned == false ) || ( order == 1 && assigned == true) )
+			if ( ( order == 0 && assigned == false ) || ( order == 1 && assigned == true ) )
 			{
 				continue;
 			}
@@ -907,6 +904,7 @@ static void b2PrepareBordersWhenReady( b2StepContext* context, int epoch )
 		b2BorderConstraints* border = borders + bi;
 
 		// Spin-wait until both adjacent clusters have finished preparation
+		// Needed so that b2Body::stateIndex available
 		while ( b2AtomicLoadInt( &clusterData[border->clusterA].prepareComplete ) < completeValue ||
 				b2AtomicLoadInt( &clusterData[border->clusterB].prepareComplete ) < completeValue )
 		{
@@ -1048,6 +1046,8 @@ static void b2WarmStartWorkerClusters( b2StepContext* context, int workerIndex, 
 	b2TracyCZoneEnd( warm_start_clusters );
 }
 
+// Warm starting applies impulses to body states. These impulses must happen in deterministic order
+// because floating point math addition is not associative.
 static void b2WarmStartBordersWhenReady( b2StepContext* context, int epoch )
 {
 	b2TracyCZoneNC( warm_start_borders, "Warm Start Borders", b2_colorNavy, true );
@@ -1387,7 +1387,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			b2AllocateArenaItem( &world->arena, awakeBodyCount * sizeof( b2ClusterBody ), "cluster body" );
 
 #if B2_ENABLE_VALIDATION
-		for (int i = 0; i < awakeBodyCount; ++i)
+		for ( int i = 0; i < awakeBodyCount; ++i )
 		{
 			stepContext->clusterBodies[i].position = b2Vec2_zero;
 			stepContext->clusterBodies[i].clusterIndex = B2_NULL_INDEX;
@@ -1400,8 +1400,17 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		memset( stepContext->clusterData, 0, B2_CLUSTER_COUNT * sizeof( b2ClusterSolveData ) );
 
 		// Compute spatial clusters before solving so constraint classification can read clusterIndex
-		b2ComputeClusters( world );
-		b2ClassifyConstraints( world, stepContext );
+		{
+			b2TracyCZoneNC( clusters, "Clusters", b2_colorPaleVioletRed, true );
+			b2ComputeClusters( world );
+			b2TracyCZoneEnd( clusters );
+		}
+
+		{
+			b2TracyCZoneNC( classify, "Classify", b2_colorMediumOrchid, true );
+			b2ClassifyConstraints( world, stepContext );
+			b2TracyCZoneEnd( classify );
+		}
 
 		// Assign clusters to workers using LPT (Longest Processing Time) heuristic
 		// for load-balanced scheduling. Same worker handles a cluster across all phases
@@ -1591,7 +1600,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// Update clusters. Bodies are assigned at the beginning of the solve to ensure they
 		// all exist and are awake. This just computes the new centers.
 		b2Cluster* clusters = world->clusterManager.clusters;
-		int clusterBodyCounts[B2_CLUSTER_COUNT] = {0};
+		int clusterBodyCounts[B2_CLUSTER_COUNT] = { 0 };
 		for ( int i = 0; i < B2_CLUSTER_COUNT; ++i )
 		{
 			// Done with the bodies
