@@ -51,6 +51,7 @@ float b2GetLengthUnitsPerMeter( void )
 static int b2DefaultAssertFcn( const char* condition, const char* fileName, int lineNumber )
 {
 	printf( "BOX2D ASSERTION: %s, %s, line %d\n", condition, fileName, lineNumber );
+	fflush( stdout );
 
 	// return non-zero to break to debugger
 	return 1;

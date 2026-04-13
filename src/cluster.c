@@ -24,7 +24,18 @@ void b2CreateClusters( b2ClusterManager* manager )
 	{
 		b2Cluster* cluster = manager->clusters + i;
 		b2Array_CreateN( cluster->bodyIds, 16 );
+		b2Array_CreateN( cluster->contactIds, 16 );
+		b2Array_CreateN( cluster->jointIds, 16 );
 	}
+
+	for ( int i = 0; i < B2_MAX_BORDERS; ++i )
+	{
+		b2PersistentBorder* border = manager->borders + i;
+		b2Array_CreateN( border->contactIds, 0 );
+		b2Array_CreateN( border->jointIds, 0 );
+	}
+
+	manager->dirtyBodyBitSet = b2CreateBitSet( 256 );
 }
 
 void b2DestroyClusters( b2ClusterManager* manager )
@@ -33,7 +44,18 @@ void b2DestroyClusters( b2ClusterManager* manager )
 	{
 		b2Cluster* cluster = manager->clusters + i;
 		b2Array_Destroy( cluster->bodyIds );
+		b2Array_Destroy( cluster->contactIds );
+		b2Array_Destroy( cluster->jointIds );
 	}
+
+	for ( int i = 0; i < B2_MAX_BORDERS; ++i )
+	{
+		b2PersistentBorder* border = manager->borders + i;
+		b2Array_Destroy( border->contactIds );
+		b2Array_Destroy( border->jointIds );
+	}
+
+	b2DestroyBitSet( &manager->dirtyBodyBitSet );
 }
 
 void b2ComputeClusters( b2World* world )
@@ -67,9 +89,6 @@ void b2ComputeClusters( b2World* world )
 	}
 
 	// Populate clusters
-	// Possible optimizations:
-	// 1. store the cluster index with the body ids
-	// 2. assign bodies to rolling clusters at creation, bumping to a new cluster after every N bodies created
 	int* bodyIds = awakeSet->bodyIds.data;
 	for ( int i = 0; i < awakeCount; ++i )
 	{
@@ -93,6 +112,9 @@ void b2ComputeClusters( b2World* world )
 			}
 
 			body->clusterIndex = (int16_t)clusterIndex;
+
+			// Newly assigned body is dirty — its constraints need classification
+			b2SetBitGrow( &manager->dirtyBodyBitSet, body->id );
 		}
 
 		B2_ASSERT( 0 <= clusterIndex && clusterIndex < B2_CLUSTER_COUNT );
@@ -148,136 +170,377 @@ static inline int b2GetBorderIndex( int a, int b )
 	return a * ( 2 * B2_CLUSTER_COUNT - a - 1 ) / 2 + ( b - a - 1 );
 }
 
-void b2ClassifyConstraints( b2World* world, b2StepContext* context )
+// Compute the cluster slot for a constraint between two bodies.
+// Returns cluster index (0..15) for interior, or B2_CLUSTER_COUNT + flatBorderIndex for border.
+static int b2ComputeClusterSlot( b2Body* bodyA, b2Body* bodyB )
 {
+	if ( bodyA->type == b2_staticBody )
+	{
+		return bodyB->clusterIndex;
+	}
+
+	if ( bodyB->type == b2_staticBody )
+	{
+		return bodyA->clusterIndex;
+	}
+
+	int clusterA = bodyA->clusterIndex;
+	int clusterB = bodyB->clusterIndex;
+
+	if ( clusterA == clusterB )
+	{
+		return clusterA;
+	}
+
+	int a = clusterA < clusterB ? clusterA : clusterB;
+	int b = clusterA < clusterB ? clusterB : clusterA;
+	return B2_CLUSTER_COUNT + b2GetBorderIndex( a, b );
+}
+
+void b2ClusterLinkContact( b2World* world, int contactId, int bodyIdA, int bodyIdB )
+{
+	b2ClusterManager* manager = &world->clusterManager;
+	b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
+	b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
+	b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
+
+	// If either non-static body hasn't been assigned to a cluster yet, skip classification.
+	// The body will be marked dirty when b2ComputeClusters assigns it, and
+	// b2ReclassifyDirtyConstraints will pick up this contact.
+	if ( ( bodyA->type != b2_staticBody && bodyA->clusterIndex == B2_NULL_INDEX ) ||
+		 ( bodyB->type != b2_staticBody && bodyB->clusterIndex == B2_NULL_INDEX ) )
+	{
+		return;
+	}
+
+	int slot = b2ComputeClusterSlot( bodyA, bodyB );
+
+	if ( slot < B2_CLUSTER_COUNT )
+	{
+		// Interior constraint
+		b2Cluster* cluster = manager->clusters + slot;
+		contact->clusterSlot = (int16_t)slot;
+		contact->clusterLocalIndex = cluster->contactIds.count;
+		b2Array_Push( cluster->contactIds, contactId );
+	}
+	else
+	{
+		// Border constraint
+		int flatIdx = slot - B2_CLUSTER_COUNT;
+		b2PersistentBorder* border = manager->borders + flatIdx;
+		contact->clusterSlot = (int16_t)slot;
+		contact->clusterLocalIndex = border->contactIds.count;
+		b2Array_Push( border->contactIds, contactId );
+	}
+}
+
+void b2ClusterUnlinkContact( b2World* world, int contactId )
+{
+	b2ClusterManager* manager = &world->clusterManager;
+	b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
+
+	int slot = contact->clusterSlot;
+	if ( slot == B2_CLUSTER_SLOT_NONE )
+	{
+		return;
+	}
+
+	int localIndex = contact->clusterLocalIndex;
+
+	if ( slot < B2_CLUSTER_COUNT )
+	{
+		b2Cluster* cluster = manager->clusters + slot;
+		B2_ASSERT( 0 <= localIndex && localIndex < cluster->contactIds.count );
+		B2_ASSERT( cluster->contactIds.data[localIndex] == contactId );
+
+		int movedIndex = b2Array_RemoveSwap( cluster->contactIds, localIndex );
+		if ( movedIndex != B2_NULL_INDEX )
+		{
+			// Fix back-reference on the contact that was swapped in
+			int movedContactId = cluster->contactIds.data[localIndex];
+			b2Contact* movedContact = b2ContactArray_Get( &world->contacts, movedContactId );
+			B2_ASSERT( movedContact->clusterLocalIndex == movedIndex );
+			movedContact->clusterLocalIndex = localIndex;
+		}
+	}
+	else
+	{
+		int flatIdx = slot - B2_CLUSTER_COUNT;
+		b2PersistentBorder* border = manager->borders + flatIdx;
+		B2_ASSERT( 0 <= localIndex && localIndex < border->contactIds.count );
+		B2_ASSERT( border->contactIds.data[localIndex] == contactId );
+
+		int movedIndex = b2Array_RemoveSwap( border->contactIds, localIndex );
+		if ( movedIndex != B2_NULL_INDEX )
+		{
+			int movedContactId = border->contactIds.data[localIndex];
+			b2Contact* movedContact = b2ContactArray_Get( &world->contacts, movedContactId );
+			B2_ASSERT( movedContact->clusterLocalIndex == movedIndex );
+			movedContact->clusterLocalIndex = localIndex;
+		}
+	}
+
+	contact->clusterSlot = B2_CLUSTER_SLOT_NONE;
+	contact->clusterLocalIndex = B2_CLUSTER_SLOT_NONE;
+}
+
+void b2ClusterLinkJoint( b2World* world, int jointId, int bodyIdA, int bodyIdB )
+{
+	b2ClusterManager* manager = &world->clusterManager;
+	b2Joint* joint = b2JointArray_Get( &world->joints, jointId );
+	b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
+	b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
+
+	// If either non-static body hasn't been assigned to a cluster yet (e.g. joint created
+	// before first b2ComputeClusters), skip classification. The body will be marked dirty
+	// when b2ComputeClusters assigns it, and b2ReclassifyDirtyConstraints will pick up this joint.
+	if ( ( bodyA->type != b2_staticBody && bodyA->clusterIndex == B2_NULL_INDEX ) ||
+		 ( bodyB->type != b2_staticBody && bodyB->clusterIndex == B2_NULL_INDEX ) )
+	{
+		return;
+	}
+
+	int slot = b2ComputeClusterSlot( bodyA, bodyB );
+
+	if ( slot < B2_CLUSTER_COUNT )
+	{
+		b2Cluster* cluster = manager->clusters + slot;
+		joint->clusterSlot = (int16_t)slot;
+		joint->clusterLocalIndex = cluster->jointIds.count;
+		b2Array_Push( cluster->jointIds, jointId );
+	}
+	else
+	{
+		int flatIdx = slot - B2_CLUSTER_COUNT;
+		b2PersistentBorder* border = manager->borders + flatIdx;
+		joint->clusterSlot = (int16_t)slot;
+		joint->clusterLocalIndex = border->jointIds.count;
+		b2Array_Push( border->jointIds, jointId );
+	}
+}
+
+void b2ClusterUnlinkJoint( b2World* world, int jointId )
+{
+	b2ClusterManager* manager = &world->clusterManager;
+	b2Joint* joint = b2JointArray_Get( &world->joints, jointId );
+
+	int slot = joint->clusterSlot;
+	if ( slot == B2_CLUSTER_SLOT_NONE )
+	{
+		return;
+	}
+
+	int localIndex = joint->clusterLocalIndex;
+
+	if ( slot < B2_CLUSTER_COUNT )
+	{
+		b2Cluster* cluster = manager->clusters + slot;
+		B2_ASSERT( 0 <= localIndex && localIndex < cluster->jointIds.count );
+		B2_ASSERT( cluster->jointIds.data[localIndex] == jointId );
+
+		int movedIndex = b2Array_RemoveSwap( cluster->jointIds, localIndex );
+		if ( movedIndex != B2_NULL_INDEX )
+		{
+			int movedJointId = cluster->jointIds.data[localIndex];
+			b2Joint* movedJoint = b2JointArray_Get( &world->joints, movedJointId );
+			B2_ASSERT( movedJoint->clusterLocalIndex == movedIndex );
+			movedJoint->clusterLocalIndex = localIndex;
+		}
+	}
+	else
+	{
+		int flatIdx = slot - B2_CLUSTER_COUNT;
+		b2PersistentBorder* border = manager->borders + flatIdx;
+		B2_ASSERT( 0 <= localIndex && localIndex < border->jointIds.count );
+		B2_ASSERT( border->jointIds.data[localIndex] == jointId );
+
+		int movedIndex = b2Array_RemoveSwap( border->jointIds, localIndex );
+		if ( movedIndex != B2_NULL_INDEX )
+		{
+			int movedJointId = border->jointIds.data[localIndex];
+			b2Joint* movedJoint = b2JointArray_Get( &world->joints, movedJointId );
+			B2_ASSERT( movedJoint->clusterLocalIndex == movedIndex );
+			movedJoint->clusterLocalIndex = localIndex;
+		}
+	}
+
+	joint->clusterSlot = B2_CLUSTER_SLOT_NONE;
+	joint->clusterLocalIndex = B2_CLUSTER_SLOT_NONE;
+}
+
+void b2ReclassifyDirtyConstraints( b2World* world, b2StepContext* context )
+{
+	B2_UNUSED( context );
+	b2ClusterManager* manager = &world->clusterManager;
+	b2BitSet* dirtyBits = &manager->dirtyBodyBitSet;
+
+	uint32_t blockCount = dirtyBits->blockCount;
+	uint64_t* bits = dirtyBits->bits;
+
+	for ( uint32_t k = 0; k < blockCount; ++k )
+	{
+		uint64_t word = bits[k];
+		while ( word != 0 )
+		{
+			uint32_t ctz = b2CTZ64( word );
+			int bodyId = (int)( 64 * k + ctz );
+
+			b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
+
+			// Walk contact linked list
+			int contactKey = body->headContactKey;
+			while ( contactKey != B2_NULL_INDEX )
+			{
+				int edgeIndex = contactKey & 1;
+				int contactId = contactKey >> 1;
+
+				b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
+				contactKey = contact->edges[edgeIndex].nextKey;
+
+				// Only reclassify touching contacts (non-touching have no cluster assignment)
+				if ( ( contact->flags & b2_contactTouchingFlag ) == 0 )
+				{
+					continue;
+				}
+
+				// Double-visit prevention: when both bodies are dirty, only process
+				// from the body with the lower id.
+				int otherBodyId = contact->edges[edgeIndex ^ 1].bodyId;
+				if ( b2GetBit( dirtyBits, otherBodyId ) && bodyId > otherBodyId )
+				{
+					continue;
+				}
+
+				b2Body* bodyA = b2BodyArray_Get( &world->bodies, contact->edges[0].bodyId );
+				b2Body* bodyB = b2BodyArray_Get( &world->bodies, contact->edges[1].bodyId );
+				int newSlot = b2ComputeClusterSlot( bodyA, bodyB );
+
+				if ( newSlot != contact->clusterSlot )
+				{
+					// Remove from old slot (if classified)
+					if ( contact->clusterSlot != B2_CLUSTER_SLOT_NONE )
+					{
+						b2ClusterUnlinkContact( world, contactId );
+					}
+
+					// Add to new slot
+					if ( newSlot < B2_CLUSTER_COUNT )
+					{
+						b2Cluster* cluster = manager->clusters + newSlot;
+						contact->clusterSlot = (int16_t)newSlot;
+						contact->clusterLocalIndex = cluster->contactIds.count;
+						b2Array_Push( cluster->contactIds, contactId );
+					}
+					else
+					{
+						int flatIdx = newSlot - B2_CLUSTER_COUNT;
+						b2PersistentBorder* border = manager->borders + flatIdx;
+						contact->clusterSlot = (int16_t)newSlot;
+						contact->clusterLocalIndex = border->contactIds.count;
+						b2Array_Push( border->contactIds, contactId );
+					}
+				}
+			}
+
+			// Walk joint linked list
+			int jointKey = body->headJointKey;
+			while ( jointKey != B2_NULL_INDEX )
+			{
+				int edgeIndex = jointKey & 1;
+				int jointId = jointKey >> 1;
+
+				b2Joint* joint = b2JointArray_Get( &world->joints, jointId );
+				jointKey = joint->edges[edgeIndex].nextKey;
+
+				// Double-visit prevention
+				int otherBodyId = joint->edges[edgeIndex ^ 1].bodyId;
+				if ( b2GetBit( dirtyBits, otherBodyId ) && bodyId > otherBodyId )
+				{
+					continue;
+				}
+
+				b2Body* bodyA = b2BodyArray_Get( &world->bodies, joint->edges[0].bodyId );
+				b2Body* bodyB = b2BodyArray_Get( &world->bodies, joint->edges[1].bodyId );
+				int newSlot = b2ComputeClusterSlot( bodyA, bodyB );
+
+				if ( newSlot != joint->clusterSlot )
+				{
+					if ( joint->clusterSlot != B2_CLUSTER_SLOT_NONE )
+					{
+						b2ClusterUnlinkJoint( world, jointId );
+					}
+
+					if ( newSlot < B2_CLUSTER_COUNT )
+					{
+						b2Cluster* cluster = manager->clusters + newSlot;
+						joint->clusterSlot = (int16_t)newSlot;
+						joint->clusterLocalIndex = cluster->jointIds.count;
+						b2Array_Push( cluster->jointIds, jointId );
+					}
+					else
+					{
+						int flatIdx = newSlot - B2_CLUSTER_COUNT;
+						b2PersistentBorder* border = manager->borders + flatIdx;
+						joint->clusterSlot = (int16_t)newSlot;
+						joint->clusterLocalIndex = border->jointIds.count;
+						b2Array_Push( border->jointIds, jointId );
+					}
+				}
+			}
+
+			// Clear the lowest set bit
+			word = word & ( word - 1 );
+		}
+	}
+
+	// Clear the dirty bitset for next step
+	b2SetBitCountAndClear( dirtyBits, dirtyBits->blockCount * 64 );
+}
+
+void b2BuildSolveData( b2World* world, b2StepContext* context )
+{
+	b2ClusterManager* manager = &world->clusterManager;
 	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
 
-	// Temporary counts for sizing
-	int clusterContactCounts[B2_CLUSTER_COUNT] = { 0 };
-	int clusterJointCounts[B2_CLUSTER_COUNT] = { 0 };
-
-	// Use a flat array for border counts, indexed by b2GetBorderIndex
-	int borderContactCounts[B2_MAX_BORDERS] = { 0 };
-	int borderJointCounts[B2_MAX_BORDERS] = { 0 };
-
-	// First pass: count contacts per cluster/border
-	{
-		int awakeContactCount = awakeSet->contactSims.count;
-		b2ContactSim* awakeContactSims = awakeSet->contactSims.data;
-
-		for ( int i = 0; i < awakeContactCount; ++i )
-		{
-			b2ContactSim* contactSim = awakeContactSims + i;
-
-			// Skip non-touching contacts
-			if ( contactSim->manifold.pointCount == 0 )
-				continue;
-
-			int idA = contactSim->bodyIdA;
-			int idB = contactSim->bodyIdB;
-			b2Body* bodyA = b2BodyArray_Get( &world->bodies, idA );
-			b2Body* bodyB = b2BodyArray_Get( &world->bodies, idB );
-			b2BodyType typeA = bodyA->type;
-			b2BodyType typeB = bodyB->type;
-
-			if ( typeA == b2_staticBody )
-			{
-				int clusterIdx = bodyB->clusterIndex;
-				clusterContactCounts[clusterIdx] += 1;
-			}
-			else if ( typeB == b2_staticBody )
-			{
-				int clusterIdx = bodyA->clusterIndex;
-				clusterContactCounts[clusterIdx] += 1;
-			}
-			else
-			{
-				int clusterA = bodyA->clusterIndex;
-				int clusterB = bodyB->clusterIndex;
-
-				if ( clusterA == clusterB )
-				{
-					clusterContactCounts[clusterA] += 1;
-				}
-				else
-				{
-					int a = clusterA < clusterB ? clusterA : clusterB;
-					int b = clusterA < clusterB ? clusterB : clusterA;
-					int borderIdx = b2GetBorderIndex( a, b );
-					borderContactCounts[borderIdx] += 1;
-				}
-			}
-		}
-	}
-
-	// First pass: count joints per cluster/border
-	{
-		int awakeJointCount = awakeSet->jointSims.count;
-		b2JointSim* awakeJointSims = awakeSet->jointSims.data;
-
-		for ( int i = 0; i < awakeJointCount; ++i )
-		{
-			b2JointSim* jointSim = awakeJointSims + i;
-			int bodyIdA = jointSim->bodyIdA;
-			int bodyIdB = jointSim->bodyIdB;
-
-			b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
-			b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
-			b2BodyType typeA = bodyA->type;
-			b2BodyType typeB = bodyB->type;
-
-			if ( typeA == b2_staticBody )
-			{
-				int clusterIdx = bodyB->clusterIndex;
-				clusterJointCounts[clusterIdx] += 1;
-			}
-			else if ( typeB == b2_staticBody )
-			{
-				int clusterIdx = bodyA->clusterIndex;
-				clusterJointCounts[clusterIdx] += 1;
-			}
-			else
-			{
-				int clusterA = bodyA->clusterIndex;
-				int clusterB = bodyB->clusterIndex;
-
-				if ( clusterA == clusterB )
-				{
-					clusterJointCounts[clusterA] += 1;
-				}
-				else
-				{
-					int a = clusterA < clusterB ? clusterA : clusterB;
-					int b = clusterA < clusterB ? clusterB : clusterA;
-					int borderIdx = b2GetBorderIndex( a, b );
-					borderJointCounts[borderIdx] += 1;
-				}
-			}
-		}
-	}
-
-	// Allocate cluster solve data arrays from arena
-	b2ClusterManager* manager = &world->clusterManager;
+	// Build cluster solve data from persistent arrays
 	int stateIndex = 0;
 	for ( int i = 0; i < B2_CLUSTER_COUNT; ++i )
 	{
 		b2ClusterSolveData* cd = context->clusterData + i;
 		b2Cluster* cluster = manager->clusters + i;
 
-		int cc = clusterContactCounts[i];
-		int jc = clusterJointCounts[i];
+		int cc = cluster->contactIds.count;
+		int jc = cluster->jointIds.count;
 
 		cd->contacts = ( cc > 0 ) ? b2AllocateArenaItem( &world->arena, cc * sizeof( b2ContactSim* ), "cluster contacts" ) : NULL;
-		cd->contactCount = 0;
+		cd->contactCount = cc;
 
 		cd->joints = ( jc > 0 ) ? b2AllocateArenaItem( &world->arena, jc * sizeof( b2JointSim* ), "cluster joints" ) : NULL;
-		cd->jointCount = 0;
+		cd->jointCount = jc;
 
 		cd->contactConstraints =
 			( cc > 0 ) ? b2AllocateArenaItem( &world->arena, cc * sizeof( b2ContactConstraint ), "cluster contact constraints" )
 					   : NULL;
 
-		// Allocate per-cluster local body state array for L1 cache locality
+		// Populate contact sim pointers from persistent contact ids
+		for ( int j = 0; j < cc; ++j )
+		{
+			int contactId = cluster->contactIds.data[j];
+			b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
+			B2_ASSERT( contact->setIndex == b2_awakeSet );
+			cd->contacts[j] = b2ContactSimArray_Get( &awakeSet->contactSims, contact->localIndex );
+		}
+
+		// Populate joint sim pointers from persistent joint ids
+		for ( int j = 0; j < jc; ++j )
+		{
+			int jointId = cluster->jointIds.data[j];
+			b2Joint* joint = b2JointArray_Get( &world->joints, jointId );
+			B2_ASSERT( joint->setIndex == b2_awakeSet );
+			cd->joints[j] = b2JointSimArray_Get( &awakeSet->jointSims, joint->localIndex );
+		}
+
+		// Per-cluster body data
 		int bodyCount = cluster->bodyIds.count;
 		cd->bodyCount = bodyCount;
 		cd->bodyIds = cluster->bodyIds.data;
@@ -289,11 +552,12 @@ void b2ClassifyConstraints( b2World* world, b2StepContext* context )
 
 	B2_ASSERT( stateIndex == awakeSet->bodyIds.count );
 
-	// Count non-empty borders and allocate
+	// Count non-empty borders
 	int borderCount = 0;
 	for ( int i = 0; i < B2_MAX_BORDERS; ++i )
 	{
-		if ( borderContactCounts[i] > 0 || borderJointCounts[i] > 0 )
+		b2PersistentBorder* pb = manager->borders + i;
+		if ( pb->contactIds.count > 0 || pb->jointIds.count > 0 )
 		{
 			borderCount += 1;
 		}
@@ -304,15 +568,16 @@ void b2ClassifyConstraints( b2World* world, b2StepContext* context )
 																  "border constraints" )
 										   : NULL;
 
-	// Fill in border data
+	// Build border solve data
 	int borderWriteIndex = 0;
 	for ( int a = 0; a < B2_CLUSTER_COUNT; ++a )
 	{
 		for ( int b = a + 1; b < B2_CLUSTER_COUNT; ++b )
 		{
 			int flatIdx = b2GetBorderIndex( a, b );
-			int cc = borderContactCounts[flatIdx];
-			int jc = borderJointCounts[flatIdx];
+			b2PersistentBorder* pb = manager->borders + flatIdx;
+			int cc = pb->contactIds.count;
+			int jc = pb->jointIds.count;
 
 			if ( cc == 0 && jc == 0 )
 			{
@@ -325,124 +590,35 @@ void b2ClassifyConstraints( b2World* world, b2StepContext* context )
 
 			border->contacts =
 				( cc > 0 ) ? b2AllocateArenaItem( &world->arena, cc * sizeof( b2ContactSim* ), "border contacts" ) : NULL;
-			border->contactCount = 0;
+			border->contactCount = cc;
 
 			border->joints =
 				( jc > 0 ) ? b2AllocateArenaItem( &world->arena, jc * sizeof( b2JointSim* ), "border joints" ) : NULL;
-			border->jointCount = 0;
+			border->jointCount = jc;
 
 			border->contactConstraints = ( cc > 0 ) ? b2AllocateArenaItem( &world->arena, cc * sizeof( b2ContactConstraint ),
 																		   "border contact constraints" )
 													: NULL;
 
-			// Store the border write index in the flat array for the second pass
-			// Reuse borderContactCounts as a mapping from flat index -> border write index
-			borderContactCounts[flatIdx] = borderWriteIndex;
+			// Populate contact sim pointers
+			for ( int j = 0; j < cc; ++j )
+			{
+				int contactId = pb->contactIds.data[j];
+				b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
+				B2_ASSERT( contact->setIndex == b2_awakeSet );
+				border->contacts[j] = b2ContactSimArray_Get( &awakeSet->contactSims, contact->localIndex );
+			}
+
+			// Populate joint sim pointers
+			for ( int j = 0; j < jc; ++j )
+			{
+				int jointId = pb->jointIds.data[j];
+				b2Joint* joint = b2JointArray_Get( &world->joints, jointId );
+				B2_ASSERT( joint->setIndex == b2_awakeSet );
+				border->joints[j] = b2JointSimArray_Get( &awakeSet->jointSims, joint->localIndex );
+			}
+
 			borderWriteIndex += 1;
-		}
-	}
-
-	// Second pass: distribute contact pointers to clusters and borders
-	{
-		int awakeContactCount = awakeSet->contactSims.count;
-		b2ContactSim* awakeContactSims = awakeSet->contactSims.data;
-
-		for ( int i = 0; i < awakeContactCount; ++i )
-		{
-			b2ContactSim* contactSim = awakeContactSims + i;
-
-			// Skip non-touching contacts
-			if ( contactSim->manifold.pointCount == 0 )
-				continue;
-
-			int idA = contactSim->bodyIdA;
-			int idB = contactSim->bodyIdB;
-			b2Body* bodyA = b2BodyArray_Get( &world->bodies, idA );
-			b2Body* bodyB = b2BodyArray_Get( &world->bodies, idB );
-			b2BodyType typeA = bodyA->type;
-			b2BodyType typeB = bodyB->type;
-
-			if ( typeA == b2_staticBody )
-			{
-				b2ClusterSolveData* cd = context->clusterData + bodyB->clusterIndex;
-				cd->contacts[cd->contactCount++] = contactSim;
-			}
-			else if ( typeB == b2_staticBody )
-			{
-				b2ClusterSolveData* cd = context->clusterData + bodyA->clusterIndex;
-				cd->contacts[cd->contactCount++] = contactSim;
-			}
-			else
-			{
-				int clusterA = bodyA->clusterIndex;
-				int clusterB = bodyB->clusterIndex;
-
-				if ( clusterA == clusterB )
-				{
-					b2ClusterSolveData* cd = context->clusterData + clusterA;
-					cd->contacts[cd->contactCount++] = contactSim;
-				}
-				else
-				{
-					int a = clusterA < clusterB ? clusterA : clusterB;
-					int b = clusterA < clusterB ? clusterB : clusterA;
-					int flatIdx = b2GetBorderIndex( a, b );
-					// borderContactCounts was repurposed as the mapping
-					int bIdx = borderContactCounts[flatIdx];
-					b2BorderConstraints* border = context->borders + bIdx;
-					border->contacts[border->contactCount++] = contactSim;
-				}
-			}
-		}
-	}
-
-	// Second pass: distribute joint pointers to clusters and borders
-	{
-		int awakeJointCount = awakeSet->jointSims.count;
-		b2JointSim* awakeJointSims = awakeSet->jointSims.data;
-
-		for ( int i = 0; i < awakeJointCount; ++i )
-		{
-			b2JointSim* jointSim = awakeJointSims + i;
-			int bodyIdA = jointSim->bodyIdA;
-			int bodyIdB = jointSim->bodyIdB;
-
-			b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
-			b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
-
-			b2BodyType typeA = bodyA->type;
-			b2BodyType typeB = bodyB->type;
-
-			if ( typeA == b2_staticBody )
-			{
-				b2ClusterSolveData* cd = context->clusterData + bodyB->clusterIndex;
-				cd->joints[cd->jointCount++] = jointSim;
-			}
-			else if ( typeB == b2_staticBody )
-			{
-				b2ClusterSolveData* cd = context->clusterData + bodyA->clusterIndex;
-				cd->joints[cd->jointCount++] = jointSim;
-			}
-			else
-			{
-				int clusterA = bodyA->clusterIndex;
-				int clusterB = bodyB->clusterIndex;
-
-				if ( clusterA == clusterB )
-				{
-					b2ClusterSolveData* cd = context->clusterData + clusterA;
-					cd->joints[cd->jointCount++] = jointSim;
-				}
-				else
-				{
-					int a = clusterA < clusterB ? clusterA : clusterB;
-					int b = clusterA < clusterB ? clusterB : clusterA;
-					int flatIdx = b2GetBorderIndex( a, b );
-					int bIdx = borderContactCounts[flatIdx];
-					b2BorderConstraints* border = context->borders + bIdx;
-					border->joints[border->jointCount++] = jointSim;
-				}
-			}
 		}
 	}
 }

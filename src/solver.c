@@ -462,6 +462,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 
 	b2BitSet* enlargedSimBitSet = &world->taskContexts.data[threadIndex].enlargedSimBitSet;
 	b2BitSet* awakeIslandBitSet = &world->taskContexts.data[threadIndex].awakeIslandBitSet;
+	b2BitSet* dirtyBodyBitSet = &world->taskContexts.data[threadIndex].dirtyBodyBitSet;
 	b2TaskContext* taskContext = world->taskContexts.data + threadIndex;
 
 	bool enableContinuous = world->enableContinuous;
@@ -512,6 +513,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		body->center = b2Add( body->center, state->deltaPosition );
 
 		// Find best cluster
+		int16_t oldCluster = body->clusterIndex;
 		int bestIndex = 0;
 		float minDistSqr = b2DistanceSquared( body->center, clusterManager->clusters[0].center );
 		for ( int clusterIndex = 1; clusterIndex < B2_CLUSTER_COUNT; ++clusterIndex )
@@ -525,6 +527,11 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		}
 
 		body->clusterIndex = (int16_t)bestIndex;
+
+		if ( bestIndex != oldCluster )
+		{
+			b2SetBitGrow( dirtyBodyBitSet, state->bodyId );
+		}
 
 		clusterBodies[stateIndex] = (b2ClusterBody){
 			.position = body->center,
@@ -1399,17 +1406,16 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			b2AllocateArenaItem( &world->arena, B2_CLUSTER_COUNT * sizeof( b2ClusterSolveData ), "cluster solve data" );
 		memset( stepContext->clusterData, 0, B2_CLUSTER_COUNT * sizeof( b2ClusterSolveData ) );
 
-		// Compute spatial clusters before solving so constraint classification can read clusterIndex
 		{
-			b2TracyCZoneNC( clusters, "Clusters", b2_colorPaleVioletRed, true );
-			b2ComputeClusters( world );
-			b2TracyCZoneEnd( clusters );
+			b2TracyCZoneNC( reclassify, "Reclassify", b2_colorMediumOrchid, true );
+			b2ReclassifyDirtyConstraints( world, stepContext );
+			b2TracyCZoneEnd( reclassify );
 		}
 
 		{
-			b2TracyCZoneNC( classify, "Classify", b2_colorMediumOrchid, true );
-			b2ClassifyConstraints( world, stepContext );
-			b2TracyCZoneEnd( classify );
+			b2TracyCZoneNC( build_solve, "BuildSolve", b2_colorMediumOrchid, true );
+			b2BuildSolveData( world, stepContext );
+			b2TracyCZoneEnd( build_solve );
 		}
 
 		// Assign clusters to workers using LPT (Longest Processing Time) heuristic
@@ -1576,14 +1582,16 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2TracyCZoneNC( update_transforms, "Update Transforms", b2_colorMediumSeaGreen, true );
 		uint64_t transformTicks = b2GetTicks();
 
-		// Prepare contact, enlarged body, and island bit sets used in body finalization.
+		// Prepare contact, enlarged body, island, and dirty body bit sets used in body finalization.
 		int awakeIslandCount = awakeSet->islandSims.count;
+		int bodyIdCapacity = b2GetIdCapacity( &world->bodyIdPool );
 		for ( int i = 0; i < world->workerCount; ++i )
 		{
 			b2TaskContext* taskContext = world->taskContexts.data + i;
 			b2SensorHitArray_Clear( &taskContext->sensorHits );
 			b2SetBitCountAndClear( &taskContext->enlargedSimBitSet, awakeBodyCount );
 			b2SetBitCountAndClear( &taskContext->awakeIslandBitSet, awakeIslandCount );
+			b2SetBitCountAndClear( &taskContext->dirtyBodyBitSet, bodyIdCapacity );
 			taskContext->splitIslandId = B2_NULL_INDEX;
 			taskContext->splitSleepTime = 0.0f;
 		}
@@ -1595,6 +1603,31 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		if ( finalizeBodiesTask != NULL )
 		{
 			world->finishTaskFcn( finalizeBodiesTask, world->userTaskContext );
+		}
+
+		// Merge per-thread dirty body bitsets into the cluster manager's bitset.
+		// The manager bitset may already have bits from b2ComputeClusters (newly assigned bodies).
+		{
+			b2BitSet* dirtyBits = &world->clusterManager.dirtyBodyBitSet;
+			uint32_t threadBlocks = world->taskContexts.data[0].dirtyBodyBitSet.blockCount;
+
+			// Grow manager bitset if needed to match thread bitset block count
+			if ( dirtyBits->blockCount < threadBlocks )
+			{
+				b2GrowBitSet( dirtyBits, threadBlocks );
+			}
+
+			// Union requires matching block counts. Thread bitsets may be smaller if manager
+			// was grown by b2SetBitGrow in b2ComputeClusters. Iterate manually.
+			for ( int i = 0; i < world->workerCount; ++i )
+			{
+				b2BitSet* threadBits = &world->taskContexts.data[i].dirtyBodyBitSet;
+				uint32_t minBlocks = threadBits->blockCount < dirtyBits->blockCount ? threadBits->blockCount : dirtyBits->blockCount;
+				for ( uint32_t k = 0; k < minBlocks; ++k )
+				{
+					dirtyBits->bits[k] |= threadBits->bits[k];
+				}
+			}
 		}
 
 		// Update clusters. Bodies are assigned at the beginning of the solve to ensure they
@@ -1678,6 +1711,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 			b2FreeArenaItem( &world->arena, clusterData );
 			stepContext->clusterData = NULL;
+
 		}
 
 		world->profile.transforms = b2GetMilliseconds( transformTicks );

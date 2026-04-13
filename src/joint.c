@@ -214,6 +214,8 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 	joint->localIndex = B2_NULL_INDEX;
 	joint->islandId = B2_NULL_INDEX;
 	joint->islandIndex = B2_NULL_INDEX;
+	joint->clusterSlot = B2_CLUSTER_SLOT_NONE;
+	joint->clusterLocalIndex = B2_CLUSTER_SLOT_NONE;
 	joint->drawScale = def->drawScale;
 	joint->type = type;
 	joint->collideConnected = def->collideConnected;

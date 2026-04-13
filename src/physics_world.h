@@ -35,6 +35,9 @@ typedef struct b2TaskContext
 	// Used to put islands to sleep
 	b2BitSet awakeIslandBitSet;
 
+	// Bodies that changed cluster membership during finalization
+	b2BitSet dirtyBodyBitSet;
+
 	// Per worker split island candidate
 	float splitSleepTime;
 	int splitIslandId;

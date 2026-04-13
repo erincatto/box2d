@@ -26,10 +26,22 @@ b2DeclareArray( b2BodyState );
 typedef struct b2Cluster
 {
 	b2ArrayC( int ) bodyIds;
+
+	// Persistent arrays of touching contact/joint IDs classified as interior to this cluster
+	b2ArrayC( int ) contactIds;
+	b2ArrayC( int ) jointIds;
+
 	b2Vec2 center;
 	b2Vec2 accumulator;
 	int stateOffset;
 } b2Cluster;
+
+// Persistent border constraint storage between two clusters
+typedef struct b2PersistentBorder
+{
+	b2ArrayC( int ) contactIds;
+	b2ArrayC( int ) jointIds;
+} b2PersistentBorder;
 
 // Interior constraints for one cluster, allocated from the arena each step
 typedef struct b2ClusterSolveData
@@ -78,6 +90,11 @@ typedef struct b2BorderConstraints
 typedef struct b2ClusterManager
 {
 	b2Cluster clusters[B2_CLUSTER_COUNT];
+	b2PersistentBorder borders[B2_MAX_BORDERS];
+
+	// Bodies whose clusterIndex changed since last reclassification
+	b2BitSet dirtyBodyBitSet;
+
 	bool initialized;
 	int bitCapacity;
 } b2ClusterManager;
@@ -87,6 +104,23 @@ void b2DestroyClusters( b2ClusterManager* manager );
 
 void b2ComputeClusters( b2World* world );
 
-// Classify all awake touching contacts and joints into cluster interiors and borders.
-// Allocates from the arena; data is transient for this step.
-void b2ClassifyConstraints( b2World* world, b2StepContext* context );
+// Cluster slot encoding for back-references on contacts/joints:
+// 0..B2_CLUSTER_COUNT-1: interior constraint in that cluster
+// B2_CLUSTER_COUNT..B2_CLUSTER_COUNT+B2_MAX_BORDERS-1: border constraint at flat index (slot - B2_CLUSTER_COUNT)
+// -1: not classified
+#define B2_CLUSTER_SLOT_NONE ( -1 )
+
+// Link/unlink a touching contact into/from the persistent cluster arrays
+void b2ClusterLinkContact( b2World* world, int contactId, int bodyIdA, int bodyIdB );
+void b2ClusterUnlinkContact( b2World* world, int contactId );
+
+// Link/unlink a joint into/from the persistent cluster arrays
+void b2ClusterLinkJoint( b2World* world, int jointId, int bodyIdA, int bodyIdB );
+void b2ClusterUnlinkJoint( b2World* world, int jointId );
+
+// Reclassify constraints for bodies that changed cluster membership.
+// Only touches constraints of dirty bodies. Clears the dirty bitset.
+void b2ReclassifyDirtyConstraints( b2World* world, b2StepContext* context );
+
+// Build transient arena-allocated solve data from persistent cluster arrays.
+void b2BuildSolveData( b2World* world, b2StepContext* context );

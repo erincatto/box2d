@@ -284,6 +284,8 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contact->localIndex = set->contactSims.count;
 	contact->islandId = B2_NULL_INDEX;
 	contact->islandIndex = B2_NULL_INDEX;
+	contact->clusterSlot = B2_CLUSTER_SLOT_NONE;
+	contact->clusterLocalIndex = B2_CLUSTER_SLOT_NONE;
 	contact->shapeIdA = shapeIdA;
 	contact->shapeIdB = shapeIdB;
 	//contact->isMarked = false;

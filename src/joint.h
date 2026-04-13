@@ -45,6 +45,11 @@ typedef struct b2Joint
 	// B2_NULL_INDEX when not in an island.
 	int islandIndex;
 
+	// Cluster classification back-reference for O(1) swap-removal.
+	// clusterSlot: 0..15 = cluster interior, 16..135 = border at flat index (slot-16), -1 = unclassified
+	int16_t clusterSlot;
+	int clusterLocalIndex;
+
 	float drawScale;
 
 	b2JointType type;

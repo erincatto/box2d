@@ -17,8 +17,8 @@
 #define TracyCFrameMark
 #endif
 
-#define EXPECTED_SLEEP_STEP 239
-#define EXPECTED_HASH 0xFA50F9B3
+#define EXPECTED_SLEEP_STEP 259
+#define EXPECTED_HASH 0x042AD2ED
 
 enum
 {
@@ -127,6 +127,11 @@ static int SingleMultithreadingTest( int workerCount )
 
 	enkiDeleteTaskScheduler( scheduler );
 
+	if (data.sleepStep != EXPECTED_SLEEP_STEP || data.hash != EXPECTED_HASH)
+	{
+		printf( "  workers=%d sleepStep=%d hash=0x%08X\n", workerCount, data.sleepStep, data.hash );
+	}
+
 	ENSURE( data.sleepStep == EXPECTED_SLEEP_STEP );
 	ENSURE( data.hash == EXPECTED_HASH );
 
@@ -174,6 +179,11 @@ static int CrossPlatformTest( void )
 		TracyCFrameMark;
 
 		done = UpdateFallingHinges( worldId, &data );
+	}
+
+	if ( data.sleepStep != EXPECTED_SLEEP_STEP || data.hash != EXPECTED_HASH )
+	{
+		printf( "  cross-platform sleepStep=%d hash=0x%08X\n", data.sleepStep, data.hash );
 	}
 
 	ENSURE( data.sleepStep == EXPECTED_SLEEP_STEP );

@@ -50,6 +50,10 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 		body->setIndex = b2_awakeSet;
 		body->localIndex = awakeSet->bodyIds.count;
 
+		// Mark woken body dirty so its touching contacts (which were unlinked from
+		// cluster arrays during sleep) get reclassified by b2ReclassifyDirtyConstraints.
+		b2SetBitGrow( &world->clusterManager.dirtyBodyBitSet, bodyId );
+
 		// Reset sleep timer
 		body->sleepTime = 0.0f;
 
@@ -294,6 +298,9 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			B2_ASSERT( contact->setIndex == b2_awakeSet );
 			B2_ASSERT( contact->islandId == islandId );
 
+			// Remove from persistent cluster arrays before sleeping
+			b2ClusterUnlinkContact( world, contact->contactId );
+
 			int localIndex = contact->localIndex;
 			b2ContactSim* awakeContactSim = b2ContactSimArray_Get( &awakeSet->contactSims, localIndex );
 
@@ -325,6 +332,10 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			b2Joint* joint = b2JointArray_Get( &world->joints, link->jointId );
 			B2_ASSERT( joint->setIndex == b2_awakeSet );
 			B2_ASSERT( joint->islandId == islandId );
+
+			// Remove from persistent cluster arrays before sleeping
+			b2ClusterUnlinkJoint( world, joint->jointId );
+
 			int localIndex = joint->localIndex;
 
 			b2JointSim* awakeJointSim = b2JointSimArray_Get( &awakeSet->jointSims, localIndex );

@@ -253,6 +253,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 		world->taskContexts.data[i].jointStateBitSet = b2CreateBitSet( 1024 );
 		world->taskContexts.data[i].enlargedSimBitSet = b2CreateBitSet( 256 );
 		world->taskContexts.data[i].awakeIslandBitSet = b2CreateBitSet( 256 );
+		world->taskContexts.data[i].dirtyBodyBitSet = b2CreateBitSet( 256 );
 
 		world->sensorTaskContexts.data[i].eventBits = b2CreateBitSet( 128 );
 	}
@@ -282,6 +283,7 @@ void b2DestroyWorld( b2WorldId worldId )
 		b2DestroyBitSet( &world->taskContexts.data[i].jointStateBitSet );
 		b2DestroyBitSet( &world->taskContexts.data[i].enlargedSimBitSet );
 		b2DestroyBitSet( &world->taskContexts.data[i].awakeIslandBitSet );
+		b2DestroyBitSet( &world->taskContexts.data[i].dirtyBodyBitSet );
 
 		b2DestroyBitSet( &world->sensorTaskContexts.data[i].eventBits );
 	}
@@ -774,6 +776,14 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	context.restitutionThreshold = world->restitutionThreshold;
 	context.maxLinearVelocity = world->maxLinearSpeed;
 	context.enableWarmStarting = world->enableWarmStarting;
+
+	// Compute spatial clusters before collide so that b2LinkContact can classify
+	// contacts immediately. Bodies don't move until b2FinalizeBodiesTask.
+	{
+		b2TracyCZoneNC( clusters, "Clusters", b2_colorPaleVioletRed, true );
+		b2ComputeClusters( world );
+		b2TracyCZoneEnd( clusters );
+	}
 
 	// Update contacts
 	{

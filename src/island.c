@@ -232,6 +232,9 @@ void b2LinkContact( b2World* world, b2Contact* contact )
 
 	// Add contact to the island that survived
 	b2AddContactToIsland( world, finalIslandId, contact );
+
+	// Classify contact into persistent cluster arrays
+	b2ClusterLinkContact( world, contact->contactId, bodyIdA, bodyIdB );
 }
 
 // This is called when a contact no longer has contact points or when a contact is destroyed.
@@ -260,6 +263,9 @@ void b2UnlinkContact( b2World* world, b2Contact* contact )
 	contact->islandId = B2_NULL_INDEX;
 	contact->islandIndex = B2_NULL_INDEX;
 	island->constraintRemoveCount += 1;
+
+	// Remove contact from persistent cluster arrays
+	b2ClusterUnlinkContact( world, contact->contactId );
 
 	b2ValidateIsland( world, islandId );
 }
@@ -309,6 +315,9 @@ void b2LinkJoint( b2World* world, b2Joint* joint )
 
 	// Add joint the island that survived
 	b2AddJointToIsland( world, finalIslandId, joint );
+
+	// Classify joint into persistent cluster arrays
+	b2ClusterLinkJoint( world, joint->jointId, joint->edges[0].bodyId, joint->edges[1].bodyId );
 }
 
 void b2UnlinkJoint( b2World* world, b2Joint* joint )
@@ -339,6 +348,9 @@ void b2UnlinkJoint( b2World* world, b2Joint* joint )
 	joint->islandId = B2_NULL_INDEX;
 	joint->islandIndex = B2_NULL_INDEX;
 	island->constraintRemoveCount += 1;
+
+	// Remove joint from persistent cluster arrays
+	b2ClusterUnlinkJoint( world, joint->jointId );
 
 	b2ValidateIsland( world, islandId );
 }
