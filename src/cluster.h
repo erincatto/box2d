@@ -11,6 +11,7 @@
 #include "box2d/constants.h"
 #include "box2d/math_functions.h"
 
+typedef struct b2Body b2Body;
 typedef struct b2BodyState b2BodyState;
 typedef struct b2ContactConstraint b2ContactConstraint;
 typedef struct b2StepContext b2StepContext;
@@ -115,6 +116,13 @@ void b2ClusterUnlinkContact( b2World* world, int contactId );
 // Link/unlink a joint into/from the persistent cluster arrays
 void b2ClusterLinkJoint( b2World* world, int jointId, int bodyIdA, int bodyIdB );
 void b2ClusterUnlinkJoint( b2World* world, int jointId );
+
+// Link/unlink a body into/from the persistent cluster bodyIds array
+void b2ClusterLinkBody( b2World* world, b2Body* body );
+void b2ClusterUnlinkBody( b2World* world, b2Body* body );
+
+// Find the nearest cluster for an unassigned body, set clusterIndex, and link
+void b2FindAndLinkBodyCluster( b2World* world, b2Body* body );
 
 // Reclassify constraints for bodies that changed cluster membership.
 // Only touches constraints of dirty bodies. Clears the dirty bitset.

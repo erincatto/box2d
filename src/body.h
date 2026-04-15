@@ -74,7 +74,6 @@ typedef struct b2Body
 	int headContactKey;
 	int contactCount;
 
-	// todo maybe move this to the body sim
 	int headShapeId;
 	int shapeCount;
 
@@ -141,8 +140,12 @@ typedef struct b2Body
 	// State index in b2StepContext
 	int stateIndex;
 
-	int16_t clusterIndex;
-	
+	int8_t clusterIndex;
+	int8_t previousClusterIndex;
+
+	// index within b2Cluster::bodyIds, or B2_NULL_INDEX if not in a cluster
+	int clusterLocalIndex;
+
 	// This is monotonically advanced when a body is allocated in this slot
 	// Used to check for invalid b2BodyId
 	uint16_t generation;
@@ -207,49 +210,6 @@ typedef struct b2BodyState
 // Identity body state, notice the deltaRotation is {1, 0}
 static const b2BodyState b2_identityBodyState = { { 0.0f, 0.0f }, 0.0f, { 0.0f, 0.0f }, 0.0f, 0.0f, 0.0f, 0, B2_NULL_INDEX, { 0.0f, 0.0f }, { 1.0f, 0.0f } };
 
-#if 0
-// Body simulation data used for integration of position and velocity
-// Transform data used for collision and solver preparation.
-typedef struct b2BodySim
-{
-	// transform for body origin
-	b2Transform transform;
-
-	// center of mass position in world space
-	b2Vec2 center;
-
-	// previous rotation and COM for TOI
-	b2Rot rotation0;
-	b2Vec2 center0;
-
-	// location of center of mass relative to the body origin
-	b2Vec2 localCenter;
-
-	b2Vec2 force;
-	float torque;
-
-	// inverse inertia
-	float invMass;
-	float invInertia;
-
-	float linearDamping;
-	float angularDamping;
-	float gravityScale;
-
-	// Index of b2Body
-	int bodyId;
-
-	// todo testing
-	int clusterIndex;
-
-	// Index of this body within its cluster's local body state array
-	int localClusterIndex;
-
-	// b2BodyFlags
-	uint32_t flags;
-} b2BodySim;
-#endif
-
 // Get a validated body from a world using an id.
 b2Body* b2GetBodyFullId( b2World* world, b2BodyId bodyId );
 
@@ -261,8 +221,6 @@ b2BodyId b2MakeBodyId( b2World* world, int bodyId );
 
 bool b2ShouldBodiesCollide( b2World* world, b2Body* bodyA, b2Body* bodyB );
 
-// b2BodySim* b2GetBodySim( b2World* world, b2Body* body );
-// b2BodyState* b2GetBodyState( b2World* world, b2Body* body );
 void b2RemoveBodyFromSet( struct b2SolverSet* set, b2BodyArray* bodies, int localIndex );
 
 // careful calling this because it can invalidate body, state, joint, and contact pointers

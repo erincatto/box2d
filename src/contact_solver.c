@@ -10,21 +10,35 @@
 
 #include <stddef.h>
 
-void b2PrepareContactConstraints( b2StepContext* context, int* contactIds, b2ContactConstraint* constraints, int count )
+void b2PrepareContactConstraints( b2StepContext* context, int* B2_RESTRICT contactIds, b2ContactConstraint* B2_RESTRICT constraints,
+								   int count )
 {
 	b2World* world = context->world;
-	b2Body* bodies = world->bodies.data;
+	b2BodyState* states = context->states;
+	b2BodyState dummyState = b2_identityBodyState;
 	float warmStartScale = world->enableWarmStarting ? 1.0f : 0.0f;
 
 	for ( int i = 0; i < count; ++i )
 	{
-		b2Contact* contactSim = b2ContactArray_Get( &world->contacts, contactIds[i] );
-		b2Body* bodyA = bodies + contactSim->edges[0].bodyId;
-		b2Body* bodyB = bodies + contactSim->edges[1].bodyId;
-		int indexA = bodyA->stateIndex;
-		int indexB = bodyB->stateIndex;
+		if ( i + 1 < count )
+		{
+			b2Prefetch( world->contacts.data + contactIds[i + 1] );
+		}
 
-		const b2Manifold* manifold = &contactSim->manifold;
+		b2Contact* contact = b2ContactArray_Get( &world->contacts, contactIds[i] );
+
+#if B2_ENABLE_VALIDATION
+		b2Body* bodies = world->bodies.data;
+		b2Body* bodyA = bodies + contact->edges[0].bodyId;
+		B2_VALIDATE( bodyA->stateIndex == contact->stateIndexA );
+		b2Body* bodyB = bodies + contact->edges[1].bodyId;
+		B2_VALIDATE( bodyB->stateIndex == contact->stateIndexB );
+#endif
+
+		int indexA = contact->stateIndexA;
+		int indexB = contact->stateIndexB;
+
+		const b2Manifold* manifold = &contact->manifold;
 		int pointCount = manifold->pointCount;
 		B2_ASSERT( 0 < pointCount && pointCount <= 2 );
 
@@ -32,26 +46,35 @@ void b2PrepareContactConstraints( b2StepContext* context, int* contactIds, b2Con
 		constraint->stateIndexA = indexA;
 		constraint->stateIndexB = indexB;
 		constraint->normal = manifold->normal;
-		constraint->friction = contactSim->friction;
-		constraint->restitution = contactSim->restitution;
-		constraint->rollingResistance = contactSim->rollingResistance;
-		constraint->rollingImpulse = warmStartScale * manifold->rollingImpulse;
-		constraint->tangentSpeed = contactSim->tangentSpeed;
+		constraint->friction = contact->friction;
+		constraint->restitution = contact->restitution;
+		constraint->rollingResistance = contact->rollingResistance;
+		constraint->tangentSpeed = contact->tangentSpeed;
 		constraint->pointCount = pointCount;
 
-		b2Vec2 vA = bodyA->linearVelocity;
-		float wA = bodyA->angularVelocity;
-		float mA = bodyA->invMass;
-		float iA = bodyA->invInertia;
+		b2BodyState* stateA = indexA == B2_NULL_INDEX ? &dummyState : states + indexA;
+		b2BodyState* stateB = indexB == B2_NULL_INDEX ? &dummyState : states + indexB;
 
-		b2Vec2 vB = bodyB->linearVelocity;
-		float wB = bodyB->angularVelocity;
-		float mB = bodyB->invMass;
-		float iB = bodyB->invInertia;
+		b2Vec2 vA = stateA->linearVelocity;
+		float wA = stateA->angularVelocity;
+		float mA = stateA->invMass;
+		float iA = stateA->invInertia;
 
+		b2Vec2 vB = stateB->linearVelocity;
+		float wB = stateB->angularVelocity;
+		float mB = stateB->invMass;
+		float iB = stateB->invInertia;
+
+		if (constraint->rollingResistance > 0.0f)
 		{
 			float k = iA + iB;
+			constraint->rollingImpulse = warmStartScale * manifold->rollingImpulse;
 			constraint->rollingMass = k > 0.0f ? 1.0f / k : 0.0f;
+		}
+		else
+		{
+			constraint->rollingImpulse = 0.0f;
+			constraint->rollingMass = 0.0f;
 		}
 
 		b2Vec2 normal = constraint->normal;
@@ -89,7 +112,7 @@ void b2PrepareContactConstraints( b2StepContext* context, int* contactIds, b2Con
 	}
 }
 
-void b2WarmStartContactConstraints( b2StepContext* context, b2ContactConstraint* constraints, int count )
+void b2WarmStartContactConstraints( b2StepContext* context, b2ContactConstraint* B2_RESTRICT constraints, int count )
 {
 	b2BodyState* states = context->states;
 	b2BodyState dummyState = b2_identityBodyState;
@@ -159,7 +182,7 @@ void b2WarmStartContactConstraints( b2StepContext* context, b2ContactConstraint*
 	}
 }
 
-void b2SolveContactConstraints( b2StepContext* context, b2ContactConstraint* constraints, int count, float inv_h,
+void b2SolveContactConstraints( b2StepContext* context, b2ContactConstraint* B2_RESTRICT constraints, int count, float inv_h,
 								float contactSpeed, bool useBias )
 {
 	b2BodyState dummyState = b2_identityBodyState;
@@ -302,7 +325,8 @@ void b2SolveContactConstraints( b2StepContext* context, b2ContactConstraint* con
 	}
 }
 
-void b2ApplyContactRestitution( b2StepContext* context, b2ContactConstraint* constraints, int count, float threshold )
+void b2ApplyContactRestitution( b2StepContext* context, b2ContactConstraint* B2_RESTRICT constraints, int count,
+								float threshold )
 {
 	b2BodyState* states = context->states;
 	b2BodyState dummyState = b2_identityBodyState;
@@ -386,7 +410,8 @@ void b2ApplyContactRestitution( b2StepContext* context, b2ContactConstraint* con
 	}
 }
 
-void b2StoreContactImpulses( b2World* world, int* contactIds, b2ContactConstraint* constraints, int count )
+void b2StoreContactImpulses( b2World* world, int* B2_RESTRICT contactIds, b2ContactConstraint* B2_RESTRICT constraints,
+							 int count )
 {
 	for ( int i = 0; i < count; ++i )
 	{

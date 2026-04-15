@@ -276,6 +276,8 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	int shapeIdB = shapeB->id;
 
 	b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
+	contact->stateIndexA = B2_NULL_INDEX;
+	contact->stateIndexB = B2_NULL_INDEX;
 	contact->contactId = contactId;
 	contact->generation += 1;
 	contact->setIndex = setIndex;
@@ -286,7 +288,6 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contact->clusterLocalIndex = B2_CLUSTER_SLOT_NONE;
 	contact->shapeIdA = shapeIdA;
 	contact->shapeIdB = shapeIdB;
-	//contact->isMarked = false;
 	contact->flags = 0;
 
 	B2_ASSERT( shapeA->sensorIndex == B2_NULL_INDEX && shapeB->sensorIndex == B2_NULL_INDEX );

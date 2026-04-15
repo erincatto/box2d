@@ -58,6 +58,62 @@ void b2DestroyClusters( b2ClusterManager* manager )
 	b2DestroyBitSet( &manager->dirtyBodyBitSet );
 }
 
+void b2ClusterLinkBody( b2World* world, b2Body* body )
+{
+	B2_ASSERT( body->clusterLocalIndex == B2_NULL_INDEX );
+	B2_ASSERT( 0 <= body->clusterIndex && body->clusterIndex < B2_CLUSTER_COUNT );
+
+	b2Cluster* cluster = world->clusterManager.clusters + body->clusterIndex;
+	body->clusterLocalIndex = cluster->bodyIds.count;
+	b2Array_Push( cluster->bodyIds, body->id );
+}
+
+void b2ClusterUnlinkBody( b2World* world, b2Body* body )
+{
+	B2_ASSERT( body->clusterLocalIndex != B2_NULL_INDEX );
+	B2_ASSERT( 0 <= body->clusterIndex && body->clusterIndex < B2_CLUSTER_COUNT );
+
+	b2Cluster* cluster = world->clusterManager.clusters + body->clusterIndex;
+	int localIndex = body->clusterLocalIndex;
+	B2_ASSERT( 0 <= localIndex && localIndex < cluster->bodyIds.count );
+	B2_ASSERT( cluster->bodyIds.data[localIndex] == body->id );
+
+	int movedIndex = b2Array_RemoveSwap( cluster->bodyIds, localIndex );
+	if ( movedIndex != B2_NULL_INDEX )
+	{
+		int movedBodyId = cluster->bodyIds.data[localIndex];
+		b2Body* movedBody = b2BodyArray_Get( &world->bodies, movedBodyId );
+		B2_ASSERT( movedBody->clusterLocalIndex == movedIndex );
+		movedBody->clusterLocalIndex = localIndex;
+	}
+
+	body->clusterLocalIndex = B2_NULL_INDEX;
+}
+
+void b2FindAndLinkBodyCluster( b2World* world, b2Body* body )
+{
+	B2_ASSERT( body->clusterIndex == B2_NULL_INDEX );
+	B2_ASSERT( body->clusterLocalIndex == B2_NULL_INDEX );
+
+	b2Cluster* clusters = world->clusterManager.clusters;
+	b2Vec2 center = body->center;
+	float minDistSqr = b2DistanceSquared( center, clusters[0].center );
+	int bestIndex = 0;
+
+	for ( int j = 1; j < B2_CLUSTER_COUNT; ++j )
+	{
+		float distSqr = b2DistanceSquared( center, clusters[j].center );
+		if ( distSqr < minDistSqr )
+		{
+			bestIndex = j;
+			minDistSqr = distSqr;
+		}
+	}
+
+	body->clusterIndex = (int8_t)bestIndex;
+	b2ClusterLinkBody( world, body );
+}
+
 void b2ComputeClusters( b2World* world )
 {
 	b2ClusterManager* manager = &world->clusterManager;
@@ -72,7 +128,7 @@ void b2ComputeClusters( b2World* world )
 
 	if ( manager->initialized == false )
 	{
-		int seedCount = b2MinInt(awakeCount, B2_CLUSTER_COUNT);
+		int seedCount = b2MinInt( awakeCount, B2_CLUSTER_COUNT );
 		for ( int i = 0; i < seedCount; ++i )
 		{
 			int bodyId = awakeSet->bodyIds.data[i];
@@ -81,47 +137,54 @@ void b2ComputeClusters( b2World* world )
 		}
 
 		manager->initialized = true;
-	}
 
-	for ( int i = 0; i < B2_CLUSTER_COUNT; ++i )
-	{
-		clusters[i].bodyIds.count = 0;
-	}
-
-	// Populate clusters
-	int* bodyIds = awakeSet->bodyIds.data;
-	for ( int i = 0; i < awakeCount; ++i )
-	{
-		b2Body* body = b2BodyArray_Get( &world->bodies, bodyIds[i] );
-		int clusterIndex = body->clusterIndex;
-
-		if (clusterIndex == B2_NULL_INDEX)
+		// Bootstrap: link all existing awake bodies now that centers are seeded
+		for ( int i = 0; i < awakeCount; ++i )
 		{
-			b2Vec2 center = body->center;
-			float minDistSqr = b2DistanceSquared( center, clusters[0].center );
-			clusterIndex = 0;
-
-			for ( int j = 1; j < B2_CLUSTER_COUNT; ++j )
-			{
-				float distSqr = b2DistanceSquared( center, clusters[j].center );
-				if ( distSqr < minDistSqr )
-				{
-					clusterIndex = j;
-					minDistSqr = distSqr;
-				}
-			}
-
-			body->clusterIndex = (int16_t)clusterIndex;
-
-			// Newly assigned body is dirty — its constraints need classification
-			b2SetBitGrow( &manager->dirtyBodyBitSet, body->id );
+			int bodyId = awakeSet->bodyIds.data[i];
+			b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
+			b2FindAndLinkBodyCluster( world, body );
+			b2SetBitGrow( &manager->dirtyBodyBitSet, bodyId );
 		}
+	}
+	else
+	{
+		// Move dirty bodies that changed cluster during the previous step's b2FinalizeBodiesTask.
+		// b2FinalizeBodiesTask updates body->clusterIndex to the new cluster and stores the old value
+		// in body->previousClusterIndex. Use previousClusterIndex to unlink from the old cluster.
+		b2BitSet* dirtyBits = &manager->dirtyBodyBitSet;
+		uint32_t blockCount = dirtyBits->blockCount;
+		uint64_t* bits = dirtyBits->bits;
 
-		B2_ASSERT( 0 <= clusterIndex && clusterIndex < B2_CLUSTER_COUNT );
-		b2Array_Push( clusters[clusterIndex].bodyIds, body->id );
+		for ( uint32_t k = 0; k < blockCount; ++k )
+		{
+			uint64_t word = bits[k];
+			while ( word != 0 )
+			{
+				uint32_t ctz = b2CTZ64( word );
+				int bodyId = (int)( 64 * k + ctz );
+
+				b2Body* body = b2BodyArray_Get( &world->bodies, bodyId );
+
+				if ( body->clusterLocalIndex != B2_NULL_INDEX )
+				{
+					// Body is in the old cluster's bodyIds but needs to move.
+					// Temporarily swap to previousClusterIndex for unlinking.
+					int8_t newCluster = body->clusterIndex;
+					body->clusterIndex = body->previousClusterIndex;
+					b2ClusterUnlinkBody( world, body );
+
+					body->clusterIndex = newCluster;
+					b2ClusterLinkBody( world, body );
+				}
+
+				word = word & ( word - 1 );
+			}
+		}
 	}
 
 	// Re-seed empty clusters
+	int* bodyIds = awakeSet->bodyIds.data;
 	for ( int i = 0; i < B2_CLUSTER_COUNT; ++i )
 	{
 		int count = clusters[i].bodyIds.count;
@@ -500,7 +563,6 @@ void b2ReclassifyDirtyConstraints( b2World* world, b2StepContext* context )
 void b2BuildSolveData( b2World* world, b2StepContext* context )
 {
 	b2ClusterManager* manager = &world->clusterManager;
-	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
 
 	// Build cluster solve data from persistent arrays
 	int stateIndex = 0;
@@ -531,8 +593,6 @@ void b2BuildSolveData( b2World* world, b2StepContext* context )
 
 		b2AtomicStoreInt( &cd->solveComplete, 0 );
 	}
-
-	B2_ASSERT( stateIndex == awakeSet->bodyIds.count );
 
 	// Count non-empty borders
 	int borderCount = 0;

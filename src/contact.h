@@ -40,7 +40,19 @@ typedef struct b2ContactEdge
 // connectivity, and for simulation.
 typedef struct b2Contact
 {
+	// Transient
+	int stateIndexA;
+	int stateIndexB;
+
 	b2ContactEdge edges[2];
+
+	b2Manifold manifold;
+
+	// Mixed friction and restitution
+	float friction;
+	float restitution;
+	float rollingResistance;
+	float tangentSpeed;
 
 	// A contact only belongs to an island if touching, otherwise B2_NULL_INDEX.
 	int islandId;
@@ -76,14 +88,6 @@ typedef struct b2Contact
 	// Simulation data (merged from b2ContactSim)
 	b2Transform cachedTransformA;
 	b2Transform cachedTransformB;
-
-	b2Manifold manifold;
-
-	// Mixed friction and restitution
-	float friction;
-	float restitution;
-	float rollingResistance;
-	float tangentSpeed;
 
 	// b2ContactSimFlags
 	uint32_t simFlags;

@@ -284,11 +284,18 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	body->enableSleep = def->enableSleep;
 	body->stateIndex = B2_NULL_INDEX;
 	body->clusterIndex = B2_NULL_INDEX;
+	body->previousClusterIndex = B2_NULL_INDEX;
+	body->clusterLocalIndex = B2_NULL_INDEX;
 
 	// dynamic and kinematic bodies that are enabled need a island
 	if ( setId >= b2_awakeSet )
 	{
 		b2CreateIslandForBody( world, setId, body );
+
+		if ( world->clusterManager.initialized )
+		{
+			b2FindAndLinkBodyCluster( world, body );
+		}
 	}
 
 	b2ValidateSolverSets( world );
@@ -376,11 +383,11 @@ void b2DestroyBody( b2BodyId bodyId )
 
 	b2RemoveBodyFromIsland( world, body );
 
-	//// Clear cluster membership bitset
-	//if ( body->clusterIndex >= 0 && body->clusterIndex < B2_CLUSTER_COUNT )
-	//{
-	//	b2ClearBit( &world->clusterManager.clusters[body->clusterIndex].memberBits, (uint32_t)body->id );
-	//}
+	// Remove from persistent cluster bodyIds
+	if ( body->clusterLocalIndex != B2_NULL_INDEX )
+	{
+		b2ClusterUnlinkBody( world, body );
+	}
 
 	// Remove body sim from solver set that owns it
 	b2SolverSet* set = b2SolverSetArray_Get( &world->solverSets, body->setIndex );
@@ -399,6 +406,8 @@ void b2DestroyBody( b2BodyId bodyId )
 	body->localIndex = B2_NULL_INDEX;
 	body->id = B2_NULL_INDEX;
 	body->clusterIndex = B2_NULL_INDEX;
+	body->previousClusterIndex = B2_NULL_INDEX;
+	body->clusterLocalIndex = B2_NULL_INDEX;
 
 	b2ValidateSolverSets( world );
 }
@@ -1106,14 +1115,20 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 		// Create island for body
 		b2CreateIslandForBody( world, b2_awakeSet, body );
 
-		B2_ASSERT( body->clusterIndex == B2_NULL_INDEX );
+		// Assign cluster before stage 7 relinks joints (b2ClusterLinkJoint needs valid clusterIndex)
+		b2FindAndLinkBodyCluster( world, body );
+		b2SetBitGrow( &world->clusterManager.dirtyBodyBitSet, body->id );
 	}
 	else if ( type == b2_staticBody )
 	{
 		// Remove body from island.
 		b2RemoveBodyFromIsland( world, body );
 
-		// The body may or may not have been in a cluster.
+		// Remove from persistent cluster bodyIds
+		if ( body->clusterLocalIndex != B2_NULL_INDEX )
+		{
+			b2ClusterUnlinkBody( world, body );
+		}
 		body->clusterIndex = B2_NULL_INDEX;
 	}
 

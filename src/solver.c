@@ -513,7 +513,6 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 		body->center = b2Add( body->center, state->deltaPosition );
 
 		// Find best cluster
-		int16_t oldCluster = body->clusterIndex;
 		int bestIndex = 0;
 		float minDistSqr = b2DistanceSquared( body->center, clusterManager->clusters[0].center );
 		for ( int clusterIndex = 1; clusterIndex < B2_CLUSTER_COUNT; ++clusterIndex )
@@ -526,16 +525,16 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 			}
 		}
 
-		body->clusterIndex = (int16_t)bestIndex;
-
-		if ( bestIndex != oldCluster )
+		if ( bestIndex != body->clusterIndex )
 		{
+			body->previousClusterIndex = body->clusterIndex;
+			body->clusterIndex = (int8_t)bestIndex;
 			b2SetBitGrow( dirtyBodyBitSet, state->bodyId );
 		}
 
 		clusterBodies[stateIndex] = (b2ClusterBody){
 			.position = body->center,
-			.clusterIndex = (int16_t)bestIndex,
+			.clusterIndex = bestIndex,
 		};
 
 		body->transform.q = b2NormalizeRot( b2MulRot( state->deltaRotation, body->transform.q ) );
@@ -682,7 +681,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 // This solves borders serially as they become available.
 static void b2SolveBordersWhenReady( b2StepContext* context, bool useBias, bool isRestitution, b2SolverStage* stage, int epoch )
 {
-	b2TracyCZoneNC( solver_borders, "Solve Borders", b2_colorMintCream, true );
+	b2TracyCZoneNC( solver_borders, "Solve Borders", b2_colorOrangeRed, true );
 
 	b2World* world = context->world;
 	b2BorderConstraints* borders = context->borders;
@@ -893,7 +892,7 @@ static void b2PrepareWorkerClusters( b2StepContext* context, int workerIndex, in
 
 static void b2PrepareBordersWhenReady( b2StepContext* context, int epoch )
 {
-	b2TracyCZoneNC( prepare_borders, "Prepare Borders", b2_colorMintCream, true );
+	b2TracyCZoneNC( prepare_borders, "Prepare Borders", b2_colorOrangeRed, true );
 
 	b2World* world = context->world;
 	b2BorderConstraints* borders = context->borders;
@@ -1060,7 +1059,7 @@ static void b2WarmStartWorkerClusters( b2StepContext* context, int workerIndex, 
 // because floating point math addition is not associative.
 static void b2WarmStartBordersWhenReady( b2StepContext* context, int epoch )
 {
-	b2TracyCZoneNC( warm_start_borders, "Warm Start Borders", b2_colorNavy, true );
+	b2TracyCZoneNC( warm_start_borders, "Warm Start Borders", b2_colorOrangeRed, true );
 
 	b2World* world = context->world;
 	b2BorderConstraints* borders = context->borders;
@@ -1640,8 +1639,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		int clusterBodyCounts[B2_CLUSTER_COUNT] = { 0 };
 		for ( int i = 0; i < B2_CLUSTER_COUNT; ++i )
 		{
-			// Done with the bodies
-			clusters[i].bodyIds.count = 0;
 			clusters[i].accumulator = b2Vec2_zero;
 		}
 

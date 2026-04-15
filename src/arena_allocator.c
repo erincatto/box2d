@@ -30,7 +30,7 @@ void b2DestroyArenaAllocator( b2ArenaAllocator* allocator )
 	b2Free( allocator->data, allocator->capacity );
 }
 
-#define B2_FORCE_HEAP 1
+#define B2_FORCE_HEAP 0
 
 void* b2AllocateArenaItem( b2ArenaAllocator* alloc, int size, const char* name )
 {

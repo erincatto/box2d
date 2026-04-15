@@ -385,6 +385,7 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 	b2Contact** contactSims = stepContext->contacts;
 	b2Shape* shapes = world->shapes.data;
 	b2Body* bodies = world->bodies.data;
+	b2Cluster* clusters = world->clusterManager.clusters;
 
 	B2_ASSERT( startIndex < endIndex );
 
@@ -394,24 +395,24 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 
 	for ( int contactIndex = startIndex; contactIndex < endIndex; ++contactIndex )
 	{
-		b2Contact* contactSim = contactSims[contactIndex];
+		b2Contact* contact = contactSims[contactIndex];
 
-		int contactId = contactSim->contactId;
+		int contactId = contact->contactId;
 
-		b2Shape* shapeA = shapes + contactSim->shapeIdA;
-		b2Shape* shapeB = shapes + contactSim->shapeIdB;
+		b2Shape* shapeA = shapes + contact->shapeIdA;
+		b2Shape* shapeB = shapes + contact->shapeIdB;
 
 		// Do proxies still overlap?
 		bool overlap = b2AABB_Overlaps( shapeA->fatAABB, shapeB->fatAABB );
 		if ( overlap == false )
 		{
-			contactSim->simFlags |= b2_simDisjoint;
-			contactSim->simFlags &= ~b2_simTouchingFlag;
+			contact->simFlags |= b2_simDisjoint;
+			contact->simFlags &= ~b2_simTouchingFlag;
 			b2SetBit( &taskContext->contactStateBitSet, contactId );
 		}
 		else
 		{
-			bool wasTouching = ( contactSim->simFlags & b2_simTouchingFlag );
+			bool wasTouching = ( contact->simFlags & b2_simTouchingFlag );
 
 			// Update contact respecting shape/body order (A,B)
 			b2Body* bodyA = bodies + shapeA->bodyId;
@@ -419,13 +420,33 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 			b2Transform transformA = bodyA->transform;
 			b2Transform transformB = bodyB->transform;
 
+			B2_VALIDATE( bodyA->clusterIndex != B2_NULL_INDEX || bodyA->type == b2_staticBody );
+			if (bodyA->clusterIndex != B2_NULL_INDEX)
+			{
+				contact->stateIndexA = clusters[bodyA->clusterIndex].stateOffset + bodyA->clusterLocalIndex;
+			}
+			else
+			{
+				contact->stateIndexA = B2_NULL_INDEX;
+			}
+
+			B2_VALIDATE( bodyB->clusterIndex != B2_NULL_INDEX || bodyB->type == b2_staticBody );
+			if (bodyB->clusterIndex != B2_NULL_INDEX)
+			{
+				contact->stateIndexB = clusters[bodyB->clusterIndex].stateOffset + bodyB->clusterLocalIndex;
+			}
+			else
+			{
+				contact->stateIndexB = B2_NULL_INDEX;
+			}
+
 			// Contact recycling optimization. Please cite this code if you use this optimization.
 			// This is inspired by persistent contact manifolds used in some physics engines, such as PhysX.
 			// However, this allows larger relative motion and has fewer tuning parameters (just one).
-			if ( recycleDistance > 0.0f && contactSim->simFlags & b2_simRelativeTransformValid )
+			if ( recycleDistance > 0.0f && contact->simFlags & b2_simRelativeTransformValid )
 			{
 				b2Transform xf = b2InvMulTransforms( transformA, transformB );
-				b2Transform xfc = b2InvMulTransforms( contactSim->cachedTransformA, contactSim->cachedTransformB );
+				b2Transform xfc = b2InvMulTransforms( contact->cachedTransformA, contact->cachedTransformB );
 				float maxExtentA = bodyA->type == b2_staticBody ? 0.0f : bodyA->maxExtent;
 				float maxExtentB = bodyB->type == b2_staticBody ? 0.0f : bodyB->maxExtent;
 				float maxExtent = b2MaxFloat( maxExtentA, maxExtentB );
@@ -438,17 +459,17 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 				float tolerance = wasTouching ? recycleDistance : recycleDistanceNonTouching;
 				if ( distance + maxExtent * b2AbsFloat( qr.s ) < tolerance )
 				{
-					b2Rot dqA = b2MulRot( transformA.q, b2InvertRot( contactSim->cachedTransformA.q ) );
-					b2Rot dqB = b2MulRot( transformB.q, b2InvertRot( contactSim->cachedTransformB.q ) );
-					b2Vec2 normal = contactSim->manifold.normal;
+					b2Rot dqA = b2MulRot( transformA.q, b2InvertRot( contact->cachedTransformA.q ) );
+					b2Rot dqB = b2MulRot( transformB.q, b2InvertRot( contact->cachedTransformB.q ) );
+					b2Vec2 normal = contact->manifold.normal;
 
 					// Minimize round-off
 					b2Vec2 dc = b2Sub( bodyB->center, bodyA->center );
 
-					for ( int i = 0; i < contactSim->manifold.pointCount; ++i )
+					for ( int i = 0; i < contact->manifold.pointCount; ++i )
 					{
 						// Keep anchors but update separation, same as sub-stepping. This eliminates jitter.
-						b2ManifoldPoint* mp = contactSim->manifold.points + i;
+						b2ManifoldPoint* mp = contact->manifold.points + i;
 						b2Vec2 rA = b2RotateVector( dqA, mp->anchorA );
 						b2Vec2 rB = b2RotateVector( dqB, mp->anchorB );
 						b2Vec2 dp = b2Add( dc, b2Sub( rB, rA ) );
@@ -462,33 +483,33 @@ static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, v
 				}
 			}
 
-			contactSim->simFlags |= b2_simRelativeTransformValid;
+			contact->simFlags |= b2_simRelativeTransformValid;
 
 			b2Vec2 centerOffsetA = b2RotateVector( transformA.q, bodyA->localCenter );
 			b2Vec2 centerOffsetB = b2RotateVector( transformB.q, bodyB->localCenter );
 
 			// This updates solid contacts
 			bool touching =
-				b2UpdateContact( world, contactSim, shapeA, transformA, centerOffsetA, shapeB, transformB, centerOffsetB );
+				b2UpdateContact( world, contact, shapeA, transformA, centerOffsetA, shapeB, transformB, centerOffsetB );
 
 			// State changes that affect island connectivity. Also affects contact events.
 			if ( touching == true && wasTouching == false )
 			{
-				contactSim->simFlags |= b2_simStartedTouching;
+				contact->simFlags |= b2_simStartedTouching;
 				b2SetBit( &taskContext->contactStateBitSet, contactId );
 			}
 			else if ( touching == false && wasTouching == true )
 			{
-				contactSim->simFlags |= b2_simStoppedTouching;
+				contact->simFlags |= b2_simStoppedTouching;
 				b2SetBit( &taskContext->contactStateBitSet, contactId );
 			}
 
 			// Caching for contact recycling. Requires 40 bytes.
-			contactSim->cachedTransformA = transformA;
-			contactSim->cachedTransformB = transformB;
-			for ( int i = 0; i < contactSim->manifold.pointCount; ++i )
+			contact->cachedTransformA = transformA;
+			contact->cachedTransformB = transformB;
+			for ( int i = 0; i < contact->manifold.pointCount; ++i )
 			{
-				b2ManifoldPoint* mp = contactSim->manifold.points + i;
+				b2ManifoldPoint* mp = contact->manifold.points + i;
 				mp->baseSeparation = mp->separation;
 			}
 
@@ -619,10 +640,6 @@ static void b2Collide( b2StepContext* context )
 			b2Contact* contact = b2ContactArray_Get( &world->contacts, contactId );
 			B2_ASSERT( contact->setIndex == b2_awakeSet );
 
-			int localIndex = contact->localIndex;
-
-			b2Contact* contactSim = b2ContactArray_Get( &world->contacts, contact->contactId );
-
 			const b2Shape* shapeA = shapes + contact->shapeIdA;
 			const b2Shape* shapeB = shapes + contact->shapeIdB;
 			b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->generation };
@@ -634,14 +651,13 @@ static void b2Collide( b2StepContext* context )
 				.generation = contact->generation,
 			};
 			uint32_t flags = contact->flags;
-			uint32_t simFlags = contactSim->simFlags;
+			uint32_t simFlags = contact->simFlags;
 
 			if ( simFlags & b2_simDisjoint )
 			{
 				// Bounding boxes no longer overlap
 				b2DestroyContact( world, contact, false );
 				contact = NULL;
-				contactSim = NULL;
 			}
 			else if ( simFlags & b2_simStartedTouching )
 			{
@@ -653,7 +669,7 @@ static void b2Collide( b2StepContext* context )
 					b2ContactBeginTouchEventArray_Push( &world->contactBeginEvents, event );
 				}
 
-				B2_ASSERT( contactSim->manifold.pointCount > 0 );
+				B2_ASSERT( contact->manifold.pointCount > 0 );
 				B2_ASSERT( contact->setIndex == b2_awakeSet );
 
 				// Link first because this wakes colliding bodies and ensures the body sims
@@ -661,17 +677,11 @@ static void b2Collide( b2StepContext* context )
 				contact->flags |= b2_contactTouchingFlag;
 				b2LinkContact( world, contact );
 
-				B2_ASSERT( contact->localIndex == localIndex );
-
-				// Contact sim pointer may have become orphaned due to awake set growth,
-				// so I just need to refresh it.
-				contactSim = contact;
-
-				contactSim->simFlags &= ~b2_simStartedTouching;
+				contact->simFlags &= ~b2_simStartedTouching;
 			}
 			else if ( simFlags & b2_simStoppedTouching )
 			{
-				contactSim->simFlags &= ~b2_simStoppedTouching;
+				contact->simFlags &= ~b2_simStoppedTouching;
 				contact->flags &= ~b2_contactTouchingFlag;
 
 				if ( contact->flags & b2_contactEnableContactEvents )
@@ -679,8 +689,6 @@ static void b2Collide( b2StepContext* context )
 					b2ContactEndTouchEvent event = { shapeIdA, shapeIdB, contactFullId };
 					b2ContactEndTouchEventArray_Push( world->contactEndEvents + endEventArrayIndex, event );
 				}
-
-				B2_ASSERT( contactSim->manifold.pointCount == 0 );
 
 				b2UnlinkContact( world, contact );
 			}

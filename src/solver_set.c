@@ -54,6 +54,12 @@ void b2WakeSolverSet( b2World* world, int setIndex )
 		// cluster arrays during sleep) get reclassified by b2ReclassifyDirtyConstraints.
 		b2SetBitGrow( &world->clusterManager.dirtyBodyBitSet, bodyId );
 
+		// Add back to persistent cluster bodyIds
+		if ( body->clusterIndex != B2_NULL_INDEX )
+		{
+			b2ClusterLinkBody( world, body );
+		}
+
 		// Reset sleep timer
 		body->sleepTime = 0.0f;
 
@@ -210,6 +216,12 @@ void b2TrySleepIsland( b2World* world, int islandId )
 				B2_ASSERT( moveEvent->bodyId.generation == body->generation );
 				moveEvent->fellAsleep = true;
 				body->bodyMoveIndex = B2_NULL_INDEX;
+			}
+
+			// Remove from persistent cluster bodyIds before sleeping
+			if ( body->clusterLocalIndex != B2_NULL_INDEX )
+			{
+				b2ClusterUnlinkBody( world, body );
 			}
 
 			int awakeBodyIndex = body->localIndex;

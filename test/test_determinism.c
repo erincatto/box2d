@@ -18,7 +18,7 @@
 #endif
 
 #define EXPECTED_SLEEP_STEP 259
-#define EXPECTED_HASH 0x042AD2ED
+#define EXPECTED_HASH 0x21AFA8EC
 
 enum
 {
