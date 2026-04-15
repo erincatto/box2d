@@ -13,6 +13,7 @@ set(BOX2D_TEST_FILES
     test_math.c
     test_shape.c
     test_table.c
+    test_thread.c
     test_world.c
 )
 

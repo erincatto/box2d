@@ -34,6 +34,7 @@ extern int IdTest( void );
 extern int MathTest( void );
 extern int ShapeTest( void );
 extern int TableTest( void );
+extern int ThreadTest( void );
 extern int WorldTest( void );
 
 // Filter-aware test runner: skips tests that don't match the filter
@@ -95,6 +96,7 @@ int main( int argc, char** argv )
 	MAYBE_RUN_TEST( DynamicTreeTest );
 	MAYBE_RUN_TEST( IdTest );
 	MAYBE_RUN_TEST( ShapeTest );
+	MAYBE_RUN_TEST( ThreadTest );
 	MAYBE_RUN_TEST( WorldTest );
 
 	printf( "======================================\n" );

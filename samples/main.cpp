@@ -30,7 +30,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <client/TracyProfiler.hpp>
 
 #ifdef BOX2D_PROFILE
 #include <tracy/Tracy.hpp>
@@ -574,7 +573,9 @@ int main( int, char** )
 // {,,ucrtbased.dll}_crtBreakAlloc = <allocation number>
 #endif
 
+#ifdef BOX2D_PROFILE
 	tracy::StartupProfiler();
+#endif
 
 	// Install memory hooks
 	b2SetAllocator( AllocFcn, FreeFcn );
@@ -784,7 +785,9 @@ int main( int, char** )
 
 	s_context.Save();
 
+#ifdef BOX2D_PROFILE
 	tracy::ShutdownProfiler();
+#endif
 
 #if defined( _MSC_VER )
 	_CrtDumpMemoryLeaks();
