@@ -20,6 +20,10 @@
 // }
 #endif
 
+#ifdef TRACY_ENABLE
+#include <tracy/TracyC.h>
+#endif
+
 extern int BitSetTest( void );
 extern int CollisionTest( void );
 extern int ContainerTest( void );
@@ -64,6 +68,10 @@ int main( int argc, char** argv )
 	//_CrtSetBreakAlloc(196);
 #endif
 
+#ifdef TRACY_ENABLE
+	___tracy_startup_profiler();
+#endif
+
 	const char* filter = NULL;
 	if ( argc > 1 )
 	{
@@ -91,6 +99,10 @@ int main( int argc, char** argv )
 
 	printf( "======================================\n" );
 	printf( "All Box2D tests passed!\n" );
+
+#ifdef TRACY_ENABLE
+	___tracy_shutdown_profiler();
+#endif
 
 #if defined( _MSC_VER )
 	if ( _CrtDumpMemoryLeaks() )

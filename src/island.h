@@ -13,8 +13,6 @@ typedef struct b2Contact b2Contact;
 typedef struct b2Joint b2Joint;
 typedef struct b2World b2World;
 
-b2DeclareArray( int );
-
 // Cached contact data stored in the island for fast contiguous iteration.
 // Avoids touching b2Contact during union-find in b2SplitIsland.
 typedef struct b2ContactLink

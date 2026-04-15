@@ -863,6 +863,81 @@ typedef enum b2SolverBlockType
 } b2SolverBlockType;
 */
 
+// Compute the number of work blocks needed given an item count and desired block size.
+// If there are too many blocks for the worker count, the block size is enlarged.
+static inline int b2ComputeBlockCount( int itemCount, int defaultBlockSize, int maxBlockCount )
+{
+	if ( itemCount == 0 )
+	{
+		return 0;
+	}
+
+	if ( itemCount > defaultBlockSize * maxBlockCount )
+	{
+		return maxBlockCount;
+	}
+
+	return ( ( itemCount - 1 ) / defaultBlockSize ) + 1;
+}
+
+// Initialize solver blocks for a contiguous range of items. Computes block size internally
+// from the same parameters used by b2ComputeBlockCount.
+static void b2InitBlocks( b2SolverBlock* blocks, int blockCount, int itemCount, int defaultBlockSize, int maxBlockCount,
+						  int16_t blockType )
+{
+	if ( blockCount == 0 )
+	{
+		return;
+	}
+
+	int blockSize;
+	if ( itemCount > defaultBlockSize * maxBlockCount )
+	{
+		blockSize = itemCount / maxBlockCount;
+	}
+	else
+	{
+		blockSize = defaultBlockSize;
+	}
+
+	for ( int i = 0; i < blockCount; ++i )
+	{
+		blocks[i].startIndex = i * blockSize;
+		blocks[i].count = (int16_t)blockSize;
+		blocks[i].blockType = blockType;
+		b2AtomicStoreInt( &blocks[i].syncIndex, 0 );
+	}
+
+	// The last block may not be full
+	blocks[blockCount - 1].count = (int16_t)( itemCount - ( blockCount - 1 ) * blockSize );
+}
+
+static inline b2SolverStage* b2InitStage( b2SolverStage* stage, b2SolverStageType type, b2SolverBlock* blocks, int blockCount,
+									int colorIndex )
+{
+	stage->type = type;
+	stage->blocks = blocks;
+	stage->blockCount = blockCount;
+	stage->colorIndex = colorIndex;
+	b2AtomicStoreInt( &stage->completionCount, 0 );
+	return stage + 1;
+}
+
+// Initialize one stage per color for each iteration. Used for warm start, solve, relax, and restitution.
+static b2SolverStage* b2InitColorStages( b2SolverStage* stage, b2SolverStageType type, int iterations,
+										  int activeColorCount, b2SolverBlock** graphColorBlocks, int* colorBlockCounts,
+										  int* activeColorIndices )
+{
+	for ( int j = 0; j < iterations; ++j )
+	{
+		for ( int i = 0; i < activeColorCount; ++i )
+		{
+			stage = b2InitStage( stage, type, graphColorBlocks[i], colorBlockCounts[i], activeColorIndices[i] );
+		}
+	}
+	return stage;
+}
+
 static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2SolverBlock* block, int workerIndex )
 {
 	b2SolverStageType stageType = stage->type;
@@ -1372,38 +1447,19 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		int workerCount = world->workerCount;
 
-		// todo 4 seems good but more benchmarking would be good
+		// 4 is a small power of two that allows for meaningful work stealing
 		const int blocksPerWorker = 4;
-
 		const int maxBlockCount = blocksPerWorker * workerCount;
 
 		// Configure blocks for tasks that parallel-for bodies
-		int bodyBlockSize = 1 << 5;
-		int bodyBlockCount;
-		if ( awakeBodyCount > bodyBlockSize * maxBlockCount )
-		{
-			// Too many blocks, increase block size
-			bodyBlockSize = awakeBodyCount / maxBlockCount;
-			bodyBlockCount = maxBlockCount;
-		}
-		else
-		{
-			// Divide by bodyBlockSize (32) and ensure there is at least one block
-			bodyBlockCount = ( ( awakeBodyCount - 1 ) >> 5 ) + 1;
-		}
+		int bodyBlockCount = b2ComputeBlockCount( awakeBodyCount, 1 << 5, maxBlockCount );
 
 		// Configure blocks for tasks parallel-for each active graph color
 		// The blocks are a mix of SIMD contact blocks and joint blocks
 		int activeColorIndices[B2_GRAPH_COLOR_COUNT];
-
 		int colorContactCounts[B2_GRAPH_COLOR_COUNT];
-		int colorContactBlockSizes[B2_GRAPH_COLOR_COUNT];
-		int colorContactBlockCounts[B2_GRAPH_COLOR_COUNT];
-
 		int colorJointCounts[B2_GRAPH_COLOR_COUNT];
-		int colorJointBlockSizes[B2_GRAPH_COLOR_COUNT];
-		int colorJointBlockCounts[B2_GRAPH_COLOR_COUNT];
-
+		int colorBlockCounts[B2_GRAPH_COLOR_COUNT];
 		int graphBlockCount = 0;
 
 		// c is the active color index
@@ -1418,58 +1474,17 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			{
 				activeColorIndices[c] = i;
 
-				// 4/8-way SIMD
-				int colorContactCountSIMD = colorContactCount > 0 ? ( ( colorContactCount - 1 ) >> B2_SIMD_SHIFT ) + 1 : 0;
-
-				colorContactCounts[c] = colorContactCountSIMD;
-
-				// determine the number of contact work blocks for this color
-				if ( colorContactCountSIMD > blocksPerWorker * maxBlockCount )
-				{
-					// too many contact blocks per worker, so make bigger blocks
-					colorContactBlockSizes[c] = colorContactCountSIMD / maxBlockCount;
-					colorContactBlockCounts[c] = maxBlockCount;
-				}
-				else if ( colorContactCountSIMD > 0 )
-				{
-					// dividing by blocksPerWorker (4)
-					colorContactBlockSizes[c] = blocksPerWorker;
-
-					// This math makes sure there is at least one block
-					// colorContactBlockCounts[c] = ( ( colorContactCountSIMD - 1 ) >> 2 ) + 1;
-					colorContactBlockCounts[c] = ( ( colorContactCountSIMD - 1 ) / blocksPerWorker ) + 1;
-				}
-				else
-				{
-					// no contacts in this color
-					colorContactBlockSizes[c] = 0;
-					colorContactBlockCounts[c] = 0;
-				}
-
+				// Ceiling for wide constraint count
+				int colorContactCountW = colorContactCount > 0 ? ( ( colorContactCount - 1 ) >> B2_SIMD_SHIFT ) + 1 : 0;
+				colorContactCounts[c] = colorContactCountW;
 				colorJointCounts[c] = colorJointCount;
 
-				// determine number of joint work blocks for this color
-				if ( colorJointCount > blocksPerWorker * maxBlockCount )
-				{
-					// too many joint blocks
-					colorJointBlockSizes[c] = colorJointCount / maxBlockCount;
-					colorJointBlockCounts[c] = maxBlockCount;
-				}
-				else if ( colorJointCount > 0 )
-				{
-					// dividing by blocksPerWorker (4)
-					colorJointBlockSizes[c] = blocksPerWorker;
-					// colorJointBlockCounts[c] = ( ( colorJointCount - 1 ) >> 2 ) + 1;
-					colorJointBlockCounts[c] = ( ( colorJointCount - 1 ) / 4 ) + 1;
-				}
-				else
-				{
-					colorJointBlockSizes[c] = 0;
-					colorJointBlockCounts[c] = 0;
-				}
+				int contactBlockCount = b2ComputeBlockCount( colorContactCountW, blocksPerWorker, maxBlockCount );
+				int jointBlockCount = b2ComputeBlockCount( colorJointCount, blocksPerWorker, maxBlockCount );
+				colorBlockCounts[c] = contactBlockCount + jointBlockCount;
 
-				graphBlockCount += colorContactBlockCounts[c] + colorJointBlockCounts[c];
-				simdContactCount += colorContactCountSIMD;
+				graphBlockCount += colorBlockCounts[c];
+				simdContactCount += colorContactCountW;
 				c += 1;
 			}
 		}
@@ -1518,13 +1533,13 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					}
 
 					// remainder
-					int colorContactCountSIMD = ( ( colorContactCount - 1 ) >> B2_SIMD_SHIFT ) + 1;
-					for ( int k = colorContactCount; k < B2_SIMD_WIDTH * colorContactCountSIMD; ++k )
+					int colorContactCountW = ( ( colorContactCount - 1 ) >> B2_SIMD_SHIFT ) + 1;
+					for ( int k = colorContactCount; k < B2_SIMD_WIDTH * colorContactCountW; ++k )
 					{
 						contacts[B2_SIMD_WIDTH * contactBase + k] = NULL;
 					}
 
-					contactBase += colorContactCountSIMD;
+					contactBase += colorContactCountW;
 				}
 
 				int colorJointCount = color->jointSims.count;
@@ -1540,26 +1555,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		}
 
 		// Define work blocks for preparing contacts and storing contact impulses
-		int contactBlockSize = blocksPerWorker;
-		// int contactBlockCount = simdContactCount > 0 ? ( ( simdContactCount - 1 ) >> 2 ) + 1 : 0;
-		int contactBlockCount = simdContactCount > 0 ? ( ( simdContactCount - 1 ) / blocksPerWorker ) + 1 : 0;
-		if ( simdContactCount > contactBlockSize * maxBlockCount )
-		{
-			// Too many blocks, increase block size
-			contactBlockSize = simdContactCount / maxBlockCount;
-			contactBlockCount = maxBlockCount;
-		}
+		int contactBlockCount = b2ComputeBlockCount( simdContactCount, blocksPerWorker, maxBlockCount );
 
 		// Define work blocks for preparing joints
-		int jointBlockSize = blocksPerWorker;
-		// int jointBlockCount = awakeJointCount > 0 ? ( ( awakeJointCount - 1 ) >> 2 ) + 1 : 0;
-		int jointBlockCount = awakeJointCount > 0 ? ( ( awakeJointCount - 1 ) / blocksPerWorker ) + 1 : 0;
-		if ( awakeJointCount > jointBlockSize * maxBlockCount )
-		{
-			// Too many blocks, increase block size
-			jointBlockSize = awakeJointCount / maxBlockCount;
-			jointBlockCount = maxBlockCount;
-		}
+		int jointBlockCount = b2ComputeBlockCount( awakeJointCount, blocksPerWorker, maxBlockCount );
 
 		int stageCount = 0;
 
@@ -1605,49 +1604,12 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			world->activeTaskCount += splitIslandTask == NULL ? 0 : 1;
 		}
 
-		// Prepare body work blocks
-		for ( int i = 0; i < bodyBlockCount; ++i )
-		{
-			b2SolverBlock* block = bodyBlocks + i;
-			block->startIndex = i * bodyBlockSize;
-			block->count = (int16_t)bodyBlockSize;
-			block->blockType = b2_bodyBlock;
-			b2AtomicStoreInt( &block->syncIndex, 0 );
-		}
-		bodyBlocks[bodyBlockCount - 1].count = (int16_t)( awakeBodyCount - ( bodyBlockCount - 1 ) * bodyBlockSize );
+		// Prepare body, joint, and contact work blocks
+		b2InitBlocks( bodyBlocks, bodyBlockCount, awakeBodyCount, 1 << 5, maxBlockCount, b2_bodyBlock );
+		b2InitBlocks( jointBlocks, jointBlockCount, awakeJointCount, blocksPerWorker, maxBlockCount, b2_jointBlock );
+		b2InitBlocks( contactBlocks, contactBlockCount, simdContactCount, blocksPerWorker, maxBlockCount, b2_contactBlock );
 
-		// Prepare joint work blocks
-		for ( int i = 0; i < jointBlockCount; ++i )
-		{
-			b2SolverBlock* block = jointBlocks + i;
-			block->startIndex = i * jointBlockSize;
-			block->count = (int16_t)jointBlockSize;
-			block->blockType = b2_jointBlock;
-			b2AtomicStoreInt( &block->syncIndex, 0 );
-		}
-
-		if ( jointBlockCount > 0 )
-		{
-			jointBlocks[jointBlockCount - 1].count = (int16_t)( awakeJointCount - ( jointBlockCount - 1 ) * jointBlockSize );
-		}
-
-		// Prepare contact work blocks
-		for ( int i = 0; i < contactBlockCount; ++i )
-		{
-			b2SolverBlock* block = contactBlocks + i;
-			block->startIndex = i * contactBlockSize;
-			block->count = (int16_t)contactBlockSize;
-			block->blockType = b2_contactBlock;
-			b2AtomicStoreInt( &block->syncIndex, 0 );
-		}
-
-		if ( contactBlockCount > 0 )
-		{
-			contactBlocks[contactBlockCount - 1].count =
-				(int16_t)( simdContactCount - ( contactBlockCount - 1 ) * contactBlockSize );
-		}
-
-		// Prepare graph work blocks
+		// Prepare graph work blocks. Each color gets joint blocks followed by contact blocks.
 		b2SolverBlock* graphColorBlocks[B2_GRAPH_COLOR_COUNT] = { 0 };
 		b2SolverBlock* baseGraphBlock = graphBlocks;
 
@@ -1655,137 +1617,34 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		{
 			graphColorBlocks[i] = baseGraphBlock;
 
-			int colorJointBlockCount = colorJointBlockCounts[i];
-			int colorJointBlockSize = colorJointBlockSizes[i];
-			for ( int j = 0; j < colorJointBlockCount; ++j )
-			{
-				b2SolverBlock* block = baseGraphBlock + j;
-				block->startIndex = j * colorJointBlockSize;
-				block->count = (int16_t)colorJointBlockSize;
-				block->blockType = b2_graphJointBlock;
-				b2AtomicStoreInt( &block->syncIndex, 0 );
-			}
+			int jointBlks = b2ComputeBlockCount( colorJointCounts[i], blocksPerWorker, maxBlockCount );
+			b2InitBlocks( baseGraphBlock, jointBlks, colorJointCounts[i], blocksPerWorker, maxBlockCount, b2_graphJointBlock );
+			baseGraphBlock += jointBlks;
 
-			if ( colorJointBlockCount > 0 )
-			{
-				baseGraphBlock[colorJointBlockCount - 1].count =
-					(int16_t)( colorJointCounts[i] - ( colorJointBlockCount - 1 ) * colorJointBlockSize );
-				baseGraphBlock += colorJointBlockCount;
-			}
-
-			int colorContactBlockCount = colorContactBlockCounts[i];
-			int colorContactBlockSize = colorContactBlockSizes[i];
-			for ( int j = 0; j < colorContactBlockCount; ++j )
-			{
-				b2SolverBlock* block = baseGraphBlock + j;
-				block->startIndex = j * colorContactBlockSize;
-				block->count = (int16_t)colorContactBlockSize;
-				block->blockType = b2_graphContactBlock;
-				b2AtomicStoreInt( &block->syncIndex, 0 );
-			}
-
-			if ( colorContactBlockCount > 0 )
-			{
-				baseGraphBlock[colorContactBlockCount - 1].count =
-					(int16_t)( colorContactCounts[i] - ( colorContactBlockCount - 1 ) * colorContactBlockSize );
-				baseGraphBlock += colorContactBlockCount;
-			}
+			int contactBlks = b2ComputeBlockCount( colorContactCounts[i], blocksPerWorker, maxBlockCount );
+			b2InitBlocks( baseGraphBlock, contactBlks, colorContactCounts[i], blocksPerWorker, maxBlockCount,
+						  b2_graphContactBlock );
+			baseGraphBlock += contactBlks;
 		}
 
 		B2_ASSERT( (ptrdiff_t)( baseGraphBlock - graphBlocks ) == graphBlockCount );
 
 		b2SolverStage* stage = stages;
 
-		// Prepare joints
-		stage->type = b2_stagePrepareJoints;
-		stage->blocks = jointBlocks;
-		stage->blockCount = jointBlockCount;
-		stage->colorIndex = -1;
-		b2AtomicStoreInt( &stage->completionCount, 0 );
-		stage += 1;
-
-		// Prepare contacts
-		stage->type = b2_stagePrepareContacts;
-		stage->blocks = contactBlocks;
-		stage->blockCount = contactBlockCount;
-		stage->colorIndex = -1;
-		b2AtomicStoreInt( &stage->completionCount, 0 );
-		stage += 1;
-
-		// Integrate velocities
-		stage->type = b2_stageIntegrateVelocities;
-		stage->blocks = bodyBlocks;
-		stage->blockCount = bodyBlockCount;
-		stage->colorIndex = -1;
-		b2AtomicStoreInt( &stage->completionCount, 0 );
-		stage += 1;
-
-		// Warm start
-		for ( int i = 0; i < activeColorCount; ++i )
-		{
-			stage->type = b2_stageWarmStart;
-			stage->blocks = graphColorBlocks[i];
-			stage->blockCount = colorJointBlockCounts[i] + colorContactBlockCounts[i];
-			stage->colorIndex = activeColorIndices[i];
-			b2AtomicStoreInt( &stage->completionCount, 0 );
-			stage += 1;
-		}
-
-		// Solve graph
-		for ( int j = 0; j < ITERATIONS; ++j )
-		{
-			for ( int i = 0; i < activeColorCount; ++i )
-			{
-				stage->type = b2_stageSolve;
-				stage->blocks = graphColorBlocks[i];
-				stage->blockCount = colorJointBlockCounts[i] + colorContactBlockCounts[i];
-				stage->colorIndex = activeColorIndices[i];
-				b2AtomicStoreInt( &stage->completionCount, 0 );
-				stage += 1;
-			}
-		}
-
-		// Integrate positions
-		stage->type = b2_stageIntegratePositions;
-		stage->blocks = bodyBlocks;
-		stage->blockCount = bodyBlockCount;
-		stage->colorIndex = -1;
-		b2AtomicStoreInt( &stage->completionCount, 0 );
-		stage += 1;
-
-		// Relax constraints
-		for ( int j = 0; j < RELAX_ITERATIONS; ++j )
-		{
-			for ( int i = 0; i < activeColorCount; ++i )
-			{
-				stage->type = b2_stageRelax;
-				stage->blocks = graphColorBlocks[i];
-				stage->blockCount = colorJointBlockCounts[i] + colorContactBlockCounts[i];
-				stage->colorIndex = activeColorIndices[i];
-				b2AtomicStoreInt( &stage->completionCount, 0 );
-				stage += 1;
-			}
-		}
-
-		// Restitution
+		stage = b2InitStage( stage, b2_stagePrepareJoints, jointBlocks, jointBlockCount, -1 );
+		stage = b2InitStage( stage, b2_stagePrepareContacts, contactBlocks, contactBlockCount, -1 );
+		stage = b2InitStage( stage, b2_stageIntegrateVelocities, bodyBlocks, bodyBlockCount, -1 );
+		stage = b2InitColorStages( stage, b2_stageWarmStart, 1, activeColorCount, graphColorBlocks, colorBlockCounts,
+								   activeColorIndices );
+		stage = b2InitColorStages( stage, b2_stageSolve, ITERATIONS, activeColorCount, graphColorBlocks, colorBlockCounts,
+								   activeColorIndices );
+		stage = b2InitStage( stage, b2_stageIntegratePositions, bodyBlocks, bodyBlockCount, -1 );
+		stage = b2InitColorStages( stage, b2_stageRelax, RELAX_ITERATIONS, activeColorCount, graphColorBlocks, colorBlockCounts,
+								   activeColorIndices );
 		// Note: joint blocks mixed in, could have joint limit restitution
-		for ( int i = 0; i < activeColorCount; ++i )
-		{
-			stage->type = b2_stageRestitution;
-			stage->blocks = graphColorBlocks[i];
-			stage->blockCount = colorJointBlockCounts[i] + colorContactBlockCounts[i];
-			stage->colorIndex = activeColorIndices[i];
-			b2AtomicStoreInt( &stage->completionCount, 0 );
-			stage += 1;
-		}
-
-		// Store impulses
-		stage->type = b2_stageStoreImpulses;
-		stage->blocks = contactBlocks;
-		stage->blockCount = contactBlockCount;
-		stage->colorIndex = -1;
-		b2AtomicStoreInt( &stage->completionCount, 0 );
-		stage += 1;
+		stage = b2InitColorStages( stage, b2_stageRestitution, 1, activeColorCount, graphColorBlocks, colorBlockCounts,
+								   activeColorIndices );
+		stage = b2InitStage( stage, b2_stageStoreImpulses, contactBlocks, contactBlockCount, -1 );
 
 		B2_ASSERT( (int)( stage - stages ) == stageCount );
 

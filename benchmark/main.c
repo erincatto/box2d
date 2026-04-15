@@ -25,6 +25,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef TRACY_ENABLE
+#include <tracy/TracyC.h>
+#endif
+
 #define ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
 #define MAYBE_UNUSED( x ) ( (void)( x ) )
 
@@ -147,6 +151,10 @@ static void MinProfile( b2Profile* p1, const b2Profile* p2 )
 
 int main( int argc, char** argv )
 {
+#ifdef TRACY_ENABLE
+	___tracy_startup_profiler();
+#endif
+
 	Benchmark benchmarks[] = {
 		{ "joint_grid", CreateJointGrid, NULL, 500 },
 		{ "junkyard", CreateJunkyard, StepJunkyard, 800 },
@@ -422,5 +430,8 @@ int main( int argc, char** argv )
 	free( profiles );
 	free( stepResults );
 
+#ifdef TRACY_ENABLE
+	___tracy_shutdown_profiler();
+#endif
 	return 0;
 }
