@@ -7,7 +7,6 @@
 
 #include <assert.h>
 
-b2DeclareArray( int );
 b2DeclareArray( uint64_t );
 b2DeclareArray( int16_t );
 b2DeclareArray( uint8_t );
