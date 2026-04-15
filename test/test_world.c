@@ -393,6 +393,72 @@ static int TestSensor( void )
 	return 0;
 }
 
+// Many Pyramids with sleeping disabled — exercises cluster reclassification
+static int ManyPyramids( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.gravity = (b2Vec2){ 0.0f, -10.0f };
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+	b2World_EnableSleeping( worldId, false );
+
+	int baseCount = 10;
+	float extent = 0.5f;
+	int rowCount = 20;
+	int columnCount = 20;
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
+
+	float groundDeltaY = 2.0f * extent * ( baseCount + 1.0f );
+	float groundWidth = 2.0f * extent * columnCount * ( baseCount + 1.0f );
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+	float groundY = 0.0f;
+	for ( int i = 0; i < rowCount; ++i )
+	{
+		b2Segment segment = { { -0.5f * 2.0f * groundWidth, groundY }, { 0.5f * 2.0f * groundWidth, groundY } };
+		b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		groundY += groundDeltaY;
+	}
+
+	bodyDef.type = b2_dynamicBody;
+	b2Polygon box = b2MakeSquare( extent );
+
+	float baseWidth = 2.0f * extent * baseCount;
+	float baseY = 0.0f;
+
+	for ( int i = 0; i < rowCount; ++i )
+	{
+		for ( int j = 0; j < columnCount; ++j )
+		{
+			float centerX = -0.5f * groundWidth + j * ( baseWidth + 2.0f * extent ) + extent;
+			for ( int row = 0; row < baseCount; ++row )
+			{
+				int n = baseCount - row;
+				float y = baseY + ( 2.0f * row + 1.0f ) * extent;
+				for ( int k = 0; k < n; ++k )
+				{
+					float x = centerX + ( 2.0f * k - n + 1.0f ) * extent;
+					bodyDef.position = (b2Vec2){ x, y };
+					b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+					b2CreatePolygonShape( bodyId, &shapeDef, &box );
+				}
+			}
+		}
+		baseY += groundDeltaY;
+	}
+
+	float timeStep = 1.0f / 60.0f;
+	int subStepCount = 4;
+	for ( int i = 0; i < 200; ++i )
+	{
+		b2World_Step( worldId, timeStep, subStepCount );
+	}
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
 int WorldTest( void )
 {
 	RUN_SUBTEST( HelloWorld );
@@ -402,6 +468,7 @@ int WorldTest( void )
 	RUN_SUBTEST( TestWorldRecycle );
 	RUN_SUBTEST( TestWorldCoverage );
 	RUN_SUBTEST( TestSensor );
+	RUN_SUBTEST( ManyPyramids );
 
 	return 0;
 }

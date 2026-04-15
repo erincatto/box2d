@@ -3,6 +3,8 @@
 
 #include "test_macros.h"
 
+#include <string.h>
+
 #if defined( _MSC_VER )
 	#include <crtdbg.h>
 
@@ -30,7 +32,20 @@ extern int ShapeTest( void );
 extern int TableTest( void );
 extern int WorldTest( void );
 
-int main( void )
+// Filter-aware test runner: skips tests that don't match the filter
+#define MAYBE_RUN_TEST( T )                                                                                                  \
+	do                                                                                                                       \
+	{                                                                                                                        \
+		if ( filter != NULL && strcmp( filter, #T ) != 0 )                                                                   \
+		{                                                                                                                    \
+			printf( "test skipped: " #T "\n" );                                                                              \
+			break;                                                                                                           \
+		}                                                                                                                    \
+		RUN_TEST( T );                                                                                                       \
+	}                                                                                                                        \
+	while ( false )
+
+int main( int argc, char** argv )
 {
 #if defined( _MSC_VER )
 	// Enable memory-leak reports
@@ -49,20 +64,30 @@ int main( void )
 	//_CrtSetBreakAlloc(196);
 #endif
 
+	const char* filter = NULL;
+	if ( argc > 1 )
+	{
+		filter = argv[1];
+	}
+
 	printf( "Starting Box2D unit tests\n" );
+	if ( filter != NULL )
+	{
+		printf( "Filter: %s\n", filter );
+	}
 	printf( "======================================\n" );
 
-	RUN_TEST( TableTest );
-	RUN_TEST( MathTest );
-	RUN_TEST( BitSetTest );
-	RUN_TEST( CollisionTest );
-	RUN_TEST( ContainerTest );
-	RUN_TEST( DeterminismTest );
-	RUN_TEST( DistanceTest );
-	RUN_TEST( DynamicTreeTest );
-	RUN_TEST( IdTest );
-	RUN_TEST( ShapeTest );
-	RUN_TEST( WorldTest );
+	MAYBE_RUN_TEST( TableTest );
+	MAYBE_RUN_TEST( MathTest );
+	MAYBE_RUN_TEST( BitSetTest );
+	MAYBE_RUN_TEST( CollisionTest );
+	MAYBE_RUN_TEST( ContainerTest );
+	MAYBE_RUN_TEST( DeterminismTest );
+	MAYBE_RUN_TEST( DistanceTest );
+	MAYBE_RUN_TEST( DynamicTreeTest );
+	MAYBE_RUN_TEST( IdTest );
+	MAYBE_RUN_TEST( ShapeTest );
+	MAYBE_RUN_TEST( WorldTest );
 
 	printf( "======================================\n" );
 	printf( "All Box2D tests passed!\n" );

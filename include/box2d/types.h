@@ -5,6 +5,7 @@
 
 #include "base.h"
 #include "collision.h"
+#include "constants.h"
 #include "id.h"
 #include "math_functions.h"
 
@@ -507,13 +508,10 @@ typedef struct b2Profile
 	float prepareStages;
 	float solveConstraints;
 	float prepareConstraints;
-	float integrateVelocities;
 	float warmStart;
 	float solveImpulses;
-	float integratePositions;
 	float relaxImpulses;
 	float applyRestitution;
-	float storeImpulses;
 	float splitIslands;
 	float transforms;
 	float sensorHits;
@@ -538,7 +536,7 @@ typedef struct b2Counters
 	int treeHeight;
 	int byteCount;
 	int taskCount;
-	int colorCounts[24];
+	int clusterCounts[B2_CLUSTER_COUNT];
 } b2Counters;
 //! @endcond
 
@@ -1411,9 +1409,6 @@ typedef struct b2DebugDraw
 
 	/// Option to draw body names
 	bool drawBodyNames;
-
-	/// Option to visualize the graph coloring used for contacts and joints
-	bool drawGraphColors;
 
 	/// Option to draw contact feature ids
 	bool drawContactFeatures;

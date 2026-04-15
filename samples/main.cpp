@@ -1,12 +1,18 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
+// clang-format off
 #if defined( _MSC_VER )
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 #define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+#else
+#include <stdlib.h>
 #endif
+// clang-format on
 
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS 1
 
@@ -437,7 +443,6 @@ static void UpdateUI()
 				ImGui::Checkbox( "Bounds", &s_context.debugDraw.drawBounds );
 				ImGui::Checkbox( "Mass", &s_context.debugDraw.drawMass );
 				ImGui::Checkbox( "Body Names", &s_context.debugDraw.drawBodyNames );
-				ImGui::Checkbox( "Graph Colors", &s_context.debugDraw.drawGraphColors );
 				ImGui::Checkbox( "Islands", &s_context.debugDraw.drawIslands );
 				ImGui::Checkbox( "Counters", &s_context.drawCounters );
 				ImGui::Checkbox( "Profile", &s_context.drawProfile );
@@ -580,6 +585,7 @@ int main( int, char** )
 
 	s_context.Load();
 	s_context.workerCount = b2MinInt( 8, (int)enki::GetNumHardwareThreads() / 2 );
+	// s_context.workerCount = 1;
 
 	SortSamples();
 

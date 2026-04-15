@@ -15,7 +15,7 @@
 
 void b2WheelJoint_EnableSpring( b2JointId jointId, bool enableSpring )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 
 	if ( enableSpring != joint->wheelJoint.enableSpring )
 	{
@@ -26,37 +26,37 @@ void b2WheelJoint_EnableSpring( b2JointId jointId, bool enableSpring )
 
 bool b2WheelJoint_IsSpringEnabled( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	return joint->wheelJoint.enableSpring;
 }
 
 void b2WheelJoint_SetSpringHertz( b2JointId jointId, float hertz )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	joint->wheelJoint.hertz = hertz;
 }
 
 float b2WheelJoint_GetSpringHertz( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	return joint->wheelJoint.hertz;
 }
 
 void b2WheelJoint_SetSpringDampingRatio( b2JointId jointId, float dampingRatio )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	joint->wheelJoint.dampingRatio = dampingRatio;
 }
 
 float b2WheelJoint_GetSpringDampingRatio( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	return joint->wheelJoint.dampingRatio;
 }
 
 void b2WheelJoint_EnableLimit( b2JointId jointId, bool enableLimit )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	if ( joint->wheelJoint.enableLimit != enableLimit )
 	{
 		joint->wheelJoint.lowerImpulse = 0.0f;
@@ -67,19 +67,19 @@ void b2WheelJoint_EnableLimit( b2JointId jointId, bool enableLimit )
 
 bool b2WheelJoint_IsLimitEnabled( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	return joint->wheelJoint.enableLimit;
 }
 
 float b2WheelJoint_GetLowerLimit( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	return joint->wheelJoint.lowerTranslation;
 }
 
 float b2WheelJoint_GetUpperLimit( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	return joint->wheelJoint.upperTranslation;
 }
 
@@ -87,7 +87,7 @@ void b2WheelJoint_SetLimits( b2JointId jointId, float lower, float upper )
 {
 	B2_ASSERT( lower <= upper );
 
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	if ( lower != joint->wheelJoint.lowerTranslation || upper != joint->wheelJoint.upperTranslation )
 	{
 		joint->wheelJoint.lowerTranslation = b2MinFloat( lower, upper );
@@ -99,7 +99,7 @@ void b2WheelJoint_SetLimits( b2JointId jointId, float lower, float upper )
 
 void b2WheelJoint_EnableMotor( b2JointId jointId, bool enableMotor )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	if ( joint->wheelJoint.enableMotor != enableMotor )
 	{
 		joint->wheelJoint.motorImpulse = 0.0f;
@@ -109,44 +109,44 @@ void b2WheelJoint_EnableMotor( b2JointId jointId, bool enableMotor )
 
 bool b2WheelJoint_IsMotorEnabled( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	return joint->wheelJoint.enableMotor;
 }
 
 void b2WheelJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	joint->wheelJoint.motorSpeed = motorSpeed;
 }
 
 float b2WheelJoint_GetMotorSpeed( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	return joint->wheelJoint.motorSpeed;
 }
 
 float b2WheelJoint_GetMotorTorque( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	return world->inv_h * joint->wheelJoint.motorImpulse;
 }
 
 void b2WheelJoint_SetMaxMotorTorque( b2JointId jointId, float torque )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	joint->wheelJoint.maxMotorTorque = torque;
 }
 
 float b2WheelJoint_GetMaxMotorTorque( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_wheelJoint );
 	return joint->wheelJoint.maxMotorTorque;
 }
 
-b2Vec2 b2GetWheelJointForce( b2World* world, b2JointSim* base )
+b2Vec2 b2GetWheelJointForce( b2World* world, b2Joint* base )
 {
-	int idA = base->bodyIdA;
+	int idA = base->edges[0].bodyId;
 	b2Transform transformA = b2GetBodyTransform( world, idA );
 
 	b2Vec2 localAxisA = b2RotateVector( base->localFrameA.q, (b2Vec2){ 1.0f, 0.0f } );
@@ -162,7 +162,7 @@ b2Vec2 b2GetWheelJointForce( b2World* world, b2JointSim* base )
 	return force;
 }
 
-float b2GetWheelJointTorque( b2World* world, b2JointSim* base )
+float b2GetWheelJointTorque( b2World* world, b2Joint* base )
 {
 	return world->inv_h * base->wheelJoint.motorImpulse;
 }
@@ -183,52 +183,37 @@ float b2GetWheelJointTorque( b2World* world, b2JointSim* base )
 // Cdot = wB - wA
 // J = [0 0 -1 0 0 1]
 
-void b2PrepareWheelJoint( b2JointSim* base, b2StepContext* context )
+void b2PrepareWheelJoint( b2Joint* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_wheelJoint );
 
 	// chase body id to the solver set where the body lives
-	int idA = base->bodyIdA;
-	int idB = base->bodyIdB;
+	int idA = base->edges[0].bodyId;
+	int idB = base->edges[1].bodyId;
 
 	b2World* world = context->world;
 
 	b2Body* bodyA = b2BodyArray_Get( &world->bodies, idA );
 	b2Body* bodyB = b2BodyArray_Get( &world->bodies, idB );
 
-	B2_ASSERT( bodyA->setIndex == b2_awakeSet || bodyB->setIndex == b2_awakeSet );
-	b2SolverSet* setA = b2SolverSetArray_Get( &world->solverSets, bodyA->setIndex );
-	b2SolverSet* setB = b2SolverSetArray_Get( &world->solverSets, bodyB->setIndex );
+	base->stateIndexA = bodyA->stateIndex;
+	base->stateIndexB = bodyB->stateIndex;
 
-	int localIndexA = bodyA->localIndex;
-	int localIndexB = bodyB->localIndex;
-
-	b2BodySim* bodySimA = b2BodySimArray_Get( &setA->bodySims, localIndexA );
-	b2BodySim* bodySimB = b2BodySimArray_Get( &setB->bodySims, localIndexB );
-
-	float mA = bodySimA->invMass;
-	float iA = bodySimA->invInertia;
-	float mB = bodySimB->invMass;
-	float iB = bodySimB->invInertia;
-
-	base->invMassA = mA;
-	base->invMassB = mB;
-	base->invIA = iA;
-	base->invIB = iB;
+	float mA = bodyA->invMass;
+	float iA = bodyA->invInertia;
+	float mB = bodyB->invMass;
+	float iB = bodyB->invInertia;
 
 	b2WheelJoint* joint = &base->wheelJoint;
 
-	joint->indexA = bodyA->setIndex == b2_awakeSet ? localIndexA : B2_NULL_INDEX;
-	joint->indexB = bodyB->setIndex == b2_awakeSet ? localIndexB : B2_NULL_INDEX;
-
 	// Compute joint anchor frames with world space rotation, relative to center of mass
-	joint->frameA.q = b2MulRot( bodySimA->transform.q, base->localFrameA.q );
-	joint->frameA.p = b2RotateVector( bodySimA->transform.q, b2Sub( base->localFrameA.p, bodySimA->localCenter ) );
-	joint->frameB.q = b2MulRot( bodySimB->transform.q, base->localFrameB.q );
-	joint->frameB.p = b2RotateVector( bodySimB->transform.q, b2Sub( base->localFrameB.p, bodySimB->localCenter ) );
+	joint->frameA.q = b2MulRot( bodyA->transform.q, base->localFrameA.q );
+	joint->frameA.p = b2RotateVector( bodyA->transform.q, b2Sub( base->localFrameA.p, bodyA->localCenter ) );
+	joint->frameB.q = b2MulRot( bodyB->transform.q, base->localFrameB.q );
+	joint->frameB.p = b2RotateVector( bodyB->transform.q, b2Sub( base->localFrameB.p, bodyB->localCenter ) );
 
 	// Compute the initial center delta. Incremental position updates are relative to this.
-	joint->deltaCenter = b2Sub( bodySimB->center, bodySimA->center );
+	joint->deltaCenter = b2Sub( bodyB->center, bodyA->center );
 
 	b2Vec2 rA = joint->frameA.p;
 	b2Vec2 rB = joint->frameB.p;
@@ -266,22 +251,22 @@ void b2PrepareWheelJoint( b2JointSim* base, b2StepContext* context )
 	}
 }
 
-void b2WarmStartWheelJoint( b2JointSim* base, b2StepContext* context )
+void b2WarmStartWheelJoint( b2Joint* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_wheelJoint );
-
-	float mA = base->invMassA;
-	float mB = base->invMassB;
-	float iA = base->invIA;
-	float iB = base->invIB;
 
 	// dummy state for static bodies
 	b2BodyState dummyState = b2_identityBodyState;
 
-	b2WheelJoint* joint = &base->wheelJoint;
+	b2BodyState* stateA = base->stateIndexA == B2_NULL_INDEX ? &dummyState : context->states + base->stateIndexA;
+	b2BodyState* stateB = base->stateIndexB == B2_NULL_INDEX ? &dummyState : context->states + base->stateIndexB;
 
-	b2BodyState* stateA = joint->indexA == B2_NULL_INDEX ? &dummyState : context->states + joint->indexA;
-	b2BodyState* stateB = joint->indexB == B2_NULL_INDEX ? &dummyState : context->states + joint->indexB;
+	float mA = stateA->invMass;
+	float iA = stateA->invInertia;
+	float mB = stateB->invMass;
+	float iB = stateB->invInertia;
+
+	b2WheelJoint* joint = &base->wheelJoint;
 
 	b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
 	b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
@@ -315,22 +300,24 @@ void b2WarmStartWheelJoint( b2JointSim* base, b2StepContext* context )
 	}
 }
 
-void b2SolveWheelJoint( b2JointSim* base, b2StepContext* context, bool useBias )
+void b2SolveWheelJoint( b2Joint* base, b2StepContext* context, bool useBias )
 {
 	B2_ASSERT( base->type == b2_wheelJoint );
 
-	float mA = base->invMassA;
-	float mB = base->invMassB;
-	float iA = base->invIA;
-	float iB = base->invIB;
+	B2_ASSERT( base->type == b2_wheelJoint );
 
 	// dummy state for static bodies
 	b2BodyState dummyState = b2_identityBodyState;
 
-	b2WheelJoint* joint = &base->wheelJoint;
+	b2BodyState* stateA = base->stateIndexA == B2_NULL_INDEX ? &dummyState : context->states + base->stateIndexA;
+	b2BodyState* stateB = base->stateIndexB == B2_NULL_INDEX ? &dummyState : context->states + base->stateIndexB;
 
-	b2BodyState* stateA = joint->indexA == B2_NULL_INDEX ? &dummyState : context->states + joint->indexA;
-	b2BodyState* stateB = joint->indexB == B2_NULL_INDEX ? &dummyState : context->states + joint->indexB;
+	float mA = stateA->invMass;
+	float iA = stateA->invInertia;
+	float mB = stateB->invMass;
+	float iB = stateB->invInertia;
+
+	b2WheelJoint* joint = &base->wheelJoint;
 
 	b2Vec2 vA = stateA->linearVelocity;
 	float wA = stateA->angularVelocity;
@@ -534,7 +521,7 @@ void b2WheelJoint_Dump()
 }
 #endif
 
-void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale )
+void b2DrawWheelJoint( b2DebugDraw* draw, b2Joint* base, b2Transform transformA, b2Transform transformB, float drawScale )
 {
 	B2_ASSERT( base->type == b2_wheelJoint );
 

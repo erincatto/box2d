@@ -36,11 +36,23 @@ typedef struct b2ContactEdge
 	int nextKey;
 } b2ContactEdge;
 
-// Cold contact data. Used as a persistent handle and for persistent island
-// connectivity.
+// Contact data. Used as a persistent handle, for persistent island
+// connectivity, and for simulation.
 typedef struct b2Contact
 {
+	// Transient
+	int stateIndexA;
+	int stateIndexB;
+
 	b2ContactEdge edges[2];
+
+	b2Manifold manifold;
+
+	// Mixed friction and restitution
+	float friction;
+	float restitution;
+	float rollingResistance;
+	float tangentSpeed;
 
 	// A contact only belongs to an island if touching, otherwise B2_NULL_INDEX.
 	int islandId;
@@ -49,16 +61,16 @@ typedef struct b2Contact
 	// B2_NULL_INDEX when not in an island.
 	int islandIndex;
 
+	// Cluster classification back-reference for O(1) swap-removal.
+	// clusterSlot: 0..15 = cluster interior, 16..135 = border at flat index (slot-16), -1 = unclassified
+	int16_t clusterSlot;
+	int clusterLocalIndex;
+
 	// index of simulation set stored in b2World
 	// B2_NULL_INDEX when slot is free
 	int setIndex;
 
-	// index into the constraint graph color array
-	// B2_NULL_INDEX for non-touching or sleeping contacts
-	// B2_NULL_INDEX when slot is free
-	int colorIndex;
-
-	// contact index within set or graph color
+	// contact index within set
 	// B2_NULL_INDEX when slot is free
 	int localIndex;
 
@@ -72,6 +84,15 @@ typedef struct b2Contact
 	// This is monotonically advanced when a contact is allocated in this slot
 	// Used to check for invalid b2ContactId
 	uint32_t generation;
+
+	// Simulation data (merged from b2ContactSim)
+	b2Transform cachedTransformA;
+	b2Transform cachedTransformB;
+
+	// b2ContactSimFlags
+	uint32_t simFlags;
+
+	b2SimplexCache cache;
 } b2Contact;
 
 // Shifted to be distinct from b2ContactFlags
@@ -99,58 +120,13 @@ enum b2ContactSimFlags
 	b2_simRelativeTransformValid = 0x00400000,
 };
 
-/// The class manages contact between two shapes. A contact exists for each overlapping
-/// AABB in the broad-phase (except if filtered). Therefore a contact object may exist
-/// that has no contact points.
-typedef struct b2ContactSim
-{
-	int contactId;
-
-	b2Transform cachedTransformA;
-	b2Transform cachedTransformB;
-
-#if B2_ENABLE_VALIDATION
-	int bodyIdA;
-	int bodyIdB;
-#endif
-
-	// Transient body indices
-	int bodySimIndexA;
-	int bodySimIndexB;
-
-	int shapeIdA;
-	int shapeIdB;
-
-	float invMassA;
-	float invIA;
-
-	float invMassB;
-	float invIB;
-
-	b2Manifold manifold;
-
-	// Mixed friction and restitution
-	float friction;
-	float restitution;
-	float rollingResistance;
-	float tangentSpeed;
-
-	// b2ContactSimFlags
-	uint32_t simFlags;
-
-	b2SimplexCache cache;
-} b2ContactSim;
-
 void b2InitializeContactRegisters( void );
 bool b2CanCollide( b2ShapeType typeA, b2ShapeType typeB );
 
 void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB );
 void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies );
 
-b2ContactSim* b2GetContactSim( b2World* world, b2Contact* contact );
-
-bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA, b2Transform transformA, b2Vec2 centerOffsetA,
+bool b2UpdateContact( b2World* world, b2Contact* contact, b2Shape* shapeA, b2Transform transformA, b2Vec2 centerOffsetA,
 					  b2Shape* shapeB, b2Transform transformB, b2Vec2 centerOffsetB );
 
 B2_ARRAY_INLINE( b2Contact, b2Contact )
-B2_ARRAY_INLINE( b2ContactSim, b2ContactSim )

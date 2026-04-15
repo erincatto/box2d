@@ -9,7 +9,7 @@
 #include "box2d/types.h"
 
 #include <stdio.h>
-#include <stdlib.h>
+//#include <stdlib.h>
 
 #ifdef BOX2D_PROFILE
 #include <tracy/TracyC.h>
@@ -17,8 +17,8 @@
 #define TracyCFrameMark
 #endif
 
-#define EXPECTED_SLEEP_STEP 293
-#define EXPECTED_HASH 0x2FF98AC6
+#define EXPECTED_SLEEP_STEP 259
+#define EXPECTED_HASH 0x21AFA8EC
 
 enum
 {
@@ -108,6 +108,8 @@ static int SingleMultithreadingTest( int workerCount )
 		b2World_Step( worldId, timeStep, subStepCount );
 		TracyCFrameMark;
 
+		taskCount = 0;
+
 		bool done = UpdateFallingHinges( worldId, &data );
 
 		if (done)
@@ -125,6 +127,11 @@ static int SingleMultithreadingTest( int workerCount )
 
 	enkiDeleteTaskScheduler( scheduler );
 
+	if (data.sleepStep != EXPECTED_SLEEP_STEP || data.hash != EXPECTED_HASH)
+	{
+		printf( "  workers=%d sleepStep=%d hash=0x%08X\n", workerCount, data.sleepStep, data.hash );
+	}
+
 	ENSURE( data.sleepStep == EXPECTED_SLEEP_STEP );
 	ENSURE( data.hash == EXPECTED_HASH );
 
@@ -136,10 +143,19 @@ static int SingleMultithreadingTest( int workerCount )
 // Test multithreaded determinism.
 static int MultithreadingTest( void )
 {
-	for ( int workerCount = 1; workerCount < 6; ++workerCount )
+	for (int run = 0; run < 3; ++run)
 	{
-		int result = SingleMultithreadingTest( workerCount );
-		ENSURE( result == 0 );
+		for ( int workerCount = 1; workerCount < 16; workerCount += 2)
+		{
+			int result = SingleMultithreadingTest( workerCount );
+			ENSURE( result == 0 );
+		}
+
+		for ( int workerCount = 32; workerCount >= 0; workerCount -= 5 )
+		{
+			int result = SingleMultithreadingTest( workerCount );
+			ENSURE( result == 0 );
+		}
 	}
 
 	return 0;
@@ -163,6 +179,11 @@ static int CrossPlatformTest( void )
 		TracyCFrameMark;
 
 		done = UpdateFallingHinges( worldId, &data );
+	}
+
+	if ( data.sleepStep != EXPECTED_SLEEP_STEP || data.hash != EXPECTED_HASH )
+	{
+		printf( "  cross-platform sleepStep=%d hash=0x%08X\n", data.sleepStep, data.hash );
 	}
 
 	ENSURE( data.sleepStep == EXPECTED_SLEEP_STEP );

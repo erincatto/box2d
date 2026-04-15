@@ -190,7 +190,7 @@ public:
 		}
 
 		m_shapeType = e_boxShape;
-		m_rowCount = 12;
+		m_rowCount = 3;
 		m_columnCount = 1;
 		m_bulletCount = 1;
 		m_bulletType = e_circleShape;

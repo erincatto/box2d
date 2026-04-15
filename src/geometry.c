@@ -347,15 +347,15 @@ b2MassData b2ComputePolygonMass( const b2Polygon* shape, float density )
 
 	// Get a reference point for forming triangles.
 	// Use the first vertex to reduce round-off errors.
-	b2Vec2 r = vertices[0];
+	b2Vec2 origin = vertices[0];
 
 	const float inv3 = 1.0f / 3.0f;
 
 	for ( int i = 1; i < count - 1; ++i )
 	{
 		// Triangle edges
-		b2Vec2 e1 = b2Sub( vertices[i], r );
-		b2Vec2 e2 = b2Sub( vertices[i + 1], r );
+		b2Vec2 e1 = b2Sub( vertices[i], origin );
+		b2Vec2 e2 = b2Sub( vertices[i + 1], origin );
 
 		float D = b2Cross( e1, e2 );
 
@@ -379,17 +379,18 @@ b2MassData b2ComputePolygonMass( const b2Polygon* shape, float density )
 	// Total mass
 	massData.mass = density * area;
 
-	// Center of mass, shift back from origin at r
+	// Center of mass, shift back from origin
 	B2_ASSERT( area > FLT_EPSILON );
 	float invArea = 1.0f / area;
 	center.x *= invArea;
 	center.y *= invArea;
-	massData.center = b2Add( r, center );
 
-	// Inertia tensor relative to the local origin (point s).
+	massData.center = b2Add( center, origin );
+
+	// Inertia tensor relative to the local origin.
 	massData.rotationalInertia = density * rotationalInertia;
 
-	// Shift inertia to center of mass
+	// Shift inertia to local center of mass.
 	massData.rotationalInertia -= massData.mass * b2Dot( center, center );
 
 	// If this goes negative we are hosed

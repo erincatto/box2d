@@ -23,44 +23,6 @@ typedef struct b2JointEdge
 	int nextKey;
 } b2JointEdge;
 
-// Map from b2JointId to b2Joint in the solver sets
-typedef struct b2Joint
-{
-	void* userData;
-
-	// index of simulation set stored in b2World
-	// B2_NULL_INDEX when slot is free
-	int setIndex;
-
-	// index into the constraint graph color array, may be B2_NULL_INDEX for sleeping/disabled joints
-	// B2_NULL_INDEX when slot is free
-	int colorIndex;
-
-	// joint index within set or graph color
-	// B2_NULL_INDEX when slot is free
-	int localIndex;
-
-	b2JointEdge edges[2];
-
-	int jointId;
-	int islandId;
-
-	// Index into the island's joints array for O(1) swap-removal.
-	// B2_NULL_INDEX when not in an island.
-	int islandIndex;
-
-	float drawScale;
-
-	b2JointType type;
-
-	// This is monotonically advanced when a body is allocated in this slot
-	// Used to check for invalid b2JointId
-	uint16_t generation;
-
-	bool collideConnected;
-
-} b2Joint;
-
 typedef struct b2DistanceJoint
 {
 	float length;
@@ -79,8 +41,6 @@ typedef struct b2DistanceJoint
 	float upperImpulse;
 	float motorImpulse;
 
-	int indexA;
-	int indexB;
 	b2Vec2 anchorA;
 	b2Vec2 anchorB;
 	b2Vec2 deltaCenter;
@@ -113,8 +73,6 @@ typedef struct b2MotorJoint
 	b2Softness linearSpring;
 	b2Softness angularSpring;
 
-	int indexA;
-	int indexB;
 	b2Transform frameA;
 	b2Transform frameB;
 	b2Vec2 deltaCenter;
@@ -137,8 +95,6 @@ typedef struct b2PrismaticJoint
 	float lowerTranslation;
 	float upperTranslation;
 
-	int indexA;
-	int indexB;
 	b2Transform frameA;
 	b2Transform frameB;
 	b2Vec2 deltaCenter;
@@ -164,8 +120,6 @@ typedef struct b2RevoluteJoint
 	float lowerAngle;
 	float upperAngle;
 
-	int indexA;
-	int indexB;
 	b2Transform frameA;
 	b2Transform frameB;
 	b2Vec2 deltaCenter;
@@ -189,8 +143,6 @@ typedef struct b2WeldJoint
 	b2Vec2 linearImpulse;
 	float angularImpulse;
 
-	int indexA;
-	int indexB;
 	b2Transform frameA;
 	b2Transform frameB;
 	b2Vec2 deltaCenter;
@@ -211,8 +163,6 @@ typedef struct b2WheelJoint
 	float hertz;
 	float dampingRatio;
 
-	int indexA;
-	int indexB;
 	b2Transform frameA;
 	b2Transform frameB;
 	b2Vec2 deltaCenter;
@@ -226,22 +176,49 @@ typedef struct b2WheelJoint
 	bool enableLimit;
 } b2WheelJoint;
 
-/// The base joint class. Joints are used to constraint two bodies together in
-/// various fashions. Some joints also feature limits and motors.
-typedef struct b2JointSim
+// Map from b2JointId to b2Joint in the solver sets
+typedef struct b2Joint
 {
-	int jointId;
+	void* userData;
 
-	int bodyIdA;
-	int bodyIdB;
+	// index of simulation set stored in b2World
+	// B2_NULL_INDEX when slot is free
+	int setIndex;
+
+	// joint index within set
+	// B2_NULL_INDEX when slot is free
+	int localIndex;
+
+	b2JointEdge edges[2];
+
+	int jointId;
+	int islandId;
+
+	// Index into the island's joints array for O(1) swap-removal.
+	// B2_NULL_INDEX when not in an island.
+	int islandIndex;
+
+	// Cluster classification back-reference for O(1) swap-removal.
+	// clusterSlot: 0..15 = cluster interior, 16..135 = border at flat index (slot-16), -1 = unclassified
+	int16_t clusterSlot;
+	int clusterLocalIndex;
+
+	float drawScale;
 
 	b2JointType type;
 
+	// This is monotonically advanced when a body is allocated in this slot
+	// Used to check for invalid b2JointId
+	uint16_t generation;
+
+	bool collideConnected;
+
+	// Transient solver indices, set during prepare
+	int stateIndexA;
+	int stateIndexB;
+
 	b2Transform localFrameA;
 	b2Transform localFrameB;
-
-	float invMassA, invMassB;
-	float invIA, invIB;
 
 	float constraintHertz;
 	float constraintDampingRatio;
@@ -260,66 +237,61 @@ typedef struct b2JointSim
 		b2WeldJoint weldJoint;
 		b2WheelJoint wheelJoint;
 	};
-} b2JointSim;
+
+} b2Joint;
 
 void b2DestroyJointInternal( b2World* world, b2Joint* joint, bool wakeBodies );
 
 b2Joint* b2GetJointFullId( b2World* world, b2JointId jointId );
-b2JointSim* b2GetJointSim( b2World* world, b2Joint* joint );
-b2JointSim* b2GetJointSimCheckType( b2JointId jointId, b2JointType type );
+b2Joint* b2GetJointCheckType( b2JointId jointId, b2JointType type );
 
-void b2PrepareJoint( b2JointSim* joint, b2StepContext* context );
-void b2WarmStartJoint( b2JointSim* joint, b2StepContext* context );
-void b2SolveJoint( b2JointSim* joint, b2StepContext* context, bool useBias );
+void b2PrepareJoint( b2Joint* joint, b2StepContext* context );
+void b2WarmStartJoint( b2Joint* joint, b2StepContext* context );
+void b2SolveJoint( b2Joint* joint, b2StepContext* context, bool useBias );
 
-void b2PrepareOverflowJoints( b2StepContext* context );
-void b2WarmStartOverflowJoints( b2StepContext* context );
-void b2SolveOverflowJoints( b2StepContext* context, bool useBias );
-
-void b2GetJointReaction( b2JointSim* sim, float invTimeStep, float* force, float* torque );
+void b2GetJointReaction( b2Joint* sim, float invTimeStep, float* force, float* torque );
 
 void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint );
 
-b2Vec2 b2GetDistanceJointForce( b2World* world, b2JointSim* base );
-b2Vec2 b2GetMotorJointForce( b2World* world, b2JointSim* base );
-b2Vec2 b2GetPrismaticJointForce( b2World* world, b2JointSim* base );
-b2Vec2 b2GetRevoluteJointForce( b2World* world, b2JointSim* base );
-b2Vec2 b2GetWeldJointForce( b2World* world, b2JointSim* base );
-b2Vec2 b2GetWheelJointForce( b2World* world, b2JointSim* base );
+b2Vec2 b2GetDistanceJointForce( b2World* world, b2Joint* base );
+b2Vec2 b2GetMotorJointForce( b2World* world, b2Joint* base );
+b2Vec2 b2GetPrismaticJointForce( b2World* world, b2Joint* base );
+b2Vec2 b2GetRevoluteJointForce( b2World* world, b2Joint* base );
+b2Vec2 b2GetWeldJointForce( b2World* world, b2Joint* base );
+b2Vec2 b2GetWheelJointForce( b2World* world, b2Joint* base );
 
-float b2GetMotorJointTorque( b2World* world, b2JointSim* base );
-float b2GetPrismaticJointTorque( b2World* world, b2JointSim* base );
-float b2GetRevoluteJointTorque( b2World* world, b2JointSim* base );
-float b2GetWeldJointTorque( b2World* world, b2JointSim* base );
-float b2GetWheelJointTorque( b2World* world, b2JointSim* base );
+float b2GetMotorJointTorque( b2World* world, b2Joint* base );
+float b2GetPrismaticJointTorque( b2World* world, b2Joint* base );
+float b2GetRevoluteJointTorque( b2World* world, b2Joint* base );
+float b2GetWeldJointTorque( b2World* world, b2Joint* base );
+float b2GetWheelJointTorque( b2World* world, b2Joint* base );
 
-void b2PrepareDistanceJoint( b2JointSim* base, b2StepContext* context );
-void b2PrepareMotorJoint( b2JointSim* base, b2StepContext* context );
-void b2PreparePrismaticJoint( b2JointSim* base, b2StepContext* context );
-void b2PrepareRevoluteJoint( b2JointSim* base, b2StepContext* context );
-void b2PrepareWeldJoint( b2JointSim* base, b2StepContext* context );
-void b2PrepareWheelJoint( b2JointSim* base, b2StepContext* context );
+void b2PrepareDistanceJoint( b2Joint* base, b2StepContext* context );
+void b2PrepareMotorJoint( b2Joint* base, b2StepContext* context );
+void b2PreparePrismaticJoint( b2Joint* base, b2StepContext* context );
+void b2PrepareRevoluteJoint( b2Joint* base, b2StepContext* context );
+void b2PrepareWeldJoint( b2Joint* base, b2StepContext* context );
+void b2PrepareWheelJoint( b2Joint* base, b2StepContext* context );
 
-void b2WarmStartDistanceJoint( b2JointSim* base, b2StepContext* context );
-void b2WarmStartMotorJoint( b2JointSim* base, b2StepContext* context );
-void b2WarmStartPrismaticJoint( b2JointSim* base, b2StepContext* context );
-void b2WarmStartRevoluteJoint( b2JointSim* base, b2StepContext* context );
-void b2WarmStartWeldJoint( b2JointSim* base, b2StepContext* context );
-void b2WarmStartWheelJoint( b2JointSim* base, b2StepContext* context );
+void b2WarmStartDistanceJoint( b2Joint* base, b2StepContext* context );
+void b2WarmStartMotorJoint( b2Joint* base, b2StepContext* context );
+void b2WarmStartPrismaticJoint( b2Joint* base, b2StepContext* context );
+void b2WarmStartRevoluteJoint( b2Joint* base, b2StepContext* context );
+void b2WarmStartWeldJoint( b2Joint* base, b2StepContext* context );
+void b2WarmStartWheelJoint( b2Joint* base, b2StepContext* context );
 
-void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBias );
-void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context );
-void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBias );
-void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBias );
-void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias );
-void b2SolveWheelJoint( b2JointSim* base, b2StepContext* context, bool useBias );
+void b2SolveDistanceJoint( b2Joint* base, b2StepContext* context, bool useBias );
+void b2SolveMotorJoint( b2Joint* base, b2StepContext* context );
+void b2SolvePrismaticJoint( b2Joint* base, b2StepContext* context, bool useBias );
+void b2SolveRevoluteJoint( b2Joint* base, b2StepContext* context, bool useBias );
+void b2SolveWeldJoint( b2Joint* base, b2StepContext* context, bool useBias );
+void b2SolveWheelJoint( b2Joint* base, b2StepContext* context, bool useBias );
 
-void b2DrawDistanceJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB );
-void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale );
-void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale );
-void b2DrawWeldJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale );
-void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale );
+void b2DrawDistanceJoint( b2DebugDraw* draw, b2Joint* base, b2Transform transformA, b2Transform transformB );
+void b2DrawPrismaticJoint( b2DebugDraw* draw, b2Joint* base, b2Transform transformA, b2Transform transformB, float drawScale );
+void b2DrawRevoluteJoint( b2DebugDraw* draw, b2Joint* base, b2Transform transformA, b2Transform transformB, float drawScale );
+void b2DrawWeldJoint( b2DebugDraw* draw, b2Joint* base, b2Transform transformA, b2Transform transformB, float drawScale );
+void b2DrawWheelJoint( b2DebugDraw* draw, b2Joint* base, b2Transform transformA, b2Transform transformB, float drawScale );
 
 // Define inline functions for arrays
 B2_ARRAY_INLINE( b2Joint, b2Joint )
-B2_ARRAY_INLINE( b2JointSim, b2JointSim )

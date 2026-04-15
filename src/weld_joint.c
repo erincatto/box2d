@@ -54,62 +54,62 @@ static inline b2Vec3 b2Solve33(const b2Mat33* m, b2Vec3 b )
 void b2WeldJoint_SetLinearHertz( b2JointId jointId, float hertz )
 {
 	B2_ASSERT( b2IsValidFloat( hertz ) && hertz >= 0.0f );
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.linearHertz = hertz;
 }
 
 float b2WeldJoint_GetLinearHertz( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_weldJoint );
 	return joint->weldJoint.linearHertz;
 }
 
 void b2WeldJoint_SetLinearDampingRatio( b2JointId jointId, float dampingRatio )
 {
 	B2_ASSERT( b2IsValidFloat( dampingRatio ) && dampingRatio >= 0.0f );
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.linearDampingRatio = dampingRatio;
 }
 
 float b2WeldJoint_GetLinearDampingRatio( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_weldJoint );
 	return joint->weldJoint.linearDampingRatio;
 }
 
 void b2WeldJoint_SetAngularHertz( b2JointId jointId, float hertz )
 {
 	B2_ASSERT( b2IsValidFloat( hertz ) && hertz >= 0.0f );
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.angularHertz = hertz;
 }
 
 float b2WeldJoint_GetAngularHertz( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_weldJoint );
 	return joint->weldJoint.angularHertz;
 }
 
 void b2WeldJoint_SetAngularDampingRatio( b2JointId jointId, float dampingRatio )
 {
 	B2_ASSERT( b2IsValidFloat( dampingRatio ) && dampingRatio >= 0.0f );
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.angularDampingRatio = dampingRatio;
 }
 
 float b2WeldJoint_GetAngularDampingRatio( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_weldJoint );
 	return joint->weldJoint.angularDampingRatio;
 }
 
-b2Vec2 b2GetWeldJointForce( b2World* world, b2JointSim* base )
+b2Vec2 b2GetWeldJointForce( b2World* world, b2Joint* base )
 {
 	b2Vec2 force = b2MulSV( world->inv_h, base->weldJoint.linearImpulse );
 	return force;
 }
 
-float b2GetWeldJointTorque( b2World* world, b2JointSim* base )
+float b2GetWeldJointTorque( b2World* world, b2Joint* base )
 {
 	return world->inv_h * base->weldJoint.angularImpulse;
 }
@@ -136,51 +136,35 @@ float b2GetWeldJointTorque( b2World* world, b2JointSim* base )
 //   = [J1 * invM * J1T J1 * invM * J2T]
 //     [J2 * invM * J1T J2 * invM * J2T]
 
-void b2PrepareWeldJoint( b2JointSim* base, b2StepContext* context )
+void b2PrepareWeldJoint( b2Joint* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_weldJoint );
 
 	// chase body id to the solver set where the body lives
-	int idA = base->bodyIdA;
-	int idB = base->bodyIdB;
+	int idA = base->edges[0].bodyId;
+	int idB = base->edges[1].bodyId;
 
 	b2World* world = context->world;
 
 	b2Body* bodyA = b2BodyArray_Get( &world->bodies, idA );
 	b2Body* bodyB = b2BodyArray_Get( &world->bodies, idB );
 
-	B2_ASSERT( bodyA->setIndex == b2_awakeSet || bodyB->setIndex == b2_awakeSet );
-	b2SolverSet* setA = b2SolverSetArray_Get( &world->solverSets, bodyA->setIndex );
-	b2SolverSet* setB = b2SolverSetArray_Get( &world->solverSets, bodyB->setIndex );
+	base->stateIndexA = bodyA->stateIndex;
+	base->stateIndexB = bodyB->stateIndex;
 
-	int localIndexA = bodyA->localIndex;
-	int localIndexB = bodyB->localIndex;
-
-	b2BodySim* bodySimA = b2BodySimArray_Get( &setA->bodySims, localIndexA );
-	b2BodySim* bodySimB = b2BodySimArray_Get( &setB->bodySims, localIndexB );
-
-	float mA = bodySimA->invMass;
-	float iA = bodySimA->invInertia;
-	float mB = bodySimB->invMass;
-	float iB = bodySimB->invInertia;
-
-	base->invMassA = mA;
-	base->invMassB = mB;
-	base->invIA = iA;
-	base->invIB = iB;
+	float iA = bodyA->invInertia;
+	float iB = bodyB->invInertia;
 
 	b2WeldJoint* joint = &base->weldJoint;
-	joint->indexA = bodyA->setIndex == b2_awakeSet ? localIndexA : B2_NULL_INDEX;
-	joint->indexB = bodyB->setIndex == b2_awakeSet ? localIndexB : B2_NULL_INDEX;
 
 	// Compute joint anchor frames with world space rotation, relative to center of mass
-	joint->frameA.q = b2MulRot( bodySimA->transform.q, base->localFrameA.q );
-	joint->frameA.p = b2RotateVector( bodySimA->transform.q, b2Sub( base->localFrameA.p, bodySimA->localCenter ) );
-	joint->frameB.q = b2MulRot( bodySimB->transform.q, base->localFrameB.q );
-	joint->frameB.p = b2RotateVector( bodySimB->transform.q, b2Sub( base->localFrameB.p, bodySimB->localCenter ) );
+	joint->frameA.q = b2MulRot( bodyA->transform.q, base->localFrameA.q );
+	joint->frameA.p = b2RotateVector( bodyA->transform.q, b2Sub( base->localFrameA.p, bodyA->localCenter ) );
+	joint->frameB.q = b2MulRot( bodyB->transform.q, base->localFrameB.q );
+	joint->frameB.p = b2RotateVector( bodyB->transform.q, b2Sub( base->localFrameB.p, bodyB->localCenter ) );
 
 	// Compute the initial center delta. Incremental position updates are relative to this.
-	joint->deltaCenter = b2Sub( bodySimB->center, bodySimA->center );
+	joint->deltaCenter = b2Sub( bodyB->center, bodyA->center );
 
 	float ka = iA + iB;
 	joint->axialMass = ka > 0.0f ? 1.0f / ka : 0.0f;
@@ -210,20 +194,20 @@ void b2PrepareWeldJoint( b2JointSim* base, b2StepContext* context )
 	}
 }
 
-void b2WarmStartWeldJoint( b2JointSim* base, b2StepContext* context )
+void b2WarmStartWeldJoint( b2Joint* base, b2StepContext* context )
 {
-	float mA = base->invMassA;
-	float mB = base->invMassB;
-	float iA = base->invIA;
-	float iB = base->invIB;
-
 	// dummy state for static bodies
 	b2BodyState dummyState = b2_identityBodyState;
 
-	b2WeldJoint* joint = &base->weldJoint;
+	b2BodyState* stateA = base->stateIndexA == B2_NULL_INDEX ? &dummyState : context->states + base->stateIndexA;
+	b2BodyState* stateB = base->stateIndexB == B2_NULL_INDEX ? &dummyState : context->states + base->stateIndexB;
 
-	b2BodyState* stateA = joint->indexA == B2_NULL_INDEX ? &dummyState : context->states + joint->indexA;
-	b2BodyState* stateB = joint->indexB == B2_NULL_INDEX ? &dummyState : context->states + joint->indexB;
+	float mA = stateA->invMass;
+	float iA = stateA->invInertia;
+	float mB = stateB->invMass;
+	float iB = stateB->invInertia;
+
+	b2WeldJoint* joint = &base->weldJoint;
 
 	b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
 	b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
@@ -241,22 +225,22 @@ void b2WarmStartWeldJoint( b2JointSim* base, b2StepContext* context )
 	}
 }
 
-void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias )
+void b2SolveWeldJoint( b2Joint* base, b2StepContext* context, bool useBias )
 {
 	B2_ASSERT( base->type == b2_weldJoint );
-
-	float mA = base->invMassA;
-	float mB = base->invMassB;
-	float iA = base->invIA;
-	float iB = base->invIB;
 
 	// dummy state for static bodies
 	b2BodyState dummyState = b2_identityBodyState;
 
-	b2WeldJoint* joint = &base->weldJoint;
+	b2BodyState* stateA = base->stateIndexA == B2_NULL_INDEX ? &dummyState : context->states + base->stateIndexA;
+	b2BodyState* stateB = base->stateIndexB == B2_NULL_INDEX ? &dummyState : context->states + base->stateIndexB;
 
-	b2BodyState* stateA = joint->indexA == B2_NULL_INDEX ? &dummyState : context->states + joint->indexA;
-	b2BodyState* stateB = joint->indexB == B2_NULL_INDEX ? &dummyState : context->states + joint->indexB;
+	float mA = stateA->invMass;
+	float iA = stateA->invInertia;
+	float mB = stateB->invMass;
+	float iB = stateB->invInertia;
+
+	b2WeldJoint* joint = &base->weldJoint;
 
 	b2Vec2 vA = stateA->linearVelocity;
 	float wA = stateA->angularVelocity;
@@ -462,7 +446,7 @@ void b2DumpWeldJoint()
 }
 #endif
 
-void b2DrawWeldJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale )
+void b2DrawWeldJoint( b2DebugDraw* draw, b2Joint* base, b2Transform transformA, b2Transform transformB, float drawScale )
 {
 	B2_ASSERT( base->type == b2_weldJoint );
 

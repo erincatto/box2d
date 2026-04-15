@@ -594,17 +594,16 @@ void Sample::Step()
 
 		int totalCount = 0;
 		char buffer[256] = { 0 };
-		int colorCount = sizeof( s.colorCounts ) / sizeof( s.colorCounts[0] );
 
-		// todo fix this
-		int offset = snprintf( buffer, 256, "colors: " );
-		for ( int i = 0; i < colorCount; ++i )
+		int offset = snprintf( buffer, 256, "clusters: " );
+		for ( int i = 0; i < B2_CLUSTER_COUNT; ++i )
 		{
-			offset += snprintf( buffer + offset, 256 - offset, "%d/", s.colorCounts[i] );
-			totalCount += s.colorCounts[i];
+			offset += snprintf( buffer + offset, 256 - offset, "%d/", s.clusterCounts[i] );
+			totalCount += s.clusterCounts[i];
 		}
 		snprintf( buffer + offset, 256 - offset, "[%d]", totalCount );
 		DrawTextLine( buffer );
+
 		DrawTextLine( "stack allocator size = %d K", s.stackUsed / 1024 );
 		DrawTextLine( "total allocation = %d K", s.byteCount / 1024 );
 	}
@@ -620,13 +619,10 @@ void Sample::Step()
 		m_maxProfile.prepareStages = b2MaxFloat( m_maxProfile.prepareStages, p.prepareStages );
 		m_maxProfile.solveConstraints = b2MaxFloat( m_maxProfile.solveConstraints, p.solveConstraints );
 		m_maxProfile.prepareConstraints = b2MaxFloat( m_maxProfile.prepareConstraints, p.prepareConstraints );
-		m_maxProfile.integrateVelocities = b2MaxFloat( m_maxProfile.integrateVelocities, p.integrateVelocities );
 		m_maxProfile.warmStart = b2MaxFloat( m_maxProfile.warmStart, p.warmStart );
 		m_maxProfile.solveImpulses = b2MaxFloat( m_maxProfile.solveImpulses, p.solveImpulses );
-		m_maxProfile.integratePositions = b2MaxFloat( m_maxProfile.integratePositions, p.integratePositions );
 		m_maxProfile.relaxImpulses = b2MaxFloat( m_maxProfile.relaxImpulses, p.relaxImpulses );
 		m_maxProfile.applyRestitution = b2MaxFloat( m_maxProfile.applyRestitution, p.applyRestitution );
-		m_maxProfile.storeImpulses = b2MaxFloat( m_maxProfile.storeImpulses, p.storeImpulses );
 		m_maxProfile.transforms = b2MaxFloat( m_maxProfile.transforms, p.transforms );
 		m_maxProfile.splitIslands = b2MaxFloat( m_maxProfile.splitIslands, p.splitIslands );
 		m_maxProfile.jointEvents = b2MaxFloat( m_maxProfile.jointEvents, p.jointEvents );
@@ -643,13 +639,10 @@ void Sample::Step()
 		m_totalProfile.prepareStages += p.prepareStages;
 		m_totalProfile.solveConstraints += p.solveConstraints;
 		m_totalProfile.prepareConstraints += p.prepareConstraints;
-		m_totalProfile.integrateVelocities += p.integrateVelocities;
 		m_totalProfile.warmStart += p.warmStart;
 		m_totalProfile.solveImpulses += p.solveImpulses;
-		m_totalProfile.integratePositions += p.integratePositions;
 		m_totalProfile.relaxImpulses += p.relaxImpulses;
 		m_totalProfile.applyRestitution += p.applyRestitution;
-		m_totalProfile.storeImpulses += p.storeImpulses;
 		m_totalProfile.transforms += p.transforms;
 		m_totalProfile.splitIslands += p.splitIslands;
 		m_totalProfile.jointEvents += p.jointEvents;
@@ -673,13 +666,10 @@ void Sample::Step()
 			aveProfile.prepareStages = scale * m_totalProfile.prepareStages;
 			aveProfile.solveConstraints = scale * m_totalProfile.solveConstraints;
 			aveProfile.prepareConstraints = scale * m_totalProfile.prepareConstraints;
-			aveProfile.integrateVelocities = scale * m_totalProfile.integrateVelocities;
 			aveProfile.warmStart = scale * m_totalProfile.warmStart;
 			aveProfile.solveImpulses = scale * m_totalProfile.solveImpulses;
-			aveProfile.integratePositions = scale * m_totalProfile.integratePositions;
 			aveProfile.relaxImpulses = scale * m_totalProfile.relaxImpulses;
 			aveProfile.applyRestitution = scale * m_totalProfile.applyRestitution;
-			aveProfile.storeImpulses = scale * m_totalProfile.storeImpulses;
 			aveProfile.transforms = scale * m_totalProfile.transforms;
 			aveProfile.splitIslands = scale * m_totalProfile.splitIslands;
 			aveProfile.jointEvents = scale * m_totalProfile.jointEvents;
@@ -701,20 +691,14 @@ void Sample::Step()
 					  m_maxProfile.solveConstraints );
 		DrawTextLine( ">> prepare constraints [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.prepareConstraints,
 					  aveProfile.prepareConstraints, m_maxProfile.prepareConstraints );
-		DrawTextLine( ">> integrate velocities [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.integrateVelocities,
-					  aveProfile.integrateVelocities, m_maxProfile.integrateVelocities );
 		DrawTextLine( ">> warm start [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.warmStart, aveProfile.warmStart,
 					  m_maxProfile.warmStart );
 		DrawTextLine( ">> solve impulses [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveImpulses, aveProfile.solveImpulses,
 					  m_maxProfile.solveImpulses );
-		DrawTextLine( ">> integrate positions [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.integratePositions,
-					  aveProfile.integratePositions, m_maxProfile.integratePositions );
 		DrawTextLine( ">> relax impulses [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.relaxImpulses, aveProfile.relaxImpulses,
 					  m_maxProfile.relaxImpulses );
 		DrawTextLine( ">> apply restitution [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.applyRestitution, aveProfile.applyRestitution,
 					  m_maxProfile.applyRestitution );
-		DrawTextLine( ">> store impulses [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.storeImpulses, aveProfile.storeImpulses,
-					  m_maxProfile.storeImpulses );
 		DrawTextLine( ">> split islands [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.splitIslands, aveProfile.splitIslands,
 					  m_maxProfile.splitIslands );
 		DrawTextLine( "> update transforms [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.transforms, aveProfile.transforms,

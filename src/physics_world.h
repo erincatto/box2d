@@ -7,9 +7,9 @@
 #include "container.h"
 #include "bitset.h"
 #include "broad_phase.h"
-#include "constraint_graph.h"
 #include "id_pool.h"
 #include "arena_allocator.h"
+#include "cluster.h"
 
 #include "box2d/types.h"
 
@@ -35,6 +35,9 @@ typedef struct b2TaskContext
 	// Used to put islands to sleep
 	b2BitSet awakeIslandBitSet;
 
+	// Bodies that changed cluster membership during finalization
+	b2BitSet dirtyBodyBitSet;
+
 	// Per worker split island candidate
 	float splitSleepTime;
 	int splitIslandId;
@@ -47,7 +50,7 @@ typedef struct b2World
 {
 	b2ArenaAllocator arena;
 	b2BroadPhase broadPhase;
-	b2ConstraintGraph constraintGraph;
+	b2ClusterManager clusterManager;
 
 	// The body id pool is used to allocate and recycle body ids. Body ids
 	// provide a stable identifier for users, but incur caches misses when used

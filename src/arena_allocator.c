@@ -30,6 +30,8 @@ void b2DestroyArenaAllocator( b2ArenaAllocator* allocator )
 	b2Free( allocator->data, allocator->capacity );
 }
 
+#define B2_FORCE_HEAP 0
+
 void* b2AllocateArenaItem( b2ArenaAllocator* alloc, int size, const char* name )
 {
 	// ensure allocation is 32 byte aligned to support 256-bit SIMD
@@ -38,7 +40,7 @@ void* b2AllocateArenaItem( b2ArenaAllocator* alloc, int size, const char* name )
 	b2ArenaEntry entry;
 	entry.size = size32;
 	entry.name = name;
-	if ( alloc->index + size32 > alloc->capacity )
+	if ( alloc->index + size32 > alloc->capacity || B2_FORCE_HEAP == 1 )
 	{
 		// fall back to the heap (undesirable)
 		entry.data = b2Alloc( size32 );

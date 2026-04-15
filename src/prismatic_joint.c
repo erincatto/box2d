@@ -15,7 +15,7 @@
 
 void b2PrismaticJoint_EnableSpring( b2JointId jointId, bool enableSpring )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	if ( enableSpring != joint->prismaticJoint.enableSpring )
 	{
 		joint->prismaticJoint.enableSpring = enableSpring;
@@ -25,49 +25,49 @@ void b2PrismaticJoint_EnableSpring( b2JointId jointId, bool enableSpring )
 
 bool b2PrismaticJoint_IsSpringEnabled( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	return joint->prismaticJoint.enableSpring;
 }
 
 void b2PrismaticJoint_SetSpringHertz( b2JointId jointId, float hertz )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	joint->prismaticJoint.hertz = hertz;
 }
 
 float b2PrismaticJoint_GetSpringHertz( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	return joint->prismaticJoint.hertz;
 }
 
 void b2PrismaticJoint_SetSpringDampingRatio( b2JointId jointId, float dampingRatio )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	joint->prismaticJoint.dampingRatio = dampingRatio;
 }
 
 float b2PrismaticJoint_GetSpringDampingRatio( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	return joint->prismaticJoint.dampingRatio;
 }
 
 void b2PrismaticJoint_SetTargetTranslation( b2JointId jointId, float translation )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	joint->prismaticJoint.targetTranslation = translation;
 }
 
 float b2PrismaticJoint_GetTargetTranslation( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	return joint->prismaticJoint.targetTranslation;
 }
 
 void b2PrismaticJoint_EnableLimit( b2JointId jointId, bool enableLimit )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	if ( enableLimit != joint->prismaticJoint.enableLimit )
 	{
 		joint->prismaticJoint.enableLimit = enableLimit;
@@ -78,19 +78,19 @@ void b2PrismaticJoint_EnableLimit( b2JointId jointId, bool enableLimit )
 
 bool b2PrismaticJoint_IsLimitEnabled( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	return joint->prismaticJoint.enableLimit;
 }
 
 float b2PrismaticJoint_GetLowerLimit( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	return joint->prismaticJoint.lowerTranslation;
 }
 
 float b2PrismaticJoint_GetUpperLimit( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	return joint->prismaticJoint.upperTranslation;
 }
 
@@ -98,7 +98,7 @@ void b2PrismaticJoint_SetLimits( b2JointId jointId, float lower, float upper )
 {
 	B2_ASSERT( lower <= upper );
 
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	if ( lower != joint->prismaticJoint.lowerTranslation || upper != joint->prismaticJoint.upperTranslation )
 	{
 		joint->prismaticJoint.lowerTranslation = b2MinFloat( lower, upper );
@@ -110,7 +110,7 @@ void b2PrismaticJoint_SetLimits( b2JointId jointId, float lower, float upper )
 
 void b2PrismaticJoint_EnableMotor( b2JointId jointId, bool enableMotor )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	if ( enableMotor != joint->prismaticJoint.enableMotor )
 	{
 		joint->prismaticJoint.enableMotor = enableMotor;
@@ -120,47 +120,47 @@ void b2PrismaticJoint_EnableMotor( b2JointId jointId, bool enableMotor )
 
 bool b2PrismaticJoint_IsMotorEnabled( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	return joint->prismaticJoint.enableMotor;
 }
 
 void b2PrismaticJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	joint->prismaticJoint.motorSpeed = motorSpeed;
 }
 
 float b2PrismaticJoint_GetMotorSpeed( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	return joint->prismaticJoint.motorSpeed;
 }
 
 float b2PrismaticJoint_GetMotorForce( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
-	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* base = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	return world->inv_h * base->prismaticJoint.motorImpulse;
 }
 
 void b2PrismaticJoint_SetMaxMotorForce( b2JointId jointId, float force )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	joint->prismaticJoint.maxMotorForce = force;
 }
 
 float b2PrismaticJoint_GetMaxMotorForce( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
+	b2Joint* joint = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	return joint->prismaticJoint.maxMotorForce;
 }
 
 float b2PrismaticJoint_GetTranslation( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
-	b2JointSim* jointSim = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
-	b2Transform transformA = b2GetBodyTransform( world, jointSim->bodyIdA );
-	b2Transform transformB = b2GetBodyTransform( world, jointSim->bodyIdB );
+	b2Joint* jointSim = b2GetJointCheckType( jointId, b2_prismaticJoint );
+	b2Transform transformA = b2GetBodyTransform( world, jointSim->edges[0].bodyId );
+	b2Transform transformB = b2GetBodyTransform( world, jointSim->edges[1].bodyId );
 
 	b2Vec2 localAxisA = b2RotateVector( jointSim->localFrameA.q, (b2Vec2){ 1.0f, 0.0f } );
 	b2Vec2 axisA = b2RotateVector( transformA.q, localAxisA );
@@ -174,43 +174,37 @@ float b2PrismaticJoint_GetTranslation( b2JointId jointId )
 float b2PrismaticJoint_GetSpeed( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
-	b2Joint* joint = b2GetJointFullId( world, jointId );
-	B2_ASSERT( joint->type == b2_prismaticJoint );
-	b2JointSim* base = b2GetJointSim( world, joint );
+	b2Joint* base = b2GetJointCheckType( jointId, b2_prismaticJoint );
 	B2_ASSERT( base->type == b2_prismaticJoint );
 
-	b2Body* bodyA = b2BodyArray_Get( &world->bodies, base->bodyIdA );
-	b2Body* bodyB = b2BodyArray_Get( &world->bodies, base->bodyIdB );
-	b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
-	b2BodySim* bodySimB = b2GetBodySim( world, bodyB );
-	b2BodyState* bodyStateA = b2GetBodyState( world, bodyA );
-	b2BodyState* bodyStateB = b2GetBodyState( world, bodyB );
+	b2Body* bodyA = b2BodyArray_Get( &world->bodies, base->edges[0].bodyId );
+	b2Body* bodyB = b2BodyArray_Get( &world->bodies, base->edges[1].bodyId );
 
-	b2Transform transformA = bodySimA->transform;
-	b2Transform transformB = bodySimB->transform;
+	b2Transform transformA = bodyA->transform;
+	b2Transform transformB = bodyB->transform;
 
 	b2Vec2 localAxisA = b2RotateVector( base->localFrameA.q, (b2Vec2){ 1.0f, 0.0f } );
 	b2Vec2 axisA = b2RotateVector( transformA.q, localAxisA );
-	b2Vec2 cA = bodySimA->center;
-	b2Vec2 cB = bodySimB->center;
-	b2Vec2 rA = b2RotateVector( transformA.q, b2Sub( base->localFrameA.p, bodySimA->localCenter ) );
-	b2Vec2 rB = b2RotateVector( transformB.q, b2Sub( base->localFrameB.p, bodySimB->localCenter ) );
+	b2Vec2 cA = bodyA->center;
+	b2Vec2 cB = bodyB->center;
+	b2Vec2 rA = b2RotateVector( transformA.q, b2Sub( base->localFrameA.p, bodyA->localCenter ) );
+	b2Vec2 rB = b2RotateVector( transformB.q, b2Sub( base->localFrameB.p, bodyB->localCenter ) );
 
 	b2Vec2 d = b2Add( b2Sub( cB, cA ), b2Sub( rB, rA ) );
 
-	b2Vec2 vA = bodyStateA ? bodyStateA->linearVelocity : b2Vec2_zero;
-	b2Vec2 vB = bodyStateB ? bodyStateB->linearVelocity : b2Vec2_zero;
-	float wA = bodyStateA ? bodyStateA->angularVelocity : 0.0f;
-	float wB = bodyStateB ? bodyStateB->angularVelocity : 0.0f;
+	b2Vec2 vA = bodyA->linearVelocity;
+	b2Vec2 vB = bodyB->linearVelocity;
+	float wA = bodyA->angularVelocity;
+	float wB = bodyB->angularVelocity;
 
 	b2Vec2 vRel = b2Sub( b2Add( vB, b2CrossSV( wB, rB ) ), b2Add( vA, b2CrossSV( wA, rA ) ) );
 	float speed = b2Dot( d, b2CrossSV( wA, axisA ) ) + b2Dot( axisA, vRel );
 	return speed;
 }
 
-b2Vec2 b2GetPrismaticJointForce( b2World* world, b2JointSim* base )
+b2Vec2 b2GetPrismaticJointForce( b2World* world, b2Joint* base )
 {
-	int idA = base->bodyIdA;
+	int idA = base->edges[0].bodyId;
 	b2Transform transformA = b2GetBodyTransform( world, idA );
 
 	b2PrismaticJoint* joint = &base->prismaticJoint;
@@ -227,7 +221,7 @@ b2Vec2 b2GetPrismaticJointForce( b2World* world, b2JointSim* base )
 	return force;
 }
 
-float b2GetPrismaticJointTorque( b2World* world, b2JointSim* base )
+float b2GetPrismaticJointTorque( b2World* world, b2Joint* base )
 {
 	return world->inv_h * base->prismaticJoint.impulse.y;
 }
@@ -277,51 +271,32 @@ float b2GetPrismaticJointTorque( b2World* world, b2JointSim* base )
 // s1 = cross(d + r1, u), s2 = cross(r2, u)
 // a1 = cross(d + r1, v), a2 = cross(r2, v)
 
-void b2PreparePrismaticJoint( b2JointSim* base, b2StepContext* context )
+void b2PreparePrismaticJoint( b2Joint* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_prismaticJoint );
 
 	// chase body id to the solver set where the body lives
-	int idA = base->bodyIdA;
-	int idB = base->bodyIdB;
+	int idA = base->edges[0].bodyId;
+	int idB = base->edges[1].bodyId;
 
 	b2World* world = context->world;
 
 	b2Body* bodyA = b2BodyArray_Get( &world->bodies, idA );
 	b2Body* bodyB = b2BodyArray_Get( &world->bodies, idB );
 
-	B2_ASSERT( bodyA->setIndex == b2_awakeSet || bodyB->setIndex == b2_awakeSet );
-	b2SolverSet* setA = b2SolverSetArray_Get( &world->solverSets, bodyA->setIndex );
-	b2SolverSet* setB = b2SolverSetArray_Get( &world->solverSets, bodyB->setIndex );
-
-	int localIndexA = bodyA->localIndex;
-	int localIndexB = bodyB->localIndex;
-
-	b2BodySim* bodySimA = b2BodySimArray_Get( &setA->bodySims, localIndexA );
-	b2BodySim* bodySimB = b2BodySimArray_Get( &setB->bodySims, localIndexB );
-
-	float mA = bodySimA->invMass;
-	float iA = bodySimA->invInertia;
-	float mB = bodySimB->invMass;
-	float iB = bodySimB->invInertia;
-
-	base->invMassA = mA;
-	base->invMassB = mB;
-	base->invIA = iA;
-	base->invIB = iB;
+	base->stateIndexA = bodyA->stateIndex;
+	base->stateIndexB = bodyB->stateIndex;
 
 	b2PrismaticJoint* joint = &base->prismaticJoint;
-	joint->indexA = bodyA->setIndex == b2_awakeSet ? localIndexA : B2_NULL_INDEX;
-	joint->indexB = bodyB->setIndex == b2_awakeSet ? localIndexB : B2_NULL_INDEX;
 
 	// Compute joint anchor frames with world space rotation, relative to center of mass
-	joint->frameA.q = b2MulRot( bodySimA->transform.q, base->localFrameA.q );
-	joint->frameA.p = b2RotateVector( bodySimA->transform.q, b2Sub( base->localFrameA.p, bodySimA->localCenter ) );
-	joint->frameB.q = b2MulRot( bodySimB->transform.q, base->localFrameB.q );
-	joint->frameB.p = b2RotateVector( bodySimB->transform.q, b2Sub( base->localFrameB.p, bodySimB->localCenter ) );
+	joint->frameA.q = b2MulRot( bodyA->transform.q, base->localFrameA.q );
+	joint->frameA.p = b2RotateVector( bodyA->transform.q, b2Sub( base->localFrameA.p, bodyA->localCenter ) );
+	joint->frameB.q = b2MulRot( bodyB->transform.q, base->localFrameB.q );
+	joint->frameB.p = b2RotateVector( bodyB->transform.q, b2Sub( base->localFrameB.p, bodyB->localCenter ) );
 
 	// Compute the initial center delta. Incremental position updates are relative to this.
-	joint->deltaCenter = b2Sub( bodySimB->center, bodySimA->center );
+	joint->deltaCenter = b2Sub( bodyB->center, bodyA->center );
 
 	joint->springSoftness = b2MakeSoft( joint->hertz, joint->dampingRatio, context->h );
 
@@ -335,22 +310,22 @@ void b2PreparePrismaticJoint( b2JointSim* base, b2StepContext* context )
 	}
 }
 
-void b2WarmStartPrismaticJoint( b2JointSim* base, b2StepContext* context )
+void b2WarmStartPrismaticJoint( b2Joint* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_prismaticJoint );
-
-	float mA = base->invMassA;
-	float mB = base->invMassB;
-	float iA = base->invIA;
-	float iB = base->invIB;
 
 	// dummy state for static bodies
 	b2BodyState dummyState = b2_identityBodyState;
 
 	b2PrismaticJoint* joint = &base->prismaticJoint;
 
-	b2BodyState* stateA = joint->indexA == B2_NULL_INDEX ? &dummyState : context->states + joint->indexA;
-	b2BodyState* stateB = joint->indexB == B2_NULL_INDEX ? &dummyState : context->states + joint->indexB;
+	b2BodyState* stateA = base->stateIndexA == B2_NULL_INDEX ? &dummyState : context->states + base->stateIndexA;
+	b2BodyState* stateB = base->stateIndexB == B2_NULL_INDEX ? &dummyState : context->states + base->stateIndexB;
+
+	float mA = stateA->invMass;
+	float iA = stateA->invInertia;
+	float mB = stateB->invMass;
+	float iB = stateB->invInertia;
 
 	b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
 	b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
@@ -389,22 +364,22 @@ void b2WarmStartPrismaticJoint( b2JointSim* base, b2StepContext* context )
 	}
 }
 
-void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBias )
+void b2SolvePrismaticJoint( b2Joint* base, b2StepContext* context, bool useBias )
 {
 	B2_ASSERT( base->type == b2_prismaticJoint );
-
-	float mA = base->invMassA;
-	float mB = base->invMassB;
-	float iA = base->invIA;
-	float iB = base->invIB;
 
 	// dummy state for static bodies
 	b2BodyState dummyState = b2_identityBodyState;
 
 	b2PrismaticJoint* joint = &base->prismaticJoint;
 
-	b2BodyState* stateA = joint->indexA == B2_NULL_INDEX ? &dummyState : context->states + joint->indexA;
-	b2BodyState* stateB = joint->indexB == B2_NULL_INDEX ? &dummyState : context->states + joint->indexB;
+	b2BodyState* stateA = base->stateIndexA == B2_NULL_INDEX ? &dummyState : context->states + base->stateIndexA;
+	b2BodyState* stateB = base->stateIndexB == B2_NULL_INDEX ? &dummyState : context->states + base->stateIndexB;
+
+	float mA = stateA->invMass;
+	float iA = stateA->invInertia;
+	float mB = stateB->invMass;
+	float iB = stateB->invInertia;
 
 	b2Vec2 vA = stateA->linearVelocity;
 	float wA = stateA->angularVelocity;
@@ -673,7 +648,7 @@ void b2PrismaticJoint::Dump()
 }
 #endif
 
-void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale )
+void b2DrawPrismaticJoint( b2DebugDraw* draw, b2Joint* base, b2Transform transformA, b2Transform transformB, float drawScale )
 {
 	B2_ASSERT( base->type == b2_prismaticJoint );
 

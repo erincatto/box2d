@@ -89,6 +89,8 @@
 /// https://github.com/wolfpld/tracy
 #ifdef BOX2D_PROFILE
 	#include <tracy/TracyC.h>
+
+// todo remove active flag that is not used
 	#define b2TracyCZoneC( ctx, color, active ) TracyCZoneC( ctx, color, active )
 	#define b2TracyCZoneNC( ctx, name, color, active ) TracyCZoneNC( ctx, name, color, active )
 	#define b2TracyCZoneEnd( ctx ) TracyCZoneEnd( ctx )
@@ -98,6 +100,25 @@
 	#define b2TracyCZoneNC( ctx, name, color, active )
 	#define b2TracyCZoneEnd( ctx )
 	#define b2TracyCFrame
+#endif
+
+// Software prefetch into L1 cache
+#if defined( _MSC_VER )
+#include <intrin.h>
+static inline void b2Prefetch( const void* p )
+{
+	_mm_prefetch( (const char*)p, _MM_HINT_T0 );
+}
+#elif defined( __GNUC__ ) || defined( __clang__ )
+static inline void b2Prefetch( const void* p )
+{
+	__builtin_prefetch( p, 0, 3 );
+}
+#else
+static inline void b2Prefetch( const void* p )
+{
+	(void)p;
+}
 #endif
 
 // clang-format on

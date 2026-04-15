@@ -129,3 +129,5 @@ B2_INLINE int b2RemoveHelper( void* data, int* count, int index, int elementSize
 
 	return B2_NULL_INDEX;
 }
+
+b2DeclareArray( int );

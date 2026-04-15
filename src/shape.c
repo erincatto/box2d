@@ -1655,8 +1655,7 @@ int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData, int c
 			contactData[index].shapeIdA = (b2ShapeId){ shapeA->id + 1, shapeId.world0, shapeA->generation };
 			contactData[index].shapeIdB = (b2ShapeId){ shapeB->id + 1, shapeId.world0, shapeB->generation };
 
-			b2ContactSim* contactSim = b2GetContactSim( world, contact );
-			contactData[index].manifold = contactSim->manifold;
+			contactData[index].manifold = contact->manifold;
 			index += 1;
 		}
 
@@ -1799,8 +1798,6 @@ void b2Shape_ApplyWind( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, 
 		return;
 	}
 
-	b2BodySim* sim = b2GetBodySim( world, body );
-
 	if ( body->setIndex != b2_awakeSet )
 	{
 		// Must wake for state to exist
@@ -1809,8 +1806,7 @@ void b2Shape_ApplyWind( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, 
 
 	B2_ASSERT( body->setIndex == b2_awakeSet );
 
-	b2BodyState* state = b2GetBodyState( world, body );
-	b2Transform transform = sim->transform;
+	b2Transform transform = body->transform;
 
 	float lengthUnits = b2GetLengthUnitsPerMeter();
 	float volumeUnits = lengthUnits * lengthUnits * lengthUnits;
@@ -1827,8 +1823,8 @@ void b2Shape_ApplyWind( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, 
 		{
 			float radius = shape->circle.radius;
 			b2Vec2 centroid = shape->localCentroid;
-			b2Vec2 lever = b2RotateVector( transform.q, b2Sub( centroid, sim->localCenter ) );
-			b2Vec2 shapeVelocity = b2Add( state->linearVelocity, b2CrossSV( state->angularVelocity, lever ) );
+			b2Vec2 lever = b2RotateVector( transform.q, b2Sub( centroid, body->localCenter ) );
+			b2Vec2 shapeVelocity = b2Add( body->linearVelocity, b2CrossSV( body->angularVelocity, lever ) );
 			b2Vec2 relativeVelocity = b2MulSub( wind, drag, shapeVelocity );
 			float speed;
 			b2Vec2 direction = b2GetLengthAndNormalize( &speed, relativeVelocity );
@@ -1841,8 +1837,8 @@ void b2Shape_ApplyWind( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, 
 		case b2_capsuleShape:
 		{
 			b2Vec2 centroid = shape->localCentroid;
-			b2Vec2 lever = b2RotateVector( transform.q, b2Sub( centroid, sim->localCenter ) );
-			b2Vec2 shapeVelocity = b2Add( state->linearVelocity, b2CrossSV( state->angularVelocity, lever ) );
+			b2Vec2 lever = b2RotateVector( transform.q, b2Sub( centroid, body->localCenter ) );
+			b2Vec2 shapeVelocity = b2Add( body->linearVelocity, b2CrossSV( body->angularVelocity, lever ) );
 			b2Vec2 relativeVelocity = b2MulSub( wind, drag, shapeVelocity );
 			float speed;
 			b2Vec2 direction = b2GetLengthAndNormalize( &speed, relativeVelocity );
@@ -1871,8 +1867,8 @@ void b2Shape_ApplyWind( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, 
 		case b2_polygonShape:
 		{
 			b2Vec2 centroid = shape->localCentroid;
-			b2Vec2 lever = b2RotateVector( transform.q, b2Sub( centroid, sim->localCenter ) );
-			b2Vec2 shapeVelocity = b2Add( state->linearVelocity, b2CrossSV( state->angularVelocity, lever ) );
+			b2Vec2 lever = b2RotateVector( transform.q, b2Sub( centroid, body->localCenter ) );
+			b2Vec2 shapeVelocity = b2Add( body->linearVelocity, b2CrossSV( body->angularVelocity, lever ) );
 			b2Vec2 relativeVelocity = b2MulSub( wind, drag, shapeVelocity );
 			float speed;
 			b2Vec2 direction = b2GetLengthAndNormalize( &speed, relativeVelocity );
@@ -1906,7 +1902,7 @@ void b2Shape_ApplyWind( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, 
 				float forceMagnitude = 0.5f * airDensity * projectedArea * speed * speed;
 				b2Vec2 f = b2MulSV( forceMagnitude, b2MulAdd( direction, lift, liftDirection ) );
 
-				b2Vec2 edgeLever = b2RotateVector( transform.q, b2Sub( edgeCenter, sim->localCenter ) );
+				b2Vec2 edgeLever = b2RotateVector( transform.q, b2Sub( edgeCenter, body->localCenter ) );
 
 				force = b2Add( force, f );
 				torque += b2Cross( edgeLever, f );
@@ -1918,6 +1914,6 @@ void b2Shape_ApplyWind( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, 
 			break;
 	}
 
-	sim->force = b2Add( sim->force, force );
-	sim->torque += torque;
+	body->force = b2Add( body->force, force );
+	body->torque += torque;
 }

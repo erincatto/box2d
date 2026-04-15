@@ -12,10 +12,7 @@
 // Maximum parallel workers. Used to size some static arrays.
 #define B2_MAX_WORKERS 64
 
-// Maximum number of colors in the constraint graph. Constraints that cannot
-// find a color are added to the overflow set which are solved single-threaded.
-// The compound barrel benchmark has minor overflow with 24 colors 
-#define B2_GRAPH_COLOR_COUNT 24
+#define B2_CLUSTER_COUNT 16
 
 // A small length used as a collision and constraint tolerance. Usually it is
 // chosen to be numerically significant, but visually insignificant. In meters.
