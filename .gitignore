@@ -10,3 +10,4 @@ CMakeUserPresets.json
 .idea/
 .claude/
 .tmp/
+AGENTS.md
