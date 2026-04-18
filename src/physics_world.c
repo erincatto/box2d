@@ -43,7 +43,7 @@ B2_ARRAY_SOURCE( b2ContactHitEvent, b2ContactHitEvent )
 B2_ARRAY_SOURCE( b2SensorBeginTouchEvent, b2SensorBeginTouchEvent )
 B2_ARRAY_SOURCE( b2SensorEndTouchEvent, b2SensorEndTouchEvent )
 
-b2World* b3GetUnlockedWorldFromId( b2WorldId id )
+static b2World* b3GetUnlockedWorldFromId( b2WorldId id )
 {
 	B2_ASSERT( 1 <= id.index1 && id.index1 <= B2_MAX_WORLDS );
 	b2World* world = b2_worlds + ( id.index1 - 1 );
