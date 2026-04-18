@@ -1096,7 +1096,7 @@ typedef struct b2ContactConstraintWide
 	b2FloatW relativeVelocity1, relativeVelocity2;
 } b2ContactConstraintWide;
 
-int b2GetContactConstraintSIMDByteCount( void )
+int b2GetWideContactConstraintByteCount( void )
 {
 	return sizeof( b2ContactConstraintWide );
 }

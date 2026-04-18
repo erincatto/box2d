@@ -38,7 +38,8 @@ typedef struct b2ContactConstraint
 	int pointCount;
 } b2ContactConstraint;
 
-int b2GetContactConstraintSIMDByteCount( void );
+// This function allows hiding SIMD intrinsics in the source file to improve compilation performance.
+int b2GetWideContactConstraintByteCount( void );
 
 // Overflow contacts don't fit into the constraint graph coloring
 void b2PrepareOverflowContacts( b2StepContext* context );
