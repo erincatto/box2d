@@ -9,11 +9,6 @@
 
 #define ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
 
-namespace enki
-{
-class TaskScheduler;
-};
-
 struct ImFont;
 
 struct SampleContext
@@ -78,7 +73,7 @@ public:
 	friend class BoundaryListener;
 	friend class ContactListener;
 
-	static constexpr int m_maxTasks = 64;
+	static constexpr int m_maxTasks = 512;
 	static constexpr int m_maxThreads = 64;
 	static constexpr int m_profileCapacity = 512;
 
@@ -91,11 +86,6 @@ public:
 	SampleContext* m_context;
 	Camera* m_camera;
 	Draw* m_draw;
-
-	enki::TaskScheduler* m_scheduler;
-	class SampleTask* m_tasks;
-	int m_taskCount;
-	int m_threadCount;
 
 	b2BodyId m_mouseBodyId;
 

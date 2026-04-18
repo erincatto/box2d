@@ -132,7 +132,7 @@ if(BOX2D_COMPILE_WARNING_AS_ERROR)
 endif()
 
 target_include_directories(samples PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${JSMN_DIR})
-target_link_libraries(samples PUBLIC box2d shared imgui implot glfw glad enkiTS)
+target_link_libraries(samples PUBLIC box2d shared imgui implot glfw glad)
 
 # target_compile_definitions(samples PRIVATE "$<$<CONFIG:DEBUG>:SAMPLES_DEBUG>")
 # message(STATUS "runtime = ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")

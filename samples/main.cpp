@@ -10,9 +10,9 @@
 
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS 1
 
-#include "TaskScheduler.h"
 #include "draw.h"
 #include "sample.h"
+#include "utils.h"
 
 #include "box2d/base.h"
 #include "box2d/box2d.h"
@@ -31,15 +31,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef BOX2D_PROFILE
+#ifdef TRACY_ENABLE
 #include <tracy/Tracy.hpp>
 #else
 #define FrameMark
 #endif
 
-#if defined( _MSC_VER ) && 0
+#if defined( _MSC_VER )
 #include <crtdbg.h>
-
 static int MyAllocHook( int allocType, void* userData, size_t size, int blockType, long requestNumber,
 						const unsigned char* filename, int lineNumber )
 {
@@ -395,7 +394,7 @@ static void ScrollCallback( GLFWwindow* window, double dx, double dy )
 
 static void UpdateUI()
 {
-	int maxWorkers = enki::GetNumHardwareThreads();
+	int maxWorkers = GetNumberOfCores();
 
 	float fontSize = ImGui::GetFontSize();
 	float menuWidth = 13.0f * fontSize;
@@ -567,13 +566,9 @@ int main( int, char** )
 	_CrtSetReportMode( _CRT_WARN, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_FILE );
 	_CrtSetReportFile( _CRT_WARN, _CRTDBG_FILE_STDOUT );
 	//_CrtSetAllocHook(MyAllocHook);
-
-// How to break at the leaking allocation, in the watch window enter this variable
-// and set it to the allocation number in {}. Do this at the first line in main.
-// {,,ucrtbased.dll}_crtBreakAlloc = <allocation number>
 #endif
 
-#ifdef BOX2D_PROFILE
+#ifdef TRACY_ENABLE
 	tracy::StartupProfiler();
 #endif
 
@@ -584,7 +579,7 @@ int main( int, char** )
 	char buffer[128];
 
 	s_context.Load();
-	s_context.workerCount = b2MinInt( 8, (int)enki::GetNumHardwareThreads() / 2 );
+	s_context.workerCount = b2MinInt( 8, GetNumberOfCores() / 2 );
 
 	SortSamples();
 
@@ -785,7 +780,7 @@ int main( int, char** )
 
 	s_context.Save();
 
-#ifdef BOX2D_PROFILE
+#ifdef TRACY_ENABLE
 	tracy::ShutdownProfiler();
 #endif
 

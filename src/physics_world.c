@@ -18,6 +18,8 @@
 #include "ctz.h"
 #include "island.h"
 #include "joint.h"
+#include "parallel_for.h"
+#include "scheduler.h"
 #include "sensor.h"
 #include "shape.h"
 #include "solver.h"
@@ -73,10 +75,10 @@ b2World* b2GetWorldLocked( int index )
 	return world;
 }
 
-static void* b2DefaultAddTaskFcn( b2TaskCallback* task, int count, int minRange, void* taskContext, void* userContext )
+static void* b2DefaultAddTaskFcn( b2TaskCallback* task, void* taskContext, void* userContext )
 {
-	B2_UNUSED( minRange, userContext );
-	task( 0, count, 0, taskContext );
+	B2_UNUSED( userContext );
+	task( taskContext );
 	return NULL;
 }
 
@@ -226,17 +228,30 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 
 	if ( def->workerCount > 0 && def->enqueueTask != NULL && def->finishTask != NULL )
 	{
+		// External task system
 		world->workerCount = b2MinInt( def->workerCount, B2_MAX_WORKERS );
 		world->enqueueTaskFcn = def->enqueueTask;
 		world->finishTaskFcn = def->finishTask;
 		world->userTaskContext = def->userTaskContext;
+		world->scheduler = NULL;
+	}
+	else if ( def->workerCount > 1 )
+	{
+		// Built-in scheduler
+		world->workerCount = b2MinInt( def->workerCount, B2_MAX_WORKERS );
+		world->scheduler = b2CreateScheduler( world->workerCount );
+		world->enqueueTaskFcn = b2SchedulerEnqueueTask;
+		world->finishTaskFcn = b2SchedulerFinishTask;
+		world->userTaskContext = world->scheduler;
 	}
 	else
 	{
+		// Serial fallback
 		world->workerCount = 1;
 		world->enqueueTaskFcn = b2DefaultAddTaskFcn;
 		world->finishTaskFcn = b2DefaultFinishTaskFcn;
 		world->userTaskContext = NULL;
+		world->scheduler = NULL;
 	}
 
 	world->taskContexts = b2TaskContextArray_Create( world->workerCount );
@@ -268,6 +283,12 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 void b2DestroyWorld( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
+
+	if ( world->scheduler != NULL )
+	{
+		b2DestroyScheduler( world->scheduler );
+		world->scheduler = NULL;
+	}
 
 	b2DestroyBitSet( &world->debugBodySet );
 	b2DestroyBitSet( &world->debugJointSet );
@@ -370,13 +391,12 @@ void b2DestroyWorld( b2WorldId worldId )
 	world->generation = generation + 1;
 }
 
-static void b2CollideTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
+static void b2CollideTask( int startIndex, int endIndex, int threadIndex, void* context )
 {
 	b2TracyCZoneNC( collide_task, "Collide", b2_colorDodgerBlue, true );
 
 	b2StepContext* stepContext = context;
 	b2World* world = stepContext->world;
-	B2_ASSERT( (int)threadIndex < world->workerCount );
 	b2TaskContext* taskContext = world->taskContexts.data + threadIndex;
 	b2ContactSim** contactSims = stepContext->contacts;
 	b2Shape* shapes = world->shapes.data;
@@ -606,12 +626,7 @@ static void b2Collide( b2StepContext* context )
 
 	// Task should take at least 40us on a 4GHz CPU (10K cycles)
 	int minRange = 64;
-	void* userCollideTask = world->enqueueTaskFcn( &b2CollideTask, contactCount, minRange, context, world->userTaskContext );
-	world->taskCount += 1;
-	if ( userCollideTask != NULL )
-	{
-		world->finishTaskFcn( userCollideTask, world->userTaskContext );
-	}
+	b2ParallelFor( world, &b2CollideTask, contactCount, minRange, context );
 
 	b2FreeArenaItem( &world->arena, contactSims );
 	context->contacts = NULL;
@@ -795,6 +810,11 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	world->locked = true;
 	world->activeTaskCount = 0;
 	world->taskCount = 0;
+
+	if ( world->scheduler != NULL )
+	{
+		b2ResetScheduler( world->scheduler );
+	}
 
 	uint64_t stepTicks = b2GetTicks();
 

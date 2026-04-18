@@ -168,6 +168,8 @@ typedef struct b2World
 	void* userTaskContext;
 	void* userTreeTask;
 
+	struct b2Scheduler* scheduler;
+
 	void* userData;
 
 	// Remember type step used for reporting forces and torques

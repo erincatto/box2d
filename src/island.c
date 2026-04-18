@@ -660,11 +660,9 @@ void b2SplitIsland( b2World* world, int baseId )
 // Note: static bodies are never in an island
 // Note: this task interacts with some allocators without locks under the assumption that no other tasks
 // are interacting with these data structures.
-void b2SplitIslandTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
+void b2SplitIslandTask( void* context )
 {
 	b2TracyCZoneNC( split, "Split Island", b2_colorOlive, true );
-
-	B2_UNUSED( startIndex, endIndex, threadIndex );
 
 	uint64_t ticks = b2GetTicks();
 	b2World* world = context;

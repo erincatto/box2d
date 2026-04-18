@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 #include "draw.h"
-#include "random.h"
 #include "sample.h"
+#include "utils.h"
 
 #include "box2d/math_functions.h"
 

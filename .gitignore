@@ -9,3 +9,4 @@ CMakeUserPresets.json
 .cache/
 .idea/
 .claude/
+.tmp/

@@ -7,6 +7,7 @@
 #include "body.h"
 #include "contact.h"
 #include "ctz.h"
+#include "parallel_for.h"
 #include "physics_world.h"
 #include "shape.h"
 #include "solver_set.h"
@@ -137,12 +138,11 @@ static int b2CompareVisitors( const void* a, const void* b )
 	return 1;
 }
 
-static void b2SensorTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
+static void b2SensorTask( int startIndex, int endIndex, int threadIndex, void* context )
 {
 	b2TracyCZoneNC( sensor_task, "Overlap", b2_colorBrown, true );
 
 	b2World* world = context;
-	B2_ASSERT( (int)threadIndex < world->workerCount );
 	b2SensorTaskContext* taskContext = world->sensorTaskContexts.data + threadIndex;
 
 	B2_ASSERT( startIndex < endIndex );
@@ -261,12 +261,7 @@ void b2OverlapSensors( b2World* world )
 
 	// Parallel-for sensors overlaps
 	int minRange = 16;
-	void* userSensorTask = world->enqueueTaskFcn( &b2SensorTask, sensorCount, minRange, world, world->userTaskContext );
-	world->taskCount += 1;
-	if ( userSensorTask != NULL )
-	{
-		world->finishTaskFcn( userSensorTask, world->userTaskContext );
-	}
+	b2ParallelFor( world, &b2SensorTask, sensorCount, minRange, world );
 
 	b2TracyCZoneNC( sensor_state, "Events", b2_colorLightSlateGray, true );
 

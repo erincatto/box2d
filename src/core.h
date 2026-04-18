@@ -170,14 +170,6 @@ void b2DestroyMutex( b2Mutex* m );
 void b2LockMutex( b2Mutex* m );
 void b2UnlockMutex( b2Mutex* m );
 
-typedef struct b2ConditionVariable b2ConditionVariable;
-
-b2ConditionVariable* b2CreateConditionVariable( void );
-void b2DestroyConditionVariable( b2ConditionVariable* cv );
-void b2WaitConditionVariable( b2ConditionVariable* cv, b2Mutex* m );
-void b2SignalConditionVariable( b2ConditionVariable* cv );
-void b2BroadcastConditionVariable( b2ConditionVariable* cv );
-
 typedef struct b2Semaphore b2Semaphore;
 
 b2Semaphore* b2CreateSemaphore( int initCount );
@@ -188,5 +180,6 @@ void b2SignalSemaphore( b2Semaphore* s );
 typedef void b2ThreadFunction( void* context );
 typedef struct b2Thread b2Thread;
 
-b2Thread* b2CreateThread( b2ThreadFunction* function, void* context );
+// Name may be NULL, otherwise it is copied.
+b2Thread* b2CreateThread( b2ThreadFunction* function, void* context, const char* name );
 void b2JoinThread( b2Thread* t );

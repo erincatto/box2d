@@ -3,8 +3,8 @@
 
 #include "draw.h"
 #include "human.h"
-#include "random.h"
 #include "sample.h"
+#include "utils.h"
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
@@ -170,7 +170,7 @@ public:
 			HitEvent* e = m_hitEvents + i;
 			if ( e->stepIndex > 0 && m_stepCount <= e->stepIndex + 30 )
 			{
-				DrawCircle(m_draw, e->point, 0.1f, b2_colorOrangeRed );
+				DrawCircle( m_draw, e->point, 0.1f, b2_colorOrangeRed );
 				DrawWorldString( m_draw, m_camera, e->point, b2_colorWhite, "%.1f", e->speed );
 			}
 		}
@@ -1192,7 +1192,7 @@ public:
 			ballShapeDef.material.restitution = 1.f;
 			b2CreateCircleShape( m_ballId, &ballShapeDef, &ballShape );
 
-			b2Body_SetLinearVelocity( m_ballId, { 0.f, -2.9f } ); // Initial velocity
+			b2Body_SetLinearVelocity( m_ballId, { 0.f, -2.9f } );	   // Initial velocity
 			b2Body_SetMotionLocks( m_ballId, { false, false, true } ); // Do not rotate a ball
 		}
 	}

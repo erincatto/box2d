@@ -1,11 +1,19 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
+// Required on Linux to expose pthread_setname_np. Must be defined before any
+// system header is included.
+#if defined( __linux__ ) && !defined( _GNU_SOURCE )
+	#define _GNU_SOURCE
+#endif
+
 #include "core.h"
 
 #include "box2d/base.h"
 
 #include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 
 #if defined( _MSC_VER )
 
@@ -97,39 +105,6 @@ void b2UnlockMutex( b2Mutex* m )
 	LeaveCriticalSection( &m->cs );
 }
 
-typedef struct b2ConditionVariable
-{
-	CONDITION_VARIABLE cv;
-} b2ConditionVariable;
-
-b2ConditionVariable* b2CreateConditionVariable( void )
-{
-	b2ConditionVariable* cv = b2Alloc( sizeof( b2ConditionVariable ) );
-	InitializeConditionVariable( &cv->cv );
-	return cv;
-}
-
-void b2DestroyConditionVariable( b2ConditionVariable* cv )
-{
-	*cv = (b2ConditionVariable){ 0 };
-	b2Free( cv, sizeof( b2ConditionVariable ) );
-}
-
-void b2WaitConditionVariable( b2ConditionVariable* cv, b2Mutex* m )
-{
-	SleepConditionVariableCS( &cv->cv, &m->cs, INFINITE );
-}
-
-void b2SignalConditionVariable( b2ConditionVariable* cv )
-{
-	WakeConditionVariable( &cv->cv );
-}
-
-void b2BroadcastConditionVariable( b2ConditionVariable* cv )
-{
-	WakeAllConditionVariable( &cv->cv );
-}
-
 typedef struct b2Semaphore
 {
 	HANDLE semaphore;
@@ -164,20 +139,72 @@ typedef struct b2Thread
 	HANDLE thread;
 	b2ThreadFunction* function;
 	void* context;
+	char name[32];
 } b2Thread;
+
+typedef HRESULT( WINAPI* b2SetThreadDescriptionFn )( HANDLE, PCWSTR );
+
+// SetThreadDescription exists on Windows 10 1607+. Resolve it dynamically so
+// older Windows versions still link. Resolved once, cached for subsequent calls.
+static void b2SetCurrentThreadName( const char* name )
+{
+	if ( name == NULL || name[0] == 0 )
+	{
+		return;
+	}
+
+	static b2SetThreadDescriptionFn pfn = NULL;
+	static int resolved = 0;
+
+	if ( resolved == 0 )
+	{
+		HMODULE kernel = GetModuleHandleW( L"kernel32.dll" );
+		if ( kernel != NULL )
+		{
+			// MSVC /Wall warns C4191 on every FARPROC function-pointer cast.
+			// This is the intended use of GetProcAddress, so suppress locally.
+#pragma warning( push )
+#pragma warning( disable : 4191 )
+			pfn = (b2SetThreadDescriptionFn)GetProcAddress( kernel, "SetThreadDescription" );
+#pragma warning( pop )
+		}
+		resolved = 1;
+	}
+
+	if ( pfn == NULL )
+	{
+		return;
+	}
+
+	wchar_t wide[32];
+	int n = MultiByteToWideChar( CP_UTF8, 0, name, -1, wide, (int)( sizeof( wide ) / sizeof( wide[0] ) ) );
+	if ( n > 0 )
+	{
+		pfn( GetCurrentThread(), wide );
+	}
+}
 
 static DWORD WINAPI b2ThreadStart( LPVOID param )
 {
 	b2Thread* t = (b2Thread*)param;
+	b2SetCurrentThreadName( t->name );
 	t->function( t->context );
 	return 0;
 }
 
-b2Thread* b2CreateThread( b2ThreadFunction* function, void* context )
+b2Thread* b2CreateThread( b2ThreadFunction* function, void* context, const char* name )
 {
 	b2Thread* t = b2Alloc( sizeof( b2Thread ) );
 	t->function = function;
 	t->context = context;
+	if ( name != NULL )
+	{
+		snprintf( t->name, sizeof( t->name ), "%s", name );
+	}
+	else
+	{
+		t->name[0] = 0;
+	}
 	t->thread = CreateThread( NULL, 0, b2ThreadStart, t, 0, NULL );
 	return t;
 }
@@ -251,40 +278,6 @@ void b2UnlockMutex( b2Mutex* m )
 	pthread_mutex_unlock( &m->mtx );
 }
 
-typedef struct b2ConditionVariable
-{
-	pthread_cond_t cond;
-} b2ConditionVariable;
-
-b2ConditionVariable* b2CreateConditionVariable( void )
-{
-	b2ConditionVariable* cv = b2Alloc( sizeof( b2ConditionVariable ) );
-	pthread_cond_init( &cv->cond, NULL );
-	return cv;
-}
-
-void b2DestroyConditionVariable( b2ConditionVariable* cv )
-{
-	pthread_cond_destroy( &cv->cond );
-	*cv = (b2ConditionVariable){ 0 };
-	b2Free( cv, sizeof( b2ConditionVariable ) );
-}
-
-void b2WaitConditionVariable( b2ConditionVariable* cv, b2Mutex* m )
-{
-	pthread_cond_wait( &cv->cond, &m->mtx );
-}
-
-void b2SignalConditionVariable( b2ConditionVariable* cv )
-{
-	pthread_cond_signal( &cv->cond );
-}
-
-void b2BroadcastConditionVariable( b2ConditionVariable* cv )
-{
-	pthread_cond_broadcast( &cv->cond );
-}
-
 #include <semaphore.h>
 
 typedef struct b2Semaphore
@@ -321,20 +314,47 @@ typedef struct b2Thread
 	pthread_t thread;
 	b2ThreadFunction* function;
 	void* context;
+	char name[32];
 } b2Thread;
+
+static void b2SetCurrentThreadName( const char* name )
+{
+	if ( name == NULL || name[0] == 0 )
+	{
+		return;
+	}
+
+#if defined( __linux__ )
+	// Linux caps thread names at 15 chars + null terminator.
+	char truncated[16];
+	snprintf( truncated, sizeof( truncated ), "%s", name );
+	pthread_setname_np( pthread_self(), truncated );
+#else
+	(void)name;
+#endif
+}
 
 static void* b2ThreadStart( void* param )
 {
 	b2Thread* t = (b2Thread*)param;
+	b2SetCurrentThreadName( t->name );
 	t->function( t->context );
 	return NULL;
 }
 
-b2Thread* b2CreateThread( b2ThreadFunction* function, void* context )
+b2Thread* b2CreateThread( b2ThreadFunction* function, void* context, const char* name )
 {
 	b2Thread* t = b2Alloc( sizeof( b2Thread ) );
 	t->function = function;
 	t->context = context;
+	if ( name != NULL )
+	{
+		snprintf( t->name, sizeof( t->name ), "%s", name );
+	}
+	else
+	{
+		t->name[0] = 0;
+	}
 	pthread_create( &t->thread, NULL, b2ThreadStart, t );
 	return t;
 }
@@ -426,40 +446,6 @@ void b2UnlockMutex( b2Mutex* m )
 	pthread_mutex_unlock( &m->mtx );
 }
 
-typedef struct b2ConditionVariable
-{
-	pthread_cond_t cond;
-} b2ConditionVariable;
-
-b2ConditionVariable* b2CreateConditionVariable( void )
-{
-	b2ConditionVariable* cv = b2Alloc( sizeof( b2ConditionVariable ) );
-	pthread_cond_init( &cv->cond, NULL );
-	return cv;
-}
-
-void b2DestroyConditionVariable( b2ConditionVariable* cv )
-{
-	pthread_cond_destroy( &cv->cond );
-	*cv = (b2ConditionVariable){ 0 };
-	b2Free( cv, sizeof( b2ConditionVariable ) );
-}
-
-void b2WaitConditionVariable( b2ConditionVariable* cv, b2Mutex* m )
-{
-	pthread_cond_wait( &cv->cond, &m->mtx );
-}
-
-void b2SignalConditionVariable( b2ConditionVariable* cv )
-{
-	pthread_cond_signal( &cv->cond );
-}
-
-void b2BroadcastConditionVariable( b2ConditionVariable* cv )
-{
-	pthread_cond_broadcast( &cv->cond );
-}
-
 #include <dispatch/dispatch.h>
 
 typedef struct b2Semaphore
@@ -496,20 +482,40 @@ typedef struct b2Thread
 	pthread_t thread;
 	b2ThreadFunction* function;
 	void* context;
+	char name[32];
 } b2Thread;
+
+// macOS pthread_setname_np takes only the name — it always names the calling thread.
+static void b2SetCurrentThreadName( const char* name )
+{
+	if ( name == NULL || name[0] == 0 )
+	{
+		return;
+	}
+	pthread_setname_np( name );
+}
 
 static void* b2ThreadStart( void* param )
 {
 	b2Thread* t = (b2Thread*)param;
+	b2SetCurrentThreadName( t->name );
 	t->function( t->context );
 	return NULL;
 }
 
-b2Thread* b2CreateThread( b2ThreadFunction* function, void* context )
+b2Thread* b2CreateThread( b2ThreadFunction* function, void* context, const char* name )
 {
 	b2Thread* t = b2Alloc( sizeof( b2Thread ) );
 	t->function = function;
 	t->context = context;
+	if ( name != NULL )
+	{
+		snprintf( t->name, sizeof( t->name ), "%s", name );
+	}
+	else
+	{
+		t->name[0] = 0;
+	}
 	pthread_create( &t->thread, NULL, b2ThreadStart, t );
 	return t;
 }
@@ -574,40 +580,6 @@ void b2UnlockMutex( b2Mutex* m )
 	(void)m;
 }
 
-typedef struct b2ConditionVariable
-{
-	int dummy;
-} b2ConditionVariable;
-
-b2ConditionVariable* b2CreateConditionVariable( void )
-{
-	b2ConditionVariable* cv = b2Alloc( sizeof( b2ConditionVariable ) );
-	cv->dummy = 42;
-	return cv;
-}
-
-void b2DestroyConditionVariable( b2ConditionVariable* cv )
-{
-	*cv = (b2ConditionVariable){ 0 };
-	b2Free( cv, sizeof( b2ConditionVariable ) );
-}
-
-void b2WaitConditionVariable( b2ConditionVariable* cv, b2Mutex* m )
-{
-	(void)cv;
-	(void)m;
-}
-
-void b2SignalConditionVariable( b2ConditionVariable* cv )
-{
-	(void)cv;
-}
-
-void b2BroadcastConditionVariable( b2ConditionVariable* cv )
-{
-	(void)cv;
-}
-
 typedef struct b2Semaphore
 {
 	int dummy;
@@ -642,8 +614,9 @@ typedef struct b2Thread
 	int dummy;
 } b2Thread;
 
-b2Thread* b2CreateThread( b2ThreadFunction* function, void* context )
+b2Thread* b2CreateThread( b2ThreadFunction* function, void* context, const char* name )
 {
+	(void)name;
 	function( context );
 	b2Thread* t = b2Alloc( sizeof( b2Thread ) );
 	t->dummy = 42;

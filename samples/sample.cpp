@@ -7,11 +7,10 @@
 
 #include "sample.h"
 
-#include "TaskScheduler.h"
 #include "draw.h"
 #include "imgui.h"
 #include "implot.h"
-#include "random.h"
+#include "utils.h"
 
 // consider using https://github.com/skeeto/pdjson
 #include "jsmn.h"
@@ -23,6 +22,7 @@
 #include <GLFW/glfw3.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 static const char* fileName = "settings.ini";
 
@@ -206,53 +206,6 @@ void SampleContext::Load()
 	free( data );
 }
 
-class SampleTask : public enki::ITaskSet
-{
-public:
-	SampleTask() = default;
-
-	void ExecuteRange( enki::TaskSetPartition range, uint32_t threadIndex ) override
-	{
-		m_task( range.start, range.end, threadIndex, m_taskContext );
-	}
-
-	b2TaskCallback* m_task = nullptr;
-	void* m_taskContext = nullptr;
-};
-
-static void* EnqueueTask( b2TaskCallback* task, int32_t itemCount, int32_t minRange, void* taskContext, void* userContext )
-{
-	Sample* sample = static_cast<Sample*>( userContext );
-	if ( sample->m_taskCount < Sample::m_maxTasks )
-	{
-		SampleTask& sampleTask = sample->m_tasks[sample->m_taskCount];
-		sampleTask.m_SetSize = itemCount;
-		sampleTask.m_MinRange = minRange;
-		sampleTask.m_task = task;
-		sampleTask.m_taskContext = taskContext;
-		sample->m_scheduler->AddTaskSetToPipe( &sampleTask );
-		++sample->m_taskCount;
-		return &sampleTask;
-	}
-	else
-	{
-		// This is not fatal but the maxTasks should be increased
-		assert( false );
-		task( 0, itemCount, 0, taskContext );
-		return nullptr;
-	}
-}
-
-static void FinishTask( void* taskPtr, void* userContext )
-{
-	if ( taskPtr != nullptr )
-	{
-		SampleTask* sampleTask = static_cast<SampleTask*>( taskPtr );
-		Sample* sample = static_cast<Sample*>( userContext );
-		sample->m_scheduler->WaitforTask( sampleTask );
-	}
-}
-
 static void TestMathCpp()
 {
 	b2Vec2 a = { 1.0f, 2.0f };
@@ -287,14 +240,6 @@ Sample::Sample( SampleContext* context )
 	m_camera = &context->camera;
 	m_draw = context->draw;
 
-	m_scheduler = new enki::TaskScheduler;
-	m_scheduler->Initialize( m_context->workerCount );
-
-	m_tasks = new SampleTask[m_maxTasks];
-	m_taskCount = 0;
-
-	m_threadCount = 1 + m_context->workerCount;
-
 	m_worldId = b2_nullWorldId;
 
 	m_textIncrement = 26;
@@ -327,8 +272,8 @@ Sample::~Sample()
 	// By deleting the world, we delete the bomb, mouse joint, etc.
 	b2DestroyWorld( m_worldId );
 
-	delete m_scheduler;
-	delete[] m_tasks;
+	// delete m_scheduler;
+	// delete[] m_tasks;
 }
 
 void Sample::CreateWorld()
@@ -341,8 +286,8 @@ void Sample::CreateWorld()
 
 	b2WorldDef worldDef = b2DefaultWorldDef();
 	worldDef.workerCount = m_context->workerCount;
-	worldDef.enqueueTask = EnqueueTask;
-	worldDef.finishTask = FinishTask;
+	// worldDef.enqueueTask = EnqueueTask;
+	// worldDef.finishTask = FinishTask;
 	worldDef.userTaskContext = this;
 	worldDef.enableSleep = m_context->enableSleep;
 
@@ -463,9 +408,9 @@ void Sample::MouseMove( b2Vec2 p )
 	m_mousePoint = p;
 }
 
-void Sample::DrawColoredTextLine( b2HexColor color, const char* text,... )
+void Sample::DrawColoredTextLine( b2HexColor color, const char* text, ... )
 {
-	if (m_context->showUI == false)
+	if ( m_context->showUI == false )
 	{
 		return;
 	}
@@ -482,7 +427,7 @@ void Sample::DrawColoredTextLine( b2HexColor color, const char* text,... )
 
 void Sample::DrawTextLine( const char* text, ... )
 {
-	if (m_context->showUI == false)
+	if ( m_context->showUI == false )
 	{
 		return;
 	}
@@ -551,7 +496,7 @@ void Sample::Step()
 	b2World_EnableWarmStarting( m_worldId, m_context->enableWarmStarting );
 	b2World_EnableContinuous( m_worldId, m_context->enableContinuous );
 
-	if (m_context->enableRecycling)
+	if ( m_context->enableRecycling )
 	{
 		b2World_SetContactRecycleDistance( m_worldId, B2_CONTACT_RECYCLE_DISTANCE );
 	}
@@ -563,7 +508,7 @@ void Sample::Step()
 	for ( int i = 0; i < 1; ++i )
 	{
 		b2World_Step( m_worldId, timeStep, m_context->subStepCount );
-		m_taskCount = 0;
+		// m_taskCount = 0;
 	}
 
 	b2World_Draw( m_worldId, &m_context->debugDraw );
@@ -578,7 +523,7 @@ void Sample::Step()
 			m_profileReadIndex += 1;
 		}
 
-		m_currentProfileIndex = static_cast<int>(m_profileWriteIndex & ( m_profileCapacity - 1 ));
+		m_currentProfileIndex = static_cast<int>( m_profileWriteIndex & ( m_profileCapacity - 1 ) );
 		m_profiles[m_currentProfileIndex] = b2World_GetProfile( m_worldId );
 
 		m_profileWriteIndex += 1;
@@ -610,7 +555,7 @@ void Sample::Step()
 	}
 
 	// Track maximum profile times
-	if (m_didStep)
+	if ( m_didStep )
 	{
 		b2Profile p = m_profiles[m_currentProfileIndex];
 		m_maxProfile.step = b2MaxFloat( m_maxProfile.step, p.step );
@@ -750,7 +695,7 @@ void Sample::UpdateGui()
 		float stepTimes[m_profileCapacity];
 		float collideTimes[m_profileCapacity];
 		float solveTimes[m_profileCapacity];
-		int count = static_cast<int>(m_profileWriteIndex - m_profileReadIndex);
+		int count = static_cast<int>( m_profileWriteIndex - m_profileReadIndex );
 		for ( int i = 0; i < count; ++i )
 		{
 			int index = ( m_profileReadIndex + i ) & ( m_profileCapacity - 1 );

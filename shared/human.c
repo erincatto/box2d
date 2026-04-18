@@ -3,7 +3,7 @@
 
 #include "human.h"
 
-#include "random.h"
+#include "utils.h"
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
@@ -412,7 +412,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		jointDef.base.bodyIdA = human->bones[bone->parentIndex].bodyId;
 		jointDef.base.bodyIdB = bone->bodyId;
 		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
-		jointDef.base.localFrameA.q = b2MakeRot(0.25f * B2_PI);
+		jointDef.base.localFrameA.q = b2MakeRot( 0.25f * B2_PI );
 		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 		jointDef.enableLimit = enableLimit;
 		jointDef.lowerAngle = -0.2f * B2_PI;

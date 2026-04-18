@@ -14,6 +14,7 @@
 #include "body.h"
 #include "contact.h"
 #include "core.h"
+#include "parallel_for.h"
 #include "physics_world.h"
 #include "shape.h"
 
@@ -324,11 +325,11 @@ b2TreeStats b2_kinematicStats;
 b2TreeStats b2_staticStats;
 #endif
 
-static void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
+static void b2FindPairsTask( int startIndex, int endIndex, int workerIndex, void* context )
 {
-	b2TracyCZoneNC( pair_task, "Pair", b2_colorMediumSlateBlue, true );
+	B2_UNUSED( workerIndex );
 
-	B2_UNUSED( threadIndex );
+	b2TracyCZoneNC( pair_task, "Pair", b2_colorMediumSlateBlue, true );
 
 	b2World* world = context;
 	b2BroadPhase* bp = &world->broadPhase;
@@ -392,12 +393,8 @@ static void b2FindPairsTask( int startIndex, int endIndex, uint32_t threadIndex,
 	b2TracyCZoneEnd( pair_task );
 }
 
-static void b2UpdateTreesTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
+static void b2UpdateTreesTask( void* context )
 {
-	B2_UNUSED( startIndex );
-	B2_UNUSED( endIndex );
-	B2_UNUSED( threadIndex );
-
 	b2TracyCZoneNC( tree_task, "Rebuild BVH", b2_colorFireBrick, true );
 
 	b2World* world = context;
@@ -436,18 +433,13 @@ void b2UpdateBroadPhasePairs( b2World* world )
 #endif
 
 	int minRange = 64;
-	void* userPairTask = world->enqueueTaskFcn( &b2FindPairsTask, moveCount, minRange, world, world->userTaskContext );
-	if ( userPairTask != NULL )
-	{
-		world->finishTaskFcn( userPairTask, world->userTaskContext );
-		world->taskCount += 1;
-	}
+	b2ParallelFor( world, &b2FindPairsTask, moveCount, minRange, world );
 
 	b2TracyCZoneNC( create_contacts, "Create Contacts", b2_colorCoral, true );
 
 	// Task that can be done in parallel with the narrow-phase
 	// - rebuild the collision tree for dynamic and kinematic bodies to keep their query performance good
-	world->userTreeTask = world->enqueueTaskFcn( &b2UpdateTreesTask, 1, 1, world, world->userTaskContext );
+	world->userTreeTask = world->enqueueTaskFcn( &b2UpdateTreesTask, world, world->userTaskContext );
 	world->taskCount += 1;
 	world->activeTaskCount += world->userTreeTask == NULL ? 0 : 1;
 

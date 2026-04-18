@@ -6,8 +6,8 @@
 #include "doohickey.h"
 #include "draw.h"
 #include "human.h"
-#include "random.h"
 #include "sample.h"
+#include "utils.h"
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"

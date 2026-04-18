@@ -14,6 +14,7 @@
 #include "ctz.h"
 #include "island.h"
 #include "joint.h"
+#include "parallel_for.h"
 #include "physics_world.h"
 #include "sensor.h"
 #include "shape.h"
@@ -628,14 +629,12 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 	b2TracyCZoneEnd( ccd );
 }
 
-static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
+static void b2FinalizeBodiesTask( int startIndex, int endIndex, int threadIndex, void* context )
 {
 	b2TracyCZoneNC( finalize_transforms, "Transforms", b2_colorMediumSeaGreen, true );
 
 	b2StepContext* stepContext = context;
 	b2World* world = stepContext->world;
-
-	B2_ASSERT( (int)threadIndex < world->workerCount );
 
 	bool enableSleep = world->enableSleep;
 	b2BodyState* states = stepContext->states;
@@ -650,9 +649,9 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, uint32_t threadI
 	B2_ASSERT( endIndex <= world->bodyMoveEvents.count );
 	b2BodyMoveEvent* moveEvents = world->bodyMoveEvents.data;
 
-	b2BitSet* enlargedSimBitSet = &world->taskContexts.data[threadIndex].enlargedSimBitSet;
-	b2BitSet* awakeIslandBitSet = &world->taskContexts.data[threadIndex].awakeIslandBitSet;
 	b2TaskContext* taskContext = world->taskContexts.data + threadIndex;
+	b2BitSet* enlargedSimBitSet = &taskContext->enlargedSimBitSet;
+	b2BitSet* awakeIslandBitSet = &taskContext->awakeIslandBitSet;
 
 	bool enableContinuous = world->enableContinuous;
 
@@ -1120,11 +1119,8 @@ static void b2ExecuteMainStage( b2SolverStage* stage, b2StepContext* context, ui
 	}
 }
 
-// This should not use the thread index because thread 0 can be called twice by enkiTS.
-static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgnore, void* taskContext )
+static void b2SolverTask( void* taskContext )
 {
-	B2_UNUSED( startIndex, endIndex, threadIndexIgnore );
-
 	b2WorkerContext* workerContext = taskContext;
 	int workerIndex = workerContext->workerIndex;
 	b2StepContext* context = workerContext->context;
@@ -1356,14 +1352,12 @@ static void b2SolverTask( int startIndex, int endIndex, uint32_t threadIndexIgno
 	}
 }
 
-static void b2BulletBodyTask( int startIndex, int endIndex, uint32_t threadIndex, void* context )
+static void b2BulletBodyTask( int startIndex, int endIndex, int threadIndex, void* context )
 {
-	B2_UNUSED( threadIndex );
-
 	b2TracyCZoneNC( bullet_body_task, "Bullet", b2_colorLightSkyBlue, true );
 
 	b2StepContext* stepContext = context;
-	b2TaskContext* taskContext = b2TaskContextArray_Get( &stepContext->world->taskContexts, threadIndex );
+	b2TaskContext* taskContext = stepContext->world->taskContexts.data + threadIndex;
 
 	B2_ASSERT( startIndex <= endIndex );
 
@@ -1599,7 +1593,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		void* splitIslandTask = NULL;
 		if ( world->splitIslandId != B2_NULL_INDEX )
 		{
-			splitIslandTask = world->enqueueTaskFcn( &b2SplitIslandTask, 1, 1, world, world->userTaskContext );
+			splitIslandTask = world->enqueueTaskFcn( &b2SplitIslandTask, world, world->userTaskContext );
 			world->taskCount += 1;
 			world->activeTaskCount += splitIslandTask == NULL ? 0 : 1;
 		}
@@ -1667,7 +1661,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2TracyCZoneNC( solve_constraints, "Solve Constraints", b2_colorIndigo, true );
 		uint64_t constraintTicks = b2GetTicks();
 
-		// Must use worker index because thread 0 can be assigned multiple tasks by enkiTS
+		// Must use worker index because thread 0 can be assigned multiple tasks
 		int jointIdCapacity = b2GetIdCapacity( &world->jointIdPool );
 		for ( int i = 0; i < workerCount; ++i )
 		{
@@ -1676,7 +1670,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 			workerContext[i].context = stepContext;
 			workerContext[i].workerIndex = i;
-			workerContext[i].userTask = world->enqueueTaskFcn( b2SolverTask, 1, 1, workerContext + i, world->userTaskContext );
+			workerContext[i].userTask = world->enqueueTaskFcn( &b2SolverTask, workerContext + i, world->userTaskContext );
 			world->taskCount += 1;
 			world->activeTaskCount += workerContext[i].userTask == NULL ? 0 : 1;
 		}
@@ -1718,13 +1712,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		}
 
 		// Finalize bodies. Must happen after the constraint solver and after island splitting.
-		void* finalizeBodiesTask =
-			world->enqueueTaskFcn( b2FinalizeBodiesTask, awakeBodyCount, 64, stepContext, world->userTaskContext );
-		world->taskCount += 1;
-		if ( finalizeBodiesTask != NULL )
-		{
-			world->finishTaskFcn( finalizeBodiesTask, world->userTaskContext );
-		}
+		b2ParallelFor( world, &b2FinalizeBodiesTask, awakeBodyCount, 64, stepContext );
 
 		b2FreeArenaItem( &world->arena, graphBlocks );
 		b2FreeArenaItem( &world->arena, jointBlocks );
@@ -1970,13 +1958,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// Fast bullet bodies
 		// Note: a bullet body may be moving slow
 		int minRange = 8;
-		void* userBulletBodyTask =
-			world->enqueueTaskFcn( &b2BulletBodyTask, bulletBodyCount, minRange, stepContext, world->userTaskContext );
-		world->taskCount += 1;
-		if ( userBulletBodyTask != NULL )
-		{
-			world->finishTaskFcn( userBulletBodyTask, world->userTaskContext );
-		}
+		b2ParallelFor( world, &b2BulletBodyTask, bulletBodyCount, minRange, stepContext );
 
 		// Serially enlarge broad-phase proxies for bullet shapes
 		b2BroadPhase* broadPhase = &world->broadPhase;

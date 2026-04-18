@@ -76,7 +76,7 @@ if(PROJECT_IS_TOP_LEVEL)
 	option(BOX2D_UNIT_TESTS "Build the Box2D unit tests" ON)
 	
 	if(BOX2D_UNIT_TESTS OR BOX2D_SAMPLES OR BOX2D_BENCHMARKS)
-		# Emscripten pthread support for enkiTS
+		# Emscripten pthread support
 		if(EMSCRIPTEN)
 			set(EMSCRIPTEN_PTHREADS_COMPILER_FLAGS "-pthread -s USE_PTHREADS=1")
 			set(EMSCRIPTEN_PTHREADS_LINKER_FLAGS "${EMSCRIPTEN_PTHREADS_COMPILER_FLAGS} -s ALLOW_MEMORY_GROWTH")
@@ -84,17 +84,6 @@ if(PROJECT_IS_TOP_LEVEL)
 			string(APPEND CMAKE_CXX_FLAGS " ${EMSCRIPTEN_PTHREADS_COMPILER_FLAGS}")
 			string(APPEND CMAKE_EXE_LINKER_FLAGS " ${EMSCRIPTEN_PTHREADS_LINKER_FLAGS}")
 		endif()
-
-		# Task system used in tests and samples
-		set(ENKITS_BUILD_EXAMPLES OFF CACHE BOOL "Build enkiTS examples")
-		FetchContent_Declare(
-			enkits
-			GIT_REPOSITORY https://github.com/dougbinks/enkiTS.git
-			GIT_TAG master
-			GIT_SHALLOW TRUE
-			GIT_PROGRESS TRUE
-		)
-		FetchContent_MakeAvailable(enkits)
 
 		add_subdirectory(shared)
 	endif()

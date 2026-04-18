@@ -4,111 +4,6 @@
 #include "core.h"
 #include "test_macros.h"
 
-// b2ConditionVariable tests
-
-static int ConditionVariableCreateDestroyTest( void )
-{
-	b2ConditionVariable* cv = b2CreateConditionVariable();
-	ENSURE( cv != NULL );
-	b2DestroyConditionVariable( cv );
-	return 0;
-}
-
-typedef struct CondVarData
-{
-	b2Mutex* mutex;
-	b2ConditionVariable* cv;
-	int value;
-	bool ready;
-} CondVarData;
-
-static void CondVarWorker( void* context )
-{
-	CondVarData* data = (CondVarData*)context;
-	b2LockMutex( data->mutex );
-	data->value = 42;
-	data->ready = true;
-	b2SignalConditionVariable( data->cv );
-	b2UnlockMutex( data->mutex );
-}
-
-static int ConditionVariableSignalTest( void )
-{
-	CondVarData data = { 0 };
-	data.mutex = b2CreateMutex();
-	data.cv = b2CreateConditionVariable();
-	data.value = 0;
-	data.ready = false;
-
-	b2Thread* thread = b2CreateThread( CondVarWorker, &data );
-
-	b2LockMutex( data.mutex );
-	while ( data.ready == false )
-	{
-		b2WaitConditionVariable( data.cv, data.mutex );
-	}
-	b2UnlockMutex( data.mutex );
-
-	ENSURE( data.value == 42 );
-
-	b2JoinThread( thread );
-	b2DestroyConditionVariable( data.cv );
-	b2DestroyMutex( data.mutex );
-	return 0;
-}
-
-typedef struct BroadcastData
-{
-	b2Mutex* mutex;
-	b2ConditionVariable* cv;
-	bool go;
-	int counter;
-} BroadcastData;
-
-static void BroadcastWorker( void* context )
-{
-	BroadcastData* data = (BroadcastData*)context;
-	b2LockMutex( data->mutex );
-	while ( data->go == false )
-	{
-		b2WaitConditionVariable( data->cv, data->mutex );
-	}
-	data->counter += 1;
-	b2UnlockMutex( data->mutex );
-}
-
-static int ConditionVariableBroadcastTest( void )
-{
-	BroadcastData data = { 0 };
-	data.mutex = b2CreateMutex();
-	data.cv = b2CreateConditionVariable();
-	data.go = false;
-	data.counter = 0;
-
-	enum { THREAD_COUNT = 4 };
-	b2Thread* threads[THREAD_COUNT];
-	for ( int i = 0; i < THREAD_COUNT; ++i )
-	{
-		threads[i] = b2CreateThread( BroadcastWorker, &data );
-	}
-
-	b2LockMutex( data.mutex );
-	data.go = true;
-	b2BroadcastConditionVariable( data.cv );
-	b2UnlockMutex( data.mutex );
-
-	for ( int i = 0; i < THREAD_COUNT; ++i )
-	{
-		b2JoinThread( threads[i] );
-	}
-
-	ENSURE( data.counter == THREAD_COUNT );
-
-	b2DestroyConditionVariable( data.cv );
-	b2DestroyMutex( data.mutex );
-	return 0;
-}
-
 // b2Semaphore tests
 
 static int SemaphoreCreateDestroyTest( void )
@@ -138,7 +33,7 @@ static int SemaphoreSignalWaitTest( void )
 	data.sem = b2CreateSemaphore( 0 );
 	data.value = 0;
 
-	b2Thread* thread = b2CreateThread( SemWorker, &data );
+	b2Thread* thread = b2CreateThread( SemWorker, &data, "sem test" );
 	b2WaitSemaphore( data.sem );
 
 	ENSURE( data.value == 99 );
@@ -174,7 +69,7 @@ static int ThreadCreateJoinTest( void )
 	data.sem = b2CreateSemaphore( 0 );
 	data.value = 0;
 
-	b2Thread* thread = b2CreateThread( SemWorker, &data );
+	b2Thread* thread = b2CreateThread( SemWorker, &data, "join test" );
 	b2JoinThread( thread );
 
 	ENSURE( data.value == 99 );
@@ -210,7 +105,9 @@ static int ThreadMultipleTest( void )
 	b2Thread* threads[THREAD_COUNT];
 	for ( int i = 0; i < THREAD_COUNT; ++i )
 	{
-		threads[i] = b2CreateThread( SumWorker, &data );
+		char name[16];
+		snprintf( name, sizeof( name ), "sum test %d", i );
+		threads[i] = b2CreateThread( SumWorker, &data, name );
 	}
 
 	for ( int i = 0; i < THREAD_COUNT; ++i )
@@ -226,9 +123,6 @@ static int ThreadMultipleTest( void )
 
 int ThreadTest( void )
 {
-	RUN_SUBTEST( ConditionVariableCreateDestroyTest );
-	RUN_SUBTEST( ConditionVariableSignalTest );
-	RUN_SUBTEST( ConditionVariableBroadcastTest );
 	RUN_SUBTEST( SemaphoreCreateDestroyTest );
 	RUN_SUBTEST( SemaphoreSignalWaitTest );
 	RUN_SUBTEST( SemaphoreInitialCountTest );

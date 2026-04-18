@@ -39,10 +39,14 @@ set(BOX2D_SOURCE_FILES
 	math_functions.c
 	motor_joint.c
 	mover.c
+	parallel_for.c
+	parallel_for.h
 	physics_world.c
 	physics_world.h
 	prismatic_joint.c
 	revolute_joint.c
+	scheduler.c
+	scheduler.h
 	sensor.c
 	sensor.h
 	shape.c
