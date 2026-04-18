@@ -3,24 +3,26 @@
 
 #pragma once
 
+#include "arena_allocator.h"
 #include "array.h"
-#include "container.h"
 #include "bitset.h"
 #include "broad_phase.h"
 #include "constraint_graph.h"
+#include "container.h"
 #include "id_pool.h"
-#include "arena_allocator.h"
 
 #include "box2d/types.h"
 
-typedef struct b2Island b2Island;
 b2DeclareArray( b2Island );
+b2DeclareArray( b2SensorHit );
+b2DeclareArray( b2SensorTaskContext );
+b2DeclareArray( b2TaskContext );
 
 // Per thread task storage
 typedef struct b2TaskContext
 {
 	// Collect per thread sensor continuous hit events.
-	b2SensorHitArray sensorHits;
+	b2ArrayC(b2SensorHit) sensorHits;
 
 	// These bits align with the contact id capacity and signal a change in contact status
 	b2BitSet contactStateBitSet;
@@ -85,7 +87,7 @@ typedef struct b2World
 	b2IdPool islandIdPool;
 
 	// Persistent islands
-	b2ArrayC(b2Island) islands;
+	b2ArrayC( b2Island ) islands;
 
 	b2IdPool shapeIdPool;
 	b2IdPool chainIdPool;
@@ -98,8 +100,8 @@ typedef struct b2World
 	b2SensorArray sensors;
 
 	// Per thread storage
-	b2TaskContextArray taskContexts;
-	b2SensorTaskContextArray sensorTaskContexts;
+	b2ArrayC( b2TaskContext ) taskContexts;
+	b2ArrayC( b2SensorTaskContext ) sensorTaskContexts;
 
 	b2BodyMoveEventArray bodyMoveEvents;
 	b2SensorBeginTouchEventArray sensorBeginEvents;
@@ -119,8 +121,8 @@ typedef struct b2World
 	// Problems:
 	// - multiple forces applied to the same body from multiple threads
 	// Deferred wake
-	//b2BitSet bodyWakeSet;
-	//b2ImpulseArray deferredImpulses;
+	// b2BitSet bodyWakeSet;
+	// b2ImpulseArray deferredImpulses;
 
 	// Used to track debug draw
 	b2BitSet debugBodySet;
@@ -208,4 +210,3 @@ B2_ARRAY_INLINE( b2ContactHitEvent, b2ContactHitEvent )
 B2_ARRAY_INLINE( b2JointEvent, b2JointEvent )
 B2_ARRAY_INLINE( b2SensorBeginTouchEvent, b2SensorBeginTouchEvent )
 B2_ARRAY_INLINE( b2SensorEndTouchEvent, b2SensorEndTouchEvent )
-B2_ARRAY_INLINE( b2TaskContext, b2TaskContext )

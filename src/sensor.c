@@ -19,8 +19,6 @@
 
 B2_ARRAY_SOURCE( b2Visitor, b2Visitor )
 B2_ARRAY_SOURCE( b2Sensor, b2Sensor )
-B2_ARRAY_SOURCE( b2SensorTaskContext, b2SensorTaskContext )
-B2_ARRAY_SOURCE( b2SensorHit, b2SensorHit )
 
 struct b2SensorQueryContext
 {

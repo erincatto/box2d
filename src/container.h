@@ -11,6 +11,14 @@
 #define b2DeclareArray( T )                                                                                                      \
 	typedef struct b2DynamicArray_##T                                                                                            \
 	{                                                                                                                            \
+		struct T* data;                                                                                                          \
+		int count;                                                                                                               \
+		int capacity;                                                                                                            \
+	} b2DynamicArray_##T
+
+#define b2DeclareArrayNative( T )                                                                                                \
+	typedef struct b2DynamicArray_##T                                                                                            \
+	{                                                                                                                            \
 		T* data;                                                                                                                 \
 		int count;                                                                                                               \
 		int capacity;                                                                                                            \
@@ -67,6 +75,15 @@
 	do                                                                                                                           \
 	{                                                                                                                            \
 		b2Array_Reserve( a, n );                                                                                                 \
+		( a ).count = ( n );                                                                                                     \
+	}                                                                                                                            \
+	while ( 0 )
+
+#define b2Array_ResizeAndSetZero( a, n )                                                                                         \
+	do                                                                                                                           \
+	{                                                                                                                            \
+		b2Array_Reserve( a, n );                                                                                                 \
+		memset( ( a ).data, 0, ( n ) * sizeof( *( a ).data ) );                                                                  \
 		( a ).count = ( n );                                                                                                     \
 	}                                                                                                                            \
 	while ( 0 )
@@ -130,4 +147,4 @@ B2_INLINE int b2RemoveHelper( void* data, int* count, int index, int elementSize
 	return B2_NULL_INDEX;
 }
 
-b2DeclareArray( int );
+b2DeclareArrayNative( int );

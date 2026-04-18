@@ -622,7 +622,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 		// Skip any sensor hits that occurred after a solid hit
 		if ( context.sensorFractions[i] < context.fraction )
 		{
-			b2SensorHitArray_Push( &taskContext->sensorHits, context.sensorHits[i] );
+			b2Array_Push( taskContext->sensorHits, context.sensorHits[i] );
 		}
 	}
 
@@ -1646,7 +1646,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		int jointIdCapacity = b2GetIdCapacity( &world->jointIdPool );
 		for ( int i = 0; i < workerCount; ++i )
 		{
-			b2TaskContext* taskContext = b2TaskContextArray_Get( &world->taskContexts, i );
+			b2TaskContext* taskContext = b2Array_Get( world->taskContexts, i );
 			b2SetBitCountAndClear( &taskContext->jointStateBitSet, jointIdCapacity );
 
 			workerContext[i].context = stepContext;
@@ -1685,7 +1685,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		for ( int i = 0; i < world->workerCount; ++i )
 		{
 			b2TaskContext* taskContext = world->taskContexts.data + i;
-			b2SensorHitArray_Clear( &taskContext->sensorHits );
+			taskContext->sensorHits.count = 0;
 			b2SetBitCountAndClear( &taskContext->enlargedSimBitSet, awakeBodyCount );
 			b2SetBitCountAndClear( &taskContext->awakeIslandBitSet, awakeIslandCount );
 			taskContext->splitIslandId = B2_NULL_INDEX;

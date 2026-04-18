@@ -23,7 +23,7 @@
 
 #define ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
 #define MAYBE_UNUSED( x ) ( (void)( x ) )
-#define THREAD_LIMIT 32
+#define THREAD_LIMIT 64
 
 typedef void CreateFcn( b2WorldId worldId );
 typedef float StepFcn( b2WorldId worldId, int stepCount );
@@ -123,7 +123,7 @@ int main( int argc, char** argv )
 	float* stepResults = malloc( maxSteps * sizeof( float ) );
 	memset( stepResults, 0, maxSteps * sizeof( float ) );
 
-	int maxThreadCount = GetNumberOfCores();
+	int maxThreadCount = b2MinInt(GetNumberOfCores(), THREAD_LIMIT);
 	int runCount = 4;
 	int singleBenchmark = -1;
 	int singleWorkerCount = -1;

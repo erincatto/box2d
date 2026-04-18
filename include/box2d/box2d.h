@@ -193,6 +193,12 @@ B2_API void b2World_SetFrictionCallback( b2WorldId worldId, b2FrictionCallback* 
 /// Set the restitution callback. Passing NULL resets to default.
 B2_API void b2World_SetRestitutionCallback( b2WorldId worldId, b2RestitutionCallback* callback );
 
+/// Set the worker count. Must be between in the range [1, B2_MAX_WORKERS]
+B2_API void b2World_SetWorkerCount( b2WorldId worldId, int count );
+
+/// Get the worker count.
+B2_API int b2World_GetWorkerCount( b2WorldId worldId );
+
 /// Dump memory stats to box2d_memory.txt
 B2_API void b2World_DumpMemoryStats( b2WorldId worldId );
 

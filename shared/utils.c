@@ -9,6 +9,8 @@
 #include <unistd.h>
 #elif defined( __linux__ )
 #include <unistd.h>
+#elif defined( __EMSCRIPTEN__ )
+#include <unistd.h>
 #endif
 
 uint32_t g_randomSeed = RAND_SEED;

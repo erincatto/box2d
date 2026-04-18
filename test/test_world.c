@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "test_macros.h"
+#include "benchmarks.h"
 
 #include "box2d/box2d.h"
 #include "box2d/collision.h"
@@ -393,6 +394,47 @@ static int TestSensor( void )
 	return 0;
 }
 
+static int TestSetWorkerCount( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.workerCount = 1;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+	ENSURE( b2World_IsValid( worldId ) );
+	ENSURE( b2World_GetWorkerCount( worldId ) == 1 );
+
+	CreateJunkyard( worldId );
+	StepJunkyard( worldId, 1 );
+
+	b2World_SetWorkerCount( worldId, 4 );
+	ENSURE( b2World_GetWorkerCount( worldId ) == 4 );
+
+	StepJunkyard( worldId, 2 );
+
+	b2World_SetWorkerCount( worldId, 4 );
+	ENSURE( b2World_GetWorkerCount( worldId ) == 4 );
+
+	StepJunkyard( worldId, 3 );
+
+	b2World_SetWorkerCount( worldId, 0 );
+	ENSURE( b2World_GetWorkerCount( worldId ) == 1 );
+
+	StepJunkyard( worldId, 4 );
+
+	b2World_SetWorkerCount( worldId, -5 );
+	ENSURE( b2World_GetWorkerCount( worldId ) == 1 );
+
+	StepJunkyard( worldId, 5 );
+
+	b2World_SetWorkerCount( worldId, B2_MAX_WORKERS + 10 );
+	ENSURE( b2World_GetWorkerCount( worldId ) == B2_MAX_WORKERS );
+
+	StepJunkyard( worldId, 2 );
+
+	b2DestroyWorld( worldId );
+
+	return 0;
+}
+
 int WorldTest( void )
 {
 	RUN_SUBTEST( HelloWorld );
@@ -402,6 +444,7 @@ int WorldTest( void )
 	RUN_SUBTEST( TestWorldRecycle );
 	RUN_SUBTEST( TestWorldCoverage );
 	RUN_SUBTEST( TestSensor );
+	RUN_SUBTEST( TestSetWorkerCount );
 
 	return 0;
 }

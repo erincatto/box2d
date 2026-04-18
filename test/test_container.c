@@ -7,9 +7,9 @@
 
 #include <assert.h>
 
-b2DeclareArray( uint64_t );
-b2DeclareArray( int16_t );
-b2DeclareArray( uint8_t );
+b2DeclareArrayNative( uint64_t );
+b2DeclareArrayNative( int16_t );
+b2DeclareArrayNative( uint8_t );
 
 typedef struct Foo
 {
