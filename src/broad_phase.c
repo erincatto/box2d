@@ -423,7 +423,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	bp->moveResults = b2AllocateArenaItem( alloc, moveCount * sizeof( b2MoveResult ), "move results" );
 
 	// This capacity can be exceeded if there are many overlapping pairs (e.g. all shapes at the origin)
-	bp->movePairCapacity = 8 * moveCount;
+	bp->movePairCapacity = 32 * moveCount;
 	bp->movePairs = b2AllocateArenaItem( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
 	b2AtomicStoreInt( &bp->movePairIndex, 0 );
 

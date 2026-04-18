@@ -451,17 +451,25 @@ void b2UnlockMutex( b2Mutex* m )
 typedef struct b2Semaphore
 {
 	dispatch_semaphore_t semaphore;
+	int initialCount;
 } b2Semaphore;
 
 b2Semaphore* b2CreateSemaphore( int initCount )
 {
 	b2Semaphore* s = b2Alloc( sizeof( b2Semaphore ) );
 	s->semaphore = dispatch_semaphore_create( (long)initCount );
+	s->initialCount = initCount;
 	return s;
 }
 
 void b2DestroySemaphore( b2Semaphore* s )
 {
+	// libdispatch aborts if the current count is less than the initial count at release time.
+	// Pad with signals so the invariant always holds; no one is waiting at this point.
+	for ( int i = 0; i < s->initialCount; ++i )
+	{
+		dispatch_semaphore_signal( s->semaphore );
+	}
 	dispatch_release( s->semaphore );
 	*s = (b2Semaphore){ 0 };
 	b2Free( s, sizeof( b2Semaphore ) );
