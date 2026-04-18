@@ -197,6 +197,11 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/../include" PREFIX "include" FILE
 
 add_library(box2d::box2d ALIAS box2d)
 
+# libm is required on many Unix toolchains for sqrtf, etc.
+if(UNIX AND NOT APPLE AND NOT EMSCRIPTEN)
+  target_link_libraries(box2d PUBLIC m)
+endif()
+
 install(
   TARGETS box2d
   EXPORT box2dConfig
