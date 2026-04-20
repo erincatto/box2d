@@ -54,19 +54,11 @@ int main( int argc, char** argv )
 {
 #if defined( _MSC_VER )
 	// Enable memory-leak reports
-
-	// How to break at the leaking allocation, in the watch window enter this variable
-	// and set it to the allocation number in {}. Do this at the first line in main.
-	// {,,ucrtbased.dll}_crtBreakAlloc = <allocation number> 3970
-	// Note:
-	// Just _crtBreakAlloc in static link
-	// Tracy Profile server leaks
-
+	//_CrtSetBreakAlloc(196);
 	_CrtSetReportMode( _CRT_WARN, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_FILE );
 	_CrtSetReportFile( _CRT_WARN, _CRTDBG_FILE_STDERR );
 	//_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG));
 	//_CrtSetAllocHook(MyAllocHook);
-	//_CrtSetBreakAlloc(196);
 #endif
 
 #ifdef TRACY_ENABLE

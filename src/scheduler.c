@@ -82,7 +82,7 @@ static bool b2SchedulerExecuteOne( b2Scheduler* scheduler )
 // Background worker thread entry point.
 static void b2SchedulerWorkerMain( void* context )
 {
-	b2SchedulerWorkerContext* workerContext = (b2SchedulerWorkerContext*)context;
+	b2SchedulerWorkerContext* workerContext = context;
 	b2Scheduler* scheduler = workerContext->scheduler;
 
 	while ( true )
@@ -105,7 +105,7 @@ b2Scheduler* b2CreateScheduler( int workerCount )
 {
 	B2_ASSERT( 0 < workerCount && workerCount <= B2_MAX_WORKERS );
 
-	b2Scheduler* scheduler = (b2Scheduler*)b2Alloc( sizeof( b2Scheduler ) );
+	b2Scheduler* scheduler = b2Alloc( sizeof( b2Scheduler ) );
 	memset( scheduler, 0, sizeof( b2Scheduler ) );
 
 	scheduler->workerCount = workerCount;
@@ -157,7 +157,7 @@ void b2ResetScheduler( b2Scheduler* scheduler )
 
 void* b2SchedulerEnqueueTask( b2TaskCallback* task, void* taskContext, void* userContext )
 {
-	b2Scheduler* scheduler = (b2Scheduler*)userContext;
+	b2Scheduler* scheduler = userContext;
 
 	int slot = b2AtomicFetchAddInt( &scheduler->nextSlot, 1 );
 	B2_ASSERT( slot < B2_SCHEDULER_MAX_TASKS );
@@ -182,8 +182,8 @@ void b2SchedulerFinishTask( void* userTask, void* userContext )
 		return;
 	}
 
-	b2Scheduler* scheduler = (b2Scheduler*)userContext;
-	b2SchedulerTask* waitTask = (b2SchedulerTask*)userTask;
+	b2Scheduler* scheduler = userContext;
+	b2SchedulerTask* waitTask = userTask;
 
 	// Main thread helps execute any available work while waiting for the
 	// target task to complete. This keeps the main thread from idling when
