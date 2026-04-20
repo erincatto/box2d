@@ -11,8 +11,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define B2_SCHEDULER_MAX_TASKS 512
-
 enum b2SchedulerTaskStatus
 {
 	b2_schedulerFree = 0,
@@ -45,7 +43,7 @@ typedef struct b2Scheduler
 	// threads created = workerCount - 1
 	int threadCount;
 
-	b2SchedulerTask tasks[B2_SCHEDULER_MAX_TASKS];
+	b2SchedulerTask tasks[B2_MAX_TASKS];
 	b2AtomicInt nextSlot;
 
 	b2Semaphore* taskSemaphore;
@@ -123,7 +121,7 @@ b2Scheduler* b2CreateScheduler( int workerCount )
 		scheduler->workerContexts[i].threadIndex = i + 1;
 
 		char name[16];
-		snprintf( name, sizeof( name ), "box2d_worker %d", i + 1 );
+		snprintf( name, sizeof( name ), "box2d_worker_%02d", i + 1 );
 		scheduler->threads[i] = b2CreateThread( b2SchedulerWorkerMain, scheduler->workerContexts + i, name );
 	}
 
@@ -160,7 +158,7 @@ void* b2SchedulerEnqueueTask( b2TaskCallback* task, void* taskContext, void* use
 	b2Scheduler* scheduler = userContext;
 
 	int slot = b2AtomicFetchAddInt( &scheduler->nextSlot, 1 );
-	B2_ASSERT( slot < B2_SCHEDULER_MAX_TASKS );
+	B2_ASSERT( slot < B2_MAX_TASKS );
 
 	b2SchedulerTask* schedulerTask = scheduler->tasks + slot;
 	schedulerTask->callback = task;

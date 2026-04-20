@@ -27,6 +27,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "implot.h"
+#include "box2d/constants.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -394,7 +395,7 @@ static void ScrollCallback( GLFWwindow* window, double dx, double dy )
 
 static void UpdateUI()
 {
-	int maxWorkers = GetNumberOfCores();
+	int maxWorkers = B2_MAX_WORKERS;
 
 	float fontSize = ImGui::GetFontSize();
 	float menuWidth = 13.0f * fontSize;

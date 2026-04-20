@@ -49,7 +49,7 @@ typedef enum b2SolverBlockType
 // in parallel via atomic CAS on each block's own syncIndex. Three properties
 // of this design matter for performance:
 //
-// 1. Distributed contention. Per-block atomics avoid the cacheline stampede
+// 1. Distributed contention. Per-block atomic syncIndex avoids the cache line stampede
 //    that a single shared fetch_add counter would cause. Once a worker
 //    settles into a block range, its CAS targets live in its own L1.
 //

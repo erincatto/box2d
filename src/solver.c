@@ -1574,9 +1574,16 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		void* splitIslandTask = NULL;
 		if ( world->splitIslandId != B2_NULL_INDEX )
 		{
-			splitIslandTask = world->enqueueTaskFcn( &b2SplitIslandTask, world, world->userTaskContext );
-			world->taskCount += 1;
-			world->activeTaskCount += splitIslandTask == NULL ? 0 : 1;
+			if (world->taskCount < B2_MAX_TASKS)
+			{
+				splitIslandTask = world->enqueueTaskFcn( &b2SplitIslandTask, world, world->userTaskContext );
+				world->taskCount += 1;
+				world->activeTaskCount += splitIslandTask == NULL ? 0 : 1;
+			}
+			else
+			{
+				b2SplitIslandTask( world );
+			}
 		}
 
 		// Prepare body, joint, and contact work blocks
@@ -1651,9 +1658,18 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 			workerContext[i].context = stepContext;
 			workerContext[i].workerIndex = i;
-			workerContext[i].userTask = world->enqueueTaskFcn( &b2SolverTask, workerContext + i, world->userTaskContext );
-			world->taskCount += 1;
-			world->activeTaskCount += workerContext[i].userTask == NULL ? 0 : 1;
+
+			if (world->taskCount < B2_MAX_TASKS)
+			{
+				workerContext[i].userTask = world->enqueueTaskFcn( &b2SolverTask, workerContext + i, world->userTaskContext );
+				world->taskCount += 1;
+				world->activeTaskCount += workerContext[i].userTask == NULL ? 0 : 1;
+			}
+			else
+			{
+				workerContext[i].userTask = NULL;
+				b2SolverTask( workerContext + i );
+			}
 		}
 
 		// Finish island split

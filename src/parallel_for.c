@@ -111,8 +111,18 @@ void b2ParallelFor( b2World* world, b2ParallelForCallback* callback, int itemCou
 	{
 		tasks[i].shared = &shared;
 		tasks[i].workerIndex = i;
-		handles[i] = world->enqueueTaskFcn( &b2ParallelForTrampoline, tasks + i, world->userTaskContext );
-		world->taskCount += 1;
+
+		if (world->taskCount < B2_MAX_TASKS)
+		{
+			handles[i] = world->enqueueTaskFcn( &b2ParallelForTrampoline, tasks + i, world->userTaskContext );
+			world->taskCount += 1;
+			world->activeTaskCount += handles[i] == NULL ? 0 : 1;
+		}
+		else
+		{
+			handles[i] = NULL;
+			b2ParallelForTrampoline( tasks + i );
+		}
 	}
 
 	for ( int i = 0; i < taskCount; ++i )
@@ -120,6 +130,7 @@ void b2ParallelFor( b2World* world, b2ParallelForCallback* callback, int itemCou
 		if ( handles[i] != NULL )
 		{
 			world->finishTaskFcn( handles[i], world->userTaskContext );
+			world->activeTaskCount -= 1;
 		}
 	}
 }

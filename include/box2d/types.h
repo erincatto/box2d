@@ -101,13 +101,13 @@ typedef struct b2WorldDef
 	/// Contact softening when mass ratios are large. Experimental.
 	bool enableContactSoftening;
 
-	/// Number of workers to use with the provided task system. Box2D performs best when using only
-	/// performance cores and accessing a single L2 cache. Efficiency cores and hyper-threading provide
+	/// Number of workers for multithreading. Box2D performs best when using performance cores and
+	/// accessing a single L3 cache (uniform memory). Efficiency cores and SMT provide
 	/// little benefit and may even harm performance.
-	/// @note Box2D does not create threads. This is the number of threads your applications has created
-	/// that you are allocating to b2World_Step.
-	/// @warning Do not modify the default value unless you are also providing a task system and providing
-	/// task callbacks (enqueueTask and finishTask).
+	/// This is clamped to the range [1, B2_MAX_WORKERS].
+	/// Using a value above 1 will turn on multithreading. If task callbacks are provided
+	/// then Box2D will use the user provided task system. Otherwise Box2D will create threads and use
+	/// an internal scheduler.
 	int workerCount;
 
 	/// Function to spawn tasks

@@ -439,9 +439,17 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	// Task that can be done in parallel with the narrow-phase
 	// - rebuild the collision tree for dynamic and kinematic bodies to keep their query performance good
-	world->userTreeTask = world->enqueueTaskFcn( &b2UpdateTreesTask, world, world->userTaskContext );
-	world->taskCount += 1;
-	world->activeTaskCount += world->userTreeTask == NULL ? 0 : 1;
+	if (world->taskCount < B2_MAX_TASKS)
+	{
+		world->userTreeTask = world->enqueueTaskFcn( &b2UpdateTreesTask, world, world->userTaskContext );
+		world->taskCount += 1;
+		world->activeTaskCount += world->userTreeTask == NULL ? 0 : 1;
+	}
+	else
+	{
+		world->userTreeTask = NULL;
+		b2UpdateTreesTask( world );
+	}
 
 	// Single-threaded work
 	// - Clear move flags
