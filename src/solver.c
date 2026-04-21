@@ -63,21 +63,19 @@ typedef struct b2WorkerContext
 } b2WorkerContext;
 
 // Integrate velocities and apply damping
-static void b2IntegrateVelocitiesTask( int startIndex, int endIndex, b2StepContext* context )
+static void b2IntegrateVelocitiesTask( b2SolverBlock block, b2StepContext* context )
 {
 	b2TracyCZoneNC( integrate_velocity, "IntVel", b2_colorDeepPink, true );
 
 	b2BodyState* states = context->states;
 	b2BodySim* sims = context->sims;
 
+	B2_VALIDATE( block.startIndex + block.count <= context->world->solverSets.data[b2_awakeSet].bodyStates.count );
+
 	b2Vec2 gravity = context->world->gravity;
 	float h = context->h;
-	float maxLinearSpeed = context->maxLinearVelocity;
-	float maxAngularSpeed = B2_MAX_ROTATION * context->inv_dt;
-	float maxLinearSpeedSquared = maxLinearSpeed * maxLinearSpeed;
-	float maxAngularSpeedSquared = maxAngularSpeed * maxAngularSpeed;
 
-	for ( int i = startIndex; i < endIndex; ++i )
+	for ( int i = block.startIndex; i < block.startIndex + block.count; ++i )
 	{
 		b2BodySim* sim = sims + i;
 		b2BodyState* state = states + i;
@@ -142,6 +140,47 @@ static void b2IntegrateVelocitiesTask( int startIndex, int endIndex, b2StepConte
 	}
 
 	b2TracyCZoneEnd( integrate_velocity );
+}
+
+static void b2IntegratePositionsTask( b2SolverBlock block, b2StepContext* context )
+{
+	b2TracyCZoneNC( integrate_positions, "IntPos", b2_colorDarkSeaGreen, true );
+
+	b2BodyState* states = context->states;
+	float h = context->h;
+
+	float maxLinearSpeed = context->maxLinearVelocity;
+	float maxAngularSpeed = B2_MAX_ROTATION * context->inv_dt;
+	float maxLinearSpeedSquared = maxLinearSpeed * maxLinearSpeed;
+	float maxAngularSpeedSquared = maxAngularSpeed * maxAngularSpeed;
+
+
+	B2_ASSERT( startIndex <= endIndex );
+
+	for ( int i = startIndex; i < endIndex; ++i )
+	{
+		b2BodyState* state = states + i;
+
+		if ( state->flags & b2_lockLinearX )
+		{
+			state->linearVelocity.x = 0.0f;
+		}
+
+		if ( state->flags & b2_lockLinearY )
+		{
+			state->linearVelocity.y = 0.0f;
+		}
+
+		if ( state->flags & b2_lockAngularZ )
+		{
+			state->angularVelocity = 0.0f;
+		}
+
+		state->deltaPosition = b2MulAdd( state->deltaPosition, h, state->linearVelocity );
+		state->deltaRotation = b2IntegrateRotation( state->deltaRotation, h * state->angularVelocity );
+	}
+
+	b2TracyCZoneEnd( integrate_positions );
 }
 
 static void b2PrepareJointsTask( int startIndex, int endIndex, b2StepContext* context )
@@ -210,41 +249,6 @@ static void b2SolveJointsTask( int startIndex, int endIndex, b2StepContext* cont
 	}
 
 	b2TracyCZoneEnd( solve_joints );
-}
-
-static void b2IntegratePositionsTask( int startIndex, int endIndex, b2StepContext* context )
-{
-	b2TracyCZoneNC( integrate_positions, "IntPos", b2_colorDarkSeaGreen, true );
-
-	b2BodyState* states = context->states;
-	float h = context->h;
-
-	B2_ASSERT( startIndex <= endIndex );
-
-	for ( int i = startIndex; i < endIndex; ++i )
-	{
-		b2BodyState* state = states + i;
-
-		if ( state->flags & b2_lockLinearX )
-		{
-			state->linearVelocity.x = 0.0f;
-		}
-
-		if ( state->flags & b2_lockLinearY )
-		{
-			state->linearVelocity.y = 0.0f;
-		}
-
-		if ( state->flags & b2_lockAngularZ )
-		{
-			state->angularVelocity = 0.0f;
-		}
-
-		state->deltaPosition = b2MulAdd( state->deltaPosition, h, state->linearVelocity );
-		state->deltaRotation = b2IntegrateRotation( state->deltaRotation, h * state->angularVelocity );
-	}
-
-	b2TracyCZoneEnd( integrate_positions );
 }
 
 #define B2_MAX_CONTINUOUS_SENSOR_HITS 8
