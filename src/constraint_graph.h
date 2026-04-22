@@ -47,6 +47,9 @@ typedef struct b2GraphColor
 		struct b2ContactConstraintWide* wideConstraints;
 		struct b2ContactConstraint* overflowConstraints;
 	};
+
+	int wideConstraintCount;
+
 } b2GraphColor;
 
 typedef struct b2ConstraintGraph

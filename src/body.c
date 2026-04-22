@@ -549,7 +549,7 @@ void b2UpdateBodyMassData( b2World* world, b2Body* body )
 	}
 
 	int shapeCount = body->shapeCount;
-	b2MassData* masses = b2AllocateArenaItem( &world->arena, shapeCount * sizeof( b2MassData ), "mass data" );
+	b2MassData* masses = b2StackAlloc( &world->stack, shapeCount * sizeof( b2MassData ), "mass data" );
 
 	// Accumulate mass over all shapes.
 	b2Vec2 localCenter = b2Vec2_zero;
@@ -597,7 +597,7 @@ void b2UpdateBodyMassData( b2World* world, b2Body* body )
 		body->inertia += inertia;
 	}
 
-	b2FreeArenaItem( &world->arena, masses );
+	b2StackFree( &world->stack, masses );
 	masses = NULL;
 
 	B2_ASSERT( body->inertia >= 0.0f );

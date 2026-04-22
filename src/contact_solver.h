@@ -42,15 +42,15 @@ typedef struct b2ContactConstraint
 int b2GetWideContactConstraintByteCount( void );
 
 // Overflow contacts don't fit into the constraint graph coloring
-void b2PrepareOverflowContacts( b2StepContext* context );
-void b2WarmStartOverflowContacts( b2StepContext* context );
-void b2SolveOverflowContacts( b2StepContext* context, bool useBias );
-void b2ApplyOverflowRestitution( b2StepContext* context );
+void b2PrepareContacts_Overflow( b2StepContext* context );
+void b2WarmStartContacts_Overflow( b2StepContext* context );
+void b2SolveContacts_Overflow( b2StepContext* context, bool useBias );
+void b2ApplyRestitution_Overflow( b2StepContext* context );
 void b2StoreOverflowImpulses( b2StepContext* context );
 
 // Contacts that live within the constraint graph coloring
-void b2PrepareContactsTask( int startIndex, int endIndex, b2StepContext* context );
-void b2WarmStartContactsTask( int startIndex, int endIndex, b2StepContext* context, int colorIndex );
-void b2SolveContactsTask( int startIndex, int endIndex, b2StepContext* context, int colorIndex, bool useBias );
-void b2ApplyRestitutionTask( int startIndex, int endIndex, b2StepContext* context, int colorIndex );
-void b2StoreImpulsesTask( int startIndex, int endIndex, b2StepContext* context );
+void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context );
+void b2WarmStartContactsTask( b2SolverBlock block, b2StepContext* context );
+void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context, bool useBias );
+void b2ApplyRestitutionTask( b2SolverBlock block, b2StepContext* context );
+void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context );

@@ -183,7 +183,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->generation = generation;
 	world->inUse = true;
 
-	world->arena = b2CreateArenaAllocator( 2048 );
+	world->stack = b2CreateStack( 2048 );
 	b2CreateBroadPhase( &world->broadPhase );
 	b2CreateGraph( &world->constraintGraph, 16 );
 
@@ -408,7 +408,7 @@ void b2DestroyWorld( b2WorldId worldId )
 	b2DestroyIdPool( &world->islandIdPool );
 	b2DestroyIdPool( &world->solverSetIdPool );
 
-	b2DestroyArenaAllocator( &world->arena );
+	b2DestroyStack( &world->stack );
 
 	// Wipe world but preserve generation
 	uint16_t generation = world->generation;
@@ -417,14 +417,14 @@ void b2DestroyWorld( b2WorldId worldId )
 	world->generation = generation + 1;
 }
 
-static void b2CollideTask( int startIndex, int endIndex, int threadIndex, void* context )
+static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* context )
 {
 	b2TracyCZoneNC( collide_task, "Collide", b2_colorDodgerBlue, true );
 
 	b2StepContext* stepContext = context;
 	b2World* world = stepContext->world;
-	b2TaskContext* taskContext = world->taskContexts.data + threadIndex;
-	b2ContactSim** contactSims = stepContext->contacts;
+	b2TaskContext* taskContext = world->taskContexts.data + workerIndex;
+	b2ContactSim** contactSims = stepContext->contactSims;
 	b2Shape* shapes = world->shapes.data;
 	b2Body* bodies = world->bodies.data;
 
@@ -615,7 +615,7 @@ static void b2Collide( b2StepContext* context )
 		return;
 	}
 
-	b2ContactSim** contactSims = b2AllocateArenaItem( &world->arena, contactCount * sizeof( b2ContactSim* ), "contacts" );
+	b2ContactSim** contactSims = b2StackAlloc( &world->stack, contactCount * sizeof( b2ContactSim* ), "contacts" );
 
 	int contactIndex = 0;
 	for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
@@ -641,7 +641,7 @@ static void b2Collide( b2StepContext* context )
 
 	B2_ASSERT( contactIndex == contactCount );
 
-	context->contacts = contactSims;
+	context->contactSims = contactSims;
 
 	// Contact bit set on ids because contact pointers are unstable as they move between touching and not touching.
 	int contactIdCapacity = b2GetIdCapacity( &world->contactIdPool );
@@ -654,8 +654,8 @@ static void b2Collide( b2StepContext* context )
 	int minRange = 64;
 	b2ParallelFor( world, &b2CollideTask, contactCount, minRange, context );
 
-	b2FreeArenaItem( &world->arena, contactSims );
-	context->contacts = NULL;
+	b2StackFree( &world->stack, contactSims );
+	context->contactSims = NULL;
 	contactSims = NULL;
 
 	// Serially update contact state
@@ -905,10 +905,10 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 
 	world->profile.step = b2GetMilliseconds( stepTicks );
 
-	B2_ASSERT( b2GetArenaAllocation( &world->arena ) == 0 );
+	B2_ASSERT( b2GetStackAllocation( &world->stack ) == 0 );
 
 	// Ensure stack is large enough
-	b2GrowArena( &world->arena );
+	b2GrowStack( &world->stack );
 
 	// Make sure all tasks that were started were also finished
 	B2_ASSERT( world->activeTaskCount == 0 );
@@ -1787,7 +1787,7 @@ b2Counters b2World_GetCounters( b2WorldId worldId )
 	b2DynamicTree* kinematicTree = world->broadPhase.trees + b2_kinematicBody;
 	s.treeHeight = b2MaxInt( b2DynamicTree_GetHeight( dynamicTree ), b2DynamicTree_GetHeight( kinematicTree ) );
 
-	s.stackUsed = b2GetMaxArenaAllocation( &world->arena );
+	s.stackUsed = b2GetMaxStackAllocation( &world->stack );
 	s.byteCount = b2GetByteCount();
 	s.taskCount = world->taskCount;
 
@@ -1969,7 +1969,7 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	fprintf( file, "\n" );
 
 	// stack allocator
-	fprintf( file, "stack allocator: %d\n\n", world->arena.capacity );
+	fprintf( file, "stack allocator: %d\n\n", world->stack.capacity );
 
 	// chain shapes
 	// todo

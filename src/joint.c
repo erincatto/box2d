@@ -1379,7 +1379,7 @@ void b2SolveJoint( b2JointSim* joint, b2StepContext* context, bool useBias )
 	}
 }
 
-void b2PrepareOverflowJoints( b2StepContext* context )
+void b2PrepareJoints_Overflow( b2StepContext* context )
 {
 	b2TracyCZoneNC( prepare_joints, "PrepJoints", b2_colorOldLace, true );
 
@@ -1396,7 +1396,7 @@ void b2PrepareOverflowJoints( b2StepContext* context )
 	b2TracyCZoneEnd( prepare_joints );
 }
 
-void b2WarmStartOverflowJoints( b2StepContext* context )
+void b2WarmStartJoints_Overflow( b2StepContext* context )
 {
 	b2TracyCZoneNC( prepare_joints, "PrepJoints", b2_colorOldLace, true );
 
@@ -1413,7 +1413,7 @@ void b2WarmStartOverflowJoints( b2StepContext* context )
 	b2TracyCZoneEnd( prepare_joints );
 }
 
-void b2SolveOverflowJoints( b2StepContext* context, bool useBias )
+void b2SolveJoints_Overflow( b2StepContext* context, bool useBias )
 {
 	b2TracyCZoneNC( solve_joints, "Solve Overflow Joints", b2_colorLemonChiffon, true );
 

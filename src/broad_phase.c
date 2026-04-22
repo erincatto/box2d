@@ -417,14 +417,14 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	b2TracyCZoneNC( update_pairs, "Find Pairs", b2_colorMediumSlateBlue, true );
 
-	b2ArenaAllocator* alloc = &world->arena;
+	b2Stack* alloc = &world->stack;
 
 	// todo these could be in the step context
-	bp->moveResults = b2AllocateArenaItem( alloc, moveCount * sizeof( b2MoveResult ), "move results" );
+	bp->moveResults = b2StackAlloc( alloc, moveCount * sizeof( b2MoveResult ), "move results" );
 
 	// This capacity can be exceeded if there are many overlapping pairs (e.g. all shapes at the origin)
 	bp->movePairCapacity = 32 * moveCount;
-	bp->movePairs = b2AllocateArenaItem( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
+	bp->movePairs = b2StackAlloc( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
 	b2AtomicStoreInt( &bp->movePairIndex, 0 );
 
 #if B2_SNOOP_TABLE_COUNTERS
@@ -505,9 +505,9 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	b2IntArray_Clear( &bp->moveArray );
 	b2ClearSet( &bp->moveSet );
 
-	b2FreeArenaItem( alloc, bp->movePairs );
+	b2StackFree( alloc, bp->movePairs );
 	bp->movePairs = NULL;
-	b2FreeArenaItem( alloc, bp->moveResults );
+	b2StackFree( alloc, bp->moveResults );
 	bp->moveResults = NULL;
 
 	b2ValidateSolverSets( world );

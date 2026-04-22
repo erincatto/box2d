@@ -47,7 +47,7 @@ typedef struct b2TaskContext
 // The world also contains efficient memory management facilities.
 typedef struct b2World
 {
-	b2ArenaAllocator arena;
+	b2Stack stack;
 	b2BroadPhase broadPhase;
 	b2ConstraintGraph constraintGraph;
 

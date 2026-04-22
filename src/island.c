@@ -412,14 +412,14 @@ void b2SplitIsland( b2World* world, int baseId )
 	b2JointLink* baseJoints = baseIsland->joints.data;
 	int baseJointCapacity = baseIsland->joints.capacity;
 
-	b2ArenaAllocator* alloc = &world->arena;
+	b2Stack* alloc = &world->stack;
 
 	// No lock is needed because I ensure the allocator is not used while this task is active.
 	// Allocate contactCounts and jointCounts before ranks so ranks can be freed first (LIFO arena).
-	int* parents = b2AllocateArenaItem( alloc, baseBodyCount * sizeof( int ), "parents" );
-	int* contactCounts = b2AllocateArenaItem( alloc, baseBodyCount * sizeof( int ), "contact counts" );
-	int* jointCounts = b2AllocateArenaItem( alloc, baseBodyCount * sizeof( int ), "joint counts" );
-	int* ranks = b2AllocateArenaItem( alloc, baseBodyCount * sizeof( int ), "ranks" );
+	int* parents = b2StackAlloc( alloc, baseBodyCount * sizeof( int ), "parents" );
+	int* contactCounts = b2StackAlloc( alloc, baseBodyCount * sizeof( int ), "contact counts" );
+	int* jointCounts = b2StackAlloc( alloc, baseBodyCount * sizeof( int ), "joint counts" );
+	int* ranks = b2StackAlloc( alloc, baseBodyCount * sizeof( int ), "ranks" );
 	for ( int i = 0; i < baseBodyCount; ++i )
 	{
 		parents[i] = i;
@@ -489,7 +489,7 @@ void b2SplitIsland( b2World* world, int baseId )
 	}
 
 	// Done with ranks
-	b2FreeArenaItem( alloc, ranks );
+	b2StackFree( alloc, ranks );
 	ranks = NULL;
 
 	// Flatten all parent indices and count connected components.
@@ -507,9 +507,9 @@ void b2SplitIsland( b2World* world, int baseId )
 	if ( componentCount == 1 )
 	{
 		baseIsland->constraintRemoveCount = 0;
-		b2FreeArenaItem( alloc, jointCounts );
-		b2FreeArenaItem( alloc, contactCounts );
-		b2FreeArenaItem( alloc, parents );
+		b2StackFree( alloc, jointCounts );
+		b2StackFree( alloc, contactCounts );
+		b2StackFree( alloc, parents );
 		return;
 	}
 
@@ -530,15 +530,15 @@ void b2SplitIsland( b2World* world, int baseId )
 	baseIsland = NULL;
 
 	// Map from body index to new island index. Only set for root bodies.
-	int* rootMap = b2AllocateArenaItem( alloc, baseBodyCount * sizeof( int ), "root map" );
+	int* rootMap = b2StackAlloc( alloc, baseBodyCount * sizeof( int ), "root map" );
 	for ( int i = 0; i < baseBodyCount; ++i )
 	{
 		rootMap[i] = B2_NULL_INDEX;
 	}
 
-	int* componentBodyCounts = b2AllocateArenaItem( alloc, componentCount * sizeof( int ), "component body counts" );
-	int* componentContactCounts = b2AllocateArenaItem( alloc, componentCount * sizeof( int ), "component contact counts" );
-	int* componentJointCounts = b2AllocateArenaItem( alloc, componentCount * sizeof( int ), "component joint counts" );
+	int* componentBodyCounts = b2StackAlloc( alloc, componentCount * sizeof( int ), "component body counts" );
+	int* componentContactCounts = b2StackAlloc( alloc, componentCount * sizeof( int ), "component contact counts" );
+	int* componentJointCounts = b2StackAlloc( alloc, componentCount * sizeof( int ), "component joint counts" );
 	int islandCount = 0;
 
 	// Find the root body for each body and create islands as needed.
@@ -561,7 +561,7 @@ void b2SplitIsland( b2World* world, int baseId )
 	B2_ASSERT( islandCount == componentCount );
 
 	// Map from new island index to island id
-	int* islandIds = b2AllocateArenaItem( alloc, islandCount * sizeof( int ), "island ids" );
+	int* islandIds = b2StackAlloc( alloc, islandCount * sizeof( int ), "island ids" );
 
 	// Create new islands and reserve body/contact/joint arrays
 	for ( int i = 0; i < islandCount; ++i )
@@ -643,14 +643,14 @@ void b2SplitIsland( b2World* world, int baseId )
 	b2Free( baseJoints, baseJointCapacity * sizeof( b2JointLink ) );
 
 	// Free arena items in LIFO order
-	b2FreeArenaItem( alloc, islandIds );
-	b2FreeArenaItem( alloc, componentJointCounts );
-	b2FreeArenaItem( alloc, componentContactCounts );
-	b2FreeArenaItem( alloc, componentBodyCounts );
-	b2FreeArenaItem( alloc, rootMap );
-	b2FreeArenaItem( alloc, jointCounts );
-	b2FreeArenaItem( alloc, contactCounts );
-	b2FreeArenaItem( alloc, parents );
+	b2StackFree( alloc, islandIds );
+	b2StackFree( alloc, componentJointCounts );
+	b2StackFree( alloc, componentContactCounts );
+	b2StackFree( alloc, componentBodyCounts );
+	b2StackFree( alloc, rootMap );
+	b2StackFree( alloc, jointCounts );
+	b2StackFree( alloc, contactCounts );
+	b2StackFree( alloc, parents );
 }
 
 // Split an island because some contacts and/or joints have been removed.

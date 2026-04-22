@@ -90,7 +90,8 @@ typedef struct b2SolverBlock
 	int startIndex;
 	uint16_t count;
 	// b2SolverBlockType
-	int16_t blockType;
+	uint8_t blockType;
+	uint8_t colorIndex;
 	b2AtomicInt syncIndex;
 } b2SolverBlock;
 
@@ -148,11 +149,8 @@ typedef struct b2StepContext
 	b2JointSim** joints;
 
 	// contact pointers for simplified parallel-for access.
-	// - parallel-for collide with no gaps
-	// - parallel-for prepare and store contacts with NULL gaps for SIMD remainders
-	// despite being an array of pointers, these are contiguous sub-arrays corresponding
-	// to constraint graph colors
-	b2ContactSim** contacts;
+	// - parallel-for collide with no gaps, includes touching and non-touching
+	b2ContactSim** contactSims;
 
 	struct b2ContactConstraintWide* wideContactConstraints;
 	int activeColorCount;
