@@ -165,11 +165,12 @@ static void b2PrepareJointsTask( b2SolverBlock block, b2StepContext* context )
 {
 	b2TracyCZoneNC( prepare_joints, "PrepJoints", b2_colorOldLace, true );
 
-	b2JointSim** joints = context->joints;
+	b2GraphColor* color = context->graph->colors + block.colorIndex;
+	b2JointSim* joints = color->jointSims.data;
 
 	for ( int i = block.startIndex; i < block.startIndex + block.count; ++i )
 	{
-		b2JointSim* joint = joints[i];
+		b2JointSim* joint = joints + i;
 		b2PrepareJoint( joint, context );
 	}
 
@@ -959,6 +960,7 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 	}
 }
 
+// This spreads out the worker start indices so they avoid touching the same solver blocks
 static inline int GetWorkerStartIndex( int workerIndex, int blockCount, int workerCount )
 {
 	if ( blockCount <= workerCount )
@@ -971,6 +973,7 @@ static inline int GetWorkerStartIndex( int workerIndex, int blockCount, int work
 	return blocksPerWorker * workerIndex + b2MinInt( remainder, workerIndex );
 }
 
+// Execute a stage, which is an array of solver blocks, each controlled with an atomic sync index.
 static void b2ExecuteStage( b2SolverStage* stage, b2StepContext* context, int previousSyncIndex, int syncIndex, int workerIndex )
 {
 	int completedCount = 0;
@@ -987,8 +990,8 @@ static void b2ExecuteStage( b2SolverStage* stage, b2StepContext* context, int pr
 
 	B2_ASSERT( 0 <= startIndex && startIndex < blockCount );
 
+	// Loop forward until reaching a block that has already been executed.
 	int blockIndex = startIndex;
-
 	while ( b2AtomicCompareExchangeInt( &blocks[blockIndex].syncIndex, expectedSyncIndex, syncIndex ) == true )
 	{
 		B2_ASSERT( stage->type != b2_stagePrepareContacts || syncIndex < 2 );
@@ -1001,19 +1004,20 @@ static void b2ExecuteStage( b2SolverStage* stage, b2StepContext* context, int pr
 		blockIndex += 1;
 		if ( blockIndex >= blockCount )
 		{
-			// Keep looking for work
+			// Wrap to the start
 			blockIndex = 0;
 		}
 
 		expectedSyncIndex = previousSyncIndex;
 	}
 
-	// Search backwards for blocks
+	// Loop backwards until reaching a block that has already been executed.
 	blockIndex = startIndex - 1;
 	while ( true )
 	{
 		if ( blockIndex < 0 )
 		{
+			// Wrap to the end
 			blockIndex = blockCount - 1;
 		}
 
@@ -1032,6 +1036,7 @@ static void b2ExecuteStage( b2SolverStage* stage, b2StepContext* context, int pr
 	(void)b2AtomicFetchAddInt( &stage->completionCount, completedCount );
 }
 
+// Execute a stage on worker 0 (main thread).
 static void b2ExecuteMainStage( b2SolverStage* stage, b2StepContext* context, uint32_t syncBits )
 {
 	int blockCount = stage->blockCount;
@@ -1056,7 +1061,7 @@ static void b2ExecuteMainStage( b2SolverStage* stage, b2StepContext* context, ui
 
 		b2ExecuteStage( stage, context, previousSyncIndex, syncIndex, workerIndex );
 
-		// todo consider using the cycle counter as well
+		// Spin waiting for thieves to finish
 		while ( b2AtomicLoadInt( &stage->completionCount ) != blockCount )
 		{
 			b2Pause();
@@ -1066,6 +1071,7 @@ static void b2ExecuteMainStage( b2SolverStage* stage, b2StepContext* context, ui
 	}
 }
 
+// Parallel solver task
 static void b2SolverTask( void* taskContext )
 {
 	b2WorkerContext* workerContext = taskContext;
@@ -1395,9 +1401,11 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		int colorContactCounts[B2_GRAPH_COLOR_COUNT];
 		int colorJointCounts[B2_GRAPH_COLOR_COUNT];
 		int colorContactBlockCounts[B2_GRAPH_COLOR_COUNT];
+		int colorJointBlockCounts[B2_GRAPH_COLOR_COUNT];
 		int colorBlockCounts[B2_GRAPH_COLOR_COUNT];
 		int graphBlockCount = 0;
 		int contactBlockCount = 0;
+		int jointBlockCount = 0;
 
 		// c is the active color index
 		int wideContactCount = 0;
@@ -1417,20 +1425,19 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				colorJointCounts[c] = colorJointCount;
 
 				int colorContactBlockCount = b2ComputeBlockCount( colorContactCountW, blocksPerWorker, maxBlockCount );
-				int jointBlockCount = b2ComputeBlockCount( colorJointCount, blocksPerWorker, maxBlockCount );
+				int colorJointBlockCount = b2ComputeBlockCount( colorJointCount, blocksPerWorker, maxBlockCount );
 				colorContactBlockCounts[c] = colorContactBlockCount;
-				colorBlockCounts[c] = colorContactBlockCount + jointBlockCount;
+				colorJointBlockCounts[c] = colorJointBlockCount;
+				colorBlockCounts[c] = colorContactBlockCount + colorJointBlockCount;
 
 				graphBlockCount += colorBlockCounts[c];
 				contactBlockCount += colorContactBlockCount;
+				jointBlockCount += colorJointBlockCount;
 				wideContactCount += colorContactCountW;
 				c += 1;
 			}
 		}
 		activeColorCount = c;
-
-		// Gather joint pointers for easy parallel-for traversal.
-		b2JointSim** joints = b2StackAlloc( &world->stack, awakeJointCount * sizeof( b2JointSim* ), "joint pointers" );
 
 		int wideContactConstraintByteCount = b2GetWideContactConstraintByteCount();
 		struct b2ContactConstraintWide* wideContactConstraints =
@@ -1442,17 +1449,15 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		graph->colors[B2_OVERFLOW_INDEX].overflowConstraints = overflowContactConstraints;
 
-		// Distribute transient constraints to each graph color and build flat arrays of contact and joint pointers
+		// Distribute transient constraints to each graph color
 		{
 			int contactBase = 0;
-			int jointBase = 0;
 			for ( int i = 0; i < activeColorCount; ++i )
 			{
 				int j = activeColorIndices[i];
 				b2GraphColor* color = colors + j;
 
 				int colorContactCount = color->contactSims.count;
-
 				if ( colorContactCount == 0 )
 				{
 					color->wideConstraints = NULL;
@@ -1468,22 +1473,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 					contactBase += colorContactCountW;
 				}
-
-				// Flat array of joints
-				int colorJointCount = color->jointSims.count;
-				for ( int k = 0; k < colorJointCount; ++k )
-				{
-					joints[jointBase + k] = color->jointSims.data + k;
-				}
-				jointBase += colorJointCount;
 			}
 
 			B2_ASSERT( contactBase == wideContactCount );
-			B2_ASSERT( jointBase == awakeJointCount );
 		}
-
-		// Define work blocks for preparing joints
-		int jointBlockCount = b2ComputeBlockCount( awakeJointCount, blocksPerWorker, maxBlockCount );
 
 		int stageCount = 0;
 
@@ -1534,22 +1527,28 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			}
 		}
 
-		// Prepare body and joint work blocks
+		// Prepare body blocks
 		b2InitBlocks( bodyBlocks, bodyBlockCount, awakeBodyCount, 1 << 5, maxBlockCount, b2_bodyBlock, UINT8_MAX );
-		b2InitBlocks( jointBlocks, jointBlockCount, awakeJointCount, blocksPerWorker, maxBlockCount, b2_jointBlock, UINT8_MAX );
 
-		// Prepare contact work blocks per-color. b2PrepareContactsTask and b2StoreImpulsesTask route via block.colorIndex
-		// to color->wideConstraints and color->contactSims.data, so startIndex/count are per-color wide-constraint indices.
+		// Prepare contact and joint work blocks per-color. These blocks are contiguous and work with a holistic
+		// parallel-for because prepare and store do not affect body state.
 		{
 			b2SolverBlock* baseContactBlock = contactBlocks;
+			b2SolverBlock* baseJointBlock = jointBlocks;
 			for ( int i = 0; i < activeColorCount; ++i )
 			{
 				uint8_t colorIndex = (uint8_t)activeColorIndices[i];
+				
 				b2InitBlocks( baseContactBlock, colorContactBlockCounts[i], colorContactCounts[i], blocksPerWorker, maxBlockCount,
 							  b2_contactBlock, colorIndex );
 				baseContactBlock += colorContactBlockCounts[i];
+
+				b2InitBlocks( baseJointBlock, colorJointBlockCounts[i], colorJointCounts[i], blocksPerWorker, maxBlockCount,
+							  b2_jointBlock, colorIndex );
+				baseJointBlock += colorJointBlockCounts[i];
 			}
 			B2_ASSERT( (ptrdiff_t)( baseContactBlock - contactBlocks ) == contactBlockCount );
+			B2_ASSERT( (ptrdiff_t)( baseJointBlock - jointBlocks ) == jointBlockCount );
 		}
 
 		// Prepare graph work blocks. Each color gets joint blocks followed by contact blocks.
@@ -1598,7 +1597,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2WorkerContext workerContext[B2_MAX_WORKERS];
 
 		stepContext->graph = graph;
-		stepContext->joints = joints;
 		stepContext->activeColorCount = activeColorCount;
 		stepContext->workerCount = workerCount;
 		stepContext->stageCount = stageCount;
@@ -1680,7 +1678,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2StackFree( &world->stack, stages );
 		b2StackFree( &world->stack, overflowContactConstraints );
 		b2StackFree( &world->stack, wideContactConstraints );
-		b2StackFree( &world->stack, joints );
+		//b2StackFree( &world->stack, joints );
 
 		world->profile.transforms = b2GetMilliseconds( transformTicks );
 		b2TracyCZoneEnd( update_transforms );

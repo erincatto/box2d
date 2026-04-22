@@ -145,9 +145,6 @@ typedef struct b2StepContext
 	int* bulletBodies;
 	b2AtomicInt bulletBodyCount;
 
-	// joint pointers for simplified parallel-for access.
-	b2JointSim** joints;
-
 	// contact pointers for simplified parallel-for access.
 	// - parallel-for collide with no gaps, includes touching and non-touching
 	b2ContactSim** contactSims;
