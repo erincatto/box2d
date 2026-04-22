@@ -36,8 +36,8 @@ typedef struct b2GraphColor
 	b2BitSet bodySet;
 
 	// cache friendly arrays
-	b2ArrayC( b2ContactSim ) contactSims;
-	b2ArrayC( b2JointSim ) jointSims;
+	b2Array( b2ContactSim ) contactSims;
+	b2Array( b2JointSim ) jointSims;
 
 	// transient
 	union

@@ -28,7 +28,7 @@ static void b2LimitVelocity( b2BodyState* state, float maxLinearSpeed )
 	}
 }
 
-void b2RemoveBodySim( b2ArrayC( b2BodySim )* bodySims, b2ArrayC( b2Body )* bodies, int localIndex )
+void b2RemoveBodySim( b2Array( b2BodySim )* bodySims, b2Array( b2Body )* bodies, int localIndex )
 {
 	B2_ASSERT( 0 <= localIndex && localIndex < bodySims->count );
 	int lastIndex = bodySims->count - 1;

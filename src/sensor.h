@@ -29,9 +29,9 @@ b2DeclareArray( b2Visitor );
 typedef struct b2Sensor
 {
 	// todo find a way to pool these
-	b2ArrayC( b2Visitor ) hits;
-	b2ArrayC( b2Visitor ) overlaps1;
-	b2ArrayC( b2Visitor ) overlaps2;
+	b2Array( b2Visitor ) hits;
+	b2Array( b2Visitor ) overlaps1;
+	b2Array( b2Visitor ) overlaps2;
 	int shapeId;
 } b2Sensor;
 

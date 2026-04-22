@@ -31,7 +31,7 @@ typedef struct b2Stack
 	int allocation;
 	int maxAllocation;
 
-	b2ArrayC( b2StackEntry ) entries;
+	b2Array( b2StackEntry ) entries;
 } b2Stack;
 
 b2Stack b2CreateStack( int capacity );

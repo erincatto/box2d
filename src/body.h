@@ -218,7 +218,7 @@ bool b2ShouldBodiesCollide( b2World* world, b2Body* bodyA, b2Body* bodyB );
 
 b2BodySim* b2GetBodySim( b2World* world, b2Body* body );
 b2BodyState* b2GetBodyState( b2World* world, b2Body* body );
-void b2RemoveBodySim( b2ArrayC( b2BodySim )* bodySims, b2ArrayC( b2Body )* bodies, int localIndex );
+void b2RemoveBodySim( b2Array( b2BodySim )* bodySims, b2Array( b2Body )* bodies, int localIndex );
 
 // careful calling this because it can invalidate body, state, joint, and contact pointers
 bool b2WakeBody( b2World* world, b2Body* body );

@@ -21,12 +21,12 @@ b2DeclareArray( Foo );
 
 typedef struct Bar
 {
-	b2ArrayC( int ) a;
+	b2Array( int ) a;
 } Bar;
 
 static int TestCreateDestroy( void )
 {
-	b2ArrayC( int ) a;
+	b2Array( int ) a;
 	b2Array_Create( a );
 	b2Array_Destroy( a );
 	return 0;
@@ -34,7 +34,7 @@ static int TestCreateDestroy( void )
 
 static int TestAccess( void )
 {
-	b2ArrayC( int ) a;
+	b2Array( int ) a;
 	b2Array_Create( a );
 	b2Array_Push( a, 42 );
 	int* element = b2Array_Get( a, 0 );
@@ -45,7 +45,7 @@ static int TestAccess( void )
 
 static int TestIteration( void )
 {
-	b2ArrayC( int ) a = { 0 };
+	b2Array( int ) a = { 0 };
 	b2Array_Push( a, 1 );
 	b2Array_Push( a, 2 );
 	b2Array_Push( a, 3 );
@@ -63,7 +63,7 @@ static int TestIteration( void )
 
 static int TestArrayOfStruct( void )
 {
-	b2ArrayC( Foo ) a;
+	b2Array( Foo ) a;
 	b2Array_Create( a );
 	b2Array_Push( a, ( (Foo){ .a = 1, .b = 5.0f } ) );
 	b2Array_Push( a, ( (Foo){ .a = 2, .b = 6.0f } ) );
@@ -106,7 +106,7 @@ static int TestStructWithArray( void )
 
 static int TestArrayEmplace( void )
 {
-	b2ArrayC( uint64_t ) a = { 0 };
+	b2Array( uint64_t ) a = { 0 };
 
 	for ( int i = 0; i < 100; ++i )
 	{
@@ -128,7 +128,7 @@ static int TestArrayEmplace( void )
 
 static int TestArrayRemove( void )
 {
-	b2ArrayC( int16_t ) a = { 0 };
+	b2Array( int16_t ) a = { 0 };
 
 	int n = 10;
 	b2Array_Reserve( a, n );
@@ -156,7 +156,7 @@ static int TestArrayRemove( void )
 
 static int TestArrayPop( void )
 {
-	b2ArrayC( uint8_t ) a = { 0 };
+	b2Array( uint8_t ) a = { 0 };
 
 	int n = 100;
 	b2Array_Resize( a, n );
@@ -203,7 +203,7 @@ b2DeclareArray( Body );
 
 static int TestEmptyArrayProperties( void )
 {
-	b2ArrayC( int ) a;
+	b2Array( int ) a;
 	b2Array_Create( a );
 	ENSURE( a.count == 0 );
 	b2Array_Destroy( a );
@@ -215,7 +215,7 @@ static int TestEmptyArrayProperties( void )
 
 static int TestArrayReserveNoop( void )
 {
-	b2ArrayC( int ) a = { 0 };
+	b2Array( int ) a = { 0 };
 	b2Array_Reserve( a, 16 );
 	ENSURE( a.capacity >= 16 );
 	int oldCapacity = a.capacity;
@@ -230,7 +230,7 @@ static int TestArrayReserveNoop( void )
 
 static int TestArrayResizeDown( void )
 {
-	b2ArrayC( int ) a = { 0 };
+	b2Array( int ) a = { 0 };
 	for ( int i = 0; i < 10; ++i )
 	{
 		b2Array_Push( a, i * 10 );
@@ -252,7 +252,7 @@ static int TestArrayResizeDown( void )
 
 static int TestArrayPopOrder( void )
 {
-	b2ArrayC( int ) a = { 0 };
+	b2Array( int ) a = { 0 };
 	b2Array_Push( a, 10 );
 	b2Array_Push( a, 20 );
 	b2Array_Push( a, 30 );
@@ -271,7 +271,7 @@ static int TestArrayPopOrder( void )
 
 static int TestArrayRemoveSwapContents( void )
 {
-	b2ArrayC( int ) a = { 0 };
+	b2Array( int ) a = { 0 };
 	b2Array_Push( a, 100 );
 	b2Array_Push( a, 200 );
 	b2Array_Push( a, 300 );
@@ -305,7 +305,7 @@ static int TestArrayRemoveSwapContents( void )
 
 static int TestArrayGrowthIntegrity( void )
 {
-	b2ArrayC( int ) a = { 0 };
+	b2Array( int ) a = { 0 };
 
 	// Push many elements to trigger multiple reallocations
 	for ( int i = 0; i < 1000; ++i )
@@ -328,7 +328,7 @@ static int TestArrayGrowthIntegrity( void )
 
 static int TestArrayInterleavedPushPop( void )
 {
-	b2ArrayC( int ) a = { 0 };
+	b2Array( int ) a = { 0 };
 
 	b2Array_Push( a, 1 );
 	b2Array_Push( a, 2 );
@@ -354,7 +354,7 @@ static int TestArrayInterleavedPushPop( void )
 
 static int TestArrayEmplaceStruct( void )
 {
-	b2ArrayC( Foo ) a = { 0 };
+	b2Array( Foo ) a = { 0 };
 
 	for ( int i = 0; i < 50; ++i )
 	{
@@ -378,7 +378,7 @@ static int TestArrayEmplaceStruct( void )
 
 static int TestArrayResizeUp( void )
 {
-	b2ArrayC( int ) a = { 0 };
+	b2Array( int ) a = { 0 };
 
 	b2Array_Resize( a, 10 );
 	ENSURE( a.count == 10 );
@@ -404,7 +404,7 @@ static int TestArrayResizeUp( void )
 
 static int TestArrayPushAfterReserve( void )
 {
-	b2ArrayC( int ) a = { 0 };
+	b2Array( int ) a = { 0 };
 
 	// Reserve doesn't change count
 	b2Array_Reserve( a, 50 );
@@ -429,7 +429,7 @@ static int TestArrayPushAfterReserve( void )
 
 static int TestArrayRemoveSwapAllFromEnd( void )
 {
-	b2ArrayC( int ) a = { 0 };
+	b2Array( int ) a = { 0 };
 	b2Array_Push( a, 1 );
 	b2Array_Push( a, 2 );
 	b2Array_Push( a, 3 );
@@ -453,7 +453,7 @@ static int TestArrayRemoveSwapAllFromEnd( void )
 
 static int TestArraySingleElement( void )
 {
-	b2ArrayC( Foo ) a = { 0 };
+	b2Array( Foo ) a = { 0 };
 
 	Foo* f = b2Array_Emplace( a );
 	f->a = 7;
@@ -474,7 +474,7 @@ static int TestArraySingleElement( void )
 
 static int TestArrayCreateN( void )
 {
-	b2ArrayC( int ) a;
+	b2Array( int ) a;
 	b2Array_CreateN( a, 16 );
 	ENSURE( a.count == 0 );
 	ENSURE( a.capacity == 16 );

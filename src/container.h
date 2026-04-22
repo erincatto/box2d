@@ -26,8 +26,8 @@
 
 // Define an array.
 // It may be zero initialized:
-// b2ArrayC(int) myArray = { 0 };
-#define b2ArrayC( T ) b2DynamicArray_##T
+// b2Array(int) myArray = { 0 };
+#define b2Array( T ) b2DynamicArray_##T
 
 // Alternative to zero initialization
 #define b2Array_Create( a )                                                                                                      \

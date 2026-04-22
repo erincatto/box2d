@@ -148,7 +148,7 @@ static void b2SensorTask( int startIndex, int endIndex, int threadIndex, void* c
 		b2Shape* sensorShape = b2Array_Get( world->shapes,sensor->shapeId );
 
 		// Swap overlap arrays
-		b2ArrayC( b2Visitor ) temp = sensor->overlaps1;
+		b2Array( b2Visitor ) temp = sensor->overlaps1;
 		sensor->overlaps1 = sensor->overlaps2;
 		sensor->overlaps2 = temp;
 		b2Array_Clear( sensor->overlaps2 );

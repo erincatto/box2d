@@ -103,7 +103,6 @@ typedef struct b2SolverStage
 	b2SolverStageType type;
 	int blockCount;
 	uint8_t colorIndex;
-	// todo consider false sharing of this atomic
 	b2AtomicInt completionCount;
 } b2SolverStage;
 
@@ -156,13 +155,14 @@ typedef struct b2StepContext
 	int stageCount;
 	bool enableWarmStarting;
 
-	// todo padding to prevent false sharing
-	char dummy1[64];
+	// padding to prevent false sharing
+	char padding1[64];
 
 	// sync index (16-bits) | stage type (16-bits)
 	b2AtomicU32 atomicSyncBits;
 
-	char dummy2[64];
+	// padding to prevent false sharing
+	char padding2[64];
 
 } b2StepContext;
 

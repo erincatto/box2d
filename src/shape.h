@@ -74,7 +74,7 @@ typedef struct b2ShapeExtent
 // When a sensor is destroyed.
 typedef struct
 {
-	b2ArrayC( int ) overlaps;
+	b2Array( int ) overlaps;
 } b2SensorOverlaps;
 
 void b2CreateShapeProxy( b2Shape* shape, b2BroadPhase* bp, b2BodyType type, b2Transform transform, bool forcePairCreation );

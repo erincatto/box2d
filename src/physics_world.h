@@ -28,7 +28,7 @@ b2DeclareArray( b2TaskContext );
 typedef struct b2TaskContext
 {
 	// Collect per thread sensor continuous hit events.
-	b2ArrayC(b2SensorHit) sensorHits;
+	b2Array(b2SensorHit) sensorHits;
 
 	// These bits align with the contact id capacity and signal a change in contact status
 	b2BitSet contactStateBitSet;
@@ -65,7 +65,7 @@ typedef struct b2World
 	// This is a sparse array that maps body ids to the body data
 	// stored in solver sets. As sims move within a set or across set.
 	// Indices come from id pool.
-	b2ArrayC( b2Body ) bodies;
+	b2Array( b2Body ) bodies;
 
 	// Provides free list for solver sets.
 	b2IdPool solverSetIdPool;
@@ -73,53 +73,53 @@ typedef struct b2World
 	// Solvers sets allow sims to be stored in contiguous arrays. The first
 	// set is all static sims. The second set is active sims. The third set is disabled
 	// sims. The remaining sets are sleeping islands.
-	b2ArrayC( b2SolverSet ) solverSets;
+	b2Array( b2SolverSet ) solverSets;
 
 	// Used to create stable ids for joints
 	b2IdPool jointIdPool;
 
 	// This is a sparse array that maps joint ids to the joint data stored in the constraint graph
 	// or in the solver sets.
-	b2ArrayC( b2Joint ) joints;
+	b2Array( b2Joint ) joints;
 
 	// Used to create stable ids for contacts
 	b2IdPool contactIdPool;
 
 	// This is a sparse array that maps contact ids to the contact data stored in the constraint graph
 	// or in the solver sets.
-	b2ArrayC( b2Contact ) contacts;
+	b2Array( b2Contact ) contacts;
 
 	// Used to create stable ids for islands
 	b2IdPool islandIdPool;
 
 	// Persistent islands
-	b2ArrayC( b2Island ) islands;
+	b2Array( b2Island ) islands;
 
 	b2IdPool shapeIdPool;
 	b2IdPool chainIdPool;
 
 	// These are sparse arrays that point into the pools above
-	b2ArrayC( b2Shape ) shapes;
-	b2ArrayC( b2ChainShape ) chainShapes;
+	b2Array( b2Shape ) shapes;
+	b2Array( b2ChainShape ) chainShapes;
 
 	// This is a dense array of sensor data.
-	b2ArrayC( b2Sensor ) sensors;
+	b2Array( b2Sensor ) sensors;
 
 	// Per thread storage
-	b2ArrayC( b2TaskContext ) taskContexts;
-	b2ArrayC( b2SensorTaskContext ) sensorTaskContexts;
+	b2Array( b2TaskContext ) taskContexts;
+	b2Array( b2SensorTaskContext ) sensorTaskContexts;
 
-	b2ArrayC( b2BodyMoveEvent ) bodyMoveEvents;
-	b2ArrayC( b2SensorBeginTouchEvent ) sensorBeginEvents;
-	b2ArrayC( b2ContactBeginTouchEvent ) contactBeginEvents;
+	b2Array( b2BodyMoveEvent ) bodyMoveEvents;
+	b2Array( b2SensorBeginTouchEvent ) sensorBeginEvents;
+	b2Array( b2ContactBeginTouchEvent ) contactBeginEvents;
 
 	// End events are double buffered so that the user doesn't need to flush events
-	b2ArrayC( b2SensorEndTouchEvent ) sensorEndEvents[2];
-	b2ArrayC( b2ContactEndTouchEvent ) contactEndEvents[2];
+	b2Array( b2SensorEndTouchEvent ) sensorEndEvents[2];
+	b2Array( b2ContactEndTouchEvent ) contactEndEvents[2];
 	int endEventArrayIndex;
 
-	b2ArrayC( b2ContactHitEvent ) contactHitEvents;
-	b2ArrayC( b2JointEvent ) jointEvents;
+	b2Array( b2ContactHitEvent ) contactHitEvents;
+	b2Array( b2JointEvent ) jointEvents;
 
 	// todo consider deferred waking and impulses to make it possible
 	// to apply forces and impulses from multiple threads

@@ -3078,24 +3078,19 @@ void b2ValidateSolverSets( b2World* world )
 // Validate shapes
 // This is very slow on compounds
 #if 0
-	int shapeCapacity = b2Array(world->shapeArray).count;
+	int shapeCapacity = world->shapes.count;
 	for (int shapeIndex = 0; shapeIndex < shapeCapacity; shapeIndex += 1)
 	{
-		b2Shape* shape = world->shapeArray + shapeIndex;
+		b2Shape* shape = world->shapes.data + shapeIndex;
 		if (shape->id != shapeIndex)
 		{
 			continue;
 		}
 
-		B2_ASSERT(0 <= shape->bodyId && shape->bodyId < b2Array(world->bodyArray).count);
+		b2Body* body = b2Array_Get(world->bodies, shape->bodyId);
 
-		b2Body* body = world->bodyArray + shape->bodyId;
-		B2_ASSERT(0 <= body->setIndex && body->setIndex < b2Array(world->solverSetArray).count);
-
-		b2SolverSet* set = world->solverSetArray + body->setIndex;
-		B2_ASSERT(0 <= body->localIndex && body->localIndex < set->sims.count);
-
-		b2BodySim* bodySim = set->sims.data + body->localIndex;
+		b2SolverSet* set = b2Array_Get(world->solverSets, body->setIndex);
+		b2BodySim* bodySim = b2Array_Get(set->bodySims, body->localIndex);
 		B2_ASSERT(bodySim->bodyId == shape->bodyId);
 
 		bool found = false;
@@ -3103,8 +3098,7 @@ void b2ValidateSolverSets( b2World* world )
 		int index = body->headShapeId;
 		while (index != B2_NULL_INDEX)
 		{
-			b2CheckId(world->shapeArray, index);
-			b2Shape* s = world->shapeArray + index;
+			b2Shape* s = b2Array_Get(world->shapes, index);
 			if (index == shapeIndex)
 			{
 				found = true;

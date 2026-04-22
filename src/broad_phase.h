@@ -33,7 +33,7 @@ typedef struct b2BroadPhase
 	// todo implement a 32bit hash set for faster lookup
 	// todo moveSet can grow quite large on the first time step and remain large
 	b2HashSet moveSet;
-	b2ArrayC( int ) moveArray;
+	b2Array( int ) moveArray;
 
 	// These are the results from the pair query and are used to create new contacts
 	// in deterministic order. There is a move result linked list for each moving shape and
