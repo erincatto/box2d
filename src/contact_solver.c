@@ -1560,7 +1560,7 @@ static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT i
 
 #endif
 
-#if 1
+#if 0
 
 // Note: Dirk suggested preparing contacts in the narrow phase. I tried this but it made Box2D slower.
 // The contact preparation is extremely fast in Box2D due to the data layout (b2ContactSim).
@@ -1781,7 +1781,7 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 {
 	b2TracyCZoneNC( prepare_contact, "Prepare Contact", b2_colorYellow, true );
 	b2World* world = context->world;
-	b2ContactSim** contacts = context->contacts;
+	b2ContactSim** contacts = context->contactSims;
 	b2ContactConstraintWide* constraints = context->wideContactConstraints;
 	b2BodyState* awakeStates = context->states;
 #if B2_ENABLE_VALIDATION
@@ -2455,7 +2455,7 @@ void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context )
 {
 	b2TracyCZoneNC( store_impulses, "Store", b2_colorFireBrick, true );
 
-	b2ContactSim** contacts = context->contacts;
+	b2ContactSim** contacts = context->contactSims;
 	const b2ContactConstraintWide* constraints = context->wideContactConstraints;
 
 	b2Manifold dummy = { 0 };
