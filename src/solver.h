@@ -99,10 +99,10 @@ typedef struct b2SolverBlock
 // Non-iterative stages use a stage instance once while iterative stages re-use the same instance each iteration.
 typedef struct b2SolverStage
 {
-	b2SolverStageType type;
 	b2SolverBlock* blocks;
+	b2SolverStageType type;
 	int blockCount;
-	int colorIndex;
+	uint8_t colorIndex;
 	// todo consider false sharing of this atomic
 	b2AtomicInt completionCount;
 } b2SolverStage;
@@ -152,7 +152,6 @@ typedef struct b2StepContext
 	// - parallel-for collide with no gaps, includes touching and non-touching
 	b2ContactSim** contactSims;
 
-	struct b2ContactConstraintWide* wideContactConstraints;
 	int activeColorCount;
 	int workerCount;
 
