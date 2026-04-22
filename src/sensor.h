@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "array.h"
 #include "bitset.h"
+#include "container.h"
 
 typedef struct b2Shape b2Shape;
 typedef struct b2World b2World;
@@ -16,29 +16,34 @@ typedef struct b2SensorHit
 	int visitorId;
 } b2SensorHit;
 
+b2DeclareArray( b2SensorHit );
+
 typedef struct b2Visitor
 {
 	int shapeId;
 	uint16_t generation;
 } b2Visitor;
 
+b2DeclareArray( b2Visitor );
+
 typedef struct b2Sensor
 {
 	// todo find a way to pool these
-	b2VisitorArray hits;
-	b2VisitorArray overlaps1;
-	b2VisitorArray overlaps2;
+	b2ArrayC( b2Visitor ) hits;
+	b2ArrayC( b2Visitor ) overlaps1;
+	b2ArrayC( b2Visitor ) overlaps2;
 	int shapeId;
 } b2Sensor;
+
+b2DeclareArray( b2Sensor );
 
 typedef struct b2SensorTaskContext
 {
 	b2BitSet eventBits;
 } b2SensorTaskContext;
 
+b2DeclareArray( b2SensorTaskContext );
+
 void b2OverlapSensors( b2World* world );
 
 void b2DestroySensor( b2World* world, b2Shape* sensorShape );
-
-B2_ARRAY_INLINE( b2Sensor, b2Sensor )
-B2_ARRAY_INLINE( b2Visitor, b2Visitor )

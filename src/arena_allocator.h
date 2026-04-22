@@ -3,11 +3,11 @@
 
 #pragma once
 
-#include "array.h"
+#include "container.h"
 
 #include <stdbool.h>
 
-B2_ARRAY_DECLARE( b2StackEntry, b2StackEntry );
+b2DeclareArray( b2StackEntry );
 
 typedef struct b2StackEntry
 {
@@ -31,7 +31,7 @@ typedef struct b2Stack
 	int allocation;
 	int maxAllocation;
 
-	b2StackEntryArray entries;
+	b2ArrayC( b2StackEntry ) entries;
 } b2Stack;
 
 b2Stack b2CreateStack( int capacity );
@@ -47,4 +47,3 @@ int b2GetStackCapacity( b2Stack* alloc );
 int b2GetStackAllocation( b2Stack* alloc );
 int b2GetMaxStackAllocation( b2Stack* alloc );
 
-B2_ARRAY_INLINE( b2StackEntry, b2StackEntry )

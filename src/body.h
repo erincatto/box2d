@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "array.h"
+#include "container.h"
 
 #include "box2d/math_functions.h"
 #include "box2d/types.h"
@@ -201,6 +201,10 @@ typedef struct b2BodySim
 	uint32_t flags;
 } b2BodySim;
 
+b2DeclareArray( b2Body );
+b2DeclareArray( b2BodySim );
+b2DeclareArray( b2BodyState );
+
 // Get a validated body from a world using an id.
 b2Body* b2GetBodyFullId( b2World* world, b2BodyId bodyId );
 
@@ -214,7 +218,7 @@ bool b2ShouldBodiesCollide( b2World* world, b2Body* bodyA, b2Body* bodyB );
 
 b2BodySim* b2GetBodySim( b2World* world, b2Body* body );
 b2BodyState* b2GetBodyState( b2World* world, b2Body* body );
-void b2RemoveBodySim( b2BodySimArray* bodySims, b2BodyArray* bodies, int localIndex );
+void b2RemoveBodySim( b2ArrayC( b2BodySim )* bodySims, b2ArrayC( b2Body )* bodies, int localIndex );
 
 // careful calling this because it can invalidate body, state, joint, and contact pointers
 bool b2WakeBody( b2World* world, b2Body* body );
@@ -231,8 +235,3 @@ static inline b2Sweep b2MakeSweep( const b2BodySim* bodySim )
 	s.localCenter = bodySim->localCenter;
 	return s;
 }
-
-// Define inline functions for arrays
-B2_ARRAY_INLINE( b2Body, b2Body )
-B2_ARRAY_INLINE( b2BodySim, b2BodySim )
-B2_ARRAY_INLINE( b2BodyState, b2BodyState )

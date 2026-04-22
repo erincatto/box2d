@@ -3,13 +3,10 @@
 
 #include "arena_allocator.h"
 
-#include "array.h"
 #include "core.h"
 
 #include <stdbool.h>
 #include <stddef.h>
-
-B2_ARRAY_SOURCE( b2StackEntry, b2StackEntry )
 
 b2Stack b2CreateStack( int capacity )
 {
@@ -20,13 +17,13 @@ b2Stack b2CreateStack( int capacity )
 	allocator.allocation = 0;
 	allocator.maxAllocation = 0;
 	allocator.index = 0;
-	allocator.entries = b2StackEntryArray_Create( 32 );
+	b2Array_CreateN( allocator.entries, 32 );
 	return allocator;
 }
 
 void b2DestroyStack( b2Stack* allocator )
 {
-	b2StackEntryArray_Destroy( &allocator->entries );
+	b2Array_Destroy( allocator->entries );
 	b2Free( allocator->data, allocator->capacity );
 }
 
@@ -61,7 +58,7 @@ void* b2StackAlloc( b2Stack* alloc, int size, const char* name )
 		alloc->maxAllocation = alloc->allocation;
 	}
 
-	b2StackEntryArray_Push( &alloc->entries, entry );
+	b2Array_Push( alloc->entries, entry );
 	return entry.data;
 }
 
@@ -80,7 +77,7 @@ void b2StackFree( b2Stack* alloc, void* mem )
 		alloc->index -= entry->size;
 	}
 	alloc->allocation -= entry->size;
-	b2StackEntryArray_Pop( &alloc->entries );
+	b2Array_Pop( alloc->entries );
 }
 
 void b2GrowStack( b2Stack* alloc )

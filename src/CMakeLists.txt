@@ -5,8 +5,6 @@ set(BOX2D_SOURCE_FILES
 	aabb.h
 	arena_allocator.c
 	arena_allocator.h
-	array.c
-	array.h
 	atomic.h
 	bitset.c
 	bitset.h

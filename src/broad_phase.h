@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "array.h"
+#include "container.h"
 #include "table.h"
 
 #include "box2d/collision.h"
@@ -33,7 +33,7 @@ typedef struct b2BroadPhase
 	// todo implement a 32bit hash set for faster lookup
 	// todo moveSet can grow quite large on the first time step and remain large
 	b2HashSet moveSet;
-	b2IntArray moveArray;
+	b2ArrayC( int ) moveArray;
 
 	// These are the results from the pair query and are used to create new contacts
 	// in deterministic order. There is a move result linked list for each moving shape and
@@ -76,6 +76,6 @@ static inline void b2BufferMove( b2BroadPhase* bp, int queryProxy )
 	bool alreadyAdded = b2AddKey( &bp->moveSet, queryProxy + 1 );
 	if ( alreadyAdded == false )
 	{
-		b2IntArray_Push( &bp->moveArray, queryProxy );
+		b2Array_Push( bp->moveArray, queryProxy );
 	}
 }

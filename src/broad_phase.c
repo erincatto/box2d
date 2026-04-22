@@ -9,7 +9,6 @@
 
 #include "aabb.h"
 #include "arena_allocator.h"
-#include "array.h"
 #include "atomic.h"
 #include "body.h"
 #include "contact.h"
@@ -36,7 +35,7 @@ void b2CreateBroadPhase( b2BroadPhase* bp )
 	// }
 
 	bp->moveSet = b2CreateSet( 16 );
-	bp->moveArray = b2IntArray_Create( 16 );
+	b2Array_CreateN( bp->moveArray, 16 );
 	bp->moveResults = NULL;
 	bp->movePairs = NULL;
 	bp->movePairCapacity = 0;
@@ -57,7 +56,7 @@ void b2DestroyBroadPhase( b2BroadPhase* bp )
 	}
 
 	b2DestroySet( &bp->moveSet );
-	b2IntArray_Destroy( &bp->moveArray );
+	b2Array_Destroy( bp->moveArray );
 	b2DestroySet( &bp->pairSet );
 
 	memset( bp, 0, sizeof( b2BroadPhase ) );
@@ -82,7 +81,7 @@ static inline void b2UnBufferMove( b2BroadPhase* bp, int proxyKey )
 		{
 			if ( bp->moveArray.data[i] == proxyKey )
 			{
-				b2IntArray_RemoveSwap( &bp->moveArray, i );
+				b2Array_RemoveSwap( bp->moveArray, i );
 				break;
 			}
 		}
@@ -235,8 +234,8 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 
 	b2World* world = queryContext->world;
 
-	b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, shapeIdA );
-	b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, shapeIdB );
+	b2Shape* shapeA = b2Array_Get( world->shapes, shapeIdA );
+	b2Shape* shapeB = b2Array_Get( world->shapes, shapeIdB );
 
 	int bodyIdA = shapeA->bodyId;
 	int bodyIdB = shapeB->bodyId;
@@ -265,8 +264,8 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 	}
 
 	// Does a joint override collision?
-	b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
-	b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
+	b2Body* bodyA = b2Array_Get( world->bodies, bodyIdA );
+	b2Body* bodyB = b2Array_Get( world->bodies, bodyIdB );
 	if ( b2ShouldBodiesCollide( world, bodyA, bodyB ) == false )
 	{
 		return true;
@@ -469,8 +468,8 @@ void b2UpdateBroadPhasePairs( b2World* world )
 			//	fprintf(s_file, "%d %d\n", shapeIdA, shapeIdB);
 			// }
 
-			b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, shapeIdA );
-			b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, shapeIdB );
+			b2Shape* shapeA = b2Array_Get( world->shapes, shapeIdA );
+			b2Shape* shapeB = b2Array_Get( world->shapes, shapeIdB );
 
 			b2CreateContact( world, shapeA, shapeB );
 
@@ -502,7 +501,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	// }
 
 	// Reset move buffer
-	b2IntArray_Clear( &bp->moveArray );
+	b2Array_Clear( bp->moveArray );
 	b2ClearSet( &bp->moveSet );
 
 	b2StackFree( alloc, bp->movePairs );

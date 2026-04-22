@@ -3,7 +3,6 @@
 
 #include "constraint_graph.h"
 
-#include "array.h"
 #include "bitset.h"
 #include "body.h"
 #include "contact.h"
@@ -57,8 +56,8 @@ void b2DestroyGraph( b2ConstraintGraph* graph )
 
 		b2DestroyBitSet( &color->bodySet );
 
-		b2ContactSimArray_Destroy( &color->contactSims );
-		b2JointSimArray_Destroy( &color->jointSims );
+		b2Array_Destroy( color->contactSims );
+		b2Array_Destroy( color->jointSims );
 	}
 }
 
@@ -75,8 +74,8 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 
 	int bodyIdA = contact->edges[0].bodyId;
 	int bodyIdB = contact->edges[1].bodyId;
-	b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
-	b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
+	b2Body* bodyA = b2Array_Get( world->bodies,bodyIdA );
+	b2Body* bodyB = b2Array_Get( world->bodies,bodyIdB );
 
 	b2BodyType typeA = bodyA->type;
 	b2BodyType typeB = bodyB->type;
@@ -138,7 +137,7 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	contact->colorIndex = colorIndex;
 	contact->localIndex = color->contactSims.count;
 
-	b2ContactSim* newContact = b2ContactSimArray_Add( &color->contactSims );
+	b2ContactSim* newContact = b2Array_Emplace( color->contactSims );
 	memcpy( newContact, contactSim, sizeof( b2ContactSim ) );
 
 	// todo perhaps skip this if the contact is already awake
@@ -152,12 +151,12 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	else
 	{
 		B2_ASSERT( bodyA->setIndex == b2_awakeSet );
-		b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
+		b2SolverSet* awakeSet = b2Array_Get( world->solverSets,b2_awakeSet );
 
 		int localIndex = bodyA->localIndex;
 		newContact->bodySimIndexA = localIndex;
 
-		b2BodySim* bodySimA = b2BodySimArray_Get( &awakeSet->bodySims, localIndex );
+		b2BodySim* bodySimA = b2Array_Get( awakeSet->bodySims,localIndex );
 		newContact->invMassA = bodySimA->invMass;
 		newContact->invIA = bodySimA->invInertia;
 	}
@@ -171,12 +170,12 @@ void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* c
 	else
 	{
 		B2_ASSERT( bodyB->setIndex == b2_awakeSet );
-		b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
+		b2SolverSet* awakeSet = b2Array_Get( world->solverSets,b2_awakeSet );
 
 		int localIndex = bodyB->localIndex;
 		newContact->bodySimIndexB = localIndex;
 
-		b2BodySim* bodySimB = b2BodySimArray_Get( &awakeSet->bodySims, localIndex );
+		b2BodySim* bodySimB = b2Array_Get( awakeSet->bodySims,localIndex );
 		newContact->invMassB = bodySimB->invMass;
 		newContact->invIB = bodySimB->invInertia;
 	}
@@ -196,7 +195,7 @@ void b2RemoveContactFromGraph( b2World* world, int bodyIdA, int bodyIdB, int col
 		b2ClearBit( &color->bodySet, bodyIdB );
 	}
 
-	int movedIndex = b2ContactSimArray_RemoveSwap( &color->contactSims, localIndex );
+	int movedIndex = b2Array_RemoveSwap( color->contactSims,localIndex );
 	if ( movedIndex != B2_NULL_INDEX )
 	{
 		// Fix index on swapped contact
@@ -204,7 +203,7 @@ void b2RemoveContactFromGraph( b2World* world, int bodyIdA, int bodyIdB, int col
 
 		// Fix moved contact
 		int movedId = movedContactSim->contactId;
-		b2Contact* movedContact = b2ContactArray_Get( &world->contacts, movedId );
+		b2Contact* movedContact = b2Array_Get( world->contacts,movedId );
 		B2_ASSERT( movedContact->setIndex == b2_awakeSet );
 		B2_ASSERT( movedContact->colorIndex == colorIndex );
 		B2_ASSERT( movedContact->localIndex == movedIndex );
@@ -278,12 +277,12 @@ b2JointSim* b2CreateJointInGraph( b2World* world, b2Joint* joint )
 
 	int bodyIdA = joint->edges[0].bodyId;
 	int bodyIdB = joint->edges[1].bodyId;
-	b2Body* bodyA = b2BodyArray_Get( &world->bodies, bodyIdA );
-	b2Body* bodyB = b2BodyArray_Get( &world->bodies, bodyIdB );
+	b2Body* bodyA = b2Array_Get( world->bodies,bodyIdA );
+	b2Body* bodyB = b2Array_Get( world->bodies,bodyIdB );
 
 	int colorIndex = b2AssignJointColor( graph, bodyIdA, bodyIdB, bodyA->type, bodyB->type );
 
-	b2JointSim* jointSim = b2JointSimArray_Add( &graph->colors[colorIndex].jointSims );
+	b2JointSim* jointSim = b2Array_Emplace( graph->colors[colorIndex].jointSims );
 	memset( jointSim, 0, sizeof( b2JointSim ) );
 
 	joint->colorIndex = colorIndex;
@@ -311,13 +310,13 @@ void b2RemoveJointFromGraph( b2World* world, int bodyIdA, int bodyIdB, int color
 		b2ClearBit( &color->bodySet, bodyIdB );
 	}
 
-	int movedIndex = b2JointSimArray_RemoveSwap( &color->jointSims, localIndex );
+	int movedIndex = b2Array_RemoveSwap( color->jointSims,localIndex );
 	if ( movedIndex != B2_NULL_INDEX )
 	{
 		// Fix moved joint
 		b2JointSim* movedJointSim = color->jointSims.data + localIndex;
 		int movedId = movedJointSim->jointId;
-		b2Joint* movedJoint = b2JointArray_Get( &world->joints, movedId );
+		b2Joint* movedJoint = b2Array_Get( world->joints,movedId );
 		B2_ASSERT( movedJoint->setIndex == b2_awakeSet );
 		B2_ASSERT( movedJoint->colorIndex == colorIndex );
 		B2_ASSERT( movedJoint->localIndex == movedIndex );

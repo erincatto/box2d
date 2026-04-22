@@ -168,7 +168,7 @@ void b2WarmStartContacts_Overflow( b2StepContext* context )
 	b2ContactConstraint* constraints = color->overflowConstraints;
 	int contactCount = color->contactSims.count;
 	b2World* world = context->world;
-	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
+	b2SolverSet* awakeSet = b2Array_Get( world->solverSets, b2_awakeSet );
 	b2BodyState* states = awakeSet->bodyStates.data;
 
 	// This is a dummy state to represent a static body because static bodies don't have a solver body.
@@ -245,7 +245,7 @@ void b2SolveContacts_Overflow( b2StepContext* context, bool useBias )
 	b2ContactConstraint* constraints = color->overflowConstraints;
 	int contactCount = color->contactSims.count;
 	b2World* world = context->world;
-	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
+	b2SolverSet* awakeSet = b2Array_Get( world->solverSets, b2_awakeSet );
 	b2BodyState* states = awakeSet->bodyStates.data;
 
 	float inv_h = context->inv_h;
@@ -413,7 +413,7 @@ void b2ApplyRestitution_Overflow( b2StepContext* context )
 	b2ContactConstraint* constraints = color->overflowConstraints;
 	int contactCount = color->contactSims.count;
 	b2World* world = context->world;
-	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
+	b2SolverSet* awakeSet = b2Array_Get( world->solverSets, b2_awakeSet );
 	b2BodyState* states = awakeSet->bodyStates.data;
 
 	float threshold = context->world->restitutionThreshold;

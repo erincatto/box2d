@@ -3,10 +3,11 @@
 
 #pragma once
 
-#include "array.h"
+#include "body.h"
+#include "contact.h"
+#include "island.h"
+#include "joint.h"
 
-typedef struct b2Body b2Body;
-typedef struct b2Joint b2Joint;
 typedef struct b2World b2World;
 
 // The solver set type by index
@@ -38,24 +39,24 @@ enum b2SolverSetType
 typedef struct b2SolverSet
 {
 	// Body array. Empty for unused set.
-	b2BodySimArray bodySims;
+	b2ArrayC( b2BodySim ) bodySims;
 
 	// Body state only exists for active set
-	b2BodyStateArray bodyStates;
+	b2ArrayC( b2BodyState ) bodyStates;
 
 	// This holds sleeping/disabled joints. Empty for static/active set.
-	b2JointSimArray jointSims;
+	b2ArrayC( b2JointSim ) jointSims;
 
 	// This holds all contacts for sleeping sets.
 	// This holds non-touching contacts for the awake set.
-	b2ContactSimArray contactSims;
+	b2ArrayC( b2ContactSim ) contactSims;
 
 	// The awake set has an array of islands. Sleeping sets normally have a single islands. However, joints
 	// created between sleeping sets causes the sets to merge, leaving them with multiple islands. These sleeping
 	// islands will be naturally merged with the set is woken.
 	// The static and disabled sets have no islands.
 	// Islands live in the solver sets to limit the number of islands that need to be considered for sleeping.
-	b2IslandSimArray islandSims;
+	b2ArrayC( b2IslandSim ) islandSims;
 
 	// Aligns with b2World::solverSetIdPool. Used to create a stable id for body/contact/joint/islands.
 	int setIndex;
@@ -73,4 +74,4 @@ void b2MergeSolverSets( b2World* world, int setIndex1, int setIndex2 );
 void b2TransferBody( b2World* world, b2SolverSet* targetSet, b2SolverSet* sourceSet, b2Body* body );
 void b2TransferJoint( b2World* world, b2SolverSet* targetSet, b2SolverSet* sourceSet, b2Joint* joint );
 
-B2_ARRAY_INLINE( b2SolverSet, b2SolverSet )
+b2DeclareArray( b2SolverSet );

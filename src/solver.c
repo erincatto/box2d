@@ -4,7 +4,6 @@
 #include "solver.h"
 
 #include "arena_allocator.h"
-#include "array.h"
 #include "atomic.h"
 #include "bitset.h"
 #include "body.h"
@@ -263,7 +262,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	}
 
 	b2World* world = continuousContext->world;
-	b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+	b2Shape* shape = b2Array_Get( world->shapes,shapeId );
 
 	// Skip same body
 	if ( shape->bodyId == fastShape->bodyId )
@@ -285,7 +284,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 		return true;
 	}
 
-	b2Body* body = b2BodyArray_Get( &world->bodies, shape->bodyId );
+	b2Body* body = b2Array_Get( world->bodies,shape->bodyId );
 
 	b2BodySim* bodySim = b2GetBodySim( world, body );
 	B2_ASSERT( body->type == b2_staticBody || ( fastBodySim->flags & b2_isBullet ) );
@@ -297,7 +296,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	}
 
 	// Skip filtered bodies
-	b2Body* fastBody = b2BodyArray_Get( &world->bodies, fastBodySim->bodyId );
+	b2Body* fastBody = b2Array_Get( world->bodies,fastBodySim->bodyId );
 	canCollide = b2ShouldBodiesCollide( world, fastBody, body );
 	if ( canCollide == false )
 	{
@@ -447,8 +446,8 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 {
 	b2TracyCZoneNC( ccd, "CCD", b2_colorDarkGoldenRod, true );
 
-	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
-	b2BodySim* fastBodySim = b2BodySimArray_Get( &awakeSet->bodySims, bodySimIndex );
+	b2SolverSet* awakeSet = b2Array_Get( world->solverSets,b2_awakeSet );
+	b2BodySim* fastBodySim = b2Array_Get( awakeSet->bodySims,bodySimIndex );
 	B2_ASSERT( fastBodySim->flags & b2_isFast );
 
 	b2Sweep sweep = b2MakeSweep( fastBodySim );
@@ -464,7 +463,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 	b2DynamicTree* staticTree = world->broadPhase.trees + b2_staticBody;
 	b2DynamicTree* kinematicTree = world->broadPhase.trees + b2_kinematicBody;
 	b2DynamicTree* dynamicTree = world->broadPhase.trees + b2_dynamicBody;
-	b2Body* fastBody = b2BodyArray_Get( &world->bodies, fastBodySim->bodyId );
+	b2Body* fastBody = b2Array_Get( world->bodies,fastBodySim->bodyId );
 
 	struct b2ContinuousContext context = { 0 };
 	context.world = world;
@@ -477,7 +476,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 	int shapeId = fastBody->headShapeId;
 	while ( shapeId != B2_NULL_INDEX )
 	{
-		b2Shape* fastShape = b2ShapeArray_Get( &world->shapes, shapeId );
+		b2Shape* fastShape = b2Array_Get( world->shapes,shapeId );
 		shapeId = fastShape->nextShapeId;
 
 		context.fastShape = fastShape;
@@ -524,7 +523,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 		fastBodySim->center0 = c;
 
 		// Update body move event
-		b2BodyMoveEvent* event = b2BodyMoveEventArray_Get( &world->bodyMoveEvents, bodySimIndex );
+		b2BodyMoveEvent* event = b2Array_Get( world->bodyMoveEvents,bodySimIndex );
 		event->transform = transform;
 
 		// Prepare AABBs for broad-phase.
@@ -533,7 +532,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 		shapeId = fastBody->headShapeId;
 		while ( shapeId != B2_NULL_INDEX )
 		{
-			b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+			b2Shape* shape = b2Array_Get( world->shapes,shapeId );
 
 			// Must recompute aabb at the interpolated transform
 			b2AABB aabb = b2ComputeShapeAABB( shape, transform );
@@ -572,7 +571,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 		shapeId = fastBody->headShapeId;
 		while ( shapeId != B2_NULL_INDEX )
 		{
-			b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+			b2Shape* shape = b2Array_Get( world->shapes,shapeId );
 
 			// shape->aabb is still valid from above
 
@@ -756,7 +755,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 		int shapeId = body->headShapeId;
 		while ( shapeId != B2_NULL_INDEX )
 		{
-			b2Shape* shape = b2ShapeArray_Get( &world->shapes, shapeId );
+			b2Shape* shape = b2Array_Get( world->shapes,shapeId );
 
 			if ( isFast )
 			{
@@ -1341,7 +1340,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	world->stepIndex += 1;
 
 	// Are there any awake bodies? This scenario should not be important for profiling.
-	b2SolverSet* awakeSet = b2SolverSetArray_Get( &world->solverSets, b2_awakeSet );
+	b2SolverSet* awakeSet = b2Array_Get( world->solverSets,b2_awakeSet );
 	int awakeBodyCount = awakeSet->bodySims.count;
 	if ( awakeBodyCount == 0 )
 	{
@@ -1385,7 +1384,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		}
 
 		// prepare for move events
-		b2BodyMoveEventArray_Resize( &world->bodyMoveEvents, awakeBodyCount );
+		b2Array_Resize( world->bodyMoveEvents,awakeBodyCount );
 
 		// 4 is a small power of two that allows for meaningful work stealing
 		const int blocksPerWorker = 4;
@@ -1727,7 +1726,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 						.userData = joint->userData,
 					};
 
-					b2JointEventArray_Push( &world->jointEvents, event );
+					b2Array_Push( world->jointEvents,event );
 
 					// Clear the smallest set bit
 					word = word & ( word - 1 );
@@ -1786,13 +1785,13 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				{
 					event.normal = contactSim->manifold.normal;
 
-					b2Shape* shapeA = b2ShapeArray_Get( &world->shapes, contactSim->shapeIdA );
-					b2Shape* shapeB = b2ShapeArray_Get( &world->shapes, contactSim->shapeIdB );
+					b2Shape* shapeA = b2Array_Get( world->shapes,contactSim->shapeIdA );
+					b2Shape* shapeB = b2Array_Get( world->shapes,contactSim->shapeIdB );
 
 					event.shapeIdA = (b2ShapeId){ shapeA->id + 1, world->worldId, shapeA->generation };
 					event.shapeIdB = (b2ShapeId){ shapeB->id + 1, world->worldId, shapeB->generation };
 
-					b2Contact* contact = b2ContactArray_Get( &world->contacts, contactSim->contactId );
+					b2Contact* contact = b2Array_Get( world->contacts,contactSim->contactId );
 
 					event.contactId = (b2ContactId){
 						.index1 = contact->contactId + 1,
@@ -1801,7 +1800,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 						.generation = contact->generation,
 					};
 
-					b2ContactHitEventArray_Push( &world->contactHitEvents, event );
+					b2Array_Push( world->contactHitEvents,event );
 				}
 			}
 		}
@@ -1996,15 +1995,15 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			for ( int j = 0; j < hitCount; ++j )
 			{
 				b2SensorHit hit = hits[j];
-				b2Shape* sensorShape = b2ShapeArray_Get( &world->shapes, hit.sensorId );
-				b2Shape* visitor = b2ShapeArray_Get( &world->shapes, hit.visitorId );
+				b2Shape* sensorShape = b2Array_Get( world->shapes,hit.sensorId );
+				b2Shape* visitor = b2Array_Get( world->shapes,hit.visitorId );
 
-				b2Sensor* sensor = b2SensorArray_Get( &world->sensors, sensorShape->sensorIndex );
+				b2Sensor* sensor = b2Array_Get( world->sensors,sensorShape->sensorIndex );
 				b2Visitor shapeRef = {
 					.shapeId = hit.visitorId,
 					.generation = visitor->generation,
 				};
-				b2VisitorArray_Push( &sensor->hits, shapeRef );
+				b2Array_Push( sensor->hits,shapeRef );
 			}
 		}
 

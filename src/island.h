@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include "array.h"
 #include "container.h"
 
 #include <stdbool.h>
@@ -76,11 +75,15 @@ typedef struct b2Island
 
 } b2Island;
 
+b2DeclareArray( b2Island );
+
 // This is used to move islands across solver sets
 typedef struct b2IslandSim
 {
 	int islandId;
 } b2IslandSim;
+
+b2DeclareArray( b2IslandSim );
 
 b2Island* b2CreateIsland( b2World* world, int setIndex );
 void b2DestroyIsland( b2World* world, int islandId );
@@ -102,4 +105,3 @@ void b2SplitIslandTask( void* context );
 
 void b2ValidateIsland( b2World* world, int islandId );
 
-B2_ARRAY_INLINE( b2IslandSim, b2IslandSim )

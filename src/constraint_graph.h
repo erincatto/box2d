@@ -3,17 +3,15 @@
 
 #pragma once
 
-#include "array.h"
 #include "bitset.h"
+#include "contact.h"
+#include "joint.h"
 #include "box2d/constants.h"
 
 #include "box2d/types.h"
 
 typedef struct b2Body b2Body;
-typedef struct b2ContactSim b2ContactSim;
 typedef struct b2Contact b2Contact;
-typedef struct b2JointSim b2JointSim;
-typedef struct b2Joint b2Joint;
 typedef struct b2StepContext b2StepContext;
 typedef struct b2World b2World;
 
@@ -38,8 +36,8 @@ typedef struct b2GraphColor
 	b2BitSet bodySet;
 
 	// cache friendly arrays
-	b2ContactSimArray contactSims;
-	b2JointSimArray jointSims;
+	b2ArrayC( b2ContactSim ) contactSims;
+	b2ArrayC( b2JointSim ) jointSims;
 
 	// transient
 	union

@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "array.h"
+#include "container.h"
 #include "core.h"
 
 #include "box2d/collision.h"
@@ -152,5 +152,5 @@ b2ContactSim* b2GetContactSim( b2World* world, b2Contact* contact );
 bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA, b2Transform transformA, b2Vec2 centerOffsetA,
 					  b2Shape* shapeB, b2Transform transformB, b2Vec2 centerOffsetB );
 
-B2_ARRAY_INLINE( b2Contact, b2Contact )
-B2_ARRAY_INLINE( b2ContactSim, b2ContactSim )
+b2DeclareArray( b2Contact );
+b2DeclareArray( b2ContactSim );

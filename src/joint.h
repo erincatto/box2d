@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
-#include "array.h"
+#include "container.h"
 #include "solver.h"
 
 #include "box2d/types.h"
@@ -320,6 +320,5 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 void b2DrawWeldJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale );
 void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale );
 
-// Define inline functions for arrays
-B2_ARRAY_INLINE( b2Joint, b2Joint )
-B2_ARRAY_INLINE( b2JointSim, b2JointSim )
+b2DeclareArray( b2Joint );
+b2DeclareArray( b2JointSim );

@@ -4,18 +4,24 @@
 #pragma once
 
 #include "arena_allocator.h"
-#include "array.h"
 #include "bitset.h"
 #include "broad_phase.h"
 #include "constraint_graph.h"
 #include "container.h"
 #include "id_pool.h"
+#include "sensor.h"
+#include "shape.h"
+#include "solver_set.h"
 
 #include "box2d/types.h"
 
-b2DeclareArray( b2Island );
-b2DeclareArray( b2SensorHit );
-b2DeclareArray( b2SensorTaskContext );
+b2DeclareArray( b2BodyMoveEvent );
+b2DeclareArray( b2ContactBeginTouchEvent );
+b2DeclareArray( b2ContactEndTouchEvent );
+b2DeclareArray( b2ContactHitEvent );
+b2DeclareArray( b2JointEvent );
+b2DeclareArray( b2SensorBeginTouchEvent );
+b2DeclareArray( b2SensorEndTouchEvent );
 b2DeclareArray( b2TaskContext );
 
 // Per thread task storage
@@ -59,7 +65,7 @@ typedef struct b2World
 	// This is a sparse array that maps body ids to the body data
 	// stored in solver sets. As sims move within a set or across set.
 	// Indices come from id pool.
-	b2BodyArray bodies;
+	b2ArrayC( b2Body ) bodies;
 
 	// Provides free list for solver sets.
 	b2IdPool solverSetIdPool;
@@ -67,21 +73,21 @@ typedef struct b2World
 	// Solvers sets allow sims to be stored in contiguous arrays. The first
 	// set is all static sims. The second set is active sims. The third set is disabled
 	// sims. The remaining sets are sleeping islands.
-	b2SolverSetArray solverSets;
+	b2ArrayC( b2SolverSet ) solverSets;
 
 	// Used to create stable ids for joints
 	b2IdPool jointIdPool;
 
 	// This is a sparse array that maps joint ids to the joint data stored in the constraint graph
 	// or in the solver sets.
-	b2JointArray joints;
+	b2ArrayC( b2Joint ) joints;
 
 	// Used to create stable ids for contacts
 	b2IdPool contactIdPool;
 
 	// This is a sparse array that maps contact ids to the contact data stored in the constraint graph
 	// or in the solver sets.
-	b2ContactArray contacts;
+	b2ArrayC( b2Contact ) contacts;
 
 	// Used to create stable ids for islands
 	b2IdPool islandIdPool;
@@ -93,27 +99,27 @@ typedef struct b2World
 	b2IdPool chainIdPool;
 
 	// These are sparse arrays that point into the pools above
-	b2ShapeArray shapes;
-	b2ChainShapeArray chainShapes;
+	b2ArrayC( b2Shape ) shapes;
+	b2ArrayC( b2ChainShape ) chainShapes;
 
 	// This is a dense array of sensor data.
-	b2SensorArray sensors;
+	b2ArrayC( b2Sensor ) sensors;
 
 	// Per thread storage
 	b2ArrayC( b2TaskContext ) taskContexts;
 	b2ArrayC( b2SensorTaskContext ) sensorTaskContexts;
 
-	b2BodyMoveEventArray bodyMoveEvents;
-	b2SensorBeginTouchEventArray sensorBeginEvents;
-	b2ContactBeginTouchEventArray contactBeginEvents;
+	b2ArrayC( b2BodyMoveEvent ) bodyMoveEvents;
+	b2ArrayC( b2SensorBeginTouchEvent ) sensorBeginEvents;
+	b2ArrayC( b2ContactBeginTouchEvent ) contactBeginEvents;
 
 	// End events are double buffered so that the user doesn't need to flush events
-	b2SensorEndTouchEventArray sensorEndEvents[2];
-	b2ContactEndTouchEventArray contactEndEvents[2];
+	b2ArrayC( b2SensorEndTouchEvent ) sensorEndEvents[2];
+	b2ArrayC( b2ContactEndTouchEvent ) contactEndEvents[2];
 	int endEventArrayIndex;
 
-	b2ContactHitEventArray contactHitEvents;
-	b2JointEventArray jointEvents;
+	b2ArrayC( b2ContactHitEvent ) contactHitEvents;
+	b2ArrayC( b2JointEvent ) jointEvents;
 
 	// todo consider deferred waking and impulses to make it possible
 	// to apply forces and impulses from multiple threads
@@ -202,11 +208,3 @@ b2World* b2GetWorldLocked( int index );
 void b2ValidateConnectivity( b2World* world );
 void b2ValidateSolverSets( b2World* world );
 void b2ValidateContacts( b2World* world );
-
-B2_ARRAY_INLINE( b2BodyMoveEvent, b2BodyMoveEvent )
-B2_ARRAY_INLINE( b2ContactBeginTouchEvent, b2ContactBeginTouchEvent )
-B2_ARRAY_INLINE( b2ContactEndTouchEvent, b2ContactEndTouchEvent )
-B2_ARRAY_INLINE( b2ContactHitEvent, b2ContactHitEvent )
-B2_ARRAY_INLINE( b2JointEvent, b2JointEvent )
-B2_ARRAY_INLINE( b2SensorBeginTouchEvent, b2SensorBeginTouchEvent )
-B2_ARRAY_INLINE( b2SensorEndTouchEvent, b2SensorEndTouchEvent )
