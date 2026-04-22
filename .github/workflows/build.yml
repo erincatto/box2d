@@ -92,6 +92,8 @@ jobs:
   build-windows-arm64:
     name: windows-arm64
     runs-on: windows-11-arm
+    timeout-minutes: 4
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
 
     - uses: actions/checkout@v4
