@@ -2218,6 +2218,7 @@ void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context, int worke
 	b2TaskContext* taskContext = world->taskContexts.data + workerIndex;
 	b2BitSet* hitEventBitSet = &taskContext->hitEventBitSet;
 	bool hasHitEvents = taskContext->hasHitEvents;
+	float negHitThreshold = -world->hitEventThreshold;
 
 	for ( int constraintIndex = block.startIndex; constraintIndex < block.startIndex + block.count; ++constraintIndex )
 	{
@@ -2256,11 +2257,21 @@ void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context, int worke
 			m->points[1].totalNormalImpulse = totalNormalImpulse2[laneIndex];
 			m->points[1].normalVelocity = normalVelocity2[laneIndex];
 
-			// Record hit-event candidates so the post-solve phase can skip cold contactSim scans.
+			// Check for hit events to speed up serial processing later in the step
 			if ( ( contactSim->simFlags & b2_simEnableHitEvent ) != 0 )
 			{
-				b2SetBit( hitEventBitSet, contactSim->contactId );
-				hasHitEvents = true;
+				for (int i = 0; i < contactSim->manifold.pointCount; ++i)
+				{
+					b2ManifoldPoint* mp = m->points + i;
+
+					// Need to check total impulse because the point may be speculative and not colliding
+					if ( mp->normalVelocity < negHitThreshold && mp->totalNormalImpulse > 0.0f )
+					{
+						b2SetBit( hitEventBitSet, contactSim->contactId );
+						hasHitEvents = true;
+						break;
+					}
+				}
 			}
 		}
 	}

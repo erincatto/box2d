@@ -697,7 +697,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 
 			const float safetyFactor = 0.5f;
 			float maxMotion = b2MaxFloat( maxDeltaPosition, maxVelocity * timeStep );
-			if ( body->type == b2_dynamicBody && enableContinuous && maxMotion * timeStep > safetyFactor * sim->minExtent )
+			if ( body->type == b2_dynamicBody && enableContinuous && maxMotion > safetyFactor * sim->minExtent )
 			{
 				// This flag is only retained for debug draw
 				sim->flags |= b2_isFast;
@@ -1741,7 +1741,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	}
 
 	// Report hit events
-	// todo_erin perhaps do this in parallel with other work below
 	{
 		b2TracyCZoneNC( hit_events, "Hit Events", b2_colorRosyBrown, true );
 		uint64_t hitTicks = b2GetTicks();
@@ -1765,7 +1764,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			b2BitSet* hitEventBitSet = &world->taskContexts.data[0].hitEventBitSet;
 			for ( int i = 1; i < world->workerCount; ++i )
 			{
-				b2InPlaceUnion( hitEventBitSet, &world->taskContexts.data[i].hitEventBitSet );
+				if ( world->taskContexts.data[i].hasHitEvents )
+				{
+					b2InPlaceUnion( hitEventBitSet, &world->taskContexts.data[i].hitEventBitSet );
+				}
 			}
 
 			float threshold = world->hitEventThreshold;
@@ -1804,6 +1806,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 						if ( approachSpeed > event.approachSpeed && mp->totalNormalImpulse > 0.0f )
 						{
 							event.approachSpeed = approachSpeed;
+							// Using the clip point here is somewhat questionable
 							event.point = mp->clipPoint;
 							hit = true;
 						}

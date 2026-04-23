@@ -2726,4 +2726,4 @@ public:
 	bool m_useRestitution;
 };
 
-static int sampleCircleImpulse = RegisterSample( "Stacking", "Circle Impulse", CircleImpulse::Create );
+static int sampleCircleImpulse = RegisterSample( "Events", "Circle Impulse", CircleImpulse::Create );
