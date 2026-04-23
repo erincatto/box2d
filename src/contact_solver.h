@@ -53,4 +53,4 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context );
 void b2WarmStartContactsTask( b2SolverBlock block, b2StepContext* context );
 void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context, bool useBias );
 void b2ApplyRestitutionTask( b2SolverBlock block, b2StepContext* context );
-void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context );
+void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context, int workerIndex );

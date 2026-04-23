@@ -33,6 +33,13 @@ typedef struct b2TaskContext
 	// These bits align with the contact id capacity and signal a change in contact status
 	b2BitSet contactStateBitSet;
 
+	// Bits indexed by contactId for contacts that have b2_simEnableHitEvent set.
+	// Populated by b2StoreImpulsesTask so the hit-event phase can skip cold scans.
+	b2BitSet hitEventBitSet;
+
+	// Fast-path flag: true when this worker set at least one bit in hitEventBitSet this step.
+	bool hasHitEvents;
+
 	// These bits align with the joint id capacity and signal a change in contact status
 	b2BitSet jointStateBitSet;
 

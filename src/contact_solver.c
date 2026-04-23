@@ -2206,7 +2206,7 @@ void b2ApplyRestitutionTask( b2SolverBlock block, b2StepContext* context )
 }
 
 // I tried adding this to the last relax iterations but it was slower.
-void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context )
+void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context, int workerIndex )
 {
 	b2TracyCZoneNC( store_impulses, "Store", b2_colorFireBrick, true );
 
@@ -2215,6 +2215,9 @@ void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context )
 	const b2ContactConstraintWide* constraints = color->wideConstraints;
 	b2ContactSim* contactSims = color->contactSims.data;
 	int colorContactCount = color->contactSims.count;
+	b2TaskContext* taskContext = world->taskContexts.data + workerIndex;
+	b2BitSet* hitEventBitSet = &taskContext->hitEventBitSet;
+	bool hasHitEvents = taskContext->hasHitEvents;
 
 	for ( int constraintIndex = block.startIndex; constraintIndex < block.startIndex + block.count; ++constraintIndex )
 	{
@@ -2239,7 +2242,8 @@ void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context )
 				break;
 			}
 
-			b2Manifold* m = &contactSims[contactIndex].manifold;
+			b2ContactSim* contactSim = contactSims + contactIndex;
+			b2Manifold* m = &contactSim->manifold;
 			m->rollingImpulse = rollingImpulse[laneIndex];
 
 			m->points[0].normalImpulse = normalImpulse1[laneIndex];
@@ -2251,8 +2255,17 @@ void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context )
 			m->points[1].tangentImpulse = tangentImpulse2[laneIndex];
 			m->points[1].totalNormalImpulse = totalNormalImpulse2[laneIndex];
 			m->points[1].normalVelocity = normalVelocity2[laneIndex];
+
+			// Record hit-event candidates so the post-solve phase can skip cold contactSim scans.
+			if ( ( contactSim->simFlags & b2_simEnableHitEvent ) != 0 )
+			{
+				b2SetBit( hitEventBitSet, contactSim->contactId );
+				hasHitEvents = true;
+			}
 		}
 	}
+
+	taskContext->hasHitEvents = hasHitEvents;
 
 	b2TracyCZoneEnd( store_impulses );
 }

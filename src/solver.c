@@ -953,7 +953,7 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 			break;
 
 		case b2_stageStoreImpulses:
-			b2StoreImpulsesTask( block, context );
+			b2StoreImpulsesTask( block, context, workerIndex );
 			break;
 	}
 }
@@ -1609,10 +1609,13 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		uint64_t constraintTicks = b2GetTicks();
 
 		int jointIdCapacity = b2GetIdCapacity( &world->jointIdPool );
+		int contactIdCapacity = b2GetIdCapacity( &world->contactIdPool );
 		for ( int i = 0; i < workerCount; ++i )
 		{
 			b2TaskContext* taskContext = b2Array_Get( world->taskContexts, i );
 			b2SetBitCountAndClear( &taskContext->jointStateBitSet, jointIdCapacity );
+			b2SetBitCountAndClear( &taskContext->hitEventBitSet, contactIdCapacity );
+			taskContext->hasHitEvents = false;
 
 			workerContext[i].context = stepContext;
 			workerContext[i].workerIndex = i;
@@ -1738,7 +1741,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	}
 
 	// Report hit events
-	// todo_erin perhaps optimize this with a bitset
 	// todo_erin perhaps do this in parallel with other work below
 	{
 		b2TracyCZoneNC( hit_events, "Hit Events", b2_colorRosyBrown, true );
@@ -1746,60 +1748,89 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		B2_ASSERT( world->contactHitEvents.count == 0 );
 
-		float threshold = world->hitEventThreshold;
-		b2GraphColor* colors = world->constraintGraph.colors;
-		for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
+		// Fast path: if no worker flagged any hit-event candidates during b2StoreImpulsesTask, skip entirely.
+		bool anyHitEvents = false;
+		for ( int i = 0; i < world->workerCount; ++i )
 		{
-			b2GraphColor* color = colors + i;
-			int contactCount = color->contactSims.count;
-			b2ContactSim* contactSims = color->contactSims.data;
-			for ( int j = 0; j < contactCount; ++j )
+			if ( world->taskContexts.data[i].hasHitEvents )
 			{
-				b2ContactSim* contactSim = contactSims + j;
-				if ( ( contactSim->simFlags & b2_simEnableHitEvent ) == 0 )
+				anyHitEvents = true;
+				break;
+			}
+		}
+
+		if ( anyHitEvents )
+		{
+			// Union per-worker bits into worker 0's bit set.
+			b2BitSet* hitEventBitSet = &world->taskContexts.data[0].hitEventBitSet;
+			for ( int i = 1; i < world->workerCount; ++i )
+			{
+				b2InPlaceUnion( hitEventBitSet, &world->taskContexts.data[i].hitEventBitSet );
+			}
+
+			float threshold = world->hitEventThreshold;
+			b2GraphColor* colors = world->constraintGraph.colors;
+			b2Contact* contactArray = world->contacts.data;
+			b2Shape* shapeArray = world->shapes.data;
+			uint16_t worldId = world->worldId;
+
+			uint32_t wordCount = hitEventBitSet->blockCount;
+			uint64_t* bits = hitEventBitSet->bits;
+			for ( uint32_t k = 0; k < wordCount; ++k )
+			{
+				uint64_t word = bits[k];
+				while ( word != 0 )
 				{
-					continue;
-				}
+					uint32_t ctz = b2CTZ64( word );
+					int contactId = (int)( 64 * k + ctz );
 
-				b2ContactHitEvent event = { 0 };
-				event.approachSpeed = threshold;
+					b2Contact* contact = contactArray + contactId;
+					B2_ASSERT( contact->setIndex == b2_awakeSet && contact->colorIndex != B2_NULL_INDEX );
 
-				bool hit = false;
-				int pointCount = contactSim->manifold.pointCount;
-				for ( int k = 0; k < pointCount; ++k )
-				{
-					b2ManifoldPoint* mp = contactSim->manifold.points + k;
-					float approachSpeed = -mp->normalVelocity;
+					b2GraphColor* color = colors + contact->colorIndex;
+					b2ContactSim* contactSim = color->contactSims.data + contact->localIndex;
 
-					// Need to check total impulse because the point may be speculative and not colliding
-					if ( approachSpeed > event.approachSpeed && mp->totalNormalImpulse > 0.0f )
+					b2ContactHitEvent event = { 0 };
+					event.approachSpeed = threshold;
+
+					bool hit = false;
+					int pointCount = contactSim->manifold.pointCount;
+					for ( int p = 0; p < pointCount; ++p )
 					{
-						event.approachSpeed = approachSpeed;
-						event.point = mp->clipPoint;
-						hit = true;
+						b2ManifoldPoint* mp = contactSim->manifold.points + p;
+						float approachSpeed = -mp->normalVelocity;
+
+						// Need to check total impulse because the point may be speculative and not colliding
+						if ( approachSpeed > event.approachSpeed && mp->totalNormalImpulse > 0.0f )
+						{
+							event.approachSpeed = approachSpeed;
+							event.point = mp->clipPoint;
+							hit = true;
+						}
 					}
-				}
 
-				if ( hit == true )
-				{
-					event.normal = contactSim->manifold.normal;
+					if ( hit == true )
+					{
+						event.normal = contactSim->manifold.normal;
 
-					b2Shape* shapeA = b2Array_Get( world->shapes, contactSim->shapeIdA );
-					b2Shape* shapeB = b2Array_Get( world->shapes, contactSim->shapeIdB );
+						b2Shape* shapeA = shapeArray + contactSim->shapeIdA;
+						b2Shape* shapeB = shapeArray + contactSim->shapeIdB;
 
-					event.shapeIdA = (b2ShapeId){ shapeA->id + 1, world->worldId, shapeA->generation };
-					event.shapeIdB = (b2ShapeId){ shapeB->id + 1, world->worldId, shapeB->generation };
+						event.shapeIdA = (b2ShapeId){ shapeA->id + 1, worldId, shapeA->generation };
+						event.shapeIdB = (b2ShapeId){ shapeB->id + 1, worldId, shapeB->generation };
 
-					b2Contact* contact = b2Array_Get( world->contacts, contactSim->contactId );
+						event.contactId = (b2ContactId){
+							.index1 = contact->contactId + 1,
+							.world0 = worldId,
+							.padding = 0,
+							.generation = contact->generation,
+						};
 
-					event.contactId = (b2ContactId){
-						.index1 = contact->contactId + 1,
-						.world0 = world->worldId,
-						.padding = 0,
-						.generation = contact->generation,
-					};
+						b2Array_Push( world->contactHitEvents, event );
+					}
 
-					b2Array_Push( world->contactHitEvents, event );
+					// Clear the smallest set bit
+					word = word & ( word - 1 );
 				}
 			}
 		}

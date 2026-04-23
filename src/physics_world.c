@@ -118,6 +118,8 @@ static void b2CreateWorkerContexts( b2World* world )
 	{
 		b2Array_CreateN(world->taskContexts.data[i].sensorHits, 8 );
 		world->taskContexts.data[i].contactStateBitSet = b2CreateBitSet( 1024 );
+		world->taskContexts.data[i].hitEventBitSet = b2CreateBitSet( 1024 );
+		world->taskContexts.data[i].hasHitEvents = false;
 		world->taskContexts.data[i].jointStateBitSet = b2CreateBitSet( 1024 );
 		world->taskContexts.data[i].enlargedSimBitSet = b2CreateBitSet( 256 );
 		world->taskContexts.data[i].awakeIslandBitSet = b2CreateBitSet( 256 );
@@ -133,6 +135,7 @@ static void b2DestroyWorkerContexts( b2World* world )
 	{
 		b2Array_Destroy(world->taskContexts.data[i].sensorHits);
 		b2DestroyBitSet( &world->taskContexts.data[i].contactStateBitSet );
+		b2DestroyBitSet( &world->taskContexts.data[i].hitEventBitSet );
 		b2DestroyBitSet( &world->taskContexts.data[i].jointStateBitSet );
 		b2DestroyBitSet( &world->taskContexts.data[i].enlargedSimBitSet );
 		b2DestroyBitSet( &world->taskContexts.data[i].awakeIslandBitSet );
