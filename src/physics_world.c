@@ -873,7 +873,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	context.maxLinearVelocity = world->maxLinearSpeed;
 	context.enableWarmStarting = world->enableWarmStarting;
 
-	// Update contacts
+	// Narrow phase : update contacts
 	{
 		uint64_t collideTicks = b2GetTicks();
 		b2Collide( &context );
@@ -912,6 +912,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	b2Array_Clear( world->sensorEndEvents[world->endEventArrayIndex] );
 	b2Array_Clear( world->contactEndEvents[world->endEventArrayIndex] );
 	world->locked = false;
+
 	b2TracyCFrame;
 }
 

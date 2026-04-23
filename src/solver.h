@@ -40,6 +40,8 @@
 // solver and C-blocks to the SIMD contact solver; both kinds run concurrently
 // within the stage -- no barrier between them. The type tag lives on the
 // block (not the stage) so that mixed-type stages can keep the concurrency.
+//
+// The solver threading model is inspired by https://github.com/bepu/bepuphysics2
 
 #pragma once
 
@@ -56,13 +58,8 @@ typedef struct b2ContactSim b2ContactSim;
 typedef struct b2JointSim b2JointSim;
 typedef struct b2World b2World;
 
-typedef struct b2Softness
-{
-	float biasRate;
-	float massScale;
-	float impulseScale;
-} b2Softness;
-
+// Solver stages. Prepare joints and prepare contacts are split up
+// because there is no need to store joint impulses.
 typedef enum b2SolverStageType
 {
 	b2_stagePrepareJoints,
@@ -105,6 +102,14 @@ typedef struct b2SolverStage
 	uint8_t colorIndex;
 	b2AtomicInt completionCount;
 } b2SolverStage;
+
+// Constraint softness
+typedef struct b2Softness
+{
+	float biasRate;
+	float massScale;
+	float impulseScale;
+} b2Softness;
 
 // Context for a time step. Recreated each time step.
 typedef struct b2StepContext
@@ -158,6 +163,10 @@ typedef struct b2StepContext
 	// padding to prevent false sharing
 	char padding1[64];
 
+	// This atomic is central to multi-threaded solver task synchronization.
+	// It prevents ABA problems by monotonically growing as the solver advances.
+	// This means a delayed worker thread will catch up without repeating already completed
+	// work (causing a race condition).
 	// sync index (16-bits) | stage type (16-bits)
 	b2AtomicU32 atomicSyncBits;
 

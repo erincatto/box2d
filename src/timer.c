@@ -4,7 +4,7 @@
 // Required on Linux to expose pthread_setname_np. Must be defined before any
 // system header is included.
 #if defined( __linux__ ) && !defined( _GNU_SOURCE )
-	#define _GNU_SOURCE
+#define _GNU_SOURCE
 #endif
 
 #include "core.h"
@@ -13,7 +13,6 @@
 
 #include <stddef.h>
 #include <stdio.h>
-#include <string.h>
 
 #if defined( _MSC_VER )
 

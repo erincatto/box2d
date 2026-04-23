@@ -341,51 +341,54 @@ void b2SolveContacts_Overflow( b2StepContext* context, bool useBias )
 			wB += iB * b2Cross( rB, P );
 		}
 
-		// Friction
-		for ( int j = 0; j < pointCount; ++j )
+		if (useBias == false)
 		{
-			b2ContactConstraintPoint* cp = constraint->points + j;
+			// Friction
+			for ( int j = 0; j < pointCount; ++j )
+			{
+				b2ContactConstraintPoint* cp = constraint->points + j;
 
-			// fixed anchor points
-			b2Vec2 rA = cp->anchorA;
-			b2Vec2 rB = cp->anchorB;
+				// fixed anchor points
+				b2Vec2 rA = cp->anchorA;
+				b2Vec2 rB = cp->anchorB;
 
-			// relative tangent velocity at contact
-			b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
-			b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
+				// relative tangent velocity at contact
+				b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
+				b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
 
-			// vt = dot(vrB - sB * tangent - (vrA + sA * tangent), tangent)
-			//    = dot(vrB - vrA, tangent) - (sA + sB)
+				// vt = dot(vrB - sB * tangent - (vrA + sA * tangent), tangent)
+				//    = dot(vrB - vrA, tangent) - (sA + sB)
 
-			float vt = b2Dot( b2Sub( vrB, vrA ), tangent ) - constraint->tangentSpeed;
+				float vt = b2Dot( b2Sub( vrB, vrA ), tangent ) - constraint->tangentSpeed;
 
-			// incremental tangent impulse
-			float impulse = cp->tangentMass * ( -vt );
+				// incremental tangent impulse
+				float impulse = cp->tangentMass * ( -vt );
 
-			// clamp the accumulated force
-			float maxFriction = friction * cp->normalImpulse;
-			float newImpulse = b2ClampFloat( cp->tangentImpulse + impulse, -maxFriction, maxFriction );
-			impulse = newImpulse - cp->tangentImpulse;
-			cp->tangentImpulse = newImpulse;
+				// clamp the accumulated force
+				float maxFriction = friction * cp->normalImpulse;
+				float newImpulse = b2ClampFloat( cp->tangentImpulse + impulse, -maxFriction, maxFriction );
+				impulse = newImpulse - cp->tangentImpulse;
+				cp->tangentImpulse = newImpulse;
 
-			// apply tangent impulse
-			b2Vec2 P = b2MulSV( impulse, tangent );
-			vA = b2MulSub( vA, mA, P );
-			wA -= iA * b2Cross( rA, P );
-			vB = b2MulAdd( vB, mB, P );
-			wB += iB * b2Cross( rB, P );
-		}
+				// apply tangent impulse
+				b2Vec2 P = b2MulSV( impulse, tangent );
+				vA = b2MulSub( vA, mA, P );
+				wA -= iA * b2Cross( rA, P );
+				vB = b2MulAdd( vB, mB, P );
+				wB += iB * b2Cross( rB, P );
+			}
 
-		// Rolling resistance
-		{
-			float deltaLambda = -constraint->rollingMass * ( wB - wA );
-			float lambda = constraint->rollingImpulse;
-			float maxLambda = constraint->rollingResistance * totalNormalImpulse;
-			constraint->rollingImpulse = b2ClampFloat( lambda + deltaLambda, -maxLambda, maxLambda );
-			deltaLambda = constraint->rollingImpulse - lambda;
+			// Rolling resistance
+			{
+				float deltaLambda = -constraint->rollingMass * ( wB - wA );
+				float lambda = constraint->rollingImpulse;
+				float maxLambda = constraint->rollingResistance * totalNormalImpulse;
+				constraint->rollingImpulse = b2ClampFloat( lambda + deltaLambda, -maxLambda, maxLambda );
+				deltaLambda = constraint->rollingImpulse - lambda;
 
-			wA -= iA * deltaLambda;
-			wB += iB * deltaLambda;
+				wA -= iA * deltaLambda;
+				wB += iB * deltaLambda;
+			}
 		}
 
 		if ( stateA->flags & b2_dynamicFlag )
@@ -1990,93 +1993,96 @@ void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context, bool useB
 			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
 		}
 
-		b2FloatW tangentX = c->normal.Y;
-		b2FloatW tangentY = b2SubW( b2ZeroW(), c->normal.X );
-
-		// point 1 friction constraint
+		if (useBias == false)
 		{
-			// fixed anchors for Jacobians
-			b2Vec2W rA = c->anchorA1;
-			b2Vec2W rB = c->anchorB1;
+			b2FloatW tangentX = c->normal.Y;
+			b2FloatW tangentY = b2SubW( b2ZeroW(), c->normal.X );
 
-			// Relative velocity at contact
-			b2FloatW dvx = b2SubW( b2SubW( bB.v.X, b2MulW( bB.w, rB.Y ) ), b2SubW( bA.v.X, b2MulW( bA.w, rA.Y ) ) );
-			b2FloatW dvy = b2SubW( b2AddW( bB.v.Y, b2MulW( bB.w, rB.X ) ), b2AddW( bA.v.Y, b2MulW( bA.w, rA.X ) ) );
-			b2FloatW vt = b2AddW( b2MulW( dvx, tangentX ), b2MulW( dvy, tangentY ) );
+			// point 1 friction constraint
+			{
+				// fixed anchors for Jacobians
+				b2Vec2W rA = c->anchorA1;
+				b2Vec2W rB = c->anchorB1;
 
-			// Tangent speed (conveyor belt)
-			vt = b2SubW( vt, c->tangentSpeed );
+				// Relative velocity at contact
+				b2FloatW dvx = b2SubW( b2SubW( bB.v.X, b2MulW( bB.w, rB.Y ) ), b2SubW( bA.v.X, b2MulW( bA.w, rA.Y ) ) );
+				b2FloatW dvy = b2SubW( b2AddW( bB.v.Y, b2MulW( bB.w, rB.X ) ), b2AddW( bA.v.Y, b2MulW( bA.w, rA.X ) ) );
+				b2FloatW vt = b2AddW( b2MulW( dvx, tangentX ), b2MulW( dvy, tangentY ) );
 
-			// Compute tangent force
-			b2FloatW negImpulse = b2MulW( c->tangentMass1, vt );
+				// Tangent speed (conveyor belt)
+				vt = b2SubW( vt, c->tangentSpeed );
 
-			// Clamp the accumulated force
-			b2FloatW maxFriction = b2MulW( c->friction, c->normalImpulse1 );
-			b2FloatW newImpulse = b2SubW( c->tangentImpulse1, negImpulse );
-			newImpulse = b2MaxW( b2SubW( b2ZeroW(), maxFriction ), b2MinW( newImpulse, maxFriction ) );
-			b2FloatW impulse = b2SubW( newImpulse, c->tangentImpulse1 );
-			c->tangentImpulse1 = newImpulse;
+				// Compute tangent force
+				b2FloatW negImpulse = b2MulW( c->tangentMass1, vt );
 
-			// Apply contact impulse
-			b2FloatW Px = b2MulW( impulse, tangentX );
-			b2FloatW Py = b2MulW( impulse, tangentY );
+				// Clamp the accumulated force
+				b2FloatW maxFriction = b2MulW( c->friction, c->normalImpulse1 );
+				b2FloatW newImpulse = b2SubW( c->tangentImpulse1, negImpulse );
+				newImpulse = b2MaxW( b2SubW( b2ZeroW(), maxFriction ), b2MinW( newImpulse, maxFriction ) );
+				b2FloatW impulse = b2SubW( newImpulse, c->tangentImpulse1 );
+				c->tangentImpulse1 = newImpulse;
 
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
-			bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
+				// Apply contact impulse
+				b2FloatW Px = b2MulW( impulse, tangentX );
+				b2FloatW Py = b2MulW( impulse, tangentY );
 
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
-			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
-		}
+				bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
+				bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
+				bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
 
-		// second point friction constraint
-		{
-			// fixed anchors for Jacobians
-			b2Vec2W rA = c->anchorA2;
-			b2Vec2W rB = c->anchorB2;
+				bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
+				bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
+				bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
+			}
 
-			// Relative velocity at contact
-			b2FloatW dvx = b2SubW( b2SubW( bB.v.X, b2MulW( bB.w, rB.Y ) ), b2SubW( bA.v.X, b2MulW( bA.w, rA.Y ) ) );
-			b2FloatW dvy = b2SubW( b2AddW( bB.v.Y, b2MulW( bB.w, rB.X ) ), b2AddW( bA.v.Y, b2MulW( bA.w, rA.X ) ) );
-			b2FloatW vt = b2AddW( b2MulW( dvx, tangentX ), b2MulW( dvy, tangentY ) );
+			// second point friction constraint
+			{
+				// fixed anchors for Jacobians
+				b2Vec2W rA = c->anchorA2;
+				b2Vec2W rB = c->anchorB2;
 
-			// Tangent speed (conveyor belt)
-			vt = b2SubW( vt, c->tangentSpeed );
+				// Relative velocity at contact
+				b2FloatW dvx = b2SubW( b2SubW( bB.v.X, b2MulW( bB.w, rB.Y ) ), b2SubW( bA.v.X, b2MulW( bA.w, rA.Y ) ) );
+				b2FloatW dvy = b2SubW( b2AddW( bB.v.Y, b2MulW( bB.w, rB.X ) ), b2AddW( bA.v.Y, b2MulW( bA.w, rA.X ) ) );
+				b2FloatW vt = b2AddW( b2MulW( dvx, tangentX ), b2MulW( dvy, tangentY ) );
 
-			// Compute tangent force
-			b2FloatW negImpulse = b2MulW( c->tangentMass2, vt );
+				// Tangent speed (conveyor belt)
+				vt = b2SubW( vt, c->tangentSpeed );
 
-			// Clamp the accumulated force
-			b2FloatW maxFriction = b2MulW( c->friction, c->normalImpulse2 );
-			b2FloatW newImpulse = b2SubW( c->tangentImpulse2, negImpulse );
-			newImpulse = b2MaxW( b2SubW( b2ZeroW(), maxFriction ), b2MinW( newImpulse, maxFriction ) );
-			b2FloatW impulse = b2SubW( newImpulse, c->tangentImpulse2 );
-			c->tangentImpulse2 = newImpulse;
+				// Compute tangent force
+				b2FloatW negImpulse = b2MulW( c->tangentMass2, vt );
 
-			// Apply contact impulse
-			b2FloatW Px = b2MulW( impulse, tangentX );
-			b2FloatW Py = b2MulW( impulse, tangentY );
+				// Clamp the accumulated force
+				b2FloatW maxFriction = b2MulW( c->friction, c->normalImpulse2 );
+				b2FloatW newImpulse = b2SubW( c->tangentImpulse2, negImpulse );
+				newImpulse = b2MaxW( b2SubW( b2ZeroW(), maxFriction ), b2MinW( newImpulse, maxFriction ) );
+				b2FloatW impulse = b2SubW( newImpulse, c->tangentImpulse2 );
+				c->tangentImpulse2 = newImpulse;
 
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
-			bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
+				// Apply contact impulse
+				b2FloatW Px = b2MulW( impulse, tangentX );
+				b2FloatW Py = b2MulW( impulse, tangentY );
 
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
-			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
-		}
+				bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
+				bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
+				bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
 
-		// Rolling resistance
-		{
-			b2FloatW deltaLambda = b2MulW( c->rollingMass, b2SubW( bA.w, bB.w ) );
-			b2FloatW lambda = c->rollingImpulse;
-			b2FloatW maxLambda = b2MulW( c->rollingResistance, totalNormalImpulse );
-			c->rollingImpulse = b2SymClampW( b2AddW( lambda, deltaLambda ), maxLambda );
-			deltaLambda = b2SubW( c->rollingImpulse, lambda );
+				bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
+				bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
+				bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
+			}
 
-			bA.w = b2MulSubW( bA.w, c->invIA, deltaLambda );
-			bB.w = b2MulAddW( bB.w, c->invIB, deltaLambda );
+			// Rolling resistance
+			{
+				b2FloatW deltaLambda = b2MulW( c->rollingMass, b2SubW( bA.w, bB.w ) );
+				b2FloatW lambda = c->rollingImpulse;
+				b2FloatW maxLambda = b2MulW( c->rollingResistance, totalNormalImpulse );
+				c->rollingImpulse = b2SymClampW( b2AddW( lambda, deltaLambda ), maxLambda );
+				deltaLambda = b2SubW( c->rollingImpulse, lambda );
+
+				bA.w = b2MulSubW( bA.w, c->invIA, deltaLambda );
+				bB.w = b2MulAddW( bB.w, c->invIB, deltaLambda );
+			}
 		}
 
 		b2ScatterBodies( states, c->indexA, &bA );
