@@ -81,6 +81,7 @@ int main( int argc, char** argv )
 		{ "spinner", CreateSpinner, StepSpinner, 500 },
 		{ "tumbler", CreateTumbler, NULL, 750 },
 		{ "washer", CreateWasher, NULL, 500 },
+		{ "compound_barrel", CreateCompoundBarrel, NULL, 500 },
 	};
 
 	int benchmarkCount = ARRAY_COUNT( benchmarks );
@@ -292,8 +293,16 @@ int main( int argc, char** argv )
 			}
 		}
 
-		printf( "body %d / shape %d / contact %d / joint %d / stack %d\n\n", counters.bodyCount, counters.shapeCount,
+		printf( "body %d / shape %d / contact %d / joint %d / stack %d\n", counters.bodyCount, counters.shapeCount,
 				counters.contactCount, counters.jointCount, counters.stackUsed );
+		printf( "graph: maxColor %d / maxBodyDegree %d / overflow contacts %d joints %d\n", counters.maxColorUsed,
+				counters.maxBodyDegree, counters.overflowContactCount, counters.overflowJointCount );
+		printf( "color counts:" );
+		for ( int c = 0; c < ARRAY_COUNT( counters.colorCounts ); ++c )
+		{
+			printf( " %d", counters.colorCounts[c] );
+		}
+		printf( "\n\n" );
 
 		char fileName[64] = { 0 };
 		snprintf( fileName, 64, "%s.csv", benchmarks[benchmarkIndex].name );

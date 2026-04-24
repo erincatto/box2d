@@ -791,3 +791,90 @@ float StepJunkyard( b2WorldId worldId, int stepCount )
 	b2Body_SetTargetTransform( g_junkyardData.pusherId, target, timeStep, true );
 	return 0.0f;
 }
+
+// Lifted from samples/sample_benchmark.cpp BenchmarkBarrel (e_compoundShape branch).
+// Each dynamic body is a compound of two triangular polygon shapes.
+void CreateCompoundBarrel( b2WorldId worldId )
+{
+	{
+		float gridSize = 1.0f;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+		float y = 0.0f;
+		float x = -40.0f * gridSize;
+		for ( int i = 0; i < 81; ++i )
+		{
+			b2Polygon box = b2MakeOffsetBox( 0.55f * gridSize, 0.5f * gridSize, (b2Vec2){ x, y }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			x += gridSize;
+		}
+
+		y = gridSize;
+		x = -40.0f * gridSize;
+		for ( int i = 0; i < 100; ++i )
+		{
+			b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.55f * gridSize, (b2Vec2){ x, y }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			y += gridSize;
+		}
+
+		y = gridSize;
+		x = 40.0f * gridSize;
+		for ( int i = 0; i < 100; ++i )
+		{
+			b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.55f * gridSize, (b2Vec2){ x, y }, b2Rot_identity );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+			y += gridSize;
+		}
+
+		b2Segment segment = { { -800.0f, -80.0f }, { 800.0f, -80.0f } };
+		b2CreateSegmentShape( groundId, &shapeDef, &segment );
+	}
+
+	int columnCount = BENCHMARK_DEBUG ? 10 : 20;
+	int rowCount = BENCHMARK_DEBUG ? 40 : 150;
+
+	b2Vec2 leftPoints[3] = { { -1.0f, 0.0f }, { 0.5f, 1.0f }, { 0.0f, 2.0f } };
+	b2Hull leftHull = b2ComputeHull( leftPoints, 3 );
+	b2Polygon left = b2MakePolygon( &leftHull, 0.0f );
+
+	b2Vec2 rightPoints[3] = { { 1.0f, 0.0f }, { -0.5f, 1.0f }, { 0.0f, 2.0f } };
+	b2Hull rightHull = b2ComputeHull( rightPoints, 3 );
+	b2Polygon right = b2MakePolygon( &rightHull, 0.0f );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	shapeDef.density = 1.0f;
+	shapeDef.material.friction = 0.5f;
+
+	// Match the sample exactly: centery is computed before shift is reset for the compound branch.
+	float shift = 2.0f;
+	float extray = 0.25f;
+	float side = 0.25f;
+	float centerx = shift * columnCount / 2.0f - 1.0f;
+	float centery = 1.15f / 2.0f;
+	float yStart = 100.0f;
+
+	for ( int i = 0; i < columnCount; ++i )
+	{
+		float x = i * shift - centerx;
+
+		for ( int j = 0; j < rowCount; ++j )
+		{
+			float y = j * ( shift + extray ) + centery + yStart;
+
+			bodyDef.position = (b2Vec2){ x + side, y };
+			side = -side;
+
+			b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &left );
+			b2CreatePolygonShape( bodyId, &shapeDef, &right );
+		}
+	}
+}

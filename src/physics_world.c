@@ -1787,10 +1787,83 @@ b2Counters b2World_GetCounters( b2WorldId worldId )
 	s.byteCount = b2GetByteCount();
 	s.taskCount = world->taskCount;
 
+	s.maxColorUsed = -1;
 	for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
 	{
-		s.colorCounts[i] = world->constraintGraph.colors[i].contactSims.count + world->constraintGraph.colors[i].jointSims.count;
+		b2GraphColor* color = world->constraintGraph.colors + i;
+		s.colorCounts[i] = color->contactSims.count + color->jointSims.count;
+		if ( s.colorCounts[i] > 0 )
+		{
+			s.maxColorUsed = i;
+		}
 	}
+
+	{
+		b2GraphColor* overflow = world->constraintGraph.colors + B2_OVERFLOW_INDEX;
+		s.overflowContactCount = overflow->contactSims.count;
+		s.overflowJointCount = overflow->jointSims.count;
+	}
+
+	// Walk awake-set contacts and joints to compute max per-body degree.
+	// Static bodies are excluded because they do not constrain coloring.
+	{
+		int bodyCount = world->bodies.count;
+		int* degree = b2Alloc( bodyCount * sizeof( int ) );
+		memset( degree, 0, bodyCount * sizeof( int ) );
+
+		int contactSlotCount = world->contacts.count;
+		for ( int i = 0; i < contactSlotCount; ++i )
+		{
+			b2Contact* contact = world->contacts.data + i;
+			if ( contact->colorIndex == B2_NULL_INDEX )
+			{
+				continue;
+			}
+			int idA = contact->edges[0].bodyId;
+			int idB = contact->edges[1].bodyId;
+			if ( 0 <= idA && idA < bodyCount && world->bodies.data[idA].type == b2_dynamicBody )
+			{
+				degree[idA] += 1;
+			}
+			if ( 0 <= idB && idB < bodyCount && world->bodies.data[idB].type == b2_dynamicBody )
+			{
+				degree[idB] += 1;
+			}
+		}
+
+		int jointSlotCount = world->joints.count;
+		for ( int i = 0; i < jointSlotCount; ++i )
+		{
+			b2Joint* joint = world->joints.data + i;
+			if ( joint->colorIndex == B2_NULL_INDEX )
+			{
+				continue;
+			}
+			int idA = joint->edges[0].bodyId;
+			int idB = joint->edges[1].bodyId;
+			if ( 0 <= idA && idA < bodyCount && world->bodies.data[idA].type == b2_dynamicBody )
+			{
+				degree[idA] += 1;
+			}
+			if ( 0 <= idB && idB < bodyCount && world->bodies.data[idB].type == b2_dynamicBody )
+			{
+				degree[idB] += 1;
+			}
+		}
+
+		int maxDegree = 0;
+		for ( int i = 0; i < bodyCount; ++i )
+		{
+			if ( degree[i] > maxDegree )
+			{
+				maxDegree = degree[i];
+			}
+		}
+		s.maxBodyDegree = maxDegree;
+
+		b2Free( degree, bodyCount * sizeof( int ) );
+	}
+
 	return s;
 }
 
