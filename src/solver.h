@@ -119,9 +119,9 @@ typedef struct b2Softness
 // whose wideStart == wideContactCount.
 typedef struct b2ContactPrepareSpan
 {
-	int wideStart;
-	int contactCount;
-	b2ContactSim* contactSims;
+	int start;
+	int count;
+	b2ContactSim* contacts;
 } b2ContactPrepareSpan;
 
 // Similar for joints
@@ -129,7 +129,7 @@ typedef struct b2JointPrepareSpan
 {
 	int start;
 	int count;
-	b2JointSim* jointSims;
+	b2JointSim* joints;
 } b2JointPrepareSpan;
 
 // Context for a time step. Recreated each time step.

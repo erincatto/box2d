@@ -21,7 +21,7 @@ void CreateJointGrid( b2WorldId worldId )
 {
 	b2World_EnableSleeping( worldId, false );
 
-	int N = BENCHMARK_DEBUG ? 10 : 100;
+	int N = BENCHMARK_DEBUG ? 20 : 100;
 
 	// Allocate to avoid huge stack usage
 	b2BodyId* bodies = malloc( N * N * sizeof( b2BodyId ) );

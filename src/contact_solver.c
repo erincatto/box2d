@@ -513,7 +513,7 @@ void b2ApplyRestitution_Overflow( b2StepContext* context )
 	b2TracyCZoneEnd( overflow_resitution );
 }
 
-void b2StoreOverflowImpulses( b2StepContext* context )
+void b2StoreImpulses_Overflow( b2StepContext* context )
 {
 	b2TracyCZoneNC( store_impulses, "Store", b2_colorFireBrick, true );
 
@@ -1593,18 +1593,20 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 
 	// Find color for start index. Linear search but fast.
 	int colorIndex = 0;
-	while ( spans[colorIndex + 1].wideStart <= wideIndex )
+	while ( spans[colorIndex + 1].start <= wideIndex )
 	{
 		colorIndex += 1;
 	}
 
+	// Loop over block
 	while ( wideIndex < endWideIndex )
 	{
-		int colorWideEndIndex = b2MinInt( spans[colorIndex + 1].wideStart, endWideIndex );
-		int colorWideStart = spans[colorIndex].wideStart;
-		int colorContactCount = spans[colorIndex].contactCount;
-		b2ContactSim* contactSims = spans[colorIndex].contactSims;
+		int colorWideStart = spans[colorIndex].start;
+		int colorWideEndIndex = b2MinInt( spans[colorIndex + 1].start, endWideIndex );
+		int colorContactCount = spans[colorIndex].count;
+		b2ContactSim* contactSims = spans[colorIndex].contacts;
 
+		// Loop over color
 		for ( ; wideIndex < colorWideEndIndex; ++wideIndex )
 		{
 			b2ContactConstraintWide* constraint = wideBase + wideIndex;
@@ -2243,17 +2245,17 @@ void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context, int worke
 
 	// Find color for start index
 	int colorIndex = 0;
-	while ( spans[colorIndex + 1].wideStart <= wideIndex )
+	while ( spans[colorIndex + 1].start <= wideIndex )
 	{
 		colorIndex += 1;
 	}
 
 	while ( wideIndex < endWideIndex )
 	{
-		int colorWideEndIndex = b2MinInt( spans[colorIndex + 1].wideStart, endWideIndex );
-		int colorWideStart = spans[colorIndex].wideStart;
-		int colorContactCount = spans[colorIndex].contactCount;
-		b2ContactSim* contactSims = spans[colorIndex].contactSims;
+		int colorWideEndIndex = b2MinInt( spans[colorIndex + 1].start, endWideIndex );
+		int colorWideStart = spans[colorIndex].start;
+		int colorContactCount = spans[colorIndex].count;
+		b2ContactSim* contactSims = spans[colorIndex].contacts;
 
 		for ( ; wideIndex < colorWideEndIndex; ++wideIndex )
 		{
