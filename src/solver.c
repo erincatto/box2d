@@ -990,13 +990,12 @@ static inline int GetWorkerStartIndex( int workerIndex, int blockCount, int work
 }
 
 // Execute a stage, which is an array of solver blocks, each controlled with an atomic sync index.
+// Each worker starts at its home index and sweeps the ring, CAS-claiming any unclaimed blocks.
 static void b2ExecuteStage( b2SolverStage* stage, b2StepContext* context, int previousSyncIndex, int syncIndex, int workerIndex )
 {
 	int completedCount = 0;
 	b2SolverBlock* blocks = stage->blocks;
 	int blockCount = stage->blockCount;
-
-	int expectedSyncIndex = previousSyncIndex;
 
 	int startIndex = GetWorkerStartIndex( workerIndex, blockCount, context->workerCount );
 	if ( startIndex == B2_NULL_INDEX )
@@ -1006,46 +1005,23 @@ static void b2ExecuteStage( b2SolverStage* stage, b2StepContext* context, int pr
 
 	B2_ASSERT( 0 <= startIndex && startIndex < blockCount );
 
-	// Loop forward until reaching a block that has already been executed.
 	int blockIndex = startIndex;
-	while ( b2AtomicCompareExchangeInt( &blocks[blockIndex].syncIndex, expectedSyncIndex, syncIndex ) == true )
+	for ( int i = 0; i < blockCount; ++i )
 	{
-		B2_ASSERT( stage->type != b2_stagePrepareContacts || syncIndex < 2 );
-		B2_ASSERT( completedCount < blockCount );
+		if ( b2AtomicCompareExchangeInt( &blocks[blockIndex].syncIndex, previousSyncIndex, syncIndex ) )
+		{
+			B2_ASSERT( stage->type != b2_stagePrepareContacts || syncIndex < 2 );
+			B2_ASSERT( completedCount < blockCount );
 
-		b2ExecuteBlock( stage, context, blocks[blockIndex], workerIndex );
+			b2ExecuteBlock( stage, context, blocks[blockIndex], workerIndex );
+			completedCount += 1;
+		}
 
-		completedCount += 1;
 		blockIndex += 1;
 		if ( blockIndex >= blockCount )
 		{
-			// Wrap to the start
 			blockIndex = 0;
 		}
-
-		expectedSyncIndex = previousSyncIndex;
-	}
-
-	// Loop backwards until reaching a block that has already been executed.
-	blockIndex = startIndex - 1;
-	while ( true )
-	{
-		if ( blockIndex < 0 )
-		{
-			// Wrap to the end
-			blockIndex = blockCount - 1;
-		}
-
-		expectedSyncIndex = previousSyncIndex;
-
-		if ( b2AtomicCompareExchangeInt( &blocks[blockIndex].syncIndex, expectedSyncIndex, syncIndex ) == false )
-		{
-			break;
-		}
-
-		b2ExecuteBlock( stage, context, blocks[blockIndex], workerIndex );
-		completedCount += 1;
-		blockIndex -= 1;
 	}
 
 	(void)b2AtomicFetchAddInt( &stage->completionCount, completedCount );
@@ -1408,7 +1384,11 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		const int maxBlockCount = BLOCKS_PER_WORKER * workerCount;
 
 		// Divide the block budget across active colors so total prepare/store blocks ~= blocksPerWorker * workerCount
-		int prepareMaxBlockCount = b2MaxInt( 1, (maxBlockCount + activeColorCount - 1) / activeColorCount );
+		int prepareMaxBlockCount = 1;
+		if (activeColorCount > 0)
+		{
+			prepareMaxBlockCount = b2MaxInt( 1, ( maxBlockCount + activeColorCount - 1 ) / activeColorCount );
+		}
 
 		// Body blocks are for parallel iteration over bodies directly (integration, update transforms)
 		int minBodiesPerBlock = 32;
