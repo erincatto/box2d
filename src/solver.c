@@ -1461,7 +1461,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// Build the span table for the flat prepare/store parallel-for while I slice the
 		// wide constraint buffer across colors. One entry per active color plus a sentinel
 		// at wideContactCount.
-		b2ContactPrepareSpan prepareSpans[B2_GRAPH_COLOR_COUNT + 1];
+		b2ContactPrepareSpan contactPrepareSpans[B2_GRAPH_COLOR_COUNT + 1];
 
 		// Distribute transient constraints to each graph color
 		{
@@ -1472,9 +1472,9 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				b2GraphColor* color = colors + j;
 
 				int colorContactCount = color->contactSims.count;
-				prepareSpans[i].wideStart = wideBase;
-				prepareSpans[i].contactCount = colorContactCount;
-				prepareSpans[i].contactSims = color->contactSims.data;
+				contactPrepareSpans[i].wideStart = wideBase;
+				contactPrepareSpans[i].contactCount = colorContactCount;
+				contactPrepareSpans[i].contactSims = color->contactSims.data;
 
 				if ( colorContactCount == 0 )
 				{
@@ -1503,9 +1503,9 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			}
 
 			// Sentinel
-			prepareSpans[activeColorCount].wideStart = wideContactCount;
-			prepareSpans[activeColorCount].contactCount = 0;
-			prepareSpans[activeColorCount].contactSims = NULL;
+			contactPrepareSpans[activeColorCount].wideStart = wideContactCount;
+			contactPrepareSpans[activeColorCount].contactCount = 0;
+			contactPrepareSpans[activeColorCount].contactSims = NULL;
 
 			B2_ASSERT( wideBase == wideContactCount );
 		}
@@ -1627,7 +1627,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stepContext->stageCount = stageCount;
 		stepContext->stages = stages;
 		stepContext->wideContactConstraints = wideContactConstraints;
-		stepContext->prepareSpans = prepareSpans;
+		stepContext->contactPrepareSpans = contactPrepareSpans;
 		stepContext->wideContactCount = wideContactCount;
 		b2AtomicStoreU32( &stepContext->atomicSyncBits, 0 );
 

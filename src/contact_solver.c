@@ -1578,7 +1578,7 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 #if B2_ENABLE_VALIDATION
 	b2Body* bodies = world->bodies.data;
 #endif
-	b2ContactPrepareSpan* spans = context->prepareSpans;
+	b2ContactPrepareSpan* spans = context->contactPrepareSpans;
 	b2ContactConstraintWide* wideBase = context->wideContactConstraints;
 
 	// Stiffer for static contacts to avoid bodies getting pushed through the ground
@@ -2231,7 +2231,7 @@ void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context, int worke
 	b2TracyCZoneNC( store_impulses, "Store", b2_colorFireBrick, true );
 
 	b2World* world = context->world;
-	const b2ContactPrepareSpan* spans = context->prepareSpans;
+	const b2ContactPrepareSpan* spans = context->contactPrepareSpans;
 	const b2ContactConstraintWide* wideBase = context->wideContactConstraints;
 	b2TaskContext* taskContext = world->taskContexts.data + workerIndex;
 	b2BitSet* hitEventBitSet = &taskContext->hitEventBitSet;

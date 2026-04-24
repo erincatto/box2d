@@ -124,6 +124,14 @@ typedef struct b2ContactPrepareSpan
 	b2ContactSim* contactSims;
 } b2ContactPrepareSpan;
 
+// Similar for joints
+typedef struct b2JointPrepareSpan
+{
+	int start;
+	int count;
+	b2JointSim* jointSims;
+} b2JointPrepareSpan;
+
 // Context for a time step. Recreated each time step.
 typedef struct b2StepContext
 {
@@ -171,8 +179,11 @@ typedef struct b2StepContext
 	// at wideContactCount. wideContactConstraints is the contiguous base
 	// pointer; per-color slices live at colors[i].wideConstraints.
 	b2ContactConstraintWide* wideContactConstraints;
-	b2ContactPrepareSpan* prepareSpans;
+	b2ContactPrepareSpan* contactPrepareSpans;
 	int wideContactCount;
+	
+	b2JointPrepareSpan* jointPrepareSpans;
+	int jointCount;
 
 	int activeColorCount;
 	int workerCount;
