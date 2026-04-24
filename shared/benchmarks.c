@@ -664,6 +664,7 @@ void CreateWasher( b2WorldId worldId )
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_dynamicBody;
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	shapeDef.enableHitEvents = true;
 
 	float y = -1.1f * a * gridCount + 10.0f;
 	for ( int i = 0; i < gridCount; ++i )

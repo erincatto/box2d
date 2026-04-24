@@ -465,6 +465,14 @@ public:
 		CreateWasher( m_worldId );
 	}
 
+	void Step() override
+	{
+		Sample::Step();
+
+		b2ContactEvents events = b2World_GetContactEvents( m_worldId );
+		DrawTextLine( "hits = %d", events.hitCount );
+	}
+
 	static Sample* Create( SampleContext* context )
 	{
 		return new BenchmarkWasher( context );
