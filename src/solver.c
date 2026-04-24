@@ -1366,7 +1366,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stepContext->states = awakeSet->bodyStates.data;
 
 		// count contacts, joints, and colors
-		int awakeJointCount = 0;
 		int activeColorCount = 0;
 		for ( int i = 0; i < B2_GRAPH_COLOR_COUNT - 1; ++i )
 		{
@@ -1374,7 +1373,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			int perColorJointCount = colors[i].jointSims.count;
 			int occupancyCount = perColorContactCount + perColorJointCount;
 			activeColorCount += occupancyCount > 0 ? 1 : 0;
-			awakeJointCount += perColorJointCount;
 		}
 
 		// prepare for move events
@@ -1384,9 +1382,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		int workerCount = world->workerCount;
 		const int maxBlockCount = BLOCKS_PER_WORKER * workerCount;
 
-		// Joints still partition per-color for prepare because the prepare joint
-		// task reads color->jointSims directly. Divide the block budget across
-		// active colors so joint prepare blocks ~= blocksPerWorker * workerCount.
+		// todo convert to span
 		int jointPrepareMaxBlockCount = 1;
 		if (activeColorCount > 0)
 		{
@@ -1462,10 +1458,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		graph->colors[B2_OVERFLOW_INDEX].overflowConstraints = overflowContactConstraints;
 
-		// Build the span table for the flat prepare/store parallel-for while
-		// we slice the wide constraint buffer across colors. One entry per
-		// active color plus a sentinel at wideContactCount.
-		b2PrepareSpan prepareSpans[B2_GRAPH_COLOR_COUNT + 1];
+		// Build the span table for the flat prepare/store parallel-for while I slice the
+		// wide constraint buffer across colors. One entry per active color plus a sentinel
+		// at wideContactCount.
+		b2ContactPrepareSpan prepareSpans[B2_GRAPH_COLOR_COUNT + 1];
 
 		// Distribute transient constraints to each graph color
 		{
@@ -1506,6 +1502,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				}
 			}
 
+			// Sentinel
 			prepareSpans[activeColorCount].wideStart = wideContactCount;
 			prepareSpans[activeColorCount].contactCount = 0;
 			prepareSpans[activeColorCount].contactSims = NULL;

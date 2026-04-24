@@ -1569,7 +1569,7 @@ static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT i
 // Runs as a flat parallel-for over the whole wide constraint range. Per-color contact sims
 // are looked up through the prepareSpans cursor rather than the block's colorIndex, so
 // blocks can be uniformly sized without honoring color boundaries. Dead lanes in each
-// color's tail wide slot are zeroed once during step setup (see b2Solve), not here.
+// color's tail wide slot were all zeroed in solver setup.
 void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 {
 	b2TracyCZoneNC( prepare_contact, "Prepare Contact", b2_colorYellow, true );
@@ -1578,7 +1578,7 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 #if B2_ENABLE_VALIDATION
 	b2Body* bodies = world->bodies.data;
 #endif
-	const b2PrepareSpan* spans = context->prepareSpans;
+	b2ContactPrepareSpan* spans = context->prepareSpans;
 	b2ContactConstraintWide* wideBase = context->wideContactConstraints;
 
 	// Stiffer for static contacts to avoid bodies getting pushed through the ground
@@ -1588,33 +1588,34 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 
 	float warmStartScale = world->enableWarmStarting ? 1.0f : 0.0f;
 
-	int i = block.startIndex;
-	int end = block.startIndex + block.count;
+	int wideIndex = block.startIndex;
+	int endWideIndex = block.startIndex + block.count;
 
-	int c = 0;
-	while ( spans[c + 1].wideStart <= i )
+	// Find color for start index. Linear search but fast.
+	int colorIndex = 0;
+	while ( spans[colorIndex + 1].wideStart <= wideIndex )
 	{
-		c += 1;
+		colorIndex += 1;
 	}
 
-	while ( i < end )
+	while ( wideIndex < endWideIndex )
 	{
-		int spanEnd = spans[c + 1].wideStart < end ? spans[c + 1].wideStart : end;
-		int wideBaseOff = spans[c].wideStart;
-		int colorContactCount = spans[c].contactCount;
-		b2ContactSim* contactSims = spans[c].contactSims;
+		int colorWideEndIndex = b2MinInt( spans[colorIndex + 1].wideStart, endWideIndex );
+		int colorWideStart = spans[colorIndex].wideStart;
+		int colorContactCount = spans[colorIndex].contactCount;
+		b2ContactSim* contactSims = spans[colorIndex].contactSims;
 
-		for ( ; i < spanEnd; ++i )
+		for ( ; wideIndex < colorWideEndIndex; ++wideIndex )
 		{
-			b2ContactConstraintWide* constraint = wideBase + i;
-			int localWide = i - wideBaseOff;
+			b2ContactConstraintWide* constraint = wideBase + wideIndex;
+			int localWideIndex = wideIndex - colorWideStart;
 
 			for ( int j = 0; j < B2_SIMD_WIDTH; ++j )
 			{
-				int contactIndex = B2_SIMD_WIDTH * localWide + j;
+				int contactIndex = B2_SIMD_WIDTH * localWideIndex + j;
 				if ( contactIndex >= colorContactCount )
 				{
-					// Remainder lanes were zeroed at step setup.
+					// Remainder lanes were zeroed in solver setup.
 					break;
 				}
 
@@ -1793,7 +1794,9 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 				}
 			}
 		}
-		c += 1;
+
+		// Advance to next color
+		colorIndex += 1;
 	}
 
 	b2TracyCZoneEnd( prepare_contact );
@@ -2228,32 +2231,33 @@ void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context, int worke
 	b2TracyCZoneNC( store_impulses, "Store", b2_colorFireBrick, true );
 
 	b2World* world = context->world;
-	const b2PrepareSpan* spans = context->prepareSpans;
+	const b2ContactPrepareSpan* spans = context->prepareSpans;
 	const b2ContactConstraintWide* wideBase = context->wideContactConstraints;
 	b2TaskContext* taskContext = world->taskContexts.data + workerIndex;
 	b2BitSet* hitEventBitSet = &taskContext->hitEventBitSet;
 	bool hasHitEvents = taskContext->hasHitEvents;
 	float negHitThreshold = -world->hitEventThreshold;
 
-	int i = block.startIndex;
-	int end = block.startIndex + block.count;
+	int wideIndex = block.startIndex;
+	int endWideIndex = block.startIndex + block.count;
 
-	int ci = 0;
-	while ( spans[ci + 1].wideStart <= i )
+	// Find color for start index
+	int colorIndex = 0;
+	while ( spans[colorIndex + 1].wideStart <= wideIndex )
 	{
-		ci += 1;
+		colorIndex += 1;
 	}
 
-	while ( i < end )
+	while ( wideIndex < endWideIndex )
 	{
-		int spanEnd = spans[ci + 1].wideStart < end ? spans[ci + 1].wideStart : end;
-		int wideBaseOff = spans[ci].wideStart;
-		int colorContactCount = spans[ci].contactCount;
-		b2ContactSim* contactSims = spans[ci].contactSims;
+		int colorWideEndIndex = b2MinInt( spans[colorIndex + 1].wideStart, endWideIndex );
+		int colorWideStart = spans[colorIndex].wideStart;
+		int colorContactCount = spans[colorIndex].contactCount;
+		b2ContactSim* contactSims = spans[colorIndex].contactSims;
 
-		for ( ; i < spanEnd; ++i )
+		for ( ; wideIndex < colorWideEndIndex; ++wideIndex )
 		{
-			const b2ContactConstraintWide* c = wideBase + i;
+			const b2ContactConstraintWide* c = wideBase + wideIndex;
 			const float* rollingImpulse = (float*)&c->rollingImpulse;
 			const float* normalImpulse1 = (float*)&c->normalImpulse1;
 			const float* normalImpulse2 = (float*)&c->normalImpulse2;
@@ -2264,8 +2268,8 @@ void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context, int worke
 			const float* normalVelocity1 = (float*)&c->relativeVelocity1;
 			const float* normalVelocity2 = (float*)&c->relativeVelocity2;
 
-			int localWide = i - wideBaseOff;
-			int baseIndex = B2_SIMD_WIDTH * localWide;
+			int localWideIndex = wideIndex - colorWideStart;
+			int baseIndex = B2_SIMD_WIDTH * localWideIndex;
 
 			for ( int laneIndex = 0; laneIndex < B2_SIMD_WIDTH; ++laneIndex )
 			{
@@ -2307,7 +2311,9 @@ void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context, int worke
 				}
 			}
 		}
-		ci += 1;
+
+		// Advance to next color
+		colorIndex += 1;
 	}
 
 	taskContext->hasHitEvents = hasHitEvents;
