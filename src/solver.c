@@ -22,6 +22,7 @@
 #include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <string.h>
 
 // these are useful for solver testing
 #define ITERATIONS 1
@@ -1383,27 +1384,30 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		int workerCount = world->workerCount;
 		const int maxBlockCount = BLOCKS_PER_WORKER * workerCount;
 
-		// Divide the block budget across active colors so total prepare/store blocks ~= blocksPerWorker * workerCount
-		int prepareMaxBlockCount = 1;
+		// Joints still partition per-color for prepare because the prepare joint
+		// task reads color->jointSims directly. Divide the block budget across
+		// active colors so joint prepare blocks ~= blocksPerWorker * workerCount.
+		int jointPrepareMaxBlockCount = 1;
 		if (activeColorCount > 0)
 		{
-			prepareMaxBlockCount = b2MaxInt( 1, ( maxBlockCount + activeColorCount - 1 ) / activeColorCount );
+			jointPrepareMaxBlockCount = b2MaxInt( 1, ( maxBlockCount + activeColorCount - 1 ) / activeColorCount );
 		}
 
 		// Body blocks are for parallel iteration over bodies directly (integration, update transforms)
 		int minBodiesPerBlock = 32;
 		b2BlockDim bodyDim = b2ComputeBlockCount( awakeBodyCount, minBodiesPerBlock, maxBlockCount );
 
+		const int minContactsPerBlock = 4;
+		const int minJointsPerBlock = 4;
+
 		// Configure blocks for tasks parallel-for each active graph color
 		// The blocks are a mix of wide contact blocks and joint blocks
 		int activeColorIndices[B2_GRAPH_COLOR_COUNT];
 		int colorContactCounts[B2_GRAPH_COLOR_COUNT];
 		int colorJointCounts[B2_GRAPH_COLOR_COUNT];
-		b2BlockDim contactDims[B2_GRAPH_COLOR_COUNT];
 		b2BlockDim jointDims[B2_GRAPH_COLOR_COUNT];
 		b2BlockDim graphContactDims[B2_GRAPH_COLOR_COUNT];
 		b2BlockDim graphJointDims[B2_GRAPH_COLOR_COUNT];
-		int contactBlockCount = 0;
 		int jointBlockCount = 0;
 		int graphBlockCount = 0;
 
@@ -1428,15 +1432,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			colorContactCounts[c] = colorContactCountW;
 			colorJointCounts[c] = colorJointCount;
 
-			int minContactsPerBlock = 4;
-			int minJointsPerBlock = 4;
-
-			// Blocks for prepare/store
-			contactDims[c] = b2ComputeBlockCount( colorContactCountW, minContactsPerBlock, prepareMaxBlockCount );
-			contactBlockCount += contactDims[c].count;
-
-			// Blocks for prepare
-			jointDims[c] = b2ComputeBlockCount( colorJointCount, minJointsPerBlock, prepareMaxBlockCount );
+			// Blocks for prepare joints (per-color: joint prepare reads color->jointSims)
+			jointDims[c] = b2ComputeBlockCount( colorJointCount, minJointsPerBlock, jointPrepareMaxBlockCount );
 			jointBlockCount += jointDims[c].count;
 
 			// Blocks for solve
@@ -1448,6 +1445,13 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		}
 		activeColorCount = c;
 
+		// Prepare and store run as one flat parallel-for over the entire wide
+		// constraint range, partitioned into uniformly sized blocks. Color info
+		// is consulted inside the task via a small span array, so blocks do not
+		// need to honor color boundaries here.
+		b2BlockDim prepareDim = b2ComputeBlockCount( wideContactCount, minContactsPerBlock, maxBlockCount );
+		int contactBlockCount = prepareDim.count;
+
 		int wideContactConstraintByteCount = b2GetWideContactConstraintByteCount();
 		struct b2ContactConstraintWide* wideContactConstraints =
 			b2StackAlloc( &world->stack, wideContactCount * wideContactConstraintByteCount, "contact constraint" );
@@ -1458,6 +1462,11 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		graph->colors[B2_OVERFLOW_INDEX].overflowConstraints = overflowContactConstraints;
 
+		// Build the span table for the flat prepare/store parallel-for while
+		// we slice the wide constraint buffer across colors. One entry per
+		// active color plus a sentinel at wideContactCount.
+		b2PrepareSpan prepareSpans[B2_GRAPH_COLOR_COUNT + 1];
+
 		// Distribute transient constraints to each graph color
 		{
 			int wideBase = 0;
@@ -1467,6 +1476,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				b2GraphColor* color = colors + j;
 
 				int colorContactCount = color->contactSims.count;
+				prepareSpans[i].wideStart = wideBase;
+				prepareSpans[i].contactCount = colorContactCount;
+				prepareSpans[i].contactSims = color->contactSims.data;
+
 				if ( colorContactCount == 0 )
 				{
 					color->wideConstraints = NULL;
@@ -1479,9 +1492,23 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 					int colorContactCountW = ( ( colorContactCount - 1 ) >> B2_SIMD_SHIFT ) + 1;
 					color->wideConstraintCount = colorContactCountW;
+
+					// Zero dead lanes in the tail wide slot so prepare workers never
+					// race to initialize them. Done once here; the prepare task no
+					// longer knows about per-color tails.
+					if ( ( colorContactCount & ( B2_SIMD_WIDTH - 1 ) ) != 0 )
+					{
+						memset( (uint8_t*)color->wideConstraints + ( colorContactCountW - 1 ) * wideContactConstraintByteCount,
+								0, wideContactConstraintByteCount );
+					}
+
 					wideBase += colorContactCountW;
 				}
 			}
+
+			prepareSpans[activeColorCount].wideStart = wideContactCount;
+			prepareSpans[activeColorCount].contactCount = 0;
+			prepareSpans[activeColorCount].contactSims = NULL;
 
 			B2_ASSERT( wideBase == wideContactCount );
 		}
@@ -1538,22 +1565,21 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// Prepare body blocks
 		b2InitBlocks( bodyBlocks, bodyDim, awakeBodyCount, b2_bodyBlock, UINT8_MAX );
 
-		// Prepare contact and joint work blocks per-color. These blocks are contiguous and work with a holistic
-		// parallel-for because prepare and store do not affect body state.
+		// Prepare contact blocks as a single flat parallel-for over the whole
+		// wide constraint range. The task walks prepareSpans to decode flat
+		// wide-slot indices back to per-color contact sims. Joint prepare
+		// blocks stay per-color because the joint prepare task still reads
+		// color->jointSims directly.
+		b2InitBlocks( contactBlocks, prepareDim, wideContactCount, b2_contactBlock, UINT8_MAX );
 		{
-			b2SolverBlock* baseContactBlock = contactBlocks;
 			b2SolverBlock* baseJointBlock = jointBlocks;
 			for ( int i = 0; i < activeColorCount; ++i )
 			{
 				uint8_t colorIndex = (uint8_t)activeColorIndices[i];
 
-				b2InitBlocks( baseContactBlock, contactDims[i], colorContactCounts[i], b2_contactBlock, colorIndex );
-				baseContactBlock += contactDims[i].count;
-
 				b2InitBlocks( baseJointBlock, jointDims[i], colorJointCounts[i], b2_jointBlock, colorIndex );
 				baseJointBlock += jointDims[i].count;
 			}
-			B2_ASSERT( (ptrdiff_t)( baseContactBlock - contactBlocks ) == contactBlockCount );
 			B2_ASSERT( (ptrdiff_t)( baseJointBlock - jointBlocks ) == jointBlockCount );
 		}
 
@@ -1603,6 +1629,9 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stepContext->workerCount = workerCount;
 		stepContext->stageCount = stageCount;
 		stepContext->stages = stages;
+		stepContext->wideContactConstraints = wideContactConstraints;
+		stepContext->prepareSpans = prepareSpans;
+		stepContext->wideContactCount = wideContactCount;
 		b2AtomicStoreU32( &stepContext->atomicSyncBits, 0 );
 
 		world->profile.prepareStages = b2GetMillisecondsAndReset( &setupTicks );

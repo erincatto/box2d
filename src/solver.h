@@ -55,6 +55,7 @@
 typedef struct b2BodySim b2BodySim;
 typedef struct b2BodyState b2BodyState;
 typedef struct b2ContactSim b2ContactSim;
+typedef struct b2ContactConstraintWide b2ContactConstraintWide;
 typedef struct b2JointSim b2JointSim;
 typedef struct b2World b2World;
 
@@ -111,6 +112,18 @@ typedef struct b2Softness
 	float impulseScale;
 } b2Softness;
 
+// Prepare/store run as a flat parallel-for over the whole wide-constraint
+// range. Each span maps a slice of that range back to the owning color's
+// contact sims so workers can decode flat wide-slot indices without touching
+// graph state. The spans array has one entry per active color plus a sentinel
+// whose wideStart == wideContactCount.
+typedef struct b2PrepareSpan
+{
+	int wideStart;
+	int contactCount;
+	b2ContactSim* contactSims;
+} b2PrepareSpan;
+
 // Context for a time step. Recreated each time step.
 typedef struct b2StepContext
 {
@@ -152,6 +165,14 @@ typedef struct b2StepContext
 	// contact pointers for simplified parallel-for access.
 	// - parallel-for collide with no gaps, includes touching and non-touching
 	b2ContactSim** contactSims;
+
+	// Flat view of the wide contact constraint array used by prepare and store.
+	// prepareSpans has activeColorCount + 1 entries, the last being a sentinel
+	// at wideContactCount. wideContactConstraints is the contiguous base
+	// pointer; per-color slices live at colors[i].wideConstraints.
+	b2ContactConstraintWide* wideContactConstraints;
+	b2PrepareSpan* prepareSpans;
+	int wideContactCount;
 
 	int activeColorCount;
 	int workerCount;
