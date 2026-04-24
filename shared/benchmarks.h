@@ -25,6 +25,7 @@ void CreateTumbler( b2WorldId worldId );
 void CreateWasher( b2WorldId worldId );
 void CreateJunkyard( b2WorldId worldId );
 float StepJunkyard( b2WorldId worldId, int stepCount );
+void CreateCompoundBarrel( b2WorldId worldId );
 
 #ifdef __cplusplus
 }

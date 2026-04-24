@@ -520,6 +520,12 @@ typedef struct b2Counters
 	int byteCount;
 	int taskCount;
 	int colorCounts[24];
+
+	// Constraint graph telemetry
+	int maxColorUsed;
+	int overflowContactCount;
+	int overflowJointCount;
+	int maxBodyDegree;
 } b2Counters;
 //! @endcond
 
