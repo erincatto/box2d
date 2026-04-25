@@ -93,11 +93,13 @@
 	#define b2TracyCZoneNC( ctx, name, color, active ) TracyCZoneNC( ctx, name, color, active )
 	#define b2TracyCZoneEnd( ctx ) TracyCZoneEnd( ctx )
 	#define b2TracyCFrame TracyCFrameMark
+	#define b2TracyCSetThreadName( name ) TracyCSetThreadName( name )
 #else
 	#define b2TracyCZoneC( ctx, color, active )
 	#define b2TracyCZoneNC( ctx, name, color, active )
 	#define b2TracyCZoneEnd( ctx )
 	#define b2TracyCFrame
+	#define b2TracyCSetThreadName( name )
 #endif
 
 // clang-format on

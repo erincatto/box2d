@@ -69,6 +69,7 @@ int main( int argc, char** argv )
 {
 #ifdef TRACY_ENABLE
 	___tracy_startup_profiler();
+	TracyCSetThreadName( "main" );
 #endif
 
 	Benchmark benchmarks[] = {

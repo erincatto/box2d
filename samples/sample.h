@@ -102,7 +102,6 @@ public:
 	uint64_t m_profileReadIndex;
 	uint64_t m_profileWriteIndex;
 
-	b2Profile m_maxProfile;
 	b2Profile m_totalProfile;
 
 	bool m_didStep;

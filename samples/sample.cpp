@@ -258,7 +258,6 @@ Sample::Sample( SampleContext* context )
 	m_profileReadIndex = 0;
 	m_profileWriteIndex = 0;
 
-	m_maxProfile = {};
 	m_totalProfile = {};
 
 	g_randomSeed = RAND_SEED;
@@ -445,7 +444,6 @@ void Sample::DrawTextLine( const char* text, ... )
 void Sample::ResetProfile()
 {
 	m_totalProfile = {};
-	m_maxProfile = {};
 	m_stepCount = 0;
 }
 
@@ -554,33 +552,10 @@ void Sample::Step()
 		DrawTextLine( "total allocation = %d K", s.byteCount / 1024 );
 	}
 
-	// Track maximum profile times
+	// Accumulate profile averages
 	if ( m_didStep )
 	{
 		b2Profile p = m_profiles[m_currentProfileIndex];
-		m_maxProfile.step = b2MaxFloat( m_maxProfile.step, p.step );
-		m_maxProfile.pairs = b2MaxFloat( m_maxProfile.pairs, p.pairs );
-		m_maxProfile.collide = b2MaxFloat( m_maxProfile.collide, p.collide );
-		m_maxProfile.solve = b2MaxFloat( m_maxProfile.solve, p.solve );
-		m_maxProfile.prepareStages = b2MaxFloat( m_maxProfile.prepareStages, p.prepareStages );
-		m_maxProfile.solveConstraints = b2MaxFloat( m_maxProfile.solveConstraints, p.solveConstraints );
-		m_maxProfile.prepareConstraints = b2MaxFloat( m_maxProfile.prepareConstraints, p.prepareConstraints );
-		m_maxProfile.integrateVelocities = b2MaxFloat( m_maxProfile.integrateVelocities, p.integrateVelocities );
-		m_maxProfile.warmStart = b2MaxFloat( m_maxProfile.warmStart, p.warmStart );
-		m_maxProfile.solveImpulses = b2MaxFloat( m_maxProfile.solveImpulses, p.solveImpulses );
-		m_maxProfile.integratePositions = b2MaxFloat( m_maxProfile.integratePositions, p.integratePositions );
-		m_maxProfile.relaxImpulses = b2MaxFloat( m_maxProfile.relaxImpulses, p.relaxImpulses );
-		m_maxProfile.applyRestitution = b2MaxFloat( m_maxProfile.applyRestitution, p.applyRestitution );
-		m_maxProfile.storeImpulses = b2MaxFloat( m_maxProfile.storeImpulses, p.storeImpulses );
-		m_maxProfile.transforms = b2MaxFloat( m_maxProfile.transforms, p.transforms );
-		m_maxProfile.splitIslands = b2MaxFloat( m_maxProfile.splitIslands, p.splitIslands );
-		m_maxProfile.jointEvents = b2MaxFloat( m_maxProfile.jointEvents, p.jointEvents );
-		m_maxProfile.hitEvents = b2MaxFloat( m_maxProfile.hitEvents, p.hitEvents );
-		m_maxProfile.refit = b2MaxFloat( m_maxProfile.refit, p.refit );
-		m_maxProfile.bullets = b2MaxFloat( m_maxProfile.bullets, p.bullets );
-		m_maxProfile.sleepIslands = b2MaxFloat( m_maxProfile.sleepIslands, p.sleepIslands );
-		m_maxProfile.sensors = b2MaxFloat( m_maxProfile.sensors, p.sensors );
-
 		m_totalProfile.step += p.step;
 		m_totalProfile.pairs += p.pairs;
 		m_totalProfile.collide += p.collide;
@@ -605,79 +580,200 @@ void Sample::Step()
 		m_totalProfile.sensors += p.sensors;
 	}
 
-	if ( m_context->drawProfile )
-	{
-		b2Profile aveProfile = {};
-		if ( m_stepCount > 0 )
-		{
-			float scale = 1.0f / m_stepCount;
-			aveProfile.step = scale * m_totalProfile.step;
-			aveProfile.pairs = scale * m_totalProfile.pairs;
-			aveProfile.collide = scale * m_totalProfile.collide;
-			aveProfile.solve = scale * m_totalProfile.solve;
-			aveProfile.prepareStages = scale * m_totalProfile.prepareStages;
-			aveProfile.solveConstraints = scale * m_totalProfile.solveConstraints;
-			aveProfile.prepareConstraints = scale * m_totalProfile.prepareConstraints;
-			aveProfile.integrateVelocities = scale * m_totalProfile.integrateVelocities;
-			aveProfile.warmStart = scale * m_totalProfile.warmStart;
-			aveProfile.solveImpulses = scale * m_totalProfile.solveImpulses;
-			aveProfile.integratePositions = scale * m_totalProfile.integratePositions;
-			aveProfile.relaxImpulses = scale * m_totalProfile.relaxImpulses;
-			aveProfile.applyRestitution = scale * m_totalProfile.applyRestitution;
-			aveProfile.storeImpulses = scale * m_totalProfile.storeImpulses;
-			aveProfile.transforms = scale * m_totalProfile.transforms;
-			aveProfile.splitIslands = scale * m_totalProfile.splitIslands;
-			aveProfile.jointEvents = scale * m_totalProfile.jointEvents;
-			aveProfile.hitEvents = scale * m_totalProfile.hitEvents;
-			aveProfile.refit = scale * m_totalProfile.refit;
-			aveProfile.bullets = scale * m_totalProfile.bullets;
-			aveProfile.sleepIslands = scale * m_totalProfile.sleepIslands;
-			aveProfile.sensors = scale * m_totalProfile.sensors;
-		}
-
-		const b2Profile& p = m_profiles[m_currentProfileIndex];
-		DrawTextLine( "step [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.step, aveProfile.step, m_maxProfile.step );
-		DrawTextLine( "pairs [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.pairs, aveProfile.pairs, m_maxProfile.pairs );
-		DrawTextLine( "collide [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.collide, aveProfile.collide, m_maxProfile.collide );
-		DrawTextLine( "solve [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solve, aveProfile.solve, m_maxProfile.solve );
-		DrawTextLine( "> prepare tasks [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.prepareStages, aveProfile.prepareStages,
-					  m_maxProfile.prepareStages );
-		DrawTextLine( "> solve constraints [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveConstraints, aveProfile.solveConstraints,
-					  m_maxProfile.solveConstraints );
-		DrawTextLine( ">> prepare constraints [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.prepareConstraints,
-					  aveProfile.prepareConstraints, m_maxProfile.prepareConstraints );
-		DrawTextLine( ">> integrate velocities [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.integrateVelocities,
-					  aveProfile.integrateVelocities, m_maxProfile.integrateVelocities );
-		DrawTextLine( ">> warm start [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.warmStart, aveProfile.warmStart,
-					  m_maxProfile.warmStart );
-		DrawTextLine( ">> solve impulses [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.solveImpulses, aveProfile.solveImpulses,
-					  m_maxProfile.solveImpulses );
-		DrawTextLine( ">> integrate positions [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.integratePositions,
-					  aveProfile.integratePositions, m_maxProfile.integratePositions );
-		DrawTextLine( ">> relax impulses [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.relaxImpulses, aveProfile.relaxImpulses,
-					  m_maxProfile.relaxImpulses );
-		DrawTextLine( ">> apply restitution [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.applyRestitution, aveProfile.applyRestitution,
-					  m_maxProfile.applyRestitution );
-		DrawTextLine( ">> store impulses [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.storeImpulses, aveProfile.storeImpulses,
-					  m_maxProfile.storeImpulses );
-		DrawTextLine( ">> split islands [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.splitIslands, aveProfile.splitIslands,
-					  m_maxProfile.splitIslands );
-		DrawTextLine( "> update transforms [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.transforms, aveProfile.transforms,
-					  m_maxProfile.transforms );
-		DrawTextLine( "> joint events [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.jointEvents, aveProfile.jointEvents,
-					  m_maxProfile.jointEvents );
-		DrawTextLine( "> hit events [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.hitEvents, aveProfile.hitEvents,
-					  m_maxProfile.hitEvents );
-		DrawTextLine( "> refit BVH [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.refit, aveProfile.refit, m_maxProfile.refit );
-		DrawTextLine( "> sleep islands [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.sleepIslands, aveProfile.sleepIslands,
-					  m_maxProfile.sleepIslands );
-		DrawTextLine( "> bullets [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.bullets, aveProfile.bullets, m_maxProfile.bullets );
-		DrawTextLine( "sensors [ave] (max) = %5.2f [%6.2f] (%6.2f)", p.sensors, aveProfile.sensors, m_maxProfile.sensors );
-	}
 }
 
 void Sample::UpdateGui()
 {
+	if ( m_context->drawProfile )
+	{
+		ImGui::SetNextWindowPos( { 5.0f, 30.0f }, ImGuiCond_FirstUseEver );
+		ImGui::SetNextWindowSize( { 580.0f, 600.0f }, ImGuiCond_FirstUseEver );
+		ImGui::Begin( "Profile (ms)", nullptr, ImGuiWindowFlags_NoCollapse );
+
+		const int count = static_cast<int>( m_profileWriteIndex - m_profileReadIndex );
+
+		// Unroll ring buffer into per-field histories.
+		constexpr int kRowCount = 22;
+		float histories[kRowCount][m_profileCapacity];
+		for ( int i = 0; i < count; ++i )
+		{
+			int idx = static_cast<int>( ( m_profileReadIndex + i ) & ( m_profileCapacity - 1 ) );
+			const b2Profile& p = m_profiles[idx];
+			histories[0][i]  = p.step;
+			histories[1][i]  = p.pairs;
+			histories[2][i]  = p.collide;
+			histories[3][i]  = p.solve;
+			histories[4][i]  = p.prepareStages;
+			histories[5][i]  = p.solveConstraints;
+			histories[6][i]  = p.prepareConstraints;
+			histories[7][i]  = p.integrateVelocities;
+			histories[8][i]  = p.warmStart;
+			histories[9][i]  = p.solveImpulses;
+			histories[10][i] = p.integratePositions;
+			histories[11][i] = p.relaxImpulses;
+			histories[12][i] = p.applyRestitution;
+			histories[13][i] = p.storeImpulses;
+			histories[14][i] = p.splitIslands;
+			histories[15][i] = p.transforms;
+			histories[16][i] = p.jointEvents;
+			histories[17][i] = p.hitEvents;
+			histories[18][i] = p.refit;
+			histories[19][i] = p.sleepIslands;
+			histories[20][i] = p.bullets;
+			histories[21][i] = p.sensors;
+		}
+
+		const b2Profile& cur = m_profiles[m_currentProfileIndex];
+		const float now[kRowCount] = {
+			cur.step, cur.pairs, cur.collide, cur.solve,
+			cur.prepareStages, cur.solveConstraints,
+			cur.prepareConstraints, cur.integrateVelocities, cur.warmStart, cur.solveImpulses,
+			cur.integratePositions, cur.relaxImpulses, cur.applyRestitution, cur.storeImpulses,
+			cur.splitIslands, cur.transforms, cur.jointEvents, cur.hitEvents,
+			cur.refit, cur.sleepIslands, cur.bullets, cur.sensors,
+		};
+
+		float avg[kRowCount] = { 0 };
+		if ( m_stepCount > 0 )
+		{
+			float scale = 1.0f / m_stepCount;
+			avg[0]  = scale * m_totalProfile.step;
+			avg[1]  = scale * m_totalProfile.pairs;
+			avg[2]  = scale * m_totalProfile.collide;
+			avg[3]  = scale * m_totalProfile.solve;
+			avg[4]  = scale * m_totalProfile.prepareStages;
+			avg[5]  = scale * m_totalProfile.solveConstraints;
+			avg[6]  = scale * m_totalProfile.prepareConstraints;
+			avg[7]  = scale * m_totalProfile.integrateVelocities;
+			avg[8]  = scale * m_totalProfile.warmStart;
+			avg[9]  = scale * m_totalProfile.solveImpulses;
+			avg[10] = scale * m_totalProfile.integratePositions;
+			avg[11] = scale * m_totalProfile.relaxImpulses;
+			avg[12] = scale * m_totalProfile.applyRestitution;
+			avg[13] = scale * m_totalProfile.storeImpulses;
+			avg[14] = scale * m_totalProfile.splitIslands;
+			avg[15] = scale * m_totalProfile.transforms;
+			avg[16] = scale * m_totalProfile.jointEvents;
+			avg[17] = scale * m_totalProfile.hitEvents;
+			avg[18] = scale * m_totalProfile.refit;
+			avg[19] = scale * m_totalProfile.sleepIslands;
+			avg[20] = scale * m_totalProfile.bullets;
+			avg[21] = scale * m_totalProfile.sensors;
+		}
+
+		// Match Frame Time chart's first three colors so rows read with the line plot.
+		const ImU32 colorStep    = IM_COL32( 102, 153, 255, 255 );
+		const ImU32 colorCollide = IM_COL32( 255, 140,  51, 255 );
+		const ImU32 colorSolve   = IM_COL32( 102, 204, 102, 255 );
+		const ImU32 colorDefault = IM_COL32( 220, 220, 220, 255 );
+
+		struct RowDef { const char* name; int indent; ImU32 color; };
+		const RowDef rows[kRowCount] = {
+			{ "step",                 0, colorStep    },
+			{ "pairs",                0, colorDefault },
+			{ "collide",              0, colorCollide },
+			{ "solve",                0, colorSolve   },
+			{ "prepare tasks",        1, colorDefault },
+			{ "solve constraints",    1, colorDefault },
+			{ "prepare constraints",  2, colorDefault },
+			{ "integrate velocities", 2, colorDefault },
+			{ "warm start",           2, colorDefault },
+			{ "solve impulses",       2, colorDefault },
+			{ "integrate positions",  2, colorDefault },
+			{ "relax impulses",       2, colorDefault },
+			{ "apply restitution",    2, colorDefault },
+			{ "store impulses",       2, colorDefault },
+			{ "split islands",        2, colorDefault },
+			{ "update transforms",    1, colorDefault },
+			{ "joint events",         1, colorDefault },
+			{ "hit events",           1, colorDefault },
+			{ "refit BVH",            1, colorDefault },
+			{ "sleep islands",        1, colorDefault },
+			{ "bullets",              1, colorDefault },
+			{ "sensors",              0, colorDefault },
+		};
+
+		// Bars are drawn relative to the step row so the proportions are visually consistent.
+		const float stepNow = b2MaxFloat( cur.step, 0.001f );
+
+		if ( ImGui::Button( "Reset" ) )
+		{
+			ResetProfile();
+		}
+
+		const ImGuiTableFlags tableFlags =
+			ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY;
+
+		if ( ImGui::BeginTable( "profile", 6, tableFlags ) )
+		{
+			ImGui::TableSetupScrollFreeze( 0, 1 );
+			ImGui::TableSetupColumn( "section", ImGuiTableColumnFlags_WidthFixed, 170.0f );
+			ImGui::TableSetupColumn( "now",     ImGuiTableColumnFlags_WidthFixed,  46.0f );
+			ImGui::TableSetupColumn( "avg",     ImGuiTableColumnFlags_WidthFixed,  46.0f );
+			ImGui::TableSetupColumn( "max",     ImGuiTableColumnFlags_WidthFixed,  46.0f );
+			ImGui::TableSetupColumn( "% step",  ImGuiTableColumnFlags_WidthFixed,  80.0f );
+			ImGui::TableSetupColumn( "history", ImGuiTableColumnFlags_WidthStretch );
+			ImGui::TableHeadersRow();
+
+			const float rowHeight = ImGui::GetTextLineHeight() * 1.5f;
+
+			for ( int r = 0; r < kRowCount; ++r )
+			{
+				const RowDef& d = rows[r];
+				const float* hist = histories[r];
+
+				// Rolling max from live history, replacing the old session-sticky max.
+				float rmax = 0.0f;
+				for ( int i = 0; i < count; ++i )
+				{
+					rmax = b2MaxFloat( rmax, hist[i] );
+				}
+
+				ImGui::TableNextRow();
+
+				ImGui::TableNextColumn();
+				if ( d.indent > 0 )
+				{
+					ImGui::Indent( d.indent * 12.0f );
+				}
+				ImGui::PushStyleColor( ImGuiCol_Text, d.color );
+				ImGui::TextUnformatted( d.name );
+				ImGui::PopStyleColor();
+				if ( d.indent > 0 )
+				{
+					ImGui::Unindent( d.indent * 12.0f );
+				}
+
+				ImGui::TableNextColumn();
+				ImGui::Text( "%6.2f", now[r] );
+				ImGui::TableNextColumn();
+				ImGui::Text( "%6.2f", avg[r] );
+				ImGui::TableNextColumn();
+				ImGui::Text( "%6.2f", rmax );
+
+				ImGui::TableNextColumn();
+				float frac = b2ClampFloat( now[r] / stepNow, 0.0f, 1.0f );
+				ImGui::PushStyleColor( ImGuiCol_PlotHistogram, d.color );
+				ImGui::ProgressBar( frac, ImVec2( -FLT_MIN, 0.0f ), "" );
+				ImGui::PopStyleColor();
+
+				ImGui::TableNextColumn();
+				if ( count > 1 )
+				{
+					char id[16];
+					snprintf( id, sizeof( id ), "##h%d", r );
+					ImGui::PushStyleColor( ImGuiCol_PlotLines, d.color );
+					ImGui::PlotLines( id, hist, count, 0, nullptr, 0.0f, rmax * 1.05f + 0.001f,
+									  ImVec2( -FLT_MIN, rowHeight ) );
+					ImGui::PopStyleColor();
+				}
+			}
+			ImGui::EndTable();
+		}
+
+		ImGui::End();
+	}
+
 	if ( m_context->frameTime )
 	{
 		float frameTimeHeight = 400.0f;
