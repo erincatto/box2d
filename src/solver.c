@@ -28,9 +28,6 @@
 #define ITERATIONS 1
 #define RELAX_ITERATIONS 1
 
-// Target 4 blocks per worker to allow work stealing
-#define BLOCKS_PER_WORKER 4
-
 #if ( defined( __GNUC__ ) || defined( __clang__ ) ) && ( defined( __i386__ ) || defined( __x86_64__ ) )
 static inline void b2Pause( void )
 {
@@ -1323,12 +1320,12 @@ static void b2SolverTask( void* taskContext )
 	}
 }
 
-static void b2BulletBodyTask( int startIndex, int endIndex, int threadIndex, void* context )
+static void b2BulletBodyTask( int startIndex, int endIndex, int workerIndex, void* context )
 {
 	b2TracyCZoneNC( bullet_body_task, "Bullet", b2_colorLightSkyBlue, true );
 
 	b2StepContext* stepContext = context;
-	b2TaskContext* taskContext = stepContext->world->taskContexts.data + threadIndex;
+	b2TaskContext* taskContext = stepContext->world->taskContexts.data + workerIndex;
 
 	B2_ASSERT( startIndex <= endIndex );
 
@@ -1400,9 +1397,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// prepare for move events
 		b2Array_Resize( world->bodyMoveEvents, awakeBodyCount );
 
-		// 4 is a small power of two that allows for meaningful work stealing
 		int workerCount = world->workerCount;
-		const int maxBlockCount = BLOCKS_PER_WORKER * workerCount;
+
+		// Target 4 blocks per worker to allow work stealing
+		const int maxBlockCount = 4 * workerCount;
 
 		// Body blocks are for parallel iteration over bodies directly (integration, update transforms)
 		int minBodiesPerBlock = 32;
@@ -1444,7 +1442,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			colorJointCounts[c] = colorJointCount;
 			jointCount += colorJointCount;
 
-			// Blocks for solve
+			// Graph solver block dimensions
 			graphContactDims[c] = b2ComputeBlockCount( colorContactCountW, minContactsPerBlock, maxBlockCount );
 			graphJointDims[c] = b2ComputeBlockCount( colorJointCount, minJointsPerBlock, maxBlockCount );
 			graphBlockCount += graphContactDims[c].count + graphJointDims[c].count;
@@ -1457,20 +1455,17 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// partitioned into uniformly sized blocks. Color info is consulted inside the task via
 		// a small span array, so blocks do not need to honor color boundaries here.
 		b2BlockDim contactPrepareDim = b2ComputeBlockCount( wideContactCount, minContactsPerBlock, maxBlockCount );
-		int contactBlockCount = contactPrepareDim.count;
-
 		b2BlockDim jointPrepareDim = b2ComputeBlockCount( jointCount, minJointsPerBlock, maxBlockCount );
-		int jointBlockCount = jointPrepareDim.count;
 
 		int wideContactConstraintByteCount = b2GetWideContactConstraintByteCount();
 		struct b2ContactConstraintWide* wideContactConstraints =
 			b2StackAlloc( &world->stack, wideContactCount * wideContactConstraintByteCount, "contact constraint" );
 
-		int overflowContactCount = colors[B2_OVERFLOW_INDEX].contactSims.count;
-		b2ContactConstraint* overflowContactConstraints =
-			b2StackAlloc( &world->stack, overflowContactCount * sizeof( b2ContactConstraint ), "overflow contact constraint" );
-
-		graph->colors[B2_OVERFLOW_INDEX].overflowConstraints = overflowContactConstraints;
+		b2GraphColor* overflow = colors + B2_OVERFLOW_INDEX;
+		int overflowCount = overflow->contactSims.count;
+		b2ContactConstraint* overflowContacts =
+			b2StackAlloc( &world->stack, overflowCount * sizeof( b2ContactConstraint ), "overflow contact constraint" );
+		overflow->overflowConstraints = overflowContacts;
 
 		// Build the span table for the flat prepare/store parallel-for while I slice the
 		// wide constraint buffer across colors. One entry per active color plus a sentinel
@@ -1478,7 +1473,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2ContactPrepareSpan contactPrepareSpans[B2_GRAPH_COLOR_COUNT + 1];
 		b2JointPrepareSpan jointPrepareSpans[B2_GRAPH_COLOR_COUNT + 1];
 
-		// Distribute transient constraints to each graph color
+		// Distribute transient constraints to each graph color and prepare spans
 		{
 			int wideBase = 0;
 			int jointBase = 0;
@@ -1505,9 +1500,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					int colorContactCountW = ( ( colorContactCount - 1 ) >> B2_SIMD_SHIFT ) + 1;
 					color->wideConstraintCount = colorContactCountW;
 
-					// Zero dead lanes in the tail wide slot so prepare workers never
-					// race to initialize them. Done once here; the prepare task no
-					// longer knows about per-color tails.
+					// Zero remainder lanes in the tail wide slot so prepare workers don't need to
+					// initialize them.
 					if ( ( colorContactCount & ( B2_SIMD_WIDTH - 1 ) ) != 0 )
 					{
 						memset( (uint8_t*)color->wideConstraints + ( colorContactCountW - 1 ) * wideContactConstraintByteCount, 0,
@@ -1559,8 +1553,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2SolverStage* stages = b2StackAlloc( &world->stack, stageCount * sizeof( b2SolverStage ), "stages" );
 		b2SolverBlock* bodyBlocks = b2StackAlloc( &world->stack, bodyDim.count * sizeof( b2SolverBlock ), "body blocks" );
 		b2SolverBlock* contactBlocks =
-			b2StackAlloc( &world->stack, contactBlockCount * sizeof( b2SolverBlock ), "contact blocks" );
-		b2SolverBlock* jointBlocks = b2StackAlloc( &world->stack, jointBlockCount * sizeof( b2SolverBlock ), "joint blocks" );
+			b2StackAlloc( &world->stack, contactPrepareDim.count * sizeof( b2SolverBlock ), "contact blocks" );
+		b2SolverBlock* jointBlocks = b2StackAlloc( &world->stack, jointPrepareDim.count * sizeof( b2SolverBlock ), "joint blocks" );
 		b2SolverBlock* graphBlocks = b2StackAlloc( &world->stack, graphBlockCount * sizeof( b2SolverBlock ), "graph blocks" );
 
 		// Split an awake island. This modifies:
@@ -1613,8 +1607,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		B2_ASSERT( (ptrdiff_t)( baseGraphBlock - graphBlocks ) == graphBlockCount );
 
 		b2SolverStage* stage = stages;
-		stage = b2InitStage( stage, b2_stagePrepareJoints, jointBlocks, jointBlockCount, UINT8_MAX );
-		stage = b2InitStage( stage, b2_stagePrepareContacts, contactBlocks, contactBlockCount, UINT8_MAX );
+		stage = b2InitStage( stage, b2_stagePrepareJoints, jointBlocks, jointPrepareDim.count, UINT8_MAX );
+		stage = b2InitStage( stage, b2_stagePrepareContacts, contactBlocks, contactPrepareDim.count, UINT8_MAX );
 		stage = b2InitStage( stage, b2_stageIntegrateVelocities, bodyBlocks, bodyDim.count, UINT8_MAX );
 		stage = b2InitColorStages( stage, b2_stageWarmStart, 1, activeColorCount, graphColorBlocks, graphBlockCounts,
 								   activeColorIndices );
@@ -1626,7 +1620,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// Note: joint blocks mixed in, could have joint limit restitution
 		stage = b2InitColorStages( stage, b2_stageRestitution, 1, activeColorCount, graphColorBlocks, graphBlockCounts,
 								   activeColorIndices );
-		stage = b2InitStage( stage, b2_stageStoreImpulses, contactBlocks, contactBlockCount, UINT8_MAX );
+		stage = b2InitStage( stage, b2_stageStoreImpulses, contactBlocks, contactPrepareDim.count, UINT8_MAX );
 
 		B2_ASSERT( (int)( stage - stages ) == stageCount );
 
@@ -1719,9 +1713,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2StackFree( &world->stack, contactBlocks );
 		b2StackFree( &world->stack, bodyBlocks );
 		b2StackFree( &world->stack, stages );
-		b2StackFree( &world->stack, overflowContactConstraints );
+		b2StackFree( &world->stack, overflowContacts );
 		b2StackFree( &world->stack, wideContactConstraints );
-		// b2StackFree( &world->stack, joints );
 
 		world->profile.transforms = b2GetMilliseconds( transformTicks );
 		b2TracyCZoneEnd( update_transforms );
@@ -1837,7 +1830,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					b2ContactHitEvent event = { 0 };
 					event.approachSpeed = threshold;
 
-					bool hit = false;
+					bool found = false;
 					int pointCount = contactSim->manifold.pointCount;
 					for ( int p = 0; p < pointCount; ++p )
 					{
@@ -1850,11 +1843,13 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 							event.approachSpeed = approachSpeed;
 							// Using the clip point here is somewhat questionable
 							event.point = mp->clipPoint;
-							hit = true;
+							found = true;
 						}
 					}
 
-					if ( hit == true )
+					B2_VALIDATE( found );
+
+					if ( found == true )
 					{
 						event.normal = contactSim->manifold.normal;
 

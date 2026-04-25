@@ -116,7 +116,7 @@ typedef struct b2Softness
 // range. Each span maps a slice of that range back to the owning color's
 // contacts so workers can decode flat wide-slot indices without touching
 // graph state. The spans array has one entry per active color plus a sentinel
-// whose wideStart == wideContactCount.
+// whose start == wideContactCount.
 typedef struct b2ContactPrepareSpan
 {
 	int start;
