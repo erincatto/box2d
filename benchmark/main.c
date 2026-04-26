@@ -9,6 +9,7 @@
 #include "utils.h"
 
 #include "box2d/box2d.h"
+#include "box2d/constants.h"
 #include "box2d/math_functions.h"
 
 #include <assert.h>
@@ -23,7 +24,6 @@
 
 #define ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
 #define MAYBE_UNUSED( x ) ( (void)( x ) )
-#define THREAD_LIMIT 64
 
 typedef void CreateFcn( b2WorldId worldId );
 typedef float StepFcn( b2WorldId worldId, int stepCount );
@@ -125,7 +125,7 @@ int main( int argc, char** argv )
 	float* stepResults = malloc( maxSteps * sizeof( float ) );
 	memset( stepResults, 0, maxSteps * sizeof( float ) );
 
-	int maxThreadCount = b2MinInt(GetNumberOfCores(), THREAD_LIMIT);
+	int maxThreadCount = b2MinInt(GetNumberOfCores(), B2_MAX_WORKERS);
 	int runCount = 4;
 	int singleBenchmark = -1;
 	int singleWorkerCount = -1;
@@ -202,7 +202,7 @@ int main( int argc, char** argv )
 
 		printf( "benchmark: %s, steps = %d\n", benchmarks[benchmarkIndex].name, stepCount );
 
-		float minTime[THREAD_LIMIT] = { 0 };
+		float minTime[B2_MAX_WORKERS] = { 0 };
 
 		for ( int threadCount = 1; threadCount <= maxThreadCount; ++threadCount )
 		{

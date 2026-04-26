@@ -1574,7 +1574,7 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 {
 	b2TracyCZoneNC( prepare_contact, "Prepare Contact", b2_colorYellow, true );
 	b2World* world = context->world;
-	b2BodyState* awakeStates = context->states;
+	b2BodyState* states = context->states;
 #if B2_ENABLE_VALIDATION
 	b2Body* bodies = world->bodies.data;
 #endif
@@ -1612,9 +1612,9 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 			b2ContactConstraintWide* constraint = wideBase + wideIndex;
 			int localWideIndex = wideIndex - colorWideStart;
 
-			for ( int j = 0; j < B2_SIMD_WIDTH; ++j )
+			for ( int lane = 0; lane < B2_SIMD_WIDTH; ++lane )
 			{
-				int contactIndex = B2_SIMD_WIDTH * localWideIndex + j;
+				int contactIndex = B2_SIMD_WIDTH * localWideIndex + lane;
 				if ( contactIndex >= colorContactCount )
 				{
 					// Remainder lanes were zeroed in solver setup.
@@ -1622,7 +1622,6 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 				}
 
 				b2ContactSim* contactSim = contactSims + contactIndex;
-
 				const b2Manifold* manifold = &contactSim->manifold;
 
 				int indexA = contactSim->bodySimIndexA;
@@ -1633,13 +1632,13 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 				int validIndexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
 				b2Body* bodyB = bodies + contactSim->bodyIdB;
 				int validIndexB = bodyB->setIndex == b2_awakeSet ? bodyB->localIndex : B2_NULL_INDEX;
-
 				B2_ASSERT( indexA == validIndexA );
 				B2_ASSERT( indexB == validIndexB );
 #endif
+
 				// 0 for null
-				constraint->indexA[j] = indexA + 1;
-				constraint->indexB[j] = indexB + 1;
+				constraint->indexA[lane] = indexA + 1;
+				constraint->indexB[lane] = indexB + 1;
 
 				b2Vec2 vA = b2Vec2_zero;
 				float wA = 0.0f;
@@ -1647,7 +1646,7 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 				float iA = contactSim->invIA;
 				if ( indexA != B2_NULL_INDEX )
 				{
-					b2BodyState* stateA = awakeStates + indexA;
+					b2BodyState* stateA = states + indexA;
 					vA = stateA->linearVelocity;
 					wA = stateA->angularVelocity;
 				}
@@ -1658,19 +1657,19 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 				float iB = contactSim->invIB;
 				if ( indexB != B2_NULL_INDEX )
 				{
-					b2BodyState* stateB = awakeStates + indexB;
+					b2BodyState* stateB = states + indexB;
 					vB = stateB->linearVelocity;
 					wB = stateB->angularVelocity;
 				}
 
-				( (float*)&constraint->invMassA )[j] = mA;
-				( (float*)&constraint->invMassB )[j] = mB;
-				( (float*)&constraint->invIA )[j] = iA;
-				( (float*)&constraint->invIB )[j] = iB;
+				( (float*)&constraint->invMassA )[lane] = mA;
+				( (float*)&constraint->invMassB )[lane] = mB;
+				( (float*)&constraint->invIA )[lane] = iA;
+				( (float*)&constraint->invIB )[lane] = iB;
 
 				{
 					float k = iA + iB;
-					( (float*)&constraint->rollingMass )[j] = k > 0.0f ? 1.0f / k : 0.0f;
+					( (float*)&constraint->rollingMass )[lane] = k > 0.0f ? 1.0f / k : 0.0f;
 				}
 
 				b2Softness soft = contactSoftness;
@@ -1695,18 +1694,18 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 				}
 
 				b2Vec2 normal = manifold->normal;
-				( (float*)&constraint->normal.X )[j] = normal.x;
-				( (float*)&constraint->normal.Y )[j] = normal.y;
+				( (float*)&constraint->normal.X )[lane] = normal.x;
+				( (float*)&constraint->normal.Y )[lane] = normal.y;
 
-				( (float*)&constraint->friction )[j] = contactSim->friction;
-				( (float*)&constraint->tangentSpeed )[j] = contactSim->tangentSpeed;
-				( (float*)&constraint->restitution )[j] = contactSim->restitution;
-				( (float*)&constraint->rollingResistance )[j] = contactSim->rollingResistance;
-				( (float*)&constraint->rollingImpulse )[j] = warmStartScale * manifold->rollingImpulse;
+				( (float*)&constraint->friction )[lane] = contactSim->friction;
+				( (float*)&constraint->tangentSpeed )[lane] = contactSim->tangentSpeed;
+				( (float*)&constraint->restitution )[lane] = contactSim->restitution;
+				( (float*)&constraint->rollingResistance )[lane] = contactSim->rollingResistance;
+				( (float*)&constraint->rollingImpulse )[lane] = warmStartScale * manifold->rollingImpulse;
 
-				( (float*)&constraint->biasRate )[j] = soft.biasRate;
-				( (float*)&constraint->massScale )[j] = soft.massScale;
-				( (float*)&constraint->impulseScale )[j] = soft.impulseScale;
+				( (float*)&constraint->biasRate )[lane] = soft.biasRate;
+				( (float*)&constraint->massScale )[lane] = soft.massScale;
+				( (float*)&constraint->impulseScale )[lane] = soft.impulseScale;
 
 				b2Vec2 tangent = b2RightPerp( normal );
 
@@ -1716,31 +1715,31 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 					b2Vec2 rA = mp->anchorA;
 					b2Vec2 rB = mp->anchorB;
 
-					( (float*)&constraint->anchorA1.X )[j] = rA.x;
-					( (float*)&constraint->anchorA1.Y )[j] = rA.y;
-					( (float*)&constraint->anchorB1.X )[j] = rB.x;
-					( (float*)&constraint->anchorB1.Y )[j] = rB.y;
+					( (float*)&constraint->anchorA1.X )[lane] = rA.x;
+					( (float*)&constraint->anchorA1.Y )[lane] = rA.y;
+					( (float*)&constraint->anchorB1.X )[lane] = rB.x;
+					( (float*)&constraint->anchorB1.Y )[lane] = rB.y;
 
-					( (float*)&constraint->baseSeparation1 )[j] = mp->separation - b2Dot( b2Sub( rB, rA ), normal );
+					( (float*)&constraint->baseSeparation1 )[lane] = mp->separation - b2Dot( b2Sub( rB, rA ), normal );
 
-					( (float*)&constraint->normalImpulse1 )[j] = warmStartScale * mp->normalImpulse;
-					( (float*)&constraint->tangentImpulse1 )[j] = warmStartScale * mp->tangentImpulse;
-					( (float*)&constraint->totalNormalImpulse1 )[j] = 0.0f;
+					( (float*)&constraint->normalImpulse1 )[lane] = warmStartScale * mp->normalImpulse;
+					( (float*)&constraint->tangentImpulse1 )[lane] = warmStartScale * mp->tangentImpulse;
+					( (float*)&constraint->totalNormalImpulse1 )[lane] = 0.0f;
 
 					float rnA = b2Cross( rA, normal );
 					float rnB = b2Cross( rB, normal );
 					float kNormal = mA + mB + iA * rnA * rnA + iB * rnB * rnB;
-					( (float*)&constraint->normalMass1 )[j] = kNormal > 0.0f ? 1.0f / kNormal : 0.0f;
+					( (float*)&constraint->normalMass1 )[lane] = kNormal > 0.0f ? 1.0f / kNormal : 0.0f;
 
 					float rtA = b2Cross( rA, tangent );
 					float rtB = b2Cross( rB, tangent );
 					float kTangent = mA + mB + iA * rtA * rtA + iB * rtB * rtB;
-					( (float*)&constraint->tangentMass1 )[j] = kTangent > 0.0f ? 1.0f / kTangent : 0.0f;
+					( (float*)&constraint->tangentMass1 )[lane] = kTangent > 0.0f ? 1.0f / kTangent : 0.0f;
 
 					// relative velocity for restitution
 					b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
 					b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
-					( (float*)&constraint->relativeVelocity1 )[j] = b2Dot( normal, b2Sub( vrB, vrA ) );
+					( (float*)&constraint->relativeVelocity1 )[lane] = b2Dot( normal, b2Sub( vrB, vrA ) );
 				}
 
 				int pointCount = manifold->pointCount;
@@ -1753,46 +1752,46 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 					b2Vec2 rA = mp->anchorA;
 					b2Vec2 rB = mp->anchorB;
 
-					( (float*)&constraint->anchorA2.X )[j] = rA.x;
-					( (float*)&constraint->anchorA2.Y )[j] = rA.y;
-					( (float*)&constraint->anchorB2.X )[j] = rB.x;
-					( (float*)&constraint->anchorB2.Y )[j] = rB.y;
+					( (float*)&constraint->anchorA2.X )[lane] = rA.x;
+					( (float*)&constraint->anchorA2.Y )[lane] = rA.y;
+					( (float*)&constraint->anchorB2.X )[lane] = rB.x;
+					( (float*)&constraint->anchorB2.Y )[lane] = rB.y;
 
-					( (float*)&constraint->baseSeparation2 )[j] = mp->separation - b2Dot( b2Sub( rB, rA ), normal );
+					( (float*)&constraint->baseSeparation2 )[lane] = mp->separation - b2Dot( b2Sub( rB, rA ), normal );
 
-					( (float*)&constraint->normalImpulse2 )[j] = warmStartScale * mp->normalImpulse;
-					( (float*)&constraint->tangentImpulse2 )[j] = warmStartScale * mp->tangentImpulse;
-					( (float*)&constraint->totalNormalImpulse2 )[j] = 0.0f;
+					( (float*)&constraint->normalImpulse2 )[lane] = warmStartScale * mp->normalImpulse;
+					( (float*)&constraint->tangentImpulse2 )[lane] = warmStartScale * mp->tangentImpulse;
+					( (float*)&constraint->totalNormalImpulse2 )[lane] = 0.0f;
 
 					float rnA = b2Cross( rA, normal );
 					float rnB = b2Cross( rB, normal );
 					float kNormal = mA + mB + iA * rnA * rnA + iB * rnB * rnB;
-					( (float*)&constraint->normalMass2 )[j] = kNormal > 0.0f ? 1.0f / kNormal : 0.0f;
+					( (float*)&constraint->normalMass2 )[lane] = kNormal > 0.0f ? 1.0f / kNormal : 0.0f;
 
 					float rtA = b2Cross( rA, tangent );
 					float rtB = b2Cross( rB, tangent );
 					float kTangent = mA + mB + iA * rtA * rtA + iB * rtB * rtB;
-					( (float*)&constraint->tangentMass2 )[j] = kTangent > 0.0f ? 1.0f / kTangent : 0.0f;
+					( (float*)&constraint->tangentMass2 )[lane] = kTangent > 0.0f ? 1.0f / kTangent : 0.0f;
 
 					// relative velocity for restitution
 					b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
 					b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
-					( (float*)&constraint->relativeVelocity2 )[j] = b2Dot( normal, b2Sub( vrB, vrA ) );
+					( (float*)&constraint->relativeVelocity2 )[lane] = b2Dot( normal, b2Sub( vrB, vrA ) );
 				}
 				else
 				{
 					// dummy data that has no effect
-					( (float*)&constraint->baseSeparation2 )[j] = 0.0f;
-					( (float*)&constraint->normalImpulse2 )[j] = 0.0f;
-					( (float*)&constraint->tangentImpulse2 )[j] = 0.0f;
-					( (float*)&constraint->totalNormalImpulse2 )[j] = 0.0f;
-					( (float*)&constraint->anchorA2.X )[j] = 0.0f;
-					( (float*)&constraint->anchorA2.Y )[j] = 0.0f;
-					( (float*)&constraint->anchorB2.X )[j] = 0.0f;
-					( (float*)&constraint->anchorB2.Y )[j] = 0.0f;
-					( (float*)&constraint->normalMass2 )[j] = 0.0f;
-					( (float*)&constraint->tangentMass2 )[j] = 0.0f;
-					( (float*)&constraint->relativeVelocity2 )[j] = 0.0f;
+					( (float*)&constraint->baseSeparation2 )[lane] = 0.0f;
+					( (float*)&constraint->normalImpulse2 )[lane] = 0.0f;
+					( (float*)&constraint->tangentImpulse2 )[lane] = 0.0f;
+					( (float*)&constraint->totalNormalImpulse2 )[lane] = 0.0f;
+					( (float*)&constraint->anchorA2.X )[lane] = 0.0f;
+					( (float*)&constraint->anchorA2.Y )[lane] = 0.0f;
+					( (float*)&constraint->anchorB2.X )[lane] = 0.0f;
+					( (float*)&constraint->anchorB2.Y )[lane] = 0.0f;
+					( (float*)&constraint->normalMass2 )[lane] = 0.0f;
+					( (float*)&constraint->tangentMass2 )[lane] = 0.0f;
+					( (float*)&constraint->relativeVelocity2 )[lane] = 0.0f;
 				}
 			}
 		}
@@ -2013,12 +2012,25 @@ void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context, bool useB
 
 		if (useBias == false)
 		{
+			// Rolling resistance
+			if ( b2AllZeroW( c->rollingResistance ) == false )
+			{
+				b2FloatW deltaLambda = b2MulW( c->rollingMass, b2SubW( bA.w, bB.w ) );
+				b2FloatW lambda = c->rollingImpulse;
+				b2FloatW maxLambda = b2MulW( c->rollingResistance, totalNormalImpulse );
+				c->rollingImpulse = b2SymClampW( b2AddW( lambda, deltaLambda ), maxLambda );
+				deltaLambda = b2SubW( c->rollingImpulse, lambda );
+
+				bA.w = b2MulSubW( bA.w, c->invIA, deltaLambda );
+				bB.w = b2MulAddW( bB.w, c->invIB, deltaLambda );
+			}
+
 			b2FloatW tangentX = c->normal.Y;
 			b2FloatW tangentY = b2SubW( b2ZeroW(), c->normal.X );
 
 			// point 1 friction constraint
 			{
-				// fixed anchors for Jacobians
+				// Fixed anchor points for applying impulses
 				b2Vec2W rA = c->anchorA1;
 				b2Vec2W rB = c->anchorB1;
 
@@ -2089,18 +2101,6 @@ void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context, bool useB
 				bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
 				bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
 			}
-
-			// Rolling resistance
-			{
-				b2FloatW deltaLambda = b2MulW( c->rollingMass, b2SubW( bA.w, bB.w ) );
-				b2FloatW lambda = c->rollingImpulse;
-				b2FloatW maxLambda = b2MulW( c->rollingResistance, totalNormalImpulse );
-				c->rollingImpulse = b2SymClampW( b2AddW( lambda, deltaLambda ), maxLambda );
-				deltaLambda = b2SubW( c->rollingImpulse, lambda );
-
-				bA.w = b2MulSubW( bA.w, c->invIA, deltaLambda );
-				bB.w = b2MulAddW( bB.w, c->invIB, deltaLambda );
-			}
 		}
 
 		b2ScatterBodies( states, c->indexA, &bA );
@@ -2144,7 +2144,7 @@ void b2ApplyRestitutionTask( b2SolverBlock block, b2StepContext* context )
 			b2FloatW mask = b2OrW( b2OrW( mask1, mask2 ), restitutionMask );
 			b2FloatW mass = b2BlendW( c->normalMass1, zero, mask );
 
-			// fixed anchors for Jacobians
+			// Fixed anchors for impulses
 			b2Vec2W rA = c->anchorA1;
 			b2Vec2W rB = c->anchorB1;
 
@@ -2160,7 +2160,6 @@ void b2ApplyRestitutionTask( b2SolverBlock block, b2StepContext* context )
 			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse1, negImpulse ), b2ZeroW() );
 			b2FloatW deltaImpulse = b2SubW( newImpulse, c->normalImpulse1 );
 			c->normalImpulse1 = newImpulse;
-
 			c->totalNormalImpulse1 = b2AddW( c->totalNormalImpulse1, deltaImpulse );
 
 			// Apply contact impulse
@@ -2228,6 +2227,9 @@ void b2ApplyRestitutionTask( b2SolverBlock block, b2StepContext* context )
 // Runs as a flat parallel-for over the whole wide constraint range. Per-color
 // contact sims are looked up through the prepareSpans cursor rather than the
 // block's colorIndex, matching the layout of b2PrepareContactsTask.
+//
+// Note: I could store the manifold pointer in the b2ContactConstraintWide to simplify
+// this.
 void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context, int workerIndex )
 {
 	b2TracyCZoneNC( store_impulses, "Store", b2_colorFireBrick, true );

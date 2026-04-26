@@ -285,8 +285,6 @@ void Sample::CreateWorld()
 
 	b2WorldDef worldDef = b2DefaultWorldDef();
 	worldDef.workerCount = m_context->workerCount;
-	// worldDef.enqueueTask = EnqueueTask;
-	// worldDef.finishTask = FinishTask;
 	worldDef.userTaskContext = this;
 	worldDef.enableSleep = m_context->enableSleep;
 
