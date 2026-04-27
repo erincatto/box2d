@@ -1094,11 +1094,20 @@ static void b2SolverTask( void* taskContext )
 
 	if ( workerIndex == 0 )
 	{
+		// The orchestrator slot is a race. The calling thread of b2World_Step also enters here
+		// as worker 0, so progress is guaranteed even if the user's task system schedules tasks
+		// out of order, has fewer threads than workerCount, or runs the task synchronously
+		// inside enqueueTaskFcn. Whoever wins the CAS becomes the orchestrator; the loser
+		// returns and lets the spinner-only path handle workers >0.
+		if ( b2AtomicCompareExchangeInt( &context->mainClaimed, 0, 1 ) == false )
+		{
+			return;
+		}
+
 		// Main thread synchronizes the workers and does work itself.
 		//
-		// This needs to be a task for the main thread because the user's task system may execute
-		// the tasks serially and this is the first task. This single task is able to fully
-		// complete all work even if all other workers are blocked.
+		// This single task is able to fully complete all work even if all other workers are
+		// blocked, so a fully serial task system still drives the simulation forward.
 
 		// Stages are re-used by loops so that I don't need more stages for large substep counts.
 		// The sync indices grow monotonically for the body/graph/constraint groupings because they share solver blocks.
@@ -1637,6 +1646,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stepContext->wideContactCount = wideContactCount;
 		stepContext->jointPrepareSpans = jointPrepareSpans;
 		b2AtomicStoreU32( &stepContext->atomicSyncBits, 0 );
+		b2AtomicStoreInt( &stepContext->mainClaimed, 0 );
 
 		world->profile.prepareStages = b2GetMillisecondsAndReset( &setupTicks );
 		b2TracyCZoneEnd( solver_setup );
@@ -1668,6 +1678,15 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				b2SolverTask( workerContext + i );
 			}
 		}
+
+		// The calling thread of b2World_Step also enters b2SolverTask as worker 0 and races for the
+		// orchestrator slot via the CAS inside. This guarantees progress even when the user's task
+		// system can't run the queued worker 0 promptly: it might schedule out of order, have fewer
+		// threads than workerCount, or invert priority by parking the calling thread in finishTaskFcn.
+		// Whoever wins the CAS becomes the orchestrator; the loser returns and lets the spinner-only
+		// path handle workers >0.
+		b2WorkerContext callerContext = { stepContext, 0, NULL };
+		b2SolverTask( &callerContext );
 
 		// Finish island split
 		if ( splitIslandTask != NULL )

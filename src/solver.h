@@ -205,6 +205,16 @@ typedef struct b2StepContext
 	// padding to prevent false sharing
 	char padding2[64];
 
+	// Race flag claimed by whichever runner reaches b2SolverTask with workerIndex 0 first.
+	// The calling thread of b2World_Step also races for this slot so the orchestrator can
+	// always make progress, regardless of how the user's task system schedules tasks (out
+	// of order, fewer threads than workers, or synchronously inside enqueueTaskFcn). The
+	// loser of the race no-ops as workerIndex 0.
+	b2AtomicInt mainClaimed;
+
+	// padding to prevent false sharing
+	char padding3[64];
+
 } b2StepContext;
 
 static inline b2Softness b2MakeSoft( float hertz, float zeta, float h )
