@@ -585,8 +585,7 @@ void Sample::UpdateGui()
 	if ( m_context->drawProfile )
 	{
 		ImGui::SetNextWindowPos( { 5.0f, 30.0f }, ImGuiCond_FirstUseEver );
-		ImGui::SetNextWindowSize( { 580.0f, 600.0f }, ImGuiCond_FirstUseEver );
-		ImGui::Begin( "Profile (ms)", nullptr, ImGuiWindowFlags_NoCollapse );
+		ImGui::Begin( "Profile (ms)", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize );
 
 		const int count = static_cast<int>( m_profileWriteIndex - m_profileReadIndex );
 
@@ -691,6 +690,30 @@ void Sample::UpdateGui()
 			{ "sensors",              0, colorDefault },
 		};
 
+		// Derive parent/child links from the indent levels so we can collapse subtrees.
+		int parents[kRowCount];
+		bool hasChildren[kRowCount] = {};
+		{
+			int stack[8];
+			int stackSize = 0;
+			for ( int i = 0; i < kRowCount; ++i )
+			{
+				while ( stackSize > 0 && rows[stack[stackSize - 1]].indent >= rows[i].indent )
+				{
+					--stackSize;
+				}
+				parents[i] = stackSize > 0 ? stack[stackSize - 1] : -1;
+				stack[stackSize++] = i;
+				if ( parents[i] >= 0 )
+				{
+					hasChildren[parents[i]] = true;
+				}
+			}
+		}
+
+		static bool s_rowOpen[kRowCount];
+		static bool s_showPlots = true;
+
 		// Bars are drawn relative to the step row so the proportions are visually consistent.
 		const float stepNow = b2MaxFloat( cur.step, 0.001f );
 
@@ -698,25 +721,44 @@ void Sample::UpdateGui()
 		{
 			ResetProfile();
 		}
+		ImGui::SameLine();
+		ImGui::Checkbox( "Show plots", &s_showPlots );
 
 		const ImGuiTableFlags tableFlags =
-			ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY;
+			ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit;
 
-		if ( ImGui::BeginTable( "profile", 6, tableFlags ) )
+		const int colCount = s_showPlots ? 6 : 5;
+		if ( ImGui::BeginTable( "profile", colCount, tableFlags ) )
 		{
-			ImGui::TableSetupScrollFreeze( 0, 1 );
 			ImGui::TableSetupColumn( "section", ImGuiTableColumnFlags_WidthFixed, 170.0f );
 			ImGui::TableSetupColumn( "now",     ImGuiTableColumnFlags_WidthFixed,  46.0f );
 			ImGui::TableSetupColumn( "avg",     ImGuiTableColumnFlags_WidthFixed,  46.0f );
 			ImGui::TableSetupColumn( "max",     ImGuiTableColumnFlags_WidthFixed,  46.0f );
 			ImGui::TableSetupColumn( "% step",  ImGuiTableColumnFlags_WidthFixed,  80.0f );
-			ImGui::TableSetupColumn( "history", ImGuiTableColumnFlags_WidthStretch );
+			if ( s_showPlots )
+			{
+				ImGui::TableSetupColumn( "history", ImGuiTableColumnFlags_WidthFixed, 200.0f );
+			}
 			ImGui::TableHeadersRow();
 
 			const float rowHeight = ImGui::GetTextLineHeight() * 1.5f;
 
 			for ( int r = 0; r < kRowCount; ++r )
 			{
+				bool visible = true;
+				for ( int p = parents[r]; p >= 0; p = parents[p] )
+				{
+					if ( !s_rowOpen[p] )
+					{
+						visible = false;
+						break;
+					}
+				}
+				if ( !visible )
+				{
+					continue;
+				}
+
 				const RowDef& d = rows[r];
 				const float* hist = histories[r];
 
@@ -734,9 +776,25 @@ void Sample::UpdateGui()
 				{
 					ImGui::Indent( d.indent * 12.0f );
 				}
-				ImGui::PushStyleColor( ImGuiCol_Text, d.color );
-				ImGui::TextUnformatted( d.name );
-				ImGui::PopStyleColor();
+				if ( hasChildren[r] )
+				{
+					ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
+											   ImGuiTreeNodeFlags_OpenOnDoubleClick |
+											   ImGuiTreeNodeFlags_NoTreePushOnOpen |
+											   ImGuiTreeNodeFlags_DefaultOpen;
+					ImGui::PushStyleColor( ImGuiCol_Text, d.color );
+					s_rowOpen[r] = ImGui::TreeNodeEx( d.name, flags );
+					ImGui::PopStyleColor();
+				}
+				else
+				{
+					float leafIndent = ImGui::GetTreeNodeToLabelSpacing();
+					ImGui::Indent( leafIndent );
+					ImGui::PushStyleColor( ImGuiCol_Text, d.color );
+					ImGui::TextUnformatted( d.name );
+					ImGui::PopStyleColor();
+					ImGui::Unindent( leafIndent );
+				}
 				if ( d.indent > 0 )
 				{
 					ImGui::Unindent( d.indent * 12.0f );
@@ -755,15 +813,18 @@ void Sample::UpdateGui()
 				ImGui::ProgressBar( frac, ImVec2( -FLT_MIN, 0.0f ), "" );
 				ImGui::PopStyleColor();
 
-				ImGui::TableNextColumn();
-				if ( count > 1 )
+				if ( s_showPlots )
 				{
-					char id[16];
-					snprintf( id, sizeof( id ), "##h%d", r );
-					ImGui::PushStyleColor( ImGuiCol_PlotLines, d.color );
-					ImGui::PlotLines( id, hist, count, 0, nullptr, 0.0f, rmax * 1.05f + 0.001f,
-									  ImVec2( -FLT_MIN, rowHeight ) );
-					ImGui::PopStyleColor();
+					ImGui::TableNextColumn();
+					if ( count > 1 )
+					{
+						char id[16];
+						snprintf( id, sizeof( id ), "##h%d", r );
+						ImGui::PushStyleColor( ImGuiCol_PlotLines, d.color );
+						ImGui::PlotLines( id, hist, count, 0, nullptr, 0.0f, rmax * 1.05f + 0.001f,
+										  ImVec2( -FLT_MIN, rowHeight ) );
+						ImGui::PopStyleColor();
+					}
 				}
 			}
 			ImGui::EndTable();
