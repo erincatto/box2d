@@ -41,7 +41,7 @@ static void MinProfile( b2Profile* p1, const b2Profile* p2 )
 	p1->step = b2MinFloat( p1->step, p2->step );
 	p1->pairs = b2MinFloat( p1->pairs, p2->pairs );
 	p1->collide = b2MinFloat( p1->collide, p2->collide );
-	p1->solveConstraints = b2MinFloat( p1->solveConstraints, p2->solveConstraints );
+	p1->constraints = b2MinFloat( p1->constraints, p2->constraints );
 	p1->transforms = b2MinFloat( p1->transforms, p2->transforms );
 	p1->refit = b2MinFloat( p1->refit, p2->refit );
 	p1->sleepIslands = b2MinFloat( p1->sleepIslands, p2->sleepIslands );
@@ -97,8 +97,8 @@ int main( int argc, char** argv )
 		.pairs = FLT_MAX,
 		.collide = FLT_MAX,
 		.solve = FLT_MAX,
-		.prepareStages = FLT_MAX,
-		.solveConstraints = FLT_MAX,
+		.solverSetup = FLT_MAX,
+		.constraints = FLT_MAX,
 		.prepareConstraints = FLT_MAX,
 		.integrateVelocities = FLT_MAX,
 		.warmStart = FLT_MAX,
@@ -285,7 +285,7 @@ int main( int argc, char** argv )
 				for ( int stepIndex = 0; stepIndex < stepCount; ++stepIndex )
 				{
 					b2Profile p = profiles[stepIndex];
-					fprintf( file, "%g %g %g %g %g %g %g\n", p.step, p.pairs, p.collide, p.solveConstraints, p.transforms,
+					fprintf( file, "%g %g %g %g %g %g %g\n", p.step, p.pairs, p.collide, p.constraints, p.transforms,
 							 p.refit, p.sleepIslands );
 				}
 

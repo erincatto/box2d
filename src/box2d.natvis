@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  
   <Type Name="__m128">
     <DisplayString>[{m128_f32[0]}, {m128_f32[1]}, {m128_f32[2]}, {m128_f32[3]}]</DisplayString>
     <Expand>
@@ -10,6 +11,7 @@
       <Item Name="Address">(void*)this</Item>
     </Expand>
   </Type>
+  
   <Type Name="__m256">
     <DisplayString>[{m256_f32[0]}, {m256_f32[1]}, {m256_f32[2]}, {m256_f32[3]}, {m256_f32[4]}, {m256_f32[5]}, {m256_f32[6]}, {m256_f32[7]}]</DisplayString>
     <Expand>
@@ -63,6 +65,34 @@
     <Expand>
       <Item Name="Block">block</Item>
       <Item Name="Sync Index">syncIndex.value</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="b2Body">
+    <DisplayString>{type} set={setIndex}</DisplayString>
+  </Type>
+
+  <Type Name="b2DynamicArray_int">
+    <DisplayString>{{ count={count}, capacity={capacity} }}</DisplayString>
+    <Expand>
+      <Item Name="count">count</Item>
+      <Item Name="capacity">capacity</Item>
+      <ArrayItems>
+        <Size>count</Size>
+        <ValuePointer>data</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="b2DynamicArray_b2Body">
+    <DisplayString>{{ count={count}, capacity={capacity} }}</DisplayString>
+    <Expand>
+      <Item Name="count">count</Item>
+      <Item Name="capacity">capacity</Item>
+      <ArrayItems>
+        <Size>count</Size>
+        <ValuePointer>data</ValuePointer>
+      </ArrayItems>
     </Expand>
   </Type>
 

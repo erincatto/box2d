@@ -485,8 +485,8 @@ typedef struct b2Profile
 	float pairs;
 	float collide;
 	float solve;
-	float prepareStages;
-	float solveConstraints;
+	float solverSetup;
+	float constraints;
 	float prepareConstraints;
 	float integrateVelocities;
 	float warmStart;

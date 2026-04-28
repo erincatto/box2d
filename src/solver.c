@@ -1557,7 +1557,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2AtomicStoreU32( &stepContext->atomicSyncBits, 0 );
 		b2AtomicStoreInt( &stepContext->mainClaimed, 0 );
 
-		world->profile.prepareStages = b2GetMillisecondsAndReset( &setupTicks );
+		world->profile.solverSetup = b2GetMillisecondsAndReset( &setupTicks );
 		b2TracyCZoneEnd( solver_setup );
 
 		b2TracyCZoneNC( solve_constraints, "Solve Constraints", b2_colorIndigo, true );
@@ -1597,14 +1597,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2WorkerContext callerContext = { stepContext, 0, NULL };
 		b2SolverTask( &callerContext );
 
-		// Finish island split
-		if ( splitIslandTask != NULL )
-		{
-			world->finishTaskFcn( splitIslandTask, world->userTaskContext );
-			world->activeTaskCount -= 1;
-		}
-		world->splitIslandId = B2_NULL_INDEX;
-
 		// Finish constraint solve
 		for ( int i = 0; i < workerCount; ++i )
 		{
@@ -1615,7 +1607,15 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			}
 		}
 
-		world->profile.solveConstraints = b2GetMillisecondsAndReset( &constraintTicks );
+		// Finish island split
+		if ( splitIslandTask != NULL )
+		{
+			world->finishTaskFcn( splitIslandTask, world->userTaskContext );
+			world->activeTaskCount -= 1;
+		}
+		world->splitIslandId = B2_NULL_INDEX;
+
+		world->profile.constraints = b2GetMillisecondsAndReset( &constraintTicks );
 		b2TracyCZoneEnd( solve_constraints );
 
 		b2TracyCZoneNC( update_transforms, "Update Transforms", b2_colorMediumSeaGreen, true );

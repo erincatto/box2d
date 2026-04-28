@@ -86,9 +86,7 @@ typedef enum b2SolverBlockType
 	b2_graphContactBlock
 } b2SolverBlockType;
 
-// Pure descriptor: written once during solver setup, then read-only across
-// all worker threads. Cheap to copy by value into b2ExecuteBlock and the
-// per-task workspaces, with no atomic field along for the ride.
+// Solver block describes a multithreaded unit of work.
 typedef struct b2SolverBlock
 {
 	int startIndex;
@@ -98,10 +96,8 @@ typedef struct b2SolverBlock
 	uint8_t colorIndex;
 } b2SolverBlock;
 
-// Pairs the block descriptor with its atomic claim counter. The CAS site in
-// b2ExecuteStage targets &blocks[i].syncIndex; the worker that wins then
-// passes blocks[i].block (descriptor only, no atomic) by value into the
-// stage tasks, so the struct copy never aliases atomic memory.
+// A unit of multithreaded work along with atomic synchronization. The syncIndex grows
+// monotonically allowing the solver block to be re-used across sub-steps.
 typedef struct b2SyncBlock
 {
 	b2SolverBlock block;

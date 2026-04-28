@@ -558,8 +558,8 @@ void Sample::Step()
 		m_totalProfile.pairs += p.pairs;
 		m_totalProfile.collide += p.collide;
 		m_totalProfile.solve += p.solve;
-		m_totalProfile.prepareStages += p.prepareStages;
-		m_totalProfile.solveConstraints += p.solveConstraints;
+		m_totalProfile.solverSetup += p.solverSetup;
+		m_totalProfile.constraints += p.constraints;
 		m_totalProfile.prepareConstraints += p.prepareConstraints;
 		m_totalProfile.integrateVelocities += p.integrateVelocities;
 		m_totalProfile.warmStart += p.warmStart;
@@ -577,14 +577,15 @@ void Sample::Step()
 		m_totalProfile.sleepIslands += p.sleepIslands;
 		m_totalProfile.sensors += p.sensors;
 	}
-
 }
 
 void Sample::UpdateGui()
 {
+	float fontSize = ImGui::GetFontSize();
+
 	if ( m_context->drawProfile )
 	{
-		ImGui::SetNextWindowPos( { 5.0f, 30.0f }, ImGuiCond_FirstUseEver );
+		ImGui::SetNextWindowPos( { fontSize, 8.0f * fontSize }, ImGuiCond_FirstUseEver );
 		ImGui::Begin( "Profile (ms)", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize );
 
 		const int count = static_cast<int>( m_profileWriteIndex - m_profileReadIndex );
@@ -596,16 +597,16 @@ void Sample::UpdateGui()
 		{
 			int idx = static_cast<int>( ( m_profileReadIndex + i ) & ( m_profileCapacity - 1 ) );
 			const b2Profile& p = m_profiles[idx];
-			histories[0][i]  = p.step;
-			histories[1][i]  = p.pairs;
-			histories[2][i]  = p.collide;
-			histories[3][i]  = p.solve;
-			histories[4][i]  = p.prepareStages;
-			histories[5][i]  = p.solveConstraints;
-			histories[6][i]  = p.prepareConstraints;
-			histories[7][i]  = p.integrateVelocities;
-			histories[8][i]  = p.warmStart;
-			histories[9][i]  = p.solveImpulses;
+			histories[0][i] = p.step;
+			histories[1][i] = p.pairs;
+			histories[2][i] = p.collide;
+			histories[3][i] = p.solve;
+			histories[4][i] = p.solverSetup;
+			histories[5][i] = p.constraints;
+			histories[6][i] = p.prepareConstraints;
+			histories[7][i] = p.integrateVelocities;
+			histories[8][i] = p.warmStart;
+			histories[9][i] = p.solveImpulses;
 			histories[10][i] = p.integratePositions;
 			histories[11][i] = p.relaxImpulses;
 			histories[12][i] = p.applyRestitution;
@@ -622,28 +623,44 @@ void Sample::UpdateGui()
 
 		const b2Profile& cur = m_profiles[m_currentProfileIndex];
 		const float now[kRowCount] = {
-			cur.step, cur.pairs, cur.collide, cur.solve,
-			cur.prepareStages, cur.solveConstraints,
-			cur.prepareConstraints, cur.integrateVelocities, cur.warmStart, cur.solveImpulses,
-			cur.integratePositions, cur.relaxImpulses, cur.applyRestitution, cur.storeImpulses,
-			cur.splitIslands, cur.transforms, cur.jointEvents, cur.hitEvents,
-			cur.refit, cur.sleepIslands, cur.bullets, cur.sensors,
+			cur.step,
+			cur.pairs,
+			cur.collide,
+			cur.solve,
+			cur.solverSetup,
+			cur.constraints,
+			cur.prepareConstraints,
+			cur.integrateVelocities,
+			cur.warmStart,
+			cur.solveImpulses,
+			cur.integratePositions,
+			cur.relaxImpulses,
+			cur.applyRestitution,
+			cur.storeImpulses,
+			cur.splitIslands,
+			cur.transforms,
+			cur.jointEvents,
+			cur.hitEvents,
+			cur.refit,
+			cur.sleepIslands,
+			cur.bullets,
+			cur.sensors,
 		};
 
 		float avg[kRowCount] = { 0 };
 		if ( m_stepCount > 0 )
 		{
 			float scale = 1.0f / m_stepCount;
-			avg[0]  = scale * m_totalProfile.step;
-			avg[1]  = scale * m_totalProfile.pairs;
-			avg[2]  = scale * m_totalProfile.collide;
-			avg[3]  = scale * m_totalProfile.solve;
-			avg[4]  = scale * m_totalProfile.prepareStages;
-			avg[5]  = scale * m_totalProfile.solveConstraints;
-			avg[6]  = scale * m_totalProfile.prepareConstraints;
-			avg[7]  = scale * m_totalProfile.integrateVelocities;
-			avg[8]  = scale * m_totalProfile.warmStart;
-			avg[9]  = scale * m_totalProfile.solveImpulses;
+			avg[0] = scale * m_totalProfile.step;
+			avg[1] = scale * m_totalProfile.pairs;
+			avg[2] = scale * m_totalProfile.collide;
+			avg[3] = scale * m_totalProfile.solve;
+			avg[4] = scale * m_totalProfile.solverSetup;
+			avg[5] = scale * m_totalProfile.constraints;
+			avg[6] = scale * m_totalProfile.prepareConstraints;
+			avg[7] = scale * m_totalProfile.integrateVelocities;
+			avg[8] = scale * m_totalProfile.warmStart;
+			avg[9] = scale * m_totalProfile.solveImpulses;
 			avg[10] = scale * m_totalProfile.integratePositions;
 			avg[11] = scale * m_totalProfile.relaxImpulses;
 			avg[12] = scale * m_totalProfile.applyRestitution;
@@ -659,35 +676,26 @@ void Sample::UpdateGui()
 		}
 
 		// Match Frame Time chart's first three colors so rows read with the line plot.
-		const ImU32 colorStep    = IM_COL32( 102, 153, 255, 255 );
-		const ImU32 colorCollide = IM_COL32( 255, 140,  51, 255 );
-		const ImU32 colorSolve   = IM_COL32( 102, 204, 102, 255 );
+		const ImU32 colorStep = IM_COL32( 102, 153, 255, 255 );
+		const ImU32 colorCollide = IM_COL32( 255, 140, 51, 255 );
+		const ImU32 colorSolve = IM_COL32( 102, 204, 102, 255 );
 		const ImU32 colorDefault = IM_COL32( 220, 220, 220, 255 );
 
-		struct RowDef { const char* name; int indent; ImU32 color; };
+		struct RowDef
+		{
+			const char* name;
+			int indent;
+			ImU32 color;
+		};
 		const RowDef rows[kRowCount] = {
-			{ "step",                 0, colorStep    },
-			{ "pairs",                0, colorDefault },
-			{ "collide",              0, colorCollide },
-			{ "solve",                0, colorSolve   },
-			{ "prepare tasks",        1, colorDefault },
-			{ "solve constraints",    1, colorDefault },
-			{ "prepare constraints",  2, colorDefault },
-			{ "integrate velocities", 2, colorDefault },
-			{ "warm start",           2, colorDefault },
-			{ "solve impulses",       2, colorDefault },
-			{ "integrate positions",  2, colorDefault },
-			{ "relax impulses",       2, colorDefault },
-			{ "apply restitution",    2, colorDefault },
-			{ "store impulses",       2, colorDefault },
-			{ "split islands",        2, colorDefault },
-			{ "update transforms",    1, colorDefault },
-			{ "joint events",         1, colorDefault },
-			{ "hit events",           1, colorDefault },
-			{ "refit BVH",            1, colorDefault },
-			{ "sleep islands",        1, colorDefault },
-			{ "bullets",              1, colorDefault },
-			{ "sensors",              0, colorDefault },
+			{ "step", 0, colorStep },			{ "pairs", 0, colorDefault },		 { "collide", 0, colorCollide },
+			{ "solve", 0, colorSolve },			{ "setup", 1, colorDefault },		 { "constraints", 1, colorDefault },
+			{ "prepare", 2, colorDefault },		{ "velocities", 2, colorDefault },	 { "warm start", 2, colorDefault },
+			{ "bias", 2, colorDefault },		{ "positions", 2, colorDefault },	 { "relax", 2, colorDefault },
+			{ "restitution", 2, colorDefault }, { "store", 2, colorDefault },		 { "split islands", 2, colorDefault },
+			{ "transforms", 1, colorDefault },	{ "joint events", 1, colorDefault }, { "hit events", 1, colorDefault },
+			{ "refit BVH", 1, colorDefault },	{ "sleep", 1, colorDefault },		 { "bullets", 1, colorDefault },
+			{ "sensors", 0, colorDefault },
 		};
 
 		// Derive parent/child links from the indent levels so we can collapse subtrees.
@@ -712,7 +720,7 @@ void Sample::UpdateGui()
 		}
 
 		static bool s_rowOpen[kRowCount];
-		static bool s_showPlots = true;
+		static bool s_showPlots = false;
 
 		// Bars are drawn relative to the step row so the proportions are visually consistent.
 		const float stepNow = b2MaxFloat( cur.step, 0.001f );
@@ -724,24 +732,23 @@ void Sample::UpdateGui()
 		ImGui::SameLine();
 		ImGui::Checkbox( "Show plots", &s_showPlots );
 
-		const ImGuiTableFlags tableFlags =
-			ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit;
+		const ImGuiTableFlags tableFlags = ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit;
 
 		const int colCount = s_showPlots ? 6 : 5;
 		if ( ImGui::BeginTable( "profile", colCount, tableFlags ) )
 		{
-			ImGui::TableSetupColumn( "section", ImGuiTableColumnFlags_WidthFixed, 170.0f );
-			ImGui::TableSetupColumn( "now",     ImGuiTableColumnFlags_WidthFixed,  46.0f );
-			ImGui::TableSetupColumn( "avg",     ImGuiTableColumnFlags_WidthFixed,  46.0f );
-			ImGui::TableSetupColumn( "max",     ImGuiTableColumnFlags_WidthFixed,  46.0f );
-			ImGui::TableSetupColumn( "% step",  ImGuiTableColumnFlags_WidthFixed,  80.0f );
+			ImGui::TableSetupColumn( "section", ImGuiTableColumnFlags_WidthFixed, 8.0f * fontSize );
+			ImGui::TableSetupColumn( "now", ImGuiTableColumnFlags_WidthFixed, 3.0f * fontSize );
+			ImGui::TableSetupColumn( "avg", ImGuiTableColumnFlags_WidthFixed, 3.0f * fontSize );
+			ImGui::TableSetupColumn( "max", ImGuiTableColumnFlags_WidthFixed, 3.0f * fontSize );
+			ImGui::TableSetupColumn( "% step", ImGuiTableColumnFlags_WidthFixed, 8.0f * fontSize );
 			if ( s_showPlots )
 			{
-				ImGui::TableSetupColumn( "history", ImGuiTableColumnFlags_WidthFixed, 200.0f );
+				ImGui::TableSetupColumn( "history", ImGuiTableColumnFlags_WidthFixed, 16.0f * fontSize );
 			}
 			ImGui::TableHeadersRow();
 
-			const float rowHeight = ImGui::GetTextLineHeight() * 1.5f;
+			const float rowHeight = 1.5f * fontSize;
 
 			for ( int r = 0; r < kRowCount; ++r )
 			{
@@ -774,14 +781,12 @@ void Sample::UpdateGui()
 				ImGui::TableNextColumn();
 				if ( d.indent > 0 )
 				{
-					ImGui::Indent( d.indent * 12.0f );
+					ImGui::Indent( d.indent * fontSize );
 				}
 				if ( hasChildren[r] )
 				{
-					ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
-											   ImGuiTreeNodeFlags_OpenOnDoubleClick |
-											   ImGuiTreeNodeFlags_NoTreePushOnOpen |
-											   ImGuiTreeNodeFlags_DefaultOpen;
+					ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick |
+											   ImGuiTreeNodeFlags_NoTreePushOnOpen;
 					ImGui::PushStyleColor( ImGuiCol_Text, d.color );
 					s_rowOpen[r] = ImGui::TreeNodeEx( d.name, flags );
 					ImGui::PopStyleColor();
@@ -797,7 +802,7 @@ void Sample::UpdateGui()
 				}
 				if ( d.indent > 0 )
 				{
-					ImGui::Unindent( d.indent * 12.0f );
+					ImGui::Unindent( d.indent * fontSize );
 				}
 
 				ImGui::TableNextColumn();
@@ -835,15 +840,15 @@ void Sample::UpdateGui()
 
 	if ( m_context->frameTime )
 	{
-		float frameTimeHeight = 400.0f;
-		float frameTimeWidth = 800.0f;
+		float frameTimeHeight = 30.0f * fontSize;
+		float frameTimeWidth = 50.0f * fontSize;
 
-		ImGui::SetNextWindowPos( { 30.0f, 30.0f }, ImGuiCond_FirstUseEver );
+		ImGui::SetNextWindowPos( { 3.0f * fontSize, 3.0f * fontSize }, ImGuiCond_FirstUseEver );
 		ImGui::SetNextWindowSize( { frameTimeWidth, frameTimeHeight }, ImGuiCond_FirstUseEver );
 
 		ImGui::Begin( "Frame Time", nullptr, ImGuiWindowFlags_NoCollapse );
 
-		ImGui::PushItemWidth( ImGui::GetWindowWidth() - 20.0f );
+		ImGui::PushItemWidth( ImGui::GetWindowWidth() - 2.0f * fontSize );
 
 		float maxValue = 0.0f;
 		float times[m_profileCapacity];
@@ -862,7 +867,7 @@ void Sample::UpdateGui()
 		}
 
 		// This is the pixel size, not the range.
-		ImVec2 plotSize = { -1, 22.0f * ImGui::GetTextLineHeight() };
+		ImVec2 plotSize = { -1, 22.0f * fontSize };
 		if ( ImPlot::BeginPlot( "Profile", plotSize, ImPlotFlags_NoTitle ) )
 		{
 			ImPlot::SetupAxes( "t", "ms" );
