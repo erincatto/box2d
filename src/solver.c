@@ -778,8 +778,9 @@ static inline b2BlockDim b2ComputeBlockCount( int itemCount, int minSize, int ma
 }
 
 // Initialize solver blocks for a contiguous range of items. Computes block size internally
-// from the same parameters used by b2ComputeBlockCount.
-static void b2InitBlocks( b2SolverBlock* blocks, b2BlockDim dim, int itemCount, uint8_t blockType, uint8_t colorIndex )
+// from the same parameters used by b2ComputeBlockCount. The atomic claim counter is zeroed
+// so workers can CAS (0, 1) on the first stage that owns these blocks.
+static void b2InitBlocks( b2SyncBlock* blocks, b2BlockDim dim, int itemCount, uint8_t blockType, uint8_t colorIndex )
 {
 	if ( dim.count == 0 )
 	{
@@ -796,21 +797,21 @@ static void b2InitBlocks( b2SolverBlock* blocks, b2BlockDim dim, int itemCount, 
 
 	for ( int i = 0; i < dim.count; ++i )
 	{
-		blocks[i].startIndex = i * blockSize;
-		blocks[i].count = (uint16_t)blockSize;
-		blocks[i].blockType = blockType;
-		blocks[i].colorIndex = colorIndex;
+		blocks[i].block.startIndex = i * blockSize;
+		blocks[i].block.count = (uint16_t)blockSize;
+		blocks[i].block.blockType = blockType;
+		blocks[i].block.colorIndex = colorIndex;
 		b2AtomicStoreInt( &blocks[i].syncIndex, 0 );
 	}
 
 	// The last block may not be full
-	blocks[dim.count - 1].count = (uint16_t)( itemCount - ( dim.count - 1 ) * blockSize );
+	blocks[dim.count - 1].block.count = (uint16_t)( itemCount - ( dim.count - 1 ) * blockSize );
 
-	B2_VALIDATE( blocks[dim.count - 1].count <= blockSize );
-	B2_VALIDATE( ( dim.count - 1 ) * dim.size + blocks[dim.count - 1].count == itemCount );
+	B2_VALIDATE( blocks[dim.count - 1].block.count <= blockSize );
+	B2_VALIDATE( ( dim.count - 1 ) * dim.size + blocks[dim.count - 1].block.count == itemCount );
 }
 
-static inline b2SolverStage* b2InitStage( b2SolverStage* stage, b2SolverStageType type, b2SolverBlock* blocks, int blockCount,
+static inline b2SolverStage* b2InitStage( b2SolverStage* stage, b2SolverStageType type, b2SyncBlock* blocks, int blockCount,
 										  uint8_t colorIndex )
 {
 	stage->type = type;
@@ -822,8 +823,10 @@ static inline b2SolverStage* b2InitStage( b2SolverStage* stage, b2SolverStageTyp
 }
 
 // Initialize one stage per color for each iteration. Used for warm start, solve, relax, and restitution.
+// All iterations of a given color share the same b2SyncBlock array so the per-block syncIndex
+// grows monotonically across stages within that color.
 static b2SolverStage* b2InitColorStages( b2SolverStage* stage, b2SolverStageType type, int iterations, int activeColorCount,
-										 b2SolverBlock** colorBlocks, int* colorBlockCounts, int* activeColorIndices )
+										 b2SyncBlock** colorBlocks, int* colorBlockCounts, int* activeColorIndices )
 {
 	for ( int j = 0; j < iterations; ++j )
 	{
@@ -926,7 +929,7 @@ static inline int GetWorkerStartIndex( int workerIndex, int blockCount, int work
 static void b2ExecuteStage( b2SolverStage* stage, b2StepContext* context, int previousSyncIndex, int syncIndex, int workerIndex )
 {
 	int completedCount = 0;
-	b2SolverBlock* blocks = stage->blocks;
+	b2SyncBlock* blocks = stage->blocks;
 	int blockCount = stage->blockCount;
 
 	int startIndex = GetWorkerStartIndex( workerIndex, blockCount, context->workerCount );
@@ -945,7 +948,9 @@ static void b2ExecuteStage( b2SolverStage* stage, b2StepContext* context, int pr
 			B2_ASSERT( stage->type != b2_stagePrepareContacts || syncIndex < 2 );
 			B2_ASSERT( completedCount < blockCount );
 
-			b2ExecuteBlock( stage, context, blocks[blockIndex], workerIndex );
+			// Pass the descriptor by value -- the wrapping b2SyncBlock holds the atomic
+			// syncIndex but we only copy .block, so the struct copy never aliases the CAS target.
+			b2ExecuteBlock( stage, context, blocks[blockIndex].block, workerIndex );
 			completedCount += 1;
 		}
 
@@ -972,7 +977,7 @@ static void b2ExecuteMainStage( b2SolverStage* stage, b2StepContext* context, ui
 
 	if ( blockCount == 1 )
 	{
-		b2ExecuteBlock( stage, context, stage->blocks[0], workerIndex );
+		b2ExecuteBlock( stage, context, stage->blocks[0].block, workerIndex );
 	}
 	else
 	{
@@ -1464,11 +1469,11 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stageCount += 1;
 
 		b2SolverStage* stages = b2StackAlloc( &world->stack, stageCount * sizeof( b2SolverStage ), "stages" );
-		b2SolverBlock* bodyBlocks = b2StackAlloc( &world->stack, bodyDim.count * sizeof( b2SolverBlock ), "body blocks" );
-		b2SolverBlock* contactBlocks =
-			b2StackAlloc( &world->stack, contactPrepareDim.count * sizeof( b2SolverBlock ), "contact blocks" );
-		b2SolverBlock* jointBlocks = b2StackAlloc( &world->stack, jointPrepareDim.count * sizeof( b2SolverBlock ), "joint blocks" );
-		b2SolverBlock* graphBlocks = b2StackAlloc( &world->stack, graphBlockCount * sizeof( b2SolverBlock ), "graph blocks" );
+		b2SyncBlock* bodyBlocks = b2StackAlloc( &world->stack, bodyDim.count * sizeof( b2SyncBlock ), "body blocks" );
+		b2SyncBlock* contactBlocks =
+			b2StackAlloc( &world->stack, contactPrepareDim.count * sizeof( b2SyncBlock ), "contact blocks" );
+		b2SyncBlock* jointBlocks = b2StackAlloc( &world->stack, jointPrepareDim.count * sizeof( b2SyncBlock ), "joint blocks" );
+		b2SyncBlock* graphBlocks = b2StackAlloc( &world->stack, graphBlockCount * sizeof( b2SyncBlock ), "graph blocks" );
 
 		// Split an awake island. This modifies:
 		// - stack allocator
@@ -1500,8 +1505,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2InitBlocks( jointBlocks, jointPrepareDim, jointCount, b2_jointBlock, UINT8_MAX );
 
 		// Prepare graph work blocks. Each color gets joint blocks followed by contact blocks.
-		b2SolverBlock* graphColorBlocks[B2_GRAPH_COLOR_COUNT] = { 0 };
-		b2SolverBlock* baseGraphBlock = graphBlocks;
+		b2SyncBlock* graphColorBlocks[B2_GRAPH_COLOR_COUNT] = { 0 };
+		b2SyncBlock* baseGraphBlock = graphBlocks;
 		int graphBlockCounts[B2_GRAPH_COLOR_COUNT] = { 0 };
 		for ( int i = 0; i < activeColorCount; ++i )
 		{

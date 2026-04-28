@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: MIT
 
 // Solver work is partitioned into fixed-size blocks that worker threads claim
-// in parallel via atomic CAS on each block's own syncIndex. Three properties
-// of this design matter for performance:
+// in parallel via atomic CAS on a per-block syncIndex. The descriptor (b2SolverBlock)
+// and the atomic counter sit in a wrapping b2SyncBlock so the CAS-winner can
+// pass the descriptor by value into stage tasks without aliasing the atomic
+// memory other threads are CAS-writing. Three properties of this design
+// matter for performance:
 //
 // 1. Distributed contention. Per-block atomic syncIndex avoids the cache line stampede
 //    that a single shared fetch_add counter would cause. Once a worker
@@ -83,6 +86,9 @@ typedef enum b2SolverBlockType
 	b2_graphContactBlock
 } b2SolverBlockType;
 
+// Pure descriptor: written once during solver setup, then read-only across
+// all worker threads. Cheap to copy by value into b2ExecuteBlock and the
+// per-task workspaces, with no atomic field along for the ride.
 typedef struct b2SolverBlock
 {
 	int startIndex;
@@ -90,14 +96,23 @@ typedef struct b2SolverBlock
 	// b2SolverBlockType
 	uint8_t blockType;
 	uint8_t colorIndex;
-	b2AtomicInt syncIndex;
 } b2SolverBlock;
+
+// Pairs the block descriptor with its atomic claim counter. The CAS site in
+// b2ExecuteStage targets &blocks[i].syncIndex; the worker that wins then
+// passes blocks[i].block (descriptor only, no atomic) by value into the
+// stage tasks, so the struct copy never aliases atomic memory.
+typedef struct b2SyncBlock
+{
+	b2SolverBlock block;
+	b2AtomicInt syncIndex;
+} b2SyncBlock;
 
 // Each stage must be completed before going to the next stage.
 // Non-iterative stages use a stage instance once while iterative stages re-use the same instance each iteration.
 typedef struct b2SolverStage
 {
-	b2SolverBlock* blocks;
+	b2SyncBlock* blocks;
 	b2SolverStageType type;
 	int blockCount;
 	uint8_t colorIndex;

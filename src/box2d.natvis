@@ -44,17 +44,24 @@
   </Type>
 
   <Type Name="b2SolverBlock">
-    <DisplayString Condition="blockType == 0">body [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}] sync={syncIndex.value}</DisplayString>
-    <DisplayString Condition="blockType == 1">joint [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}] sync={syncIndex.value}</DisplayString>
-    <DisplayString Condition="blockType == 2">contact [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}] sync={syncIndex.value}</DisplayString>
-    <DisplayString Condition="blockType == 3">graphJoint [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}] sync={syncIndex.value}</DisplayString>
-    <DisplayString Condition="blockType == 4">graphContact [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}] sync={syncIndex.value}</DisplayString>
-    <DisplayString>unknown [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}] sync={syncIndex.value}</DisplayString>
+    <DisplayString Condition="blockType == 0">body [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}]</DisplayString>
+    <DisplayString Condition="blockType == 1">joint [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}]</DisplayString>
+    <DisplayString Condition="blockType == 2">contact [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}]</DisplayString>
+    <DisplayString Condition="blockType == 3">graphJoint [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}]</DisplayString>
+    <DisplayString Condition="blockType == 4">graphContact [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}]</DisplayString>
+    <DisplayString>unknown [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}]</DisplayString>
     <Expand>
       <Item Name="Block Type">blockType</Item>
       <Item Name="Start Index">startIndex</Item>
       <Item Name="Count">count</Item>
       <Item Name="Color Index">(unsigned int)colorIndex</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="b2SyncBlock">
+    <DisplayString>{block} sync={syncIndex.value}</DisplayString>
+    <Expand>
+      <Item Name="Block">block</Item>
       <Item Name="Sync Index">syncIndex.value</Item>
     </Expand>
   </Type>
