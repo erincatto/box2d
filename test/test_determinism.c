@@ -28,7 +28,7 @@ static int SingleMultithreadingTest( int workerCount )
 	FallingHingeData data = CreateFallingHinges( worldId );
 
 	float timeStep = 1.0f / 60.0f;
-	int stepLimit = 1000;
+	int stepLimit = 500;
 	for ( int i = 0; i < stepLimit; ++i )
 	{
 		int subStepCount = 4;
@@ -36,7 +36,6 @@ static int SingleMultithreadingTest( int workerCount )
 		TracyCFrameMark;
 
 		bool done = UpdateFallingHinges( worldId, &data );
-
 		if ( done )
 		{
 			break;

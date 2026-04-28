@@ -160,94 +160,6 @@ static void b2IntegratePositionsTask( b2SolverBlock block, b2StepContext* contex
 	b2TracyCZoneEnd( integrate_positions );
 }
 
-static void b2PrepareJointsTask( b2SolverBlock block, b2StepContext* context )
-{
-	b2TracyCZoneNC( prepare_joints, "PrepJoints", b2_colorOldLace, true );
-
-	b2JointPrepareSpan* spans = context->jointPrepareSpans;
-
-	int index = block.startIndex;
-	int endIndex = block.startIndex + block.count;
-
-	// Find color for start index. Linear search but fast.
-	int colorIndex = 0;
-	while ( spans[colorIndex + 1].start <= index )
-	{
-		colorIndex += 1;
-	}
-
-	// Loop over block
-	while ( index < endIndex )
-	{
-		int colorStart = spans[colorIndex].start;
-		int colorEndIndex = b2MinInt( spans[colorIndex + 1].start, endIndex );
-		b2JointSim* joints = spans[colorIndex].joints;
-
-		// Loop over color
-		for ( ; index < colorEndIndex; ++index )
-		{
-			B2_ASSERT( 0 <= index - colorStart && index - colorStart < spans[colorIndex].count );
-			b2JointSim* joint = joints + (index - colorStart);
-			b2PrepareJoint( joint, context );
-		}
-
-		// Advance to next color
-		colorIndex += 1;
-	}
-
-	b2TracyCZoneEnd( prepare_joints );
-}
-
-static void b2WarmStartJointsTask( b2SolverBlock block, b2StepContext* context )
-{
-	b2TracyCZoneNC( warm_joints, "WarmJoints", b2_colorGold, true );
-
-	b2GraphColor* color = context->graph->colors + block.colorIndex;
-	b2JointSim* joints = color->jointSims.data;
-
-	for ( int i = block.startIndex; i < block.startIndex + block.count; ++i )
-	{
-		b2JointSim* joint = joints + i;
-		b2WarmStartJoint( joint, context );
-	}
-
-	b2TracyCZoneEnd( warm_joints );
-}
-
-static void b2SolveJointsTask( b2SolverBlock block, b2StepContext* context, bool useBias, int workerIndex )
-{
-	b2TracyCZoneNC( solve_joints, "SolveJoints", b2_colorLemonChiffon, true );
-
-	b2GraphColor* color = context->graph->colors + block.colorIndex;
-	b2JointSim* joints = color->jointSims.data;
-
-	B2_ASSERT( 0 <= block.startIndex && block.startIndex + block.count <= color->jointSims.count );
-
-	b2BitSet* jointStateBitSet = &context->world->taskContexts.data[workerIndex].jointStateBitSet;
-
-	for ( int i = block.startIndex; i < block.startIndex + block.count; ++i )
-	{
-		b2JointSim* joint = joints + i;
-		b2SolveJoint( joint, context, useBias );
-
-		if ( useBias && ( joint->forceThreshold < FLT_MAX || joint->torqueThreshold < FLT_MAX ) &&
-			 b2GetBit( jointStateBitSet, joint->jointId ) == false )
-		{
-			float force, torque;
-			b2GetJointReaction( joint, context->inv_h, &force, &torque );
-
-			// Check thresholds. A zero threshold means all awake joints get reported.
-			if ( force >= joint->forceThreshold || torque >= joint->torqueThreshold )
-			{
-				// Flag this joint for processing.
-				b2SetBit( jointStateBitSet, joint->jointId );
-			}
-		}
-	}
-
-	b2TracyCZoneEnd( solve_joints );
-}
-
 #define B2_MAX_CONTINUOUS_SENSOR_HITS 8
 
 struct b2ContinuousContext
@@ -1366,14 +1278,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	int awakeBodyCount = awakeSet->bodySims.count;
 	if ( awakeBodyCount == 0 )
 	{
-		// Nothing to simulate, however the tree rebuild must be finished.
-		if ( world->userTreeTask != NULL )
-		{
-			world->finishTaskFcn( world->userTreeTask, world->userTaskContext );
-			world->userTreeTask = NULL;
-			world->activeTaskCount -= 1;
-		}
-
 		b2ValidateNoEnlarged( &world->broadPhase );
 		return;
 	}

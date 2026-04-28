@@ -397,7 +397,8 @@ static void b2UpdateTreesTask( void* context )
 	b2TracyCZoneNC( tree_task, "Rebuild BVH", b2_colorFireBrick, true );
 
 	b2World* world = context;
-	b2BroadPhase_RebuildTrees( &world->broadPhase );
+	b2DynamicTree_Rebuild( world->broadPhase.trees + b2_dynamicBody, false );
+	b2DynamicTree_Rebuild( world->broadPhase.trees + b2_kinematicBody, false );
 
 	b2TracyCZoneEnd( tree_task );
 }
@@ -525,12 +526,6 @@ bool b2BroadPhase_TestOverlap( const b2BroadPhase* bp, int proxyKeyA, int proxyK
 	b2AABB aabbA = b2DynamicTree_GetAABB( bp->trees + typeIndexA, proxyIdA );
 	b2AABB aabbB = b2DynamicTree_GetAABB( bp->trees + typeIndexB, proxyIdB );
 	return b2AABB_Overlaps( aabbA, aabbB );
-}
-
-void b2BroadPhase_RebuildTrees( b2BroadPhase* bp )
-{
-	b2DynamicTree_Rebuild( bp->trees + b2_dynamicBody, false );
-	b2DynamicTree_Rebuild( bp->trees + b2_kinematicBody, false );
 }
 
 int b2BroadPhase_GetShapeIndex( b2BroadPhase* bp, int proxyKey )

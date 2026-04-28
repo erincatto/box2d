@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "test_macros.h"
+#include "box2d/base.h"
 
 #include <string.h>
 
@@ -71,6 +72,8 @@ int main( int argc, char** argv )
 		filter = argv[1];
 	}
 
+	uint64_t ticks = b2GetTicks();
+
 	printf( "Starting Box2D unit tests\n" );
 	if ( filter != NULL )
 	{
@@ -93,6 +96,9 @@ int main( int argc, char** argv )
 
 	printf( "======================================\n" );
 	printf( "All Box2D tests passed!\n" );
+	
+	float duration = b2GetMilliseconds( ticks );
+	printf( "Test duration = %.2f s\n", 0.001f * duration );
 
 #ifdef TRACY_ENABLE
 	___tracy_shutdown_profiler();

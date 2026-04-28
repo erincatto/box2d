@@ -276,6 +276,10 @@ void b2PrepareJoints_Overflow( b2StepContext* context );
 void b2WarmStartJoints_Overflow( b2StepContext* context );
 void b2SolveJoints_Overflow( b2StepContext* context, bool useBias );
 
+void b2PrepareJointsTask( b2SolverBlock block, b2StepContext* context );
+void b2WarmStartJointsTask( b2SolverBlock block, b2StepContext* context );
+void b2SolveJointsTask( b2SolverBlock block, b2StepContext* context, bool useBias, int workerIndex );
+
 void b2GetJointReaction( b2JointSim* sim, float invTimeStep, float* force, float* torque );
 
 void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint );

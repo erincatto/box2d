@@ -58,8 +58,6 @@ void b2BroadPhase_DestroyProxy( b2BroadPhase* bp, int proxyKey );
 void b2BroadPhase_MoveProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb );
 void b2BroadPhase_EnlargeProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb );
 
-void b2BroadPhase_RebuildTrees( b2BroadPhase* bp );
-
 int b2BroadPhase_GetShapeIndex( b2BroadPhase* bp, int proxyKey );
 
 void b2UpdateBroadPhasePairs( b2World* world );

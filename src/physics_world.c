@@ -820,10 +820,6 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		world->endEventArrayIndex = 1 - world->endEventArrayIndex;
 		b2Array_Clear( world->sensorEndEvents[world->endEventArrayIndex] );
 		b2Array_Clear( world->contactEndEvents[world->endEventArrayIndex] );
-
-		// todo_erin would be useful to still process collision while paused
-		b2TracyCFrame;
-		return;
 	}
 
 	b2TracyCZoneNC( world_step, "Step", b2_colorBox2DGreen, true );
@@ -889,6 +885,14 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		uint64_t solveTicks = b2GetTicks();
 		b2Solve( world, &context );
 		world->profile.solve = b2GetMilliseconds( solveTicks );
+	}
+
+	// Finish the tree task in case b2Solve didn't finish it
+	if (world->userTreeTask)
+	{
+		world->finishTaskFcn( world->userTreeTask, world->userTaskContext );
+		world->userTreeTask = NULL;
+		world->activeTaskCount -= 1;
 	}
 
 	// Update sensors
