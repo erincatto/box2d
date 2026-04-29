@@ -510,6 +510,9 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 				}
 			}
 
+			// Caching for contact recycling.
+			contactSim->cachedTransformA = transformA;
+			contactSim->cachedTransformB = transformB;
 			contactSim->simFlags |= b2_simRelativeTransformValid;
 
 			b2Vec2 centerOffsetA = b2RotateVector( transformA.q, bodySimA->localCenter );
@@ -531,9 +534,6 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 				b2SetBit( &taskContext->contactStateBitSet, contactId );
 			}
 
-			// Caching for contact recycling. Requires 40 bytes.
-			contactSim->cachedTransformA = transformA;
-			contactSim->cachedTransformB = transformB;
 			for ( int i = 0; i < contactSim->manifold.pointCount; ++i )
 			{
 				b2ManifoldPoint* mp = contactSim->manifold.points + i;
