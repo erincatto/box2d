@@ -815,14 +815,6 @@ void Sample::UpdateGui()
 
 	if ( m_context->drawCounters )
 	{
-		// Mirror of b2_graphColors[] in src/constraint_graph.c — keep in sync if that table changes.
-		static const b2HexColor s_graphColors[B2_GRAPH_COLOR_COUNT] = {
-			b2_colorRed,	b2_colorOrange, b2_colorYellow,	   b2_colorGreen,	  b2_colorCyan,		b2_colorBlue,
-			b2_colorViolet, b2_colorPink,	b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,	b2_colorRosyBrown,
-			b2_colorAqua,	b2_colorPeru,	b2_colorLime,	   b2_colorGold,	  b2_colorPlum,		b2_colorSnow,
-			b2_colorTeal,	b2_colorKhaki,	b2_colorSalmon,	   b2_colorPeachPuff, b2_colorHoneyDew, b2_colorBlack,
-		};
-
 		b2Counters s = b2World_GetCounters( m_worldId );
 		constexpr int colorCount = sizeof( s.colorCounts ) / sizeof( s.colorCounts[0] );
 		const int overflowIndex = colorCount - 1;
@@ -844,6 +836,18 @@ void Sample::UpdateGui()
 		ImGui::Begin( "Counters", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize );
 
 		ImGui::Text( "bodies/shapes/contacts/joints = %d/%d/%d/%d", s.bodyCount, s.shapeCount, s.contactCount, s.jointCount );
+		{
+			float frac = s.awakeContactCount > 0
+				? b2ClampFloat( (float)s.recycledContactCount / (float)s.awakeContactCount, 0.0f, 1.0f )
+				: 0.0f;
+
+			char overlay[32];
+			snprintf( overlay, sizeof( overlay ), "%d / %d", s.recycledContactCount, s.awakeContactCount );
+
+			ImGui::TextUnformatted( "recycled contacts" );
+			ImGui::SameLine();
+			ImGui::ProgressBar( frac, ImVec2( -FLT_MIN, 0.0f ), overlay );
+		}
 		ImGui::Text( "islands/tasks = %d/%d", s.islandCount, s.taskCount );
 		ImGui::Text( "tree height static/movable = %d/%d", s.staticTreeHeight, s.treeHeight );
 		ImGui::Text( "stack allocator size = %d K", s.stackUsed / 1024 );
@@ -873,7 +877,7 @@ void Sample::UpdateGui()
 					continue;
 				}
 
-				uint32_t hex = static_cast<uint32_t>( s_graphColors[i] );
+				uint32_t hex = static_cast<uint32_t>( b2GetGraphColor( i ) );
 				ImU32 swatch = IM_COL32( ( hex >> 16 ) & 0xFF, ( hex >> 8 ) & 0xFF, hex & 0xFF, 255 );
 				ImU32 barColor = isOverflow ? IM_COL32( 220, 60, 60, 255 ) : swatch;
 
@@ -883,7 +887,7 @@ void Sample::UpdateGui()
 				if ( isOverflow )
 				{
 					ImGui::PushStyleColor( ImGuiCol_Text, IM_COL32( 220, 60, 60, 255 ) );
-					ImGui::TextUnformatted( "ovf" );
+					ImGui::TextUnformatted( "over" );
 					ImGui::PopStyleColor();
 				}
 				else

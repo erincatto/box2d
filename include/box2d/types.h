@@ -526,6 +526,12 @@ typedef struct b2Counters
 	int overflowContactCount;
 	int overflowJointCount;
 	int maxBodyDegree;
+
+	// Number of contacts touched by the collide pass (graph contacts + awake-set non-touching).
+	int awakeContactCount;
+
+	// Number of contacts recycled in the most recent step.
+	int recycledContactCount;
 } b2Counters;
 //! @endcond
 
@@ -1325,6 +1331,10 @@ typedef enum b2HexColor
 	b2_colorBox2DGreen = 0x8CC924,
 	b2_colorBox2DYellow = 0xFFEE8C
 } b2HexColor;
+
+/// Get the visualization color assigned to a constraint graph color slot. The last index
+/// (B2_GRAPH_COLOR_COUNT - 1) is the overflow color.
+B2_API b2HexColor b2GetGraphColor( int index );
 
 /// The type of contact point drawing
 typedef enum b2ContactDrawType

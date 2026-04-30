@@ -504,6 +504,8 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 						mp->persisted = true;
 					}
 
+					taskContext->recycledContactCount += 1;
+
 					// Contact is recycled. This also skips updating other aspects of the contact
 					// such as material parameters.
 					continue;
@@ -643,6 +645,7 @@ static void b2Collide( b2StepContext* context )
 	for ( int i = 0; i < world->workerCount; ++i )
 	{
 		b2SetBitCountAndClear( &world->taskContexts.data[i].contactStateBitSet, contactIdCapacity );
+		world->taskContexts.data[i].recycledContactCount = 0;
 	}
 
 	// Task should take at least 40us on a 4GHz CPU (10K cycles)
@@ -1216,7 +1219,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 							{
 								// graph color
 								float pointSize = contact->colorIndex == B2_OVERFLOW_INDEX ? 7.5f : 5.0f;
-								draw->DrawPointFcn( p, pointSize, b2_graphColors[contact->colorIndex], draw->context );
+								draw->DrawPointFcn( p, pointSize, b2GetGraphColor( contact->colorIndex ), draw->context );
 								// m_context->draw.DrawString(point->position, "%d", point->color);
 							}
 							else if ( mp->separation > linearSlop )
@@ -1791,16 +1794,25 @@ b2Counters b2World_GetCounters( b2WorldId worldId )
 	s.byteCount = b2GetByteCount();
 	s.taskCount = world->taskCount;
 
+	s.recycledContactCount = 0;
+	for ( int i = 0; i < world->workerCount; ++i )
+	{
+		s.recycledContactCount += world->taskContexts.data[i].recycledContactCount;
+	}
+
 	s.maxColorUsed = -1;
+	s.awakeContactCount = 0;
 	for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
 	{
 		b2GraphColor* color = world->constraintGraph.colors + i;
 		s.colorCounts[i] = color->contactSims.count + color->jointSims.count;
+		s.awakeContactCount += color->contactSims.count;
 		if ( s.colorCounts[i] > 0 )
 		{
 			s.maxColorUsed = i;
 		}
 	}
+	s.awakeContactCount += world->solverSets.data[b2_awakeSet].contactSims.count;
 
 	{
 		b2GraphColor* overflow = world->constraintGraph.colors + B2_OVERFLOW_INDEX;

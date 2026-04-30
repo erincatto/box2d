@@ -53,6 +53,9 @@ typedef struct b2TaskContext
 	float splitSleepTime;
 	int splitIslandId;
 
+	// Number of contacts recycled this step (collide pass).
+	int recycledContactCount;
+
 } b2TaskContext;
 
 // The world struct manages all physics entities, dynamic simulation,  and asynchronous queries.
