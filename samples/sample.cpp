@@ -525,31 +525,6 @@ void Sample::Step()
 		m_profileWriteIndex += 1;
 	}
 
-	if ( m_context->drawCounters )
-	{
-		b2Counters s = b2World_GetCounters( m_worldId );
-
-		DrawTextLine( "bodies/shapes/contacts/joints = %d/%d/%d/%d", s.bodyCount, s.shapeCount, s.contactCount, s.jointCount );
-		DrawTextLine( "islands/tasks = %d/%d", s.islandCount, s.taskCount );
-		DrawTextLine( "tree height static/movable = %d/%d", s.staticTreeHeight, s.treeHeight );
-
-		int totalCount = 0;
-		char buffer[256] = { 0 };
-		int colorCount = sizeof( s.colorCounts ) / sizeof( s.colorCounts[0] );
-
-		// todo fix this
-		int offset = snprintf( buffer, 256, "colors: " );
-		for ( int i = 0; i < colorCount; ++i )
-		{
-			offset += snprintf( buffer + offset, 256 - offset, "%d/", s.colorCounts[i] );
-			totalCount += s.colorCounts[i];
-		}
-		snprintf( buffer + offset, 256 - offset, "[%d]", totalCount );
-		DrawTextLine( buffer );
-		DrawTextLine( "stack allocator size = %d K", s.stackUsed / 1024 );
-		DrawTextLine( "total allocation = %d K", s.byteCount / 1024 );
-	}
-
 	// Accumulate profile averages
 	if ( m_didStep )
 	{
@@ -831,6 +806,101 @@ void Sample::UpdateGui()
 						ImGui::PopStyleColor();
 					}
 				}
+			}
+			ImGui::EndTable();
+		}
+
+		ImGui::End();
+	}
+
+	if ( m_context->drawCounters )
+	{
+		// Mirror of b2_graphColors[] in src/constraint_graph.c — keep in sync if that table changes.
+		static const b2HexColor s_graphColors[B2_GRAPH_COLOR_COUNT] = {
+			b2_colorRed,	b2_colorOrange, b2_colorYellow,	   b2_colorGreen,	  b2_colorCyan,		b2_colorBlue,
+			b2_colorViolet, b2_colorPink,	b2_colorChocolate, b2_colorGoldenRod, b2_colorCoral,	b2_colorRosyBrown,
+			b2_colorAqua,	b2_colorPeru,	b2_colorLime,	   b2_colorGold,	  b2_colorPlum,		b2_colorSnow,
+			b2_colorTeal,	b2_colorKhaki,	b2_colorSalmon,	   b2_colorPeachPuff, b2_colorHoneyDew, b2_colorBlack,
+		};
+
+		b2Counters s = b2World_GetCounters( m_worldId );
+		constexpr int colorCount = sizeof( s.colorCounts ) / sizeof( s.colorCounts[0] );
+		const int overflowIndex = colorCount - 1;
+
+		// Bars are scaled to the largest non-overflow color so the distribution shape reads clearly;
+		// overflow gets its own bar against the same scale, with a red tint to flag coupling problems.
+		int totalCount = 0;
+		int maxCount = 1;
+		for ( int i = 0; i < colorCount; ++i )
+		{
+			totalCount += s.colorCounts[i];
+			if ( i != overflowIndex && s.colorCounts[i] > maxCount )
+			{
+				maxCount = s.colorCounts[i];
+			}
+		}
+
+		ImGui::SetNextWindowPos( { fontSize, 8.0f * fontSize }, ImGuiCond_FirstUseEver );
+		ImGui::Begin( "Counters", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize );
+
+		ImGui::Text( "bodies/shapes/contacts/joints = %d/%d/%d/%d", s.bodyCount, s.shapeCount, s.contactCount, s.jointCount );
+		ImGui::Text( "islands/tasks = %d/%d", s.islandCount, s.taskCount );
+		ImGui::Text( "tree height static/movable = %d/%d", s.staticTreeHeight, s.treeHeight );
+		ImGui::Text( "stack allocator size = %d K", s.stackUsed / 1024 );
+		ImGui::Text( "total allocation = %d K", s.byteCount / 1024 );
+		ImGui::Separator();
+		ImGui::Text( "%d constraints across %d colors", totalCount, colorCount );
+
+		const ImGuiTableFlags tableFlags =
+			ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit;
+		if ( ImGui::BeginTable( "graphColors", 3, tableFlags ) )
+		{
+			ImGui::TableSetupColumn( "color", ImGuiTableColumnFlags_WidthFixed, 3.5f * fontSize );
+			ImGui::TableSetupColumn( "count", ImGuiTableColumnFlags_WidthFixed, 5.0f * fontSize );
+			ImGui::TableSetupColumn( "share", ImGuiTableColumnFlags_WidthFixed, 16.0f * fontSize );
+			ImGui::TableHeadersRow();
+
+			const float invMax = 1.0f / static_cast<float>( maxCount );
+
+			for ( int i = 0; i < colorCount; ++i )
+			{
+				int count = s.colorCounts[i];
+				bool isOverflow = ( i == overflowIndex );
+
+				// Skip empty slots, but always show overflow — a non-zero overflow row is the signal we care about.
+				if ( count == 0 && !isOverflow )
+				{
+					continue;
+				}
+
+				uint32_t hex = static_cast<uint32_t>( s_graphColors[i] );
+				ImU32 swatch = IM_COL32( ( hex >> 16 ) & 0xFF, ( hex >> 8 ) & 0xFF, hex & 0xFF, 255 );
+				ImU32 barColor = isOverflow ? IM_COL32( 220, 60, 60, 255 ) : swatch;
+
+				ImGui::TableNextRow();
+
+				ImGui::TableNextColumn();
+				if ( isOverflow )
+				{
+					ImGui::PushStyleColor( ImGuiCol_Text, IM_COL32( 220, 60, 60, 255 ) );
+					ImGui::TextUnformatted( "ovf" );
+					ImGui::PopStyleColor();
+				}
+				else
+				{
+					ImGui::PushStyleColor( ImGuiCol_Text, swatch );
+					ImGui::Text( "%d", i );
+					ImGui::PopStyleColor();
+				}
+
+				ImGui::TableNextColumn();
+				ImGui::Text( "%d", count );
+
+				ImGui::TableNextColumn();
+				float frac = b2ClampFloat( count * invMax, 0.0f, 1.0f );
+				ImGui::PushStyleColor( ImGuiCol_PlotHistogram, barColor );
+				ImGui::ProgressBar( frac, ImVec2( -FLT_MIN, 0.0f ), "" );
+				ImGui::PopStyleColor();
 			}
 			ImGui::EndTable();
 		}
