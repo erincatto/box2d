@@ -56,14 +56,24 @@ typedef struct b2RayResult
 	bool hit;
 } b2RayResult;
 
-/// Optional world capacities that can be used to avoid run-time allocations
+/// Optional world capacities that can be used to avoid run-time allocations.
+/// @see b2World_GetMaxCapacity
 /// @ingroup world
 typedef struct b2Capacity
 {
+	/// Number of expected static shapes.
 	int staticShapeCount;
+
+	/// Number of expected dynamic and kinematic shapes.
 	int dynamicShapeCount;
+
+	/// Number of expected static bodies.
 	int staticBodyCount;
+
+	/// Number of expected dynamic and kinematic bodies.
 	int dynamicBodyCount;
+
+	/// Number of expected contacts.
 	int contactCount;
 } b2Capacity;
 
@@ -534,12 +544,6 @@ typedef struct b2Counters
 	int byteCount;
 	int taskCount;
 	int colorCounts[24];
-
-	// Constraint graph telemetry
-	int maxColorUsed;
-	int overflowContactCount;
-	int overflowJointCount;
-	int maxBodyDegree;
 
 	// Number of contacts touched by the collide pass (graph contacts + awake-set non-touching).
 	int awakeContactCount;

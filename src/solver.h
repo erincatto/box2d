@@ -55,6 +55,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#if B2_SIMD_WIDTH == 8
+#define B2_SIMD_SHIFT 3
+#elif B2_SIMD_WIDTH == 4
+#define B2_SIMD_SHIFT 2
+#else
+#define B2_SIMD_SHIFT 0
+#endif
+
 typedef struct b2BodySim b2BodySim;
 typedef struct b2BodyState b2BodyState;
 typedef struct b2ContactSim b2ContactSim;

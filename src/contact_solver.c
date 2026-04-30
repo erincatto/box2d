@@ -1606,6 +1606,11 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 		int colorContactCount = spans[colorIndex].count;
 		b2ContactSim* contactSims = spans[colorIndex].contacts;
 
+#if B2_ENABLE_VALIDATION
+		int expectedWide = colorContactCount > 0 ? ( ( colorContactCount - 1 ) >> B2_SIMD_SHIFT ) + 1 : 0;
+		B2_ASSERT( spans[colorIndex + 1].start - spans[colorIndex].start == expectedWide );
+#endif
+
 		// Loop over color
 		for ( ; wideIndex < colorWideEndIndex; ++wideIndex )
 		{

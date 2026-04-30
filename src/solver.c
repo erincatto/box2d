@@ -1264,14 +1264,6 @@ static void b2BulletBodyTask( int startIndex, int endIndex, int workerIndex, voi
 	b2TracyCZoneEnd( bullet_body_task );
 }
 
-#if B2_SIMD_WIDTH == 8
-#define B2_SIMD_SHIFT 3
-#elif B2_SIMD_WIDTH == 4
-#define B2_SIMD_SHIFT 2
-#else
-#define B2_SIMD_SHIFT 0
-#endif
-
 // Solve with graph coloring
 void b2Solve( b2World* world, b2StepContext* stepContext )
 {
@@ -1535,7 +1527,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stage = b2InitStage( stage, b2_stageIntegratePositions, bodyBlocks, bodyDim.count, UINT8_MAX );
 		stage = b2InitColorStages( stage, b2_stageRelax, RELAX_ITERATIONS, activeColorCount, graphColorBlocks, graphBlockCounts,
 								   activeColorIndices );
-		// Note: joint blocks mixed in, could have joint limit restitution
 		stage = b2InitColorStages( stage, b2_stageRestitution, 1, activeColorCount, graphColorBlocks, graphBlockCounts,
 								   activeColorIndices );
 		stage = b2InitStage( stage, b2_stageStoreImpulses, contactBlocks, contactPrepareDim.count, UINT8_MAX );

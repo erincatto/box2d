@@ -295,8 +295,6 @@ int main( int argc, char** argv )
 
 		printf( "body %d / shape %d / contact %d / joint %d / stack %d\n", counters.bodyCount, counters.shapeCount,
 				counters.contactCount, counters.jointCount, counters.stackUsed );
-		printf( "graph: maxColor %d / maxBodyDegree %d / overflow contacts %d joints %d\n", counters.maxColorUsed,
-				counters.maxBodyDegree, counters.overflowContactCount, counters.overflowJointCount );
 		printf( "color counts:" );
 		for ( int c = 0; c < ARRAY_COUNT( counters.colorCounts ); ++c )
 		{

@@ -825,14 +825,6 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 
 	world->profile = (b2Profile){ 0 };
 
-	if ( timeStep == 0.0f )
-	{
-		// Swap end event array buffers
-		world->endEventArrayIndex = 1 - world->endEventArrayIndex;
-		b2Array_Clear( world->sensorEndEvents[world->endEventArrayIndex] );
-		b2Array_Clear( world->contactEndEvents[world->endEventArrayIndex] );
-	}
-
 	b2TracyCZoneNC( world_step, "Step", b2_colorBox2DGreen, true );
 
 	world->locked = true;
@@ -1824,85 +1816,14 @@ b2Counters b2World_GetCounters( b2WorldId worldId )
 		s.recycledContactCount += world->taskContexts.data[i].recycledContactCount;
 	}
 
-	s.maxColorUsed = -1;
 	s.awakeContactCount = 0;
 	for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
 	{
 		b2GraphColor* color = world->constraintGraph.colors + i;
 		s.colorCounts[i] = color->contactSims.count + color->jointSims.count;
 		s.awakeContactCount += color->contactSims.count;
-		if ( s.colorCounts[i] > 0 )
-		{
-			s.maxColorUsed = i;
-		}
 	}
 	s.awakeContactCount += world->solverSets.data[b2_awakeSet].contactSims.count;
-
-	{
-		b2GraphColor* overflow = world->constraintGraph.colors + B2_OVERFLOW_INDEX;
-		s.overflowContactCount = overflow->contactSims.count;
-		s.overflowJointCount = overflow->jointSims.count;
-	}
-
-	// Walk awake-set contacts and joints to compute max per-body degree.
-	// Static bodies are excluded because they do not constrain coloring.
-	{
-		int bodyCount = world->bodies.count;
-		int* degree = b2Alloc( bodyCount * sizeof( int ) );
-		memset( degree, 0, bodyCount * sizeof( int ) );
-
-		int contactSlotCount = world->contacts.count;
-		for ( int i = 0; i < contactSlotCount; ++i )
-		{
-			b2Contact* contact = world->contacts.data + i;
-			if ( contact->colorIndex == B2_NULL_INDEX )
-			{
-				continue;
-			}
-			int idA = contact->edges[0].bodyId;
-			int idB = contact->edges[1].bodyId;
-			if ( 0 <= idA && idA < bodyCount && world->bodies.data[idA].type == b2_dynamicBody )
-			{
-				degree[idA] += 1;
-			}
-			if ( 0 <= idB && idB < bodyCount && world->bodies.data[idB].type == b2_dynamicBody )
-			{
-				degree[idB] += 1;
-			}
-		}
-
-		int jointSlotCount = world->joints.count;
-		for ( int i = 0; i < jointSlotCount; ++i )
-		{
-			b2Joint* joint = world->joints.data + i;
-			if ( joint->colorIndex == B2_NULL_INDEX )
-			{
-				continue;
-			}
-			int idA = joint->edges[0].bodyId;
-			int idB = joint->edges[1].bodyId;
-			if ( 0 <= idA && idA < bodyCount && world->bodies.data[idA].type == b2_dynamicBody )
-			{
-				degree[idA] += 1;
-			}
-			if ( 0 <= idB && idB < bodyCount && world->bodies.data[idB].type == b2_dynamicBody )
-			{
-				degree[idB] += 1;
-			}
-		}
-
-		int maxDegree = 0;
-		for ( int i = 0; i < bodyCount; ++i )
-		{
-			if ( degree[i] > maxDegree )
-			{
-				maxDegree = degree[i];
-			}
-		}
-		s.maxBodyDegree = maxDegree;
-
-		b2Free( degree, bodyCount * sizeof( int ) );
-	}
 
 	return s;
 }
