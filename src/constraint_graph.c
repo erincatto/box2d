@@ -56,7 +56,6 @@ void b2DestroyGraph( b2ConstraintGraph* graph )
 		B2_ASSERT( i != B2_OVERFLOW_INDEX || color->bodySet.bits == NULL );
 
 		b2DestroyBitSet( &color->bodySet );
-
 		b2Array_Destroy( color->contactSims );
 		b2Array_Destroy( color->jointSims );
 	}
