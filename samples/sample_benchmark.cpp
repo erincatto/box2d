@@ -427,6 +427,30 @@ public:
 
 static int benchmarkBarrel24 = RegisterSample( "Benchmark", "Barrel 2.4", BenchmarkBarrel24::Create );
 
+class BenchmarkCompounds : public Sample
+{
+public:
+	explicit BenchmarkCompounds( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 50.0f };
+			m_context->camera.zoom = 25.0f * 2.2f;
+			m_context->enableSleep = false;
+		}
+
+		CreateCompounds( m_worldId );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new BenchmarkCompounds( context );
+	}
+};
+
+static int benchmarkCompounds = RegisterSample( "Benchmark", "Compounds", BenchmarkCompounds::Create );
+
 class BenchmarkTumbler : public Sample
 {
 public:
@@ -1023,10 +1047,10 @@ public:
 
 static int sampleSmash = RegisterSample( "Benchmark", "Smash", BenchmarkSmash::Create );
 
-class BenchmarkCompound : public Sample
+class BenchmarkLargeCompounds : public Sample
 {
 public:
-	explicit BenchmarkCompound( SampleContext* context )
+	explicit BenchmarkLargeCompounds( SampleContext* context )
 		: Sample( context )
 	{
 		if ( m_context->restart == false )
@@ -1117,11 +1141,11 @@ public:
 
 	static Sample* Create( SampleContext* context )
 	{
-		return new BenchmarkCompound( context );
+		return new BenchmarkLargeCompounds( context );
 	}
 };
 
-static int sampleCompound = RegisterSample( "Benchmark", "Compound", BenchmarkCompound::Create );
+static int sampleLargeCompounds = RegisterSample( "Benchmark", "Large Compounds", BenchmarkLargeCompounds::Create );
 
 class BenchmarkKinematic : public Sample
 {

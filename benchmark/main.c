@@ -72,6 +72,7 @@ int main( int argc, char** argv )
 #endif
 
 	Benchmark benchmarks[] = {
+		{ "compounds", CreateCompounds, NULL, 500 },
 		{ "joint_grid", CreateJointGrid, NULL, 500 },
 		{ "junkyard", CreateJunkyard, StepJunkyard, 800 },
 		{ "large_pyramid", CreateLargePyramid, NULL, 500 },
@@ -81,7 +82,6 @@ int main( int argc, char** argv )
 		{ "spinner", CreateSpinner, StepSpinner, 500 },
 		{ "tumbler", CreateTumbler, NULL, 750 },
 		{ "washer", CreateWasher, NULL, 500 },
-		{ "compound_barrel", CreateCompoundBarrel, NULL, 500 },
 	};
 
 	int benchmarkCount = ARRAY_COUNT( benchmarks );

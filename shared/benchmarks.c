@@ -807,7 +807,7 @@ float StepJunkyard( b2WorldId worldId, int stepCount )
 
 // Lifted from samples/sample_benchmark.cpp BenchmarkBarrel (e_compoundShape branch).
 // Each dynamic body is a compound of two triangular polygon shapes.
-void CreateCompoundBarrel( b2WorldId worldId )
+void CreateCompounds( b2WorldId worldId )
 {
 	{
 		float gridSize = 1.0f;
@@ -872,7 +872,7 @@ void CreateCompoundBarrel( b2WorldId worldId )
 	float side = 0.25f;
 	float centerx = shift * columnCount / 2.0f - 1.0f;
 	float centery = 1.15f / 2.0f;
-	float yStart = 100.0f;
+	float yStart = 5.0f;
 
 	for ( int i = 0; i < columnCount; ++i )
 	{

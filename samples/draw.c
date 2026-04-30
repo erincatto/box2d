@@ -1319,14 +1319,6 @@ void AddPolygon( Polygons* render, b2Transform transform, const b2Vec2* points, 
 	data.radius = radius;
 	data.color = MakeRGBA8( color, 1.0f );
 
-	if ( render->polygons.count >= render->polygons.capacity )
-	{
-		data.count += 0;
-		volatile int dummy = 32;
-		dummy += 22;
-		printf( "oops\n" );
-	}
-
 	PolygonArray_Push( &render->polygons, data );
 }
 
