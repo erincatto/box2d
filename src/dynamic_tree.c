@@ -83,8 +83,10 @@ static uint16_t b2MaxUInt16( uint16_t a, uint16_t b )
 	return a > b ? a : b;
 }
 
-b2DynamicTree b2DynamicTree_Create( void )
+b2DynamicTree b2DynamicTree_Create( int proxyCapacity )
 {
+	int capacity = b2MaxInt( proxyCapacity, 16 );
+
 	b2DynamicTree tree;
 
 	// memset needed for deterministic serialization
@@ -92,7 +94,8 @@ b2DynamicTree b2DynamicTree_Create( void )
 
 	tree.root = B2_NULL_INDEX;
 
-	tree.nodeCapacity = 16;
+	// maximum node count for a full binary tree is 2 * leafCount - 1
+	tree.nodeCapacity = 2 * capacity - 1;
 	tree.nodeCount = 0;
 	tree.nodes = (b2TreeNode*)b2Alloc( tree.nodeCapacity * sizeof( b2TreeNode ) );
 

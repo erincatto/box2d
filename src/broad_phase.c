@@ -24,7 +24,7 @@
 
 // static FILE* s_file = NULL;
 
-void b2CreateBroadPhase( b2BroadPhase* bp )
+void b2CreateBroadPhase( b2BroadPhase* bp, const b2Capacity* capacity )
 {
 	_Static_assert( b2_bodyTypeCount == 3, "must be three body types" );
 
@@ -34,18 +34,22 @@ void b2CreateBroadPhase( b2BroadPhase* bp )
 	//	fprintf(s_file, "============\n\n");
 	// }
 
-	bp->moveSet = b2CreateSet( 16 );
-	b2Array_CreateN( bp->moveArray, 16 );
+	bp->moveSet = b2CreateSet( b2MaxInt( 16, 2 * capacity->dynamicShapeCount ) );
+	b2Array_CreateN( bp->moveArray, b2MaxInt( 16, capacity->dynamicShapeCount ) );
 	bp->moveResults = NULL;
 	bp->movePairs = NULL;
 	bp->movePairCapacity = 0;
 	b2AtomicStoreInt( &bp->movePairIndex, 0 );
-	bp->pairSet = b2CreateSet( 32 );
+	bp->pairSet = b2CreateSet( b2MaxInt( 32, 2 * capacity->contactCount ) );
 
-	for ( int i = 0; i < b2_bodyTypeCount; ++i )
-	{
-		bp->trees[i] = b2DynamicTree_Create();
-	}
+	int staticCapacity = b2MaxInt( 16, capacity->staticShapeCount );
+	bp->trees[b2_staticBody] = b2DynamicTree_Create( staticCapacity );
+
+	int kinematicCapacity = 16;
+	bp->trees[b2_kinematicBody] = b2DynamicTree_Create( kinematicCapacity );
+
+	int dynamicCapacity = b2MaxInt( 16, capacity->dynamicShapeCount );
+	bp->trees[b2_dynamicBody] = b2DynamicTree_Create( dynamicCapacity );
 }
 
 void b2DestroyBroadPhase( b2BroadPhase* bp )

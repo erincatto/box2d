@@ -56,7 +56,7 @@ typedef struct b2ConstraintGraph
 	b2GraphColor colors[B2_GRAPH_COLOR_COUNT];
 } b2ConstraintGraph;
 
-void b2CreateGraph( b2ConstraintGraph* graph, int bodyCapacity );
+void b2CreateGraph( b2ConstraintGraph* graph, const b2Capacity* capacity );
 void b2DestroyGraph( b2ConstraintGraph* graph );
 
 void b2AddContactToGraph( b2World* world, b2ContactSim* contactSim, b2Contact* contact );

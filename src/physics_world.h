@@ -173,6 +173,8 @@ typedef struct b2World
 
 	b2Profile profile;
 
+	b2Capacity maxCapacity;
+
 	b2PreSolveFcn* preSolveFcn;
 	void* preSolveContext;
 

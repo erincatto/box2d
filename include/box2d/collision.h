@@ -685,7 +685,7 @@ typedef struct b2TreeStats
 } b2TreeStats;
 
 /// Constructing the tree initializes the node pool.
-B2_API b2DynamicTree b2DynamicTree_Create( void );
+B2_API b2DynamicTree b2DynamicTree_Create( int proxyCapacity );
 
 /// Destroy the tree, freeing the node pool.
 B2_API void b2DynamicTree_Destroy( b2DynamicTree* tree );

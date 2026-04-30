@@ -25,7 +25,7 @@
 // This is used for debugging by making all constraints be assigned to overflow.
 #define B2_FORCE_OVERFLOW 0
 
-void b2CreateGraph( b2ConstraintGraph* graph, int bodyCapacity )
+void b2CreateGraph( b2ConstraintGraph* graph, const b2Capacity* capacity )
 {
 	_Static_assert( B2_GRAPH_COLOR_COUNT >= 2, "must have at least two constraint graph colors" );
 	_Static_assert( B2_OVERFLOW_INDEX == B2_GRAPH_COLOR_COUNT - 1, "bad over flow index" );
@@ -33,7 +33,7 @@ void b2CreateGraph( b2ConstraintGraph* graph, int bodyCapacity )
 
 	*graph = (b2ConstraintGraph){ 0 };
 
-	bodyCapacity = b2MaxInt( bodyCapacity, 8 );
+	int bodyCapacity = b2MaxInt( capacity->staticBodyCount + capacity->dynamicBodyCount, 16 );
 
 	// Initialize graph color bit set.
 	// No bitset for overflow color.
@@ -42,6 +42,7 @@ void b2CreateGraph( b2ConstraintGraph* graph, int bodyCapacity )
 		b2GraphColor* color = graph->colors + i;
 		color->bodySet = b2CreateBitSet( bodyCapacity );
 		b2SetBitCountAndClear( &color->bodySet, bodyCapacity );
+		b2Array_Reserve( color->contactSims, 16 );
 	}
 }
 

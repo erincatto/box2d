@@ -179,12 +179,14 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->inUse = true;
 
 	world->stack = b2CreateStack( 2048 );
-	b2CreateBroadPhase( &world->broadPhase );
-	b2CreateGraph( &world->constraintGraph, 16 );
+	b2CreateBroadPhase( &world->broadPhase, &def->capacity );
+	b2CreateGraph( &world->constraintGraph, &def->capacity );
 
 	// pools
 	world->bodyIdPool = b2CreateIdPool();
-	b2Array_CreateN( world->bodies, 16 );
+
+	int bodyCapacity = b2MaxInt( 16, def->capacity.staticBodyCount + def->capacity.dynamicBodyCount );
+	b2Array_CreateN( world->bodies, bodyCapacity );
 	b2Array_CreateN( world->solverSets, 8 );
 
 	// add empty static, active, and disabled body sets
@@ -194,6 +196,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	// static set
 	set.setIndex = b2AllocId( &world->solverSetIdPool );
 	b2Array_Push( world->solverSets, set );
+	b2Array_Reserve( world->solverSets.data[b2_staticSet].bodySims, b2MaxInt( 16, def->capacity.staticBodyCount ) );
 	B2_ASSERT( world->solverSets.data[b2_staticSet].setIndex == b2_staticSet );
 
 	// disabled set
@@ -204,22 +207,27 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	// awake set
 	set.setIndex = b2AllocId( &world->solverSetIdPool );
 	b2Array_Push( world->solverSets, set );
+	b2Array_Reserve( world->solverSets.data[b2_awakeSet].bodySims, b2MaxInt( 16, def->capacity.dynamicBodyCount ) );
+	b2Array_Reserve( world->solverSets.data[b2_awakeSet].bodyStates, b2MaxInt( 16, def->capacity.dynamicBodyCount ) );
+	b2Array_Reserve( world->solverSets.data[b2_awakeSet].contactSims, b2MaxInt( 16, def->capacity.contactCount ) );
 	B2_ASSERT( world->solverSets.data[b2_awakeSet].setIndex == b2_awakeSet );
 
 	world->shapeIdPool = b2CreateIdPool();
-	b2Array_CreateN( world->shapes, 16 );
+
+	int shapeCapacity = b2MaxInt( 16, def->capacity.staticShapeCount + def->capacity.dynamicShapeCount );
+	b2Array_CreateN( world->shapes, shapeCapacity );
 
 	world->chainIdPool = b2CreateIdPool();
 	b2Array_CreateN( world->chainShapes, 4 );
 
 	world->contactIdPool = b2CreateIdPool();
-	b2Array_CreateN( world->contacts, 16 );
+	b2Array_CreateN( world->contacts, b2MaxInt( 16, def->capacity.contactCount ) );
 
 	world->jointIdPool = b2CreateIdPool();
 	b2Array_CreateN( world->joints, 16 );
 
 	world->islandIdPool = b2CreateIdPool();
-	b2Array_CreateN( world->islands, 8 );
+	b2Array_CreateN( world->islands, b2MaxInt( 16, def->capacity.dynamicBodyCount ) );
 
 	b2Array_CreateN( world->sensors, 4 );
 
@@ -837,6 +845,22 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	}
 
 	uint64_t stepTicks = b2GetTicks();
+
+	{
+		b2Capacity* c = &world->maxCapacity;
+		c->staticShapeCount = b2MaxInt( c->staticShapeCount, world->broadPhase.trees[b2_staticBody].proxyCount );
+		c->dynamicShapeCount = b2MaxInt( c->dynamicShapeCount, world->broadPhase.trees[b2_dynamicBody].proxyCount );
+
+		int staticBodyCount = world->solverSets.data[b2_staticSet].bodySims.count;
+		c->staticBodyCount = b2MaxInt( c->staticBodyCount, staticBodyCount );
+
+		// this includes kinematic bodies
+		int totalBodyCount = b2GetIdCount( &world->bodyIdPool );
+		c->dynamicBodyCount = b2MaxInt( c->dynamicBodyCount, totalBodyCount - staticBodyCount );
+
+		int totalContactCount = b2GetIdCount( &world->contactIdPool );
+		c->contactCount = b2MaxInt( c->contactCount, totalContactCount );
+	}
 
 	// Update collision pairs and create contacts
 	{
@@ -1881,6 +1905,12 @@ b2Counters b2World_GetCounters( b2WorldId worldId )
 	}
 
 	return s;
+}
+
+b2Capacity b2World_GetMaxCapacity( b2WorldId worldId )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	return world->maxCapacity;
 }
 
 void b2World_SetUserData( b2WorldId worldId, void* userData )

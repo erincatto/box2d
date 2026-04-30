@@ -12,7 +12,7 @@ static int TreeCreateDestroy( void )
 		.upperBound = { 2.0f, 2.0f },
 	};
 
-	b2DynamicTree tree = b2DynamicTree_Create();
+	b2DynamicTree tree = b2DynamicTree_Create( 16 );
 	b2DynamicTree_CreateProxy( &tree, a, 1, 0 );
 
 	ENSURE( tree.nodeCount > 0 );
@@ -40,7 +40,7 @@ static int TreeRayCastTest( void )
 {
 	// Test AABB centered at origin with bounds [-1, -1] to [1, 1]
 	b2AABB a = { .lowerBound = { -1.0f, -1.0f }, .upperBound = { 1.0f, 1.0f }, };
-	b2DynamicTree tree = b2DynamicTree_Create();
+	b2DynamicTree tree = b2DynamicTree_Create( 16 );
 	int proxyId = b2DynamicTree_CreateProxy( &tree, a, 1, 0 );
 
 	b2RayCastInput input = {};
@@ -241,7 +241,7 @@ static bool QueryCollectListCallback( int proxyId, uint64_t userData, void* cont
 
 static int TreeMultipleProxiesTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create();
+	b2DynamicTree tree = b2DynamicTree_Create( 16 );
 
 	b2AABB a1 = { .lowerBound = { -5.0f, -1.0f }, .upperBound = { -3.0f, 1.0f } };
 	b2AABB a2 = { .lowerBound = { -1.0f, -1.0f }, .upperBound = { 1.0f, 1.0f } };
@@ -267,7 +267,7 @@ static int TreeMultipleProxiesTest( void )
 
 static int TreeQueryTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create();
+	b2DynamicTree tree = b2DynamicTree_Create( 16 );
 
 	b2AABB a1 = { .lowerBound = { -5.0f, -1.0f }, .upperBound = { -3.0f, 1.0f } };
 	b2AABB a2 = { .lowerBound = { -1.0f, -1.0f }, .upperBound = { 1.0f, 1.0f } };
@@ -299,7 +299,7 @@ static int TreeQueryTest( void )
 
 static int TreeMoveAndEnlargeTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create();
+	b2DynamicTree tree = b2DynamicTree_Create( 16 );
 
 	b2AABB a = { .lowerBound = { 0.0f, 0.0f }, .upperBound = { 1.0f, 1.0f } };
 	int id = b2DynamicTree_CreateProxy( &tree, a, 0x1ull, 100 );
@@ -328,7 +328,7 @@ static int TreeMoveAndEnlargeTest( void )
 
 static int TreeRebuildAndValidateTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create();
+	b2DynamicTree tree = b2DynamicTree_Create( 16 );
 
 	// Create a number of proxies to make rebuild meaningful
 	for ( int i = 0; i < 12; ++i )
@@ -350,7 +350,7 @@ static int TreeRebuildAndValidateTest( void )
 
 static int TreeRowHeightTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create();
+	b2DynamicTree tree = b2DynamicTree_Create( 16 );
 
 	int columnCount = 200;
 	for (int i = 0; i < columnCount; ++i)
@@ -370,7 +370,7 @@ static int TreeRowHeightTest( void )
 
 static int TreeGridHeightTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create();
+	b2DynamicTree tree = b2DynamicTree_Create( 16 );
 
 	int columnCount = 20;
 	int rowCount = 20;
@@ -397,7 +397,7 @@ static int TreeGridHeightTest( void )
 
 static int TreeGridMovementTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create();
+	b2DynamicTree tree = b2DynamicTree_Create( 16 );
 
 	int proxyIds[GRID_COUNT * GRID_COUNT];
 	int index = 0;

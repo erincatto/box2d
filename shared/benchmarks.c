@@ -194,6 +194,19 @@ void CreateManyPyramids( b2WorldId worldId )
 	}
 }
 
+b2Capacity GetManyPyramidsCapacity( void )
+{
+	b2Capacity c = {
+		.staticShapeCount = 20,
+		.staticBodyCount = 1,
+		.dynamicShapeCount = 22000,
+		.dynamicBodyCount = 22000,
+		.contactCount = 58000,
+	};
+
+	return c;
+}
+
 #ifdef NDEBUG
 enum RainConstants
 {

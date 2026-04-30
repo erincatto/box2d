@@ -56,6 +56,17 @@ typedef struct b2RayResult
 	bool hit;
 } b2RayResult;
 
+/// Optional world capacities that can be used to avoid run-time allocations
+/// @ingroup world
+typedef struct b2Capacity
+{
+	int staticShapeCount;
+	int dynamicShapeCount;
+	int staticBodyCount;
+	int dynamicBodyCount;
+	int contactCount;
+} b2Capacity;
+
 /// World definition used to create a simulation world.
 /// Must be initialized using b2DefaultWorldDef().
 /// @ingroup world
@@ -121,6 +132,9 @@ typedef struct b2WorldDef
 
 	/// User data
 	void* userData;
+
+	/// Optional initial capacities
+	b2Capacity capacity;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;

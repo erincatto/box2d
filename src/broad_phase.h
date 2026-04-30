@@ -48,7 +48,7 @@ typedef struct b2BroadPhase
 
 } b2BroadPhase;
 
-void b2CreateBroadPhase( b2BroadPhase* bp );
+void b2CreateBroadPhase( b2BroadPhase* bp, const b2Capacity* capacity );
 void b2DestroyBroadPhase( b2BroadPhase* bp );
 
 int b2BroadPhase_CreateProxy( b2BroadPhase* bp, b2BodyType proxyType, b2AABB aabb, uint64_t categoryBits, int shapeIndex,

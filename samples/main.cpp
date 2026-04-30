@@ -128,6 +128,14 @@ static void RestartSample()
 	delete s_sample;
 	s_sample = nullptr;
 	s_context.restart = true;
+	if ( g_sampleEntries[s_context.sampleIndex].capacityFcn != nullptr)
+	{
+		s_context.capacity = g_sampleEntries[s_context.sampleIndex].capacityFcn();
+	}
+	else
+	{
+		s_context.capacity = b2DefaultWorldDef().capacity;
+	}
 	s_sample = g_sampleEntries[s_context.sampleIndex].createFcn( &s_context );
 	s_context.restart = false;
 }
@@ -717,6 +725,14 @@ int main( int, char** )
 		if ( s_sample == nullptr )
 		{
 			// delayed creation because imgui doesn't create fonts until NewFrame() is called
+			if ( g_sampleEntries[s_context.sampleIndex].capacityFcn != nullptr )
+			{
+				s_context.capacity = g_sampleEntries[s_context.sampleIndex].capacityFcn();
+			}
+			else
+			{
+				s_context.capacity = b2DefaultWorldDef().capacity;
+			}
 			s_sample = g_sampleEntries[s_context.sampleIndex].createFcn( &s_context );
 		}
 
@@ -754,6 +770,14 @@ int main( int, char** )
 
 			delete s_sample;
 			s_sample = nullptr;
+			if ( g_sampleEntries[s_context.sampleIndex].capacityFcn != nullptr )
+			{
+				s_context.capacity = g_sampleEntries[s_context.sampleIndex].capacityFcn();
+			}
+			else
+			{
+				s_context.capacity = b2DefaultWorldDef().capacity;
+			}
 			s_sample = g_sampleEntries[s_context.sampleIndex].createFcn( &s_context );
 		}
 

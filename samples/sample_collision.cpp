@@ -521,7 +521,7 @@ public:
 
 		float y = -4.0f;
 
-		m_tree = b2DynamicTree_Create();
+		m_tree = b2DynamicTree_Create( 16 );
 
 		const b2Vec2 aabbMargin = { 0.1f, 0.1f };
 

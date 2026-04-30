@@ -1216,7 +1216,7 @@ typedef struct
 Polygons CreatePolygons()
 {
 	Polygons render = { 0 };
-	render.polygons = PolygonArray_Create( POLYGON_BATCH_SIZE );
+	render.polygons = PolygonArray_Create( 10 * POLYGON_BATCH_SIZE );
 	render.programId = CreateProgramFromFiles( "samples/data/solid_polygon.vs", "samples/data/solid_polygon.fs" );
 	render.projectionUniform = glGetUniformLocation( render.programId, "projectionMatrix" );
 	render.pixelScaleUniform = glGetUniformLocation( render.programId, "pixelScale" );
@@ -1318,6 +1318,14 @@ void AddPolygon( Polygons* render, b2Transform transform, const b2Vec2* points, 
 	data.count = n;
 	data.radius = radius;
 	data.color = MakeRGBA8( color, 1.0f );
+
+	if ( render->polygons.count >= render->polygons.capacity )
+	{
+		data.count += 0;
+		volatile int dummy = 32;
+		dummy += 22;
+		printf( "oops\n" );
+	}
 
 	PolygonArray_Push( &render->polygons, data );
 }

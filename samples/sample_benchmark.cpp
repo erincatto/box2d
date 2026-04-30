@@ -714,13 +714,19 @@ public:
 		CreateManyPyramids( m_worldId );
 	}
 
+	static b2Capacity GetCapacity()
+	{
+		return GetManyPyramidsCapacity();
+	}
+
 	static Sample* Create( SampleContext* context )
 	{
 		return new BenchmarkManyPyramids( context );
 	}
 };
 
-static int benchmarkManyPyramids = RegisterSample( "Benchmark", "Many Pyramids", BenchmarkManyPyramids::Create );
+static int benchmarkManyPyramids =
+	RegisterSampleWithCapacity( "Benchmark", "Many Pyramids", BenchmarkManyPyramids::Create, BenchmarkManyPyramids::GetCapacity );
 
 class BenchmarkCreateDestroy : public Sample
 {

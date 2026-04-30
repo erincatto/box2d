@@ -37,7 +37,7 @@ struct SampleContext
 
 	// These are persisted
 	int sampleIndex = 0;
-
+	b2Capacity capacity;
 	b2DebugDraw debugDraw;
 	ImFont* regularFont;
 	ImFont* mediumFont;
@@ -108,14 +108,17 @@ public:
 };
 
 typedef Sample* SampleCreateFcn( SampleContext* context );
+typedef b2Capacity SampleCapacityFcn( void );
 
 int RegisterSample( const char* category, const char* name, SampleCreateFcn* fcn );
+int RegisterSampleWithCapacity( const char* category, const char* name, SampleCreateFcn* fcn, SampleCapacityFcn* capacityFcn );
 
 struct SampleEntry
 {
 	const char* category;
 	const char* name;
 	SampleCreateFcn* createFcn;
+	SampleCapacityFcn* capacityFcn;
 };
 
 #define MAX_SAMPLES 256

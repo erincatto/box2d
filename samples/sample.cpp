@@ -270,9 +270,6 @@ Sample::~Sample()
 {
 	// By deleting the world, we delete the bomb, mouse joint, etc.
 	b2DestroyWorld( m_worldId );
-
-	// delete m_scheduler;
-	// delete[] m_tasks;
 }
 
 void Sample::CreateWorld()
@@ -287,10 +284,7 @@ void Sample::CreateWorld()
 	worldDef.workerCount = m_context->workerCount;
 	worldDef.userTaskContext = this;
 	worldDef.enableSleep = m_context->enableSleep;
-
-	// todo experimental
-	// worldDef.enableContactSoftening = true;
-
+	worldDef.capacity = m_context->capacity;
 	m_worldId = b2CreateWorld( &worldDef );
 }
 
@@ -838,8 +832,8 @@ void Sample::UpdateGui()
 		ImGui::Text( "bodies/shapes/contacts/joints = %d/%d/%d/%d", s.bodyCount, s.shapeCount, s.contactCount, s.jointCount );
 		{
 			float frac = s.awakeContactCount > 0
-				? b2ClampFloat( (float)s.recycledContactCount / (float)s.awakeContactCount, 0.0f, 1.0f )
-				: 0.0f;
+							 ? b2ClampFloat( (float)s.recycledContactCount / (float)s.awakeContactCount, 0.0f, 1.0f )
+							 : 0.0f;
 
 			char overlay[32];
 			snprintf( overlay, sizeof( overlay ), "%d / %d", s.recycledContactCount, s.awakeContactCount );
@@ -852,11 +846,18 @@ void Sample::UpdateGui()
 		ImGui::Text( "tree height static/movable = %d/%d", s.staticTreeHeight, s.treeHeight );
 		ImGui::Text( "stack allocator size = %d K", s.stackUsed / 1024 );
 		ImGui::Text( "total allocation = %d K", s.byteCount / 1024 );
+
+		ImGui::Separator();
+		b2Capacity c = b2World_GetMaxCapacity( m_worldId );
+		ImGui::Text( "max capacities" );
+		ImGui::BulletText( "static shapes/bodies = %d/%d", c.staticShapeCount, c.staticBodyCount );
+		ImGui::BulletText( "dynamic shapes/bodies = %d/%d", c.dynamicShapeCount, c.dynamicBodyCount );
+		ImGui::BulletText( "contacts = %d", c.contactCount );
+
 		ImGui::Separator();
 		ImGui::Text( "%d constraints across %d colors", totalCount, colorCount );
 
-		const ImGuiTableFlags tableFlags =
-			ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit;
+		const ImGuiTableFlags tableFlags = ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit;
 		if ( ImGui::BeginTable( "graphColors", 3, tableFlags ) )
 		{
 			ImGui::TableSetupColumn( "color", ImGuiTableColumnFlags_WidthFixed, 3.5f * fontSize );
@@ -1107,7 +1108,20 @@ int RegisterSample( const char* category, const char* name, SampleCreateFcn* fcn
 	int index = g_sampleCount;
 	if ( index < MAX_SAMPLES )
 	{
-		g_sampleEntries[index] = { category, name, fcn };
+		g_sampleEntries[index] = { category, name, fcn, nullptr };
+		++g_sampleCount;
+		return index;
+	}
+
+	return -1;
+}
+
+int RegisterSampleWithCapacity( const char* category, const char* name, SampleCreateFcn* fcn, SampleCapacityFcn* capacityFcn )
+{
+	int index = g_sampleCount;
+	if ( index < MAX_SAMPLES )
+	{
+		g_sampleEntries[index] = { category, name, fcn, capacityFcn };
 		++g_sampleCount;
 		return index;
 	}
