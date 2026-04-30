@@ -46,7 +46,7 @@
 			int newCapacity = a->capacity < 2 ? 2 : a->capacity + ( a->capacity >> 1 );                                          \
 			TYPE##Array_Reserve( a, newCapacity );                                                                              \
 		}                                                                                                                        \
-		memcpy(a->data + a->count, &value, sizeof(TYPE));                                                                                               \
+		a->data[a->count] = value;                                                                                               \
 		a->count += 1;                                                                                                           \
 	}                                                                                                                            \
 	static inline void TYPE##Array_Set( TYPE##Array* a, int index, TYPE value )                                                \
