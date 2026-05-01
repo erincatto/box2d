@@ -5,6 +5,14 @@
 
 #include "box2d/collision.h"
 
+#include "dynamic_tree.h"
+#include "physics_world.h"
+
+#include <math.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
 static int TreeCreateDestroy( void )
 {
 	b2AABB a = {
@@ -446,6 +454,357 @@ static int TreeGridMovementTest( void )
 	return 0;
 }
 
+typedef struct BuildBruteForceContext
+{
+	const b2AABB* aabbs;
+	int leafCount;
+	int* hitFlags;
+	b2AABB queryAabb;
+} BuildBruteForceContext;
+
+static bool BuildQueryCallback( int proxyId, uint64_t userData, void* context )
+{
+	(void)userData;
+	BuildBruteForceContext* ctx = (BuildBruteForceContext*)context;
+	if ( 0 <= proxyId && proxyId < ctx->leafCount )
+	{
+		ctx->hitFlags[proxyId] = 1;
+	}
+	return true;
+}
+
+static bool AabbOverlap( b2AABB a, b2AABB b )
+{
+	if ( a.upperBound.x < b.lowerBound.x || b.upperBound.x < a.lowerBound.x )
+	{
+		return false;
+	}
+	if ( a.upperBound.y < b.lowerBound.y || b.upperBound.y < a.lowerBound.y )
+	{
+		return false;
+	}
+	return true;
+}
+
+static int BuildFromLeavesCheck( int leafCount, const b2AABB* aabbs )
+{
+	uint64_t* userData = NULL;
+	uint64_t* categoryBits = NULL;
+	if ( leafCount > 0 )
+	{
+		userData = (uint64_t*)malloc( leafCount * sizeof( uint64_t ) );
+		categoryBits = (uint64_t*)malloc( leafCount * sizeof( uint64_t ) );
+		for ( int i = 0; i < leafCount; ++i )
+		{
+			userData[i] = (uint64_t)( i + 1 );
+			categoryBits[i] = ( (uint64_t)1 ) << ( i & 63 );
+		}
+	}
+
+	b2DynamicTree tree = b2DynamicTree_Create();
+	b2DynamicTree_BuildFromLeaves( &tree, aabbs, userData, categoryBits, leafCount, NULL );
+
+	if ( leafCount == 0 )
+	{
+		ENSURE( tree.proxyCount == 0 );
+		ENSURE( tree.nodeCount == 0 );
+		ENSURE( tree.root == -1 );
+		b2DynamicTree_Destroy( &tree );
+		return 0;
+	}
+
+	ENSURE( tree.proxyCount == leafCount );
+	ENSURE( tree.nodeCount == ( leafCount == 1 ? 1 : 2 * leafCount - 1 ) );
+
+	if ( leafCount == 1 )
+	{
+		ENSURE( tree.root == 0 );
+	}
+	else
+	{
+		ENSURE( tree.root >= leafCount && tree.root < tree.nodeCount );
+	}
+
+	// Validate that each leaf carries the input AABB and metadata.
+	for ( int i = 0; i < leafCount; ++i )
+	{
+		b2AABB stored = b2DynamicTree_GetAABB( &tree, i );
+		ENSURE( stored.lowerBound.x == aabbs[i].lowerBound.x );
+		ENSURE( stored.lowerBound.y == aabbs[i].lowerBound.y );
+		ENSURE( stored.upperBound.x == aabbs[i].upperBound.x );
+		ENSURE( stored.upperBound.y == aabbs[i].upperBound.y );
+		ENSURE( b2DynamicTree_GetUserData( &tree, i ) == userData[i] );
+		ENSURE( b2DynamicTree_GetCategoryBits( &tree, i ) == categoryBits[i] );
+	}
+
+	// Height should be near log2(N) for a balanced median-split build.
+	int height = b2DynamicTree_GetHeight( &tree );
+	if ( leafCount > 1 )
+	{
+		float minHeight = log2f( (float)leafCount );
+		ENSURE( (float)height < 3.0f * minHeight + 4.0f );
+	}
+
+	// Brute-force query verification: hit set from the tree must match the
+	// brute-force overlap set for several query AABBs.
+	if ( leafCount > 0 )
+	{
+		b2AABB queries[3] = {
+			{ .lowerBound = { -1000.0f, -1000.0f }, .upperBound = { 1000.0f, 1000.0f } }, // all
+			{ .lowerBound = { 0.0f, 0.0f }, .upperBound = { 5.0f, 5.0f } },
+			{ .lowerBound = { 50.0f, 50.0f }, .upperBound = { 60.0f, 60.0f } },
+		};
+
+		int* hitFlags = (int*)calloc( leafCount, sizeof( int ) );
+		int* expectedFlags = (int*)calloc( leafCount, sizeof( int ) );
+
+		for ( int q = 0; q < 3; ++q )
+		{
+			memset( hitFlags, 0, leafCount * sizeof( int ) );
+			memset( expectedFlags, 0, leafCount * sizeof( int ) );
+
+			BuildBruteForceContext ctx = {
+				.aabbs = aabbs,
+				.leafCount = leafCount,
+				.hitFlags = hitFlags,
+				.queryAabb = queries[q],
+			};
+			b2DynamicTree_Query( &tree, queries[q], UINT64_MAX, BuildQueryCallback, &ctx );
+
+			for ( int i = 0; i < leafCount; ++i )
+			{
+				expectedFlags[i] = AabbOverlap( aabbs[i], queries[q] ) ? 1 : 0;
+			}
+
+			for ( int i = 0; i < leafCount; ++i )
+			{
+				if ( hitFlags[i] != expectedFlags[i] )
+				{
+					printf( "  query %d leaf %d hit=%d expected=%d\n", q, i, hitFlags[i], expectedFlags[i] );
+					free( hitFlags );
+					free( expectedFlags );
+					b2DynamicTree_Destroy( &tree );
+					free( userData );
+					free( categoryBits );
+					return 1;
+				}
+			}
+		}
+
+		free( hitFlags );
+		free( expectedFlags );
+	}
+
+	b2DynamicTree_Destroy( &tree );
+	free( userData );
+	free( categoryBits );
+	return 0;
+}
+
+static int TreeBuildFromLeavesEdgeCases( void )
+{
+	// Empty tree.
+	{
+		ENSURE( BuildFromLeavesCheck( 0, NULL ) == 0 );
+	}
+
+	// Single leaf.
+	{
+		b2AABB aabb = { .lowerBound = { -1.0f, -1.0f }, .upperBound = { 1.0f, 1.0f } };
+		ENSURE( BuildFromLeavesCheck( 1, &aabb ) == 0 );
+	}
+
+	// Two leaves.
+	{
+		b2AABB aabbs[2] = {
+			{ .lowerBound = { -2.0f, -2.0f }, .upperBound = { -1.0f, -1.0f } },
+			{ .lowerBound = { 1.0f, 1.0f }, .upperBound = { 2.0f, 2.0f } },
+		};
+		ENSURE( BuildFromLeavesCheck( 2, aabbs ) == 0 );
+	}
+
+	// Three leaves with all-coincident centers (forces the degenerate split path).
+	{
+		b2AABB aabbs[3] = {
+			{ .lowerBound = { -0.5f, -0.5f }, .upperBound = { 0.5f, 0.5f } },
+			{ .lowerBound = { -0.5f, -0.5f }, .upperBound = { 0.5f, 0.5f } },
+			{ .lowerBound = { -0.5f, -0.5f }, .upperBound = { 0.5f, 0.5f } },
+		};
+		ENSURE( BuildFromLeavesCheck( 3, aabbs ) == 0 );
+	}
+
+	return 0;
+}
+
+static int TreeBuildFromLeavesGrid( void )
+{
+	// 30x30 grid + jitter. Stays under the parallel threshold (1024) so the
+	// serial path is exercised; world is NULL anyway.
+	const int side = 30;
+	const int leafCount = side * side;
+	b2AABB* aabbs = (b2AABB*)malloc( leafCount * sizeof( b2AABB ) );
+
+	uint32_t rng = 0xC0FFEE;
+	for ( int i = 0; i < side; ++i )
+	{
+		for ( int j = 0; j < side; ++j )
+		{
+			float x = (float)i;
+			float y = (float)j;
+			rng = rng * 1664525u + 1013904223u;
+			float jx = ( (float)( rng & 0xFFFF ) / 65536.0f ) - 0.5f;
+			rng = rng * 1664525u + 1013904223u;
+			float jy = ( (float)( rng & 0xFFFF ) / 65536.0f ) - 0.5f;
+			b2AABB a = {
+				.lowerBound = { x + jx, y + jy },
+				.upperBound = { x + jx + 1.0f, y + jy + 1.0f },
+			};
+			aabbs[i * side + j] = a;
+		}
+	}
+
+	int rc = BuildFromLeavesCheck( leafCount, aabbs );
+	free( aabbs );
+	return rc;
+}
+
+// Synchronous fake task system: enqueueTask runs the task immediately. Lets
+// the parallel build scaffolding execute its prefix-sum / scatter / spawn
+// math without requiring a real worker pool. With one logical worker behind
+// the dispatcher, blocks are claimed serially in order, so this also gives
+// us a deterministic reference for what parallel execution should produce.
+static void* SyncEnqueueTask( b2TaskCallback* task, void* taskContext, void* userContext )
+{
+	(void)userContext;
+	task( taskContext );
+	return NULL;
+}
+
+static void SyncFinishTask( void* userTask, void* userContext )
+{
+	(void)userTask;
+	(void)userContext;
+}
+
+static void SetupSyncFakeWorld( b2World* world, int workerCount )
+{
+	memset( world, 0, sizeof( b2World ) );
+	world->workerCount = workerCount;
+	world->enqueueTaskFcn = &SyncEnqueueTask;
+	world->finishTaskFcn = &SyncFinishTask;
+	world->userTaskContext = NULL;
+	world->taskCount = 0;
+}
+
+static int TreeBuildFromLeavesParallelScaffolding( void )
+{
+	// Cross the parallel-build floor (1024) and the parallel-partition
+	// threshold (2048) so the scaffolding actually fires.
+	const int side = 50;
+	const int leafCount = side * side;
+	b2AABB* aabbs = (b2AABB*)malloc( leafCount * sizeof( b2AABB ) );
+	uint64_t* userData = (uint64_t*)malloc( leafCount * sizeof( uint64_t ) );
+	uint64_t* categoryBits = (uint64_t*)malloc( leafCount * sizeof( uint64_t ) );
+
+	uint32_t rng = 0xBADC0DE;
+	for ( int i = 0; i < side; ++i )
+	{
+		for ( int j = 0; j < side; ++j )
+		{
+			float x = (float)i;
+			float y = (float)j;
+			rng = rng * 1664525u + 1013904223u;
+			float jx = ( (float)( rng & 0xFFFF ) / 65536.0f ) - 0.5f;
+			rng = rng * 1664525u + 1013904223u;
+			float jy = ( (float)( rng & 0xFFFF ) / 65536.0f ) - 0.5f;
+			int idx = i * side + j;
+			aabbs[idx].lowerBound = (b2Vec2){ x + jx, y + jy };
+			aabbs[idx].upperBound = (b2Vec2){ x + jx + 1.0f, y + jy + 1.0f };
+			userData[idx] = (uint64_t)( idx + 1 );
+			categoryBits[idx] = ( (uint64_t)1 ) << ( idx & 63 );
+		}
+	}
+
+	b2DynamicTree treeSerial = b2DynamicTree_Create();
+	b2DynamicTree_BuildFromLeaves( &treeSerial, aabbs, userData, categoryBits, leafCount, NULL );
+
+	// Run the parallel path with a synchronous fake at workerCount = 4. Should
+	// produce the same tree structure (parent/child relationships, AABBs,
+	// heights, root) as the serial path because the partition is stable.
+	b2World fakeWorld;
+	SetupSyncFakeWorld( &fakeWorld, 4 );
+	b2DynamicTree treeParallel = b2DynamicTree_Create();
+	b2DynamicTree_BuildFromLeaves( &treeParallel, aabbs, userData, categoryBits, leafCount, &fakeWorld );
+
+	ENSURE( treeSerial.proxyCount == treeParallel.proxyCount );
+	ENSURE( treeSerial.nodeCount == treeParallel.nodeCount );
+	ENSURE( treeSerial.root == treeParallel.root );
+	ENSURE( b2DynamicTree_GetHeight( &treeSerial ) == b2DynamicTree_GetHeight( &treeParallel ) );
+
+	for ( int i = 0; i < treeSerial.nodeCount; ++i )
+	{
+		b2AABB s = b2DynamicTree_GetAABB( &treeSerial, i );
+		b2AABB p = b2DynamicTree_GetAABB( &treeParallel, i );
+		ENSURE( s.lowerBound.x == p.lowerBound.x );
+		ENSURE( s.lowerBound.y == p.lowerBound.y );
+		ENSURE( s.upperBound.x == p.upperBound.x );
+		ENSURE( s.upperBound.y == p.upperBound.y );
+		ENSURE( b2DynamicTree_GetCategoryBits( &treeSerial, i ) == b2DynamicTree_GetCategoryBits( &treeParallel, i ) );
+	}
+
+	b2DynamicTree_Destroy( &treeSerial );
+	b2DynamicTree_Destroy( &treeParallel );
+	free( aabbs );
+	free( userData );
+	free( categoryBits );
+	return 0;
+}
+
+static int TreeBuildFromLeavesRebuildable( void )
+{
+	// After BuildFromLeaves, the tree should still accept incremental ops.
+	const int leafCount = 8;
+	b2AABB aabbs[8];
+	uint64_t userData[8];
+	uint64_t categoryBits[8];
+	for ( int i = 0; i < leafCount; ++i )
+	{
+		float x = (float)i * 2.0f;
+		aabbs[i].lowerBound = (b2Vec2){ x - 0.5f, -0.5f };
+		aabbs[i].upperBound = (b2Vec2){ x + 0.5f, 0.5f };
+		userData[i] = (uint64_t)i;
+		categoryBits[i] = 0xFFull;
+	}
+
+	b2DynamicTree tree = b2DynamicTree_Create();
+	b2DynamicTree_BuildFromLeaves( &tree, aabbs, userData, categoryBits, leafCount, NULL );
+
+	ENSURE( tree.proxyCount == leafCount );
+	ENSURE( b2DynamicTree_GetHeight( &tree ) > 0 );
+
+	// Move each leaf and confirm queries still find them.
+	for ( int i = 0; i < leafCount; ++i )
+	{
+		b2AABB a = b2DynamicTree_GetAABB( &tree, i );
+		a.lowerBound.y += 100.0f;
+		a.upperBound.y += 100.0f;
+		b2DynamicTree_MoveProxy( &tree, i, a );
+	}
+
+	b2AABB query = { .lowerBound = { -1000.0f, 99.0f }, .upperBound = { 1000.0f, 101.0f } };
+	int hits[8] = { 0 };
+	BuildBruteForceContext ctx = { .aabbs = aabbs, .leafCount = leafCount, .hitFlags = hits, .queryAabb = query };
+	b2DynamicTree_Query( &tree, query, UINT64_MAX, BuildQueryCallback, &ctx );
+
+	for ( int i = 0; i < leafCount; ++i )
+	{
+		ENSURE( hits[i] == 1 );
+	}
+
+	b2DynamicTree_Destroy( &tree );
+	return 0;
+}
+
 int DynamicTreeTest( void )
 {
 	RUN_SUBTEST( TreeCreateDestroy );
@@ -457,6 +816,10 @@ int DynamicTreeTest( void )
 	RUN_SUBTEST( TreeRowHeightTest );
 	RUN_SUBTEST( TreeGridHeightTest );
 	RUN_SUBTEST( TreeGridMovementTest );
+	RUN_SUBTEST( TreeBuildFromLeavesEdgeCases );
+	RUN_SUBTEST( TreeBuildFromLeavesGrid );
+	RUN_SUBTEST( TreeBuildFromLeavesParallelScaffolding );
+	RUN_SUBTEST( TreeBuildFromLeavesRebuildable );
 
 	// todo test queries versus brute force
 

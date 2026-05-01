@@ -3,6 +3,9 @@
 
 #include "aabb.h"
 #include "core.h"
+#include "dynamic_tree.h"
+#include "parallel_for.h"
+#include "physics_world.h"
 
 #include "box2d/collision.h"
 #include "box2d/constants.h"
@@ -117,6 +120,8 @@ b2DynamicTree b2DynamicTree_Create( int proxyCapacity )
 	tree.leafIndices = NULL;
 	tree.leafBoxes = NULL;
 	tree.leafCenters = NULL;
+	tree.leafIndicesAlt = NULL;
+	tree.leafCentersAlt = NULL;
 	tree.binIndices = NULL;
 	tree.rebuildCapacity = 0;
 
@@ -129,6 +134,8 @@ void b2DynamicTree_Destroy( b2DynamicTree* tree )
 	b2Free( tree->leafIndices, tree->rebuildCapacity * sizeof( int32_t ) );
 	b2Free( tree->leafBoxes, tree->rebuildCapacity * sizeof( b2AABB ) );
 	b2Free( tree->leafCenters, tree->rebuildCapacity * sizeof( b2Vec2 ) );
+	b2Free( tree->leafIndicesAlt, tree->rebuildCapacity * sizeof( int32_t ) );
+	b2Free( tree->leafCentersAlt, tree->rebuildCapacity * sizeof( b2Vec2 ) );
 	b2Free( tree->binIndices, tree->rebuildCapacity * sizeof( int32_t ) );
 
 	memset( tree, 0, sizeof( b2DynamicTree ) );
@@ -2047,4 +2054,894 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 	b2DynamicTree_Validate( tree );
 
 	return leafCount;
+}
+
+// ============================================================================
+// Parallel build from a flat leaf array.
+//
+// Input is owned by the caller (a flat array of AABBs plus optional userData
+// and categoryBits). Output is a fresh tree with the input element at slot i
+// becoming leaf node i, and N-1 internal nodes at slots [N, 2N-1) in DFS
+// preorder. The build uses the midpoint-of-centroid heuristic and a stable
+// count+scatter partition so the result is bit-identical regardless of the
+// number of workers used.
+// ============================================================================
+
+// Below this leaf count, the entire build runs serially even when a world is
+// supplied. Avoids paying task-spawn overhead on small inputs.
+#define B2_BUILD_MIN_PARALLEL_LEAVES 1024
+
+// A subtree with this many leaves or fewer builds entirely on one worker (no
+// task spawn, no parallel partition). Tuned to be roughly the smallest range
+// where parallel_for's dispatch is cheaper than a serial pass.
+#define B2_BUILD_SUBTREE_TASK_THRESHOLD 2048
+
+typedef struct b2BuildContext
+{
+	b2DynamicTree* tree;
+	b2World* world;
+
+	// Source for this depth (read by partition); destination is the alt pair.
+	// Roles flip each level via the ping-pong invariant.
+	int* srcIndices;
+	b2Vec2* srcCenters;
+	int* dstIndices;
+	b2Vec2* dstCenters;
+
+	int rangeFirst;
+	int rangeCount;
+
+	// Pre-allocated internal-node slots for this subtree, DFS preorder.
+	int internalFirst;
+	int internalCount;
+
+	// Output: read by the parent after the recursive call (or task) completes.
+	int rootIndex;
+	b2AABB rootAabb;
+	uint16_t rootHeight;
+	uint64_t rootCategoryBits;
+} b2BuildContext;
+
+static int b2BuildShouldParallelize( const b2BuildContext* ctx )
+{
+	return ctx->world != NULL && ctx->world->workerCount > 1 && ctx->rangeCount >= B2_BUILD_SUBTREE_TASK_THRESHOLD;
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2: leaf node initialization (reset all leaves + seed scratch buffers).
+// ---------------------------------------------------------------------------
+
+typedef struct b2BuildLeafInitShared
+{
+	b2TreeNode* nodes;
+	const b2AABB* aabbs;
+	const uint64_t* userData;
+	const uint64_t* categoryBits;
+	int* indices;
+	b2Vec2* centers;
+} b2BuildLeafInitShared;
+
+static void b2BuildLeafInitRange( b2BuildLeafInitShared* shared, int startIndex, int endIndex )
+{
+	b2TreeNode* nodes = shared->nodes;
+	const b2AABB* aabbs = shared->aabbs;
+	const uint64_t* userData = shared->userData;
+	const uint64_t* categoryBits = shared->categoryBits;
+	int* indices = shared->indices;
+	b2Vec2* centers = shared->centers;
+
+	for ( int i = startIndex; i < endIndex; ++i )
+	{
+		b2AABB aabb = aabbs[i];
+		b2TreeNode* node = nodes + i;
+		node->aabb = aabb;
+		node->userData = userData != NULL ? userData[i] : 0;
+		node->categoryBits = categoryBits != NULL ? categoryBits[i] : B2_DEFAULT_CATEGORY_BITS;
+		node->parent = B2_NULL_INDEX;
+		node->height = 0;
+		node->flags = b2_allocatedNode | b2_leafNode;
+
+		indices[i] = i;
+		centers[i] = b2AABB_Center( aabb );
+	}
+}
+
+static void b2BuildLeafInitTask( int startIndex, int endIndex, int workerIndex, void* context )
+{
+	(void)workerIndex;
+	b2BuildLeafInitRange( (b2BuildLeafInitShared*)context, startIndex, endIndex );
+}
+
+// ---------------------------------------------------------------------------
+// Phase 3 helper: centroid-AABB reduction over a sub-range.
+// ---------------------------------------------------------------------------
+
+typedef struct b2BuildCentroidShared
+{
+	const b2Vec2* centers;
+	int rangeFirst;
+	b2Vec2* perWorkerLower;
+	b2Vec2* perWorkerUpper;
+} b2BuildCentroidShared;
+
+static void b2BuildCentroidTask( int startIndex, int endIndex, int workerIndex, void* context )
+{
+	b2BuildCentroidShared* shared = (b2BuildCentroidShared*)context;
+	const b2Vec2* centers = shared->centers + shared->rangeFirst;
+
+	b2Vec2 lower = shared->perWorkerLower[workerIndex];
+	b2Vec2 upper = shared->perWorkerUpper[workerIndex];
+
+	for ( int i = startIndex; i < endIndex; ++i )
+	{
+		b2Vec2 c = centers[i];
+		lower = b2Min( lower, c );
+		upper = b2Max( upper, c );
+	}
+
+	shared->perWorkerLower[workerIndex] = lower;
+	shared->perWorkerUpper[workerIndex] = upper;
+}
+
+static void b2BuildCentroidBounds( const b2BuildContext* ctx, b2Vec2* outLower, b2Vec2* outUpper )
+{
+	const b2Vec2* centers = ctx->srcCenters + ctx->rangeFirst;
+	int n = ctx->rangeCount;
+
+	if ( ctx->world == NULL || ctx->world->workerCount == 1 || n < B2_BUILD_SUBTREE_TASK_THRESHOLD )
+	{
+		b2Vec2 lower = centers[0];
+		b2Vec2 upper = centers[0];
+		for ( int i = 1; i < n; ++i )
+		{
+			b2Vec2 c = centers[i];
+			lower = b2Min( lower, c );
+			upper = b2Max( upper, c );
+		}
+		*outLower = lower;
+		*outUpper = upper;
+		return;
+	}
+
+	int workerCount = ctx->world->workerCount;
+	b2Vec2 perWorkerLower[B2_MAX_WORKERS];
+	b2Vec2 perWorkerUpper[B2_MAX_WORKERS];
+	b2Vec2 sentinelLow = { FLT_MAX, FLT_MAX };
+	b2Vec2 sentinelHigh = { -FLT_MAX, -FLT_MAX };
+	for ( int i = 0; i < workerCount; ++i )
+	{
+		perWorkerLower[i] = sentinelLow;
+		perWorkerUpper[i] = sentinelHigh;
+	}
+
+	b2BuildCentroidShared shared = {
+		.centers = ctx->srcCenters,
+		.rangeFirst = ctx->rangeFirst,
+		.perWorkerLower = perWorkerLower,
+		.perWorkerUpper = perWorkerUpper,
+	};
+
+	b2ParallelFor( ctx->world, b2BuildCentroidTask, n, 1024, &shared );
+
+	b2Vec2 lower = sentinelLow;
+	b2Vec2 upper = sentinelHigh;
+	for ( int i = 0; i < workerCount; ++i )
+	{
+		lower = b2Min( lower, perWorkerLower[i] );
+		upper = b2Max( upper, perWorkerUpper[i] );
+	}
+	*outLower = lower;
+	*outUpper = upper;
+}
+
+// ---------------------------------------------------------------------------
+// Phase 3 helper: stable count+scatter partition over a sub-range.
+//
+// Predicate is independent per leaf (compares srcCenters[i] on the chosen
+// axis to a fixed pivot), so the partition is deterministic. Output is
+// stable: relative order of "left" items is preserved, same for "right".
+// ---------------------------------------------------------------------------
+
+static int b2BuildPartitionPredicate( b2Vec2 c, int axis, float pivot )
+{
+	return ( axis == 0 ? c.x : c.y ) < pivot;
+}
+
+static int b2BuildPartitionSerial( b2BuildContext* ctx, int axis, float pivot )
+{
+	const int* srcIndices = ctx->srcIndices + ctx->rangeFirst;
+	const b2Vec2* srcCenters = ctx->srcCenters + ctx->rangeFirst;
+	int* dstIndices = ctx->dstIndices + ctx->rangeFirst;
+	b2Vec2* dstCenters = ctx->dstCenters + ctx->rangeFirst;
+	int n = ctx->rangeCount;
+
+	int leftCount = 0;
+	for ( int i = 0; i < n; ++i )
+	{
+		if ( b2BuildPartitionPredicate( srcCenters[i], axis, pivot ) )
+		{
+			leftCount += 1;
+		}
+	}
+
+	int li = 0;
+	int ri = leftCount;
+	for ( int i = 0; i < n; ++i )
+	{
+		if ( b2BuildPartitionPredicate( srcCenters[i], axis, pivot ) )
+		{
+			dstIndices[li] = srcIndices[i];
+			dstCenters[li] = srcCenters[i];
+			li += 1;
+		}
+		else
+		{
+			dstIndices[ri] = srcIndices[i];
+			dstCenters[ri] = srcCenters[i];
+			ri += 1;
+		}
+	}
+
+	B2_ASSERT( li == leftCount );
+	B2_ASSERT( ri == n );
+	return leftCount;
+}
+
+// Replicates the block layout that b2ParallelFor would compute. Keeping it
+// here lets each block know its own index from the (start,end) it receives.
+static void b2BuildComputeBlocks( int itemCount, int workerCount, int minRange, int* outBlockSize, int* outBlockCount )
+{
+	int blocksPerWorker = 4;
+	int maxBlockCount = blocksPerWorker * workerCount;
+	int blockSize;
+	int blockCount;
+	if ( itemCount <= minRange * maxBlockCount )
+	{
+		blockSize = minRange;
+		blockCount = ( itemCount + blockSize - 1 ) / blockSize;
+	}
+	else
+	{
+		blockSize = ( itemCount + maxBlockCount - 1 ) / maxBlockCount;
+		blockCount = ( itemCount + blockSize - 1 ) / blockSize;
+	}
+	*outBlockSize = blockSize;
+	*outBlockCount = blockCount;
+}
+
+typedef struct b2BuildPartitionShared
+{
+	const int* srcIndices;
+	const b2Vec2* srcCenters;
+	int* dstIndices;
+	b2Vec2* dstCenters;
+	int rangeFirst;
+	int axis;
+	float pivot;
+	int blockSize;
+	int* perBlockLeftCount;
+	int* perBlockLeftOffset;
+	int* perBlockRightOffset;
+} b2BuildPartitionShared;
+
+static void b2BuildPartitionCountTask( int startIndex, int endIndex, int workerIndex, void* context )
+{
+	(void)workerIndex;
+	b2BuildPartitionShared* shared = (b2BuildPartitionShared*)context;
+	const b2Vec2* centers = shared->srcCenters + shared->rangeFirst;
+	int axis = shared->axis;
+	float pivot = shared->pivot;
+
+	int count = 0;
+	for ( int i = startIndex; i < endIndex; ++i )
+	{
+		if ( b2BuildPartitionPredicate( centers[i], axis, pivot ) )
+		{
+			count += 1;
+		}
+	}
+
+	int blockIndex = startIndex / shared->blockSize;
+	shared->perBlockLeftCount[blockIndex] = count;
+}
+
+static void b2BuildPartitionScatterTask( int startIndex, int endIndex, int workerIndex, void* context )
+{
+	(void)workerIndex;
+	b2BuildPartitionShared* shared = (b2BuildPartitionShared*)context;
+	const int* srcIndices = shared->srcIndices + shared->rangeFirst;
+	const b2Vec2* srcCenters = shared->srcCenters + shared->rangeFirst;
+	int* dstIndices = shared->dstIndices + shared->rangeFirst;
+	b2Vec2* dstCenters = shared->dstCenters + shared->rangeFirst;
+	int axis = shared->axis;
+	float pivot = shared->pivot;
+
+	int blockIndex = startIndex / shared->blockSize;
+	int li = shared->perBlockLeftOffset[blockIndex];
+	int ri = shared->perBlockRightOffset[blockIndex];
+
+	for ( int i = startIndex; i < endIndex; ++i )
+	{
+		b2Vec2 c = srcCenters[i];
+		int idx = srcIndices[i];
+		if ( b2BuildPartitionPredicate( c, axis, pivot ) )
+		{
+			dstIndices[li] = idx;
+			dstCenters[li] = c;
+			li += 1;
+		}
+		else
+		{
+			dstIndices[ri] = idx;
+			dstCenters[ri] = c;
+			ri += 1;
+		}
+	}
+}
+
+static int b2BuildPartitionParallel( b2BuildContext* ctx, int axis, float pivot )
+{
+	int n = ctx->rangeCount;
+	int workerCount = ctx->world->workerCount;
+	int minRange = 1024;
+
+	int blockSize;
+	int blockCount;
+	b2BuildComputeBlocks( n, workerCount, minRange, &blockSize, &blockCount );
+
+	// Block counts share fixed-size on-stack arrays; max possible block count
+	// is B2_MAX_WORKERS * blocksPerWorker = 32 * 4 = 128.
+	int perBlockLeftCount[B2_MAX_WORKERS * 4];
+	int perBlockLeftOffset[B2_MAX_WORKERS * 4];
+	int perBlockRightOffset[B2_MAX_WORKERS * 4];
+	B2_ASSERT( blockCount <= (int)( sizeof( perBlockLeftCount ) / sizeof( perBlockLeftCount[0] ) ) );
+
+	b2BuildPartitionShared shared = {
+		.srcIndices = ctx->srcIndices,
+		.srcCenters = ctx->srcCenters,
+		.dstIndices = ctx->dstIndices,
+		.dstCenters = ctx->dstCenters,
+		.rangeFirst = ctx->rangeFirst,
+		.axis = axis,
+		.pivot = pivot,
+		.blockSize = blockSize,
+		.perBlockLeftCount = perBlockLeftCount,
+		.perBlockLeftOffset = perBlockLeftOffset,
+		.perBlockRightOffset = perBlockRightOffset,
+	};
+
+	// Pass 1: per-block left count.
+	b2ParallelFor( ctx->world, b2BuildPartitionCountTask, n, minRange, &shared );
+
+	// Exclusive prefix sums to get destination offsets per block.
+	int leftAccum = 0;
+	int rightAccum = 0;
+	for ( int b = 0; b < blockCount; ++b )
+	{
+		int blockStart = b * blockSize;
+		int blockEnd = blockStart + blockSize;
+		if ( blockEnd > n )
+		{
+			blockEnd = n;
+		}
+		int blockLen = blockEnd - blockStart;
+		int blockLeft = perBlockLeftCount[b];
+		int blockRight = blockLen - blockLeft;
+		perBlockLeftOffset[b] = leftAccum;
+		perBlockRightOffset[b] = rightAccum;
+		leftAccum += blockLeft;
+		rightAccum += blockRight;
+	}
+	int totalLeft = leftAccum;
+
+	// Right items are placed after all left items in dst.
+	for ( int b = 0; b < blockCount; ++b )
+	{
+		perBlockRightOffset[b] += totalLeft;
+	}
+
+	// Pass 2: scatter.
+	b2ParallelFor( ctx->world, b2BuildPartitionScatterTask, n, minRange, &shared );
+
+	return totalLeft;
+}
+
+static int b2BuildPartition( b2BuildContext* ctx, int axis, float pivot )
+{
+	if ( b2BuildShouldParallelize( ctx ) )
+	{
+		return b2BuildPartitionParallel( ctx, axis, pivot );
+	}
+	return b2BuildPartitionSerial( ctx, axis, pivot );
+}
+
+// ---------------------------------------------------------------------------
+// Recursive build core. Operates on a single subtree described by ctx and
+// writes the subtree-root summary back into ctx (rootIndex/rootAabb/...).
+// ---------------------------------------------------------------------------
+
+static void b2BuildRecursive( b2BuildContext* ctx );
+
+static void b2BuildTrampoline( void* context )
+{
+	b2BuildRecursive( (b2BuildContext*)context );
+}
+
+// Iterative stack-based serial build used for subtrees small enough that
+// task-spawn overhead would dominate. Mirrors b2BuildTree but consumes
+// internal node indices from the pre-allocated ctx range and partitions with
+// the stable count+scatter scheme over the ping-pong scratch buffers.
+//
+// The stack frame mirrors b2RebuildItem with the addition of buffer pointers
+// and the internal-range bookkeeping.
+typedef struct b2BuildSerialFrame
+{
+	int nodeIndex;
+	int childCount;       // -1 (not started), 0 (left in flight), 1 (right in flight)
+	int splitIndex;       // leftCount produced by partition
+	int rangeFirst;
+	int rangeCount;
+	int internalFirst;
+	int internalCount;
+	int* srcIndices;
+	b2Vec2* srcCenters;
+	int* dstIndices;
+	b2Vec2* dstCenters;
+	int childRoot[2];
+} b2BuildSerialFrame;
+
+static void b2BuildSerialPartitionAndSplit( b2BuildSerialFrame* frame )
+{
+	const b2Vec2* centers = frame->srcCenters + frame->rangeFirst;
+	int n = frame->rangeCount;
+
+	b2Vec2 lower = centers[0];
+	b2Vec2 upper = centers[0];
+	for ( int i = 1; i < n; ++i )
+	{
+		b2Vec2 c = centers[i];
+		lower = b2Min( lower, c );
+		upper = b2Max( upper, c );
+	}
+
+	float dx = upper.x - lower.x;
+	float dy = upper.y - lower.y;
+	int axis = dx > dy ? 0 : 1;
+	float pivot = 0.5f * ( axis == 0 ? lower.x + upper.x : lower.y + upper.y );
+
+	const int* srcIndices = frame->srcIndices + frame->rangeFirst;
+	int* dstIndices = frame->dstIndices + frame->rangeFirst;
+	b2Vec2* dstCenters = frame->dstCenters + frame->rangeFirst;
+
+	int leftCount = 0;
+	for ( int i = 0; i < n; ++i )
+	{
+		if ( b2BuildPartitionPredicate( centers[i], axis, pivot ) )
+		{
+			leftCount += 1;
+		}
+	}
+
+	// Degenerate: all centers on one side. Force a balanced split by index.
+	if ( leftCount == 0 || leftCount == n )
+	{
+		// Copy through unchanged — order is already stable in src — and pick n/2.
+		for ( int i = 0; i < n; ++i )
+		{
+			dstIndices[i] = srcIndices[i];
+			dstCenters[i] = centers[i];
+		}
+		frame->splitIndex = n / 2;
+		return;
+	}
+
+	int li = 0;
+	int ri = leftCount;
+	for ( int i = 0; i < n; ++i )
+	{
+		if ( b2BuildPartitionPredicate( centers[i], axis, pivot ) )
+		{
+			dstIndices[li] = srcIndices[i];
+			dstCenters[li] = centers[i];
+			li += 1;
+		}
+		else
+		{
+			dstIndices[ri] = srcIndices[i];
+			dstCenters[ri] = centers[i];
+			ri += 1;
+		}
+	}
+
+	frame->splitIndex = leftCount;
+}
+
+static void b2BuildSubtreeSerial( b2BuildContext* ctx )
+{
+	b2DynamicTree* tree = ctx->tree;
+	b2TreeNode* nodes = tree->nodes;
+
+	if ( ctx->rangeCount == 1 )
+	{
+		int leafIndex = ctx->srcIndices[ctx->rangeFirst];
+		ctx->rootIndex = leafIndex;
+		ctx->rootAabb = nodes[leafIndex].aabb;
+		ctx->rootHeight = 0;
+		ctx->rootCategoryBits = nodes[leafIndex].categoryBits;
+		return;
+	}
+
+	b2BuildSerialFrame stack[B2_TREE_STACK_SIZE];
+	int top = 0;
+	stack[0] = (b2BuildSerialFrame){
+		.nodeIndex = ctx->internalFirst,
+		.childCount = -1,
+		.rangeFirst = ctx->rangeFirst,
+		.rangeCount = ctx->rangeCount,
+		.internalFirst = ctx->internalFirst,
+		.internalCount = ctx->internalCount,
+		.srcIndices = ctx->srcIndices,
+		.srcCenters = ctx->srcCenters,
+		.dstIndices = ctx->dstIndices,
+		.dstCenters = ctx->dstCenters,
+	};
+	b2BuildSerialPartitionAndSplit( &stack[0] );
+
+	for ( ;; )
+	{
+		b2BuildSerialFrame* frame = stack + top;
+		frame->childCount += 1;
+
+		if ( frame->childCount == 2 )
+		{
+			b2TreeNode* node = nodes + frame->nodeIndex;
+			int left = frame->childRoot[0];
+			int right = frame->childRoot[1];
+			node->aabb = b2AABB_Union( nodes[left].aabb, nodes[right].aabb );
+			node->height = 1 + b2MaxUInt16( nodes[left].height, nodes[right].height );
+			node->categoryBits = nodes[left].categoryBits | nodes[right].categoryBits;
+			node->parent = B2_NULL_INDEX;
+			node->userData = 0;
+			node->children.child1 = left;
+			node->children.child2 = right;
+			node->flags = b2_allocatedNode;
+			nodes[left].parent = frame->nodeIndex;
+			nodes[right].parent = frame->nodeIndex;
+
+			if ( top == 0 )
+			{
+				ctx->rootIndex = frame->nodeIndex;
+				ctx->rootAabb = node->aabb;
+				ctx->rootHeight = node->height;
+				ctx->rootCategoryBits = node->categoryBits;
+				return;
+			}
+			int childRoot = frame->nodeIndex;
+			top -= 1;
+			stack[top].childRoot[stack[top].childCount] = childRoot;
+			continue;
+		}
+
+		// Descend into next child (childCount == 0 -> left, childCount == 1 -> right).
+		int childIndex = frame->childCount;
+		int rangeFirst = frame->rangeFirst + ( childIndex == 0 ? 0 : frame->splitIndex );
+		int rangeCount = childIndex == 0 ? frame->splitIndex : frame->rangeCount - frame->splitIndex;
+
+		if ( rangeCount == 1 )
+		{
+			// Single leaf: read from the destination produced by frame's partition,
+			// since that is where the partition wrote the items.
+			int leafIndex = frame->dstIndices[rangeFirst];
+			frame->childRoot[childIndex] = leafIndex;
+			continue;
+		}
+
+		// Allocate child internals from the parent's range. Left first, then right.
+		int leftLeaves = frame->splitIndex;
+		int rightLeaves = frame->rangeCount - frame->splitIndex;
+		int leftInternals = leftLeaves > 1 ? leftLeaves - 1 : 0;
+		int rightInternals = rightLeaves > 1 ? rightLeaves - 1 : 0;
+		(void)rightInternals;
+		int childInternalFirst;
+		int childInternalCount;
+		if ( childIndex == 0 )
+		{
+			childInternalFirst = frame->internalFirst + 1;
+			childInternalCount = leftInternals;
+		}
+		else
+		{
+			childInternalFirst = frame->internalFirst + 1 + leftInternals;
+			childInternalCount = frame->internalCount - 1 - leftInternals;
+		}
+
+		B2_ASSERT( top + 1 < B2_TREE_STACK_SIZE );
+		top += 1;
+		// Children read from the parent's destination buffer (where the partition
+		// wrote) and write to the parent's source buffer.
+		stack[top] = (b2BuildSerialFrame){
+			.nodeIndex = childInternalFirst,
+			.childCount = -1,
+			.rangeFirst = rangeFirst,
+			.rangeCount = rangeCount,
+			.internalFirst = childInternalFirst,
+			.internalCount = childInternalCount,
+			.srcIndices = frame->dstIndices,
+			.srcCenters = frame->dstCenters,
+			.dstIndices = frame->srcIndices,
+			.dstCenters = frame->srcCenters,
+		};
+		b2BuildSerialPartitionAndSplit( &stack[top] );
+	}
+}
+
+static void b2BuildRecursive( b2BuildContext* ctx )
+{
+	if ( ctx->rangeCount == 1 )
+	{
+		b2TreeNode* nodes = ctx->tree->nodes;
+		int leafIndex = ctx->srcIndices[ctx->rangeFirst];
+		ctx->rootIndex = leafIndex;
+		ctx->rootAabb = nodes[leafIndex].aabb;
+		ctx->rootHeight = 0;
+		ctx->rootCategoryBits = nodes[leafIndex].categoryBits;
+		return;
+	}
+
+	if ( ctx->rangeCount <= B2_BUILD_SUBTREE_TASK_THRESHOLD || ctx->world == NULL || ctx->world->workerCount == 1 )
+	{
+		b2BuildSubtreeSerial( ctx );
+		return;
+	}
+
+	b2Vec2 lower, upper;
+	b2BuildCentroidBounds( ctx, &lower, &upper );
+
+	float dx = upper.x - lower.x;
+	float dy = upper.y - lower.y;
+	int axis = dx > dy ? 0 : 1;
+	float pivot = 0.5f * ( axis == 0 ? lower.x + upper.x : lower.y + upper.y );
+
+	int leftCount = b2BuildPartition( ctx, axis, pivot );
+	int rightCount = ctx->rangeCount - leftCount;
+
+	// Pathological centroid layout: force a balanced split by index. The dst
+	// buffer already holds a stable-order copy of src, so we just choose the
+	// midpoint; no re-scatter needed.
+	if ( leftCount == 0 || rightCount == 0 )
+	{
+		// Re-emit dst as a copy of src in source order, then split at n/2.
+		// b2BuildPartition already wrote dst[0..totalLeft) and dst[totalLeft..n);
+		// for a degenerate predicate one side is empty and the other holds all
+		// items in source order, so dst is correct as-is.
+		leftCount = ctx->rangeCount / 2;
+		rightCount = ctx->rangeCount - leftCount;
+	}
+
+	int thisInternal = ctx->internalFirst;
+	int leftInternals = leftCount > 1 ? leftCount - 1 : 0;
+	int rightInternals = rightCount > 1 ? rightCount - 1 : 0;
+	(void)rightInternals;
+
+	b2BuildContext leftCtx = {
+		.tree = ctx->tree,
+		.world = ctx->world,
+		.srcIndices = ctx->dstIndices,
+		.srcCenters = ctx->dstCenters,
+		.dstIndices = ctx->srcIndices,
+		.dstCenters = ctx->srcCenters,
+		.rangeFirst = ctx->rangeFirst,
+		.rangeCount = leftCount,
+		.internalFirst = ctx->internalFirst + 1,
+		.internalCount = leftInternals,
+	};
+	b2BuildContext rightCtx = {
+		.tree = ctx->tree,
+		.world = ctx->world,
+		.srcIndices = ctx->dstIndices,
+		.srcCenters = ctx->dstCenters,
+		.dstIndices = ctx->srcIndices,
+		.dstCenters = ctx->srcCenters,
+		.rangeFirst = ctx->rangeFirst + leftCount,
+		.rangeCount = rightCount,
+		.internalFirst = ctx->internalFirst + 1 + leftInternals,
+		.internalCount = ctx->internalCount - 1 - leftInternals,
+	};
+
+	// Continue-the-bigger-half locally, spawn the smaller half as a task.
+	// Bounds live tasks at O(log N) and gives us idle workers for the bigger
+	// half's parallel partitions.
+	b2BuildContext* bigger = leftCount >= rightCount ? &leftCtx : &rightCtx;
+	b2BuildContext* smaller = leftCount >= rightCount ? &rightCtx : &leftCtx;
+	b2World* world = ctx->world;
+
+	int spawn = smaller->rangeCount > B2_BUILD_SUBTREE_TASK_THRESHOLD && world->taskCount < B2_MAX_TASKS;
+	if ( spawn )
+	{
+		// If the task system runs synchronously it returns NULL from enqueue
+		// (the task is already complete by the time enqueue returns). Either
+		// way, smaller's work is done before bigger starts only if NULL was
+		// returned; the async case overlaps with the bigger build below.
+		void* smallerTask = world->enqueueTaskFcn( &b2BuildTrampoline, smaller, world->userTaskContext );
+		world->taskCount += 1;
+		b2BuildRecursive( bigger );
+		if ( smallerTask != NULL )
+		{
+			world->finishTaskFcn( smallerTask, world->userTaskContext );
+		}
+	}
+	else
+	{
+		b2BuildRecursive( &leftCtx );
+		b2BuildRecursive( &rightCtx );
+	}
+
+	b2TreeNode* nodes = ctx->tree->nodes;
+	int leftRoot = leftCtx.rootIndex;
+	int rightRoot = rightCtx.rootIndex;
+
+	b2TreeNode* node = nodes + thisInternal;
+	node->aabb = b2AABB_Union( leftCtx.rootAabb, rightCtx.rootAabb );
+	node->height = 1 + b2MaxUInt16( leftCtx.rootHeight, rightCtx.rootHeight );
+	node->categoryBits = leftCtx.rootCategoryBits | rightCtx.rootCategoryBits;
+	node->parent = B2_NULL_INDEX;
+	node->userData = 0;
+	node->children.child1 = leftRoot;
+	node->children.child2 = rightRoot;
+	node->flags = b2_allocatedNode;
+	nodes[leftRoot].parent = thisInternal;
+	nodes[rightRoot].parent = thisInternal;
+
+	ctx->rootIndex = thisInternal;
+	ctx->rootAabb = node->aabb;
+	ctx->rootHeight = node->height;
+	ctx->rootCategoryBits = node->categoryBits;
+}
+
+// ---------------------------------------------------------------------------
+// Public entry point.
+// ---------------------------------------------------------------------------
+
+void b2DynamicTree_BuildFromLeaves( b2DynamicTree* tree, const b2AABB* leafAabbs, const uint64_t* leafUserData,
+									const uint64_t* leafCategoryBits, int leafCount, b2World* world )
+{
+	B2_ASSERT( tree != NULL );
+	B2_ASSERT( leafCount >= 0 );
+	B2_ASSERT( leafCount == 0 || leafAabbs != NULL );
+
+	if ( leafCount == 0 )
+	{
+		// Reset to empty.
+		int oldCapacity = tree->nodeCapacity;
+		for ( int i = 0; i < oldCapacity - 1; ++i )
+		{
+			tree->nodes[i].next = i + 1;
+			tree->nodes[i].flags = 0;
+		}
+		tree->nodes[oldCapacity - 1].next = B2_NULL_INDEX;
+		tree->nodes[oldCapacity - 1].flags = 0;
+		tree->freeList = 0;
+		tree->nodeCount = 0;
+		tree->proxyCount = 0;
+		tree->root = B2_NULL_INDEX;
+		return;
+	}
+
+	// Phase 1: ensure the node pool has room for leafCount + (leafCount - 1) nodes.
+	int totalNodes = leafCount == 1 ? 1 : 2 * leafCount - 1;
+	if ( tree->nodeCapacity < totalNodes )
+	{
+		b2Free( tree->nodes, tree->nodeCapacity * sizeof( b2TreeNode ) );
+		int newCapacity = totalNodes;
+		tree->nodes = (b2TreeNode*)b2Alloc( newCapacity * sizeof( b2TreeNode ) );
+		// Zero so that uninitialized internal-node slots have deterministic
+		// padding bytes (we overwrite all relevant fields before reading).
+		memset( tree->nodes, 0, newCapacity * sizeof( b2TreeNode ) );
+		tree->nodeCapacity = newCapacity;
+	}
+
+	// Slots [totalNodes, nodeCapacity) are unused by this build. Chain them
+	// onto the freelist so future incremental ops can use them and so the
+	// nodeCount + freeCount == nodeCapacity invariant holds.
+	tree->nodeCount = totalNodes;
+	tree->proxyCount = leafCount;
+	if ( tree->nodeCapacity > totalNodes )
+	{
+		for ( int i = totalNodes; i < tree->nodeCapacity - 1; ++i )
+		{
+			tree->nodes[i].next = i + 1;
+			tree->nodes[i].flags = 0;
+		}
+		tree->nodes[tree->nodeCapacity - 1].next = B2_NULL_INDEX;
+		tree->nodes[tree->nodeCapacity - 1].flags = 0;
+		tree->freeList = totalNodes;
+	}
+	else
+	{
+		tree->freeList = B2_NULL_INDEX;
+	}
+
+	// Ensure rebuild scratch capacity for ping-pong buffers.
+	if ( leafCount > tree->rebuildCapacity )
+	{
+		int newCapacity = leafCount + leafCount / 2;
+		b2Free( tree->leafIndices, tree->rebuildCapacity * sizeof( int32_t ) );
+		b2Free( tree->leafCenters, tree->rebuildCapacity * sizeof( b2Vec2 ) );
+		b2Free( tree->leafIndicesAlt, tree->rebuildCapacity * sizeof( int32_t ) );
+		b2Free( tree->leafCentersAlt, tree->rebuildCapacity * sizeof( b2Vec2 ) );
+		tree->leafIndices = (int32_t*)b2Alloc( newCapacity * sizeof( int32_t ) );
+		tree->leafCenters = (b2Vec2*)b2Alloc( newCapacity * sizeof( b2Vec2 ) );
+		tree->leafIndicesAlt = (int32_t*)b2Alloc( newCapacity * sizeof( int32_t ) );
+		tree->leafCentersAlt = (b2Vec2*)b2Alloc( newCapacity * sizeof( b2Vec2 ) );
+		tree->rebuildCapacity = newCapacity;
+	}
+	else
+	{
+		// Lazily allocate alt buffers if the existing rebuild path created the
+		// primaries but never used the parallel build before.
+		if ( tree->leafIndicesAlt == NULL )
+		{
+			tree->leafIndicesAlt = (int32_t*)b2Alloc( tree->rebuildCapacity * sizeof( int32_t ) );
+		}
+		if ( tree->leafCentersAlt == NULL )
+		{
+			tree->leafCentersAlt = (b2Vec2*)b2Alloc( tree->rebuildCapacity * sizeof( b2Vec2 ) );
+		}
+		if ( tree->leafIndices == NULL )
+		{
+			tree->leafIndices = (int32_t*)b2Alloc( tree->rebuildCapacity * sizeof( int32_t ) );
+		}
+		if ( tree->leafCenters == NULL )
+		{
+			tree->leafCenters = (b2Vec2*)b2Alloc( tree->rebuildCapacity * sizeof( b2Vec2 ) );
+		}
+	}
+
+	// Phase 2: initialize leaves and seed scratch.
+	b2BuildLeafInitShared init = {
+		.nodes = tree->nodes,
+		.aabbs = leafAabbs,
+		.userData = leafUserData,
+		.categoryBits = leafCategoryBits,
+		.indices = tree->leafIndices,
+		.centers = tree->leafCenters,
+	};
+	if ( world != NULL && world->workerCount > 1 && leafCount >= B2_BUILD_MIN_PARALLEL_LEAVES )
+	{
+		b2ParallelFor( world, b2BuildLeafInitTask, leafCount, 1024, &init );
+	}
+	else
+	{
+		b2BuildLeafInitRange( &init, 0, leafCount );
+	}
+
+	if ( leafCount == 1 )
+	{
+		tree->root = 0;
+		b2DynamicTree_Validate( tree );
+		return;
+	}
+
+	// Phase 3: recursive build.
+	b2World* effectiveWorld = ( world != NULL && world->workerCount > 1 && leafCount >= B2_BUILD_MIN_PARALLEL_LEAVES ) ? world : NULL;
+
+	b2BuildContext rootCtx = {
+		.tree = tree,
+		.world = effectiveWorld,
+		.srcIndices = tree->leafIndices,
+		.srcCenters = tree->leafCenters,
+		.dstIndices = tree->leafIndicesAlt,
+		.dstCenters = tree->leafCentersAlt,
+		.rangeFirst = 0,
+		.rangeCount = leafCount,
+		.internalFirst = leafCount,
+		.internalCount = leafCount - 1,
+	};
+	b2BuildRecursive( &rootCtx );
+
+	// Phase 4: finalize.
+	tree->root = rootCtx.rootIndex;
+	tree->nodes[tree->root].parent = B2_NULL_INDEX;
+
+	b2DynamicTree_Validate( tree );
 }

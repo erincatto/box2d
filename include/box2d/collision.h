@@ -667,6 +667,10 @@ typedef struct b2DynamicTree
 	/// Leaf bounding box centers for rebuild
 	b2Vec2* leafCenters;
 
+	/// Ping-pong scratch for stable parallel partition during BuildFromLeaves
+	int32_t* leafIndicesAlt;
+	b2Vec2* leafCentersAlt;
+
 	/// Bins for sorting during rebuild
 	int32_t* binIndices;
 
