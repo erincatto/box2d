@@ -1128,3 +1128,189 @@ int RegisterSampleWithCapacity( const char* category, const char* name, SampleCr
 
 	return -1;
 }
+
+void SelectSample( SampleContext* context, int selection, bool restart )
+{
+	if ( restart == false )
+	{
+		ResetView( &context->camera );
+		context->sampleIndex = selection;
+		context->subStepCount = 4;
+		context->debugDraw.drawJoints = true;
+	}
+
+	delete context->sample;
+	context->sample = nullptr;
+	if ( g_sampleEntries[context->sampleIndex].capacityFcn != nullptr )
+	{
+		context->capacity = g_sampleEntries[context->sampleIndex].capacityFcn();
+	}
+	else
+	{
+		context->capacity = b2DefaultWorldDef().capacity;
+	}
+	context->restart = restart;
+	context->sample = g_sampleEntries[context->sampleIndex].createFcn( context );
+}
+
+void UpdateSampleUI( SampleContext* context )
+{
+	int maxWorkers = B2_MAX_WORKERS;
+
+	float fontSize = ImGui::GetFontSize();
+	float menuWidth = 13.0f * fontSize;
+	if ( context->showUI )
+	{
+		ImGui::SetNextWindowPos( { context->camera.width - menuWidth - 0.5f * fontSize, 0.5f * fontSize } );
+		ImGui::SetNextWindowSize( { menuWidth, context->camera.height - fontSize } );
+
+		ImGui::Begin( "Tools", &context->showUI,
+					  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse );
+
+		if ( ImGui::BeginTabBar( "ControlTabs", ImGuiTabBarFlags_None ) )
+		{
+			if ( ImGui::BeginTabItem( "Controls" ) )
+			{
+				ImGui::PushItemWidth( 100.0f );
+				ImGui::SliderInt( "Sub-steps", &context->subStepCount, 1, 32 );
+				ImGui::SliderFloat( "Hertz", &context->hertz, 5.0f, 240.0f, "%.0f hz" );
+
+				if ( ImGui::SliderInt( "Workers", &context->workerCount, 1, maxWorkers ) )
+				{
+					context->workerCount = b2ClampInt( context->workerCount, 1, maxWorkers );
+					SelectSample( context, context->sampleIndex, true );
+				}
+				ImGui::PopItemWidth();
+
+				ImGui::Separator();
+
+				ImGui::Checkbox( "Sleep", &context->enableSleep );
+				ImGui::Checkbox( "Warm Starting", &context->enableWarmStarting );
+				ImGui::Checkbox( "Continuous", &context->enableContinuous );
+				ImGui::Checkbox( "Contact Recycling", &context->enableRecycling );
+
+				ImGui::Separator();
+
+				ImGui::Checkbox( "Shapes", &context->debugDraw.drawShapes );
+				ImGui::Checkbox( "Joints", &context->debugDraw.drawJoints );
+				ImGui::Checkbox( "Joint Extras", &context->debugDraw.drawJointExtras );
+				ImGui::Checkbox( "Bounds", &context->debugDraw.drawBounds );
+				ImGui::Checkbox( "Mass", &context->debugDraw.drawMass );
+				ImGui::Checkbox( "Body Names", &context->debugDraw.drawBodyNames );
+				ImGui::Checkbox( "Graph Colors", &context->debugDraw.drawGraphColors );
+				ImGui::Checkbox( "Islands", &context->debugDraw.drawIslands );
+				ImGui::Checkbox( "Counters", &context->drawCounters );
+				ImGui::Checkbox( "Profile", &context->drawProfile );
+				ImGui::Checkbox( "Frame Time", &context->frameTime );
+
+				ImGui::Separator();
+
+				ImGui::Checkbox( "Contact Points", &context->debugDraw.drawContacts );
+				ImGui::RadioButton( "Anchor A", &context->debugDraw.drawAnchorA, 1 );
+				ImGui::SameLine();
+				ImGui::RadioButton( "Anchor B", &context->debugDraw.drawAnchorA, 0 );
+				ImGui::Checkbox( "Contact Normals", &context->debugDraw.drawContactNormals );
+				ImGui::Checkbox( "Contact Features", &context->debugDraw.drawContactFeatures );
+				ImGui::Checkbox( "Contact Forces", &context->debugDraw.drawContactForces );
+				ImGui::Checkbox( "Friction Forces", &context->debugDraw.drawFrictionForces );
+
+				ImGui::Separator();
+
+				ImGui::PushItemWidth( 80.0f );
+				ImGui::InputFloat( "Joint Scale", &context->debugDraw.jointScale );
+				ImGui::InputFloat( "Force Scale", &context->debugDraw.forceScale );
+				ImGui::PopItemWidth();
+
+				ImVec2 button_sz = ImVec2( -1, 0 );
+				if ( ImGui::Button( "Pause (P)", button_sz ) )
+				{
+					context->pause = !context->pause;
+				}
+
+				if ( ImGui::Button( "Single Step (O)", button_sz ) )
+				{
+					context->singleStep = !context->singleStep;
+				}
+
+				if ( ImGui::Button( "Dump Mem Stats", button_sz ) )
+				{
+					b2World_DumpMemoryStats( context->sample->m_worldId );
+				}
+
+				if ( ImGui::Button( "Reset Profile", button_sz ) )
+				{
+					context->sample->ResetProfile();
+				}
+
+				if ( ImGui::Button( "Restart (R)", button_sz ) )
+				{
+					SelectSample( context, context->sampleIndex, true );
+				}
+
+				if ( ImGui::Button( "Quit", button_sz ) )
+				{
+					glfwSetWindowShouldClose( context->window, GL_TRUE );
+				}
+
+				ImGui::EndTabItem();
+			}
+
+			ImGuiTreeNodeFlags leafNodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+			leafNodeFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
+			ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+
+			if ( ImGui::BeginTabItem( "Samples" ) )
+			{
+				int categoryIndex = 0;
+				const char* category = g_sampleEntries[categoryIndex].category;
+				int i = 0;
+				while ( i < g_sampleCount )
+				{
+					bool categorySelected = strcmp( category, g_sampleEntries[context->sampleIndex].category ) == 0;
+					ImGuiTreeNodeFlags nodeSelectionFlags = categorySelected ? ImGuiTreeNodeFlags_Selected : 0;
+					bool nodeOpen = ImGui::TreeNodeEx( category, nodeFlags | nodeSelectionFlags );
+
+					if ( nodeOpen )
+					{
+						while ( i < g_sampleCount && strcmp( category, g_sampleEntries[i].category ) == 0 )
+						{
+							ImGuiTreeNodeFlags selectionFlags = 0;
+							if ( context->sampleIndex == i )
+							{
+								selectionFlags = ImGuiTreeNodeFlags_Selected;
+							}
+							ImGui::TreeNodeEx( (void*)(intptr_t)i, leafNodeFlags | selectionFlags, "%s",
+											   g_sampleEntries[i].name );
+							if ( ImGui::IsItemClicked() )
+							{
+								SelectSample( context, i, false );
+							}
+							++i;
+						}
+						ImGui::TreePop();
+					}
+					else
+					{
+						while ( i < g_sampleCount && strcmp( category, g_sampleEntries[i].category ) == 0 )
+						{
+							++i;
+						}
+					}
+
+					if ( i < g_sampleCount )
+					{
+						category = g_sampleEntries[i].category;
+						categoryIndex = i;
+					}
+				}
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
+		}
+
+		ImGui::End();
+
+		context->sample->UpdateGui();
+	}
+}

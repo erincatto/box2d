@@ -19,6 +19,12 @@ struct SampleContext
 	struct GLFWwindow* window = nullptr;
 	Camera camera;
 	Draw* draw;
+	class Sample* sample = nullptr;
+	b2Capacity capacity;
+	b2DebugDraw debugDraw;
+	ImFont* regularFont;
+	ImFont* mediumFont;
+	ImFont* largeFont;
 	float uiScale = 1.0f;
 	float hertz = 60.0f;
 	int subStepCount = 4;
@@ -37,11 +43,6 @@ struct SampleContext
 
 	// These are persisted
 	int sampleIndex = 0;
-	b2Capacity capacity;
-	b2DebugDraw debugDraw;
-	ImFont* regularFont;
-	ImFont* mediumFont;
-	ImFont* largeFont;
 };
 
 class Sample
@@ -54,6 +55,7 @@ public:
 
 	void ResetText();
 	virtual void Step( );
+	
 	virtual void UpdateGui();
 	virtual void Keyboard( int )
 	{
@@ -112,6 +114,8 @@ typedef b2Capacity SampleCapacityFcn( void );
 
 int RegisterSample( const char* category, const char* name, SampleCreateFcn* fcn );
 int RegisterSampleWithCapacity( const char* category, const char* name, SampleCreateFcn* fcn, SampleCapacityFcn* capacityFcn );
+void SelectSample( SampleContext* context, int selection, bool restart );
+void UpdateSampleUI( SampleContext* context );
 
 struct SampleEntry
 {

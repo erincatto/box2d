@@ -1189,7 +1189,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 			}
 
 			const float linearSlop = B2_LINEAR_SLOP;
-			if ( draw->contactDrawType != b2_drawContacts_None && body->type == b2_dynamicBody )
+			if ( draw->drawContacts && body->type == b2_dynamicBody )
 			{
 				int contactKey = body->headContactKey;
 				while ( contactKey != B2_NULL_INDEX )
@@ -1215,20 +1215,14 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 						{
 							b2ManifoldPoint* mp = contactSim->manifold.points + j;
 
-							b2Vec2 p = mp->clipPoint;
-							if (draw->contactDrawType == b2_drawContacts_AnchorA)
+							b2Vec2 p;
+							if (draw->drawAnchorA == 1)
 							{
 								p = b2Add( bodySimA->center, mp->anchorA );
 							}
-							else if (draw->contactDrawType == b2_drawContacts_AnchorB)
+							else
 							{
 								p = b2Add( bodySimB->center, mp->anchorB );
-							}
-							else if (draw->contactDrawType == b2_drawContacts_Average)
-							{
-								b2Vec2 pA = b2Add( bodySimA->center, mp->anchorA );
-								b2Vec2 pB = b2Add( bodySimB->center, mp->anchorB );
-								p = b2Lerp( pA, pB, 0.5f );
 							}
 
 							if ( draw->drawGraphColors && contact->colorIndex != B2_NULL_INDEX )
