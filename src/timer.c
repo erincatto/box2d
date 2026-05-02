@@ -14,7 +14,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#if defined( _MSC_VER )
+#if defined( _WIN32 )
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN 1
@@ -162,10 +162,14 @@ static void b2SetCurrentThreadName( const char* name )
 		{
 			// MSVC /Wall warns C4191 on every FARPROC function-pointer cast.
 			// This is the intended use of GetProcAddress, so suppress locally.
+#if defined( _MSC_VER )
 #pragma warning( push )
 #pragma warning( disable : 4191 )
+#endif
 			pfn = (b2SetThreadDescriptionFn)GetProcAddress( kernel, "SetThreadDescription" );
+#if defined( _MSC_VER )
 #pragma warning( pop )
+#endif
 		}
 		resolved = 1;
 	}
