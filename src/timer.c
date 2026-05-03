@@ -160,15 +160,21 @@ static void b2SetCurrentThreadName( const char* name )
 		HMODULE kernel = GetModuleHandleW( L"kernel32.dll" );
 		if ( kernel != NULL )
 		{
-			// MSVC /Wall warns C4191 on every FARPROC function-pointer cast.
-			// This is the intended use of GetProcAddress, so suppress locally.
+			// MSVC /Wall warns C4191 and GCC/Clang -Wcast-function-type
+			// warns on every FARPROC function-pointer cast. This is the
+			// intended use of GetProcAddress, so suppress locally.
 #if defined( _MSC_VER )
 #pragma warning( push )
 #pragma warning( disable : 4191 )
+#elif defined( __GNUC__ )
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
 #endif
 			pfn = (b2SetThreadDescriptionFn)GetProcAddress( kernel, "SetThreadDescription" );
 #if defined( _MSC_VER )
 #pragma warning( pop )
+#elif defined( __GNUC__ )
+#pragma GCC diagnostic pop
 #endif
 		}
 		resolved = 1;
