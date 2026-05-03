@@ -1,4 +1,5 @@
 include(GNUInstallDirs)
+include(FetchContent)
 
 set(BOX2D_SOURCE_FILES
 	aabb.c
@@ -143,8 +144,12 @@ if (MSVC)
 	# Enable asserts in release with debug info
 	target_compile_definitions(box2d PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:B2_ENABLE_ASSERT>")
 
-	# Warnings
-	# 4710 - warn about inline functions that are not inlined
+	# All Warnings with some disabled
+	# 4820 - padding between members
+	# 5045 - Spectre mitigation
+	# 4061 - not handling all cases for an enum in a switch block
+	# 4711 - function inlined without being marked for inline
+	# 4710 - inline functions that are not inlined
 	target_compile_options(box2d PRIVATE /Wall /wd4820 /wd5045 /wd4061 /wd4711 /wd4710)
 
 	if (BOX2D_AVX2)
@@ -153,21 +158,21 @@ if (MSVC)
 		target_compile_options(box2d PRIVATE /arch:AVX2)
 	endif()
 
-	if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+	if (CMAKE_C_COMPILER_ID STREQUAL "Clang")
 		target_compile_options(box2d PRIVATE -Wmissing-prototypes)
 	endif()
 
 elseif (MINGW)
 	message(STATUS "Box2D on MinGW")
+	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wall -Wextra -pedantic -Wno-unused-value)
 	if (BOX2D_AVX2)
 		message(STATUS "Box2D using AVX2")	
 		target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
 		target_compile_options(box2d PRIVATE -mavx2)
-	else()
 	endif()
 elseif (APPLE)
 	message(STATUS "Box2D on Apple")
-	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wall -Wextra -pedantic)
+	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wall -Wextra -pedantic -Wno-unused-value)
 elseif (EMSCRIPTEN)
 	message(STATUS "Box2D on Emscripten")
 	if (NOT BOX2D_DISABLE_SIMD)
@@ -176,7 +181,7 @@ elseif (EMSCRIPTEN)
 elseif (UNIX)
 	message(STATUS "Box2D using Unix")
 	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wall -Wextra -pedantic -Wno-unused-value)
-	if ("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
+	if (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
 		# raspberry pi
 		# -mfpu=neon
 		# target_compile_options(box2d PRIVATE)
@@ -185,7 +190,6 @@ elseif (UNIX)
 			message(STATUS "Box2D using AVX2")
 			target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
 			target_compile_options(box2d PRIVATE -mavx2)
-		else()
 		endif()
 	endif()
 endif()
