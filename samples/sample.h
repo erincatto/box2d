@@ -3,9 +3,10 @@
 
 #pragma once
 
+#include "draw.h"
+
 #include "box2d/id.h"
 #include "box2d/types.h"
-#include "draw.h"
 
 #define ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
 
@@ -27,6 +28,7 @@ struct SampleContext
 	ImFont* largeFont;
 	float uiScale = 1.0f;
 	float hertz = 60.0f;
+	float recycleDistance = 0.05f;
 	int subStepCount = 4;
 	int workerCount = 1;
 	bool restart = false;
@@ -36,7 +38,6 @@ struct SampleContext
 	bool drawProfile = false;
 	bool enableWarmStarting = true;
 	bool enableContinuous = true;
-	bool enableRecycling = true;
 	bool enableSleep = true;
 	bool showUI = true;
 	bool frameTime = false;
@@ -51,11 +52,11 @@ public:
 	explicit Sample( SampleContext* context );
 	virtual ~Sample();
 
-	void CreateWorld( );
+	void CreateWorld();
 
 	void ResetText();
-	virtual void Step( );
-	
+	virtual void Step();
+
 	virtual void UpdateGui();
 	virtual void Keyboard( int )
 	{
@@ -103,8 +104,6 @@ public:
 	int m_currentProfileIndex;
 	uint64_t m_profileReadIndex;
 	uint64_t m_profileWriteIndex;
-
-	b2Profile m_totalProfile;
 
 	bool m_didStep;
 };
