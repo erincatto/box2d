@@ -163,7 +163,10 @@ static void b2SetCurrentThreadName( const char* name )
 			// MSVC /Wall warns C4191 and GCC/Clang -Wcast-function-type
 			// warns on every FARPROC function-pointer cast. This is the
 			// intended use of GetProcAddress, so suppress locally.
-#if defined( _MSC_VER )
+#if defined( __clang__ )
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcast-function-type"
+#elif defined( _MSC_VER )
 #pragma warning( push )
 #pragma warning( disable : 4191 )
 #elif defined( __GNUC__ )
@@ -171,7 +174,9 @@ static void b2SetCurrentThreadName( const char* name )
 #pragma GCC diagnostic ignored "-Wcast-function-type"
 #endif
 			pfn = (b2SetThreadDescriptionFn)GetProcAddress( kernel, "SetThreadDescription" );
-#if defined( _MSC_VER )
+#if defined( __clang__ )
+#pragma clang diagnostic pop
+#elif defined( _MSC_VER )
 #pragma warning( pop )
 #elif defined( __GNUC__ )
 #pragma GCC diagnostic pop
