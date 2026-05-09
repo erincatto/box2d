@@ -258,7 +258,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				break;
 
 			case GLFW_KEY_R:
-				SelectSample(&s_context, s_context.sampleIndex, true );
+				SelectSample( &s_context, s_context.sampleIndex, true );
 				break;
 
 			case GLFW_KEY_O:
@@ -379,6 +379,11 @@ static void ScrollCallback( GLFWwindow* window, double dx, double dy )
 		return;
 	}
 
+	double xd, yd;
+	glfwGetCursorPos( window, &xd, &yd );
+	b2Vec2 ps = { (float)xd, (float)yd };
+	b2Vec2 pw1 = ConvertScreenToWorld( &s_context.camera, ps );
+
 	if ( dy > 0 )
 	{
 		s_context.camera.zoom /= 1.1f;
@@ -387,6 +392,9 @@ static void ScrollCallback( GLFWwindow* window, double dx, double dy )
 	{
 		s_context.camera.zoom *= 1.1f;
 	}
+
+	b2Vec2 pw2 = ConvertScreenToWorld( &s_context.camera, ps );
+	s_context.camera.center -= pw2 - pw1;
 }
 
 int main( int, char** )
@@ -570,7 +578,7 @@ int main( int, char** )
 
 		FlushDraw( s_context.draw, &s_context.camera );
 
-		UpdateSampleUI(&s_context);
+		UpdateSampleUI( &s_context );
 
 		// ImGui::ShowDemoWindow();
 
