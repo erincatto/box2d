@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "array.h"
+#include "container.h"
 
 #include "box2d/types.h"
 
@@ -20,7 +20,7 @@ typedef struct b2Shape
 	b2ShapeType type;
 	b2SurfaceMaterial material;
 	float density;
-
+	float aabbMargin;
 	b2AABB aabb;
 	b2AABB fatAABB;
 	b2Vec2 localCentroid;
@@ -74,7 +74,7 @@ typedef struct b2ShapeExtent
 // When a sensor is destroyed.
 typedef struct
 {
-	b2IntArray overlaps;
+	b2Array( int ) overlaps;
 } b2SensorOverlaps;
 
 void b2CreateShapeProxy( b2Shape* shape, b2BroadPhase* bp, b2BodyType type, b2Transform transform, bool forcePairCreation );
@@ -130,5 +130,5 @@ static inline bool b2ShouldQueryCollide( b2Filter shapeFilter, b2QueryFilter que
 	return ( shapeFilter.categoryBits & queryFilter.maskBits ) != 0 && ( shapeFilter.maskBits & queryFilter.categoryBits ) != 0;
 }
 
-B2_ARRAY_INLINE( b2ChainShape, b2ChainShape )
-B2_ARRAY_INLINE( b2Shape, b2Shape )
+b2DeclareArray( b2Shape );
+b2DeclareArray( b2ChainShape );

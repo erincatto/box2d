@@ -179,8 +179,8 @@ float b2PrismaticJoint_GetSpeed( b2JointId jointId )
 	b2JointSim* base = b2GetJointSim( world, joint );
 	B2_ASSERT( base->type == b2_prismaticJoint );
 
-	b2Body* bodyA = b2BodyArray_Get( &world->bodies, base->bodyIdA );
-	b2Body* bodyB = b2BodyArray_Get( &world->bodies, base->bodyIdB );
+	b2Body* bodyA = b2Array_Get( world->bodies, base->bodyIdA );
+	b2Body* bodyB = b2Array_Get( world->bodies, base->bodyIdB );
 	b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
 	b2BodySim* bodySimB = b2GetBodySim( world, bodyB );
 	b2BodyState* bodyStateA = b2GetBodyState( world, bodyA );
@@ -287,18 +287,18 @@ void b2PreparePrismaticJoint( b2JointSim* base, b2StepContext* context )
 
 	b2World* world = context->world;
 
-	b2Body* bodyA = b2BodyArray_Get( &world->bodies, idA );
-	b2Body* bodyB = b2BodyArray_Get( &world->bodies, idB );
+	b2Body* bodyA = b2Array_Get( world->bodies, idA );
+	b2Body* bodyB = b2Array_Get( world->bodies, idB );
 
 	B2_ASSERT( bodyA->setIndex == b2_awakeSet || bodyB->setIndex == b2_awakeSet );
-	b2SolverSet* setA = b2SolverSetArray_Get( &world->solverSets, bodyA->setIndex );
-	b2SolverSet* setB = b2SolverSetArray_Get( &world->solverSets, bodyB->setIndex );
+	b2SolverSet* setA = b2Array_Get( world->solverSets, bodyA->setIndex );
+	b2SolverSet* setB = b2Array_Get( world->solverSets, bodyB->setIndex );
 
 	int localIndexA = bodyA->localIndex;
 	int localIndexB = bodyB->localIndex;
 
-	b2BodySim* bodySimA = b2BodySimArray_Get( &setA->bodySims, localIndexA );
-	b2BodySim* bodySimB = b2BodySimArray_Get( &setB->bodySims, localIndexB );
+	b2BodySim* bodySimA = b2Array_Get( setA->bodySims, localIndexA );
+	b2BodySim* bodySimB = b2Array_Get( setB->bodySims, localIndexB );
 
 	float mA = bodySimA->invMass;
 	float iA = bodySimA->invInertia;
@@ -495,7 +495,7 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 				if ( C > 0.0f )
 				{
 					// speculation
-					float safe = b2_lengthUnitsPerMeter;
+					float safe = b2GetLengthUnitsPerMeter();
 					bias = b2MinFloat( C, safe ) * context->inv_h;
 				}
 				else if ( useBias )
@@ -542,7 +542,7 @@ void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBi
 				if ( C > 0.0f )
 				{
 					// speculation
-					float safe = b2_lengthUnitsPerMeter;
+					float safe = b2GetLengthUnitsPerMeter();
 					bias = b2MinFloat( C, safe ) * context->inv_h;
 				}
 				else if ( useBias )
@@ -673,7 +673,7 @@ void b2PrismaticJoint::Dump()
 }
 #endif
 
-void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawSize )
+void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale )
 {
 	B2_ASSERT( base->type == b2_prismaticJoint );
 
@@ -683,21 +683,21 @@ void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform tran
 	b2Transform frameB = b2MulTransforms( transformB, base->localFrameB );
 	b2Vec2 axisA = b2RotateVector( frameA.q, (b2Vec2){ 1.0f, 0.0f } );
 
-	draw->DrawSegmentFcn( frameA.p, frameB.p, b2_colorDimGray, draw->context );
+	draw->DrawLineFcn( frameA.p, frameB.p, b2_colorDimGray, draw->context );
 
 	if ( joint->enableLimit )
 	{
-		float b = 0.25f * drawSize;
+		float b = 0.25f * drawScale;
 		b2Vec2 lower = b2MulAdd( frameA.p, joint->lowerTranslation, axisA );
 		b2Vec2 upper = b2MulAdd( frameA.p, joint->upperTranslation, axisA );
 		b2Vec2 perp = b2LeftPerp( axisA );
-		draw->DrawSegmentFcn( lower, upper, b2_colorGray, draw->context );
-		draw->DrawSegmentFcn( b2MulSub( lower, b, perp ), b2MulAdd( lower, b, perp ), b2_colorGreen, draw->context );
-		draw->DrawSegmentFcn( b2MulSub( upper, b, perp ), b2MulAdd( upper, b, perp ), b2_colorRed, draw->context );
+		draw->DrawLineFcn( lower, upper, b2_colorGray, draw->context );
+		draw->DrawLineFcn( b2MulSub( lower, b, perp ), b2MulAdd( lower, b, perp ), b2_colorGreen, draw->context );
+		draw->DrawLineFcn( b2MulSub( upper, b, perp ), b2MulAdd( upper, b, perp ), b2_colorRed, draw->context );
 	}
 	else
 	{
-		draw->DrawSegmentFcn( b2MulSub( frameA.p, 1.0f, axisA ), b2MulAdd( frameA.p, 1.0f, axisA ), b2_colorGray, draw->context );
+		draw->DrawLineFcn( b2MulSub( frameA.p, 1.0f, axisA ), b2MulAdd( frameA.p, 1.0f, axisA ), b2_colorGray, draw->context );
 	}
 
 	if ( joint->enableSpring )

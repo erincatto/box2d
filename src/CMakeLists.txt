@@ -5,8 +5,6 @@ set(BOX2D_SOURCE_FILES
 	aabb.h
 	arena_allocator.c
 	arena_allocator.h
-	array.c
-	array.h
 	atomic.h
 	bitset.c
 	bitset.h
@@ -14,13 +12,13 @@ set(BOX2D_SOURCE_FILES
 	body.h
 	broad_phase.c
 	broad_phase.h
-	constants.h
 	constraint_graph.c
 	constraint_graph.h
 	contact.c
 	contact.h
 	contact_solver.c
 	contact_solver.h
+	container.h
 	core.c
 	core.h
 	ctz.h
@@ -39,10 +37,14 @@ set(BOX2D_SOURCE_FILES
 	math_functions.c
 	motor_joint.c
 	mover.c
+	parallel_for.c
+	parallel_for.h
 	physics_world.c
 	physics_world.h
 	prismatic_joint.c
 	revolute_joint.c
+	scheduler.c
+	scheduler.h
 	sensor.c
 	sensor.h
 	shape.c
@@ -63,6 +65,7 @@ set(BOX2D_API_FILES
 	../include/box2d/base.h
 	../include/box2d/box2d.h
 	../include/box2d/collision.h
+	../include/box2d/constants.h
 	../include/box2d/id.h
 	../include/box2d/math_functions.h
 	../include/box2d/types.h
@@ -101,18 +104,20 @@ if (BOX2D_COMPILE_WARNING_AS_ERROR)
 endif()
 
 if (BOX2D_PROFILE)
-	target_compile_definitions(box2d PRIVATE BOX2D_PROFILE)
+    target_compile_definitions(box2d PRIVATE BOX2D_PROFILE)
+    set(TRACY_DELAYED_INIT ON CACHE BOOL "Enable delayed init for Tracy" FORCE)
+    set(TRACY_MANUAL_LIFETIME ON CACHE BOOL "Enable manual lifetime for Tracy" FORCE)
 
-	FetchContent_Declare(
-		tracy
-		GIT_REPOSITORY https://github.com/wolfpld/tracy.git
-		GIT_TAG v0.11.1
-		GIT_SHALLOW TRUE
-		GIT_PROGRESS TRUE
-	)
-	FetchContent_MakeAvailable(tracy)
+    FetchContent_Declare(
+        tracy
+        GIT_REPOSITORY https://github.com/wolfpld/tracy.git
+        GIT_TAG v0.13.1
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+    )
+    FetchContent_MakeAvailable(tracy)
 
-	target_link_libraries(box2d PUBLIC TracyClient)
+    target_link_libraries(box2d PUBLIC TracyClient)
 endif()
 
 if (BOX2D_VALIDATE)
@@ -190,6 +195,11 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/../include" PREFIX "include" FILE
 
 add_library(box2d::box2d ALIAS box2d)
 
+# libm is required on many Unix toolchains for sqrtf, etc.
+if(UNIX AND NOT APPLE AND NOT EMSCRIPTEN)
+  target_link_libraries(box2d PUBLIC m)
+endif()
+
 install(
   TARGETS box2d
   EXPORT box2dConfig
@@ -219,7 +229,7 @@ include(CMakePackageConfigHelpers)
 
 write_basic_package_version_file(
   "${PROJECT_BINARY_DIR}/box2dConfigVersion.cmake"
-  VERSION ${BOX2D_VERSION}
+  VERSION ${box2d_VERSION}
   COMPATIBILITY SameMajorVersion
 )
 

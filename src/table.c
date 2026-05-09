@@ -31,8 +31,8 @@ b2HashSet b2CreateSet( int capacity )
 	}
 
 	set.count = 0;
-	set.items = b2Alloc( capacity * sizeof( b2SetItem ) );
-	memset( set.items, 0, capacity * sizeof( b2SetItem ) );
+	set.items = b2Alloc( set.capacity * sizeof( b2SetItem ) );
+	memset( set.items, 0, set.capacity * sizeof( b2SetItem ) );
 
 	return set;
 }

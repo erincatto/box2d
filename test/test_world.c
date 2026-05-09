@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
-#include "constants.h"
-#include "core.h"
 #include "test_macros.h"
+#include "benchmarks.h"
 
 #include "box2d/box2d.h"
 #include "box2d/collision.h"
+#include "box2d/constants.h"
 #include "box2d/math_functions.h"
 
 #include <stdio.h>
@@ -20,14 +20,14 @@ int HelloWorld( void )
 {
 	// Construct a world object, which will hold and simulate the rigid bodies.
 	b2WorldDef worldDef = b2DefaultWorldDef();
-	worldDef.gravity = ( b2Vec2 ){ 0.0f, -10.0f };
+	worldDef.gravity = (b2Vec2){ 0.0f, -10.0f };
 
 	b2WorldId worldId = b2CreateWorld( &worldDef );
 	ENSURE( b2World_IsValid( worldId ) );
 
 	// Define the ground body.
 	b2BodyDef groundBodyDef = b2DefaultBodyDef();
-	groundBodyDef.position = ( b2Vec2 ){ 0.0f, -10.0f };
+	groundBodyDef.position = (b2Vec2){ 0.0f, -10.0f };
 
 	// Call the body factory which allocates memory for the ground body
 	// from a pool and creates the ground box shape (also from a pool).
@@ -45,7 +45,7 @@ int HelloWorld( void )
 	// Define the dynamic body. We set its position and call the body factory.
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_dynamicBody;
-	bodyDef.position = ( b2Vec2 ){ 0.0f, 4.0f };
+	bodyDef.position = (b2Vec2){ 0.0f, 4.0f };
 
 	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
@@ -366,7 +366,7 @@ static int TestSensor( void )
 		b2World_Step( worldId, timeStep, subStepCount );
 
 		b2Vec2 bulletPos = b2Body_GetPosition( bulletId );
-		//printf( "Bullet pos: %g %g\n", bulletPos.x, bulletPos.y );
+		// printf( "Bullet pos: %g %g\n", bulletPos.x, bulletPos.y );
 
 		b2SensorEvents events = b2World_GetSensorEvents( worldId );
 
@@ -394,6 +394,47 @@ static int TestSensor( void )
 	return 0;
 }
 
+static int TestSetWorkerCount( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.workerCount = 1;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+	ENSURE( b2World_IsValid( worldId ) );
+	ENSURE( b2World_GetWorkerCount( worldId ) == 1 );
+
+	CreateJunkyard( worldId );
+	StepJunkyard( worldId, 1 );
+
+	b2World_SetWorkerCount( worldId, 4 );
+	ENSURE( b2World_GetWorkerCount( worldId ) == 4 );
+
+	StepJunkyard( worldId, 2 );
+
+	b2World_SetWorkerCount( worldId, 4 );
+	ENSURE( b2World_GetWorkerCount( worldId ) == 4 );
+
+	StepJunkyard( worldId, 3 );
+
+	b2World_SetWorkerCount( worldId, 0 );
+	ENSURE( b2World_GetWorkerCount( worldId ) == 1 );
+
+	StepJunkyard( worldId, 4 );
+
+	b2World_SetWorkerCount( worldId, -5 );
+	ENSURE( b2World_GetWorkerCount( worldId ) == 1 );
+
+	StepJunkyard( worldId, 5 );
+
+	b2World_SetWorkerCount( worldId, B2_MAX_WORKERS + 10 );
+	ENSURE( b2World_GetWorkerCount( worldId ) == B2_MAX_WORKERS );
+
+	StepJunkyard( worldId, 2 );
+
+	b2DestroyWorld( worldId );
+
+	return 0;
+}
+
 int WorldTest( void )
 {
 	RUN_SUBTEST( HelloWorld );
@@ -403,6 +444,7 @@ int WorldTest( void )
 	RUN_SUBTEST( TestWorldRecycle );
 	RUN_SUBTEST( TestWorldCoverage );
 	RUN_SUBTEST( TestSensor );
+	RUN_SUBTEST( TestSetWorkerCount );
 
 	return 0;
 }

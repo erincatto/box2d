@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
-#include "array.h"
+#include "container.h"
 #include "solver.h"
 
 #include "box2d/types.h"
@@ -44,8 +44,10 @@ typedef struct b2Joint
 
 	int jointId;
 	int islandId;
-	int islandPrev;
-	int islandNext;
+
+	// Index into the island's joints array for O(1) swap-removal.
+	// B2_NULL_INDEX when not in an island.
+	int islandIndex;
 
 	float drawScale;
 
@@ -270,9 +272,13 @@ void b2PrepareJoint( b2JointSim* joint, b2StepContext* context );
 void b2WarmStartJoint( b2JointSim* joint, b2StepContext* context );
 void b2SolveJoint( b2JointSim* joint, b2StepContext* context, bool useBias );
 
-void b2PrepareOverflowJoints( b2StepContext* context );
-void b2WarmStartOverflowJoints( b2StepContext* context );
-void b2SolveOverflowJoints( b2StepContext* context, bool useBias );
+void b2PrepareJoints_Overflow( b2StepContext* context );
+void b2WarmStartJoints_Overflow( b2StepContext* context );
+void b2SolveJoints_Overflow( b2StepContext* context, bool useBias );
+
+void b2PrepareJointsTask( b2SolverBlock block, b2StepContext* context );
+void b2WarmStartJointsTask( b2SolverBlock block, b2StepContext* context );
+void b2SolveJointsTask( b2SolverBlock block, b2StepContext* context, bool useBias, int workerIndex );
 
 void b2GetJointReaction( b2JointSim* sim, float invTimeStep, float* force, float* torque );
 
@@ -313,11 +319,10 @@ void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias );
 void b2SolveWheelJoint( b2JointSim* base, b2StepContext* context, bool useBias );
 
 void b2DrawDistanceJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB );
-void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawSize );
-void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawSize );
-void b2DrawWeldJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawSize );
-void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB );
+void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale );
+void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale );
+void b2DrawWeldJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale );
+void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale );
 
-// Define inline functions for arrays
-B2_ARRAY_INLINE( b2Joint, b2Joint )
-B2_ARRAY_INLINE( b2JointSim, b2JointSim )
+b2DeclareArray( b2Joint );
+b2DeclareArray( b2JointSim );

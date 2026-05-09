@@ -5,69 +5,47 @@
 
 #include "box2d/types.h"
 
-struct ImFont;
-
-struct Camera
+typedef struct Camera
 {
-	Camera();
+	b2Vec2 center;
+	float zoom;
+	float width;
+	float height;
+} Camera;
 
-	void ResetView();
-	b2Vec2 ConvertScreenToWorld( b2Vec2 screenPoint );
-	b2Vec2 ConvertWorldToScreen( b2Vec2 worldPoint );
-	void BuildProjectionMatrix( float* m, float zBias );
-	b2AABB GetViewBounds();
+typedef struct Draw Draw;
 
-	b2Vec2 m_center;
-	float m_zoom;
-	float m_width;
-	float m_height;
-};
-
-// This class implements Box2D debug drawing callbacks
-class Draw
+#ifdef __cplusplus
+extern "C"
 {
-public:
-	Draw();
-	~Draw();
+#endif
 
-	void Create( Camera* camera );
-	void Destroy();
+Camera GetDefaultCamera( void );
+void ResetView( Camera* camera );
+b2Vec2 ConvertScreenToWorld( Camera* camera, b2Vec2 screenPoint );
+b2Vec2 ConvertWorldToScreen( Camera* camera, b2Vec2 worldPoint );
+b2AABB GetViewBounds( Camera* camera );
 
-	void DrawPolygon( const b2Vec2* vertices, int32_t vertexCount, b2HexColor color );
-	void DrawSolidPolygon( b2Transform transform, const b2Vec2* vertices, int32_t vertexCount, float radius, b2HexColor color );
+Draw* CreateDraw( void );
+void DestroyDraw( Draw* draw );
 
-	void DrawCircle( b2Vec2 center, float radius, b2HexColor color );
-	void DrawSolidCircle( b2Transform transform, b2Vec2 center, float radius, b2HexColor color );
+void DrawPoint( Draw* draw, b2Vec2 p, float size, b2HexColor color );
+void DrawLine( Draw* draw, b2Vec2 p1, b2Vec2 p2, b2HexColor color );
+void DrawCircle( Draw* draw, b2Vec2 center, float radius, b2HexColor color );
+void DrawSolidCircle( Draw* draw, b2Transform transform, float radius, b2HexColor color );
+void DrawSolidCapsule( Draw* draw, b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color );
+void DrawPolygon( Draw* draw, const b2Vec2* vertices, int vertexCount, b2HexColor color );
+void DrawSolidPolygon( Draw* draw, b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius,
+					   b2HexColor color );
+void DrawTransform( Draw* draw, b2Transform transform, float scale );
+void DrawBounds( Draw* draw, b2AABB aabb, b2HexColor color );
+void DrawScreenString( Draw* draw, float x, float y, b2HexColor color, const char* string, ... );
+void DrawWorldString( Draw* draw, Camera* camera, b2Vec2 p, b2HexColor color, const char* string, ... );
 
-	void DrawSolidCapsule( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color );
+void FlushDraw( Draw* draw, Camera* camera );
 
-	void DrawLine( b2Vec2 p1, b2Vec2 p2, b2HexColor color );
+void DrawBackground( Draw* draw, Camera* camera );
 
-	void DrawTransform( b2Transform transform );
-
-	void DrawPoint( b2Vec2 p, float size, b2HexColor color );
-
-	void DrawString( int x, int y, const char* string, ... );
-
-	void DrawString( b2Vec2 p, const char* string, ... );
-
-	void DrawBounds( b2AABB aabb, b2HexColor color );
-
-	void Flush();
-	void DrawBackground();
-
-	Camera* m_camera;
-	bool m_showUI;
-	struct GLBackground* m_background;
-	struct GLPoints* m_points;
-	struct GLLines* m_lines;
-	struct GLCircles* m_circles;
-	struct GLSolidCircles* m_solidCircles;
-	struct GLSolidCapsules* m_solidCapsules;
-	struct GLSolidPolygons* m_solidPolygons;
-	b2DebugDraw m_debugDraw;
-
-	ImFont* m_regularFont;
-	ImFont* m_mediumFont;
-	ImFont* m_largeFont;
-};
+#ifdef __cplusplus
+}
+#endif

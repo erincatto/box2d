@@ -8,3 +8,7 @@ settings.ini
 CMakeUserPresets.json
 .cache/
 .idea/
+.claude/
+.tmp/
+AGENTS.md
+GEMINI.md

@@ -1,41 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
-<Type Name="__m128">
-	<DisplayString>[{m128_f32[0]}, {m128_f32[1]}, {m128_f32[2]}, {m128_f32[3]}]</DisplayString>
-	<Expand>
-		<Item Name="x">m128_f32[0]</Item>
-		<Item Name="y">m128_f32[1]</Item>
-		<Item Name="z">m128_f32[2]</Item>
-		<Item Name="w">m128_f32[3]</Item>
-		<Item Name="Address">(void*)this</Item>
-	</Expand>
-</Type>
-<Type Name="__m256">
-	<DisplayString>[{m256_f32[0]}, {m256_f32[1]}, {m256_f32[2]}, {m256_f32[3]}, {m256_f32[4]}, {m256_f32[5]}, {m256_f32[6]}, {m256_f32[7]}]</DisplayString>
-	<Expand>
-		<Item Name="x1">m256_f32[0]</Item>
-		<Item Name="y1">m256_f32[1]</Item>
-		<Item Name="z1">m256_f32[2]</Item>
-		<Item Name="w1">m256_f32[3]</Item>
-		<Item Name="x2">m256_f32[4]</Item>
-		<Item Name="y2">m256_f32[5]</Item>
-		<Item Name="z2">m256_f32[6]</Item>
-		<Item Name="w2">m256_f32[7]</Item>
-		<Item Name="Address">(void*)this</Item>
-	</Expand>
-</Type>
+  
+  <Type Name="__m128">
+    <DisplayString>[{m128_f32[0]}, {m128_f32[1]}, {m128_f32[2]}, {m128_f32[3]}]</DisplayString>
+    <Expand>
+      <Item Name="x">m128_f32[0]</Item>
+      <Item Name="y">m128_f32[1]</Item>
+      <Item Name="z">m128_f32[2]</Item>
+      <Item Name="w">m128_f32[3]</Item>
+      <Item Name="Address">(void*)this</Item>
+    </Expand>
+  </Type>
+  
+  <Type Name="__m256">
+    <DisplayString>[{m256_f32[0]}, {m256_f32[1]}, {m256_f32[2]}, {m256_f32[3]}, {m256_f32[4]}, {m256_f32[5]}, {m256_f32[6]}, {m256_f32[7]}]</DisplayString>
+    <Expand>
+      <Item Name="x1">m256_f32[0]</Item>
+      <Item Name="y1">m256_f32[1]</Item>
+      <Item Name="z1">m256_f32[2]</Item>
+      <Item Name="w1">m256_f32[3]</Item>
+      <Item Name="x2">m256_f32[4]</Item>
+      <Item Name="y2">m256_f32[5]</Item>
+      <Item Name="z2">m256_f32[6]</Item>
+      <Item Name="w2">m256_f32[7]</Item>
+      <Item Name="Address">(void*)this</Item>
+    </Expand>
+  </Type>
 
-<Type Name="b2WorldId">
-	<DisplayString>index: {index1}</DisplayString>
-	<Expand>
-		<ExpandedItem>b2_worlds[ index1 - 1 ]</ExpandedItem>
-	</Expand>
-</Type>
-	
-<Type Name="b2BodyId">
-	<DisplayString>
-		{b2_worlds[world0].bodies.data[index1-1].name,na},
-		{b2_worlds[world0].bodies.data[index1-1].type}
-	</DisplayString>
-</Type>
+  <Type Name="b2WorldId">
+    <DisplayString>index: {index1}</DisplayString>
+    <Expand>
+      <ExpandedItem>b2_worlds[ index1 - 1 ]</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="b2BodyId">
+    <DisplayString>
+      {b2_worlds[world0].bodies.data[index1-1].name,na},
+      {b2_worlds[world0].bodies.data[index1-1].type}
+    </DisplayString>
+  </Type>
+
+  <Type Name="b2AtomicInt">
+    <DisplayString>{value}</DisplayString>
+  </Type>
+
+  <Type Name="b2SolverBlock">
+    <DisplayString Condition="blockType == 0">body [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}]</DisplayString>
+    <DisplayString Condition="blockType == 1">joint [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}]</DisplayString>
+    <DisplayString Condition="blockType == 2">contact [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}]</DisplayString>
+    <DisplayString Condition="blockType == 3">graphJoint [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}]</DisplayString>
+    <DisplayString Condition="blockType == 4">graphContact [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}]</DisplayString>
+    <DisplayString>unknown [color={(unsigned int)colorIndex}] [{count,u} items @ {startIndex}]</DisplayString>
+    <Expand>
+      <Item Name="Block Type">blockType</Item>
+      <Item Name="Start Index">startIndex</Item>
+      <Item Name="Count">count</Item>
+      <Item Name="Color Index">(unsigned int)colorIndex</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="b2SyncBlock">
+    <DisplayString>{block} sync={syncIndex.value}</DisplayString>
+    <Expand>
+      <Item Name="Block">block</Item>
+      <Item Name="Sync Index">syncIndex.value</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="b2Body">
+    <DisplayString>{type} set={setIndex}</DisplayString>
+  </Type>
+
+  <Type Name="b2DynamicArray_int">
+    <DisplayString>{{ count={count}, capacity={capacity} }}</DisplayString>
+    <Expand>
+      <Item Name="count">count</Item>
+      <Item Name="capacity">capacity</Item>
+      <ArrayItems>
+        <Size>count</Size>
+        <ValuePointer>data</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="b2DynamicArray_b2Body">
+    <DisplayString>{{ count={count}, capacity={capacity} }}</DisplayString>
+    <Expand>
+      <Item Name="count">count</Item>
+      <Item Name="capacity">capacity</Item>
+      <ArrayItems>
+        <Size>count</Size>
+        <ValuePointer>data</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
 </AutoVisualizer>
