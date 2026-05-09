@@ -256,7 +256,7 @@ typedef struct b2BodyDef
 	/// If you want a fast moving projectile to collide with a fast moving target, you need to consider the relative
 	/// movement in your ray or shape cast. This is out of the scope of Box2D.
 	/// So what are good use cases for bullets? Pinball games or games with dynamic containers that hold other objects.
-	/// It should be a use case where it doesn't break the game if there is a collision missed, but the having them
+	/// It should be a use case where it doesn't break the game if there is a collision missed, but having them
 	/// captured improves the quality of the game.
 	bool isBullet;
 
