@@ -144,22 +144,23 @@ if (MSVC)
 	# Enable asserts in release with debug info
 	target_compile_definitions(box2d PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:B2_ENABLE_ASSERT>")
 
-	# All Warnings with some disabled
-	# 4820 - padding between members
-	# 5045 - Spectre mitigation
-	# 4061 - not handling all cases for an enum in a switch block
-	# 4711 - function inlined without being marked for inline
-	# 4710 - inline functions that are not inlined
-	target_compile_options(box2d PRIVATE /Wall /wd4820 /wd5045 /wd4061 /wd4711 /wd4710)
-
-	if (BOX2D_AVX2)
-		message(STATUS "Box2D using AVX2")	
-		target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
-		target_compile_options(box2d PRIVATE /arch:AVX2)
+	if (CMAKE_C_COMPILER_ID STREQUAL "Clang")
+		# clang-cl: /Wall maps to -Weverything which is far too aggressive
+		target_compile_options(box2d PRIVATE /W4 -Wmissing-prototypes)
+	else()
+		# All Warnings with some disabled
+		# 4820 - padding between members
+		# 5045 - Spectre mitigation
+		# 4061 - not handling all cases for an enum in a switch block
+		# 4711 - function inlined without being marked for inline
+		# 4710 - inline functions that are not inlined
+		target_compile_options(box2d PRIVATE /Wall /wd4820 /wd5045 /wd4061 /wd4711 /wd4710)
 	endif()
 
-	if (CMAKE_C_COMPILER_ID STREQUAL "Clang")
-		target_compile_options(box2d PRIVATE -Wmissing-prototypes)
+	if (BOX2D_AVX2)
+		message(STATUS "Box2D using AVX2")
+		target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
+		target_compile_options(box2d PRIVATE /arch:AVX2)
 	endif()
 
 elseif (MINGW)
