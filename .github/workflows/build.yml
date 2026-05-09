@@ -89,6 +89,25 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: ./bin/${{env.BUILD_TYPE}}/test
 
+  build-windows-clang-cl:
+    name: windows-clang-cl
+    runs-on: windows-latest
+    timeout-minutes: 4
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Configure CMake
+      run: cmake -T ClangCL -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ./bin/${{env.BUILD_TYPE}}/test
+
   build-windows-mingw:
     name: windows-mingw
     runs-on: windows-latest
