@@ -1216,7 +1216,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 							b2ManifoldPoint* mp = contactSim->manifold.points + j;
 
 							b2Vec2 p;
-							if ( draw->drawAnchorA == 1 )
+							if ( draw->drawAnchorA )
 							{
 								p = b2Add( bodySimA->center, mp->anchorA );
 							}

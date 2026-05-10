@@ -1121,6 +1121,7 @@ void SelectSample( SampleContext* context, int selection, bool restart )
 	}
 	context->restart = restart;
 	context->sample = g_sampleEntries[context->sampleIndex].createFcn( context );
+	context->restart = false;
 }
 
 void UpdateSampleUI( SampleContext* context )
@@ -1185,9 +1186,16 @@ void UpdateSampleUI( SampleContext* context )
 				ImGui::Separator();
 
 				ImGui::Checkbox( "Contact Points", &context->debugDraw.drawContacts );
-				ImGui::RadioButton( "Anchor A", &context->debugDraw.drawAnchorA, 1 );
+
+				if ( ImGui::RadioButton( "Anchor A", context->debugDraw.drawAnchorA == true ) )
+				{
+					context->debugDraw.drawAnchorA = true;
+				}
 				ImGui::SameLine();
-				ImGui::RadioButton( "Anchor B", &context->debugDraw.drawAnchorA, 0 );
+				if ( ImGui::RadioButton( "Anchor B", context->debugDraw.drawAnchorA == false ) )
+				{
+					context->debugDraw.drawAnchorA = false;
+				}
 				ImGui::Checkbox( "Contact Normals", &context->debugDraw.drawContactNormals );
 				ImGui::Checkbox( "Contact Features", &context->debugDraw.drawContactFeatures );
 				ImGui::Checkbox( "Contact Forces", &context->debugDraw.drawContactForces );

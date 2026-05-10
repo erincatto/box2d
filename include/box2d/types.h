@@ -1400,7 +1400,7 @@ typedef struct b2DebugDraw
 	bool drawContacts;
 
 	/// Draw anchor A for contact points (instead of anchorB)
-	int drawAnchorA;
+	bool drawAnchorA;
 
 	/// Option to draw shapes
 	bool drawShapes;
