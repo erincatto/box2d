@@ -2,12 +2,7 @@ name: Generate API JSON
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'include/box2d/**'
-      - 'scripts/api_dump.py'
-      - 'docs/CMakeLists.txt'
-      - '.github/workflows/api.yml'
+    tags: ['v*']
   workflow_dispatch:
 
 permissions:
@@ -30,14 +25,16 @@ jobs:
         run: cmake --build build --target doc
 
       - name: Generate API JSON
-        run: python3 scripts/api_dump.py --xml build/docs/xml --out api/box2d_api.json --version "${{ github.sha }}"
+        run: python3 scripts/api_dump.py --xml build/docs/xml --out api/box2d_api.json --version "${{ github.ref_name }}"
 
-      - name: Commit if changed
-        run: |
-          if [ -n "$(git status --porcelain api/box2d_api.json)" ]; then
-            git config user.name 'github-actions[bot]'
-            git config user.email 'github-actions[bot]@users.noreply.github.com'
-            git add api/box2d_api.json
-            git commit -m "Update api/box2d_api.json [skip ci]"
-            git push
-          fi
+      - name: Upload as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: box2d_api
+          path: api/box2d_api.json
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: api/box2d_api.json
