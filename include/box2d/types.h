@@ -256,7 +256,7 @@ typedef struct b2BodyDef
 	/// If you want a fast moving projectile to collide with a fast moving target, you need to consider the relative
 	/// movement in your ray or shape cast. This is out of the scope of Box2D.
 	/// So what are good use cases for bullets? Pinball games or games with dynamic containers that hold other objects.
-	/// It should be a use case where it doesn't break the game if there is a collision missed, but the having them
+	/// It should be a use case where it doesn't break the game if there is a collision missed, but having them
 	/// captured improves the quality of the game.
 	bool isBullet;
 
@@ -1354,16 +1354,6 @@ typedef enum b2HexColor
 /// (B2_GRAPH_COLOR_COUNT - 1) is the overflow color.
 B2_API b2HexColor b2GetGraphColor( int index );
 
-/// The type of contact point drawing
-typedef enum b2ContactDrawType
-{
-	b2_drawContacts_None = 0,
-	b2_drawContacts_Clip = 1,
-	b2_drawContacts_AnchorA = 2,
-	b2_drawContacts_AnchorB = 3,
-	b2_drawContacts_Average = 4,
-} b2ContactDrawType;
-
 /// This struct holds callbacks you can implement to draw a Box2D world.
 /// This structure should be zero initialized.
 /// @ingroup world
@@ -1407,7 +1397,10 @@ typedef struct b2DebugDraw
 	float jointScale;
 
 	/// Option to draw contact points
-	b2ContactDrawType contactDrawType;
+	bool drawContacts;
+
+	/// Draw anchor A for contact points (instead of anchorB)
+	bool drawAnchorA;
 
 	/// Option to draw shapes
 	bool drawShapes;

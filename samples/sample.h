@@ -3,9 +3,10 @@
 
 #pragma once
 
+#include "draw.h"
+
 #include "box2d/id.h"
 #include "box2d/types.h"
-#include "draw.h"
 
 #define ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
 
@@ -19,8 +20,15 @@ struct SampleContext
 	struct GLFWwindow* window = nullptr;
 	Camera camera;
 	Draw* draw;
+	class Sample* sample = nullptr;
+	b2Capacity capacity;
+	b2DebugDraw debugDraw;
+	ImFont* regularFont;
+	ImFont* mediumFont;
+	ImFont* largeFont;
 	float uiScale = 1.0f;
 	float hertz = 60.0f;
+	float recycleDistance = 0.05f;
 	int subStepCount = 4;
 	int workerCount = 1;
 	bool restart = false;
@@ -30,18 +38,12 @@ struct SampleContext
 	bool drawProfile = false;
 	bool enableWarmStarting = true;
 	bool enableContinuous = true;
-	bool enableRecycling = true;
 	bool enableSleep = true;
 	bool showUI = true;
 	bool frameTime = false;
 
 	// These are persisted
 	int sampleIndex = 0;
-	b2Capacity capacity;
-	b2DebugDraw debugDraw;
-	ImFont* regularFont;
-	ImFont* mediumFont;
-	ImFont* largeFont;
 };
 
 class Sample
@@ -50,10 +52,11 @@ public:
 	explicit Sample( SampleContext* context );
 	virtual ~Sample();
 
-	void CreateWorld( );
+	void CreateWorld();
 
 	void ResetText();
-	virtual void Step( );
+	virtual void Step();
+
 	virtual void UpdateGui();
 	virtual void Keyboard( int )
 	{
@@ -102,8 +105,6 @@ public:
 	uint64_t m_profileReadIndex;
 	uint64_t m_profileWriteIndex;
 
-	b2Profile m_totalProfile;
-
 	bool m_didStep;
 };
 
@@ -112,6 +113,8 @@ typedef b2Capacity SampleCapacityFcn( void );
 
 int RegisterSample( const char* category, const char* name, SampleCreateFcn* fcn );
 int RegisterSampleWithCapacity( const char* category, const char* name, SampleCreateFcn* fcn, SampleCapacityFcn* capacityFcn );
+void SelectSample( SampleContext* context, int selection, bool restart );
+void UpdateSampleUI( SampleContext* context );
 
 struct SampleEntry
 {

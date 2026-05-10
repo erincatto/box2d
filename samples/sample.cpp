@@ -146,6 +146,8 @@ void SampleContext::Load()
 	debugDraw.DrawStringFcn = DrawStringFcn;
 	debugDraw.context = this;
 
+	recycleDistance = B2_CONTACT_RECYCLE_DISTANCE;
+
 	char* data = nullptr;
 	int size = 0;
 	bool found = ReadFile( data, size, fileName );
@@ -258,8 +260,6 @@ Sample::Sample( SampleContext* context )
 	m_profileReadIndex = 0;
 	m_profileWriteIndex = 0;
 
-	m_totalProfile = {};
-
 	g_randomSeed = RAND_SEED;
 
 	CreateWorld();
@@ -286,6 +286,8 @@ void Sample::CreateWorld()
 	worldDef.enableSleep = m_context->enableSleep;
 	worldDef.capacity = m_context->capacity;
 	m_worldId = b2CreateWorld( &worldDef );
+
+	b2World_SetContactRecycleDistance( m_worldId, m_context->recycleDistance );
 }
 
 void Sample::ResetText()
@@ -435,7 +437,6 @@ void Sample::DrawTextLine( const char* text, ... )
 
 void Sample::ResetProfile()
 {
-	m_totalProfile = {};
 	m_stepCount = 0;
 }
 
@@ -486,19 +487,9 @@ void Sample::Step()
 	b2World_EnableWarmStarting( m_worldId, m_context->enableWarmStarting );
 	b2World_EnableContinuous( m_worldId, m_context->enableContinuous );
 
-	if ( m_context->enableRecycling )
-	{
-		b2World_SetContactRecycleDistance( m_worldId, B2_CONTACT_RECYCLE_DISTANCE );
-	}
-	else
-	{
-		b2World_SetContactRecycleDistance( m_worldId, 0.0f );
-	}
-
 	for ( int i = 0; i < 1; ++i )
 	{
 		b2World_Step( m_worldId, timeStep, m_context->subStepCount );
-		// m_taskCount = 0;
 	}
 
 	b2World_Draw( m_worldId, &m_context->debugDraw );
@@ -518,34 +509,6 @@ void Sample::Step()
 
 		m_profileWriteIndex += 1;
 	}
-
-	// Accumulate profile averages
-	if ( m_didStep )
-	{
-		b2Profile p = m_profiles[m_currentProfileIndex];
-		m_totalProfile.step += p.step;
-		m_totalProfile.pairs += p.pairs;
-		m_totalProfile.collide += p.collide;
-		m_totalProfile.solve += p.solve;
-		m_totalProfile.solverSetup += p.solverSetup;
-		m_totalProfile.constraints += p.constraints;
-		m_totalProfile.prepareConstraints += p.prepareConstraints;
-		m_totalProfile.integrateVelocities += p.integrateVelocities;
-		m_totalProfile.warmStart += p.warmStart;
-		m_totalProfile.solveImpulses += p.solveImpulses;
-		m_totalProfile.integratePositions += p.integratePositions;
-		m_totalProfile.relaxImpulses += p.relaxImpulses;
-		m_totalProfile.applyRestitution += p.applyRestitution;
-		m_totalProfile.storeImpulses += p.storeImpulses;
-		m_totalProfile.transforms += p.transforms;
-		m_totalProfile.splitIslands += p.splitIslands;
-		m_totalProfile.jointEvents += p.jointEvents;
-		m_totalProfile.hitEvents += p.hitEvents;
-		m_totalProfile.refit += p.refit;
-		m_totalProfile.bullets += p.bullets;
-		m_totalProfile.sleepIslands += p.sleepIslands;
-		m_totalProfile.sensors += p.sensors;
-	}
 }
 
 void Sample::UpdateGui()
@@ -562,6 +525,7 @@ void Sample::UpdateGui()
 		// Unroll ring buffer into per-field histories.
 		constexpr int kRowCount = 22;
 		float histories[kRowCount][m_profileCapacity];
+		float totals[kRowCount] = {};
 		for ( int i = 0; i < count; ++i )
 		{
 			int idx = static_cast<int>( ( m_profileReadIndex + i ) & ( m_profileCapacity - 1 ) );
@@ -588,6 +552,29 @@ void Sample::UpdateGui()
 			histories[19][i] = p.sleepIslands;
 			histories[20][i] = p.bullets;
 			histories[21][i] = p.sensors;
+
+			totals[0] += p.step;
+			totals[1] += p.pairs;
+			totals[2] += p.collide;
+			totals[3] += p.solve;
+			totals[4] += p.solverSetup;
+			totals[5] += p.constraints;
+			totals[6] += p.prepareConstraints;
+			totals[7] += p.integrateVelocities;
+			totals[8] += p.warmStart;
+			totals[9] += p.solveImpulses;
+			totals[10] += p.integratePositions;
+			totals[11] += p.relaxImpulses;
+			totals[12] += p.applyRestitution;
+			totals[13] += p.storeImpulses;
+			totals[14] += p.splitIslands;
+			totals[15] += p.transforms;
+			totals[16] += p.jointEvents;
+			totals[17] += p.hitEvents;
+			totals[18] += p.refit;
+			totals[19] += p.sleepIslands;
+			totals[20] += p.bullets;
+			totals[21] += p.sensors;
 		}
 
 		const b2Profile& cur = m_profiles[m_currentProfileIndex];
@@ -616,32 +603,15 @@ void Sample::UpdateGui()
 			cur.sensors,
 		};
 
-		float avg[kRowCount] = { 0 };
-		if ( m_stepCount > 0 )
+		// Rolling average
+		float avg[kRowCount] = {};
+		if ( count > 0 )
 		{
-			float scale = 1.0f / m_stepCount;
-			avg[0] = scale * m_totalProfile.step;
-			avg[1] = scale * m_totalProfile.pairs;
-			avg[2] = scale * m_totalProfile.collide;
-			avg[3] = scale * m_totalProfile.solve;
-			avg[4] = scale * m_totalProfile.solverSetup;
-			avg[5] = scale * m_totalProfile.constraints;
-			avg[6] = scale * m_totalProfile.prepareConstraints;
-			avg[7] = scale * m_totalProfile.integrateVelocities;
-			avg[8] = scale * m_totalProfile.warmStart;
-			avg[9] = scale * m_totalProfile.solveImpulses;
-			avg[10] = scale * m_totalProfile.integratePositions;
-			avg[11] = scale * m_totalProfile.relaxImpulses;
-			avg[12] = scale * m_totalProfile.applyRestitution;
-			avg[13] = scale * m_totalProfile.storeImpulses;
-			avg[14] = scale * m_totalProfile.splitIslands;
-			avg[15] = scale * m_totalProfile.transforms;
-			avg[16] = scale * m_totalProfile.jointEvents;
-			avg[17] = scale * m_totalProfile.hitEvents;
-			avg[18] = scale * m_totalProfile.refit;
-			avg[19] = scale * m_totalProfile.sleepIslands;
-			avg[20] = scale * m_totalProfile.bullets;
-			avg[21] = scale * m_totalProfile.sensors;
+			float scale = 1.0f / count;
+			for ( int i = 0; i < kRowCount; ++i )
+			{
+				avg[i] = scale * totals[i];
+			}
 		}
 
 		// Match Frame Time chart's first three colors so rows read with the line plot.
@@ -1127,4 +1097,207 @@ int RegisterSampleWithCapacity( const char* category, const char* name, SampleCr
 	}
 
 	return -1;
+}
+
+void SelectSample( SampleContext* context, int selection, bool restart )
+{
+	if ( restart == false )
+	{
+		ResetView( &context->camera );
+		context->sampleIndex = selection;
+		context->subStepCount = 4;
+		context->debugDraw.drawJoints = true;
+	}
+
+	delete context->sample;
+	context->sample = nullptr;
+	if ( g_sampleEntries[context->sampleIndex].capacityFcn != nullptr )
+	{
+		context->capacity = g_sampleEntries[context->sampleIndex].capacityFcn();
+	}
+	else
+	{
+		context->capacity = b2DefaultWorldDef().capacity;
+	}
+	context->restart = restart;
+	context->sample = g_sampleEntries[context->sampleIndex].createFcn( context );
+	context->restart = false;
+}
+
+void UpdateSampleUI( SampleContext* context )
+{
+	int maxWorkers = B2_MAX_WORKERS;
+	b2WorldId worldId = context->sample->m_worldId;
+
+	float fontSize = ImGui::GetFontSize();
+	float menuWidth = 13.0f * fontSize;
+	if ( context->showUI )
+	{
+		ImGui::SetNextWindowPos( { context->camera.width - menuWidth - 0.5f * fontSize, 0.5f * fontSize } );
+		ImGui::SetNextWindowSize( { menuWidth, context->camera.height - fontSize } );
+
+		ImGui::Begin( "Tools", &context->showUI,
+					  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse );
+
+		if ( ImGui::BeginTabBar( "ControlTabs", ImGuiTabBarFlags_None ) )
+		{
+			if ( ImGui::BeginTabItem( "Controls" ) )
+			{
+				ImGui::PushItemWidth( 100.0f );
+				ImGui::SliderInt( "Sub-steps", &context->subStepCount, 1, 32 );
+				ImGui::SliderFloat( "Hertz", &context->hertz, 5.0f, 240.0f, "%.0f hz" );
+
+				if ( ImGui::SliderInt( "Workers", &context->workerCount, 1, maxWorkers ) )
+				{
+					context->workerCount = b2ClampInt( context->workerCount, 1, maxWorkers );
+					SelectSample( context, context->sampleIndex, true );
+				}
+				ImGui::PopItemWidth();
+
+				ImGui::Separator();
+
+				ImGui::Checkbox( "Sleep", &context->enableSleep );
+				ImGui::Checkbox( "Warm Starting", &context->enableWarmStarting );
+				ImGui::Checkbox( "Continuous", &context->enableContinuous );
+
+				ImGui::PushItemWidth( 100.0f );
+				float recyclingCentimeters = 100.0f * context->recycleDistance;
+				if ( ImGui::SliderFloat( "Recycle", &recyclingCentimeters, 0.0f, 10.0f, "%.1f cm" ) )
+				{
+					context->recycleDistance = 0.01f * recyclingCentimeters;
+					b2World_SetContactRecycleDistance( worldId, context->recycleDistance );
+				}
+				ImGui::PopItemWidth();
+
+				ImGui::Separator();
+
+				ImGui::Checkbox( "Shapes", &context->debugDraw.drawShapes );
+				ImGui::Checkbox( "Joints", &context->debugDraw.drawJoints );
+				ImGui::Checkbox( "Joint Extras", &context->debugDraw.drawJointExtras );
+				ImGui::Checkbox( "Bounds", &context->debugDraw.drawBounds );
+				ImGui::Checkbox( "Mass", &context->debugDraw.drawMass );
+				ImGui::Checkbox( "Body Names", &context->debugDraw.drawBodyNames );
+				ImGui::Checkbox( "Graph Colors", &context->debugDraw.drawGraphColors );
+				ImGui::Checkbox( "Islands", &context->debugDraw.drawIslands );
+				ImGui::Checkbox( "Counters", &context->drawCounters );
+				ImGui::Checkbox( "Profile", &context->drawProfile );
+				ImGui::Checkbox( "Frame Time", &context->frameTime );
+
+				ImGui::Separator();
+
+				ImGui::Checkbox( "Contact Points", &context->debugDraw.drawContacts );
+
+				if ( ImGui::RadioButton( "Anchor A", context->debugDraw.drawAnchorA == true ) )
+				{
+					context->debugDraw.drawAnchorA = true;
+				}
+				ImGui::SameLine();
+				if ( ImGui::RadioButton( "Anchor B", context->debugDraw.drawAnchorA == false ) )
+				{
+					context->debugDraw.drawAnchorA = false;
+				}
+				ImGui::Checkbox( "Contact Normals", &context->debugDraw.drawContactNormals );
+				ImGui::Checkbox( "Contact Features", &context->debugDraw.drawContactFeatures );
+				ImGui::Checkbox( "Contact Forces", &context->debugDraw.drawContactForces );
+				ImGui::Checkbox( "Friction Forces", &context->debugDraw.drawFrictionForces );
+
+				ImGui::Separator();
+
+				ImGui::PushItemWidth( 80.0f );
+				ImGui::InputFloat( "Joint Scale", &context->debugDraw.jointScale );
+				ImGui::InputFloat( "Force Scale", &context->debugDraw.forceScale );
+				ImGui::PopItemWidth();
+
+				ImVec2 button_sz = ImVec2( -1, 0 );
+				if ( ImGui::Button( "Pause (P)", button_sz ) )
+				{
+					context->pause = !context->pause;
+				}
+
+				if ( ImGui::Button( "Single Step (O)", button_sz ) )
+				{
+					context->singleStep = !context->singleStep;
+				}
+
+				if ( ImGui::Button( "Dump Mem Stats", button_sz ) )
+				{
+					b2World_DumpMemoryStats( context->sample->m_worldId );
+				}
+
+				if ( ImGui::Button( "Reset Profile", button_sz ) )
+				{
+					context->sample->ResetProfile();
+				}
+
+				if ( ImGui::Button( "Restart (R)", button_sz ) )
+				{
+					SelectSample( context, context->sampleIndex, true );
+				}
+
+				if ( ImGui::Button( "Quit", button_sz ) )
+				{
+					glfwSetWindowShouldClose( context->window, GL_TRUE );
+				}
+
+				ImGui::EndTabItem();
+			}
+
+			ImGuiTreeNodeFlags leafNodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+			leafNodeFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
+			ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+
+			if ( ImGui::BeginTabItem( "Samples" ) )
+			{
+				int categoryIndex = 0;
+				const char* category = g_sampleEntries[categoryIndex].category;
+				int i = 0;
+				while ( i < g_sampleCount )
+				{
+					bool categorySelected = strcmp( category, g_sampleEntries[context->sampleIndex].category ) == 0;
+					ImGuiTreeNodeFlags nodeSelectionFlags = categorySelected ? ImGuiTreeNodeFlags_Selected : 0;
+					bool nodeOpen = ImGui::TreeNodeEx( category, nodeFlags | nodeSelectionFlags );
+
+					if ( nodeOpen )
+					{
+						while ( i < g_sampleCount && strcmp( category, g_sampleEntries[i].category ) == 0 )
+						{
+							ImGuiTreeNodeFlags selectionFlags = 0;
+							if ( context->sampleIndex == i )
+							{
+								selectionFlags = ImGuiTreeNodeFlags_Selected;
+							}
+							ImGui::TreeNodeEx( (void*)(intptr_t)i, leafNodeFlags | selectionFlags, "%s",
+											   g_sampleEntries[i].name );
+							if ( ImGui::IsItemClicked() )
+							{
+								SelectSample( context, i, false );
+							}
+							++i;
+						}
+						ImGui::TreePop();
+					}
+					else
+					{
+						while ( i < g_sampleCount && strcmp( category, g_sampleEntries[i].category ) == 0 )
+						{
+							++i;
+						}
+					}
+
+					if ( i < g_sampleCount )
+					{
+						category = g_sampleEntries[i].category;
+						categoryIndex = i;
+					}
+				}
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
+		}
+
+		ImGui::End();
+
+		context->sample->UpdateGui();
+	}
 }

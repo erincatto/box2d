@@ -89,6 +89,56 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: ./bin/${{env.BUILD_TYPE}}/test
 
+  build-windows-clang-cl:
+    name: windows-clang-cl
+    runs-on: windows-latest
+    timeout-minutes: 4
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Configure CMake
+      run: cmake -T ClangCL -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ./bin/${{env.BUILD_TYPE}}/test
+
+  build-windows-mingw:
+    name: windows-mingw
+    runs-on: windows-latest
+    timeout-minutes: 4
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup MSYS2 UCRT64
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: UCRT64
+        update: true
+        install: >-
+          mingw-w64-ucrt-x86_64-gcc
+          mingw-w64-ucrt-x86_64-cmake
+          mingw-w64-ucrt-x86_64-ninja
+
+    - name: Configure CMake
+      run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+
+    - name: Build
+      run: cmake --build build --config ${{env.BUILD_TYPE}}
+
+    - name: Test
+      working-directory: build
+      run: ./bin/test
+
   build-windows-arm64:
     name: windows-arm64
     runs-on: windows-11-arm
@@ -138,7 +188,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Setup MSVC dev command prompt
-      uses: TheMrMilchmann/setup-msvc-dev@v3
+      uses: TheMrMilchmann/setup-msvc-dev@v4
       with:
         arch: x64
 

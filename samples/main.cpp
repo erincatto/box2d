@@ -27,6 +27,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "implot.h"
+
 #include "box2d/constants.h"
 
 #include <stdio.h>
@@ -54,18 +55,16 @@ static int MyAllocHook( int allocType, void* userData, size_t size, int blockTyp
 #endif
 
 static SampleContext s_context;
-static int32_t s_selection = 0;
-static Sample* s_sample = nullptr;
 static bool s_rightMouseDown = false;
 static b2Vec2 s_clickPointWS = b2Vec2_zero;
 static float s_framebufferScale = 1.0f;
 
-inline bool IsPowerOfTwo( int32_t x )
+inline bool IsPowerOfTwo( int x )
 {
 	return ( x != 0 ) && ( ( x & ( x - 1 ) ) == 0 );
 }
 
-void* AllocFcn( unsigned int size, int32_t alignment )
+void* AllocFcn( unsigned int size, int alignment )
 {
 	// Allocation must be a multiple of alignment or risk a seg fault
 	// https://en.cppreference.com/w/c/memory/aligned_alloc
@@ -121,23 +120,6 @@ static int CompareSamples( const void* a, const void* b )
 static void SortSamples()
 {
 	qsort( g_sampleEntries, g_sampleCount, sizeof( SampleEntry ), CompareSamples );
-}
-
-static void RestartSample()
-{
-	delete s_sample;
-	s_sample = nullptr;
-	s_context.restart = true;
-	if ( g_sampleEntries[s_context.sampleIndex].capacityFcn != nullptr)
-	{
-		s_context.capacity = g_sampleEntries[s_context.sampleIndex].capacityFcn();
-	}
-	else
-	{
-		s_context.capacity = b2DefaultWorldDef().capacity;
-	}
-	s_sample = g_sampleEntries[s_context.sampleIndex].createFcn( &s_context );
-	s_context.restart = false;
 }
 
 static void CreateUI( GLFWwindow* window, const char* glslVersion )
@@ -224,7 +206,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				if ( mods == GLFW_MOD_CONTROL )
 				{
 					b2Vec2 newOrigin = { 2.0f, 0.0f };
-					s_sample->ShiftOrigin( newOrigin );
+					s_context.sample->ShiftOrigin( newOrigin );
 				}
 				else
 				{
@@ -237,7 +219,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				if ( mods == GLFW_MOD_CONTROL )
 				{
 					b2Vec2 newOrigin = { -2.0f, 0.0f };
-					s_sample->ShiftOrigin( newOrigin );
+					s_context.sample->ShiftOrigin( newOrigin );
 				}
 				else
 				{
@@ -250,7 +232,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				if ( mods == GLFW_MOD_CONTROL )
 				{
 					b2Vec2 newOrigin = { 0.0f, 2.0f };
-					s_sample->ShiftOrigin( newOrigin );
+					s_context.sample->ShiftOrigin( newOrigin );
 				}
 				else
 				{
@@ -263,7 +245,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				if ( mods == GLFW_MOD_CONTROL )
 				{
 					b2Vec2 newOrigin = { 0.0f, -2.0f };
-					s_sample->ShiftOrigin( newOrigin );
+					s_context.sample->ShiftOrigin( newOrigin );
 				}
 				else
 				{
@@ -276,7 +258,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				break;
 
 			case GLFW_KEY_R:
-				RestartSample();
+				SelectSample( &s_context, s_context.sampleIndex, true );
 				break;
 
 			case GLFW_KEY_O:
@@ -289,19 +271,25 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 
 			case GLFW_KEY_LEFT_BRACKET:
 				// Switch to previous test
-				--s_selection;
-				if ( s_selection < 0 )
 				{
-					s_selection = g_sampleCount - 1;
+					int selection = s_context.sampleIndex - 1;
+					if ( selection < 0 )
+					{
+						selection = g_sampleCount - 1;
+					}
+					SelectSample( &s_context, selection, false );
 				}
 				break;
 
 			case GLFW_KEY_RIGHT_BRACKET:
 				// Switch to next test
-				++s_selection;
-				if ( s_selection == g_sampleCount )
 				{
-					s_selection = 0;
+					int selection = s_context.sampleIndex + 1;
+					if ( selection == g_sampleCount )
+					{
+						selection = 0;
+					}
+					SelectSample( &s_context, selection, false );
 				}
 				break;
 
@@ -310,9 +298,9 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				break;
 
 			default:
-				if ( s_sample )
+				if ( s_context.sample != nullptr )
 				{
-					s_sample->Keyboard( key );
+					s_context.sample->Keyboard( key );
 				}
 		}
 	}
@@ -342,12 +330,12 @@ static void MouseButtonCallback( GLFWwindow* window, int button, int action, int
 		b2Vec2 pw = ConvertScreenToWorld( &s_context.camera, ps );
 		if ( action == GLFW_PRESS )
 		{
-			s_sample->MouseDown( pw, button, modifiers );
+			s_context.sample->MouseDown( pw, button, modifiers );
 		}
 
 		if ( action == GLFW_RELEASE )
 		{
-			s_sample->MouseUp( pw, button );
+			s_context.sample->MouseUp( pw, button );
 		}
 	}
 	else if ( button == GLFW_MOUSE_BUTTON_2 )
@@ -372,7 +360,7 @@ static void MouseMotionCallback( GLFWwindow* window, double xd, double yd )
 	ImGui_ImplGlfw_CursorPosCallback( window, ps.x, ps.y );
 
 	b2Vec2 pw = ConvertScreenToWorld( &s_context.camera, ps );
-	s_sample->MouseMove( pw );
+	s_context.sample->MouseMove( pw );
 
 	if ( s_rightMouseDown )
 	{
@@ -391,6 +379,11 @@ static void ScrollCallback( GLFWwindow* window, double dx, double dy )
 		return;
 	}
 
+	double xd, yd;
+	glfwGetCursorPos( window, &xd, &yd );
+	b2Vec2 ps = { (float)xd, (float)yd };
+	b2Vec2 pw1 = ConvertScreenToWorld( &s_context.camera, ps );
+
 	if ( dy > 0 )
 	{
 		s_context.camera.zoom /= 1.1f;
@@ -399,172 +392,9 @@ static void ScrollCallback( GLFWwindow* window, double dx, double dy )
 	{
 		s_context.camera.zoom *= 1.1f;
 	}
-}
 
-static void UpdateUI()
-{
-	int maxWorkers = B2_MAX_WORKERS;
-
-	float fontSize = ImGui::GetFontSize();
-	float menuWidth = 13.0f * fontSize;
-	if ( s_context.showUI )
-	{
-		ImGui::SetNextWindowPos( { s_context.camera.width - menuWidth - 0.5f * fontSize, 0.5f * fontSize } );
-		ImGui::SetNextWindowSize( { menuWidth, s_context.camera.height - fontSize } );
-
-		ImGui::Begin( "Tools", &s_context.showUI,
-					  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse );
-
-		if ( ImGui::BeginTabBar( "ControlTabs", ImGuiTabBarFlags_None ) )
-		{
-			if ( ImGui::BeginTabItem( "Controls" ) )
-			{
-				ImGui::PushItemWidth( 100.0f );
-				ImGui::SliderInt( "Sub-steps", &s_context.subStepCount, 1, 32 );
-				ImGui::SliderFloat( "Hertz", &s_context.hertz, 5.0f, 240.0f, "%.0f hz" );
-
-				if ( ImGui::SliderInt( "Workers", &s_context.workerCount, 1, maxWorkers ) )
-				{
-					s_context.workerCount = b2ClampInt( s_context.workerCount, 1, maxWorkers );
-					RestartSample();
-				}
-				ImGui::PopItemWidth();
-
-				ImGui::Separator();
-
-				ImGui::Checkbox( "Sleep", &s_context.enableSleep );
-				ImGui::Checkbox( "Warm Starting", &s_context.enableWarmStarting );
-				ImGui::Checkbox( "Continuous", &s_context.enableContinuous );
-				ImGui::Checkbox( "Contact Recycling", &s_context.enableRecycling );
-
-				ImGui::Separator();
-
-				ImGui::Checkbox( "Shapes", &s_context.debugDraw.drawShapes );
-				ImGui::Checkbox( "Joints", &s_context.debugDraw.drawJoints );
-				ImGui::Checkbox( "Joint Extras", &s_context.debugDraw.drawJointExtras );
-				ImGui::Checkbox( "Bounds", &s_context.debugDraw.drawBounds );
-				ImGui::Checkbox( "Mass", &s_context.debugDraw.drawMass );
-				ImGui::Checkbox( "Body Names", &s_context.debugDraw.drawBodyNames );
-				ImGui::Checkbox( "Graph Colors", &s_context.debugDraw.drawGraphColors );
-				ImGui::Checkbox( "Islands", &s_context.debugDraw.drawIslands );
-				ImGui::Checkbox( "Counters", &s_context.drawCounters );
-				ImGui::Checkbox( "Profile", &s_context.drawProfile );
-				ImGui::Checkbox( "Frame Time", &s_context.frameTime );
-
-				ImGui::Separator();
-
-				{
-					bool changed = false;
-					const char* drawTypes[] = { "None", "Clip", "AnchorA", "AnchorB", "Average" };
-					int drawType = int( s_context.debugDraw.contactDrawType );
-					changed = changed || ImGui::Combo( "Contact", &drawType, drawTypes, IM_ARRAYSIZE( drawTypes ) );
-					s_context.debugDraw.contactDrawType = b2ContactDrawType( drawType );
-				}
-
-				ImGui::Checkbox( "Contact Normals", &s_context.debugDraw.drawContactNormals );
-				ImGui::Checkbox( "Contact Features", &s_context.debugDraw.drawContactFeatures );
-				ImGui::Checkbox( "Contact Forces", &s_context.debugDraw.drawContactForces );
-				ImGui::Checkbox( "Friction Forces", &s_context.debugDraw.drawFrictionForces );
-
-				ImGui::Separator();
-
-				ImGui::PushItemWidth( 80.0f );
-				ImGui::InputFloat( "Joint Scale", &s_context.debugDraw.jointScale );
-				ImGui::InputFloat( "Force Scale", &s_context.debugDraw.forceScale );
-				ImGui::PopItemWidth();
-
-				ImVec2 button_sz = ImVec2( -1, 0 );
-				if ( ImGui::Button( "Pause (P)", button_sz ) )
-				{
-					s_context.pause = !s_context.pause;
-				}
-
-				if ( ImGui::Button( "Single Step (O)", button_sz ) )
-				{
-					s_context.singleStep = !s_context.singleStep;
-				}
-
-				if ( ImGui::Button( "Dump Mem Stats", button_sz ) )
-				{
-					b2World_DumpMemoryStats( s_sample->m_worldId );
-				}
-
-				if ( ImGui::Button( "Reset Profile", button_sz ) )
-				{
-					s_sample->ResetProfile();
-				}
-
-				if ( ImGui::Button( "Restart (R)", button_sz ) )
-				{
-					RestartSample();
-				}
-
-				if ( ImGui::Button( "Quit", button_sz ) )
-				{
-					glfwSetWindowShouldClose( s_context.window, GL_TRUE );
-				}
-
-				ImGui::EndTabItem();
-			}
-
-			ImGuiTreeNodeFlags leafNodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
-			leafNodeFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-
-			ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
-
-			if ( ImGui::BeginTabItem( "Samples" ) )
-			{
-				int categoryIndex = 0;
-				const char* category = g_sampleEntries[categoryIndex].category;
-				int i = 0;
-				while ( i < g_sampleCount )
-				{
-					bool categorySelected = strcmp( category, g_sampleEntries[s_context.sampleIndex].category ) == 0;
-					ImGuiTreeNodeFlags nodeSelectionFlags = categorySelected ? ImGuiTreeNodeFlags_Selected : 0;
-					bool nodeOpen = ImGui::TreeNodeEx( category, nodeFlags | nodeSelectionFlags );
-
-					if ( nodeOpen )
-					{
-						while ( i < g_sampleCount && strcmp( category, g_sampleEntries[i].category ) == 0 )
-						{
-							ImGuiTreeNodeFlags selectionFlags = 0;
-							if ( s_context.sampleIndex == i )
-							{
-								selectionFlags = ImGuiTreeNodeFlags_Selected;
-							}
-							ImGui::TreeNodeEx( (void*)(intptr_t)i, leafNodeFlags | selectionFlags, "%s",
-											   g_sampleEntries[i].name );
-							if ( ImGui::IsItemClicked() )
-							{
-								s_selection = i;
-							}
-							++i;
-						}
-						ImGui::TreePop();
-					}
-					else
-					{
-						while ( i < g_sampleCount && strcmp( category, g_sampleEntries[i].category ) == 0 )
-						{
-							++i;
-						}
-					}
-
-					if ( i < g_sampleCount )
-					{
-						category = g_sampleEntries[i].category;
-						categoryIndex = i;
-					}
-				}
-				ImGui::EndTabItem();
-			}
-			ImGui::EndTabBar();
-		}
-
-		ImGui::End();
-
-		s_sample->UpdateGui();
-	}
+	b2Vec2 pw2 = ConvertScreenToWorld( &s_context.camera, ps );
+	s_context.camera.center -= pw2 - pw1;
 }
 
 int main( int, char** )
@@ -673,7 +503,6 @@ int main( int, char** )
 	s_context.draw = CreateDraw();
 
 	s_context.sampleIndex = b2ClampInt( s_context.sampleIndex, 0, g_sampleCount - 1 );
-	s_selection = s_context.sampleIndex;
 
 	glClearColor( 0.2f, 0.2f, 0.2f, 1.0f );
 
@@ -722,7 +551,7 @@ int main( int, char** )
 
 		ImGui::NewFrame();
 
-		if ( s_sample == nullptr )
+		if ( s_context.sample == nullptr )
 		{
 			// delayed creation because imgui doesn't create fonts until NewFrame() is called
 			if ( g_sampleEntries[s_context.sampleIndex].capacityFcn != nullptr )
@@ -733,23 +562,23 @@ int main( int, char** )
 			{
 				s_context.capacity = b2DefaultWorldDef().capacity;
 			}
-			s_sample = g_sampleEntries[s_context.sampleIndex].createFcn( &s_context );
+			s_context.sample = g_sampleEntries[s_context.sampleIndex].createFcn( &s_context );
 		}
 
-		s_sample->ResetText();
+		s_context.sample->ResetText();
 
 		const SampleEntry& entry = g_sampleEntries[s_context.sampleIndex];
-		s_sample->DrawColoredTextLine(b2_colorYellow, "%s : %s", entry.category, entry.name );
+		s_context.sample->DrawColoredTextLine( b2_colorYellow, "%s : %s", entry.category, entry.name );
 
-		s_sample->Step();
+		s_context.sample->Step();
 
 		DrawScreenString( s_context.draw, 5.0f, s_context.camera.height - 10.0f, b2_colorSeaGreen,
-						  "%.1f ms - step %d - camera (%g, %g, %g)", 1000.0f * frameTime, s_sample->m_stepCount,
+						  "%.1f ms - step %d - camera (%g, %g, %g)", 1000.0f * frameTime, s_context.sample->m_stepCount,
 						  s_context.camera.center.x, s_context.camera.center.y, s_context.camera.zoom );
 
 		FlushDraw( s_context.draw, &s_context.camera );
 
-		UpdateUI();
+		UpdateSampleUI( &s_context );
 
 		// ImGui::ShowDemoWindow();
 
@@ -760,26 +589,6 @@ int main( int, char** )
 
 		// For the Tracy profiler
 		FrameMark;
-
-		if ( s_selection != s_context.sampleIndex )
-		{
-			ResetView( &s_context.camera );
-			s_context.sampleIndex = s_selection;
-			s_context.subStepCount = 4;
-			s_context.debugDraw.drawJoints = true;
-
-			delete s_sample;
-			s_sample = nullptr;
-			if ( g_sampleEntries[s_context.sampleIndex].capacityFcn != nullptr )
-			{
-				s_context.capacity = g_sampleEntries[s_context.sampleIndex].capacityFcn();
-			}
-			else
-			{
-				s_context.capacity = b2DefaultWorldDef().capacity;
-			}
-			s_sample = g_sampleEntries[s_context.sampleIndex].createFcn( &s_context );
-		}
 
 		glfwPollEvents();
 
@@ -795,8 +604,7 @@ int main( int, char** )
 		frameTime = float( time2 - time1 );
 	}
 
-	delete s_sample;
-	s_sample = nullptr;
+	delete s_context.sample;
 
 	DestroyDraw( s_context.draw );
 

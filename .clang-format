@@ -6,6 +6,7 @@
 # https://github.com/llvm/llvm-project/blob/main/clang/lib/Format/Format.cpp
 ---
 Language: Cpp
+Standard: Latest
 BasedOnStyle: Microsoft
 
 BreakBeforeBraces: Custom
@@ -23,14 +24,14 @@ InsertNewlineAtEOF: true
 IncludeBlocks: Regroup
 
 IncludeCategories:
-  - Regex:           '^"(box2d\/)'
-    Priority:        3
-  - Regex:           '^<.*'
-    Priority:        4
-  - Regex:           '^"[^.]*\.h"'
+  - Regex:           '^"[^/]+\.h"'
     Priority:        1
-  - Regex:           '^"[^.]*\.inl"'
+  - Regex:           '^"[^/]+\.inl"'
     Priority:        2
+  - Regex:           '^"box2d/'
+    Priority:        3
+  - Regex:           '^<.*>'
+    Priority:        4
 
 IndentExternBlock: NoIndent
 IndentCaseLabels: true
@@ -39,9 +40,8 @@ AccessModifierOffset: -4
 
 SpacesInParens: Custom
 SpacesInParensOptions:
-  ExceptDoubleParentheses: false
+  ExceptDoubleParentheses: true
   InConditionalStatements: true
   InCStyleCasts: false
   InEmptyParentheses: false
   Other: true
-  

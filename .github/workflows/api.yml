@@ -1,0 +1,43 @@
+name: Generate API JSON
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'include/box2d/**'
+      - 'scripts/api_dump.py'
+      - 'docs/CMakeLists.txt'
+      - '.github/workflows/api.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Doxygen + Graphviz
+        run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
+
+      - name: Configure CMake
+        run: cmake -B build -DBOX2D_DOCS=ON -DBOX2D_SAMPLES=OFF -DBOX2D_UNIT_TESTS=OFF
+
+      - name: Build docs
+        run: cmake --build build --target doc
+
+      - name: Generate API JSON
+        run: python3 scripts/api_dump.py --xml build/docs/xml --out api/box2d_api.json --version "${{ github.sha }}"
+
+      - name: Commit if changed
+        run: |
+          if [ -n "$(git status --porcelain api/box2d_api.json)" ]; then
+            git config user.name 'github-actions[bot]'
+            git config user.email 'github-actions[bot]@users.noreply.github.com'
+            git add api/box2d_api.json
+            git commit -m "Update api/box2d_api.json [skip ci]"
+            git push
+          fi
