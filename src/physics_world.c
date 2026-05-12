@@ -420,6 +420,11 @@ void b2DestroyWorld( b2WorldId worldId )
 	world->generation = generation + 1;
 }
 
+static inline float b2RelativeCos( b2Rot a, b2Rot b )
+{
+	return a.c * b.c + a.s * b.s;
+}
+
 static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* context )
 {
 	b2TracyCZoneNC( collide_task, "Collide", b2_colorDodgerBlue, true );
@@ -478,10 +483,16 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			// Contact recycling optimization. Please cite this code if you use this optimization.
 			// This is inspired by persistent contact manifolds used in some physics engines, such as PhysX.
 			// However, this allows larger relative motion and has fewer tuning parameters (just one).
-			if ( recycleDistance > 0.0f && contactSim->simFlags & b2_simRelativeTransformValid )
+			if ( recycleDistance > 0.0f && ( contactSim->simFlags & b2_simRelativeTransformValid ) &&
+				 ( contactSim->simFlags & b2_contactRecycleFlag ) )
 			{
 				b2Transform xf = b2InvMulTransforms( transformA, transformB );
 				b2Transform xfc = b2InvMulTransforms( contactSim->cachedTransformA, contactSim->cachedTransformB );
+
+				float cosA = b2RelativeCos( transformA.q, contactSim->cachedTransformA.q );
+				float cosB = b2RelativeCos( transformB.q, contactSim->cachedTransformB.q );
+				float minCos = b2MinFloat( cosA, cosB );
+
 				float maxExtentA = bodyA->type == b2_staticBody ? 0.0f : bodySimA->maxExtent;
 				float maxExtentB = bodyB->type == b2_staticBody ? 0.0f : bodySimB->maxExtent;
 				float maxExtent = b2MaxFloat( maxExtentA, maxExtentB );
@@ -492,7 +503,8 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 				// Note that qr.s == sin(theta) ~= theta for small angles.
 				// Need a tighter tolerance for non-touching shapes so that contacts are not missed.
 				float tolerance = wasTouching ? recycleDistance : recycleDistanceNonTouching;
-				if ( distance + maxExtent * b2AbsFloat( qr.s ) < tolerance )
+
+				if ( minCos > B2_CONTACT_RECYCLE_COS_ANGLE && distance + maxExtent * b2AbsFloat( qr.s ) < tolerance )
 				{
 					b2Rot dqA = b2MulRot( transformA.q, b2InvertRot( contactSim->cachedTransformA.q ) );
 					b2Rot dqB = b2MulRot( transformB.q, b2InvertRot( contactSim->cachedTransformB.q ) );

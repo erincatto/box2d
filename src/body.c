@@ -19,6 +19,8 @@
 
 #include <string.h>
 
+_Static_assert( B2_NAME_LENGTH >= 1, "minimum name length" );
+
 static void b2LimitVelocity( b2BodyState* state, float maxLinearSpeed )
 {
 	float v2 = b2LengthSquared( state->linearVelocity );
@@ -234,6 +236,8 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	bodySim->flags |= def->isBullet ? b2_isBullet : 0;
 	bodySim->flags |= def->allowFastRotation ? b2_allowFastRotation : 0;
 	bodySim->flags |= def->type == b2_dynamicBody ? b2_dynamicFlag : 0;
+	bodySim->flags |= def->enableSleep ? b2_enableSleep : 0;
+	bodySim->flags |= def->enableContactRecycling ? b2_bodyEnableContactRecycling : 0;
 
 	if ( setId == b2_awakeSet )
 	{
@@ -299,7 +303,6 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	body->sleepTime = 0.0f;
 	body->type = def->type;
 	body->flags = bodySim->flags;
-	body->enableSleep = def->enableSleep;
 
 	// dynamic and kinematic bodies that are enabled need a island
 	if ( setId >= b2_awakeSet )
@@ -1560,7 +1563,7 @@ bool b2Body_IsSleepEnabled( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
-	return body->enableSleep;
+	return (body->flags & b2_enableSleep) == b2_enableSleep;
 }
 
 void b2Body_SetSleepThreshold( b2BodyId bodyId, float sleepThreshold )
@@ -1586,7 +1589,14 @@ void b2Body_EnableSleep( b2BodyId bodyId, bool enableSleep )
 	}
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
-	body->enableSleep = enableSleep;
+
+	bool flag = ( body->flags & b2_enableSleep ) == b2_enableSleep;
+	if ( enableSleep == flag )
+	{
+		return;
+	}
+
+	body->flags = enableSleep ? body->flags | b2_enableSleep : body->flags & ~b2_enableSleep;
 
 	if ( enableSleep == false )
 	{
