@@ -59,6 +59,9 @@ enum b2BodyFlags
 
 	// If all this flags is set then the body has fixed rotation
 	b2_fixedRotation = b2_lockAngularZ,
+
+	// These flags are transient per time step. These may be different across b2Body, b2BodySim, and b2BodyState.
+	b2_bodyTransientFlags = b2_isFast | b2_isSpeedCapped | b2_hadTimeOfImpact,
 };
 
 // Body organizational details that are not used in the solver.

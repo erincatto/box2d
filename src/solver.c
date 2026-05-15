@@ -619,11 +619,11 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 		// If you hit this then it means you deferred mass computation but never called b2Body_ApplyMassFromShapes
 		B2_ASSERT( ( body->flags & b2_dirtyMass ) == 0 );
 
-		body->flags &= ~( b2_isFast | b2_isSpeedCapped | b2_hadTimeOfImpact );
+		body->flags &= ~b2_bodyTransientFlags;
 		body->flags |= ( sim->flags & ( b2_isSpeedCapped | b2_hadTimeOfImpact ) );
 		body->flags |= ( state->flags & ( b2_isSpeedCapped | b2_hadTimeOfImpact ) );
-		sim->flags &= ~( b2_isFast | b2_isSpeedCapped | b2_hadTimeOfImpact );
-		state->flags &= ~( b2_isFast | b2_isSpeedCapped | b2_hadTimeOfImpact );
+		sim->flags &= ~b2_bodyTransientFlags;
+		state->flags &= ~b2_bodyTransientFlags;
 
 		if ( enableSleep == false || ( body->flags & b2_enableSleep ) == 0 || sleepVelocity > body->sleepThreshold )
 		{

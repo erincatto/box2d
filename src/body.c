@@ -88,6 +88,21 @@ b2BodyState* b2GetBodyState( b2World* world, b2Body* body )
 	return NULL;
 }
 
+static void b2SyncBodyFlags( b2World* world, b2Body* body )
+{
+	// Never sync transient flags
+	uint32_t flags = body->flags & ~b2_bodyTransientFlags;
+
+	b2BodySim* bodySim = b2GetBodySim( world, body );
+	bodySim->flags = flags;
+
+	b2BodyState* bodyState = b2GetBodyState( world, body );
+	if ( bodyState != NULL )
+	{
+		bodyState->flags = flags;
+	}
+}
+
 static void b2CreateIslandForBody( b2World* world, int setIndex, b2Body* body )
 {
 	B2_ASSERT( body->islandId == B2_NULL_INDEX );
@@ -1129,6 +1144,8 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 			body->flags &= ~b2_dynamicFlag;
 		}
 
+		b2SyncBodyFlags( world, body );
+
 		// Body type affects the mass properties
 		b2UpdateBodyMassData( world, body );
 		return;
@@ -1278,15 +1295,10 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 		b2LinkJoint( world, joint );
 	}
 
+	b2SyncBodyFlags( world, body );
+
 	// Body type affects the mass
 	b2UpdateBodyMassData( world, body );
-
-	b2BodyState* state = b2GetBodyState( world, body );
-	if ( state != NULL )
-	{
-		// Ensure flags are in sync (b2_skipSolverWrite)
-		state->flags = body->flags;
-	}
 
 	b2ValidateSolverSets( world );
 	b2ValidateIsland( world, body->islandId );
@@ -1563,7 +1575,7 @@ bool b2Body_IsSleepEnabled( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
-	return (body->flags & b2_enableSleep) == b2_enableSleep;
+	return ( body->flags & b2_enableSleep ) == b2_enableSleep;
 }
 
 void b2Body_SetSleepThreshold( b2BodyId bodyId, float sleepThreshold )
@@ -1785,16 +1797,12 @@ void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks )
 		body->flags &= ~b2_allLocks;
 		body->flags |= newFlags;
 
-		b2BodySim* bodySim = b2GetBodySim( world, body );
-		bodySim->flags &= ~b2_allLocks;
-		bodySim->flags |= newFlags;
+		b2SyncBodyFlags( world, body );
 
 		b2BodyState* state = b2GetBodyState( world, body );
 
 		if ( state != NULL )
 		{
-			state->flags = bodySim->flags;
-
 			if ( locks.linearX )
 			{
 				state->linearVelocity.x = 0.0f;

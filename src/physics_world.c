@@ -2893,6 +2893,15 @@ void b2ValidateSolverSets( b2World* world )
 					B2_ASSERT( body->setIndex == setIndex );
 					B2_ASSERT( body->localIndex == i );
 
+					uint32_t syncedFlags = body->flags & ~b2_bodyTransientFlags;
+					B2_ASSERT( ( bodySim->flags & syncedFlags ) == syncedFlags );
+
+					b2BodyState* bodyState = b2GetBodyState( world, body );
+					if ( bodyState != NULL )
+					{
+						B2_ASSERT( ( bodyState->flags & syncedFlags ) == syncedFlags );
+					}
+
 					if ( body->type == b2_dynamicBody )
 					{
 						B2_ASSERT( body->flags & b2_dynamicFlag );
