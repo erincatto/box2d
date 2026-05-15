@@ -426,7 +426,7 @@ B2_API void b2Body_SetAwake( b2BodyId bodyId, bool awake );
 /// Wake bodies touching this body. Works for static bodies.
 B2_API void b2Body_WakeTouching( b2BodyId bodyId );
 
-/// Enable or disable sleeping for this body. If sleeping is disabled the body will wake.
+/// Enable or disable sleeping for this body. If sleeping is disabled the body will wake (and the entire island).
 B2_API void b2Body_EnableSleep( b2BodyId bodyId, bool enableSleep );
 
 /// Returns true if sleeping is enabled for this body
