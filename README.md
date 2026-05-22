@@ -35,24 +35,25 @@ Box2D is a 2D physics engine for games.
 - Optimized for large piles of bodies
 
 ### Samples
-- OpenGL with GLFW and enkiTS
+- OpenGL with GLFW
 - Graphical user interface with imgui
 - Many samples to demonstrate features and performance
 
-## Building for Visual Studio
+## Building All Platforms
 - Install [CMake](https://cmake.org/)
-- Ensure CMake is in the user `PATH`
-- Run `create_sln.bat`
-- Open and build `build/box2d.sln`
+- Install [git](https://git-scm.com/)
+- Ensure these run from the command line
+
+## Building for Visual Studio
+- Install [Visual Studio](https://visualstudio.microsoft.com/)
+- Run `build_vs2026.bat`
+- Open and build `build/box2d.slnx`
 
 ## Building for Linux
 - Run `build.sh` from a bash shell
 - Results are in the build sub-folder
 
 ## Building for Xcode
-- Install [CMake](https://cmake.org)
-- Add Cmake to the path in .zprofile (the default Terminal shell is zsh)
-    - export PATH="/Applications/CMake.app/Contents/bin:$PATH"
 - mkdir build
 - cd build
 - cmake -G Xcode ..

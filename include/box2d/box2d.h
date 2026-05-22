@@ -152,6 +152,13 @@ B2_API void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionD
 /// @note Advanced feature
 B2_API void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushSpeed );
 
+/// Set the contact point recycling distance. Setting this to zero disables contact point recycling.
+/// Usually in meters.
+B2_API void b2World_SetContactRecycleDistance( b2WorldId worldId, float recycleDistance );
+
+/// Get the contact point recycling distance. Usually in meters.
+B2_API float b2World_GetContactRecycleDistance( b2WorldId worldId );
+
 /// Set the maximum linear speed. Usually in m/s.
 B2_API void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearSpeed );
 
@@ -174,6 +181,9 @@ B2_API b2Profile b2World_GetProfile( b2WorldId worldId );
 /// Get world counters and sizes
 B2_API b2Counters b2World_GetCounters( b2WorldId worldId );
 
+/// Get max capacity. This can be used with b2WorldDef to avoid run-time allocations and copies
+B2_API b2Capacity b2World_GetMaxCapacity( b2WorldId worldId );
+
 /// Set the user data pointer.
 B2_API void b2World_SetUserData( b2WorldId worldId, void* userData );
 
@@ -185,6 +195,12 @@ B2_API void b2World_SetFrictionCallback( b2WorldId worldId, b2FrictionCallback* 
 
 /// Set the restitution callback. Passing NULL resets to default.
 B2_API void b2World_SetRestitutionCallback( b2WorldId worldId, b2RestitutionCallback* callback );
+
+/// Set the worker count. Must be between in the range [1, B2_MAX_WORKERS]
+B2_API void b2World_SetWorkerCount( b2WorldId worldId, int count );
+
+/// Get the worker count.
+B2_API int b2World_GetWorkerCount( b2WorldId worldId );
 
 /// Dump memory stats to box2d_memory.txt
 B2_API void b2World_DumpMemoryStats( b2WorldId worldId );
@@ -279,9 +295,13 @@ B2_API void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity );
 
 /// Set the velocity to reach the given transform after a given time step.
 /// The result will be close but maybe not exact. This is meant for kinematic bodies.
-/// The target is not applied if the velocity would be below the sleep threshold.
-/// This will automatically wake the body if asleep.
-B2_API void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep );
+/// The target is not applied if the velocity would be below the sleep threshold and
+/// the body is currently asleep.
+/// @param bodyId The body id
+/// @param target The target transform for the body
+/// @param timeStep The time step of the next call to b2World_Step
+/// @param wake Option to wake the body or not
+B2_API void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep, bool wake );
 
 /// Get the linear velocity of a local point attached to a body. Usually in meters per second.
 B2_API b2Vec2 b2Body_GetLocalPointVelocity( b2BodyId bodyId, b2Vec2 localPoint );
@@ -311,6 +331,12 @@ B2_API void b2Body_ApplyForceToCenter( b2BodyId bodyId, b2Vec2 force, bool wake 
 /// @param torque about the z-axis (out of the screen), usually in N*m.
 /// @param wake also wake up the body
 B2_API void b2Body_ApplyTorque( b2BodyId bodyId, float torque, bool wake );
+
+/// Clear the force and torque on this body. Forces and torques are automatically cleared after each world
+/// step. So this only needs to be called if the application wants to remove the effect of previous
+/// calls to apply forces and torques before the world step is called.
+/// @param bodyId The body id
+B2_API void b2Body_ClearForces( b2BodyId bodyId );
 
 /// Apply an impulse at a point. This immediately modifies the velocity.
 /// It also modifies the angular velocity if the point of application
@@ -362,7 +388,7 @@ B2_API void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData );
 /// Get the mass data for a body
 B2_API b2MassData b2Body_GetMassData( b2BodyId bodyId );
 
-/// This update the mass properties to the sum of the mass properties of the shapes.
+/// This updates the mass properties to the sum of the mass properties of the shapes.
 /// This normally does not need to be called unless you called SetMassData to override
 /// the mass and you later want to reset the mass.
 /// You may also use this when automatic mass computation has been disabled.
@@ -396,6 +422,9 @@ B2_API bool b2Body_IsAwake( b2BodyId bodyId );
 /// @warning Putting a body to sleep will put the entire island of bodies touching this body to sleep,
 /// which can be expensive and possibly unintuitive.
 B2_API void b2Body_SetAwake( b2BodyId bodyId, bool awake );
+
+/// Wake bodies touching this body. Works for static bodies.
+B2_API void b2Body_WakeTouching( b2BodyId bodyId );
 
 /// Enable or disable sleeping for this body. If sleeping is disabled the body will wake.
 B2_API void b2Body_EnableSleep( b2BodyId bodyId, bool enableSleep );
@@ -491,7 +520,7 @@ B2_API b2ShapeId b2CreateSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, c
 
 /// Create a capsule shape and attach it to a body. The shape definition and geometry are fully cloned.
 /// Contacts are not created until the next time step.
-/// @return the shape id for accessing the shape
+/// @return the shape id for accessing the shape, this will be b2_nullShapeId if the length is too small.
 B2_API b2ShapeId b2CreateCapsuleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Capsule* capsule );
 
 /// Create a polygon shape and attach it to a body. The shape definition and geometry are fully cloned.
@@ -537,28 +566,25 @@ B2_API void b2Shape_SetDensity( b2ShapeId shapeId, float density, bool updateBod
 B2_API float b2Shape_GetDensity( b2ShapeId shapeId );
 
 /// Set the friction on a shape
-/// @see b2ShapeDef::friction
 B2_API void b2Shape_SetFriction( b2ShapeId shapeId, float friction );
 
 /// Get the friction of a shape
 B2_API float b2Shape_GetFriction( b2ShapeId shapeId );
 
 /// Set the shape restitution (bounciness)
-/// @see b2ShapeDef::restitution
 B2_API void b2Shape_SetRestitution( b2ShapeId shapeId, float restitution );
 
 /// Get the shape restitution
 B2_API float b2Shape_GetRestitution( b2ShapeId shapeId );
 
-/// Set the shape material identifier
-/// @see b2ShapeDef::material
-B2_API void b2Shape_SetMaterial( b2ShapeId shapeId, int material );
+/// Set the user material identifier
+B2_API void b2Shape_SetUserMaterial( b2ShapeId shapeId, uint64_t material );
 
-/// Get the shape material identifier
-B2_API int b2Shape_GetMaterial( b2ShapeId shapeId );
+/// Get the user material identifier
+B2_API uint64_t b2Shape_GetUserMaterial( b2ShapeId shapeId );
 
 /// Set the shape surface material
-B2_API void b2Shape_SetSurfaceMaterial( b2ShapeId shapeId, b2SurfaceMaterial surfaceMaterial );
+B2_API void b2Shape_SetSurfaceMaterial( b2ShapeId shapeId, const b2SurfaceMaterial* surfaceMaterial );
 
 /// Get the shape surface material
 B2_API b2SurfaceMaterial b2Shape_GetSurfaceMaterial( b2ShapeId shapeId );
@@ -658,10 +684,10 @@ B2_API int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData
 /// Get the maximum capacity required for retrieving all the overlapped shapes on a sensor shape.
 /// This returns 0 if the provided shape is not a sensor.
 /// @param shapeId the id of a sensor shape
-/// @returns the required capacity to get all the overlaps in b2Shape_GetSensorOverlaps
+/// @returns the required capacity to get all the overlaps in b2Shape_GetSensorData
 B2_API int b2Shape_GetSensorCapacity( b2ShapeId shapeId );
 
-/// Get the overlap data for a sensor shape.
+/// Get the overlap data for a sensor shape computed the previous world step.
 /// @param shapeId the id of a sensor shape
 /// @param visitorIds a user allocated array that is filled with the overlapping shapes (visitors)
 /// @param capacity the capacity of overlappedShapes
@@ -679,6 +705,16 @@ B2_API b2MassData b2Shape_ComputeMassData( b2ShapeId shapeId );
 /// Get the closest point on a shape to a target point. Target and result are in world space.
 /// todo need sample
 B2_API b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target );
+
+/// Apply a wind force to the body for this shape using the density of air. This considers
+/// the projected area of the shape in the wind direction. This also considers
+/// the relative velocity of the shape.
+/// @param shapeId the shape id
+/// @param wind the wind velocity in world space
+/// @param drag the drag coefficient, the force that opposes the relative velocity
+/// @param lift the lift coefficient, the force that is perpendicular to the relative velocity
+/// @param wake should this wake the body
+B2_API void b2Shape_ApplyWind( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, bool wake );
 
 /// Chain Shape
 
@@ -699,26 +735,15 @@ B2_API int b2Chain_GetSegmentCount( b2ChainId chainId );
 /// the actual number of segments returned.
 B2_API int b2Chain_GetSegments( b2ChainId chainId, b2ShapeId* segmentArray, int capacity );
 
-/// Set the chain friction
-/// @see b2ChainDef::friction
-B2_API void b2Chain_SetFriction( b2ChainId chainId, float friction );
+/// Get the number of materials used on this chain. Must be 1 or the number of segments.
+B2_API int b2Chain_GetSurfaceMaterialCount( b2ChainId chainId );
 
-/// Get the chain friction
-B2_API float b2Chain_GetFriction( b2ChainId chainId );
+/// Set a chain material. If the chain has only one material, this material is applied to all
+/// segments. Otherwise it is applied to a single segment.
+B2_API void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* material, int materialIndex );
 
-/// Set the chain restitution (bounciness)
-/// @see b2ChainDef::restitution
-B2_API void b2Chain_SetRestitution( b2ChainId chainId, float restitution );
-
-/// Get the chain restitution
-B2_API float b2Chain_GetRestitution( b2ChainId chainId );
-
-/// Set the chain material
-/// @see b2ChainDef::material
-B2_API void b2Chain_SetMaterial( b2ChainId chainId, int material );
-
-/// Get the chain material
-B2_API int b2Chain_GetMaterial( b2ChainId chainId );
+/// Get a chain material by index.
+B2_API b2SurfaceMaterial b2Chain_GetSurfaceMaterial( b2ChainId chainId, int materialIndex );
 
 /// Chain identifier validation. Provides validation for up to 64K allocations.
 B2_API bool b2Chain_IsValid( b2ChainId id );
@@ -731,8 +756,8 @@ B2_API bool b2Chain_IsValid( b2ChainId id );
  * @{
  */
 
-/// Destroy a joint
-B2_API void b2DestroyJoint( b2JointId jointId );
+/// Destroy a joint. Optionally wake attached bodies.
+B2_API void b2DestroyJoint( b2JointId jointId, bool wakeAttached );
 
 /// Joint identifier validation. Provides validation for up to 64K allocations.
 B2_API bool b2Joint_IsValid( b2JointId id );
@@ -809,7 +834,6 @@ B2_API void b2Joint_SetTorqueThreshold( b2JointId jointId, float threshold );
 /// Get the torque threshold for joint events (N-m)
 B2_API float b2Joint_GetTorqueThreshold( b2JointId jointId );
 
-
 /**
  * @defgroup distance_joint Distance Joint
  * @brief Functions for the distance joint.
@@ -839,9 +863,6 @@ B2_API void b2DistanceJoint_SetSpringForceRange( b2JointId jointId, float lowerF
 
 /// Get the force range for the spring.
 B2_API void b2DistanceJoint_GetSpringForceRange( b2JointId jointId, float* lowerForce, float* upperForce );
-
-/// The the spring resist compression?
-B2_API bool b2DistanceJoint_IsCompressionEnabled( b2JointId jointId );
 
 /// Set the spring stiffness in Hertz
 B2_API void b2DistanceJoint_SetSpringHertz( b2JointId jointId, float hertz );
@@ -901,8 +922,11 @@ B2_API float b2DistanceJoint_GetMotorForce( b2JointId jointId );
  * @defgroup motor_joint Motor Joint
  * @brief Functions for the motor joint.
  *
- * The motor joint is used to drive the relative transform between two bodies. The target
- * is set by updating the local frames using b2Joint_SetLocalFrameA or b2Joint_SetLocalFrameB.
+ * The motor joint is designed to control the movement of a body while still being
+ * responsive to collisions. A spring controls the position and rotation. A velocity motor
+ * can be used to control velocity and allows for friction in top-down games. Both types
+ * of control can be combined. For example, you can have a spring with friction.
+ * Position and velocity control have force and torque limits.
  * @{
  */
 
@@ -969,39 +993,6 @@ B2_API void b2MotorJoint_SetMaxSpringTorque( b2JointId jointId, float maxTorque 
 
 /// Get the maximum spring torque in newtons * meters
 B2_API float b2MotorJoint_GetMaxSpringTorque( b2JointId jointId );
-
-/**@}*/
-
-/**
- * @defgroup mouse_joint Mouse Joint
- * @brief Functions for the mouse joint.
- *
- * The mouse joint is designed for use in the samples application, but you may find it useful in applications where
- * the user moves a rigid body with a cursor.
- * @{
- */
-
-/// Create a mouse joint
-/// @see b2MouseJointDef for details
-B2_API b2JointId b2CreateMouseJoint( b2WorldId worldId, const b2MouseJointDef* def );
-
-/// Set the mouse joint spring stiffness in Hertz
-B2_API void b2MouseJoint_SetSpringHertz( b2JointId jointId, float hertz );
-
-/// Get the mouse joint spring stiffness in Hertz
-B2_API float b2MouseJoint_GetSpringHertz( b2JointId jointId );
-
-/// Set the mouse joint spring damping ratio, non-dimensional
-B2_API void b2MouseJoint_SetSpringDampingRatio( b2JointId jointId, float dampingRatio );
-
-/// Get the mouse joint damping ratio, non-dimensional
-B2_API float b2MouseJoint_GetSpringDampingRatio( b2JointId jointId );
-
-/// Set the mouse joint maximum force, usually in newtons
-B2_API void b2MouseJoint_SetMaxForce( b2JointId jointId, float maxForce );
-
-/// Get the mouse joint maximum force, usually in newtons
-B2_API float b2MouseJoint_GetMaxForce( b2JointId jointId );
 
 /**@}*/
 

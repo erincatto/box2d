@@ -16,11 +16,11 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.8f, 6.4f };
-			m_context->camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.center = { 0.8f, 6.4f };
+			m_context->camera.zoom = 25.0f * 0.4f;
 		}
 
-		m_type = b2_dynamicBody;
+		m_type = b2_staticBody;
 		m_isEnabled = true;
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -165,6 +165,21 @@ public:
 			b2CreateCapsuleShape( m_touchingBodyId, &shapeDef, &capsule );
 		}
 
+		// Create a separate body on the ground
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_staticBody;
+			bodyDef.isEnabled = m_isEnabled;
+			bodyDef.position = { 8.5f, 0.2f };
+			bodyDef.name = "debris";
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Capsule capsule = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, 0.5f };
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
+		}
+
 		// Create a separate floating body
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -188,7 +203,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 11.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 9.0f * fontSize, height ) );
 		ImGui::Begin( "Body Type", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 
@@ -283,12 +298,12 @@ public:
 
 static int sampleBodyType = RegisterSample( "Bodies", "Body Type", BodyType::Create );
 
-float FrictionCallback( float, int, float, int )
+float FrictionCallback( float, uint64_t, float, uint64_t )
 {
 	return 0.1f;
 }
 
-float RestitutionCallback( float, int, float, int )
+float RestitutionCallback( float, uint64_t, float, uint64_t )
 {
 	return 1.0f;
 }
@@ -301,8 +316,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 2.3f, 10.0f };
-			m_context->camera.m_zoom = 25.0f * 0.5f;
+			m_context->camera.center = { 2.3f, 10.0f };
+			m_context->camera.zoom = 25.0f * 0.5f;
 		}
 
 		// Test friction and restitution callbacks
@@ -352,7 +367,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 120.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
 		ImGui::Begin( "Weeble", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 		if ( ImGui::Button( "Teleport" ) )
@@ -381,7 +396,7 @@ public:
 	{
 		Sample::Step();
 
-		m_context->draw.DrawCircle( m_explosionPosition, m_explosionRadius, b2_colorAzure );
+		DrawCircle( m_context->draw, m_explosionPosition, m_explosionRadius, b2_colorAzure );
 
 		// This shows how to get the velocity of a point on a body
 		b2Vec2 localPoint = { 0.0f, 2.0f };
@@ -391,8 +406,8 @@ public:
 		b2Vec2 v2 = b2Body_GetWorldPointVelocity( m_weebleId, worldPoint );
 
 		b2Vec2 offset = { 0.05f, 0.0f };
-		m_context->draw.DrawLine( worldPoint, worldPoint + v1, b2_colorRed );
-		m_context->draw.DrawLine( worldPoint + offset, worldPoint + v2 + offset, b2_colorGreen );
+		DrawLine(m_context->draw,  worldPoint, worldPoint + v1, b2_colorRed );
+		DrawLine(m_context->draw,  worldPoint + offset, worldPoint + v2 + offset, b2_colorGreen );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -416,8 +431,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 3.0f, 50.0f };
-			m_context->camera.m_zoom = 25.0f * 2.2f;
+			m_context->camera.center = { 3.0f, 50.0f };
+			m_context->camera.zoom = 25.0f * 2.2f;
 		}
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -557,7 +572,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 160.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 		ImGui::Begin( "Sleep", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 
@@ -667,8 +682,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 2.3f, 10.0f };
-			m_context->camera.m_zoom = 25.0f * 0.5f;
+			m_context->camera.center = { 2.3f, 10.0f };
+			m_context->camera.zoom = 25.0f * 0.5f;
 		}
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -745,8 +760,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.8f, 6.4f };
-			m_context->camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.center = { 0.8f, 6.4f };
+			m_context->camera.zoom = 25.0f * 0.4f;
 		}
 
 		b2BodyId groundId = b2_nullBodyId;
@@ -816,8 +831,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 4.0f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 4.0f;
 		}
 
 		m_amplitude = 2.0f;
@@ -854,10 +869,11 @@ public:
 			b2Rot rotation = b2MakeRot( 2.0f * m_time );
 
 			b2Vec2 axis = b2RotateVector( rotation, { 0.0f, 1.0f } );
-			m_context->draw.DrawLine( point - 0.5f * axis, point + 0.5f * axis, b2_colorPlum );
-			m_context->draw.DrawPoint( point, 10.0f, b2_colorPlum );
+			DrawLine( m_context->draw, point - 0.5f * axis, point + 0.5f * axis, b2_colorPlum );
+			DrawPoint( m_context->draw, point, 10.0f, b2_colorPlum );
 
-			b2Body_SetTargetTransform( m_bodyId, { point, rotation }, timeStep );
+			bool wake = true;
+			b2Body_SetTargetTransform( m_bodyId, { point, rotation }, timeStep, wake );
 		}
 
 		Sample::Step();
@@ -886,8 +902,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 2.5f };
-			m_context->camera.m_zoom = 3.5f;
+			m_context->camera.center = { 0.0f, 2.5f };
+			m_context->camera.zoom = 3.5f;
 		}
 
 		{
@@ -986,3 +1002,126 @@ public:
 };
 
 static int sampleMixedLocks = RegisterSample( "Bodies", "Mixed Locks", MixedLocks::Create );
+
+class SetVelocity : public Sample
+{
+public:
+	explicit SetVelocity( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 2.5f };
+			m_context->camera.zoom = 3.5f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 0.0f, -0.25f };
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Polygon box = b2MakeBox( 20.0f, 0.25f );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Polygon box = b2MakeSquare( 0.5f );
+			bodyDef.position = { 0.0f, 0.5f };
+			m_bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
+		}
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		b2Body_SetLinearVelocity( m_bodyId, { 0.0f, -20.0f } );
+
+		b2Vec2 position = b2Body_GetPosition( m_bodyId );
+		DrawTextLine( "(x, y) = (%.2g, %.2g)", position.x, position.y );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new SetVelocity( context );
+	}
+
+	b2BodyId m_bodyId;
+};
+
+static int sampleSetVelocity = RegisterSample( "Bodies", "Set Velocity", SetVelocity::Create );
+
+class WakeTouching : public Sample
+{
+public:
+	explicit WakeTouching( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 4.0f };
+			m_context->camera.zoom = 8.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			m_groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Segment segment = { { -20.0f, 0.0f }, { 20.0f, 0.0f } };
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreateSegmentShape( m_groundId, &shapeDef, &segment );
+		}
+
+		b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.density = 1.0f;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+
+		float x = -1.0f * ( m_count - 1 );
+
+		for ( int i = 0; i < m_count; ++i )
+		{
+			bodyDef.position = { x, 4.0f };
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+			x += 2.0f;
+		}
+	}
+
+	void UpdateGui() override
+	{
+		float fontSize = ImGui::GetFontSize();
+		float height = 5.0f * fontSize;
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 10.0f * fontSize, height ) );
+
+		ImGui::Begin( "Wake Touching", nullptr, ImGuiWindowFlags_NoResize );
+
+		if ( ImGui::Button( "Wake Touching" ) )
+		{
+			b2Body_WakeTouching( m_groundId );
+		}
+
+		ImGui::End();
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new WakeTouching( context );
+	}
+
+	static constexpr int m_count = 10;
+
+	b2BodyId m_groundId;
+};
+
+static int sampleWakeTouching = RegisterSample( "Bodies", "Wake Touching", WakeTouching::Create );

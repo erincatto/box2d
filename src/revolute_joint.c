@@ -211,18 +211,18 @@ void b2PrepareRevoluteJoint( b2JointSim* base, b2StepContext* context )
 
 	b2World* world = context->world;
 
-	b2Body* bodyA = b2BodyArray_Get( &world->bodies, idA );
-	b2Body* bodyB = b2BodyArray_Get( &world->bodies, idB );
+	b2Body* bodyA = b2Array_Get( world->bodies, idA );
+	b2Body* bodyB = b2Array_Get( world->bodies, idB );
 
 	B2_ASSERT( bodyA->setIndex == b2_awakeSet || bodyB->setIndex == b2_awakeSet );
-	b2SolverSet* setA = b2SolverSetArray_Get( &world->solverSets, bodyA->setIndex );
-	b2SolverSet* setB = b2SolverSetArray_Get( &world->solverSets, bodyB->setIndex );
+	b2SolverSet* setA = b2Array_Get( world->solverSets, bodyA->setIndex );
+	b2SolverSet* setB = b2Array_Get( world->solverSets, bodyB->setIndex );
 
 	int localIndexA = bodyA->localIndex;
 	int localIndexB = bodyB->localIndex;
 
-	b2BodySim* bodySimA = b2BodySimArray_Get( &setA->bodySims, localIndexA );
-	b2BodySim* bodySimB = b2BodySimArray_Get( &setB->bodySims, localIndexB );
+	b2BodySim* bodySimA = b2Array_Get( setA->bodySims, localIndexA );
+	b2BodySim* bodySimB = b2Array_Get( setB->bodySims, localIndexB );
 
 	float mA = bodySimA->invMass;
 	float iA = bodySimA->invInertia;
@@ -288,11 +288,17 @@ void b2WarmStartRevoluteJoint( b2JointSim* base, b2StepContext* context )
 
 	float axialImpulse = joint->springImpulse + joint->motorImpulse + joint->lowerImpulse - joint->upperImpulse;
 
-	stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, joint->linearImpulse );
-	stateA->angularVelocity -= iA * ( b2Cross( rA, joint->linearImpulse ) + axialImpulse );
+	if ( stateA->flags & b2_dynamicFlag )
+	{
+		stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, joint->linearImpulse );
+		stateA->angularVelocity -= iA * ( b2Cross( rA, joint->linearImpulse ) + axialImpulse );
+	}
 
-	stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, joint->linearImpulse );
-	stateB->angularVelocity += iB * ( b2Cross( rB, joint->linearImpulse ) + axialImpulse );
+	if ( stateB->flags & b2_dynamicFlag )
+	{
+		stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, joint->linearImpulse );
+		stateB->angularVelocity += iB * ( b2Cross( rB, joint->linearImpulse ) + axialImpulse );
+	}
 }
 
 void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBias )
@@ -467,10 +473,17 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 		wB += iB * b2Cross( rB, impulse );
 	}
 
-	stateA->linearVelocity = vA;
-	stateA->angularVelocity = wA;
-	stateB->linearVelocity = vB;
-	stateB->angularVelocity = wB;
+	if ( stateA->flags & b2_dynamicFlag )
+	{
+		stateA->linearVelocity = vA;
+		stateA->angularVelocity = wA;
+	}
+
+	if ( stateB->flags & b2_dynamicFlag )
+	{
+		stateB->linearVelocity = vB;
+		stateB->angularVelocity = wB;
+	}
 }
 
 #if 0
@@ -496,7 +509,7 @@ void b2RevoluteJoint::Dump()
 }
 #endif
 
-void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawSize )
+void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale )
 {
 	B2_ASSERT( base->type == b2_revoluteJoint );
 
@@ -505,15 +518,15 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 	b2Transform frameA = b2MulTransforms( transformA, base->localFrameA );
 	b2Transform frameB = b2MulTransforms( transformB, base->localFrameB );
 
-	const float radius = 0.25f * drawSize;
+	const float radius = 0.25f * drawScale;
 	draw->DrawCircleFcn( frameB.p, radius, b2_colorGray, draw->context );
 
 	b2Vec2 rx = { radius, 0.0f };
 	b2Vec2 r = b2RotateVector( frameA.q, rx );
-	draw->DrawSegmentFcn( frameA.p, b2Add( frameA.p, r ), b2_colorGray, draw->context );
+	draw->DrawLineFcn( frameA.p, b2Add( frameA.p, r ), b2_colorGray, draw->context );
 
 	r = b2RotateVector( frameB.q, rx );
-	draw->DrawSegmentFcn( frameB.p, b2Add( frameB.p, r ), b2_colorBlue, draw->context );
+	draw->DrawLineFcn( frameB.p, b2Add( frameB.p, r ), b2_colorBlue, draw->context );
 
 	if ( draw->drawJointExtras )
 	{
@@ -534,21 +547,21 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 		b2Rot rotHi = b2MulRot( frameA.q, b2MakeRot( upperAngle ) );
 		b2Vec2 rhi = b2RotateVector( rotHi, rx );
 
-		draw->DrawSegmentFcn( frameB.p, b2Add( frameB.p, rlo ), b2_colorGreen, draw->context );
-		draw->DrawSegmentFcn( frameB.p, b2Add( frameB.p, rhi ), b2_colorRed, draw->context );
+		draw->DrawLineFcn( frameB.p, b2Add( frameB.p, rlo ), b2_colorGreen, draw->context );
+		draw->DrawLineFcn( frameB.p, b2Add( frameB.p, rhi ), b2_colorRed, draw->context );
 	}
 
 	if ( joint->enableSpring )
 	{
 		b2Rot q = b2MulRot( frameA.q, b2MakeRot( joint->targetAngle ) );
 		b2Vec2 v = b2RotateVector( q, rx );
-		draw->DrawSegmentFcn( frameB.p, b2Add( frameB.p, v ), b2_colorViolet, draw->context );
+		draw->DrawLineFcn( frameB.p, b2Add( frameB.p, v ), b2_colorViolet, draw->context );
 	}
 
 	b2HexColor color = b2_colorGold;
-	draw->DrawSegmentFcn( transformA.p, frameA.p, color, draw->context );
-	draw->DrawSegmentFcn( frameA.p, frameB.p, color, draw->context );
-	draw->DrawSegmentFcn( transformB.p, frameB.p, color, draw->context );
+	draw->DrawLineFcn( transformA.p, frameA.p, color, draw->context );
+	draw->DrawLineFcn( frameA.p, frameB.p, color, draw->context );
+	draw->DrawLineFcn( transformB.p, frameB.p, color, draw->context );
 
 	// char buffer[32];
 	// sprintf(buffer, "%.1f", b2Length(joint->impulse));

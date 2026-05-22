@@ -18,8 +18,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 3.0f, 14.0f };
-			m_context->camera.m_zoom = 25.0f;
+			m_context->camera.center = { 3.0f, 14.0f };
+			m_context->camera.zoom = 25.0f;
 		}
 
 		float extent = 1.0f;
@@ -81,8 +81,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 16.5f };
-			m_context->camera.m_zoom = 25.0f;
+			m_context->camera.center = { 0.0f, 16.5f };
+			m_context->camera.zoom = 25.0f;
 		}
 
 		{
@@ -139,8 +139,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 16.5f };
-			m_context->camera.m_zoom = 25.0f;
+			m_context->camera.center = { 0.0f, 16.5f };
+			m_context->camera.zoom = 25.0f;
 		}
 
 		{
@@ -198,8 +198,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 2.5f };
-			m_context->camera.m_zoom = 3.75f;
+			m_context->camera.center = { 0.0f, 2.5f };
+			m_context->camera.zoom = 3.75f;
 		}
 
 		m_bodyIds = nullptr;
@@ -272,7 +272,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 210.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 220.0f, height ) );
 
 		ImGui::Begin( "Overlap Recovery", nullptr, ImGuiWindowFlags_NoResize );
@@ -313,6 +313,9 @@ public:
 
 static int sampleOverlapRecovery = RegisterSample( "Robustness", "Overlap Recovery", OverlapRecovery::Create );
 
+// A pyramid of 5cm squares. Stacking tiny objects is challenging for physics engines due to rotational effects.
+// This is also challenging for Box2D because of the AABB margin and linear slop are close to the shape size. This
+// leads to many collision pairs and some shape overlap.
 class TinyPyramid : public Sample
 {
 public:
@@ -321,8 +324,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 0.8f };
-			m_context->camera.m_zoom = 1.0f;
+			m_context->camera.center = { 0.0f, 0.8f };
+			m_context->camera.zoom = 1.0f;
 		}
 
 		{
@@ -387,8 +390,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 1.0f };
-			m_context->camera.m_zoom = 1.5f;
+			m_context->camera.center = { 0.0f, 1.0f };
+			m_context->camera.zoom = 1.5f;
 			m_context->subStepCount = 12;
 		}
 
@@ -489,7 +492,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 240.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 320.0f, height ) );
 
 		ImGui::Begin( "Cart", nullptr, ImGuiWindowFlags_NoResize );
@@ -548,3 +551,62 @@ public:
 };
 
 static int sampleCart = RegisterSample( "Robustness", "Cart", Cart::Create );
+
+// Ensure prismatic joint stability when highly distorted
+class MultiplePrismatic : public Sample
+{
+public:
+	explicit MultiplePrismatic( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 8.0f };
+			m_context->camera.zoom = 25.0f * 0.5f;
+		}
+
+		b2BodyId groundId;
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			groundId = b2CreateBody( m_worldId, &bodyDef );
+		}
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+		b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
+		jointDef.base.bodyIdA = groundId;
+		jointDef.base.localFrameA.p = { 0.0f, 0.0f };
+		jointDef.base.localFrameB.p = { 0.0f, -0.6f };
+		jointDef.base.drawScale = 1.0f;
+		jointDef.base.constraintHertz = 240.0f;
+		jointDef.lowerTranslation = -6.0f;
+		jointDef.upperTranslation = 6.0f;
+		jointDef.enableLimit = true;
+
+		for ( int i = 0; i < 6; ++i )
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 0.0f, 0.6f + 1.2f * i };
+			bodyDef.type = b2_dynamicBody;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			jointDef.base.bodyIdB = bodyId;
+			b2CreatePrismaticJoint( m_worldId, &jointDef );
+
+			jointDef.base.bodyIdA = bodyId;
+			jointDef.base.localFrameA.p = { 0.0f, 0.6f };
+		}
+
+		// Increase the mouse force
+		m_mouseForceScale = 100000.0f;
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new MultiplePrismatic( context );
+	}
+};
+
+static int sampleMultiplePrismatic = RegisterSample( "Robustness", "Multiple Prismatic", MultiplePrismatic::Create );

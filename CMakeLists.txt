@@ -1,5 +1,4 @@
 ﻿cmake_minimum_required(VERSION 3.22)
-include(FetchContent)
 include(CMakeDependentOption)
 
 project(box2d
@@ -21,7 +20,7 @@ message(STATUS "CMake host system processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 # static link to make leak checking easier (_crtBreakAlloc)
 # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-if (MSVC OR APPLE)
+if (MSVC OR APPLE OR (UNIX AND NOT APPLE))
 	option(BOX2D_SANITIZE "Enable sanitizers for some builds" OFF)
 	if(BOX2D_SANITIZE)
 		message(STATUS "Box2D Sanitize")
@@ -35,7 +34,7 @@ if (MSVC OR APPLE)
 			add_link_options(-fsanitize=address -fsanitize-address-use-after-scope -fsanitize=undefined)
 		endif()
 	else()
-		if(MSVC AND PROJECT_IS_TOP_LEVEL)
+		if(MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" AND PROJECT_IS_TOP_LEVEL)
 			# enable hot reloading
 			add_compile_options("$<$<CONFIG:Debug>:/ZI>")
 			add_link_options("$<$<CONFIG:Debug>:/INCREMENTAL>")
@@ -45,7 +44,7 @@ endif()
 
 # Deterministic math
 # https://box2d.org/posts/2024/08/determinism/
-if (MINGW OR APPLE OR UNIX)
+if (MINGW OR UNIX)
 	add_compile_options(-ffp-contract=off)
 endif()
 
@@ -58,11 +57,9 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-set(CMAKE_VERBOSE_MAKEFILE ON)
 
-# Needed for samples.exe to find box2d.dll
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
+# Leaving this here for testing
+# set(CMAKE_VERBOSE_MAKEFILE ON)
 
 add_subdirectory(src)
 
@@ -75,8 +72,12 @@ if(PROJECT_IS_TOP_LEVEL)
 	option(BOX2D_VALIDATE "Enable heavy validation" ON)
 	option(BOX2D_UNIT_TESTS "Build the Box2D unit tests" ON)
 	
+	# Needed for samples.exe to find box2d.dll
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
+
 	if(BOX2D_UNIT_TESTS OR BOX2D_SAMPLES OR BOX2D_BENCHMARKS)
-		# Emscripten pthread support for enkiTS
+		# Emscripten pthread support
 		if(EMSCRIPTEN)
 			set(EMSCRIPTEN_PTHREADS_COMPILER_FLAGS "-pthread -s USE_PTHREADS=1")
 			set(EMSCRIPTEN_PTHREADS_LINKER_FLAGS "${EMSCRIPTEN_PTHREADS_COMPILER_FLAGS} -s ALLOW_MEMORY_GROWTH")
@@ -84,17 +85,6 @@ if(PROJECT_IS_TOP_LEVEL)
 			string(APPEND CMAKE_CXX_FLAGS " ${EMSCRIPTEN_PTHREADS_COMPILER_FLAGS}")
 			string(APPEND CMAKE_EXE_LINKER_FLAGS " ${EMSCRIPTEN_PTHREADS_LINKER_FLAGS}")
 		endif()
-
-		# Task system used in tests and samples
-		set(ENKITS_BUILD_EXAMPLES OFF CACHE BOOL "Build enkiTS examples")
-		FetchContent_Declare(
-			enkits
-			GIT_REPOSITORY https://github.com/dougbinks/enkiTS.git
-			GIT_TAG master
-			GIT_SHALLOW TRUE
-			GIT_PROGRESS TRUE
-		)
-		FetchContent_MakeAvailable(enkits)
 
 		add_subdirectory(shared)
 	endif()
@@ -104,7 +94,7 @@ if(PROJECT_IS_TOP_LEVEL)
 		message(STATUS "Adding Box2D unit tests")
 		add_subdirectory(test)
 		set_target_properties(test PROPERTIES XCODE_GENERATE_SCHEME TRUE)
-	else()
+	elseif(BOX2D_UNIT_TESTS)
 		message(STATUS "Skipping Box2D unit tests")
 	endif()
 

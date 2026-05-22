@@ -11,7 +11,13 @@
 typedef struct b2SetItem
 {
 	uint64_t key;
-	uint32_t hash;
+
+	// storing lower 32 bits of hash
+	// this is wasteful because I just need to know if the item is occupied
+	// I could require the key to be non-zero and use 0 to indicate an empty slot
+	// Update: looks like I store this to make growing the table faster, however this is wasteful once
+	// the table has hit the high water mark
+	//uint32_t hash;
 } b2SetItem;
 
 typedef struct b2HashSet
@@ -35,3 +41,13 @@ bool b2RemoveKey( b2HashSet* set, uint64_t key );
 bool b2ContainsKey( const b2HashSet* set, uint64_t key );
 
 int b2GetHashSetBytes( b2HashSet* set );
+
+static inline int b2GetSetCount( b2HashSet* set )
+{
+	return set->count;
+}
+
+static inline int b2GetSetCapacity( b2HashSet* set )
+{
+	return set->capacity;
+}

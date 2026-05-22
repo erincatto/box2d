@@ -89,9 +89,9 @@ void Doohickey::Despawn()
 {
 	assert( m_isSpawned == true );
 
-	b2DestroyJoint( m_axleId1 );
-	b2DestroyJoint( m_axleId2 );
-	b2DestroyJoint( m_sliderId );
+	b2DestroyJoint( m_axleId1, false );
+	b2DestroyJoint( m_axleId2, false );
+	b2DestroyJoint( m_sliderId, false );
 
 	b2DestroyBody( m_wheelId1 );
 	b2DestroyBody( m_wheelId2 );

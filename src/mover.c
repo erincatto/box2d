@@ -1,9 +1,8 @@
 // SPDX-FileCopyrightText: 2025 Erin Catto
 // SPDX-License-Identifier: MIT
 
-#include "constants.h"
-
 #include "box2d/collision.h"
+#include "box2d/constants.h"
 
 b2PlaneSolverResult b2SolvePlanes( b2Vec2 targetDelta, b2CollisionPlane* planes, int count )
 {

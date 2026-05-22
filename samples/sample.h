@@ -3,16 +3,14 @@
 
 #pragma once
 
+#include "draw.h"
+
 #include "box2d/id.h"
 #include "box2d/types.h"
-#include "draw.h"
 
 #define ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
 
-namespace enki
-{
-class TaskScheduler;
-};
+struct ImFont;
 
 struct SampleContext
 {
@@ -21,35 +19,31 @@ struct SampleContext
 
 	struct GLFWwindow* window = nullptr;
 	Camera camera;
-	Draw draw;
+	Draw* draw;
+	class Sample* sample = nullptr;
+	b2Capacity capacity;
+	b2DebugDraw debugDraw;
+	ImFont* regularFont;
+	ImFont* mediumFont;
+	ImFont* largeFont;
 	float uiScale = 1.0f;
 	float hertz = 60.0f;
+	float recycleDistance = 0.05f;
 	int subStepCount = 4;
 	int workerCount = 1;
 	bool restart = false;
 	bool pause = false;
 	bool singleStep = false;
-	bool drawJointExtras = false;
-	bool drawBounds = false;
-	bool drawMass = false;
-	bool drawBodyNames = false;
-	bool drawContactPoints = false;
-	bool drawContactNormals = false;
-	bool drawContactImpulses = false;
-	bool drawContactFeatures = false;
-	bool drawFrictionImpulses = false;
-	bool drawIslands = false;
-	bool drawGraphColors = false;
 	bool drawCounters = false;
 	bool drawProfile = false;
 	bool enableWarmStarting = true;
 	bool enableContinuous = true;
 	bool enableSleep = true;
+	bool showUI = true;
+	bool frameTime = false;
 
 	// These are persisted
 	int sampleIndex = 0;
-	bool drawShapes = true;
-	bool drawJoints = true;
 };
 
 class Sample
@@ -58,13 +52,12 @@ public:
 	explicit Sample( SampleContext* context );
 	virtual ~Sample();
 
-	void CreateWorld( );
+	void CreateWorld();
 
-	void DrawTitle( const char* string );
-	virtual void Step( );
-	virtual void UpdateGui()
-	{
-	}
+	void ResetText();
+	virtual void Step();
+
+	virtual void UpdateGui();
 	virtual void Keyboard( int )
 	{
 	}
@@ -73,6 +66,7 @@ public:
 	virtual void MouseMove( b2Vec2 p );
 
 	void DrawTextLine( const char* text, ... );
+	void DrawColoredTextLine( b2HexColor color, const char* text, ... );
 	void ResetProfile();
 	void ShiftOrigin( b2Vec2 newOrigin );
 
@@ -82,8 +76,9 @@ public:
 	friend class BoundaryListener;
 	friend class ContactListener;
 
-	static constexpr int m_maxTasks = 64;
+	static constexpr int m_maxTasks = 512;
 	static constexpr int m_maxThreads = 64;
+	static constexpr int m_profileCapacity = 512;
 
 #ifdef NDEBUG
 	static constexpr bool m_isDebug = false;
@@ -95,34 +90,38 @@ public:
 	Camera* m_camera;
 	Draw* m_draw;
 
-	enki::TaskScheduler* m_scheduler;
-	class SampleTask* m_tasks;
-	int m_taskCount;
-	int m_threadCount;
-
 	b2BodyId m_mouseBodyId;
 
 	b2WorldId m_worldId;
 	b2JointId m_mouseJointId;
 	b2Vec2 m_mousePoint;
+	float m_mouseForceScale;
 	int m_stepCount;
-	b2Profile m_maxProfile;
-	b2Profile m_totalProfile;
-
-private:
 	int m_textLine;
 	int m_textIncrement;
+
+	b2Profile m_profiles[m_profileCapacity];
+	int m_currentProfileIndex;
+	uint64_t m_profileReadIndex;
+	uint64_t m_profileWriteIndex;
+
+	bool m_didStep;
 };
 
 typedef Sample* SampleCreateFcn( SampleContext* context );
+typedef b2Capacity SampleCapacityFcn( void );
 
 int RegisterSample( const char* category, const char* name, SampleCreateFcn* fcn );
+int RegisterSampleWithCapacity( const char* category, const char* name, SampleCreateFcn* fcn, SampleCapacityFcn* capacityFcn );
+void SelectSample( SampleContext* context, int selection, bool restart );
+void UpdateSampleUI( SampleContext* context );
 
 struct SampleEntry
 {
 	const char* category;
 	const char* name;
 	SampleCreateFcn* createFcn;
+	SampleCapacityFcn* capacityFcn;
 };
 
 #define MAX_SAMPLES 256

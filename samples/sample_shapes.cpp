@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 #include "draw.h"
-#include "random.h"
 #include "sample.h"
+#include "utils.h"
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
@@ -31,8 +31,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 25.0f * 1.75f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 25.0f * 1.75f;
 		}
 
 		m_groundId = b2_nullBodyId;
@@ -40,8 +40,11 @@ public:
 		m_chainId = b2_nullChainId;
 		m_shapeId = b2_nullShapeId;
 		m_shapeType = e_circleShape;
-		m_restitution = 0.0f;
-		m_friction = 0.2f;
+
+		m_material = b2DefaultSurfaceMaterial();
+		m_material.friction = 0.2f;
+		m_material.customColor = b2_colorSteelBlue;
+		m_material.userMaterialId = 42;
 
 		CreateScene();
 		Launch();
@@ -110,15 +113,10 @@ public:
 		// }
 		// printf("};\n");
 
-		b2SurfaceMaterial material = {};
-		material.friction = 0.2f;
-		material.customColor = b2_colorSteelBlue;
-		material.userMaterialId = 42;
-
 		b2ChainDef chainDef = b2DefaultChainDef();
 		chainDef.points = points;
 		chainDef.count = count;
-		chainDef.materials = &material;
+		chainDef.materials = &m_material;
 		chainDef.materialCount = 1;
 		chainDef.isLoop = true;
 
@@ -141,9 +139,7 @@ public:
 		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.density = 1.0f;
-		shapeDef.material.friction = m_friction;
-		shapeDef.material.restitution = m_restitution;
+		shapeDef.material = m_material;
 
 		if ( m_shapeType == e_circleShape )
 		{
@@ -172,7 +168,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 155.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Chain Shape", nullptr, ImGuiWindowFlags_NoResize );
@@ -185,15 +181,15 @@ public:
 			Launch();
 		}
 
-		if ( ImGui::SliderFloat( "Friction", &m_friction, 0.0f, 1.0f, "%.2f" ) )
+		if ( ImGui::SliderFloat( "Friction", &m_material.friction, 0.0f, 1.0f, "%.2f" ) )
 		{
-			b2Shape_SetFriction( m_shapeId, m_friction );
-			b2Chain_SetFriction( m_chainId, m_friction );
+			b2Shape_SetSurfaceMaterial( m_shapeId, &m_material );
+			b2Chain_SetSurfaceMaterial( m_chainId, &m_material, 0 );
 		}
 
-		if ( ImGui::SliderFloat( "Restitution", &m_restitution, 0.0f, 2.0f, "%.1f" ) )
+		if ( ImGui::SliderFloat( "Restitution", &m_material.restitution, 0.0f, 2.0f, "%.1f" ) )
 		{
-			b2Shape_SetRestitution( m_shapeId, m_restitution );
+			b2Shape_SetSurfaceMaterial( m_shapeId, &m_material );
 		}
 
 		if ( ImGui::Button( "Launch" ) )
@@ -208,8 +204,8 @@ public:
 	{
 		Sample::Step();
 
-		m_context->draw.DrawLine( b2Vec2_zero, { 0.5f, 0.0f }, b2_colorRed );
-		m_context->draw.DrawLine( b2Vec2_zero, { 0.0f, 0.5f }, b2_colorGreen );
+		DrawLine( m_draw, b2Vec2_zero, { 0.5f, 0.0f }, b2_colorRed );
+		DrawLine( m_draw, b2Vec2_zero, { 0.0f, 0.5f }, b2_colorGreen );
 
 		// DrawTextLine( "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
 	}
@@ -224,8 +220,7 @@ public:
 	b2ChainId m_chainId;
 	ShapeType m_shapeType;
 	b2ShapeId m_shapeId;
-	float m_restitution;
-	float m_friction;
+	b2SurfaceMaterial m_material;
 };
 
 static int sampleChainShape = RegisterSample( "Shapes", "Chain Shape", ChainShape::Create );
@@ -241,8 +236,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 6.0f };
-			m_context->camera.m_zoom = 25.0f * 0.5f;
+			m_context->camera.center = { 0.0f, 6.0f };
+			m_context->camera.zoom = 25.0f * 0.5f;
 		}
 
 		{
@@ -403,7 +398,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
 
 		ImGui::Begin( "Compound Shapes", nullptr, ImGuiWindowFlags_NoResize );
@@ -425,16 +420,16 @@ public:
 		if ( m_drawBodyAABBs )
 		{
 			b2AABB aabb = b2Body_ComputeAABB( m_table1Id );
-			m_context->draw.DrawBounds( aabb, b2_colorYellow );
+			DrawBounds( m_draw, aabb, b2_colorYellow );
 
 			aabb = b2Body_ComputeAABB( m_table2Id );
-			m_context->draw.DrawBounds( aabb, b2_colorYellow );
+			DrawBounds( m_draw, aabb, b2_colorYellow );
 
 			aabb = b2Body_ComputeAABB( m_ship1Id );
-			m_context->draw.DrawBounds( aabb, b2_colorYellow );
+			DrawBounds( m_draw, aabb, b2_colorYellow );
 
 			aabb = b2Body_ComputeAABB( m_ship2Id );
-			m_context->draw.DrawBounds( aabb, b2_colorYellow );
+			DrawBounds( m_draw, aabb, b2_colorYellow );
 		}
 	}
 
@@ -470,8 +465,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_zoom = 25.0f * 0.5f;
-			m_context->camera.m_center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 25.0f * 0.5f;
+			m_context->camera.center = { 0.0f, 5.0f };
 		}
 
 		{
@@ -521,7 +516,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 240.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Shape Filter", nullptr, ImGuiWindowFlags_NoResize );
@@ -640,13 +635,13 @@ public:
 		Sample::Step();
 
 		b2Vec2 p1 = b2Body_GetPosition( m_player1Id );
-		m_context->draw.DrawString( { p1.x - 0.5f, p1.y }, "player 1" );
+		DrawWorldString( m_draw, m_camera, { p1.x - 0.5f, p1.y }, b2_colorWhite, "player 1" );
 
 		b2Vec2 p2 = b2Body_GetPosition( m_player2Id );
-		m_context->draw.DrawString( { p2.x - 0.5f, p2.y }, "player 2" );
+		DrawWorldString( m_draw, m_camera, { p2.x - 0.5f, p2.y }, b2_colorWhite, "player 2" );
 
 		b2Vec2 p3 = b2Body_GetPosition( m_player3Id );
-		m_context->draw.DrawString( { p3.x - 0.5f, p3.y }, "player 3" );
+		DrawWorldString( m_draw, m_camera, { p3.x - 0.5f, p3.y }, b2_colorWhite, "player 3" );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -679,8 +674,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 5.0f };
-			m_context->camera.m_zoom = 10.0f;
+			m_context->camera.center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 10.0f;
 		}
 
 		// Register custom filter
@@ -723,7 +718,7 @@ public:
 		for ( int i = 0; i < e_count; ++i )
 		{
 			b2Vec2 p = b2Body_GetPosition( m_bodyIds[i] );
-			m_context->draw.DrawString( { p.x, p.y }, "%d", i );
+			DrawWorldString( m_draw, m_camera, { p.x, p.y }, b2_colorWhite, "%d", i );
 		}
 	}
 
@@ -775,8 +770,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 4.0f, 17.0f };
-			m_context->camera.m_zoom = 27.5f;
+			m_context->camera.center = { 4.0f, 17.0f };
+			m_context->camera.zoom = 27.5f;
 		}
 
 		{
@@ -846,7 +841,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Restitution", nullptr, ImGuiWindowFlags_NoResize );
@@ -889,8 +884,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 14.0f };
-			m_context->camera.m_zoom = 25.0f * 0.6f;
+			m_context->camera.center = { 0.0f, 14.0f };
+			m_context->camera.zoom = 25.0f * 0.6f;
 		}
 
 		{
@@ -956,8 +951,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 5.0f, 20.0f };
-			m_context->camera.m_zoom = 27.5f;
+			m_context->camera.center = { 5.0f, 20.0f };
+			m_context->camera.zoom = 27.5f;
 		}
 
 		m_lift = 0.0f;
@@ -1024,7 +1019,7 @@ public:
 
 		for ( int i = 0; i < 20; ++i )
 		{
-			m_context->draw.DrawString( { -41.5f, 2.0f * i + 1.0f }, "%.2f", m_resistScale * i );
+			DrawWorldString( m_draw, m_camera, { -41.5f, 2.0f * i + 1.0f }, b2_colorWhite, "%.2f", m_resistScale * i );
 		}
 	}
 
@@ -1047,8 +1042,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 2.0f, 7.5f };
-			m_context->camera.m_zoom = 12.0f;
+			m_context->camera.center = { 2.0f, 7.5f };
+			m_context->camera.zoom = 12.0f;
 		}
 
 		// Ground
@@ -1106,8 +1101,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 60.0f, -15.0f };
-			m_context->camera.m_zoom = 38.0f;
+			m_context->camera.center = { 60.0f, -15.0f };
+			m_context->camera.zoom = 38.0f;
 		}
 
 		{
@@ -1194,7 +1189,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 80.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 260.0f, height ) );
 
 		ImGui::Begin( "Ball Parameters", nullptr, ImGuiWindowFlags_NoResize );
@@ -1247,8 +1242,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_zoom = 25.0f * 0.25f;
-			m_context->camera.m_center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 25.0f * 0.25f;
+			m_context->camera.center = { 0.0f, 5.0f };
 		}
 
 		{
@@ -1319,7 +1314,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 230.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
 
 		ImGui::Begin( "Modify Geometry", nullptr, ImGuiWindowFlags_NoResize );
@@ -1408,8 +1403,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 5.0f };
-			m_context->camera.m_zoom = 25.0f * 0.5f;
+			m_context->camera.center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 25.0f * 0.5f;
 		}
 
 		b2Vec2 points1[] = { { 40.0f, 1.0f },	{ 0.0f, 0.0f },	 { -40.0f, 0.0f },
@@ -1488,8 +1483,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_zoom = 25.0f * 0.55f;
-			m_context->camera.m_center = { 2.0f, 8.0f };
+			m_context->camera.zoom = 25.0f * 0.55f;
+			m_context->camera.center = { 2.0f, 8.0f };
 		}
 
 		{
@@ -1558,8 +1553,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_zoom = 25.0f * 0.55f;
-			m_context->camera.m_center = { 2.0f, 8.0f };
+			m_context->camera.zoom = 25.0f * 0.55f;
+			m_context->camera.center = { 2.0f, 8.0f };
 		}
 
 		{
@@ -1623,8 +1618,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_zoom = 25.0f * 0.55f;
-			m_context->camera.m_center = { 2.0f, 8.0f };
+			m_context->camera.zoom = 25.0f * 0.55f;
+			m_context->camera.center = { 2.0f, 8.0f };
 		}
 
 		{
@@ -1662,7 +1657,7 @@ public:
 	{
 		Sample::Step();
 
-		m_context->draw.DrawTransform( b2Transform_identity );
+		DrawTransform( m_draw, b2Transform_identity, 1.0f );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -1682,8 +1677,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 14.0f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 14.0f;
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -1730,7 +1725,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 160.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Explosion", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1772,8 +1767,8 @@ public:
 
 		DrawTextLine( "reference angle = %g", m_referenceAngle );
 
-		m_context->draw.DrawCircle( b2Vec2_zero, m_radius + m_falloff, b2_colorBox2DBlue );
-		m_context->draw.DrawCircle( b2Vec2_zero, m_radius, b2_colorBox2DYellow );
+		DrawCircle( m_draw, b2Vec2_zero, m_radius + m_falloff, b2_colorBox2DBlue );
+		DrawCircle( m_draw, b2Vec2_zero, m_radius, b2_colorBox2DYellow );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -1799,8 +1794,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 2.5f };
-			m_context->camera.m_zoom = 3.5f;
+			m_context->camera.center = { 0.0f, 2.5f };
+			m_context->camera.zoom = 3.5f;
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -1856,8 +1851,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 5.0f };
-			m_context->camera.m_zoom = 10.0f;
+			m_context->camera.center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 10.0f;
 		}
 
 		{
@@ -1913,3 +1908,173 @@ public:
 };
 
 static int sampleBoxRestitution = RegisterSample( "Shapes", "Box Restitution", BoxRestitution::Create );
+
+class Wind : public Sample
+{
+public:
+	enum ShapeType
+	{
+		e_circleShape = 0,
+		e_capsuleShape,
+		e_boxShape
+	};
+
+	explicit Wind( SampleContext* context )
+		: Sample( context )
+		, m_bodyIds{}
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 1.0f };
+			m_context->camera.zoom = 2.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			m_groundId = b2CreateBody( m_worldId, &bodyDef );
+		}
+
+		m_shapeType = e_capsuleShape;
+		m_wind = { 6.0f, 0.0f };
+		m_drag = 1.0f;
+		m_lift = 0.75f;
+		m_count = 10;
+		m_noise = { 0.0f, 0.0f };
+
+		CreateScene();
+	}
+
+	void CreateScene()
+	{
+		for ( int i = 0; i < m_maxCount; ++i )
+		{
+			if ( B2_IS_NON_NULL( m_bodyIds[i] ) )
+			{
+				b2DestroyBody( m_bodyIds[i] );
+				m_bodyIds[i] = b2_nullBodyId;
+			}
+		}
+
+		float radius = 0.1f;
+		b2Circle circle = { { 0.0f, 0.0f }, radius };
+		b2Capsule capsule = { { 0.0f, -radius }, { 0.0f, radius }, 0.25f * radius };
+		b2Polygon box = b2MakeBox( 0.25f * radius, 1.25f * radius );
+
+		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+		jointDef.base.bodyIdA = m_groundId;
+		jointDef.base.localFrameA.p = { 0.0f, 2.0f + radius };
+		jointDef.base.drawScale = 0.1f;
+		jointDef.hertz = 0.1f;
+		jointDef.dampingRatio = 0.0f;
+		jointDef.enableSpring = true;
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.density = 20.0f;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.gravityScale = 0.5f;
+		bodyDef.enableSleep = false;
+
+		for ( int i = 0; i < m_count; ++i )
+		{
+			bodyDef.position = { 0.0f, 2.0f - 2.0f * radius * i };
+			m_bodyIds[i] = b2CreateBody( m_worldId, &bodyDef );
+
+			if ( m_shapeType == e_circleShape )
+			{
+				b2CreateCircleShape( m_bodyIds[i], &shapeDef, &circle );
+			}
+			else if ( m_shapeType == e_capsuleShape )
+			{
+				b2CreateCapsuleShape( m_bodyIds[i], &shapeDef, &capsule );
+			}
+			else
+			{
+				b2CreatePolygonShape( m_bodyIds[i], &shapeDef, &box );
+			}
+
+			jointDef.base.bodyIdB = m_bodyIds[i];
+			jointDef.base.localFrameB.p = { 0.0f, radius };
+			b2CreateRevoluteJoint( m_worldId, &jointDef );
+
+			jointDef.base.bodyIdA = m_bodyIds[i];
+			jointDef.base.localFrameA.p = { 0.0f, -radius };
+		}
+	}
+
+	void UpdateGui() override
+	{
+		float fontSize = ImGui::GetFontSize();
+		float height = 15.0f * fontSize;
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize }, ImGuiCond_Once );
+		ImGui::SetNextWindowSize( { 24.0f * fontSize, height } );
+
+		ImGui::Begin( "Wind", nullptr, ImGuiWindowFlags_NoResize );
+		ImGui::PushItemWidth( 18.0f * fontSize );
+
+		const char* shapeTypes[] = { "Circle", "Capsule", "Box" };
+		int shapeType = int( m_shapeType );
+		if ( ImGui::Combo( "Shape", &shapeType, shapeTypes, IM_ARRAYSIZE( shapeTypes ) ) )
+		{
+			m_shapeType = ShapeType( shapeType );
+			CreateScene();
+		}
+
+		ImGui::SliderFloat2( "Wind", &m_wind.x, -20.0f, 20.0f, "%.1f" );
+		ImGui::SliderFloat( "Drag", &m_drag, 0.0f, 1.0f, "%.2f" );
+		ImGui::SliderFloat( "Lift", &m_lift, 0.0f, 4.0f, "%.2f" );
+		if ( ImGui::SliderInt( "Count", &m_count, 1, m_maxCount, "%d" ) )
+		{
+			CreateScene();
+		}
+
+		ImGui::PopItemWidth();
+		ImGui::End();
+	}
+
+	void Step() override
+	{
+		if ( m_context->pause == false || m_context->singleStep == true )
+		{
+			float speed;
+			b2Vec2 direction = b2GetLengthAndNormalize( &speed, m_wind );
+			b2Vec2 wind = b2MulSV( speed, b2Add( direction, m_noise ) );
+
+			for ( int i = 0; i < m_count; ++i )
+			{
+				b2ShapeId shapeIds[1];
+				int count = b2Body_GetShapes( m_bodyIds[i], shapeIds, 1 );
+				for ( int j = 0; j < count; ++j )
+				{
+					b2Shape_ApplyWind( shapeIds[j], wind, m_drag, m_lift, true );
+				}
+			}
+
+			b2Vec2 rand = RandomVec2( -0.3f, 0.3f );
+			m_noise = b2Lerp( m_noise, rand, 0.05f );
+
+			DrawLine( m_draw, b2Vec2_zero, b2MulSV( 0.2f, wind ), b2_colorFuchsia );
+		}
+
+		Sample::Step();
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new Wind( context );
+	}
+
+	static constexpr int m_maxCount = 60;
+
+	ShapeType m_shapeType;
+	b2Vec2 m_wind;
+	float m_drag;
+	float m_lift;
+	b2Vec2 m_noise;
+	b2BodyId m_groundId;
+	b2BodyId m_bodyIds[m_maxCount];
+	int m_count;
+};
+
+static int sampleWind = RegisterSample( "Shapes", "Wind", Wind::Create );

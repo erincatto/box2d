@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
-#include "constants.h"
 #include "core.h"
 
 #include "box2d/collision.h"
+#include "box2d/constants.h"
 #include "box2d/math_functions.h"
 
 #include <float.h>
@@ -86,7 +86,7 @@ static b2Hull b2RecurseHull( b2Vec2 p1, b2Vec2 p2, b2Vec2* ps, int count )
 // - returns an empty hull if it fails
 b2Hull b2ComputeHull( const b2Vec2* points, int count )
 {
-	b2Hull hull;
+	b2Hull hull = { 0 };
 	hull.count = 0;
 
 	if ( count < 3 || count > B2_MAX_POLYGON_VERTICES )

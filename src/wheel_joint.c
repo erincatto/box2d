@@ -193,18 +193,18 @@ void b2PrepareWheelJoint( b2JointSim* base, b2StepContext* context )
 
 	b2World* world = context->world;
 
-	b2Body* bodyA = b2BodyArray_Get( &world->bodies, idA );
-	b2Body* bodyB = b2BodyArray_Get( &world->bodies, idB );
+	b2Body* bodyA = b2Array_Get( world->bodies, idA );
+	b2Body* bodyB = b2Array_Get( world->bodies, idB );
 
 	B2_ASSERT( bodyA->setIndex == b2_awakeSet || bodyB->setIndex == b2_awakeSet );
-	b2SolverSet* setA = b2SolverSetArray_Get( &world->solverSets, bodyA->setIndex );
-	b2SolverSet* setB = b2SolverSetArray_Get( &world->solverSets, bodyB->setIndex );
+	b2SolverSet* setA = b2Array_Get( world->solverSets, bodyA->setIndex );
+	b2SolverSet* setB = b2Array_Get( world->solverSets, bodyB->setIndex );
 
 	int localIndexA = bodyA->localIndex;
 	int localIndexB = bodyB->localIndex;
 
-	b2BodySim* bodySimA = b2BodySimArray_Get( &setA->bodySims, localIndexA );
-	b2BodySim* bodySimB = b2BodySimArray_Get( &setB->bodySims, localIndexB );
+	b2BodySim* bodySimA = b2Array_Get( setA->bodySims, localIndexA );
+	b2BodySim* bodySimB = b2Array_Get( setB->bodySims, localIndexB );
 
 	float mA = bodySimA->invMass;
 	float iA = bodySimA->invInertia;
@@ -302,10 +302,17 @@ void b2WarmStartWheelJoint( b2JointSim* base, b2StepContext* context )
 	float LA = axialImpulse * a1 + joint->perpImpulse * s1 + joint->motorImpulse;
 	float LB = axialImpulse * a2 + joint->perpImpulse * s2 + joint->motorImpulse;
 
-	stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, P );
-	stateA->angularVelocity -= iA * LA;
-	stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, P );
-	stateB->angularVelocity += iB * LB;
+	if ( stateA->flags & b2_dynamicFlag )
+	{
+		stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, P );
+		stateA->angularVelocity -= iA * LA;
+	}
+
+	if ( stateB->flags & b2_dynamicFlag )
+	{
+		stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, P );
+		stateB->angularVelocity += iB * LB;
+	}
 }
 
 void b2SolveWheelJoint( b2JointSim* base, b2StepContext* context, bool useBias )
@@ -491,10 +498,17 @@ void b2SolveWheelJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 		wB += iB * LB;
 	}
 
-	stateA->linearVelocity = vA;
-	stateA->angularVelocity = wA;
-	stateB->linearVelocity = vB;
-	stateB->angularVelocity = wB;
+	if ( stateA->flags & b2_dynamicFlag )
+	{
+		stateA->linearVelocity = vA;
+		stateA->angularVelocity = wA;
+	}
+
+	if ( stateB->flags & b2_dynamicFlag )
+	{
+		stateB->linearVelocity = vB;
+		stateB->angularVelocity = wB;
+	}
 }
 
 #if 0
@@ -520,7 +534,7 @@ void b2WheelJoint_Dump()
 }
 #endif
 
-void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB )
+void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale )
 {
 	B2_ASSERT( base->type == b2_wheelJoint );
 
@@ -536,20 +550,22 @@ void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transfor
 	b2HexColor c4 = b2_colorDimGray;
 	b2HexColor c5 = b2_colorBlue;
 
-	draw->DrawSegmentFcn( frameA.p, frameB.p, c5, draw->context );
+	draw->DrawLineFcn( frameA.p, frameB.p, c5, draw->context );
 
 	if ( joint->enableLimit )
 	{
 		b2Vec2 lower = b2MulAdd( frameA.p, joint->lowerTranslation, axisA );
 		b2Vec2 upper = b2MulAdd( frameA.p, joint->upperTranslation, axisA );
 		b2Vec2 perp = b2LeftPerp( axisA );
-		draw->DrawSegmentFcn( lower, upper, c1, draw->context );
-		draw->DrawSegmentFcn( b2MulSub( lower, 0.1f, perp ), b2MulAdd( lower, 0.1f, perp ), c2, draw->context );
-		draw->DrawSegmentFcn( b2MulSub( upper, 0.1f, perp ), b2MulAdd( upper, 0.1f, perp ), c3, draw->context );
+		draw->DrawLineFcn( lower, upper, c1, draw->context );
+		draw->DrawLineFcn( b2MulSub( lower, 0.1f * drawScale, perp ), b2MulAdd( lower, 0.1f * drawScale, perp ), c2,
+							  draw->context );
+		draw->DrawLineFcn( b2MulSub( upper, 0.1f * drawScale, perp ), b2MulAdd( upper, 0.1f * drawScale, perp ), c3,
+							  draw->context );
 	}
 	else
 	{
-		draw->DrawSegmentFcn( b2MulSub( frameA.p, 1.0f, axisA ), b2MulAdd( frameA.p, 1.0f, axisA ), c1, draw->context );
+		draw->DrawLineFcn( b2MulSub( frameA.p, 1.0f, axisA ), b2MulAdd( frameA.p, 1.0f, axisA ), c1, draw->context );
 	}
 
 	draw->DrawPointFcn( frameA.p, 5.0f, c1, draw->context );

@@ -3,10 +3,13 @@
 
 #pragma once
 
-#include "array.h"
+#include "container.h"
 
 #include "box2d/math_functions.h"
 #include "box2d/types.h"
+
+// Length of body debug name
+#define B2_NAME_LENGTH 32
 
 typedef struct b2World b2World;
 
@@ -29,7 +32,7 @@ enum b2BodyFlags
 
 	// This body was speed capped in the current time step
 	b2_isSpeedCapped = 0x00000020,
-	
+
 	// This body had a time of impact event in the current time step
 	b2_hadTimeOfImpact = 0x00000040,
 
@@ -39,6 +42,16 @@ enum b2BodyFlags
 	// This body need's to have its AABB increased
 	b2_enlargeBounds = 0x00000100,
 
+	// This body is dynamic so the solver should write to it.
+	// This prevents writing to kinematic bodies that causes a multithreaded sharing
+	// cache coherence problem even when the values are not changing.
+	// Used for b2BodyState flags.
+	b2_dynamicFlag = 0x00000200,
+
+	// Flag to indicate the user has used the updateBodyMass option to defer mass
+	// computation but b2Body_ApplyMassFromShapes was not called before the world step.
+	b2_dirtyMass = 0x00000400,
+
 	// All lock flags
 	b2_allLocks = b2_lockAngularZ | b2_lockLinearX | b2_lockLinearY,
 };
@@ -46,7 +59,7 @@ enum b2BodyFlags
 // Body organizational details that are not used in the solver.
 typedef struct b2Body
 {
-	char name[32];
+	char name[B2_NAME_LENGTH];
 
 	void* userData;
 
@@ -75,9 +88,8 @@ typedef struct b2Body
 	// All enabled dynamic and kinematic bodies are in an island.
 	int islandId;
 
-	// doubly-linked island list
-	int islandPrev;
-	int islandNext;
+	// Need this island index for faster union-find
+	int islandIndex;
 
 	float mass;
 
@@ -103,7 +115,6 @@ typedef struct b2Body
 
 	// todo move into flags
 	bool enableSleep;
-	bool isMarked;
 } b2Body;
 
 // Body State
@@ -139,6 +150,7 @@ typedef struct b2BodyState
 	float angularVelocity; // 4
 
 	// b2BodyFlags
+	// Important flags: locking, dynamic
 	uint32_t flags; // 4
 
 	// Using delta position reduces round-off error far from the origin
@@ -189,6 +201,10 @@ typedef struct b2BodySim
 	uint32_t flags;
 } b2BodySim;
 
+b2DeclareArray( b2Body );
+b2DeclareArray( b2BodySim );
+b2DeclareArray( b2BodyState );
+
 // Get a validated body from a world using an id.
 b2Body* b2GetBodyFullId( b2World* world, b2BodyId bodyId );
 
@@ -202,6 +218,7 @@ bool b2ShouldBodiesCollide( b2World* world, b2Body* bodyA, b2Body* bodyB );
 
 b2BodySim* b2GetBodySim( b2World* world, b2Body* body );
 b2BodyState* b2GetBodyState( b2World* world, b2Body* body );
+void b2RemoveBodySim( b2Array( b2BodySim )* bodySims, b2Array( b2Body )* bodies, int localIndex );
 
 // careful calling this because it can invalidate body, state, joint, and contact pointers
 bool b2WakeBody( b2World* world, b2Body* body );
@@ -218,8 +235,3 @@ static inline b2Sweep b2MakeSweep( const b2BodySim* bodySim )
 	s.localCenter = bodySim->localCenter;
 	return s;
 }
-
-// Define inline functions for arrays
-B2_ARRAY_INLINE( b2Body, b2Body )
-B2_ARRAY_INLINE( b2BodySim, b2BodySim )
-B2_ARRAY_INLINE( b2BodyState, b2BodyState )

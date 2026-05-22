@@ -1,4 +1,5 @@
 build/
+api/
 imgui.ini
 settings.ini
 .vscode/
@@ -15,3 +16,7 @@ bin-intermediate/
 *.user
 *.vcxproj
 *.filters
+.claude/
+.tmp/
+AGENTS.md
+GEMINI.md

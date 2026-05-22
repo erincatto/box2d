@@ -4,8 +4,8 @@
 #include "donut.h"
 #include "draw.h"
 #include "human.h"
-#include "random.h"
 #include "sample.h"
+#include "utils.h"
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
@@ -30,11 +30,11 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 25.0f * 1.333f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 25.0f * 1.333f;
 		}
 
-		m_context->drawJoints = false;
+		m_context->debugDraw.drawJoints = false;
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -238,7 +238,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 90.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
 
 		ImGui::Begin( "Sensor Event", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -347,8 +347,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 6.0f };
-			m_context->camera.m_zoom = 7.5f;
+			m_context->camera.center = { 0.0f, 6.0f };
+			m_context->camera.zoom = 7.5f;
 		}
 
 		{
@@ -430,7 +430,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 19.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 12.0f * fontSize, height ) );
 
 		ImGui::Begin( "Sensor Bookend", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -692,8 +692,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 6.0f };
-			m_context->camera.m_zoom = 7.5f;
+			m_context->camera.center = { 0.0f, 6.0f };
+			m_context->camera.zoom = 7.5f;
 		}
 
 		{
@@ -793,7 +793,7 @@ public:
 			b2ShapeId shapeId = m_visitorIds[i];
 			b2AABB aabb = b2Shape_GetAABB( shapeId );
 			b2Vec2 point = b2AABB_Center( aabb );
-			m_context->draw.DrawPoint( point, 10.0f, b2_colorWhite );
+			DrawPoint( m_draw, point, 10.0f, b2_colorWhite );
 		}
 	}
 
@@ -828,8 +828,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 0.0f };
-			m_context->camera.m_zoom = 25.0f * 1.75f;
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 25.0f * 1.75f;
 		}
 
 		{
@@ -930,7 +930,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 60.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Contact Event", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1016,9 +1016,9 @@ public:
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							m_context->draw.DrawLine( point.point, point.point + point.totalNormalImpulse * normal,
-													  b2_colorBlueViolet );
-							m_context->draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
+							DrawLine( m_draw, point.clipPoint, point.clipPoint + point.totalNormalImpulse * normal,
+									  b2_colorBlueViolet );
+							DrawPoint( m_draw, point.clipPoint, 10.0f, b2_colorWhite );
 						}
 					}
 				}
@@ -1047,9 +1047,9 @@ public:
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							m_context->draw.DrawLine( point.point, point.point + point.totalNormalImpulse * normal,
-													  b2_colorYellowGreen );
-							m_context->draw.DrawPoint( point.point, 10.0f, b2_colorWhite );
+							DrawLine( m_draw, point.clipPoint, point.clipPoint + point.totalNormalImpulse * normal,
+									  b2_colorYellowGreen );
+							DrawPoint( m_draw, point.clipPoint, 10.0f, b2_colorWhite );
 						}
 					}
 				}
@@ -1239,8 +1239,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.5f, 7.5f };
-			m_context->camera.m_zoom = 25.0f * 0.4f;
+			m_context->camera.center = { 0.5f, 7.5f };
+			m_context->camera.zoom = 25.0f * 0.4f;
 		}
 
 		b2World_SetPreSolveCallback( m_worldId, PreSolveStatic, this );
@@ -1353,7 +1353,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "One-Sided Platform", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1478,8 +1478,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 2.0f, 8.0f };
-			m_context->camera.m_zoom = 25.0f * 0.55f;
+			m_context->camera.center = { 2.0f, 8.0f };
+			m_context->camera.zoom = 25.0f * 0.55f;
 		}
 
 		{
@@ -1563,7 +1563,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
 
 		ImGui::Begin( "Body Move", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
@@ -1596,9 +1596,16 @@ public:
 		b2BodyEvents events = b2World_GetBodyEvents( m_worldId );
 		for ( int i = 0; i < events.moveCount; ++i )
 		{
-			// draw the transform of every body that moved (not sleeping)
 			const b2BodyMoveEvent* event = events.moveEvents + i;
-			m_context->draw.DrawTransform( event->transform );
+
+			if ( event->userData == nullptr )
+			{
+				// The mouse joint body has no user data
+				continue;
+			}
+
+			// draw the transform of every body that moved (not sleeping)
+			DrawTransform( m_draw, event->transform, 1.0f );
 
 			b2Transform transform = b2Body_GetTransform( event->bodyId );
 			B2_ASSERT( transform.p.x == event->transform.p.x );
@@ -1626,7 +1633,7 @@ public:
 			}
 		}
 
-		m_context->draw.DrawCircle( m_explosionPosition, m_explosionRadius, b2_colorAzure );
+		DrawCircle( m_draw, m_explosionPosition, m_explosionRadius, b2_colorAzure );
 
 		DrawTextLine( "sleep count: %d", m_sleepCount );
 	}
@@ -1664,8 +1671,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 3.0f };
-			m_context->camera.m_zoom = 4.5f;
+			m_context->camera.center = { 0.0f, 3.0f };
+			m_context->camera.zoom = 4.5f;
 		}
 
 		{
@@ -1818,11 +1825,11 @@ public:
 		b2Vec2 origin = { 5.0f, 1.0f };
 		b2Vec2 translation = { -10.0f, 0.0f };
 		b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, b2DefaultQueryFilter() );
-		m_context->draw.DrawLine( origin, origin + translation, b2_colorDimGray );
+		DrawLine( m_draw, origin, origin + translation, b2_colorDimGray );
 
 		if ( result.hit )
 		{
-			m_context->draw.DrawPoint( result.point, 10.0f, b2_colorCyan );
+			DrawPoint( m_draw, result.point, 10.0f, b2_colorCyan );
 		}
 	}
 
@@ -1856,8 +1863,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 8.0f };
-			m_context->camera.m_zoom = 25.0f * 0.7f;
+			m_context->camera.center = { 0.0f, 8.0f };
+			m_context->camera.zoom = 25.0f * 0.7f;
 		}
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -2056,7 +2063,7 @@ public:
 			{
 				int index = (int)(intptr_t)event->userData;
 				assert( 0 <= index && index < e_count );
-				b2DestroyJoint( event->jointId );
+				b2DestroyJoint( event->jointId, true );
 				m_jointIds[index] = b2_nullJointId;
 			}
 		}
@@ -2080,8 +2087,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 6.0f };
-			m_context->camera.m_zoom = 7.5f;
+			m_context->camera.center = { 0.0f, 6.0f };
+			m_context->camera.zoom = 7.5f;
 		}
 
 		{
@@ -2151,11 +2158,11 @@ public:
 			for ( int i = 0; i < data.manifold.pointCount; ++i )
 			{
 				const b2ManifoldPoint* manifoldPoint = data.manifold.points + i;
-				b2Vec2 p1 = manifoldPoint->point;
+				b2Vec2 p1 = manifoldPoint->clipPoint;
 				b2Vec2 p2 = p1 + manifoldPoint->totalNormalImpulse * data.manifold.normal;
-				m_draw->DrawLine( p1, p2, b2_colorCrimson );
-				m_draw->DrawPoint( p1, 6.0f, b2_colorCrimson );
-				m_draw->DrawString( p1, "%.2f", manifoldPoint->totalNormalImpulse );
+				DrawLine( m_draw, p1, p2, b2_colorCrimson );
+				DrawPoint( m_draw, p1, 6.0f, b2_colorCrimson );
+				DrawWorldString( m_draw, m_camera, p1, b2_colorWhite, "%.2f", manifoldPoint->totalNormalImpulse );
 			}
 		}
 		else
@@ -2183,8 +2190,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { 0.0f, 5.0f };
-			m_context->camera.m_zoom = 7.5f;
+			m_context->camera.center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 7.5f;
 		}
 
 		b2BodyId groundId;
@@ -2306,7 +2313,7 @@ public:
 	{
 		float fontSize = ImGui::GetFontSize();
 		float height = 120.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->m_height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 120.0f, height ) );
 
 		ImGui::Begin( "Sensor Hit", nullptr, ImGuiWindowFlags_NoResize );
@@ -2361,7 +2368,7 @@ public:
 
 		for ( int i = 0; i < m_transformCount; ++i )
 		{
-			m_draw->DrawTransform( m_transforms[i] );
+			DrawTransform( m_draw, m_transforms[i], 1.0f );
 		}
 
 		b2SensorEvents sensorEvents = b2World_GetSensorEvents( m_worldId );
@@ -2417,8 +2424,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.m_center = { -7.0f, 9.0f };
-			m_context->camera.m_zoom = 14.0f;
+			m_context->camera.center = { -7.0f, 9.0f };
+			m_context->camera.zoom = 14.0f;
 		}
 
 		{
@@ -2525,9 +2532,9 @@ public:
 
 		if ( m_dragging )
 		{
-			m_draw->DrawLine( m_point1, m_point2, b2_colorWhite );
-			m_draw->DrawPoint( m_point1, 5.0f, b2_colorGreen );
-			m_draw->DrawPoint( m_point2, 5.0f, b2_colorRed );
+			DrawLine( m_draw, m_point1, m_point2, b2_colorWhite );
+			DrawPoint( m_draw, m_point1, 5.0f, b2_colorGreen );
+			DrawPoint( m_draw, m_point2, 5.0f, b2_colorRed );
 		}
 
 		b2ContactEvents contactEvents = b2World_GetContactEvents( m_worldId );
@@ -2537,14 +2544,14 @@ public:
 
 			if ( B2_ID_EQUALS( event->shapeIdA, m_projectileShapeId ) || B2_ID_EQUALS( event->shapeIdB, m_projectileShapeId ) )
 			{
-				if (b2Contact_IsValid(event->contactId))
+				if ( b2Contact_IsValid( event->contactId ) )
 				{
 					b2ContactData data = b2Contact_GetData( event->contactId );
 
-					if (data.manifold.pointCount > 0)
+					if ( data.manifold.pointCount > 0 )
 					{
 						b2ExplosionDef explosionDef = b2DefaultExplosionDef();
-						explosionDef.position = data.manifold.points[0].point;
+						explosionDef.position = data.manifold.points[0].clipPoint;
 						explosionDef.radius = 1.0f;
 						explosionDef.impulsePerLength = 20.0f;
 						b2World_Explode( m_worldId, &explosionDef );
@@ -2572,3 +2579,151 @@ public:
 };
 
 static int sampleProjectileEvent = RegisterSample( "Events", "Projectile Event", ProjectileEvent::Create );
+
+class CircleImpulse : public Sample
+{
+public:
+	struct Event
+	{
+		float impulse;
+		float totalImpulse;
+		float speed;
+	};
+
+	explicit CircleImpulse( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 2.7f };
+			m_context->camera.zoom = 3.4f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+			b2Segment segment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		m_gravity = 10.0f;
+		m_restitution = 0.25f;
+		m_useGravity = false;
+		m_useRestitution = false;
+		m_mass = 1.0f;
+		m_bodyId = b2_nullBodyId;
+
+		Spawn();
+	}
+
+	void Spawn()
+	{
+		if ( B2_IS_NON_NULL( m_bodyId ) )
+		{
+			b2DestroyBody( m_bodyId );
+			m_bodyId = b2_nullBodyId;
+		}
+
+		m_events.clear();
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.gravityScale = m_useGravity ? 1.0f : 0.0f;
+		bodyDef.linearVelocity.y = -25.0f;
+		bodyDef.position.y = 5.5f;
+
+		b2Circle circle = {};
+		circle.radius = 0.25f;
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.enableHitEvents = true;
+		shapeDef.material.friction = 0.0f;
+		shapeDef.material.restitution = m_useRestitution ? m_restitution : 0.0f;
+
+		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2CreateCircleShape( m_bodyId, &shapeDef, &circle );
+
+		// Override mass
+		b2MassData massData = b2Body_GetMassData( m_bodyId );
+		float ratio = m_mass / massData.mass;
+		massData.mass = m_mass;
+		massData.rotationalInertia *= ratio;
+		b2Body_SetMassData( m_bodyId, massData );
+	}
+
+	void UpdateGui() override
+	{
+		float fontSize = ImGui::GetFontSize();
+		float height = 6.0f * fontSize;
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 10.0f * fontSize, height ) );
+
+		ImGui::Begin( "Circle Impulse", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
+
+		if ( ImGui::Checkbox( "gravity", &m_useGravity ) )
+		{
+			Spawn();
+		}
+
+		if ( ImGui::Checkbox( "restitution", &m_useRestitution ) )
+		{
+			Spawn();
+		}
+
+		ImGui::End();
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		b2ContactEvents events = b2World_GetContactEvents( m_worldId );
+		for ( int i = 0; i < events.hitCount; ++i )
+		{
+			b2ContactHitEvent* event = events.hitEvents + i;
+
+			DrawPoint( m_draw, event->point, 10.0f, b2_colorWhite );
+
+			b2ContactData data = b2Contact_GetData( event->contactId );
+
+			Event e = {};
+			e.speed = event->approachSpeed;
+			if ( data.manifold.pointCount > 0 )
+			{
+				e.impulse = data.manifold.points[0].normalImpulse;
+				e.totalImpulse = data.manifold.points[0].totalNormalImpulse;
+			}
+			m_events.push_back( e );
+		}
+
+		DrawTextLine( "mass = %g, gravity = %g, restitution = %g", m_mass, m_useGravity ? 10.0f : 0.0f,
+					  m_useRestitution ? m_restitution : 0.0f );
+
+		int eventCount = (int)m_events.size();
+		for ( int i = 0; i < eventCount; ++i )
+		{
+			const Event& e = m_events[i];
+			DrawTextLine( "hit speed = %g, hit momentum = %g, final impulse = %g, total impulse = %g", e.speed, m_mass * e.speed,
+						  e.impulse, e.totalImpulse );
+		}
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new CircleImpulse( context );
+	}
+
+	float m_mass;
+	std::vector<Event> m_events;
+	b2BodyId m_bodyId;
+	float m_gravity;
+	float m_restitution;
+	bool m_useGravity;
+	bool m_useRestitution;
+};
+
+static int sampleCircleImpulse = RegisterSample( "Events", "Circle Impulse", CircleImpulse::Create );

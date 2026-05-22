@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "array.h"
+#include "container.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -11,6 +11,27 @@
 typedef struct b2Contact b2Contact;
 typedef struct b2Joint b2Joint;
 typedef struct b2World b2World;
+
+// Cached contact data stored in the island for fast contiguous iteration.
+// Avoids touching b2Contact during union-find in b2SplitIsland.
+typedef struct b2ContactLink
+{
+	int contactId;
+	int bodyIdA;
+	int bodyIdB;
+} b2ContactLink;
+
+b2DeclareArray( b2ContactLink );
+
+// Cached joint data stored in the island for fast contiguous iteration.
+typedef struct b2JointLink
+{
+	int jointId;
+	int bodyIdA;
+	int bodyIdB;
+} b2JointLink;
+
+b2DeclareArray( b2JointLink );
 
 // Deterministic solver
 //
@@ -20,10 +41,11 @@ typedef struct b2World b2World;
 // - start touching: merge islands - temporary linked list - mark root island dirty - wake all - largest island is root
 // - stop touching: increment constraintRemoveCount
 
-// Persistent island for awake bodies, joints, and contacts
+// Persistent island for awake bodies, joints, and contacts.
+// Contacts are touching.
+// Contacts and joints may connect to static bodies, but static bodies are not in the island.
 // https://en.wikipedia.org/wiki/Component_(graph_theory)
 // https://en.wikipedia.org/wiki/Dynamic_connectivity
-// map from int to solver set and index
 typedef struct b2Island
 {
 	// index of solver set stored in b2World
@@ -36,28 +58,32 @@ typedef struct b2Island
 
 	int islandId;
 
-	int headBody;
-	int tailBody;
-	int bodyCount;
-
-	int headContact;
-	int tailContact;
-	int contactCount;
-
-	int headJoint;
-	int tailJoint;
-	int jointCount;
-
 	// Keeps track of how many contacts have been removed from this island.
 	// This is used to determine if an island is a candidate for splitting.
 	int constraintRemoveCount;
+
+	// I tried using a stack array for this but the data pointer goes out of
+	// sync when the world island array grows.
+	b2Array( int ) bodies;
+
+	// Contacts and joints that belong to this island. May connect to static
+	// bodies not in the island.
+	// Each link has the two body ids so that b2SplitIsland's union-find pass
+	// never needs to touch b2Contact/b2Joint.
+	b2Array( b2ContactLink ) contacts;
+	b2Array( b2JointLink ) joints;
+
 } b2Island;
+
+b2DeclareArray( b2Island );
 
 // This is used to move islands across solver sets
 typedef struct b2IslandSim
 {
 	int islandId;
 } b2IslandSim;
+
+b2DeclareArray( b2IslandSim );
 
 b2Island* b2CreateIsland( b2World* world, int setIndex );
 void b2DestroyIsland( b2World* world, int islandId );
@@ -75,9 +101,7 @@ void b2LinkJoint( b2World* world, b2Joint* joint );
 void b2UnlinkJoint( b2World* world, b2Joint* joint );
 
 void b2SplitIsland( b2World* world, int baseId );
-void b2SplitIslandTask( int startIndex, int endIndex, uint32_t threadIndex, void* context );
+void b2SplitIslandTask( void* context );
 
 void b2ValidateIsland( b2World* world, int islandId );
 
-B2_ARRAY_INLINE( b2Island, b2Island )
-B2_ARRAY_INLINE( b2IslandSim, b2IslandSim )

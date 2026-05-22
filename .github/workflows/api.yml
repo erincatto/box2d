@@ -1,0 +1,40 @@
+name: Generate API JSON
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Doxygen + Graphviz
+        run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
+
+      - name: Configure CMake
+        run: cmake -B build -DBOX2D_DOCS=ON -DBOX2D_SAMPLES=OFF -DBOX2D_UNIT_TESTS=OFF
+
+      - name: Build docs
+        run: cmake --build build --target doc
+
+      - name: Generate API JSON
+        run: python3 scripts/api_dump.py --xml build/docs/xml --out api/box2d_api.json --version "${{ github.ref_name }}"
+
+      - name: Upload as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: box2d_api
+          path: api/box2d_api.json
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: api/box2d_api.json
