@@ -1409,6 +1409,9 @@ typedef struct b2DebugDraw
 	/// Option to draw shapes
 	bool drawShapes;
 
+	/// Option to draw chain shape normals
+	bool drawChainNormals;
+
 	/// Option to draw joints
 	bool drawJoints;
 

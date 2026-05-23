@@ -515,8 +515,15 @@ B2_API b2ShapeId b2CreateCircleShape( b2BodyId bodyId, const b2ShapeDef* def, co
 
 /// Create a line segment shape and attach it to a body. The shape definition and geometry are fully cloned.
 /// Contacts are not created until the next time step.
-/// @return the shape id for accessing the shape
+/// @return the shape id or b2_nullShapeId if the segment is too short.
 B2_API b2ShapeId b2CreateSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Segment* segment );
+
+/// Create an orphaned chain segment shape and attach it to a body. The shape definition and
+/// geometry are fully cloned. The caller is responsible for the segment's ghost vertices and
+/// lifetime. The segment is not owned by any b2ChainShape (b2Shape_GetParentChain returns
+/// b2_nullChainId). Contacts are not created until the next time step.
+/// @return the shape id, or b2_nullShapeId if the segment is too short.
+B2_API b2ShapeId b2CreateChainSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, const b2ChainSegment* chainSegment );
 
 /// Create a capsule shape and attach it to a body. The shape definition and geometry are fully cloned.
 /// Contacts are not created until the next time step.
@@ -667,6 +674,12 @@ B2_API void b2Shape_SetSegment( b2ShapeId shapeId, const b2Segment* segment );
 /// This does not modify the mass properties.
 /// @see b2Body_ApplyMassFromShapes
 B2_API void b2Shape_SetPolygon( b2ShapeId shapeId, const b2Polygon* polygon );
+
+/// Allows you to change a shape to be an orphaned chain segment or update the current chain
+/// segment, including its ghost vertices. The chainId on the input is ignored. The resulting
+/// shape is always orphaned. Asserts if the shape is already a chain segment
+/// owned by a b2ChainShape (chainId != B2_NULL_INDEX).
+B2_API void b2Shape_SetChainSegment( b2ShapeId shapeId, const b2ChainSegment* chainSegment );
 
 /// Get the parent chain id if the shape type is a chain segment, otherwise
 /// returns b2_nullChainId.

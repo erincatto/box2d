@@ -150,6 +150,7 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 	if ( file != nullptr )
 	{
 		ImFontConfig fontConfig;
+		// This brightens the font, improving readability when it is small.
 		fontConfig.RasterizerMultiply = s_context.uiScale * s_framebufferScale;
 
 		float regularSize = floorf( 13.0f * s_context.uiScale );
@@ -157,6 +158,7 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 		float largeSize = floorf( 64.0f * s_context.uiScale );
 
 		ImGuiIO& io = ImGui::GetIO();
+		//s_context.regularFont = io.Fonts->AddFontFromFileTTF( fontPath, regularSize );
 		s_context.regularFont = io.Fonts->AddFontFromFileTTF( fontPath, regularSize, &fontConfig );
 		s_context.mediumFont = io.Fonts->AddFontFromFileTTF( fontPath, mediumSize, &fontConfig );
 		s_context.largeFont = io.Fonts->AddFontFromFileTTF( fontPath, largeSize, &fontConfig );

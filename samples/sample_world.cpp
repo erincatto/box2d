@@ -143,6 +143,8 @@ public:
 
 	void UpdateGui() override
 	{
+		Sample::UpdateGui();
+
 		float fontSize = ImGui::GetFontSize();
 		float height = 13.0f * fontSize;
 		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );

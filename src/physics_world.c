@@ -954,7 +954,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	b2TracyCFrame;
 }
 
-static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2HexColor color )
+static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2HexColor color, bool drawChainNormals )
 {
 	switch ( shape->type )
 	{
@@ -998,7 +998,15 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2He
 			b2Vec2 p2 = b2TransformPoint( xf, segment->point2 );
 			draw->DrawLineFcn( p1, p2, color, draw->context );
 			draw->DrawPointFcn( p2, 4.0f, color, draw->context );
-			draw->DrawLineFcn( p1, b2Lerp( p1, p2, 0.1f ), b2_colorPaleGreen, draw->context );
+
+			if (drawChainNormals)
+			{
+				b2Vec2 c = b2Lerp( p1, p2, 0.5f );
+				b2Vec2 e = b2Normalize( b2Sub( p2, p1 ) );
+				b2Vec2 n = b2RightPerp( e );
+				float L = 0.2f * b2GetLengthUnitsPerMeter();
+				draw->DrawLineFcn( c, b2MulAdd( c, L, n ), b2_colorPaleGreen, draw->context );
+			}
 		}
 		break;
 
@@ -1085,7 +1093,7 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 			color = b2_colorGray;
 		}
 
-		b2DrawShape( draw, shape, bodySim->transform, color );
+		b2DrawShape( draw, shape, bodySim->transform, color, draw->drawChainNormals );
 	}
 
 	if ( draw->drawBounds )
@@ -1955,8 +1963,12 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	fprintf( file, "static tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_staticBody ) );
 	fprintf( file, "kinematic tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_kinematicBody ) );
 	fprintf( file, "dynamic tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_dynamicBody ) );
-	b2HashSet* moveSet = &world->broadPhase.moveSet;
-	fprintf( file, "moveSet: %d (%u, %u)\n", b2GetHashSetBytes( moveSet ), moveSet->count, moveSet->capacity );
+	int movedBytes = 0;
+	for ( int i = 0; i < b2_bodyTypeCount; ++i )
+	{
+		movedBytes += b2GetBitSetBytes( &world->broadPhase.movedProxies[i] );
+	}
+	fprintf( file, "movedProxies: %d\n", movedBytes );
 	fprintf( file, "moveArray: %d\n", b2Array_ByteCount( world->broadPhase.moveArray ) );
 	b2HashSet* pairSet = &world->broadPhase.pairSet;
 	fprintf( file, "pairSet: %d (%u, %u)\n", b2GetHashSetBytes( pairSet ), pairSet->count, pairSet->capacity );

@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "bitset.h"
 #include "container.h"
 #include "table.h"
 
@@ -27,12 +28,9 @@ typedef struct b2BroadPhase
 {
 	b2DynamicTree trees[b2_bodyTypeCount];
 
-	// The move set and array are used to track shapes that have moved significantly
-	// and need a pair query for new contacts. The array has a deterministic order.
-	// todo perhaps just a move set?
-	// todo implement a 32bit hash set for faster lookup
-	// todo moveSet can grow quite large on the first time step and remain large
-	b2HashSet moveSet;
+	// Per body-type bit sets indexed by proxyId, marking proxies moved this step.
+	// Paired with moveArray which preserves deterministic insertion order for pair queries.
+	b2BitSet movedProxies[b2_bodyTypeCount];
 	b2Array( int ) moveArray;
 
 	// These are the results from the pair query and are used to create new contacts
@@ -70,10 +68,12 @@ void b2ValidateNoEnlarged( const b2BroadPhase* bp );
 // Warning: this must be called in deterministic order
 static inline void b2BufferMove( b2BroadPhase* bp, int queryProxy )
 {
-	// Adding 1 because 0 is the sentinel
-	bool alreadyAdded = b2AddKey( &bp->moveSet, queryProxy + 1 );
-	if ( alreadyAdded == false )
+	b2BodyType proxyType = B2_PROXY_TYPE( queryProxy );
+	int proxyId = B2_PROXY_ID( queryProxy );
+	b2BitSet* set = &bp->movedProxies[proxyType];
+	if ( b2GetBit( set, proxyId ) == false )
 	{
+		b2SetBitGrow( set, proxyId );
 		b2Array_Push( bp->moveArray, queryProxy );
 	}
 }

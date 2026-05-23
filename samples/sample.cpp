@@ -1172,6 +1172,7 @@ void UpdateSampleUI( SampleContext* context )
 				ImGui::Separator();
 
 				ImGui::Checkbox( "Shapes", &context->debugDraw.drawShapes );
+				ImGui::Checkbox( "Chain Normals", &context->debugDraw.drawChainNormals );
 				ImGui::Checkbox( "Joints", &context->debugDraw.drawJoints );
 				ImGui::Checkbox( "Joint Extras", &context->debugDraw.drawJointExtras );
 				ImGui::Checkbox( "Bounds", &context->debugDraw.drawBounds );

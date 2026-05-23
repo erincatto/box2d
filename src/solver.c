@@ -1950,7 +1950,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				B2_ASSERT( B2_PROXY_TYPE( proxyKey ) == b2_dynamicBody );
 
 				// all fast bullet shapes should already be in the move buffer
-				B2_ASSERT( b2ContainsKey( &broadPhase->moveSet, proxyKey + 1 ) );
+				B2_ASSERT( b2GetBit( &broadPhase->movedProxies[b2_dynamicBody], proxyId ) );
 
 				b2DynamicTree_EnlargeProxy( dynamicTree, proxyId, shape->fatAABB );
 
