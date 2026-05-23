@@ -74,7 +74,7 @@ jobs:
     - uses: actions/checkout@v6
 
     - name: Setup MSVC dev command prompt
-      uses: TheMrMilchmann/setup-msvc-dev@v3
+      uses: TheMrMilchmann/setup-msvc-dev@v4
       with:
         arch: x64
 
@@ -168,7 +168,7 @@ jobs:
     - uses: actions/checkout@v6
 
     - name: Setup MSVC dev command prompt
-      uses: TheMrMilchmann/setup-msvc-dev@v3
+      uses: TheMrMilchmann/setup-msvc-dev@v4
       with:
         arch: x64
 
