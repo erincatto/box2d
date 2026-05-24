@@ -283,8 +283,13 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contact->islandIndex = B2_NULL_INDEX;
 	contact->shapeIdA = shapeIdA;
 	contact->shapeIdB = shapeIdB;
-	//contact->isMarked = false;
 	contact->flags = 0;
+
+	// Both bodies must enable recycling
+	if ( ( bodyA->flags & b2_bodyEnableContactRecycling ) != 0 && ( bodyB->flags & b2_bodyEnableContactRecycling ) != 0 )
+	{
+		contact->flags |= b2_contactRecycleFlag;
+	}
 
 	B2_ASSERT( shapeA->sensorIndex == B2_NULL_INDEX && shapeB->sensorIndex == B2_NULL_INDEX );
 
@@ -359,7 +364,7 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 														  shapeB->material.restitution, shapeB->material.userMaterialId );
 
 	contactSim->tangentSpeed = 0.0f;
-	contactSim->simFlags = 0;
+	contactSim->simFlags = contact->flags;
 
 	if ( shapeA->enablePreSolveEvents || shapeB->enablePreSolveEvents )
 	{

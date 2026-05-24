@@ -35,6 +35,7 @@ b2BodyDef b2DefaultBodyDef( void )
 	def.sleepThreshold = 0.05f * b2GetLengthUnitsPerMeter();
 	def.gravityScale = 1.0f;
 	def.enableSleep = true;
+	def.enableContactRecycling = true;
 	def.isAwake = true;
 	def.isEnabled = true;
 	def.internalValue = B2_SECRET_COOKIE;

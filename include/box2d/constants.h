@@ -34,6 +34,11 @@
 #define B2_MAX_WORLDS 128
 #endif
 
+/// Maximum length of the body name. Can be 0 if you don't need names.
+#ifndef B2_NAME_LENGTH
+#define B2_NAME_LENGTH 10
+#endif
+
 /// The maximum rotation of a body per time step. This limit is very large and is used
 /// to prevent numerical problems. You shouldn't need to adjust this.
 /// @warning increasing this to 0.5f * b2_pi or greater will break continuous collision.
@@ -46,6 +51,9 @@
 
 /// The default contact recycling distance.
 #define B2_CONTACT_RECYCLE_DISTANCE ( 10.0f * B2_LINEAR_SLOP )
+
+/// The default contact recycling world angle threshold. 0.98 ~= 11.5 degrees
+#define B2_CONTACT_RECYCLE_COS_ANGLE ( 0.98f  )
 
 /// This is used to fatten AABBs in the dynamic tree. This allows proxies
 /// to move by a small amount without triggering a tree adjustment. This is in meters.

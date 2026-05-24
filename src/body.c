@@ -19,6 +19,8 @@
 
 #include <string.h>
 
+_Static_assert( B2_NAME_LENGTH >= 0, "minimum name length" );
+
 static void b2LimitVelocity( b2BodyState* state, float maxLinearSpeed )
 {
 	float v2 = b2LengthSquared( state->linearVelocity );
@@ -84,6 +86,21 @@ b2BodyState* b2GetBodyState( b2World* world, b2Body* body )
 	}
 
 	return NULL;
+}
+
+void b2SyncBodyFlags( b2World* world, b2Body* body )
+{
+	// Never sync transient flags
+	uint32_t flags = body->flags & ~b2_bodyTransientFlags;
+
+	b2BodySim* bodySim = b2GetBodySim( world, body );
+	bodySim->flags = flags;
+
+	b2BodyState* bodyState = b2GetBodyState( world, body );
+	if ( bodyState != NULL )
+	{
+		bodyState->flags = flags;
+	}
 }
 
 static void b2CreateIslandForBody( b2World* world, int setIndex, b2Body* body )
@@ -234,6 +251,8 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	bodySim->flags |= def->isBullet ? b2_isBullet : 0;
 	bodySim->flags |= def->allowFastRotation ? b2_allowFastRotation : 0;
 	bodySim->flags |= def->type == b2_dynamicBody ? b2_dynamicFlag : 0;
+	bodySim->flags |= def->enableSleep ? b2_enableSleep : 0;
+	bodySim->flags |= def->enableContactRecycling ? b2_bodyEnableContactRecycling : 0;
 
 	if ( setId == b2_awakeSet )
 	{
@@ -260,22 +279,16 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 
 	if ( def->name )
 	{
-		int i = 0;
-		while ( i < B2_NAME_LENGTH - 1 && def->name[i] != 0 )
-		{
-			body->name[i] = def->name[i];
-			i += 1;
-		}
-
-		while ( i < B2_NAME_LENGTH )
-		{
-			body->name[i] = 0;
-			i += 1;
-		}
+#if defined( _MSC_VER )
+		strncpy_s( body->name, B2_NAME_LENGTH + 1, def->name, B2_NAME_LENGTH );
+#else
+		strncpy( body->name, def->name, B2_NAME_LENGTH );
+		body->name[B2_NAME_LENGTH] = 0;
+#endif
 	}
 	else
 	{
-		memset( body->name, 0, B2_NAME_LENGTH * sizeof( char ) );
+		memset( body->name, 0, sizeof( body->name ) );
 	}
 
 	body->userData = def->userData;
@@ -299,7 +312,6 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	body->sleepTime = 0.0f;
 	body->type = def->type;
 	body->flags = bodySim->flags;
-	body->enableSleep = def->enableSleep;
 
 	// dynamic and kinematic bodies that are enabled need a island
 	if ( setId >= b2_awakeSet )
@@ -1126,6 +1138,8 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 			body->flags &= ~b2_dynamicFlag;
 		}
 
+		b2SyncBodyFlags( world, body );
+
 		// Body type affects the mass properties
 		b2UpdateBodyMassData( world, body );
 		return;
@@ -1275,15 +1289,10 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 		b2LinkJoint( world, joint );
 	}
 
+	b2SyncBodyFlags( world, body );
+
 	// Body type affects the mass
 	b2UpdateBodyMassData( world, body );
-
-	b2BodyState* state = b2GetBodyState( world, body );
-	if ( state != NULL )
-	{
-		// Ensure flags are in sync (b2_skipSolverWrite)
-		state->flags = body->flags;
-	}
 
 	b2ValidateSolverSets( world );
 	b2ValidateIsland( world, body->islandId );
@@ -1296,22 +1305,16 @@ void b2Body_SetName( b2BodyId bodyId, const char* name )
 
 	if ( name )
 	{
-		int i = 0;
-		while ( i < B2_NAME_LENGTH - 1 && name[i] != 0 )
-		{
-			body->name[i] = name[i];
-			i += 1;
-		}
-
-		while ( i < B2_NAME_LENGTH )
-		{
-			body->name[i] = 0;
-			i += 1;
-		}
+#if defined( _MSC_VER )
+		strncpy_s( body->name, B2_NAME_LENGTH + 1, name, B2_NAME_LENGTH );
+#else
+		strncpy( body->name, name, B2_NAME_LENGTH );
+		body->name[B2_NAME_LENGTH] = 0;
+#endif
 	}
 	else
 	{
-		memset( body->name, 0, B2_NAME_LENGTH * sizeof( char ) );
+		memset( body->name, 0, sizeof( body->name ) );
 	}
 }
 
@@ -1560,7 +1563,7 @@ bool b2Body_IsSleepEnabled( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
-	return body->enableSleep;
+	return ( body->flags & b2_enableSleep ) == b2_enableSleep;
 }
 
 void b2Body_SetSleepThreshold( b2BodyId bodyId, float sleepThreshold )
@@ -1586,7 +1589,15 @@ void b2Body_EnableSleep( b2BodyId bodyId, bool enableSleep )
 	}
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
-	body->enableSleep = enableSleep;
+
+	bool flag = ( body->flags & b2_enableSleep ) == b2_enableSleep;
+	if ( enableSleep == flag )
+	{
+		return;
+	}
+
+	body->flags = enableSleep ? body->flags | b2_enableSleep : body->flags & ~b2_enableSleep;
+	b2SyncBodyFlags( world, body );
 
 	if ( enableSleep == false )
 	{
@@ -1775,16 +1786,12 @@ void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks )
 		body->flags &= ~b2_allLocks;
 		body->flags |= newFlags;
 
-		b2BodySim* bodySim = b2GetBodySim( world, body );
-		bodySim->flags &= ~b2_allLocks;
-		bodySim->flags |= newFlags;
+		b2SyncBodyFlags( world, body );
 
 		b2BodyState* state = b2GetBodyState( world, body );
 
 		if ( state != NULL )
 		{
-			state->flags = bodySim->flags;
-
 			if ( locks.linearX )
 			{
 				state->linearVelocity.x = 0.0f;
@@ -1823,17 +1830,18 @@ void b2Body_SetBullet( b2BodyId bodyId, bool flag )
 		return;
 	}
 
-	b2Body* body = b2GetBodyFullId( world, bodyId );
-	b2BodySim* bodySim = b2GetBodySim( world, body );
+	uint32_t newFlag = flag ? b2_isBullet : 0;
 
-	if ( flag )
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	if ((body->flags & b2_isBullet) == newFlag)
 	{
-		bodySim->flags |= b2_isBullet;
+		return;
 	}
-	else
-	{
-		bodySim->flags &= ~b2_isBullet;
-	}
+
+	body->flags &= ~b2_isBullet;
+	body->flags |= newFlag;
+
+	b2SyncBodyFlags( world, body );
 }
 
 bool b2Body_IsBullet( b2BodyId bodyId )
@@ -1842,6 +1850,35 @@ bool b2Body_IsBullet( b2BodyId bodyId )
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	b2BodySim* bodySim = b2GetBodySim( world, body );
 	return ( bodySim->flags & b2_isBullet ) != 0;
+}
+
+void b2Body_EnableContactRecycling( b2BodyId bodyId, bool flag )
+{
+	b2World* world = b2GetWorldLocked( bodyId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
+
+	uint32_t newFlag = flag ? b2_bodyEnableContactRecycling : 0;
+
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	if ( ( body->flags & b2_bodyEnableContactRecycling ) == newFlag )
+	{
+		return;
+	}
+
+	body->flags &= ~b2_bodyEnableContactRecycling;
+	body->flags |= newFlag;
+
+	b2SyncBodyFlags( world, body );
+}
+
+bool b2Body_IsContactRecyclingEnabled( b2BodyId bodyId )
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	return ( body->flags & b2_bodyEnableContactRecycling ) != 0;
 }
 
 void b2Body_EnableContactEvents( b2BodyId bodyId, bool flag )

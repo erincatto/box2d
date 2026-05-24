@@ -232,9 +232,10 @@ static b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const vo
 	{
 		b2UpdateBodyMassData( world, body );
 	}
-	else
+	else if ( ( body->flags & b2_dirtyMass ) == 0 )
 	{
 		body->flags |= b2_dirtyMass;
+		b2SyncBodyFlags( world, body );
 	}
 
 	b2ValidateSolverSets( world );
@@ -275,6 +276,22 @@ b2ShapeId b2CreateSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, const b2
 	}
 
 	return b2CreateShape( bodyId, def, segment, b2_segmentShape );
+}
+
+b2ShapeId b2CreateChainSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, const b2ChainSegment* chainSegment )
+{
+	float lengthSqr = b2DistanceSquared( chainSegment->segment.point1, chainSegment->segment.point2 );
+	if ( lengthSqr <= B2_LINEAR_SLOP * B2_LINEAR_SLOP )
+	{
+		B2_ASSERT( false );
+		return b2_nullShapeId;
+	}
+
+	// No parent chain shape
+	b2ChainSegment local = *chainSegment;
+	local.chainId = B2_NULL_INDEX;
+
+	return b2CreateShape( bodyId, def, &local, b2_chainSegmentShape );
 }
 
 // Destroy a shape on a body. This doesn't need to be called when destroying a body.
@@ -376,6 +393,13 @@ void b2DestroyShape( b2ShapeId shapeId, bool updateBodyMass )
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
+
+	// Cannot destroy a chain segment that has a parent chain shape
+	if ( shape->type == b2_chainSegmentShape && shape->chainSegment.chainId != B2_NULL_INDEX )
+	{
+		B2_ASSERT( false );
+		return;
+	}
 
 	// need to wake bodies because this might be a static body
 	bool wakeBodies = true;
@@ -1526,6 +1550,39 @@ void b2Shape_SetPolygon( b2ShapeId shapeId, const b2Polygon* polygon )
 	shape->aabbMargin = b2ComputeShapeMargin( shape );
 
 	// need to wake bodies so they can react to the shape change
+	bool wakeBodies = true;
+	bool destroyProxy = true;
+	b2ResetProxy( world, shape, wakeBodies, destroyProxy );
+}
+
+void b2Shape_SetChainSegment( b2ShapeId shapeId, const b2ChainSegment* chainSegment )
+{
+	b2World* world = b2GetWorldLocked( shapeId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
+
+	b2Shape* shape = b2GetShape( world, shapeId );
+
+	// Cannot modify a chain segment that has a parent chain shape
+	if ( shape->type == b2_chainSegmentShape && shape->chainSegment.chainId != B2_NULL_INDEX )
+	{
+		B2_ASSERT( false );
+		return;
+	}
+
+	float lengthSqr = b2DistanceSquared( chainSegment->segment.point1, chainSegment->segment.point2 );
+	if ( lengthSqr <= B2_LINEAR_SLOP * B2_LINEAR_SLOP )
+	{
+		return;
+	}
+
+	shape->chainSegment = *chainSegment;
+	shape->chainSegment.chainId = B2_NULL_INDEX;
+	shape->type = b2_chainSegmentShape;
+	shape->aabbMargin = b2ComputeShapeMargin( shape );
+
 	bool wakeBodies = true;
 	bool destroyProxy = true;
 	b2ResetProxy( world, shape, wakeBodies, destroyProxy );

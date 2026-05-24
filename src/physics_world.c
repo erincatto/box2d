@@ -420,6 +420,11 @@ void b2DestroyWorld( b2WorldId worldId )
 	world->generation = generation + 1;
 }
 
+static inline float b2RelativeCos( b2Rot a, b2Rot b )
+{
+	return a.c * b.c + a.s * b.s;
+}
+
 static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* context )
 {
 	b2TracyCZoneNC( collide_task, "Collide", b2_colorDodgerBlue, true );
@@ -478,10 +483,16 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			// Contact recycling optimization. Please cite this code if you use this optimization.
 			// This is inspired by persistent contact manifolds used in some physics engines, such as PhysX.
 			// However, this allows larger relative motion and has fewer tuning parameters (just one).
-			if ( recycleDistance > 0.0f && contactSim->simFlags & b2_simRelativeTransformValid )
+			if ( recycleDistance > 0.0f && ( contactSim->simFlags & b2_simRelativeTransformValid ) &&
+				 ( contactSim->simFlags & b2_contactRecycleFlag ) )
 			{
 				b2Transform xf = b2InvMulTransforms( transformA, transformB );
 				b2Transform xfc = b2InvMulTransforms( contactSim->cachedTransformA, contactSim->cachedTransformB );
+
+				float cosA = b2RelativeCos( transformA.q, contactSim->cachedTransformA.q );
+				float cosB = b2RelativeCos( transformB.q, contactSim->cachedTransformB.q );
+				float minCos = b2MinFloat( cosA, cosB );
+
 				float maxExtentA = bodyA->type == b2_staticBody ? 0.0f : bodySimA->maxExtent;
 				float maxExtentB = bodyB->type == b2_staticBody ? 0.0f : bodySimB->maxExtent;
 				float maxExtent = b2MaxFloat( maxExtentA, maxExtentB );
@@ -492,7 +503,8 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 				// Note that qr.s == sin(theta) ~= theta for small angles.
 				// Need a tighter tolerance for non-touching shapes so that contacts are not missed.
 				float tolerance = wasTouching ? recycleDistance : recycleDistanceNonTouching;
-				if ( distance + maxExtent * b2AbsFloat( qr.s ) < tolerance )
+
+				if ( minCos > B2_CONTACT_RECYCLE_COS_ANGLE && distance + maxExtent * b2AbsFloat( qr.s ) < tolerance )
 				{
 					b2Rot dqA = b2MulRot( transformA.q, b2InvertRot( contactSim->cachedTransformA.q ) );
 					b2Rot dqB = b2MulRot( transformB.q, b2InvertRot( contactSim->cachedTransformB.q ) );
@@ -942,7 +954,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	b2TracyCFrame;
 }
 
-static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2HexColor color )
+static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2HexColor color, bool drawChainNormals )
 {
 	switch ( shape->type )
 	{
@@ -986,7 +998,15 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2He
 			b2Vec2 p2 = b2TransformPoint( xf, segment->point2 );
 			draw->DrawLineFcn( p1, p2, color, draw->context );
 			draw->DrawPointFcn( p2, 4.0f, color, draw->context );
-			draw->DrawLineFcn( p1, b2Lerp( p1, p2, 0.1f ), b2_colorPaleGreen, draw->context );
+
+			if (drawChainNormals)
+			{
+				b2Vec2 c = b2Lerp( p1, p2, 0.5f );
+				b2Vec2 e = b2Normalize( b2Sub( p2, p1 ) );
+				b2Vec2 n = b2RightPerp( e );
+				float L = 0.2f * b2GetLengthUnitsPerMeter();
+				draw->DrawLineFcn( c, b2MulAdd( c, L, n ), b2_colorPaleGreen, draw->context );
+			}
 		}
 		break;
 
@@ -1073,7 +1093,7 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 			color = b2_colorGray;
 		}
 
-		b2DrawShape( draw, shape, bodySim->transform, color );
+		b2DrawShape( draw, shape, bodySim->transform, color, draw->drawChainNormals );
 	}
 
 	if ( draw->drawBounds )
@@ -1943,8 +1963,12 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	fprintf( file, "static tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_staticBody ) );
 	fprintf( file, "kinematic tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_kinematicBody ) );
 	fprintf( file, "dynamic tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_dynamicBody ) );
-	b2HashSet* moveSet = &world->broadPhase.moveSet;
-	fprintf( file, "moveSet: %d (%u, %u)\n", b2GetHashSetBytes( moveSet ), moveSet->count, moveSet->capacity );
+	int movedBytes = 0;
+	for ( int i = 0; i < b2_bodyTypeCount; ++i )
+	{
+		movedBytes += b2GetBitSetBytes( &world->broadPhase.movedProxies[i] );
+	}
+	fprintf( file, "movedProxies: %d\n", movedBytes );
 	fprintf( file, "moveArray: %d\n", b2Array_ByteCount( world->broadPhase.moveArray ) );
 	b2HashSet* pairSet = &world->broadPhase.pairSet;
 	fprintf( file, "pairSet: %d (%u, %u)\n", b2GetHashSetBytes( pairSet ), pairSet->count, pairSet->capacity );
@@ -2880,6 +2904,15 @@ void b2ValidateSolverSets( b2World* world )
 					b2Body* body = bodies + bodyId;
 					B2_ASSERT( body->setIndex == setIndex );
 					B2_ASSERT( body->localIndex == i );
+
+					uint32_t syncedFlags = body->flags & ~b2_bodyTransientFlags;
+					B2_ASSERT( ( bodySim->flags & syncedFlags ) == syncedFlags );
+
+					b2BodyState* bodyState = b2GetBodyState( world, body );
+					if ( bodyState != NULL )
+					{
+						B2_ASSERT( ( bodyState->flags & syncedFlags ) == syncedFlags );
+					}
 
 					if ( body->type == b2_dynamicBody )
 					{

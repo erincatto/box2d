@@ -228,7 +228,7 @@ typedef struct b2BodyDef
 	/// Sleep speed threshold, default is 0.05 meters per second
 	float sleepThreshold;
 
-	/// Optional body name for debugging. Up to 31 characters (excluding null termination)
+	/// Optional body name for debugging. Up to B2_NAME_LENGTH characters
 	const char* name;
 
 	/// Use this to store application specific body data.
@@ -266,6 +266,10 @@ typedef struct b2BodyDef
 	/// This allows this body to bypass rotational speed limits. Should only be used
 	/// for circular objects, like wheels.
 	bool allowFastRotation;
+
+	/// Enable contact recycling. True by default. Leaving this enabled improves performance
+	/// but may lead to ghost collision that should be avoided on characters.
+	bool enableContactRecycling;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
@@ -1404,6 +1408,9 @@ typedef struct b2DebugDraw
 
 	/// Option to draw shapes
 	bool drawShapes;
+
+	/// Option to draw chain shape normals
+	bool drawChainNormals;
 
 	/// Option to draw joints
 	bool drawJoints;

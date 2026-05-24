@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 4
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
@@ -34,7 +34,7 @@ jobs:
     timeout-minutes: 4
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_COMPILER=clang-18 -DCMAKE_C_FLAGS="-fsanitize=thread -fno-omit-frame-pointer" -DCMAKE_CXX_FLAGS="-fsanitize=thread -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
@@ -46,13 +46,33 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: ./bin/test
       
+  build-ubuntu-clang-msan:
+    name: ubuntu-clang-msan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_COMPILER=clang-18 -DCMAKE_C_FLAGS="-fsanitize=memory -fsanitize-memory-track-origins=1 -fno-omit-frame-pointer" -DCMAKE_CXX_FLAGS="-fsanitize=memory -fsanitize-memory-track-origins=1 -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=memory" -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      env:
+        MSAN_OPTIONS: abort_on_error=1:halt_on_error=1
+      run: ./bin/test
+            
   build-macos:
     name: macos
     runs-on: macos-latest
     timeout-minutes: 4
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBOX2D_SANITIZE=ON -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
@@ -71,10 +91,10 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Setup MSVC dev command prompt
-      uses: TheMrMilchmann/setup-msvc-dev@v3
+      uses: TheMrMilchmann/setup-msvc-dev@v4
       with:
         arch: x64
 
@@ -96,7 +116,7 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Configure CMake
       run: cmake -T ClangCL -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
@@ -117,7 +137,7 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Setup MSYS2 UCRT64
       uses: msys2/setup-msys2@v2
@@ -146,7 +166,7 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Configure CMake
       run: cmake -A arm64 -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_DISABLE_SIMD=TRUE -DBOX2D_SAMPLES=OFF -DBOX2D_SANITIZE=ON -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
@@ -165,10 +185,10 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Setup MSVC dev command prompt
-      uses: TheMrMilchmann/setup-msvc-dev@v3
+      uses: TheMrMilchmann/setup-msvc-dev@v4
       with:
         arch: x64
 
@@ -185,7 +205,7 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Setup MSVC dev command prompt
       uses: TheMrMilchmann/setup-msvc-dev@v4
@@ -204,7 +224,7 @@ jobs:
     timeout-minutes: 6
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DBOX2D_SAMPLES=ON -DBUILD_SHARED_LIBS=OFF -DBOX2D_UNIT_TESTS=OFF
@@ -218,7 +238,7 @@ jobs:
     timeout-minutes: 6
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DBOX2D_SAMPLES=ON -DBUILD_SHARED_LIBS=ON -DBOX2D_UNIT_TESTS=OFF
@@ -232,7 +252,7 @@ jobs:
     timeout-minutes: 6
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Install X11, Wayland & GL development libraries
       run: sudo apt-get update && sudo apt-get install -y libx11-dev wayland-protocols libwayland-dev libxkbcommon-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev

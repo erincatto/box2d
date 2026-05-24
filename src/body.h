@@ -5,11 +5,9 @@
 
 #include "container.h"
 
+#include "box2d/constants.h"
 #include "box2d/math_functions.h"
 #include "box2d/types.h"
-
-// Length of body debug name
-#define B2_NAME_LENGTH 32
 
 typedef struct b2World b2World;
 
@@ -52,15 +50,24 @@ enum b2BodyFlags
 	// computation but b2Body_ApplyMassFromShapes was not called before the world step.
 	b2_dirtyMass = 0x00000400,
 
+	b2_enableSleep = 0x00000800,
+
+	b2_bodyEnableContactRecycling = 0x00001000,
+
 	// All lock flags
 	b2_allLocks = b2_lockAngularZ | b2_lockLinearX | b2_lockLinearY,
+
+	// If this flag is set then the body has fixed rotation
+	// todo use this to set the inverse inertia to zero
+	b2_fixedRotation = b2_lockAngularZ,
+
+	// These flags are transient per time step. These may be different across b2Body, b2BodySim, and b2BodyState.
+	b2_bodyTransientFlags = b2_isFast | b2_isSpeedCapped | b2_hadTimeOfImpact,
 };
 
 // Body organizational details that are not used in the solver.
 typedef struct b2Body
 {
-	char name[B2_NAME_LENGTH];
-
 	void* userData;
 
 	// index of solver set stored in b2World
@@ -113,8 +120,7 @@ typedef struct b2Body
 	// Used to check for invalid b2BodyId
 	uint16_t generation;
 
-	// todo move into flags
-	bool enableSleep;
+	char name[B2_NAME_LENGTH + 1];
 } b2Body;
 
 // Body State
@@ -218,12 +224,13 @@ bool b2ShouldBodiesCollide( b2World* world, b2Body* bodyA, b2Body* bodyB );
 
 b2BodySim* b2GetBodySim( b2World* world, b2Body* body );
 b2BodyState* b2GetBodyState( b2World* world, b2Body* body );
-void b2RemoveBodySim( b2Array( b2BodySim )* bodySims, b2Array( b2Body )* bodies, int localIndex );
+void b2RemoveBodySim( b2Array( b2BodySim ) * bodySims, b2Array( b2Body ) * bodies, int localIndex );
 
 // careful calling this because it can invalidate body, state, joint, and contact pointers
 bool b2WakeBody( b2World* world, b2Body* body );
 
 void b2UpdateBodyMassData( b2World* world, b2Body* body );
+void b2SyncBodyFlags( b2World* world, b2Body* body );
 
 static inline b2Sweep b2MakeSweep( const b2BodySim* bodySim )
 {

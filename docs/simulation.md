@@ -912,10 +912,29 @@ shape id for a chain segment shape, you can get the owning chain id. This will r
 if the shape is not a chain segment.
 
 ```c
-b2ChainId chainId = b2SHape_GetParentChain(myShapeId);
+b2ChainId chainId = b2Shape_GetParentChain(myShapeId);
 ```
 
-You cannot create a chain segment shape directly.
+You can create an orphaned chain segment directly via `b2CreateChainSegmentShape`. This is useful for streaming or destructible terrain, per-segment lifetime control, or any case where you already manage your own continuity data. The caller is responsible for supplying correct ghost vertices that maintain smooth contact normals across adjacent segments. You can also update an orphaned segment (or convert any shape to one) using `b2Shape_SetChainSegment`. However, this function cannot mutate a segment that is owned by a `b2ChainShape`.
+
+```c
+// Chain segments are one-sided. The collision normal points to the right of
+// the segment direction (point1 -> point2), so this segment collides with
+// shapes above it.
+b2ChainSegment chainSegment;
+chainSegment.ghost1 = (b2Vec2){  2.0f, 0.0f };
+chainSegment.segment.point1 = (b2Vec2){  1.0f, 0.0f };
+chainSegment.segment.point2 = (b2Vec2){ -1.0f, 0.0f };
+chainSegment.ghost2 = (b2Vec2){ -2.0f, 0.0f };
+chainSegment.chainId = B2_NULL_INDEX;
+
+b2ShapeDef shapeDef = b2DefaultShapeDef();
+b2ShapeId shapeId = b2CreateChainSegmentShape( myBodyId, &shapeDef, &chainSegment );
+
+// Later, update ghost vertices in place.
+chainSegment.ghost1 = (b2Vec2){ 3.0f, 0.5f };
+b2Shape_SetChainSegment( shapeId, &chainSegment );
+```
 
 ### Sensors
 Sometimes game logic needs to know when two shapes overlap yet there

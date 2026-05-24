@@ -225,6 +225,190 @@ public:
 
 static int sampleChainShape = RegisterSample( "Shapes", "Chain Shape", ChainShape::Create );
 
+class ChainSegmentShape : public Sample
+{
+public:
+	enum ShapeType
+	{
+		e_circleShape = 0,
+		e_capsuleShape,
+		e_boxShape
+	};
+
+	explicit ChainSegmentShape( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 25.0f * 1.0f;
+		}
+
+		m_bodyId = b2_nullBodyId;
+		m_shapeType = e_circleShape;
+		m_mutateIndex = 0;
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			// Walk right-to-left so the right-perpendicular normal of (point2 - point1) points up.
+			for ( int i = 0; i < m_pointCount; ++i )
+			{
+				float x = 25.0f - 50.0f * i / ( m_pointCount - 1 );
+				float y = 1.5f * sinf( 0.18f * x );
+				m_points[i] = { x, y };
+			}
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			for ( int i = 0; i < m_segmentCount; ++i )
+			{
+				b2ChainSegment chainSegment;
+				chainSegment.ghost1 = m_points[i];
+				chainSegment.segment.point1 = m_points[i + 1];
+				chainSegment.segment.point2 = m_points[i + 2];
+				chainSegment.ghost2 = m_points[i + 3];
+				chainSegment.chainId = -1;
+				m_segmentShapes[i] = b2CreateChainSegmentShape( groundId, &shapeDef, &chainSegment );
+			}
+		}
+
+		Launch();
+	}
+
+	void Launch()
+	{
+		if ( B2_IS_NON_NULL( m_bodyId ) )
+		{
+			b2DestroyBody( m_bodyId );
+		}
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.position = { -18.0f, 5.0f };
+		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		if ( m_shapeType == e_circleShape )
+		{
+			b2Circle circle = { { 0.0f, 0.0f }, 0.25f };
+			b2CreateCircleShape( m_bodyId, &shapeDef, &circle );
+		}
+		else if ( m_shapeType == e_capsuleShape )
+		{
+			b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0f }, 0.25f };
+			b2CreateCapsuleShape( m_bodyId, &shapeDef, &capsule );
+		}
+		else
+		{
+			b2Polygon box = b2MakeSquare( 0.5f );
+			b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
+		}
+	}
+
+	void Mutate()
+	{
+		// Get an index in [1,pointCount - 2]
+		// index 0 and pointCount-1 are ghost vertices and are not mutated
+		int index = m_mutateIndex + 1;
+		assert( 1 <= index && index <= m_pointCount - 2 );
+
+		m_mutateIndex += 1;
+		if ( m_mutateIndex == m_segmentCount )
+		{
+			m_mutateIndex = 0;
+		}
+
+		m_points[index].y += 0.25f;
+
+		b2ChainSegment cs;
+		cs.ghost1 = m_points[index - 1];
+		cs.segment.point1 = m_points[index];
+		cs.segment.point2 = m_points[index + 1];
+		cs.ghost2 = m_points[index + 2];
+		cs.chainId = -1;
+
+		assert( 0 <= index - 1 && index - 1 < m_segmentCount );
+		b2Shape_SetChainSegment( m_segmentShapes[index - 1], &cs );
+
+		if ( index - 1 > 0 )
+		{
+			assert( 0 <= index - 2 );
+			b2ChainSegment cs2;
+			cs2.ghost1 = m_points[index - 2];
+			cs2.segment.point1 = m_points[index - 1];
+			cs2.segment.point2 = m_points[index];
+			cs2.ghost2 = m_points[index + 1];
+			cs2.chainId = -1;
+			assert( 0 <= index - 2 && index - 2 < m_segmentCount );
+			b2Shape_SetChainSegment( m_segmentShapes[index - 2], &cs2 );
+		}
+
+		if ( index + 1 < m_pointCount - 2 )
+		{
+			assert( index + 3 < m_pointCount );
+			b2ChainSegment cs3;
+			cs3.ghost1 = m_points[index];
+			cs3.segment.point1 = m_points[index + 1];
+			cs3.segment.point2 = m_points[index + 2];
+			cs3.ghost2 = m_points[index + 3];
+			cs3.chainId = -1;
+			assert( 0 <= index && index < m_segmentCount );
+			b2Shape_SetChainSegment( m_segmentShapes[index], &cs3 );
+		}
+	}
+
+	void UpdateGui() override
+	{
+		float fontSize = ImGui::GetFontSize();
+		float height = 130.0f;
+		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
+
+		ImGui::Begin( "Chain Segment Shape", nullptr, ImGuiWindowFlags_NoResize );
+
+		const char* shapeTypes[] = { "Circle", "Capsule", "Box" };
+		int shapeType = int( m_shapeType );
+		if ( ImGui::Combo( "Shape", &shapeType, shapeTypes, IM_ARRAYSIZE( shapeTypes ) ) )
+		{
+			m_shapeType = ShapeType( shapeType );
+			Launch();
+		}
+
+		if ( ImGui::Button( "Launch" ) )
+		{
+			Launch();
+		}
+
+		if ( ImGui::Button( "Mutate" ) )
+		{
+			Mutate();
+		}
+
+		ImGui::End();
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new ChainSegmentShape( context );
+	}
+
+	static constexpr int m_segmentCount = 32;
+	static constexpr int m_pointCount = m_segmentCount + 3;
+	b2BodyId m_bodyId;
+	ShapeType m_shapeType;
+	b2ShapeId m_segmentShapes[m_segmentCount];
+	b2Vec2 m_points[m_pointCount];
+	int m_mutateIndex;
+};
+
+static int sampleChainSegmentShape = RegisterSample( "Shapes", "Chain Segment", ChainSegmentShape::Create );
+
 // This sample shows how careful creation of compound shapes leads to better simulation and avoids
 // objects getting stuck.
 // This also shows how to get the combined AABB for the body.

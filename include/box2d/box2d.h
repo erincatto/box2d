@@ -426,7 +426,7 @@ B2_API void b2Body_SetAwake( b2BodyId bodyId, bool awake );
 /// Wake bodies touching this body. Works for static bodies.
 B2_API void b2Body_WakeTouching( b2BodyId bodyId );
 
-/// Enable or disable sleeping for this body. If sleeping is disabled the body will wake.
+/// Enable or disable sleeping for this body. If sleeping is disabled the body will wake (and the entire island).
 B2_API void b2Body_EnableSleep( b2BodyId bodyId, bool enableSleep );
 
 /// Returns true if sleeping is enabled for this body
@@ -459,6 +459,16 @@ B2_API void b2Body_SetBullet( b2BodyId bodyId, bool flag );
 
 /// Is this body a bullet?
 B2_API bool b2Body_IsBullet( b2BodyId bodyId );
+
+/// Enable or disable contact recycling for this body. Contact recycling is a performance optimization
+/// that reuses contact manifolds when bodies move slightly. Disabling it can avoid ghost collisions
+/// on characters at the cost of higher per-step work. Existing contacts retain their prior setting;
+/// only contacts created after this call see the new value.
+/// @see b2BodyDef::enableContactRecycling
+B2_API void b2Body_EnableContactRecycling( b2BodyId bodyId, bool flag );
+
+/// Is contact recycling enabled on this body?
+B2_API bool b2Body_IsContactRecyclingEnabled( b2BodyId bodyId );
 
 /// Enable/disable contact events on all shapes.
 /// @see b2ShapeDef::enableContactEvents
@@ -515,8 +525,15 @@ B2_API b2ShapeId b2CreateCircleShape( b2BodyId bodyId, const b2ShapeDef* def, co
 
 /// Create a line segment shape and attach it to a body. The shape definition and geometry are fully cloned.
 /// Contacts are not created until the next time step.
-/// @return the shape id for accessing the shape
+/// @return the shape id or b2_nullShapeId if the segment is too short.
 B2_API b2ShapeId b2CreateSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Segment* segment );
+
+/// Create an orphaned chain segment shape and attach it to a body. The shape definition and
+/// geometry are fully cloned. The caller is responsible for the segment's ghost vertices and
+/// lifetime. The segment is not owned by any b2ChainShape (b2Shape_GetParentChain returns
+/// b2_nullChainId). Contacts are not created until the next time step.
+/// @return the shape id, or b2_nullShapeId if the segment is too short.
+B2_API b2ShapeId b2CreateChainSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, const b2ChainSegment* chainSegment );
 
 /// Create a capsule shape and attach it to a body. The shape definition and geometry are fully cloned.
 /// Contacts are not created until the next time step.
@@ -667,6 +684,12 @@ B2_API void b2Shape_SetSegment( b2ShapeId shapeId, const b2Segment* segment );
 /// This does not modify the mass properties.
 /// @see b2Body_ApplyMassFromShapes
 B2_API void b2Shape_SetPolygon( b2ShapeId shapeId, const b2Polygon* polygon );
+
+/// Allows you to change a shape to be an orphaned chain segment or update the current chain
+/// segment, including its ghost vertices. The chainId on the input is ignored. The resulting
+/// shape is always orphaned. Asserts if the shape is already a chain segment
+/// owned by a b2ChainShape (chainId != B2_NULL_INDEX).
+B2_API void b2Shape_SetChainSegment( b2ShapeId shapeId, const b2ChainSegment* chainSegment );
 
 /// Get the parent chain id if the shape type is a chain segment, otherwise
 /// returns b2_nullChainId.
