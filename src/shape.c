@@ -394,9 +394,10 @@ void b2DestroyShape( b2ShapeId shapeId, bool updateBodyMass )
 
 	b2Shape* shape = b2GetShape( world, shapeId );
 
-	if (shape->type == b2_chainSegmentShape && shape->chainSegment.chainId != B2_NULL_INDEX)
+	// Cannot destroy a chain segment that has a parent chain shape
+	if ( shape->type == b2_chainSegmentShape && shape->chainSegment.chainId != B2_NULL_INDEX )
 	{
-		b2Log( "Cannot destroy a chain segment that is part of a chain shape" );
+		B2_ASSERT( false );
 		return;
 	}
 

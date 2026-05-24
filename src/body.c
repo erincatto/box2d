@@ -282,7 +282,8 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 #if defined( _MSC_VER )
 		strncpy_s( body->name, B2_NAME_LENGTH + 1, def->name, B2_NAME_LENGTH );
 #else
-		strncpy( body->name, def->name, B2_NAME_LENGTH + 1 );
+		strncpy( body->name, def->name, B2_NAME_LENGTH );
+		body->name[B2_NAME_LENGTH] = 0;
 #endif
 	}
 	else
@@ -1307,7 +1308,8 @@ void b2Body_SetName( b2BodyId bodyId, const char* name )
 #if defined( _MSC_VER )
 		strncpy_s( body->name, B2_NAME_LENGTH + 1, name, B2_NAME_LENGTH );
 #else
-		strncpy( body->name, name, B2_NAME_LENGTH + 1 );
+		strncpy( body->name, name, B2_NAME_LENGTH );
+		body->name[B2_NAME_LENGTH] = 0;
 #endif
 	}
 	else
@@ -1848,6 +1850,35 @@ bool b2Body_IsBullet( b2BodyId bodyId )
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	b2BodySim* bodySim = b2GetBodySim( world, body );
 	return ( bodySim->flags & b2_isBullet ) != 0;
+}
+
+void b2Body_EnableContactRecycling( b2BodyId bodyId, bool flag )
+{
+	b2World* world = b2GetWorldLocked( bodyId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
+
+	uint32_t newFlag = flag ? b2_bodyEnableContactRecycling : 0;
+
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	if ( ( body->flags & b2_bodyEnableContactRecycling ) == newFlag )
+	{
+		return;
+	}
+
+	body->flags &= ~b2_bodyEnableContactRecycling;
+	body->flags |= newFlag;
+
+	b2SyncBodyFlags( world, body );
+}
+
+bool b2Body_IsContactRecyclingEnabled( b2BodyId bodyId )
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	return ( body->flags & b2_bodyEnableContactRecycling ) != 0;
 }
 
 void b2Body_EnableContactEvents( b2BodyId bodyId, bool flag )

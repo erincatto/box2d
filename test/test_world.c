@@ -578,6 +578,36 @@ static int EnableSleepFlagSyncTest( void )
 	return 0;
 }
 
+static int EnableContactRecyclingTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+
+	// Default is enabled
+	b2BodyId bodyA = b2CreateBody( worldId, &bodyDef );
+	ENSURE( b2Body_IsContactRecyclingEnabled( bodyA ) == true );
+
+	b2Body_EnableContactRecycling( bodyA, false );
+	ENSURE( b2Body_IsContactRecyclingEnabled( bodyA ) == false );
+
+	b2Body_EnableContactRecycling( bodyA, true );
+	ENSURE( b2Body_IsContactRecyclingEnabled( bodyA ) == true );
+
+	// Per-def opt-out at creation
+	bodyDef.enableContactRecycling = false;
+	b2BodyId bodyB = b2CreateBody( worldId, &bodyDef );
+	ENSURE( b2Body_IsContactRecyclingEnabled( bodyB ) == false );
+
+	// Stepping after toggling must not trip the flag-sync validator
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
 static int SetBulletDriftTest( void )
 {
 	b2WorldDef worldDef = b2DefaultWorldDef();
@@ -678,6 +708,7 @@ int WorldTest( void )
 	RUN_SUBTEST( DestroyOwnedChainSegmentTest );
 	RUN_SUBTEST( DeferredMassFlagSyncTest );
 	RUN_SUBTEST( EnableSleepFlagSyncTest );
+	RUN_SUBTEST( EnableContactRecyclingTest );
 
 	return 0;
 }

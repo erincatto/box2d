@@ -460,6 +460,16 @@ B2_API void b2Body_SetBullet( b2BodyId bodyId, bool flag );
 /// Is this body a bullet?
 B2_API bool b2Body_IsBullet( b2BodyId bodyId );
 
+/// Enable or disable contact recycling for this body. Contact recycling is a performance optimization
+/// that reuses contact manifolds when bodies move slightly. Disabling it can avoid ghost collisions
+/// on characters at the cost of higher per-step work. Existing contacts retain their prior setting;
+/// only contacts created after this call see the new value.
+/// @see b2BodyDef::enableContactRecycling
+B2_API void b2Body_EnableContactRecycling( b2BodyId bodyId, bool flag );
+
+/// Is contact recycling enabled on this body?
+B2_API bool b2Body_IsContactRecyclingEnabled( b2BodyId bodyId );
+
 /// Enable/disable contact events on all shapes.
 /// @see b2ShapeDef::enableContactEvents
 /// @warning changing this at runtime may cause mismatched begin/end touch events

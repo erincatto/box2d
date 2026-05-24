@@ -413,6 +413,8 @@ void b2UpdateBroadPhasePairs( b2World* world )
 {
 	b2BroadPhase* bp = &world->broadPhase;
 
+	b2ValidateMovedProxies( bp );
+
 	int moveCount = bp->moveArray.count;
 
 	if ( moveCount == 0 )
@@ -562,6 +564,30 @@ void b2ValidateNoEnlarged( const b2BroadPhase* bp )
 		const b2DynamicTree* tree = bp->trees + j;
 		b2DynamicTree_ValidateNoEnlarged( tree );
 	}
+#else
+	B2_UNUSED( bp );
+#endif
+}
+
+void b2ValidateMovedProxies( const b2BroadPhase* bp )
+{
+#if B2_ENABLE_VALIDATION == 1
+	// Invariant: bit set in movedProxies[type] iff proxyKey is present in moveArray.
+	int moveCount = bp->moveArray.count;
+	for ( int i = 0; i < moveCount; ++i )
+	{
+		int proxyKey = bp->moveArray.data[i];
+		b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
+		int proxyId = B2_PROXY_ID( proxyKey );
+		B2_ASSERT( b2GetBit( &bp->movedProxies[proxyType], proxyId ) );
+	}
+
+	int totalSetBits = 0;
+	for ( int i = 0; i < b2_bodyTypeCount; ++i )
+	{
+		totalSetBits += b2CountSetBits( (b2BitSet*)&bp->movedProxies[i] );
+	}
+	B2_ASSERT( totalSetBits == moveCount );
 #else
 	B2_UNUSED( bp );
 #endif

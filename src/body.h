@@ -58,6 +58,7 @@ enum b2BodyFlags
 	b2_allLocks = b2_lockAngularZ | b2_lockLinearX | b2_lockLinearY,
 
 	// If this flag is set then the body has fixed rotation
+	// todo use this to set the inverse inertia to zero
 	b2_fixedRotation = b2_lockAngularZ,
 
 	// These flags are transient per time step. These may be different across b2Body, b2BodySim, and b2BodyState.

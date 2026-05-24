@@ -63,6 +63,7 @@ bool b2BroadPhase_TestOverlap( const b2BroadPhase* bp, int proxyKeyA, int proxyK
 
 void b2ValidateBroadphase( const b2BroadPhase* bp );
 void b2ValidateNoEnlarged( const b2BroadPhase* bp );
+void b2ValidateMovedProxies( const b2BroadPhase* bp );
 
 // This is what triggers new contact pairs to be created
 // Warning: this must be called in deterministic order
