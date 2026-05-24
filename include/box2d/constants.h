@@ -34,7 +34,7 @@
 #define B2_MAX_WORLDS 128
 #endif
 
-/// Maximum length of the body name. Must be at least 1. Includes null termination.
+/// Maximum length of the body name. Can be 0 if you don't need names.
 #ifndef B2_NAME_LENGTH
 #define B2_NAME_LENGTH 10
 #endif

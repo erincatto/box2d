@@ -232,9 +232,10 @@ static b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const vo
 	{
 		b2UpdateBodyMassData( world, body );
 	}
-	else
+	else if ( ( body->flags & b2_dirtyMass ) == 0 )
 	{
 		body->flags |= b2_dirtyMass;
+		b2SyncBodyFlags( world, body );
 	}
 
 	b2ValidateSolverSets( world );
@@ -392,6 +393,12 @@ void b2DestroyShape( b2ShapeId shapeId, bool updateBodyMass )
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
+
+	if (shape->type == b2_chainSegmentShape && shape->chainSegment.chainId != B2_NULL_INDEX)
+	{
+		b2Log( "Cannot destroy a chain segment that is part of a chain shape" );
+		return;
+	}
 
 	// need to wake bodies because this might be a static body
 	bool wakeBodies = true;

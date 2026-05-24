@@ -19,7 +19,7 @@
 
 #include <string.h>
 
-_Static_assert( B2_NAME_LENGTH >= 1, "minimum name length" );
+_Static_assert( B2_NAME_LENGTH >= 0, "minimum name length" );
 
 static void b2LimitVelocity( b2BodyState* state, float maxLinearSpeed )
 {
@@ -88,7 +88,7 @@ b2BodyState* b2GetBodyState( b2World* world, b2Body* body )
 	return NULL;
 }
 
-static void b2SyncBodyFlags( b2World* world, b2Body* body )
+void b2SyncBodyFlags( b2World* world, b2Body* body )
 {
 	// Never sync transient flags
 	uint32_t flags = body->flags & ~b2_bodyTransientFlags;
@@ -279,22 +279,15 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 
 	if ( def->name )
 	{
-		int i = 0;
-		while ( i < B2_NAME_LENGTH - 1 && def->name[i] != 0 )
-		{
-			body->name[i] = def->name[i];
-			i += 1;
-		}
-
-		while ( i < B2_NAME_LENGTH )
-		{
-			body->name[i] = 0;
-			i += 1;
-		}
+#if defined( _MSC_VER )
+		strncpy_s( body->name, B2_NAME_LENGTH + 1, def->name, B2_NAME_LENGTH );
+#else
+		strncpy( body->name, def->name, B2_NAME_LENGTH + 1 );
+#endif
 	}
 	else
 	{
-		memset( body->name, 0, B2_NAME_LENGTH * sizeof( char ) );
+		memset( body->name, 0, sizeof( body->name ) );
 	}
 
 	body->userData = def->userData;
@@ -1311,22 +1304,15 @@ void b2Body_SetName( b2BodyId bodyId, const char* name )
 
 	if ( name )
 	{
-		int i = 0;
-		while ( i < B2_NAME_LENGTH - 1 && name[i] != 0 )
-		{
-			body->name[i] = name[i];
-			i += 1;
-		}
-
-		while ( i < B2_NAME_LENGTH )
-		{
-			body->name[i] = 0;
-			i += 1;
-		}
+#if defined( _MSC_VER )
+		strncpy_s( body->name, B2_NAME_LENGTH + 1, name, B2_NAME_LENGTH );
+#else
+		strncpy( body->name, name, B2_NAME_LENGTH + 1 );
+#endif
 	}
 	else
 	{
-		memset( body->name, 0, B2_NAME_LENGTH * sizeof( char ) );
+		memset( body->name, 0, sizeof( body->name ) );
 	}
 }
 
@@ -1609,6 +1595,7 @@ void b2Body_EnableSleep( b2BodyId bodyId, bool enableSleep )
 	}
 
 	body->flags = enableSleep ? body->flags | b2_enableSleep : body->flags & ~b2_enableSleep;
+	b2SyncBodyFlags( world, body );
 
 	if ( enableSleep == false )
 	{
@@ -1841,17 +1828,18 @@ void b2Body_SetBullet( b2BodyId bodyId, bool flag )
 		return;
 	}
 
-	b2Body* body = b2GetBodyFullId( world, bodyId );
-	b2BodySim* bodySim = b2GetBodySim( world, body );
+	uint32_t newFlag = flag ? b2_isBullet : 0;
 
-	if ( flag )
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	if ((body->flags & b2_isBullet) == newFlag)
 	{
-		bodySim->flags |= b2_isBullet;
+		return;
 	}
-	else
-	{
-		bodySim->flags &= ~b2_isBullet;
-	}
+
+	body->flags &= ~b2_isBullet;
+	body->flags |= newFlag;
+
+	b2SyncBodyFlags( world, body );
 }
 
 bool b2Body_IsBullet( b2BodyId bodyId )

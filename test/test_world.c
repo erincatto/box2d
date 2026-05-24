@@ -9,9 +9,6 @@
 #include "box2d/constants.h"
 #include "box2d/math_functions.h"
 
-#include "core.h"
-
-#include <float.h>
 #include <stdio.h>
 
 // This is a simple example of building and running a simulation
@@ -505,7 +502,9 @@ static int ChainSegmentShapeTest( void )
 	ENSURE_SMALL( got2.segment.point2.x - cs2.segment.point2.x, 1e-5f );
 	ENSURE_SMALL( got2.segment.point2.y - cs2.segment.point2.y, 1e-5f );
 	ENSURE_SMALL( got2.ghost1.x - cs2.ghost1.x, 1e-5f );
+	ENSURE_SMALL( got2.ghost1.y - cs2.ghost1.y, 1e-5f );
 	ENSURE_SMALL( got2.ghost2.x - cs2.ghost2.x, 1e-5f );
+	ENSURE_SMALL( got2.ghost2.y - cs2.ghost2.y, 1e-5f );
 	ENSURE( got2.chainId == B2_NULL_INDEX );
 
 	b2ChainId parentChain2 = b2Shape_GetParentChain( orphanShape );
@@ -521,7 +520,9 @@ static int ChainSegmentShapeTest( void )
 	ENSURE( b2Shape_GetType( convShape ) == b2_chainSegmentShape );
 	b2ChainSegment got3 = b2Shape_GetChainSegment( convShape );
 	ENSURE_SMALL( got3.ghost1.x - cs2.ghost1.x, 1e-5f );
+	ENSURE_SMALL( got3.ghost1.y - cs2.ghost1.y, 1e-5f );
 	ENSURE_SMALL( got3.ghost2.x - cs2.ghost2.x, 1e-5f );
+	ENSURE_SMALL( got3.ghost2.y - cs2.ghost2.y, 1e-5f );
 	ENSURE( got3.chainId == B2_NULL_INDEX );
 
 	b2ChainId parentChain3 = b2Shape_GetParentChain( convShape );
@@ -530,6 +531,135 @@ static int ChainSegmentShapeTest( void )
 	b2DestroyShape( orphanShape, true );
 	b2DestroyWorld( worldId );
 
+	return 0;
+}
+
+static int DeferredMassFlagSyncTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	shapeDef.updateBodyMass = false;
+
+	b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+	b2CreateCircleShape( bodyId, &shapeDef, &circle );
+
+	b2Body_ApplyMassFromShapes( bodyId );
+
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+static int EnableSleepFlagSyncTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+	bodyDef.enableSleep = false;
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+	ENSURE( b2Body_IsSleepEnabled( bodyId ) == false );
+
+	b2Body_EnableSleep( bodyId, true );
+	ENSURE( b2Body_IsSleepEnabled( bodyId ) == true );
+
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+static int SetBulletDriftTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	{
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.isBullet = false;
+		b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+		ENSURE( b2Body_IsBullet( bodyId ) == false );
+
+		b2Body_SetBullet( bodyId, true );
+		ENSURE( b2Body_IsBullet( bodyId ) == true );
+
+		b2MotionLocks locks = { 0 };
+		locks.linearX = true;
+		b2Body_SetMotionLocks( bodyId, locks );
+
+		ENSURE( b2Body_IsBullet( bodyId ) == true );
+	}
+
+	{
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.isBullet = true;
+		b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+		ENSURE( b2Body_IsBullet( bodyId ) == true );
+
+		b2Body_SetBullet( bodyId, false );
+		ENSURE( b2Body_IsBullet( bodyId ) == false );
+
+		b2MotionLocks locks = { 0 };
+		locks.linearX = true;
+		b2Body_SetMotionLocks( bodyId, locks );
+
+		ENSURE( b2Body_IsBullet( bodyId ) == false );
+	}
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+static int DestroyOwnedChainSegmentTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
+
+	b2Vec2 points[5] = {
+		{ -4.0f, 0.0f }, { -2.0f, 0.0f }, { 0.0f, 0.0f }, { 2.0f, 0.0f }, { 4.0f, 0.0f },
+	};
+	b2SurfaceMaterial material = { 0 };
+	b2ChainDef chainDef = b2DefaultChainDef();
+	chainDef.points = points;
+	chainDef.count = 5;
+	chainDef.materials = &material;
+	chainDef.materialCount = 1;
+	chainDef.isLoop = false;
+	b2ChainId chainId = b2CreateChain( groundId, &chainDef );
+
+	int segmentCount = b2Chain_GetSegmentCount( chainId );
+	ENSURE( segmentCount > 0 );
+
+	b2ShapeId segments[8] = { 0 };
+	int got = b2Chain_GetSegments( chainId, segments, segmentCount );
+	ENSURE( got == segmentCount );
+
+	for ( int i = 0; i < segmentCount; ++i )
+	{
+		b2ChainId parent = b2Shape_GetParentChain( segments[i] );
+		ENSURE( B2_IS_NON_NULL( parent ) );
+	}
+
+	b2DestroyShape( segments[0], true );
+
+	b2DestroyChain( chainId );
+	b2DestroyWorld( worldId );
 	return 0;
 }
 
@@ -544,6 +674,10 @@ int WorldTest( void )
 	RUN_SUBTEST( TestSensor );
 	RUN_SUBTEST( TestSetWorkerCount );
 	RUN_SUBTEST( ChainSegmentShapeTest );
+	RUN_SUBTEST( SetBulletDriftTest );
+	RUN_SUBTEST( DestroyOwnedChainSegmentTest );
+	RUN_SUBTEST( DeferredMassFlagSyncTest );
+	RUN_SUBTEST( EnableSleepFlagSyncTest );
 
 	return 0;
 }

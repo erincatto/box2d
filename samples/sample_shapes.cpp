@@ -291,7 +291,7 @@ public:
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		if ( m_shapeType == e_circleShape )
 		{
-			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+			b2Circle circle = { { 0.0f, 0.0f }, 0.25f };
 			b2CreateCircleShape( m_bodyId, &shapeDef, &circle );
 		}
 		else if ( m_shapeType == e_capsuleShape )

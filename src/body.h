@@ -57,7 +57,7 @@ enum b2BodyFlags
 	// All lock flags
 	b2_allLocks = b2_lockAngularZ | b2_lockLinearX | b2_lockLinearY,
 
-	// If all this flags is set then the body has fixed rotation
+	// If this flag is set then the body has fixed rotation
 	b2_fixedRotation = b2_lockAngularZ,
 
 	// These flags are transient per time step. These may be different across b2Body, b2BodySim, and b2BodyState.
@@ -119,7 +119,7 @@ typedef struct b2Body
 	// Used to check for invalid b2BodyId
 	uint16_t generation;
 
-	char name[B2_NAME_LENGTH];
+	char name[B2_NAME_LENGTH + 1];
 } b2Body;
 
 // Body State
@@ -223,12 +223,13 @@ bool b2ShouldBodiesCollide( b2World* world, b2Body* bodyA, b2Body* bodyB );
 
 b2BodySim* b2GetBodySim( b2World* world, b2Body* body );
 b2BodyState* b2GetBodyState( b2World* world, b2Body* body );
-void b2RemoveBodySim( b2Array( b2BodySim )* bodySims, b2Array( b2Body )* bodies, int localIndex );
+void b2RemoveBodySim( b2Array( b2BodySim ) * bodySims, b2Array( b2Body ) * bodies, int localIndex );
 
 // careful calling this because it can invalidate body, state, joint, and contact pointers
 bool b2WakeBody( b2World* world, b2Body* body );
 
 void b2UpdateBodyMassData( b2World* world, b2Body* body );
+void b2SyncBodyFlags( b2World* world, b2Body* body );
 
 static inline b2Sweep b2MakeSweep( const b2BodySim* bodySim )
 {

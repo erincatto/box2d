@@ -5,6 +5,9 @@
 
 #include <stdint.h>
 
+/// Used to indicate an unset or invalid index value.
+#define B2_NULL_INDEX ( -1 )
+
 // clang-format off
 // 
 // Shared library macros

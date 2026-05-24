@@ -7,8 +7,6 @@
 
 // clang-format off
 
-#define B2_NULL_INDEX ( -1 )
-
 // for performance comparisons
 #define B2_RESTRICT restrict
 
