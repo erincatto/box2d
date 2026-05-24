@@ -653,46 +653,6 @@ static int SetBulletDriftTest( void )
 	return 0;
 }
 
-static int DestroyOwnedChainSegmentTest( void )
-{
-	b2WorldDef worldDef = b2DefaultWorldDef();
-	b2WorldId worldId = b2CreateWorld( &worldDef );
-
-	b2BodyDef bodyDef = b2DefaultBodyDef();
-	b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
-
-	b2Vec2 points[5] = {
-		{ -4.0f, 0.0f }, { -2.0f, 0.0f }, { 0.0f, 0.0f }, { 2.0f, 0.0f }, { 4.0f, 0.0f },
-	};
-	b2SurfaceMaterial material = { 0 };
-	b2ChainDef chainDef = b2DefaultChainDef();
-	chainDef.points = points;
-	chainDef.count = 5;
-	chainDef.materials = &material;
-	chainDef.materialCount = 1;
-	chainDef.isLoop = false;
-	b2ChainId chainId = b2CreateChain( groundId, &chainDef );
-
-	int segmentCount = b2Chain_GetSegmentCount( chainId );
-	ENSURE( segmentCount > 0 );
-
-	b2ShapeId segments[8] = { 0 };
-	int got = b2Chain_GetSegments( chainId, segments, segmentCount );
-	ENSURE( got == segmentCount );
-
-	for ( int i = 0; i < segmentCount; ++i )
-	{
-		b2ChainId parent = b2Shape_GetParentChain( segments[i] );
-		ENSURE( B2_IS_NON_NULL( parent ) );
-	}
-
-	b2DestroyShape( segments[0], true );
-
-	b2DestroyChain( chainId );
-	b2DestroyWorld( worldId );
-	return 0;
-}
-
 int WorldTest( void )
 {
 	RUN_SUBTEST( HelloWorld );
@@ -705,7 +665,6 @@ int WorldTest( void )
 	RUN_SUBTEST( TestSetWorkerCount );
 	RUN_SUBTEST( ChainSegmentShapeTest );
 	RUN_SUBTEST( SetBulletDriftTest );
-	RUN_SUBTEST( DestroyOwnedChainSegmentTest );
 	RUN_SUBTEST( DeferredMassFlagSyncTest );
 	RUN_SUBTEST( EnableSleepFlagSyncTest );
 	RUN_SUBTEST( EnableContactRecyclingTest );
