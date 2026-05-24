@@ -142,33 +142,21 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 		assert( false );
 	}
 
-	ImGui::GetStyle().ScaleAllSizes( s_context.uiScale );
-
-	const char* fontPath = "samples/data/droid_sans.ttf";
-	FILE* file = fopen( fontPath, "rb" );
-
-	if ( file != nullptr )
+	ImGuiIO& io = ImGui::GetIO();
+	if ( s_context.uiScale == 1.0f )
+	{
+		io.Fonts->AddFontDefaultBitmap();
+	}
+	else
 	{
 		ImFontConfig fontConfig;
 		// This brightens the font, improving readability when it is small.
 		fontConfig.RasterizerMultiply = s_context.uiScale * s_framebufferScale;
+		io.Fonts->AddFontDefaultVector( &fontConfig );
 
-		float regularSize = floorf( 13.0f * s_context.uiScale );
-		float mediumSize = floorf( 40.0f * s_context.uiScale );
-		float largeSize = floorf( 64.0f * s_context.uiScale );
-
-		ImGuiIO& io = ImGui::GetIO();
-		//s_context.regularFont = io.Fonts->AddFontFromFileTTF( fontPath, regularSize );
-		s_context.regularFont = io.Fonts->AddFontFromFileTTF( fontPath, regularSize, &fontConfig );
-		s_context.mediumFont = io.Fonts->AddFontFromFileTTF( fontPath, mediumSize, &fontConfig );
-		s_context.largeFont = io.Fonts->AddFontFromFileTTF( fontPath, largeSize, &fontConfig );
-
-		ImGui::GetIO().FontDefault = s_context.regularFont;
-	}
-	else
-	{
-		printf( "\n\nERROR: the Box2D samples working directory must be the top level Box2D directory (same as README.md)\n\n" );
-		exit( EXIT_FAILURE );
+		ImGuiStyle& style = ImGui::GetStyle();
+		style.ScaleAllSizes( s_context.uiScale );
+		style.FontSizeBase = floorf( 13.0f * s_context.uiScale );
 	}
 }
 
@@ -574,7 +562,8 @@ int main( int, char** )
 
 		s_context.sample->Step();
 
-		DrawScreenString( s_context.draw, 5.0f, s_context.camera.height - 10.0f, b2_colorSeaGreen,
+		float fontSize = ImGui::GetFontSize();
+		DrawScreenString( s_context.draw, 5.0f, s_context.camera.height - 0.5f * fontSize, b2_colorSeaGreen,
 						  "%.1f ms - step %d - camera (%g, %g, %g)", 1000.0f * frameTime, s_context.sample->m_stepCount,
 						  s_context.camera.center.x, s_context.camera.center.y, s_context.camera.zoom );
 

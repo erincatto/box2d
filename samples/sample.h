@@ -23,9 +23,6 @@ struct SampleContext
 	class Sample* sample = nullptr;
 	b2Capacity capacity;
 	b2DebugDraw debugDraw;
-	ImFont* regularFont;
-	ImFont* mediumFont;
-	ImFont* largeFont;
 	float uiScale = 1.0f;
 	float hertz = 60.0f;
 	float recycleDistance = 0.05f;

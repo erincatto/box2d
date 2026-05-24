@@ -12,6 +12,7 @@
 
 #include "box2d/math_functions.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -28,10 +29,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 // clang-format on
-
-#define STBTT_STATIC
-#define STB_TRUETYPE_IMPLEMENTATION
-#include "stb_truetype.h"
 
 //#define STB_IMAGE_WRITE_IMPLEMENTATION
 //#include "stb_image_write.h"
@@ -140,29 +137,6 @@ static void BuildProjectionMatrix( Camera* camera, float* m, float zBias )
 	m[15] = 1.0f;
 }
 
-static void MakeOrthographicMatrix( float* m, float left, float right, float bottom, float top, float near, float far )
-{
-	m[0] = 2.0f / ( right - left );
-	m[1] = 0.0f;
-	m[2] = 0.0f;
-	m[3] = 0.0f;
-
-	m[4] = 0.0f;
-	m[5] = 2.0f / ( top - bottom );
-	m[6] = 0.0f;
-	m[7] = 0.0f;
-
-	m[8] = 0.0f;
-	m[9] = 0.0f;
-	m[10] = -2.0f / ( far - near );
-	m[11] = 0.0f;
-
-	m[12] = -( right + left ) / ( right - left );
-	m[13] = -( top + bottom ) / ( top - bottom );
-	m[14] = -( far + near ) / ( far - near );
-	m[15] = 1.0f;
-}
-
 b2AABB GetViewBounds( Camera* camera )
 {
 	if ( camera->height == 0.0f || camera->width == 0.0f )
@@ -175,223 +149,6 @@ b2AABB GetViewBounds( Camera* camera )
 	bounds.lowerBound = ConvertScreenToWorld( camera, (b2Vec2){ 0.0f, camera->height } );
 	bounds.upperBound = ConvertScreenToWorld( camera, (b2Vec2){ camera->width, 0.0f } );
 	return bounds;
-}
-
-typedef struct
-{
-	b2Vec2 position;
-	b2Vec2 uv;
-	RGBA8 color;
-} FontVertex;
-
-ARRAY_DECLARE( FontVertex );
-ARRAY_INLINE( FontVertex );
-ARRAY_SOURCE( FontVertex );
-
-#define FONT_FIRST_CHARACTER 32
-#define FONT_CHARACTER_COUNT 96
-#define FONT_ATLAS_WIDTH 512
-#define FONT_ATLAS_HEIGHT 512
-
-// The number of vertices the vbo can hold. Must be a multiple of 6.
-#define FONT_BATCH_SIZE ( 6 * 10000 )
-
-typedef struct
-{
-	float fontSize;
-	FontVertexArray vertices;
-	stbtt_bakedchar* characters;
-	unsigned int textureId;
-	uint32_t vaoId;
-	uint32_t vboId;
-	uint32_t programId;
-} Font;
-
-Font CreateFont( const char* trueTypeFile, float fontSize )
-{
-	Font font = { 0 };
-
-	FILE* file = fopen( trueTypeFile, "rb" );
-	if ( file == NULL )
-	{
-		assert( false );
-		return font;
-	}
-
-	font.vertices = FontVertexArray_Create( FONT_BATCH_SIZE );
-	font.fontSize = fontSize;
-	font.characters = malloc( FONT_CHARACTER_COUNT * sizeof( stbtt_bakedchar ) );
-
-	int fileBufferCapacity = 1 << 20;
-	unsigned char* fileBuffer = (unsigned char*)malloc( fileBufferCapacity * sizeof( unsigned char ) );
-	fread( fileBuffer, 1, fileBufferCapacity, file );
-
-	int pw = FONT_ATLAS_WIDTH;
-	int ph = FONT_ATLAS_HEIGHT;
-	unsigned char* tempBitmap = (unsigned char*)malloc( pw * ph * sizeof( unsigned char ) );
-	stbtt_BakeFontBitmap( fileBuffer, 0, font.fontSize, tempBitmap, pw, ph, FONT_FIRST_CHARACTER, FONT_CHARACTER_COUNT,
-						  font.characters );
-
-	glGenTextures( 1, &font.textureId );
-	glBindTexture( GL_TEXTURE_2D, font.textureId );
-	glTexImage2D( GL_TEXTURE_2D, 0, GL_R8, pw, ph, 0, GL_RED, GL_UNSIGNED_BYTE, tempBitmap );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-
-	// for debugging
-	// stbi_write_png( "build/fontAtlas.png", pw, ph, 1, tempBitmap, pw );
-
-	fclose( file );
-	free( fileBuffer );
-	free( tempBitmap );
-	fileBuffer = NULL;
-	tempBitmap = NULL;
-
-	font.programId = CreateProgramFromFiles( "samples/data/font.vs", "samples/data/font.fs" );
-	if ( font.programId == 0 )
-	{
-		return font;
-	}
-
-	// Setting up the VAO and VBO
-	glGenBuffers( 1, &font.vboId );
-	glBindBuffer( GL_ARRAY_BUFFER, font.vboId );
-	glBufferData( GL_ARRAY_BUFFER, FONT_BATCH_SIZE * sizeof( FontVertex ), NULL, GL_DYNAMIC_DRAW );
-
-	glGenVertexArrays( 1, &font.vaoId );
-	glBindVertexArray( font.vaoId );
-
-	// position attribute
-	glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, sizeof( FontVertex ), (void*)offsetof( FontVertex, position ) );
-	glEnableVertexAttribArray( 0 );
-
-	// uv attribute
-	glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, sizeof( FontVertex ), (void*)offsetof( FontVertex, uv ) );
-	glEnableVertexAttribArray( 1 );
-
-	// color attribute will be expanded to floats using normalization
-	glVertexAttribPointer( 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof( FontVertex ), (void*)offsetof( FontVertex, color ) );
-	glEnableVertexAttribArray( 2 );
-
-	glBindVertexArray( 0 );
-
-	CheckOpenGL();
-
-	return font;
-}
-
-void DestroyFont( Font* font )
-{
-	if ( font->programId != 0 )
-	{
-		glDeleteProgram( font->programId );
-	}
-
-	glDeleteBuffers( 1, &font->vboId );
-	glDeleteVertexArrays( 1, &font->vaoId );
-
-	if ( font->textureId != 0 )
-	{
-		glDeleteTextures( 1, &font->textureId );
-	}
-
-	free( font->characters );
-
-	FontVertexArray_Destroy( &font->vertices );
-}
-
-void AddText( Font* font, float x, float y, b2HexColor color, const char* text )
-{
-	if ( text == NULL )
-	{
-		return;
-	}
-
-	b2Vec2 position = { x, y };
-	RGBA8 c = MakeRGBA8( color, 1.0f );
-	int pw = FONT_ATLAS_WIDTH;
-	int ph = FONT_ATLAS_HEIGHT;
-
-	int i = 0;
-	while ( text[i] != 0 )
-	{
-		int index = (int)text[i] - FONT_FIRST_CHARACTER;
-
-		if ( 0 <= index && index < FONT_CHARACTER_COUNT )
-		{
-			// 1=opengl
-			stbtt_aligned_quad q;
-			stbtt_GetBakedQuad( font->characters, pw, ph, index, &position.x, &position.y, &q, 1 );
-
-			FontVertex v1 = { { q.x0, q.y0 }, { q.s0, q.t0 }, c };
-			FontVertex v2 = { { q.x1, q.y0 }, { q.s1, q.t0 }, c };
-			FontVertex v3 = { { q.x1, q.y1 }, { q.s1, q.t1 }, c };
-			FontVertex v4 = { { q.x0, q.y1 }, { q.s0, q.t1 }, c };
-
-			FontVertexArray_Push( &font->vertices, v1 );
-			FontVertexArray_Push( &font->vertices, v3 );
-			FontVertexArray_Push( &font->vertices, v2 );
-			FontVertexArray_Push( &font->vertices, v1 );
-			FontVertexArray_Push( &font->vertices, v4 );
-			FontVertexArray_Push( &font->vertices, v3 );
-		}
-
-		i += 1;
-	}
-}
-
-void FlushText( Font* font, Camera* camera )
-{
-	float projectionMatrix[16];
-	MakeOrthographicMatrix( projectionMatrix, 0.0f, camera->width, camera->height, 0.0f, -1.0f, 1.0f );
-
-	glUseProgram( font->programId );
-
-	glEnable( GL_BLEND );
-	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
-	int slot = 0;
-	glActiveTexture( GL_TEXTURE0 + slot );
-	glBindTexture( GL_TEXTURE_2D, font->textureId );
-
-	glBindVertexArray( font->vaoId );
-	glBindBuffer( GL_ARRAY_BUFFER, font->vboId );
-
-	int textureUniform = glGetUniformLocation( font->programId, "FontAtlas" );
-	glUniform1i( textureUniform, slot );
-
-	int matrixUniform = glGetUniformLocation( font->programId, "ProjectionMatrix" );
-	glUniformMatrix4fv( matrixUniform, 1, GL_FALSE, projectionMatrix );
-
-	int totalVertexCount = font->vertices.count;
-	int drawCallCount = ( totalVertexCount / FONT_BATCH_SIZE ) + 1;
-
-	for ( int i = 0; i < drawCallCount; i++ )
-	{
-		const FontVertex* data = font->vertices.data + i * FONT_BATCH_SIZE;
-
-		int vertexCount;
-		if ( i == drawCallCount - 1 )
-		{
-			vertexCount = totalVertexCount % FONT_BATCH_SIZE;
-		}
-		else
-		{
-			vertexCount = FONT_BATCH_SIZE;
-		}
-
-		glBufferSubData( GL_ARRAY_BUFFER, 0, vertexCount * sizeof( FontVertex ), data );
-		glDrawArrays( GL_TRIANGLES, 0, vertexCount );
-	}
-
-	glBindBuffer( GL_ARRAY_BUFFER, 0 );
-	glBindVertexArray( 0 );
-	glBindTexture( GL_TEXTURE_2D, 0 );
-
-	glDisable( GL_BLEND );
-
-	CheckOpenGL();
-
-	font->vertices.count = 0;
 }
 
 typedef struct
@@ -1375,7 +1132,6 @@ typedef struct Draw
 	SolidCircles circles;
 	Capsules capsules;
 	Polygons polygons;
-	Font font;
 } Draw;
 
 Draw* CreateDraw( void )
@@ -1389,7 +1145,6 @@ Draw* CreateDraw( void )
 	draw->circles = CreateSolidCircles();
 	draw->capsules = CreateCapsules();
 	draw->polygons = CreatePolygons();
-	draw->font = CreateFont( "samples/data/droid_sans.ttf", 18.0f );
 	return draw;
 }
 
@@ -1402,7 +1157,6 @@ void DestroyDraw( Draw* draw )
 	DestroySolidCircles( &draw->circles );
 	DestroyCapsules( &draw->capsules );
 	DestroyPolygons( &draw->polygons );
-	DestroyFont( &draw->font );
 	free( draw );
 }
 
@@ -1472,32 +1226,6 @@ void DrawBounds( Draw* draw, b2AABB aabb, b2HexColor color )
 	AddLine( &draw->lines, p4, p1, color );
 }
 
-void DrawScreenString( Draw* draw, float x, float y, b2HexColor color, const char* string, ... )
-{
-	char buffer[256];
-	va_list arg;
-	va_start( arg, string );
-	vsnprintf( buffer, 256, string, arg );
-	va_end( arg );
-
-	buffer[255] = 0;
-	AddText( &draw->font, x, y, color, buffer );
-}
-
-void DrawWorldString( Draw* draw, Camera* camera, b2Vec2 p, b2HexColor color, const char* string, ... )
-{
-	b2Vec2 ps = ConvertWorldToScreen( camera, p );
-
-	char buffer[256];
-	va_list arg;
-	va_start( arg, string );
-	vsnprintf( buffer, 256, string, arg );
-	va_end( arg );
-
-	buffer[255] = 0;
-	AddText( &draw->font, ps.x, ps.y, color, buffer );
-}
-
 void FlushDraw( Draw* draw, Camera* camera )
 {
 	// order matters
@@ -1507,7 +1235,6 @@ void FlushDraw( Draw* draw, Camera* camera )
 	FlushCircles( &draw->hollowCircles, camera );
 	FlushLines( &draw->lines, camera );
 	FlushPoints( &draw->points, camera );
-	FlushText( &draw->font, camera );
 	CheckOpenGL();
 }
 

@@ -1130,7 +1130,7 @@ void UpdateSampleUI( SampleContext* context )
 	b2WorldId worldId = context->sample->m_worldId;
 
 	float fontSize = ImGui::GetFontSize();
-	float menuWidth = 13.0f * fontSize;
+	float menuWidth = 14.0f * fontSize;
 	if ( context->showUI )
 	{
 		ImGui::SetNextWindowPos( { context->camera.width - menuWidth - 0.5f * fontSize, 0.5f * fontSize } );
