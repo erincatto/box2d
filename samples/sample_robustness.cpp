@@ -268,15 +268,9 @@ public:
 		assert( bodyIndex == m_bodyCount );
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 210.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 220.0f, height ) );
-
-		ImGui::Begin( "Overlap Recovery", nullptr, ImGuiWindowFlags_NoResize );
-		ImGui::PushItemWidth( 100.0f );
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
 		bool changed = false;
 		changed = changed || ImGui::SliderFloat( "Extent", &m_extent, 0.1f, 1.0f, "%.1f" );
@@ -293,7 +287,6 @@ public:
 		}
 
 		ImGui::PopItemWidth();
-		ImGui::End();
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -488,15 +481,9 @@ public:
 		b2Joint_SetConstraintTuning( m_jointId2, m_constraintHertz, m_constraintDampingRatio );
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 240.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 320.0f, height ) );
-
-		ImGui::Begin( "Cart", nullptr, ImGuiWindowFlags_NoResize );
-		ImGui::PushItemWidth( 200.0f );
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
 		bool changed = false;
 		ImGui::Text( "Contact" );
@@ -529,7 +516,6 @@ public:
 		}
 
 		ImGui::PopItemWidth();
-		ImGui::End();
 	}
 
 	static Sample* Create( SampleContext* context )

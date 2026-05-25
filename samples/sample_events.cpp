@@ -234,15 +234,8 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 90.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
-
-		ImGui::Begin( "Sensor Event", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
 		if ( ImGui::RadioButton( "donut", m_type == e_donut ) )
 		{
 			Clear();
@@ -254,8 +247,6 @@ public:
 			Clear();
 			m_type = e_human;
 		}
-
-		ImGui::End();
 	}
 
 	void Step() override
@@ -426,15 +417,8 @@ public:
 		m_visitorShapeId = b2CreateCircleShape( m_visitorBodyId, &shapeDef, &circle );
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 19.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 12.0f * fontSize, height ) );
-
-		ImGui::Begin( "Sensor Bookend", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
 		if ( B2_IS_NULL( m_visitorBodyId ) )
 		{
 			if ( ImGui::Button( "create visitor" ) )
@@ -552,8 +536,6 @@ public:
 				}
 			}
 		}
-
-		ImGui::End();
 	}
 
 	void Step() override
@@ -926,18 +908,11 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 60.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
-
-		ImGui::Begin( "Contact Event", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		ImGui::SliderFloat( "force", &m_force, 100.0f, 500.0f, "%.1f" );
-
-		ImGui::End();
+		ImGui::PopItemWidth();
 	}
 
 	void Step() override
@@ -1349,19 +1324,12 @@ public:
 		return false;
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
-
-		ImGui::Begin( "One-Sided Platform", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		ImGui::SliderFloat( "force", &m_force, 0.0f, 50.0f, "%.1f" );
 		ImGui::SliderFloat( "impulse", &m_impulse, 0.0f, 50.0f, "%.1f" );
-
-		ImGui::End();
+		ImGui::PopItemWidth();
 	}
 
 	void Step() override
@@ -1559,15 +1527,8 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
-
-		ImGui::Begin( "Body Move", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
 		if ( ImGui::Button( "Explode" ) )
 		{
 			b2ExplosionDef def = b2DefaultExplosionDef();
@@ -1578,9 +1539,9 @@ public:
 			b2World_Explode( m_worldId, &def );
 		}
 
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		ImGui::SliderFloat( "Magnitude", &m_explosionMagnitude, -20.0f, 20.0f, "%.1f" );
-
-		ImGui::End();
+		ImGui::PopItemWidth();
 	}
 
 	void Step() override
@@ -2309,23 +2270,14 @@ public:
 		m_shapeId = b2CreateCircleShape( m_bodyId, &shapeDef, &circle );
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 120.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 120.0f, height ) );
-
-		ImGui::Begin( "Sensor Hit", nullptr, ImGuiWindowFlags_NoResize );
-
 		ImGui::Checkbox( "Bullet", &m_isBullet );
 
 		if ( ImGui::Button( "Launch" ) || glfwGetKey( m_context->window, GLFW_KEY_B ) == GLFW_PRESS )
 		{
 			Launch();
 		}
-
-		ImGui::End();
 	}
 
 	void CollectTransforms( b2ShapeId sensorShapeId )
@@ -2655,15 +2607,8 @@ public:
 		b2Body_SetMassData( m_bodyId, massData );
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 6.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 10.0f * fontSize, height ) );
-
-		ImGui::Begin( "Circle Impulse", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
 		if ( ImGui::Checkbox( "gravity", &m_useGravity ) )
 		{
 			Spawn();
@@ -2673,8 +2618,6 @@ public:
 		{
 			Spawn();
 		}
-
-		ImGui::End();
 	}
 
 	void Step() override

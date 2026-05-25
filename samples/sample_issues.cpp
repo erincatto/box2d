@@ -338,16 +338,8 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 11.0f * fontSize;
-		float winX = 0.5f * fontSize;
-		float winY = m_camera->height - height - 2.0f * fontSize;
-		ImGui::SetNextWindowPos( { winX, winY }, ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 9.0f * fontSize, height ) );
-		ImGui::Begin( "Disable Crash", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
 		if ( ImGui::Checkbox( "Enable", &m_isEnabled ) )
 		{
 			if ( m_isEnabled )
@@ -359,8 +351,6 @@ public:
 				b2Body_Disable( m_attachmentId );
 			}
 		}
-
-		ImGui::End();
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -457,14 +447,8 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 11.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 9.0f * fontSize, height ) );
-		ImGui::Begin( "Crash 01", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
 		if ( ImGui::RadioButton( "Static", m_type == b2_staticBody ) )
 		{
 			m_type = b2_staticBody;
@@ -495,8 +479,6 @@ public:
 				b2Body_Disable( m_attachmentId );
 			}
 		}
-
-		ImGui::End();
 	}
 
 	static Sample* Create( SampleContext* context )

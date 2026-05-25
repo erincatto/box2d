@@ -161,14 +161,9 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 21.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 19.0f * fontSize, height ) );
-
-		ImGui::Begin( "Shape Distance", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
 		const char* shapeTypes[] = { "point", "segment", "triangle", "box" };
 		int shapeType = int( m_typeA );
@@ -205,6 +200,8 @@ public:
 			m_transform.q = b2MakeRot( m_angle );
 		}
 
+		ImGui::PopItemWidth();
+
 		ImGui::Separator();
 
 		ImGui::Checkbox( "show indices", &m_showIndices );
@@ -219,11 +216,11 @@ public:
 
 		if ( m_drawSimplex && m_simplexCount > 0 )
 		{
+			ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 			ImGui::SliderInt( "index", &m_simplexIndex, 0, m_simplexCount - 1 );
 			m_simplexIndex = b2ClampInt( m_simplexIndex, 0, m_simplexCount - 1 );
+			ImGui::PopItemWidth();
 		}
-
-		ImGui::End();
 	}
 
 	void MouseDown( b2Vec2 p, int button, int mods ) override
@@ -570,16 +567,9 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 320.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
-
-		ImGui::Begin( "Dynamic Tree", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
-		ImGui::PushItemWidth( 100.0f );
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
 		bool changed = false;
 		if ( ImGui::SliderInt( "rows", &m_rowCount, 0, 1000, "%d" ) )
@@ -615,6 +605,8 @@ public:
 		{
 		}
 
+		ImGui::PopItemWidth();
+
 		if ( ImGui::RadioButton( "Incremental", m_updateType == Update_Incremental ) )
 		{
 			m_updateType = Update_Incremental;
@@ -637,9 +629,6 @@ public:
 
 		ImGui::Text( "mouse button 1: ray cast" );
 		ImGui::Text( "mouse button 1 + shift: query" );
-
-		ImGui::PopItemWidth();
-		ImGui::End();
 
 		if ( changed )
 		{
@@ -910,16 +899,9 @@ public:
 		m_showFraction = false;
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 230.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
-
-		ImGui::Begin( "Ray-cast", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
-		ImGui::PushItemWidth( 100.0f );
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
 		ImGui::SliderFloat( "x offset", &m_transform.p.x, -2.0f, 2.0f, "%.2f" );
 		ImGui::SliderFloat( "y offset", &m_transform.p.y, -2.0f, 2.0f, "%.2f" );
@@ -932,6 +914,8 @@ public:
 		// if (ImGui::SliderFloat("ray radius", &m_rayRadius, 0.0f, 1.0f, "%.1f"))
 		//{
 		// }
+
+		ImGui::PopItemWidth();
 
 		ImGui::Checkbox( "show fraction", &m_showFraction );
 
@@ -946,10 +930,6 @@ public:
 		ImGui::Text( "mouse btn 1: ray cast" );
 		ImGui::Text( "mouse btn 1 + shft: translate" );
 		ImGui::Text( "mouse btn 1 + ctrl: rotate" );
-
-		ImGui::PopItemWidth();
-
-		ImGui::End();
 	}
 
 	void MouseDown( b2Vec2 p, int button, int mods ) override
@@ -1597,19 +1577,13 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 320.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
-
-		ImGui::Begin( "Ray-cast World", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
 		ImGui::Checkbox( "Simple", &m_simple );
 
 		if ( m_simple == false )
 		{
+			ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 			const char* castTypes[] = { "Ray", "Circle", "Capsule", "Polygon" };
 			int castType = int( m_castType );
 			if ( ImGui::Combo( "Type", &castType, castTypes, IM_ARRAYSIZE( castTypes ) ) )
@@ -1628,6 +1602,7 @@ public:
 			{
 				m_mode = Mode( mode );
 			}
+			ImGui::PopItemWidth();
 		}
 
 		if ( ImGui::Button( "Polygon" ) )
@@ -1670,8 +1645,6 @@ public:
 		{
 			DestroyBody();
 		}
-
-		ImGui::End();
 	}
 
 	void Step() override
@@ -2081,15 +2054,8 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 330.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
-
-		ImGui::Begin( "Overlap World", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
 		if ( ImGui::Button( "Polygon 1" ) )
 			Create( 0 );
 		ImGui::SameLine();
@@ -2142,8 +2108,6 @@ public:
 		ImGui::RadioButton( "Circle##Overlap", &m_shapeType, e_circleShape );
 		ImGui::RadioButton( "Capsule##Overlap", &m_shapeType, e_capsuleShape );
 		ImGui::RadioButton( "Box##Overlap", &m_shapeType, e_boxShape );
-
-		ImGui::End();
 	}
 
 	void Step() override
@@ -2286,16 +2250,9 @@ public:
 		m_wedge = b2ComputeHull( points, 3 );
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 24.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 20.0f * fontSize, height ) );
-
-		ImGui::Begin( "Manifold", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
-		ImGui::PushItemWidth( 14.0f * fontSize );
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
 		ImGui::SliderFloat( "x offset", &m_transform.p.x, -2.0f, 2.0f, "%.2f" );
 		ImGui::SliderFloat( "y offset", &m_transform.p.y, -2.0f, 2.0f, "%.2f" );
@@ -2327,8 +2284,6 @@ public:
 
 		ImGui::Text( "mouse button 1: drag" );
 		ImGui::Text( "mouse button 1 + shift: rotate" );
-
-		ImGui::End();
 	}
 
 	void MouseDown( b2Vec2 p, int button, int mods ) override
@@ -3007,15 +2962,9 @@ public:
 		free( m_segments );
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 290.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
-
-		ImGui::Begin( "Smooth Manifold", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-		ImGui::PushItemWidth( 100.0f );
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
 		{
 			const char* shapeTypes[] = { "Circle", "Box" };
@@ -3033,6 +2982,9 @@ public:
 		}
 
 		ImGui::SliderFloat( "Round", &m_round, 0.0f, 0.4f, "%.1f" );
+
+		ImGui::PopItemWidth();
+
 		ImGui::Checkbox( "Show Ids", &m_showIds );
 		ImGui::Checkbox( "Show Separation", &m_showSeparation );
 		ImGui::Checkbox( "Show Anchors", &m_showAnchors );
@@ -3047,9 +2999,6 @@ public:
 
 		ImGui::Text( "mouse button 1: drag" );
 		ImGui::Text( "mouse button 1 + shift: rotate" );
-
-		ImGui::PopItemWidth();
-		ImGui::End();
 	}
 
 	void MouseDown( b2Vec2 p, int button, int mods ) override
@@ -3446,14 +3395,9 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 300.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
-
-		ImGui::Begin( "Shape Distance", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
 		const char* shapeTypes[] = { "point", "segment", "triangle", "box" };
 		int shapeType = int( m_typeA );
@@ -3490,12 +3434,12 @@ public:
 			m_transform.q = b2MakeRot( m_angle );
 		}
 
+		ImGui::PopItemWidth();
+
 		ImGui::Separator();
 
 		ImGui::Checkbox( "show indices", &m_showIndices );
 		ImGui::Checkbox( "encroach", &m_encroach );
-
-		ImGui::End();
 	}
 
 	void Step() override
