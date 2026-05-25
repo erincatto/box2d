@@ -407,16 +407,12 @@ public:
 		m_velocity = b2ClipVector( m_velocity, m_planes, m_planeCount );
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 350.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 25.0f ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 340.0f, height ) );
+		ImGui::TextUnformatted( "Mover" );
+		ImGui::Spacing();
 
-		ImGui::Begin( "Mover", nullptr, 0 );
-
-		ImGui::PushItemWidth( 240.0f );
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
 		ImGui::SliderFloat( "Jump Speed", &m_jumpSpeed, 0.0f, 40.0f, "%.0f" );
 		ImGui::SliderFloat( "Min Speed", &m_minSpeed, 0.0f, 1.0f, "%.2f" );
@@ -433,7 +429,7 @@ public:
 
 		ImGui::Separator();
 
-		ImGui::Text( "Pogo Shape" );
+		ImGui::TextUnformatted( "Pogo Shape" );
 		ImGui::RadioButton( "Point", &m_pogoShape, PogoPoint );
 		ImGui::SameLine();
 		ImGui::RadioButton( "Circle", &m_pogoShape, PogoCircle );
@@ -441,8 +437,6 @@ public:
 		ImGui::RadioButton( "Segment", &m_pogoShape, PogoSegment );
 
 		ImGui::Checkbox( "Lock Camera", &m_lockCamera );
-
-		ImGui::End();
 	}
 
 	static bool PlaneResultFcn( b2ShapeId shapeId, const b2PlaneResult* planeResult, void* context )

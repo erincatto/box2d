@@ -3651,9 +3651,6 @@ public:
 
 		DrawTextLine( "toi = %g", output.fraction );
 
-		// DrawString(5, m_textLine, "max toi iters = %d, max root iters = %d", b2_toiMaxIters,
-		//                        b2_toiMaxRootIters);
-
 		b2Vec2 vertices[B2_MAX_POLYGON_VERTICES];
 
 		// Draw A

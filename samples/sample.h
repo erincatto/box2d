@@ -31,13 +31,13 @@ struct SampleContext
 	bool restart = false;
 	bool pause = false;
 	bool singleStep = false;
-	bool drawCounters = false;
-	bool drawProfile = false;
 	bool enableWarmStarting = true;
 	bool enableContinuous = true;
 	bool enableSleep = true;
 	bool showUI = true;
-	bool frameTime = false;
+
+	// Diagnostics drawer visibility. D toggles.
+	bool showDiagnostics = false;
 
 	// These are persisted
 	int sampleIndex = 0;
@@ -55,6 +55,9 @@ public:
 	virtual void Step();
 
 	virtual void UpdateGui();
+	virtual void BuildSamplePanel()
+	{
+	}
 	virtual void Keyboard( int )
 	{
 	}
@@ -76,6 +79,13 @@ public:
 	static constexpr int m_maxTasks = 512;
 	static constexpr int m_maxThreads = 64;
 	static constexpr int m_profileCapacity = 512;
+	static constexpr int m_maxHudLines = 64;
+
+	struct HudLine
+	{
+		b2HexColor color;
+		char text[256];
+	};
 
 #ifdef NDEBUG
 	static constexpr bool m_isDebug = false;
@@ -94,8 +104,9 @@ public:
 	b2Vec2 m_mousePoint;
 	float m_mouseForceScale;
 	int m_stepCount;
-	int m_textLine;
-	int m_textIncrement;
+
+	HudLine m_hudLines[m_maxHudLines];
+	int m_hudLineCount;
 
 	b2Profile m_profiles[m_profileCapacity];
 	int m_currentProfileIndex;

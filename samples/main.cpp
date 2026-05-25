@@ -287,6 +287,10 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				s_context.showUI = !s_context.showUI;
 				break;
 
+			case GLFW_KEY_D:
+				s_context.showDiagnostics = !s_context.showDiagnostics;
+				break;
+
 			default:
 				if ( s_context.sample != nullptr )
 				{
@@ -558,14 +562,26 @@ int main( int, char** )
 		s_context.sample->ResetText();
 
 		const SampleEntry& entry = g_sampleEntries[s_context.sampleIndex];
-		s_context.sample->DrawColoredTextLine( b2_colorYellow, "%s : %s", entry.category, entry.name );
+
+		if ( s_context.showUI )
+		{
+			s_context.sample->DrawColoredTextLine( b2_colorYellow, "%s : %s", entry.category, entry.name );
+			s_context.sample->DrawColoredTextLine( b2_colorSeaGreen, "%.1f ms  step %d", 1000.0f * frameTime,
+												   s_context.sample->m_stepCount );
+			s_context.sample->DrawColoredTextLine( b2_colorSeaGreen, "cam %g, %g  z %g", s_context.camera.center.x,
+												   s_context.camera.center.y, s_context.camera.zoom );
+		}
 
 		s_context.sample->Step();
 
-		float fontSize = ImGui::GetFontSize();
-		DrawScreenString( s_context.draw, 5.0f, s_context.camera.height - 0.5f * fontSize, b2_colorSeaGreen,
-						  "%.1f ms - step %d - camera (%g, %g, %g)", 1000.0f * frameTime, s_context.sample->m_stepCount,
-						  s_context.camera.center.x, s_context.camera.center.y, s_context.camera.zoom );
+		if ( s_context.showUI == false )
+		{
+			float fontSize = ImGui::GetFontSize();
+			DrawScreenString( s_context.draw, 5.0f, 1.5f * fontSize, b2_colorYellow, "%s : %s", entry.category,
+							  entry.name );
+			DrawScreenString( s_context.draw, 5.0f, s_context.camera.height - 0.5f * fontSize, b2_colorSeaGreen,
+							  "%.1f ms  step %d", 1000.0f * frameTime, s_context.sample->m_stepCount );
+		}
 
 		FlushDraw( s_context.draw, &s_context.camera );
 
