@@ -303,16 +303,12 @@ public:
 
 	void BuildSamplePanel() override
 	{
-		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
-
 		bool changed = false;
 		const char* shapeTypes[] = { "Circle", "Capsule", "Mix", "Compound", "Human" };
 
 		int shapeType = int( m_shapeType );
 		changed = changed || ImGui::Combo( "Shape", &shapeType, shapeTypes, IM_ARRAYSIZE( shapeTypes ) );
 		m_shapeType = ShapeType( shapeType );
-
-		ImGui::PopItemWidth();
 
 		changed = changed || ImGui::Button( "Reset Scene" );
 

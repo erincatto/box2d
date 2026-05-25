@@ -661,7 +661,7 @@ int main( int, char** )
 
 		if ( s_context.showUI )
 		{
-			s_context.sample->DrawColoredTextLine( b2_colorYellow, "%s", entry.name );
+			s_context.sample->DrawColoredTextLine( b2_colorGoldenRod, "%s", entry.name );
 			s_context.sample->DrawColoredTextLine( b2_colorLightGray, "%s", entry.category );
 			s_context.sample->DrawTextLine( "" );
 			s_context.sample->DrawColoredTextLine( b2_colorSeaGreen, "%.1f ms", 1000.0f * frameTime );

@@ -1385,6 +1385,14 @@ void UpdateSampleUI( SampleContext* context )
 
 		ImGui::EndMainMenuBar();
 
+		{
+			float menuBarBottom = ImGui::GetFrameHeight();
+			ImU32 borderColor = ImGui::GetColorU32( ImGuiCol_Border );
+			ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+			ImGui::GetForegroundDrawList()->AddLine( ImVec2( 0.0f, menuBarBottom ),
+													 ImVec2( displaySize.x, menuBarBottom ), borderColor, 1.0f );
+		}
+
 		if ( showHelp )
 		{
 			ImGui::SetNextWindowPos( { context->camera.width * 0.5f, context->camera.height * 0.5f }, ImGuiCond_Appearing,
@@ -1606,6 +1614,11 @@ void UpdateSampleUI( SampleContext* context )
 	for ( int i = 0; i < context->sample->m_hudLineCount; ++i )
 	{
 		const Sample::HudLine& line = context->sample->m_hudLines[i];
+		if ( line.text[0] == '\0' )
+		{
+			ImGui::Separator();
+			continue;
+		}
 		uint32_t hex = static_cast<uint32_t>( line.color );
 		ImU32 color = IM_COL32( ( hex >> 16 ) & 0xFF, ( hex >> 8 ) & 0xFF, hex & 0xFF, 255 );
 		ImGui::PushStyleColor( ImGuiCol_Text, color );
