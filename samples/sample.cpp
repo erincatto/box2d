@@ -579,98 +579,6 @@ void Sample::UpdateGui()
 
 	if ( ImGui::BeginTabBar( "DiagnosticsTabs", ImGuiTabBarFlags_None ) )
 	{
-		// ---- Counters tab ----
-		if ( ImGui::BeginTabItem( "Counters" ) )
-		{
-			b2Counters s = b2World_GetCounters( m_worldId );
-			b2Capacity c = b2World_GetMaxCapacity( m_worldId );
-			constexpr int colorCount = sizeof( s.colorCounts ) / sizeof( s.colorCounts[0] );
-			const int overflowIndex = colorCount - 1;
-
-			if ( ImGui::BeginTable( "counters_layout", 2, ImGuiTableFlags_SizingFixedFit ) )
-			{
-				ImGui::TableSetupColumn( "left", ImGuiTableColumnFlags_WidthFixed, 22.0f * fontSize );
-				ImGui::TableSetupColumn( "right", ImGuiTableColumnFlags_WidthStretch );
-				ImGui::TableNextRow();
-				ImGui::TableNextColumn();
-
-				ImGui::Text( "bodies   %d / %d", s.bodyCount, c.staticBodyCount + c.dynamicBodyCount );
-				ImGui::Text( "shapes   %d / %d", s.shapeCount, c.staticShapeCount + c.dynamicShapeCount );
-				ImGui::Text( "contacts %d / %d", s.contactCount, c.contactCount );
-				ImGui::Text( "joints   %d", s.jointCount );
-				ImGui::Text( "islands/tasks %d / %d", s.islandCount, s.taskCount );
-				ImGui::Text( "tree height static/movable %d / %d", s.staticTreeHeight, s.treeHeight );
-				ImGui::Text( "alloc %d K   stack %d K", s.byteCount / 1024, s.stackUsed / 1024 );
-
-				{
-					float frac = s.awakeContactCount > 0
-									 ? b2ClampFloat( (float)s.recycledContactCount / (float)s.awakeContactCount, 0.0f, 1.0f )
-									 : 0.0f;
-					char overlay[32];
-					snprintf( overlay, sizeof( overlay ), "%d / %d", s.recycledContactCount, s.awakeContactCount );
-					ImGui::TextUnformatted( "recycled" );
-					ImGui::SameLine();
-					ImGui::ProgressBar( frac, ImVec2( -FLT_MIN, 0.0f ), overlay );
-				}
-
-				ImGui::TableNextColumn();
-
-				int totalCount = 0;
-				int normalCount = 0;
-				for ( int i = 0; i < colorCount; ++i )
-				{
-					totalCount += s.colorCounts[i];
-					if ( i != overflowIndex )
-					{
-						normalCount += s.colorCounts[i];
-					}
-				}
-				int overflowCount = s.colorCounts[overflowIndex];
-
-				ImGui::Text( "%d constraints across %d colors", totalCount, colorCount - 1 );
-
-				float availWidth = ImGui::GetContentRegionAvail().x;
-				float barHeight = 2.0f * fontSize;
-				ImDrawList* dl = ImGui::GetWindowDrawList();
-
-				ImVec2 cursor = ImGui::GetCursorScreenPos();
-				dl->AddRectFilled( cursor, ImVec2( cursor.x + availWidth, cursor.y + barHeight ),
-								   IM_COL32( 40, 40, 40, 255 ) );
-				if ( normalCount > 0 )
-				{
-					float x = cursor.x;
-					const float invTotal = 1.0f / (float)normalCount;
-					for ( int i = 0; i < overflowIndex; ++i )
-					{
-						int cnt = s.colorCounts[i];
-						if ( cnt == 0 )
-						{
-							continue;
-						}
-						float segW = availWidth * cnt * invTotal;
-						uint32_t hex = static_cast<uint32_t>( b2GetGraphColor( i ) );
-						ImU32 col = IM_COL32( ( hex >> 16 ) & 0xFF, ( hex >> 8 ) & 0xFF, hex & 0xFF, 255 );
-						dl->AddRectFilled( ImVec2( x, cursor.y ), ImVec2( x + segW, cursor.y + barHeight ), col );
-						x += segW;
-					}
-				}
-				ImGui::Dummy( ImVec2( availWidth, barHeight ) );
-
-				ImGui::Spacing();
-				float overflowFrac = totalCount > 0 ? (float)overflowCount / (float)totalCount : 0.0f;
-				char overflowOverlay[32];
-				snprintf( overflowOverlay, sizeof( overflowOverlay ), "overflow %d", overflowCount );
-				ImGui::PushStyleColor( ImGuiCol_PlotHistogram, IM_COL32( 220, 60, 60, 255 ) );
-				ImGui::ProgressBar( overflowFrac, ImVec2( -FLT_MIN, 0.0f ), overflowOverlay );
-				ImGui::PopStyleColor();
-
-				ImGui::EndTable();
-			}
-
-			ImGui::EndTabItem();
-		}
-
-		// ---- Profile tab ----
 		if ( ImGui::BeginTabItem( "Profile" ) )
 		{
 			const int count = static_cast<int>( m_profileWriteIndex - m_profileReadIndex );
@@ -949,7 +857,6 @@ void Sample::UpdateGui()
 			ImGui::EndTabItem();
 		}
 
-		// ---- Frame Time tab ----
 		if ( ImGui::BeginTabItem( "Frame Time" ) )
 		{
 			float maxValue = 0.0f;
@@ -977,6 +884,95 @@ void Sample::UpdateGui()
 				ImPlot::PlotLine( "collide", times, collideTimes, count );
 				ImPlot::PlotLine( "solve", times, solveTimes, count );
 				ImPlot::EndPlot();
+			}
+
+			ImGui::EndTabItem();
+		}
+
+		if ( ImGui::BeginTabItem( "Counters" ) )
+		{
+			b2Counters s = b2World_GetCounters( m_worldId );
+			b2Capacity c = b2World_GetMaxCapacity( m_worldId );
+			constexpr int colorCount = sizeof( s.colorCounts ) / sizeof( s.colorCounts[0] );
+			const int overflowIndex = colorCount - 1;
+
+			if ( ImGui::BeginTable( "counters_layout", 2, ImGuiTableFlags_SizingFixedFit ) )
+			{
+				ImGui::TableSetupColumn( "left", ImGuiTableColumnFlags_WidthFixed, 22.0f * fontSize );
+				ImGui::TableSetupColumn( "right", ImGuiTableColumnFlags_WidthStretch );
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+
+				ImGui::Text( "bodies   %d / %d", s.bodyCount, c.staticBodyCount + c.dynamicBodyCount );
+				ImGui::Text( "shapes   %d / %d", s.shapeCount, c.staticShapeCount + c.dynamicShapeCount );
+				ImGui::Text( "contacts %d / %d", s.contactCount, c.contactCount );
+				ImGui::Text( "joints   %d", s.jointCount );
+				ImGui::Text( "islands/tasks %d / %d", s.islandCount, s.taskCount );
+				ImGui::Text( "tree height static/movable %d / %d", s.staticTreeHeight, s.treeHeight );
+				ImGui::Text( "alloc %d K   stack %d K", s.byteCount / 1024, s.stackUsed / 1024 );
+
+				{
+					float frac = s.awakeContactCount > 0
+									 ? b2ClampFloat( (float)s.recycledContactCount / (float)s.awakeContactCount, 0.0f, 1.0f )
+									 : 0.0f;
+					char overlay[32];
+					snprintf( overlay, sizeof( overlay ), "%d / %d", s.recycledContactCount, s.awakeContactCount );
+					ImGui::TextUnformatted( "recycled" );
+					ImGui::SameLine();
+					ImGui::ProgressBar( frac, ImVec2( -FLT_MIN, 0.0f ), overlay );
+				}
+
+				ImGui::TableNextColumn();
+
+				int totalCount = 0;
+				int normalCount = 0;
+				for ( int i = 0; i < colorCount; ++i )
+				{
+					totalCount += s.colorCounts[i];
+					if ( i != overflowIndex )
+					{
+						normalCount += s.colorCounts[i];
+					}
+				}
+				int overflowCount = s.colorCounts[overflowIndex];
+
+				ImGui::Text( "%d constraints across %d colors", totalCount, colorCount - 1 );
+
+				float availWidth = ImGui::GetContentRegionAvail().x;
+				float barHeight = 2.0f * fontSize;
+				ImDrawList* dl = ImGui::GetWindowDrawList();
+
+				ImVec2 cursor = ImGui::GetCursorScreenPos();
+				dl->AddRectFilled( cursor, ImVec2( cursor.x + availWidth, cursor.y + barHeight ), IM_COL32( 40, 40, 40, 255 ) );
+				if ( normalCount > 0 )
+				{
+					float x = cursor.x;
+					const float invTotal = 1.0f / (float)normalCount;
+					for ( int i = 0; i < overflowIndex; ++i )
+					{
+						int cnt = s.colorCounts[i];
+						if ( cnt == 0 )
+						{
+							continue;
+						}
+						float segW = availWidth * cnt * invTotal;
+						uint32_t hex = static_cast<uint32_t>( b2GetGraphColor( i ) );
+						ImU32 col = IM_COL32( ( hex >> 16 ) & 0xFF, ( hex >> 8 ) & 0xFF, hex & 0xFF, 255 );
+						dl->AddRectFilled( ImVec2( x, cursor.y ), ImVec2( x + segW, cursor.y + barHeight ), col );
+						x += segW;
+					}
+				}
+				ImGui::Dummy( ImVec2( availWidth, barHeight ) );
+
+				ImGui::Spacing();
+				float overflowFrac = totalCount > 0 ? (float)overflowCount / (float)totalCount : 0.0f;
+				char overflowOverlay[32];
+				snprintf( overflowOverlay, sizeof( overflowOverlay ), "overflow %d", overflowCount );
+				ImGui::PushStyleColor( ImGuiCol_PlotHistogram, IM_COL32( 220, 60, 60, 255 ) );
+				ImGui::ProgressBar( overflowFrac, ImVec2( -FLT_MIN, 0.0f ), overflowOverlay );
+				ImGui::PopStyleColor();
+
+				ImGui::EndTable();
 			}
 
 			ImGui::EndTabItem();
