@@ -3398,7 +3398,7 @@ public:
 		float jointDampingRatio = 0.5f;
 		CreateHuman( &m_human, m_worldId, { 0.0f, 5.0f }, m_scale, jointFrictionTorque, jointHertz, jointDampingRatio, 1, nullptr,
 					 false );
-		Human_ApplyRandomAngularImpulse( &m_human, 10.0f );
+		Human_ApplyRandomAngularImpulse( &m_human, 0.1f );
 	}
 
 	void BuildSamplePanel() override
