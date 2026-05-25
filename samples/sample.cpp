@@ -1327,7 +1327,79 @@ void UpdateSampleUI( SampleContext* context )
 			ImGui::EndMenu();
 		}
 
+		static bool showHelp = false;
+		static bool showAbout = false;
+		if ( ImGui::BeginMenu( "Help" ) )
+		{
+			ImGui::MenuItem( "Controls", nullptr, &showHelp );
+			ImGui::MenuItem( "About", nullptr, &showAbout );
+			ImGui::EndMenu();
+		}
+
 		ImGui::EndMainMenuBar();
+
+		if ( showHelp )
+		{
+			ImGui::SetNextWindowPos( { context->camera.width * 0.5f, context->camera.height * 0.5f }, ImGuiCond_Appearing,
+									 { 0.5f, 0.5f } );
+			ImGui::SetNextWindowSize( { 24.0f * fontSize, 0.0f }, ImGuiCond_Appearing );
+
+			if ( ImGui::Begin( "Controls", &showHelp,
+							   ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize ) )
+			{
+				auto row = []( const char* key, const char* desc ) {
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex( 0 );
+					ImGui::TextUnformatted( key );
+					ImGui::TableSetColumnIndex( 1 );
+					ImGui::TextUnformatted( desc );
+				};
+
+				ImGui::SeparatorText( "Keyboard" );
+				if ( ImGui::BeginTable( "keys", 2, ImGuiTableFlags_SizingFixedFit ) )
+				{
+					row( "Tab", "Show / hide UI" );
+					row( "M", "Show / hide diagnostics" );
+					row( "P", "Pause / resume" );
+					row( "O", "Single step" );
+					row( "R", "Restart sample" );
+					row( "[  ]", "Previous / next sample" );
+					row( "Arrows", "Pan camera" );
+					row( "Ctrl+Arrows", "Shift origin" );
+					row( "Z  X", "Zoom out / in" );
+					row( "Home", "Reset camera" );
+					row( "Esc", "Quit" );
+					ImGui::EndTable();
+				}
+
+				ImGui::SeparatorText( "Mouse" );
+				if ( ImGui::BeginTable( "mouse", 2, ImGuiTableFlags_SizingFixedFit ) )
+				{
+					row( "Left drag", "Move bodies (mouse joint)" );
+					row( "Right drag", "Pan camera" );
+					row( "Scroll wheel", "Zoom" );
+					ImGui::EndTable();
+				}
+			}
+			ImGui::End();
+		}
+
+		if ( showAbout )
+		{
+			ImGui::SetNextWindowPos( { context->camera.width * 0.5f, context->camera.height * 0.5f }, ImGuiCond_Appearing,
+									 { 0.5f, 0.5f } );
+			ImGui::SetNextWindowSize( { 22.0f * fontSize, 0.0f }, ImGuiCond_Appearing );
+
+			if ( ImGui::Begin( "About", &showAbout, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize ) )
+			{
+				b2Version version = b2GetVersion();
+				ImGui::Text( "Box2D %d.%d.%d", version.major, version.minor, version.revision );
+				ImGui::Spacing();
+				ImGui::TextLinkOpenURL( "box2d.org", "https://box2d.org/" );
+				ImGui::TextLinkOpenURL( "github.com/erincatto/box2d", "https://github.com/erincatto/box2d" );
+			}
+			ImGui::End();
+		}
 	}
 
 	float menuBarHeight = ImGui::GetFrameHeight();
