@@ -9,6 +9,7 @@
 
 #include "container.h"
 #include "shader.h"
+#include "shaders_embedded.h"
 
 #include "box2d/math_functions.h"
 
@@ -165,7 +166,7 @@ Background CreateBackground()
 {
 	Background background = { 0 };
 
-	background.programId = CreateProgramFromFiles( "samples/data/background.vs", "samples/data/background.fs" );
+	background.programId = CreateProgramFromStrings( k_background_vs, k_background_fs );
 	background.timeUniform = glGetUniformLocation( background.programId, "time" );
 	background.resolutionUniform = glGetUniformLocation( background.programId, "resolution" );
 	background.baseColorUniform = glGetUniformLocation( background.programId, "baseColor" );
@@ -259,7 +260,7 @@ PointRender CreatePointDrawData()
 {
 	PointRender render = { 0 };
 	render.points = PointDataArray_Create( POINT_BATCH_SIZE );
-	render.programId = CreateProgramFromFiles( "samples/data/point.vs", "samples/data/point.fs" );
+	render.programId = CreateProgramFromStrings( k_point_vs, k_point_fs );
 	render.projectionUniform = glGetUniformLocation( render.programId, "projectionMatrix" );
 	int vertexAttribute = 0;
 	int sizeAttribute = 1;
@@ -382,7 +383,7 @@ LineRender CreateLineRender()
 {
 	LineRender render = { 0 };
 	render.points = VertexDataArray_Create( LINE_BATCH_SIZE );
-	render.programId = CreateProgramFromFiles( "samples/data/line.vs", "samples/data/line.fs" );
+	render.programId = CreateProgramFromStrings( k_line_vs, k_line_fs );
 	render.projectionUniform = glGetUniformLocation( render.programId, "projectionMatrix" );
 	int vertexAttribute = 0;
 	int colorAttribute = 1;
@@ -513,7 +514,7 @@ CircleRender CreateCircles()
 {
 	CircleRender render = { 0 };
 	render.circles = CircleDataArray_Create( CIRCLE_BATCH_SIZE );
-	render.programId = CreateProgramFromFiles( "samples/data/circle.vs", "samples/data/circle.fs" );
+	render.programId = CreateProgramFromStrings( k_circle_vs, k_circle_fs );
 	render.projectionUniform = glGetUniformLocation( render.programId, "projectionMatrix" );
 	render.pixelScaleUniform = glGetUniformLocation( render.programId, "pixelScale" );
 	int vertexAttribute = 0;
@@ -660,7 +661,7 @@ SolidCircles CreateSolidCircles()
 {
 	SolidCircles render = { 0 };
 	render.circles = SolidCircleArray_Create( SOLID_CIRCLE_BATCH_SIZE );
-	render.programId = CreateProgramFromFiles( "samples/data/solid_circle.vs", "samples/data/solid_circle.fs" );
+	render.programId = CreateProgramFromStrings( k_solid_circle_vs, k_solid_circle_fs );
 	render.projectionUniform = glGetUniformLocation( render.programId, "projectionMatrix" );
 	render.pixelScaleUniform = glGetUniformLocation( render.programId, "pixelScale" );
 
@@ -807,7 +808,7 @@ Capsules CreateCapsules()
 {
 	Capsules render = { 0 };
 	render.capsules = CapsuleArray_Create( CAPSULE_BATCH_SIZE );
-	render.programId = CreateProgramFromFiles( "samples/data/solid_capsule.vs", "samples/data/solid_capsule.fs" );
+	render.programId = CreateProgramFromStrings( k_solid_capsule_vs, k_solid_capsule_fs );
 	render.projectionUniform = glGetUniformLocation( render.programId, "projectionMatrix" );
 	render.pixelScaleUniform = glGetUniformLocation( render.programId, "pixelScale" );
 
@@ -974,7 +975,7 @@ Polygons CreatePolygons()
 {
 	Polygons render = { 0 };
 	render.polygons = PolygonArray_Create( 10 * POLYGON_BATCH_SIZE );
-	render.programId = CreateProgramFromFiles( "samples/data/solid_polygon.vs", "samples/data/solid_polygon.fs" );
+	render.programId = CreateProgramFromStrings( k_solid_polygon_vs, k_solid_polygon_fs );
 	render.projectionUniform = glGetUniformLocation( render.programId, "projectionMatrix" );
 	render.pixelScaleUniform = glGetUniformLocation( render.programId, "pixelScale" );
 
