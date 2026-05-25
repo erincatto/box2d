@@ -199,14 +199,8 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 11.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 9.0f * fontSize, height ) );
-		ImGui::Begin( "Body Type", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
 		if ( ImGui::RadioButton( "Static", m_type == b2_staticBody ) )
 		{
 			m_type = b2_staticBody;
@@ -223,11 +217,11 @@ public:
 			b2Body_SetType( m_platformId, b2_kinematicBody );
 			b2Body_SetLinearVelocity( m_platformId, { -m_speed, 0.0f } );
 			b2Body_SetAngularVelocity( m_platformId, 0.0f );
-			
+
 			b2Body_SetType( m_secondAttachmentId, b2_kinematicBody );
 			b2Body_SetLinearVelocity(m_secondAttachmentId, b2Vec2_zero);
 			b2Body_SetAngularVelocity(m_secondAttachmentId, 0.0f);
-			
+
 			b2Body_SetType( m_secondPayloadId, b2_kinematicBody );
 			b2Body_SetType( m_touchingBodyId, b2_kinematicBody );
 			b2Body_SetType( m_floatingBodyId, b2_kinematicBody );
@@ -258,8 +252,6 @@ public:
 				b2Body_Disable( m_floatingBodyId );
 			}
 		}
-
-		ImGui::End();
 	}
 
 	void Step() override
@@ -363,13 +355,8 @@ public:
 		m_explosionMagnitude = 8.0f;
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 120.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 200.0f, height ) );
-		ImGui::Begin( "Weeble", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
 		if ( ImGui::Button( "Teleport" ) )
 		{
 			b2Body_SetTransform( m_weebleId, { 0.0f, 5.0f }, b2MakeRot( 0.95 * B2_PI ) );
@@ -384,12 +371,10 @@ public:
 			def.impulsePerLength = m_explosionMagnitude;
 			b2World_Explode( m_worldId, &def );
 		}
-		ImGui::PushItemWidth( 100.0f );
 
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		ImGui::SliderFloat( "Magnitude", &m_explosionMagnitude, -100.0f, 100.0f, "%.1f" );
-
 		ImGui::PopItemWidth();
-		ImGui::End();
 	}
 
 	void Step() override
@@ -568,15 +553,9 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 160.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
-		ImGui::Begin( "Sleep", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
-		ImGui::PushItemWidth( 120.0f );
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
 		ImGui::Text( "Pendulum Tuning" );
 
@@ -611,8 +590,6 @@ public:
 				ToggleInvoker();
 			}
 		}
-
-		ImGui::End();
 	}
 
 	void Step() override
@@ -734,8 +711,8 @@ public:
 	{
 		Sample::Step();
 
-		DrawTextLine("A bad body is a dynamic body with no mass and behaves like a kinematic body." );
-		DrawTextLine( "Bad bodies are considered invalid and a user bug. Behavior is not guaranteed." );
+		DrawScreenTextLine("A bad body is a dynamic body with no mass and behaves like a kinematic body." );
+		DrawScreenTextLine( "Bad bodies are considered invalid and a user bug. Behavior is not guaranteed." );
 
 		// For science
 		b2Body_ApplyForceToCenter( m_badBodyId, { 0.0f, 10.0f }, true );
@@ -808,7 +785,7 @@ public:
 		b2Vec2 r = b2Body_GetWorldVector( m_bodyId, { 0.0f, -m_lever } );
 
 		b2Vec2 vp = v + b2CrossSV( omega, r );
-		DrawTextLine( "pivot velocity = (%g, %g)", vp.x, vp.y );
+		DrawScreenTextLine( "pivot velocity = (%g, %g)", vp.x, vp.y );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -1097,21 +1074,12 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 5.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 10.0f * fontSize, height ) );
-
-		ImGui::Begin( "Wake Touching", nullptr, ImGuiWindowFlags_NoResize );
-
 		if ( ImGui::Button( "Wake Touching" ) )
 		{
 			b2Body_WakeTouching( m_groundId );
 		}
-
-		ImGui::End();
 	}
 
 	static Sample* Create( SampleContext* context )

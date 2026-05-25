@@ -23,9 +23,6 @@ struct SampleContext
 	class Sample* sample = nullptr;
 	b2Capacity capacity;
 	b2DebugDraw debugDraw;
-	ImFont* regularFont;
-	ImFont* mediumFont;
-	ImFont* largeFont;
 	float uiScale = 1.0f;
 	float hertz = 60.0f;
 	float recycleDistance = 0.05f;
@@ -34,13 +31,16 @@ struct SampleContext
 	bool restart = false;
 	bool pause = false;
 	bool singleStep = false;
-	bool drawCounters = false;
-	bool drawProfile = false;
 	bool enableWarmStarting = true;
 	bool enableContinuous = true;
 	bool enableSleep = true;
 	bool showUI = true;
-	bool frameTime = false;
+
+	// Diagnostics drawer visibility. D toggles.
+	bool showDiagnostics = false;
+
+	// Set by Ctrl+O; consumed by UpdateSampleUI to open the fuzzy sample picker.
+	bool openSamplePicker = false;
 
 	// These are persisted
 	int sampleIndex = 0;
@@ -58,6 +58,9 @@ public:
 	virtual void Step();
 
 	virtual void UpdateGui();
+	virtual void BuildSamplePanel()
+	{
+	}
 	virtual void Keyboard( int )
 	{
 	}
@@ -67,6 +70,8 @@ public:
 
 	void DrawTextLine( const char* text, ... );
 	void DrawColoredTextLine( b2HexColor color, const char* text, ... );
+	void DrawScreenTextLine( const char* text, ... );
+	void DrawColoredScreenTextLine( b2HexColor color, const char* text, ... );
 	void ResetProfile();
 	void ShiftOrigin( b2Vec2 newOrigin );
 
@@ -79,6 +84,13 @@ public:
 	static constexpr int m_maxTasks = 512;
 	static constexpr int m_maxThreads = 64;
 	static constexpr int m_profileCapacity = 512;
+	static constexpr int m_maxHudLines = 64;
+
+	struct HudLine
+	{
+		b2HexColor color;
+		char text[256];
+	};
 
 #ifdef NDEBUG
 	static constexpr bool m_isDebug = false;
@@ -97,8 +109,10 @@ public:
 	b2Vec2 m_mousePoint;
 	float m_mouseForceScale;
 	int m_stepCount;
-	int m_textLine;
-	int m_textIncrement;
+
+	HudLine m_hudLines[m_maxHudLines];
+	int m_hudLineCount;
+	float m_screenTextY;
 
 	b2Profile m_profiles[m_profileCapacity];
 	int m_currentProfileIndex;

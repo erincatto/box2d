@@ -141,18 +141,11 @@ public:
 		m_followCar = false;
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		Sample::UpdateGui();
-
-		float fontSize = ImGui::GetFontSize();
-		float height = 13.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 18.0f * fontSize, height ) );
-
-		ImGui::Begin( "Large World", nullptr, ImGuiWindowFlags_NoResize );
-
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		ImGui::SliderFloat( "speed", &m_speed, -400.0f, 400.0f, "%.0f" );
+		ImGui::PopItemWidth();
 		if ( ImGui::Button( "stop" ) )
 		{
 			m_speed = 0.0f;
@@ -162,7 +155,6 @@ public:
 		ImGui::Checkbox( "follow car", &m_followCar );
 
 		ImGui::Text( "world size = %g kilometers", m_gridSize * m_gridCount / 1000.0f );
-		ImGui::End();
 	}
 
 	void Step() override

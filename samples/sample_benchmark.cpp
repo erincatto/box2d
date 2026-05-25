@@ -301,16 +301,8 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		Sample::UpdateGui();
-
-		float fontSize = ImGui::GetFontSize();
-		float height = 6.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 15.0f * fontSize, height ) );
-		ImGui::Begin( "Benchmark: Barrel", nullptr, ImGuiWindowFlags_NoResize );
-
 		bool changed = false;
 		const char* shapeTypes[] = { "Circle", "Capsule", "Mix", "Compound", "Human" };
 
@@ -324,8 +316,6 @@ public:
 		{
 			CreateScene();
 		}
-
-		ImGui::End();
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -617,16 +607,9 @@ public:
 		m_bodyIndex = 0;
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		Sample::UpdateGui();
-
-		float fontSize = ImGui::GetFontSize();
-		float height = 8.5f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 15.5f * fontSize, height ) );
-		ImGui::Begin( "Benchmark: Many Tumblers", nullptr, ImGuiWindowFlags_NoResize );
-		ImGui::PushItemWidth( 8.0f * fontSize );
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
 		bool changed = false;
 		changed = changed || ImGui::SliderInt( "Row Count", &m_rowCount, 1, 32 );
@@ -647,7 +630,6 @@ public:
 		}
 
 		ImGui::PopItemWidth();
-		ImGui::End();
 	}
 
 	void Step() override
@@ -859,11 +841,11 @@ public:
 			CreateScene();
 		}
 
-		DrawTextLine( "total: create = %g ms, destroy = %g ms", m_createTime, m_destroyTime );
+		DrawScreenTextLine( "total: create = %g ms, destroy = %g ms", m_createTime, m_destroyTime );
 
 		float createPerBody = 1000.0f * m_createTime / m_iterations / m_bodyCount;
 		float destroyPerBody = 1000.0f * m_destroyTime / m_iterations / m_bodyCount;
-		DrawTextLine( "body: create = %g us, destroy = %g us", createPerBody, destroyPerBody );
+		DrawScreenTextLine( "body: create = %g us, destroy = %g us", createPerBody, destroyPerBody );
 
 		Sample::Step();
 	}
@@ -1326,16 +1308,9 @@ public:
 		m_minTime = 1e6f;
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 17.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 13.0f * fontSize, height ) );
-
-		ImGui::Begin( "Cast", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
-
-		ImGui::PushItemWidth( 7.5f * fontSize );
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
 		bool changed = false;
 
@@ -1381,6 +1356,8 @@ public:
 			changed = true;
 		}
 
+		ImGui::PopItemWidth();
+
 		if ( ImGui::Checkbox( "top down", &m_topDown ) )
 		{
 			changed = true;
@@ -1390,9 +1367,6 @@ public:
 		{
 			m_drawIndex = ( m_drawIndex + 1 ) % m_origins.size();
 		}
-
-		ImGui::PopItemWidth();
-		ImGui::End();
 
 		if ( changed )
 		{
@@ -1566,7 +1540,7 @@ public:
 		}
 
 		DrawTextLine( "build time ms = %g", m_buildTime );
-		DrawTextLine( "hit count = %d, node visits = %d, leaf visits = %d", hitCount, nodeVisits, leafVisits );
+		DrawScreenTextLine( "hit count = %d, node visits = %d, leaf visits = %d", hitCount, nodeVisits, leafVisits );
 		DrawTextLine( "total ms = %.3f", ms );
 		DrawTextLine( "min total ms = %.3f", m_minTime );
 
@@ -1743,17 +1717,11 @@ public:
 		free( m_outputs );
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 5.0f * fontSize;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 17.0f * fontSize, height ) );
-		ImGui::Begin( "Benchmark: Shape Distance", nullptr, ImGuiWindowFlags_NoResize );
-
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		ImGui::SliderInt( "draw index", &m_drawIndex, 0, m_count - 1 );
-
-		ImGui::End();
+		ImGui::PopItemWidth();
 	}
 
 	void Step() override
@@ -1780,7 +1748,7 @@ public:
 			m_minMilliseconds = b2MinFloat( m_minMilliseconds, ms );
 
 			DrawTextLine( "count = %d", m_count );
-			DrawTextLine( "min ms = %g, ave us = %g", m_minMilliseconds, 1000.0f * m_minMilliseconds / float( m_count ) );
+			DrawScreenTextLine( "min ms = %g, ave us = %g", m_minMilliseconds, 1000.0f * m_minMilliseconds / float( m_count ) );
 			DrawTextLine( "average iterations = %g", totalIterations / float( m_count ) );
 		}
 
@@ -1993,8 +1961,8 @@ public:
 
 		m_maxBeginCount = b2MaxInt( events.beginCount, m_maxBeginCount );
 		m_maxEndCount = b2MaxInt( events.endCount, m_maxEndCount );
-		DrawTextLine( "max begin touch events = %d", m_maxBeginCount );
-		DrawTextLine( "max end touch events = %d", m_maxEndCount );
+		DrawScreenTextLine( "max begin touch events = %d", m_maxBeginCount );
+		DrawScreenTextLine( "max end touch events = %d", m_maxEndCount );
 	}
 
 	bool Filter( b2ShapeId idA, b2ShapeId idB )

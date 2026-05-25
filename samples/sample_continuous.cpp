@@ -117,15 +117,9 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 100.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
-
-		ImGui::Begin( "Bounce House", nullptr, ImGuiWindowFlags_NoResize );
-
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		const char* shapeTypes[] = { "Circle", "Capsule", "Box" };
 		int shapeType = int( m_shapeType );
 		if ( ImGui::Combo( "Shape", &shapeType, shapeTypes, IM_ARRAYSIZE( shapeTypes ) ) )
@@ -133,13 +127,12 @@ public:
 			m_shapeType = ShapeType( shapeType );
 			Launch();
 		}
+		ImGui::PopItemWidth();
 
 		if ( ImGui::Checkbox( "hit events", &m_enableHitEvents ) )
 		{
 			b2Body_EnableHitEvents( m_bodyId, m_enableHitEvents );
 		}
-
-		ImGui::End();
 	}
 
 	void Step() override
@@ -340,24 +333,17 @@ public:
 		// m_shapeId = b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 240.0f, height ) );
-
-		ImGui::Begin( "Chain Drop", nullptr, ImGuiWindowFlags_NoResize );
-
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		ImGui::SliderFloat( "Speed", &m_speed, -100.0f, 0.0f, "%.0f" );
 		ImGui::SliderFloat( "Y Offset", &m_yOffset, -1.0f, 1.0f, "%.1f" );
+		ImGui::PopItemWidth();
 
 		if ( ImGui::Button( "Launch" ) )
 		{
 			Launch();
 		}
-
-		ImGui::End();
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -597,15 +583,8 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 110.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 140.0f, height ) );
-
-		ImGui::Begin( "Skinny Box", nullptr, ImGuiWindowFlags_NoResize );
-
 		ImGui::Checkbox( "Capsule", &m_capsule );
 
 		if ( ImGui::Button( "Launch" ) )
@@ -614,8 +593,6 @@ public:
 		}
 
 		ImGui::Checkbox( "Auto Test", &m_autoTest );
-
-		ImGui::End();
 	}
 
 	void Step() override
@@ -867,15 +844,9 @@ public:
 		}
 	}
 
-	void UpdateGui() override
+	void BuildSamplePanel() override
 	{
-		float fontSize = ImGui::GetFontSize();
-		float height = 140.0f;
-		ImGui::SetNextWindowPos( ImVec2( 0.5f * fontSize, m_camera->height - height - 2.0f * fontSize ), ImGuiCond_Once );
-		ImGui::SetNextWindowSize( ImVec2( 180.0f, height ) );
-
-		ImGui::Begin( "Ghost Bumps", nullptr, ImGuiWindowFlags_NoResize );
-		ImGui::PushItemWidth( 100.0f );
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
 		if ( ImGui::Checkbox( "Chain", &m_useChain ) )
 		{
@@ -918,7 +889,6 @@ public:
 		}
 
 		ImGui::PopItemWidth();
-		ImGui::End();
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -1134,7 +1104,7 @@ public:
 
 		b2Vec2 p = b2Body_GetPosition( m_ballId );
 		b2Vec2 v = b2Body_GetLinearVelocity( m_ballId );
-		DrawTextLine( "p.x = %.9f, v.y = %.9f", p.x, v.y );
+		DrawScreenTextLine( "p.x = %.9f, v.y = %.9f", p.x, v.y );
 
 		Sample::Step();
 	}
@@ -1204,7 +1174,7 @@ public:
 
 		b2Vec2 p = b2Body_GetPosition( m_ballId );
 		b2Vec2 v = b2Body_GetLinearVelocity( m_ballId );
-		DrawTextLine( "p.x = %.9f, v.y = %.9f", p.x, v.y );
+		DrawScreenTextLine( "p.x = %.9f, v.y = %.9f", p.x, v.y );
 
 		Sample::Step();
 	}

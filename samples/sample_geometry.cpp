@@ -113,7 +113,7 @@ public:
 	{
 		Sample::Step();
 
-		DrawTextLine( "Options: generate(g), auto(a), bulk(b)" );
+		DrawScreenTextLine( "Options: generate(g), auto(a), bulk(b)" );
 
 		b2Hull hull;
 		bool valid = false;
@@ -177,7 +177,7 @@ public:
 		}
 		else
 		{
-			DrawTextLine( "generation = %d, count = %d", m_generation, hull.count );
+			DrawScreenTextLine( "generation = %d, count = %d", m_generation, hull.count );
 		}
 
 		if ( milliseconds > 0.0f )

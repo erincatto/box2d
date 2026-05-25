@@ -122,6 +122,92 @@ static void SortSamples()
 	qsort( g_sampleEntries, g_sampleCount, sizeof( SampleEntry ), CompareSamples );
 }
 
+static void ApplyUIStyle( void )
+{
+	ImGuiStyle& style = ImGui::GetStyle();
+
+	// Metrics: containers round at 4px, controls at 3px - one deliberate
+	// system instead of the stock mix. Padding gives rows room to breathe.
+	style.WindowPadding = ImVec2( 10.0f, 10.0f );
+	style.FramePadding = ImVec2( 8.0f, 4.0f );
+	style.CellPadding = ImVec2( 6.0f, 4.0f );
+	style.ItemSpacing = ImVec2( 8.0f, 7.0f );
+	style.ItemInnerSpacing = ImVec2( 7.0f, 4.0f );
+	style.IndentSpacing = 18.0f;
+	style.ScrollbarSize = 12.0f;
+	style.GrabMinSize = 10.0f;
+
+	style.WindowBorderSize = 1.0f;
+	style.FrameBorderSize = 0.0f;
+	style.PopupBorderSize = 1.0f;
+	style.TabBorderSize = 0.0f;
+	style.SeparatorTextBorderSize = 1.0f;
+
+	style.WindowRounding = 4.0f;
+	style.ChildRounding = 4.0f;
+	style.PopupRounding = 4.0f;
+	style.FrameRounding = 3.0f;
+	style.GrabRounding = 3.0f;
+	style.ScrollbarRounding = 3.0f;
+	style.TabRounding = 3.0f;
+
+	style.WindowTitleAlign = ImVec2( 0.0f, 0.5f );
+
+	// Palette: neutral charcoal surfaces, one steel-blue accent at three
+	// brightnesses. Replaces stock ImGui's saturated cornflower blue.
+	const ImVec4 accent = ImVec4( 0.28f, 0.48f, 0.66f, 1.00f );
+	const ImVec4 accentHi = ImVec4( 0.38f, 0.60f, 0.80f, 1.00f );
+	const ImVec4 accentLo = ImVec4( 0.22f, 0.36f, 0.50f, 1.00f );
+
+	ImVec4* c = style.Colors;
+	c[ImGuiCol_Text] = ImVec4( 0.90f, 0.91f, 0.93f, 1.00f );
+	c[ImGuiCol_TextDisabled] = ImVec4( 0.49f, 0.51f, 0.55f, 1.00f );
+	c[ImGuiCol_WindowBg] = ImVec4( 0.110f, 0.115f, 0.125f, 0.97f );
+	c[ImGuiCol_ChildBg] = ImVec4( 0.00f, 0.00f, 0.00f, 0.00f );
+	c[ImGuiCol_PopupBg] = ImVec4( 0.100f, 0.105f, 0.115f, 0.98f );
+	c[ImGuiCol_Border] = ImVec4( 0.00f, 0.00f, 0.00f, 0.45f );
+	c[ImGuiCol_BorderShadow] = ImVec4( 0.00f, 0.00f, 0.00f, 0.00f );
+	c[ImGuiCol_FrameBg] = ImVec4( 0.18f, 0.19f, 0.21f, 1.00f );
+	c[ImGuiCol_FrameBgHovered] = ImVec4( 0.24f, 0.26f, 0.29f, 1.00f );
+	c[ImGuiCol_FrameBgActive] = ImVec4( 0.29f, 0.32f, 0.36f, 1.00f );
+	c[ImGuiCol_TitleBg] = ImVec4( 0.090f, 0.095f, 0.105f, 1.00f );
+	c[ImGuiCol_TitleBgActive] = ImVec4( 0.14f, 0.16f, 0.19f, 1.00f );
+	c[ImGuiCol_TitleBgCollapsed] = ImVec4( 0.090f, 0.095f, 0.105f, 0.75f );
+	c[ImGuiCol_MenuBarBg] = ImVec4( 0.13f, 0.14f, 0.16f, 1.00f );
+	c[ImGuiCol_ScrollbarBg] = ImVec4( 0.06f, 0.06f, 0.07f, 0.55f );
+	c[ImGuiCol_ScrollbarGrab] = ImVec4( 0.28f, 0.30f, 0.33f, 1.00f );
+	c[ImGuiCol_ScrollbarGrabHovered] = ImVec4( 0.36f, 0.39f, 0.43f, 1.00f );
+	c[ImGuiCol_ScrollbarGrabActive] = accent;
+	c[ImGuiCol_CheckMark] = accentHi;
+	c[ImGuiCol_SliderGrab] = accent;
+	c[ImGuiCol_SliderGrabActive] = accentHi;
+	c[ImGuiCol_Button] = ImVec4( 0.22f, 0.24f, 0.27f, 1.00f );
+	c[ImGuiCol_ButtonHovered] = accentLo;
+	c[ImGuiCol_ButtonActive] = accent;
+	c[ImGuiCol_Header] = ImVec4( 0.19f, 0.21f, 0.24f, 1.00f );
+	c[ImGuiCol_HeaderHovered] = accentLo;
+	c[ImGuiCol_HeaderActive] = accent;
+	c[ImGuiCol_Separator] = ImVec4( 1.00f, 1.00f, 1.00f, 0.09f );
+	c[ImGuiCol_SeparatorHovered] = accentLo;
+	c[ImGuiCol_SeparatorActive] = accent;
+	c[ImGuiCol_ResizeGrip] = ImVec4( 1.00f, 1.00f, 1.00f, 0.06f );
+	c[ImGuiCol_ResizeGripHovered] = accentLo;
+	c[ImGuiCol_ResizeGripActive] = accent;
+	c[ImGuiCol_Tab] = ImVec4( 0.15f, 0.16f, 0.18f, 1.00f );
+	c[ImGuiCol_TabHovered] = accentLo;
+	c[ImGuiCol_TabSelected] = accent;
+	c[ImGuiCol_TabSelectedOverline] = accentHi;
+	c[ImGuiCol_TabDimmed] = ImVec4( 0.12f, 0.13f, 0.14f, 1.00f );
+	c[ImGuiCol_TabDimmedSelected] = accentLo;
+	c[ImGuiCol_TextSelectedBg] = ImVec4( accent.x, accent.y, accent.z, 0.40f );
+	c[ImGuiCol_DragDropTarget] = accentHi;
+	c[ImGuiCol_NavCursor] = accentHi;
+	c[ImGuiCol_PlotLines] = ImVec4( 0.70f, 0.72f, 0.75f, 1.00f );
+	c[ImGuiCol_PlotLinesHovered] = accentHi;
+	c[ImGuiCol_PlotHistogram] = accent;
+	c[ImGuiCol_PlotHistogramHovered] = accentHi;
+}
+
 static void CreateUI( GLFWwindow* window, const char* glslVersion )
 {
 	IMGUI_CHECKVERSION();
@@ -142,33 +228,23 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 		assert( false );
 	}
 
-	ImGui::GetStyle().ScaleAllSizes( s_context.uiScale );
+	ImGuiIO& io = ImGui::GetIO();
+	ApplyUIStyle();
 
-	const char* fontPath = "samples/data/droid_sans.ttf";
-	FILE* file = fopen( fontPath, "rb" );
-
-	if ( file != nullptr )
+	if ( s_context.uiScale == 1.0f )
+	{
+		io.Fonts->AddFontDefaultBitmap();
+	}
+	else
 	{
 		ImFontConfig fontConfig;
 		// This brightens the font, improving readability when it is small.
 		fontConfig.RasterizerMultiply = s_context.uiScale * s_framebufferScale;
+		io.Fonts->AddFontDefaultVector( &fontConfig );
 
-		float regularSize = floorf( 13.0f * s_context.uiScale );
-		float mediumSize = floorf( 40.0f * s_context.uiScale );
-		float largeSize = floorf( 64.0f * s_context.uiScale );
-
-		ImGuiIO& io = ImGui::GetIO();
-		//s_context.regularFont = io.Fonts->AddFontFromFileTTF( fontPath, regularSize );
-		s_context.regularFont = io.Fonts->AddFontFromFileTTF( fontPath, regularSize, &fontConfig );
-		s_context.mediumFont = io.Fonts->AddFontFromFileTTF( fontPath, mediumSize, &fontConfig );
-		s_context.largeFont = io.Fonts->AddFontFromFileTTF( fontPath, largeSize, &fontConfig );
-
-		ImGui::GetIO().FontDefault = s_context.regularFont;
-	}
-	else
-	{
-		printf( "\n\nERROR: the Box2D samples working directory must be the top level Box2D directory (same as README.md)\n\n" );
-		exit( EXIT_FAILURE );
+		ImGuiStyle& style = ImGui::GetStyle();
+		style.ScaleAllSizes( s_context.uiScale );
+		style.FontSizeBase = floorf( 13.0f * s_context.uiScale );
 	}
 }
 
@@ -264,7 +340,15 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				break;
 
 			case GLFW_KEY_O:
-				s_context.singleStep = true;
+				if ( mods == GLFW_MOD_CONTROL )
+				{
+					s_context.showUI = true;
+					s_context.openSamplePicker = true;
+				}
+				else
+				{
+					s_context.singleStep = true;
+				}
 				break;
 
 			case GLFW_KEY_P:
@@ -297,6 +381,10 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 
 			case GLFW_KEY_TAB:
 				s_context.showUI = !s_context.showUI;
+				break;
+
+			case GLFW_KEY_M:
+				s_context.showDiagnostics = !s_context.showDiagnostics;
 				break;
 
 			default:
@@ -570,13 +658,30 @@ int main( int, char** )
 		s_context.sample->ResetText();
 
 		const SampleEntry& entry = g_sampleEntries[s_context.sampleIndex];
-		s_context.sample->DrawColoredTextLine( b2_colorYellow, "%s : %s", entry.category, entry.name );
+
+		if ( s_context.showUI )
+		{
+			s_context.sample->DrawColoredTextLine( b2_colorGoldenRod, "%s", entry.name );
+			s_context.sample->DrawColoredTextLine( b2_colorLightGray, "%s", entry.category );
+			s_context.sample->DrawTextLine( "" );
+			s_context.sample->DrawColoredTextLine( b2_colorSeaGreen, "%.1f ms", 1000.0f * frameTime );
+			s_context.sample->DrawColoredTextLine( b2_colorSeaGreen, "step %d", s_context.sample->m_stepCount );
+			s_context.sample->DrawTextLine( "" );
+			s_context.sample->DrawColoredTextLine( b2_colorSeaGreen, "cam (%.1f, %.1f)", s_context.camera.center.x,
+												   s_context.camera.center.y );
+			s_context.sample->DrawColoredTextLine( b2_colorSeaGreen, "zoom %.2f", s_context.camera.zoom );
+		}
 
 		s_context.sample->Step();
 
-		DrawScreenString( s_context.draw, 5.0f, s_context.camera.height - 10.0f, b2_colorSeaGreen,
-						  "%.1f ms - step %d - camera (%g, %g, %g)", 1000.0f * frameTime, s_context.sample->m_stepCount,
-						  s_context.camera.center.x, s_context.camera.center.y, s_context.camera.zoom );
+		if ( s_context.showUI == false )
+		{
+			float fontSize = ImGui::GetFontSize();
+			DrawScreenString( s_context.draw, 5.0f, 1.5f * fontSize, b2_colorYellow, "%s : %s", entry.category,
+							  entry.name );
+			DrawScreenString( s_context.draw, 5.0f, s_context.camera.height - 0.5f * fontSize, b2_colorSeaGreen,
+							  "%.1f ms  step %d", 1000.0f * frameTime, s_context.sample->m_stepCount );
+		}
 
 		FlushDraw( s_context.draw, &s_context.camera );
 
