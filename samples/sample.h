@@ -39,6 +39,9 @@ struct SampleContext
 	// Diagnostics drawer visibility. D toggles.
 	bool showDiagnostics = false;
 
+	// Set by Ctrl+O; consumed by UpdateSampleUI to open the fuzzy sample picker.
+	bool openSamplePicker = false;
+
 	// These are persisted
 	int sampleIndex = 0;
 };

@@ -340,7 +340,15 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				break;
 
 			case GLFW_KEY_O:
-				s_context.singleStep = true;
+				if ( mods == GLFW_MOD_CONTROL )
+				{
+					s_context.showUI = true;
+					s_context.openSamplePicker = true;
+				}
+				else
+				{
+					s_context.singleStep = true;
+				}
 				break;
 
 			case GLFW_KEY_P:

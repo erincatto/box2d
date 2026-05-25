@@ -1130,6 +1130,53 @@ int Sample::ParsePath( const char* svgPath, b2Vec2 offset, b2Vec2* points, int c
 	return pointCount;
 }
 
+// Case-insensitive subsequence match. Returns >=0 score on match, -1 on no match.
+// Empty needle returns 0 so an empty query lets all samples through with a neutral score.
+static int FuzzyScore( const char* needle, const char* haystack )
+{
+	if ( needle == nullptr || needle[0] == '\0' )
+	{
+		return 0;
+	}
+
+	int score = 0;
+	int hi = 0;
+	int prevMatchHi = -2;
+
+	for ( int ni = 0; needle[ni] != '\0'; ++ni )
+	{
+		int nc = tolower( (unsigned char)needle[ni] );
+		while ( haystack[hi] != '\0' && tolower( (unsigned char)haystack[hi] ) != nc )
+		{
+			++hi;
+		}
+		if ( haystack[hi] == '\0' )
+		{
+			return -1;
+		}
+
+		int bonus = 1;
+		if ( hi == 0 )
+		{
+			bonus += 10; // prefix match
+		}
+		else if ( !isalnum( (unsigned char)haystack[hi - 1] ) )
+		{
+			bonus += 5; // word-start (after _, space, etc.)
+		}
+		if ( hi == prevMatchHi + 1 )
+		{
+			bonus += 3; // contiguous run
+		}
+
+		score += bonus;
+		prevMatchHi = hi;
+		++hi;
+	}
+
+	return score;
+}
+
 SampleEntry g_sampleEntries[MAX_SAMPLES] = {};
 int g_sampleCount = 0;
 
@@ -1364,6 +1411,7 @@ void UpdateSampleUI( SampleContext* context )
 					row( "O", "Single step" );
 					row( "R", "Restart sample" );
 					row( "[  ]", "Previous / next sample" );
+					row( "Ctrl+O", "Open sample picker" );
 					row( "Arrows", "Pan camera" );
 					row( "Ctrl+Arrows", "Shift origin" );
 					row( "Z  X", "Zoom out / in" );
@@ -1399,6 +1447,150 @@ void UpdateSampleUI( SampleContext* context )
 				ImGui::TextLinkOpenURL( "github.com/erincatto/box2d", "https://github.com/erincatto/box2d" );
 			}
 			ImGui::End();
+		}
+	}
+
+	// Fuzzy sample picker (Ctrl+O). Opens a transient popup; type to filter by
+	// name or category, Up/Down to navigate, Enter to select, Esc / click-outside to dismiss.
+	{
+		static char query[64] = {};
+		static char prevQuery[64] = {};
+		static int highlight = 0;
+		static int prevHighlight = 0;
+		static int filtered[MAX_SAMPLES];
+		static int filteredCount = 0;
+		static bool justOpened = false;
+		static bool forceScroll = false;
+
+		auto rebuild = []( const char* q, int* outFiltered, int* outCount ) {
+			struct Scored
+			{
+				int idx;
+				int score;
+			};
+			static Scored scored[MAX_SAMPLES];
+			int n = 0;
+			for ( int i = 0; i < g_sampleCount; ++i )
+			{
+				int nameScore = FuzzyScore( q, g_sampleEntries[i].name );
+				int catScore = FuzzyScore( q, g_sampleEntries[i].category );
+				int best = -1;
+				if ( nameScore >= 0 )
+				{
+					best = nameScore * 2; // name matches outweigh category-only matches
+				}
+				if ( catScore >= 0 && catScore > best )
+				{
+					best = catScore;
+				}
+				if ( best < 0 )
+				{
+					continue;
+				}
+				scored[n].idx = i;
+				scored[n].score = best;
+				++n;
+			}
+			// Stable insertion sort by score desc; equal scores keep registry order
+			// (which main.cpp sorts by category then name).
+			for ( int i = 1; i < n; ++i )
+			{
+				Scored tmp = scored[i];
+				int j = i - 1;
+				while ( j >= 0 && scored[j].score < tmp.score )
+				{
+					scored[j + 1] = scored[j];
+					--j;
+				}
+				scored[j + 1] = tmp;
+			}
+			for ( int i = 0; i < n; ++i )
+			{
+				outFiltered[i] = scored[i].idx;
+			}
+			*outCount = n;
+		};
+
+		if ( context->openSamplePicker )
+		{
+			ImGui::OpenPopup( "##sample_picker" );
+			context->openSamplePicker = false;
+			query[0] = '\0';
+			prevQuery[0] = '\0';
+			highlight = 0;
+			prevHighlight = 0;
+			rebuild( query, filtered, &filteredCount );
+			justOpened = true;
+			forceScroll = true;
+		}
+
+		ImGui::SetNextWindowPos( { context->camera.width * 0.5f, context->camera.height * 0.35f }, ImGuiCond_Appearing,
+								 { 0.5f, 0.5f } );
+		ImGui::SetNextWindowSize( { 32.0f * fontSize, 0.0f }, ImGuiCond_Appearing );
+
+		if ( ImGui::BeginPopup( "##sample_picker",
+								ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			if ( justOpened )
+			{
+				ImGui::SetKeyboardFocusHere();
+				justOpened = false;
+			}
+
+			ImGui::PushItemWidth( -1.0f );
+			ImGui::InputTextWithHint( "##q", "Search by name or category...", query, sizeof( query ) );
+			ImGui::PopItemWidth();
+
+			if ( strcmp( query, prevQuery ) != 0 )
+			{
+				rebuild( query, filtered, &filteredCount );
+				strncpy( prevQuery, query, sizeof( prevQuery ) );
+				prevQuery[sizeof( prevQuery ) - 1] = '\0';
+				highlight = 0;
+				forceScroll = true;
+			}
+
+			if ( filteredCount > 0 )
+			{
+				if ( ImGui::IsKeyPressed( ImGuiKey_DownArrow, true ) )
+				{
+					highlight = ( highlight + 1 ) % filteredCount;
+				}
+				if ( ImGui::IsKeyPressed( ImGuiKey_UpArrow, true ) )
+				{
+					highlight = ( highlight + filteredCount - 1 ) % filteredCount;
+				}
+			}
+			bool commit = ImGui::IsKeyPressed( ImGuiKey_Enter, false ) || ImGui::IsKeyPressed( ImGuiKey_KeypadEnter, false );
+
+			ImGui::BeginChild( "##results", { 0.0f, 14.0f * fontSize }, ImGuiChildFlags_Borders );
+			for ( int row = 0; row < filteredCount; ++row )
+			{
+				int i = filtered[row];
+				char label[160];
+				snprintf( label, sizeof( label ), "%s  >  %s", g_sampleEntries[i].category, g_sampleEntries[i].name );
+				bool sel = ( row == highlight );
+				if ( ImGui::Selectable( label, sel ) )
+				{
+					highlight = row;
+					commit = true;
+				}
+				if ( sel && ( forceScroll || highlight != prevHighlight ) )
+				{
+					ImGui::SetScrollHereY();
+				}
+			}
+			ImGui::EndChild();
+			prevHighlight = highlight;
+			forceScroll = false;
+
+			if ( commit && filteredCount > 0 )
+			{
+				SelectSample( context, filtered[highlight], false );
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
 		}
 	}
 
