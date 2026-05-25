@@ -1104,7 +1104,7 @@ public:
 
 		b2Vec2 p = b2Body_GetPosition( m_ballId );
 		b2Vec2 v = b2Body_GetLinearVelocity( m_ballId );
-		DrawTextLine( "p.x = %.9f, v.y = %.9f", p.x, v.y );
+		DrawScreenTextLine( "p.x = %.9f, v.y = %.9f", p.x, v.y );
 
 		Sample::Step();
 	}
@@ -1174,7 +1174,7 @@ public:
 
 		b2Vec2 p = b2Body_GetPosition( m_ballId );
 		b2Vec2 v = b2Body_GetLinearVelocity( m_ballId );
-		DrawTextLine( "p.x = %.9f, v.y = %.9f", p.x, v.y );
+		DrawScreenTextLine( "p.x = %.9f, v.y = %.9f", p.x, v.y );
 
 		Sample::Step();
 	}

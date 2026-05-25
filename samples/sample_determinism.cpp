@@ -53,7 +53,7 @@ public:
 		}
 		else
 		{
-			DrawTextLine( "sleep step = %d, hash = 0x%08X", m_data.sleepStep, m_data.hash );
+			DrawScreenTextLine( "sleep step = %d, hash = 0x%08X", m_data.sleepStep, m_data.hash );
 		}
 	}
 

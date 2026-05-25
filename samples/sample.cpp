@@ -262,6 +262,7 @@ Sample::Sample( SampleContext* context )
 	m_stepCount = 0;
 	m_didStep = false;
 	m_hudLineCount = 0;
+	m_screenTextY = 0.0f;
 
 	m_mouseBodyId = b2_nullBodyId;
 	m_mousePoint = {};
@@ -305,6 +306,15 @@ void Sample::CreateWorld()
 void Sample::ResetText()
 {
 	m_hudLineCount = 0;
+	float fontSize = ImGui::GetFontSize();
+	if ( m_context->showUI )
+	{
+		m_screenTextY = ImGui::GetFrameHeight() + 1.5f * fontSize;
+	}
+	else
+	{
+		m_screenTextY = 3.0f * fontSize;
+	}
 }
 
 struct QueryContext
@@ -445,6 +455,30 @@ void Sample::DrawTextLine( const char* text, ... )
 	va_end( arg );
 	line.text[sizeof( line.text ) - 1] = 0;
 	m_hudLineCount += 1;
+}
+
+void Sample::DrawScreenTextLine( const char* text, ... )
+{
+	char buffer[256];
+	va_list arg;
+	va_start( arg, text );
+	vsnprintf( buffer, sizeof( buffer ), text, arg );
+	va_end( arg );
+	buffer[sizeof( buffer ) - 1] = 0;
+	DrawScreenString( m_draw, 5.0f, m_screenTextY, b2_colorWhite, "%s", buffer );
+	m_screenTextY += 1.5f * ImGui::GetFontSize();
+}
+
+void Sample::DrawColoredScreenTextLine( b2HexColor color, const char* text, ... )
+{
+	char buffer[256];
+	va_list arg;
+	va_start( arg, text );
+	vsnprintf( buffer, sizeof( buffer ), text, arg );
+	va_end( arg );
+	buffer[sizeof( buffer ) - 1] = 0;
+	DrawScreenString( m_draw, 5.0f, m_screenTextY, color, "%s", buffer );
+	m_screenTextY += 1.5f * ImGui::GetFontSize();
 }
 
 void Sample::ResetProfile()
@@ -1250,7 +1284,7 @@ void UpdateSampleUI( SampleContext* context )
 				ImGui::EndMenu();
 			}
 			ImGui::Separator();
-			ImGui::MenuItem( "Diagnostics", "D", &context->showDiagnostics );
+			ImGui::MenuItem( "Diagnostics", "M", &context->showDiagnostics );
 			ImGui::Separator();
 			if ( ImGui::BeginMenu( "Scale" ) )
 			{

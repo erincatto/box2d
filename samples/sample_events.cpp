@@ -917,7 +917,7 @@ public:
 
 	void Step() override
 	{
-		DrawTextLine( "move using WASD" );
+		DrawScreenTextLine( "move using WASD" );
 
 		b2Vec2 position = b2Body_GetPosition( m_playerId );
 
@@ -1405,8 +1405,8 @@ public:
 
 		b2ContactData contactData = {};
 		int contactCount = b2Body_GetContactData( m_movingPlatformId, &contactData, 1 );
-		DrawTextLine( "Platform contact count = %d, point count = %d", contactCount, contactData.manifold.pointCount );
-		DrawTextLine( "Movement: A/D/Space" );
+		DrawScreenTextLine( "Platform contact count = %d, point count = %d", contactCount, contactData.manifold.pointCount );
+		DrawScreenTextLine( "Movement: A/D/Space" );
 		DrawTextLine( "Can jump = %s", canJump ? "true" : "false" );
 
 		if ( m_context->hertz > 0.0f )
@@ -1761,7 +1761,7 @@ public:
 			start += snprintf( buffer + start, sizeof( buffer ) - start, "%s, ", name );
 		}
 
-		DrawTextLine( buffer );
+		DrawScreenTextLine( buffer );
 	}
 
 	void Step() override
@@ -2478,7 +2478,7 @@ public:
 
 	void Step() override
 	{
-		DrawTextLine( "Use Ctrl + Left Mouse to drag and shoot a projectile" );
+		DrawScreenTextLine( "Use Ctrl + Left Mouse to drag and shoot a projectile" );
 
 		Sample::Step();
 
@@ -2643,14 +2643,14 @@ public:
 			m_events.push_back( e );
 		}
 
-		DrawTextLine( "mass = %g, gravity = %g, restitution = %g", m_mass, m_useGravity ? 10.0f : 0.0f,
+		DrawScreenTextLine( "mass = %g, gravity = %g, restitution = %g", m_mass, m_useGravity ? 10.0f : 0.0f,
 					  m_useRestitution ? m_restitution : 0.0f );
 
 		int eventCount = (int)m_events.size();
 		for ( int i = 0; i < eventCount; ++i )
 		{
 			const Event& e = m_events[i];
-			DrawTextLine( "hit speed = %g, hit momentum = %g, final impulse = %g, total impulse = %g", e.speed, m_mass * e.speed,
+			DrawScreenTextLine( "hit speed = %g, hit momentum = %g, final impulse = %g, total impulse = %g", e.speed, m_mass * e.speed,
 						  e.impulse, e.totalImpulse );
 		}
 	}

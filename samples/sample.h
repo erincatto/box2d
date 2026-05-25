@@ -67,6 +67,8 @@ public:
 
 	void DrawTextLine( const char* text, ... );
 	void DrawColoredTextLine( b2HexColor color, const char* text, ... );
+	void DrawScreenTextLine( const char* text, ... );
+	void DrawColoredScreenTextLine( b2HexColor color, const char* text, ... );
 	void ResetProfile();
 	void ShiftOrigin( b2Vec2 newOrigin );
 
@@ -107,6 +109,7 @@ public:
 
 	HudLine m_hudLines[m_maxHudLines];
 	int m_hudLineCount;
+	float m_screenTextY;
 
 	b2Profile m_profiles[m_profileCapacity];
 	int m_currentProfileIndex;

@@ -388,7 +388,7 @@ public:
 		b2Vec2 force = b2Joint_GetConstraintForce( m_jointId );
 		float torque = b2Joint_GetConstraintTorque( m_jointId );
 
-		DrawTextLine( "force = {%3.f, %3.f}, torque = %3.f", force.x, force.y, torque );
+		DrawScreenTextLine( "force = {%3.f, %3.f}, torque = %3.f", force.x, force.y, torque );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -2514,7 +2514,7 @@ public:
 			m_car.SetSpeed( -m_speed );
 		}
 
-		DrawTextLine( "Keys: left = a, brake = s, right = d" );
+		DrawScreenTextLine( "Keys: left = a, brake = s, right = d" );
 
 		b2Vec2 linearVelocity = b2Body_GetLinearVelocity( m_car.m_chassisId );
 		float kph = linearVelocity.x * 3.6f;

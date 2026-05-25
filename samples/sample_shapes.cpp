@@ -867,7 +867,7 @@ public:
 
 	void Step() override
 	{
-		DrawTextLine( "Custom filter disables collision between odd and even shapes" );
+		DrawScreenTextLine( "Custom filter disables collision between odd and even shapes" );
 
 		Sample::Step();
 
@@ -1602,7 +1602,7 @@ public:
 	{
 		Sample::Step();
 
-		DrawTextLine( "This shows how to link together two chain shapes" );
+		DrawScreenTextLine( "This shows how to link together two chain shapes" );
 	}
 
 	static Sample* Create( SampleContext* context )

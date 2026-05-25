@@ -845,11 +845,11 @@ public:
 			CreateScene();
 		}
 
-		DrawTextLine( "total: create = %g ms, destroy = %g ms", m_createTime, m_destroyTime );
+		DrawScreenTextLine( "total: create = %g ms, destroy = %g ms", m_createTime, m_destroyTime );
 
 		float createPerBody = 1000.0f * m_createTime / m_iterations / m_bodyCount;
 		float destroyPerBody = 1000.0f * m_destroyTime / m_iterations / m_bodyCount;
-		DrawTextLine( "body: create = %g us, destroy = %g us", createPerBody, destroyPerBody );
+		DrawScreenTextLine( "body: create = %g us, destroy = %g us", createPerBody, destroyPerBody );
 
 		Sample::Step();
 	}
@@ -1544,7 +1544,7 @@ public:
 		}
 
 		DrawTextLine( "build time ms = %g", m_buildTime );
-		DrawTextLine( "hit count = %d, node visits = %d, leaf visits = %d", hitCount, nodeVisits, leafVisits );
+		DrawScreenTextLine( "hit count = %d, node visits = %d, leaf visits = %d", hitCount, nodeVisits, leafVisits );
 		DrawTextLine( "total ms = %.3f", ms );
 		DrawTextLine( "min total ms = %.3f", m_minTime );
 
@@ -1752,7 +1752,7 @@ public:
 			m_minMilliseconds = b2MinFloat( m_minMilliseconds, ms );
 
 			DrawTextLine( "count = %d", m_count );
-			DrawTextLine( "min ms = %g, ave us = %g", m_minMilliseconds, 1000.0f * m_minMilliseconds / float( m_count ) );
+			DrawScreenTextLine( "min ms = %g, ave us = %g", m_minMilliseconds, 1000.0f * m_minMilliseconds / float( m_count ) );
 			DrawTextLine( "average iterations = %g", totalIterations / float( m_count ) );
 		}
 
@@ -1965,8 +1965,8 @@ public:
 
 		m_maxBeginCount = b2MaxInt( events.beginCount, m_maxBeginCount );
 		m_maxEndCount = b2MaxInt( events.endCount, m_maxEndCount );
-		DrawTextLine( "max begin touch events = %d", m_maxBeginCount );
-		DrawTextLine( "max end touch events = %d", m_maxEndCount );
+		DrawScreenTextLine( "max begin touch events = %d", m_maxBeginCount );
+		DrawScreenTextLine( "max end touch events = %d", m_maxEndCount );
 	}
 
 	bool Filter( b2ShapeId idA, b2ShapeId idB )

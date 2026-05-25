@@ -374,9 +374,9 @@ public:
 			}
 		}
 
-		DrawTextLine( "mouse button 1: drag" );
-		DrawTextLine( "mouse button 1 + shift: rotate" );
-		DrawTextLine( "distance = %.2f, iterations = %d", output.distance, output.iterations );
+		DrawScreenTextLine( "mouse button 1: drag" );
+		DrawScreenTextLine( "mouse button 1 + shift: rotate" );
+		DrawScreenTextLine( "distance = %.2f, iterations = %d", output.distance, output.iterations );
 
 		if ( m_cache.count == 1 )
 		{
@@ -389,7 +389,7 @@ public:
 		}
 		else if ( m_cache.count == 3 )
 		{
-			DrawTextLine( "cache = {%d, %d, %d}, {%d, %d, %d}", m_cache.indexA[0], m_cache.indexA[1], m_cache.indexA[2],
+			DrawScreenTextLine( "cache = {%d, %d, %d}, {%d, %d, %d}", m_cache.indexA[0], m_cache.indexA[1], m_cache.indexA[2],
 						  m_cache.indexB[0], m_cache.indexB[1], m_cache.indexB[2] );
 		}
 	}
@@ -691,7 +691,7 @@ public:
 			DrawPoint( m_draw, m_startPoint, 5.0f, b2_colorGreen );
 			DrawPoint( m_draw, m_endPoint, 5.0f, b2_colorRed );
 
-			DrawTextLine( "node visits = %d, leaf visits = %d", result.nodeVisits, result.leafVisits );
+			DrawScreenTextLine( "node visits = %d, leaf visits = %d", result.nodeVisits, result.leafVisits );
 		}
 
 		b2HexColor c = b2_colorBlue;
@@ -805,7 +805,7 @@ public:
 		float areaRatio = b2DynamicTree_GetAreaRatio( &m_tree );
 
 		int hmin = (int)( ceilf( logf( (float)m_proxyCount ) / logf( 2.0f ) - 1.0f ) );
-		DrawTextLine( "proxies = %d, height = %d, hmin = %d, area ratio = %.1f", m_proxyCount, height, hmin, areaRatio );
+		DrawScreenTextLine( "proxies = %d, height = %d, hmin = %d, area ratio = %.1f", m_proxyCount, height, hmin, areaRatio );
 
 		b2DynamicTree_Validate( &m_tree );
 
@@ -1651,8 +1651,8 @@ public:
 	{
 		Sample::Step();
 
-		DrawTextLine( "Click left mouse button and drag to modify ray cast" );
-		DrawTextLine( "Shape 7 is intentionally ignored by the ray" );
+		DrawScreenTextLine( "Click left mouse button and drag to modify ray cast" );
+		DrawScreenTextLine( "Shape 7 is intentionally ignored by the ray" );
 
 		b2HexColor color1 = b2_colorGreen;
 		b2HexColor color2 = b2_colorLightGray;
@@ -1662,7 +1662,7 @@ public:
 
 		if ( m_simple )
 		{
-			DrawTextLine( "Simple closest point ray cast" );
+			DrawScreenTextLine( "Simple closest point ray cast" );
 
 			// This version doesn't have a callback, but it doesn't skip the ignored shape
 			b2RayResult result = b2World_CastRayClosest( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter() );
@@ -1685,19 +1685,19 @@ public:
 			switch ( m_mode )
 			{
 				case e_any:
-					DrawTextLine( "Cast mode: any - check for obstruction - unsorted" );
+					DrawScreenTextLine( "Cast mode: any - check for obstruction - unsorted" );
 					break;
 
 				case e_closest:
-					DrawTextLine( "Cast mode: closest - find closest shape along the cast" );
+					DrawScreenTextLine( "Cast mode: closest - find closest shape along the cast" );
 					break;
 
 				case e_multiple:
-					DrawTextLine( "Cast mode: multiple - gather up to 3 shapes - unsorted" );
+					DrawScreenTextLine( "Cast mode: multiple - gather up to 3 shapes - unsorted" );
 					break;
 
 				case e_sorted:
-					DrawTextLine( "Cast mode: sorted - gather up to 3 shapes sorted by closeness" );
+					DrawScreenTextLine( "Cast mode: sorted - gather up to 3 shapes sorted by closeness" );
 					break;
 
 				default:
@@ -2114,8 +2114,8 @@ public:
 	{
 		Sample::Step();
 
-		DrawTextLine( "left mouse button: drag query shape" );
-		DrawTextLine( "left mouse button + shift: rotate query shape" );
+		DrawScreenTextLine( "left mouse button: drag query shape" );
+		DrawScreenTextLine( "left mouse button + shift: rotate query shape" );
 
 		m_doomCount = 0;
 
@@ -3471,7 +3471,7 @@ public:
 		distanceCache.count = 0;
 		b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &distanceCache, nullptr, 0 );
 
-		DrawTextLine( "hit = %s, iterations = %d, fraction = %g, distance = %g", output.hit ? "true" : "false", output.iterations,
+		DrawScreenTextLine( "hit = %s, iterations = %d, fraction = %g, distance = %g", output.hit ? "true" : "false", output.iterations,
 					  output.fraction, distanceOutput.distance );
 
 		DrawShape( m_typeA, b2Transform_identity, m_radiusA, b2_colorCyan );
@@ -3509,10 +3509,10 @@ public:
 			}
 		}
 
-		DrawTextLine( "mouse button 1: drag" );
-		DrawTextLine( "mouse button 1 + shift: rotate" );
-		DrawTextLine( "mouse button 1 + control: sweep" );
-		DrawTextLine( "distance = %.2f, iterations = %d", distanceOutput.distance, output.iterations );
+		DrawScreenTextLine( "mouse button 1: drag" );
+		DrawScreenTextLine( "mouse button 1 + shift: rotate" );
+		DrawScreenTextLine( "mouse button 1 + control: sweep" );
+		DrawScreenTextLine( "distance = %.2f, iterations = %d", distanceOutput.distance, output.iterations );
 	}
 
 	static Sample* Create( SampleContext* context )

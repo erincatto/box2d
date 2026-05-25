@@ -711,8 +711,8 @@ public:
 	{
 		Sample::Step();
 
-		DrawTextLine("A bad body is a dynamic body with no mass and behaves like a kinematic body." );
-		DrawTextLine( "Bad bodies are considered invalid and a user bug. Behavior is not guaranteed." );
+		DrawScreenTextLine("A bad body is a dynamic body with no mass and behaves like a kinematic body." );
+		DrawScreenTextLine( "Bad bodies are considered invalid and a user bug. Behavior is not guaranteed." );
 
 		// For science
 		b2Body_ApplyForceToCenter( m_badBodyId, { 0.0f, 10.0f }, true );
@@ -785,7 +785,7 @@ public:
 		b2Vec2 r = b2Body_GetWorldVector( m_bodyId, { 0.0f, -m_lever } );
 
 		b2Vec2 vp = v + b2CrossSV( omega, r );
-		DrawTextLine( "pivot velocity = (%g, %g)", vp.x, vp.y );
+		DrawScreenTextLine( "pivot velocity = (%g, %g)", vp.x, vp.y );
 	}
 
 	static Sample* Create( SampleContext* context )
