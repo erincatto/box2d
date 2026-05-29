@@ -51,7 +51,7 @@ public:
 		// DrawCircle({0.0f, 2.0f}, 1.0f, b2_colorWhite);
 
 		b2Vec2 position = b2Body_GetPosition( m_bodyId );
-		DrawTextLine( "(x, y) = (%.2g, %.2g)", position.x, position.y );
+		DrawScreenTextLine( "(x, y) = (%.2g, %.2g)", position.x, position.y );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -347,7 +347,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -387,6 +387,8 @@ public:
 			DestroyBullets();
 			CreateStacks();
 		}
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -491,7 +493,7 @@ public:
 		int eventCount = (int)m_events.size();
 		for ( int i = 0; i < eventCount; ++i )
 		{
-			DrawTextLine( "%d, %d", m_events[i].indexA, m_events[i].indexB );
+			DrawScreenTextLine( "%d, %d", m_events[i].indexA, m_events[i].indexB );
 		}
 	}
 
@@ -686,13 +688,15 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Button( "Flip" ) )
 		{
 			m_flip = !m_flip;
 			CreateBodies();
 		}
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )

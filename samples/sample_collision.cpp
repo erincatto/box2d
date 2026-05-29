@@ -161,7 +161,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -221,6 +221,8 @@ public:
 			m_simplexIndex = b2ClampInt( m_simplexIndex, 0, m_simplexCount - 1 );
 			ImGui::PopItemWidth();
 		}
+
+		return true;
 	}
 
 	void MouseDown( b2Vec2 p, int button, int mods ) override
@@ -380,11 +382,11 @@ public:
 
 		if ( m_cache.count == 1 )
 		{
-			DrawTextLine( "cache = {%d}, {%d}", m_cache.indexA[0], m_cache.indexB[0] );
+			DrawScreenTextLine( "cache = {%d}, {%d}", m_cache.indexA[0], m_cache.indexB[0] );
 		}
 		else if ( m_cache.count == 2 )
 		{
-			DrawTextLine( "cache = {%d, %d}, {%d, %d}", m_cache.indexA[0], m_cache.indexA[1], m_cache.indexB[0],
+			DrawScreenTextLine( "cache = {%d, %d}, {%d, %d}", m_cache.indexA[0], m_cache.indexA[1], m_cache.indexB[0],
 						  m_cache.indexB[1] );
 		}
 		else if ( m_cache.count == 3 )
@@ -567,7 +569,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -634,6 +636,8 @@ public:
 		{
 			BuildTree();
 		}
+
+		return true;
 	}
 
 	void MouseDown( b2Vec2 p, int button, int mods ) override
@@ -757,7 +761,7 @@ public:
 					}
 				}
 				float ms = b2GetMilliseconds( ticks );
-				DrawTextLine( "incremental : %.3f ms", ms );
+				DrawScreenTextLine( "incremental : %.3f ms", ms );
 			}
 			break;
 
@@ -775,7 +779,7 @@ public:
 				uint64_t ticks = b2GetTicks();
 				int boxCount = b2DynamicTree_Rebuild( &m_tree, true );
 				float ms = b2GetMilliseconds( ticks );
-				DrawTextLine( "full build %d : %.3f ms", boxCount, ms );
+				DrawScreenTextLine( "full build %d : %.3f ms", boxCount, ms );
 			}
 			break;
 
@@ -793,7 +797,7 @@ public:
 				uint64_t ticks = b2GetTicks();
 				int boxCount = b2DynamicTree_Rebuild( &m_tree, false );
 				float ms = b2GetMilliseconds( ticks );
-				DrawTextLine( "partial rebuild %d : %.3f ms", boxCount, ms );
+				DrawScreenTextLine( "partial rebuild %d : %.3f ms", boxCount, ms );
 			}
 			break;
 
@@ -899,7 +903,7 @@ public:
 		m_showFraction = false;
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -930,6 +934,8 @@ public:
 		ImGui::Text( "mouse btn 1: ray cast" );
 		ImGui::Text( "mouse btn 1 + shft: translate" );
 		ImGui::Text( "mouse btn 1 + ctrl: rotate" );
+
+		return true;
 	}
 
 	void MouseDown( b2Vec2 p, int button, int mods ) override
@@ -1577,7 +1583,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::Checkbox( "Simple", &m_simple );
 
@@ -1645,6 +1651,8 @@ public:
 		{
 			DestroyBody();
 		}
+
+		return true;
 	}
 
 	void Step() override
@@ -2054,7 +2062,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Button( "Polygon 1" ) )
 			Create( 0 );
@@ -2108,6 +2116,8 @@ public:
 		ImGui::RadioButton( "Circle##Overlap", &m_shapeType, e_circleShape );
 		ImGui::RadioButton( "Capsule##Overlap", &m_shapeType, e_capsuleShape );
 		ImGui::RadioButton( "Box##Overlap", &m_shapeType, e_boxShape );
+
+		return true;
 	}
 
 	void Step() override
@@ -2250,7 +2260,7 @@ public:
 		m_wedge = b2ComputeHull( points, 3 );
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -2284,6 +2294,8 @@ public:
 
 		ImGui::Text( "mouse button 1: drag" );
 		ImGui::Text( "mouse button 1 + shift: rotate" );
+
+		return true;
 	}
 
 	void MouseDown( b2Vec2 p, int button, int mods ) override
@@ -2957,12 +2969,12 @@ public:
 		}
 	}
 
-	virtual ~SmoothManifold() override
+	~SmoothManifold() override
 	{
 		free( m_segments );
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -2999,6 +3011,8 @@ public:
 
 		ImGui::Text( "mouse button 1: drag" );
 		ImGui::Text( "mouse button 1 + shift: rotate" );
+
+		return true;
 	}
 
 	void MouseDown( b2Vec2 p, int button, int mods ) override
@@ -3395,7 +3409,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -3440,6 +3454,8 @@ public:
 
 		ImGui::Checkbox( "show indices", &m_showIndices );
 		ImGui::Checkbox( "encroach", &m_encroach );
+
+		return true;
 	}
 
 	void Step() override
@@ -3593,7 +3609,7 @@ public:
 
 		b2TOIOutput output = b2TimeOfImpact( &input );
 
-		DrawTextLine( "toi = %g", output.fraction );
+		DrawScreenTextLine( "toi = %g", output.fraction );
 
 		b2Vec2 vertices[B2_MAX_POLYGON_VERTICES];
 
@@ -3641,7 +3657,7 @@ public:
 			distanceInput.useRadii = false;
 			b2SimplexCache cache = { 0 };
 			b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, nullptr, 0 );
-			DrawTextLine( "distance = %g", distanceOutput.distance );
+			DrawScreenTextLine( "distance = %g", distanceOutput.distance );
 		}
 
 #if 0

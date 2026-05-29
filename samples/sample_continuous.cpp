@@ -117,7 +117,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		const char* shapeTypes[] = { "Circle", "Capsule", "Box" };
@@ -133,6 +133,8 @@ public:
 		{
 			b2Body_EnableHitEvents( m_bodyId, m_enableHitEvents );
 		}
+
+		return true;
 	}
 
 	void Step() override
@@ -333,7 +335,7 @@ public:
 		// m_shapeId = b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		ImGui::SliderFloat( "Speed", &m_speed, -100.0f, 0.0f, "%.0f" );
@@ -344,6 +346,8 @@ public:
 		{
 			Launch();
 		}
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -583,7 +587,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::Checkbox( "Capsule", &m_capsule );
 
@@ -593,6 +597,8 @@ public:
 		}
 
 		ImGui::Checkbox( "Auto Test", &m_autoTest );
+
+		return true;
 	}
 
 	void Step() override
@@ -844,7 +850,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -889,6 +895,8 @@ public:
 		}
 
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )

@@ -338,7 +338,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Checkbox( "Enable", &m_isEnabled ) )
 		{
@@ -351,6 +351,8 @@ public:
 				b2Body_Disable( m_attachmentId );
 			}
 		}
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -447,7 +449,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::RadioButton( "Static", m_type == b2_staticBody ) )
 		{
@@ -479,6 +481,8 @@ public:
 				b2Body_Disable( m_attachmentId );
 			}
 		}
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )

@@ -301,7 +301,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		bool changed = false;
 		const char* shapeTypes[] = { "Circle", "Capsule", "Mix", "Compound", "Human" };
@@ -316,6 +316,8 @@ public:
 		{
 			CreateScene();
 		}
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -484,7 +486,7 @@ public:
 		Sample::Step();
 
 		b2ContactEvents events = b2World_GetContactEvents( m_worldId );
-		DrawTextLine( "hits = %d", events.hitCount );
+		DrawScreenTextLine( "hits = %d", events.hitCount );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -607,7 +609,7 @@ public:
 		m_bodyIndex = 0;
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -630,6 +632,8 @@ public:
 		}
 
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	void Step() override
@@ -960,8 +964,8 @@ public:
 			m_sleepTotal += b2GetMillisecondsAndReset( &ticks );
 
 			int count = m_stepCount - 20;
-			DrawTextLine( "wake ave = %g ms", m_wakeTotal / count );
-			DrawTextLine( "sleep ave = %g ms", m_sleepTotal / count );
+			DrawScreenTextLine( "wake ave = %g ms", m_wakeTotal / count );
+			DrawScreenTextLine( "sleep ave = %g ms", m_sleepTotal / count );
 		}
 
 		Sample::Step();
@@ -1308,7 +1312,7 @@ public:
 		m_minTime = 1e6f;
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -1372,6 +1376,8 @@ public:
 		{
 			BuildScene();
 		}
+
+		return true;
 	}
 
 	struct CastResult
@@ -1539,13 +1545,13 @@ public:
 			}
 		}
 
-		DrawTextLine( "build time ms = %g", m_buildTime );
+		DrawScreenTextLine( "build time ms = %g", m_buildTime );
 		DrawScreenTextLine( "hit count = %d, node visits = %d, leaf visits = %d", hitCount, nodeVisits, leafVisits );
-		DrawTextLine( "total ms = %.3f", ms );
-		DrawTextLine( "min total ms = %.3f", m_minTime );
+		DrawScreenTextLine( "total ms = %.3f", ms );
+		DrawScreenTextLine( "min total ms = %.3f", m_minTime );
 
 		float aveRayCost = 1000.0f * m_minTime / float( sampleCount );
-		DrawTextLine( "average us = %.2f", aveRayCost );
+		DrawScreenTextLine( "average us = %.2f", aveRayCost );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -1602,7 +1608,7 @@ public:
 			m_context->pause = true;
 		}
 
-		// DrawTextLine( "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
+		// DrawScreenTextLine( "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -1717,11 +1723,13 @@ public:
 		free( m_outputs );
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		ImGui::SliderInt( "draw index", &m_drawIndex, 0, m_count - 1 );
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	void Step() override
@@ -1747,9 +1755,9 @@ public:
 			float ms = b2GetMilliseconds( start );
 			m_minMilliseconds = b2MinFloat( m_minMilliseconds, ms );
 
-			DrawTextLine( "count = %d", m_count );
+			DrawScreenTextLine( "count = %d", m_count );
 			DrawScreenTextLine( "min ms = %g, ave us = %g", m_minMilliseconds, 1000.0f * m_minMilliseconds / float( m_count ) );
-			DrawTextLine( "average iterations = %g", totalIterations / float( m_count ) );
+			DrawScreenTextLine( "average iterations = %g", totalIterations / float( m_count ) );
 		}
 
 		b2Transform xfA = m_transformAs[m_drawIndex];
@@ -1761,7 +1769,7 @@ public:
 		DrawPoint( m_context->draw, output.pointA, 10.0f, b2_colorWhite );
 		DrawPoint( m_context->draw, output.pointB, 10.0f, b2_colorWhite );
 		DrawLine( m_context->draw, output.pointA, output.pointA + 0.5f * output.normal, b2_colorYellow );
-		DrawTextLine( "distance = %g", output.distance );
+		DrawScreenTextLine( "distance = %g", output.distance );
 
 		Sample::Step();
 	}

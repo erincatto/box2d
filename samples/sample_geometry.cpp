@@ -173,7 +173,7 @@ public:
 
 		if ( valid == false )
 		{
-			DrawTextLine( "generation = %d, FAILED", m_generation );
+			DrawScreenTextLine( "generation = %d, FAILED", m_generation );
 		}
 		else
 		{
@@ -182,7 +182,7 @@ public:
 
 		if ( milliseconds > 0.0f )
 		{
-			DrawTextLine( "milliseconds = %g", milliseconds );
+			DrawScreenTextLine( "milliseconds = %g", milliseconds );
 		}
 
 		DrawPolygon( m_draw, hull.points, hull.count, b2_colorGray );

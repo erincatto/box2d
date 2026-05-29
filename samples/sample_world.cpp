@@ -141,7 +141,7 @@ public:
 		m_followCar = false;
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		ImGui::SliderFloat( "speed", &m_speed, -400.0f, 400.0f, "%.0f" );
@@ -155,6 +155,8 @@ public:
 		ImGui::Checkbox( "follow car", &m_followCar );
 
 		ImGui::Text( "world size = %g kilometers", m_gridSize * m_gridCount / 1000.0f );
+
+		return true;
 	}
 
 	void Step() override

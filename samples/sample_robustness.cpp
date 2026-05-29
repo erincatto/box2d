@@ -268,7 +268,7 @@ public:
 		assert( bodyIndex == m_bodyCount );
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -287,6 +287,8 @@ public:
 		}
 
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -358,7 +360,7 @@ public:
 
 	void Step() override
 	{
-		DrawTextLine( "%.1fcm squares", 200.0f * m_extent );
+		DrawScreenTextLine( "%.1fcm squares", 200.0f * m_extent );
 		Sample::Step();
 	}
 
@@ -481,7 +483,7 @@ public:
 		b2Joint_SetConstraintTuning( m_jointId2, m_constraintHertz, m_constraintDampingRatio );
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -516,6 +518,8 @@ public:
 		}
 
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )

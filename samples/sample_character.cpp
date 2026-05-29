@@ -407,7 +407,7 @@ public:
 		m_velocity = b2ClipVector( m_velocity, m_planes, m_planeCount );
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::TextUnformatted( "Mover" );
 		ImGui::Spacing();
@@ -437,6 +437,8 @@ public:
 		ImGui::RadioButton( "Segment", &m_pogoShape, PogoSegment );
 
 		ImGui::Checkbox( "Lock Camera", &m_lockCamera );
+
+		return true;
 	}
 
 	static bool PlaneResultFcn( b2ShapeId shapeId, const b2PlaneResult* planeResult, void* context )
@@ -575,9 +577,9 @@ public:
 		DrawLine( m_draw, m_transform.p, m_transform.p + m_velocity, b2_colorPurple );
 
 		b2Vec2 p = m_transform.p;
-		DrawTextLine( "position %.2f %.2f", p.x, p.y );
-		DrawTextLine( "velocity %.2f %.2f", m_velocity.x, m_velocity.y );
-		DrawTextLine( "iterations %d", m_totalIterations );
+		DrawScreenTextLine( "position %.2f %.2f", p.x, p.y );
+		DrawScreenTextLine( "velocity %.2f %.2f", m_velocity.x, m_velocity.y );
+		DrawScreenTextLine( "iterations %d", m_totalIterations );
 
 		if ( m_lockCamera )
 		{
@@ -827,7 +829,7 @@ public:
 
 		float castLength = m_pogoRestLength + m_capsule.radius + castExtension;
 
-		DrawTextLine( "extension = %.3f", castExtension );
+		DrawScreenTextLine( "extension = %.3f", castExtension );
 
 		// Start cast from the center of the bottom capsule sphere.
 		b2Vec2 origin = b2TransformPoint( m_transform, m_capsule.center1 );
@@ -997,7 +999,7 @@ public:
 				steer = m_airSteer;
 			}
 
-			DrawTextLine( "steer = %.2f", steer );
+			DrawScreenTextLine( "steer = %.2f", steer );
 
 			float accelSpeed = steer * m_accelerate * m_maxSpeed * timeStep;
 			if ( accelSpeed > addSpeed )
@@ -1192,7 +1194,7 @@ public:
 				steer = m_airSteer;
 			}
 
-			DrawTextLine( "steer = %.2f", steer );
+			DrawScreenTextLine( "steer = %.2f", steer );
 
 			float accelSpeed = steer * m_accelerate * m_maxSpeed * timeStep;
 			if ( accelSpeed > addSpeed )
@@ -1212,7 +1214,7 @@ public:
 
 		float rayLength = m_pogoRestLength + m_capsule.radius + rayExtension;
 
-		DrawTextLine( "extension = %.3f", rayExtension );
+		DrawScreenTextLine( "extension = %.3f", rayExtension );
 
 		b2Vec2 origin = b2TransformPoint( m_transform, m_capsule.center1 );
 		b2Circle circle = { origin, 0.9f * m_capsule.radius };
@@ -1517,9 +1519,9 @@ public:
 		m_context->draw.DrawSegment( m_transform.p, m_transform.p + m_velocity, b2_colorPurple );
 
 		b2Vec2 p = m_transform.p;
-		DrawTextLine( "position %.2f %.2f", p.x, p.y );
-		DrawTextLine( "velocity %.2f %.2f", m_velocity.x, m_velocity.y );
-		DrawTextLine( "iterations %d", m_totalIterations );
+		DrawScreenTextLine( "position %.2f %.2f", p.x, p.y );
+		DrawScreenTextLine( "velocity %.2f %.2f", m_velocity.x, m_velocity.y );
+		DrawScreenTextLine( "iterations %d", m_totalIterations );
 
 		if ( m_lockCamera )
 		{
