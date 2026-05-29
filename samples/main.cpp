@@ -506,16 +506,9 @@ int main( int, char** )
 		glfwGetMonitorContentScale( primaryMonitor, &contentScale, &contentScale );
 
 #ifdef __APPLE__
-		// On macOS the window is measured in points and the framebuffer is HiDPI
-		// (Retina). ImGui keeps the UI at a constant physical size via
-		// io.DisplayFramebufferScale, which also drives font rasterizer density, so the
-		// content scale must not also scale ImGui sizes (that would double-count). We
-		// only record it as the framebuffer density used to select a crisp font.
 		s_context.uiScale = 1.0f;
 		s_framebufferScale = contentScale;
 #else
-		// On Windows/Linux the framebuffer equals the window in pixels
-		// (DisplayFramebufferScale == 1), so the content scale must drive ImGui sizing.
 		s_context.uiScale = contentScale;
 		s_framebufferScale = 1.0f;
 #endif
