@@ -115,7 +115,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -213,6 +213,8 @@ public:
 		}
 
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -328,7 +330,7 @@ public:
 		m_time = 0.0f;
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -352,6 +354,8 @@ public:
 		{
 			b2Body_ApplyLinearImpulseToCenter( m_bodyId, { 100.0f, 0.0f }, true );
 		}
+
+		return true;
 	}
 
 	void Step() override
@@ -494,7 +498,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Button( "Explode" ) )
 		{
@@ -507,6 +511,8 @@ public:
 
 			DrawCircle( m_draw, def.position, 10.0f, b2_colorWhite );
 		}
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -681,7 +687,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Checkbox( "Limit", &m_enableLimit ) )
 		{
@@ -740,6 +746,8 @@ public:
 			}
 			ImGui::PopItemWidth();
 		}
+
+		return true;
 	}
 
 	void Step() override
@@ -747,13 +755,13 @@ public:
 		Sample::Step();
 
 		float angle1 = b2RevoluteJoint_GetAngle( m_jointId1 );
-		DrawTextLine( "Angle (Deg) 1 = %2.1f", angle1 );
+		DrawScreenTextLine( "Angle (Deg) 1 = %2.1f", angle1 );
 
 		float torque1 = b2RevoluteJoint_GetMotorTorque( m_jointId1 );
-		DrawTextLine( "Motor Torque 1 = %4.1f", torque1 );
+		DrawScreenTextLine( "Motor Torque 1 = %4.1f", torque1 );
 
 		float torque2 = b2RevoluteJoint_GetMotorTorque( m_jointId2 );
-		DrawTextLine( "Motor Torque 2 = %4.1f", torque2 );
+		DrawScreenTextLine( "Motor Torque 2 = %4.1f", torque2 );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -838,7 +846,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Checkbox( "Limit", &m_enableLimit ) )
 		{
@@ -897,6 +905,8 @@ public:
 			}
 			ImGui::PopItemWidth();
 		}
+
+		return true;
 	}
 
 	void Step() override
@@ -904,13 +914,13 @@ public:
 		Sample::Step();
 
 		float force = b2PrismaticJoint_GetMotorForce( m_jointId );
-		DrawTextLine( "Motor Force = %4.1f", force );
+		DrawScreenTextLine( "Motor Force = %4.1f", force );
 
 		float translation = b2PrismaticJoint_GetTranslation( m_jointId );
-		DrawTextLine( "Translation = %4.1f", translation );
+		DrawScreenTextLine( "Translation = %4.1f", translation );
 
 		float speed = b2PrismaticJoint_GetSpeed( m_jointId );
-		DrawTextLine( "Speed = %4.8f", speed );
+		DrawScreenTextLine( "Speed = %4.8f", speed );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -987,7 +997,7 @@ public:
 		m_jointId = b2CreateWheelJoint( m_worldId, &jointDef );
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Checkbox( "Limit", &m_enableLimit ) )
 		{
@@ -1033,6 +1043,8 @@ public:
 			}
 			ImGui::PopItemWidth();
 		}
+
+		return true;
 	}
 
 	void Step() override
@@ -1040,7 +1052,7 @@ public:
 		Sample::Step();
 
 		float torque = b2WheelJoint_GetMotorTorque( m_jointId );
-		DrawTextLine( "Motor Torque = %4.1f", torque );
+		DrawScreenTextLine( "Motor Torque = %4.1f", torque );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -1166,7 +1178,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -1212,6 +1224,8 @@ public:
 		}
 
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -1311,7 +1325,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		bool updateFriction = ImGui::SliderFloat( "Joint Friction", &m_frictionTorque, 0.0f, 1000.0f, "%2.f" );
@@ -1323,6 +1337,8 @@ public:
 				b2RevoluteJoint_SetMaxMotorTorque( m_jointIds[i], m_frictionTorque );
 			}
 		}
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -1410,7 +1426,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -1463,6 +1479,8 @@ public:
 				b2Joint_SetCollideConnected( m_jointIds[i], m_collideConnected );
 			}
 		}
+
+		return true;
 	}
 
 	void Step() override
@@ -1470,7 +1488,7 @@ public:
 		Sample::Step();
 
 		b2Vec2 tipPosition = b2Body_GetPosition( m_tipId );
-		DrawTextLine( "tip-y = %.2f", tipPosition.y );
+		DrawScreenTextLine( "tip-y = %.2f", tipPosition.y );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -1669,7 +1687,7 @@ public:
 		++index;
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Checkbox( "Lock Linear X", &m_motionLocks.linearX ) )
 		{
@@ -1702,6 +1720,8 @@ public:
 		{
 			b2Body_ApplyLinearImpulseToCenter( m_bodyIds[0], { 100.0f, 0.0f }, true );
 		}
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -1893,7 +1913,7 @@ public:
 		m_breakForce = 1000.0f;
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -1906,6 +1926,8 @@ public:
 		}
 
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	void Step() override
@@ -2095,7 +2117,7 @@ public:
 		m_jointDampingRatio = 2.0f;
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -2133,6 +2155,8 @@ public:
 				b2Body_ApplyLinearImpulse( m_bodyIds[i], { m_impulse, -m_impulse }, p, true );
 			}
 		}
+
+		return true;
 	}
 
 	void Step() override
@@ -2276,7 +2300,7 @@ public:
 		b2Body_SetLinearVelocity( m_bodyId, vB );
 		b2Body_SetAngularVelocity( m_bodyId, omegaB );
 
-		DrawTextLine( "forces = %g, %g", m_impulses[0] * invTimeStep, m_impulses[1] * invTimeStep );
+		DrawScreenTextLine( "forces = %g, %g", m_impulses[0] * invTimeStep, m_impulses[1] * invTimeStep );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -2469,7 +2493,7 @@ public:
 		m_car.Spawn( m_worldId, { 0.0f, 0.0f }, 1.0f, m_hertz, m_dampingRatio, m_torque, nullptr );
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		if ( ImGui::SliderFloat( "Spring Hertz", &m_hertz, 0.0f, 20.0f, "%.0f" ) )
@@ -2492,6 +2516,8 @@ public:
 			m_car.SetTorque( m_torque );
 		}
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	void Step() override
@@ -2518,7 +2544,7 @@ public:
 
 		b2Vec2 linearVelocity = b2Body_GetLinearVelocity( m_car.m_chassisId );
 		float kph = linearVelocity.x * 3.6f;
-		DrawTextLine( "speed in kph: %.2g", kph );
+		DrawScreenTextLine( "speed in kph: %.2g", kph );
 
 		b2Vec2 carPosition = b2Body_GetPosition( m_car.m_chassisId );
 		m_context->camera.center.x = carPosition.x;
@@ -2583,7 +2609,7 @@ public:
 		// Human_ApplyRandomAngularImpulse( &m_human, 10.0f );
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -2609,6 +2635,8 @@ public:
 			DestroyHuman( &m_human );
 			Spawn();
 		}
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -2876,7 +2904,7 @@ public:
 		car.Spawn( m_worldId, { 0.0f, y + 2.0f }, 1.0f, 3.0f, 0.7f, 0.0f, nullptr );
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Checkbox( "Motor", &m_enableMotor ) )
 		{
@@ -2899,6 +2927,8 @@ public:
 		}
 
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	void Step() override
@@ -3184,7 +3214,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Checkbox( "Motor", &m_enableMotor ) )
 		{
@@ -3207,6 +3237,8 @@ public:
 		}
 
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	void Step() override
@@ -3303,7 +3335,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Button( "impulse" ) )
 		{
@@ -3332,6 +3364,8 @@ public:
 		{
 			b2RevoluteJoint_EnableLimit( m_jointId, m_enableLimit );
 		}
+
+		return true;
 	}
 
 	void Step() override
@@ -3344,7 +3378,7 @@ public:
 		float translationError = b2Joint_GetLinearSeparation( m_jointId );
 		m_translationError = b2MaxFloat( m_translationError, translationError );
 
-		DrawTextLine( "translation error = %g", m_translationError );
+		DrawScreenTextLine( "translation error = %g", m_translationError );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -3401,7 +3435,7 @@ public:
 		Human_ApplyRandomAngularImpulse( &m_human, 0.1f );
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -3411,6 +3445,8 @@ public:
 		}
 
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )

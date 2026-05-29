@@ -231,20 +231,17 @@ static void CreateUI( GLFWwindow* window, const char* glslVersion )
 	ImGuiIO& io = ImGui::GetIO();
 	ApplyUIStyle();
 
-	if ( s_context.uiScale == 1.0f )
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.ScaleAllSizes( s_context.uiScale );
+	style.FontSizeBase = floorf( 13.0f * s_context.uiScale );
+
+	if ( s_context.uiScale == 1.0f && s_framebufferScale == 1.0f )
 	{
 		io.Fonts->AddFontDefaultBitmap();
 	}
 	else
 	{
-		ImFontConfig fontConfig;
-		// This brightens the font, improving readability when it is small.
-		fontConfig.RasterizerMultiply = s_context.uiScale * s_framebufferScale;
-		io.Fonts->AddFontDefaultVector( &fontConfig );
-
-		ImGuiStyle& style = ImGui::GetStyle();
-		style.ScaleAllSizes( s_context.uiScale );
-		style.FontSizeBase = floorf( 13.0f * s_context.uiScale );
+		io.Fonts->AddFontDefaultVector();
 	}
 }
 
@@ -281,54 +278,20 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 
 			case GLFW_KEY_LEFT:
 				// Pan left
-				if ( mods == GLFW_MOD_CONTROL )
-				{
-					b2Vec2 newOrigin = { 2.0f, 0.0f };
-					s_context.sample->ShiftOrigin( newOrigin );
-				}
-				else
-				{
-					s_context.camera.center.x -= 0.5f;
-				}
+				s_context.camera.center.x -= 0.5f;
 				break;
 
 			case GLFW_KEY_RIGHT:
 				// Pan right
-				if ( mods == GLFW_MOD_CONTROL )
-				{
-					b2Vec2 newOrigin = { -2.0f, 0.0f };
-					s_context.sample->ShiftOrigin( newOrigin );
-				}
-				else
-				{
-					s_context.camera.center.x += 0.5f;
-				}
+				s_context.camera.center.x += 0.5f;
 				break;
 
 			case GLFW_KEY_DOWN:
-				// Pan down
-				if ( mods == GLFW_MOD_CONTROL )
-				{
-					b2Vec2 newOrigin = { 0.0f, 2.0f };
-					s_context.sample->ShiftOrigin( newOrigin );
-				}
-				else
-				{
-					s_context.camera.center.y -= 0.5f;
-				}
+				s_context.camera.center.y -= 0.5f;
 				break;
 
 			case GLFW_KEY_UP:
-				// Pan up
-				if ( mods == GLFW_MOD_CONTROL )
-				{
-					b2Vec2 newOrigin = { 0.0f, -2.0f };
-					s_context.sample->ShiftOrigin( newOrigin );
-				}
-				else
-				{
-					s_context.camera.center.y += 0.5f;
-				}
+				s_context.camera.center.y += 0.5f;
 				break;
 
 			case GLFW_KEY_HOME:
@@ -384,7 +347,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				break;
 
 			case GLFW_KEY_M:
-				s_context.showDiagnostics = !s_context.showDiagnostics;
+				s_context.showMetrics = !s_context.showMetrics;
 				break;
 
 			default:
@@ -539,12 +502,22 @@ int main( int, char** )
 
 	if ( GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor() )
 	{
+		float contentScale = 1.0f;
+		glfwGetMonitorContentScale( primaryMonitor, &contentScale, &contentScale );
+
 #ifdef __APPLE__
-		glfwGetMonitorContentScale( primaryMonitor, &s_framebufferScale, &s_framebufferScale );
+		// On macOS the window is measured in points and the framebuffer is HiDPI
+		// (Retina). ImGui keeps the UI at a constant physical size via
+		// io.DisplayFramebufferScale, which also drives font rasterizer density, so the
+		// content scale must not also scale ImGui sizes (that would double-count). We
+		// only record it as the framebuffer density used to select a crisp font.
+		s_context.uiScale = 1.0f;
+		s_framebufferScale = contentScale;
 #else
-		float uiScale = 1.0f;
-		glfwGetMonitorContentScale( primaryMonitor, &uiScale, &uiScale );
-		s_context.uiScale = uiScale;
+		// On Windows/Linux the framebuffer equals the window in pixels
+		// (DisplayFramebufferScale == 1), so the content scale must drive ImGui sizing.
+		s_context.uiScale = contentScale;
+		s_framebufferScale = 1.0f;
 #endif
 	}
 
@@ -626,18 +599,21 @@ int main( int, char** )
 
 		// s_context.draw.DrawBackground();
 
-		// double cursorPosX = 0, cursorPosY = 0;
-		// glfwGetCursorPos( s_context.window, &cursorPosX, &cursorPosY );
-		// ImGui_ImplGlfw_CursorPosCallback( s_context.window, cursorPosX / s_windowScale, cursorPosY / s_windowScale );
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
-		// ImGui_ImplGlfw_CursorPosCallback( s_context.window, cursorPosX / s_windowScale, cursorPosY / s_windowScale );
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize.x = s_context.camera.width;
 		io.DisplaySize.y = s_context.camera.height;
-		io.DisplayFramebufferScale.x = bufferWidth / s_context.camera.width;
-		io.DisplayFramebufferScale.y = bufferHeight / s_context.camera.height;
+
+		// These can be zero if the window is minimized
+		if ( s_context.camera.width > 0.0f && s_context.camera.height > 0.0f )
+		{
+			// Framebuffer/window ratio: 1 on Windows/Linux, 2 on a Retina display. Drives
+			// both UI magnification and font rasterizer density.
+			io.DisplayFramebufferScale.x = bufferWidth / s_context.camera.width;
+			io.DisplayFramebufferScale.y = bufferHeight / s_context.camera.height;
+		}
 
 		ImGui::NewFrame();
 
@@ -656,38 +632,13 @@ int main( int, char** )
 		}
 
 		s_context.sample->ResetText();
-
-		const SampleEntry& entry = g_sampleEntries[s_context.sampleIndex];
-
-		if ( s_context.showUI )
-		{
-			s_context.sample->DrawColoredTextLine( b2_colorGoldenRod, "%s", entry.name );
-			s_context.sample->DrawColoredTextLine( b2_colorLightGray, "%s", entry.category );
-			s_context.sample->DrawTextLine( "" );
-			s_context.sample->DrawColoredTextLine( b2_colorSeaGreen, "%.1f ms", 1000.0f * frameTime );
-			s_context.sample->DrawColoredTextLine( b2_colorSeaGreen, "step %d", s_context.sample->m_stepCount );
-			s_context.sample->DrawTextLine( "" );
-			s_context.sample->DrawColoredTextLine( b2_colorSeaGreen, "cam (%.1f, %.1f)", s_context.camera.center.x,
-												   s_context.camera.center.y );
-			s_context.sample->DrawColoredTextLine( b2_colorSeaGreen, "zoom %.2f", s_context.camera.zoom );
-		}
-
 		s_context.sample->Step();
-
-		if ( s_context.showUI == false )
-		{
-			float fontSize = ImGui::GetFontSize();
-			DrawScreenString( s_context.draw, 5.0f, 1.5f * fontSize, b2_colorYellow, "%s : %s", entry.category,
-							  entry.name );
-			DrawScreenString( s_context.draw, 5.0f, s_context.camera.height - 0.5f * fontSize, b2_colorSeaGreen,
-							  "%.1f ms  step %d", 1000.0f * frameTime, s_context.sample->m_stepCount );
-		}
 
 		FlushDraw( s_context.draw, &s_context.camera );
 
-		UpdateSampleUI( &s_context );
+		DrawUI( &s_context, frameTime );
 
-		// ImGui::ShowDemoWindow();
+		//ImGui::ShowDemoWindow();
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );

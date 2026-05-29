@@ -60,7 +60,7 @@ void SampleContext::Save()
 	fprintf( file, "  \"sampleIndex\": %d,\n", sampleIndex );
 	fprintf( file, "  \"drawShapes\": %s,\n", debugDraw.drawShapes ? "true" : "false" );
 	fprintf( file, "  \"drawJoints\": %s,\n", debugDraw.drawJoints ? "true" : "false" );
-	fprintf( file, "  \"showDiagnostics\": %s\n", showDiagnostics ? "true" : "false" );
+	fprintf( file, "  \"showDiagnostics\": %s\n", showMetrics ? "true" : "false" );
 	fprintf( file, "}\n" );
 	fclose( file );
 }
@@ -209,11 +209,11 @@ void SampleContext::Load()
 			const char* s = data + tokens[i + 1].start;
 			if ( strncmp( s, "true", 4 ) == 0 )
 			{
-				showDiagnostics = true;
+				showMetrics = true;
 			}
 			else if ( strncmp( s, "false", 5 ) == 0 )
 			{
-				showDiagnostics = false;
+				showMetrics = false;
 			}
 		}
 	}
@@ -261,7 +261,6 @@ Sample::Sample( SampleContext* context )
 
 	m_stepCount = 0;
 	m_didStep = false;
-	m_hudLineCount = 0;
 	m_screenTextY = 0.0f;
 
 	m_mouseBodyId = b2_nullBodyId;
@@ -305,7 +304,6 @@ void Sample::CreateWorld()
 
 void Sample::ResetText()
 {
-	m_hudLineCount = 0;
 	float fontSize = ImGui::GetFontSize();
 	if ( m_context->showUI )
 	{
@@ -423,40 +421,6 @@ void Sample::MouseMove( b2Vec2 p )
 	m_mousePoint = p;
 }
 
-void Sample::DrawColoredTextLine( b2HexColor color, const char* text, ... )
-{
-	if ( m_context->showUI == false || m_hudLineCount >= m_maxHudLines )
-	{
-		return;
-	}
-
-	HudLine& line = m_hudLines[m_hudLineCount];
-	line.color = color;
-	va_list arg;
-	va_start( arg, text );
-	vsnprintf( line.text, sizeof( line.text ), text, arg );
-	va_end( arg );
-	line.text[sizeof( line.text ) - 1] = 0;
-	m_hudLineCount += 1;
-}
-
-void Sample::DrawTextLine( const char* text, ... )
-{
-	if ( m_context->showUI == false || m_hudLineCount >= m_maxHudLines )
-	{
-		return;
-	}
-
-	HudLine& line = m_hudLines[m_hudLineCount];
-	line.color = b2_colorWhite;
-	va_list arg;
-	va_start( arg, text );
-	vsnprintf( line.text, sizeof( line.text ), text, arg );
-	va_end( arg );
-	line.text[sizeof( line.text ) - 1] = 0;
-	m_hudLineCount += 1;
-}
-
 void Sample::DrawScreenTextLine( const char* text, ... )
 {
 	char buffer[256];
@@ -466,18 +430,6 @@ void Sample::DrawScreenTextLine( const char* text, ... )
 	va_end( arg );
 	buffer[sizeof( buffer ) - 1] = 0;
 	DrawScreenString( m_draw, 5.0f, m_screenTextY, b2_colorWhite, "%s", buffer );
-	m_screenTextY += 1.5f * ImGui::GetFontSize();
-}
-
-void Sample::DrawColoredScreenTextLine( b2HexColor color, const char* text, ... )
-{
-	char buffer[256];
-	va_list arg;
-	va_start( arg, text );
-	vsnprintf( buffer, sizeof( buffer ), text, arg );
-	va_end( arg );
-	buffer[sizeof( buffer ) - 1] = 0;
-	DrawScreenString( m_draw, 5.0f, m_screenTextY, color, "%s", buffer );
 	m_screenTextY += 1.5f * ImGui::GetFontSize();
 }
 
@@ -505,8 +457,8 @@ void Sample::Step()
 
 		if ( m_context->showUI )
 		{
-			DrawTextLine( "****PAUSED****" );
-			DrawTextLine( "" );
+			DrawScreenTextLine( "****PAUSED****" );
+			DrawScreenTextLine( "" );
 		}
 	}
 
@@ -557,15 +509,33 @@ void Sample::Step()
 	}
 }
 
-void Sample::UpdateGui()
+struct RowDef
 {
-	float fontSize = ImGui::GetFontSize();
+	const char* name;
+	int indent;
+	ImU32 color;
+};
 
-	if ( m_context->showDiagnostics == false )
+float AddSegment( ImDrawList* dl, float availWidth, float t, float stepNow, ImU32 col, float x, ImVec2 cursor, float barHeight )
+{
+	float w = availWidth * ( t / stepNow );
+	if ( w > 0.0f )
+	{
+		dl->AddRectFilled( ImVec2( x, cursor.y ), ImVec2( x + w, cursor.y + barHeight ), col );
+		x += w;
+	}
+
+	return x;
+}
+
+void Sample::DrawMetrics()
+{
+	if ( m_context->showMetrics == false )
 	{
 		return;
 	}
 
+	float fontSize = ImGui::GetFontSize();
 	float menuWidth = 14.0f * fontSize;
 	float drawerHeight = 16.0f * fontSize;
 	float drawerWidth = m_camera->width - menuWidth - 1.5f * fontSize;
@@ -573,11 +543,11 @@ void Sample::UpdateGui()
 	ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->height - drawerHeight - 0.5f * fontSize } );
 	ImGui::SetNextWindowSize( { drawerWidth, drawerHeight } );
 
-	ImGui::Begin( "Diagnostics", nullptr,
+	ImGui::Begin( "Metrics", nullptr,
 				  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
 					  ImGuiWindowFlags_NoTitleBar );
 
-	if ( ImGui::BeginTabBar( "DiagnosticsTabs", ImGuiTabBarFlags_None ) )
+	if ( ImGui::BeginTabBar( "MetricsTabs", ImGuiTabBarFlags_None ) )
 	{
 		if ( ImGui::BeginTabItem( "Profile" ) )
 		{
@@ -668,12 +638,6 @@ void Sample::UpdateGui()
 			const ImU32 colorOther = IM_COL32( 90, 90, 90, 255 );
 			const ImU32 colorDefault = IM_COL32( 220, 220, 220, 255 );
 
-			struct RowDef
-			{
-				const char* name;
-				int indent;
-				ImU32 color;
-			};
 			const RowDef rows[kRowCount] = {
 				{ "step", 0, colorStep },			{ "pairs", 0, colorPairs },			 { "collide", 0, colorCollide },
 				{ "solve", 0, colorSolve },			{ "setup", 1, colorDefault },		 { "constraints", 1, colorDefault },
@@ -708,7 +672,7 @@ void Sample::UpdateGui()
 			static bool s_rowOpen[kRowCount];
 			static bool s_showPlots = false;
 
-			const float stepNow = b2MaxFloat( now[0], 0.001f );
+			float stepNow = b2MaxFloat( now[0], 0.001f );
 
 			if ( ImGui::Button( "Reset" ) )
 			{
@@ -733,19 +697,11 @@ void Sample::UpdateGui()
 				ImVec2 cursor = ImGui::GetCursorScreenPos();
 				float x = cursor.x;
 
-				auto addSeg = [&]( float t, ImU32 col ) {
-					float w = availWidth * ( t / stepNow );
-					if ( w > 0.0f )
-					{
-						dl->AddRectFilled( ImVec2( x, cursor.y ), ImVec2( x + w, cursor.y + barHeight ), col );
-						x += w;
-					}
-				};
-				addSeg( pairsT, colorPairs );
-				addSeg( collideT, colorCollide );
-				addSeg( solveT, colorSolve );
-				addSeg( sensorsT, colorSensors );
-				addSeg( otherT, colorOther );
+				x = AddSegment( dl, availWidth, pairsT, stepNow, colorPairs, x, cursor, barHeight );
+				x = AddSegment( dl, availWidth, collideT, stepNow, colorCollide, x, cursor, barHeight );
+				x = AddSegment( dl, availWidth, solveT, stepNow, colorSolve, x, cursor, barHeight );
+				x = AddSegment( dl, availWidth, sensorsT, stepNow, colorSensors, x, cursor, barHeight );
+				x = AddSegment( dl, availWidth, otherT, stepNow, colorOther, x, cursor, barHeight );
 
 				ImGui::Dummy( ImVec2( availWidth, barHeight ) );
 			}
@@ -982,11 +938,6 @@ void Sample::UpdateGui()
 	}
 
 	ImGui::End();
-}
-
-void Sample::ShiftOrigin( b2Vec2 newOrigin )
-{
-	// m_world->ShiftOrigin(newOrigin);
 }
 
 // Parse an SVG path element with only straight lines. Example:
@@ -1227,17 +1178,18 @@ void SelectSample( SampleContext* context, int selection, bool restart )
 	context->restart = false;
 }
 
-void UpdateSampleUI( SampleContext* context )
+static void DrawRow( const char* key, const char* desc )
 {
-	int maxWorkers = B2_MAX_WORKERS;
+	ImGui::TableNextRow();
+	ImGui::TableSetColumnIndex( 0 );
+	ImGui::TextUnformatted( key );
+	ImGui::TableSetColumnIndex( 1 );
+	ImGui::TextUnformatted( desc );
+}
 
+static void DrawMenuBar( SampleContext* context )
+{
 	float fontSize = ImGui::GetFontSize();
-	float menuWidth = 14.0f * fontSize;
-
-	if ( context->showUI == false )
-	{
-		return;
-	}
 
 	if ( ImGui::BeginMainMenuBar() )
 	{
@@ -1327,7 +1279,7 @@ void UpdateSampleUI( SampleContext* context )
 				ImGui::EndMenu();
 			}
 			ImGui::Separator();
-			ImGui::MenuItem( "Diagnostics", "M", &context->showDiagnostics );
+			ImGui::MenuItem( "Diagnostics", "M", &context->showMetrics );
 			ImGui::Separator();
 			if ( ImGui::BeginMenu( "Scale" ) )
 			{
@@ -1381,12 +1333,13 @@ void UpdateSampleUI( SampleContext* context )
 
 		ImGui::EndMainMenuBar();
 
+		// Draw a dark border along the bottom of the menu
 		{
 			float menuBarBottom = ImGui::GetFrameHeight();
 			ImU32 borderColor = ImGui::GetColorU32( ImGuiCol_Border );
 			ImVec2 displaySize = ImGui::GetIO().DisplaySize;
-			ImGui::GetForegroundDrawList()->AddLine( ImVec2( 0.0f, menuBarBottom ),
-													 ImVec2( displaySize.x, menuBarBottom ), borderColor, 1.0f );
+			ImGui::GetForegroundDrawList()->AddLine( ImVec2( 0.0f, menuBarBottom ), ImVec2( displaySize.x, menuBarBottom ),
+													 borderColor, 1.0f );
 		}
 
 		if ( showHelp )
@@ -1395,41 +1348,32 @@ void UpdateSampleUI( SampleContext* context )
 									 { 0.5f, 0.5f } );
 			ImGui::SetNextWindowSize( { 24.0f * fontSize, 0.0f }, ImGuiCond_Appearing );
 
-			if ( ImGui::Begin( "Controls", &showHelp,
-							   ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize ) )
+			if ( ImGui::Begin( "Controls", &showHelp, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize ) )
 			{
-				auto row = []( const char* key, const char* desc ) {
-					ImGui::TableNextRow();
-					ImGui::TableSetColumnIndex( 0 );
-					ImGui::TextUnformatted( key );
-					ImGui::TableSetColumnIndex( 1 );
-					ImGui::TextUnformatted( desc );
-				};
-
 				ImGui::SeparatorText( "Keyboard" );
 				if ( ImGui::BeginTable( "keys", 2, ImGuiTableFlags_SizingFixedFit ) )
 				{
-					row( "Tab", "Show / hide UI" );
-					row( "M", "Show / hide diagnostics" );
-					row( "P", "Pause / resume" );
-					row( "O", "Single step" );
-					row( "R", "Restart sample" );
-					row( "[  ]", "Previous / next sample" );
-					row( "Ctrl+O", "Open sample picker" );
-					row( "Arrows", "Pan camera" );
-					row( "Ctrl+Arrows", "Shift origin" );
-					row( "Z  X", "Zoom out / in" );
-					row( "Home", "Reset camera" );
-					row( "Esc", "Quit" );
+					DrawRow( "Tab", "Show / hide UI" );
+					DrawRow( "M", "Show / hide diagnostics" );
+					DrawRow( "P", "Pause / resume" );
+					DrawRow( "O", "Single step" );
+					DrawRow( "R", "Restart sample" );
+					DrawRow( "[  ]", "Previous / next sample" );
+					DrawRow( "Ctrl+O", "Open sample picker" );
+					DrawRow( "Arrows", "Pan camera" );
+					DrawRow( "Ctrl+Arrows", "Shift origin" );
+					DrawRow( "Z  X", "Zoom out / in" );
+					DrawRow( "Home", "Reset camera" );
+					DrawRow( "Esc", "Quit" );
 					ImGui::EndTable();
 				}
 
 				ImGui::SeparatorText( "Mouse" );
 				if ( ImGui::BeginTable( "mouse", 2, ImGuiTableFlags_SizingFixedFit ) )
 				{
-					row( "Left drag", "Move bodies (mouse joint)" );
-					row( "Right drag", "Pan camera" );
-					row( "Scroll wheel", "Zoom" );
+					DrawRow( "Left drag", "Move bodies (mouse joint)" );
+					DrawRow( "Right drag", "Pan camera" );
+					DrawRow( "Scroll wheel", "Zoom" );
 					ImGui::EndTable();
 				}
 			}
@@ -1453,151 +1397,181 @@ void UpdateSampleUI( SampleContext* context )
 			ImGui::End();
 		}
 	}
+}
+
+struct Scored
+{
+	int idx;
+	int score;
+};
+
+void Rebuild( const char* q, int* outFiltered, int* outCount )
+{
+	static Scored scored[MAX_SAMPLES];
+	int n = 0;
+	for ( int i = 0; i < g_sampleCount; ++i )
+	{
+		int nameScore = FuzzyScore( q, g_sampleEntries[i].name );
+		int catScore = FuzzyScore( q, g_sampleEntries[i].category );
+		int best = -1;
+		if ( nameScore >= 0 )
+		{
+			best = nameScore * 2; // name matches outweigh category-only matches
+		}
+		if ( catScore >= 0 && catScore > best )
+		{
+			best = catScore;
+		}
+		if ( best < 0 )
+		{
+			continue;
+		}
+		scored[n].idx = i;
+		scored[n].score = best;
+		n += 1;
+	}
+
+	// Stable insertion sort by score desc. Equal scores keep registry order
+	// (which main.cpp sorts by category then name).
+	for ( int i = 1; i < n; ++i )
+	{
+		Scored tmp = scored[i];
+		int j = i - 1;
+		while ( j >= 0 && scored[j].score < tmp.score )
+		{
+			scored[j + 1] = scored[j];
+			--j;
+		}
+		scored[j + 1] = tmp;
+	}
+
+	for ( int i = 0; i < n; ++i )
+	{
+		outFiltered[i] = scored[i].idx;
+	}
+	*outCount = n;
+}
+
+void DrawSamplePicker( SampleContext* context )
+{
+	float fontSize = ImGui::GetFontSize();
 
 	// Fuzzy sample picker (Ctrl+O). Opens a transient popup; type to filter by
 	// name or category, Up/Down to navigate, Enter to select, Esc / click-outside to dismiss.
+	static char query[64] = {};
+	static char prevQuery[64] = {};
+	static int highlight = 0;
+	static int prevHighlight = 0;
+	static int filtered[MAX_SAMPLES];
+	static int filteredCount = 0;
+	static bool justOpened = false;
+	static bool forceScroll = false;
+
+	if ( context->openSamplePicker )
 	{
-		static char query[64] = {};
-		static char prevQuery[64] = {};
-		static int highlight = 0;
-		static int prevHighlight = 0;
-		static int filtered[MAX_SAMPLES];
-		static int filteredCount = 0;
-		static bool justOpened = false;
-		static bool forceScroll = false;
+		ImGui::OpenPopup( "##sample_picker" );
+		context->openSamplePicker = false;
+		query[0] = '\0';
+		prevQuery[0] = '\0';
+		highlight = 0;
+		prevHighlight = 0;
+		Rebuild( query, filtered, &filteredCount );
+		justOpened = true;
+		forceScroll = true;
+	}
 
-		auto rebuild = []( const char* q, int* outFiltered, int* outCount ) {
-			struct Scored
-			{
-				int idx;
-				int score;
-			};
-			static Scored scored[MAX_SAMPLES];
-			int n = 0;
-			for ( int i = 0; i < g_sampleCount; ++i )
-			{
-				int nameScore = FuzzyScore( q, g_sampleEntries[i].name );
-				int catScore = FuzzyScore( q, g_sampleEntries[i].category );
-				int best = -1;
-				if ( nameScore >= 0 )
-				{
-					best = nameScore * 2; // name matches outweigh category-only matches
-				}
-				if ( catScore >= 0 && catScore > best )
-				{
-					best = catScore;
-				}
-				if ( best < 0 )
-				{
-					continue;
-				}
-				scored[n].idx = i;
-				scored[n].score = best;
-				++n;
-			}
-			// Stable insertion sort by score desc; equal scores keep registry order
-			// (which main.cpp sorts by category then name).
-			for ( int i = 1; i < n; ++i )
-			{
-				Scored tmp = scored[i];
-				int j = i - 1;
-				while ( j >= 0 && scored[j].score < tmp.score )
-				{
-					scored[j + 1] = scored[j];
-					--j;
-				}
-				scored[j + 1] = tmp;
-			}
-			for ( int i = 0; i < n; ++i )
-			{
-				outFiltered[i] = scored[i].idx;
-			}
-			*outCount = n;
-		};
+	ImGui::SetNextWindowPos( { context->camera.width * 0.5f, context->camera.height * 0.35f }, ImGuiCond_Appearing,
+							 { 0.5f, 0.5f } );
+	ImGui::SetNextWindowSize( { 32.0f * fontSize, 0.0f }, ImGuiCond_Appearing );
 
-		if ( context->openSamplePicker )
+	if ( ImGui::BeginPopup( "##sample_picker",
+							ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings ) )
+	{
+		if ( justOpened )
 		{
-			ImGui::OpenPopup( "##sample_picker" );
-			context->openSamplePicker = false;
-			query[0] = '\0';
-			prevQuery[0] = '\0';
+			ImGui::SetKeyboardFocusHere();
+			justOpened = false;
+		}
+
+		ImGui::PushItemWidth( -1.0f );
+		ImGui::InputTextWithHint( "##q", "Search by name or category...", query, sizeof( query ) );
+		ImGui::PopItemWidth();
+
+		if ( strcmp( query, prevQuery ) != 0 )
+		{
+			Rebuild( query, filtered, &filteredCount );
+			strncpy( prevQuery, query, sizeof( prevQuery ) );
+			prevQuery[sizeof( prevQuery ) - 1] = '\0';
 			highlight = 0;
-			prevHighlight = 0;
-			rebuild( query, filtered, &filteredCount );
-			justOpened = true;
 			forceScroll = true;
 		}
 
-		ImGui::SetNextWindowPos( { context->camera.width * 0.5f, context->camera.height * 0.35f }, ImGuiCond_Appearing,
-								 { 0.5f, 0.5f } );
-		ImGui::SetNextWindowSize( { 32.0f * fontSize, 0.0f }, ImGuiCond_Appearing );
-
-		if ( ImGui::BeginPopup( "##sample_picker",
-								ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings ) )
+		if ( filteredCount > 0 )
 		{
-			if ( justOpened )
+			if ( ImGui::IsKeyPressed( ImGuiKey_DownArrow, true ) )
 			{
-				ImGui::SetKeyboardFocusHere();
-				justOpened = false;
+				highlight = ( highlight + 1 ) % filteredCount;
 			}
-
-			ImGui::PushItemWidth( -1.0f );
-			ImGui::InputTextWithHint( "##q", "Search by name or category...", query, sizeof( query ) );
-			ImGui::PopItemWidth();
-
-			if ( strcmp( query, prevQuery ) != 0 )
+			if ( ImGui::IsKeyPressed( ImGuiKey_UpArrow, true ) )
 			{
-				rebuild( query, filtered, &filteredCount );
-				strncpy( prevQuery, query, sizeof( prevQuery ) );
-				prevQuery[sizeof( prevQuery ) - 1] = '\0';
-				highlight = 0;
-				forceScroll = true;
+				highlight = ( highlight + filteredCount - 1 ) % filteredCount;
 			}
-
-			if ( filteredCount > 0 )
-			{
-				if ( ImGui::IsKeyPressed( ImGuiKey_DownArrow, true ) )
-				{
-					highlight = ( highlight + 1 ) % filteredCount;
-				}
-				if ( ImGui::IsKeyPressed( ImGuiKey_UpArrow, true ) )
-				{
-					highlight = ( highlight + filteredCount - 1 ) % filteredCount;
-				}
-			}
-			bool commit = ImGui::IsKeyPressed( ImGuiKey_Enter, false ) || ImGui::IsKeyPressed( ImGuiKey_KeypadEnter, false );
-
-			ImGui::BeginChild( "##results", { 0.0f, 14.0f * fontSize }, ImGuiChildFlags_Borders );
-			for ( int row = 0; row < filteredCount; ++row )
-			{
-				int i = filtered[row];
-				char label[160];
-				snprintf( label, sizeof( label ), "%s  >  %s", g_sampleEntries[i].category, g_sampleEntries[i].name );
-				bool sel = ( row == highlight );
-				if ( ImGui::Selectable( label, sel ) )
-				{
-					highlight = row;
-					commit = true;
-				}
-				if ( sel && ( forceScroll || highlight != prevHighlight ) )
-				{
-					ImGui::SetScrollHereY();
-				}
-			}
-			ImGui::EndChild();
-			prevHighlight = highlight;
-			forceScroll = false;
-
-			if ( commit && filteredCount > 0 )
-			{
-				SelectSample( context, filtered[highlight], false );
-				ImGui::CloseCurrentPopup();
-			}
-
-			ImGui::EndPopup();
 		}
-	}
+		bool commit = ImGui::IsKeyPressed( ImGuiKey_Enter, false ) || ImGui::IsKeyPressed( ImGuiKey_KeypadEnter, false );
 
+		ImGui::BeginChild( "##results", { 0.0f, 14.0f * fontSize }, ImGuiChildFlags_Borders );
+		for ( int row = 0; row < filteredCount; ++row )
+		{
+			int i = filtered[row];
+			char label[160];
+			snprintf( label, sizeof( label ), "%s  >  %s", g_sampleEntries[i].category, g_sampleEntries[i].name );
+			bool sel = ( row == highlight );
+			if ( ImGui::Selectable( label, sel ) )
+			{
+				highlight = row;
+				commit = true;
+			}
+			if ( sel && ( forceScroll || highlight != prevHighlight ) )
+			{
+				ImGui::SetScrollHereY();
+			}
+		}
+		ImGui::EndChild();
+		prevHighlight = highlight;
+		forceScroll = false;
+
+		if ( commit && filteredCount > 0 )
+		{
+			SelectSample( context, filtered[highlight], false );
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
+// When UI is hidden draw a minimal in world hud
+static void DrawHud( SampleContext* context, float frameTime )
+{
+	const SampleEntry& entry = g_sampleEntries[context->sampleIndex];
+	float fontSize = ImGui::GetFontSize();
+
+	DrawScreenString( context->draw, 5.0f, 1.5f * fontSize, b2_colorYellow, "%s : %s", entry.category, entry.name );
+	DrawScreenString( context->draw, 5.0f, context->camera.height - 0.5f * fontSize, b2_colorSeaGreen, "%.1f ms  step %d",
+					  1000.0f * frameTime, context->sample->m_stepCount );
+}
+
+static inline ImVec4 MakeColor( b2HexColor hexColor )
+{
+	ImU32 color = IM_COL32( ( hexColor >> 16 ) & 0xFF, ( hexColor >> 8 ) & 0xFF, hexColor & 0xFF, 255 );
+	return ImGui::ColorConvertU32ToFloat4( color );
+}
+
+static void DrawRightPanel( SampleContext* context, float frameTime )
+{
+	const SampleEntry& entry = g_sampleEntries[context->sampleIndex];
+	float fontSize = ImGui::GetFontSize();
+	float menuWidth = 14.0f * fontSize;
 	float menuBarHeight = ImGui::GetFrameHeight();
 
 	ImGui::SetNextWindowPos( { context->camera.width - menuWidth - 0.5f * fontSize, menuBarHeight + 0.5f * fontSize } );
@@ -1607,29 +1581,21 @@ void UpdateSampleUI( SampleContext* context )
 				  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
 					  ImGuiWindowFlags_NoTitleBar );
 
-	for ( int i = 0; i < context->sample->m_hudLineCount; ++i )
-	{
-		const Sample::HudLine& line = context->sample->m_hudLines[i];
-		if ( line.text[0] == '\0' )
-		{
-			ImGui::Separator();
-			continue;
-		}
-		uint32_t hex = static_cast<uint32_t>( line.color );
-		ImU32 color = IM_COL32( ( hex >> 16 ) & 0xFF, ( hex >> 8 ) & 0xFF, hex & 0xFF, 255 );
-		ImGui::PushStyleColor( ImGuiCol_Text, color );
-		ImGui::TextUnformatted( line.text );
-		ImGui::PopStyleColor();
-	}
+	ImGui::TextColored( MakeColor( b2_colorGoldenRod ), "%s", entry.name );
+	ImGui::TextColored( MakeColor( b2_colorLightGray ), "%s", entry.category );
+	ImGui::Separator();
+	ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "%.1f ms", 1000.0f * frameTime );
+	ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "step %d", context->sample->m_stepCount );
+	ImGui::Separator();
+	ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "cam (%.1f, %.1f)", context->camera.center.x, context->camera.center.y );
+	ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "zoom %.2f", context->camera.zoom );
 
-	if ( context->sample->m_hudLineCount > 0 )
+	ImGui::Separator();
+
+	if ( context->sample->DrawControls() )
 	{
 		ImGui::Separator();
 	}
-
-	context->sample->BuildSamplePanel();
-
-	ImGui::Separator();
 
 	if ( ImGui::CollapsingHeader( "Solver", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{
@@ -1637,9 +1603,9 @@ void UpdateSampleUI( SampleContext* context )
 		ImGui::SliderInt( "Sub-steps", &context->subStepCount, 1, 32 );
 		ImGui::SliderFloat( "Hertz", &context->hertz, 5.0f, 240.0f, "%.0f hz" );
 
-		if ( ImGui::SliderInt( "Workers", &context->workerCount, 1, maxWorkers ) )
+		if ( ImGui::SliderInt( "Workers", &context->workerCount, 1, B2_MAX_WORKERS ) )
 		{
-			context->workerCount = b2ClampInt( context->workerCount, 1, maxWorkers );
+			context->workerCount = b2ClampInt( context->workerCount, 1, B2_MAX_WORKERS );
 			SelectSample( context, context->sampleIndex, true );
 		}
 
@@ -1657,6 +1623,21 @@ void UpdateSampleUI( SampleContext* context )
 	}
 
 	ImGui::End();
+}
 
-	context->sample->UpdateGui();
+// Entry point for all UI drawing. This should not be a member of Sample because
+// this can delete the current sample.
+void DrawUI( SampleContext* context, float frameTime )
+{
+	if ( context->showUI == false )
+	{
+		// Minimal hud
+		DrawHud( context, frameTime );
+		return;
+	}
+
+	DrawMenuBar( context );
+	DrawSamplePicker( context );
+	DrawRightPanel( context, frameTime );
+	context->sample->DrawMetrics();
 }

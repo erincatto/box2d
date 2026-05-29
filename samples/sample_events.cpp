@@ -234,7 +234,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::RadioButton( "donut", m_type == e_donut ) )
 		{
@@ -247,6 +247,8 @@ public:
 			Clear();
 			m_type = e_human;
 		}
+
+		return true;
 	}
 
 	void Step() override
@@ -417,7 +419,7 @@ public:
 		m_visitorShapeId = b2CreateCircleShape( m_visitorBodyId, &shapeDef, &circle );
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( B2_IS_NULL( m_visitorBodyId ) )
 		{
@@ -536,6 +538,8 @@ public:
 				}
 			}
 		}
+
+		return true;
 	}
 
 	void Step() override
@@ -631,9 +635,9 @@ public:
 			m_sensorShapeId2 = b2_nullShapeId;
 		}
 
-		DrawTextLine( "visiting 1 == %s", m_isVisiting1 ? "true" : "false" );
-		DrawTextLine( "visiting 2 == %s", m_isVisiting2 ? "true" : "false" );
-		DrawTextLine( "sensors overlap count == %d", m_sensorsOverlapCount );
+		DrawScreenTextLine( "visiting 1 == %s", m_isVisiting1 ? "true" : "false" );
+		DrawScreenTextLine( "visiting 2 == %s", m_isVisiting2 ? "true" : "false" );
+		DrawScreenTextLine( "sensors overlap count == %d", m_sensorsOverlapCount );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -764,7 +768,7 @@ public:
 			}
 		}
 
-		DrawTextLine( "count == %d", m_overlapCount );
+		DrawScreenTextLine( "count == %d", m_overlapCount );
 
 		int capacity = b2Shape_GetSensorCapacity( m_sensorId );
 		m_visitorIds.clear();
@@ -908,11 +912,13 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		ImGui::SliderFloat( "force", &m_force, 100.0f, 500.0f, "%.1f" );
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	void Step() override
@@ -1324,12 +1330,14 @@ public:
 		return false;
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		ImGui::SliderFloat( "force", &m_force, 0.0f, 50.0f, "%.1f" );
 		ImGui::SliderFloat( "impulse", &m_impulse, 0.0f, 50.0f, "%.1f" );
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	void Step() override
@@ -1407,7 +1415,7 @@ public:
 		int contactCount = b2Body_GetContactData( m_movingPlatformId, &contactData, 1 );
 		DrawScreenTextLine( "Platform contact count = %d, point count = %d", contactCount, contactData.manifold.pointCount );
 		DrawScreenTextLine( "Movement: A/D/Space" );
-		DrawTextLine( "Can jump = %s", canJump ? "true" : "false" );
+		DrawScreenTextLine( "Can jump = %s", canJump ? "true" : "false" );
 
 		if ( m_context->hertz > 0.0f )
 		{
@@ -1527,7 +1535,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Button( "Explode" ) )
 		{
@@ -1542,6 +1550,8 @@ public:
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		ImGui::SliderFloat( "Magnitude", &m_explosionMagnitude, -20.0f, 20.0f, "%.1f" );
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	void Step() override
@@ -1596,7 +1606,7 @@ public:
 
 		DrawCircle( m_draw, m_explosionPosition, m_explosionRadius, b2_colorAzure );
 
-		DrawTextLine( "sleep count: %d", m_sleepCount );
+		DrawScreenTextLine( "sleep count: %d", m_sleepCount );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -2270,7 +2280,7 @@ public:
 		m_shapeId = b2CreateCircleShape( m_bodyId, &shapeDef, &circle );
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::Checkbox( "Bullet", &m_isBullet );
 
@@ -2278,6 +2288,8 @@ public:
 		{
 			Launch();
 		}
+
+		return true;
 	}
 
 	void CollectTransforms( b2ShapeId sensorShapeId )
@@ -2336,8 +2348,8 @@ public:
 			}
 		}
 
-		DrawTextLine( "begin touch count = %d", m_beginCount );
-		DrawTextLine( "end touch count = %d", m_endCount );
+		DrawScreenTextLine( "begin touch count = %d", m_beginCount );
+		DrawScreenTextLine( "end touch count = %d", m_endCount );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -2607,7 +2619,7 @@ public:
 		b2Body_SetMassData( m_bodyId, massData );
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Checkbox( "gravity", &m_useGravity ) )
 		{
@@ -2618,6 +2630,8 @@ public:
 		{
 			Spawn();
 		}
+
+		return true;
 	}
 
 	void Step() override

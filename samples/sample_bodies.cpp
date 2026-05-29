@@ -199,7 +199,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::RadioButton( "Static", m_type == b2_staticBody ) )
 		{
@@ -252,6 +252,8 @@ public:
 				b2Body_Disable( m_floatingBodyId );
 			}
 		}
+
+		return true;
 	}
 
 	void Step() override
@@ -355,7 +357,7 @@ public:
 		m_explosionMagnitude = 8.0f;
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Button( "Teleport" ) )
 		{
@@ -375,6 +377,8 @@ public:
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 		ImGui::SliderFloat( "Magnitude", &m_explosionMagnitude, -100.0f, 100.0f, "%.1f" );
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	void Step() override
@@ -553,7 +557,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -590,6 +594,8 @@ public:
 				ToggleInvoker();
 			}
 		}
+
+		return true;
 	}
 
 	void Step() override
@@ -633,7 +639,7 @@ public:
 
 		for ( int i = 0; i < 2; ++i )
 		{
-			DrawTextLine( "sensor touch %d = %s", i, m_sensorTouching[i] ? "true" : "false" );
+			DrawScreenTextLine( "sensor touch %d = %s", i, m_sensorTouching[i] ? "true" : "false" );
 		}
 	}
 
@@ -1021,7 +1027,7 @@ public:
 		b2Body_SetLinearVelocity( m_bodyId, { 0.0f, -20.0f } );
 
 		b2Vec2 position = b2Body_GetPosition( m_bodyId );
-		DrawTextLine( "(x, y) = (%.2g, %.2g)", position.x, position.y );
+		DrawScreenTextLine( "(x, y) = (%.2g, %.2g)", position.x, position.y );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -1074,12 +1080,14 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Button( "Wake Touching" ) )
 		{
 			b2Body_WakeTouching( m_groundId );
 		}
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )

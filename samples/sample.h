@@ -37,7 +37,7 @@ struct SampleContext
 	bool showUI = true;
 
 	// Diagnostics drawer visibility. D toggles.
-	bool showDiagnostics = false;
+	bool showMetrics = false;
 
 	// Set by Ctrl+O; consumed by UpdateSampleUI to open the fuzzy sample picker.
 	bool openSamplePicker = false;
@@ -57,10 +57,11 @@ public:
 	void ResetText();
 	virtual void Step();
 
-	virtual void UpdateGui();
-	virtual void BuildSamplePanel()
+	virtual bool DrawControls()
 	{
+		return false;
 	}
+
 	virtual void Keyboard( int )
 	{
 	}
@@ -68,12 +69,9 @@ public:
 	virtual void MouseUp( b2Vec2 p, int button );
 	virtual void MouseMove( b2Vec2 p );
 
-	void DrawTextLine( const char* text, ... );
-	void DrawColoredTextLine( b2HexColor color, const char* text, ... );
+	void DrawMetrics();
 	void DrawScreenTextLine( const char* text, ... );
-	void DrawColoredScreenTextLine( b2HexColor color, const char* text, ... );
 	void ResetProfile();
-	void ShiftOrigin( b2Vec2 newOrigin );
 
 	static int ParsePath( const char* svgPath, b2Vec2 offset, b2Vec2* points, int capacity, float scale, bool reverseOrder );
 
@@ -84,13 +82,6 @@ public:
 	static constexpr int m_maxTasks = 512;
 	static constexpr int m_maxThreads = 64;
 	static constexpr int m_profileCapacity = 512;
-	static constexpr int m_maxHudLines = 64;
-
-	struct HudLine
-	{
-		b2HexColor color;
-		char text[256];
-	};
 
 #ifdef NDEBUG
 	static constexpr bool m_isDebug = false;
@@ -109,9 +100,6 @@ public:
 	b2Vec2 m_mousePoint;
 	float m_mouseForceScale;
 	int m_stepCount;
-
-	HudLine m_hudLines[m_maxHudLines];
-	int m_hudLineCount;
 	float m_screenTextY;
 
 	b2Profile m_profiles[m_profileCapacity];
@@ -128,7 +116,7 @@ typedef b2Capacity SampleCapacityFcn( void );
 int RegisterSample( const char* category, const char* name, SampleCreateFcn* fcn );
 int RegisterSampleWithCapacity( const char* category, const char* name, SampleCreateFcn* fcn, SampleCapacityFcn* capacityFcn );
 void SelectSample( SampleContext* context, int selection, bool restart );
-void UpdateSampleUI( SampleContext* context );
+void DrawUI( SampleContext* context, float frameTime );
 
 struct SampleEntry
 {

@@ -164,7 +164,7 @@ public:
 		m_stepCount = 0;
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -193,6 +193,8 @@ public:
 		{
 			Launch();
 		}
+
+		return true;
 	}
 
 	void Step() override
@@ -353,7 +355,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -376,6 +378,8 @@ public:
 		{
 			Mutate();
 		}
+
+		return true;
 	}
 
 	void Step() override
@@ -568,7 +572,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Button( "Intrude" ) )
 		{
@@ -576,6 +580,8 @@ public:
 		}
 
 		ImGui::Checkbox( "Body AABBs", &m_drawBodyAABBs );
+
+		return true;
 	}
 
 	void Step() override
@@ -677,7 +683,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::Text( "Player 1 Collides With" );
 		{
@@ -711,6 +717,8 @@ public:
 
 				b2Shape_SetFilter( m_shape1Id, filter1 );
 			}
+
+			return true;
 		}
 
 		ImGui::Separator();
@@ -993,7 +1001,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -1012,6 +1020,8 @@ public:
 		{
 			CreateBodies();
 		}
+
+		return true;
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -1336,7 +1346,7 @@ public:
 		m_bodyIds.clear();
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -1351,6 +1361,8 @@ public:
 		}
 
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	void Step() override
@@ -1455,7 +1467,7 @@ public:
 		b2Body_ApplyMassFromShapes( bodyId );
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::RadioButton( "Circle", m_shapeType == b2_circleShape ) )
 		{
@@ -1505,6 +1517,8 @@ public:
 		{
 			b2Body_SetType( bodyId, b2_dynamicBody );
 		}
+
+		return true;
 	}
 
 	void Step() override
@@ -1859,7 +1873,7 @@ public:
 		m_impulse = 10.0f;
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		if ( ImGui::Button( "Explode" ) )
 		{
@@ -1876,6 +1890,8 @@ public:
 		ImGui::SliderFloat( "falloff", &m_falloff, 0.0f, 20.0f, "%.1f" );
 		ImGui::SliderFloat( "impulse", &m_impulse, -20.0f, 20.0f, "%.1f" );
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	void Step() override
@@ -1896,7 +1912,7 @@ public:
 
 		Sample::Step();
 
-		DrawTextLine( "reference angle = %g", m_referenceAngle );
+		DrawScreenTextLine( "reference angle = %g", m_referenceAngle );
 
 		DrawCircle( m_draw, b2Vec2_zero, m_radius + m_falloff, b2_colorBox2DBlue );
 		DrawCircle( m_draw, b2Vec2_zero, m_radius, b2_colorBox2DYellow );
@@ -2134,7 +2150,7 @@ public:
 		}
 	}
 
-	void BuildSamplePanel() override
+	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
 
@@ -2155,6 +2171,8 @@ public:
 		}
 
 		ImGui::PopItemWidth();
+
+		return true;
 	}
 
 	void Step() override
