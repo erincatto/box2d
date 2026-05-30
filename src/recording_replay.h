@@ -18,6 +18,13 @@ typedef struct b2RecReader
 	int workerCount;         // 0 = use recorded count
 	bool ok;                 // false on read overrun or id mismatch, a fatal stop
 	bool diverged;           // a StateHash failed to reproduce, non-fatal so a viewer can keep playing
+
+	// Scratch for variable-length defs (chain points/materials), grown on demand and
+	// freed with the player. Cloned by the create call so only valid during one dispatch.
+	b2Vec2* chainPoints;
+	int chainPointCap;
+	b2SurfaceMaterial* chainMaterials;
+	int chainMaterialCap;
 } b2RecReader;
 
 // Incremental player. Owns the file image and drives replay one step at a time.
@@ -47,7 +54,27 @@ b2Transform b2RecR_XF( b2RecReader* rdr );
 b2WorldId b2RecR_WORLDID( b2RecReader* rdr );
 b2BodyId b2RecR_BODYID( b2RecReader* rdr );
 b2ShapeId b2RecR_SHAPEID( b2RecReader* rdr );
+b2ChainId b2RecR_CHAINID( b2RecReader* rdr );
+b2JointId b2RecR_JOINTID( b2RecReader* rdr );
 b2Circle b2RecR_CIRCLE( b2RecReader* rdr );
+b2Capsule b2RecR_CAPSULE( b2RecReader* rdr );
+b2Segment b2RecR_SEGMENT( b2RecReader* rdr );
+b2Polygon b2RecR_POLYGON( b2RecReader* rdr );
+b2ChainSegment b2RecR_CHAINSEG( b2RecReader* rdr );
+b2Filter b2RecR_FILTER( b2RecReader* rdr );
+b2SurfaceMaterial b2RecR_MATERIAL( b2RecReader* rdr );
+b2MassData b2RecR_MASSDATA( b2RecReader* rdr );
+b2MotionLocks b2RecR_LOCKS( b2RecReader* rdr );
+const char* b2RecR_STR( b2RecReader* rdr );
+b2ExplosionDef b2RecR_EXPLOSIONDEF( b2RecReader* rdr );
 b2WorldDef b2RecR_WORLDDEF( b2RecReader* rdr );
 b2BodyDef b2RecR_BODYDEF( b2RecReader* rdr );
 b2ShapeDef b2RecR_SHAPEDEF( b2RecReader* rdr );
+b2ChainDef b2RecR_CHAINDEF( b2RecReader* rdr );
+b2DistanceJointDef b2RecR_DISTANCEJOINTDEF( b2RecReader* rdr );
+b2MotorJointDef b2RecR_MOTORJOINTDEF( b2RecReader* rdr );
+b2FilterJointDef b2RecR_FILTERJOINTDEF( b2RecReader* rdr );
+b2PrismaticJointDef b2RecR_PRISMATICJOINTDEF( b2RecReader* rdr );
+b2RevoluteJointDef b2RecR_REVOLUTEJOINTDEF( b2RecReader* rdr );
+b2WeldJointDef b2RecR_WELDJOINTDEF( b2RecReader* rdr );
+b2WheelJointDef b2RecR_WHEELJOINTDEF( b2RecReader* rdr );

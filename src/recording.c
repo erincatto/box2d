@@ -134,10 +134,72 @@ void b2RecW_SHAPEID( b2RecBuffer* buf, b2ShapeId v )
 	b2RecW_U64( buf, b2StoreShapeId( v ) );
 }
 
+void b2RecW_CHAINID( b2RecBuffer* buf, b2ChainId v )
+{
+	b2RecW_U64( buf, b2StoreChainId( v ) );
+}
+
+void b2RecW_JOINTID( b2RecBuffer* buf, b2JointId v )
+{
+	b2RecW_U64( buf, b2StoreJointId( v ) );
+}
+
+// Geometry is pointer-free POD, pointerWidth in the header gates the layout
+
 void b2RecW_CIRCLE( b2RecBuffer* buf, b2Circle v )
 {
-	// b2Circle is pointer-free POD, pointerWidth in header gates this
 	b2RecBufAppend( buf, &v, (int)sizeof( b2Circle ) );
+}
+
+void b2RecW_CAPSULE( b2RecBuffer* buf, b2Capsule v )
+{
+	b2RecBufAppend( buf, &v, (int)sizeof( b2Capsule ) );
+}
+
+void b2RecW_SEGMENT( b2RecBuffer* buf, b2Segment v )
+{
+	b2RecBufAppend( buf, &v, (int)sizeof( b2Segment ) );
+}
+
+void b2RecW_POLYGON( b2RecBuffer* buf, b2Polygon v )
+{
+	b2RecBufAppend( buf, &v, (int)sizeof( b2Polygon ) );
+}
+
+void b2RecW_CHAINSEG( b2RecBuffer* buf, b2ChainSegment v )
+{
+	b2RecBufAppend( buf, &v, (int)sizeof( b2ChainSegment ) );
+}
+
+void b2RecW_FILTER( b2RecBuffer* buf, b2Filter v )
+{
+	b2RecW_U64( buf, v.categoryBits );
+	b2RecW_U64( buf, v.maskBits );
+	b2RecW_I32( buf, v.groupIndex );
+}
+
+void b2RecW_MATERIAL( b2RecBuffer* buf, b2SurfaceMaterial v )
+{
+	b2RecW_F32( buf, v.friction );
+	b2RecW_F32( buf, v.restitution );
+	b2RecW_F32( buf, v.rollingResistance );
+	b2RecW_F32( buf, v.tangentSpeed );
+	b2RecW_U64( buf, v.userMaterialId );
+	b2RecW_U32( buf, v.customColor );
+}
+
+void b2RecW_MASSDATA( b2RecBuffer* buf, b2MassData v )
+{
+	b2RecW_F32( buf, v.mass );
+	b2RecW_VEC2( buf, v.center );
+	b2RecW_F32( buf, v.rotationalInertia );
+}
+
+void b2RecW_LOCKS( b2RecBuffer* buf, b2MotionLocks v )
+{
+	b2RecW_BOOL( buf, v.linearX );
+	b2RecW_BOOL( buf, v.linearY );
+	b2RecW_BOOL( buf, v.angularZ );
 }
 
 void b2RecW_STR( b2RecBuffer* buf, const char* s )
@@ -240,6 +302,144 @@ void b2RecW_SHAPEDEF( b2RecBuffer* buf, b2ShapeDef v )
 	// internalValue omitted
 }
 
+// Variable-length def: point and material arrays are length-prefixed and inlined.
+// Arrays are cloned by b2CreateChain so they only need to outlive the dispatch call.
+void b2RecW_CHAINDEF( b2RecBuffer* buf, b2ChainDef v )
+{
+	// userData: not preserved
+	b2RecW_U64( buf, 0u );
+	b2RecW_I32( buf, v.count );
+	for ( int i = 0; i < v.count; ++i )
+	{
+		b2RecW_VEC2( buf, v.points[i] );
+	}
+	b2RecW_I32( buf, v.materialCount );
+	for ( int i = 0; i < v.materialCount; ++i )
+	{
+		b2RecW_MATERIAL( buf, v.materials[i] );
+	}
+	b2RecW_FILTER( buf, v.filter );
+	b2RecW_BOOL( buf, v.isLoop );
+	b2RecW_BOOL( buf, v.enableSensorEvents );
+	// internalValue omitted
+}
+
+void b2RecW_EXPLOSIONDEF( b2RecBuffer* buf, b2ExplosionDef v )
+{
+	b2RecW_U64( buf, v.maskBits );
+	b2RecW_VEC2( buf, v.position );
+	b2RecW_F32( buf, v.radius );
+	b2RecW_F32( buf, v.falloff );
+	b2RecW_F32( buf, v.impulsePerLength );
+}
+
+// Joint defs share a base. Body ids are written as ids and remapped to the replay world on
+// read. userData and internalValue are not serialized.
+static void b2RecW_JointBase( b2RecBuffer* buf, const b2JointDef* base )
+{
+	b2RecW_U64( buf, 0u ); // userData
+	b2RecW_BODYID( buf, base->bodyIdA );
+	b2RecW_BODYID( buf, base->bodyIdB );
+	b2RecW_XF( buf, base->localFrameA );
+	b2RecW_XF( buf, base->localFrameB );
+	b2RecW_F32( buf, base->forceThreshold );
+	b2RecW_F32( buf, base->torqueThreshold );
+	b2RecW_F32( buf, base->constraintHertz );
+	b2RecW_F32( buf, base->constraintDampingRatio );
+	b2RecW_F32( buf, base->drawScale );
+	b2RecW_BOOL( buf, base->collideConnected );
+}
+
+void b2RecW_DISTANCEJOINTDEF( b2RecBuffer* buf, b2DistanceJointDef v )
+{
+	b2RecW_JointBase( buf, &v.base );
+	b2RecW_F32( buf, v.length );
+	b2RecW_BOOL( buf, v.enableSpring );
+	b2RecW_F32( buf, v.lowerSpringForce );
+	b2RecW_F32( buf, v.upperSpringForce );
+	b2RecW_F32( buf, v.hertz );
+	b2RecW_F32( buf, v.dampingRatio );
+	b2RecW_BOOL( buf, v.enableLimit );
+	b2RecW_F32( buf, v.minLength );
+	b2RecW_F32( buf, v.maxLength );
+	b2RecW_BOOL( buf, v.enableMotor );
+	b2RecW_F32( buf, v.maxMotorForce );
+	b2RecW_F32( buf, v.motorSpeed );
+}
+
+void b2RecW_MOTORJOINTDEF( b2RecBuffer* buf, b2MotorJointDef v )
+{
+	b2RecW_JointBase( buf, &v.base );
+	b2RecW_VEC2( buf, v.linearVelocity );
+	b2RecW_F32( buf, v.maxVelocityForce );
+	b2RecW_F32( buf, v.angularVelocity );
+	b2RecW_F32( buf, v.maxVelocityTorque );
+	b2RecW_F32( buf, v.linearHertz );
+	b2RecW_F32( buf, v.linearDampingRatio );
+	b2RecW_F32( buf, v.maxSpringForce );
+	b2RecW_F32( buf, v.angularHertz );
+	b2RecW_F32( buf, v.angularDampingRatio );
+	b2RecW_F32( buf, v.maxSpringTorque );
+}
+
+void b2RecW_FILTERJOINTDEF( b2RecBuffer* buf, b2FilterJointDef v )
+{
+	b2RecW_JointBase( buf, &v.base );
+}
+
+void b2RecW_PRISMATICJOINTDEF( b2RecBuffer* buf, b2PrismaticJointDef v )
+{
+	b2RecW_JointBase( buf, &v.base );
+	b2RecW_BOOL( buf, v.enableSpring );
+	b2RecW_F32( buf, v.hertz );
+	b2RecW_F32( buf, v.dampingRatio );
+	b2RecW_F32( buf, v.targetTranslation );
+	b2RecW_BOOL( buf, v.enableLimit );
+	b2RecW_F32( buf, v.lowerTranslation );
+	b2RecW_F32( buf, v.upperTranslation );
+	b2RecW_BOOL( buf, v.enableMotor );
+	b2RecW_F32( buf, v.maxMotorForce );
+	b2RecW_F32( buf, v.motorSpeed );
+}
+
+void b2RecW_REVOLUTEJOINTDEF( b2RecBuffer* buf, b2RevoluteJointDef v )
+{
+	b2RecW_JointBase( buf, &v.base );
+	b2RecW_F32( buf, v.targetAngle );
+	b2RecW_BOOL( buf, v.enableSpring );
+	b2RecW_F32( buf, v.hertz );
+	b2RecW_F32( buf, v.dampingRatio );
+	b2RecW_BOOL( buf, v.enableLimit );
+	b2RecW_F32( buf, v.lowerAngle );
+	b2RecW_F32( buf, v.upperAngle );
+	b2RecW_BOOL( buf, v.enableMotor );
+	b2RecW_F32( buf, v.maxMotorTorque );
+	b2RecW_F32( buf, v.motorSpeed );
+}
+
+void b2RecW_WELDJOINTDEF( b2RecBuffer* buf, b2WeldJointDef v )
+{
+	b2RecW_JointBase( buf, &v.base );
+	b2RecW_F32( buf, v.linearHertz );
+	b2RecW_F32( buf, v.angularHertz );
+	b2RecW_F32( buf, v.linearDampingRatio );
+	b2RecW_F32( buf, v.angularDampingRatio );
+}
+
+void b2RecW_WHEELJOINTDEF( b2RecBuffer* buf, b2WheelJointDef v )
+{
+	b2RecW_JointBase( buf, &v.base );
+	b2RecW_BOOL( buf, v.enableSpring );
+	b2RecW_F32( buf, v.hertz );
+	b2RecW_F32( buf, v.dampingRatio );
+	b2RecW_BOOL( buf, v.enableLimit );
+	b2RecW_F32( buf, v.lowerTranslation );
+	b2RecW_F32( buf, v.upperTranslation );
+	b2RecW_BOOL( buf, v.enableMotor );
+	b2RecW_F32( buf, v.maxMotorTorque );
+	b2RecW_F32( buf, v.motorSpeed );
+}
+
 // Record framing
 
 void b2RecBeginRecord( b2Recording* rec, uint8_t opcode )
@@ -269,7 +469,7 @@ void b2RecEndRecord( b2Recording* rec )
 	{ \
 		__VA_ARGS__ \
 	}
-#include "recording_ops.inc"
+#include "recording_ops.inl"
 #undef B2_REC_OP
 #undef ARG
 
@@ -282,8 +482,34 @@ void b2RecEndRecord( b2Recording* rec )
 		b2RecWriteArgs_##Name( rec, a ); \
 		b2RecEndRecord( rec ); \
 	}
-#include "recording_ops.inc"
+#include "recording_ops.inl"
 #undef B2_REC_OP
+
+// Codegen: create-op writers that append the returned id inside the record. The RET tag
+// selects the id type and its write primitive; RET_NONE ops generate nothing.
+
+#define B2_REC_RETWRITE( op, Name, idType, idW ) \
+	void b2RecWriteRet_##Name( b2Recording* rec, const b2RecArgs_##Name* a, idType id ) \
+	{ \
+		b2RecBeginRecord( rec, (uint8_t)( op ) ); \
+		b2RecWriteArgs_##Name( rec, a ); \
+		idW( &rec->buffer, id ); \
+		b2RecEndRecord( rec ); \
+	}
+#define B2_REC_RETWRITE_RET_NONE( op, Name )
+#define B2_REC_RETWRITE_RET_BODYID( op, Name ) B2_REC_RETWRITE( op, Name, b2BodyId, b2RecW_BODYID )
+#define B2_REC_RETWRITE_RET_SHAPEID( op, Name ) B2_REC_RETWRITE( op, Name, b2ShapeId, b2RecW_SHAPEID )
+#define B2_REC_RETWRITE_RET_CHAINID( op, Name ) B2_REC_RETWRITE( op, Name, b2ChainId, b2RecW_CHAINID )
+#define B2_REC_RETWRITE_RET_JOINTID( op, Name ) B2_REC_RETWRITE( op, Name, b2JointId, b2RecW_JOINTID )
+#define B2_REC_OP( op, Name, RET, ... ) B2_REC_RETWRITE_##RET( op, Name )
+#include "recording_ops.inl"
+#undef B2_REC_OP
+#undef B2_REC_RETWRITE_RET_NONE
+#undef B2_REC_RETWRITE_RET_BODYID
+#undef B2_REC_RETWRITE_RET_SHAPEID
+#undef B2_REC_RETWRITE_RET_CHAINID
+#undef B2_REC_RETWRITE_RET_JOINTID
+#undef B2_REC_RETWRITE
 
 // Lifecycle
 

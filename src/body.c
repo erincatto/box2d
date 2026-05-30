@@ -325,15 +325,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 
 	b2BodyId id = { bodyId + 1, world->worldId, body->generation };
 
-	// Record the create op and the returned id in one framed record
-	if ( world->recording != NULL )
-	{
-		b2RecBeginRecord( world->recording, 0x10 );
-		b2RecArgs_CreateBody _ca = { worldId, *def };
-		b2RecWriteArgs_CreateBody( world->recording, &_ca );
-		b2RecW_BODYID( &world->recording->buffer, id );
-		b2RecEndRecord( world->recording );
-	}
+	B2_REC_CREATE( world, CreateBody, id, worldId, *def );
 
 	return id;
 }
@@ -828,6 +820,7 @@ void b2Body_SetLinearVelocity( b2BodyId bodyId, b2Vec2 linearVelocity )
 void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
+	B2_REC( world, BodySetAngularVelocity, bodyId, angularVelocity );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
 	if ( body->type == b2_staticBody || ( body->flags & b2_lockAngularZ ) )
@@ -852,6 +845,7 @@ void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity )
 void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep, bool wake )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
+	B2_REC( world, BodySetTargetTransform, bodyId, target, timeStep, wake );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
 	if ( body->setIndex == b2_disabledSet )
@@ -944,6 +938,7 @@ b2Vec2 b2Body_GetWorldPointVelocity( b2BodyId bodyId, b2Vec2 worldPoint )
 void b2Body_ApplyForce( b2BodyId bodyId, b2Vec2 force, b2Vec2 point, bool wake )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
+	B2_REC( world, BodyApplyForce, bodyId, force, point, wake );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
 	if ( body->type != b2_dynamicBody || body->setIndex == b2_disabledSet )
@@ -967,6 +962,7 @@ void b2Body_ApplyForce( b2BodyId bodyId, b2Vec2 force, b2Vec2 point, bool wake )
 void b2Body_ApplyForceToCenter( b2BodyId bodyId, b2Vec2 force, bool wake )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
+	B2_REC( world, BodyApplyForceToCenter, bodyId, force, wake );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
 	if ( body->type != b2_dynamicBody || body->setIndex == b2_disabledSet )
@@ -989,6 +985,7 @@ void b2Body_ApplyForceToCenter( b2BodyId bodyId, b2Vec2 force, bool wake )
 void b2Body_ApplyTorque( b2BodyId bodyId, float torque, bool wake )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
+	B2_REC( world, BodyApplyTorque, bodyId, torque, wake );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
 	if ( body->type != b2_dynamicBody || body->setIndex == b2_disabledSet )
@@ -1011,6 +1008,7 @@ void b2Body_ApplyTorque( b2BodyId bodyId, float torque, bool wake )
 void b2Body_ClearForces( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
+	B2_REC( world, BodyClearForces, bodyId );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	b2BodySim* bodySim = b2GetBodySim( world, body );
 	bodySim->force = b2Vec2_zero;
@@ -1020,6 +1018,7 @@ void b2Body_ClearForces( b2BodyId bodyId )
 void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Vec2 point, bool wake )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
+	B2_REC( world, BodyApplyLinearImpulse, bodyId, impulse, point, wake );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
 	if ( body->type != b2_dynamicBody || body->setIndex == b2_disabledSet )
@@ -1048,6 +1047,7 @@ void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Vec2 point, b
 void b2Body_ApplyLinearImpulseToCenter( b2BodyId bodyId, b2Vec2 impulse, bool wake )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
+	B2_REC( world, BodyApplyLinearImpulseToCenter, bodyId, impulse, wake );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
 	if ( body->type != b2_dynamicBody || body->setIndex == b2_disabledSet )
@@ -1076,6 +1076,7 @@ void b2Body_ApplyAngularImpulse( b2BodyId bodyId, float impulse, bool wake )
 {
 	B2_ASSERT( b2Body_IsValid( bodyId ) );
 	b2World* world = b2GetWorld( bodyId.world0 );
+	B2_REC( world, BodyApplyAngularImpulse, bodyId, impulse, wake );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
 	if ( body->type != b2_dynamicBody || body->setIndex == b2_disabledSet )
@@ -1136,6 +1137,7 @@ b2BodyType b2Body_GetType( b2BodyId bodyId )
 void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
+	B2_REC( world, BodySetType, bodyId, (int32_t)type );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
 	b2BodyType originalType = body->type;
@@ -1322,6 +1324,7 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 void b2Body_SetName( b2BodyId bodyId, const char* name )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
+	B2_REC( world, BodySetName, bodyId, name );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
 	if ( name )
@@ -1402,6 +1405,8 @@ void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData )
 		return;
 	}
 
+	B2_REC( world, BodySetMassData, bodyId, massData );
+
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	b2BodySim* bodySim = b2GetBodySim( world, body );
 
@@ -1434,6 +1439,8 @@ void b2Body_ApplyMassFromShapes( b2BodyId bodyId )
 		return;
 	}
 
+	B2_REC( world, BodyApplyMassFromShapes, bodyId );
+
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	b2UpdateBodyMassData( world, body );
 }
@@ -1447,6 +1454,8 @@ void b2Body_SetLinearDamping( b2BodyId bodyId, float linearDamping )
 	{
 		return;
 	}
+
+	B2_REC( world, BodySetLinearDamping, bodyId, linearDamping );
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	b2BodySim* bodySim = b2GetBodySim( world, body );
@@ -1471,6 +1480,8 @@ void b2Body_SetAngularDamping( b2BodyId bodyId, float angularDamping )
 		return;
 	}
 
+	B2_REC( world, BodySetAngularDamping, bodyId, angularDamping );
+
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	b2BodySim* bodySim = b2GetBodySim( world, body );
 	bodySim->angularDamping = angularDamping;
@@ -1494,6 +1505,8 @@ void b2Body_SetGravityScale( b2BodyId bodyId, float gravityScale )
 	{
 		return;
 	}
+
+	B2_REC( world, BodySetGravityScale, bodyId, gravityScale );
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	b2BodySim* bodySim = b2GetBodySim( world, body );
@@ -1524,6 +1537,8 @@ void b2Body_SetAwake( b2BodyId bodyId, bool awake )
 		return;
 	}
 
+	B2_REC( world, BodySetAwake, bodyId, awake );
+
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
 	if ( awake && body->setIndex >= b2_firstSleepingSet )
@@ -1546,6 +1561,7 @@ void b2Body_SetAwake( b2BodyId bodyId, bool awake )
 void b2Body_WakeTouching( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
+	B2_REC( world, BodyWakeTouching, bodyId );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
 	int contactKey = body->headContactKey;
@@ -1590,6 +1606,7 @@ bool b2Body_IsSleepEnabled( b2BodyId bodyId )
 void b2Body_SetSleepThreshold( b2BodyId bodyId, float sleepThreshold )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
+	B2_REC( world, BodySetSleepThreshold, bodyId, sleepThreshold );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	body->sleepThreshold = sleepThreshold;
 }
@@ -1608,6 +1625,8 @@ void b2Body_EnableSleep( b2BodyId bodyId, bool enableSleep )
 	{
 		return;
 	}
+
+	B2_REC( world, BodyEnableSleep, bodyId, enableSleep );
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
@@ -1635,6 +1654,8 @@ void b2Body_Disable( b2BodyId bodyId )
 	{
 		return;
 	}
+
+	B2_REC( world, BodyDisable, bodyId );
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	if ( body->setIndex == b2_disabledSet )
@@ -1705,6 +1726,8 @@ void b2Body_Enable( b2BodyId bodyId )
 	{
 		return;
 	}
+
+	B2_REC( world, BodyEnable, bodyId );
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	if ( body->setIndex != b2_disabledSet )
@@ -1796,6 +1819,8 @@ void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks )
 		return;
 	}
 
+	B2_REC( world, BodySetMotionLocks, bodyId, locks );
+
 	uint32_t newFlags = 0;
 	newFlags |= locks.linearX ? b2_lockLinearX : 0;
 	newFlags |= locks.linearY ? b2_lockLinearY : 0;
@@ -1851,6 +1876,8 @@ void b2Body_SetBullet( b2BodyId bodyId, bool flag )
 		return;
 	}
 
+	B2_REC( world, BodySetBullet, bodyId, flag );
+
 	uint32_t newFlag = flag ? b2_isBullet : 0;
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
@@ -1881,6 +1908,8 @@ void b2Body_EnableContactRecycling( b2BodyId bodyId, bool flag )
 		return;
 	}
 
+	B2_REC( world, BodyEnableContactRecycling, bodyId, flag );
+
 	uint32_t newFlag = flag ? b2_bodyEnableContactRecycling : 0;
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
@@ -1905,6 +1934,7 @@ bool b2Body_IsContactRecyclingEnabled( b2BodyId bodyId )
 void b2Body_EnableContactEvents( b2BodyId bodyId, bool flag )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
+	B2_REC( world, BodyEnableContactEvents, bodyId, flag );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	int shapeId = body->headShapeId;
 	while ( shapeId != B2_NULL_INDEX )
@@ -1918,6 +1948,7 @@ void b2Body_EnableContactEvents( b2BodyId bodyId, bool flag )
 void b2Body_EnableHitEvents( b2BodyId bodyId, bool flag )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
+	B2_REC( world, BodyEnableHitEvents, bodyId, flag );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	int shapeId = body->headShapeId;
 	while ( shapeId != B2_NULL_INDEX )

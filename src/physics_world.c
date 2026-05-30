@@ -1663,6 +1663,8 @@ void b2World_EnableSleeping( b2WorldId worldId, bool flag )
 		return;
 	}
 
+	B2_REC( world, WorldEnableSleeping, worldId, flag );
+
 	if ( flag == world->enableSleep )
 	{
 		return;
@@ -1699,6 +1701,8 @@ void b2World_EnableWarmStarting( b2WorldId worldId, bool flag )
 		return;
 	}
 
+	B2_REC( world, WorldEnableWarmStarting, worldId, flag );
+
 	world->enableWarmStarting = flag;
 }
 
@@ -1724,6 +1728,8 @@ void b2World_EnableContinuous( b2WorldId worldId, bool flag )
 		return;
 	}
 
+	B2_REC( world, WorldEnableContinuous, worldId, flag );
+
 	world->enableContinuous = flag;
 }
 
@@ -1741,6 +1747,8 @@ void b2World_SetRestitutionThreshold( b2WorldId worldId, float value )
 	{
 		return;
 	}
+
+	B2_REC( world, WorldSetRestitutionThreshold, worldId, value );
 
 	world->restitutionThreshold = b2ClampFloat( value, 0.0f, FLT_MAX );
 }
@@ -1760,6 +1768,8 @@ void b2World_SetHitEventThreshold( b2WorldId worldId, float value )
 		return;
 	}
 
+	B2_REC( world, WorldSetHitEventThreshold, worldId, value );
+
 	world->hitEventThreshold = b2ClampFloat( value, 0.0f, FLT_MAX );
 }
 
@@ -1778,6 +1788,8 @@ void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRati
 		return;
 	}
 
+	B2_REC( world, WorldSetContactTuning, worldId, hertz, dampingRatio, pushSpeed );
+
 	world->contactHertz = b2ClampFloat( hertz, 0.0f, FLT_MAX );
 	world->contactDampingRatio = b2ClampFloat( dampingRatio, 0.0f, FLT_MAX );
 	world->contactSpeed = b2ClampFloat( pushSpeed, 0.0f, FLT_MAX );
@@ -1791,6 +1803,8 @@ void b2World_SetContactRecycleDistance( b2WorldId worldId, float recycleDistance
 	{
 		return;
 	}
+
+	B2_REC( world, WorldSetContactRecycleDistance, worldId, recycleDistance );
 
 	world->contactRecycleDistance = b2ClampFloat( recycleDistance, 0.0f, FLT_MAX );
 }
@@ -1811,6 +1825,8 @@ void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearSpeed 
 	{
 		return;
 	}
+
+	B2_REC( world, WorldSetMaximumLinearSpeed, worldId, maximumLinearSpeed );
 
 	world->maxLinearSpeed = maximumLinearSpeed;
 }
@@ -2675,6 +2691,7 @@ void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* fcn, void* c
 void b2World_SetGravity( b2WorldId worldId, b2Vec2 gravity )
 {
 	b2World* world = b2GetWorldFromId( worldId );
+	B2_REC( world, WorldSetGravity, worldId, gravity );
 	world->gravity = gravity;
 }
 
@@ -2791,6 +2808,8 @@ void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionDef )
 		return;
 	}
 
+	B2_REC( world, WorldExplode, worldId, *explosionDef );
+
 	struct ExplosionContext explosionContext = { world, position, radius, falloff, impulsePerLength };
 
 	b2AABB aabb;
@@ -2811,6 +2830,8 @@ void b2World_RebuildStaticTree( b2WorldId worldId )
 		return;
 	}
 
+	B2_REC( world, WorldRebuildStaticTree, worldId );
+
 	b2DynamicTree* staticTree = world->broadPhase.trees + b2_staticBody;
 	b2DynamicTree_Rebuild( staticTree, true );
 }
@@ -2818,6 +2839,7 @@ void b2World_RebuildStaticTree( b2WorldId worldId )
 void b2World_EnableSpeculative( b2WorldId worldId, bool flag )
 {
 	b2World* world = b2GetWorldFromId( worldId );
+	B2_REC( world, WorldEnableSpeculative, worldId, flag );
 	world->enableSpeculative = flag;
 }
 

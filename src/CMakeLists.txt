@@ -45,6 +45,7 @@ set(BOX2D_SOURCE_FILES
 	prismatic_joint.c
 	recording.c
 	recording.h
+	recording_ops.inl
 	recording_replay.c
 	recording_replay.h
 	revolute_joint.c

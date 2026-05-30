@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#include "determinism.h"
 #include "draw.h"
 #include "sample.h"
 
 #include "box2d/box2d.h"
 
 #include <imgui.h>
-
 #include <stdio.h>
 
 // Produces a recording file so the Replay File sample has something to load. Runs a small scene
@@ -20,8 +20,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.center = { 0.0f, 0.0f };
-			m_context->camera.zoom = 25.0f;
+			m_context->camera.center = { 0.0f, 7.5f };
+			m_context->camera.zoom = 10.0f;
 		}
 
 		// Recreate the base world with recording enabled
@@ -37,24 +37,33 @@ public:
 		worldDef.recordingPath = m_path;
 		m_worldId = b2CreateWorld( &worldDef );
 
-		b2BodyDef groundDef = b2DefaultBodyDef();
-		groundDef.position = { 0.0f, -10.0f };
-		b2BodyId groundId = b2CreateBody( m_worldId, &groundDef );
-		b2ShapeDef groundShapeDef = b2DefaultShapeDef();
-		b2Circle groundCircle = { { 0.0f, 0.0f }, 10.0f };
-		b2CreateCircleShape( groundId, &groundShapeDef, &groundCircle );
+		m_data = CreateFallingHinges( m_worldId );
+		m_done = false;
+	}
 
-		for ( int i = 0; i < 24; ++i )
+	~MakeRecording() override
+	{
+		DestroyFallingHinges( &m_data );
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		if ( m_context->pause == false && m_done == false )
 		{
-			b2BodyDef bodyDef = b2DefaultBodyDef();
-			bodyDef.type = b2_dynamicBody;
-			bodyDef.position = { -1.75f + 0.5f * ( i % 8 ), 6.0f + 0.7f * ( i / 8 ) };
-			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			m_done = UpdateFallingHinges( m_worldId, &m_data );
 
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			shapeDef.density = 1.0f;
-			b2Circle circle = { { 0.0f, 0.0f }, 0.22f };
-			b2CreateCircleShape( bodyId, &shapeDef, &circle );
+			if ( m_done )
+			{
+				printf( "sleep step = %d, hash = 0x%08X\n", m_data.sleepStep, m_data.hash );
+
+				b2World_StopRecording( m_worldId );
+			}
+		}
+		else
+		{
+			DrawScreenTextLine( "sleep step = %d, hash = 0x%08X", m_data.sleepStep, m_data.hash );
 		}
 	}
 
@@ -80,6 +89,9 @@ public:
 		return new MakeRecording( context );
 	}
 
+	FallingHingeData m_data;
+	bool m_done;
+
 	const char* m_path = "recording.b2rec";
 };
 
@@ -98,8 +110,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.center = { 0.0f, 0.0f };
-			m_context->camera.zoom = 25.0f;
+			m_context->camera.center = { 0.0f, 7.5f };
+			m_context->camera.zoom = 10.0f;
 		}
 
 		// The base ctor created an empty world we do not need. The player owns the world we draw,
@@ -177,14 +189,13 @@ public:
 			b2World_Draw( m_worldId, &m_context->debugDraw );
 		}
 
-		DrawScreenTextLine( "frame %d%s", b2RecPlayer_GetFrame( m_player ),
-		                    b2RecPlayer_IsAtEnd( m_player ) ? "  (end)" : "" );
+		DrawScreenTextLine( "frame %d%s", b2RecPlayer_GetFrame( m_player ), b2RecPlayer_IsAtEnd( m_player ) ? "  (end)" : "" );
 
 		if ( b2RecPlayer_HasDiverged( m_player ) )
 		{
 			DrawScreenTextLine( "****DIVERGED****" );
 		}
-		
+
 		if ( m_context->pause )
 		{
 			DrawScreenTextLine( "****PAUSED****" );
