@@ -142,11 +142,11 @@ public:
 		if ( m_player != nullptr )
 		{
 			m_worldId = b2RecPlayer_GetWorldId( m_player );
-			snprintf( m_status, sizeof( m_status ), "loaded %s", m_path );
+			snprintf( m_status, sizeof( m_status ), "loaded file" );
 		}
 		else
 		{
-			snprintf( m_status, sizeof( m_status ), "failed to open %s", m_path );
+			snprintf( m_status, sizeof( m_status ), "failed to open file" );
 		}
 	}
 
@@ -230,7 +230,7 @@ public:
 
 	b2RecPlayer* m_player;
 	char m_path[256];
-	char m_status[128];
+	char m_status[32];
 };
 
 static int sampleReplayFile = RegisterSample( "Replay", "Replay File", ReplayFile::Create );
