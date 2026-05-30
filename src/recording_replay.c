@@ -492,13 +492,6 @@ b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount )
 		return NULL;
 	}
 
-	if ( hdr.simdWidth != (uint8_t)B2_SIMD_WIDTH )
-	{
-		printf( "b2ReplayFile: SIMD width mismatch (file=%u, runtime=%d)\n", hdr.simdWidth, B2_SIMD_WIDTH );
-		b2Free( data, (int)fileSize );
-		return NULL;
-	}
-
 	if ( hdr.pointerWidth != (uint8_t)sizeof( void* ) )
 	{
 		printf( "b2ReplayFile: pointer width mismatch (file=%u, runtime=%u)\n", hdr.pointerWidth,

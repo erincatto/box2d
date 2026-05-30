@@ -102,13 +102,13 @@ Box2D does not have any support for coordinate frame wrapping. You would likely 
 ## Determinism
 
 ### Is Box2D deterministic?
-For the same input, and same binary, Box2D will reproduce any simulation. Box2D does not use any random numbers nor base any computation on random events (such as timers, etc).
+For the same input Box2D will reproduce any simulation. Box2D does not use any random numbers nor base any computation on random events (such as timers, etc).
 
 Box2D is also deterministic under multithreading. A simulation using two threads will give the same result as eight threads.
 
 Box2D has cross-platform determinism as of version 3.1.
 
-However, Box2D does not have rollback determinism.
+However, Box2D does not have rollback determinism. There is no mechanism to set a world back to a prior state and then resume simulation expecting identical results. Box2D caches a lot of internal state to improve simulation stability and performance. Capturing all this data would be a huge undertaking and brittle. It would add a lot of complexity to the engine for an uncommon use case. I suspect the best physics engine for this use case would simply remove most of the internal caching, making a trade-off for performance and stability to achieve a specific game networking goal. So I have no plans to add this feature to Box2D.
 
 ### But I really want determinism
 This naturally leads to the question of fixed-point math. Box2D does not support fixed-point math. In the past Box2D was ported to the NDS in fixed-point and apparently it worked okay. Fixed-point math is slower and more tedious to develop, so I have chosen not to use fixed-point for the development of Box2D.
