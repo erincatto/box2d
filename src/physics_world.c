@@ -7,6 +7,8 @@
 
 #include "physics_world.h"
 
+#include "recording.h"
+
 #include "arena_allocator.h"
 #include "bitset.h"
 #include "body.h"
@@ -317,6 +319,13 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->debugContactSet = b2CreateBitSet( 256 );
 	world->debugIslandSet = b2CreateBitSet( 256 );
 
+	// Start recording if requested; b2StartRecording writes the CreateWorld record
+	world->recording = NULL;
+	if ( def->recordingPath != NULL )
+	{
+		b2StartRecording( world, def );
+	}
+
 	// add one to worldId so that 0 represents a null b2WorldId
 	return (b2WorldId){ (uint16_t)( worldId + 1 ), world->generation };
 }
@@ -324,6 +333,9 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 void b2DestroyWorld( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
+
+	// Flush and close recording before teardown
+	b2StopRecordingInternal( world );
 
 	if ( world->scheduler != NULL )
 	{
@@ -827,6 +839,9 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		return;
 	}
 
+	// Record step inputs before simulation runs
+	B2_REC( world, Step, worldId, timeStep, subStepCount );
+
 	// Prepare to capture events
 	// Ensure user does not access stale data if there is an early return
 	b2Array_Clear( world->bodyMoveEvents );
@@ -950,6 +965,15 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	b2Array_Clear( world->sensorEndEvents[world->endEventArrayIndex] );
 	b2Array_Clear( world->contactEndEvents[world->endEventArrayIndex] );
 	world->locked = false;
+
+	if ( world->recording != NULL )
+	{
+		// StateHash proves the simulation reproduced exactly on replay
+		uint64_t hash = b2HashWorldState( world );
+		b2RecArgs_StateHash sha = { worldId, hash };
+		b2RecWrite_StateHash( world->recording, &sha );
+		b2FlushRecording( world->recording );
+	}
 
 	b2TracyCFrame;
 }
@@ -1923,6 +1947,46 @@ int b2World_GetWorkerCount( b2WorldId worldId )
 	}
 
 	return world->workerCount;
+}
+
+void b2World_SaveRecording( b2WorldId worldId, const char* path )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	if ( world->recording == NULL )
+	{
+		return;
+	}
+
+	b2FlushRecording( world->recording );
+	fflush( world->recording->file );
+
+	// Stream-copy the recording to the user path. Source file stays open.
+	FILE* src = world->recording->file;
+	long pos = ftell( src );
+	fseek( src, 0, SEEK_SET );
+
+	FILE* dst = fopen( path, "wb" );
+	if ( dst == NULL )
+	{
+		fseek( src, pos, SEEK_SET );
+		return;
+	}
+
+	uint8_t copyBuf[4096];
+	size_t n;
+	while ( ( n = fread( copyBuf, 1, sizeof( copyBuf ), src ) ) > 0 )
+	{
+		fwrite( copyBuf, 1, n, dst );
+	}
+
+	fclose( dst );
+	fseek( src, pos, SEEK_SET );
+}
+
+void b2World_StopRecording( b2WorldId worldId )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	b2StopRecordingInternal( world );
 }
 
 void b2World_DumpMemoryStats( b2WorldId worldId )

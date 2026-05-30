@@ -3,6 +3,8 @@
 
 #include "body.h"
 
+#include "recording.h"
+
 #include "aabb.h"
 #include "contact.h"
 #include "core.h"
@@ -322,6 +324,17 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	b2ValidateSolverSets( world );
 
 	b2BodyId id = { bodyId + 1, world->worldId, body->generation };
+
+	// Record the create op and the returned id in one framed record
+	if ( world->recording != NULL )
+	{
+		b2RecBeginRecord( world->recording, 0x10 );
+		b2RecArgs_CreateBody _ca = { worldId, *def };
+		b2RecWriteArgs_CreateBody( world->recording, &_ca );
+		b2RecW_BODYID( &world->recording->buffer, id );
+		b2RecEndRecord( world->recording );
+	}
+
 	return id;
 }
 
@@ -344,6 +357,9 @@ void b2DestroyBody( b2BodyId bodyId )
 	{
 		return;
 	}
+
+	// Record before destroying (body must still be valid)
+	B2_REC( world, DestroyBody, bodyId );
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
@@ -709,6 +725,8 @@ void b2Body_SetTransform( b2BodyId bodyId, b2Vec2 position, b2Rot rotation )
 	b2World* world = b2GetWorld( bodyId.world0 );
 	B2_ASSERT( world->locked == false );
 
+	B2_REC( world, BodySetTransform, bodyId, position, rotation );
+
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	b2BodySim* bodySim = b2GetBodySim( world, body );
 
@@ -783,6 +801,9 @@ float b2Body_GetAngularVelocity( b2BodyId bodyId )
 void b2Body_SetLinearVelocity( b2BodyId bodyId, b2Vec2 linearVelocity )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
+
+	B2_REC( world, BodySetLinearVelocity, bodyId, linearVelocity );
+
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
 	if ( body->type == b2_staticBody )

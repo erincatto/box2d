@@ -11,6 +11,7 @@ set(BOX2D_TEST_FILES
     test_id.c
     test_macros.h
     test_math.c
+    test_recording.c
     test_shape.c
     test_table.c
     test_thread.c

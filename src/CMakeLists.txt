@@ -43,6 +43,10 @@ set(BOX2D_SOURCE_FILES
 	physics_world.c
 	physics_world.h
 	prismatic_joint.c
+	recording.c
+	recording.h
+	recording_replay.c
+	recording_replay.h
 	revolute_joint.c
 	scheduler.c
 	scheduler.h

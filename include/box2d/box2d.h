@@ -211,6 +211,22 @@ B2_API void b2World_RebuildStaticTree( b2WorldId worldId );
 /// This is for internal testing
 B2_API void b2World_EnableSpeculative( b2WorldId worldId, bool flag );
 
+/// Flush the current recording buffer and copy the recording to @p path.
+/// The internal recording remains open and active. Use this to snapshot the session.
+/// @param worldId The world being recorded
+/// @param path Destination file path for the copy
+B2_API void b2World_SaveRecording( b2WorldId worldId, const char* path );
+
+/// Stop the current recording, flush the buffer, and close the file.
+/// @param worldId The world being recorded
+B2_API void b2World_StopRecording( b2WorldId worldId );
+
+/// Replay a .b2rec file by re-running the engine and asserting recorded ids and state match.
+/// @param path Path to the recording file
+/// @param workerCount Worker count to use for replay. 0 uses the recorded count.
+/// @return true if replay completed without divergence, false on any mismatch
+B2_API bool b2ReplayFile( const char* path, int workerCount );
+
 /** @} */
 
 /**

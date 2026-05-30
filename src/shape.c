@@ -3,6 +3,8 @@
 
 #include "shape.h"
 
+#include "recording.h"
+
 #include "body.h"
 #include "broad_phase.h"
 #include "contact.h"
@@ -246,7 +248,19 @@ static b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const vo
 
 b2ShapeId b2CreateCircleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Circle* circle )
 {
-	return b2CreateShape( bodyId, def, circle, b2_circleShape );
+	b2ShapeId id = b2CreateShape( bodyId, def, circle, b2_circleShape );
+
+	b2World* world = b2GetWorld( bodyId.world0 );
+	if ( world->recording != NULL )
+	{
+		b2RecBeginRecord( world->recording, 0x40 );
+		b2RecArgs_CreateCircleShape _ca = { bodyId, *def, *circle };
+		b2RecWriteArgs_CreateCircleShape( world->recording, &_ca );
+		b2RecW_SHAPEID( &world->recording->buffer, id );
+		b2RecEndRecord( world->recording );
+	}
+
+	return id;
 }
 
 b2ShapeId b2CreateCapsuleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Capsule* capsule )
