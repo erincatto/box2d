@@ -13,3 +13,5 @@ CMakeUserPresets.json
 .tmp/
 AGENTS.md
 GEMINI.md
+*.b2rec
+

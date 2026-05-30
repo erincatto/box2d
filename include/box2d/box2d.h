@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 Erin Catto
+// SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
 #pragma once
@@ -221,11 +221,50 @@ B2_API void b2World_SaveRecording( b2WorldId worldId, const char* path );
 /// @param worldId The world being recorded
 B2_API void b2World_StopRecording( b2WorldId worldId );
 
-/// Replay a .b2rec file by re-running the engine and asserting recorded ids and state match.
+/** @} */
+
+/**
+ * @defgroup replay Replay
+ * These functions allow you to replay a recorded simulation.
+ * @{
+ */
+
+/// Replay a file by re-running the engine and asserting recorded ids and state match.
 /// @param path Path to the recording file
 /// @param workerCount Worker count to use for replay. 0 uses the recorded count.
 /// @return true if replay completed without divergence, false on any mismatch
-B2_API bool b2ReplayFile( const char* path, int workerCount );
+B2_API bool b2ValidateReplayFile( const char* path, int workerCount );
+
+/// Opaque handle for incremental playback of a recording.
+typedef struct b2RecPlayer b2RecPlayer;
+
+/// Open a replay file for incremental playback and replay up to the first step.
+/// @param path Path to the recording file
+/// @param workerCount Worker count for the replay world. 0 uses the recorded count.
+/// @return A player handle, or NULL if the file is missing or malformed
+B2_API b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount );
+
+/// Advance the replay by one recorded step.
+/// @return true if a step executed, false once the end of the recording is reached
+B2_API bool b2RecPlayer_StepFrame( b2RecPlayer* player );
+
+/// Get the id of the replayed world.
+B2_API b2WorldId b2RecPlayer_GetWorldId( const b2RecPlayer* player );
+
+/// Rewind the player to the first step, recreating the replay world from the file.
+B2_API void b2RecPlayer_Restart( b2RecPlayer* player );
+
+/// Get the number of steps replayed so far.
+B2_API int b2RecPlayer_GetFrame( const b2RecPlayer* player );
+
+/// Returns true once the end of the recording has been reached.
+B2_API bool b2RecPlayer_IsAtEnd( const b2RecPlayer* player );
+
+/// Returns true if a recorded state hash failed to reproduce, meaning replay diverged.
+B2_API bool b2RecPlayer_HasDiverged( const b2RecPlayer* player );
+
+/// Close a player and free its replay world and file buffer.
+B2_API void b2RecPlayer_Destroy( b2RecPlayer* player );
 
 /** @} */
 

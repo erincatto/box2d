@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 Erin Catto
+// SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
 #if defined( _MSC_VER ) && !defined( _CRT_SECURE_NO_WARNINGS )
@@ -280,8 +280,10 @@ Sample::Sample( SampleContext* context )
 
 Sample::~Sample()
 {
-	// By deleting the world, we delete the bomb, mouse joint, etc.
-	b2DestroyWorld( m_worldId );
+	if (B2_IS_NON_NULL(m_worldId))
+	{
+		b2DestroyWorld( m_worldId );
+	}
 }
 
 void Sample::CreateWorld()

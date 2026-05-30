@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 Erin Catto
+// SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
 #include "test_macros.h"
@@ -85,19 +85,55 @@ int RecordingTest( void )
 	}
 
 	// Replay with recorded worker count
-	bool ok1 = b2ReplayFile( s_recPath, 0 );
+	bool ok1 = b2ValidateReplayFile( s_recPath, 0 );
 	ENSURE( ok1 );
 
 	// Replay with a different worker count to prove cross-thread determinism
-	bool ok4 = b2ReplayFile( s_recPath, 4 );
+	bool ok4 = b2ValidateReplayFile( s_recPath, 4 );
 	ENSURE( ok4 );
 
 	// The saved snapshot must replay deterministically at both worker counts
-	bool okSaved0 = b2ReplayFile( s_savedPath, 0 );
+	bool okSaved0 = b2ValidateReplayFile( s_savedPath, 0 );
 	ENSURE( okSaved0 );
 
-	bool okSaved4 = b2ReplayFile( s_savedPath, 4 );
+	bool okSaved4 = b2ValidateReplayFile( s_savedPath, 4 );
 	ENSURE( okSaved4 );
+
+	// Drive the incremental player directly. It underpins the viewer and exercises
+	// per-frame stepping, restart, and the getters beyond what b2ReplayFile covers.
+	{
+		b2RecPlayer* player = b2RecPlayer_Create( s_recPath, 0 );
+		ENSURE( player != NULL );
+
+		int frames = 0;
+		while ( b2RecPlayer_StepFrame( player ) )
+		{
+			frames += 1;
+		}
+		ENSURE( frames == 60 );
+		ENSURE( b2RecPlayer_GetFrame( player ) == 60 );
+		ENSURE( b2RecPlayer_IsAtEnd( player ) );
+		ENSURE( b2RecPlayer_HasDiverged( player ) == false );
+
+		// The trailing DestroyWorld is an end marker; the world stays valid so a viewer can keep
+		// drawing the final step rather than blanking at the end
+		ENSURE( b2World_IsValid( b2RecPlayer_GetWorldId( player ) ) );
+
+		// Restart reproduces the same run without reloading the file
+		b2RecPlayer_Restart( player );
+		ENSURE( b2RecPlayer_GetFrame( player ) == 0 );
+		ENSURE( b2RecPlayer_IsAtEnd( player ) == false );
+
+		int frames2 = 0;
+		while ( b2RecPlayer_StepFrame( player ) )
+		{
+			frames2 += 1;
+		}
+		ENSURE( frames2 == 60 );
+		ENSURE( b2RecPlayer_HasDiverged( player ) == false );
+
+		b2RecPlayer_Destroy( player );
+	}
 
 	remove( s_recPath );
 	remove( s_savedPath );

@@ -305,11 +305,10 @@ static void b2RecDispatch_CreateWorld( const b2RecArgs_CreateWorld* a, b2RecRead
 static void b2RecDispatch_DestroyWorld( const b2RecArgs_DestroyWorld* a, b2RecReader* rdr )
 {
 	(void)a;
-	if ( b2World_IsValid( rdr->replayWorldId ) )
-	{
-		b2DestroyWorld( rdr->replayWorldId );
-	}
-	rdr->replayWorldId = b2_nullWorldId;
+	(void)rdr;
+	// The recorded session ended here. The player owns the replay world's lifetime and tears it
+	// down in b2RecPlayer_Destroy/Restart, so a viewer can keep drawing the final step. There is
+	// one world per recording and this is always the last record, so leaving it alive is safe.
 }
 
 static void b2RecDispatch_Step( const b2RecArgs_Step* a, b2RecReader* rdr )
@@ -371,32 +370,90 @@ static void b2RecDispatch_StateHash( const b2RecArgs_StateHash* a, b2RecReader* 
 	{
 		printf( "b2ReplayFile: StateHash mismatch (recorded=0x%llX, computed=0x%llX)\n",
 		        (unsigned long long)a->hash, (unsigned long long)computed );
-		rdr->ok = false;
+		// Non-fatal: reading continues so a viewer can show where divergence begins
+		rdr->diverged = true;
 	}
 }
 
 // Codegen pass 2 builds the read-and-dispatch switch cases. Each case reads the ARG fields
-// into a b2RecArgs_<Name> then dispatches. Create ops read the returned id in their dispatcher
+// into a b2RecArgs_<Name> then dispatches. Create ops read the returned id in their dispatcher.
+// Returns the opcode just dispatched, or -1 at end of file or on a fatal read error.
 
-bool b2ReplayFile( const char* path, int workerCount )
+static int b2RecDispatchOne( b2RecPlayer* player )
+{
+	b2RecReader* rdr = &player->rdr;
+	if ( rdr->cursor >= rdr->size || !rdr->ok )
+	{
+		return -1;
+	}
+
+	uint8_t opcode = b2RecR_U8( rdr );
+	if ( !rdr->ok )
+	{
+		return -1;
+	}
+	uint32_t payloadSize = b2RecR_U24( rdr );
+	if ( !rdr->ok )
+	{
+		return -1;
+	}
+	int payloadStart = rdr->cursor;
+
+	switch ( opcode )
+	{
+#define ARG( TAG, field ) a.field = b2RecR_##TAG( rdr );
+#define B2_REC_OP( op, Name, RET, ... ) \
+	case op: \
+	{ \
+		b2RecArgs_##Name a; \
+		memset( &a, 0, sizeof( a ) ); \
+		__VA_ARGS__ b2RecDispatch_##Name( &a, rdr ); \
+		break; \
+	}
+#include "recording_ops.inc"
+#undef B2_REC_OP
+#undef ARG
+		default:
+			printf( "b2ReplayFile: unknown opcode 0x%02X, skipping %u bytes\n", opcode, payloadSize );
+			rdr->cursor = payloadStart + (int)payloadSize;
+			break;
+	}
+
+	return (int)opcode;
+}
+
+// Dispatch records until the CreateWorld record has produced a valid world.
+static void b2RecPumpToWorld( b2RecPlayer* player )
+{
+	while ( b2World_IsValid( player->rdr.replayWorldId ) == false )
+	{
+		if ( b2RecDispatchOne( player ) < 0 )
+		{
+			break;
+		}
+	}
+}
+
+b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount )
 {
 	FILE* f = fopen( path, "rb" );
 	if ( f == NULL )
 	{
 		printf( "b2ReplayFile: cannot open '%s'\n", path );
-		return false;
+		return NULL;
 	}
 
 	if ( fseek( f, 0, SEEK_END ) != 0 )
 	{
 		fclose( f );
-		return false;
+		return NULL;
 	}
+
 	long fileSize = ftell( f );
 	if ( fileSize < 0 )
 	{
 		fclose( f );
-		return false;
+		return NULL;
 	}
 	fseek( f, 0, SEEK_SET );
 
@@ -407,7 +464,7 @@ bool b2ReplayFile( const char* path, int workerCount )
 	if ( (long)nread != fileSize )
 	{
 		b2Free( data, (int)fileSize );
-		return false;
+		return NULL;
 	}
 
 	// Validate header
@@ -415,7 +472,7 @@ bool b2ReplayFile( const char* path, int workerCount )
 	{
 		printf( "b2ReplayFile: file too small\n" );
 		b2Free( data, (int)fileSize );
-		return false;
+		return NULL;
 	}
 
 	b2RecHeader hdr;
@@ -425,83 +482,158 @@ bool b2ReplayFile( const char* path, int workerCount )
 	{
 		printf( "b2ReplayFile: bad magic (got 0x%08X)\n", hdr.magic );
 		b2Free( data, (int)fileSize );
-		return false;
+		return NULL;
 	}
+
 	if ( hdr.versionMajor != 1 )
 	{
 		printf( "b2ReplayFile: version mismatch (file=%u, runtime=1)\n", hdr.versionMajor );
 		b2Free( data, (int)fileSize );
-		return false;
+		return NULL;
 	}
+
 	if ( hdr.simdWidth != (uint8_t)B2_SIMD_WIDTH )
 	{
 		printf( "b2ReplayFile: SIMD width mismatch (file=%u, runtime=%d)\n", hdr.simdWidth, B2_SIMD_WIDTH );
 		b2Free( data, (int)fileSize );
-		return false;
+		return NULL;
 	}
+
 	if ( hdr.pointerWidth != (uint8_t)sizeof( void* ) )
 	{
 		printf( "b2ReplayFile: pointer width mismatch (file=%u, runtime=%u)\n", hdr.pointerWidth,
 		        (unsigned)sizeof( void* ) );
 		b2Free( data, (int)fileSize );
-		return false;
+		return NULL;
 	}
+
 	if ( hdr.bigEndian != 0 )
 	{
 		printf( "b2ReplayFile: big-endian recording not supported\n" );
 		b2Free( data, (int)fileSize );
+		return NULL;
+	}
+
+	b2RecPlayer* player = b2Alloc( (int)sizeof( b2RecPlayer ) );
+	player->data = data;
+	player->size = (int)fileSize;
+	player->headerEnd = 32;
+	player->frame = 0;
+	player->atEnd = false;
+	player->rdr.data = data;
+	player->rdr.size = (int)fileSize;
+	player->rdr.cursor = 32; // past header
+	player->rdr.replayWorldId = b2_nullWorldId;
+	player->rdr.workerCount = workerCount;
+	player->rdr.ok = true;
+	player->rdr.diverged = false;
+
+	// The first record is CreateWorld; replay it so the world exists before the first step
+	b2RecPumpToWorld( player );
+	if ( b2World_IsValid( player->rdr.replayWorldId ) == false )
+	{
+		printf( "b2ReplayFile: no CreateWorld record\n" );
+		b2RecPlayer_Destroy( player );
+		return NULL;
+	}
+
+	return player;
+}
+
+bool b2RecPlayer_StepFrame( b2RecPlayer* player )
+{
+	if ( player->atEnd )
+	{
 		return false;
 	}
 
-	b2RecReader rdr;
-	rdr.data = data;
-	rdr.size = (int)fileSize;
-	rdr.cursor = 32; // past header
-	rdr.replayWorldId = b2_nullWorldId;
-	rdr.workerCount = workerCount;
-	rdr.ok = true;
-
-	while ( rdr.cursor < rdr.size && rdr.ok )
+	// Dispatch records until one Step has executed. A leading StateHash from the prior frame
+	// is checked here against the current world, before any mutators of the next frame run.
+	for ( ;; )
 	{
-		uint8_t opcode = b2RecR_U8( &rdr );
-		if ( !rdr.ok )
+		int opcode = b2RecDispatchOne( player );
+		if ( opcode < 0 )
+		{
+			player->atEnd = true;
+			return false;
+		}
+		if ( opcode == 0x80 ) // Step
+		{
+			player->frame += 1;
+			return true;
+		}
+	}
+}
+
+void b2RecPlayer_Restart( b2RecPlayer* player )
+{
+	if ( b2World_IsValid( player->rdr.replayWorldId ) )
+	{
+		b2DestroyWorld( player->rdr.replayWorldId );
+	}
+	player->rdr.cursor = player->headerEnd;
+	player->rdr.replayWorldId = b2_nullWorldId;
+	player->rdr.ok = true;
+	player->rdr.diverged = false;
+	player->frame = 0;
+	player->atEnd = false;
+	b2RecPumpToWorld( player );
+}
+
+b2WorldId b2RecPlayer_GetWorldId( const b2RecPlayer* player )
+{
+	return player != NULL ? player->rdr.replayWorldId : b2_nullWorldId;
+}
+
+int b2RecPlayer_GetFrame( const b2RecPlayer* player )
+{
+	return player != NULL ? player->frame : 0;
+}
+
+bool b2RecPlayer_IsAtEnd( const b2RecPlayer* player )
+{
+	return player != NULL ? player->atEnd : true;
+}
+
+bool b2RecPlayer_HasDiverged( const b2RecPlayer* player )
+{
+	return player != NULL ? player->rdr.diverged : false;
+}
+
+void b2RecPlayer_Destroy( b2RecPlayer* player )
+{
+	if ( player == NULL )
+	{
+		return;
+	}
+	if ( b2World_IsValid( player->rdr.replayWorldId ) )
+	{
+		b2DestroyWorld( player->rdr.replayWorldId );
+	}
+	if ( player->data != NULL )
+	{
+		b2Free( player->data, player->size );
+	}
+	b2Free( player, (int)sizeof( b2RecPlayer ) );
+}
+
+bool b2ValidateReplayFile( const char* path, int workerCount )
+{
+	b2RecPlayer* player = b2RecPlayer_Create( path, workerCount );
+	if ( player == NULL )
+	{
+		return false;
+	}
+
+	while ( b2RecPlayer_StepFrame( player ) )
+	{
+		if ( player->rdr.diverged )
 		{
 			break;
 		}
-		uint32_t payloadSize = b2RecR_U24( &rdr );
-		if ( !rdr.ok )
-		{
-			break;
-		}
-		int payloadStart = rdr.cursor;
-
-		switch ( opcode )
-		{
-#define ARG( TAG, field ) a.field = b2RecR_##TAG( &rdr );
-#define B2_REC_OP( op, Name, RET, ... ) \
-	case op: \
-	{ \
-		b2RecArgs_##Name a; \
-		memset( &a, 0, sizeof( a ) ); \
-		__VA_ARGS__ b2RecDispatch_##Name( &a, &rdr ); \
-		break; \
-	}
-#include "recording_ops.inc"
-#undef B2_REC_OP
-#undef ARG
-			default:
-				printf( "b2ReplayFile: unknown opcode 0x%02X, skipping %u bytes\n", opcode, payloadSize );
-				rdr.cursor = payloadStart + (int)payloadSize;
-				break;
-		}
 	}
 
-	// Clean up if replay world is still alive (e.g. DestroyWorld record was missing)
-	if ( b2World_IsValid( rdr.replayWorldId ) )
-	{
-		b2DestroyWorld( rdr.replayWorldId );
-	}
-
-	b2Free( data, (int)fileSize );
-	return rdr.ok;
+	bool ok = player->rdr.ok && player->rdr.diverged == false;
+	b2RecPlayer_Destroy( player );
+	return ok;
 }

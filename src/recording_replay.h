@@ -16,8 +16,20 @@ typedef struct b2RecReader
 	int cursor;
 	b2WorldId replayWorldId; // world created during replay; valid after CreateWorld record
 	int workerCount;         // 0 = use recorded count
-	bool ok;                 // false on read overrun, id mismatch, or StateHash divergence
+	bool ok;                 // false on read overrun or id mismatch, a fatal stop
+	bool diverged;           // a StateHash failed to reproduce, non-fatal so a viewer can keep playing
 } b2RecReader;
+
+// Incremental player. Owns the file image and drives replay one step at a time.
+typedef struct b2RecPlayer
+{
+	uint8_t* data;   // file image, owned here
+	int size;
+	int headerEnd;   // first payload offset
+	int frame;       // steps dispatched so far
+	bool atEnd;      // a StepFrame ran out of records without reaching a step
+	b2RecReader rdr; // cursor and replay world, threaded into every dispatcher
+} b2RecPlayer;
 
 // Read primitives
 
