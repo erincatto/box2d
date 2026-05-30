@@ -342,7 +342,7 @@ static void b2SetCurrentThreadName( const char* name )
 #if defined( __linux__ )
 	// Linux caps thread names at 15 chars + null terminator.
 	char truncated[16];
-	snprintf( truncated, sizeof( truncated ), "%s", name );
+	snprintf( truncated, sizeof( truncated ), "%.15s", name );
 	pthread_setname_np( pthread_self(), truncated );
 #else
 	(void)name;
