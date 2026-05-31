@@ -40,6 +40,7 @@ typedef enum b2RecQueryKind
 typedef struct b2RecDrawQuery
 {
 	int kind;
+	b2QueryFilter filter; // query filter for overlap and cast ops, zeroed for the shape local queries
 	b2AABB aabb;
 	b2ShapeProxy proxy;
 	b2Capsule mover;

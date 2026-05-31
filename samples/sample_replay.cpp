@@ -8,6 +8,7 @@
 #include "box2d/box2d.h"
 #include "box2d/constants.h"
 
+#include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <stdio.h>
 
@@ -119,6 +120,81 @@ public:
 
 static int sampleMakeRecording = RegisterSample( "Replay", "Make Recording", MakeRecording::Create );
 
+// Names for the inspector readouts
+static const char* ReplayBodyTypeName( b2BodyType type )
+{
+	switch ( type )
+	{
+		case b2_staticBody: return "static";
+		case b2_kinematicBody: return "kinematic";
+		case b2_dynamicBody: return "dynamic";
+		default: return "?";
+	}
+}
+
+static const char* ReplayShapeTypeName( b2ShapeType type )
+{
+	switch ( type )
+	{
+		case b2_circleShape: return "circle";
+		case b2_capsuleShape: return "capsule";
+		case b2_segmentShape: return "segment";
+		case b2_polygonShape: return "polygon";
+		case b2_chainSegmentShape: return "chain segment";
+		default: return "?";
+	}
+}
+
+static const char* ReplayJointTypeName( b2JointType type )
+{
+	switch ( type )
+	{
+		case b2_distanceJoint: return "distance";
+		case b2_filterJoint: return "filter";
+		case b2_motorJoint: return "motor";
+		case b2_prismaticJoint: return "prismatic";
+		case b2_revoluteJoint: return "revolute";
+		case b2_weldJoint: return "weld";
+		case b2_wheelJoint: return "wheel";
+		default: return "?";
+	}
+}
+
+static const char* ReplayQueryTypeName( b2RecQueryType type )
+{
+	switch ( type )
+	{
+		case b2_recQueryOverlapAABB: return "overlap AABB";
+		case b2_recQueryOverlapShape: return "overlap shape";
+		case b2_recQueryCastRay: return "cast ray";
+		case b2_recQueryCastShape: return "cast shape";
+		case b2_recQueryCollideMover: return "collide mover";
+		case b2_recQueryCastRayClosest: return "cast ray closest";
+		case b2_recQueryCastMover: return "cast mover";
+		case b2_recQueryShapeTestPoint: return "shape test point";
+		case b2_recQueryShapeRayCast: return "shape ray cast";
+		default: return "?";
+	}
+}
+
+// Pick the first shape whose area contains the click point
+struct ReplayPickContext
+{
+	b2Vec2 point;
+	b2ShapeId shape;
+};
+
+static bool ReplayPickCallback( b2ShapeId shapeId, void* context )
+{
+	ReplayPickContext* pick = static_cast<ReplayPickContext*>( context );
+	if ( b2Shape_TestPoint( shapeId, pick->point ) )
+	{
+		pick->shape = shapeId;
+		return false;
+	}
+	return true;
+}
+
 // Plays back a recording by re-running the engine one step at a time and drawing the
 // replayed world. Stepping is driven by the recorded inputs, not by b2World_Step, so the motion
 // reproduces the original session exactly. Pause, single step, and restart use the shared sample
@@ -172,6 +248,7 @@ public:
 		}
 		m_worldId = b2_nullWorldId;
 		m_buildMismatch = false;
+		m_selectedShape = b2_nullShapeId;
 	}
 
 	void OpenPlayer()
@@ -213,6 +290,14 @@ public:
 		{
 			DrawScreenTextLine( "%s", m_status );
 			return;
+		}
+
+		// Drop a selection whose shape is gone, either destroyed during replay or invalidated when a
+		// backward seek rebuilt the world so its world generation no longer matches.
+		bool sameWorld = m_selectWorld.index1 == m_worldId.index1 && m_selectWorld.generation == m_worldId.generation;
+		if ( sameWorld == false || b2Shape_IsValid( m_selectedShape ) == false )
+		{
+			m_selectedShape = b2_nullShapeId;
 		}
 
 		if ( m_context->pause && m_context->singleStep )
@@ -257,6 +342,7 @@ public:
 		{
 			b2World_Draw( m_worldId, &m_context->debugDraw );
 			b2RecPlayer_DrawFrameQueries( m_player, &m_context->debugDraw );
+			DrawSelectionHighlight();
 		}
 
 		DrawScreenTextLine( "frame %d / %d%s", b2RecPlayer_GetFrame( m_player ), m_info.frameCount,
@@ -330,8 +416,8 @@ public:
 		return false;
 	}
 
-	// The right panel is otherwise free for a future details view and outliner. The one
-	// control here reopens the drawer and jumps to the timeline if it was closed.
+	// The right panel hosts the scene inspector. The button reopens the diagnostics drawer and jumps
+	// to the timeline if it was closed.
 	bool DrawControls() override
 	{
 		if ( ImGui::Button( "Show Timeline" ) )
@@ -339,7 +425,248 @@ public:
 			m_context->showMetrics = true;
 			m_selectTimelineTab = true;
 		}
-		return false;
+
+		ImGui::Separator();
+		ImGui::TextColored( ImVec4( 0.9f, 0.6f, 0.2f, 1.0f ), "Inspector" );
+
+		if ( m_player == nullptr || B2_IS_NULL( m_worldId ) )
+		{
+			ImGui::TextDisabled( "Load a recording to inspect." );
+			return true;
+		}
+
+		if ( b2Shape_IsValid( m_selectedShape ) )
+		{
+			b2BodyId body = b2Shape_GetBody( m_selectedShape );
+			DrawBodySection( body );
+			DrawShapeSection( body );
+			DrawContactSection( body );
+			DrawJointSection( body );
+		}
+		else
+		{
+			ImGui::TextWrapped( "Click a shape to inspect." );
+			b2Vec2 g = b2World_GetGravity( m_worldId );
+			b2Counters c = b2World_GetCounters( m_worldId );
+			ImGui::Text( "gravity (%.2f, %.2f)", g.x, g.y );
+			ImGui::Text( "bodies %d  shapes %d", c.bodyCount, c.shapeCount );
+			ImGui::Text( "contacts %d  joints %d", c.contactCount, c.jointCount );
+			ImGui::Text( "sleeping %s", b2World_IsSleepingEnabled( m_worldId ) ? "on" : "off" );
+			ImGui::Text( "continuous %s", b2World_IsContinuousEnabled( m_worldId ) ? "on" : "off" );
+		}
+
+		DrawQuerySection();
+		return true;
+	}
+
+	// Highlight the selected shape without touching the world: its AABB, the body frame and center of
+	// mass, and the body's live contact points and normals.
+	void DrawSelectionHighlight()
+	{
+		if ( b2Shape_IsValid( m_selectedShape ) == false )
+		{
+			return;
+		}
+
+		Draw* draw = m_context->draw;
+		b2BodyId body = b2Shape_GetBody( m_selectedShape );
+
+		DrawBounds( draw, b2Shape_GetAABB( m_selectedShape ), b2_colorYellow );
+		DrawTransform( draw, b2Body_GetTransform( body ), 0.5f );
+		DrawPoint( draw, b2Body_GetWorldCenterOfMass( body ), 8.0f, b2_colorYellow );
+
+		b2ContactData contacts[64];
+		int capacity = b2Body_GetContactCapacity( body );
+		if ( capacity > 64 )
+		{
+			capacity = 64;
+		}
+		int count = b2Body_GetContactData( body, contacts, capacity );
+		for ( int i = 0; i < count; ++i )
+		{
+			b2Vec2 originA = b2Body_GetPosition( b2Shape_GetBody( contacts[i].shapeIdA ) );
+			const b2Manifold* m = &contacts[i].manifold;
+			for ( int j = 0; j < m->pointCount; ++j )
+			{
+				b2Vec2 point = b2Add( originA, m->points[j].anchorA );
+				DrawPoint( draw, point, 6.0f, b2_colorOrange );
+				DrawLine( draw, point, b2MulAdd( point, 0.3f, m->normal ), b2_colorOrange );
+			}
+		}
+	}
+
+	void DrawBodySection( b2BodyId body )
+	{
+		if ( ImGui::CollapsingHeader( "Body", ImGuiTreeNodeFlags_DefaultOpen ) == false )
+		{
+			return;
+		}
+
+		const char* name = b2Body_GetName( body );
+		b2Transform xf = b2Body_GetTransform( body );
+		b2Vec2 v = b2Body_GetLinearVelocity( body );
+
+		ImGui::Text( "id      %d", body.index1 );
+		ImGui::Text( "name    %s", ( name != nullptr && name[0] != '\0' ) ? name : "(none)" );
+		ImGui::Text( "type    %s", ReplayBodyTypeName( b2Body_GetType( body ) ) );
+		ImGui::Text( "pos     (%.3f, %.3f)", xf.p.x, xf.p.y );
+		ImGui::Text( "angle   %.1f deg", b2Rot_GetAngle( xf.q ) * 57.2957795f );
+		ImGui::Text( "vel     (%.3f, %.3f)", v.x, v.y );
+		ImGui::Text( "omega   %.3f rad/s", b2Body_GetAngularVelocity( body ) );
+		ImGui::Text( "mass    %.4g kg", b2Body_GetMass( body ) );
+		ImGui::Text( "inertia %.4g", b2Body_GetRotationalInertia( body ) );
+		ImGui::Text( "awake   %s", b2Body_IsAwake( body ) ? "yes" : "no" );
+		ImGui::Text( "enabled %s", b2Body_IsEnabled( body ) ? "yes" : "no" );
+		ImGui::Text( "bullet  %s", b2Body_IsBullet( body ) ? "yes" : "no" );
+		ImGui::Text( "gravity scale %.2f", b2Body_GetGravityScale( body ) );
+		ImGui::Text( "shapes %d  joints %d", b2Body_GetShapeCount( body ), b2Body_GetJointCount( body ) );
+	}
+
+	void DrawShapeSection( b2BodyId body )
+	{
+		b2ShapeId shapes[16];
+		int n = b2Body_GetShapes( body, shapes, 16 );
+		for ( int i = 0; i < n; ++i )
+		{
+			b2ShapeId shape = shapes[i];
+			bool selected = B2_ID_EQUALS( shape, m_selectedShape );
+			char header[64];
+			snprintf( header, sizeof( header ), "Shape %d  %s%s###shape%d", i, ReplayShapeTypeName( b2Shape_GetType( shape ) ),
+					  selected ? "  *" : "", i );
+			if ( ImGui::CollapsingHeader( header, selected ? ImGuiTreeNodeFlags_DefaultOpen : 0 ) == false )
+			{
+				continue;
+			}
+
+			b2Filter f = b2Shape_GetFilter( shape );
+			ImGui::Text( "category 0x%016llx", (unsigned long long)f.categoryBits );
+			ImGui::Text( "mask     0x%016llx", (unsigned long long)f.maskBits );
+			ImGui::Text( "group    %d", f.groupIndex );
+			ImGui::Text( "density  %.3g", b2Shape_GetDensity( shape ) );
+			ImGui::Text( "friction %.3g", b2Shape_GetFriction( shape ) );
+			ImGui::Text( "restitution %.3g", b2Shape_GetRestitution( shape ) );
+			ImGui::Text( "sensor   %s", b2Shape_IsSensor( shape ) ? "yes" : "no" );
+			b2SurfaceMaterial mat = b2Shape_GetSurfaceMaterial( shape );
+			ImGui::Text( "custom color 0x%06x", (unsigned)mat.customColor );
+		}
+	}
+
+	void DrawContactSection( b2BodyId body )
+	{
+		b2ContactData contacts[64];
+		int capacity = b2Body_GetContactCapacity( body );
+		if ( capacity > 64 )
+		{
+			capacity = 64;
+		}
+		int count = b2Body_GetContactData( body, contacts, capacity );
+
+		char header[32];
+		snprintf( header, sizeof( header ), "Contacts (%d)###contacts", count );
+		if ( ImGui::CollapsingHeader( header ) == false )
+		{
+			return;
+		}
+
+		for ( int i = 0; i < count; ++i )
+		{
+			const b2Manifold* m = &contacts[i].manifold;
+			ImGui::Text( "shapes %d / %d   normal (%.2f, %.2f)   points %d", contacts[i].shapeIdA.index1,
+						 contacts[i].shapeIdB.index1, m->normal.x, m->normal.y, m->pointCount );
+			for ( int j = 0; j < m->pointCount; ++j )
+			{
+				const b2ManifoldPoint* mp = &m->points[j];
+				ImGui::Text( "  sep %.4f  Pn %.3g  Pt %.3g", mp->separation, mp->normalImpulse, mp->tangentImpulse );
+			}
+		}
+	}
+
+	void DrawJointSection( b2BodyId body )
+	{
+		b2JointId joints[16];
+		int count = b2Body_GetJoints( body, joints, 16 );
+
+		char header[32];
+		snprintf( header, sizeof( header ), "Joints (%d)###joints", count );
+		if ( ImGui::CollapsingHeader( header ) == false )
+		{
+			return;
+		}
+
+		for ( int i = 0; i < count; ++i )
+		{
+			b2JointId joint = joints[i];
+			b2JointType type = b2Joint_GetType( joint );
+			b2BodyId bodyA = b2Joint_GetBodyA( joint );
+			b2BodyId other = B2_ID_EQUALS( bodyA, body ) ? b2Joint_GetBodyB( joint ) : bodyA;
+
+			ImGui::Text( "%s  to body %d  %s", ReplayJointTypeName( type ), other.index1,
+						 b2Joint_GetCollideConnected( joint ) ? "collide" : "" );
+			ImGui::Text( "  force %.3g  torque %.3g", b2Length( b2Joint_GetConstraintForce( joint ) ),
+						 b2Joint_GetConstraintTorque( joint ) );
+
+			switch ( type )
+			{
+				case b2_revoluteJoint:
+					ImGui::Text( "  angle %.1f deg", b2RevoluteJoint_GetAngle( joint ) * 57.2957795f );
+					break;
+				case b2_prismaticJoint:
+					ImGui::Text( "  translation %.3f", b2PrismaticJoint_GetTranslation( joint ) );
+					break;
+				case b2_distanceJoint:
+					ImGui::Text( "  length %.3f", b2DistanceJoint_GetCurrentLength( joint ) );
+					break;
+				default:
+					break;
+			}
+		}
+	}
+
+	void DrawQuerySection()
+	{
+		int count = b2RecPlayer_GetFrameQueryCount( m_player );
+		char header[32];
+		snprintf( header, sizeof( header ), "Queries (%d)###queries", count );
+		if ( ImGui::CollapsingHeader( header ) == false )
+		{
+			return;
+		}
+
+		if ( count == 0 )
+		{
+			ImGui::TextDisabled( "No queries this frame." );
+			return;
+		}
+
+		for ( int i = 0; i < count; ++i )
+		{
+			b2RecQueryInfo q = b2RecPlayer_GetFrameQuery( m_player, i );
+			char label[64];
+			snprintf( label, sizeof( label ), "%s  hits %d###q%d", ReplayQueryTypeName( q.type ), q.hitCount, i );
+			if ( ImGui::TreeNode( label ) == false )
+			{
+				continue;
+			}
+
+			bool shapeLocal = q.type == b2_recQueryShapeTestPoint || q.type == b2_recQueryShapeRayCast;
+			if ( shapeLocal == false )
+			{
+				ImGui::Text( "category 0x%016llx", (unsigned long long)q.filter.categoryBits );
+				ImGui::Text( "mask     0x%016llx", (unsigned long long)q.filter.maskBits );
+			}
+			else
+			{
+				ImGui::Text( "shape    %d", q.shape.index1 );
+			}
+
+			for ( int h = 0; h < q.hitCount; ++h )
+			{
+				b2RecQueryHit hit = b2RecPlayer_GetFrameQueryHit( m_player, i, h );
+				ImGui::Text( "  hit shape %d  fraction %.3f", hit.shape.index1, hit.fraction );
+			}
+
+			ImGui::TreePop();
+		}
 	}
 
 	// All replay controls live in the diagnostics drawer tab.
@@ -469,9 +796,23 @@ public:
 		ImGui::EndTabItem();
 	}
 
-	// Block mouse interaction.
-	void MouseDown( b2Vec2, int, int ) override
+	// Left click selects a shape to inspect. Picking only reads the world, it never creates the drag
+	// joint the base sample does, so the replay is not mutated. Dragging stays disabled.
+	void MouseDown( b2Vec2 p, int button, int ) override
 	{
+		if ( button != GLFW_MOUSE_BUTTON_1 || B2_IS_NULL( m_worldId ) )
+		{
+			return;
+		}
+
+		b2Vec2 d = { 0.001f, 0.001f };
+		b2AABB box = { b2Sub( p, d ), b2Add( p, d ) };
+		ReplayPickContext pick = { p, b2_nullShapeId };
+		b2World_OverlapAABB( m_worldId, box, b2DefaultQueryFilter(), ReplayPickCallback, &pick );
+
+		// A miss clears the selection
+		m_selectedShape = pick.shape;
+		m_selectWorld = m_worldId;
 	}
 	void MouseUp( b2Vec2, int ) override
 	{
@@ -499,6 +840,10 @@ public:
 	bool m_loop = false;
 	bool m_selectTimelineTab = true;
 	bool m_prevShowMetrics = false;
+
+	// Inspector selection. The world id is kept so a rebuild on a backward seek drops a stale shape.
+	b2ShapeId m_selectedShape = b2_nullShapeId;
+	b2WorldId m_selectWorld = b2_nullWorldId;
 };
 
 static int sampleReplayFile = RegisterSample( "Replay", "Replay File", ReplayFile::Create );

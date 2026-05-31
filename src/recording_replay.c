@@ -1650,6 +1650,7 @@ static void b2RecDispatch_QueryOverlapAABB( const b2RecArgs_QueryOverlapAABB* a,
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_OVERLAP_AABB, rdr->hits, (int)n );
+		q->filter = a->filter;
 		q->aabb = a->aabb;
 	}
 }
@@ -1671,6 +1672,7 @@ static void b2RecDispatch_QueryOverlapShape( const b2RecArgs_QueryOverlapShape* 
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_OVERLAP_SHAPE, rdr->hits, (int)n );
+		q->filter = a->filter;
 		q->proxy = a->proxy;
 	}
 }
@@ -1723,6 +1725,7 @@ static void b2RecDispatch_QueryCastRay( const b2RecArgs_QueryCastRay* a, b2RecRe
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_CAST_RAY, rdr->hits, (int)n );
+		q->filter = a->filter;
 		q->origin = a->origin;
 		q->translation = a->translation;
 	}
@@ -1748,6 +1751,7 @@ static void b2RecDispatch_QueryCastShape( const b2RecArgs_QueryCastShape* a, b2R
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_CAST_SHAPE, rdr->hits, (int)n );
+		q->filter = a->filter;
 		q->proxy = a->proxy;
 		q->translation = a->translation;
 	}
@@ -1801,6 +1805,7 @@ static void b2RecDispatch_QueryCollideMover( const b2RecArgs_QueryCollideMover* 
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_COLLIDE_MOVER, rdr->hits, (int)n );
+		q->filter = a->filter;
 		q->mover = a->mover;
 	}
 }
@@ -1828,6 +1833,7 @@ static void b2RecDispatch_QueryCastRayClosest( const b2RecArgs_QueryCastRayClose
 		h.normal = rec.normal;
 		h.fraction = rec.fraction;
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_CAST_RAY_CLOSEST, &h, rec.hit ? 1 : 0 );
+		q->filter = a->filter;
 		q->origin = a->origin;
 		q->translation = a->translation;
 	}
@@ -1844,6 +1850,7 @@ static void b2RecDispatch_QueryCastMover( const b2RecArgs_QueryCastMover* a, b2R
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_CAST_MOVER, NULL, 0 );
+		q->filter = a->filter;
 		q->mover = a->mover;
 		q->translation = a->translation;
 		q->castFraction = rec;
@@ -2451,6 +2458,57 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw )
 				break;
 		}
 	}
+}
+
+// Public query inspection. The internal b2RecQueryKind values match the public b2RecQueryType, so
+// the kind copies across as a plain cast. The asserts keep the two enums in lockstep.
+_Static_assert( (int)b2_recQueryOverlapAABB == (int)B2_RECQ_OVERLAP_AABB, "query type enum drift" );
+_Static_assert( (int)b2_recQueryShapeRayCast == (int)B2_RECQ_SHAPE_RAY_CAST, "query type enum drift" );
+
+int b2RecPlayer_GetFrameQueryCount( const b2RecPlayer* player )
+{
+	return player != NULL ? player->frameQueryCount : 0;
+}
+
+b2RecQueryInfo b2RecPlayer_GetFrameQuery( const b2RecPlayer* player, int index )
+{
+	b2RecQueryInfo info = { 0 };
+	if ( player == NULL || index < 0 || index >= player->frameQueryCount )
+	{
+		return info;
+	}
+
+	const b2RecDrawQuery* q = &player->frameQueries[index];
+	info.type = (b2RecQueryType)q->kind;
+	info.filter = q->filter;
+	info.aabb = q->aabb;
+	info.origin = q->origin;
+	info.translation = q->translation;
+	info.shape = q->shape;
+	info.hitCount = q->hitCount;
+	return info;
+}
+
+b2RecQueryHit b2RecPlayer_GetFrameQueryHit( const b2RecPlayer* player, int queryIndex, int hitIndex )
+{
+	b2RecQueryHit hit = { 0 };
+	if ( player == NULL || queryIndex < 0 || queryIndex >= player->frameQueryCount )
+	{
+		return hit;
+	}
+
+	const b2RecDrawQuery* q = &player->frameQueries[queryIndex];
+	if ( hitIndex < 0 || hitIndex >= q->hitCount )
+	{
+		return hit;
+	}
+
+	const b2RecRecordedHit* h = &player->frameHits[q->hitStart + hitIndex];
+	hit.shape = h->id;
+	hit.point = h->point;
+	hit.normal = h->normal;
+	hit.fraction = h->fraction;
+	return hit;
 }
 
 bool b2ValidateReplayFile( const char* path, int workerCount )
