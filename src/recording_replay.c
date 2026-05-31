@@ -2139,25 +2139,39 @@ bool b2RecPlayer_StepFrame( b2RecPlayer* player )
 	player->frameQueryCount = 0;
 	player->frameHitCount = 0;
 
-	// Dispatch records until one Step has executed. A leading StateHash from the prior frame
-	// is checked here against the current world, before any mutators of the next frame run.
+	// Run this frame's Step, then consume the records that trail it (StateHash, queries, any
+	// between-frame mutators) up to the next Step. The queries and hash for a frame are recorded
+	// after its Step, so grouping them with that Step keeps them paired with the world state they
+	// were computed against. Stopping before the next Step is what advances exactly one frame.
+	bool stepped = false;
 	for ( ;; )
 	{
+		// Peek the next opcode without consuming it. The next frame's Step ends this frame.
+		if ( player->rdr.cursor >= player->rdr.size || player->rdr.ok == false )
+		{
+			player->atEnd = true;
+			return stepped;
+		}
+		if ( stepped && player->rdr.data[player->rdr.cursor] == 0x80 )
+		{
+			return true;
+		}
+
 		int opcode = b2RecDispatchOne( player );
 		if ( opcode < 0 )
 		{
 			player->atEnd = true;
-			return false;
+			return stepped;
+		}
+		if ( opcode == 0x80 ) // Step
+		{
+			player->frame += 1;
+			stepped = true;
 		}
 		// Latch the first frame that diverged for the timeline marker
 		if ( player->divergeFrame < 0 && player->rdr.diverged )
 		{
 			player->divergeFrame = player->frame;
-		}
-		if ( opcode == 0x80 ) // Step
-		{
-			player->frame += 1;
-			return true;
 		}
 	}
 }
