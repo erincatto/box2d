@@ -2153,6 +2153,18 @@ b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter f
 
 	B2_ASSERT( b2IsValidAABB( aabb ) );
 
+	b2RecQueryWriter recWriter = { 0 };
+	if ( world->recording != NULL )
+	{
+		b2RecQueryBegin( &recWriter, (void*)fcn, context );
+		b2RecW_WORLDID( &recWriter.buf, worldId );
+		b2RecW_AABB( &recWriter.buf, aabb );
+		b2RecW_QUERYFILTER( &recWriter.buf, filter );
+		recWriter.countOffset = b2RecReserveU32( &recWriter.buf );
+		fcn = b2RecOverlapTrampoline;
+		context = &recWriter;
+	}
+
 	WorldQueryContext worldContext = { world, fcn, filter, context };
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
@@ -2162,6 +2174,13 @@ b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter f
 
 		treeStats.nodeVisits += treeResult.nodeVisits;
 		treeStats.leafVisits += treeResult.leafVisits;
+	}
+
+	if ( world->recording != NULL )
+	{
+		b2RecPatchU32( &recWriter.buf, recWriter.countOffset, recWriter.hitCount );
+		b2RecW_TREESTATS( &recWriter.buf, treeStats );
+		b2RecQueryCommit( world->recording, 0xE0, &recWriter );
 	}
 
 	return treeStats;
@@ -2228,6 +2247,18 @@ b2TreeStats b2World_OverlapShape( b2WorldId worldId, const b2ShapeProxy* proxy, 
 		return treeStats;
 	}
 
+	b2RecQueryWriter recWriter = { 0 };
+	if ( world->recording != NULL )
+	{
+		b2RecQueryBegin( &recWriter, (void*)fcn, context );
+		b2RecW_WORLDID( &recWriter.buf, worldId );
+		b2RecW_SHAPEPROXY( &recWriter.buf, *proxy );
+		b2RecW_QUERYFILTER( &recWriter.buf, filter );
+		recWriter.countOffset = b2RecReserveU32( &recWriter.buf );
+		fcn = b2RecOverlapTrampoline;
+		context = &recWriter;
+	}
+
 	b2AABB aabb = b2MakeAABB( proxy->points, proxy->count, proxy->radius );
 	WorldOverlapContext worldContext = {
 		world, fcn, filter, proxy, context,
@@ -2240,6 +2271,13 @@ b2TreeStats b2World_OverlapShape( b2WorldId worldId, const b2ShapeProxy* proxy, 
 
 		treeStats.nodeVisits += treeResult.nodeVisits;
 		treeStats.leafVisits += treeResult.leafVisits;
+	}
+
+	if ( world->recording != NULL )
+	{
+		b2RecPatchU32( &recWriter.buf, recWriter.countOffset, recWriter.hitCount );
+		b2RecW_TREESTATS( &recWriter.buf, treeStats );
+		b2RecQueryCommit( world->recording, 0xE1, &recWriter );
 	}
 
 	return treeStats;
@@ -2306,6 +2344,19 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translatio
 	B2_ASSERT( b2IsValidVec2( origin ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
+	b2RecQueryWriter recWriter = { 0 };
+	if ( world->recording != NULL )
+	{
+		b2RecQueryBegin( &recWriter, (void*)fcn, context );
+		b2RecW_WORLDID( &recWriter.buf, worldId );
+		b2RecW_VEC2( &recWriter.buf, origin );
+		b2RecW_VEC2( &recWriter.buf, translation );
+		b2RecW_QUERYFILTER( &recWriter.buf, filter );
+		recWriter.countOffset = b2RecReserveU32( &recWriter.buf );
+		fcn = b2RecCastTrampoline;
+		context = &recWriter;
+	}
+
 	b2RayCastInput input = { origin, translation, 1.0f };
 
 	WorldRayCastContext worldContext = { world, fcn, filter, 1.0f, context };
@@ -2319,10 +2370,17 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translatio
 
 		if ( worldContext.fraction == 0.0f )
 		{
-			return treeStats;
+			break;
 		}
 
 		input.maxFraction = worldContext.fraction;
+	}
+
+	if ( world->recording != NULL )
+	{
+		b2RecPatchU32( &recWriter.buf, recWriter.countOffset, recWriter.hitCount );
+		b2RecW_TREESTATS( &recWriter.buf, treeStats );
+		b2RecQueryCommit( world->recording, 0xE2, &recWriter );
 	}
 
 	return treeStats;
@@ -2372,10 +2430,22 @@ b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 tra
 
 		if ( worldContext.fraction == 0.0f )
 		{
-			return result;
+			break;
 		}
 
 		input.maxFraction = worldContext.fraction;
+	}
+
+	if ( world->recording != NULL )
+	{
+		b2RecBuffer recBuf = { 0 };
+		b2RecW_WORLDID( &recBuf, worldId );
+		b2RecW_VEC2( &recBuf, origin );
+		b2RecW_VEC2( &recBuf, translation );
+		b2RecW_QUERYFILTER( &recBuf, filter );
+		b2RecW_RAYRESULT( &recBuf, result );
+		b2RecCommitRecord( world->recording, 0xE5, recBuf.data, recBuf.size );
+		b2RecBufFree( &recBuf );
 	}
 
 	return result;
@@ -2433,6 +2503,19 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2V
 
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
+	b2RecQueryWriter recWriter = { 0 };
+	if ( world->recording != NULL )
+	{
+		b2RecQueryBegin( &recWriter, (void*)fcn, context );
+		b2RecW_WORLDID( &recWriter.buf, worldId );
+		b2RecW_SHAPEPROXY( &recWriter.buf, *proxy );
+		b2RecW_VEC2( &recWriter.buf, translation );
+		b2RecW_QUERYFILTER( &recWriter.buf, filter );
+		recWriter.countOffset = b2RecReserveU32( &recWriter.buf );
+		fcn = b2RecCastTrampoline;
+		context = &recWriter;
+	}
+
 	b2ShapeCastInput input = { 0 };
 	input.proxy = *proxy;
 	input.translation = translation;
@@ -2449,10 +2532,17 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2V
 
 		if ( worldContext.fraction == 0.0f )
 		{
-			return treeStats;
+			break;
 		}
 
 		input.maxFraction = worldContext.fraction;
+	}
+
+	if ( world->recording != NULL )
+	{
+		b2RecPatchU32( &recWriter.buf, recWriter.countOffset, recWriter.hitCount );
+		b2RecW_TREESTATS( &recWriter.buf, treeStats );
+		b2RecQueryCommit( world->recording, 0xE3, &recWriter );
 	}
 
 	return treeStats;
@@ -2532,10 +2622,22 @@ float b2World_CastMover( b2WorldId worldId, const b2Capsule* mover, b2Vec2 trans
 
 		if ( worldContext.fraction == 0.0f )
 		{
-			return 0.0f;
+			break;
 		}
 
 		input.maxFraction = worldContext.fraction;
+	}
+
+	if ( world->recording != NULL )
+	{
+		b2RecBuffer recBuf = { 0 };
+		b2RecW_WORLDID( &recBuf, worldId );
+		b2RecW_CAPSULE( &recBuf, *mover );
+		b2RecW_VEC2( &recBuf, translation );
+		b2RecW_QUERYFILTER( &recBuf, filter );
+		b2RecW_F32( &recBuf, worldContext.fraction );
+		b2RecCommitRecord( world->recording, 0xE6, recBuf.data, recBuf.size );
+		b2RecBufFree( &recBuf );
 	}
 
 	return worldContext.fraction;
@@ -2591,6 +2693,18 @@ void b2World_CollideMover( b2WorldId worldId, const b2Capsule* mover, b2QueryFil
 		return;
 	}
 
+	b2RecQueryWriter recWriter = { 0 };
+	if ( world->recording != NULL )
+	{
+		b2RecQueryBegin( &recWriter, (void*)fcn, context );
+		b2RecW_WORLDID( &recWriter.buf, worldId );
+		b2RecW_CAPSULE( &recWriter.buf, *mover );
+		b2RecW_QUERYFILTER( &recWriter.buf, filter );
+		recWriter.countOffset = b2RecReserveU32( &recWriter.buf );
+		fcn = b2RecPlaneTrampoline;
+		context = &recWriter;
+	}
+
 	b2Vec2 r = { mover->radius, mover->radius };
 
 	b2AABB aabb;
@@ -2604,6 +2718,13 @@ void b2World_CollideMover( b2WorldId worldId, const b2Capsule* mover, b2QueryFil
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
 		b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, TreeCollideCallback, &worldContext );
+	}
+
+	if ( world->recording != NULL )
+	{
+		b2RecPatchU32( &recWriter.buf, recWriter.countOffset, recWriter.hitCount );
+		// CollideMover returns void; no TREESTATS tail
+		b2RecQueryCommit( world->recording, 0xE4, &recWriter );
 	}
 }
 
@@ -2677,6 +2798,11 @@ void b2World_Dump()
 void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterFcn* fcn, void* context )
 {
 	b2World* world = b2GetWorldFromId( worldId );
+	if ( fcn != NULL && world->recording != NULL )
+	{
+		printf( "b2World_SetCustomFilterCallback: customFilter not supported while recording\n" );
+		B2_ASSERT( false && "customFilter callbacks are not supported while recording" );
+	}
 	world->customFilterFcn = fcn;
 	world->customFilterContext = context;
 }
@@ -2684,6 +2810,11 @@ void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterFcn* fcn,
 void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* fcn, void* context )
 {
 	b2World* world = b2GetWorldFromId( worldId );
+	if ( fcn != NULL && world->recording != NULL )
+	{
+		printf( "b2World_SetPreSolveCallback: preSolve not supported while recording\n" );
+		B2_ASSERT( false && "preSolve callbacks are not supported while recording" );
+	}
 	world->preSolveFcn = fcn;
 	world->preSolveContext = context;
 }

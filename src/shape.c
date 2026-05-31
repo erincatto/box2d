@@ -1121,20 +1121,37 @@ bool b2Shape_TestPoint( b2ShapeId shapeId, b2Vec2 point )
 	b2Transform transform = b2GetBodyTransform( world, shape->bodyId );
 	b2Vec2 localPoint = b2InvTransformPoint( transform, point );
 
+	bool result;
 	switch ( shape->type )
 	{
 		case b2_capsuleShape:
-			return b2PointInCapsule( &shape->capsule, localPoint );
+			result = b2PointInCapsule( &shape->capsule, localPoint );
+			break;
 
 		case b2_circleShape:
-			return b2PointInCircle( &shape->circle, localPoint );
+			result = b2PointInCircle( &shape->circle, localPoint );
+			break;
 
 		case b2_polygonShape:
-			return b2PointInPolygon( &shape->polygon, localPoint );
+			result = b2PointInPolygon( &shape->polygon, localPoint );
+			break;
 
 		default:
-			return false;
+			result = false;
+			break;
 	}
+
+	if ( world->recording != NULL )
+	{
+		b2RecBuffer recBuf = { 0 };
+		b2RecW_SHAPEID( &recBuf, shapeId );
+		b2RecW_VEC2( &recBuf, point );
+		b2RecW_BOOL( &recBuf, result );
+		b2RecCommitRecord( world->recording, 0xE7, recBuf.data, recBuf.size );
+		b2RecBufFree( &recBuf );
+	}
+
+	return result;
 }
 
 // todo_erin untested
@@ -1176,7 +1193,7 @@ b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, const b2RayCastInput* input )
 
 		default:
 			B2_ASSERT( false );
-			return output;
+			break;
 	}
 
 	if ( output.hit )
@@ -1184,6 +1201,16 @@ b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, const b2RayCastInput* input )
 		// convert to world coordinates
 		output.normal = b2RotateVector( transform.q, output.normal );
 		output.point = b2TransformPoint( transform, output.point );
+	}
+
+	if ( world->recording != NULL )
+	{
+		b2RecBuffer recBuf = { 0 };
+		b2RecW_SHAPEID( &recBuf, shapeId );
+		b2RecW_RAYCASTINPUT( &recBuf, *input );
+		b2RecW_CASTOUTPUT( &recBuf, output );
+		b2RecCommitRecord( world->recording, 0xE8, recBuf.data, recBuf.size );
+		b2RecBufFree( &recBuf );
 	}
 
 	return output;

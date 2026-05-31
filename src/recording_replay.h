@@ -8,6 +8,51 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+// Forward declare for the back-pointer on b2RecReader
+typedef struct b2RecPlayer b2RecPlayer;
+
+// A single recorded callback hit, used both as reader scratch and as the per-frame draw store
+typedef struct b2RecRecordedHit
+{
+	b2ShapeId id;
+	b2Vec2 point;
+	b2Vec2 normal;
+	float fraction;
+	b2PlaneResult plane;
+	float userReturnF;
+	bool userReturnB;
+} b2RecRecordedHit;
+
+// Per-frame draw record for one query call
+typedef enum b2RecQueryKind
+{
+	B2_RECQ_OVERLAP_AABB,
+	B2_RECQ_OVERLAP_SHAPE,
+	B2_RECQ_CAST_RAY,
+	B2_RECQ_CAST_SHAPE,
+	B2_RECQ_COLLIDE_MOVER,
+	B2_RECQ_CAST_RAY_CLOSEST,
+	B2_RECQ_CAST_MOVER,
+	B2_RECQ_SHAPE_TEST_POINT,
+	B2_RECQ_SHAPE_RAY_CAST
+} b2RecQueryKind;
+
+typedef struct b2RecDrawQuery
+{
+	int kind;
+	b2AABB aabb;
+	b2ShapeProxy proxy;
+	b2Capsule mover;
+	b2Vec2 origin;
+	b2Vec2 translation;
+	bool boolResult;
+	float castFraction;
+	b2CastOutput castOut;
+	b2ShapeId shape;
+	int hitStart;
+	int hitCount;
+} b2RecDrawQuery;
+
 // Reader state threaded through the replay loop and all dispatch functions
 typedef struct b2RecReader
 {
@@ -25,10 +70,16 @@ typedef struct b2RecReader
 	int chainPointCap;
 	b2SurfaceMaterial* chainMaterials;
 	int chainMaterialCap;
+
+	// Scratch for recorded query hits; grown on demand, freed with the player
+	b2RecRecordedHit* hits;
+	int hitCap;
+
+	b2RecPlayer* owner; // player that owns this reader
 } b2RecReader;
 
 // Incremental player. Owns the file image and drives replay one step at a time.
-typedef struct b2RecPlayer
+struct b2RecPlayer
 {
 	uint8_t* data;   // file image, owned here
 	int size;
@@ -36,7 +87,15 @@ typedef struct b2RecPlayer
 	int frame;       // steps dispatched so far
 	bool atEnd;      // a StepFrame ran out of records without reaching a step
 	b2RecReader rdr; // cursor and replay world, threaded into every dispatcher
-} b2RecPlayer;
+
+	// Per-frame query store, reset at the top of each StepFrame
+	b2RecDrawQuery* frameQueries;
+	int frameQueryCount;
+	int frameQueryCap;
+	b2RecRecordedHit* frameHits;
+	int frameHitCount;
+	int frameHitCap;
+};
 
 // Read primitives
 
@@ -78,3 +137,14 @@ b2PrismaticJointDef b2RecR_PRISMATICJOINTDEF( b2RecReader* rdr );
 b2RevoluteJointDef b2RecR_REVOLUTEJOINTDEF( b2RecReader* rdr );
 b2WeldJointDef b2RecR_WELDJOINTDEF( b2RecReader* rdr );
 b2WheelJointDef b2RecR_WHEELJOINTDEF( b2RecReader* rdr );
+b2AABB b2RecR_AABB( b2RecReader* rdr );
+b2QueryFilter b2RecR_QUERYFILTER( b2RecReader* rdr );
+b2ShapeProxy b2RecR_SHAPEPROXY( b2RecReader* rdr );
+b2RayCastInput b2RecR_RAYCASTINPUT( b2RecReader* rdr );
+b2CastOutput b2RecR_CASTOUTPUT( b2RecReader* rdr );
+b2RayResult b2RecR_RAYRESULT( b2RecReader* rdr );
+b2PlaneResult b2RecR_PLANERESULT( b2RecReader* rdr );
+b2TreeStats b2RecR_TREESTATS( b2RecReader* rdr );
+
+// Grow the reader's hit scratch to at least n entries
+void b2RecEnsureHits( b2RecReader* rdr, int n );

@@ -79,8 +79,8 @@ void b2RecW_U32( b2RecBuffer* buf, uint32_t v )
 
 void b2RecW_U64( b2RecBuffer* buf, uint64_t v )
 {
-	uint8_t b[8] = { (uint8_t)v,       (uint8_t)( v >> 8 ),  (uint8_t)( v >> 16 ), (uint8_t)( v >> 24 ),
-		             (uint8_t)( v >> 32 ), (uint8_t)( v >> 40 ), (uint8_t)( v >> 48 ), (uint8_t)( v >> 56 ) };
+	uint8_t b[8] = { (uint8_t)v,		   (uint8_t)( v >> 8 ),	 (uint8_t)( v >> 16 ), (uint8_t)( v >> 24 ),
+					 (uint8_t)( v >> 32 ), (uint8_t)( v >> 40 ), (uint8_t)( v >> 48 ), (uint8_t)( v >> 56 ) };
 	b2RecBufAppend( buf, b, 8 );
 }
 
@@ -440,6 +440,158 @@ void b2RecW_WHEELJOINTDEF( b2RecBuffer* buf, b2WheelJointDef v )
 	b2RecW_F32( buf, v.motorSpeed );
 }
 
+void b2RecW_AABB( b2RecBuffer* buf, b2AABB v )
+{
+	b2RecW_VEC2( buf, v.lowerBound );
+	b2RecW_VEC2( buf, v.upperBound );
+}
+
+void b2RecW_QUERYFILTER( b2RecBuffer* buf, b2QueryFilter v )
+{
+	b2RecW_U64( buf, v.categoryBits );
+	b2RecW_U64( buf, v.maskBits );
+}
+
+void b2RecW_SHAPEPROXY( b2RecBuffer* buf, b2ShapeProxy v )
+{
+	int count = v.count;
+	if ( count < 0 )
+		count = 0;
+	if ( count > B2_MAX_POLYGON_VERTICES )
+		count = B2_MAX_POLYGON_VERTICES;
+	b2RecW_I32( buf, count );
+	for ( int i = 0; i < count; ++i )
+	{
+		b2RecW_VEC2( buf, v.points[i] );
+	}
+	b2RecW_F32( buf, v.radius );
+}
+
+void b2RecW_RAYCASTINPUT( b2RecBuffer* buf, b2RayCastInput v )
+{
+	b2RecW_VEC2( buf, v.origin );
+	b2RecW_VEC2( buf, v.translation );
+	b2RecW_F32( buf, v.maxFraction );
+}
+
+void b2RecW_CASTOUTPUT( b2RecBuffer* buf, b2CastOutput v )
+{
+	b2RecW_VEC2( buf, v.normal );
+	b2RecW_VEC2( buf, v.point );
+	b2RecW_F32( buf, v.fraction );
+	b2RecW_I32( buf, v.iterations );
+	b2RecW_BOOL( buf, v.hit );
+}
+
+void b2RecW_RAYRESULT( b2RecBuffer* buf, b2RayResult v )
+{
+	b2RecW_SHAPEID( buf, v.shapeId );
+	b2RecW_VEC2( buf, v.point );
+	b2RecW_VEC2( buf, v.normal );
+	b2RecW_F32( buf, v.fraction );
+	b2RecW_I32( buf, v.nodeVisits );
+	b2RecW_I32( buf, v.leafVisits );
+	b2RecW_BOOL( buf, v.hit );
+}
+
+void b2RecW_PLANERESULT( b2RecBuffer* buf, b2PlaneResult v )
+{
+	b2RecW_VEC2( buf, v.plane.normal );
+	b2RecW_F32( buf, v.plane.offset );
+	b2RecW_VEC2( buf, v.point );
+	b2RecW_BOOL( buf, v.hit );
+}
+
+void b2RecW_TREESTATS( b2RecBuffer* buf, b2TreeStats v )
+{
+	b2RecW_I32( buf, v.nodeVisits );
+	b2RecW_I32( buf, v.leafVisits );
+}
+
+// Patch helpers for query hit-count backfill
+
+int b2RecReserveU32( b2RecBuffer* buf )
+{
+	int offset = buf->size;
+	uint8_t zero[4] = { 0, 0, 0, 0 };
+	b2RecBufAppend( buf, zero, 4 );
+	return offset;
+}
+
+void b2RecPatchU32( b2RecBuffer* buf, int offset, uint32_t v )
+{
+	B2_ASSERT( offset >= 0 && offset + 4 <= buf->size );
+	uint8_t* p = buf->data + offset;
+	p[0] = (uint8_t)v;
+	p[1] = (uint8_t)( v >> 8 );
+	p[2] = (uint8_t)( v >> 16 );
+	p[3] = (uint8_t)( v >> 24 );
+}
+
+// Concurrent query commits are serialized so records never interleave in the shared buffer
+void b2RecCommitRecord( b2Recording* rec, uint8_t opcode, const uint8_t* payload, int payloadSize )
+{
+	B2_ASSERT( payloadSize >= 0 && payloadSize < ( 1 << 24 ) );
+	b2LockMutex( rec->lock );
+	b2RecW_U8( &rec->buffer, opcode );
+	uint8_t sz[3] = { (uint8_t)payloadSize, (uint8_t)( payloadSize >> 8 ), (uint8_t)( payloadSize >> 16 ) };
+	b2RecBufAppend( &rec->buffer, sz, 3 );
+	b2RecBufAppend( &rec->buffer, payload, payloadSize );
+	b2UnlockMutex( rec->lock );
+}
+
+void b2RecQueryBegin( b2RecQueryWriter* w, void* fcn, void* context )
+{
+	w->buf = (b2RecBuffer){ 0 };
+	w->userFcn = fcn;
+	w->userContext = context;
+	w->hitCount = 0;
+	w->countOffset = 0;
+}
+
+void b2RecQueryCommit( b2Recording* rec, uint8_t opcode, b2RecQueryWriter* w )
+{
+	b2RecCommitRecord( rec, opcode, w->buf.data, w->buf.size );
+	b2RecBufFree( &w->buf );
+}
+
+bool b2RecOverlapTrampoline( b2ShapeId id, void* ctx )
+{
+	b2RecQueryWriter* w = (b2RecQueryWriter*)ctx;
+	b2OverlapResultFcn* realFcn = (b2OverlapResultFcn*)w->userFcn;
+	bool ret = realFcn( id, w->userContext );
+	b2RecW_SHAPEID( &w->buf, id );
+	b2RecW_BOOL( &w->buf, ret );
+	w->hitCount++;
+	return ret;
+}
+
+float b2RecCastTrampoline( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx )
+{
+	b2RecQueryWriter* w = (b2RecQueryWriter*)ctx;
+	b2CastResultFcn* realFcn = (b2CastResultFcn*)w->userFcn;
+	float ret = realFcn( id, point, normal, fraction, w->userContext );
+	b2RecW_SHAPEID( &w->buf, id );
+	b2RecW_VEC2( &w->buf, point );
+	b2RecW_VEC2( &w->buf, normal );
+	b2RecW_F32( &w->buf, fraction );
+	b2RecW_F32( &w->buf, ret );
+	w->hitCount++;
+	return ret;
+}
+
+bool b2RecPlaneTrampoline( b2ShapeId id, const b2PlaneResult* plane, void* ctx )
+{
+	b2RecQueryWriter* w = (b2RecQueryWriter*)ctx;
+	b2PlaneResultFcn* realFcn = (b2PlaneResultFcn*)w->userFcn;
+	bool ret = realFcn( id, plane, w->userContext );
+	b2RecW_SHAPEID( &w->buf, id );
+	b2RecW_PLANERESULT( &w->buf, *plane );
+	b2RecW_BOOL( &w->buf, ret );
+	w->hitCount++;
+	return ret;
+}
+
 // Record framing
 
 void b2RecBeginRecord( b2Recording* rec, uint8_t opcode )
@@ -464,10 +616,10 @@ void b2RecEndRecord( b2Recording* rec )
 // Codegen pass 1b: arg writers. Each generated function writes its struct fields to the buffer
 
 #define ARG( TAG, field ) b2RecW_##TAG( &rec->buffer, a->field );
-#define B2_REC_OP( op, Name, RET, ... ) \
-	void b2RecWriteArgs_##Name( b2Recording* rec, const b2RecArgs_##Name* a ) \
-	{ \
-		__VA_ARGS__ \
+#define B2_REC_OP( op, Name, RET, ... )                                                                                          \
+	void b2RecWriteArgs_##Name( b2Recording* rec, const b2RecArgs_##Name* a )                                                    \
+	{                                                                                                                            \
+		__VA_ARGS__                                                                                                              \
 	}
 #include "recording_ops.inl"
 #undef B2_REC_OP
@@ -475,12 +627,12 @@ void b2RecEndRecord( b2Recording* rec )
 
 // Codegen: full writers wrapping begin, arg writer, end
 
-#define B2_REC_OP( op, Name, RET, ... ) \
-	void b2RecWrite_##Name( b2Recording* rec, const b2RecArgs_##Name* a ) \
-	{ \
-		b2RecBeginRecord( rec, (uint8_t)( op ) ); \
-		b2RecWriteArgs_##Name( rec, a ); \
-		b2RecEndRecord( rec ); \
+#define B2_REC_OP( op, Name, RET, ... )                                                                                          \
+	void b2RecWrite_##Name( b2Recording* rec, const b2RecArgs_##Name* a )                                                        \
+	{                                                                                                                            \
+		b2RecBeginRecord( rec, (uint8_t)( op ) );                                                                                \
+		b2RecWriteArgs_##Name( rec, a );                                                                                         \
+		b2RecEndRecord( rec );                                                                                                   \
 	}
 #include "recording_ops.inl"
 #undef B2_REC_OP
@@ -488,13 +640,13 @@ void b2RecEndRecord( b2Recording* rec )
 // Codegen: create-op writers that append the returned id inside the record. The RET tag
 // selects the id type and its write primitive; RET_NONE ops generate nothing.
 
-#define B2_REC_RETWRITE( op, Name, idType, idW ) \
-	void b2RecWriteRet_##Name( b2Recording* rec, const b2RecArgs_##Name* a, idType id ) \
-	{ \
-		b2RecBeginRecord( rec, (uint8_t)( op ) ); \
-		b2RecWriteArgs_##Name( rec, a ); \
-		idW( &rec->buffer, id ); \
-		b2RecEndRecord( rec ); \
+#define B2_REC_RETWRITE( op, Name, idType, idW )                                                                                 \
+	void b2RecWriteRet_##Name( b2Recording* rec, const b2RecArgs_##Name* a, idType id )                                          \
+	{                                                                                                                            \
+		b2RecBeginRecord( rec, (uint8_t)( op ) );                                                                                \
+		b2RecWriteArgs_##Name( rec, a );                                                                                         \
+		idW( &rec->buffer, id );                                                                                                 \
+		b2RecEndRecord( rec );                                                                                                   \
 	}
 #define B2_REC_RETWRITE_RET_NONE( op, Name )
 #define B2_REC_RETWRITE_RET_BODYID( op, Name ) B2_REC_RETWRITE( op, Name, b2BodyId, b2RecW_BODYID )
@@ -525,6 +677,8 @@ void b2StartRecording( b2World* world, const b2WorldDef* def )
 		b2Free( rec, (int)sizeof( b2Recording ) );
 		return;
 	}
+
+	rec->lock = b2CreateMutex();
 
 	int initCap = 65536;
 	rec->buffer.data = b2Alloc( initCap );
@@ -577,6 +731,7 @@ void b2StopRecordingInternal( b2World* world )
 	b2FlushRecording( rec );
 	fclose( rec->file );
 	b2RecBufFree( &rec->buffer );
+	b2DestroyMutex( rec->lock );
 	b2Free( rec, (int)sizeof( b2Recording ) );
 }
 
@@ -603,8 +758,8 @@ uint64_t b2HashWorldState( b2World* world )
 
 		uint32_t bits;
 
-#define B2_HASH_FLOAT( f ) \
-	memcpy( &bits, &( f ), 4 ); \
+#define B2_HASH_FLOAT( f )                                                                                                       \
+	memcpy( &bits, &( f ), 4 );                                                                                                  \
 	hash = ( hash ^ (uint64_t)bits ) * prime;
 
 		B2_HASH_FLOAT( sim->transform.p.x )

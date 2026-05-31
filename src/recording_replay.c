@@ -571,6 +571,111 @@ b2WheelJointDef b2RecR_WHEELJOINTDEF( b2RecReader* rdr )
 	return def;
 }
 
+b2AABB b2RecR_AABB( b2RecReader* rdr )
+{
+	b2AABB v;
+	v.lowerBound = b2RecR_VEC2( rdr );
+	v.upperBound = b2RecR_VEC2( rdr );
+	return v;
+}
+
+b2QueryFilter b2RecR_QUERYFILTER( b2RecReader* rdr )
+{
+	b2QueryFilter f;
+	f.categoryBits = b2RecR_U64( rdr );
+	f.maskBits = b2RecR_U64( rdr );
+	return f;
+}
+
+b2ShapeProxy b2RecR_SHAPEPROXY( b2RecReader* rdr )
+{
+	b2ShapeProxy p;
+	memset( &p, 0, sizeof( p ) );
+	int count = b2RecR_I32( rdr );
+	if ( count < 0 ) count = 0;
+	if ( count > B2_MAX_POLYGON_VERTICES ) count = B2_MAX_POLYGON_VERTICES;
+	p.count = count;
+	for ( int i = 0; i < count; ++i )
+	{
+		p.points[i] = b2RecR_VEC2( rdr );
+	}
+	p.radius = b2RecR_F32( rdr );
+	return p;
+}
+
+b2RayCastInput b2RecR_RAYCASTINPUT( b2RecReader* rdr )
+{
+	b2RayCastInput v;
+	v.origin = b2RecR_VEC2( rdr );
+	v.translation = b2RecR_VEC2( rdr );
+	v.maxFraction = b2RecR_F32( rdr );
+	return v;
+}
+
+b2CastOutput b2RecR_CASTOUTPUT( b2RecReader* rdr )
+{
+	b2CastOutput v;
+	v.normal = b2RecR_VEC2( rdr );
+	v.point = b2RecR_VEC2( rdr );
+	v.fraction = b2RecR_F32( rdr );
+	v.iterations = b2RecR_I32( rdr );
+	v.hit = b2RecR_BOOL( rdr );
+	return v;
+}
+
+b2RayResult b2RecR_RAYRESULT( b2RecReader* rdr )
+{
+	b2RayResult v;
+	// shapeId keeps the recorded world0; b2RecMakeShapeId is applied at compare time
+	v.shapeId = b2RecR_SHAPEID( rdr );
+	v.point = b2RecR_VEC2( rdr );
+	v.normal = b2RecR_VEC2( rdr );
+	v.fraction = b2RecR_F32( rdr );
+	v.nodeVisits = b2RecR_I32( rdr );
+	v.leafVisits = b2RecR_I32( rdr );
+	v.hit = b2RecR_BOOL( rdr );
+	return v;
+}
+
+b2PlaneResult b2RecR_PLANERESULT( b2RecReader* rdr )
+{
+	b2PlaneResult v;
+	v.plane.normal = b2RecR_VEC2( rdr );
+	v.plane.offset = b2RecR_F32( rdr );
+	v.point = b2RecR_VEC2( rdr );
+	v.hit = b2RecR_BOOL( rdr );
+	return v;
+}
+
+b2TreeStats b2RecR_TREESTATS( b2RecReader* rdr )
+{
+	b2TreeStats v;
+	v.nodeVisits = b2RecR_I32( rdr );
+	v.leafVisits = b2RecR_I32( rdr );
+	return v;
+}
+
+void b2RecEnsureHits( b2RecReader* rdr, int n )
+{
+	if ( n <= rdr->hitCap )
+	{
+		return;
+	}
+	int newCap = n + 8;
+	if ( rdr->hits != NULL )
+	{
+		b2RecRecordedHit* newHits = b2Alloc( newCap * (int)sizeof( b2RecRecordedHit ) );
+		memcpy( newHits, rdr->hits, (size_t)( rdr->hitCap ) * sizeof( b2RecRecordedHit ) );
+		b2Free( rdr->hits, rdr->hitCap * (int)sizeof( b2RecRecordedHit ) );
+		rdr->hits = newHits;
+	}
+	else
+	{
+		rdr->hits = b2Alloc( newCap * (int)sizeof( b2RecRecordedHit ) );
+	}
+	rdr->hitCap = newCap;
+}
+
 // Per op dispatch, the only place real public API names appear
 // Body and shape ids have world0 replaced with the replay world's slot index
 
@@ -1422,6 +1527,366 @@ static void b2RecDispatch_WheelJointSetMaxMotorTorque( const b2RecArgs_WheelJoin
 	b2WheelJoint_SetMaxMotorTorque( b2RecMakeJointId( rdr, a->joint ), a->torque );
 }
 
+// Float bit comparators: compare raw bits so NaN != NaN is handled consistently
+
+static bool b2RecF32Differs( float a, float b )
+{
+	uint32_t ua, ub;
+	memcpy( &ua, &a, 4 );
+	memcpy( &ub, &b, 4 );
+	return ua != ub;
+}
+
+static bool b2RecVec2Differs( b2Vec2 a, b2Vec2 b )
+{
+	return b2RecF32Differs( a.x, b.x ) || b2RecF32Differs( a.y, b.y );
+}
+
+// Per-frame query stash: push a draw record and copy its hits into frameHits.
+// Ids in hits[] are already remapped to the replay world by the caller.
+
+static void b2RecGrowFrameQueries( b2RecPlayer* player )
+{
+	if ( player->frameQueryCount < player->frameQueryCap )
+	{
+		return;
+	}
+	int newCap = player->frameQueryCap == 0 ? 8 : player->frameQueryCap * 2;
+	b2RecDrawQuery* newQ = b2Alloc( newCap * (int)sizeof( b2RecDrawQuery ) );
+	if ( player->frameQueries != NULL )
+	{
+		memcpy( newQ, player->frameQueries, (size_t)player->frameQueryCount * sizeof( b2RecDrawQuery ) );
+		b2Free( player->frameQueries, player->frameQueryCap * (int)sizeof( b2RecDrawQuery ) );
+	}
+	player->frameQueries = newQ;
+	player->frameQueryCap = newCap;
+}
+
+static void b2RecGrowFrameHits( b2RecPlayer* player, int need )
+{
+	if ( player->frameHitCount + need <= player->frameHitCap )
+	{
+		return;
+	}
+	int newCap = player->frameHitCap == 0 ? 16 : player->frameHitCap * 2;
+	if ( newCap < player->frameHitCount + need )
+	{
+		newCap = player->frameHitCount + need + 8;
+	}
+	b2RecRecordedHit* newH = b2Alloc( newCap * (int)sizeof( b2RecRecordedHit ) );
+	if ( player->frameHits != NULL )
+	{
+		memcpy( newH, player->frameHits, (size_t)player->frameHitCount * sizeof( b2RecRecordedHit ) );
+		b2Free( player->frameHits, player->frameHitCap * (int)sizeof( b2RecRecordedHit ) );
+	}
+	player->frameHits = newH;
+	player->frameHitCap = newCap;
+}
+
+static b2RecDrawQuery* b2RecStashQueryBegin( b2RecPlayer* player, int kind,
+                                              const b2RecRecordedHit* hits, int hitCount )
+{
+	b2RecGrowFrameQueries( player );
+	b2RecDrawQuery* q = &player->frameQueries[player->frameQueryCount];
+	memset( q, 0, sizeof( *q ) );
+	q->kind = kind;
+	q->hitStart = player->frameHitCount;
+	q->hitCount = hitCount;
+	b2RecGrowFrameHits( player, hitCount );
+	for ( int i = 0; i < hitCount; ++i )
+	{
+		player->frameHits[player->frameHitCount + i] = hits[i];
+	}
+	player->frameHitCount += hitCount;
+	player->frameQueryCount++;
+	return q;
+}
+
+// Overlap AABB dispatcher
+
+typedef struct b2RecReplayOverlap
+{
+	b2RecReader* rdr;
+	const b2RecRecordedHit* hits;
+	int count;
+	int cursor;
+} b2RecReplayOverlap;
+
+static bool b2RecReplayOverlapTrampoline( b2ShapeId id, void* ctx )
+{
+	b2RecReplayOverlap* rc = ctx;
+	if ( rc->cursor >= rc->count )
+	{
+		rc->rdr->diverged = true;
+		return false;
+	}
+	const b2RecRecordedHit* h = &rc->hits[rc->cursor++];
+	if ( id.index1 != h->id.index1 || id.generation != h->id.generation )
+	{
+		rc->rdr->diverged = true;
+	}
+	return h->userReturnB;
+}
+
+static void b2RecDispatch_QueryOverlapAABB( const b2RecArgs_QueryOverlapAABB* a, b2RecReader* rdr )
+{
+	uint32_t n = b2RecR_U32( rdr );
+	b2RecEnsureHits( rdr, (int)n );
+	for ( uint32_t i = 0; i < n; ++i )
+	{
+		rdr->hits[i].id = b2RecMakeShapeId( rdr, b2RecR_SHAPEID( rdr ) );
+		rdr->hits[i].userReturnB = b2RecR_BOOL( rdr );
+	}
+	(void)b2RecR_TREESTATS( rdr );
+	if ( !rdr->ok ) return;
+	b2RecReplayOverlap rc = { rdr, rdr->hits, (int)n, 0 };
+	b2World_OverlapAABB( rdr->replayWorldId, a->aabb, a->filter, b2RecReplayOverlapTrampoline, &rc );
+	if ( rc.cursor != (int)n ) rdr->diverged = true;
+	if ( rdr->owner )
+	{
+		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_OVERLAP_AABB, rdr->hits, (int)n );
+		q->aabb = a->aabb;
+	}
+}
+
+static void b2RecDispatch_QueryOverlapShape( const b2RecArgs_QueryOverlapShape* a, b2RecReader* rdr )
+{
+	uint32_t n = b2RecR_U32( rdr );
+	b2RecEnsureHits( rdr, (int)n );
+	for ( uint32_t i = 0; i < n; ++i )
+	{
+		rdr->hits[i].id = b2RecMakeShapeId( rdr, b2RecR_SHAPEID( rdr ) );
+		rdr->hits[i].userReturnB = b2RecR_BOOL( rdr );
+	}
+	(void)b2RecR_TREESTATS( rdr );
+	if ( !rdr->ok ) return;
+	b2RecReplayOverlap rc = { rdr, rdr->hits, (int)n, 0 };
+	b2World_OverlapShape( rdr->replayWorldId, &a->proxy, a->filter, b2RecReplayOverlapTrampoline, &rc );
+	if ( rc.cursor != (int)n ) rdr->diverged = true;
+	if ( rdr->owner )
+	{
+		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_OVERLAP_SHAPE, rdr->hits, (int)n );
+		q->proxy = a->proxy;
+	}
+}
+
+// Cast ray dispatcher
+
+typedef struct b2RecReplayCast
+{
+	b2RecReader* rdr;
+	const b2RecRecordedHit* hits;
+	int count;
+	int cursor;
+} b2RecReplayCast;
+
+static float b2RecReplayCastTrampoline( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx )
+{
+	b2RecReplayCast* rc = ctx;
+	if ( rc->cursor >= rc->count )
+	{
+		rc->rdr->diverged = true;
+		return 0.0f;
+	}
+	const b2RecRecordedHit* h = &rc->hits[rc->cursor++];
+	if ( id.index1 != h->id.index1 || id.generation != h->id.generation ||
+	     b2RecVec2Differs( point, h->point ) || b2RecVec2Differs( normal, h->normal ) ||
+	     b2RecF32Differs( fraction, h->fraction ) )
+	{
+		rc->rdr->diverged = true;
+	}
+	return h->userReturnF;
+}
+
+static void b2RecDispatch_QueryCastRay( const b2RecArgs_QueryCastRay* a, b2RecReader* rdr )
+{
+	uint32_t n = b2RecR_U32( rdr );
+	b2RecEnsureHits( rdr, (int)n );
+	for ( uint32_t i = 0; i < n; ++i )
+	{
+		rdr->hits[i].id = b2RecMakeShapeId( rdr, b2RecR_SHAPEID( rdr ) );
+		rdr->hits[i].point = b2RecR_VEC2( rdr );
+		rdr->hits[i].normal = b2RecR_VEC2( rdr );
+		rdr->hits[i].fraction = b2RecR_F32( rdr );
+		rdr->hits[i].userReturnF = b2RecR_F32( rdr );
+	}
+	(void)b2RecR_TREESTATS( rdr );
+	if ( !rdr->ok ) return;
+	b2RecReplayCast rc = { rdr, rdr->hits, (int)n, 0 };
+	b2World_CastRay( rdr->replayWorldId, a->origin, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
+	if ( rc.cursor != (int)n ) rdr->diverged = true;
+	if ( rdr->owner )
+	{
+		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_CAST_RAY, rdr->hits, (int)n );
+		q->origin = a->origin;
+		q->translation = a->translation;
+	}
+}
+
+static void b2RecDispatch_QueryCastShape( const b2RecArgs_QueryCastShape* a, b2RecReader* rdr )
+{
+	uint32_t n = b2RecR_U32( rdr );
+	b2RecEnsureHits( rdr, (int)n );
+	for ( uint32_t i = 0; i < n; ++i )
+	{
+		rdr->hits[i].id = b2RecMakeShapeId( rdr, b2RecR_SHAPEID( rdr ) );
+		rdr->hits[i].point = b2RecR_VEC2( rdr );
+		rdr->hits[i].normal = b2RecR_VEC2( rdr );
+		rdr->hits[i].fraction = b2RecR_F32( rdr );
+		rdr->hits[i].userReturnF = b2RecR_F32( rdr );
+	}
+	(void)b2RecR_TREESTATS( rdr );
+	if ( !rdr->ok ) return;
+	b2RecReplayCast rc = { rdr, rdr->hits, (int)n, 0 };
+	b2World_CastShape( rdr->replayWorldId, &a->proxy, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
+	if ( rc.cursor != (int)n ) rdr->diverged = true;
+	if ( rdr->owner )
+	{
+		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_CAST_SHAPE, rdr->hits, (int)n );
+		q->proxy = a->proxy;
+		q->translation = a->translation;
+	}
+}
+
+// CollideMover dispatcher
+
+typedef struct b2RecReplayPlane
+{
+	b2RecReader* rdr;
+	const b2RecRecordedHit* hits;
+	int count;
+	int cursor;
+} b2RecReplayPlane;
+
+static bool b2RecReplayPlaneTrampoline( b2ShapeId id, const b2PlaneResult* plane, void* ctx )
+{
+	b2RecReplayPlane* rc = ctx;
+	if ( rc->cursor >= rc->count )
+	{
+		rc->rdr->diverged = true;
+		return true;
+	}
+	const b2RecRecordedHit* h = &rc->hits[rc->cursor++];
+	if ( id.index1 != h->id.index1 || id.generation != h->id.generation ||
+	     b2RecVec2Differs( plane->plane.normal, h->plane.plane.normal ) ||
+	     b2RecF32Differs( plane->plane.offset, h->plane.plane.offset ) ||
+	     b2RecVec2Differs( plane->point, h->plane.point ) ||
+	     plane->hit != h->plane.hit )
+	{
+		rc->rdr->diverged = true;
+	}
+	return h->userReturnB;
+}
+
+static void b2RecDispatch_QueryCollideMover( const b2RecArgs_QueryCollideMover* a, b2RecReader* rdr )
+{
+	uint32_t n = b2RecR_U32( rdr );
+	b2RecEnsureHits( rdr, (int)n );
+	for ( uint32_t i = 0; i < n; ++i )
+	{
+		rdr->hits[i].id = b2RecMakeShapeId( rdr, b2RecR_SHAPEID( rdr ) );
+		rdr->hits[i].plane = b2RecR_PLANERESULT( rdr );
+		rdr->hits[i].userReturnB = b2RecR_BOOL( rdr );
+	}
+	// CollideMover has no TREESTATS tail (returns void)
+	if ( !rdr->ok ) return;
+	b2RecReplayPlane rc = { rdr, rdr->hits, (int)n, 0 };
+	b2World_CollideMover( rdr->replayWorldId, &a->mover, a->filter, b2RecReplayPlaneTrampoline, &rc );
+	if ( rc.cursor != (int)n ) rdr->diverged = true;
+	if ( rdr->owner )
+	{
+		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_COLLIDE_MOVER, rdr->hits, (int)n );
+		q->mover = a->mover;
+	}
+}
+
+// CastRayClosest dispatcher
+
+static void b2RecDispatch_QueryCastRayClosest( const b2RecArgs_QueryCastRayClosest* a, b2RecReader* rdr )
+{
+	b2RayResult rec = b2RecR_RAYRESULT( rdr );
+	if ( !rdr->ok ) return;
+	b2RayResult got = b2World_CastRayClosest( rdr->replayWorldId, a->origin, a->translation, a->filter );
+	if ( got.hit != rec.hit ||
+	     ( got.hit && ( got.shapeId.index1 != rec.shapeId.index1 || got.shapeId.generation != rec.shapeId.generation ||
+	                    b2RecVec2Differs( got.point, rec.point ) || b2RecVec2Differs( got.normal, rec.normal ) ||
+	                    b2RecF32Differs( got.fraction, rec.fraction ) ) ) )
+	{
+		rdr->diverged = true;
+	}
+	if ( rdr->owner )
+	{
+		// Stash the closest result as a single pooled hit so the shared draw loop renders its point
+		b2RecRecordedHit h = { 0 };
+		h.id = b2RecMakeShapeId( rdr, rec.shapeId );
+		h.point = rec.point;
+		h.normal = rec.normal;
+		h.fraction = rec.fraction;
+		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_CAST_RAY_CLOSEST, &h, rec.hit ? 1 : 0 );
+		q->origin = a->origin;
+		q->translation = a->translation;
+	}
+}
+
+// CastMover dispatcher
+
+static void b2RecDispatch_QueryCastMover( const b2RecArgs_QueryCastMover* a, b2RecReader* rdr )
+{
+	float rec = b2RecR_F32( rdr );
+	if ( !rdr->ok ) return;
+	float got = b2World_CastMover( rdr->replayWorldId, &a->mover, a->translation, a->filter );
+	if ( b2RecF32Differs( got, rec ) ) rdr->diverged = true;
+	if ( rdr->owner )
+	{
+		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_CAST_MOVER, NULL, 0 );
+		q->mover = a->mover;
+		q->translation = a->translation;
+		q->castFraction = rec;
+	}
+}
+
+// ShapeTestPoint dispatcher
+
+static void b2RecDispatch_ShapeTestPoint( const b2RecArgs_ShapeTestPoint* a, b2RecReader* rdr )
+{
+	bool rec = b2RecR_BOOL( rdr );
+	if ( !rdr->ok ) return;
+	b2ShapeId id = b2RecMakeShapeId( rdr, a->shape );
+	bool got = b2Shape_TestPoint( id, a->point );
+	if ( got != rec ) rdr->diverged = true;
+	if ( rdr->owner )
+	{
+		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_SHAPE_TEST_POINT, NULL, 0 );
+		q->shape = id;
+		q->origin = a->point;
+		q->boolResult = rec;
+	}
+}
+
+// ShapeRayCast dispatcher
+
+static void b2RecDispatch_ShapeRayCast( const b2RecArgs_ShapeRayCast* a, b2RecReader* rdr )
+{
+	b2CastOutput rec = b2RecR_CASTOUTPUT( rdr );
+	if ( !rdr->ok ) return;
+	b2ShapeId id = b2RecMakeShapeId( rdr, a->shape );
+	b2CastOutput got = b2Shape_RayCast( id, &a->input );
+	if ( got.hit != rec.hit ||
+	     ( got.hit && ( b2RecVec2Differs( got.normal, rec.normal ) || b2RecVec2Differs( got.point, rec.point ) ||
+	                    b2RecF32Differs( got.fraction, rec.fraction ) ) ) )
+	{
+		rdr->diverged = true;
+	}
+	if ( rdr->owner )
+	{
+		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_SHAPE_RAY_CAST, NULL, 0 );
+		q->shape = id;
+		q->origin = a->input.origin;
+		q->translation = a->input.translation;
+		q->castOut = rec;
+	}
+}
+
 static void b2RecDispatch_StateHash( const b2RecArgs_StateHash* a, b2RecReader* rdr )
 {
 	b2World* world = b2GetWorldFromId( rdr->replayWorldId );
@@ -1584,6 +2049,15 @@ b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount )
 	player->rdr.chainPointCap = 0;
 	player->rdr.chainMaterials = NULL;
 	player->rdr.chainMaterialCap = 0;
+	player->rdr.hits = NULL;
+	player->rdr.hitCap = 0;
+	player->rdr.owner = player;
+	player->frameQueries = NULL;
+	player->frameQueryCount = 0;
+	player->frameQueryCap = 0;
+	player->frameHits = NULL;
+	player->frameHitCount = 0;
+	player->frameHitCap = 0;
 
 	// The first record is CreateWorld; replay it so the world exists before the first step
 	b2RecPumpToWorld( player );
@@ -1603,6 +2077,10 @@ bool b2RecPlayer_StepFrame( b2RecPlayer* player )
 	{
 		return false;
 	}
+
+	// Reset per-frame query store before dispatching new records
+	player->frameQueryCount = 0;
+	player->frameHitCount = 0;
 
 	// Dispatch records until one Step has executed. A leading StateHash from the prior frame
 	// is checked here against the current world, before any mutators of the next frame run.
@@ -1679,7 +2157,178 @@ void b2RecPlayer_Destroy( b2RecPlayer* player )
 	{
 		b2Free( player->rdr.chainMaterials, player->rdr.chainMaterialCap * (int)sizeof( b2SurfaceMaterial ) );
 	}
+	if ( player->rdr.hits != NULL )
+	{
+		b2Free( player->rdr.hits, player->rdr.hitCap * (int)sizeof( b2RecRecordedHit ) );
+	}
+	if ( player->frameQueries != NULL )
+	{
+		b2Free( player->frameQueries, player->frameQueryCap * (int)sizeof( b2RecDrawQuery ) );
+	}
+	if ( player->frameHits != NULL )
+	{
+		b2Free( player->frameHits, player->frameHitCap * (int)sizeof( b2RecRecordedHit ) );
+	}
 	b2Free( player, (int)sizeof( b2RecPlayer ) );
+}
+
+// Highlight each reported overlap shape by its AABB. Skip any destroyed since the query,
+// per the b2Shape_GetAABB contract that overlap results may contain stale shapes.
+static void b2RecDrawHitAABBs( const b2RecPlayer* player, const b2RecDrawQuery* q, b2DebugDraw* draw )
+{
+	if ( draw->DrawPolygonFcn == NULL )
+	{
+		return;
+	}
+	for ( int hi = q->hitStart; hi < q->hitStart + q->hitCount; ++hi )
+	{
+		b2ShapeId id = player->frameHits[hi].id;
+		if ( b2Shape_IsValid( id ) == false )
+		{
+			continue;
+		}
+		b2AABB b = b2Shape_GetAABB( id );
+		b2Vec2 vs[4] = { b.lowerBound, { b.upperBound.x, b.lowerBound.y }, b.upperBound, { b.lowerBound.x, b.upperBound.y } };
+		draw->DrawPolygonFcn( vs, 4, b2_colorMagenta, draw->context );
+	}
+}
+
+void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw )
+{
+	if ( player == NULL || draw == NULL ) return;
+
+	for ( int qi = 0; qi < player->frameQueryCount; ++qi )
+	{
+		const b2RecDrawQuery* q = &player->frameQueries[qi];
+
+		switch ( q->kind )
+		{
+			case B2_RECQ_CAST_RAY:
+			case B2_RECQ_CAST_RAY_CLOSEST:
+			{
+				// Ray origin to endpoint
+				b2Vec2 end = b2Add( q->origin, q->translation );
+				if ( draw->DrawLineFcn )
+				{
+					draw->DrawLineFcn( q->origin, end, b2_colorYellow, draw->context );
+				}
+				// Per-hit point + short normal
+				for ( int hi = q->hitStart; hi < q->hitStart + q->hitCount; ++hi )
+				{
+					const b2RecRecordedHit* h = &player->frameHits[hi];
+					if ( draw->DrawPointFcn )
+					{
+						draw->DrawPointFcn( h->point, 4.0f, b2_colorYellow, draw->context );
+					}
+					if ( draw->DrawLineFcn )
+					{
+						b2Vec2 np = b2MulAdd( h->point, 0.2f, h->normal );
+						draw->DrawLineFcn( h->point, np, b2_colorLightYellow, draw->context );
+					}
+				}
+				break;
+			}
+			case B2_RECQ_CAST_SHAPE:
+			{
+				// Shape cast: draw per-hit points along the swept path
+				for ( int hi = q->hitStart; hi < q->hitStart + q->hitCount; ++hi )
+				{
+					const b2RecRecordedHit* h = &player->frameHits[hi];
+					if ( draw->DrawPointFcn )
+					{
+						draw->DrawPointFcn( h->point, 4.0f, b2_colorSkyBlue, draw->context );
+					}
+					if ( draw->DrawLineFcn )
+					{
+						b2Vec2 np = b2MulAdd( h->point, 0.2f, h->normal );
+						draw->DrawLineFcn( h->point, np, b2_colorLightSkyBlue, draw->context );
+					}
+				}
+				break;
+			}
+			case B2_RECQ_CAST_MOVER:
+			{
+				if ( draw->DrawSolidCapsuleFcn )
+				{
+					draw->DrawSolidCapsuleFcn( q->mover.center1, q->mover.center2, q->mover.radius,
+					                           b2_colorLightSkyBlue, draw->context );
+				}
+				break;
+			}
+			case B2_RECQ_OVERLAP_AABB:
+			{
+				b2Vec2 vs[4] = { q->aabb.lowerBound,
+				                 { q->aabb.upperBound.x, q->aabb.lowerBound.y },
+				                 q->aabb.upperBound,
+				                 { q->aabb.lowerBound.x, q->aabb.upperBound.y } };
+				if ( draw->DrawPolygonFcn )
+				{
+					draw->DrawPolygonFcn( vs, 4, b2_colorLimeGreen, draw->context );
+				}
+				b2RecDrawHitAABBs( player, q, draw );
+				break;
+			}
+			case B2_RECQ_OVERLAP_SHAPE:
+			{
+				if ( q->proxy.count == 1 )
+				{
+					if ( draw->DrawCircleFcn )
+					{
+						draw->DrawCircleFcn( q->proxy.points[0], q->proxy.radius, b2_colorLimeGreen, draw->context );
+					}
+				}
+				else if ( q->proxy.count >= 2 && draw->DrawPolygonFcn )
+				{
+					draw->DrawPolygonFcn( q->proxy.points, q->proxy.count, b2_colorLimeGreen, draw->context );
+				}
+				b2RecDrawHitAABBs( player, q, draw );
+				break;
+			}
+			case B2_RECQ_COLLIDE_MOVER:
+			{
+				if ( draw->DrawSolidCapsuleFcn )
+				{
+					draw->DrawSolidCapsuleFcn( q->mover.center1, q->mover.center2, q->mover.radius,
+					                           b2_colorTan, draw->context );
+				}
+				// Per-hit plane point and normal
+				for ( int hi = q->hitStart; hi < q->hitStart + q->hitCount; ++hi )
+				{
+					const b2RecRecordedHit* h = &player->frameHits[hi];
+					if ( h->plane.hit && draw->DrawLineFcn )
+					{
+						b2Vec2 np = b2MulAdd( h->plane.point, 0.2f, h->plane.plane.normal );
+						draw->DrawLineFcn( h->plane.point, np, b2_colorOrange, draw->context );
+					}
+				}
+				break;
+			}
+			case B2_RECQ_SHAPE_TEST_POINT:
+			{
+				b2HexColor c = q->boolResult ? b2_colorAqua : b2_colorRed;
+				if ( draw->DrawPointFcn )
+				{
+					draw->DrawPointFcn( q->origin, 6.0f, c, draw->context );
+				}
+				break;
+			}
+			case B2_RECQ_SHAPE_RAY_CAST:
+			{
+				b2Vec2 end = b2Add( q->origin, q->translation );
+				if ( draw->DrawLineFcn )
+				{
+					draw->DrawLineFcn( q->origin, end, b2_colorViolet, draw->context );
+				}
+				if ( q->castOut.hit && draw->DrawPointFcn )
+				{
+					draw->DrawPointFcn( q->castOut.point, 4.0f, b2_colorViolet, draw->context );
+				}
+				break;
+			}
+			default:
+				break;
+		}
+	}
 }
 
 bool b2ValidateReplayFile( const char* path, int workerCount )

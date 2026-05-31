@@ -46,6 +46,16 @@ public:
 		DestroyFallingHinges( &m_data );
 	}
 
+	static bool OverlapCounter( b2ShapeId, void* )
+	{
+		return true;
+	}
+
+	static float AllHitsCast( b2ShapeId, b2Vec2, b2Vec2, float fraction, void* )
+	{
+		return 1.0f;
+	}
+
 	void Step() override
 	{
 		Sample::Step();
@@ -53,6 +63,17 @@ public:
 		if ( m_context->pause == false && m_done == false )
 		{
 			m_done = UpdateFallingHinges( m_worldId, &m_data );
+
+			// Issue a few queries each step so the Replay viewer has something to draw
+			b2QueryFilter filter = b2DefaultQueryFilter();
+			b2AABB scanBox = { { -5.0f, -2.0f }, { 5.0f, 4.0f } };
+			b2World_OverlapAABB( m_worldId, scanBox, filter, OverlapCounter, nullptr );
+			b2Vec2 origin = { 0.0f, 12.0f };
+			b2Vec2 translation = { 0.0f, -14.0f };
+			b2World_CastRayClosest( m_worldId, origin, translation, filter );
+
+			origin.x = 5.0f;
+			b2World_CastRay( m_worldId, origin, translation, filter, AllHitsCast, nullptr );
 
 			if ( m_done )
 			{
@@ -187,6 +208,7 @@ public:
 		if ( B2_IS_NON_NULL( m_worldId ) )
 		{
 			b2World_Draw( m_worldId, &m_context->debugDraw );
+			b2RecPlayer_DrawFrameQueries( m_player, &m_context->debugDraw );
 		}
 
 		DrawScreenTextLine( "frame %d%s", b2RecPlayer_GetFrame( m_player ), b2RecPlayer_IsAtEnd( m_player ) ? "  (end)" : "" );

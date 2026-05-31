@@ -16,6 +16,84 @@
 static const char* s_recPath = "recording_test.b2rec";
 static const char* s_savedPath = "test_recording_saved.b2rec";
 
+// Query callbacks used by RecordingTest
+static int s_overlapCount = 0;
+static bool s_overlapFcn( b2ShapeId id, void* ctx )
+{
+	(void)id;
+	(void)ctx;
+	s_overlapCount++;
+	return true;
+}
+
+static float s_closestCastFcn( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx )
+{
+	(void)id; (void)point; (void)normal; (void)ctx;
+	return fraction;
+}
+
+static float s_allHitsCastFcn( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx )
+{
+	(void)id; (void)point; (void)normal; (void)ctx;
+	return fraction;
+}
+
+static bool s_planeFcn( b2ShapeId id, const b2PlaneResult* plane, void* ctx )
+{
+	(void)id; (void)plane; (void)ctx;
+	return true;
+}
+
+// No-op draw callbacks for the headless draw-path exercise
+static void s_DrawLine( b2Vec2 p1, b2Vec2 p2, b2HexColor c, void* ctx ) { (void)p1; (void)p2; (void)c; (void)ctx; }
+static void s_DrawPoint( b2Vec2 p, float sz, b2HexColor c, void* ctx ) { (void)p; (void)sz; (void)c; (void)ctx; }
+static void s_DrawPoly( const b2Vec2* v, int n, b2HexColor c, void* ctx ) { (void)v; (void)n; (void)c; (void)ctx; }
+static void s_DrawCapsule( b2Vec2 p1, b2Vec2 p2, float r, b2HexColor c, void* ctx ) { (void)p1; (void)p2; (void)r; (void)c; (void)ctx; }
+
+// Issue all 9 spatial query types against worldId. groundShapeId and a known position
+// are used for the shape-level queries.
+static void IssueAllQueries( b2WorldId worldId, b2ShapeId groundShapeId )
+{
+	b2QueryFilter filter = b2DefaultQueryFilter();
+
+	// OverlapAABB
+	b2AABB aabb = { { -5.0f, -15.0f }, { 5.0f, 5.0f } };
+	b2World_OverlapAABB( worldId, aabb, filter, s_overlapFcn, NULL );
+
+	// OverlapShape (small box proxy)
+	b2ShapeProxy proxy = b2MakeProxy( (b2Vec2[]){ { -0.5f, -0.5f }, { 0.5f, -0.5f }, { 0.5f, 0.5f }, { -0.5f, 0.5f } }, 4, 0.0f );
+	b2World_OverlapShape( worldId, &proxy, filter, s_overlapFcn, NULL );
+
+	// CastRay (all hits)
+	b2Vec2 rayOrigin = { 0.0f, 10.0f };
+	b2Vec2 rayDir = { 0.0f, -20.0f };
+	b2World_CastRay( worldId, rayOrigin, rayDir, filter, s_allHitsCastFcn, NULL );
+
+	// CastRayClosest
+	b2World_CastRayClosest( worldId, rayOrigin, rayDir, filter );
+
+	// CastShape (circle proxy)
+	b2ShapeProxy circProxy = b2MakeProxy( (b2Vec2[]){ { 0.0f, 0.0f } }, 1, 0.3f );
+	b2World_CastShape( worldId, &circProxy, rayDir, filter, s_closestCastFcn, NULL );
+
+	// CollideMover (capsule with radius > 2*B2_LINEAR_SLOP)
+	b2Capsule moverCap = { { -0.3f, 0.0f }, { 0.3f, 0.0f }, 0.5f };
+	b2World_CollideMover( worldId, &moverCap, filter, s_planeFcn, NULL );
+
+	// CastMover
+	b2Vec2 moverTranslation = { 0.0f, -5.0f };
+	b2World_CastMover( worldId, &moverCap, moverTranslation, filter );
+
+	// Shape_TestPoint: test inside (0,0 local, well inside the r=10 ground circle at y=-10)
+	// and outside
+	b2Shape_TestPoint( groundShapeId, (b2Vec2){ 0.0f, -10.0f } );   // inside center of ground
+	b2Shape_TestPoint( groundShapeId, (b2Vec2){ 0.0f, 100.0f } );   // outside
+
+	// Shape_RayCast against the ground shape
+	b2RayCastInput rcIn = { { 0.0f, 5.0f }, { 0.0f, -20.0f }, 1.0f };
+	b2Shape_RayCast( groundShapeId, &rcIn );
+}
+
 int RecordingTest( void )
 {
 	// Record a session
@@ -324,6 +402,9 @@ int RecordingTest( void )
 	explosion.impulsePerLength = 5.0f;
 	b2World_Explode( worldId, &explosion );
 
+	// Issue all 9 query types before the first step (pre-step path)
+	IssueAllQueries( worldId, groundShapeId );
+
 	float timeStep = 1.0f / 60.0f;
 	int subStepCount = 4;
 	for ( int i = 0; i < 60; ++i )
@@ -334,6 +415,12 @@ int RecordingTest( void )
 			b2Body_ApplyLinearImpulseToCenter( capsuleBodyId, (b2Vec2){ 2.0f, 0.0f }, true );
 			b2Body_ClearForces( bodyId );
 			b2Body_SetGravityScale( bodyId, 1.0f );
+		}
+
+		// Also issue queries mid-loop to exercise recording across steps
+		if ( i == 15 )
+		{
+			IssueAllQueries( worldId, groundShapeId );
 		}
 
 		b2World_Step( worldId, timeStep, subStepCount );
@@ -384,9 +471,21 @@ int RecordingTest( void )
 		b2RecPlayer* player = b2RecPlayer_Create( s_recPath, 0 );
 		ENSURE( player != NULL );
 
+		// Build a no-op b2DebugDraw to exercise the draw path headlessly
+		b2DebugDraw dd = b2DefaultDebugDraw();
+		dd.DrawLineFcn = s_DrawLine;
+		dd.DrawPointFcn = s_DrawPoint;
+		dd.DrawPolygonFcn = s_DrawPoly;
+		dd.DrawSolidCapsuleFcn = s_DrawCapsule;
+
 		int frames = 0;
 		while ( b2RecPlayer_StepFrame( player ) )
 		{
+			// Exercise the draw path on every other frame
+			if ( frames % 2 == 0 )
+			{
+				b2RecPlayer_DrawFrameQueries( player, &dd );
+			}
 			frames += 1;
 		}
 		ENSURE( frames == 60 );

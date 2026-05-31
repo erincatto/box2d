@@ -19,13 +19,13 @@ typedef struct b2World b2World;
 // File header, fixed 32 bytes, little-endian, single-arch-gated
 typedef struct b2RecHeader
 {
-	uint32_t magic;        // 'B2RC' = 0x43523242
+	uint32_t magic;		   // 'B2RC' = 0x43523242
 	uint16_t versionMajor; // 1
 	uint16_t versionMinor; // 0
-	uint32_t buildHash;    // 0 for PR1
-	uint8_t simdWidth;     // B2_SIMD_WIDTH, informational
+	uint32_t buildHash;	   // 0 for PR1
+	uint8_t simdWidth;	   // B2_SIMD_WIDTH, informational
 	uint8_t pointerWidth;  // sizeof(void*), gates POD-def memcpy
-	uint8_t bigEndian;     // 0 on all supported targets
+	uint8_t bigEndian;	   // 0 on all supported targets
 	uint8_t reserved0;
 	uint64_t wallClockUnix; // informational
 	uint8_t reserved[8];
@@ -45,6 +45,7 @@ typedef struct b2Recording
 	FILE* file;
 	b2RecBuffer buffer;
 	int recordStart; // offset of the 3-byte size field for u24 backpatch
+	b2Mutex* lock;   // serializes query record commits across concurrent query threads
 } b2Recording;
 
 // C type aliases per TAG, used in codegen arg structs (recording.c only)
@@ -83,13 +84,21 @@ typedef b2PrismaticJointDef b2RecCType_PRISMATICJOINTDEF;
 typedef b2RevoluteJointDef b2RecCType_REVOLUTEJOINTDEF;
 typedef b2WeldJointDef b2RecCType_WELDJOINTDEF;
 typedef b2WheelJointDef b2RecCType_WHEELJOINTDEF;
+typedef b2AABB b2RecCType_AABB;
+typedef b2QueryFilter b2RecCType_QUERYFILTER;
+typedef b2ShapeProxy b2RecCType_SHAPEPROXY;
+typedef b2RayCastInput b2RecCType_RAYCASTINPUT;
 
 // Codegen pass 1a: arg structs, generated in recording.c, declared here for call sites.
 // These are typedef'd in recording.c before the write helpers, but must be visible
 // in body.c and shape.c which use B2_REC. We generate them via the X-macro here.
 // IMPORTANT: this block must not expand ARG or B2_REC_OP as functions.
 #define ARG( TAG, field ) b2RecCType_##TAG field;
-#define B2_REC_OP( op, Name, RET, ... ) typedef struct { __VA_ARGS__ } b2RecArgs_##Name;
+#define B2_REC_OP( op, Name, RET, ... )                                                                                          \
+	typedef struct                                                                                                               \
+	{                                                                                                                            \
+		__VA_ARGS__                                                                                                              \
+	} b2RecArgs_##Name;
 #include "recording_ops.inl"
 #undef B2_REC_OP
 #undef ARG
@@ -136,6 +145,14 @@ void b2RecW_PRISMATICJOINTDEF( b2RecBuffer* buf, b2PrismaticJointDef v );
 void b2RecW_REVOLUTEJOINTDEF( b2RecBuffer* buf, b2RevoluteJointDef v );
 void b2RecW_WELDJOINTDEF( b2RecBuffer* buf, b2WeldJointDef v );
 void b2RecW_WHEELJOINTDEF( b2RecBuffer* buf, b2WheelJointDef v );
+void b2RecW_AABB( b2RecBuffer* buf, b2AABB v );
+void b2RecW_QUERYFILTER( b2RecBuffer* buf, b2QueryFilter v );
+void b2RecW_SHAPEPROXY( b2RecBuffer* buf, b2ShapeProxy v );
+void b2RecW_RAYCASTINPUT( b2RecBuffer* buf, b2RayCastInput v );
+void b2RecW_CASTOUTPUT( b2RecBuffer* buf, b2CastOutput v );
+void b2RecW_RAYRESULT( b2RecBuffer* buf, b2RayResult v );
+void b2RecW_PLANERESULT( b2RecBuffer* buf, b2PlaneResult v );
+void b2RecW_TREESTATS( b2RecBuffer* buf, b2TreeStats v );
 
 // Record framing
 void b2RecBeginRecord( b2Recording* rec, uint8_t opcode );
@@ -144,8 +161,8 @@ void b2RecEndRecord( b2Recording* rec );
 // Per op arg writers (no framing) and full writers (framing plus args), generated from the
 // manifest. Create ops reach the arg writer directly so the call site can append the returned
 // id inside the same record; void ops reach the full writer through B2_REC.
-#define B2_REC_OP( op, Name, RET, ... ) \
-	void b2RecWriteArgs_##Name( b2Recording* rec, const b2RecArgs_##Name* a ); \
+#define B2_REC_OP( op, Name, RET, ... )                                                                                          \
+	void b2RecWriteArgs_##Name( b2Recording* rec, const b2RecArgs_##Name* a );                                                   \
 	void b2RecWrite_##Name( b2Recording* rec, const b2RecArgs_##Name* a );
 #include "recording_ops.inl"
 #undef B2_REC_OP
@@ -167,27 +184,54 @@ void b2RecEndRecord( b2Recording* rec );
 #undef B2_REC_RETDECL_RET_JOINTID
 
 // Record a void op. One branch when recording is off, args built inside the branch
-#define B2_REC( world, Name, ... ) \
-	do \
-	{ \
-		if ( (world)->recording != NULL ) \
-		{ \
-			b2RecArgs_##Name _a = { __VA_ARGS__ }; \
-			b2RecWrite_##Name( (world)->recording, &_a ); \
-		} \
-	} while ( 0 )
+#define B2_REC( world, Name, ... )                                                                                               \
+	do                                                                                                                           \
+	{                                                                                                                            \
+		if ( ( world )->recording != NULL )                                                                                      \
+		{                                                                                                                        \
+			b2RecArgs_##Name _a = { __VA_ARGS__ };                                                                               \
+			b2RecWrite_##Name( ( world )->recording, &_a );                                                                      \
+		}                                                                                                                        \
+	}                                                                                                                            \
+	while ( 0 )
 
 // Record a create op and its returned id in one framed record. The id is appended after
 // the args so replay can assert it matches. Place this after the real create call.
-#define B2_REC_CREATE( world, Name, id, ... ) \
-	do \
-	{ \
-		if ( (world)->recording != NULL ) \
-		{ \
-			b2RecArgs_##Name _ca = { __VA_ARGS__ }; \
-			b2RecWriteRet_##Name( (world)->recording, &_ca, id ); \
-		} \
-	} while ( 0 )
+#define B2_REC_CREATE( world, Name, id, ... )                                                                                    \
+	do                                                                                                                           \
+	{                                                                                                                            \
+		if ( ( world )->recording != NULL )                                                                                      \
+		{                                                                                                                        \
+			b2RecArgs_##Name _ca = { __VA_ARGS__ };                                                                              \
+			b2RecWriteRet_##Name( ( world )->recording, &_ca, id );                                                              \
+		}                                                                                                                        \
+	}                                                                                                                            \
+	while ( 0 )
+
+// Patch helpers for the query hit-count backfill
+int b2RecReserveU32( b2RecBuffer* buf );
+void b2RecPatchU32( b2RecBuffer* buf, int offset, uint32_t v );
+
+// Commit a finished query record under the lock. The local buffer is still owned by the caller.
+void b2RecCommitRecord( b2Recording* rec, uint8_t opcode, const uint8_t* payload, int payloadSize );
+
+// Per-query writer context: holds user fcn+ctx, the local payload buffer, and the hit counter
+typedef struct b2RecQueryWriter
+{
+	void* userFcn;
+	void* userContext;
+	b2RecBuffer buf; // per-call local payload, heap-backed
+	int countOffset; // offset of the reserved u32 hit-count slot
+	uint32_t hitCount;
+} b2RecQueryWriter;
+
+void b2RecQueryBegin( b2RecQueryWriter* w, void* fcn, void* context );
+void b2RecQueryCommit( b2Recording* rec, uint8_t opcode, b2RecQueryWriter* w );
+
+// Recording trampolines: replace the user fcn pointer so hits are captured before dispatch
+bool b2RecOverlapTrampoline( b2ShapeId id, void* ctx );
+float b2RecCastTrampoline( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx );
+bool b2RecPlaneTrampoline( b2ShapeId id, const b2PlaneResult* plane, void* ctx );
 
 // Lifecycle
 void b2StartRecording( b2World* world, const b2WorldDef* def );
