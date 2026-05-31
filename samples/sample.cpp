@@ -936,6 +936,8 @@ void Sample::DrawMetrics()
 			ImGui::EndTabItem();
 		}
 
+		DrawMetricsTab();
+
 		ImGui::EndTabBar();
 	}
 
@@ -1599,7 +1601,7 @@ static void DrawRightPanel( SampleContext* context, float frameTime )
 		ImGui::Separator();
 	}
 
-	if ( ImGui::CollapsingHeader( "Solver", ImGuiTreeNodeFlags_DefaultOpen ) )
+	if ( context->sample->HasSolverControls() && ImGui::CollapsingHeader( "Solver", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{
 		ImGui::PushItemWidth( 6.0f * fontSize );
 		ImGui::SliderInt( "Sub-steps", &context->subStepCount, 1, 32 );

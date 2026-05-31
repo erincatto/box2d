@@ -85,7 +85,13 @@ struct b2RecPlayer
 	int size;
 	int headerEnd;     // first payload offset
 	uint32_t buildHash; // engine build that produced the file, from the header
+	uint64_t wallClock; // unix time the recording was made, from the header
 	int frame;          // steps dispatched so far
+	int frameCount;     // total recorded steps, counted once at open
+	int recordedWorkerCount; // worker count from the recorded world def
+	float recordedDt;        // dt of the first recorded step
+	int recordedSubStepCount; // sub-steps of the first recorded step
+	int divergeFrame;   // first step that diverged, -1 until then
 	bool atEnd;      // a StepFrame ran out of records without reaching a step
 	b2RecReader rdr; // cursor and replay world, threaded into every dispatcher
 

@@ -761,6 +761,11 @@ static void b2RecCheckJointId( b2RecReader* rdr, b2JointId got, b2JointId rec )
 static void b2RecDispatch_CreateWorld( const b2RecArgs_CreateWorld* a, b2RecReader* rdr )
 {
 	b2WorldDef def = a->def;
+	if ( rdr->owner != NULL )
+	{
+		// Keep the recorded count even when the replay overrides the effective one
+		rdr->owner->recordedWorkerCount = def.workerCount;
+	}
 	// Never re-record during replay. Task pointers stay NULL so the internal scheduler is used
 	def.recordingPath = NULL;
 	def.enqueueTask = NULL;
@@ -1959,6 +1964,48 @@ static void b2RecPumpToWorld( b2RecPlayer* player )
 	}
 }
 
+// Walk the records once without dispatching to count steps and read the first step's tuning.
+// The framing is opcode u8 + payload u24 + payload, so we can skip records blind.
+static void b2RecScanFile( b2RecPlayer* player )
+{
+	const uint8_t* data = player->data;
+	int size = player->size;
+	int cursor = player->headerEnd;
+	int frameCount = 0;
+	bool gotStep = false;
+
+	while ( cursor + 4 <= size )
+	{
+		uint8_t opcode = data[cursor];
+		uint32_t payloadSize =
+			(uint32_t)data[cursor + 1] | ( (uint32_t)data[cursor + 2] << 8 ) | ( (uint32_t)data[cursor + 3] << 16 );
+		int payloadStart = cursor + 4;
+		if ( payloadStart + (int)payloadSize > size )
+		{
+			break;
+		}
+
+		if ( opcode == 0x80 ) // Step: [u32 world][f32 dt][i32 subStepCount]
+		{
+			frameCount += 1;
+			if ( gotStep == false && payloadSize >= 12 )
+			{
+				uint32_t dtBits = (uint32_t)data[payloadStart + 4] | ( (uint32_t)data[payloadStart + 5] << 8 ) |
+				                  ( (uint32_t)data[payloadStart + 6] << 16 ) | ( (uint32_t)data[payloadStart + 7] << 24 );
+				memcpy( &player->recordedDt, &dtBits, 4 );
+				player->recordedSubStepCount = (int)( (uint32_t)data[payloadStart + 8] | ( (uint32_t)data[payloadStart + 9] << 8 ) |
+				                                      ( (uint32_t)data[payloadStart + 10] << 16 ) |
+				                                      ( (uint32_t)data[payloadStart + 11] << 24 ) );
+				gotStep = true;
+			}
+		}
+
+		cursor = payloadStart + (int)payloadSize;
+	}
+
+	player->frameCount = frameCount;
+}
+
 b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount )
 {
 	FILE* f = fopen( path, "rb" );
@@ -2037,7 +2084,13 @@ b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount )
 	player->size = (int)fileSize;
 	player->headerEnd = 32;
 	player->buildHash = hdr.buildHash;
+	player->wallClock = hdr.wallClockUnix;
 	player->frame = 0;
+	player->frameCount = 0;
+	player->recordedWorkerCount = 0;
+	player->recordedDt = 0.0f;
+	player->recordedSubStepCount = 0;
+	player->divergeFrame = -1;
 	player->atEnd = false;
 	player->rdr.data = data;
 	player->rdr.size = (int)fileSize;
@@ -2059,6 +2112,9 @@ b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount )
 	player->frameHits = NULL;
 	player->frameHitCount = 0;
 	player->frameHitCap = 0;
+
+	// Count steps and read the first step's tuning so the viewer can show length and hz up front
+	b2RecScanFile( player );
 
 	// The first record is CreateWorld; replay it so the world exists before the first step
 	b2RecPumpToWorld( player );
@@ -2093,6 +2149,11 @@ bool b2RecPlayer_StepFrame( b2RecPlayer* player )
 			player->atEnd = true;
 			return false;
 		}
+		// Latch the first frame that diverged for the timeline marker
+		if ( player->divergeFrame < 0 && player->rdr.diverged )
+		{
+			player->divergeFrame = player->frame;
+		}
 		if ( opcode == 0x80 ) // Step
 		{
 			player->frame += 1;
@@ -2112,6 +2173,7 @@ void b2RecPlayer_Restart( b2RecPlayer* player )
 	player->rdr.ok = true;
 	player->rdr.diverged = false;
 	player->frame = 0;
+	player->divergeFrame = -1;
 	player->atEnd = false;
 	b2RecPumpToWorld( player );
 }
@@ -2124,6 +2186,41 @@ b2WorldId b2RecPlayer_GetWorldId( const b2RecPlayer* player )
 int b2RecPlayer_GetFrame( const b2RecPlayer* player )
 {
 	return player != NULL ? player->frame : 0;
+}
+
+void b2RecPlayer_SeekFrame( b2RecPlayer* player, int targetFrame )
+{
+	if ( player == NULL )
+	{
+		return;
+	}
+	if ( targetFrame < 0 )
+	{
+		targetFrame = 0;
+	}
+	// Backward seek has to rewind and replay from the start
+	if ( targetFrame < player->frame )
+	{
+		b2RecPlayer_Restart( player );
+	}
+	while ( player->frame < targetFrame && b2RecPlayer_StepFrame( player ) )
+	{
+	}
+}
+
+b2RecPlayerInfo b2RecPlayer_GetInfo( const b2RecPlayer* player )
+{
+	b2RecPlayerInfo info = { 0 };
+	if ( player != NULL )
+	{
+		info.frameCount = player->frameCount;
+		info.workerCount = player->recordedWorkerCount;
+		info.timeStep = player->recordedDt;
+		info.subStepCount = player->recordedSubStepCount;
+		info.buildHash = player->buildHash;
+		info.wallClock = player->wallClock;
+	}
+	return info;
 }
 
 uint32_t b2RecPlayer_GetBuildHash( const b2RecPlayer* player )
@@ -2139,6 +2236,11 @@ bool b2RecPlayer_IsAtEnd( const b2RecPlayer* player )
 bool b2RecPlayer_HasDiverged( const b2RecPlayer* player )
 {
 	return player != NULL ? player->rdr.diverged : false;
+}
+
+int b2RecPlayer_GetDivergeFrame( const b2RecPlayer* player )
+{
+	return player != NULL ? player->divergeFrame : -1;
 }
 
 void b2RecPlayer_Destroy( b2RecPlayer* player )

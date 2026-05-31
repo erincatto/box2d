@@ -6,6 +6,7 @@
 #include "sample.h"
 
 #include "box2d/box2d.h"
+#include "box2d/constants.h"
 
 #include <imgui.h>
 #include <stdio.h>
@@ -143,6 +144,11 @@ public:
 			m_worldId = b2_nullWorldId;
 		}
 
+		// The timeline scrubber lives in the diagnostics drawer, so open it for the replay
+		m_prevShowMetrics = m_context->showMetrics;
+		m_context->showMetrics = true;
+		m_selectTimelineTab = true;
+
 		snprintf( m_path, sizeof( m_path ), "%s", "recording.b2rec" );
 		m_status[0] = '\0';
 		m_player = nullptr;
@@ -153,6 +159,7 @@ public:
 	{
 		ClosePlayer();
 
+		m_context->showMetrics = m_prevShowMetrics;
 		m_worldId = b2_nullWorldId;
 	}
 
@@ -171,11 +178,14 @@ public:
 	{
 		ClosePlayer();
 
-		// A worker count of 0 uses the recorded count.
-		m_player = b2RecPlayer_Create( m_path, 0 );
+		// Replay workers of 0 uses the recorded count, otherwise force a different count
+		// to spot-check cross-thread determinism.
+		m_player = b2RecPlayer_Create( m_path, m_replayWorkers );
+		m_frameAccum = 0.0f;
 		if ( m_player != nullptr )
 		{
 			m_worldId = b2RecPlayer_GetWorldId( m_player );
+			m_info = b2RecPlayer_GetInfo( m_player );
 
 			// Flag a file made by a different engine build. 0 on either side is unstamped.
 			m_recHash = b2RecPlayer_GetBuildHash( m_player );
@@ -185,8 +195,16 @@ public:
 		}
 		else
 		{
+			m_info = b2RecPlayerInfo{};
 			snprintf( m_status, sizeof( m_status ), "failed to open file" );
 		}
+	}
+
+	// Advance one recorded step and keep the world pointer current
+	void AdvanceOne()
+	{
+		b2RecPlayer_StepFrame( m_player );
+		m_worldId = b2RecPlayer_GetWorldId( m_player );
 	}
 
 	void Step() override
@@ -197,18 +215,42 @@ public:
 			return;
 		}
 
-		bool advance = m_context->pause == false;
 		if ( m_context->pause && m_context->singleStep )
 		{
 			m_context->singleStep = false;
-			advance = true;
+			if ( b2RecPlayer_IsAtEnd( m_player ) == false )
+			{
+				AdvanceOne();
+			}
+			m_frameAccum = 0.0f;
+		}
+		else if ( m_context->pause == false )
+		{
+			// Speed scales how many recorded steps pass per display frame. Below 1 advances
+			// only every few frames, above 1 advances several.
+			m_frameAccum += m_speed;
+			while ( m_frameAccum >= 1.0f )
+			{
+				m_frameAccum -= 1.0f;
+				if ( b2RecPlayer_IsAtEnd( m_player ) )
+				{
+					if ( m_loop )
+					{
+						b2RecPlayer_Restart( m_player );
+						m_worldId = b2RecPlayer_GetWorldId( m_player );
+					}
+					else
+					{
+						m_frameAccum = 0.0f;
+						break;
+					}
+				}
+				AdvanceOne();
+			}
 		}
 
-		if ( advance && b2RecPlayer_IsAtEnd( m_player ) == false )
-		{
-			b2RecPlayer_StepFrame( m_player );
-			m_worldId = b2RecPlayer_GetWorldId( m_player );
-		}
+		// Keep the base panel "step N" line tracking the replay frame
+		m_stepCount = b2RecPlayer_GetFrame( m_player );
 
 		m_context->debugDraw.drawingBounds = GetViewBounds( &m_context->camera );
 		if ( B2_IS_NON_NULL( m_worldId ) )
@@ -217,7 +259,8 @@ public:
 			b2RecPlayer_DrawFrameQueries( m_player, &m_context->debugDraw );
 		}
 
-		DrawScreenTextLine( "frame %d%s", b2RecPlayer_GetFrame( m_player ), b2RecPlayer_IsAtEnd( m_player ) ? "  (end)" : "" );
+		DrawScreenTextLine( "frame %d / %d%s", b2RecPlayer_GetFrame( m_player ), m_info.frameCount,
+							b2RecPlayer_IsAtEnd( m_player ) ? "  (end)" : "" );
 
 		if ( b2RecPlayer_HasDiverged( m_player ) )
 		{
@@ -235,12 +278,92 @@ public:
 		}
 	}
 
+	// Shared transport row used by both the right panel and the timeline tab
+	void DrawTransport()
+	{
+		if ( m_player == nullptr )
+		{
+			return;
+		}
+
+		int frame = b2RecPlayer_GetFrame( m_player );
+
+		if ( ImGui::Button( "|<" ) )
+		{
+			b2RecPlayer_SeekFrame( m_player, 0 );
+			m_worldId = b2RecPlayer_GetWorldId( m_player );
+			m_frameAccum = 0.0f;
+		}
+		ImGui::SameLine();
+		if ( ImGui::Button( "<" ) )
+		{
+			b2RecPlayer_SeekFrame( m_player, frame - 1 );
+			m_worldId = b2RecPlayer_GetWorldId( m_player );
+			m_frameAccum = 0.0f;
+			m_context->pause = true;
+		}
+		ImGui::SameLine();
+		if ( ImGui::Button( m_context->pause ? "Play " : "Pause" ) )
+		{
+			m_context->pause = !m_context->pause;
+		}
+		ImGui::SameLine();
+		if ( ImGui::Button( ">" ) )
+		{
+			b2RecPlayer_SeekFrame( m_player, frame + 1 );
+			m_worldId = b2RecPlayer_GetWorldId( m_player );
+			m_frameAccum = 0.0f;
+			m_context->pause = true;
+		}
+		ImGui::SameLine();
+		if ( ImGui::Button( ">|" ) )
+		{
+			b2RecPlayer_SeekFrame( m_player, m_info.frameCount );
+			m_worldId = b2RecPlayer_GetWorldId( m_player );
+			m_frameAccum = 0.0f;
+		}
+	}
+
+	// A replay re-runs recorded inputs, so the live solver sliders would do nothing
+	bool HasSolverControls() const override
+	{
+		return false;
+	}
+
+	// The right panel is otherwise free for a future details view and outliner. The one
+	// control here reopens the drawer and jumps to the timeline if it was closed.
 	bool DrawControls() override
 	{
-		ImGui::PushItemWidth( 18.0f * ImGui::GetFontSize() );
+		if ( ImGui::Button( "Show Timeline" ) )
+		{
+			m_context->showMetrics = true;
+			m_selectTimelineTab = true;
+		}
+		return false;
+	}
+
+	// All replay controls live in the diagnostics drawer tab.
+	void DrawMetricsTab() override
+	{
+		ImGuiTabItemFlags tabFlags = 0;
+		if ( m_selectTimelineTab )
+		{
+			tabFlags |= ImGuiTabItemFlags_SetSelected;
+			m_selectTimelineTab = false;
+		}
+
+		if ( ImGui::BeginTabItem( "Timeline", nullptr, tabFlags ) == false )
+		{
+			return;
+		}
+
+		float fontSize = ImGui::GetFontSize();
+
+		// File row, always available so a recording can be loaded even when none is open
+		ImGui::PushItemWidth( 18.0f * fontSize );
 		ImGui::InputText( "File", m_path, sizeof( m_path ) );
 		ImGui::PopItemWidth();
-
+		ImGui::SameLine();
 		if ( ImGui::Button( "Load" ) )
 		{
 			OpenPlayer();
@@ -250,10 +373,100 @@ public:
 		{
 			b2RecPlayer_Restart( m_player );
 			m_worldId = b2RecPlayer_GetWorldId( m_player );
+			m_frameAccum = 0.0f;
+		}
+		ImGui::SameLine();
+		ImGui::TextUnformatted( m_status );
+
+		if ( m_player == nullptr )
+		{
+			ImGui::EndTabItem();
+			return;
 		}
 
-		ImGui::TextUnformatted( m_status );
-		return true;
+		// Transport row: buttons, speed, loop, replay worker count
+		DrawTransport();
+		ImGui::SameLine();
+
+		const char* speedNames[] = { "0.25x", "0.5x", "1x", "2x", "4x" };
+		const float speedValues[] = { 0.25f, 0.5f, 1.0f, 2.0f, 4.0f };
+		int speedIndex = 2;
+		for ( int i = 0; i < 5; ++i )
+		{
+			if ( m_speed == speedValues[i] )
+			{
+				speedIndex = i;
+			}
+		}
+		ImGui::PushItemWidth( 5.0f * fontSize );
+		if ( ImGui::Combo( "Speed", &speedIndex, speedNames, 5 ) )
+		{
+			m_speed = speedValues[speedIndex];
+		}
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+		ImGui::Checkbox( "Loop", &m_loop );
+		ImGui::SameLine();
+
+		// Replaying at a different worker count is a visual cross-thread determinism check.
+		// 0 means use the recorded count. Re-open on release so the player is not rebuilt mid-drag.
+		ImGui::PushItemWidth( 6.0f * fontSize );
+		ImGui::SliderInt( "Workers", &m_replayWorkers, 0, B2_MAX_WORKERS );
+		ImGui::PopItemWidth();
+		bool reopen = ImGui::IsItemDeactivatedAfterEdit();
+		ImGui::SameLine();
+		ImGui::TextDisabled( "(rec %d)", m_info.workerCount );
+
+		// Scrubber: full width, seeks both directions
+		int scrub = b2RecPlayer_GetFrame( m_player );
+		ImGui::PushItemWidth( -1.0f );
+		if ( ImGui::SliderInt( "##frame", &scrub, 0, m_info.frameCount ) )
+		{
+			b2RecPlayer_SeekFrame( m_player, scrub );
+			m_worldId = b2RecPlayer_GetWorldId( m_player );
+			m_frameAccum = 0.0f;
+			m_context->pause = true;
+		}
+		ImGui::PopItemWidth();
+
+		// Mark where the replay first diverged on the scrubber track
+		int divergeFrame = b2RecPlayer_GetDivergeFrame( m_player );
+		if ( divergeFrame >= 0 && m_info.frameCount > 0 )
+		{
+			ImVec2 lo = ImGui::GetItemRectMin();
+			ImVec2 hi = ImGui::GetItemRectMax();
+			float t = (float)divergeFrame / (float)m_info.frameCount;
+			float x = lo.x + t * ( hi.x - lo.x );
+			ImGui::GetWindowDrawList()->AddLine( ImVec2( x, lo.y ), ImVec2( x, hi.y ), IM_COL32( 220, 60, 60, 255 ), 2.0f );
+		}
+
+		// Info row: recording metadata, live counts, divergence
+		ImGui::Text( "frames %d", m_info.frameCount );
+		if ( m_info.timeStep > 0.0f )
+		{
+			ImGui::SameLine();
+			ImGui::Text( "   %.0f hz, %d sub-steps", 1.0f / m_info.timeStep, m_info.subStepCount );
+		}
+		if ( B2_IS_NON_NULL( m_worldId ) )
+		{
+			b2Counters c = b2World_GetCounters( m_worldId );
+			ImGui::SameLine();
+			ImGui::Text( "   bodies %d  shapes %d  contacts %d  joints %d", c.bodyCount, c.shapeCount, c.contactCount,
+						 c.jointCount );
+		}
+		if ( divergeFrame >= 0 )
+		{
+			ImGui::SameLine();
+			ImGui::TextColored( ImVec4( 0.85f, 0.30f, 0.30f, 1.0f ), "   diverged at frame %d", divergeFrame );
+		}
+
+		// Re-open last so the player is not torn down mid-draw
+		if ( reopen )
+		{
+			OpenPlayer();
+		}
+
+		ImGui::EndTabItem();
 	}
 
 	// Block mouse interaction.
@@ -278,6 +491,14 @@ public:
 	uint32_t m_recHash = 0;
 	uint32_t m_runHash = 0;
 	bool m_buildMismatch = false;
+
+	b2RecPlayerInfo m_info = {};
+	float m_speed = 1.0f;
+	float m_frameAccum = 0.0f;
+	int m_replayWorkers = 0;
+	bool m_loop = false;
+	bool m_selectTimelineTab = true;
+	bool m_prevShowMetrics = false;
 };
 
 static int sampleReplayFile = RegisterSample( "Replay", "Replay File", ReplayFile::Create );

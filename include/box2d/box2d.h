@@ -238,6 +238,17 @@ B2_API bool b2ValidateReplayFile( const char* path, int workerCount );
 /// Opaque handle for incremental playback of a recording.
 typedef struct b2RecPlayer b2RecPlayer;
 
+/// Static metadata describing a recording, resolved once when the player opens the file.
+typedef struct b2RecPlayerInfo
+{
+	int frameCount;		// total recorded steps
+	int workerCount;	// worker count recorded in the world def
+	float timeStep;		// dt of the recorded steps
+	int subStepCount;	// recorded sub-steps
+	uint32_t buildHash; // engine build that produced the file, 0 if unstamped
+	uint64_t wallClock; // unix time the recording was made
+} b2RecPlayerInfo;
+
 /// Open a replay file for incremental playback and replay up to the first step.
 /// @param path Path to the recording file
 /// @param workerCount Worker count for the replay world. 0 uses the recorded count.
@@ -254,8 +265,15 @@ B2_API b2WorldId b2RecPlayer_GetWorldId( const b2RecPlayer* player );
 /// Rewind the player to the first step, recreating the replay world from the file.
 B2_API void b2RecPlayer_Restart( b2RecPlayer* player );
 
+/// Seek to a recorded step. Seeking backward rewinds and re-runs from the start, so the
+/// cost grows with the target frame. Clamps to the recording bounds.
+B2_API void b2RecPlayer_SeekFrame( b2RecPlayer* player, int targetFrame );
+
 /// Get the number of steps replayed so far.
 B2_API int b2RecPlayer_GetFrame( const b2RecPlayer* player );
+
+/// Get static metadata for the recording (frame count, recorded tuning, build, time).
+B2_API b2RecPlayerInfo b2RecPlayer_GetInfo( const b2RecPlayer* player );
 
 /// Get the engine build hash recorded in the file, or 0 if unstamped. Compare with
 /// b2GetBuildHash to tell whether the file was made by a different build.
@@ -266,6 +284,9 @@ B2_API bool b2RecPlayer_IsAtEnd( const b2RecPlayer* player );
 
 /// Returns true if a recorded state hash failed to reproduce, meaning replay diverged.
 B2_API bool b2RecPlayer_HasDiverged( const b2RecPlayer* player );
+
+/// Get the first step at which replay diverged, or -1 if it has not diverged.
+B2_API int b2RecPlayer_GetDivergeFrame( const b2RecPlayer* player );
 
 /// Close a player and free its replay world and file buffer.
 B2_API void b2RecPlayer_Destroy( b2RecPlayer* player );
