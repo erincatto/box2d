@@ -257,6 +257,10 @@ B2_API void b2RecPlayer_Restart( b2RecPlayer* player );
 /// Get the number of steps replayed so far.
 B2_API int b2RecPlayer_GetFrame( const b2RecPlayer* player );
 
+/// Get the engine build hash recorded in the file, or 0 if unstamped. Compare with
+/// b2GetBuildHash to tell whether the file was made by a different build.
+B2_API uint32_t b2RecPlayer_GetBuildHash( const b2RecPlayer* player );
+
 /// Returns true once the end of the recording has been reached.
 B2_API bool b2RecPlayer_IsAtEnd( const b2RecPlayer* player );
 

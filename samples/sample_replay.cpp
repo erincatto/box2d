@@ -164,6 +164,7 @@ public:
 			m_player = nullptr;
 		}
 		m_worldId = b2_nullWorldId;
+		m_buildMismatch = false;
 	}
 
 	void OpenPlayer()
@@ -175,7 +176,12 @@ public:
 		if ( m_player != nullptr )
 		{
 			m_worldId = b2RecPlayer_GetWorldId( m_player );
-			snprintf( m_status, sizeof( m_status ), "loaded file" );
+
+			// Flag a file made by a different engine build. 0 on either side is unstamped.
+			m_recHash = b2RecPlayer_GetBuildHash( m_player );
+			m_runHash = b2GetBuildHash();
+			m_buildMismatch = m_recHash != 0 && m_runHash != 0 && m_recHash != m_runHash;
+			snprintf( m_status, sizeof( m_status ), "loaded (build %08x)", m_recHash );
 		}
 		else
 		{
@@ -216,6 +222,11 @@ public:
 		if ( b2RecPlayer_HasDiverged( m_player ) )
 		{
 			DrawScreenTextLine( "****DIVERGED****" );
+		}
+
+		if ( m_buildMismatch )
+		{
+			DrawScreenTextLine( "build mismatch: file %08x, engine %08x", m_recHash, m_runHash );
 		}
 
 		if ( m_context->pause )
@@ -264,6 +275,9 @@ public:
 	b2RecPlayer* m_player;
 	char m_path[256];
 	char m_status[32];
+	uint32_t m_recHash = 0;
+	uint32_t m_runHash = 0;
+	bool m_buildMismatch = false;
 };
 
 static int sampleReplayFile = RegisterSample( "Replay", "Replay File", ReplayFile::Create );

@@ -22,7 +22,7 @@ typedef struct b2RecHeader
 	uint32_t magic;		   // 'B2RC' = 0x43523242
 	uint16_t versionMajor; // 1
 	uint16_t versionMinor; // 0
-	uint32_t buildHash;	   // 0 for PR1
+	uint32_t buildHash;	   // short git hash, 0 if unstamped
 	uint8_t simdWidth;	   // B2_SIMD_WIDTH, informational
 	uint8_t pointerWidth;  // sizeof(void*), gates POD-def memcpy
 	uint8_t bigEndian;	   // 0 on all supported targets

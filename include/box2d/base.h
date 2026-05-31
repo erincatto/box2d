@@ -100,6 +100,10 @@ typedef struct b2Version
 /// Get the current version of Box2D
 B2_API b2Version b2GetVersion( void );
 
+/// Get the short git hash of this Box2D build, or 0 if built without git.
+/// Stamped into recordings so a replay host can tell which build produced a file.
+B2_API uint32_t b2GetBuildHash( void );
+
 /**@}*/
 
 //! @cond

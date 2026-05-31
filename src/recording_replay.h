@@ -83,8 +83,9 @@ struct b2RecPlayer
 {
 	uint8_t* data;   // file image, owned here
 	int size;
-	int headerEnd;   // first payload offset
-	int frame;       // steps dispatched so far
+	int headerEnd;     // first payload offset
+	uint32_t buildHash; // engine build that produced the file, from the header
+	int frame;          // steps dispatched so far
 	bool atEnd;      // a StepFrame ran out of records without reaching a step
 	b2RecReader rdr; // cursor and replay world, threaded into every dispatcher
 

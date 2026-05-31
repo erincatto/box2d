@@ -2036,6 +2036,7 @@ b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount )
 	player->data = data;
 	player->size = (int)fileSize;
 	player->headerEnd = 32;
+	player->buildHash = hdr.buildHash;
 	player->frame = 0;
 	player->atEnd = false;
 	player->rdr.data = data;
@@ -2123,6 +2124,11 @@ b2WorldId b2RecPlayer_GetWorldId( const b2RecPlayer* player )
 int b2RecPlayer_GetFrame( const b2RecPlayer* player )
 {
 	return player != NULL ? player->frame : 0;
+}
+
+uint32_t b2RecPlayer_GetBuildHash( const b2RecPlayer* player )
+{
+	return player != NULL ? player->buildHash : 0;
 }
 
 bool b2RecPlayer_IsAtEnd( const b2RecPlayer* player )

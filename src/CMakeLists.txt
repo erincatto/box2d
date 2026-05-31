@@ -77,6 +77,26 @@ set(BOX2D_API_FILES
 	../include/box2d/types.h
 )
 
+# Stamp the short git hash into recordings so replay can refuse a file made by a
+# different engine build. Resolved at configure time, so it can lag a commit until
+# the next cmake run. 0 (no git, or a non-repo checkout) disables the replay check.
+set(BOX2D_BUILD_HASH "00000000")
+find_package(Git QUIET)
+if(GIT_FOUND)
+	execute_process(
+		COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		OUTPUT_VARIABLE BOX2D_GIT_SHA
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+		ERROR_QUIET
+		RESULT_VARIABLE BOX2D_GIT_RESULT
+	)
+	if(BOX2D_GIT_RESULT EQUAL 0 AND BOX2D_GIT_SHA)
+		string(SUBSTRING "${BOX2D_GIT_SHA}" 0 8 BOX2D_BUILD_HASH)
+	endif()
+endif()
+configure_file(build_hash.h.in "${CMAKE_CURRENT_BINARY_DIR}/build_hash.h" @ONLY)
+
 # Hide internal functions
 # https://gcc.gnu.org/wiki/Visibility
 set(CMAKE_C_VISIBILITY_PRESET hidden)
