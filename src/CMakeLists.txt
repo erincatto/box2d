@@ -13,6 +13,7 @@ set(BOX2D_SOURCE_FILES
 	body.h
 	broad_phase.c
 	broad_phase.h
+	build_hash.h.in
 	constraint_graph.c
 	constraint_graph.h
 	contact.c
@@ -96,6 +97,7 @@ if(GIT_FOUND)
 	endif()
 endif()
 configure_file(build_hash.h.in "${CMAKE_CURRENT_BINARY_DIR}/build_hash.h" @ONLY)
+set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/build_hash.h" PROPERTIES GENERATED TRUE)
 
 # Hide internal functions
 # https://gcc.gnu.org/wiki/Visibility
@@ -103,6 +105,11 @@ set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 
 add_library(box2d ${BOX2D_SOURCE_FILES} ${BOX2D_API_FILES})
+
+# The build hash header is generated into the binary dir, so it is not in the source list. Add it
+# to the target and a source group so the IDE shows it next to the hand-written sources.
+target_sources(box2d PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/build_hash.h")
+source_group("src" FILES "${CMAKE_CURRENT_BINARY_DIR}/build_hash.h")
 
 target_include_directories(box2d
   PUBLIC
