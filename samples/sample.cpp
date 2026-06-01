@@ -1614,38 +1614,38 @@ static void DrawRightPanel( SampleContext* context, float frameTime )
 	if ( context->sample->HasSolverControls() && ImGui::CollapsingHeader( "Solver", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{
 		ImGui::PushItemWidth( 6.0f * fontSize );
-		ImGui::SliderInt( "Sub-steps", &context->subStepCount, 1, 32 );
-		ImGui::SliderFloat( "Hertz", &context->hertz, 5.0f, 240.0f, "%.0f hz" );
+		ImGui::SliderInt( "Sub-steps##Solver", &context->subStepCount, 1, 32 );
+		ImGui::SliderFloat( "Hertz##Solver", &context->hertz, 5.0f, 240.0f, "%.0f hz" );
 
-		if ( ImGui::SliderInt( "Workers", &context->workerCount, 1, B2_MAX_WORKERS ) )
+		if ( ImGui::SliderInt( "Workers##Solver", &context->workerCount, 1, B2_MAX_WORKERS ) )
 		{
 			context->workerCount = b2ClampInt( context->workerCount, 1, B2_MAX_WORKERS );
 			SelectSample( context, context->sampleIndex, true );
 		}
 
 		float recyclingCentimeters = 100.0f * context->recycleDistance;
-		if ( ImGui::SliderFloat( "Recycle", &recyclingCentimeters, 0.0f, 10.0f, "%.1f cm" ) )
+		if ( ImGui::SliderFloat( "Recycle##Solver", &recyclingCentimeters, 0.0f, 10.0f, "%.1f cm" ) )
 		{
 			context->recycleDistance = 0.01f * recyclingCentimeters;
 			b2World_SetContactRecycleDistance( context->sample->m_worldId, context->recycleDistance );
 		}
 		ImGui::PopItemWidth();
 
-		ImGui::Checkbox( "Sleep", &context->enableSleep );
-		ImGui::Checkbox( "Warm Starting", &context->enableWarmStarting );
-		ImGui::Checkbox( "Continuous", &context->enableContinuous );
+		ImGui::Checkbox( "Sleep##Solver", &context->enableSleep );
+		ImGui::Checkbox( "Warm Starting##Solver", &context->enableWarmStarting );
+		ImGui::Checkbox( "Continuous##Solver", &context->enableContinuous );
 	}
 
 	if ( context->sample->HasSolverControls() && ImGui::CollapsingHeader( "Recording", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{
 		ImGui::PushItemWidth( 9.0f * fontSize );
-		ImGui::InputText( "File", context->recordingFile, sizeof( context->recordingFile ) );
+		ImGui::InputText( "File##Recording", context->recordingFile, sizeof( context->recordingFile ) );
 		ImGui::PopItemWidth();
 
 		if ( context->record == false )
 		{
 			// Recording must begin at world creation, so restart with it enabled
-			if ( ImGui::Button( "Record" ) )
+			if ( ImGui::Button( "Record##Recording" ) )
 			{
 				context->record = true;
 				SelectSample( context, context->sampleIndex, true );
@@ -1653,7 +1653,7 @@ static void DrawRightPanel( SampleContext* context, float frameTime )
 		}
 		else
 		{
-			if ( ImGui::Button( "Stop" ) )
+			if ( ImGui::Button( "Stop##Recording" ) )
 			{
 				b2World_StopRecording( context->sample->m_worldId );
 				context->record = false;
