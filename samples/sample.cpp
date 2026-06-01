@@ -249,7 +249,7 @@ static void TestMathCpp()
 	c += c;
 }
 
-Sample::Sample( SampleContext* context )
+Sample::Sample( SampleContext* context, bool createWorld )
 {
 	m_context = context;
 	m_camera = &context->camera;
@@ -274,7 +274,10 @@ Sample::Sample( SampleContext* context )
 
 	g_randomSeed = RAND_SEED;
 
-	CreateWorld();
+	if ( createWorld )
+	{
+		CreateWorld();
+	}
 	TestMathCpp();
 }
 

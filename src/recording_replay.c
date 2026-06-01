@@ -21,11 +21,14 @@
 
 static void b2RecRdrCheck( b2RecReader* rdr, int size )
 {
-	if ( rdr->cursor + size > rdr->size )
+	// 64-bit compare so a corrupt or oversized size can't overflow the cursor add
+	if ( size < 0 || (int64_t)rdr->cursor + (int64_t)size > (int64_t)rdr->size )
 	{
 		rdr->ok = false;
 	}
 }
+
+static bool b2RecReserveScratch( b2RecReader* rdr, void** data, int* cap, int need, int elemSize );
 
 uint8_t b2RecR_U8( b2RecReader* rdr )
 {
@@ -322,34 +325,12 @@ b2BodyDef b2RecR_BODYDEF( b2RecReader* rdr )
 	def.gravityScale = b2RecR_F32( rdr );
 	def.sleepThreshold = b2RecR_F32( rdr );
 
-	// Point def.name at a static scratch buffer, only needed for the b2CreateBody call
-	static char s_nameBuf[B2_NAME_LENGTH + 1];
-	uint16_t nameLen = b2RecR_U16( rdr );
-	if ( nameLen == 0xFFFFu )
-	{
-		def.name = NULL;
-	}
-	else
-	{
-		int len = (int)nameLen;
-		if ( len > B2_NAME_LENGTH )
-		{
-			len = B2_NAME_LENGTH;
-		}
-		b2RecRdrCheck( rdr, len );
-		if ( rdr->ok && len > 0 )
-		{
-			memcpy( s_nameBuf, rdr->data + rdr->cursor, (size_t)len );
-			rdr->cursor += len;
-		}
-		s_nameBuf[len] = '\0';
-		def.name = s_nameBuf;
-	}
+	// b2RecR_STR handles the over-length clamp and skips the full recorded length, so the
+	// cursor stays aligned even for names longer than B2_NAME_LENGTH. Valid until the create call.
+	def.name = b2RecR_STR( rdr );
 
 	(void)b2RecR_U64( rdr ); // userData (not preserved)
-	def.motionLocks.linearX = b2RecR_BOOL( rdr );
-	def.motionLocks.linearY = b2RecR_BOOL( rdr );
-	def.motionLocks.angularZ = b2RecR_BOOL( rdr );
+	def.motionLocks = b2RecR_LOCKS( rdr );
 	def.enableSleep = b2RecR_BOOL( rdr );
 	def.isAwake = b2RecR_BOOL( rdr );
 	def.isBullet = b2RecR_BOOL( rdr );
@@ -364,16 +345,9 @@ b2ShapeDef b2RecR_SHAPEDEF( b2RecReader* rdr )
 {
 	b2ShapeDef def = b2DefaultShapeDef();
 	(void)b2RecR_U64( rdr ); // userData (not preserved)
-	def.material.friction = b2RecR_F32( rdr );
-	def.material.restitution = b2RecR_F32( rdr );
-	def.material.rollingResistance = b2RecR_F32( rdr );
-	def.material.tangentSpeed = b2RecR_F32( rdr );
-	def.material.userMaterialId = b2RecR_U64( rdr );
-	def.material.customColor = b2RecR_U32( rdr );
+	def.material = b2RecR_MATERIAL( rdr );
 	def.density = b2RecR_F32( rdr );
-	def.filter.categoryBits = b2RecR_U64( rdr );
-	def.filter.maskBits = b2RecR_U64( rdr );
-	def.filter.groupIndex = b2RecR_I32( rdr );
+	def.filter = b2RecR_FILTER( rdr );
 	def.enableCustomFiltering = b2RecR_BOOL( rdr );
 	def.isSensor = b2RecR_BOOL( rdr );
 	def.enableSensorEvents = b2RecR_BOOL( rdr );
@@ -396,20 +370,15 @@ b2ChainDef b2RecR_CHAINDEF( b2RecReader* rdr )
 	{
 		count = 0;
 	}
-	if ( count > rdr->chainPointCap )
+	if ( b2RecReserveScratch( rdr, (void**)&rdr->chainPoints, &rdr->chainPointCap, count, (int)sizeof( b2Vec2 ) ) == false )
 	{
-		if ( rdr->chainPoints != NULL )
-		{
-			b2Free( rdr->chainPoints, rdr->chainPointCap * (int)sizeof( b2Vec2 ) );
-		}
-		rdr->chainPoints = b2Alloc( count * (int)sizeof( b2Vec2 ) );
-		rdr->chainPointCap = count;
+		count = 0; // corrupt count, the read has already failed
 	}
 	for ( int i = 0; i < count; ++i )
 	{
 		rdr->chainPoints[i] = b2RecR_VEC2( rdr );
 	}
-	def.points = rdr->chainPoints;
+	def.points = count > 0 ? rdr->chainPoints : NULL;
 	def.count = count;
 
 	int materialCount = b2RecR_I32( rdr );
@@ -417,20 +386,16 @@ b2ChainDef b2RecR_CHAINDEF( b2RecReader* rdr )
 	{
 		materialCount = 0;
 	}
-	if ( materialCount > rdr->chainMaterialCap )
+	if ( b2RecReserveScratch( rdr, (void**)&rdr->chainMaterials, &rdr->chainMaterialCap, materialCount,
+							  (int)sizeof( b2SurfaceMaterial ) ) == false )
 	{
-		if ( rdr->chainMaterials != NULL )
-		{
-			b2Free( rdr->chainMaterials, rdr->chainMaterialCap * (int)sizeof( b2SurfaceMaterial ) );
-		}
-		rdr->chainMaterials = b2Alloc( materialCount * (int)sizeof( b2SurfaceMaterial ) );
-		rdr->chainMaterialCap = materialCount;
+		materialCount = 0;
 	}
 	for ( int i = 0; i < materialCount; ++i )
 	{
 		rdr->chainMaterials[i] = b2RecR_MATERIAL( rdr );
 	}
-	def.materials = rdr->chainMaterials;
+	def.materials = materialCount > 0 ? rdr->chainMaterials : NULL;
 	def.materialCount = materialCount;
 
 	def.filter = b2RecR_FILTER( rdr );
@@ -658,25 +623,62 @@ b2TreeStats b2RecR_TREESTATS( b2RecReader* rdr )
 	return v;
 }
 
-void b2RecEnsureHits( b2RecReader* rdr, int n )
+// Reserve reader scratch for a count taken from an untrusted file. Every recorded element
+// consumes at least one byte, so a valid count can never exceed the bytes left in the file.
+// Reject anything larger (or negative, or that would overflow the byte size) by failing the read
+// rather than allocating wildly. Contents are not preserved; callers overwrite before use.
+static bool b2RecReserveScratch( b2RecReader* rdr, void** data, int* cap, int need, int elemSize )
 {
-	if ( n <= rdr->hitCap )
+	int remaining = rdr->size - rdr->cursor;
+	if ( need < 0 || remaining < 0 || need > remaining || need > INT_MAX / elemSize )
+	{
+		rdr->ok = false;
+		return false;
+	}
+	if ( need <= *cap )
+	{
+		return true;
+	}
+	int newCap = need <= INT_MAX / elemSize - 8 ? need + 8 : need;
+	if ( *data != NULL )
+	{
+		b2Free( *data, *cap * elemSize );
+	}
+	*data = b2Alloc( newCap * elemSize );
+	*cap = newCap;
+	return true;
+}
+
+// Overflow-safe growth for the player's accumulating draw arrays. Counts come from the replay
+// itself, not the file, so this only guards the byte-size multiply. Preserves keep elements.
+static void b2RecGrow( void** data, int* cap, int need, int keep, int elemSize )
+{
+	if ( need <= *cap )
 	{
 		return;
 	}
-	int newCap = n + 8;
-	if ( rdr->hits != NULL )
+	int newCap = *cap == 0 ? 8 : 2 * *cap;
+	if ( newCap < need )
 	{
-		b2RecRecordedHit* newHits = b2Alloc( newCap * (int)sizeof( b2RecRecordedHit ) );
-		memcpy( newHits, rdr->hits, (size_t)( rdr->hitCap ) * sizeof( b2RecRecordedHit ) );
-		b2Free( rdr->hits, rdr->hitCap * (int)sizeof( b2RecRecordedHit ) );
-		rdr->hits = newHits;
+		newCap = need;
 	}
-	else
+	B2_ASSERT( newCap <= INT_MAX / elemSize );
+	void* grown = b2Alloc( newCap * elemSize );
+	if ( *data != NULL )
 	{
-		rdr->hits = b2Alloc( newCap * (int)sizeof( b2RecRecordedHit ) );
+		if ( keep > 0 )
+		{
+			memcpy( grown, *data, (size_t)keep * (size_t)elemSize );
+		}
+		b2Free( *data, *cap * elemSize );
 	}
-	rdr->hitCap = newCap;
+	*data = grown;
+	*cap = newCap;
+}
+
+void b2RecEnsureHits( b2RecReader* rdr, int n )
+{
+	b2RecReserveScratch( rdr, (void**)&rdr->hits, &rdr->hitCap, n, (int)sizeof( b2RecRecordedHit ) );
 }
 
 // Per op dispatch, the only place real public API names appear
@@ -721,44 +723,34 @@ static b2JointId b2RecMakeJointId( b2RecReader* rdr, b2JointId recorded )
 // A create op appends its returned id after the args. Replay compares index1 and generation
 // only, since world0 differs between record and replay. A mismatch means structural drift.
 
-static void b2RecCheckBodyId( b2RecReader* rdr, b2BodyId got, b2BodyId rec )
+static void b2RecCheckId( b2RecReader* rdr, const char* kind, int gotIndex, unsigned gotGen, int recIndex, unsigned recGen )
 {
-	if ( got.index1 != rec.index1 || got.generation != rec.generation )
+	if ( gotIndex != recIndex || gotGen != recGen )
 	{
-		printf( "b2ReplayFile: body id mismatch (rec index1=%d gen=%u, got index1=%d gen=%u)\n", rec.index1,
-				(unsigned)rec.generation, got.index1, (unsigned)got.generation );
+		printf( "b2ReplayFile: %s id mismatch (rec index1=%d gen=%u, got index1=%d gen=%u)\n", kind, recIndex, recGen, gotIndex,
+				gotGen );
 		rdr->ok = false;
 	}
+}
+
+static void b2RecCheckBodyId( b2RecReader* rdr, b2BodyId got, b2BodyId rec )
+{
+	b2RecCheckId( rdr, "body", got.index1, got.generation, rec.index1, rec.generation );
 }
 
 static void b2RecCheckShapeId( b2RecReader* rdr, b2ShapeId got, b2ShapeId rec )
 {
-	if ( got.index1 != rec.index1 || got.generation != rec.generation )
-	{
-		printf( "b2ReplayFile: shape id mismatch (rec index1=%d gen=%u, got index1=%d gen=%u)\n", rec.index1,
-				(unsigned)rec.generation, got.index1, (unsigned)got.generation );
-		rdr->ok = false;
-	}
+	b2RecCheckId( rdr, "shape", got.index1, got.generation, rec.index1, rec.generation );
 }
 
 static void b2RecCheckChainId( b2RecReader* rdr, b2ChainId got, b2ChainId rec )
 {
-	if ( got.index1 != rec.index1 || got.generation != rec.generation )
-	{
-		printf( "b2ReplayFile: chain id mismatch (rec index1=%d gen=%u, got index1=%d gen=%u)\n", rec.index1,
-				(unsigned)rec.generation, got.index1, (unsigned)got.generation );
-		rdr->ok = false;
-	}
+	b2RecCheckId( rdr, "chain", got.index1, got.generation, rec.index1, rec.generation );
 }
 
 static void b2RecCheckJointId( b2RecReader* rdr, b2JointId got, b2JointId rec )
 {
-	if ( got.index1 != rec.index1 || got.generation != rec.generation )
-	{
-		printf( "b2ReplayFile: joint id mismatch (rec index1=%d gen=%u, got index1=%d gen=%u)\n", rec.index1,
-				(unsigned)rec.generation, got.index1, (unsigned)got.generation );
-		rdr->ok = false;
-	}
+	b2RecCheckId( rdr, "joint", got.index1, got.generation, rec.index1, rec.generation );
 }
 
 static void b2RecDispatch_CreateWorld( const b2RecArgs_CreateWorld* a, b2RecReader* rdr )
@@ -865,18 +857,8 @@ static void b2RecDispatch_WorldEnableSpeculative( const b2RecArgs_WorldEnableSpe
 // Append a created body to the outliner tracking list. Ordinals are creation order and never reused.
 static void b2RecTrackBodyCreate( b2RecPlayer* player, b2BodyId id )
 {
-	if ( player->bodyIdCount == player->bodyIdCap )
-	{
-		int newCap = player->bodyIdCap == 0 ? 64 : player->bodyIdCap * 2;
-		b2BodyId* grown = b2Alloc( newCap * (int)sizeof( b2BodyId ) );
-		if ( player->bodyIds != NULL )
-		{
-			memcpy( grown, player->bodyIds, (size_t)player->bodyIdCount * sizeof( b2BodyId ) );
-			b2Free( player->bodyIds, player->bodyIdCap * (int)sizeof( b2BodyId ) );
-		}
-		player->bodyIds = grown;
-		player->bodyIdCap = newCap;
-	}
+	b2RecGrow( (void**)&player->bodyIds, &player->bodyIdCap, player->bodyIdCount + 1, player->bodyIdCount,
+			   (int)sizeof( b2BodyId ) );
 	player->bodyIds[player->bodyIdCount] = id;
 	player->bodyIdCount += 1;
 }
@@ -1191,6 +1173,11 @@ static void b2RecDispatch_ShapeApplyWind( const b2RecArgs_ShapeApplyWind* a, b2R
 static void b2RecDispatch_CreateChain( const b2RecArgs_CreateChain* a, b2RecReader* rdr )
 {
 	b2ChainId recId = b2RecR_CHAINID( rdr );
+	if ( !rdr->ok )
+	{
+		// A corrupt point/material count left the def degenerate, do not build a chain from it
+		return;
+	}
 	b2BodyId bodyId = b2RecMakeBodyId( rdr, a->body );
 	b2ChainId gotId = b2CreateChain( bodyId, &a->def );
 	b2RecCheckChainId( rdr, gotId, recId );
@@ -1601,40 +1588,14 @@ static bool b2RecVec2Differs( b2Vec2 a, b2Vec2 b )
 
 static void b2RecGrowFrameQueries( b2RecPlayer* player )
 {
-	if ( player->frameQueryCount < player->frameQueryCap )
-	{
-		return;
-	}
-	int newCap = player->frameQueryCap == 0 ? 8 : player->frameQueryCap * 2;
-	b2RecDrawQuery* newQ = b2Alloc( newCap * (int)sizeof( b2RecDrawQuery ) );
-	if ( player->frameQueries != NULL )
-	{
-		memcpy( newQ, player->frameQueries, (size_t)player->frameQueryCount * sizeof( b2RecDrawQuery ) );
-		b2Free( player->frameQueries, player->frameQueryCap * (int)sizeof( b2RecDrawQuery ) );
-	}
-	player->frameQueries = newQ;
-	player->frameQueryCap = newCap;
+	b2RecGrow( (void**)&player->frameQueries, &player->frameQueryCap, player->frameQueryCount + 1, player->frameQueryCount,
+			   (int)sizeof( b2RecDrawQuery ) );
 }
 
 static void b2RecGrowFrameHits( b2RecPlayer* player, int need )
 {
-	if ( player->frameHitCount + need <= player->frameHitCap )
-	{
-		return;
-	}
-	int newCap = player->frameHitCap == 0 ? 16 : player->frameHitCap * 2;
-	if ( newCap < player->frameHitCount + need )
-	{
-		newCap = player->frameHitCount + need + 8;
-	}
-	b2RecRecordedHit* newH = b2Alloc( newCap * (int)sizeof( b2RecRecordedHit ) );
-	if ( player->frameHits != NULL )
-	{
-		memcpy( newH, player->frameHits, (size_t)player->frameHitCount * sizeof( b2RecRecordedHit ) );
-		b2Free( player->frameHits, player->frameHitCap * (int)sizeof( b2RecRecordedHit ) );
-	}
-	player->frameHits = newH;
-	player->frameHitCap = newCap;
+	b2RecGrow( (void**)&player->frameHits, &player->frameHitCap, player->frameHitCount + need, player->frameHitCount,
+			   (int)sizeof( b2RecRecordedHit ) );
 }
 
 static b2RecDrawQuery* b2RecStashQueryBegin( b2RecPlayer* player, int kind, const b2RecRecordedHit* hits, int hitCount )
@@ -1657,17 +1618,19 @@ static b2RecDrawQuery* b2RecStashQueryBegin( b2RecPlayer* player, int kind, cons
 
 // Overlap AABB dispatcher
 
-typedef struct b2RecReplayOverlap
+// Shared context for the query replay trampolines: walks the recorded hits in order and flags
+// any divergence from the re-issued query
+typedef struct b2RecReplayQueryCtx
 {
 	b2RecReader* rdr;
 	const b2RecRecordedHit* hits;
 	int count;
 	int cursor;
-} b2RecReplayOverlap;
+} b2RecReplayQueryCtx;
 
 static bool b2RecReplayOverlapTrampoline( b2ShapeId id, void* ctx )
 {
-	b2RecReplayOverlap* rc = ctx;
+	b2RecReplayQueryCtx* rc = ctx;
 	if ( rc->cursor >= rc->count )
 	{
 		rc->rdr->diverged = true;
@@ -1685,6 +1648,10 @@ static void b2RecDispatch_QueryOverlapAABB( const b2RecArgs_QueryOverlapAABB* a,
 {
 	uint32_t n = b2RecR_U32( rdr );
 	b2RecEnsureHits( rdr, (int)n );
+	if ( !rdr->ok )
+	{
+		return;
+	}
 	for ( uint32_t i = 0; i < n; ++i )
 	{
 		rdr->hits[i].id = b2RecMakeShapeId( rdr, b2RecR_SHAPEID( rdr ) );
@@ -1693,7 +1660,7 @@ static void b2RecDispatch_QueryOverlapAABB( const b2RecArgs_QueryOverlapAABB* a,
 	(void)b2RecR_TREESTATS( rdr );
 	if ( !rdr->ok )
 		return;
-	b2RecReplayOverlap rc = { rdr, rdr->hits, (int)n, 0 };
+	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
 	b2World_OverlapAABB( rdr->replayWorldId, a->aabb, a->filter, b2RecReplayOverlapTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
@@ -1709,6 +1676,10 @@ static void b2RecDispatch_QueryOverlapShape( const b2RecArgs_QueryOverlapShape* 
 {
 	uint32_t n = b2RecR_U32( rdr );
 	b2RecEnsureHits( rdr, (int)n );
+	if ( !rdr->ok )
+	{
+		return;
+	}
 	for ( uint32_t i = 0; i < n; ++i )
 	{
 		rdr->hits[i].id = b2RecMakeShapeId( rdr, b2RecR_SHAPEID( rdr ) );
@@ -1717,7 +1688,7 @@ static void b2RecDispatch_QueryOverlapShape( const b2RecArgs_QueryOverlapShape* 
 	(void)b2RecR_TREESTATS( rdr );
 	if ( !rdr->ok )
 		return;
-	b2RecReplayOverlap rc = { rdr, rdr->hits, (int)n, 0 };
+	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
 	b2World_OverlapShape( rdr->replayWorldId, &a->proxy, a->filter, b2RecReplayOverlapTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
@@ -1731,17 +1702,9 @@ static void b2RecDispatch_QueryOverlapShape( const b2RecArgs_QueryOverlapShape* 
 
 // Cast ray dispatcher
 
-typedef struct b2RecReplayCast
-{
-	b2RecReader* rdr;
-	const b2RecRecordedHit* hits;
-	int count;
-	int cursor;
-} b2RecReplayCast;
-
 static float b2RecReplayCastTrampoline( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx )
 {
-	b2RecReplayCast* rc = ctx;
+	b2RecReplayQueryCtx* rc = ctx;
 	if ( rc->cursor >= rc->count )
 	{
 		rc->rdr->diverged = true;
@@ -1760,6 +1723,10 @@ static void b2RecDispatch_QueryCastRay( const b2RecArgs_QueryCastRay* a, b2RecRe
 {
 	uint32_t n = b2RecR_U32( rdr );
 	b2RecEnsureHits( rdr, (int)n );
+	if ( !rdr->ok )
+	{
+		return;
+	}
 	for ( uint32_t i = 0; i < n; ++i )
 	{
 		rdr->hits[i].id = b2RecMakeShapeId( rdr, b2RecR_SHAPEID( rdr ) );
@@ -1771,7 +1738,7 @@ static void b2RecDispatch_QueryCastRay( const b2RecArgs_QueryCastRay* a, b2RecRe
 	(void)b2RecR_TREESTATS( rdr );
 	if ( !rdr->ok )
 		return;
-	b2RecReplayCast rc = { rdr, rdr->hits, (int)n, 0 };
+	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
 	b2World_CastRay( rdr->replayWorldId, a->origin, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
@@ -1788,6 +1755,10 @@ static void b2RecDispatch_QueryCastShape( const b2RecArgs_QueryCastShape* a, b2R
 {
 	uint32_t n = b2RecR_U32( rdr );
 	b2RecEnsureHits( rdr, (int)n );
+	if ( !rdr->ok )
+	{
+		return;
+	}
 	for ( uint32_t i = 0; i < n; ++i )
 	{
 		rdr->hits[i].id = b2RecMakeShapeId( rdr, b2RecR_SHAPEID( rdr ) );
@@ -1799,7 +1770,7 @@ static void b2RecDispatch_QueryCastShape( const b2RecArgs_QueryCastShape* a, b2R
 	(void)b2RecR_TREESTATS( rdr );
 	if ( !rdr->ok )
 		return;
-	b2RecReplayCast rc = { rdr, rdr->hits, (int)n, 0 };
+	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
 	b2World_CastShape( rdr->replayWorldId, &a->proxy, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
@@ -1814,17 +1785,9 @@ static void b2RecDispatch_QueryCastShape( const b2RecArgs_QueryCastShape* a, b2R
 
 // CollideMover dispatcher
 
-typedef struct b2RecReplayPlane
-{
-	b2RecReader* rdr;
-	const b2RecRecordedHit* hits;
-	int count;
-	int cursor;
-} b2RecReplayPlane;
-
 static bool b2RecReplayPlaneTrampoline( b2ShapeId id, const b2PlaneResult* plane, void* ctx )
 {
-	b2RecReplayPlane* rc = ctx;
+	b2RecReplayQueryCtx* rc = ctx;
 	if ( rc->cursor >= rc->count )
 	{
 		rc->rdr->diverged = true;
@@ -1845,6 +1808,10 @@ static void b2RecDispatch_QueryCollideMover( const b2RecArgs_QueryCollideMover* 
 {
 	uint32_t n = b2RecR_U32( rdr );
 	b2RecEnsureHits( rdr, (int)n );
+	if ( !rdr->ok )
+	{
+		return;
+	}
 	for ( uint32_t i = 0; i < n; ++i )
 	{
 		rdr->hits[i].id = b2RecMakeShapeId( rdr, b2RecR_SHAPEID( rdr ) );
@@ -1854,7 +1821,7 @@ static void b2RecDispatch_QueryCollideMover( const b2RecArgs_QueryCollideMover* 
 	// CollideMover has no TREESTATS tail (returns void)
 	if ( !rdr->ok )
 		return;
-	b2RecReplayPlane rc = { rdr, rdr->hits, (int)n, 0 };
+	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
 	b2World_CollideMover( rdr->replayWorldId, &a->mover, a->filter, b2RecReplayPlaneTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
@@ -2014,7 +1981,15 @@ static int b2RecDispatchOne( b2RecPlayer* player )
 #undef ARG
 		default:
 			printf( "b2ReplayFile: unknown opcode 0x%02X, skipping %u bytes\n", opcode, payloadSize );
-			rdr->cursor = payloadStart + (int)payloadSize;
+			// payloadStart is in bounds, so size - payloadStart is the bytes left to skip over
+			if ( payloadSize > (uint32_t)( rdr->size - payloadStart ) )
+			{
+				rdr->ok = false;
+			}
+			else
+			{
+				rdr->cursor = payloadStart + (int)payloadSize;
+			}
 			break;
 	}
 

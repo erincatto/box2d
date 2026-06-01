@@ -264,9 +264,7 @@ void b2RecW_BODYDEF( b2RecBuffer* buf, b2BodyDef v )
 	b2RecW_STR( buf, v.name );
 	// userData: not preserved
 	b2RecW_U64( buf, 0u );
-	b2RecW_BOOL( buf, v.motionLocks.linearX );
-	b2RecW_BOOL( buf, v.motionLocks.linearY );
-	b2RecW_BOOL( buf, v.motionLocks.angularZ );
+	b2RecW_LOCKS( buf, v.motionLocks );
 	b2RecW_BOOL( buf, v.enableSleep );
 	b2RecW_BOOL( buf, v.isAwake );
 	b2RecW_BOOL( buf, v.isBullet );
@@ -280,18 +278,9 @@ void b2RecW_SHAPEDEF( b2RecBuffer* buf, b2ShapeDef v )
 {
 	// userData: not preserved
 	b2RecW_U64( buf, 0u );
-	// surface material
-	b2RecW_F32( buf, v.material.friction );
-	b2RecW_F32( buf, v.material.restitution );
-	b2RecW_F32( buf, v.material.rollingResistance );
-	b2RecW_F32( buf, v.material.tangentSpeed );
-	b2RecW_U64( buf, v.material.userMaterialId );
-	b2RecW_U32( buf, v.material.customColor );
+	b2RecW_MATERIAL( buf, v.material );
 	b2RecW_F32( buf, v.density );
-	// filter
-	b2RecW_U64( buf, v.filter.categoryBits );
-	b2RecW_U64( buf, v.filter.maskBits );
-	b2RecW_I32( buf, v.filter.groupIndex );
+	b2RecW_FILTER( buf, v.filter );
 	b2RecW_BOOL( buf, v.enableCustomFiltering );
 	b2RecW_BOOL( buf, v.isSensor );
 	b2RecW_BOOL( buf, v.enableSensorEvents );

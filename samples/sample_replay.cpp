@@ -205,21 +205,15 @@ static bool ReplayPickCallback( b2ShapeId shapeId, void* context )
 class ReplayFile : public Sample
 {
 public:
+	// The player owns the world we draw, so skip the base world. m_worldId stays null until
+	// OpenPlayer adopts the player's world.
 	explicit ReplayFile( SampleContext* context )
-		: Sample( context )
+		: Sample( context, false )
 	{
 		if ( m_context->restart == false )
 		{
 			m_context->camera.center = { 0.0f, 7.5f };
 			m_context->camera.zoom = 10.0f;
-		}
-
-		// The base ctor created an empty world we do not need. The player owns the world we draw,
-		// and the base dtor frees m_worldId, so it must not point at the player's world yet.
-		if ( B2_IS_NON_NULL( m_worldId ) )
-		{
-			b2DestroyWorld( m_worldId );
-			m_worldId = b2_nullWorldId;
 		}
 
 		// The timeline scrubber lives in the diagnostics drawer, so open it for the replay

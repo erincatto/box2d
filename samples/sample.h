@@ -54,7 +54,9 @@ struct SampleContext
 class Sample
 {
 public:
-	explicit Sample( SampleContext* context );
+	// createWorld false lets a subclass that supplies its own world (e.g. the replay viewer)
+	// skip the throwaway world the base would otherwise build and immediately discard
+	explicit Sample( SampleContext* context, bool createWorld = true );
 	virtual ~Sample();
 
 	void CreateWorld();

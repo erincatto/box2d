@@ -964,16 +964,19 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	world->endEventArrayIndex = 1 - world->endEventArrayIndex;
 	b2Array_Clear( world->sensorEndEvents[world->endEventArrayIndex] );
 	b2Array_Clear( world->contactEndEvents[world->endEventArrayIndex] );
-	world->locked = false;
 
 	if ( world->recording != NULL )
 	{
-		// StateHash proves the simulation reproduced exactly on replay
+		// Write the per-step StateHash and flush while the world is still locked. Queries early
+		// return while locked, so this keeps the shared recording buffer single-writer without a
+		// lock. StateHash proves the simulation reproduced exactly on replay.
 		uint64_t hash = b2HashWorldState( world );
 		b2RecArgs_StateHash sha = { worldId, hash };
 		b2RecWrite_StateHash( world->recording, &sha );
 		b2FlushRecording( world->recording );
 	}
+
+	world->locked = false;
 
 	b2TracyCFrame;
 }
@@ -1974,7 +1977,11 @@ void b2World_SaveRecording( b2WorldId worldId, const char* path )
 		return;
 	}
 
+	// Flush under the lock so a query committing from another thread can't race the shared buffer.
+	// The file copy below touches only the file, which query commits never write, so it stays unlocked.
+	b2LockMutex( world->recording->lock );
 	b2FlushRecording( world->recording );
+	b2UnlockMutex( world->recording->lock );
 	fflush( world->recording->file );
 
 	// Stream-copy the recording to the user path. Source file stays open.

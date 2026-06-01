@@ -117,11 +117,12 @@ int RecordingTest( void )
 	b2ShapeId groundShapeId = b2CreateCircleShape( groundId, &groundShapeDef, &groundCircle );
 	ENSURE( b2Shape_IsValid( groundShapeId ) );
 
-	// Dynamic body with a circle shape
+	// Dynamic body with a circle shape. The name is intentionally longer than B2_NAME_LENGTH so
+	// replay exercises the over-length name path in the body def reader.
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_dynamicBody;
 	bodyDef.position = (b2Vec2){ 0.0f, 4.0f };
-	bodyDef.name = "testBody";
+	bodyDef.name = "testBodyWithLongName";
 	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 	ENSURE( b2Body_IsValid( bodyId ) );
 
