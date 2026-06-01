@@ -5,6 +5,7 @@
 #include "core.h"
 #include "joint.h"
 #include "physics_world.h"
+#include "recording.h"
 #include "solver.h"
 #include "solver_set.h"
 
@@ -15,6 +16,8 @@
 
 void b2WheelJoint_EnableSpring( b2JointId jointId, bool enableSpring )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, WheelJointEnableSpring, jointId, enableSpring );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
 
 	if ( enableSpring != joint->wheelJoint.enableSpring )
@@ -32,6 +35,8 @@ bool b2WheelJoint_IsSpringEnabled( b2JointId jointId )
 
 void b2WheelJoint_SetSpringHertz( b2JointId jointId, float hertz )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, WheelJointSetSpringHertz, jointId, hertz );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
 	joint->wheelJoint.hertz = hertz;
 }
@@ -44,6 +49,8 @@ float b2WheelJoint_GetSpringHertz( b2JointId jointId )
 
 void b2WheelJoint_SetSpringDampingRatio( b2JointId jointId, float dampingRatio )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, WheelJointSetSpringDampingRatio, jointId, dampingRatio );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
 	joint->wheelJoint.dampingRatio = dampingRatio;
 }
@@ -56,6 +63,8 @@ float b2WheelJoint_GetSpringDampingRatio( b2JointId jointId )
 
 void b2WheelJoint_EnableLimit( b2JointId jointId, bool enableLimit )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, WheelJointEnableLimit, jointId, enableLimit );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
 	if ( joint->wheelJoint.enableLimit != enableLimit )
 	{
@@ -85,6 +94,8 @@ float b2WheelJoint_GetUpperLimit( b2JointId jointId )
 
 void b2WheelJoint_SetLimits( b2JointId jointId, float lower, float upper )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, WheelJointSetLimits, jointId, lower, upper );
 	B2_ASSERT( lower <= upper );
 
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
@@ -99,6 +110,8 @@ void b2WheelJoint_SetLimits( b2JointId jointId, float lower, float upper )
 
 void b2WheelJoint_EnableMotor( b2JointId jointId, bool enableMotor )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, WheelJointEnableMotor, jointId, enableMotor );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
 	if ( joint->wheelJoint.enableMotor != enableMotor )
 	{
@@ -115,6 +128,8 @@ bool b2WheelJoint_IsMotorEnabled( b2JointId jointId )
 
 void b2WheelJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, WheelJointSetMotorSpeed, jointId, motorSpeed );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
 	joint->wheelJoint.motorSpeed = motorSpeed;
 }
@@ -134,6 +149,8 @@ float b2WheelJoint_GetMotorTorque( b2JointId jointId )
 
 void b2WheelJoint_SetMaxMotorTorque( b2JointId jointId, float torque )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, WheelJointSetMaxMotorTorque, jointId, torque );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
 	joint->wheelJoint.maxMotorTorque = torque;
 }

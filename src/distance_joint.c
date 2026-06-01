@@ -9,6 +9,7 @@
 #include "core.h"
 #include "joint.h"
 #include "physics_world.h"
+#include "recording.h"
 #include "solver.h"
 #include "solver_set.h"
 
@@ -17,6 +18,8 @@
 
 void b2DistanceJoint_SetLength( b2JointId jointId, float length )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, DistanceJointSetLength, jointId, length );
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	b2DistanceJoint* joint = &base->distanceJoint;
 
@@ -35,6 +38,8 @@ float b2DistanceJoint_GetLength( b2JointId jointId )
 
 void b2DistanceJoint_EnableLimit( b2JointId jointId, bool enableLimit )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, DistanceJointEnableLimit, jointId, enableLimit );
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	b2DistanceJoint* joint = &base->distanceJoint;
 	joint->enableLimit = enableLimit;
@@ -48,6 +53,8 @@ bool b2DistanceJoint_IsLimitEnabled( b2JointId jointId )
 
 void b2DistanceJoint_SetLengthRange( b2JointId jointId, float minLength, float maxLength )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, DistanceJointSetLengthRange, jointId, minLength, maxLength );
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	b2DistanceJoint* joint = &base->distanceJoint;
 
@@ -97,6 +104,8 @@ float b2DistanceJoint_GetCurrentLength( b2JointId jointId )
 
 void b2DistanceJoint_EnableSpring( b2JointId jointId, bool enableSpring )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, DistanceJointEnableSpring, jointId, enableSpring );
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	base->distanceJoint.enableSpring = enableSpring;
 }
@@ -109,6 +118,8 @@ bool b2DistanceJoint_IsSpringEnabled( b2JointId jointId )
 
 void b2DistanceJoint_SetSpringForceRange( b2JointId jointId, float lowerForce, float upperForce )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, DistanceJointSetSpringForceRange, jointId, lowerForce, upperForce );
 	B2_ASSERT( lowerForce <= upperForce );
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	base->distanceJoint.lowerSpringForce = lowerForce;
@@ -124,12 +135,16 @@ void b2DistanceJoint_GetSpringForceRange( b2JointId jointId, float* lowerForce, 
 
 void b2DistanceJoint_SetSpringHertz( b2JointId jointId, float hertz )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, DistanceJointSetSpringHertz, jointId, hertz );
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	base->distanceJoint.hertz = hertz;
 }
 
 void b2DistanceJoint_SetSpringDampingRatio( b2JointId jointId, float dampingRatio )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, DistanceJointSetSpringDampingRatio, jointId, dampingRatio );
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	base->distanceJoint.dampingRatio = dampingRatio;
 }
@@ -150,6 +165,8 @@ float b2DistanceJoint_GetSpringDampingRatio( b2JointId jointId )
 
 void b2DistanceJoint_EnableMotor( b2JointId jointId, bool enableMotor )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, DistanceJointEnableMotor, jointId, enableMotor );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	if ( enableMotor != joint->distanceJoint.enableMotor )
 	{
@@ -166,6 +183,8 @@ bool b2DistanceJoint_IsMotorEnabled( b2JointId jointId )
 
 void b2DistanceJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, DistanceJointSetMotorSpeed, jointId, motorSpeed );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	joint->distanceJoint.motorSpeed = motorSpeed;
 }
@@ -185,6 +204,8 @@ float b2DistanceJoint_GetMotorForce( b2JointId jointId )
 
 void b2DistanceJoint_SetMaxMotorForce( b2JointId jointId, float force )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, DistanceJointSetMaxMotorForce, jointId, force );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	joint->distanceJoint.maxMotorForce = force;
 }

@@ -5,6 +5,7 @@
 #include "core.h"
 #include "joint.h"
 #include "physics_world.h"
+#include "recording.h"
 #include "solver.h"
 #include "solver_set.h"
 
@@ -53,6 +54,8 @@ static inline b2Vec3 b2Solve33(const b2Mat33* m, b2Vec3 b )
 
 void b2WeldJoint_SetLinearHertz( b2JointId jointId, float hertz )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, WeldJointSetLinearHertz, jointId, hertz );
 	B2_ASSERT( b2IsValidFloat( hertz ) && hertz >= 0.0f );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.linearHertz = hertz;
@@ -66,6 +69,8 @@ float b2WeldJoint_GetLinearHertz( b2JointId jointId )
 
 void b2WeldJoint_SetLinearDampingRatio( b2JointId jointId, float dampingRatio )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, WeldJointSetLinearDampingRatio, jointId, dampingRatio );
 	B2_ASSERT( b2IsValidFloat( dampingRatio ) && dampingRatio >= 0.0f );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.linearDampingRatio = dampingRatio;
@@ -79,6 +84,8 @@ float b2WeldJoint_GetLinearDampingRatio( b2JointId jointId )
 
 void b2WeldJoint_SetAngularHertz( b2JointId jointId, float hertz )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, WeldJointSetAngularHertz, jointId, hertz );
 	B2_ASSERT( b2IsValidFloat( hertz ) && hertz >= 0.0f );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.angularHertz = hertz;
@@ -92,6 +99,8 @@ float b2WeldJoint_GetAngularHertz( b2JointId jointId )
 
 void b2WeldJoint_SetAngularDampingRatio( b2JointId jointId, float dampingRatio )
 {
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, WeldJointSetAngularDampingRatio, jointId, dampingRatio );
 	B2_ASSERT( b2IsValidFloat( dampingRatio ) && dampingRatio >= 0.0f );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_weldJoint );
 	joint->weldJoint.angularDampingRatio = dampingRatio;

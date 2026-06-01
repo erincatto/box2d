@@ -7,6 +7,8 @@
 
 #include "physics_world.h"
 
+#include "recording.h"
+
 #include "arena_allocator.h"
 #include "bitset.h"
 #include "body.h"
@@ -317,6 +319,13 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->debugContactSet = b2CreateBitSet( 256 );
 	world->debugIslandSet = b2CreateBitSet( 256 );
 
+	// Start recording if requested; b2StartRecording writes the CreateWorld record
+	world->recording = NULL;
+	if ( def->recordingPath != NULL )
+	{
+		b2StartRecording( world, def );
+	}
+
 	// add one to worldId so that 0 represents a null b2WorldId
 	return (b2WorldId){ (uint16_t)( worldId + 1 ), world->generation };
 }
@@ -324,6 +333,9 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 void b2DestroyWorld( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
+
+	// Flush and close recording before teardown
+	b2StopRecordingInternal( world );
 
 	if ( world->scheduler != NULL )
 	{
@@ -827,6 +839,9 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		return;
 	}
 
+	// Record step inputs before simulation runs
+	B2_REC( world, Step, worldId, timeStep, subStepCount );
+
 	// Prepare to capture events
 	// Ensure user does not access stale data if there is an early return
 	b2Array_Clear( world->bodyMoveEvents );
@@ -949,6 +964,18 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	world->endEventArrayIndex = 1 - world->endEventArrayIndex;
 	b2Array_Clear( world->sensorEndEvents[world->endEventArrayIndex] );
 	b2Array_Clear( world->contactEndEvents[world->endEventArrayIndex] );
+
+	if ( world->recording != NULL )
+	{
+		// Write the per-step StateHash and flush while the world is still locked. Queries early
+		// return while locked, so this keeps the shared recording buffer single-writer without a
+		// lock. StateHash proves the simulation reproduced exactly on replay.
+		uint64_t hash = b2HashWorldState( world );
+		b2RecArgs_StateHash sha = { worldId, hash };
+		b2RecWrite_StateHash( world->recording, &sha );
+		b2FlushRecording( world->recording );
+	}
+
 	world->locked = false;
 
 	b2TracyCFrame;
@@ -1639,6 +1666,8 @@ void b2World_EnableSleeping( b2WorldId worldId, bool flag )
 		return;
 	}
 
+	B2_REC( world, WorldEnableSleeping, worldId, flag );
+
 	if ( flag == world->enableSleep )
 	{
 		return;
@@ -1675,6 +1704,8 @@ void b2World_EnableWarmStarting( b2WorldId worldId, bool flag )
 		return;
 	}
 
+	B2_REC( world, WorldEnableWarmStarting, worldId, flag );
+
 	world->enableWarmStarting = flag;
 }
 
@@ -1700,6 +1731,8 @@ void b2World_EnableContinuous( b2WorldId worldId, bool flag )
 		return;
 	}
 
+	B2_REC( world, WorldEnableContinuous, worldId, flag );
+
 	world->enableContinuous = flag;
 }
 
@@ -1717,6 +1750,8 @@ void b2World_SetRestitutionThreshold( b2WorldId worldId, float value )
 	{
 		return;
 	}
+
+	B2_REC( world, WorldSetRestitutionThreshold, worldId, value );
 
 	world->restitutionThreshold = b2ClampFloat( value, 0.0f, FLT_MAX );
 }
@@ -1736,6 +1771,8 @@ void b2World_SetHitEventThreshold( b2WorldId worldId, float value )
 		return;
 	}
 
+	B2_REC( world, WorldSetHitEventThreshold, worldId, value );
+
 	world->hitEventThreshold = b2ClampFloat( value, 0.0f, FLT_MAX );
 }
 
@@ -1754,6 +1791,8 @@ void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRati
 		return;
 	}
 
+	B2_REC( world, WorldSetContactTuning, worldId, hertz, dampingRatio, pushSpeed );
+
 	world->contactHertz = b2ClampFloat( hertz, 0.0f, FLT_MAX );
 	world->contactDampingRatio = b2ClampFloat( dampingRatio, 0.0f, FLT_MAX );
 	world->contactSpeed = b2ClampFloat( pushSpeed, 0.0f, FLT_MAX );
@@ -1767,6 +1806,8 @@ void b2World_SetContactRecycleDistance( b2WorldId worldId, float recycleDistance
 	{
 		return;
 	}
+
+	B2_REC( world, WorldSetContactRecycleDistance, worldId, recycleDistance );
 
 	world->contactRecycleDistance = b2ClampFloat( recycleDistance, 0.0f, FLT_MAX );
 }
@@ -1787,6 +1828,8 @@ void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearSpeed 
 	{
 		return;
 	}
+
+	B2_REC( world, WorldSetMaximumLinearSpeed, worldId, maximumLinearSpeed );
 
 	world->maxLinearSpeed = maximumLinearSpeed;
 }
@@ -1923,6 +1966,59 @@ int b2World_GetWorkerCount( b2WorldId worldId )
 	}
 
 	return world->workerCount;
+}
+
+void b2World_SaveRecording( b2WorldId worldId, const char* path )
+{
+	b2World* world = b3GetUnlockedWorldFromId( worldId );
+
+	if ( world == NULL || world->recording == NULL || path == NULL )
+	{
+		return;
+	}
+
+	// Flush under the lock so a query committing from another thread can't race the shared buffer.
+	// The file copy below touches only the file, which query commits never write, so it stays unlocked.
+	b2LockMutex( world->recording->lock );
+	b2FlushRecording( world->recording );
+	b2UnlockMutex( world->recording->lock );
+	fflush( world->recording->file );
+
+	// Stream-copy the recording to the user path. Source file stays open.
+	FILE* src = world->recording->file;
+	long pos = ftell( src );
+	if ( pos < 0 || fseek( src, 0, SEEK_SET ) != 0 )
+	{
+		return;
+	}
+
+	FILE* dst = fopen( path, "wb" );
+	if ( dst == NULL )
+	{
+		fseek( src, pos, SEEK_SET );
+		return;
+	}
+
+	uint8_t copyBuf[4096];
+	size_t n;
+	while ( ( n = fread( copyBuf, 1, sizeof( copyBuf ), src ) ) > 0 )
+	{
+		fwrite( copyBuf, 1, n, dst );
+	}
+
+	fclose( dst );
+	fseek( src, pos, SEEK_SET );
+}
+
+void b2World_StopRecording( b2WorldId worldId )
+{
+	b2World* world = b3GetUnlockedWorldFromId( worldId );
+	if ( world == NULL )
+	{
+		return;
+	}
+
+	b2StopRecordingInternal( world );
 }
 
 void b2World_DumpMemoryStats( b2WorldId worldId )
@@ -2073,6 +2169,19 @@ b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter f
 
 	B2_ASSERT( b2IsValidAABB( aabb ) );
 
+	b2RecQueryWriter recWriter = { 0 };
+	if ( world->recording != NULL )
+	{
+		b2RecQueryBegin( &recWriter, context );
+		recWriter.userFcn.overlapFcn = fcn;
+		b2RecW_WORLDID( &recWriter.buf, worldId );
+		b2RecW_AABB( &recWriter.buf, aabb );
+		b2RecW_QUERYFILTER( &recWriter.buf, filter );
+		recWriter.countOffset = b2RecReserveU32( &recWriter.buf );
+		fcn = b2RecOverlapTrampoline;
+		context = &recWriter;
+	}
+
 	WorldQueryContext worldContext = { world, fcn, filter, context };
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
@@ -2082,6 +2191,13 @@ b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter f
 
 		treeStats.nodeVisits += treeResult.nodeVisits;
 		treeStats.leafVisits += treeResult.leafVisits;
+	}
+
+	if ( world->recording != NULL )
+	{
+		b2RecPatchU32( &recWriter.buf, recWriter.countOffset, recWriter.hitCount );
+		b2RecW_TREESTATS( &recWriter.buf, treeStats );
+		b2RecQueryCommit( world->recording, 0xE0, &recWriter );
 	}
 
 	return treeStats;
@@ -2148,6 +2264,19 @@ b2TreeStats b2World_OverlapShape( b2WorldId worldId, const b2ShapeProxy* proxy, 
 		return treeStats;
 	}
 
+	b2RecQueryWriter recWriter = { 0 };
+	if ( world->recording != NULL )
+	{
+		b2RecQueryBegin( &recWriter, context );
+		recWriter.userFcn.overlapFcn = fcn;
+		b2RecW_WORLDID( &recWriter.buf, worldId );
+		b2RecW_SHAPEPROXY( &recWriter.buf, *proxy );
+		b2RecW_QUERYFILTER( &recWriter.buf, filter );
+		recWriter.countOffset = b2RecReserveU32( &recWriter.buf );
+		fcn = b2RecOverlapTrampoline;
+		context = &recWriter;
+	}
+
 	b2AABB aabb = b2MakeAABB( proxy->points, proxy->count, proxy->radius );
 	WorldOverlapContext worldContext = {
 		world, fcn, filter, proxy, context,
@@ -2160,6 +2289,13 @@ b2TreeStats b2World_OverlapShape( b2WorldId worldId, const b2ShapeProxy* proxy, 
 
 		treeStats.nodeVisits += treeResult.nodeVisits;
 		treeStats.leafVisits += treeResult.leafVisits;
+	}
+
+	if ( world->recording != NULL )
+	{
+		b2RecPatchU32( &recWriter.buf, recWriter.countOffset, recWriter.hitCount );
+		b2RecW_TREESTATS( &recWriter.buf, treeStats );
+		b2RecQueryCommit( world->recording, 0xE1, &recWriter );
 	}
 
 	return treeStats;
@@ -2226,6 +2362,20 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translatio
 	B2_ASSERT( b2IsValidVec2( origin ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
+	b2RecQueryWriter recWriter = { 0 };
+	if ( world->recording != NULL )
+	{
+		b2RecQueryBegin( &recWriter, context );
+		recWriter.userFcn.castFcn = fcn;
+		b2RecW_WORLDID( &recWriter.buf, worldId );
+		b2RecW_VEC2( &recWriter.buf, origin );
+		b2RecW_VEC2( &recWriter.buf, translation );
+		b2RecW_QUERYFILTER( &recWriter.buf, filter );
+		recWriter.countOffset = b2RecReserveU32( &recWriter.buf );
+		fcn = b2RecCastTrampoline;
+		context = &recWriter;
+	}
+
 	b2RayCastInput input = { origin, translation, 1.0f };
 
 	WorldRayCastContext worldContext = { world, fcn, filter, 1.0f, context };
@@ -2239,10 +2389,17 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translatio
 
 		if ( worldContext.fraction == 0.0f )
 		{
-			return treeStats;
+			break;
 		}
 
 		input.maxFraction = worldContext.fraction;
+	}
+
+	if ( world->recording != NULL )
+	{
+		b2RecPatchU32( &recWriter.buf, recWriter.countOffset, recWriter.hitCount );
+		b2RecW_TREESTATS( &recWriter.buf, treeStats );
+		b2RecQueryCommit( world->recording, 0xE2, &recWriter );
 	}
 
 	return treeStats;
@@ -2292,10 +2449,22 @@ b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 tra
 
 		if ( worldContext.fraction == 0.0f )
 		{
-			return result;
+			break;
 		}
 
 		input.maxFraction = worldContext.fraction;
+	}
+
+	if ( world->recording != NULL )
+	{
+		b2RecBuffer recBuf = { 0 };
+		b2RecW_WORLDID( &recBuf, worldId );
+		b2RecW_VEC2( &recBuf, origin );
+		b2RecW_VEC2( &recBuf, translation );
+		b2RecW_QUERYFILTER( &recBuf, filter );
+		b2RecW_RAYRESULT( &recBuf, result );
+		b2RecCommitRecord( world->recording, 0xE5, recBuf.data, recBuf.size );
+		b2RecBufFree( &recBuf );
 	}
 
 	return result;
@@ -2353,6 +2522,20 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2V
 
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
+	b2RecQueryWriter recWriter = { 0 };
+	if ( world->recording != NULL )
+	{
+		b2RecQueryBegin( &recWriter, context );
+		recWriter.userFcn.castFcn = fcn;
+		b2RecW_WORLDID( &recWriter.buf, worldId );
+		b2RecW_SHAPEPROXY( &recWriter.buf, *proxy );
+		b2RecW_VEC2( &recWriter.buf, translation );
+		b2RecW_QUERYFILTER( &recWriter.buf, filter );
+		recWriter.countOffset = b2RecReserveU32( &recWriter.buf );
+		fcn = b2RecCastTrampoline;
+		context = &recWriter;
+	}
+
 	b2ShapeCastInput input = { 0 };
 	input.proxy = *proxy;
 	input.translation = translation;
@@ -2369,10 +2552,17 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2V
 
 		if ( worldContext.fraction == 0.0f )
 		{
-			return treeStats;
+			break;
 		}
 
 		input.maxFraction = worldContext.fraction;
+	}
+
+	if ( world->recording != NULL )
+	{
+		b2RecPatchU32( &recWriter.buf, recWriter.countOffset, recWriter.hitCount );
+		b2RecW_TREESTATS( &recWriter.buf, treeStats );
+		b2RecQueryCommit( world->recording, 0xE3, &recWriter );
 	}
 
 	return treeStats;
@@ -2452,10 +2642,22 @@ float b2World_CastMover( b2WorldId worldId, const b2Capsule* mover, b2Vec2 trans
 
 		if ( worldContext.fraction == 0.0f )
 		{
-			return 0.0f;
+			break;
 		}
 
 		input.maxFraction = worldContext.fraction;
+	}
+
+	if ( world->recording != NULL )
+	{
+		b2RecBuffer recBuf = { 0 };
+		b2RecW_WORLDID( &recBuf, worldId );
+		b2RecW_CAPSULE( &recBuf, *mover );
+		b2RecW_VEC2( &recBuf, translation );
+		b2RecW_QUERYFILTER( &recBuf, filter );
+		b2RecW_F32( &recBuf, worldContext.fraction );
+		b2RecCommitRecord( world->recording, 0xE6, recBuf.data, recBuf.size );
+		b2RecBufFree( &recBuf );
 	}
 
 	return worldContext.fraction;
@@ -2511,6 +2713,19 @@ void b2World_CollideMover( b2WorldId worldId, const b2Capsule* mover, b2QueryFil
 		return;
 	}
 
+	b2RecQueryWriter recWriter = { 0 };
+	if ( world->recording != NULL )
+	{
+		b2RecQueryBegin( &recWriter, context );
+		recWriter.userFcn.planeFcn = fcn;
+		b2RecW_WORLDID( &recWriter.buf, worldId );
+		b2RecW_CAPSULE( &recWriter.buf, *mover );
+		b2RecW_QUERYFILTER( &recWriter.buf, filter );
+		recWriter.countOffset = b2RecReserveU32( &recWriter.buf );
+		fcn = b2RecPlaneTrampoline;
+		context = &recWriter;
+	}
+
 	b2Vec2 r = { mover->radius, mover->radius };
 
 	b2AABB aabb;
@@ -2524,6 +2739,13 @@ void b2World_CollideMover( b2WorldId worldId, const b2Capsule* mover, b2QueryFil
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
 		b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, TreeCollideCallback, &worldContext );
+	}
+
+	if ( world->recording != NULL )
+	{
+		b2RecPatchU32( &recWriter.buf, recWriter.countOffset, recWriter.hitCount );
+		// CollideMover returns void; no TREESTATS tail
+		b2RecQueryCommit( world->recording, 0xE4, &recWriter );
 	}
 }
 
@@ -2597,6 +2819,11 @@ void b2World_Dump()
 void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterFcn* fcn, void* context )
 {
 	b2World* world = b2GetWorldFromId( worldId );
+	if ( fcn != NULL && world->recording != NULL )
+	{
+		printf( "b2World_SetCustomFilterCallback: customFilter not supported while recording\n" );
+		B2_ASSERT( false && "customFilter callbacks are not supported while recording" );
+	}
 	world->customFilterFcn = fcn;
 	world->customFilterContext = context;
 }
@@ -2604,6 +2831,11 @@ void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterFcn* fcn,
 void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* fcn, void* context )
 {
 	b2World* world = b2GetWorldFromId( worldId );
+	if ( fcn != NULL && world->recording != NULL )
+	{
+		printf( "b2World_SetPreSolveCallback: preSolve not supported while recording\n" );
+		B2_ASSERT( false && "preSolve callbacks are not supported while recording" );
+	}
 	world->preSolveFcn = fcn;
 	world->preSolveContext = context;
 }
@@ -2611,6 +2843,7 @@ void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* fcn, void* c
 void b2World_SetGravity( b2WorldId worldId, b2Vec2 gravity )
 {
 	b2World* world = b2GetWorldFromId( worldId );
+	B2_REC( world, WorldSetGravity, worldId, gravity );
 	world->gravity = gravity;
 }
 
@@ -2727,6 +2960,8 @@ void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionDef )
 		return;
 	}
 
+	B2_REC( world, WorldExplode, worldId, *explosionDef );
+
 	struct ExplosionContext explosionContext = { world, position, radius, falloff, impulsePerLength };
 
 	b2AABB aabb;
@@ -2747,6 +2982,8 @@ void b2World_RebuildStaticTree( b2WorldId worldId )
 		return;
 	}
 
+	B2_REC( world, WorldRebuildStaticTree, worldId );
+
 	b2DynamicTree* staticTree = world->broadPhase.trees + b2_staticBody;
 	b2DynamicTree_Rebuild( staticTree, true );
 }
@@ -2754,6 +2991,7 @@ void b2World_RebuildStaticTree( b2WorldId worldId )
 void b2World_EnableSpeculative( b2WorldId worldId, bool flag )
 {
 	b2World* world = b2GetWorldFromId( worldId );
+	B2_REC( world, WorldEnableSpeculative, worldId, flag );
 	world->enableSpeculative = flag;
 }
 

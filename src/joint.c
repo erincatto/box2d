@@ -8,6 +8,7 @@
 #include "core.h"
 #include "island.h"
 #include "physics_world.h"
+#include "recording.h"
 #include "shape.h"
 #include "solver.h"
 #include "solver_set.h"
@@ -415,6 +416,9 @@ b2JointId b2CreateDistanceJoint( b2WorldId worldId, const b2DistanceJointDef* de
 	joint->distanceJoint.motorImpulse = 0.0f;
 
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
+
+	B2_REC_CREATE( world, CreateDistanceJoint, jointId, worldId, *def );
+
 	return jointId;
 }
 
@@ -446,6 +450,9 @@ b2JointId b2CreateMotorJoint( b2WorldId worldId, const b2MotorJointDef* def )
 	joint->motorJoint.maxSpringTorque = def->maxSpringTorque;
 
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
+
+	B2_REC_CREATE( world, CreateMotorJoint, jointId, worldId, *def );
+
 	return jointId;
 }
 
@@ -466,6 +473,9 @@ b2JointId b2CreateFilterJoint( b2WorldId worldId, const b2FilterJointDef* def )
 	b2JointSim* joint = pair.jointSim;
 
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
+
+	B2_REC_CREATE( world, CreateFilterJoint, jointId, worldId, *def );
+
 	return jointId;
 }
 
@@ -500,6 +510,9 @@ b2JointId b2CreatePrismaticJoint( b2WorldId worldId, const b2PrismaticJointDef* 
 	joint->prismaticJoint.enableMotor = def->enableMotor;
 
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
+
+	B2_REC_CREATE( world, CreatePrismaticJoint, jointId, worldId, *def );
+
 	return jointId;
 }
 
@@ -538,6 +551,9 @@ b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJointDef* de
 	joint->revoluteJoint.enableMotor = def->enableMotor;
 
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
+
+	B2_REC_CREATE( world, CreateRevoluteJoint, jointId, worldId, *def );
+
 	return jointId;
 }
 
@@ -567,6 +583,9 @@ b2JointId b2CreateWeldJoint( b2WorldId worldId, const b2WeldJointDef* def )
 	joint->weldJoint.angularImpulse = 0.0f;
 
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
+
+	B2_REC_CREATE( world, CreateWeldJoint, jointId, worldId, *def );
+
 	return jointId;
 }
 
@@ -605,6 +624,9 @@ b2JointId b2CreateWheelJoint( b2WorldId worldId, const b2WheelJointDef* def )
 	joint->wheelJoint.enableMotor = def->enableMotor;
 
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
+
+	B2_REC_CREATE( world, CreateWheelJoint, jointId, worldId, *def );
+
 	return jointId;
 }
 
@@ -725,6 +747,8 @@ void b2DestroyJoint( b2JointId jointId, bool wakeAttached )
 		return;
 	}
 
+	B2_REC( world, DestroyJoint, jointId, wakeAttached );
+
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 
 	b2DestroyJointInternal( world, joint, wakeAttached );
@@ -762,6 +786,7 @@ void b2Joint_SetLocalFrameA( b2JointId jointId, b2Transform localFrame )
 	B2_ASSERT( b2IsValidTransform( localFrame ) );
 
 	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, JointSetLocalFrameA, jointId, localFrame );
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* jointSim = b2GetJointSim( world, joint );
 	jointSim->localFrameA = localFrame;
@@ -780,6 +805,7 @@ void b2Joint_SetLocalFrameB( b2JointId jointId, b2Transform localFrame )
 	B2_ASSERT( b2IsValidTransform( localFrame ) );
 
 	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, JointSetLocalFrameB, jointId, localFrame );
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* jointSim = b2GetJointSim( world, joint );
 	jointSim->localFrameB = localFrame;
@@ -800,6 +826,8 @@ void b2Joint_SetCollideConnected( b2JointId jointId, bool shouldCollide )
 	{
 		return;
 	}
+
+	B2_REC( world, JointSetCollideConnected, jointId, shouldCollide );
 
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	if ( joint->collideConnected == shouldCollide )
@@ -866,6 +894,8 @@ void b2Joint_WakeBodies( b2JointId jointId )
 	{
 		return;
 	}
+
+	B2_REC( world, JointWakeBodies, jointId );
 
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2Body* bodyA = b2Array_Get( world->bodies,joint->edges[0].bodyId );
@@ -1212,6 +1242,7 @@ void b2Joint_SetConstraintTuning( b2JointId jointId, float hertz, float dampingR
 	B2_ASSERT( b2IsValidFloat( dampingRatio ) && dampingRatio >= 0.0f );
 
 	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, JointSetConstraintTuning, jointId, hertz, dampingRatio );
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* base = b2GetJointSim( world, joint );
 	base->constraintHertz = hertz;
@@ -1232,6 +1263,7 @@ void b2Joint_SetForceThreshold( b2JointId jointId, float threshold )
 	B2_ASSERT( b2IsValidFloat( threshold ) && threshold >= 0.0f );
 
 	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, JointSetForceThreshold, jointId, threshold );
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* base = b2GetJointSim( world, joint );
 	base->forceThreshold = threshold;
@@ -1250,6 +1282,7 @@ void b2Joint_SetTorqueThreshold( b2JointId jointId, float threshold )
 	B2_ASSERT( b2IsValidFloat( threshold ) && threshold >= 0.0f );
 
 	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, JointSetTorqueThreshold, jointId, threshold );
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* base = b2GetJointSim( world, joint );
 	base->torqueThreshold = threshold;

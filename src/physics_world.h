@@ -3,6 +3,8 @@
 
 #pragma once
 
+typedef struct b2Recording b2Recording;
+
 #include "arena_allocator.h"
 #include "bitset.h"
 #include "broad_phase.h"
@@ -190,6 +192,8 @@ typedef struct b2World
 	struct b2Scheduler* scheduler;
 
 	void* userData;
+
+	b2Recording* recording; // NULL unless recordingPath was set at world creation
 
 	// Remember type step used for reporting forces and torques
 	// inverse sub-step

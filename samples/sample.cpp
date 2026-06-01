@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 Erin Catto
+// SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
 #if defined( _MSC_VER ) && !defined( _CRT_SECURE_NO_WARNINGS )
@@ -249,7 +249,7 @@ static void TestMathCpp()
 	c += c;
 }
 
-Sample::Sample( SampleContext* context )
+Sample::Sample( SampleContext* context, bool createWorld )
 {
 	m_context = context;
 	m_camera = &context->camera;
@@ -274,14 +274,19 @@ Sample::Sample( SampleContext* context )
 
 	g_randomSeed = RAND_SEED;
 
-	CreateWorld();
+	if ( createWorld )
+	{
+		CreateWorld();
+	}
 	TestMathCpp();
 }
 
 Sample::~Sample()
 {
-	// By deleting the world, we delete the bomb, mouse joint, etc.
-	b2DestroyWorld( m_worldId );
+	if (B2_IS_NON_NULL(m_worldId))
+	{
+		b2DestroyWorld( m_worldId );
+	}
 }
 
 void Sample::CreateWorld()
@@ -297,6 +302,10 @@ void Sample::CreateWorld()
 	worldDef.userTaskContext = this;
 	worldDef.enableSleep = m_context->enableSleep;
 	worldDef.capacity = m_context->capacity;
+	if ( m_context->record )
+	{
+		worldDef.recordingPath = m_context->recordingFile;
+	}
 	m_worldId = b2CreateWorld( &worldDef );
 
 	b2World_SetContactRecycleDistance( m_worldId, m_context->recycleDistance );
@@ -934,6 +943,8 @@ void Sample::DrawMetrics()
 			ImGui::EndTabItem();
 		}
 
+		DrawMetricsTab();
+
 		ImGui::EndTabBar();
 	}
 
@@ -1161,6 +1172,9 @@ void SelectSample( SampleContext* context, int selection, bool restart )
 		context->sampleIndex = selection;
 		context->subStepCount = 4;
 		context->debugDraw.drawJoints = true;
+
+		// Switching samples stops recording; a restart keeps it on and re-records
+		context->record = false;
 	}
 
 	delete context->sample;
@@ -1597,29 +1611,56 @@ static void DrawRightPanel( SampleContext* context, float frameTime )
 		ImGui::Separator();
 	}
 
-	if ( ImGui::CollapsingHeader( "Solver", ImGuiTreeNodeFlags_DefaultOpen ) )
+	if ( context->sample->HasSolverControls() && ImGui::CollapsingHeader( "Solver", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{
 		ImGui::PushItemWidth( 6.0f * fontSize );
-		ImGui::SliderInt( "Sub-steps", &context->subStepCount, 1, 32 );
-		ImGui::SliderFloat( "Hertz", &context->hertz, 5.0f, 240.0f, "%.0f hz" );
+		ImGui::SliderInt( "Sub-steps##Solver", &context->subStepCount, 1, 32 );
+		ImGui::SliderFloat( "Hertz##Solver", &context->hertz, 5.0f, 240.0f, "%.0f hz" );
 
-		if ( ImGui::SliderInt( "Workers", &context->workerCount, 1, B2_MAX_WORKERS ) )
+		if ( ImGui::SliderInt( "Workers##Solver", &context->workerCount, 1, B2_MAX_WORKERS ) )
 		{
 			context->workerCount = b2ClampInt( context->workerCount, 1, B2_MAX_WORKERS );
 			SelectSample( context, context->sampleIndex, true );
 		}
 
 		float recyclingCentimeters = 100.0f * context->recycleDistance;
-		if ( ImGui::SliderFloat( "Recycle", &recyclingCentimeters, 0.0f, 10.0f, "%.1f cm" ) )
+		if ( ImGui::SliderFloat( "Recycle##Solver", &recyclingCentimeters, 0.0f, 10.0f, "%.1f cm" ) )
 		{
 			context->recycleDistance = 0.01f * recyclingCentimeters;
 			b2World_SetContactRecycleDistance( context->sample->m_worldId, context->recycleDistance );
 		}
 		ImGui::PopItemWidth();
 
-		ImGui::Checkbox( "Sleep", &context->enableSleep );
-		ImGui::Checkbox( "Warm Starting", &context->enableWarmStarting );
-		ImGui::Checkbox( "Continuous", &context->enableContinuous );
+		ImGui::Checkbox( "Sleep##Solver", &context->enableSleep );
+		ImGui::Checkbox( "Warm Starting##Solver", &context->enableWarmStarting );
+		ImGui::Checkbox( "Continuous##Solver", &context->enableContinuous );
+	}
+
+	if ( context->sample->HasSolverControls() && ImGui::CollapsingHeader( "Recording", ImGuiTreeNodeFlags_DefaultOpen ) )
+	{
+		ImGui::PushItemWidth( 9.0f * fontSize );
+		ImGui::InputText( "File##Recording", context->recordingFile, sizeof( context->recordingFile ) );
+		ImGui::PopItemWidth();
+
+		if ( context->record == false )
+		{
+			// Recording must begin at world creation, so restart with it enabled
+			if ( ImGui::Button( "Record##Recording" ) )
+			{
+				context->record = true;
+				SelectSample( context, context->sampleIndex, true );
+			}
+		}
+		else
+		{
+			if ( ImGui::Button( "Stop##Recording" ) )
+			{
+				b2World_StopRecording( context->sample->m_worldId );
+				context->record = false;
+			}
+			ImGui::SameLine();
+			ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "recording" );
+		}
 	}
 
 	ImGui::End();
