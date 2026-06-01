@@ -2515,9 +2515,11 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 }
 
 // Public query inspection. The internal b2RecQueryKind values match the public b2RecQueryType, so
-// the kind copies across as a plain cast. The asserts keep the two enums in lockstep.
-_Static_assert( (int)b2_recQueryOverlapAABB == (int)B2_RECQ_OVERLAP_AABB, "query type enum drift" );
-_Static_assert( (int)b2_recQueryShapeRayCast == (int)B2_RECQ_SHAPE_RAY_CAST, "query type enum drift" );
+// the kind copies across as a plain cast. Pin the first and last kinds to catch enum drift. Each
+// value is compared to an integer literal, never to the other enum, since two enum operands trip
+// MSVC C5287 even through a cast.
+_Static_assert( b2_recQueryOverlapAABB == 0 && B2_RECQ_OVERLAP_AABB == 0, "query type enum drift" );
+_Static_assert( b2_recQueryShapeRayCast == 8 && B2_RECQ_SHAPE_RAY_CAST == 8, "query type enum drift" );
 
 int b2RecPlayer_GetFrameQueryCount( const b2RecPlayer* player )
 {
