@@ -299,6 +299,10 @@ void Sample::CreateWorld()
 	worldDef.userTaskContext = this;
 	worldDef.enableSleep = m_context->enableSleep;
 	worldDef.capacity = m_context->capacity;
+	if ( m_context->record )
+	{
+		worldDef.recordingPath = m_context->recordingFile;
+	}
 	m_worldId = b2CreateWorld( &worldDef );
 
 	b2World_SetContactRecycleDistance( m_worldId, m_context->recycleDistance );
@@ -1165,6 +1169,9 @@ void SelectSample( SampleContext* context, int selection, bool restart )
 		context->sampleIndex = selection;
 		context->subStepCount = 4;
 		context->debugDraw.drawJoints = true;
+
+		// Switching samples stops recording; a restart keeps it on and re-records
+		context->record = false;
 	}
 
 	delete context->sample;
@@ -1624,6 +1631,33 @@ static void DrawRightPanel( SampleContext* context, float frameTime )
 		ImGui::Checkbox( "Sleep", &context->enableSleep );
 		ImGui::Checkbox( "Warm Starting", &context->enableWarmStarting );
 		ImGui::Checkbox( "Continuous", &context->enableContinuous );
+	}
+
+	if ( context->sample->HasSolverControls() && ImGui::CollapsingHeader( "Recording", ImGuiTreeNodeFlags_DefaultOpen ) )
+	{
+		ImGui::PushItemWidth( 9.0f * fontSize );
+		ImGui::InputText( "File", context->recordingFile, sizeof( context->recordingFile ) );
+		ImGui::PopItemWidth();
+
+		if ( context->record == false )
+		{
+			// Recording must begin at world creation, so restart with it enabled
+			if ( ImGui::Button( "Record" ) )
+			{
+				context->record = true;
+				SelectSample( context, context->sampleIndex, true );
+			}
+		}
+		else
+		{
+			if ( ImGui::Button( "Stop" ) )
+			{
+				b2World_StopRecording( context->sample->m_worldId );
+				context->record = false;
+			}
+			ImGui::SameLine();
+			ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "recording" );
+		}
 	}
 
 	ImGui::End();

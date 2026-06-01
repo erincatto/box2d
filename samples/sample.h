@@ -42,6 +42,11 @@ struct SampleContext
 	// Set by Ctrl+O; consumed by UpdateSampleUI to open the fuzzy sample picker.
 	bool openSamplePicker = false;
 
+	// When set, the next world created records to recordingFile. Cleared when a
+	// different sample is selected so a restart re-records but a switch does not.
+	bool record = false;
+	char recordingFile[256] = "recording.b2rec";
+
 	// These are persisted
 	int sampleIndex = 0;
 };
