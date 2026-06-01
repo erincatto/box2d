@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 Erin Catto
+// SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
 #pragma once
@@ -16,7 +16,7 @@
 
 typedef struct b2World b2World;
 
-// File header, fixed 32 bytes, little-endian, single-arch-gated
+// File header, fixed 32 bytes, little-endian
 typedef struct b2RecHeader
 {
 	uint32_t magic;		   // 'B2RC' = 0x43523242
@@ -45,7 +45,7 @@ typedef struct b2Recording
 	FILE* file;
 	b2RecBuffer buffer;
 	int recordStart; // offset of the 3-byte size field for u24 backpatch
-	b2Mutex* lock;   // serializes query record commits across concurrent query threads
+	b2Mutex* lock;	 // serializes query record commits across concurrent query threads
 } b2Recording;
 
 // C type aliases per TAG, used in codegen arg structs (recording.c only)
@@ -218,9 +218,6 @@ void b2RecCommitRecord( b2Recording* rec, uint8_t opcode, const uint8_t* payload
 // Per-query writer context: holds user fcn+ctx, the local payload buffer, and the hit counter
 typedef struct b2RecQueryWriter
 {
-	// Stash the user callback in its exact type so no function-pointer cast is ever needed.
-	// A void* stash is a function-to-object conversion that ISO C forbids, and casting
-	// between function pointer types trips MSVC C4191, so give each callback shape its own slot.
 	union
 	{
 		b2OverlapResultFcn* overlapFcn;

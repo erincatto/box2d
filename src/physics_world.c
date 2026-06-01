@@ -1967,8 +1967,9 @@ int b2World_GetWorkerCount( b2WorldId worldId )
 
 void b2World_SaveRecording( b2WorldId worldId, const char* path )
 {
-	b2World* world = b2GetWorldFromId( worldId );
-	if ( world->recording == NULL )
+	b2World* world = b3GetUnlockedWorldFromId( worldId );
+
+	if ( world == NULL || world->recording == NULL || path == NULL )
 	{
 		return;
 	}
@@ -1979,7 +1980,10 @@ void b2World_SaveRecording( b2WorldId worldId, const char* path )
 	// Stream-copy the recording to the user path. Source file stays open.
 	FILE* src = world->recording->file;
 	long pos = ftell( src );
-	fseek( src, 0, SEEK_SET );
+	if ( pos < 0 || fseek( src, 0, SEEK_SET ) != 0 )
+	{
+		return;
+	}
 
 	FILE* dst = fopen( path, "wb" );
 	if ( dst == NULL )
@@ -2001,7 +2005,12 @@ void b2World_SaveRecording( b2WorldId worldId, const char* path )
 
 void b2World_StopRecording( b2WorldId worldId )
 {
-	b2World* world = b2GetWorldFromId( worldId );
+	b2World* world = b3GetUnlockedWorldFromId( worldId );
+	if ( world == NULL )
+	{
+		return;
+	}
+
 	b2StopRecordingInternal( world );
 }
 

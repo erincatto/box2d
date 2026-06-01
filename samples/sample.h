@@ -67,14 +67,13 @@ public:
 		return false;
 	}
 
-	// The right panel solver controls only make sense for a live sim. A replay re-runs
-	// recorded inputs, so it hides them.
+	// Allow solver controls to be hidden by a sample.
 	virtual bool HasSolverControls() const
 	{
 		return true;
 	}
 
-	// Contribute extra tabs to the diagnostics drawer (the replay timeline lives here).
+	// Allow a sample to add extra tabs to the metrics window.
 	virtual void DrawMetricsTab()
 	{
 	}

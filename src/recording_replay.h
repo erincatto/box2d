@@ -8,7 +8,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-// Forward declare for the back-pointer on b2RecReader
 typedef struct b2RecPlayer b2RecPlayer;
 
 // A single recorded callback hit, used both as reader scratch and as the per-frame draw store
@@ -40,7 +39,7 @@ typedef enum b2RecQueryKind
 typedef struct b2RecDrawQuery
 {
 	int kind;
-	b2QueryFilter filter; // query filter for overlap and cast ops, zeroed for the shape local queries
+	b2QueryFilter filter;
 	b2AABB aabb;
 	b2ShapeProxy proxy;
 	b2Capsule mover;
@@ -61,9 +60,9 @@ typedef struct b2RecReader
 	int size;
 	int cursor;
 	b2WorldId replayWorldId; // world created during replay; valid after CreateWorld record
-	int workerCount;         // 0 = use recorded count
-	bool ok;                 // false on read overrun or id mismatch, a fatal stop
-	bool diverged;           // a StateHash failed to reproduce, non-fatal so a viewer can keep playing
+	int workerCount;		 // 0 = use recorded count
+	bool ok;				 // false on read overrun or id mismatch, a fatal stop
+	bool diverged;			 // a StateHash failed to reproduce, non-fatal so a viewer can keep playing
 
 	// Scratch for variable-length defs (chain points/materials), grown on demand and
 	// freed with the player. Cloned by the create call so only valid during one dispatch.
@@ -82,19 +81,19 @@ typedef struct b2RecReader
 // Incremental player. Owns the file image and drives replay one step at a time.
 struct b2RecPlayer
 {
-	uint8_t* data;   // file image, owned here
+	uint8_t* data; // file image, owned here
 	int size;
-	int headerEnd;     // first payload offset
-	uint32_t buildHash; // engine build that produced the file, from the header
-	uint64_t wallClock; // unix time the recording was made, from the header
-	int frame;          // steps dispatched so far
-	int frameCount;     // total recorded steps, counted once at open
-	int recordedWorkerCount; // worker count from the recorded world def
-	float recordedDt;        // dt of the first recorded step
+	int headerEnd;			  // first payload offset
+	uint32_t buildHash;		  // engine build that produced the file, from the header
+	uint64_t wallClock;		  // unix time the recording was made, from the header
+	int frame;				  // steps dispatched so far
+	int frameCount;			  // total recorded steps, counted once at open
+	int recordedWorkerCount;  // worker count from the recorded world def
+	float recordedDt;		  // dt of the first recorded step
 	int recordedSubStepCount; // sub-steps of the first recorded step
-	int divergeFrame;   // first step that diverged, -1 until then
-	bool atEnd;      // a StepFrame ran out of records without reaching a step
-	b2RecReader rdr; // cursor and replay world, threaded into every dispatcher
+	int divergeFrame;		  // first step that diverged, -1 until then
+	bool atEnd;				  // a StepFrame ran out of records without reaching a step
+	b2RecReader rdr;		  // cursor and replay world, threaded into every dispatcher
 
 	// Per-frame query store, reset at the top of each StepFrame
 	b2RecDrawQuery* frameQueries;

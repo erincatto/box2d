@@ -11,6 +11,7 @@
 
 #include "box2d/box2d.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -56,7 +57,7 @@ uint32_t b2RecR_U24( b2RecReader* rdr )
 		return 0;
 	}
 	uint32_t v = (uint32_t)rdr->data[rdr->cursor] | ( (uint32_t)rdr->data[rdr->cursor + 1] << 8 ) |
-	             ( (uint32_t)rdr->data[rdr->cursor + 2] << 16 );
+				 ( (uint32_t)rdr->data[rdr->cursor + 2] << 16 );
 	rdr->cursor += 3;
 	return v;
 }
@@ -69,7 +70,7 @@ uint32_t b2RecR_U32( b2RecReader* rdr )
 		return 0;
 	}
 	uint32_t v = (uint32_t)rdr->data[rdr->cursor] | ( (uint32_t)rdr->data[rdr->cursor + 1] << 8 ) |
-	             ( (uint32_t)rdr->data[rdr->cursor + 2] << 16 ) | ( (uint32_t)rdr->data[rdr->cursor + 3] << 24 );
+				 ( (uint32_t)rdr->data[rdr->cursor + 2] << 16 ) | ( (uint32_t)rdr->data[rdr->cursor + 3] << 24 );
 	rdr->cursor += 4;
 	return v;
 }
@@ -82,9 +83,9 @@ uint64_t b2RecR_U64( b2RecReader* rdr )
 		return 0;
 	}
 	uint64_t v = (uint64_t)rdr->data[rdr->cursor] | ( (uint64_t)rdr->data[rdr->cursor + 1] << 8 ) |
-	             ( (uint64_t)rdr->data[rdr->cursor + 2] << 16 ) | ( (uint64_t)rdr->data[rdr->cursor + 3] << 24 ) |
-	             ( (uint64_t)rdr->data[rdr->cursor + 4] << 32 ) | ( (uint64_t)rdr->data[rdr->cursor + 5] << 40 ) |
-	             ( (uint64_t)rdr->data[rdr->cursor + 6] << 48 ) | ( (uint64_t)rdr->data[rdr->cursor + 7] << 56 );
+				 ( (uint64_t)rdr->data[rdr->cursor + 2] << 16 ) | ( (uint64_t)rdr->data[rdr->cursor + 3] << 24 ) |
+				 ( (uint64_t)rdr->data[rdr->cursor + 4] << 32 ) | ( (uint64_t)rdr->data[rdr->cursor + 5] << 40 ) |
+				 ( (uint64_t)rdr->data[rdr->cursor + 6] << 48 ) | ( (uint64_t)rdr->data[rdr->cursor + 7] << 56 );
 	rdr->cursor += 8;
 	return v;
 }
@@ -592,8 +593,10 @@ b2ShapeProxy b2RecR_SHAPEPROXY( b2RecReader* rdr )
 	b2ShapeProxy p;
 	memset( &p, 0, sizeof( p ) );
 	int count = b2RecR_I32( rdr );
-	if ( count < 0 ) count = 0;
-	if ( count > B2_MAX_POLYGON_VERTICES ) count = B2_MAX_POLYGON_VERTICES;
+	if ( count < 0 )
+		count = 0;
+	if ( count > B2_MAX_POLYGON_VERTICES )
+		count = B2_MAX_POLYGON_VERTICES;
 	p.count = count;
 	for ( int i = 0; i < count; ++i )
 	{
@@ -723,7 +726,7 @@ static void b2RecCheckBodyId( b2RecReader* rdr, b2BodyId got, b2BodyId rec )
 	if ( got.index1 != rec.index1 || got.generation != rec.generation )
 	{
 		printf( "b2ReplayFile: body id mismatch (rec index1=%d gen=%u, got index1=%d gen=%u)\n", rec.index1,
-		        (unsigned)rec.generation, got.index1, (unsigned)got.generation );
+				(unsigned)rec.generation, got.index1, (unsigned)got.generation );
 		rdr->ok = false;
 	}
 }
@@ -733,7 +736,7 @@ static void b2RecCheckShapeId( b2RecReader* rdr, b2ShapeId got, b2ShapeId rec )
 	if ( got.index1 != rec.index1 || got.generation != rec.generation )
 	{
 		printf( "b2ReplayFile: shape id mismatch (rec index1=%d gen=%u, got index1=%d gen=%u)\n", rec.index1,
-		        (unsigned)rec.generation, got.index1, (unsigned)got.generation );
+				(unsigned)rec.generation, got.index1, (unsigned)got.generation );
 		rdr->ok = false;
 	}
 }
@@ -743,7 +746,7 @@ static void b2RecCheckChainId( b2RecReader* rdr, b2ChainId got, b2ChainId rec )
 	if ( got.index1 != rec.index1 || got.generation != rec.generation )
 	{
 		printf( "b2ReplayFile: chain id mismatch (rec index1=%d gen=%u, got index1=%d gen=%u)\n", rec.index1,
-		        (unsigned)rec.generation, got.index1, (unsigned)got.generation );
+				(unsigned)rec.generation, got.index1, (unsigned)got.generation );
 		rdr->ok = false;
 	}
 }
@@ -753,7 +756,7 @@ static void b2RecCheckJointId( b2RecReader* rdr, b2JointId got, b2JointId rec )
 	if ( got.index1 != rec.index1 || got.generation != rec.generation )
 	{
 		printf( "b2ReplayFile: joint id mismatch (rec index1=%d gen=%u, got index1=%d gen=%u)\n", rec.index1,
-		        (unsigned)rec.generation, got.index1, (unsigned)got.generation );
+				(unsigned)rec.generation, got.index1, (unsigned)got.generation );
 		rdr->ok = false;
 	}
 }
@@ -1322,7 +1325,8 @@ static void b2RecDispatch_DistanceJointEnableSpring( const b2RecArgs_DistanceJoi
 	b2DistanceJoint_EnableSpring( b2RecMakeJointId( rdr, a->joint ), a->enableSpring );
 }
 
-static void b2RecDispatch_DistanceJointSetSpringForceRange( const b2RecArgs_DistanceJointSetSpringForceRange* a, b2RecReader* rdr )
+static void b2RecDispatch_DistanceJointSetSpringForceRange( const b2RecArgs_DistanceJointSetSpringForceRange* a,
+															b2RecReader* rdr )
 {
 	b2DistanceJoint_SetSpringForceRange( b2RecMakeJointId( rdr, a->joint ), a->lowerForce, a->upperForce );
 }
@@ -1332,7 +1336,8 @@ static void b2RecDispatch_DistanceJointSetSpringHertz( const b2RecArgs_DistanceJ
 	b2DistanceJoint_SetSpringHertz( b2RecMakeJointId( rdr, a->joint ), a->hertz );
 }
 
-static void b2RecDispatch_DistanceJointSetSpringDampingRatio( const b2RecArgs_DistanceJointSetSpringDampingRatio* a, b2RecReader* rdr )
+static void b2RecDispatch_DistanceJointSetSpringDampingRatio( const b2RecArgs_DistanceJointSetSpringDampingRatio* a,
+															  b2RecReader* rdr )
 {
 	b2DistanceJoint_SetSpringDampingRatio( b2RecMakeJointId( rdr, a->joint ), a->dampingRatio );
 }
@@ -1399,7 +1404,8 @@ static void b2RecDispatch_MotorJointSetAngularHertz( const b2RecArgs_MotorJointS
 	b2MotorJoint_SetAngularHertz( b2RecMakeJointId( rdr, a->joint ), a->hertz );
 }
 
-static void b2RecDispatch_MotorJointSetAngularDampingRatio( const b2RecArgs_MotorJointSetAngularDampingRatio* a, b2RecReader* rdr )
+static void b2RecDispatch_MotorJointSetAngularDampingRatio( const b2RecArgs_MotorJointSetAngularDampingRatio* a,
+															b2RecReader* rdr )
 {
 	b2MotorJoint_SetAngularDampingRatio( b2RecMakeJointId( rdr, a->joint ), a->damping );
 }
@@ -1426,12 +1432,14 @@ static void b2RecDispatch_PrismaticJointSetSpringHertz( const b2RecArgs_Prismati
 	b2PrismaticJoint_SetSpringHertz( b2RecMakeJointId( rdr, a->joint ), a->hertz );
 }
 
-static void b2RecDispatch_PrismaticJointSetSpringDampingRatio( const b2RecArgs_PrismaticJointSetSpringDampingRatio* a, b2RecReader* rdr )
+static void b2RecDispatch_PrismaticJointSetSpringDampingRatio( const b2RecArgs_PrismaticJointSetSpringDampingRatio* a,
+															   b2RecReader* rdr )
 {
 	b2PrismaticJoint_SetSpringDampingRatio( b2RecMakeJointId( rdr, a->joint ), a->dampingRatio );
 }
 
-static void b2RecDispatch_PrismaticJointSetTargetTranslation( const b2RecArgs_PrismaticJointSetTargetTranslation* a, b2RecReader* rdr )
+static void b2RecDispatch_PrismaticJointSetTargetTranslation( const b2RecArgs_PrismaticJointSetTargetTranslation* a,
+															  b2RecReader* rdr )
 {
 	b2PrismaticJoint_SetTargetTranslation( b2RecMakeJointId( rdr, a->joint ), a->translation );
 }
@@ -1473,7 +1481,8 @@ static void b2RecDispatch_RevoluteJointSetSpringHertz( const b2RecArgs_RevoluteJ
 	b2RevoluteJoint_SetSpringHertz( b2RecMakeJointId( rdr, a->joint ), a->hertz );
 }
 
-static void b2RecDispatch_RevoluteJointSetSpringDampingRatio( const b2RecArgs_RevoluteJointSetSpringDampingRatio* a, b2RecReader* rdr )
+static void b2RecDispatch_RevoluteJointSetSpringDampingRatio( const b2RecArgs_RevoluteJointSetSpringDampingRatio* a,
+															  b2RecReader* rdr )
 {
 	b2RevoluteJoint_SetSpringDampingRatio( b2RecMakeJointId( rdr, a->joint ), a->dampingRatio );
 }
@@ -1628,8 +1637,7 @@ static void b2RecGrowFrameHits( b2RecPlayer* player, int need )
 	player->frameHitCap = newCap;
 }
 
-static b2RecDrawQuery* b2RecStashQueryBegin( b2RecPlayer* player, int kind,
-                                              const b2RecRecordedHit* hits, int hitCount )
+static b2RecDrawQuery* b2RecStashQueryBegin( b2RecPlayer* player, int kind, const b2RecRecordedHit* hits, int hitCount )
 {
 	b2RecGrowFrameQueries( player );
 	b2RecDrawQuery* q = &player->frameQueries[player->frameQueryCount];
@@ -1683,10 +1691,12 @@ static void b2RecDispatch_QueryOverlapAABB( const b2RecArgs_QueryOverlapAABB* a,
 		rdr->hits[i].userReturnB = b2RecR_BOOL( rdr );
 	}
 	(void)b2RecR_TREESTATS( rdr );
-	if ( !rdr->ok ) return;
+	if ( !rdr->ok )
+		return;
 	b2RecReplayOverlap rc = { rdr, rdr->hits, (int)n, 0 };
 	b2World_OverlapAABB( rdr->replayWorldId, a->aabb, a->filter, b2RecReplayOverlapTrampoline, &rc );
-	if ( rc.cursor != (int)n ) rdr->diverged = true;
+	if ( rc.cursor != (int)n )
+		rdr->diverged = true;
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_OVERLAP_AABB, rdr->hits, (int)n );
@@ -1705,10 +1715,12 @@ static void b2RecDispatch_QueryOverlapShape( const b2RecArgs_QueryOverlapShape* 
 		rdr->hits[i].userReturnB = b2RecR_BOOL( rdr );
 	}
 	(void)b2RecR_TREESTATS( rdr );
-	if ( !rdr->ok ) return;
+	if ( !rdr->ok )
+		return;
 	b2RecReplayOverlap rc = { rdr, rdr->hits, (int)n, 0 };
 	b2World_OverlapShape( rdr->replayWorldId, &a->proxy, a->filter, b2RecReplayOverlapTrampoline, &rc );
-	if ( rc.cursor != (int)n ) rdr->diverged = true;
+	if ( rc.cursor != (int)n )
+		rdr->diverged = true;
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_OVERLAP_SHAPE, rdr->hits, (int)n );
@@ -1736,9 +1748,8 @@ static float b2RecReplayCastTrampoline( b2ShapeId id, b2Vec2 point, b2Vec2 norma
 		return 0.0f;
 	}
 	const b2RecRecordedHit* h = &rc->hits[rc->cursor++];
-	if ( id.index1 != h->id.index1 || id.generation != h->id.generation ||
-	     b2RecVec2Differs( point, h->point ) || b2RecVec2Differs( normal, h->normal ) ||
-	     b2RecF32Differs( fraction, h->fraction ) )
+	if ( id.index1 != h->id.index1 || id.generation != h->id.generation || b2RecVec2Differs( point, h->point ) ||
+		 b2RecVec2Differs( normal, h->normal ) || b2RecF32Differs( fraction, h->fraction ) )
 	{
 		rc->rdr->diverged = true;
 	}
@@ -1758,10 +1769,12 @@ static void b2RecDispatch_QueryCastRay( const b2RecArgs_QueryCastRay* a, b2RecRe
 		rdr->hits[i].userReturnF = b2RecR_F32( rdr );
 	}
 	(void)b2RecR_TREESTATS( rdr );
-	if ( !rdr->ok ) return;
+	if ( !rdr->ok )
+		return;
 	b2RecReplayCast rc = { rdr, rdr->hits, (int)n, 0 };
 	b2World_CastRay( rdr->replayWorldId, a->origin, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
-	if ( rc.cursor != (int)n ) rdr->diverged = true;
+	if ( rc.cursor != (int)n )
+		rdr->diverged = true;
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_CAST_RAY, rdr->hits, (int)n );
@@ -1784,10 +1797,12 @@ static void b2RecDispatch_QueryCastShape( const b2RecArgs_QueryCastShape* a, b2R
 		rdr->hits[i].userReturnF = b2RecR_F32( rdr );
 	}
 	(void)b2RecR_TREESTATS( rdr );
-	if ( !rdr->ok ) return;
+	if ( !rdr->ok )
+		return;
 	b2RecReplayCast rc = { rdr, rdr->hits, (int)n, 0 };
 	b2World_CastShape( rdr->replayWorldId, &a->proxy, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
-	if ( rc.cursor != (int)n ) rdr->diverged = true;
+	if ( rc.cursor != (int)n )
+		rdr->diverged = true;
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_CAST_SHAPE, rdr->hits, (int)n );
@@ -1817,10 +1832,9 @@ static bool b2RecReplayPlaneTrampoline( b2ShapeId id, const b2PlaneResult* plane
 	}
 	const b2RecRecordedHit* h = &rc->hits[rc->cursor++];
 	if ( id.index1 != h->id.index1 || id.generation != h->id.generation ||
-	     b2RecVec2Differs( plane->plane.normal, h->plane.plane.normal ) ||
-	     b2RecF32Differs( plane->plane.offset, h->plane.plane.offset ) ||
-	     b2RecVec2Differs( plane->point, h->plane.point ) ||
-	     plane->hit != h->plane.hit )
+		 b2RecVec2Differs( plane->plane.normal, h->plane.plane.normal ) ||
+		 b2RecF32Differs( plane->plane.offset, h->plane.plane.offset ) || b2RecVec2Differs( plane->point, h->plane.point ) ||
+		 plane->hit != h->plane.hit )
 	{
 		rc->rdr->diverged = true;
 	}
@@ -1838,10 +1852,12 @@ static void b2RecDispatch_QueryCollideMover( const b2RecArgs_QueryCollideMover* 
 		rdr->hits[i].userReturnB = b2RecR_BOOL( rdr );
 	}
 	// CollideMover has no TREESTATS tail (returns void)
-	if ( !rdr->ok ) return;
+	if ( !rdr->ok )
+		return;
 	b2RecReplayPlane rc = { rdr, rdr->hits, (int)n, 0 };
 	b2World_CollideMover( rdr->replayWorldId, &a->mover, a->filter, b2RecReplayPlaneTrampoline, &rc );
-	if ( rc.cursor != (int)n ) rdr->diverged = true;
+	if ( rc.cursor != (int)n )
+		rdr->diverged = true;
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_COLLIDE_MOVER, rdr->hits, (int)n );
@@ -1855,12 +1871,13 @@ static void b2RecDispatch_QueryCollideMover( const b2RecArgs_QueryCollideMover* 
 static void b2RecDispatch_QueryCastRayClosest( const b2RecArgs_QueryCastRayClosest* a, b2RecReader* rdr )
 {
 	b2RayResult rec = b2RecR_RAYRESULT( rdr );
-	if ( !rdr->ok ) return;
+	if ( !rdr->ok )
+		return;
 	b2RayResult got = b2World_CastRayClosest( rdr->replayWorldId, a->origin, a->translation, a->filter );
 	if ( got.hit != rec.hit ||
-	     ( got.hit && ( got.shapeId.index1 != rec.shapeId.index1 || got.shapeId.generation != rec.shapeId.generation ||
-	                    b2RecVec2Differs( got.point, rec.point ) || b2RecVec2Differs( got.normal, rec.normal ) ||
-	                    b2RecF32Differs( got.fraction, rec.fraction ) ) ) )
+		 ( got.hit && ( got.shapeId.index1 != rec.shapeId.index1 || got.shapeId.generation != rec.shapeId.generation ||
+						b2RecVec2Differs( got.point, rec.point ) || b2RecVec2Differs( got.normal, rec.normal ) ||
+						b2RecF32Differs( got.fraction, rec.fraction ) ) ) )
 	{
 		rdr->diverged = true;
 	}
@@ -1884,9 +1901,11 @@ static void b2RecDispatch_QueryCastRayClosest( const b2RecArgs_QueryCastRayClose
 static void b2RecDispatch_QueryCastMover( const b2RecArgs_QueryCastMover* a, b2RecReader* rdr )
 {
 	float rec = b2RecR_F32( rdr );
-	if ( !rdr->ok ) return;
+	if ( !rdr->ok )
+		return;
 	float got = b2World_CastMover( rdr->replayWorldId, &a->mover, a->translation, a->filter );
-	if ( b2RecF32Differs( got, rec ) ) rdr->diverged = true;
+	if ( b2RecF32Differs( got, rec ) )
+		rdr->diverged = true;
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_CAST_MOVER, NULL, 0 );
@@ -1902,10 +1921,12 @@ static void b2RecDispatch_QueryCastMover( const b2RecArgs_QueryCastMover* a, b2R
 static void b2RecDispatch_ShapeTestPoint( const b2RecArgs_ShapeTestPoint* a, b2RecReader* rdr )
 {
 	bool rec = b2RecR_BOOL( rdr );
-	if ( !rdr->ok ) return;
+	if ( !rdr->ok )
+		return;
 	b2ShapeId id = b2RecMakeShapeId( rdr, a->shape );
 	bool got = b2Shape_TestPoint( id, a->point );
-	if ( got != rec ) rdr->diverged = true;
+	if ( got != rec )
+		rdr->diverged = true;
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_SHAPE_TEST_POINT, NULL, 0 );
@@ -1920,12 +1941,13 @@ static void b2RecDispatch_ShapeTestPoint( const b2RecArgs_ShapeTestPoint* a, b2R
 static void b2RecDispatch_ShapeRayCast( const b2RecArgs_ShapeRayCast* a, b2RecReader* rdr )
 {
 	b2CastOutput rec = b2RecR_CASTOUTPUT( rdr );
-	if ( !rdr->ok ) return;
+	if ( !rdr->ok )
+		return;
 	b2ShapeId id = b2RecMakeShapeId( rdr, a->shape );
 	b2CastOutput got = b2Shape_RayCast( id, &a->input );
 	if ( got.hit != rec.hit ||
-	     ( got.hit && ( b2RecVec2Differs( got.normal, rec.normal ) || b2RecVec2Differs( got.point, rec.point ) ||
-	                    b2RecF32Differs( got.fraction, rec.fraction ) ) ) )
+		 ( got.hit && ( b2RecVec2Differs( got.normal, rec.normal ) || b2RecVec2Differs( got.point, rec.point ) ||
+						b2RecF32Differs( got.fraction, rec.fraction ) ) ) )
 	{
 		rdr->diverged = true;
 	}
@@ -1945,8 +1967,8 @@ static void b2RecDispatch_StateHash( const b2RecArgs_StateHash* a, b2RecReader* 
 	uint64_t computed = b2HashWorldState( world );
 	if ( computed != a->hash )
 	{
-		printf( "b2ReplayFile: StateHash mismatch (recorded=0x%llX, computed=0x%llX)\n",
-		        (unsigned long long)a->hash, (unsigned long long)computed );
+		printf( "b2ReplayFile: StateHash mismatch (recorded=0x%llX, computed=0x%llX)\n", (unsigned long long)a->hash,
+				(unsigned long long)computed );
 		// Non-fatal: reading continues so a viewer can show where divergence begins
 		rdr->diverged = true;
 	}
@@ -1979,13 +2001,13 @@ static int b2RecDispatchOne( b2RecPlayer* player )
 	switch ( opcode )
 	{
 #define ARG( TAG, field ) a.field = b2RecR_##TAG( rdr );
-#define B2_REC_OP( op, Name, RET, ... ) \
-	case op: \
-	{ \
-		b2RecArgs_##Name a; \
-		memset( &a, 0, sizeof( a ) ); \
-		__VA_ARGS__ b2RecDispatch_##Name( &a, rdr ); \
-		break; \
+#define B2_REC_OP( op, Name, RET, ... )                                                                                          \
+	case op:                                                                                                                     \
+	{                                                                                                                            \
+		b2RecArgs_##Name a;                                                                                                      \
+		memset( &a, 0, sizeof( a ) );                                                                                            \
+		__VA_ARGS__ b2RecDispatch_##Name( &a, rdr );                                                                             \
+		break;                                                                                                                   \
 	}
 #include "recording_ops.inl"
 #undef B2_REC_OP
@@ -2038,11 +2060,11 @@ static void b2RecScanFile( b2RecPlayer* player )
 			if ( gotStep == false && payloadSize >= 12 )
 			{
 				uint32_t dtBits = (uint32_t)data[payloadStart + 4] | ( (uint32_t)data[payloadStart + 5] << 8 ) |
-				                  ( (uint32_t)data[payloadStart + 6] << 16 ) | ( (uint32_t)data[payloadStart + 7] << 24 );
+								  ( (uint32_t)data[payloadStart + 6] << 16 ) | ( (uint32_t)data[payloadStart + 7] << 24 );
 				memcpy( &player->recordedDt, &dtBits, 4 );
-				player->recordedSubStepCount = (int)( (uint32_t)data[payloadStart + 8] | ( (uint32_t)data[payloadStart + 9] << 8 ) |
-				                                      ( (uint32_t)data[payloadStart + 10] << 16 ) |
-				                                      ( (uint32_t)data[payloadStart + 11] << 24 ) );
+				player->recordedSubStepCount =
+					(int)( (uint32_t)data[payloadStart + 8] | ( (uint32_t)data[payloadStart + 9] << 8 ) |
+						   ( (uint32_t)data[payloadStart + 10] << 16 ) | ( (uint32_t)data[payloadStart + 11] << 24 ) );
 				gotStep = true;
 			}
 		}
@@ -2055,6 +2077,12 @@ static void b2RecScanFile( b2RecPlayer* player )
 
 b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount )
 {
+	if ( path == NULL )
+	{
+		printf( "b2ReplayFile: path is NULL\n" );
+		return NULL;
+	}
+
 	FILE* f = fopen( path, "rb" );
 	if ( f == NULL )
 	{
@@ -2069,7 +2097,7 @@ b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount )
 	}
 
 	long fileSize = ftell( f );
-	if ( fileSize < 0 )
+	if ( fileSize < 0 || fileSize > INT_MAX )
 	{
 		fclose( f );
 		return NULL;
@@ -2077,10 +2105,10 @@ b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount )
 	fseek( f, 0, SEEK_SET );
 
 	uint8_t* data = b2Alloc( (int)fileSize );
-	size_t nread = fread( data, 1, (size_t)fileSize, f );
+	size_t readSize = fread( data, 1, (size_t)fileSize, f );
 	fclose( f );
 
-	if ( (long)nread != fileSize )
+	if ( (long)readSize != fileSize )
 	{
 		b2Free( data, (int)fileSize );
 		return NULL;
@@ -2113,8 +2141,7 @@ b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount )
 
 	if ( hdr.pointerWidth != (uint8_t)sizeof( void* ) )
 	{
-		printf( "b2ReplayFile: pointer width mismatch (file=%u, runtime=%u)\n", hdr.pointerWidth,
-		        (unsigned)sizeof( void* ) );
+		printf( "b2ReplayFile: pointer width mismatch (file=%u, runtime=%u)\n", hdr.pointerWidth, (unsigned)sizeof( void* ) );
 		b2Free( data, (int)fileSize );
 		return NULL;
 	}
@@ -2372,7 +2399,8 @@ static void b2RecDrawHitAABBs( const b2RecPlayer* player, const b2RecDrawQuery* 
 
 void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int queryIndex )
 {
-	if ( player == NULL || draw == NULL ) return;
+	if ( player == NULL || draw == NULL )
+		return;
 
 	// queryIndex < 0 draws all queries, otherwise just the one selected in the viewer
 	for ( int qi = 0; qi < player->frameQueryCount; ++qi )
@@ -2433,17 +2461,17 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 			{
 				if ( draw->DrawSolidCapsuleFcn )
 				{
-					draw->DrawSolidCapsuleFcn( q->mover.center1, q->mover.center2, q->mover.radius,
-					                           b2_colorLightSkyBlue, draw->context );
+					draw->DrawSolidCapsuleFcn( q->mover.center1, q->mover.center2, q->mover.radius, b2_colorLightSkyBlue,
+											   draw->context );
 				}
 				break;
 			}
 			case B2_RECQ_OVERLAP_AABB:
 			{
 				b2Vec2 vs[4] = { q->aabb.lowerBound,
-				                 { q->aabb.upperBound.x, q->aabb.lowerBound.y },
-				                 q->aabb.upperBound,
-				                 { q->aabb.lowerBound.x, q->aabb.upperBound.y } };
+								 { q->aabb.upperBound.x, q->aabb.lowerBound.y },
+								 q->aabb.upperBound,
+								 { q->aabb.lowerBound.x, q->aabb.upperBound.y } };
 				if ( draw->DrawPolygonFcn )
 				{
 					draw->DrawPolygonFcn( vs, 4, b2_colorLimeGreen, draw->context );
@@ -2471,8 +2499,7 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 			{
 				if ( draw->DrawSolidCapsuleFcn )
 				{
-					draw->DrawSolidCapsuleFcn( q->mover.center1, q->mover.center2, q->mover.radius,
-					                           b2_colorTan, draw->context );
+					draw->DrawSolidCapsuleFcn( q->mover.center1, q->mover.center2, q->mover.radius, b2_colorTan, draw->context );
 				}
 				// Per-hit plane point and normal
 				for ( int hi = q->hitStart; hi < q->hitStart + q->hitCount; ++hi )
@@ -2515,9 +2542,7 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 }
 
 // Public query inspection. The internal b2RecQueryKind values match the public b2RecQueryType, so
-// the kind copies across as a plain cast. Pin the first and last kinds to catch enum drift. Each
-// value is compared to an integer literal, never to the other enum, since two enum operands trip
-// MSVC C5287 even through a cast.
+// the kind copies across as a plain cast. Pin the first and last kinds to catch enum drift.
 _Static_assert( b2_recQueryOverlapAABB == 0 && B2_RECQ_OVERLAP_AABB == 0, "query type enum drift" );
 _Static_assert( b2_recQueryShapeRayCast == 8 && B2_RECQ_SHAPE_RAY_CAST == 8, "query type enum drift" );
 

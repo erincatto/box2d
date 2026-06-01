@@ -82,9 +82,11 @@ typedef struct b2ContactId
 } b2ContactId;
 
 #ifdef __cplusplus
+	/// A null id. Works for any id type.
 	#define B2_NULL_ID {}
 	#define B2_ID_INLINE inline
 #else
+	/// A null id. Works for any id type.
 	#define B2_NULL_ID { 0 }
 	#define B2_ID_INLINE static inline
 #endif
