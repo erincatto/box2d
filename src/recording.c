@@ -541,10 +541,10 @@ void b2RecCommitRecord( b2Recording* rec, uint8_t opcode, const uint8_t* payload
 	b2UnlockMutex( rec->lock );
 }
 
-void b2RecQueryBegin( b2RecQueryWriter* w, void* fcn, void* context )
+void b2RecQueryBegin( b2RecQueryWriter* w, void* context )
 {
 	w->buf = (b2RecBuffer){ 0 };
-	w->userFcn = fcn;
+	w->userFcn.overlapFcn = NULL;
 	w->userContext = context;
 	w->hitCount = 0;
 	w->countOffset = 0;
@@ -559,8 +559,7 @@ void b2RecQueryCommit( b2Recording* rec, uint8_t opcode, b2RecQueryWriter* w )
 bool b2RecOverlapTrampoline( b2ShapeId id, void* ctx )
 {
 	b2RecQueryWriter* w = (b2RecQueryWriter*)ctx;
-	b2OverlapResultFcn* realFcn = (b2OverlapResultFcn*)w->userFcn;
-	bool ret = realFcn( id, w->userContext );
+	bool ret = w->userFcn.overlapFcn( id, w->userContext );
 	b2RecW_SHAPEID( &w->buf, id );
 	b2RecW_BOOL( &w->buf, ret );
 	w->hitCount++;
@@ -570,8 +569,7 @@ bool b2RecOverlapTrampoline( b2ShapeId id, void* ctx )
 float b2RecCastTrampoline( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx )
 {
 	b2RecQueryWriter* w = (b2RecQueryWriter*)ctx;
-	b2CastResultFcn* realFcn = (b2CastResultFcn*)w->userFcn;
-	float ret = realFcn( id, point, normal, fraction, w->userContext );
+	float ret = w->userFcn.castFcn( id, point, normal, fraction, w->userContext );
 	b2RecW_SHAPEID( &w->buf, id );
 	b2RecW_VEC2( &w->buf, point );
 	b2RecW_VEC2( &w->buf, normal );
@@ -584,8 +582,7 @@ float b2RecCastTrampoline( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float frac
 bool b2RecPlaneTrampoline( b2ShapeId id, const b2PlaneResult* plane, void* ctx )
 {
 	b2RecQueryWriter* w = (b2RecQueryWriter*)ctx;
-	b2PlaneResultFcn* realFcn = (b2PlaneResultFcn*)w->userFcn;
-	bool ret = realFcn( id, plane, w->userContext );
+	bool ret = w->userFcn.planeFcn( id, plane, w->userContext );
 	b2RecW_SHAPEID( &w->buf, id );
 	b2RecW_PLANERESULT( &w->buf, *plane );
 	b2RecW_BOOL( &w->buf, ret );

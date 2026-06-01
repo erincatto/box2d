@@ -218,14 +218,22 @@ void b2RecCommitRecord( b2Recording* rec, uint8_t opcode, const uint8_t* payload
 // Per-query writer context: holds user fcn+ctx, the local payload buffer, and the hit counter
 typedef struct b2RecQueryWriter
 {
-	void* userFcn;
+	// Stash the user callback in its exact type so no function-pointer cast is ever needed.
+	// A void* stash is a function-to-object conversion that ISO C forbids, and casting
+	// between function pointer types trips MSVC C4191, so give each callback shape its own slot.
+	union
+	{
+		b2OverlapResultFcn* overlapFcn;
+		b2CastResultFcn* castFcn;
+		b2PlaneResultFcn* planeFcn;
+	} userFcn;
 	void* userContext;
 	b2RecBuffer buf; // per-call local payload, heap-backed
 	int countOffset; // offset of the reserved u32 hit-count slot
 	uint32_t hitCount;
 } b2RecQueryWriter;
 
-void b2RecQueryBegin( b2RecQueryWriter* w, void* fcn, void* context );
+void b2RecQueryBegin( b2RecQueryWriter* w, void* context );
 void b2RecQueryCommit( b2Recording* rec, uint8_t opcode, b2RecQueryWriter* w );
 
 // Recording trampolines: replace the user fcn pointer so hits are captured before dispatch

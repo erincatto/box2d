@@ -2156,7 +2156,8 @@ b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter f
 	b2RecQueryWriter recWriter = { 0 };
 	if ( world->recording != NULL )
 	{
-		b2RecQueryBegin( &recWriter, (void*)fcn, context );
+		b2RecQueryBegin( &recWriter, context );
+		recWriter.userFcn.overlapFcn = fcn;
 		b2RecW_WORLDID( &recWriter.buf, worldId );
 		b2RecW_AABB( &recWriter.buf, aabb );
 		b2RecW_QUERYFILTER( &recWriter.buf, filter );
@@ -2250,7 +2251,8 @@ b2TreeStats b2World_OverlapShape( b2WorldId worldId, const b2ShapeProxy* proxy, 
 	b2RecQueryWriter recWriter = { 0 };
 	if ( world->recording != NULL )
 	{
-		b2RecQueryBegin( &recWriter, (void*)fcn, context );
+		b2RecQueryBegin( &recWriter, context );
+		recWriter.userFcn.overlapFcn = fcn;
 		b2RecW_WORLDID( &recWriter.buf, worldId );
 		b2RecW_SHAPEPROXY( &recWriter.buf, *proxy );
 		b2RecW_QUERYFILTER( &recWriter.buf, filter );
@@ -2347,7 +2349,8 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translatio
 	b2RecQueryWriter recWriter = { 0 };
 	if ( world->recording != NULL )
 	{
-		b2RecQueryBegin( &recWriter, (void*)fcn, context );
+		b2RecQueryBegin( &recWriter, context );
+		recWriter.userFcn.castFcn = fcn;
 		b2RecW_WORLDID( &recWriter.buf, worldId );
 		b2RecW_VEC2( &recWriter.buf, origin );
 		b2RecW_VEC2( &recWriter.buf, translation );
@@ -2506,7 +2509,8 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2V
 	b2RecQueryWriter recWriter = { 0 };
 	if ( world->recording != NULL )
 	{
-		b2RecQueryBegin( &recWriter, (void*)fcn, context );
+		b2RecQueryBegin( &recWriter, context );
+		recWriter.userFcn.castFcn = fcn;
 		b2RecW_WORLDID( &recWriter.buf, worldId );
 		b2RecW_SHAPEPROXY( &recWriter.buf, *proxy );
 		b2RecW_VEC2( &recWriter.buf, translation );
@@ -2696,7 +2700,8 @@ void b2World_CollideMover( b2WorldId worldId, const b2Capsule* mover, b2QueryFil
 	b2RecQueryWriter recWriter = { 0 };
 	if ( world->recording != NULL )
 	{
-		b2RecQueryBegin( &recWriter, (void*)fcn, context );
+		b2RecQueryBegin( &recWriter, context );
+		recWriter.userFcn.planeFcn = fcn;
 		b2RecW_WORLDID( &recWriter.buf, worldId );
 		b2RecW_CAPSULE( &recWriter.buf, *mover );
 		b2RecW_QUERYFILTER( &recWriter.buf, filter );
