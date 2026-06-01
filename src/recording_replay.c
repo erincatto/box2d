@@ -2370,12 +2370,18 @@ static void b2RecDrawHitAABBs( const b2RecPlayer* player, const b2RecDrawQuery* 
 	}
 }
 
-void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw )
+void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int queryIndex )
 {
 	if ( player == NULL || draw == NULL ) return;
 
+	// queryIndex < 0 draws all queries, otherwise just the one selected in the viewer
 	for ( int qi = 0; qi < player->frameQueryCount; ++qi )
 	{
+		if ( queryIndex >= 0 && qi != queryIndex )
+		{
+			continue;
+		}
+
 		const b2RecDrawQuery* q = &player->frameQueries[qi];
 
 		switch ( q->kind )

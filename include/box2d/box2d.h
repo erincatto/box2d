@@ -291,11 +291,12 @@ B2_API int b2RecPlayer_GetDivergeFrame( const b2RecPlayer* player );
 /// Close a player and free its replay world and file buffer.
 B2_API void b2RecPlayer_Destroy( b2RecPlayer* player );
 
-/// Draw the spatial queries recorded during the most recently replayed frame.
+/// Draw spatial queries recorded during the most recently replayed frame.
 /// Call after b2World_Draw so queries are layered on top of the world.
 /// @param player A valid player handle
 /// @param draw Debug draw callbacks. NULL draw function pointers are skipped.
-B2_API void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw );
+/// @param queryIndex Index into the frame's queries to draw, or -1 to draw all of them.
+B2_API void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int queryIndex );
 
 /// The kind of a recorded spatial query, matching the public query and cast functions.
 typedef enum b2RecQueryType

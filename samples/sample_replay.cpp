@@ -338,7 +338,10 @@ public:
 		if ( B2_IS_NON_NULL( m_worldId ) )
 		{
 			b2World_Draw( m_worldId, &m_context->debugDraw );
-			b2RecPlayer_DrawFrameQueries( m_player, &m_context->debugDraw );
+			if ( m_selKind == SelQuery )
+			{
+				b2RecPlayer_DrawFrameQueries( m_player, &m_context->debugDraw, m_selQuery );
+			}
 			DrawSelectionHighlight();
 		}
 

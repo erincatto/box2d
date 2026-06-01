@@ -484,7 +484,7 @@ int RecordingTest( void )
 			// Exercise the draw path on every other frame
 			if ( frames % 2 == 0 )
 			{
-				b2RecPlayer_DrawFrameQueries( player, &dd );
+				b2RecPlayer_DrawFrameQueries( player, &dd, -1 );
 			}
 			frames += 1;
 		}
