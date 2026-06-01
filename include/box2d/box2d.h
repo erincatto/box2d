@@ -341,6 +341,14 @@ B2_API b2RecQueryInfo b2RecPlayer_GetFrameQuery( const b2RecPlayer* player, int 
 /// Get one result of a recorded query from the most recently replayed frame.
 B2_API b2RecQueryHit b2RecPlayer_GetFrameQueryHit( const b2RecPlayer* player, int queryIndex, int hitIndex );
 
+/// Get the number of body slots tracked for the outliner. This is the creation-order span and
+/// includes holes for destroyed bodies, so it only grows as the replay advances.
+B2_API int b2RecPlayer_GetBodyCount( const b2RecPlayer* player );
+
+/// Get a tracked body by creation ordinal. Returns b2_nullBodyId for a destroyed slot, an ordinal not
+/// yet reached at the current frame, or an out-of-range index. Validate with b2Body_IsValid.
+B2_API b2BodyId b2RecPlayer_GetBodyId( const b2RecPlayer* player, int index );
+
 /** @} */
 
 /**

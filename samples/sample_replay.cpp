@@ -68,13 +68,15 @@ public:
 
 			// Issue a few queries each step so the Replay viewer has something to draw
 			b2QueryFilter filter = b2DefaultQueryFilter();
-			b2AABB scanBox = { { -5.0f, -2.0f }, { 5.0f, 4.0f } };
+			b2AABB scanBox = { { 5.0f, 1.0f }, { 7.0f, 2.5f } };
 			b2World_OverlapAABB( m_worldId, scanBox, filter, OverlapCounter, nullptr );
+
 			b2Vec2 origin = { 0.0f, 12.0f };
 			b2Vec2 translation = { 0.0f, -14.0f };
 			b2World_CastRayClosest( m_worldId, origin, translation, filter );
 
-			origin.x = 5.0f;
+			origin = {-10.0f, 2.0f};
+			translation = {20.0f, 0.0f};
 			b2World_CastRay( m_worldId, origin, translation, filter, AllHitsCast, nullptr );
 
 			if ( m_done )
@@ -248,7 +250,10 @@ public:
 		}
 		m_worldId = b2_nullWorldId;
 		m_buildMismatch = false;
-		m_selectedShape = b2_nullShapeId;
+		m_selKind = SelNone;
+		m_selBodyOrdinal = -1;
+		m_selSlot = -1;
+		m_selQuery = -1;
 	}
 
 	void OpenPlayer()
@@ -290,14 +295,6 @@ public:
 		{
 			DrawScreenTextLine( "%s", m_status );
 			return;
-		}
-
-		// Drop a selection whose shape is gone, either destroyed during replay or invalidated when a
-		// backward seek rebuilt the world so its world generation no longer matches.
-		bool sameWorld = m_selectWorld.index1 == m_worldId.index1 && m_selectWorld.generation == m_worldId.generation;
-		if ( sameWorld == false || b2Shape_IsValid( m_selectedShape ) == false )
-		{
-			m_selectedShape = b2_nullShapeId;
 		}
 
 		if ( m_context->pause && m_context->singleStep )
@@ -362,6 +359,8 @@ public:
 		{
 			DrawScreenTextLine( "****PAUSED****" );
 		}
+
+		DrawInspectorPanel();
 	}
 
 	// Shared transport row used by both the right panel and the timeline tab
@@ -416,8 +415,8 @@ public:
 		return false;
 	}
 
-	// The right panel hosts the scene inspector. The button reopens the diagnostics drawer and jumps
-	// to the timeline if it was closed.
+	// The inspector lives in the wide left panel. This right-panel control just reopens the
+	// diagnostics drawer and jumps to the timeline if it was closed.
 	bool DrawControls() override
 	{
 		if ( ImGui::Button( "Show Timeline" ) )
@@ -425,56 +424,94 @@ public:
 			m_context->showMetrics = true;
 			m_selectTimelineTab = true;
 		}
-
-		ImGui::Separator();
-		ImGui::TextColored( ImVec4( 0.9f, 0.6f, 0.2f, 1.0f ), "Inspector" );
-
-		if ( m_player == nullptr || B2_IS_NULL( m_worldId ) )
-		{
-			ImGui::TextDisabled( "Load a recording to inspect." );
-			return true;
-		}
-
-		if ( b2Shape_IsValid( m_selectedShape ) )
-		{
-			b2BodyId body = b2Shape_GetBody( m_selectedShape );
-			DrawBodySection( body );
-			DrawShapeSection( body );
-			DrawContactSection( body );
-			DrawJointSection( body );
-		}
-		else
-		{
-			ImGui::TextWrapped( "Click a shape to inspect." );
-			b2Vec2 g = b2World_GetGravity( m_worldId );
-			b2Counters c = b2World_GetCounters( m_worldId );
-			ImGui::Text( "gravity (%.2f, %.2f)", g.x, g.y );
-			ImGui::Text( "bodies %d  shapes %d", c.bodyCount, c.shapeCount );
-			ImGui::Text( "contacts %d  joints %d", c.contactCount, c.jointCount );
-			ImGui::Text( "sleeping %s", b2World_IsSleepingEnabled( m_worldId ) ? "on" : "off" );
-			ImGui::Text( "continuous %s", b2World_IsContinuousEnabled( m_worldId ) ? "on" : "off" );
-		}
-
-		DrawQuerySection();
-		return true;
+		return false;
 	}
 
-	// Highlight the selected shape without touching the world: its AABB, the body frame and center of
-	// mass, and the body's live contact points and normals.
-	void DrawSelectionHighlight()
+	// Selection resolution. The selection is stored as creation ordinals so it survives a backward
+	// scrub that rebuilds the world. Each frame the ordinal is mapped back to a live id, or to null
+	// when that object does not exist at the current frame.
+	b2BodyId SelectedBody() const
 	{
-		if ( b2Shape_IsValid( m_selectedShape ) == false )
+		if ( m_selBodyOrdinal < 0 )
 		{
+			return b2_nullBodyId;
+		}
+		return b2RecPlayer_GetBodyId( m_player, m_selBodyOrdinal );
+	}
+
+	b2ShapeId SelectedShape() const
+	{
+		b2BodyId body = SelectedBody();
+		if ( m_selKind != SelShape || b2Body_IsValid( body ) == false )
+		{
+			return b2_nullShapeId;
+		}
+		b2ShapeId shapes[32];
+		int n = b2Body_GetShapes( body, shapes, 32 );
+		return ( m_selSlot >= 0 && m_selSlot < n ) ? shapes[m_selSlot] : b2_nullShapeId;
+	}
+
+	b2JointId SelectedJoint() const
+	{
+		b2BodyId body = SelectedBody();
+		if ( m_selKind != SelJoint || b2Body_IsValid( body ) == false )
+		{
+			return b2_nullJointId;
+		}
+		b2JointId joints[16];
+		int n = b2Body_GetJoints( body, joints, 16 );
+		return ( m_selSlot >= 0 && m_selSlot < n ) ? joints[m_selSlot] : b2_nullJointId;
+	}
+
+	int FindBodyOrdinal( b2BodyId body ) const
+	{
+		int count = b2RecPlayer_GetBodyCount( m_player );
+		for ( int i = 0; i < count; ++i )
+		{
+			if ( B2_ID_EQUALS( b2RecPlayer_GetBodyId( m_player, i ), body ) )
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	// Map a picked shape back to its body ordinal and shape slot. A null shape clears the selection.
+	void SelectShape( b2ShapeId shape )
+	{
+		if ( B2_IS_NULL( shape ) )
+		{
+			m_selKind = SelNone;
 			return;
 		}
+		b2BodyId body = b2Shape_GetBody( shape );
+		int ordinal = FindBodyOrdinal( body );
+		if ( ordinal < 0 )
+		{
+			m_selKind = SelNone;
+			return;
+		}
+		b2ShapeId shapes[32];
+		int n = b2Body_GetShapes( body, shapes, 32 );
+		int slot = -1;
+		for ( int i = 0; i < n; ++i )
+		{
+			if ( B2_ID_EQUALS( shapes[i], shape ) )
+			{
+				slot = i;
+				break;
+			}
+		}
+		m_selKind = SelShape;
+		m_selBodyOrdinal = ordinal;
+		m_selSlot = slot;
+		m_revealSelection = true; // expand and scroll the tree to the picked shape next draw
+	}
 
+	// Draw a body's live contact points and normals, the most useful solver readout
+	void DrawBodyContacts( b2BodyId body )
+	{
 		Draw* draw = m_context->draw;
-		b2BodyId body = b2Shape_GetBody( m_selectedShape );
-
-		DrawBounds( draw, b2Shape_GetAABB( m_selectedShape ), b2_colorYellow );
-		DrawTransform( draw, b2Body_GetTransform( body ), 0.5f );
-		DrawPoint( draw, b2Body_GetWorldCenterOfMass( body ), 8.0f, b2_colorYellow );
-
 		b2ContactData contacts[64];
 		int capacity = b2Body_GetContactCapacity( body );
 		if ( capacity > 64 )
@@ -495,7 +532,277 @@ public:
 		}
 	}
 
-	void DrawBodySection( b2BodyId body )
+	// Highlight the current selection without touching the world. Queries are already drawn by
+	// b2RecPlayer_DrawFrameQueries, so they need nothing here.
+	void DrawSelectionHighlight()
+	{
+		Draw* draw = m_context->draw;
+
+		if ( m_selKind == SelShape )
+		{
+			b2ShapeId shape = SelectedShape();
+			if ( b2Shape_IsValid( shape ) == false )
+			{
+				return;
+			}
+			b2BodyId body = b2Shape_GetBody( shape );
+			DrawBounds( draw, b2Shape_GetAABB( shape ), b2_colorYellow );
+			DrawTransform( draw, b2Body_GetTransform( body ), 0.5f );
+			DrawPoint( draw, b2Body_GetWorldCenterOfMass( body ), 8.0f, b2_colorYellow );
+			DrawBodyContacts( body );
+		}
+		else if ( m_selKind == SelBody )
+		{
+			b2BodyId body = SelectedBody();
+			if ( b2Body_IsValid( body ) == false )
+			{
+				return;
+			}
+			DrawBounds( draw, b2Body_ComputeAABB( body ), b2_colorYellow );
+			DrawTransform( draw, b2Body_GetTransform( body ), 0.5f );
+			DrawPoint( draw, b2Body_GetWorldCenterOfMass( body ), 8.0f, b2_colorYellow );
+			DrawBodyContacts( body );
+		}
+		else if ( m_selKind == SelJoint )
+		{
+			b2JointId joint = SelectedJoint();
+			if ( b2Joint_IsValid( joint ) == false )
+			{
+				return;
+			}
+			b2BodyId a = b2Joint_GetBodyA( joint );
+			b2BodyId b = b2Joint_GetBodyB( joint );
+			if ( b2Body_IsValid( a ) )
+			{
+				DrawPoint( draw, b2Body_GetWorldCenterOfMass( a ), 8.0f, b2_colorMagenta );
+			}
+			if ( b2Body_IsValid( b ) )
+			{
+				DrawPoint( draw, b2Body_GetWorldCenterOfMass( b ), 8.0f, b2_colorMagenta );
+			}
+		}
+	}
+
+	// Wide left panel: an outliner tree of the scene on top, the selected item's full detail below.
+	// Its own window, so it is not bound by the fixed-width right Info panel. Opened from Step, which
+	// runs inside the imgui frame.
+	void DrawInspectorPanel()
+	{
+		if ( m_player == nullptr )
+		{
+			return;
+		}
+
+		float fontSize = ImGui::GetFontSize();
+		float menuBarHeight = ImGui::GetFrameHeight();
+		float drawerHeight = 16.0f * fontSize; // matches the diagnostics drawer in sample.cpp
+		float top = menuBarHeight + 0.5f * fontSize;
+		// Stop above the timeline drawer, which this sample keeps open
+		float bottom = m_context->showMetrics ? m_context->camera.height - drawerHeight - fontSize
+											   : m_context->camera.height - 0.5f * fontSize;
+
+		ImGui::SetNextWindowPos( { 0.5f * fontSize, top } );
+		ImGui::SetNextWindowSize( { 22.0f * fontSize, bottom - top } );
+		ImGui::Begin( "Inspector", nullptr,
+					  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
+						  ImGuiWindowFlags_NoTitleBar );
+
+		ImGui::TextColored( ImVec4( 0.9f, 0.6f, 0.2f, 1.0f ), "Outline" );
+		float avail = ImGui::GetContentRegionAvail().y;
+		ImGui::BeginChild( "tree", ImVec2( 0.0f, 0.55f * avail ) );
+		DrawOutlineTree();
+		ImGui::EndChild();
+
+		ImGui::Separator();
+		ImGui::TextColored( ImVec4( 0.9f, 0.6f, 0.2f, 1.0f ), "Detail" );
+		ImGui::BeginChild( "detail" );
+		DrawDetail();
+		ImGui::EndChild();
+
+		ImGui::End();
+	}
+
+	// The scene tree: bodies (creation order), each expandable to its shapes and joints, plus the
+	// current frame's queries. Clicking a row selects it; clicking a body arrow expands it.
+	void DrawOutlineTree()
+	{
+		// A viewport pick asks the tree to reveal its target once: expand the owning body and scroll to
+		// the row. Consumed at the end so it never fights the user's own expand/collapse.
+		bool reveal = m_revealSelection;
+
+		int count = b2RecPlayer_GetBodyCount( m_player );
+		for ( int ord = 0; ord < count; ++ord )
+		{
+			b2BodyId body = b2RecPlayer_GetBodyId( m_player, ord );
+			if ( B2_IS_NULL( body ) || b2Body_IsValid( body ) == false )
+			{
+				continue;
+			}
+
+			bool ownsSelection = m_selBodyOrdinal == ord &&
+								 ( m_selKind == SelBody || m_selKind == SelShape || m_selKind == SelJoint );
+
+			const char* name = b2Body_GetName( body );
+			char label[64];
+			snprintf( label, sizeof( label ), "Body %d  %s###b%d", ord,
+					  ( name != nullptr && name[0] != '\0' ) ? name : ReplayBodyTypeName( b2Body_GetType( body ) ), ord );
+
+			ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+			if ( m_selKind == SelBody && m_selBodyOrdinal == ord )
+			{
+				flags |= ImGuiTreeNodeFlags_Selected;
+			}
+			// Reveal a picked shape or joint by expanding its body
+			if ( reveal && ownsSelection && m_selKind != SelBody )
+			{
+				ImGui::SetNextItemOpen( true );
+			}
+			bool open = ImGui::TreeNodeEx( label, flags );
+			if ( reveal && ownsSelection && m_selKind == SelBody )
+			{
+				ImGui::SetScrollHereY( 0.5f );
+			}
+			if ( ImGui::IsItemClicked() && ImGui::IsItemToggledOpen() == false )
+			{
+				m_selKind = SelBody;
+				m_selBodyOrdinal = ord;
+				m_selSlot = -1;
+			}
+			if ( open == false )
+			{
+				continue;
+			}
+
+			b2ShapeId shapes[32];
+			int sn = b2Body_GetShapes( body, shapes, 32 );
+			for ( int s = 0; s < sn; ++s )
+			{
+				char sl[64];
+				snprintf( sl, sizeof( sl ), "Shape %d  %s###b%ds%d", s, ReplayShapeTypeName( b2Shape_GetType( shapes[s] ) ),
+						  ord, s );
+				ImGuiTreeNodeFlags lf =
+					ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+				if ( m_selKind == SelShape && m_selBodyOrdinal == ord && m_selSlot == s )
+				{
+					lf |= ImGuiTreeNodeFlags_Selected;
+				}
+				ImGui::TreeNodeEx( sl, lf );
+				if ( reveal && m_selKind == SelShape && m_selBodyOrdinal == ord && m_selSlot == s )
+				{
+					ImGui::SetScrollHereY( 0.5f );
+				}
+				if ( ImGui::IsItemClicked() )
+				{
+					m_selKind = SelShape;
+					m_selBodyOrdinal = ord;
+					m_selSlot = s;
+				}
+			}
+
+			b2JointId joints[16];
+			int jn = b2Body_GetJoints( body, joints, 16 );
+			for ( int j = 0; j < jn; ++j )
+			{
+				char jl[64];
+				snprintf( jl, sizeof( jl ), "%s joint###b%dj%d", ReplayJointTypeName( b2Joint_GetType( joints[j] ) ), ord, j );
+				ImGuiTreeNodeFlags lf =
+					ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+				if ( m_selKind == SelJoint && m_selBodyOrdinal == ord && m_selSlot == j )
+				{
+					lf |= ImGuiTreeNodeFlags_Selected;
+				}
+				ImGui::TreeNodeEx( jl, lf );
+				if ( ImGui::IsItemClicked() )
+				{
+					m_selKind = SelJoint;
+					m_selBodyOrdinal = ord;
+					m_selSlot = j;
+				}
+			}
+
+			ImGui::TreePop();
+		}
+
+		int qn = b2RecPlayer_GetFrameQueryCount( m_player );
+		char ql[32];
+		snprintf( ql, sizeof( ql ), "Queries (%d)###queries", qn );
+		if ( ImGui::TreeNodeEx( ql, ImGuiTreeNodeFlags_SpanAvailWidth ) )
+		{
+			for ( int i = 0; i < qn; ++i )
+			{
+				b2RecQueryInfo q = b2RecPlayer_GetFrameQuery( m_player, i );
+				char qi[64];
+				snprintf( qi, sizeof( qi ), "%s  (%d)###q%d", ReplayQueryTypeName( q.type ), q.hitCount, i );
+				ImGuiTreeNodeFlags lf =
+					ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+				if ( m_selKind == SelQuery && m_selQuery == i )
+				{
+					lf |= ImGuiTreeNodeFlags_Selected;
+				}
+				ImGui::TreeNodeEx( qi, lf );
+				if ( ImGui::IsItemClicked() )
+				{
+					m_selKind = SelQuery;
+					m_selQuery = i;
+				}
+			}
+			ImGui::TreePop();
+		}
+
+		m_revealSelection = false;
+	}
+
+	// Detail pane for the current selection. Full width, so 64-bit hex fits without clipping.
+	void DrawDetail()
+	{
+		if ( m_selKind == SelNone )
+		{
+			ImGui::TextWrapped( "Click a node, or a shape in the view." );
+			if ( B2_IS_NON_NULL( m_worldId ) )
+			{
+				b2Vec2 g = b2World_GetGravity( m_worldId );
+				b2Counters c = b2World_GetCounters( m_worldId );
+				ImGui::Text( "gravity (%.2f, %.2f)", g.x, g.y );
+				ImGui::Text( "bodies %d  shapes %d", c.bodyCount, c.shapeCount );
+				ImGui::Text( "contacts %d  joints %d", c.contactCount, c.jointCount );
+			}
+			return;
+		}
+
+		if ( m_selKind == SelQuery )
+		{
+			DrawQueryDetail();
+			return;
+		}
+
+		b2BodyId body = SelectedBody();
+		if ( b2Body_IsValid( body ) == false )
+		{
+			ImGui::TextDisabled( "Not present at this frame." );
+			return;
+		}
+
+		DrawBodyDetail( body );
+		if ( m_selKind == SelShape )
+		{
+			b2ShapeId shape = SelectedShape();
+			if ( b2Shape_IsValid( shape ) )
+			{
+				DrawShapeDetail( shape );
+			}
+		}
+		else if ( m_selKind == SelJoint )
+		{
+			b2JointId joint = SelectedJoint();
+			if ( b2Joint_IsValid( joint ) )
+			{
+				DrawJointDetail( joint );
+			}
+		}
+		DrawContactDetail( body );
+	}
+
+	void DrawBodyDetail( b2BodyId body )
 	{
 		if ( ImGui::CollapsingHeader( "Body", ImGuiTreeNodeFlags_DefaultOpen ) == false )
 		{
@@ -522,36 +829,30 @@ public:
 		ImGui::Text( "shapes %d  joints %d", b2Body_GetShapeCount( body ), b2Body_GetJointCount( body ) );
 	}
 
-	void DrawShapeSection( b2BodyId body )
+	void DrawShapeDetail( b2ShapeId shape )
 	{
-		b2ShapeId shapes[16];
-		int n = b2Body_GetShapes( body, shapes, 16 );
-		for ( int i = 0; i < n; ++i )
+		if ( ImGui::CollapsingHeader( "Shape", ImGuiTreeNodeFlags_DefaultOpen ) == false )
 		{
-			b2ShapeId shape = shapes[i];
-			bool selected = B2_ID_EQUALS( shape, m_selectedShape );
-			char header[64];
-			snprintf( header, sizeof( header ), "Shape %d  %s%s###shape%d", i, ReplayShapeTypeName( b2Shape_GetType( shape ) ),
-					  selected ? "  *" : "", i );
-			if ( ImGui::CollapsingHeader( header, selected ? ImGuiTreeNodeFlags_DefaultOpen : 0 ) == false )
-			{
-				continue;
-			}
-
-			b2Filter f = b2Shape_GetFilter( shape );
-			ImGui::Text( "category 0x%016llx", (unsigned long long)f.categoryBits );
-			ImGui::Text( "mask     0x%016llx", (unsigned long long)f.maskBits );
-			ImGui::Text( "group    %d", f.groupIndex );
-			ImGui::Text( "density  %.3g", b2Shape_GetDensity( shape ) );
-			ImGui::Text( "friction %.3g", b2Shape_GetFriction( shape ) );
-			ImGui::Text( "restitution %.3g", b2Shape_GetRestitution( shape ) );
-			ImGui::Text( "sensor   %s", b2Shape_IsSensor( shape ) ? "yes" : "no" );
-			b2SurfaceMaterial mat = b2Shape_GetSurfaceMaterial( shape );
-			ImGui::Text( "custom color 0x%06x", (unsigned)mat.customColor );
+			return;
 		}
+
+		ImGui::Text( "type     %s", ReplayShapeTypeName( b2Shape_GetType( shape ) ) );
+		b2Filter f = b2Shape_GetFilter( shape );
+		ImGui::Text( "category 0x%016llx", (unsigned long long)f.categoryBits );
+		ImGui::Text( "mask     0x%016llx", (unsigned long long)f.maskBits );
+		ImGui::Text( "group    %d", f.groupIndex );
+		ImGui::Text( "density  %.3g", b2Shape_GetDensity( shape ) );
+		ImGui::Text( "friction %.3g", b2Shape_GetFriction( shape ) );
+		ImGui::Text( "restitution %.3g", b2Shape_GetRestitution( shape ) );
+		ImGui::Text( "sensor   %s", b2Shape_IsSensor( shape ) ? "yes" : "no" );
+		b2SurfaceMaterial mat = b2Shape_GetSurfaceMaterial( shape );
+		ImGui::Text( "custom color 0x%06x", (unsigned)mat.customColor );
+		b2AABB aabb = b2Shape_GetAABB( shape );
+		ImGui::Text( "aabb (%.2f, %.2f)-(%.2f, %.2f)", aabb.lowerBound.x, aabb.lowerBound.y, aabb.upperBound.x,
+					 aabb.upperBound.y );
 	}
 
-	void DrawContactSection( b2BodyId body )
+	void DrawContactDetail( b2BodyId body )
 	{
 		b2ContactData contacts[64];
 		int capacity = b2Body_GetContactCapacity( body );
@@ -581,91 +882,76 @@ public:
 		}
 	}
 
-	void DrawJointSection( b2BodyId body )
+	void DrawJointDetail( b2JointId joint )
 	{
-		b2JointId joints[16];
-		int count = b2Body_GetJoints( body, joints, 16 );
-
-		char header[32];
-		snprintf( header, sizeof( header ), "Joints (%d)###joints", count );
-		if ( ImGui::CollapsingHeader( header ) == false )
+		if ( ImGui::CollapsingHeader( "Joint", ImGuiTreeNodeFlags_DefaultOpen ) == false )
 		{
 			return;
 		}
 
-		for ( int i = 0; i < count; ++i )
+		b2JointType type = b2Joint_GetType( joint );
+		ImGui::Text( "type     %s", ReplayJointTypeName( type ) );
+		ImGui::Text( "body A   %d", b2Joint_GetBodyA( joint ).index1 );
+		ImGui::Text( "body B   %d", b2Joint_GetBodyB( joint ).index1 );
+		ImGui::Text( "collide  %s", b2Joint_GetCollideConnected( joint ) ? "yes" : "no" );
+		ImGui::Text( "force    %.3g", b2Length( b2Joint_GetConstraintForce( joint ) ) );
+		ImGui::Text( "torque   %.3g", b2Joint_GetConstraintTorque( joint ) );
+
+		switch ( type )
 		{
-			b2JointId joint = joints[i];
-			b2JointType type = b2Joint_GetType( joint );
-			b2BodyId bodyA = b2Joint_GetBodyA( joint );
-			b2BodyId other = B2_ID_EQUALS( bodyA, body ) ? b2Joint_GetBodyB( joint ) : bodyA;
-
-			ImGui::Text( "%s  to body %d  %s", ReplayJointTypeName( type ), other.index1,
-						 b2Joint_GetCollideConnected( joint ) ? "collide" : "" );
-			ImGui::Text( "  force %.3g  torque %.3g", b2Length( b2Joint_GetConstraintForce( joint ) ),
-						 b2Joint_GetConstraintTorque( joint ) );
-
-			switch ( type )
-			{
-				case b2_revoluteJoint:
-					ImGui::Text( "  angle %.1f deg", b2RevoluteJoint_GetAngle( joint ) * 57.2957795f );
-					break;
-				case b2_prismaticJoint:
-					ImGui::Text( "  translation %.3f", b2PrismaticJoint_GetTranslation( joint ) );
-					break;
-				case b2_distanceJoint:
-					ImGui::Text( "  length %.3f", b2DistanceJoint_GetCurrentLength( joint ) );
-					break;
-				default:
-					break;
-			}
+			case b2_revoluteJoint:
+				ImGui::Text( "angle    %.1f deg", b2RevoluteJoint_GetAngle( joint ) * 57.2957795f );
+				break;
+			case b2_prismaticJoint:
+				ImGui::Text( "translation %.3f", b2PrismaticJoint_GetTranslation( joint ) );
+				break;
+			case b2_distanceJoint:
+				ImGui::Text( "length   %.3f", b2DistanceJoint_GetCurrentLength( joint ) );
+				break;
+			default:
+				break;
 		}
 	}
 
-	void DrawQuerySection()
+	void DrawQueryDetail()
 	{
 		int count = b2RecPlayer_GetFrameQueryCount( m_player );
-		char header[32];
-		snprintf( header, sizeof( header ), "Queries (%d)###queries", count );
-		if ( ImGui::CollapsingHeader( header ) == false )
+		if ( m_selQuery < 0 || m_selQuery >= count )
+		{
+			ImGui::TextDisabled( "Query not present at this frame." );
+			return;
+		}
+
+		b2RecQueryInfo q = b2RecPlayer_GetFrameQuery( m_player, m_selQuery );
+		if ( ImGui::CollapsingHeader( "Query", ImGuiTreeNodeFlags_DefaultOpen ) == false )
 		{
 			return;
 		}
 
-		if ( count == 0 )
+		ImGui::Text( "type     %s", ReplayQueryTypeName( q.type ) );
+		bool shapeLocal = q.type == b2_recQueryShapeTestPoint || q.type == b2_recQueryShapeRayCast;
+		if ( shapeLocal == false )
 		{
-			ImGui::TextDisabled( "No queries this frame." );
-			return;
+			ImGui::Text( "category 0x%016llx", (unsigned long long)q.filter.categoryBits );
+			ImGui::Text( "mask     0x%016llx", (unsigned long long)q.filter.maskBits );
 		}
-
-		for ( int i = 0; i < count; ++i )
+		else
 		{
-			b2RecQueryInfo q = b2RecPlayer_GetFrameQuery( m_player, i );
-			char label[64];
-			snprintf( label, sizeof( label ), "%s  hits %d###q%d", ReplayQueryTypeName( q.type ), q.hitCount, i );
-			if ( ImGui::TreeNode( label ) == false )
-			{
-				continue;
-			}
+			ImGui::Text( "shape    %d", q.shape.index1 );
+		}
+		ImGui::Text( "hits     %d", q.hitCount );
 
-			bool shapeLocal = q.type == b2_recQueryShapeTestPoint || q.type == b2_recQueryShapeRayCast;
-			if ( shapeLocal == false )
-			{
-				ImGui::Text( "category 0x%016llx", (unsigned long long)q.filter.categoryBits );
-				ImGui::Text( "mask     0x%016llx", (unsigned long long)q.filter.maskBits );
-			}
-			else
-			{
-				ImGui::Text( "shape    %d", q.shape.index1 );
-			}
-
-			for ( int h = 0; h < q.hitCount; ++h )
-			{
-				b2RecQueryHit hit = b2RecPlayer_GetFrameQueryHit( m_player, i, h );
-				ImGui::Text( "  hit shape %d  fraction %.3f", hit.shape.index1, hit.fraction );
-			}
-
-			ImGui::TreePop();
+		// Hits as one wrapped id list, so a 50-hit query stays compact
+		char line[256];
+		int len = 0;
+		for ( int h = 0; h < q.hitCount && len < (int)sizeof( line ) - 12; ++h )
+		{
+			b2RecQueryHit hit = b2RecPlayer_GetFrameQueryHit( m_player, m_selQuery, h );
+			len += snprintf( line + len, sizeof( line ) - len, "%d ", hit.shape.index1 );
+		}
+		if ( q.hitCount > 0 )
+		{
+			ImGui::TextWrapped( "hit shapes: %s", line );
 		}
 	}
 
@@ -811,8 +1097,7 @@ public:
 		b2World_OverlapAABB( m_worldId, box, b2DefaultQueryFilter(), ReplayPickCallback, &pick );
 
 		// A miss clears the selection
-		m_selectedShape = pick.shape;
-		m_selectWorld = m_worldId;
+		SelectShape( pick.shape );
 	}
 	void MouseUp( b2Vec2, int ) override
 	{
@@ -841,9 +1126,21 @@ public:
 	bool m_selectTimelineTab = true;
 	bool m_prevShowMetrics = false;
 
-	// Inspector selection. The world id is kept so a rebuild on a backward seek drops a stale shape.
-	b2ShapeId m_selectedShape = b2_nullShapeId;
-	b2WorldId m_selectWorld = b2_nullWorldId;
+	// Inspector selection, keyed by stable creation ordinals so it survives a backward scrub. Resolved
+	// to live ids each frame from the player's body tracking; out of range means "not at this frame".
+	enum SelKind
+	{
+		SelNone,
+		SelBody,
+		SelShape,
+		SelJoint,
+		SelQuery
+	};
+	SelKind m_selKind = SelNone;
+	int m_selBodyOrdinal = -1; // index into the player's tracked body list
+	int m_selSlot = -1;        // shape or joint slot within that body
+	int m_selQuery = -1;       // query index, only meaningful for the current frame
+	bool m_revealSelection = false; // one-shot request to expand and scroll the tree to a viewport pick
 };
 
 static int sampleReplayFile = RegisterSample( "Replay", "Replay File", ReplayFile::Create );

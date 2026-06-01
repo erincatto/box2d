@@ -103,6 +103,12 @@ struct b2RecPlayer
 	b2RecRecordedHit* frameHits;
 	int frameHitCount;
 	int frameHitCap;
+
+	// Live bodies in creation order, tracked from create/destroy ops to drive the viewer outliner.
+	// Destroyed slots hold b2_nullBodyId so ordinals stay stable. Rebuilt deterministically on replay.
+	b2BodyId* bodyIds;
+	int bodyIdCount;
+	int bodyIdCap;
 };
 
 // Read primitives

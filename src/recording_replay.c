@@ -859,17 +859,57 @@ static void b2RecDispatch_WorldEnableSpeculative( const b2RecArgs_WorldEnableSpe
 	b2World_EnableSpeculative( rdr->replayWorldId, a->flag );
 }
 
+// Append a created body to the outliner tracking list. Ordinals are creation order and never reused.
+static void b2RecTrackBodyCreate( b2RecPlayer* player, b2BodyId id )
+{
+	if ( player->bodyIdCount == player->bodyIdCap )
+	{
+		int newCap = player->bodyIdCap == 0 ? 64 : player->bodyIdCap * 2;
+		b2BodyId* grown = b2Alloc( newCap * (int)sizeof( b2BodyId ) );
+		if ( player->bodyIds != NULL )
+		{
+			memcpy( grown, player->bodyIds, (size_t)player->bodyIdCount * sizeof( b2BodyId ) );
+			b2Free( player->bodyIds, player->bodyIdCap * (int)sizeof( b2BodyId ) );
+		}
+		player->bodyIds = grown;
+		player->bodyIdCap = newCap;
+	}
+	player->bodyIds[player->bodyIdCount] = id;
+	player->bodyIdCount += 1;
+}
+
+// Leave a hole so later ordinals do not shift, keeping a stored selection stable across the playthrough
+static void b2RecTrackBodyDestroy( b2RecPlayer* player, b2BodyId id )
+{
+	for ( int i = 0; i < player->bodyIdCount; ++i )
+	{
+		if ( B2_ID_EQUALS( player->bodyIds[i], id ) )
+		{
+			player->bodyIds[i] = b2_nullBodyId;
+			return;
+		}
+	}
+}
+
 static void b2RecDispatch_CreateBody( const b2RecArgs_CreateBody* a, b2RecReader* rdr )
 {
 	// Recorded id is appended after args (written before b2RecEndRecord)
 	b2BodyId recId = b2RecR_BODYID( rdr );
 	b2BodyId gotId = b2CreateBody( rdr->replayWorldId, &a->def );
 	b2RecCheckBodyId( rdr, gotId, recId );
+	if ( rdr->owner != NULL )
+	{
+		b2RecTrackBodyCreate( rdr->owner, gotId );
+	}
 }
 
 static void b2RecDispatch_DestroyBody( const b2RecArgs_DestroyBody* a, b2RecReader* rdr )
 {
 	b2BodyId id = b2RecMakeBodyId( rdr, a->body );
+	if ( rdr->owner != NULL )
+	{
+		b2RecTrackBodyDestroy( rdr->owner, id );
+	}
 	b2DestroyBody( id );
 }
 
@@ -2119,6 +2159,9 @@ b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount )
 	player->frameHits = NULL;
 	player->frameHitCount = 0;
 	player->frameHitCap = 0;
+	player->bodyIds = NULL;
+	player->bodyIdCount = 0;
+	player->bodyIdCap = 0;
 
 	// Count steps and read the first step's tuning so the viewer can show length and hz up front
 	b2RecScanFile( player );
@@ -2196,6 +2239,7 @@ void b2RecPlayer_Restart( b2RecPlayer* player )
 	player->frame = 0;
 	player->divergeFrame = -1;
 	player->atEnd = false;
+	player->bodyIdCount = 0; // rebuilt deterministically as the replay re-runs
 	b2RecPumpToWorld( player );
 }
 
@@ -2297,6 +2341,10 @@ void b2RecPlayer_Destroy( b2RecPlayer* player )
 	if ( player->frameHits != NULL )
 	{
 		b2Free( player->frameHits, player->frameHitCap * (int)sizeof( b2RecRecordedHit ) );
+	}
+	if ( player->bodyIds != NULL )
+	{
+		b2Free( player->bodyIds, player->bodyIdCap * (int)sizeof( b2BodyId ) );
 	}
 	b2Free( player, (int)sizeof( b2RecPlayer ) );
 }
@@ -2509,6 +2557,20 @@ b2RecQueryHit b2RecPlayer_GetFrameQueryHit( const b2RecPlayer* player, int query
 	hit.normal = h->normal;
 	hit.fraction = h->fraction;
 	return hit;
+}
+
+int b2RecPlayer_GetBodyCount( const b2RecPlayer* player )
+{
+	return player != NULL ? player->bodyIdCount : 0;
+}
+
+b2BodyId b2RecPlayer_GetBodyId( const b2RecPlayer* player, int index )
+{
+	if ( player == NULL || index < 0 || index >= player->bodyIdCount )
+	{
+		return b2_nullBodyId;
+	}
+	return player->bodyIds[index];
 }
 
 bool b2ValidateReplayFile( const char* path, int workerCount )
