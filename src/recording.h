@@ -36,7 +36,7 @@ typedef struct b2RecHeader
 } b2RecHeader;
 _Static_assert( sizeof( b2RecHeader ) == 32, "recording header must be 32 bytes" );
 
-// Append-only write buffer. Flushed to disk on each Step and on Save/Stop.
+// Growable append-only byte buffer. Doubles on demand.
 typedef struct b2RecBuffer
 {
 	uint8_t* data;
@@ -44,9 +44,10 @@ typedef struct b2RecBuffer
 	int size;
 } b2RecBuffer;
 
+// User-owned recording buffer. The world appends into it while recording; the user saves and
+// destroys it. Opaque across the public API.
 typedef struct b2Recording
 {
-	FILE* file;
 	b2RecBuffer buffer;
 	int recordStart; // offset of the 3-byte size field for u24 backpatch
 	b2Mutex* lock;	 // serializes query record commits across concurrent query threads
@@ -77,7 +78,6 @@ typedef b2SurfaceMaterial b2RecCType_MATERIAL;
 typedef b2MassData b2RecCType_MASSDATA;
 typedef b2MotionLocks b2RecCType_LOCKS;
 typedef b2ExplosionDef b2RecCType_EXPLOSIONDEF;
-typedef b2WorldDef b2RecCType_WORLDDEF;
 typedef b2BodyDef b2RecCType_BODYDEF;
 typedef b2ShapeDef b2RecCType_SHAPEDEF;
 typedef b2ChainDef b2RecCType_CHAINDEF;
@@ -138,7 +138,6 @@ void b2RecW_MASSDATA( b2RecBuffer* buf, b2MassData v );
 void b2RecW_LOCKS( b2RecBuffer* buf, b2MotionLocks v );
 void b2RecW_STR( b2RecBuffer* buf, const char* s );
 void b2RecW_EXPLOSIONDEF( b2RecBuffer* buf, b2ExplosionDef v );
-void b2RecW_WORLDDEF( b2RecBuffer* buf, b2WorldDef v );
 void b2RecW_BODYDEF( b2RecBuffer* buf, b2BodyDef v );
 void b2RecW_SHAPEDEF( b2RecBuffer* buf, b2ShapeDef v );
 void b2RecW_CHAINDEF( b2RecBuffer* buf, b2ChainDef v );
@@ -242,10 +241,8 @@ bool b2RecOverlapTrampoline( b2ShapeId id, void* ctx );
 float b2RecCastTrampoline( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx );
 bool b2RecPlaneTrampoline( b2ShapeId id, const b2PlaneResult* plane, void* ctx );
 
-// Lifecycle
-void b2StartRecording( b2World* world, const b2WorldDef* def );
-void b2StartRecordingSnapshot( b2World* world, const char* path );
-void b2FlushRecording( b2Recording* rec );
+// Lifecycle. Public create/destroy/save/load live in box2d.h; these are the engine-side hooks.
+void b2StartRecordingIntoBuffer( b2World* world, b2Recording* recording );
 void b2StopRecordingInternal( b2World* world );
 
 // Deterministic hash over all body transforms and velocities.

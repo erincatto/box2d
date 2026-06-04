@@ -757,7 +757,6 @@ b2WorldId b2CreateWorldFromSnapshot( const uint8_t* image, int size, int workerC
 	def.enqueueTask = NULL;
 	def.finishTask = NULL;
 	def.userTaskContext = NULL;
-	def.recordingPath = NULL;
 
 	// Capacity is only a sizing hint. Every container is resized from the image below
 	b2WorldId id = b2CreateWorld( &def );

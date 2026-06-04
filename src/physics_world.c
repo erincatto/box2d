@@ -319,12 +319,8 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->debugContactSet = b2CreateBitSet( 256 );
 	world->debugIslandSet = b2CreateBitSet( 256 );
 
-	// Start recording if requested; b2StartRecording writes the CreateWorld record
+	// Recording is started by the host with b2World_StartRecording, never from the world def
 	world->recording = NULL;
-	if ( def->recordingPath != NULL )
-	{
-		b2StartRecording( world, def );
-	}
 
 	// add one to worldId so that 0 represents a null b2WorldId
 	return (b2WorldId){ (uint16_t)( worldId + 1 ), world->generation };
@@ -334,7 +330,7 @@ void b2DestroyWorld( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 
-	// Flush and close recording before teardown
+	// Detach any recording before teardown; the host owns and frees the recording buffer
 	b2StopRecordingInternal( world );
 
 	if ( world->scheduler != NULL )
@@ -967,13 +963,12 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 
 	if ( world->recording != NULL )
 	{
-		// Write the per-step StateHash and flush while the world is still locked. Queries early
-		// return while locked, so this keeps the shared recording buffer single-writer without a
-		// lock. StateHash proves the simulation reproduced exactly on replay.
+		// Write the per-step StateHash while the world is still locked. Queries early return while
+		// locked, so this keeps the shared recording buffer single-writer without a lock. StateHash
+		// proves the simulation reproduced exactly on replay.
 		uint64_t hash = b2HashWorldState( world );
 		b2RecArgs_StateHash sha = { worldId, hash };
 		b2RecWrite_StateHash( world->recording, &sha );
-		b2FlushRecording( world->recording );
 	}
 
 	world->locked = false;
@@ -1968,59 +1963,17 @@ int b2World_GetWorkerCount( b2WorldId worldId )
 	return world->workerCount;
 }
 
-void b2World_StartRecording( b2WorldId worldId, const char* path )
+void b2World_StartRecording( b2WorldId worldId, b2Recording* recording )
 {
 	// Must be a step boundary, so refuse a locked world
 	b2World* world = b3GetUnlockedWorldFromId( worldId );
 
-	if ( world == NULL || path == NULL || world->recording != NULL )
+	if ( world == NULL || recording == NULL || world->recording != NULL )
 	{
 		return;
 	}
 
-	b2StartRecordingSnapshot( world, path );
-}
-
-void b2World_SaveRecording( b2WorldId worldId, const char* path )
-{
-	b2World* world = b3GetUnlockedWorldFromId( worldId );
-
-	if ( world == NULL || world->recording == NULL || path == NULL )
-	{
-		return;
-	}
-
-	// Flush under the lock so a query committing from another thread can't race the shared buffer.
-	// The file copy below touches only the file, which query commits never write, so it stays unlocked.
-	b2LockMutex( world->recording->lock );
-	b2FlushRecording( world->recording );
-	b2UnlockMutex( world->recording->lock );
-	fflush( world->recording->file );
-
-	// Stream-copy the recording to the user path. Source file stays open.
-	FILE* src = world->recording->file;
-	long pos = ftell( src );
-	if ( pos < 0 || fseek( src, 0, SEEK_SET ) != 0 )
-	{
-		return;
-	}
-
-	FILE* dst = fopen( path, "wb" );
-	if ( dst == NULL )
-	{
-		fseek( src, pos, SEEK_SET );
-		return;
-	}
-
-	uint8_t copyBuf[4096];
-	size_t n;
-	while ( ( n = fread( copyBuf, 1, sizeof( copyBuf ), src ) ) > 0 )
-	{
-		fwrite( copyBuf, 1, n, dst );
-	}
-
-	fclose( dst );
-	fseek( src, pos, SEEK_SET );
+	b2StartRecordingIntoBuffer( world, recording );
 }
 
 void b2World_StopRecording( b2WorldId worldId )

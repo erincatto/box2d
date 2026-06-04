@@ -193,7 +193,7 @@ typedef struct b2World
 
 	void* userData;
 
-	b2Recording* recording; // NULL unless recordingPath was set at world creation
+	b2Recording* recording; // NULL unless b2World_StartRecording is active, owned by the host
 
 	// Remember type step used for reporting forces and torques
 	// inverse sub-step

@@ -5,8 +5,7 @@
 
 #include "draw.h"
 
-#include "box2d/id.h"
-#include "box2d/types.h"
+#include "box2d/box2d.h"
 
 #define ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
 
@@ -42,8 +41,9 @@ struct SampleContext
 	// Set by Ctrl+O; consumed by UpdateSampleUI to open the fuzzy sample picker.
 	bool openSamplePicker = false;
 
-	// When set, the next world created records to recordingFile. Cleared when a
-	// different sample is selected so a restart re-records but a switch does not.
+	// When set, the next world created is recorded into a buffer, saved to recordingFile when
+	// recording stops. Cleared when a different sample is selected so a restart re-records but a
+	// switch does not.
 	bool record = false;
 	char recordingFile[256] = "recording.b2rec";
 
@@ -60,6 +60,9 @@ public:
 	virtual ~Sample();
 
 	void CreateWorld();
+
+	// Stop the active recording if any, save it to context->recordingFile, and free it
+	void FinishRecording();
 
 	void ResetText();
 	virtual void Step();
@@ -114,6 +117,7 @@ public:
 	b2BodyId m_mouseBodyId;
 
 	b2WorldId m_worldId;
+	b2Recording* m_recording; // active recording buffer, owned here; NULL when not recording
 	b2JointId m_mouseJointId;
 	b2Vec2 m_mousePoint;
 	float m_mouseForceScale;

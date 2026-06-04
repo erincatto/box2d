@@ -78,10 +78,10 @@ typedef struct b2RecReader
 	b2RecPlayer* owner; // player that owns this reader
 } b2RecReader;
 
-// Incremental player. Owns the file image and drives replay one step at a time.
+// Incremental player. Owns a private copy of the recording bytes and drives replay one step at a time.
 struct b2RecPlayer
 {
-	uint8_t* data; // file image, owned here
+	uint8_t* data; // recording bytes, a private copy owned here
 	int size;
 	int headerEnd;			  // first payload offset
 	uint32_t buildHash;		  // engine build that produced the file, from the header
@@ -110,8 +110,7 @@ struct b2RecPlayer
 	int bodyIdCap;
 
 	// Frame-0 image used to restart in place, so the replay world id stays stable across a
-	// restart or backward scrub. For a snapshot file it points into the owned file blob; for a
-	// from-creation file it is a snapshot captured at open after the pre-step creates ran.
+	// restart or backward scrub. Points into the seed snapshot blob inside the owned copy.
 	const uint8_t* frame0Image;
 	int frame0Size;
 	bool frame0Owned; // true when frame0Image is a separate allocation to free
@@ -149,7 +148,6 @@ b2MassData b2RecR_MASSDATA( b2RecReader* rdr );
 b2MotionLocks b2RecR_LOCKS( b2RecReader* rdr );
 const char* b2RecR_STR( b2RecReader* rdr );
 b2ExplosionDef b2RecR_EXPLOSIONDEF( b2RecReader* rdr );
-b2WorldDef b2RecR_WORLDDEF( b2RecReader* rdr );
 b2BodyDef b2RecR_BODYDEF( b2RecReader* rdr );
 b2ShapeDef b2RecR_SHAPEDEF( b2RecReader* rdr );
 b2ChainDef b2RecR_CHAINDEF( b2RecReader* rdr );

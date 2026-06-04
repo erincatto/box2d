@@ -211,23 +211,45 @@ B2_API void b2World_RebuildStaticTree( b2WorldId worldId );
 /// This is for internal testing
 B2_API void b2World_EnableSpeculative( b2WorldId worldId, bool flag );
 
-/// Begin recording from the current world state. Unlike b2WorldDef::recordingPath, which
-/// records from b2CreateWorld, this serializes a snapshot of the live world into the file so
-/// recording can start after a bug appears. The file then continues with the same hook log as
-/// a from-creation recording. Must be called at a step boundary. No effect if already recording.
+/// Opaque handle for a recording buffer. Create one, hand it to b2World_StartRecording, then
+/// save its bytes and destroy it. The buffer grows as the world records into it.
+typedef struct b2Recording b2Recording;
+
+/// Create a recording buffer. The buffer grows on demand. @p byteCapacity pre-sizes it to avoid
+/// reallocations during a known-length session. Pass 0 for a small default.
+/// @return A recording handle, freed with b2DestroyRecording
+B2_API b2Recording* b2CreateRecording( int byteCapacity );
+
+/// Destroy a recording buffer and free its memory.
+B2_API void b2DestroyRecording( b2Recording* recording );
+
+/// Get a pointer to the recorded bytes, for saving to a file or transmitting. Valid until the
+/// next recording call or b2DestroyRecording.
+B2_API const uint8_t* b2Recording_GetData( const b2Recording* recording );
+
+/// Get the number of recorded bytes.
+B2_API int b2Recording_GetSize( const b2Recording* recording );
+
+/// Begin recording the world into @p recording. Serializes a snapshot of the current world as the
+/// seed, then logs every mutating call. Call at a step boundary, before or after creating bodies.
+/// Start before the first step to capture the whole session. No effect if already recording or if
+/// the world is locked.
 /// @param worldId The world to record
-/// @param path Destination file path for the recording
-B2_API void b2World_StartRecording( b2WorldId worldId, const char* path );
+/// @param recording A recording buffer from b2CreateRecording
+B2_API void b2World_StartRecording( b2WorldId worldId, b2Recording* recording );
 
-/// Flush the current recording buffer and copy the recording to @p path.
-/// The internal recording remains open and active. Use this to snapshot the session.
-/// @param worldId The world being recorded
-/// @param path Destination file path for the copy
-B2_API void b2World_SaveRecording( b2WorldId worldId, const char* path );
-
-/// Stop the current recording, flush the buffer, and close the file.
+/// Stop recording. The recording buffer keeps its bytes. Save and destroy it yourself.
 /// @param worldId The world being recorded
 B2_API void b2World_StopRecording( b2WorldId worldId );
+
+/// Save a recording buffer to a file. Convenience wrapper over your own file I/O.
+/// @return false if the file could not be written
+B2_API bool b2SaveRecordingToFile( const b2Recording* recording, const char* path );
+
+/// Load a recording from a file into a new recording buffer. Convenience wrapper over your own
+/// file I/O. Destroy the result with b2DestroyRecording.
+/// @return NULL if the file is missing or unreadable
+B2_API b2Recording* b2LoadRecordingFromFile( const char* path );
 
 /** @} */
 
@@ -237,11 +259,12 @@ B2_API void b2World_StopRecording( b2WorldId worldId );
  * @{
  */
 
-/// Replay a file by re-running the engine and asserting recorded ids and state match.
-/// @param path Path to the recording file
-/// @param workerCount Worker count to use for replay. 0 uses the recorded count.
+/// Replay a recording by re-running the engine and asserting recorded ids and state match.
+/// @param data Recorded bytes, e.g. from b2Recording_GetData or a loaded file
+/// @param size Number of recorded bytes
+/// @param workerCount Worker count to use for replay. 0 uses the serial single-worker fallback.
 /// @return true if replay completed without divergence, false on any mismatch
-B2_API bool b2ValidateReplayFile( const char* path, int workerCount );
+B2_API bool b2ValidateReplay( const void* data, int size, int workerCount );
 
 /// Opaque handle for incremental playback of a recording.
 typedef struct b2RecPlayer b2RecPlayer;
@@ -250,18 +273,20 @@ typedef struct b2RecPlayer b2RecPlayer;
 typedef struct b2RecPlayerInfo
 {
 	int frameCount;		// total recorded steps
-	int workerCount;	// worker count recorded in the world def
+	int workerCount;	// worker count used for the replay world
 	float timeStep;		// dt of the recorded steps
 	int subStepCount;	// recorded sub-steps
 	uint32_t buildHash; // engine build that produced the file, 0 if unstamped
 	uint64_t wallClock; // unix time the recording was made
 } b2RecPlayerInfo;
 
-/// Open a replay file for incremental playback and replay up to the first step.
-/// @param path Path to the recording file
-/// @param workerCount Worker count for the replay world. 0 uses the recorded count.
-/// @return A player handle, or NULL if the file is missing or malformed
-B2_API b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount );
+/// Open a recording for incremental playback and replay up to the first step. The player copies
+/// the bytes, so you may free or destroy the source buffer immediately after this call.
+/// @param data Recorded bytes, e.g. from b2Recording_GetData or a loaded file
+/// @param size Number of recorded bytes
+/// @param workerCount Worker count for the replay world. 0 uses the serial single-worker fallback.
+/// @return A player handle, or NULL if the recording is malformed
+B2_API b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount );
 
 /// Advance the replay by one recorded step.
 /// @return true if a step executed, false once the end of the recording is reached

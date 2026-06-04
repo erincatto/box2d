@@ -143,10 +143,6 @@ typedef struct b2WorldDef
 	/// User data
 	void* userData;
 
-	/// Path to record this world's mutator calls to a .b2rec file. NULL disables recording.
-	/// Set before calling b2CreateWorld. Recording cannot be started mid-session.
-	const char* recordingPath;
-
 	/// Optional initial capacities
 	b2Capacity capacity;
 

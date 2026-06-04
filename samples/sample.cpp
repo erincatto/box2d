@@ -274,6 +274,8 @@ Sample::Sample( SampleContext* context, bool createWorld )
 
 	g_randomSeed = RAND_SEED;
 
+	m_recording = nullptr;
+
 	if ( createWorld )
 	{
 		CreateWorld();
@@ -285,14 +287,29 @@ Sample::~Sample()
 {
 	if (B2_IS_NON_NULL(m_worldId))
 	{
+		FinishRecording();
 		b2DestroyWorld( m_worldId );
 	}
+}
+
+void Sample::FinishRecording()
+{
+	if ( m_recording == nullptr )
+	{
+		return;
+	}
+
+	b2World_StopRecording( m_worldId );
+	b2SaveRecordingToFile( m_recording, m_context->recordingFile );
+	b2DestroyRecording( m_recording );
+	m_recording = nullptr;
 }
 
 void Sample::CreateWorld()
 {
 	if ( B2_IS_NON_NULL( m_worldId ) )
 	{
+		FinishRecording();
 		b2DestroyWorld( m_worldId );
 		m_worldId = b2_nullWorldId;
 	}
@@ -302,13 +319,17 @@ void Sample::CreateWorld()
 	worldDef.userTaskContext = this;
 	worldDef.enableSleep = m_context->enableSleep;
 	worldDef.capacity = m_context->capacity;
-	if ( m_context->record )
-	{
-		worldDef.recordingPath = m_context->recordingFile;
-	}
 	m_worldId = b2CreateWorld( &worldDef );
 
 	b2World_SetContactRecycleDistance( m_worldId, m_context->recycleDistance );
+
+	// Record the whole session by starting before the first step. The buffer grows as the
+	// world records into it; it is saved and freed in FinishRecording.
+	if ( m_context->record )
+	{
+		m_recording = b2CreateRecording( 0 );
+		b2World_StartRecording( m_worldId, m_recording );
+	}
 }
 
 void Sample::ResetText()
@@ -1655,7 +1676,7 @@ static void DrawRightPanel( SampleContext* context, float frameTime )
 		{
 			if ( ImGui::Button( "Stop##Recording" ) )
 			{
-				b2World_StopRecording( context->sample->m_worldId );
+				context->sample->FinishRecording();
 				context->record = false;
 			}
 			ImGui::SameLine();

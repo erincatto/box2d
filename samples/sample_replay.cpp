@@ -29,8 +29,12 @@ public:
 		b2WorldDef worldDef = b2DefaultWorldDef();
 		worldDef.workerCount = m_context->workerCount;
 		worldDef.enableSleep = m_context->enableSleep;
-		worldDef.recordingPath = m_path;
 		m_worldId = b2CreateWorld( &worldDef );
+
+		// Record the whole session by starting before the first step. FinishRecording saves the
+		// buffer to context->recordingFile, the path the Replay File sample loads by default.
+		m_recording = b2CreateRecording( 0 );
+		b2World_StartRecording( m_worldId, m_recording );
 
 		m_data = CreateFallingHinges( m_worldId );
 		m_done = false;
@@ -76,7 +80,7 @@ public:
 			{
 				printf( "sleep step = %d, hash = 0x%08X\n", m_data.sleepStep, m_data.hash );
 
-				b2World_StopRecording( m_worldId );
+				FinishRecording();
 			}
 		}
 		else
@@ -87,7 +91,7 @@ public:
 
 	bool DrawControls() override
 	{
-		ImGui::TextWrapped( "Recording to \"%s\".", m_path );
+		ImGui::TextWrapped( "Recording to \"%s\".", m_context->recordingFile );
 		return true;
 	}
 
@@ -109,8 +113,6 @@ public:
 
 	FallingHingeData m_data;
 	bool m_done;
-
-	const char* m_path = "recording.b2rec";
 };
 
 static int sampleMakeRecording = RegisterSample( "Replay", "Make Recording", MakeRecording::Create );
@@ -247,9 +249,14 @@ public:
 	{
 		ClosePlayer();
 
-		// Replay workers of 0 uses the recorded count, otherwise force a different count
-		// to spot-check cross-thread determinism.
-		m_player = b2RecPlayer_Create( m_path, m_replayWorkers );
+		// Load the file into a recording buffer, then hand its bytes to the player. The player
+		// copies them, so the buffer is freed right away. Replay workers of 0 uses the serial
+		// fallback, otherwise force a different count to spot-check cross-thread determinism.
+		b2Recording* recording = b2LoadRecordingFromFile( m_path );
+		m_player = recording != nullptr ? b2RecPlayer_Create( b2Recording_GetData( recording ),
+															  b2Recording_GetSize( recording ), m_replayWorkers )
+										: nullptr;
+		b2DestroyRecording( recording );
 		m_frameAccum = 0.0f;
 		if ( m_player != nullptr )
 		{

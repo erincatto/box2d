@@ -14,7 +14,6 @@
 #include <stdlib.h>
 
 static const char* s_recPath = "recording_test.b2rec";
-static const char* s_savedPath = "test_recording_saved.b2rec";
 
 // Query callbacks used by RecordingTest
 static int s_overlapCount = 0;
@@ -101,10 +100,13 @@ int RecordingTest( void )
 	b2WorldDef worldDef = b2DefaultWorldDef();
 	worldDef.gravity = (b2Vec2){ 0.0f, -10.0f };
 	worldDef.workerCount = 1;
-	worldDef.recordingPath = s_recPath;
 
 	b2WorldId worldId = b2CreateWorld( &worldDef );
 	ENSURE( b2World_IsValid( worldId ) );
+
+	// Record from before the first step so the whole session is captured
+	b2Recording* rec = b2CreateRecording( 0 );
+	b2World_StartRecording( worldId, rec );
 
 	// Static ground body with a circle shape
 	b2BodyDef groundDef = b2DefaultBodyDef();
@@ -427,49 +429,33 @@ int RecordingTest( void )
 		b2World_Step( worldId, timeStep, subStepCount );
 	}
 
-	// Save a mid-recording snapshot, must replay deterministically too
-	b2World_SaveRecording( worldId, s_savedPath );
-
 	b2World_StopRecording( worldId );
 	b2DestroyWorld( worldId );
 
-	// Verify both files are non-empty
-	{
-		FILE* fp = fopen( s_recPath, "rb" );
-		ENSURE( fp != NULL );
-		fseek( fp, 0, SEEK_END );
-		long sz = ftell( fp );
-		fclose( fp );
-		ENSURE( sz > 0 );
-	}
-	{
-		FILE* fp = fopen( s_savedPath, "rb" );
-		ENSURE( fp != NULL );
-		fseek( fp, 0, SEEK_END );
-		long sz = ftell( fp );
-		fclose( fp );
-		ENSURE( sz > 0 );
-	}
+	// The recording buffer now holds the full session
+	const uint8_t* recData = b2Recording_GetData( rec );
+	int recSize = b2Recording_GetSize( rec );
+	ENSURE( recSize > 0 );
 
-	// Replay with recorded worker count
-	bool ok1 = b2ValidateReplayFile( s_recPath, 0 );
-	ENSURE( ok1 );
+	// Replay from the buffer with the recorded worker count
+	ENSURE( b2ValidateReplay( recData, recSize, 0 ) );
 
 	// Replay with a different worker count to prove cross-thread determinism
-	bool ok4 = b2ValidateReplayFile( s_recPath, 4 );
-	ENSURE( ok4 );
+	ENSURE( b2ValidateReplay( recData, recSize, 4 ) );
 
-	// The saved snapshot must replay deterministically at both worker counts
-	bool okSaved0 = b2ValidateReplayFile( s_savedPath, 0 );
-	ENSURE( okSaved0 );
-
-	bool okSaved4 = b2ValidateReplayFile( s_savedPath, 4 );
-	ENSURE( okSaved4 );
+	// File round-trip: save the buffer, load it back, and replay the loaded copy
+	ENSURE( b2SaveRecordingToFile( rec, s_recPath ) );
+	b2Recording* loaded = b2LoadRecordingFromFile( s_recPath );
+	ENSURE( loaded != NULL );
+	ENSURE( b2Recording_GetSize( loaded ) == recSize );
+	ENSURE( b2ValidateReplay( b2Recording_GetData( loaded ), b2Recording_GetSize( loaded ), 0 ) );
+	ENSURE( b2ValidateReplay( b2Recording_GetData( loaded ), b2Recording_GetSize( loaded ), 4 ) );
+	b2DestroyRecording( loaded );
 
 	// Drive the incremental player directly. It underpins the viewer and exercises
-	// per-frame stepping, restart, and the getters beyond what b2ReplayFile covers.
+	// per-frame stepping, restart, and the getters beyond what b2ValidateReplay covers.
 	{
-		b2RecPlayer* player = b2RecPlayer_Create( s_recPath, 0 );
+		b2RecPlayer* player = b2RecPlayer_Create( recData, recSize, 0 );
 		ENSURE( player != NULL );
 
 		// Build a no-op b2DebugDraw to exercise the draw path headlessly
@@ -514,7 +500,7 @@ int RecordingTest( void )
 		b2RecPlayer_Destroy( player );
 	}
 
+	b2DestroyRecording( rec );
 	remove( s_recPath );
-	remove( s_savedPath );
 	return 0;
 }

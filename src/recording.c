@@ -12,6 +12,9 @@
 #include "physics_world.h"
 #include "world_snapshot.h"
 
+#include "box2d/box2d.h"
+
+#include <limits.h>
 #include <stddef.h>
 #include <time.h>
 
@@ -225,31 +228,6 @@ void b2RecW_STR( b2RecBuffer* buf, const char* s )
 
 // Hand-written def helpers. Zero all pointer and cookie fields before serializing
 // Readers call b2Default*Def() first to get the cookie, then overwrite fields
-
-void b2RecW_WORLDDEF( b2RecBuffer* buf, b2WorldDef v )
-{
-	b2RecW_VEC2( buf, v.gravity );
-	b2RecW_F32( buf, v.restitutionThreshold );
-	b2RecW_F32( buf, v.hitEventThreshold );
-	b2RecW_F32( buf, v.contactHertz );
-	b2RecW_F32( buf, v.contactDampingRatio );
-	b2RecW_F32( buf, v.contactSpeed );
-	b2RecW_F32( buf, v.maximumLinearSpeed );
-	b2RecW_BOOL( buf, v.enableSleep );
-	b2RecW_BOOL( buf, v.enableContinuous );
-	b2RecW_BOOL( buf, v.enableContactSoftening );
-	b2RecW_I32( buf, v.workerCount );
-	// userData written as zero, host pointer not preserved
-	b2RecW_U64( buf, 0u );
-	// capacity
-	b2RecW_I32( buf, v.capacity.staticShapeCount );
-	b2RecW_I32( buf, v.capacity.dynamicShapeCount );
-	b2RecW_I32( buf, v.capacity.staticBodyCount );
-	b2RecW_I32( buf, v.capacity.dynamicBodyCount );
-	b2RecW_I32( buf, v.capacity.contactCount );
-	// recordingPath, enqueueTask, finishTask, userTaskContext,
-	// frictionCallback, restitutionCallback, internalValue: all omitted
-}
 
 void b2RecW_BODYDEF( b2RecBuffer* buf, b2BodyDef v )
 {
@@ -653,67 +631,51 @@ void b2RecEndRecord( b2Recording* rec )
 
 // Lifecycle
 
-void b2StartRecording( b2World* world, const b2WorldDef* def )
+b2Recording* b2CreateRecording( int byteCapacity )
 {
 	b2Recording* rec = b2Alloc( (int)sizeof( b2Recording ) );
 	*rec = (b2Recording){ 0 };
 
-	// Open for read+write so b2World_SaveRecording can copy the file while it stays open
-	rec->file = fopen( def->recordingPath, "w+b" );
-	if ( rec->file == NULL )
-	{
-		b2Free( rec, (int)sizeof( b2Recording ) );
-		return;
-	}
-
-	rec->lock = b2CreateMutex();
-
-	int initCap = 65536;
+	// Pre-size to taste; the buffer still doubles on demand. A few hundred KiB is plenty for a
+	// short session and avoids early reallocations.
+	int initCap = byteCapacity > 0 ? byteCapacity : 65536;
 	rec->buffer.data = b2Alloc( initCap );
 	rec->buffer.capacity = initCap;
 	rec->buffer.size = 0;
-
-	b2RecHeader hdr;
-	memset( &hdr, 0, sizeof( hdr ) );
-	hdr.magic = B2_REC_MAGIC;
-	hdr.versionMajor = 1;
-	hdr.versionMinor = 0;
-	hdr.buildHash = B2_BUILD_HASH;
-	hdr.simdWidth = (uint8_t)B2_SIMD_WIDTH;
-	hdr.pointerWidth = (uint8_t)sizeof( void* );
-	hdr.bigEndian = 0;
-	hdr.wallClockUnix = (uint64_t)time( NULL );
-	b2RecBufAppend( &rec->buffer, &hdr, (int)sizeof( hdr ) );
-
-	world->recording = rec;
-
-	// Write the CreateWorld record, first record in file, self-describes the world
-	b2RecArgs_CreateWorld a = { *def };
-	b2RecWrite_CreateWorld( rec, &a );
+	rec->lock = b2CreateMutex();
+	return rec;
 }
 
-void b2StartRecordingSnapshot( b2World* world, const char* path )
+void b2DestroyRecording( b2Recording* recording )
 {
-	b2Recording* rec = b2Alloc( (int)sizeof( b2Recording ) );
-	*rec = (b2Recording){ 0 };
-
-	// Open for read+write so b2World_SaveRecording can copy the file while it stays open
-	rec->file = fopen( path, "w+b" );
-	if ( rec->file == NULL )
+	if ( recording == NULL )
 	{
-		b2Free( rec, (int)sizeof( b2Recording ) );
 		return;
 	}
 
-	rec->lock = b2CreateMutex();
+	b2RecBufFree( &recording->buffer );
+	b2DestroyMutex( recording->lock );
+	b2Free( recording, (int)sizeof( b2Recording ) );
+}
 
-	int initCap = 65536;
-	rec->buffer.data = b2Alloc( initCap );
-	rec->buffer.capacity = initCap;
-	rec->buffer.size = 0;
+const uint8_t* b2Recording_GetData( const b2Recording* recording )
+{
+	return recording->buffer.data;
+}
 
-	// Serialize the live world into a blob that follows the header and seeds replay.
-	// Replaces the CreateWorld record a from-creation file opens with.
+int b2Recording_GetSize( const b2Recording* recording )
+{
+	return recording->buffer.size;
+}
+
+void b2StartRecordingIntoBuffer( b2World* world, b2Recording* recording )
+{
+	// Reset so a recording handle can be reused for a fresh session
+	recording->buffer.size = 0;
+	recording->recordStart = 0;
+
+	// Serialize the live world into a blob that follows the header and seeds replay. Called before
+	// the first step this is a small empty world image; mid-stream it is the live state.
 	b2RecBuffer blob = { 0 };
 	b2SerializeWorld( world, &blob );
 
@@ -728,26 +690,17 @@ void b2StartRecordingSnapshot( b2World* world, const char* path )
 	hdr.bigEndian = 0;
 	hdr.wallClockUnix = (uint64_t)time( NULL );
 	hdr.snapshotSize = (uint64_t)blob.size;
-	b2RecBufAppend( &rec->buffer, &hdr, (int)sizeof( hdr ) );
-	b2RecBufAppend( &rec->buffer, blob.data, blob.size );
+	b2RecBufAppend( &recording->buffer, &hdr, (int)sizeof( hdr ) );
+	b2RecBufAppend( &recording->buffer, blob.data, blob.size );
 	b2RecBufFree( &blob );
 
-	world->recording = rec;
+	world->recording = recording;
 
 	// Anchor the recorded state so replay verifies the blob deserialized to the same world
 	// before any Step runs
 	b2WorldId wid = { (uint16_t)( world->worldId + 1 ), world->generation };
 	b2RecArgs_StateHash sha = { wid, b2HashWorldState( world ) };
-	b2RecWrite_StateHash( rec, &sha );
-}
-
-void b2FlushRecording( b2Recording* rec )
-{
-	if ( rec->buffer.size > 0 )
-	{
-		fwrite( rec->buffer.data, 1, (size_t)rec->buffer.size, rec->file );
-		rec->buffer.size = 0;
-	}
+	b2RecWrite_StateHash( recording, &sha );
 }
 
 void b2StopRecordingInternal( b2World* world )
@@ -760,16 +713,73 @@ void b2StopRecordingInternal( b2World* world )
 	b2Recording* rec = world->recording;
 	world->recording = NULL;
 
-	// Write DestroyWorld so the file is self-contained
+	// Write DestroyWorld so the buffer is self-contained, an end marker the viewer reads. The
+	// buffer and handle belong to the user, freed with b2DestroyRecording.
 	b2WorldId wid = { (uint16_t)( world->worldId + 1 ), world->generation };
 	b2RecArgs_DestroyWorld a = { wid };
 	b2RecWrite_DestroyWorld( rec, &a );
+}
 
-	b2FlushRecording( rec );
-	fclose( rec->file );
-	b2RecBufFree( &rec->buffer );
-	b2DestroyMutex( rec->lock );
-	b2Free( rec, (int)sizeof( b2Recording ) );
+// Convenience file I/O. The library never opens files while recording. These let a host persist
+// or reload a recording buffer without writing its own I/O. fopen precedent: b2World_DumpMemoryStats.
+
+bool b2SaveRecordingToFile( const b2Recording* recording, const char* path )
+{
+	if ( recording == NULL || path == NULL )
+	{
+		return false;
+	}
+
+	FILE* f = fopen( path, "wb" );
+	if ( f == NULL )
+	{
+		return false;
+	}
+
+	size_t written = fwrite( recording->buffer.data, 1, (size_t)recording->buffer.size, f );
+	fclose( f );
+	return (int)written == recording->buffer.size;
+}
+
+b2Recording* b2LoadRecordingFromFile( const char* path )
+{
+	if ( path == NULL )
+	{
+		return NULL;
+	}
+
+	FILE* f = fopen( path, "rb" );
+	if ( f == NULL )
+	{
+		return NULL;
+	}
+
+	if ( fseek( f, 0, SEEK_END ) != 0 )
+	{
+		fclose( f );
+		return NULL;
+	}
+
+	long fileSize = ftell( f );
+	if ( fileSize < 0 || fileSize > INT_MAX )
+	{
+		fclose( f );
+		return NULL;
+	}
+	fseek( f, 0, SEEK_SET );
+
+	b2Recording* rec = b2CreateRecording( (int)fileSize );
+	size_t readSize = fread( rec->buffer.data, 1, (size_t)fileSize, f );
+	fclose( f );
+
+	if ( (long)readSize != fileSize )
+	{
+		b2DestroyRecording( rec );
+		return NULL;
+	}
+
+	rec->buffer.size = (int)fileSize;
+	return rec;
 }
 
 // Deterministic over worker count: walk the bodies sparse array in index order, not

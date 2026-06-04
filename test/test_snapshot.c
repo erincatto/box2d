@@ -15,8 +15,6 @@
 #include <string.h>
 
 static const char* s_snapPath = "test_snapshot_midstream.b2rec";
-static const char* s_savedSnapPath = "test_snapshot_saved.b2rec";
-static const char* s_fromCreatePath = "test_snapshot_fromcreate.b2rec";
 
 // Ids held across a snapshot to prove they keep resolving after an in-place restore
 typedef struct SnapshotIds
@@ -415,21 +413,29 @@ int SnapshotTest( void )
 			b2World_Step( wId, dt, subSteps );
 		}
 
-		b2World_StartRecording( wId, s_snapPath );
+		b2Recording* rec = b2CreateRecording( 0 );
+		b2World_StartRecording( wId, rec );
 		for ( int step = 0; step < 60; ++step )
 		{
 			b2World_Step( wId, dt, subSteps );
 		}
-		b2World_SaveRecording( wId, s_savedSnapPath );
 		b2World_StopRecording( wId );
 		b2DestroyWorld( wId );
 
-		ENSURE( b2ValidateReplayFile( s_snapPath, 0 ) );
-		ENSURE( b2ValidateReplayFile( s_snapPath, 4 ) );
-		ENSURE( b2ValidateReplayFile( s_savedSnapPath, 0 ) );
+		const uint8_t* recData = b2Recording_GetData( rec );
+		int recSize = b2Recording_GetSize( rec );
+		ENSURE( b2ValidateReplay( recData, recSize, 0 ) );
+		ENSURE( b2ValidateReplay( recData, recSize, 4 ) );
 
-		// The player opens the snapshot file and the replay world id is stable across a restart
-		b2RecPlayer* player = b2RecPlayer_Create( s_snapPath, 0 );
+		// File round-trip: save the buffer, load it back, and replay the loaded copy
+		ENSURE( b2SaveRecordingToFile( rec, s_snapPath ) );
+		b2Recording* loaded = b2LoadRecordingFromFile( s_snapPath );
+		ENSURE( loaded != NULL );
+		ENSURE( b2ValidateReplay( b2Recording_GetData( loaded ), b2Recording_GetSize( loaded ), 0 ) );
+		b2DestroyRecording( loaded );
+
+		// The player opens the recording and the replay world id is stable across a restart
+		b2RecPlayer* player = b2RecPlayer_Create( recData, recSize, 0 );
 		ENSURE( player != NULL );
 		b2WorldId pid0 = b2RecPlayer_GetWorldId( player );
 
@@ -455,6 +461,7 @@ int SnapshotTest( void )
 		ENSURE( b2RecPlayer_HasDiverged( player ) == false );
 
 		b2RecPlayer_Destroy( player );
+		b2DestroyRecording( rec );
 	}
 
 	// Phase 9: snapshot-equals-real. A world built from a mid-stream snapshot must reproduce the
@@ -503,12 +510,15 @@ int SnapshotTest( void )
 		b2DestroyWorld( cId );
 	}
 
-	// Phase 10: a from-creation file also restarts in place now, with a stable replay world id
+	// Phase 10: a recording started before the first step also restarts in place, with a stable
+	// replay world id
 	{
 		b2WorldDef wd = b2DefaultWorldDef();
 		wd.workerCount = 1;
-		wd.recordingPath = s_fromCreatePath;
 		b2WorldId wId = b2CreateWorld( &wd );
+
+		b2Recording* rec = b2CreateRecording( 0 );
+		b2World_StartRecording( wId, rec );
 
 		b2BodyDef bd = b2DefaultBodyDef();
 		bd.type = b2_dynamicBody;
@@ -525,7 +535,7 @@ int SnapshotTest( void )
 		b2World_StopRecording( wId );
 		b2DestroyWorld( wId );
 
-		b2RecPlayer* player = b2RecPlayer_Create( s_fromCreatePath, 0 );
+		b2RecPlayer* player = b2RecPlayer_Create( b2Recording_GetData( rec ), b2Recording_GetSize( rec ), 0 );
 		ENSURE( player != NULL );
 		b2WorldId pid0 = b2RecPlayer_GetWorldId( player );
 		for ( int i = 0; i < 5; ++i )
@@ -537,11 +547,10 @@ int SnapshotTest( void )
 		ENSURE( pid0.index1 == pid1.index1 && pid0.generation == pid1.generation );
 		ENSURE( b2RecPlayer_GetFrame( player ) == 0 );
 		b2RecPlayer_Destroy( player );
+		b2DestroyRecording( rec );
 	}
 
 	remove( s_snapPath );
-	remove( s_savedSnapPath );
-	remove( s_fromCreatePath );
 
 	// Clean up
 	b2DestroyWorld( worldAId );
