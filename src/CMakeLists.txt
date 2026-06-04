@@ -66,6 +66,8 @@ set(BOX2D_SOURCE_FILES
 	types.c
 	weld_joint.c
 	wheel_joint.c
+	world_snapshot.c
+	world_snapshot.h
 )
 
 set(BOX2D_API_FILES
