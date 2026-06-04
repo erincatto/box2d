@@ -32,7 +32,7 @@ typedef struct b2RecHeader
 	uint8_t bigEndian;	   // 0 on all supported targets
 	uint8_t reserved0;
 	uint64_t wallClockUnix; // informational
-	uint8_t reserved[8];
+	uint64_t snapshotSize;	// bytes of snapshot blob after the header, 0 for hook-only files
 } b2RecHeader;
 _Static_assert( sizeof( b2RecHeader ) == 32, "recording header must be 32 bytes" );
 
@@ -244,6 +244,7 @@ bool b2RecPlaneTrampoline( b2ShapeId id, const b2PlaneResult* plane, void* ctx )
 
 // Lifecycle
 void b2StartRecording( b2World* world, const b2WorldDef* def );
+void b2StartRecordingSnapshot( b2World* world, const char* path );
 void b2FlushRecording( b2Recording* rec );
 void b2StopRecordingInternal( b2World* world );
 

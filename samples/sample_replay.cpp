@@ -18,19 +18,12 @@ class MakeRecording : public Sample
 {
 public:
 	explicit MakeRecording( SampleContext* context )
-		: Sample( context )
+		: Sample( context, false )
 	{
 		if ( m_context->restart == false )
 		{
 			m_context->camera.center = { 0.0f, 7.5f };
 			m_context->camera.zoom = 10.0f;
-		}
-
-		// Recreate the base world with recording enabled
-		if ( B2_IS_NON_NULL( m_worldId ) )
-		{
-			b2DestroyWorld( m_worldId );
-			m_worldId = b2_nullWorldId;
 		}
 
 		b2WorldDef worldDef = b2DefaultWorldDef();

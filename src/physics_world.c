@@ -1968,6 +1968,19 @@ int b2World_GetWorkerCount( b2WorldId worldId )
 	return world->workerCount;
 }
 
+void b2World_StartRecording( b2WorldId worldId, const char* path )
+{
+	// Must be a step boundary, so refuse a locked world
+	b2World* world = b3GetUnlockedWorldFromId( worldId );
+
+	if ( world == NULL || path == NULL || world->recording != NULL )
+	{
+		return;
+	}
+
+	b2StartRecordingSnapshot( world, path );
+}
+
 void b2World_SaveRecording( b2WorldId worldId, const char* path )
 {
 	b2World* world = b3GetUnlockedWorldFromId( worldId );

@@ -2008,6 +2008,23 @@ static void b2RecPumpToWorld( b2RecPlayer* player )
 	}
 }
 
+// Advance past the records that build the initial scene, stopping at the first Step. The frame-0
+// image is captured here so the built world, not an empty one, is the restore point.
+static void b2RecPumpToFirstStep( b2RecPlayer* player )
+{
+	while ( player->rdr.cursor < player->rdr.size && player->rdr.ok )
+	{
+		if ( player->rdr.data[player->rdr.cursor] == 0x80 ) // next record is a Step
+		{
+			break;
+		}
+		if ( b2RecDispatchOne( player ) < 0 )
+		{
+			break;
+		}
+	}
+}
+
 // Walk the records once without dispatching to count steps and read the first step's tuning.
 // The framing is opcode u8 + payload u24 + payload, so we can skip records blind.
 static void b2RecScanFile( b2RecPlayer* player )
@@ -2128,10 +2145,19 @@ b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount )
 		return NULL;
 	}
 
+	// A snapshot blob, if present, sits between the header and the op stream
+	if ( hdr.snapshotSize > (uint64_t)( fileSize - 32 ) )
+	{
+		printf( "b2ReplayFile: snapshot size exceeds file\n" );
+		b2Free( data, (int)fileSize );
+		return NULL;
+	}
+	int headerEnd = 32 + (int)hdr.snapshotSize;
+
 	b2RecPlayer* player = b2Alloc( (int)sizeof( b2RecPlayer ) );
 	player->data = data;
 	player->size = (int)fileSize;
-	player->headerEnd = 32;
+	player->headerEnd = headerEnd;
 	player->buildHash = hdr.buildHash;
 	player->wallClock = hdr.wallClockUnix;
 	player->frame = 0;
@@ -2143,7 +2169,7 @@ b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount )
 	player->atEnd = false;
 	player->rdr.data = data;
 	player->rdr.size = (int)fileSize;
-	player->rdr.cursor = 32; // past header
+	player->rdr.cursor = headerEnd; // past header and any snapshot blob
 	player->rdr.replayWorldId = b2_nullWorldId;
 	player->rdr.workerCount = workerCount;
 	player->rdr.ok = true;
@@ -2164,17 +2190,62 @@ b2RecPlayer* b2RecPlayer_Create( const char* path, int workerCount )
 	player->bodyIds = NULL;
 	player->bodyIdCount = 0;
 	player->bodyIdCap = 0;
+	player->frame0Image = NULL;
+	player->frame0Size = 0;
+	player->frame0Owned = false;
+	player->frame0BodyIds = NULL;
+	player->frame0BodyIdCount = 0;
+	player->frame0Cursor = headerEnd;
 
 	// Count steps and read the first step's tuning so the viewer can show length and hz up front
 	b2RecScanFile( player );
 
-	// The first record is CreateWorld; replay it so the world exists before the first step
-	b2RecPumpToWorld( player );
-	if ( b2World_IsValid( player->rdr.replayWorldId ) == false )
+	if ( hdr.snapshotSize > 0 )
 	{
-		printf( "b2ReplayFile: no CreateWorld record\n" );
-		b2RecPlayer_Destroy( player );
-		return NULL;
+		// Mid-stream file: deserialize the blob to stand up the replay world. The op stream that
+		// follows is the same hook log as a from-creation file. The blob doubles as the frame-0
+		// restore image, owned by the file image we already hold.
+		player->rdr.replayWorldId = b2CreateWorldFromSnapshot( data + 32, (int)hdr.snapshotSize, workerCount );
+		if ( b2World_IsValid( player->rdr.replayWorldId ) == false )
+		{
+			printf( "b2ReplayFile: snapshot deserialize failed\n" );
+			b2RecPlayer_Destroy( player );
+			return NULL;
+		}
+		player->recordedWorkerCount = workerCount;
+		player->frame0Image = data + 32;
+		player->frame0Size = (int)hdr.snapshotSize;
+		player->frame0Owned = false;
+	}
+	else
+	{
+		// From-creation file: replay CreateWorld and the pre-step creates so the world is fully
+		// built at frame 0, the same as the initial recorded scene.
+		b2RecPumpToWorld( player );
+		if ( b2World_IsValid( player->rdr.replayWorldId ) == false )
+		{
+			printf( "b2ReplayFile: no CreateWorld record\n" );
+			b2RecPlayer_Destroy( player );
+			return NULL;
+		}
+		b2RecPumpToFirstStep( player );
+
+		// Capture a frame-0 image so a restart restores the built world in place instead of
+		// destroying and recreating it, keeping the replay world id stable. Stepping resumes at
+		// the first Step, so the pre-step creates are not replayed again.
+		int imageSize = b2World_Snapshot( player->rdr.replayWorldId, NULL, 0 );
+		uint8_t* image = b2Alloc( imageSize );
+		b2World_Snapshot( player->rdr.replayWorldId, image, imageSize );
+		player->frame0Image = image;
+		player->frame0Size = imageSize;
+		player->frame0Owned = true;
+		player->frame0Cursor = player->rdr.cursor;
+		if ( player->bodyIdCount > 0 )
+		{
+			player->frame0BodyIds = b2Alloc( player->bodyIdCount * (int)sizeof( b2BodyId ) );
+			memcpy( player->frame0BodyIds, player->bodyIds, player->bodyIdCount * (int)sizeof( b2BodyId ) );
+			player->frame0BodyIdCount = player->bodyIdCount;
+		}
 	}
 
 	return player;
@@ -2230,19 +2301,27 @@ bool b2RecPlayer_StepFrame( b2RecPlayer* player )
 
 void b2RecPlayer_Restart( b2RecPlayer* player )
 {
-	if ( b2World_IsValid( player->rdr.replayWorldId ) )
+	// Restore the frame-0 image in place so the replay world id stays stable across a restart or
+	// backward scrub. Stepping resumes at frame0Cursor: the first Step for a snapshot file, or the
+	// pre-step creates for a from-creation file, which rebuild the body list deterministically.
+	if ( b2World_Restore( player->rdr.replayWorldId, player->frame0Image, player->frame0Size ) == false )
 	{
-		b2DestroyWorld( player->rdr.replayWorldId );
+		player->rdr.ok = false;
+		return;
 	}
-	player->rdr.cursor = player->headerEnd;
-	player->rdr.replayWorldId = b2_nullWorldId;
+	player->rdr.cursor = player->frame0Cursor;
 	player->rdr.ok = true;
 	player->rdr.diverged = false;
 	player->frame = 0;
 	player->divergeFrame = -1;
 	player->atEnd = false;
-	player->bodyIdCount = 0; // rebuilt deterministically as the replay re-runs
-	b2RecPumpToWorld( player );
+
+	// Roll the outliner body list back to its frame-0 contents
+	player->bodyIdCount = player->frame0BodyIdCount;
+	if ( player->frame0BodyIdCount > 0 )
+	{
+		memcpy( player->bodyIds, player->frame0BodyIds, player->frame0BodyIdCount * (int)sizeof( b2BodyId ) );
+	}
 }
 
 b2WorldId b2RecPlayer_GetWorldId( const b2RecPlayer* player )
@@ -2347,6 +2426,14 @@ void b2RecPlayer_Destroy( b2RecPlayer* player )
 	if ( player->bodyIds != NULL )
 	{
 		b2Free( player->bodyIds, player->bodyIdCap * (int)sizeof( b2BodyId ) );
+	}
+	if ( player->frame0Owned && player->frame0Image != NULL )
+	{
+		b2Free( (void*)player->frame0Image, player->frame0Size );
+	}
+	if ( player->frame0BodyIds != NULL )
+	{
+		b2Free( player->frame0BodyIds, player->frame0BodyIdCount * (int)sizeof( b2BodyId ) );
 	}
 	b2Free( player, (int)sizeof( b2RecPlayer ) );
 }

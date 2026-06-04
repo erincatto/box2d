@@ -8,11 +8,14 @@ end up in the same state.
 The main use is for debugging. You can record a session then load it in the sample app and view
 the Box2D state as the simulation progresses.
 
-Because a recording starts at world creation, **you must enable recording before the world is
-created**. There is no way to snapshot a world mid-session and record from there. This is the
-standard contract for replay-based debugging tools, and the cost of keeping the format aligned
-with the stable public API rather than the engine's internal layout. Recording is cheap when
-enabled and free when off, so it is reasonable to leave on in development builds.
+The simplest recording starts at world creation: enable it before the world is created and the
+file logs every call from `b2CreateWorld` on. Recording is cheap when enabled and free when off,
+so it is reasonable to leave on in development builds.
+
+A recording can also start mid-session. `b2World_StartRecording` serializes a snapshot of the
+live world into the file, which then continues with the same call log. This serves the "a bug
+appeared after 30 seconds and only then did I turn recording on" case that a from-creation
+recording cannot. See [Snapshots and mid-stream recording](#snapshots-and-mid-stream-recording).
 
 ## Recording
 
@@ -27,9 +30,8 @@ b2WorldId worldId = b2CreateWorld( &worldDef );
 // ... create bodies, step the world as usual ...
 ```
 
-`recordingPath` is the only way to start recording. There is intentionally no
-`BeginRecording`, since starting partway through would require snapshotting the engine's
-internal state, which the design deliberately avoids.
+`recordingPath` records from `b2CreateWorld`. To start partway through a session instead, use
+`b2World_StartRecording` (below), which snapshots the live world into the file first.
 
 While a world is recording you can copy the file out at any time without interrupting capture:
 
@@ -72,7 +74,7 @@ while ( b2RecPlayer_StepFrame( player ) )
     // Read it with the normal b2Body_Get* and b2World_* functions, or draw it.
 }
 
-b2RecPlayer_Restart( player );   // rewind to the first step, recreating the world
+b2RecPlayer_Restart( player );   // rewind to frame 0 in place; the world id stays the same
 b2RecPlayer_Destroy( player );
 ```
 
@@ -81,6 +83,77 @@ determinism contract below). `b2RecPlayer_IsAtEnd` reports when the recording is
 and `b2RecPlayer_HasDiverged` reports whether a recorded state hash failed to reproduce.
 Divergence is non-fatal during playback so the viewer can keep playing and show where the
 run starts to differ.
+
+## Snapshots and mid-stream recording {#snapshots-and-mid-stream-recording}
+
+A snapshot is a serialized image of a world's simulation state at a step boundary. It captures
+everything the engine needs to continue the simulation: bodies, shapes, joints, contacts with
+their warm-start impulses, the island and sleep partition, the broad-phase trees, and the id
+pools. It does not capture host wiring (worker count, task callbacks, user data, the friction
+and restitution mixers); that is rebuilt or reinstalled at restore.
+
+### Recording from the current state
+
+`b2World_StartRecording` begins a recording from a live world instead of from `b2CreateWorld`.
+It writes a snapshot of the world into the file, then logs subsequent calls as usual. Call it
+at a step boundary.
+
+```c
+// Run normally, no recording yet...
+for ( int i = 0; i < 1800; ++i )
+    b2World_Step( worldId, 1.0f / 60.0f, 4 );
+
+// Something looks wrong. Start recording from here.
+b2World_StartRecording( worldId, "from_the_bug.b2rec" );
+
+for ( int i = 0; i < 600; ++i )
+    b2World_Step( worldId, 1.0f / 60.0f, 4 );
+
+b2World_StopRecording( worldId );
+```
+
+The resulting file replays exactly like a from-creation file with `b2ValidateReplayFile`, the
+player, or the viewer. The only difference is that it opens by deserializing the snapshot rather
+than by replaying a `b2CreateWorld` call. `b2World_SaveRecording` and `b2World_StopRecording`
+work the same for both kinds.
+
+### Saving and restoring a world directly
+
+The same machinery is available without a file, as a public API for save states and rollback:
+
+```c
+// Serialize: query the size, then fill a buffer you own.
+int size = b2World_Snapshot( worldId, NULL, 0 );
+uint8_t* image = malloc( size );
+b2World_Snapshot( worldId, image, size );
+
+// ... keep simulating ...
+
+// Restore the same world in place. Ids you held at the snapshot instant keep working.
+b2World_Restore( worldId, image, size );
+
+// Or load the image into a brand new world. The new world has a fresh id, so origin ids
+// do not match it, and its host wiring is reset to defaults.
+b2WorldId loaded = b2CreateWorldFromSnapshot( image, size, /*workerCount*/ 0 );
+```
+
+`b2World_Restore` keeps the world's slot and generation, so the `b2WorldId` and every
+`b2BodyId` / `b2ShapeId` / `b2JointId` / `b2ChainId` you held at the snapshot instant resolve
+again. Ids minted after the snapshot fail validation after a restore rather than aliasing a
+different object. `b2CreateWorldFromSnapshot` allocates a new world, so use it only when there
+is no existing world to restore into.
+
+Like recording, snapshots are worker-count independent: a world snapshotted single-threaded
+restores and continues with any worker count.
+
+### Layout gate
+
+Unlike the build-hash, which is informational for from-creation files, a snapshot is a raw
+struct image and the reader's build must have **identical struct layouts**. The image carries a
+layout hash, and restore refuses an image whose hash differs. A rejected image (bad magic,
+version, or layout) leaves the target world unchanged. A snapshot file therefore cannot replay
+across a build whose layout changed, which is stricter than the cross-build tolerance of a
+from-creation file.
 
 ## Viewing a recording
 
@@ -133,8 +206,10 @@ after `b2World_Draw`.
 - **User data is not preserved.** `userData` pointers are host addresses with no meaning in
   the replay process, so they are written as zero. Code that keys off user data during replay
   will not see the original pointers.
-- **Recording must be enabled before the bug.** There is no mid-session start and no snapshot;
-  a recording always begins at `b2CreateWorld`.
+- **Snapshots require a matching struct layout.** A from-creation file replays across builds as
+  long as the float environment and architecture match, but a snapshot (and a file made by
+  `b2World_StartRecording`) is a raw struct image gated on an exact layout hash, so it will not
+  load into a build whose internal layout changed.
 - **Friction and restitution callbacks must be reinstalled.** These mixers are pure functions
   of their inputs, so their results are not recorded. To replay a session that used a custom
   mixer, install the same mixer on the replay host. The defaults need nothing.

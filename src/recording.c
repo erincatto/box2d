@@ -10,6 +10,7 @@
 #include "body.h"
 #include "build_hash.h"
 #include "physics_world.h"
+#include "world_snapshot.h"
 
 #include <stddef.h>
 #include <time.h>
@@ -689,6 +690,55 @@ void b2StartRecording( b2World* world, const b2WorldDef* def )
 	// Write the CreateWorld record, first record in file, self-describes the world
 	b2RecArgs_CreateWorld a = { *def };
 	b2RecWrite_CreateWorld( rec, &a );
+}
+
+void b2StartRecordingSnapshot( b2World* world, const char* path )
+{
+	b2Recording* rec = b2Alloc( (int)sizeof( b2Recording ) );
+	*rec = (b2Recording){ 0 };
+
+	// Open for read+write so b2World_SaveRecording can copy the file while it stays open
+	rec->file = fopen( path, "w+b" );
+	if ( rec->file == NULL )
+	{
+		b2Free( rec, (int)sizeof( b2Recording ) );
+		return;
+	}
+
+	rec->lock = b2CreateMutex();
+
+	int initCap = 65536;
+	rec->buffer.data = b2Alloc( initCap );
+	rec->buffer.capacity = initCap;
+	rec->buffer.size = 0;
+
+	// Serialize the live world into a blob that follows the header and seeds replay.
+	// Replaces the CreateWorld record a from-creation file opens with.
+	b2RecBuffer blob = { 0 };
+	b2SerializeWorld( world, &blob );
+
+	b2RecHeader hdr;
+	memset( &hdr, 0, sizeof( hdr ) );
+	hdr.magic = B2_REC_MAGIC;
+	hdr.versionMajor = 1;
+	hdr.versionMinor = 0;
+	hdr.buildHash = B2_BUILD_HASH;
+	hdr.simdWidth = (uint8_t)B2_SIMD_WIDTH;
+	hdr.pointerWidth = (uint8_t)sizeof( void* );
+	hdr.bigEndian = 0;
+	hdr.wallClockUnix = (uint64_t)time( NULL );
+	hdr.snapshotSize = (uint64_t)blob.size;
+	b2RecBufAppend( &rec->buffer, &hdr, (int)sizeof( hdr ) );
+	b2RecBufAppend( &rec->buffer, blob.data, blob.size );
+	b2RecBufFree( &blob );
+
+	world->recording = rec;
+
+	// Anchor the recorded state so replay verifies the blob deserialized to the same world
+	// before any Step runs
+	b2WorldId wid = { (uint16_t)( world->worldId + 1 ), world->generation };
+	b2RecArgs_StateHash sha = { wid, b2HashWorldState( world ) };
+	b2RecWrite_StateHash( rec, &sha );
 }
 
 void b2FlushRecording( b2Recording* rec )

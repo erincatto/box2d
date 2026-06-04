@@ -188,7 +188,9 @@ static void b2SerBitSet( b2RecBuffer* buf, const b2BitSet* bs )
 	}
 }
 
-// Restore a bitset, leak-clean: destroy the existing one, alloc fresh at exact blockCount capacity
+// Restore a bitset, leak-clean: destroy the existing one, alloc fresh at exact blockCount capacity.
+// Always keep bits non-NULL, matching b2CreateBitSet, so a later b2GrowBitSet on a count-0 bitset
+// has a buffer to grow from. An empty color bitset serializes as 0 blocks but must restore usable.
 static void b2DesBitSet( b2SnapReader* r, b2BitSet* bs )
 {
 	uint32_t blockCount = b2SnapR_U32( r );
@@ -197,12 +199,13 @@ static void b2DesBitSet( b2SnapReader* r, b2BitSet* bs )
 	{
 		return;
 	}
+	uint32_t blockCapacity = blockCount > 0 ? blockCount : 1;
+	bs->bits = b2Alloc( (int)( blockCapacity * sizeof( uint64_t ) ) );
+	memset( bs->bits, 0, blockCapacity * sizeof( uint64_t ) );
+	bs->blockCapacity = blockCapacity;
+	bs->blockCount = blockCount;
 	if ( blockCount > 0 )
 	{
-		// Allocate at exact block count so b2DestroyBitSet frees the right size
-		bs->bits = b2Alloc( (int)( blockCount * sizeof( uint64_t ) ) );
-		bs->blockCapacity = blockCount;
-		bs->blockCount = blockCount;
 		b2SnapR_Bytes( r, bs->bits, (int)( blockCount * sizeof( uint64_t ) ) );
 	}
 }

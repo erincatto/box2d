@@ -211,6 +211,14 @@ B2_API void b2World_RebuildStaticTree( b2WorldId worldId );
 /// This is for internal testing
 B2_API void b2World_EnableSpeculative( b2WorldId worldId, bool flag );
 
+/// Begin recording from the current world state. Unlike b2WorldDef::recordingPath, which
+/// records from b2CreateWorld, this serializes a snapshot of the live world into the file so
+/// recording can start after a bug appears. The file then continues with the same hook log as
+/// a from-creation recording. Must be called at a step boundary. No effect if already recording.
+/// @param worldId The world to record
+/// @param path Destination file path for the recording
+B2_API void b2World_StartRecording( b2WorldId worldId, const char* path );
+
 /// Flush the current recording buffer and copy the recording to @p path.
 /// The internal recording remains open and active. Use this to snapshot the session.
 /// @param worldId The world being recorded

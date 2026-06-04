@@ -11,7 +11,12 @@
 #include "box2d/math_functions.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+static const char* s_snapPath = "test_snapshot_midstream.b2rec";
+static const char* s_savedSnapPath = "test_snapshot_saved.b2rec";
+static const char* s_fromCreatePath = "test_snapshot_fromcreate.b2rec";
 
 // Ids held across a snapshot to prove they keep resolving after an in-place restore
 typedef struct SnapshotIds
@@ -397,6 +402,146 @@ int SnapshotTest( void )
 	}
 
 	b2Free( image, imageSize );
+
+	// Phase 8: mid-stream recording into a file, then deterministic replay. b2World_StartRecording
+	// writes a snapshot of the live world, the file then continues with the hook log. Replay passing
+	// proves the deserialized snapshot reproduced the live world for every recorded step.
+	{
+		b2WorldId wId = BuildScene( 1, NULL );
+
+		// Snapshot mid-motion so the recorded tail exercises moving bodies, not a settled world
+		for ( int step = 0; step < 20; ++step )
+		{
+			b2World_Step( wId, dt, subSteps );
+		}
+
+		b2World_StartRecording( wId, s_snapPath );
+		for ( int step = 0; step < 60; ++step )
+		{
+			b2World_Step( wId, dt, subSteps );
+		}
+		b2World_SaveRecording( wId, s_savedSnapPath );
+		b2World_StopRecording( wId );
+		b2DestroyWorld( wId );
+
+		ENSURE( b2ValidateReplayFile( s_snapPath, 0 ) );
+		ENSURE( b2ValidateReplayFile( s_snapPath, 4 ) );
+		ENSURE( b2ValidateReplayFile( s_savedSnapPath, 0 ) );
+
+		// The player opens the snapshot file and the replay world id is stable across a restart
+		b2RecPlayer* player = b2RecPlayer_Create( s_snapPath, 0 );
+		ENSURE( player != NULL );
+		b2WorldId pid0 = b2RecPlayer_GetWorldId( player );
+
+		int frames = 0;
+		while ( b2RecPlayer_StepFrame( player ) )
+		{
+			frames += 1;
+		}
+		ENSURE( frames == 60 );
+		ENSURE( b2RecPlayer_HasDiverged( player ) == false );
+
+		b2RecPlayer_Restart( player );
+		b2WorldId pid1 = b2RecPlayer_GetWorldId( player );
+		ENSURE( pid0.index1 == pid1.index1 && pid0.generation == pid1.generation );
+		ENSURE( b2RecPlayer_GetFrame( player ) == 0 );
+
+		int frames2 = 0;
+		while ( b2RecPlayer_StepFrame( player ) )
+		{
+			frames2 += 1;
+		}
+		ENSURE( frames2 == 60 );
+		ENSURE( b2RecPlayer_HasDiverged( player ) == false );
+
+		b2RecPlayer_Destroy( player );
+	}
+
+	// Phase 9: snapshot-equals-real. A world built from a mid-stream snapshot must reproduce the
+	// origin world's future step for step, not merely be internally self-consistent.
+	{
+		b2WorldId wId = BuildScene( 1, NULL );
+
+		// Snapshot mid-motion so the compared tail has real dynamics
+		for ( int step = 0; step < 20; ++step )
+		{
+			b2World_Step( wId, dt, subSteps );
+		}
+
+		int snapSize = b2World_Snapshot( wId, NULL, 0 );
+		uint8_t* snap = b2Alloc( snapSize );
+		b2World_Snapshot( wId, snap, snapSize );
+
+		b2World* origin = b2GetWorldFromId( wId );
+
+		enum
+		{
+			tailSteps = 90
+		};
+		uint64_t realTail[tailSteps];
+		for ( int step = 0; step < tailSteps; ++step )
+		{
+			b2World_Step( wId, dt, subSteps );
+			realTail[step] = b2HashWorldState( origin );
+		}
+
+		b2WorldId cId = b2CreateWorldFromSnapshot( snap, snapSize, 1 );
+		ENSURE( b2World_IsValid( cId ) );
+		b2World* clone = b2GetWorldFromId( cId );
+		for ( int step = 0; step < tailSteps; ++step )
+		{
+			b2World_Step( cId, dt, subSteps );
+			if ( realTail[step] != b2HashWorldState( clone ) )
+			{
+				printf( "snapshot-equals-real mismatch at tail step %d\n", step );
+				ENSURE( false );
+			}
+		}
+
+		b2Free( snap, snapSize );
+		b2DestroyWorld( wId );
+		b2DestroyWorld( cId );
+	}
+
+	// Phase 10: a from-creation file also restarts in place now, with a stable replay world id
+	{
+		b2WorldDef wd = b2DefaultWorldDef();
+		wd.workerCount = 1;
+		wd.recordingPath = s_fromCreatePath;
+		b2WorldId wId = b2CreateWorld( &wd );
+
+		b2BodyDef bd = b2DefaultBodyDef();
+		bd.type = b2_dynamicBody;
+		bd.position = (b2Vec2){ 0.0f, 8.0f };
+		b2BodyId fallingBody = b2CreateBody( wId, &bd );
+		b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+		b2ShapeDef sdef = b2DefaultShapeDef();
+		b2CreatePolygonShape( fallingBody, &sdef, &box );
+
+		for ( int step = 0; step < 30; ++step )
+		{
+			b2World_Step( wId, dt, subSteps );
+		}
+		b2World_StopRecording( wId );
+		b2DestroyWorld( wId );
+
+		b2RecPlayer* player = b2RecPlayer_Create( s_fromCreatePath, 0 );
+		ENSURE( player != NULL );
+		b2WorldId pid0 = b2RecPlayer_GetWorldId( player );
+		for ( int i = 0; i < 5; ++i )
+		{
+			b2RecPlayer_StepFrame( player );
+		}
+		b2RecPlayer_Restart( player );
+		b2WorldId pid1 = b2RecPlayer_GetWorldId( player );
+		ENSURE( pid0.index1 == pid1.index1 && pid0.generation == pid1.generation );
+		ENSURE( b2RecPlayer_GetFrame( player ) == 0 );
+		b2RecPlayer_Destroy( player );
+	}
+
+	remove( s_snapPath );
+	remove( s_savedSnapPath );
+	remove( s_fromCreatePath );
 
 	// Clean up
 	b2DestroyWorld( worldAId );

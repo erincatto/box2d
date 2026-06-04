@@ -108,6 +108,16 @@ struct b2RecPlayer
 	b2BodyId* bodyIds;
 	int bodyIdCount;
 	int bodyIdCap;
+
+	// Frame-0 image used to restart in place, so the replay world id stays stable across a
+	// restart or backward scrub. For a snapshot file it points into the owned file blob; for a
+	// from-creation file it is a snapshot captured at open after the pre-step creates ran.
+	const uint8_t* frame0Image;
+	int frame0Size;
+	bool frame0Owned; // true when frame0Image is a separate allocation to free
+	b2BodyId* frame0BodyIds;
+	int frame0BodyIdCount;
+	int frame0Cursor; // op-stream offset of the first Step, where stepping resumes
 };
 
 // Read primitives
