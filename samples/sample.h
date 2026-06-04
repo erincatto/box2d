@@ -41,10 +41,7 @@ struct SampleContext
 	// Set by Ctrl+O; consumed by UpdateSampleUI to open the fuzzy sample picker.
 	bool openSamplePicker = false;
 
-	// When set, the next world created is recorded into a buffer, saved to recordingFile when
-	// recording stops. Cleared when a different sample is selected so a restart re-records but a
-	// switch does not.
-	bool record = false;
+	// Path the active recording is saved to when recording stops.
 	char recordingFile[256] = "recording.b2rec";
 
 	// These are persisted
@@ -60,6 +57,9 @@ public:
 	virtual ~Sample();
 
 	void CreateWorld();
+
+	// Snapshot the live world and begin recording into a host-owned buffer
+	void StartRecording();
 
 	// Stop the active recording if any, save it to context->recordingFile, and free it
 	void FinishRecording();
@@ -118,6 +118,7 @@ public:
 
 	b2WorldId m_worldId;
 	b2Recording* m_recording; // active recording buffer, owned here; NULL when not recording
+	int m_recordStartStep;	  // step the active recording began at, for the UI indicator
 	b2JointId m_mouseJointId;
 	b2Vec2 m_mousePoint;
 	float m_mouseForceScale;

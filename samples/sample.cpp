@@ -275,6 +275,7 @@ Sample::Sample( SampleContext* context, bool createWorld )
 	g_randomSeed = RAND_SEED;
 
 	m_recording = nullptr;
+	m_recordStartStep = 0;
 
 	if ( createWorld )
 	{
@@ -290,6 +291,19 @@ Sample::~Sample()
 		FinishRecording();
 		b2DestroyWorld( m_worldId );
 	}
+}
+
+void Sample::StartRecording()
+{
+	if ( m_recording != nullptr )
+	{
+		return;
+	}
+
+	// Snapshots the live world as the seed, so recording can begin at any step boundary
+	m_recording = b2CreateRecording( 0 );
+	b2World_StartRecording( m_worldId, m_recording );
+	m_recordStartStep = m_stepCount;
 }
 
 void Sample::FinishRecording()
@@ -322,14 +336,6 @@ void Sample::CreateWorld()
 	m_worldId = b2CreateWorld( &worldDef );
 
 	b2World_SetContactRecycleDistance( m_worldId, m_context->recycleDistance );
-
-	// Record the whole session by starting before the first step. The buffer grows as the
-	// world records into it; it is saved and freed in FinishRecording.
-	if ( m_context->record )
-	{
-		m_recording = b2CreateRecording( 0 );
-		b2World_StartRecording( m_worldId, m_recording );
-	}
 }
 
 void Sample::ResetText()
@@ -1193,9 +1199,6 @@ void SelectSample( SampleContext* context, int selection, bool restart )
 		context->sampleIndex = selection;
 		context->subStepCount = 4;
 		context->debugDraw.drawJoints = true;
-
-		// Switching samples stops recording; a restart keeps it on and re-records
-		context->record = false;
 	}
 
 	delete context->sample;
@@ -1663,13 +1666,19 @@ static void DrawRightPanel( SampleContext* context, float frameTime )
 		ImGui::InputText( "File##Recording", context->recordingFile, sizeof( context->recordingFile ) );
 		ImGui::PopItemWidth();
 
-		if ( context->record == false )
+		if ( context->sample->m_recording == nullptr )
 		{
-			// Recording must begin at world creation, so restart with it enabled
-			if ( ImGui::Button( "Record##Recording" ) )
+			// Restart to a clean world then snapshot it at step 0, a whole session capture
+			if ( ImGui::Button( "Record (restart)##Recording" ) )
 			{
-				context->record = true;
 				SelectSample( context, context->sampleIndex, true );
+				context->sample->StartRecording();
+			}
+
+			// Snapshot the running world and log from here, the mid simulation case
+			if ( ImGui::Button( "Record Now##Recording" ) )
+			{
+				context->sample->StartRecording();
 			}
 		}
 		else
@@ -1677,10 +1686,8 @@ static void DrawRightPanel( SampleContext* context, float frameTime )
 			if ( ImGui::Button( "Stop##Recording" ) )
 			{
 				context->sample->FinishRecording();
-				context->record = false;
 			}
-			ImGui::SameLine();
-			ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "recording" );
+			ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "recording (from step %d)", context->sample->m_recordStartStep );
 		}
 	}
 
