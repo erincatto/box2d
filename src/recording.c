@@ -727,9 +727,8 @@ void b2StopRecordingInternal( b2World* world )
 
 uint64_t b2HashWorldState( b2World* world )
 {
-	// FNV-1a 64-bit
-	uint64_t hash = 14695981039346656037ull;
-	const uint64_t prime = 1099511628211ull;
+	uint64_t hash = B2_SNAP_FNV_INIT;
+	const uint64_t prime = B2_SNAP_FNV_PRIME;
 
 	int bodyCount = world->bodies.count;
 	for ( int i = 0; i < bodyCount; ++i )

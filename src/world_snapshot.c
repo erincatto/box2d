@@ -265,9 +265,21 @@ static void b2DesTree( b2SnapReader* r, b2DynamicTree* tree )
 	int freeList = b2SnapR_I32( r );
 	int proxyCount = b2SnapR_I32( r );
 
-	// Free the nodes alloc the shell made
+	// Free what the shell or a live world holds. A live tree that ran a rebuild also owns
+	// rebuild scratch, so free that too. Null everything so a failure here leaves the tree
+	// safe to destroy.
 	b2Free( tree->nodes, tree->nodeCapacity * (int)sizeof( b2TreeNode ) );
+	b2Free( tree->leafIndices, tree->rebuildCapacity * (int)sizeof( int ) );
+	b2Free( tree->leafBoxes, tree->rebuildCapacity * (int)sizeof( b2AABB ) );
+	b2Free( tree->leafCenters, tree->rebuildCapacity * (int)sizeof( b2Vec2 ) );
+	b2Free( tree->binIndices, tree->rebuildCapacity * (int)sizeof( int ) );
 	tree->nodes = NULL;
+	tree->leafIndices = NULL;
+	tree->leafBoxes = NULL;
+	tree->leafCenters = NULL;
+	tree->binIndices = NULL;
+	tree->nodeCapacity = 0;
+	tree->rebuildCapacity = 0;
 
 	if ( !r->ok )
 	{
@@ -279,13 +291,6 @@ static void b2DesTree( b2SnapReader* r, b2DynamicTree* tree )
 	tree->nodeCapacity = nodeCapacity;
 	tree->freeList = freeList;
 	tree->proxyCount = proxyCount;
-
-	// Rebuild scratch pointers stay NULL with rebuildCapacity 0
-	tree->leafIndices = NULL;
-	tree->leafBoxes = NULL;
-	tree->leafCenters = NULL;
-	tree->binIndices = NULL;
-	tree->rebuildCapacity = 0;
 
 	if ( nodeCapacity > 0 )
 	{
@@ -338,6 +343,9 @@ static void b2DesGraphColor( b2SnapReader* r, b2GraphColor* color, bool isOverfl
 }
 
 // World scalar config (simulation settings only, no runtime/shell fields)
+// Only simulation scalars belong here, never host or worker state (workerCount,
+// scheduler, callbacks, user data). b2World_Restore relies on that so an in-place
+// restore preserves the live world's wiring.
 static void b2SerWorldConfig( b2RecBuffer* buf, const b2World* world )
 {
 	b2SnapW_Bytes( buf, &world->gravity, sizeof( b2Vec2 ) );
@@ -489,60 +497,46 @@ void b2SerializeWorld( b2World* world, b2RecBuffer* buf )
 	}
 }
 
-b2WorldId b2DeserializeWorld( const uint8_t* image, int size, int workerCount )
+// Free per-object heap the overwrite steps below don't reach, so restoring over a
+// populated world doesn't leak. Outer arrays stay alive for the steps to reuse.
+// Mirrors the per-object teardown in b2DestroyWorld.
+static void b2FreeLiveSimElements( b2World* world )
 {
-	b2WorldId nullId = b2_nullWorldId;
-
-	if ( image == NULL || size < (int)sizeof( b2SnapHeader ) )
+	for ( int i = 0; i < world->chainShapes.count; ++i )
 	{
-		return nullId;
+		b2ChainShape* chain = world->chainShapes.data + i;
+		if ( chain->id != B2_NULL_INDEX )
+		{
+			b2FreeChainData( chain );
+		}
 	}
 
-	// Validate header before touching anything
-	b2SnapHeader hdr;
-	memcpy( &hdr, image, sizeof( hdr ) );
-	if ( hdr.magic != B2_SNAP_MAGIC || hdr.version != B2_SNAP_VERSION )
+	for ( int i = 0; i < world->sensors.count; ++i )
 	{
-		return nullId;
-	}
-	if ( hdr.layoutHash != b2ComputeLayoutHash() )
-	{
-		return nullId;
+		b2Sensor* sensor = world->sensors.data + i;
+		b2Array_Destroy( sensor->hits );
+		b2Array_Destroy( sensor->overlaps1 );
+		b2Array_Destroy( sensor->overlaps2 );
 	}
 
-	b2SnapReader readerStorage;
-	b2SnapReader* r = &readerStorage;
-	r->data = image;
-	r->cursor = (int)sizeof( hdr );
-	r->size = size;
-	r->ok = true;
-
-	// Build a minimal valid def so b2CreateWorld produces a fully valid shell
-	b2WorldDef def = b2DefaultWorldDef();
-	def.workerCount = workerCount;
-	def.enqueueTask = NULL;
-	def.finishTask = NULL;
-	def.userTaskContext = NULL;
-	def.recordingPath = NULL;
-
-	// Capacity is only a sizing hint. Every container is resized from the image below
-	b2WorldId id = b2CreateWorld( &def );
-	if ( !b2World_IsValid( id ) )
+	for ( int i = 0; i < world->islands.count; ++i )
 	{
-		return nullId;
+		b2Island* island = world->islands.data + i;
+		b2Array_Destroy( island->bodies );
+		b2Array_Destroy( island->contacts );
+		b2Array_Destroy( island->joints );
 	}
+}
 
-	b2World* world = b2GetWorldFromId( id );
-
+// Overwrite a world with the simulation state from the reader. Mirrors the write
+// order in b2SerializeWorld. The world must be a clean shell from b2CreateWorld, or
+// a live world whose per-object heap was first freed by b2FreeLiveSimElements. Host
+// wiring (scheduler, callbacks, user data) is never touched. Returns false on a
+// corrupt image.
+static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
+{
 	// Step 1: world scalars
 	b2DesWorldConfig( r, world );
-	// Default friction/restitution callbacks already set by b2CreateWorld (def has NULL pointers)
-	// NULL out callbacks the user might set — snapshot carries no host pointers
-	world->preSolveFcn = NULL;
-	world->preSolveContext = NULL;
-	world->customFilterFcn = NULL;
-	world->customFilterContext = NULL;
-	world->userData = NULL;
 
 	// Step 2: 7 id pools (overwrite entirely, including solverSetIdPool from the 3 pre-created sets)
 	b2DesIdPool( r, &world->bodyIdPool );
@@ -723,19 +717,130 @@ b2WorldId b2DeserializeWorld( const uint8_t* image, int size, int workerCount )
 		}
 	}
 
-	if ( !r->ok )
+	return r->ok;
+}
+
+b2WorldId b2CreateWorldFromSnapshot( const uint8_t* image, int size, int workerCount )
+{
+	b2WorldId nullId = b2_nullWorldId;
+
+	if ( image == NULL || size < (int)sizeof( b2SnapHeader ) )
+	{
+		return nullId;
+	}
+
+	// Validate header before touching anything
+	b2SnapHeader hdr;
+	memcpy( &hdr, image, sizeof( hdr ) );
+	if ( hdr.magic != B2_SNAP_MAGIC || hdr.version != B2_SNAP_VERSION )
+	{
+		return nullId;
+	}
+	if ( hdr.layoutHash != b2ComputeLayoutHash() )
+	{
+		return nullId;
+	}
+
+	b2SnapReader readerStorage;
+	b2SnapReader* r = &readerStorage;
+	r->data = image;
+	r->cursor = (int)sizeof( hdr );
+	r->size = size;
+	r->ok = true;
+
+	// Build a minimal valid def so b2CreateWorld produces a fully valid shell
+	b2WorldDef def = b2DefaultWorldDef();
+	def.workerCount = workerCount;
+	def.enqueueTask = NULL;
+	def.finishTask = NULL;
+	def.userTaskContext = NULL;
+	def.recordingPath = NULL;
+
+	// Capacity is only a sizing hint. Every container is resized from the image below
+	b2WorldId id = b2CreateWorld( &def );
+	if ( !b2World_IsValid( id ) )
+	{
+		return nullId;
+	}
+
+	b2World* world = b2GetWorldFromId( id );
+
+	if ( b2DeserializeIntoShell( r, world ) == false )
 	{
 		// Image was corrupt; clean up by destroying the world
 		b2DestroyWorld( id );
 		return nullId;
 	}
 
+	// A world loaded from scratch carries no host pointers
+	world->preSolveFcn = NULL;
+	world->preSolveContext = NULL;
+	world->customFilterFcn = NULL;
+	world->customFilterContext = NULL;
+	world->userData = NULL;
+
 	return id;
 }
 
-// FNV-1a 64-bit constants (same as b2HashWorldState in recording.c)
-#define B2_SNAP_FNV_INIT 14695981039346656037ull
-#define B2_SNAP_FNV_PRIME 1099511628211ull
+bool b2World_Restore( b2WorldId worldId, const uint8_t* image, int size )
+{
+	if ( image == NULL || size < (int)sizeof( b2SnapHeader ) )
+	{
+		return false;
+	}
+
+	// Validate the image fully before touching the world so a bad image leaves it intact
+	b2SnapHeader hdr;
+	memcpy( &hdr, image, sizeof( hdr ) );
+	if ( hdr.magic != B2_SNAP_MAGIC || hdr.version != B2_SNAP_VERSION )
+	{
+		return false;
+	}
+	if ( hdr.layoutHash != b2ComputeLayoutHash() )
+	{
+		return false;
+	}
+
+	b2World* world = b2GetWorldFromId( worldId );
+
+	// Restoring mid step would corrupt an in-flight solve
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return false;
+	}
+
+	b2SnapReader readerStorage;
+	b2SnapReader* r = &readerStorage;
+	r->data = image;
+	r->cursor = (int)sizeof( hdr );
+	r->size = size;
+	r->ok = true;
+
+	// Point of no return. The slot, generation, and host wiring are kept, so held ids
+	// resolve into the rebuilt world. A truncated payload past here leaves the world
+	// unusable and the caller must destroy it.
+	b2FreeLiveSimElements( world );
+
+	return b2DeserializeIntoShell( r, world );
+}
+
+int b2World_Snapshot( b2WorldId worldId, uint8_t* image, int capacity )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+
+	b2RecBuffer buf = { 0 };
+	b2SerializeWorld( world, &buf );
+	int size = buf.size;
+
+	if ( image != NULL && size <= capacity )
+	{
+		memcpy( image, buf.data, size );
+	}
+
+	b2RecBufFree( &buf );
+	return size;
+}
 
 static uint64_t b2FnvMixBytes( uint64_t hash, const void* data, int n )
 {

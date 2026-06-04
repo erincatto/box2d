@@ -353,6 +353,58 @@ B2_API b2BodyId b2RecPlayer_GetBodyId( const b2RecPlayer* player, int index );
 /** @} */
 
 /**
+ * @defgroup snapshot Snapshot
+ * Save and restore the full simulation state of a world as a byte image. Unlike a
+ * recording, which is a stream of steps, a snapshot is a single instant. Useful for
+ * rollback, undo, and deterministic save games. Call between world steps.
+ *
+ * A snapshot carries only simulation state. Host wiring (task callbacks, worker
+ * count, user data, pre-solve, custom filter, friction and restitution callbacks)
+ * is not stored. Restoring in place with b2World_Restore keeps the live world's
+ * wiring. Loading with b2CreateWorldFromSnapshot resets it to defaults.
+ *
+ * Ids: every b2BodyId / b2ShapeId / b2JointId / b2ChainId carries the world slot it
+ * was created in. b2World_Restore reuses the same world, so ids you held at the
+ * snapshot instant keep working. b2CreateWorldFromSnapshot allocates a new world,
+ * so ids from the origin world will not match it. Ids minted after the snapshot
+ * instant fail validation after a restore rather than aliasing a different object.
+ * @{
+ */
+
+/// Write a snapshot of the world's simulation state into a caller-owned buffer.
+/// Call once with image == NULL to get the required size, then again with a buffer
+/// of at least that size. Must be called at a step boundary.
+/// @param worldId The world to snapshot
+/// @param image Destination buffer, or NULL to query the size
+/// @param capacity Size of image in bytes, ignored when querying
+/// @return The number of bytes the snapshot needs. If it exceeds capacity nothing is written.
+B2_API int b2World_Snapshot( b2WorldId worldId, uint8_t* image, int capacity );
+
+/// Restore a world's simulation state from a snapshot image, in place. The world keeps
+/// its slot and generation, so this b2WorldId and any ids held from this same world stay
+/// valid for objects that existed at the snapshot instant. Host wiring is preserved.
+/// Restore into the same world the snapshot came from to keep held ids valid. Must be
+/// called at a step boundary.
+/// @param worldId The world to restore into
+/// @param image A snapshot image produced by b2World_Snapshot
+/// @param size Size of image in bytes
+/// @return true on success. On a rejected image (bad magic, version, or layout) the world
+///         is left unchanged. A corrupt payload detected after the rebuild begins returns
+///         false and leaves the world unusable, so the caller must destroy it.
+B2_API bool b2World_Restore( b2WorldId worldId, const uint8_t* image, int size );
+
+/// Create a new world from a snapshot image. Use this to load a saved world when there is
+/// no existing world to restore into. The new world gets a fresh slot and id, so ids held
+/// from the origin world will not match it. Host wiring is reset to defaults.
+/// @param image A snapshot image produced by b2World_Snapshot
+/// @param size Size of image in bytes
+/// @param workerCount Worker count for the new world. 0 uses the serial single-worker fallback.
+/// @return The new world id, or b2_nullWorldId on failure.
+B2_API b2WorldId b2CreateWorldFromSnapshot( const uint8_t* image, int size, int workerCount );
+
+/** @} */
+
+/**
  * @defgroup body Body
  * This is the body API.
  * @{

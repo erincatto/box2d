@@ -14,6 +14,10 @@
 #include <stdio.h>
 #include <string.h>
 
+// FNV-1a 64-bit constants
+#define B2_SNAP_FNV_INIT 14695981039346656037ull
+#define B2_SNAP_FNV_PRIME 1099511628211ull
+
 typedef struct b2World b2World;
 
 // File header, fixed 32 bytes, little-endian

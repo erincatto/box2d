@@ -4,6 +4,7 @@
 #include "test_macros.h"
 #include "world_snapshot.h"
 
+#include "core.h"
 #include "physics_world.h"
 
 #include "box2d/box2d.h"
@@ -11,6 +12,15 @@
 
 #include <stdio.h>
 #include <string.h>
+
+// Ids held across a snapshot to prove they keep resolving after an in-place restore
+typedef struct SnapshotIds
+{
+	b2BodyId body;
+	b2ShapeId shape;
+	b2JointId joint;
+	b2ChainId chain;
+} SnapshotIds;
 
 // Build a scene that exercises every heap-bearing container:
 // - ground (static box)
@@ -20,10 +30,13 @@
 // - one sensor shape overlapping a moving body
 // - isolated second stack let to sleep before the snapshot
 //
-// Returns the worldId and, via out-params, a body that stays dynamic so the
-// sensor has something to overlap with.
-static b2WorldId BuildScene( int workerCount )
+// Returns the worldId. When outIds is non-NULL it also returns one id of each kind
+// (body, shape, joint, chain) so a caller can check they survive an in-place restore.
+static b2WorldId BuildScene( int workerCount, SnapshotIds* outIds )
 {
+	b2JointId heldJoint = b2_nullJointId;
+	b2ChainId heldChain = b2_nullChainId;
+
 	b2WorldDef def = b2DefaultWorldDef();
 	def.workerCount = workerCount;
 	b2WorldId worldId = b2CreateWorld( &def );
@@ -69,7 +82,7 @@ static b2WorldId BuildScene( int workerCount )
 
 	b2Polygon jbox = b2MakeBox( 0.3f, 0.3f );
 	b2ShapeDef jsd = b2DefaultShapeDef();
-	b2CreatePolygonShape( jbA, &jsd, &jbox );
+	b2ShapeId heldShape = b2CreatePolygonShape( jbA, &jsd, &jbox );
 	b2CreatePolygonShape( jbB, &jsd, &jbox );
 	b2CreatePolygonShape( jbC, &jsd, &jbox );
 	b2CreatePolygonShape( jbD, &jsd, &jbox );
@@ -89,7 +102,7 @@ static b2WorldId BuildScene( int workerCount )
 		rd.base.bodyIdB = jbB;
 		rd.base.localFrameA.p = (b2Vec2){ 0.3f, 0.0f };
 		rd.base.localFrameB.p = (b2Vec2){ -0.3f, 0.0f };
-		b2CreateRevoluteJoint( worldId, &rd );
+		heldJoint = b2CreateRevoluteJoint( worldId, &rd );
 	}
 
 	// Prismatic joint
@@ -145,8 +158,7 @@ static b2WorldId BuildScene( int workerCount )
 		chainDef.materials = &chainMat;
 		chainDef.materialCount = 1;
 		chainDef.isLoop = false;
-		b2ChainId chainId = b2CreateChain( chainBodyId, &chainDef );
-		(void)chainId;
+		heldChain = b2CreateChain( chainBodyId, &chainDef );
 	}
 
 	// Sensor on a static body, overlapping the scene area
@@ -176,6 +188,14 @@ static b2WorldId BuildScene( int workerCount )
 		}
 	}
 
+	if ( outIds != NULL )
+	{
+		outIds->body = stackTop;
+		outIds->shape = heldShape;
+		outIds->joint = heldJoint;
+		outIds->chain = heldChain;
+	}
+
 	return worldId;
 }
 
@@ -203,7 +223,7 @@ static int StepUntilSleep( b2WorldId worldId )
 int SnapshotTest( void )
 {
 	// Phase 1: build and settle worldA
-	b2WorldId worldAId = BuildScene( 1 );
+	b2WorldId worldAId = BuildScene( 1, NULL );
 	StepUntilSleep( worldAId );
 
 	b2World* worldA = b2GetWorldFromId( worldAId );
@@ -220,7 +240,7 @@ int SnapshotTest( void )
 	ENSURE( buf.size > 0 );
 
 	// Phase 2: deserialize into worldB (same worker count)
-	b2WorldId worldBId = b2DeserializeWorld( buf.data, buf.size, 1 );
+	b2WorldId worldBId = b2CreateWorldFromSnapshot( buf.data, buf.size, 1 );
 	ENSURE( b2World_IsValid( worldBId ) );
 
 	b2World* worldB = b2GetWorldFromId( worldBId );
@@ -267,11 +287,11 @@ int SnapshotTest( void )
 	buf = (b2RecBuffer){ 0 };
 	b2SerializeWorld( worldA, &buf );
 
-	b2WorldId worldA1Id = b2DeserializeWorld( buf.data, buf.size, 1 );
+	b2WorldId worldA1Id = b2CreateWorldFromSnapshot( buf.data, buf.size, 1 );
 	ENSURE( b2World_IsValid( worldA1Id ) );
 	b2World* worldA1 = b2GetWorldFromId( worldA1Id );
 
-	b2WorldId worldCId = b2DeserializeWorld( buf.data, buf.size, 4 );
+	b2WorldId worldCId = b2CreateWorldFromSnapshot( buf.data, buf.size, 4 );
 	ENSURE( b2World_IsValid( worldCId ) );
 	b2World* worldC = b2GetWorldFromId( worldCId );
 
@@ -292,11 +312,100 @@ int SnapshotTest( void )
 		}
 	}
 
+	// Phase 5: in-place restore keeps held ids working and rolls the world back exactly
+	SnapshotIds ids;
+	b2WorldId rId = BuildScene( 1, &ids );
+	StepUntilSleep( rId );
+	b2World* rWorld = b2GetWorldFromId( rId );
+
+	// Producer: size query, then fill a caller-owned buffer
+	int imageSize = b2World_Snapshot( rId, NULL, 0 );
+	ENSURE( imageSize > 0 );
+	uint8_t* image = b2Alloc( imageSize );
+	int written = b2World_Snapshot( rId, image, imageSize );
+	ENSURE( written == imageSize );
+
+	uint64_t snapHash = b2HashWorldStateDeep( rWorld );
+
+	// Diverge from the snapshot: push a held body and add a body that did not exist at the snapshot
+	b2Body_SetLinearVelocity( ids.body, (b2Vec2){ 3.0f, 6.0f } );
+	b2Body_SetAwake( ids.body, true );
+	b2BodyDef postDef = b2DefaultBodyDef();
+	postDef.type = b2_dynamicBody;
+	postDef.position = (b2Vec2){ 20.0f, 20.0f };
+	b2BodyId postBody = b2CreateBody( rId, &postDef );
+	for ( int step = 0; step < 30; ++step )
+	{
+		b2World_Step( rId, dt, subSteps );
+	}
+	ENSURE( b2HashWorldStateDeep( rWorld ) != snapHash );
+
+	ENSURE( b2World_Restore( rId, image, imageSize ) );
+
+	// Whole-world state rolled back to the snapshot instant
+	ENSURE( b2HashWorldStateDeep( rWorld ) == snapHash );
+
+	// The world id and every id held at the snapshot instant resolve again
+	ENSURE( b2World_IsValid( rId ) );
+	ENSURE( b2Body_IsValid( ids.body ) );
+	ENSURE( b2Shape_IsValid( ids.shape ) );
+	ENSURE( b2Joint_IsValid( ids.joint ) );
+	ENSURE( b2Chain_IsValid( ids.chain ) );
+
+	// An id minted after the snapshot is rejected, not aliased onto a different object
+	ENSURE( b2Body_IsValid( postBody ) == false );
+
+	// Phase 6: a rejected image leaves the world untouched
+	uint64_t preBadHash = b2HashWorldStateDeep( rWorld );
+	ENSURE( b2World_Restore( rId, NULL, 0 ) == false );
+	uint8_t* corrupt = b2Alloc( imageSize );
+	memcpy( corrupt, image, imageSize );
+	corrupt[0] ^= 0xFF; // break the magic
+	ENSURE( b2World_Restore( rId, corrupt, imageSize ) == false );
+	ENSURE( b2HashWorldStateDeep( rWorld ) == preBadHash );
+	b2Free( corrupt, imageSize );
+
+	// Repeated in-place restore over the chain/sensor/island heap must not leak
+	for ( int i = 0; i < 3; ++i )
+	{
+		ENSURE( b2World_Restore( rId, image, imageSize ) );
+	}
+	ENSURE( b2HashWorldStateDeep( rWorld ) == snapHash );
+
+	// Phase 7: restore is worker-count independent. Restore the one-worker image into a
+	// four-worker world and lockstep it against the same image loaded fresh at one worker.
+	b2WorldDef def4 = b2DefaultWorldDef();
+	def4.workerCount = 4;
+	b2WorldId sId = b2CreateWorld( &def4 );
+	ENSURE( b2World_Restore( sId, image, imageSize ) );
+	b2World* sWorld = b2GetWorldFromId( sId );
+
+	b2WorldId freshId = b2CreateWorldFromSnapshot( image, imageSize, 1 );
+	ENSURE( b2World_IsValid( freshId ) );
+	b2World* freshWorld = b2GetWorldFromId( freshId );
+
+	ENSURE( b2HashWorldState( sWorld ) == b2HashWorldState( freshWorld ) );
+	for ( int step = 0; step < 120; ++step )
+	{
+		b2World_Step( sId, dt, subSteps );
+		b2World_Step( freshId, dt, subSteps );
+		if ( b2HashWorldState( sWorld ) != b2HashWorldState( freshWorld ) )
+		{
+			printf( "in-place vs fresh hash mismatch at step %d\n", step );
+			ENSURE( false );
+		}
+	}
+
+	b2Free( image, imageSize );
+
 	// Clean up
 	b2DestroyWorld( worldAId );
 	b2DestroyWorld( worldBId );
 	b2DestroyWorld( worldA1Id );
 	b2DestroyWorld( worldCId );
+	b2DestroyWorld( rId );
+	b2DestroyWorld( sId );
+	b2DestroyWorld( freshId );
 
 	b2RecBufFree( &buf );
 
