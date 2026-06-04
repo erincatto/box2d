@@ -14,6 +14,7 @@ set(BOX2D_SOURCE_FILES
 	broad_phase.c
 	broad_phase.h
 	build_hash.h.in
+	character_joint.c
 	constraint_graph.c
 	constraint_graph.h
 	contact.c

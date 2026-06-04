@@ -568,6 +568,7 @@ typedef struct b2Counters
 /// @ingroup joint
 typedef enum b2JointType
 {
+	b2_characterJoint,
 	b2_distanceJoint,
 	b2_filterJoint,
 	b2_motorJoint,

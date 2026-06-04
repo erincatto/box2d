@@ -61,6 +61,29 @@ typedef struct b2Joint
 
 } b2Joint;
 
+typedef struct b2CharacterJoint
+{
+	b2Vec2 target;
+	float maxVelocityForce;
+	float linearHertz;
+	float linearDampingRatio;
+	float maxSpringForce;
+
+	b2Vec2 linearVelocityImpulse;
+	b2Vec2 linearSpringImpulse;
+
+	b2Softness linearSpring;
+
+	int indexA;
+	int indexB;
+	b2Transform frameA;
+	b2Transform frameB;
+	b2Vec2 deltaCenter;
+
+	// Assume center of mass
+	b2Mat22 linearMass;
+} b2MotorJoint;
+
 typedef struct b2DistanceJoint
 {
 	float length;

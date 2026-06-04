@@ -37,7 +37,7 @@ _Static_assert( B2_MAX_WORLDS > 0, "must be 1 or more" );
 _Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B2_MAX_WORLDS limit exceeded" );
 static b2World b2_worlds[B2_MAX_WORLDS];
 
-static b2World* b3GetUnlockedWorldFromId( b2WorldId id )
+static b2World* b2GetUnlockedWorldFromId( b2WorldId id )
 {
 	B2_ASSERT( 1 <= id.index1 && id.index1 <= B2_MAX_WORLDS );
 	b2World* world = b2_worlds + ( id.index1 - 1 );
@@ -1941,7 +1941,7 @@ void b2World_SetRestitutionCallback( b2WorldId worldId, b2RestitutionCallback* c
 
 void b2World_SetWorkerCount( b2WorldId worldId, int count )
 {
-	b2World* world = b3GetUnlockedWorldFromId( worldId );
+	b2World* world = b2GetUnlockedWorldFromId( worldId );
 	if ( world == NULL )
 	{
 		return;
@@ -1959,7 +1959,7 @@ void b2World_SetWorkerCount( b2WorldId worldId, int count )
 
 int b2World_GetWorkerCount( b2WorldId worldId )
 {
-	b2World* world = b3GetUnlockedWorldFromId( worldId );
+	b2World* world = b2GetUnlockedWorldFromId( worldId );
 	if ( world == NULL )
 	{
 		return 0;
@@ -1970,7 +1970,7 @@ int b2World_GetWorkerCount( b2WorldId worldId )
 
 void b2World_SaveRecording( b2WorldId worldId, const char* path )
 {
-	b2World* world = b3GetUnlockedWorldFromId( worldId );
+	b2World* world = b2GetUnlockedWorldFromId( worldId );
 
 	if ( world == NULL || world->recording == NULL || path == NULL )
 	{
@@ -2012,7 +2012,7 @@ void b2World_SaveRecording( b2WorldId worldId, const char* path )
 
 void b2World_StopRecording( b2WorldId worldId )
 {
-	b2World* world = b3GetUnlockedWorldFromId( worldId );
+	b2World* world = b2GetUnlockedWorldFromId( worldId );
 	if ( world == NULL )
 	{
 		return;
