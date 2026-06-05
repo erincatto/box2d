@@ -300,10 +300,15 @@ void Sample::StartRecording()
 		return;
 	}
 
+	uint64_t ticks = b2GetTicks();
+
 	// Snapshots the live world as the seed, so recording can begin at any step boundary
 	m_recording = b2CreateRecording( 0 );
 	b2World_StartRecording( m_worldId, m_recording );
 	m_recordStartStep = m_stepCount;
+
+	float ms = b2GetMilliseconds( ticks );
+	printf( "b2World_StartRecording took : %g ms", ms );
 }
 
 void Sample::FinishRecording()
