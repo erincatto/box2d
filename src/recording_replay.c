@@ -619,38 +619,37 @@ static bool b2RecReserveScratch( b2RecReader* rdr, void** data, int* cap, int ne
 	int newCap = need <= INT_MAX / elemSize - 8 ? need + 8 : need;
 	if ( *data != NULL )
 	{
-		b2Free( *data, *cap * elemSize );
+		b2Free( *data, (size_t)*cap * (size_t)elemSize );
 	}
-	*data = b2Alloc( newCap * elemSize );
+	*data = b2Alloc( (size_t)newCap * (size_t)elemSize );
 	*cap = newCap;
 	return true;
 }
 
 // Overflow-safe growth for the player's accumulating draw arrays. Counts come from the replay
 // itself, not the file, so this only guards the byte-size multiply. Preserves keep elements.
-static void b2RecGrow( void** data, int* cap, int need, int keep, int elemSize )
+static void b2RecGrow( void** data, int* capacity, int need, int keep, int elemSize )
 {
-	if ( need <= *cap )
+	if ( need <= *capacity )
 	{
 		return;
 	}
-	int newCap = *cap == 0 ? 8 : 2 * *cap;
+	int newCap = *capacity == 0 ? 8 : 2 * *capacity;
 	if ( newCap < need )
 	{
 		newCap = need;
 	}
-	B2_ASSERT( newCap <= INT_MAX / elemSize );
-	void* grown = b2Alloc( newCap * elemSize );
+	void* grown = b2Alloc( (size_t)newCap * (size_t)elemSize );
 	if ( *data != NULL )
 	{
 		if ( keep > 0 )
 		{
 			memcpy( grown, *data, (size_t)keep * (size_t)elemSize );
 		}
-		b2Free( *data, *cap * elemSize );
+		b2Free( *data, (size_t)*capacity * (size_t)elemSize );
 	}
 	*data = grown;
-	*cap = newCap;
+	*capacity = newCap;
 }
 
 void b2RecEnsureHits( b2RecReader* rdr, int n )
@@ -2025,9 +2024,9 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 		return NULL;
 	}
 
-	if ( hdr.versionMajor != 1 )
+	if ( hdr.versionMajor != 2 )
 	{
-		printf( "b2RecPlayer_Create: version mismatch (file=%u, runtime=1)\n", hdr.versionMajor );
+		printf( "b2RecPlayer_Create: version mismatch (file=%u, runtime=2)\n", hdr.versionMajor );
 		return NULL;
 	}
 
@@ -2041,6 +2040,13 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 	{
 		printf( "b2RecPlayer_Create: big-endian recording not supported\n" );
 		return NULL;
+	}
+
+	// Restore the length scale the recording was made under so replay reproduces the same constants.
+	// This is global engine state, so it also affects the caller's other worlds.
+	if ( hdr.lengthScale > 0.0f )
+	{
+		b2SetLengthUnitsPerMeter( hdr.lengthScale );
 	}
 
 	// Every recording is snapshot-seeded: the blob sits between the header and the op stream
@@ -2060,7 +2066,7 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 	player->size = size;
 	player->headerEnd = headerEnd;
 	player->buildHash = hdr.buildHash;
-	player->wallClock = hdr.wallClockUnix;
+	player->lengthScale = hdr.lengthScale;
 	player->frame = 0;
 	player->frameCount = 0;
 	player->recordedWorkerCount = 0;
@@ -2099,7 +2105,7 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 	player->frame0Cursor = headerEnd;
 	player->keyframes = NULL;
 	player->keyframeCount = 0;
-	player->keyframeCap = 0;
+	player->keyframeCapacity = 0;
 	player->keyframeBudget = B2_REC_KEYFRAME_BUDGET_DEFAULT;
 	player->keyframeBytes = 0;
 	player->keyframeMinInterval = B2_REC_KEYFRAME_INTERVAL_DEFAULT;
@@ -2149,8 +2155,8 @@ static void b2RecCaptureKeyframe( b2RecPlayer* player )
 	b2RecBuffer buf = { 0 };
 	b2SerializeWorld( world, &buf );
 
-	int bodyBytes = player->bodyIdCount * (int)sizeof( b2BodyId );
-	int newBytes = buf.size + bodyBytes;
+	size_t bodyBytes = (size_t)player->bodyIdCount * sizeof( b2BodyId );
+	size_t newBytes = (size_t)buf.size + bodyBytes;
 
 	// Make room under the budget: doubling the spacing drops the off-grid keyframes, roughly halving
 	// the bytes, until the new keyframe fits or only it remains. The budget is soft in the corner
@@ -2159,14 +2165,14 @@ static void b2RecCaptureKeyframe( b2RecPlayer* player )
 	{
 		player->keyframeInterval *= 2;
 		int kept = 0;
-		int keptBytes = 0;
+		size_t keptBytes = 0;
 		for ( int i = 0; i < player->keyframeCount; ++i )
 		{
 			b2RecKeyframe* kf = &player->keyframes[i];
 			if ( kf->frame % player->keyframeInterval == 0 )
 			{
 				player->keyframes[kept] = *kf;
-				keptBytes += kf->imageSize + kf->bodyIdCount * (int)sizeof( b2BodyId );
+				keptBytes += (size_t)kf->imageSize + (size_t)kf->bodyIdCount * sizeof( b2BodyId );
 				kept += 1;
 			}
 			else
@@ -2187,7 +2193,7 @@ static void b2RecCaptureKeyframe( b2RecPlayer* player )
 		}
 	}
 
-	b2RecGrow( (void**)&player->keyframes, &player->keyframeCap, player->keyframeCount + 1, player->keyframeCount,
+	b2RecGrow( (void**)&player->keyframes, &player->keyframeCapacity, player->keyframeCount + 1, player->keyframeCount,
 			   (int)sizeof( b2RecKeyframe ) );
 
 	b2RecKeyframe* kf = &player->keyframes[player->keyframeCount];
@@ -2375,7 +2381,7 @@ b2RecPlayerInfo b2RecPlayer_GetInfo( const b2RecPlayer* player )
 		info.timeStep = player->recordedDt;
 		info.subStepCount = player->recordedSubStepCount;
 		info.buildHash = player->buildHash;
-		info.wallClock = player->wallClock;
+		info.lengthScale = player->lengthScale;
 	}
 	return info;
 }
@@ -2400,7 +2406,7 @@ int b2RecPlayer_GetDivergeFrame( const b2RecPlayer* player )
 	return player != NULL ? player->divergeFrame : -1;
 }
 
-void b2RecPlayer_SetKeyframePolicy( b2RecPlayer* player, int budgetBytes, int minIntervalFrames )
+void b2RecPlayer_SetKeyframePolicy( b2RecPlayer* player, size_t budgetBytes, int minIntervalFrames )
 {
 	if ( player == NULL )
 	{
@@ -2431,7 +2437,7 @@ void b2RecPlayer_SetKeyframePolicy( b2RecPlayer* player, int budgetBytes, int mi
 	player->lastKeyframeFrame = 0;
 }
 
-int b2RecPlayer_GetKeyframeBudget( const b2RecPlayer* player )
+size_t b2RecPlayer_GetKeyframeBudget( const b2RecPlayer* player )
 {
 	return player != NULL ? player->keyframeBudget : 0;
 }
@@ -2446,7 +2452,7 @@ int b2RecPlayer_GetKeyframeInterval( const b2RecPlayer* player )
 	return player != NULL ? player->keyframeInterval : 0;
 }
 
-int b2RecPlayer_GetKeyframeBytes( const b2RecPlayer* player )
+size_t b2RecPlayer_GetKeyframeBytes( const b2RecPlayer* player )
 {
 	return player != NULL ? player->keyframeBytes : 0;
 }
@@ -2508,7 +2514,7 @@ void b2RecPlayer_Destroy( b2RecPlayer* player )
 	}
 	if ( player->keyframes != NULL )
 	{
-		b2Free( player->keyframes, player->keyframeCap * (int)sizeof( b2RecKeyframe ) );
+		b2Free( player->keyframes, (size_t)player->keyframeCapacity * sizeof( b2RecKeyframe ) );
 	}
 	b2Free( player, (int)sizeof( b2RecPlayer ) );
 }

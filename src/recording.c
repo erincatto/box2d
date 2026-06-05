@@ -16,7 +16,6 @@
 
 #include <limits.h>
 #include <stddef.h>
-#include <time.h>
 
 // Magic value 'B2RC' in little-endian: bytes B2, R, C yield 0x43523242
 #define B2_REC_MAGIC 0x43523242u
@@ -681,13 +680,13 @@ void b2StartRecordingIntoBuffer( b2World* world, b2Recording* recording )
 
 	b2RecHeader hdr = { 0 };
 	hdr.magic = B2_REC_MAGIC;
-	hdr.versionMajor = 1;
+	hdr.versionMajor = 2;
 	hdr.versionMinor = 0;
 	hdr.buildHash = B2_BUILD_HASH;
+	hdr.lengthScale = b2GetLengthUnitsPerMeter();
 	hdr.simdWidth = (uint8_t)B2_SIMD_WIDTH;
 	hdr.pointerWidth = (uint8_t)sizeof( void* );
 	hdr.bigEndian = 0;
-	hdr.wallClockUnix = (uint64_t)time( NULL );
 	hdr.snapshotSize = (uint64_t)blob.size;
 	b2RecBufAppend( &recording->buffer, &hdr, (int)sizeof( hdr ) );
 	b2RecBufAppend( &recording->buffer, blob.data, blob.size );

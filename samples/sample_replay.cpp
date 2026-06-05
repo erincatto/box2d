@@ -20,23 +20,13 @@ class MakeRecording : public Sample
 {
 public:
 	explicit MakeRecording( SampleContext* context )
-		: Sample( context, false )
+		: Sample( context )
 	{
 		if ( m_context->restart == false )
 		{
 			m_context->camera.center = { 0.0f, 7.5f };
 			m_context->camera.zoom = 10.0f;
 		}
-
-		b2WorldDef worldDef = b2DefaultWorldDef();
-		worldDef.workerCount = m_context->workerCount;
-		worldDef.enableSleep = m_context->enableSleep;
-		m_worldId = b2CreateWorld( &worldDef );
-
-		// Record the whole session by starting before the first step. FinishRecording saves the
-		// buffer to context->recordingFile, the path the Replay File sample loads by default.
-		m_recording = b2CreateRecording( 0 );
-		b2World_StartRecording( m_worldId, m_recording );
 
 		m_data = CreateFallingHinges( m_worldId );
 		m_done = false;
@@ -74,8 +64,8 @@ public:
 			b2Vec2 translation = { 0.0f, -14.0f };
 			b2World_CastRayClosest( m_worldId, origin, translation, filter );
 
-			origin = {-10.0f, 2.0f};
-			translation = {20.0f, 0.0f};
+			origin = { -10.0f, 2.0f };
+			translation = { 20.0f, 0.0f };
 			b2World_CastRay( m_worldId, origin, translation, filter, AllHitsCast, nullptr );
 
 			if ( m_done )
@@ -124,10 +114,14 @@ static const char* ReplayBodyTypeName( b2BodyType type )
 {
 	switch ( type )
 	{
-		case b2_staticBody: return "static";
-		case b2_kinematicBody: return "kinematic";
-		case b2_dynamicBody: return "dynamic";
-		default: return "?";
+		case b2_staticBody:
+			return "static";
+		case b2_kinematicBody:
+			return "kinematic";
+		case b2_dynamicBody:
+			return "dynamic";
+		default:
+			return "?";
 	}
 }
 
@@ -135,12 +129,18 @@ static const char* ReplayShapeTypeName( b2ShapeType type )
 {
 	switch ( type )
 	{
-		case b2_circleShape: return "circle";
-		case b2_capsuleShape: return "capsule";
-		case b2_segmentShape: return "segment";
-		case b2_polygonShape: return "polygon";
-		case b2_chainSegmentShape: return "chain segment";
-		default: return "?";
+		case b2_circleShape:
+			return "circle";
+		case b2_capsuleShape:
+			return "capsule";
+		case b2_segmentShape:
+			return "segment";
+		case b2_polygonShape:
+			return "polygon";
+		case b2_chainSegmentShape:
+			return "chain segment";
+		default:
+			return "?";
 	}
 }
 
@@ -148,14 +148,22 @@ static const char* ReplayJointTypeName( b2JointType type )
 {
 	switch ( type )
 	{
-		case b2_distanceJoint: return "distance";
-		case b2_filterJoint: return "filter";
-		case b2_motorJoint: return "motor";
-		case b2_prismaticJoint: return "prismatic";
-		case b2_revoluteJoint: return "revolute";
-		case b2_weldJoint: return "weld";
-		case b2_wheelJoint: return "wheel";
-		default: return "?";
+		case b2_distanceJoint:
+			return "distance";
+		case b2_filterJoint:
+			return "filter";
+		case b2_motorJoint:
+			return "motor";
+		case b2_prismaticJoint:
+			return "prismatic";
+		case b2_revoluteJoint:
+			return "revolute";
+		case b2_weldJoint:
+			return "weld";
+		case b2_wheelJoint:
+			return "wheel";
+		default:
+			return "?";
 	}
 }
 
@@ -163,16 +171,26 @@ static const char* ReplayQueryTypeName( b2RecQueryType type )
 {
 	switch ( type )
 	{
-		case b2_recQueryOverlapAABB: return "overlap AABB";
-		case b2_recQueryOverlapShape: return "overlap shape";
-		case b2_recQueryCastRay: return "cast ray";
-		case b2_recQueryCastShape: return "cast shape";
-		case b2_recQueryCollideMover: return "collide mover";
-		case b2_recQueryCastRayClosest: return "cast ray closest";
-		case b2_recQueryCastMover: return "cast mover";
-		case b2_recQueryShapeTestPoint: return "shape test point";
-		case b2_recQueryShapeRayCast: return "shape ray cast";
-		default: return "?";
+		case b2_recQueryOverlapAABB:
+			return "overlap AABB";
+		case b2_recQueryOverlapShape:
+			return "overlap shape";
+		case b2_recQueryCastRay:
+			return "cast ray";
+		case b2_recQueryCastShape:
+			return "cast shape";
+		case b2_recQueryCollideMover:
+			return "collide mover";
+		case b2_recQueryCastRayClosest:
+			return "cast ray closest";
+		case b2_recQueryCastMover:
+			return "cast mover";
+		case b2_recQueryShapeTestPoint:
+			return "shape test point";
+		case b2_recQueryShapeRayCast:
+			return "shape ray cast";
+		default:
+			return "?";
 	}
 }
 
@@ -257,7 +275,7 @@ public:
 		// copies them, so the buffer is freed right away. Replay workers of 0 uses the serial
 		// fallback, otherwise force a different count to spot-check cross-thread determinism.
 		b2Recording* recording = b2LoadRecordingFromFile( m_path );
-		if (recording != nullptr)
+		if ( recording != nullptr )
 		{
 			const uint8_t* data = b2Recording_GetData( recording );
 			int byteCount = b2Recording_GetSize( recording );
@@ -279,13 +297,12 @@ public:
 			// sticky across reopens (the player is freshly created, so its ring is back at defaults).
 			if ( m_keyframeBudgetMB < 0 )
 			{
-				m_keyframeBudgetMB = b2RecPlayer_GetKeyframeBudget( m_player ) / ( 1024 * 1024 );
+				m_keyframeBudgetMB = (int)( b2RecPlayer_GetKeyframeBudget( m_player ) / ( 1024 * 1024 ) );
 				m_keyframeMinInterval = b2RecPlayer_GetKeyframeMinInterval( m_player );
 			}
 			else
 			{
-				int64_t bytes = (int64_t)m_keyframeBudgetMB * 1024 * 1024;
-				bytes = bytes > INT_MAX ? INT_MAX : bytes;
+				size_t bytes = (size_t)m_keyframeBudgetMB * 1024 * 1024;
 				b2RecPlayer_SetKeyframePolicy( m_player, bytes, m_keyframeMinInterval );
 			}
 
@@ -295,12 +312,11 @@ public:
 			m_buildMismatch = m_recHash != 0 && m_runHash != 0 && m_recHash != m_runHash;
 			snprintf( m_status, sizeof( m_status ), "loaded (build %08x)", m_recHash );
 
-			if (m_context->restart == false)
+			if ( m_context->restart == false )
 			{
 				b2AABB bounds = b2World_GetBounds( m_worldId );
 				FocusOnBounds( &m_context->camera, bounds );
 				m_context->camera.zoom *= 1.5f;
-
 			}
 		}
 		else
@@ -630,7 +646,7 @@ public:
 		float top = menuBarHeight + 0.5f * fontSize;
 		// Stop above the timeline drawer, which this sample keeps open
 		float bottom = m_context->showMetrics ? m_context->camera.height - drawerHeight - fontSize
-											   : m_context->camera.height - 0.5f * fontSize;
+											  : m_context->camera.height - 0.5f * fontSize;
 
 		ImGui::SetNextWindowPos( { 0.5f * fontSize, top } );
 		ImGui::SetNextWindowSize( { 22.0f * fontSize, bottom - top } );
@@ -670,8 +686,8 @@ public:
 				continue;
 			}
 
-			bool ownsSelection = m_selBodyOrdinal == ord &&
-								 ( m_selKind == SelBody || m_selKind == SelShape || m_selKind == SelJoint );
+			bool ownsSelection =
+				m_selBodyOrdinal == ord && ( m_selKind == SelBody || m_selKind == SelShape || m_selKind == SelJoint );
 
 			const char* name = b2Body_GetName( body );
 			char label[64];
@@ -709,8 +725,8 @@ public:
 			for ( int s = 0; s < sn; ++s )
 			{
 				char sl[64];
-				snprintf( sl, sizeof( sl ), "Shape %d  %s###b%ds%d", s, ReplayShapeTypeName( b2Shape_GetType( shapes[s] ) ),
-						  ord, s );
+				snprintf( sl, sizeof( sl ), "Shape %d  %s###b%ds%d", s, ReplayShapeTypeName( b2Shape_GetType( shapes[s] ) ), ord,
+						  s );
 				ImGuiTreeNodeFlags lf =
 					ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 				if ( m_selKind == SelShape && m_selBodyOrdinal == ord && m_selSlot == s )
@@ -1064,7 +1080,7 @@ public:
 		// Keyframe ring controls. Budget trades memory for backward-seek speed; min interval is the
 		// finest spacing. Changing either reopens the player so the ring rebuilds from frame 0.
 		ImGui::PushItemWidth( 6.0f * fontSize );
-		ImGui::SliderInt( "Keyframe MB", &m_keyframeBudgetMB, 1, 2048 );
+		ImGui::SliderInt( "Keyframe MB", &m_keyframeBudgetMB, 1, 4096 );
 		reopen = reopen || ImGui::IsItemDeactivatedAfterEdit();
 		ImGui::SameLine();
 		ImGui::SliderInt( "Min interval", &m_keyframeMinInterval, 1, 240 );
@@ -1189,9 +1205,9 @@ public:
 	};
 
 	SelKind m_selKind = SelNone;
-	int m_selBodyOrdinal = -1; // index into the player's tracked body list
-	int m_selSlot = -1;        // shape or joint slot within that body
-	int m_selQuery = -1;       // query index, only meaningful for the current frame
+	int m_selBodyOrdinal = -1;		// index into the player's tracked body list
+	int m_selSlot = -1;				// shape or joint slot within that body
+	int m_selQuery = -1;			// query index, only meaningful for the current frame
 	bool m_revealSelection = false; // one-shot request to expand and scroll the tree to a viewport pick
 };
 

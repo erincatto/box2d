@@ -82,7 +82,7 @@ typedef struct b2RecReader
 // from the nearest keyframe instead of from frame 0. The image is a full b2SerializeWorld blob.
 typedef struct b2RecKeyframe
 {
-	uint8_t* image;	   // serialized world at the end of this frame
+	uint8_t* image; // serialized world at the end of this frame
 	int imageSize;
 	int frame;		   // frame this restores to, a post-step boundary
 	int cursor;		   // op-stream offset where the next frame resumes
@@ -99,7 +99,7 @@ struct b2RecPlayer
 	int size;
 	int headerEnd;			  // first payload offset
 	uint32_t buildHash;		  // engine build that produced the file, from the header
-	uint64_t wallClock;		  // unix time the recording was made, from the header
+	float lengthScale;		  // length scale used in the recording
 	int frame;				  // steps dispatched so far
 	int frameCount;			  // total recorded steps, counted once at open
 	int recordedWorkerCount;  // worker count from the recorded world def
@@ -137,12 +137,12 @@ struct b2RecPlayer
 	// hit, so memory stays bounded and seek cost grows only once a recording outgrows the budget.
 	b2RecKeyframe* keyframes;
 	int keyframeCount;
-	int keyframeCap;
-	int keyframeBudget;		// memory cap in bytes for the kept snapshots
-	int keyframeBytes;		// running total of kept snapshot + body-list bytes
+	int keyframeCapacity;
+	size_t keyframeBudget;	 // memory cap in bytes for the kept snapshots
+	size_t keyframeBytes;	 // running total of kept snapshot + body-list bytes
 	int keyframeMinInterval; // finest spacing in frames
-	int keyframeInterval;	// current spacing, a power-of-two multiple of the min, doubles on eviction
-	int lastKeyframeFrame;	// highest frame captured, guards against re-capture while back-stepping
+	int keyframeInterval;	 // current spacing, a power-of-two multiple of the min, doubles on eviction
+	int lastKeyframeFrame;	 // highest frame captured, guards against re-capture while back-stepping
 };
 
 // Read primitives

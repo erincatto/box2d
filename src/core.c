@@ -117,7 +117,7 @@ uint32_t b2GetBuildHash( void )
 static b2AllocFcn* b2_allocFcn = NULL;
 static b2FreeFcn* b2_freeFcn = NULL;
 
-static b2AtomicInt b2_byteCount;
+static b2AtomicI64 b2_byteCount;
 
 void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn )
 {
@@ -128,7 +128,7 @@ void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn )
 // Use 32 byte alignment for everything. Works with 256bit SIMD.
 #define B2_ALIGNMENT 32
 
-void* b2Alloc( int size )
+void* b2Alloc( size_t size )
 {
 	if ( size == 0 )
 	{
@@ -136,11 +136,11 @@ void* b2Alloc( int size )
 	}
 
 	// This could cause some sharing issues, however Box2D rarely calls b2Alloc.
-	b2AtomicFetchAddInt( &b2_byteCount, size );
+	b2AtomicFetchAddI64( &b2_byteCount, size );
 
 	// Allocation must be a multiple of 32 or risk a seg fault
 	// https://en.cppreference.com/w/c/memory/aligned_alloc
-	int size32 = ( ( size - 1 ) | 0x1F ) + 1;
+	size_t size32 = ( ( size - 1 ) | 0x1F ) + 1;
 
 	if ( b2_allocFcn != NULL )
 	{
@@ -174,14 +174,14 @@ void* b2Alloc( int size )
 	return ptr;
 }
 
-void* b2AllocZeroInit( int size )
+void* b2AllocZeroInit( size_t size )
 {
 	void* memory = b2Alloc( size );
 	memset( memory, 0, size );
 	return memory;
 }
 
-void b2Free( void* mem, int size )
+void b2Free( void* mem, size_t size )
 {
 	if ( mem == NULL )
 	{
@@ -203,10 +203,10 @@ void b2Free( void* mem, int size )
 #endif
 	}
 
-	b2AtomicFetchAddInt( &b2_byteCount, -size );
+	b2AtomicFetchAddI64( &b2_byteCount, -(int64_t)size );
 }
 
-void* b2GrowAlloc( void* oldMem, int oldSize, int newSize )
+void* b2GrowAlloc( void* oldMem, size_t oldSize, size_t newSize )
 {
 	B2_ASSERT( newSize > oldSize );
 	void* newMem = b2Alloc( newSize );
@@ -218,7 +218,7 @@ void* b2GrowAlloc( void* oldMem, int oldSize, int newSize )
 	return newMem;
 }
 
-void* b2GrowAllocZeroInit( void* oldMem, int oldSize, int newSize )
+void* b2GrowAllocZeroInit( void* oldMem, size_t oldSize, size_t newSize )
 {
 	B2_ASSERT( newSize > oldSize );
 	void* newMem = b2Alloc( newSize );
@@ -232,7 +232,7 @@ void* b2GrowAllocZeroInit( void* oldMem, int oldSize, int newSize )
 	return newMem;
 }
 
-int b2GetByteCount( void )
+int64_t b2GetByteCount( void )
 {
-	return b2AtomicLoadInt( &b2_byteCount );
+	return b2AtomicLoadI64( &b2_byteCount );
 }

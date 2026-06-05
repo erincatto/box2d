@@ -906,7 +906,7 @@ void Sample::DrawMetrics()
 				ImGui::Text( "joints   %d", s.jointCount );
 				ImGui::Text( "islands/tasks %d / %d", s.islandCount, s.taskCount );
 				ImGui::Text( "tree height static/movable %d / %d", s.staticTreeHeight, s.treeHeight );
-				ImGui::Text( "alloc %d K   stack %d K", s.byteCount / 1024, s.stackUsed / 1024 );
+				ImGui::Text( "alloc %lld K   stack %d K", (long long)( s.byteCount / 1024 ), s.stackUsed / 1024 );
 
 				{
 					float frac = s.awakeContactCount > 0

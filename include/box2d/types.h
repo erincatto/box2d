@@ -421,16 +421,16 @@ typedef struct b2ShapeDef
 	/// @see enableSensorEvents
 	bool isSensor;
 
-	/// Enable sensor events for this shape. This applies to sensors and non-sensors. Both shapes involved must have this flag set to true.
-	/// False by default, even for sensors.
+	/// Enable sensor events for this shape. This applies to sensors and non-sensors. Both shapes involved must have this flag set
+	/// to true. False by default, even for sensors.
 	bool enableSensorEvents;
 
-	/// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Only one shape involved needs this flag set to true.
-	/// Ignored for sensors. False by default.
+	/// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Only one shape involved needs this
+	/// flag set to true. Ignored for sensors. False by default.
 	bool enableContactEvents;
 
-	/// Enable hit events for this shape. Only applies to kinematic and dynamic bodies. Only one shape involved needs this flag set to true.
-	/// Ignored for sensors. False by default.
+	/// Enable hit events for this shape. Only applies to kinematic and dynamic bodies. Only one shape involved needs this flag
+	/// set to true. Ignored for sensors. False by default.
 	bool enableHitEvents;
 
 	/// Enable pre-solve contact events for this shape. Only applies to dynamic bodies. These are expensive
@@ -537,6 +537,8 @@ typedef struct b2Profile
 /// Counters that give details of the simulation size.
 typedef struct b2Counters
 {
+	int64_t byteCount;
+
 	int bodyCount;
 	int shapeCount;
 	int contactCount;
@@ -545,7 +547,6 @@ typedef struct b2Counters
 	int stackUsed;
 	int staticTreeHeight;
 	int treeHeight;
-	int byteCount;
 	int taskCount;
 	int colorCounts[24];
 
@@ -554,6 +555,7 @@ typedef struct b2Counters
 
 	// Number of contacts recycled in the most recent step.
 	int recycledContactCount;
+
 } b2Counters;
 //! @endcond
 
@@ -1368,7 +1370,7 @@ typedef struct b2DebugDraw
 
 	/// Draw a solid closed polygon provided in CCW order.
 	void ( *DrawSolidPolygonFcn )( b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color,
-								void* context );
+								   void* context );
 
 	/// Draw a circle.
 	void ( *DrawCircleFcn )( b2Vec2 center, float radius, b2HexColor color, void* context );

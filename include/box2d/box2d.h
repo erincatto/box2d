@@ -214,6 +214,14 @@ B2_API void b2World_RebuildStaticTree( b2WorldId worldId );
 /// This is for internal testing
 B2_API void b2World_EnableSpeculative( b2WorldId worldId, bool flag );
 
+/** @} */
+
+/**
+ * @defgroup recording Recording
+ * These functions allow you to record a simulation for later playback
+ * @{
+ */
+
 /// Opaque handle for a recording buffer. Create one, hand it to b2World_StartRecording, then
 /// save its bytes and destroy it. The buffer grows as the world records into it.
 typedef struct b2Recording b2Recording;
@@ -253,159 +261,6 @@ B2_API bool b2SaveRecordingToFile( const b2Recording* recording, const char* pat
 /// file I/O. Destroy the result with b2DestroyRecording.
 /// @return NULL if the file is missing or unreadable
 B2_API b2Recording* b2LoadRecordingFromFile( const char* path );
-
-/** @} */
-
-/**
- * @defgroup replay Replay
- * These functions allow you to replay a recorded simulation.
- * @{
- */
-
-/// Replay a recording by re-running the engine and asserting recorded ids and state match.
-/// @param data Recorded bytes, e.g. from b2Recording_GetData or a loaded file
-/// @param size Number of recorded bytes
-/// @param workerCount Worker count to use for replay. 0 uses the serial single-worker fallback.
-/// @return true if replay completed without divergence, false on any mismatch
-B2_API bool b2ValidateReplay( const void* data, int size, int workerCount );
-
-/// Opaque handle for incremental playback of a recording.
-typedef struct b2RecPlayer b2RecPlayer;
-
-/// Static metadata describing a recording, resolved once when the player opens the file.
-typedef struct b2RecPlayerInfo
-{
-	int frameCount;		// total recorded steps
-	int workerCount;	// worker count used for the replay world
-	float timeStep;		// dt of the recorded steps
-	int subStepCount;	// recorded sub-steps
-	uint32_t buildHash; // engine build that produced the file, 0 if unstamped
-	uint64_t wallClock; // unix time the recording was made
-} b2RecPlayerInfo;
-
-/// Open a recording for incremental playback and replay up to the first step. The player copies
-/// the bytes, so you may free or destroy the source buffer immediately after this call.
-/// @param data Recorded bytes, e.g. from b2Recording_GetData or a loaded file
-/// @param size Number of recorded bytes
-/// @param workerCount Worker count for the replay world. 0 uses the serial single-worker fallback.
-/// @return A player handle, or NULL if the recording is malformed
-B2_API b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount );
-
-/// Advance the replay by one recorded step.
-/// @return true if a step executed, false once the end of the recording is reached
-B2_API bool b2RecPlayer_StepFrame( b2RecPlayer* player );
-
-/// Get the id of the replayed world.
-B2_API b2WorldId b2RecPlayer_GetWorldId( const b2RecPlayer* player );
-
-/// Rewind the player to the first step, recreating the replay world from the file.
-B2_API void b2RecPlayer_Restart( b2RecPlayer* player );
-
-/// Seek to a recorded step. Seeking backward rewinds and re-runs from the start, so the
-/// cost grows with the target frame. Clamps to the recording bounds.
-B2_API void b2RecPlayer_SeekFrame( b2RecPlayer* player, int targetFrame );
-
-/// Get the number of steps replayed so far.
-B2_API int b2RecPlayer_GetFrame( const b2RecPlayer* player );
-
-/// Get static metadata for the recording (frame count, recorded tuning, build, time).
-B2_API b2RecPlayerInfo b2RecPlayer_GetInfo( const b2RecPlayer* player );
-
-/// Get the engine build hash recorded in the file, or 0 if unstamped. Compare with
-/// b2GetBuildHash to tell whether the file was made by a different build.
-B2_API uint32_t b2RecPlayer_GetBuildHash( const b2RecPlayer* player );
-
-/// Returns true once the end of the recording has been reached.
-B2_API bool b2RecPlayer_IsAtEnd( const b2RecPlayer* player );
-
-/// Returns true if a recorded state hash failed to reproduce, meaning replay diverged.
-B2_API bool b2RecPlayer_HasDiverged( const b2RecPlayer* player );
-
-/// Get the first step at which replay diverged, or -1 if it has not diverged.
-B2_API int b2RecPlayer_GetDivergeFrame( const b2RecPlayer* player );
-
-/// Tune the keyframe ring used to speed up backward seeking. A keyframe is a periodic snapshot the
-/// player restores from instead of replaying from the start, trading memory for seek speed.
-/// @param budgetBytes Memory cap for the kept snapshots. The spacing widens to stay under it.
-/// @param minIntervalFrames Finest spacing between keyframes, in frames.
-/// Either argument <= 0 keeps its current value. Clears the existing ring, so call
-/// b2RecPlayer_Restart afterward to repopulate it under the new policy.
-B2_API void b2RecPlayer_SetKeyframePolicy( b2RecPlayer* player, int budgetBytes, int minIntervalFrames );
-
-/// Get the keyframe memory budget in bytes.
-B2_API int b2RecPlayer_GetKeyframeBudget( const b2RecPlayer* player );
-
-/// Get the finest keyframe spacing in frames.
-B2_API int b2RecPlayer_GetKeyframeMinInterval( const b2RecPlayer* player );
-
-/// Get the current keyframe spacing in frames. Starts at the min interval and doubles as the ring
-/// evicts to stay under budget, so it reflects the effective backward-seek granularity right now.
-B2_API int b2RecPlayer_GetKeyframeInterval( const b2RecPlayer* player );
-
-/// Get the memory currently held by keyframe snapshots, in bytes.
-B2_API int b2RecPlayer_GetKeyframeBytes( const b2RecPlayer* player );
-
-/// Close a player and free its replay world and file buffer.
-B2_API void b2RecPlayer_Destroy( b2RecPlayer* player );
-
-/// Draw spatial queries recorded during the most recently replayed frame.
-/// Call after b2World_Draw so queries are layered on top of the world.
-/// @param player A valid player handle
-/// @param draw Debug draw callbacks. NULL draw function pointers are skipped.
-/// @param queryIndex Index into the frame's queries to draw, or -1 to draw all of them.
-B2_API void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int queryIndex );
-
-/// The kind of a recorded spatial query, matching the public query and cast functions.
-typedef enum b2RecQueryType
-{
-	b2_recQueryOverlapAABB,
-	b2_recQueryOverlapShape,
-	b2_recQueryCastRay,
-	b2_recQueryCastShape,
-	b2_recQueryCollideMover,
-	b2_recQueryCastRayClosest,
-	b2_recQueryCastMover,
-	b2_recQueryShapeTestPoint,
-	b2_recQueryShapeRayCast,
-} b2RecQueryType;
-
-/// A spatial query recorded during a replayed frame, exposed for inspection.
-typedef struct b2RecQueryInfo
-{
-	b2RecQueryType type;
-	b2QueryFilter filter;	 // zeroed for the shape local query types
-	b2AABB aabb;			 // overlap AABB
-	b2Vec2 origin;			 // ray and cast origin
-	b2Vec2 translation;		 // ray and cast translation
-	b2ShapeId shape;		 // target shape for the shape local query types
-	int hitCount;			 // number of recorded results
-} b2RecQueryInfo;
-
-/// One result of a recorded spatial query.
-typedef struct b2RecQueryHit
-{
-	b2ShapeId shape;
-	b2Vec2 point;
-	b2Vec2 normal;
-	float fraction;
-} b2RecQueryHit;
-
-/// Get the number of spatial queries recorded for the most recently replayed frame.
-B2_API int b2RecPlayer_GetFrameQueryCount( const b2RecPlayer* player );
-
-/// Get a recorded query from the most recently replayed frame by index.
-B2_API b2RecQueryInfo b2RecPlayer_GetFrameQuery( const b2RecPlayer* player, int index );
-
-/// Get one result of a recorded query from the most recently replayed frame.
-B2_API b2RecQueryHit b2RecPlayer_GetFrameQueryHit( const b2RecPlayer* player, int queryIndex, int hitIndex );
-
-/// Get the number of body slots tracked for the outliner. This is the creation-order span and
-/// includes holes for destroyed bodies, so it only grows as the replay advances.
-B2_API int b2RecPlayer_GetBodyCount( const b2RecPlayer* player );
-
-/// Get a tracked body by creation ordinal. Returns b2_nullBodyId for a destroyed slot, an ordinal not
-/// yet reached at the current frame, or an out-of-range index. Validate with b2Body_IsValid.
-B2_API b2BodyId b2RecPlayer_GetBodyId( const b2RecPlayer* player, int index );
 
 /** @} */
 
@@ -1571,3 +1426,158 @@ B2_API bool b2Contact_IsValid( b2ContactId id );
 B2_API b2ContactData b2Contact_GetData( b2ContactId contactId );
 
 /**@}*/
+
+/**
+ * @defgroup replay Replay
+ * These functions allow you to replay a recorded simulation. This functionality is built
+ * to serve the replay viewer in the sample app.
+ * @{
+ */
+
+/// Replay a recording by re-running the engine and asserting recorded ids and state match.
+/// @param data Recorded bytes, e.g. from b2Recording_GetData or a loaded file
+/// @param size Number of recorded bytes
+/// @param workerCount Worker count to use for replay. 0 uses the serial single-worker fallback.
+/// @return true if replay completed without divergence, false on any mismatch
+B2_API bool b2ValidateReplay( const void* data, int size, int workerCount );
+
+/// Opaque handle for incremental playback of a recording.
+typedef struct b2RecPlayer b2RecPlayer;
+
+/// Static metadata describing a recording, resolved once when the player opens the file.
+typedef struct b2RecPlayerInfo
+{
+	int frameCount;		// total recorded steps
+	int workerCount;	// worker count used for the replay world
+	float timeStep;		// dt of the recorded steps
+	int subStepCount;	// recorded sub-steps
+	uint32_t buildHash; // engine build that produced the file, 0 if unstamped
+	float lengthScale;	// length units per meter in effect when recorded
+} b2RecPlayerInfo;
+
+/// Open a recording for incremental playback and replay up to the first step. The player copies
+/// the bytes, so you may free or destroy the source buffer immediately after this call.
+/// @param data Recorded bytes, e.g. from b2Recording_GetData or a loaded file
+/// @param size Number of recorded bytes
+/// @param workerCount Worker count for the replay world. 0 uses the serial single-worker fallback.
+/// @return A player handle, or NULL if the recording is malformed
+B2_API b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount );
+
+/// Advance the replay by one recorded step.
+/// @return true if a step executed, false once the end of the recording is reached
+B2_API bool b2RecPlayer_StepFrame( b2RecPlayer* player );
+
+/// Get the id of the replayed world.
+B2_API b2WorldId b2RecPlayer_GetWorldId( const b2RecPlayer* player );
+
+/// Rewind the player to the first step, recreating the replay world from the file.
+B2_API void b2RecPlayer_Restart( b2RecPlayer* player );
+
+/// Seek to a recorded step. Seeking backward rewinds and re-runs from the start, so the
+/// cost grows with the target frame. Clamps to the recording bounds.
+B2_API void b2RecPlayer_SeekFrame( b2RecPlayer* player, int targetFrame );
+
+/// Get the number of steps replayed so far.
+B2_API int b2RecPlayer_GetFrame( const b2RecPlayer* player );
+
+/// Get static metadata for the recording (frame count, recorded tuning, build, time).
+B2_API b2RecPlayerInfo b2RecPlayer_GetInfo( const b2RecPlayer* player );
+
+/// Get the engine build hash recorded in the file, or 0 if unstamped. Compare with
+/// b2GetBuildHash to tell whether the file was made by a different build.
+B2_API uint32_t b2RecPlayer_GetBuildHash( const b2RecPlayer* player );
+
+/// Returns true once the end of the recording has been reached.
+B2_API bool b2RecPlayer_IsAtEnd( const b2RecPlayer* player );
+
+/// Returns true if a recorded state hash failed to reproduce, meaning replay diverged.
+B2_API bool b2RecPlayer_HasDiverged( const b2RecPlayer* player );
+
+/// Get the first step at which replay diverged, or -1 if it has not diverged.
+B2_API int b2RecPlayer_GetDivergeFrame( const b2RecPlayer* player );
+
+/// Tune the keyframe ring used to speed up backward seeking. A keyframe is a periodic snapshot the
+/// player restores from instead of replaying from the start, trading memory for seek speed.
+/// @param player the recording player
+/// @param budgetBytes Memory cap for the kept snapshots. The spacing widens to stay under it.
+/// @param minIntervalFrames Finest spacing between keyframes, in frames.
+/// A zero budget or a non-positive interval keeps that value. Clears the existing ring, so call
+/// b2RecPlayer_Restart afterward to repopulate it under the new policy.
+B2_API void b2RecPlayer_SetKeyframePolicy( b2RecPlayer* player, size_t budgetBytes, int minIntervalFrames );
+
+/// Get the keyframe memory budget in bytes.
+B2_API size_t b2RecPlayer_GetKeyframeBudget( const b2RecPlayer* player );
+
+/// Get the finest keyframe spacing in frames.
+B2_API int b2RecPlayer_GetKeyframeMinInterval( const b2RecPlayer* player );
+
+/// Get the current keyframe spacing in frames. Starts at the min interval and doubles as the ring
+/// evicts to stay under budget, so it reflects the effective backward-seek granularity right now.
+B2_API int b2RecPlayer_GetKeyframeInterval( const b2RecPlayer* player );
+
+/// Get the memory currently held by keyframe snapshots, in bytes.
+B2_API size_t b2RecPlayer_GetKeyframeBytes( const b2RecPlayer* player );
+
+/// Close a player and free its replay world and file buffer.
+B2_API void b2RecPlayer_Destroy( b2RecPlayer* player );
+
+/// Draw spatial queries recorded during the most recently replayed frame.
+/// Call after b2World_Draw so queries are layered on top of the world.
+/// @param player A valid player handle
+/// @param draw Debug draw callbacks. NULL draw function pointers are skipped.
+/// @param queryIndex Index into the frame's queries to draw, or -1 to draw all of them.
+B2_API void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int queryIndex );
+
+/// The kind of a recorded spatial query, matching the public query and cast functions.
+typedef enum b2RecQueryType
+{
+	b2_recQueryOverlapAABB,
+	b2_recQueryOverlapShape,
+	b2_recQueryCastRay,
+	b2_recQueryCastShape,
+	b2_recQueryCollideMover,
+	b2_recQueryCastRayClosest,
+	b2_recQueryCastMover,
+	b2_recQueryShapeTestPoint,
+	b2_recQueryShapeRayCast,
+} b2RecQueryType;
+
+/// A spatial query recorded during a replayed frame, exposed for inspection.
+typedef struct b2RecQueryInfo
+{
+	b2RecQueryType type;
+	b2QueryFilter filter; // zeroed for the shape local query types
+	b2AABB aabb;		  // overlap AABB
+	b2Vec2 origin;		  // ray and cast origin
+	b2Vec2 translation;	  // ray and cast translation
+	b2ShapeId shape;	  // target shape for the shape local query types
+	int hitCount;		  // number of recorded results
+} b2RecQueryInfo;
+
+/// One result of a recorded spatial query.
+typedef struct b2RecQueryHit
+{
+	b2ShapeId shape;
+	b2Vec2 point;
+	b2Vec2 normal;
+	float fraction;
+} b2RecQueryHit;
+
+/// Get the number of spatial queries recorded for the most recently replayed frame.
+B2_API int b2RecPlayer_GetFrameQueryCount( const b2RecPlayer* player );
+
+/// Get a recorded query from the most recently replayed frame by index.
+B2_API b2RecQueryInfo b2RecPlayer_GetFrameQuery( const b2RecPlayer* player, int index );
+
+/// Get one result of a recorded query from the most recently replayed frame.
+B2_API b2RecQueryHit b2RecPlayer_GetFrameQueryHit( const b2RecPlayer* player, int queryIndex, int hitIndex );
+
+/// Get the number of body slots tracked for the outliner. This is the creation-order span and
+/// includes holes for destroyed bodies, so it only grows as the replay advances.
+B2_API int b2RecPlayer_GetBodyCount( const b2RecPlayer* player );
+
+/// Get a tracked body by creation ordinal. Returns b2_nullBodyId for a destroyed slot, an ordinal not
+/// yet reached at the current frame, or an out-of-range index. Validate with b2Body_IsValid.
+B2_API b2BodyId b2RecPlayer_GetBodyId( const b2RecPlayer* player, int index );
+
+/** @} */

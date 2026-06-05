@@ -5,8 +5,6 @@
 
 #include "recording.h"
 
-#include "box2d/id.h"
-
 #include <stdint.h>
 
 typedef struct b2World b2World;
