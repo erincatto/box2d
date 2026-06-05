@@ -7,9 +7,13 @@
 
 #include "test_macros.h"
 
+#include "physics_world.h"
+#include "world_snapshot.h"
+
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -576,6 +580,146 @@ int RecordingOutlinerTest( void )
 	ENSURE( b2RecPlayer_GetBodyCount( player ) == seedCount );
 
 	b2RecPlayer_Destroy( player );
+	b2DestroyRecording( rec );
+	return 0;
+}
+
+// Deep hash of a replay world, the ground truth a keyframe seek must reproduce
+static uint64_t ReplayDeepHash( b2RecPlayer* player )
+{
+	return b2HashWorldStateDeep( b2GetWorldFromId( b2RecPlayer_GetWorldId( player ) ) );
+}
+
+// A backward seek restores the nearest keyframe and re-steps the gap, so it must land on the exact
+// state a linear forward replay would. Compares scattered backward and forward seeks against a
+// forward-only deep-hash table at the given worker count. A positive budgetBytes tightens the
+// keyframe policy on the player under test to force repeated budget eviction; the forward-only
+// reference is left at the default policy since it never seeks back.
+static int CheckKeyframeSeek( const uint8_t* recData, int recSize, int workerCount, int budgetBytes, int minInterval )
+{
+	// Forward-only reference: a fresh player never seeks backward, so it never restores a keyframe
+	// and gives the linear ground truth deep hash at every frame
+	b2RecPlayer* ref = b2RecPlayer_Create( recData, recSize, workerCount );
+	ENSURE( ref != NULL );
+	int frameCount = b2RecPlayer_GetInfo( ref ).frameCount;
+	ENSURE( frameCount > 0 );
+
+	uint64_t* refHash = malloc( (size_t)( frameCount + 1 ) * sizeof( uint64_t ) );
+	ENSURE( refHash != NULL );
+	refHash[0] = ReplayDeepHash( ref );
+	for ( int f = 1; f <= frameCount; ++f )
+	{
+		ENSURE( b2RecPlayer_StepFrame( ref ) );
+		refHash[f] = ReplayDeepHash( ref );
+	}
+	ENSURE( b2RecPlayer_HasDiverged( ref ) == false );
+	b2RecPlayer_Destroy( ref );
+
+	// Player under test: play to the end so the keyframe ring is fully populated (and an eviction
+	// has fired under a tight budget), then seek around it
+	b2RecPlayer* player = b2RecPlayer_Create( recData, recSize, workerCount );
+	ENSURE( player != NULL );
+	if ( budgetBytes > 0 )
+	{
+		b2RecPlayer_SetKeyframePolicy( player, budgetBytes, minInterval );
+	}
+	while ( b2RecPlayer_StepFrame( player ) )
+	{
+	}
+	ENSURE( b2RecPlayer_GetFrame( player ) == frameCount );
+
+	// Targets jump backward and forward: below the first keyframe (1, 5), onto exact interval
+	// multiples (128, 256), and around the eviction boundary near frame 272
+	int targets[] = { frameCount, 1, frameCount - 1, 290, 17, 271, 256, 128, 33, 200, 5, 300, 100, frameCount };
+	for ( int i = 0; i < ARRAY_COUNT( targets ); ++i )
+	{
+		int t = targets[i];
+		if ( t > frameCount )
+		{
+			t = frameCount;
+		}
+		b2RecPlayer_SeekFrame( player, t );
+		ENSURE( b2RecPlayer_GetFrame( player ) == t );
+		ENSURE( b2RecPlayer_HasDiverged( player ) == false );
+		uint64_t got = ReplayDeepHash( player );
+		if ( got != refHash[t] )
+		{
+			printf( "keyframe seek mismatch at frame %d (wc %d): got %llu want %llu\n", t, workerCount,
+					(unsigned long long)got, (unsigned long long)refHash[t] );
+			free( refHash );
+			b2RecPlayer_Destroy( player );
+			return 1;
+		}
+	}
+
+	b2RecPlayer_Destroy( player );
+	free( refHash );
+	return 0;
+}
+
+// Fast backward seeking via keyframes must be bit-identical to a linear replay. Records enough frames
+// to fill the keyframe ring and trigger one eviction, then verifies seeks at two worker counts.
+int RecordingKeyframeTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.gravity = (b2Vec2){ 0.0f, -10.0f };
+	worldDef.workerCount = 1;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	// Ground
+	b2BodyDef groundDef = b2DefaultBodyDef();
+	b2BodyId groundId = b2CreateBody( worldId, &groundDef );
+	b2ShapeDef groundShapeDef = b2DefaultShapeDef();
+	b2Polygon groundBox = b2MakeBox( 20.0f, 1.0f );
+	b2CreatePolygonShape( groundId, &groundShapeDef, &groundBox );
+
+	// A light stack of dynamic boxes so the world keeps evolving each step (settling, then sleeping)
+	// without the cost of joints. The offset start makes the stack topple a little, lengthening the
+	// dynamic phase that discriminates a faithful restore.
+	for ( int i = 0; i < 8; ++i )
+	{
+		b2BodyDef bd = b2DefaultBodyDef();
+		bd.type = b2_dynamicBody;
+		bd.position = (b2Vec2){ 0.05f * (float)i, 2.0f + 1.1f * (float)i };
+		b2BodyId id = b2CreateBody( worldId, &bd );
+		b2ShapeDef sd = b2DefaultShapeDef();
+		sd.density = 1.0f;
+		b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+		b2CreatePolygonShape( id, &sd, &box );
+	}
+
+	b2Recording* rec = b2CreateRecording( 0 );
+	b2World_StartRecording( worldId, rec );
+
+	// 320 steps fills the 16-deep ring (keyframes at 16..256) and fires the eviction at 272
+	for ( int i = 0; i < 320; ++i )
+	{
+		b2World_Step( worldId, 1.0f / 60.0f, 4 );
+	}
+
+	b2World_StopRecording( worldId );
+	b2DestroyWorld( worldId );
+
+	const uint8_t* recData = b2Recording_GetData( rec );
+	int recSize = b2Recording_GetSize( rec );
+	ENSURE( recSize > 0 );
+
+	// Measure one snapshot so the tight budget holds only a handful of keyframes, forcing the
+	// interval-doubling eviction during the 320-frame replay
+	b2RecPlayer* probe = b2RecPlayer_Create( recData, recSize, 0 );
+	ENSURE( probe != NULL );
+	int snapSize = b2World_Snapshot( b2RecPlayer_GetWorldId( probe ), NULL, 0 );
+	b2RecPlayer_Destroy( probe );
+	ENSURE( snapSize > 0 );
+	int tightBudget = 6 * snapSize;
+
+	// Default policy (capture + restore, no eviction) and a tight budget (forces eviction and the
+	// SetKeyframePolicy path), each at the recorded worker count and a different one
+	ENSURE( CheckKeyframeSeek( recData, recSize, 0, 0, 0 ) == 0 );
+	ENSURE( CheckKeyframeSeek( recData, recSize, 4, 0, 0 ) == 0 );
+	ENSURE( CheckKeyframeSeek( recData, recSize, 0, tightBudget, 8 ) == 0 );
+	ENSURE( CheckKeyframeSeek( recData, recSize, 4, tightBudget, 8 ) == 0 );
+
 	b2DestroyRecording( rec );
 	return 0;
 }

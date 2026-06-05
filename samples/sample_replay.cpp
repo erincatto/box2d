@@ -11,6 +11,7 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <limits.h>
 #include <stdio.h>
 
 // Produces a recording file so the Replay File sample has something to load. Runs a small scene
@@ -273,6 +274,20 @@ public:
 		{
 			m_worldId = b2RecPlayer_GetWorldId( m_player );
 			m_info = b2RecPlayer_GetInfo( m_player );
+
+			// Keyframe policy: adopt the engine defaults the first time, then keep the user's choice
+			// sticky across reopens (the player is freshly created, so its ring is back at defaults).
+			if ( m_keyframeBudgetMB < 0 )
+			{
+				m_keyframeBudgetMB = b2RecPlayer_GetKeyframeBudget( m_player ) / ( 1024 * 1024 );
+				m_keyframeMinInterval = b2RecPlayer_GetKeyframeMinInterval( m_player );
+			}
+			else
+			{
+				int64_t bytes = (int64_t)m_keyframeBudgetMB * 1024 * 1024;
+				bytes = bytes > INT_MAX ? INT_MAX : bytes;
+				b2RecPlayer_SetKeyframePolicy( m_player, bytes, m_keyframeMinInterval );
+			}
 
 			// Flag a file made by a different engine build. 0 on either side is unstamped.
 			m_recHash = b2RecPlayer_GetBuildHash( m_player );
@@ -1046,6 +1061,22 @@ public:
 		ImGui::SameLine();
 		ImGui::TextDisabled( "(rec %d)", m_info.workerCount );
 
+		// Keyframe ring controls. Budget trades memory for backward-seek speed; min interval is the
+		// finest spacing. Changing either reopens the player so the ring rebuilds from frame 0.
+		ImGui::PushItemWidth( 6.0f * fontSize );
+		ImGui::SliderInt( "Keyframe MB", &m_keyframeBudgetMB, 1, 2048 );
+		reopen = reopen || ImGui::IsItemDeactivatedAfterEdit();
+		ImGui::SameLine();
+		ImGui::SliderInt( "Min interval", &m_keyframeMinInterval, 1, 240 );
+		reopen = reopen || ImGui::IsItemDeactivatedAfterEdit();
+		ImGui::PopItemWidth();
+
+		// Live ring state: the effective spacing widens as the ring evicts under the budget, and the
+		// memory held grows as keyframes accumulate while the replay plays forward
+		ImGui::SameLine();
+		ImGui::TextDisabled( "actual %d frames, %.1f MB", b2RecPlayer_GetKeyframeInterval( m_player ),
+							 (double)b2RecPlayer_GetKeyframeBytes( m_player ) / ( 1024.0 * 1024.0 ) );
+
 		// Scrubber: full width, seeks both directions
 		int scrub = b2RecPlayer_GetFrame( m_player );
 		ImGui::PushItemWidth( -1.0f );
@@ -1141,6 +1172,10 @@ public:
 	bool m_loop = false;
 	bool m_selectTimelineTab = true;
 	bool m_prevShowMetrics = false;
+
+	// Keyframe ring policy mirrored into the UI. -1 means adopt the engine default on first open.
+	int m_keyframeBudgetMB = -1;
+	int m_keyframeMinInterval = -1;
 
 	// Inspector selection, keyed by stable creation ordinals so it survives a backward scrub. Resolved
 	// to live ids each frame from the player's body tracking; out of range means "not at this frame".

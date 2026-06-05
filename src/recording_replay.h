@@ -78,6 +78,20 @@ typedef struct b2RecReader
 	b2RecPlayer* owner; // player that owns this reader
 } b2RecReader;
 
+// A restore point captured during forward replay, so a backward seek can re-simulate only the gap
+// from the nearest keyframe instead of from frame 0. The image is a full b2SerializeWorld blob.
+typedef struct b2RecKeyframe
+{
+	uint8_t* image;	   // serialized world at the end of this frame
+	int imageSize;
+	int frame;		   // frame this restores to, a post-step boundary
+	int cursor;		   // op-stream offset where the next frame resumes
+	b2BodyId* bodyIds; // outliner list as of this frame
+	int bodyIdCount;
+	int divergeFrame; // divergence latches as of this frame, so a seek reports the linear path's state
+	bool diverged;
+} b2RecKeyframe;
+
 // Incremental player. Owns a private copy of the recording bytes and drives replay one step at a time.
 struct b2RecPlayer
 {
@@ -117,6 +131,18 @@ struct b2RecPlayer
 	b2BodyId* frame0BodyIds;
 	int frame0BodyIdCount;
 	int frame0Cursor; // op-stream offset of the first Step, where stepping resumes
+
+	// Keyframe ring for fast backward seeks. Captured in increasing-frame order as the replay plays
+	// forward. The spacing doubles and the off-grid keyframes are evicted once the memory budget is
+	// hit, so memory stays bounded and seek cost grows only once a recording outgrows the budget.
+	b2RecKeyframe* keyframes;
+	int keyframeCount;
+	int keyframeCap;
+	int keyframeBudget;		// memory cap in bytes for the kept snapshots
+	int keyframeBytes;		// running total of kept snapshot + body-list bytes
+	int keyframeMinInterval; // finest spacing in frames
+	int keyframeInterval;	// current spacing, a power-of-two multiple of the min, doubles on eviction
+	int lastKeyframeFrame;	// highest frame captured, guards against re-capture while back-stepping
 };
 
 // Read primitives

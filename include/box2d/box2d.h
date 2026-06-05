@@ -324,6 +324,27 @@ B2_API bool b2RecPlayer_HasDiverged( const b2RecPlayer* player );
 /// Get the first step at which replay diverged, or -1 if it has not diverged.
 B2_API int b2RecPlayer_GetDivergeFrame( const b2RecPlayer* player );
 
+/// Tune the keyframe ring used to speed up backward seeking. A keyframe is a periodic snapshot the
+/// player restores from instead of replaying from the start, trading memory for seek speed.
+/// @param budgetBytes Memory cap for the kept snapshots. The spacing widens to stay under it.
+/// @param minIntervalFrames Finest spacing between keyframes, in frames.
+/// Either argument <= 0 keeps its current value. Clears the existing ring, so call
+/// b2RecPlayer_Restart afterward to repopulate it under the new policy.
+B2_API void b2RecPlayer_SetKeyframePolicy( b2RecPlayer* player, int budgetBytes, int minIntervalFrames );
+
+/// Get the keyframe memory budget in bytes.
+B2_API int b2RecPlayer_GetKeyframeBudget( const b2RecPlayer* player );
+
+/// Get the finest keyframe spacing in frames.
+B2_API int b2RecPlayer_GetKeyframeMinInterval( const b2RecPlayer* player );
+
+/// Get the current keyframe spacing in frames. Starts at the min interval and doubles as the ring
+/// evicts to stay under budget, so it reflects the effective backward-seek granularity right now.
+B2_API int b2RecPlayer_GetKeyframeInterval( const b2RecPlayer* player );
+
+/// Get the memory currently held by keyframe snapshots, in bytes.
+B2_API int b2RecPlayer_GetKeyframeBytes( const b2RecPlayer* player );
+
 /// Close a player and free its replay world and file buffer.
 B2_API void b2RecPlayer_Destroy( b2RecPlayer* player );
 

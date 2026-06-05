@@ -35,6 +35,7 @@ extern int IdTest( void );
 extern int MathTest( void );
 extern int RecordingTest( void );
 extern int RecordingOutlinerTest( void );
+extern int RecordingKeyframeTest( void );
 extern int ShapeTest( void );
 extern int SnapshotTest( void );
 extern int TableTest( void );
@@ -95,6 +96,7 @@ int main( int argc, char** argv )
 	MAYBE_RUN_TEST( IdTest );
 	MAYBE_RUN_TEST( RecordingTest );
 	MAYBE_RUN_TEST( RecordingOutlinerTest );
+	MAYBE_RUN_TEST( RecordingKeyframeTest );
 	MAYBE_RUN_TEST( ShapeTest );
 	MAYBE_RUN_TEST( SnapshotTest );
 	MAYBE_RUN_TEST( ThreadTest );

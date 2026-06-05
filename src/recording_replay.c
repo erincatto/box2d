@@ -9,6 +9,7 @@
 
 #include "body.h"
 #include "physics_world.h"
+#include "world_snapshot.h"
 
 #include "box2d/box2d.h"
 
@@ -17,6 +18,12 @@
 #include <string.h>
 
 #define B2_REC_MAGIC 0x43523242u
+
+// Keyframe ring tuning. A memory budget caps the snapshots kept; the spacing starts at the min and
+// doubles when adding the next keyframe would exceed the budget, so memory stays bounded and seek
+// cost grows only once a recording outgrows the budget. The Replay sample exposes both as sliders.
+#define B2_REC_KEYFRAME_INTERVAL_DEFAULT 16
+#define B2_REC_KEYFRAME_BUDGET_DEFAULT ( 32 * 1024 * 1024 )
 
 // Read primitives
 
@@ -2090,6 +2097,14 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 	player->frame0BodyIds = NULL;
 	player->frame0BodyIdCount = 0;
 	player->frame0Cursor = headerEnd;
+	player->keyframes = NULL;
+	player->keyframeCount = 0;
+	player->keyframeCap = 0;
+	player->keyframeBudget = B2_REC_KEYFRAME_BUDGET_DEFAULT;
+	player->keyframeBytes = 0;
+	player->keyframeMinInterval = B2_REC_KEYFRAME_INTERVAL_DEFAULT;
+	player->keyframeInterval = B2_REC_KEYFRAME_INTERVAL_DEFAULT;
+	player->lastKeyframeFrame = 0;
 
 	// Count steps and read the first step's tuning so the viewer can show length and hz up front
 	b2RecScanFile( player );
@@ -2123,6 +2138,106 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 	return player;
 }
 
+// Capture a restore point for the just-completed frame. rdr.cursor already sits at the next frame's
+// Step, so this records the exact resume position next to a full world image plus the outliner and
+// divergence state forward stepping would otherwise have to rebuild.
+static void b2RecCaptureKeyframe( b2RecPlayer* player )
+{
+	// Serialize first so the new keyframe's size is known, then own an exact-size copy so the free
+	// size matches the alloc size for leak accounting (the buffer over-allocates its capacity)
+	b2World* world = b2GetWorldFromId( player->rdr.replayWorldId );
+	b2RecBuffer buf = { 0 };
+	b2SerializeWorld( world, &buf );
+
+	int bodyBytes = player->bodyIdCount * (int)sizeof( b2BodyId );
+	int newBytes = buf.size + bodyBytes;
+
+	// Make room under the budget: doubling the spacing drops the off-grid keyframes, roughly halving
+	// the bytes, until the new keyframe fits or only it remains. The budget is soft in the corner
+	// where a single snapshot already exceeds it.
+	while ( player->keyframeCount > 0 && player->keyframeBytes + newBytes > player->keyframeBudget )
+	{
+		player->keyframeInterval *= 2;
+		int kept = 0;
+		int keptBytes = 0;
+		for ( int i = 0; i < player->keyframeCount; ++i )
+		{
+			b2RecKeyframe* kf = &player->keyframes[i];
+			if ( kf->frame % player->keyframeInterval == 0 )
+			{
+				player->keyframes[kept] = *kf;
+				keptBytes += kf->imageSize + kf->bodyIdCount * (int)sizeof( b2BodyId );
+				kept += 1;
+			}
+			else
+			{
+				b2Free( kf->image, kf->imageSize );
+				if ( kf->bodyIds != NULL )
+				{
+					b2Free( kf->bodyIds, kf->bodyIdCount * (int)sizeof( b2BodyId ) );
+				}
+			}
+		}
+		bool progress = kept < player->keyframeCount;
+		player->keyframeCount = kept;
+		player->keyframeBytes = keptBytes;
+		if ( progress == false )
+		{
+			break;
+		}
+	}
+
+	b2RecGrow( (void**)&player->keyframes, &player->keyframeCap, player->keyframeCount + 1, player->keyframeCount,
+			   (int)sizeof( b2RecKeyframe ) );
+
+	b2RecKeyframe* kf = &player->keyframes[player->keyframeCount];
+	kf->image = b2Alloc( buf.size );
+	memcpy( kf->image, buf.data, (size_t)buf.size );
+	kf->imageSize = buf.size;
+	b2RecBufFree( &buf );
+
+	kf->frame = player->frame;
+	kf->cursor = player->rdr.cursor;
+	kf->divergeFrame = player->divergeFrame;
+	kf->diverged = player->rdr.diverged;
+	kf->bodyIdCount = player->bodyIdCount;
+	kf->bodyIds = NULL;
+	if ( bodyBytes > 0 )
+	{
+		kf->bodyIds = b2Alloc( bodyBytes );
+		memcpy( kf->bodyIds, player->bodyIds, (size_t)bodyBytes );
+	}
+
+	player->keyframeBytes += newBytes;
+	player->keyframeCount += 1;
+	player->lastKeyframeFrame = player->frame;
+}
+
+// Restore the world and player state from a keyframe, so a backward seek resumes from it instead of
+// frame 0. Mirrors b2RecPlayer_Restart but targets a mid-stream image. b2World_Restore is in place,
+// so the replay world id stays stable.
+static void b2RecPlayerRestoreKeyframe( b2RecPlayer* player, const b2RecKeyframe* kf )
+{
+	if ( b2World_Restore( player->rdr.replayWorldId, kf->image, kf->imageSize ) == false )
+	{
+		player->rdr.ok = false;
+		return;
+	}
+	player->rdr.cursor = kf->cursor;
+	player->rdr.ok = true;
+	player->rdr.diverged = kf->diverged;
+	player->frame = kf->frame;
+	player->divergeFrame = kf->divergeFrame;
+	player->atEnd = false;
+
+	b2RecGrow( (void**)&player->bodyIds, &player->bodyIdCap, kf->bodyIdCount, 0, (int)sizeof( b2BodyId ) );
+	player->bodyIdCount = kf->bodyIdCount;
+	if ( kf->bodyIdCount > 0 )
+	{
+		memcpy( player->bodyIds, kf->bodyIds, kf->bodyIdCount * (int)sizeof( b2BodyId ) );
+	}
+}
+
 bool b2RecPlayer_StepFrame( b2RecPlayer* player )
 {
 	if ( player->atEnd )
@@ -2149,6 +2264,12 @@ bool b2RecPlayer_StepFrame( b2RecPlayer* player )
 		}
 		if ( stepped && player->rdr.data[player->rdr.cursor] == 0x80 )
 		{
+			// Capture a keyframe at the interval. The guard skips frames already covered, so
+			// re-stepping a gap during a backward seek never re-captures.
+			if ( player->frame > player->lastKeyframeFrame && player->frame % player->keyframeInterval == 0 )
+			{
+				b2RecCaptureKeyframe( player );
+			}
 			return true;
 		}
 
@@ -2216,10 +2337,28 @@ void b2RecPlayer_SeekFrame( b2RecPlayer* player, int targetFrame )
 	{
 		targetFrame = 0;
 	}
-	// Backward seek has to rewind and replay from the start
+	// Backward seek resumes from the nearest keyframe below the target instead of replaying from
+	// frame 0. Strictly below, so the step loop still runs the target frame and regenerates its
+	// per-frame query store, body list, and divergence latch exactly as a forward replay would.
 	if ( targetFrame < player->frame )
 	{
-		b2RecPlayer_Restart( player );
+		const b2RecKeyframe* best = NULL;
+		for ( int i = 0; i < player->keyframeCount; ++i )
+		{
+			const b2RecKeyframe* kf = &player->keyframes[i];
+			if ( kf->frame < targetFrame && ( best == NULL || kf->frame > best->frame ) )
+			{
+				best = kf;
+			}
+		}
+		if ( best != NULL )
+		{
+			b2RecPlayerRestoreKeyframe( player, best );
+		}
+		else
+		{
+			b2RecPlayer_Restart( player );
+		}
 	}
 	while ( player->frame < targetFrame && b2RecPlayer_StepFrame( player ) )
 	{
@@ -2259,6 +2398,57 @@ bool b2RecPlayer_HasDiverged( const b2RecPlayer* player )
 int b2RecPlayer_GetDivergeFrame( const b2RecPlayer* player )
 {
 	return player != NULL ? player->divergeFrame : -1;
+}
+
+void b2RecPlayer_SetKeyframePolicy( b2RecPlayer* player, int budgetBytes, int minIntervalFrames )
+{
+	if ( player == NULL )
+	{
+		return;
+	}
+	if ( budgetBytes > 0 )
+	{
+		player->keyframeBudget = budgetBytes;
+	}
+	if ( minIntervalFrames > 0 )
+	{
+		player->keyframeMinInterval = minIntervalFrames;
+	}
+
+	// Drop the ring so it repopulates under the new policy on the next replay
+	for ( int i = 0; i < player->keyframeCount; ++i )
+	{
+		b2RecKeyframe* kf = &player->keyframes[i];
+		b2Free( kf->image, kf->imageSize );
+		if ( kf->bodyIds != NULL )
+		{
+			b2Free( kf->bodyIds, kf->bodyIdCount * (int)sizeof( b2BodyId ) );
+		}
+	}
+	player->keyframeCount = 0;
+	player->keyframeBytes = 0;
+	player->keyframeInterval = player->keyframeMinInterval;
+	player->lastKeyframeFrame = 0;
+}
+
+int b2RecPlayer_GetKeyframeBudget( const b2RecPlayer* player )
+{
+	return player != NULL ? player->keyframeBudget : 0;
+}
+
+int b2RecPlayer_GetKeyframeMinInterval( const b2RecPlayer* player )
+{
+	return player != NULL ? player->keyframeMinInterval : 0;
+}
+
+int b2RecPlayer_GetKeyframeInterval( const b2RecPlayer* player )
+{
+	return player != NULL ? player->keyframeInterval : 0;
+}
+
+int b2RecPlayer_GetKeyframeBytes( const b2RecPlayer* player )
+{
+	return player != NULL ? player->keyframeBytes : 0;
 }
 
 void b2RecPlayer_Destroy( b2RecPlayer* player )
@@ -2306,6 +2496,19 @@ void b2RecPlayer_Destroy( b2RecPlayer* player )
 	if ( player->frame0BodyIds != NULL )
 	{
 		b2Free( player->frame0BodyIds, player->frame0BodyIdCount * (int)sizeof( b2BodyId ) );
+	}
+	for ( int i = 0; i < player->keyframeCount; ++i )
+	{
+		b2RecKeyframe* kf = &player->keyframes[i];
+		b2Free( kf->image, kf->imageSize );
+		if ( kf->bodyIds != NULL )
+		{
+			b2Free( kf->bodyIds, kf->bodyIdCount * (int)sizeof( b2BodyId ) );
+		}
+	}
+	if ( player->keyframes != NULL )
+	{
+		b2Free( player->keyframes, player->keyframeCap * (int)sizeof( b2RecKeyframe ) );
 	}
 	b2Free( player, (int)sizeof( b2RecPlayer ) );
 }

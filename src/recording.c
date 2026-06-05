@@ -679,8 +679,7 @@ void b2StartRecordingIntoBuffer( b2World* world, b2Recording* recording )
 	b2RecBuffer blob = { 0 };
 	b2SerializeWorld( world, &blob );
 
-	b2RecHeader hdr;
-	memset( &hdr, 0, sizeof( hdr ) );
+	b2RecHeader hdr = { 0 };
 	hdr.magic = B2_REC_MAGIC;
 	hdr.versionMajor = 1;
 	hdr.versionMinor = 0;
