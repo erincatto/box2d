@@ -152,6 +152,20 @@ b2AABB GetViewBounds( Camera* camera )
 	return bounds;
 }
 
+void FocusOnBounds(Camera* camera, b2AABB bounds)
+{
+	if (camera->width == 0)
+	{
+		return;
+	}
+
+	b2Vec2 extents = b2AABB_Extents( bounds );
+
+	float invRatio = camera->height / camera->width;
+	camera->zoom = b2MaxFloat( extents.x * invRatio, extents.y );
+	camera->center = b2AABB_Center( bounds );
+}
+
 typedef struct
 {
 	GLuint vaoId;

@@ -7,6 +7,7 @@
 
 #include "recording_replay.h"
 
+#include "body.h"
 #include "physics_world.h"
 
 #include "box2d/box2d.h"
@@ -817,6 +818,23 @@ static void b2RecTrackBodyDestroy( b2RecPlayer* player, b2BodyId id )
 			player->bodyIds[i] = b2_nullBodyId;
 			return;
 		}
+	}
+}
+
+// Snapshot bodies are restored as a struct image and never hit the CreateBody hook the tracker keys
+// on, so the seed world must be walked once to populate the outliner list. Slot order is stable.
+static void b2RecSeedBodyIds( b2RecPlayer* player )
+{
+	b2World* world = b2GetWorldFromId( player->rdr.replayWorldId );
+	player->bodyIdCount = 0;
+	int count = world->bodies.count;
+	for ( int i = 0; i < count; ++i )
+	{
+		if ( world->bodies.data[i].id != i )
+		{
+			continue; // free slot
+		}
+		b2RecTrackBodyCreate( player, b2MakeBodyId( world, i ) );
 	}
 }
 
@@ -2089,6 +2107,18 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 	player->frame0Image = copy + 32;
 	player->frame0Size = (int)hdr.snapshotSize;
 	player->frame0Owned = false;
+
+	// The seed snapshot holds the bodies present when recording began; only post-snapshot creates
+	// reach the tracker, so seed the outliner list directly from the restored world
+	b2RecSeedBodyIds( player );
+
+	// Stash the frame-0 list so a restart or backward scrub rolls the outliner back to it
+	player->frame0BodyIdCount = player->bodyIdCount;
+	if ( player->bodyIdCount > 0 )
+	{
+		player->frame0BodyIds = b2Alloc( player->bodyIdCount * (int)sizeof( b2BodyId ) );
+		memcpy( player->frame0BodyIds, player->bodyIds, player->bodyIdCount * (int)sizeof( b2BodyId ) );
+	}
 
 	return player;
 }

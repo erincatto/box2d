@@ -4,6 +4,7 @@
 #include "determinism.h"
 #include "draw.h"
 #include "sample.h"
+#include "utils.h"
 
 #include "box2d/box2d.h"
 #include "box2d/constants.h"
@@ -214,7 +215,9 @@ public:
 		// The timeline scrubber lives in the diagnostics drawer, so open it for the replay
 		m_prevShowMetrics = m_context->showMetrics;
 		m_context->showMetrics = true;
+		m_context->pause = true;
 		m_selectTimelineTab = true;
+		m_replayWorkers = b2MinInt( 8, GetNumberOfCores() / 2 );
 
 		snprintf( m_path, sizeof( m_path ), "%s", "recording.b2rec" );
 		m_status[0] = '\0';
@@ -253,11 +256,19 @@ public:
 		// copies them, so the buffer is freed right away. Replay workers of 0 uses the serial
 		// fallback, otherwise force a different count to spot-check cross-thread determinism.
 		b2Recording* recording = b2LoadRecordingFromFile( m_path );
-		m_player = recording != nullptr ? b2RecPlayer_Create( b2Recording_GetData( recording ),
-															  b2Recording_GetSize( recording ), m_replayWorkers )
-										: nullptr;
+		if (recording != nullptr)
+		{
+			const uint8_t* data = b2Recording_GetData( recording );
+			int byteCount = b2Recording_GetSize( recording );
+			m_player = b2RecPlayer_Create( data, byteCount, m_replayWorkers );
+		}
+		else
+		{
+			m_player = nullptr;
+		}
+
 		b2DestroyRecording( recording );
-		m_frameAccum = 0.0f;
+		m_frameAccumulator = 0.0f;
 		if ( m_player != nullptr )
 		{
 			m_worldId = b2RecPlayer_GetWorldId( m_player );
@@ -268,6 +279,14 @@ public:
 			m_runHash = b2GetBuildHash();
 			m_buildMismatch = m_recHash != 0 && m_runHash != 0 && m_recHash != m_runHash;
 			snprintf( m_status, sizeof( m_status ), "loaded (build %08x)", m_recHash );
+
+			if (m_context->restart == false)
+			{
+				b2AABB bounds = b2World_GetBounds( m_worldId );
+				FocusOnBounds( &m_context->camera, bounds );
+				m_context->camera.zoom *= 1.5f;
+
+			}
 		}
 		else
 		{
@@ -298,16 +317,16 @@ public:
 			{
 				AdvanceOne();
 			}
-			m_frameAccum = 0.0f;
+			m_frameAccumulator = 0.0f;
 		}
 		else if ( m_context->pause == false )
 		{
 			// Speed scales how many recorded steps pass per display frame. Below 1 advances
 			// only every few frames, above 1 advances several.
-			m_frameAccum += m_speed;
-			while ( m_frameAccum >= 1.0f )
+			m_frameAccumulator += m_speed;
+			while ( m_frameAccumulator >= 1.0f )
 			{
-				m_frameAccum -= 1.0f;
+				m_frameAccumulator -= 1.0f;
 				if ( b2RecPlayer_IsAtEnd( m_player ) )
 				{
 					if ( m_loop )
@@ -317,7 +336,7 @@ public:
 					}
 					else
 					{
-						m_frameAccum = 0.0f;
+						m_frameAccumulator = 0.0f;
 						break;
 					}
 				}
@@ -374,14 +393,14 @@ public:
 		{
 			b2RecPlayer_SeekFrame( m_player, 0 );
 			m_worldId = b2RecPlayer_GetWorldId( m_player );
-			m_frameAccum = 0.0f;
+			m_frameAccumulator = 0.0f;
 		}
 		ImGui::SameLine();
 		if ( ImGui::Button( "<" ) )
 		{
 			b2RecPlayer_SeekFrame( m_player, frame - 1 );
 			m_worldId = b2RecPlayer_GetWorldId( m_player );
-			m_frameAccum = 0.0f;
+			m_frameAccumulator = 0.0f;
 			m_context->pause = true;
 		}
 		ImGui::SameLine();
@@ -394,7 +413,7 @@ public:
 		{
 			b2RecPlayer_SeekFrame( m_player, frame + 1 );
 			m_worldId = b2RecPlayer_GetWorldId( m_player );
-			m_frameAccum = 0.0f;
+			m_frameAccumulator = 0.0f;
 			m_context->pause = true;
 		}
 		ImGui::SameLine();
@@ -402,7 +421,7 @@ public:
 		{
 			b2RecPlayer_SeekFrame( m_player, m_info.frameCount );
 			m_worldId = b2RecPlayer_GetWorldId( m_player );
-			m_frameAccum = 0.0f;
+			m_frameAccumulator = 0.0f;
 		}
 	}
 
@@ -983,7 +1002,7 @@ public:
 		{
 			b2RecPlayer_Restart( m_player );
 			m_worldId = b2RecPlayer_GetWorldId( m_player );
-			m_frameAccum = 0.0f;
+			m_frameAccumulator = 0.0f;
 		}
 		ImGui::SameLine();
 		ImGui::TextUnformatted( m_status );
@@ -1034,7 +1053,7 @@ public:
 		{
 			b2RecPlayer_SeekFrame( m_player, scrub );
 			m_worldId = b2RecPlayer_GetWorldId( m_player );
-			m_frameAccum = 0.0f;
+			m_frameAccumulator = 0.0f;
 			m_context->pause = true;
 		}
 		ImGui::PopItemWidth();
@@ -1117,7 +1136,7 @@ public:
 
 	b2RecPlayerInfo m_info = {};
 	float m_speed = 1.0f;
-	float m_frameAccum = 0.0f;
+	float m_frameAccumulator = 0.0f;
 	int m_replayWorkers = 0;
 	bool m_loop = false;
 	bool m_selectTimelineTab = true;
@@ -1133,6 +1152,7 @@ public:
 		SelJoint,
 		SelQuery
 	};
+
 	SelKind m_selKind = SelNone;
 	int m_selBodyOrdinal = -1; // index into the player's tracked body list
 	int m_selSlot = -1;        // shape or joint slot within that body

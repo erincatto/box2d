@@ -41,6 +41,9 @@ B2_API void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount );
 /// Call this to draw shapes and other debug draw data
 B2_API void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw );
 
+/// Call this to get the world bounds based on the union of all shape bounds.
+B2_API b2AABB b2World_GetBounds( b2WorldId worldId );
+
 /// Get the body events for the current time step. The event data is transient. Do not store a reference to this data.
 B2_API b2BodyEvents b2World_GetBodyEvents( b2WorldId worldId );
 

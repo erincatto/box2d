@@ -504,3 +504,78 @@ int RecordingTest( void )
 	remove( s_recPath );
 	return 0;
 }
+
+// Recording started mid-stream snapshots the live world as its seed. Those seed bodies are restored
+// as a struct image on replay and never pass through the CreateBody hook, so the player must seed
+// its outliner body list from the restored world. Guards that path, which drives the viewer Outline.
+int RecordingOutlinerTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.gravity = (b2Vec2){ 0.0f, -10.0f };
+	worldDef.workerCount = 1;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	// Build a scene before recording so the bodies live in the seed snapshot, not the op stream
+	b2BodyDef groundDef = b2DefaultBodyDef();
+	b2BodyId groundId = b2CreateBody( worldId, &groundDef );
+	b2ShapeDef groundShapeDef = b2DefaultShapeDef();
+	b2Circle groundCircle = { { 0.0f, 0.0f }, 10.0f };
+	b2CreateCircleShape( groundId, &groundShapeDef, &groundCircle );
+
+	int dynamicCount = 3;
+	for ( int i = 0; i < dynamicCount; ++i )
+	{
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.position = (b2Vec2){ (float)i, 4.0f };
+		b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+		b2CreateCircleShape( bodyId, &shapeDef, &circle );
+	}
+	int expectedBodies = 1 + dynamicCount;
+
+	// Settle a step, then start recording with the scene already present (non-empty seed)
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+
+	b2Recording* rec = b2CreateRecording( 0 );
+	b2World_StartRecording( worldId, rec );
+	for ( int i = 0; i < 10; ++i )
+	{
+		b2World_Step( worldId, 1.0f / 60.0f, 4 );
+	}
+	b2World_StopRecording( worldId );
+	b2DestroyWorld( worldId );
+
+	const uint8_t* recData = b2Recording_GetData( rec );
+	int recSize = b2Recording_GetSize( rec );
+	ENSURE( recSize > 0 );
+
+	b2RecPlayer* player = b2RecPlayer_Create( recData, recSize, 0 );
+	ENSURE( player != NULL );
+
+	// The outliner list must be populated from the seed snapshot before any frame is stepped, and
+	// match the live body count of the restored world (no destroys yet, so no nulled holes)
+	b2WorldId replayWorldId = b2RecPlayer_GetWorldId( player );
+	int seedCount = b2RecPlayer_GetBodyCount( player );
+	ENSURE( seedCount == expectedBodies );
+	ENSURE( seedCount == b2World_GetCounters( replayWorldId ).bodyCount );
+
+	// Each seeded id is a valid handle into the replay world
+	for ( int ord = 0; ord < seedCount; ++ord )
+	{
+		ENSURE( b2Body_IsValid( b2RecPlayer_GetBodyId( player, ord ) ) );
+	}
+
+	while ( b2RecPlayer_StepFrame( player ) )
+	{
+	}
+
+	// Restart rolls the outliner list back to its frame-0 seed contents
+	b2RecPlayer_Restart( player );
+	ENSURE( b2RecPlayer_GetBodyCount( player ) == seedCount );
+
+	b2RecPlayer_Destroy( player );
+	b2DestroyRecording( rec );
+	return 0;
+}
