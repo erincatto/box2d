@@ -286,7 +286,7 @@ Sample::Sample( SampleContext* context, bool createWorld )
 
 Sample::~Sample()
 {
-	if (B2_IS_NON_NULL(m_worldId))
+	if ( B2_IS_NON_NULL( m_worldId ) )
 	{
 		FinishRecording();
 		b2DestroyWorld( m_worldId );
@@ -494,12 +494,6 @@ void Sample::Step()
 		else
 		{
 			timeStep = 0.0f;
-		}
-
-		if ( m_context->showUI )
-		{
-			DrawScreenTextLine( "****PAUSED****" );
-			DrawScreenTextLine( "" );
 		}
 	}
 
@@ -981,6 +975,25 @@ void Sample::DrawMetrics()
 	}
 
 	ImGui::End();
+}
+
+void Sample::DrawHud( float frameTime )
+{
+	const SampleEntry& entry = g_sampleEntries[m_context->sampleIndex];
+	float fontSize = ImGui::GetFontSize();
+
+	DrawScreenString( m_context->draw, 5.0f, 1.5f * fontSize, b2_colorYellow, "%s : %s", entry.category, entry.name );
+	DrawScreenString( m_context->draw, 5.0f, 3.0f * fontSize, b2_colorForestGreen, "Press TAB to show UI" );
+	m_screenTextY += 1.5f * fontSize;
+
+	if ( m_context->pause )
+	{
+		DrawScreenString( m_context->draw, 5.0f, 4.5f * fontSize, b2_colorRed, "****PAUSED****" );
+		m_screenTextY += 1.5f * fontSize;
+	}
+
+	DrawScreenString( m_context->draw, 5.0f, m_camera->height - 0.5f * fontSize, b2_colorSeaGreen, "%.1f ms  step %d",
+					  1000.0f * frameTime, m_stepCount );
 }
 
 // Parse an SVG path element with only straight lines. Example:
@@ -1593,24 +1606,7 @@ void DrawSamplePicker( SampleContext* context )
 	}
 }
 
-// When UI is hidden draw a minimal in world hud
-static void DrawHud( SampleContext* context, float frameTime )
-{
-	const SampleEntry& entry = g_sampleEntries[context->sampleIndex];
-	float fontSize = ImGui::GetFontSize();
-
-	DrawScreenString( context->draw, 5.0f, 1.5f * fontSize, b2_colorYellow, "%s : %s", entry.category, entry.name );
-	DrawScreenString( context->draw, 5.0f, context->camera.height - 0.5f * fontSize, b2_colorSeaGreen, "%.1f ms  step %d",
-					  1000.0f * frameTime, context->sample->m_stepCount );
-}
-
-static inline ImVec4 MakeColor( b2HexColor hexColor )
-{
-	ImU32 color = IM_COL32( ( hexColor >> 16 ) & 0xFF, ( hexColor >> 8 ) & 0xFF, hexColor & 0xFF, 255 );
-	return ImGui::ColorConvertU32ToFloat4( color );
-}
-
-static void DrawRightPanel( SampleContext* context, float frameTime )
+static void DrawInfoPanel( SampleContext* context, float frameTime )
 {
 	const SampleEntry& entry = g_sampleEntries[context->sampleIndex];
 	float fontSize = ImGui::GetFontSize();
@@ -1627,6 +1623,13 @@ static void DrawRightPanel( SampleContext* context, float frameTime )
 	ImGui::TextColored( MakeColor( b2_colorGoldenRod ), "%s", entry.name );
 	ImGui::TextColored( MakeColor( b2_colorLightGray ), "%s", entry.category );
 	ImGui::Separator();
+
+	if ( context->pause )
+	{
+		ImGui::TextColored( MakeColor( b2_colorRed ), "PAUSED" );
+		ImGui::Separator();
+	}
+
 	ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "%.1f ms", 1000.0f * frameTime );
 	ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "step %d", context->sample->m_stepCount );
 	ImGui::Separator();
@@ -1703,15 +1706,8 @@ static void DrawRightPanel( SampleContext* context, float frameTime )
 // this can delete the current sample.
 void DrawUI( SampleContext* context, float frameTime )
 {
-	if ( context->showUI == false )
-	{
-		// Minimal hud
-		DrawHud( context, frameTime );
-		return;
-	}
-
 	DrawMenuBar( context );
 	DrawSamplePicker( context );
-	DrawRightPanel( context, frameTime );
+	DrawInfoPanel( context, frameTime );
 	context->sample->DrawMetrics();
 }

@@ -81,12 +81,6 @@ public:
 		}
 	}
 
-	bool DrawControls() override
-	{
-		ImGui::TextWrapped( "Recording to \"%s\".", m_context->recordingFile );
-		return true;
-	}
-
 	// Block mouse interaction
 	void MouseDown( b2Vec2, int, int ) override
 	{
@@ -389,25 +383,10 @@ public:
 			DrawSelectionHighlight();
 		}
 
-		DrawScreenTextLine( "frame %d / %d%s", b2RecPlayer_GetFrame( m_player ), m_info.frameCount,
-							b2RecPlayer_IsAtEnd( m_player ) ? "  (end)" : "" );
-
-		if ( b2RecPlayer_HasDiverged( m_player ) )
+		if (m_context->showUI)
 		{
-			DrawScreenTextLine( "****DIVERGED****" );
+			DrawInspectorPanel();
 		}
-
-		if ( m_buildMismatch )
-		{
-			DrawScreenTextLine( "build mismatch: file %08x, engine %08x", m_recHash, m_runHash );
-		}
-
-		if ( m_context->pause )
-		{
-			DrawScreenTextLine( "****PAUSED****" );
-		}
-
-		DrawInspectorPanel();
 	}
 
 	// Shared transport row used by both the right panel and the timeline tab
@@ -471,6 +450,20 @@ public:
 			m_context->showMetrics = true;
 			m_selectTimelineTab = true;
 		}
+
+		if ( b2RecPlayer_HasDiverged( m_player ) )
+		{
+			ImGui::TextColored( MakeColor( b2_colorRed ), "****DIVERGED****" );
+		}
+
+		if ( m_buildMismatch )
+		{
+			ImGui::TextColored( MakeColor( b2_colorRed ), "****BUILD MISMATCH****" );
+		}
+
+		ImGui::TextDisabled( "Frame %d / %d%s", b2RecPlayer_GetFrame( m_player ), m_info.frameCount,
+					 b2RecPlayer_IsAtEnd( m_player ) ? "  (end)" : "" );
+
 		return false;
 	}
 

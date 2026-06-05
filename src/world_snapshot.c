@@ -739,8 +739,12 @@ b2WorldId b2CreateWorldFromSnapshot( const uint8_t* image, int size, int workerC
 	{
 		return nullId;
 	}
-	if ( hdr.layoutHash != b2ComputeLayoutHash() )
+
+	uint32_t layoutHash = b2ComputeLayoutHash();
+	if ( hdr.layoutHash != layoutHash )
 	{
+		// Layout hash is affected by B2_ENABLE_VALIDATION
+		b2Log( "layout hash mismatch" );
 		return nullId;
 	}
 

@@ -4,6 +4,7 @@
 #pragma once
 
 #include "draw.h"
+#include "imgui.h"
 
 #include "box2d/box2d.h"
 
@@ -91,6 +92,7 @@ public:
 	virtual void MouseMove( b2Vec2 p );
 
 	void DrawMetrics();
+	void DrawHud( float frameTime );
 	void DrawScreenTextLine( const char* text, ... );
 	void ResetProfile();
 
@@ -148,6 +150,12 @@ struct SampleEntry
 	SampleCreateFcn* createFcn;
 	SampleCapacityFcn* capacityFcn;
 };
+
+inline ImVec4 MakeColor( b2HexColor hexColor )
+{
+	ImU32 color = IM_COL32( ( hexColor >> 16 ) & 0xFF, ( hexColor >> 8 ) & 0xFF, hexColor & 0xFF, 255 );
+	return ImGui::ColorConvertU32ToFloat4( color );
+}
 
 #define MAX_SAMPLES 256
 extern SampleEntry g_sampleEntries[MAX_SAMPLES];

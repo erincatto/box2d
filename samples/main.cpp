@@ -625,11 +625,21 @@ int main( int, char** )
 		}
 
 		s_context.sample->ResetText();
+
+		if ( s_context.showUI == false )
+		{
+			// Minimal hud
+			s_context.sample->DrawHud( frameTime );
+		}
+
 		s_context.sample->Step();
 
 		FlushDraw( s_context.draw, &s_context.camera );
 
-		DrawUI( &s_context, frameTime );
+		if ( s_context.showUI == true )
+		{
+			DrawUI( &s_context, frameTime );
+		}
 
 		//ImGui::ShowDemoWindow();
 
