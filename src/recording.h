@@ -53,6 +53,11 @@ typedef struct b2Recording
 	b2RecBuffer buffer;
 	int recordStart; // offset of the 3-byte size field for u24 backpatch
 	b2Mutex* lock;	 // serializes query record commits across concurrent query threads
+
+	// Union of world bounds over every recorded step, written out at stop so a replay can frame
+	// the whole motion. haveBounds gates the first union the same way b2World_GetBounds does.
+	b2AABB accumulatedBounds;
+	bool haveBounds;
 } b2Recording;
 
 // C type aliases per TAG, used in codegen arg structs (recording.c only)
@@ -246,6 +251,9 @@ bool b2RecPlaneTrampoline( b2ShapeId id, const b2PlaneResult* plane, void* ctx )
 // Lifecycle. Public create/destroy/save/load live in box2d.h; these are the engine-side hooks.
 void b2StartRecordingIntoBuffer( b2World* world, b2Recording* recording );
 void b2StopRecordingInternal( b2World* world );
+
+// Fold one step's world bounds into the running union the recorder writes out at stop.
+void b2RecAccumulateBounds( b2Recording* rec, b2AABB bounds );
 
 // Deterministic hash over all body transforms and velocities.
 // Called by both recorder and replayer to verify simulation reproduces exactly.

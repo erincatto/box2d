@@ -213,7 +213,14 @@ public:
 
 			if ( m_context->restart == false )
 			{
-				b2AABB bounds = b2World_GetBounds( m_worldId );
+				// Frame the whole recorded motion. Older recordings lack stored bounds, so fall
+				// back to the live frame-0 bounds when the recorded extents are empty.
+				b2AABB bounds = m_info.bounds;
+				b2Vec2 extents = b2AABB_Extents( bounds );
+				if ( extents.x <= 0.0f && extents.y <= 0.0f )
+				{
+					bounds = b2World_GetBounds( m_worldId );
+				}
 				FocusOnBounds( &m_context->camera, bounds );
 				m_context->camera.zoom *= 1.5f;
 			}

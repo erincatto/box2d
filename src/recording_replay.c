@@ -1909,6 +1909,12 @@ static void b2RecDispatch_StateHash( const b2RecArgs_StateHash* a, b2RecReader* 
 	}
 }
 
+static void b2RecDispatch_RecordingBounds( const b2RecArgs_RecordingBounds* a, b2RecReader* rdr )
+{
+	// Primary resolve is the open-time scan, this keeps the value right if it ever moves earlier
+	rdr->owner->bounds = a->bounds;
+}
+
 // Codegen pass 2 builds the read-and-dispatch switch cases. Each case reads the ARG fields
 // into a b2RecArgs_<Name> then dispatches. Create ops read the returned id in their dispatcher.
 // Returns the opcode just dispatched, or -1 at end of file or on a fatal read error.
@@ -1999,6 +2005,11 @@ static void b2RecScanFile( b2RecPlayer* player )
 				gotStep = true;
 			}
 		}
+		else if ( opcode == 0xF2 && payloadSize >= 16 ) // RecordingBounds: [f32 lo.x][lo.y][hi.x][hi.y]
+		{
+			// Little-endian floats match b2AABB layout, header already rejected big-endian files
+			memcpy( &player->bounds, data + payloadStart, 16 );
+		}
 
 		cursor = payloadStart + (int)payloadSize;
 	}
@@ -2071,6 +2082,7 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 	player->recordedWorkerCount = 0;
 	player->recordedDt = 0.0f;
 	player->recordedSubStepCount = 0;
+	player->bounds = (b2AABB){ 0 };
 	player->divergeFrame = -1;
 	player->atEnd = false;
 	player->rdr.data = copy;
@@ -2380,6 +2392,7 @@ b2RecPlayerInfo b2RecPlayer_GetInfo( const b2RecPlayer* player )
 		info.timeStep = player->recordedDt;
 		info.subStepCount = player->recordedSubStepCount;
 		info.lengthScale = player->lengthScale;
+		info.bounds = player->bounds;
 	}
 	return info;
 }

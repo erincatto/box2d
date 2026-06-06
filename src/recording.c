@@ -666,11 +666,18 @@ int b2Recording_GetSize( const b2Recording* recording )
 	return recording->buffer.size;
 }
 
+void b2RecAccumulateBounds( b2Recording* rec, b2AABB bounds )
+{
+	rec->accumulatedBounds = rec->haveBounds ? b2AABB_Union( rec->accumulatedBounds, bounds ) : bounds;
+	rec->haveBounds = true;
+}
+
 void b2StartRecordingIntoBuffer( b2World* world, b2Recording* recording )
 {
 	// Reset so a recording handle can be reused for a fresh session
 	recording->buffer.size = 0;
 	recording->recordStart = 0;
+	recording->haveBounds = false;
 
 	// Serialize the live world into a blob that follows the header and seeds replay. Called before
 	// the first step this is a small empty world image; mid-stream it is the live state.
@@ -691,6 +698,13 @@ void b2StartRecordingIntoBuffer( b2World* world, b2Recording* recording )
 
 	world->recording = recording;
 
+	// Seed the bounds with the snapshot state so frame 0 is framed even if nothing moves
+	b2AABB seed;
+	if ( b2ComputeWorldBounds( world, &seed ) )
+	{
+		b2RecAccumulateBounds( recording, seed );
+	}
+
 	// Anchor the recorded state so replay verifies the blob deserialized to the same world
 	// before any Step runs
 	b2WorldId wid = { (uint16_t)( world->worldId + 1 ), world->generation };
@@ -707,6 +721,11 @@ void b2StopRecordingInternal( b2World* world )
 
 	b2Recording* rec = world->recording;
 	world->recording = NULL;
+
+	// Stash the accumulated bounds so a viewer can frame the whole motion at open time. Sits in
+	// the op stream ahead of the end marker; absent in older recordings.
+	b2RecArgs_RecordingBounds rb = { rec->haveBounds ? rec->accumulatedBounds : (b2AABB){ 0 } };
+	b2RecWrite_RecordingBounds( rec, &rb );
 
 	// Write DestroyWorld so the buffer is self-contained, an end marker the viewer reads. The
 	// buffer and handle belong to the user, freed with b2DestroyRecording.

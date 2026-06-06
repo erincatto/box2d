@@ -202,3 +202,6 @@ B2_REC_OP( 0xE7, ShapeTestPoint, RET_NONE, ARG( SHAPEID, shape ) ARG( VEC2, poin
 B2_REC_OP( 0xE8, ShapeRayCast, RET_NONE, ARG( SHAPEID, shape ) ARG( RAYCASTINPUT, input ) )
 
 B2_REC_OP( 0xF1, StateHash, RET_NONE, ARG( WORLDID, world ) ARG( U64, hash ) )
+
+// Accumulated world bounds over the whole recording, written once at stop. Informational.
+B2_REC_OP( 0xF2, RecordingBounds, RET_NONE, ARG( AABB, bounds ) )

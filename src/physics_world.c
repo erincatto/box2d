@@ -969,6 +969,13 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		uint64_t hash = b2HashWorldState( world );
 		b2RecArgs_StateHash sha = { worldId, hash };
 		b2RecWrite_StateHash( world->recording, &sha );
+
+		// Grow the recorded bounds so a replay can frame the whole motion, not just frame 0
+		b2AABB bounds;
+		if ( b2ComputeWorldBounds( world, &bounds ) )
+		{
+			b2RecAccumulateBounds( world->recording, bounds );
+		}
 	}
 
 	world->locked = false;
@@ -1387,14 +1394,8 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 	}
 }
 
-b2AABB b2World_GetBounds(b2WorldId worldId)
+bool b2ComputeWorldBounds( b2World* world, b2AABB* bounds )
 {
-	b2World* world = b2GetUnlockedWorldFromId( worldId );
-	if ( world == NULL )
-	{
-		return (b2AABB){ 0 };
-	}
-
 	b2AABB worldBounds = { 0 };
 	bool haveBounds = false;
 
@@ -1406,20 +1407,26 @@ b2AABB b2World_GetBounds(b2WorldId worldId)
 			continue;
 		}
 
-		b2AABB bounds = b2DynamicTree_GetRootBounds( world->broadPhase.trees + i );
-
-		if ( haveBounds )
-		{
-			worldBounds = b2AABB_Union( worldBounds, bounds );
-		}
-		else
-		{
-			worldBounds = bounds;
-			haveBounds = true;
-		}
+		b2AABB treeBounds = b2DynamicTree_GetRootBounds( tree );
+		worldBounds = haveBounds ? b2AABB_Union( worldBounds, treeBounds ) : treeBounds;
+		haveBounds = true;
 	}
 
-	return worldBounds;
+	*bounds = worldBounds;
+	return haveBounds;
+}
+
+b2AABB b2World_GetBounds(b2WorldId worldId)
+{
+	b2World* world = b2GetUnlockedWorldFromId( worldId );
+	if ( world == NULL )
+	{
+		return (b2AABB){ 0 };
+	}
+
+	b2AABB bounds;
+	b2ComputeWorldBounds( world, &bounds );
+	return bounds;
 }
 
 b2BodyEvents b2World_GetBodyEvents( b2WorldId worldId )

@@ -104,6 +104,7 @@ struct b2RecPlayer
 	int recordedWorkerCount;  // worker count from the recorded world def
 	float recordedDt;		  // dt of the first recorded step
 	int recordedSubStepCount; // sub-steps of the first recorded step
+	b2AABB bounds;			  // accumulated world bounds, resolved by the open-time scan
 	int divergeFrame;		  // first step that diverged, -1 until then
 	bool atEnd;				  // a StepFrame ran out of records without reaching a step
 	b2RecReader rdr;		  // cursor and replay world, threaded into every dispatcher

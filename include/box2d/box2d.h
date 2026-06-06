@@ -1452,6 +1452,7 @@ typedef struct b2RecPlayerInfo
 	float timeStep;		// dt of the recorded steps
 	int subStepCount;	// recorded sub-steps
 	float lengthScale;	// length units per meter in effect when recorded
+	b2AABB bounds;		// accumulated world bounds over the recording, zero-extent if unavailable
 } b2RecPlayerInfo;
 
 /// Open a recording for incremental playback and replay up to the first step. The player copies

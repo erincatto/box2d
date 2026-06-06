@@ -477,6 +477,14 @@ int RecordingTest( void )
 		b2RecPlayer* player = b2RecPlayer_Create( recData, recSize, 0 );
 		ENSURE( player != NULL );
 
+		// Recorded bounds frame the whole session, so they must enclose the static ground circle
+		// and segment that bracket the scene from x in [-20, 20] down to the bottom of the circle
+		b2AABB recBounds = b2RecPlayer_GetInfo( player ).bounds;
+		b2Vec2 recExtents = b2AABB_Extents( recBounds );
+		ENSURE( recExtents.x > 0.0f && recExtents.y > 0.0f );
+		ENSURE( recBounds.lowerBound.x <= -20.0f && recBounds.upperBound.x >= 20.0f );
+		ENSURE( recBounds.lowerBound.y <= -20.0f );
+
 		// Build a no-op b2DebugDraw to exercise the draw path headlessly
 		b2DebugDraw dd = b2DefaultDebugDraw();
 		dd.DrawLineFcn = s_DrawLine;
