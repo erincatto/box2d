@@ -23,7 +23,7 @@
 // doubles when adding the next keyframe would exceed the budget, so memory stays bounded and seek
 // cost grows only once a recording outgrows the budget. The Replay sample exposes both as sliders.
 #define B2_REC_KEYFRAME_INTERVAL_DEFAULT 16
-#define B2_REC_KEYFRAME_BUDGET_DEFAULT ( 32 * 1024 * 1024 )
+#define B2_REC_KEYFRAME_BUDGET_DEFAULT ( 512 * 1024 * 1024 )
 
 // Read primitives
 

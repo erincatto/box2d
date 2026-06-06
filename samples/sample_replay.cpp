@@ -293,7 +293,7 @@ public:
 			DrawSelectionHighlight();
 		}
 
-		if (m_context->showUI)
+		if ( m_context->showUI )
 		{
 			DrawInspectorPanel();
 		}
@@ -324,10 +324,30 @@ public:
 			m_context->pause = true;
 		}
 		ImGui::SameLine();
-		if ( ImGui::Button( m_context->pause ? "Play " : "Pause" ) )
+
+		if ( m_context->pause )
 		{
-			m_context->pause = !m_context->pause;
+			ImGui::PushStyleColor( ImGuiCol_Button, (ImVec4)ImColor::HSV( 2.0f / 7.0f, 0.6f, 0.6f ) );
+			ImGui::PushStyleColor( ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV( 2.0f / 7.0f, 0.7f, 0.7f ) );
+			ImGui::PushStyleColor( ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV( 2.0f / 7.0f, 0.8f, 0.8f ) );
+			if ( ImGui::Button( "Play " ) )
+			{
+				m_context->pause = false;
+			}
+			ImGui::PopStyleColor( 3 );
 		}
+		else
+		{
+			ImGui::PushStyleColor( ImGuiCol_Button, (ImVec4)ImColor::HSV( 1.0f / 7.0f, 0.6f, 0.6f ) );
+			ImGui::PushStyleColor( ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV( 1.0f / 7.0f, 0.7f, 0.7f ) );
+			ImGui::PushStyleColor( ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV( 1.0f / 7.0f, 0.8f, 0.8f ) );
+			if ( ImGui::Button( "Pause" ) )
+			{
+				m_context->pause = true;
+			}
+			ImGui::PopStyleColor( 3 );
+		}
+
 		ImGui::SameLine();
 		if ( ImGui::Button( ">" ) )
 		{
@@ -372,7 +392,7 @@ public:
 		}
 
 		ImGui::TextDisabled( "Frame %d / %d%s", b2RecPlayer_GetFrame( m_player ), m_info.frameCount,
-					 b2RecPlayer_IsAtEnd( m_player ) ? "  (end)" : "" );
+							 b2RecPlayer_IsAtEnd( m_player ) ? "  (end)" : "" );
 
 		return false;
 	}
@@ -822,13 +842,16 @@ public:
 		for ( int i = 0; i < count; ++i )
 		{
 			const b2Manifold* m = &contacts[i].manifold;
-			ImGui::Text( "shapes %d / %d   normal (%.2f, %.2f)   points %d", contacts[i].shapeIdA.index1,
-						 contacts[i].shapeIdB.index1, m->normal.x, m->normal.y, m->pointCount );
+			ImGui::Text( "shapes %d / %d", contacts[i].shapeIdA.index1, contacts[i].shapeIdB.index1 );
+			ImGui::Text( "normal (%.2f, %.2f)", m->normal.x, m->normal.y );
+			ImGui::Text( "points %d", m->pointCount );
 			for ( int j = 0; j < m->pointCount; ++j )
 			{
 				const b2ManifoldPoint* mp = &m->points[j];
-				ImGui::Text( "  sep %.4f  Pn %.3g  Pt %.3g", mp->separation, mp->normalImpulse, mp->tangentImpulse );
+				ImGui::Text( "  sep %.3f  Pn %.2g", mp->separation, mp->normalImpulse );
 			}
+
+			ImGui::Separator();
 		}
 	}
 
@@ -969,10 +992,10 @@ public:
 		// Keyframe ring controls. Budget trades memory for backward-seek speed; min interval is the
 		// finest spacing. Changing either reopens the player so the ring rebuilds from frame 0.
 		ImGui::PushItemWidth( 6.0f * fontSize );
-		ImGui::SliderInt( "Keyframe MB", &m_keyframeBudgetMB, 1, 4096 );
+		ImGui::SliderInt( "Keyframe MB", &m_keyframeBudgetMB, 128, 4096 );
 		reopen = reopen || ImGui::IsItemDeactivatedAfterEdit();
 		ImGui::SameLine();
-		ImGui::SliderInt( "Min interval", &m_keyframeMinInterval, 1, 240 );
+		ImGui::SliderInt( "Min interval", &m_keyframeMinInterval, 8, 60 );
 		reopen = reopen || ImGui::IsItemDeactivatedAfterEdit();
 		ImGui::PopItemWidth();
 

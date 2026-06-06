@@ -314,7 +314,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				}
 				break;
 
-			case GLFW_KEY_P:
+			case GLFW_KEY_SPACE:
 				s_context.pause = !s_context.pause;
 				break;
 
