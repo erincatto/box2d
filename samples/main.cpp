@@ -454,7 +454,7 @@ int main( int, char** )
 {
 #if defined( _MSC_VER )
 	// Enable memory-leak reports
-	//_CrtSetBreakAlloc( 217 );
+	//_CrtSetBreakAlloc( 1418 );
 	_CrtSetReportMode( _CRT_WARN, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_FILE );
 	_CrtSetReportFile( _CRT_WARN, _CRTDBG_FILE_STDOUT );
 	//_CrtSetAllocHook(MyAllocHook);
@@ -641,7 +641,7 @@ int main( int, char** )
 			DrawUI( &s_context, frameTime );
 		}
 
-		//ImGui::ShowDemoWindow();
+		// ImGui::ShowDemoWindow();
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );

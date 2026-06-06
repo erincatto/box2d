@@ -83,6 +83,18 @@ add_library(implot STATIC
 target_link_libraries(implot PUBLIC imgui)
 target_include_directories(implot PUBLIC ${implot_SOURCE_DIR})
 
+# nativefiledialog-extended for the Replay open dialog. Native OS file picker, target nfd.
+set(NFD_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(NFD_INSTALL OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(
+    nfd
+    GIT_REPOSITORY https://github.com/btzy/nativefiledialog-extended.git
+    GIT_TAG v1.3.0
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(nfd)
+
 # Embed shaders as null-terminated byte arrays into a generated header so the
 # samples binary has no runtime dependency on samples/data/*.vs and *.fs.
 set(SHADER_FILES
@@ -158,7 +170,7 @@ if(BOX2D_COMPILE_WARNING_AS_ERROR)
 endif()
 
 target_include_directories(samples PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${JSMN_DIR})
-target_link_libraries(samples PUBLIC box2d shared imgui implot glfw glad)
+target_link_libraries(samples PUBLIC box2d shared imgui implot glfw glad nfd)
 
 # target_compile_definitions(samples PRIVATE "$<$<CONFIG:DEBUG>:SAMPLES_DEBUG>")
 # message(STATUS "runtime = ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")

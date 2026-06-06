@@ -20,6 +20,8 @@
 #include "box2d/math_functions.h"
 
 #include <GLFW/glfw3.h>
+#include <nfd.h>
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -148,6 +150,11 @@ void SampleContext::Load()
 	debugDraw.context = this;
 
 	recycleDistance = B2_CONTACT_RECYCLE_DISTANCE;
+
+	if (g_replayIndex >= 0)
+	{
+		sampleIndex = g_replayIndex;
+	}
 
 	char* data = nullptr;
 	int size = 0;
@@ -1182,6 +1189,7 @@ static int FuzzyScore( const char* needle, const char* haystack )
 
 SampleEntry g_sampleEntries[MAX_SAMPLES] = {};
 int g_sampleCount = 0;
+int g_replayIndex = -1;
 
 int RegisterSample( const char* category, const char* name, SampleCreateFcn* fcn )
 {
@@ -1202,6 +1210,20 @@ int RegisterSampleWithCapacity( const char* category, const char* name, SampleCr
 	if ( index < MAX_SAMPLES )
 	{
 		g_sampleEntries[index] = { category, name, fcn, capacityFcn };
+		++g_sampleCount;
+		return index;
+	}
+
+	return -1;
+}
+
+int RegisterReplay( const char* category, const char* name, SampleCreateFcn* fcn )
+{
+	int index = g_sampleCount;
+	if ( index < MAX_SAMPLES )
+	{
+		g_sampleEntries[index] = { category, name, fcn, nullptr };
+		g_replayIndex = index;
 		++g_sampleCount;
 		return index;
 	}
@@ -1374,6 +1396,26 @@ static void DrawMenuBar( SampleContext* context )
 						++i;
 					}
 				}
+			}
+			ImGui::EndMenu();
+		}
+
+		// Only present once the replay viewer is registered. Open pops a native picker, then
+		// hands the chosen file to the viewer through replayFile.
+		if ( g_replayIndex >= 0 && ImGui::BeginMenu( "Replay" ) )
+		{
+			if ( ImGui::MenuItem( "Open..." ) )
+			{
+				NFD_Init();
+				nfdu8char_t* outPath = nullptr;
+				nfdu8filteritem_t filter[1] = { { "Box2D recording", "b2rec" } };
+				if ( NFD_OpenDialogU8( &outPath, filter, 1, nullptr ) == NFD_OKAY )
+				{
+					snprintf( context->replayFile, sizeof( context->replayFile ), "%s", outPath );
+					NFD_FreePathU8( outPath );
+					SelectSample( context, g_replayIndex, false );
+				}
+				NFD_Quit();
 			}
 			ImGui::EndMenu();
 		}

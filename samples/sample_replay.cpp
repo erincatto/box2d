@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
-#include "determinism.h"
 #include "draw.h"
 #include "sample.h"
 #include "utils.h"
@@ -13,95 +12,6 @@
 #include <imgui.h>
 #include <limits.h>
 #include <stdio.h>
-
-// Produces a recording file so the Replay File sample has something to load. Runs a small scene
-// with recording enabled at world creation.
-class MakeRecording : public Sample
-{
-public:
-	explicit MakeRecording( SampleContext* context )
-		: Sample( context )
-	{
-		if ( m_context->restart == false )
-		{
-			m_context->camera.center = { 0.0f, 7.5f };
-			m_context->camera.zoom = 10.0f;
-		}
-
-		m_data = CreateFallingHinges( m_worldId );
-		m_done = false;
-	}
-
-	~MakeRecording() override
-	{
-		DestroyFallingHinges( &m_data );
-	}
-
-	static bool OverlapCounter( b2ShapeId, void* )
-	{
-		return true;
-	}
-
-	static float AllHitsCast( b2ShapeId, b2Vec2, b2Vec2, float fraction, void* )
-	{
-		return 1.0f;
-	}
-
-	void Step() override
-	{
-		Sample::Step();
-
-		if ( m_context->pause == false && m_done == false )
-		{
-			m_done = UpdateFallingHinges( m_worldId, &m_data );
-
-			// Issue a few queries each step so the Replay viewer has something to draw
-			b2QueryFilter filter = b2DefaultQueryFilter();
-			b2AABB scanBox = { { 5.0f, 1.0f }, { 7.0f, 2.5f } };
-			b2World_OverlapAABB( m_worldId, scanBox, filter, OverlapCounter, nullptr );
-
-			b2Vec2 origin = { 0.0f, 12.0f };
-			b2Vec2 translation = { 0.0f, -14.0f };
-			b2World_CastRayClosest( m_worldId, origin, translation, filter );
-
-			origin = { -10.0f, 2.0f };
-			translation = { 20.0f, 0.0f };
-			b2World_CastRay( m_worldId, origin, translation, filter, AllHitsCast, nullptr );
-
-			if ( m_done )
-			{
-				printf( "sleep step = %d, hash = 0x%08X\n", m_data.sleepStep, m_data.hash );
-
-				FinishRecording();
-			}
-		}
-		else
-		{
-			DrawScreenTextLine( "sleep step = %d, hash = 0x%08X", m_data.sleepStep, m_data.hash );
-		}
-	}
-
-	// Block mouse interaction
-	void MouseDown( b2Vec2, int, int ) override
-	{
-	}
-	void MouseUp( b2Vec2, int ) override
-	{
-	}
-	void MouseMove( b2Vec2 ) override
-	{
-	}
-
-	static Sample* Create( SampleContext* context )
-	{
-		return new MakeRecording( context );
-	}
-
-	FallingHingeData m_data;
-	bool m_done;
-};
-
-static int sampleMakeRecording = RegisterSample( "Replay", "Make Recording", MakeRecording::Create );
 
 // Names for the inspector readouts
 static const char* ReplayBodyTypeName( b2BodyType type )
@@ -232,7 +142,7 @@ public:
 		m_selectTimelineTab = true;
 		m_replayWorkers = b2MinInt( 8, GetNumberOfCores() / 2 );
 
-		snprintf( m_path, sizeof( m_path ), "%s", "recording.b2rec" );
+		snprintf( m_path, sizeof( m_path ), "%s", m_context->replayFile );
 		m_status[0] = '\0';
 		m_player = nullptr;
 		OpenPlayer();
@@ -1013,21 +923,7 @@ public:
 		float fontSize = ImGui::GetFontSize();
 
 		// File row, always available so a recording can be loaded even when none is open
-		ImGui::PushItemWidth( 18.0f * fontSize );
-		ImGui::InputText( "File", m_path, sizeof( m_path ) );
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
-		if ( ImGui::Button( "Load" ) )
-		{
-			OpenPlayer();
-		}
-		ImGui::SameLine();
-		if ( ImGui::Button( "Restart" ) && m_player != nullptr )
-		{
-			b2RecPlayer_Restart( m_player );
-			m_worldId = b2RecPlayer_GetWorldId( m_player );
-			m_frameAccumulator = 0.0f;
-		}
+		ImGui::Text( "File: %s", m_path );
 		ImGui::SameLine();
 		ImGui::TextUnformatted( m_status );
 
@@ -1204,4 +1100,4 @@ public:
 	bool m_revealSelection = false; // one-shot request to expand and scroll the tree to a viewport pick
 };
 
-static int sampleReplayFile = RegisterSample( "Replay", "Replay File", ReplayFile::Create );
+static int sampleReplayFile = RegisterReplay( "Replay", "Replay File", ReplayFile::Create );

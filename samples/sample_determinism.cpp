@@ -38,17 +38,42 @@ public:
 		DestroyFallingHinges( &m_data );
 	}
 
+	static bool OverlapFcn( b2ShapeId, void* )
+	{
+		return true;
+	}
+
+	static float CastFcn( b2ShapeId, b2Vec2, b2Vec2, float fraction, void* )
+	{
+		return 1.0f;
+	}
+
 	void Step() override
 	{
 		Sample::Step();
 
-		if (m_context->pause == false && m_done == false)
+		if ( m_context->pause == false && m_done == false )
 		{
 			m_done = UpdateFallingHinges( m_worldId, &m_data );
 
-			if (m_done)
+			// Issue a few queries each step so the Replay viewer has something to draw
+			b2QueryFilter filter = b2DefaultQueryFilter();
+			b2AABB scanBox = { { 5.0f, 1.0f }, { 7.0f, 2.5f } };
+			b2World_OverlapAABB( m_worldId, scanBox, filter, OverlapFcn, nullptr );
+
+			b2Vec2 origin = { 0.0f, 12.0f };
+			b2Vec2 translation = { 0.0f, -14.0f };
+			b2World_CastRayClosest( m_worldId, origin, translation, filter );
+
+			origin = { -10.0f, 2.0f };
+			translation = { 20.0f, 0.0f };
+			b2World_CastRay( m_worldId, origin, translation, filter, CastFcn, nullptr );
+
+			if ( m_done )
 			{
 				printf( "sleep step = %d, hash = 0x%08X\n", m_data.sleepStep, m_data.hash );
+
+				FinishRecording();
 			}
 		}
 		else

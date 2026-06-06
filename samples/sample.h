@@ -45,6 +45,10 @@ struct SampleContext
 	// Path the active recording is saved to when recording stops.
 	char recordingFile[256] = "recording.b2rec";
 
+	// Path the Replay menu hands to the viewer. Kept apart from the record path so opening a
+	// file to view never moves where the next recording lands.
+	char replayFile[256] = "recording.b2rec";
+
 	// These are persisted
 	int sampleIndex = 0;
 };
@@ -140,6 +144,7 @@ typedef b2Capacity SampleCapacityFcn( void );
 
 int RegisterSample( const char* category, const char* name, SampleCreateFcn* fcn );
 int RegisterSampleWithCapacity( const char* category, const char* name, SampleCreateFcn* fcn, SampleCapacityFcn* capacityFcn );
+int RegisterReplay( const char* category, const char* name, SampleCreateFcn* fcn );
 void SelectSample( SampleContext* context, int selection, bool restart );
 void DrawUI( SampleContext* context, float frameTime );
 
@@ -160,3 +165,4 @@ inline ImVec4 MakeColor( b2HexColor hexColor )
 #define MAX_SAMPLES 256
 extern SampleEntry g_sampleEntries[MAX_SAMPLES];
 extern int g_sampleCount;
+extern int g_replayIndex;
