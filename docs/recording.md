@@ -170,20 +170,6 @@ your responsibility:
 - **Floating-point environment** must match. Box2D builds with `-ffp-contract=off` so fused
   multiply-add does not change results. Building with `-ffast-math` is unsupported.
 
-## Build-hash
-
-The header also records the engine's git build hash, but this is informational, not an enforced
-gate. The hash lets a tool warn that the builds differ.
-
-```c
-uint32_t engineHash = b2GetBuildHash();                   // the running engine
-uint32_t fileHash   = b2RecPlayer_GetBuildHash( player ); // the recording
-```
-
-The hash is stamped at CMake configure time, so it can lag by a commit until the next configure.
-This only makes the warning coarse. The Replay sample shows the recorded hash on load and draws a
-`build mismatch` line when the two differ and neither is zero.
-
 ## Spatial queries
 
 Overlap and cast queries issued during a recorded step (ray casts, shape casts, overlap tests,

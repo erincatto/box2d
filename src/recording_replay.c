@@ -2065,7 +2065,6 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 	player->data = copy;
 	player->size = size;
 	player->headerEnd = headerEnd;
-	player->buildHash = hdr.buildHash;
 	player->lengthScale = hdr.lengthScale;
 	player->frame = 0;
 	player->frameCount = 0;
@@ -2301,8 +2300,8 @@ bool b2RecPlayer_StepFrame( b2RecPlayer* player )
 void b2RecPlayer_Restart( b2RecPlayer* player )
 {
 	// Restore the frame-0 image in place so the replay world id stays stable across a restart or
-	// backward scrub. Stepping resumes at frame0Cursor: the first Step for a snapshot file, or the
-	// pre-step creates for a from-creation file, which rebuild the body list deterministically.
+	// backward scrub. Stepping resumes at frame0Cursor, the first Step, which rebuilds the body
+	// list deterministically.
 	if ( b2World_Restore( player->rdr.replayWorldId, player->frame0Image, player->frame0Size ) == false )
 	{
 		player->rdr.ok = false;
@@ -2380,15 +2379,9 @@ b2RecPlayerInfo b2RecPlayer_GetInfo( const b2RecPlayer* player )
 		info.workerCount = player->recordedWorkerCount;
 		info.timeStep = player->recordedDt;
 		info.subStepCount = player->recordedSubStepCount;
-		info.buildHash = player->buildHash;
 		info.lengthScale = player->lengthScale;
 	}
 	return info;
-}
-
-uint32_t b2RecPlayer_GetBuildHash( const b2RecPlayer* player )
-{
-	return player != NULL ? player->buildHash : 0;
 }
 
 bool b2RecPlayer_IsAtEnd( const b2RecPlayer* player )

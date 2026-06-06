@@ -3,8 +3,6 @@
 
 #include "core.h"
 
-#include "build_hash.h"
-
 #include "box2d/math_functions.h"
 
 #if defined( B2_COMPILER_MSVC )
@@ -107,11 +105,6 @@ b2Version b2GetVersion( void )
 		.minor = 2,
 		.revision = 0,
 	};
-}
-
-uint32_t b2GetBuildHash( void )
-{
-	return B2_BUILD_HASH;
 }
 
 static b2AllocFcn* b2_allocFcn = NULL;

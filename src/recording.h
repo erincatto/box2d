@@ -26,14 +26,14 @@ typedef struct b2RecHeader
 	uint32_t magic;		   // 'B2RC' = 0x43523242
 	uint16_t versionMajor; // 1
 	uint16_t versionMinor; // 0
-	uint32_t buildHash;	   // short git hash, 0 if unstamped
+	uint32_t reserved2;
 	float lengthScale;	   // The world length scale
-	uint8_t simdWidth;	   // B2_SIMD_WIDTH, informational
+	uint8_t reserved3;
 	uint8_t pointerWidth;  // sizeof(void*), gates POD-def memcpy
 	uint8_t bigEndian;	   // 0 on all supported targets
 	uint8_t reserved0;
 	uint32_t reserved1;
-	uint64_t snapshotSize; // bytes of snapshot blob after the header, 0 for hook-only files
+	uint64_t snapshotSize; // bytes of snapshot blob after the header
 } b2RecHeader;
 
 _Static_assert( sizeof( b2RecHeader ) == 32, "recording header must be 32 bytes" );

@@ -98,7 +98,6 @@ struct b2RecPlayer
 	uint8_t* data; // recording bytes, a private copy owned here
 	int size;
 	int headerEnd;			  // first payload offset
-	uint32_t buildHash;		  // engine build that produced the file, from the header
 	float lengthScale;		  // length scale used in the recording
 	int frame;				  // steps dispatched so far
 	int frameCount;			  // total recorded steps, counted once at open

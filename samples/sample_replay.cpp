@@ -164,7 +164,6 @@ public:
 			m_player = nullptr;
 		}
 		m_worldId = b2_nullWorldId;
-		m_buildMismatch = false;
 		m_selKind = SelNone;
 		m_selBodyOrdinal = -1;
 		m_selSlot = -1;
@@ -210,11 +209,7 @@ public:
 				b2RecPlayer_SetKeyframePolicy( m_player, bytes, m_keyframeMinInterval );
 			}
 
-			// Flag a file made by a different engine build. 0 on either side is unstamped.
-			m_recHash = b2RecPlayer_GetBuildHash( m_player );
-			m_runHash = b2GetBuildHash();
-			m_buildMismatch = m_recHash != 0 && m_runHash != 0 && m_recHash != m_runHash;
-			snprintf( m_status, sizeof( m_status ), "loaded (build %08x)", m_recHash );
+			snprintf( m_status, sizeof( m_status ), "loaded" );
 
 			if ( m_context->restart == false )
 			{
@@ -384,11 +379,6 @@ public:
 		if ( b2RecPlayer_HasDiverged( m_player ) )
 		{
 			ImGui::TextColored( MakeColor( b2_colorRed ), "****DIVERGED****" );
-		}
-
-		if ( m_buildMismatch )
-		{
-			ImGui::TextColored( MakeColor( b2_colorRed ), "****BUILD MISMATCH****" );
 		}
 
 		ImGui::TextDisabled( "Frame %d / %d%s", b2RecPlayer_GetFrame( m_player ), m_info.frameCount,
@@ -1089,9 +1079,6 @@ public:
 	b2RecPlayer* m_player;
 	char m_path[256];
 	char m_status[32];
-	uint32_t m_recHash = 0;
-	uint32_t m_runHash = 0;
-	bool m_buildMismatch = false;
 
 	b2RecPlayerInfo m_info = {};
 	float m_speed = 1.0f;

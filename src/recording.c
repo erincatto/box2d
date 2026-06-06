@@ -8,7 +8,6 @@
 #include "recording.h"
 
 #include "body.h"
-#include "build_hash.h"
 #include "physics_world.h"
 #include "world_snapshot.h"
 
@@ -682,9 +681,7 @@ void b2StartRecordingIntoBuffer( b2World* world, b2Recording* recording )
 	hdr.magic = B2_REC_MAGIC;
 	hdr.versionMajor = 2;
 	hdr.versionMinor = 0;
-	hdr.buildHash = B2_BUILD_HASH;
 	hdr.lengthScale = b2GetLengthUnitsPerMeter();
-	hdr.simdWidth = (uint8_t)B2_SIMD_WIDTH;
 	hdr.pointerWidth = (uint8_t)sizeof( void* );
 	hdr.bigEndian = 0;
 	hdr.snapshotSize = (uint64_t)blob.size;
