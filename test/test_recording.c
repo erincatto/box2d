@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static const char* s_recPath = "recording_test.b2rec";
 
@@ -446,6 +447,20 @@ int RecordingTest( void )
 
 	// Replay with a different worker count to prove cross-thread determinism
 	ENSURE( b2ValidateReplay( recData, recSize, 4 ) );
+
+	// The reserved header bytes (offsets 8 and 16, formerly buildHash and simdWidth) must stay
+	// ignored on read. Guards a future change that starts validating them or shrinks the header.
+	{
+		uint8_t* patched = b2Alloc( recSize );
+		memcpy( patched, recData, recSize );
+		patched[8] = 0xAB;
+		patched[9] = 0xCD;
+		patched[10] = 0xEF;
+		patched[11] = 0x12;
+		patched[16] = 0x34;
+		ENSURE( b2ValidateReplay( patched, recSize, 0 ) );
+		b2Free( patched, recSize );
+	}
 
 	// File round-trip: save the buffer, load it back, and replay the loaded copy
 	ENSURE( b2SaveRecordingToFile( rec, s_recPath ) );

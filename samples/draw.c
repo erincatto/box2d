@@ -11,6 +11,7 @@
 #include "shader.h"
 #include "shaders_embedded.h"
 
+#include "box2d/constants.h"
 #include "box2d/math_functions.h"
 
 #include <assert.h>
@@ -161,8 +162,17 @@ void FocusOnBounds(Camera* camera, b2AABB bounds)
 
 	b2Vec2 extents = b2AABB_Extents( bounds );
 
+	if (extents.x < B2_LINEAR_SLOP || extents.y < B2_LINEAR_SLOP)
+	{
+		return;
+	}
+
 	float invRatio = camera->height / camera->width;
 	camera->zoom = b2MaxFloat( extents.x * invRatio, extents.y );
+
+	// Need to guard against zero because zoom can get stuck there
+	camera->zoom = b2MaxFloat( camera->zoom, 0.01f );
+
 	camera->center = b2AABB_Center( bounds );
 }
 
