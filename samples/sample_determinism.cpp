@@ -7,6 +7,7 @@
 #include "box2d/math_functions.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 // This sample provides a visual representation of the cross platform determinism unit test.
 // The scenario is designed to produce a chaotic result engaging:
@@ -19,7 +20,6 @@
 class FallingHinges : public Sample
 {
 public:
-
 	explicit FallingHinges( SampleContext* context )
 		: Sample( context )
 	{
@@ -92,3 +92,76 @@ public:
 };
 
 static int sampleFallingHinges = RegisterSample( "Determinism", "Falling Hinges", FallingHinges::Create );
+
+class SnapShot : public Sample
+{
+public:
+	explicit SnapShot( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 7.5f };
+			m_context->camera.zoom = 10.0f;
+		}
+
+		m_data = CreateFallingHinges( m_worldId );
+		m_done = false;
+		m_image = nullptr;
+		m_size = 0;
+	}
+
+	~SnapShot() override
+	{
+		if (m_image != nullptr)
+		{
+			free( m_image );
+		}
+
+		DestroyFallingHinges( &m_data );
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		if ( m_stepCount == 50 )
+		{
+			m_size = b2World_Snapshot( m_worldId, nullptr, 0 );
+			m_image = (uint8_t*)malloc( m_size );
+			b2World_Snapshot( m_worldId, m_image, m_size );
+		}
+		else if ( m_stepCount == 150 && m_image != nullptr )
+		{
+			b2World_Restore( m_worldId, m_image, m_size );
+		}
+
+		if ( m_context->pause == false && m_done == false )
+		{
+			m_done = UpdateFallingHinges( m_worldId, &m_data );
+
+			if ( m_done )
+			{
+				printf( "sleep step = %d, hash = 0x%08X\n", m_data.sleepStep, m_data.hash );
+
+				FinishRecording();
+			}
+		}
+		else
+		{
+			DrawScreenTextLine( "sleep step = %d, hash = 0x%08X", m_data.sleepStep, m_data.hash );
+		}
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new SnapShot( context );
+	}
+
+	FallingHingeData m_data;
+	uint8_t* m_image;
+	int m_size;
+	bool m_done;
+};
+
+static int sampleSnapShot = RegisterSample( "Determinism", "SnapShot", SnapShot::Create );
