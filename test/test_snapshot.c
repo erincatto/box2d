@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#include "determinism.h"
 #include "test_macros.h"
 #include "world_snapshot.h"
 

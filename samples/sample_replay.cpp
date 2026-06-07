@@ -174,6 +174,12 @@ public:
 	{
 		ClosePlayer();
 
+		if ( strlen(m_path) == 0 )
+		{
+			snprintf( m_status, sizeof( m_status ), "Open recording from Replay menu" );
+			return;
+		}
+
 		// Load the file into a recording buffer, then hand its bytes to the player. The player
 		// copies them, so the buffer is freed right away. Replay workers of 0 uses the serial
 		// fallback, otherwise force a different count to spot-check cross-thread determinism.
@@ -1071,9 +1077,11 @@ public:
 		// A miss clears the selection
 		SelectShape( pick.shape );
 	}
+
 	void MouseUp( b2Vec2, int ) override
 	{
 	}
+
 	void MouseMove( b2Vec2 ) override
 	{
 	}
@@ -1085,7 +1093,7 @@ public:
 
 	b2RecPlayer* m_player;
 	char m_path[256];
-	char m_status[32];
+	char m_status[64];
 
 	b2RecPlayerInfo m_info = {};
 	float m_speed = 1.0f;

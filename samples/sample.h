@@ -47,10 +47,11 @@ struct SampleContext
 
 	// Path the Replay menu hands to the viewer. Kept apart from the record path so opening a
 	// file to view never moves where the next recording lands.
-	char replayFile[256] = "recording.b2rec";
+	char replayFile[256] = "";
 
 	// These are persisted
 	int sampleIndex = 0;
+	bool newUser = true;
 };
 
 class Sample

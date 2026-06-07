@@ -5,6 +5,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+#include "benchmarks.h"
 #include "test_macros.h"
 
 #include "physics_world.h"
@@ -744,5 +745,279 @@ int RecordingKeyframeTest( void )
 	ENSURE( CheckKeyframeSeek( recData, recSize, 4, tightBudget, 8 ) == 0 );
 
 	b2DestroyRecording( rec );
+	return 0;
+}
+
+// Build a settling pyramid: heavy stacking contact churn and warm starting, the regime where the
+// replay-scrub divergence appears. A small drop gap keeps the early steps actively colliding.
+static void BuildScrubPyramid( b2WorldId worldId, int baseCount )
+{
+	b2BodyDef bd = b2DefaultBodyDef();
+	bd.position = (b2Vec2){ 0.0f, -1.0f };
+	b2BodyId groundId = b2CreateBody( worldId, &bd );
+	b2Polygon groundBox = b2MakeBox( 40.0f, 1.0f );
+	b2ShapeDef gsd = b2DefaultShapeDef();
+	b2CreatePolygonShape( groundId, &gsd, &groundBox );
+
+	float h = 0.5f;
+	float pitch = 2.0f * h + 0.05f;
+	b2Polygon box = b2MakeBox( h, h );
+	b2ShapeDef sd = b2DefaultShapeDef();
+	sd.density = 1.0f;
+
+	for ( int row = 0; row < baseCount; ++row )
+	{
+		int count = baseCount - row;
+		float y = h + (float)row * pitch;
+		float xStart = -0.5f * (float)( count - 1 ) * pitch;
+		for ( int col = 0; col < count; ++col )
+		{
+			b2BodyDef body = b2DefaultBodyDef();
+			body.type = b2_dynamicBody;
+			body.position = (b2Vec2){ xStart + (float)col * pitch, y };
+			b2BodyId id = b2CreateBody( worldId, &body );
+			b2CreatePolygonShape( id, &sd, &box );
+		}
+	}
+}
+
+static void BuildPyramidScene( b2WorldId worldId )
+{
+	BuildScrubPyramid( worldId, 6 );
+}
+
+// Keep traversing so an all-hits ray reports every shape in pure tree-traversal order
+static float s_keepAllCastFcn( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx )
+{
+	(void)id; (void)point; (void)normal; (void)fraction; (void)ctx;
+	return 1.0f;
+}
+
+// Issue many-hit spatial queries over the active region. Hit ORDER is the broad-phase tree traversal
+// order, which a keyframe restore must reproduce or query re-verification flags a divergence.
+static void IssuePileQueries( b2WorldId worldId )
+{
+	b2QueryFilter filter = b2DefaultQueryFilter();
+
+	b2AABB aabb = { { -12.0f, -2.0f }, { 12.0f, 22.0f } };
+	b2World_OverlapAABB( worldId, aabb, filter, s_overlapFcn, NULL );
+
+	b2World_CastRay( worldId, (b2Vec2){ -12.0f, 10.0f }, (b2Vec2){ 24.0f, 0.0f }, filter, s_keepAllCastFcn, NULL );
+	b2World_CastRay( worldId, (b2Vec2){ 0.0f, 22.0f }, (b2Vec2){ 0.0f, -24.0f }, filter, s_keepAllCastFcn, NULL );
+}
+
+// Record stepCount frames of a freshly built scene at the given worker count. When withQueries is set,
+// many-hit queries are issued each step (recorded and re-verified on replay), exposing broad-phase
+// traversal-order drift after a keyframe restore.
+static b2Recording* RecordSceneEx( void ( *build )( b2WorldId ), int workerCount, int stepCount, bool withQueries )
+{
+	b2WorldDef wd = b2DefaultWorldDef();
+	wd.workerCount = workerCount;
+	b2WorldId worldId = b2CreateWorld( &wd );
+	build( worldId );
+
+	b2Recording* rec = b2CreateRecording( 0 );
+	b2World_StartRecording( worldId, rec );
+	for ( int i = 0; i < stepCount; ++i )
+	{
+		b2World_Step( worldId, 1.0f / 60.0f, 4 );
+		if ( withQueries )
+		{
+			IssuePileQueries( worldId );
+		}
+	}
+	b2World_StopRecording( worldId );
+	b2DestroyWorld( worldId );
+	return rec;
+}
+
+static b2Recording* RecordScene( void ( *build )( b2WorldId ), int workerCount, int stepCount )
+{
+	return RecordSceneEx( build, workerCount, stepCount, false );
+}
+
+// Drives the actual timeline-scrub path: seek to every frame, walking the scrubber from end to start,
+// via the keyframe machinery and compare the replay deep hash against a linear forward reference. A
+// tight budget forces keyframe eviction so seeks restore from distant keyframes and re-step long gaps,
+// the stress a calm sparse seek list never reaches. Returns 0 on success, 1 on the first bad frame.
+static int CheckScrubAllFrames( const uint8_t* recData, int recSize, int workerCount, int budgetBytes, int minInterval )
+{
+	b2RecPlayer* ref = b2RecPlayer_Create( recData, recSize, workerCount );
+	ENSURE( ref != NULL );
+	int frameCount = b2RecPlayer_GetInfo( ref ).frameCount;
+	ENSURE( frameCount > 0 );
+
+	uint64_t* refHash = malloc( (size_t)( frameCount + 1 ) * sizeof( uint64_t ) );
+	ENSURE( refHash != NULL );
+	refHash[0] = ReplayDeepHash( ref );
+	for ( int f = 1; f <= frameCount; ++f )
+	{
+		ENSURE( b2RecPlayer_StepFrame( ref ) );
+		refHash[f] = ReplayDeepHash( ref );
+	}
+	ENSURE( b2RecPlayer_HasDiverged( ref ) == false );
+	b2RecPlayer_Destroy( ref );
+
+	b2RecPlayer* player = b2RecPlayer_Create( recData, recSize, workerCount );
+	ENSURE( player != NULL );
+	if ( budgetBytes > 0 )
+	{
+		b2RecPlayer_SetKeyframePolicy( player, budgetBytes, minInterval );
+	}
+	while ( b2RecPlayer_StepFrame( player ) )
+	{
+	}
+
+	for ( int t = frameCount; t >= 0; --t )
+	{
+		b2RecPlayer_SeekFrame( player, t );
+		ENSURE( b2RecPlayer_GetFrame( player ) == t );
+		uint64_t got = ReplayDeepHash( player );
+		bool diverged = b2RecPlayer_HasDiverged( player );
+		if ( got != refHash[t] || diverged )
+		{
+			// Deep hash matches but the player diverged => an order sensitive query re-verification
+			// failed (broad-phase traversal order), not the simulation state
+			const char* kind = ( got == refHash[t] ) ? "query-order" : "state";
+			printf( "scrub mismatch at frame %d (wc %d budget %d): %s divergence (deep got %llu want %llu)\n", t,
+					workerCount, budgetBytes, kind, (unsigned long long)got, (unsigned long long)refHash[t] );
+			free( refHash );
+			b2RecPlayer_Destroy( player );
+			return 1;
+		}
+	}
+
+	free( refHash );
+	b2RecPlayer_Destroy( player );
+	return 0;
+}
+
+// Scrub every frame of a recording at both a tight (eviction, long re-steps) and the default
+// keyframe budget. Returns 0 on success.
+static int ScrubRecording( b2Recording* rec, int workerCount )
+{
+	const uint8_t* recData = b2Recording_GetData( rec );
+	int recSize = b2Recording_GetSize( rec );
+	ENSURE( recSize > 0 );
+
+	b2RecPlayer* probe = b2RecPlayer_Create( recData, recSize, 0 );
+	ENSURE( probe != NULL );
+	int snapSize = b2World_Snapshot( b2RecPlayer_GetWorldId( probe ), NULL, 0 );
+	b2RecPlayer_Destroy( probe );
+	int tightBudget = 4 * snapSize;
+
+	ENSURE( CheckScrubAllFrames( recData, recSize, workerCount, tightBudget, 8 ) == 0 );
+	ENSURE( CheckScrubAllFrames( recData, recSize, workerCount, 0, 0 ) == 0 );
+	return 0;
+}
+
+// Feature coverage for the timeline-scrub path: a backward seek restores a keyframe and re-steps the
+// gap, landing on the exact linear-replay state at every frame, under the default and a tight
+// (eviction) keyframe budget. A small scene at one worker keeps it fast and deterministic. Cross
+// worker determinism is RestepRaceTest's job.
+int RecordingScrubTest( void )
+{
+	b2Recording* rec = RecordScene( BuildPyramidScene, 1, 80 );
+	ENSURE( ScrubRecording( rec, 1 ) == 0 );
+	b2DestroyRecording( rec );
+	return 0;
+}
+
+// Feature coverage for query re-verification on scrub: queries issued each step are recorded and
+// replayed in order (broad-phase traversal order, which the deep state hash does not cover). Same
+// small scene at one worker.
+int RecordingQueryScrubTest( void )
+{
+	b2Recording* rec = RecordSceneEx( BuildPyramidScene, 1, 80, true );
+	ENSURE( ScrubRecording( rec, 1 ) == 0 );
+	b2DestroyRecording( rec );
+	return 0;
+}
+
+// Diagnostic: scrub an external recording for the first divergent frame, classifying it as a state or
+// a query-order divergence. Drop a file at the path below (e.g. the one that diverges in the replay
+// sample) and run `test.exe ReplayFileScrubDiag` to pinpoint it. No-op when the file is absent.
+int ReplayFileScrubDiag( void )
+{
+	const char* path = "diverge.b2rec";
+	b2Recording* rec = b2LoadRecordingFromFile( path );
+	if ( rec == NULL )
+	{
+		printf( "  ReplayFileScrubDiag: drop a recording at %s to scrub it for the first divergent frame\n", path );
+		return 0;
+	}
+
+	printf( "  ReplayFileScrubDiag: scrubbing %s (%d bytes)\n", path, b2Recording_GetSize( rec ) );
+	int r = ScrubRecording( rec, 0 );
+	b2DestroyRecording( rec );
+	return r;
+}
+
+// Re-step the same fixed mid-churn state many times at a high worker count. A deterministic engine
+// returns the same deep hash every time; any variation is a multithreaded race. Scrubbing re-steps
+// the same frames repeatedly, so a rare race surfaces there even though a single linear pass hides
+// it. Returns 0 if every repetition agrees, 1 on the first divergent repetition.
+static int RestepRaceStress( void ( *build )( b2WorldId ), const char* name, int workerCount, int churnFrame, int restepCount,
+							 int reps )
+{
+	float dt = 1.0f / 60.0f;
+	int subSteps = 4;
+
+	b2WorldDef wd = b2DefaultWorldDef();
+	wd.workerCount = workerCount;
+	b2WorldId liveId = b2CreateWorld( &wd );
+	build( liveId );
+	for ( int i = 0; i < churnFrame; ++i )
+	{
+		b2World_Step( liveId, dt, subSteps );
+	}
+
+	int size = b2World_Snapshot( liveId, NULL, 0 );
+	uint8_t* image = b2Alloc( size );
+	b2World_Snapshot( liveId, image, size );
+	b2DestroyWorld( liveId );
+
+	b2WorldDef cd = b2DefaultWorldDef();
+	cd.workerCount = workerCount;
+	b2WorldId cloneId = b2CreateWorld( &cd );
+	b2World* clone = b2GetWorldFromId( cloneId );
+
+	uint64_t ref = 0;
+	int result = 0;
+	for ( int rep = 0; rep < reps && result == 0; ++rep )
+	{
+		ENSURE( b2World_Restore( cloneId, image, size ) );
+		for ( int s = 0; s < restepCount; ++s )
+		{
+			b2World_Step( cloneId, dt, subSteps );
+		}
+		uint64_t h = b2HashWorldStateDeep( clone );
+		if ( rep == 0 )
+		{
+			ref = h;
+		}
+		else if ( h != ref )
+		{
+			printf( "restep race: %s rep %d differs (wc %d churn %d restep %d): %llu vs ref %llu\n", name, rep, workerCount,
+					churnFrame, restepCount, (unsigned long long)h, (unsigned long long)ref );
+			result = 1;
+		}
+	}
+
+	b2DestroyWorld( cloneId );
+	b2Free( image, size );
+	return result;
+}
+
+// Re-stepping a fixed state must give the same result every time. The determinism risk is the
+// island-split-for-sleep candidate pick: each worker keeps its sleepiest candidate, so on a sleep
+// time tie between two split-needing islands the per-worker winner depends on which worker stole the
+// body. Two workers put many islands on each worker, so a single worker reliably sees two tied
+// candidates and the pick diverges on the first comparison. Eight workers spread the bodies thin and
+// hide it for hundreds of reps. Junkyard at this frame has many debris islands sleeping together,
+// the ties the bug needs.
+int ReStepRaceTest( void )
+{
+	ENSURE( RestepRaceStress( CreateJunkyard, "junkyard", 2, 150, 50, 16 ) == 0 );
 	return 0;
 }
