@@ -2043,7 +2043,8 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 
 	if ( hdr.pointerWidth != (uint8_t)sizeof( void* ) )
 	{
-		printf( "b2RecPlayer_Create: pointer width mismatch (file=%u, runtime=%u)\n", hdr.pointerWidth, (unsigned)sizeof( void* ) );
+		printf( "b2RecPlayer_Create: pointer width mismatch (file=%u, runtime=%u)\n", hdr.pointerWidth,
+				(unsigned)sizeof( void* ) );
 		return NULL;
 	}
 
@@ -2350,24 +2351,30 @@ void b2RecPlayer_SeekFrame( b2RecPlayer* player, int targetFrame )
 	{
 		return;
 	}
+	
 	if ( targetFrame < 0 )
 	{
 		targetFrame = 0;
 	}
-	// Backward seek resumes from the nearest keyframe below the target instead of replaying from
-	// frame 0. Strictly below, so the step loop still runs the target frame and regenerates its
-	// per-frame query store, body list, and divergence latch exactly as a forward replay would.
+
+	// Resume from the nearest keyframe strictly below the target when it beats the current cursor.
+	// A backward seek must restore since the cursor cannot rewind. A forward seek restores only when
+	// a keyframe sits ahead of the cursor, capping a long forward fling at one keyframe interval of
+	// replay instead of every intervening frame. Strictly below so the step loop still runs the
+	// target frame and regenerates its per-frame query store, body list, and divergence latch
+	// exactly as a plain forward replay would.
+	const b2RecKeyframe* best = NULL;
+	for ( int i = 0; i < player->keyframeCount; ++i )
+	{
+		const b2RecKeyframe* kf = &player->keyframes[i];
+		if ( kf->frame < targetFrame && ( best == NULL || kf->frame > best->frame ) )
+		{
+			best = kf;
+		}
+	}
+
 	if ( targetFrame < player->frame )
 	{
-		const b2RecKeyframe* best = NULL;
-		for ( int i = 0; i < player->keyframeCount; ++i )
-		{
-			const b2RecKeyframe* kf = &player->keyframes[i];
-			if ( kf->frame < targetFrame && ( best == NULL || kf->frame > best->frame ) )
-			{
-				best = kf;
-			}
-		}
 		if ( best != NULL )
 		{
 			b2RecPlayerRestoreKeyframe( player, best );
@@ -2377,6 +2384,11 @@ void b2RecPlayer_SeekFrame( b2RecPlayer* player, int targetFrame )
 			b2RecPlayer_Restart( player );
 		}
 	}
+	else if ( best != NULL && best->frame > player->frame )
+	{
+		b2RecPlayerRestoreKeyframe( player, best );
+	}
+
 	while ( player->frame < targetFrame && b2RecPlayer_StepFrame( player ) )
 	{
 	}
