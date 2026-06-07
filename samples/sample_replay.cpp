@@ -9,6 +9,7 @@
 #include "box2d/constants.h"
 
 #include <GLFW/glfw3.h>
+#include <float.h>
 #include <imgui.h>
 #include <limits.h>
 #include <stdio.h>
@@ -125,7 +126,7 @@ class ReplayFile : public Sample
 {
 public:
 	// The player owns the world we draw, so skip the base world. m_worldId stays null until
-	// OpenPlayer adopts the player's world.
+	// CreatePlayer adopts the player's world.
 	explicit ReplayFile( SampleContext* context )
 		: Sample( context, false )
 	{
@@ -145,7 +146,24 @@ public:
 		snprintf( m_path, sizeof( m_path ), "%s", m_context->replayFile );
 		m_status[0] = '\0';
 		m_player = nullptr;
-		OpenPlayer();
+
+		// A fresh open gathers the keyframe policy through the Load popup, then pre-generates every
+		// keyframe. A restart reuses the persisted policy and fills the ring lazily so R stays quick.
+		if ( m_context->restart == false )
+		{
+			if ( strlen( m_path ) > 0 )
+			{
+				m_requestLoadPopup = true;
+			}
+			else
+			{
+				snprintf( m_status, sizeof( m_status ), "Open recording from Replay menu" );
+			}
+		}
+		else
+		{
+			CreatePlayer();
+		}
 	}
 
 	~ReplayFile() override
@@ -170,7 +188,7 @@ public:
 		m_selQuery = -1;
 	}
 
-	void OpenPlayer()
+	void CreatePlayer()
 	{
 		ClosePlayer();
 
@@ -202,18 +220,10 @@ public:
 			m_worldId = b2RecPlayer_GetWorldId( m_player );
 			m_info = b2RecPlayer_GetInfo( m_player );
 
-			// Keyframe policy: adopt the engine defaults the first time, then keep the user's choice
-			// sticky across reopens (the player is freshly created, so its ring is back at defaults).
-			if ( m_keyframeBudgetMB < 0 )
-			{
-				m_keyframeBudgetMB = (int)( b2RecPlayer_GetKeyframeBudget( m_player ) / ( 1024 * 1024 ) );
-				m_keyframeMinInterval = b2RecPlayer_GetKeyframeMinInterval( m_player );
-			}
-			else
-			{
-				size_t bytes = (size_t)m_keyframeBudgetMB * 1024 * 1024;
-				b2RecPlayer_SetKeyframePolicy( m_player, bytes, m_keyframeMinInterval );
-			}
+			// Apply the persisted keyframe policy before any stepping captures keyframes. A freshly
+			// created player starts at the engine defaults, so the ring rebuilds under our spacing.
+			size_t bytes = (size_t)m_context->replayKeyframeBudgetMB * 1024 * 1024;
+			b2RecPlayer_SetKeyframePolicy( m_player, bytes, m_context->replayKeyframeMinInterval );
 
 			snprintf( m_status, sizeof( m_status ), "loaded" );
 
@@ -238,6 +248,106 @@ public:
 		}
 	}
 
+	// Modal shown after the Replay menu picks a file: choose the keyframe budget and min interval,
+	// then Load creates the player and pre-generates the whole ring behind a progress bar. Drawn at
+	// the root ID stack from Step, like the sample picker.
+	void DrawLoadPopup()
+	{
+		const char* popupId = "Load Replay";
+
+		if ( m_requestLoadPopup )
+		{
+			m_requestLoadPopup = false;
+			m_popupBudgetMB = m_context->replayKeyframeBudgetMB;
+			m_popupMinInterval = m_context->replayKeyframeMinInterval;
+			ImGui::OpenPopup( popupId );
+		}
+
+		float fontSize = ImGui::GetFontSize();
+		ImGui::SetNextWindowPos( { m_context->camera.width * 0.5f, m_context->camera.height * 0.35f }, ImGuiCond_Appearing,
+								 { 0.5f, 0.5f } );
+		ImGui::SetNextWindowSize( { 26.0f * fontSize, 0.0f }, ImGuiCond_Appearing );
+
+		if ( ImGui::BeginPopupModal( popupId, nullptr, ImGuiWindowFlags_AlwaysAutoResize ) == false )
+		{
+			return;
+		}
+
+		// Show just the file name, paths run long
+		const char* slash = strrchr( m_path, '\\' );
+		ImGui::TextDisabled( "File:" );
+		ImGui::SameLine();
+		ImGui::TextUnformatted( slash != nullptr ? slash + 1 : m_path );
+		ImGui::Separator();
+
+		if ( m_generating )
+		{
+			// Step forward in wall-clock slices so the bar animates. Forward stepping captures
+			// keyframes at the interval; a restart then returns to frame 0 with the ring kept.
+			uint64_t ticks = b2GetTicks();
+			while ( b2RecPlayer_IsAtEnd( m_player ) == false && b2GetMilliseconds( ticks ) < 12.0f )
+			{
+				b2RecPlayer_StepFrame( m_player );
+			}
+
+			int frame = b2RecPlayer_GetFrame( m_player );
+			int total = m_info.frameCount > 0 ? m_info.frameCount : 1;
+			float frac = frame >= total ? 1.0f : (float)frame / (float)total;
+			char overlay[32];
+			snprintf( overlay, sizeof( overlay ), "%d / %d", frame, m_info.frameCount );
+			ImGui::TextUnformatted( "Generating keyframes" );
+			ImGui::ProgressBar( frac, ImVec2( -FLT_MIN, 0.0f ), overlay );
+
+			if ( b2RecPlayer_IsAtEnd( m_player ) )
+			{
+				b2RecPlayer_Restart( m_player );
+				m_worldId = b2RecPlayer_GetWorldId( m_player );
+				m_generating = false;
+				m_context->pause = true;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+			return;
+		}
+
+		ImGui::PushItemWidth( 10.0f * fontSize );
+		ImGui::SliderInt( "Memory budget (MB)", &m_popupBudgetMB, 128, 4096 );
+		ImGui::SliderInt( "Min sample interval", &m_popupMinInterval, 8, 60 );
+		ImGui::PopItemWidth();
+
+		// Surface a failed open inline so Load can be retried
+		if ( m_status[0] != '\0' && strcmp( m_status, "loaded" ) != 0 )
+		{
+			ImGui::TextColored( ImVec4( 0.85f, 0.30f, 0.30f, 1.0f ), "%s", m_status );
+		}
+
+		ImGui::Separator();
+		if ( ImGui::Button( "Load" ) )
+		{
+			// Commit the choices so they persist, build the player under that policy, then start
+			// pre-generation. An empty recording has nothing to generate.
+			m_context->replayKeyframeBudgetMB = m_popupBudgetMB;
+			m_context->replayKeyframeMinInterval = m_popupMinInterval;
+			CreatePlayer();
+			if ( m_player != nullptr )
+			{
+				m_generating = m_info.frameCount > 0;
+				if ( m_generating == false )
+				{
+					ImGui::CloseCurrentPopup();
+				}
+			}
+		}
+		ImGui::SameLine();
+		if ( ImGui::Button( "Cancel" ) )
+		{
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+
 	// Advance one recorded step and keep the world pointer current
 	void AdvanceOne()
 	{
@@ -247,6 +357,16 @@ public:
 
 	void Step() override
 	{
+		DrawLoadPopup();
+
+		// While the ring builds the world is mid-fast-forward, so hold off drawing it. The popup
+		// owns the screen and shows the progress bar until generation finishes.
+		if ( m_generating )
+		{
+			m_stepCount = b2RecPlayer_GetFrame( m_player );
+			return;
+		}
+
 		if ( m_player == nullptr )
 		{
 			DrawScreenTextLine( "%s", m_status );
@@ -992,20 +1112,10 @@ public:
 		ImGui::SameLine();
 		ImGui::TextDisabled( "(rec %d)", m_info.workerCount );
 
-		// Keyframe ring controls. Budget trades memory for backward-seek speed; min interval is the
-		// finest spacing. Changing either reopens the player so the ring rebuilds from frame 0.
-		ImGui::PushItemWidth( 6.0f * fontSize );
-		ImGui::SliderInt( "Keyframe MB", &m_keyframeBudgetMB, 128, 4096 );
-		reopen = reopen || ImGui::IsItemDeactivatedAfterEdit();
-		ImGui::SameLine();
-		ImGui::SliderInt( "Min interval", &m_keyframeMinInterval, 8, 60 );
-		reopen = reopen || ImGui::IsItemDeactivatedAfterEdit();
-		ImGui::PopItemWidth();
-
 		// Live ring state: the effective spacing widens as the ring evicts under the budget, and the
-		// memory held grows as keyframes accumulate while the replay plays forward
-		ImGui::SameLine();
-		ImGui::TextDisabled( "actual %d frames, %.1f MB", b2RecPlayer_GetKeyframeInterval( m_player ),
+		// memory held grows as keyframes accumulate. Budget and min interval are chosen in the Load
+		// popup and persisted, so there is no live slider here.
+		ImGui::TextDisabled( "keyframe spacing %d frames, %.1f MB", b2RecPlayer_GetKeyframeInterval( m_player ),
 							 (double)b2RecPlayer_GetKeyframeBytes( m_player ) / ( 1024.0 * 1024.0 ) );
 
 		// Scrubber: full width, seeks both directions
@@ -1054,7 +1164,7 @@ public:
 		// Re-open last so the player is not torn down mid-draw
 		if ( reopen )
 		{
-			OpenPlayer();
+			CreatePlayer();
 		}
 
 		ImGui::EndTabItem();
@@ -1103,9 +1213,13 @@ public:
 	bool m_selectTimelineTab = true;
 	bool m_prevShowMetrics = false;
 
-	// Keyframe ring policy mirrored into the UI. -1 means adopt the engine default on first open.
-	int m_keyframeBudgetMB = -1;
-	int m_keyframeMinInterval = -1;
+	// Load popup state. A fresh open configures the keyframe policy here, then the popup switches to
+	// a progress bar while every keyframe is generated up front. Temporaries hold the in-popup edits
+	// so Cancel leaves the persisted settings untouched.
+	bool m_requestLoadPopup = false;
+	bool m_generating = false;
+	int m_popupBudgetMB = 512;
+	int m_popupMinInterval = 16;
 
 	// Inspector selection, keyed by stable creation ordinals so it survives a backward scrub. Resolved
 	// to live ids each frame from the player's body tracking; out of range means "not at this frame".

@@ -52,6 +52,11 @@ struct SampleContext
 	// These are persisted
 	int sampleIndex = 0;
 	bool newUser = true;
+
+	// Replay keyframe policy, persisted and used to seed the Load popup. Defaults match the
+	// engine defaults in recording_replay.c.
+	int replayKeyframeBudgetMB = 512;
+	int replayKeyframeMinInterval = 16;
 };
 
 class Sample

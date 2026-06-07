@@ -63,7 +63,9 @@ void SampleContext::Save()
 	fprintf( file, "  \"newUser\": %d,\n", false );
 	fprintf( file, "  \"drawShapes\": %s,\n", debugDraw.drawShapes ? "true" : "false" );
 	fprintf( file, "  \"drawJoints\": %s,\n", debugDraw.drawJoints ? "true" : "false" );
-	fprintf( file, "  \"showDiagnostics\": %s\n", showMetrics ? "true" : "false" );
+	fprintf( file, "  \"showDiagnostics\": %s,\n", showMetrics ? "true" : "false" );
+	fprintf( file, "  \"replayKeyframeBudgetMB\": %d,\n", replayKeyframeBudgetMB );
+	fprintf( file, "  \"replayKeyframeMinInterval\": %d\n", replayKeyframeMinInterval );
 	fprintf( file, "}\n" );
 	fclose( file );
 }
@@ -225,6 +227,26 @@ void SampleContext::Load()
 			{
 				showMetrics = false;
 			}
+		}
+		else if ( jsoneq( data, &tokens[i], "replayKeyframeBudgetMB" ) == 0 )
+		{
+			int count = tokens[i + 1].end - tokens[i + 1].start;
+			assert( count < 32 );
+			const char* s = data + tokens[i + 1].start;
+			strncpy( buffer, s, count );
+			buffer[count] = 0;
+			char* dummy;
+			replayKeyframeBudgetMB = (int)strtol( buffer, &dummy, 10 );
+		}
+		else if ( jsoneq( data, &tokens[i], "replayKeyframeMinInterval" ) == 0 )
+		{
+			int count = tokens[i + 1].end - tokens[i + 1].start;
+			assert( count < 32 );
+			const char* s = data + tokens[i + 1].start;
+			strncpy( buffer, s, count );
+			buffer[count] = 0;
+			char* dummy;
+			replayKeyframeMinInterval = (int)strtol( buffer, &dummy, 10 );
 		}
 	}
 
