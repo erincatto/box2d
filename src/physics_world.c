@@ -967,8 +967,8 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		// locked, so this keeps the shared recording buffer single-writer without a lock. StateHash
 		// proves the simulation reproduced exactly on replay.
 		uint64_t hash = b2HashWorldState( world );
-		b2RecArgs_StateHash sha = { worldId, hash };
-		b2RecWrite_StateHash( world->recording, &sha );
+		b2RecArgs_StateHash stateHash = { worldId, hash };
+		b2RecWrite_StateHash( world->recording, &stateHash );
 
 		// Grow the recorded bounds so a replay can frame the whole motion, not just frame 0
 		b2AABB bounds;

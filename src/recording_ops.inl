@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 // X-macro manifest for the recording system.
-// Include with B2_REC_OP and ARG defined; no commas between ARG tokens.
+// Include with B2_REC_OP and ARG defined. No commas between ARG tokens.
 //
 // B2_REC_OP( opcode, Name, RET, ARGS )
 //   RET in { RET_NONE, RET_BODYID, RET_SHAPEID }

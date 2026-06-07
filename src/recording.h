@@ -60,7 +60,7 @@ typedef struct b2Recording
 	bool haveBounds;
 } b2Recording;
 
-// C type aliases per TAG, used in codegen arg structs (recording.c only)
+// C type aliases per TAG, used in codegen arg structs
 typedef bool b2RecCType_BOOL;
 typedef int32_t b2RecCType_I32;
 typedef uint32_t b2RecCType_U32;
@@ -104,6 +104,17 @@ typedef b2RayCastInput b2RecCType_RAYCASTINPUT;
 // These are typedef'd in recording.c before the write helpers, but must be visible
 // in body.c and shape.c which use B2_REC. We generate them via the X-macro here.
 // IMPORTANT: this block must not expand ARG or B2_REC_OP as functions.
+//
+// For example, this:
+// B2_REC_OP( 0x80, Step, RET_NONE, ARG( WORLDID, world ) ARG( F32, dt ) ARG( I32, subStepCount ) )
+// Becomes:
+// typedef struct
+// {
+//   b2RecCType_WORLDID world;
+//   b2RecCType_F32 dt;
+//   b2RecCType_I32 subStepCount;
+// } b2RecArgs_Step;
+// Which are the arguments to b2World_Step
 #define ARG( TAG, field ) b2RecCType_##TAG field;
 #define B2_REC_OP( op, Name, RET, ... )                                                                                          \
 	typedef struct                                                                                                               \
@@ -178,7 +189,8 @@ void b2RecEndRecord( b2Recording* rec );
 #undef B2_REC_OP
 
 // Create ops also need a writer that appends the returned id inside the same record.
-// Generated only for ops carrying a RET tag; the id type comes from that tag.
+// Generated only for ops carrying a RET tag. The id type comes from that tag.
+// Recording the returned ids allows verification of deterministic replay.
 #define B2_REC_RETDECL_RET_NONE( Name )
 #define B2_REC_RETDECL_RET_BODYID( Name ) void b2RecWriteRet_##Name( b2Recording* rec, const b2RecArgs_##Name* a, b2BodyId id );
 #define B2_REC_RETDECL_RET_SHAPEID( Name ) void b2RecWriteRet_##Name( b2Recording* rec, const b2RecArgs_##Name* a, b2ShapeId id );

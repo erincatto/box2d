@@ -28,12 +28,16 @@
 
 // Snapshot image magic and version
 #define B2_SNAP_MAGIC 0x32534E42u // 'BNS2'
+
+// Bump this if any of the data structures below get modified.
 #define B2_SNAP_VERSION 1u
 
 // Layout hash seeds from all structs we memcpy, plus key constants.
-// Changing any struct or constant updates the hash, refusing stale images.
+// Changing any struct or constant updates the hash. Re-purposing or swapping
+// fields might not change the hash
 static uint32_t b2ComputeLayoutHash( void )
 {
+	// FNV-1a hash
 	uint32_t h = 2166136261u;
 #define MIX( x )                                                                                                                 \
 	h ^= (uint32_t)( x );                                                                                                        \
@@ -117,8 +121,6 @@ static uint32_t b2SnapR_U32( b2SnapReader* r )
 	b2SnapR_Bytes( r, &v, 4 );
 	return v;
 }
-
-// Write helpers (thin wrappers so call sites stay readable)
 
 static void b2SnapW_I32( b2RecBuffer* buf, int v )
 {

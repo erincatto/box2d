@@ -562,13 +562,14 @@ void b2RecBeginRecord( b2Recording* rec, uint8_t opcode )
 {
 	b2RecW_U8( &rec->buffer, opcode );
 	rec->recordStart = rec->buffer.size;
-	// Placeholder 3 bytes for the u24 payload size (backpatched in b2RecEndRecord)
+	// Make space to hold a 24 byte payload size, which isn't known until b2RecEndRecord is called.
 	uint8_t zero[3] = { 0, 0, 0 };
 	b2RecBufAppend( &rec->buffer, zero, 3 );
 }
 
 void b2RecEndRecord( b2Recording* rec )
 {
+	// Compute the final payload size and record it in the 24 byte space reserved right after the opcode.
 	int payloadSize = rec->buffer.size - rec->recordStart - 3;
 	B2_ASSERT( payloadSize >= 0 && payloadSize < ( 1 << 24 ) );
 	uint8_t* p = rec->buffer.data + rec->recordStart;
@@ -578,7 +579,15 @@ void b2RecEndRecord( b2Recording* rec )
 }
 
 // Codegen pass 1b: arg writers. Each generated function writes its struct fields to the buffer
-
+// Example:
+// B2_REC_OP( 0x80, Step, RET_NONE, ARG( WORLDID, world ) ARG( F32, dt ) ARG( I32, subStepCount ) )
+// Becomes:
+// void b2RecWriteArgs_Step( b2Recording* rec, const b2RecArgs_Step* a)
+// {
+//   b2RecW_WORLDID( &rec->buffer, a->world );
+//   b2RecW_F32( &rec->buffer, a->dt );
+//   b2RecW_I32( &rec->buffer, a->subStepCount );
+// }
 #define ARG( TAG, field ) b2RecW_##TAG( &rec->buffer, a->field );
 #define B2_REC_OP( op, Name, RET, ... )                                                                                          \
 	void b2RecWriteArgs_##Name( b2Recording* rec, const b2RecArgs_##Name* a )                                                    \
@@ -590,7 +599,15 @@ void b2RecEndRecord( b2Recording* rec )
 #undef ARG
 
 // Codegen: full writers wrapping begin, arg writer, end
-
+// Example:
+// B2_REC_OP( 0x80, Step, RET_NONE, ARG( WORLDID, world ) ARG( F32, dt ) ARG( I32, subStepCount ) )
+// Becomes:
+// void b2RecWrite_Step( b2Recording* rec, const b2RecArgs_Step* a)
+// {
+//   b2RecBeginRecord( rec, (uint8_t)( 0x80 ) );
+//   b2RecWriteArgs_Step( rec, a );
+//   b2RecEndRecord( rec );
+// }
 #define B2_REC_OP( op, Name, RET, ... )                                                                                          \
 	void b2RecWrite_##Name( b2Recording* rec, const b2RecArgs_##Name* a )                                                        \
 	{                                                                                                                            \
@@ -602,7 +619,17 @@ void b2RecEndRecord( b2Recording* rec )
 #undef B2_REC_OP
 
 // Codegen: create-op writers that append the returned id inside the record. The RET tag
-// selects the id type and its write primitive; RET_NONE ops generate nothing.
+// selects the id type and its write primitive. RET_NONE ops generate nothing.
+// Example:
+// B2_REC_OP( 0x40, CreateCircleShape, RET_SHAPEID, ARG( BODYID, body ) ARG( SHAPEDEF, def ) ARG( CIRCLE, circle ) )
+// Becomes:
+// 	void b2RecWriteRet_CreateCircleShape( b2Recording* rec, const b2RecArgs_CreateCircleShape* a, idType id )
+//	{
+//		b2RecBeginRecord( rec, (uint8_t)( 0x40 ) );
+//		b2RecWriteArgs_CreateCircleShape( rec, a );
+//		b2RecW_SHAPEID( &rec->buffer, id );
+//		b2RecEndRecord( rec );
+//	}
 
 #define B2_REC_RETWRITE( op, Name, idType, idW )                                                                                 \
 	void b2RecWriteRet_##Name( b2Recording* rec, const b2RecArgs_##Name* a, idType id )                                          \
@@ -679,8 +706,7 @@ void b2StartRecordingIntoBuffer( b2World* world, b2Recording* recording )
 	recording->recordStart = 0;
 	recording->haveBounds = false;
 
-	// Serialize the live world into a blob that follows the header and seeds replay. Called before
-	// the first step this is a small empty world image; mid-stream it is the live state.
+	// Serialize the live world into a blob that follows the header and seeds replay.
 	b2RecBuffer blob = { 0 };
 	b2SerializeWorld( world, &blob );
 
@@ -705,11 +731,10 @@ void b2StartRecordingIntoBuffer( b2World* world, b2Recording* recording )
 		b2RecAccumulateBounds( recording, seed );
 	}
 
-	// Anchor the recorded state so replay verifies the blob deserialized to the same world
-	// before any Step runs
-	b2WorldId wid = { (uint16_t)( world->worldId + 1 ), world->generation };
-	b2RecArgs_StateHash sha = { wid, b2HashWorldState( world ) };
-	b2RecWrite_StateHash( recording, &sha );
+	// Anchor the recorded state hash so replay verifies the blob deserialized to the same world.
+	b2WorldId worldId = { (uint16_t)( world->worldId + 1 ), world->generation };
+	b2RecArgs_StateHash stateHash = { worldId, b2HashWorldState( world ) };
+	b2RecWrite_StateHash( recording, &stateHash );
 }
 
 void b2StopRecordingInternal( b2World* world )
@@ -796,9 +821,7 @@ b2Recording* b2LoadRecordingFromFile( const char* path )
 	return rec;
 }
 
-// Deterministic over worker count: walk the bodies sparse array in index order, not
-// solver set order. Free slots have body->id == B2_NULL_INDEX, live slots have body->id == i
-
+// Hash transforms and velocities.
 uint64_t b2HashWorldState( b2World* world )
 {
 	uint64_t hash = B2_SNAP_FNV_INIT;
