@@ -84,6 +84,7 @@ typedef struct b2RecKeyframe
 {
 	uint8_t* image; // serialized world at the end of this frame
 	int imageSize;
+	int imageCapacity; // allocation size of image, which over-allocates, so the free size matches
 	int frame;		   // frame this restores to, a post-step boundary
 	int cursor;		   // op-stream offset where the next frame resumes
 	b2BodyId* bodyIds; // outliner list as of this frame
@@ -97,17 +98,18 @@ struct b2RecPlayer
 {
 	uint8_t* data; // recording bytes, a private copy owned here
 	int size;
-	int headerEnd;			  // first payload offset
-	float lengthScale;		  // length scale used in the recording
-	int frame;				  // steps dispatched so far
-	int frameCount;			  // total recorded steps, counted once at open
-	int recordedWorkerCount;  // worker count from the recorded world def
-	float recordedDt;		  // dt of the first recorded step
-	int recordedSubStepCount; // sub-steps of the first recorded step
-	b2AABB bounds;			  // accumulated world bounds, resolved by the open-time scan
-	int divergeFrame;		  // first step that diverged, -1 until then
-	bool atEnd;				  // a StepFrame ran out of records without reaching a step
-	b2RecReader rdr;		  // cursor and replay world, threaded into every dispatcher
+	int headerEnd;			   // first payload offset
+	float lengthScale;		   // length scale used in the recording
+	float previousLengthScale; // global length scale before this player overrode it, restored on destroy
+	int frame;				   // steps dispatched so far
+	int frameCount;			   // total recorded steps, counted once at open
+	int recordedWorkerCount;   // worker count the replay world runs at
+	float recordedDt;		   // dt of the first recorded step
+	int recordedSubStepCount;  // sub-steps of the first recorded step
+	b2AABB bounds;			   // accumulated world bounds, resolved by the open-time scan
+	int divergeFrame;		   // first step that diverged, -1 until then
+	bool atEnd;				   // a StepFrame ran out of records without reaching a step
+	b2RecReader rdr;		   // cursor and replay world, threaded into every dispatcher
 
 	// Per-frame query store, reset at the top of each StepFrame
 	b2RecDrawQuery* frameQueries;
@@ -127,10 +129,8 @@ struct b2RecPlayer
 	// restart or backward scrub. Points into the seed snapshot blob inside the owned copy.
 	const uint8_t* frame0Image;
 	int frame0Size;
-	bool frame0Owned; // true when frame0Image is a separate allocation to free
 	b2BodyId* frame0BodyIds;
 	int frame0BodyIdCount;
-	int frame0Cursor; // op-stream offset of the first Step, where stepping resumes
 
 	// Keyframe ring for fast backward seeks. Captured in increasing-frame order as the replay plays
 	// forward. The spacing doubles and the off-grid keyframes are evicted once the memory budget is

@@ -236,10 +236,7 @@ int SnapshotTest( void )
 	ENSURE( worldA->solverSets.count > 3 );
 
 	// Serialize worldA
-	b2RecBuffer buf;
-	buf.data = NULL;
-	buf.capacity = 0;
-	buf.size = 0;
+	b2RecBuffer buf = { 0 };
 	b2SerializeWorld( worldA, &buf );
 	ENSURE( buf.size > 0 );
 

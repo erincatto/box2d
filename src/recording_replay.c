@@ -17,8 +17,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define B2_REC_MAGIC 0x43523242u
-
 // Keyframe ring tuning. A memory budget caps the snapshots kept; the spacing starts at the min and
 // doubles when adding the next keyframe would exceed the budget, so memory stays bounded and seek
 // cost grows only once a recording outgrows the budget. The Replay sample exposes both as sliders.
@@ -2035,9 +2033,9 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 		return NULL;
 	}
 
-	if ( hdr.versionMajor != 2 )
+	if ( hdr.versionMajor != 3 )
 	{
-		printf( "b2RecPlayer_Create: version mismatch (file=%u, runtime=2)\n", hdr.versionMajor );
+		printf( "b2RecPlayer_Create: version mismatch (file=%u, runtime=3)\n", hdr.versionMajor );
 		return NULL;
 	}
 
@@ -2052,13 +2050,6 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 	{
 		printf( "b2RecPlayer_Create: big-endian recording not supported\n" );
 		return NULL;
-	}
-
-	// Restore the length scale the recording was made under so replay reproduces the same constants.
-	// This is global engine state, so it also affects the caller's other worlds.
-	if ( hdr.lengthScale > 0.0f )
-	{
-		b2SetLengthUnitsPerMeter( hdr.lengthScale );
 	}
 
 	// Every recording is snapshot-seeded: the blob sits between the header and the op stream
@@ -2078,6 +2069,7 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 	player->size = size;
 	player->headerEnd = headerEnd;
 	player->lengthScale = hdr.lengthScale;
+	player->previousLengthScale = b2GetLengthUnitsPerMeter();
 	player->frame = 0;
 	player->frameCount = 0;
 	player->recordedWorkerCount = 0;
@@ -2111,10 +2103,8 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 	player->bodyIdCap = 0;
 	player->frame0Image = NULL;
 	player->frame0Size = 0;
-	player->frame0Owned = false;
 	player->frame0BodyIds = NULL;
 	player->frame0BodyIdCount = 0;
-	player->frame0Cursor = headerEnd;
 	player->keyframes = NULL;
 	player->keyframeCount = 0;
 	player->keyframeCapacity = 0;
@@ -2123,6 +2113,14 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 	player->keyframeMinInterval = B2_REC_KEYFRAME_INTERVAL_DEFAULT;
 	player->keyframeInterval = B2_REC_KEYFRAME_INTERVAL_DEFAULT;
 	player->lastKeyframeFrame = 0;
+
+	// Override the global length scale with the recording's so replay reproduces the same constants.
+	// This is global engine state and affects the caller's other worlds, so the previous value was
+	// captured above and is restored in b2RecPlayer_Destroy.
+	if ( hdr.lengthScale > 0.0f )
+	{
+		b2SetLengthUnitsPerMeter( hdr.lengthScale );
+	}
 
 	// Count steps and read the first step's tuning so the viewer can show length and hz up front
 	b2RecScanFile( player );
@@ -2139,7 +2137,6 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 	player->recordedWorkerCount = workerCount;
 	player->frame0Image = copy + 32;
 	player->frame0Size = (int)hdr.snapshotSize;
-	player->frame0Owned = false;
 
 	// The seed snapshot holds the bodies present when recording began; only post-snapshot creates
 	// reach the tracker, so seed the outliner list directly from the restored world
@@ -2156,19 +2153,30 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 	return player;
 }
 
+// Free a keyframe's heap. image is freed at its allocation size, which over-allocates the logical
+// image, so the free size matches the alloc.
+static void b2FreeKeyframe( b2RecKeyframe* kf )
+{
+	b2Free( kf->image, kf->imageCapacity );
+	if ( kf->bodyIds != NULL )
+	{
+		b2Free( kf->bodyIds, kf->bodyIdCount * (int)sizeof( b2BodyId ) );
+	}
+}
+
 // Capture a restore point for the just-completed frame. rdr.cursor already sits at the next frame's
 // Step, so this records the exact resume position next to a full world image plus the outliner and
 // divergence state forward stepping would otherwise have to rebuild.
 static void b2RecCaptureKeyframe( b2RecPlayer* player )
 {
-	// Serialize first so the new keyframe's size is known, then own an exact-size copy so the free
-	// size matches the alloc size for leak accounting (the buffer over-allocates its capacity)
+	// Serialize into a buffer the keyframe takes ownership of, so there is no second full-size alloc
+	// and copy. The buffer over-allocates, so the budget and free track its capacity, not its size.
 	b2World* world = b2GetWorldFromId( player->rdr.replayWorldId );
 	b2RecBuffer buf = { 0 };
 	b2SerializeWorld( world, &buf );
 
 	size_t bodyBytes = (size_t)player->bodyIdCount * sizeof( b2BodyId );
-	size_t newBytes = (size_t)buf.size + bodyBytes;
+	size_t newBytes = (size_t)buf.capacity + bodyBytes;
 
 	// Make room under the budget: doubling the spacing drops the off-grid keyframes, roughly halving
 	// the bytes, until the new keyframe fits or only it remains. The budget is soft in the corner
@@ -2184,16 +2192,12 @@ static void b2RecCaptureKeyframe( b2RecPlayer* player )
 			if ( kf->frame % player->keyframeInterval == 0 )
 			{
 				player->keyframes[kept] = *kf;
-				keptBytes += (size_t)kf->imageSize + (size_t)kf->bodyIdCount * sizeof( b2BodyId );
+				keptBytes += (size_t)kf->imageCapacity + (size_t)kf->bodyIdCount * sizeof( b2BodyId );
 				kept += 1;
 			}
 			else
 			{
-				b2Free( kf->image, kf->imageSize );
-				if ( kf->bodyIds != NULL )
-				{
-					b2Free( kf->bodyIds, kf->bodyIdCount * (int)sizeof( b2BodyId ) );
-				}
+				b2FreeKeyframe( kf );
 			}
 		}
 		bool progress = kept < player->keyframeCount;
@@ -2209,10 +2213,10 @@ static void b2RecCaptureKeyframe( b2RecPlayer* player )
 			   (int)sizeof( b2RecKeyframe ) );
 
 	b2RecKeyframe* kf = &player->keyframes[player->keyframeCount];
-	kf->image = b2Alloc( buf.size );
-	memcpy( kf->image, buf.data, (size_t)buf.size );
+	// Hand the serialized buffer to the keyframe rather than copying it into an exact-size block
+	kf->image = buf.data;
 	kf->imageSize = buf.size;
-	b2RecBufFree( &buf );
+	kf->imageCapacity = buf.capacity;
 
 	kf->frame = player->frame;
 	kf->cursor = player->rdr.cursor;
@@ -2313,14 +2317,15 @@ bool b2RecPlayer_StepFrame( b2RecPlayer* player )
 void b2RecPlayer_Restart( b2RecPlayer* player )
 {
 	// Restore the frame-0 image in place so the replay world id stays stable across a restart or
-	// backward scrub. Stepping resumes at frame0Cursor, the first Step, which rebuilds the body
+	// backward scrub. Stepping resumes at the first Step, which rebuilds the body
 	// list deterministically.
 	if ( b2World_Restore( player->rdr.replayWorldId, player->frame0Image, player->frame0Size ) == false )
 	{
 		player->rdr.ok = false;
 		return;
 	}
-	player->rdr.cursor = player->frame0Cursor;
+	// Stepping resumes at the first Step, which sits right after the header and snapshot blob
+	player->rdr.cursor = player->headerEnd;
 	player->rdr.ok = true;
 	player->rdr.diverged = false;
 	player->frame = 0;
@@ -2442,12 +2447,7 @@ void b2RecPlayer_SetKeyframePolicy( b2RecPlayer* player, size_t budgetBytes, int
 	// Drop the ring so it repopulates under the new policy on the next replay
 	for ( int i = 0; i < player->keyframeCount; ++i )
 	{
-		b2RecKeyframe* kf = &player->keyframes[i];
-		b2Free( kf->image, kf->imageSize );
-		if ( kf->bodyIds != NULL )
-		{
-			b2Free( kf->bodyIds, kf->bodyIdCount * (int)sizeof( b2BodyId ) );
-		}
+		b2FreeKeyframe( &player->keyframes[i] );
 	}
 	player->keyframeCount = 0;
 	player->keyframeBytes = 0;
@@ -2513,27 +2513,23 @@ void b2RecPlayer_Destroy( b2RecPlayer* player )
 	{
 		b2Free( player->bodyIds, player->bodyIdCap * (int)sizeof( b2BodyId ) );
 	}
-	if ( player->frame0Owned && player->frame0Image != NULL )
-	{
-		b2Free( (void*)player->frame0Image, player->frame0Size );
-	}
+	// frame0Image points into the owned data copy, freed above, so it is not freed here
 	if ( player->frame0BodyIds != NULL )
 	{
 		b2Free( player->frame0BodyIds, player->frame0BodyIdCount * (int)sizeof( b2BodyId ) );
 	}
 	for ( int i = 0; i < player->keyframeCount; ++i )
 	{
-		b2RecKeyframe* kf = &player->keyframes[i];
-		b2Free( kf->image, kf->imageSize );
-		if ( kf->bodyIds != NULL )
-		{
-			b2Free( kf->bodyIds, kf->bodyIdCount * (int)sizeof( b2BodyId ) );
-		}
+		b2FreeKeyframe( &player->keyframes[i] );
 	}
 	if ( player->keyframes != NULL )
 	{
 		b2Free( player->keyframes, (size_t)player->keyframeCapacity * sizeof( b2RecKeyframe ) );
 	}
+
+	// Restore the global length scale.
+	b2SetLengthUnitsPerMeter( player->previousLengthScale );
+
 	b2Free( player, (int)sizeof( b2RecPlayer ) );
 }
 

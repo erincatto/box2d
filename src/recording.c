@@ -16,15 +16,19 @@
 #include <limits.h>
 #include <stddef.h>
 
-// Magic value 'B2RC' in little-endian: bytes B2, R, C yield 0x43523242
-#define B2_REC_MAGIC 0x43523242u
-
 // Buffer helpers
 
 void b2RecBufAppend( b2RecBuffer* buf, const void* data, int size )
 {
 	if ( size <= 0 )
 	{
+		return;
+	}
+
+	// Sizing pass: tally bytes without allocating or copying
+	if ( buf->countOnly )
+	{
+		buf->size += size;
 		return;
 	}
 
@@ -712,11 +716,12 @@ void b2StartRecordingIntoBuffer( b2World* world, b2Recording* recording )
 
 	b2RecHeader hdr = { 0 };
 	hdr.magic = B2_REC_MAGIC;
-	hdr.versionMajor = 2;
+	hdr.versionMajor = 3;
 	hdr.versionMinor = 0;
 	hdr.lengthScale = b2GetLengthUnitsPerMeter();
 	hdr.pointerWidth = (uint8_t)sizeof( void* );
 	hdr.bigEndian = 0;
+	hdr.validationEnabled = B2_ENABLE_VALIDATION ? 1u : 0u;
 	hdr.snapshotSize = (uint64_t)blob.size;
 	b2RecBufAppend( &recording->buffer, &hdr, (int)sizeof( hdr ) );
 	b2RecBufAppend( &recording->buffer, blob.data, blob.size );
@@ -804,7 +809,9 @@ b2Recording* b2LoadRecordingFromFile( const char* path )
 	}
 
 	long fileSize = ftell( f );
-	if ( fileSize < 0 || fileSize > INT_MAX )
+	// Anything smaller than the fixed header can't be a recording, so reject it here rather than
+	// hand back a malformed buffer that only fails later
+	if ( fileSize < (long)sizeof( b2RecHeader ) || fileSize > INT_MAX )
 	{
 		fclose( f );
 		return NULL;
@@ -816,6 +823,15 @@ b2Recording* b2LoadRecordingFromFile( const char* path )
 	fclose( f );
 
 	if ( (long)readSize != fileSize )
+	{
+		b2DestroyRecording( rec );
+		return NULL;
+	}
+
+	// Validate the magic so a wrong file fails at load instead of deep in the player
+	b2RecHeader hdr;
+	memcpy( &hdr, rec->buffer.data, sizeof( hdr ) );
+	if ( hdr.magic != B2_REC_MAGIC )
 	{
 		b2DestroyRecording( rec );
 		return NULL;

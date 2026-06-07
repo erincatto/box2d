@@ -141,7 +141,6 @@ public:
 		m_context->showMetrics = true;
 		m_context->pause = true;
 		m_selectTimelineTab = true;
-		m_replayWorkers = b2MinInt( 8, GetNumberOfCores() / 2 );
 
 		snprintf( m_path, sizeof( m_path ), "%s", m_context->replayFile );
 		m_status[0] = '\0';
@@ -206,7 +205,10 @@ public:
 		{
 			const uint8_t* data = b2Recording_GetData( recording );
 			int byteCount = b2Recording_GetSize( recording );
-			m_player = b2RecPlayer_Create( data, byteCount, m_replayWorkers );
+
+			// Use a large worker count so key frame generation is fast
+			m_context->workerCount = b2MinInt( 8, GetNumberOfCores() / 2 );
+			m_player = b2RecPlayer_Create( data, byteCount, m_context->workerCount );
 		}
 		else
 		{
@@ -1106,11 +1108,14 @@ public:
 		// Replaying at a different worker count is a visual cross-thread determinism check.
 		// 0 means use the recorded count. Re-open on release so the player is not rebuilt mid-drag.
 		ImGui::PushItemWidth( 6.0f * fontSize );
-		ImGui::SliderInt( "Workers", &m_replayWorkers, 0, B2_MAX_WORKERS );
+		if (ImGui::SliderInt( "Workers", &m_context->workerCount, 0, B2_MAX_WORKERS ))
+		{
+			if (B2_IS_NON_NULL(m_worldId))
+			{
+				b2World_SetWorkerCount( m_worldId, m_context->workerCount );
+			}
+		}
 		ImGui::PopItemWidth();
-		bool reopen = ImGui::IsItemDeactivatedAfterEdit();
-		ImGui::SameLine();
-		ImGui::TextDisabled( "(rec %d)", m_info.workerCount );
 
 		// Live ring state: the effective spacing widens as the ring evicts under the budget, and the
 		// memory held grows as keyframes accumulate. Budget and min interval are chosen in the Load
@@ -1161,12 +1166,6 @@ public:
 			ImGui::TextColored( ImVec4( 0.85f, 0.30f, 0.30f, 1.0f ), "   diverged at frame %d", divergeFrame );
 		}
 
-		// Re-open last so the player is not torn down mid-draw
-		if ( reopen )
-		{
-			CreatePlayer();
-		}
-
 		ImGui::EndTabItem();
 	}
 
@@ -1208,7 +1207,6 @@ public:
 	b2RecPlayerInfo m_info = {};
 	float m_speed = 1.0f;
 	float m_frameAccumulator = 0.0f;
-	int m_replayWorkers = 0;
 	bool m_loop = false;
 	bool m_selectTimelineTab = true;
 	bool m_prevShowMetrics = false;

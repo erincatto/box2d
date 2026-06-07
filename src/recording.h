@@ -20,30 +20,35 @@
 
 typedef struct b2World b2World;
 
+// Magic value 'B2RC' in little-endian: bytes B2, R, C yield 0x43523242
+#define B2_REC_MAGIC 0x43523242u
+
 // File header, fixed 32 bytes, little-endian
 typedef struct b2RecHeader
 {
-	uint32_t magic;		   // 'B2RC' = 0x43523242
-	uint16_t versionMajor; // 1
-	uint16_t versionMinor; // 0
+	uint32_t magic;			 // 'B2RC' = 0x43523242
+	uint16_t versionMajor;	 // 3
+	uint16_t versionMinor;	 // 0
 	uint32_t reserved2;
-	float lengthScale;	   // The world length scale
+	float lengthScale;		 // The world length scale
 	uint8_t reserved3;
-	uint8_t pointerWidth;  // sizeof(void*), gates POD-def memcpy
-	uint8_t bigEndian;	   // 0 on all supported targets
-	uint8_t reserved0;
+	uint8_t pointerWidth;	 // sizeof(void*), gates POD-def memcpy
+	uint8_t bigEndian;		 // 0 on all supported targets
+	uint8_t validationEnabled; // 1 if built with validation, only for diagnostics on a layout mismatch
 	uint32_t reserved1;
-	uint64_t snapshotSize; // bytes of snapshot blob after the header
+	uint64_t snapshotSize;	 // bytes of snapshot blob after the header
 } b2RecHeader;
 
 _Static_assert( sizeof( b2RecHeader ) == 32, "recording header must be 32 bytes" );
 
-// Growable append-only byte buffer. Doubles on demand.
+// Growable append-only byte buffer. Doubles on demand. In countOnly mode it tallies size without
+// allocating, so a serialize can be sized cheaply before a second pass fills a real buffer.
 typedef struct b2RecBuffer
 {
 	uint8_t* data;
 	int capacity;
 	int size;
+	bool countOnly;
 } b2RecBuffer;
 
 // User-owned recording buffer. The world appends into it while recording; the user saves and

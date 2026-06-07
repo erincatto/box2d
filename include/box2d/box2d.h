@@ -271,9 +271,11 @@ B2_API b2Recording* b2LoadRecordingFromFile( const char* path );
  * rollback, undo, and deterministic save games. Call between world steps.
  *
  * A snapshot carries only simulation state. Host wiring (task callbacks, worker
- * count, user data, pre-solve, custom filter, friction and restitution callbacks)
- * is not stored. Restoring in place with b2World_Restore keeps the live world's
- * wiring. Loading with b2CreateWorldFromSnapshot resets it to defaults.
+ * count, world and per-object user data, pre-solve, custom filter, friction and
+ * restitution callbacks) is not stored, so body, shape and joint user data read back
+ * as NULL after a restore even though the ids stay valid. Restoring in place with
+ * b2World_Restore keeps the live world's wiring. Loading with b2CreateWorldFromSnapshot
+ * resets it to defaults.
  *
  * Ids: every b2BodyId / b2ShapeId / b2JointId / b2ChainId carries the world slot it
  * was created in. b2World_Restore reuses the same world, so ids you held at the
@@ -290,6 +292,7 @@ B2_API b2Recording* b2LoadRecordingFromFile( const char* path );
 /// @param image Destination buffer, or NULL to query the size
 /// @param capacity Size of image in bytes, ignored when querying
 /// @return The number of bytes the snapshot needs. If it exceeds capacity nothing is written.
+///         Returns 0 if the world is mid-step.
 B2_API int b2World_Snapshot( b2WorldId worldId, uint8_t* image, int capacity );
 
 /// Restore a world's simulation state from a snapshot image, in place. The world keeps
