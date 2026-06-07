@@ -749,7 +749,11 @@ void b2StopRecordingInternal( b2World* world )
 
 	// Stash the accumulated bounds so a viewer can frame the whole motion at open time. Sits in
 	// the op stream ahead of the end marker; absent in older recordings.
-	b2RecArgs_RecordingBounds rb = { rec->haveBounds ? rec->accumulatedBounds : (b2AABB){ 0 } };
+	b2RecArgs_RecordingBounds rb = { 0 };
+	if ( rec->haveBounds )
+	{
+		rb.bounds = rec->accumulatedBounds;
+	}
 	b2RecWrite_RecordingBounds( rec, &rb );
 
 	// Write DestroyWorld so the buffer is self-contained, an end marker the viewer reads. The
