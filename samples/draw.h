@@ -25,6 +25,7 @@ void ResetView( Camera* camera );
 b2Vec2 ConvertScreenToWorld( Camera* camera, b2Vec2 screenPoint );
 b2Vec2 ConvertWorldToScreen( Camera* camera, b2Vec2 worldPoint );
 b2AABB GetViewBounds( Camera* camera );
+void FocusOnBounds( Camera* camera, b2AABB bounds );
 
 Draw* CreateDraw( void );
 void DestroyDraw( Draw* draw );

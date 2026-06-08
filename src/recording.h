@@ -14,41 +14,58 @@
 #include <stdio.h>
 #include <string.h>
 
+// FNV-1a 64-bit constants
+#define B2_SNAP_FNV_INIT 14695981039346656037ull
+#define B2_SNAP_FNV_PRIME 1099511628211ull
+
 typedef struct b2World b2World;
+
+// Magic value 'B2RC' in little-endian: bytes B2, R, C yield 0x43523242
+#define B2_REC_MAGIC 0x43523242u
 
 // File header, fixed 32 bytes, little-endian
 typedef struct b2RecHeader
 {
-	uint32_t magic;		   // 'B2RC' = 0x43523242
-	uint16_t versionMajor; // 1
-	uint16_t versionMinor; // 0
-	uint32_t buildHash;	   // short git hash, 0 if unstamped
-	uint8_t simdWidth;	   // B2_SIMD_WIDTH, informational
-	uint8_t pointerWidth;  // sizeof(void*), gates POD-def memcpy
-	uint8_t bigEndian;	   // 0 on all supported targets
-	uint8_t reserved0;
-	uint64_t wallClockUnix; // informational
-	uint8_t reserved[8];
+	uint32_t magic;			 // 'B2RC' = 0x43523242
+	uint16_t versionMajor;	 // 3
+	uint16_t versionMinor;	 // 0
+	uint32_t reserved2;
+	float lengthScale;		 // The world length scale
+	uint8_t reserved3;
+	uint8_t pointerWidth;	 // sizeof(void*), gates POD-def memcpy
+	uint8_t bigEndian;		 // 0 on all supported targets
+	uint8_t validationEnabled; // 1 if built with validation, only for diagnostics on a layout mismatch
+	uint32_t reserved1;
+	uint64_t snapshotSize;	 // bytes of snapshot blob after the header
 } b2RecHeader;
+
 _Static_assert( sizeof( b2RecHeader ) == 32, "recording header must be 32 bytes" );
 
-// Append-only write buffer. Flushed to disk on each Step and on Save/Stop.
+// Growable append-only byte buffer. Doubles on demand. In countOnly mode it tallies size without
+// allocating, so a serialize can be sized cheaply before a second pass fills a real buffer.
 typedef struct b2RecBuffer
 {
 	uint8_t* data;
 	int capacity;
 	int size;
+	bool countOnly;
 } b2RecBuffer;
 
+// User-owned recording buffer. The world appends into it while recording; the user saves and
+// destroys it. Opaque across the public API.
 typedef struct b2Recording
 {
-	FILE* file;
 	b2RecBuffer buffer;
 	int recordStart; // offset of the 3-byte size field for u24 backpatch
 	b2Mutex* lock;	 // serializes query record commits across concurrent query threads
+
+	// Union of world bounds over every recorded step, written out at stop so a replay can frame
+	// the whole motion. haveBounds gates the first union the same way b2World_GetBounds does.
+	b2AABB accumulatedBounds;
+	bool haveBounds;
 } b2Recording;
 
-// C type aliases per TAG, used in codegen arg structs (recording.c only)
+// C type aliases per TAG, used in codegen arg structs
 typedef bool b2RecCType_BOOL;
 typedef int32_t b2RecCType_I32;
 typedef uint32_t b2RecCType_U32;
@@ -73,7 +90,6 @@ typedef b2SurfaceMaterial b2RecCType_MATERIAL;
 typedef b2MassData b2RecCType_MASSDATA;
 typedef b2MotionLocks b2RecCType_LOCKS;
 typedef b2ExplosionDef b2RecCType_EXPLOSIONDEF;
-typedef b2WorldDef b2RecCType_WORLDDEF;
 typedef b2BodyDef b2RecCType_BODYDEF;
 typedef b2ShapeDef b2RecCType_SHAPEDEF;
 typedef b2ChainDef b2RecCType_CHAINDEF;
@@ -93,6 +109,17 @@ typedef b2RayCastInput b2RecCType_RAYCASTINPUT;
 // These are typedef'd in recording.c before the write helpers, but must be visible
 // in body.c and shape.c which use B2_REC. We generate them via the X-macro here.
 // IMPORTANT: this block must not expand ARG or B2_REC_OP as functions.
+//
+// For example, this:
+// B2_REC_OP( 0x80, Step, RET_NONE, ARG( WORLDID, world ) ARG( F32, dt ) ARG( I32, subStepCount ) )
+// Becomes:
+// typedef struct
+// {
+//   b2RecCType_WORLDID world;
+//   b2RecCType_F32 dt;
+//   b2RecCType_I32 subStepCount;
+// } b2RecArgs_Step;
+// Which are the arguments to b2World_Step
 #define ARG( TAG, field ) b2RecCType_##TAG field;
 #define B2_REC_OP( op, Name, RET, ... )                                                                                          \
 	typedef struct                                                                                                               \
@@ -134,7 +161,6 @@ void b2RecW_MASSDATA( b2RecBuffer* buf, b2MassData v );
 void b2RecW_LOCKS( b2RecBuffer* buf, b2MotionLocks v );
 void b2RecW_STR( b2RecBuffer* buf, const char* s );
 void b2RecW_EXPLOSIONDEF( b2RecBuffer* buf, b2ExplosionDef v );
-void b2RecW_WORLDDEF( b2RecBuffer* buf, b2WorldDef v );
 void b2RecW_BODYDEF( b2RecBuffer* buf, b2BodyDef v );
 void b2RecW_SHAPEDEF( b2RecBuffer* buf, b2ShapeDef v );
 void b2RecW_CHAINDEF( b2RecBuffer* buf, b2ChainDef v );
@@ -168,7 +194,8 @@ void b2RecEndRecord( b2Recording* rec );
 #undef B2_REC_OP
 
 // Create ops also need a writer that appends the returned id inside the same record.
-// Generated only for ops carrying a RET tag; the id type comes from that tag.
+// Generated only for ops carrying a RET tag. The id type comes from that tag.
+// Recording the returned ids allows verification of deterministic replay.
 #define B2_REC_RETDECL_RET_NONE( Name )
 #define B2_REC_RETDECL_RET_BODYID( Name ) void b2RecWriteRet_##Name( b2Recording* rec, const b2RecArgs_##Name* a, b2BodyId id );
 #define B2_REC_RETDECL_RET_SHAPEID( Name ) void b2RecWriteRet_##Name( b2Recording* rec, const b2RecArgs_##Name* a, b2ShapeId id );
@@ -238,10 +265,12 @@ bool b2RecOverlapTrampoline( b2ShapeId id, void* ctx );
 float b2RecCastTrampoline( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx );
 bool b2RecPlaneTrampoline( b2ShapeId id, const b2PlaneResult* plane, void* ctx );
 
-// Lifecycle
-void b2StartRecording( b2World* world, const b2WorldDef* def );
-void b2FlushRecording( b2Recording* rec );
+// Lifecycle. Public create/destroy/save/load live in box2d.h; these are the engine-side hooks.
+void b2StartRecordingIntoBuffer( b2World* world, b2Recording* recording );
 void b2StopRecordingInternal( b2World* world );
+
+// Fold one step's world bounds into the running union the recorder writes out at stop.
+void b2RecAccumulateBounds( b2Recording* rec, b2AABB bounds );
 
 // Deterministic hash over all body transforms and velocities.
 // Called by both recorder and replayer to verify simulation reproduces exactly.

@@ -514,13 +514,13 @@ typedef struct b2ManifoldPoint
 
 	/// Location of the contact point relative to shapeA's origin in world space.
 	/// This can be converted to a world point using:
-	/// b2Vec2 worldPointA = b2Add(b2Body_GetCenter(myBodyIdA), anchorA);
+	/// b2Vec2 worldPointA = b2Add(b2Body_GetWorldCenterOfMass(myBodyIdA), anchorA);
 	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
 	b2Vec2 anchorA;
 
 	/// Location of the contact point relative to shapeB's origin in world space
 	/// This can be converted to a world point using:
-	/// b2Vec2 worldPointB = b2Add(b2Body_GetCenter(myBodyIdB), anchorB);
+	/// b2Vec2 worldPointB = b2Add(b2Body_GetWorldCenterOfMass(myBodyIdB), anchorB);
 	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
 	b2Vec2 anchorB;
 
@@ -635,6 +635,48 @@ B2_API b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segment
  * spatial game data besides rigid bodies.
  * @{
  */
+
+/// Tree node flags. For internal usage.
+enum b2TreeNodeFlags
+{
+	b2_allocatedNode = 0x0001,
+	b2_enlargedNode = 0x0002,
+	b2_leafNode = 0x0004,
+};
+
+/// A node in the dynamic tree. For internal usage.
+typedef struct b2TreeNode
+{
+	/// The node bounding box
+	b2AABB aabb; // 16
+
+	/// Category bits for collision filtering
+	uint64_t categoryBits; // 8
+
+	union
+	{
+		/// Children (internal node)
+		struct
+		{
+			int32_t child1, child2;
+		} children;
+
+		/// User data (leaf node)
+		uint64_t userData;
+	}; // 8
+
+	union
+	{
+		/// The node parent index (allocated node)
+		int32_t parent;
+
+		/// The node freelist next index (free node)
+		int32_t next;
+	}; // 4
+
+	uint16_t height; // 2
+	uint16_t flags;	 // 2
+} b2TreeNode;
 
 /// The dynamic tree structure. This should be considered private data.
 /// It is placed here for performance reasons.

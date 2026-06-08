@@ -37,7 +37,7 @@ _Static_assert( B2_MAX_WORLDS > 0, "must be 1 or more" );
 _Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B2_MAX_WORLDS limit exceeded" );
 static b2World b2_worlds[B2_MAX_WORLDS];
 
-static b2World* b3GetUnlockedWorldFromId( b2WorldId id )
+static b2World* b2GetUnlockedWorldFromId( b2WorldId id )
 {
 	B2_ASSERT( 1 <= id.index1 && id.index1 <= B2_MAX_WORLDS );
 	b2World* world = b2_worlds + ( id.index1 - 1 );
@@ -319,12 +319,8 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->debugContactSet = b2CreateBitSet( 256 );
 	world->debugIslandSet = b2CreateBitSet( 256 );
 
-	// Start recording if requested; b2StartRecording writes the CreateWorld record
+	// Recording is started by the host with b2World_StartRecording, never from the world def
 	world->recording = NULL;
-	if ( def->recordingPath != NULL )
-	{
-		b2StartRecording( world, def );
-	}
 
 	// add one to worldId so that 0 represents a null b2WorldId
 	return (b2WorldId){ (uint16_t)( worldId + 1 ), world->generation };
@@ -334,7 +330,7 @@ void b2DestroyWorld( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 
-	// Flush and close recording before teardown
+	// Detach any recording before teardown; the host owns and frees the recording buffer
 	b2StopRecordingInternal( world );
 
 	if ( world->scheduler != NULL )
@@ -967,13 +963,19 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 
 	if ( world->recording != NULL )
 	{
-		// Write the per-step StateHash and flush while the world is still locked. Queries early
-		// return while locked, so this keeps the shared recording buffer single-writer without a
-		// lock. StateHash proves the simulation reproduced exactly on replay.
+		// Write the per-step StateHash while the world is still locked. Queries early return while
+		// locked, so this keeps the shared recording buffer single-writer without a lock. StateHash
+		// proves the simulation reproduced exactly on replay.
 		uint64_t hash = b2HashWorldState( world );
-		b2RecArgs_StateHash sha = { worldId, hash };
-		b2RecWrite_StateHash( world->recording, &sha );
-		b2FlushRecording( world->recording );
+		b2RecArgs_StateHash stateHash = { worldId, hash };
+		b2RecWrite_StateHash( world->recording, &stateHash );
+
+		// Grow the recorded bounds so a replay can frame the whole motion, not just frame 0
+		b2AABB bounds;
+		if ( b2ComputeWorldBounds( world, &bounds ) )
+		{
+			b2RecAccumulateBounds( world->recording, bounds );
+		}
 	}
 
 	world->locked = false;
@@ -1390,6 +1392,41 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 			word = word & ( word - 1 );
 		}
 	}
+}
+
+bool b2ComputeWorldBounds( b2World* world, b2AABB* bounds )
+{
+	b2AABB worldBounds = { 0 };
+	bool haveBounds = false;
+
+	for ( int i = 0; i < b2_bodyTypeCount; ++i )
+	{
+		b2DynamicTree* tree = world->broadPhase.trees + i;
+		if ( b2DynamicTree_GetProxyCount( tree ) == 0 )
+		{
+			continue;
+		}
+
+		b2AABB treeBounds = b2DynamicTree_GetRootBounds( tree );
+		worldBounds = haveBounds ? b2AABB_Union( worldBounds, treeBounds ) : treeBounds;
+		haveBounds = true;
+	}
+
+	*bounds = worldBounds;
+	return haveBounds;
+}
+
+b2AABB b2World_GetBounds(b2WorldId worldId)
+{
+	b2World* world = b2GetUnlockedWorldFromId( worldId );
+	if ( world == NULL )
+	{
+		return (b2AABB){ 0 };
+	}
+
+	b2AABB bounds;
+	b2ComputeWorldBounds( world, &bounds );
+	return bounds;
 }
 
 b2BodyEvents b2World_GetBodyEvents( b2WorldId worldId )
@@ -1941,7 +1978,7 @@ void b2World_SetRestitutionCallback( b2WorldId worldId, b2RestitutionCallback* c
 
 void b2World_SetWorkerCount( b2WorldId worldId, int count )
 {
-	b2World* world = b3GetUnlockedWorldFromId( worldId );
+	b2World* world = b2GetUnlockedWorldFromId( worldId );
 	if ( world == NULL )
 	{
 		return;
@@ -1959,7 +1996,7 @@ void b2World_SetWorkerCount( b2WorldId worldId, int count )
 
 int b2World_GetWorkerCount( b2WorldId worldId )
 {
-	b2World* world = b3GetUnlockedWorldFromId( worldId );
+	b2World* world = b2GetUnlockedWorldFromId( worldId );
 	if ( world == NULL )
 	{
 		return 0;
@@ -1968,51 +2005,22 @@ int b2World_GetWorkerCount( b2WorldId worldId )
 	return world->workerCount;
 }
 
-void b2World_SaveRecording( b2WorldId worldId, const char* path )
+void b2World_StartRecording( b2WorldId worldId, b2Recording* recording )
 {
-	b2World* world = b3GetUnlockedWorldFromId( worldId );
+	// Must be a step boundary, so refuse a locked world
+	b2World* world = b2GetUnlockedWorldFromId( worldId );
 
-	if ( world == NULL || world->recording == NULL || path == NULL )
+	if ( world == NULL || recording == NULL || world->recording != NULL )
 	{
 		return;
 	}
 
-	// Flush under the lock so a query committing from another thread can't race the shared buffer.
-	// The file copy below touches only the file, which query commits never write, so it stays unlocked.
-	b2LockMutex( world->recording->lock );
-	b2FlushRecording( world->recording );
-	b2UnlockMutex( world->recording->lock );
-	fflush( world->recording->file );
-
-	// Stream-copy the recording to the user path. Source file stays open.
-	FILE* src = world->recording->file;
-	long pos = ftell( src );
-	if ( pos < 0 || fseek( src, 0, SEEK_SET ) != 0 )
-	{
-		return;
-	}
-
-	FILE* dst = fopen( path, "wb" );
-	if ( dst == NULL )
-	{
-		fseek( src, pos, SEEK_SET );
-		return;
-	}
-
-	uint8_t copyBuf[4096];
-	size_t n;
-	while ( ( n = fread( copyBuf, 1, sizeof( copyBuf ), src ) ) > 0 )
-	{
-		fwrite( copyBuf, 1, n, dst );
-	}
-
-	fclose( dst );
-	fseek( src, pos, SEEK_SET );
+	b2StartRecordingIntoBuffer( world, recording );
 }
 
 void b2World_StopRecording( b2WorldId worldId )
 {
-	b2World* world = b3GetUnlockedWorldFromId( worldId );
+	b2World* world = b2GetUnlockedWorldFromId( worldId );
 	if ( world == NULL )
 	{
 		return;
@@ -2031,43 +2039,113 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 
 	b2World* world = b2GetWorldFromId( worldId );
 
+	int total = 0;
+
 	// id pools
+	int bodyIdBytes = b2GetIdBytes( &world->bodyIdPool );
+	int solverSetIdBytes = b2GetIdBytes( &world->solverSetIdPool );
+	int jointIdBytes = b2GetIdBytes( &world->jointIdPool );
+	int contactIdBytes = b2GetIdBytes( &world->contactIdPool );
+	int islandIdBytes = b2GetIdBytes( &world->islandIdPool );
+	int shapeIdBytes = b2GetIdBytes( &world->shapeIdPool );
+	int chainIdBytes = b2GetIdBytes( &world->chainIdPool );
+	total += bodyIdBytes + solverSetIdBytes + jointIdBytes + contactIdBytes + islandIdBytes + shapeIdBytes + chainIdBytes;
+
 	fprintf( file, "id pools\n" );
-	fprintf( file, "body ids: %d\n", b2GetIdBytes( &world->bodyIdPool ) );
-	fprintf( file, "solver set ids: %d\n", b2GetIdBytes( &world->solverSetIdPool ) );
-	fprintf( file, "joint ids: %d\n", b2GetIdBytes( &world->jointIdPool ) );
-	fprintf( file, "contact ids: %d\n", b2GetIdBytes( &world->contactIdPool ) );
-	fprintf( file, "island ids: %d\n", b2GetIdBytes( &world->islandIdPool ) );
-	fprintf( file, "shape ids: %d\n", b2GetIdBytes( &world->shapeIdPool ) );
-	fprintf( file, "chain ids: %d\n", b2GetIdBytes( &world->chainIdPool ) );
+	fprintf( file, "body ids: %d\n", bodyIdBytes );
+	fprintf( file, "solver set ids: %d\n", solverSetIdBytes );
+	fprintf( file, "joint ids: %d\n", jointIdBytes );
+	fprintf( file, "contact ids: %d\n", contactIdBytes );
+	fprintf( file, "island ids: %d\n", islandIdBytes );
+	fprintf( file, "shape ids: %d\n", shapeIdBytes );
+	fprintf( file, "chain ids: %d\n", chainIdBytes );
 	fprintf( file, "\n" );
 
+	// Islands own per-island body/contact/joint link arrays
+	int islandLinkBytes = 0;
+	for ( int i = 0; i < world->islands.count; ++i )
+	{
+		b2Island* island = world->islands.data + i;
+		islandLinkBytes += b2Array_ByteCount( island->bodies );
+		islandLinkBytes += b2Array_ByteCount( island->contacts );
+		islandLinkBytes += b2Array_ByteCount( island->joints );
+	}
+
 	// world arrays
+	int bodyArrayBytes = b2Array_ByteCount( world->bodies );
+	int solverSetArrayBytes = b2Array_ByteCount( world->solverSets );
+	int jointArrayBytes = b2Array_ByteCount( world->joints );
+	int contactArrayBytes = b2Array_ByteCount( world->contacts );
+	int islandArrayBytes = b2Array_ByteCount( world->islands );
+	int shapeArrayBytes = b2Array_ByteCount( world->shapes );
+	int chainArrayBytes = b2Array_ByteCount( world->chainShapes );
+	int sensorArrayBytes = b2Array_ByteCount( world->sensors );
+	total += bodyArrayBytes + solverSetArrayBytes + jointArrayBytes + contactArrayBytes + islandArrayBytes + islandLinkBytes +
+			 shapeArrayBytes + chainArrayBytes + sensorArrayBytes;
+
 	fprintf( file, "world arrays\n" );
-	fprintf( file, "bodies: %d\n", b2Array_ByteCount( world->bodies ) );
-	fprintf( file, "solver sets: %d\n", b2Array_ByteCount( world->solverSets ) );
-	fprintf( file, "joints: %d\n", b2Array_ByteCount( world->joints ) );
-	fprintf( file, "contacts: %d\n", b2Array_ByteCount( world->contacts ) );
-	// todo account for body/contact/joint arrays in island
-	fprintf( file, "islands: %d\n", world->islands.capacity * (int)sizeof( b2Island ) );
-	fprintf( file, "shapes: %d\n", b2Array_ByteCount( world->shapes ) );
-	fprintf( file, "chains: %d\n", b2Array_ByteCount( world->chainShapes ) );
+	fprintf( file, "bodies: %d\n", bodyArrayBytes );
+	fprintf( file, "solver sets: %d\n", solverSetArrayBytes );
+	fprintf( file, "joints: %d\n", jointArrayBytes );
+	fprintf( file, "contacts: %d\n", contactArrayBytes );
+	fprintf( file, "islands: %d\n", islandArrayBytes );
+	fprintf( file, "island links: %d\n", islandLinkBytes );
+	fprintf( file, "shapes: %d\n", shapeArrayBytes );
+	fprintf( file, "chains: %d\n", chainArrayBytes );
+	fprintf( file, "sensors: %d\n", sensorArrayBytes );
+	fprintf( file, "\n" );
+
+	// Chain shapes own index and surface material arrays
+	int chainDataBytes = 0;
+	for ( int i = 0; i < world->chainShapes.count; ++i )
+	{
+		b2ChainShape* chain = world->chainShapes.data + i;
+		if ( chain->id == B2_NULL_INDEX )
+		{
+			continue;
+		}
+
+		chainDataBytes += chain->count * (int)sizeof( int );
+		chainDataBytes += chain->materialCount * (int)sizeof( b2SurfaceMaterial );
+	}
+
+	// Sensors own overlap tracking arrays. The sensor array is dense.
+	int sensorOverlapBytes = 0;
+	for ( int i = 0; i < world->sensors.count; ++i )
+	{
+		b2Sensor* sensor = world->sensors.data + i;
+		sensorOverlapBytes += b2Array_ByteCount( sensor->hits );
+		sensorOverlapBytes += b2Array_ByteCount( sensor->overlaps1 );
+		sensorOverlapBytes += b2Array_ByteCount( sensor->overlaps2 );
+	}
+	total += chainDataBytes + sensorOverlapBytes;
+
+	fprintf( file, "owned arrays\n" );
+	fprintf( file, "chain data: %d\n", chainDataBytes );
+	fprintf( file, "sensor overlaps: %d\n", sensorOverlapBytes );
 	fprintf( file, "\n" );
 
 	// broad-phase
-	fprintf( file, "broad-phase\n" );
-	fprintf( file, "static tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_staticBody ) );
-	fprintf( file, "kinematic tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_kinematicBody ) );
-	fprintf( file, "dynamic tree: %d\n", b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_dynamicBody ) );
+	int staticTreeBytes = b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_staticBody );
+	int kinematicTreeBytes = b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_kinematicBody );
+	int dynamicTreeBytes = b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_dynamicBody );
 	int movedBytes = 0;
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
 		movedBytes += b2GetBitSetBytes( &world->broadPhase.movedProxies[i] );
 	}
-	fprintf( file, "movedProxies: %d\n", movedBytes );
-	fprintf( file, "moveArray: %d\n", b2Array_ByteCount( world->broadPhase.moveArray ) );
+	int moveArrayBytes = b2Array_ByteCount( world->broadPhase.moveArray );
 	b2HashSet* pairSet = &world->broadPhase.pairSet;
-	fprintf( file, "pairSet: %d (%u, %u)\n", b2GetHashSetBytes( pairSet ), pairSet->count, pairSet->capacity );
+	int pairSetBytes = b2GetHashSetBytes( pairSet );
+	total += staticTreeBytes + kinematicTreeBytes + dynamicTreeBytes + movedBytes + moveArrayBytes + pairSetBytes;
+
+	fprintf( file, "broad-phase\n" );
+	fprintf( file, "static tree: %d\n", staticTreeBytes );
+	fprintf( file, "kinematic tree: %d\n", kinematicTreeBytes );
+	fprintf( file, "dynamic tree: %d\n", dynamicTreeBytes );
+	fprintf( file, "movedProxies: %d\n", movedBytes );
+	fprintf( file, "moveArray: %d\n", moveArrayBytes );
+	fprintf( file, "pairSet: %d (%u, %u)\n", pairSetBytes, pairSet->count, pairSet->capacity );
 	fprintf( file, "\n" );
 
 	// solver sets
@@ -2092,12 +2170,19 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 		islandSimCapacity += set->islandSims.capacity;
 	}
 
+	int setBodySimBytes = bodySimCapacity * (int)sizeof( b2BodySim );
+	int setBodyStateBytes = bodyStateCapacity * (int)sizeof( b2BodyState );
+	int setJointSimBytes = jointSimCapacity * (int)sizeof( b2JointSim );
+	int setContactSimBytes = contactSimCapacity * (int)sizeof( b2ContactSim );
+	int setIslandSimBytes = islandSimCapacity * (int)sizeof( b2IslandSim );
+	total += setBodySimBytes + setBodyStateBytes + setJointSimBytes + setContactSimBytes + setIslandSimBytes;
+
 	fprintf( file, "solver sets\n" );
-	fprintf( file, "body sim: %d\n", bodySimCapacity * (int)sizeof( b2BodySim ) );
-	fprintf( file, "body state: %d\n", bodyStateCapacity * (int)sizeof( b2BodyState ) );
-	fprintf( file, "joint sim: %d\n", jointSimCapacity * (int)sizeof( b2JointSim ) );
-	fprintf( file, "contact sim: %d\n", contactSimCapacity * (int)sizeof( b2ContactSim ) );
-	fprintf( file, "island sim: %d\n", islandSimCapacity * (int)sizeof( islandSimCapacity ) );
+	fprintf( file, "body sim: %d\n", setBodySimBytes );
+	fprintf( file, "body state: %d\n", setBodyStateBytes );
+	fprintf( file, "joint sim: %d\n", setJointSimBytes );
+	fprintf( file, "contact sim: %d\n", setContactSimBytes );
+	fprintf( file, "island sim: %d\n", setIslandSimBytes );
 	fprintf( file, "\n" );
 
 	// constraint graph
@@ -2112,17 +2197,72 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 		jointSimCapacity += c->jointSims.capacity;
 	}
 
+	int graphJointSimBytes = jointSimCapacity * (int)sizeof( b2JointSim );
+	int graphContactSimBytes = contactSimCapacity * (int)sizeof( b2ContactSim );
+	total += bodyBitSetBytes + graphJointSimBytes + graphContactSimBytes;
+
 	fprintf( file, "constraint graph\n" );
 	fprintf( file, "body bit sets: %d\n", bodyBitSetBytes );
-	fprintf( file, "joint sim: %d\n", jointSimCapacity * (int)sizeof( b2JointSim ) );
-	fprintf( file, "contact sim: %d\n", contactSimCapacity * (int)sizeof( b2ContactSim ) );
+	fprintf( file, "joint sim: %d\n", graphJointSimBytes );
+	fprintf( file, "contact sim: %d\n", graphContactSimBytes );
 	fprintf( file, "\n" );
 
+	// Per worker task storage and its bit sets
+	int taskContextBytes = b2Array_ByteCount( world->taskContexts );
+	for ( int i = 0; i < world->taskContexts.count; ++i )
+	{
+		b2TaskContext* taskContext = world->taskContexts.data + i;
+		taskContextBytes += b2Array_ByteCount( taskContext->sensorHits );
+		taskContextBytes += b2GetBitSetBytes( &taskContext->contactStateBitSet );
+		taskContextBytes += b2GetBitSetBytes( &taskContext->hitEventBitSet );
+		taskContextBytes += b2GetBitSetBytes( &taskContext->jointStateBitSet );
+		taskContextBytes += b2GetBitSetBytes( &taskContext->enlargedSimBitSet );
+		taskContextBytes += b2GetBitSetBytes( &taskContext->awakeIslandBitSet );
+	}
+
+	int sensorTaskContextBytes = b2Array_ByteCount( world->sensorTaskContexts );
+	for ( int i = 0; i < world->sensorTaskContexts.count; ++i )
+	{
+		b2SensorTaskContext* taskContext = world->sensorTaskContexts.data + i;
+		sensorTaskContextBytes += b2GetBitSetBytes( &taskContext->eventBits );
+	}
+	total += taskContextBytes + sensorTaskContextBytes;
+
+	fprintf( file, "task contexts\n" );
+	fprintf( file, "worker: %d\n", taskContextBytes );
+	fprintf( file, "sensor: %d\n", sensorTaskContextBytes );
+	fprintf( file, "\n" );
+
+	// Double buffered event arrays
+	int eventBytes = 0;
+	eventBytes += b2Array_ByteCount( world->bodyMoveEvents );
+	eventBytes += b2Array_ByteCount( world->sensorBeginEvents );
+	eventBytes += b2Array_ByteCount( world->contactBeginEvents );
+	eventBytes += b2Array_ByteCount( world->sensorEndEvents[0] );
+	eventBytes += b2Array_ByteCount( world->sensorEndEvents[1] );
+	eventBytes += b2Array_ByteCount( world->contactEndEvents[0] );
+	eventBytes += b2Array_ByteCount( world->contactEndEvents[1] );
+	eventBytes += b2Array_ByteCount( world->contactHitEvents );
+	eventBytes += b2Array_ByteCount( world->jointEvents );
+	total += eventBytes;
+
+	fprintf( file, "events: %d\n\n", eventBytes );
+
+	// Debug draw bit sets
+	int debugBytes = 0;
+	debugBytes += b2GetBitSetBytes( &world->debugBodySet );
+	debugBytes += b2GetBitSetBytes( &world->debugJointSet );
+	debugBytes += b2GetBitSetBytes( &world->debugContactSet );
+	debugBytes += b2GetBitSetBytes( &world->debugIslandSet );
+	total += debugBytes;
+
+	fprintf( file, "debug draw: %d\n\n", debugBytes );
+
 	// stack allocator
+	total += world->stack.capacity;
 	fprintf( file, "stack allocator: %d\n\n", world->stack.capacity );
 
-	// chain shapes
-	// todo
+	fprintf( file, "total: %d\n", total );
 
 	fclose( file );
 }

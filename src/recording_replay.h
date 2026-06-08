@@ -78,22 +78,38 @@ typedef struct b2RecReader
 	b2RecPlayer* owner; // player that owns this reader
 } b2RecReader;
 
-// Incremental player. Owns the file image and drives replay one step at a time.
+// A restore point captured during forward replay, so a backward seek can re-simulate only the gap
+// from the nearest keyframe instead of from frame 0. The image is a full b2SerializeWorld blob.
+typedef struct b2RecKeyframe
+{
+	uint8_t* image; // serialized world at the end of this frame
+	int imageSize;
+	int imageCapacity; // allocation size of image, which over-allocates, so the free size matches
+	int frame;		   // frame this restores to, a post-step boundary
+	int cursor;		   // op-stream offset where the next frame resumes
+	b2BodyId* bodyIds; // outliner list as of this frame
+	int bodyIdCount;
+	int divergeFrame; // divergence latches as of this frame, so a seek reports the linear path's state
+	bool diverged;
+} b2RecKeyframe;
+
+// Incremental player. Owns a private copy of the recording bytes and drives replay one step at a time.
 struct b2RecPlayer
 {
-	uint8_t* data; // file image, owned here
+	uint8_t* data; // recording bytes, a private copy owned here
 	int size;
-	int headerEnd;			  // first payload offset
-	uint32_t buildHash;		  // engine build that produced the file, from the header
-	uint64_t wallClock;		  // unix time the recording was made, from the header
-	int frame;				  // steps dispatched so far
-	int frameCount;			  // total recorded steps, counted once at open
-	int recordedWorkerCount;  // worker count from the recorded world def
-	float recordedDt;		  // dt of the first recorded step
-	int recordedSubStepCount; // sub-steps of the first recorded step
-	int divergeFrame;		  // first step that diverged, -1 until then
-	bool atEnd;				  // a StepFrame ran out of records without reaching a step
-	b2RecReader rdr;		  // cursor and replay world, threaded into every dispatcher
+	int headerEnd;			   // first payload offset
+	float lengthScale;		   // length scale used in the recording
+	float previousLengthScale; // global length scale before this player overrode it, restored on destroy
+	int frame;				   // steps dispatched so far
+	int frameCount;			   // total recorded steps, counted once at open
+	int recordedWorkerCount;   // worker count the replay world runs at
+	float recordedDt;		   // dt of the first recorded step
+	int recordedSubStepCount;  // sub-steps of the first recorded step
+	b2AABB bounds;			   // accumulated world bounds, resolved by the open-time scan
+	int divergeFrame;		   // first step that diverged, -1 until then
+	bool atEnd;				   // a StepFrame ran out of records without reaching a step
+	b2RecReader rdr;		   // cursor and replay world, threaded into every dispatcher
 
 	// Per-frame query store, reset at the top of each StepFrame
 	b2RecDrawQuery* frameQueries;
@@ -108,6 +124,25 @@ struct b2RecPlayer
 	b2BodyId* bodyIds;
 	int bodyIdCount;
 	int bodyIdCap;
+
+	// Frame-0 image used to restart in place, so the replay world id stays stable across a
+	// restart or backward scrub. Points into the seed snapshot blob inside the owned copy.
+	const uint8_t* frame0Image;
+	int frame0Size;
+	b2BodyId* frame0BodyIds;
+	int frame0BodyIdCount;
+
+	// Keyframe ring for fast backward seeks. Captured in increasing-frame order as the replay plays
+	// forward. The spacing doubles and the off-grid keyframes are evicted once the memory budget is
+	// hit, so memory stays bounded and seek cost grows only once a recording outgrows the budget.
+	b2RecKeyframe* keyframes;
+	int keyframeCount;
+	int keyframeCapacity;
+	size_t keyframeBudget;	 // memory cap in bytes for the kept snapshots
+	size_t keyframeBytes;	 // running total of kept snapshot + body-list bytes
+	int keyframeMinInterval; // finest spacing in frames
+	int keyframeInterval;	 // current spacing, a power-of-two multiple of the min, doubles on eviction
+	int lastKeyframeFrame;	 // highest frame captured, guards against re-capture while back-stepping
 };
 
 // Read primitives
@@ -139,7 +174,6 @@ b2MassData b2RecR_MASSDATA( b2RecReader* rdr );
 b2MotionLocks b2RecR_LOCKS( b2RecReader* rdr );
 const char* b2RecR_STR( b2RecReader* rdr );
 b2ExplosionDef b2RecR_EXPLOSIONDEF( b2RecReader* rdr );
-b2WorldDef b2RecR_WORLDDEF( b2RecReader* rdr );
 b2BodyDef b2RecR_BODYDEF( b2RecReader* rdr );
 b2ShapeDef b2RecR_SHAPEDEF( b2RecReader* rdr );
 b2ChainDef b2RecR_CHAINDEF( b2RecReader* rdr );

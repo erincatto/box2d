@@ -13,7 +13,6 @@ set(BOX2D_SOURCE_FILES
 	body.h
 	broad_phase.c
 	broad_phase.h
-	build_hash.h.in
 	constraint_graph.c
 	constraint_graph.h
 	contact.c
@@ -66,6 +65,8 @@ set(BOX2D_SOURCE_FILES
 	types.c
 	weld_joint.c
 	wheel_joint.c
+	world_snapshot.c
+	world_snapshot.h
 )
 
 set(BOX2D_API_FILES
@@ -78,38 +79,12 @@ set(BOX2D_API_FILES
 	../include/box2d/types.h
 )
 
-# Stamp the short git hash into recordings so replay can refuse a file made by a
-# different engine build. Resolved at configure time, so it can lag a commit until
-# the next cmake run. 0 (no git, or a non-repo checkout) disables the replay check.
-set(BOX2D_BUILD_HASH "00000000")
-find_package(Git QUIET)
-if(GIT_FOUND)
-	execute_process(
-		COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		OUTPUT_VARIABLE BOX2D_GIT_SHA
-		OUTPUT_STRIP_TRAILING_WHITESPACE
-		ERROR_QUIET
-		RESULT_VARIABLE BOX2D_GIT_RESULT
-	)
-	if(BOX2D_GIT_RESULT EQUAL 0 AND BOX2D_GIT_SHA)
-		string(SUBSTRING "${BOX2D_GIT_SHA}" 0 8 BOX2D_BUILD_HASH)
-	endif()
-endif()
-configure_file(build_hash.h.in "${CMAKE_CURRENT_BINARY_DIR}/build_hash.h" @ONLY)
-set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/build_hash.h" PROPERTIES GENERATED TRUE)
-
 # Hide internal functions
 # https://gcc.gnu.org/wiki/Visibility
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 
 add_library(box2d ${BOX2D_SOURCE_FILES} ${BOX2D_API_FILES})
-
-# The build hash header is generated into the binary dir, so it is not in the source list. Add it
-# to the target and a source group so the IDE shows it next to the hand-written sources.
-target_sources(box2d PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/build_hash.h")
-source_group("src" FILES "${CMAKE_CURRENT_BINARY_DIR}/build_hash.h")
 
 target_include_directories(box2d
   PUBLIC

@@ -20,6 +20,8 @@
 #include "box2d/math_functions.h"
 
 #include <GLFW/glfw3.h>
+#include <nfd.h>
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,9 +60,12 @@ void SampleContext::Save()
 	FILE* file = fopen( fileName, "w" );
 	fprintf( file, "{\n" );
 	fprintf( file, "  \"sampleIndex\": %d,\n", sampleIndex );
+	fprintf( file, "  \"newUser\": %d,\n", false );
 	fprintf( file, "  \"drawShapes\": %s,\n", debugDraw.drawShapes ? "true" : "false" );
 	fprintf( file, "  \"drawJoints\": %s,\n", debugDraw.drawJoints ? "true" : "false" );
-	fprintf( file, "  \"showDiagnostics\": %s\n", showMetrics ? "true" : "false" );
+	fprintf( file, "  \"showDiagnostics\": %s,\n", showMetrics ? "true" : "false" );
+	fprintf( file, "  \"replayKeyframeBudgetMB\": %d,\n", replayKeyframeBudgetMB );
+	fprintf( file, "  \"replayKeyframeMinInterval\": %d\n", replayKeyframeMinInterval );
 	fprintf( file, "}\n" );
 	fclose( file );
 }
@@ -149,6 +154,11 @@ void SampleContext::Load()
 
 	recycleDistance = B2_CONTACT_RECYCLE_DISTANCE;
 
+	if (g_replayIndex >= 0)
+	{
+		sampleIndex = g_replayIndex;
+	}
+
 	char* data = nullptr;
 	int size = 0;
 	bool found = ReadFile( data, size, fileName );
@@ -156,6 +166,8 @@ void SampleContext::Load()
 	{
 		return;
 	}
+
+	newUser = false;
 
 	jsmn_parser parser;
 	jsmntok_t tokens[MAX_TOKENS];
@@ -216,6 +228,26 @@ void SampleContext::Load()
 				showMetrics = false;
 			}
 		}
+		else if ( jsoneq( data, &tokens[i], "replayKeyframeBudgetMB" ) == 0 )
+		{
+			int count = tokens[i + 1].end - tokens[i + 1].start;
+			assert( count < 32 );
+			const char* s = data + tokens[i + 1].start;
+			strncpy( buffer, s, count );
+			buffer[count] = 0;
+			char* dummy;
+			replayKeyframeBudgetMB = (int)strtol( buffer, &dummy, 10 );
+		}
+		else if ( jsoneq( data, &tokens[i], "replayKeyframeMinInterval" ) == 0 )
+		{
+			int count = tokens[i + 1].end - tokens[i + 1].start;
+			assert( count < 32 );
+			const char* s = data + tokens[i + 1].start;
+			strncpy( buffer, s, count );
+			buffer[count] = 0;
+			char* dummy;
+			replayKeyframeMinInterval = (int)strtol( buffer, &dummy, 10 );
+		}
 	}
 
 	free( data );
@@ -274,6 +306,9 @@ Sample::Sample( SampleContext* context, bool createWorld )
 
 	g_randomSeed = RAND_SEED;
 
+	m_recording = nullptr;
+	m_recordStartStep = 0;
+
 	if ( createWorld )
 	{
 		CreateWorld();
@@ -283,16 +318,49 @@ Sample::Sample( SampleContext* context, bool createWorld )
 
 Sample::~Sample()
 {
-	if (B2_IS_NON_NULL(m_worldId))
+	if ( B2_IS_NON_NULL( m_worldId ) )
 	{
+		FinishRecording();
 		b2DestroyWorld( m_worldId );
 	}
+}
+
+void Sample::StartRecording()
+{
+	if ( m_recording != nullptr )
+	{
+		return;
+	}
+
+	uint64_t ticks = b2GetTicks();
+
+	// Snapshots the live world as the seed, so recording can begin at any step boundary
+	m_recording = b2CreateRecording( 0 );
+	b2World_StartRecording( m_worldId, m_recording );
+	m_recordStartStep = m_stepCount;
+
+	float ms = b2GetMilliseconds( ticks );
+	printf( "b2World_StartRecording took : %g ms", ms );
+}
+
+void Sample::FinishRecording()
+{
+	if ( m_recording == nullptr )
+	{
+		return;
+	}
+
+	b2World_StopRecording( m_worldId );
+	b2SaveRecordingToFile( m_recording, m_context->recordingFile );
+	b2DestroyRecording( m_recording );
+	m_recording = nullptr;
 }
 
 void Sample::CreateWorld()
 {
 	if ( B2_IS_NON_NULL( m_worldId ) )
 	{
+		FinishRecording();
 		b2DestroyWorld( m_worldId );
 		m_worldId = b2_nullWorldId;
 	}
@@ -302,10 +370,6 @@ void Sample::CreateWorld()
 	worldDef.userTaskContext = this;
 	worldDef.enableSleep = m_context->enableSleep;
 	worldDef.capacity = m_context->capacity;
-	if ( m_context->record )
-	{
-		worldDef.recordingPath = m_context->recordingFile;
-	}
 	m_worldId = b2CreateWorld( &worldDef );
 
 	b2World_SetContactRecycleDistance( m_worldId, m_context->recycleDistance );
@@ -462,12 +526,6 @@ void Sample::Step()
 		else
 		{
 			timeStep = 0.0f;
-		}
-
-		if ( m_context->showUI )
-		{
-			DrawScreenTextLine( "****PAUSED****" );
-			DrawScreenTextLine( "" );
 		}
 	}
 
@@ -874,7 +932,7 @@ void Sample::DrawMetrics()
 				ImGui::Text( "joints   %d", s.jointCount );
 				ImGui::Text( "islands/tasks %d / %d", s.islandCount, s.taskCount );
 				ImGui::Text( "tree height static/movable %d / %d", s.staticTreeHeight, s.treeHeight );
-				ImGui::Text( "alloc %d K   stack %d K", s.byteCount / 1024, s.stackUsed / 1024 );
+				ImGui::Text( "alloc %lld K   stack %d K", (long long)( s.byteCount / 1024 ), s.stackUsed / 1024 );
 
 				{
 					float frac = s.awakeContactCount > 0
@@ -949,6 +1007,25 @@ void Sample::DrawMetrics()
 	}
 
 	ImGui::End();
+}
+
+void Sample::DrawHud( float frameTime )
+{
+	const SampleEntry& entry = g_sampleEntries[m_context->sampleIndex];
+	float fontSize = ImGui::GetFontSize();
+
+	DrawScreenString( m_context->draw, 5.0f, 1.5f * fontSize, b2_colorYellow, "%s : %s", entry.category, entry.name );
+	DrawScreenString( m_context->draw, 5.0f, 3.0f * fontSize, b2_colorForestGreen, "Press TAB to show UI" );
+	m_screenTextY += 1.5f * fontSize;
+
+	if ( m_context->pause )
+	{
+		DrawScreenString( m_context->draw, 5.0f, 4.5f * fontSize, b2_colorRed, "****PAUSED****" );
+		m_screenTextY += 1.5f * fontSize;
+	}
+
+	DrawScreenString( m_context->draw, 5.0f, m_camera->height - 0.5f * fontSize, b2_colorSeaGreen, "%.1f ms  step %d",
+					  1000.0f * frameTime, m_stepCount );
 }
 
 // Parse an SVG path element with only straight lines. Example:
@@ -1137,6 +1214,7 @@ static int FuzzyScore( const char* needle, const char* haystack )
 
 SampleEntry g_sampleEntries[MAX_SAMPLES] = {};
 int g_sampleCount = 0;
+int g_replayIndex = -1;
 
 int RegisterSample( const char* category, const char* name, SampleCreateFcn* fcn )
 {
@@ -1164,6 +1242,20 @@ int RegisterSampleWithCapacity( const char* category, const char* name, SampleCr
 	return -1;
 }
 
+int RegisterReplay( const char* category, const char* name, SampleCreateFcn* fcn )
+{
+	int index = g_sampleCount;
+	if ( index < MAX_SAMPLES )
+	{
+		g_sampleEntries[index] = { category, name, fcn, nullptr };
+		g_replayIndex = index;
+		++g_sampleCount;
+		return index;
+	}
+
+	return -1;
+}
+
 void SelectSample( SampleContext* context, int selection, bool restart )
 {
 	if ( restart == false )
@@ -1172,9 +1264,6 @@ void SelectSample( SampleContext* context, int selection, bool restart )
 		context->sampleIndex = selection;
 		context->subStepCount = 4;
 		context->debugDraw.drawJoints = true;
-
-		// Switching samples stops recording; a restart keeps it on and re-records
-		context->record = false;
 	}
 
 	delete context->sample;
@@ -1336,7 +1425,27 @@ static void DrawMenuBar( SampleContext* context )
 			ImGui::EndMenu();
 		}
 
-		static bool showHelp = false;
+		// Only present once the replay viewer is registered. Open pops a native picker, then
+		// hands the chosen file to the viewer through replayFile.
+		if ( g_replayIndex >= 0 && ImGui::BeginMenu( "Replay" ) )
+		{
+			if ( ImGui::MenuItem( "Open..." ) )
+			{
+				NFD_Init();
+				nfdu8char_t* outPath = nullptr;
+				nfdu8filteritem_t filter[1] = { { "Box2D recording", "b2rec" } };
+				if ( NFD_OpenDialogU8( &outPath, filter, 1, nullptr ) == NFD_OKAY )
+				{
+					snprintf( context->replayFile, sizeof( context->replayFile ), "%s", outPath );
+					NFD_FreePathU8( outPath );
+					SelectSample( context, g_replayIndex, false );
+				}
+				NFD_Quit();
+			}
+			ImGui::EndMenu();
+		}
+
+		static bool showHelp = context->newUser;
 		static bool showAbout = false;
 		if ( ImGui::BeginMenu( "Help" ) )
 		{
@@ -1369,7 +1478,7 @@ static void DrawMenuBar( SampleContext* context )
 				{
 					DrawRow( "Tab", "Show / hide UI" );
 					DrawRow( "M", "Show / hide diagnostics" );
-					DrawRow( "P", "Pause / resume" );
+					DrawRow( "Space", "Pause / resume" );
 					DrawRow( "O", "Single step" );
 					DrawRow( "R", "Restart sample" );
 					DrawRow( "[  ]", "Previous / next sample" );
@@ -1564,24 +1673,7 @@ void DrawSamplePicker( SampleContext* context )
 	}
 }
 
-// When UI is hidden draw a minimal in world hud
-static void DrawHud( SampleContext* context, float frameTime )
-{
-	const SampleEntry& entry = g_sampleEntries[context->sampleIndex];
-	float fontSize = ImGui::GetFontSize();
-
-	DrawScreenString( context->draw, 5.0f, 1.5f * fontSize, b2_colorYellow, "%s : %s", entry.category, entry.name );
-	DrawScreenString( context->draw, 5.0f, context->camera.height - 0.5f * fontSize, b2_colorSeaGreen, "%.1f ms  step %d",
-					  1000.0f * frameTime, context->sample->m_stepCount );
-}
-
-static inline ImVec4 MakeColor( b2HexColor hexColor )
-{
-	ImU32 color = IM_COL32( ( hexColor >> 16 ) & 0xFF, ( hexColor >> 8 ) & 0xFF, hexColor & 0xFF, 255 );
-	return ImGui::ColorConvertU32ToFloat4( color );
-}
-
-static void DrawRightPanel( SampleContext* context, float frameTime )
+static void DrawInfoPanel( SampleContext* context, float frameTime )
 {
 	const SampleEntry& entry = g_sampleEntries[context->sampleIndex];
 	float fontSize = ImGui::GetFontSize();
@@ -1598,6 +1690,15 @@ static void DrawRightPanel( SampleContext* context, float frameTime )
 	ImGui::TextColored( MakeColor( b2_colorGoldenRod ), "%s", entry.name );
 	ImGui::TextColored( MakeColor( b2_colorLightGray ), "%s", entry.category );
 	ImGui::Separator();
+
+	if ( context->pause )
+	{
+		ImGui::TextColored( MakeColor( b2_colorRed ), "PAUSED" );
+		ImGui::SameLine();
+		ImGui::TextDisabled( "(space)" );
+		ImGui::Separator();
+	}
+
 	ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "%.1f ms", 1000.0f * frameTime );
 	ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "step %d", context->sample->m_stepCount );
 	ImGui::Separator();
@@ -1642,24 +1743,28 @@ static void DrawRightPanel( SampleContext* context, float frameTime )
 		ImGui::InputText( "File##Recording", context->recordingFile, sizeof( context->recordingFile ) );
 		ImGui::PopItemWidth();
 
-		if ( context->record == false )
+		if ( context->sample->m_recording == nullptr )
 		{
-			// Recording must begin at world creation, so restart with it enabled
-			if ( ImGui::Button( "Record##Recording" ) )
+			// Restart to a clean world then snapshot it at step 0, a whole session capture
+			if ( ImGui::Button( "Record (restart)##Recording" ) )
 			{
-				context->record = true;
 				SelectSample( context, context->sampleIndex, true );
+				context->sample->StartRecording();
+			}
+
+			// Snapshot the running world and log from here, the mid simulation case
+			if ( ImGui::Button( "Record Now##Recording" ) )
+			{
+				context->sample->StartRecording();
 			}
 		}
 		else
 		{
 			if ( ImGui::Button( "Stop##Recording" ) )
 			{
-				b2World_StopRecording( context->sample->m_worldId );
-				context->record = false;
+				context->sample->FinishRecording();
 			}
-			ImGui::SameLine();
-			ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "recording" );
+			ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "recording (from step %d)", context->sample->m_recordStartStep );
 		}
 	}
 
@@ -1670,15 +1775,8 @@ static void DrawRightPanel( SampleContext* context, float frameTime )
 // this can delete the current sample.
 void DrawUI( SampleContext* context, float frameTime )
 {
-	if ( context->showUI == false )
-	{
-		// Minimal hud
-		DrawHud( context, frameTime );
-		return;
-	}
-
 	DrawMenuBar( context );
 	DrawSamplePicker( context );
-	DrawRightPanel( context, frameTime );
+	DrawInfoPanel( context, frameTime );
 	context->sample->DrawMetrics();
 }
