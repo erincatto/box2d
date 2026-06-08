@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 // X-macro manifest for the recording system.
-// Include with B2_REC_OP and ARG defined; no commas between ARG tokens.
+// Include with B2_REC_OP and ARG defined. No commas between ARG tokens.
 //
 // B2_REC_OP( opcode, Name, RET, ARGS )
 //   RET in { RET_NONE, RET_BODYID, RET_SHAPEID }
@@ -20,7 +20,8 @@
 //   0xE0-0xEF  spatial queries
 //   0xF0-0xFF  markers
 
-B2_REC_OP( 0x00, CreateWorld, RET_NONE, ARG( WORLDDEF, def ) )
+// Recordings are seeded with a world snapshot, not a CreateWorld op. DestroyWorld stays as the
+// end-of-session marker the viewer reads.
 B2_REC_OP( 0x01, DestroyWorld, RET_NONE, ARG( WORLDID, world ) )
 B2_REC_OP( 0x80, Step, RET_NONE, ARG( WORLDID, world ) ARG( F32, dt ) ARG( I32, subStepCount ) )
 
@@ -201,3 +202,6 @@ B2_REC_OP( 0xE7, ShapeTestPoint, RET_NONE, ARG( SHAPEID, shape ) ARG( VEC2, poin
 B2_REC_OP( 0xE8, ShapeRayCast, RET_NONE, ARG( SHAPEID, shape ) ARG( RAYCASTINPUT, input ) )
 
 B2_REC_OP( 0xF1, StateHash, RET_NONE, ARG( WORLDID, world ) ARG( U64, hash ) )
+
+// Accumulated world bounds over the whole recording, written once at stop. Informational.
+B2_REC_OP( 0xF2, RecordingBounds, RET_NONE, ARG( AABB, bounds ) )

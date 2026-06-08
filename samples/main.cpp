@@ -64,7 +64,7 @@ inline bool IsPowerOfTwo( int x )
 	return ( x != 0 ) && ( ( x & ( x - 1 ) ) == 0 );
 }
 
-void* AllocFcn( unsigned int size, int alignment )
+void* AllocFcn( size_t size, int alignment )
 {
 	// Allocation must be a multiple of alignment or risk a seg fault
 	// https://en.cppreference.com/w/c/memory/aligned_alloc
@@ -81,7 +81,7 @@ void* AllocFcn( unsigned int size, int alignment )
 	return ptr;
 }
 
-void FreeFcn( void* mem, unsigned int size )
+void FreeFcn( void* mem, size_t size )
 {
 	(void)size;
 
@@ -314,7 +314,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				}
 				break;
 
-			case GLFW_KEY_P:
+			case GLFW_KEY_SPACE:
 				s_context.pause = !s_context.pause;
 				break;
 
@@ -450,11 +450,11 @@ static void ScrollCallback( GLFWwindow* window, double dx, double dy )
 	s_context.camera.center -= pw2 - pw1;
 }
 
-int main( int, char** )
+int main( int argc, char** argv )
 {
 #if defined( _MSC_VER )
 	// Enable memory-leak reports
-	//_CrtSetBreakAlloc( 217 );
+	//_CrtSetBreakAlloc( 1418 );
 	_CrtSetReportMode( _CRT_WARN, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_FILE );
 	_CrtSetReportFile( _CRT_WARN, _CRTDBG_FILE_STDOUT );
 	//_CrtSetAllocHook(MyAllocHook);
@@ -472,6 +472,14 @@ int main( int, char** )
 
 	s_context.Load();
 	s_context.workerCount = b2MinInt( 8, GetNumberOfCores() / 2 );
+
+	// A recording path on the command line opens straight into the replay viewer.
+	// Dragging a file onto the exe arrives here as argv[1] too.
+	if ( argc > 1 && g_replayIndex >= 0 )
+	{
+		snprintf( s_context.replayFile, sizeof( s_context.replayFile ), "%s", argv[1] );
+		s_context.sampleIndex = g_replayIndex;
+	}
 
 	SortSamples();
 
@@ -625,13 +633,23 @@ int main( int, char** )
 		}
 
 		s_context.sample->ResetText();
+
+		if ( s_context.showUI == false )
+		{
+			// Minimal hud
+			s_context.sample->DrawHud( frameTime );
+		}
+
 		s_context.sample->Step();
 
 		FlushDraw( s_context.draw, &s_context.camera );
 
-		DrawUI( &s_context, frameTime );
+		if ( s_context.showUI == true )
+		{
+			DrawUI( &s_context, frameTime );
+		}
 
-		//ImGui::ShowDemoWindow();
+		// ImGui::ShowDemoWindow();
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );

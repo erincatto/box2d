@@ -11,6 +11,7 @@
 #include "shader.h"
 #include "shaders_embedded.h"
 
+#include "box2d/constants.h"
 #include "box2d/math_functions.h"
 
 #include <assert.h>
@@ -31,8 +32,8 @@
 #include <GLFW/glfw3.h>
 // clang-format on
 
-//#define STB_IMAGE_WRITE_IMPLEMENTATION
-//#include "stb_image_write.h"
+// #define STB_IMAGE_WRITE_IMPLEMENTATION
+// #include "stb_image_write.h"
 
 #define BUFFER_OFFSET( x ) ( (const void*)( x ) )
 
@@ -150,6 +151,29 @@ b2AABB GetViewBounds( Camera* camera )
 	bounds.lowerBound = ConvertScreenToWorld( camera, (b2Vec2){ 0.0f, camera->height } );
 	bounds.upperBound = ConvertScreenToWorld( camera, (b2Vec2){ camera->width, 0.0f } );
 	return bounds;
+}
+
+void FocusOnBounds( Camera* camera, b2AABB bounds )
+{
+	if ( camera->width == 0 )
+	{
+		return;
+	}
+
+	b2Vec2 extents = b2AABB_Extents( bounds );
+
+	if ( extents.x < B2_LINEAR_SLOP || extents.y < B2_LINEAR_SLOP )
+	{
+		return;
+	}
+
+	float invRatio = camera->height / camera->width;
+	camera->zoom = b2MaxFloat( extents.x * invRatio, extents.y );
+
+	// Need to guard against zero because zoom can get stuck there
+	camera->zoom = b2MaxFloat( camera->zoom, 0.01f );
+
+	camera->center = b2AABB_Center( bounds );
 }
 
 typedef struct

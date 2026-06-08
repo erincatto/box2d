@@ -78,3 +78,25 @@ static inline uint32_t b2AtomicLoadU32( b2AtomicU32* a )
 #error "Unsupported platform"
 #endif
 }
+
+static inline int64_t b2AtomicFetchAddI64( b2AtomicI64* a, int64_t increment )
+{
+#if defined( _MSC_VER )
+	return (int64_t)_InterlockedExchangeAdd64( (__int64*)&a->value, (__int64)increment );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_fetch_add( &a->value, increment, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
+static inline int64_t b2AtomicLoadI64( b2AtomicI64* a )
+{
+#if defined( _MSC_VER )
+	return _InterlockedOr64( (__int64*)&a->value, 0 );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_load_n( &a->value, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}

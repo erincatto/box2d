@@ -254,8 +254,8 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
-    - name: Install X11, Wayland & GL development libraries
-      run: sudo apt-get update && sudo apt-get install -y libx11-dev wayland-protocols libwayland-dev libxkbcommon-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev
+    - name: Install X11, Wayland, GL & GTK development libraries
+      run: sudo apt-get update && sudo apt-get install -y libx11-dev wayland-protocols libwayland-dev libxkbcommon-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev libgtk-3-dev
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DBOX2D_SAMPLES=ON -DBUILD_SHARED_LIBS=OFF -DBOX2D_UNIT_TESTS=OFF
