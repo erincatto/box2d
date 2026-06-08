@@ -450,7 +450,7 @@ static void ScrollCallback( GLFWwindow* window, double dx, double dy )
 	s_context.camera.center -= pw2 - pw1;
 }
 
-int main( int, char** )
+int main( int argc, char** argv )
 {
 #if defined( _MSC_VER )
 	// Enable memory-leak reports
@@ -472,6 +472,14 @@ int main( int, char** )
 
 	s_context.Load();
 	s_context.workerCount = b2MinInt( 8, GetNumberOfCores() / 2 );
+
+	// A recording path on the command line opens straight into the replay viewer.
+	// Dragging a file onto the exe arrives here as argv[1] too.
+	if ( argc > 1 && g_replayIndex >= 0 )
+	{
+		snprintf( s_context.replayFile, sizeof( s_context.replayFile ), "%s", argv[1] );
+		s_context.sampleIndex = g_replayIndex;
+	}
 
 	SortSamples();
 

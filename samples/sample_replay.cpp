@@ -931,6 +931,7 @@ public:
 			return;
 		}
 
+		ImGui::Text( "id      %d", shape.index1 );
 		ImGui::Text( "type     %s", ReplayShapeTypeName( b2Shape_GetType( shape ) ) );
 		b2Filter f = b2Shape_GetFilter( shape );
 		ImGui::Text( "category 0x%016llx", (unsigned long long)f.categoryBits );

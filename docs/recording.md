@@ -106,7 +106,7 @@ determinism contract below). `b2RecPlayer_IsAtEnd` reports when the recording is
 is non-fatal during playback so the viewer can keep playing and show where the run starts to
 differ.
 
-## Snapshots
+## Snapshots (#snapshot)
 
 A recording is seeded by a snapshot: a serialized image of a world's simulation state at a step
 boundary. It captures everything the engine needs to continue the simulation: bodies, shapes,
@@ -150,6 +150,14 @@ The samples app has a **Replay** category with a recording viewer:
   supports play, pause, single-step, restart, and camera control. A `DIVERGED` overlay appears
   if a recorded state hash fails to reproduce, which is a real determinism break, not a viewer
   bug.
+
+The quickest way in is to pass the recording on the command line, which boots the samples app straight into the viewer with the file pre-loaded:
+
+```c
+samples path/to/session.b2rec
+```
+
+On Windows you can also drag a `.b2rec` file onto `samples.exe`. Otherwise open a recording from the **Replay** menu.
 
 You can also record any sample: open the **Recording** controls in the diagnostics drawer, set a
 file name, and press **Record**. The sample restarts with recording on, and **Stop** saves the
