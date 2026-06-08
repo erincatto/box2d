@@ -566,14 +566,14 @@ void b2RecBeginRecord( b2Recording* rec, uint8_t opcode )
 {
 	b2RecW_U8( &rec->buffer, opcode );
 	rec->recordStart = rec->buffer.size;
-	// Make space to hold a 24 byte payload size, which isn't known until b2RecEndRecord is called.
+	// Make space to hold a 24-bit payload size, which isn't known until b2RecEndRecord is called.
 	uint8_t zero[3] = { 0, 0, 0 };
 	b2RecBufAppend( &rec->buffer, zero, 3 );
 }
 
 void b2RecEndRecord( b2Recording* rec )
 {
-	// Compute the final payload size and record it in the 24 byte space reserved right after the opcode.
+	// Compute the final payload size and record it in the 24-bit space reserved right after the opcode.
 	int payloadSize = rec->buffer.size - rec->recordStart - 3;
 	B2_ASSERT( payloadSize >= 0 && payloadSize < ( 1 << 24 ) );
 	uint8_t* p = rec->buffer.data + rec->recordStart;

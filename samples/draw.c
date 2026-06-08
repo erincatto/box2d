@@ -32,8 +32,8 @@
 #include <GLFW/glfw3.h>
 // clang-format on
 
-//#define STB_IMAGE_WRITE_IMPLEMENTATION
-//#include "stb_image_write.h"
+// #define STB_IMAGE_WRITE_IMPLEMENTATION
+// #include "stb_image_write.h"
 
 #define BUFFER_OFFSET( x ) ( (const void*)( x ) )
 
@@ -153,16 +153,16 @@ b2AABB GetViewBounds( Camera* camera )
 	return bounds;
 }
 
-void FocusOnBounds(Camera* camera, b2AABB bounds)
+void FocusOnBounds( Camera* camera, b2AABB bounds )
 {
-	if (camera->width == 0)
+	if ( camera->width == 0 )
 	{
 		return;
 	}
 
 	b2Vec2 extents = b2AABB_Extents( bounds );
 
-	if (extents.x < B2_LINEAR_SLOP || extents.y < B2_LINEAR_SLOP)
+	if ( extents.x < B2_LINEAR_SLOP || extents.y < B2_LINEAR_SLOP )
 	{
 		return;
 	}
