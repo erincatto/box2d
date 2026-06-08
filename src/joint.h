@@ -61,15 +61,13 @@ typedef struct b2Joint
 
 } b2Joint;
 
+// Character joint is like a motor joint, but customized for character movement.
 typedef struct b2CharacterJoint
 {
-	b2Vec2 target;
-	float maxVelocityForce;
 	float linearHertz;
 	float linearDampingRatio;
 	float maxSpringForce;
 
-	b2Vec2 linearVelocityImpulse;
 	b2Vec2 linearSpringImpulse;
 
 	b2Softness linearSpring;
@@ -80,9 +78,28 @@ typedef struct b2CharacterJoint
 	b2Transform frameB;
 	b2Vec2 deltaCenter;
 
-	// Assume center of mass
 	b2Mat22 linearMass;
-} b2MotorJoint;
+} b2CharacterJoint;
+
+// The pogo joint is a hybrid between a contact and a joint
+typedef struct b2PogoJoint
+{
+	float linearHertz;
+	float linearDampingRatio;
+	float maxSpringForce;
+
+	b2Vec2 linearSpringImpulse;
+
+	b2Softness linearSpring;
+
+	int indexA;
+	int indexB;
+	b2Transform frameA;
+	b2Transform frameB;
+	b2Vec2 deltaCenter;
+
+	b2Mat22 linearMass;
+} b2PogoJoint;
 
 typedef struct b2DistanceJoint
 {
@@ -276,6 +293,7 @@ typedef struct b2JointSim
 
 	union
 	{
+		b2CharacterJoint characterJoint;
 		b2DistanceJoint distanceJoint;
 		b2MotorJoint motorJoint;
 		b2RevoluteJoint revoluteJoint;
