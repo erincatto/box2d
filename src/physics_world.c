@@ -2374,8 +2374,7 @@ static bool TreeOverlapCallback( int proxyId, uint64_t userData, void* context )
 	b2DistanceInput input;
 	input.proxyA = *worldContext->proxy;
 	input.proxyB = b2MakeShapeDistanceProxy( shape );
-	input.transformA = b2Transform_identity;
-	input.transformB = transform;
+	input.transform = transform;
 	input.useRadii = true;
 
 	b2SimplexCache cache = { 0 };
@@ -2473,7 +2472,7 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, uint64_t
 	if ( output.hit )
 	{
 		b2ShapeId id = { shapeId + 1, world->worldId, shape->generation };
-		float fraction = worldContext->fcn( id, output.point, output.normal, output.fraction, worldContext->userContext );
+		float fraction = worldContext->fcn( id, b2ToVec2( output.point ), output.normal, output.fraction, worldContext->userContext );
 
 		// The user may return -1 to skip this shape
 		if ( 0.0f <= fraction && fraction <= 1.0f )
@@ -2634,7 +2633,7 @@ static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 	if ( output.hit )
 	{
 		b2ShapeId id = { shapeId + 1, world->worldId, shape->generation };
-		float fraction = worldContext->fcn( id, output.point, output.normal, output.fraction, worldContext->userContext );
+		float fraction = worldContext->fcn( id, b2ToVec2( output.point ), output.normal, output.fraction, worldContext->userContext );
 
 		// The user may return -1 to skip this shape
 		if ( 0.0f <= fraction && fraction <= 1.0f )
@@ -3021,8 +3020,7 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 	b2DistanceInput input;
 	input.proxyA = b2MakeShapeDistanceProxy( shape );
 	input.proxyB = b2MakeProxy( &explosionContext->position, 1, 0.0f );
-	input.transformA = transform;
-	input.transformB = b2Transform_identity;
+	input.transform = b2InvMulTransforms( transform, b2Transform_identity );
 	input.useRadii = true;
 
 	b2SimplexCache cache = { 0 };
@@ -3042,7 +3040,7 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 		return true;
 	}
 
-	b2Vec2 closestPoint = output.pointA;
+	b2Vec2 closestPoint = b2TransformPoint( transform, output.pointA );
 	if ( output.distance == 0.0f )
 	{
 		b2Vec2 localCentroid = b2GetShapeCentroid( shape );

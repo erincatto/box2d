@@ -40,8 +40,7 @@ static int ShapeDistanceTest( void )
 	b2DistanceInput input;
 	input.proxyA = b2MakeProxy( vas, ARRAY_COUNT( vas ), 0.0f );
 	input.proxyB = b2MakeProxy( vbs, ARRAY_COUNT( vbs ), 0.0f );
-	input.transformA = b2Transform_identity;
-	input.transformB = b2Transform_identity;
+	input.transform = b2Transform_identity;
 	input.useRadii = false;
 
 	b2SimplexCache cache = { 0 };
@@ -64,8 +63,8 @@ static int ShapeCastTest( void )
 	b2ShapeCastPairInput input;
 	input.proxyA = b2MakeProxy( vas, ARRAY_COUNT( vas ), 0.0f );
 	input.proxyB = b2MakeProxy( vbs, ARRAY_COUNT( vbs ), 0.0f );
-	input.transformA = b2Transform_identity;
-	input.transformB = b2Transform_identity;
+	input.transformA = b2WorldTransform_identity;
+	input.transformB = b2WorldTransform_identity;
 	input.translationB = ( b2Vec2 ){ -2.0f, 0.0f };
 	input.maxFraction = 1.0f;
 

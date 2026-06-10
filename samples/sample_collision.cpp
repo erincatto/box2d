@@ -311,8 +311,7 @@ public:
 		b2DistanceInput input;
 		input.proxyA = m_proxyA;
 		input.proxyB = m_proxyB;
-		input.transformA = b2Transform_identity;
-		input.transformB = m_transform;
+		input.transform = m_transform;
 		input.useRadii = m_radiusA > 0.0f || m_radiusB > 0.0f;
 
 		if ( m_useCache == false )
@@ -3480,8 +3479,7 @@ public:
 		b2DistanceInput distanceInput;
 		distanceInput.proxyA = m_proxyA;
 		distanceInput.proxyB = m_proxyB;
-		distanceInput.transformA = b2Transform_identity;
-		distanceInput.transformB = transform;
+		distanceInput.transform = transform;
 		distanceInput.useRadii = false;
 		b2SimplexCache distanceCache;
 		distanceCache.count = 0;
@@ -3652,8 +3650,8 @@ public:
 			b2DistanceInput distanceInput;
 			distanceInput.proxyA = input.proxyA;
 			distanceInput.proxyB = input.proxyB;
-			distanceInput.transformA = b2GetSweepTransform( &sweepA, output.fraction );
-			distanceInput.transformB = b2GetSweepTransform( &sweepB, output.fraction );
+			distanceInput.transform =
+				b2InvMulTransforms( b2GetSweepTransform( &sweepA, output.fraction ), b2GetSweepTransform( &sweepB, output.fraction ) );
 			distanceInput.useRadii = false;
 			b2SimplexCache cache = { 0 };
 			b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, nullptr, 0 );

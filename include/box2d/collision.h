@@ -76,7 +76,7 @@ typedef struct b2CastOutput
 	b2Vec2 normal;
 
 	/// The surface hit point
-	b2Vec2 point;
+	b2Position point;
 
 	/// The fraction of the input translation at collision
 	float fraction;
@@ -368,11 +368,9 @@ typedef struct b2DistanceInput
 	/// The proxy for shape B
 	b2ShapeProxy proxyB;
 
-	/// The world transform for shape A
-	b2Transform transformA;
-
-	/// The world transform for shape B
-	b2Transform transformB;
+	/// Transform of shape B in shape A's frame, the relative pose B in A
+	/// (b2InvMulTransforms( worldA, worldB )). The query is origin independent and runs in frame A.
+	b2Transform transform;
 
 	/// Should the proxy radius be considered?
 	bool useRadii;
@@ -381,9 +379,9 @@ typedef struct b2DistanceInput
 /// Output for b2ShapeDistance
 typedef struct b2DistanceOutput
 {
-	b2Vec2 pointA;	  ///< Closest point on shapeA
-	b2Vec2 pointB;	  ///< Closest point on shapeB
-	b2Vec2 normal;	  ///< Normal vector that points from A to B. Invalid if distance is zero.
+	b2Vec2 pointA;	  ///< Closest point on shapeA, in shape A's frame
+	b2Vec2 pointB;	  ///< Closest point on shapeB, in shape A's frame
+	b2Vec2 normal;	  ///< A to B normal in shape A's frame. Invalid if distance is zero.
 	float distance;	  ///< The final distance, zero if overlapped
 	int iterations;	  ///< Number of GJK iterations used
 	int simplexCount; ///< The number of simplexes stored in the simplex array
@@ -416,10 +414,10 @@ B2_API b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2Simplex
 /// Input parameters for b2ShapeCast
 typedef struct b2ShapeCastPairInput
 {
-	b2ShapeProxy proxyA;	///< The proxy for shape A
-	b2ShapeProxy proxyB;	///< The proxy for shape B
-	b2Transform transformA; ///< The world transform for shape A
-	b2Transform transformB; ///< The world transform for shape B
+	b2ShapeProxy proxyA;		 ///< The proxy for shape A
+	b2ShapeProxy proxyB;		 ///< The proxy for shape B
+	b2WorldTransform transformA; ///< The world transform for shape A
+	b2WorldTransform transformB; ///< The world transform for shape B
 	b2Vec2 translationB;	///< The translation of shape B
 	float maxFraction;		///< The fraction of the translation to consider, typically 1
 	bool canEncroach;		///< Allows shapes with a radius to move slightly closer if already touching

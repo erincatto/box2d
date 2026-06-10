@@ -98,8 +98,7 @@ static bool b2SensorQueryCallback( int proxyId, uint64_t userData, void* context
 	b2DistanceInput input;
 	input.proxyA = b2MakeShapeDistanceProxy( sensorShape );
 	input.proxyB = b2MakeShapeDistanceProxy( otherShape );
-	input.transformA = queryContext->transform;
-	input.transformB = otherTransform;
+	input.transform = b2InvMulTransforms( queryContext->transform, otherTransform );
 	input.useRadii = true;
 	b2SimplexCache cache = { 0 };
 	b2DistanceOutput output = b2ShapeDistance( &input, &cache, NULL, 0 );

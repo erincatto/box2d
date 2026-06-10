@@ -131,7 +131,7 @@ b2CastOutput b2AABB_RayCast( b2AABB a, b2Vec2 p1, b2Vec2 p2 )
 	// Intersection.
 	output.fraction = tmin;
 	output.normal = normal;
-	output.point = b2Lerp( p1, p2, tmin );
+	output.point = b2MakePosition( b2Lerp( p1, p2, tmin ) );
 	output.hit = true;
 	return output;
 }

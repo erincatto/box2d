@@ -491,8 +491,7 @@ bool b2PointInPolygon( const b2Polygon* shape, b2Vec2 point )
 	b2DistanceInput input = { 0 };
 	input.proxyA = b2MakeProxy( shape->vertices, shape->count, 0.0f );
 	input.proxyB = b2MakeProxy( &point, 1, 0.0f );
-	input.transformA = b2Transform_identity;
-	input.transformB = b2Transform_identity;
+	input.transform = b2Transform_identity;
 	input.useRadii = false;
 
 	b2SimplexCache cache = { 0 };
@@ -526,7 +525,7 @@ b2CastOutput b2RayCastCircle( const b2Circle* shape, const b2RayCastInput* input
 		if ( b2LengthSquared( s ) < rr )
 		{
 			// initial overlap
-			output.point = input->origin;
+			output.point = b2MakePosition( input->origin );
 			output.hit = true;
 		}
 
@@ -561,7 +560,7 @@ b2CastOutput b2RayCastCircle( const b2Circle* shape, const b2RayCastInput* input
 		if ( b2LengthSquared( s ) < rr )
 		{
 			// initial overlap
-			output.point = input->origin;
+			output.point = b2MakePosition( input->origin );
 			output.hit = true;
 		}
 
@@ -573,7 +572,7 @@ b2CastOutput b2RayCastCircle( const b2Circle* shape, const b2RayCastInput* input
 
 	output.fraction = fraction / length;
 	output.normal = b2Normalize( hitPoint );
-	output.point = b2MulAdd( p, shape->radius, output.normal );
+	output.point = b2MakePosition( b2MulAdd( p, shape->radius, output.normal ) );
 	output.hit = true;
 
 	return output;
@@ -630,7 +629,7 @@ b2CastOutput b2RayCastCapsule( const b2Capsule* shape, const b2RayCastInput* inp
 		}
 
 		// ray starts inside capsule -> no hit
-		output.point = input->origin;
+		output.point = b2MakePosition( input->origin );
 		output.hit = true;
 		return output;
 	}
@@ -707,7 +706,7 @@ b2CastOutput b2RayCastCapsule( const b2Capsule* shape, const b2RayCastInput* inp
 	{
 		// ray hits capsule side
 		output.fraction = s2 / rayLength;
-		output.point = b2Add( b2Lerp( v1, v2, s1 / capsuleLength ), b2MulSV( shape->radius, n ) );
+		output.point = b2MakePosition( b2Add( b2Lerp( v1, v2, s1 / capsuleLength ), b2MulSV( shape->radius, n ) ) );
 		output.normal = n;
 		output.hit = true;
 		return output;
@@ -789,7 +788,7 @@ b2CastOutput b2RayCastSegment( const b2Segment* shape, const b2RayCastInput* inp
 	}
 
 	output.fraction = t;
-	output.point = p;
+	output.point = b2MakePosition( p );
 	output.normal = normal;
 	output.hit = true;
 
@@ -866,13 +865,13 @@ b2CastOutput b2RayCastPolygon( const b2Polygon* shape, const b2RayCastInput* inp
 		{
 			output.fraction = lower;
 			output.normal = shape->normals[index];
-			output.point = b2MulAdd( input->origin, lower, d );
+			output.point = b2MakePosition( b2MulAdd( input->origin, lower, d ) );
 			output.hit = true;
 		}
 		else
 		{
 			// initial overlap
-			output.point = input->origin;
+			output.point = b2MakePosition( input->origin );
 			output.hit = true;
 		}
 
@@ -882,8 +881,8 @@ b2CastOutput b2RayCastPolygon( const b2Polygon* shape, const b2RayCastInput* inp
 	b2ShapeCastPairInput castInput;
 	castInput.proxyA = b2MakeProxy( shape->vertices, shape->count, shape->radius );
 	castInput.proxyB = b2MakeProxy( &input->origin, 1, 0.0f );
-	castInput.transformA = b2Transform_identity;
-	castInput.transformB = b2Transform_identity;
+	castInput.transformA = b2WorldTransform_identity;
+	castInput.transformB = b2WorldTransform_identity;
 	castInput.translationB = input->translation;
 	castInput.maxFraction = input->maxFraction;
 	castInput.canEncroach = false;
@@ -895,8 +894,8 @@ b2CastOutput b2ShapeCastCircle( const b2Circle* shape, const b2ShapeCastInput* i
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->center, 1, shape->radius );
 	pairInput.proxyB = input->proxy;
-	pairInput.transformA = b2Transform_identity;
-	pairInput.transformB = b2Transform_identity;
+	pairInput.transformA = b2WorldTransform_identity;
+	pairInput.transformB = b2WorldTransform_identity;
 	pairInput.translationB = input->translation;
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
@@ -910,8 +909,8 @@ b2CastOutput b2ShapeCastCapsule( const b2Capsule* shape, const b2ShapeCastInput*
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->center1, 2, shape->radius );
 	pairInput.proxyB = input->proxy;
-	pairInput.transformA = b2Transform_identity;
-	pairInput.transformB = b2Transform_identity;
+	pairInput.transformA = b2WorldTransform_identity;
+	pairInput.transformB = b2WorldTransform_identity;
 	pairInput.translationB = input->translation;
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
@@ -925,8 +924,8 @@ b2CastOutput b2ShapeCastSegment( const b2Segment* shape, const b2ShapeCastInput*
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->point1, 2, 0.0f );
 	pairInput.proxyB = input->proxy;
-	pairInput.transformA = b2Transform_identity;
-	pairInput.transformB = b2Transform_identity;
+	pairInput.transformA = b2WorldTransform_identity;
+	pairInput.transformB = b2WorldTransform_identity;
 	pairInput.translationB = input->translation;
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
@@ -940,8 +939,8 @@ b2CastOutput b2ShapeCastPolygon( const b2Polygon* shape, const b2ShapeCastInput*
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( shape->vertices, shape->count, shape->radius );
 	pairInput.proxyB = input->proxy;
-	pairInput.transformA = b2Transform_identity;
-	pairInput.transformB = b2Transform_identity;
+	pairInput.transformA = b2WorldTransform_identity;
+	pairInput.transformB = b2WorldTransform_identity;
 	pairInput.translationB = input->translation;
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
@@ -955,8 +954,7 @@ b2PlaneResult b2CollideMoverAndCircle( const b2Capsule* mover, const b2Circle* s
 	b2DistanceInput distanceInput;
 	distanceInput.proxyA = b2MakeProxy( &shape->center, 1, 0.0f );
 	distanceInput.proxyB = b2MakeProxy( &mover->center1, 2, mover->radius );
-	distanceInput.transformA = b2Transform_identity;
-	distanceInput.transformB = b2Transform_identity;
+	distanceInput.transform = b2Transform_identity;
 	distanceInput.useRadii = false;
 
 	float totalRadius = mover->radius + shape->radius;
@@ -982,8 +980,7 @@ b2PlaneResult b2CollideMoverAndCapsule( const b2Capsule* mover, const b2Capsule*
 	b2DistanceInput distanceInput;
 	distanceInput.proxyA = b2MakeProxy( &shape->center1, 2, 0.0f );
 	distanceInput.proxyB = b2MakeProxy( &mover->center1, 2, mover->radius );
-	distanceInput.transformA = b2Transform_identity;
-	distanceInput.transformB = b2Transform_identity;
+	distanceInput.transform = b2Transform_identity;
 	distanceInput.useRadii = false;
 
 	float totalRadius = mover->radius + shape->radius;
@@ -1009,8 +1006,7 @@ b2PlaneResult b2CollideMoverAndPolygon( const b2Capsule* mover, const b2Polygon*
 	b2DistanceInput distanceInput;
 	distanceInput.proxyA = b2MakeProxy( shape->vertices, shape->count, shape->radius );
 	distanceInput.proxyB = b2MakeProxy( &mover->center1, 2, mover->radius );
-	distanceInput.transformA = b2Transform_identity;
-	distanceInput.transformB = b2Transform_identity;
+	distanceInput.transform = b2Transform_identity;
 	distanceInput.useRadii = false;
 
 	float totalRadius = mover->radius + shape->radius;
@@ -1036,8 +1032,7 @@ b2PlaneResult b2CollideMoverAndSegment( const b2Capsule* mover, const b2Segment*
 	b2DistanceInput distanceInput;
 	distanceInput.proxyA = b2MakeProxy( &shape->point1, 2, 0.0f );
 	distanceInput.proxyB = b2MakeProxy( &mover->center1, 2, mover->radius );
-	distanceInput.transformA = b2Transform_identity;
-	distanceInput.transformB = b2Transform_identity;
+	distanceInput.transform = b2Transform_identity;
 	distanceInput.useRadii = false;
 
 	float totalRadius = mover->radius;

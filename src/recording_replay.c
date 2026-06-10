@@ -559,7 +559,7 @@ b2CastOutput b2RecR_CASTOUTPUT( b2RecReader* rdr )
 {
 	b2CastOutput v;
 	v.normal = b2RecR_VEC2( rdr );
-	v.point = b2RecR_VEC2( rdr );
+	v.point = b2MakePosition( b2RecR_VEC2( rdr ) );
 	v.fraction = b2RecR_F32( rdr );
 	v.iterations = b2RecR_I32( rdr );
 	v.hit = b2RecR_BOOL( rdr );
@@ -1879,7 +1879,8 @@ static void b2RecDispatch_ShapeRayCast( const b2RecArgs_ShapeRayCast* a, b2RecRe
 	b2ShapeId id = b2RecMakeShapeId( rdr, a->shape );
 	b2CastOutput got = b2Shape_RayCast( id, &a->input );
 	if ( got.hit != rec.hit ||
-		 ( got.hit && ( b2RecVec2Differs( got.normal, rec.normal ) || b2RecVec2Differs( got.point, rec.point ) ||
+		 ( got.hit && ( b2RecVec2Differs( got.normal, rec.normal ) ||
+						b2RecVec2Differs( b2ToVec2( got.point ), b2ToVec2( rec.point ) ) ||
 						b2RecF32Differs( got.fraction, rec.fraction ) ) ) )
 	{
 		rdr->diverged = true;
@@ -2688,7 +2689,7 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 				}
 				if ( q->castOut.hit && draw->DrawPointFcn )
 				{
-					draw->DrawPointFcn( q->castOut.point, 4.0f, b2_colorViolet, draw->context );
+					draw->DrawPointFcn( b2ToVec2( q->castOut.point ), 4.0f, b2_colorViolet, draw->context );
 				}
 				break;
 			}

@@ -4,6 +4,7 @@
 #include "aabb.h"
 #include "test_macros.h"
 
+#include "box2d/collision.h"
 #include "box2d/math_functions.h"
 
 static int AABBTest( void )
@@ -194,10 +195,54 @@ static int AABBRayCastTest( void )
 	return 0;
 }
 
+// The narrow phase differences the two world positions in double then works in frame A, so a
+// manifold far from the origin must match the same manifold at the origin. Float loses this past
+// ~1e7 m where the ULP grows larger than the overlap, which is the whole point of large world mode.
+static int LargeWorldManifoldTest( void )
+{
+	b2Polygon boxA = b2MakeBox( 0.5f, 0.5f );
+	b2Polygon boxB = b2MakeBox( 0.5f, 0.5f );
+
+	// Centers 0.9 apart so the boxes overlap by 0.1 along x
+	b2Vec2 sep = { 0.9f, 0.0f };
+
+	b2WorldTransform xfAo = b2WorldTransform_identity;
+	b2WorldTransform xfBo = { b2OffsetPosition( b2Position_zero, sep ), b2Rot_identity };
+	b2Manifold mOrigin = b2CollidePolygons( &boxA, xfAo, &boxB, xfBo );
+
+	ENSURE( mOrigin.pointCount == 2 );
+	ENSURE_SMALL( mOrigin.points[0].separation + 0.1f, 0.01f );
+	ENSURE_SMALL( mOrigin.points[1].separation + 0.1f, 0.01f );
+
+#if defined( BOX2D_DOUBLE_PRECISION )
+	// Same relative configuration shifted far from the origin. In double the manifold is
+	// preserved to float precision, in float it would collapse since the offset is below the ULP.
+	b2Position base = b2OffsetPosition( b2Position_zero, ( b2Vec2 ){ 1.0e7f, 1.0e7f } );
+	b2WorldTransform xfAl = { base, b2Rot_identity };
+	b2WorldTransform xfBl = { b2OffsetPosition( base, sep ), b2Rot_identity };
+	b2Manifold mLarge = b2CollidePolygons( &boxA, xfAl, &boxB, xfBl );
+
+	ENSURE( mLarge.pointCount == mOrigin.pointCount );
+	ENSURE_SMALL( mLarge.normal.x - mOrigin.normal.x, 1e-4f );
+	ENSURE_SMALL( mLarge.normal.y - mOrigin.normal.y, 1e-4f );
+	for ( int i = 0; i < mLarge.pointCount; ++i )
+	{
+		ENSURE_SMALL( mLarge.points[i].separation - mOrigin.points[i].separation, 1e-4f );
+		ENSURE_SMALL( mLarge.points[i].anchorA.x - mOrigin.points[i].anchorA.x, 1e-4f );
+		ENSURE_SMALL( mLarge.points[i].anchorA.y - mOrigin.points[i].anchorA.y, 1e-4f );
+		ENSURE_SMALL( mLarge.points[i].anchorB.x - mOrigin.points[i].anchorB.x, 1e-4f );
+		ENSURE_SMALL( mLarge.points[i].anchorB.y - mOrigin.points[i].anchorB.y, 1e-4f );
+	}
+#endif
+
+	return 0;
+}
+
 int CollisionTest( void )
 {
 	RUN_SUBTEST( AABBTest );
 	RUN_SUBTEST( AABBRayCastTest );
+	RUN_SUBTEST( LargeWorldManifoldTest );
 
 	return 0;
 }

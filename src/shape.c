@@ -928,7 +928,7 @@ b2CastOutput b2RayCastShape( const b2RayCastInput* input, const b2Shape* shape, 
 			return output;
 	}
 
-	output.point = b2TransformPoint( transform, output.point );
+	output.point = b2TransformWorldPoint( b2MakeWorldTransform( transform ), b2ToVec2( output.point ) );
 	output.normal = b2RotateVector( transform.q, output.normal );
 	return output;
 }
@@ -992,7 +992,7 @@ b2CastOutput b2ShapeCastShape( const b2ShapeCastInput* input, const b2Shape* sha
 			return output;
 	}
 
-	output.point = b2TransformPoint( transform, output.point );
+	output.point = b2TransformWorldPoint( b2MakeWorldTransform( transform ), b2ToVec2( output.point ) );
 	output.normal = b2RotateVector( transform.q, output.normal );
 	return output;
 }
@@ -1200,7 +1200,7 @@ b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, const b2RayCastInput* input )
 	{
 		// convert to world coordinates
 		output.normal = b2RotateVector( transform.q, output.normal );
-		output.point = b2TransformPoint( transform, output.point );
+		output.point = b2TransformWorldPoint( b2MakeWorldTransform( transform ), b2ToVec2( output.point ) );
 	}
 
 	if ( world->recording != NULL )
@@ -1903,14 +1903,13 @@ b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target )
 	b2DistanceInput input;
 	input.proxyA = b2MakeShapeDistanceProxy( shape );
 	input.proxyB = b2MakeProxy( &target, 1, 0.0f );
-	input.transformA = transform;
-	input.transformB = b2Transform_identity;
+	input.transform = b2InvMulTransforms( transform, b2Transform_identity );
 	input.useRadii = true;
 
 	b2SimplexCache cache = { 0 };
 	b2DistanceOutput output = b2ShapeDistance( &input, &cache, NULL, 0 );
 
-	return output.pointA;
+	return b2TransformPoint( transform, output.pointA );
 }
 
 // https://en.wikipedia.org/wiki/Density_of_air

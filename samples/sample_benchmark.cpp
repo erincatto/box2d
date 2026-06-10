@@ -1746,8 +1746,7 @@ public:
 			for ( int i = 0; i < m_count; ++i )
 			{
 				b2SimplexCache cache = {};
-				input.transformA = m_transformAs[i];
-				input.transformB = m_transformBs[i];
+				input.transform = b2InvMulTransforms( m_transformAs[i], m_transformBs[i] );
 				m_outputs[i] = b2ShapeDistance( &input, &cache, nullptr, 0 );
 				totalIterations += m_outputs[i].iterations;
 			}
@@ -1763,12 +1762,18 @@ public:
 		b2Transform xfA = m_transformAs[m_drawIndex];
 		b2Transform xfB = m_transformBs[m_drawIndex];
 		b2DistanceOutput output = m_outputs[m_drawIndex];
+
+		// The query returns frame A results, project to world for drawing
+		b2Vec2 worldPointA = b2TransformPoint( xfA, output.pointA );
+		b2Vec2 worldPointB = b2TransformPoint( xfA, output.pointB );
+		b2Vec2 worldNormal = b2RotateVector( xfA.q, output.normal );
+
 		DrawSolidPolygon( m_context->draw, xfA, m_polygonA.vertices, m_polygonA.count, m_polygonA.radius, b2_colorBox2DGreen );
 		DrawSolidPolygon( m_context->draw, xfB, m_polygonB.vertices, m_polygonB.count, m_polygonB.radius, b2_colorBox2DBlue );
-		DrawLine( m_context->draw, output.pointA, output.pointB, b2_colorDimGray );
-		DrawPoint( m_context->draw, output.pointA, 10.0f, b2_colorWhite );
-		DrawPoint( m_context->draw, output.pointB, 10.0f, b2_colorWhite );
-		DrawLine( m_context->draw, output.pointA, output.pointA + 0.5f * output.normal, b2_colorYellow );
+		DrawLine( m_context->draw, worldPointA, worldPointB, b2_colorDimGray );
+		DrawPoint( m_context->draw, worldPointA, 10.0f, b2_colorWhite );
+		DrawPoint( m_context->draw, worldPointB, 10.0f, b2_colorWhite );
+		DrawLine( m_context->draw, worldPointA, worldPointA + 0.5f * worldNormal, b2_colorYellow );
 		DrawScreenTextLine( "distance = %g", output.distance );
 
 		Sample::Step();

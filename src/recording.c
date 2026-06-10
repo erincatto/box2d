@@ -448,7 +448,7 @@ void b2RecW_RAYCASTINPUT( b2RecBuffer* buf, b2RayCastInput v )
 void b2RecW_CASTOUTPUT( b2RecBuffer* buf, b2CastOutput v )
 {
 	b2RecW_VEC2( buf, v.normal );
-	b2RecW_VEC2( buf, v.point );
+	b2RecW_VEC2( buf, b2ToVec2( v.point ) );
 	b2RecW_F32( buf, v.fraction );
 	b2RecW_I32( buf, v.iterations );
 	b2RecW_BOOL( buf, v.hit );
