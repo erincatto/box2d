@@ -2353,7 +2353,7 @@ public:
 		{
 			const b2ManifoldPoint* mp = manifold->points + i;
 
-			b2Vec2 p1 = mp->clipPoint;
+			b2Vec2 p1 = b2Add( origin1, mp->anchorA );
 			b2Vec2 p2 = b2MulAdd( p1, 0.5f, manifold->normal );
 			DrawLine( m_draw, p1, p2, b2_colorViolet );
 
@@ -3064,7 +3064,7 @@ public:
 		{
 			const b2ManifoldPoint* mp = manifold->points + i;
 
-			b2Vec2 p1 = mp->clipPoint;
+			b2Vec2 p1 = mp->anchorA;
 			b2Vec2 p2 = b2MulAdd( p1, 0.5f, manifold->normal );
 			DrawLine( m_draw, p1, p2, b2_colorWhite );
 

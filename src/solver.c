@@ -1751,7 +1751,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					b2ContactHitEvent event = { 0 };
 					event.approachSpeed = threshold;
 
-					bool found = false;
+					b2ManifoldPoint* bestPoint = NULL;
 					int pointCount = contactSim->manifold.pointCount;
 					for ( int p = 0; p < pointCount; ++p )
 					{
@@ -1762,20 +1762,23 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 						if ( approachSpeed > event.approachSpeed && mp->totalNormalImpulse > 0.0f )
 						{
 							event.approachSpeed = approachSpeed;
-							// Using the clip point here is somewhat questionable
-							event.point = mp->clipPoint;
-							found = true;
+							bestPoint = mp;
 						}
 					}
 
-					B2_VALIDATE( found );
+					B2_VALIDATE( bestPoint != NULL );
 
-					if ( found == true )
+					if ( bestPoint != NULL )
 					{
 						event.normal = contactSim->manifold.normal;
 
 						b2Shape* shapeA = shapeArray + contactSim->shapeIdA;
 						b2Shape* shapeB = shapeArray + contactSim->shapeIdB;
+
+						// World contact point reconstructed from body A center of mass and the anchor
+						b2Body* bodyA = b2Array_Get( world->bodies, shapeA->bodyId );
+						b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
+						event.point = b2Add( bodySimA->center, bestPoint->anchorA );
 
 						event.shapeIdA = (b2ShapeId){ shapeA->id + 1, worldId, shapeA->generation };
 						event.shapeIdB = (b2ShapeId){ shapeB->id + 1, worldId, shapeB->generation };

@@ -675,6 +675,15 @@ B2_INLINE b2Transform b2ToRelativeTransform( b2WorldTransform t, b2Position base
 	return r;
 }
 
+/// Promote a float transform to a world transform. Lossless.
+B2_INLINE b2WorldTransform b2MakeWorldTransform( b2Transform t )
+{
+	b2WorldTransform w;
+	w.p = b2MakePosition( t.p );
+	w.q = t.q;
+	return w;
+}
+
 #else
 
 B2_INLINE b2Position b2MakePosition( b2Vec2 v )
@@ -726,6 +735,11 @@ B2_INLINE b2Transform b2ToRelativeTransform( b2WorldTransform t, b2Position base
 {
 	b2Transform r = { b2Sub( t.p, base ), t.q };
 	return r;
+}
+
+B2_INLINE b2WorldTransform b2MakeWorldTransform( b2Transform t )
+{
+	return t;
 }
 
 #endif

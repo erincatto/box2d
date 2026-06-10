@@ -86,7 +86,7 @@ b2ContactData b2Contact_GetData( b2ContactId contactId )
 	return data;
 }
 
-typedef b2Manifold b2ManifoldFcn( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
+typedef b2Manifold b2ManifoldFcn( const b2Shape* shapeA, b2WorldTransform xfA, const b2Shape* shapeB, b2WorldTransform xfB,
 								  b2SimplexCache* cache );
 
 struct b2ContactRegister
@@ -98,84 +98,84 @@ struct b2ContactRegister
 static struct b2ContactRegister s_registers[b2_shapeTypeCount][b2_shapeTypeCount];
 static bool s_initialized = false;
 
-static b2Manifold b2CircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
+static b2Manifold b2CircleManifold( const b2Shape* shapeA, b2WorldTransform xfA, const b2Shape* shapeB, b2WorldTransform xfB,
 									b2SimplexCache* cache )
 {
 	B2_UNUSED( cache );
 	return b2CollideCircles( &shapeA->circle, xfA, &shapeB->circle, xfB );
 }
 
-static b2Manifold b2CapsuleAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
+static b2Manifold b2CapsuleAndCircleManifold( const b2Shape* shapeA, b2WorldTransform xfA, const b2Shape* shapeB, b2WorldTransform xfB,
 											  b2SimplexCache* cache )
 {
 	B2_UNUSED( cache );
 	return b2CollideCapsuleAndCircle( &shapeA->capsule, xfA, &shapeB->circle, xfB );
 }
 
-static b2Manifold b2CapsuleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
+static b2Manifold b2CapsuleManifold( const b2Shape* shapeA, b2WorldTransform xfA, const b2Shape* shapeB, b2WorldTransform xfB,
 									 b2SimplexCache* cache )
 {
 	B2_UNUSED( cache );
 	return b2CollideCapsules( &shapeA->capsule, xfA, &shapeB->capsule, xfB );
 }
 
-static b2Manifold b2PolygonAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
+static b2Manifold b2PolygonAndCircleManifold( const b2Shape* shapeA, b2WorldTransform xfA, const b2Shape* shapeB, b2WorldTransform xfB,
 											  b2SimplexCache* cache )
 {
 	B2_UNUSED( cache );
 	return b2CollidePolygonAndCircle( &shapeA->polygon, xfA, &shapeB->circle, xfB );
 }
 
-static b2Manifold b2PolygonAndCapsuleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
+static b2Manifold b2PolygonAndCapsuleManifold( const b2Shape* shapeA, b2WorldTransform xfA, const b2Shape* shapeB, b2WorldTransform xfB,
 											   b2SimplexCache* cache )
 {
 	B2_UNUSED( cache );
 	return b2CollidePolygonAndCapsule( &shapeA->polygon, xfA, &shapeB->capsule, xfB );
 }
 
-static b2Manifold b2PolygonManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
+static b2Manifold b2PolygonManifold( const b2Shape* shapeA, b2WorldTransform xfA, const b2Shape* shapeB, b2WorldTransform xfB,
 									 b2SimplexCache* cache )
 {
 	B2_UNUSED( cache );
 	return b2CollidePolygons( &shapeA->polygon, xfA, &shapeB->polygon, xfB );
 }
 
-static b2Manifold b2SegmentAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
+static b2Manifold b2SegmentAndCircleManifold( const b2Shape* shapeA, b2WorldTransform xfA, const b2Shape* shapeB, b2WorldTransform xfB,
 											  b2SimplexCache* cache )
 {
 	B2_UNUSED( cache );
 	return b2CollideSegmentAndCircle( &shapeA->segment, xfA, &shapeB->circle, xfB );
 }
 
-static b2Manifold b2SegmentAndCapsuleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
+static b2Manifold b2SegmentAndCapsuleManifold( const b2Shape* shapeA, b2WorldTransform xfA, const b2Shape* shapeB, b2WorldTransform xfB,
 											   b2SimplexCache* cache )
 {
 	B2_UNUSED( cache );
 	return b2CollideSegmentAndCapsule( &shapeA->segment, xfA, &shapeB->capsule, xfB );
 }
 
-static b2Manifold b2SegmentAndPolygonManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
+static b2Manifold b2SegmentAndPolygonManifold( const b2Shape* shapeA, b2WorldTransform xfA, const b2Shape* shapeB, b2WorldTransform xfB,
 											   b2SimplexCache* cache )
 {
 	B2_UNUSED( cache );
 	return b2CollideSegmentAndPolygon( &shapeA->segment, xfA, &shapeB->polygon, xfB );
 }
 
-static b2Manifold b2ChainSegmentAndCircleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB, b2Transform xfB,
+static b2Manifold b2ChainSegmentAndCircleManifold( const b2Shape* shapeA, b2WorldTransform xfA, const b2Shape* shapeB, b2WorldTransform xfB,
 												   b2SimplexCache* cache )
 {
 	B2_UNUSED( cache );
 	return b2CollideChainSegmentAndCircle( &shapeA->chainSegment, xfA, &shapeB->circle, xfB );
 }
 
-static b2Manifold b2ChainSegmentAndCapsuleManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB,
-													b2Transform xfB, b2SimplexCache* cache )
+static b2Manifold b2ChainSegmentAndCapsuleManifold( const b2Shape* shapeA, b2WorldTransform xfA, const b2Shape* shapeB,
+													b2WorldTransform xfB, b2SimplexCache* cache )
 {
 	return b2CollideChainSegmentAndCapsule( &shapeA->chainSegment, xfA, &shapeB->capsule, xfB, cache );
 }
 
-static b2Manifold b2ChainSegmentAndPolygonManifold( const b2Shape* shapeA, b2Transform xfA, const b2Shape* shapeB,
-													b2Transform xfB, b2SimplexCache* cache )
+static b2Manifold b2ChainSegmentAndPolygonManifold( const b2Shape* shapeA, b2WorldTransform xfA, const b2Shape* shapeB,
+													b2WorldTransform xfB, b2SimplexCache* cache )
 {
 	return b2CollideChainSegmentAndPolygon( &shapeA->chainSegment, xfA, &shapeB->polygon, xfB, cache );
 }
@@ -534,7 +534,10 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 
 	// Compute new manifold
 	b2ManifoldFcn* fcn = s_registers[shapeA->type][shapeB->type].fcn;
-	contactSim->manifold = fcn( shapeA, transformA, shapeB, transformB, &contactSim->cache );
+	// Promote to world transforms for the collision call. The body sim still holds float
+	// transforms until phase 3, where the shim goes away.
+	contactSim->manifold =
+		fcn( shapeA, b2MakeWorldTransform( transformA ), shapeB, b2MakeWorldTransform( transformB ), &contactSim->cache );
 
 	// Keep these updated in case the values on the shapes are modified
 	contactSim->friction = world->frictionCallback( shapeA->material.friction, shapeA->material.userMaterialId,
@@ -567,7 +570,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 
 		b2Manifold* manifold = &contactSim->manifold;
 		float bestSeparation = manifold->points[0].separation;
-		b2Vec2 bestPoint = manifold->points[0].clipPoint;
+		b2Vec2 bestPoint = b2Add( transformA.p, manifold->points[0].anchorA );
 
 		// Get deepest point
 		for ( int i = 1; i < manifold->pointCount; ++i )
@@ -576,7 +579,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 			if ( separation < bestSeparation )
 			{
 				bestSeparation = separation;
-				bestPoint = manifold->points[i].clipPoint;
+				bestPoint = b2Add( transformA.p, manifold->points[i].anchorA );
 			}
 		}
 

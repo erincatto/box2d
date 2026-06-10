@@ -15,8 +15,15 @@
 #define TracyCFrameMark
 #endif
 
+#if defined( BOX2D_DOUBLE_PRECISION )
+// Double precision resolves the contact boundary in double, converging to a different but
+// equally deterministic result, so large world mode keeps its own reference.
+#define EXPECTED_SLEEP_STEP 299
+#define EXPECTED_HASH 0x05F26F52
+#else
 #define EXPECTED_SLEEP_STEP 328
 #define EXPECTED_HASH 0x26E08AEE
+#endif
 
 static int SingleMultithreadingTest( int workerCount )
 {
