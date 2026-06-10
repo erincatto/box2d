@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#include "aabb.h"
 #include "shape.h"
 
 #include "box2d/collision.h"
@@ -398,7 +399,117 @@ b2MassData b2ComputePolygonMass( const b2Polygon* shape, float density )
 	return massData;
 }
 
-b2AABB b2ComputeCircleAABB( const b2Circle* shape, b2Transform xf )
+#if defined( BOX2D_DOUBLE_PRECISION )
+
+// Large world AABBs are built in double and narrowed to float with directed rounding so the box
+// always contains the shape. The inflation (speculative margin) folds into the double step before
+// the single outward rounding, otherwise it vanishes into a float ULP far from the origin.
+
+static b2AABB b2ComputeCircleFatAABB( const b2Circle* shape, b2WorldTransform xf, float extra )
+{
+	b2Position c = b2TransformWorldPoint( xf, shape->center );
+	double r = (double)shape->radius + (double)extra;
+	b2AABB aabb = {
+		{ b2RoundDownFloat( c.x - r ), b2RoundDownFloat( c.y - r ) },
+		{ b2RoundUpFloat( c.x + r ), b2RoundUpFloat( c.y + r ) },
+	};
+	return aabb;
+}
+
+static b2AABB b2ComputeCapsuleFatAABB( const b2Capsule* shape, b2WorldTransform xf, float extra )
+{
+	b2Position v1 = b2TransformWorldPoint( xf, shape->center1 );
+	b2Position v2 = b2TransformWorldPoint( xf, shape->center2 );
+	double r = (double)shape->radius + (double)extra;
+	b2AABB aabb = {
+		{ b2RoundDownFloat( ( v1.x < v2.x ? v1.x : v2.x ) - r ), b2RoundDownFloat( ( v1.y < v2.y ? v1.y : v2.y ) - r ) },
+		{ b2RoundUpFloat( ( v1.x > v2.x ? v1.x : v2.x ) + r ), b2RoundUpFloat( ( v1.y > v2.y ? v1.y : v2.y ) + r ) },
+	};
+	return aabb;
+}
+
+static b2AABB b2ComputePolygonFatAABB( const b2Polygon* shape, b2WorldTransform xf, float extra )
+{
+	B2_ASSERT( shape->count > 0 );
+	b2Position v = b2TransformWorldPoint( xf, shape->vertices[0] );
+	double lx = v.x, ly = v.y, ux = v.x, uy = v.y;
+
+	for ( int i = 1; i < shape->count; ++i )
+	{
+		v = b2TransformWorldPoint( xf, shape->vertices[i] );
+		lx = v.x < lx ? v.x : lx;
+		ly = v.y < ly ? v.y : ly;
+		ux = v.x > ux ? v.x : ux;
+		uy = v.y > uy ? v.y : uy;
+	}
+
+	double r = (double)shape->radius + (double)extra;
+	b2AABB aabb = {
+		{ b2RoundDownFloat( lx - r ), b2RoundDownFloat( ly - r ) },
+		{ b2RoundUpFloat( ux + r ), b2RoundUpFloat( uy + r ) },
+	};
+	return aabb;
+}
+
+static b2AABB b2ComputeSegmentFatAABB( const b2Segment* shape, b2WorldTransform xf, float extra )
+{
+	b2Position v1 = b2TransformWorldPoint( xf, shape->point1 );
+	b2Position v2 = b2TransformWorldPoint( xf, shape->point2 );
+	double e = (double)extra;
+	b2AABB aabb = {
+		{ b2RoundDownFloat( ( v1.x < v2.x ? v1.x : v2.x ) - e ), b2RoundDownFloat( ( v1.y < v2.y ? v1.y : v2.y ) - e ) },
+		{ b2RoundUpFloat( ( v1.x > v2.x ? v1.x : v2.x ) + e ), b2RoundUpFloat( ( v1.y > v2.y ? v1.y : v2.y ) + e ) },
+	};
+	return aabb;
+}
+
+b2AABB b2ComputeCircleAABB( const b2Circle* shape, b2WorldTransform xf )
+{
+	return b2ComputeCircleFatAABB( shape, xf, 0.0f );
+}
+
+b2AABB b2ComputeCapsuleAABB( const b2Capsule* shape, b2WorldTransform xf )
+{
+	return b2ComputeCapsuleFatAABB( shape, xf, 0.0f );
+}
+
+b2AABB b2ComputePolygonAABB( const b2Polygon* shape, b2WorldTransform xf )
+{
+	return b2ComputePolygonFatAABB( shape, xf, 0.0f );
+}
+
+b2AABB b2ComputeSegmentAABB( const b2Segment* shape, b2WorldTransform xf )
+{
+	return b2ComputeSegmentFatAABB( shape, xf, 0.0f );
+}
+
+b2AABB b2ComputeFatShapeAABB( const b2Shape* shape, b2WorldTransform xf, float extra )
+{
+	switch ( shape->type )
+	{
+		case b2_capsuleShape:
+			return b2ComputeCapsuleFatAABB( &shape->capsule, xf, extra );
+		case b2_circleShape:
+			return b2ComputeCircleFatAABB( &shape->circle, xf, extra );
+		case b2_polygonShape:
+			return b2ComputePolygonFatAABB( &shape->polygon, xf, extra );
+		case b2_segmentShape:
+			return b2ComputeSegmentFatAABB( &shape->segment, xf, extra );
+		case b2_chainSegmentShape:
+			return b2ComputeSegmentFatAABB( &shape->chainSegment.segment, xf, extra );
+		default:
+		{
+			B2_ASSERT( false );
+			b2Vec2 c = b2ToVec2( xf.p );
+			b2AABB empty = { c, c };
+			return empty;
+		}
+	}
+}
+
+#else
+
+b2AABB b2ComputeCircleAABB( const b2Circle* shape, b2WorldTransform xf )
 {
 	b2Vec2 p = b2TransformPoint( xf, shape->center );
 	float r = shape->radius;
@@ -407,7 +518,7 @@ b2AABB b2ComputeCircleAABB( const b2Circle* shape, b2Transform xf )
 	return aabb;
 }
 
-b2AABB b2ComputeCapsuleAABB( const b2Capsule* shape, b2Transform xf )
+b2AABB b2ComputeCapsuleAABB( const b2Capsule* shape, b2WorldTransform xf )
 {
 	b2Vec2 v1 = b2TransformPoint( xf, shape->center1 );
 	b2Vec2 v2 = b2TransformPoint( xf, shape->center2 );
@@ -420,7 +531,7 @@ b2AABB b2ComputeCapsuleAABB( const b2Capsule* shape, b2Transform xf )
 	return aabb;
 }
 
-b2AABB b2ComputePolygonAABB( const b2Polygon* shape, b2Transform xf )
+b2AABB b2ComputePolygonAABB( const b2Polygon* shape, b2WorldTransform xf )
 {
 	B2_ASSERT( shape->count > 0 );
 	b2Vec2 lower = b2TransformPoint( xf, shape->vertices[0] );
@@ -441,7 +552,7 @@ b2AABB b2ComputePolygonAABB( const b2Polygon* shape, b2Transform xf )
 	return aabb;
 }
 
-b2AABB b2ComputeSegmentAABB( const b2Segment* shape, b2Transform xf )
+b2AABB b2ComputeSegmentAABB( const b2Segment* shape, b2WorldTransform xf )
 {
 	b2Vec2 v1 = b2TransformPoint( xf, shape->point1 );
 	b2Vec2 v2 = b2TransformPoint( xf, shape->point2 );
@@ -452,6 +563,20 @@ b2AABB b2ComputeSegmentAABB( const b2Segment* shape, b2Transform xf )
 	b2AABB aabb = { lower, upper };
 	return aabb;
 }
+
+// Conservative world AABB for a shape, inflated by extra. Float mode adds the inflation to the
+// tight box directly so the result is byte identical to the legacy compute then speculative grow.
+b2AABB b2ComputeFatShapeAABB( const b2Shape* shape, b2WorldTransform xf, float extra )
+{
+	b2AABB aabb = b2ComputeShapeAABB( shape, xf );
+	aabb.lowerBound.x -= extra;
+	aabb.lowerBound.y -= extra;
+	aabb.upperBound.x += extra;
+	aabb.upperBound.y += extra;
+	return aabb;
+}
+
+#endif
 
 bool b2PointInCircle( const b2Circle* shape, b2Vec2 point )
 {

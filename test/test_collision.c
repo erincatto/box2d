@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "aabb.h"
+#include "shape.h"
 #include "test_macros.h"
 
 #include "box2d/collision.h"
@@ -238,11 +239,53 @@ static int LargeWorldManifoldTest( void )
 	return 0;
 }
 
+// Broad-phase AABBs are built in double and narrowed to float with directed outward rounding, so a
+// shape and its speculative margin stay inside their box far from the origin. A float build would
+// round the extent away into the ULP (~1 m at 1e7) and clip the shape out of its own box.
+static int LargeWorldAABBTest( void )
+{
+	// Rounded box: 0.5 half extents plus 0.1 radius, so the tight extent is 0.6 each way
+	b2Polygon box = b2MakeRoundedBox( 0.5f, 0.5f, 0.1f );
+
+	b2AABB aabbOrigin = b2ComputePolygonAABB( &box, b2WorldTransform_identity );
+	ENSURE_SMALL( aabbOrigin.lowerBound.x + 0.6f, FLT_EPSILON );
+	ENSURE_SMALL( aabbOrigin.lowerBound.y + 0.6f, FLT_EPSILON );
+	ENSURE_SMALL( aabbOrigin.upperBound.x - 0.6f, FLT_EPSILON );
+	ENSURE_SMALL( aabbOrigin.upperBound.y - 0.6f, FLT_EPSILON );
+
+#if defined( BOX2D_DOUBLE_PRECISION )
+	double d = 1.0e7;
+	b2WorldTransform xfLarge = { { d, d }, b2Rot_identity };
+
+	// Tight world AABB still contains the 0.6 m extent
+	b2AABB tight = b2ComputePolygonAABB( &box, xfLarge );
+	ENSURE( (double)tight.lowerBound.x <= d - 0.6 );
+	ENSURE( (double)tight.lowerBound.y <= d - 0.6 );
+	ENSURE( (double)tight.upperBound.x >= d + 0.6 );
+	ENSURE( (double)tight.upperBound.y >= d + 0.6 );
+
+	// The fat helper folds the extra into the double step before the single outward rounding, so a
+	// margin smaller than a float ULP at this range survives instead of becoming a no-op subtract.
+	float extra = 0.05f;
+	b2Shape shape = { 0 };
+	shape.type = b2_polygonShape;
+	shape.polygon = box;
+	b2AABB fat = b2ComputeFatShapeAABB( &shape, xfLarge, extra );
+	ENSURE( (double)fat.lowerBound.x <= d - 0.6 - (double)extra );
+	ENSURE( (double)fat.lowerBound.y <= d - 0.6 - (double)extra );
+	ENSURE( (double)fat.upperBound.x >= d + 0.6 + (double)extra );
+	ENSURE( (double)fat.upperBound.y >= d + 0.6 + (double)extra );
+#endif
+
+	return 0;
+}
+
 int CollisionTest( void )
 {
 	RUN_SUBTEST( AABBTest );
 	RUN_SUBTEST( AABBRayCastTest );
 	RUN_SUBTEST( LargeWorldManifoldTest );
+	RUN_SUBTEST( LargeWorldAABBTest );
 
 	return 0;
 }

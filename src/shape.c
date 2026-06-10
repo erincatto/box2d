@@ -92,11 +92,7 @@ static void b2UpdateShapeAABBs( b2Shape* shape, b2Transform transform, b2BodyTyp
 	const float speculativeDistance = B2_SPECULATIVE_DISTANCE;
 	const float aabbMargin = shape->aabbMargin;
 
-	b2AABB aabb = b2ComputeShapeAABB( shape, transform );
-	aabb.lowerBound.x -= speculativeDistance;
-	aabb.lowerBound.y -= speculativeDistance;
-	aabb.upperBound.x += speculativeDistance;
-	aabb.upperBound.y += speculativeDistance;
+	b2AABB aabb = b2ComputeFatShapeAABB( shape, b2MakeWorldTransform( transform ), speculativeDistance );
 	shape->aabb = aabb;
 
 	// Smaller margin for static bodies. Cannot be zero due to TOI tolerance.
@@ -686,7 +682,7 @@ int b2Chain_GetSegments( b2ChainId chainId, b2ShapeId* segmentArray, int capacit
 	return count;
 }
 
-b2AABB b2ComputeShapeAABB( const b2Shape* shape, b2Transform xf )
+b2AABB b2ComputeShapeAABB( const b2Shape* shape, b2WorldTransform xf )
 {
 	switch ( shape->type )
 	{
@@ -703,7 +699,8 @@ b2AABB b2ComputeShapeAABB( const b2Shape* shape, b2Transform xf )
 		default:
 		{
 			B2_ASSERT( false );
-			b2AABB empty = { xf.p, xf.p };
+			b2Vec2 c = b2ToVec2( xf.p );
+			b2AABB empty = { c, c };
 			return empty;
 		}
 	}

@@ -738,11 +738,7 @@ void b2Body_SetTransform( b2BodyId bodyId, b2Vec2 position, b2Rot rotation )
 	while ( shapeId != B2_NULL_INDEX )
 	{
 		b2Shape* shape = b2Array_Get( world->shapes, shapeId );
-		b2AABB aabb = b2ComputeShapeAABB( shape, transform );
-		aabb.lowerBound.x -= speculativeDistance;
-		aabb.lowerBound.y -= speculativeDistance;
-		aabb.upperBound.x += speculativeDistance;
-		aabb.upperBound.y += speculativeDistance;
+		b2AABB aabb = b2ComputeFatShapeAABB( shape, b2MakeWorldTransform( transform ), speculativeDistance );
 		shape->aabb = aabb;
 
 		if ( b2AABB_Contains( shape->fatAABB, aabb ) == false )

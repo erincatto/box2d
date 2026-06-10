@@ -418,7 +418,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 		context.centroid2 = b2TransformPoint( xf2, fastShape->localCentroid );
 
 		b2AABB box1 = fastShape->aabb;
-		b2AABB box2 = b2ComputeShapeAABB( fastShape, xf2 );
+		b2AABB box2 = b2ComputeShapeAABB( fastShape, b2MakeWorldTransform( xf2 ) );
 
 		// Store this to avoid double computation in the case there is no impact event
 		fastShape->aabb = box2;
@@ -469,11 +469,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 			b2Shape* shape = b2Array_Get( world->shapes, shapeId );
 
 			// Must recompute aabb at the interpolated transform
-			b2AABB aabb = b2ComputeShapeAABB( shape, transform );
-			aabb.lowerBound.x -= speculativeDistance;
-			aabb.lowerBound.y -= speculativeDistance;
-			aabb.upperBound.x += speculativeDistance;
-			aabb.upperBound.y += speculativeDistance;
+			b2AABB aabb = b2ComputeFatShapeAABB( shape, b2MakeWorldTransform( transform ), speculativeDistance );
 			shape->aabb = aabb;
 
 			if ( b2AABB_Contains( shape->fatAABB, aabb ) == false )
@@ -704,11 +700,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 			}
 			else
 			{
-				b2AABB aabb = b2ComputeShapeAABB( shape, transform );
-				aabb.lowerBound.x -= speculativeDistance;
-				aabb.lowerBound.y -= speculativeDistance;
-				aabb.upperBound.x += speculativeDistance;
-				aabb.upperBound.y += speculativeDistance;
+				b2AABB aabb = b2ComputeFatShapeAABB( shape, b2MakeWorldTransform( transform ), speculativeDistance );
 				shape->aabb = aabb;
 
 				B2_ASSERT( shape->enlargedAABB == false );

@@ -84,7 +84,11 @@ void b2FreeChainData( b2ChainShape* chain );
 
 b2MassData b2ComputeShapeMass( const b2Shape* shape );
 b2ShapeExtent b2ComputeShapeExtent( const b2Shape* shape, b2Vec2 localCenter );
-b2AABB b2ComputeShapeAABB( const b2Shape* shape, b2Transform transform );
+b2AABB b2ComputeShapeAABB( const b2Shape* shape, b2WorldTransform transform );
+
+// Conservative world AABB for a shape, inflated by extra margin. In large world mode this is
+// computed in double and rounded outward so the inflation is not lost far from the origin.
+b2AABB b2ComputeFatShapeAABB( const b2Shape* shape, b2WorldTransform transform, float extra );
 b2Vec2 b2GetShapeCentroid( const b2Shape* shape );
 float b2GetShapePerimeter( const b2Shape* shape );
 float b2GetShapeProjectedPerimeter( const b2Shape* shape, b2Vec2 line );
