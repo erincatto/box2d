@@ -96,4 +96,20 @@
     </Expand>
   </Type>
 
+  <Type Name="b2Position">
+    <DisplayString>[{x}, {y}]</DisplayString>
+    <Expand>
+      <Item Name="x">x</Item>
+      <Item Name="y">y</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="b2WorldTransform">
+    <DisplayString>p [{p.x}, {p.y}] q [{q.c}, {q.s}]</DisplayString>
+    <Expand>
+      <Item Name="p">p</Item>
+      <Item Name="q">q</Item>
+    </Expand>
+  </Type>
+
 </AutoVisualizer>

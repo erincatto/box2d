@@ -10,6 +10,13 @@
 
 #include <stdbool.h>
 
+#if defined( BOX2D_DOUBLE_PRECISION )
+// Force a link error if the application and library disagree on precision. A float app linking
+// a double precision library, or the reverse, gets one unresolved external on the first call
+// every program makes. CMake consumers inherit the define and cannot mismatch.
+#define b2CreateWorld b2CreateWorldDoublePrecision
+#endif
+
 /**
  * @defgroup world World
  * These functions allow you to create a simulation world.

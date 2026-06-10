@@ -173,6 +173,57 @@ int MathTest( void )
 		float tolerance = 0.1f * B2_PI / 180.0f;
 		ENSURE_SMALL( relativeAngle - unwoundAngle, tolerance );
 	}
-	
+
+	// World position boundary helpers. With large world mode off these collapse to the float
+	// ops, so the round trips hold in both builds.
+	{
+		b2Vec2 d = { 0.25f, -0.5f };
+		b2Position base = b2MakePosition( ( b2Vec2 ){ 10.0f, -20.0f } );
+		b2Position p = b2OffsetPosition( base, d );
+		b2Vec2 back = b2PositionDelta( p, base );
+		ENSURE_SMALL( back.x - d.x, 8.0f * FLT_EPSILON );
+		ENSURE_SMALL( back.y - d.y, 8.0f * FLT_EPSILON );
+
+		b2Vec2 r = b2ToVec2( base );
+		ENSURE( r.x == 10.0f && r.y == -20.0f );
+
+		ENSURE( b2IsValidPosition( p ) );
+		ENSURE( b2IsValidPosition( b2Position_zero ) );
+		ENSURE( b2IsValidWorldTransform( b2WorldTransform_identity ) );
+
+		b2WorldTransform wt = { b2MakePosition( ( b2Vec2 ){ 3.0f, -4.0f } ), b2MakeRot( 0.7f ) };
+		ENSURE( b2IsValidWorldTransform( wt ) );
+
+		// Local to world to local round trip
+		b2Vec2 local = { 1.5f, 2.5f };
+		b2Position world = b2TransformWorldPoint( wt, local );
+		b2Vec2 backLocal = b2InvTransformWorldPoint( wt, world );
+		ENSURE_SMALL( backLocal.x - local.x, 8.0f * FLT_EPSILON );
+		ENSURE_SMALL( backLocal.y - local.y, 8.0f * FLT_EPSILON );
+
+		// Relative transform of B in A matches a float reference at modest coordinates
+		b2WorldTransform A = { b2MakePosition( ( b2Vec2 ){ -2.0f, 3.0f } ), b2MakeRot( 1.0f ) };
+		b2WorldTransform B = { b2MakePosition( ( b2Vec2 ){ 1.0f, 0.0f } ), b2MakeRot( -2.0f ) };
+		b2Transform rel = b2InvMulWorldTransforms( A, B );
+		b2Transform refA = { b2ToVec2( A.p ), A.q };
+		b2Transform refB = { b2ToVec2( B.p ), B.q };
+		b2Transform ref = b2InvMulTransforms( refA, refB );
+		ENSURE_SMALL( rel.p.x - ref.p.x, 8.0f * FLT_EPSILON );
+		ENSURE_SMALL( rel.p.y - ref.p.y, 8.0f * FLT_EPSILON );
+	}
+
+#if defined( BOX2D_DOUBLE_PRECISION )
+	// Far from the origin a float vector cannot resolve sub meter motion, but a double world
+	// position can. This is the whole point of large world mode.
+	{
+		b2Vec2 d = { 0.25f, -0.5f };
+		b2Position base = b2MakePosition( ( b2Vec2 ){ 1.0e7f, 0.0f } );
+		b2Position p = b2OffsetPosition( base, d );
+		b2Vec2 back = b2PositionDelta( p, base );
+		ENSURE_SMALL( back.x - d.x, 1.0e-4f );
+		ENSURE_SMALL( back.y - d.y, 1.0e-4f );
+	}
+#endif
+
 	return 0;
 }

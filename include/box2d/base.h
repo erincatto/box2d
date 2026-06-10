@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -100,6 +101,9 @@ typedef struct b2Version
 
 /// Get the current version of Box2D
 B2_API b2Version b2GetVersion( void );
+
+/// @return true if the library was built with BOX2D_DOUBLE_PRECISION (large world mode)
+B2_API bool b2IsDoublePrecision( void );
 
 /**@}*/
 

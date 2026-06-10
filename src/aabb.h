@@ -47,3 +47,29 @@ static inline bool b2EnlargeAABB( b2AABB* a, b2AABB b )
 
 	return changed;
 }
+
+#if defined( BOX2D_DOUBLE_PRECISION )
+
+#include <float.h>
+#include <math.h>
+
+// Directed narrowing of a world coordinate to float. nextafterf is an exact IEEE operation
+// with a unique result, so it is cross-platform deterministic like sqrtf, not accuracy defined
+// like the trig that Box2D hand rolls. The broadphase pair order rides on this.
+
+// Round toward -inf so a float box always contains the double box. Float ULP at 1e8 dwarfs the
+// AABB margin, plain truncation could clip a shape out of its own box.
+static inline float b2RoundDownFloat( double x )
+{
+	float f = (float)x;
+	return (double)f > x ? nextafterf( f, -FLT_MAX ) : f;
+}
+
+// Round a double toward +inf when narrowing to float
+static inline float b2RoundUpFloat( double x )
+{
+	float f = (float)x;
+	return (double)f < x ? nextafterf( f, FLT_MAX ) : f;
+}
+
+#endif
