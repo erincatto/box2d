@@ -93,7 +93,7 @@ static bool b2SensorQueryCallback( int proxyId, uint64_t userData, void* context
 		}
 	}
 
-	b2Transform otherTransform = b2GetBodyTransform( world, otherShape->bodyId );
+	b2Transform otherTransform = b2ToRelativeTransform( b2GetBodyTransform( world, otherShape->bodyId ), b2Position_zero );
 
 	b2DistanceInput input;
 	input.proxyA = b2MakeShapeDistanceProxy( sensorShape );
@@ -173,7 +173,7 @@ static void b2SensorTask( int startIndex, int endIndex, int threadIndex, void* c
 			continue;
 		}
 
-		b2Transform transform = b2GetBodyTransformQuick( world, body );
+		b2Transform transform = b2ToRelativeTransform( b2GetBodyTransformQuick( world, body ), b2Position_zero );
 
 		struct b2SensorQueryContext queryContext = {
 			.world = world,

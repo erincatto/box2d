@@ -1058,8 +1058,8 @@ float b2Joint_GetLinearSeparation( b2JointId jointId )
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* base = b2GetJointSim( world, joint );
 
-	b2Transform xfA = b2GetBodyTransform( world, joint->edges[0].bodyId );
-	b2Transform xfB = b2GetBodyTransform( world, joint->edges[1].bodyId );
+	b2Transform xfA = b2ToRelativeTransform( b2GetBodyTransform( world, joint->edges[0].bodyId ), b2Position_zero );
+	b2Transform xfB = b2ToRelativeTransform( b2GetBodyTransform( world, joint->edges[1].bodyId ), b2Position_zero );
 
 	b2Vec2 pA = b2TransformPoint( xfA, base->localFrameA.p );
 	b2Vec2 pB = b2TransformPoint( xfB, base->localFrameB.p );
@@ -1176,8 +1176,8 @@ float b2Joint_GetAngularSeparation( b2JointId jointId )
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* base = b2GetJointSim( world, joint );
 
-	b2Transform xfA = b2GetBodyTransform( world, joint->edges[0].bodyId );
-	b2Transform xfB = b2GetBodyTransform( world, joint->edges[1].bodyId );
+	b2Transform xfA = b2ToRelativeTransform( b2GetBodyTransform( world, joint->edges[0].bodyId ), b2Position_zero );
+	b2Transform xfB = b2ToRelativeTransform( b2GetBodyTransform( world, joint->edges[1].bodyId ), b2Position_zero );
 	float relativeAngle = b2RelativeAngle( xfA.q, xfB.q );
 
 	switch ( joint->type )
@@ -1558,8 +1558,8 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 
 	b2JointSim* jointSim = b2GetJointSim( world, joint );
 
-	b2Transform transformA = b2GetBodyTransformQuick( world, bodyA );
-	b2Transform transformB = b2GetBodyTransformQuick( world, bodyB );
+	b2Transform transformA = b2ToRelativeTransform( b2GetBodyTransformQuick( world, bodyA ), b2Position_zero );
+	b2Transform transformB = b2ToRelativeTransform( b2GetBodyTransformQuick( world, bodyB ), b2Position_zero );
 	b2Vec2 pA = b2TransformPoint( transformA, jointSim->localFrameA.p );
 	b2Vec2 pB = b2TransformPoint( transformB, jointSim->localFrameB.p );
 

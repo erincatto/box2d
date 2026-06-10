@@ -865,8 +865,19 @@ uint64_t b2HashWorldState( b2World* world )
 	memcpy( &bits, &( f ), 4 );                                                                                                  \
 	hash = ( hash ^ (uint64_t)bits ) * prime;
 
-		B2_HASH_FLOAT( sim->transform.p.x )
-		B2_HASH_FLOAT( sim->transform.p.y )
+		// World positions are double in large world mode. Hash the full width or the determinism
+		// gate would validate only to float precision and pass vacuously far from the origin.
+#if defined( BOX2D_DOUBLE_PRECISION )
+		uint64_t bits64;
+#define B2_HASH_POSITION( d )                                                                                                    \
+	memcpy( &bits64, &( d ), 8 );                                                                                                \
+	hash = ( hash ^ bits64 ) * prime;
+#else
+#define B2_HASH_POSITION( f ) B2_HASH_FLOAT( f )
+#endif
+
+		B2_HASH_POSITION( sim->transform.p.x )
+		B2_HASH_POSITION( sim->transform.p.y )
 		B2_HASH_FLOAT( sim->transform.q.c )
 		B2_HASH_FLOAT( sim->transform.q.s )
 
@@ -879,6 +890,7 @@ uint64_t b2HashWorldState( b2World* world )
 		}
 
 #undef B2_HASH_FLOAT
+#undef B2_HASH_POSITION
 	}
 
 	return hash;

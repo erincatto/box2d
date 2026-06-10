@@ -476,8 +476,8 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			b2Body* bodyB = bodies + shapeB->bodyId;
 			b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
 			b2BodySim* bodySimB = b2GetBodySim( world, bodyB );
-			b2Transform transformA = bodySimA->transform;
-			b2Transform transformB = bodySimB->transform;
+			b2WorldTransform transformA = bodySimA->transform;
+			b2WorldTransform transformB = bodySimB->transform;
 
 			// These may not be skipped by relative transform check below
 			contactSim->bodySimIndexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
@@ -494,7 +494,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			if ( recycleDistance > 0.0f && ( contactSim->simFlags & b2_simRelativeTransformValid ) &&
 				 ( contactSim->simFlags & b2_contactRecycleFlag ) )
 			{
-				b2Transform xf = b2InvMulTransforms( transformA, transformB );
+				b2Transform xf = b2InvMulWorldTransforms( transformA, transformB );
 				b2Transform xfc = b2InvMulTransforms( contactSim->cachedTransformA, contactSim->cachedTransformB );
 
 				float cosA = b2RelativeCos( transformA.q, contactSim->cachedTransformA.q );
@@ -519,7 +519,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 					b2Vec2 normal = contactSim->manifold.normal;
 
 					// Minimize round-off
-					b2Vec2 dc = b2Sub( bodySimB->center, bodySimA->center );
+					b2Vec2 dc = b2PositionDelta( bodySimB->center, bodySimA->center );
 
 					for ( int i = 0; i < contactSim->manifold.pointCount; ++i )
 					{
@@ -540,9 +540,11 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 				}
 			}
 
-			// Caching for contact recycling.
-			contactSim->cachedTransformA = transformA;
-			contactSim->cachedTransformB = transformB;
+			// Caching for contact recycling. The cache stays float, so a large world demotes the world
+			// translation here. The relative-pose distance check below loses precision far from the
+			// origin, only disabling recycling there, never correctness.
+			contactSim->cachedTransformA = (b2Transform){ b2ToVec2( transformA.p ), transformA.q };
+			contactSim->cachedTransformB = (b2Transform){ b2ToVec2( transformB.p ), transformB.q };
 			contactSim->simFlags |= b2_simRelativeTransformValid;
 
 			b2Vec2 centerOffsetA = b2RotateVector( transformA.q, bodySimA->localCenter );
@@ -1122,7 +1124,7 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 			color = b2_colorGray;
 		}
 
-		b2DrawShape( draw, shape, bodySim->transform, color, draw->drawChainNormals );
+		b2DrawShape( draw, shape, b2ToRelativeTransform( bodySim->transform, b2Position_zero ), color, draw->drawChainNormals );
 	}
 
 	if ( draw->drawBounds )
@@ -1197,7 +1199,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				b2Vec2 offset = { 0.1f, 0.1f };
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
-				b2Transform transform = { bodySim->center, bodySim->transform.q };
+				b2Transform transform = { b2ToVec2( bodySim->center ), bodySim->transform.q };
 				b2Vec2 p = b2TransformPoint( transform, offset );
 				draw->DrawStringFcn( p, body->name, b2_colorBlueViolet, draw->context );
 			}
@@ -1207,8 +1209,8 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				b2Vec2 offset = { 0.1f, 0.1f };
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
-				b2Transform transform = { bodySim->center, bodySim->transform.q };
-				draw->DrawLineFcn( bodySim->center0, bodySim->center, b2_colorWhiteSmoke, draw->context );
+				b2Transform transform = { b2ToVec2( bodySim->center ), bodySim->transform.q };
+				draw->DrawLineFcn( b2ToVec2( bodySim->center0 ), b2ToVec2( bodySim->center ), b2_colorWhiteSmoke, draw->context );
 				draw->DrawTransformFcn( transform, draw->context );
 
 				b2Vec2 p = b2TransformPoint( transform, offset );
@@ -1267,11 +1269,11 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 							b2Vec2 p;
 							if ( draw->drawAnchorA )
 							{
-								p = b2Add( bodySimA->center, mp->anchorA );
+								p = b2ToVec2( b2OffsetPosition( bodySimA->center, mp->anchorA ) );
 							}
 							else
 							{
-								p = b2Add( bodySimB->center, mp->anchorB );
+								p = b2ToVec2( b2OffsetPosition( bodySimB->center, mp->anchorB ) );
 							}
 
 							if ( draw->drawGraphColors && contact->colorIndex != B2_NULL_INDEX )
@@ -2369,7 +2371,7 @@ static bool TreeOverlapCallback( int proxyId, uint64_t userData, void* context )
 	}
 
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
+	b2Transform transform = b2ToRelativeTransform( b2GetBodyTransformQuick( world, body ), b2Position_zero );
 
 	b2DistanceInput input;
 	input.proxyA = *worldContext->proxy;
@@ -2466,7 +2468,7 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, uint64_t
 	}
 
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
+	b2Transform transform = b2ToRelativeTransform( b2GetBodyTransformQuick( world, body ), b2Position_zero );
 	b2CastOutput output = b2RayCastShape( input, shape, transform );
 
 	if ( output.hit )
@@ -2626,7 +2628,7 @@ static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 	}
 
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
+	b2Transform transform = b2ToRelativeTransform( b2GetBodyTransformQuick( world, body ), b2Position_zero );
 
 	b2CastOutput output = b2ShapeCastShape( input, shape, transform );
 
@@ -2739,7 +2741,7 @@ static float MoverCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 	}
 
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
+	b2Transform transform = b2ToRelativeTransform( b2GetBodyTransformQuick( world, body ), b2Position_zero );
 
 	b2CastOutput output = b2ShapeCastShape( input, shape, transform );
 	if ( output.fraction == 0.0f )
@@ -2827,7 +2829,7 @@ static bool TreeCollideCallback( int proxyId, uint64_t userData, void* context )
 	}
 
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
+	b2Transform transform = b2ToRelativeTransform( b2GetBodyTransformQuick( world, body ), b2Position_zero );
 
 	b2PlaneResult result = b2CollideMover( &worldContext->mover, shape, transform );
 
@@ -3015,7 +3017,7 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
 	B2_ASSERT( body->type == b2_dynamicBody );
 
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
+	b2Transform transform = b2ToRelativeTransform( b2GetBodyTransformQuick( world, body ), b2Position_zero );
 
 	b2DistanceInput input;
 	input.proxyA = b2MakeShapeDistanceProxy( shape );
@@ -3073,7 +3075,7 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 	b2BodyState* state = b2Array_Get( set->bodyStates, localIndex );
 	b2BodySim* bodySim = b2Array_Get( set->bodySims, localIndex );
 	state->linearVelocity = b2MulAdd( state->linearVelocity, bodySim->invMass, impulse );
-	state->angularVelocity += bodySim->invInertia * b2Cross( b2Sub( closestPoint, bodySim->center ), impulse );
+	state->angularVelocity += bodySim->invInertia * b2Cross( b2PositionDelta( b2MakePosition( closestPoint ), bodySim->center ), impulse );
 
 	return true;
 }

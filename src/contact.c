@@ -526,18 +526,15 @@ b2ContactSim* b2GetContactSim( b2World* world, b2Contact* contact )
 
 // Update the contact manifold and touching status.
 // Note: do not assume the shape AABBs are overlapping or are valid.
-bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA, b2Transform transformA, b2Vec2 centerOffsetA,
-					  b2Shape* shapeB, b2Transform transformB, b2Vec2 centerOffsetB )
+bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA, b2WorldTransform transformA, b2Vec2 centerOffsetA,
+					  b2Shape* shapeB, b2WorldTransform transformB, b2Vec2 centerOffsetB )
 {
 	// Save old manifold
 	b2Manifold oldManifold = contactSim->manifold;
 
 	// Compute new manifold
 	b2ManifoldFcn* fcn = s_registers[shapeA->type][shapeB->type].fcn;
-	// Promote to world transforms for the collision call. The body sim still holds float
-	// transforms until phase 3, where the shim goes away.
-	contactSim->manifold =
-		fcn( shapeA, b2MakeWorldTransform( transformA ), shapeB, b2MakeWorldTransform( transformB ), &contactSim->cache );
+	contactSim->manifold = fcn( shapeA, transformA, shapeB, transformB, &contactSim->cache );
 
 	// Keep these updated in case the values on the shapes are modified
 	contactSim->friction = world->frictionCallback( shapeA->material.friction, shapeA->material.userMaterialId,
@@ -570,7 +567,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 
 		b2Manifold* manifold = &contactSim->manifold;
 		float bestSeparation = manifold->points[0].separation;
-		b2Vec2 bestPoint = b2Add( transformA.p, manifold->points[0].anchorA );
+		b2Vec2 bestPoint = b2ToVec2( b2OffsetPosition( transformA.p, manifold->points[0].anchorA ) );
 
 		// Get deepest point
 		for ( int i = 1; i < manifold->pointCount; ++i )
@@ -579,7 +576,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 			if ( separation < bestSeparation )
 			{
 				bestSeparation = separation;
-				bestPoint = b2Add( transformA.p, manifold->points[i].anchorA );
+				bestPoint = b2ToVec2( b2OffsetPosition( transformA.p, manifold->points[i].anchorA ) );
 			}
 		}
 

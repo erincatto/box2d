@@ -986,6 +986,16 @@ static uint64_t b2FnvMixFloat( uint64_t hash, float f )
 	return ( hash ^ (uint64_t)bits ) * B2_SNAP_FNV_PRIME;
 }
 
+#if defined( BOX2D_DOUBLE_PRECISION )
+// Mix a full width world coordinate so the deep hash sees the low double bits
+static uint64_t b2FnvMixDouble( uint64_t hash, double d )
+{
+	uint64_t bits;
+	memcpy( &bits, &d, 8 );
+	return ( hash ^ bits ) * B2_SNAP_FNV_PRIME;
+}
+#endif
+
 static uint64_t b2FnvMixInt( uint64_t hash, int v )
 {
 	return ( hash ^ (uint64_t)(uint32_t)v ) * B2_SNAP_FNV_PRIME;
@@ -1007,8 +1017,13 @@ uint64_t b2HashWorldStateDeep( b2World* world )
 
 		b2BodySim* sim = b2GetBodySim( world, body );
 
+#if defined( BOX2D_DOUBLE_PRECISION )
+		hash = b2FnvMixDouble( hash, sim->transform.p.x );
+		hash = b2FnvMixDouble( hash, sim->transform.p.y );
+#else
 		hash = b2FnvMixFloat( hash, sim->transform.p.x );
 		hash = b2FnvMixFloat( hash, sim->transform.p.y );
+#endif
 		hash = b2FnvMixFloat( hash, sim->transform.q.c );
 		hash = b2FnvMixFloat( hash, sim->transform.q.s );
 

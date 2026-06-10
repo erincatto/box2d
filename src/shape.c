@@ -86,13 +86,13 @@ static float b2ComputeShapeMargin( b2Shape* shape )
 	return b2MinFloat( B2_MAX_AABB_MARGIN, B2_AABB_MARGIN_FRACTION * margin );
 }
 
-static void b2UpdateShapeAABBs( b2Shape* shape, b2Transform transform, b2BodyType proxyType )
+static void b2UpdateShapeAABBs( b2Shape* shape, b2WorldTransform transform, b2BodyType proxyType )
 	{
 	// Compute a bounding box with a speculative margin
 	const float speculativeDistance = B2_SPECULATIVE_DISTANCE;
 	const float aabbMargin = shape->aabbMargin;
 
-	b2AABB aabb = b2ComputeFatShapeAABB( shape, b2MakeWorldTransform( transform ), speculativeDistance );
+	b2AABB aabb = b2ComputeFatShapeAABB( shape, transform, speculativeDistance );
 	shape->aabb = aabb;
 
 	// Smaller margin for static bodies. Cannot be zero due to TOI tolerance.
@@ -105,7 +105,7 @@ static void b2UpdateShapeAABBs( b2Shape* shape, b2Transform transform, b2BodyTyp
 	shape->fatAABB = fatAABB;
 }
 
-static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2Transform transform, const b2ShapeDef* def,
+static b2Shape* b2CreateShapeInternal( b2World* world, b2Body* body, b2WorldTransform transform, const b2ShapeDef* def,
 									   const void* geometry, b2ShapeType shapeType )
 {
 	int shapeId = b2AllocId( &world->shapeIdPool );
@@ -222,7 +222,7 @@ static b2ShapeId b2CreateShape( b2BodyId bodyId, const b2ShapeDef* def, const vo
 	}
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
+	b2WorldTransform transform = b2GetBodyTransformQuick( world, body );
 
 	b2Shape* shape = b2CreateShapeInternal( world, body, transform, def, geometry, shapeType );
 
@@ -451,7 +451,7 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 	}
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
+	b2WorldTransform transform = b2GetBodyTransformQuick( world, body );
 
 	int chainId = b2AllocId( &world->chainIdPool );
 
@@ -1032,7 +1032,7 @@ b2PlaneResult b2CollideMover( const b2Capsule* mover, const b2Shape* shape, b2Tr
 	return result;
 }
 
-void b2CreateShapeProxy( b2Shape* shape, b2BroadPhase* bp, b2BodyType type, b2Transform transform, bool forcePairCreation )
+void b2CreateShapeProxy( b2Shape* shape, b2BroadPhase* bp, b2BodyType type, b2WorldTransform transform, bool forcePairCreation )
 {
 	B2_ASSERT( shape->proxyKey == B2_NULL_INDEX );
 
@@ -1115,8 +1115,8 @@ bool b2Shape_TestPoint( b2ShapeId shapeId, b2Vec2 point )
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
 
-	b2Transform transform = b2GetBodyTransform( world, shape->bodyId );
-	b2Vec2 localPoint = b2InvTransformPoint( transform, point );
+	b2WorldTransform transform = b2GetBodyTransform( world, shape->bodyId );
+	b2Vec2 localPoint = b2InvTransformWorldPoint( transform, b2MakePosition( point ) );
 
 	bool result;
 	switch ( shape->type )
@@ -1157,11 +1157,11 @@ b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, const b2RayCastInput* input )
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
 
-	b2Transform transform = b2GetBodyTransform( world, shape->bodyId );
+	b2WorldTransform transform = b2GetBodyTransform( world, shape->bodyId );
 
 	// input in local coordinates
 	b2RayCastInput localInput;
-	localInput.origin = b2InvTransformPoint( transform, input->origin );
+	localInput.origin = b2InvTransformWorldPoint( transform, b2MakePosition( input->origin ) );
 	localInput.translation = b2InvRotateVector( transform.q, input->translation );
 	localInput.maxFraction = input->maxFraction;
 
@@ -1197,7 +1197,7 @@ b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, const b2RayCastInput* input )
 	{
 		// convert to world coordinates
 		output.normal = b2RotateVector( transform.q, output.normal );
-		output.point = b2TransformWorldPoint( b2MakeWorldTransform( transform ), b2ToVec2( output.point ) );
+		output.point = b2TransformWorldPoint( transform, b2ToVec2( output.point ) );
 	}
 
 	if ( world->recording != NULL )
@@ -1362,7 +1362,7 @@ static void b2ResetProxy( b2World* world, b2Shape* shape, bool wakeBodies, bool 
 		}
 	}
 
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
+	b2WorldTransform transform = b2GetBodyTransformQuick( world, body );
 	if ( shape->proxyKey != B2_NULL_INDEX )
 	{
 		b2BodyType proxyType = B2_PROXY_TYPE( shape->proxyKey );
@@ -1895,18 +1895,18 @@ b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target )
 
 	b2Shape* shape = b2GetShape( world, shapeId );
 	b2Body* body = b2Array_Get( world->bodies,shape->bodyId );
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
+	b2WorldTransform transform = b2GetBodyTransformQuick( world, body );
 
 	b2DistanceInput input;
 	input.proxyA = b2MakeShapeDistanceProxy( shape );
 	input.proxyB = b2MakeProxy( &target, 1, 0.0f );
-	input.transform = b2InvMulTransforms( transform, b2Transform_identity );
+	input.transform = b2InvMulWorldTransforms( transform, b2WorldTransform_identity );
 	input.useRadii = true;
 
 	b2SimplexCache cache = { 0 };
 	b2DistanceOutput output = b2ShapeDistance( &input, &cache, NULL, 0 );
 
-	return b2TransformPoint( transform, output.pointA );
+	return b2ToVec2( b2TransformWorldPoint( transform, output.pointA ) );
 }
 
 // https://en.wikipedia.org/wiki/Density_of_air
@@ -1954,7 +1954,7 @@ void b2Shape_ApplyWind( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, 
 	B2_ASSERT( body->setIndex == b2_awakeSet );
 
 	b2BodyState* state = b2GetBodyState( world, body );
-	b2Transform transform = sim->transform;
+	b2WorldTransform transform = sim->transform;
 
 	float lengthUnits = b2GetLengthUnitsPerMeter();
 	float volumeUnits = lengthUnits * lengthUnits * lengthUnits;

@@ -256,7 +256,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	// Early out on fast parallel movement over a chain shape.
 	if ( shape->type == b2_chainSegmentShape )
 	{
-		b2Transform transform = bodySim->transform;
+		b2Transform transform = { b2ToVec2( bodySim->transform.p ), bodySim->transform.q };
 		b2Vec2 p1 = b2TransformPoint( transform, shape->chainSegment.segment.point1 );
 		b2Vec2 p2 = b2TransformPoint( transform, shape->chainSegment.segment.point2 );
 		b2Vec2 e = b2Sub( p2, p1 );
@@ -451,10 +451,10 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 		// Advance body
 		b2Transform transform = { origin, q };
-		fastBodySim->transform = transform;
-		fastBodySim->center = c;
+		fastBodySim->transform = b2MakeWorldTransform( transform );
+		fastBodySim->center = b2MakePosition( c );
 		fastBodySim->rotation0 = q;
-		fastBodySim->center0 = c;
+		fastBodySim->center0 = b2MakePosition( c );
 
 		// Update body move event
 		b2BodyMoveEvent* event = b2Array_Get( world->bodyMoveEvents, bodySimIndex );
@@ -581,7 +581,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 		B2_ASSERT( b2IsValidVec2( v ) );
 		B2_ASSERT( b2IsValidFloat( w ) );
 
-		sim->center = b2Add( sim->center, state->deltaPosition );
+		sim->center = b2OffsetPosition( sim->center, state->deltaPosition );
 		sim->transform.q = b2NormalizeRot( b2MulRot( state->deltaRotation, sim->transform.q ) );
 
 		// Use the velocity of the farthest point on the body to account for rotation.
@@ -598,12 +598,12 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 		state->deltaPosition = b2Vec2_zero;
 		state->deltaRotation = b2Rot_identity;
 
-		sim->transform.p = b2Sub( sim->center, b2RotateVector( sim->transform.q, sim->localCenter ) );
+		sim->transform.p = b2OffsetPosition( sim->center, b2Neg( b2RotateVector( sim->transform.q, sim->localCenter ) ) );
 
 		// cache miss here, however I need the shape list below
 		b2Body* body = bodies + sim->bodyId;
 		body->bodyMoveIndex = simIndex;
-		moveEvents[simIndex].transform = sim->transform;
+		moveEvents[simIndex].transform = (b2Transform){ b2ToVec2( sim->transform.p ), sim->transform.q };
 		moveEvents[simIndex].bodyId = (b2BodyId){ sim->bodyId + 1, worldId, body->generation };
 		moveEvents[simIndex].userData = body->userData;
 		moveEvents[simIndex].fellAsleep = false;
@@ -682,7 +682,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 		}
 
 		// Update shapes AABBs
-		b2Transform transform = sim->transform;
+		b2WorldTransform transform = sim->transform;
 		bool isFast = ( sim->flags & b2_isFast ) != 0;
 		int shapeId = body->headShapeId;
 		while ( shapeId != B2_NULL_INDEX )
@@ -700,7 +700,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 			}
 			else
 			{
-				b2AABB aabb = b2ComputeFatShapeAABB( shape, b2MakeWorldTransform( transform ), speculativeDistance );
+				b2AABB aabb = b2ComputeFatShapeAABB( shape, transform, speculativeDistance );
 				shape->aabb = aabb;
 
 				B2_ASSERT( shape->enlargedAABB == false );
@@ -1770,7 +1770,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 						// World contact point reconstructed from body A center of mass and the anchor
 						b2Body* bodyA = b2Array_Get( world->bodies, shapeA->bodyId );
 						b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
-						event.point = b2Add( bodySimA->center, bestPoint->anchorA );
+						event.point = b2ToVec2( b2OffsetPosition( bodySimA->center, bestPoint->anchorA ) );
 
 						event.shapeIdA = (b2ShapeId){ shapeA->id + 1, worldId, shapeA->generation };
 						event.shapeIdB = (b2ShapeId){ shapeB->id + 1, worldId, shapeB->generation };

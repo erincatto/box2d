@@ -77,7 +77,7 @@ typedef struct
 	b2Array( int ) overlaps;
 } b2SensorOverlaps;
 
-void b2CreateShapeProxy( b2Shape* shape, b2BroadPhase* bp, b2BodyType type, b2Transform transform, bool forcePairCreation );
+void b2CreateShapeProxy( b2Shape* shape, b2BroadPhase* bp, b2BodyType type, b2WorldTransform transform, bool forcePairCreation );
 void b2DestroyShapeProxy( b2Shape* shape, b2BroadPhase* bp );
 
 void b2FreeChainData( b2ChainShape* chain );
