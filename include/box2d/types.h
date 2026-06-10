@@ -47,12 +47,25 @@ typedef float b2RestitutionCallback( float restitutionA, uint64_t userMaterialId
 /// @ingroup world
 typedef struct b2RayResult
 {
+	/// The shape hit.
 	b2ShapeId shapeId;
+
+	/// The world point of the hit.
 	b2Vec2 point;
+
+	/// The world normal of the shape surface at the hit point.
 	b2Vec2 normal;
+
+	/// The fraction of the input ray.
 	float fraction;
+
+	/// The number of BVH nodes visited. Diagnostic.
 	int nodeVisits;
+
+	/// The number of BVH leaves visited. Diagnostic.
 	int leafVisits;
+
+	/// Did the ray hit? If false, all other data is invalid.
 	bool hit;
 } b2RayResult;
 
@@ -1091,9 +1104,16 @@ typedef struct b2ContactEvents
 /// @note If sleeping is disabled all dynamic and kinematic bodies will trigger move events.
 typedef struct b2BodyMoveEvent
 {
+	/// The body user data.
 	void* userData;
+
+	/// The body transform.
 	b2Transform transform;
+
+	/// The body id.
 	b2BodyId bodyId;
+
+	/// Did the body fall asleep this time step?
 	bool fellAsleep;
 } b2BodyMoveEvent;
 
@@ -1137,9 +1157,17 @@ typedef struct b2JointEvents
 /// @see b2Shape_GetContactData() and b2Body_GetContactData()
 typedef struct b2ContactData
 {
+	/// The contact id. You may hold onto this to track a contact across time steps.
+	/// This id may become orphaned. Use b2Contact_IsValid before using it for other functions.
 	b2ContactId contactId;
+
+	/// The first shape id.
 	b2ShapeId shapeIdA;
+
+	/// The second shape id.
 	b2ShapeId shapeIdB;
+
+	/// The manifold copied from the contact.
 	b2Manifold manifold;
 } b2ContactData;
 

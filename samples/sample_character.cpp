@@ -389,13 +389,15 @@ public:
 			mover.radius = m_capsule.radius;
 
 			b2World_CollideMover( m_worldId, &mover, collideFilter, PlaneResultFcn, this );
-			b2PlaneSolverResult result = b2SolvePlanes( target - m_transform.p, m_planes, m_planeCount );
+
+			b2Vec2 targetDelta = target - m_transform.p;
+			b2PlaneSolverResult result = b2SolvePlanes( targetDelta, m_planes, m_planeCount );
 
 			m_totalIterations += result.iterationCount;
 
-			float fraction = b2World_CastMover( m_worldId, &mover, result.translation, castFilter );
+			float fraction = b2World_CastMover( m_worldId, &mover, result.delta, castFilter );
 
-			b2Vec2 delta = fraction * result.translation;
+			b2Vec2 delta = fraction * result.delta;
 			m_transform.p += delta;
 
 			if ( b2LengthSquared( delta ) < tolerance * tolerance )
