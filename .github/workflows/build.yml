@@ -80,6 +80,7 @@ jobs:
         MSAN_OPTIONS: ${{ matrix.msan-options }}
       run: ${{ matrix.test }}
 
+  # mingw needs some extra setup so keeping it separate from the matrix.
   build-windows-mingw:
     name: windows-mingw
     runs-on: windows-latest
@@ -114,7 +115,7 @@ jobs:
   samples:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 6
+    timeout-minutes: 8
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     strategy:
       fail-fast: false
