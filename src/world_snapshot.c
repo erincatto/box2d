@@ -29,8 +29,9 @@
 // Snapshot image magic and version
 #define B2_SNAP_MAGIC 0x32534E42u // 'BNS2'
 
-// Bump this if any of the data structures below get modified.
-#define B2_SNAP_VERSION 2u
+// Bump this if any of the data structures below get modified. The layout hash only catches
+// size changes, a same-size reinterpretation like the contact cache reshape needs this bump.
+#define B2_SNAP_VERSION 3u
 
 // Header flag bits
 #define B2_SNAP_FLAG_VALIDATION 0x1u	   // image was built with validation, only used for diagnostics
@@ -481,9 +482,10 @@ void b2SerializeWorld( b2World* world, b2RecBuffer* buf )
 	hdr.version = B2_SNAP_VERSION;
 	hdr.layoutHash = b2ComputeLayoutHash();
 	hdr.flags = B2_ENABLE_VALIDATION ? B2_SNAP_FLAG_VALIDATION : 0u;
-#if defined( BOX2D_DOUBLE_PRECISION )
-	hdr.flags |= B2_SNAP_FLAG_DOUBLE_PRECISION;
-#endif
+	if ( b2IsDoublePrecision() )
+	{
+		hdr.flags |= B2_SNAP_FLAG_DOUBLE_PRECISION;
+	}
 	b2SnapW_Bytes( buf, &hdr, (int)sizeof( hdr ) );
 
 	// World config
@@ -850,11 +852,7 @@ static bool b2OpenSnapshotImage( const uint8_t* image, int size, b2SnapReader* r
 	// World positions are stored at the build precision, so the layout differs irreconcilably across
 	// modes. Called out before the layout hash so the cause is clear rather than a generic mismatch.
 	bool imageDouble = ( hdr.flags & B2_SNAP_FLAG_DOUBLE_PRECISION ) != 0;
-#if defined( BOX2D_DOUBLE_PRECISION )
-	bool buildDouble = true;
-#else
-	bool buildDouble = false;
-#endif
+	bool buildDouble = b2IsDoublePrecision();
 	if ( imageDouble != buildDouble )
 	{
 		b2Log( "snapshot precision mismatch: image %s, this build %s\n", imageDouble ? "double" : "float",
@@ -1005,16 +1003,6 @@ static uint64_t b2FnvMixFloat( uint64_t hash, float f )
 	return ( hash ^ (uint64_t)bits ) * B2_SNAP_FNV_PRIME;
 }
 
-#if defined( BOX2D_DOUBLE_PRECISION )
-// Mix a full width world coordinate so the deep hash sees the low double bits
-static uint64_t b2FnvMixDouble( uint64_t hash, double d )
-{
-	uint64_t bits;
-	memcpy( &bits, &d, 8 );
-	return ( hash ^ bits ) * B2_SNAP_FNV_PRIME;
-}
-#endif
-
 static uint64_t b2FnvMixInt( uint64_t hash, int v )
 {
 	return ( hash ^ (uint64_t)(uint32_t)v ) * B2_SNAP_FNV_PRIME;
@@ -1036,13 +1024,7 @@ uint64_t b2HashWorldStateDeep( b2World* world )
 
 		b2BodySim* sim = b2GetBodySim( world, body );
 
-#if defined( BOX2D_DOUBLE_PRECISION )
-		hash = b2FnvMixDouble( hash, sim->transform.p.x );
-		hash = b2FnvMixDouble( hash, sim->transform.p.y );
-#else
-		hash = b2FnvMixFloat( hash, sim->transform.p.x );
-		hash = b2FnvMixFloat( hash, sim->transform.p.y );
-#endif
+		hash = b2FnvMixPosition( hash, sim->transform.p );
 		hash = b2FnvMixFloat( hash, sim->transform.q.c );
 		hash = b2FnvMixFloat( hash, sim->transform.q.s );
 

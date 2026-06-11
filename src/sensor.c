@@ -22,7 +22,7 @@ struct b2SensorQueryContext
 	b2SensorTaskContext* taskContext;
 	b2Sensor* sensor;
 	b2Shape* sensorShape;
-	b2Transform transform;
+	b2WorldTransform transform;
 };
 
 // Sensor shapes need to
@@ -93,12 +93,13 @@ static bool b2SensorQueryCallback( int proxyId, uint64_t userData, void* context
 		}
 	}
 
-	b2Transform otherTransform = b2ToRelativeTransform( b2GetBodyTransform( world, otherShape->bodyId ), b2Position_zero );
+	// The relative pose is differenced in double so sensor overlap stays exact far from the origin
+	b2WorldTransform otherTransform = b2GetBodyTransform( world, otherShape->bodyId );
 
 	b2DistanceInput input;
 	input.proxyA = b2MakeShapeDistanceProxy( sensorShape );
 	input.proxyB = b2MakeShapeDistanceProxy( otherShape );
-	input.transform = b2InvMulTransforms( queryContext->transform, otherTransform );
+	input.transform = b2InvMulWorldTransforms( queryContext->transform, otherTransform );
 	input.useRadii = true;
 	b2SimplexCache cache = { 0 };
 	b2DistanceOutput output = b2ShapeDistance( &input, &cache, NULL, 0 );
@@ -173,7 +174,7 @@ static void b2SensorTask( int startIndex, int endIndex, int threadIndex, void* c
 			continue;
 		}
 
-		b2Transform transform = b2ToRelativeTransform( b2GetBodyTransformQuick( world, body ), b2Position_zero );
+		b2WorldTransform transform = b2GetBodyTransformQuick( world, body );
 
 		struct b2SensorQueryContext queryContext = {
 			.world = world,

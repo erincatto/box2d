@@ -399,11 +399,10 @@ b2MassData b2ComputePolygonMass( const b2Polygon* shape, float density )
 	return massData;
 }
 
-#if defined( BOX2D_DOUBLE_PRECISION )
-
-// Large world AABBs are built in double and narrowed to float with directed rounding so the box
-// always contains the shape. The inflation (speculative margin) folds into the double step before
-// the single outward rounding, otherwise it vanishes into a float ULP far from the origin.
+// AABBs are built in double and narrowed to float once. In large world mode the narrowing rounds
+// outward so the box always contains the shape, and the inflation (speculative margin) folds into
+// the double step, otherwise it vanishes into a float ULP far from the origin. In float mode the
+// rounding helpers are plain casts.
 
 static b2AABB b2ComputeCircleFatAABB( const b2Circle* shape, b2WorldTransform xf, float extra )
 {
@@ -500,83 +499,11 @@ b2AABB b2ComputeFatShapeAABB( const b2Shape* shape, b2WorldTransform xf, float e
 		default:
 		{
 			B2_ASSERT( false );
-			b2Vec2 c = b2ToVec2( xf.p );
-			b2AABB empty = { c, c };
+			b2AABB empty = { { 0.0f, 0.0f }, { 0.0f, 0.0f } };
 			return empty;
 		}
 	}
 }
-
-#else
-
-b2AABB b2ComputeCircleAABB( const b2Circle* shape, b2WorldTransform xf )
-{
-	b2Vec2 p = b2TransformPoint( xf, shape->center );
-	float r = shape->radius;
-
-	b2AABB aabb = { { p.x - r, p.y - r }, { p.x + r, p.y + r } };
-	return aabb;
-}
-
-b2AABB b2ComputeCapsuleAABB( const b2Capsule* shape, b2WorldTransform xf )
-{
-	b2Vec2 v1 = b2TransformPoint( xf, shape->center1 );
-	b2Vec2 v2 = b2TransformPoint( xf, shape->center2 );
-
-	b2Vec2 r = { shape->radius, shape->radius };
-	b2Vec2 lower = b2Sub( b2Min( v1, v2 ), r );
-	b2Vec2 upper = b2Add( b2Max( v1, v2 ), r );
-
-	b2AABB aabb = { lower, upper };
-	return aabb;
-}
-
-b2AABB b2ComputePolygonAABB( const b2Polygon* shape, b2WorldTransform xf )
-{
-	B2_ASSERT( shape->count > 0 );
-	b2Vec2 lower = b2TransformPoint( xf, shape->vertices[0] );
-	b2Vec2 upper = lower;
-
-	for ( int i = 1; i < shape->count; ++i )
-	{
-		b2Vec2 v = b2TransformPoint( xf, shape->vertices[i] );
-		lower = b2Min( lower, v );
-		upper = b2Max( upper, v );
-	}
-
-	b2Vec2 r = { shape->radius, shape->radius };
-	lower = b2Sub( lower, r );
-	upper = b2Add( upper, r );
-
-	b2AABB aabb = { lower, upper };
-	return aabb;
-}
-
-b2AABB b2ComputeSegmentAABB( const b2Segment* shape, b2WorldTransform xf )
-{
-	b2Vec2 v1 = b2TransformPoint( xf, shape->point1 );
-	b2Vec2 v2 = b2TransformPoint( xf, shape->point2 );
-
-	b2Vec2 lower = b2Min( v1, v2 );
-	b2Vec2 upper = b2Max( v1, v2 );
-
-	b2AABB aabb = { lower, upper };
-	return aabb;
-}
-
-// Conservative world AABB for a shape, inflated by extra. Float mode adds the inflation to the
-// tight box directly so the result is byte identical to the legacy compute then speculative grow.
-b2AABB b2ComputeFatShapeAABB( const b2Shape* shape, b2WorldTransform xf, float extra )
-{
-	b2AABB aabb = b2ComputeShapeAABB( shape, xf );
-	aabb.lowerBound.x -= extra;
-	aabb.lowerBound.y -= extra;
-	aabb.upperBound.x += extra;
-	aabb.upperBound.y += extra;
-	return aabb;
-}
-
-#endif
 
 bool b2PointInCircle( const b2Circle* shape, b2Vec2 point )
 {

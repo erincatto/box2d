@@ -56,18 +56,23 @@ static void s_DrawPoly( const b2Vec2* v, int n, b2HexColor c, void* ctx ) { (voi
 static void s_DrawCapsule( b2Vec2 p1, b2Vec2 p2, float r, b2HexColor c, void* ctx ) { (void)p1; (void)p2; (void)r; (void)c; (void)ctx; }
 
 // Issue all 9 spatial query types against worldId. groundShapeId and a known position
-// are used for the shape-level queries.
+// are used for the shape-level queries. Half the queries use a nonzero origin with the
+// geometry shifted to compensate, so the origin wire args and the per shape re-centering
+// are exercised rather than passing vacuously at zero.
 static void IssueAllQueries( b2WorldId worldId, b2ShapeId groundShapeId )
 {
 	b2QueryFilter filter = b2DefaultQueryFilter();
 
-	// OverlapAABB
-	b2AABB aabb = { { -5.0f, -15.0f }, { 5.0f, 5.0f } };
-	b2World_OverlapAABB( worldId, aabb, filter, s_overlapFcn, NULL );
+	b2Vec2 baseOffset = { 3.0f, -2.0f };
+	b2Position base = b2MakePosition( baseOffset );
 
-	// OverlapShape (small box proxy)
+	// OverlapAABB, box shifted so base + aabb covers the same world region as before
+	b2AABB aabb = { { -5.0f - baseOffset.x, -15.0f - baseOffset.y }, { 5.0f - baseOffset.x, 5.0f - baseOffset.y } };
+	b2World_OverlapAABB( worldId, base, aabb, filter, s_overlapFcn, NULL );
+
+	// OverlapShape (small box proxy) at zero origin
 	b2ShapeProxy proxy = b2MakeProxy( (b2Vec2[]){ { -0.5f, -0.5f }, { 0.5f, -0.5f }, { 0.5f, 0.5f }, { -0.5f, 0.5f } }, 4, 0.0f );
-	b2World_OverlapShape( worldId, &proxy, filter, s_overlapFcn, NULL );
+	b2World_OverlapShape( worldId, b2Position_zero, &proxy, filter, s_overlapFcn, NULL );
 
 	// CastRay (all hits)
 	b2Vec2 rayOrigin = { 0.0f, 10.0f };
@@ -77,26 +82,26 @@ static void IssueAllQueries( b2WorldId worldId, b2ShapeId groundShapeId )
 	// CastRayClosest
 	b2World_CastRayClosest( worldId, b2MakePosition( rayOrigin ), rayDir, filter );
 
-	// CastShape (circle proxy)
-	b2ShapeProxy circProxy = b2MakeProxy( (b2Vec2[]){ { 0.0f, 0.0f } }, 1, 0.3f );
-	b2World_CastShape( worldId, &circProxy, rayDir, filter, s_closestCastFcn, NULL );
+	// CastShape (circle proxy), cast from the nonzero base
+	b2ShapeProxy circProxy = b2MakeProxy( (b2Vec2[]){ { -baseOffset.x, -baseOffset.y } }, 1, 0.3f );
+	b2World_CastShape( worldId, base, &circProxy, rayDir, filter, s_closestCastFcn, NULL );
 
-	// CollideMover (capsule with radius > 2*B2_LINEAR_SLOP)
-	b2Capsule moverCap = { { -0.3f, 0.0f }, { 0.3f, 0.0f }, 0.5f };
-	b2World_CollideMover( worldId, &moverCap, filter, s_planeFcn, NULL );
+	// CollideMover (capsule with radius > 2*B2_LINEAR_SLOP), mover relative to the base
+	b2Capsule moverCap = { { -0.3f - baseOffset.x, -baseOffset.y }, { 0.3f - baseOffset.x, -baseOffset.y }, 0.5f };
+	b2World_CollideMover( worldId, base, &moverCap, filter, s_planeFcn, NULL );
 
 	// CastMover
 	b2Vec2 moverTranslation = { 0.0f, -5.0f };
-	b2World_CastMover( worldId, &moverCap, moverTranslation, filter );
+	b2World_CastMover( worldId, base, &moverCap, moverTranslation, filter );
 
 	// Shape_TestPoint: test inside (0,0 local, well inside the r=10 ground circle at y=-10)
 	// and outside
-	b2Shape_TestPoint( groundShapeId, (b2Vec2){ 0.0f, -10.0f } );   // inside center of ground
-	b2Shape_TestPoint( groundShapeId, (b2Vec2){ 0.0f, 100.0f } );   // outside
+	b2Shape_TestPoint( groundShapeId, b2MakePosition( (b2Vec2){ 0.0f, -10.0f } ) ); // inside center of ground
+	b2Shape_TestPoint( groundShapeId, b2MakePosition( (b2Vec2){ 0.0f, 100.0f } ) ); // outside
 
-	// Shape_RayCast against the ground shape
-	b2RayCastInput rcIn = { { 0.0f, 5.0f }, { 0.0f, -20.0f }, 1.0f };
-	b2Shape_RayCast( groundShapeId, &rcIn );
+	// Shape_RayCast against the ground shape, ray relative to the nonzero base
+	b2RayCastInput rcIn = { { -baseOffset.x, 5.0f - baseOffset.y }, { 0.0f, -20.0f }, 1.0f };
+	b2Shape_RayCast( groundShapeId, base, &rcIn );
 }
 
 int RecordingTest( void )
@@ -240,10 +245,10 @@ int RecordingTest( void )
 	b2Body_WakeTouching( bodyId );
 
 	// Per-step forces and impulses applied before the first step
-	b2Body_ApplyForce( bodyId, (b2Vec2){ 0.0f, 50.0f }, (b2Vec2){ 1.0f, 5.0f }, true );
+	b2Body_ApplyForce( bodyId, (b2Vec2){ 0.0f, 50.0f }, b2MakePosition( (b2Vec2){ 1.0f, 5.0f } ), true );
 	b2Body_ApplyForceToCenter( bodyId, (b2Vec2){ 5.0f, 0.0f }, true );
 	b2Body_ApplyTorque( bodyId, 1.0f, true );
-	b2Body_ApplyLinearImpulse( bodyId, (b2Vec2){ 0.1f, 0.0f }, (b2Vec2){ 1.0f, 5.0f }, true );
+	b2Body_ApplyLinearImpulse( bodyId, (b2Vec2){ 0.1f, 0.0f }, b2MakePosition( (b2Vec2){ 1.0f, 5.0f } ), true );
 	b2Body_ApplyLinearImpulseToCenter( bodyId, (b2Vec2){ 0.0f, 0.1f }, true );
 	b2Body_ApplyAngularImpulse( bodyId, 0.05f, true );
 
@@ -800,7 +805,7 @@ static void IssuePileQueries( b2WorldId worldId )
 	b2QueryFilter filter = b2DefaultQueryFilter();
 
 	b2AABB aabb = { { -12.0f, -2.0f }, { 12.0f, 22.0f } };
-	b2World_OverlapAABB( worldId, aabb, filter, s_overlapFcn, NULL );
+	b2World_OverlapAABB( worldId, b2Position_zero, aabb, filter, s_overlapFcn, NULL );
 
 	b2World_CastRay( worldId, b2MakePosition( (b2Vec2){ -12.0f, 10.0f } ), (b2Vec2){ 24.0f, 0.0f }, filter, s_keepAllCastFcn, NULL );
 	b2World_CastRay( worldId, b2MakePosition( (b2Vec2){ 0.0f, 22.0f } ), (b2Vec2){ 0.0f, -24.0f }, filter, s_keepAllCastFcn, NULL );

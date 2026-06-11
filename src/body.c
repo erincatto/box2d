@@ -932,7 +932,7 @@ b2Vec2 b2Body_GetWorldPointVelocity( b2BodyId bodyId, b2Position worldPoint )
 	return v;
 }
 
-void b2Body_ApplyForce( b2BodyId bodyId, b2Vec2 force, b2Vec2 point, bool wake )
+void b2Body_ApplyForce( b2BodyId bodyId, b2Vec2 force, b2Position point, bool wake )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	B2_REC( world, BodyApplyForce, bodyId, force, point, wake );
@@ -952,7 +952,7 @@ void b2Body_ApplyForce( b2BodyId bodyId, b2Vec2 force, b2Vec2 point, bool wake )
 	{
 		b2BodySim* bodySim = b2GetBodySim( world, body );
 		bodySim->force = b2Add( bodySim->force, force );
-		bodySim->torque += b2Cross( b2PositionDelta( b2MakePosition( point ), bodySim->center ), force );
+		bodySim->torque += b2Cross( b2PositionDelta( point, bodySim->center ), force );
 	}
 }
 
@@ -1012,7 +1012,7 @@ void b2Body_ClearForces( b2BodyId bodyId )
 	bodySim->torque = 0.0f;
 }
 
-void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Vec2 point, bool wake )
+void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Position point, bool wake )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	B2_REC( world, BodyApplyLinearImpulse, bodyId, impulse, point, wake );
@@ -1035,7 +1035,7 @@ void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Vec2 point, b
 		b2BodyState* state = b2Array_Get( set->bodyStates, localIndex );
 		b2BodySim* bodySim = b2Array_Get( set->bodySims, localIndex );
 		state->linearVelocity = b2MulAdd( state->linearVelocity, bodySim->invMass, impulse );
-		state->angularVelocity += bodySim->invInertia * b2Cross( b2PositionDelta( b2MakePosition( point ), bodySim->center ), impulse );
+		state->angularVelocity += bodySim->invInertia * b2Cross( b2PositionDelta( point, bodySim->center ), impulse );
 
 		b2LimitVelocity( state, world->maxLinearSpeed );
 	}

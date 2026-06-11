@@ -25,7 +25,7 @@ public:
 
 		if ( m_context->restart == false )
 		{
-			m_context->camera.center = origin;
+			m_context->camera.center = b2OffsetPosition( origin, {0.0f, 5.0f} );
 			m_context->camera.zoom = 14.0f;
 		}
 

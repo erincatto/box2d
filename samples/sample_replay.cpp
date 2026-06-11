@@ -102,7 +102,7 @@ static const char* ReplayQueryTypeName( b2RecQueryType type )
 // Pick the first shape whose area contains the click point
 struct ReplayPickContext
 {
-	b2Vec2 point;
+	b2Position point;
 	b2ShapeId shape;
 };
 
@@ -1186,13 +1186,11 @@ public:
 			return;
 		}
 
-		// Picking rides the float carve-out (b2World_OverlapAABB), so it loses precision far from
-		// the origin. Fine for click to select.
-		b2Vec2 pf = b2ToVec2( p );
+		// A tiny box around the click point, exact at any distance with the click as the origin
 		b2Vec2 d = { 0.001f, 0.001f };
-		b2AABB box = { b2Sub( pf, d ), b2Add( pf, d ) };
-		ReplayPickContext pick = { pf, b2_nullShapeId };
-		b2World_OverlapAABB( m_worldId, box, b2DefaultQueryFilter(), ReplayPickCallback, &pick );
+		b2AABB box = { b2Neg( d ), d };
+		ReplayPickContext pick = { p, b2_nullShapeId };
+		b2World_OverlapAABB( m_worldId, p, box, b2DefaultQueryFilter(), ReplayPickCallback, &pick );
 
 		// A miss clears the selection
 		SelectShape( pick.shape );

@@ -213,7 +213,7 @@ public:
 		CastContext_Single context;
 		context.startPos = start;
 		context.translation = { translation.x, translation.y };
-		b2World_CastShape( m_worldId, &transformedShape, translation, filter, &b2CastResult_Closest, &context );
+		b2World_CastShape( m_worldId, b2Position_zero, &transformedShape, translation, filter, &b2CastResult_Closest, &context );
 
 		if ( context.hit )
 		{

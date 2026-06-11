@@ -1753,7 +1753,7 @@ public:
 					proxy = b2MakeProxy( box.vertices, box.count, box.radius );
 				}
 
-				b2World_CastShape( m_worldId, &proxy, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
+				b2World_CastShape( m_worldId, b2Position_zero, &proxy, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
 			}
 
 			if ( context.count > 0 )
@@ -2157,7 +2157,7 @@ public:
 			DrawPolygon( m_draw, box.vertices, box.count, b2_colorWhite );
 		}
 
-		b2World_OverlapShape( m_worldId, &proxy, b2DefaultQueryFilter(), OverlapResultFcn, this );
+		b2World_OverlapShape( m_worldId, b2Position_zero, &proxy, b2DefaultQueryFilter(), OverlapResultFcn, this );
 
 		if ( B2_IS_NON_NULL( m_bodyIds[m_ignoreIndex] ) )
 		{

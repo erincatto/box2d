@@ -596,20 +596,45 @@ B2_INLINE b2Transform b2InvMulTransforms( b2Transform A, b2Transform B )
 }
 
 // World position boundary. These cross between the double precision world space at the public
-// boundary and the float interior. With large world mode off every helper collapses to its
-// float counterpart, so the build is byte identical.
-#if defined( BOX2D_DOUBLE_PRECISION )
+// boundary and the float interior. One set of bodies serves both modes: the typedefs collapse
+// the types in float mode and the explicit float casts become no-ops.
 
 /// Convert a vector to a world position
 B2_INLINE b2Position b2MakePosition( b2Vec2 v )
 {
-	return B2_LITERAL( b2Position ){ (double)v.x, (double)v.y };
+	return B2_LITERAL( b2Position ){ v.x, v.y };
 }
 
 /// Lossy conversion of a world position to a float vector
 B2_INLINE b2Vec2 b2ToVec2( b2Position p )
 {
 	return B2_LITERAL( b2Vec2 ){ (float)p.x, (float)p.y };
+}
+
+/// Narrow a world coordinate to float, rounding toward negative infinity. Use with
+/// b2RoundUpFloat to build a conservative float box that always contains double bounds,
+/// where plain rounding far from the origin could clip. nextafterf is an exact IEEE
+/// operation, so this is cross-platform deterministic. With large world mode off this is
+/// a plain conversion.
+B2_INLINE float b2RoundDownFloat( double x )
+{
+#if defined( BOX2D_DOUBLE_PRECISION )
+	float f = (float)x;
+	return (double)f > x ? nextafterf( f, -FLT_MAX ) : f;
+#else
+	return (float)x;
+#endif
+}
+
+/// Narrow a world coordinate to float, rounding toward positive infinity
+B2_INLINE float b2RoundUpFloat( double x )
+{
+#if defined( BOX2D_DOUBLE_PRECISION )
+	float f = (float)x;
+	return (double)f < x ? nextafterf( f, FLT_MAX ) : f;
+#else
+	return (float)x;
+#endif
 }
 
 /// a - b, demoted to float. The primary precision boundary operation.
@@ -624,7 +649,7 @@ B2_INLINE b2Position b2OffsetPosition( b2Position p, b2Vec2 d )
 	return B2_LITERAL( b2Position ){ p.x + d.x, p.y + d.y };
 }
 
-/// World position interpolation for sweeps and sampling
+/// World position interpolation for sweeps and sampling.
 B2_INLINE b2Position b2LerpPosition( b2Position a, b2Position b, float t )
 {
 	return B2_LITERAL( b2Position ){ ( 1.0f - t ) * a.x + t * b.x, ( 1.0f - t ) * a.y + t * b.y };
@@ -656,7 +681,7 @@ B2_INLINE b2Transform b2InvMulWorldTransforms( b2WorldTransform A, b2WorldTransf
 	return C;
 }
 
-/// Compose a world transform with a local transform
+/// Compose a world transform with a local transform.
 B2_INLINE b2WorldTransform b2MulWorldTransforms( b2WorldTransform A, b2Transform B )
 {
 	b2WorldTransform C;
@@ -666,7 +691,7 @@ B2_INLINE b2WorldTransform b2MulWorldTransforms( b2WorldTransform A, b2Transform
 	return C;
 }
 
-/// Shift a world transform into the frame of a base position
+/// Shift a world transform into the frame of a base position.
 B2_INLINE b2Transform b2ToRelativeTransform( b2WorldTransform t, b2Position base )
 {
 	b2Transform r;
@@ -683,66 +708,6 @@ B2_INLINE b2WorldTransform b2MakeWorldTransform( b2Transform t )
 	w.q = t.q;
 	return w;
 }
-
-#else
-
-B2_INLINE b2Position b2MakePosition( b2Vec2 v )
-{
-	return v;
-}
-
-B2_INLINE b2Vec2 b2ToVec2( b2Position p )
-{
-	return p;
-}
-
-B2_INLINE b2Vec2 b2PositionDelta( b2Position a, b2Position b )
-{
-	return b2Sub( a, b );
-}
-
-B2_INLINE b2Position b2OffsetPosition( b2Position p, b2Vec2 d )
-{
-	return b2Add( p, d );
-}
-
-B2_INLINE b2Position b2LerpPosition( b2Position a, b2Position b, float t )
-{
-	return b2Lerp( a, b, t );
-}
-
-B2_INLINE b2Position b2TransformWorldPoint( b2WorldTransform t, b2Vec2 p )
-{
-	return b2TransformPoint( t, p );
-}
-
-B2_INLINE b2Vec2 b2InvTransformWorldPoint( b2WorldTransform t, b2Position p )
-{
-	return b2InvTransformPoint( t, p );
-}
-
-B2_INLINE b2Transform b2InvMulWorldTransforms( b2WorldTransform A, b2WorldTransform B )
-{
-	return b2InvMulTransforms( A, B );
-}
-
-B2_INLINE b2WorldTransform b2MulWorldTransforms( b2WorldTransform A, b2Transform B )
-{
-	return b2MulTransforms( A, B );
-}
-
-B2_INLINE b2Transform b2ToRelativeTransform( b2WorldTransform t, b2Position base )
-{
-	b2Transform r = { b2Sub( t.p, base ), t.q };
-	return r;
-}
-
-B2_INLINE b2WorldTransform b2MakeWorldTransform( b2Transform t )
-{
-	return t;
-}
-
-#endif
 
 /// Multiply a 2-by-2 matrix times a 2D vector
 B2_INLINE b2Vec2 b2MulMV( b2Mat22 A, b2Vec2 v )

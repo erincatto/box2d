@@ -59,7 +59,7 @@ public:
 			// Issue a few queries each step so the Replay viewer has something to draw
 			b2QueryFilter filter = b2DefaultQueryFilter();
 			b2AABB scanBox = { { 5.0f, 1.0f }, { 7.0f, 2.5f } };
-			b2World_OverlapAABB( m_worldId, scanBox, filter, OverlapFcn, nullptr );
+			b2World_OverlapAABB( m_worldId, b2Position_zero, scanBox, filter, OverlapFcn, nullptr );
 
 			b2Vec2 origin = { 0.0f, 12.0f };
 			b2Vec2 translation = { 0.0f, -14.0f };

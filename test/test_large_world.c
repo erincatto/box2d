@@ -218,6 +218,137 @@ static int LargeWorldRayCastTest( void )
 	return 0;
 }
 
+typedef struct OriginQueryData
+{
+	int overlapCount;
+	b2Position castPoint;
+	float castFraction;
+	float moverFraction;
+	int planeCount;
+	bool insidePoint;
+	b2Position shapeRayPoint;
+	bool shapeRayHit;
+} OriginQueryData;
+
+static bool OriginOverlapFcn( b2ShapeId id, void* ctx )
+{
+	(void)id;
+	OriginQueryData* data = ctx;
+	data->overlapCount += 1;
+	return true;
+}
+
+static float OriginCastFcn( b2ShapeId id, b2Position point, b2Vec2 normal, float fraction, void* ctx )
+{
+	(void)id;
+	(void)normal;
+	OriginQueryData* data = ctx;
+	data->castPoint = point;
+	data->castFraction = fraction;
+	return fraction;
+}
+
+static bool OriginPlaneFcn( b2ShapeId id, const b2PlaneResult* plane, void* ctx )
+{
+	(void)id;
+	(void)plane;
+	OriginQueryData* data = ctx;
+	data->planeCount += 1;
+	return true;
+}
+
+// Issue every origin taking query against a unit box on the base, with all geometry relative to
+// the base. The results must match an origin zero run, which is what makes the origin plumbing
+// (tree lift, per shape re-centering, output compose) non vacuous far from the origin.
+static OriginQueryData RunOriginQueries( b2Vec2 baseVec )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.workerCount = 1;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.position = b2MakePosition( baseVec );
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+	b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2ShapeId shapeId = b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+	b2Position base = b2MakePosition( baseVec );
+	b2QueryFilter filter = b2DefaultQueryFilter();
+	OriginQueryData data = { 0 };
+	data.castFraction = 1.0f;
+
+	// Overlap a small circle centered on the box
+	b2Vec2 center = { 0.0f, 0.0f };
+	b2ShapeProxy overlapProxy = b2MakeProxy( &center, 1, 0.1f );
+	b2World_OverlapShape( worldId, base, &overlapProxy, filter, OriginOverlapFcn, &data );
+
+	// Cast a small circle at the left face. Center stops at -0.6, hit point on the face at -0.5.
+	b2Vec2 start = { -5.0f, 0.0f };
+	b2ShapeProxy castProxy = b2MakeProxy( &start, 1, 0.1f );
+	b2World_CastShape( worldId, base, &castProxy, ( b2Vec2 ){ 10.0f, 0.0f }, filter, OriginCastFcn, &data );
+
+	// Mover cast at the box
+	b2Capsule mover = { { -5.0f, -0.2f }, { -5.0f, 0.2f }, 0.3f };
+	data.moverFraction = b2World_CastMover( worldId, base, &mover, ( b2Vec2 ){ 10.0f, 0.0f }, filter );
+
+	// Mover overlapping the box gathers planes
+	b2Capsule touching = { { -0.9f, -0.2f }, { -0.9f, 0.2f }, 0.5f };
+	b2World_CollideMover( worldId, base, &touching, filter, OriginPlaneFcn, &data );
+
+	// Shape level queries at the base
+	data.insidePoint = b2Shape_TestPoint( shapeId, base );
+
+	b2RayCastInput rayInput = { { -5.0f, 0.0f }, { 10.0f, 0.0f }, 1.0f };
+	b2CastOutput rayOutput = b2Shape_RayCast( shapeId, base, &rayInput );
+	data.shapeRayHit = rayOutput.hit;
+	data.shapeRayPoint = rayOutput.point;
+
+	b2DestroyWorld( worldId );
+	return data;
+}
+
+static int LargeWorldOriginQueryTest( void )
+{
+	b2Vec2 zeroVec = { 0.0f, 0.0f };
+	OriginQueryData origin = RunOriginQueries( zeroVec );
+	ENSURE( origin.overlapCount == 1 );
+	ENSURE( origin.castFraction < 1.0f );
+	ENSURE( origin.moverFraction < 1.0f );
+	ENSURE( origin.planeCount >= 1 );
+	ENSURE( origin.insidePoint == true );
+	ENSURE( origin.shapeRayHit == true );
+
+	b2Vec2 castRel = b2PositionDelta( origin.castPoint, b2Position_zero );
+	ENSURE_SMALL( castRel.x + 0.5f, 1e-3f );
+	b2Vec2 rayRel = b2PositionDelta( origin.shapeRayPoint, b2Position_zero );
+	ENSURE_SMALL( rayRel.x + 0.5f, 1e-3f );
+
+#if defined( BOX2D_DOUBLE_PRECISION )
+	// The same relative queries far from the origin must reproduce the origin run. A float query
+	// at 1e7 could not resolve the faces below the coordinate ULP.
+	b2Vec2 baseVec = { 1.0e7f, 0.0f };
+	b2Position base = b2MakePosition( baseVec );
+	OriginQueryData large = RunOriginQueries( baseVec );
+	ENSURE( large.overlapCount == origin.overlapCount );
+	ENSURE( large.planeCount == origin.planeCount );
+	ENSURE( large.insidePoint == origin.insidePoint );
+	ENSURE( large.shapeRayHit == origin.shapeRayHit );
+	ENSURE_SMALL( large.castFraction - origin.castFraction, 1e-4f );
+	ENSURE_SMALL( large.moverFraction - origin.moverFraction, 1e-4f );
+
+	b2Vec2 castRelLarge = b2PositionDelta( large.castPoint, base );
+	ENSURE_SMALL( castRelLarge.x - castRel.x, 1e-3f );
+	ENSURE_SMALL( castRelLarge.y - castRel.y, 1e-3f );
+
+	b2Vec2 rayRelLarge = b2PositionDelta( large.shapeRayPoint, base );
+	ENSURE_SMALL( rayRelLarge.x - rayRel.x, 1e-3f );
+	ENSURE_SMALL( rayRelLarge.y - rayRel.y, 1e-3f );
+#endif
+
+	return 0;
+}
+
 // A recording made far from the origin must replay with no divergence. The recorded world positions
 // ride the double precision wire format added for large world mode; demoting them to float would snap
 // a replayed body off the recorded path and the per step state hash would diverge. Float build: the
@@ -304,6 +435,7 @@ int LargeWorldTest( void )
 	RUN_SUBTEST( LargeWorldPyramidTest );
 	RUN_SUBTEST( LargeWorldBulletTest );
 	RUN_SUBTEST( LargeWorldRayCastTest );
+	RUN_SUBTEST( LargeWorldOriginQueryTest );
 	RUN_SUBTEST( LargeWorldRecordingTest );
 
 	return 0;

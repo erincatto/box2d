@@ -397,7 +397,7 @@ void Sample::ResetText()
 
 struct QueryContext
 {
-	b2Vec2 point;
+	b2Position point;
 	b2BodyId bodyId = b2_nullBodyId;
 };
 
@@ -433,21 +433,15 @@ void Sample::MouseDown( b2Position p, int button, int mod )
 
 	if ( button == GLFW_MOUSE_BUTTON_1 )
 	{
-		// The pick query rides the float carve-out (b2World_OverlapAABB), so it loses sub-pixel
-		// precision far from the origin. Fine for click to select.
-		b2Vec2 pf = b2ToVec2( p );
-
-		// Make a small box.
-		b2AABB box;
+		// A tiny box around the click point, exact at any distance with the click as the origin
 		b2Vec2 d = { 0.001f, 0.001f };
-		box.lowerBound = b2Sub( pf, d );
-		box.upperBound = b2Add( pf, d );
+		b2AABB box = { b2Neg( d ), d };
 
 		m_mousePoint = p;
 
 		// Query the world for overlapping shapes.
-		QueryContext queryContext = { pf, b2_nullBodyId };
-		b2World_OverlapAABB( m_worldId, box, b2DefaultQueryFilter(), QueryCallback, &queryContext );
+		QueryContext queryContext = { p, b2_nullBodyId };
+		b2World_OverlapAABB( m_worldId, p, box, b2DefaultQueryFilter(), QueryCallback, &queryContext );
 
 		if ( B2_IS_NON_NULL( queryContext.bodyId ) )
 		{

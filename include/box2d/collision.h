@@ -840,7 +840,8 @@ B2_API void b2DynamicTree_ValidateNoEnlarged( const b2DynamicTree* tree );
  * @{
  */
 
-/// These are the collision planes returned from b2World_CollideMover
+/// These are the collision planes returned from b2World_CollideMover.
+/// The plane and point are relative to the query origin, matching the mover capsule.
 typedef struct b2PlaneResult
 {
 	/// The collision plane between the mover and a convex shape

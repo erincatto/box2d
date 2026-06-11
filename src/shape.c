@@ -699,8 +699,7 @@ b2AABB b2ComputeShapeAABB( const b2Shape* shape, b2WorldTransform xf )
 		default:
 		{
 			B2_ASSERT( false );
-			b2Vec2 c = b2ToVec2( xf.p );
-			b2AABB empty = { c, c };
+			b2AABB empty = { { 0.0f, 0.0f }, { 0.0f, 0.0f } };
 			return empty;
 		}
 	}
@@ -925,7 +924,9 @@ b2CastOutput b2RayCastShape( const b2RayCastInput* input, const b2Shape* shape, 
 			return output;
 	}
 
-	output.point = b2TransformWorldPoint( b2MakeWorldTransform( transform ), b2ToVec2( output.point ) );
+	// The output point stays in the frame of the input transform, a caller chosen frame that is
+	// typically re-centered near the origin. The conversion is float scale, lossless.
+	output.point = b2MakePosition( b2TransformPoint( transform, b2ToVec2( output.point ) ) );
 	output.normal = b2RotateVector( transform.q, output.normal );
 	return output;
 }
@@ -989,7 +990,8 @@ b2CastOutput b2ShapeCastShape( const b2ShapeCastInput* input, const b2Shape* sha
 			return output;
 	}
 
-	output.point = b2TransformWorldPoint( b2MakeWorldTransform( transform ), b2ToVec2( output.point ) );
+	// Same frame contract as b2RayCastShape, the point stays in the input transform frame
+	output.point = b2MakePosition( b2TransformPoint( transform, b2ToVec2( output.point ) ) );
 	output.normal = b2RotateVector( transform.q, output.normal );
 	return output;
 }
@@ -1110,13 +1112,13 @@ bool b2Shape_IsSensor( b2ShapeId shapeId )
 	return shape->sensorIndex != B2_NULL_INDEX;
 }
 
-bool b2Shape_TestPoint( b2ShapeId shapeId, b2Vec2 point )
+bool b2Shape_TestPoint( b2ShapeId shapeId, b2Position point )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
 
 	b2WorldTransform transform = b2GetBodyTransform( world, shape->bodyId );
-	b2Vec2 localPoint = b2InvTransformWorldPoint( transform, b2MakePosition( point ) );
+	b2Vec2 localPoint = b2InvTransformWorldPoint( transform, point );
 
 	bool result;
 	switch ( shape->type )
@@ -1142,7 +1144,7 @@ bool b2Shape_TestPoint( b2ShapeId shapeId, b2Vec2 point )
 	{
 		b2RecBuffer recBuf = { 0 };
 		b2RecW_SHAPEID( &recBuf, shapeId );
-		b2RecW_VEC2( &recBuf, point );
+		b2RecW_POSITION( &recBuf, point );
 		b2RecW_BOOL( &recBuf, result );
 		b2RecCommitRecord( world->recording, 0xE7, recBuf.data, recBuf.size );
 		b2RecBufFree( &recBuf );
@@ -1151,59 +1153,28 @@ bool b2Shape_TestPoint( b2ShapeId shapeId, b2Vec2 point )
 	return result;
 }
 
-// todo_erin untested
-b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, const b2RayCastInput* input )
+b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, b2Position origin, const b2RayCastInput* input )
 {
+	B2_ASSERT( b2IsValidPosition( origin ) );
+
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
 
-	b2WorldTransform transform = b2GetBodyTransform( world, shape->bodyId );
+	// Re-center on the origin so the cast runs in float precision
+	b2Transform transform = b2ToRelativeTransform( b2GetBodyTransform( world, shape->bodyId ), origin );
 
-	// input in local coordinates
-	b2RayCastInput localInput;
-	localInput.origin = b2InvTransformWorldPoint( transform, b2MakePosition( input->origin ) );
-	localInput.translation = b2InvRotateVector( transform.q, input->translation );
-	localInput.maxFraction = input->maxFraction;
-
-	b2CastOutput output = { 0 };
-	switch ( shape->type )
-	{
-		case b2_capsuleShape:
-			output = b2RayCastCapsule( &shape->capsule, &localInput );
-			break;
-
-		case b2_circleShape:
-			output = b2RayCastCircle( &shape->circle, &localInput );
-			break;
-
-		case b2_segmentShape:
-			output = b2RayCastSegment( &shape->segment, &localInput, false );
-			break;
-
-		case b2_polygonShape:
-			output = b2RayCastPolygon( &shape->polygon, &localInput );
-			break;
-
-		case b2_chainSegmentShape:
-			output = b2RayCastSegment( &shape->chainSegment.segment, &localInput, true );
-			break;
-
-		default:
-			B2_ASSERT( false );
-			break;
-	}
+	b2CastOutput output = b2RayCastShape( input, shape, transform );
 
 	if ( output.hit )
 	{
-		// convert to world coordinates
-		output.normal = b2RotateVector( transform.q, output.normal );
-		output.point = b2TransformWorldPoint( transform, b2ToVec2( output.point ) );
+		output.point = b2OffsetPosition( origin, b2ToVec2( output.point ) );
 	}
 
 	if ( world->recording != NULL )
 	{
 		b2RecBuffer recBuf = { 0 };
 		b2RecW_SHAPEID( &recBuf, shapeId );
+		b2RecW_POSITION( &recBuf, origin );
 		b2RecW_RAYCASTINPUT( &recBuf, *input );
 		b2RecW_CASTOUTPUT( &recBuf, output );
 		b2RecCommitRecord( world->recording, 0xE8, recBuf.data, recBuf.size );
@@ -1885,28 +1856,33 @@ b2MassData b2Shape_ComputeMassData( b2ShapeId shapeId )
 	return b2ComputeShapeMass( shape );
 }
 
-b2Vec2 b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Vec2 target )
+b2Position b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Position target )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
 	if ( world == NULL )
 	{
-		return (b2Vec2){ 0 };
+		return b2Position_zero;
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );
-	b2Body* body = b2Array_Get( world->bodies,shape->bodyId );
+	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
 	b2WorldTransform transform = b2GetBodyTransformQuick( world, body );
+
+	// The target rides in as the frame of proxy B, so the relative pose is differenced in double
+	// and the result stays exact far from the origin
+	b2Vec2 zero = b2Vec2_zero;
+	b2WorldTransform targetTransform = { target, b2Rot_identity };
 
 	b2DistanceInput input;
 	input.proxyA = b2MakeShapeDistanceProxy( shape );
-	input.proxyB = b2MakeProxy( &target, 1, 0.0f );
-	input.transform = b2InvMulWorldTransforms( transform, b2WorldTransform_identity );
+	input.proxyB = b2MakeProxy( &zero, 1, 0.0f );
+	input.transform = b2InvMulWorldTransforms( transform, targetTransform );
 	input.useRadii = true;
 
 	b2SimplexCache cache = { 0 };
 	b2DistanceOutput output = b2ShapeDistance( &input, &cache, NULL, 0 );
 
-	return b2ToVec2( b2TransformWorldPoint( transform, output.pointA ) );
+	return b2TransformWorldPoint( transform, output.pointA );
 }
 
 // https://en.wikipedia.org/wiki/Density_of_air

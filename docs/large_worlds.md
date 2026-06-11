@@ -1,4 +1,4 @@
-# Large Worlds (Double Precision)
+# Large Worlds (Double Precision) {#large-worlds}
 
 Box2D can be built with double precision world positions for large worlds: simulations that range
 far from the origin, where a single-precision float can no longer resolve a position. At a
@@ -12,9 +12,11 @@ Physics uses for its big-world mode: doubles carry the absolute position, everyt
 body's frame stays float, and the per-step motion the solver integrates is small and meters-scale
 where float precision is ample. The cost is a few percent, not the 2x of an all-double build.
 
-Double precision is **off by default**. With it off the build is byte-for-byte identical to a
-normal Box2D build: every double-precision type collapses to its float counterpart through a
-typedef, so there is no code path to regress and no performance change.
+Double precision is **off by default**. With it off every double-precision type collapses to its
+float counterpart through a typedef and the boundary helpers reduce to plain float operations, so
+a float build behaves as Box2D always has with no measurable cost.
+
+This implementation is inspired by [Jolt](https://jrouwe.github.io/JoltPhysics/index.html#big-worlds).
 
 ## Enabling it
 
@@ -55,9 +57,11 @@ cost: enabling large world mode is a deliberate source migration, and the compil
 site that needs a `b2MakePosition` / `b2ToVec2` conversion. Helpers cover the boundary:
 
 ```c
-b2Position p = b2MakePosition( v );    // float vector -> world position
-b2Vec2     v = b2ToVec2( p );          // world position -> float vector (lossy far from origin)
+b2Position p = b2MakePosition( v );     // float vector -> world position
+b2Vec2     v = b2ToVec2( p );           // world position -> float vector (lossy far from origin)
 b2Vec2     d = b2PositionDelta( a, b ); // a - b, demoted to float (the precision boundary)
+float      x = b2RoundDownFloat( p.x ); // conservative narrowing, pair with b2RoundUpFloat to
+                                        // build a float box that always contains double bounds
 ```
 
 ## Operating range
@@ -69,32 +73,39 @@ Overlapping shapes always still produce a pair, so correctness is preserved, but
 to 1e8 meters the broad phase reports extra false pairs and loses some margin hysteresis, which
 costs performance. Stay within about ±1e7 to ±1e8 meters.
 
-## Precision carve-outs
+## Query origins
 
-A few query and collision entry points stay float-only in this release. They take or return float
-world coordinates, so far from the origin they lose precision the same way a float build would.
-They remain correct near the origin and are conservative far from it:
+Every spatial query takes a `b2Position` origin, and the query geometry is relative to that
+origin: the overlap AABB and proxy points, the cast proxy, the ray input of `b2Shape_RayCast`,
+the mover capsule, and the planes `b2World_CollideMover` returns. Near the origin pass
+`b2Position_zero` and the query reads as a plain world query. Far from the origin pass a nearby
+base, typically a body or camera position: the query then runs in float relative to that base
+with full precision, and cast results come back as world `b2Position` points.
 
-- `b2World_OverlapAABB`, `b2World_OverlapShape`, `b2World_CastShape`
-- `b2World_CastMover`, `b2World_CollideMover`
-- `b2Shape_RayCast`
+```c
+// A precise pick box around a distant point
+b2AABB box = { { -0.001f, -0.001f }, { 0.001f, 0.001f } };
+b2World_OverlapAABB( worldId, clickPoint, box, filter, MyCallback, &ctx );
+```
 
-The mover functions drive character controllers. A character run far from the origin through
-`b2World_CastMover` / `b2World_CollideMover` gets float world coordinates and silently loses
-sub-meter motion, so a kinematic character at 1e7 does not behave with double precision yet. This
-is a functional limitation of the first large-world release, not just a thinner API. Keep movers
-near the origin, or shift the world so the character stays near it.
+Character controllers work at any distance: pass the mover's vicinity as the origin to
+`b2World_CastMover` / `b2World_CollideMover` and keep the capsule coordinates relative to it. The
+returned planes are relative to the same origin, and the plane solver is frame agnostic, so they
+feed `b2SolvePlanes` directly.
 
-`b2World_CastRay` and `b2World_CastRayClosest` are **not** carve-outs: their origin is a
-`b2Position` and each candidate shape is re-centered in double, so a ray cast resolves the hit point
-accurately anywhere in range.
+Internally the tree traversal truncates the origin to float, which is conservative the same way
+the broad phase is: candidate shapes are found with coarse float bounds, then each shape is
+re-centered on the origin in double, so hits are exact even where the float bounds are not.
+`b2World_CastRay` and `b2World_CastRayClosest` take a `b2Position` origin directly and resolve
+hit points the same way.
 
 ## Recordings and snapshots
 
 Recordings and snapshots store world positions at the build precision. A double-precision recording
 or snapshot will not load into a float build, and the reverse, because the position layout differs
 irreconcilably; the loader rejects a precision mismatch with a clear message rather than replaying
-wrong. Within one precision mode they behave exactly as documented in
+wrong. The format version covers the query origin arguments, so recordings made before origins
+existed are refused at load. Within one precision mode they behave exactly as documented in
 [Recording and Replay](#recording). A recording made far from the origin reproduces the run
 exactly, because the recorded positions ride the same double-precision wire format the live
 simulation uses.

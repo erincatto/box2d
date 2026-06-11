@@ -126,14 +126,12 @@ void b2RecW_XF( b2RecBuffer* buf, b2Transform v )
 	b2RecW_ROT( buf, v.q );
 }
 
-#if defined( BOX2D_DOUBLE_PRECISION )
 void b2RecW_F64( b2RecBuffer* buf, double v )
 {
 	uint64_t bits;
 	memcpy( &bits, &v, 8 );
 	b2RecW_U64( buf, bits );
 }
-#endif
 
 // A world position keeps full precision on the wire so a recording reproduces the simulation far
 // from the origin. In the float build this is two floats, identical to VEC2.
@@ -744,8 +742,8 @@ void b2StartRecordingIntoBuffer( b2World* world, b2Recording* recording )
 
 	b2RecHeader hdr = { 0 };
 	hdr.magic = B2_REC_MAGIC;
-	hdr.versionMajor = 3;
-	hdr.versionMinor = 0;
+	hdr.versionMajor = B2_REC_VERSION_MAJOR;
+	hdr.versionMinor = B2_REC_VERSION_MINOR;
 	hdr.lengthScale = b2GetLengthUnitsPerMeter();
 	hdr.pointerWidth = (uint8_t)sizeof( void* );
 	hdr.bigEndian = 0;
@@ -893,19 +891,7 @@ uint64_t b2HashWorldState( b2World* world )
 	memcpy( &bits, &( f ), 4 );                                                                                                  \
 	hash = ( hash ^ (uint64_t)bits ) * prime;
 
-		// World positions are double in large world mode. Hash the full width or the determinism
-		// gate would validate only to float precision and pass vacuously far from the origin.
-#if defined( BOX2D_DOUBLE_PRECISION )
-		uint64_t bits64;
-#define B2_HASH_POSITION( d )                                                                                                    \
-	memcpy( &bits64, &( d ), 8 );                                                                                                \
-	hash = ( hash ^ bits64 ) * prime;
-#else
-#define B2_HASH_POSITION( f ) B2_HASH_FLOAT( f )
-#endif
-
-		B2_HASH_POSITION( sim->transform.p.x )
-		B2_HASH_POSITION( sim->transform.p.y )
+		hash = b2FnvMixPosition( hash, sim->transform.p );
 		B2_HASH_FLOAT( sim->transform.q.c )
 		B2_HASH_FLOAT( sim->transform.q.s )
 
@@ -918,7 +904,6 @@ uint64_t b2HashWorldState( b2World* world )
 		}
 
 #undef B2_HASH_FLOAT
-#undef B2_HASH_POSITION
 	}
 
 	return hash;

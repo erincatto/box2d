@@ -389,12 +389,8 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 	b2BodySim* fastBodySim = b2Array_Get( awakeSet->bodySims, bodySimIndex );
 	B2_ASSERT( fastBodySim->flags & b2_isFast );
 
-#if defined( BOX2D_DOUBLE_PRECISION )
 	// Re-center the sweep on the fast body so the TOI and the swept query stay in float precision
 	b2Position base = fastBodySim->center0;
-#else
-	b2Position base = b2Position_zero;
-#endif
 	b2Sweep sweep = b2MakeRelativeSweep( fastBodySim, base );
 
 	b2Transform xf1;

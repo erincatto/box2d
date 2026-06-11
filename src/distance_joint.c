@@ -92,8 +92,10 @@ float b2DistanceJoint_GetCurrentLength( b2JointId jointId )
 		return 0.0f;
 	}
 
-	b2Transform transformA = b2ToRelativeTransform( b2GetBodyTransform( world, base->bodyIdA ), b2Position_zero );
-	b2Transform transformB = b2ToRelativeTransform( b2GetBodyTransform( world, base->bodyIdB ), b2Position_zero );
+	// Relative to body A so the difference stays in float precision far from the origin
+	b2WorldTransform wxfA = b2GetBodyTransform( world, base->bodyIdA );
+	b2Transform transformA = b2ToRelativeTransform( wxfA, wxfA.p );
+	b2Transform transformB = b2ToRelativeTransform( b2GetBodyTransform( world, base->bodyIdB ), wxfA.p );
 
 	b2Vec2 pA = b2TransformPoint( transformA, base->localFrameA.p );
 	b2Vec2 pB = b2TransformPoint( transformB, base->localFrameB.p );
@@ -220,8 +222,10 @@ b2Vec2 b2GetDistanceJointForce( b2World* world, b2JointSim* base )
 {
 	b2DistanceJoint* joint = &base->distanceJoint;
 
-	b2Transform transformA = b2ToRelativeTransform( b2GetBodyTransform( world, base->bodyIdA ), b2Position_zero );
-	b2Transform transformB = b2ToRelativeTransform( b2GetBodyTransform( world, base->bodyIdB ), b2Position_zero );
+	// Relative to body A so the difference stays in float precision far from the origin
+	b2WorldTransform wxfA = b2GetBodyTransform( world, base->bodyIdA );
+	b2Transform transformA = b2ToRelativeTransform( wxfA, wxfA.p );
+	b2Transform transformB = b2ToRelativeTransform( b2GetBodyTransform( world, base->bodyIdB ), wxfA.p );
 
 	b2Vec2 pA = b2TransformPoint( transformA, base->localFrameA.p );
 	b2Vec2 pB = b2TransformPoint( transformB, base->localFrameB.p );

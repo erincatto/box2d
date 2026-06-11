@@ -1476,7 +1476,7 @@ public:
 				b2Vec2 translation = m_translations[i];
 
 				CastResult result;
-				b2TreeStats traversalResult = b2World_CastShape( m_worldId, &proxy, translation, filter, CastCallback, &result );
+				b2TreeStats traversalResult = b2World_CastShape( m_worldId, b2Position_zero, &proxy, translation, filter, CastCallback, &result );
 
 				if ( i == m_drawIndex )
 				{
@@ -1518,7 +1518,7 @@ public:
 				b2AABB aabb = { origin - extent, origin + extent };
 
 				result.count = 0;
-				b2TreeStats traversalResult = b2World_OverlapAABB( m_worldId, aabb, filter, OverlapCallback, &result );
+				b2TreeStats traversalResult = b2World_OverlapAABB( m_worldId, b2Position_zero, aabb, filter, OverlapCallback, &result );
 
 				if ( i == m_drawIndex )
 				{

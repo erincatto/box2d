@@ -158,9 +158,7 @@ bool b2RecR_BOOL( b2RecReader* rdr );
 b2Vec2 b2RecR_VEC2( b2RecReader* rdr );
 b2Rot b2RecR_ROT( b2RecReader* rdr );
 b2Transform b2RecR_XF( b2RecReader* rdr );
-#if defined( BOX2D_DOUBLE_PRECISION )
 double b2RecR_F64( b2RecReader* rdr );
-#endif
 b2Position b2RecR_POSITION( b2RecReader* rdr );
 b2WorldTransform b2RecR_WORLDXF( b2RecReader* rdr );
 b2WorldId b2RecR_WORLDID( b2RecReader* rdr );

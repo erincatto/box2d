@@ -636,7 +636,7 @@ void Human_SetScale( Human* human, float scale )
 	float originalRatio = scale / human->originalScale;
 	float frictionTorque = ( originalRatio * originalRatio * originalRatio ) * human->frictionTorque;
 
-	b2Vec2 origin = b2ToVec2( b2Body_GetPosition( human->bones[0].bodyId ) );
+	b2Position origin = b2Body_GetPosition( human->bones[0].bodyId );
 
 	for ( int boneIndex = 0; boneIndex < bone_count; ++boneIndex )
 	{
@@ -644,10 +644,10 @@ void Human_SetScale( Human* human, float scale )
 
 		if ( boneIndex > 0 )
 		{
+			// Scale the bone offset from the root in float, the offset is bone scale
 			b2WorldTransform worldTransform = b2Body_GetTransform( bone->bodyId );
-			b2Transform transform = { b2ToVec2( worldTransform.p ), worldTransform.q };
-			transform.p = b2MulAdd( origin, ratio, b2Sub( transform.p, origin ) );
-			b2Body_SetTransform( bone->bodyId, b2MakePosition( transform.p ), transform.q );
+			b2Vec2 d = b2MulSV( ratio, b2PositionDelta( worldTransform.p, origin ) );
+			b2Body_SetTransform( bone->bodyId, b2OffsetPosition( origin, d ), worldTransform.q );
 
 			b2Transform localFrameA = b2Joint_GetLocalFrameA( bone->jointId );
 			b2Transform localFrameB = b2Joint_GetLocalFrameB( bone->jointId );

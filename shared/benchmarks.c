@@ -403,7 +403,7 @@ void CreateSpinner( b2WorldId worldId )
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 		jointDef.base.bodyIdA = groundId;
 		jointDef.base.bodyIdB = spinnerId;
-		jointDef.base.localFrameA.p = b2ToVec2( bodyDef.position );
+		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( groundId, bodyDef.position );
 		jointDef.enableMotor = true;
 		jointDef.motorSpeed = motorSpeed;
 		jointDef.maxMotorTorque = maxMotorTorque;

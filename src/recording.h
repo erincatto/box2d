@@ -18,17 +18,41 @@
 #define B2_SNAP_FNV_INIT 14695981039346656037ull
 #define B2_SNAP_FNV_PRIME 1099511628211ull
 
+// Mix a world position at full width, or the determinism gates would validate only to float
+// precision and pass vacuously far from the origin
+static inline uint64_t b2FnvMixPosition( uint64_t hash, b2Position p )
+{
+#if defined( BOX2D_DOUBLE_PRECISION )
+	uint64_t bx, by;
+	memcpy( &bx, &p.x, 8 );
+	memcpy( &by, &p.y, 8 );
+#else
+	uint32_t fx, fy;
+	memcpy( &fx, &p.x, 4 );
+	memcpy( &fy, &p.y, 4 );
+	uint64_t bx = fx, by = fy;
+#endif
+	hash = ( hash ^ bx ) * B2_SNAP_FNV_PRIME;
+	hash = ( hash ^ by ) * B2_SNAP_FNV_PRIME;
+	return hash;
+}
+
 typedef struct b2World b2World;
 
 // Magic value 'B2RC' in little-endian: bytes B2, R, C yield 0x43523242
 #define B2_REC_MAGIC 0x43523242u
 
+// Recording format version. Any mismatch refuses to load. The minor tracks op stream layout
+// changes that keep the 32 byte header shape, such as the query origin args.
+#define B2_REC_VERSION_MAJOR 3
+#define B2_REC_VERSION_MINOR 1
+
 // File header, fixed 32 bytes, little-endian
 typedef struct b2RecHeader
 {
 	uint32_t magic;			 // 'B2RC' = 0x43523242
-	uint16_t versionMajor;	 // 3
-	uint16_t versionMinor;	 // 0
+	uint16_t versionMajor;	 // B2_REC_VERSION_MAJOR
+	uint16_t versionMinor;	 // B2_REC_VERSION_MINOR
 	uint32_t reserved2;
 	float lengthScale;		 // The world length scale
 	uint8_t reserved3;
@@ -147,9 +171,7 @@ void b2RecW_BOOL( b2RecBuffer* buf, bool v );
 void b2RecW_VEC2( b2RecBuffer* buf, b2Vec2 v );
 void b2RecW_ROT( b2RecBuffer* buf, b2Rot v );
 void b2RecW_XF( b2RecBuffer* buf, b2Transform v );
-#if defined( BOX2D_DOUBLE_PRECISION )
 void b2RecW_F64( b2RecBuffer* buf, double v );
-#endif
 // World position and world transform. Two doubles per position in large world mode, two floats
 // otherwise so the wire stays byte-identical to VEC2 / XF in the float build.
 void b2RecW_POSITION( b2RecBuffer* buf, b2Position v );

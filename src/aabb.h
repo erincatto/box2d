@@ -48,32 +48,10 @@ static inline bool b2EnlargeAABB( b2AABB* a, b2AABB b )
 	return changed;
 }
 
-#if defined( BOX2D_DOUBLE_PRECISION )
-
-#include <float.h>
-#include <math.h>
-
-// Directed narrowing of a world coordinate to float. nextafterf is an exact IEEE operation
-// with a unique result, so it is cross-platform deterministic like sqrtf, not accuracy defined
-// like the trig that Box2D hand rolls. The broadphase pair order rides on this.
-
-// Round toward -inf so a float box always contains the double box. Float ULP at 1e8 dwarfs the
-// AABB margin, plain truncation could clip a shape out of its own box.
-static inline float b2RoundDownFloat( double x )
-{
-	float f = (float)x;
-	return (double)f > x ? nextafterf( f, -FLT_MAX ) : f;
-}
-
-// Round a double toward +inf when narrowing to float
-static inline float b2RoundUpFloat( double x )
-{
-	float f = (float)x;
-	return (double)f < x ? nextafterf( f, FLT_MAX ) : f;
-}
-
 // Translate a relative AABB into world space, rounding outward so the float box always contains
 // the true box far from the origin where a float coordinate cannot resolve the shape extent.
+// Float ULP at 1e8 dwarfs the AABB margin, plain truncation could clip a shape out of its own
+// box. The broadphase pair order rides on the deterministic directed rounding.
 static inline b2AABB b2OffsetAABB( b2AABB box, b2Position origin )
 {
 	b2AABB result;
@@ -83,16 +61,3 @@ static inline b2AABB b2OffsetAABB( b2AABB box, b2Position origin )
 	result.upperBound.y = b2RoundUpFloat( origin.y + (double)box.upperBound.y );
 	return result;
 }
-
-#else
-
-// Float mode plain translate. A zero origin is bit identical to the input box.
-static inline b2AABB b2OffsetAABB( b2AABB box, b2Position origin )
-{
-	b2AABB result;
-	result.lowerBound = b2Add( box.lowerBound, origin );
-	result.upperBound = b2Add( box.upperBound, origin );
-	return result;
-}
-
-#endif
