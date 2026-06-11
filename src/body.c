@@ -718,8 +718,7 @@ void b2Body_SetTransform( b2BodyId bodyId, b2Position position, b2Rot rotation )
 	b2World* world = b2GetWorld( bodyId.world0 );
 	B2_ASSERT( world->locked == false );
 
-	// Recording demotes the world position to float until the recording format gains a position arg
-	B2_REC( world, BodySetTransform, bodyId, b2ToVec2( position ), rotation );
+	B2_REC( world, BodySetTransform, bodyId, position, rotation );
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	b2BodySim* bodySim = b2GetBodySim( world, body );
@@ -844,8 +843,7 @@ void b2Body_SetTargetTransform( b2BodyId bodyId, b2WorldTransform target, float 
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 
-	// Recording demotes the world transform to float until the recording format gains a position arg
-	B2_REC( world, BodySetTargetTransform, bodyId, ( (b2Transform){ b2ToVec2( target.p ), target.q } ), timeStep, wake );
+	B2_REC( world, BodySetTargetTransform, bodyId, target, timeStep, wake );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
 	if ( body->setIndex == b2_disabledSet )

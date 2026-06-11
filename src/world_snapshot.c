@@ -33,7 +33,8 @@
 #define B2_SNAP_VERSION 2u
 
 // Header flag bits
-#define B2_SNAP_FLAG_VALIDATION 0x1u // image was built with validation, only used for diagnostics
+#define B2_SNAP_FLAG_VALIDATION 0x1u	   // image was built with validation, only used for diagnostics
+#define B2_SNAP_FLAG_DOUBLE_PRECISION 0x2u // image was built with double precision world positions
 
 // Layout hash seeds from all structs we memcpy, plus key constants.
 // Changing any struct or constant updates the hash. Re-purposing or swapping
@@ -480,6 +481,9 @@ void b2SerializeWorld( b2World* world, b2RecBuffer* buf )
 	hdr.version = B2_SNAP_VERSION;
 	hdr.layoutHash = b2ComputeLayoutHash();
 	hdr.flags = B2_ENABLE_VALIDATION ? B2_SNAP_FLAG_VALIDATION : 0u;
+#if defined( BOX2D_DOUBLE_PRECISION )
+	hdr.flags |= B2_SNAP_FLAG_DOUBLE_PRECISION;
+#endif
 	b2SnapW_Bytes( buf, &hdr, (int)sizeof( hdr ) );
 
 	// World config
@@ -840,6 +844,21 @@ static bool b2OpenSnapshotImage( const uint8_t* image, int size, b2SnapReader* r
 	memcpy( &hdr, image, sizeof( hdr ) );
 	if ( hdr.magic != B2_SNAP_MAGIC || hdr.version != B2_SNAP_VERSION )
 	{
+		return false;
+	}
+
+	// World positions are stored at the build precision, so the layout differs irreconcilably across
+	// modes. Called out before the layout hash so the cause is clear rather than a generic mismatch.
+	bool imageDouble = ( hdr.flags & B2_SNAP_FLAG_DOUBLE_PRECISION ) != 0;
+#if defined( BOX2D_DOUBLE_PRECISION )
+	bool buildDouble = true;
+#else
+	bool buildDouble = false;
+#endif
+	if ( imageDouble != buildDouble )
+	{
+		b2Log( "snapshot precision mismatch: image %s, this build %s\n", imageDouble ? "double" : "float",
+			   buildDouble ? "double" : "float" );
 		return false;
 	}
 

@@ -2538,8 +2538,7 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Position origin, b2Vec2 transl
 		b2RecQueryBegin( &recWriter, context );
 		recWriter.userFcn.castFcn = fcn;
 		b2RecW_WORLDID( &recWriter.buf, worldId );
-		// Demote the world origin to float until the recording format gains a position arg
-		b2RecW_VEC2( &recWriter.buf, b2ToVec2( origin ) );
+		b2RecW_POSITION( &recWriter.buf, origin );
 		b2RecW_VEC2( &recWriter.buf, translation );
 		b2RecW_QUERYFILTER( &recWriter.buf, filter );
 		recWriter.countOffset = b2RecReserveU32( &recWriter.buf );
@@ -2632,8 +2631,7 @@ b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Position origin, b2Vec2
 	{
 		b2RecBuffer recBuf = { 0 };
 		b2RecW_WORLDID( &recBuf, worldId );
-		// Demote the world origin to float until the recording format gains a position arg
-		b2RecW_VEC2( &recBuf, b2ToVec2( origin ) );
+		b2RecW_POSITION( &recBuf, origin );
 		b2RecW_VEC2( &recBuf, translation );
 		b2RecW_QUERYFILTER( &recBuf, filter );
 		b2RecW_RAYRESULT( &recBuf, result );

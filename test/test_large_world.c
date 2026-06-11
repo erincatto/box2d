@@ -218,11 +218,93 @@ static int LargeWorldRayCastTest( void )
 	return 0;
 }
 
+// A recording made far from the origin must replay with no divergence. The recorded world positions
+// ride the double precision wire format added for large world mode; demoting them to float would snap
+// a replayed body off the recorded path and the per step state hash would diverge. Float build: the
+// positions are float either way, so this is a plain recording round trip.
+static int LargeWorldRecordingTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.workerCount = 1;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	// At 1e7 the double precision wire format is what keeps the replay on the recorded path. The
+	// float build has no large world range (the broad phase asserts |coord| < B2_HUGE = 1e5), so it
+	// records the same scene at the origin: a plain recording round trip.
+#if defined( BOX2D_DOUBLE_PRECISION )
+	b2Vec2 base = { 1.0e7f, 0.0f };
+#else
+	b2Vec2 base = { 0.0f, 0.0f };
+#endif
+
+	// Record from before any body exists so world positions ride the op stream (CreateBody,
+	// SetTransform), exercising the recorded position wire format rather than the seed snapshot.
+	b2Recording* rec = b2CreateRecording( 0 );
+	b2World_StartRecording( worldId, rec );
+
+	b2BodyDef groundDef = b2DefaultBodyDef();
+	groundDef.position = b2MakePosition( base );
+	b2BodyId groundId = b2CreateBody( worldId, &groundDef );
+	b2Polygon groundBox = b2MakeBox( 20.0f, 0.5f );
+	b2ShapeDef groundShapeDef = b2DefaultShapeDef();
+	b2CreatePolygonShape( groundId, &groundShapeDef, &groundBox );
+
+	// A box settling on the ground exercises the contact solver far from the origin.
+	b2BodyDef stackDef = b2DefaultBodyDef();
+	stackDef.type = b2_dynamicBody;
+	stackDef.position = b2MakePosition( ( b2Vec2 ){ base.x, base.y + 1.0f } );
+	b2BodyId stackId = b2CreateBody( worldId, &stackDef );
+	b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+	b2ShapeDef boxDef = b2DefaultShapeDef();
+	boxDef.density = 1.0f;
+	b2CreatePolygonShape( stackId, &boxDef, &box );
+
+	// A free body sliding along x so its center accrues sub-meter detail that float cannot hold at
+	// 1e7. Its evolved double transform is fed back through SetTransform mid recording, so the op
+	// stream carries a position no float could round trip.
+	b2BodyDef sliderDef = b2DefaultBodyDef();
+	sliderDef.type = b2_dynamicBody;
+	sliderDef.gravityScale = 0.0f;
+	sliderDef.position = b2MakePosition( ( b2Vec2 ){ base.x, base.y + 5.0f } );
+	sliderDef.linearVelocity = ( b2Vec2 ){ 3.0f, 0.0f };
+	b2BodyId sliderId = b2CreateBody( worldId, &sliderDef );
+	b2CreatePolygonShape( sliderId, &boxDef, &box );
+
+	for ( int step = 0; step < 30; ++step )
+	{
+		b2World_Step( worldId, 1.0f / 60.0f, 4 );
+	}
+
+	b2WorldTransform sliderXf = b2Body_GetTransform( sliderId );
+	b2Body_SetTransform( sliderId, sliderXf.p, sliderXf.q );
+
+	for ( int step = 0; step < 30; ++step )
+	{
+		b2World_Step( worldId, 1.0f / 60.0f, 4 );
+	}
+
+	b2World_StopRecording( worldId );
+	b2DestroyWorld( worldId );
+
+	const uint8_t* data = b2Recording_GetData( rec );
+	int size = b2Recording_GetSize( rec );
+	ENSURE( size > 0 );
+
+	// Replay at the recorded worker count and a different one. A demoted op stream position would
+	// diverge the state hash; the double precision wire format reproduces the run exactly.
+	ENSURE( b2ValidateReplay( data, size, 0 ) );
+	ENSURE( b2ValidateReplay( data, size, 4 ) );
+
+	b2DestroyRecording( rec );
+	return 0;
+}
+
 int LargeWorldTest( void )
 {
 	RUN_SUBTEST( LargeWorldPyramidTest );
 	RUN_SUBTEST( LargeWorldBulletTest );
 	RUN_SUBTEST( LargeWorldRayCastTest );
+	RUN_SUBTEST( LargeWorldRecordingTest );
 
 	return 0;
 }

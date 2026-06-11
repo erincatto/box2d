@@ -141,6 +141,37 @@ b2Transform b2RecR_XF( b2RecReader* rdr )
 	return xf;
 }
 
+#if defined( BOX2D_DOUBLE_PRECISION )
+double b2RecR_F64( b2RecReader* rdr )
+{
+	uint64_t bits = b2RecR_U64( rdr );
+	double v;
+	memcpy( &v, &bits, 8 );
+	return v;
+}
+#endif
+
+b2Position b2RecR_POSITION( b2RecReader* rdr )
+{
+	b2Position p;
+#if defined( BOX2D_DOUBLE_PRECISION )
+	p.x = b2RecR_F64( rdr );
+	p.y = b2RecR_F64( rdr );
+#else
+	p.x = b2RecR_F32( rdr );
+	p.y = b2RecR_F32( rdr );
+#endif
+	return p;
+}
+
+b2WorldTransform b2RecR_WORLDXF( b2RecReader* rdr )
+{
+	b2WorldTransform t;
+	t.p = b2RecR_POSITION( rdr );
+	t.q = b2RecR_ROT( rdr );
+	return t;
+}
+
 b2WorldId b2RecR_WORLDID( b2RecReader* rdr )
 {
 	return b2LoadWorldId( b2RecR_U32( rdr ) );
@@ -291,7 +322,7 @@ b2BodyDef b2RecR_BODYDEF( b2RecReader* rdr )
 {
 	b2BodyDef def = b2DefaultBodyDef();
 	def.type = (b2BodyType)b2RecR_I32( rdr );
-	def.position = b2MakePosition( b2RecR_VEC2( rdr ) );
+	def.position = b2RecR_POSITION( rdr );
 	def.rotation = b2RecR_ROT( rdr );
 	def.linearVelocity = b2RecR_VEC2( rdr );
 	def.angularVelocity = b2RecR_F32( rdr );
@@ -384,7 +415,7 @@ b2ExplosionDef b2RecR_EXPLOSIONDEF( b2RecReader* rdr )
 {
 	b2ExplosionDef def = b2DefaultExplosionDef();
 	def.maskBits = b2RecR_U64( rdr );
-	def.position = b2MakePosition( b2RecR_VEC2( rdr ) );
+	def.position = b2RecR_POSITION( rdr );
 	def.radius = b2RecR_F32( rdr );
 	def.falloff = b2RecR_F32( rdr );
 	def.impulsePerLength = b2RecR_F32( rdr );
@@ -559,7 +590,7 @@ b2CastOutput b2RecR_CASTOUTPUT( b2RecReader* rdr )
 {
 	b2CastOutput v;
 	v.normal = b2RecR_VEC2( rdr );
-	v.point = b2MakePosition( b2RecR_VEC2( rdr ) );
+	v.point = b2RecR_POSITION( rdr );
 	v.fraction = b2RecR_F32( rdr );
 	v.iterations = b2RecR_I32( rdr );
 	v.hit = b2RecR_BOOL( rdr );
@@ -571,7 +602,7 @@ b2RayResult b2RecR_RAYRESULT( b2RecReader* rdr )
 	b2RayResult v;
 	// shapeId keeps the recorded world0; b2RecMakeShapeId is applied at compare time
 	v.shapeId = b2RecR_SHAPEID( rdr );
-	v.point = b2MakePosition( b2RecR_VEC2( rdr ) );
+	v.point = b2RecR_POSITION( rdr );
 	v.normal = b2RecR_VEC2( rdr );
 	v.fraction = b2RecR_F32( rdr );
 	v.nodeVisits = b2RecR_I32( rdr );
@@ -867,7 +898,7 @@ static void b2RecDispatch_DestroyBody( const b2RecArgs_DestroyBody* a, b2RecRead
 static void b2RecDispatch_BodySetTransform( const b2RecArgs_BodySetTransform* a, b2RecReader* rdr )
 {
 	b2BodyId id = b2RecMakeBodyId( rdr, a->body );
-	b2Body_SetTransform( id, b2MakePosition( a->position ), a->rotation );
+	b2Body_SetTransform( id, a->position, a->rotation );
 }
 
 static void b2RecDispatch_BodySetLinearVelocity( const b2RecArgs_BodySetLinearVelocity* a, b2RecReader* rdr )
@@ -893,7 +924,7 @@ static void b2RecDispatch_BodySetAngularVelocity( const b2RecArgs_BodySetAngular
 
 static void b2RecDispatch_BodySetTargetTransform( const b2RecArgs_BodySetTargetTransform* a, b2RecReader* rdr )
 {
-	b2Body_SetTargetTransform( b2RecMakeBodyId( rdr, a->body ), b2MakeWorldTransform( a->target ), a->timeStep, a->wake );
+	b2Body_SetTargetTransform( b2RecMakeBodyId( rdr, a->body ), a->target, a->timeStep, a->wake );
 }
 
 static void b2RecDispatch_BodyApplyForce( const b2RecArgs_BodyApplyForce* a, b2RecReader* rdr )
@@ -1696,7 +1727,7 @@ static void b2RecDispatch_QueryCastRay( const b2RecArgs_QueryCastRay* a, b2RecRe
 	for ( uint32_t i = 0; i < n; ++i )
 	{
 		rdr->hits[i].id = b2RecMakeShapeId( rdr, b2RecR_SHAPEID( rdr ) );
-		rdr->hits[i].point = b2RecR_VEC2( rdr );
+		rdr->hits[i].point = b2ToVec2( b2RecR_POSITION( rdr ) );
 		rdr->hits[i].normal = b2RecR_VEC2( rdr );
 		rdr->hits[i].fraction = b2RecR_F32( rdr );
 		rdr->hits[i].userReturnF = b2RecR_F32( rdr );
@@ -1705,14 +1736,14 @@ static void b2RecDispatch_QueryCastRay( const b2RecArgs_QueryCastRay* a, b2RecRe
 	if ( !rdr->ok )
 		return;
 	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
-	b2World_CastRay( rdr->replayWorldId, b2MakePosition( a->origin ), a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
+	b2World_CastRay( rdr->replayWorldId, a->origin, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_CAST_RAY, rdr->hits, (int)n );
 		q->filter = a->filter;
-		q->origin = a->origin;
+		q->origin = b2ToVec2( a->origin );
 		q->translation = a->translation;
 	}
 }
@@ -1728,7 +1759,7 @@ static void b2RecDispatch_QueryCastShape( const b2RecArgs_QueryCastShape* a, b2R
 	for ( uint32_t i = 0; i < n; ++i )
 	{
 		rdr->hits[i].id = b2RecMakeShapeId( rdr, b2RecR_SHAPEID( rdr ) );
-		rdr->hits[i].point = b2RecR_VEC2( rdr );
+		rdr->hits[i].point = b2ToVec2( b2RecR_POSITION( rdr ) );
 		rdr->hits[i].normal = b2RecR_VEC2( rdr );
 		rdr->hits[i].fraction = b2RecR_F32( rdr );
 		rdr->hits[i].userReturnF = b2RecR_F32( rdr );
@@ -1806,7 +1837,7 @@ static void b2RecDispatch_QueryCastRayClosest( const b2RecArgs_QueryCastRayClose
 	b2RayResult rec = b2RecR_RAYRESULT( rdr );
 	if ( !rdr->ok )
 		return;
-	b2RayResult got = b2World_CastRayClosest( rdr->replayWorldId, b2MakePosition( a->origin ), a->translation, a->filter );
+	b2RayResult got = b2World_CastRayClosest( rdr->replayWorldId, a->origin, a->translation, a->filter );
 	if ( got.hit != rec.hit ||
 		 ( got.hit && ( got.shapeId.index1 != rec.shapeId.index1 || got.shapeId.generation != rec.shapeId.generation ||
 						b2RecVec2Differs( b2ToVec2( got.point ), b2ToVec2( rec.point ) ) || b2RecVec2Differs( got.normal, rec.normal ) ||
@@ -1824,7 +1855,7 @@ static void b2RecDispatch_QueryCastRayClosest( const b2RecArgs_QueryCastRayClose
 		h.fraction = rec.fraction;
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_CAST_RAY_CLOSEST, &h, rec.hit ? 1 : 0 );
 		q->filter = a->filter;
-		q->origin = a->origin;
+		q->origin = b2ToVec2( a->origin );
 		q->translation = a->translation;
 	}
 }

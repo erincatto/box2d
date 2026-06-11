@@ -74,6 +74,8 @@ typedef float b2RecCType_F32;
 typedef b2Vec2 b2RecCType_VEC2;
 typedef b2Rot b2RecCType_ROT;
 typedef b2Transform b2RecCType_XF;
+typedef b2Position b2RecCType_POSITION;
+typedef b2WorldTransform b2RecCType_WORLDXF;
 typedef const char* b2RecCType_STR;
 typedef b2WorldId b2RecCType_WORLDID;
 typedef b2BodyId b2RecCType_BODYID;
@@ -145,6 +147,13 @@ void b2RecW_BOOL( b2RecBuffer* buf, bool v );
 void b2RecW_VEC2( b2RecBuffer* buf, b2Vec2 v );
 void b2RecW_ROT( b2RecBuffer* buf, b2Rot v );
 void b2RecW_XF( b2RecBuffer* buf, b2Transform v );
+#if defined( BOX2D_DOUBLE_PRECISION )
+void b2RecW_F64( b2RecBuffer* buf, double v );
+#endif
+// World position and world transform. Two doubles per position in large world mode, two floats
+// otherwise so the wire stays byte-identical to VEC2 / XF in the float build.
+void b2RecW_POSITION( b2RecBuffer* buf, b2Position v );
+void b2RecW_WORLDXF( b2RecBuffer* buf, b2WorldTransform v );
 void b2RecW_WORLDID( b2RecBuffer* buf, b2WorldId v );
 void b2RecW_BODYID( b2RecBuffer* buf, b2BodyId v );
 void b2RecW_SHAPEID( b2RecBuffer* buf, b2ShapeId v );

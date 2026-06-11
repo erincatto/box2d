@@ -126,6 +126,34 @@ void b2RecW_XF( b2RecBuffer* buf, b2Transform v )
 	b2RecW_ROT( buf, v.q );
 }
 
+#if defined( BOX2D_DOUBLE_PRECISION )
+void b2RecW_F64( b2RecBuffer* buf, double v )
+{
+	uint64_t bits;
+	memcpy( &bits, &v, 8 );
+	b2RecW_U64( buf, bits );
+}
+#endif
+
+// A world position keeps full precision on the wire so a recording reproduces the simulation far
+// from the origin. In the float build this is two floats, identical to VEC2.
+void b2RecW_POSITION( b2RecBuffer* buf, b2Position v )
+{
+#if defined( BOX2D_DOUBLE_PRECISION )
+	b2RecW_F64( buf, v.x );
+	b2RecW_F64( buf, v.y );
+#else
+	b2RecW_F32( buf, v.x );
+	b2RecW_F32( buf, v.y );
+#endif
+}
+
+void b2RecW_WORLDXF( b2RecBuffer* buf, b2WorldTransform v )
+{
+	b2RecW_POSITION( buf, v.p );
+	b2RecW_ROT( buf, v.q );
+}
+
 void b2RecW_WORLDID( b2RecBuffer* buf, b2WorldId v )
 {
 	b2RecW_U32( buf, b2StoreWorldId( v ) );
@@ -234,8 +262,7 @@ void b2RecW_STR( b2RecBuffer* buf, const char* s )
 void b2RecW_BODYDEF( b2RecBuffer* buf, b2BodyDef v )
 {
 	b2RecW_I32( buf, (int32_t)v.type );
-	// Demote the world position to float until the recording format gains a position arg
-	b2RecW_VEC2( buf, b2ToVec2( v.position ) );
+	b2RecW_POSITION( buf, v.position );
 	b2RecW_ROT( buf, v.rotation );
 	b2RecW_VEC2( buf, v.linearVelocity );
 	b2RecW_F32( buf, v.angularVelocity );
@@ -299,7 +326,7 @@ void b2RecW_CHAINDEF( b2RecBuffer* buf, b2ChainDef v )
 void b2RecW_EXPLOSIONDEF( b2RecBuffer* buf, b2ExplosionDef v )
 {
 	b2RecW_U64( buf, v.maskBits );
-	b2RecW_VEC2( buf, b2ToVec2( v.position ) );
+	b2RecW_POSITION( buf, v.position );
 	b2RecW_F32( buf, v.radius );
 	b2RecW_F32( buf, v.falloff );
 	b2RecW_F32( buf, v.impulsePerLength );
@@ -449,7 +476,7 @@ void b2RecW_RAYCASTINPUT( b2RecBuffer* buf, b2RayCastInput v )
 void b2RecW_CASTOUTPUT( b2RecBuffer* buf, b2CastOutput v )
 {
 	b2RecW_VEC2( buf, v.normal );
-	b2RecW_VEC2( buf, b2ToVec2( v.point ) );
+	b2RecW_POSITION( buf, v.point );
 	b2RecW_F32( buf, v.fraction );
 	b2RecW_I32( buf, v.iterations );
 	b2RecW_BOOL( buf, v.hit );
@@ -458,7 +485,7 @@ void b2RecW_CASTOUTPUT( b2RecBuffer* buf, b2CastOutput v )
 void b2RecW_RAYRESULT( b2RecBuffer* buf, b2RayResult v )
 {
 	b2RecW_SHAPEID( buf, v.shapeId );
-	b2RecW_VEC2( buf, b2ToVec2( v.point ) );
+	b2RecW_POSITION( buf, v.point );
 	b2RecW_VEC2( buf, v.normal );
 	b2RecW_F32( buf, v.fraction );
 	b2RecW_I32( buf, v.nodeVisits );
@@ -542,7 +569,7 @@ float b2RecCastTrampoline( b2ShapeId id, b2Position point, b2Vec2 normal, float 
 	b2RecQueryWriter* w = (b2RecQueryWriter*)ctx;
 	float ret = w->userFcn.castFcn( id, point, normal, fraction, w->userContext );
 	b2RecW_SHAPEID( &w->buf, id );
-	b2RecW_VEC2( &w->buf, b2ToVec2( point ) );
+	b2RecW_POSITION( &w->buf, point );
 	b2RecW_VEC2( &w->buf, normal );
 	b2RecW_F32( &w->buf, fraction );
 	b2RecW_F32( &w->buf, ret );
