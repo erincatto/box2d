@@ -93,11 +93,13 @@ Character controllers work at any distance: pass the mover's vicinity as the ori
 returned planes are relative to the same origin, and the plane solver is frame agnostic, so they
 feed `b2SolvePlanes` directly.
 
-Internally the tree traversal truncates the origin to float, which is conservative the same way
-the broad phase is: candidate shapes are found with coarse float bounds, then each shape is
-re-centered on the origin in double, so hits are exact even where the float bounds are not.
-`b2World_CastRay` and `b2World_CastRayClosest` take a `b2Position` origin directly and resolve
-hit points the same way.
+Internally, overlap query boxes are lifted to world float with outward rounding, so they are
+conservative: an overlapping shape is always found. Ray and shape casts traverse the tree with
+the origin truncated to float, which displaces the traversal by up to one coordinate ULP, about
+a meter at 1e7. A cast that merely grazes a shape by less than that can miss it. Shapes the tree
+does report are re-centered on the origin in double, so reported hits are exact even where the
+float bounds are not. `b2World_CastRay` and `b2World_CastRayClosest` take a `b2Position` origin
+directly and resolve hit points the same way.
 
 ## Recordings and snapshots
 

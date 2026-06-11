@@ -1777,10 +1777,22 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 						b2Shape* shapeA = shapeArray + contactSim->shapeIdA;
 						b2Shape* shapeB = shapeArray + contactSim->shapeIdB;
 
-						// World contact point reconstructed from body A center of mass and the anchor
+						// World contact point reconstructed from a body center of mass and the matching
+						// anchor. The anchors were built with the manifold, so a body that has moved since
+						// drags the point with it. A static body has not moved, prefer one so the common
+						// case of a fast body striking the world stays exact.
 						b2Body* bodyA = b2Array_Get( world->bodies, shapeA->bodyId );
-						b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
-						event.point = b2OffsetPosition( bodySimA->center, bestPoint->anchorA );
+						b2Body* bodyB = b2Array_Get( world->bodies, shapeB->bodyId );
+						if ( bodyA->type != b2_staticBody && bodyB->type == b2_staticBody )
+						{
+							b2BodySim* bodySimB = b2GetBodySim( world, bodyB );
+							event.point = b2OffsetPosition( bodySimB->center, bestPoint->anchorB );
+						}
+						else
+						{
+							b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
+							event.point = b2OffsetPosition( bodySimA->center, bestPoint->anchorA );
+						}
 
 						event.shapeIdA = (b2ShapeId){ shapeA->id + 1, worldId, shapeA->generation };
 						event.shapeIdB = (b2ShapeId){ shapeB->id + 1, worldId, shapeB->generation };

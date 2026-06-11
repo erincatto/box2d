@@ -2547,7 +2547,8 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Position origin, b2Vec2 transl
 		context = &recWriter;
 	}
 
-	// Tree traversal is conservative float, so the truncated origin is safe. Per-shape casts
+	// Tree traversal sees the origin truncated to float, displacing the ray by up to one
+	// coordinate ULP, a graze sized miss tolerance at extreme range. Per-shape casts
 	// re-difference against the full precision origin carried on the context.
 	b2RayCastInput input = { b2ToVec2( origin ), translation, 1.0f };
 
@@ -2740,8 +2741,8 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, b2Position origin, const b2Sha
 	worldContext.relInput.maxFraction = 1.0f;
 	worldContext.userContext = context;
 
-	// Tree traversal uses the truncated origin to lift the proxy to world float. This is
-	// conservative the same way the ray tree input is, per shape casts re-difference at full
+	// Tree traversal uses the truncated origin to lift the proxy to world float, with the same
+	// graze sized tolerance as the ray tree input. Per shape casts re-difference at full
 	// precision against the origin carried on the context.
 	b2ShapeCastInput treeInput = worldContext.relInput;
 	b2Vec2 originf = b2ToVec2( origin );
@@ -2843,7 +2844,7 @@ float b2World_CastMover( b2WorldId worldId, b2Position origin, const b2Capsule* 
 	worldContext.relInput.maxFraction = 1.0f;
 	worldContext.relInput.canEncroach = true;
 
-	// Truncated origin lift for the tree, conservative the same way the ray tree input is
+	// Truncated origin lift for the tree, same graze sized tolerance as the ray tree input
 	b2ShapeCastInput treeInput = worldContext.relInput;
 	b2Vec2 originf = b2ToVec2( origin );
 	treeInput.proxy.points[0] = b2Add( mover->center1, originf );

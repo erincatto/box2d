@@ -1042,9 +1042,10 @@ typedef struct b2ContactHitEvent
 	///	@see b2Contact_IsValid
 	b2ContactId contactId;
 
-	/// Point where the shapes hit at the beginning of the time step.
-	/// This is a mid-point between the two surfaces. It could be at speculative
-	/// point where the two shapes were not touching at the beginning of the time step.
+	/// Point where the shapes hit. This is a mid-point between the two surfaces. It could be
+	/// a speculative point where the shapes were not touching at the beginning of the time
+	/// step. The point is reconstructed after the step, so when both bodies are moving it may
+	/// trail the impact by up to one step of motion.
 	b2Position point;
 
 	/// Normal vector pointing from shape A to shape B
