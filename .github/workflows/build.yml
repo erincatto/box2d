@@ -178,6 +178,48 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: ./bin/${{env.BUILD_TYPE}}/test
 
+  build-ubuntu-gcc-double:
+    name: ubuntu-gcc-double
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_DOUBLE_PRECISION=ON -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ./bin/test
+
+  build-windows-double:
+    name: windows-double
+    runs-on: windows-latest
+    timeout-minutes: 4
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    steps:
+
+    - uses: actions/checkout@v6
+
+    - name: Setup MSVC dev command prompt
+      uses: TheMrMilchmann/setup-msvc-dev@v4
+      with:
+        arch: x64
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_DOUBLE_PRECISION=ON -DBOX2D_SAMPLES=OFF -DBOX2D_SANITIZE=ON -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ./bin/${{env.BUILD_TYPE}}/test
+
   samples-windows-static:
     name: samples-windows-static
     runs-on: windows-latest
