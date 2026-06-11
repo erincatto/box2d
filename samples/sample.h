@@ -97,9 +97,9 @@ public:
 	virtual void Keyboard( int )
 	{
 	}
-	virtual void MouseDown( b2Vec2 p, int button, int mod );
-	virtual void MouseUp( b2Vec2 p, int button );
-	virtual void MouseMove( b2Vec2 p );
+	virtual void MouseDown( b2Position p, int button, int mod );
+	virtual void MouseUp( b2Position p, int button );
+	virtual void MouseMove( b2Position p );
 
 	void DrawMetrics();
 	void DrawHud( float frameTime );
@@ -132,7 +132,7 @@ public:
 	b2Recording* m_recording; // active recording buffer, owned here; NULL when not recording
 	int m_recordStartStep;	  // step the active recording began at, for the UI indicator
 	b2JointId m_mouseJointId;
-	b2Vec2 m_mousePoint;
+	b2Position m_mousePoint;
 	float m_mouseForceScale;
 	int m_stepCount;
 	float m_screenTextY;

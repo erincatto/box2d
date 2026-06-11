@@ -66,11 +66,11 @@ Camera GetDefaultCamera( void )
 
 void ResetView( Camera* camera )
 {
-	camera->center = (b2Vec2){ 0.0f, 20.0f };
+	camera->center = b2MakePosition( (b2Vec2){ 0.0f, 20.0f } );
 	camera->zoom = 1.0f;
 }
 
-b2Vec2 ConvertScreenToWorld( Camera* camera, b2Vec2 screenPoint )
+b2Position ConvertScreenToWorld( Camera* camera, b2Vec2 screenPoint )
 {
 	float w = camera->width;
 	float h = camera->height;
@@ -80,14 +80,21 @@ b2Vec2 ConvertScreenToWorld( Camera* camera, b2Vec2 screenPoint )
 	float ratio = w / h;
 	b2Vec2 extents = { camera->zoom * ratio, camera->zoom };
 
+#if defined( BOX2D_DOUBLE_PRECISION )
+	// Form the offset from the view center in float, then add to the double center. Building
+	// center +/- extents in float would lose the view-sized extents far from the origin.
+	b2Vec2 offset = { extents.x * ( 2.0f * u - 1.0f ), extents.y * ( 2.0f * v - 1.0f ) };
+	return b2OffsetPosition( camera->center, offset );
+#else
 	b2Vec2 lower = b2Sub( camera->center, extents );
 	b2Vec2 upper = b2Add( camera->center, extents );
 
 	b2Vec2 pw = { ( 1.0f - u ) * lower.x + u * upper.x, ( 1.0f - v ) * lower.y + v * upper.y };
 	return pw;
+#endif
 }
 
-b2Vec2 ConvertWorldToScreen( Camera* camera, b2Vec2 worldPoint )
+b2Vec2 ConvertWorldToScreen( Camera* camera, b2Position worldPoint )
 {
 	float w = camera->width;
 	float h = camera->height;
@@ -95,11 +102,18 @@ b2Vec2 ConvertWorldToScreen( Camera* camera, b2Vec2 worldPoint )
 
 	b2Vec2 extents = { camera->zoom * ratio, camera->zoom };
 
+#if defined( BOX2D_DOUBLE_PRECISION )
+	// Distance from the view center, double subtract demoted to float, then a float mapping.
+	b2Vec2 local = b2PositionDelta( worldPoint, camera->center );
+	float u = ( local.x + extents.x ) / ( 2.0f * extents.x );
+	float v = ( local.y + extents.y ) / ( 2.0f * extents.y );
+#else
 	b2Vec2 lower = b2Sub( camera->center, extents );
 	b2Vec2 upper = b2Add( camera->center, extents );
 
 	float u = ( worldPoint.x - lower.x ) / ( upper.x - lower.x );
 	float v = ( worldPoint.y - lower.y ) / ( upper.y - lower.y );
+#endif
 
 	b2Vec2 ps = { u * w, ( 1.0f - v ) * h };
 	return ps;
@@ -113,10 +127,16 @@ static void BuildProjectionMatrix( Camera* camera, float* m, float zBias )
 	float ratio = camera->width / camera->height;
 	b2Vec2 extents = { camera->zoom * ratio, camera->zoom };
 
+#if defined( BOX2D_DOUBLE_PRECISION )
+	// The center cancels out of the span, and vertices arrive camera relative, so it never enters here.
+	float w = 2.0f * extents.x;
+	float h = 2.0f * extents.y;
+#else
 	b2Vec2 lower = b2Sub( camera->center, extents );
 	b2Vec2 upper = b2Add( camera->center, extents );
 	float w = upper.x - lower.x;
 	float h = upper.y - lower.y;
+#endif
 
 	m[0] = 2.0f / w;
 	m[1] = 0.0f;
@@ -133,11 +153,36 @@ static void BuildProjectionMatrix( Camera* camera, float* m, float zBias )
 	m[10] = -1.0f;
 	m[11] = 0.0f;
 
+#if defined( BOX2D_DOUBLE_PRECISION )
+	// Vertices reach the GPU already shifted into camera relative space (draw->origin and
+	// CameraRelative), so the view center is the origin here. No double coordinate enters a shader.
+	m[12] = 0.0f;
+	m[13] = 0.0f;
+#else
 	m[12] = -2.0f * camera->center.x / w;
 	m[13] = -2.0f * camera->center.y / h;
+#endif
 	m[14] = zBias;
 	m[15] = 1.0f;
 }
+
+#if defined( BOX2D_DOUBLE_PRECISION )
+#include <float.h>
+#include <math.h>
+
+// Round a double toward -inf / +inf so the float view box always contains the double view.
+static inline float RoundDownFloat( double x )
+{
+	float f = (float)x;
+	return (double)f > x ? nextafterf( f, -FLT_MAX ) : f;
+}
+
+static inline float RoundUpFloat( double x )
+{
+	float f = (float)x;
+	return (double)f < x ? nextafterf( f, FLT_MAX ) : f;
+}
+#endif
 
 b2AABB GetViewBounds( Camera* camera )
 {
@@ -147,9 +192,18 @@ b2AABB GetViewBounds( Camera* camera )
 		return bounds;
 	}
 
+	b2Position lower = ConvertScreenToWorld( camera, (b2Vec2){ 0.0f, camera->height } );
+	b2Position upper = ConvertScreenToWorld( camera, (b2Vec2){ camera->width, 0.0f } );
+
 	b2AABB bounds;
-	bounds.lowerBound = ConvertScreenToWorld( camera, (b2Vec2){ 0.0f, camera->height } );
-	bounds.upperBound = ConvertScreenToWorld( camera, (b2Vec2){ camera->width, 0.0f } );
+#if defined( BOX2D_DOUBLE_PRECISION )
+	// Engine cull box stays float. Round outward so nothing visible is clipped far from the origin.
+	bounds.lowerBound = (b2Vec2){ RoundDownFloat( lower.x ), RoundDownFloat( lower.y ) };
+	bounds.upperBound = (b2Vec2){ RoundUpFloat( upper.x ), RoundUpFloat( upper.y ) };
+#else
+	bounds.lowerBound = lower;
+	bounds.upperBound = upper;
+#endif
 	return bounds;
 }
 
@@ -173,7 +227,7 @@ void FocusOnBounds( Camera* camera, b2AABB bounds )
 	// Need to guard against zero because zoom can get stuck there
 	camera->zoom = b2MaxFloat( camera->zoom, 0.01f );
 
-	camera->center = b2AABB_Center( bounds );
+	camera->center = b2MakePosition( b2AABB_Center( bounds ) );
 }
 
 typedef struct

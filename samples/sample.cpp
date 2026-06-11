@@ -132,7 +132,14 @@ void DrawPointFcn( b2Vec2 p, float size, b2HexColor color, void* context )
 void DrawStringFcn( b2Vec2 p, const char* s, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
-	DrawWorldString( sampleContext->draw, &sampleContext->camera, p, color, s );
+#if defined( BOX2D_DOUBLE_PRECISION )
+	// The callback point arrives relative to draw->origin (the camera center). Lift it back to a
+	// world position so the label lands where the geometry drew.
+	b2Position world = b2OffsetPosition( sampleContext->camera.center, p );
+#else
+	b2Position world = p;
+#endif
+	DrawWorldString( sampleContext->draw, &sampleContext->camera, world, color, s );
 }
 
 #define MAX_TOKENS 32
@@ -417,7 +424,7 @@ bool QueryCallback( b2ShapeId shapeId, void* context )
 	return true;
 }
 
-void Sample::MouseDown( b2Vec2 p, int button, int mod )
+void Sample::MouseDown( b2Position p, int button, int mod )
 {
 	if ( B2_IS_NON_NULL( m_mouseJointId ) )
 	{
@@ -426,16 +433,20 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 
 	if ( button == GLFW_MOUSE_BUTTON_1 )
 	{
+		// The pick query rides the float carve-out (b2World_OverlapAABB), so it loses sub-pixel
+		// precision far from the origin. Fine for click to select.
+		b2Vec2 pf = b2ToVec2( p );
+
 		// Make a small box.
 		b2AABB box;
 		b2Vec2 d = { 0.001f, 0.001f };
-		box.lowerBound = b2Sub( p, d );
-		box.upperBound = b2Add( p, d );
+		box.lowerBound = b2Sub( pf, d );
+		box.upperBound = b2Add( pf, d );
 
 		m_mousePoint = p;
 
 		// Query the world for overlapping shapes.
-		QueryContext queryContext = { p, b2_nullBodyId };
+		QueryContext queryContext = { pf, b2_nullBodyId };
 		b2World_OverlapAABB( m_worldId, box, b2DefaultQueryFilter(), QueryCallback, &queryContext );
 
 		if ( B2_IS_NON_NULL( queryContext.bodyId ) )
@@ -471,7 +482,7 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 	}
 }
 
-void Sample::MouseUp( b2Vec2 p, int button )
+void Sample::MouseUp( b2Position p, int button )
 {
 	if ( B2_IS_NON_NULL( m_mouseJointId ) && button == GLFW_MOUSE_BUTTON_1 )
 	{
@@ -483,7 +494,7 @@ void Sample::MouseUp( b2Vec2 p, int button )
 	}
 }
 
-void Sample::MouseMove( b2Vec2 p )
+void Sample::MouseMove( b2Position p )
 {
 	if ( b2Joint_IsValid( m_mouseJointId ) == false )
 	{
@@ -557,6 +568,10 @@ void Sample::Step()
 		b2World_Step( m_worldId, timeStep, m_context->subStepCount );
 	}
 
+#if defined( BOX2D_DOUBLE_PRECISION )
+	// Draw relative to the camera so callbacks get float coordinates near the origin.
+	m_context->debugDraw.origin = m_context->camera.center;
+#endif
 	b2World_Draw( m_worldId, &m_context->debugDraw );
 
 	if ( timeStep > 0.0f )

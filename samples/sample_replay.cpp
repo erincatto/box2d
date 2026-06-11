@@ -413,6 +413,10 @@ public:
 		m_stepCount = b2RecPlayer_GetFrame( m_player );
 
 		m_context->debugDraw.drawingBounds = GetViewBounds( &m_context->camera );
+#if defined( BOX2D_DOUBLE_PRECISION )
+		// Draw relative to the camera so callbacks and recorded queries land near the origin.
+		m_context->debugDraw.origin = m_context->camera.center;
+#endif
 		if ( B2_IS_NON_NULL( m_worldId ) )
 		{
 			b2World_Draw( m_worldId, &m_context->debugDraw );
@@ -616,11 +620,11 @@ public:
 		int count = b2Body_GetContactData( body, contacts, capacity );
 		for ( int i = 0; i < count; ++i )
 		{
-			b2Vec2 originA = b2Body_GetPosition( b2Shape_GetBody( contacts[i].shapeIdA ) );
+			b2Position originA = b2Body_GetPosition( b2Shape_GetBody( contacts[i].shapeIdA ) );
 			const b2Manifold* m = &contacts[i].manifold;
 			for ( int j = 0; j < m->pointCount; ++j )
 			{
-				b2Vec2 point = b2Add( originA, m->points[j].anchorA );
+				b2Vec2 point = CameraRelative( &m_context->camera, b2OffsetPosition( originA, m->points[j].anchorA ) );
 				DrawPoint( draw, point, 6.0f, b2_colorOrange );
 				DrawLine( draw, point, b2MulAdd( point, 0.3f, m->normal ), b2_colorOrange );
 			}
@@ -641,9 +645,10 @@ public:
 				return;
 			}
 			b2BodyId body = b2Shape_GetBody( shape );
-			DrawBounds( draw, b2Shape_GetAABB( shape ), b2_colorYellow );
-			DrawTransform( draw, b2Body_GetTransform( body ), 0.5f );
-			DrawPoint( draw, b2Body_GetWorldCenterOfMass( body ), 8.0f, b2_colorYellow );
+			Camera* cam = &m_context->camera;
+			DrawBounds( draw, CameraRelative( cam, b2Shape_GetAABB( shape ) ), b2_colorYellow );
+			DrawTransform( draw, CameraRelative( cam, b2Body_GetTransform( body ) ), 0.5f );
+			DrawPoint( draw, CameraRelative( cam, b2Body_GetWorldCenterOfMass( body ) ), 8.0f, b2_colorYellow );
 			DrawBodyContacts( body );
 		}
 		else if ( m_selKind == SelBody )
@@ -653,9 +658,10 @@ public:
 			{
 				return;
 			}
-			DrawBounds( draw, b2Body_ComputeAABB( body ), b2_colorYellow );
-			DrawTransform( draw, b2Body_GetTransform( body ), 0.5f );
-			DrawPoint( draw, b2Body_GetWorldCenterOfMass( body ), 8.0f, b2_colorYellow );
+			Camera* cam = &m_context->camera;
+			DrawBounds( draw, CameraRelative( cam, b2Body_ComputeAABB( body ) ), b2_colorYellow );
+			DrawTransform( draw, CameraRelative( cam, b2Body_GetTransform( body ) ), 0.5f );
+			DrawPoint( draw, CameraRelative( cam, b2Body_GetWorldCenterOfMass( body ) ), 8.0f, b2_colorYellow );
 			DrawBodyContacts( body );
 		}
 		else if ( m_selKind == SelJoint )
@@ -667,13 +673,14 @@ public:
 			}
 			b2BodyId a = b2Joint_GetBodyA( joint );
 			b2BodyId b = b2Joint_GetBodyB( joint );
+			Camera* cam = &m_context->camera;
 			if ( b2Body_IsValid( a ) )
 			{
-				DrawPoint( draw, b2Body_GetWorldCenterOfMass( a ), 8.0f, b2_colorMagenta );
+				DrawPoint( draw, CameraRelative( cam, b2Body_GetWorldCenterOfMass( a ) ), 8.0f, b2_colorMagenta );
 			}
 			if ( b2Body_IsValid( b ) )
 			{
-				DrawPoint( draw, b2Body_GetWorldCenterOfMass( b ), 8.0f, b2_colorMagenta );
+				DrawPoint( draw, CameraRelative( cam, b2Body_GetWorldCenterOfMass( b ) ), 8.0f, b2_colorMagenta );
 			}
 		}
 	}
@@ -905,7 +912,7 @@ public:
 		}
 
 		const char* name = b2Body_GetName( body );
-		b2Transform xf = b2Body_GetTransform( body );
+		b2WorldTransform xf = b2Body_GetTransform( body );
 		b2Vec2 v = b2Body_GetLinearVelocity( body );
 
 		ImGui::Text( "id      %d", body.index1 );
@@ -1172,27 +1179,30 @@ public:
 
 	// Left click selects a shape to inspect. Picking only reads the world, it never creates the drag
 	// joint the base sample does, so the replay is not mutated. Dragging stays disabled.
-	void MouseDown( b2Vec2 p, int button, int ) override
+	void MouseDown( b2Position p, int button, int ) override
 	{
 		if ( button != GLFW_MOUSE_BUTTON_1 || B2_IS_NULL( m_worldId ) )
 		{
 			return;
 		}
 
+		// Picking rides the float carve-out (b2World_OverlapAABB), so it loses precision far from
+		// the origin. Fine for click to select.
+		b2Vec2 pf = b2ToVec2( p );
 		b2Vec2 d = { 0.001f, 0.001f };
-		b2AABB box = { b2Sub( p, d ), b2Add( p, d ) };
-		ReplayPickContext pick = { p, b2_nullShapeId };
+		b2AABB box = { b2Sub( pf, d ), b2Add( pf, d ) };
+		ReplayPickContext pick = { pf, b2_nullShapeId };
 		b2World_OverlapAABB( m_worldId, box, b2DefaultQueryFilter(), ReplayPickCallback, &pick );
 
 		// A miss clears the selection
 		SelectShape( pick.shape );
 	}
 
-	void MouseUp( b2Vec2, int ) override
+	void MouseUp( b2Position, int ) override
 	{
 	}
 
-	void MouseMove( b2Vec2 ) override
+	void MouseMove( b2Position ) override
 	{
 	}
 

@@ -14,7 +14,7 @@ typedef struct b2RecPlayer b2RecPlayer;
 typedef struct b2RecRecordedHit
 {
 	b2ShapeId id;
-	b2Vec2 point;
+	b2Position point;
 	b2Vec2 normal;
 	float fraction;
 	b2PlaneResult plane;
@@ -43,7 +43,7 @@ typedef struct b2RecDrawQuery
 	b2AABB aabb;
 	b2ShapeProxy proxy;
 	b2Capsule mover;
-	b2Vec2 origin;
+	b2Position origin;
 	b2Vec2 translation;
 	bool boolResult;
 	float castFraction;

@@ -122,21 +122,33 @@ foreach(SHADER_FILE ${SHADER_FILES})
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${SHADER_PATH})
 endforeach()
 
-set(BOX2D_SAMPLE_FILES
-    car.cpp
-    car.h
+# The shared host plus the double precision aware samples. Compiled in every precision mode.
+# The Replay Viewer is part of the host: it is the required way to view a double precision recording.
+set(BOX2D_SAMPLE_FRAMEWORK_FILES
     container.c
     container.h
-    donut.cpp
-    donut.h
-    doohickey.cpp
-    doohickey.h
     draw.c
     draw.h
     draw_text.cpp
     main.cpp
     sample.cpp
     sample.h
+    sample_replay.cpp
+    shader.c
+    shader.h
+    stb_image_write.h
+)
+
+# Samples that take float world coordinates directly. In double precision mode they would not
+# compile against the retyped API (a b2Vec2 where a b2Position is now required is a hard error),
+# so they are dropped from that build rather than guarded file by file.
+set(BOX2D_SAMPLE_FLOAT_FILES
+    car.cpp
+    car.h
+    donut.cpp
+    donut.h
+    doohickey.cpp
+    doohickey.h
     sample_benchmark.cpp
     sample_bodies.cpp
     sample_character.cpp
@@ -147,15 +159,18 @@ set(BOX2D_SAMPLE_FILES
     sample_geometry.cpp
     sample_issues.cpp
     sample_joints.cpp
-    sample_replay.cpp
     sample_robustness.cpp
     sample_shapes.cpp
     sample_stacking.cpp
     sample_world.cpp
-    shader.c
-    shader.h
-    stb_image_write.h
 )
+
+if(BOX2D_DOUBLE_PRECISION)
+    # Live large world scene, the recording source for the Replay Viewer in double precision.
+    set(BOX2D_SAMPLE_FILES ${BOX2D_SAMPLE_FRAMEWORK_FILES} sample_large_world.cpp)
+else()
+    set(BOX2D_SAMPLE_FILES ${BOX2D_SAMPLE_FRAMEWORK_FILES} ${BOX2D_SAMPLE_FLOAT_FILES})
+endif()
 
 add_executable(samples ${BOX2D_SAMPLE_FILES})
 
