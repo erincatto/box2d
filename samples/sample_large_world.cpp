@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 Erin Catto
+// SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
 #include "draw.h"
@@ -6,8 +6,6 @@
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
-
-#include <imgui.h>
 
 // A pyramid built far from the origin to exercise double precision world positions. The contact
 // solver runs in delta space, so the stack settles the same as one at the origin while the body
@@ -21,15 +19,15 @@ public:
 	{
 		// 1e7 is exactly representable in float, so integer box offsets stay exact and a run here
 		// can be compared against one at the origin.
-		b2Position origin = b2MakePosition( { 1.0e7f, 0.0f } );
+		b2Position origin = b2MakePosition( { 10.0e6f, 0.0f } );
 
 		if ( m_context->restart == false )
 		{
-			m_context->camera.center = b2OffsetPosition( origin, {0.0f, 5.0f} );
-			m_context->camera.zoom = 14.0f;
+			m_context->camera.center = b2OffsetPosition( origin, {0.0f, 12.0f} );
+			m_context->camera.zoom = 17.0f;
 		}
 
-		float h = 0.5f;
+		float h = 0.25f;
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.position = origin;
@@ -42,7 +40,7 @@ public:
 		b2Polygon box = b2MakeBox( h, h );
 		bodyDef.type = b2_dynamicBody;
 
-		int baseCount = 14;
+		int baseCount = 50;
 		for ( int i = 0; i < baseCount; ++i )
 		{
 			float y = ( 2.0f * i + 1.0f ) * h;

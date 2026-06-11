@@ -1135,12 +1135,10 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 	{
 		b2AABB aabb = shape->fatAABB;
 
-		// The float broad-phase box is shifted into the view frame for drawing
-		b2Vec2 o = b2ToVec2( draw->origin );
-		b2Vec2 vs[4] = { { aabb.lowerBound.x - o.x, aabb.lowerBound.y - o.y },
-						 { aabb.upperBound.x - o.x, aabb.lowerBound.y - o.y },
-						 { aabb.upperBound.x - o.x, aabb.upperBound.y - o.y },
-						 { aabb.lowerBound.x - o.x, aabb.upperBound.y - o.y } };
+		// Shift the float broad-phase box into the view frame.
+		b2Vec2 lower = b2PositionDelta( b2MakePosition( aabb.lowerBound ), draw->origin );
+		b2Vec2 upper = b2PositionDelta( b2MakePosition( aabb.upperBound ), draw->origin );
+		b2Vec2 vs[4] = { lower, { upper.x, lower.y }, upper, { lower.x, upper.y } };
 
 		draw->DrawPolygonFcn( vs, 4, b2_colorGold, draw->context );
 	}
@@ -1385,11 +1383,10 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 					if ( shapeCount > 0 )
 					{
-						b2Vec2 o = b2ToVec2( draw->origin );
-						b2Vec2 vs[4] = { { aabb.lowerBound.x - o.x, aabb.lowerBound.y - o.y },
-										 { aabb.upperBound.x - o.x, aabb.lowerBound.y - o.y },
-										 { aabb.upperBound.x - o.x, aabb.upperBound.y - o.y },
-										 { aabb.lowerBound.x - o.x, aabb.upperBound.y - o.y } };
+						// Corner differenced in double to match the shape draw frame
+						b2Vec2 lower = b2PositionDelta( b2MakePosition( aabb.lowerBound ), draw->origin );
+						b2Vec2 upper = b2PositionDelta( b2MakePosition( aabb.upperBound ), draw->origin );
+						b2Vec2 vs[4] = { lower, { upper.x, lower.y }, upper, { lower.x, upper.y } };
 
 						draw->DrawPolygonFcn( vs, 4, b2_colorOrangeRed, draw->context );
 					}

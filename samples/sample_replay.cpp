@@ -122,12 +122,12 @@ static bool ReplayPickCallback( b2ShapeId shapeId, void* context )
 // reproduces the original session exactly. Pause, single step, and restart use the shared sample
 // controls. Mouse picking is disabled because dragging a body would mutate the replayed world
 // and diverge it from the recording.
-class ReplayFile : public Sample
+class ReplayViewer : public Sample
 {
 public:
 	// The player owns the world we draw, so skip the base world. m_worldId stays null until
 	// CreatePlayer adopts the player's world.
-	explicit ReplayFile( SampleContext* context )
+	explicit ReplayViewer( SampleContext* context )
 		: Sample( context, false )
 	{
 		if ( m_context->restart == false )
@@ -165,7 +165,7 @@ public:
 		}
 	}
 
-	~ReplayFile() override
+	~ReplayViewer() override
 	{
 		ClosePlayer();
 
@@ -1206,7 +1206,7 @@ public:
 
 	static Sample* Create( SampleContext* context )
 	{
-		return new ReplayFile( context );
+		return new ReplayViewer( context );
 	}
 
 	b2RecPlayer* m_player;
@@ -1246,4 +1246,4 @@ public:
 	bool m_revealSelection = false; // one-shot request to expand and scroll the tree to a viewport pick
 };
 
-static int sampleReplayFile = RegisterReplay( "Replay", "Replay File", ReplayFile::Create );
+static int sampleReplayViewer = RegisterReplay( "Replay", "Viewer", ReplayViewer::Create );
