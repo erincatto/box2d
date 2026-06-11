@@ -18,8 +18,8 @@
 #if defined( BOX2D_DOUBLE_PRECISION )
 // Double precision resolves the contact boundary in double, converging to a different but
 // equally deterministic result, so large world mode keeps its own reference.
-#define EXPECTED_SLEEP_STEP 244
-#define EXPECTED_HASH 0xC898947A
+#define EXPECTED_SLEEP_STEP 247
+#define EXPECTED_HASH 0x4A4320F6
 #else
 #define EXPECTED_SLEEP_STEP 328
 #define EXPECTED_HASH 0x26E08AEE

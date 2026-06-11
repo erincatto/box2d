@@ -9,6 +9,7 @@ set(BOX2D_TEST_FILES
     test_distance.c
     test_dynamic_tree.c
     test_id.c
+    test_large_world.c
     test_macros.h
     test_math.c
     test_recording.c

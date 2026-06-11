@@ -494,11 +494,19 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			if ( recycleDistance > 0.0f && ( contactSim->simFlags & b2_simRelativeTransformValid ) &&
 				 ( contactSim->simFlags & b2_contactRecycleFlag ) )
 			{
-				b2Transform xf = b2InvMulWorldTransforms( transformA, transformB );
+#if defined( BOX2D_DOUBLE_PRECISION )
+				b2Rot cachedQA = contactSim->cachedRotationA;
+				b2Rot cachedQB = contactSim->cachedRotationB;
+				b2Transform xfc = contactSim->cachedRelativePose;
+#else
+				b2Rot cachedQA = contactSim->cachedTransformA.q;
+				b2Rot cachedQB = contactSim->cachedTransformB.q;
 				b2Transform xfc = b2InvMulTransforms( contactSim->cachedTransformA, contactSim->cachedTransformB );
+#endif
+				b2Transform xf = b2InvMulWorldTransforms( transformA, transformB );
 
-				float cosA = b2RelativeCos( transformA.q, contactSim->cachedTransformA.q );
-				float cosB = b2RelativeCos( transformB.q, contactSim->cachedTransformB.q );
+				float cosA = b2RelativeCos( transformA.q, cachedQA );
+				float cosB = b2RelativeCos( transformB.q, cachedQB );
 				float minCos = b2MinFloat( cosA, cosB );
 
 				float maxExtentA = bodyA->type == b2_staticBody ? 0.0f : bodySimA->maxExtent;
@@ -514,8 +522,8 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 
 				if ( minCos > B2_CONTACT_RECYCLE_COS_ANGLE && distance + maxExtent * b2AbsFloat( qr.s ) < tolerance )
 				{
-					b2Rot dqA = b2MulRot( transformA.q, b2InvertRot( contactSim->cachedTransformA.q ) );
-					b2Rot dqB = b2MulRot( transformB.q, b2InvertRot( contactSim->cachedTransformB.q ) );
+					b2Rot dqA = b2MulRot( transformA.q, b2InvertRot( cachedQA ) );
+					b2Rot dqB = b2MulRot( transformB.q, b2InvertRot( cachedQB ) );
 					b2Vec2 normal = contactSim->manifold.normal;
 
 					// Minimize round-off
@@ -540,11 +548,17 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 				}
 			}
 
-			// Caching for contact recycling. The cache stays float, so a large world demotes the world
-			// translation here. The relative-pose distance check below loses precision far from the
-			// origin, only disabling recycling there, never correctness.
+			// Caching for contact recycling. In large world mode the relative pose is differenced in
+			// double here and cached directly, so the distance check above stays precise far from the
+			// origin. The float cache would lose the translation to cancellation at large coordinates.
+#if defined( BOX2D_DOUBLE_PRECISION )
+			contactSim->cachedRotationA = transformA.q;
+			contactSim->cachedRotationB = transformB.q;
+			contactSim->cachedRelativePose = b2InvMulWorldTransforms( transformA, transformB );
+#else
 			contactSim->cachedTransformA = (b2Transform){ b2ToVec2( transformA.p ), transformA.q };
 			contactSim->cachedTransformB = (b2Transform){ b2ToVec2( transformB.p ), transformB.q };
+#endif
 			contactSim->simFlags |= b2_simRelativeTransformValid;
 
 			b2Vec2 centerOffsetA = b2RotateVector( transformA.q, bodySimA->localCenter );

@@ -72,4 +72,27 @@ static inline float b2RoundUpFloat( double x )
 	return (double)f < x ? nextafterf( f, FLT_MAX ) : f;
 }
 
+// Translate a relative AABB into world space, rounding outward so the float box always contains
+// the true box far from the origin where a float coordinate cannot resolve the shape extent.
+static inline b2AABB b2OffsetAABB( b2AABB box, b2Position origin )
+{
+	b2AABB result;
+	result.lowerBound.x = b2RoundDownFloat( origin.x + (double)box.lowerBound.x );
+	result.lowerBound.y = b2RoundDownFloat( origin.y + (double)box.lowerBound.y );
+	result.upperBound.x = b2RoundUpFloat( origin.x + (double)box.upperBound.x );
+	result.upperBound.y = b2RoundUpFloat( origin.y + (double)box.upperBound.y );
+	return result;
+}
+
+#else
+
+// Float mode plain translate. A zero origin is bit identical to the input box.
+static inline b2AABB b2OffsetAABB( b2AABB box, b2Position origin )
+{
+	b2AABB result;
+	result.lowerBound = b2Add( box.lowerBound, origin );
+	result.upperBound = b2Add( box.upperBound, origin );
+	return result;
+}
+
 #endif

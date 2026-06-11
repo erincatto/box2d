@@ -104,8 +104,17 @@ typedef struct b2ContactSim
 {
 	int contactId;
 
+#if defined( BOX2D_DOUBLE_PRECISION )
+	// Cache the relative pose directly so recycling stays precise far from the origin. Two world
+	// transforms demoted to float would lose the translation to cancellation when subtracted at
+	// large coordinates. Same 32 bytes as the two float transforms below.
+	b2Rot cachedRotationA;
+	b2Rot cachedRotationB;
+	b2Transform cachedRelativePose;
+#else
 	b2Transform cachedTransformA;
 	b2Transform cachedTransformB;
+#endif
 
 #if B2_ENABLE_VALIDATION
 	int bodyIdA;

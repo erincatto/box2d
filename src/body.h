@@ -232,11 +232,13 @@ bool b2WakeBody( b2World* world, b2Body* body );
 void b2UpdateBodyMassData( b2World* world, b2Body* body );
 void b2SyncBodyFlags( b2World* world, b2Body* body );
 
-static inline b2Sweep b2MakeSweep( const b2BodySim* bodySim )
+// Build a sweep relative to a base position so continuous collision keeps float precision far
+// from the origin. The base cancels out of the relative motion the TOI actually solves.
+static inline b2Sweep b2MakeRelativeSweep( const b2BodySim* bodySim, b2Position base )
 {
 	b2Sweep s;
-	s.c1 = b2ToVec2( bodySim->center0 );
-	s.c2 = b2ToVec2( bodySim->center );
+	s.c1 = b2PositionDelta( bodySim->center0, base );
+	s.c2 = b2PositionDelta( bodySim->center, base );
 	s.q1 = bodySim->rotation0;
 	s.q2 = bodySim->transform.q;
 	s.localCenter = bodySim->localCenter;
