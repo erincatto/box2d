@@ -1558,8 +1558,8 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 
 	b2JointSim* jointSim = b2GetJointSim( world, joint );
 
-	b2Transform transformA = b2ToRelativeTransform( b2GetBodyTransformQuick( world, bodyA ), b2Position_zero );
-	b2Transform transformB = b2ToRelativeTransform( b2GetBodyTransformQuick( world, bodyB ), b2Position_zero );
+	b2Transform transformA = b2ToRelativeTransform( b2GetBodyTransformQuick( world, bodyA ), draw->origin );
+	b2Transform transformB = b2ToRelativeTransform( b2GetBodyTransformQuick( world, bodyB ), draw->origin );
 	b2Vec2 pA = b2TransformPoint( transformA, jointSim->localFrameA.p );
 	b2Vec2 pB = b2TransformPoint( transformB, jointSim->localFrameB.p );
 

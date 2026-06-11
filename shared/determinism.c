@@ -12,7 +12,7 @@ FallingHingeData CreateFallingHinges( b2WorldId worldId )
 {
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.position = (b2Vec2){ 0.0f, -1.0f };
+		bodyDef.position = b2MakePosition( (b2Vec2){ 0.0f, -1.0f } );
 		b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
 
 		b2Polygon box = b2MakeBox( 40.0f, 1.0f );
@@ -121,7 +121,9 @@ bool UpdateFallingHinges( b2WorldId worldId, FallingHingeData* data )
 			data->hash = B2_HASH_INIT;
 			for ( int i = 0; i < data->bodyCount; ++i )
 			{
-				b2Transform xf = b2Body_GetTransform( data->bodyIds[i] );
+				// Hash the float transform so the determinism reference is precision independent
+				b2WorldTransform wt = b2Body_GetTransform( data->bodyIds[i] );
+				b2Transform xf = { b2ToVec2( wt.p ), wt.q };
 				data->hash = b2Hash( data->hash, (uint8_t*)( &xf ), sizeof( b2Transform ) );
 			}
 

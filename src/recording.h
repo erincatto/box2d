@@ -262,7 +262,7 @@ void b2RecQueryCommit( b2Recording* rec, uint8_t opcode, b2RecQueryWriter* w );
 
 // Recording trampolines: replace the user fcn pointer so hits are captured before dispatch
 bool b2RecOverlapTrampoline( b2ShapeId id, void* ctx );
-float b2RecCastTrampoline( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx );
+float b2RecCastTrampoline( b2ShapeId id, b2Position point, b2Vec2 normal, float fraction, void* ctx );
 bool b2RecPlaneTrampoline( b2ShapeId id, const b2PlaneResult* plane, void* ctx );
 
 // Lifecycle. Public create/destroy/save/load live in box2d.h; these are the engine-side hooks.

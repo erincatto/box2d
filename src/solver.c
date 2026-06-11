@@ -365,7 +365,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 			b2ShapeId shapeIdB = { fastShape->id + 1, world->worldId, fastShape->generation };
 
 			// TOI runs in the base frame, lift the hit point back to world for the callback
-			b2Vec2 worldPoint = b2ToVec2( b2OffsetPosition( continuousContext->base, output.point ) );
+			b2Position worldPoint = b2OffsetPosition( continuousContext->base, output.point );
 			didHit = world->preSolveFcn( shapeIdA, shapeIdB, worldPoint, output.normal, world->preSolveContext );
 		}
 
@@ -472,7 +472,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 		// Update body move event
 		b2BodyMoveEvent* event = b2Array_Get( world->bodyMoveEvents, bodySimIndex );
-		event->transform = (b2Transform){ b2ToVec2( fastBodySim->transform.p ), q };
+		event->transform = fastBodySim->transform;
 
 		// Prepare AABBs for broad-phase.
 		// Even though a body is fast, it may not move much. So the AABB may not need enlargement.
@@ -617,7 +617,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 		// cache miss here, however I need the shape list below
 		b2Body* body = bodies + sim->bodyId;
 		body->bodyMoveIndex = simIndex;
-		moveEvents[simIndex].transform = (b2Transform){ b2ToVec2( sim->transform.p ), sim->transform.q };
+		moveEvents[simIndex].transform = sim->transform;
 		moveEvents[simIndex].bodyId = (b2BodyId){ sim->bodyId + 1, worldId, body->generation };
 		moveEvents[simIndex].userData = body->userData;
 		moveEvents[simIndex].fellAsleep = false;
@@ -1784,7 +1784,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 						// World contact point reconstructed from body A center of mass and the anchor
 						b2Body* bodyA = b2Array_Get( world->bodies, shapeA->bodyId );
 						b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
-						event.point = b2ToVec2( b2OffsetPosition( bodySimA->center, bestPoint->anchorA ) );
+						event.point = b2OffsetPosition( bodySimA->center, bestPoint->anchorA );
 
 						event.shapeIdA = (b2ShapeId){ shapeA->id + 1, worldId, shapeA->generation };
 						event.shapeIdB = (b2ShapeId){ shapeB->id + 1, worldId, shapeB->generation };

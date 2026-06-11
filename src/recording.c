@@ -234,7 +234,8 @@ void b2RecW_STR( b2RecBuffer* buf, const char* s )
 void b2RecW_BODYDEF( b2RecBuffer* buf, b2BodyDef v )
 {
 	b2RecW_I32( buf, (int32_t)v.type );
-	b2RecW_VEC2( buf, v.position );
+	// Demote the world position to float until the recording format gains a position arg
+	b2RecW_VEC2( buf, b2ToVec2( v.position ) );
 	b2RecW_ROT( buf, v.rotation );
 	b2RecW_VEC2( buf, v.linearVelocity );
 	b2RecW_F32( buf, v.angularVelocity );
@@ -298,7 +299,7 @@ void b2RecW_CHAINDEF( b2RecBuffer* buf, b2ChainDef v )
 void b2RecW_EXPLOSIONDEF( b2RecBuffer* buf, b2ExplosionDef v )
 {
 	b2RecW_U64( buf, v.maskBits );
-	b2RecW_VEC2( buf, v.position );
+	b2RecW_VEC2( buf, b2ToVec2( v.position ) );
 	b2RecW_F32( buf, v.radius );
 	b2RecW_F32( buf, v.falloff );
 	b2RecW_F32( buf, v.impulsePerLength );
@@ -457,7 +458,7 @@ void b2RecW_CASTOUTPUT( b2RecBuffer* buf, b2CastOutput v )
 void b2RecW_RAYRESULT( b2RecBuffer* buf, b2RayResult v )
 {
 	b2RecW_SHAPEID( buf, v.shapeId );
-	b2RecW_VEC2( buf, v.point );
+	b2RecW_VEC2( buf, b2ToVec2( v.point ) );
 	b2RecW_VEC2( buf, v.normal );
 	b2RecW_F32( buf, v.fraction );
 	b2RecW_I32( buf, v.nodeVisits );
@@ -536,12 +537,12 @@ bool b2RecOverlapTrampoline( b2ShapeId id, void* ctx )
 	return ret;
 }
 
-float b2RecCastTrampoline( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx )
+float b2RecCastTrampoline( b2ShapeId id, b2Position point, b2Vec2 normal, float fraction, void* ctx )
 {
 	b2RecQueryWriter* w = (b2RecQueryWriter*)ctx;
 	float ret = w->userFcn.castFcn( id, point, normal, fraction, w->userContext );
 	b2RecW_SHAPEID( &w->buf, id );
-	b2RecW_VEC2( &w->buf, point );
+	b2RecW_VEC2( &w->buf, b2ToVec2( point ) );
 	b2RecW_VEC2( &w->buf, normal );
 	b2RecW_F32( &w->buf, fraction );
 	b2RecW_F32( &w->buf, ret );

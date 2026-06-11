@@ -9,6 +9,7 @@
 
 #include "recording.h"
 
+#include "aabb.h"
 #include "arena_allocator.h"
 #include "bitset.h"
 #include "body.h"
@@ -1138,17 +1139,19 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 			color = b2_colorGray;
 		}
 
-		b2DrawShape( draw, shape, b2ToRelativeTransform( bodySim->transform, b2Position_zero ), color, draw->drawChainNormals );
+		b2DrawShape( draw, shape, b2ToRelativeTransform( bodySim->transform, draw->origin ), color, draw->drawChainNormals );
 	}
 
 	if ( draw->drawBounds )
 	{
 		b2AABB aabb = shape->fatAABB;
 
-		b2Vec2 vs[4] = { { aabb.lowerBound.x, aabb.lowerBound.y },
-						 { aabb.upperBound.x, aabb.lowerBound.y },
-						 { aabb.upperBound.x, aabb.upperBound.y },
-						 { aabb.lowerBound.x, aabb.upperBound.y } };
+		// The float broad-phase box is shifted into the view frame for drawing
+		b2Vec2 o = b2ToVec2( draw->origin );
+		b2Vec2 vs[4] = { { aabb.lowerBound.x - o.x, aabb.lowerBound.y - o.y },
+						 { aabb.upperBound.x - o.x, aabb.lowerBound.y - o.y },
+						 { aabb.upperBound.x - o.x, aabb.upperBound.y - o.y },
+						 { aabb.lowerBound.x - o.x, aabb.upperBound.y - o.y } };
 
 		draw->DrawPolygonFcn( vs, 4, b2_colorGold, draw->context );
 	}
@@ -1213,7 +1216,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				b2Vec2 offset = { 0.1f, 0.1f };
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
-				b2Transform transform = { b2ToVec2( bodySim->center ), bodySim->transform.q };
+				b2Transform transform = { b2PositionDelta( bodySim->center, draw->origin ), bodySim->transform.q };
 				b2Vec2 p = b2TransformPoint( transform, offset );
 				draw->DrawStringFcn( p, body->name, b2_colorBlueViolet, draw->context );
 			}
@@ -1223,8 +1226,9 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				b2Vec2 offset = { 0.1f, 0.1f };
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
-				b2Transform transform = { b2ToVec2( bodySim->center ), bodySim->transform.q };
-				draw->DrawLineFcn( b2ToVec2( bodySim->center0 ), b2ToVec2( bodySim->center ), b2_colorWhiteSmoke, draw->context );
+				b2Transform transform = { b2PositionDelta( bodySim->center, draw->origin ), bodySim->transform.q };
+				draw->DrawLineFcn( b2PositionDelta( bodySim->center0, draw->origin ), b2PositionDelta( bodySim->center, draw->origin ),
+								   b2_colorWhiteSmoke, draw->context );
 				draw->DrawTransformFcn( transform, draw->context );
 
 				b2Vec2 p = b2TransformPoint( transform, offset );
@@ -1283,11 +1287,11 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 							b2Vec2 p;
 							if ( draw->drawAnchorA )
 							{
-								p = b2ToVec2( b2OffsetPosition( bodySimA->center, mp->anchorA ) );
+								p = b2PositionDelta( b2OffsetPosition( bodySimA->center, mp->anchorA ), draw->origin );
 							}
 							else
 							{
-								p = b2ToVec2( b2OffsetPosition( bodySimB->center, mp->anchorB ) );
+								p = b2PositionDelta( b2OffsetPosition( bodySimB->center, mp->anchorB ), draw->origin );
 							}
 
 							if ( draw->drawGraphColors && contact->colorIndex != B2_NULL_INDEX )
@@ -1392,10 +1396,11 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 					if ( shapeCount > 0 )
 					{
-						b2Vec2 vs[4] = { { aabb.lowerBound.x, aabb.lowerBound.y },
-										 { aabb.upperBound.x, aabb.lowerBound.y },
-										 { aabb.upperBound.x, aabb.upperBound.y },
-										 { aabb.lowerBound.x, aabb.upperBound.y } };
+						b2Vec2 o = b2ToVec2( draw->origin );
+						b2Vec2 vs[4] = { { aabb.lowerBound.x - o.x, aabb.lowerBound.y - o.y },
+										 { aabb.upperBound.x - o.x, aabb.lowerBound.y - o.y },
+										 { aabb.upperBound.x - o.x, aabb.upperBound.y - o.y },
+										 { aabb.lowerBound.x - o.x, aabb.upperBound.y - o.y } };
 
 						draw->DrawPolygonFcn( vs, 4, b2_colorOrangeRed, draw->context );
 					}
@@ -2462,6 +2467,7 @@ typedef struct WorldRayCastContext
 	b2CastResultFcn* fcn;
 	b2QueryFilter filter;
 	float fraction;
+	b2Position origin;
 	void* userContext;
 } WorldRayCastContext;
 
@@ -2482,13 +2488,22 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, uint64_t
 	}
 
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2Transform transform = b2ToRelativeTransform( b2GetBodyTransformQuick( world, body ), b2Position_zero );
-	b2CastOutput output = b2RayCastShape( input, shape, transform );
+	b2WorldTransform xf = b2GetBodyTransformQuick( world, body );
+
+	// Re-center on the body so the per-shape cast stays in float precision far from the origin.
+	// The tree traversal already used the truncated origin in input; here we re-difference in full
+	// precision against the body position.
+	b2Position base = xf.p;
+	b2Transform transform = b2ToRelativeTransform( xf, base );
+	b2RayCastInput localInput = *input;
+	localInput.origin = b2PositionDelta( worldContext->origin, base );
+	b2CastOutput output = b2RayCastShape( &localInput, shape, transform );
 
 	if ( output.hit )
 	{
 		b2ShapeId id = { shapeId + 1, world->worldId, shape->generation };
-		float fraction = worldContext->fcn( id, b2ToVec2( output.point ), output.normal, output.fraction, worldContext->userContext );
+		b2Position point = b2OffsetPosition( base, b2ToVec2( output.point ) );
+		float fraction = worldContext->fcn( id, point, output.normal, output.fraction, worldContext->userContext );
 
 		// The user may return -1 to skip this shape
 		if ( 0.0f <= fraction && fraction <= 1.0f )
@@ -2502,7 +2517,7 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, uint64_t
 	return input->maxFraction;
 }
 
-b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn,
+b2TreeStats b2World_CastRay( b2WorldId worldId, b2Position origin, b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn,
 							 void* context )
 {
 	b2TreeStats treeStats = { 0 };
@@ -2514,7 +2529,7 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translatio
 		return treeStats;
 	}
 
-	B2_ASSERT( b2IsValidVec2( origin ) );
+	B2_ASSERT( b2IsValidPosition( origin ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
 	b2RecQueryWriter recWriter = { 0 };
@@ -2523,7 +2538,8 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translatio
 		b2RecQueryBegin( &recWriter, context );
 		recWriter.userFcn.castFcn = fcn;
 		b2RecW_WORLDID( &recWriter.buf, worldId );
-		b2RecW_VEC2( &recWriter.buf, origin );
+		// Demote the world origin to float until the recording format gains a position arg
+		b2RecW_VEC2( &recWriter.buf, b2ToVec2( origin ) );
 		b2RecW_VEC2( &recWriter.buf, translation );
 		b2RecW_QUERYFILTER( &recWriter.buf, filter );
 		recWriter.countOffset = b2RecReserveU32( &recWriter.buf );
@@ -2531,9 +2547,11 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translatio
 		context = &recWriter;
 	}
 
-	b2RayCastInput input = { origin, translation, 1.0f };
+	// Tree traversal is conservative float, so the truncated origin is safe. Per-shape casts
+	// re-difference against the full precision origin carried on the context.
+	b2RayCastInput input = { b2ToVec2( origin ), translation, 1.0f };
 
-	WorldRayCastContext worldContext = { world, fcn, filter, 1.0f, context };
+	WorldRayCastContext worldContext = { world, fcn, filter, 1.0f, origin, context };
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
@@ -2561,7 +2579,7 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translatio
 }
 
 // This callback finds the closest hit. This is the most common callback used in games.
-static float b2RayCastClosestFcn( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
+static float b2RayCastClosestFcn( b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context )
 {
 	// Ignore initial overlap
 	if ( fraction == 0.0f )
@@ -2578,7 +2596,7 @@ static float b2RayCastClosestFcn( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal
 	return fraction;
 }
 
-b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter )
+b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Position origin, b2Vec2 translation, b2QueryFilter filter )
 {
 	b2RayResult result = { 0 };
 
@@ -2589,11 +2607,11 @@ b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 tra
 		return result;
 	}
 
-	B2_ASSERT( b2IsValidVec2( origin ) );
+	B2_ASSERT( b2IsValidPosition( origin ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
-	b2RayCastInput input = { origin, translation, 1.0f };
-	WorldRayCastContext worldContext = { world, b2RayCastClosestFcn, filter, 1.0f, &result };
+	b2RayCastInput input = { b2ToVec2( origin ), translation, 1.0f };
+	WorldRayCastContext worldContext = { world, b2RayCastClosestFcn, filter, 1.0f, origin, &result };
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
@@ -2614,7 +2632,8 @@ b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 tra
 	{
 		b2RecBuffer recBuf = { 0 };
 		b2RecW_WORLDID( &recBuf, worldId );
-		b2RecW_VEC2( &recBuf, origin );
+		// Demote the world origin to float until the recording format gains a position arg
+		b2RecW_VEC2( &recBuf, b2ToVec2( origin ) );
 		b2RecW_VEC2( &recBuf, translation );
 		b2RecW_QUERYFILTER( &recBuf, filter );
 		b2RecW_RAYRESULT( &recBuf, result );
@@ -2649,7 +2668,9 @@ static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 	if ( output.hit )
 	{
 		b2ShapeId id = { shapeId + 1, world->worldId, shape->generation };
-		float fraction = worldContext->fcn( id, b2ToVec2( output.point ), output.normal, output.fraction, worldContext->userContext );
+
+		// Shape cast is a documented float carve-out, the point is world precision near the origin
+		float fraction = worldContext->fcn( id, output.point, output.normal, output.fraction, worldContext->userContext );
 
 		// The user may return -1 to skip this shape
 		if ( 0.0f <= fraction && fraction <= 1.0f )
@@ -2696,7 +2717,7 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2V
 	input.translation = translation;
 	input.maxFraction = 1.0f;
 
-	WorldRayCastContext worldContext = { world, fcn, filter, 1.0f, context };
+	WorldRayCastContext worldContext = { world, fcn, filter, 1.0f, b2Position_zero, context };
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
@@ -3011,7 +3032,7 @@ b2Vec2 b2World_GetGravity( b2WorldId worldId )
 struct ExplosionContext
 {
 	b2World* world;
-	b2Vec2 position;
+	b2Position position;
 	float radius;
 	float falloff;
 	float impulsePerLength;
@@ -3031,12 +3052,16 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
 	B2_ASSERT( body->type == b2_dynamicBody );
 
-	b2Transform transform = b2ToRelativeTransform( b2GetBodyTransformQuick( world, body ), b2Position_zero );
+	b2WorldTransform xf = b2GetBodyTransformQuick( world, body );
+
+	// Re-center the explosion into the shape local frame so distance and direction stay precise
+	// far from the origin. Everything below runs in that near-origin frame.
+	b2Vec2 localPosition = b2InvTransformWorldPoint( xf, explosionContext->position );
 
 	b2DistanceInput input;
 	input.proxyA = b2MakeShapeDistanceProxy( shape );
-	input.proxyB = b2MakeProxy( &explosionContext->position, 1, 0.0f );
-	input.transform = b2InvMulTransforms( transform, b2Transform_identity );
+	input.proxyB = b2MakeProxy( &localPosition, 1, 0.0f );
+	input.transform = b2Transform_identity;
 	input.useRadii = true;
 
 	b2SimplexCache cache = { 0 };
@@ -3056,14 +3081,13 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 		return true;
 	}
 
-	b2Vec2 closestPoint = b2TransformPoint( transform, output.pointA );
+	b2Vec2 closestPoint = output.pointA;
 	if ( output.distance == 0.0f )
 	{
-		b2Vec2 localCentroid = b2GetShapeCentroid( shape );
-		closestPoint = b2TransformPoint( transform, localCentroid );
+		closestPoint = b2GetShapeCentroid( shape );
 	}
 
-	b2Vec2 direction = b2Sub( closestPoint, explosionContext->position );
+	b2Vec2 direction = b2Sub( closestPoint, localPosition );
 	if ( b2LengthSquared( direction ) > 100.0f * FLT_EPSILON * FLT_EPSILON )
 	{
 		direction = b2Normalize( direction );
@@ -3073,7 +3097,7 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 		direction = (b2Vec2){ 1.0f, 0.0f };
 	}
 
-	b2Vec2 localLine = b2InvRotateVector( transform.q, b2LeftPerp( direction ) );
+	b2Vec2 localLine = b2LeftPerp( direction );
 	float perimeter = b2GetShapeProjectedPerimeter( shape, localLine );
 	float scale = 1.0f;
 	if ( output.distance > radius && falloff > 0.0f )
@@ -3082,14 +3106,17 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 	}
 
 	float magnitude = explosionContext->impulsePerLength * perimeter * scale;
-	b2Vec2 impulse = b2MulSV( magnitude, direction );
+	b2Vec2 impulse = b2MulSV( magnitude, b2RotateVector( xf.q, direction ) );
 
 	int localIndex = body->localIndex;
 	b2SolverSet* set = b2Array_Get( world->solverSets, b2_awakeSet );
 	b2BodyState* state = b2Array_Get( set->bodyStates, localIndex );
 	b2BodySim* bodySim = b2Array_Get( set->bodySims, localIndex );
 	state->linearVelocity = b2MulAdd( state->linearVelocity, bodySim->invMass, impulse );
-	state->angularVelocity += bodySim->invInertia * b2Cross( b2PositionDelta( b2MakePosition( closestPoint ), bodySim->center ), impulse );
+
+	// Lever arm from the center of mass to the closest point, rotated to world
+	b2Vec2 r = b2RotateVector( xf.q, b2Sub( closestPoint, bodySim->localCenter ) );
+	state->angularVelocity += bodySim->invInertia * b2Cross( r, impulse );
 
 	return true;
 }
@@ -3097,12 +3124,12 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionDef )
 {
 	uint64_t maskBits = explosionDef->maskBits;
-	b2Vec2 position = explosionDef->position;
+	b2Position position = explosionDef->position;
 	float radius = explosionDef->radius;
 	float falloff = explosionDef->falloff;
 	float impulsePerLength = explosionDef->impulsePerLength;
 
-	B2_ASSERT( b2IsValidVec2( position ) );
+	B2_ASSERT( b2IsValidPosition( position ) );
 	B2_ASSERT( b2IsValidFloat( radius ) && radius >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( falloff ) && falloff >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( impulsePerLength ) );
@@ -3118,11 +3145,10 @@ void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionDef )
 
 	struct ExplosionContext explosionContext = { world, position, radius, falloff, impulsePerLength };
 
-	b2AABB aabb;
-	aabb.lowerBound.x = position.x - ( radius + falloff );
-	aabb.lowerBound.y = position.y - ( radius + falloff );
-	aabb.upperBound.x = position.x + ( radius + falloff );
-	aabb.upperBound.y = position.y + ( radius + falloff );
+	// The broad-phase tree is float, so translate a local query box out to world with outward rounding
+	float extent = radius + falloff;
+	b2AABB localBox = { { -extent, -extent }, { extent, extent } };
+	b2AABB aabb = b2OffsetAABB( localBox, position );
 
 	b2DynamicTree_Query( world->broadPhase.trees + b2_dynamicBody, aabb, maskBits, ExplosionCallback, &explosionContext );
 }

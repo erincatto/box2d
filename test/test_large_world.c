@@ -41,7 +41,7 @@ static PyramidResult RunPyramid( b2Vec2 baseVec )
 
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.position = baseVec;
+		bodyDef.position = b2MakePosition( baseVec );
 		b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
 
 		// Ground top surface at baseY + 0.5
@@ -65,7 +65,7 @@ static PyramidResult RunPyramid( b2Vec2 baseVec )
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
-		bodyDef.position = ( b2Vec2 ){ baseVec.x + offsets[i].x, baseVec.y + offsets[i].y };
+		bodyDef.position = b2MakePosition( ( b2Vec2 ){ baseVec.x + offsets[i].x, baseVec.y + offsets[i].y } );
 		bodyIds[i] = b2CreateBody( worldId, &bodyDef );
 		b2CreatePolygonShape( bodyIds[i], &shapeDef, &box );
 	}
@@ -128,7 +128,7 @@ static float RunBullet( b2Vec2 baseVec )
 	// Thin tall wall centered on the base
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_staticBody;
-	bodyDef.position = baseVec;
+	bodyDef.position = b2MakePosition( baseVec );
 	b2BodyId wallId = b2CreateBody( worldId, &bodyDef );
 	b2Polygon wall = b2MakeBox( 0.05f, 5.0f );
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -140,7 +140,7 @@ static float RunBullet( b2Vec2 baseVec )
 	bodyDef.type = b2_dynamicBody;
 	bodyDef.isBullet = true;
 	bodyDef.gravityScale = 0.0f;
-	bodyDef.position = ( b2Vec2 ){ baseVec.x + 10.0f, baseVec.y };
+	bodyDef.position = b2MakePosition( ( b2Vec2 ){ baseVec.x + 10.0f, baseVec.y } );
 	bodyDef.linearVelocity = ( b2Vec2 ){ -200.0f, 0.0f };
 	b2BodyId bulletId = b2CreateBody( worldId, &bodyDef );
 	b2Circle circle = { { 0.0f, 0.0f }, 0.1f };
@@ -174,10 +174,55 @@ static int LargeWorldBulletTest( void )
 	return 0;
 }
 
+// Cast a ray at a unit box on the base and report the hit point relative to the base. The ray
+// origin is differenced against the body position in double, so the hit must land on the box face
+// regardless of how far the base is from the origin.
+static b2Vec2 RunRayCast( b2Vec2 baseVec )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.workerCount = 1;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.position = b2MakePosition( baseVec );
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+	b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+	// Ray from 5 m left of the box, traveling 10 m right. Hits the left face at base + {-0.5, 0}.
+	b2Position origin = b2MakePosition( ( b2Vec2 ){ baseVec.x - 5.0f, baseVec.y } );
+	b2Vec2 translation = { 10.0f, 0.0f };
+	b2RayResult result = b2World_CastRayClosest( worldId, origin, translation, b2DefaultQueryFilter() );
+
+	// A miss leaves the point at the origin, which the caller's position check rejects
+	b2Vec2 rel = b2PositionDelta( result.point, b2MakePosition( baseVec ) );
+	b2DestroyWorld( worldId );
+	return rel;
+}
+
+// A float ray cast at 1e7 would resolve the hit only to the ~1 m coordinate ULP. The double origin
+// plus per-shape re-centering keeps the analytic hit point accurate far from the origin.
+static int LargeWorldRayCastTest( void )
+{
+	b2Vec2 rel = RunRayCast( ( b2Vec2 ){ 0.0f, 0.0f } );
+	ENSURE_SMALL( rel.x + 0.5f, 1e-4f );
+	ENSURE_SMALL( rel.y, 1e-4f );
+
+#if defined( BOX2D_DOUBLE_PRECISION )
+	rel = RunRayCast( ( b2Vec2 ){ 1.0e7f, 0.0f } );
+	ENSURE_SMALL( rel.x + 0.5f, 1e-4f );
+	ENSURE_SMALL( rel.y, 1e-4f );
+#endif
+
+	return 0;
+}
+
 int LargeWorldTest( void )
 {
 	RUN_SUBTEST( LargeWorldPyramidTest );
 	RUN_SUBTEST( LargeWorldBulletTest );
+	RUN_SUBTEST( LargeWorldRayCastTest );
 
 	return 0;
 }

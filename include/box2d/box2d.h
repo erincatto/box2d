@@ -81,12 +81,12 @@ B2_API b2TreeStats b2World_OverlapShape( b2WorldId worldId, const b2ShapeProxy* 
 /// @param fcn A user implemented callback function
 /// @param context A user context that is passed along to the callback function
 ///	@return traversal performance counters
-B2_API b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter,
+B2_API b2TreeStats b2World_CastRay( b2WorldId worldId, b2Position origin, b2Vec2 translation, b2QueryFilter filter,
 									b2CastResultFcn* fcn, void* context );
 
 /// Cast a ray into the world to collect the closest hit. This is a convenience function. Ignores initial overlap.
 /// This is less general than b2World_CastRay() and does not allow for custom filtering.
-B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter );
+B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Position origin, b2Vec2 translation, b2QueryFilter filter );
 
 /// Cast a shape through the world. Similar to a cast ray except that a shape is cast instead of a point.
 ///	@see b2World_CastRay
@@ -369,24 +369,24 @@ B2_API void b2Body_SetUserData( b2BodyId bodyId, void* userData );
 B2_API void* b2Body_GetUserData( b2BodyId bodyId );
 
 /// Get the world position of a body. This is the location of the body origin.
-B2_API b2Vec2 b2Body_GetPosition( b2BodyId bodyId );
+B2_API b2Position b2Body_GetPosition( b2BodyId bodyId );
 
 /// Get the world rotation of a body as a cosine/sine pair (complex number)
 B2_API b2Rot b2Body_GetRotation( b2BodyId bodyId );
 
 /// Get the world transform of a body.
-B2_API b2Transform b2Body_GetTransform( b2BodyId bodyId );
+B2_API b2WorldTransform b2Body_GetTransform( b2BodyId bodyId );
 
 /// Set the world transform of a body. This acts as a teleport and is fairly expensive.
 /// @note Generally you should create a body with then intended transform.
 /// @see b2BodyDef::position and b2BodyDef::rotation
-B2_API void b2Body_SetTransform( b2BodyId bodyId, b2Vec2 position, b2Rot rotation );
+B2_API void b2Body_SetTransform( b2BodyId bodyId, b2Position position, b2Rot rotation );
 
 /// Get a local point on a body given a world point
-B2_API b2Vec2 b2Body_GetLocalPoint( b2BodyId bodyId, b2Vec2 worldPoint );
+B2_API b2Vec2 b2Body_GetLocalPoint( b2BodyId bodyId, b2Position worldPoint );
 
 /// Get a world point on a body given a local point
-B2_API b2Vec2 b2Body_GetWorldPoint( b2BodyId bodyId, b2Vec2 localPoint );
+B2_API b2Position b2Body_GetWorldPoint( b2BodyId bodyId, b2Vec2 localPoint );
 
 /// Get a local vector on a body given a world vector
 B2_API b2Vec2 b2Body_GetLocalVector( b2BodyId bodyId, b2Vec2 worldVector );
@@ -414,13 +414,13 @@ B2_API void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity );
 /// @param target The target transform for the body
 /// @param timeStep The time step of the next call to b2World_Step
 /// @param wake Option to wake the body or not
-B2_API void b2Body_SetTargetTransform( b2BodyId bodyId, b2Transform target, float timeStep, bool wake );
+B2_API void b2Body_SetTargetTransform( b2BodyId bodyId, b2WorldTransform target, float timeStep, bool wake );
 
 /// Get the linear velocity of a local point attached to a body. Usually in meters per second.
 B2_API b2Vec2 b2Body_GetLocalPointVelocity( b2BodyId bodyId, b2Vec2 localPoint );
 
 /// Get the linear velocity of a world point attached to a body. Usually in meters per second.
-B2_API b2Vec2 b2Body_GetWorldPointVelocity( b2BodyId bodyId, b2Vec2 worldPoint );
+B2_API b2Vec2 b2Body_GetWorldPointVelocity( b2BodyId bodyId, b2Position worldPoint );
 
 /// Apply a force at a world point. If the force is not applied at the center of mass,
 /// it will generate a torque and affect the angular velocity. This optionally wakes up the body.
@@ -491,7 +491,7 @@ B2_API float b2Body_GetRotationalInertia( b2BodyId bodyId );
 B2_API b2Vec2 b2Body_GetLocalCenterOfMass( b2BodyId bodyId );
 
 /// Get the center of mass position of the body in world space
-B2_API b2Vec2 b2Body_GetWorldCenterOfMass( b2BodyId bodyId );
+B2_API b2Position b2Body_GetWorldCenterOfMass( b2BodyId bodyId );
 
 /// Override the body's mass properties. Normally this is computed automatically using the
 /// shape geometry and density. This information is lost if a shape is added or removed or if the

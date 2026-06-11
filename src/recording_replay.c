@@ -291,7 +291,7 @@ b2BodyDef b2RecR_BODYDEF( b2RecReader* rdr )
 {
 	b2BodyDef def = b2DefaultBodyDef();
 	def.type = (b2BodyType)b2RecR_I32( rdr );
-	def.position = b2RecR_VEC2( rdr );
+	def.position = b2MakePosition( b2RecR_VEC2( rdr ) );
 	def.rotation = b2RecR_ROT( rdr );
 	def.linearVelocity = b2RecR_VEC2( rdr );
 	def.angularVelocity = b2RecR_F32( rdr );
@@ -384,7 +384,7 @@ b2ExplosionDef b2RecR_EXPLOSIONDEF( b2RecReader* rdr )
 {
 	b2ExplosionDef def = b2DefaultExplosionDef();
 	def.maskBits = b2RecR_U64( rdr );
-	def.position = b2RecR_VEC2( rdr );
+	def.position = b2MakePosition( b2RecR_VEC2( rdr ) );
 	def.radius = b2RecR_F32( rdr );
 	def.falloff = b2RecR_F32( rdr );
 	def.impulsePerLength = b2RecR_F32( rdr );
@@ -571,7 +571,7 @@ b2RayResult b2RecR_RAYRESULT( b2RecReader* rdr )
 	b2RayResult v;
 	// shapeId keeps the recorded world0; b2RecMakeShapeId is applied at compare time
 	v.shapeId = b2RecR_SHAPEID( rdr );
-	v.point = b2RecR_VEC2( rdr );
+	v.point = b2MakePosition( b2RecR_VEC2( rdr ) );
 	v.normal = b2RecR_VEC2( rdr );
 	v.fraction = b2RecR_F32( rdr );
 	v.nodeVisits = b2RecR_I32( rdr );
@@ -867,7 +867,7 @@ static void b2RecDispatch_DestroyBody( const b2RecArgs_DestroyBody* a, b2RecRead
 static void b2RecDispatch_BodySetTransform( const b2RecArgs_BodySetTransform* a, b2RecReader* rdr )
 {
 	b2BodyId id = b2RecMakeBodyId( rdr, a->body );
-	b2Body_SetTransform( id, a->position, a->rotation );
+	b2Body_SetTransform( id, b2MakePosition( a->position ), a->rotation );
 }
 
 static void b2RecDispatch_BodySetLinearVelocity( const b2RecArgs_BodySetLinearVelocity* a, b2RecReader* rdr )
@@ -893,7 +893,7 @@ static void b2RecDispatch_BodySetAngularVelocity( const b2RecArgs_BodySetAngular
 
 static void b2RecDispatch_BodySetTargetTransform( const b2RecArgs_BodySetTargetTransform* a, b2RecReader* rdr )
 {
-	b2Body_SetTargetTransform( b2RecMakeBodyId( rdr, a->body ), a->target, a->timeStep, a->wake );
+	b2Body_SetTargetTransform( b2RecMakeBodyId( rdr, a->body ), b2MakeWorldTransform( a->target ), a->timeStep, a->wake );
 }
 
 static void b2RecDispatch_BodyApplyForce( const b2RecArgs_BodyApplyForce* a, b2RecReader* rdr )
@@ -1668,7 +1668,7 @@ static void b2RecDispatch_QueryOverlapShape( const b2RecArgs_QueryOverlapShape* 
 
 // Cast ray dispatcher
 
-static float b2RecReplayCastTrampoline( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx )
+static float b2RecReplayCastTrampoline( b2ShapeId id, b2Position point, b2Vec2 normal, float fraction, void* ctx )
 {
 	b2RecReplayQueryCtx* rc = ctx;
 	if ( rc->cursor >= rc->count )
@@ -1677,7 +1677,7 @@ static float b2RecReplayCastTrampoline( b2ShapeId id, b2Vec2 point, b2Vec2 norma
 		return 0.0f;
 	}
 	const b2RecRecordedHit* h = &rc->hits[rc->cursor++];
-	if ( id.index1 != h->id.index1 || id.generation != h->id.generation || b2RecVec2Differs( point, h->point ) ||
+	if ( id.index1 != h->id.index1 || id.generation != h->id.generation || b2RecVec2Differs( b2ToVec2( point ), h->point ) ||
 		 b2RecVec2Differs( normal, h->normal ) || b2RecF32Differs( fraction, h->fraction ) )
 	{
 		rc->rdr->diverged = true;
@@ -1705,7 +1705,7 @@ static void b2RecDispatch_QueryCastRay( const b2RecArgs_QueryCastRay* a, b2RecRe
 	if ( !rdr->ok )
 		return;
 	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
-	b2World_CastRay( rdr->replayWorldId, a->origin, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
+	b2World_CastRay( rdr->replayWorldId, b2MakePosition( a->origin ), a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
 	if ( rdr->owner )
@@ -1806,10 +1806,10 @@ static void b2RecDispatch_QueryCastRayClosest( const b2RecArgs_QueryCastRayClose
 	b2RayResult rec = b2RecR_RAYRESULT( rdr );
 	if ( !rdr->ok )
 		return;
-	b2RayResult got = b2World_CastRayClosest( rdr->replayWorldId, a->origin, a->translation, a->filter );
+	b2RayResult got = b2World_CastRayClosest( rdr->replayWorldId, b2MakePosition( a->origin ), a->translation, a->filter );
 	if ( got.hit != rec.hit ||
 		 ( got.hit && ( got.shapeId.index1 != rec.shapeId.index1 || got.shapeId.generation != rec.shapeId.generation ||
-						b2RecVec2Differs( got.point, rec.point ) || b2RecVec2Differs( got.normal, rec.normal ) ||
+						b2RecVec2Differs( b2ToVec2( got.point ), b2ToVec2( rec.point ) ) || b2RecVec2Differs( got.normal, rec.normal ) ||
 						b2RecF32Differs( got.fraction, rec.fraction ) ) ) )
 	{
 		rdr->diverged = true;
@@ -1819,7 +1819,7 @@ static void b2RecDispatch_QueryCastRayClosest( const b2RecArgs_QueryCastRayClose
 		// Stash the closest result as a single pooled hit so the shared draw loop renders its point
 		b2RecRecordedHit h = { 0 };
 		h.id = b2RecMakeShapeId( rdr, rec.shapeId );
-		h.point = rec.point;
+		h.point = b2ToVec2( rec.point );
 		h.normal = rec.normal;
 		h.fraction = rec.fraction;
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_CAST_RAY_CLOSEST, &h, rec.hit ? 1 : 0 );
