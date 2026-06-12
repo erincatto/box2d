@@ -1675,11 +1675,17 @@ public:
 		}
 	}
 
+	bool DrawControls() override
+	{
+		ImGui::Text( "Flipper: press A" );
+		return true;
+	}
+
 	void Step() override
 	{
 		Sample::Step();
 
-		if ( glfwGetKey( m_context->window, GLFW_KEY_SPACE ) == GLFW_PRESS )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS )
 		{
 			b2RevoluteJoint_SetMotorSpeed( m_leftJointId, 20.0f );
 			b2RevoluteJoint_SetMotorSpeed( m_rightJointId, -20.0f );
