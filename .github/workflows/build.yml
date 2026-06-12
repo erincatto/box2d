@@ -77,7 +77,7 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}/build
       env:
-        MSAN_OPTIONS: ${{ matrix.msan-options }}
+        MSAN_OPTIONS: ${{ matrix['msan-options'] || '' }}
       run: ${{ matrix.test }}
 
   # mingw needs some extra setup so keeping it separate from the matrix.
@@ -153,7 +153,7 @@ jobs:
         arch: x64
 
     - name: Install X11, Wayland, GL & GTK development libraries
-      if: ${{ matrix.linux-deps }}
+      if: ${{ matrix['linux-deps'] }}
       run: sudo apt-get update && sudo apt-get install -y libx11-dev wayland-protocols libwayland-dev libxkbcommon-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev libgtk-3-dev
 
     - name: Configure CMake

@@ -6,13 +6,12 @@
 #include "box2d/math_functions.h"
 
 /// Used to detect bad values. Positions greater than about 16km will have precision
-/// problems, so 100km as a limit should be fine in all cases. In large world mode this finite
-/// infinity must stay above the world coordinates the float broad-phase tree holds, so it is
-/// raised past the documented operating range.
+/// problems in single precision, so 100km as a limit should be fine in all cases.
+/// In large world mode the broad-phase starts to have excessive padding at 10,000km.
 #if defined( BOX2D_DOUBLE_PRECISION )
 #define B2_HUGE ( 1.0e9f * b2GetLengthUnitsPerMeter() )
 #else
-#define B2_HUGE ( 100000.0f * b2GetLengthUnitsPerMeter() )
+#define B2_HUGE ( 1.0e5f * b2GetLengthUnitsPerMeter() )
 #endif
 
 /// Maximum parallel workers. Used for some fixed size arrays.
