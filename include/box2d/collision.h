@@ -269,10 +269,10 @@ B2_API b2CastOutput b2RayCastSegment( const b2Segment* shape, const b2RayCastInp
 B2_API b2CastOutput b2RayCastPolygon( const b2Polygon* shape, const b2RayCastInput* input );
 
 /// Shape cast versus a circle.
-B2_API b2CastOutput b2ShapeCastCircle(const b2Circle* shape,  const b2ShapeCastInput* input );
+B2_API b2CastOutput b2ShapeCastCircle( const b2Circle* shape, const b2ShapeCastInput* input );
 
 /// Shape cast versus a capsule.
-B2_API b2CastOutput b2ShapeCastCapsule( const b2Capsule* shape, const b2ShapeCastInput* input);
+B2_API b2CastOutput b2ShapeCastCapsule( const b2Capsule* shape, const b2ShapeCastInput* input );
 
 /// Shape cast versus a line segment.
 B2_API b2CastOutput b2ShapeCastSegment( const b2Segment* shape, const b2ShapeCastInput* input );
@@ -418,9 +418,9 @@ typedef struct b2ShapeCastPairInput
 	b2ShapeProxy proxyB;		 ///< The proxy for shape B
 	b2WorldTransform transformA; ///< The world transform for shape A
 	b2WorldTransform transformB; ///< The world transform for shape B
-	b2Vec2 translationB;	///< The translation of shape B
-	float maxFraction;		///< The fraction of the translation to consider, typically 1
-	bool canEncroach;		///< Allows shapes with a radius to move slightly closer if already touching
+	b2Vec2 translationB;		 ///< The translation of shape B
+	float maxFraction;			 ///< The fraction of the translation to consider, typically 1
+	bool canEncroach;			 ///< Allows shapes with a radius to move slightly closer if already touching
 } b2ShapeCastPairInput;
 
 /// Perform a linear shape cast of shape B moving and shape A fixed. Determines the hit point, normal, and translation fraction.
@@ -480,7 +480,7 @@ typedef struct b2TOIOutput
 	/// The hit normal
 	b2Vec2 normal;
 
-	/// The sweep time of the collision 
+	/// The sweep time of the collision
 	float fraction;
 } b2TOIOutput;
 
@@ -565,7 +565,8 @@ typedef struct b2Manifold
 } b2Manifold;
 
 /// Compute the contact manifold between two circles
-B2_API b2Manifold b2CollideCircles( const b2Circle* circleA, b2WorldTransform xfA, const b2Circle* circleB, b2WorldTransform xfB );
+B2_API b2Manifold b2CollideCircles( const b2Circle* circleA, b2WorldTransform xfA, const b2Circle* circleB,
+									b2WorldTransform xfB );
 
 /// Compute the contact manifold between a capsule and circle
 B2_API b2Manifold b2CollideCapsuleAndCircle( const b2Capsule* capsuleA, b2WorldTransform xfA, const b2Circle* circleB,
@@ -580,7 +581,8 @@ B2_API b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2WorldT
 											 b2WorldTransform xfB );
 
 /// Compute the contact manifold between a capsule and circle
-B2_API b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2WorldTransform xfA, const b2Capsule* capsuleB, b2WorldTransform xfB );
+B2_API b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2WorldTransform xfA, const b2Capsule* capsuleB,
+									 b2WorldTransform xfB );
 
 /// Compute the contact manifold between an segment and a capsule
 B2_API b2Manifold b2CollideSegmentAndCapsule( const b2Segment* segmentA, b2WorldTransform xfA, const b2Capsule* capsuleB,
@@ -591,7 +593,8 @@ B2_API b2Manifold b2CollidePolygonAndCapsule( const b2Polygon* polygonA, b2World
 											  b2WorldTransform xfB );
 
 /// Compute the contact manifold between two polygons
-B2_API b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2WorldTransform xfA, const b2Polygon* polygonB, b2WorldTransform xfB );
+B2_API b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2WorldTransform xfA, const b2Polygon* polygonB,
+									 b2WorldTransform xfB );
 
 /// Compute the contact manifold between an segment and a polygon
 B2_API b2Manifold b2CollideSegmentAndPolygon( const b2Segment* segmentA, b2WorldTransform xfA, const b2Polygon* polygonB,
@@ -602,12 +605,12 @@ B2_API b2Manifold b2CollideChainSegmentAndCircle( const b2ChainSegment* segmentA
 												  b2WorldTransform xfB );
 
 /// Compute the contact manifold between a chain segment and a capsule
-B2_API b2Manifold b2CollideChainSegmentAndCapsule( const b2ChainSegment* segmentA, b2WorldTransform xfA, const b2Capsule* capsuleB,
-												   b2WorldTransform xfB, b2SimplexCache* cache );
+B2_API b2Manifold b2CollideChainSegmentAndCapsule( const b2ChainSegment* segmentA, b2WorldTransform xfA,
+												   const b2Capsule* capsuleB, b2WorldTransform xfB, b2SimplexCache* cache );
 
 /// Compute the contact manifold between a chain segment and a rounded polygon
-B2_API b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2WorldTransform xfA, const b2Polygon* polygonB,
-												   b2WorldTransform xfB, b2SimplexCache* cache );
+B2_API b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2WorldTransform xfA,
+												   const b2Polygon* polygonB, b2WorldTransform xfB, b2SimplexCache* cache );
 
 /**@}*/
 

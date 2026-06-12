@@ -1463,12 +1463,12 @@ typedef struct b2RecPlayer b2RecPlayer;
 /// Static metadata describing a recording, resolved once when the player opens the file.
 typedef struct b2RecPlayerInfo
 {
-	int frameCount;		// total recorded steps
-	int workerCount;	// worker count used for the replay world
-	float timeStep;		// dt of the recorded steps
-	int subStepCount;	// recorded sub-steps
-	float lengthScale;	// length units per meter in effect when recorded
-	b2AABB bounds;		// accumulated world bounds over the recording, zero-extent if unavailable
+	int frameCount;	   // total recorded steps
+	int workerCount;   // worker count used for the replay world
+	float timeStep;	   // dt of the recorded steps
+	int subStepCount;  // recorded sub-steps
+	float lengthScale; // length units per meter in effect when recorded
+	b2AABB bounds;	   // accumulated world bounds over the recording, zero-extent if unavailable
 } b2RecPlayerInfo;
 
 /// Open a recording for incremental playback and replay up to the first step. The player copies

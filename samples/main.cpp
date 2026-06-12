@@ -119,7 +119,20 @@ static int CompareSamples( const void* a, const void* b )
 
 static void SortSamples()
 {
+	SampleCreateFcn* replayFcn = ( g_replayIndex >= 0 ) ? g_sampleEntries[g_replayIndex].createFcn : nullptr;
 	qsort( g_sampleEntries, g_sampleCount, sizeof( SampleEntry ), CompareSamples );
+	if ( replayFcn != nullptr )
+	{
+		g_replayIndex = -1;
+		for ( int i = 0; i < g_sampleCount; ++i )
+		{
+			if ( g_sampleEntries[i].createFcn == replayFcn )
+			{
+				g_replayIndex = i;
+				break;
+			}
+		}
+	}
 }
 
 static void ApplyUIStyle( void )
