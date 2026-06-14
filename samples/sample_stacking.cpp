@@ -846,7 +846,7 @@ public:
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 			if ( i == 0 )
 			{
-				b2Body_ApplyLinearImpulse( bodyId, b2Vec2{ 0.2f, 0.0f }, b2MakePosition( { x, 1.0f } ), true );
+				b2Body_ApplyLinearImpulse( bodyId, b2Vec2{ 0.2f, 0.0f }, b2Position{ x, 1.0f }, true );
 			}
 
 			x += 1.0f;

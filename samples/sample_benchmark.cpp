@@ -537,11 +537,11 @@ public:
 		free( m_bodyIds );
 	}
 
-	void CreateTumbler( b2Vec2 position, int index )
+	void CreateTumbler( b2Position position, int index )
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_kinematicBody;
-		bodyDef.position = { position.x, position.y };
+		bodyDef.position = position;
 		bodyDef.angularVelocity = ( B2_PI / 180.0f ) * m_angularSpeed;
 		b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 		m_tumblerIds[index] = bodyId;
@@ -580,7 +580,7 @@ public:
 
 		m_tumblerCount = m_rowCount * m_columnCount;
 		m_tumblerIds = static_cast<b2BodyId*>( malloc( m_tumblerCount * sizeof( b2BodyId ) ) );
-		m_positions = static_cast<b2Vec2*>( malloc( m_tumblerCount * sizeof( b2Vec2 ) ) );
+		m_positions = static_cast<b2Position*>( malloc( m_tumblerCount * sizeof( b2Position ) ) );
 
 		int index = 0;
 		float x = -4.0f * m_rowCount;
@@ -652,7 +652,7 @@ public:
 
 				b2BodyDef bodyDef = b2DefaultBodyDef();
 				bodyDef.type = b2_dynamicBody;
-				bodyDef.position = b2MakePosition( m_positions[i] );
+				bodyDef.position = m_positions[i];
 				m_bodyIds[m_bodyIndex] = b2CreateBody( m_worldId, &bodyDef );
 				b2CreateCapsuleShape( m_bodyIds[m_bodyIndex], &shapeDef, &capsule );
 
@@ -672,7 +672,7 @@ public:
 	int m_columnCount;
 
 	b2BodyId* m_tumblerIds;
-	b2Vec2* m_positions;
+	b2Position* m_positions;
 	int m_tumblerCount;
 
 	b2BodyId* m_bodyIds;

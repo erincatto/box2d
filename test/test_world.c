@@ -27,7 +27,7 @@ int HelloWorld( void )
 
 	// Define the ground body.
 	b2BodyDef groundBodyDef = b2DefaultBodyDef();
-	groundBodyDef.position = b2MakePosition( (b2Vec2){ 0.0f, -10.0f } );
+	groundBodyDef.position = (b2Position){ 0.0f, -10.0f };
 
 	// Call the body factory which allocates memory for the ground body
 	// from a pool and creates the ground box shape (also from a pool).
@@ -45,7 +45,7 @@ int HelloWorld( void )
 	// Define the dynamic body. We set its position and call the body factory.
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_dynamicBody;
-	bodyDef.position = b2MakePosition( (b2Vec2){ 0.0f, 4.0f } );
+	bodyDef.position = (b2Position){ 0.0f, 4.0f };
 
 	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
@@ -347,7 +347,7 @@ static int TestSensor( void )
 	bodyDef.type = b2_dynamicBody;
 	bodyDef.isBullet = true;
 	bodyDef.gravityScale = 0.0f;
-	bodyDef.position = b2MakePosition( (b2Vec2){ 7.39814f, 4.0f } );
+	bodyDef.position = (b2Position){ 7.39814f, 4.0f };
 	bodyDef.linearVelocity = (b2Vec2){ -20.0f, 0.0f };
 	b2BodyId bulletId = b2CreateBody( worldId, &bodyDef );
 	shapeDef = b2DefaultShapeDef();
@@ -473,7 +473,7 @@ static int ChainSegmentShapeTest( void )
 
 	b2BodyDef dynamicDef = b2DefaultBodyDef();
 	dynamicDef.type = b2_dynamicBody;
-	dynamicDef.position = b2MakePosition( (b2Vec2){ 0.0f, 2.0f } );
+	dynamicDef.position = (b2Position){ 0.0f, 2.0f };
 	b2BodyId circleBodyId = b2CreateBody( worldId, &dynamicDef );
 	b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
 	b2ShapeDef circleShapeDef = b2DefaultShapeDef();

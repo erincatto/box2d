@@ -66,7 +66,7 @@ Camera GetDefaultCamera( void )
 
 void ResetView( Camera* camera )
 {
-	camera->center = b2MakePosition( (b2Vec2){ 0.0f, 20.0f } );
+	camera->center = (b2Position){ 0.0f, 20.0f };
 	camera->zoom = 1.0f;
 }
 

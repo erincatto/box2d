@@ -65,7 +65,7 @@ static PyramidResult RunPyramid( b2Vec2 baseVec )
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
-		bodyDef.position = b2MakePosition( ( b2Vec2 ){ baseVec.x + offsets[i].x, baseVec.y + offsets[i].y } );
+		bodyDef.position = (b2Position){ baseVec.x + offsets[i].x, baseVec.y + offsets[i].y };
 		bodyIds[i] = b2CreateBody( worldId, &bodyDef );
 		b2CreatePolygonShape( bodyIds[i], &shapeDef, &box );
 	}
@@ -140,7 +140,7 @@ static float RunBullet( b2Vec2 baseVec )
 	bodyDef.type = b2_dynamicBody;
 	bodyDef.isBullet = true;
 	bodyDef.gravityScale = 0.0f;
-	bodyDef.position = b2MakePosition( ( b2Vec2 ){ baseVec.x + 10.0f, baseVec.y } );
+	bodyDef.position = (b2Position){ baseVec.x + 10.0f, baseVec.y };
 	bodyDef.linearVelocity = ( b2Vec2 ){ -200.0f, 0.0f };
 	b2BodyId bulletId = b2CreateBody( worldId, &bodyDef );
 	b2Circle circle = { { 0.0f, 0.0f }, 0.1f };
@@ -191,7 +191,7 @@ static b2Vec2 RunRayCast( b2Vec2 baseVec )
 	b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
 	// Ray from 5 m left of the box, traveling 10 m right. Hits the left face at base + {-0.5, 0}.
-	b2Position origin = b2MakePosition( ( b2Vec2 ){ baseVec.x - 5.0f, baseVec.y } );
+	b2Position origin = (b2Position){ baseVec.x - 5.0f, baseVec.y };
 	b2Vec2 translation = { 10.0f, 0.0f };
 	b2RayResult result = b2World_CastRayClosest( worldId, origin, translation, b2DefaultQueryFilter() );
 
@@ -383,7 +383,7 @@ static int LargeWorldRecordingTest( void )
 	// A box settling on the ground exercises the contact solver far from the origin.
 	b2BodyDef stackDef = b2DefaultBodyDef();
 	stackDef.type = b2_dynamicBody;
-	stackDef.position = b2MakePosition( ( b2Vec2 ){ base.x, base.y + 1.0f } );
+	stackDef.position = (b2Position){ base.x, base.y + 1.0f };
 	b2BodyId stackId = b2CreateBody( worldId, &stackDef );
 	b2Polygon box = b2MakeBox( 0.5f, 0.5f );
 	b2ShapeDef boxDef = b2DefaultShapeDef();
@@ -396,7 +396,7 @@ static int LargeWorldRecordingTest( void )
 	b2BodyDef sliderDef = b2DefaultBodyDef();
 	sliderDef.type = b2_dynamicBody;
 	sliderDef.gravityScale = 0.0f;
-	sliderDef.position = b2MakePosition( ( b2Vec2 ){ base.x, base.y + 5.0f } );
+	sliderDef.position = (b2Position){ base.x, base.y + 5.0f };
 	sliderDef.linearVelocity = ( b2Vec2 ){ 3.0f, 0.0f };
 	b2BodyId sliderId = b2CreateBody( worldId, &sliderDef );
 	b2CreatePolygonShape( sliderId, &boxDef, &box );

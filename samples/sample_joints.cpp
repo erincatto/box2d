@@ -103,12 +103,12 @@ public:
 			m_bodyIds[i] = b2CreateBody( m_worldId, &bodyDef );
 			b2CreateCircleShape( m_bodyIds[i], &shapeDef, &circle );
 
-			b2Vec2 pivotA = { m_length * i, yOffset };
-			b2Vec2 pivotB = { m_length * ( i + 1.0f ), yOffset };
+			b2Position pivotA = { m_length * i, yOffset };
+			b2Position pivotB = { m_length * ( i + 1.0f ), yOffset };
 			jointDef.base.bodyIdA = prevBodyId;
 			jointDef.base.bodyIdB = m_bodyIds[i];
-			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, b2MakePosition( pivotA ) );
-			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, b2MakePosition( pivotB ) );
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivotA );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivotB );
 			m_jointIds[i] = b2CreateDistanceJoint( m_worldId, &jointDef );
 
 			prevBodyId = m_bodyIds[i];
@@ -269,7 +269,7 @@ public:
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_kinematicBody;
-			bodyDef.position = b2MakePosition( m_transform.p );
+			bodyDef.position = m_transform.p;
 			m_targetId = b2CreateBody( m_worldId, &bodyDef );
 		}
 
@@ -277,7 +277,7 @@ public:
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
-			bodyDef.position = b2MakePosition( m_transform.p );
+			bodyDef.position = m_transform.p;
 			m_bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2Polygon box = b2MakeBox( 2.0f, 0.5f );
@@ -374,7 +374,7 @@ public:
 		{
 			m_time += m_speed * timeStep;
 
-			b2Vec2 linearOffset;
+			b2Position linearOffset;
 			linearOffset.x = 6.0f * sinf( 2.0f * m_time );
 			linearOffset.y = 8.0f + 4.0f * sinf( 1.0f * m_time );
 
@@ -382,10 +382,10 @@ public:
 			m_transform = { linearOffset, b2MakeRot( angularOffset ) };
 
 			bool wake = true;
-			b2Body_SetTargetTransform( m_targetId, b2MakeWorldTransform( m_transform ), timeStep, wake );
+			b2Body_SetTargetTransform( m_targetId, m_transform, timeStep, wake );
 		}
 
-		DrawTransform( m_draw, m_transform, 1.0f );
+		DrawTransform( m_draw, b2ToRelativeTransform( m_transform, b2Position_zero ), 1.0f );
 
 		Sample::Step();
 
@@ -403,7 +403,7 @@ public:
 	b2BodyId m_targetId;
 	b2BodyId m_bodyId;
 	b2JointId m_jointId;
-	b2Transform m_transform;
+	b2WorldTransform m_transform;
 	float m_time;
 	float m_speed;
 	float m_maxForce;
@@ -1537,7 +1537,7 @@ public:
 			m_bodyIds[i] = b2_nullBodyId;
 		}
 
-		b2Vec2 position = { -12.5f, 10.0f };
+		b2Position position = { -12.5f, 10.0f };
 		bodyDef.type = b2_dynamicBody;
 		bodyDef.motionLocks = m_motionLocks;
 
@@ -1549,19 +1549,19 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 
 			float length = 2.0f;
-			b2Vec2 pivot1 = { position.x, position.y + 1.0f + length };
-			b2Vec2 pivot2 = { position.x, position.y + 1.0f };
+			b2Position pivot1 = { position.x, position.y + 1.0f + length };
+			b2Position pivot2 = { position.x, position.y + 1.0f };
 			b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
-			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, b2MakePosition( pivot1 ) );
-			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, b2MakePosition( pivot2 ) );
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot1 );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot2 );
 			jointDef.length = length;
 			b2CreateDistanceJoint( m_worldId, &jointDef );
 		}
@@ -1573,7 +1573,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
@@ -1581,7 +1581,7 @@ public:
 			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
-			jointDef.base.localFrameA.p = position;
+			jointDef.base.localFrameA.p = b2ToVec2( position );
 			jointDef.maxVelocityForce = 200.0f;
 			jointDef.maxVelocityTorque = 200.0f;
 			b2CreateMotorJoint( m_worldId, &jointDef );
@@ -1594,7 +1594,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
@@ -1615,7 +1615,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
@@ -1636,7 +1636,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
@@ -1661,7 +1661,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
@@ -1765,7 +1765,7 @@ public:
 			m_jointIds[i] = b2_nullJointId;
 		}
 
-		b2Vec2 position = { -12.5f, 10.0f };
+		b2Position position = { -12.5f, 10.0f };
 		bodyDef.type = b2_dynamicBody;
 		bodyDef.enableSleep = false;
 
@@ -1777,18 +1777,18 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
 			float length = 2.0f;
-			b2Vec2 pivot1 = { position.x, position.y + 1.0f + length };
-			b2Vec2 pivot2 = { position.x, position.y + 1.0f };
+			b2Position pivot1 = { position.x, position.y + 1.0f + length };
+			b2Position pivot2 = { position.x, position.y + 1.0f };
 			b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
-			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, b2MakePosition( pivot1 ) );
-			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, b2MakePosition( pivot2 ) );
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot1 );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot2 );
 			jointDef.length = length;
 			jointDef.base.collideConnected = true;
 			m_jointIds[index] = b2CreateDistanceJoint( m_worldId, &jointDef );
@@ -1801,14 +1801,14 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
 			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
-			jointDef.base.localFrameA.p = position;
+			jointDef.base.localFrameA.p = b2ToVec2( position );
 			jointDef.maxVelocityForce = 1000.0f;
 			jointDef.maxVelocityTorque = 20.0f;
 			jointDef.base.collideConnected = true;
@@ -1822,7 +1822,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
@@ -1843,7 +1843,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
@@ -1864,7 +1864,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
@@ -1885,7 +1885,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
@@ -1992,7 +1992,7 @@ public:
 		b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
 		b2CreateSegmentShape( groundId, &shapeDef, &segment );
 
-		b2Vec2 position = { -20.0f, 10.0f };
+		b2Position position = { -20.0f, 10.0f };
 		bodyDef.type = b2_dynamicBody;
 		bodyDef.enableSleep = false;
 
@@ -2004,18 +2004,18 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 
 			float length = 2.0f;
-			b2Vec2 pivot1 = { position.x, position.y + 1.0f + length };
-			b2Vec2 pivot2 = { position.x, position.y + 1.0f };
+			b2Position pivot1 = { position.x, position.y + 1.0f + length };
+			b2Position pivot2 = { position.x, position.y + 1.0f };
 			b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
-			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, b2MakePosition( pivot1 ) );
-			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, b2MakePosition( pivot2 ) );
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot1 );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot2 );
 			jointDef.length = length;
 			jointDef.base.collideConnected = true;
 			m_jointIds[index] = b2CreateDistanceJoint( m_worldId, &jointDef );
@@ -2028,7 +2028,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 
@@ -2049,7 +2049,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 
@@ -2070,7 +2070,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 
@@ -2091,7 +2091,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 

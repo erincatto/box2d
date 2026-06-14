@@ -256,7 +256,7 @@ public:
 	{
 		// 1e7 is exactly representable in float, so integer box offsets stay exact and a run here
 		// can be compared against one at the origin.
-		b2Position origin = b2MakePosition( { 10.0e6f, 0.0f } );
+		b2Position origin = b2Position{ 10.0e6f, 0.0f };
 
 		if ( m_context->restart == false )
 		{
@@ -313,7 +313,7 @@ public:
 	explicit FarRagdolls( SampleContext* context )
 		: Sample( context )
 	{
-		b2Position origin = b2MakePosition( { 10.0e6f, 0.0f } );
+		b2Position origin = b2Position{ 10.0e6f, 0.0f };
 
 		if ( m_context->restart == false )
 		{

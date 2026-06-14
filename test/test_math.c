@@ -178,7 +178,7 @@ int MathTest( void )
 	// ops, so the round trips hold in both builds.
 	{
 		b2Vec2 d = { 0.25f, -0.5f };
-		b2Position base = b2MakePosition( ( b2Vec2 ){ 10.0f, -20.0f } );
+		b2Position base = (b2Position){ 10.0f, -20.0f };
 		b2Position p = b2OffsetPosition( base, d );
 		b2Vec2 back = b2PositionDelta( p, base );
 		ENSURE_SMALL( back.x - d.x, 8.0f * FLT_EPSILON );
@@ -191,7 +191,7 @@ int MathTest( void )
 		ENSURE( b2IsValidPosition( b2Position_zero ) );
 		ENSURE( b2IsValidWorldTransform( b2WorldTransform_identity ) );
 
-		b2WorldTransform wt = { b2MakePosition( ( b2Vec2 ){ 3.0f, -4.0f } ), b2MakeRot( 0.7f ) };
+		b2WorldTransform wt = { (b2Position){ 3.0f, -4.0f }, b2MakeRot( 0.7f ) };
 		ENSURE( b2IsValidWorldTransform( wt ) );
 
 		// Local to world to local round trip
@@ -202,8 +202,8 @@ int MathTest( void )
 		ENSURE_SMALL( backLocal.y - local.y, 8.0f * FLT_EPSILON );
 
 		// Relative transform of B in A matches a float reference at modest coordinates
-		b2WorldTransform A = { b2MakePosition( ( b2Vec2 ){ -2.0f, 3.0f } ), b2MakeRot( 1.0f ) };
-		b2WorldTransform B = { b2MakePosition( ( b2Vec2 ){ 1.0f, 0.0f } ), b2MakeRot( -2.0f ) };
+		b2WorldTransform A = { (b2Position){ -2.0f, 3.0f }, b2MakeRot( 1.0f ) };
+		b2WorldTransform B = { (b2Position){ 1.0f, 0.0f }, b2MakeRot( -2.0f ) };
 		b2Transform rel = b2InvMulWorldTransforms( A, B );
 		b2Transform refA = { b2ToVec2( A.p ), A.q };
 		b2Transform refB = { b2ToVec2( B.p ), B.q };
@@ -217,7 +217,7 @@ int MathTest( void )
 	// position can. This is the whole point of large world mode.
 	{
 		b2Vec2 d = { 0.25f, -0.5f };
-		b2Position base = b2MakePosition( ( b2Vec2 ){ 1.0e7f, 0.0f } );
+		b2Position base = (b2Position){ 1.0e7f, 0.0f };
 		b2Position p = b2OffsetPosition( base, d );
 		b2Vec2 back = b2PositionDelta( p, base );
 		ENSURE_SMALL( back.x - d.x, 1.0e-4f );

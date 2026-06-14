@@ -1850,7 +1850,7 @@ public:
 			m_jointIds[i] = b2_nullJointId;
 		}
 
-		b2Vec2 position = { -12.5f, 10.0f };
+		b2Position position = { -12.5f, 10.0f };
 		bodyDef.type = b2_dynamicBody;
 		bodyDef.enableSleep = false;
 
@@ -1865,7 +1865,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
@@ -1892,14 +1892,14 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
 			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
-			jointDef.base.localFrameA.p = position;
+			jointDef.base.localFrameA.p = b2ToVec2(position);
 			jointDef.maxVelocityForce = 1000.0f;
 			jointDef.maxVelocityTorque = 20.0f;
 			jointDef.base.forceThreshold = forceThreshold;
@@ -1916,7 +1916,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
@@ -1940,7 +1940,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
@@ -1964,7 +1964,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
@@ -1990,7 +1990,7 @@ public:
 		{
 			assert( index < e_count );
 
-			bodyDef.position = b2MakePosition( position );
+			bodyDef.position = position;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
