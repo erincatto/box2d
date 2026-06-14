@@ -206,7 +206,7 @@ void b2RecW_AABB( b2RecBuffer* buf, b2AABB v );
 void b2RecW_QUERYFILTER( b2RecBuffer* buf, b2QueryFilter v );
 void b2RecW_SHAPEPROXY( b2RecBuffer* buf, b2ShapeProxy v );
 void b2RecW_RAYCASTINPUT( b2RecBuffer* buf, b2RayCastInput v );
-void b2RecW_CASTOUTPUT( b2RecBuffer* buf, b2CastOutput v );
+void b2RecW_WORLDCASTOUTPUT( b2RecBuffer* buf, b2WorldCastOutput v );
 void b2RecW_RAYRESULT( b2RecBuffer* buf, b2RayResult v );
 void b2RecW_PLANERESULT( b2RecBuffer* buf, b2PlaneResult v );
 void b2RecW_TREESTATS( b2RecBuffer* buf, b2TreeStats v );

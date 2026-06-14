@@ -1003,15 +1003,15 @@ public:
 			if ( output->fraction == 0.0f )
 			{
 				assert( output->normal.x == 0.0f && output->normal.y == 0.0f );
-				p = b2ToVec2( output->point );
-				DrawPoint( m_draw, b2ToVec2( output->point ), 5.0, b2_colorPeru );
+				p = output->point;
+				DrawPoint( m_draw, output->point, 5.0, b2_colorPeru );
 			}
 			else
 			{
 				p = b2MulAdd( p1, output->fraction, d );
 				DrawLine( m_draw, p1, p, b2_colorWhite );
 				DrawPoint( m_draw, p1, 5.0f, b2_colorGreen );
-				DrawPoint( m_draw, b2ToVec2( output->point ), 5.0f, b2_colorWhite );
+				DrawPoint( m_draw, output->point, 5.0f, b2_colorWhite );
 
 				b2Vec2 n = b2MulAdd( p, 1.0f, output->normal );
 				DrawLine( m_draw, p, n, b2_colorViolet );
@@ -1055,7 +1055,7 @@ public:
 			if ( localOutput.hit )
 			{
 				output = localOutput;
-				output.point = b2MakePosition( b2TransformPoint( transform, b2ToVec2( localOutput.point ) ) );
+				output.point = b2TransformPoint( transform, localOutput.point );
 				output.normal = b2RotateVector( transform.q, localOutput.normal );
 				maxFraction = localOutput.fraction;
 			}
@@ -1078,7 +1078,7 @@ public:
 			if ( localOutput.hit )
 			{
 				output = localOutput;
-				output.point = b2MakePosition( b2TransformPoint( transform, b2ToVec2( localOutput.point ) ) );
+				output.point = b2TransformPoint( transform, localOutput.point );
 				output.normal = b2RotateVector( transform.q, localOutput.normal );
 				maxFraction = localOutput.fraction;
 			}
@@ -1099,7 +1099,7 @@ public:
 			if ( localOutput.hit )
 			{
 				output = localOutput;
-				output.point = b2MakePosition( b2TransformPoint( transform, b2ToVec2( localOutput.point ) ) );
+				output.point = b2TransformPoint( transform, localOutput.point );
 				output.normal = b2RotateVector( transform.q, localOutput.normal );
 				maxFraction = localOutput.fraction;
 			}
@@ -1120,7 +1120,7 @@ public:
 			if ( localOutput.hit )
 			{
 				output = localOutput;
-				output.point = b2MakePosition( b2TransformPoint( transform, b2ToVec2( localOutput.point ) ) );
+				output.point = b2TransformPoint( transform, localOutput.point );
 				output.normal = b2RotateVector( transform.q, localOutput.normal );
 				maxFraction = localOutput.fraction;
 			}
@@ -1144,7 +1144,7 @@ public:
 			if ( localOutput.hit )
 			{
 				output = localOutput;
-				output.point = b2MakePosition( b2TransformPoint( transform, b2ToVec2( localOutput.point ) ) );
+				output.point = b2TransformPoint( transform, localOutput.point );
 				output.normal = b2RotateVector( transform.q, localOutput.normal );
 				maxFraction = localOutput.fraction;
 			}
@@ -3470,7 +3470,7 @@ public:
 		input.maxFraction = 1.0f;
 		input.canEncroach = m_encroach;
 
-		b2CastOutput output = b2ShapeCast( &input );
+		b2WorldCastOutput output = b2ShapeCast( &input );
 
 		b2Transform transform;
 		transform.q = m_transform.q;

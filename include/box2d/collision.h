@@ -69,14 +69,15 @@ typedef struct b2ShapeCastInput
 	bool canEncroach;
 } b2ShapeCastInput;
 
-/// Low level ray cast or shape-cast output data. Returns a zero fraction and normal in the case of initial overlap.
+/// Low level ray cast or shape-cast output data. The hit point is in the local or relative frame
+/// of the input. Returns a zero fraction and normal in the case of initial overlap.
 typedef struct b2CastOutput
 {
 	/// The surface normal at the hit point
 	b2Vec2 normal;
 
 	/// The surface hit point
-	b2Position point;
+	b2Vec2 point;
 
 	/// The fraction of the input translation at collision
 	float fraction;
@@ -87,6 +88,37 @@ typedef struct b2CastOutput
 	/// Did the cast hit?
 	bool hit;
 } b2CastOutput;
+
+#if defined( BOX2D_DOUBLE_PRECISION )
+
+/// World-space cast output. The hit point is a world position. The normal stays a float direction.
+typedef struct b2WorldCastOutput
+{
+	b2Vec2 normal;	  ///< The surface normal at the hit point
+	b2Position point; ///< The surface hit point in world space
+	float fraction;	  ///< The fraction of the input translation at collision
+	int iterations;	  ///< The number of iterations used
+	bool hit;		  ///< Did the cast hit?
+} b2WorldCastOutput;
+
+#else
+
+typedef b2CastOutput b2WorldCastOutput;
+
+#endif
+
+/// Narrow a world-space cast output back to a local one. Lossless when the point is already
+/// in float range, as with an identity world transform.
+B2_INLINE b2CastOutput b2NarrowCastOutput( b2WorldCastOutput w )
+{
+	b2CastOutput output;
+	output.normal = w.normal;
+	output.point = b2ToVec2( w.point );
+	output.fraction = w.fraction;
+	output.iterations = w.iterations;
+	output.hit = w.hit;
+	return output;
+}
 
 /// This holds the mass data computed for a shape.
 typedef struct b2MassData
@@ -424,8 +456,8 @@ typedef struct b2ShapeCastPairInput
 } b2ShapeCastPairInput;
 
 /// Perform a linear shape cast of shape B moving and shape A fixed. Determines the hit point, normal, and translation fraction.
-/// Initially touching shapes are treated as a miss.
-B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input );
+/// Initially touching shapes are treated as a miss. The hit point is in world space.
+B2_API b2WorldCastOutput b2ShapeCast( const b2ShapeCastPairInput* input );
 
 /// Make a proxy for use in overlap, shape cast, and related functions. This is a deep copy of the points.
 B2_API b2ShapeProxy b2MakeProxy( const b2Vec2* points, int count, float radius );

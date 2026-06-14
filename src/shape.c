@@ -925,8 +925,8 @@ b2CastOutput b2RayCastShape( const b2RayCastInput* input, const b2Shape* shape, 
 	}
 
 	// The output point stays in the frame of the input transform, a caller chosen frame that is
-	// typically re-centered near the origin. The conversion is float scale, lossless.
-	output.point = b2MakePosition( b2TransformPoint( transform, b2ToVec2( output.point ) ) );
+	// typically re-centered near the origin.
+	output.point = b2TransformPoint( transform, output.point );
 	output.normal = b2RotateVector( transform.q, output.normal );
 	return output;
 }
@@ -991,7 +991,7 @@ b2CastOutput b2ShapeCastShape( const b2ShapeCastInput* input, const b2Shape* sha
 	}
 
 	// Same frame contract as b2RayCastShape, the point stays in the input transform frame
-	output.point = b2MakePosition( b2TransformPoint( transform, b2ToVec2( output.point ) ) );
+	output.point = b2TransformPoint( transform, output.point );
 	output.normal = b2RotateVector( transform.q, output.normal );
 	return output;
 }
@@ -1153,7 +1153,7 @@ bool b2Shape_TestPoint( b2ShapeId shapeId, b2Position point )
 	return result;
 }
 
-b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, b2Position origin, const b2RayCastInput* input )
+b2WorldCastOutput b2Shape_RayCast( b2ShapeId shapeId, b2Position origin, const b2RayCastInput* input )
 {
 	B2_ASSERT( b2IsValidPosition( origin ) );
 
@@ -1163,12 +1163,14 @@ b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, b2Position origin, const b2RayC
 	// Re-center on the origin so the cast runs in float precision
 	b2Transform transform = b2ToRelativeTransform( b2GetBodyTransform( world, shape->bodyId ), origin );
 
-	b2CastOutput output = b2RayCastShape( input, shape, transform );
-
-	if ( output.hit )
-	{
-		output.point = b2OffsetPosition( origin, b2ToVec2( output.point ) );
-	}
+	// Lift the re-centered float result back to a world position
+	b2CastOutput local = b2RayCastShape( input, shape, transform );
+	b2WorldCastOutput output;
+	output.normal = local.normal;
+	output.point = b2OffsetPosition( origin, local.point );
+	output.fraction = local.fraction;
+	output.iterations = local.iterations;
+	output.hit = local.hit;
 
 	if ( world->recording != NULL )
 	{
@@ -1176,7 +1178,7 @@ b2CastOutput b2Shape_RayCast( b2ShapeId shapeId, b2Position origin, const b2RayC
 		b2RecW_SHAPEID( &recBuf, shapeId );
 		b2RecW_POSITION( &recBuf, origin );
 		b2RecW_RAYCASTINPUT( &recBuf, *input );
-		b2RecW_CASTOUTPUT( &recBuf, output );
+		b2RecW_WORLDCASTOUTPUT( &recBuf, output );
 		b2RecCommitRecord( world->recording, 0xE8, recBuf.data, recBuf.size );
 		b2RecBufFree( &recBuf );
 	}

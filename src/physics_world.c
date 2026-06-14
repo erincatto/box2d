@@ -2500,7 +2500,7 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, uint64_t
 	if ( output.hit )
 	{
 		b2ShapeId id = { shapeId + 1, world->worldId, shape->generation };
-		b2Position point = b2OffsetPosition( base, b2ToVec2( output.point ) );
+		b2Position point = b2OffsetPosition( base, output.point );
 		float fraction = worldContext->fcn( id, point, output.normal, output.fraction, worldContext->userContext );
 
 		// The user may return -1 to skip this shape
@@ -2682,7 +2682,7 @@ static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 	{
 		b2ShapeId id = { shapeId + 1, world->worldId, shape->generation };
 
-		b2Position point = b2OffsetPosition( worldContext->origin, b2ToVec2( output.point ) );
+		b2Position point = b2OffsetPosition( worldContext->origin, output.point );
 		float fraction = worldContext->fcn( id, point, output.normal, output.fraction, worldContext->userContext );
 
 		// The user may return -1 to skip this shape

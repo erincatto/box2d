@@ -606,7 +606,7 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 }
 
 // Shape cast using conservative advancement
-b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
+b2WorldCastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 {
 	// Compute tolerance
 	float linearSlop = B2_LINEAR_SLOP;
@@ -632,7 +632,7 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	distanceInput.transform = b2InvMulWorldTransforms( input->transformA, transformB );
 
 	b2Vec2 delta2 = input->translationB;
-	b2CastOutput output = { 0 };
+	b2WorldCastOutput output = { 0 };
 
 	int iteration = 0;
 	const int maxIterations = 20;

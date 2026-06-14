@@ -471,7 +471,7 @@ void b2RecW_RAYCASTINPUT( b2RecBuffer* buf, b2RayCastInput v )
 	b2RecW_F32( buf, v.maxFraction );
 }
 
-void b2RecW_CASTOUTPUT( b2RecBuffer* buf, b2CastOutput v )
+void b2RecW_WORLDCASTOUTPUT( b2RecBuffer* buf, b2WorldCastOutput v )
 {
 	b2RecW_VEC2( buf, v.normal );
 	b2RecW_POSITION( buf, v.point );

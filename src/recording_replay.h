@@ -47,7 +47,7 @@ typedef struct b2RecDrawQuery
 	b2Vec2 translation;
 	bool boolResult;
 	float castFraction;
-	b2CastOutput castOut;
+	b2WorldCastOutput castOut;
 	b2ShapeId shape;
 	int hitStart;
 	int hitCount;
@@ -191,7 +191,7 @@ b2AABB b2RecR_AABB( b2RecReader* rdr );
 b2QueryFilter b2RecR_QUERYFILTER( b2RecReader* rdr );
 b2ShapeProxy b2RecR_SHAPEPROXY( b2RecReader* rdr );
 b2RayCastInput b2RecR_RAYCASTINPUT( b2RecReader* rdr );
-b2CastOutput b2RecR_CASTOUTPUT( b2RecReader* rdr );
+b2WorldCastOutput b2RecR_WORLDCASTOUTPUT( b2RecReader* rdr );
 b2RayResult b2RecR_RAYRESULT( b2RecReader* rdr );
 b2PlaneResult b2RecR_PLANERESULT( b2RecReader* rdr );
 b2TreeStats b2RecR_TREESTATS( b2RecReader* rdr );

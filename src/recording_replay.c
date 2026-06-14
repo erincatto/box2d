@@ -584,9 +584,9 @@ b2RayCastInput b2RecR_RAYCASTINPUT( b2RecReader* rdr )
 	return v;
 }
 
-b2CastOutput b2RecR_CASTOUTPUT( b2RecReader* rdr )
+b2WorldCastOutput b2RecR_WORLDCASTOUTPUT( b2RecReader* rdr )
 {
-	b2CastOutput v;
+	b2WorldCastOutput v;
 	v.normal = b2RecR_VEC2( rdr );
 	v.point = b2RecR_POSITION( rdr );
 	v.fraction = b2RecR_F32( rdr );
@@ -1910,11 +1910,11 @@ static void b2RecDispatch_ShapeTestPoint( const b2RecArgs_ShapeTestPoint* a, b2R
 
 static void b2RecDispatch_ShapeRayCast( const b2RecArgs_ShapeRayCast* a, b2RecReader* rdr )
 {
-	b2CastOutput rec = b2RecR_CASTOUTPUT( rdr );
+	b2WorldCastOutput rec = b2RecR_WORLDCASTOUTPUT( rdr );
 	if ( !rdr->ok )
 		return;
 	b2ShapeId id = b2RecMakeShapeId( rdr, a->shape );
-	b2CastOutput got = b2Shape_RayCast( id, a->origin, &a->input );
+	b2WorldCastOutput got = b2Shape_RayCast( id, a->origin, &a->input );
 	if ( got.hit != rec.hit ||
 		 ( got.hit && ( b2RecVec2Differs( got.normal, rec.normal ) ||
 						b2RecVec2Differs( b2PositionDelta( got.point, rec.point ), b2Vec2_zero ) ||

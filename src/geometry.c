@@ -577,7 +577,7 @@ b2CastOutput b2RayCastCircle( const b2Circle* shape, const b2RayCastInput* input
 		if ( b2LengthSquared( s ) < rr )
 		{
 			// initial overlap
-			output.point = b2MakePosition( input->origin );
+			output.point = input->origin;
 			output.hit = true;
 		}
 
@@ -612,7 +612,7 @@ b2CastOutput b2RayCastCircle( const b2Circle* shape, const b2RayCastInput* input
 		if ( b2LengthSquared( s ) < rr )
 		{
 			// initial overlap
-			output.point = b2MakePosition( input->origin );
+			output.point = input->origin;
 			output.hit = true;
 		}
 
@@ -624,7 +624,7 @@ b2CastOutput b2RayCastCircle( const b2Circle* shape, const b2RayCastInput* input
 
 	output.fraction = fraction / length;
 	output.normal = b2Normalize( hitPoint );
-	output.point = b2MakePosition( b2MulAdd( p, shape->radius, output.normal ) );
+	output.point = b2MulAdd( p, shape->radius, output.normal );
 	output.hit = true;
 
 	return output;
@@ -681,7 +681,7 @@ b2CastOutput b2RayCastCapsule( const b2Capsule* shape, const b2RayCastInput* inp
 		}
 
 		// ray starts inside capsule -> no hit
-		output.point = b2MakePosition( input->origin );
+		output.point = input->origin;
 		output.hit = true;
 		return output;
 	}
@@ -758,7 +758,7 @@ b2CastOutput b2RayCastCapsule( const b2Capsule* shape, const b2RayCastInput* inp
 	{
 		// ray hits capsule side
 		output.fraction = s2 / rayLength;
-		output.point = b2MakePosition( b2Add( b2Lerp( v1, v2, s1 / capsuleLength ), b2MulSV( shape->radius, n ) ) );
+		output.point = b2Add( b2Lerp( v1, v2, s1 / capsuleLength ), b2MulSV( shape->radius, n ) );
 		output.normal = n;
 		output.hit = true;
 		return output;
@@ -840,7 +840,7 @@ b2CastOutput b2RayCastSegment( const b2Segment* shape, const b2RayCastInput* inp
 	}
 
 	output.fraction = t;
-	output.point = b2MakePosition( p );
+	output.point = p;
 	output.normal = normal;
 	output.hit = true;
 
@@ -917,13 +917,13 @@ b2CastOutput b2RayCastPolygon( const b2Polygon* shape, const b2RayCastInput* inp
 		{
 			output.fraction = lower;
 			output.normal = shape->normals[index];
-			output.point = b2MakePosition( b2MulAdd( input->origin, lower, d ) );
+			output.point = b2MulAdd( input->origin, lower, d );
 			output.hit = true;
 		}
 		else
 		{
 			// initial overlap
-			output.point = b2MakePosition( input->origin );
+			output.point = input->origin;
 			output.hit = true;
 		}
 
@@ -938,7 +938,7 @@ b2CastOutput b2RayCastPolygon( const b2Polygon* shape, const b2RayCastInput* inp
 	castInput.translationB = input->translation;
 	castInput.maxFraction = input->maxFraction;
 	castInput.canEncroach = false;
-	return b2ShapeCast( &castInput );
+	return b2NarrowCastOutput( b2ShapeCast( &castInput ) );
 }
 
 b2CastOutput b2ShapeCastCircle( const b2Circle* shape, const b2ShapeCastInput* input )
@@ -952,8 +952,7 @@ b2CastOutput b2ShapeCastCircle( const b2Circle* shape, const b2ShapeCastInput* i
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	b2CastOutput output = b2ShapeCast( &pairInput );
-	return output;
+	return b2NarrowCastOutput( b2ShapeCast( &pairInput ) );
 }
 
 b2CastOutput b2ShapeCastCapsule( const b2Capsule* shape, const b2ShapeCastInput* input )
@@ -967,8 +966,7 @@ b2CastOutput b2ShapeCastCapsule( const b2Capsule* shape, const b2ShapeCastInput*
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	b2CastOutput output = b2ShapeCast( &pairInput );
-	return output;
+	return b2NarrowCastOutput( b2ShapeCast( &pairInput ) );
 }
 
 b2CastOutput b2ShapeCastSegment( const b2Segment* shape, const b2ShapeCastInput* input )
@@ -982,8 +980,7 @@ b2CastOutput b2ShapeCastSegment( const b2Segment* shape, const b2ShapeCastInput*
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	b2CastOutput output = b2ShapeCast( &pairInput );
-	return output;
+	return b2NarrowCastOutput( b2ShapeCast( &pairInput ) );
 }
 
 b2CastOutput b2ShapeCastPolygon( const b2Polygon* shape, const b2ShapeCastInput* input )
@@ -997,8 +994,7 @@ b2CastOutput b2ShapeCastPolygon( const b2Polygon* shape, const b2ShapeCastInput*
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	b2CastOutput output = b2ShapeCast( &pairInput );
-	return output;
+	return b2NarrowCastOutput( b2ShapeCast( &pairInput ) );
 }
 
 b2PlaneResult b2CollideMoverAndCircle( const b2Capsule* mover, const b2Circle* shape )
