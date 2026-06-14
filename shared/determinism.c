@@ -12,7 +12,7 @@ FallingHingeData CreateFallingHinges( b2WorldId worldId )
 {
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.position = b2MakePosition( (b2Vec2){ 0.0f, -1.0f } );
+		bodyDef.position = (b2Position){ 0.0f, -1.0f };
 		b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
 
 		b2Polygon box = b2MakeBox( 40.0f, 1.0f );
@@ -29,10 +29,10 @@ FallingHingeData CreateFallingHinges( b2WorldId worldId )
 	float h = 0.25f;
 	float r = 0.1f * h;
 	b2Polygon box = b2MakeRoundedBox( h - r, h - r, r );
-	box = b2MakeSquare(h);
-	
+	box = b2MakeSquare( h );
+
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
-	//shapeDef.material.friction = 0.3f;
+	// shapeDef.material.friction = 0.3f;
 
 	b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 	jointDef.enableLimit = true;

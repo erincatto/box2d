@@ -575,15 +575,6 @@ b2ShapeProxy b2RecR_SHAPEPROXY( b2RecReader* rdr )
 	return p;
 }
 
-b2RayCastInput b2RecR_RAYCASTINPUT( b2RecReader* rdr )
-{
-	b2RayCastInput v;
-	v.origin = b2RecR_VEC2( rdr );
-	v.translation = b2RecR_VEC2( rdr );
-	v.maxFraction = b2RecR_F32( rdr );
-	return v;
-}
-
 b2WorldCastOutput b2RecR_WORLDCASTOUTPUT( b2RecReader* rdr )
 {
 	b2WorldCastOutput v;
@@ -1914,7 +1905,7 @@ static void b2RecDispatch_ShapeRayCast( const b2RecArgs_ShapeRayCast* a, b2RecRe
 	if ( !rdr->ok )
 		return;
 	b2ShapeId id = b2RecMakeShapeId( rdr, a->shape );
-	b2WorldCastOutput got = b2Shape_RayCast( id, a->origin, &a->input );
+	b2WorldCastOutput got = b2Shape_RayCast( id, a->origin, a->translation );
 	if ( got.hit != rec.hit ||
 		 ( got.hit && ( b2RecVec2Differs( got.normal, rec.normal ) ||
 						b2RecVec2Differs( b2PositionDelta( got.point, rec.point ), b2Vec2_zero ) ||
@@ -1926,9 +1917,9 @@ static void b2RecDispatch_ShapeRayCast( const b2RecArgs_ShapeRayCast* a, b2RecRe
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_SHAPE_RAY_CAST, NULL, 0 );
 		q->shape = id;
-		// The drawn ray start is the world position of the relative input origin
-		q->origin = b2OffsetPosition( a->origin, a->input.origin );
-		q->translation = a->input.translation;
+		// The ray starts at the origin
+		q->origin = a->origin;
+		q->translation = a->translation;
 		q->castOut = rec;
 	}
 }

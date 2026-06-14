@@ -299,8 +299,8 @@ static OriginQueryData RunOriginQueries( b2Vec2 baseVec )
 	// Shape level queries at the base
 	data.insidePoint = b2Shape_TestPoint( shapeId, base );
 
-	b2RayCastInput rayInput = { { -5.0f, 0.0f }, { 10.0f, 0.0f }, 1.0f };
-	b2WorldCastOutput rayOutput = b2Shape_RayCast( shapeId, base, &rayInput );
+	b2WorldCastOutput rayOutput =
+		b2Shape_RayCast( shapeId, b2OffsetPosition( base, ( b2Vec2 ){ -5.0f, 0.0f } ), ( b2Vec2 ){ 10.0f, 0.0f } );
 	data.shapeRayHit = rayOutput.hit;
 	data.shapeRayPoint = rayOutput.point;
 

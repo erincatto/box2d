@@ -464,13 +464,6 @@ void b2RecW_SHAPEPROXY( b2RecBuffer* buf, b2ShapeProxy v )
 	b2RecW_F32( buf, v.radius );
 }
 
-void b2RecW_RAYCASTINPUT( b2RecBuffer* buf, b2RayCastInput v )
-{
-	b2RecW_VEC2( buf, v.origin );
-	b2RecW_VEC2( buf, v.translation );
-	b2RecW_F32( buf, v.maxFraction );
-}
-
 void b2RecW_WORLDCASTOUTPUT( b2RecBuffer* buf, b2WorldCastOutput v )
 {
 	b2RecW_VEC2( buf, v.normal );

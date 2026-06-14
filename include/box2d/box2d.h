@@ -766,9 +766,9 @@ B2_API bool b2Shape_AreHitEventsEnabled( b2ShapeId shapeId );
 /// Test a world point for overlap with a shape
 B2_API bool b2Shape_TestPoint( b2ShapeId shapeId, b2Position point );
 
-/// Ray cast a shape directly. The ray input is relative to the origin and the output point is a
-/// world position. Near the origin pass b2Position_zero and a world ray.
-B2_API b2WorldCastOutput b2Shape_RayCast( b2ShapeId shapeId, b2Position origin, const b2RayCastInput* input );
+/// Ray cast a single shape. The ray starts at the origin and extends by the translation. The output
+/// point is a world position.
+B2_API b2WorldCastOutput b2Shape_RayCast( b2ShapeId shapeId, b2Position origin, b2Vec2 translation );
 
 /// Get a copy of the shape's circle. Asserts the type is correct.
 B2_API b2Circle b2Shape_GetCircle( b2ShapeId shapeId );

@@ -76,8 +76,9 @@ costs performance. Stay within about ±1e7 to ±1e8 meters.
 ## Query origins
 
 Every spatial query takes a `b2Position` origin, and the query geometry is relative to that
-origin: the overlap AABB and proxy points, the cast proxy, the ray input of `b2Shape_RayCast`,
-the mover capsule, and the planes `b2World_CollideMover` returns. Near the origin pass
+origin: the overlap AABB and proxy points, the cast proxy, the ray translation of
+`b2World_CastRay` and `b2Shape_RayCast` (whose origin is the ray start), the mover capsule, and
+the planes `b2World_CollideMover` returns. Near the origin pass
 `b2Position_zero` and the query reads as a plain world query. Far from the origin pass a nearby
 base, typically a body or camera position: the query then runs in float relative to that base
 with full precision, and cast results come back as world `b2Position` points.

@@ -190,7 +190,6 @@ b2WheelJointDef b2RecR_WHEELJOINTDEF( b2RecReader* rdr );
 b2AABB b2RecR_AABB( b2RecReader* rdr );
 b2QueryFilter b2RecR_QUERYFILTER( b2RecReader* rdr );
 b2ShapeProxy b2RecR_SHAPEPROXY( b2RecReader* rdr );
-b2RayCastInput b2RecR_RAYCASTINPUT( b2RecReader* rdr );
 b2WorldCastOutput b2RecR_WORLDCASTOUTPUT( b2RecReader* rdr );
 b2RayResult b2RecR_RAYRESULT( b2RecReader* rdr );
 b2PlaneResult b2RecR_PLANERESULT( b2RecReader* rdr );

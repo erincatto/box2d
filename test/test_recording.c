@@ -99,9 +99,9 @@ static void IssueAllQueries( b2WorldId worldId, b2ShapeId groundShapeId )
 	b2Shape_TestPoint( groundShapeId, b2MakePosition( (b2Vec2){ 0.0f, -10.0f } ) ); // inside center of ground
 	b2Shape_TestPoint( groundShapeId, b2MakePosition( (b2Vec2){ 0.0f, 100.0f } ) ); // outside
 
-	// Shape_RayCast against the ground shape, ray relative to the nonzero base
-	b2RayCastInput rcIn = { { -baseOffset.x, 5.0f - baseOffset.y }, { 0.0f, -20.0f }, 1.0f };
-	b2Shape_RayCast( groundShapeId, base, &rcIn );
+	// Shape_RayCast against the ground shape, ray starting above the ground
+	b2Position rayStart = b2OffsetPosition( base, ( b2Vec2 ){ -baseOffset.x, 5.0f - baseOffset.y } );
+	b2Shape_RayCast( groundShapeId, rayStart, ( b2Vec2 ){ 0.0f, -20.0f } );
 }
 
 int RecordingTest( void )

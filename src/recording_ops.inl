@@ -205,7 +205,7 @@ B2_REC_OP( 0xE6, QueryCastMover, RET_NONE,
 		   ARG( WORLDID, world ) ARG( POSITION, origin ) ARG( CAPSULE, mover ) ARG( VEC2, translation )
 			   ARG( QUERYFILTER, filter ) )
 B2_REC_OP( 0xE7, ShapeTestPoint, RET_NONE, ARG( SHAPEID, shape ) ARG( POSITION, point ) )
-B2_REC_OP( 0xE8, ShapeRayCast, RET_NONE, ARG( SHAPEID, shape ) ARG( POSITION, origin ) ARG( RAYCASTINPUT, input ) )
+B2_REC_OP( 0xE8, ShapeRayCast, RET_NONE, ARG( SHAPEID, shape ) ARG( POSITION, origin ) ARG( VEC2, translation ) )
 
 B2_REC_OP( 0xF1, StateHash, RET_NONE, ARG( WORLDID, world ) ARG( U64, hash ) )
 

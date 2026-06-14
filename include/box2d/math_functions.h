@@ -927,6 +927,12 @@ inline b2Position operator+( b2Position a, b2Vec2 b )
 	return { a.x + b.x, a.y + b.y };
 }
 
+/// Offset a world position by a vector
+inline b2Position operator-( b2Position a, b2Vec2 b )
+{
+	return { a.x - b.x, a.y - b.y };
+}
+
 /// Delta between two world positions, demoted to float
 inline b2Vec2 operator-( b2Position a, b2Position b )
 {

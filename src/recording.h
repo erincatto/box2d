@@ -45,7 +45,7 @@ typedef struct b2World b2World;
 // Recording format version. Any mismatch refuses to load. The minor tracks op stream layout
 // changes that keep the 32 byte header shape, such as the query origin args.
 #define B2_REC_VERSION_MAJOR 3
-#define B2_REC_VERSION_MINOR 1
+#define B2_REC_VERSION_MINOR 2
 
 // File header, fixed 32 bytes, little-endian
 typedef struct b2RecHeader
@@ -129,7 +129,6 @@ typedef b2WheelJointDef b2RecCType_WHEELJOINTDEF;
 typedef b2AABB b2RecCType_AABB;
 typedef b2QueryFilter b2RecCType_QUERYFILTER;
 typedef b2ShapeProxy b2RecCType_SHAPEPROXY;
-typedef b2RayCastInput b2RecCType_RAYCASTINPUT;
 
 // Codegen pass 1a: arg structs, generated in recording.c, declared here for call sites.
 // These are typedef'd in recording.c before the write helpers, but must be visible
@@ -205,7 +204,6 @@ void b2RecW_WHEELJOINTDEF( b2RecBuffer* buf, b2WheelJointDef v );
 void b2RecW_AABB( b2RecBuffer* buf, b2AABB v );
 void b2RecW_QUERYFILTER( b2RecBuffer* buf, b2QueryFilter v );
 void b2RecW_SHAPEPROXY( b2RecBuffer* buf, b2ShapeProxy v );
-void b2RecW_RAYCASTINPUT( b2RecBuffer* buf, b2RayCastInput v );
 void b2RecW_WORLDCASTOUTPUT( b2RecBuffer* buf, b2WorldCastOutput v );
 void b2RecW_RAYRESULT( b2RecBuffer* buf, b2RayResult v );
 void b2RecW_PLANERESULT( b2RecBuffer* buf, b2PlaneResult v );
