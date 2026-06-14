@@ -44,7 +44,7 @@ extern "C"
 {
 #endif
 
-void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale, float frictionTorque, float hertz,
+void CreateHuman( Human* human, b2WorldId worldId, b2Position position, float scale, float frictionTorque, float hertz,
 				  float dampingRatio, int groupIndex, void* userData, bool colorize );
 
 void DestroyHuman( Human* human );

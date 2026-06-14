@@ -10,7 +10,7 @@ class Donut
 public:
 	Donut();
 
-	void Create( b2WorldId worldId, b2Vec2 position, float scale, int groupIndex, bool enableSensorEvents, void* userData );
+	void Create( b2WorldId worldId, b2Position position, float scale, int groupIndex, bool enableSensorEvents, void* userData );
 	void Destroy();
 
 	static constexpr int m_sides = 7;

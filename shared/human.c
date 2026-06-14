@@ -10,7 +10,7 @@
 
 #include <assert.h>
 
-void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale, float frictionTorque, float hertz,
+void CreateHuman( Human* human, b2WorldId worldId, b2Position position, float scale, float frictionTorque, float hertz,
 				  float dampingRatio, int groupIndex, void* userData, bool colorize )
 {
 	assert( human->isSpawned == false );
@@ -67,7 +67,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		Bone* bone = human->bones + bone_hip;
 		bone->parentIndex = -1;
 
-		bodyDef.position = b2MakePosition( b2Add( (b2Vec2){ 0.0f, 0.95f * s }, position ) );
+		bodyDef.position = b2OffsetPosition( position, (b2Vec2){ 0.0f, 0.95f * s } );
 		bodyDef.linearDamping = 0.0f;
 		bodyDef.name = "hip";
 
@@ -87,7 +87,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		Bone* bone = human->bones + bone_torso;
 		bone->parentIndex = bone_hip;
 
-		bodyDef.position = b2MakePosition( b2Add( (b2Vec2){ 0.0f, 1.2f * s }, position ) );
+		bodyDef.position = b2OffsetPosition( position, (b2Vec2){ 0.0f, 1.2f * s } );
 		bodyDef.linearDamping = 0.0f;
 		bodyDef.name = "torso";
 
@@ -104,12 +104,12 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		b2Capsule capsule = { { 0.0f, -0.135f * s }, { 0.0f, 0.135f * s }, 0.09f * s };
 		b2CreateCapsuleShape( bone->bodyId, &shapeDef, &capsule );
 
-		b2Vec2 pivot = b2Add( (b2Vec2){ 0.0f, 1.0f * s }, position );
+		b2Position pivot = b2OffsetPosition( position, (b2Vec2){ 0.0f, 1.0f * s } );
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 		jointDef.base.bodyIdA = human->bones[bone->parentIndex].bodyId;
 		jointDef.base.bodyIdB = bone->bodyId;
-		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, b2MakePosition( pivot ) );
-		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, b2MakePosition( pivot ) );
+		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 		jointDef.enableLimit = enableLimit;
 		jointDef.lowerAngle = -0.25f * B2_PI;
 		jointDef.upperAngle = 0.0f;
@@ -128,7 +128,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		Bone* bone = human->bones + bone_head;
 		bone->parentIndex = bone_torso;
 
-		bodyDef.position = b2MakePosition( b2Add( (b2Vec2){ 0.0f * s, 1.475f * s }, position ) );
+		bodyDef.position = b2OffsetPosition( position, (b2Vec2){ 0.0f * s, 1.475f * s } );
 		bodyDef.linearDamping = 0.1f;
 		bodyDef.name = "head";
 
@@ -147,12 +147,12 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		// capsule = { { 0.0f, -0.12f * s }, { 0.0f, -0.08f * s }, 0.05f * s };
 		// b2CreateCapsuleShape( bone->bodyId, &shapeDef, &capsule );
 
-		b2Vec2 pivot = b2Add( (b2Vec2){ 0.0f, 1.4f * s }, position );
+		b2Position pivot = b2OffsetPosition( position, (b2Vec2){ 0.0f, 1.4f * s } );
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 		jointDef.base.bodyIdA = human->bones[bone->parentIndex].bodyId;
 		jointDef.base.bodyIdB = bone->bodyId;
-		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, b2MakePosition( pivot ) );
-		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, b2MakePosition( pivot ) );
+		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 		jointDef.enableLimit = enableLimit;
 		jointDef.lowerAngle = -0.3f * B2_PI;
 		jointDef.upperAngle = 0.1f * B2_PI;
@@ -171,7 +171,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		Bone* bone = human->bones + bone_upperLeftLeg;
 		bone->parentIndex = bone_hip;
 
-		bodyDef.position = b2MakePosition( b2Add( (b2Vec2){ 0.0f, 0.775f * s }, position ) );
+		bodyDef.position = b2OffsetPosition( position, (b2Vec2){ 0.0f, 0.775f * s } );
 		bodyDef.linearDamping = 0.0f;
 		bodyDef.name = "upper_left_leg";
 
@@ -186,12 +186,12 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.06f * s };
 		b2CreateCapsuleShape( bone->bodyId, &shapeDef, &capsule );
 
-		b2Vec2 pivot = b2Add( (b2Vec2){ 0.0f, 0.9f * s }, position );
+		b2Position pivot = b2OffsetPosition( position, (b2Vec2){ 0.0f, 0.9f * s } );
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 		jointDef.base.bodyIdA = human->bones[bone->parentIndex].bodyId;
 		jointDef.base.bodyIdB = bone->bodyId;
-		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, b2MakePosition( pivot ) );
-		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, b2MakePosition( pivot ) );
+		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 		jointDef.enableLimit = enableLimit;
 		jointDef.lowerAngle = -0.05f * B2_PI;
 		jointDef.upperAngle = 0.4f * B2_PI;
@@ -220,7 +220,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		Bone* bone = human->bones + bone_lowerLeftLeg;
 		bone->parentIndex = bone_upperLeftLeg;
 
-		bodyDef.position = b2MakePosition( b2Add( (b2Vec2){ 0.0f, 0.475f * s }, position ) );
+		bodyDef.position = b2OffsetPosition( position, (b2Vec2){ 0.0f, 0.475f * s } );
 		bodyDef.linearDamping = 0.0f;
 		bodyDef.name = "lower_left_leg";
 
@@ -243,12 +243,12 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		b2CreatePolygonShape( bone->bodyId, &footShapeDef, &footPolygon );
 
-		b2Vec2 pivot = b2Add( (b2Vec2){ 0.0f, 0.625f * s }, position );
+		b2Position pivot = b2OffsetPosition( position, (b2Vec2){ 0.0f, 0.625f * s } );
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 		jointDef.base.bodyIdA = human->bones[bone->parentIndex].bodyId;
 		jointDef.base.bodyIdB = bone->bodyId;
-		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, b2MakePosition( pivot ) );
-		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, b2MakePosition( pivot ) );
+		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 		jointDef.enableLimit = enableLimit;
 		jointDef.lowerAngle = -0.5f * B2_PI;
 		jointDef.upperAngle = -0.02f * B2_PI;
@@ -267,7 +267,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		Bone* bone = human->bones + bone_upperRightLeg;
 		bone->parentIndex = bone_hip;
 
-		bodyDef.position = b2MakePosition( b2Add( (b2Vec2){ 0.0f, 0.775f * s }, position ) );
+		bodyDef.position = b2OffsetPosition( position, (b2Vec2){ 0.0f, 0.775f * s } );
 		bodyDef.linearDamping = 0.0f;
 		bodyDef.name = "upper_right_leg";
 
@@ -282,12 +282,12 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.06f * s };
 		b2CreateCapsuleShape( bone->bodyId, &shapeDef, &capsule );
 
-		b2Vec2 pivot = b2Add( (b2Vec2){ 0.0f, 0.9f * s }, position );
+		b2Position pivot = b2OffsetPosition( position, (b2Vec2){ 0.0f, 0.9f * s } );
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 		jointDef.base.bodyIdA = human->bones[bone->parentIndex].bodyId;
 		jointDef.base.bodyIdB = bone->bodyId;
-		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, b2MakePosition( pivot ) );
-		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, b2MakePosition( pivot ) );
+		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 		jointDef.enableLimit = enableLimit;
 		jointDef.lowerAngle = -0.05f * B2_PI;
 		jointDef.upperAngle = 0.4f * B2_PI;
@@ -306,7 +306,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		Bone* bone = human->bones + bone_lowerRightLeg;
 		bone->parentIndex = bone_upperRightLeg;
 
-		bodyDef.position = b2MakePosition( b2Add( (b2Vec2){ 0.0f, 0.475f * s }, position ) );
+		bodyDef.position = b2OffsetPosition( position, (b2Vec2){ 0.0f, 0.475f * s } );
 		bodyDef.linearDamping = 0.0f;
 		bodyDef.name = "lower_right_leg";
 
@@ -329,12 +329,12 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 
 		b2CreatePolygonShape( bone->bodyId, &footShapeDef, &footPolygon );
 
-		b2Vec2 pivot = b2Add( (b2Vec2){ 0.0f, 0.625f * s }, position );
+		b2Position pivot = b2OffsetPosition( position, (b2Vec2){ 0.0f, 0.625f * s } );
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 		jointDef.base.bodyIdA = human->bones[bone->parentIndex].bodyId;
 		jointDef.base.bodyIdB = bone->bodyId;
-		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, b2MakePosition( pivot ) );
-		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, b2MakePosition( pivot ) );
+		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 		jointDef.enableLimit = enableLimit;
 		jointDef.lowerAngle = -0.5f * B2_PI;
 		jointDef.upperAngle = -0.02f * B2_PI;
@@ -354,7 +354,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		bone->parentIndex = bone_torso;
 		bone->frictionScale = 0.5f;
 
-		bodyDef.position = b2MakePosition( b2Add( (b2Vec2){ 0.0f, 1.225f * s }, position ) );
+		bodyDef.position = b2OffsetPosition( position, (b2Vec2){ 0.0f, 1.225f * s } );
 		bodyDef.linearDamping = 0.0f;
 		bodyDef.name = "upper_left_arm";
 
@@ -368,12 +368,12 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.035f * s };
 		b2CreateCapsuleShape( bone->bodyId, &shapeDef, &capsule );
 
-		b2Vec2 pivot = b2Add( (b2Vec2){ 0.0f, 1.35f * s }, position );
+		b2Position pivot = b2OffsetPosition( position, (b2Vec2){ 0.0f, 1.35f * s } );
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 		jointDef.base.bodyIdA = human->bones[bone->parentIndex].bodyId;
 		jointDef.base.bodyIdB = bone->bodyId;
-		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, b2MakePosition( pivot ) );
-		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, b2MakePosition( pivot ) );
+		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 		jointDef.enableLimit = enableLimit;
 		jointDef.lowerAngle = -0.1f * B2_PI;
 		jointDef.upperAngle = 0.8f * B2_PI;
@@ -392,7 +392,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		Bone* bone = human->bones + bone_lowerLeftArm;
 		bone->parentIndex = bone_upperLeftArm;
 
-		bodyDef.position = b2MakePosition( b2Add( (b2Vec2){ 0.0f, 0.975f * s }, position ) );
+		bodyDef.position = b2OffsetPosition( position, (b2Vec2){ 0.0f, 0.975f * s } );
 		bodyDef.linearDamping = 0.1f;
 		bodyDef.name = "lower_left_arm";
 
@@ -407,13 +407,13 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.03f * s };
 		b2CreateCapsuleShape( bone->bodyId, &shapeDef, &capsule );
 
-		b2Vec2 pivot = b2Add( (b2Vec2){ 0.0f, 1.1f * s }, position );
+		b2Position pivot = b2OffsetPosition( position, (b2Vec2){ 0.0f, 1.1f * s } );
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 		jointDef.base.bodyIdA = human->bones[bone->parentIndex].bodyId;
 		jointDef.base.bodyIdB = bone->bodyId;
-		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, b2MakePosition( pivot ) );
+		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
 		jointDef.base.localFrameA.q = b2MakeRot( 0.25f * B2_PI );
-		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, b2MakePosition( pivot ) );
+		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 		jointDef.enableLimit = enableLimit;
 		jointDef.lowerAngle = -0.2f * B2_PI;
 		jointDef.upperAngle = 0.3f * B2_PI;
@@ -432,7 +432,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		Bone* bone = human->bones + bone_upperRightArm;
 		bone->parentIndex = bone_torso;
 
-		bodyDef.position = b2MakePosition( b2Add( (b2Vec2){ 0.0f, 1.225f * s }, position ) );
+		bodyDef.position = b2OffsetPosition( position, (b2Vec2){ 0.0f, 1.225f * s } );
 		bodyDef.linearDamping = 0.0f;
 		bodyDef.name = "upper_right_arm";
 
@@ -447,12 +447,12 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.035f * s };
 		b2CreateCapsuleShape( bone->bodyId, &shapeDef, &capsule );
 
-		b2Vec2 pivot = b2Add( (b2Vec2){ 0.0f, 1.35f * s }, position );
+		b2Position pivot = b2OffsetPosition( position, (b2Vec2){ 0.0f, 1.35f * s } );
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 		jointDef.base.bodyIdA = human->bones[bone->parentIndex].bodyId;
 		jointDef.base.bodyIdB = bone->bodyId;
-		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, b2MakePosition( pivot ) );
-		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, b2MakePosition( pivot ) );
+		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 		jointDef.enableLimit = enableLimit;
 		jointDef.lowerAngle = -0.1f * B2_PI;
 		jointDef.upperAngle = 0.8f * B2_PI;
@@ -471,7 +471,7 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		Bone* bone = human->bones + bone_lowerRightArm;
 		bone->parentIndex = bone_upperRightArm;
 
-		bodyDef.position = b2MakePosition( b2Add( (b2Vec2){ 0.0f, 0.975f * s }, position ) );
+		bodyDef.position = b2OffsetPosition( position, (b2Vec2){ 0.0f, 0.975f * s } );
 		bodyDef.linearDamping = 0.1f;
 		bodyDef.name = "lower_right_arm";
 
@@ -486,13 +486,13 @@ void CreateHuman( Human* human, b2WorldId worldId, b2Vec2 position, float scale,
 		b2Capsule capsule = { { 0.0f, -0.125f * s }, { 0.0f, 0.125f * s }, 0.03f * s };
 		b2CreateCapsuleShape( bone->bodyId, &shapeDef, &capsule );
 
-		b2Vec2 pivot = b2Add( (b2Vec2){ 0.0f, 1.1f * s }, position );
+		b2Position pivot = b2OffsetPosition( position, (b2Vec2){ 0.0f, 1.1f * s } );
 		b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 		jointDef.base.bodyIdA = human->bones[bone->parentIndex].bodyId;
 		jointDef.base.bodyIdB = bone->bodyId;
-		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, b2MakePosition( pivot ) );
+		jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
 		jointDef.base.localFrameA.q = b2MakeRot( 0.25f * B2_PI );
-		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, b2MakePosition( pivot ) );
+		jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
 		jointDef.enableLimit = enableLimit;
 		jointDef.lowerAngle = -0.2f * B2_PI;
 		jointDef.upperAngle = 0.3f * B2_PI;

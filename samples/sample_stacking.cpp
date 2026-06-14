@@ -50,7 +50,7 @@ public:
 
 		// DrawCircle({0.0f, 2.0f}, 1.0f, b2_colorWhite);
 
-		b2Vec2 position = b2Body_GetPosition( m_bodyId );
+		b2Position position = b2Body_GetPosition( m_bodyId );
 		DrawScreenTextLine( "(x, y) = (%.2g, %.2g)", position.x, position.y );
 	}
 
@@ -485,7 +485,7 @@ public:
 			int indexA = static_cast<int>( reinterpret_cast<intptr_t>( userDataA ) );
 			int indexB = static_cast<int>( reinterpret_cast<intptr_t>( userDataB ) );
 
-			DrawPoint( m_draw, event->point, 10.0f, b2_colorWhite );
+			DrawPoint( m_draw, b2ToVec2( event->point ), 10.0f, b2_colorWhite );
 
 			m_events.push_back( { indexA, indexB } );
 		}
@@ -846,7 +846,7 @@ public:
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 			if ( i == 0 )
 			{
-				b2Body_ApplyLinearImpulse( bodyId, b2Vec2{ 0.2f, 0.0f }, b2Vec2{ x, 1.0f }, true );
+				b2Body_ApplyLinearImpulse( bodyId, b2Vec2{ 0.2f, 0.0f }, b2MakePosition( { x, 1.0f } ), true );
 			}
 
 			x += 1.0f;

@@ -6,6 +6,7 @@
 #include "draw.h"
 #include "human.h"
 #include "sample.h"
+#include "utils.h"
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
@@ -13,10 +14,10 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
-class LargeWorld : public Sample
+class TileWorld : public Sample
 {
 public:
-	explicit LargeWorld( SampleContext* context )
+	explicit TileWorld( SampleContext* context )
 		: Sample( context )
 	{
 		m_period = 40.0f;
@@ -31,7 +32,7 @@ public:
 
 		if ( m_context->restart == false )
 		{
-			m_context->camera.center = m_viewPosition;
+			m_context->camera.center = b2MakePosition( m_viewPosition );
 			m_context->camera.zoom = 25.0f * 1.0f;
 			m_context->debugDraw.drawJoints = false;
 		}
@@ -110,7 +111,7 @@ public:
 			}
 			else if ( remainder == 1 )
 			{
-				b2Vec2 position = { xbase - 2.0f, 10.0f };
+				b2Position position = { xbase - 2.0f, 10.0f };
 				for ( int i = 0; i < 5; ++i )
 				{
 					Human human = {};
@@ -121,7 +122,7 @@ public:
 			}
 			else
 			{
-				b2Vec2 position = { xbase - 4.0f, 12.0f };
+				b2Position position = { xbase - 4.0f, 12.0f };
 
 				for ( int i = 0; i < 5; ++i )
 				{
@@ -174,7 +175,7 @@ public:
 
 		if ( m_speed != 0.0f )
 		{
-			m_context->camera.center = m_viewPosition;
+			m_context->camera.center = b2MakePosition( m_viewPosition );
 		}
 
 		if ( m_followCar )
@@ -188,7 +189,7 @@ public:
 			m_explosionPosition.x = ( 0.5f + m_cycleIndex ) * m_period - span;
 
 			b2ExplosionDef def = b2DefaultExplosionDef();
-			def.position = m_explosionPosition;
+			def.position = b2MakePosition( m_explosionPosition );
 			def.radius = radius;
 			def.falloff = 0.1f;
 			def.impulsePerLength = 1.0f;
@@ -222,7 +223,7 @@ public:
 
 	static Sample* Create( SampleContext* context )
 	{
-		return new LargeWorld( context );
+		return new TileWorld( context );
 	}
 
 	Car m_car;
@@ -239,4 +240,137 @@ public:
 	bool m_followCar;
 };
 
-static int sampleLargeWorld = RegisterSample( "World", "Large World", LargeWorld::Create );
+static int sampleTileWorld = RegisterSample( "World", "Tiles", TileWorld::Create );
+
+#ifdef BOX2D_DOUBLE_PRECISION
+
+// A pyramid built far from the origin to exercise double precision world positions. The contact
+// solver runs in delta space, so the stack settles the same as one at the origin while the body
+// transforms hold their full double coordinate. Record it (R) and open it in the Replay Viewer:
+// the recorded doubles survive the snapshot and the motion reproduces with no divergence.
+class FarPyramid : public Sample
+{
+public:
+	explicit FarPyramid( SampleContext* context )
+		: Sample( context )
+	{
+		// 1e7 is exactly representable in float, so integer box offsets stay exact and a run here
+		// can be compared against one at the origin.
+		b2Position origin = b2MakePosition( { 10.0e6f, 0.0f } );
+
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = b2OffsetPosition( origin, { 0.0f, 12.0f } );
+			m_context->camera.zoom = 17.0f;
+		}
+
+		float h = 0.25f;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.position = origin;
+		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
+		b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
+		b2Polygon box = b2MakeBox( h, h );
+		bodyDef.type = b2_dynamicBody;
+
+		int baseCount = 50;
+		for ( int i = 0; i < baseCount; ++i )
+		{
+			float y = ( 2.0f * i + 1.0f ) * h;
+			for ( int j = i; j < baseCount; ++j )
+			{
+				float x = ( i + 1.0f ) * h + 2.0f * ( j - i ) * h - h * baseCount;
+				bodyDef.position = b2OffsetPosition( origin, { x, y } );
+				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+				b2CreatePolygonShape( bodyId, &shapeDef, &box );
+			}
+		}
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		b2Position c = m_context->camera.center;
+		DrawScreenTextLine( "view center (%.1f, %.1f) m from world origin", c.x, c.y );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new FarPyramid( context );
+	}
+};
+
+static int sampleFarPyramid = RegisterSample( "World", "Far Pyramid", FarPyramid::Create );
+
+class FarRagdolls : public Sample
+{
+public:
+	explicit FarRagdolls( SampleContext* context )
+		: Sample( context )
+	{
+		b2Position origin = b2MakePosition( { 10.0e6f, 0.0f } );
+
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = b2OffsetPosition( origin, { 0.0f, 6.0f } );
+			m_context->camera.zoom = 10.0f;
+		}
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.position = origin;
+		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		float w = 6.0f;
+		float h = 12.0f;
+		b2Segment floor = { { -w, 0.0f }, { w, 0.0f } };
+		b2Segment leftWall = { { -w, 0.0f }, { -w, h } };
+		b2Segment rightWall = { { w, 0.0f }, { w, h } };
+		b2CreateSegmentShape( groundId, &shapeDef, &floor );
+		b2CreateSegmentShape( groundId, &shapeDef, &leftWall );
+		b2CreateSegmentShape( groundId, &shapeDef, &rightWall );
+
+		float scale = 1.0f;
+		int index = 0;
+		for ( int i = 0; i < e_rowCount; ++i )
+		{
+			for ( int j = 0; j < e_columnCount; ++j )
+			{
+				float x = 2.4f * scale * ( j - 0.5f * ( e_columnCount - 1 ) ) + RandomFloatRange( -0.3f, 0.3f );
+				float y = 2.0f + 2.2f * scale * i;
+				b2Position p = b2OffsetPosition( origin, { x, y } );
+				CreateHuman( m_humans + index, m_worldId, p, scale, 0.05f, 1.0f, 0.5f, index + 1, nullptr, false );
+				index += 1;
+			}
+		}
+
+		m_humanCount = index;
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		b2Position c = m_context->camera.center;
+		DrawScreenTextLine( "%d ragdolls piled %.0f m from the world origin", m_humanCount, c.x );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new FarRagdolls( context );
+	}
+
+	static constexpr int e_columnCount = 5;
+	static constexpr int e_rowCount = 5;
+	Human m_humans[e_columnCount * e_rowCount] = {};
+	int m_humanCount = 0;
+};
+
+static int sampleFarRagdolls = RegisterSample( "World", "Far Ragdolls", FarRagdolls::Create );
+
+#endif

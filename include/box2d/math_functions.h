@@ -595,17 +595,13 @@ B2_INLINE b2Transform b2InvMulTransforms( b2Transform A, b2Transform B )
 	return C;
 }
 
-// World position boundary. These cross between the double precision world space at the public
-// boundary and the float interior. One set of bodies serves both modes: the typedefs collapse
-// the types in float mode and the explicit float casts become no-ops.
-
-/// Convert a vector to a world position
+/// Convert a vector to a world position.
 B2_INLINE b2Position b2MakePosition( b2Vec2 v )
 {
 	return B2_LITERAL( b2Position ){ v.x, v.y };
 }
 
-/// Lossy conversion of a world position to a float vector
+/// Lossy conversion of a world position to a float vector.
 B2_INLINE b2Vec2 b2ToVec2( b2Position p )
 {
 	return B2_LITERAL( b2Vec2 ){ (float)p.x, (float)p.y };
@@ -626,7 +622,7 @@ B2_INLINE float b2RoundDownFloat( double x )
 #endif
 }
 
-/// Narrow a world coordinate to float, rounding toward positive infinity
+/// Narrow a world coordinate to float, rounding toward positive infinity.
 B2_INLINE float b2RoundUpFloat( double x )
 {
 #if defined( BOX2D_DOUBLE_PRECISION )

@@ -23,7 +23,7 @@ struct CastContext_Single
 	bool hit = false;
 };
 
-static float b2CastResult_Closest( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* c )
+static float b2CastResult_Closest( b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* c )
 {
 	CastContext_Single* context = static_cast<CastContext_Single*>( c );
 
@@ -31,7 +31,7 @@ static float b2CastResult_Closest( b2ShapeId shapeId, b2Vec2 point, b2Vec2 norma
 		return -1.0f;
 
 	context->result.shapeId = shapeId;
-	context->result.point = point;
+	context->result.point = b2ToVec2( point );
 	context->result.normal = normal;
 	context->result.endPos = context->startPos + context->translation * fraction;
 	context->result.fraction = fraction;
@@ -112,7 +112,7 @@ public:
 		characterBox_ = b2MakeBox( 0.1f, 0.1f );
 		b2CreatePolygonShape( characterBodyId_, &characterShapeDef, &characterBox_ );
 
-		context->camera.center = b2Vec2_zero;
+		context->camera.center = b2Position_zero;
 	}
 
 	void Step() override
@@ -183,15 +183,15 @@ public:
 			}
 		}
 
-		b2Vec2 characterPos = b2Body_GetPosition( characterBodyId_ );
-		b2Vec2 newCharacterPos = characterPos;
+		b2Position characterPos = b2Body_GetPosition( characterBodyId_ );
+		b2Position newCharacterPos = characterPos;
 		newCharacterPos.x += characterVelocity_.x * timeStep;
 		newCharacterPos.y += characterVelocity_.y * timeStep;
 		b2Body_SetTransform( characterBodyId_, newCharacterPos, b2Rot_identity );
 
 		PhysicsHitQueryResult2D hitResult;
 		const b2ShapeProxy shapeProxy = b2MakeProxy( characterBox_.vertices, characterBox_.count, characterBox_.radius );
-		if ( ShapeCastSingle( hitResult, characterPos, newCharacterPos, 0.0f, shapeProxy ) )
+		if ( ShapeCastSingle( hitResult, b2ToVec2( characterPos ), b2ToVec2( newCharacterPos ), 0.0f, shapeProxy ) )
 		{
 			hitPos = hitResult.point;
 			hitNormal = hitResult.normal;
@@ -327,7 +327,7 @@ public:
 			b2CreatePolygonShape( m_platformId, &shapeDef, &box );
 
 			b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
-			b2Vec2 pivot = { -2.0f, 5.0f };
+			b2Position pivot = { -2.0f, 5.0f };
 			revoluteDef.base.bodyIdA = m_attachmentId;
 			revoluteDef.base.bodyIdB = m_platformId;
 			revoluteDef.base.localFrameA.p = b2Body_GetLocalPoint( m_attachmentId, pivot );
@@ -423,7 +423,7 @@ public:
 			b2CreatePolygonShape( m_platformId, &shapeDef, &box );
 
 			b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
-			b2Vec2 pivot = { -2.0f, 5.0f };
+			b2Position pivot = { -2.0f, 5.0f };
 			revoluteDef.base.bodyIdA = m_attachmentId;
 			revoluteDef.base.bodyIdB = m_platformId;
 			revoluteDef.base.localFrameA.p = b2Body_GetLocalPoint( m_attachmentId, pivot );
@@ -433,7 +433,7 @@ public:
 			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
 
 			b2PrismaticJointDef prismaticDef = b2DefaultPrismaticJointDef();
-			b2Vec2 anchor = { 0.0f, 5.0f };
+			b2Position anchor = { 0.0f, 5.0f };
 			prismaticDef.base.bodyIdA = groundId;
 			prismaticDef.base.bodyIdB = m_platformId;
 			prismaticDef.base.localFrameA.p = b2Body_GetLocalPoint( groundId, anchor );

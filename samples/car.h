@@ -10,7 +10,7 @@ class Car
 public:
 	Car();
 
-	void Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz, float dampingRatio, float torque, void* userData );
+	void Spawn( b2WorldId worldId, b2Position position, float scale, float hertz, float dampingRatio, float torque, void* userData );
 	void Despawn();
 
 	void SetSpeed( float speed );
@@ -31,7 +31,7 @@ class Truck
 public:
 	Truck();
 
-	void Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz, float dampingRatio, float torque, float density,
+	void Spawn( b2WorldId worldId, b2Position position, float scale, float hertz, float dampingRatio, float torque, float density,
 				void* userData );
 	void Despawn();
 

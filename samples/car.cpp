@@ -18,7 +18,7 @@ Car::Car()
 	m_isSpawned = false;
 }
 
-void Car::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz, float dampingRatio, float torque, void* userData )
+void Car::Spawn( b2WorldId worldId, b2Position position, float scale, float hertz, float dampingRatio, float torque, void* userData )
 {
 	assert( m_isSpawned == false );
 
@@ -47,7 +47,7 @@ void Car::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz, f
 
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_dynamicBody;
-	bodyDef.position = b2Add( { 0.0f, 1.0f * scale }, position );
+	bodyDef.position = b2OffsetPosition( position, { 0.0f, 1.0f * scale } );
 	m_chassisId = b2CreateBody( worldId, &bodyDef );
 	b2CreatePolygonShape( m_chassisId, &shapeDef, &chassis );
 
@@ -55,18 +55,18 @@ void Car::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz, f
 	shapeDef.material.friction = 1.5f;
 	shapeDef.material.rollingResistance = 0.1f;
 
-	bodyDef.position = b2Add( { -1.0f * scale, 0.35f * scale }, position );
+	bodyDef.position = b2OffsetPosition( position, { -1.0f * scale, 0.35f * scale } );
 	bodyDef.allowFastRotation = true;
 	m_rearWheelId = b2CreateBody( worldId, &bodyDef );
 	b2CreateCircleShape( m_rearWheelId, &shapeDef, &circle );
 
-	bodyDef.position = b2Add( { 1.0f * scale, 0.4f * scale }, position );
+	bodyDef.position = b2OffsetPosition( position, { 1.0f * scale, 0.4f * scale } );
 	bodyDef.allowFastRotation = true;
 	m_frontWheelId = b2CreateBody( worldId, &bodyDef );
 	b2CreateCircleShape( m_frontWheelId, &shapeDef, &circle );
 
 	b2Vec2 axis = { 0.0f, 1.0f };
-	b2Vec2 pivot = b2Body_GetPosition( m_rearWheelId );
+	b2Position pivot = b2Body_GetPosition( m_rearWheelId );
 
 	// float throttle = 0.0f;
 	// float speed = 35.0f;
@@ -156,7 +156,7 @@ Truck::Truck()
 	m_isSpawned = false;
 }
 
-void Truck::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz, float dampingRatio, float torque, float density,
+void Truck::Spawn( b2WorldId worldId, b2Position position, float scale, float hertz, float dampingRatio, float torque, float density,
 				   void* userData )
 {
 	assert( m_isSpawned == false );
@@ -189,7 +189,7 @@ void Truck::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz,
 
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_dynamicBody;
-	bodyDef.position = b2Add( { 0.0f, 1.0f * scale }, position );
+	bodyDef.position = b2OffsetPosition( position, { 0.0f, 1.0f * scale } );
 	m_chassisId = b2CreateBody( worldId, &bodyDef );
 	b2CreatePolygonShape( m_chassisId, &shapeDef, &chassis );
 
@@ -206,16 +206,16 @@ void Truck::Spawn( b2WorldId worldId, b2Vec2 position, float scale, float hertz,
 	shapeDef.material.customColor = b2_colorSilver;
 
 	b2Circle circle = { { 0.0f, 0.0f }, 0.4f * scale };
-	bodyDef.position = b2Add( { -2.75f * scale, 0.3f * scale }, position );
+	bodyDef.position = b2OffsetPosition( position, { -2.75f * scale, 0.3f * scale } );
 	m_rearWheelId = b2CreateBody( worldId, &bodyDef );
 	b2CreateCircleShape( m_rearWheelId, &shapeDef, &circle );
 
-	bodyDef.position = b2Add( { 0.8f * scale, 0.3f * scale }, position );
+	bodyDef.position = b2OffsetPosition( position, { 0.8f * scale, 0.3f * scale } );
 	m_frontWheelId = b2CreateBody( worldId, &bodyDef );
 	b2CreateCircleShape( m_frontWheelId, &shapeDef, &circle );
 
 	b2Vec2 axis = { 0.0f, 1.0f };
-	b2Vec2 pivot = b2Body_GetPosition( m_rearWheelId );
+	b2Position pivot = b2Body_GetPosition( m_rearWheelId );
 
 	// float throttle = 0.0f;
 	// float speed = 35.0f;

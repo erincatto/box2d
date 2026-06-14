@@ -42,10 +42,10 @@ struct CastResult
 	bool hit;
 };
 
-static float CastCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
+static float CastCallback( b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context )
 {
 	CastResult* result = (CastResult*)context;
-	result->point = point;
+	result->point = b2ToVec2( point );
 	result->normal = normal;
 	result->bodyId = b2Shape_GetBody( shapeId );
 	result->fraction = fraction;
@@ -153,7 +153,7 @@ public:
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 				b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-				b2Vec2 pivot = { xBase + 1.0f * i, yBase };
+				b2Position pivot = { xBase + 1.0f * i, yBase };
 				jointDef.base.bodyIdA = prevBodyId;
 				jointDef.base.bodyIdB = bodyId;
 				jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
@@ -163,7 +163,7 @@ public:
 				prevBodyId = bodyId;
 			}
 
-			b2Vec2 pivot = { xBase + 1.0f * count, yBase };
+			b2Position pivot = { xBase + 1.0f * count, yBase };
 			jointDef.base.bodyIdA = prevBodyId;
 			jointDef.base.bodyIdB = groundId2;
 			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
@@ -365,7 +365,7 @@ public:
 				DrawLine( m_draw, segment.point1 + delta, segment.point2 + delta, b2_colorPlum );
 			}
 
-			b2Body_ApplyForce( castResult.bodyId, { 0.0f, -50.0f }, castResult.point, true );
+			b2Body_ApplyForce( castResult.bodyId, { 0.0f, -50.0f }, b2MakePosition( castResult.point ), true );
 		}
 
 		b2Vec2 target = m_transform.p + timeStep * m_velocity + timeStep * m_pogoVelocity * b2Vec2{ 0.0f, 1.0f };
@@ -476,7 +476,7 @@ public:
 			return true;
 		}
 
-		b2Vec2 center = b2Body_GetWorldCenterOfMass( bodyId );
+		b2Vec2 center = b2ToVec2( b2Body_GetWorldCenterOfMass( bodyId ) );
 		b2Vec2 direction = b2Normalize( center - self->m_transform.p );
 		b2Vec2 impulse = b2Vec2{ 2.0f * direction.x, 2.0f };
 		b2Body_ApplyLinearImpulseToCenter( bodyId, impulse, true );
@@ -521,7 +521,7 @@ public:
 			};
 
 			bool wake = true;
-			b2Body_SetTargetTransform( m_elevatorId, { point, b2Rot_identity }, timeStep, wake );
+			b2Body_SetTargetTransform( m_elevatorId, { b2MakePosition( point ), b2Rot_identity }, timeStep, wake );
 		}
 
 		m_time += timeStep;
@@ -736,7 +736,7 @@ public:
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 				b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-				b2Vec2 pivot = { xBase + 1.0f * i, yBase };
+				b2Position pivot = { xBase + 1.0f * i, yBase };
 				jointDef.base.bodyIdA = prevBodyId;
 				jointDef.base.bodyIdB = bodyId;
 				jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
@@ -746,7 +746,7 @@ public:
 				prevBodyId = bodyId;
 			}
 
-			b2Vec2 pivot = { xBase + 1.0f * count, yBase };
+			b2Position pivot = { xBase + 1.0f * count, yBase };
 			jointDef.base.bodyIdA = prevBodyId;
 			jointDef.base.bodyIdB = groundId2;
 			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
@@ -1308,7 +1308,7 @@ public:
 				m_context->draw.DrawSegment( segment.point1 + delta, segment.point2 + delta, b2_colorPlum );
 			}
 
-			b2Body_ApplyForce( castResult.bodyId, { 0.0f, -50.0f }, castResult.point, true );
+			b2Body_ApplyForce( castResult.bodyId, { 0.0f, -50.0f }, b2MakePosition( castResult.point ), true );
 		}
 
 		b2Vec2 target = m_transform.p + timeStep * m_velocity + timeStep * m_pogoVelocity * b2Vec2{ 0.0f, 1.0f };
@@ -1418,7 +1418,7 @@ public:
 			return true;
 		}
 
-		b2Vec2 center = b2Body_GetWorldCenterOfMass( bodyId );
+		b2Vec2 center = b2ToVec2( b2Body_GetWorldCenterOfMass( bodyId ) );
 		b2Vec2 direction = b2Normalize( center - self->m_transform.p );
 		b2Vec2 impulse = b2Vec2{ 2.0f * direction.x, 2.0f };
 		b2Body_ApplyLinearImpulseToCenter( bodyId, impulse, true );

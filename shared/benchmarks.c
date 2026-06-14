@@ -286,7 +286,7 @@ void CreateGroup( b2WorldId worldId, int rowIndex, int columnIndex )
 	float span = g_rainData.gridCount * g_rainData.gridSize;
 	float groupDistance = 1.0f * span / RAIN_COLUMN_COUNT;
 
-	b2Vec2 position;
+	b2Position position;
 	position.x = -0.5f * span + groupDistance * ( columnIndex + 0.5f );
 	position.y = 40.0f + 45.0f * rowIndex;
 

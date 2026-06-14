@@ -155,7 +155,7 @@ public:
 				}
 			}
 
-			e->point = event->point;
+			e->point = b2ToVec2( event->point );
 			e->speed = event->approachSpeed;
 			e->stepIndex = m_stepCount;
 		}
@@ -166,7 +166,7 @@ public:
 			if ( e->stepIndex > 0 && m_stepCount <= e->stepIndex + 30 )
 			{
 				DrawCircle( m_draw, e->point, 0.1f, b2_colorOrangeRed );
-				DrawWorldString( m_draw, m_camera, e->point, b2_colorWhite, "%.1f", e->speed );
+				DrawWorldString( m_draw, m_camera, b2MakePosition( e->point ), b2_colorWhite, "%.1f", e->speed );
 			}
 		}
 
@@ -1110,7 +1110,7 @@ public:
 		b2ContactData data;
 		b2Body_GetContactData( m_ballId, &data, 1 );
 
-		b2Vec2 p = b2Body_GetPosition( m_ballId );
+		b2Position p = b2Body_GetPosition( m_ballId );
 		b2Vec2 v = b2Body_GetLinearVelocity( m_ballId );
 		DrawScreenTextLine( "p.x = %.9f, v.y = %.9f", p.x, v.y );
 
@@ -1180,7 +1180,7 @@ public:
 		b2ContactData data;
 		b2Body_GetContactData( m_ballId, &data, 1 );
 
-		b2Vec2 p = b2Body_GetPosition( m_ballId );
+		b2Position p = b2Body_GetPosition( m_ballId );
 		b2Vec2 v = b2Body_GetLinearVelocity( m_ballId );
 		DrawScreenTextLine( "p.x = %.9f, v.y = %.9f", p.x, v.y );
 
@@ -1574,10 +1574,10 @@ public:
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.enableSleep = false;
 
-			bodyDef.position = p1;
+			bodyDef.position = b2MakePosition( p1 );
 			b2BodyId leftFlipperId = b2CreateBody( m_worldId, &bodyDef );
 
-			bodyDef.position = p2;
+			bodyDef.position = b2MakePosition( p2 );
 			b2BodyId rightFlipperId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2Polygon box = b2MakeBox( 1.75f, 0.2f );
@@ -1627,7 +1627,7 @@ public:
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
-			jointDef.base.localFrameA.p = bodyDef.position;
+			jointDef.base.localFrameA.p = b2ToVec2( bodyDef.position );
 			jointDef.base.localFrameB.p = b2Vec2_zero;
 			jointDef.enableMotor = true;
 			jointDef.maxMotorTorque = 0.1f;
@@ -1637,7 +1637,7 @@ public:
 			bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box1 );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box2 );
-			jointDef.base.localFrameA.p = bodyDef.position;
+			jointDef.base.localFrameA.p = b2ToVec2( bodyDef.position );
 			jointDef.base.bodyIdB = bodyId;
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}

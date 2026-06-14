@@ -225,26 +225,26 @@ public:
 		return true;
 	}
 
-	void MouseDown( b2Vec2 p, int button, int mods ) override
+	void MouseDown( b2Position p, int button, int mods ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
 			if ( mods == 0 && m_rotating == false )
 			{
 				m_dragging = true;
-				m_startPoint = p;
+				m_startPoint = b2ToVec2( p );
 				m_basePosition = m_transform.p;
 			}
 			else if ( mods == GLFW_MOD_SHIFT && m_dragging == false )
 			{
 				m_rotating = true;
-				m_startPoint = p;
+				m_startPoint = b2ToVec2( p );
 				m_baseAngle = m_angle;
 			}
 		}
 	}
 
-	void MouseUp( b2Vec2, int button ) override
+	void MouseUp( b2Position, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -253,11 +253,11 @@ public:
 		}
 	}
 
-	void MouseMove( b2Vec2 p ) override
+	void MouseMove( b2Position p ) override
 	{
 		if ( m_dragging )
 		{
-			m_transform.p = m_basePosition + 0.5f * ( p - m_startPoint );
+			m_transform.p = m_basePosition + 0.5f * ( b2ToVec2( p ) - m_startPoint );
 		}
 		else if ( m_rotating )
 		{
@@ -365,13 +365,13 @@ public:
 			for ( int i = 0; i < m_proxyA.count; ++i )
 			{
 				b2Vec2 p = m_proxyA.points[i];
-				DrawWorldString( m_draw, m_camera, p, b2_colorWhite, " %d", i );
+				DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, " %d", i );
 			}
 
 			for ( int i = 0; i < m_proxyB.count; ++i )
 			{
 				b2Vec2 p = b2TransformPoint( m_transform, m_proxyB.points[i] );
-				DrawWorldString( m_draw, m_camera, p, b2_colorWhite, " %d", i );
+				DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, " %d", i );
 			}
 		}
 
@@ -639,26 +639,26 @@ public:
 		return true;
 	}
 
-	void MouseDown( b2Vec2 p, int button, int mods ) override
+	void MouseDown( b2Position p, int button, int mods ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
 			if ( mods == 0 && m_queryDrag == false )
 			{
 				m_rayDrag = true;
-				m_startPoint = p;
-				m_endPoint = p;
+				m_startPoint = b2ToVec2( p );
+				m_endPoint = b2ToVec2( p );
 			}
 			else if ( mods == GLFW_MOD_SHIFT && m_rayDrag == false )
 			{
 				m_queryDrag = true;
-				m_startPoint = p;
-				m_endPoint = p;
+				m_startPoint = b2ToVec2( p );
+				m_endPoint = b2ToVec2( p );
 			}
 		}
 	}
 
-	void MouseUp( b2Vec2, int button ) override
+	void MouseUp( b2Position, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -667,9 +667,9 @@ public:
 		}
 	}
 
-	void MouseMove( b2Vec2 p ) override
+	void MouseMove( b2Position p ) override
 	{
-		m_endPoint = p;
+		m_endPoint = b2ToVec2( p );
 	}
 
 	void Step() override
@@ -937,15 +937,15 @@ public:
 		return true;
 	}
 
-	void MouseDown( b2Vec2 p, int button, int mods ) override
+	void MouseDown( b2Position p, int button, int mods ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
-			m_startPosition = p;
+			m_startPosition = b2ToVec2( p );
 
 			if ( mods == 0 )
 			{
-				m_rayStart = p;
+				m_rayStart = b2ToVec2( p );
 				m_rayDrag = true;
 			}
 			else if ( mods == GLFW_MOD_SHIFT )
@@ -961,7 +961,7 @@ public:
 		}
 	}
 
-	void MouseUp( b2Vec2, int button ) override
+	void MouseUp( b2Position, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -971,11 +971,11 @@ public:
 		}
 	}
 
-	void MouseMove( b2Vec2 p ) override
+	void MouseMove( b2Position p ) override
 	{
 		if ( m_rayDrag )
 		{
-			m_rayEnd = p;
+			m_rayEnd = b2ToVec2( p );
 		}
 		else if ( m_translating )
 		{
@@ -1003,15 +1003,15 @@ public:
 			if ( output->fraction == 0.0f )
 			{
 				assert( output->normal.x == 0.0f && output->normal.y == 0.0f );
-				p = output->point;
-				DrawPoint( m_draw, output->point, 5.0, b2_colorPeru );
+				p = b2ToVec2( output->point );
+				DrawPoint( m_draw, b2ToVec2( output->point ), 5.0, b2_colorPeru );
 			}
 			else
 			{
 				p = b2MulAdd( p1, output->fraction, d );
 				DrawLine( m_draw, p1, p, b2_colorWhite );
 				DrawPoint( m_draw, p1, 5.0f, b2_colorGreen );
-				DrawPoint( m_draw, output->point, 5.0f, b2_colorWhite );
+				DrawPoint( m_draw, b2ToVec2( output->point ), 5.0f, b2_colorWhite );
 
 				b2Vec2 n = b2MulAdd( p, 1.0f, output->normal );
 				DrawLine( m_draw, p, n, b2_colorViolet );
@@ -1020,7 +1020,7 @@ public:
 			if ( m_showFraction )
 			{
 				b2Vec2 ps = { p.x + 0.05f, p.y - 0.02f };
-				DrawWorldString( m_draw, m_camera, ps, b2_colorWhite, "%.2f", output->fraction );
+				DrawWorldString( m_draw, m_camera, b2MakePosition( ps ), b2_colorWhite, "%.2f", output->fraction );
 			}
 		}
 		else
@@ -1055,7 +1055,7 @@ public:
 			if ( localOutput.hit )
 			{
 				output = localOutput;
-				output.point = b2TransformPoint( transform, localOutput.point );
+				output.point = b2MakePosition( b2TransformPoint( transform, b2ToVec2( localOutput.point ) ) );
 				output.normal = b2RotateVector( transform.q, localOutput.normal );
 				maxFraction = localOutput.fraction;
 			}
@@ -1078,7 +1078,7 @@ public:
 			if ( localOutput.hit )
 			{
 				output = localOutput;
-				output.point = b2TransformPoint( transform, localOutput.point );
+				output.point = b2MakePosition( b2TransformPoint( transform, b2ToVec2( localOutput.point ) ) );
 				output.normal = b2RotateVector( transform.q, localOutput.normal );
 				maxFraction = localOutput.fraction;
 			}
@@ -1099,7 +1099,7 @@ public:
 			if ( localOutput.hit )
 			{
 				output = localOutput;
-				output.point = b2TransformPoint( transform, localOutput.point );
+				output.point = b2MakePosition( b2TransformPoint( transform, b2ToVec2( localOutput.point ) ) );
 				output.normal = b2RotateVector( transform.q, localOutput.normal );
 				maxFraction = localOutput.fraction;
 			}
@@ -1120,7 +1120,7 @@ public:
 			if ( localOutput.hit )
 			{
 				output = localOutput;
-				output.point = b2TransformPoint( transform, localOutput.point );
+				output.point = b2MakePosition( b2TransformPoint( transform, b2ToVec2( localOutput.point ) ) );
 				output.normal = b2RotateVector( transform.q, localOutput.normal );
 				maxFraction = localOutput.fraction;
 			}
@@ -1144,7 +1144,7 @@ public:
 			if ( localOutput.hit )
 			{
 				output = localOutput;
-				output.point = b2TransformPoint( transform, localOutput.point );
+				output.point = b2MakePosition( b2TransformPoint( transform, b2ToVec2( localOutput.point ) ) );
 				output.normal = b2RotateVector( transform.q, localOutput.normal );
 				maxFraction = localOutput.fraction;
 			}
@@ -1202,7 +1202,7 @@ struct CastContext
 };
 
 // This callback finds the closest hit. This is the most common callback used in games.
-static float RayCastClosestCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
+static float RayCastClosestCallback( b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context )
 {
 	CastContext* rayContext = (CastContext*)context;
 
@@ -1216,7 +1216,7 @@ static float RayCastClosestCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 nor
 		return -1.0f;
 	}
 
-	rayContext->points[0] = point;
+	rayContext->points[0] = b2ToVec2( point );
 	rayContext->normals[0] = normal;
 	rayContext->fractions[0] = fraction;
 	rayContext->count = 1;
@@ -1230,7 +1230,7 @@ static float RayCastClosestCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 nor
 // This callback finds any hit. For this type of query we are usually just checking for obstruction,
 // so the hit data is not relevant.
 // NOTE: shape hits are not ordered, so this may not return the closest hit
-static float RayCastAnyCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
+static float RayCastAnyCallback( b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context )
 {
 	CastContext* rayContext = (CastContext*)context;
 
@@ -1244,7 +1244,7 @@ static float RayCastAnyCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal,
 		return -1.0f;
 	}
 
-	rayContext->points[0] = point;
+	rayContext->points[0] = b2ToVec2( point );
 	rayContext->normals[0] = normal;
 	rayContext->fractions[0] = fraction;
 	rayContext->count = 1;
@@ -1260,7 +1260,7 @@ static float RayCastAnyCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal,
 // NOTE: shape hits are not ordered, so this may return hits in any order. This means that
 // if you limit the number of results, you may discard the closest hit. You can see this
 // behavior in the sample.
-static float RayCastMultipleCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
+static float RayCastMultipleCallback( b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context )
 {
 	CastContext* rayContext = (CastContext*)context;
 
@@ -1277,7 +1277,7 @@ static float RayCastMultipleCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 no
 	int count = rayContext->count;
 	assert( count < 3 );
 
-	rayContext->points[count] = point;
+	rayContext->points[count] = b2ToVec2( point );
 	rayContext->normals[count] = normal;
 	rayContext->fractions[count] = fraction;
 	rayContext->count = count + 1;
@@ -1294,7 +1294,7 @@ static float RayCastMultipleCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 no
 }
 
 // This ray cast collects multiple hits along the ray and sorts them.
-static float RayCastSortedCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
+static float RayCastSortedCallback( b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context )
 {
 	CastContext* rayContext = (CastContext*)context;
 
@@ -1338,7 +1338,7 @@ static float RayCastSortedCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 norm
 		rayContext->fractions[j] = rayContext->fractions[j - 1];
 	}
 
-	rayContext->points[index] = point;
+	rayContext->points[index] = b2ToVec2( point );
 	rayContext->normals[index] = normal;
 	rayContext->fractions[index] = fraction;
 	rayContext->count = count < 3 ? count + 1 : 3;
@@ -1541,26 +1541,26 @@ public:
 		}
 	}
 
-	void MouseDown( b2Vec2 p, int button, int mods ) override
+	void MouseDown( b2Position p, int button, int mods ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
 			if ( mods == 0 && m_rotating == false )
 			{
-				m_rayStart = p;
-				m_rayEnd = p;
+				m_rayStart = b2ToVec2( p );
+				m_rayEnd = b2ToVec2( p );
 				m_dragging = true;
 			}
 			else if ( mods == GLFW_MOD_SHIFT && m_dragging == false )
 			{
 				m_rotating = true;
-				m_angleAnchor = p;
+				m_angleAnchor = b2ToVec2( p );
 				m_baseAngle = m_angle;
 			}
 		}
 	}
 
-	void MouseUp( b2Vec2, int button ) override
+	void MouseUp( b2Position, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -1569,11 +1569,11 @@ public:
 		}
 	}
 
-	void MouseMove( b2Vec2 p ) override
+	void MouseMove( b2Position p ) override
 	{
 		if ( m_dragging )
 		{
-			m_rayEnd = p;
+			m_rayEnd = b2ToVec2( p );
 		}
 		else if ( m_rotating )
 		{
@@ -1672,15 +1672,15 @@ public:
 			DrawScreenTextLine( "Simple closest point ray cast" );
 
 			// This version doesn't have a callback, but it doesn't skip the ignored shape
-			b2RayResult result = b2World_CastRayClosest( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter() );
+			b2RayResult result = b2World_CastRayClosest( m_worldId, b2MakePosition( m_rayStart ), rayTranslation, b2DefaultQueryFilter() );
 
 			if ( result.hit == true && result.fraction > 0.0f )
 			{
 				b2Vec2 c = b2MulAdd( m_rayStart, result.fraction, rayTranslation );
-				DrawPoint( m_draw, result.point, 5.0f, color1 );
+				DrawPoint( m_draw, b2ToVec2( result.point ), 5.0f, color1 );
 				DrawLine( m_draw, m_rayStart, c, color2 );
-				b2Vec2 head = b2MulAdd( result.point, 0.5f, result.normal );
-				DrawLine( m_draw, result.point, head, color3 );
+				b2Vec2 head = b2MulAdd( b2ToVec2( result.point ), 0.5f, result.normal );
+				DrawLine( m_draw, b2ToVec2( result.point ), head, color3 );
 			}
 			else
 			{
@@ -1736,7 +1736,7 @@ public:
 
 			if ( m_castType == e_rayCast )
 			{
-				b2World_CastRay( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
+				b2World_CastRay( m_worldId, b2MakePosition( m_rayStart ), rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
 			}
 			else
 			{
@@ -1817,9 +1817,9 @@ public:
 
 		if ( B2_IS_NON_NULL( m_bodyIds[m_ignoreIndex] ) )
 		{
-			b2Vec2 p = b2Body_GetPosition( m_bodyIds[m_ignoreIndex] );
+			b2Vec2 p = b2ToVec2( b2Body_GetPosition( m_bodyIds[m_ignoreIndex] ) );
 			p.x -= 0.2f;
-			DrawWorldString( m_draw, m_camera, p, b2_colorWhite, "ign" );
+			DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, "ign" );
 		}
 	}
 
@@ -2021,25 +2021,25 @@ public:
 		}
 	}
 
-	void MouseDown( b2Vec2 p, int button, int mods ) override
+	void MouseDown( b2Position p, int button, int mods ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
 			if ( mods == 0 && m_rotating == false )
 			{
 				m_dragging = true;
-				m_position = p;
+				m_position = b2ToVec2( p );
 			}
 			else if ( mods == GLFW_MOD_SHIFT && m_dragging == false )
 			{
 				m_rotating = true;
-				m_startPosition = p;
+				m_startPosition = b2ToVec2( p );
 				m_baseAngle = m_angle;
 			}
 		}
 	}
 
-	void MouseUp( b2Vec2, int button ) override
+	void MouseUp( b2Position, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -2048,11 +2048,11 @@ public:
 		}
 	}
 
-	void MouseMove( b2Vec2 p ) override
+	void MouseMove( b2Position p ) override
 	{
 		if ( m_dragging )
 		{
-			m_position = p;
+			m_position = b2ToVec2( p );
 		}
 		else if ( m_rotating )
 		{
@@ -2161,9 +2161,9 @@ public:
 
 		if ( B2_IS_NON_NULL( m_bodyIds[m_ignoreIndex] ) )
 		{
-			b2Vec2 p = b2Body_GetPosition( m_bodyIds[m_ignoreIndex] );
+			b2Vec2 p = b2ToVec2( b2Body_GetPosition( m_bodyIds[m_ignoreIndex] ) );
 			p.x -= 0.2f;
-			DrawWorldString( m_draw, m_camera, p, b2_colorWhite, "skip" );
+			DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, "skip" );
 		}
 
 		for ( int i = 0; i < m_doomCount; ++i )
@@ -2297,26 +2297,26 @@ public:
 		return true;
 	}
 
-	void MouseDown( b2Vec2 p, int button, int mods ) override
+	void MouseDown( b2Position p, int button, int mods ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
 			if ( mods == 0 && m_rotating == false )
 			{
 				m_dragging = true;
-				m_startPoint = p;
+				m_startPoint = b2ToVec2( p );
 				m_basePosition = m_transform.p;
 			}
 			else if ( mods == GLFW_MOD_SHIFT && m_dragging == false )
 			{
 				m_rotating = true;
-				m_startPoint = p;
+				m_startPoint = b2ToVec2( p );
 				m_baseAngle = m_angle;
 			}
 		}
 	}
 
-	void MouseUp( b2Vec2, int button ) override
+	void MouseUp( b2Position, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -2325,7 +2325,7 @@ public:
 		}
 	}
 
-	void MouseMove( b2Vec2 p ) override
+	void MouseMove( b2Position p ) override
 	{
 		if ( m_dragging )
 		{
@@ -2345,7 +2345,7 @@ public:
 		if ( m_showCount )
 		{
 			b2Vec2 p = 0.5f * ( origin1 + origin2 );
-			DrawWorldString( m_draw, m_camera, p, b2_colorWhite, "%d", manifold->pointCount );
+			DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, "%d", manifold->pointCount );
 		}
 
 		for ( int i = 0; i < manifold->pointCount; ++i )
@@ -2371,13 +2371,13 @@ public:
 				// uint32_t indexA = mp->id >> 8;
 				// uint32_t indexB = 0xFF & mp->id;
 				b2Vec2 p = { p1.x + 0.05f, p1.y - 0.02f };
-				DrawWorldString( m_draw, m_camera, p, b2_colorWhite, "0x%04x", mp->id );
+				DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, "0x%04x", mp->id );
 			}
 
 			if ( m_showSeparation )
 			{
 				b2Vec2 p = { p1.x + 0.05f, p1.y + 0.03f };
-				DrawWorldString( m_draw, m_camera, p, b2_colorWhite, "%.3f", mp->separation );
+				DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, "%.3f", mp->separation );
 			}
 		}
 	}
@@ -2407,7 +2407,7 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollideCircles( &circle1, transform1, &circle2, transform2 );
+			b2Manifold m = b2CollideCircles( &circle1, b2MakeWorldTransform( transform1 ), &circle2, b2MakeWorldTransform( transform2 ) );
 
 			b2Vec2 center1 = b2TransformPoint( transform1, circle1.center );
 			DrawSolidCircle( m_draw, { center1, transform1.q }, circle1.radius, color1 );
@@ -2427,7 +2427,7 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollideCapsuleAndCircle( &capsule, transform1, &circle, transform2 );
+			b2Manifold m = b2CollideCapsuleAndCircle( &capsule, b2MakeWorldTransform( transform1 ), &circle, b2MakeWorldTransform( transform2 ) );
 
 			b2Vec2 v1 = b2TransformPoint( transform1, capsule.center1 );
 			b2Vec2 v2 = b2TransformPoint( transform1, capsule.center2 );
@@ -2449,7 +2449,7 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollideSegmentAndCircle( &segment, transform1, &circle, transform2 );
+			b2Manifold m = b2CollideSegmentAndCircle( &segment, b2MakeWorldTransform( transform1 ), &circle, b2MakeWorldTransform( transform2 ) );
 
 			b2Vec2 p1 = b2TransformPoint( transform1, segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment.point2 );
@@ -2472,7 +2472,7 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollidePolygonAndCircle( &box, transform1, &circle, transform2 );
+			b2Manifold m = b2CollidePolygonAndCircle( &box, b2MakeWorldTransform( transform1 ), &circle, b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, box.vertices, box.count, m_round, color1 );
 
@@ -2492,7 +2492,7 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollideCapsules( &capsule1, transform1, &capsule2, transform2 );
+			b2Manifold m = b2CollideCapsules( &capsule1, b2MakeWorldTransform( transform1 ), &capsule2, b2MakeWorldTransform( transform2 ) );
 
 			b2Vec2 v1 = b2TransformPoint( transform1, capsule1.center1 );
 			b2Vec2 v2 = b2TransformPoint( transform1, capsule1.center2 );
@@ -2515,7 +2515,7 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollidePolygonAndCapsule( &box, transform1, &capsule, transform2 );
+			b2Manifold m = b2CollidePolygonAndCapsule( &box, b2MakeWorldTransform( transform1 ), &capsule, b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, box.vertices, box.count, box.radius, color1 );
 
@@ -2536,7 +2536,7 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollideSegmentAndCapsule( &segment, transform1, &capsule, transform2 );
+			b2Manifold m = b2CollideSegmentAndCapsule( &segment, b2MakeWorldTransform( transform1 ), &capsule, b2MakeWorldTransform( transform2 ) );
 
 			b2Vec2 p1 = b2TransformPoint( transform1, segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment.point2 );
@@ -2563,7 +2563,7 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollidePolygons( &box1, transform1, &box, transform2 );
+			b2Manifold m = b2CollidePolygons( &box1, b2MakeWorldTransform( transform1 ), &box, b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, box1.vertices, box1.count, box1.radius, color1 );
 			DrawSolidPolygon( m_draw, transform2, box.vertices, box.count, box.radius, color2 );
@@ -2582,7 +2582,7 @@ public:
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 			// b2Transform transform2 = {b2Add({0.0f, -0.1f}, offset), {0.0f, 1.0f}};
 
-			b2Manifold m = b2CollidePolygons( &box1, transform1, &box, transform2 );
+			b2Manifold m = b2CollidePolygons( &box1, b2MakeWorldTransform( transform1 ), &box, b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, box1.vertices, box1.count, box1.radius, color1 );
 			DrawSolidPolygon( m_draw, transform2, box.vertices, box.count, box.radius, color2 );
@@ -2602,7 +2602,7 @@ public:
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 			// b2Transform transform2 = {b2Add({0.0f, -0.1f}, offset), {0.0f, 1.0f}};
 
-			b2Manifold m = b2CollidePolygons( &box, transform1, &rox, transform2 );
+			b2Manifold m = b2CollidePolygons( &box, b2MakeWorldTransform( transform1 ), &rox, b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, box.vertices, box.count, box.radius, color1 );
 			DrawSolidPolygon( m_draw, transform2, rox.vertices, rox.count, rox.radius, color2 );
@@ -2622,7 +2622,7 @@ public:
 			// b2Transform transform1 = {{6.48024225f, 2.07872653f}, {-0.938356698f, 0.345668465f}};
 			// b2Transform transform2 = {{5.52862263f, 2.51146317f}, {-0.859374702f, -0.511346340f}};
 
-			b2Manifold m = b2CollidePolygons( &rox, transform1, &rox, transform2 );
+			b2Manifold m = b2CollidePolygons( &rox, b2MakeWorldTransform( transform1 ), &rox, b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, rox.vertices, rox.count, rox.radius, color1 );
 			DrawSolidPolygon( m_draw, transform2, rox.vertices, rox.count, rox.radius, color2 );
@@ -2642,7 +2642,7 @@ public:
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 			// b2Transform transform2 = {b2Add({-1.44583416f, 0.397352695f}, offset), m_transform.q};
 
-			b2Manifold m = b2CollideSegmentAndPolygon( &segment, transform1, &rox, transform2 );
+			b2Manifold m = b2CollideSegmentAndPolygon( &segment, b2MakeWorldTransform( transform1 ), &rox, b2MakeWorldTransform( transform2 ) );
 
 			b2Vec2 p1 = b2TransformPoint( transform1, segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment.point2 );
@@ -2663,7 +2663,7 @@ public:
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 			// b2Transform transform2 = {b2Add({0.0f, -0.1f}, offset), {0.0f, 1.0f}};
 
-			b2Manifold m = b2CollidePolygons( &wox, transform1, &wox, transform2 );
+			b2Manifold m = b2CollidePolygons( &wox, b2MakeWorldTransform( transform1 ), &wox, b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, wox.vertices, wox.count, wox.radius, color1 );
 			DrawSolidPolygon( m_draw, transform1, wox.vertices, wox.count, 0.0f, color1 );
@@ -2690,7 +2690,7 @@ public:
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 			// b2Transform transform2 = {b2Add({0.0f, -0.1f}, offset), {0.0f, 1.0f}};
 
-			b2Manifold m = b2CollidePolygons( &w1, transform1, &w2, transform2 );
+			b2Manifold m = b2CollidePolygons( &w1, b2MakeWorldTransform( transform1 ), &w2, b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, w1.vertices, w1.count, w1.radius, color1 );
 			DrawSolidPolygon( m_draw, transform1, w1.vertices, w1.count, 0.0f, color1 );
@@ -2715,7 +2715,7 @@ public:
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 			// b2Transform transform2 = {b2Add({0.0f, -0.1f}, offset), {0.0f, 1.0f}};
 
-			b2Manifold m = b2CollidePolygons( &box, transform1, &tri, transform2 );
+			b2Manifold m = b2CollidePolygons( &box, b2MakeWorldTransform( transform1 ), &tri, b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, box.vertices, box.count, 0.0f, color1 );
 			DrawSolidPolygon( m_draw, transform2, tri.vertices, tri.count, 0.0f, color2 );
@@ -2733,7 +2733,7 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollideChainSegmentAndCircle( &segment, transform1, &circle, transform2 );
+			b2Manifold m = b2CollideChainSegmentAndCircle( &segment, b2MakeWorldTransform( transform1 ), &circle, b2MakeWorldTransform( transform2 ) );
 
 			b2Vec2 g1 = b2TransformPoint( transform1, segment.ghost1 );
 			b2Vec2 g2 = b2TransformPoint( transform1, segment.ghost2 );
@@ -2765,8 +2765,8 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m1 = b2CollideChainSegmentAndPolygon( &segment1, transform1, &rox, transform2, &m_smgroxCache1 );
-			b2Manifold m2 = b2CollideChainSegmentAndPolygon( &segment2, transform1, &rox, transform2, &m_smgroxCache2 );
+			b2Manifold m1 = b2CollideChainSegmentAndPolygon( &segment1, b2MakeWorldTransform( transform1 ), &rox, b2MakeWorldTransform( transform2 ), &m_smgroxCache1 );
+			b2Manifold m2 = b2CollideChainSegmentAndPolygon( &segment2, b2MakeWorldTransform( transform1 ), &rox, b2MakeWorldTransform( transform2 ), &m_smgroxCache2 );
 
 			{
 				b2Vec2 g2 = b2TransformPoint( transform1, segment1.ghost2 );
@@ -2806,8 +2806,8 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m1 = b2CollideChainSegmentAndCapsule( &segment1, transform1, &capsule, transform2, &m_smgcapCache1 );
-			b2Manifold m2 = b2CollideChainSegmentAndCapsule( &segment2, transform1, &capsule, transform2, &m_smgcapCache2 );
+			b2Manifold m1 = b2CollideChainSegmentAndCapsule( &segment1, b2MakeWorldTransform( transform1 ), &capsule, b2MakeWorldTransform( transform2 ), &m_smgcapCache1 );
+			b2Manifold m2 = b2CollideChainSegmentAndCapsule( &segment2, b2MakeWorldTransform( transform1 ), &capsule, b2MakeWorldTransform( transform2 ), &m_smgcapCache2 );
 
 			{
 				b2Vec2 g2 = b2TransformPoint( transform1, segment1.ghost2 );
@@ -3014,26 +3014,26 @@ public:
 		return true;
 	}
 
-	void MouseDown( b2Vec2 p, int button, int mods ) override
+	void MouseDown( b2Position p, int button, int mods ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
 			if ( mods == 0 && m_rotating == false )
 			{
 				m_dragging = true;
-				m_startPoint = p;
+				m_startPoint = b2ToVec2( p );
 				m_basePosition = m_transform.p;
 			}
 			else if ( mods == GLFW_MOD_SHIFT && m_dragging == false )
 			{
 				m_rotating = true;
-				m_startPoint = p;
+				m_startPoint = b2ToVec2( p );
 				m_baseAngle = m_angle;
 			}
 		}
 	}
 
-	void MouseUp( b2Vec2, int button ) override
+	void MouseUp( b2Position, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -3042,7 +3042,7 @@ public:
 		}
 	}
 
-	void MouseMove( b2Vec2 p ) override
+	void MouseMove( b2Position p ) override
 	{
 		if ( m_dragging )
 		{
@@ -3081,13 +3081,13 @@ public:
 				// uint32_t indexA = mp->id >> 8;
 				// uint32_t indexB = 0xFF & mp->id;
 				b2Vec2 p = { p1.x + 0.05f, p1.y - 0.02f };
-				DrawWorldString( m_draw, m_camera, p, b2_colorWhite, "0x%04x", mp->id );
+				DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, "0x%04x", mp->id );
 			}
 
 			if ( m_showSeparation )
 			{
 				b2Vec2 p = { p1.x + 0.05f, p1.y + 0.03f };
-				DrawWorldString( m_draw, m_camera, p, b2_colorWhite, "%.3f", mp->separation );
+				DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, "%.3f", mp->separation );
 			}
 		}
 	}
@@ -3119,7 +3119,7 @@ public:
 			for ( int i = 0; i < m_count; ++i )
 			{
 				const b2ChainSegment* segment = m_segments + i;
-				b2Manifold m = b2CollideChainSegmentAndCircle( segment, transform1, &circle, transform2 );
+				b2Manifold m = b2CollideChainSegmentAndCircle( segment, b2MakeWorldTransform( transform1 ), &circle, b2MakeWorldTransform( transform2 ) );
 				DrawManifold( &m );
 			}
 		}
@@ -3133,7 +3133,7 @@ public:
 			{
 				const b2ChainSegment* segment = m_segments + i;
 				b2SimplexCache cache = {};
-				b2Manifold m = b2CollideChainSegmentAndPolygon( segment, transform1, &rox, transform2, &cache );
+				b2Manifold m = b2CollideChainSegmentAndPolygon( segment, b2MakeWorldTransform( transform1 ), &rox, b2MakeWorldTransform( transform2 ), &cache );
 				DrawManifold( &m );
 			}
 		}
@@ -3349,7 +3349,7 @@ public:
 		}
 	}
 
-	void MouseDown( b2Vec2 p, int button, int mods ) override
+	void MouseDown( b2Position p, int button, int mods ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -3358,7 +3358,7 @@ public:
 				m_dragging = true;
 				m_sweeping = false;
 				m_rotating = false;
-				m_startPoint = p;
+				m_startPoint = b2ToVec2( p );
 				m_basePosition = m_transform.p;
 			}
 			else if ( mods == GLFW_MOD_SHIFT )
@@ -3366,7 +3366,7 @@ public:
 				m_dragging = false;
 				m_sweeping = false;
 				m_rotating = true;
-				m_startPoint = p;
+				m_startPoint = b2ToVec2( p );
 				m_baseAngle = m_angle;
 			}
 			else if ( mods == GLFW_MOD_CONTROL )
@@ -3374,13 +3374,13 @@ public:
 				m_dragging = false;
 				m_sweeping = true;
 				m_rotating = false;
-				m_startPoint = p;
+				m_startPoint = b2ToVec2( p );
 				m_basePosition = b2Vec2_zero;
 			}
 		}
 	}
 
-	void MouseUp( b2Vec2, int button ) override
+	void MouseUp( b2Position, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -3390,11 +3390,11 @@ public:
 		}
 	}
 
-	void MouseMove( b2Vec2 p ) override
+	void MouseMove( b2Position p ) override
 	{
 		if ( m_dragging )
 		{
-			m_transform.p = m_basePosition + 0.5f * ( p - m_startPoint );
+			m_transform.p = m_basePosition + 0.5f * ( b2ToVec2( p ) - m_startPoint );
 		}
 		else if ( m_rotating )
 		{
@@ -3404,7 +3404,7 @@ public:
 		}
 		else if ( m_sweeping )
 		{
-			m_translation = p - m_startPoint;
+			m_translation = b2ToVec2( p ) - m_startPoint;
 		}
 	}
 
@@ -3464,8 +3464,8 @@ public:
 		b2ShapeCastPairInput input = {};
 		input.proxyA = m_proxyA;
 		input.proxyB = m_proxyB;
-		input.transformA = b2Transform_identity;
-		input.transformB = m_transform;
+		input.transformA = b2MakeWorldTransform( b2Transform_identity );
+		input.transformB = b2MakeWorldTransform( m_transform );
 		input.translationB = m_translation;
 		input.maxFraction = 1.0f;
 		input.canEncroach = m_encroach;
@@ -3499,12 +3499,12 @@ public:
 
 			if ( output.fraction > 0.0f )
 			{
-				DrawPoint( m_draw, output.point, 5.0f, b2_colorWhite );
-				DrawLine( m_draw, output.point, output.point + 0.5f * output.normal, b2_colorYellow );
+				DrawPoint( m_draw, b2ToVec2( output.point ), 5.0f, b2_colorWhite );
+				DrawLine( m_draw, b2ToVec2( output.point ), b2ToVec2( output.point + 0.5f * output.normal ), b2_colorYellow );
 			}
 			else
 			{
-				DrawPoint( m_draw, output.point, 5.0f, b2_colorPeru );
+				DrawPoint( m_draw, b2ToVec2( output.point ), 5.0f, b2_colorPeru );
 			}
 		}
 
@@ -3513,13 +3513,13 @@ public:
 			for ( int i = 0; i < m_proxyA.count; ++i )
 			{
 				b2Vec2 p = m_proxyA.points[i];
-				DrawWorldString( m_draw, m_camera, p, b2_colorWhite, " %d", i );
+				DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, " %d", i );
 			}
 
 			for ( int i = 0; i < m_proxyB.count; ++i )
 			{
 				b2Vec2 p = b2TransformPoint( m_transform, m_proxyB.points[i] );
-				DrawWorldString( m_draw, m_camera, p, b2_colorWhite, " %d", i );
+				DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, " %d", i );
 			}
 		}
 

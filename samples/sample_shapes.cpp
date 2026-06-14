@@ -798,13 +798,13 @@ public:
 	{
 		Sample::Step();
 
-		b2Vec2 p1 = b2Body_GetPosition( m_player1Id );
+		b2Position p1 = b2Body_GetPosition( m_player1Id );
 		DrawWorldString( m_draw, m_camera, { p1.x - 0.5f, p1.y }, b2_colorWhite, "player 1" );
 
-		b2Vec2 p2 = b2Body_GetPosition( m_player2Id );
+		b2Position p2 = b2Body_GetPosition( m_player2Id );
 		DrawWorldString( m_draw, m_camera, { p2.x - 0.5f, p2.y }, b2_colorWhite, "player 2" );
 
-		b2Vec2 p3 = b2Body_GetPosition( m_player3Id );
+		b2Position p3 = b2Body_GetPosition( m_player3Id );
 		DrawWorldString( m_draw, m_camera, { p3.x - 0.5f, p3.y }, b2_colorWhite, "player 3" );
 	}
 
@@ -881,7 +881,7 @@ public:
 
 		for ( int i = 0; i < e_count; ++i )
 		{
-			b2Vec2 p = b2Body_GetPosition( m_bodyIds[i] );
+			b2Position p = b2Body_GetPosition( m_bodyIds[i] );
 			DrawWorldString( m_draw, m_camera, { p.x, p.y }, b2_colorWhite, "%d", i );
 		}
 	}
@@ -1861,7 +1861,7 @@ public:
 			b2Polygon box = b2MakeBox( 1.0f, 0.1f );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			weldDef.base.localFrameA.p = bodyDef.position;
+			weldDef.base.localFrameA.p = b2ToVec2( bodyDef.position );
 			weldDef.base.bodyIdB = bodyId;
 
 			b2JointId jointId = b2CreateWeldJoint( m_worldId, &weldDef );
@@ -1878,7 +1878,7 @@ public:
 		if ( ImGui::Button( "Explode" ) )
 		{
 			b2ExplosionDef def = b2DefaultExplosionDef();
-			def.position = b2Vec2_zero;
+			def.position = b2Position_zero;
 			def.radius = m_radius;
 			def.falloff = m_falloff;
 			def.impulsePerLength = m_impulse;

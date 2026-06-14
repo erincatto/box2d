@@ -43,7 +43,7 @@ public:
 		return true;
 	}
 
-	static float CastFcn( b2ShapeId, b2Vec2, b2Vec2, float fraction, void* )
+	static float CastFcn( b2ShapeId, b2Position, b2Vec2, float fraction, void* )
 	{
 		return 1.0f;
 	}
@@ -61,7 +61,7 @@ public:
 			b2AABB scanBox = { { 5.0f, 1.0f }, { 7.0f, 2.5f } };
 			b2World_OverlapAABB( m_worldId, b2Position_zero, scanBox, filter, OverlapFcn, nullptr );
 
-			b2Vec2 origin = { 0.0f, 12.0f };
+			b2Position origin = { 0.0f, 12.0f };
 			b2Vec2 translation = { 0.0f, -14.0f };
 			b2World_CastRayClosest( m_worldId, origin, translation, filter );
 

@@ -652,7 +652,7 @@ public:
 
 				b2BodyDef bodyDef = b2DefaultBodyDef();
 				bodyDef.type = b2_dynamicBody;
-				bodyDef.position = m_positions[i];
+				bodyDef.position = b2MakePosition( m_positions[i] );
 				m_bodyIds[m_bodyIndex] = b2CreateBody( m_worldId, &bodyDef );
 				b2CreateCapsuleShape( m_bodyIds[m_bodyIndex], &shapeDef, &capsule );
 
@@ -1387,10 +1387,10 @@ public:
 		bool hit;
 	};
 
-	static float CastCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
+	static float CastCallback( b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context )
 	{
 		CastResult* result = (CastResult*)context;
-		result->point = point;
+		result->point = b2ToVec2( point );
 		result->fraction = fraction;
 		result->hit = true;
 		return fraction;
@@ -1438,7 +1438,7 @@ public:
 				b2Vec2 origin = m_origins[i];
 				b2Vec2 translation = m_translations[i];
 
-				b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, filter );
+				b2RayResult result = b2World_CastRayClosest( m_worldId, b2MakePosition( origin ), translation, filter );
 
 				if ( i == m_drawIndex )
 				{
@@ -1461,7 +1461,7 @@ public:
 			DrawPoint( m_context->draw, p2, 5.0f, b2_colorRed );
 			if ( drawResult.hit )
 			{
-				DrawPoint( m_context->draw, drawResult.point, 5.0f, b2_colorWhite );
+				DrawPoint( m_context->draw, b2ToVec2( drawResult.point ), 5.0f, b2_colorWhite );
 			}
 		}
 		else if ( m_queryType == e_circleCast )

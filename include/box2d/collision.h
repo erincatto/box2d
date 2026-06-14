@@ -640,6 +640,13 @@ enum b2TreeNodeFlags
 	b2_leafNode = 0x0004,
 };
 
+/// Tree node child indices. Internal usage.
+typedef struct b2TreeNodeChildren
+{
+	int child1; ///< child node index 1
+	int child2; ///< child node index 2
+} b2TreeNodeChildren;
+
 /// A node in the dynamic tree. For internal usage.
 typedef struct b2TreeNode
 {
@@ -652,10 +659,7 @@ typedef struct b2TreeNode
 	union
 	{
 		/// Children (internal node)
-		struct
-		{
-			int32_t child1, child2;
-		} children;
+		b2TreeNodeChildren children;
 
 		/// User data (leaf node)
 		uint64_t userData;

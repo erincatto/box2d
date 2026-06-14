@@ -22,7 +22,7 @@ Doohickey::Doohickey()
 	m_isSpawned = false;
 }
 
-void Doohickey::Spawn( b2WorldId worldId, b2Vec2 position, float scale )
+void Doohickey::Spawn( b2WorldId worldId, b2Position position, float scale )
 {
 	assert( m_isSpawned == false );
 
@@ -35,19 +35,19 @@ void Doohickey::Spawn( b2WorldId worldId, b2Vec2 position, float scale )
 	b2Circle circle = { { 0.0f, 0.0f }, 1.0f * scale };
 	b2Capsule capsule = { { -3.5f * scale, 0.0f }, { 3.5f * scale, 0.0f }, 0.15f * scale };
 
-	bodyDef.position = b2MulAdd( position, scale, { -5.0f, 3.0f } );
+	bodyDef.position = b2OffsetPosition( position, b2MulSV( scale, { -5.0f, 3.0f } ) );
 	m_wheelId1 = b2CreateBody( worldId, &bodyDef );
 	b2CreateCircleShape( m_wheelId1, &shapeDef, &circle );
 
-	bodyDef.position = b2MulAdd( position, scale, { 5.0f, 3.0f } );
+	bodyDef.position = b2OffsetPosition( position, b2MulSV( scale, { 5.0f, 3.0f } ) );
 	m_wheelId2 = b2CreateBody( worldId, &bodyDef );
 	b2CreateCircleShape( m_wheelId2, &shapeDef, &circle );
 
-	bodyDef.position = b2MulAdd( position, scale, { -1.5f, 3.0f } );
+	bodyDef.position = b2OffsetPosition( position, b2MulSV( scale, { -1.5f, 3.0f } ) );
 	m_barId1 = b2CreateBody( worldId, &bodyDef );
 	b2CreateCapsuleShape( m_barId1, &shapeDef, &capsule );
 
-	bodyDef.position = b2MulAdd( position, scale, { 1.5f, 3.0f } );
+	bodyDef.position = b2OffsetPosition( position, b2MulSV( scale, { 1.5f, 3.0f } ) );
 	m_barId2 = b2CreateBody( worldId, &bodyDef );
 	b2CreateCapsuleShape( m_barId2, &shapeDef, &capsule );
 

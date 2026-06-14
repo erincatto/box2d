@@ -139,10 +139,9 @@ set(BOX2D_SAMPLE_FRAMEWORK_FILES
     stb_image_write.h
 )
 
-# Samples that take float world coordinates directly. In double precision mode they would not
-# compile against the retyped API (a b2Vec2 where a b2Position is now required is a hard error),
-# so they are dropped from that build rather than guarded file by file.
-set(BOX2D_SAMPLE_FLOAT_FILES
+# Samples beyond the host. These compile in both precision modes: a world coordinate flowing
+# through the b2World API keeps its natural type and is demoted only at the ad-hoc draw boundary.
+set(BOX2D_SAMPLE_COMMON_FILES
     car.cpp
     car.h
     donut.cpp
@@ -165,12 +164,7 @@ set(BOX2D_SAMPLE_FLOAT_FILES
     sample_world.cpp
 )
 
-if(BOX2D_DOUBLE_PRECISION)
-    # Live large world scene, the recording source for the Replay Viewer in double precision.
-    set(BOX2D_SAMPLE_FILES ${BOX2D_SAMPLE_FRAMEWORK_FILES} sample_large_world.cpp)
-else()
-    set(BOX2D_SAMPLE_FILES ${BOX2D_SAMPLE_FRAMEWORK_FILES} ${BOX2D_SAMPLE_FLOAT_FILES})
-endif()
+set(BOX2D_SAMPLE_FILES ${BOX2D_SAMPLE_FRAMEWORK_FILES} ${BOX2D_SAMPLE_COMMON_FILES})
 
 add_executable(samples ${BOX2D_SAMPLE_FILES})
 
