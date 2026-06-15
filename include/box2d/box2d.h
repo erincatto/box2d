@@ -492,11 +492,11 @@ B2_API float b2Body_GetMass( b2BodyId bodyId );
 /// Get the rotational inertia of the body, usually in kg*m^2
 B2_API float b2Body_GetRotationalInertia( b2BodyId bodyId );
 
-/// Get the center of mass position of the body in local space
-B2_API b2Vec2 b2Body_GetLocalCenterOfMass( b2BodyId bodyId );
+/// Get the center of mass position of the body in local space.
+B2_API b2Vec2 b2Body_GetLocalCenter( b2BodyId bodyId );
 
-/// Get the center of mass position of the body in world space
-B2_API b2Position b2Body_GetWorldCenterOfMass( b2BodyId bodyId );
+/// Get the center of mass position of the body in world space.
+B2_API b2Position b2Body_GetWorldCenter( b2BodyId bodyId );
 
 /// Override the body's mass properties. Normally this is computed automatically using the
 /// shape geometry and density. This information is lost if a shape is added or removed or if the

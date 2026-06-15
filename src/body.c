@@ -1374,7 +1374,7 @@ float b2Body_GetRotationalInertia( b2BodyId bodyId )
 	return body->inertia;
 }
 
-b2Vec2 b2Body_GetLocalCenterOfMass( b2BodyId bodyId )
+b2Vec2 b2Body_GetLocalCenter( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
@@ -1382,7 +1382,7 @@ b2Vec2 b2Body_GetLocalCenterOfMass( b2BodyId bodyId )
 	return bodySim->localCenter;
 }
 
-b2Position b2Body_GetWorldCenterOfMass( b2BodyId bodyId )
+b2Position b2Body_GetWorldCenter( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );

@@ -86,7 +86,7 @@ b2Position ConvertScreenToWorld( Camera* camera, b2Vec2 screenPoint )
 	return b2OffsetPosition( camera->center, offset );
 }
 
-b2Vec2 ConvertWorldToScreen( Camera* camera, b2Position worldPoint )
+b2Vec2 ConvertViewToScreen( Camera* camera, b2Vec2 viewPoint )
 {
 	float w = camera->width;
 	float h = camera->height;
@@ -94,13 +94,17 @@ b2Vec2 ConvertWorldToScreen( Camera* camera, b2Position worldPoint )
 
 	b2Vec2 extents = { camera->zoom * ratio, camera->zoom };
 
-	// Distance from the view center, demoted to float, then a float mapping
-	b2Vec2 local = b2PositionDelta( worldPoint, camera->center );
-	float u = ( local.x + extents.x ) / ( 2.0f * extents.x );
-	float v = ( local.y + extents.y ) / ( 2.0f * extents.y );
+	float u = ( viewPoint.x + extents.x ) / ( 2.0f * extents.x );
+	float v = ( viewPoint.y + extents.y ) / ( 2.0f * extents.y );
 
 	b2Vec2 ps = { u * w, ( 1.0f - v ) * h };
 	return ps;
+}
+
+b2Vec2 ConvertWorldToScreen( Camera* camera, b2Position worldPoint )
+{
+	// Distance from the view center, demoted to float, then the float mapping
+	return ConvertViewToScreen( camera, b2PositionDelta( worldPoint, camera->center ) );
 }
 
 // Convert from world coordinates to normalized device coordinates.
@@ -130,8 +134,8 @@ static void BuildProjectionMatrix( Camera* camera, float* m, float zBias )
 	m[11] = 0.0f;
 
 #if defined( BOX2D_DOUBLE_PRECISION )
-	// Vertices reach the GPU already shifted into camera relative space (draw->origin and
-	// CameraRelative), so the view center is the origin here. No double coordinate enters a shader.
+	// Vertices reach the GPU already shifted into camera relative space (b2DebugDraw::origin and the
+	// DrawWorld helpers), so the view center is the origin here. No double coordinate enters a shader.
 	m[12] = 0.0f;
 	m[13] = 0.0f;
 #else
@@ -1164,6 +1168,9 @@ typedef struct Draw
 	SolidCircles circles;
 	Capsules capsules;
 	Polygons polygons;
+
+	// Camera center in large world mode, subtracted by the DrawWorld helpers. Zero in float mode.
+	b2Position origin;
 } Draw;
 
 Draw* CreateDraw( void )
@@ -1190,6 +1197,11 @@ void DestroyDraw( Draw* draw )
 	DestroyCapsules( &draw->capsules );
 	DestroyPolygons( &draw->polygons );
 	free( draw );
+}
+
+void SetDrawOrigin( Draw* draw, b2Position origin )
+{
+	draw->origin = origin;
 }
 
 void DrawPoint( Draw* draw, b2Vec2 p, float size, b2HexColor color )
@@ -1256,6 +1268,35 @@ void DrawBounds( Draw* draw, b2AABB aabb, b2HexColor color )
 	AddLine( &draw->lines, p2, p3, color );
 	AddLine( &draw->lines, p3, p4, color );
 	AddLine( &draw->lines, p4, p1, color );
+}
+
+// World space variants. They subtract Draw::origin so far from the origin the difference happens in
+// double before reaching the float draw helpers. Identity in float mode.
+void DrawWorldPoint( Draw* draw, b2Position p, float size, b2HexColor color )
+{
+	DrawPoint( draw, b2PositionDelta( p, draw->origin ), size, color );
+}
+
+void DrawWorldLine( Draw* draw, b2Position p1, b2Position p2, b2HexColor color )
+{
+	DrawLine( draw, b2PositionDelta( p1, draw->origin ), b2PositionDelta( p2, draw->origin ), color );
+}
+
+void DrawWorldCircle( Draw* draw, b2Position center, float radius, b2HexColor color )
+{
+	DrawCircle( draw, b2PositionDelta( center, draw->origin ), radius, color );
+}
+
+void DrawWorldTransform( Draw* draw, b2WorldTransform t, float scale )
+{
+	DrawTransform( draw, b2ToRelativeTransform( t, draw->origin ), scale );
+}
+
+void DrawWorldBounds( Draw* draw, b2AABB aabb, b2HexColor color )
+{
+	b2Vec2 lower = b2PositionDelta( b2MakePosition( aabb.lowerBound ), draw->origin );
+	b2Vec2 upper = b2PositionDelta( b2MakePosition( aabb.upperBound ), draw->origin );
+	DrawBounds( draw, (b2AABB){ lower, upper }, color );
 }
 
 void FlushDraw( Draw* draw, Camera* camera )

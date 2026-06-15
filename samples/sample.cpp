@@ -132,14 +132,15 @@ void DrawPointFcn( b2Vec2 p, float size, b2HexColor color, void* context )
 void DrawStringFcn( b2Vec2 p, const char* s, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
+	Camera* camera = &sampleContext->camera;
 #if defined( BOX2D_DOUBLE_PRECISION )
-	// The callback point arrives relative to draw->origin (the camera center). Lift it back to a
-	// world position so the label lands where the geometry drew.
-	b2Position world = b2OffsetPosition( sampleContext->camera.center, p );
+	// Point already arrives relative to draw->origin, the camera center
+	b2Vec2 ps = ConvertViewToScreen( camera, p );
 #else
-	b2Position world = p;
+	// Default origin is zero, so the point is a world coordinate
+	b2Vec2 ps = ConvertWorldToScreen( camera, p );
 #endif
-	DrawWorldString( sampleContext->draw, &sampleContext->camera, world, color, s );
+	DrawScreenString( sampleContext->draw, ps.x, ps.y, color, "%s", s );
 }
 
 #define MAX_TOKENS 32
@@ -563,8 +564,9 @@ void Sample::Step()
 	}
 
 #if defined( BOX2D_DOUBLE_PRECISION )
-	// Draw relative to the camera so callbacks get float coordinates near the origin.
+	// Draw relative to the camera so callbacks and ad-hoc draws get float coordinates near the origin.
 	m_context->debugDraw.origin = m_context->camera.center;
+	SetDrawOrigin( m_context->draw, m_context->camera.center );
 #endif
 	b2World_Draw( m_worldId, &m_context->debugDraw );
 

@@ -35,7 +35,7 @@ enum PogoShape
 
 struct CastResult
 {
-	b2Vec2 point;
+	b2Position point;
 	b2Vec2 normal;
 	b2BodyId bodyId;
 	float fraction;
@@ -45,7 +45,7 @@ struct CastResult
 static float CastCallback( b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context )
 {
 	CastResult* result = (CastResult*)context;
-	result->point = b2ToVec2( point );
+	result->point = point;
 	result->normal = normal;
 	result->bodyId = b2Shape_GetBody( shapeId );
 	result->fraction = fraction;
@@ -365,7 +365,7 @@ public:
 				DrawLine( m_draw, segment.point1 + delta, segment.point2 + delta, b2_colorPlum );
 			}
 
-			b2Body_ApplyForce( castResult.bodyId, { 0.0f, -50.0f }, b2MakePosition( castResult.point ), true );
+			b2Body_ApplyForce( castResult.bodyId, { 0.0f, -50.0f }, castResult.point, true );
 		}
 
 		b2Vec2 target = m_transform.p + timeStep * m_velocity + timeStep * m_pogoVelocity * b2Vec2{ 0.0f, 1.0f };
@@ -476,7 +476,7 @@ public:
 			return true;
 		}
 
-		b2Vec2 center = b2ToVec2( b2Body_GetWorldCenterOfMass( bodyId ) );
+		b2Vec2 center = b2ToVec2( b2Body_GetWorldCenter( bodyId ) );
 		b2Vec2 direction = b2Normalize( center - self->m_transform.p );
 		b2Vec2 impulse = b2Vec2{ 2.0f * direction.x, 2.0f };
 		b2Body_ApplyLinearImpulseToCenter( bodyId, impulse, true );
@@ -515,13 +515,13 @@ public:
 
 		if ( timeStep > 0.0f )
 		{
-			b2Vec2 point = {
+			b2Position point = {
 				.x = m_elevatorBase.x,
 				.y = m_elevatorAmplitude * cosf( 1.0f * m_time + B2_PI ) + m_elevatorBase.y,
 			};
 
 			bool wake = true;
-			b2Body_SetTargetTransform( m_elevatorId, { b2MakePosition( point ), b2Rot_identity }, timeStep, wake );
+			b2Body_SetTargetTransform( m_elevatorId, { point, b2Rot_identity }, timeStep, wake );
 		}
 
 		m_time += timeStep;
@@ -1418,7 +1418,7 @@ public:
 			return true;
 		}
 
-		b2Vec2 center = b2ToVec2( b2Body_GetWorldCenterOfMass( bodyId ) );
+		b2Vec2 center = b2ToVec2( b2Body_GetWorldCenter( bodyId ) );
 		b2Vec2 direction = b2Normalize( center - self->m_transform.p );
 		b2Vec2 impulse = b2Vec2{ 2.0f * direction.x, 2.0f };
 		b2Body_ApplyLinearImpulseToCenter( bodyId, impulse, true );

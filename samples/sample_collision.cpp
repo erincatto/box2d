@@ -386,12 +386,12 @@ public:
 		else if ( m_cache.count == 2 )
 		{
 			DrawScreenTextLine( "cache = {%d, %d}, {%d, %d}", m_cache.indexA[0], m_cache.indexA[1], m_cache.indexB[0],
-						  m_cache.indexB[1] );
+								m_cache.indexB[1] );
 		}
 		else if ( m_cache.count == 3 )
 		{
 			DrawScreenTextLine( "cache = {%d, %d, %d}, {%d, %d, %d}", m_cache.indexA[0], m_cache.indexA[1], m_cache.indexA[2],
-						  m_cache.indexB[0], m_cache.indexB[1], m_cache.indexB[2] );
+								m_cache.indexB[0], m_cache.indexB[1], m_cache.indexB[2] );
 		}
 	}
 
@@ -1195,7 +1195,7 @@ struct ShapeUserData
 // Context for ray cast callbacks. Do what you want with this.
 struct CastContext
 {
-	b2Vec2 points[3];
+	b2Position points[3];
 	b2Vec2 normals[3];
 	float fractions[3];
 	int count;
@@ -1216,7 +1216,7 @@ static float RayCastClosestCallback( b2ShapeId shapeId, b2Position point, b2Vec2
 		return -1.0f;
 	}
 
-	rayContext->points[0] = b2ToVec2( point );
+	rayContext->points[0] = point;
 	rayContext->normals[0] = normal;
 	rayContext->fractions[0] = fraction;
 	rayContext->count = 1;
@@ -1244,7 +1244,7 @@ static float RayCastAnyCallback( b2ShapeId shapeId, b2Position point, b2Vec2 nor
 		return -1.0f;
 	}
 
-	rayContext->points[0] = b2ToVec2( point );
+	rayContext->points[0] = point;
 	rayContext->normals[0] = normal;
 	rayContext->fractions[0] = fraction;
 	rayContext->count = 1;
@@ -1277,7 +1277,7 @@ static float RayCastMultipleCallback( b2ShapeId shapeId, b2Position point, b2Vec
 	int count = rayContext->count;
 	assert( count < 3 );
 
-	rayContext->points[count] = b2ToVec2( point );
+	rayContext->points[count] = point;
 	rayContext->normals[count] = normal;
 	rayContext->fractions[count] = fraction;
 	rayContext->count = count + 1;
@@ -1338,7 +1338,7 @@ static float RayCastSortedCallback( b2ShapeId shapeId, b2Position point, b2Vec2 
 		rayContext->fractions[j] = rayContext->fractions[j - 1];
 	}
 
-	rayContext->points[index] = b2ToVec2( point );
+	rayContext->points[index] = point;
 	rayContext->normals[index] = normal;
 	rayContext->fractions[index] = fraction;
 	rayContext->count = count < 3 ? count + 1 : 3;
@@ -1547,8 +1547,8 @@ public:
 		{
 			if ( mods == 0 && m_rotating == false )
 			{
-				m_rayStart = b2ToVec2( p );
-				m_rayEnd = b2ToVec2( p );
+				m_rayStart = p;
+				m_rayEnd = p;
 				m_dragging = true;
 			}
 			else if ( mods == GLFW_MOD_SHIFT && m_dragging == false )
@@ -1573,7 +1573,7 @@ public:
 	{
 		if ( m_dragging )
 		{
-			m_rayEnd = b2ToVec2( p );
+			m_rayEnd = p;
 		}
 		else if ( m_rotating )
 		{
@@ -1665,26 +1665,26 @@ public:
 		b2HexColor color2 = b2_colorLightGray;
 		b2HexColor color3 = b2_colorMagenta;
 
-		b2Vec2 rayTranslation = b2Sub( m_rayEnd, m_rayStart );
+		b2Vec2 rayTranslation = b2PositionDelta( m_rayEnd, m_rayStart );
 
 		if ( m_simple )
 		{
 			DrawScreenTextLine( "Simple closest point ray cast" );
 
 			// This version doesn't have a callback, but it doesn't skip the ignored shape
-			b2RayResult result = b2World_CastRayClosest( m_worldId, b2MakePosition( m_rayStart ), rayTranslation, b2DefaultQueryFilter() );
+			b2RayResult result = b2World_CastRayClosest( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter() );
 
 			if ( result.hit == true && result.fraction > 0.0f )
 			{
-				b2Vec2 c = b2MulAdd( m_rayStart, result.fraction, rayTranslation );
-				DrawPoint( m_draw, b2ToVec2( result.point ), 5.0f, color1 );
-				DrawLine( m_draw, m_rayStart, c, color2 );
-				b2Vec2 head = b2MulAdd( b2ToVec2( result.point ), 0.5f, result.normal );
-				DrawLine( m_draw, b2ToVec2( result.point ), head, color3 );
+				b2Position c = m_rayStart + result.fraction * rayTranslation;
+				DrawWorldPoint( m_draw, result.point, 5.0f, color1 );
+				DrawWorldLine( m_draw, m_rayStart, c, color2 );
+				b2Position head = result.point + 0.5f * result.normal;
+				DrawWorldLine( m_draw, result.point, head, color3 );
 			}
 			else
 			{
-				DrawLine( m_draw, m_rayStart, m_rayEnd, color2 );
+				DrawWorldLine( m_draw, m_rayStart, m_rayEnd, color2 );
 			}
 		}
 		else
@@ -1727,16 +1727,16 @@ public:
 			context.fractions[1] = FLT_MAX;
 			context.fractions[2] = FLT_MAX;
 
-			b2Transform transform = { m_rayStart, b2MakeRot( m_angle ) };
-			b2Circle circle = { .center = m_rayStart, .radius = m_castRadius };
-			b2Capsule capsule = { b2TransformPoint( transform, { -0.25f, 0.0f } ), b2TransformPoint( transform, { 0.25f, 0.0f } ),
+			b2Rot rotation = b2MakeRot( m_angle );
+			b2Circle circle = { .center = b2Vec2_zero, .radius = m_castRadius };
+			b2Capsule capsule = { b2RotateVector( rotation, { -0.25f, 0.0f } ), b2RotateVector( rotation, { 0.25f, 0.0f } ),
 								  m_castRadius };
-			b2Polygon box = b2MakeOffsetRoundedBox( 0.125f, 0.25f, transform.p, transform.q, m_castRadius );
+			b2Polygon box = b2MakeOffsetRoundedBox( 0.125f, 0.25f, b2Vec2_zero, rotation, m_castRadius );
 			b2ShapeProxy proxy = {};
 
 			if ( m_castType == e_rayCast )
 			{
-				b2World_CastRay( m_worldId, b2MakePosition( m_rayStart ), rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
+				b2World_CastRay( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
 			}
 			else
 			{
@@ -1753,7 +1753,7 @@ public:
 					proxy = b2MakeProxy( box.vertices, box.count, box.radius );
 				}
 
-				b2World_CastShape( m_worldId, b2Position_zero, &proxy, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
+				b2World_CastShape( m_worldId, m_rayStart, &proxy, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
 			}
 
 			if ( context.count > 0 )
@@ -1762,13 +1762,13 @@ public:
 				b2HexColor colors[3] = { b2_colorRed, b2_colorGreen, b2_colorBlue };
 				for ( int i = 0; i < context.count; ++i )
 				{
-					b2Vec2 c = b2MulAdd( m_rayStart, context.fractions[i], rayTranslation );
-					b2Vec2 p = context.points[i];
+					b2Position c = m_rayStart + context.fractions[i] * rayTranslation;
+					b2Position p = context.points[i];
 					b2Vec2 n = context.normals[i];
-					DrawPoint( m_draw, p, 5.0f, colors[i] );
-					DrawLine( m_draw, m_rayStart, c, color2 );
-					b2Vec2 head = b2MulAdd( p, 1.0f, n );
-					DrawLine( m_draw, p, head, color3 );
+					DrawWorldPoint( m_draw, p, 5.0f, colors[i] );
+					DrawWorldLine( m_draw, m_rayStart, c, color2 );
+					b2Position head = p + 1.0f * n;
+					DrawWorldLine( m_draw, p, head, color3 );
 
 					b2Vec2 t = b2MulSV( context.fractions[i], rayTranslation );
 					b2Transform shiftedTransform = { t, b2Rot_identity };
@@ -1792,7 +1792,7 @@ public:
 			}
 			else
 			{
-				DrawLine( m_draw, m_rayStart, m_rayEnd, color2 );
+				DrawWorldLine( m_draw, m_rayStart, m_rayEnd, color2 );
 				b2Transform shiftedTransform = { rayTranslation, b2Rot_identity };
 
 				if ( m_castType == e_circleCast )
@@ -1813,7 +1813,7 @@ public:
 			}
 		}
 
-		DrawPoint( m_draw, m_rayStart, 5.0f, b2_colorGreen );
+		DrawWorldPoint( m_draw, m_rayStart, 5.0f, b2_colorGreen );
 
 		if ( B2_IS_NON_NULL( m_bodyIds[m_ignoreIndex] ) )
 		{
@@ -1850,8 +1850,8 @@ public:
 	float m_angle;
 	bool m_rotating;
 
-	b2Vec2 m_rayStart;
-	b2Vec2 m_rayEnd;
+	b2Position m_rayStart;
+	b2Position m_rayEnd;
 	bool m_dragging;
 };
 
@@ -2407,7 +2407,8 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollideCircles( &circle1, b2MakeWorldTransform( transform1 ), &circle2, b2MakeWorldTransform( transform2 ) );
+			b2Manifold m =
+				b2CollideCircles( &circle1, b2MakeWorldTransform( transform1 ), &circle2, b2MakeWorldTransform( transform2 ) );
 
 			b2Vec2 center1 = b2TransformPoint( transform1, circle1.center );
 			DrawSolidCircle( m_draw, { center1, transform1.q }, circle1.radius, color1 );
@@ -2427,7 +2428,8 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollideCapsuleAndCircle( &capsule, b2MakeWorldTransform( transform1 ), &circle, b2MakeWorldTransform( transform2 ) );
+			b2Manifold m = b2CollideCapsuleAndCircle( &capsule, b2MakeWorldTransform( transform1 ), &circle,
+													  b2MakeWorldTransform( transform2 ) );
 
 			b2Vec2 v1 = b2TransformPoint( transform1, capsule.center1 );
 			b2Vec2 v2 = b2TransformPoint( transform1, capsule.center2 );
@@ -2449,7 +2451,8 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollideSegmentAndCircle( &segment, b2MakeWorldTransform( transform1 ), &circle, b2MakeWorldTransform( transform2 ) );
+			b2Manifold m = b2CollideSegmentAndCircle( &segment, b2MakeWorldTransform( transform1 ), &circle,
+													  b2MakeWorldTransform( transform2 ) );
 
 			b2Vec2 p1 = b2TransformPoint( transform1, segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment.point2 );
@@ -2472,7 +2475,8 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollidePolygonAndCircle( &box, b2MakeWorldTransform( transform1 ), &circle, b2MakeWorldTransform( transform2 ) );
+			b2Manifold m = b2CollidePolygonAndCircle( &box, b2MakeWorldTransform( transform1 ), &circle,
+													  b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, box.vertices, box.count, m_round, color1 );
 
@@ -2492,7 +2496,8 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollideCapsules( &capsule1, b2MakeWorldTransform( transform1 ), &capsule2, b2MakeWorldTransform( transform2 ) );
+			b2Manifold m =
+				b2CollideCapsules( &capsule1, b2MakeWorldTransform( transform1 ), &capsule2, b2MakeWorldTransform( transform2 ) );
 
 			b2Vec2 v1 = b2TransformPoint( transform1, capsule1.center1 );
 			b2Vec2 v2 = b2TransformPoint( transform1, capsule1.center2 );
@@ -2515,7 +2520,8 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollidePolygonAndCapsule( &box, b2MakeWorldTransform( transform1 ), &capsule, b2MakeWorldTransform( transform2 ) );
+			b2Manifold m = b2CollidePolygonAndCapsule( &box, b2MakeWorldTransform( transform1 ), &capsule,
+													   b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, box.vertices, box.count, box.radius, color1 );
 
@@ -2536,7 +2542,8 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollideSegmentAndCapsule( &segment, b2MakeWorldTransform( transform1 ), &capsule, b2MakeWorldTransform( transform2 ) );
+			b2Manifold m = b2CollideSegmentAndCapsule( &segment, b2MakeWorldTransform( transform1 ), &capsule,
+													   b2MakeWorldTransform( transform2 ) );
 
 			b2Vec2 p1 = b2TransformPoint( transform1, segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment.point2 );
@@ -2563,7 +2570,8 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollidePolygons( &box1, b2MakeWorldTransform( transform1 ), &box, b2MakeWorldTransform( transform2 ) );
+			b2Manifold m =
+				b2CollidePolygons( &box1, b2MakeWorldTransform( transform1 ), &box, b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, box1.vertices, box1.count, box1.radius, color1 );
 			DrawSolidPolygon( m_draw, transform2, box.vertices, box.count, box.radius, color2 );
@@ -2582,7 +2590,8 @@ public:
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 			// b2Transform transform2 = {b2Add({0.0f, -0.1f}, offset), {0.0f, 1.0f}};
 
-			b2Manifold m = b2CollidePolygons( &box1, b2MakeWorldTransform( transform1 ), &box, b2MakeWorldTransform( transform2 ) );
+			b2Manifold m =
+				b2CollidePolygons( &box1, b2MakeWorldTransform( transform1 ), &box, b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, box1.vertices, box1.count, box1.radius, color1 );
 			DrawSolidPolygon( m_draw, transform2, box.vertices, box.count, box.radius, color2 );
@@ -2602,7 +2611,8 @@ public:
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 			// b2Transform transform2 = {b2Add({0.0f, -0.1f}, offset), {0.0f, 1.0f}};
 
-			b2Manifold m = b2CollidePolygons( &box, b2MakeWorldTransform( transform1 ), &rox, b2MakeWorldTransform( transform2 ) );
+			b2Manifold m =
+				b2CollidePolygons( &box, b2MakeWorldTransform( transform1 ), &rox, b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, box.vertices, box.count, box.radius, color1 );
 			DrawSolidPolygon( m_draw, transform2, rox.vertices, rox.count, rox.radius, color2 );
@@ -2622,7 +2632,8 @@ public:
 			// b2Transform transform1 = {{6.48024225f, 2.07872653f}, {-0.938356698f, 0.345668465f}};
 			// b2Transform transform2 = {{5.52862263f, 2.51146317f}, {-0.859374702f, -0.511346340f}};
 
-			b2Manifold m = b2CollidePolygons( &rox, b2MakeWorldTransform( transform1 ), &rox, b2MakeWorldTransform( transform2 ) );
+			b2Manifold m =
+				b2CollidePolygons( &rox, b2MakeWorldTransform( transform1 ), &rox, b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, rox.vertices, rox.count, rox.radius, color1 );
 			DrawSolidPolygon( m_draw, transform2, rox.vertices, rox.count, rox.radius, color2 );
@@ -2642,7 +2653,8 @@ public:
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 			// b2Transform transform2 = {b2Add({-1.44583416f, 0.397352695f}, offset), m_transform.q};
 
-			b2Manifold m = b2CollideSegmentAndPolygon( &segment, b2MakeWorldTransform( transform1 ), &rox, b2MakeWorldTransform( transform2 ) );
+			b2Manifold m = b2CollideSegmentAndPolygon( &segment, b2MakeWorldTransform( transform1 ), &rox,
+													   b2MakeWorldTransform( transform2 ) );
 
 			b2Vec2 p1 = b2TransformPoint( transform1, segment.point1 );
 			b2Vec2 p2 = b2TransformPoint( transform1, segment.point2 );
@@ -2663,7 +2675,8 @@ public:
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 			// b2Transform transform2 = {b2Add({0.0f, -0.1f}, offset), {0.0f, 1.0f}};
 
-			b2Manifold m = b2CollidePolygons( &wox, b2MakeWorldTransform( transform1 ), &wox, b2MakeWorldTransform( transform2 ) );
+			b2Manifold m =
+				b2CollidePolygons( &wox, b2MakeWorldTransform( transform1 ), &wox, b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, wox.vertices, wox.count, wox.radius, color1 );
 			DrawSolidPolygon( m_draw, transform1, wox.vertices, wox.count, 0.0f, color1 );
@@ -2715,7 +2728,8 @@ public:
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 			// b2Transform transform2 = {b2Add({0.0f, -0.1f}, offset), {0.0f, 1.0f}};
 
-			b2Manifold m = b2CollidePolygons( &box, b2MakeWorldTransform( transform1 ), &tri, b2MakeWorldTransform( transform2 ) );
+			b2Manifold m =
+				b2CollidePolygons( &box, b2MakeWorldTransform( transform1 ), &tri, b2MakeWorldTransform( transform2 ) );
 
 			DrawSolidPolygon( m_draw, transform1, box.vertices, box.count, 0.0f, color1 );
 			DrawSolidPolygon( m_draw, transform2, tri.vertices, tri.count, 0.0f, color2 );
@@ -2733,7 +2747,8 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m = b2CollideChainSegmentAndCircle( &segment, b2MakeWorldTransform( transform1 ), &circle, b2MakeWorldTransform( transform2 ) );
+			b2Manifold m = b2CollideChainSegmentAndCircle( &segment, b2MakeWorldTransform( transform1 ), &circle,
+														   b2MakeWorldTransform( transform2 ) );
 
 			b2Vec2 g1 = b2TransformPoint( transform1, segment.ghost1 );
 			b2Vec2 g2 = b2TransformPoint( transform1, segment.ghost2 );
@@ -2765,8 +2780,10 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m1 = b2CollideChainSegmentAndPolygon( &segment1, b2MakeWorldTransform( transform1 ), &rox, b2MakeWorldTransform( transform2 ), &m_smgroxCache1 );
-			b2Manifold m2 = b2CollideChainSegmentAndPolygon( &segment2, b2MakeWorldTransform( transform1 ), &rox, b2MakeWorldTransform( transform2 ), &m_smgroxCache2 );
+			b2Manifold m1 = b2CollideChainSegmentAndPolygon( &segment1, b2MakeWorldTransform( transform1 ), &rox,
+															 b2MakeWorldTransform( transform2 ), &m_smgroxCache1 );
+			b2Manifold m2 = b2CollideChainSegmentAndPolygon( &segment2, b2MakeWorldTransform( transform1 ), &rox,
+															 b2MakeWorldTransform( transform2 ), &m_smgroxCache2 );
 
 			{
 				b2Vec2 g2 = b2TransformPoint( transform1, segment1.ghost2 );
@@ -2806,8 +2823,10 @@ public:
 			b2Transform transform1 = { offset, b2Rot_identity };
 			b2Transform transform2 = { b2Add( m_transform.p, offset ), m_transform.q };
 
-			b2Manifold m1 = b2CollideChainSegmentAndCapsule( &segment1, b2MakeWorldTransform( transform1 ), &capsule, b2MakeWorldTransform( transform2 ), &m_smgcapCache1 );
-			b2Manifold m2 = b2CollideChainSegmentAndCapsule( &segment2, b2MakeWorldTransform( transform1 ), &capsule, b2MakeWorldTransform( transform2 ), &m_smgcapCache2 );
+			b2Manifold m1 = b2CollideChainSegmentAndCapsule( &segment1, b2MakeWorldTransform( transform1 ), &capsule,
+															 b2MakeWorldTransform( transform2 ), &m_smgcapCache1 );
+			b2Manifold m2 = b2CollideChainSegmentAndCapsule( &segment2, b2MakeWorldTransform( transform1 ), &capsule,
+															 b2MakeWorldTransform( transform2 ), &m_smgcapCache2 );
 
 			{
 				b2Vec2 g2 = b2TransformPoint( transform1, segment1.ghost2 );
@@ -3119,7 +3138,8 @@ public:
 			for ( int i = 0; i < m_count; ++i )
 			{
 				const b2ChainSegment* segment = m_segments + i;
-				b2Manifold m = b2CollideChainSegmentAndCircle( segment, b2MakeWorldTransform( transform1 ), &circle, b2MakeWorldTransform( transform2 ) );
+				b2Manifold m = b2CollideChainSegmentAndCircle( segment, b2MakeWorldTransform( transform1 ), &circle,
+															   b2MakeWorldTransform( transform2 ) );
 				DrawManifold( &m );
 			}
 		}
@@ -3133,7 +3153,8 @@ public:
 			{
 				const b2ChainSegment* segment = m_segments + i;
 				b2SimplexCache cache = {};
-				b2Manifold m = b2CollideChainSegmentAndPolygon( segment, b2MakeWorldTransform( transform1 ), &rox, b2MakeWorldTransform( transform2 ), &cache );
+				b2Manifold m = b2CollideChainSegmentAndPolygon( segment, b2MakeWorldTransform( transform1 ), &rox,
+																b2MakeWorldTransform( transform2 ), &cache );
 				DrawManifold( &m );
 			}
 		}
@@ -3485,8 +3506,8 @@ public:
 		distanceCache.count = 0;
 		b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &distanceCache, nullptr, 0 );
 
-		DrawScreenTextLine( "hit = %s, iterations = %d, fraction = %g, distance = %g", output.hit ? "true" : "false", output.iterations,
-					  output.fraction, distanceOutput.distance );
+		DrawScreenTextLine( "hit = %s, iterations = %d, fraction = %g, distance = %g", output.hit ? "true" : "false",
+							output.iterations, output.fraction, distanceOutput.distance );
 
 		DrawShape( m_typeA, b2Transform_identity, m_radiusA, b2_colorCyan );
 		DrawShape( m_typeB, m_transform, m_radiusB, b2_colorLightGreen );
@@ -3650,8 +3671,8 @@ public:
 			b2DistanceInput distanceInput;
 			distanceInput.proxyA = input.proxyA;
 			distanceInput.proxyB = input.proxyB;
-			distanceInput.transform =
-				b2InvMulTransforms( b2GetSweepTransform( &sweepA, output.fraction ), b2GetSweepTransform( &sweepB, output.fraction ) );
+			distanceInput.transform = b2InvMulTransforms( b2GetSweepTransform( &sweepA, output.fraction ),
+														  b2GetSweepTransform( &sweepB, output.fraction ) );
 			distanceInput.useRadii = false;
 			b2SimplexCache cache = { 0 };
 			b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, nullptr, 0 );

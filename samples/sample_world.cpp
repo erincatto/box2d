@@ -32,7 +32,7 @@ public:
 
 		if ( m_context->restart == false )
 		{
-			m_context->camera.center = b2MakePosition( m_viewPosition );
+			m_context->camera.center = m_viewPosition;
 			m_context->camera.zoom = 25.0f * 1.0f;
 			m_context->debugDraw.drawJoints = false;
 		}
@@ -175,7 +175,7 @@ public:
 
 		if ( m_speed != 0.0f )
 		{
-			m_context->camera.center = b2MakePosition( m_viewPosition );
+			m_context->camera.center = m_viewPosition;
 		}
 
 		if ( m_followCar )
@@ -189,7 +189,7 @@ public:
 			m_explosionPosition.x = ( 0.5f + m_cycleIndex ) * m_period - span;
 
 			b2ExplosionDef def = b2DefaultExplosionDef();
-			def.position = b2MakePosition( m_explosionPosition );
+			def.position = m_explosionPosition;
 			def.radius = radius;
 			def.falloff = 0.1f;
 			def.impulsePerLength = 1.0f;
@@ -200,7 +200,7 @@ public:
 
 		if ( m_explode )
 		{
-			DrawCircle( m_draw, m_explosionPosition, radius, b2_colorAzure );
+			DrawWorldCircle( m_draw, m_explosionPosition, radius, b2_colorAzure );
 		}
 
 		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS )
@@ -227,7 +227,7 @@ public:
 	}
 
 	Car m_car;
-	b2Vec2 m_viewPosition;
+	b2Position m_viewPosition;
 	float m_period;
 	int m_cycleCount;
 	int m_cycleIndex;
@@ -235,7 +235,7 @@ public:
 	float m_gridSize;
 	float m_speed;
 
-	b2Vec2 m_explosionPosition;
+	b2Position m_explosionPosition;
 	bool m_explode;
 	bool m_followCar;
 };

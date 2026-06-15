@@ -414,8 +414,9 @@ public:
 
 		m_context->debugDraw.drawingBounds = GetViewBounds( &m_context->camera );
 #if defined( BOX2D_DOUBLE_PRECISION )
-		// Draw relative to the camera so callbacks and recorded queries land near the origin.
+		// Draw relative to the camera so callbacks, recorded queries, and ad-hoc draws land near the origin.
 		m_context->debugDraw.origin = m_context->camera.center;
+		SetDrawOrigin( m_context->draw, m_context->camera.center );
 #endif
 		if ( B2_IS_NON_NULL( m_worldId ) )
 		{
@@ -624,9 +625,9 @@ public:
 			const b2Manifold* m = &contacts[i].manifold;
 			for ( int j = 0; j < m->pointCount; ++j )
 			{
-				b2Vec2 point = CameraRelative( &m_context->camera, b2OffsetPosition( originA, m->points[j].anchorA ) );
-				DrawPoint( draw, point, 6.0f, b2_colorOrange );
-				DrawLine( draw, point, b2MulAdd( point, 0.3f, m->normal ), b2_colorOrange );
+				b2Position point = b2OffsetPosition( originA, m->points[j].anchorA );
+				DrawWorldPoint( draw, point, 6.0f, b2_colorOrange );
+				DrawWorldLine( draw, point, point + b2MulSV( 0.3f, m->normal ), b2_colorOrange );
 			}
 		}
 	}
@@ -645,10 +646,9 @@ public:
 				return;
 			}
 			b2BodyId body = b2Shape_GetBody( shape );
-			Camera* cam = &m_context->camera;
-			DrawBounds( draw, CameraRelative( cam, b2Shape_GetAABB( shape ) ), b2_colorYellow );
-			DrawTransform( draw, CameraRelative( cam, b2Body_GetTransform( body ) ), 0.5f );
-			DrawPoint( draw, CameraRelative( cam, b2Body_GetWorldCenterOfMass( body ) ), 8.0f, b2_colorYellow );
+			DrawWorldBounds( draw, b2Shape_GetAABB( shape ), b2_colorYellow );
+			DrawWorldTransform( draw, b2Body_GetTransform( body ), 0.5f );
+			DrawWorldPoint( draw, b2Body_GetWorldCenter( body ), 8.0f, b2_colorYellow );
 			DrawBodyContacts( body );
 		}
 		else if ( m_selKind == SelBody )
@@ -658,10 +658,9 @@ public:
 			{
 				return;
 			}
-			Camera* cam = &m_context->camera;
-			DrawBounds( draw, CameraRelative( cam, b2Body_ComputeAABB( body ) ), b2_colorYellow );
-			DrawTransform( draw, CameraRelative( cam, b2Body_GetTransform( body ) ), 0.5f );
-			DrawPoint( draw, CameraRelative( cam, b2Body_GetWorldCenterOfMass( body ) ), 8.0f, b2_colorYellow );
+			DrawWorldBounds( draw, b2Body_ComputeAABB( body ), b2_colorYellow );
+			DrawWorldTransform( draw, b2Body_GetTransform( body ), 0.5f );
+			DrawWorldPoint( draw, b2Body_GetWorldCenter( body ), 8.0f, b2_colorYellow );
 			DrawBodyContacts( body );
 		}
 		else if ( m_selKind == SelJoint )
@@ -673,14 +672,13 @@ public:
 			}
 			b2BodyId a = b2Joint_GetBodyA( joint );
 			b2BodyId b = b2Joint_GetBodyB( joint );
-			Camera* cam = &m_context->camera;
 			if ( b2Body_IsValid( a ) )
 			{
-				DrawPoint( draw, CameraRelative( cam, b2Body_GetWorldCenterOfMass( a ) ), 8.0f, b2_colorMagenta );
+				DrawWorldPoint( draw, b2Body_GetWorldCenter( a ), 8.0f, b2_colorMagenta );
 			}
 			if ( b2Body_IsValid( b ) )
 			{
-				DrawPoint( draw, CameraRelative( cam, b2Body_GetWorldCenterOfMass( b ) ), 8.0f, b2_colorMagenta );
+				DrawWorldPoint( draw, b2Body_GetWorldCenter( b ), 8.0f, b2_colorMagenta );
 			}
 		}
 	}

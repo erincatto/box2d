@@ -219,8 +219,8 @@ public:
 			b2Body_SetAngularVelocity( m_platformId, 0.0f );
 
 			b2Body_SetType( m_secondAttachmentId, b2_kinematicBody );
-			b2Body_SetLinearVelocity(m_secondAttachmentId, b2Vec2_zero);
-			b2Body_SetAngularVelocity(m_secondAttachmentId, 0.0f);
+			b2Body_SetLinearVelocity( m_secondAttachmentId, b2Vec2_zero );
+			b2Body_SetAngularVelocity( m_secondAttachmentId, 0.0f );
 
 			b2Body_SetType( m_secondPayloadId, b2_kinematicBody );
 			b2Body_SetType( m_touchingBodyId, b2_kinematicBody );
@@ -367,7 +367,7 @@ public:
 		if ( ImGui::Button( "Explode" ) )
 		{
 			b2ExplosionDef def = b2DefaultExplosionDef();
-			def.position = b2MakePosition( m_explosionPosition );
+			def.position = m_explosionPosition;
 			def.radius = m_explosionRadius;
 			def.falloff = 0.1f;
 			def.impulsePerLength = m_explosionMagnitude;
@@ -385,7 +385,7 @@ public:
 	{
 		Sample::Step();
 
-		DrawCircle( m_context->draw, m_explosionPosition, m_explosionRadius, b2_colorAzure );
+		DrawWorldCircle( m_context->draw, m_explosionPosition, m_explosionRadius, b2_colorAzure );
 
 		// This shows how to get the velocity of a point on a body
 		b2Vec2 localPoint = { 0.0f, 2.0f };
@@ -395,8 +395,8 @@ public:
 		b2Vec2 v2 = b2Body_GetWorldPointVelocity( m_weebleId, worldPoint );
 
 		b2Vec2 offset = { 0.05f, 0.0f };
-		DrawLine(m_context->draw,  b2ToVec2( worldPoint ), b2ToVec2( worldPoint + v1 ), b2_colorRed );
-		DrawLine(m_context->draw,  b2ToVec2( worldPoint + offset ), b2ToVec2( worldPoint + v2 + offset ), b2_colorGreen );
+		DrawWorldLine( m_context->draw, worldPoint, worldPoint + v1, b2_colorRed );
+		DrawWorldLine( m_context->draw, worldPoint + offset, worldPoint + v2 + offset, b2_colorGreen );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -405,7 +405,7 @@ public:
 	}
 
 	b2BodyId m_weebleId;
-	b2Vec2 m_explosionPosition;
+	b2Position m_explosionPosition;
 	float m_explosionRadius;
 	float m_explosionMagnitude;
 };
@@ -717,7 +717,7 @@ public:
 	{
 		Sample::Step();
 
-		DrawScreenTextLine("A bad body is a dynamic body with no mass and behaves like a kinematic body." );
+		DrawScreenTextLine( "A bad body is a dynamic body with no mass and behaves like a kinematic body." );
 		DrawScreenTextLine( "Bad bodies are considered invalid and a user bug. Behavior is not guaranteed." );
 
 		// For science
@@ -845,18 +845,18 @@ public:
 
 		if ( timeStep > 0.0f )
 		{
-			b2Vec2 point = {
+			b2Position point = {
 				.x = 2.0f * m_amplitude * cosf( m_time ),
 				.y = m_amplitude * sinf( 2.0f * m_time ),
 			};
 			b2Rot rotation = b2MakeRot( 2.0f * m_time );
 
 			b2Vec2 axis = b2RotateVector( rotation, { 0.0f, 1.0f } );
-			DrawLine( m_context->draw, point - 0.5f * axis, point + 0.5f * axis, b2_colorPlum );
-			DrawPoint( m_context->draw, point, 10.0f, b2_colorPlum );
+			DrawWorldLine( m_context->draw, point - 0.5f * axis, point + 0.5f * axis, b2_colorPlum );
+			DrawWorldPoint( m_context->draw, point, 10.0f, b2_colorPlum );
 
 			bool wake = true;
-			b2Body_SetTargetTransform( m_bodyId, { b2MakePosition( point ), rotation }, timeStep, wake );
+			b2Body_SetTargetTransform( m_bodyId, { point , rotation }, timeStep, wake );
 		}
 
 		Sample::Step();

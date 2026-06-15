@@ -27,7 +27,7 @@ public:
 
 	struct HitEvent
 	{
-		b2Vec2 point;
+		b2Position point;
 		float speed;
 		int stepIndex;
 	};
@@ -155,7 +155,7 @@ public:
 				}
 			}
 
-			e->point = b2ToVec2( event->point );
+			e->point = event->point;
 			e->speed = event->approachSpeed;
 			e->stepIndex = m_stepCount;
 		}
@@ -165,8 +165,8 @@ public:
 			HitEvent* e = m_hitEvents + i;
 			if ( e->stepIndex > 0 && m_stepCount <= e->stepIndex + 30 )
 			{
-				DrawCircle( m_draw, e->point, 0.1f, b2_colorOrangeRed );
-				DrawWorldString( m_draw, m_camera, b2MakePosition( e->point ), b2_colorWhite, "%.1f", e->speed );
+				DrawWorldCircle( m_draw, e->point, 0.1f, b2_colorOrangeRed );
+				DrawWorldString( m_draw, m_camera, e->point, b2_colorWhite, "%.1f", e->speed );
 			}
 		}
 
@@ -1568,16 +1568,16 @@ public:
 
 		// Flippers
 		{
-			b2Vec2 p1 = { -2.0f, 0.0f }, p2 = { 2.0f, 0.0f };
+			b2Position p1 = { -2.0f, 0.0f }, p2 = { 2.0f, 0.0f };
 
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.enableSleep = false;
 
-			bodyDef.position = b2MakePosition( p1 );
+			bodyDef.position = p1;
 			b2BodyId leftFlipperId = b2CreateBody( m_worldId, &bodyDef );
 
-			bodyDef.position = b2MakePosition( p2 );
+			bodyDef.position = p2;
 			b2BodyId rightFlipperId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2Polygon box = b2MakeBox( 1.75f, 0.2f );
@@ -1595,14 +1595,14 @@ public:
 			jointDef.enableLimit = true;
 
 			jointDef.motorSpeed = 0.0f;
-			jointDef.base.localFrameA.p = p1;
+			jointDef.base.localFrameA.p = b2ToVec2( p1 );
 			jointDef.base.bodyIdB = leftFlipperId;
 			jointDef.lowerAngle = -30.0f * B2_PI / 180.0f;
 			jointDef.upperAngle = 5.0f * B2_PI / 180.0f;
 			m_leftJointId = b2CreateRevoluteJoint( m_worldId, &jointDef );
 
 			jointDef.motorSpeed = 0.0f;
-			jointDef.base.localFrameA.p = p2;
+			jointDef.base.localFrameA.p = b2ToVec2( p2 );
 			jointDef.base.bodyIdB = rightFlipperId;
 			jointDef.lowerAngle = -5.0f * B2_PI / 180.0f;
 			jointDef.upperAngle = 30.0f * B2_PI / 180.0f;

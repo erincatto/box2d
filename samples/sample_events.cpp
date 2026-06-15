@@ -997,9 +997,12 @@ public:
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							DrawLine( m_draw, b2ToVec2( b2Body_GetWorldCenterOfMass( b2Shape_GetBody( idA ) ) + point.anchorA ), b2ToVec2( ( b2Body_GetWorldCenterOfMass( b2Shape_GetBody( idA ) ) + point.anchorA ) + point.totalNormalImpulse * normal ),
+							DrawLine( m_draw, b2ToVec2( b2Body_GetWorldCenter( b2Shape_GetBody( idA ) ) + point.anchorA ),
+									  b2ToVec2( ( b2Body_GetWorldCenter( b2Shape_GetBody( idA ) ) + point.anchorA ) +
+												point.totalNormalImpulse * normal ),
 									  b2_colorBlueViolet );
-							DrawPoint( m_draw, b2ToVec2( b2Body_GetWorldCenterOfMass( b2Shape_GetBody( idA ) ) + point.anchorA ), 10.0f, b2_colorWhite );
+							DrawPoint( m_draw, b2ToVec2( b2Body_GetWorldCenter( b2Shape_GetBody( idA ) ) + point.anchorA ), 10.0f,
+									   b2_colorWhite );
 						}
 					}
 				}
@@ -1028,9 +1031,12 @@ public:
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							DrawLine( m_draw, b2ToVec2( b2Body_GetWorldCenterOfMass( b2Shape_GetBody( idA ) ) + point.anchorA ), b2ToVec2( ( b2Body_GetWorldCenterOfMass( b2Shape_GetBody( idA ) ) + point.anchorA ) + point.totalNormalImpulse * normal ),
+							DrawLine( m_draw, b2ToVec2( b2Body_GetWorldCenter( b2Shape_GetBody( idA ) ) + point.anchorA ),
+									  b2ToVec2( ( b2Body_GetWorldCenter( b2Shape_GetBody( idA ) ) + point.anchorA ) +
+												point.totalNormalImpulse * normal ),
 									  b2_colorYellowGreen );
-							DrawPoint( m_draw, b2ToVec2( b2Body_GetWorldCenterOfMass( b2Shape_GetBody( idA ) ) + point.anchorA ), 10.0f, b2_colorWhite );
+							DrawPoint( m_draw, b2ToVec2( b2Body_GetWorldCenter( b2Shape_GetBody( idA ) ) + point.anchorA ), 10.0f,
+									   b2_colorWhite );
 						}
 					}
 				}
@@ -1540,7 +1546,7 @@ public:
 		if ( ImGui::Button( "Explode" ) )
 		{
 			b2ExplosionDef def = b2DefaultExplosionDef();
-			def.position = b2MakePosition( m_explosionPosition );
+			def.position = m_explosionPosition;
 			def.radius = m_explosionRadius;
 			def.falloff = 0.1f;
 			def.impulsePerLength = m_explosionMagnitude;
@@ -1604,7 +1610,7 @@ public:
 			}
 		}
 
-		DrawCircle( m_draw, m_explosionPosition, m_explosionRadius, b2_colorAzure );
+		DrawWorldCircle( m_draw, m_explosionPosition, m_explosionRadius, b2_colorAzure );
 
 		DrawScreenTextLine( "sleep count: %d", m_sleepCount );
 	}
@@ -1618,7 +1624,7 @@ public:
 	bool m_sleeping[e_count] = {};
 	int m_count;
 	int m_sleepCount;
-	b2Vec2 m_explosionPosition;
+	b2Position m_explosionPosition;
 	float m_explosionRadius;
 	float m_explosionMagnitude;
 };
@@ -1793,10 +1799,10 @@ public:
 		PrintOverlaps( m_kinematicSensorId, "kinematic" );
 		PrintOverlaps( m_dynamicSensorId, "dynamic" );
 
-		b2Vec2 origin = { 5.0f, 1.0f };
+		b2Position origin = { 5.0f, 1.0f };
 		b2Vec2 translation = { -10.0f, 0.0f };
-		b2RayResult result = b2World_CastRayClosest( m_worldId, b2MakePosition( origin ), translation, b2DefaultQueryFilter() );
-		DrawLine( m_draw, origin, origin + translation, b2_colorDimGray );
+		b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, b2DefaultQueryFilter() );
+		DrawWorldLine( m_draw, origin, origin + translation, b2_colorDimGray );
 
 		if ( result.hit )
 		{
@@ -1899,7 +1905,7 @@ public:
 			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
-			jointDef.base.localFrameA.p = b2ToVec2(position);
+			jointDef.base.localFrameA.p = b2ToVec2( position );
 			jointDef.maxVelocityForce = 1000.0f;
 			jointDef.maxVelocityTorque = 20.0f;
 			jointDef.base.forceThreshold = forceThreshold;
@@ -2129,11 +2135,12 @@ public:
 			for ( int i = 0; i < data.manifold.pointCount; ++i )
 			{
 				const b2ManifoldPoint* manifoldPoint = data.manifold.points + i;
-				b2Vec2 p1 = b2ToVec2( b2Body_GetWorldCenterOfMass( b2Shape_GetBody( data.shapeIdA ) ) + manifoldPoint->anchorA );
-				b2Vec2 p2 = p1 + manifoldPoint->totalNormalImpulse * data.manifold.normal;
-				DrawLine( m_draw, p1, p2, b2_colorCrimson );
-				DrawPoint( m_draw, p1, 6.0f, b2_colorCrimson );
-				DrawWorldString( m_draw, m_camera, b2MakePosition( p1 ), b2_colorWhite, "%.2f", manifoldPoint->totalNormalImpulse );
+				b2BodyId bodyIdA = b2Shape_GetBody( data.shapeIdA );
+				b2Position p1 = b2Body_GetWorldCenter( bodyIdA ) + manifoldPoint->anchorA;
+				b2Position p2 = p1 + manifoldPoint->totalNormalImpulse * data.manifold.normal;
+				DrawWorldLine( m_draw, p1, p2, b2_colorCrimson );
+				DrawWorldPoint( m_draw, p1, 6.0f, b2_colorCrimson );
+				DrawWorldString( m_draw, m_camera, p1, b2_colorWhite, "%.2f", manifoldPoint->totalNormalImpulse );
 			}
 		}
 		else
@@ -2410,8 +2417,8 @@ public:
 		m_projectileId = {};
 		m_projectileShapeId = {};
 		m_dragging = false;
-		m_point1 = b2Vec2_zero;
-		m_point2 = b2Vec2_zero;
+		m_point1 = b2Position_zero;
+		m_point2 = b2Position_zero;
 
 		b2Polygon box = b2MakeRoundedBox( 0.45f, 0.45f, 0.05f );
 
@@ -2444,7 +2451,7 @@ public:
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
-		bodyDef.position = b2MakePosition( m_point1 );
+		bodyDef.position = m_point1;
 		bodyDef.linearVelocity = 4.0f * ( m_point2 - m_point1 );
 		bodyDef.isBullet = true;
 
@@ -2463,7 +2470,7 @@ public:
 			if ( mods == GLFW_MOD_CONTROL )
 			{
 				m_dragging = true;
-				m_point1 = b2ToVec2( p );
+				m_point1 = p;
 			}
 		}
 	}
@@ -2484,7 +2491,7 @@ public:
 	{
 		if ( m_dragging )
 		{
-			m_point2 = b2ToVec2( p );
+			m_point2 = p;
 		}
 	}
 
@@ -2496,9 +2503,9 @@ public:
 
 		if ( m_dragging )
 		{
-			DrawLine( m_draw, m_point1, m_point2, b2_colorWhite );
-			DrawPoint( m_draw, m_point1, 5.0f, b2_colorGreen );
-			DrawPoint( m_draw, m_point2, 5.0f, b2_colorRed );
+			DrawWorldLine( m_draw, m_point1, m_point2, b2_colorWhite );
+			DrawWorldPoint( m_draw, m_point1, 5.0f, b2_colorGreen );
+			DrawWorldPoint( m_draw, m_point2, 5.0f, b2_colorRed );
 		}
 
 		b2ContactEvents contactEvents = b2World_GetContactEvents( m_worldId );
@@ -2515,7 +2522,8 @@ public:
 					if ( data.manifold.pointCount > 0 )
 					{
 						b2ExplosionDef explosionDef = b2DefaultExplosionDef();
-						explosionDef.position = b2Body_GetWorldCenterOfMass( b2Shape_GetBody( data.shapeIdA ) ) + data.manifold.points[0].anchorA;
+						explosionDef.position =
+							b2Body_GetWorldCenter( b2Shape_GetBody( data.shapeIdA ) ) + data.manifold.points[0].anchorA;
 						explosionDef.radius = 1.0f;
 						explosionDef.impulsePerLength = 20.0f;
 						b2World_Explode( m_worldId, &explosionDef );
@@ -2537,8 +2545,8 @@ public:
 
 	b2BodyId m_projectileId;
 	b2ShapeId m_projectileShapeId;
-	b2Vec2 m_point1;
-	b2Vec2 m_point2;
+	b2Position m_point1;
+	b2Position m_point2;
 	bool m_dragging;
 };
 
@@ -2658,14 +2666,14 @@ public:
 		}
 
 		DrawScreenTextLine( "mass = %g, gravity = %g, restitution = %g", m_mass, m_useGravity ? 10.0f : 0.0f,
-					  m_useRestitution ? m_restitution : 0.0f );
+							m_useRestitution ? m_restitution : 0.0f );
 
 		int eventCount = (int)m_events.size();
 		for ( int i = 0; i < eventCount; ++i )
 		{
 			const Event& e = m_events[i];
-			DrawScreenTextLine( "hit speed = %g, hit momentum = %g, final impulse = %g, total impulse = %g", e.speed, m_mass * e.speed,
-						  e.impulse, e.totalImpulse );
+			DrawScreenTextLine( "hit speed = %g, hit momentum = %g, final impulse = %g, total impulse = %g", e.speed,
+								m_mass * e.speed, e.impulse, e.totalImpulse );
 		}
 	}
 

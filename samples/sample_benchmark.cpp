@@ -1230,8 +1230,8 @@ public:
 		// Pre-compute rays to avoid randomizer overhead
 		for ( int i = 0; i < sampleCount; ++i )
 		{
-			b2Vec2 rayStart = RandomVec2( 0.0f, extent );
-			b2Vec2 rayEnd = RandomVec2( 0.0f, extent );
+			b2Position rayStart = RandomPos( 0.0f, extent );
+			b2Position rayEnd = RandomPos( 0.0f, extent );
 
 			m_origins[i] = rayStart;
 			m_translations[i] = rayEnd - rayStart;
@@ -1435,10 +1435,10 @@ public:
 
 			for ( int i = 0; i < sampleCount; ++i )
 			{
-				b2Vec2 origin = m_origins[i];
+				b2Position origin = m_origins[i];
 				b2Vec2 translation = m_translations[i];
 
-				b2RayResult result = b2World_CastRayClosest( m_worldId, b2MakePosition( origin ), translation, filter );
+				b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, filter );
 
 				if ( i == m_drawIndex )
 				{
@@ -1454,14 +1454,14 @@ public:
 
 			m_minTime = b2MinFloat( m_minTime, ms );
 
-			b2Vec2 p1 = m_origins[m_drawIndex];
-			b2Vec2 p2 = p1 + m_translations[m_drawIndex];
-			DrawLine( m_context->draw, p1, p2, b2_colorWhite );
-			DrawPoint( m_context->draw, p1, 5.0f, b2_colorGreen );
-			DrawPoint( m_context->draw, p2, 5.0f, b2_colorRed );
+			b2Position p1 = m_origins[m_drawIndex];
+			b2Position p2 = m_origins[m_drawIndex] + m_translations[m_drawIndex];
+			DrawWorldLine( m_context->draw, p1, p2, b2_colorWhite );
+			DrawWorldPoint( m_context->draw, p1, 5.0f, b2_colorGreen );
+			DrawWorldPoint( m_context->draw, p2, 5.0f, b2_colorRed );
 			if ( drawResult.hit )
 			{
-				DrawPoint( m_context->draw, b2ToVec2( drawResult.point ), 5.0f, b2_colorWhite );
+				DrawWorldPoint( m_context->draw, drawResult.point, 5.0f, b2_colorWhite );
 			}
 		}
 		else if ( m_queryType == e_circleCast )
@@ -1472,11 +1472,12 @@ public:
 
 			for ( int i = 0; i < sampleCount; ++i )
 			{
-				b2ShapeProxy proxy = b2MakeProxy( &m_origins[i], 1, m_radius );
+				b2ShapeProxy proxy = b2MakeProxy( &b2Vec2_zero, 1, m_radius );
 				b2Vec2 translation = m_translations[i];
 
 				CastResult result;
-				b2TreeStats traversalResult = b2World_CastShape( m_worldId, b2Position_zero, &proxy, translation, filter, CastCallback, &result );
+				b2TreeStats traversalResult =
+					b2World_CastShape( m_worldId, m_origins[i], &proxy, translation, filter, CastCallback, &result );
 
 				if ( i == m_drawIndex )
 				{
@@ -1492,15 +1493,15 @@ public:
 
 			m_minTime = b2MinFloat( m_minTime, ms );
 
-			b2Vec2 p1 = m_origins[m_drawIndex];
-			b2Vec2 p2 = p1 + m_translations[m_drawIndex];
-			DrawLine( m_context->draw, p1, p2, b2_colorWhite );
-			DrawPoint( m_context->draw, p1, 5.0f, b2_colorGreen );
-			DrawPoint( m_context->draw, p2, 5.0f, b2_colorRed );
+			b2Position p1 = m_origins[m_drawIndex];
+			b2Position p2 = m_origins[m_drawIndex] + m_translations[m_drawIndex];
+			DrawWorldLine( m_context->draw, p1, p2, b2_colorWhite );
+			DrawWorldPoint( m_context->draw, p1, 5.0f, b2_colorGreen );
+			DrawWorldPoint( m_context->draw, p2, 5.0f, b2_colorRed );
 			if ( drawResult.hit )
 			{
-				b2Vec2 t = b2Lerp( p1, p2, drawResult.fraction );
-				DrawCircle( m_context->draw, t, m_radius, b2_colorWhite );
+				b2Position t = m_origins[m_drawIndex] + b2MulSV( drawResult.fraction, m_translations[m_drawIndex] );
+				DrawWorldCircle( m_context->draw, t, m_radius, b2_colorWhite );
 				DrawPoint( m_context->draw, drawResult.point, 5.0f, b2_colorWhite );
 			}
 		}
@@ -1514,11 +1515,11 @@ public:
 
 			for ( int i = 0; i < sampleCount; ++i )
 			{
-				b2Vec2 origin = m_origins[i];
-				b2AABB aabb = { origin - extent, origin + extent };
+				b2AABB aabb = { -extent, extent };
 
 				result.count = 0;
-				b2TreeStats traversalResult = b2World_OverlapAABB( m_worldId, b2Position_zero, aabb, filter, OverlapCallback, &result );
+				b2TreeStats traversalResult =
+					b2World_OverlapAABB( m_worldId, m_origins[i], aabb, filter, OverlapCallback, &result );
 
 				if ( i == m_drawIndex )
 				{
@@ -1534,10 +1535,13 @@ public:
 
 			m_minTime = b2MinFloat( m_minTime, ms );
 
-			b2Vec2 origin = m_origins[m_drawIndex];
-			b2AABB aabb = { origin - extent, origin + extent };
+			b2Position origin = m_origins[m_drawIndex];
+			b2AABB aabb = {
+				{ b2RoundDownFloat( origin.x - extent.x ), b2RoundDownFloat( origin.y - extent.y ) },
+				{ b2RoundUpFloat( origin.x + extent.x ), b2RoundUpFloat( origin.y + extent.y ) },
+			};
 
-			DrawBounds( m_context->draw, aabb, b2_colorWhite );
+			DrawWorldBounds( m_context->draw, aabb, b2_colorWhite );
 
 			for ( int i = 0; i < drawResult.count; ++i )
 			{
@@ -1561,7 +1565,7 @@ public:
 
 	QueryType m_queryType;
 
-	std::vector<b2Vec2> m_origins;
+	std::vector<b2Position> m_origins;
 	std::vector<b2Vec2> m_translations;
 	float m_minTime;
 	float m_buildTime;

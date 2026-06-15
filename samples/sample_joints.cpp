@@ -2261,7 +2261,7 @@ public:
 
 		b2Vec2 vB = b2Body_GetLinearVelocity( m_bodyId );
 		float omegaB = b2Body_GetAngularVelocity( m_bodyId );
-		b2Vec2 pB = b2ToVec2( b2Body_GetWorldCenterOfMass( m_bodyId ) );
+		b2Vec2 pB = b2ToVec2( b2Body_GetWorldCenter( m_bodyId ) );
 
 		for ( int i = 0; i < 2; ++i )
 		{
