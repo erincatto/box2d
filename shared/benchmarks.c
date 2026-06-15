@@ -800,8 +800,8 @@ float StepJunkyard( b2WorldId worldId, int stepCount )
 	float timeStep = 1.0f / 60.0f;
 	float time = timeStep * stepCount;
 	b2CosSin cs = b2ComputeCosSin( 0.2f * time );
-	b2Transform target = { (b2Vec2){ 60.0f * cs.sine, 0.0f }, b2Rot_identity };
-	b2Body_SetTargetTransform( g_junkyardData.pusherId, b2MakeWorldTransform( target ), timeStep, true );
+	b2WorldTransform target = { (b2Pos){ 60.0f * cs.sine, 0.0f }, b2Rot_identity };
+	b2Body_SetTargetTransform( g_junkyardData.pusherId, target, timeStep, true );
 	return 0.0f;
 }
 

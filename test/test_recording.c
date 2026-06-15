@@ -6,9 +6,8 @@
 #endif
 
 #include "benchmarks.h"
-#include "test_macros.h"
-
 #include "physics_world.h"
+#include "test_macros.h"
 #include "world_snapshot.h"
 
 #include "box2d/box2d.h"
@@ -33,27 +32,60 @@ static bool s_overlapFcn( b2ShapeId id, void* ctx )
 
 static float s_closestCastFcn( b2ShapeId id, b2Pos point, b2Vec2 normal, float fraction, void* ctx )
 {
-	(void)id; (void)point; (void)normal; (void)ctx;
+	(void)id;
+	(void)point;
+	(void)normal;
+	(void)ctx;
 	return fraction;
 }
 
 static float s_allHitsCastFcn( b2ShapeId id, b2Pos point, b2Vec2 normal, float fraction, void* ctx )
 {
-	(void)id; (void)point; (void)normal; (void)ctx;
+	(void)id;
+	(void)point;
+	(void)normal;
+	(void)ctx;
 	return fraction;
 }
 
 static bool s_planeFcn( b2ShapeId id, const b2PlaneResult* plane, void* ctx )
 {
-	(void)id; (void)plane; (void)ctx;
+	(void)id;
+	(void)plane;
+	(void)ctx;
 	return true;
 }
 
 // No-op draw callbacks for the headless draw-path exercise
-static void s_DrawLine( b2Vec2 p1, b2Vec2 p2, b2HexColor c, void* ctx ) { (void)p1; (void)p2; (void)c; (void)ctx; }
-static void s_DrawPoint( b2Vec2 p, float sz, b2HexColor c, void* ctx ) { (void)p; (void)sz; (void)c; (void)ctx; }
-static void s_DrawPoly( const b2Vec2* v, int n, b2HexColor c, void* ctx ) { (void)v; (void)n; (void)c; (void)ctx; }
-static void s_DrawCapsule( b2Vec2 p1, b2Vec2 p2, float r, b2HexColor c, void* ctx ) { (void)p1; (void)p2; (void)r; (void)c; (void)ctx; }
+static void s_DrawLine( b2Vec2 p1, b2Vec2 p2, b2HexColor c, void* ctx )
+{
+	(void)p1;
+	(void)p2;
+	(void)c;
+	(void)ctx;
+}
+static void s_DrawPoint( b2Vec2 p, float sz, b2HexColor c, void* ctx )
+{
+	(void)p;
+	(void)sz;
+	(void)c;
+	(void)ctx;
+}
+static void s_DrawPoly( const b2Vec2* v, int n, b2HexColor c, void* ctx )
+{
+	(void)v;
+	(void)n;
+	(void)c;
+	(void)ctx;
+}
+static void s_DrawCapsule( b2Vec2 p1, b2Vec2 p2, float r, b2HexColor c, void* ctx )
+{
+	(void)p1;
+	(void)p2;
+	(void)r;
+	(void)c;
+	(void)ctx;
+}
 
 // Issue all 9 spatial query types against worldId. groundShapeId and a known position
 // are used for the shape-level queries. Half the queries use a nonzero origin with the
@@ -100,8 +132,8 @@ static void IssueAllQueries( b2WorldId worldId, b2ShapeId groundShapeId )
 	b2Shape_TestPoint( groundShapeId, (b2Pos){ 0.0f, 100.0f } ); // outside
 
 	// Shape_RayCast against the ground shape, ray starting above the ground
-	b2Pos rayStart = b2OffsetPos( base, ( b2Vec2 ){ -baseOffset.x, 5.0f - baseOffset.y } );
-	b2Shape_RayCast( groundShapeId, rayStart, ( b2Vec2 ){ 0.0f, -20.0f } );
+	b2Pos rayStart = b2OffsetPos( base, (b2Vec2){ -baseOffset.x, 5.0f - baseOffset.y } );
+	b2Shape_RayCast( groundShapeId, rayStart, (b2Vec2){ 0.0f, -20.0f } );
 }
 
 int RecordingTest( void )
@@ -238,7 +270,7 @@ int RecordingTest( void )
 	b2Body_ApplyMassFromShapes( bodyId );
 	b2Body_SetType( capsuleBodyId, b2_kinematicBody );
 	b2Body_SetType( capsuleBodyId, b2_dynamicBody );
-	b2Body_SetTargetTransform( kinematicId, b2MakeWorldTransform( (b2Transform){ { -2.0f, 5.0f }, b2Rot_identity } ), 1.0f / 60.0f, true );
+	b2Body_SetTargetTransform( kinematicId, (b2WorldTransform){ { -2.0f, 5.0f }, b2Rot_identity }, 1.0f / 60.0f, true );
 	b2Body_Disable( disableId );
 	b2Body_Enable( disableId );
 	b2Body_SetAwake( bodyId, true );
@@ -673,8 +705,8 @@ static int CheckKeyframeSeek( const uint8_t* recData, int recSize, int workerCou
 		uint64_t got = ReplayDeepHash( player );
 		if ( got != refHash[t] )
 		{
-			printf( "keyframe seek mismatch at frame %d (wc %d): got %llu want %llu\n", t, workerCount,
-					(unsigned long long)got, (unsigned long long)refHash[t] );
+			printf( "keyframe seek mismatch at frame %d (wc %d): got %llu want %llu\n", t, workerCount, (unsigned long long)got,
+					(unsigned long long)refHash[t] );
 			free( refHash );
 			b2RecPlayer_Destroy( player );
 			return 1;
@@ -794,7 +826,11 @@ static void BuildPyramidScene( b2WorldId worldId )
 // Keep traversing so an all-hits ray reports every shape in pure tree-traversal order
 static float s_keepAllCastFcn( b2ShapeId id, b2Pos point, b2Vec2 normal, float fraction, void* ctx )
 {
-	(void)id; (void)point; (void)normal; (void)fraction; (void)ctx;
+	(void)id;
+	(void)point;
+	(void)normal;
+	(void)fraction;
+	(void)ctx;
 	return 1.0f;
 }
 
@@ -884,8 +920,8 @@ static int CheckScrubAllFrames( const uint8_t* recData, int recSize, int workerC
 			// Deep hash matches but the player diverged => an order sensitive query re-verification
 			// failed (broad-phase traversal order), not the simulation state
 			const char* kind = ( got == refHash[t] ) ? "query-order" : "state";
-			printf( "scrub mismatch at frame %d (wc %d budget %d): %s divergence (deep got %llu want %llu)\n", t,
-					workerCount, budgetBytes, kind, (unsigned long long)got, (unsigned long long)refHash[t] );
+			printf( "scrub mismatch at frame %d (wc %d budget %d): %s divergence (deep got %llu want %llu)\n", t, workerCount,
+					budgetBytes, kind, (unsigned long long)got, (unsigned long long)refHash[t] );
 			free( refHash );
 			b2RecPlayer_Destroy( player );
 			return 1;

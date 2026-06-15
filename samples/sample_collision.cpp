@@ -12,7 +12,8 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <imgui_internal.h>
-// #include <stdlib.h>
+
+// Note: these samples haven't been fully updated for double precision.
 
 class ShapeDistance : public Sample
 {

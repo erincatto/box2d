@@ -677,16 +677,6 @@ B2_INLINE b2Transform b2InvMulWorldTransforms( b2WorldTransform A, b2WorldTransf
 	return C;
 }
 
-/// Compose a world transform with a local transform.
-B2_INLINE b2WorldTransform b2MulWorldTransforms( b2WorldTransform A, b2Transform B )
-{
-	b2WorldTransform C;
-	C.q = b2MulRot( A.q, B.q );
-	b2Vec2 r = b2RotateVector( A.q, B.p );
-	C.p = B2_LITERAL( b2Pos ){ A.p.x + r.x, A.p.y + r.y };
-	return C;
-}
-
 /// Shift a world transform into the frame of a base position.
 B2_INLINE b2Transform b2ToRelativeTransform( b2WorldTransform t, b2Pos base )
 {
