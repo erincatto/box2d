@@ -52,6 +52,7 @@ void SetDrawOrigin( Draw* draw, b2Position origin );
 void DrawWorldPoint( Draw* draw, b2Position p, float size, b2HexColor color );
 void DrawWorldLine( Draw* draw, b2Position p1, b2Position p2, b2HexColor color );
 void DrawWorldCircle( Draw* draw, b2Position center, float radius, b2HexColor color );
+void DrawWorldCapsule( Draw* draw, b2Position p1, b2Position p2, float radius, b2HexColor color );
 void DrawWorldTransform( Draw* draw, b2WorldTransform t, float scale );
 void DrawWorldBounds( Draw* draw, b2AABB aabb, b2HexColor color );
 

@@ -1287,6 +1287,11 @@ void DrawWorldCircle( Draw* draw, b2Position center, float radius, b2HexColor co
 	DrawCircle( draw, b2PositionDelta( center, draw->origin ), radius, color );
 }
 
+void DrawWorldCapsule( Draw* draw, b2Position p1, b2Position p2, float radius, b2HexColor color )
+{
+	DrawSolidCapsule( draw, b2PositionDelta( p1, draw->origin ), b2PositionDelta( p2, draw->origin ), radius, color );
+}
+
 void DrawWorldTransform( Draw* draw, b2WorldTransform t, float scale )
 {
 	DrawTransform( draw, b2ToRelativeTransform( t, draw->origin ), scale );

@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define INFO_PANEL_WIDTH 16.0f
+
 static const char* fileName = "settings.ini";
 
 // Load a file. You must free the character array.
@@ -614,7 +616,7 @@ void Sample::DrawMetrics()
 	}
 
 	float fontSize = ImGui::GetFontSize();
-	float menuWidth = 14.0f * fontSize;
+	float menuWidth = INFO_PANEL_WIDTH * fontSize;
 	float drawerHeight = 16.0f * fontSize;
 	float drawerWidth = m_camera->width - menuWidth - 1.5f * fontSize;
 
@@ -1688,7 +1690,7 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 {
 	const SampleEntry& entry = g_sampleEntries[context->sampleIndex];
 	float fontSize = ImGui::GetFontSize();
-	float menuWidth = 14.0f * fontSize;
+	float menuWidth = INFO_PANEL_WIDTH * fontSize;
 	float menuBarHeight = ImGui::GetFrameHeight();
 
 	ImGui::SetNextWindowPos( { context->camera.width - menuWidth - 0.5f * fontSize, menuBarHeight + 0.5f * fontSize } );
@@ -1718,10 +1720,12 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 
 	ImGui::Separator();
 
+	ImGui::PushItemWidth( 6.0f * fontSize );
 	if ( context->sample->DrawControls() )
 	{
 		ImGui::Separator();
 	}
+	ImGui::PopItemWidth();
 
 	if ( context->sample->HasSolverControls() && ImGui::CollapsingHeader( "Solver", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{

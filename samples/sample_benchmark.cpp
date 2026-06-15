@@ -1382,7 +1382,7 @@ public:
 
 	struct CastResult
 	{
-		b2Vec2 point;
+		b2Position point;
 		float fraction;
 		bool hit;
 	};
@@ -1390,7 +1390,7 @@ public:
 	static float CastCallback( b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context )
 	{
 		CastResult* result = (CastResult*)context;
-		result->point = b2ToVec2( point );
+		result->point = point;
 		result->fraction = fraction;
 		result->hit = true;
 		return fraction;
@@ -1502,7 +1502,7 @@ public:
 			{
 				b2Position t = m_origins[m_drawIndex] + b2MulSV( drawResult.fraction, m_translations[m_drawIndex] );
 				DrawWorldCircle( m_context->draw, t, m_radius, b2_colorWhite );
-				DrawPoint( m_context->draw, drawResult.point, 5.0f, b2_colorWhite );
+				DrawWorldPoint( m_context->draw, drawResult.point, 5.0f, b2_colorWhite );
 			}
 		}
 		else if ( m_queryType == e_overlap )
