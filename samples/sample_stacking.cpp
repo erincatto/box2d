@@ -485,7 +485,7 @@ public:
 			int indexA = static_cast<int>( reinterpret_cast<intptr_t>( userDataA ) );
 			int indexB = static_cast<int>( reinterpret_cast<intptr_t>( userDataB ) );
 
-			DrawPoint( m_draw, b2ToVec2( event->point ), 10.0f, b2_colorWhite );
+			DrawWorldPoint( m_draw, event->point, 10.0f, b2_colorWhite );
 
 			m_events.push_back( { indexA, indexB } );
 		}

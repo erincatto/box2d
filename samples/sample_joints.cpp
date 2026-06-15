@@ -509,7 +509,7 @@ public:
 			def.impulsePerLength = 10.0f;
 			b2World_Explode( m_worldId, &def );
 
-			DrawCircle( m_draw, b2ToVec2( def.position ), 10.0f, b2_colorWhite );
+			DrawWorldCircle( m_draw, def.position, 10.0f, b2_colorWhite );
 		}
 
 		return true;

@@ -121,10 +121,8 @@ bool UpdateFallingHinges( b2WorldId worldId, FallingHingeData* data )
 			data->hash = B2_HASH_INIT;
 			for ( int i = 0; i < data->bodyCount; ++i )
 			{
-				// Hash the float transform so the determinism reference is precision independent
-				b2WorldTransform wt = b2Body_GetTransform( data->bodyIds[i] );
-				b2Transform xf = { b2ToVec2( wt.p ), wt.q };
-				data->hash = b2Hash( data->hash, (uint8_t*)( &xf ), sizeof( b2Transform ) );
+				b2WorldTransform transform = b2Body_GetTransform( data->bodyIds[i] );
+				data->hash = b2Hash( data->hash, (uint8_t*)( &transform ), sizeof( b2WorldTransform ) );
 			}
 
 			data->sleepStep = data->stepCount;

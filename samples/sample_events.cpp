@@ -993,16 +993,17 @@ public:
 						b2Manifold manifold = contactData[j].manifold;
 						b2Vec2 normal = manifold.normal;
 						assert( b2AbsFloat( b2Length( normal ) - 1.0f ) < 4.0f * FLT_EPSILON );
+						b2BodyId bidA = b2Shape_GetBody( idA );
 
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							DrawLine( m_draw, b2ToVec2( b2Body_GetWorldCenter( b2Shape_GetBody( idA ) ) + point.anchorA ),
-									  b2ToVec2( ( b2Body_GetWorldCenter( b2Shape_GetBody( idA ) ) + point.anchorA ) +
-												point.totalNormalImpulse * normal ),
-									  b2_colorBlueViolet );
-							DrawPoint( m_draw, b2ToVec2( b2Body_GetWorldCenter( b2Shape_GetBody( idA ) ) + point.anchorA ), 10.0f,
-									   b2_colorWhite );
+							b2Position posA = b2Body_GetWorldCenter( bidA );
+							b2Position p1 = posA + point.anchorA;
+							b2Position p2 = p1 + point.totalNormalImpulse * normal;
+
+							DrawWorldLine( m_draw, p1, p2, b2_colorBlueViolet );
+							DrawWorldPoint( m_draw, p1, 10.0f, b2_colorWhite );
 						}
 					}
 				}
@@ -1027,16 +1028,17 @@ public:
 						b2Manifold manifold = contactData[j].manifold;
 						b2Vec2 normal = manifold.normal;
 						assert( b2AbsFloat( b2Length( normal ) - 1.0f ) < 4.0f * FLT_EPSILON );
+						b2BodyId bidA = b2Shape_GetBody( idA );
 
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							DrawLine( m_draw, b2ToVec2( b2Body_GetWorldCenter( b2Shape_GetBody( idA ) ) + point.anchorA ),
-									  b2ToVec2( ( b2Body_GetWorldCenter( b2Shape_GetBody( idA ) ) + point.anchorA ) +
-												point.totalNormalImpulse * normal ),
-									  b2_colorYellowGreen );
-							DrawPoint( m_draw, b2ToVec2( b2Body_GetWorldCenter( b2Shape_GetBody( idA ) ) + point.anchorA ), 10.0f,
-									   b2_colorWhite );
+							b2Position posA = b2Body_GetWorldCenter( bidA );
+							b2Position p1 = posA + point.anchorA;
+							b2Position p2 = p1 + point.totalNormalImpulse * normal;
+
+							DrawWorldLine( m_draw, p1, p2, b2_colorYellowGreen );
+							DrawWorldPoint( m_draw, p1, 10.0f, b2_colorWhite );
 						}
 					}
 				}
@@ -1301,13 +1303,13 @@ public:
 	static bool PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Position point, b2Vec2 normal, void* context )
 	{
 		Platform* self = static_cast<Platform*>( context );
-		return self->PreSolve( shapeIdA, shapeIdB, b2ToVec2( point ), normal );
+		return self->PreSolve( shapeIdA, shapeIdB, point , normal );
 	}
 
 	// This callback must be thread-safe. It may be called multiple times simultaneously.
 	// Notice how this method is constant and doesn't change any data. It also
 	// does not try to access any values in the world that may be changing, such as contact data.
-	bool PreSolve( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Vec2 point, b2Vec2 normal ) const
+	bool PreSolve( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Position point, b2Vec2 normal ) const
 	{
 		assert( b2Shape_IsValid( shapeIdA ) );
 		assert( b2Shape_IsValid( shapeIdB ) );
@@ -1806,7 +1808,7 @@ public:
 
 		if ( result.hit )
 		{
-			DrawPoint( m_draw, b2ToVec2( result.point ), 10.0f, b2_colorCyan );
+			DrawWorldPoint( m_draw, result.point, 10.0f, b2_colorCyan );
 		}
 	}
 
@@ -2651,7 +2653,7 @@ public:
 		{
 			b2ContactHitEvent* event = events.hitEvents + i;
 
-			DrawPoint( m_draw, b2ToVec2( event->point ), 10.0f, b2_colorWhite );
+			DrawWorldPoint( m_draw, event->point, 10.0f, b2_colorWhite );
 
 			b2ContactData data = b2Contact_GetData( event->contactId );
 
