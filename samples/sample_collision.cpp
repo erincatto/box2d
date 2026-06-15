@@ -3485,13 +3485,12 @@ public:
 		b2ShapeCastPairInput input = {};
 		input.proxyA = m_proxyA;
 		input.proxyB = m_proxyB;
-		input.transformA = b2MakeWorldTransform( b2Transform_identity );
-		input.transformB = b2MakeWorldTransform( m_transform );
+		input.transform = m_transform;
 		input.translationB = m_translation;
 		input.maxFraction = 1.0f;
 		input.canEncroach = m_encroach;
 
-		b2WorldCastOutput output = b2ShapeCast( &input );
+		b2CastOutput output = b2ShapeCast( &input );
 
 		b2Transform transform;
 		transform.q = m_transform.q;
@@ -3520,12 +3519,12 @@ public:
 
 			if ( output.fraction > 0.0f )
 			{
-				DrawPoint( m_draw, b2ToVec2( output.point ), 5.0f, b2_colorWhite );
-				DrawLine( m_draw, b2ToVec2( output.point ), b2ToVec2( output.point + 0.5f * output.normal ), b2_colorYellow );
+				DrawPoint( m_draw, output.point, 5.0f, b2_colorWhite );
+				DrawLine( m_draw, output.point, output.point + 0.5f * output.normal, b2_colorYellow );
 			}
 			else
 			{
-				DrawPoint( m_draw, b2ToVec2( output.point ), 5.0f, b2_colorPeru );
+				DrawPoint( m_draw, output.point, 5.0f, b2_colorPeru );
 			}
 		}
 

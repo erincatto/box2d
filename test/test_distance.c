@@ -63,12 +63,11 @@ static int ShapeCastTest( void )
 	b2ShapeCastPairInput input;
 	input.proxyA = b2MakeProxy( vas, ARRAY_COUNT( vas ), 0.0f );
 	input.proxyB = b2MakeProxy( vbs, ARRAY_COUNT( vbs ), 0.0f );
-	input.transformA = b2WorldTransform_identity;
-	input.transformB = b2WorldTransform_identity;
+	input.transform = b2Transform_identity;
 	input.translationB = ( b2Vec2 ){ -2.0f, 0.0f };
 	input.maxFraction = 1.0f;
 
-	b2WorldCastOutput output = b2ShapeCast( &input );
+	b2CastOutput output = b2ShapeCast( &input );
 
 	ENSURE( output.hit );
 	ENSURE_SMALL( output.fraction - 0.5f, 0.005f );

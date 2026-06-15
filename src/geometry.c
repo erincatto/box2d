@@ -933,12 +933,11 @@ b2CastOutput b2RayCastPolygon( const b2Polygon* shape, const b2RayCastInput* inp
 	b2ShapeCastPairInput castInput;
 	castInput.proxyA = b2MakeProxy( shape->vertices, shape->count, shape->radius );
 	castInput.proxyB = b2MakeProxy( &input->origin, 1, 0.0f );
-	castInput.transformA = b2WorldTransform_identity;
-	castInput.transformB = b2WorldTransform_identity;
+	castInput.transform = b2Transform_identity;
 	castInput.translationB = input->translation;
 	castInput.maxFraction = input->maxFraction;
 	castInput.canEncroach = false;
-	return b2NarrowCastOutput( b2ShapeCast( &castInput ) );
+	return b2ShapeCast( &castInput );
 }
 
 b2CastOutput b2ShapeCastCircle( const b2Circle* shape, const b2ShapeCastInput* input )
@@ -946,13 +945,12 @@ b2CastOutput b2ShapeCastCircle( const b2Circle* shape, const b2ShapeCastInput* i
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->center, 1, shape->radius );
 	pairInput.proxyB = input->proxy;
-	pairInput.transformA = b2WorldTransform_identity;
-	pairInput.transformB = b2WorldTransform_identity;
+	pairInput.transform = b2Transform_identity;
 	pairInput.translationB = input->translation;
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	return b2NarrowCastOutput( b2ShapeCast( &pairInput ) );
+	return b2ShapeCast( &pairInput );
 }
 
 b2CastOutput b2ShapeCastCapsule( const b2Capsule* shape, const b2ShapeCastInput* input )
@@ -960,13 +958,12 @@ b2CastOutput b2ShapeCastCapsule( const b2Capsule* shape, const b2ShapeCastInput*
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->center1, 2, shape->radius );
 	pairInput.proxyB = input->proxy;
-	pairInput.transformA = b2WorldTransform_identity;
-	pairInput.transformB = b2WorldTransform_identity;
+	pairInput.transform = b2Transform_identity;
 	pairInput.translationB = input->translation;
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	return b2NarrowCastOutput( b2ShapeCast( &pairInput ) );
+	return b2ShapeCast( &pairInput );
 }
 
 b2CastOutput b2ShapeCastSegment( const b2Segment* shape, const b2ShapeCastInput* input )
@@ -974,13 +971,12 @@ b2CastOutput b2ShapeCastSegment( const b2Segment* shape, const b2ShapeCastInput*
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->point1, 2, 0.0f );
 	pairInput.proxyB = input->proxy;
-	pairInput.transformA = b2WorldTransform_identity;
-	pairInput.transformB = b2WorldTransform_identity;
+	pairInput.transform = b2Transform_identity;
 	pairInput.translationB = input->translation;
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	return b2NarrowCastOutput( b2ShapeCast( &pairInput ) );
+	return b2ShapeCast( &pairInput );
 }
 
 b2CastOutput b2ShapeCastPolygon( const b2Polygon* shape, const b2ShapeCastInput* input )
@@ -988,13 +984,12 @@ b2CastOutput b2ShapeCastPolygon( const b2Polygon* shape, const b2ShapeCastInput*
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( shape->vertices, shape->count, shape->radius );
 	pairInput.proxyB = input->proxy;
-	pairInput.transformA = b2WorldTransform_identity;
-	pairInput.transformB = b2WorldTransform_identity;
+	pairInput.transform = b2Transform_identity;
 	pairInput.translationB = input->translation;
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	return b2NarrowCastOutput( b2ShapeCast( &pairInput ) );
+	return b2ShapeCast( &pairInput );
 }
 
 b2PlaneResult b2CollideMoverAndCircle( const b2Capsule* mover, const b2Circle* shape )

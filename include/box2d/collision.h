@@ -107,19 +107,6 @@ typedef b2CastOutput b2WorldCastOutput;
 
 #endif
 
-/// Narrow a world-space cast output back to a local one. Lossless when the point is already
-/// in float range, as with an identity world transform.
-B2_INLINE b2CastOutput b2NarrowCastOutput( b2WorldCastOutput w )
-{
-	b2CastOutput output;
-	output.normal = w.normal;
-	output.point = b2ToVec2( w.point );
-	output.fraction = w.fraction;
-	output.iterations = w.iterations;
-	output.hit = w.hit;
-	return output;
-}
-
 /// This holds the mass data computed for a shape.
 typedef struct b2MassData
 {
@@ -446,18 +433,17 @@ B2_API b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2Simplex
 /// Input parameters for b2ShapeCast
 typedef struct b2ShapeCastPairInput
 {
-	b2ShapeProxy proxyA;		 ///< The proxy for shape A
-	b2ShapeProxy proxyB;		 ///< The proxy for shape B
-	b2WorldTransform transformA; ///< The world transform for shape A
-	b2WorldTransform transformB; ///< The world transform for shape B
-	b2Vec2 translationB;		 ///< The translation of shape B
-	float maxFraction;			 ///< The fraction of the translation to consider, typically 1
-	bool canEncroach;			 ///< Allows shapes with a radius to move slightly closer if already touching
+	b2ShapeProxy proxyA;   ///< The proxy for shape A
+	b2ShapeProxy proxyB;   ///< The proxy for shape B
+	b2Transform transform; ///< Transform of shape B in shape A's frame, the relative pose B in A
+	b2Vec2 translationB;   ///< The translation of shape B, in A's frame
+	float maxFraction;	   ///< The fraction of the translation to consider, typically 1
+	bool canEncroach;	   ///< Allows shapes with a radius to move slightly closer if already touching
 } b2ShapeCastPairInput;
 
 /// Perform a linear shape cast of shape B moving and shape A fixed. Determines the hit point, normal, and translation fraction.
-/// Initially touching shapes are treated as a miss. The hit point is in world space.
-B2_API b2WorldCastOutput b2ShapeCast( const b2ShapeCastPairInput* input );
+/// The query runs in frame A, so the hit point and normal are returned in frame A. Initially touching shapes are a miss.
+B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input );
 
 /// Make a proxy for use in overlap, shape cast, and related functions. This is a deep copy of the points.
 B2_API b2ShapeProxy b2MakeProxy( const b2Vec2* points, int count, float radius );

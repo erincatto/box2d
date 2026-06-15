@@ -606,7 +606,7 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 }
 
 // Shape cast using conservative advancement
-b2WorldCastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
+b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 {
 	// Compute tolerance
 	float linearSlop = B2_LINEAR_SLOP;
@@ -626,13 +626,12 @@ b2WorldCastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	distanceInput.proxyB = input->proxyB;
 	distanceInput.useRadii = false;
 
-	// Advance the world pose of B and re-relativize each iteration. The distance query runs in
-	// frame A, so the cast reconstructs world results from the fixed transform of A.
-	b2WorldTransform transformB = input->transformB;
-	distanceInput.transform = b2InvMulWorldTransforms( input->transformA, transformB );
+	// The whole cast runs in frame A. Advance the relative pose of B in float each iteration,
+	// which keeps the math near the local origin and avoids re-relativizing world poses.
+	distanceInput.transform = input->transform;
 
 	b2Vec2 delta2 = input->translationB;
-	b2WorldCastOutput output = { 0 };
+	b2CastOutput output = { 0 };
 
 	int iteration = 0;
 	const int maxIterations = 20;
@@ -642,10 +641,6 @@ b2WorldCastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 		output.iterations += 1;
 
 		b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
-
-		// Project the frame A results back to world
-		b2Vec2 worldNormal = b2RotateVector( input->transformA.q, distanceOutput.normal );
-		b2Position worldPointA = b2TransformWorldPoint( input->transformA, distanceOutput.pointA );
 
 		if ( distanceOutput.distance < target + tolerance )
 		{
@@ -661,10 +656,9 @@ b2WorldCastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 					output.hit = true;
 
 					// Compute a common point
-					b2Position worldPointB = b2TransformWorldPoint( input->transformA, distanceOutput.pointB );
-					b2Position c1 = b2OffsetPosition( worldPointA, b2MulSV( input->proxyA.radius, worldNormal ) );
-					b2Position c2 = b2OffsetPosition( worldPointB, b2MulSV( -input->proxyB.radius, worldNormal ) );
-					output.point = b2LerpPosition( c1, c2, 0.5f );
+					b2Vec2 c1 = b2MulAdd( distanceOutput.pointA, input->proxyA.radius, distanceOutput.normal );
+					b2Vec2 c2 = b2MulAdd( distanceOutput.pointB, -input->proxyB.radius, distanceOutput.normal );
+					output.point = b2Lerp( c1, c2, 0.5f );
 					return output;
 				}
 			}
@@ -673,8 +667,8 @@ b2WorldCastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 				// Regular hit
 				B2_ASSERT( distanceOutput.distance > 0.0f && b2IsNormalized( distanceOutput.normal ) );
 				output.fraction = fraction;
-				output.point = b2OffsetPosition( worldPointA, b2MulSV( input->proxyA.radius, worldNormal ) );
-				output.normal = worldNormal;
+				output.point = b2MulAdd( distanceOutput.pointA, input->proxyA.radius, distanceOutput.normal );
+				output.normal = distanceOutput.normal;
 				output.hit = true;
 				return output;
 			}
@@ -684,7 +678,7 @@ b2WorldCastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 		B2_ASSERT( b2IsNormalized( distanceOutput.normal ) );
 
 		// Check if shapes are approaching each other
-		float denominator = b2Dot( delta2, worldNormal );
+		float denominator = b2Dot( delta2, distanceOutput.normal );
 		if ( denominator >= 0.0f )
 		{
 			// Miss
@@ -699,8 +693,7 @@ b2WorldCastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 			return output;
 		}
 
-		transformB.p = b2OffsetPosition( input->transformB.p, b2MulSV( fraction, delta2 ) );
-		distanceInput.transform = b2InvMulWorldTransforms( input->transformA, transformB );
+		distanceInput.transform.p = b2MulAdd( input->transform.p, fraction, delta2 );
 	}
 
 	// Failure!
@@ -755,7 +748,7 @@ b2CastOutput b2ShapeCastMerged( const b2ShapeCastPairInput* input, b2ShapeCastDa
 
 	b2ShapeProxy proxyA = input->proxyA;
 
-	b2Transform xf = b2InvMulTransforms( input->transformA, input->transformB );
+	b2Transform xf = input->transform;
 
 	// Put proxyB in proxyA's frame to reduce round-off error
 	b2ShapeProxy proxyB;
@@ -770,7 +763,7 @@ b2CastOutput b2ShapeCastMerged( const b2ShapeCastPairInput* input, b2ShapeCastDa
 
 	float radius = proxyA.radius + proxyB.radius;
 
-	b2Vec2 r = b2RotateVector( xf.q, input->translationB );
+	b2Vec2 r = input->translationB;
 	float lambda = 0.0f;
 	float maxFraction = input->maxFraction;
 
@@ -912,8 +905,9 @@ b2CastOutput b2ShapeCastMerged( const b2ShapeCastPairInput* input, b2ShapeCastDa
 	b2Vec2 n = b2Normalize( b2Neg( v ) );
 	b2Vec2 point = { pointA.x + proxyA.radius * n.x, pointA.y + proxyA.radius * n.y };
 
-	output.point = b2TransformPoint( input->transformA, point );
-	output.normal = b2RotateVector( input->transformA.q, n );
+	// Results stay in frame A, matching b2ShapeCast
+	output.point = point;
+	output.normal = n;
 	output.fraction = lambda;
 	output.iterations = iteration;
 	output.hit = true;
