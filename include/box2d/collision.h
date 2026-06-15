@@ -94,11 +94,11 @@ typedef struct b2CastOutput
 /// World-space cast output. The hit point is a world position. The normal stays a float direction.
 typedef struct b2WorldCastOutput
 {
-	b2Vec2 normal;	  ///< The surface normal at the hit point
-	b2Pos point; ///< The surface hit point in world space
-	float fraction;	  ///< The fraction of the input translation at collision
-	int iterations;	  ///< The number of iterations used
-	bool hit;		  ///< Did the cast hit?
+	b2Vec2 normal;	///< The surface normal at the hit point
+	b2Pos point;	///< The surface hit point in world space
+	float fraction; ///< The fraction of the input translation at collision
+	int iterations; ///< The number of iterations used
+	bool hit;		///< Did the cast hit?
 } b2WorldCastOutput;
 
 #else

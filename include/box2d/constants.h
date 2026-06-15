@@ -25,7 +25,7 @@
 
 /// Maximum number of colors in the constraint graph. Constraints that cannot
 /// find a color are added to the overflow set which are solved single-threaded.
-/// The compound barrel benchmark has minor overflow with 24 colors 
+/// The compound barrel benchmark has minor overflow with 24 colors
 #define B2_GRAPH_COLOR_COUNT 24
 
 /// A small length used as a collision and constraint tolerance. Usually it is
@@ -58,7 +58,7 @@
 #define B2_CONTACT_RECYCLE_DISTANCE ( 10.0f * B2_LINEAR_SLOP )
 
 /// The default contact recycling world angle threshold. 0.98 ~= 11.5 degrees
-#define B2_CONTACT_RECYCLE_COS_ANGLE ( 0.98f  )
+#define B2_CONTACT_RECYCLE_COS_ANGLE ( 0.98f )
 
 /// This is used to fatten AABBs in the dynamic tree. This allows proxies
 /// to move by a small amount without triggering a tree adjustment. This is in meters.

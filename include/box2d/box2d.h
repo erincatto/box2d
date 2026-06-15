@@ -1560,7 +1560,7 @@ typedef struct b2RecQueryInfo
 	b2RecQueryType type;
 	b2QueryFilter filter; // zeroed for the shape local query types
 	b2AABB aabb;		  // overlap AABB, relative to origin
-	b2Pos origin;	  // query origin
+	b2Pos origin;		  // query origin
 	b2Vec2 translation;	  // ray and cast translation
 	b2ShapeId shape;	  // target shape for the shape local query types
 	int hitCount;		  // number of recorded results
