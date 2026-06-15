@@ -7,8 +7,7 @@
 
 #include "physics_world.h"
 
-#include "recording.h"
-
+#include "aabb.h"
 #include "arena_allocator.h"
 #include "bitset.h"
 #include "body.h"
@@ -20,6 +19,7 @@
 #include "island.h"
 #include "joint.h"
 #include "parallel_for.h"
+#include "recording.h"
 #include "scheduler.h"
 #include "sensor.h"
 #include "shape.h"
@@ -476,8 +476,8 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			b2Body* bodyB = bodies + shapeB->bodyId;
 			b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
 			b2BodySim* bodySimB = b2GetBodySim( world, bodyB );
-			b2Transform transformA = bodySimA->transform;
-			b2Transform transformB = bodySimB->transform;
+			b2WorldTransform transformA = bodySimA->transform;
+			b2WorldTransform transformB = bodySimB->transform;
 
 			// These may not be skipped by relative transform check below
 			contactSim->bodySimIndexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
@@ -494,11 +494,13 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			if ( recycleDistance > 0.0f && ( contactSim->simFlags & b2_simRelativeTransformValid ) &&
 				 ( contactSim->simFlags & b2_contactRecycleFlag ) )
 			{
-				b2Transform xf = b2InvMulTransforms( transformA, transformB );
-				b2Transform xfc = b2InvMulTransforms( contactSim->cachedTransformA, contactSim->cachedTransformB );
+				b2Rot cachedQA = contactSim->cachedRotationA;
+				b2Rot cachedQB = contactSim->cachedRotationB;
+				b2Transform xfc = contactSim->cachedRelativePose;
+				b2Transform xf = b2InvMulWorldTransforms( transformA, transformB );
 
-				float cosA = b2RelativeCos( transformA.q, contactSim->cachedTransformA.q );
-				float cosB = b2RelativeCos( transformB.q, contactSim->cachedTransformB.q );
+				float cosA = b2RelativeCos( transformA.q, cachedQA );
+				float cosB = b2RelativeCos( transformB.q, cachedQB );
 				float minCos = b2MinFloat( cosA, cosB );
 
 				float maxExtentA = bodyA->type == b2_staticBody ? 0.0f : bodySimA->maxExtent;
@@ -514,12 +516,12 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 
 				if ( minCos > B2_CONTACT_RECYCLE_COS_ANGLE && distance + maxExtent * b2AbsFloat( qr.s ) < tolerance )
 				{
-					b2Rot dqA = b2MulRot( transformA.q, b2InvertRot( contactSim->cachedTransformA.q ) );
-					b2Rot dqB = b2MulRot( transformB.q, b2InvertRot( contactSim->cachedTransformB.q ) );
+					b2Rot dqA = b2MulRot( transformA.q, b2InvertRot( cachedQA ) );
+					b2Rot dqB = b2MulRot( transformB.q, b2InvertRot( cachedQB ) );
 					b2Vec2 normal = contactSim->manifold.normal;
 
 					// Minimize round-off
-					b2Vec2 dc = b2Sub( bodySimB->center, bodySimA->center );
+					b2Vec2 dc = b2SubPos( bodySimB->center, bodySimA->center );
 
 					for ( int i = 0; i < contactSim->manifold.pointCount; ++i )
 					{
@@ -540,9 +542,12 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 				}
 			}
 
-			// Caching for contact recycling.
-			contactSim->cachedTransformA = transformA;
-			contactSim->cachedTransformB = transformB;
+			// Caching for contact recycling. In large world mode the relative pose is differenced in
+			// double here and cached directly, so the distance check above stays precise far from the
+			// origin. A float cache would lose the translation to cancellation at large coordinates.
+			contactSim->cachedRotationA = transformA.q;
+			contactSim->cachedRotationB = transformB.q;
+			contactSim->cachedRelativePose = b2InvMulWorldTransforms( transformA, transformB );
 			contactSim->simFlags |= b2_simRelativeTransformValid;
 
 			b2Vec2 centerOffsetA = b2RotateVector( transformA.q, bodySimA->localCenter );
@@ -1028,7 +1033,7 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2He
 			draw->DrawLineFcn( p1, p2, color, draw->context );
 			draw->DrawPointFcn( p2, 4.0f, color, draw->context );
 
-			if (drawChainNormals)
+			if ( drawChainNormals )
 			{
 				b2Vec2 c = b2Lerp( p1, p2, 0.5f );
 				b2Vec2 e = b2Normalize( b2Sub( p2, p1 ) );
@@ -1122,17 +1127,17 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 			color = b2_colorGray;
 		}
 
-		b2DrawShape( draw, shape, bodySim->transform, color, draw->drawChainNormals );
+		b2DrawShape( draw, shape, b2ToRelativeTransform( bodySim->transform, draw->origin ), color, draw->drawChainNormals );
 	}
 
 	if ( draw->drawBounds )
 	{
 		b2AABB aabb = shape->fatAABB;
 
-		b2Vec2 vs[4] = { { aabb.lowerBound.x, aabb.lowerBound.y },
-						 { aabb.upperBound.x, aabb.lowerBound.y },
-						 { aabb.upperBound.x, aabb.upperBound.y },
-						 { aabb.lowerBound.x, aabb.upperBound.y } };
+		// Shift the float broad-phase box into the view frame.
+		b2Vec2 lower = b2SubPos( b2ToPos( aabb.lowerBound ), draw->origin );
+		b2Vec2 upper = b2SubPos( b2ToPos( aabb.upperBound ), draw->origin );
+		b2Vec2 vs[4] = { lower, { upper.x, lower.y }, upper, { lower.x, upper.y } };
 
 		draw->DrawPolygonFcn( vs, 4, b2_colorGold, draw->context );
 	}
@@ -1197,7 +1202,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				b2Vec2 offset = { 0.1f, 0.1f };
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
-				b2Transform transform = { bodySim->center, bodySim->transform.q };
+				b2Transform transform = { b2SubPos( bodySim->center, draw->origin ), bodySim->transform.q };
 				b2Vec2 p = b2TransformPoint( transform, offset );
 				draw->DrawStringFcn( p, body->name, b2_colorBlueViolet, draw->context );
 			}
@@ -1207,8 +1212,9 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				b2Vec2 offset = { 0.1f, 0.1f };
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
-				b2Transform transform = { bodySim->center, bodySim->transform.q };
-				draw->DrawLineFcn( bodySim->center0, bodySim->center, b2_colorWhiteSmoke, draw->context );
+				b2Transform transform = { b2SubPos( bodySim->center, draw->origin ), bodySim->transform.q };
+				draw->DrawLineFcn( b2SubPos( bodySim->center0, draw->origin ),
+								   b2SubPos( bodySim->center, draw->origin ), b2_colorWhiteSmoke, draw->context );
 				draw->DrawTransformFcn( transform, draw->context );
 
 				b2Vec2 p = b2TransformPoint( transform, offset );
@@ -1267,11 +1273,11 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 							b2Vec2 p;
 							if ( draw->drawAnchorA )
 							{
-								p = b2Add( bodySimA->center, mp->anchorA );
+								p = b2SubPos( b2OffsetPos( bodySimA->center, mp->anchorA ), draw->origin );
 							}
 							else
 							{
-								p = b2Add( bodySimB->center, mp->anchorB );
+								p = b2SubPos( b2OffsetPos( bodySimB->center, mp->anchorB ), draw->origin );
 							}
 
 							if ( draw->drawGraphColors && contact->colorIndex != B2_NULL_INDEX )
@@ -1376,10 +1382,10 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 					if ( shapeCount > 0 )
 					{
-						b2Vec2 vs[4] = { { aabb.lowerBound.x, aabb.lowerBound.y },
-										 { aabb.upperBound.x, aabb.lowerBound.y },
-										 { aabb.upperBound.x, aabb.upperBound.y },
-										 { aabb.lowerBound.x, aabb.upperBound.y } };
+						// Corner differenced in double to match the shape draw frame
+						b2Vec2 lower = b2SubPos( b2ToPos( aabb.lowerBound ), draw->origin );
+						b2Vec2 upper = b2SubPos( b2ToPos( aabb.upperBound ), draw->origin );
+						b2Vec2 vs[4] = { lower, { upper.x, lower.y }, upper, { lower.x, upper.y } };
 
 						draw->DrawPolygonFcn( vs, 4, b2_colorOrangeRed, draw->context );
 					}
@@ -1416,7 +1422,7 @@ bool b2ComputeWorldBounds( b2World* world, b2AABB* bounds )
 	return haveBounds;
 }
 
-b2AABB b2World_GetBounds(b2WorldId worldId)
+b2AABB b2World_GetBounds( b2WorldId worldId )
 {
 	b2World* world = b2GetUnlockedWorldFromId( worldId );
 	if ( world == NULL )
@@ -2296,7 +2302,8 @@ static bool TreeQueryCallback( int proxyId, uint64_t userData, void* context )
 	return result;
 }
 
-b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter filter, b2OverlapResultFcn* fcn, void* context )
+b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2Pos origin, b2AABB aabb, b2QueryFilter filter, b2OverlapResultFcn* fcn,
+								 void* context )
 {
 	b2TreeStats treeStats = { 0 };
 
@@ -2307,6 +2314,7 @@ b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter f
 		return treeStats;
 	}
 
+	B2_ASSERT( b2IsValidPosition( origin ) );
 	B2_ASSERT( b2IsValidAABB( aabb ) );
 
 	b2RecQueryWriter recWriter = { 0 };
@@ -2315,6 +2323,7 @@ b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter f
 		b2RecQueryBegin( &recWriter, context );
 		recWriter.userFcn.overlapFcn = fcn;
 		b2RecW_WORLDID( &recWriter.buf, worldId );
+		b2RecW_POSITION( &recWriter.buf, origin );
 		b2RecW_AABB( &recWriter.buf, aabb );
 		b2RecW_QUERYFILTER( &recWriter.buf, filter );
 		recWriter.countOffset = b2RecReserveU32( &recWriter.buf );
@@ -2322,12 +2331,15 @@ b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2AABB aabb, b2QueryFilter f
 		context = &recWriter;
 	}
 
+	// Lift to a world float box with outward rounding so the conservative tree test never misses
+	b2AABB worldBox = b2OffsetAABB( aabb, origin );
+
 	WorldQueryContext worldContext = { world, fcn, filter, context };
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
 		b2TreeStats treeResult =
-			b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, TreeQueryCallback, &worldContext );
+			b2DynamicTree_Query( world->broadPhase.trees + i, worldBox, filter.maskBits, TreeQueryCallback, &worldContext );
 
 		treeStats.nodeVisits += treeResult.nodeVisits;
 		treeStats.leafVisits += treeResult.leafVisits;
@@ -2349,6 +2361,7 @@ typedef struct WorldOverlapContext
 	b2OverlapResultFcn* fcn;
 	b2QueryFilter filter;
 	const b2ShapeProxy* proxy;
+	b2Pos origin;
 	void* userContext;
 } WorldOverlapContext;
 
@@ -2368,14 +2381,14 @@ static bool TreeOverlapCallback( int proxyId, uint64_t userData, void* context )
 		return true;
 	}
 
+	// Re-center on the query origin so the distance test stays in float precision far from the world origin
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
+	b2Transform transform = b2ToRelativeTransform( b2GetBodyTransformQuick( world, body ), worldContext->origin );
 
 	b2DistanceInput input;
 	input.proxyA = *worldContext->proxy;
 	input.proxyB = b2MakeShapeDistanceProxy( shape );
-	input.transformA = b2Transform_identity;
-	input.transformB = transform;
+	input.transform = transform;
 	input.useRadii = true;
 
 	b2SimplexCache cache = { 0 };
@@ -2392,8 +2405,8 @@ static bool TreeOverlapCallback( int proxyId, uint64_t userData, void* context )
 	return result;
 }
 
-b2TreeStats b2World_OverlapShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2QueryFilter filter, b2OverlapResultFcn* fcn,
-								  void* context )
+b2TreeStats b2World_OverlapShape( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy, b2QueryFilter filter,
+								  b2OverlapResultFcn* fcn, void* context )
 {
 	b2TreeStats treeStats = { 0 };
 
@@ -2404,12 +2417,15 @@ b2TreeStats b2World_OverlapShape( b2WorldId worldId, const b2ShapeProxy* proxy, 
 		return treeStats;
 	}
 
+	B2_ASSERT( b2IsValidPosition( origin ) );
+
 	b2RecQueryWriter recWriter = { 0 };
 	if ( world->recording != NULL )
 	{
 		b2RecQueryBegin( &recWriter, context );
 		recWriter.userFcn.overlapFcn = fcn;
 		b2RecW_WORLDID( &recWriter.buf, worldId );
+		b2RecW_POSITION( &recWriter.buf, origin );
 		b2RecW_SHAPEPROXY( &recWriter.buf, *proxy );
 		b2RecW_QUERYFILTER( &recWriter.buf, filter );
 		recWriter.countOffset = b2RecReserveU32( &recWriter.buf );
@@ -2417,9 +2433,10 @@ b2TreeStats b2World_OverlapShape( b2WorldId worldId, const b2ShapeProxy* proxy, 
 		context = &recWriter;
 	}
 
-	b2AABB aabb = b2MakeAABB( proxy->points, proxy->count, proxy->radius );
+	// Relative box lifted to world float with outward rounding, conservative for the tree
+	b2AABB aabb = b2OffsetAABB( b2MakeAABB( proxy->points, proxy->count, proxy->radius ), origin );
 	WorldOverlapContext worldContext = {
-		world, fcn, filter, proxy, context,
+		world, fcn, filter, proxy, origin, context,
 	};
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
@@ -2447,6 +2464,7 @@ typedef struct WorldRayCastContext
 	b2CastResultFcn* fcn;
 	b2QueryFilter filter;
 	float fraction;
+	b2Pos origin;
 	void* userContext;
 } WorldRayCastContext;
 
@@ -2467,13 +2485,22 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, uint64_t
 	}
 
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
-	b2CastOutput output = b2RayCastShape( input, shape, transform );
+	b2WorldTransform xf = b2GetBodyTransformQuick( world, body );
+
+	// Re-center on the body so the per-shape cast stays in float precision far from the origin.
+	// The tree traversal already used the truncated origin in input. Here we re-difference in full
+	// precision against the body position.
+	b2Pos base = xf.p;
+	b2Transform transform = b2ToRelativeTransform( xf, base );
+	b2RayCastInput localInput = *input;
+	localInput.origin = b2SubPos( worldContext->origin, base );
+	b2CastOutput output = b2RayCastShape( &localInput, shape, transform );
 
 	if ( output.hit )
 	{
 		b2ShapeId id = { shapeId + 1, world->worldId, shape->generation };
-		float fraction = worldContext->fcn( id, output.point, output.normal, output.fraction, worldContext->userContext );
+		b2Pos point = b2OffsetPos( base, output.point );
+		float fraction = worldContext->fcn( id, point, output.normal, output.fraction, worldContext->userContext );
 
 		// The user may return -1 to skip this shape
 		if ( 0.0f <= fraction && fraction <= 1.0f )
@@ -2487,7 +2514,7 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, uint64_t
 	return input->maxFraction;
 }
 
-b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn,
+b2TreeStats b2World_CastRay( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn,
 							 void* context )
 {
 	b2TreeStats treeStats = { 0 };
@@ -2499,7 +2526,7 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translatio
 		return treeStats;
 	}
 
-	B2_ASSERT( b2IsValidVec2( origin ) );
+	B2_ASSERT( b2IsValidPosition( origin ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
 	b2RecQueryWriter recWriter = { 0 };
@@ -2508,7 +2535,7 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translatio
 		b2RecQueryBegin( &recWriter, context );
 		recWriter.userFcn.castFcn = fcn;
 		b2RecW_WORLDID( &recWriter.buf, worldId );
-		b2RecW_VEC2( &recWriter.buf, origin );
+		b2RecW_POSITION( &recWriter.buf, origin );
 		b2RecW_VEC2( &recWriter.buf, translation );
 		b2RecW_QUERYFILTER( &recWriter.buf, filter );
 		recWriter.countOffset = b2RecReserveU32( &recWriter.buf );
@@ -2516,9 +2543,12 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translatio
 		context = &recWriter;
 	}
 
-	b2RayCastInput input = { origin, translation, 1.0f };
+	// Tree traversal sees the origin truncated to float, displacing the ray by up to one
+	// coordinate ULP, a graze sized miss tolerance at extreme range. Per-shape casts
+	// re-difference against the full precision origin carried on the context.
+	b2RayCastInput input = { b2ToVec2( origin ), translation, 1.0f };
 
-	WorldRayCastContext worldContext = { world, fcn, filter, 1.0f, context };
+	WorldRayCastContext worldContext = { world, fcn, filter, 1.0f, origin, context };
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
@@ -2546,7 +2576,7 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Vec2 origin, b2Vec2 translatio
 }
 
 // This callback finds the closest hit. This is the most common callback used in games.
-static float b2RayCastClosestFcn( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
+static float b2RayCastClosestFcn( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context )
 {
 	// Ignore initial overlap
 	if ( fraction == 0.0f )
@@ -2563,7 +2593,7 @@ static float b2RayCastClosestFcn( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal
 	return fraction;
 }
 
-b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter )
+b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter )
 {
 	b2RayResult result = { 0 };
 
@@ -2574,11 +2604,11 @@ b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 tra
 		return result;
 	}
 
-	B2_ASSERT( b2IsValidVec2( origin ) );
+	B2_ASSERT( b2IsValidPosition( origin ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
-	b2RayCastInput input = { origin, translation, 1.0f };
-	WorldRayCastContext worldContext = { world, b2RayCastClosestFcn, filter, 1.0f, &result };
+	b2RayCastInput input = { b2ToVec2( origin ), translation, 1.0f };
+	WorldRayCastContext worldContext = { world, b2RayCastClosestFcn, filter, 1.0f, origin, &result };
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
@@ -2599,7 +2629,7 @@ b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 tra
 	{
 		b2RecBuffer recBuf = { 0 };
 		b2RecW_WORLDID( &recBuf, worldId );
-		b2RecW_VEC2( &recBuf, origin );
+		b2RecW_POSITION( &recBuf, origin );
 		b2RecW_VEC2( &recBuf, translation );
 		b2RecW_QUERYFILTER( &recBuf, filter );
 		b2RecW_RAYRESULT( &recBuf, result );
@@ -2610,13 +2640,25 @@ b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Vec2 origin, b2Vec2 tra
 	return result;
 }
 
-static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, uint64_t userData, void* context )
+typedef struct WorldShapeCastContext
+{
+	b2World* world;
+	b2CastResultFcn* fcn;
+	b2QueryFilter filter;
+	float fraction;
+	b2Pos origin;
+	// origin relative input
+	b2ShapeCastInput input;
+	void* userContext;
+} WorldShapeCastContext;
+
+static float ShapeCastCallback( const b2BoxCastInput* input, int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
 
 	int shapeId = (int)userData;
 
-	WorldRayCastContext* worldContext = context;
+	WorldShapeCastContext* worldContext = context;
 	b2World* world = worldContext->world;
 
 	b2Shape* shape = b2Array_Get( world->shapes, shapeId );
@@ -2626,15 +2668,23 @@ static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 		return input->maxFraction;
 	}
 
-	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
+	// Rebuild from the origin relative input, taking only the advancing fraction from the tree.
+	// The tree input is world float and would lose the cast far from the origin.
+	b2ShapeCastInput localInput = worldContext->input;
+	localInput.maxFraction = input->maxFraction;
 
-	b2CastOutput output = b2ShapeCastShape( input, shape, transform );
+	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
+	b2WorldTransform transform = b2GetBodyTransformQuick( world, body );
+	b2Transform localTransform = b2ToRelativeTransform( transform, worldContext->origin );
+
+	b2CastOutput output = b2ShapeCastShape( &localInput, shape, localTransform );
 
 	if ( output.hit )
 	{
 		b2ShapeId id = { shapeId + 1, world->worldId, shape->generation };
-		float fraction = worldContext->fcn( id, output.point, output.normal, output.fraction, worldContext->userContext );
+
+		b2Pos point = b2OffsetPos( worldContext->origin, output.point );
+		float fraction = worldContext->fcn( id, point, output.normal, output.fraction, worldContext->userContext );
 
 		// The user may return -1 to skip this shape
 		if ( 0.0f <= fraction && fraction <= 1.0f )
@@ -2648,8 +2698,8 @@ static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 	return input->maxFraction;
 }
 
-b2TreeStats b2World_CastShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2Vec2 translation, b2QueryFilter filter,
-							   b2CastResultFcn* fcn, void* context )
+b2TreeStats b2World_CastShape( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy, b2Vec2 translation,
+							   b2QueryFilter filter, b2CastResultFcn* fcn, void* context )
 {
 	b2TreeStats treeStats = { 0 };
 
@@ -2660,6 +2710,7 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2V
 		return treeStats;
 	}
 
+	B2_ASSERT( b2IsValidPosition( origin ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
 	b2RecQueryWriter recWriter = { 0 };
@@ -2668,6 +2719,7 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2V
 		b2RecQueryBegin( &recWriter, context );
 		recWriter.userFcn.castFcn = fcn;
 		b2RecW_WORLDID( &recWriter.buf, worldId );
+		b2RecW_POSITION( &recWriter.buf, origin );
 		b2RecW_SHAPEPROXY( &recWriter.buf, *proxy );
 		b2RecW_VEC2( &recWriter.buf, translation );
 		b2RecW_QUERYFILTER( &recWriter.buf, filter );
@@ -2676,17 +2728,28 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2V
 		context = &recWriter;
 	}
 
-	b2ShapeCastInput input = { 0 };
-	input.proxy = *proxy;
-	input.translation = translation;
-	input.maxFraction = 1.0f;
+	WorldShapeCastContext worldContext = { 0 };
+	worldContext.world = world;
+	worldContext.fcn = fcn;
+	worldContext.filter = filter;
+	worldContext.fraction = 1.0f;
+	worldContext.origin = origin;
+	worldContext.input.proxy = *proxy;
+	worldContext.input.translation = translation;
+	worldContext.input.maxFraction = 1.0f;
+	worldContext.userContext = context;
 
-	WorldRayCastContext worldContext = { world, fcn, filter, 1.0f, context };
+	// Bound the proxy in origin relative space then lift to a conservative world float box. The
+	// tree node boxes use the same directed rounding, so the swept box never clips a shape far
+	// from the origin. Per shape casts re-difference at full precision against the carried origin.
+	b2AABB localBox = b2MakeAABB( proxy->points, proxy->count, proxy->radius );
+	b2AABB box = b2OffsetAABB( localBox, origin );
+	b2BoxCastInput treeInput = { box, translation, 1.0f };
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
 		b2TreeStats treeResult =
-			b2DynamicTree_ShapeCast( world->broadPhase.trees + i, &input, filter.maskBits, ShapeCastCallback, &worldContext );
+			b2DynamicTree_BoxCast( world->broadPhase.trees + i, &treeInput, filter.maskBits, ShapeCastCallback, &worldContext );
 		treeStats.nodeVisits += treeResult.nodeVisits;
 		treeStats.leafVisits += treeResult.leafVisits;
 
@@ -2695,7 +2758,7 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2V
 			break;
 		}
 
-		input.maxFraction = worldContext.fraction;
+		treeInput.maxFraction = worldContext.fraction;
 	}
 
 	if ( world->recording != NULL )
@@ -2708,23 +2771,17 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, const b2ShapeProxy* proxy, b2V
 	return treeStats;
 }
 
-typedef struct b2MoverContext
-{
-	b2World* world;
-	b2QueryFilter filter;
-	b2ShapeProxy proxy;
-	b2Transform transform;
-	void* userContext;
-} b2CharacterCallbackContext;
-
 typedef struct WorldMoverCastContext
 {
 	b2World* world;
 	b2QueryFilter filter;
 	float fraction;
+	b2Pos origin;
+	// origin relative input
+	b2ShapeCastInput input;
 } WorldMoverCastContext;
 
-static float MoverCastCallback( const b2ShapeCastInput* input, int proxyId, uint64_t userData, void* context )
+static float MoverCastCallback( const b2BoxCastInput* input, int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
 
@@ -2739,10 +2796,14 @@ static float MoverCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 		return worldContext->fraction;
 	}
 
-	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
+	// Rebuild from the origin relative input, taking only the advancing fraction from the tree
+	b2ShapeCastInput localInput = worldContext->input;
+	localInput.maxFraction = input->maxFraction;
 
-	b2CastOutput output = b2ShapeCastShape( input, shape, transform );
+	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
+	b2Transform transform = b2ToRelativeTransform( b2GetBodyTransformQuick( world, body ), worldContext->origin );
+
+	b2CastOutput output = b2ShapeCastShape( &localInput, shape, transform );
 	if ( output.fraction == 0.0f )
 	{
 		// Ignore overlapping shapes
@@ -2753,8 +2814,9 @@ static float MoverCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 	return output.fraction;
 }
 
-float b2World_CastMover( b2WorldId worldId, const b2Capsule* mover, b2Vec2 translation, b2QueryFilter filter )
+float b2World_CastMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2Vec2 translation, b2QueryFilter filter )
 {
+	B2_ASSERT( b2IsValidPosition( origin ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 	B2_ASSERT( mover->radius > 2.0f * B2_LINEAR_SLOP );
 
@@ -2765,33 +2827,41 @@ float b2World_CastMover( b2WorldId worldId, const b2Capsule* mover, b2Vec2 trans
 		return 1.0f;
 	}
 
-	b2ShapeCastInput input = { 0 };
-	input.proxy.points[0] = mover->center1;
-	input.proxy.points[1] = mover->center2;
-	input.proxy.count = 2;
-	input.proxy.radius = mover->radius;
-	input.translation = translation;
-	input.maxFraction = 1.0f;
-	input.canEncroach = true;
+	WorldMoverCastContext worldContext = { 0 };
+	worldContext.world = world;
+	worldContext.filter = filter;
+	worldContext.fraction = 1.0f;
+	worldContext.origin = origin;
+	worldContext.input.proxy.points[0] = mover->center1;
+	worldContext.input.proxy.points[1] = mover->center2;
+	worldContext.input.proxy.count = 2;
+	worldContext.input.proxy.radius = mover->radius;
+	worldContext.input.translation = translation;
+	worldContext.input.maxFraction = 1.0f;
+	worldContext.input.canEncroach = true;
 
-	WorldMoverCastContext worldContext = { world, filter, 1.0f };
+	// Bound the capsule in origin relative space then lift to a conservative world float box
+	b2Vec2 centers[2] = { mover->center1, mover->center2 };
+	b2AABB box = b2OffsetAABB( b2MakeAABB( centers, 2, mover->radius ), origin );
+	b2BoxCastInput treeInput = { box, translation, 1.0f };
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_ShapeCast( world->broadPhase.trees + i, &input, filter.maskBits, MoverCastCallback, &worldContext );
+		b2DynamicTree_BoxCast( world->broadPhase.trees + i, &treeInput, filter.maskBits, MoverCastCallback, &worldContext );
 
 		if ( worldContext.fraction == 0.0f )
 		{
 			break;
 		}
 
-		input.maxFraction = worldContext.fraction;
+		treeInput.maxFraction = worldContext.fraction;
 	}
 
 	if ( world->recording != NULL )
 	{
 		b2RecBuffer recBuf = { 0 };
 		b2RecW_WORLDID( &recBuf, worldId );
+		b2RecW_POSITION( &recBuf, origin );
 		b2RecW_CAPSULE( &recBuf, *mover );
 		b2RecW_VEC2( &recBuf, translation );
 		b2RecW_QUERYFILTER( &recBuf, filter );
@@ -2809,6 +2879,7 @@ typedef struct WorldMoverContext
 	b2PlaneResultFcn* fcn;
 	b2QueryFilter filter;
 	b2Capsule mover;
+	b2Pos origin;
 	void* userContext;
 } WorldMoverContext;
 
@@ -2827,8 +2898,9 @@ static bool TreeCollideCallback( int proxyId, uint64_t userData, void* context )
 		return true;
 	}
 
+	// Re-center on the query origin, the mover and the resulting planes are origin relative
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
+	b2Transform transform = b2ToRelativeTransform( b2GetBodyTransformQuick( world, body ), worldContext->origin );
 
 	b2PlaneResult result = b2CollideMover( &worldContext->mover, shape, transform );
 
@@ -2844,7 +2916,8 @@ static bool TreeCollideCallback( int proxyId, uint64_t userData, void* context )
 
 // It is tempting to use a shape proxy for the mover, but this makes handling deep overlap difficult and the generality may
 // not be worth it.
-void b2World_CollideMover( b2WorldId worldId, const b2Capsule* mover, b2QueryFilter filter, b2PlaneResultFcn* fcn, void* context )
+void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2QueryFilter filter,
+						   b2PlaneResultFcn* fcn, void* context )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
@@ -2853,12 +2926,15 @@ void b2World_CollideMover( b2WorldId worldId, const b2Capsule* mover, b2QueryFil
 		return;
 	}
 
+	B2_ASSERT( b2IsValidPosition( origin ) );
+
 	b2RecQueryWriter recWriter = { 0 };
 	if ( world->recording != NULL )
 	{
 		b2RecQueryBegin( &recWriter, context );
 		recWriter.userFcn.planeFcn = fcn;
 		b2RecW_WORLDID( &recWriter.buf, worldId );
+		b2RecW_POSITION( &recWriter.buf, origin );
 		b2RecW_CAPSULE( &recWriter.buf, *mover );
 		b2RecW_QUERYFILTER( &recWriter.buf, filter );
 		recWriter.countOffset = b2RecReserveU32( &recWriter.buf );
@@ -2868,12 +2944,14 @@ void b2World_CollideMover( b2WorldId worldId, const b2Capsule* mover, b2QueryFil
 
 	b2Vec2 r = { mover->radius, mover->radius };
 
-	b2AABB aabb;
-	aabb.lowerBound = b2Sub( b2Min( mover->center1, mover->center2 ), r );
-	aabb.upperBound = b2Add( b2Max( mover->center1, mover->center2 ), r );
+	// Relative box lifted to world float with outward rounding, conservative for the tree
+	b2AABB relBox;
+	relBox.lowerBound = b2Sub( b2Min( mover->center1, mover->center2 ), r );
+	relBox.upperBound = b2Add( b2Max( mover->center1, mover->center2 ), r );
+	b2AABB aabb = b2OffsetAABB( relBox, origin );
 
 	WorldMoverContext worldContext = {
-		world, fcn, filter, *mover, context,
+		world, fcn, filter, *mover, origin, context,
 	};
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
@@ -2996,7 +3074,7 @@ b2Vec2 b2World_GetGravity( b2WorldId worldId )
 struct ExplosionContext
 {
 	b2World* world;
-	b2Vec2 position;
+	b2Pos position;
 	float radius;
 	float falloff;
 	float impulsePerLength;
@@ -3016,13 +3094,16 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
 	B2_ASSERT( body->type == b2_dynamicBody );
 
-	b2Transform transform = b2GetBodyTransformQuick( world, body );
+	b2WorldTransform xf = b2GetBodyTransformQuick( world, body );
+
+	// Re-center the explosion into the shape local frame so distance and direction stay precise
+	// far from the origin. Everything below runs in that near-origin frame.
+	b2Vec2 localPosition = b2InvTransformWorldPoint( xf, explosionContext->position );
 
 	b2DistanceInput input;
 	input.proxyA = b2MakeShapeDistanceProxy( shape );
-	input.proxyB = b2MakeProxy( &explosionContext->position, 1, 0.0f );
-	input.transformA = transform;
-	input.transformB = b2Transform_identity;
+	input.proxyB = b2MakeProxy( &localPosition, 1, 0.0f );
+	input.transform = b2Transform_identity;
 	input.useRadii = true;
 
 	b2SimplexCache cache = { 0 };
@@ -3045,11 +3126,10 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 	b2Vec2 closestPoint = output.pointA;
 	if ( output.distance == 0.0f )
 	{
-		b2Vec2 localCentroid = b2GetShapeCentroid( shape );
-		closestPoint = b2TransformPoint( transform, localCentroid );
+		closestPoint = b2GetShapeCentroid( shape );
 	}
 
-	b2Vec2 direction = b2Sub( closestPoint, explosionContext->position );
+	b2Vec2 direction = b2Sub( closestPoint, localPosition );
 	if ( b2LengthSquared( direction ) > 100.0f * FLT_EPSILON * FLT_EPSILON )
 	{
 		direction = b2Normalize( direction );
@@ -3059,7 +3139,7 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 		direction = (b2Vec2){ 1.0f, 0.0f };
 	}
 
-	b2Vec2 localLine = b2InvRotateVector( transform.q, b2LeftPerp( direction ) );
+	b2Vec2 localLine = b2LeftPerp( direction );
 	float perimeter = b2GetShapeProjectedPerimeter( shape, localLine );
 	float scale = 1.0f;
 	if ( output.distance > radius && falloff > 0.0f )
@@ -3068,14 +3148,17 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 	}
 
 	float magnitude = explosionContext->impulsePerLength * perimeter * scale;
-	b2Vec2 impulse = b2MulSV( magnitude, direction );
+	b2Vec2 impulse = b2MulSV( magnitude, b2RotateVector( xf.q, direction ) );
 
 	int localIndex = body->localIndex;
 	b2SolverSet* set = b2Array_Get( world->solverSets, b2_awakeSet );
 	b2BodyState* state = b2Array_Get( set->bodyStates, localIndex );
 	b2BodySim* bodySim = b2Array_Get( set->bodySims, localIndex );
 	state->linearVelocity = b2MulAdd( state->linearVelocity, bodySim->invMass, impulse );
-	state->angularVelocity += bodySim->invInertia * b2Cross( b2Sub( closestPoint, bodySim->center ), impulse );
+
+	// Lever arm from the center of mass to the closest point, rotated to world
+	b2Vec2 r = b2RotateVector( xf.q, b2Sub( closestPoint, bodySim->localCenter ) );
+	state->angularVelocity += bodySim->invInertia * b2Cross( r, impulse );
 
 	return true;
 }
@@ -3083,12 +3166,12 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionDef )
 {
 	uint64_t maskBits = explosionDef->maskBits;
-	b2Vec2 position = explosionDef->position;
+	b2Pos position = explosionDef->position;
 	float radius = explosionDef->radius;
 	float falloff = explosionDef->falloff;
 	float impulsePerLength = explosionDef->impulsePerLength;
 
-	B2_ASSERT( b2IsValidVec2( position ) );
+	B2_ASSERT( b2IsValidPosition( position ) );
 	B2_ASSERT( b2IsValidFloat( radius ) && radius >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( falloff ) && falloff >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( impulsePerLength ) );
@@ -3104,11 +3187,10 @@ void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionDef )
 
 	struct ExplosionContext explosionContext = { world, position, radius, falloff, impulsePerLength };
 
-	b2AABB aabb;
-	aabb.lowerBound.x = position.x - ( radius + falloff );
-	aabb.lowerBound.y = position.y - ( radius + falloff );
-	aabb.upperBound.x = position.x + ( radius + falloff );
-	aabb.upperBound.y = position.y + ( radius + falloff );
+	// The broad-phase tree is float, so translate a local query box out to world with outward rounding
+	float extent = radius + falloff;
+	b2AABB localBox = { { -extent, -extent }, { extent, extent } };
+	b2AABB aabb = b2OffsetAABB( localBox, position );
 
 	b2DynamicTree_Query( world->broadPhase.trees + b2_dynamicBody, aabb, maskBits, ExplosionCallback, &explosionContext );
 }

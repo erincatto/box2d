@@ -174,15 +174,15 @@ static const b2BodyState b2_identityBodyState = { { 0.0f, 0.0f }, 0.0f, 0, { 0.0
 // Transform data used for collision and solver preparation.
 typedef struct b2BodySim
 {
-	// transform for body origin
-	b2Transform transform;
+	// transform for body origin, double translation in large world mode
+	b2WorldTransform transform;
 
 	// center of mass position in world space
-	b2Vec2 center;
+	b2Pos center;
 
 	// previous rotation and COM for TOI
 	b2Rot rotation0;
-	b2Vec2 center0;
+	b2Pos center0;
 
 	// location of center of mass relative to the body origin
 	b2Vec2 localCenter;
@@ -214,8 +214,8 @@ b2DeclareArray( b2BodyState );
 // Get a validated body from a world using an id.
 b2Body* b2GetBodyFullId( b2World* world, b2BodyId bodyId );
 
-b2Transform b2GetBodyTransformQuick( b2World* world, b2Body* body );
-b2Transform b2GetBodyTransform( b2World* world, int bodyId );
+b2WorldTransform b2GetBodyTransformQuick( b2World* world, b2Body* body );
+b2WorldTransform b2GetBodyTransform( b2World* world, int bodyId );
 
 // Create a b2BodyId from a raw id.
 b2BodyId b2MakeBodyId( b2World* world, int bodyId );
@@ -232,11 +232,13 @@ bool b2WakeBody( b2World* world, b2Body* body );
 void b2UpdateBodyMassData( b2World* world, b2Body* body );
 void b2SyncBodyFlags( b2World* world, b2Body* body );
 
-static inline b2Sweep b2MakeSweep( const b2BodySim* bodySim )
+// Build a sweep relative to a base position so continuous collision keeps float precision far
+// from the origin. The base cancels out of the relative motion the TOI actually solves.
+static inline b2Sweep b2MakeRelativeSweep( const b2BodySim* bodySim, b2Pos base )
 {
 	b2Sweep s;
-	s.c1 = bodySim->center0;
-	s.c2 = bodySim->center;
+	s.c1 = b2SubPos( bodySim->center0, base );
+	s.c2 = b2SubPos( bodySim->center, base );
 	s.q1 = bodySim->rotation0;
 	s.q2 = bodySim->transform.q;
 	s.localCenter = bodySim->localCenter;

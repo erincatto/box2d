@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define INFO_PANEL_WIDTH 16.0f
+
 static const char* fileName = "settings.ini";
 
 // Load a file. You must free the character array.
@@ -132,7 +134,15 @@ void DrawPointFcn( b2Vec2 p, float size, b2HexColor color, void* context )
 void DrawStringFcn( b2Vec2 p, const char* s, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
-	DrawWorldString( sampleContext->draw, &sampleContext->camera, p, color, s );
+	Camera* camera = &sampleContext->camera;
+#if defined( BOX2D_DOUBLE_PRECISION )
+	// Point already arrives relative to draw->origin, the camera center
+	b2Vec2 ps = ConvertViewToScreen( camera, p );
+#else
+	// Default origin is zero, so the point is a world coordinate
+	b2Vec2 ps = ConvertWorldToScreen( camera, p );
+#endif
+	DrawScreenString( sampleContext->draw, ps.x, ps.y, color, "%s", s );
 }
 
 #define MAX_TOKENS 32
@@ -390,7 +400,7 @@ void Sample::ResetText()
 
 struct QueryContext
 {
-	b2Vec2 point;
+	b2Pos point;
 	b2BodyId bodyId = b2_nullBodyId;
 };
 
@@ -417,7 +427,7 @@ bool QueryCallback( b2ShapeId shapeId, void* context )
 	return true;
 }
 
-void Sample::MouseDown( b2Vec2 p, int button, int mod )
+void Sample::MouseDown( b2Pos p, int button, int mod )
 {
 	if ( B2_IS_NON_NULL( m_mouseJointId ) )
 	{
@@ -426,17 +436,15 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 
 	if ( button == GLFW_MOUSE_BUTTON_1 )
 	{
-		// Make a small box.
-		b2AABB box;
+		// A tiny box around the click point, exact at any distance with the click as the origin
 		b2Vec2 d = { 0.001f, 0.001f };
-		box.lowerBound = b2Sub( p, d );
-		box.upperBound = b2Add( p, d );
+		b2AABB box = { b2Neg( d ), d };
 
 		m_mousePoint = p;
 
 		// Query the world for overlapping shapes.
 		QueryContext queryContext = { p, b2_nullBodyId };
-		b2World_OverlapAABB( m_worldId, box, b2DefaultQueryFilter(), QueryCallback, &queryContext );
+		b2World_OverlapAABB( m_worldId, p, box, b2DefaultQueryFilter(), QueryCallback, &queryContext );
 
 		if ( B2_IS_NON_NULL( queryContext.bodyId ) )
 		{
@@ -471,7 +479,7 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 	}
 }
 
-void Sample::MouseUp( b2Vec2 p, int button )
+void Sample::MouseUp( b2Pos p, int button )
 {
 	if ( B2_IS_NON_NULL( m_mouseJointId ) && button == GLFW_MOUSE_BUTTON_1 )
 	{
@@ -483,7 +491,7 @@ void Sample::MouseUp( b2Vec2 p, int button )
 	}
 }
 
-void Sample::MouseMove( b2Vec2 p )
+void Sample::MouseMove( b2Pos p )
 {
 	if ( b2Joint_IsValid( m_mouseJointId ) == false )
 	{
@@ -557,6 +565,11 @@ void Sample::Step()
 		b2World_Step( m_worldId, timeStep, m_context->subStepCount );
 	}
 
+#if defined( BOX2D_DOUBLE_PRECISION )
+	// Draw relative to the camera so callbacks and ad-hoc draws get float coordinates near the origin.
+	m_context->debugDraw.origin = m_context->camera.center;
+	SetDrawOrigin( m_context->draw, m_context->camera.center );
+#endif
 	b2World_Draw( m_worldId, &m_context->debugDraw );
 
 	if ( timeStep > 0.0f )
@@ -603,7 +616,7 @@ void Sample::DrawMetrics()
 	}
 
 	float fontSize = ImGui::GetFontSize();
-	float menuWidth = 14.0f * fontSize;
+	float menuWidth = INFO_PANEL_WIDTH * fontSize;
 	float drawerHeight = 16.0f * fontSize;
 	float drawerWidth = m_camera->width - menuWidth - 1.5f * fontSize;
 
@@ -1677,7 +1690,7 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 {
 	const SampleEntry& entry = g_sampleEntries[context->sampleIndex];
 	float fontSize = ImGui::GetFontSize();
-	float menuWidth = 14.0f * fontSize;
+	float menuWidth = INFO_PANEL_WIDTH * fontSize;
 	float menuBarHeight = ImGui::GetFrameHeight();
 
 	ImGui::SetNextWindowPos( { context->camera.width - menuWidth - 0.5f * fontSize, menuBarHeight + 0.5f * fontSize } );
@@ -1707,10 +1720,12 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 
 	ImGui::Separator();
 
+	ImGui::PushItemWidth( 6.0f * fontSize );
 	if ( context->sample->DrawControls() )
 	{
 		ImGui::Separator();
 	}
+	ImGui::PopItemWidth();
 
 	if ( context->sample->HasSolverControls() && ImGui::CollapsingHeader( "Solver", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{

@@ -163,11 +163,10 @@ float b2WheelJoint_GetMaxMotorTorque( b2JointId jointId )
 
 b2Vec2 b2GetWheelJointForce( b2World* world, b2JointSim* base )
 {
-	int idA = base->bodyIdA;
-	b2Transform transformA = b2GetBodyTransform( world, idA );
+	b2Rot qA = b2GetBodyTransform( world, base->bodyIdA ).q;
 
 	b2Vec2 localAxisA = b2RotateVector( base->localFrameA.q, (b2Vec2){ 1.0f, 0.0f } );
-	b2Vec2 axisA = b2RotateVector( transformA.q, localAxisA );
+	b2Vec2 axisA = b2RotateVector( qA, localAxisA );
 	b2Vec2 perpA = b2LeftPerp( axisA );
 
 	b2WheelJoint* joint = &base->wheelJoint;
@@ -245,7 +244,7 @@ void b2PrepareWheelJoint( b2JointSim* base, b2StepContext* context )
 	joint->frameB.p = b2RotateVector( bodySimB->transform.q, b2Sub( base->localFrameB.p, bodySimB->localCenter ) );
 
 	// Compute the initial center delta. Incremental position updates are relative to this.
-	joint->deltaCenter = b2Sub( bodySimB->center, bodySimA->center );
+	joint->deltaCenter = b2SubPos( bodySimB->center, bodySimA->center );
 
 	b2Vec2 rA = joint->frameA.p;
 	b2Vec2 rB = joint->frameB.p;

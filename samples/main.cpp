@@ -56,7 +56,7 @@ static int MyAllocHook( int allocType, void* userData, size_t size, int blockTyp
 
 static SampleContext s_context;
 static bool s_rightMouseDown = false;
-static b2Vec2 s_clickPointWS = b2Vec2_zero;
+static b2Pos s_clickPointWS = b2Pos_zero;
 static float s_framebufferScale = 1.0f;
 
 inline bool IsPowerOfTwo( int x )
@@ -119,7 +119,20 @@ static int CompareSamples( const void* a, const void* b )
 
 static void SortSamples()
 {
+	SampleCreateFcn* replayFcn = ( g_replayIndex >= 0 ) ? g_sampleEntries[g_replayIndex].createFcn : nullptr;
 	qsort( g_sampleEntries, g_sampleCount, sizeof( SampleEntry ), CompareSamples );
+	if ( replayFcn != nullptr )
+	{
+		g_replayIndex = -1;
+		for ( int i = 0; i < g_sampleCount; ++i )
+		{
+			if ( g_sampleEntries[i].createFcn == replayFcn )
+			{
+				g_replayIndex = i;
+				break;
+			}
+		}
+	}
 }
 
 static void ApplyUIStyle( void )
@@ -380,7 +393,7 @@ static void MouseButtonCallback( GLFWwindow* window, int button, int action, int
 	// Use the mouse to move things around.
 	if ( button == GLFW_MOUSE_BUTTON_1 )
 	{
-		b2Vec2 pw = ConvertScreenToWorld( &s_context.camera, ps );
+		b2Pos pw = ConvertScreenToWorld( &s_context.camera, ps );
 		if ( action == GLFW_PRESS )
 		{
 			s_context.sample->MouseDown( pw, button, modifiers );
@@ -412,12 +425,12 @@ static void MouseMotionCallback( GLFWwindow* window, double xd, double yd )
 
 	ImGui_ImplGlfw_CursorPosCallback( window, ps.x, ps.y );
 
-	b2Vec2 pw = ConvertScreenToWorld( &s_context.camera, ps );
+	b2Pos pw = ConvertScreenToWorld( &s_context.camera, ps );
 	s_context.sample->MouseMove( pw );
 
 	if ( s_rightMouseDown )
 	{
-		b2Vec2 diff = b2Sub( pw, s_clickPointWS );
+		b2Vec2 diff = pw - s_clickPointWS;
 		s_context.camera.center.x -= diff.x;
 		s_context.camera.center.y -= diff.y;
 		s_clickPointWS = ConvertScreenToWorld( &s_context.camera, ps );
@@ -435,7 +448,7 @@ static void ScrollCallback( GLFWwindow* window, double dx, double dy )
 	double xd, yd;
 	glfwGetCursorPos( window, &xd, &yd );
 	b2Vec2 ps = { (float)xd, (float)yd };
-	b2Vec2 pw1 = ConvertScreenToWorld( &s_context.camera, ps );
+	b2Pos pw1 = ConvertScreenToWorld( &s_context.camera, ps );
 
 	if ( dy > 0 )
 	{
@@ -446,8 +459,12 @@ static void ScrollCallback( GLFWwindow* window, double dx, double dy )
 		s_context.camera.zoom *= 1.1f;
 	}
 
-	b2Vec2 pw2 = ConvertScreenToWorld( &s_context.camera, ps );
-	s_context.camera.center -= pw2 - pw1;
+	b2Pos pw2 = ConvertScreenToWorld( &s_context.camera, ps );
+
+	// Keep the world point under the cursor fixed across the zoom.
+	b2Vec2 pan = pw2 - pw1;
+	s_context.camera.center.x -= pan.x;
+	s_context.camera.center.y -= pan.y;
 }
 
 int main( int argc, char** argv )

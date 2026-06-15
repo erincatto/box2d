@@ -141,6 +141,35 @@ b2Transform b2RecR_XF( b2RecReader* rdr )
 	return xf;
 }
 
+double b2RecR_F64( b2RecReader* rdr )
+{
+	uint64_t bits = b2RecR_U64( rdr );
+	double v;
+	memcpy( &v, &bits, 8 );
+	return v;
+}
+
+b2Pos b2RecR_POSITION( b2RecReader* rdr )
+{
+	b2Pos p;
+#if defined( BOX2D_DOUBLE_PRECISION )
+	p.x = b2RecR_F64( rdr );
+	p.y = b2RecR_F64( rdr );
+#else
+	p.x = b2RecR_F32( rdr );
+	p.y = b2RecR_F32( rdr );
+#endif
+	return p;
+}
+
+b2WorldTransform b2RecR_WORLDXF( b2RecReader* rdr )
+{
+	b2WorldTransform t;
+	t.p = b2RecR_POSITION( rdr );
+	t.q = b2RecR_ROT( rdr );
+	return t;
+}
+
 b2WorldId b2RecR_WORLDID( b2RecReader* rdr )
 {
 	return b2LoadWorldId( b2RecR_U32( rdr ) );
@@ -291,7 +320,7 @@ b2BodyDef b2RecR_BODYDEF( b2RecReader* rdr )
 {
 	b2BodyDef def = b2DefaultBodyDef();
 	def.type = (b2BodyType)b2RecR_I32( rdr );
-	def.position = b2RecR_VEC2( rdr );
+	def.position = b2RecR_POSITION( rdr );
 	def.rotation = b2RecR_ROT( rdr );
 	def.linearVelocity = b2RecR_VEC2( rdr );
 	def.angularVelocity = b2RecR_F32( rdr );
@@ -384,7 +413,7 @@ b2ExplosionDef b2RecR_EXPLOSIONDEF( b2RecReader* rdr )
 {
 	b2ExplosionDef def = b2DefaultExplosionDef();
 	def.maskBits = b2RecR_U64( rdr );
-	def.position = b2RecR_VEC2( rdr );
+	def.position = b2RecR_POSITION( rdr );
 	def.radius = b2RecR_F32( rdr );
 	def.falloff = b2RecR_F32( rdr );
 	def.impulsePerLength = b2RecR_F32( rdr );
@@ -546,20 +575,11 @@ b2ShapeProxy b2RecR_SHAPEPROXY( b2RecReader* rdr )
 	return p;
 }
 
-b2RayCastInput b2RecR_RAYCASTINPUT( b2RecReader* rdr )
+b2WorldCastOutput b2RecR_WORLDCASTOUTPUT( b2RecReader* rdr )
 {
-	b2RayCastInput v;
-	v.origin = b2RecR_VEC2( rdr );
-	v.translation = b2RecR_VEC2( rdr );
-	v.maxFraction = b2RecR_F32( rdr );
-	return v;
-}
-
-b2CastOutput b2RecR_CASTOUTPUT( b2RecReader* rdr )
-{
-	b2CastOutput v;
+	b2WorldCastOutput v;
 	v.normal = b2RecR_VEC2( rdr );
-	v.point = b2RecR_VEC2( rdr );
+	v.point = b2RecR_POSITION( rdr );
 	v.fraction = b2RecR_F32( rdr );
 	v.iterations = b2RecR_I32( rdr );
 	v.hit = b2RecR_BOOL( rdr );
@@ -571,7 +591,7 @@ b2RayResult b2RecR_RAYRESULT( b2RecReader* rdr )
 	b2RayResult v;
 	// shapeId keeps the recorded world0; b2RecMakeShapeId is applied at compare time
 	v.shapeId = b2RecR_SHAPEID( rdr );
-	v.point = b2RecR_VEC2( rdr );
+	v.point = b2RecR_POSITION( rdr );
 	v.normal = b2RecR_VEC2( rdr );
 	v.fraction = b2RecR_F32( rdr );
 	v.nodeVisits = b2RecR_I32( rdr );
@@ -1627,13 +1647,14 @@ static void b2RecDispatch_QueryOverlapAABB( const b2RecArgs_QueryOverlapAABB* a,
 	if ( !rdr->ok )
 		return;
 	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
-	b2World_OverlapAABB( rdr->replayWorldId, a->aabb, a->filter, b2RecReplayOverlapTrampoline, &rc );
+	b2World_OverlapAABB( rdr->replayWorldId, a->origin, a->aabb, a->filter, b2RecReplayOverlapTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_OVERLAP_AABB, rdr->hits, (int)n );
 		q->filter = a->filter;
+		q->origin = a->origin;
 		q->aabb = a->aabb;
 	}
 }
@@ -1655,20 +1676,21 @@ static void b2RecDispatch_QueryOverlapShape( const b2RecArgs_QueryOverlapShape* 
 	if ( !rdr->ok )
 		return;
 	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
-	b2World_OverlapShape( rdr->replayWorldId, &a->proxy, a->filter, b2RecReplayOverlapTrampoline, &rc );
+	b2World_OverlapShape( rdr->replayWorldId, a->origin, &a->proxy, a->filter, b2RecReplayOverlapTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_OVERLAP_SHAPE, rdr->hits, (int)n );
 		q->filter = a->filter;
+		q->origin = a->origin;
 		q->proxy = a->proxy;
 	}
 }
 
 // Cast ray dispatcher
 
-static float b2RecReplayCastTrampoline( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx )
+static float b2RecReplayCastTrampoline( b2ShapeId id, b2Pos point, b2Vec2 normal, float fraction, void* ctx )
 {
 	b2RecReplayQueryCtx* rc = ctx;
 	if ( rc->cursor >= rc->count )
@@ -1677,8 +1699,11 @@ static float b2RecReplayCastTrampoline( b2ShapeId id, b2Vec2 point, b2Vec2 norma
 		return 0.0f;
 	}
 	const b2RecRecordedHit* h = &rc->hits[rc->cursor++];
-	if ( id.index1 != h->id.index1 || id.generation != h->id.generation || b2RecVec2Differs( point, h->point ) ||
-		 b2RecVec2Differs( normal, h->normal ) || b2RecF32Differs( fraction, h->fraction ) )
+	// Compare positions through the full width delta, truncating both sides would pass vacuously
+	// far from the origin
+	if ( id.index1 != h->id.index1 || id.generation != h->id.generation ||
+		 b2RecVec2Differs( b2SubPos( point, h->point ), b2Vec2_zero ) || b2RecVec2Differs( normal, h->normal ) ||
+		 b2RecF32Differs( fraction, h->fraction ) )
 	{
 		rc->rdr->diverged = true;
 	}
@@ -1696,7 +1721,7 @@ static void b2RecDispatch_QueryCastRay( const b2RecArgs_QueryCastRay* a, b2RecRe
 	for ( uint32_t i = 0; i < n; ++i )
 	{
 		rdr->hits[i].id = b2RecMakeShapeId( rdr, b2RecR_SHAPEID( rdr ) );
-		rdr->hits[i].point = b2RecR_VEC2( rdr );
+		rdr->hits[i].point = b2RecR_POSITION( rdr );
 		rdr->hits[i].normal = b2RecR_VEC2( rdr );
 		rdr->hits[i].fraction = b2RecR_F32( rdr );
 		rdr->hits[i].userReturnF = b2RecR_F32( rdr );
@@ -1728,7 +1753,7 @@ static void b2RecDispatch_QueryCastShape( const b2RecArgs_QueryCastShape* a, b2R
 	for ( uint32_t i = 0; i < n; ++i )
 	{
 		rdr->hits[i].id = b2RecMakeShapeId( rdr, b2RecR_SHAPEID( rdr ) );
-		rdr->hits[i].point = b2RecR_VEC2( rdr );
+		rdr->hits[i].point = b2RecR_POSITION( rdr );
 		rdr->hits[i].normal = b2RecR_VEC2( rdr );
 		rdr->hits[i].fraction = b2RecR_F32( rdr );
 		rdr->hits[i].userReturnF = b2RecR_F32( rdr );
@@ -1737,13 +1762,14 @@ static void b2RecDispatch_QueryCastShape( const b2RecArgs_QueryCastShape* a, b2R
 	if ( !rdr->ok )
 		return;
 	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
-	b2World_CastShape( rdr->replayWorldId, &a->proxy, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
+	b2World_CastShape( rdr->replayWorldId, a->origin, &a->proxy, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_CAST_SHAPE, rdr->hits, (int)n );
 		q->filter = a->filter;
+		q->origin = a->origin;
 		q->proxy = a->proxy;
 		q->translation = a->translation;
 	}
@@ -1788,13 +1814,14 @@ static void b2RecDispatch_QueryCollideMover( const b2RecArgs_QueryCollideMover* 
 	if ( !rdr->ok )
 		return;
 	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
-	b2World_CollideMover( rdr->replayWorldId, &a->mover, a->filter, b2RecReplayPlaneTrampoline, &rc );
+	b2World_CollideMover( rdr->replayWorldId, a->origin, &a->mover, a->filter, b2RecReplayPlaneTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_COLLIDE_MOVER, rdr->hits, (int)n );
 		q->filter = a->filter;
+		q->origin = a->origin;
 		q->mover = a->mover;
 	}
 }
@@ -1809,8 +1836,8 @@ static void b2RecDispatch_QueryCastRayClosest( const b2RecArgs_QueryCastRayClose
 	b2RayResult got = b2World_CastRayClosest( rdr->replayWorldId, a->origin, a->translation, a->filter );
 	if ( got.hit != rec.hit ||
 		 ( got.hit && ( got.shapeId.index1 != rec.shapeId.index1 || got.shapeId.generation != rec.shapeId.generation ||
-						b2RecVec2Differs( got.point, rec.point ) || b2RecVec2Differs( got.normal, rec.normal ) ||
-						b2RecF32Differs( got.fraction, rec.fraction ) ) ) )
+						b2RecVec2Differs( b2SubPos( got.point, rec.point ), b2Vec2_zero ) ||
+						b2RecVec2Differs( got.normal, rec.normal ) || b2RecF32Differs( got.fraction, rec.fraction ) ) ) )
 	{
 		rdr->diverged = true;
 	}
@@ -1836,13 +1863,14 @@ static void b2RecDispatch_QueryCastMover( const b2RecArgs_QueryCastMover* a, b2R
 	float rec = b2RecR_F32( rdr );
 	if ( !rdr->ok )
 		return;
-	float got = b2World_CastMover( rdr->replayWorldId, &a->mover, a->translation, a->filter );
+	float got = b2World_CastMover( rdr->replayWorldId, a->origin, &a->mover, a->translation, a->filter );
 	if ( b2RecF32Differs( got, rec ) )
 		rdr->diverged = true;
 	if ( rdr->owner )
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_CAST_MOVER, NULL, 0 );
 		q->filter = a->filter;
+		q->origin = a->origin;
 		q->mover = a->mover;
 		q->translation = a->translation;
 		q->castFraction = rec;
@@ -1873,13 +1901,14 @@ static void b2RecDispatch_ShapeTestPoint( const b2RecArgs_ShapeTestPoint* a, b2R
 
 static void b2RecDispatch_ShapeRayCast( const b2RecArgs_ShapeRayCast* a, b2RecReader* rdr )
 {
-	b2CastOutput rec = b2RecR_CASTOUTPUT( rdr );
+	b2WorldCastOutput rec = b2RecR_WORLDCASTOUTPUT( rdr );
 	if ( !rdr->ok )
 		return;
 	b2ShapeId id = b2RecMakeShapeId( rdr, a->shape );
-	b2CastOutput got = b2Shape_RayCast( id, &a->input );
+	b2WorldCastOutput got = b2Shape_RayCast( id, a->origin, a->translation );
 	if ( got.hit != rec.hit ||
-		 ( got.hit && ( b2RecVec2Differs( got.normal, rec.normal ) || b2RecVec2Differs( got.point, rec.point ) ||
+		 ( got.hit && ( b2RecVec2Differs( got.normal, rec.normal ) ||
+						b2RecVec2Differs( b2SubPos( got.point, rec.point ), b2Vec2_zero ) ||
 						b2RecF32Differs( got.fraction, rec.fraction ) ) ) )
 	{
 		rdr->diverged = true;
@@ -1888,8 +1917,9 @@ static void b2RecDispatch_ShapeRayCast( const b2RecArgs_ShapeRayCast* a, b2RecRe
 	{
 		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_SHAPE_RAY_CAST, NULL, 0 );
 		q->shape = id;
-		q->origin = a->input.origin;
-		q->translation = a->input.translation;
+		// The ray starts at the origin
+		q->origin = a->origin;
+		q->translation = a->translation;
 		q->castOut = rec;
 	}
 }
@@ -2033,9 +2063,10 @@ b2RecPlayer* b2RecPlayer_Create( const void* data, int size, int workerCount )
 		return NULL;
 	}
 
-	if ( hdr.versionMajor != 3 )
+	if ( hdr.versionMajor != B2_REC_VERSION_MAJOR || hdr.versionMinor != B2_REC_VERSION_MINOR )
 	{
-		printf( "b2RecPlayer_Create: version mismatch (file=%u, runtime=3)\n", hdr.versionMajor );
+		printf( "b2RecPlayer_Create: version mismatch (file=%u.%u, runtime=%u.%u)\n", hdr.versionMajor, hdr.versionMinor,
+				B2_REC_VERSION_MAJOR, B2_REC_VERSION_MINOR );
 		return NULL;
 	}
 
@@ -2332,6 +2363,11 @@ void b2RecPlayer_Restart( b2RecPlayer* player )
 	player->divergeFrame = -1;
 	player->atEnd = false;
 
+	// Frame 0 is the pre-step snapshot, so it has no recorded queries. Clear the per-frame store so
+	// the last stepped frame's queries do not linger on a load or a backward scrub to the start.
+	player->frameQueryCount = 0;
+	player->frameHitCount = 0;
+
 	// Roll the outliner body list back to its frame-0 contents
 	player->bodyIdCount = player->frame0BodyIdCount;
 	if ( player->frame0BodyIdCount > 0 )
@@ -2535,6 +2571,18 @@ void b2RecPlayer_Destroy( b2RecPlayer* player )
 
 // Highlight each reported overlap shape by its AABB. Skip any destroyed since the query,
 // per the b2Shape_GetAABB contract that overlap results may contain stale shapes.
+// Shift recorded world geometry into the draw origin frame so the viewer can render it far from
+// the origin. Identity when origin is zero, the float mode default.
+static b2Vec2 b2RecDrawRel( b2Pos p, b2Pos origin )
+{
+	return b2SubPos( p, origin );
+}
+
+static b2Vec2 b2RecDrawRelVec( b2Vec2 p, b2Pos origin )
+{
+	return b2SubPos( b2ToPos( p ), origin );
+}
+
 static void b2RecDrawHitAABBs( const b2RecPlayer* player, const b2RecDrawQuery* q, b2DebugDraw* draw )
 {
 	if ( draw->DrawPolygonFcn == NULL )
@@ -2549,7 +2597,9 @@ static void b2RecDrawHitAABBs( const b2RecPlayer* player, const b2RecDrawQuery* 
 			continue;
 		}
 		b2AABB b = b2Shape_GetAABB( id );
-		b2Vec2 vs[4] = { b.lowerBound, { b.upperBound.x, b.lowerBound.y }, b.upperBound, { b.lowerBound.x, b.upperBound.y } };
+		b2Vec2 lo = b2RecDrawRelVec( b.lowerBound, draw->origin );
+		b2Vec2 hi2 = b2RecDrawRelVec( b.upperBound, draw->origin );
+		b2Vec2 vs[4] = { lo, { hi2.x, lo.y }, hi2, { lo.x, hi2.y } };
 		draw->DrawPolygonFcn( vs, 4, b2_colorMagenta, draw->context );
 	}
 }
@@ -2575,23 +2625,25 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 			case B2_RECQ_CAST_RAY_CLOSEST:
 			{
 				// Ray origin to endpoint
-				b2Vec2 end = b2Add( q->origin, q->translation );
+				b2Vec2 origin = b2RecDrawRel( q->origin, draw->origin );
+				b2Vec2 end = b2Add( origin, q->translation );
 				if ( draw->DrawLineFcn )
 				{
-					draw->DrawLineFcn( q->origin, end, b2_colorYellow, draw->context );
+					draw->DrawLineFcn( origin, end, b2_colorYellow, draw->context );
 				}
 				// Per-hit point + short normal
 				for ( int hi = q->hitStart; hi < q->hitStart + q->hitCount; ++hi )
 				{
 					const b2RecRecordedHit* h = &player->frameHits[hi];
+					b2Vec2 point = b2RecDrawRel( h->point, draw->origin );
 					if ( draw->DrawPointFcn )
 					{
-						draw->DrawPointFcn( h->point, 4.0f, b2_colorYellow, draw->context );
+						draw->DrawPointFcn( point, 4.0f, b2_colorYellow, draw->context );
 					}
 					if ( draw->DrawLineFcn )
 					{
-						b2Vec2 np = b2MulAdd( h->point, 0.2f, h->normal );
-						draw->DrawLineFcn( h->point, np, b2_colorLightYellow, draw->context );
+						b2Vec2 np = b2MulAdd( point, 0.2f, h->normal );
+						draw->DrawLineFcn( point, np, b2_colorLightYellow, draw->context );
 					}
 				}
 				break;
@@ -2602,33 +2654,38 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 				for ( int hi = q->hitStart; hi < q->hitStart + q->hitCount; ++hi )
 				{
 					const b2RecRecordedHit* h = &player->frameHits[hi];
+					b2Vec2 point = b2RecDrawRel( h->point, draw->origin );
 					if ( draw->DrawPointFcn )
 					{
-						draw->DrawPointFcn( h->point, 4.0f, b2_colorSkyBlue, draw->context );
+						draw->DrawPointFcn( point, 4.0f, b2_colorSkyBlue, draw->context );
 					}
 					if ( draw->DrawLineFcn )
 					{
-						b2Vec2 np = b2MulAdd( h->point, 0.2f, h->normal );
-						draw->DrawLineFcn( h->point, np, b2_colorLightSkyBlue, draw->context );
+						b2Vec2 np = b2MulAdd( point, 0.2f, h->normal );
+						draw->DrawLineFcn( point, np, b2_colorLightSkyBlue, draw->context );
 					}
 				}
 				break;
 			}
 			case B2_RECQ_CAST_MOVER:
 			{
+				// The mover capsule is relative to the query origin
+				b2Vec2 shift = b2SubPos( q->origin, draw->origin );
 				if ( draw->DrawSolidCapsuleFcn )
 				{
-					draw->DrawSolidCapsuleFcn( q->mover.center1, q->mover.center2, q->mover.radius, b2_colorLightSkyBlue,
-											   draw->context );
+					b2Vec2 c1 = b2Add( q->mover.center1, shift );
+					b2Vec2 c2 = b2Add( q->mover.center2, shift );
+					draw->DrawSolidCapsuleFcn( c1, c2, q->mover.radius, b2_colorLightSkyBlue, draw->context );
 				}
 				break;
 			}
 			case B2_RECQ_OVERLAP_AABB:
 			{
-				b2Vec2 vs[4] = { q->aabb.lowerBound,
-								 { q->aabb.upperBound.x, q->aabb.lowerBound.y },
-								 q->aabb.upperBound,
-								 { q->aabb.lowerBound.x, q->aabb.upperBound.y } };
+				// The query box is relative to the query origin
+				b2Vec2 shift = b2SubPos( q->origin, draw->origin );
+				b2Vec2 lo = b2Add( q->aabb.lowerBound, shift );
+				b2Vec2 hi2 = b2Add( q->aabb.upperBound, shift );
+				b2Vec2 vs[4] = { lo, { hi2.x, lo.y }, hi2, { lo.x, hi2.y } };
 				if ( draw->DrawPolygonFcn )
 				{
 					draw->DrawPolygonFcn( vs, 4, b2_colorLimeGreen, draw->context );
@@ -2638,25 +2695,36 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 			}
 			case B2_RECQ_OVERLAP_SHAPE:
 			{
-				if ( q->proxy.count == 1 )
+				// The proxy points are relative to the query origin
+				b2Vec2 shift = b2SubPos( q->origin, draw->origin );
+				b2ShapeProxy proxy = q->proxy;
+				for ( int i = 0; i < proxy.count; ++i )
+				{
+					proxy.points[i] = b2Add( q->proxy.points[i], shift );
+				}
+				if ( proxy.count == 1 )
 				{
 					if ( draw->DrawCircleFcn )
 					{
-						draw->DrawCircleFcn( q->proxy.points[0], q->proxy.radius, b2_colorLimeGreen, draw->context );
+						draw->DrawCircleFcn( proxy.points[0], proxy.radius, b2_colorLimeGreen, draw->context );
 					}
 				}
-				else if ( q->proxy.count >= 2 && draw->DrawPolygonFcn )
+				else if ( proxy.count >= 2 && draw->DrawPolygonFcn )
 				{
-					draw->DrawPolygonFcn( q->proxy.points, q->proxy.count, b2_colorLimeGreen, draw->context );
+					draw->DrawPolygonFcn( proxy.points, proxy.count, b2_colorLimeGreen, draw->context );
 				}
 				b2RecDrawHitAABBs( player, q, draw );
 				break;
 			}
 			case B2_RECQ_COLLIDE_MOVER:
 			{
+				// The mover capsule and the collision planes are relative to the query origin
+				b2Vec2 shift = b2SubPos( q->origin, draw->origin );
 				if ( draw->DrawSolidCapsuleFcn )
 				{
-					draw->DrawSolidCapsuleFcn( q->mover.center1, q->mover.center2, q->mover.radius, b2_colorTan, draw->context );
+					b2Vec2 c1 = b2Add( q->mover.center1, shift );
+					b2Vec2 c2 = b2Add( q->mover.center2, shift );
+					draw->DrawSolidCapsuleFcn( c1, c2, q->mover.radius, b2_colorTan, draw->context );
 				}
 				// Per-hit plane point and normal
 				for ( int hi = q->hitStart; hi < q->hitStart + q->hitCount; ++hi )
@@ -2664,8 +2732,9 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 					const b2RecRecordedHit* h = &player->frameHits[hi];
 					if ( h->plane.hit && draw->DrawLineFcn )
 					{
-						b2Vec2 np = b2MulAdd( h->plane.point, 0.2f, h->plane.plane.normal );
-						draw->DrawLineFcn( h->plane.point, np, b2_colorOrange, draw->context );
+						b2Vec2 point = b2Add( h->plane.point, shift );
+						b2Vec2 np = b2MulAdd( point, 0.2f, h->plane.plane.normal );
+						draw->DrawLineFcn( point, np, b2_colorOrange, draw->context );
 					}
 				}
 				break;
@@ -2675,20 +2744,21 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 				b2HexColor c = q->boolResult ? b2_colorAqua : b2_colorRed;
 				if ( draw->DrawPointFcn )
 				{
-					draw->DrawPointFcn( q->origin, 6.0f, c, draw->context );
+					draw->DrawPointFcn( b2RecDrawRel( q->origin, draw->origin ), 6.0f, c, draw->context );
 				}
 				break;
 			}
 			case B2_RECQ_SHAPE_RAY_CAST:
 			{
-				b2Vec2 end = b2Add( q->origin, q->translation );
+				b2Vec2 origin = b2RecDrawRel( q->origin, draw->origin );
+				b2Vec2 end = b2Add( origin, q->translation );
 				if ( draw->DrawLineFcn )
 				{
-					draw->DrawLineFcn( q->origin, end, b2_colorViolet, draw->context );
+					draw->DrawLineFcn( origin, end, b2_colorViolet, draw->context );
 				}
 				if ( q->castOut.hit && draw->DrawPointFcn )
 				{
-					draw->DrawPointFcn( q->castOut.point, 4.0f, b2_colorViolet, draw->context );
+					draw->DrawPointFcn( b2RecDrawRel( q->castOut.point, draw->origin ), 4.0f, b2_colorViolet, draw->context );
 				}
 				break;
 			}

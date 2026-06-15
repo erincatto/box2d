@@ -6,8 +6,13 @@
 #include "box2d/math_functions.h"
 
 /// Used to detect bad values. Positions greater than about 16km will have precision
-/// problems, so 100km as a limit should be fine in all cases.
-#define B2_HUGE ( 100000.0f * b2GetLengthUnitsPerMeter() )
+/// problems in single precision, so 100km as a limit should be fine in all cases.
+/// In large world mode the broad-phase starts to have excessive padding at 10,000km.
+#if defined( BOX2D_DOUBLE_PRECISION )
+#define B2_HUGE ( 1.0e9f * b2GetLengthUnitsPerMeter() )
+#else
+#define B2_HUGE ( 1.0e5f * b2GetLengthUnitsPerMeter() )
+#endif
 
 /// Maximum parallel workers. Used for some fixed size arrays.
 #define B2_MAX_WORKERS 32
@@ -20,7 +25,7 @@
 
 /// Maximum number of colors in the constraint graph. Constraints that cannot
 /// find a color are added to the overflow set which are solved single-threaded.
-/// The compound barrel benchmark has minor overflow with 24 colors 
+/// The compound barrel benchmark has minor overflow with 24 colors
 #define B2_GRAPH_COLOR_COUNT 24
 
 /// A small length used as a collision and constraint tolerance. Usually it is
@@ -53,7 +58,7 @@
 #define B2_CONTACT_RECYCLE_DISTANCE ( 10.0f * B2_LINEAR_SLOP )
 
 /// The default contact recycling world angle threshold. 0.98 ~= 11.5 degrees
-#define B2_CONTACT_RECYCLE_COS_ANGLE ( 0.98f  )
+#define B2_CONTACT_RECYCLE_COS_ANGLE ( 0.98f )
 
 /// This is used to fatten AABBs in the dynamic tree. This allows proxies
 /// to move by a small amount without triggering a tree adjustment. This is in meters.

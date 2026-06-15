@@ -15,8 +15,13 @@
 #define TracyCFrameMark
 #endif
 
-#define EXPECTED_SLEEP_STEP 328
-#define EXPECTED_HASH 0x26E08AEE
+#if defined( BOX2D_DOUBLE_PRECISION )
+#define EXPECTED_SLEEP_STEP 247
+#define EXPECTED_HASH 0x14D56E35
+#else
+#define EXPECTED_SLEEP_STEP 327
+#define EXPECTED_HASH 0x5F0C8CAC
+#endif
 
 static int SingleMultithreadingTest( int workerCount )
 {

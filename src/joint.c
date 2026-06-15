@@ -1058,8 +1058,10 @@ float b2Joint_GetLinearSeparation( b2JointId jointId )
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* base = b2GetJointSim( world, joint );
 
-	b2Transform xfA = b2GetBodyTransform( world, joint->edges[0].bodyId );
-	b2Transform xfB = b2GetBodyTransform( world, joint->edges[1].bodyId );
+	// Relative to body A so the difference stays in float precision far from the origin
+	b2WorldTransform wxfA = b2GetBodyTransform( world, joint->edges[0].bodyId );
+	b2Transform xfA = b2ToRelativeTransform( wxfA, wxfA.p );
+	b2Transform xfB = b2ToRelativeTransform( b2GetBodyTransform( world, joint->edges[1].bodyId ), wxfA.p );
 
 	b2Vec2 pA = b2TransformPoint( xfA, base->localFrameA.p );
 	b2Vec2 pB = b2TransformPoint( xfB, base->localFrameB.p );
@@ -1176,9 +1178,9 @@ float b2Joint_GetAngularSeparation( b2JointId jointId )
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* base = b2GetJointSim( world, joint );
 
-	b2Transform xfA = b2GetBodyTransform( world, joint->edges[0].bodyId );
-	b2Transform xfB = b2GetBodyTransform( world, joint->edges[1].bodyId );
-	float relativeAngle = b2RelativeAngle( xfA.q, xfB.q );
+	b2Rot qA = b2GetBodyTransform( world, joint->edges[0].bodyId ).q;
+	b2Rot qB = b2GetBodyTransform( world, joint->edges[1].bodyId ).q;
+	float relativeAngle = b2RelativeAngle( qA, qB );
 
 	switch ( joint->type )
 	{
@@ -1558,8 +1560,8 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 
 	b2JointSim* jointSim = b2GetJointSim( world, joint );
 
-	b2Transform transformA = b2GetBodyTransformQuick( world, bodyA );
-	b2Transform transformB = b2GetBodyTransformQuick( world, bodyB );
+	b2Transform transformA = b2ToRelativeTransform( b2GetBodyTransformQuick( world, bodyA ), draw->origin );
+	b2Transform transformB = b2ToRelativeTransform( b2GetBodyTransformQuick( world, bodyB ), draw->origin );
 	b2Vec2 pA = b2TransformPoint( transformA, jointSim->localFrameA.p );
 	b2Vec2 pB = b2TransformPoint( transformB, jointSim->localFrameB.p );
 

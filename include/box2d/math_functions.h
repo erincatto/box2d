@@ -47,6 +47,30 @@ typedef struct b2Transform
 	b2Rot q;
 } b2Transform;
 
+#if defined( BOX2D_DOUBLE_PRECISION )
+
+/// A world position. Double precision in large world mode so coordinates stay accurate far
+/// from the origin.
+typedef struct b2Pos
+{
+	double x, y;
+} b2Pos;
+
+/// A world transform with double precision translation and float rotation. Rotation is frame
+/// local and never needs the extra range, the same split as Jolt's DMat44.
+typedef struct b2WorldTransform
+{
+	b2Pos p;
+	b2Rot q;
+} b2WorldTransform;
+
+#else
+
+typedef b2Vec2 b2Pos;
+typedef b2Transform b2WorldTransform;
+
+#endif
+
 /// A 2-by-2 Matrix
 typedef struct b2Mat22
 {
@@ -83,6 +107,10 @@ static const b2Rot b2Rot_identity = { 1.0f, 0.0f };
 static const b2Transform b2Transform_identity = { { 0.0f, 0.0f }, { 1.0f, 0.0f } };
 static const b2Mat22 b2Mat22_zero = { { 0.0f, 0.0f }, { 0.0f, 0.0f } };
 
+// Initializers valid in both modes: 0.0f promotes to double, the identity rotation is float
+static const b2Pos b2Pos_zero = { 0.0f, 0.0f };
+static const b2WorldTransform b2WorldTransform_identity = { { 0.0f, 0.0f }, { 1.0f, 0.0f } };
+
 /// Is this a valid number? Not NaN or infinity.
 B2_API bool b2IsValidFloat( float a );
 
@@ -100,6 +128,12 @@ B2_API bool b2IsValidAABB( b2AABB aabb );
 
 /// Is this a valid plane? Normal is a unit vector. Not Nan or infinity.
 B2_API bool b2IsValidPlane( b2Plane a );
+
+/// Is this a valid world position? Not NaN or infinity.
+B2_API bool b2IsValidPosition( b2Pos p );
+
+/// Is this a valid world transform? Not NaN or infinity. Rotation is normalized.
+B2_API bool b2IsValidWorldTransform( b2WorldTransform t );
 
 /// @return the minimum of two integers
 B2_INLINE int b2MinInt( int a, int b )
@@ -561,6 +595,106 @@ B2_INLINE b2Transform b2InvMulTransforms( b2Transform A, b2Transform B )
 	return C;
 }
 
+/// Convert a vector to a world position. no-op in single precision.
+B2_INLINE b2Pos b2ToPos( b2Vec2 v )
+{
+	return B2_LITERAL( b2Pos ){ v.x, v.y };
+}
+
+/// Lossy conversion of a world position to a float vector. no-op in single precision.
+B2_INLINE b2Vec2 b2ToVec2( b2Pos p )
+{
+	return B2_LITERAL( b2Vec2 ){ (float)p.x, (float)p.y };
+}
+
+/// Narrow a world coordinate to float, rounding toward negative infinity. Use with
+/// b2RoundUpFloat to build a conservative float box that always contains double bounds,
+/// where plain rounding far from the origin could clip. nextafterf is an exact IEEE
+/// operation, so this is cross-platform deterministic. With large world mode off this is
+/// a plain conversion.
+B2_INLINE float b2RoundDownFloat( double x )
+{
+#if defined( BOX2D_DOUBLE_PRECISION )
+	float f = (float)x;
+	return (double)f > x ? nextafterf( f, -FLT_MAX ) : f;
+#else
+	return (float)x;
+#endif
+}
+
+/// Narrow a world coordinate to float, rounding toward positive infinity.
+B2_INLINE float b2RoundUpFloat( double x )
+{
+#if defined( BOX2D_DOUBLE_PRECISION )
+	float f = (float)x;
+	return (double)f < x ? nextafterf( f, FLT_MAX ) : f;
+#else
+	return (float)x;
+#endif
+}
+
+/// a - b, demoted to float. The primary precision boundary operation.
+B2_INLINE b2Vec2 b2SubPos( b2Pos a, b2Pos b )
+{
+	return B2_LITERAL( b2Vec2 ){ (float)( a.x - b.x ), (float)( a.y - b.y ) };
+}
+
+/// p + d
+B2_INLINE b2Pos b2OffsetPos( b2Pos p, b2Vec2 d )
+{
+	return B2_LITERAL( b2Pos ){ p.x + d.x, p.y + d.y };
+}
+
+/// World position interpolation for sweeps and sampling.
+B2_INLINE b2Pos b2LerpPosition( b2Pos a, b2Pos b, float t )
+{
+	return B2_LITERAL( b2Pos ){ ( 1.0f - t ) * a.x + t * b.x, ( 1.0f - t ) * a.y + t * b.y };
+}
+
+/// Transform a local point to a world position. Rotation in float, translation in double.
+B2_INLINE b2Pos b2TransformWorldPoint( b2WorldTransform t, b2Vec2 p )
+{
+	float rx = t.q.c * p.x - t.q.s * p.y;
+	float ry = t.q.s * p.x + t.q.c * p.y;
+	return B2_LITERAL( b2Pos ){ t.p.x + rx, t.p.y + ry };
+}
+
+/// Transform a world position to a local point. One double subtraction, then float.
+B2_INLINE b2Vec2 b2InvTransformWorldPoint( b2WorldTransform t, b2Pos p )
+{
+	float vx = (float)( p.x - t.p.x );
+	float vy = (float)( p.y - t.p.y );
+	return B2_LITERAL( b2Vec2 ){ t.q.c * vx + t.q.s * vy, -t.q.s * vx + t.q.c * vy };
+}
+
+/// Relative transform of frame B in frame A. The narrow phase boundary.
+B2_INLINE b2Transform b2InvMulWorldTransforms( b2WorldTransform A, b2WorldTransform B )
+{
+	b2Transform C;
+	C.q = b2InvMulRot( A.q, B.q );
+	b2Vec2 d = { (float)( B.p.x - A.p.x ), (float)( B.p.y - A.p.y ) };
+	C.p = b2InvRotateVector( A.q, d );
+	return C;
+}
+
+/// Shift a world transform into the frame of a base position.
+B2_INLINE b2Transform b2ToRelativeTransform( b2WorldTransform t, b2Pos base )
+{
+	b2Transform r;
+	r.q = t.q;
+	r.p = B2_LITERAL( b2Vec2 ){ (float)( t.p.x - base.x ), (float)( t.p.y - base.y ) };
+	return r;
+}
+
+/// Promote a float transform to a world transform. Lossless.
+B2_INLINE b2WorldTransform b2MakeWorldTransform( b2Transform t )
+{
+	b2WorldTransform w;
+	w.p = b2ToPos( t.p );
+	w.q = t.q;
+	return w;
+}
+
 /// Multiply a 2-by-2 matrix times a 2D vector
 B2_INLINE b2Vec2 b2MulMV( b2Mat22 A, b2Vec2 v )
 {
@@ -774,6 +908,28 @@ inline bool operator!=( b2Vec2 a, b2Vec2 b )
 {
 	return a.x != b.x || a.y != b.y;
 }
+
+#if defined( BOX2D_DOUBLE_PRECISION )
+
+/// Offset a world position by a vector
+inline b2Pos operator+( b2Pos a, b2Vec2 b )
+{
+	return { a.x + b.x, a.y + b.y };
+}
+
+/// Offset a world position by a vector
+inline b2Pos operator-( b2Pos a, b2Vec2 b )
+{
+	return { a.x - b.x, a.y - b.y };
+}
+
+/// Delta between two world positions, demoted to float
+inline b2Vec2 operator-( b2Pos a, b2Pos b )
+{
+	return { (float)( a.x - b.x ), (float)( a.y - b.y ) };
+}
+
+#endif
 
 #endif
 

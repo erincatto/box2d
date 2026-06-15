@@ -48,7 +48,7 @@ typedef float b2RestitutionCallback( float restitutionA, uint64_t userMaterialId
 typedef struct b2RayResult
 {
 	b2ShapeId shapeId;
-	b2Vec2 point;
+	b2Pos point;
 	b2Vec2 normal;
 	float fraction;
 	int nodeVisits;
@@ -198,7 +198,7 @@ typedef struct b2BodyDef
 	/// The initial world position of the body. Bodies should be created with the desired position.
 	/// @note Creating bodies at the origin and then moving them nearly doubles the cost of body creation, especially
 	/// if the body is moved after shapes have been added.
-	b2Vec2 position;
+	b2Pos position;
 
 	/// The initial world rotation of the body. Use b2MakeRot() if you have an angle.
 	b2Rot rotation;
@@ -910,7 +910,7 @@ typedef struct b2ExplosionDef
 	uint64_t maskBits;
 
 	/// The center of the explosion in world space
-	b2Vec2 position;
+	b2Pos position;
 
 	/// The radius of the explosion
 	float radius;
@@ -1042,10 +1042,11 @@ typedef struct b2ContactHitEvent
 	///	@see b2Contact_IsValid
 	b2ContactId contactId;
 
-	/// Point where the shapes hit at the beginning of the time step.
-	/// This is a mid-point between the two surfaces. It could be at speculative
-	/// point where the two shapes were not touching at the beginning of the time step.
-	b2Vec2 point;
+	/// Point where the shapes hit. This is a mid-point between the two surfaces. It could be
+	/// a speculative point where the shapes were not touching at the beginning of the time
+	/// step. The point is reconstructed after the step, so when both bodies are moving it may
+	/// trail the impact by up to one step of motion.
+	b2Pos point;
 
 	/// Normal vector pointing from shape A to shape B
 	b2Vec2 normal;
@@ -1091,7 +1092,7 @@ typedef struct b2ContactEvents
 typedef struct b2BodyMoveEvent
 {
 	void* userData;
-	b2Transform transform;
+	b2WorldTransform transform;
 	b2BodyId bodyId;
 	bool fellAsleep;
 } b2BodyMoveEvent;
@@ -1171,7 +1172,7 @@ typedef bool b2CustomFilterFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* co
 /// Return false if you want to disable the contact this step
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
-typedef bool b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Vec2 point, b2Vec2 normal, void* context );
+typedef bool b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context );
 
 /// Prototype callback for overlap queries.
 /// Called for each shape found in the query.
@@ -1196,7 +1197,7 @@ typedef bool b2OverlapResultFcn( b2ShapeId shapeId, void* context );
 /// @return -1 to filter, 0 to terminate, fraction to clip the ray for closest hit, 1 to continue
 /// @see b2World_CastRay
 /// @ingroup world
-typedef float b2CastResultFcn( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context );
+typedef float b2CastResultFcn( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context );
 
 // Used to collect collision planes for character movers.
 // Return true to continue gathering planes.
@@ -1446,6 +1447,11 @@ typedef struct b2DebugDraw
 
 	/// Option to draw islands as bounding boxes
 	bool drawIslands;
+
+	/// World point that drawn coordinates are relative to. In large world mode set this to the
+	/// camera position each frame so callbacks receive float coordinates near the origin. Defaults
+	/// to zero, which is bit identical to passing world coordinates directly.
+	b2Pos origin;
 
 	/// User context that is passed as an argument to drawing callback functions
 	void* context;

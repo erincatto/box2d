@@ -134,8 +134,14 @@ if (BOX2D_VALIDATE)
 endif()
 
 if (BOX2D_DISABLE_SIMD)
-	message(STATUS "Box2D SIMD disabled")	
+	message(STATUS "Box2D SIMD disabled")
 	target_compile_definitions(box2d PRIVATE BOX2D_DISABLE_SIMD)
+endif()
+
+if (BOX2D_DOUBLE_PRECISION)
+	message(STATUS "Box2D double precision ON")
+	# PUBLIC: consumers must see the same precision mode in the headers or they cannot match the ABI
+	target_compile_definitions(box2d PUBLIC BOX2D_DOUBLE_PRECISION)
 endif()
 
 if (MSVC)

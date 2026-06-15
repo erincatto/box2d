@@ -1,4 +1,4 @@
-# Recording and Replay
+# Recording and Replay {#recording}
 
 Box2D can record a simulation into a memory buffer and replay it later, reproducing the original
 run exactly. A recording is a snapshot of the world at the moment recording starts followed by a

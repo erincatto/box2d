@@ -89,7 +89,7 @@ static int ShapeMassTest( void )
 static int ShapeAABBTest( void )
 {
 	{
-		b2AABB b = b2ComputeCircleAABB( &circle, b2Transform_identity );
+		b2AABB b = b2ComputeCircleAABB( &circle, b2WorldTransform_identity );
 		ENSURE_SMALL( b.lowerBound.x, FLT_EPSILON );
 		ENSURE_SMALL( b.lowerBound.y + 1.0f, FLT_EPSILON );
 		ENSURE_SMALL( b.upperBound.x - 2.0f, FLT_EPSILON );
@@ -97,7 +97,7 @@ static int ShapeAABBTest( void )
 	}
 
 	{
-		b2AABB b = b2ComputePolygonAABB( &box, b2Transform_identity );
+		b2AABB b = b2ComputePolygonAABB( &box, b2WorldTransform_identity );
 		ENSURE_SMALL( b.lowerBound.x + 1.0f, FLT_EPSILON );
 		ENSURE_SMALL( b.lowerBound.y + 1.0f, FLT_EPSILON );
 		ENSURE_SMALL( b.upperBound.x - 1.0f, FLT_EPSILON );
@@ -105,7 +105,7 @@ static int ShapeAABBTest( void )
 	}
 
 	{
-		b2AABB b = b2ComputeSegmentAABB( &segment, b2Transform_identity );
+		b2AABB b = b2ComputeSegmentAABB( &segment, b2WorldTransform_identity );
 		ENSURE_SMALL( b.lowerBound.x, FLT_EPSILON );
 		ENSURE_SMALL( b.lowerBound.y + 1.0f, FLT_EPSILON );
 		ENSURE_SMALL( b.upperBound.x, FLT_EPSILON );

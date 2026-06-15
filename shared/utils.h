@@ -72,6 +72,15 @@ B2_INLINE b2Vec2 RandomVec2( float lo, float hi )
 	return v;
 }
 
+// Random position with coordinates in range [lo, hi]
+B2_INLINE b2Pos RandomPos( float lo, float hi )
+{
+	b2Pos v;
+	v.x = RandomFloatRange( lo, hi );
+	v.y = RandomFloatRange( lo, hi );
+	return v;
+}
+
 // Random rotation with angle in range [-pi, pi]
 B2_INLINE b2Rot RandomRot( void )
 {

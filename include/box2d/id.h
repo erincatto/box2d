@@ -81,15 +81,17 @@ typedef struct b2ContactId
 	uint32_t generation;
 } b2ContactId;
 
+// clang-format off
 #ifdef __cplusplus
-	/// A null id. Works for any id type.
-	#define B2_NULL_ID {}
-	#define B2_ID_INLINE inline
+/// A null id. Works for any id type.
+#define B2_NULL_ID {}
+#define B2_ID_INLINE inline
 #else
-	/// A null id. Works for any id type.
-	#define B2_NULL_ID { 0 }
-	#define B2_ID_INLINE static inline
+/// A null id. Works for any id type.
+#define B2_NULL_ID { 0 }
+#define B2_ID_INLINE static inline
 #endif
+// clang-format on
 
 /// Use these to make your identifiers null.
 /// You may also use zero initialization to get null.
@@ -101,13 +103,14 @@ static const b2JointId b2_nullJointId = B2_NULL_ID;
 static const b2ContactId b2_nullContactId = B2_NULL_ID;
 
 /// Macro to determine if any id is null.
-#define B2_IS_NULL( id ) ( (id).index1 == 0 )
+#define B2_IS_NULL( id ) ( ( id ).index1 == 0 )
 
 /// Macro to determine if any id is non-null.
-#define B2_IS_NON_NULL( id ) ( (id).index1 != 0 )
+#define B2_IS_NON_NULL( id ) ( ( id ).index1 != 0 )
 
 /// Compare two ids for equality. Doesn't work for b2WorldId. Don't mix types.
-#define B2_ID_EQUALS( id1, id2 ) ( (id1).index1 == (id2).index1 && (id1).world0 == (id2).world0 && (id1).generation == (id2).generation )
+#define B2_ID_EQUALS( id1, id2 )                                                                                                 \
+	( ( id1 ).index1 == ( id2 ).index1 && ( id1 ).world0 == ( id2 ).world0 && ( id1 ).generation == ( id2 ).generation )
 
 /// Store a world id into a uint32_t.
 B2_ID_INLINE uint32_t b2StoreWorldId( b2WorldId id )
