@@ -65,13 +65,13 @@ B2_API b2JointEvents b2World_GetJointEvents( b2WorldId worldId );
 
 /// Overlap test for all shapes that *potentially* overlap the provided AABB.
 /// The AABB is relative to the origin, which keeps the test precise far from the world origin
-/// in large world mode. Near the origin pass b2Position_zero and a world AABB.
-B2_API b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2Position origin, b2AABB aabb, b2QueryFilter filter,
+/// in large world mode. Near the origin pass b2Pos_zero and a world AABB.
+B2_API b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2Pos origin, b2AABB aabb, b2QueryFilter filter,
 										b2OverlapResultFcn* fcn, void* context );
 
 /// Overlap test for all shapes that overlap the provided shape proxy.
-/// The proxy points are relative to the origin. Near the origin pass b2Position_zero and world points.
-B2_API b2TreeStats b2World_OverlapShape( b2WorldId worldId, b2Position origin, const b2ShapeProxy* proxy, b2QueryFilter filter,
+/// The proxy points are relative to the origin. Near the origin pass b2Pos_zero and world points.
+B2_API b2TreeStats b2World_OverlapShape( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy, b2QueryFilter filter,
 										 b2OverlapResultFcn* fcn, void* context );
 
 /// Cast a ray into the world to collect shapes in the path of the ray.
@@ -84,27 +84,27 @@ B2_API b2TreeStats b2World_OverlapShape( b2WorldId worldId, b2Position origin, c
 /// @param fcn A user implemented callback function
 /// @param context A user context that is passed along to the callback function
 ///	@return traversal performance counters
-B2_API b2TreeStats b2World_CastRay( b2WorldId worldId, b2Position origin, b2Vec2 translation, b2QueryFilter filter,
+B2_API b2TreeStats b2World_CastRay( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter,
 									b2CastResultFcn* fcn, void* context );
 
 /// Cast a ray into the world to collect the closest hit. This is a convenience function. Ignores initial overlap.
 /// This is less general than b2World_CastRay() and does not allow for custom filtering.
-B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Position origin, b2Vec2 translation, b2QueryFilter filter );
+B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter );
 
 /// Cast a shape through the world. Similar to a cast ray except that a shape is cast instead of a point.
 /// The proxy points are relative to the origin. Callback points are world positions.
 ///	@see b2World_CastRay
-B2_API b2TreeStats b2World_CastShape( b2WorldId worldId, b2Position origin, const b2ShapeProxy* proxy, b2Vec2 translation,
+B2_API b2TreeStats b2World_CastShape( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy, b2Vec2 translation,
 									  b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
 
 /// Cast a capsule mover through the world. This is a special shape cast that handles sliding along other shapes while reducing
-/// clipping. The mover capsule is relative to the origin. Near the origin pass b2Position_zero and a world capsule.
-B2_API float b2World_CastMover( b2WorldId worldId, b2Position origin, const b2Capsule* mover, b2Vec2 translation,
+/// clipping. The mover capsule is relative to the origin. Near the origin pass b2Pos_zero and a world capsule.
+B2_API float b2World_CastMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2Vec2 translation,
 								b2QueryFilter filter );
 
 /// Collide a capsule mover with the world, gathering collision planes that can be fed to b2SolvePlanes. Useful for
 /// kinematic character movement. The mover capsule and the resulting planes are relative to the origin.
-B2_API void b2World_CollideMover( b2WorldId worldId, b2Position origin, const b2Capsule* mover, b2QueryFilter filter,
+B2_API void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2QueryFilter filter,
 								  b2PlaneResultFcn* fcn, void* context );
 
 /// Enable/disable sleep. If your application does not need sleeping, you can gain some performance
@@ -374,7 +374,7 @@ B2_API void b2Body_SetUserData( b2BodyId bodyId, void* userData );
 B2_API void* b2Body_GetUserData( b2BodyId bodyId );
 
 /// Get the world position of a body. This is the location of the body origin.
-B2_API b2Position b2Body_GetPosition( b2BodyId bodyId );
+B2_API b2Pos b2Body_GetPosition( b2BodyId bodyId );
 
 /// Get the world rotation of a body as a cosine/sine pair (complex number)
 B2_API b2Rot b2Body_GetRotation( b2BodyId bodyId );
@@ -385,13 +385,13 @@ B2_API b2WorldTransform b2Body_GetTransform( b2BodyId bodyId );
 /// Set the world transform of a body. This acts as a teleport and is fairly expensive.
 /// @note Generally you should create a body with then intended transform.
 /// @see b2BodyDef::position and b2BodyDef::rotation
-B2_API void b2Body_SetTransform( b2BodyId bodyId, b2Position position, b2Rot rotation );
+B2_API void b2Body_SetTransform( b2BodyId bodyId, b2Pos position, b2Rot rotation );
 
 /// Get a local point on a body given a world point
-B2_API b2Vec2 b2Body_GetLocalPoint( b2BodyId bodyId, b2Position worldPoint );
+B2_API b2Vec2 b2Body_GetLocalPoint( b2BodyId bodyId, b2Pos worldPoint );
 
 /// Get a world point on a body given a local point
-B2_API b2Position b2Body_GetWorldPoint( b2BodyId bodyId, b2Vec2 localPoint );
+B2_API b2Pos b2Body_GetWorldPoint( b2BodyId bodyId, b2Vec2 localPoint );
 
 /// Get a local vector on a body given a world vector
 B2_API b2Vec2 b2Body_GetLocalVector( b2BodyId bodyId, b2Vec2 worldVector );
@@ -425,7 +425,7 @@ B2_API void b2Body_SetTargetTransform( b2BodyId bodyId, b2WorldTransform target,
 B2_API b2Vec2 b2Body_GetLocalPointVelocity( b2BodyId bodyId, b2Vec2 localPoint );
 
 /// Get the linear velocity of a world point attached to a body. Usually in meters per second.
-B2_API b2Vec2 b2Body_GetWorldPointVelocity( b2BodyId bodyId, b2Position worldPoint );
+B2_API b2Vec2 b2Body_GetWorldPointVelocity( b2BodyId bodyId, b2Pos worldPoint );
 
 /// Apply a force at a world point. If the force is not applied at the center of mass,
 /// it will generate a torque and affect the angular velocity. This optionally wakes up the body.
@@ -434,7 +434,7 @@ B2_API b2Vec2 b2Body_GetWorldPointVelocity( b2BodyId bodyId, b2Position worldPoi
 /// @param force The world force vector, usually in newtons (N)
 /// @param point The world position of the point of application
 /// @param wake Option to wake up the body
-B2_API void b2Body_ApplyForce( b2BodyId bodyId, b2Vec2 force, b2Position point, bool wake );
+B2_API void b2Body_ApplyForce( b2BodyId bodyId, b2Vec2 force, b2Pos point, bool wake );
 
 /// Apply a force to the center of mass. This optionally wakes up the body.
 /// The force is ignored if the body is not awake.
@@ -466,7 +466,7 @@ B2_API void b2Body_ClearForces( b2BodyId bodyId );
 /// @param wake also wake up the body
 /// @warning This should be used for one-shot impulses. If you need a steady force,
 /// use a force instead, which will work better with the sub-stepping solver.
-B2_API void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Position point, bool wake );
+B2_API void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Pos point, bool wake );
 
 /// Apply an impulse to the center of mass. This immediately modifies the velocity.
 /// The impulse is ignored if the body is not awake. This optionally wakes the body.
@@ -496,7 +496,7 @@ B2_API float b2Body_GetRotationalInertia( b2BodyId bodyId );
 B2_API b2Vec2 b2Body_GetLocalCenter( b2BodyId bodyId );
 
 /// Get the center of mass position of the body in world space.
-B2_API b2Position b2Body_GetWorldCenter( b2BodyId bodyId );
+B2_API b2Pos b2Body_GetWorldCenter( b2BodyId bodyId );
 
 /// Override the body's mass properties. Normally this is computed automatically using the
 /// shape geometry and density. This information is lost if a shape is added or removed or if the
@@ -764,11 +764,11 @@ B2_API void b2Shape_EnableHitEvents( b2ShapeId shapeId, bool flag );
 B2_API bool b2Shape_AreHitEventsEnabled( b2ShapeId shapeId );
 
 /// Test a world point for overlap with a shape
-B2_API bool b2Shape_TestPoint( b2ShapeId shapeId, b2Position point );
+B2_API bool b2Shape_TestPoint( b2ShapeId shapeId, b2Pos point );
 
 /// Ray cast a single shape. The ray starts at the origin and extends by the translation. The output
 /// point is a world position.
-B2_API b2WorldCastOutput b2Shape_RayCast( b2ShapeId shapeId, b2Position origin, b2Vec2 translation );
+B2_API b2WorldCastOutput b2Shape_RayCast( b2ShapeId shapeId, b2Pos origin, b2Vec2 translation );
 
 /// Get a copy of the shape's circle. Asserts the type is correct.
 B2_API b2Circle b2Shape_GetCircle( b2ShapeId shapeId );
@@ -846,7 +846,7 @@ B2_API b2MassData b2Shape_ComputeMassData( b2ShapeId shapeId );
 
 /// Get the closest point on a shape to a target point. Target and result are world positions.
 /// todo need sample
-B2_API b2Position b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Position target );
+B2_API b2Pos b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Pos target );
 
 /// Apply a wind force to the body for this shape using the density of air. This considers
 /// the projected area of the shape in the wind direction. This also considers
@@ -1560,7 +1560,7 @@ typedef struct b2RecQueryInfo
 	b2RecQueryType type;
 	b2QueryFilter filter; // zeroed for the shape local query types
 	b2AABB aabb;		  // overlap AABB, relative to origin
-	b2Position origin;	  // query origin
+	b2Pos origin;	  // query origin
 	b2Vec2 translation;	  // ray and cast translation
 	b2ShapeId shape;	  // target shape for the shape local query types
 	int hitCount;		  // number of recorded results
@@ -1570,7 +1570,7 @@ typedef struct b2RecQueryInfo
 typedef struct b2RecQueryHit
 {
 	b2ShapeId shape;
-	b2Position point;
+	b2Pos point;
 	b2Vec2 normal;
 	float fraction;
 } b2RecQueryHit;

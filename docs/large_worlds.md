@@ -37,9 +37,9 @@ diagnostics.
 
 Double precision adds two types and leaves the existing math types alone:
 
-- `b2Position` — a world position. Two doubles in large world mode, an alias for `b2Vec2`
+- `b2Pos` — a world position. Two doubles in large world mode, an alias for `b2Vec2`
   otherwise.
-- `b2WorldTransform` — a world transform: a `b2Position` translation and a float `b2Rot` rotation.
+- `b2WorldTransform` — a world transform: a `b2Pos` translation and a float `b2Rot` rotation.
   An alias for `b2Transform` otherwise.
 
 `b2Vec2`, `b2Rot`, `b2Transform`, and `b2AABB` stay float in both modes. `b2Transform` remains the
@@ -51,22 +51,22 @@ The public API uses these types wherever it accepts or returns a world position:
 origins, contact and ray-cast result points, and the body move event. With double precision off
 these are all the float types they have always been, so existing code compiles unchanged.
 
-With double precision **on**, `b2Position` and `b2Vec2` are distinct structs by design. Code that
+With double precision **on**, `b2Pos` and `b2Vec2` are distinct structs by design. Code that
 passed a `b2Vec2` where a world position is now required no longer compiles, which is the intended
 cost: enabling large world mode is a deliberate source migration, and the compiler points at every
-site that needs a `b2MakePosition` / `b2ToVec2` conversion. Helpers cover the boundary:
+site that needs a `b2ToPos` / `b2ToVec2` conversion. Helpers cover the boundary:
 
 ```c
-b2Position p = b2MakePosition( v );     // float vector -> world position
+b2Pos p = b2ToPos( v );     // float vector -> world position
 b2Vec2     v = b2ToVec2( p );           // world position -> float vector (lossy far from origin)
-b2Vec2     d = b2PositionDelta( a, b ); // a - b, demoted to float (the precision boundary)
+b2Vec2     d = b2SubPos( a, b ); // a - b, demoted to float (the precision boundary)
 float      x = b2RoundDownFloat( p.x ); // conservative narrowing, pair with b2RoundUpFloat to
                                         // build a float box that always contains double bounds
 ```
 
 ## Operating range
 
-Full simulation correctness holds everywhere `b2Position` can represent. The practical limit comes
+Full simulation correctness holds everywhere `b2Pos` can represent. The practical limit comes
 from the broad phase, which stays float and stores conservative (outward-rounded) float bounds. Far
 from the origin the float bound quantization grows: about one meter at 1e7, sixteen meters at 1e8.
 Overlapping shapes always still produce a pair, so correctness is preserved, but beyond roughly 1e7
@@ -75,13 +75,13 @@ costs performance. Stay within about ±1e7 to ±1e8 meters.
 
 ## Query origins
 
-Every spatial query takes a `b2Position` origin, and the query geometry is relative to that
+Every spatial query takes a `b2Pos` origin, and the query geometry is relative to that
 origin: the overlap AABB and proxy points, the cast proxy, the ray translation of
 `b2World_CastRay` and `b2Shape_RayCast` (whose origin is the ray start), the mover capsule, and
 the planes `b2World_CollideMover` returns. Near the origin pass
-`b2Position_zero` and the query reads as a plain world query. Far from the origin pass a nearby
+`b2Pos_zero` and the query reads as a plain world query. Far from the origin pass a nearby
 base, typically a body or camera position: the query then runs in float relative to that base
-with full precision, and cast results come back as world `b2Position` points.
+with full precision, and cast results come back as world `b2Pos` points.
 
 ```c
 // A precise pick box around a distant point
@@ -99,7 +99,7 @@ conservative: an overlapping shape is always found. Ray and shape casts traverse
 the origin truncated to float, which displaces the traversal by up to one coordinate ULP, about
 a meter at 1e7. A cast that merely grazes a shape by less than that can miss it. Shapes the tree
 does report are re-centered on the origin in double, so reported hits are exact even where the
-float bounds are not. `b2World_CastRay` and `b2World_CastRayClosest` take a `b2Position` origin
+float bounds are not. `b2World_CastRay` and `b2World_CastRayClosest` take a `b2Pos` origin
 directly and resolve hit points the same way.
 
 ## Recordings and snapshots

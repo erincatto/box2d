@@ -225,7 +225,7 @@ public:
 		return true;
 	}
 
-	void MouseDown( b2Position position, int button, int mods ) override
+	void MouseDown( b2Pos position, int button, int mods ) override
 	{
 		b2Vec2 p = b2ToVec2( position );
 
@@ -246,7 +246,7 @@ public:
 		}
 	}
 
-	void MouseUp( b2Position, int button ) override
+	void MouseUp( b2Pos, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -255,7 +255,7 @@ public:
 		}
 	}
 
-	void MouseMove( b2Position position ) override
+	void MouseMove( b2Pos position ) override
 	{
 		b2Vec2 p = b2ToVec2( position );
 
@@ -369,13 +369,13 @@ public:
 			for ( int i = 0; i < m_proxyA.count; ++i )
 			{
 				b2Vec2 p = m_proxyA.points[i];
-				DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, " %d", i );
+				DrawWorldString( m_draw, m_camera, b2ToPos( p ), b2_colorWhite, " %d", i );
 			}
 
 			for ( int i = 0; i < m_proxyB.count; ++i )
 			{
 				b2Vec2 p = b2TransformPoint( m_transform, m_proxyB.points[i] );
-				DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, " %d", i );
+				DrawWorldString( m_draw, m_camera, b2ToPos( p ), b2_colorWhite, " %d", i );
 			}
 		}
 
@@ -643,7 +643,7 @@ public:
 		return true;
 	}
 
-	void MouseDown( b2Position position, int button, int mods ) override
+	void MouseDown( b2Pos position, int button, int mods ) override
 	{
 		b2Vec2 p = b2ToVec2( position );
 
@@ -664,7 +664,7 @@ public:
 		}
 	}
 
-	void MouseUp( b2Position, int button ) override
+	void MouseUp( b2Pos, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -673,7 +673,7 @@ public:
 		}
 	}
 
-	void MouseMove( b2Position position ) override
+	void MouseMove( b2Pos position ) override
 	{
 		m_endPoint = b2ToVec2( position );
 	}
@@ -943,7 +943,7 @@ public:
 		return true;
 	}
 
-	void MouseDown( b2Position position, int button, int mods ) override
+	void MouseDown( b2Pos position, int button, int mods ) override
 	{
 		b2Vec2 p = b2ToVec2( position );
 
@@ -969,7 +969,7 @@ public:
 		}
 	}
 
-	void MouseUp( b2Position, int button ) override
+	void MouseUp( b2Pos, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -979,7 +979,7 @@ public:
 		}
 	}
 
-	void MouseMove( b2Position position ) override
+	void MouseMove( b2Pos position ) override
 	{
 		b2Vec2 p = b2ToVec2( position );
 
@@ -1030,7 +1030,7 @@ public:
 			if ( m_showFraction )
 			{
 				b2Vec2 ps = { p.x + 0.05f, p.y - 0.02f };
-				DrawWorldString( m_draw, m_camera, b2MakePosition( ps ), b2_colorWhite, "%.2f", output->fraction );
+				DrawWorldString( m_draw, m_camera, b2ToPos( ps ), b2_colorWhite, "%.2f", output->fraction );
 			}
 		}
 		else
@@ -1205,14 +1205,14 @@ struct ShapeUserData
 // Context for ray cast callbacks. Do what you want with this.
 struct CastContext
 {
-	b2Position points[3];
+	b2Pos points[3];
 	b2Vec2 normals[3];
 	float fractions[3];
 	int count;
 };
 
 // This callback finds the closest hit. This is the most common callback used in games.
-static float RayCastClosestCallback( b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context )
+static float RayCastClosestCallback( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context )
 {
 	CastContext* rayContext = (CastContext*)context;
 
@@ -1240,7 +1240,7 @@ static float RayCastClosestCallback( b2ShapeId shapeId, b2Position point, b2Vec2
 // This callback finds any hit. For this type of query we are usually just checking for obstruction,
 // so the hit data is not relevant.
 // NOTE: shape hits are not ordered, so this may not return the closest hit
-static float RayCastAnyCallback( b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context )
+static float RayCastAnyCallback( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context )
 {
 	CastContext* rayContext = (CastContext*)context;
 
@@ -1270,7 +1270,7 @@ static float RayCastAnyCallback( b2ShapeId shapeId, b2Position point, b2Vec2 nor
 // NOTE: shape hits are not ordered, so this may return hits in any order. This means that
 // if you limit the number of results, you may discard the closest hit. You can see this
 // behavior in the sample.
-static float RayCastMultipleCallback( b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context )
+static float RayCastMultipleCallback( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context )
 {
 	CastContext* rayContext = (CastContext*)context;
 
@@ -1304,7 +1304,7 @@ static float RayCastMultipleCallback( b2ShapeId shapeId, b2Position point, b2Vec
 }
 
 // This ray cast collects multiple hits along the ray and sorts them.
-static float RayCastSortedCallback( b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context )
+static float RayCastSortedCallback( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context )
 {
 	CastContext* rayContext = (CastContext*)context;
 
@@ -1551,7 +1551,7 @@ public:
 		}
 	}
 
-	void MouseDown( b2Position position, int button, int mods ) override
+	void MouseDown( b2Pos position, int button, int mods ) override
 	{
 		b2Vec2 p = b2ToVec2( position );
 
@@ -1572,7 +1572,7 @@ public:
 		}
 	}
 
-	void MouseUp( b2Position, int button ) override
+	void MouseUp( b2Pos, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -1581,7 +1581,7 @@ public:
 		}
 	}
 
-	void MouseMove( b2Position p ) override
+	void MouseMove( b2Pos p ) override
 	{
 		if ( m_dragging )
 		{
@@ -1677,7 +1677,7 @@ public:
 		b2HexColor color2 = b2_colorLightGray;
 		b2HexColor color3 = b2_colorMagenta;
 
-		b2Vec2 rayTranslation = b2PositionDelta( m_rayEnd, m_rayStart );
+		b2Vec2 rayTranslation = b2SubPos( m_rayEnd, m_rayStart );
 
 		if ( m_simple )
 		{
@@ -1688,10 +1688,10 @@ public:
 
 			if ( result.hit == true && result.fraction > 0.0f )
 			{
-				b2Position c = m_rayStart + result.fraction * rayTranslation;
+				b2Pos c = m_rayStart + result.fraction * rayTranslation;
 				DrawWorldPoint( m_draw, result.point, 5.0f, color1 );
 				DrawWorldLine( m_draw, m_rayStart, c, color2 );
-				b2Position head = result.point + 0.5f * result.normal;
+				b2Pos head = result.point + 0.5f * result.normal;
 				DrawWorldLine( m_draw, result.point, head, color3 );
 			}
 			else
@@ -1774,12 +1774,12 @@ public:
 				b2HexColor colors[3] = { b2_colorRed, b2_colorGreen, b2_colorBlue };
 				for ( int i = 0; i < context.count; ++i )
 				{
-					b2Position c = m_rayStart + context.fractions[i] * rayTranslation;
-					b2Position p = context.points[i];
+					b2Pos c = m_rayStart + context.fractions[i] * rayTranslation;
+					b2Pos p = context.points[i];
 					b2Vec2 n = context.normals[i];
 					DrawWorldPoint( m_draw, p, 5.0f, colors[i] );
 					DrawWorldLine( m_draw, m_rayStart, c, color2 );
-					b2Position head = p + 1.0f * n;
+					b2Pos head = p + 1.0f * n;
 					DrawWorldLine( m_draw, p, head, color3 );
 
 					b2Vec2 t = b2MulSV( context.fractions[i], rayTranslation );
@@ -1829,7 +1829,7 @@ public:
 
 		if ( B2_IS_NON_NULL( m_bodyIds[m_ignoreIndex] ) )
 		{
-			b2Position p = b2Body_GetPosition( m_bodyIds[m_ignoreIndex] );
+			b2Pos p = b2Body_GetPosition( m_bodyIds[m_ignoreIndex] );
 			p.x -= 0.2f;
 			DrawWorldString( m_draw, m_camera, p, b2_colorWhite, "ign" );
 		}
@@ -1862,8 +1862,8 @@ public:
 	float m_angle;
 	bool m_rotating;
 
-	b2Position m_rayStart;
-	b2Position m_rayEnd;
+	b2Pos m_rayStart;
+	b2Pos m_rayEnd;
 	bool m_dragging;
 };
 
@@ -2033,7 +2033,7 @@ public:
 		}
 	}
 
-	void MouseDown( b2Position position, int button, int mods ) override
+	void MouseDown( b2Pos position, int button, int mods ) override
 	{
 		b2Vec2 p = b2ToVec2( position );
 
@@ -2053,7 +2053,7 @@ public:
 		}
 	}
 
-	void MouseUp( b2Position, int button ) override
+	void MouseUp( b2Pos, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -2062,7 +2062,7 @@ public:
 		}
 	}
 
-	void MouseMove( b2Position position ) override
+	void MouseMove( b2Pos position ) override
 	{
 		b2Vec2 p = b2ToVec2( position );
 
@@ -2173,11 +2173,11 @@ public:
 			DrawPolygon( m_draw, box.vertices, box.count, b2_colorWhite );
 		}
 
-		b2World_OverlapShape( m_worldId, b2Position_zero, &proxy, b2DefaultQueryFilter(), OverlapResultFcn, this );
+		b2World_OverlapShape( m_worldId, b2Pos_zero, &proxy, b2DefaultQueryFilter(), OverlapResultFcn, this );
 
 		if ( B2_IS_NON_NULL( m_bodyIds[m_ignoreIndex] ) )
 		{
-			b2Position p = b2Body_GetPosition( m_bodyIds[m_ignoreIndex] );
+			b2Pos p = b2Body_GetPosition( m_bodyIds[m_ignoreIndex] );
 			p.x -= 0.2f;
 			DrawWorldString( m_draw, m_camera, p, b2_colorWhite, "skip" );
 		}
@@ -2313,7 +2313,7 @@ public:
 		return true;
 	}
 
-	void MouseDown( b2Position position, int button, int mods ) override
+	void MouseDown( b2Pos position, int button, int mods ) override
 	{
 		b2Vec2 p = b2ToVec2( position );
 
@@ -2334,7 +2334,7 @@ public:
 		}
 	}
 
-	void MouseUp( b2Position, int button ) override
+	void MouseUp( b2Pos, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -2343,7 +2343,7 @@ public:
 		}
 	}
 
-	void MouseMove( b2Position p ) override
+	void MouseMove( b2Pos p ) override
 	{
 		if ( m_dragging )
 		{
@@ -2363,7 +2363,7 @@ public:
 		if ( m_showCount )
 		{
 			b2Vec2 p = 0.5f * ( origin1 + origin2 );
-			DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, "%d", manifold->pointCount );
+			DrawWorldString( m_draw, m_camera, b2ToPos( p ), b2_colorWhite, "%d", manifold->pointCount );
 		}
 
 		for ( int i = 0; i < manifold->pointCount; ++i )
@@ -2389,13 +2389,13 @@ public:
 				// uint32_t indexA = mp->id >> 8;
 				// uint32_t indexB = 0xFF & mp->id;
 				b2Vec2 p = { p1.x + 0.05f, p1.y - 0.02f };
-				DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, "0x%04x", mp->id );
+				DrawWorldString( m_draw, m_camera, b2ToPos( p ), b2_colorWhite, "0x%04x", mp->id );
 			}
 
 			if ( m_showSeparation )
 			{
 				b2Vec2 p = { p1.x + 0.05f, p1.y + 0.03f };
-				DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, "%.3f", mp->separation );
+				DrawWorldString( m_draw, m_camera, b2ToPos( p ), b2_colorWhite, "%.3f", mp->separation );
 			}
 		}
 	}
@@ -3051,7 +3051,7 @@ public:
 		return true;
 	}
 
-	void MouseDown( b2Position position, int button, int mods ) override
+	void MouseDown( b2Pos position, int button, int mods ) override
 	{
 		b2Vec2 p = b2ToVec2( position );
 
@@ -3072,7 +3072,7 @@ public:
 		}
 	}
 
-	void MouseUp( b2Position, int button ) override
+	void MouseUp( b2Pos, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -3081,7 +3081,7 @@ public:
 		}
 	}
 
-	void MouseMove( b2Position p ) override
+	void MouseMove( b2Pos p ) override
 	{
 		if ( m_dragging )
 		{
@@ -3120,13 +3120,13 @@ public:
 				// uint32_t indexA = mp->id >> 8;
 				// uint32_t indexB = 0xFF & mp->id;
 				b2Vec2 p = { p1.x + 0.05f, p1.y - 0.02f };
-				DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, "0x%04x", mp->id );
+				DrawWorldString( m_draw, m_camera, b2ToPos( p ), b2_colorWhite, "0x%04x", mp->id );
 			}
 
 			if ( m_showSeparation )
 			{
 				b2Vec2 p = { p1.x + 0.05f, p1.y + 0.03f };
-				DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, "%.3f", mp->separation );
+				DrawWorldString( m_draw, m_camera, b2ToPos( p ), b2_colorWhite, "%.3f", mp->separation );
 			}
 		}
 	}
@@ -3390,7 +3390,7 @@ public:
 		}
 	}
 
-	void MouseDown( b2Position position, int button, int mods ) override
+	void MouseDown( b2Pos position, int button, int mods ) override
 	{
 		b2Vec2 p = b2ToVec2( position );
 
@@ -3423,7 +3423,7 @@ public:
 		}
 	}
 
-	void MouseUp( b2Position, int button ) override
+	void MouseUp( b2Pos, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -3433,7 +3433,7 @@ public:
 		}
 	}
 
-	void MouseMove( b2Position position ) override
+	void MouseMove( b2Pos position ) override
 	{
 		b2Vec2 p = b2ToVec2( position );
 
@@ -3557,13 +3557,13 @@ public:
 			for ( int i = 0; i < m_proxyA.count; ++i )
 			{
 				b2Vec2 p = m_proxyA.points[i];
-				DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, " %d", i );
+				DrawWorldString( m_draw, m_camera, b2ToPos( p ), b2_colorWhite, " %d", i );
 			}
 
 			for ( int i = 0; i < m_proxyB.count; ++i )
 			{
 				b2Vec2 p = b2TransformPoint( m_transform, m_proxyB.points[i] );
-				DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, " %d", i );
+				DrawWorldString( m_draw, m_camera, b2ToPos( p ), b2_colorWhite, " %d", i );
 			}
 		}
 

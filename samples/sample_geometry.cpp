@@ -190,7 +190,7 @@ public:
 		for ( int32_t i = 0; i < m_count; ++i )
 		{
 			DrawPoint( m_draw, m_points[i], 5.0f, b2_colorBlue );
-			DrawWorldString( m_draw, m_camera, b2MakePosition( b2Add( m_points[i], { 0.1f, 0.1f } ) ), b2_colorWhite, "%d", i );
+			DrawWorldString( m_draw, m_camera, b2ToPos( b2Add( m_points[i], { 0.1f, 0.1f } ) ), b2_colorWhite, "%d", i );
 		}
 
 		for ( int32_t i = 0; i < hull.count; ++i )

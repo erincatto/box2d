@@ -111,7 +111,7 @@ public:
 			}
 			else if ( remainder == 1 )
 			{
-				b2Position position = { xbase - 2.0f, 10.0f };
+				b2Pos position = { xbase - 2.0f, 10.0f };
 				for ( int i = 0; i < 5; ++i )
 				{
 					Human human = {};
@@ -122,7 +122,7 @@ public:
 			}
 			else
 			{
-				b2Position position = { xbase - 4.0f, 12.0f };
+				b2Pos position = { xbase - 4.0f, 12.0f };
 
 				for ( int i = 0; i < 5; ++i )
 				{
@@ -227,7 +227,7 @@ public:
 	}
 
 	Car m_car;
-	b2Position m_viewPosition;
+	b2Pos m_viewPosition;
 	float m_period;
 	int m_cycleCount;
 	int m_cycleIndex;
@@ -235,7 +235,7 @@ public:
 	float m_gridSize;
 	float m_speed;
 
-	b2Position m_explosionPosition;
+	b2Pos m_explosionPosition;
 	bool m_explode;
 	bool m_followCar;
 };
@@ -256,11 +256,11 @@ public:
 	{
 		// 1e7 is exactly representable in float, so integer box offsets stay exact and a run here
 		// can be compared against one at the origin.
-		b2Position origin = b2Position{ 10.0e6f, 0.0f };
+		b2Pos origin = b2Pos{ 10.0e6f, 0.0f };
 
 		if ( m_context->restart == false )
 		{
-			m_context->camera.center = b2OffsetPosition( origin, { 0.0f, 12.0f } );
+			m_context->camera.center = b2OffsetPos( origin, { 0.0f, 12.0f } );
 			m_context->camera.zoom = 17.0f;
 		}
 
@@ -284,7 +284,7 @@ public:
 			for ( int j = i; j < baseCount; ++j )
 			{
 				float x = ( i + 1.0f ) * h + 2.0f * ( j - i ) * h - h * baseCount;
-				bodyDef.position = b2OffsetPosition( origin, { x, y } );
+				bodyDef.position = b2OffsetPos( origin, { x, y } );
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 				b2CreatePolygonShape( bodyId, &shapeDef, &box );
 			}
@@ -295,7 +295,7 @@ public:
 	{
 		Sample::Step();
 
-		b2Position c = m_context->camera.center;
+		b2Pos c = m_context->camera.center;
 		DrawScreenTextLine( "view center (%.1f, %.1f) m from world origin", c.x, c.y );
 	}
 
@@ -313,11 +313,11 @@ public:
 	explicit FarRagdolls( SampleContext* context )
 		: Sample( context )
 	{
-		b2Position origin = b2Position{ 10.0e6f, 0.0f };
+		b2Pos origin = b2Pos{ 10.0e6f, 0.0f };
 
 		if ( m_context->restart == false )
 		{
-			m_context->camera.center = b2OffsetPosition( origin, { 0.0f, 6.0f } );
+			m_context->camera.center = b2OffsetPos( origin, { 0.0f, 6.0f } );
 			m_context->camera.zoom = 10.0f;
 		}
 
@@ -343,7 +343,7 @@ public:
 			{
 				float x = 2.4f * scale * ( j - 0.5f * ( e_columnCount - 1 ) ) + RandomFloatRange( -0.3f, 0.3f );
 				float y = 2.0f + 2.2f * scale * i;
-				b2Position p = b2OffsetPosition( origin, { x, y } );
+				b2Pos p = b2OffsetPos( origin, { x, y } );
 				CreateHuman( m_humans + index, m_worldId, p, scale, 0.05f, 1.0f, 0.5f, index + 1, nullptr, false );
 				index += 1;
 			}
@@ -356,7 +356,7 @@ public:
 	{
 		Sample::Step();
 
-		b2Position c = m_context->camera.center;
+		b2Pos c = m_context->camera.center;
 		DrawScreenTextLine( "%d ragdolls piled %.0f m from the world origin", m_humanCount, c.x );
 	}
 

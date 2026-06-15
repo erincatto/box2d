@@ -10,7 +10,7 @@ class Doohickey
 public:
 	Doohickey();
 
-	void Spawn( b2WorldId worldId, b2Position position, float scale );
+	void Spawn( b2WorldId worldId, b2Pos position, float scale );
 	void Despawn();
 
 	b2BodyId m_wheelId1;

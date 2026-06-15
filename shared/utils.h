@@ -73,9 +73,9 @@ B2_INLINE b2Vec2 RandomVec2( float lo, float hi )
 }
 
 // Random position with coordinates in range [lo, hi]
-B2_INLINE b2Position RandomPos( float lo, float hi )
+B2_INLINE b2Pos RandomPos( float lo, float hi )
 {
-	b2Position v;
+	b2Pos v;
 	v.x = RandomFloatRange( lo, hi );
 	v.y = RandomFloatRange( lo, hi );
 	return v;

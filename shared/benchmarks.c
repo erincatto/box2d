@@ -55,7 +55,7 @@ void CreateJointGrid( b2WorldId worldId )
 				bodyDef.type = b2_dynamicBody;
 			}
 
-			bodyDef.position = (b2Position){ fk, -fi };
+			bodyDef.position = (b2Pos){ fk, -fi };
 
 			b2BodyId body = b2CreateBody( worldId, &bodyDef );
 
@@ -94,7 +94,7 @@ void CreateLargePyramid( b2WorldId worldId )
 
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.position = (b2Position){ 0.0f, -1.0f };
+		bodyDef.position = (b2Pos){ 0.0f, -1.0f };
 		b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
 
 		b2Polygon box = b2MakeBox( 100.0f, 1.0f );
@@ -122,7 +122,7 @@ void CreateLargePyramid( b2WorldId worldId )
 		{
 			float x = ( i + 1.0f ) * shift + 2.0f * ( j - i ) * shift - a * baseCount;
 
-			bodyDef.position = (b2Position){ x, y };
+			bodyDef.position = (b2Pos){ x, y };
 
 			b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
@@ -146,7 +146,7 @@ static void CreateSmallPyramid( b2WorldId worldId, int baseCount, float extent, 
 		for ( int j = i; j < baseCount; ++j )
 		{
 			float x = ( i + 1.0f ) * extent + 2.0f * ( j - i ) * extent + centerX - 0.5f;
-			bodyDef.position = (b2Position){ x, y };
+			bodyDef.position = (b2Pos){ x, y };
 
 			b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
@@ -286,7 +286,7 @@ void CreateGroup( b2WorldId worldId, int rowIndex, int columnIndex )
 	float span = g_rainData.gridCount * g_rainData.gridSize;
 	float groupDistance = 1.0f * span / RAIN_COLUMN_COUNT;
 
-	b2Position position;
+	b2Pos position;
 	position.x = -0.5f * span + groupDistance * ( columnIndex + 0.5f );
 	position.y = 40.0f + 45.0f * rowIndex;
 
@@ -387,7 +387,7 @@ void CreateSpinner( b2WorldId worldId )
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
-		bodyDef.position = (b2Position){ 0.0, 12.0f };
+		bodyDef.position = (b2Pos){ 0.0, 12.0f };
 		bodyDef.enableSleep = false;
 
 		b2BodyId spinnerId = b2CreateBody( worldId, &bodyDef );
@@ -427,7 +427,7 @@ void CreateSpinner( b2WorldId worldId )
 	float x = -23.0f, y = 2.0f;
 	for ( int i = 0; i < bodyCount; ++i )
 	{
-		bodyDef.position = (b2Position){ x, y };
+		bodyDef.position = (b2Pos){ x, y };
 		b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
 		int remainder = i % 3;
@@ -471,7 +471,7 @@ void CreateSmash( b2WorldId worldId )
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
-		bodyDef.position = (b2Position){ -20.0f, 0.0f };
+		bodyDef.position = (b2Pos){ -20.0f, 0.0f };
 		bodyDef.linearVelocity = (b2Vec2){ 40.0f, 0.0f };
 		b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
@@ -515,7 +515,7 @@ void CreateTumbler( b2WorldId worldId )
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
-		bodyDef.position = (b2Position){ 0.0f, 10.0f };
+		bodyDef.position = (b2Pos){ 0.0f, 10.0f };
 		b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -559,7 +559,7 @@ void CreateTumbler( b2WorldId worldId )
 
 		for ( int j = 0; j < gridCount; ++j )
 		{
-			bodyDef.position = (b2Position){ x, y };
+			bodyDef.position = (b2Pos){ x, y };
 			b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
 			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
@@ -585,7 +585,7 @@ void CreateWasher( b2WorldId worldId )
 		float motorSpeed = 25.0f;
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.position = (b2Position){ 0.0f, 10.0f };
+		bodyDef.position = (b2Pos){ 0.0f, 10.0f };
 
 		if ( kinematic == true )
 		{
@@ -686,7 +686,7 @@ void CreateWasher( b2WorldId worldId )
 
 		for ( int j = 0; j < gridCount; ++j )
 		{
-			bodyDef.position = (b2Position){ x, y };
+			bodyDef.position = (b2Pos){ x, y };
 			b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
 			b2CreatePolygonShape( bodyId, &shapeDef, &polygon );
@@ -780,7 +780,7 @@ void CreateJunkyard( b2WorldId worldId )
 		{
 			float y = 4.0f * j * radius + yStart;
 
-			bodyDef.position = (b2Position){ x + side, y };
+			bodyDef.position = (b2Pos){ x + side, y };
 			side = -side;
 
 			b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
@@ -789,7 +789,7 @@ void CreateJunkyard( b2WorldId worldId )
 	}
 
 	bodyDef.type = b2_kinematicBody;
-	bodyDef.position = b2Position_zero;
+	bodyDef.position = b2Pos_zero;
 	g_junkyardData.pusherId = b2CreateBody( worldId, &bodyDef );
 	b2Polygon box = b2MakeOffsetBox( 2.0f, 4.0f, (b2Vec2){ 0.0f, 4.0f }, b2Rot_identity );
 	b2CreatePolygonShape( g_junkyardData.pusherId, &shapeDef, &box );
@@ -882,7 +882,7 @@ void CreateCompounds( b2WorldId worldId )
 		{
 			float y = j * ( shift + extray ) + centery + yStart;
 
-			bodyDef.position = (b2Position){ x + side, y };
+			bodyDef.position = (b2Pos){ x + side, y };
 			side = -side;
 
 			b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );

@@ -102,7 +102,7 @@ static const char* ReplayQueryTypeName( b2RecQueryType type )
 // Pick the first shape whose area contains the click point
 struct ReplayPickContext
 {
-	b2Position point;
+	b2Pos point;
 	b2ShapeId shape;
 };
 
@@ -621,11 +621,11 @@ public:
 		int count = b2Body_GetContactData( body, contacts, capacity );
 		for ( int i = 0; i < count; ++i )
 		{
-			b2Position originA = b2Body_GetPosition( b2Shape_GetBody( contacts[i].shapeIdA ) );
+			b2Pos originA = b2Body_GetPosition( b2Shape_GetBody( contacts[i].shapeIdA ) );
 			const b2Manifold* m = &contacts[i].manifold;
 			for ( int j = 0; j < m->pointCount; ++j )
 			{
-				b2Position point = b2OffsetPosition( originA, m->points[j].anchorA );
+				b2Pos point = b2OffsetPos( originA, m->points[j].anchorA );
 				DrawWorldPoint( draw, point, 6.0f, b2_colorOrange );
 				DrawWorldLine( draw, point, point + b2MulSV( 0.3f, m->normal ), b2_colorOrange );
 			}
@@ -1177,7 +1177,7 @@ public:
 
 	// Left click selects a shape to inspect. Picking only reads the world, it never creates the drag
 	// joint the base sample does, so the replay is not mutated. Dragging stays disabled.
-	void MouseDown( b2Position p, int button, int ) override
+	void MouseDown( b2Pos p, int button, int ) override
 	{
 		if ( button != GLFW_MOUSE_BUTTON_1 || B2_IS_NULL( m_worldId ) )
 		{
@@ -1194,11 +1194,11 @@ public:
 		SelectShape( pick.shape );
 	}
 
-	void MouseUp( b2Position, int ) override
+	void MouseUp( b2Pos, int ) override
 	{
 	}
 
-	void MouseMove( b2Position ) override
+	void MouseMove( b2Pos ) override
 	{
 	}
 

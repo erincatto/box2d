@@ -28,7 +28,7 @@ extern "C" void DrawScreenString( Draw* /*draw*/, float x, float y, b2HexColor c
 	ImGui::GetBackgroundDrawList()->AddText( nullptr, 0.0f, ImVec2( vp->Pos.x + x, vp->Pos.y + y - ascent ), col, buffer );
 }
 
-extern "C" void DrawWorldString( Draw* draw, Camera* camera, b2Position p, b2HexColor color, const char* string, ... )
+extern "C" void DrawWorldString( Draw* draw, Camera* camera, b2Pos p, b2HexColor color, const char* string, ... )
 {
 	char buffer[256];
 	va_list arg;

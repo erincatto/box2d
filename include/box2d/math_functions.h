@@ -51,22 +51,22 @@ typedef struct b2Transform
 
 /// A world position. Double precision in large world mode so coordinates stay accurate far
 /// from the origin.
-typedef struct b2Position
+typedef struct b2Pos
 {
 	double x, y;
-} b2Position;
+} b2Pos;
 
 /// A world transform with double precision translation and float rotation. Rotation is frame
 /// local and never needs the extra range, the same split as Jolt's DMat44.
 typedef struct b2WorldTransform
 {
-	b2Position p;
+	b2Pos p;
 	b2Rot q;
 } b2WorldTransform;
 
 #else
 
-typedef b2Vec2 b2Position;
+typedef b2Vec2 b2Pos;
 typedef b2Transform b2WorldTransform;
 
 #endif
@@ -108,7 +108,7 @@ static const b2Transform b2Transform_identity = { { 0.0f, 0.0f }, { 1.0f, 0.0f }
 static const b2Mat22 b2Mat22_zero = { { 0.0f, 0.0f }, { 0.0f, 0.0f } };
 
 // Initializers valid in both modes: 0.0f promotes to double, the identity rotation is float
-static const b2Position b2Position_zero = { 0.0f, 0.0f };
+static const b2Pos b2Pos_zero = { 0.0f, 0.0f };
 static const b2WorldTransform b2WorldTransform_identity = { { 0.0f, 0.0f }, { 1.0f, 0.0f } };
 
 /// Is this a valid number? Not NaN or infinity.
@@ -130,7 +130,7 @@ B2_API bool b2IsValidAABB( b2AABB aabb );
 B2_API bool b2IsValidPlane( b2Plane a );
 
 /// Is this a valid world position? Not NaN or infinity.
-B2_API bool b2IsValidPosition( b2Position p );
+B2_API bool b2IsValidPosition( b2Pos p );
 
 /// Is this a valid world transform? Not NaN or infinity. Rotation is normalized.
 B2_API bool b2IsValidWorldTransform( b2WorldTransform t );
@@ -595,14 +595,14 @@ B2_INLINE b2Transform b2InvMulTransforms( b2Transform A, b2Transform B )
 	return C;
 }
 
-/// Convert a vector to a world position.
-B2_INLINE b2Position b2MakePosition( b2Vec2 v )
+/// Convert a vector to a world position. no-op in single precision.
+B2_INLINE b2Pos b2ToPos( b2Vec2 v )
 {
-	return B2_LITERAL( b2Position ){ v.x, v.y };
+	return B2_LITERAL( b2Pos ){ v.x, v.y };
 }
 
-/// Lossy conversion of a world position to a float vector.
-B2_INLINE b2Vec2 b2ToVec2( b2Position p )
+/// Lossy conversion of a world position to a float vector. no-op in single precision.
+B2_INLINE b2Vec2 b2ToVec2( b2Pos p )
 {
 	return B2_LITERAL( b2Vec2 ){ (float)p.x, (float)p.y };
 }
@@ -634,33 +634,33 @@ B2_INLINE float b2RoundUpFloat( double x )
 }
 
 /// a - b, demoted to float. The primary precision boundary operation.
-B2_INLINE b2Vec2 b2PositionDelta( b2Position a, b2Position b )
+B2_INLINE b2Vec2 b2SubPos( b2Pos a, b2Pos b )
 {
 	return B2_LITERAL( b2Vec2 ){ (float)( a.x - b.x ), (float)( a.y - b.y ) };
 }
 
 /// p + d
-B2_INLINE b2Position b2OffsetPosition( b2Position p, b2Vec2 d )
+B2_INLINE b2Pos b2OffsetPos( b2Pos p, b2Vec2 d )
 {
-	return B2_LITERAL( b2Position ){ p.x + d.x, p.y + d.y };
+	return B2_LITERAL( b2Pos ){ p.x + d.x, p.y + d.y };
 }
 
 /// World position interpolation for sweeps and sampling.
-B2_INLINE b2Position b2LerpPosition( b2Position a, b2Position b, float t )
+B2_INLINE b2Pos b2LerpPosition( b2Pos a, b2Pos b, float t )
 {
-	return B2_LITERAL( b2Position ){ ( 1.0f - t ) * a.x + t * b.x, ( 1.0f - t ) * a.y + t * b.y };
+	return B2_LITERAL( b2Pos ){ ( 1.0f - t ) * a.x + t * b.x, ( 1.0f - t ) * a.y + t * b.y };
 }
 
 /// Transform a local point to a world position. Rotation in float, translation in double.
-B2_INLINE b2Position b2TransformWorldPoint( b2WorldTransform t, b2Vec2 p )
+B2_INLINE b2Pos b2TransformWorldPoint( b2WorldTransform t, b2Vec2 p )
 {
 	float rx = t.q.c * p.x - t.q.s * p.y;
 	float ry = t.q.s * p.x + t.q.c * p.y;
-	return B2_LITERAL( b2Position ){ t.p.x + rx, t.p.y + ry };
+	return B2_LITERAL( b2Pos ){ t.p.x + rx, t.p.y + ry };
 }
 
 /// Transform a world position to a local point. One double subtraction, then float.
-B2_INLINE b2Vec2 b2InvTransformWorldPoint( b2WorldTransform t, b2Position p )
+B2_INLINE b2Vec2 b2InvTransformWorldPoint( b2WorldTransform t, b2Pos p )
 {
 	float vx = (float)( p.x - t.p.x );
 	float vy = (float)( p.y - t.p.y );
@@ -683,12 +683,12 @@ B2_INLINE b2WorldTransform b2MulWorldTransforms( b2WorldTransform A, b2Transform
 	b2WorldTransform C;
 	C.q = b2MulRot( A.q, B.q );
 	b2Vec2 r = b2RotateVector( A.q, B.p );
-	C.p = B2_LITERAL( b2Position ){ A.p.x + r.x, A.p.y + r.y };
+	C.p = B2_LITERAL( b2Pos ){ A.p.x + r.x, A.p.y + r.y };
 	return C;
 }
 
 /// Shift a world transform into the frame of a base position.
-B2_INLINE b2Transform b2ToRelativeTransform( b2WorldTransform t, b2Position base )
+B2_INLINE b2Transform b2ToRelativeTransform( b2WorldTransform t, b2Pos base )
 {
 	b2Transform r;
 	r.q = t.q;
@@ -700,7 +700,7 @@ B2_INLINE b2Transform b2ToRelativeTransform( b2WorldTransform t, b2Position base
 B2_INLINE b2WorldTransform b2MakeWorldTransform( b2Transform t )
 {
 	b2WorldTransform w;
-	w.p = b2MakePosition( t.p );
+	w.p = b2ToPos( t.p );
 	w.q = t.q;
 	return w;
 }
@@ -922,19 +922,19 @@ inline bool operator!=( b2Vec2 a, b2Vec2 b )
 #if defined( BOX2D_DOUBLE_PRECISION )
 
 /// Offset a world position by a vector
-inline b2Position operator+( b2Position a, b2Vec2 b )
+inline b2Pos operator+( b2Pos a, b2Vec2 b )
 {
 	return { a.x + b.x, a.y + b.y };
 }
 
 /// Offset a world position by a vector
-inline b2Position operator-( b2Position a, b2Vec2 b )
+inline b2Pos operator-( b2Pos a, b2Vec2 b )
 {
 	return { a.x - b.x, a.y - b.y };
 }
 
 /// Delta between two world positions, demoted to float
-inline b2Vec2 operator-( b2Position a, b2Position b )
+inline b2Vec2 operator-( b2Pos a, b2Pos b )
 {
 	return { (float)( a.x - b.x ), (float)( a.y - b.y ) };
 }

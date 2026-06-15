@@ -27,7 +27,7 @@ public:
 
 	struct HitEvent
 	{
-		b2Position point;
+		b2Pos point;
 		float speed;
 		int stepIndex;
 	};
@@ -1110,7 +1110,7 @@ public:
 		b2ContactData data;
 		b2Body_GetContactData( m_ballId, &data, 1 );
 
-		b2Position p = b2Body_GetPosition( m_ballId );
+		b2Pos p = b2Body_GetPosition( m_ballId );
 		b2Vec2 v = b2Body_GetLinearVelocity( m_ballId );
 		DrawScreenTextLine( "p.x = %.9f, v.y = %.9f", p.x, v.y );
 
@@ -1180,7 +1180,7 @@ public:
 		b2ContactData data;
 		b2Body_GetContactData( m_ballId, &data, 1 );
 
-		b2Position p = b2Body_GetPosition( m_ballId );
+		b2Pos p = b2Body_GetPosition( m_ballId );
 		b2Vec2 v = b2Body_GetLinearVelocity( m_ballId );
 		DrawScreenTextLine( "p.x = %.9f, v.y = %.9f", p.x, v.y );
 
@@ -1568,7 +1568,7 @@ public:
 
 		// Flippers
 		{
-			b2Position p1 = { -2.0f, 0.0f }, p2 = { 2.0f, 0.0f };
+			b2Pos p1 = { -2.0f, 0.0f }, p2 = { 2.0f, 0.0f };
 
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;

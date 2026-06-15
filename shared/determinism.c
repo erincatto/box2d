@@ -12,7 +12,7 @@ FallingHingeData CreateFallingHinges( b2WorldId worldId )
 {
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.position = (b2Position){ 0.0f, -1.0f };
+		bodyDef.position = (b2Pos){ 0.0f, -1.0f };
 		b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
 
 		b2Polygon box = b2MakeBox( 40.0f, 1.0f );

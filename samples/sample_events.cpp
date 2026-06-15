@@ -175,7 +175,7 @@ public:
 			return;
 		}
 
-		b2Position center = { m_side, 29.5f };
+		b2Pos center = { m_side, 29.5f };
 
 		if ( m_type == e_donut )
 		{
@@ -925,7 +925,7 @@ public:
 	{
 		DrawScreenTextLine( "move using WASD" );
 
-		b2Position position = b2Body_GetPosition( m_playerId );
+		b2Pos position = b2Body_GetPosition( m_playerId );
 
 		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS )
 		{
@@ -998,9 +998,9 @@ public:
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							b2Position posA = b2Body_GetWorldCenter( bidA );
-							b2Position p1 = posA + point.anchorA;
-							b2Position p2 = p1 + point.totalNormalImpulse * normal;
+							b2Pos posA = b2Body_GetWorldCenter( bidA );
+							b2Pos p1 = posA + point.anchorA;
+							b2Pos p2 = p1 + point.totalNormalImpulse * normal;
 
 							DrawWorldLine( m_draw, p1, p2, b2_colorBlueViolet );
 							DrawWorldPoint( m_draw, p1, 10.0f, b2_colorWhite );
@@ -1033,9 +1033,9 @@ public:
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							b2Position posA = b2Body_GetWorldCenter( bidA );
-							b2Position p1 = posA + point.anchorA;
-							b2Position p2 = p1 + point.totalNormalImpulse * normal;
+							b2Pos posA = b2Body_GetWorldCenter( bidA );
+							b2Pos p1 = posA + point.anchorA;
+							b2Pos p2 = p1 + point.totalNormalImpulse * normal;
 
 							DrawWorldLine( m_draw, p1, p2, b2_colorYellowGreen );
 							DrawWorldPoint( m_draw, p1, 10.0f, b2_colorWhite );
@@ -1300,7 +1300,7 @@ public:
 		m_jumping = false;
 	}
 
-	static bool PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Position point, b2Vec2 normal, void* context )
+	static bool PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context )
 	{
 		Platform* self = static_cast<Platform*>( context );
 		return self->PreSolve( shapeIdA, shapeIdB, point , normal );
@@ -1309,7 +1309,7 @@ public:
 	// This callback must be thread-safe. It may be called multiple times simultaneously.
 	// Notice how this method is constant and doesn't change any data. It also
 	// does not try to access any values in the world that may be changing, such as contact data.
-	bool PreSolve( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Position point, b2Vec2 normal ) const
+	bool PreSolve( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal ) const
 	{
 		assert( b2Shape_IsValid( shapeIdA ) );
 		assert( b2Shape_IsValid( shapeIdB ) );
@@ -1382,7 +1382,7 @@ public:
 
 		// A kinematic body is moved by setting its velocity. This
 		// ensure friction works correctly.
-		b2Position platformPosition = b2Body_GetPosition( m_movingPlatformId );
+		b2Pos platformPosition = b2Body_GetPosition( m_movingPlatformId );
 		if ( platformPosition.x < -15.0f )
 		{
 			b2Body_SetLinearVelocity( m_movingPlatformId, { 2.0f, 0.0f } );
@@ -1584,7 +1584,7 @@ public:
 			}
 
 			// draw the transform of every body that moved (not sleeping)
-			DrawTransform( m_draw, b2ToRelativeTransform( event->transform, b2Position_zero ), 1.0f );
+			DrawTransform( m_draw, b2ToRelativeTransform( event->transform, b2Pos_zero ), 1.0f );
 
 			b2WorldTransform transform = b2Body_GetTransform( event->bodyId );
 			B2_ASSERT( transform.p.x == event->transform.p.x );
@@ -1626,7 +1626,7 @@ public:
 	bool m_sleeping[e_count] = {};
 	int m_count;
 	int m_sleepCount;
-	b2Position m_explosionPosition;
+	b2Pos m_explosionPosition;
 	float m_explosionRadius;
 	float m_explosionMagnitude;
 };
@@ -1784,7 +1784,7 @@ public:
 
 	void Step() override
 	{
-		b2Position position = b2Body_GetPosition( m_kinematicBodyId );
+		b2Pos position = b2Body_GetPosition( m_kinematicBodyId );
 		if ( position.y < 0.0f )
 		{
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { 0.0f, 1.0f } );
@@ -1801,7 +1801,7 @@ public:
 		PrintOverlaps( m_kinematicSensorId, "kinematic" );
 		PrintOverlaps( m_dynamicSensorId, "dynamic" );
 
-		b2Position origin = { 5.0f, 1.0f };
+		b2Pos origin = { 5.0f, 1.0f };
 		b2Vec2 translation = { -10.0f, 0.0f };
 		b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, b2DefaultQueryFilter() );
 		DrawWorldLine( m_draw, origin, origin + translation, b2_colorDimGray );
@@ -1858,7 +1858,7 @@ public:
 			m_jointIds[i] = b2_nullJointId;
 		}
 
-		b2Position position = { -12.5f, 10.0f };
+		b2Pos position = { -12.5f, 10.0f };
 		bodyDef.type = b2_dynamicBody;
 		bodyDef.enableSleep = false;
 
@@ -1878,8 +1878,8 @@ public:
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
 			float length = 2.0f;
-			b2Position pivot1 = { position.x, position.y + 1.0f + length };
-			b2Position pivot2 = { position.x, position.y + 1.0f };
+			b2Pos pivot1 = { position.x, position.y + 1.0f + length };
+			b2Pos pivot2 = { position.x, position.y + 1.0f };
 			b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -1928,7 +1928,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			b2Position pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -1952,7 +1952,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			b2Position pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -1976,7 +1976,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			b2Position pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2WeldJointDef jointDef = b2DefaultWeldJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -2002,7 +2002,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			b2Position pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2WheelJointDef jointDef = b2DefaultWheelJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -2138,8 +2138,8 @@ public:
 			{
 				const b2ManifoldPoint* manifoldPoint = data.manifold.points + i;
 				b2BodyId bodyIdA = b2Shape_GetBody( data.shapeIdA );
-				b2Position p1 = b2Body_GetWorldCenter( bodyIdA ) + manifoldPoint->anchorA;
-				b2Position p2 = p1 + manifoldPoint->totalNormalImpulse * data.manifold.normal;
+				b2Pos p1 = b2Body_GetWorldCenter( bodyIdA ) + manifoldPoint->anchorA;
+				b2Pos p2 = p1 + manifoldPoint->totalNormalImpulse * data.manifold.normal;
 				DrawWorldLine( m_draw, p1, p2, b2_colorCrimson );
 				DrawWorldPoint( m_draw, p1, 6.0f, b2_colorCrimson );
 				DrawWorldString( m_draw, m_camera, p1, b2_colorWhite, "%.2f", manifoldPoint->totalNormalImpulse );
@@ -2236,7 +2236,7 @@ public:
 			b2Capsule capsule = { { 0.0f, 1.0f }, { 0.0f, 9.0f }, 0.1f };
 			m_dynamicSensorId = b2CreateCapsuleShape( m_dynamicBodyId, &shapeDef, &capsule );
 
-			b2Position pivot = bodyDef.position + b2Vec2{ 0.0f, 6.0f };
+			b2Pos pivot = bodyDef.position + b2Vec2{ 0.0f, 6.0f };
 			b2Vec2 axis = { 1.0f, 0.0f };
 			b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
 			jointDef.base.bodyIdA = groundId;
@@ -2310,14 +2310,14 @@ public:
 		for ( int i = 0; i < count && m_transformCount < m_transformCapacity; ++i )
 		{
 			b2BodyId sensorBodyId = b2Shape_GetBody( sensorShapeId );
-			m_transforms[m_transformCount] = b2ToRelativeTransform( b2Body_GetTransform( sensorBodyId ), b2Position_zero );
+			m_transforms[m_transformCount] = b2ToRelativeTransform( b2Body_GetTransform( sensorBodyId ), b2Pos_zero );
 			m_transformCount += 1;
 		}
 	}
 
 	void Step() override
 	{
-		b2Position p = b2Body_GetPosition( m_kinematicBodyId );
+		b2Pos p = b2Body_GetPosition( m_kinematicBodyId );
 		if ( p.x > 1.0f )
 		{
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { -0.5f, 0.0f } );
@@ -2419,8 +2419,8 @@ public:
 		m_projectileId = {};
 		m_projectileShapeId = {};
 		m_dragging = false;
-		m_point1 = b2Position_zero;
-		m_point2 = b2Position_zero;
+		m_point1 = b2Pos_zero;
+		m_point2 = b2Pos_zero;
 
 		b2Polygon box = b2MakeRoundedBox( 0.45f, 0.45f, 0.05f );
 
@@ -2465,7 +2465,7 @@ public:
 		m_projectileShapeId = b2CreateCircleShape( m_projectileId, &shapeDef, &circle );
 	}
 
-	void MouseDown( b2Position p, int button, int mods ) override
+	void MouseDown( b2Pos p, int button, int mods ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -2477,7 +2477,7 @@ public:
 		}
 	}
 
-	void MouseUp( b2Position, int button ) override
+	void MouseUp( b2Pos, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -2489,7 +2489,7 @@ public:
 		}
 	}
 
-	void MouseMove( b2Position p ) override
+	void MouseMove( b2Pos p ) override
 	{
 		if ( m_dragging )
 		{
@@ -2547,8 +2547,8 @@ public:
 
 	b2BodyId m_projectileId;
 	b2ShapeId m_projectileShapeId;
-	b2Position m_point1;
-	b2Position m_point2;
+	b2Pos m_point1;
+	b2Pos m_point2;
 	bool m_dragging;
 };
 

@@ -208,7 +208,7 @@ static int LargeWorldManifoldTest( void )
 	b2Vec2 sep = { 0.9f, 0.0f };
 
 	b2WorldTransform xfAo = b2WorldTransform_identity;
-	b2WorldTransform xfBo = { b2OffsetPosition( b2Position_zero, sep ), b2Rot_identity };
+	b2WorldTransform xfBo = { b2OffsetPos( b2Pos_zero, sep ), b2Rot_identity };
 	b2Manifold mOrigin = b2CollidePolygons( &boxA, xfAo, &boxB, xfBo );
 
 	ENSURE( mOrigin.pointCount == 2 );
@@ -218,9 +218,9 @@ static int LargeWorldManifoldTest( void )
 #if defined( BOX2D_DOUBLE_PRECISION )
 	// Same relative configuration shifted far from the origin. In double the manifold is
 	// preserved to float precision, in float it would collapse since the offset is below the ULP.
-	b2Position base = b2OffsetPosition( b2Position_zero, ( b2Vec2 ){ 1.0e7f, 1.0e7f } );
+	b2Pos base = b2OffsetPos( b2Pos_zero, ( b2Vec2 ){ 1.0e7f, 1.0e7f } );
 	b2WorldTransform xfAl = { base, b2Rot_identity };
-	b2WorldTransform xfBl = { b2OffsetPosition( base, sep ), b2Rot_identity };
+	b2WorldTransform xfBl = { b2OffsetPos( base, sep ), b2Rot_identity };
 	b2Manifold mLarge = b2CollidePolygons( &boxA, xfAl, &boxB, xfBl );
 
 	ENSURE( mLarge.pointCount == mOrigin.pointCount );

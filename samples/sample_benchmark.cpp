@@ -537,7 +537,7 @@ public:
 		free( m_bodyIds );
 	}
 
-	void CreateTumbler( b2Position position, int index )
+	void CreateTumbler( b2Pos position, int index )
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_kinematicBody;
@@ -580,7 +580,7 @@ public:
 
 		m_tumblerCount = m_rowCount * m_columnCount;
 		m_tumblerIds = static_cast<b2BodyId*>( malloc( m_tumblerCount * sizeof( b2BodyId ) ) );
-		m_positions = static_cast<b2Position*>( malloc( m_tumblerCount * sizeof( b2Position ) ) );
+		m_positions = static_cast<b2Pos*>( malloc( m_tumblerCount * sizeof( b2Pos ) ) );
 
 		int index = 0;
 		float x = -4.0f * m_rowCount;
@@ -672,7 +672,7 @@ public:
 	int m_columnCount;
 
 	b2BodyId* m_tumblerIds;
-	b2Position* m_positions;
+	b2Pos* m_positions;
 	int m_tumblerCount;
 
 	b2BodyId* m_bodyIds;
@@ -1230,8 +1230,8 @@ public:
 		// Pre-compute rays to avoid randomizer overhead
 		for ( int i = 0; i < sampleCount; ++i )
 		{
-			b2Position rayStart = RandomPos( 0.0f, extent );
-			b2Position rayEnd = RandomPos( 0.0f, extent );
+			b2Pos rayStart = RandomPos( 0.0f, extent );
+			b2Pos rayEnd = RandomPos( 0.0f, extent );
 
 			m_origins[i] = rayStart;
 			m_translations[i] = rayEnd - rayStart;
@@ -1382,12 +1382,12 @@ public:
 
 	struct CastResult
 	{
-		b2Position point;
+		b2Pos point;
 		float fraction;
 		bool hit;
 	};
 
-	static float CastCallback( b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context )
+	static float CastCallback( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context )
 	{
 		CastResult* result = (CastResult*)context;
 		result->point = point;
@@ -1435,7 +1435,7 @@ public:
 
 			for ( int i = 0; i < sampleCount; ++i )
 			{
-				b2Position origin = m_origins[i];
+				b2Pos origin = m_origins[i];
 				b2Vec2 translation = m_translations[i];
 
 				b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, filter );
@@ -1454,8 +1454,8 @@ public:
 
 			m_minTime = b2MinFloat( m_minTime, ms );
 
-			b2Position p1 = m_origins[m_drawIndex];
-			b2Position p2 = m_origins[m_drawIndex] + m_translations[m_drawIndex];
+			b2Pos p1 = m_origins[m_drawIndex];
+			b2Pos p2 = m_origins[m_drawIndex] + m_translations[m_drawIndex];
 			DrawWorldLine( m_context->draw, p1, p2, b2_colorWhite );
 			DrawWorldPoint( m_context->draw, p1, 5.0f, b2_colorGreen );
 			DrawWorldPoint( m_context->draw, p2, 5.0f, b2_colorRed );
@@ -1493,14 +1493,14 @@ public:
 
 			m_minTime = b2MinFloat( m_minTime, ms );
 
-			b2Position p1 = m_origins[m_drawIndex];
-			b2Position p2 = m_origins[m_drawIndex] + m_translations[m_drawIndex];
+			b2Pos p1 = m_origins[m_drawIndex];
+			b2Pos p2 = m_origins[m_drawIndex] + m_translations[m_drawIndex];
 			DrawWorldLine( m_context->draw, p1, p2, b2_colorWhite );
 			DrawWorldPoint( m_context->draw, p1, 5.0f, b2_colorGreen );
 			DrawWorldPoint( m_context->draw, p2, 5.0f, b2_colorRed );
 			if ( drawResult.hit )
 			{
-				b2Position t = m_origins[m_drawIndex] + b2MulSV( drawResult.fraction, m_translations[m_drawIndex] );
+				b2Pos t = m_origins[m_drawIndex] + b2MulSV( drawResult.fraction, m_translations[m_drawIndex] );
 				DrawWorldCircle( m_context->draw, t, m_radius, b2_colorWhite );
 				DrawWorldPoint( m_context->draw, drawResult.point, 5.0f, b2_colorWhite );
 			}
@@ -1535,7 +1535,7 @@ public:
 
 			m_minTime = b2MinFloat( m_minTime, ms );
 
-			b2Position origin = m_origins[m_drawIndex];
+			b2Pos origin = m_origins[m_drawIndex];
 			b2AABB aabb = {
 				{ b2RoundDownFloat( origin.x - extent.x ), b2RoundDownFloat( origin.y - extent.y ) },
 				{ b2RoundUpFloat( origin.x + extent.x ), b2RoundUpFloat( origin.y + extent.y ) },
@@ -1565,7 +1565,7 @@ public:
 
 	QueryType m_queryType;
 
-	std::vector<b2Position> m_origins;
+	std::vector<b2Pos> m_origins;
 	std::vector<b2Vec2> m_translations;
 	float m_minTime;
 	float m_buildTime;

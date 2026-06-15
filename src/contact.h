@@ -104,9 +104,7 @@ typedef struct b2ContactSim
 {
 	int contactId;
 
-	// Cache the relative pose directly so recycling stays precise far from the origin. Two world
-	// transforms demoted to float would lose the translation to cancellation when subtracted at
-	// large coordinates.
+	// Cache for contact recycling.
 	b2Rot cachedRotationA;
 	b2Rot cachedRotationB;
 	b2Transform cachedRelativePose;

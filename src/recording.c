@@ -135,7 +135,7 @@ void b2RecW_F64( b2RecBuffer* buf, double v )
 
 // A world position keeps full precision on the wire so a recording reproduces the simulation far
 // from the origin. In the float build this is two floats, identical to VEC2.
-void b2RecW_POSITION( b2RecBuffer* buf, b2Position v )
+void b2RecW_POSITION( b2RecBuffer* buf, b2Pos v )
 {
 #if defined( BOX2D_DOUBLE_PRECISION )
 	b2RecW_F64( buf, v.x );
@@ -555,7 +555,7 @@ bool b2RecOverlapTrampoline( b2ShapeId id, void* ctx )
 	return ret;
 }
 
-float b2RecCastTrampoline( b2ShapeId id, b2Position point, b2Vec2 normal, float fraction, void* ctx )
+float b2RecCastTrampoline( b2ShapeId id, b2Pos point, b2Vec2 normal, float fraction, void* ctx )
 {
 	b2RecQueryWriter* w = (b2RecQueryWriter*)ctx;
 	float ret = w->userFcn.castFcn( id, point, normal, fraction, w->userContext );

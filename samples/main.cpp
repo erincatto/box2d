@@ -56,7 +56,7 @@ static int MyAllocHook( int allocType, void* userData, size_t size, int blockTyp
 
 static SampleContext s_context;
 static bool s_rightMouseDown = false;
-static b2Position s_clickPointWS = b2Position_zero;
+static b2Pos s_clickPointWS = b2Pos_zero;
 static float s_framebufferScale = 1.0f;
 
 inline bool IsPowerOfTwo( int x )
@@ -393,7 +393,7 @@ static void MouseButtonCallback( GLFWwindow* window, int button, int action, int
 	// Use the mouse to move things around.
 	if ( button == GLFW_MOUSE_BUTTON_1 )
 	{
-		b2Position pw = ConvertScreenToWorld( &s_context.camera, ps );
+		b2Pos pw = ConvertScreenToWorld( &s_context.camera, ps );
 		if ( action == GLFW_PRESS )
 		{
 			s_context.sample->MouseDown( pw, button, modifiers );
@@ -425,7 +425,7 @@ static void MouseMotionCallback( GLFWwindow* window, double xd, double yd )
 
 	ImGui_ImplGlfw_CursorPosCallback( window, ps.x, ps.y );
 
-	b2Position pw = ConvertScreenToWorld( &s_context.camera, ps );
+	b2Pos pw = ConvertScreenToWorld( &s_context.camera, ps );
 	s_context.sample->MouseMove( pw );
 
 	if ( s_rightMouseDown )
@@ -448,7 +448,7 @@ static void ScrollCallback( GLFWwindow* window, double dx, double dy )
 	double xd, yd;
 	glfwGetCursorPos( window, &xd, &yd );
 	b2Vec2 ps = { (float)xd, (float)yd };
-	b2Position pw1 = ConvertScreenToWorld( &s_context.camera, ps );
+	b2Pos pw1 = ConvertScreenToWorld( &s_context.camera, ps );
 
 	if ( dy > 0 )
 	{
@@ -459,7 +459,7 @@ static void ScrollCallback( GLFWwindow* window, double dx, double dy )
 		s_context.camera.zoom *= 1.1f;
 	}
 
-	b2Position pw2 = ConvertScreenToWorld( &s_context.camera, ps );
+	b2Pos pw2 = ConvertScreenToWorld( &s_context.camera, ps );
 
 	// Keep the world point under the cursor fixed across the zoom.
 	b2Vec2 pan = pw2 - pw1;

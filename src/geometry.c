@@ -406,7 +406,7 @@ b2MassData b2ComputePolygonMass( const b2Polygon* shape, float density )
 
 static b2AABB b2ComputeCircleFatAABB( const b2Circle* shape, b2WorldTransform xf, float extra )
 {
-	b2Position c = b2TransformWorldPoint( xf, shape->center );
+	b2Pos c = b2TransformWorldPoint( xf, shape->center );
 	double r = (double)shape->radius + (double)extra;
 	b2AABB aabb = {
 		{ b2RoundDownFloat( c.x - r ), b2RoundDownFloat( c.y - r ) },
@@ -417,8 +417,8 @@ static b2AABB b2ComputeCircleFatAABB( const b2Circle* shape, b2WorldTransform xf
 
 static b2AABB b2ComputeCapsuleFatAABB( const b2Capsule* shape, b2WorldTransform xf, float extra )
 {
-	b2Position v1 = b2TransformWorldPoint( xf, shape->center1 );
-	b2Position v2 = b2TransformWorldPoint( xf, shape->center2 );
+	b2Pos v1 = b2TransformWorldPoint( xf, shape->center1 );
+	b2Pos v2 = b2TransformWorldPoint( xf, shape->center2 );
 	double r = (double)shape->radius + (double)extra;
 	b2AABB aabb = {
 		{ b2RoundDownFloat( ( v1.x < v2.x ? v1.x : v2.x ) - r ), b2RoundDownFloat( ( v1.y < v2.y ? v1.y : v2.y ) - r ) },
@@ -430,7 +430,7 @@ static b2AABB b2ComputeCapsuleFatAABB( const b2Capsule* shape, b2WorldTransform 
 static b2AABB b2ComputePolygonFatAABB( const b2Polygon* shape, b2WorldTransform xf, float extra )
 {
 	B2_ASSERT( shape->count > 0 );
-	b2Position v = b2TransformWorldPoint( xf, shape->vertices[0] );
+	b2Pos v = b2TransformWorldPoint( xf, shape->vertices[0] );
 	double lx = v.x, ly = v.y, ux = v.x, uy = v.y;
 
 	for ( int i = 1; i < shape->count; ++i )
@@ -452,8 +452,8 @@ static b2AABB b2ComputePolygonFatAABB( const b2Polygon* shape, b2WorldTransform 
 
 static b2AABB b2ComputeSegmentFatAABB( const b2Segment* shape, b2WorldTransform xf, float extra )
 {
-	b2Position v1 = b2TransformWorldPoint( xf, shape->point1 );
-	b2Position v2 = b2TransformWorldPoint( xf, shape->point2 );
+	b2Pos v1 = b2TransformWorldPoint( xf, shape->point1 );
+	b2Pos v2 = b2TransformWorldPoint( xf, shape->point2 );
 	double e = (double)extra;
 	b2AABB aabb = {
 		{ b2RoundDownFloat( ( v1.x < v2.x ? v1.x : v2.x ) - e ), b2RoundDownFloat( ( v1.y < v2.y ? v1.y : v2.y ) - e ) },

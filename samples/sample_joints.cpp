@@ -103,8 +103,8 @@ public:
 			m_bodyIds[i] = b2CreateBody( m_worldId, &bodyDef );
 			b2CreateCircleShape( m_bodyIds[i], &shapeDef, &circle );
 
-			b2Position pivotA = { m_length * i, yOffset };
-			b2Position pivotB = { m_length * ( i + 1.0f ), yOffset };
+			b2Pos pivotA = { m_length * i, yOffset };
+			b2Pos pivotB = { m_length * ( i + 1.0f ), yOffset };
 			jointDef.base.bodyIdA = prevBodyId;
 			jointDef.base.bodyIdB = m_bodyIds[i];
 			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivotA );
@@ -374,7 +374,7 @@ public:
 		{
 			m_time += m_speed * timeStep;
 
-			b2Position linearOffset;
+			b2Pos linearOffset;
 			linearOffset.x = 6.0f * sinf( 2.0f * m_time );
 			linearOffset.y = 8.0f + 4.0f * sinf( 1.0f * m_time );
 
@@ -385,7 +385,7 @@ public:
 			b2Body_SetTargetTransform( m_targetId, m_transform, timeStep, wake );
 		}
 
-		DrawTransform( m_draw, b2ToRelativeTransform( m_transform, b2Position_zero ), 1.0f );
+		DrawTransform( m_draw, b2ToRelativeTransform( m_transform, b2Pos_zero ), 1.0f );
 
 		Sample::Step();
 
@@ -621,7 +621,7 @@ public:
 			b2Capsule capsule = { { 0.0f, -1.0f }, { 0.0f, 6.0f }, 0.5f };
 			b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
 
-			b2Position pivot = { -10.0f, 20.5f };
+			b2Pos pivot = { -10.0f, 20.5f };
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -670,7 +670,7 @@ public:
 			shapeDef.density = 1.0f;
 			b2CreatePolygonShape( body, &shapeDef, &box );
 
-			b2Position pivot = { 19.0f, 10.0f };
+			b2Pos pivot = { 19.0f, 10.0f };
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = body;
@@ -821,7 +821,7 @@ public:
 			b2Polygon box = b2MakeBox( 0.5f, 2.0f );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			b2Position pivot = { 0.0f, 9.0f };
+			b2Pos pivot = { 0.0f, 9.0f };
 			// b2Vec2 axis = b2Normalize({1.0f, 0.0f});
 			b2Vec2 axis = b2Normalize( { 1.0f, 1.0f } );
 			b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
@@ -977,7 +977,7 @@ public:
 		b2Capsule capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.5f };
 		b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
 
-		b2Position pivot = { 0.0f, 10.0f };
+		b2Pos pivot = { 0.0f, 10.0f };
 		b2Vec2 axis = b2Normalize( { 1.0f, 1.0f } );
 		b2WheelJointDef jointDef = b2DefaultWheelJointDef();
 		jointDef.base.bodyIdA = groundId;
@@ -1126,7 +1126,7 @@ public:
 
 				b2CreatePolygonShape( m_bodyIds[i], &shapeDef, &box );
 
-				b2Position pivot = { xbase + 1.0f * i, 20.0f };
+				b2Pos pivot = { xbase + 1.0f * i, 20.0f };
 				jointDef.base.bodyIdA = prevBodyId;
 				jointDef.base.bodyIdB = m_bodyIds[i];
 				jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
@@ -1136,7 +1136,7 @@ public:
 				prevBodyId = m_bodyIds[i];
 			}
 
-			b2Position pivot = { xbase + 1.0f * m_count, 20.0f };
+			b2Pos pivot = { xbase + 1.0f * m_count, 20.0f };
 			jointDef.base.bodyIdA = prevBodyId;
 			jointDef.base.bodyIdB = groundId;
 			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
@@ -1286,7 +1286,7 @@ public:
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 				b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
 
-				b2Position pivot = { ( 2.0f * i ) * hx, m_count * hx };
+				b2Pos pivot = { ( 2.0f * i ) * hx, m_count * hx };
 				jointDef.base.bodyIdA = prevBodyId;
 				jointDef.base.bodyIdB = bodyId;
 				jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
@@ -1311,7 +1311,7 @@ public:
 			shapeDef.filter.maskBits = 0x1;
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 
-			b2Position pivot = { ( 2.0f * m_count ) * hx, m_count * hx };
+			b2Pos pivot = { ( 2.0f * m_count ) * hx, m_count * hx };
 			jointDef.base.bodyIdA = prevBodyId;
 			jointDef.base.bodyIdB = bodyId;
 			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
@@ -1404,7 +1404,7 @@ public:
 				m_bodyIds[i] = b2CreateBody( m_worldId, &bodyDef );
 				b2CreateCapsuleShape( m_bodyIds[i], &shapeDef, &capsule );
 
-				b2Position pivot = { ( 2.0f * i ) * hx, 0.0f };
+				b2Pos pivot = { ( 2.0f * i ) * hx, 0.0f };
 				jointDef.base.bodyIdA = prevBodyId;
 				jointDef.base.bodyIdB = m_bodyIds[i];
 				jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
@@ -1487,7 +1487,7 @@ public:
 	{
 		Sample::Step();
 
-		b2Position tipPosition = b2Body_GetPosition( m_tipId );
+		b2Pos tipPosition = b2Body_GetPosition( m_tipId );
 		DrawScreenTextLine( "tip-y = %.2f", tipPosition.y );
 	}
 
@@ -1537,7 +1537,7 @@ public:
 			m_bodyIds[i] = b2_nullBodyId;
 		}
 
-		b2Position position = { -12.5f, 10.0f };
+		b2Pos position = { -12.5f, 10.0f };
 		bodyDef.type = b2_dynamicBody;
 		bodyDef.motionLocks = m_motionLocks;
 
@@ -1555,8 +1555,8 @@ public:
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 
 			float length = 2.0f;
-			b2Position pivot1 = { position.x, position.y + 1.0f + length };
-			b2Position pivot2 = { position.x, position.y + 1.0f };
+			b2Pos pivot1 = { position.x, position.y + 1.0f + length };
+			b2Pos pivot2 = { position.x, position.y + 1.0f };
 			b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
@@ -1599,7 +1599,7 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 
-			b2Position pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
@@ -1620,7 +1620,7 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 
-			b2Position pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
@@ -1641,7 +1641,7 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 
-			b2Position pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2WeldJointDef jointDef = b2DefaultWeldJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
@@ -1666,7 +1666,7 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 
-			b2Position pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2WheelJointDef jointDef = b2DefaultWheelJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
@@ -1765,7 +1765,7 @@ public:
 			m_jointIds[i] = b2_nullJointId;
 		}
 
-		b2Position position = { -12.5f, 10.0f };
+		b2Pos position = { -12.5f, 10.0f };
 		bodyDef.type = b2_dynamicBody;
 		bodyDef.enableSleep = false;
 
@@ -1782,8 +1782,8 @@ public:
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
 			float length = 2.0f;
-			b2Position pivot1 = { position.x, position.y + 1.0f + length };
-			b2Position pivot2 = { position.x, position.y + 1.0f };
+			b2Pos pivot1 = { position.x, position.y + 1.0f + length };
+			b2Pos pivot2 = { position.x, position.y + 1.0f };
 			b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -1826,7 +1826,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			b2Position pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -1847,7 +1847,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			b2Position pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -1868,7 +1868,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			b2Position pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2WeldJointDef jointDef = b2DefaultWeldJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -1889,7 +1889,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			b2Position pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2WheelJointDef jointDef = b2DefaultWheelJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -1948,7 +1948,7 @@ public:
 			else
 			{
 				b2Transform localFrame = b2Joint_GetLocalFrameA( m_jointIds[i] );
-				DrawWorldString( m_draw, m_camera, b2MakePosition( localFrame.p ), b2_colorWhite, "(%.1f, %.1f)", force.x,
+				DrawWorldString( m_draw, m_camera, b2ToPos( localFrame.p ), b2_colorWhite, "(%.1f, %.1f)", force.x,
 								 force.y );
 			}
 		}
@@ -1992,7 +1992,7 @@ public:
 		b2Segment segment = { { -40.0f, 0.0f }, { 40.0f, 0.0f } };
 		b2CreateSegmentShape( groundId, &shapeDef, &segment );
 
-		b2Position position = { -20.0f, 10.0f };
+		b2Pos position = { -20.0f, 10.0f };
 		bodyDef.type = b2_dynamicBody;
 		bodyDef.enableSleep = false;
 
@@ -2009,8 +2009,8 @@ public:
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 
 			float length = 2.0f;
-			b2Position pivot1 = { position.x, position.y + 1.0f + length };
-			b2Position pivot2 = { position.x, position.y + 1.0f };
+			b2Pos pivot1 = { position.x, position.y + 1.0f + length };
+			b2Pos pivot2 = { position.x, position.y + 1.0f };
 			b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
@@ -2032,7 +2032,7 @@ public:
 			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 
-			b2Position pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
@@ -2053,7 +2053,7 @@ public:
 			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 
-			b2Position pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
@@ -2074,7 +2074,7 @@ public:
 			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 
-			b2Position pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2WeldJointDef jointDef = b2DefaultWeldJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
@@ -2095,7 +2095,7 @@ public:
 			m_bodyIds[index] = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( m_bodyIds[index], &shapeDef, &box );
 
-			b2Position pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2WheelJointDef jointDef = b2DefaultWheelJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_bodyIds[index];
@@ -2152,7 +2152,7 @@ public:
 		{
 			for ( int i = 0; i < e_count; ++i )
 			{
-				b2Position p = b2Body_GetWorldPoint( m_bodyIds[i], { 1.0f, 1.0f } );
+				b2Pos p = b2Body_GetWorldPoint( m_bodyIds[i], { 1.0f, 1.0f } );
 				b2Body_ApplyLinearImpulse( m_bodyIds[i], { m_impulse, -m_impulse }, p, true );
 			}
 		}
@@ -2172,7 +2172,7 @@ public:
 			float linear = b2Joint_GetLinearSeparation( m_jointIds[i] );
 			float angular = b2Joint_GetAngularSeparation( m_jointIds[i] );
 			b2Transform localFrame = b2Joint_GetLocalFrameA( m_jointIds[i] );
-			DrawWorldString( m_draw, m_camera, b2MakePosition( localFrame.p ), b2_colorWhite, "%.2f m, %.1f deg", linear,
+			DrawWorldString( m_draw, m_camera, b2ToPos( localFrame.p ), b2_colorWhite, "%.2f m, %.1f deg", linear,
 							 180.0f * angular / B2_PI );
 		}
 
@@ -2261,14 +2261,14 @@ public:
 
 		b2Vec2 vB = b2Body_GetLinearVelocity( m_bodyId );
 		float omegaB = b2Body_GetAngularVelocity( m_bodyId );
-		b2Position pB = b2Body_GetWorldCenter( m_bodyId );
+		b2Pos pB = b2Body_GetWorldCenter( m_bodyId );
 
 		for ( int i = 0; i < 2; ++i )
 		{
-			b2Position anchorA = { 3.0f, 0.0f };
-			b2Position anchorB = b2Body_GetWorldPoint( m_bodyId, localAnchors[i] );
+			b2Pos anchorA = { 3.0f, 0.0f };
+			b2Pos anchorB = b2Body_GetWorldPoint( m_bodyId, localAnchors[i] );
 
-			b2Vec2 deltaAnchor = b2PositionDelta( anchorB, anchorA );
+			b2Vec2 deltaAnchor = b2SubPos( anchorB, anchorA );
 
 			float slackLength = 1.0f;
 			float length = b2Length( deltaAnchor );
@@ -2283,7 +2283,7 @@ public:
 			DrawWorldLine( m_draw, anchorA, anchorB, b2_colorViolet );
 			b2Vec2 axis = b2Normalize( deltaAnchor );
 
-			b2Vec2 rB = b2PositionDelta( anchorB, pB );
+			b2Vec2 rB = b2SubPos( anchorB, pB );
 			float Jb = b2Cross( rB, axis );
 			float K = invMass + Jb * invI * Jb;
 			float invK = K < 0.0001f ? 0.0f : 1.0f / K;
@@ -2400,7 +2400,7 @@ public:
 			b2Polygon box = b2MakeBox( 10.0f, 0.25f );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			b2Position pivot = bodyDef.position;
+			b2Pos pivot = bodyDef.position;
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -2429,7 +2429,7 @@ public:
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 				b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
 
-				b2Position pivot = { 160.0f + 2.0f * i, -0.125f };
+				b2Pos pivot = { 160.0f + 2.0f * i, -0.125f };
 				jointDef.base.bodyIdA = prevBodyId;
 				jointDef.base.bodyIdB = bodyId;
 				jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
@@ -2439,7 +2439,7 @@ public:
 				prevBodyId = bodyId;
 			}
 
-			b2Position pivot = { 160.0f + 2.0f * N, -0.125f };
+			b2Pos pivot = { 160.0f + 2.0f * N, -0.125f };
 			jointDef.base.bodyIdA = prevBodyId;
 			jointDef.base.bodyIdB = groundId;
 			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
@@ -2547,7 +2547,7 @@ public:
 		float kph = linearVelocity.x * 3.6f;
 		DrawScreenTextLine( "speed in kph: %.2g", kph );
 
-		b2Position carPosition = b2Body_GetPosition( m_car.m_chassisId );
+		b2Pos carPosition = b2Body_GetPosition( m_car.m_chassisId );
 		m_context->camera.center.x = carPosition.x;
 
 		Sample::Step();
@@ -3002,13 +3002,13 @@ public:
 		float linkCount = 40;
 		float doorHalfHeight = 1.5f;
 
-		b2Position gearPosition1 = { -4.25f, 9.75f };
-		b2Position gearPosition2 = gearPosition1 + b2Vec2{ 2.0f, 1.0f };
-		b2Position linkAttachPosition = gearPosition2 + b2Vec2{ gearRadius + 2.0f * toothHalfWidth + toothRadius, 0.0f };
-		b2Position doorPosition = linkAttachPosition - b2Vec2{ 0.0f, 2.0f * linkCount * linkHalfLength + doorHalfHeight };
+		b2Pos gearPosition1 = { -4.25f, 9.75f };
+		b2Pos gearPosition2 = gearPosition1 + b2Vec2{ 2.0f, 1.0f };
+		b2Pos linkAttachPosition = gearPosition2 + b2Vec2{ gearRadius + 2.0f * toothHalfWidth + toothRadius, 0.0f };
+		b2Pos doorPosition = linkAttachPosition - b2Vec2{ 0.0f, 2.0f * linkCount * linkHalfLength + doorHalfHeight };
 
 		{
-			b2Position position = gearPosition1;
+			b2Pos position = gearPosition1;
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = position;
@@ -3056,7 +3056,7 @@ public:
 		b2BodyId followerId;
 
 		{
-			b2Position position = gearPosition2;
+			b2Pos position = gearPosition2;
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = position;
@@ -3114,7 +3114,7 @@ public:
 
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
-			b2Position position = linkAttachPosition + b2Vec2{ 0.0f, -linkHalfLength };
+			b2Pos position = linkAttachPosition + b2Vec2{ 0.0f, -linkHalfLength };
 
 			int count = 40;
 			b2BodyId prevBodyId = followerId;
@@ -3125,7 +3125,7 @@ public:
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 				b2CreateCapsuleShape( bodyId, &shapeDef, &capsule );
 
-				b2Position pivot = { position.x, position.y + linkHalfLength };
+				b2Pos pivot = { position.x, position.y + linkHalfLength };
 				jointDef.base.bodyIdA = prevBodyId;
 				jointDef.base.bodyIdB = bodyId;
 				jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
@@ -3154,7 +3154,7 @@ public:
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
 			{
-				b2Position pivot = doorPosition + b2Vec2{ 0.0f, doorHalfHeight };
+				b2Pos pivot = doorPosition + b2Vec2{ 0.0f, doorHalfHeight };
 				b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
 				revoluteDef.base.bodyIdA = lastLinkId;
 				revoluteDef.base.bodyIdB = bodyId;
@@ -3340,7 +3340,7 @@ public:
 	{
 		if ( ImGui::Button( "impulse" ) )
 		{
-			b2Position p = b2Body_GetWorldPoint( m_doorId, { 0.0f, 1.5f } );
+			b2Pos p = b2Body_GetWorldPoint( m_doorId, { 0.0f, 1.5f } );
 			b2Body_ApplyLinearImpulse( m_doorId, { m_impulse, 0.0f }, p, true );
 			m_translationError = 0.0f;
 		}
@@ -3373,7 +3373,7 @@ public:
 	{
 		Sample::Step();
 
-		b2Position p = b2Body_GetWorldPoint( m_doorId, { 0.0f, 1.5f } );
+		b2Pos p = b2Body_GetWorldPoint( m_doorId, { 0.0f, 1.5f } );
 		DrawWorldPoint( m_draw, p, 5.0f, b2_colorDarkKhaki );
 
 		float translationError = b2Joint_GetLinearSeparation( m_jointId );

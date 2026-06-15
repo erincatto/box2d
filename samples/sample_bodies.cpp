@@ -79,7 +79,7 @@ public:
 			b2CreatePolygonShape( m_platformId, &shapeDef, &box );
 
 			b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
-			b2Position pivot = { -2.0f, 5.0f };
+			b2Pos pivot = { -2.0f, 5.0f };
 			revoluteDef.base.bodyIdA = m_attachmentId;
 			revoluteDef.base.bodyIdB = m_platformId;
 			revoluteDef.base.localFrameA.p = b2Body_GetLocalPoint( m_attachmentId, pivot );
@@ -98,7 +98,7 @@ public:
 			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
 
 			b2PrismaticJointDef prismaticDef = b2DefaultPrismaticJointDef();
-			b2Position anchor = { 0.0f, 5.0f };
+			b2Pos anchor = { 0.0f, 5.0f };
 			prismaticDef.base.bodyIdA = groundId;
 			prismaticDef.base.bodyIdB = m_platformId;
 			prismaticDef.base.localFrameA.p = b2Body_GetLocalPoint( groundId, anchor );
@@ -261,7 +261,7 @@ public:
 		// Drive the kinematic body.
 		if ( m_type == b2_kinematicBody )
 		{
-			b2Position p = b2Body_GetPosition( m_platformId );
+			b2Pos p = b2Body_GetPosition( m_platformId );
 			b2Vec2 v = b2Body_GetLinearVelocity( m_platformId );
 
 			if ( ( p.x < -14.0f && v.x < 0.0f ) || ( p.x > 6.0f && v.x > 0.0f ) )
@@ -389,7 +389,7 @@ public:
 
 		// This shows how to get the velocity of a point on a body
 		b2Vec2 localPoint = { 0.0f, 2.0f };
-		b2Position worldPoint = b2Body_GetWorldPoint( m_weebleId, localPoint );
+		b2Pos worldPoint = b2Body_GetWorldPoint( m_weebleId, localPoint );
 
 		b2Vec2 v1 = b2Body_GetLocalPointVelocity( m_weebleId, localPoint );
 		b2Vec2 v2 = b2Body_GetWorldPointVelocity( m_weebleId, worldPoint );
@@ -405,7 +405,7 @@ public:
 	}
 
 	b2BodyId m_weebleId;
-	b2Position m_explosionPosition;
+	b2Pos m_explosionPosition;
 	float m_explosionRadius;
 	float m_explosionMagnitude;
 };
@@ -511,7 +511,7 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreateCapsuleShape( m_pendulumId, &shapeDef, &capsule );
 
-			b2Position pivot = bodyDef.position;
+			b2Pos pivot = bodyDef.position;
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_pendulumId;
@@ -845,7 +845,7 @@ public:
 
 		if ( timeStep > 0.0f )
 		{
-			b2Position point = {
+			b2Pos point = {
 				.x = 2.0f * m_amplitude * cosf( m_time ),
 				.y = m_amplitude * sinf( 2.0f * m_time ),
 			};
@@ -1026,7 +1026,7 @@ public:
 
 		b2Body_SetLinearVelocity( m_bodyId, { 0.0f, -20.0f } );
 
-		b2Position position = b2Body_GetPosition( m_bodyId );
+		b2Pos position = b2Body_GetPosition( m_bodyId );
 		DrawScreenTextLine( "(x, y) = (%.2g, %.2g)", position.x, position.y );
 	}
 

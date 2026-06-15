@@ -216,7 +216,7 @@ float b2PrismaticJoint_GetSpeed( b2JointId jointId )
 	b2Vec2 rB = b2RotateVector( qB, b2Sub( base->localFrameB.p, bodySimB->localCenter ) );
 
 	// Difference the centers in double so the speed stays exact far from the origin
-	b2Vec2 dc = b2PositionDelta( bodySimB->center, bodySimA->center );
+	b2Vec2 dc = b2SubPos( bodySimB->center, bodySimA->center );
 	b2Vec2 d = b2Add( dc, b2Sub( rB, rA ) );
 
 	b2Vec2 vA = bodyStateA ? bodyStateA->linearVelocity : b2Vec2_zero;
@@ -341,7 +341,7 @@ void b2PreparePrismaticJoint( b2JointSim* base, b2StepContext* context )
 	joint->frameB.p = b2RotateVector( bodySimB->transform.q, b2Sub( base->localFrameB.p, bodySimB->localCenter ) );
 
 	// Compute the initial center delta. Incremental position updates are relative to this.
-	joint->deltaCenter = b2PositionDelta( bodySimB->center, bodySimA->center );
+	joint->deltaCenter = b2SubPos( bodySimB->center, bodySimA->center );
 
 	joint->springSoftness = b2MakeSoft( joint->hertz, joint->dampingRatio, context->h );
 

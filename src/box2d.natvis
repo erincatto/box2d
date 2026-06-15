@@ -96,7 +96,7 @@
     </Expand>
   </Type>
 
-  <Type Name="b2Position">
+  <Type Name="b2Pos">
     <DisplayString>[{x}, {y}]</DisplayString>
     <Expand>
       <Item Name="x">x</Item>

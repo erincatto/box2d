@@ -1112,7 +1112,7 @@ bool b2Shape_IsSensor( b2ShapeId shapeId )
 	return shape->sensorIndex != B2_NULL_INDEX;
 }
 
-bool b2Shape_TestPoint( b2ShapeId shapeId, b2Position point )
+bool b2Shape_TestPoint( b2ShapeId shapeId, b2Pos point )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
@@ -1153,7 +1153,7 @@ bool b2Shape_TestPoint( b2ShapeId shapeId, b2Position point )
 	return result;
 }
 
-b2WorldCastOutput b2Shape_RayCast( b2ShapeId shapeId, b2Position origin, b2Vec2 translation )
+b2WorldCastOutput b2Shape_RayCast( b2ShapeId shapeId, b2Pos origin, b2Vec2 translation )
 {
 	B2_ASSERT( b2IsValidPosition( origin ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
@@ -1171,7 +1171,7 @@ b2WorldCastOutput b2Shape_RayCast( b2ShapeId shapeId, b2Position origin, b2Vec2 
 	b2CastOutput local = b2RayCastShape( &input, shape, transform );
 	b2WorldCastOutput output;
 	output.normal = local.normal;
-	output.point = b2OffsetPosition( origin, local.point );
+	output.point = b2OffsetPos( origin, local.point );
 	output.fraction = local.fraction;
 	output.iterations = local.iterations;
 	output.hit = local.hit;
@@ -1862,12 +1862,12 @@ b2MassData b2Shape_ComputeMassData( b2ShapeId shapeId )
 	return b2ComputeShapeMass( shape );
 }
 
-b2Position b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Position target )
+b2Pos b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Pos target )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
 	if ( world == NULL )
 	{
-		return b2Position_zero;
+		return b2Pos_zero;
 	}
 
 	b2Shape* shape = b2GetShape( world, shapeId );

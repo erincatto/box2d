@@ -35,14 +35,14 @@ enum PogoShape
 
 struct CastResult
 {
-	b2Position point;
+	b2Pos point;
 	b2Vec2 normal;
 	b2BodyId bodyId;
 	float fraction;
 	bool hit;
 };
 
-static float CastCallback( b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context )
+static float CastCallback( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context )
 {
 	CastResult* result = (CastResult*)context;
 	result->point = point;
@@ -155,7 +155,7 @@ public:
 				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 				b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-				b2Position pivot = { xBase + 1.0f * i, yBase };
+				b2Pos pivot = { xBase + 1.0f * i, yBase };
 				jointDef.base.bodyIdA = prevBodyId;
 				jointDef.base.bodyIdB = bodyId;
 				jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
@@ -165,7 +165,7 @@ public:
 				prevBodyId = bodyId;
 			}
 
-			b2Position pivot = { xBase + 1.0f * count, yBase };
+			b2Pos pivot = { xBase + 1.0f * count, yBase };
 			jointDef.base.bodyIdA = prevBodyId;
 			jointDef.base.bodyIdB = groundId2;
 			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
@@ -311,7 +311,7 @@ public:
 			translation = { 0.0f, -rayLength };
 		}
 
-		b2Position origin = m_position + m_capsule.center1;
+		b2Pos origin = m_position + m_capsule.center1;
 		b2World_CastShape( m_worldId, origin, &proxy, translation, pogoFilter, CastCallback, &castResult );
 
 		// Avoid snapping to ground if still going up
@@ -372,7 +372,7 @@ public:
 
 		DrawWorldTransform( m_draw, { m_position, b2Rot_identity }, 0.25f );
 
-		b2Position target = m_position + timeStep * m_velocity + timeStep * m_pogoVelocity * b2Vec2{ 0.0f, 1.0f };
+		b2Pos target = m_position + timeStep * m_velocity + timeStep * m_pogoVelocity * b2Vec2{ 0.0f, 1.0f };
 
 		// Mover overlap filter
 		b2QueryFilter collideFilter = { MoverBit, StaticBit | DynamicBit | MoverBit };
@@ -470,7 +470,7 @@ public:
 			return true;
 		}
 
-		b2Position center = b2Body_GetWorldCenter( bodyId );
+		b2Pos center = b2Body_GetWorldCenter( bodyId );
 		b2Vec2 direction = b2Normalize( center - self->m_position );
 		b2Vec2 impulse = b2Vec2{ 2.0f * direction.x, 2.0f };
 		b2Body_ApplyLinearImpulseToCenter( bodyId, impulse, true );
@@ -482,7 +482,7 @@ public:
 	{
 		if ( key == 'K' )
 		{
-			b2Position origin = { m_position.x, m_position.y + m_capsule.center1.y - 3.0f * m_capsule.radius };
+			b2Pos origin = { m_position.x, m_position.y + m_capsule.center1.y - 3.0f * m_capsule.radius };
 			float radius = 0.5f;
 			b2ShapeProxy proxy = b2MakeProxy( &b2Vec2_zero, 1, radius );
 			b2QueryFilter filter = { MoverBit, DebrisBit };
@@ -511,7 +511,7 @@ public:
 
 		if ( timeStep > 0.0f )
 		{
-			b2Position point = {
+			b2Pos point = {
 				.x = m_elevatorBase.x,
 				.y = m_elevatorAmplitude * cosf( 1.0f * m_time + B2_PI ) + m_elevatorBase.y,
 			};
@@ -559,20 +559,20 @@ public:
 		for ( int i = 0; i < count; ++i )
 		{
 			b2Plane plane = m_planes[i].plane;
-			b2Position p1 = m_position + ( plane.offset - m_capsule.radius ) * plane.normal;
-			b2Position p2 = p1 + 0.1f * plane.normal;
+			b2Pos p1 = m_position + ( plane.offset - m_capsule.radius ) * plane.normal;
+			b2Pos p2 = p1 + 0.1f * plane.normal;
 			DrawWorldPoint( m_draw, p1, 5.0f, b2_colorYellow );
 			DrawWorldLine( m_draw, p1, p2, b2_colorYellow );
 		}
 
-		b2Position p1 = m_position + m_capsule.center1;
-		b2Position p2 = m_position + m_capsule.center2;
+		b2Pos p1 = m_position + m_capsule.center1;
+		b2Pos p2 = m_position + m_capsule.center2;
 
 		b2HexColor color = m_onGround ? b2_colorOrange : b2_colorAquamarine;
 		DrawWorldCapsule( m_draw, p1, p2, m_capsule.radius, color );
 		DrawWorldLine( m_draw, m_position, m_position + m_velocity, b2_colorPurple );
 
-		b2Position p = m_position;
+		b2Pos p = m_position;
 		DrawScreenTextLine( "position %.2f %.2f", p.x, p.y );
 		DrawScreenTextLine( "velocity %.2f %.2f", m_velocity.x, m_velocity.y );
 		DrawScreenTextLine( "iterations %d", m_totalIterations );
@@ -604,7 +604,7 @@ public:
 	float m_pogoDampingRatio = 0.8f;
 
 	int m_pogoShape = PogoSegment;
-	b2Position m_position;
+	b2Pos m_position;
 	b2Vec2 m_velocity;
 	b2Capsule m_capsule;
 	b2BodyId m_elevatorId;

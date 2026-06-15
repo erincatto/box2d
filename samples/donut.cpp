@@ -19,7 +19,7 @@ Donut::Donut()
 	m_isSpawned = false;
 }
 
-void Donut::Create( b2WorldId worldId, b2Position position, float scale, int groupIndex, bool enableSensorEvents, void* userData )
+void Donut::Create( b2WorldId worldId, b2Pos position, float scale, int groupIndex, bool enableSensorEvents, void* userData )
 {
 	assert( m_isSpawned == false );
 
@@ -35,7 +35,7 @@ void Donut::Create( b2WorldId worldId, b2Position position, float scale, int gro
 
 	b2Capsule capsule = { { 0.0f, -0.5f * length }, { 0.0f, 0.5f * length }, 0.25f * scale };
 
-	b2Position center = position;
+	b2Pos center = position;
 
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_dynamicBody;

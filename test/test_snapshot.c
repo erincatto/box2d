@@ -48,7 +48,7 @@ static b2WorldId BuildScene( int workerCount, SnapshotIds* outIds )
 	// Ground
 	{
 		b2BodyDef bd = b2DefaultBodyDef();
-		bd.position = (b2Position){ 0.0f, -1.0f };
+		bd.position = (b2Pos){ 0.0f, -1.0f };
 		b2BodyId groundId = b2CreateBody( worldId, &bd );
 
 		b2Polygon groundBox = b2MakeBox( 40.0f, 1.0f );
@@ -65,7 +65,7 @@ static b2WorldId BuildScene( int workerCount, SnapshotIds* outIds )
 		{
 			b2BodyDef bd = b2DefaultBodyDef();
 			bd.type = b2_dynamicBody;
-			bd.position = (b2Position){ 0.0f, 0.5f + (float)i * 1.1f };
+			bd.position = (b2Pos){ 0.0f, 0.5f + (float)i * 1.1f };
 			b2BodyId bodyId = b2CreateBody( worldId, &bd );
 			b2CreatePolygonShape( bodyId, &sd, &box );
 			stackTop = bodyId;
@@ -75,13 +75,13 @@ static b2WorldId BuildScene( int workerCount, SnapshotIds* outIds )
 	// Joint bodies: two dynamic bodies, one for each pair of joints
 	b2BodyDef jbDef = b2DefaultBodyDef();
 	jbDef.type = b2_dynamicBody;
-	jbDef.position = (b2Position){ 5.0f, 2.0f };
+	jbDef.position = (b2Pos){ 5.0f, 2.0f };
 	b2BodyId jbA = b2CreateBody( worldId, &jbDef );
-	jbDef.position = (b2Position){ 7.0f, 2.0f };
+	jbDef.position = (b2Pos){ 7.0f, 2.0f };
 	b2BodyId jbB = b2CreateBody( worldId, &jbDef );
-	jbDef.position = (b2Position){ 9.0f, 2.0f };
+	jbDef.position = (b2Pos){ 9.0f, 2.0f };
 	b2BodyId jbC = b2CreateBody( worldId, &jbDef );
-	jbDef.position = (b2Position){ 11.0f, 2.0f };
+	jbDef.position = (b2Pos){ 11.0f, 2.0f };
 	b2BodyId jbD = b2CreateBody( worldId, &jbDef );
 
 	b2Polygon jbox = b2MakeBox( 0.3f, 0.3f );
@@ -148,7 +148,7 @@ static b2WorldId BuildScene( int workerCount, SnapshotIds* outIds )
 	// Chain shape on a static body
 	{
 		b2BodyDef cbd = b2DefaultBodyDef();
-		cbd.position = (b2Position){ -10.0f, 0.0f };
+		cbd.position = (b2Pos){ -10.0f, 0.0f };
 		b2BodyId chainBodyId = b2CreateBody( worldId, &cbd );
 
 		b2Vec2 chainPoints[5] = {
@@ -168,7 +168,7 @@ static b2WorldId BuildScene( int workerCount, SnapshotIds* outIds )
 	// Sensor on a static body, overlapping the scene area
 	{
 		b2BodyDef sbd = b2DefaultBodyDef();
-		sbd.position = (b2Position){ 0.0f, 5.0f };
+		sbd.position = (b2Pos){ 0.0f, 5.0f };
 		b2BodyId sensorBodyId = b2CreateBody( worldId, &sbd );
 
 		b2Polygon sensorBox = b2MakeBox( 3.0f, 3.0f );
@@ -186,7 +186,7 @@ static b2WorldId BuildScene( int workerCount, SnapshotIds* outIds )
 		{
 			b2BodyDef bd = b2DefaultBodyDef();
 			bd.type = b2_dynamicBody;
-			bd.position = (b2Position){ 40.0f, 0.5f + (float)i * 1.1f };
+			bd.position = (b2Pos){ 40.0f, 0.5f + (float)i * 1.1f };
 			b2BodyId bodyId = b2CreateBody( worldId, &bd );
 			b2CreatePolygonShape( bodyId, &sd, &box );
 		}
@@ -333,7 +333,7 @@ int SnapshotTest( void )
 	b2Body_SetAwake( ids.body, true );
 	b2BodyDef postDef = b2DefaultBodyDef();
 	postDef.type = b2_dynamicBody;
-	postDef.position = (b2Position){ 20.0f, 20.0f };
+	postDef.position = (b2Pos){ 20.0f, 20.0f };
 	b2BodyId postBody = b2CreateBody( rId, &postDef );
 	for ( int step = 0; step < 30; ++step )
 	{
@@ -520,7 +520,7 @@ int SnapshotTest( void )
 
 		b2BodyDef bd = b2DefaultBodyDef();
 		bd.type = b2_dynamicBody;
-		bd.position = (b2Position){ 0.0f, 8.0f };
+		bd.position = (b2Pos){ 0.0f, 8.0f };
 		b2BodyId fallingBody = b2CreateBody( wId, &bd );
 		b2Polygon box = b2MakeBox( 0.5f, 0.5f );
 		b2ShapeDef sdef = b2DefaultShapeDef();

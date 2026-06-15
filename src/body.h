@@ -178,11 +178,11 @@ typedef struct b2BodySim
 	b2WorldTransform transform;
 
 	// center of mass position in world space
-	b2Position center;
+	b2Pos center;
 
 	// previous rotation and COM for TOI
 	b2Rot rotation0;
-	b2Position center0;
+	b2Pos center0;
 
 	// location of center of mass relative to the body origin
 	b2Vec2 localCenter;
@@ -234,11 +234,11 @@ void b2SyncBodyFlags( b2World* world, b2Body* body );
 
 // Build a sweep relative to a base position so continuous collision keeps float precision far
 // from the origin. The base cancels out of the relative motion the TOI actually solves.
-static inline b2Sweep b2MakeRelativeSweep( const b2BodySim* bodySim, b2Position base )
+static inline b2Sweep b2MakeRelativeSweep( const b2BodySim* bodySim, b2Pos base )
 {
 	b2Sweep s;
-	s.c1 = b2PositionDelta( bodySim->center0, base );
-	s.c2 = b2PositionDelta( bodySim->center, base );
+	s.c1 = b2SubPos( bodySim->center0, base );
+	s.c2 = b2SubPos( bodySim->center, base );
 	s.q1 = bodySim->rotation0;
 	s.q2 = bodySim->transform.q;
 	s.localCenter = bodySim->localCenter;

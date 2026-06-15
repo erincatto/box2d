@@ -29,7 +29,7 @@ the mover is trying to slide along a surface and we don't want to stop that even
 
 `b2World_CollideMover()` complements the cast function. This function generates collision planes for touching and/or overlapped surfaces. The character mover is assumed to have a fixed rotation, so it doesn't need contact manifolds or contact points. It just needs collision planes. Each plane is returned with the `b2Plane` and a `b2ShapeId` for each shape the mover is touching.
 
-Both mover functions take a `b2Position` origin and the mover capsule is relative to it. Near the world origin pass `b2Position_zero` and a world capsule. In [large world mode](#large-worlds) pass the mover's vicinity so the character stays precise far from the origin. The returned planes are relative to the same origin and feed `b2SolvePlanes()` directly.
+Both mover functions take a `b2Pos` origin and the mover capsule is relative to it. Near the world origin pass `b2Pos_zero` and a world capsule. In [large world mode](#large-worlds) pass the mover's vicinity so the character stays precise far from the origin. The returned planes are relative to the same origin and feed `b2SolvePlanes()` directly.
 
 Once you have some collision planes from `b2World_CollideMover()`, you can process and filter them to generate an array of `b2CollisionPlane`. These collision planes can then be sent to `b2SolvePlanes()` to generate a new position for the mover
 that attempts to find the optimal new position given the current position.

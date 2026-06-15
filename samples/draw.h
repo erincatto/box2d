@@ -8,7 +8,7 @@
 typedef struct Camera
 {
 	// World point the view is centered on. Double precision in large world mode.
-	b2Position center;
+	b2Pos center;
 	float zoom;
 	float width;
 	float height;
@@ -23,8 +23,8 @@ extern "C"
 
 Camera GetDefaultCamera( void );
 void ResetView( Camera* camera );
-b2Position ConvertScreenToWorld( Camera* camera, b2Vec2 screenPoint );
-b2Vec2 ConvertWorldToScreen( Camera* camera, b2Position worldPoint );
+b2Pos ConvertScreenToWorld( Camera* camera, b2Vec2 screenPoint );
+b2Vec2 ConvertWorldToScreen( Camera* camera, b2Pos worldPoint );
 b2Vec2 ConvertViewToScreen( Camera* camera, b2Vec2 viewPoint );
 b2AABB GetViewBounds( Camera* camera );
 void FocusOnBounds( Camera* camera, b2AABB bounds );
@@ -48,16 +48,16 @@ void DrawBounds( Draw* draw, b2AABB aabb, b2HexColor color );
 
 // World space draws. Set Draw::origin to the camera center each frame so far from the origin the
 // shift happens in double before reaching the float helpers above.
-void SetDrawOrigin( Draw* draw, b2Position origin );
-void DrawWorldPoint( Draw* draw, b2Position p, float size, b2HexColor color );
-void DrawWorldLine( Draw* draw, b2Position p1, b2Position p2, b2HexColor color );
-void DrawWorldCircle( Draw* draw, b2Position center, float radius, b2HexColor color );
-void DrawWorldCapsule( Draw* draw, b2Position p1, b2Position p2, float radius, b2HexColor color );
+void SetDrawOrigin( Draw* draw, b2Pos origin );
+void DrawWorldPoint( Draw* draw, b2Pos p, float size, b2HexColor color );
+void DrawWorldLine( Draw* draw, b2Pos p1, b2Pos p2, b2HexColor color );
+void DrawWorldCircle( Draw* draw, b2Pos center, float radius, b2HexColor color );
+void DrawWorldCapsule( Draw* draw, b2Pos p1, b2Pos p2, float radius, b2HexColor color );
 void DrawWorldTransform( Draw* draw, b2WorldTransform t, float scale );
 void DrawWorldBounds( Draw* draw, b2AABB aabb, b2HexColor color );
 
 void DrawScreenString( Draw* draw, float x, float y, b2HexColor color, const char* string, ... );
-void DrawWorldString( Draw* draw, Camera* camera, b2Position p, b2HexColor color, const char* string, ... );
+void DrawWorldString( Draw* draw, Camera* camera, b2Pos p, b2HexColor color, const char* string, ... );
 
 void FlushDraw( Draw* draw, Camera* camera );
 

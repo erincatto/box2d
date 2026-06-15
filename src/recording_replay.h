@@ -14,7 +14,7 @@ typedef struct b2RecPlayer b2RecPlayer;
 typedef struct b2RecRecordedHit
 {
 	b2ShapeId id;
-	b2Position point;
+	b2Pos point;
 	b2Vec2 normal;
 	float fraction;
 	b2PlaneResult plane;
@@ -43,7 +43,7 @@ typedef struct b2RecDrawQuery
 	b2AABB aabb;
 	b2ShapeProxy proxy;
 	b2Capsule mover;
-	b2Position origin;
+	b2Pos origin;
 	b2Vec2 translation;
 	bool boolResult;
 	float castFraction;
@@ -159,7 +159,7 @@ b2Vec2 b2RecR_VEC2( b2RecReader* rdr );
 b2Rot b2RecR_ROT( b2RecReader* rdr );
 b2Transform b2RecR_XF( b2RecReader* rdr );
 double b2RecR_F64( b2RecReader* rdr );
-b2Position b2RecR_POSITION( b2RecReader* rdr );
+b2Pos b2RecR_POSITION( b2RecReader* rdr );
 b2WorldTransform b2RecR_WORLDXF( b2RecReader* rdr );
 b2WorldId b2RecR_WORLDID( b2RecReader* rdr );
 b2BodyId b2RecR_BODYID( b2RecReader* rdr );

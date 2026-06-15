@@ -149,9 +149,9 @@ double b2RecR_F64( b2RecReader* rdr )
 	return v;
 }
 
-b2Position b2RecR_POSITION( b2RecReader* rdr )
+b2Pos b2RecR_POSITION( b2RecReader* rdr )
 {
-	b2Position p;
+	b2Pos p;
 #if defined( BOX2D_DOUBLE_PRECISION )
 	p.x = b2RecR_F64( rdr );
 	p.y = b2RecR_F64( rdr );
@@ -1690,7 +1690,7 @@ static void b2RecDispatch_QueryOverlapShape( const b2RecArgs_QueryOverlapShape* 
 
 // Cast ray dispatcher
 
-static float b2RecReplayCastTrampoline( b2ShapeId id, b2Position point, b2Vec2 normal, float fraction, void* ctx )
+static float b2RecReplayCastTrampoline( b2ShapeId id, b2Pos point, b2Vec2 normal, float fraction, void* ctx )
 {
 	b2RecReplayQueryCtx* rc = ctx;
 	if ( rc->cursor >= rc->count )
@@ -1702,7 +1702,7 @@ static float b2RecReplayCastTrampoline( b2ShapeId id, b2Position point, b2Vec2 n
 	// Compare positions through the full width delta, truncating both sides would pass vacuously
 	// far from the origin
 	if ( id.index1 != h->id.index1 || id.generation != h->id.generation ||
-		 b2RecVec2Differs( b2PositionDelta( point, h->point ), b2Vec2_zero ) || b2RecVec2Differs( normal, h->normal ) ||
+		 b2RecVec2Differs( b2SubPos( point, h->point ), b2Vec2_zero ) || b2RecVec2Differs( normal, h->normal ) ||
 		 b2RecF32Differs( fraction, h->fraction ) )
 	{
 		rc->rdr->diverged = true;
@@ -1836,7 +1836,7 @@ static void b2RecDispatch_QueryCastRayClosest( const b2RecArgs_QueryCastRayClose
 	b2RayResult got = b2World_CastRayClosest( rdr->replayWorldId, a->origin, a->translation, a->filter );
 	if ( got.hit != rec.hit ||
 		 ( got.hit && ( got.shapeId.index1 != rec.shapeId.index1 || got.shapeId.generation != rec.shapeId.generation ||
-						b2RecVec2Differs( b2PositionDelta( got.point, rec.point ), b2Vec2_zero ) ||
+						b2RecVec2Differs( b2SubPos( got.point, rec.point ), b2Vec2_zero ) ||
 						b2RecVec2Differs( got.normal, rec.normal ) || b2RecF32Differs( got.fraction, rec.fraction ) ) ) )
 	{
 		rdr->diverged = true;
@@ -1908,7 +1908,7 @@ static void b2RecDispatch_ShapeRayCast( const b2RecArgs_ShapeRayCast* a, b2RecRe
 	b2WorldCastOutput got = b2Shape_RayCast( id, a->origin, a->translation );
 	if ( got.hit != rec.hit ||
 		 ( got.hit && ( b2RecVec2Differs( got.normal, rec.normal ) ||
-						b2RecVec2Differs( b2PositionDelta( got.point, rec.point ), b2Vec2_zero ) ||
+						b2RecVec2Differs( b2SubPos( got.point, rec.point ), b2Vec2_zero ) ||
 						b2RecF32Differs( got.fraction, rec.fraction ) ) ) )
 	{
 		rdr->diverged = true;
@@ -2568,14 +2568,14 @@ void b2RecPlayer_Destroy( b2RecPlayer* player )
 // per the b2Shape_GetAABB contract that overlap results may contain stale shapes.
 // Shift recorded world geometry into the draw origin frame so the viewer can render it far from
 // the origin. Identity when origin is zero, the float mode default.
-static b2Vec2 b2RecDrawRel( b2Position p, b2Position origin )
+static b2Vec2 b2RecDrawRel( b2Pos p, b2Pos origin )
 {
-	return b2PositionDelta( p, origin );
+	return b2SubPos( p, origin );
 }
 
-static b2Vec2 b2RecDrawRelVec( b2Vec2 p, b2Position origin )
+static b2Vec2 b2RecDrawRelVec( b2Vec2 p, b2Pos origin )
 {
-	return b2PositionDelta( b2MakePosition( p ), origin );
+	return b2SubPos( b2ToPos( p ), origin );
 }
 
 static void b2RecDrawHitAABBs( const b2RecPlayer* player, const b2RecDrawQuery* q, b2DebugDraw* draw )
@@ -2665,7 +2665,7 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 			case B2_RECQ_CAST_MOVER:
 			{
 				// The mover capsule is relative to the query origin
-				b2Vec2 shift = b2PositionDelta( q->origin, draw->origin );
+				b2Vec2 shift = b2SubPos( q->origin, draw->origin );
 				if ( draw->DrawSolidCapsuleFcn )
 				{
 					b2Vec2 c1 = b2Add( q->mover.center1, shift );
@@ -2677,7 +2677,7 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 			case B2_RECQ_OVERLAP_AABB:
 			{
 				// The query box is relative to the query origin
-				b2Vec2 shift = b2PositionDelta( q->origin, draw->origin );
+				b2Vec2 shift = b2SubPos( q->origin, draw->origin );
 				b2Vec2 lo = b2Add( q->aabb.lowerBound, shift );
 				b2Vec2 hi2 = b2Add( q->aabb.upperBound, shift );
 				b2Vec2 vs[4] = { lo, { hi2.x, lo.y }, hi2, { lo.x, hi2.y } };
@@ -2691,7 +2691,7 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 			case B2_RECQ_OVERLAP_SHAPE:
 			{
 				// The proxy points are relative to the query origin
-				b2Vec2 shift = b2PositionDelta( q->origin, draw->origin );
+				b2Vec2 shift = b2SubPos( q->origin, draw->origin );
 				b2ShapeProxy proxy = q->proxy;
 				for ( int i = 0; i < proxy.count; ++i )
 				{
@@ -2714,7 +2714,7 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 			case B2_RECQ_COLLIDE_MOVER:
 			{
 				// The mover capsule and the collision planes are relative to the query origin
-				b2Vec2 shift = b2PositionDelta( q->origin, draw->origin );
+				b2Vec2 shift = b2SubPos( q->origin, draw->origin );
 				if ( draw->DrawSolidCapsuleFcn )
 				{
 					b2Vec2 c1 = b2Add( q->mover.center1, shift );

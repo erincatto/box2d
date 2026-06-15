@@ -400,7 +400,7 @@ void Sample::ResetText()
 
 struct QueryContext
 {
-	b2Position point;
+	b2Pos point;
 	b2BodyId bodyId = b2_nullBodyId;
 };
 
@@ -427,7 +427,7 @@ bool QueryCallback( b2ShapeId shapeId, void* context )
 	return true;
 }
 
-void Sample::MouseDown( b2Position p, int button, int mod )
+void Sample::MouseDown( b2Pos p, int button, int mod )
 {
 	if ( B2_IS_NON_NULL( m_mouseJointId ) )
 	{
@@ -479,7 +479,7 @@ void Sample::MouseDown( b2Position p, int button, int mod )
 	}
 }
 
-void Sample::MouseUp( b2Position p, int button )
+void Sample::MouseUp( b2Pos p, int button )
 {
 	if ( B2_IS_NON_NULL( m_mouseJointId ) && button == GLFW_MOUSE_BUTTON_1 )
 	{
@@ -491,7 +491,7 @@ void Sample::MouseUp( b2Position p, int button )
 	}
 }
 
-void Sample::MouseMove( b2Position p )
+void Sample::MouseMove( b2Pos p )
 {
 	if ( b2Joint_IsValid( m_mouseJointId ) == false )
 	{

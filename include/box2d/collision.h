@@ -95,7 +95,7 @@ typedef struct b2CastOutput
 typedef struct b2WorldCastOutput
 {
 	b2Vec2 normal;	  ///< The surface normal at the hit point
-	b2Position point; ///< The surface hit point in world space
+	b2Pos point; ///< The surface hit point in world space
 	float fraction;	  ///< The fraction of the input translation at collision
 	int iterations;	  ///< The number of iterations used
 	bool hit;		  ///< Did the cast hit?
@@ -525,13 +525,13 @@ typedef struct b2ManifoldPoint
 {
 	/// Location of the contact point relative to shapeA's origin in world space.
 	/// This can be converted to a world point using:
-	/// b2Position worldPointA = b2OffsetPosition(b2Body_GetWorldCenterOfMass(myBodyIdA), anchorA);
+	/// b2Pos worldPointA = b2OffsetPosition(b2Body_GetWorldCenterOfMass(myBodyIdA), anchorA);
 	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
 	b2Vec2 anchorA;
 
 	/// Location of the contact point relative to shapeB's origin in world space
 	/// This can be converted to a world point using:
-	/// b2Position worldPointB = b2OffsetPosition(b2Body_GetWorldCenterOfMass(myBodyIdB), anchorB);
+	/// b2Pos worldPointB = b2OffsetPosition(b2Body_GetWorldCenterOfMass(myBodyIdB), anchorB);
 	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
 	b2Vec2 anchorB;
 

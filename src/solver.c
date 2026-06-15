@@ -170,7 +170,7 @@ struct b2ContinuousContext
 	b2Shape* fastShape;
 	b2Vec2 centroid1, centroid2;
 	b2Sweep sweep;
-	b2Position base;
+	b2Pos base;
 	float fraction;
 	b2SensorHit sensorHits[B2_MAX_CONTINUOUS_SENSOR_HITS];
 	float sensorFractions[B2_MAX_CONTINUOUS_SENSOR_HITS];
@@ -365,7 +365,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 			b2ShapeId shapeIdB = { fastShape->id + 1, world->worldId, fastShape->generation };
 
 			// TOI runs in the base frame, lift the hit point back to world for the callback
-			b2Position worldPoint = b2OffsetPosition( continuousContext->base, output.point );
+			b2Pos worldPoint = b2OffsetPos( continuousContext->base, output.point );
 			didHit = world->preSolveFcn( shapeIdA, shapeIdB, worldPoint, output.normal, world->preSolveContext );
 		}
 
@@ -390,7 +390,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 	B2_ASSERT( fastBodySim->flags & b2_isFast );
 
 	// Re-center the sweep on the fast body so the TOI and the swept query stay in float precision
-	b2Position base = fastBodySim->center0;
+	b2Pos base = fastBodySim->center0;
 	b2Sweep sweep = b2MakeRelativeSweep( fastBodySim, base );
 
 	b2Transform xf1;
@@ -461,8 +461,8 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 		// Advance body, lifting the base frame result back to world
 		fastBodySim->transform.q = q;
-		fastBodySim->transform.p = b2OffsetPosition( base, origin );
-		fastBodySim->center = b2OffsetPosition( base, c );
+		fastBodySim->transform.p = b2OffsetPos( base, origin );
+		fastBodySim->center = b2OffsetPos( base, c );
 		fastBodySim->rotation0 = q;
 		fastBodySim->center0 = fastBodySim->center;
 
@@ -591,7 +591,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 		B2_ASSERT( b2IsValidVec2( v ) );
 		B2_ASSERT( b2IsValidFloat( w ) );
 
-		sim->center = b2OffsetPosition( sim->center, state->deltaPosition );
+		sim->center = b2OffsetPos( sim->center, state->deltaPosition );
 		sim->transform.q = b2NormalizeRot( b2MulRot( state->deltaRotation, sim->transform.q ) );
 
 		// Use the velocity of the farthest point on the body to account for rotation.
@@ -608,7 +608,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 		state->deltaPosition = b2Vec2_zero;
 		state->deltaRotation = b2Rot_identity;
 
-		sim->transform.p = b2OffsetPosition( sim->center, b2Neg( b2RotateVector( sim->transform.q, sim->localCenter ) ) );
+		sim->transform.p = b2OffsetPos( sim->center, b2Neg( b2RotateVector( sim->transform.q, sim->localCenter ) ) );
 
 		// cache miss here, however I need the shape list below
 		b2Body* body = bodies + sim->bodyId;
@@ -1786,12 +1786,12 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 						if ( bodyA->type != b2_staticBody && bodyB->type == b2_staticBody )
 						{
 							b2BodySim* bodySimB = b2GetBodySim( world, bodyB );
-							event.point = b2OffsetPosition( bodySimB->center, bestPoint->anchorB );
+							event.point = b2OffsetPos( bodySimB->center, bestPoint->anchorB );
 						}
 						else
 						{
 							b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
-							event.point = b2OffsetPosition( bodySimA->center, bestPoint->anchorA );
+							event.point = b2OffsetPos( bodySimA->center, bestPoint->anchorA );
 						}
 
 						event.shapeIdA = (b2ShapeId){ shapeA->id + 1, worldId, shapeA->generation };

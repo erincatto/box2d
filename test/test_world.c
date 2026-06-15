@@ -27,7 +27,7 @@ int HelloWorld( void )
 
 	// Define the ground body.
 	b2BodyDef groundBodyDef = b2DefaultBodyDef();
-	groundBodyDef.position = (b2Position){ 0.0f, -10.0f };
+	groundBodyDef.position = (b2Pos){ 0.0f, -10.0f };
 
 	// Call the body factory which allocates memory for the ground body
 	// from a pool and creates the ground box shape (also from a pool).
@@ -45,7 +45,7 @@ int HelloWorld( void )
 	// Define the dynamic body. We set its position and call the body factory.
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_dynamicBody;
-	bodyDef.position = (b2Position){ 0.0f, 4.0f };
+	bodyDef.position = (b2Pos){ 0.0f, 4.0f };
 
 	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
@@ -70,7 +70,7 @@ int HelloWorld( void )
 	float timeStep = 1.0f / 60.0f;
 	int subStepCount = 4;
 
-	b2Position position = b2Body_GetPosition( bodyId );
+	b2Pos position = b2Body_GetPosition( bodyId );
 	b2Rot rotation = b2Body_GetRotation( bodyId );
 
 	// This is our little game loop.
@@ -252,7 +252,7 @@ static bool CustomFilter( b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* context 
 	return true;
 }
 
-static bool PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Position point, b2Vec2 normal, void* context )
+static bool PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context )
 {
 	(void)shapeIdA;
 	(void)shapeIdB;
@@ -347,7 +347,7 @@ static int TestSensor( void )
 	bodyDef.type = b2_dynamicBody;
 	bodyDef.isBullet = true;
 	bodyDef.gravityScale = 0.0f;
-	bodyDef.position = (b2Position){ 7.39814f, 4.0f };
+	bodyDef.position = (b2Pos){ 7.39814f, 4.0f };
 	bodyDef.linearVelocity = (b2Vec2){ -20.0f, 0.0f };
 	b2BodyId bulletId = b2CreateBody( worldId, &bodyDef );
 	shapeDef = b2DefaultShapeDef();
@@ -365,7 +365,7 @@ static int TestSensor( void )
 		int subStepCount = 4;
 		b2World_Step( worldId, timeStep, subStepCount );
 
-		b2Position bulletPos = b2Body_GetPosition( bulletId );
+		b2Pos bulletPos = b2Body_GetPosition( bulletId );
 		// printf( "Bullet pos: %g %g\n", bulletPos.x, bulletPos.y );
 
 		b2SensorEvents events = b2World_GetSensorEvents( worldId );
@@ -473,7 +473,7 @@ static int ChainSegmentShapeTest( void )
 
 	b2BodyDef dynamicDef = b2DefaultBodyDef();
 	dynamicDef.type = b2_dynamicBody;
-	dynamicDef.position = (b2Position){ 0.0f, 2.0f };
+	dynamicDef.position = (b2Pos){ 0.0f, 2.0f };
 	b2BodyId circleBodyId = b2CreateBody( worldId, &dynamicDef );
 	b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
 	b2ShapeDef circleShapeDef = b2DefaultShapeDef();
@@ -484,7 +484,7 @@ static int ChainSegmentShapeTest( void )
 		b2World_Step( worldId, 1.0f / 60.0f, 4 );
 	}
 
-	b2Position circlePos = b2Body_GetPosition( circleBodyId );
+	b2Pos circlePos = b2Body_GetPosition( circleBodyId );
 	ENSURE( circlePos.y > 0.0f );
 
 	b2ChainSegment cs2 = { 0 };

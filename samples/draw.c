@@ -66,11 +66,11 @@ Camera GetDefaultCamera( void )
 
 void ResetView( Camera* camera )
 {
-	camera->center = (b2Position){ 0.0f, 20.0f };
+	camera->center = (b2Pos){ 0.0f, 20.0f };
 	camera->zoom = 1.0f;
 }
 
-b2Position ConvertScreenToWorld( Camera* camera, b2Vec2 screenPoint )
+b2Pos ConvertScreenToWorld( Camera* camera, b2Vec2 screenPoint )
 {
 	float w = camera->width;
 	float h = camera->height;
@@ -83,7 +83,7 @@ b2Position ConvertScreenToWorld( Camera* camera, b2Vec2 screenPoint )
 	// Form the offset from the view center in float, then add to the center. Building
 	// center +/- extents in float would lose the view-sized extents far from the origin.
 	b2Vec2 offset = { extents.x * ( 2.0f * u - 1.0f ), extents.y * ( 2.0f * v - 1.0f ) };
-	return b2OffsetPosition( camera->center, offset );
+	return b2OffsetPos( camera->center, offset );
 }
 
 b2Vec2 ConvertViewToScreen( Camera* camera, b2Vec2 viewPoint )
@@ -101,10 +101,10 @@ b2Vec2 ConvertViewToScreen( Camera* camera, b2Vec2 viewPoint )
 	return ps;
 }
 
-b2Vec2 ConvertWorldToScreen( Camera* camera, b2Position worldPoint )
+b2Vec2 ConvertWorldToScreen( Camera* camera, b2Pos worldPoint )
 {
 	// Distance from the view center, demoted to float, then the float mapping
-	return ConvertViewToScreen( camera, b2PositionDelta( worldPoint, camera->center ) );
+	return ConvertViewToScreen( camera, b2SubPos( worldPoint, camera->center ) );
 }
 
 // Convert from world coordinates to normalized device coordinates.
@@ -154,8 +154,8 @@ b2AABB GetViewBounds( Camera* camera )
 		return bounds;
 	}
 
-	b2Position lower = ConvertScreenToWorld( camera, (b2Vec2){ 0.0f, camera->height } );
-	b2Position upper = ConvertScreenToWorld( camera, (b2Vec2){ camera->width, 0.0f } );
+	b2Pos lower = ConvertScreenToWorld( camera, (b2Vec2){ 0.0f, camera->height } );
+	b2Pos upper = ConvertScreenToWorld( camera, (b2Vec2){ camera->width, 0.0f } );
 
 	// Engine cull box stays float. Round outward so nothing visible is clipped far from the origin.
 	b2AABB bounds;
@@ -184,7 +184,7 @@ void FocusOnBounds( Camera* camera, b2AABB bounds )
 	// Need to guard against zero because zoom can get stuck there
 	camera->zoom = b2MaxFloat( camera->zoom, 0.01f );
 
-	camera->center = b2MakePosition( b2AABB_Center( bounds ) );
+	camera->center = b2ToPos( b2AABB_Center( bounds ) );
 }
 
 typedef struct
@@ -1170,7 +1170,7 @@ typedef struct Draw
 	Polygons polygons;
 
 	// Camera center in large world mode, subtracted by the DrawWorld helpers. Zero in float mode.
-	b2Position origin;
+	b2Pos origin;
 } Draw;
 
 Draw* CreateDraw( void )
@@ -1199,7 +1199,7 @@ void DestroyDraw( Draw* draw )
 	free( draw );
 }
 
-void SetDrawOrigin( Draw* draw, b2Position origin )
+void SetDrawOrigin( Draw* draw, b2Pos origin )
 {
 	draw->origin = origin;
 }
@@ -1272,24 +1272,24 @@ void DrawBounds( Draw* draw, b2AABB aabb, b2HexColor color )
 
 // World space variants. They subtract Draw::origin so far from the origin the difference happens in
 // double before reaching the float draw helpers. Identity in float mode.
-void DrawWorldPoint( Draw* draw, b2Position p, float size, b2HexColor color )
+void DrawWorldPoint( Draw* draw, b2Pos p, float size, b2HexColor color )
 {
-	DrawPoint( draw, b2PositionDelta( p, draw->origin ), size, color );
+	DrawPoint( draw, b2SubPos( p, draw->origin ), size, color );
 }
 
-void DrawWorldLine( Draw* draw, b2Position p1, b2Position p2, b2HexColor color )
+void DrawWorldLine( Draw* draw, b2Pos p1, b2Pos p2, b2HexColor color )
 {
-	DrawLine( draw, b2PositionDelta( p1, draw->origin ), b2PositionDelta( p2, draw->origin ), color );
+	DrawLine( draw, b2SubPos( p1, draw->origin ), b2SubPos( p2, draw->origin ), color );
 }
 
-void DrawWorldCircle( Draw* draw, b2Position center, float radius, b2HexColor color )
+void DrawWorldCircle( Draw* draw, b2Pos center, float radius, b2HexColor color )
 {
-	DrawCircle( draw, b2PositionDelta( center, draw->origin ), radius, color );
+	DrawCircle( draw, b2SubPos( center, draw->origin ), radius, color );
 }
 
-void DrawWorldCapsule( Draw* draw, b2Position p1, b2Position p2, float radius, b2HexColor color )
+void DrawWorldCapsule( Draw* draw, b2Pos p1, b2Pos p2, float radius, b2HexColor color )
 {
-	DrawSolidCapsule( draw, b2PositionDelta( p1, draw->origin ), b2PositionDelta( p2, draw->origin ), radius, color );
+	DrawSolidCapsule( draw, b2SubPos( p1, draw->origin ), b2SubPos( p2, draw->origin ), radius, color );
 }
 
 void DrawWorldTransform( Draw* draw, b2WorldTransform t, float scale )
@@ -1299,8 +1299,8 @@ void DrawWorldTransform( Draw* draw, b2WorldTransform t, float scale )
 
 void DrawWorldBounds( Draw* draw, b2AABB aabb, b2HexColor color )
 {
-	b2Vec2 lower = b2PositionDelta( b2MakePosition( aabb.lowerBound ), draw->origin );
-	b2Vec2 upper = b2PositionDelta( b2MakePosition( aabb.upperBound ), draw->origin );
+	b2Vec2 lower = b2SubPos( b2ToPos( aabb.lowerBound ), draw->origin );
+	b2Vec2 upper = b2SubPos( b2ToPos( aabb.upperBound ), draw->origin );
 	DrawBounds( draw, (b2AABB){ lower, upper }, color );
 }
 

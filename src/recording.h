@@ -20,7 +20,7 @@
 
 // Mix a world position at full width, or the determinism gates would validate only to float
 // precision and pass vacuously far from the origin
-static inline uint64_t b2FnvMixPosition( uint64_t hash, b2Position p )
+static inline uint64_t b2FnvMixPosition( uint64_t hash, b2Pos p )
 {
 #if defined( BOX2D_DOUBLE_PRECISION )
 	uint64_t bx, by;
@@ -98,7 +98,7 @@ typedef float b2RecCType_F32;
 typedef b2Vec2 b2RecCType_VEC2;
 typedef b2Rot b2RecCType_ROT;
 typedef b2Transform b2RecCType_XF;
-typedef b2Position b2RecCType_POSITION;
+typedef b2Pos b2RecCType_POSITION;
 typedef b2WorldTransform b2RecCType_WORLDXF;
 typedef const char* b2RecCType_STR;
 typedef b2WorldId b2RecCType_WORLDID;
@@ -173,7 +173,7 @@ void b2RecW_XF( b2RecBuffer* buf, b2Transform v );
 void b2RecW_F64( b2RecBuffer* buf, double v );
 // World position and world transform. Two doubles per position in large world mode, two floats
 // otherwise so the wire stays byte-identical to VEC2 / XF in the float build.
-void b2RecW_POSITION( b2RecBuffer* buf, b2Position v );
+void b2RecW_POSITION( b2RecBuffer* buf, b2Pos v );
 void b2RecW_WORLDXF( b2RecBuffer* buf, b2WorldTransform v );
 void b2RecW_WORLDID( b2RecBuffer* buf, b2WorldId v );
 void b2RecW_BODYID( b2RecBuffer* buf, b2BodyId v );
@@ -291,7 +291,7 @@ void b2RecQueryCommit( b2Recording* rec, uint8_t opcode, b2RecQueryWriter* w );
 
 // Recording trampolines: replace the user fcn pointer so hits are captured before dispatch
 bool b2RecOverlapTrampoline( b2ShapeId id, void* ctx );
-float b2RecCastTrampoline( b2ShapeId id, b2Position point, b2Vec2 normal, float fraction, void* ctx );
+float b2RecCastTrampoline( b2ShapeId id, b2Pos point, b2Vec2 normal, float fraction, void* ctx );
 bool b2RecPlaneTrampoline( b2ShapeId id, const b2PlaneResult* plane, void* ctx );
 
 // Lifecycle. Public create/destroy/save/load live in box2d.h; these are the engine-side hooks.

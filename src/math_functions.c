@@ -67,7 +67,7 @@ bool b2IsValidPlane( b2Plane a )
 	return b2IsValidVec2( a.normal ) && b2IsNormalized( a.normal ) && b2IsValidFloat( a.offset );
 }
 
-bool b2IsValidPosition( b2Position p )
+bool b2IsValidPosition( b2Pos p )
 {
 	if ( isnan( p.x ) || isnan( p.y ) )
 	{

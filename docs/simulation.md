@@ -273,7 +273,7 @@ shapes and joints do not move.
 
 ```c
 b2BodyDef bodyDef = b2DefaultBodyDef();
-bodyDef.position = b2MakePosition((b2Vec2){0.0f, 2.0f});
+bodyDef.position = b2ToPos((b2Vec2){0.0f, 2.0f});
 bodyDef.rotation = b2MakeRot(0.25f * B2_PI);
 ```
 
@@ -551,12 +551,12 @@ Keep in mind that the Box2D interface uses *radians*.
 ```c
 b2Body_SetTransform(myBodyId, position, rotation);
 b2WorldTransform transform = b2Body_GetTransform(myBodyId);
-b2Position position = b2Body_GetPosition(myBodyId);
+b2Pos position = b2Body_GetPosition(myBodyId);
 b2Rot rotation = b2Body_GetRotation(myBodyId);
 float angleInRadians = b2Rot_GetAngle(rotation);
 ```
 
-World positions use `b2Position` and world transforms use `b2WorldTransform`. In the default
+World positions use `b2Pos` and world transforms use `b2WorldTransform`. In the default
 build these are aliases for `b2Vec2` and `b2Transform`. They become double precision types in
 [large world mode](#large-worlds).
 
@@ -568,7 +568,7 @@ body that is square. The body origin might be a corner of the square,
 while the center of mass is located at the center of the square.
 
 ```c
-b2Position worldCenter = b2Body_GetWorldCenterOfMass(myBodyId);
+b2Pos worldCenter = b2Body_GetWorldCenterOfMass(myBodyId);
 b2Vec2 localCenter = b2Body_GetLocalCenterOfMass(myBodyId);
 ```
 
@@ -585,7 +585,7 @@ float angularVelocity = b2Body_GetAngularVelocity(myBodyId);
 You can drive a body to a specific transform. This is useful for kinematic bodies.
 
 ```c
-b2Position targetPosition = b2MakePosition((b2Vec2){42.0f, -100.0f});
+b2Pos targetPosition = b2ToPos((b2Vec2){42.0f, -100.0f});
 b2Rot targetRotation = b2MakeRot(B2_PI);
 b2WorldTransform target = {targetPosition, targetRotation};
 float timeStep = 1.0f / 60.0f;
@@ -628,7 +628,7 @@ these concepts, I recommend reading \"Essential Mathematics for Games and
 Interactive Applications\" by Jim Van Verth and Lars Bishop.
 
 ```c
-b2Position worldPoint = b2Body_GetWorldPoint(myBodyId, localPoint);
+b2Pos worldPoint = b2Body_GetWorldPoint(myBodyId, localPoint);
 b2Vec2 worldVector = b2Body_GetWorldVector(myBodyId, localVector);
 b2Vec2 localPoint = b2Body_GetLocalPoint(myBodyId, worldPoint);
 b2Vec2 localVector = b2Body_GetLocalVector(myBodyId, worldVector);
@@ -1327,7 +1327,7 @@ so you will need to disable the contact every time-step. This function must be t
 and must not read from or write to the Box2D world.
 
 ```c
-bool MyPreSolve(b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Position point, b2Vec2 normal, void* context)
+bool MyPreSolve(b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context)
 {
     MyGame* myGame = context;
 
@@ -1492,9 +1492,9 @@ jointDef.base.bodyIdA = myBodyIdA;
 jointDef.base.bodyIdB = myBodyIdB;
 jointDef.base.localFrameA.p = (b2Vec2){1.0f, -3.0f};
 jointDef.base.localFrameB.p = (b2Vec2){0.0f, 0.5f};
-b2Position anchorA = b2Body_GetWorldPoint(myBodyIdA, jointDef.base.localFrameA.p);
-b2Position anchorB = b2Body_GetWorldPoint(myBodyIdB, jointDef.base.localFrameB.p);
-jointDef.length = b2Length(b2PositionDelta(anchorB, anchorA));
+b2Pos anchorA = b2Body_GetWorldPoint(myBodyIdA, jointDef.base.localFrameA.p);
+b2Pos anchorB = b2Body_GetWorldPoint(myBodyIdB, jointDef.base.localFrameB.p);
+jointDef.length = b2Length(b2SubPos(anchorB, anchorA));
 jointDef.base.collideConnected = true;
 
 b2JointId myJointId = b2CreateDistanceJoint(myWorldId, &jointDef);
@@ -1536,7 +1536,7 @@ Like all joints, the anchor points are specified in local coordinates.
 However, you can use the body utility functions to simplify this.
 
 ```c
-b2Position worldPivot = b2MakePosition((b2Vec2){10.0f, -4.0f});
+b2Pos worldPivot = b2ToPos((b2Vec2){10.0f, -4.0f});
 b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 jointDef.base.bodyIdA = myBodyIdA;
 jointDef.base.bodyIdB = myBodyIdB;
@@ -1584,7 +1584,7 @@ joint has a limit and a motor enabled. The motor is setup to simulate
 joint friction.
 
 ```c
-b2Position worldPivot = b2MakePosition((b2Vec2){10.0f, -4.0f});
+b2Pos worldPivot = b2ToPos((b2Vec2){10.0f, -4.0f});
 b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 jointDef.base.bodyIdA = myBodyIdA;
 jointDef.base.bodyIdB = myBodyIdB;
@@ -1654,7 +1654,7 @@ Using this analogy provides an example prismatic joint definition with a
 joint limit and a friction motor:
 
 ```c
-b2Position worldPivot = b2MakePosition((b2Vec2){10.0f, -4.0f});
+b2Pos worldPivot = b2ToPos((b2Vec2){10.0f, -4.0f});
 b2Vec2 worldAxis = {1.0f, 0.0f};
 b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
 jointDef.base.bodyIdA = myBodyIdA;
@@ -1818,11 +1818,11 @@ b2AABB aabb;
 aabb.lowerBound = (b2Vec2){-1.0f, -1.0f};
 aabb.upperBound = (b2Vec2){1.0f, 1.0f};
 b2QueryFilter filter = b2DefaultQueryFilter();
-b2World_OverlapAABB(myWorldId, b2Position_zero, aabb, filter, MyOverlapCallback, &myGame);
+b2World_OverlapAABB(myWorldId, b2Pos_zero, aabb, filter, MyOverlapCallback, &myGame);
 ```
 
-The query geometry is relative to the `b2Position` origin. Near the world origin pass
-`b2Position_zero` and world coordinates, as here. The origin matters for
+The query geometry is relative to the `b2Pos` origin. Near the world origin pass
+`b2Pos_zero` and world coordinates, as here. The origin matters for
 [large worlds](#large-worlds), where it keeps distant queries precise.
 
 Do not make any assumptions about the order of the callback. The order shapes
@@ -1846,7 +1846,7 @@ This takes a `b2OverlapResultFcn()` to receive results and control the search pr
 ```c
 b2Circle circle = {b2Vec2_zero, 0.2f};
 b2ShapeProxy proxy = b2MakeProxy(&circle.center, 1, circle.radius);
-b2World_OverlapShape(myWorldId, b2Position_zero, &proxy, grenadeFilter, MyOverlapCallback, &myGame);
+b2World_OverlapShape(myWorldId, b2Pos_zero, &proxy, grenadeFilter, MyOverlapCallback, &myGame);
 ```
 
 ### Ray-casts
@@ -1879,12 +1879,12 @@ Here is an example:
 struct MyRayCastContext
 {
     b2ShapeId shapeId;
-    b2Position point;
+    b2Pos point;
     b2Vec2 normal;
     float fraction;
 };
 
-float MyCastCallback(b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context)
+float MyCastCallback(b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context)
 {
     MyRayCastContext* myContext = context;
     myContext->shapeId = shapeId;
@@ -1899,7 +1899,7 @@ MyRayCastContext context = {0};
 b2Vec2 origin = {-1.0f, 0.0f};
 b2Vec2 end = {3.0f, 1.0f};
 b2Vec2 translation = b2Sub(end, origin);
-b2World_CastRay(myWorldId, b2MakePosition(origin), translation, viewFilter, MyCastCallback, &context);
+b2World_CastRay(myWorldId, b2ToPos(origin), translation, viewFilter, MyCastCallback, &context);
 ```
 
 Ray-cast results may be delivered in an arbitrary order. This doesn't affect the result for closest point ray-casts (except in ties). When you are collecting multiple hits along the ray, you may want to sort them according to the hit fraction. See the `CastWorld` sample for details.
@@ -1915,12 +1915,12 @@ to represent an arbitrary shape.
 struct MyRayCastContext
 {
     b2ShapeId shapeId;
-    b2Position point;
+    b2Pos point;
     b2Vec2 normal;
     float fraction;
 };
 
-float MyCastCallback(b2ShapeId shapeId, b2Position point, b2Vec2 normal, float fraction, void* context)
+float MyCastCallback(b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context)
 {
     MyRayCastContext* myContext = context;
     myContext->shapeId = shapeId;
@@ -1935,7 +1935,7 @@ MyRayCastContext context = {0};
 b2Circle circle = {{-1.0f, 0.0f}, 0.05f};
 b2ShapeProxy proxy = b2MakeProxy(&circle.center, 1, circle.radius);
 b2Vec2 translation = {10.0f, -5.0f};
-b2World_CastShape(myWorldId, b2Position_zero, &proxy, translation, grenadeFilter, MyCastCallback, &context);
+b2World_CastShape(myWorldId, b2Pos_zero, &proxy, translation, grenadeFilter, MyCastCallback, &context);
 ```
 
 Otherwise, shape-casts are setup similarly to ray-casts. You can expect shape-casts to generally be slower

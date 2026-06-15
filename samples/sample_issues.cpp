@@ -92,7 +92,7 @@ public:
 			b2CreatePolygonShape( m_platformId, &shapeDef, &box );
 
 			b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
-			b2Position pivot = { -2.0f, 5.0f };
+			b2Pos pivot = { -2.0f, 5.0f };
 			revoluteDef.base.bodyIdA = m_attachmentId;
 			revoluteDef.base.bodyIdB = m_platformId;
 			revoluteDef.base.localFrameA.p = b2Body_GetLocalPoint( m_attachmentId, pivot );
@@ -188,7 +188,7 @@ public:
 			b2CreatePolygonShape( m_platformId, &shapeDef, &box );
 
 			b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
-			b2Position pivot = { -2.0f, 5.0f };
+			b2Pos pivot = { -2.0f, 5.0f };
 			revoluteDef.base.bodyIdA = m_attachmentId;
 			revoluteDef.base.bodyIdB = m_platformId;
 			revoluteDef.base.localFrameA.p = b2Body_GetLocalPoint( m_attachmentId, pivot );
@@ -198,7 +198,7 @@ public:
 			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
 
 			b2PrismaticJointDef prismaticDef = b2DefaultPrismaticJointDef();
-			b2Position anchor = { 0.0f, 5.0f };
+			b2Pos anchor = { 0.0f, 5.0f };
 			prismaticDef.base.bodyIdA = groundId;
 			prismaticDef.base.bodyIdB = m_platformId;
 			prismaticDef.base.localFrameA.p = b2Body_GetLocalPoint( groundId, anchor );
