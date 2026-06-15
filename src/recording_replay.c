@@ -2363,6 +2363,11 @@ void b2RecPlayer_Restart( b2RecPlayer* player )
 	player->divergeFrame = -1;
 	player->atEnd = false;
 
+	// Frame 0 is the pre-step snapshot, so it has no recorded queries. Clear the per-frame store so
+	// the last stepped frame's queries do not linger on a load or a backward scrub to the start.
+	player->frameQueryCount = 0;
+	player->frameHitCount = 0;
+
 	// Roll the outliner body list back to its frame-0 contents
 	player->bodyIdCount = player->frame0BodyIdCount;
 	if ( player->frame0BodyIdCount > 0 )

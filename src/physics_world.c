@@ -2777,7 +2777,8 @@ typedef struct WorldMoverCastContext
 	b2QueryFilter filter;
 	float fraction;
 	b2Pos origin;
-	b2ShapeCastInput relInput; // origin relative input for the per shape casts, carries canEncroach
+	// origin relative input
+	b2ShapeCastInput input;
 } WorldMoverCastContext;
 
 static float MoverCastCallback( const b2BoxCastInput* input, int proxyId, uint64_t userData, void* context )
@@ -2796,7 +2797,7 @@ static float MoverCastCallback( const b2BoxCastInput* input, int proxyId, uint64
 	}
 
 	// Rebuild from the origin relative input, taking only the advancing fraction from the tree
-	b2ShapeCastInput localInput = worldContext->relInput;
+	b2ShapeCastInput localInput = worldContext->input;
 	localInput.maxFraction = input->maxFraction;
 
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
@@ -2831,13 +2832,13 @@ float b2World_CastMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover
 	worldContext.filter = filter;
 	worldContext.fraction = 1.0f;
 	worldContext.origin = origin;
-	worldContext.relInput.proxy.points[0] = mover->center1;
-	worldContext.relInput.proxy.points[1] = mover->center2;
-	worldContext.relInput.proxy.count = 2;
-	worldContext.relInput.proxy.radius = mover->radius;
-	worldContext.relInput.translation = translation;
-	worldContext.relInput.maxFraction = 1.0f;
-	worldContext.relInput.canEncroach = true;
+	worldContext.input.proxy.points[0] = mover->center1;
+	worldContext.input.proxy.points[1] = mover->center2;
+	worldContext.input.proxy.count = 2;
+	worldContext.input.proxy.radius = mover->radius;
+	worldContext.input.translation = translation;
+	worldContext.input.maxFraction = 1.0f;
+	worldContext.input.canEncroach = true;
 
 	// Bound the capsule in origin relative space then lift to a conservative world float box
 	b2Vec2 centers[2] = { mover->center1, mover->center2 };
