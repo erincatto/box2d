@@ -75,12 +75,12 @@ static void IssueAllQueries( b2WorldId worldId, b2ShapeId groundShapeId )
 	b2World_OverlapShape( worldId, b2Position_zero, &proxy, filter, s_overlapFcn, NULL );
 
 	// CastRay (all hits)
-	b2Vec2 rayOrigin = { 0.0f, 10.0f };
+	b2Position rayOrigin = { 0.0f, 10.0f };
 	b2Vec2 rayDir = { 0.0f, -20.0f };
-	b2World_CastRay( worldId, b2MakePosition( rayOrigin ), rayDir, filter, s_allHitsCastFcn, NULL );
+	b2World_CastRay( worldId, rayOrigin, rayDir, filter, s_allHitsCastFcn, NULL );
 
 	// CastRayClosest
-	b2World_CastRayClosest( worldId, b2MakePosition( rayOrigin ), rayDir, filter );
+	b2World_CastRayClosest( worldId, rayOrigin, rayDir, filter );
 
 	// CastShape (circle proxy), cast from the nonzero base
 	b2ShapeProxy circProxy = b2MakeProxy( (b2Vec2[]){ { -baseOffset.x, -baseOffset.y } }, 1, 0.3f );

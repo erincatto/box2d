@@ -225,20 +225,22 @@ public:
 		return true;
 	}
 
-	void MouseDown( b2Position p, int button, int mods ) override
+	void MouseDown( b2Position position, int button, int mods ) override
 	{
+		b2Vec2 p = b2ToVec2( position );
+
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
 			if ( mods == 0 && m_rotating == false )
 			{
 				m_dragging = true;
-				m_startPoint = b2ToVec2( p );
+				m_startPoint = p;
 				m_basePosition = m_transform.p;
 			}
 			else if ( mods == GLFW_MOD_SHIFT && m_dragging == false )
 			{
 				m_rotating = true;
-				m_startPoint = b2ToVec2( p );
+				m_startPoint = p;
 				m_baseAngle = m_angle;
 			}
 		}
@@ -253,11 +255,13 @@ public:
 		}
 	}
 
-	void MouseMove( b2Position p ) override
+	void MouseMove( b2Position position ) override
 	{
+		b2Vec2 p = b2ToVec2( position );
+
 		if ( m_dragging )
 		{
-			m_transform.p = m_basePosition + 0.5f * ( b2ToVec2( p ) - m_startPoint );
+			m_transform.p = m_basePosition + 0.5f * ( p - m_startPoint );
 		}
 		else if ( m_rotating )
 		{
@@ -639,21 +643,23 @@ public:
 		return true;
 	}
 
-	void MouseDown( b2Position p, int button, int mods ) override
+	void MouseDown( b2Position position, int button, int mods ) override
 	{
+		b2Vec2 p = b2ToVec2( position );
+
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
 			if ( mods == 0 && m_queryDrag == false )
 			{
 				m_rayDrag = true;
-				m_startPoint = b2ToVec2( p );
-				m_endPoint = b2ToVec2( p );
+				m_startPoint = p;
+				m_endPoint = p;
 			}
 			else if ( mods == GLFW_MOD_SHIFT && m_rayDrag == false )
 			{
 				m_queryDrag = true;
-				m_startPoint = b2ToVec2( p );
-				m_endPoint = b2ToVec2( p );
+				m_startPoint = p;
+				m_endPoint = p;
 			}
 		}
 	}
@@ -667,9 +673,9 @@ public:
 		}
 	}
 
-	void MouseMove( b2Position p ) override
+	void MouseMove( b2Position position ) override
 	{
-		m_endPoint = b2ToVec2( p );
+		m_endPoint = b2ToVec2( position );
 	}
 
 	void Step() override
@@ -937,15 +943,17 @@ public:
 		return true;
 	}
 
-	void MouseDown( b2Position p, int button, int mods ) override
+	void MouseDown( b2Position position, int button, int mods ) override
 	{
+		b2Vec2 p = b2ToVec2( position );
+
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
-			m_startPosition = b2ToVec2( p );
+			m_startPosition = p;
 
 			if ( mods == 0 )
 			{
-				m_rayStart = b2ToVec2( p );
+				m_rayStart = p;
 				m_rayDrag = true;
 			}
 			else if ( mods == GLFW_MOD_SHIFT )
@@ -971,11 +979,13 @@ public:
 		}
 	}
 
-	void MouseMove( b2Position p ) override
+	void MouseMove( b2Position position ) override
 	{
+		b2Vec2 p = b2ToVec2( position );
+
 		if ( m_rayDrag )
 		{
-			m_rayEnd = b2ToVec2( p );
+			m_rayEnd = p;
 		}
 		else if ( m_translating )
 		{
@@ -1541,20 +1551,22 @@ public:
 		}
 	}
 
-	void MouseDown( b2Position p, int button, int mods ) override
+	void MouseDown( b2Position position, int button, int mods ) override
 	{
+		b2Vec2 p = b2ToVec2( position );
+
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
 			if ( mods == 0 && m_rotating == false )
 			{
-				m_rayStart = p;
-				m_rayEnd = p;
+				m_rayStart = position;
+				m_rayEnd = position;
 				m_dragging = true;
 			}
 			else if ( mods == GLFW_MOD_SHIFT && m_dragging == false )
 			{
 				m_rotating = true;
-				m_angleAnchor = b2ToVec2( p );
+				m_angleAnchor = p;
 				m_baseAngle = m_angle;
 			}
 		}
@@ -1817,9 +1829,9 @@ public:
 
 		if ( B2_IS_NON_NULL( m_bodyIds[m_ignoreIndex] ) )
 		{
-			b2Vec2 p = b2ToVec2( b2Body_GetPosition( m_bodyIds[m_ignoreIndex] ) );
+			b2Position p = b2Body_GetPosition( m_bodyIds[m_ignoreIndex] );
 			p.x -= 0.2f;
-			DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, "ign" );
+			DrawWorldString( m_draw, m_camera, p, b2_colorWhite, "ign" );
 		}
 	}
 
@@ -2021,19 +2033,21 @@ public:
 		}
 	}
 
-	void MouseDown( b2Position p, int button, int mods ) override
+	void MouseDown( b2Position position, int button, int mods ) override
 	{
+		b2Vec2 p = b2ToVec2( position );
+
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
 			if ( mods == 0 && m_rotating == false )
 			{
 				m_dragging = true;
-				m_position = b2ToVec2( p );
+				m_position = p;
 			}
 			else if ( mods == GLFW_MOD_SHIFT && m_dragging == false )
 			{
 				m_rotating = true;
-				m_startPosition = b2ToVec2( p );
+				m_startPosition = p;
 				m_baseAngle = m_angle;
 			}
 		}
@@ -2048,11 +2062,13 @@ public:
 		}
 	}
 
-	void MouseMove( b2Position p ) override
+	void MouseMove( b2Position position ) override
 	{
+		b2Vec2 p = b2ToVec2( position );
+
 		if ( m_dragging )
 		{
-			m_position = b2ToVec2( p );
+			m_position = p;
 		}
 		else if ( m_rotating )
 		{
@@ -2161,9 +2177,9 @@ public:
 
 		if ( B2_IS_NON_NULL( m_bodyIds[m_ignoreIndex] ) )
 		{
-			b2Vec2 p = b2ToVec2( b2Body_GetPosition( m_bodyIds[m_ignoreIndex] ) );
+			b2Position p = b2Body_GetPosition( m_bodyIds[m_ignoreIndex] );
 			p.x -= 0.2f;
-			DrawWorldString( m_draw, m_camera, b2MakePosition( p ), b2_colorWhite, "skip" );
+			DrawWorldString( m_draw, m_camera, p, b2_colorWhite, "skip" );
 		}
 
 		for ( int i = 0; i < m_doomCount; ++i )
@@ -2297,20 +2313,22 @@ public:
 		return true;
 	}
 
-	void MouseDown( b2Position p, int button, int mods ) override
+	void MouseDown( b2Position position, int button, int mods ) override
 	{
+		b2Vec2 p = b2ToVec2( position );
+
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
 			if ( mods == 0 && m_rotating == false )
 			{
 				m_dragging = true;
-				m_startPoint = b2ToVec2( p );
+				m_startPoint = p;
 				m_basePosition = m_transform.p;
 			}
 			else if ( mods == GLFW_MOD_SHIFT && m_dragging == false )
 			{
 				m_rotating = true;
-				m_startPoint = b2ToVec2( p );
+				m_startPoint = p;
 				m_baseAngle = m_angle;
 			}
 		}
@@ -3033,20 +3051,22 @@ public:
 		return true;
 	}
 
-	void MouseDown( b2Position p, int button, int mods ) override
+	void MouseDown( b2Position position, int button, int mods ) override
 	{
+		b2Vec2 p = b2ToVec2( position );
+
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
 			if ( mods == 0 && m_rotating == false )
 			{
 				m_dragging = true;
-				m_startPoint = b2ToVec2( p );
+				m_startPoint = p;
 				m_basePosition = m_transform.p;
 			}
 			else if ( mods == GLFW_MOD_SHIFT && m_dragging == false )
 			{
 				m_rotating = true;
-				m_startPoint = b2ToVec2( p );
+				m_startPoint = p;
 				m_baseAngle = m_angle;
 			}
 		}
@@ -3370,8 +3390,10 @@ public:
 		}
 	}
 
-	void MouseDown( b2Position p, int button, int mods ) override
+	void MouseDown( b2Position position, int button, int mods ) override
 	{
+		b2Vec2 p = b2ToVec2( position );
+
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
 			if ( mods == 0 )
@@ -3379,7 +3401,7 @@ public:
 				m_dragging = true;
 				m_sweeping = false;
 				m_rotating = false;
-				m_startPoint = b2ToVec2( p );
+				m_startPoint = p;
 				m_basePosition = m_transform.p;
 			}
 			else if ( mods == GLFW_MOD_SHIFT )
@@ -3387,7 +3409,7 @@ public:
 				m_dragging = false;
 				m_sweeping = false;
 				m_rotating = true;
-				m_startPoint = b2ToVec2( p );
+				m_startPoint = p;
 				m_baseAngle = m_angle;
 			}
 			else if ( mods == GLFW_MOD_CONTROL )
@@ -3395,7 +3417,7 @@ public:
 				m_dragging = false;
 				m_sweeping = true;
 				m_rotating = false;
-				m_startPoint = b2ToVec2( p );
+				m_startPoint = p;
 				m_basePosition = b2Vec2_zero;
 			}
 		}
@@ -3411,11 +3433,13 @@ public:
 		}
 	}
 
-	void MouseMove( b2Position p ) override
+	void MouseMove( b2Position position ) override
 	{
+		b2Vec2 p = b2ToVec2( position );
+
 		if ( m_dragging )
 		{
-			m_transform.p = m_basePosition + 0.5f * ( b2ToVec2( p ) - m_startPoint );
+			m_transform.p = m_basePosition + 0.5f * ( p - m_startPoint );
 		}
 		else if ( m_rotating )
 		{
@@ -3425,7 +3449,7 @@ public:
 		}
 		else if ( m_sweeping )
 		{
-			m_translation = b2ToVec2( p ) - m_startPoint;
+			m_translation = p - m_startPoint;
 		}
 	}
 

@@ -2261,29 +2261,29 @@ public:
 
 		b2Vec2 vB = b2Body_GetLinearVelocity( m_bodyId );
 		float omegaB = b2Body_GetAngularVelocity( m_bodyId );
-		b2Vec2 pB = b2ToVec2( b2Body_GetWorldCenter( m_bodyId ) );
+		b2Position pB = b2Body_GetWorldCenter( m_bodyId );
 
 		for ( int i = 0; i < 2; ++i )
 		{
-			b2Vec2 anchorA = { 3.0f, 0.0f };
-			b2Vec2 anchorB = b2ToVec2( b2Body_GetWorldPoint( m_bodyId, localAnchors[i] ) );
+			b2Position anchorA = { 3.0f, 0.0f };
+			b2Position anchorB = b2Body_GetWorldPoint( m_bodyId, localAnchors[i] );
 
-			b2Vec2 deltaAnchor = b2Sub( anchorB, anchorA );
+			b2Vec2 deltaAnchor = b2PositionDelta( anchorB, anchorA );
 
 			float slackLength = 1.0f;
 			float length = b2Length( deltaAnchor );
 			float C = length - slackLength;
 			if ( C < 0.0f || length < 0.001f )
 			{
-				DrawLine( m_draw, anchorA, anchorB, b2_colorLightCyan );
+				DrawWorldLine( m_draw, anchorA, anchorB, b2_colorLightCyan );
 				m_impulses[i] = 0.0f;
 				continue;
 			}
 
-			DrawLine( m_draw, anchorA, anchorB, b2_colorViolet );
+			DrawWorldLine( m_draw, anchorA, anchorB, b2_colorViolet );
 			b2Vec2 axis = b2Normalize( deltaAnchor );
 
-			b2Vec2 rB = b2Sub( anchorB, pB );
+			b2Vec2 rB = b2PositionDelta( anchorB, pB );
 			float Jb = b2Cross( rB, axis );
 			float K = invMass + Jb * invI * Jb;
 			float invK = K < 0.0001f ? 0.0f : 1.0f / K;
@@ -3373,8 +3373,8 @@ public:
 	{
 		Sample::Step();
 
-		b2Vec2 p = b2ToVec2( b2Body_GetWorldPoint( m_doorId, { 0.0f, 1.5f } ) );
-		DrawPoint( m_draw, p, 5.0f, b2_colorDarkKhaki );
+		b2Position p = b2Body_GetWorldPoint( m_doorId, { 0.0f, 1.5f } );
+		DrawWorldPoint( m_draw, p, 5.0f, b2_colorDarkKhaki );
 
 		float translationError = b2Joint_GetLinearSeparation( m_jointId );
 		m_translationError = b2MaxFloat( m_translationError, translationError );

@@ -70,7 +70,7 @@ int HelloWorld( void )
 	float timeStep = 1.0f / 60.0f;
 	int subStepCount = 4;
 
-	b2Vec2 position = b2ToVec2( b2Body_GetPosition( bodyId ) );
+	b2Position position = b2Body_GetPosition( bodyId );
 	b2Rot rotation = b2Body_GetRotation( bodyId );
 
 	// This is our little game loop.
@@ -81,7 +81,7 @@ int HelloWorld( void )
 		b2World_Step( worldId, timeStep, subStepCount );
 
 		// Now print the position and angle of the body.
-		position = b2ToVec2( b2Body_GetPosition( bodyId ) );
+		position = b2Body_GetPosition( bodyId );
 		rotation = b2Body_GetRotation( bodyId );
 
 		// printf("%4.2f %4.2f %4.2f\n", position.x, position.y, b2Rot_GetAngle(rotation));
@@ -365,7 +365,7 @@ static int TestSensor( void )
 		int subStepCount = 4;
 		b2World_Step( worldId, timeStep, subStepCount );
 
-		b2Vec2 bulletPos = b2ToVec2( b2Body_GetPosition( bulletId ) );
+		b2Position bulletPos = b2Body_GetPosition( bulletId );
 		// printf( "Bullet pos: %g %g\n", bulletPos.x, bulletPos.y );
 
 		b2SensorEvents events = b2World_GetSensorEvents( worldId );
@@ -484,7 +484,7 @@ static int ChainSegmentShapeTest( void )
 		b2World_Step( worldId, 1.0f / 60.0f, 4 );
 	}
 
-	b2Vec2 circlePos = b2ToVec2( b2Body_GetPosition( circleBodyId ) );
+	b2Position circlePos = b2Body_GetPosition( circleBodyId );
 	ENSURE( circlePos.y > 0.0f );
 
 	b2ChainSegment cs2 = { 0 };

@@ -2488,7 +2488,7 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, uint64_t
 	b2WorldTransform xf = b2GetBodyTransformQuick( world, body );
 
 	// Re-center on the body so the per-shape cast stays in float precision far from the origin.
-	// The tree traversal already used the truncated origin in input; here we re-difference in full
+	// The tree traversal already used the truncated origin in input. Here we re-difference in full
 	// precision against the body position.
 	b2Position base = xf.p;
 	b2Transform transform = b2ToRelativeTransform( xf, base );
