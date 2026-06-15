@@ -523,15 +523,15 @@ B2_API b2TOIOutput b2TimeOfImpact( const b2TOIInput* input );
 /// the time step.
 typedef struct b2ManifoldPoint
 {
-	/// Location of the contact point relative to shapeA's origin in world space.
+	/// Location of the contact point relative to bodyA's center of mass in world space.
 	/// This can be converted to a world point using:
-	/// b2Pos worldPointA = b2OffsetPosition(b2Body_GetWorldCenterOfMass(myBodyIdA), anchorA);
+	/// b2Pos worldPointA = b2OffsetPos(b2Body_GetWorldCenter(myBodyIdA), anchorA);
 	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
 	b2Vec2 anchorA;
 
-	/// Location of the contact point relative to shapeB's origin in world space
+	/// Location of the contact point relative to bodyB's center of mass in world space.
 	/// This can be converted to a world point using:
-	/// b2Pos worldPointB = b2OffsetPosition(b2Body_GetWorldCenterOfMass(myBodyIdB), anchorB);
+	/// b2Pos worldPointB = b2OffsetPos(b2Body_GetWorldCenter(myBodyIdB), anchorB);
 	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
 	b2Vec2 anchorB;
 

@@ -598,7 +598,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 			contactSim->manifold.points[0] = contactSim->manifold.points[1];
 			contactSim->manifold.pointCount = 1;
 		}
-		else if ( contactSim->manifold.points[0].separation > 1.5f * B2_LINEAR_SLOP )
+		else if ( contactSim->manifold.points[1].separation > 1.5f * B2_LINEAR_SLOP )
 		{
 			contactSim->manifold.pointCount = 1;
 		}

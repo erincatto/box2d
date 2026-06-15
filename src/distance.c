@@ -700,7 +700,9 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	return output;
 }
 
+// Note: the code below is experimental and probably broken
 #if 0
+
 static inline b2Vec2 b2ComputeSimplexClosestPoint( const b2Simplex* s )
 {
 	if ( s->count == 1 )

@@ -512,7 +512,7 @@ The body's mass data is available through the following functions:
 ```c
 float mass = b2Body_GetMass(myBodyId);
 float inertia = b2Body_GetRotationalInertia(myBodyId);
-b2Vec2 localCenter b2Body_GetLocalCenterOfMass(myBodyId);
+b2Vec2 localCenter b2Body_GetLocalCenter(myBodyId);
 b2MassData massData = b2Body_GetMassData(myBodyId);
 ```
 
@@ -568,8 +568,8 @@ body that is square. The body origin might be a corner of the square,
 while the center of mass is located at the center of the square.
 
 ```c
-b2Pos worldCenter = b2Body_GetWorldCenterOfMass(myBodyId);
-b2Vec2 localCenter = b2Body_GetLocalCenterOfMass(myBodyId);
+b2Pos worldCenter = b2Body_GetWorldCenter(myBodyId);
+b2Vec2 localCenter = b2Body_GetLocalCenter(myBodyId);
 ```
 
 You can access the linear and angular velocity. The linear velocity is
