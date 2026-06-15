@@ -806,26 +806,36 @@ typedef float b2TreeRayCastCallbackFcn( const b2RayCastInput* input, int proxyId
 B2_API b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
 										  b2TreeRayCastCallbackFcn* callback, void* context );
 
-/// This function receives clipped ray cast input for a proxy. The function
-/// returns the new ray fraction.
-/// - return a value of 0 to terminate the ray cast
-/// - return a value less than input->maxFraction to clip the ray
-/// - return a value of input->maxFraction to continue the ray cast without clipping
-typedef float b2TreeShapeCastCallbackFcn( const b2ShapeCastInput* input, int proxyId, uint64_t userData, void* context );
+/// Input for casting an AABB through a dynamic tree
+typedef struct b2BoxCastInput
+{
+	/// The AABB to cast, in the tree's frame.
+	b2AABB box;
 
-/// Ray cast against the proxies in the tree. This relies on the callback
-/// to perform a exact ray cast in the case were the proxy contains a shape.
-/// The callback also performs the any collision filtering. This has performance
-/// roughly equal to k * log(n), where k is the number of collisions and n is the
-/// number of proxies in the tree.
-/// @param tree the dynamic tree to ray cast
-/// @param input the ray cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
+	/// The sweep translation.
+	b2Vec2 translation;
+
+	/// The maximum fraction of the translation to consider, typically 1.
+	float maxFraction;
+} b2BoxCastInput;
+
+/// This function receives clipped AABB cast input for a proxy. The function
+/// returns the new cast fraction.
+/// - return a value of 0 to terminate the cast
+/// - return a value less than input->maxFraction to clip the cast
+/// - return a value of input->maxFraction to continue the cast without clipping
+typedef float b2TreeBoxCastCallbackFcn( const b2BoxCastInput* input, int proxyId, uint64_t userData, void* context );
+
+/// Cast a swept AABB through the tree. This has performance roughly equal to k * log(n),
+/// where k is the number of collisions and n is the number of proxies in the tree.
+/// @param tree the dynamic tree to cast through
+/// @param input the AABB cast input. The box sweeps from its origin to origin + maxFraction * translation.
 /// @param maskBits filter bits: `bool accept = (maskBits & node->categoryBits) != 0;`
-/// @param callback a callback class that is called for each proxy that is hit by the shape
+/// @param callback a callback that is called for each proxy the swept box may hit
 /// @param context user context that is passed to the callback
 ///	@return performance data
-B2_API b2TreeStats b2DynamicTree_ShapeCast( const b2DynamicTree* tree, const b2ShapeCastInput* input, uint64_t maskBits,
-											b2TreeShapeCastCallbackFcn* callback, void* context );
+B2_API b2TreeStats b2DynamicTree_BoxCast( const b2DynamicTree* tree, const b2BoxCastInput* input, uint64_t maskBits,
+										  b2TreeBoxCastCallbackFcn* callback, void* context );
 
 /// Get the height of the binary tree.
 B2_API int b2DynamicTree_GetHeight( const b2DynamicTree* tree );

@@ -7,8 +7,6 @@
 
 #include "physics_world.h"
 
-#include "recording.h"
-
 #include "aabb.h"
 #include "arena_allocator.h"
 #include "bitset.h"
@@ -21,6 +19,7 @@
 #include "island.h"
 #include "joint.h"
 #include "parallel_for.h"
+#include "recording.h"
 #include "scheduler.h"
 #include "sensor.h"
 #include "shape.h"
@@ -1034,7 +1033,7 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2He
 			draw->DrawLineFcn( p1, p2, color, draw->context );
 			draw->DrawPointFcn( p2, 4.0f, color, draw->context );
 
-			if (drawChainNormals)
+			if ( drawChainNormals )
 			{
 				b2Vec2 c = b2Lerp( p1, p2, 0.5f );
 				b2Vec2 e = b2Normalize( b2Sub( p2, p1 ) );
@@ -1214,8 +1213,8 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
 				b2Transform transform = { b2PositionDelta( bodySim->center, draw->origin ), bodySim->transform.q };
-				draw->DrawLineFcn( b2PositionDelta( bodySim->center0, draw->origin ), b2PositionDelta( bodySim->center, draw->origin ),
-								   b2_colorWhiteSmoke, draw->context );
+				draw->DrawLineFcn( b2PositionDelta( bodySim->center0, draw->origin ),
+								   b2PositionDelta( bodySim->center, draw->origin ), b2_colorWhiteSmoke, draw->context );
 				draw->DrawTransformFcn( transform, draw->context );
 
 				b2Vec2 p = b2TransformPoint( transform, offset );
@@ -1423,7 +1422,7 @@ bool b2ComputeWorldBounds( b2World* world, b2AABB* bounds )
 	return haveBounds;
 }
 
-b2AABB b2World_GetBounds(b2WorldId worldId)
+b2AABB b2World_GetBounds( b2WorldId worldId )
 {
 	b2World* world = b2GetUnlockedWorldFromId( worldId );
 	if ( world == NULL )
@@ -2303,8 +2302,8 @@ static bool TreeQueryCallback( int proxyId, uint64_t userData, void* context )
 	return result;
 }
 
-b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2Position origin, b2AABB aabb, b2QueryFilter filter,
-								 b2OverlapResultFcn* fcn, void* context )
+b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2Position origin, b2AABB aabb, b2QueryFilter filter, b2OverlapResultFcn* fcn,
+								 void* context )
 {
 	b2TreeStats treeStats = { 0 };
 
@@ -2648,11 +2647,12 @@ typedef struct WorldShapeCastContext
 	b2QueryFilter filter;
 	float fraction;
 	b2Position origin;
-	b2ShapeCastInput relInput; // origin relative input for the per shape casts
+	// origin relative input
+	b2ShapeCastInput input;
 	void* userContext;
 } WorldShapeCastContext;
 
-static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, uint64_t userData, void* context )
+static float ShapeCastCallback( const b2BoxCastInput* input, int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
 
@@ -2670,13 +2670,14 @@ static float ShapeCastCallback( const b2ShapeCastInput* input, int proxyId, uint
 
 	// Rebuild from the origin relative input, taking only the advancing fraction from the tree.
 	// The tree input is world float and would lose the cast far from the origin.
-	b2ShapeCastInput localInput = worldContext->relInput;
+	b2ShapeCastInput localInput = worldContext->input;
 	localInput.maxFraction = input->maxFraction;
 
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2Transform transform = b2ToRelativeTransform( b2GetBodyTransformQuick( world, body ), worldContext->origin );
+	b2WorldTransform transform = b2GetBodyTransformQuick( world, body );
+	b2Transform localTransform = b2ToRelativeTransform( transform, worldContext->origin );
 
-	b2CastOutput output = b2ShapeCastShape( &localInput, shape, transform );
+	b2CastOutput output = b2ShapeCastShape( &localInput, shape, localTransform );
 
 	if ( output.hit )
 	{
@@ -2733,25 +2734,22 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, b2Position origin, const b2Sha
 	worldContext.filter = filter;
 	worldContext.fraction = 1.0f;
 	worldContext.origin = origin;
-	worldContext.relInput.proxy = *proxy;
-	worldContext.relInput.translation = translation;
-	worldContext.relInput.maxFraction = 1.0f;
+	worldContext.input.proxy = *proxy;
+	worldContext.input.translation = translation;
+	worldContext.input.maxFraction = 1.0f;
 	worldContext.userContext = context;
 
-	// Tree traversal uses the truncated origin to lift the proxy to world float, with the same
-	// graze sized tolerance as the ray tree input. Per shape casts re-difference at full
-	// precision against the origin carried on the context.
-	b2ShapeCastInput treeInput = worldContext.relInput;
-	b2Vec2 originf = b2ToVec2( origin );
-	for ( int i = 0; i < proxy->count; ++i )
-	{
-		treeInput.proxy.points[i] = b2Add( proxy->points[i], originf );
-	}
+	// Bound the proxy in origin relative space then lift to a conservative world float box. The
+	// tree node boxes use the same directed rounding, so the swept box never clips a shape far
+	// from the origin. Per shape casts re-difference at full precision against the carried origin.
+	b2AABB localBox = b2MakeAABB( proxy->points, proxy->count, proxy->radius );
+	b2AABB box = b2OffsetAABB( localBox, origin );
+	b2BoxCastInput treeInput = { box, translation, 1.0f };
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
 		b2TreeStats treeResult =
-			b2DynamicTree_ShapeCast( world->broadPhase.trees + i, &treeInput, filter.maskBits, ShapeCastCallback, &worldContext );
+			b2DynamicTree_BoxCast( world->broadPhase.trees + i, &treeInput, filter.maskBits, ShapeCastCallback, &worldContext );
 		treeStats.nodeVisits += treeResult.nodeVisits;
 		treeStats.leafVisits += treeResult.leafVisits;
 
@@ -2782,7 +2780,7 @@ typedef struct WorldMoverCastContext
 	b2ShapeCastInput relInput; // origin relative input for the per shape casts, carries canEncroach
 } WorldMoverCastContext;
 
-static float MoverCastCallback( const b2ShapeCastInput* input, int proxyId, uint64_t userData, void* context )
+static float MoverCastCallback( const b2BoxCastInput* input, int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
 
@@ -2841,15 +2839,14 @@ float b2World_CastMover( b2WorldId worldId, b2Position origin, const b2Capsule* 
 	worldContext.relInput.maxFraction = 1.0f;
 	worldContext.relInput.canEncroach = true;
 
-	// Truncated origin lift for the tree, same graze sized tolerance as the ray tree input
-	b2ShapeCastInput treeInput = worldContext.relInput;
-	b2Vec2 originf = b2ToVec2( origin );
-	treeInput.proxy.points[0] = b2Add( mover->center1, originf );
-	treeInput.proxy.points[1] = b2Add( mover->center2, originf );
+	// Bound the capsule in origin relative space then lift to a conservative world float box
+	b2Vec2 centers[2] = { mover->center1, mover->center2 };
+	b2AABB box = b2OffsetAABB( b2MakeAABB( centers, 2, mover->radius ), origin );
+	b2BoxCastInput treeInput = { box, translation, 1.0f };
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_ShapeCast( world->broadPhase.trees + i, &treeInput, filter.maskBits, MoverCastCallback, &worldContext );
+		b2DynamicTree_BoxCast( world->broadPhase.trees + i, &treeInput, filter.maskBits, MoverCastCallback, &worldContext );
 
 		if ( worldContext.fraction == 0.0f )
 		{

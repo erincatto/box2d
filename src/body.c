@@ -505,9 +505,11 @@ b2AABB b2Body_ComputeAABB( b2BodyId bodyId )
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	if ( body->headShapeId == B2_NULL_INDEX )
 	{
+		// No shapes, bracket the body origin so the box still contains the true position far away
 		b2WorldTransform transform = b2GetBodyTransform( world, body->id );
-		b2Vec2 p = b2ToVec2( transform.p );
-		return (b2AABB){ p, p };
+		b2Vec2 lower = { b2RoundDownFloat( transform.p.x ), b2RoundDownFloat( transform.p.y ) };
+		b2Vec2 upper = { b2RoundUpFloat( transform.p.x ), b2RoundUpFloat( transform.p.y ) };
+		return (b2AABB){ lower, upper };
 	}
 
 	b2Shape* shape = b2Array_Get( world->shapes, body->headShapeId );
