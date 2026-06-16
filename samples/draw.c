@@ -1303,13 +1303,14 @@ void DrawWorldPolygon( Draw* draw, b2WorldTransform transform, const b2Vec2* ver
 	}
 }
 
-void DrawWorldSolidCircle( Draw* draw, b2WorldTransform transform, float radius, b2HexColor color )
+void DrawWorldSolidCircle( Draw* draw, b2WorldTransform transform, b2Vec2 center, float radius, b2HexColor color )
 {
+	b2WorldTransform xf = { b2OffsetPos( transform.p, center ), transform.q };
 	DrawSolidCircle( draw, b2ToRelativeTransform( transform, draw->origin ), radius, color );
 }
 
 void DrawWorldSolidPolygon( Draw* draw, b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, float radius,
-						   b2HexColor color )
+							b2HexColor color )
 {
 	DrawSolidPolygon( draw, b2ToRelativeTransform( transform, draw->origin ), vertices, vertexCount, radius, color );
 }

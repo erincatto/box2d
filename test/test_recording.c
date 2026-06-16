@@ -71,8 +71,9 @@ static void s_DrawPoint( b2Vec2 p, float sz, b2HexColor c, void* ctx )
 	(void)c;
 	(void)ctx;
 }
-static void s_DrawPoly( const b2Vec2* v, int n, b2HexColor c, void* ctx )
+static void s_DrawPoly( b2WorldTransform xf, const b2Vec2* v, int n, b2HexColor c, void* ctx )
 {
+	(void)xf;
 	(void)v;
 	(void)n;
 	(void)c;

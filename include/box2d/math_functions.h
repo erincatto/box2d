@@ -667,13 +667,22 @@ B2_INLINE b2Vec2 b2InvTransformWorldPoint( b2WorldTransform t, b2Pos p )
 	return B2_LITERAL( b2Vec2 ){ t.q.c * vx + t.q.s * vy, -t.q.s * vx + t.q.c * vy };
 }
 
-/// Relative transform of frame B in frame A. The narrow phase boundary.
+/// Relative transform of frame B in frame A.
 B2_INLINE b2Transform b2InvMulWorldTransforms( b2WorldTransform A, b2WorldTransform B )
 {
 	b2Transform C;
 	C.q = b2InvMulRot( A.q, B.q );
 	b2Vec2 d = { (float)( B.p.x - A.p.x ), (float)( B.p.y - A.p.y ) };
 	C.p = b2InvRotateVector( A.q, d );
+	return C;
+}
+
+/// Convert a local transform B into world space using world transform A.
+B2_INLINE b2WorldTransform b2OffsetWorldTransform( b2WorldTransform A, b2Transform B )
+{
+	b2WorldTransform C;
+	C.q = b2MulRot( A.q, B.q );
+	C.p = b2OffsetPos( A.p, b2RotateVector( A.q, B.p ) );
 	return C;
 }
 

@@ -452,46 +452,15 @@ void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 	}
 }
 
-#if 0
-void b2DumpWeldJoint()
-{
-	int32 indexA = bodyA->islandIndex;
-	int32 indexB = bodyB->islandIndex;
-
-	b2Dump("  b2WeldJointDef jd;\n");
-	b2Dump("  jd.bodyA = sims[%d];\n", indexA);
-	b2Dump("  jd.bodyB = sims[%d];\n", indexB);
-	b2Dump("  jd.collideConnected = bool(%d);\n", collideConnected);
-	b2Dump("  jd.localAnchorA.Set(%.9g, %.9g);\n", localAnchorA.x, localAnchorA.y);
-	b2Dump("  jd.localAnchorB.Set(%.9g, %.9g);\n", localAnchorB.x, localAnchorB.y);
-	b2Dump("  jd.referenceAngle = %.9g;\n", referenceAngle);
-	b2Dump("  jd.stiffness = %.9g;\n", stiffness);
-	b2Dump("  jd.damping = %.9g;\n", damping);
-	b2Dump("  joints[%d] = world->CreateJoint(&jd);\n", index);
-}
-#endif
-
-void b2DrawWeldJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale )
+void b2DrawWeldJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform transformA, b2WorldTransform transformB,
+					  float drawScale )
 {
 	B2_ASSERT( base->type == b2_weldJoint );
 
-	b2Transform frameA = b2MulTransforms( transformA, base->localFrameA );
-	b2Transform frameB = b2MulTransforms( transformB, base->localFrameB );
+	b2WorldTransform frameA = b2OffsetWorldTransform( transformA, base->localFrameA );
+	b2WorldTransform frameB = b2OffsetWorldTransform( transformB, base->localFrameB );
 
 	b2Polygon box = b2MakeBox( 0.25f * drawScale, 0.125f * drawScale );
-
-	b2Vec2 points[4];
-
-	for ( int i = 0; i < 4; ++i )
-	{
-		points[i] = b2TransformPoint( frameA, box.vertices[i] );
-	}
-	draw->DrawPolygonFcn( points, 4, b2_colorDarkOrange, draw->context );
-
-	for ( int i = 0; i < 4; ++i )
-	{
-		points[i] = b2TransformPoint( frameB, box.vertices[i] );
-	}
-
-	draw->DrawPolygonFcn( points, 4, b2_colorDarkCyan, draw->context );
+	draw->DrawPolygonFcn( frameA, box.vertices, 4, b2_colorDarkOrange, draw->context );
+	draw->DrawPolygonFcn( frameB, box.vertices, 4, b2_colorDarkCyan, draw->context );
 }

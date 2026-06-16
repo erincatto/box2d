@@ -122,7 +122,7 @@ public:
 				b2Pos p = b2TransformWorldPoint( transform, m_point );
 				if ( radius > 0.0f )
 				{
-					DrawWorldSolidCircle( m_draw, { p, transform.q }, radius, color );
+					DrawWorldSolidCircle( m_draw, { p, transform.q }, b2Vec2_zero, radius, color );
 				}
 				else
 				{
@@ -1047,8 +1047,7 @@ public:
 		// circle
 		{
 			b2WorldTransform transform = b2MakeWorldTransform( { b2Add( m_transform.p, offset ), m_transform.q } );
-			b2Pos center = b2TransformWorldPoint( transform, m_circle.center );
-			DrawWorldSolidCircle( m_draw, { center, transform.q }, m_circle.radius, color1 );
+			DrawWorldSolidCircle( m_draw, transform, m_circle.center, m_circle.radius, color1 );
 
 			b2Vec2 start = b2InvTransformWorldPoint( transform, m_rayStart );
 			b2Vec2 translation = b2InvRotateVector( transform.q, m_rayEnd - m_rayStart );
@@ -1776,7 +1775,7 @@ public:
 					// The swept shape rests at the contact position c
 					if ( m_castType == e_circleCast )
 					{
-						DrawWorldSolidCircle( m_draw, { c, b2Rot_identity }, m_castRadius, b2_colorYellow );
+						DrawWorldSolidCircle( m_draw, { c, b2Rot_identity }, b2Vec2_zero, m_castRadius, b2_colorYellow );
 					}
 					else if ( m_castType == e_capsuleCast )
 					{
@@ -1797,7 +1796,7 @@ public:
 				// No hit, so the swept shape rests at the end of the ray
 				if ( m_castType == e_circleCast )
 				{
-					DrawWorldSolidCircle( m_draw, { m_rayEnd, b2Rot_identity }, m_castRadius, b2_colorGray );
+					DrawWorldSolidCircle( m_draw, { m_rayEnd, b2Rot_identity }, b2Vec2_zero, m_castRadius, b2_colorGray );
 				}
 				else if ( m_castType == e_capsuleCast )
 				{
@@ -2139,7 +2138,7 @@ public:
 				.radius = 1.0f,
 			};
 			proxy = b2MakeProxy( &circle.center, 1, circle.radius );
-			DrawWorldSolidCircle( m_draw, { m_position, b2Rot_identity }, circle.radius, b2_colorWhite );
+			DrawWorldSolidCircle( m_draw, { m_position, b2Rot_identity }, circle.center, circle.radius, b2_colorWhite );
 		}
 		else if ( m_shapeType == e_capsuleShape )
 		{
@@ -2422,10 +2421,8 @@ public:
 
 			b2Manifold m = b2CollideCircles( &circle1, transform1, &circle2, transform2 );
 
-			b2Pos center1 = b2TransformWorldPoint( transform1, circle1.center );
-			DrawWorldSolidCircle( m_draw, { center1, transform1.q }, circle1.radius, color1 );
-			b2Pos center2 = b2TransformWorldPoint( transform2, circle2.center );
-			DrawWorldSolidCircle( m_draw, { center2, transform2.q }, circle2.radius, color2 );
+			DrawWorldSolidCircle( m_draw, transform1, circle1.center, circle1.radius, color1 );
+			DrawWorldSolidCircle( m_draw, transform2, circle2.center, circle2.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2445,9 +2442,7 @@ public:
 			b2Pos v1 = b2TransformWorldPoint( transform1, capsule.center1 );
 			b2Pos v2 = b2TransformWorldPoint( transform1, capsule.center2 );
 			DrawWorldCapsule( m_draw, v1, v2, capsule.radius, color1 );
-
-			b2Pos center = b2TransformWorldPoint( transform2, circle.center );
-			DrawWorldSolidCircle( m_draw, { center, transform2.q }, circle.radius, color2 );
+			DrawWorldSolidCircle( m_draw, transform2, circle.center, circle.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2467,9 +2462,7 @@ public:
 			b2Pos p1 = b2TransformWorldPoint( transform1, segment.point1 );
 			b2Pos p2 = b2TransformWorldPoint( transform1, segment.point2 );
 			DrawWorldLine( m_draw, p1, p2, color1 );
-
-			b2Pos center = b2TransformWorldPoint( transform2, circle.center );
-			DrawWorldSolidCircle( m_draw, { center, transform2.q }, circle.radius, color2 );
+			DrawWorldSolidCircle( m_draw, transform2, circle.center, circle.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2488,9 +2481,7 @@ public:
 			b2Manifold m = b2CollidePolygonAndCircle( &box, transform1, &circle, transform2 );
 
 			DrawWorldSolidPolygon( m_draw, transform1, box.vertices, box.count, m_round, color1 );
-
-			b2Pos center = b2TransformWorldPoint( transform2, circle.center );
-			DrawWorldSolidCircle( m_draw, { center, transform2.q }, circle.radius, color2 );
+			DrawWorldSolidCircle( m_draw, transform2, circle.center, circle.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -2755,9 +2746,7 @@ public:
 			DrawWorldLine( m_draw, g1, p1, b2_colorLightGray );
 			DrawWorldLine( m_draw, p1, p2, color1 );
 			DrawWorldLine( m_draw, p2, g2, b2_colorLightGray );
-
-			b2Pos center = b2TransformWorldPoint( transform2, circle.center );
-			DrawWorldSolidCircle( m_draw, { center, transform2.q }, circle.radius, color2 );
+			DrawWorldSolidCircle( m_draw, transform2, circle.center, circle.radius, color2 );
 
 			DrawManifold( &m, transform1.p, transform2.p );
 
@@ -3126,7 +3115,7 @@ public:
 		{
 			float radius = 0.5f;
 			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
-			DrawWorldSolidCircle( m_draw, transform2, circle.radius, color2 );
+			DrawWorldSolidCircle( m_draw, transform2, circle.center, circle.radius, color2 );
 
 			for ( int i = 0; i < m_count; ++i )
 			{
@@ -3323,7 +3312,7 @@ public:
 				b2Pos p = b2TransformWorldPoint( transform, m_point );
 				if ( radius > 0.0f )
 				{
-					DrawWorldSolidCircle( m_draw, { p, transform.q }, radius, color );
+					DrawWorldSolidCircle( m_draw, { p, transform.q }, b2Vec2_zero, radius, color );
 				}
 				else
 				{

@@ -89,9 +89,9 @@ b2ChainDef b2DefaultChainDef( void )
 	return def;
 }
 
-static void b2EmptyDrawPolygon( const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context )
+static void b2EmptyDrawPolygon( b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context )
 {
-	B2_UNUSED( vertices, vertexCount, color, context );
+	B2_UNUSED( transform, vertices, vertexCount, color, context );
 }
 
 static void b2EmptyDrawSolidPolygon( b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius,
@@ -105,9 +105,9 @@ static void b2EmptyDrawCircle( b2Vec2 center, float radius, b2HexColor color, vo
 	B2_UNUSED( center, radius, color, context );
 }
 
-static void b2EmptyDrawSolidCircle( b2Transform transform, float radius, b2HexColor color, void* context )
+static void b2EmptyDrawSolidCircle( b2WorldTransform transform, b2Vec2 center, float radius, b2HexColor color, void* context )
 {
-	B2_UNUSED( transform, radius, color, context );
+	B2_UNUSED( transform, center, radius, color, context );
 }
 
 static void b2EmptyDrawSolidCapsule( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context )

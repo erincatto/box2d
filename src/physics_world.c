@@ -986,8 +986,10 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	b2TracyCFrame;
 }
 
-static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2HexColor color, bool drawChainNormals )
+static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2WorldTransform transform, b2HexColor color, bool drawChainNormals )
 {
+	b2Transform xf = b2ToRelativeTransform( transform, draw->origin );
+
 	switch ( shape->type )
 	{
 		case b2_capsuleShape:
@@ -1002,8 +1004,7 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2Transform xf, b2He
 		case b2_circleShape:
 		{
 			b2Circle* circle = &shape->circle;
-			xf.p = b2TransformPoint( xf, circle->center );
-			draw->DrawSolidCircleFcn( xf, circle->radius, color, draw->context );
+			draw->DrawSolidCircleFcn( transform, circle->center, circle->radius, color, draw->context );
 		}
 		break;
 
@@ -1065,14 +1066,13 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 
 	b2Shape* shape = b2Array_Get( world->shapes, shapeId );
 	B2_ASSERT( shape->id == shapeId );
+	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
+	b2BodySim* bodySim = b2GetBodySim( world, body );
 
 	b2SetBit( &world->debugBodySet, shape->bodyId );
 
 	if ( draw->drawShapes )
 	{
-		b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-		b2BodySim* bodySim = b2GetBodySim( world, body );
-
 		b2HexColor color;
 
 		if ( shape->material.customColor != 0 )
@@ -1125,19 +1125,15 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 			color = b2_colorGray;
 		}
 
-		b2DrawShape( draw, shape, b2ToRelativeTransform( bodySim->transform, draw->origin ), color, draw->drawChainNormals );
+		b2DrawShape( draw, shape, bodySim->transform, color, draw->drawChainNormals );
 	}
 
 	if ( draw->drawBounds )
 	{
-		b2AABB aabb = shape->fatAABB;
-
-		// Shift the float broad-phase box into the view frame.
-		b2Vec2 lower = b2SubPos( b2ToPos( aabb.lowerBound ), draw->origin );
-		b2Vec2 upper = b2SubPos( b2ToPos( aabb.upperBound ), draw->origin );
+		b2Vec2 lower = shape->fatAABB.lowerBound;
+		b2Vec2 upper = shape->fatAABB.upperBound;
 		b2Vec2 vs[4] = { lower, { upper.x, lower.y }, upper, { lower.x, upper.y } };
-
-		draw->DrawPolygonFcn( vs, 4, b2_colorGold, draw->context );
+		draw->DrawPolygonFcn( b2WorldTransform_identity, vs, 4, b2_colorGold, draw->context );
 	}
 
 	return true;
@@ -1380,12 +1376,10 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 					if ( shapeCount > 0 )
 					{
-						// Corner differenced in double to match the shape draw frame
-						b2Vec2 lower = b2SubPos( b2ToPos( aabb.lowerBound ), draw->origin );
-						b2Vec2 upper = b2SubPos( b2ToPos( aabb.upperBound ), draw->origin );
+						b2Vec2 lower = aabb.lowerBound;
+						b2Vec2 upper = aabb.upperBound;
 						b2Vec2 vs[4] = { lower, { upper.x, lower.y }, upper, { lower.x, upper.y } };
-
-						draw->DrawPolygonFcn( vs, 4, b2_colorOrangeRed, draw->context );
+						draw->DrawPolygonFcn(b2WorldTransform_identity, vs, 4, b2_colorOrangeRed, draw->context );
 					}
 
 					b2SetBit( &world->debugIslandSet, islandId );

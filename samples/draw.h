@@ -54,7 +54,7 @@ void DrawWorldLine( Draw* draw, b2Pos p1, b2Pos p2, b2HexColor color );
 void DrawWorldCircle( Draw* draw, b2Pos center, float radius, b2HexColor color );
 void DrawWorldCapsule( Draw* draw, b2Pos p1, b2Pos p2, float radius, b2HexColor color );
 void DrawWorldPolygon( Draw* draw, b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, b2HexColor color );
-void DrawWorldSolidCircle( Draw* draw, b2WorldTransform transform, float radius, b2HexColor color );
+void DrawWorldSolidCircle( Draw* draw, b2WorldTransform transform, b2Vec2 center, float radius, b2HexColor color );
 void DrawWorldSolidPolygon( Draw* draw, b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, float radius,
 						   b2HexColor color );
 void DrawWorldTransform( Draw* draw, b2WorldTransform t, float scale );
