@@ -2289,11 +2289,6 @@ public:
 			m_angle = 0.0f;
 		}
 
-		ImGui::Separator();
-
-		ImGui::Text( "mouse button 1: drag" );
-		ImGui::Text( "mouse button 1 + shift: rotate" );
-
 		return true;
 	}
 
@@ -2845,6 +2840,9 @@ public:
 			offset.x += 2.0f * increment.x;
 		}
 #endif
+
+		DrawScreenTextLine( "mouse button 1: drag" );
+		DrawScreenTextLine( "mouse button 1 + shift: rotate" );
 	}
 
 	static Sample* Create( SampleContext* context )

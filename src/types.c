@@ -135,6 +135,11 @@ static void b2EmptyDrawString( b2Pos p, const char* s, b2HexColor color, void* c
 	B2_UNUSED( p, s, color, context );
 }
 
+static void b2EmptyDrawBounds( b2AABB aabb, b2HexColor color, void* context )
+{
+	B2_UNUSED( aabb, color, context );
+}
+
 b2DebugDraw b2DefaultDebugDraw( void )
 {
 	b2DebugDraw draw = { 0 };
@@ -149,6 +154,7 @@ b2DebugDraw b2DefaultDebugDraw( void )
 	draw.DrawTransformFcn = b2EmptyDrawTransform;
 	draw.DrawPointFcn = b2EmptyDrawPoint;
 	draw.DrawStringFcn = b2EmptyDrawString;
+	draw.DrawBoundsFcn = b2EmptyDrawBounds;
 
 	draw.drawingBounds.lowerBound = (b2Vec2){ -FLT_MAX, -FLT_MAX };
 	draw.drawingBounds.upperBound = (b2Vec2){ FLT_MAX, FLT_MAX };
