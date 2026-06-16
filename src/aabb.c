@@ -21,8 +21,8 @@ b2CastOutput b2AABB_RayCast( b2AABB a, b2Vec2 p1, b2Vec2 p2 )
 	// Radius not handled
 	b2CastOutput output = { 0 };
 
-	float tmin = -FLT_MAX;
-	float tmax = FLT_MAX;
+	float tMin = -FLT_MAX;
+	float tMax = FLT_MAX;
 
 	b2Vec2 p = p1;
 	b2Vec2 d = b2Sub( p2, p1 );
@@ -57,17 +57,17 @@ b2CastOutput b2AABB_RayCast( b2AABB a, b2Vec2 p1, b2Vec2 p2 )
 		}
 
 		// Push the min up
-		if ( t1 > tmin )
+		if ( t1 > tMin )
 		{
 			normal.y = 0.0f;
 			normal.x = s;
-			tmin = t1;
+			tMin = t1;
 		}
 
 		// Pull the max down
-		tmax = b2MinFloat( tmax, t2 );
+		tMax = b2MinFloat( tMax, t2 );
 
-		if ( tmin > tmax )
+		if ( tMin > tMax )
 		{
 			return output;
 		}
@@ -100,38 +100,38 @@ b2CastOutput b2AABB_RayCast( b2AABB a, b2Vec2 p1, b2Vec2 p2 )
 		}
 
 		// Push the min up
-		if ( t1 > tmin )
+		if ( t1 > tMin )
 		{
 			normal.x = 0.0f;
 			normal.y = s;
-			tmin = t1;
+			tMin = t1;
 		}
 
 		// Pull the max down
-		tmax = b2MinFloat( tmax, t2 );
+		tMax = b2MinFloat( tMax, t2 );
 
-		if ( tmin > tmax )
+		if ( tMin > tMax )
 		{
 			return output;
 		}
 	}
 
 	// Does the ray start inside the box?
-	if ( tmin < 0.0f )
+	if ( tMin < 0.0f )
 	{
 		return output;
 	}
 
 	// Does the ray intersect beyond the segment length?
-	if ( 1.0f < tmin )
+	if ( 1.0f < tMin )
 	{
 		return output;
 	}
 
 	// Intersection.
-	output.fraction = tmin;
+	output.fraction = tMin;
 	output.normal = normal;
-	output.point = b2Lerp( p1, p2, tmin );
+	output.point = b2Lerp( p1, p2, tMin );
 	output.hit = true;
 	return output;
 }

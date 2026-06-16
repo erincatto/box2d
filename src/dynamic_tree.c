@@ -743,10 +743,7 @@ static void b2RemoveLeaf( b2DynamicTree* tree, int leaf )
 // the node pool.
 int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData )
 {
-	B2_ASSERT( -B2_HUGE < aabb.lowerBound.x && aabb.lowerBound.x < B2_HUGE );
-	B2_ASSERT( -B2_HUGE < aabb.lowerBound.y && aabb.lowerBound.y < B2_HUGE );
-	B2_ASSERT( -B2_HUGE < aabb.upperBound.x && aabb.upperBound.x < B2_HUGE );
-	B2_ASSERT( -B2_HUGE < aabb.upperBound.y && aabb.upperBound.y < B2_HUGE );
+	B2_VALIDATE( b2IsValidAABB( aabb ) );
 
 	int proxyId = b2AllocateNode( tree );
 	b2TreeNode* node = tree->nodes + proxyId;

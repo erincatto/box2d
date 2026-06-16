@@ -542,9 +542,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 				}
 			}
 
-			// Caching for contact recycling. In large world mode the relative pose is differenced in
-			// double here and cached directly, so the distance check above stays precise far from the
-			// origin. A float cache would lose the translation to cancellation at large coordinates.
+			// Caching for contact recycling.
 			contactSim->cachedRotationA = transformA.q;
 			contactSim->cachedRotationB = transformB.q;
 			contactSim->cachedRelativePose = b2InvMulWorldTransforms( transformA, transformB );
@@ -3085,7 +3083,6 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 	B2_UNUSED( proxyId );
 
 	int shapeId = (int)userData;
-
 	struct ExplosionContext* explosionContext = context;
 	b2World* world = explosionContext->world;
 

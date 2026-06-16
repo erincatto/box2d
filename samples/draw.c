@@ -150,7 +150,10 @@ b2AABB GetViewBounds( Camera* camera )
 {
 	if ( camera->height == 0.0f || camera->width == 0.0f )
 	{
-		b2AABB bounds = { .lowerBound = b2Vec2_zero, .upperBound = b2Vec2_zero };
+		b2AABB bounds = {
+			.lowerBound = b2Vec2_zero,
+			.upperBound = b2Vec2_zero,
+		};
 		return bounds;
 	}
 
@@ -1290,6 +1293,29 @@ void DrawWorldCircle( Draw* draw, b2Pos center, float radius, b2HexColor color )
 void DrawWorldCapsule( Draw* draw, b2Pos p1, b2Pos p2, float radius, b2HexColor color )
 {
 	DrawSolidCapsule( draw, b2SubPos( p1, draw->origin ), b2SubPos( p2, draw->origin ), radius, color );
+}
+
+void DrawWorldPolygon( Draw* draw, b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, b2HexColor color )
+{
+	b2Transform xf = b2ToRelativeTransform( transform, draw->origin );
+	b2Vec2 p1 = b2TransformPoint( xf, vertices[vertexCount - 1] );
+	for ( int i = 0; i < vertexCount; ++i )
+	{
+		b2Vec2 p2 = b2TransformPoint( xf, vertices[i] );
+		AddLine( &draw->lines, p1, p2, color );
+		p1 = p2;
+	}
+}
+
+void DrawWorldSolidCircle( Draw* draw, b2WorldTransform transform, float radius, b2HexColor color )
+{
+	DrawSolidCircle( draw, b2ToRelativeTransform( transform, draw->origin ), radius, color );
+}
+
+void DrawWorldSolidPolygon( Draw* draw, b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, float radius,
+						   b2HexColor color )
+{
+	DrawSolidPolygon( draw, b2ToRelativeTransform( transform, draw->origin ), vertices, vertexCount, radius, color );
 }
 
 void DrawWorldTransform( Draw* draw, b2WorldTransform t, float scale )

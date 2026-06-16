@@ -517,6 +517,10 @@ void Sample::DrawScreenTextLine( const char* text, ... )
 void Sample::ResetProfile()
 {
 	m_stepCount = 0;
+	memset( m_profiles, 0, sizeof( m_profiles ) );
+	m_currentProfileIndex = 0;
+	m_profileReadIndex = 0;
+	m_profileWriteIndex = 0;
 }
 
 void Sample::Step()
