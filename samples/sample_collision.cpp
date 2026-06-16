@@ -13,8 +13,6 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
-// Note: these samples haven't been fully updated for double precision.
-
 class ShapeDistance : public Sample
 {
 public:
