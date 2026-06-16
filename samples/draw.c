@@ -133,15 +133,11 @@ static void BuildProjectionMatrix( Camera* camera, float* m, float zBias )
 	m[10] = -1.0f;
 	m[11] = 0.0f;
 
-#if defined( BOX2D_DOUBLE_PRECISION )
-	// Vertices reach the GPU already shifted into camera relative space (b2DebugDraw::origin and the
-	// DrawWorld helpers), so the view center is the origin here. No double coordinate enters a shader.
+	// Vertices reach the GPU already shifted into camera relative space, the engine draw path and the
+	// DrawWorld helpers subtract the view center, so the view center is the origin here. In large world
+	// mode this also keeps double coordinates out of the shader.
 	m[12] = 0.0f;
 	m[13] = 0.0f;
-#else
-	m[12] = -2.0f * camera->center.x / w;
-	m[13] = -2.0f * camera->center.y / h;
-#endif
 	m[14] = zBias;
 	m[15] = 1.0f;
 }

@@ -242,8 +242,6 @@ public:
 
 static int sampleTileWorld = RegisterSample( "World", "Tiles", TileWorld::Create );
 
-#ifdef BOX2D_DOUBLE_PRECISION
-
 // A pyramid built far from the origin to exercise double precision world positions. The contact
 // solver runs in delta space, so the stack settles the same as one at the origin while the body
 // transforms hold their full double coordinate. Record it (R) and open it in the Replay Viewer:
@@ -296,7 +294,7 @@ public:
 		Sample::Step();
 
 		b2Pos c = m_context->camera.center;
-		DrawScreenTextLine( "view center (%.1f, %.1f) m from world origin", c.x, c.y );
+		DrawScreenTextLine( "view center %.0f km from world origin", 0.001f * c.x );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -357,7 +355,7 @@ public:
 		Sample::Step();
 
 		b2Pos c = m_context->camera.center;
-		DrawScreenTextLine( "%d ragdolls piled %.0f m from the world origin", m_humanCount, c.x );
+		DrawScreenTextLine( "%d ragdolls piled %.0f km from the world origin", m_humanCount, 0.001f * c.x );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -372,8 +370,6 @@ public:
 };
 
 static int sampleFarRagdolls = RegisterSample( "World", "Far Ragdolls", FarRagdolls::Create );
-
-#endif
 
 // The Gear Lift mechanism from the Joints samples, rebuilt 1000 km from the origin. This sample is
 // not guarded, so it compiles and renders in both precision modes. The debug draw subtracts the

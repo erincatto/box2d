@@ -657,6 +657,12 @@ int main( int argc, char** argv )
 			s_context.sample->DrawHud( frameTime );
 		}
 
+		// Draw relative to the camera so world draws get float coordinates near the origin, and stay exact
+		// far from it in large world mode. This must hold even for samples that drive their own Step without
+		// calling Sample::Step, otherwise their world draws ignore camera panning.
+		s_context.debugDraw.origin = s_context.camera.center;
+		SetDrawOrigin( s_context.draw, s_context.camera.center );
+
 		s_context.sample->Step();
 
 		FlushDraw( s_context.draw, &s_context.camera );

@@ -113,46 +113,46 @@ public:
 		return proxy;
 	}
 
-	void DrawShape( ShapeType type, b2Transform transform, float radius, b2HexColor color )
+	void DrawShape( ShapeType type, b2WorldTransform transform, float radius, b2HexColor color )
 	{
 		switch ( type )
 		{
 			case e_point:
 			{
-				b2Vec2 p = b2TransformPoint( transform, m_point );
+				b2Pos p = b2TransformWorldPoint( transform, m_point );
 				if ( radius > 0.0f )
 				{
-					DrawSolidCircle( m_draw, { p, transform.q }, radius, color );
+					DrawWorldSolidCircle( m_draw, { p, transform.q }, radius, color );
 				}
 				else
 				{
-					DrawPoint( m_draw, p, 5.0f, color );
+					DrawWorldPoint( m_draw, p, 5.0f, color );
 				}
 			}
 			break;
 
 			case e_segment:
 			{
-				b2Vec2 p1 = b2TransformPoint( transform, m_segment.point1 );
-				b2Vec2 p2 = b2TransformPoint( transform, m_segment.point2 );
+				b2Pos p1 = b2TransformWorldPoint( transform, m_segment.point1 );
+				b2Pos p2 = b2TransformWorldPoint( transform, m_segment.point2 );
 
 				if ( radius > 0.0f )
 				{
-					DrawSolidCapsule( m_draw, p1, p2, radius, color );
+					DrawWorldCapsule( m_draw, p1, p2, radius, color );
 				}
 				else
 				{
-					DrawLine( m_draw, p1, p2, color );
+					DrawWorldLine( m_draw, p1, p2, color );
 				}
 			}
 			break;
 
 			case e_triangle:
-				DrawSolidPolygon( m_draw, transform, m_triangle.vertices, m_triangle.count, radius, color );
+				DrawWorldSolidPolygon( m_draw, transform, m_triangle.vertices, m_triangle.count, radius, color );
 				break;
 
 			case e_box:
-				DrawSolidPolygon( m_draw, transform, m_box.vertices, m_box.count, radius, color );
+				DrawWorldSolidPolygon( m_draw, transform, m_box.vertices, m_box.count, radius, color );
 				break;
 
 			default:
@@ -323,8 +323,9 @@ public:
 
 		m_simplexCount = output.simplexCount;
 
-		DrawShape( m_typeA, b2Transform_identity, m_radiusA, b2_colorCyan );
-		DrawShape( m_typeB, m_transform, m_radiusB, b2_colorBisque );
+		// Shape A is at the world origin, so its frame-A distance output doubles as world points
+		DrawShape( m_typeA, b2WorldTransform_identity, m_radiusA, b2_colorCyan );
+		DrawShape( m_typeB, b2MakeWorldTransform( m_transform ), m_radiusB, b2_colorBisque );
 
 		if ( m_drawSimplex )
 		{
@@ -337,9 +338,9 @@ public:
 				b2Vec2 pointA, pointB;
 				ComputeSimplexWitnessPoints( &pointA, &pointB, simplex );
 
-				DrawLine( m_draw, pointA, pointB, b2_colorWhite );
-				DrawPoint( m_draw, pointA, 10.0f, b2_colorWhite );
-				DrawPoint( m_draw, pointB, 10.0f, b2_colorWhite );
+				DrawWorldLine( m_draw, b2ToPos( pointA ), b2ToPos( pointB ), b2_colorWhite );
+				DrawWorldPoint( m_draw, b2ToPos( pointA ), 10.0f, b2_colorWhite );
+				DrawWorldPoint( m_draw, b2ToPos( pointB ), 10.0f, b2_colorWhite );
 			}
 
 			b2HexColor colors[3] = { b2_colorRed, b2_colorGreen, b2_colorBlue };
@@ -347,17 +348,18 @@ public:
 			for ( int i = 0; i < simplex->count; ++i )
 			{
 				b2SimplexVertex* vertex = vertices[i];
-				DrawPoint( m_draw, vertex->wA, 10.0f, colors[i] );
-				DrawPoint( m_draw, vertex->wB, 10.0f, colors[i] );
+				DrawWorldPoint( m_draw, b2ToPos( vertex->wA ), 10.0f, colors[i] );
+				DrawWorldPoint( m_draw, b2ToPos( vertex->wB ), 10.0f, colors[i] );
 			}
 		}
 		else
 		{
-			DrawLine( m_draw, output.pointA, output.pointB, b2_colorDimGray );
-			DrawPoint( m_draw, output.pointA, 10.0f, b2_colorWhite );
-			DrawPoint( m_draw, output.pointB, 10.0f, b2_colorWhite );
+			DrawWorldLine( m_draw, b2ToPos( output.pointA ), b2ToPos( output.pointB ), b2_colorDimGray );
+			DrawWorldPoint( m_draw, b2ToPos( output.pointA ), 10.0f, b2_colorWhite );
+			DrawWorldPoint( m_draw, b2ToPos( output.pointB ), 10.0f, b2_colorWhite );
 
-			DrawLine( m_draw, output.pointA, output.pointA + 0.5f * output.normal, b2_colorYellow );
+			DrawWorldLine( m_draw, b2ToPos( output.pointA ), b2ToPos( output.pointA + 0.5f * output.normal ),
+						   b2_colorYellow );
 		}
 
 		if ( m_showIndices )
@@ -1783,7 +1785,8 @@ public:
 					}
 					else if ( m_castType == e_polygonCast )
 					{
-						DrawWorldSolidPolygon( m_draw, { c, b2Rot_identity }, box.vertices, box.count, box.radius, b2_colorYellow );
+						DrawWorldSolidPolygon( m_draw, { c, b2Rot_identity }, box.vertices, box.count, box.radius,
+											   b2_colorYellow );
 					}
 				}
 			}
@@ -1803,7 +1806,8 @@ public:
 				}
 				else if ( m_castType == e_polygonCast )
 				{
-					DrawWorldSolidPolygon( m_draw, { m_rayEnd, b2Rot_identity }, box.vertices, box.count, box.radius, b2_colorYellow );
+					DrawWorldSolidPolygon( m_draw, { m_rayEnd, b2Rot_identity }, box.vertices, box.count, box.radius,
+										   b2_colorYellow );
 				}
 			}
 		}
@@ -2296,6 +2300,8 @@ public:
 
 	void MouseDown( b2Pos position, int button, int mods ) override
 	{
+		bool handled = false;
+
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
 			if ( mods == 0 && m_rotating == false )
@@ -2303,13 +2309,20 @@ public:
 				m_dragging = true;
 				m_startPoint = position;
 				m_basePosition = m_transform.p;
+				handled = true;
 			}
 			else if ( mods == GLFW_MOD_SHIFT && m_dragging == false )
 			{
 				m_rotating = true;
 				m_startPoint = position;
 				m_baseAngle = m_angle;
+				handled = true;
 			}
+		}
+
+		if ( handled == false )
+		{
+			Sample::MouseDown( position, button, mods );
 		}
 	}
 
@@ -2335,6 +2348,10 @@ public:
 		{
 			m_angle = b2ClampFloat( m_baseAngle + 1.0f * d.x, -B2_PI, B2_PI );
 			m_transform.q = b2MakeRot( m_angle );
+		}
+		else
+		{
+			Sample::MouseMove( position );
 		}
 	}
 
@@ -2403,8 +2420,7 @@ public:
 			b2WorldTransform transform1 = b2MakeWorldTransform( { offset, b2Rot_identity } );
 			b2WorldTransform transform2 = b2MakeWorldTransform( { b2Add( m_transform.p, offset ), m_transform.q } );
 
-			b2Manifold m =
-				b2CollideCircles( &circle1, transform1, &circle2, transform2 );
+			b2Manifold m = b2CollideCircles( &circle1, transform1, &circle2, transform2 );
 
 			b2Pos center1 = b2TransformWorldPoint( transform1, circle1.center );
 			DrawWorldSolidCircle( m_draw, { center1, transform1.q }, circle1.radius, color1 );
@@ -2489,8 +2505,7 @@ public:
 			b2WorldTransform transform1 = b2MakeWorldTransform( { offset, b2Rot_identity } );
 			b2WorldTransform transform2 = b2MakeWorldTransform( { b2Add( m_transform.p, offset ), m_transform.q } );
 
-			b2Manifold m =
-				b2CollideCapsules( &capsule1, transform1, &capsule2, transform2 );
+			b2Manifold m = b2CollideCapsules( &capsule1, transform1, &capsule2, transform2 );
 
 			b2Pos v1 = b2TransformWorldPoint( transform1, capsule1.center1 );
 			b2Pos v2 = b2TransformWorldPoint( transform1, capsule1.center2 );
@@ -2561,8 +2576,7 @@ public:
 			b2WorldTransform transform1 = b2MakeWorldTransform( { offset, b2Rot_identity } );
 			b2WorldTransform transform2 = b2MakeWorldTransform( { b2Add( m_transform.p, offset ), m_transform.q } );
 
-			b2Manifold m =
-				b2CollidePolygons( &box1, transform1, &box, transform2 );
+			b2Manifold m = b2CollidePolygons( &box1, transform1, &box, transform2 );
 
 			DrawWorldSolidPolygon( m_draw, transform1, box1.vertices, box1.count, box1.radius, color1 );
 			DrawWorldSolidPolygon( m_draw, transform2, box.vertices, box.count, box.radius, color2 );
@@ -2581,8 +2595,7 @@ public:
 			b2WorldTransform transform2 = b2MakeWorldTransform( { b2Add( m_transform.p, offset ), m_transform.q } );
 			// b2Transform transform2 = {b2Add({0.0f, -0.1f}, offset), {0.0f, 1.0f}};
 
-			b2Manifold m =
-				b2CollidePolygons( &box1, transform1, &box, transform2 );
+			b2Manifold m = b2CollidePolygons( &box1, transform1, &box, transform2 );
 
 			DrawWorldSolidPolygon( m_draw, transform1, box1.vertices, box1.count, box1.radius, color1 );
 			DrawWorldSolidPolygon( m_draw, transform2, box.vertices, box.count, box.radius, color2 );
@@ -2602,8 +2615,7 @@ public:
 			b2WorldTransform transform2 = b2MakeWorldTransform( { b2Add( m_transform.p, offset ), m_transform.q } );
 			// b2Transform transform2 = {b2Add({0.0f, -0.1f}, offset), {0.0f, 1.0f}};
 
-			b2Manifold m =
-				b2CollidePolygons( &box, transform1, &rox, transform2 );
+			b2Manifold m = b2CollidePolygons( &box, transform1, &rox, transform2 );
 
 			DrawWorldSolidPolygon( m_draw, transform1, box.vertices, box.count, box.radius, color1 );
 			DrawWorldSolidPolygon( m_draw, transform2, rox.vertices, rox.count, rox.radius, color2 );
@@ -2623,8 +2635,7 @@ public:
 			// b2Transform transform1 = {{6.48024225f, 2.07872653f}, {-0.938356698f, 0.345668465f}};
 			// b2Transform transform2 = {{5.52862263f, 2.51146317f}, {-0.859374702f, -0.511346340f}};
 
-			b2Manifold m =
-				b2CollidePolygons( &rox, transform1, &rox, transform2 );
+			b2Manifold m = b2CollidePolygons( &rox, transform1, &rox, transform2 );
 
 			DrawWorldSolidPolygon( m_draw, transform1, rox.vertices, rox.count, rox.radius, color1 );
 			DrawWorldSolidPolygon( m_draw, transform2, rox.vertices, rox.count, rox.radius, color2 );
@@ -2665,8 +2676,7 @@ public:
 			b2WorldTransform transform2 = b2MakeWorldTransform( { b2Add( m_transform.p, offset ), m_transform.q } );
 			// b2Transform transform2 = {b2Add({0.0f, -0.1f}, offset), {0.0f, 1.0f}};
 
-			b2Manifold m =
-				b2CollidePolygons( &wox, transform1, &wox, transform2 );
+			b2Manifold m = b2CollidePolygons( &wox, transform1, &wox, transform2 );
 
 			DrawWorldSolidPolygon( m_draw, transform1, wox.vertices, wox.count, wox.radius, color1 );
 			DrawWorldSolidPolygon( m_draw, transform1, wox.vertices, wox.count, 0.0f, color1 );
@@ -2718,8 +2728,7 @@ public:
 			b2WorldTransform transform2 = b2MakeWorldTransform( { b2Add( m_transform.p, offset ), m_transform.q } );
 			// b2Transform transform2 = {b2Add({0.0f, -0.1f}, offset), {0.0f, 1.0f}};
 
-			b2Manifold m =
-				b2CollidePolygons( &box, transform1, &tri, transform2 );
+			b2Manifold m = b2CollidePolygons( &box, transform1, &tri, transform2 );
 
 			DrawWorldSolidPolygon( m_draw, transform1, box.vertices, box.count, 0.0f, color1 );
 			DrawWorldSolidPolygon( m_draw, transform2, tri.vertices, tri.count, 0.0f, color2 );

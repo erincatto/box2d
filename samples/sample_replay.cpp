@@ -413,11 +413,7 @@ public:
 		m_stepCount = b2RecPlayer_GetFrame( m_player );
 
 		m_context->debugDraw.drawingBounds = GetViewBounds( &m_context->camera );
-#if defined( BOX2D_DOUBLE_PRECISION )
-		// Draw relative to the camera so callbacks, recorded queries, and ad-hoc draws land near the origin.
-		m_context->debugDraw.origin = m_context->camera.center;
-		SetDrawOrigin( m_context->draw, m_context->camera.center );
-#endif
+
 		if ( B2_IS_NON_NULL( m_worldId ) )
 		{
 			b2World_Draw( m_worldId, &m_context->debugDraw );

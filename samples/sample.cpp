@@ -135,13 +135,8 @@ void DrawStringFcn( b2Vec2 p, const char* s, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
 	Camera* camera = &sampleContext->camera;
-#if defined( BOX2D_DOUBLE_PRECISION )
 	// Point already arrives relative to draw->origin, the camera center
 	b2Vec2 ps = ConvertViewToScreen( camera, p );
-#else
-	// Default origin is zero, so the point is a world coordinate
-	b2Vec2 ps = ConvertWorldToScreen( camera, p );
-#endif
 	DrawScreenString( sampleContext->draw, ps.x, ps.y, color, "%s", s );
 }
 
@@ -560,6 +555,7 @@ void Sample::Step()
 	}
 
 	m_context->debugDraw.drawingBounds = GetViewBounds( &m_context->camera );
+
 	b2World_EnableSleeping( m_worldId, m_context->enableSleep );
 	b2World_EnableWarmStarting( m_worldId, m_context->enableWarmStarting );
 	b2World_EnableContinuous( m_worldId, m_context->enableContinuous );
@@ -569,11 +565,6 @@ void Sample::Step()
 		b2World_Step( m_worldId, timeStep, m_context->subStepCount );
 	}
 
-#if defined( BOX2D_DOUBLE_PRECISION )
-	// Draw relative to the camera so callbacks and ad-hoc draws get float coordinates near the origin.
-	m_context->debugDraw.origin = m_context->camera.center;
-	SetDrawOrigin( m_context->draw, m_context->camera.center );
-#endif
 	b2World_Draw( m_worldId, &m_context->debugDraw );
 
 	if ( timeStep > 0.0f )
