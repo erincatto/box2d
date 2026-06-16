@@ -293,6 +293,15 @@ public:
 	{
 		Sample::Step();
 
+		if ( b2IsDoublePrecision() == true )
+		{
+			DrawScreenTextLine( "Double precision" );
+		}
+		else
+		{
+			DrawScreenTextLine( "Single precision" );
+		}
+
 		b2Pos c = m_context->camera.center;
 		DrawScreenTextLine( "view center %.0f km from world origin", 0.001f * c.x );
 	}
@@ -353,6 +362,15 @@ public:
 	void Step() override
 	{
 		Sample::Step();
+
+		if ( b2IsDoublePrecision() == true )
+		{
+			DrawScreenTextLine( "Double precision" );
+		}
+		else
+		{
+			DrawScreenTextLine( "Single precision" );
+		}
 
 		b2Pos c = m_context->camera.center;
 		DrawScreenTextLine( "%d ragdolls piled %.0f km from the world origin", m_humanCount, 0.001f * c.x );
@@ -695,12 +713,16 @@ public:
 		float fx = (float)m_origin.x;
 		float gridStep = nextafterf( fx, FLT_MAX ) - fx;
 
-#ifdef BOX2D_DOUBLE_PRECISION
-		const char* mode = "double precision";
-#else
-		const char* mode = "single precision";
-#endif
-		DrawScreenTextLine( "%s build, gate %.0f km from the origin", mode, m_origin.x / 1000.0 );
+		if ( b2IsDoublePrecision() == true )
+		{
+			DrawScreenTextLine( "Double precision" );
+		}
+		else
+		{
+			DrawScreenTextLine( "Single precision" );
+		}
+
+		DrawScreenTextLine( "%.0f km from the origin", m_origin.x / 1000.0 );
 		DrawScreenTextLine( "float grid step here = %g m, gear teeth are about 0.12 m", gridStep );
 	}
 
