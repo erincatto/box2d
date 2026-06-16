@@ -779,7 +779,7 @@ public:
 			b2ShapeId shapeId = m_visitorIds[i];
 			b2AABB aabb = b2Shape_GetAABB( shapeId );
 			b2Vec2 point = b2AABB_Center( aabb );
-			DrawPoint( m_draw, point, 10.0f, b2_colorWhite );
+			DrawPoint( m_draw, b2ToPos( point ), 10.0f, b2_colorWhite );
 		}
 	}
 
@@ -1002,8 +1002,8 @@ public:
 							b2Pos p1 = posA + point.anchorA;
 							b2Pos p2 = p1 + point.totalNormalImpulse * normal;
 
-							DrawWorldLine( m_draw, p1, p2, b2_colorBlueViolet );
-							DrawWorldPoint( m_draw, p1, 10.0f, b2_colorWhite );
+							DrawLine( m_draw, p1, p2, b2_colorBlueViolet );
+							DrawPoint( m_draw, p1, 10.0f, b2_colorWhite );
 						}
 					}
 				}
@@ -1037,8 +1037,8 @@ public:
 							b2Pos p1 = posA + point.anchorA;
 							b2Pos p2 = p1 + point.totalNormalImpulse * normal;
 
-							DrawWorldLine( m_draw, p1, p2, b2_colorYellowGreen );
-							DrawWorldPoint( m_draw, p1, 10.0f, b2_colorWhite );
+							DrawLine( m_draw, p1, p2, b2_colorYellowGreen );
+							DrawPoint( m_draw, p1, 10.0f, b2_colorWhite );
 						}
 					}
 				}
@@ -1584,7 +1584,7 @@ public:
 			}
 
 			// draw the transform of every body that moved (not sleeping)
-			DrawTransform( m_draw, b2ToRelativeTransform( event->transform, b2Pos_zero ), 1.0f );
+			DrawTransform( m_draw, event->transform, 1.0f );
 
 			b2WorldTransform transform = b2Body_GetTransform( event->bodyId );
 			B2_ASSERT( transform.p.x == event->transform.p.x );
@@ -1612,7 +1612,7 @@ public:
 			}
 		}
 
-		DrawWorldCircle( m_draw, m_explosionPosition, m_explosionRadius, b2_colorAzure );
+		DrawCircle( m_draw, m_explosionPosition, m_explosionRadius, b2_colorAzure );
 
 		DrawScreenTextLine( "sleep count: %d", m_sleepCount );
 	}
@@ -1804,11 +1804,11 @@ public:
 		b2Pos origin = { 5.0f, 1.0f };
 		b2Vec2 translation = { -10.0f, 0.0f };
 		b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, b2DefaultQueryFilter() );
-		DrawWorldLine( m_draw, origin, origin + translation, b2_colorDimGray );
+		DrawLine( m_draw, origin, origin + translation, b2_colorDimGray );
 
 		if ( result.hit )
 		{
-			DrawWorldPoint( m_draw, result.point, 10.0f, b2_colorCyan );
+			DrawPoint( m_draw, result.point, 10.0f, b2_colorCyan );
 		}
 	}
 
@@ -2140,9 +2140,9 @@ public:
 				b2BodyId bodyIdA = b2Shape_GetBody( data.shapeIdA );
 				b2Pos p1 = b2Body_GetWorldCenter( bodyIdA ) + manifoldPoint->anchorA;
 				b2Pos p2 = p1 + manifoldPoint->totalNormalImpulse * data.manifold.normal;
-				DrawWorldLine( m_draw, p1, p2, b2_colorCrimson );
-				DrawWorldPoint( m_draw, p1, 6.0f, b2_colorCrimson );
-				DrawWorldString( m_draw, m_camera, p1, b2_colorWhite, "%.2f", manifoldPoint->totalNormalImpulse );
+				DrawLine( m_draw, p1, p2, b2_colorCrimson );
+				DrawPoint( m_draw, p1, 6.0f, b2_colorCrimson );
+				DrawString( m_draw, m_camera, p1, b2_colorWhite, "%.2f", manifoldPoint->totalNormalImpulse );
 			}
 		}
 		else
@@ -2310,7 +2310,7 @@ public:
 		for ( int i = 0; i < count && m_transformCount < m_transformCapacity; ++i )
 		{
 			b2BodyId sensorBodyId = b2Shape_GetBody( sensorShapeId );
-			m_transforms[m_transformCount] = b2ToRelativeTransform( b2Body_GetTransform( sensorBodyId ), b2Pos_zero );
+			m_transforms[m_transformCount] = b2Body_GetTransform( sensorBodyId );
 			m_transformCount += 1;
 		}
 	}
@@ -2379,7 +2379,7 @@ public:
 
 	static constexpr int m_transformCapacity = 20;
 	int m_transformCount;
-	b2Transform m_transforms[m_transformCapacity];
+	b2WorldTransform m_transforms[m_transformCapacity];
 
 	bool m_isBullet;
 	int m_beginCount;
@@ -2505,9 +2505,9 @@ public:
 
 		if ( m_dragging )
 		{
-			DrawWorldLine( m_draw, m_point1, m_point2, b2_colorWhite );
-			DrawWorldPoint( m_draw, m_point1, 5.0f, b2_colorGreen );
-			DrawWorldPoint( m_draw, m_point2, 5.0f, b2_colorRed );
+			DrawLine( m_draw, m_point1, m_point2, b2_colorWhite );
+			DrawPoint( m_draw, m_point1, 5.0f, b2_colorGreen );
+			DrawPoint( m_draw, m_point2, 5.0f, b2_colorRed );
 		}
 
 		b2ContactEvents contactEvents = b2World_GetContactEvents( m_worldId );
@@ -2653,7 +2653,7 @@ public:
 		{
 			b2ContactHitEvent* event = events.hitEvents + i;
 
-			DrawWorldPoint( m_draw, event->point, 10.0f, b2_colorWhite );
+			DrawPoint( m_draw, event->point, 10.0f, b2_colorWhite );
 
 			b2ContactData data = b2Contact_GetData( event->contactId );
 

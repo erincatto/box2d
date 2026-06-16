@@ -2570,18 +2570,6 @@ void b2RecPlayer_Destroy( b2RecPlayer* player )
 
 // Highlight each reported overlap shape by its AABB. Skip any destroyed since the query,
 // per the b2Shape_GetAABB contract that overlap results may contain stale shapes.
-// Shift recorded world geometry into the draw origin frame so the viewer can render it far from
-// the origin. Identity when origin is zero, the float mode default.
-static b2Vec2 b2RecDrawRel( b2Pos p, b2Pos origin )
-{
-	return b2SubPos( p, origin );
-}
-
-static b2Vec2 b2RecDrawRelVec( b2Vec2 p, b2Pos origin )
-{
-	return b2SubPos( b2ToPos( p ), origin );
-}
-
 static void b2RecDrawHitAABBs( const b2RecPlayer* player, const b2RecDrawQuery* q, b2DebugDraw* draw )
 {
 	if ( draw->DrawPolygonFcn == NULL )
@@ -2624,8 +2612,8 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 			case B2_RECQ_CAST_RAY_CLOSEST:
 			{
 				// Ray origin to endpoint
-				b2Vec2 origin = b2RecDrawRel( q->origin, draw->origin );
-				b2Vec2 end = b2Add( origin, q->translation );
+				b2Pos origin = q->origin;
+				b2Pos end = b2OffsetPos( origin, q->translation );
 				if ( draw->DrawLineFcn )
 				{
 					draw->DrawLineFcn( origin, end, b2_colorYellow, draw->context );
@@ -2634,14 +2622,14 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 				for ( int hi = q->hitStart; hi < q->hitStart + q->hitCount; ++hi )
 				{
 					const b2RecRecordedHit* h = &player->frameHits[hi];
-					b2Vec2 point = b2RecDrawRel( h->point, draw->origin );
+					b2Pos point = h->point;
 					if ( draw->DrawPointFcn )
 					{
 						draw->DrawPointFcn( point, 4.0f, b2_colorYellow, draw->context );
 					}
 					if ( draw->DrawLineFcn )
 					{
-						b2Vec2 np = b2MulAdd( point, 0.2f, h->normal );
+						b2Pos np = b2OffsetPos( point, b2MulSV( 0.2f, h->normal ) );
 						draw->DrawLineFcn( point, np, b2_colorLightYellow, draw->context );
 					}
 				}
@@ -2653,14 +2641,14 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 				for ( int hi = q->hitStart; hi < q->hitStart + q->hitCount; ++hi )
 				{
 					const b2RecRecordedHit* h = &player->frameHits[hi];
-					b2Vec2 point = b2RecDrawRel( h->point, draw->origin );
+					b2Pos point = h->point;
 					if ( draw->DrawPointFcn )
 					{
 						draw->DrawPointFcn( point, 4.0f, b2_colorSkyBlue, draw->context );
 					}
 					if ( draw->DrawLineFcn )
 					{
-						b2Vec2 np = b2MulAdd( point, 0.2f, h->normal );
+						b2Pos np = b2OffsetPos( point, b2MulSV( 0.2f, h->normal ) );
 						draw->DrawLineFcn( point, np, b2_colorLightSkyBlue, draw->context );
 					}
 				}
@@ -2669,11 +2657,10 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 			case B2_RECQ_CAST_MOVER:
 			{
 				// The mover capsule is relative to the query origin
-				b2Vec2 shift = b2SubPos( q->origin, draw->origin );
 				if ( draw->DrawSolidCapsuleFcn )
 				{
-					b2Vec2 c1 = b2Add( q->mover.center1, shift );
-					b2Vec2 c2 = b2Add( q->mover.center2, shift );
+					b2Pos c1 = b2OffsetPos( q->origin, q->mover.center1 );
+					b2Pos c2 = b2OffsetPos( q->origin, q->mover.center2 );
 					draw->DrawSolidCapsuleFcn( c1, c2, q->mover.radius, b2_colorLightSkyBlue, draw->context );
 				}
 				break;
@@ -2698,7 +2685,8 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 				{
 					if ( draw->DrawCircleFcn )
 					{
-						draw->DrawCircleFcn( q->proxy.points[0], q->proxy.radius, b2_colorLimeGreen, draw->context );
+						draw->DrawCircleFcn( b2OffsetPos( q->origin, q->proxy.points[0] ), q->proxy.radius, b2_colorLimeGreen,
+											 draw->context );
 					}
 				}
 				else if ( q->proxy.count >= 2 && draw->DrawPolygonFcn )
@@ -2713,11 +2701,10 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 			case B2_RECQ_COLLIDE_MOVER:
 			{
 				// The mover capsule and the collision planes are relative to the query origin
-				b2Vec2 shift = b2SubPos( q->origin, draw->origin );
 				if ( draw->DrawSolidCapsuleFcn )
 				{
-					b2Vec2 c1 = b2Add( q->mover.center1, shift );
-					b2Vec2 c2 = b2Add( q->mover.center2, shift );
+					b2Pos c1 = b2OffsetPos( q->origin, q->mover.center1 );
+					b2Pos c2 = b2OffsetPos( q->origin, q->mover.center2 );
 					draw->DrawSolidCapsuleFcn( c1, c2, q->mover.radius, b2_colorTan, draw->context );
 				}
 				// Per-hit plane point and normal
@@ -2726,8 +2713,8 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 					const b2RecRecordedHit* h = &player->frameHits[hi];
 					if ( h->plane.hit && draw->DrawLineFcn )
 					{
-						b2Vec2 point = b2Add( h->plane.point, shift );
-						b2Vec2 np = b2MulAdd( point, 0.2f, h->plane.plane.normal );
+						b2Pos point = b2OffsetPos( q->origin, h->plane.point );
+						b2Pos np = b2OffsetPos( point, b2MulSV( 0.2f, h->plane.plane.normal ) );
 						draw->DrawLineFcn( point, np, b2_colorOrange, draw->context );
 					}
 				}
@@ -2738,21 +2725,21 @@ void b2RecPlayer_DrawFrameQueries( b2RecPlayer* player, b2DebugDraw* draw, int q
 				b2HexColor c = q->boolResult ? b2_colorAqua : b2_colorRed;
 				if ( draw->DrawPointFcn )
 				{
-					draw->DrawPointFcn( b2RecDrawRel( q->origin, draw->origin ), 6.0f, c, draw->context );
+					draw->DrawPointFcn( q->origin, 6.0f, c, draw->context );
 				}
 				break;
 			}
 			case B2_RECQ_SHAPE_RAY_CAST:
 			{
-				b2Vec2 origin = b2RecDrawRel( q->origin, draw->origin );
-				b2Vec2 end = b2Add( origin, q->translation );
+				b2Pos origin = q->origin;
+				b2Pos end = b2OffsetPos( origin, q->translation );
 				if ( draw->DrawLineFcn )
 				{
 					draw->DrawLineFcn( origin, end, b2_colorViolet, draw->context );
 				}
 				if ( q->castOut.hit && draw->DrawPointFcn )
 				{
-					draw->DrawPointFcn( b2RecDrawRel( q->castOut.point, draw->origin ), 4.0f, b2_colorViolet, draw->context );
+					draw->DrawPointFcn( q->castOut.point, 4.0f, b2_colorViolet, draw->context );
 				}
 				break;
 			}

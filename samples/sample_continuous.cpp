@@ -165,8 +165,8 @@ public:
 			HitEvent* e = m_hitEvents + i;
 			if ( e->stepIndex > 0 && m_stepCount <= e->stepIndex + 30 )
 			{
-				DrawWorldCircle( m_draw, e->point, 0.1f, b2_colorOrangeRed );
-				DrawWorldString( m_draw, m_camera, e->point, b2_colorWhite, "%.1f", e->speed );
+				DrawCircle( m_draw, e->point, 0.1f, b2_colorOrangeRed );
+				DrawString( m_draw, m_camera, e->point, b2_colorWhite, "%.1f", e->speed );
 			}
 		}
 
@@ -251,7 +251,7 @@ public:
 		b2CosSin cs2 = b2ComputeCosSin( m_time );
 		float gravity = 10.0f;
 		b2Vec2 gravityVec = { gravity * cs1.sine, gravity * cs2.cosine };
-		DrawLine( m_draw, b2Vec2_zero, b2Vec2{ 3.0f * cs1.sine, 3.0f * cs2.cosine }, b2_colorWhite );
+		DrawLine( m_draw, b2Pos_zero, b2ToPos( b2Vec2{ 3.0f * cs1.sine, 3.0f * cs2.cosine } ), b2_colorWhite );
 		m_time += timeStep;
 		m_countDown -= timeStep;
 		b2World_SetGravity( m_worldId, gravityVec );

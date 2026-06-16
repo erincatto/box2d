@@ -385,7 +385,7 @@ public:
 	{
 		Sample::Step();
 
-		DrawWorldCircle( m_context->draw, m_explosionPosition, m_explosionRadius, b2_colorAzure );
+		DrawCircle( m_context->draw, m_explosionPosition, m_explosionRadius, b2_colorAzure );
 
 		// This shows how to get the velocity of a point on a body
 		b2Vec2 localPoint = { 0.0f, 2.0f };
@@ -395,8 +395,8 @@ public:
 		b2Vec2 v2 = b2Body_GetWorldPointVelocity( m_weebleId, worldPoint );
 
 		b2Vec2 offset = { 0.05f, 0.0f };
-		DrawWorldLine( m_context->draw, worldPoint, worldPoint + v1, b2_colorRed );
-		DrawWorldLine( m_context->draw, worldPoint + offset, worldPoint + v2 + offset, b2_colorGreen );
+		DrawLine( m_context->draw, worldPoint, worldPoint + v1, b2_colorRed );
+		DrawLine( m_context->draw, worldPoint + offset, worldPoint + v2 + offset, b2_colorGreen );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -852,8 +852,8 @@ public:
 			b2Rot rotation = b2MakeRot( 2.0f * m_time );
 
 			b2Vec2 axis = b2RotateVector( rotation, { 0.0f, 1.0f } );
-			DrawWorldLine( m_context->draw, point - 0.5f * axis, point + 0.5f * axis, b2_colorPlum );
-			DrawWorldPoint( m_context->draw, point, 10.0f, b2_colorPlum );
+			DrawLine( m_context->draw, point - 0.5f * axis, point + 0.5f * axis, b2_colorPlum );
+			DrawPoint( m_context->draw, point, 10.0f, b2_colorPlum );
 
 			bool wake = true;
 			b2Body_SetTargetTransform( m_bodyId, { point , rotation }, timeStep, wake );

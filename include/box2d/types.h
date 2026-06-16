@@ -1362,6 +1362,8 @@ typedef enum b2HexColor
 B2_API b2HexColor b2GetGraphColor( int index );
 
 /// This struct holds callbacks you can implement to draw a Box2D world.
+/// Callbacks receive world coordinates. In large world mode the translation is double precision so
+/// it stays accurate far from the origin. Shift into your own camera frame inside the callbacks.
 /// This structure should be zero initialized.
 /// @ingroup world
 typedef struct b2DebugDraw
@@ -1371,29 +1373,32 @@ typedef struct b2DebugDraw
 							  void* context );
 
 	/// Draw a solid closed polygon provided in CCW order.
-	void ( *DrawSolidPolygonFcn )( b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color,
-								   void* context );
+	void ( *DrawSolidPolygonFcn )( b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, float radius,
+								   b2HexColor color, void* context );
 
 	/// Draw a circle.
-	void ( *DrawCircleFcn )( b2Vec2 center, float radius, b2HexColor color, void* context );
+	void ( *DrawCircleFcn )( b2Pos center, float radius, b2HexColor color, void* context );
 
 	/// Draw a solid circle.
 	void ( *DrawSolidCircleFcn )( b2WorldTransform transform, b2Vec2 center, float radius, b2HexColor color, void* context );
 
 	/// Draw a solid capsule.
-	void ( *DrawSolidCapsuleFcn )( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context );
+	void ( *DrawSolidCapsuleFcn )( b2Pos p1, b2Pos p2, float radius, b2HexColor color, void* context );
 
 	/// Draw a line segment.
-	void ( *DrawLineFcn )( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context );
+	void ( *DrawLineFcn )( b2Pos p1, b2Pos p2, b2HexColor color, void* context );
 
 	/// Draw a transform. Choose your own length scale.
-	void ( *DrawTransformFcn )( b2Transform transform, void* context );
+	void ( *DrawTransformFcn )( b2WorldTransform transform, void* context );
 
 	/// Draw a point.
-	void ( *DrawPointFcn )( b2Vec2 p, float size, b2HexColor color, void* context );
+	void ( *DrawPointFcn )( b2Pos p, float size, b2HexColor color, void* context );
 
 	/// Draw a string in world space
-	void ( *DrawStringFcn )( b2Vec2 p, const char* s, b2HexColor color, void* context );
+	void ( *DrawStringFcn )( b2Pos p, const char* s, b2HexColor color, void* context );
+
+	/// Draw a bounding box
+	void ( *DrawBoundsFcn )( b2AABB aabb, b2HexColor color, void* context );
 
 	/// World bounds to use for debug draw
 	b2AABB drawingBounds;
@@ -1448,11 +1453,6 @@ typedef struct b2DebugDraw
 
 	/// Option to draw islands as bounding boxes
 	bool drawIslands;
-
-	/// World point that drawn coordinates are relative to. In large world mode set this to the
-	/// camera position each frame so callbacks receive float coordinates near the origin. Defaults
-	/// to zero, which is bit identical to passing world coordinates directly.
-	b2Pos origin;
 
 	/// User context that is passed as an argument to drawing callback functions
 	void* context;

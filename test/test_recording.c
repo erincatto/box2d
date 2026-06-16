@@ -57,14 +57,14 @@ static bool s_planeFcn( b2ShapeId id, const b2PlaneResult* plane, void* ctx )
 }
 
 // No-op draw callbacks for the headless draw-path exercise
-static void s_DrawLine( b2Vec2 p1, b2Vec2 p2, b2HexColor c, void* ctx )
+static void s_DrawLine( b2Pos p1, b2Pos p2, b2HexColor c, void* ctx )
 {
 	(void)p1;
 	(void)p2;
 	(void)c;
 	(void)ctx;
 }
-static void s_DrawPoint( b2Vec2 p, float sz, b2HexColor c, void* ctx )
+static void s_DrawPoint( b2Pos p, float sz, b2HexColor c, void* ctx )
 {
 	(void)p;
 	(void)sz;
@@ -79,7 +79,7 @@ static void s_DrawPoly( b2WorldTransform xf, const b2Vec2* v, int n, b2HexColor 
 	(void)c;
 	(void)ctx;
 }
-static void s_DrawCapsule( b2Vec2 p1, b2Vec2 p2, float r, b2HexColor c, void* ctx )
+static void s_DrawCapsule( b2Pos p1, b2Pos p2, float r, b2HexColor c, void* ctx )
 {
 	(void)p1;
 	(void)p2;

@@ -200,7 +200,7 @@ public:
 
 		if ( m_explode )
 		{
-			DrawWorldCircle( m_draw, m_explosionPosition, radius, b2_colorAzure );
+			DrawCircle( m_draw, m_explosionPosition, radius, b2_colorAzure );
 		}
 
 		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS )

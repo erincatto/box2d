@@ -988,15 +988,13 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 
 static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2WorldTransform transform, b2HexColor color, bool drawChainNormals )
 {
-	b2Transform xf = b2ToRelativeTransform( transform, draw->origin );
-
 	switch ( shape->type )
 	{
 		case b2_capsuleShape:
 		{
 			b2Capsule* capsule = &shape->capsule;
-			b2Vec2 p1 = b2TransformPoint( xf, capsule->center1 );
-			b2Vec2 p2 = b2TransformPoint( xf, capsule->center2 );
+			b2Pos p1 = b2TransformWorldPoint( transform, capsule->center1 );
+			b2Pos p2 = b2TransformWorldPoint( transform, capsule->center2 );
 			draw->DrawSolidCapsuleFcn( p1, p2, capsule->radius, color, draw->context );
 		}
 		break;
@@ -1011,15 +1009,15 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2WorldTransform tra
 		case b2_polygonShape:
 		{
 			b2Polygon* poly = &shape->polygon;
-			draw->DrawSolidPolygonFcn( xf, poly->vertices, poly->count, poly->radius, color, draw->context );
+			draw->DrawSolidPolygonFcn( transform, poly->vertices, poly->count, poly->radius, color, draw->context );
 		}
 		break;
 
 		case b2_segmentShape:
 		{
 			b2Segment* segment = &shape->segment;
-			b2Vec2 p1 = b2TransformPoint( xf, segment->point1 );
-			b2Vec2 p2 = b2TransformPoint( xf, segment->point2 );
+			b2Pos p1 = b2TransformWorldPoint( transform, segment->point1 );
+			b2Pos p2 = b2TransformWorldPoint( transform, segment->point2 );
 			draw->DrawLineFcn( p1, p2, color, draw->context );
 		}
 		break;
@@ -1027,18 +1025,18 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2WorldTransform tra
 		case b2_chainSegmentShape:
 		{
 			b2Segment* segment = &shape->chainSegment.segment;
-			b2Vec2 p1 = b2TransformPoint( xf, segment->point1 );
-			b2Vec2 p2 = b2TransformPoint( xf, segment->point2 );
+			b2Pos p1 = b2TransformWorldPoint( transform, segment->point1 );
+			b2Pos p2 = b2TransformWorldPoint( transform, segment->point2 );
 			draw->DrawLineFcn( p1, p2, color, draw->context );
 			draw->DrawPointFcn( p2, 4.0f, color, draw->context );
 
 			if ( drawChainNormals )
 			{
-				b2Vec2 c = b2Lerp( p1, p2, 0.5f );
-				b2Vec2 e = b2Normalize( b2Sub( p2, p1 ) );
+				b2Pos c = b2LerpPosition( p1, p2, 0.5f );
+				b2Vec2 e = b2Normalize( b2SubPos( p2, p1 ) );
 				b2Vec2 n = b2RightPerp( e );
 				float L = 0.2f * b2GetLengthUnitsPerMeter();
-				draw->DrawLineFcn( c, b2MulAdd( c, L, n ), b2_colorPaleGreen, draw->context );
+				draw->DrawLineFcn( c, b2OffsetPos( c, b2MulSV( L, n ) ), b2_colorPaleGreen, draw->context );
 			}
 		}
 		break;
@@ -1130,10 +1128,7 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 
 	if ( draw->drawBounds )
 	{
-		b2Vec2 lower = shape->fatAABB.lowerBound;
-		b2Vec2 upper = shape->fatAABB.upperBound;
-		b2Vec2 vs[4] = { lower, { upper.x, lower.y }, upper, { lower.x, upper.y } };
-		draw->DrawPolygonFcn( b2WorldTransform_identity, vs, 4, b2_colorGold, draw->context );
+		draw->DrawBoundsFcn( shape->fatAABB, b2_colorGold, draw->context );
 	}
 
 	return true;
@@ -1196,8 +1191,8 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				b2Vec2 offset = { 0.1f, 0.1f };
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
-				b2Transform transform = { b2SubPos( bodySim->center, draw->origin ), bodySim->transform.q };
-				b2Vec2 p = b2TransformPoint( transform, offset );
+				b2WorldTransform transform = { bodySim->center, bodySim->transform.q };
+				b2Pos p = b2TransformWorldPoint( transform, offset );
 				draw->DrawStringFcn( p, body->name, b2_colorBlueViolet, draw->context );
 			}
 
@@ -1206,12 +1201,11 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 				b2Vec2 offset = { 0.1f, 0.1f };
 				b2BodySim* bodySim = b2GetBodySim( world, body );
 
-				b2Transform transform = { b2SubPos( bodySim->center, draw->origin ), bodySim->transform.q };
-				draw->DrawLineFcn( b2SubPos( bodySim->center0, draw->origin ),
-								   b2SubPos( bodySim->center, draw->origin ), b2_colorWhiteSmoke, draw->context );
+				b2WorldTransform transform = { bodySim->center, bodySim->transform.q };
+				draw->DrawLineFcn( bodySim->center0, bodySim->center, b2_colorWhiteSmoke, draw->context );
 				draw->DrawTransformFcn( transform, draw->context );
 
-				b2Vec2 p = b2TransformPoint( transform, offset );
+				b2Pos p = b2TransformWorldPoint( transform, offset );
 				char buffer[32];
 				snprintf( buffer, 32, "  %.2f", body->mass );
 				draw->DrawStringFcn( p, buffer, b2_colorWhite, draw->context );
@@ -1264,14 +1258,14 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 						{
 							b2ManifoldPoint* mp = contactSim->manifold.points + j;
 
-							b2Vec2 p;
+							b2Pos p;
 							if ( draw->drawAnchorA )
 							{
-								p = b2SubPos( b2OffsetPos( bodySimA->center, mp->anchorA ), draw->origin );
+								p = b2OffsetPos( bodySimA->center, mp->anchorA );
 							}
 							else
 							{
-								p = b2SubPos( b2OffsetPos( bodySimB->center, mp->anchorB ), draw->origin );
+								p = b2OffsetPos( bodySimB->center, mp->anchorB );
 							}
 
 							if ( draw->drawGraphColors && contact->colorIndex != B2_NULL_INDEX )
@@ -1299,8 +1293,8 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 							if ( draw->drawContactNormals )
 							{
-								b2Vec2 p1 = p;
-								b2Vec2 p2 = b2MulAdd( p1, k_axisScale, normal );
+								b2Pos p1 = p;
+								b2Pos p2 = b2OffsetPos( p1, b2MulSV( k_axisScale, normal ) );
 								draw->DrawLineFcn( p1, p2, normalColor, draw->context );
 
 								snprintf( buffer, B2_ARRAY_COUNT( buffer ), " %.2f", mp->separation );
@@ -1311,8 +1305,8 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 								// todo validate
 								// multiply by one-half due to relax iteration
 								float force = 0.5f * mp->totalNormalImpulse * world->inv_dt;
-								b2Vec2 p1 = p;
-								b2Vec2 p2 = b2MulAdd( p1, draw->forceScale * force, normal );
+								b2Pos p1 = p;
+								b2Pos p2 = b2OffsetPos( p1, b2MulSV( draw->forceScale * force, normal ) );
 								draw->DrawLineFcn( p1, p2, impulseColor, draw->context );
 								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", force );
 								draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
@@ -1328,8 +1322,8 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 							{
 								float force = 0.5f * mp->tangentImpulse * world->inv_h;
 								b2Vec2 tangent = b2RightPerp( normal );
-								b2Vec2 p1 = p;
-								b2Vec2 p2 = b2MulAdd( p1, draw->forceScale * force, tangent );
+								b2Pos p1 = p;
+								b2Pos p2 = b2OffsetPos( p1, b2MulSV( draw->forceScale * force, tangent ) );
 								draw->DrawLineFcn( p1, p2, frictionColor, draw->context );
 								snprintf( buffer, B2_ARRAY_COUNT( buffer ), "%.1f", force );
 								draw->DrawStringFcn( p1, buffer, b2_colorWhite, draw->context );
@@ -1376,10 +1370,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 					if ( shapeCount > 0 )
 					{
-						b2Vec2 lower = aabb.lowerBound;
-						b2Vec2 upper = aabb.upperBound;
-						b2Vec2 vs[4] = { lower, { upper.x, lower.y }, upper, { lower.x, upper.y } };
-						draw->DrawPolygonFcn(b2WorldTransform_identity, vs, 4, b2_colorOrangeRed, draw->context );
+						draw->DrawBoundsFcn( aabb, b2_colorOrangeRed, draw->context );
 					}
 
 					b2SetBit( &world->debugIslandSet, islandId );
@@ -2958,73 +2949,6 @@ void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mov
 		b2RecQueryCommit( world->recording, 0xE4, &recWriter );
 	}
 }
-
-#if 0
-
-void b2World_Dump()
-{
-	if (m_locked)
-	{
-		return;
-	}
-
-	b2OpenDump("box2d_dump.inl");
-
-	b2Dump("b2Vec2 g(%.9g, %.9g);\n", m_gravity.x, m_gravity.y);
-	b2Dump("m_world->SetGravity(g);\n");
-
-	b2Dump("b2Body** sims = (b2Body**)b2Alloc(%d * sizeof(b2Body*));\n", m_bodyCount);
-	b2Dump("b2Joint** joints = (b2Joint**)b2Alloc(%d * sizeof(b2Joint*));\n", m_jointCount);
-
-	int32 i = 0;
-	for (b2Body* b = m_bodyList; b; b = b->m_next)
-	{
-		b->m_islandIndex = i;
-		b->Dump();
-		++i;
-	}
-
-	i = 0;
-	for (b2Joint* j = m_jointList; j; j = j->m_next)
-	{
-		j->m_index = i;
-		++i;
-	}
-
-	// First pass on joints, skip gear joints.
-	for (b2Joint* j = m_jointList; j; j = j->m_next)
-	{
-		if (j->m_type == e_gearJoint)
-		{
-			continue;
-		}
-
-		b2Dump("{\n");
-		j->Dump();
-		b2Dump("}\n");
-	}
-
-	// Second pass on joints, only gear joints.
-	for (b2Joint* j = m_jointList; j; j = j->m_next)
-	{
-		if (j->m_type != e_gearJoint)
-		{
-			continue;
-		}
-
-		b2Dump("{\n");
-		j->Dump();
-		b2Dump("}\n");
-	}
-
-	b2Dump("b2Free(joints);\n");
-	b2Dump("b2Free(sims);\n");
-	b2Dump("joints = nullptr;\n");
-	b2Dump("sims = nullptr;\n");
-
-	b2CloseDump();
-}
-#endif
 
 void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterFcn* fcn, void* context )
 {
