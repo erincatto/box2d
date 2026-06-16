@@ -28,8 +28,6 @@
 #include "imgui_impl_opengl3.h"
 #include "implot.h"
 
-#include "box2d/constants.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -523,7 +521,8 @@ int main( int argc, char** argv )
 	glfwWindowHint( GLFW_SAMPLES, 4 );
 
 	b2Version version = b2GetVersion();
-	snprintf( buffer, 128, "Box2D Version %d.%d.%d", version.major, version.minor, version.revision );
+	const char* precision = b2IsDoublePrecision() ? "double" : "single";
+	snprintf( buffer, 128, "Box2D Version %d.%d.%d - %s precision", version.major, version.minor, version.revision, precision );
 
 	if ( GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor() )
 	{
