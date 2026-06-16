@@ -209,19 +209,20 @@ static int LargeWorldManifoldTest( void )
 
 	b2WorldTransform xfAo = b2WorldTransform_identity;
 	b2WorldTransform xfBo = { b2OffsetPos( b2Pos_zero, sep ), b2Rot_identity };
-	b2Manifold mOrigin = b2CollidePolygons( &boxA, xfAo, &boxB, xfBo );
+	b2LocalManifold mOrigin = b2CollidePolygons( &boxA, &boxB, b2InvMulWorldTransforms( xfAo, xfBo ) );
 
 	ENSURE( mOrigin.pointCount == 2 );
 	ENSURE_SMALL( mOrigin.points[0].separation + 0.1f, 0.01f );
 	ENSURE_SMALL( mOrigin.points[1].separation + 0.1f, 0.01f );
 
 #if defined( BOX2D_DOUBLE_PRECISION )
-	// Same relative configuration shifted far from the origin. In double the manifold is
-	// preserved to float precision, in float it would collapse since the offset is below the ULP.
+	// Same relative configuration shifted far from the origin. The relative pose differences the
+	// world positions in double, so in double the frame A manifold is preserved to float precision.
+	// In float it would collapse since the offset is below the ULP.
 	b2Pos base = b2OffsetPos( b2Pos_zero, ( b2Vec2 ){ 1.0e7f, 1.0e7f } );
 	b2WorldTransform xfAl = { base, b2Rot_identity };
 	b2WorldTransform xfBl = { b2OffsetPos( base, sep ), b2Rot_identity };
-	b2Manifold mLarge = b2CollidePolygons( &boxA, xfAl, &boxB, xfBl );
+	b2LocalManifold mLarge = b2CollidePolygons( &boxA, &boxB, b2InvMulWorldTransforms( xfAl, xfBl ) );
 
 	ENSURE( mLarge.pointCount == mOrigin.pointCount );
 	ENSURE_SMALL( mLarge.normal.x - mOrigin.normal.x, 1e-4f );
@@ -229,10 +230,8 @@ static int LargeWorldManifoldTest( void )
 	for ( int i = 0; i < mLarge.pointCount; ++i )
 	{
 		ENSURE_SMALL( mLarge.points[i].separation - mOrigin.points[i].separation, 1e-4f );
-		ENSURE_SMALL( mLarge.points[i].anchorA.x - mOrigin.points[i].anchorA.x, 1e-4f );
-		ENSURE_SMALL( mLarge.points[i].anchorA.y - mOrigin.points[i].anchorA.y, 1e-4f );
-		ENSURE_SMALL( mLarge.points[i].anchorB.x - mOrigin.points[i].anchorB.x, 1e-4f );
-		ENSURE_SMALL( mLarge.points[i].anchorB.y - mOrigin.points[i].anchorB.y, 1e-4f );
+		ENSURE_SMALL( mLarge.points[i].point.x - mOrigin.points[i].point.x, 1e-4f );
+		ENSURE_SMALL( mLarge.points[i].point.y - mOrigin.points[i].point.y, 1e-4f );
 	}
 #endif
 
