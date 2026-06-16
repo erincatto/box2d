@@ -525,7 +525,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	// Compute the manifold in frame A, then marshal it to world anchors relative to each shape origin.
 	// The relative pose differences the two world positions before the narrow phase runs in frame A,
 	// so precision is retained far from the origin.
-	// anchorB = point - pB = qA * point + pA - pB = anchorA + (pA - pB)
+	// anchorB = worldPoint - pB = rot(qA, localAnchorA) + pA - pB = anchorA + (pA - pB)
 	b2Transform relativeTransform = b2InvMulWorldTransforms( transformA, transformB );
 	b2ManifoldFcn* fcn = s_registers[shapeA->type][shapeB->type].fcn;
 	b2LocalManifold local = fcn( shapeA, shapeB, relativeTransform, &contactSim->cache );

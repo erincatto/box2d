@@ -1397,7 +1397,8 @@ typedef struct b2DebugDraw
 	/// Draw a string in world space
 	void ( *DrawStringFcn )( b2Pos p, const char* s, b2HexColor color, void* context );
 
-	/// Draw a bounding box
+	/// Draw a bounding box. With double precision enabled, the single precision bounding box
+	/// gets increasing padding when moving far from the origin.
 	void ( *DrawBoundsFcn )( b2AABB aabb, b2HexColor color, void* context );
 
 	/// World bounds to use for debug draw
