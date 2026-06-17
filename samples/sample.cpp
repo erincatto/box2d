@@ -82,67 +82,65 @@ static int jsoneq( const char* json, jsmntok_t* tok, const char* s )
 	return -1;
 }
 
-void DrawPolygonFcn( const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context )
+void DrawPolygonFcn(b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
-	DrawPolygon( sampleContext->draw, vertices, vertexCount, color );
+	DrawPolygon( sampleContext->draw, transform, vertices, vertexCount, color );
 }
 
-void DrawSolidPolygonFcn( b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color,
+void DrawSolidPolygonFcn( b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color,
 						  void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
 	DrawSolidPolygon( sampleContext->draw, transform, vertices, vertexCount, radius, color );
 }
 
-void DrawCircleFcn( b2Vec2 center, float radius, b2HexColor color, void* context )
+void DrawCircleFcn( b2Pos center, float radius, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
 	DrawCircle( sampleContext->draw, center, radius, color );
 }
 
-void DrawSolidCircleFcn( b2Transform transform, float radius, b2HexColor color, void* context )
+void DrawSolidCircleFcn( b2WorldTransform transform, b2Vec2 center, float radius, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
-	DrawSolidCircle( sampleContext->draw, transform, radius, color );
+	DrawSolidCircle( sampleContext->draw, transform, center, radius, color );
 }
 
-void DrawSolidCapsuleFcn( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context )
+void DrawSolidCapsuleFcn( b2Pos p1, b2Pos p2, float radius, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
-	DrawSolidCapsule( sampleContext->draw, p1, p2, radius, color );
+	DrawCapsule( sampleContext->draw, p1, p2, radius, color );
 }
 
-void DrawLineFcn( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context )
+void DrawLineFcn( b2Pos p1, b2Pos p2, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
 	DrawLine( sampleContext->draw, p1, p2, color );
 }
 
-void DrawTransformFcn( b2Transform transform, void* context )
+void DrawTransformFcn( b2WorldTransform transform, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
 	DrawTransform( sampleContext->draw, transform, 1.0f );
 }
 
-void DrawPointFcn( b2Vec2 p, float size, b2HexColor color, void* context )
+void DrawPointFcn( b2Pos p, float size, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
 	DrawPoint( sampleContext->draw, p, size, color );
 }
 
-void DrawStringFcn( b2Vec2 p, const char* s, b2HexColor color, void* context )
+void DrawStringFcn( b2Pos p, const char* s, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
-	Camera* camera = &sampleContext->camera;
-#if defined( BOX2D_DOUBLE_PRECISION )
-	// Point already arrives relative to draw->origin, the camera center
-	b2Vec2 ps = ConvertViewToScreen( camera, p );
-#else
-	// Default origin is zero, so the point is a world coordinate
-	b2Vec2 ps = ConvertWorldToScreen( camera, p );
-#endif
-	DrawScreenString( sampleContext->draw, ps.x, ps.y, color, "%s", s );
+	DrawString( sampleContext->draw, &sampleContext->camera, p, color, "%s", s );
+}
+
+void DrawBoundsFcn( b2AABB aabb, b2HexColor color, void* context )
+{
+	SampleContext* sampleContext = static_cast<SampleContext*>( context );
+	DrawBounds( sampleContext->draw, aabb, color );
 }
 
 #define MAX_TOKENS 32
@@ -160,6 +158,8 @@ void SampleContext::Load()
 	debugDraw.DrawTransformFcn = DrawTransformFcn;
 	debugDraw.DrawPointFcn = DrawPointFcn;
 	debugDraw.DrawStringFcn = DrawStringFcn;
+	debugDraw.DrawBoundsFcn = DrawBoundsFcn;
+
 	debugDraw.context = this;
 
 	recycleDistance = B2_CONTACT_RECYCLE_DISTANCE;
@@ -517,6 +517,10 @@ void Sample::DrawScreenTextLine( const char* text, ... )
 void Sample::ResetProfile()
 {
 	m_stepCount = 0;
+	memset( m_profiles, 0, sizeof( m_profiles ) );
+	m_currentProfileIndex = 0;
+	m_profileReadIndex = 0;
+	m_profileWriteIndex = 0;
 }
 
 void Sample::Step()
@@ -556,6 +560,7 @@ void Sample::Step()
 	}
 
 	m_context->debugDraw.drawingBounds = GetViewBounds( &m_context->camera );
+
 	b2World_EnableSleeping( m_worldId, m_context->enableSleep );
 	b2World_EnableWarmStarting( m_worldId, m_context->enableWarmStarting );
 	b2World_EnableContinuous( m_worldId, m_context->enableContinuous );
@@ -565,11 +570,6 @@ void Sample::Step()
 		b2World_Step( m_worldId, timeStep, m_context->subStepCount );
 	}
 
-#if defined( BOX2D_DOUBLE_PRECISION )
-	// Draw relative to the camera so callbacks and ad-hoc draws get float coordinates near the origin.
-	m_context->debugDraw.origin = m_context->camera.center;
-	SetDrawOrigin( m_context->draw, m_context->camera.center );
-#endif
 	b2World_Draw( m_worldId, &m_context->debugDraw );
 
 	if ( timeStep > 0.0f )

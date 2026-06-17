@@ -385,7 +385,7 @@ public:
 			b2Body_SetTargetTransform( m_targetId, m_transform, timeStep, wake );
 		}
 
-		DrawTransform( m_draw, b2ToRelativeTransform( m_transform, b2Pos_zero ), 1.0f );
+		DrawTransform( m_draw, m_transform, 1.0f );
 
 		Sample::Step();
 
@@ -509,7 +509,7 @@ public:
 			def.impulsePerLength = 10.0f;
 			b2World_Explode( m_worldId, &def );
 
-			DrawWorldCircle( m_draw, def.position, 10.0f, b2_colorWhite );
+			DrawCircle( m_draw, def.position, 10.0f, b2_colorWhite );
 		}
 
 		return true;
@@ -1948,7 +1948,7 @@ public:
 			else
 			{
 				b2Transform localFrame = b2Joint_GetLocalFrameA( m_jointIds[i] );
-				DrawWorldString( m_draw, m_camera, b2ToPos( localFrame.p ), b2_colorWhite, "(%.1f, %.1f)", force.x,
+				DrawString( m_draw, m_camera, b2ToPos( localFrame.p ), b2_colorWhite, "(%.1f, %.1f)", force.x,
 								 force.y );
 			}
 		}
@@ -2172,7 +2172,7 @@ public:
 			float linear = b2Joint_GetLinearSeparation( m_jointIds[i] );
 			float angular = b2Joint_GetAngularSeparation( m_jointIds[i] );
 			b2Transform localFrame = b2Joint_GetLocalFrameA( m_jointIds[i] );
-			DrawWorldString( m_draw, m_camera, b2ToPos( localFrame.p ), b2_colorWhite, "%.2f m, %.1f deg", linear,
+			DrawString( m_draw, m_camera, b2ToPos( localFrame.p ), b2_colorWhite, "%.2f m, %.1f deg", linear,
 							 180.0f * angular / B2_PI );
 		}
 
@@ -2227,8 +2227,7 @@ public:
 	{
 		Sample::Step();
 
-		b2Transform axes = b2Transform_identity;
-		DrawTransform( m_draw, axes, 1.0f );
+		DrawTransform( m_draw, b2WorldTransform_identity, 1.0f );
 
 		if ( m_context->pause )
 		{
@@ -2275,12 +2274,12 @@ public:
 			float C = length - slackLength;
 			if ( C < 0.0f || length < 0.001f )
 			{
-				DrawWorldLine( m_draw, anchorA, anchorB, b2_colorLightCyan );
+				DrawLine( m_draw, anchorA, anchorB, b2_colorLightCyan );
 				m_impulses[i] = 0.0f;
 				continue;
 			}
 
-			DrawWorldLine( m_draw, anchorA, anchorB, b2_colorViolet );
+			DrawLine( m_draw, anchorA, anchorB, b2_colorViolet );
 			b2Vec2 axis = b2Normalize( deltaAnchor );
 
 			b2Vec2 rB = b2SubPos( anchorB, pB );
@@ -3374,7 +3373,7 @@ public:
 		Sample::Step();
 
 		b2Pos p = b2Body_GetWorldPoint( m_doorId, { 0.0f, 1.5f } );
-		DrawWorldPoint( m_draw, p, 5.0f, b2_colorDarkKhaki );
+		DrawPoint( m_draw, p, 5.0f, b2_colorDarkKhaki );
 
 		float translationError = b2Joint_GetLinearSeparation( m_jointId );
 		m_translationError = b2MaxFloat( m_translationError, translationError );

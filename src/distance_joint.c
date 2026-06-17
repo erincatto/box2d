@@ -544,54 +544,32 @@ void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBia
 	}
 }
 
-#if 0
-void b2DistanceJoint::Dump()
-{
-	int32 indexA = m_bodyA->m_islandIndex;
-	int32 indexB = m_bodyB->m_islandIndex;
-
-	b2Dump("  b2DistanceJointDef jd;\n");
-	b2Dump("  jd.bodyA = sims[%d];\n", indexA);
-	b2Dump("  jd.bodyB = sims[%d];\n", indexB);
-	b2Dump("  jd.collideConnected = bool(%d);\n", m_collideConnected);
-	b2Dump("  jd.localAnchorA.Set(%.9g, %.9g);\n", m_localAnchorA.x, m_localAnchorA.y);
-	b2Dump("  jd.localAnchorB.Set(%.9g, %.9g);\n", m_localAnchorB.x, m_localAnchorB.y);
-	b2Dump("  jd.length = %.9g;\n", m_length);
-	b2Dump("  jd.minLength = %.9g;\n", m_minLength);
-	b2Dump("  jd.maxLength = %.9g;\n", m_maxLength);
-	b2Dump("  jd.stiffness = %.9g;\n", m_stiffness);
-	b2Dump("  jd.damping = %.9g;\n", m_damping);
-	b2Dump("  joints[%d] = m_world->CreateJoint(&jd);\n", m_index);
-}
-#endif
-
-void b2DrawDistanceJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB )
+void b2DrawDistanceJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform transformA, b2WorldTransform transformB )
 {
 	B2_ASSERT( base->type == b2_distanceJoint );
 
 	b2DistanceJoint* joint = &base->distanceJoint;
 
-	b2Vec2 pA = b2TransformPoint( transformA, base->localFrameA.p );
-	b2Vec2 pB = b2TransformPoint( transformB, base->localFrameB.p );
+	b2Pos pA = b2TransformWorldPoint( transformA, base->localFrameA.p );
+	b2Pos pB = b2TransformWorldPoint( transformB, base->localFrameB.p );
 
-	b2Vec2 axis = b2Normalize( b2Sub( pB, pA ) );
+	b2Vec2 axis = b2Normalize( b2SubPos( pB, pA ) );
 
 	if ( joint->minLength < joint->maxLength && joint->enableLimit )
 	{
-		b2Vec2 pMin = b2MulAdd( pA, joint->minLength, axis );
-		b2Vec2 pMax = b2MulAdd( pA, joint->maxLength, axis );
+		b2Pos pMin = b2OffsetPos( pA, b2MulSV( joint->minLength, axis ) );
+		b2Pos pMax = b2OffsetPos( pA, b2MulSV( joint->maxLength, axis ) );
 		b2Vec2 offset = b2MulSV( 0.05f * b2GetLengthUnitsPerMeter(), b2RightPerp( axis ) );
 
 		if ( joint->minLength > B2_LINEAR_SLOP )
 		{
-			// draw->DrawPoint(pMin, 4.0f, c2, draw->context);
-			draw->DrawLineFcn( b2Sub( pMin, offset ), b2Add( pMin, offset ), b2_colorLightGreen, draw->context );
+			draw->DrawLineFcn( b2OffsetPos( pMin, b2Neg( offset ) ), b2OffsetPos( pMin, offset ), b2_colorLightGreen,
+							   draw->context );
 		}
 
 		if ( joint->maxLength < B2_HUGE )
 		{
-			// draw->DrawPoint(pMax, 4.0f, c3, draw->context);
-			draw->DrawLineFcn( b2Sub( pMax, offset ), b2Add( pMax, offset ), b2_colorRed, draw->context );
+			draw->DrawLineFcn( b2OffsetPos( pMax, b2Neg( offset ) ), b2OffsetPos( pMax, offset ), b2_colorRed, draw->context );
 		}
 
 		if ( joint->minLength > B2_LINEAR_SLOP && joint->maxLength < B2_HUGE )
@@ -606,7 +584,7 @@ void b2DrawDistanceJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 
 	if ( joint->hertz > 0.0f && joint->enableSpring )
 	{
-		b2Vec2 pRest = b2MulAdd( pA, joint->length, axis );
+		b2Pos pRest = b2OffsetPos( pA, b2MulSV( joint->length, axis ) );
 		draw->DrawPointFcn( pRest, 4.0f, b2_colorBlue, draw->context );
 	}
 }

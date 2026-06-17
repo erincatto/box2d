@@ -133,15 +133,11 @@ static void BuildProjectionMatrix( Camera* camera, float* m, float zBias )
 	m[10] = -1.0f;
 	m[11] = 0.0f;
 
-#if defined( BOX2D_DOUBLE_PRECISION )
-	// Vertices reach the GPU already shifted into camera relative space (b2DebugDraw::origin and the
-	// DrawWorld helpers), so the view center is the origin here. No double coordinate enters a shader.
+	// Vertices reach the GPU already shifted into camera relative space, the engine draw path and the
+	// Draw helpers subtract the view center, so the view center is the origin here. In large world
+	// mode this also keeps double coordinates out of the shader.
 	m[12] = 0.0f;
 	m[13] = 0.0f;
-#else
-	m[12] = -2.0f * camera->center.x / w;
-	m[13] = -2.0f * camera->center.y / h;
-#endif
 	m[14] = zBias;
 	m[15] = 1.0f;
 }
@@ -150,7 +146,10 @@ b2AABB GetViewBounds( Camera* camera )
 {
 	if ( camera->height == 0.0f || camera->width == 0.0f )
 	{
-		b2AABB bounds = { .lowerBound = b2Vec2_zero, .upperBound = b2Vec2_zero };
+		b2AABB bounds = {
+			.lowerBound = b2Vec2_zero,
+			.upperBound = b2Vec2_zero,
+		};
 		return bounds;
 	}
 
@@ -1204,104 +1203,79 @@ void SetDrawOrigin( Draw* draw, b2Pos origin )
 	draw->origin = origin;
 }
 
-void DrawPoint( Draw* draw, b2Vec2 p, float size, b2HexColor color )
+void DrawPoint( Draw* draw, b2Pos p, float size, b2HexColor color )
 {
-	AddPoint( &draw->points, p, size, color );
+	AddPoint( &draw->points, b2SubPos( p, draw->origin ), size, color );
 }
 
-void DrawLine( Draw* draw, b2Vec2 p1, b2Vec2 p2, b2HexColor color )
+void DrawLine( Draw* draw, b2Pos p1, b2Pos p2, b2HexColor color )
 {
-	AddLine( &draw->lines, p1, p2, color );
+	AddLine( &draw->lines, b2SubPos( p1, draw->origin ), b2SubPos( p2, draw->origin ), color );
 }
 
-void DrawCircle( Draw* draw, b2Vec2 center, float radius, b2HexColor color )
+void DrawCircle( Draw* draw, b2Pos center, float radius, b2HexColor color )
 {
-	AddCircle( &draw->hollowCircles, center, radius, color );
+	AddCircle( &draw->hollowCircles, b2SubPos( center, draw->origin ), radius, color );
 }
 
-void DrawSolidCircle( Draw* draw, b2Transform transform, float radius, b2HexColor color )
+void DrawCapsule( Draw* draw, b2Pos p1, b2Pos p2, float radius, b2HexColor color )
 {
-	AddSolidCircle( &draw->circles, transform, radius, color );
+	AddCapsule( &draw->capsules, b2SubPos( p1, draw->origin ), b2SubPos( p2, draw->origin ), radius, color );
 }
 
-void DrawSolidCapsule( Draw* draw, b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color )
+void DrawPolygon( Draw* draw, b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, b2HexColor color )
 {
-	AddCapsule( &draw->capsules, p1, p2, radius, color );
-}
-
-void DrawPolygon( Draw* draw, const b2Vec2* vertices, int vertexCount, b2HexColor color )
-{
-	b2Vec2 p1 = vertices[vertexCount - 1];
+	b2Transform xf = b2ToRelativeTransform( transform, draw->origin );
+	b2Vec2 p1 = b2TransformPoint( xf, vertices[vertexCount - 1] );
 	for ( int i = 0; i < vertexCount; ++i )
 	{
-		b2Vec2 p2 = vertices[i];
+		b2Vec2 p2 = b2TransformPoint( xf, vertices[i] );
 		AddLine( &draw->lines, p1, p2, color );
 		p1 = p2;
 	}
 }
 
-void DrawSolidPolygon( Draw* draw, b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius,
-					   b2HexColor color )
+void DrawSolidCircle( Draw* draw, b2WorldTransform transform, b2Vec2 center, float radius, b2HexColor color )
 {
-	AddPolygon( &draw->polygons, transform, vertices, vertexCount, radius, color );
+	// Fold the local center offset into the world transform, then shift into the camera frame
+	b2WorldTransform xf = { b2TransformWorldPoint( transform, center ), transform.q };
+	b2Transform localTransform = b2ToRelativeTransform( xf, draw->origin );
+	AddSolidCircle( &draw->circles, localTransform, radius, color );
 }
 
-void DrawTransform( Draw* draw, b2Transform transform, float scale )
+void DrawSolidPolygon( Draw* draw, b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, float radius,
+							b2HexColor color )
 {
-	b2Vec2 p1 = transform.p;
+	AddPolygon( &draw->polygons, b2ToRelativeTransform( transform, draw->origin ), vertices, vertexCount, radius, color );
+}
 
-	b2Vec2 p2 = b2MulAdd( p1, scale, b2Rot_GetXAxis( transform.q ) );
+void DrawTransform( Draw* draw, b2WorldTransform transform, float scale )
+{
+	b2Transform xf = b2ToRelativeTransform( transform, draw->origin );
+
+	b2Vec2 p1 = xf.p;
+
+	b2Vec2 p2 = b2MulAdd( p1, scale, b2Rot_GetXAxis( xf.q ) );
 	AddLine( &draw->lines, p1, p2, b2_colorRed );
 
-	p2 = b2MulAdd( p1, scale, b2Rot_GetYAxis( transform.q ) );
+	p2 = b2MulAdd( p1, scale, b2Rot_GetYAxis( xf.q ) );
 	AddLine( &draw->lines, p1, p2, b2_colorGreen );
 }
 
 void DrawBounds( Draw* draw, b2AABB aabb, b2HexColor color )
 {
-	b2Vec2 p1 = aabb.lowerBound;
-	b2Vec2 p2 = { aabb.upperBound.x, aabb.lowerBound.y };
-	b2Vec2 p3 = aabb.upperBound;
-	b2Vec2 p4 = { aabb.lowerBound.x, aabb.upperBound.y };
+	b2Vec2 lower = b2SubPos( b2ToPos( aabb.lowerBound ), draw->origin );
+	b2Vec2 upper = b2SubPos( b2ToPos( aabb.upperBound ), draw->origin );
+
+	b2Vec2 p1 = lower;
+	b2Vec2 p2 = { upper.x, lower.y };
+	b2Vec2 p3 = upper;
+	b2Vec2 p4 = { lower.x, upper.y };
 
 	AddLine( &draw->lines, p1, p2, color );
 	AddLine( &draw->lines, p2, p3, color );
 	AddLine( &draw->lines, p3, p4, color );
 	AddLine( &draw->lines, p4, p1, color );
-}
-
-// World space variants. They subtract Draw::origin so far from the origin the difference happens in
-// double before reaching the float draw helpers. Identity in float mode.
-void DrawWorldPoint( Draw* draw, b2Pos p, float size, b2HexColor color )
-{
-	DrawPoint( draw, b2SubPos( p, draw->origin ), size, color );
-}
-
-void DrawWorldLine( Draw* draw, b2Pos p1, b2Pos p2, b2HexColor color )
-{
-	DrawLine( draw, b2SubPos( p1, draw->origin ), b2SubPos( p2, draw->origin ), color );
-}
-
-void DrawWorldCircle( Draw* draw, b2Pos center, float radius, b2HexColor color )
-{
-	DrawCircle( draw, b2SubPos( center, draw->origin ), radius, color );
-}
-
-void DrawWorldCapsule( Draw* draw, b2Pos p1, b2Pos p2, float radius, b2HexColor color )
-{
-	DrawSolidCapsule( draw, b2SubPos( p1, draw->origin ), b2SubPos( p2, draw->origin ), radius, color );
-}
-
-void DrawWorldTransform( Draw* draw, b2WorldTransform t, float scale )
-{
-	DrawTransform( draw, b2ToRelativeTransform( t, draw->origin ), scale );
-}
-
-void DrawWorldBounds( Draw* draw, b2AABB aabb, b2HexColor color )
-{
-	b2Vec2 lower = b2SubPos( b2ToPos( aabb.lowerBound ), draw->origin );
-	b2Vec2 upper = b2SubPos( b2ToPos( aabb.upperBound ), draw->origin );
-	DrawBounds( draw, (b2AABB){ lower, upper }, color );
 }
 
 void FlushDraw( Draw* draw, Camera* camera )

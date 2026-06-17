@@ -329,19 +329,19 @@ public:
 			m_pogoVelocity = 0.0f;
 
 			b2Vec2 delta = translation;
-			DrawWorldLine( m_draw, origin, origin + delta, b2_colorGray );
+			DrawLine( m_draw, origin, origin + delta, b2_colorGray );
 
 			if ( m_pogoShape == PogoPoint )
 			{
-				DrawWorldPoint( m_draw, origin + delta, 10.0f, b2_colorGray );
+				DrawPoint( m_draw, origin + delta, 10.0f, b2_colorGray );
 			}
 			else if ( m_pogoShape == PogoCircle )
 			{
-				DrawWorldCircle( m_draw, origin + delta, circle.radius, b2_colorGray );
+				DrawCircle( m_draw, origin + delta, circle.radius, b2_colorGray );
 			}
 			else
 			{
-				DrawWorldLine( m_draw, origin + segment.point1 + delta, origin + segment.point2 + delta, b2_colorGray );
+				DrawLine( m_draw, origin + segment.point1 + delta, origin + segment.point2 + delta, b2_colorGray );
 			}
 		}
 		else
@@ -352,25 +352,25 @@ public:
 			m_pogoVelocity = b2SpringDamper( m_pogoHertz, m_pogoDampingRatio, offset, m_pogoVelocity, timeStep );
 
 			b2Vec2 delta = castResult.fraction * translation;
-			DrawWorldLine( m_draw, origin, origin + delta, b2_colorGray );
+			DrawLine( m_draw, origin, origin + delta, b2_colorGray );
 
 			if ( m_pogoShape == PogoPoint )
 			{
-				DrawWorldPoint( m_draw, origin + delta, 10.0f, b2_colorPlum );
+				DrawPoint( m_draw, origin + delta, 10.0f, b2_colorPlum );
 			}
 			else if ( m_pogoShape == PogoCircle )
 			{
-				DrawWorldCircle( m_draw, origin + delta, circle.radius, b2_colorPlum );
+				DrawCircle( m_draw, origin + delta, circle.radius, b2_colorPlum );
 			}
 			else
 			{
-				DrawWorldLine( m_draw, origin + segment.point1 + delta, origin + segment.point2 + delta, b2_colorPlum );
+				DrawLine( m_draw, origin + segment.point1 + delta, origin + segment.point2 + delta, b2_colorPlum );
 			}
 
 			b2Body_ApplyForce( castResult.bodyId, { 0.0f, -50.0f }, castResult.point, true );
 		}
 
-		DrawWorldTransform( m_draw, { m_position, b2Rot_identity }, 0.25f );
+		DrawTransform( m_draw, { m_position, b2Rot_identity }, 0.25f );
 
 		b2Pos target = m_position + timeStep * m_velocity + timeStep * m_pogoVelocity * b2Vec2{ 0.0f, 1.0f };
 
@@ -487,7 +487,7 @@ public:
 			b2ShapeProxy proxy = b2MakeProxy( &b2Vec2_zero, 1, radius );
 			b2QueryFilter filter = { MoverBit, DebrisBit };
 			b2World_OverlapShape( m_worldId, origin, &proxy, filter, Kick, this );
-			DrawWorldCircle( m_draw, origin, radius, b2_colorGoldenRod );
+			DrawCircle( m_draw, origin, radius, b2_colorGoldenRod );
 		}
 
 		Sample::Keyboard( key );
@@ -561,16 +561,16 @@ public:
 			b2Plane plane = m_planes[i].plane;
 			b2Pos p1 = m_position + ( plane.offset - m_capsule.radius ) * plane.normal;
 			b2Pos p2 = p1 + 0.1f * plane.normal;
-			DrawWorldPoint( m_draw, p1, 5.0f, b2_colorYellow );
-			DrawWorldLine( m_draw, p1, p2, b2_colorYellow );
+			DrawPoint( m_draw, p1, 5.0f, b2_colorYellow );
+			DrawLine( m_draw, p1, p2, b2_colorYellow );
 		}
 
 		b2Pos p1 = m_position + m_capsule.center1;
 		b2Pos p2 = m_position + m_capsule.center2;
 
 		b2HexColor color = m_onGround ? b2_colorOrange : b2_colorAquamarine;
-		DrawWorldCapsule( m_draw, p1, p2, m_capsule.radius, color );
-		DrawWorldLine( m_draw, m_position, m_position + m_velocity, b2_colorPurple );
+		DrawCapsule( m_draw, p1, p2, m_capsule.radius, color );
+		DrawLine( m_draw, m_position, m_position + m_velocity, b2_colorPurple );
 
 		b2Pos p = m_position;
 		DrawScreenTextLine( "position %.2f %.2f", p.x, p.y );

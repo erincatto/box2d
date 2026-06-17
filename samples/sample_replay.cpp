@@ -413,11 +413,7 @@ public:
 		m_stepCount = b2RecPlayer_GetFrame( m_player );
 
 		m_context->debugDraw.drawingBounds = GetViewBounds( &m_context->camera );
-#if defined( BOX2D_DOUBLE_PRECISION )
-		// Draw relative to the camera so callbacks, recorded queries, and ad-hoc draws land near the origin.
-		m_context->debugDraw.origin = m_context->camera.center;
-		SetDrawOrigin( m_context->draw, m_context->camera.center );
-#endif
+
 		if ( B2_IS_NON_NULL( m_worldId ) )
 		{
 			b2World_Draw( m_worldId, &m_context->debugDraw );
@@ -626,8 +622,8 @@ public:
 			for ( int j = 0; j < m->pointCount; ++j )
 			{
 				b2Pos point = b2OffsetPos( originA, m->points[j].anchorA );
-				DrawWorldPoint( draw, point, 6.0f, b2_colorOrange );
-				DrawWorldLine( draw, point, point + b2MulSV( 0.3f, m->normal ), b2_colorOrange );
+				DrawPoint( draw, point, 6.0f, b2_colorOrange );
+				DrawLine( draw, point, point + b2MulSV( 0.3f, m->normal ), b2_colorOrange );
 			}
 		}
 	}
@@ -646,9 +642,9 @@ public:
 				return;
 			}
 			b2BodyId body = b2Shape_GetBody( shape );
-			DrawWorldBounds( draw, b2Shape_GetAABB( shape ), b2_colorYellow );
-			DrawWorldTransform( draw, b2Body_GetTransform( body ), 0.5f );
-			DrawWorldPoint( draw, b2Body_GetWorldCenter( body ), 8.0f, b2_colorYellow );
+			DrawBounds( draw, b2Shape_GetAABB( shape ), b2_colorYellow );
+			DrawTransform( draw, b2Body_GetTransform( body ), 0.5f );
+			DrawPoint( draw, b2Body_GetWorldCenter( body ), 8.0f, b2_colorYellow );
 			DrawBodyContacts( body );
 		}
 		else if ( m_selKind == SelBody )
@@ -658,9 +654,9 @@ public:
 			{
 				return;
 			}
-			DrawWorldBounds( draw, b2Body_ComputeAABB( body ), b2_colorYellow );
-			DrawWorldTransform( draw, b2Body_GetTransform( body ), 0.5f );
-			DrawWorldPoint( draw, b2Body_GetWorldCenter( body ), 8.0f, b2_colorYellow );
+			DrawBounds( draw, b2Body_ComputeAABB( body ), b2_colorYellow );
+			DrawTransform( draw, b2Body_GetTransform( body ), 0.5f );
+			DrawPoint( draw, b2Body_GetWorldCenter( body ), 8.0f, b2_colorYellow );
 			DrawBodyContacts( body );
 		}
 		else if ( m_selKind == SelJoint )
@@ -674,11 +670,11 @@ public:
 			b2BodyId b = b2Joint_GetBodyB( joint );
 			if ( b2Body_IsValid( a ) )
 			{
-				DrawWorldPoint( draw, b2Body_GetWorldCenter( a ), 8.0f, b2_colorMagenta );
+				DrawPoint( draw, b2Body_GetWorldCenter( a ), 8.0f, b2_colorMagenta );
 			}
 			if ( b2Body_IsValid( b ) )
 			{
-				DrawWorldPoint( draw, b2Body_GetWorldCenter( b ), 8.0f, b2_colorMagenta );
+				DrawPoint( draw, b2Body_GetWorldCenter( b ), 8.0f, b2_colorMagenta );
 			}
 		}
 	}

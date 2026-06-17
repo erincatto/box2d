@@ -28,8 +28,6 @@
 #include "imgui_impl_opengl3.h"
 #include "implot.h"
 
-#include "box2d/constants.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -523,7 +521,8 @@ int main( int argc, char** argv )
 	glfwWindowHint( GLFW_SAMPLES, 4 );
 
 	b2Version version = b2GetVersion();
-	snprintf( buffer, 128, "Box2D Version %d.%d.%d", version.major, version.minor, version.revision );
+	const char* precision = b2IsDoublePrecision() ? "double" : "single";
+	snprintf( buffer, 128, "Box2D Version %d.%d.%d - %s precision", version.major, version.minor, version.revision, precision );
 
 	if ( GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor() )
 	{
@@ -656,6 +655,11 @@ int main( int argc, char** argv )
 			// Minimal hud
 			s_context.sample->DrawHud( frameTime );
 		}
+
+		// Draw relative to the camera so world draws get float coordinates near the origin, and stay exact
+		// far from it in large world mode. This must hold even for samples that drive their own Step without
+		// calling Sample::Step, otherwise their world draws ignore camera panning.
+		SetDrawOrigin( s_context.draw, s_context.camera.center );
 
 		s_context.sample->Step();
 

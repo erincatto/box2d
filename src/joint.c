@@ -1560,10 +1560,11 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 
 	b2JointSim* jointSim = b2GetJointSim( world, joint );
 
-	b2Transform transformA = b2ToRelativeTransform( b2GetBodyTransformQuick( world, bodyA ), draw->origin );
-	b2Transform transformB = b2ToRelativeTransform( b2GetBodyTransformQuick( world, bodyB ), draw->origin );
-	b2Vec2 pA = b2TransformPoint( transformA, jointSim->localFrameA.p );
-	b2Vec2 pB = b2TransformPoint( transformB, jointSim->localFrameB.p );
+	b2WorldTransform xfA = b2GetBodyTransformQuick( world, bodyA );
+	b2WorldTransform xfB = b2GetBodyTransformQuick( world, bodyB );
+
+	b2Pos pA = b2TransformWorldPoint( xfA, jointSim->localFrameA.p );
+	b2Pos pB = b2TransformWorldPoint( xfB, jointSim->localFrameB.p );
 
 	b2HexColor color = b2_colorDarkSeaGreen;
 
@@ -1572,7 +1573,7 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 	switch ( joint->type )
 	{
 		case b2_distanceJoint:
-			b2DrawDistanceJoint( draw, jointSim, transformA, transformB );
+			b2DrawDistanceJoint( draw, jointSim, xfA, xfB );
 			break;
 
 		case b2_filterJoint:
@@ -1586,25 +1587,25 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 			break;
 
 		case b2_prismaticJoint:
-			b2DrawPrismaticJoint( draw, jointSim, transformA, transformB, scale );
+			b2DrawPrismaticJoint( draw, jointSim, xfA, xfB, scale );
 			break;
 
 		case b2_revoluteJoint:
-			b2DrawRevoluteJoint( draw, jointSim, transformA, transformB, scale );
+			b2DrawRevoluteJoint( draw, jointSim, xfA, xfB, scale );
 			break;
 
 		case b2_weldJoint:
-			b2DrawWeldJoint( draw, jointSim, transformA, transformB, scale );
+			b2DrawWeldJoint( draw, jointSim, xfA, xfB, scale );
 			break;
 
 		case b2_wheelJoint:
-			b2DrawWheelJoint( draw, jointSim, transformA, transformB, scale );
+			b2DrawWheelJoint( draw, jointSim, xfA, xfB, scale );
 			break;
 
 		default:
-			draw->DrawLineFcn( transformA.p, pA, color, draw->context );
+			draw->DrawLineFcn( xfA.p, pA, color, draw->context );
 			draw->DrawLineFcn( pA, pB, color, draw->context );
-			draw->DrawLineFcn( transformB.p, pB, color, draw->context );
+			draw->DrawLineFcn( xfB.p, pB, color, draw->context );
 			break;
 	}
 
@@ -1613,7 +1614,7 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 		int colorIndex = joint->colorIndex;
 		if ( colorIndex != B2_NULL_INDEX )
 		{
-			b2Vec2 p = b2Lerp( pA, pB, 0.5f );
+			b2Pos p = b2LerpPosition( pA, pB, 0.5f );
 			draw->DrawPointFcn( p, 5.0f, b2GetGraphColor( colorIndex ), draw->context );
 		}
 	}
@@ -1622,9 +1623,9 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 	{
 		b2Vec2 force = b2GetJointConstraintForce( world, joint );
 		float torque = b2GetJointConstraintTorque( world, joint );
-		b2Vec2 p = b2Lerp( pA, pB, 0.5f );
+		b2Pos p = b2LerpPosition( pA, pB, 0.5f );
 
-		draw->DrawLineFcn( p, b2MulAdd( p, 0.001f, force ), b2_colorAzure, draw->context );
+		draw->DrawLineFcn( p, b2OffsetPos( p, b2MulSV( 0.001f, force ) ), b2_colorAzure, draw->context );
 
 		char buffer[64];
 		snprintf( buffer, 64, "f = [%g, %g], t = %g", force.x, force.y, torque );
