@@ -69,7 +69,8 @@ typedef struct b2ShapeCastInput
 	bool canEncroach;
 } b2ShapeCastInput;
 
-/// Low level ray cast or shape-cast output data. Returns a zero fraction and normal in the case of initial overlap.
+/// Low level ray cast or shape-cast output data. The hit point is in the local or relative frame
+/// of the input. Returns a zero fraction and normal in the case of initial overlap.
 typedef struct b2CastOutput
 {
 	/// The surface normal at the hit point
@@ -87,6 +88,24 @@ typedef struct b2CastOutput
 	/// Did the cast hit?
 	bool hit;
 } b2CastOutput;
+
+#if defined( BOX2D_DOUBLE_PRECISION )
+
+/// World-space cast output. The hit point is a world position. The normal stays a float direction.
+typedef struct b2WorldCastOutput
+{
+	b2Vec2 normal;	///< The surface normal at the hit point
+	b2Pos point;	///< The surface hit point in world space
+	float fraction; ///< The fraction of the input translation at collision
+	int iterations; ///< The number of iterations used
+	bool hit;		///< Did the cast hit?
+} b2WorldCastOutput;
+
+#else
+
+typedef b2CastOutput b2WorldCastOutput;
+
+#endif
 
 /// This holds the mass data computed for a shape.
 typedef struct b2MassData
@@ -235,16 +254,16 @@ B2_API b2MassData b2ComputeCapsuleMass( const b2Capsule* shape, float density );
 B2_API b2MassData b2ComputePolygonMass( const b2Polygon* shape, float density );
 
 /// Compute the bounding box of a transformed circle
-B2_API b2AABB b2ComputeCircleAABB( const b2Circle* shape, b2Transform transform );
+B2_API b2AABB b2ComputeCircleAABB( const b2Circle* shape, b2WorldTransform transform );
 
 /// Compute the bounding box of a transformed capsule
-B2_API b2AABB b2ComputeCapsuleAABB( const b2Capsule* shape, b2Transform transform );
+B2_API b2AABB b2ComputeCapsuleAABB( const b2Capsule* shape, b2WorldTransform transform );
 
 /// Compute the bounding box of a transformed polygon
-B2_API b2AABB b2ComputePolygonAABB( const b2Polygon* shape, b2Transform transform );
+B2_API b2AABB b2ComputePolygonAABB( const b2Polygon* shape, b2WorldTransform transform );
 
 /// Compute the bounding box of a transformed line segment
-B2_API b2AABB b2ComputeSegmentAABB( const b2Segment* shape, b2Transform transform );
+B2_API b2AABB b2ComputeSegmentAABB( const b2Segment* shape, b2WorldTransform transform );
 
 /// Test a point for overlap with a circle in local space
 B2_API bool b2PointInCircle( const b2Circle* shape, b2Vec2 point );
@@ -269,10 +288,10 @@ B2_API b2CastOutput b2RayCastSegment( const b2Segment* shape, const b2RayCastInp
 B2_API b2CastOutput b2RayCastPolygon( const b2Polygon* shape, const b2RayCastInput* input );
 
 /// Shape cast versus a circle.
-B2_API b2CastOutput b2ShapeCastCircle(const b2Circle* shape,  const b2ShapeCastInput* input );
+B2_API b2CastOutput b2ShapeCastCircle( const b2Circle* shape, const b2ShapeCastInput* input );
 
 /// Shape cast versus a capsule.
-B2_API b2CastOutput b2ShapeCastCapsule( const b2Capsule* shape, const b2ShapeCastInput* input);
+B2_API b2CastOutput b2ShapeCastCapsule( const b2Capsule* shape, const b2ShapeCastInput* input );
 
 /// Shape cast versus a line segment.
 B2_API b2CastOutput b2ShapeCastSegment( const b2Segment* shape, const b2ShapeCastInput* input );
@@ -368,11 +387,9 @@ typedef struct b2DistanceInput
 	/// The proxy for shape B
 	b2ShapeProxy proxyB;
 
-	/// The world transform for shape A
-	b2Transform transformA;
-
-	/// The world transform for shape B
-	b2Transform transformB;
+	/// Transform of shape B in shape A's frame, the relative pose B in A
+	/// (b2InvMulTransforms( worldA, worldB )). The query is origin independent and runs in frame A.
+	b2Transform transform;
 
 	/// Should the proxy radius be considered?
 	bool useRadii;
@@ -381,9 +398,9 @@ typedef struct b2DistanceInput
 /// Output for b2ShapeDistance
 typedef struct b2DistanceOutput
 {
-	b2Vec2 pointA;	  ///< Closest point on shapeA
-	b2Vec2 pointB;	  ///< Closest point on shapeB
-	b2Vec2 normal;	  ///< Normal vector that points from A to B. Invalid if distance is zero.
+	b2Vec2 pointA;	  ///< Closest point on shapeA, in shape A's frame
+	b2Vec2 pointB;	  ///< Closest point on shapeB, in shape A's frame
+	b2Vec2 normal;	  ///< A to B normal in shape A's frame. Invalid if distance is zero.
 	float distance;	  ///< The final distance, zero if overlapped
 	int iterations;	  ///< Number of GJK iterations used
 	int simplexCount; ///< The number of simplexes stored in the simplex array
@@ -416,17 +433,16 @@ B2_API b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2Simplex
 /// Input parameters for b2ShapeCast
 typedef struct b2ShapeCastPairInput
 {
-	b2ShapeProxy proxyA;	///< The proxy for shape A
-	b2ShapeProxy proxyB;	///< The proxy for shape B
-	b2Transform transformA; ///< The world transform for shape A
-	b2Transform transformB; ///< The world transform for shape B
-	b2Vec2 translationB;	///< The translation of shape B
-	float maxFraction;		///< The fraction of the translation to consider, typically 1
-	bool canEncroach;		///< Allows shapes with a radius to move slightly closer if already touching
+	b2ShapeProxy proxyA;   ///< The proxy for shape A
+	b2ShapeProxy proxyB;   ///< The proxy for shape B
+	b2Transform transform; ///< Transform of shape B in shape A's frame, the relative pose B in A
+	b2Vec2 translationB;   ///< The translation of shape B, in A's frame
+	float maxFraction;	   ///< The fraction of the translation to consider, typically 1
+	bool canEncroach;	   ///< Allows shapes with a radius to move slightly closer if already touching
 } b2ShapeCastPairInput;
 
 /// Perform a linear shape cast of shape B moving and shape A fixed. Determines the hit point, normal, and translation fraction.
-/// Initially touching shapes are treated as a miss.
+/// The query runs in frame A, so the hit point and normal are returned in frame A. Initially touching shapes are a miss.
 B2_API b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input );
 
 /// Make a proxy for use in overlap, shape cast, and related functions. This is a deep copy of the points.
@@ -482,7 +498,7 @@ typedef struct b2TOIOutput
 	/// The hit normal
 	b2Vec2 normal;
 
-	/// The sweep time of the collision 
+	/// The sweep time of the collision
 	float fraction;
 } b2TOIOutput;
 
@@ -497,6 +513,9 @@ B2_API b2TOIOutput b2TimeOfImpact( const b2TOIInput* input );
 /**
  * @defgroup collision Collision
  * @brief Functions for colliding pairs of shapes
+ *
+ * Each function takes the shapes in their own local frames and the transform of shape B in
+ * shape A's frame (b2InvMulWorldTransforms( worldA, worldB )). The manifold is returned in frame A.
  * @{
  */
 
@@ -507,20 +526,15 @@ B2_API b2TOIOutput b2TimeOfImpact( const b2TOIInput* input );
 /// the time step.
 typedef struct b2ManifoldPoint
 {
-	/// Location of the contact point in world space when first clipped. Subject to precision
-	/// loss at large coordinates. This point lags behind when contact recycling is used.
-	/// @note Should only be used for debugging. Use anchorA and/or anchorB for game logic.
-	b2Vec2 clipPoint;
-
-	/// Location of the contact point relative to shapeA's origin in world space.
+	/// Location of the contact point relative to bodyA's center of mass in world space.
 	/// This can be converted to a world point using:
-	/// b2Vec2 worldPointA = b2Add(b2Body_GetWorldCenterOfMass(myBodyIdA), anchorA);
+	/// b2Pos worldPointA = b2OffsetPos(b2Body_GetWorldCenter(myBodyIdA), anchorA);
 	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
 	b2Vec2 anchorA;
 
-	/// Location of the contact point relative to shapeB's origin in world space
+	/// Location of the contact point relative to bodyB's center of mass in world space.
 	/// This can be converted to a world point using:
-	/// b2Vec2 worldPointB = b2Add(b2Body_GetWorldCenterOfMass(myBodyIdB), anchorB);
+	/// b2Pos worldPointB = b2OffsetPos(b2Body_GetWorldCenter(myBodyIdB), anchorB);
 	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
 	b2Vec2 anchorB;
 
@@ -571,50 +585,70 @@ typedef struct b2Manifold
 
 } b2Manifold;
 
+/// Contact manifold point in local coordinates (frame A).
+typedef struct b2LocalManifoldPoint
+{
+	/// Contact point in frame A
+	b2Vec2 point;
+
+	/// The separation of the contact point, negative if penetrating. May be positive or negative.
+	float separation;
+
+	/// Uniquely identifies a contact point between two shapes
+	uint16_t id;
+} b2LocalManifoldPoint;
+
+/// Contact manifold in local coordinates (frame A).
+typedef struct b2LocalManifold
+{
+	/// The unit normal vector in frame A, points from shape A to shape B
+	b2Vec2 normal;
+
+	/// The manifold points, up to two are possible in 2D
+	b2LocalManifoldPoint points[2];
+
+	/// The number of contacts points, will be 0, 1, or 2
+	int pointCount;
+
+} b2LocalManifold;
+
 /// Compute the contact manifold between two circles
-B2_API b2Manifold b2CollideCircles( const b2Circle* circleA, b2Transform xfA, const b2Circle* circleB, b2Transform xfB );
+B2_API b2LocalManifold b2CollideCircles( const b2Circle* circleA, const b2Circle* circleB, b2Transform xf );
 
 /// Compute the contact manifold between a capsule and circle
-B2_API b2Manifold b2CollideCapsuleAndCircle( const b2Capsule* capsuleA, b2Transform xfA, const b2Circle* circleB,
-											 b2Transform xfB );
+B2_API b2LocalManifold b2CollideCapsuleAndCircle( const b2Capsule* capsuleA, const b2Circle* circleB, b2Transform xf );
 
 /// Compute the contact manifold between an segment and a circle
-B2_API b2Manifold b2CollideSegmentAndCircle( const b2Segment* segmentA, b2Transform xfA, const b2Circle* circleB,
-											 b2Transform xfB );
+B2_API b2LocalManifold b2CollideSegmentAndCircle( const b2Segment* segmentA, const b2Circle* circleB, b2Transform xf );
 
 /// Compute the contact manifold between a polygon and a circle
-B2_API b2Manifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, b2Transform xfA, const b2Circle* circleB,
-											 b2Transform xfB );
+B2_API b2LocalManifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, const b2Circle* circleB, b2Transform xf );
 
 /// Compute the contact manifold between a capsule and circle
-B2_API b2Manifold b2CollideCapsules( const b2Capsule* capsuleA, b2Transform xfA, const b2Capsule* capsuleB, b2Transform xfB );
+B2_API b2LocalManifold b2CollideCapsules( const b2Capsule* capsuleA, const b2Capsule* capsuleB, b2Transform xf );
 
 /// Compute the contact manifold between an segment and a capsule
-B2_API b2Manifold b2CollideSegmentAndCapsule( const b2Segment* segmentA, b2Transform xfA, const b2Capsule* capsuleB,
-											  b2Transform xfB );
+B2_API b2LocalManifold b2CollideSegmentAndCapsule( const b2Segment* segmentA, const b2Capsule* capsuleB, b2Transform xf );
 
 /// Compute the contact manifold between a polygon and capsule
-B2_API b2Manifold b2CollidePolygonAndCapsule( const b2Polygon* polygonA, b2Transform xfA, const b2Capsule* capsuleB,
-											  b2Transform xfB );
+B2_API b2LocalManifold b2CollidePolygonAndCapsule( const b2Polygon* polygonA, const b2Capsule* capsuleB, b2Transform xf );
 
 /// Compute the contact manifold between two polygons
-B2_API b2Manifold b2CollidePolygons( const b2Polygon* polygonA, b2Transform xfA, const b2Polygon* polygonB, b2Transform xfB );
+B2_API b2LocalManifold b2CollidePolygons( const b2Polygon* polygonA, const b2Polygon* polygonB, b2Transform xf );
 
 /// Compute the contact manifold between an segment and a polygon
-B2_API b2Manifold b2CollideSegmentAndPolygon( const b2Segment* segmentA, b2Transform xfA, const b2Polygon* polygonB,
-											  b2Transform xfB );
+B2_API b2LocalManifold b2CollideSegmentAndPolygon( const b2Segment* segmentA, const b2Polygon* polygonB, b2Transform xf );
 
 /// Compute the contact manifold between a chain segment and a circle
-B2_API b2Manifold b2CollideChainSegmentAndCircle( const b2ChainSegment* segmentA, b2Transform xfA, const b2Circle* circleB,
-												  b2Transform xfB );
+B2_API b2LocalManifold b2CollideChainSegmentAndCircle( const b2ChainSegment* segmentA, const b2Circle* circleB, b2Transform xf );
 
 /// Compute the contact manifold between a chain segment and a capsule
-B2_API b2Manifold b2CollideChainSegmentAndCapsule( const b2ChainSegment* segmentA, b2Transform xfA, const b2Capsule* capsuleB,
-												   b2Transform xfB, b2SimplexCache* cache );
+B2_API b2LocalManifold b2CollideChainSegmentAndCapsule( const b2ChainSegment* segmentA, const b2Capsule* capsuleB, b2Transform xf,
+														b2SimplexCache* cache );
 
 /// Compute the contact manifold between a chain segment and a rounded polygon
-B2_API b2Manifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, b2Transform xfA, const b2Polygon* polygonB,
-												   b2Transform xfB, b2SimplexCache* cache );
+B2_API b2LocalManifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA, const b2Polygon* polygonB, b2Transform xf,
+														b2SimplexCache* cache );
 
 /**@}*/
 
@@ -644,6 +678,13 @@ enum b2TreeNodeFlags
 	b2_leafNode = 0x0004,
 };
 
+/// Tree node child indices. Internal usage.
+typedef struct b2TreeNodeChildren
+{
+	int child1; ///< child node index 1
+	int child2; ///< child node index 2
+} b2TreeNodeChildren;
+
 /// A node in the dynamic tree. For internal usage.
 typedef struct b2TreeNode
 {
@@ -656,10 +697,7 @@ typedef struct b2TreeNode
 	union
 	{
 		/// Children (internal node)
-		struct
-		{
-			int32_t child1, child2;
-		} children;
+		b2TreeNodeChildren children;
 
 		/// User data (leaf node)
 		uint64_t userData;
@@ -788,26 +826,36 @@ typedef float b2TreeRayCastCallbackFcn( const b2RayCastInput* input, int proxyId
 B2_API b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
 										  b2TreeRayCastCallbackFcn* callback, void* context );
 
-/// This function receives clipped ray cast input for a proxy. The function
-/// returns the new ray fraction.
-/// - return a value of 0 to terminate the ray cast
-/// - return a value less than input->maxFraction to clip the ray
-/// - return a value of input->maxFraction to continue the ray cast without clipping
-typedef float b2TreeShapeCastCallbackFcn( const b2ShapeCastInput* input, int proxyId, uint64_t userData, void* context );
+/// Input for casting an AABB through a dynamic tree
+typedef struct b2BoxCastInput
+{
+	/// The AABB to cast, in the tree's frame.
+	b2AABB box;
 
-/// Ray cast against the proxies in the tree. This relies on the callback
-/// to perform a exact ray cast in the case were the proxy contains a shape.
-/// The callback also performs the any collision filtering. This has performance
-/// roughly equal to k * log(n), where k is the number of collisions and n is the
-/// number of proxies in the tree.
-/// @param tree the dynamic tree to ray cast
-/// @param input the ray cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
+	/// The sweep translation.
+	b2Vec2 translation;
+
+	/// The maximum fraction of the translation to consider, typically 1.
+	float maxFraction;
+} b2BoxCastInput;
+
+/// This function receives clipped AABB cast input for a proxy. The function
+/// returns the new cast fraction.
+/// - return a value of 0 to terminate the cast
+/// - return a value less than input->maxFraction to clip the cast
+/// - return a value of input->maxFraction to continue the cast without clipping
+typedef float b2TreeBoxCastCallbackFcn( const b2BoxCastInput* input, int proxyId, uint64_t userData, void* context );
+
+/// Cast a swept AABB through the tree. This has performance roughly equal to k * log(n),
+/// where k is the number of collisions and n is the number of proxies in the tree.
+/// @param tree the dynamic tree to cast through
+/// @param input the AABB cast input. The box sweeps from its origin to origin + maxFraction * translation.
 /// @param maskBits filter bits: `bool accept = (maskBits & node->categoryBits) != 0;`
-/// @param callback a callback class that is called for each proxy that is hit by the shape
+/// @param callback a callback that is called for each proxy the swept box may hit
 /// @param context user context that is passed to the callback
 ///	@return performance data
-B2_API b2TreeStats b2DynamicTree_ShapeCast( const b2DynamicTree* tree, const b2ShapeCastInput* input, uint64_t maskBits,
-											b2TreeShapeCastCallbackFcn* callback, void* context );
+B2_API b2TreeStats b2DynamicTree_BoxCast( const b2DynamicTree* tree, const b2BoxCastInput* input, uint64_t maskBits,
+										  b2TreeBoxCastCallbackFcn* callback, void* context );
 
 /// Get the height of the binary tree.
 B2_API int b2DynamicTree_GetHeight( const b2DynamicTree* tree );
@@ -847,7 +895,8 @@ B2_API void b2DynamicTree_ValidateNoEnlarged( const b2DynamicTree* tree );
  * @{
  */
 
-/// These are the collision planes returned from b2World_CollideMover
+/// These are the collision planes returned from b2World_CollideMover.
+/// The plane and point are relative to the query origin, matching the mover capsule.
 typedef struct b2PlaneResult
 {
 	/// The collision plane between the mover and a convex shape

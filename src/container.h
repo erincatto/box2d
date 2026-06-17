@@ -107,7 +107,7 @@
 	while ( 0 )
 
 // Get a pointer to an element
-#define b2Array_Get( a, index ) ( B2_ASSERT( 0 <= (index) && (index) < ( a ).count ), ( a ).data + (index) )
+#define b2Array_Get( a, index ) ( B2_ASSERT( 0 <= ( index ) && ( index ) < ( a ).count ), ( a ).data + ( index ) )
 
 // Create a new uninitialized element and return a pointer to it
 #define b2Array_Emplace( a ) ( b2EmplaceHelper( (void**)&( a ).data, &( a ).count, &( a ).capacity, sizeof( *( a ).data ) ) )
@@ -147,11 +147,11 @@ B2_INLINE int b2RemoveHelper( void* data, int* count, int index, int elementSize
 	return B2_NULL_INDEX;
 }
 
-#define b2Array_Clear( a ) \
-	do                     \
-	{                      \
-		( a ).count = 0;   \
-	}                      \
+#define b2Array_Clear( a )                                                                                                       \
+	do                                                                                                                           \
+	{                                                                                                                            \
+		( a ).count = 0;                                                                                                         \
+	}                                                                                                                            \
 	while ( 0 )
 
 #define b2Array_ByteCount( a ) ( ( a ).capacity * (int)sizeof( *( a ).data ) )

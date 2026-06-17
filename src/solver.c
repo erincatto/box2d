@@ -3,6 +3,7 @@
 
 #include "solver.h"
 
+#include "aabb.h"
 #include "arena_allocator.h"
 #include "atomic.h"
 #include "bitset.h"
@@ -169,6 +170,7 @@ struct b2ContinuousContext
 	b2Shape* fastShape;
 	b2Vec2 centroid1, centroid2;
 	b2Sweep sweep;
+	b2Pos base;
 	float fraction;
 	b2SensorHit sensorHits[B2_MAX_CONTINUOUS_SENSOR_HITS];
 	float sensorFractions[B2_MAX_CONTINUOUS_SENSOR_HITS];
@@ -256,7 +258,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	// Early out on fast parallel movement over a chain shape.
 	if ( shape->type == b2_chainSegmentShape )
 	{
-		b2Transform transform = bodySim->transform;
+		b2Transform transform = b2ToRelativeTransform( bodySim->transform, continuousContext->base );
 		b2Vec2 p1 = b2TransformPoint( transform, shape->chainSegment.segment.point1 );
 		b2Vec2 p2 = b2TransformPoint( transform, shape->chainSegment.segment.point2 );
 		b2Vec2 e = b2Sub( p2, p1 );
@@ -309,7 +311,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	b2TOIInput input;
 	input.proxyA = b2MakeShapeDistanceProxy( shape );
 	input.proxyB = b2MakeShapeDistanceProxy( fastShape );
-	input.sweepA = b2MakeSweep( bodySim );
+	input.sweepA = b2MakeRelativeSweep( bodySim, continuousContext->base );
 	input.sweepB = continuousContext->sweep;
 	input.maxFraction = continuousContext->fraction;
 
@@ -361,7 +363,10 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 		{
 			b2ShapeId shapeIdA = { shape->id + 1, world->worldId, shape->generation };
 			b2ShapeId shapeIdB = { fastShape->id + 1, world->worldId, fastShape->generation };
-			didHit = world->preSolveFcn( shapeIdA, shapeIdB, output.point, output.normal, world->preSolveContext );
+
+			// TOI runs in the base frame, lift the hit point back to world for the callback
+			b2Pos worldPoint = b2OffsetPos( continuousContext->base, output.point );
+			didHit = world->preSolveFcn( shapeIdA, shapeIdB, worldPoint, output.normal, world->preSolveContext );
 		}
 
 		if ( didHit )
@@ -384,7 +389,9 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 	b2BodySim* fastBodySim = b2Array_Get( awakeSet->bodySims, bodySimIndex );
 	B2_ASSERT( fastBodySim->flags & b2_isFast );
 
-	b2Sweep sweep = b2MakeSweep( fastBodySim );
+	// Re-center the sweep on the fast body so the TOI and the swept query stay in float precision
+	b2Pos base = fastBodySim->center0;
+	b2Sweep sweep = b2MakeRelativeSweep( fastBodySim, base );
 
 	b2Transform xf1;
 	xf1.q = sweep.q1;
@@ -402,6 +409,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 	struct b2ContinuousContext context = { 0 };
 	context.world = world;
 	context.sweep = sweep;
+	context.base = base;
 	context.fastBodySim = fastBodySim;
 	context.fraction = 1.0f;
 
@@ -418,7 +426,9 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 		context.centroid2 = b2TransformPoint( xf2, fastShape->localCentroid );
 
 		b2AABB box1 = fastShape->aabb;
-		b2AABB box2 = b2ComputeShapeAABB( fastShape, xf2 );
+
+		// xf2 is in the base frame, compute the tight box near the origin then lift to world
+		b2AABB box2 = b2OffsetAABB( b2ComputeShapeAABB( fastShape, b2MakeWorldTransform( xf2 ) ), base );
 
 		// Store this to avoid double computation in the case there is no impact event
 		fastShape->aabb = box2;
@@ -449,16 +459,16 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 		b2Vec2 c = b2Lerp( sweep.c1, sweep.c2, context.fraction );
 		b2Vec2 origin = b2Sub( c, b2RotateVector( q, sweep.localCenter ) );
 
-		// Advance body
-		b2Transform transform = { origin, q };
-		fastBodySim->transform = transform;
-		fastBodySim->center = c;
+		// Advance body, lifting the base frame result back to world
+		fastBodySim->transform.q = q;
+		fastBodySim->transform.p = b2OffsetPos( base, origin );
+		fastBodySim->center = b2OffsetPos( base, c );
 		fastBodySim->rotation0 = q;
-		fastBodySim->center0 = c;
+		fastBodySim->center0 = fastBodySim->center;
 
 		// Update body move event
 		b2BodyMoveEvent* event = b2Array_Get( world->bodyMoveEvents, bodySimIndex );
-		event->transform = transform;
+		event->transform = fastBodySim->transform;
 
 		// Prepare AABBs for broad-phase.
 		// Even though a body is fast, it may not move much. So the AABB may not need enlargement.
@@ -469,11 +479,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 			b2Shape* shape = b2Array_Get( world->shapes, shapeId );
 
 			// Must recompute aabb at the interpolated transform
-			b2AABB aabb = b2ComputeShapeAABB( shape, transform );
-			aabb.lowerBound.x -= speculativeDistance;
-			aabb.lowerBound.y -= speculativeDistance;
-			aabb.upperBound.x += speculativeDistance;
-			aabb.upperBound.y += speculativeDistance;
+			b2AABB aabb = b2ComputeFatShapeAABB( shape, fastBodySim->transform, speculativeDistance );
 			shape->aabb = aabb;
 
 			if ( b2AABB_Contains( shape->fatAABB, aabb ) == false )
@@ -585,7 +591,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 		B2_ASSERT( b2IsValidVec2( v ) );
 		B2_ASSERT( b2IsValidFloat( w ) );
 
-		sim->center = b2Add( sim->center, state->deltaPosition );
+		sim->center = b2OffsetPos( sim->center, state->deltaPosition );
 		sim->transform.q = b2NormalizeRot( b2MulRot( state->deltaRotation, sim->transform.q ) );
 
 		// Use the velocity of the farthest point on the body to account for rotation.
@@ -602,7 +608,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 		state->deltaPosition = b2Vec2_zero;
 		state->deltaRotation = b2Rot_identity;
 
-		sim->transform.p = b2Sub( sim->center, b2RotateVector( sim->transform.q, sim->localCenter ) );
+		sim->transform.p = b2OffsetPos( sim->center, b2Neg( b2RotateVector( sim->transform.q, sim->localCenter ) ) );
 
 		// cache miss here, however I need the shape list below
 		b2Body* body = bodies + sim->bodyId;
@@ -686,7 +692,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 		}
 
 		// Update shapes AABBs
-		b2Transform transform = sim->transform;
+		b2WorldTransform transform = sim->transform;
 		bool isFast = ( sim->flags & b2_isFast ) != 0;
 		int shapeId = body->headShapeId;
 		while ( shapeId != B2_NULL_INDEX )
@@ -704,11 +710,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 			}
 			else
 			{
-				b2AABB aabb = b2ComputeShapeAABB( shape, transform );
-				aabb.lowerBound.x -= speculativeDistance;
-				aabb.lowerBound.y -= speculativeDistance;
-				aabb.upperBound.x += speculativeDistance;
-				aabb.upperBound.y += speculativeDistance;
+				b2AABB aabb = b2ComputeFatShapeAABB( shape, transform, speculativeDistance );
 				shape->aabb = aabb;
 
 				B2_ASSERT( shape->enlargedAABB == false );
@@ -1751,7 +1753,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					b2ContactHitEvent event = { 0 };
 					event.approachSpeed = threshold;
 
-					bool found = false;
+					b2ManifoldPoint* bestPoint = NULL;
 					int pointCount = contactSim->manifold.pointCount;
 					for ( int p = 0; p < pointCount; ++p )
 					{
@@ -1762,20 +1764,35 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 						if ( approachSpeed > event.approachSpeed && mp->totalNormalImpulse > 0.0f )
 						{
 							event.approachSpeed = approachSpeed;
-							// Using the clip point here is somewhat questionable
-							event.point = mp->clipPoint;
-							found = true;
+							bestPoint = mp;
 						}
 					}
 
-					B2_VALIDATE( found );
+					B2_VALIDATE( bestPoint != NULL );
 
-					if ( found == true )
+					if ( bestPoint != NULL )
 					{
 						event.normal = contactSim->manifold.normal;
 
 						b2Shape* shapeA = shapeArray + contactSim->shapeIdA;
 						b2Shape* shapeB = shapeArray + contactSim->shapeIdB;
+
+						// World contact point reconstructed from a body center of mass and the matching
+						// anchor. The anchors were built with the manifold, so a body that has moved since
+						// drags the point with it. A static body has not moved, prefer one so the common
+						// case of a fast body striking the world stays exact.
+						b2Body* bodyA = b2Array_Get( world->bodies, shapeA->bodyId );
+						b2Body* bodyB = b2Array_Get( world->bodies, shapeB->bodyId );
+						if ( bodyA->type != b2_staticBody && bodyB->type == b2_staticBody )
+						{
+							b2BodySim* bodySimB = b2GetBodySim( world, bodyB );
+							event.point = b2OffsetPos( bodySimB->center, bestPoint->anchorB );
+						}
+						else
+						{
+							b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
+							event.point = b2OffsetPos( bodySimA->center, bestPoint->anchorA );
+						}
 
 						event.shapeIdA = (b2ShapeId){ shapeA->id + 1, worldId, shapeA->generation };
 						event.shapeIdB = (b2ShapeId){ shapeB->id + 1, worldId, shapeB->generation };

@@ -29,11 +29,13 @@
 // Snapshot image magic and version
 #define B2_SNAP_MAGIC 0x32534E42u // 'BNS2'
 
-// Bump this if any of the data structures below get modified.
-#define B2_SNAP_VERSION 2u
+// Bump this if any of the data structures below get modified. The layout hash only catches
+// size changes, a same-size reinterpretation like the contact cache reshape needs this bump.
+#define B2_SNAP_VERSION 3u
 
 // Header flag bits
-#define B2_SNAP_FLAG_VALIDATION 0x1u // image was built with validation, only used for diagnostics
+#define B2_SNAP_FLAG_VALIDATION 0x1u	   // image was built with validation, only used for diagnostics
+#define B2_SNAP_FLAG_DOUBLE_PRECISION 0x2u // image was built with double precision world positions
 
 // Layout hash seeds from all structs we memcpy, plus key constants.
 // Changing any struct or constant updates the hash. Re-purposing or swapping
@@ -480,6 +482,10 @@ void b2SerializeWorld( b2World* world, b2RecBuffer* buf )
 	hdr.version = B2_SNAP_VERSION;
 	hdr.layoutHash = b2ComputeLayoutHash();
 	hdr.flags = B2_ENABLE_VALIDATION ? B2_SNAP_FLAG_VALIDATION : 0u;
+	if ( b2IsDoublePrecision() )
+	{
+		hdr.flags |= B2_SNAP_FLAG_DOUBLE_PRECISION;
+	}
 	b2SnapW_Bytes( buf, &hdr, (int)sizeof( hdr ) );
 
 	// World config
@@ -843,6 +849,17 @@ static bool b2OpenSnapshotImage( const uint8_t* image, int size, b2SnapReader* r
 		return false;
 	}
 
+	// World positions are stored at the build precision, so the layout differs irreconcilably across
+	// modes. Called out before the layout hash so the cause is clear rather than a generic mismatch.
+	bool imageDouble = ( hdr.flags & B2_SNAP_FLAG_DOUBLE_PRECISION ) != 0;
+	bool buildDouble = b2IsDoublePrecision();
+	if ( imageDouble != buildDouble )
+	{
+		b2Log( "snapshot precision mismatch: image %s, this build %s\n", imageDouble ? "double" : "float",
+			   buildDouble ? "double" : "float" );
+		return false;
+	}
+
 	if ( hdr.layoutHash != b2ComputeLayoutHash() )
 	{
 		bool imageValidation = ( hdr.flags & B2_SNAP_FLAG_VALIDATION ) != 0;
@@ -1007,8 +1024,7 @@ uint64_t b2HashWorldStateDeep( b2World* world )
 
 		b2BodySim* sim = b2GetBodySim( world, body );
 
-		hash = b2FnvMixFloat( hash, sim->transform.p.x );
-		hash = b2FnvMixFloat( hash, sim->transform.p.y );
+		hash = b2FnvMixPosition( hash, sim->transform.p );
 		hash = b2FnvMixFloat( hash, sim->transform.q.c );
 		hash = b2FnvMixFloat( hash, sim->transform.q.s );
 

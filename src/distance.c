@@ -436,12 +436,11 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 	// This is still a performance gain at 8 points.
 	b2ShapeProxy localProxyB;
 	{
-		b2Transform transform = b2InvMulTransforms( input->transformA, input->transformB );
 		localProxyB.count = input->proxyB.count;
 		localProxyB.radius = input->proxyB.radius;
 		for ( int i = 0; i < localProxyB.count; ++i )
 		{
-			localProxyB.points[i] = b2TransformPoint( transform, input->proxyB.points[i] );
+			localProxyB.points[i] = b2TransformPoint( input->transform, input->proxyB.points[i] );
 		}
 	}
 
@@ -501,8 +500,8 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 			// Overlap
 			b2Vec2 localPointA, localPointB;
 			b2ComputeWitnessPoints( &simplex, &localPointA, &localPointB );
-			output.pointA = b2TransformPoint( input->transformA, localPointA );
-			output.pointB = b2TransformPoint( input->transformA, localPointB );
+			output.pointA = localPointA;
+			output.pointB = localPointB;
 			return output;
 		}
 
@@ -526,8 +525,8 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 			// Must return overlap due to invalid normal.
 			b2Vec2 localPointA, localPointB;
 			b2ComputeWitnessPoints( &simplex, &localPointA, &localPointB );
-			output.pointA = b2TransformPoint( input->transformA, localPointA );
-			output.pointB = b2TransformPoint( input->transformA, localPointB );
+			output.pointA = localPointA;
+			output.pointB = localPointB;
 			return output;
 		}
 
@@ -575,17 +574,16 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 	}
 #endif
 
-	// Prepare output
+	// Prepare output in frame A
 	b2Vec2 normal = b2Normalize( nonUnitNormal );
 	B2_ASSERT( b2IsNormalized( normal ) );
-	normal = b2RotateVector( input->transformA.q, normal );
 
 	b2Vec2 localPointA, localPointB;
 	b2ComputeWitnessPoints( &simplex, &localPointA, &localPointB );
 	output.normal = normal;
 	output.distance = b2Distance( localPointA, localPointB );
-	output.pointA = b2TransformPoint( input->transformA, localPointA );
-	output.pointB = b2TransformPoint( input->transformA, localPointB );
+	output.pointA = localPointA;
+	output.pointB = localPointB;
 	output.iterations = iteration;
 	output.simplexCount = simplexIndex;
 
@@ -626,9 +624,11 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	b2DistanceInput distanceInput = { 0 };
 	distanceInput.proxyA = input->proxyA;
 	distanceInput.proxyB = input->proxyB;
-	distanceInput.transformA = input->transformA;
-	distanceInput.transformB = input->transformB;
 	distanceInput.useRadii = false;
+
+	// The whole cast runs in frame A. Advance the relative pose of B in float each iteration,
+	// which keeps the math near the local origin and avoids re-relativizing world poses.
+	distanceInput.transform = input->transform;
 
 	b2Vec2 delta2 = input->translationB;
 	b2CastOutput output = { 0 };
@@ -693,14 +693,16 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 			return output;
 		}
 
-		distanceInput.transformB.p = b2MulAdd( input->transformB.p, fraction, delta2 );
+		distanceInput.transform.p = b2MulAdd( input->transform.p, fraction, delta2 );
 	}
 
 	// Failure!
 	return output;
 }
 
+// Note: the code below is experimental and probably broken
 #if 0
+
 static inline b2Vec2 b2ComputeSimplexClosestPoint( const b2Simplex* s )
 {
 	if ( s->count == 1 )
@@ -748,7 +750,7 @@ b2CastOutput b2ShapeCastMerged( const b2ShapeCastPairInput* input, b2ShapeCastDa
 
 	b2ShapeProxy proxyA = input->proxyA;
 
-	b2Transform xf = b2InvMulTransforms( input->transformA, input->transformB );
+	b2Transform xf = input->transform;
 
 	// Put proxyB in proxyA's frame to reduce round-off error
 	b2ShapeProxy proxyB;
@@ -763,7 +765,7 @@ b2CastOutput b2ShapeCastMerged( const b2ShapeCastPairInput* input, b2ShapeCastDa
 
 	float radius = proxyA.radius + proxyB.radius;
 
-	b2Vec2 r = b2RotateVector( xf.q, input->translationB );
+	b2Vec2 r = input->translationB;
 	float lambda = 0.0f;
 	float maxFraction = input->maxFraction;
 
@@ -905,8 +907,9 @@ b2CastOutput b2ShapeCastMerged( const b2ShapeCastPairInput* input, b2ShapeCastDa
 	b2Vec2 n = b2Normalize( b2Neg( v ) );
 	b2Vec2 point = { pointA.x + proxyA.radius * n.x, pointA.y + proxyA.radius * n.y };
 
-	output.point = b2TransformPoint( input->transformA, point );
-	output.normal = b2RotateVector( input->transformA.q, n );
+	// Results stay in frame A, matching b2ShapeCast
+	output.point = point;
+	output.normal = n;
 	output.fraction = lambda;
 	output.iterations = iteration;
 	output.hit = true;
@@ -1184,9 +1187,15 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 	for ( ;; )
 	{
 		// Get the distance between shapes. We can also use the results to get a separating axis.
-		distanceInput.transformA = b2GetSweepTransform( &sweepA, t1 );
-		distanceInput.transformB = b2GetSweepTransform( &sweepB, t1 );
+		b2Transform xfA = b2GetSweepTransform( &sweepA, t1 );
+		b2Transform xfB = b2GetSweepTransform( &sweepB, t1 );
+		distanceInput.transform = b2InvMulTransforms( xfA, xfB );
 		b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
+
+		// The distance query runs in frame A, project the witness data back to world
+		b2Vec2 worldNormal = b2RotateVector( xfA.q, distanceOutput.normal );
+		b2Vec2 worldPointA = b2TransformPoint( xfA, distanceOutput.pointA );
+		b2Vec2 worldPointB = b2TransformPoint( xfA, distanceOutput.pointB );
 
 		// Progressive time of impact. This handles slender geometry well but introduces
 		// significant time loss.
@@ -1228,10 +1237,10 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 			b2_toiHitCount += 1;
 #endif
 			// Averaged hit point
-			b2Vec2 pA = b2MulAdd( distanceOutput.pointA, proxyA->radius, distanceOutput.normal );
-			b2Vec2 pB = b2MulAdd( distanceOutput.pointB, -proxyB->radius, distanceOutput.normal );
+			b2Vec2 pA = b2MulAdd( worldPointA, proxyA->radius, worldNormal );
+			b2Vec2 pB = b2MulAdd( worldPointB, -proxyB->radius, worldNormal );
 			output.point = b2Lerp( pA, pB, 0.5f );
-			output.normal = distanceOutput.normal;
+			output.normal = worldNormal;
 			output.fraction = t1;
 			break;
 		}
@@ -1320,10 +1329,10 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 				b2_toiHitCount += 1;
 #endif
 				// Averaged hit point
-				b2Vec2 pA = b2MulAdd( distanceOutput.pointA, proxyA->radius, distanceOutput.normal );
-				b2Vec2 pB = b2MulAdd( distanceOutput.pointB, -proxyB->radius, distanceOutput.normal );
+				b2Vec2 pA = b2MulAdd( worldPointA, proxyA->radius, worldNormal );
+				b2Vec2 pB = b2MulAdd( worldPointB, -proxyB->radius, worldNormal );
 				output.point = b2Lerp( pA, pB, 0.5f );
-				output.normal = distanceOutput.normal;
+				output.normal = worldNormal;
 				output.fraction = t1;
 				done = true;
 				break;
@@ -1406,10 +1415,10 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 			b2_toiFailedCount += 1;
 #endif
 			// Averaged hit point
-			b2Vec2 pA = b2MulAdd( distanceOutput.pointA, proxyA->radius, distanceOutput.normal );
-			b2Vec2 pB = b2MulAdd( distanceOutput.pointB, -proxyB->radius, distanceOutput.normal );
+			b2Vec2 pA = b2MulAdd( worldPointA, proxyA->radius, worldNormal );
+			b2Vec2 pB = b2MulAdd( worldPointB, -proxyB->radius, worldNormal );
 			output.point = b2Lerp( pA, pB, 0.5f );
-			output.normal = distanceOutput.normal;
+			output.normal = worldNormal;
 			output.fraction = t1;
 			break;
 		}

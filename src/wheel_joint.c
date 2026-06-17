@@ -163,11 +163,10 @@ float b2WheelJoint_GetMaxMotorTorque( b2JointId jointId )
 
 b2Vec2 b2GetWheelJointForce( b2World* world, b2JointSim* base )
 {
-	int idA = base->bodyIdA;
-	b2Transform transformA = b2GetBodyTransform( world, idA );
+	b2Rot qA = b2GetBodyTransform( world, base->bodyIdA ).q;
 
 	b2Vec2 localAxisA = b2RotateVector( base->localFrameA.q, (b2Vec2){ 1.0f, 0.0f } );
-	b2Vec2 axisA = b2RotateVector( transformA.q, localAxisA );
+	b2Vec2 axisA = b2RotateVector( qA, localAxisA );
 	b2Vec2 perpA = b2LeftPerp( axisA );
 
 	b2WheelJoint* joint = &base->wheelJoint;
@@ -245,7 +244,7 @@ void b2PrepareWheelJoint( b2JointSim* base, b2StepContext* context )
 	joint->frameB.p = b2RotateVector( bodySimB->transform.q, b2Sub( base->localFrameB.p, bodySimB->localCenter ) );
 
 	// Compute the initial center delta. Incremental position updates are relative to this.
-	joint->deltaCenter = b2Sub( bodySimB->center, bodySimA->center );
+	joint->deltaCenter = b2SubPos( bodySimB->center, bodySimA->center );
 
 	b2Vec2 rA = joint->frameA.p;
 	b2Vec2 rB = joint->frameB.p;
@@ -551,14 +550,15 @@ void b2WheelJoint_Dump()
 }
 #endif
 
-void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale )
+void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform transformA, b2WorldTransform transformB,
+					   float drawScale )
 {
 	B2_ASSERT( base->type == b2_wheelJoint );
 
 	b2WheelJoint* joint = &base->wheelJoint;
 
-	b2Transform frameA = b2MulTransforms( transformA, base->localFrameA );
-	b2Transform frameB = b2MulTransforms( transformB, base->localFrameB );
+	b2WorldTransform frameA = b2OffsetWorldTransform( transformA, base->localFrameA );
+	b2WorldTransform frameB = b2OffsetWorldTransform( transformB, base->localFrameB );
 	b2Vec2 axisA = b2RotateVector( frameA.q, (b2Vec2){ 1.0f, 0.0f } );
 
 	b2HexColor c1 = b2_colorGray;
@@ -571,18 +571,18 @@ void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transfor
 
 	if ( joint->enableLimit )
 	{
-		b2Vec2 lower = b2MulAdd( frameA.p, joint->lowerTranslation, axisA );
-		b2Vec2 upper = b2MulAdd( frameA.p, joint->upperTranslation, axisA );
+		b2Pos lower = b2OffsetPos( frameA.p, b2MulSV( joint->lowerTranslation, axisA ) );
+		b2Pos upper = b2OffsetPos( frameA.p, b2MulSV( joint->upperTranslation, axisA ) );
 		b2Vec2 perp = b2LeftPerp( axisA );
 		draw->DrawLineFcn( lower, upper, c1, draw->context );
-		draw->DrawLineFcn( b2MulSub( lower, 0.1f * drawScale, perp ), b2MulAdd( lower, 0.1f * drawScale, perp ), c2,
-							  draw->context );
-		draw->DrawLineFcn( b2MulSub( upper, 0.1f * drawScale, perp ), b2MulAdd( upper, 0.1f * drawScale, perp ), c3,
-							  draw->context );
+		draw->DrawLineFcn( b2OffsetPos( lower, b2MulSV( -0.1f * drawScale, perp ) ),
+						   b2OffsetPos( lower, b2MulSV( 0.1f * drawScale, perp ) ), c2, draw->context );
+		draw->DrawLineFcn( b2OffsetPos( upper, b2MulSV( -0.1f * drawScale, perp ) ),
+						   b2OffsetPos( upper, b2MulSV( 0.1f * drawScale, perp ) ), c3, draw->context );
 	}
 	else
 	{
-		draw->DrawLineFcn( b2MulSub( frameA.p, 1.0f, axisA ), b2MulAdd( frameA.p, 1.0f, axisA ), c1, draw->context );
+		draw->DrawLineFcn( b2OffsetPos( frameA.p, b2Neg( axisA ) ), b2OffsetPos( frameA.p, axisA ), c1, draw->context );
 	}
 
 	draw->DrawPointFcn( frameA.p, 5.0f, c1, draw->context );

@@ -96,10 +96,8 @@ float b2RevoluteJoint_GetAngle( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
 	b2JointSim* jointSim = b2GetJointSimCheckType( jointId, b2_revoluteJoint );
-	b2Transform transformA = b2GetBodyTransform( world, jointSim->bodyIdA );
-	b2Transform transformB = b2GetBodyTransform( world, jointSim->bodyIdB );
-	b2Rot qA = b2MulRot( transformA.q, jointSim->localFrameA.q );
-	b2Rot qB = b2MulRot( transformB.q, jointSim->localFrameB.q );
+	b2Rot qA = b2MulRot( b2GetBodyTransform( world, jointSim->bodyIdA ).q, jointSim->localFrameA.q );
+	b2Rot qB = b2MulRot( b2GetBodyTransform( world, jointSim->bodyIdB ).q, jointSim->localFrameB.q );
 
 	float angle = b2RelativeAngle( qA, qB );
 	return angle;
@@ -269,7 +267,7 @@ void b2PrepareRevoluteJoint( b2JointSim* base, b2StepContext* context )
 	joint->frameB.p = b2RotateVector( bodySimB->transform.q, b2Sub( base->localFrameB.p, bodySimB->localCenter ) );
 
 	// Compute the initial center delta. Incremental position updates are relative to this.
-	joint->deltaCenter = b2Sub( bodySimB->center, bodySimA->center );
+	joint->deltaCenter = b2SubPos( bodySimB->center, bodySimA->center );
 
 	float k = iA + iB;
 	joint->axialMass = k > 0.0f ? 1.0f / k : 0.0f;
@@ -505,54 +503,32 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 	}
 }
 
-#if 0
-void b2RevoluteJoint::Dump()
-{
-	int32 indexA = joint->bodyA->joint->islandIndex;
-	int32 indexB = joint->bodyB->joint->islandIndex;
-
-	b2Dump("  b2RevoluteJointDef jd;\n");
-	b2Dump("  jd.bodyA = bodies[%d];\n", indexA);
-	b2Dump("  jd.bodyB = bodies[%d];\n", indexB);
-	b2Dump("  jd.collideConnected = bool(%d);\n", joint->collideConnected);
-	b2Dump("  jd.localAnchorA.Set(%.9g, %.9g);\n", joint->localAnchorA.x, joint->localAnchorA.y);
-	b2Dump("  jd.localAnchorB.Set(%.9g, %.9g);\n", joint->localAnchorB.x, joint->localAnchorB.y);
-	b2Dump("  jd.referenceAngle = %.9g;\n", joint->referenceAngle);
-	b2Dump("  jd.enableLimit = bool(%d);\n", joint->enableLimit);
-	b2Dump("  jd.lowerAngle = %.9g;\n", joint->lowerAngle);
-	b2Dump("  jd.upperAngle = %.9g;\n", joint->upperAngle);
-	b2Dump("  jd.enableMotor = bool(%d);\n", joint->enableMotor);
-	b2Dump("  jd.motorSpeed = %.9g;\n", joint->motorSpeed);
-	b2Dump("  jd.maxMotorTorque = %.9g;\n", joint->maxMotorTorque);
-	b2Dump("  joints[%d] = joint->world->CreateJoint(&jd);\n", joint->index);
-}
-#endif
-
-void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform transformA, b2Transform transformB, float drawScale )
+void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform transformA, b2WorldTransform transformB,
+						  float drawScale )
 {
 	B2_ASSERT( base->type == b2_revoluteJoint );
 
 	b2RevoluteJoint* joint = &base->revoluteJoint;
 
-	b2Transform frameA = b2MulTransforms( transformA, base->localFrameA );
-	b2Transform frameB = b2MulTransforms( transformB, base->localFrameB );
+	b2WorldTransform frameA = b2OffsetWorldTransform( transformA, base->localFrameA );
+	b2WorldTransform frameB = b2OffsetWorldTransform( transformB, base->localFrameB );
 
 	const float radius = 0.25f * drawScale;
 	draw->DrawCircleFcn( frameB.p, radius, b2_colorGray, draw->context );
 
 	b2Vec2 rx = { radius, 0.0f };
 	b2Vec2 r = b2RotateVector( frameA.q, rx );
-	draw->DrawLineFcn( frameA.p, b2Add( frameA.p, r ), b2_colorGray, draw->context );
+	draw->DrawLineFcn( frameA.p, b2OffsetPos( frameA.p, r ), b2_colorGray, draw->context );
 
 	r = b2RotateVector( frameB.q, rx );
-	draw->DrawLineFcn( frameB.p, b2Add( frameB.p, r ), b2_colorBlue, draw->context );
+	draw->DrawLineFcn( frameB.p, b2OffsetPos( frameB.p, r ), b2_colorBlue, draw->context );
 
 	if ( draw->drawJointExtras )
 	{
 		float jointAngle = b2RelativeAngle( frameA.q, frameB.q );
 		char buffer[32];
 		snprintf( buffer, 32, " %.1f deg", 180.0f * jointAngle / B2_PI );
-		draw->DrawStringFcn( b2Add( frameA.p, r ), buffer, b2_colorWhite, draw->context );
+		draw->DrawStringFcn( b2OffsetPos( frameA.p, r ), buffer, b2_colorWhite, draw->context );
 	}
 
 	float lowerAngle = joint->lowerAngle;
@@ -566,15 +542,15 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2Transform trans
 		b2Rot rotHi = b2MulRot( frameA.q, b2MakeRot( upperAngle ) );
 		b2Vec2 rhi = b2RotateVector( rotHi, rx );
 
-		draw->DrawLineFcn( frameB.p, b2Add( frameB.p, rlo ), b2_colorGreen, draw->context );
-		draw->DrawLineFcn( frameB.p, b2Add( frameB.p, rhi ), b2_colorRed, draw->context );
+		draw->DrawLineFcn( frameB.p, b2OffsetPos( frameB.p, rlo ), b2_colorGreen, draw->context );
+		draw->DrawLineFcn( frameB.p, b2OffsetPos( frameB.p, rhi ), b2_colorRed, draw->context );
 	}
 
 	if ( joint->enableSpring )
 	{
 		b2Rot q = b2MulRot( frameA.q, b2MakeRot( joint->targetAngle ) );
 		b2Vec2 v = b2RotateVector( q, rx );
-		draw->DrawLineFcn( frameB.p, b2Add( frameB.p, v ), b2_colorViolet, draw->context );
+		draw->DrawLineFcn( frameB.p, b2OffsetPos( frameB.p, v ), b2_colorViolet, draw->context );
 	}
 
 	b2HexColor color = b2_colorGold;

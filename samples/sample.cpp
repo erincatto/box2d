@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define INFO_PANEL_WIDTH 16.0f
+
 static const char* fileName = "settings.ini";
 
 // Load a file. You must free the character array.
@@ -80,59 +82,65 @@ static int jsoneq( const char* json, jsmntok_t* tok, const char* s )
 	return -1;
 }
 
-void DrawPolygonFcn( const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context )
+void DrawPolygonFcn(b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
-	DrawPolygon( sampleContext->draw, vertices, vertexCount, color );
+	DrawPolygon( sampleContext->draw, transform, vertices, vertexCount, color );
 }
 
-void DrawSolidPolygonFcn( b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color,
+void DrawSolidPolygonFcn( b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color,
 						  void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
 	DrawSolidPolygon( sampleContext->draw, transform, vertices, vertexCount, radius, color );
 }
 
-void DrawCircleFcn( b2Vec2 center, float radius, b2HexColor color, void* context )
+void DrawCircleFcn( b2Pos center, float radius, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
 	DrawCircle( sampleContext->draw, center, radius, color );
 }
 
-void DrawSolidCircleFcn( b2Transform transform, float radius, b2HexColor color, void* context )
+void DrawSolidCircleFcn( b2WorldTransform transform, b2Vec2 center, float radius, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
-	DrawSolidCircle( sampleContext->draw, transform, radius, color );
+	DrawSolidCircle( sampleContext->draw, transform, center, radius, color );
 }
 
-void DrawSolidCapsuleFcn( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context )
+void DrawSolidCapsuleFcn( b2Pos p1, b2Pos p2, float radius, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
-	DrawSolidCapsule( sampleContext->draw, p1, p2, radius, color );
+	DrawCapsule( sampleContext->draw, p1, p2, radius, color );
 }
 
-void DrawLineFcn( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context )
+void DrawLineFcn( b2Pos p1, b2Pos p2, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
 	DrawLine( sampleContext->draw, p1, p2, color );
 }
 
-void DrawTransformFcn( b2Transform transform, void* context )
+void DrawTransformFcn( b2WorldTransform transform, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
 	DrawTransform( sampleContext->draw, transform, 1.0f );
 }
 
-void DrawPointFcn( b2Vec2 p, float size, b2HexColor color, void* context )
+void DrawPointFcn( b2Pos p, float size, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
 	DrawPoint( sampleContext->draw, p, size, color );
 }
 
-void DrawStringFcn( b2Vec2 p, const char* s, b2HexColor color, void* context )
+void DrawStringFcn( b2Pos p, const char* s, b2HexColor color, void* context )
 {
 	SampleContext* sampleContext = static_cast<SampleContext*>( context );
-	DrawWorldString( sampleContext->draw, &sampleContext->camera, p, color, s );
+	DrawString( sampleContext->draw, &sampleContext->camera, p, color, "%s", s );
+}
+
+void DrawBoundsFcn( b2AABB aabb, b2HexColor color, void* context )
+{
+	SampleContext* sampleContext = static_cast<SampleContext*>( context );
+	DrawBounds( sampleContext->draw, aabb, color );
 }
 
 #define MAX_TOKENS 32
@@ -150,6 +158,8 @@ void SampleContext::Load()
 	debugDraw.DrawTransformFcn = DrawTransformFcn;
 	debugDraw.DrawPointFcn = DrawPointFcn;
 	debugDraw.DrawStringFcn = DrawStringFcn;
+	debugDraw.DrawBoundsFcn = DrawBoundsFcn;
+
 	debugDraw.context = this;
 
 	recycleDistance = B2_CONTACT_RECYCLE_DISTANCE;
@@ -390,7 +400,7 @@ void Sample::ResetText()
 
 struct QueryContext
 {
-	b2Vec2 point;
+	b2Pos point;
 	b2BodyId bodyId = b2_nullBodyId;
 };
 
@@ -417,7 +427,7 @@ bool QueryCallback( b2ShapeId shapeId, void* context )
 	return true;
 }
 
-void Sample::MouseDown( b2Vec2 p, int button, int mod )
+void Sample::MouseDown( b2Pos p, int button, int mod )
 {
 	if ( B2_IS_NON_NULL( m_mouseJointId ) )
 	{
@@ -426,17 +436,15 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 
 	if ( button == GLFW_MOUSE_BUTTON_1 )
 	{
-		// Make a small box.
-		b2AABB box;
+		// A tiny box around the click point, exact at any distance with the click as the origin
 		b2Vec2 d = { 0.001f, 0.001f };
-		box.lowerBound = b2Sub( p, d );
-		box.upperBound = b2Add( p, d );
+		b2AABB box = { b2Neg( d ), d };
 
 		m_mousePoint = p;
 
 		// Query the world for overlapping shapes.
 		QueryContext queryContext = { p, b2_nullBodyId };
-		b2World_OverlapAABB( m_worldId, box, b2DefaultQueryFilter(), QueryCallback, &queryContext );
+		b2World_OverlapAABB( m_worldId, p, box, b2DefaultQueryFilter(), QueryCallback, &queryContext );
 
 		if ( B2_IS_NON_NULL( queryContext.bodyId ) )
 		{
@@ -471,7 +479,7 @@ void Sample::MouseDown( b2Vec2 p, int button, int mod )
 	}
 }
 
-void Sample::MouseUp( b2Vec2 p, int button )
+void Sample::MouseUp( b2Pos p, int button )
 {
 	if ( B2_IS_NON_NULL( m_mouseJointId ) && button == GLFW_MOUSE_BUTTON_1 )
 	{
@@ -483,7 +491,7 @@ void Sample::MouseUp( b2Vec2 p, int button )
 	}
 }
 
-void Sample::MouseMove( b2Vec2 p )
+void Sample::MouseMove( b2Pos p )
 {
 	if ( b2Joint_IsValid( m_mouseJointId ) == false )
 	{
@@ -509,6 +517,10 @@ void Sample::DrawScreenTextLine( const char* text, ... )
 void Sample::ResetProfile()
 {
 	m_stepCount = 0;
+	memset( m_profiles, 0, sizeof( m_profiles ) );
+	m_currentProfileIndex = 0;
+	m_profileReadIndex = 0;
+	m_profileWriteIndex = 0;
 }
 
 void Sample::Step()
@@ -548,6 +560,7 @@ void Sample::Step()
 	}
 
 	m_context->debugDraw.drawingBounds = GetViewBounds( &m_context->camera );
+
 	b2World_EnableSleeping( m_worldId, m_context->enableSleep );
 	b2World_EnableWarmStarting( m_worldId, m_context->enableWarmStarting );
 	b2World_EnableContinuous( m_worldId, m_context->enableContinuous );
@@ -603,7 +616,7 @@ void Sample::DrawMetrics()
 	}
 
 	float fontSize = ImGui::GetFontSize();
-	float menuWidth = 14.0f * fontSize;
+	float menuWidth = INFO_PANEL_WIDTH * fontSize;
 	float drawerHeight = 16.0f * fontSize;
 	float drawerWidth = m_camera->width - menuWidth - 1.5f * fontSize;
 
@@ -1677,7 +1690,7 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 {
 	const SampleEntry& entry = g_sampleEntries[context->sampleIndex];
 	float fontSize = ImGui::GetFontSize();
-	float menuWidth = 14.0f * fontSize;
+	float menuWidth = INFO_PANEL_WIDTH * fontSize;
 	float menuBarHeight = ImGui::GetFrameHeight();
 
 	ImGui::SetNextWindowPos( { context->camera.width - menuWidth - 0.5f * fontSize, menuBarHeight + 0.5f * fontSize } );
@@ -1707,10 +1720,12 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 
 	ImGui::Separator();
 
+	ImGui::PushItemWidth( 6.0f * fontSize );
 	if ( context->sample->DrawControls() )
 	{
 		ImGui::Separator();
 	}
+	ImGui::PopItemWidth();
 
 	if ( context->sample->HasSolverControls() && ImGui::CollapsingHeader( "Solver", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{

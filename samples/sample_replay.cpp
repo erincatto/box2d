@@ -102,7 +102,7 @@ static const char* ReplayQueryTypeName( b2RecQueryType type )
 // Pick the first shape whose area contains the click point
 struct ReplayPickContext
 {
-	b2Vec2 point;
+	b2Pos point;
 	b2ShapeId shape;
 };
 
@@ -122,12 +122,12 @@ static bool ReplayPickCallback( b2ShapeId shapeId, void* context )
 // reproduces the original session exactly. Pause, single step, and restart use the shared sample
 // controls. Mouse picking is disabled because dragging a body would mutate the replayed world
 // and diverge it from the recording.
-class ReplayFile : public Sample
+class ReplayViewer : public Sample
 {
 public:
 	// The player owns the world we draw, so skip the base world. m_worldId stays null until
 	// CreatePlayer adopts the player's world.
-	explicit ReplayFile( SampleContext* context )
+	explicit ReplayViewer( SampleContext* context )
 		: Sample( context, false )
 	{
 		if ( m_context->restart == false )
@@ -165,7 +165,7 @@ public:
 		}
 	}
 
-	~ReplayFile() override
+	~ReplayViewer() override
 	{
 		ClosePlayer();
 
@@ -413,6 +413,7 @@ public:
 		m_stepCount = b2RecPlayer_GetFrame( m_player );
 
 		m_context->debugDraw.drawingBounds = GetViewBounds( &m_context->camera );
+
 		if ( B2_IS_NON_NULL( m_worldId ) )
 		{
 			b2World_Draw( m_worldId, &m_context->debugDraw );
@@ -616,13 +617,13 @@ public:
 		int count = b2Body_GetContactData( body, contacts, capacity );
 		for ( int i = 0; i < count; ++i )
 		{
-			b2Vec2 originA = b2Body_GetPosition( b2Shape_GetBody( contacts[i].shapeIdA ) );
+			b2Pos originA = b2Body_GetPosition( b2Shape_GetBody( contacts[i].shapeIdA ) );
 			const b2Manifold* m = &contacts[i].manifold;
 			for ( int j = 0; j < m->pointCount; ++j )
 			{
-				b2Vec2 point = b2Add( originA, m->points[j].anchorA );
+				b2Pos point = b2OffsetPos( originA, m->points[j].anchorA );
 				DrawPoint( draw, point, 6.0f, b2_colorOrange );
-				DrawLine( draw, point, b2MulAdd( point, 0.3f, m->normal ), b2_colorOrange );
+				DrawLine( draw, point, point + b2MulSV( 0.3f, m->normal ), b2_colorOrange );
 			}
 		}
 	}
@@ -643,7 +644,7 @@ public:
 			b2BodyId body = b2Shape_GetBody( shape );
 			DrawBounds( draw, b2Shape_GetAABB( shape ), b2_colorYellow );
 			DrawTransform( draw, b2Body_GetTransform( body ), 0.5f );
-			DrawPoint( draw, b2Body_GetWorldCenterOfMass( body ), 8.0f, b2_colorYellow );
+			DrawPoint( draw, b2Body_GetWorldCenter( body ), 8.0f, b2_colorYellow );
 			DrawBodyContacts( body );
 		}
 		else if ( m_selKind == SelBody )
@@ -655,7 +656,7 @@ public:
 			}
 			DrawBounds( draw, b2Body_ComputeAABB( body ), b2_colorYellow );
 			DrawTransform( draw, b2Body_GetTransform( body ), 0.5f );
-			DrawPoint( draw, b2Body_GetWorldCenterOfMass( body ), 8.0f, b2_colorYellow );
+			DrawPoint( draw, b2Body_GetWorldCenter( body ), 8.0f, b2_colorYellow );
 			DrawBodyContacts( body );
 		}
 		else if ( m_selKind == SelJoint )
@@ -669,11 +670,11 @@ public:
 			b2BodyId b = b2Joint_GetBodyB( joint );
 			if ( b2Body_IsValid( a ) )
 			{
-				DrawPoint( draw, b2Body_GetWorldCenterOfMass( a ), 8.0f, b2_colorMagenta );
+				DrawPoint( draw, b2Body_GetWorldCenter( a ), 8.0f, b2_colorMagenta );
 			}
 			if ( b2Body_IsValid( b ) )
 			{
-				DrawPoint( draw, b2Body_GetWorldCenterOfMass( b ), 8.0f, b2_colorMagenta );
+				DrawPoint( draw, b2Body_GetWorldCenter( b ), 8.0f, b2_colorMagenta );
 			}
 		}
 	}
@@ -905,7 +906,7 @@ public:
 		}
 
 		const char* name = b2Body_GetName( body );
-		b2Transform xf = b2Body_GetTransform( body );
+		b2WorldTransform xf = b2Body_GetTransform( body );
 		b2Vec2 v = b2Body_GetLinearVelocity( body );
 
 		ImGui::Text( "id      %d", body.index1 );
@@ -1172,33 +1173,34 @@ public:
 
 	// Left click selects a shape to inspect. Picking only reads the world, it never creates the drag
 	// joint the base sample does, so the replay is not mutated. Dragging stays disabled.
-	void MouseDown( b2Vec2 p, int button, int ) override
+	void MouseDown( b2Pos p, int button, int ) override
 	{
 		if ( button != GLFW_MOUSE_BUTTON_1 || B2_IS_NULL( m_worldId ) )
 		{
 			return;
 		}
 
+		// A tiny box around the click point, exact at any distance with the click as the origin
 		b2Vec2 d = { 0.001f, 0.001f };
-		b2AABB box = { b2Sub( p, d ), b2Add( p, d ) };
+		b2AABB box = { b2Neg( d ), d };
 		ReplayPickContext pick = { p, b2_nullShapeId };
-		b2World_OverlapAABB( m_worldId, box, b2DefaultQueryFilter(), ReplayPickCallback, &pick );
+		b2World_OverlapAABB( m_worldId, p, box, b2DefaultQueryFilter(), ReplayPickCallback, &pick );
 
 		// A miss clears the selection
 		SelectShape( pick.shape );
 	}
 
-	void MouseUp( b2Vec2, int ) override
+	void MouseUp( b2Pos, int ) override
 	{
 	}
 
-	void MouseMove( b2Vec2 ) override
+	void MouseMove( b2Pos ) override
 	{
 	}
 
 	static Sample* Create( SampleContext* context )
 	{
-		return new ReplayFile( context );
+		return new ReplayViewer( context );
 	}
 
 	b2RecPlayer* m_player;
@@ -1238,4 +1240,4 @@ public:
 	bool m_revealSelection = false; // one-shot request to expand and scroll the tree to a viewport pick
 };
 
-static int sampleReplayFile = RegisterReplay( "Replay", "Replay File", ReplayFile::Create );
+static int sampleReplayViewer = RegisterReplay( "Replay", "Viewer", ReplayViewer::Create );

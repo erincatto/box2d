@@ -49,11 +49,7 @@ typedef struct b2RayResult
 {
 	/// The shape hit.
 	b2ShapeId shapeId;
-
-	/// The world point of the hit.
-	b2Vec2 point;
-
-	/// The world normal of the shape surface at the hit point.
+	b2Pos point;
 	b2Vec2 normal;
 
 	/// The fraction of the input ray.
@@ -211,7 +207,7 @@ typedef struct b2BodyDef
 	/// The initial world position of the body. Bodies should be created with the desired position.
 	/// @note Creating bodies at the origin and then moving them nearly doubles the cost of body creation, especially
 	/// if the body is moved after shapes have been added.
-	b2Vec2 position;
+	b2Pos position;
 
 	/// The initial world rotation of the body. Use b2MakeRot() if you have an angle.
 	b2Rot rotation;
@@ -924,7 +920,7 @@ typedef struct b2ExplosionDef
 	uint64_t maskBits;
 
 	/// The center of the explosion in world space
-	b2Vec2 position;
+	b2Pos position;
 
 	/// The radius of the explosion
 	float radius;
@@ -1056,10 +1052,11 @@ typedef struct b2ContactHitEvent
 	///	@see b2Contact_IsValid
 	b2ContactId contactId;
 
-	/// Point where the shapes hit at the beginning of the time step.
-	/// This is a mid-point between the two surfaces. It could be at speculative
-	/// point where the two shapes were not touching at the beginning of the time step.
-	b2Vec2 point;
+	/// Point where the shapes hit. This is a mid-point between the two surfaces. It could be
+	/// a speculative point where the shapes were not touching at the beginning of the time
+	/// step. The point is reconstructed after the step, so when both bodies are moving it may
+	/// trail the impact by up to one step of motion.
+	b2Pos point;
 
 	/// Normal vector pointing from shape A to shape B
 	b2Vec2 normal;
@@ -1106,11 +1103,7 @@ typedef struct b2BodyMoveEvent
 {
 	/// The body user data.
 	void* userData;
-
-	/// The body transform.
-	b2Transform transform;
-
-	/// The body id.
+	b2WorldTransform transform;
 	b2BodyId bodyId;
 
 	/// Did the body fall asleep this time step?
@@ -1200,7 +1193,7 @@ typedef bool b2CustomFilterFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* co
 /// Return false if you want to disable the contact this step
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
-typedef bool b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Vec2 point, b2Vec2 normal, void* context );
+typedef bool b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context );
 
 /// Prototype callback for overlap queries.
 /// Called for each shape found in the query.
@@ -1225,7 +1218,7 @@ typedef bool b2OverlapResultFcn( b2ShapeId shapeId, void* context );
 /// @return -1 to filter, 0 to terminate, fraction to clip the ray for closest hit, 1 to continue
 /// @see b2World_CastRay
 /// @ingroup world
-typedef float b2CastResultFcn( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context );
+typedef float b2CastResultFcn( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context );
 
 // Used to collect collision planes for character movers.
 // Return true to continue gathering planes.
@@ -1390,37 +1383,44 @@ typedef enum b2HexColor
 B2_API b2HexColor b2GetGraphColor( int index );
 
 /// This struct holds callbacks you can implement to draw a Box2D world.
-/// This structure should be zero initialized.
+/// Callbacks receive world coordinates. In large world mode the translation is double precision so
+/// it stays accurate far from the origin. Shift into your own camera frame inside the callbacks.
+/// Initialize with b2DefaultDebugDraw.
 /// @ingroup world
 typedef struct b2DebugDraw
 {
 	/// Draw a closed polygon provided in CCW order.
-	void ( *DrawPolygonFcn )( const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context );
+	void ( *DrawPolygonFcn )( b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, b2HexColor color,
+							  void* context );
 
 	/// Draw a solid closed polygon provided in CCW order.
-	void ( *DrawSolidPolygonFcn )( b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color,
-								   void* context );
+	void ( *DrawSolidPolygonFcn )( b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, float radius,
+								   b2HexColor color, void* context );
 
 	/// Draw a circle.
-	void ( *DrawCircleFcn )( b2Vec2 center, float radius, b2HexColor color, void* context );
+	void ( *DrawCircleFcn )( b2Pos center, float radius, b2HexColor color, void* context );
 
 	/// Draw a solid circle.
-	void ( *DrawSolidCircleFcn )( b2Transform transform, float radius, b2HexColor color, void* context );
+	void ( *DrawSolidCircleFcn )( b2WorldTransform transform, b2Vec2 center, float radius, b2HexColor color, void* context );
 
 	/// Draw a solid capsule.
-	void ( *DrawSolidCapsuleFcn )( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context );
+	void ( *DrawSolidCapsuleFcn )( b2Pos p1, b2Pos p2, float radius, b2HexColor color, void* context );
 
 	/// Draw a line segment.
-	void ( *DrawLineFcn )( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context );
+	void ( *DrawLineFcn )( b2Pos p1, b2Pos p2, b2HexColor color, void* context );
 
 	/// Draw a transform. Choose your own length scale.
-	void ( *DrawTransformFcn )( b2Transform transform, void* context );
+	void ( *DrawTransformFcn )( b2WorldTransform transform, void* context );
 
 	/// Draw a point.
-	void ( *DrawPointFcn )( b2Vec2 p, float size, b2HexColor color, void* context );
+	void ( *DrawPointFcn )( b2Pos p, float size, b2HexColor color, void* context );
 
 	/// Draw a string in world space
-	void ( *DrawStringFcn )( b2Vec2 p, const char* s, b2HexColor color, void* context );
+	void ( *DrawStringFcn )( b2Pos p, const char* s, b2HexColor color, void* context );
+
+	/// Draw a bounding box. With double precision enabled, the single precision bounding box
+	/// gets increasing padding when moving far from the origin.
+	void ( *DrawBoundsFcn )( b2AABB aabb, b2HexColor color, void* context );
 
 	/// World bounds to use for debug draw
 	b2AABB drawingBounds;

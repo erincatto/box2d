@@ -79,7 +79,7 @@ public:
 			b2CreatePolygonShape( m_platformId, &shapeDef, &box );
 
 			b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
-			b2Vec2 pivot = { -2.0f, 5.0f };
+			b2Pos pivot = { -2.0f, 5.0f };
 			revoluteDef.base.bodyIdA = m_attachmentId;
 			revoluteDef.base.bodyIdB = m_platformId;
 			revoluteDef.base.localFrameA.p = b2Body_GetLocalPoint( m_attachmentId, pivot );
@@ -98,7 +98,7 @@ public:
 			b2CreateRevoluteJoint( m_worldId, &revoluteDef );
 
 			b2PrismaticJointDef prismaticDef = b2DefaultPrismaticJointDef();
-			b2Vec2 anchor = { 0.0f, 5.0f };
+			b2Pos anchor = { 0.0f, 5.0f };
 			prismaticDef.base.bodyIdA = groundId;
 			prismaticDef.base.bodyIdB = m_platformId;
 			prismaticDef.base.localFrameA.p = b2Body_GetLocalPoint( groundId, anchor );
@@ -219,8 +219,8 @@ public:
 			b2Body_SetAngularVelocity( m_platformId, 0.0f );
 
 			b2Body_SetType( m_secondAttachmentId, b2_kinematicBody );
-			b2Body_SetLinearVelocity(m_secondAttachmentId, b2Vec2_zero);
-			b2Body_SetAngularVelocity(m_secondAttachmentId, 0.0f);
+			b2Body_SetLinearVelocity( m_secondAttachmentId, b2Vec2_zero );
+			b2Body_SetAngularVelocity( m_secondAttachmentId, 0.0f );
 
 			b2Body_SetType( m_secondPayloadId, b2_kinematicBody );
 			b2Body_SetType( m_touchingBodyId, b2_kinematicBody );
@@ -261,7 +261,7 @@ public:
 		// Drive the kinematic body.
 		if ( m_type == b2_kinematicBody )
 		{
-			b2Vec2 p = b2Body_GetPosition( m_platformId );
+			b2Pos p = b2Body_GetPosition( m_platformId );
 			b2Vec2 v = b2Body_GetLinearVelocity( m_platformId );
 
 			if ( ( p.x < -14.0f && v.x < 0.0f ) || ( p.x > 6.0f && v.x > 0.0f ) )
@@ -389,14 +389,14 @@ public:
 
 		// This shows how to get the velocity of a point on a body
 		b2Vec2 localPoint = { 0.0f, 2.0f };
-		b2Vec2 worldPoint = b2Body_GetWorldPoint( m_weebleId, localPoint );
+		b2Pos worldPoint = b2Body_GetWorldPoint( m_weebleId, localPoint );
 
 		b2Vec2 v1 = b2Body_GetLocalPointVelocity( m_weebleId, localPoint );
 		b2Vec2 v2 = b2Body_GetWorldPointVelocity( m_weebleId, worldPoint );
 
 		b2Vec2 offset = { 0.05f, 0.0f };
-		DrawLine(m_context->draw,  worldPoint, worldPoint + v1, b2_colorRed );
-		DrawLine(m_context->draw,  worldPoint + offset, worldPoint + v2 + offset, b2_colorGreen );
+		DrawLine( m_context->draw, worldPoint, worldPoint + v1, b2_colorRed );
+		DrawLine( m_context->draw, worldPoint + offset, worldPoint + v2 + offset, b2_colorGreen );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -405,7 +405,7 @@ public:
 	}
 
 	b2BodyId m_weebleId;
-	b2Vec2 m_explosionPosition;
+	b2Pos m_explosionPosition;
 	float m_explosionRadius;
 	float m_explosionMagnitude;
 };
@@ -511,7 +511,7 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2CreateCapsuleShape( m_pendulumId, &shapeDef, &capsule );
 
-			b2Vec2 pivot = bodyDef.position;
+			b2Pos pivot = bodyDef.position;
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = m_pendulumId;
@@ -717,7 +717,7 @@ public:
 	{
 		Sample::Step();
 
-		DrawScreenTextLine("A bad body is a dynamic body with no mass and behaves like a kinematic body." );
+		DrawScreenTextLine( "A bad body is a dynamic body with no mass and behaves like a kinematic body." );
 		DrawScreenTextLine( "Bad bodies are considered invalid and a user bug. Behavior is not guaranteed." );
 
 		// For science
@@ -845,7 +845,7 @@ public:
 
 		if ( timeStep > 0.0f )
 		{
-			b2Vec2 point = {
+			b2Pos point = {
 				.x = 2.0f * m_amplitude * cosf( m_time ),
 				.y = m_amplitude * sinf( 2.0f * m_time ),
 			};
@@ -856,7 +856,7 @@ public:
 			DrawPoint( m_context->draw, point, 10.0f, b2_colorPlum );
 
 			bool wake = true;
-			b2Body_SetTargetTransform( m_bodyId, { point, rotation }, timeStep, wake );
+			b2Body_SetTargetTransform( m_bodyId, { point , rotation }, timeStep, wake );
 		}
 
 		Sample::Step();
@@ -1026,7 +1026,7 @@ public:
 
 		b2Body_SetLinearVelocity( m_bodyId, { 0.0f, -20.0f } );
 
-		b2Vec2 position = b2Body_GetPosition( m_bodyId );
+		b2Pos position = b2Body_GetPosition( m_bodyId );
 		DrawScreenTextLine( "(x, y) = (%.2g, %.2g)", position.x, position.y );
 	}
 

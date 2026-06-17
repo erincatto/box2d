@@ -89,50 +89,55 @@ b2ChainDef b2DefaultChainDef( void )
 	return def;
 }
 
-static void b2EmptyDrawPolygon( const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context )
+static void b2EmptyDrawPolygon( b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context )
 {
-	B2_UNUSED( vertices, vertexCount, color, context );
+	B2_UNUSED( transform, vertices, vertexCount, color, context );
 }
 
-static void b2EmptyDrawSolidPolygon( b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius,
+static void b2EmptyDrawSolidPolygon( b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, float radius,
 									 b2HexColor color, void* context )
 {
 	B2_UNUSED( transform, vertices, vertexCount, radius, color, context );
 }
 
-static void b2EmptyDrawCircle( b2Vec2 center, float radius, b2HexColor color, void* context )
+static void b2EmptyDrawCircle( b2Pos center, float radius, b2HexColor color, void* context )
 {
 	B2_UNUSED( center, radius, color, context );
 }
 
-static void b2EmptyDrawSolidCircle( b2Transform transform, float radius, b2HexColor color, void* context )
+static void b2EmptyDrawSolidCircle( b2WorldTransform transform, b2Vec2 center, float radius, b2HexColor color, void* context )
 {
-	B2_UNUSED( transform, radius, color, context );
+	B2_UNUSED( transform, center, radius, color, context );
 }
 
-static void b2EmptyDrawSolidCapsule( b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context )
+static void b2EmptyDrawSolidCapsule( b2Pos p1, b2Pos p2, float radius, b2HexColor color, void* context )
 {
 	B2_UNUSED( p1, p2, radius, color, context );
 }
 
-static void b2EmptyDrawSegment( b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context )
+static void b2EmptyDrawSegment( b2Pos p1, b2Pos p2, b2HexColor color, void* context )
 {
 	B2_UNUSED( p1, p2, color, context );
 }
 
-static void b2EmptyDrawTransform( b2Transform transform, void* context )
+static void b2EmptyDrawTransform( b2WorldTransform transform, void* context )
 {
 	B2_UNUSED( transform, context );
 }
 
-static void b2EmptyDrawPoint( b2Vec2 p, float size, b2HexColor color, void* context )
+static void b2EmptyDrawPoint( b2Pos p, float size, b2HexColor color, void* context )
 {
 	B2_UNUSED( p, size, color, context );
 }
 
-static void b2EmptyDrawString( b2Vec2 p, const char* s, b2HexColor color, void* context )
+static void b2EmptyDrawString( b2Pos p, const char* s, b2HexColor color, void* context )
 {
 	B2_UNUSED( p, s, color, context );
+}
+
+static void b2EmptyDrawBounds( b2AABB aabb, b2HexColor color, void* context )
+{
+	B2_UNUSED( aabb, color, context );
 }
 
 b2DebugDraw b2DefaultDebugDraw( void )
@@ -149,6 +154,7 @@ b2DebugDraw b2DefaultDebugDraw( void )
 	draw.DrawTransformFcn = b2EmptyDrawTransform;
 	draw.DrawPointFcn = b2EmptyDrawPoint;
 	draw.DrawStringFcn = b2EmptyDrawString;
+	draw.DrawBoundsFcn = b2EmptyDrawBounds;
 
 	draw.drawingBounds.lowerBound = (b2Vec2){ -FLT_MAX, -FLT_MAX };
 	draw.drawingBounds.upperBound = (b2Vec2){ FLT_MAX, FLT_MAX };

@@ -6,9 +6,8 @@
 #endif
 
 #include "benchmarks.h"
-#include "test_macros.h"
-
 #include "physics_world.h"
+#include "test_macros.h"
 #include "world_snapshot.h"
 
 #include "box2d/box2d.h"
@@ -31,72 +30,111 @@ static bool s_overlapFcn( b2ShapeId id, void* ctx )
 	return true;
 }
 
-static float s_closestCastFcn( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx )
+static float s_closestCastFcn( b2ShapeId id, b2Pos point, b2Vec2 normal, float fraction, void* ctx )
 {
-	(void)id; (void)point; (void)normal; (void)ctx;
+	(void)id;
+	(void)point;
+	(void)normal;
+	(void)ctx;
 	return fraction;
 }
 
-static float s_allHitsCastFcn( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx )
+static float s_allHitsCastFcn( b2ShapeId id, b2Pos point, b2Vec2 normal, float fraction, void* ctx )
 {
-	(void)id; (void)point; (void)normal; (void)ctx;
+	(void)id;
+	(void)point;
+	(void)normal;
+	(void)ctx;
 	return fraction;
 }
 
 static bool s_planeFcn( b2ShapeId id, const b2PlaneResult* plane, void* ctx )
 {
-	(void)id; (void)plane; (void)ctx;
+	(void)id;
+	(void)plane;
+	(void)ctx;
 	return true;
 }
 
 // No-op draw callbacks for the headless draw-path exercise
-static void s_DrawLine( b2Vec2 p1, b2Vec2 p2, b2HexColor c, void* ctx ) { (void)p1; (void)p2; (void)c; (void)ctx; }
-static void s_DrawPoint( b2Vec2 p, float sz, b2HexColor c, void* ctx ) { (void)p; (void)sz; (void)c; (void)ctx; }
-static void s_DrawPoly( const b2Vec2* v, int n, b2HexColor c, void* ctx ) { (void)v; (void)n; (void)c; (void)ctx; }
-static void s_DrawCapsule( b2Vec2 p1, b2Vec2 p2, float r, b2HexColor c, void* ctx ) { (void)p1; (void)p2; (void)r; (void)c; (void)ctx; }
+static void s_DrawLine( b2Pos p1, b2Pos p2, b2HexColor c, void* ctx )
+{
+	(void)p1;
+	(void)p2;
+	(void)c;
+	(void)ctx;
+}
+static void s_DrawPoint( b2Pos p, float sz, b2HexColor c, void* ctx )
+{
+	(void)p;
+	(void)sz;
+	(void)c;
+	(void)ctx;
+}
+static void s_DrawPoly( b2WorldTransform xf, const b2Vec2* v, int n, b2HexColor c, void* ctx )
+{
+	(void)xf;
+	(void)v;
+	(void)n;
+	(void)c;
+	(void)ctx;
+}
+static void s_DrawCapsule( b2Pos p1, b2Pos p2, float r, b2HexColor c, void* ctx )
+{
+	(void)p1;
+	(void)p2;
+	(void)r;
+	(void)c;
+	(void)ctx;
+}
 
 // Issue all 9 spatial query types against worldId. groundShapeId and a known position
-// are used for the shape-level queries.
+// are used for the shape-level queries. Half the queries use a nonzero origin with the
+// geometry shifted to compensate, so the origin wire args and the per shape re-centering
+// are exercised rather than passing vacuously at zero.
 static void IssueAllQueries( b2WorldId worldId, b2ShapeId groundShapeId )
 {
 	b2QueryFilter filter = b2DefaultQueryFilter();
 
-	// OverlapAABB
-	b2AABB aabb = { { -5.0f, -15.0f }, { 5.0f, 5.0f } };
-	b2World_OverlapAABB( worldId, aabb, filter, s_overlapFcn, NULL );
+	b2Vec2 baseOffset = { 3.0f, -2.0f };
+	b2Pos base = b2ToPos( baseOffset );
 
-	// OverlapShape (small box proxy)
+	// OverlapAABB, box shifted so base + aabb covers the same world region as before
+	b2AABB aabb = { { -5.0f - baseOffset.x, -15.0f - baseOffset.y }, { 5.0f - baseOffset.x, 5.0f - baseOffset.y } };
+	b2World_OverlapAABB( worldId, base, aabb, filter, s_overlapFcn, NULL );
+
+	// OverlapShape (small box proxy) at zero origin
 	b2ShapeProxy proxy = b2MakeProxy( (b2Vec2[]){ { -0.5f, -0.5f }, { 0.5f, -0.5f }, { 0.5f, 0.5f }, { -0.5f, 0.5f } }, 4, 0.0f );
-	b2World_OverlapShape( worldId, &proxy, filter, s_overlapFcn, NULL );
+	b2World_OverlapShape( worldId, b2Pos_zero, &proxy, filter, s_overlapFcn, NULL );
 
 	// CastRay (all hits)
-	b2Vec2 rayOrigin = { 0.0f, 10.0f };
+	b2Pos rayOrigin = { 0.0f, 10.0f };
 	b2Vec2 rayDir = { 0.0f, -20.0f };
 	b2World_CastRay( worldId, rayOrigin, rayDir, filter, s_allHitsCastFcn, NULL );
 
 	// CastRayClosest
 	b2World_CastRayClosest( worldId, rayOrigin, rayDir, filter );
 
-	// CastShape (circle proxy)
-	b2ShapeProxy circProxy = b2MakeProxy( (b2Vec2[]){ { 0.0f, 0.0f } }, 1, 0.3f );
-	b2World_CastShape( worldId, &circProxy, rayDir, filter, s_closestCastFcn, NULL );
+	// CastShape (circle proxy), cast from the nonzero base
+	b2ShapeProxy circProxy = b2MakeProxy( (b2Vec2[]){ { -baseOffset.x, -baseOffset.y } }, 1, 0.3f );
+	b2World_CastShape( worldId, base, &circProxy, rayDir, filter, s_closestCastFcn, NULL );
 
-	// CollideMover (capsule with radius > 2*B2_LINEAR_SLOP)
-	b2Capsule moverCap = { { -0.3f, 0.0f }, { 0.3f, 0.0f }, 0.5f };
-	b2World_CollideMover( worldId, &moverCap, filter, s_planeFcn, NULL );
+	// CollideMover (capsule with radius > 2*B2_LINEAR_SLOP), mover relative to the base
+	b2Capsule moverCap = { { -0.3f - baseOffset.x, -baseOffset.y }, { 0.3f - baseOffset.x, -baseOffset.y }, 0.5f };
+	b2World_CollideMover( worldId, base, &moverCap, filter, s_planeFcn, NULL );
 
 	// CastMover
 	b2Vec2 moverTranslation = { 0.0f, -5.0f };
-	b2World_CastMover( worldId, &moverCap, moverTranslation, filter );
+	b2World_CastMover( worldId, base, &moverCap, moverTranslation, filter );
 
 	// Shape_TestPoint: test inside (0,0 local, well inside the r=10 ground circle at y=-10)
 	// and outside
-	b2Shape_TestPoint( groundShapeId, (b2Vec2){ 0.0f, -10.0f } );   // inside center of ground
-	b2Shape_TestPoint( groundShapeId, (b2Vec2){ 0.0f, 100.0f } );   // outside
+	b2Shape_TestPoint( groundShapeId, (b2Pos){ 0.0f, -10.0f } ); // inside center of ground
+	b2Shape_TestPoint( groundShapeId, (b2Pos){ 0.0f, 100.0f } ); // outside
 
-	// Shape_RayCast against the ground shape
-	b2RayCastInput rcIn = { { 0.0f, 5.0f }, { 0.0f, -20.0f }, 1.0f };
-	b2Shape_RayCast( groundShapeId, &rcIn );
+	// Shape_RayCast against the ground shape, ray starting above the ground
+	b2Pos rayStart = b2OffsetPos( base, (b2Vec2){ -baseOffset.x, 5.0f - baseOffset.y } );
+	b2Shape_RayCast( groundShapeId, rayStart, (b2Vec2){ 0.0f, -20.0f } );
 }
 
 int RecordingTest( void )
@@ -116,7 +154,7 @@ int RecordingTest( void )
 
 	// Static ground body with a circle shape
 	b2BodyDef groundDef = b2DefaultBodyDef();
-	groundDef.position = (b2Vec2){ 0.0f, -10.0f };
+	groundDef.position = (b2Pos){ 0.0f, -10.0f };
 	b2BodyId groundId = b2CreateBody( worldId, &groundDef );
 	ENSURE( b2Body_IsValid( groundId ) );
 
@@ -129,7 +167,7 @@ int RecordingTest( void )
 	// replay exercises the over-length name path in the body def reader.
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_dynamicBody;
-	bodyDef.position = (b2Vec2){ 0.0f, 4.0f };
+	bodyDef.position = (b2Pos){ 0.0f, 4.0f };
 	bodyDef.name = "testBodyWithLongName";
 	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 	ENSURE( b2Body_IsValid( bodyId ) );
@@ -150,7 +188,7 @@ int RecordingTest( void )
 	// Capsule on a second dynamic body
 	b2BodyDef capsuleBodyDef = b2DefaultBodyDef();
 	capsuleBodyDef.type = b2_dynamicBody;
-	capsuleBodyDef.position = (b2Vec2){ 2.0f, 6.0f };
+	capsuleBodyDef.position = (b2Pos){ 2.0f, 6.0f };
 	b2BodyId capsuleBodyId = b2CreateBody( worldId, &capsuleBodyDef );
 	b2Capsule capsule = { { -0.5f, 0.0f }, { 0.5f, 0.0f }, 0.25f };
 	b2ShapeDef capsuleDef = b2DefaultShapeDef();
@@ -199,7 +237,7 @@ int RecordingTest( void )
 	// A kinematic body to exercise SetType and SetTargetTransform
 	b2BodyDef kinematicDef = b2DefaultBodyDef();
 	kinematicDef.type = b2_kinematicBody;
-	kinematicDef.position = (b2Vec2){ -3.0f, 5.0f };
+	kinematicDef.position = (b2Pos){ -3.0f, 5.0f };
 	b2BodyId kinematicId = b2CreateBody( worldId, &kinematicDef );
 	b2ShapeDef kinematicShapeDef = b2DefaultShapeDef();
 	b2Circle kinematicCircle = { { 0.0f, 0.0f }, 0.3f };
@@ -208,13 +246,13 @@ int RecordingTest( void )
 	// A body to exercise Disable/Enable
 	b2BodyDef disableDef = b2DefaultBodyDef();
 	disableDef.type = b2_dynamicBody;
-	disableDef.position = (b2Vec2){ 5.0f, 5.0f };
+	disableDef.position = (b2Pos){ 5.0f, 5.0f };
 	b2BodyId disableId = b2CreateBody( worldId, &disableDef );
 	b2Circle disableCircle = { { 0.0f, 0.0f }, 0.3f };
 	b2CreateCircleShape( disableId, &shapeDef, &disableCircle );
 
 	// Exercise the recorded body mutators
-	b2Body_SetTransform( bodyId, (b2Vec2){ 1.0f, 5.0f }, b2Rot_identity );
+	b2Body_SetTransform( bodyId, (b2Pos){ 1.0f, 5.0f }, b2Rot_identity );
 	b2Body_SetLinearVelocity( bodyId, (b2Vec2){ 0.5f, 0.0f } );
 	b2Body_SetAngularVelocity( bodyId, 0.25f );
 	b2Body_SetName( bodyId, "renamedBody" );
@@ -233,23 +271,23 @@ int RecordingTest( void )
 	b2Body_ApplyMassFromShapes( bodyId );
 	b2Body_SetType( capsuleBodyId, b2_kinematicBody );
 	b2Body_SetType( capsuleBodyId, b2_dynamicBody );
-	b2Body_SetTargetTransform( kinematicId, (b2Transform){ { -2.0f, 5.0f }, b2Rot_identity }, 1.0f / 60.0f, true );
+	b2Body_SetTargetTransform( kinematicId, (b2WorldTransform){ { -2.0f, 5.0f }, b2Rot_identity }, 1.0f / 60.0f, true );
 	b2Body_Disable( disableId );
 	b2Body_Enable( disableId );
 	b2Body_SetAwake( bodyId, true );
 	b2Body_WakeTouching( bodyId );
 
 	// Per-step forces and impulses applied before the first step
-	b2Body_ApplyForce( bodyId, (b2Vec2){ 0.0f, 50.0f }, (b2Vec2){ 1.0f, 5.0f }, true );
+	b2Body_ApplyForce( bodyId, (b2Vec2){ 0.0f, 50.0f }, (b2Pos){ 1.0f, 5.0f }, true );
 	b2Body_ApplyForceToCenter( bodyId, (b2Vec2){ 5.0f, 0.0f }, true );
 	b2Body_ApplyTorque( bodyId, 1.0f, true );
-	b2Body_ApplyLinearImpulse( bodyId, (b2Vec2){ 0.1f, 0.0f }, (b2Vec2){ 1.0f, 5.0f }, true );
+	b2Body_ApplyLinearImpulse( bodyId, (b2Vec2){ 0.1f, 0.0f }, (b2Pos){ 1.0f, 5.0f }, true );
 	b2Body_ApplyLinearImpulseToCenter( bodyId, (b2Vec2){ 0.0f, 0.1f }, true );
 	b2Body_ApplyAngularImpulse( bodyId, 0.05f, true );
 
 	// Chain shape on a static body, plus a material change and a throwaway chain destroyed
 	b2BodyDef chainBodyDef = b2DefaultBodyDef();
-	chainBodyDef.position = (b2Vec2){ 0.0f, -2.0f };
+	chainBodyDef.position = (b2Pos){ 0.0f, -2.0f };
 	b2BodyId chainBodyId = b2CreateBody( worldId, &chainBodyDef );
 	b2Vec2 chainPoints[6] = { { -8.0f, 0.0f }, { -4.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 8.0f, 0.0f }, { 8.0f, 4.0f } };
 	b2SurfaceMaterial chainMats[1] = { b2DefaultSurfaceMaterial() };
@@ -275,7 +313,7 @@ int RecordingTest( void )
 	{
 		b2BodyDef jbd = b2DefaultBodyDef();
 		jbd.type = b2_dynamicBody;
-		jbd.position = (b2Vec2){ -7.0f + (float)i, 8.0f };
+		jbd.position = (b2Pos){ -7.0f + (float)i, 8.0f };
 		jb[i] = b2CreateBody( worldId, &jbd );
 		b2Circle jc = { { 0.0f, 0.0f }, 0.25f };
 		b2CreateCircleShape( jb[i], &shapeDef, &jc );
@@ -405,7 +443,7 @@ int RecordingTest( void )
 	b2World_SetMaximumLinearSpeed( worldId, 100.0f );
 	b2World_RebuildStaticTree( worldId );
 	b2ExplosionDef explosion = b2DefaultExplosionDef();
-	explosion.position = (b2Vec2){ 0.0f, 4.0f };
+	explosion.position = (b2Pos){ 0.0f, 4.0f };
 	explosion.radius = 3.0f;
 	explosion.falloff = 1.0f;
 	explosion.impulsePerLength = 5.0f;
@@ -555,7 +593,7 @@ int RecordingOutlinerTest( void )
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
-		bodyDef.position = (b2Vec2){ (float)i, 4.0f };
+		bodyDef.position = (b2Pos){ (float)i, 4.0f };
 		b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
@@ -668,8 +706,8 @@ static int CheckKeyframeSeek( const uint8_t* recData, int recSize, int workerCou
 		uint64_t got = ReplayDeepHash( player );
 		if ( got != refHash[t] )
 		{
-			printf( "keyframe seek mismatch at frame %d (wc %d): got %llu want %llu\n", t, workerCount,
-					(unsigned long long)got, (unsigned long long)refHash[t] );
+			printf( "keyframe seek mismatch at frame %d (wc %d): got %llu want %llu\n", t, workerCount, (unsigned long long)got,
+					(unsigned long long)refHash[t] );
 			free( refHash );
 			b2RecPlayer_Destroy( player );
 			return 1;
@@ -704,7 +742,7 @@ int RecordingKeyframeTest( void )
 	{
 		b2BodyDef bd = b2DefaultBodyDef();
 		bd.type = b2_dynamicBody;
-		bd.position = (b2Vec2){ 0.05f * (float)i, 2.0f + 1.1f * (float)i };
+		bd.position = (b2Pos){ 0.05f * (float)i, 2.0f + 1.1f * (float)i };
 		b2BodyId id = b2CreateBody( worldId, &bd );
 		b2ShapeDef sd = b2DefaultShapeDef();
 		sd.density = 1.0f;
@@ -753,7 +791,7 @@ int RecordingKeyframeTest( void )
 static void BuildScrubPyramid( b2WorldId worldId, int baseCount )
 {
 	b2BodyDef bd = b2DefaultBodyDef();
-	bd.position = (b2Vec2){ 0.0f, -1.0f };
+	bd.position = (b2Pos){ 0.0f, -1.0f };
 	b2BodyId groundId = b2CreateBody( worldId, &bd );
 	b2Polygon groundBox = b2MakeBox( 40.0f, 1.0f );
 	b2ShapeDef gsd = b2DefaultShapeDef();
@@ -774,7 +812,7 @@ static void BuildScrubPyramid( b2WorldId worldId, int baseCount )
 		{
 			b2BodyDef body = b2DefaultBodyDef();
 			body.type = b2_dynamicBody;
-			body.position = (b2Vec2){ xStart + (float)col * pitch, y };
+			body.position = (b2Pos){ xStart + (float)col * pitch, y };
 			b2BodyId id = b2CreateBody( worldId, &body );
 			b2CreatePolygonShape( id, &sd, &box );
 		}
@@ -787,9 +825,13 @@ static void BuildPyramidScene( b2WorldId worldId )
 }
 
 // Keep traversing so an all-hits ray reports every shape in pure tree-traversal order
-static float s_keepAllCastFcn( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx )
+static float s_keepAllCastFcn( b2ShapeId id, b2Pos point, b2Vec2 normal, float fraction, void* ctx )
 {
-	(void)id; (void)point; (void)normal; (void)fraction; (void)ctx;
+	(void)id;
+	(void)point;
+	(void)normal;
+	(void)fraction;
+	(void)ctx;
 	return 1.0f;
 }
 
@@ -800,10 +842,10 @@ static void IssuePileQueries( b2WorldId worldId )
 	b2QueryFilter filter = b2DefaultQueryFilter();
 
 	b2AABB aabb = { { -12.0f, -2.0f }, { 12.0f, 22.0f } };
-	b2World_OverlapAABB( worldId, aabb, filter, s_overlapFcn, NULL );
+	b2World_OverlapAABB( worldId, b2Pos_zero, aabb, filter, s_overlapFcn, NULL );
 
-	b2World_CastRay( worldId, (b2Vec2){ -12.0f, 10.0f }, (b2Vec2){ 24.0f, 0.0f }, filter, s_keepAllCastFcn, NULL );
-	b2World_CastRay( worldId, (b2Vec2){ 0.0f, 22.0f }, (b2Vec2){ 0.0f, -24.0f }, filter, s_keepAllCastFcn, NULL );
+	b2World_CastRay( worldId, (b2Pos){ -12.0f, 10.0f }, (b2Vec2){ 24.0f, 0.0f }, filter, s_keepAllCastFcn, NULL );
+	b2World_CastRay( worldId, (b2Pos){ 0.0f, 22.0f }, (b2Vec2){ 0.0f, -24.0f }, filter, s_keepAllCastFcn, NULL );
 }
 
 // Record stepCount frames of a freshly built scene at the given worker count. When withQueries is set,
@@ -879,8 +921,8 @@ static int CheckScrubAllFrames( const uint8_t* recData, int recSize, int workerC
 			// Deep hash matches but the player diverged => an order sensitive query re-verification
 			// failed (broad-phase traversal order), not the simulation state
 			const char* kind = ( got == refHash[t] ) ? "query-order" : "state";
-			printf( "scrub mismatch at frame %d (wc %d budget %d): %s divergence (deep got %llu want %llu)\n", t,
-					workerCount, budgetBytes, kind, (unsigned long long)got, (unsigned long long)refHash[t] );
+			printf( "scrub mismatch at frame %d (wc %d budget %d): %s divergence (deep got %llu want %llu)\n", t, workerCount,
+					budgetBytes, kind, (unsigned long long)got, (unsigned long long)refHash[t] );
 			free( refHash );
 			b2RecPlayer_Destroy( player );
 			return 1;

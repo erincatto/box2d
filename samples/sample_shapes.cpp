@@ -201,8 +201,8 @@ public:
 	{
 		Sample::Step();
 
-		DrawLine( m_draw, b2Vec2_zero, { 0.5f, 0.0f }, b2_colorRed );
-		DrawLine( m_draw, b2Vec2_zero, { 0.0f, 0.5f }, b2_colorGreen );
+		DrawLine( m_draw, b2Pos_zero, b2ToPos( { 0.5f, 0.0f } ), b2_colorRed );
+		DrawLine( m_draw, b2Pos_zero, b2ToPos( { 0.0f, 0.5f } ), b2_colorGreen );
 
 		// DrawTextLine( "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
 	}
@@ -798,14 +798,14 @@ public:
 	{
 		Sample::Step();
 
-		b2Vec2 p1 = b2Body_GetPosition( m_player1Id );
-		DrawWorldString( m_draw, m_camera, { p1.x - 0.5f, p1.y }, b2_colorWhite, "player 1" );
+		b2Pos p1 = b2Body_GetPosition( m_player1Id );
+		DrawString( m_draw, m_camera, { p1.x - 0.5f, p1.y }, b2_colorWhite, "player 1" );
 
-		b2Vec2 p2 = b2Body_GetPosition( m_player2Id );
-		DrawWorldString( m_draw, m_camera, { p2.x - 0.5f, p2.y }, b2_colorWhite, "player 2" );
+		b2Pos p2 = b2Body_GetPosition( m_player2Id );
+		DrawString( m_draw, m_camera, { p2.x - 0.5f, p2.y }, b2_colorWhite, "player 2" );
 
-		b2Vec2 p3 = b2Body_GetPosition( m_player3Id );
-		DrawWorldString( m_draw, m_camera, { p3.x - 0.5f, p3.y }, b2_colorWhite, "player 3" );
+		b2Pos p3 = b2Body_GetPosition( m_player3Id );
+		DrawString( m_draw, m_camera, { p3.x - 0.5f, p3.y }, b2_colorWhite, "player 3" );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -881,8 +881,8 @@ public:
 
 		for ( int i = 0; i < e_count; ++i )
 		{
-			b2Vec2 p = b2Body_GetPosition( m_bodyIds[i] );
-			DrawWorldString( m_draw, m_camera, { p.x, p.y }, b2_colorWhite, "%d", i );
+			b2Pos p = b2Body_GetPosition( m_bodyIds[i] );
+			DrawString( m_draw, m_camera, { p.x, p.y }, b2_colorWhite, "%d", i );
 		}
 	}
 
@@ -1180,7 +1180,7 @@ public:
 
 		for ( int i = 0; i < 20; ++i )
 		{
-			DrawWorldString( m_draw, m_camera, { -41.5f, 2.0f * i + 1.0f }, b2_colorWhite, "%.2f", m_resistScale * i );
+			DrawString( m_draw, m_camera, { -41.5f, 2.0f * i + 1.0f }, b2_colorWhite, "%.2f", m_resistScale * i );
 		}
 	}
 
@@ -1809,7 +1809,7 @@ public:
 	{
 		Sample::Step();
 
-		DrawTransform( m_draw, b2Transform_identity, 1.0f );
+		DrawTransform( m_draw, b2WorldTransform_identity, 1.0f );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -1861,7 +1861,7 @@ public:
 			b2Polygon box = b2MakeBox( 1.0f, 0.1f );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			weldDef.base.localFrameA.p = bodyDef.position;
+			weldDef.base.localFrameA.p = b2ToVec2( bodyDef.position );
 			weldDef.base.bodyIdB = bodyId;
 
 			b2JointId jointId = b2CreateWeldJoint( m_worldId, &weldDef );
@@ -1878,7 +1878,7 @@ public:
 		if ( ImGui::Button( "Explode" ) )
 		{
 			b2ExplosionDef def = b2DefaultExplosionDef();
-			def.position = b2Vec2_zero;
+			def.position = b2Pos_zero;
 			def.radius = m_radius;
 			def.falloff = m_falloff;
 			def.impulsePerLength = m_impulse;
@@ -1914,8 +1914,8 @@ public:
 
 		DrawScreenTextLine( "reference angle = %g", m_referenceAngle );
 
-		DrawCircle( m_draw, b2Vec2_zero, m_radius + m_falloff, b2_colorBox2DBlue );
-		DrawCircle( m_draw, b2Vec2_zero, m_radius, b2_colorBox2DYellow );
+		DrawCircle( m_draw, b2Pos_zero, m_radius + m_falloff, b2_colorBox2DBlue );
+		DrawCircle( m_draw, b2Pos_zero, m_radius, b2_colorBox2DYellow );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -2196,7 +2196,7 @@ public:
 			b2Vec2 rand = RandomVec2( -0.3f, 0.3f );
 			m_noise = b2Lerp( m_noise, rand, 0.05f );
 
-			DrawLine( m_draw, b2Vec2_zero, b2MulSV( 0.2f, wind ), b2_colorFuchsia );
+			DrawLine( m_draw, b2Pos_zero, b2ToPos( b2MulSV( 0.2f, wind ) ), b2_colorFuchsia );
 		}
 
 		Sample::Step();

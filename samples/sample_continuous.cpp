@@ -27,7 +27,7 @@ public:
 
 	struct HitEvent
 	{
-		b2Vec2 point;
+		b2Pos point;
 		float speed;
 		int stepIndex;
 	};
@@ -166,7 +166,7 @@ public:
 			if ( e->stepIndex > 0 && m_stepCount <= e->stepIndex + 30 )
 			{
 				DrawCircle( m_draw, e->point, 0.1f, b2_colorOrangeRed );
-				DrawWorldString( m_draw, m_camera, e->point, b2_colorWhite, "%.1f", e->speed );
+				DrawString( m_draw, m_camera, e->point, b2_colorWhite, "%.1f", e->speed );
 			}
 		}
 
@@ -251,7 +251,7 @@ public:
 		b2CosSin cs2 = b2ComputeCosSin( m_time );
 		float gravity = 10.0f;
 		b2Vec2 gravityVec = { gravity * cs1.sine, gravity * cs2.cosine };
-		DrawLine( m_draw, b2Vec2_zero, b2Vec2{ 3.0f * cs1.sine, 3.0f * cs2.cosine }, b2_colorWhite );
+		DrawLine( m_draw, b2Pos_zero, b2ToPos( b2Vec2{ 3.0f * cs1.sine, 3.0f * cs2.cosine } ), b2_colorWhite );
 		m_time += timeStep;
 		m_countDown -= timeStep;
 		b2World_SetGravity( m_worldId, gravityVec );
@@ -1110,7 +1110,7 @@ public:
 		b2ContactData data;
 		b2Body_GetContactData( m_ballId, &data, 1 );
 
-		b2Vec2 p = b2Body_GetPosition( m_ballId );
+		b2Pos p = b2Body_GetPosition( m_ballId );
 		b2Vec2 v = b2Body_GetLinearVelocity( m_ballId );
 		DrawScreenTextLine( "p.x = %.9f, v.y = %.9f", p.x, v.y );
 
@@ -1180,7 +1180,7 @@ public:
 		b2ContactData data;
 		b2Body_GetContactData( m_ballId, &data, 1 );
 
-		b2Vec2 p = b2Body_GetPosition( m_ballId );
+		b2Pos p = b2Body_GetPosition( m_ballId );
 		b2Vec2 v = b2Body_GetLinearVelocity( m_ballId );
 		DrawScreenTextLine( "p.x = %.9f, v.y = %.9f", p.x, v.y );
 
@@ -1568,7 +1568,7 @@ public:
 
 		// Flippers
 		{
-			b2Vec2 p1 = { -2.0f, 0.0f }, p2 = { 2.0f, 0.0f };
+			b2Pos p1 = { -2.0f, 0.0f }, p2 = { 2.0f, 0.0f };
 
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
@@ -1595,14 +1595,14 @@ public:
 			jointDef.enableLimit = true;
 
 			jointDef.motorSpeed = 0.0f;
-			jointDef.base.localFrameA.p = p1;
+			jointDef.base.localFrameA.p = b2ToVec2( p1 );
 			jointDef.base.bodyIdB = leftFlipperId;
 			jointDef.lowerAngle = -30.0f * B2_PI / 180.0f;
 			jointDef.upperAngle = 5.0f * B2_PI / 180.0f;
 			m_leftJointId = b2CreateRevoluteJoint( m_worldId, &jointDef );
 
 			jointDef.motorSpeed = 0.0f;
-			jointDef.base.localFrameA.p = p2;
+			jointDef.base.localFrameA.p = b2ToVec2( p2 );
 			jointDef.base.bodyIdB = rightFlipperId;
 			jointDef.lowerAngle = -5.0f * B2_PI / 180.0f;
 			jointDef.upperAngle = 30.0f * B2_PI / 180.0f;
@@ -1627,7 +1627,7 @@ public:
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
-			jointDef.base.localFrameA.p = bodyDef.position;
+			jointDef.base.localFrameA.p = b2ToVec2( bodyDef.position );
 			jointDef.base.localFrameB.p = b2Vec2_zero;
 			jointDef.enableMotor = true;
 			jointDef.maxMotorTorque = 0.1f;
@@ -1637,7 +1637,7 @@ public:
 			bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box1 );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box2 );
-			jointDef.base.localFrameA.p = bodyDef.position;
+			jointDef.base.localFrameA.p = b2ToVec2( bodyDef.position );
 			jointDef.base.bodyIdB = bodyId;
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
@@ -1675,11 +1675,17 @@ public:
 		}
 	}
 
+	bool DrawControls() override
+	{
+		ImGui::Text( "Flipper: press A" );
+		return true;
+	}
+
 	void Step() override
 	{
 		Sample::Step();
 
-		if ( glfwGetKey( m_context->window, GLFW_KEY_SPACE ) == GLFW_PRESS )
+		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS )
 		{
 			b2RevoluteJoint_SetMotorSpeed( m_leftJointId, 20.0f );
 			b2RevoluteJoint_SetMotorSpeed( m_rightJointId, -20.0f );

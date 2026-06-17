@@ -66,11 +66,11 @@ Camera GetDefaultCamera( void )
 
 void ResetView( Camera* camera )
 {
-	camera->center = (b2Vec2){ 0.0f, 20.0f };
+	camera->center = (b2Pos){ 0.0f, 20.0f };
 	camera->zoom = 1.0f;
 }
 
-b2Vec2 ConvertScreenToWorld( Camera* camera, b2Vec2 screenPoint )
+b2Pos ConvertScreenToWorld( Camera* camera, b2Vec2 screenPoint )
 {
 	float w = camera->width;
 	float h = camera->height;
@@ -80,14 +80,13 @@ b2Vec2 ConvertScreenToWorld( Camera* camera, b2Vec2 screenPoint )
 	float ratio = w / h;
 	b2Vec2 extents = { camera->zoom * ratio, camera->zoom };
 
-	b2Vec2 lower = b2Sub( camera->center, extents );
-	b2Vec2 upper = b2Add( camera->center, extents );
-
-	b2Vec2 pw = { ( 1.0f - u ) * lower.x + u * upper.x, ( 1.0f - v ) * lower.y + v * upper.y };
-	return pw;
+	// Form the offset from the view center in float, then add to the center. Building
+	// center +/- extents in float would lose the view-sized extents far from the origin.
+	b2Vec2 offset = { extents.x * ( 2.0f * u - 1.0f ), extents.y * ( 2.0f * v - 1.0f ) };
+	return b2OffsetPos( camera->center, offset );
 }
 
-b2Vec2 ConvertWorldToScreen( Camera* camera, b2Vec2 worldPoint )
+b2Vec2 ConvertViewToScreen( Camera* camera, b2Vec2 viewPoint )
 {
 	float w = camera->width;
 	float h = camera->height;
@@ -95,14 +94,17 @@ b2Vec2 ConvertWorldToScreen( Camera* camera, b2Vec2 worldPoint )
 
 	b2Vec2 extents = { camera->zoom * ratio, camera->zoom };
 
-	b2Vec2 lower = b2Sub( camera->center, extents );
-	b2Vec2 upper = b2Add( camera->center, extents );
-
-	float u = ( worldPoint.x - lower.x ) / ( upper.x - lower.x );
-	float v = ( worldPoint.y - lower.y ) / ( upper.y - lower.y );
+	float u = ( viewPoint.x + extents.x ) / ( 2.0f * extents.x );
+	float v = ( viewPoint.y + extents.y ) / ( 2.0f * extents.y );
 
 	b2Vec2 ps = { u * w, ( 1.0f - v ) * h };
 	return ps;
+}
+
+b2Vec2 ConvertWorldToScreen( Camera* camera, b2Pos worldPoint )
+{
+	// Distance from the view center, demoted to float, then the float mapping
+	return ConvertViewToScreen( camera, b2SubPos( worldPoint, camera->center ) );
 }
 
 // Convert from world coordinates to normalized device coordinates.
@@ -113,10 +115,8 @@ static void BuildProjectionMatrix( Camera* camera, float* m, float zBias )
 	float ratio = camera->width / camera->height;
 	b2Vec2 extents = { camera->zoom * ratio, camera->zoom };
 
-	b2Vec2 lower = b2Sub( camera->center, extents );
-	b2Vec2 upper = b2Add( camera->center, extents );
-	float w = upper.x - lower.x;
-	float h = upper.y - lower.y;
+	float w = 2.0f * extents.x;
+	float h = 2.0f * extents.y;
 
 	m[0] = 2.0f / w;
 	m[1] = 0.0f;
@@ -133,8 +133,11 @@ static void BuildProjectionMatrix( Camera* camera, float* m, float zBias )
 	m[10] = -1.0f;
 	m[11] = 0.0f;
 
-	m[12] = -2.0f * camera->center.x / w;
-	m[13] = -2.0f * camera->center.y / h;
+	// Vertices reach the GPU already shifted into camera relative space, the engine draw path and the
+	// Draw helpers subtract the view center, so the view center is the origin here. In large world
+	// mode this also keeps double coordinates out of the shader.
+	m[12] = 0.0f;
+	m[13] = 0.0f;
 	m[14] = zBias;
 	m[15] = 1.0f;
 }
@@ -143,13 +146,20 @@ b2AABB GetViewBounds( Camera* camera )
 {
 	if ( camera->height == 0.0f || camera->width == 0.0f )
 	{
-		b2AABB bounds = { .lowerBound = b2Vec2_zero, .upperBound = b2Vec2_zero };
+		b2AABB bounds = {
+			.lowerBound = b2Vec2_zero,
+			.upperBound = b2Vec2_zero,
+		};
 		return bounds;
 	}
 
+	b2Pos lower = ConvertScreenToWorld( camera, (b2Vec2){ 0.0f, camera->height } );
+	b2Pos upper = ConvertScreenToWorld( camera, (b2Vec2){ camera->width, 0.0f } );
+
+	// Engine cull box stays float. Round outward so nothing visible is clipped far from the origin.
 	b2AABB bounds;
-	bounds.lowerBound = ConvertScreenToWorld( camera, (b2Vec2){ 0.0f, camera->height } );
-	bounds.upperBound = ConvertScreenToWorld( camera, (b2Vec2){ camera->width, 0.0f } );
+	bounds.lowerBound = (b2Vec2){ b2RoundDownFloat( lower.x ), b2RoundDownFloat( lower.y ) };
+	bounds.upperBound = (b2Vec2){ b2RoundUpFloat( upper.x ), b2RoundUpFloat( upper.y ) };
 	return bounds;
 }
 
@@ -173,7 +183,7 @@ void FocusOnBounds( Camera* camera, b2AABB bounds )
 	// Need to guard against zero because zoom can get stuck there
 	camera->zoom = b2MaxFloat( camera->zoom, 0.01f );
 
-	camera->center = b2AABB_Center( bounds );
+	camera->center = b2ToPos( b2AABB_Center( bounds ) );
 }
 
 typedef struct
@@ -1157,6 +1167,9 @@ typedef struct Draw
 	SolidCircles circles;
 	Capsules capsules;
 	Polygons polygons;
+
+	// Camera center in large world mode, subtracted by the DrawWorld helpers. Zero in float mode.
+	b2Pos origin;
 } Draw;
 
 Draw* CreateDraw( void )
@@ -1185,65 +1198,79 @@ void DestroyDraw( Draw* draw )
 	free( draw );
 }
 
-void DrawPoint( Draw* draw, b2Vec2 p, float size, b2HexColor color )
+void SetDrawOrigin( Draw* draw, b2Pos origin )
 {
-	AddPoint( &draw->points, p, size, color );
+	draw->origin = origin;
 }
 
-void DrawLine( Draw* draw, b2Vec2 p1, b2Vec2 p2, b2HexColor color )
+void DrawPoint( Draw* draw, b2Pos p, float size, b2HexColor color )
 {
-	AddLine( &draw->lines, p1, p2, color );
+	AddPoint( &draw->points, b2SubPos( p, draw->origin ), size, color );
 }
 
-void DrawCircle( Draw* draw, b2Vec2 center, float radius, b2HexColor color )
+void DrawLine( Draw* draw, b2Pos p1, b2Pos p2, b2HexColor color )
 {
-	AddCircle( &draw->hollowCircles, center, radius, color );
+	AddLine( &draw->lines, b2SubPos( p1, draw->origin ), b2SubPos( p2, draw->origin ), color );
 }
 
-void DrawSolidCircle( Draw* draw, b2Transform transform, float radius, b2HexColor color )
+void DrawCircle( Draw* draw, b2Pos center, float radius, b2HexColor color )
 {
-	AddSolidCircle( &draw->circles, transform, radius, color );
+	AddCircle( &draw->hollowCircles, b2SubPos( center, draw->origin ), radius, color );
 }
 
-void DrawSolidCapsule( Draw* draw, b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color )
+void DrawCapsule( Draw* draw, b2Pos p1, b2Pos p2, float radius, b2HexColor color )
 {
-	AddCapsule( &draw->capsules, p1, p2, radius, color );
+	AddCapsule( &draw->capsules, b2SubPos( p1, draw->origin ), b2SubPos( p2, draw->origin ), radius, color );
 }
 
-void DrawPolygon( Draw* draw, const b2Vec2* vertices, int vertexCount, b2HexColor color )
+void DrawPolygon( Draw* draw, b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, b2HexColor color )
 {
-	b2Vec2 p1 = vertices[vertexCount - 1];
+	b2Transform xf = b2ToRelativeTransform( transform, draw->origin );
+	b2Vec2 p1 = b2TransformPoint( xf, vertices[vertexCount - 1] );
 	for ( int i = 0; i < vertexCount; ++i )
 	{
-		b2Vec2 p2 = vertices[i];
+		b2Vec2 p2 = b2TransformPoint( xf, vertices[i] );
 		AddLine( &draw->lines, p1, p2, color );
 		p1 = p2;
 	}
 }
 
-void DrawSolidPolygon( Draw* draw, b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius,
-					   b2HexColor color )
+void DrawSolidCircle( Draw* draw, b2WorldTransform transform, b2Vec2 center, float radius, b2HexColor color )
 {
-	AddPolygon( &draw->polygons, transform, vertices, vertexCount, radius, color );
+	// Fold the local center offset into the world transform, then shift into the camera frame
+	b2WorldTransform xf = { b2TransformWorldPoint( transform, center ), transform.q };
+	b2Transform localTransform = b2ToRelativeTransform( xf, draw->origin );
+	AddSolidCircle( &draw->circles, localTransform, radius, color );
 }
 
-void DrawTransform( Draw* draw, b2Transform transform, float scale )
+void DrawSolidPolygon( Draw* draw, b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, float radius,
+							b2HexColor color )
 {
-	b2Vec2 p1 = transform.p;
+	AddPolygon( &draw->polygons, b2ToRelativeTransform( transform, draw->origin ), vertices, vertexCount, radius, color );
+}
 
-	b2Vec2 p2 = b2MulAdd( p1, scale, b2Rot_GetXAxis( transform.q ) );
+void DrawTransform( Draw* draw, b2WorldTransform transform, float scale )
+{
+	b2Transform xf = b2ToRelativeTransform( transform, draw->origin );
+
+	b2Vec2 p1 = xf.p;
+
+	b2Vec2 p2 = b2MulAdd( p1, scale, b2Rot_GetXAxis( xf.q ) );
 	AddLine( &draw->lines, p1, p2, b2_colorRed );
 
-	p2 = b2MulAdd( p1, scale, b2Rot_GetYAxis( transform.q ) );
+	p2 = b2MulAdd( p1, scale, b2Rot_GetYAxis( xf.q ) );
 	AddLine( &draw->lines, p1, p2, b2_colorGreen );
 }
 
 void DrawBounds( Draw* draw, b2AABB aabb, b2HexColor color )
 {
-	b2Vec2 p1 = aabb.lowerBound;
-	b2Vec2 p2 = { aabb.upperBound.x, aabb.lowerBound.y };
-	b2Vec2 p3 = aabb.upperBound;
-	b2Vec2 p4 = { aabb.lowerBound.x, aabb.upperBound.y };
+	b2Vec2 lower = b2SubPos( b2ToPos( aabb.lowerBound ), draw->origin );
+	b2Vec2 upper = b2SubPos( b2ToPos( aabb.upperBound ), draw->origin );
+
+	b2Vec2 p1 = lower;
+	b2Vec2 p2 = { upper.x, lower.y };
+	b2Vec2 p3 = upper;
+	b2Vec2 p4 = { lower.x, upper.y };
 
 	AddLine( &draw->lines, p1, p2, color );
 	AddLine( &draw->lines, p2, p3, color );

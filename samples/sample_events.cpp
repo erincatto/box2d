@@ -122,7 +122,7 @@ public:
 				b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
 				revoluteDef.base.bodyIdA = groundId;
 				revoluteDef.base.bodyIdB = bodyId;
-				revoluteDef.base.localFrameA.p = bodyDef.position;
+				revoluteDef.base.localFrameA.p = b2ToVec2( bodyDef.position );
 				revoluteDef.base.localFrameB.p = b2Vec2_zero;
 				revoluteDef.maxMotorTorque = 200.0f;
 				revoluteDef.motorSpeed = 2.0f * sign;
@@ -175,7 +175,7 @@ public:
 			return;
 		}
 
-		b2Vec2 center = { m_side, 29.5f };
+		b2Pos center = { m_side, 29.5f };
 
 		if ( m_type == e_donut )
 		{
@@ -779,7 +779,7 @@ public:
 			b2ShapeId shapeId = m_visitorIds[i];
 			b2AABB aabb = b2Shape_GetAABB( shapeId );
 			b2Vec2 point = b2AABB_Center( aabb );
-			DrawPoint( m_draw, point, 10.0f, b2_colorWhite );
+			DrawPoint( m_draw, b2ToPos( point ), 10.0f, b2_colorWhite );
 		}
 	}
 
@@ -925,7 +925,7 @@ public:
 	{
 		DrawScreenTextLine( "move using WASD" );
 
-		b2Vec2 position = b2Body_GetPosition( m_playerId );
+		b2Pos position = b2Body_GetPosition( m_playerId );
 
 		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS )
 		{
@@ -993,13 +993,17 @@ public:
 						b2Manifold manifold = contactData[j].manifold;
 						b2Vec2 normal = manifold.normal;
 						assert( b2AbsFloat( b2Length( normal ) - 1.0f ) < 4.0f * FLT_EPSILON );
+						b2BodyId bidA = b2Shape_GetBody( idA );
 
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							DrawLine( m_draw, point.clipPoint, point.clipPoint + point.totalNormalImpulse * normal,
-									  b2_colorBlueViolet );
-							DrawPoint( m_draw, point.clipPoint, 10.0f, b2_colorWhite );
+							b2Pos posA = b2Body_GetWorldCenter( bidA );
+							b2Pos p1 = posA + point.anchorA;
+							b2Pos p2 = p1 + point.totalNormalImpulse * normal;
+
+							DrawLine( m_draw, p1, p2, b2_colorBlueViolet );
+							DrawPoint( m_draw, p1, 10.0f, b2_colorWhite );
 						}
 					}
 				}
@@ -1024,13 +1028,17 @@ public:
 						b2Manifold manifold = contactData[j].manifold;
 						b2Vec2 normal = manifold.normal;
 						assert( b2AbsFloat( b2Length( normal ) - 1.0f ) < 4.0f * FLT_EPSILON );
+						b2BodyId bidA = b2Shape_GetBody( idA );
 
 						for ( int k = 0; k < manifold.pointCount; ++k )
 						{
 							b2ManifoldPoint point = manifold.points[k];
-							DrawLine( m_draw, point.clipPoint, point.clipPoint + point.totalNormalImpulse * normal,
-									  b2_colorYellowGreen );
-							DrawPoint( m_draw, point.clipPoint, 10.0f, b2_colorWhite );
+							b2Pos posA = b2Body_GetWorldCenter( bidA );
+							b2Pos p1 = posA + point.anchorA;
+							b2Pos p2 = p1 + point.totalNormalImpulse * normal;
+
+							DrawLine( m_draw, p1, p2, b2_colorYellowGreen );
+							DrawPoint( m_draw, p1, 10.0f, b2_colorWhite );
 						}
 					}
 				}
@@ -1116,9 +1124,9 @@ public:
 				continue;
 			}
 
-			b2Transform playerTransform = b2Body_GetTransform( m_playerId );
-			b2Transform debrisTransform = b2Body_GetTransform( debrisId );
-			b2Transform relativeTransform = b2InvMulTransforms( playerTransform, debrisTransform );
+			b2WorldTransform playerTransform = b2Body_GetTransform( m_playerId );
+			b2WorldTransform debrisTransform = b2Body_GetTransform( debrisId );
+			b2Transform relativeTransform = b2InvMulWorldTransforms( playerTransform, debrisTransform );
 
 			int shapeCount = b2Body_GetShapeCount( debrisId );
 			if ( shapeCount == 0 )
@@ -1292,16 +1300,16 @@ public:
 		m_jumping = false;
 	}
 
-	static bool PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Vec2 point, b2Vec2 normal, void* context )
+	static bool PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context )
 	{
 		Platform* self = static_cast<Platform*>( context );
-		return self->PreSolve( shapeIdA, shapeIdB, point, normal );
+		return self->PreSolve( shapeIdA, shapeIdB, point , normal );
 	}
 
 	// This callback must be thread-safe. It may be called multiple times simultaneously.
 	// Notice how this method is constant and doesn't change any data. It also
 	// does not try to access any values in the world that may be changing, such as contact data.
-	bool PreSolve( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Vec2 point, b2Vec2 normal ) const
+	bool PreSolve( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal ) const
 	{
 		assert( b2Shape_IsValid( shapeIdA ) );
 		assert( b2Shape_IsValid( shapeIdB ) );
@@ -1374,7 +1382,7 @@ public:
 
 		// A kinematic body is moved by setting its velocity. This
 		// ensure friction works correctly.
-		b2Vec2 platformPosition = b2Body_GetPosition( m_movingPlatformId );
+		b2Pos platformPosition = b2Body_GetPosition( m_movingPlatformId );
 		if ( platformPosition.x < -15.0f )
 		{
 			b2Body_SetLinearVelocity( m_movingPlatformId, { 2.0f, 0.0f } );
@@ -1578,7 +1586,7 @@ public:
 			// draw the transform of every body that moved (not sleeping)
 			DrawTransform( m_draw, event->transform, 1.0f );
 
-			b2Transform transform = b2Body_GetTransform( event->bodyId );
+			b2WorldTransform transform = b2Body_GetTransform( event->bodyId );
 			B2_ASSERT( transform.p.x == event->transform.p.x );
 			B2_ASSERT( transform.p.y == event->transform.p.y );
 			B2_ASSERT( transform.q.c == event->transform.q.c );
@@ -1618,7 +1626,7 @@ public:
 	bool m_sleeping[e_count] = {};
 	int m_count;
 	int m_sleepCount;
-	b2Vec2 m_explosionPosition;
+	b2Pos m_explosionPosition;
 	float m_explosionRadius;
 	float m_explosionMagnitude;
 };
@@ -1776,7 +1784,7 @@ public:
 
 	void Step() override
 	{
-		b2Vec2 position = b2Body_GetPosition( m_kinematicBodyId );
+		b2Pos position = b2Body_GetPosition( m_kinematicBodyId );
 		if ( position.y < 0.0f )
 		{
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { 0.0f, 1.0f } );
@@ -1793,7 +1801,7 @@ public:
 		PrintOverlaps( m_kinematicSensorId, "kinematic" );
 		PrintOverlaps( m_dynamicSensorId, "dynamic" );
 
-		b2Vec2 origin = { 5.0f, 1.0f };
+		b2Pos origin = { 5.0f, 1.0f };
 		b2Vec2 translation = { -10.0f, 0.0f };
 		b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, b2DefaultQueryFilter() );
 		DrawLine( m_draw, origin, origin + translation, b2_colorDimGray );
@@ -1850,7 +1858,7 @@ public:
 			m_jointIds[i] = b2_nullJointId;
 		}
 
-		b2Vec2 position = { -12.5f, 10.0f };
+		b2Pos position = { -12.5f, 10.0f };
 		bodyDef.type = b2_dynamicBody;
 		bodyDef.enableSleep = false;
 
@@ -1870,8 +1878,8 @@ public:
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
 			float length = 2.0f;
-			b2Vec2 pivot1 = { position.x, position.y + 1.0f + length };
-			b2Vec2 pivot2 = { position.x, position.y + 1.0f };
+			b2Pos pivot1 = { position.x, position.y + 1.0f + length };
+			b2Pos pivot2 = { position.x, position.y + 1.0f };
 			b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -1899,7 +1907,7 @@ public:
 			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
-			jointDef.base.localFrameA.p = position;
+			jointDef.base.localFrameA.p = b2ToVec2( position );
 			jointDef.maxVelocityForce = 1000.0f;
 			jointDef.maxVelocityTorque = 20.0f;
 			jointDef.base.forceThreshold = forceThreshold;
@@ -1920,7 +1928,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			b2Vec2 pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -1944,7 +1952,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			b2Vec2 pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -1968,7 +1976,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			b2Vec2 pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2WeldJointDef jointDef = b2DefaultWeldJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -1994,7 +2002,7 @@ public:
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
-			b2Vec2 pivot = { position.x - 1.0f, position.y };
+			b2Pos pivot = { position.x - 1.0f, position.y };
 			b2WheelJointDef jointDef = b2DefaultWheelJointDef();
 			jointDef.base.bodyIdA = groundId;
 			jointDef.base.bodyIdB = bodyId;
@@ -2129,11 +2137,12 @@ public:
 			for ( int i = 0; i < data.manifold.pointCount; ++i )
 			{
 				const b2ManifoldPoint* manifoldPoint = data.manifold.points + i;
-				b2Vec2 p1 = manifoldPoint->clipPoint;
-				b2Vec2 p2 = p1 + manifoldPoint->totalNormalImpulse * data.manifold.normal;
+				b2BodyId bodyIdA = b2Shape_GetBody( data.shapeIdA );
+				b2Pos p1 = b2Body_GetWorldCenter( bodyIdA ) + manifoldPoint->anchorA;
+				b2Pos p2 = p1 + manifoldPoint->totalNormalImpulse * data.manifold.normal;
 				DrawLine( m_draw, p1, p2, b2_colorCrimson );
 				DrawPoint( m_draw, p1, 6.0f, b2_colorCrimson );
-				DrawWorldString( m_draw, m_camera, p1, b2_colorWhite, "%.2f", manifoldPoint->totalNormalImpulse );
+				DrawString( m_draw, m_camera, p1, b2_colorWhite, "%.2f", manifoldPoint->totalNormalImpulse );
 			}
 		}
 		else
@@ -2227,7 +2236,7 @@ public:
 			b2Capsule capsule = { { 0.0f, 1.0f }, { 0.0f, 9.0f }, 0.1f };
 			m_dynamicSensorId = b2CreateCapsuleShape( m_dynamicBodyId, &shapeDef, &capsule );
 
-			b2Vec2 pivot = bodyDef.position + b2Vec2{ 0.0f, 6.0f };
+			b2Pos pivot = bodyDef.position + b2Vec2{ 0.0f, 6.0f };
 			b2Vec2 axis = { 1.0f, 0.0f };
 			b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
 			jointDef.base.bodyIdA = groundId;
@@ -2308,7 +2317,7 @@ public:
 
 	void Step() override
 	{
-		b2Vec2 p = b2Body_GetPosition( m_kinematicBodyId );
+		b2Pos p = b2Body_GetPosition( m_kinematicBodyId );
 		if ( p.x > 1.0f )
 		{
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { -0.5f, 0.0f } );
@@ -2370,7 +2379,7 @@ public:
 
 	static constexpr int m_transformCapacity = 20;
 	int m_transformCount;
-	b2Transform m_transforms[m_transformCapacity];
+	b2WorldTransform m_transforms[m_transformCapacity];
 
 	bool m_isBullet;
 	int m_beginCount;
@@ -2410,8 +2419,8 @@ public:
 		m_projectileId = {};
 		m_projectileShapeId = {};
 		m_dragging = false;
-		m_point1 = b2Vec2_zero;
-		m_point2 = b2Vec2_zero;
+		m_point1 = b2Pos_zero;
+		m_point2 = b2Pos_zero;
 
 		b2Polygon box = b2MakeRoundedBox( 0.45f, 0.45f, 0.05f );
 
@@ -2456,7 +2465,7 @@ public:
 		m_projectileShapeId = b2CreateCircleShape( m_projectileId, &shapeDef, &circle );
 	}
 
-	void MouseDown( b2Vec2 p, int button, int mods ) override
+	void MouseDown( b2Pos p, int button, int mods ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -2468,7 +2477,7 @@ public:
 		}
 	}
 
-	void MouseUp( b2Vec2, int button ) override
+	void MouseUp( b2Pos, int button ) override
 	{
 		if ( button == GLFW_MOUSE_BUTTON_1 )
 		{
@@ -2480,7 +2489,7 @@ public:
 		}
 	}
 
-	void MouseMove( b2Vec2 p ) override
+	void MouseMove( b2Pos p ) override
 	{
 		if ( m_dragging )
 		{
@@ -2515,7 +2524,8 @@ public:
 					if ( data.manifold.pointCount > 0 )
 					{
 						b2ExplosionDef explosionDef = b2DefaultExplosionDef();
-						explosionDef.position = data.manifold.points[0].clipPoint;
+						explosionDef.position =
+							b2Body_GetWorldCenter( b2Shape_GetBody( data.shapeIdA ) ) + data.manifold.points[0].anchorA;
 						explosionDef.radius = 1.0f;
 						explosionDef.impulsePerLength = 20.0f;
 						b2World_Explode( m_worldId, &explosionDef );
@@ -2537,8 +2547,8 @@ public:
 
 	b2BodyId m_projectileId;
 	b2ShapeId m_projectileShapeId;
-	b2Vec2 m_point1;
-	b2Vec2 m_point2;
+	b2Pos m_point1;
+	b2Pos m_point2;
 	bool m_dragging;
 };
 
@@ -2658,14 +2668,14 @@ public:
 		}
 
 		DrawScreenTextLine( "mass = %g, gravity = %g, restitution = %g", m_mass, m_useGravity ? 10.0f : 0.0f,
-					  m_useRestitution ? m_restitution : 0.0f );
+							m_useRestitution ? m_restitution : 0.0f );
 
 		int eventCount = (int)m_events.size();
 		for ( int i = 0; i < eventCount; ++i )
 		{
 			const Event& e = m_events[i];
-			DrawScreenTextLine( "hit speed = %g, hit momentum = %g, final impulse = %g, total impulse = %g", e.speed, m_mass * e.speed,
-						  e.impulse, e.totalImpulse );
+			DrawScreenTextLine( "hit speed = %g, hit momentum = %g, final impulse = %g, total impulse = %g", e.speed,
+								m_mass * e.speed, e.impulse, e.totalImpulse );
 		}
 	}
 

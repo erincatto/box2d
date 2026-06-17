@@ -122,21 +122,32 @@ foreach(SHADER_FILE ${SHADER_FILES})
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${SHADER_PATH})
 endforeach()
 
-set(BOX2D_SAMPLE_FILES
-    car.cpp
-    car.h
+# The shared host plus the double precision aware samples. Compiled in every precision mode.
+# The Replay Viewer is part of the host: it is the required way to view a double precision recording.
+set(BOX2D_SAMPLE_FRAMEWORK_FILES
     container.c
     container.h
-    donut.cpp
-    donut.h
-    doohickey.cpp
-    doohickey.h
     draw.c
     draw.h
     draw_text.cpp
     main.cpp
     sample.cpp
     sample.h
+    sample_replay.cpp
+    shader.c
+    shader.h
+    stb_image_write.h
+)
+
+# Samples beyond the host. These compile in both precision modes: a world coordinate flowing
+# through the b2World API keeps its natural type and is demoted only at the ad-hoc draw boundary.
+set(BOX2D_SAMPLE_COMMON_FILES
+    car.cpp
+    car.h
+    donut.cpp
+    donut.h
+    doohickey.cpp
+    doohickey.h
     sample_benchmark.cpp
     sample_bodies.cpp
     sample_character.cpp
@@ -147,15 +158,13 @@ set(BOX2D_SAMPLE_FILES
     sample_geometry.cpp
     sample_issues.cpp
     sample_joints.cpp
-    sample_replay.cpp
     sample_robustness.cpp
     sample_shapes.cpp
     sample_stacking.cpp
     sample_world.cpp
-    shader.c
-    shader.h
-    stb_image_write.h
 )
+
+set(BOX2D_SAMPLE_FILES ${BOX2D_SAMPLE_FRAMEWORK_FILES} ${BOX2D_SAMPLE_COMMON_FILES})
 
 add_executable(samples ${BOX2D_SAMPLE_FILES})
 

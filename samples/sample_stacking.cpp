@@ -50,7 +50,7 @@ public:
 
 		// DrawCircle({0.0f, 2.0f}, 1.0f, b2_colorWhite);
 
-		b2Vec2 position = b2Body_GetPosition( m_bodyId );
+		b2Pos position = b2Body_GetPosition( m_bodyId );
 		DrawScreenTextLine( "(x, y) = (%.2g, %.2g)", position.x, position.y );
 	}
 
@@ -846,7 +846,7 @@ public:
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 			if ( i == 0 )
 			{
-				b2Body_ApplyLinearImpulse( bodyId, b2Vec2{ 0.2f, 0.0f }, b2Vec2{ x, 1.0f }, true );
+				b2Body_ApplyLinearImpulse( bodyId, b2Vec2{ 0.2f, 0.0f }, b2Pos{ x, 1.0f }, true );
 			}
 
 			x += 1.0f;

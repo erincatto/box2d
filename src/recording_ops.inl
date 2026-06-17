@@ -43,17 +43,17 @@ B2_REC_OP( 0x0D, WorldEnableSpeculative, RET_NONE, ARG( WORLDID, world ) ARG( BO
 // Body
 B2_REC_OP( 0x10, CreateBody, RET_BODYID, ARG( WORLDID, world ) ARG( BODYDEF, def ) )
 B2_REC_OP( 0x11, DestroyBody, RET_NONE, ARG( BODYID, body ) )
-B2_REC_OP( 0x20, BodySetTransform, RET_NONE, ARG( BODYID, body ) ARG( VEC2, position ) ARG( ROT, rotation ) )
+B2_REC_OP( 0x20, BodySetTransform, RET_NONE, ARG( BODYID, body ) ARG( POSITION, position ) ARG( ROT, rotation ) )
 B2_REC_OP( 0x21, BodySetLinearVelocity, RET_NONE, ARG( BODYID, body ) ARG( VEC2, v ) )
 B2_REC_OP( 0x22, BodySetType, RET_NONE, ARG( BODYID, body ) ARG( I32, type ) )
 B2_REC_OP( 0x23, BodySetName, RET_NONE, ARG( BODYID, body ) ARG( STR, name ) )
 B2_REC_OP( 0x24, BodySetAngularVelocity, RET_NONE, ARG( BODYID, body ) ARG( F32, w ) )
-B2_REC_OP( 0x25, BodySetTargetTransform, RET_NONE, ARG( BODYID, body ) ARG( XF, target ) ARG( F32, timeStep ) ARG( BOOL, wake ) )
-B2_REC_OP( 0x26, BodyApplyForce, RET_NONE, ARG( BODYID, body ) ARG( VEC2, force ) ARG( VEC2, point ) ARG( BOOL, wake ) )
+B2_REC_OP( 0x25, BodySetTargetTransform, RET_NONE, ARG( BODYID, body ) ARG( WORLDXF, target ) ARG( F32, timeStep ) ARG( BOOL, wake ) )
+B2_REC_OP( 0x26, BodyApplyForce, RET_NONE, ARG( BODYID, body ) ARG( VEC2, force ) ARG( POSITION, point ) ARG( BOOL, wake ) )
 B2_REC_OP( 0x27, BodyApplyForceToCenter, RET_NONE, ARG( BODYID, body ) ARG( VEC2, force ) ARG( BOOL, wake ) )
 B2_REC_OP( 0x28, BodyApplyTorque, RET_NONE, ARG( BODYID, body ) ARG( F32, torque ) ARG( BOOL, wake ) )
 B2_REC_OP( 0x29, BodyClearForces, RET_NONE, ARG( BODYID, body ) )
-B2_REC_OP( 0x2A, BodyApplyLinearImpulse, RET_NONE, ARG( BODYID, body ) ARG( VEC2, impulse ) ARG( VEC2, point ) ARG( BOOL, wake ) )
+B2_REC_OP( 0x2A, BodyApplyLinearImpulse, RET_NONE, ARG( BODYID, body ) ARG( VEC2, impulse ) ARG( POSITION, point ) ARG( BOOL, wake ) )
 B2_REC_OP( 0x2B, BodyApplyLinearImpulseToCenter, RET_NONE, ARG( BODYID, body ) ARG( VEC2, impulse ) ARG( BOOL, wake ) )
 B2_REC_OP( 0x2C, BodyApplyAngularImpulse, RET_NONE, ARG( BODYID, body ) ARG( F32, impulse ) ARG( BOOL, wake ) )
 B2_REC_OP( 0x2D, BodySetMassData, RET_NONE, ARG( BODYID, body ) ARG( MASSDATA, massData ) )
@@ -187,19 +187,25 @@ B2_REC_OP( 0xD0, WheelJointSetMotorSpeed, RET_NONE, ARG( JOINTID, joint ) ARG( F
 B2_REC_OP( 0xD1, WheelJointSetMaxMotorTorque, RET_NONE, ARG( JOINTID, joint ) ARG( F32, torque ) )
 
 // Spatial queries. Inputs through the manifest (reader side). Hit tail / results hand-written.
-B2_REC_OP( 0xE0, QueryOverlapAABB, RET_NONE, ARG( WORLDID, world ) ARG( AABB, aabb ) ARG( QUERYFILTER, filter ) )
-B2_REC_OP( 0xE1, QueryOverlapShape, RET_NONE, ARG( WORLDID, world ) ARG( SHAPEPROXY, proxy ) ARG( QUERYFILTER, filter ) )
+// Query geometry is relative to the origin so recordings reproduce queries far from the world origin.
+B2_REC_OP( 0xE0, QueryOverlapAABB, RET_NONE,
+		   ARG( WORLDID, world ) ARG( POSITION, origin ) ARG( AABB, aabb ) ARG( QUERYFILTER, filter ) )
+B2_REC_OP( 0xE1, QueryOverlapShape, RET_NONE,
+		   ARG( WORLDID, world ) ARG( POSITION, origin ) ARG( SHAPEPROXY, proxy ) ARG( QUERYFILTER, filter ) )
 B2_REC_OP( 0xE2, QueryCastRay, RET_NONE,
-		   ARG( WORLDID, world ) ARG( VEC2, origin ) ARG( VEC2, translation ) ARG( QUERYFILTER, filter ) )
+		   ARG( WORLDID, world ) ARG( POSITION, origin ) ARG( VEC2, translation ) ARG( QUERYFILTER, filter ) )
 B2_REC_OP( 0xE3, QueryCastShape, RET_NONE,
-		   ARG( WORLDID, world ) ARG( SHAPEPROXY, proxy ) ARG( VEC2, translation ) ARG( QUERYFILTER, filter ) )
-B2_REC_OP( 0xE4, QueryCollideMover, RET_NONE, ARG( WORLDID, world ) ARG( CAPSULE, mover ) ARG( QUERYFILTER, filter ) )
+		   ARG( WORLDID, world ) ARG( POSITION, origin ) ARG( SHAPEPROXY, proxy ) ARG( VEC2, translation )
+			   ARG( QUERYFILTER, filter ) )
+B2_REC_OP( 0xE4, QueryCollideMover, RET_NONE,
+		   ARG( WORLDID, world ) ARG( POSITION, origin ) ARG( CAPSULE, mover ) ARG( QUERYFILTER, filter ) )
 B2_REC_OP( 0xE5, QueryCastRayClosest, RET_NONE,
-		   ARG( WORLDID, world ) ARG( VEC2, origin ) ARG( VEC2, translation ) ARG( QUERYFILTER, filter ) )
+		   ARG( WORLDID, world ) ARG( POSITION, origin ) ARG( VEC2, translation ) ARG( QUERYFILTER, filter ) )
 B2_REC_OP( 0xE6, QueryCastMover, RET_NONE,
-		   ARG( WORLDID, world ) ARG( CAPSULE, mover ) ARG( VEC2, translation ) ARG( QUERYFILTER, filter ) )
-B2_REC_OP( 0xE7, ShapeTestPoint, RET_NONE, ARG( SHAPEID, shape ) ARG( VEC2, point ) )
-B2_REC_OP( 0xE8, ShapeRayCast, RET_NONE, ARG( SHAPEID, shape ) ARG( RAYCASTINPUT, input ) )
+		   ARG( WORLDID, world ) ARG( POSITION, origin ) ARG( CAPSULE, mover ) ARG( VEC2, translation )
+			   ARG( QUERYFILTER, filter ) )
+B2_REC_OP( 0xE7, ShapeTestPoint, RET_NONE, ARG( SHAPEID, shape ) ARG( POSITION, point ) )
+B2_REC_OP( 0xE8, ShapeRayCast, RET_NONE, ARG( SHAPEID, shape ) ARG( POSITION, origin ) ARG( VEC2, translation ) )
 
 B2_REC_OP( 0xF1, StateHash, RET_NONE, ARG( WORLDID, world ) ARG( U64, hash ) )
 

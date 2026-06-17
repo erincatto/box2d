@@ -18,17 +18,41 @@
 #define B2_SNAP_FNV_INIT 14695981039346656037ull
 #define B2_SNAP_FNV_PRIME 1099511628211ull
 
+// Mix a world position at full width, or the determinism gates would validate only to float
+// precision and pass vacuously far from the origin
+static inline uint64_t b2FnvMixPosition( uint64_t hash, b2Pos p )
+{
+#if defined( BOX2D_DOUBLE_PRECISION )
+	uint64_t bx, by;
+	memcpy( &bx, &p.x, 8 );
+	memcpy( &by, &p.y, 8 );
+#else
+	uint32_t fx, fy;
+	memcpy( &fx, &p.x, 4 );
+	memcpy( &fy, &p.y, 4 );
+	uint64_t bx = fx, by = fy;
+#endif
+	hash = ( hash ^ bx ) * B2_SNAP_FNV_PRIME;
+	hash = ( hash ^ by ) * B2_SNAP_FNV_PRIME;
+	return hash;
+}
+
 typedef struct b2World b2World;
 
 // Magic value 'B2RC' in little-endian: bytes B2, R, C yield 0x43523242
 #define B2_REC_MAGIC 0x43523242u
 
+// Recording format version. Any mismatch refuses to load. The minor tracks op stream layout
+// changes that keep the 32 byte header shape, such as the query origin args.
+#define B2_REC_VERSION_MAJOR 3
+#define B2_REC_VERSION_MINOR 2
+
 // File header, fixed 32 bytes, little-endian
 typedef struct b2RecHeader
 {
 	uint32_t magic;			 // 'B2RC' = 0x43523242
-	uint16_t versionMajor;	 // 3
-	uint16_t versionMinor;	 // 0
+	uint16_t versionMajor;	 // B2_REC_VERSION_MAJOR
+	uint16_t versionMinor;	 // B2_REC_VERSION_MINOR
 	uint32_t reserved2;
 	float lengthScale;		 // The world length scale
 	uint8_t reserved3;
@@ -74,6 +98,8 @@ typedef float b2RecCType_F32;
 typedef b2Vec2 b2RecCType_VEC2;
 typedef b2Rot b2RecCType_ROT;
 typedef b2Transform b2RecCType_XF;
+typedef b2Pos b2RecCType_POSITION;
+typedef b2WorldTransform b2RecCType_WORLDXF;
 typedef const char* b2RecCType_STR;
 typedef b2WorldId b2RecCType_WORLDID;
 typedef b2BodyId b2RecCType_BODYID;
@@ -103,7 +129,6 @@ typedef b2WheelJointDef b2RecCType_WHEELJOINTDEF;
 typedef b2AABB b2RecCType_AABB;
 typedef b2QueryFilter b2RecCType_QUERYFILTER;
 typedef b2ShapeProxy b2RecCType_SHAPEPROXY;
-typedef b2RayCastInput b2RecCType_RAYCASTINPUT;
 
 // Codegen pass 1a: arg structs, generated in recording.c, declared here for call sites.
 // These are typedef'd in recording.c before the write helpers, but must be visible
@@ -145,6 +170,11 @@ void b2RecW_BOOL( b2RecBuffer* buf, bool v );
 void b2RecW_VEC2( b2RecBuffer* buf, b2Vec2 v );
 void b2RecW_ROT( b2RecBuffer* buf, b2Rot v );
 void b2RecW_XF( b2RecBuffer* buf, b2Transform v );
+void b2RecW_F64( b2RecBuffer* buf, double v );
+// World position and world transform. Two doubles per position in large world mode, two floats
+// otherwise so the wire stays byte-identical to VEC2 / XF in the float build.
+void b2RecW_POSITION( b2RecBuffer* buf, b2Pos v );
+void b2RecW_WORLDXF( b2RecBuffer* buf, b2WorldTransform v );
 void b2RecW_WORLDID( b2RecBuffer* buf, b2WorldId v );
 void b2RecW_BODYID( b2RecBuffer* buf, b2BodyId v );
 void b2RecW_SHAPEID( b2RecBuffer* buf, b2ShapeId v );
@@ -174,8 +204,7 @@ void b2RecW_WHEELJOINTDEF( b2RecBuffer* buf, b2WheelJointDef v );
 void b2RecW_AABB( b2RecBuffer* buf, b2AABB v );
 void b2RecW_QUERYFILTER( b2RecBuffer* buf, b2QueryFilter v );
 void b2RecW_SHAPEPROXY( b2RecBuffer* buf, b2ShapeProxy v );
-void b2RecW_RAYCASTINPUT( b2RecBuffer* buf, b2RayCastInput v );
-void b2RecW_CASTOUTPUT( b2RecBuffer* buf, b2CastOutput v );
+void b2RecW_WORLDCASTOUTPUT( b2RecBuffer* buf, b2WorldCastOutput v );
 void b2RecW_RAYRESULT( b2RecBuffer* buf, b2RayResult v );
 void b2RecW_PLANERESULT( b2RecBuffer* buf, b2PlaneResult v );
 void b2RecW_TREESTATS( b2RecBuffer* buf, b2TreeStats v );
@@ -262,7 +291,7 @@ void b2RecQueryCommit( b2Recording* rec, uint8_t opcode, b2RecQueryWriter* w );
 
 // Recording trampolines: replace the user fcn pointer so hits are captured before dispatch
 bool b2RecOverlapTrampoline( b2ShapeId id, void* ctx );
-float b2RecCastTrampoline( b2ShapeId id, b2Vec2 point, b2Vec2 normal, float fraction, void* ctx );
+float b2RecCastTrampoline( b2ShapeId id, b2Pos point, b2Vec2 normal, float fraction, void* ctx );
 bool b2RecPlaneTrampoline( b2ShapeId id, const b2PlaneResult* plane, void* ctx );
 
 // Lifecycle. Public create/destroy/save/load live in box2d.h; these are the engine-side hooks.

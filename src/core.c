@@ -107,6 +107,15 @@ b2Version b2GetVersion( void )
 	};
 }
 
+bool b2IsDoublePrecision( void )
+{
+#if defined( BOX2D_DOUBLE_PRECISION )
+	return true;
+#else
+	return false;
+#endif
+}
+
 static b2AllocFcn* b2_allocFcn = NULL;
 static b2FreeFcn* b2_freeFcn = NULL;
 

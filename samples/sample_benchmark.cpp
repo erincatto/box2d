@@ -537,11 +537,11 @@ public:
 		free( m_bodyIds );
 	}
 
-	void CreateTumbler( b2Vec2 position, int index )
+	void CreateTumbler( b2Pos position, int index )
 	{
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_kinematicBody;
-		bodyDef.position = { position.x, position.y };
+		bodyDef.position = position;
 		bodyDef.angularVelocity = ( B2_PI / 180.0f ) * m_angularSpeed;
 		b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 		m_tumblerIds[index] = bodyId;
@@ -580,7 +580,7 @@ public:
 
 		m_tumblerCount = m_rowCount * m_columnCount;
 		m_tumblerIds = static_cast<b2BodyId*>( malloc( m_tumblerCount * sizeof( b2BodyId ) ) );
-		m_positions = static_cast<b2Vec2*>( malloc( m_tumblerCount * sizeof( b2Vec2 ) ) );
+		m_positions = static_cast<b2Pos*>( malloc( m_tumblerCount * sizeof( b2Pos ) ) );
 
 		int index = 0;
 		float x = -4.0f * m_rowCount;
@@ -672,7 +672,7 @@ public:
 	int m_columnCount;
 
 	b2BodyId* m_tumblerIds;
-	b2Vec2* m_positions;
+	b2Pos* m_positions;
 	int m_tumblerCount;
 
 	b2BodyId* m_bodyIds;
@@ -716,8 +716,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.center = { 16.0f, 110.0f };
-			m_context->camera.zoom = 25.0f * 5.0f;
+			m_context->camera.center = { 23.0f, 72.5f };
+			m_context->camera.zoom = 165.0f;
 			m_context->enableSleep = false;
 		}
 
@@ -1230,8 +1230,8 @@ public:
 		// Pre-compute rays to avoid randomizer overhead
 		for ( int i = 0; i < sampleCount; ++i )
 		{
-			b2Vec2 rayStart = RandomVec2( 0.0f, extent );
-			b2Vec2 rayEnd = RandomVec2( 0.0f, extent );
+			b2Pos rayStart = RandomPos( 0.0f, extent );
+			b2Pos rayEnd = RandomPos( 0.0f, extent );
 
 			m_origins[i] = rayStart;
 			m_translations[i] = rayEnd - rayStart;
@@ -1382,12 +1382,12 @@ public:
 
 	struct CastResult
 	{
-		b2Vec2 point;
+		b2Pos point;
 		float fraction;
 		bool hit;
 	};
 
-	static float CastCallback( b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context )
+	static float CastCallback( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context )
 	{
 		CastResult* result = (CastResult*)context;
 		result->point = point;
@@ -1435,7 +1435,7 @@ public:
 
 			for ( int i = 0; i < sampleCount; ++i )
 			{
-				b2Vec2 origin = m_origins[i];
+				b2Pos origin = m_origins[i];
 				b2Vec2 translation = m_translations[i];
 
 				b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, filter );
@@ -1454,8 +1454,8 @@ public:
 
 			m_minTime = b2MinFloat( m_minTime, ms );
 
-			b2Vec2 p1 = m_origins[m_drawIndex];
-			b2Vec2 p2 = p1 + m_translations[m_drawIndex];
+			b2Pos p1 = m_origins[m_drawIndex];
+			b2Pos p2 = m_origins[m_drawIndex] + m_translations[m_drawIndex];
 			DrawLine( m_context->draw, p1, p2, b2_colorWhite );
 			DrawPoint( m_context->draw, p1, 5.0f, b2_colorGreen );
 			DrawPoint( m_context->draw, p2, 5.0f, b2_colorRed );
@@ -1472,11 +1472,12 @@ public:
 
 			for ( int i = 0; i < sampleCount; ++i )
 			{
-				b2ShapeProxy proxy = b2MakeProxy( &m_origins[i], 1, m_radius );
+				b2ShapeProxy proxy = b2MakeProxy( &b2Vec2_zero, 1, m_radius );
 				b2Vec2 translation = m_translations[i];
 
 				CastResult result;
-				b2TreeStats traversalResult = b2World_CastShape( m_worldId, &proxy, translation, filter, CastCallback, &result );
+				b2TreeStats traversalResult =
+					b2World_CastShape( m_worldId, m_origins[i], &proxy, translation, filter, CastCallback, &result );
 
 				if ( i == m_drawIndex )
 				{
@@ -1492,14 +1493,14 @@ public:
 
 			m_minTime = b2MinFloat( m_minTime, ms );
 
-			b2Vec2 p1 = m_origins[m_drawIndex];
-			b2Vec2 p2 = p1 + m_translations[m_drawIndex];
+			b2Pos p1 = m_origins[m_drawIndex];
+			b2Pos p2 = m_origins[m_drawIndex] + m_translations[m_drawIndex];
 			DrawLine( m_context->draw, p1, p2, b2_colorWhite );
 			DrawPoint( m_context->draw, p1, 5.0f, b2_colorGreen );
 			DrawPoint( m_context->draw, p2, 5.0f, b2_colorRed );
 			if ( drawResult.hit )
 			{
-				b2Vec2 t = b2Lerp( p1, p2, drawResult.fraction );
+				b2Pos t = m_origins[m_drawIndex] + b2MulSV( drawResult.fraction, m_translations[m_drawIndex] );
 				DrawCircle( m_context->draw, t, m_radius, b2_colorWhite );
 				DrawPoint( m_context->draw, drawResult.point, 5.0f, b2_colorWhite );
 			}
@@ -1514,11 +1515,11 @@ public:
 
 			for ( int i = 0; i < sampleCount; ++i )
 			{
-				b2Vec2 origin = m_origins[i];
-				b2AABB aabb = { origin - extent, origin + extent };
+				b2AABB aabb = { -extent, extent };
 
 				result.count = 0;
-				b2TreeStats traversalResult = b2World_OverlapAABB( m_worldId, aabb, filter, OverlapCallback, &result );
+				b2TreeStats traversalResult =
+					b2World_OverlapAABB( m_worldId, m_origins[i], aabb, filter, OverlapCallback, &result );
 
 				if ( i == m_drawIndex )
 				{
@@ -1534,14 +1535,17 @@ public:
 
 			m_minTime = b2MinFloat( m_minTime, ms );
 
-			b2Vec2 origin = m_origins[m_drawIndex];
-			b2AABB aabb = { origin - extent, origin + extent };
+			b2Pos origin = m_origins[m_drawIndex];
+			b2AABB aabb = {
+				{ b2RoundDownFloat( origin.x - extent.x ), b2RoundDownFloat( origin.y - extent.y ) },
+				{ b2RoundUpFloat( origin.x + extent.x ), b2RoundUpFloat( origin.y + extent.y ) },
+			};
 
 			DrawBounds( m_context->draw, aabb, b2_colorWhite );
 
 			for ( int i = 0; i < drawResult.count; ++i )
 			{
-				DrawPoint( m_context->draw, drawResult.points[i], 5.0f, b2_colorHotPink );
+				DrawPoint( m_context->draw, b2ToPos( drawResult.points[i] ), 5.0f, b2_colorHotPink );
 			}
 		}
 
@@ -1561,7 +1565,7 @@ public:
 
 	QueryType m_queryType;
 
-	std::vector<b2Vec2> m_origins;
+	std::vector<b2Pos> m_origins;
 	std::vector<b2Vec2> m_translations;
 	float m_minTime;
 	float m_buildTime;
@@ -1700,16 +1704,15 @@ public:
 			m_polygonB = b2MakePolygon( &hull, 0.1f );
 		}
 
-		// todo arena
-		m_transformAs = (b2Transform*)malloc( m_count * sizeof( b2Transform ) );
-		m_transformBs = (b2Transform*)malloc( m_count * sizeof( b2Transform ) );
+		m_transformAs = (b2WorldTransform*)malloc( m_count * sizeof( b2WorldTransform ) );
+		m_transformBs = (b2WorldTransform*)malloc( m_count * sizeof( b2WorldTransform ) );
 		m_outputs = (b2DistanceOutput*)calloc( m_count, sizeof( b2DistanceOutput ) );
 
 		g_randomSeed = 42;
 		for ( int i = 0; i < m_count; ++i )
 		{
-			m_transformAs[i] = { RandomVec2( -0.1f, 0.1f ), RandomRot() };
-			m_transformBs[i] = { RandomVec2( 0.25f, 2.0f ), RandomRot() };
+			m_transformAs[i] = { RandomPos( -0.1f, 0.1f ), RandomRot() };
+			m_transformBs[i] = { RandomPos( 0.25f, 2.0f ), RandomRot() };
 		}
 
 		m_drawIndex = 0;
@@ -1746,8 +1749,7 @@ public:
 			for ( int i = 0; i < m_count; ++i )
 			{
 				b2SimplexCache cache = {};
-				input.transformA = m_transformAs[i];
-				input.transformB = m_transformBs[i];
+				input.transform = b2InvMulWorldTransforms( m_transformAs[i], m_transformBs[i] );
 				m_outputs[i] = b2ShapeDistance( &input, &cache, nullptr, 0 );
 				totalIterations += m_outputs[i].iterations;
 			}
@@ -1760,15 +1762,21 @@ public:
 			DrawScreenTextLine( "average iterations = %g", totalIterations / float( m_count ) );
 		}
 
-		b2Transform xfA = m_transformAs[m_drawIndex];
-		b2Transform xfB = m_transformBs[m_drawIndex];
+		b2WorldTransform xfA = m_transformAs[m_drawIndex];
+		b2WorldTransform xfB = m_transformBs[m_drawIndex];
 		b2DistanceOutput output = m_outputs[m_drawIndex];
+
+		// The query returns frame A results, project to world for drawing
+		b2Pos worldPointA = b2TransformWorldPoint( xfA, output.pointA );
+		b2Pos worldPointB = b2TransformWorldPoint( xfA, output.pointB );
+		b2Vec2 worldNormal = b2RotateVector( xfA.q, output.normal );
+
 		DrawSolidPolygon( m_context->draw, xfA, m_polygonA.vertices, m_polygonA.count, m_polygonA.radius, b2_colorBox2DGreen );
 		DrawSolidPolygon( m_context->draw, xfB, m_polygonB.vertices, m_polygonB.count, m_polygonB.radius, b2_colorBox2DBlue );
-		DrawLine( m_context->draw, output.pointA, output.pointB, b2_colorDimGray );
-		DrawPoint( m_context->draw, output.pointA, 10.0f, b2_colorWhite );
-		DrawPoint( m_context->draw, output.pointB, 10.0f, b2_colorWhite );
-		DrawLine( m_context->draw, output.pointA, output.pointA + 0.5f * output.normal, b2_colorYellow );
+		DrawLine( m_context->draw, worldPointA, worldPointB, b2_colorDimGray );
+		DrawPoint( m_context->draw, worldPointA, 10.0f, b2_colorWhite );
+		DrawPoint( m_context->draw, worldPointB, 10.0f, b2_colorWhite );
+		DrawLine( m_context->draw, worldPointA, worldPointA + 0.5f * worldNormal, b2_colorYellow );
 		DrawScreenTextLine( "distance = %g", output.distance );
 
 		Sample::Step();
@@ -1780,8 +1788,8 @@ public:
 	}
 
 	static constexpr int m_count = m_isDebug ? 100 : 10000;
-	b2Transform* m_transformAs;
-	b2Transform* m_transformBs;
+	b2WorldTransform* m_transformAs;
+	b2WorldTransform* m_transformBs;
 	b2DistanceOutput* m_outputs;
 	b2Polygon m_polygonA;
 	b2Polygon m_polygonB;
