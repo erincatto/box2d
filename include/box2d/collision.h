@@ -515,7 +515,7 @@ B2_API b2TOIOutput b2TimeOfImpact( const b2TOIInput* input );
  * @brief Functions for colliding pairs of shapes
  *
  * Each function takes the shapes in their own local frames and the transform of shape B in
- * shape A's frame (b2InvMulTransforms( worldA, worldB )). The manifold is returned in frame A.
+ * shape A's frame (b2InvMulWorldTransforms( worldA, worldB )). The manifold is returned in frame A.
  * @{
  */
 

@@ -716,8 +716,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.center = { 16.0f, 110.0f };
-			m_context->camera.zoom = 25.0f * 5.0f;
+			m_context->camera.center = { 23.0f, 72.5f };
+			m_context->camera.zoom = 165.0f;
 			m_context->enableSleep = false;
 		}
 

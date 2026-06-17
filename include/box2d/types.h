@@ -1364,7 +1364,7 @@ B2_API b2HexColor b2GetGraphColor( int index );
 /// This struct holds callbacks you can implement to draw a Box2D world.
 /// Callbacks receive world coordinates. In large world mode the translation is double precision so
 /// it stays accurate far from the origin. Shift into your own camera frame inside the callbacks.
-/// This structure should be zero initialized.
+/// Initialize with b2DefaultDebugDraw.
 /// @ingroup world
 typedef struct b2DebugDraw
 {

@@ -134,7 +134,7 @@ static void BuildProjectionMatrix( Camera* camera, float* m, float zBias )
 	m[11] = 0.0f;
 
 	// Vertices reach the GPU already shifted into camera relative space, the engine draw path and the
-	// DrawWorld helpers subtract the view center, so the view center is the origin here. In large world
+	// Draw helpers subtract the view center, so the view center is the origin here. In large world
 	// mode this also keeps double coordinates out of the shader.
 	m[12] = 0.0f;
 	m[13] = 0.0f;

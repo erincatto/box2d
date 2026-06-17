@@ -174,7 +174,7 @@ void CreateManyPyramids( b2WorldId worldId )
 
 	for ( int i = 0; i < rowCount; ++i )
 	{
-		b2Segment segment = { { -0.5f * 2.0f * groundWidth, groundY }, { 0.5f * 2.0f * groundWidth, groundY } };
+		b2Segment segment = { { -0.5f * groundWidth, groundY }, { 0.5f * groundWidth, groundY } };
 		b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		groundY += groundDeltaY;
 	}
@@ -186,7 +186,7 @@ void CreateManyPyramids( b2WorldId worldId )
 	{
 		for ( int j = 0; j < columnCount; ++j )
 		{
-			float centerX = -0.5f * groundWidth + j * ( baseWidth + 2.0f * extent ) + extent;
+			float centerX = -0.5f * groundWidth + j * ( baseWidth + 2.0f * extent ) + 2.0f * extent;
 			CreateSmallPyramid( worldId, baseCount, extent, centerX, baseY );
 		}
 
