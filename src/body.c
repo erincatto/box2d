@@ -3,8 +3,6 @@
 
 #include "body.h"
 
-#include "recording.h"
-
 #include "aabb.h"
 #include "contact.h"
 #include "core.h"
@@ -12,6 +10,7 @@
 #include "island.h"
 #include "joint.h"
 #include "physics_world.h"
+#include "recording.h"
 #include "sensor.h"
 #include "shape.h"
 #include "solver_set.h"
@@ -619,7 +618,7 @@ void b2UpdateBodyMassData( b2World* world, b2Body* body )
 
 	B2_ASSERT( body->inertia >= 0.0f );
 
-	if ( body->inertia > 0.0f )
+	if ( body->inertia > 0.0f && ( body->flags & b2_fixedRotation ) == 0 )
 	{
 		bodySim->invInertia = 1.0f / body->inertia;
 	}
@@ -1880,7 +1879,7 @@ void b2Body_SetBullet( b2BodyId bodyId, bool flag )
 	uint32_t newFlag = flag ? b2_isBullet : 0;
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
-	if ((body->flags & b2_isBullet) == newFlag)
+	if ( ( body->flags & b2_isBullet ) == newFlag )
 	{
 		return;
 	}

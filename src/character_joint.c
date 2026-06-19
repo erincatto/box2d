@@ -11,7 +11,6 @@
 // needed for dll export
 #include "box2d/box2d.h"
 
-
 void b2CharacterJoint_SetLinearHertz( b2JointId jointId, float hertz )
 {
 	// b2World* world = b2GetWorld( jointId.world0 );
@@ -125,7 +124,7 @@ void b2PrepareCharacterJoint( b2JointSim* base, b2StepContext* context )
 	joint->frameB.p = b2RotateVector( bodySimB->transform.q, b2Sub( base->localFrameB.p, bodySimB->localCenter ) );
 
 	// Compute the initial center delta. Incremental position updates are relative to this.
-	joint->deltaCenter = b2Sub( bodySimB->center, bodySimA->center );
+	joint->deltaCenter = b2SubPos( bodySimB->center, bodySimA->center );
 
 	b2Vec2 rA = joint->frameA.p;
 	b2Vec2 rB = joint->frameB.p;

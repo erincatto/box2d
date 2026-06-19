@@ -2468,21 +2468,17 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, uint64_t
 	}
 
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2WorldTransform xf = b2GetBodyTransformQuick( world, body );
+	b2WorldTransform bodyTransform = b2GetBodyTransformQuick( world, body );
+	b2Transform transform = b2ToRelativeTransform( bodyTransform, worldContext->origin );
 
-	// Re-center on the body so the per-shape cast stays in float precision far from the origin.
-	// The tree traversal already used the truncated origin in input. Here we re-difference in full
-	// precision against the body position.
-	b2Pos base = xf.p;
-	b2Transform transform = b2ToRelativeTransform( xf, base );
 	b2RayCastInput localInput = *input;
-	localInput.origin = b2SubPos( worldContext->origin, base );
+	localInput.origin = b2Vec2_zero;
 	b2CastOutput output = b2RayCastShape( &localInput, shape, transform );
 
 	if ( output.hit )
 	{
 		b2ShapeId id = { shapeId + 1, world->worldId, shape->generation };
-		b2Pos point = b2OffsetPos( base, output.point );
+		b2Pos point = b2OffsetPos( worldContext->origin, output.point );
 		float fraction = worldContext->fcn( id, point, output.normal, output.fraction, worldContext->userContext );
 
 		// The user may return -1 to skip this shape
@@ -2784,7 +2780,8 @@ static float MoverCastCallback( const b2BoxCastInput* input, int proxyId, uint64
 	localInput.maxFraction = input->maxFraction;
 
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2Transform transform = b2ToRelativeTransform( b2GetBodyTransformQuick( world, body ), worldContext->origin );
+	b2WorldTransform bodyTransform = b2GetBodyTransformQuick( world, body );
+	b2Transform transform = b2ToRelativeTransform( bodyTransform, worldContext->origin );
 
 	b2CastOutput output = b2ShapeCastShape( &localInput, shape, transform );
 	if ( output.fraction == 0.0f )
@@ -2899,8 +2896,8 @@ static bool TreeCollideCallback( int proxyId, uint64_t userData, void* context )
 
 // It is tempting to use a shape proxy for the mover, but this makes handling deep overlap difficult and the generality may
 // not be worth it.
-void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2QueryFilter filter,
-						   b2PlaneResultFcn* fcn, void* context )
+void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2QueryFilter filter, b2PlaneResultFcn* fcn,
+						   void* context )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );

@@ -57,9 +57,6 @@ public:
 			m_done = UpdateFallingHinges( m_worldId, &m_data );
 
 			b2QueryFilter filter = b2DefaultQueryFilter();
-
-			// Issue a few queries each step so the Replay viewer has something to draw
-			b2QueryFilter filter = b2DefaultQueryFilter();
 			b2AABB scanBox = { { 5.0f, 1.0f }, { 7.0f, 2.5f } };
 			b2World_OverlapAABB( m_worldId, b2Pos_zero, scanBox, filter, OverlapFcn, nullptr );
 

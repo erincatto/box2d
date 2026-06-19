@@ -61,3 +61,24 @@ static inline b2AABB b2OffsetAABB( b2AABB box, b2Pos origin )
 	result.upperBound.y = b2RoundUpFloat( origin.y + (double)box.upperBound.y );
 	return result;
 }
+
+static inline float b2ExpandDown( float x, float margin )
+{
+	return fminf( x - margin, nextafterf( x, -INFINITY ) );
+}
+
+static inline float b2ExpandUp( float x, float margin )
+{
+	return fmaxf( x + margin, nextafterf( x, +INFINITY ) );
+}
+
+// todo consider this to ensure at least one ULP margin
+static inline b2AABB b2Expand( b2AABB a, float margin )
+{
+	b2AABB b;
+	b.lowerBound.x = b2ExpandDown( a.lowerBound.x, margin );
+	b.lowerBound.y = b2ExpandDown( a.lowerBound.y, margin );
+	b.upperBound.x = b2ExpandUp( a.upperBound.x, margin );
+	b.upperBound.y = b2ExpandUp( a.upperBound.y, margin );
+	return b;
+}

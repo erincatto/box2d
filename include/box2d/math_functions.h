@@ -678,7 +678,7 @@ B2_INLINE b2Transform b2InvMulWorldTransforms( b2WorldTransform A, b2WorldTransf
 }
 
 /// Convert a local transform B into world space using world transform A.
-B2_INLINE b2WorldTransform b2OffsetWorldTransform( b2WorldTransform A, b2Transform B )
+B2_INLINE b2WorldTransform b2MulWorldTransforms( b2WorldTransform A, b2Transform B )
 {
 	b2WorldTransform C;
 	C.q = b2MulRot( A.q, B.q );

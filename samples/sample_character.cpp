@@ -394,9 +394,9 @@ public:
 
 			m_totalIterations += result.iterationCount;
 
-			float fraction = b2World_CastMover( m_worldId, m_position, &mover, result.translation, castFilter );
+			float fraction = b2World_CastMover( m_worldId, m_position, &mover, result.delta, castFilter );
 
-			b2Vec2 delta = fraction * result.translation;
+			b2Vec2 delta = fraction * result.delta;
 			m_position = m_position + delta;
 
 			if ( b2LengthSquared( delta ) < tolerance * tolerance )
