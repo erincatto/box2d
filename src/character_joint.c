@@ -28,7 +28,7 @@ float b2CharacterJoint_GetLinearHertz( b2JointId jointId )
 void b2CharacterJoint_SetLinearDampingRatio( b2JointId jointId, float damping )
 {
 	// b2World* world = b2GetWorld( jointId.world0 );
-	//B2_REC( world, CharacterJointSetLinearDampingRatio, jointId, damping );
+	// B2_REC( world, CharacterJointSetLinearDampingRatio, jointId, damping );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_characterJoint );
 	joint->characterJoint.linearDampingRatio = damping;
 }
@@ -42,7 +42,7 @@ float b2CharacterJoint_GetLinearDampingRatio( b2JointId jointId )
 void b2CharacterJoint_SetMaxSpringForce( b2JointId jointId, float maxForce )
 {
 	// b2World* world = b2GetWorld( jointId.world0 );
-	//B2_REC( world, CharacterJointSetMaxSpringForce, jointId, maxForce );
+	// B2_REC( world, CharacterJointSetMaxSpringForce, jointId, maxForce );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_characterJoint );
 	joint->characterJoint.maxSpringForce = b2MaxFloat( 0.0f, maxForce );
 }
@@ -150,6 +150,8 @@ void b2WarmStartCharacterJoint( b2JointSim* base, b2StepContext* context )
 
 	float mA = base->invMassA;
 	float mB = base->invMassB;
+	float iA = base->invIA;
+	float iB = base->invIB;
 
 	b2CharacterJoint* joint = &base->characterJoint;
 
@@ -158,16 +160,20 @@ void b2WarmStartCharacterJoint( b2JointSim* base, b2StepContext* context )
 
 	b2BodyState* stateA = joint->indexA == B2_NULL_INDEX ? &dummyState : context->states + joint->indexA;
 	b2BodyState* stateB = joint->indexB == B2_NULL_INDEX ? &dummyState : context->states + joint->indexB;
+	b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
+	b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
 	b2Vec2 linearImpulse = joint->linearSpringImpulse;
 
 	if ( stateA->flags & b2_dynamicFlag )
 	{
 		stateA->linearVelocity = b2MulSub( stateA->linearVelocity, mA, linearImpulse );
+		stateA->angularVelocity -= iA * b2Cross( rA, linearImpulse );
 	}
 
 	if ( stateB->flags & b2_dynamicFlag )
 	{
 		stateB->linearVelocity = b2MulAdd( stateB->linearVelocity, mB, linearImpulse );
+		stateB->angularVelocity += iB * b2Cross( rB, linearImpulse );
 	}
 }
 

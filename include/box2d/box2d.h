@@ -226,6 +226,13 @@ B2_API void b2World_RebuildStaticTree( b2WorldId worldId );
 /// This is for internal testing
 B2_API void b2World_EnableSpeculative( b2WorldId worldId, bool flag );
 
+/// Compute a deterministic hash of the simulation state: body transforms and velocities, contact and
+/// joint impulses, and the index bookkeeping that drives the solve. Reproduces exactly across worker
+/// counts and ignores struct padding and free slots, so two worlds that simulate identically always
+/// agree. Use this to detect desyncs (for example rollback resimulation) instead of comparing
+/// serialized world bytes, which carry non-canonical padding.
+B2_API uint64_t b2World_GetStateHash( b2WorldId worldId );
+
 /** @} */
 
 /**
