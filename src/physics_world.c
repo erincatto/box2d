@@ -330,7 +330,7 @@ void b2DestroyWorld( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 
-	// Detach any recording before teardown; the host owns and frees the recording buffer
+	// Detach any recording before teardown. The user owns and frees the recording buffer.
 	b2StopRecordingInternal( world );
 
 	if ( world->scheduler != NULL )

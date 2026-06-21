@@ -4,7 +4,8 @@
 #include "utils.h"
 
 #if defined( _WIN64 )
-#include <Windows.h>
+// On Windows this is capitalized, but not in Linux mingw.
+#include <windows.h>
 #elif defined( __APPLE__ )
 #include <unistd.h>
 #elif defined( __linux__ )

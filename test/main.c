@@ -53,6 +53,12 @@ int main( int argc, char** argv )
 	//_CrtSetBreakAlloc(196);
 	_CrtSetReportMode( _CRT_WARN, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_FILE );
 	_CrtSetReportFile( _CRT_WARN, _CRTDBG_FILE_STDERR );
+	// Route CRT errors and assertions to stderr instead of a modal dialog so a headless run
+	// (CI, redirected stdout) fails fast rather than blocking on Abort/Retry/Ignore.
+	_CrtSetReportMode( _CRT_ERROR, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_FILE );
+	_CrtSetReportFile( _CRT_ERROR, _CRTDBG_FILE_STDERR );
+	_CrtSetReportMode( _CRT_ASSERT, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_FILE );
+	_CrtSetReportFile( _CRT_ASSERT, _CRTDBG_FILE_STDERR );
 	//_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG));
 	//_CrtSetAllocHook(MyAllocHook);
 #endif
