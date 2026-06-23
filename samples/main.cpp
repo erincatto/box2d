@@ -614,7 +614,7 @@ int main( int argc, char** argv )
 
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-		// s_context.draw.DrawBackground();
+		// DrawBackground( s_context.draw, &s_context.camera );
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();

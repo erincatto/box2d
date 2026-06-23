@@ -518,6 +518,10 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 			if ( b2AABB_Contains( shape->fatAABB, shape->aabb ) == false )
 			{
 				float margin = shape->aabbMargin;
+
+				// Note: far from the origin the margin can be snapped to the nearest ULP.
+				// This relevant for DP mode. So we lose the broad-phase hysteresis.
+				// todo consider using b2Expand to ensure at least one ULP of margin.
 				b2AABB fatAABB;
 				fatAABB.lowerBound.x = shape->aabb.lowerBound.x - margin;
 				fatAABB.lowerBound.y = shape->aabb.lowerBound.y - margin;

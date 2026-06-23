@@ -13,6 +13,7 @@ set(BOX2D_SOURCE_FILES
 	body.h
 	broad_phase.c
 	broad_phase.h
+	character_joint.c
 	constraint_graph.c
 	constraint_graph.h
 	contact.c

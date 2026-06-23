@@ -510,8 +510,8 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform 
 
 	b2RevoluteJoint* joint = &base->revoluteJoint;
 
-	b2WorldTransform frameA = b2OffsetWorldTransform( transformA, base->localFrameA );
-	b2WorldTransform frameB = b2OffsetWorldTransform( transformB, base->localFrameB );
+	b2WorldTransform frameA = b2MulWorldTransforms( transformA, base->localFrameA );
+	b2WorldTransform frameB = b2MulWorldTransforms( transformB, base->localFrameB );
 
 	const float radius = 0.25f * drawScale;
 	draw->DrawCircleFcn( frameB.p, radius, b2_colorGray, draw->context );

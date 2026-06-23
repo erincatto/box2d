@@ -557,8 +557,8 @@ void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform tra
 
 	b2WheelJoint* joint = &base->wheelJoint;
 
-	b2WorldTransform frameA = b2OffsetWorldTransform( transformA, base->localFrameA );
-	b2WorldTransform frameB = b2OffsetWorldTransform( transformB, base->localFrameB );
+	b2WorldTransform frameA = b2MulWorldTransforms( transformA, base->localFrameA );
+	b2WorldTransform frameB = b2MulWorldTransforms( transformB, base->localFrameB );
 	b2Vec2 axisA = b2RotateVector( frameA.q, (b2Vec2){ 1.0f, 0.0f } );
 
 	b2HexColor c1 = b2_colorGray;

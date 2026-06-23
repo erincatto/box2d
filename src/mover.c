@@ -48,7 +48,7 @@ b2PlaneSolverResult b2SolvePlanes( b2Vec2 targetDelta, b2CollisionPlane* planes,
 	}
 
 	return (b2PlaneSolverResult){
-		.translation = delta,
+		.delta = delta,
 		.iterationCount = iteration,
 	};
 }

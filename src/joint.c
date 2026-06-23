@@ -45,6 +45,14 @@ b2DistanceJointDef b2DefaultDistanceJointDef( void )
 	return def;
 }
 
+b2FilterJointDef b2DefaultFilterJointDef( void )
+{
+	b2FilterJointDef def = { 0 };
+	def.base = b2DefaultJointDef();
+	def.internalValue = B2_SECRET_COOKIE;
+	return def;
+}
+
 b2MotorJointDef b2DefaultMotorJointDef( void )
 {
 	b2MotorJointDef def = { 0 };
@@ -53,9 +61,9 @@ b2MotorJointDef b2DefaultMotorJointDef( void )
 	return def;
 }
 
-b2FilterJointDef b2DefaultFilterJointDef( void )
+b2MoverJointDef b2DefaultMoverJointDef( void )
 {
-	b2FilterJointDef def = { 0 };
+	b2MoverJointDef def = { 0 };
 	def.base = b2DefaultJointDef();
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;
@@ -452,6 +460,33 @@ b2JointId b2CreateMotorJoint( b2WorldId worldId, const b2MotorJointDef* def )
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 
 	B2_REC_CREATE( world, CreateMotorJoint, jointId, worldId, *def );
+
+	return jointId;
+}
+
+b2JointId b2CreateMoverJoint( b2WorldId worldId, const b2MotorJointDef* def )
+{
+	B2_CHECK_DEF( def );
+	b2World* world = b2GetWorldFromId( worldId );
+
+	B2_ASSERT( world->locked == false );
+
+	if ( world->locked )
+	{
+		return (b2JointId){ 0 };
+	}
+
+	b2JointPair pair = b2CreateJoint( world, &def->base, b2_moverJoint );
+	b2JointSim* joint = pair.jointSim;
+
+	joint->moverJoint = (b2MoverJoint){ 0 };
+	joint->moverJoint.linearHertz = def->linearHertz;
+	joint->moverJoint.linearDampingRatio = def->linearDampingRatio;
+	joint->moverJoint.maxSpringForce = def->maxSpringForce;
+
+	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
+
+	// B2_REC_CREATE( world, CreateMoverJoint, jointId, worldId, *def );
 
 	return jointId;
 }

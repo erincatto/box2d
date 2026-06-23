@@ -1974,7 +1974,11 @@ static int b2RecDispatchOne( b2RecPlayer* player )
 	{                                                                                                                            \
 		b2RecArgs_##Name a;                                                                                                      \
 		memset( &a, 0, sizeof( a ) );                                                                                            \
-		__VA_ARGS__ b2RecDispatch_##Name( &a, rdr );                                                                             \
+		__VA_ARGS__                                                                                                              \
+		if ( rdr->ok )                                                                                                           \
+		{                                                                                                                        \
+			b2RecDispatch_##Name( &a, rdr );                                                                                     \
+		}                                                                                                                        \
 		break;                                                                                                                   \
 	}
 #include "recording_ops.inl"

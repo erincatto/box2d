@@ -828,6 +828,20 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 		}
 	}
 
+	// Event buffers are transient and never serialized. An in-place restore reuses the live
+	// world's arrays, so end events queued by a between-step mutator (b2Body_Disable and friends)
+	// would survive the restore and surface after the first resimmed step. Reset to match a fresh
+	// world from snapshot. The double-buffer parity is restored, but the contents must start empty.
+	b2Array_Clear( world->bodyMoveEvents );
+	b2Array_Clear( world->sensorBeginEvents );
+	b2Array_Clear( world->sensorEndEvents[0] );
+	b2Array_Clear( world->sensorEndEvents[1] );
+	b2Array_Clear( world->contactBeginEvents );
+	b2Array_Clear( world->contactEndEvents[0] );
+	b2Array_Clear( world->contactEndEvents[1] );
+	b2Array_Clear( world->contactHitEvents );
+	b2Array_Clear( world->jointEvents );
+
 	return r->ok;
 }
 
@@ -1156,4 +1170,10 @@ uint64_t b2HashWorldStateDeep( b2World* world )
 	hash = b2FnvMixInt( hash, world->solverSets.count );
 
 	return hash;
+}
+
+uint64_t b2World_GetStateHash( b2WorldId worldId )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	return b2HashWorldStateDeep( world );
 }
