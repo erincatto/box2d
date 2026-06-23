@@ -79,7 +79,7 @@ typedef struct b2CharacterJoint
 	b2Vec2 deltaCenter;
 
 	b2Mat22 linearMass;
-} b2CharacterJoint;
+} b2MoverJoint;
 
 // The pogo joint is a hybrid between a contact and a joint
 typedef struct b2PogoJoint
@@ -293,9 +293,9 @@ typedef struct b2JointSim
 
 	union
 	{
-		b2CharacterJoint characterJoint;
 		b2DistanceJoint distanceJoint;
 		b2MotorJoint motorJoint;
+		b2MoverJoint moverJoint;
 		b2RevoluteJoint revoluteJoint;
 		b2PrismaticJoint prismaticJoint;
 		b2WeldJoint weldJoint;
@@ -327,6 +327,7 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint );
 
 b2Vec2 b2GetDistanceJointForce( b2World* world, b2JointSim* base );
 b2Vec2 b2GetMotorJointForce( b2World* world, b2JointSim* base );
+b2Vec2 b2GetMoverJointForce( b2World* world, b2JointSim* base );
 b2Vec2 b2GetPrismaticJointForce( b2World* world, b2JointSim* base );
 b2Vec2 b2GetRevoluteJointForce( b2World* world, b2JointSim* base );
 b2Vec2 b2GetWeldJointForce( b2World* world, b2JointSim* base );
@@ -340,6 +341,7 @@ float b2GetWheelJointTorque( b2World* world, b2JointSim* base );
 
 void b2PrepareDistanceJoint( b2JointSim* base, b2StepContext* context );
 void b2PrepareMotorJoint( b2JointSim* base, b2StepContext* context );
+void b2PrepareMoverJoint( b2JointSim* base, b2StepContext* context );
 void b2PreparePrismaticJoint( b2JointSim* base, b2StepContext* context );
 void b2PrepareRevoluteJoint( b2JointSim* base, b2StepContext* context );
 void b2PrepareWeldJoint( b2JointSim* base, b2StepContext* context );
@@ -347,6 +349,7 @@ void b2PrepareWheelJoint( b2JointSim* base, b2StepContext* context );
 
 void b2WarmStartDistanceJoint( b2JointSim* base, b2StepContext* context );
 void b2WarmStartMotorJoint( b2JointSim* base, b2StepContext* context );
+void b2WarmStartMoverJoint( b2JointSim* base, b2StepContext* context );
 void b2WarmStartPrismaticJoint( b2JointSim* base, b2StepContext* context );
 void b2WarmStartRevoluteJoint( b2JointSim* base, b2StepContext* context );
 void b2WarmStartWeldJoint( b2JointSim* base, b2StepContext* context );
@@ -354,6 +357,7 @@ void b2WarmStartWheelJoint( b2JointSim* base, b2StepContext* context );
 
 void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBias );
 void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context );
+void b2SolveMoverJoint( b2JointSim* base, b2StepContext* context );
 void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBias );
 void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBias );
 void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias );
