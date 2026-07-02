@@ -555,8 +555,6 @@ b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJointDef* de
 {
 	B2_CHECK_DEF( def );
 	B2_ASSERT( def->lowerAngle <= def->upperAngle );
-	B2_ASSERT( def->lowerAngle >= -0.99f * B2_PI );
-	B2_ASSERT( def->upperAngle <= 0.99f * B2_PI );
 
 	b2World* world = b2GetWorldFromId( worldId );
 
@@ -577,8 +575,12 @@ b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJointDef* de
 	joint->revoluteJoint.targetAngle = b2ClampFloat( def->targetAngle, -B2_PI, B2_PI );
 	joint->revoluteJoint.hertz = def->hertz;
 	joint->revoluteJoint.dampingRatio = def->dampingRatio;
-	joint->revoluteJoint.lowerAngle = def->lowerAngle;
-	joint->revoluteJoint.upperAngle = def->upperAngle;
+
+	float lowerAngle = b2MinFloat( def->lowerAngle, def->upperAngle );
+	float upperAngle = b2MaxFloat( def->lowerAngle, def->upperAngle );
+	joint->revoluteJoint.lowerAngle = b2ClampFloat( lowerAngle, -0.99f * B2_PI, 0.99f * B2_PI );
+	joint->revoluteJoint.upperAngle = b2ClampFloat( upperAngle, -0.99f * B2_PI, 0.99f * B2_PI );
+
 	joint->revoluteJoint.maxMotorTorque = def->maxMotorTorque;
 	joint->revoluteJoint.motorSpeed = def->motorSpeed;
 	joint->revoluteJoint.enableSpring = def->enableSpring;

@@ -7,16 +7,26 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// Compile-time options. Edit box2d/config.h, or define BOX2D_USER_CONFIG to
+// point at your own copy.
+#ifdef BOX2D_USER_CONFIG
+#include BOX2D_USER_CONFIG
+#endif
+#include "config.h"
+
 /// Used to indicate an unset or invalid index value.
 #define B2_NULL_INDEX ( -1 )
 
 // clang-format off
 // 
 // Shared library macros
-#if defined( _MSC_VER ) && defined( box2d_EXPORTS )
+// Predefine BOX2D_EXPORT to reuse an existing export/import scheme, for example
+// when compiling Box2D into another shared library.
+#ifndef BOX2D_EXPORT
+#if defined( _WIN32 ) && defined( box2d_EXPORTS )
 	// build the Windows DLL
 	#define BOX2D_EXPORT __declspec( dllexport )
-#elif defined( _MSC_VER ) && defined( BOX2D_DLL )
+#elif defined( _WIN32 ) && defined( BOX2D_DLL )
 	// using the Windows DLL
 	#define BOX2D_EXPORT __declspec( dllimport )
 #elif defined( box2d_EXPORTS )
@@ -25,6 +35,7 @@
 #else
 	// static library
 	#define BOX2D_EXPORT
+#endif
 #endif
 
 // C++ macros

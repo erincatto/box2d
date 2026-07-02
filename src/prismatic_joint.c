@@ -112,13 +112,8 @@ void b2PrismaticJoint_SetLimits( b2JointId jointId, float lower, float upper )
 	B2_ASSERT( lower <= upper );
 
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
-	if ( lower != joint->prismaticJoint.lowerTranslation || upper != joint->prismaticJoint.upperTranslation )
-	{
-		joint->prismaticJoint.lowerTranslation = b2MinFloat( lower, upper );
-		joint->prismaticJoint.upperTranslation = b2MaxFloat( lower, upper );
-		joint->prismaticJoint.lowerImpulse = 0.0f;
-		joint->prismaticJoint.upperImpulse = 0.0f;
-	}
+	joint->prismaticJoint.lowerTranslation = b2MinFloat( lower, upper );
+	joint->prismaticJoint.upperTranslation = b2MaxFloat( lower, upper );
 }
 
 void b2PrismaticJoint_EnableMotor( b2JointId jointId, bool enableMotor )

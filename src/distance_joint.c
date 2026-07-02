@@ -62,9 +62,6 @@ void b2DistanceJoint_SetLengthRange( b2JointId jointId, float minLength, float m
 	maxLength = b2ClampFloat( maxLength, B2_LINEAR_SLOP, B2_HUGE );
 	joint->minLength = b2MinFloat( minLength, maxLength );
 	joint->maxLength = b2MaxFloat( minLength, maxLength );
-	joint->impulse = 0.0f;
-	joint->lowerImpulse = 0.0f;
-	joint->upperImpulse = 0.0f;
 }
 
 float b2DistanceJoint_GetMinLength( b2JointId jointId )

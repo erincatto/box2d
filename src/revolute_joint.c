@@ -143,13 +143,8 @@ void b2RevoluteJoint_SetLimits( b2JointId jointId, float lower, float upper )
 	B2_ASSERT( upper <= 0.99f * B2_PI );
 
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_revoluteJoint );
-	if ( lower != joint->revoluteJoint.lowerAngle || upper != joint->revoluteJoint.upperAngle )
-	{
-		joint->revoluteJoint.lowerAngle = b2MinFloat( lower, upper );
-		joint->revoluteJoint.upperAngle = b2MaxFloat( lower, upper );
-		joint->revoluteJoint.lowerImpulse = 0.0f;
-		joint->revoluteJoint.upperImpulse = 0.0f;
-	}
+	joint->revoluteJoint.lowerAngle = b2MinFloat( lower, upper );
+	joint->revoluteJoint.upperAngle = b2MaxFloat( lower, upper );
 }
 
 void b2RevoluteJoint_EnableMotor( b2JointId jointId, bool enableMotor )

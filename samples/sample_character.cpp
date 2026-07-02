@@ -665,6 +665,9 @@ public:
 			b2CreateChain( groundId1, &chainDef );
 		}
 
+		m_capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.3f };
+
+		// This is the mover the player controlls
 		{
 			m_velocity = { 0.0f, 0.0f };
 			// Mover position is center of the capsule.
@@ -679,13 +682,17 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.density = 1.0f;
 
-			b2Capsule capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.3f };
-
-			b2CreateCapsuleShape( m_moverId, &shapeDef, &capsule );
+			b2CreateCapsuleShape( m_moverId, &shapeDef, &m_capsule );
 
 			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
 			jointDef.linearVelocity = m_velocity;
 			jointDef.maxVelocityForce = 10.0f;
+
+			// The ground can be any body, but a static body is standard.
+			jointDef.base.bodyIdA = groundId1;
+			jointDef.base.bodyIdB = m_moverId;
+
+			m_moverJointId = b2CreateMotorJoint( m_worldId, &jointDef );
 		}
 
 		b2BodyId groundId2;
@@ -899,7 +906,8 @@ public:
 			translation = { 0.0f, -rayLength };
 		}
 
-		b2Pos origin = m_position + m_capsule.center1;
+		b2Pos position = b2Body_GetPosition( m_moverId );
+		b2Pos origin = position + m_capsule.center1;
 		b2World_CastShape( m_worldId, origin, &proxy, translation, pogoFilter, CastCallback, &castResult );
 
 		// Avoid snapping to ground if still going up
@@ -1197,6 +1205,7 @@ public:
 	b2JointId m_moverJointId;
 	b2BodyId m_elevatorId;
 	b2ShapeId m_ballId;
+	b2Capsule m_capsule;
 	ShapeUserData m_friendlyShape;
 	ShapeUserData m_elevatorShape;
 	b2CollisionPlane m_planes[m_planeCapacity] = {};

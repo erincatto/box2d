@@ -74,6 +74,7 @@ set(BOX2D_API_FILES
 	../include/box2d/base.h
 	../include/box2d/box2d.h
 	../include/box2d/collision.h
+	../include/box2d/config.h
 	../include/box2d/constants.h
 	../include/box2d/id.h
 	../include/box2d/math_functions.h
