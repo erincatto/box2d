@@ -136,6 +136,19 @@ Support development of Box2D through [Github Sponsors](https://github.com/sponso
 
 Please consider starring this repository and subscribing to my [YouTube channel](https://www.youtube.com/@erin_catto).
 
+## LLM Usage
+
+LLMs are used in the following areas:
+
+- unit tests
+- samples app
+- migrating code between Box2D and Box3D
+- build configuration
+- code reviews
+- benchmarking
+
+Elsewhere all code is developed and written by me. I take responsibility for every line of code in Box2D/3D.
+
 ## External ports, wrappers, and bindings (unsupported)
 
 - Beef bindings - https://github.com/EnokViking/Box2DBeef

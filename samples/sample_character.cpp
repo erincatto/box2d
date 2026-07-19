@@ -820,7 +820,6 @@ public:
 		m_onGround = false;
 		m_jumpReleased = true;
 		m_lockCamera = true;
-		m_planeCount = 0;
 		m_time = 0.0f;
 	}
 
@@ -966,42 +965,7 @@ public:
 			b2Body_ApplyForce( castResult.bodyId, { 0.0f, -50.0f }, castResult.point, true );
 		}
 
-		DrawTransform( m_draw, { m_position, b2Rot_identity }, 0.25f );
-
-		b2Pos target = m_position + timeStep * m_velocity + timeStep * m_pogoVelocity * b2Vec2{ 0.0f, 1.0f };
-
-		// Mover overlap filter
-		b2QueryFilter collideFilter = { MoverBit, StaticBit | DynamicBit | MoverBit };
-
-		// Movers don't sweep against other movers, allows for soft collision
-		b2QueryFilter castFilter = { MoverBit, StaticBit | DynamicBit };
-
-		m_totalIterations = 0;
-		float tolerance = 0.01f;
-
-		for ( int iteration = 0; iteration < 5; ++iteration )
-		{
-			m_planeCount = 0;
-
-			b2Capsule mover = m_capsule;
-
-			b2World_CollideMover( m_worldId, m_position, &mover, collideFilter, PlaneResultFcn, this );
-			b2PlaneSolverResult result = b2SolvePlanes( target - m_position, m_planes, m_planeCount );
-
-			m_totalIterations += result.iterationCount;
-
-			float fraction = b2World_CastMover( m_worldId, m_position, &mover, result.delta, castFilter );
-
-			b2Vec2 delta = fraction * result.delta;
-			m_position = m_position + delta;
-
-			if ( b2LengthSquared( delta ) < tolerance * tolerance )
-			{
-				break;
-			}
-		}
-
-		m_velocity = b2ClipVector( m_velocity, m_planes, m_planeCount );
+		b2MotorJoint_SetLinearVelocity( m_moverJointId, m_velocity );
 	}
 
 	bool DrawControls() override
@@ -1053,40 +1017,6 @@ public:
 		}
 
 		return true;
-	}
-
-	static bool Kick( b2ShapeId shapeId, void* context )
-	{
-		Mover* self = (Mover*)context;
-		b2BodyId bodyId = b2Shape_GetBody( shapeId );
-		b2BodyType type = b2Body_GetType( bodyId );
-
-		if ( type != b2_dynamicBody )
-		{
-			return true;
-		}
-
-		b2Pos center = b2Body_GetWorldCenter( bodyId );
-		b2Vec2 direction = b2Normalize( center - self->m_position );
-		b2Vec2 impulse = b2Vec2{ 2.0f * direction.x, 2.0f };
-		b2Body_ApplyLinearImpulseToCenter( bodyId, impulse, true );
-
-		return true;
-	}
-
-	void Keyboard( int key ) override
-	{
-		if ( key == 'K' )
-		{
-			b2Pos origin = { m_position.x, m_position.y + m_capsule.center1.y - 3.0f * m_capsule.radius };
-			float radius = 0.5f;
-			b2ShapeProxy proxy = b2MakeProxy( &b2Vec2_zero, 1, radius );
-			b2QueryFilter filter = { MoverBit, DebrisBit };
-			b2World_OverlapShape( m_worldId, origin, &proxy, filter, Kick, this );
-			DrawCircle( m_draw, origin, radius, b2_colorGoldenRod );
-		}
-
-		Sample::Keyboard( key );
 	}
 
 	void Step() override
@@ -1151,31 +1081,18 @@ public:
 			SolveMove( timeStep, throttle );
 		}
 
-		int count = m_planeCount;
-		for ( int i = 0; i < count; ++i )
-		{
-			b2Plane plane = m_planes[i].plane;
-			b2Pos p1 = m_position + ( plane.offset - m_capsule.radius ) * plane.normal;
-			b2Pos p2 = p1 + 0.1f * plane.normal;
-			DrawPoint( m_draw, p1, 5.0f, b2_colorYellow );
-			DrawLine( m_draw, p1, p2, b2_colorYellow );
-		}
-
-		b2Pos p1 = m_position + m_capsule.center1;
-		b2Pos p2 = m_position + m_capsule.center2;
+		b2Pos position = b2Body_GetPosition( m_moverId );
 
 		b2HexColor color = m_onGround ? b2_colorOrange : b2_colorAquamarine;
-		DrawCapsule( m_draw, p1, p2, m_capsule.radius, color );
-		DrawLine( m_draw, m_position, m_position + m_velocity, b2_colorPurple );
+		DrawLine( m_draw, position, position + m_velocity, b2_colorPurple );
 
-		b2Pos p = m_position;
-		DrawScreenTextLine( "position %.2f %.2f", p.x, p.y );
+		DrawScreenTextLine( "position %.2f %.2f", position.x, position.y );
 		DrawScreenTextLine( "velocity %.2f %.2f", m_velocity.x, m_velocity.y );
 		DrawScreenTextLine( "iterations %d", m_totalIterations );
 
 		if ( m_lockCamera )
 		{
-			m_camera->center.x = m_position.x;
+			m_camera->center.x = position.x;
 		}
 	}
 
@@ -1208,8 +1125,6 @@ public:
 	b2Capsule m_capsule;
 	ShapeUserData m_friendlyShape;
 	ShapeUserData m_elevatorShape;
-	b2CollisionPlane m_planes[m_planeCapacity] = {};
-	int m_planeCount;
 	int m_totalIterations;
 	float m_pogoVelocity;
 	float m_time;

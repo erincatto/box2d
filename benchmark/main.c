@@ -13,6 +13,7 @@
 #include "box2d/math_functions.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,6 +48,74 @@ static void MinProfile( b2Profile* p1, const b2Profile* p2 )
 	p1->sleepIslands = b2MinFloat( p1->sleepIslands, p2->sleepIslands );
 }
 
+// Match a name=value option in either its short or long spelling. Returns the value or NULL.
+static const char* MatchValue( const char* arg, const char* shortName, const char* longName )
+{
+	size_t n = strlen( shortName );
+	if ( strncmp( arg, shortName, n ) == 0 )
+	{
+		return arg + n;
+	}
+	n = strlen( longName );
+	if ( strncmp( arg, longName, n ) == 0 )
+	{
+		return arg + n;
+	}
+	return NULL;
+}
+
+// Distinguish a numeric benchmark index from a name. Empty string is not numeric.
+static bool IsAllDigits( const char* s )
+{
+	if ( *s == 0 )
+	{
+		return false;
+	}
+	for ( ; *s != 0; ++s )
+	{
+		if ( isdigit( (unsigned char)*s ) == 0 )
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+static bool EqualsIgnoreCase( const char* a, const char* b )
+{
+	while ( *a != 0 && *b != 0 )
+	{
+		if ( tolower( (unsigned char)*a ) != tolower( (unsigned char)*b ) )
+		{
+			return false;
+		}
+		++a;
+		++b;
+	}
+	return *a == *b;
+}
+
+static int FindBenchmark( const Benchmark* benchmarks, int count, const char* name )
+{
+	for ( int i = 0; i < count; ++i )
+	{
+		if ( EqualsIgnoreCase( benchmarks[i].name, name ) )
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+static void PrintBenchmarks( const Benchmark* benchmarks, int count )
+{
+	printf( "Registered benchmarks:\n" );
+	for ( int i = 0; i < count; ++i )
+	{
+		printf( "  %2d  %s\n", i, benchmarks[i].name );
+	}
+}
+
 // Box2D benchmark application. On Windows it is important to use affinity avoid cross CCD
 // usage or efficiency cores. Also on Windows create a power plan with Processor power management
 // Min/Max of 99%. This prevents boosting and makes the benchmarks more repeatable.
@@ -57,6 +126,12 @@ static void MinProfile( b2Profile* p1, const b2Profile* p2 )
 
 // Run all benchmarks with 4 workers only.
 // start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=4 -w=4
+
+// List the registered benchmarks.
+// .\build\bin\Release\benchmark.exe -l
+
+// Run a single benchmark by name with 4 workers.
+// start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=4 -w=4 --benchmark=many_pyramids -r=5
 
 // Run benchmark 3 with 4 workers and repeat 20 times. Record the step times.
 // start /affinity 0x5555 .\build\bin\Release\benchmark.exe -t=4 -w=4 -b=3 -r=20 -s
@@ -135,42 +210,68 @@ int main( int argc, char** argv )
 	for ( int i = 1; i < argc; ++i )
 	{
 		const char* arg = argv[i];
-		if ( strncmp( arg, "-t=", 3 ) == 0 )
+		const char* value;
+		if ( ( value = MatchValue( arg, "-t=", "--threads=" ) ) != NULL )
 		{
-			int threadCount = atoi( arg + 3 );
+			int threadCount = atoi( value );
 			maxThreadCount = b2ClampInt( threadCount, 1, maxThreadCount );
 		}
-		else if ( strncmp( arg, "-b=", 3 ) == 0 )
+		else if ( ( value = MatchValue( arg, "-b=", "--benchmark=" ) ) != NULL )
 		{
-			singleBenchmark = atoi( arg + 3 );
-			singleBenchmark = b2ClampInt( singleBenchmark, 0, benchmarkCount - 1 );
+			// Accept an index for backward compatibility, otherwise an exact name
+			if ( IsAllDigits( value ) )
+			{
+				singleBenchmark = b2ClampInt( atoi( value ), 0, benchmarkCount - 1 );
+			}
+			else
+			{
+				singleBenchmark = FindBenchmark( benchmarks, benchmarkCount, value );
+				if ( singleBenchmark == -1 )
+				{
+					printf( "No benchmark named \"%s\"\n", value );
+					PrintBenchmarks( benchmarks, benchmarkCount );
+					exit( 1 );
+				}
+			}
 		}
-		else if ( strncmp( arg, "-w=", 3 ) == 0 )
+		else if ( ( value = MatchValue( arg, "-w=", "--workers=" ) ) != NULL )
 		{
-			singleWorkerCount = atoi( arg + 3 );
+			singleWorkerCount = atoi( value );
 		}
-		else if ( strncmp( arg, "-r=", 3 ) == 0 )
+		else if ( ( value = MatchValue( arg, "-r=", "--repeats=" ) ) != NULL )
 		{
-			runCount = b2ClampInt( atoi( arg + 3 ), 1, 1000 );
+			runCount = b2ClampInt( atoi( value ), 1, 1000 );
 		}
-		else if ( strncmp( arg, "-nc", 3 ) == 0 )
+		else if ( strcmp( arg, "-nc" ) == 0 || strcmp( arg, "--no-continuous" ) == 0 )
 		{
 			enableContinuous = false;
 			printf( "Continuous disabled\n" );
 		}
-		else if ( strncmp( arg, "-s", 3 ) == 0 )
+		else if ( strcmp( arg, "-s" ) == 0 || strcmp( arg, "--record-steps" ) == 0 )
 		{
 			recordStepTimes = true;
 		}
-		else if ( strcmp( arg, "-h" ) == 0 )
+		else if ( strcmp( arg, "-l" ) == 0 || strcmp( arg, "--list" ) == 0 )
+		{
+			PrintBenchmarks( benchmarks, benchmarkCount );
+			exit( 0 );
+		}
+		else if ( strcmp( arg, "-h" ) == 0 || strcmp( arg, "--help" ) == 0 )
 		{
 			printf( "Usage\n"
-					"-t=<integer>: the maximum number of threads to use\n"
-					"-b=<integer>: run a single benchmark\n"
-					"-w=<integer>: run a single worker count\n"
-					"-r=<integer>: number of repeats (default is 4)\n"
-					"-s: record step times\n" );
+					"-t, --threads=<integer>: the maximum number of threads to use\n"
+					"-b, --benchmark=<index|name>: run a single benchmark by index or name\n"
+					"-w, --workers=<integer>: run a single worker count\n"
+					"-r, --repeats=<integer>: number of repeats (default is 4)\n"
+					"-nc, --no-continuous: disable continuous collision\n"
+					"-s, --record-steps: record step times\n"
+					"-l, --list: list the registered benchmarks\n"
+					"-h, --help: print this help\n" );
 			exit( 0 );
+		}
+		else
+		{
+			printf( "Unknown option \"%s\", use -h for help\n", arg );
 		}
 	}
 

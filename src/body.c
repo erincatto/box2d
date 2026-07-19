@@ -1418,6 +1418,21 @@ void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData )
 
 	bodySim->invMass = body->mass > 0.0f ? 1.0f / body->mass : 0.0f;
 	bodySim->invInertia = body->inertia > 0.0f ? 1.0f / body->inertia : 0.0f;
+
+	// Update extents using supplied mass center.
+	bodySim->minExtent = B2_HUGE;
+	bodySim->maxExtent = 0.0f;
+	int shapeId = body->headShapeId;
+	while ( shapeId != B2_NULL_INDEX )
+	{
+		const b2Shape* s = b2Array_Get( world->shapes, shapeId );
+		b2ShapeExtent extent = b2ComputeShapeExtent( s, massData.center );
+		bodySim->minExtent = b2MinFloat( bodySim->minExtent, extent.minExtent );
+		bodySim->maxExtent = b2MaxFloat( bodySim->maxExtent, extent.maxExtent );
+		shapeId = s->nextShapeId;
+	}
+
+	body->flags &= ~b2_dirtyMass;
 }
 
 b2MassData b2Body_GetMassData( b2BodyId bodyId )
