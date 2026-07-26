@@ -11,51 +11,51 @@
 // needed for dll export
 #include "box2d/box2d.h"
 
-void b2MoverJoint_SetLinearHertz( b2JointId jointId, float hertz )
+void b2PogoJoint_SetLinearHertz( b2JointId jointId, float hertz )
 {
 	// b2World* world = b2GetWorld( jointId.world0 );
-	// B2_REC( world, MoverJointSetLinearHertz, jointId, hertz );
+	// B2_REC( world, PogoJointSetLinearHertz, jointId, hertz );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_moverJoint );
-	joint->moverJoint.linearHertz = hertz;
+	joint->pogoJoint.linearHertz = hertz;
 }
 
-float b2MoverJoint_GetLinearHertz( b2JointId jointId )
+float b2PogoJoint_GetLinearHertz( b2JointId jointId )
 {
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_moverJoint );
-	return joint->moverJoint.linearHertz;
+	return joint->pogoJoint.linearHertz;
 }
 
-void b2MoverJoint_SetLinearDampingRatio( b2JointId jointId, float damping )
-{
-	// b2World* world = b2GetWorld( jointId.world0 );
-	// B2_REC( world, MoverJointSetLinearDampingRatio, jointId, damping );
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_moverJoint );
-	joint->moverJoint.linearDampingRatio = damping;
-}
-
-float b2MoverJoint_GetLinearDampingRatio( b2JointId jointId )
-{
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_moverJoint );
-	return joint->moverJoint.linearDampingRatio;
-}
-
-void b2MoverJoint_SetMaxSpringForce( b2JointId jointId, float maxForce )
+void b2PogoJoint_SetLinearDampingRatio( b2JointId jointId, float damping )
 {
 	// b2World* world = b2GetWorld( jointId.world0 );
-	// B2_REC( world, MoverJointSetMaxSpringForce, jointId, maxForce );
+	// B2_REC( world, PogoJointSetLinearDampingRatio, jointId, damping );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_moverJoint );
-	joint->moverJoint.maxSpringForce = b2MaxFloat( 0.0f, maxForce );
+	joint->pogoJoint.linearDampingRatio = damping;
 }
 
-float b2MoverJoint_GetMaxSpringForce( b2JointId jointId )
+float b2PogoJoint_GetLinearDampingRatio( b2JointId jointId )
 {
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_moverJoint );
-	return joint->moverJoint.maxSpringForce;
+	return joint->pogoJoint.linearDampingRatio;
 }
 
-b2Vec2 b2GetMoverJointForce( b2World* world, b2JointSim* base )
+void b2PogoJoint_SetMaxSpringForce( b2JointId jointId, float maxForce )
 {
-	b2Vec2 force = b2MulSV( world->inv_h, base->moverJoint.linearSpringImpulse );
+	// b2World* world = b2GetWorld( jointId.world0 );
+	// B2_REC( world, PogoJointSetMaxSpringForce, jointId, maxForce );
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_moverJoint );
+	joint->pogoJoint.maxSpringForce = b2MaxFloat( 0.0f, maxForce );
+}
+
+float b2PogoJoint_GetMaxSpringForce( b2JointId jointId )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_moverJoint );
+	return joint->pogoJoint.maxSpringForce;
+}
+
+b2Vec2 b2GetPogoJointForce( b2World* world, b2JointSim* base )
+{
+	b2Vec2 force = b2MulSV( world->inv_h, base->pogoJoint.linearSpringImpulse );
 	return force;
 }
 
@@ -73,7 +73,7 @@ b2Vec2 b2GetMoverJointForce( b2World* world, b2JointSim* base )
 // J = [0 0 -1 0 0 1]
 // K = invI1 + invI2
 
-void b2PrepareMoverJoint( b2JointSim* base, b2StepContext* context )
+void b2PreparePogoJoint( b2JointSim* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_moverJoint );
 
@@ -107,7 +107,7 @@ void b2PrepareMoverJoint( b2JointSim* base, b2StepContext* context )
 	base->invIA = iA;
 	base->invIB = iB;
 
-	b2MoverJoint* joint = &base->moverJoint;
+	b2PogoJoint* joint = &base->pogoJoint;
 	joint->indexA = bodyA->setIndex == b2_awakeSet ? localIndexA : B2_NULL_INDEX;
 	joint->indexB = bodyB->setIndex == b2_awakeSet ? localIndexB : B2_NULL_INDEX;
 
@@ -138,7 +138,7 @@ void b2PrepareMoverJoint( b2JointSim* base, b2StepContext* context )
 	}
 }
 
-void b2WarmStartMoverJoint( b2JointSim* base, b2StepContext* context )
+void b2WarmStartPogoJoint( b2JointSim* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_moverJoint );
 
@@ -147,7 +147,7 @@ void b2WarmStartMoverJoint( b2JointSim* base, b2StepContext* context )
 	float iA = base->invIA;
 	float iB = base->invIB;
 
-	b2MoverJoint* joint = &base->moverJoint;
+	b2PogoJoint* joint = &base->pogoJoint;
 
 	// dummy state for static bodies
 	b2BodyState dummyState = b2_identityBodyState;
@@ -171,7 +171,7 @@ void b2WarmStartMoverJoint( b2JointSim* base, b2StepContext* context )
 	}
 }
 
-void b2SolveMoverJoint( b2JointSim* base, b2StepContext* context )
+void b2SolvePogoJoint( b2JointSim* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_moverJoint );
 
@@ -183,7 +183,7 @@ void b2SolveMoverJoint( b2JointSim* base, b2StepContext* context )
 	// dummy state for static bodies
 	b2BodyState dummyState = b2_identityBodyState;
 
-	b2MoverJoint* joint = &base->moverJoint;
+	b2PogoJoint* joint = &base->pogoJoint;
 	b2BodyState* stateA = joint->indexA == B2_NULL_INDEX ? &dummyState : context->states + joint->indexA;
 	b2BodyState* stateB = joint->indexB == B2_NULL_INDEX ? &dummyState : context->states + joint->indexB;
 

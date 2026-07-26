@@ -1146,6 +1146,32 @@ B2_API float b2MotorJoint_GetMaxSpringTorque( b2JointId jointId );
 /**@}*/
 
 /**
+ * @defgroup mover_joint Mover Joint
+ * @brief Functions for the mover joint.
+ *
+ * The mover joint is designed for a dynamic character mover.
+ * @{
+ */
+
+/// Create a mover joint
+/// @see b2MoverJointDef for details
+B2_API b2JointId b2CreateMoverJoint( b2WorldId worldId, const b2MoverJointDef* def );
+
+/// Set the desired relative linear velocity in meters per second
+B2_API void b2MoverJoint_SetLinearVelocity( b2JointId jointId, b2Vec2 velocity );
+
+/// Get the desired relative linear velocity in meters per second
+B2_API b2Vec2 b2MoverJoint_GetLinearVelocity( b2JointId jointId );
+
+/// Set the motor joint maximum force, usually in newtons
+B2_API void b2MoverJoint_SetMaxVelocityForce( b2JointId jointId, b2Vec2 maxForce );
+
+/// Get the motor joint maximum force, usually in newtons
+B2_API b2Vec2 b2MoverJoint_GetMaxVelocityForce( b2JointId jointId );
+
+/**@}*/
+
+/**
  * @defgroup filter_joint Filter Joint
  * @brief Functions for the filter joint.
  *

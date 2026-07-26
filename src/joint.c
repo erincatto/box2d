@@ -464,7 +464,7 @@ b2JointId b2CreateMotorJoint( b2WorldId worldId, const b2MotorJointDef* def )
 	return jointId;
 }
 
-b2JointId b2CreateMoverJoint( b2WorldId worldId, const b2MotorJointDef* def )
+b2JointId b2CreateMoverJoint( b2WorldId worldId, const b2MoverJointDef* def )
 {
 	B2_CHECK_DEF( def );
 	b2World* world = b2GetWorldFromId( worldId );
@@ -480,9 +480,8 @@ b2JointId b2CreateMoverJoint( b2WorldId worldId, const b2MotorJointDef* def )
 	b2JointSim* joint = pair.jointSim;
 
 	joint->moverJoint = (b2MoverJoint){ 0 };
-	joint->moverJoint.linearHertz = def->linearHertz;
-	joint->moverJoint.linearDampingRatio = def->linearDampingRatio;
-	joint->moverJoint.maxSpringForce = def->maxSpringForce;
+	joint->moverJoint.linearVelocity = def->linearVelocity;
+	joint->moverJoint.maxVelocityForce = def->maxVelocityForce;
 
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 
@@ -1351,6 +1350,10 @@ void b2PrepareJoint( b2JointSim* joint, b2StepContext* context )
 			b2PrepareMotorJoint( joint, context );
 			break;
 
+		case b2_moverJoint:
+			b2PrepareMoverJoint( joint, context );
+			break;
+
 		case b2_filterJoint:
 			break;
 
@@ -1387,6 +1390,10 @@ void b2WarmStartJoint( b2JointSim* joint, b2StepContext* context )
 			b2WarmStartMotorJoint( joint, context );
 			break;
 
+		case b2_moverJoint:
+			b2WarmStartMoverJoint( joint, context );
+			break;
+
 		case b2_filterJoint:
 			break;
 
@@ -1421,6 +1428,10 @@ void b2SolveJoint( b2JointSim* joint, b2StepContext* context, bool useBias )
 
 		case b2_motorJoint:
 			b2SolveMotorJoint( joint, context );
+			break;
+
+		case b2_moverJoint:
+			b2SolveMoverJoint( joint, context );
 			break;
 
 		case b2_filterJoint:

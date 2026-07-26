@@ -667,32 +667,37 @@ public:
 
 		m_capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.3f };
 
-		// This is the mover the player controlls
+		// This is the mover the player controls
 		{
 			m_velocity = { 0.0f, 0.0f };
 			// Mover position is center of the capsule.
 			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { 2.0f, 8.0f };
 			bodyDef.isBullet = true;
 			bodyDef.motionLocks.angularZ = true;
+			bodyDef.enableSleep = false;
 			bodyDef.name = "mover";
 
 			m_moverId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.density = 1.0f;
+			shapeDef.material.friction = 0.0f;
+			shapeDef.filter.categoryBits = MoverBit;
 
 			b2CreateCapsuleShape( m_moverId, &shapeDef, &m_capsule );
 
-			b2MotorJointDef jointDef = b2DefaultMotorJointDef();
+			b2MoverJointDef jointDef = b2DefaultMoverJointDef();
 			jointDef.linearVelocity = m_velocity;
-			jointDef.maxVelocityForce = 10.0f;
+			jointDef.maxVelocityForce = { 100.0f, 0.0f };
 
 			// The ground can be any body, but a static body is standard.
 			jointDef.base.bodyIdA = groundId1;
 			jointDef.base.bodyIdB = m_moverId;
+			jointDef.base.collideConnected = true;
 
-			m_moverJointId = b2CreateMotorJoint( m_worldId, &jointDef );
+			m_moverJointId = b2CreateMoverJoint( m_worldId, &jointDef );
 		}
 
 		b2BodyId groundId2;
@@ -727,7 +732,6 @@ public:
 
 		{
 			b2Polygon box = b2MakeBox( 0.5f, 0.125f );
-
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
@@ -770,20 +774,6 @@ public:
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
-			bodyDef.position = { 32.0f, 4.5f };
-
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			m_friendlyShape.maxPush = 0.025f;
-			m_friendlyShape.clipVelocity = false;
-
-			shapeDef.filter = { MoverBit, AllBits, 0 };
-			shapeDef.userData = &m_friendlyShape;
-			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
-			b2CreateCapsuleShape( bodyId, &shapeDef, &m_capsule );
-		}
-
-		{
-			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { 7.0f, 7.0f };
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
@@ -803,24 +793,29 @@ public:
 			bodyDef.position = { m_elevatorBase.x, m_elevatorBase.y - m_elevatorAmplitude };
 			m_elevatorId = b2CreateBody( m_worldId, &bodyDef );
 
-			m_elevatorShape = {
-				.maxPush = 0.1f,
-				.clipVelocity = true,
-			};
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.filter = { DynamicBit, AllBits, 0 };
-			shapeDef.userData = &m_elevatorShape;
 
 			b2Polygon box = b2MakeBox( 2.0f, 0.1f );
 			b2CreatePolygonShape( m_elevatorId, &shapeDef, &box );
 		}
 
-		m_totalIterations = 0;
 		m_pogoVelocity = 0.0f;
 		m_onGround = false;
 		m_jumpReleased = true;
 		m_lockCamera = true;
 		m_time = 0.0f;
+	}
+
+	static float CastCallback( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context )
+	{
+		CastResult* result = (CastResult*)context;
+		result->point = point;
+		result->normal = normal;
+		result->bodyId = b2Shape_GetBody( shapeId );
+		result->fraction = fraction;
+		result->hit = true;
+		return fraction;
 	}
 
 	// https://github.com/id-Software/Quake/blob/master/QW/client/pmove.c#L390
@@ -841,7 +836,7 @@ public:
 			// friction has units of 1/time
 			float drop = control * m_friction * timeStep;
 			float newSpeed = b2MaxFloat( 0.0f, speed - drop );
-			m_velocity *= newSpeed / speed;
+			m_velocity.x *= newSpeed / speed;
 		}
 
 		b2Vec2 desiredVelocity = { m_maxSpeed * throttle, 0.0f };
@@ -870,13 +865,13 @@ public:
 				accelSpeed = addSpeed;
 			}
 
-			m_velocity += accelSpeed * desiredDirection;
+			m_velocity.x += accelSpeed * desiredDirection.x;
 		}
 
 		m_velocity.y -= m_gravity * timeStep;
 
 		float pogoRestLength = 3.0f * m_capsule.radius;
-		float rayLength = pogoRestLength + m_capsule.radius;
+		float rayLength = m_onGround ? pogoRestLength + m_capsule.radius : pogoRestLength;
 		b2Circle circle = { b2Vec2_zero, 0.5f * m_capsule.radius };
 		b2Vec2 segmentOffset = { 0.75f * m_capsule.radius, 0.0f };
 		b2Segment segment = {
@@ -909,18 +904,13 @@ public:
 		b2Pos origin = position + m_capsule.center1;
 		b2World_CastShape( m_worldId, origin, &proxy, translation, pogoFilter, CastCallback, &castResult );
 
-		// Avoid snapping to ground if still going up
-		if ( m_onGround == false )
-		{
-			m_onGround = castResult.hit && m_velocity.y <= 0.01f;
-		}
-		else
-		{
-			m_onGround = castResult.hit;
-		}
+		// After gravity was applied, disable pogo when still moving up.
+		// Avoids getting pulled back to the ground when jumping.
+		bool suppressPogo = m_velocity.y > 0.0f;
 
-		if ( castResult.hit == false )
+		if ( castResult.hit == false || suppressPogo )
 		{
+			m_onGround = false;
 			m_pogoVelocity = 0.0f;
 
 			b2Vec2 delta = translation;
@@ -941,6 +931,8 @@ public:
 		}
 		else
 		{
+			m_onGround = true;
+
 			float pogoCurrentLength = castResult.fraction * rayLength;
 
 			float offset = pogoCurrentLength - pogoRestLength;
@@ -965,7 +957,9 @@ public:
 			b2Body_ApplyForce( castResult.bodyId, { 0.0f, -50.0f }, castResult.point, true );
 		}
 
-		b2MotorJoint_SetLinearVelocity( m_moverJointId, m_velocity );
+		m_velocity.y += m_pogoVelocity;
+
+		b2MoverJoint_SetLinearVelocity( m_moverJointId, m_velocity );
 	}
 
 	bool DrawControls() override
@@ -991,30 +985,6 @@ public:
 		ImGui::Separator();
 
 		ImGui::Checkbox( "Lock Camera", &m_lockCamera );
-
-		return true;
-	}
-
-	static bool PlaneResultFcn( b2ShapeId shapeId, const b2PlaneResult* planeResult, void* context )
-	{
-		assert( planeResult->hit == true );
-
-		Mover* self = static_cast<Mover*>( context );
-		float maxPush = FLT_MAX;
-		bool clipVelocity = true;
-		ShapeUserData* userData = static_cast<ShapeUserData*>( (void*)b2Shape_GetUserData( shapeId ) );
-		if ( userData != nullptr )
-		{
-			maxPush = userData->maxPush;
-			clipVelocity = userData->clipVelocity;
-		}
-
-		if ( self->m_planeCount < m_planeCapacity )
-		{
-			assert( b2IsValidPlane( planeResult->plane ) );
-			self->m_planes[self->m_planeCount] = { planeResult->plane, maxPush, 0.0f, clipVelocity };
-			self->m_planeCount += 1;
-		}
 
 		return true;
 	}
@@ -1068,7 +1038,7 @@ public:
 			{
 				if ( m_onGround == true && m_jumpReleased )
 				{
-					m_velocity.y = m_jumpSpeed;
+					b2Body_ApplyLinearImpulseToCenter( m_moverId, { 0.0f, 5.0f }, true );
 					m_onGround = false;
 					m_jumpReleased = false;
 				}
@@ -1088,7 +1058,6 @@ public:
 
 		DrawScreenTextLine( "position %.2f %.2f", position.x, position.y );
 		DrawScreenTextLine( "velocity %.2f %.2f", m_velocity.x, m_velocity.y );
-		DrawScreenTextLine( "iterations %d", m_totalIterations );
 
 		if ( m_lockCamera )
 		{
@@ -1101,7 +1070,6 @@ public:
 		return new DynamicMover( context );
 	}
 
-	static constexpr int m_planeCapacity = 8;
 	static constexpr b2Vec2 m_elevatorBase = { 112.0f, 10.0f };
 	static constexpr float m_elevatorAmplitude = 4.0f;
 
@@ -1123,9 +1091,6 @@ public:
 	b2BodyId m_elevatorId;
 	b2ShapeId m_ballId;
 	b2Capsule m_capsule;
-	ShapeUserData m_friendlyShape;
-	ShapeUserData m_elevatorShape;
-	int m_totalIterations;
 	float m_pogoVelocity;
 	float m_time;
 	bool m_onGround;

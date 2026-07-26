@@ -626,9 +626,9 @@ typedef struct b2JointDef
 
 } b2JointDef;
 
-/// A motor joint is used to control the relative velocity and or transform between two bodies.
-/// With a velocity of zero this acts like top-down friction.
-/// @ingroup motor_joint
+/// A mover joint is used to move a dynamic character mover through velocity commands.
+/// The x and y directions are handled separately. Does not affect rotation.
+/// @ingroup mover_joint
 typedef struct b2MoverJointDef
 {
 	/// Base joint definition
@@ -637,39 +637,15 @@ typedef struct b2MoverJointDef
 	/// The desired linear velocity
 	b2Vec2 linearVelocity;
 
-	/// The maximum motor force in newtons
-	float maxVelocityForce;
-
-	/// The desired angular velocity
-	float angularVelocity;
-
-	/// The maximum motor torque in newton-meters
-	float maxVelocityTorque;
-
-	/// Linear spring hertz for position control
-	float linearHertz;
-
-	/// Linear spring damping ratio
-	float linearDampingRatio;
-
-	/// Maximum spring force in newtons
-	float maxSpringForce;
-
-	/// Angular spring hertz for position control
-	float angularHertz;
-
-	/// Angular spring damping ratio
-	float angularDampingRatio;
-
-	/// Maximum spring torque in newton-meters
-	float maxSpringTorque;
+	/// The maximum motor force in newtons.
+	b2Vec2 maxVelocityForce;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
 } b2MoverJointDef;
 
 /// Use this to initialize your joint definition
-/// @ingroup motor_joint
+/// @ingroup mover_joint
 B2_API b2MoverJointDef b2DefaultMoverJointDef( void );
 
 /// Distance joint definition

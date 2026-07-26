@@ -13,7 +13,6 @@ set(BOX2D_SOURCE_FILES
 	body.h
 	broad_phase.c
 	broad_phase.h
-	character_joint.c
 	constraint_graph.c
 	constraint_graph.h
 	contact.c
@@ -38,11 +37,13 @@ set(BOX2D_SOURCE_FILES
 	manifold.c
 	math_functions.c
 	motor_joint.c
+	mover_joint.c
 	mover.c
 	parallel_for.c
 	parallel_for.h
 	physics_world.c
 	physics_world.h
+	pogo_joint.c
 	prismatic_joint.c
 	recording.c
 	recording.h
@@ -131,7 +132,8 @@ if (BOX2D_PROFILE)
 endif()
 
 if (BOX2D_VALIDATE)
-	message(STATUS "Box2D validation ON")	
+	# Only effective when NDEBUG is undefined, see base.h
+	message(STATUS "Box2D validation ON (debug builds)")
 	target_compile_definitions(box2d PRIVATE BOX2D_VALIDATE)
 endif()
 
