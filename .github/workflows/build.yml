@@ -51,6 +51,17 @@ jobs:
             os: windows-11-arm
             args: -A arm64 -DBOX2D_DISABLE_SIMD=TRUE -DBOX2D_SANITIZE=ON
             test: ./bin/Debug/test
+          # Optimized runs. The determinism golden hash is otherwise only checked at -O0,
+          # and -O2 is where a value changing float transform would first show up.
+          - name: windows-relwithdebinfo
+            os: windows-latest
+            msvc: true
+            config: RelWithDebInfo
+            test: ./bin/RelWithDebInfo/test
+          - name: macos-relwithdebinfo
+            os: macos-latest
+            config: RelWithDebInfo
+            test: ./bin/test
           - name: ubuntu-gcc-double
             os: ubuntu-latest
             args: -DBOX2D_DOUBLE_PRECISION=ON
@@ -70,10 +81,10 @@ jobs:
         arch: x64
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON ${{ matrix.args }}
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.config || env.BUILD_TYPE }} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON ${{ matrix.args }}
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/build --config ${{ matrix.config || env.BUILD_TYPE }}
 
     - name: Test
       working-directory: ${{github.workspace}}/build
@@ -83,9 +94,9 @@ jobs:
       run: ${{ matrix.test }}
 
   # mingw needs some extra setup so keeping it separate from the matrix.
-  # Also the one optimized test run. Debug -O0 copies whole structs and can hide
-  # padding bugs. RelWithDebInfo tests -O2 codegen while B2_ENABLE_ASSERT keeps
-  # asserts alive, heavy validation stays Debug only.
+  # Debug -O0 copies whole structs and can hide padding bugs. RelWithDebInfo tests
+  # -O2 codegen while B2_ENABLE_ASSERT keeps asserts alive, heavy validation stays
+  # Debug only.
   build-windows-mingw:
     name: windows-mingw
     runs-on: windows-latest

@@ -579,6 +579,7 @@ typedef enum b2JointType
 	b2_filterJoint,
 	b2_motorJoint,
 	b2_moverJoint,
+	b2_pogoJoint,
 	b2_prismaticJoint,
 	b2_revoluteJoint,
 	b2_weldJoint,
@@ -625,28 +626,6 @@ typedef struct b2JointDef
 	bool collideConnected;
 
 } b2JointDef;
-
-/// A mover joint is used to move a dynamic character mover through velocity commands.
-/// The x and y directions are handled separately. Does not affect rotation.
-/// @ingroup mover_joint
-typedef struct b2MoverJointDef
-{
-	/// Base joint definition
-	b2JointDef base;
-
-	/// The desired linear velocity
-	b2Vec2 linearVelocity;
-
-	/// The maximum motor force in newtons.
-	b2Vec2 maxVelocityForce;
-
-	/// Used internally to detect a valid definition. DO NOT SET.
-	int internalValue;
-} b2MoverJointDef;
-
-/// Use this to initialize your joint definition
-/// @ingroup mover_joint
-B2_API b2MoverJointDef b2DefaultMoverJointDef( void );
 
 /// Distance joint definition
 /// Connects a point on body A with a point on body B by a segment.
@@ -702,6 +681,22 @@ typedef struct b2DistanceJointDef
 /// @ingroup distance_joint
 B2_API b2DistanceJointDef b2DefaultDistanceJointDef( void );
 
+/// A filter joint is used to disable collision between two specific bodies.
+///
+/// @ingroup filter_joint
+typedef struct b2FilterJointDef
+{
+	/// Base joint definition
+	b2JointDef base;
+
+	/// Used internally to detect a valid definition. DO NOT SET.
+	int internalValue;
+} b2FilterJointDef;
+
+/// Use this to initialize your joint definition
+/// @ingroup filter_joint
+B2_API b2FilterJointDef b2DefaultFilterJointDef( void );
+
 /// A motor joint is used to control the relative velocity and or transform between two bodies.
 /// With a velocity of zero this acts like top-down friction.
 /// @ingroup motor_joint
@@ -748,21 +743,54 @@ typedef struct b2MotorJointDef
 /// @ingroup motor_joint
 B2_API b2MotorJointDef b2DefaultMotorJointDef( void );
 
-/// A filter joint is used to disable collision between two specific bodies.
-///
-/// @ingroup filter_joint
-typedef struct b2FilterJointDef
+/// A mover joint is used to move a dynamic character mover through velocity commands.
+/// The x and y directions are handled separately. Does not affect rotation.
+/// @ingroup mover_joint
+typedef struct b2MoverJointDef
 {
 	/// Base joint definition
 	b2JointDef base;
 
+	/// The desired linear velocity
+	b2Vec2 linearVelocity;
+
+	/// The maximum motor force in newtons.
+	b2Vec2 maxVelocityForce;
+
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
-} b2FilterJointDef;
+} b2MoverJointDef;
 
 /// Use this to initialize your joint definition
-/// @ingroup filter_joint
-B2_API b2FilterJointDef b2DefaultFilterJointDef( void );
+/// @ingroup mover_joint
+B2_API b2MoverJointDef b2DefaultMoverJointDef( void );
+
+/// Pogo joint definition
+/// @ingroup pogo_joint
+typedef struct b2PogoJointDef
+{
+	/// Base joint definition
+	b2JointDef base;
+
+	/// The spring stiffness Hertz, cycles per second
+	float hertz;
+
+	/// The spring damping ratio, non-dimensional
+	float dampingRatio;
+
+	/// Spring length.
+	float length;
+
+	/// Width of ground cast.
+	float width;
+
+	/// Used internally to detect a valid definition. DO NOT SET.
+	int internalValue;
+} b2PogoJointDef;
+
+/// Use this to initialize your joint definition
+/// @ingroup pogo_joint
+B2_API b2PogoJointDef b2DefaultPogoJointDef( void );
 
 /// Prismatic joint definition
 /// Body B may slide along the x-axis in local frame A. Body B cannot rotate relative to body A.

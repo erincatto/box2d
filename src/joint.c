@@ -69,6 +69,14 @@ b2MoverJointDef b2DefaultMoverJointDef( void )
 	return def;
 }
 
+b2PogoJointDef b2DefaultPogoJointDef( void )
+{
+	b2PogoJointDef def = { 0 };
+	def.base = b2DefaultJointDef();
+	def.internalValue = B2_SECRET_COOKIE;
+	return def;
+}
+
 b2PrismaticJointDef b2DefaultPrismaticJointDef( void )
 {
 	b2PrismaticJointDef def = { 0 };
@@ -509,6 +517,38 @@ b2JointId b2CreateFilterJoint( b2WorldId worldId, const b2FilterJointDef* def )
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 
 	B2_REC_CREATE( world, CreateFilterJoint, jointId, worldId, *def );
+
+	return jointId;
+}
+
+b2JointId b2CreatePogoJoint( b2WorldId worldId, const b2PogoJointDef* def )
+{
+	B2_CHECK_DEF( def );
+	B2_ASSERT( b2IsValidFloat( def->length ) && def->length >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( def->hertz ) && def->hertz >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( def->dampingRatio ) && def->dampingRatio >= 0.0f );
+
+	b2World* world = b2GetWorldFromId( worldId );
+
+	B2_ASSERT( world->locked == false );
+
+	if ( world->locked )
+	{
+		return (b2JointId){ 0 };
+	}
+
+	b2JointPair pair = b2CreateJoint( world, &def->base, b2_pogoJoint );
+
+	b2JointSim* joint = pair.jointSim;
+
+	joint->pogoJoint = (b2PogoJoint){ 0 };
+	joint->pogoJoint.length = def->length;
+	joint->pogoJoint.hertz = def->hertz;
+	joint->pogoJoint.dampingRatio = def->dampingRatio;
+
+	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
+
+	//B2_REC_CREATE( world, CreatePogoJoint, jointId, worldId, *def );
 
 	return jointId;
 }

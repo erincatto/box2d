@@ -148,6 +148,10 @@ if (BOX2D_DOUBLE_PRECISION)
 	target_compile_definitions(box2d PUBLIC BOX2D_DOUBLE_PRECISION)
 endif()
 
+# Enable asserts in release with debug info. RelWithDebInfo defines NDEBUG, so the
+# optimized test runs would otherwise lose assertions.
+target_compile_definitions(box2d PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:B2_ENABLE_ASSERT>")
+
 if (MSVC)
 	message(STATUS "Box2D on MSVC")	
 	if (BUILD_SHARED_LIBS)
@@ -157,9 +161,6 @@ if (MSVC)
 
 	# Visual Studio won't load the natvis unless it is in the project
 	target_sources(box2d PRIVATE box2d.natvis)
-
-	# Enable asserts in release with debug info
-	target_compile_definitions(box2d PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:B2_ENABLE_ASSERT>")
 
 	if (CMAKE_C_COMPILER_ID STREQUAL "Clang")
 		# clang-cl: /Wall maps to -Weverything which is far too aggressive

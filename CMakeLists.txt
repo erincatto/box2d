@@ -49,12 +49,17 @@ endif()
 
 # Deterministic math
 # https://box2d.org/posts/2024/08/determinism/
-if (MINGW OR UNIX)
-	add_compile_options(-ffp-contract=off)
-elseif (MSVC AND CMAKE_C_COMPILER_ID STREQUAL "Clang")
-	# clang-cl contracts multiply add into FMA under AVX2, diverging from non FMA builds.
-	# The plain driver flag is dropped, so force it through to the frontend.
-	add_compile_options(/clang:-ffp-contract=off)
+# Contraction into FMA is the one value changing transform enabled by default, and whether
+# it fires depends on the target. Test the compiler, not the platform, so every gcc and
+# clang gets the flag including a clang that is neither MinGW nor clang-cl.
+if (CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+	if (CMAKE_C_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+		# clang-cl contracts multiply add into FMA under AVX2, diverging from non FMA builds.
+		# The plain driver flag is dropped, so force it through to the frontend.
+		add_compile_options(/clang:-ffp-contract=off)
+	else()
+		add_compile_options(-ffp-contract=off)
+	endif()
 endif()
 
 option(BOX2D_DISABLE_SIMD "Disable SIMD math (slower)" OFF)

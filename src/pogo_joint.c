@@ -11,46 +11,46 @@
 // needed for dll export
 #include "box2d/box2d.h"
 
-void b2PogoJoint_SetLinearHertz( b2JointId jointId, float hertz )
+void b2PogoJoint_SetLength( b2JointId jointId, float length )
 {
 	// b2World* world = b2GetWorld( jointId.world0 );
 	// B2_REC( world, PogoJointSetLinearHertz, jointId, hertz );
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_moverJoint );
-	joint->pogoJoint.linearHertz = hertz;
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_pogoJoint );
+	joint->pogoJoint.length = length;
 }
 
-float b2PogoJoint_GetLinearHertz( b2JointId jointId )
+float b2PogoJoint_GetLength( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_moverJoint );
-	return joint->pogoJoint.linearHertz;
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_pogoJoint );
+	return joint->pogoJoint.length;
 }
 
-void b2PogoJoint_SetLinearDampingRatio( b2JointId jointId, float damping )
+float b2PogoJoint_GetSpringHertz( b2JointId jointId )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_pogoJoint );
+	return joint->pogoJoint.hertz;
+}
+
+void b2PogoJoint_SetSpringHertz( b2JointId jointId, float hertz )
+{
+	// b2World* world = b2GetWorld( jointId.world0 );
+	// B2_REC( world, PogoJointSetLinearHertz, jointId, hertz );
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_pogoJoint );
+	joint->pogoJoint.hertz = hertz;
+}
+
+void b2PogoJoint_SetSpringDampingRatio( b2JointId jointId, float damping )
 {
 	// b2World* world = b2GetWorld( jointId.world0 );
 	// B2_REC( world, PogoJointSetLinearDampingRatio, jointId, damping );
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_moverJoint );
-	joint->pogoJoint.linearDampingRatio = damping;
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_pogoJoint );
+	joint->pogoJoint.dampingRatio = damping;
 }
 
-float b2PogoJoint_GetLinearDampingRatio( b2JointId jointId )
+float b2PogoJoint_GetSpringDampingRatio( b2JointId jointId )
 {
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_moverJoint );
-	return joint->pogoJoint.linearDampingRatio;
-}
-
-void b2PogoJoint_SetMaxSpringForce( b2JointId jointId, float maxForce )
-{
-	// b2World* world = b2GetWorld( jointId.world0 );
-	// B2_REC( world, PogoJointSetMaxSpringForce, jointId, maxForce );
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_moverJoint );
-	joint->pogoJoint.maxSpringForce = b2MaxFloat( 0.0f, maxForce );
-}
-
-float b2PogoJoint_GetMaxSpringForce( b2JointId jointId )
-{
-	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_moverJoint );
-	return joint->pogoJoint.maxSpringForce;
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_pogoJoint );
+	return joint->pogoJoint.dampingRatio;
 }
 
 b2Vec2 b2GetPogoJointForce( b2World* world, b2JointSim* base )
@@ -75,7 +75,7 @@ b2Vec2 b2GetPogoJointForce( b2World* world, b2JointSim* base )
 
 void b2PreparePogoJoint( b2JointSim* base, b2StepContext* context )
 {
-	B2_ASSERT( base->type == b2_moverJoint );
+	B2_ASSERT( base->type == b2_pogoJoint );
 
 	// chase body id to the solver set where the body lives
 	int idA = base->bodyIdA;
@@ -123,7 +123,7 @@ void b2PreparePogoJoint( b2JointSim* base, b2StepContext* context )
 	b2Vec2 rA = joint->frameA.p;
 	b2Vec2 rB = joint->frameB.p;
 
-	joint->linearSpring = b2MakeSoft( joint->linearHertz, joint->linearDampingRatio, context->h );
+	joint->linearSpring = b2MakeSoft( joint->hertz, joint->dampingRatio, context->h );
 
 	b2Mat22 kl;
 	kl.cx.x = mA + mB + rA.y * rA.y * iA + rB.y * rB.y * iB;
@@ -140,7 +140,7 @@ void b2PreparePogoJoint( b2JointSim* base, b2StepContext* context )
 
 void b2WarmStartPogoJoint( b2JointSim* base, b2StepContext* context )
 {
-	B2_ASSERT( base->type == b2_moverJoint );
+	B2_ASSERT( base->type == b2_pogoJoint );
 
 	float mA = base->invMassA;
 	float mB = base->invMassB;
@@ -173,7 +173,7 @@ void b2WarmStartPogoJoint( b2JointSim* base, b2StepContext* context )
 
 void b2SolvePogoJoint( b2JointSim* base, b2StepContext* context )
 {
-	B2_ASSERT( base->type == b2_moverJoint );
+	B2_ASSERT( base->type == b2_pogoJoint );
 
 	float mA = base->invMassA;
 	float mB = base->invMassB;
@@ -196,7 +196,7 @@ void b2SolvePogoJoint( b2JointSim* base, b2StepContext* context )
 	b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
 
 	// linear spring
-	if ( joint->maxSpringForce > 0.0f && joint->linearHertz > 0.0f )
+	if ( joint->maxSpringForce > 0.0f && joint->hertz > 0.0f )
 	{
 		b2Vec2 dcA = stateA->deltaPosition;
 		b2Vec2 dcB = stateB->deltaPosition;

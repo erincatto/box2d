@@ -64,12 +64,11 @@ typedef struct b2Joint
 // The pogo joint is a hybrid between a contact and a joint
 typedef struct b2PogoJoint
 {
-	float linearHertz;
-	float linearDampingRatio;
+	float length;
+	float hertz;
+	float dampingRatio;
 	float maxSpringForce;
-
 	b2Vec2 linearSpringImpulse;
-
 	b2Softness linearSpring;
 
 	int indexA;
@@ -324,6 +323,7 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint );
 b2Vec2 b2GetDistanceJointForce( b2World* world, b2JointSim* base );
 b2Vec2 b2GetMotorJointForce( b2World* world, b2JointSim* base );
 b2Vec2 b2GetMoverJointForce( b2World* world, b2JointSim* base );
+b2Vec2 b2GetPogoJointForce( b2World* world, b2JointSim* base );
 b2Vec2 b2GetPrismaticJointForce( b2World* world, b2JointSim* base );
 b2Vec2 b2GetRevoluteJointForce( b2World* world, b2JointSim* base );
 b2Vec2 b2GetWeldJointForce( b2World* world, b2JointSim* base );

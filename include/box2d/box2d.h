@@ -1068,6 +1068,21 @@ B2_API float b2DistanceJoint_GetMotorForce( b2JointId jointId );
 /** @} */
 
 /**
+ * @defgroup filter_joint Filter Joint
+ * @brief Functions for the filter joint.
+ *
+ * The filter joint is used to disable collision between two bodies. As a side effect of being a joint, it also
+ * keeps the two bodies in the same simulation island.
+ * @{
+ */
+
+/// Create a filter joint.
+/// @see b2FilterJointDef for details
+B2_API b2JointId b2CreateFilterJoint( b2WorldId worldId, const b2FilterJointDef* def );
+
+/**@}*/
+
+/**
  * @defgroup motor_joint Motor Joint
  * @brief Functions for the motor joint.
  *
@@ -1172,19 +1187,36 @@ B2_API b2Vec2 b2MoverJoint_GetMaxVelocityForce( b2JointId jointId );
 /**@}*/
 
 /**
- * @defgroup filter_joint Filter Joint
- * @brief Functions for the filter joint.
- *
- * The filter joint is used to disable collision between two bodies. As a side effect of being a joint, it also
- * keeps the two bodies in the same simulation island.
+ * @defgroup pogo_joint Pogo Joint
+ * @brief Functions for the pogo joint. Used for dynamic character movers.
  * @{
  */
 
-/// Create a filter joint.
-/// @see b2FilterJointDef for details
-B2_API b2JointId b2CreateFilterJoint( b2WorldId worldId, const b2FilterJointDef* def );
+/// Create a pog joint
+/// @see b2PogoJointDef for details
+B2_API b2JointId b2CreatePogoJoint( b2WorldId worldId, const b2PogoJointDef* def );
 
-/**@}*/
+/// Set the rest length of a pogo joint
+/// @param jointId The id for a pogo joint
+/// @param length The new pogo joint length
+B2_API void b2PogoJoint_SetLength( b2JointId jointId, float length );
+
+/// Get the rest length of a pogo joint
+B2_API float b2PogoJoint_GetLength( b2JointId jointId );
+
+/// Set the spring stiffness in Hertz
+B2_API void b2PogoJoint_SetSpringHertz( b2JointId jointId, float hertz );
+
+/// Get the spring Hertz
+B2_API float b2PogoJoint_GetSpringHertz( b2JointId jointId );
+
+/// Set the spring damping ratio, non-dimensional
+B2_API void b2PogoJoint_SetSpringDampingRatio( b2JointId jointId, float dampingRatio );
+
+/// Get the spring damping ratio
+B2_API float b2PogoJoint_GetSpringDampingRatio( b2JointId jointId );
+
+/** @} */
 
 /**
  * @defgroup prismatic_joint Prismatic Joint
