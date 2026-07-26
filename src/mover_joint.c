@@ -45,12 +45,6 @@ b2Vec2 b2GetMoverJointForce( b2World* world, b2JointSim* base )
 	return force;
 }
 
-float b2GetMoverJointTorque( b2World* world, b2JointSim* base )
-{
-	B2_UNUSED( world, base );
-	return 0.0f;
-}
-
 void b2PrepareMoverJoint( b2JointSim* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_moverJoint );

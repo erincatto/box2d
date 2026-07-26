@@ -1020,6 +1020,9 @@ static b2Vec2 b2GetJointConstraintForce( b2World* world, b2Joint* joint )
 		case b2_motorJoint:
 			return b2GetMotorJointForce( world, base );
 
+		case b2_moverJoint:
+			return b2GetMoverJointForce( world, base );
+
 		case b2_filterJoint:
 			return b2Vec2_zero;
 
