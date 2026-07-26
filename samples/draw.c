@@ -270,20 +270,18 @@ void RenderBackground( Background* background, Camera* camera )
 
 #define POINT_BATCH_SIZE 2048
 
-typedef struct
+typedef struct PointData
 {
 	b2Vec2 position;
 	float size;
 	RGBA8 rgba;
 } PointData;
 
-ARRAY_DECLARE( PointData );
-ARRAY_INLINE( PointData );
-ARRAY_SOURCE( PointData );
+DeclareArray( PointData );
 
 typedef struct
 {
-	PointDataArray points;
+	Array( PointData ) points;
 	GLuint vaoId;
 	GLuint vboId;
 	GLuint programId;
@@ -293,7 +291,7 @@ typedef struct
 PointRender CreatePointDrawData()
 {
 	PointRender render = { 0 };
-	render.points = PointDataArray_Create( POINT_BATCH_SIZE );
+	Array_CreateN( render.points, POINT_BATCH_SIZE );
 	render.programId = CreateProgramFromStrings( k_point_vs, k_point_fs );
 	render.projectionUniform = glGetUniformLocation( render.programId, "projectionMatrix" );
 	int vertexAttribute = 0;
@@ -341,7 +339,7 @@ void DestroyPointDrawData( PointRender* render )
 		glDeleteProgram( render->programId );
 	}
 
-	PointDataArray_Destroy( &render->points );
+	Array_Destroy( render->points );
 
 	*render = (PointRender){ 0 };
 }
@@ -349,7 +347,8 @@ void DestroyPointDrawData( PointRender* render )
 void AddPoint( PointRender* render, b2Vec2 v, float size, b2HexColor c )
 {
 	RGBA8 rgba = MakeRGBA8( c, 1.0f );
-	PointDataArray_Push( &render->points, (PointData){ v, size, rgba } );
+	PointData data = { v, size, rgba };
+	Array_Push( render->points, data );
 }
 
 void FlushPoints( PointRender* render, Camera* camera )
@@ -394,19 +393,17 @@ void FlushPoints( PointRender* render, Camera* camera )
 
 #define LINE_BATCH_SIZE ( 2 * 2048 )
 
-typedef struct
+typedef struct VertexData
 {
 	b2Vec2 position;
 	RGBA8 rgba;
 } VertexData;
 
-ARRAY_DECLARE( VertexData );
-ARRAY_INLINE( VertexData );
-ARRAY_SOURCE( VertexData );
+DeclareArray( VertexData );
 
 typedef struct
 {
-	VertexDataArray points;
+	Array( VertexData ) points;
 	GLuint vaoId;
 	GLuint vboId;
 	GLuint programId;
@@ -416,7 +413,7 @@ typedef struct
 LineRender CreateLineRender()
 {
 	LineRender render = { 0 };
-	render.points = VertexDataArray_Create( LINE_BATCH_SIZE );
+	Array_CreateN( render.points, LINE_BATCH_SIZE );
 	render.programId = CreateProgramFromStrings( k_line_vs, k_line_fs );
 	render.projectionUniform = glGetUniformLocation( render.programId, "projectionMatrix" );
 	int vertexAttribute = 0;
@@ -462,7 +459,7 @@ void DestroyLineRender( LineRender* render )
 		glDeleteProgram( render->programId );
 	}
 
-	VertexDataArray_Destroy( &render->points );
+	Array_Destroy( render->points );
 
 	*render = (LineRender){ 0 };
 }
@@ -470,8 +467,10 @@ void DestroyLineRender( LineRender* render )
 void AddLine( LineRender* render, b2Vec2 p1, b2Vec2 p2, b2HexColor c )
 {
 	RGBA8 rgba = MakeRGBA8( c, 1.0f );
-	VertexDataArray_Push( &render->points, (VertexData){ p1, rgba } );
-	VertexDataArray_Push( &render->points, (VertexData){ p2, rgba } );
+	VertexData v1 = { p1, rgba };
+	VertexData v2 = { p2, rgba };
+	Array_Push( render->points, v1 );
+	Array_Push( render->points, v2 );
 }
 
 void FlushLines( LineRender* render, Camera* camera )
@@ -523,20 +522,18 @@ void FlushLines( LineRender* render, Camera* camera )
 
 #define CIRCLE_BATCH_SIZE 2048
 
-typedef struct
+typedef struct CircleData
 {
 	b2Vec2 position;
 	float radius;
 	RGBA8 rgba;
 } CircleData;
 
-ARRAY_DECLARE( CircleData );
-ARRAY_INLINE( CircleData );
-ARRAY_SOURCE( CircleData );
+DeclareArray( CircleData );
 
 typedef struct
 {
-	CircleDataArray circles;
+	Array( CircleData ) circles;
 	GLuint vaoId;
 	GLuint vboIds[2];
 	GLuint programId;
@@ -547,7 +544,7 @@ typedef struct
 CircleRender CreateCircles()
 {
 	CircleRender render = { 0 };
-	render.circles = CircleDataArray_Create( CIRCLE_BATCH_SIZE );
+	Array_CreateN( render.circles, CIRCLE_BATCH_SIZE );
 	render.programId = CreateProgramFromStrings( k_circle_vs, k_circle_fs );
 	render.projectionUniform = glGetUniformLocation( render.programId, "projectionMatrix" );
 	render.pixelScaleUniform = glGetUniformLocation( render.programId, "pixelScale" );
@@ -609,7 +606,7 @@ void DestroyCircles( CircleRender* render )
 		glDeleteProgram( render->programId );
 	}
 
-	CircleDataArray_Destroy( &render->circles );
+	Array_Destroy( render->circles );
 
 	*render = (CircleRender){ 0 };
 }
@@ -617,7 +614,8 @@ void DestroyCircles( CircleRender* render )
 void AddCircle( CircleRender* render, b2Vec2 center, float radius, b2HexColor color )
 {
 	RGBA8 rgba = MakeRGBA8( color, 1.0f );
-	CircleDataArray_Push( &render->circles, (CircleData){ center, radius, rgba } );
+	CircleData c = { center, radius, rgba };
+	Array_Push( render->circles, c );
 }
 
 void FlushCircles( CircleRender* render, Camera* camera )
@@ -665,16 +663,14 @@ void FlushCircles( CircleRender* render, Camera* camera )
 	render->circles.count = 0;
 }
 
-typedef struct
+typedef struct SolidCircle
 {
 	b2Transform transform;
 	float radius;
 	RGBA8 rgba;
 } SolidCircle;
 
-ARRAY_DECLARE( SolidCircle );
-ARRAY_INLINE( SolidCircle );
-ARRAY_SOURCE( SolidCircle );
+DeclareArray( SolidCircle );
 
 #define SOLID_CIRCLE_BATCH_SIZE 2048
 
@@ -683,7 +679,7 @@ ARRAY_SOURCE( SolidCircle );
 // https://www.g-truc.net/post-0666.html
 typedef struct
 {
-	SolidCircleArray circles;
+	Array( SolidCircle ) circles;
 	GLuint vaoId;
 	GLuint vboIds[2];
 	GLuint programId;
@@ -694,7 +690,7 @@ typedef struct
 SolidCircles CreateSolidCircles()
 {
 	SolidCircles render = { 0 };
-	render.circles = SolidCircleArray_Create( SOLID_CIRCLE_BATCH_SIZE );
+	Array_CreateN( render.circles, SOLID_CIRCLE_BATCH_SIZE );
 	render.programId = CreateProgramFromStrings( k_solid_circle_vs, k_solid_circle_fs );
 	render.projectionUniform = glGetUniformLocation( render.programId, "projectionMatrix" );
 	render.pixelScaleUniform = glGetUniformLocation( render.programId, "pixelScale" );
@@ -757,7 +753,7 @@ void DestroySolidCircles( SolidCircles* render )
 		glDeleteProgram( render->programId );
 	}
 
-	SolidCircleArray_Destroy( &render->circles );
+	Array_Destroy( render->circles );
 
 	*render = (SolidCircles){ 0 };
 }
@@ -765,7 +761,8 @@ void DestroySolidCircles( SolidCircles* render )
 void AddSolidCircle( SolidCircles* render, b2Transform transform, float radius, b2HexColor color )
 {
 	RGBA8 rgba = MakeRGBA8( color, 1.0f );
-	SolidCircleArray_Push( &render->circles, (SolidCircle){ transform, radius, rgba } );
+	SolidCircle c = { transform, radius, rgba };
+	Array_Push( render->circles, c );
 }
 
 void FlushSolidCircles( SolidCircles* render, Camera* camera )
@@ -813,7 +810,7 @@ void FlushSolidCircles( SolidCircles* render, Camera* camera )
 	render->circles.count = 0;
 }
 
-typedef struct
+typedef struct Capsule
 {
 	b2Transform transform;
 	float radius;
@@ -821,16 +818,14 @@ typedef struct
 	RGBA8 rgba;
 } Capsule;
 
-ARRAY_DECLARE( Capsule );
-ARRAY_INLINE( Capsule );
-ARRAY_SOURCE( Capsule );
+DeclareArray( Capsule );
 
 #define CAPSULE_BATCH_SIZE 2048
 
 // Draw capsules using SDF-based shader
 typedef struct
 {
-	CapsuleArray capsules;
+	Array( Capsule ) capsules;
 	GLuint vaoId;
 	GLuint vboIds[2];
 	GLuint programId;
@@ -841,7 +836,7 @@ typedef struct
 Capsules CreateCapsules()
 {
 	Capsules render = { 0 };
-	render.capsules = CapsuleArray_Create( CAPSULE_BATCH_SIZE );
+	Array_CreateN( render.capsules, CAPSULE_BATCH_SIZE );
 	render.programId = CreateProgramFromStrings( k_solid_capsule_vs, k_solid_capsule_fs );
 	render.projectionUniform = glGetUniformLocation( render.programId, "projectionMatrix" );
 	render.pixelScaleUniform = glGetUniformLocation( render.programId, "pixelScale" );
@@ -906,7 +901,7 @@ void DestroyCapsules( Capsules* render )
 		glDeleteProgram( render->programId );
 	}
 
-	CapsuleArray_Destroy( &render->capsules );
+	Array_Destroy( render->capsules );
 
 	*render = (Capsules){ 0 };
 }
@@ -929,7 +924,8 @@ void AddCapsule( Capsules* render, b2Vec2 p1, b2Vec2 p2, float radius, b2HexColo
 
 	RGBA8 rgba = MakeRGBA8( c, 1.0f );
 
-	CapsuleArray_Push( &render->capsules, (Capsule){ transform, radius, length, rgba } );
+	Capsule capsule = { transform, radius, length, rgba };
+	Array_Push( render->capsules, capsule );
 }
 
 void FlushCapsules( Capsules* render, Camera* camera )
@@ -977,7 +973,7 @@ void FlushCapsules( Capsules* render, Camera* camera )
 	render->capsules.count = 0;
 }
 
-typedef struct
+typedef struct Polygon
 {
 	b2Transform transform;
 	b2Vec2 p1, p2, p3, p4, p5, p6, p7, p8;
@@ -988,16 +984,14 @@ typedef struct
 	RGBA8 color;
 } Polygon;
 
-ARRAY_DECLARE( Polygon );
-ARRAY_INLINE( Polygon );
-ARRAY_SOURCE( Polygon );
+DeclareArray( Polygon );
 
 #define POLYGON_BATCH_SIZE 2048
 
 // Rounded and non-rounded convex polygons using an SDF-based shader.
-typedef struct
+typedef struct Polygons
 {
-	PolygonArray polygons;
+	Array( Polygon ) polygons;
 	GLuint vaoId;
 	GLuint vboIds[2];
 	GLuint programId;
@@ -1008,7 +1002,7 @@ typedef struct
 Polygons CreatePolygons()
 {
 	Polygons render = { 0 };
-	render.polygons = PolygonArray_Create( 10 * POLYGON_BATCH_SIZE );
+	Array_CreateN( render.polygons, 10 * POLYGON_BATCH_SIZE );
 	render.programId = CreateProgramFromStrings( k_solid_polygon_vs, k_solid_polygon_fs );
 	render.projectionUniform = glGetUniformLocation( render.programId, "projectionMatrix" );
 	render.pixelScaleUniform = glGetUniformLocation( render.programId, "pixelScale" );
@@ -1090,7 +1084,7 @@ void DestroyPolygons( Polygons* render )
 		glDeleteProgram( render->programId );
 	}
 
-	PolygonArray_Destroy( &render->polygons );
+	Array_Destroy( render->polygons );
 
 	*render = (Polygons){ 0 };
 }
@@ -1111,7 +1105,7 @@ void AddPolygon( Polygons* render, b2Transform transform, const b2Vec2* points, 
 	data.radius = radius;
 	data.color = MakeRGBA8( color, 1.0f );
 
-	PolygonArray_Push( &render->polygons, data );
+	Array_Push( render->polygons, data );
 }
 
 void FlushPolygons( Polygons* render, Camera* camera )
@@ -1244,7 +1238,7 @@ void DrawSolidCircle( Draw* draw, b2WorldTransform transform, b2Vec2 center, flo
 }
 
 void DrawSolidPolygon( Draw* draw, b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, float radius,
-							b2HexColor color )
+					   b2HexColor color )
 {
 	AddPolygon( &draw->polygons, b2ToRelativeTransform( transform, draw->origin ), vertices, vertexCount, radius, color );
 }

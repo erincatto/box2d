@@ -39,6 +39,7 @@
 
 #if defined( _MSC_VER )
 #include <crtdbg.h>
+#if 0
 static int MyAllocHook( int allocType, void* userData, size_t size, int blockType, long requestNumber,
 						const unsigned char* filename, int lineNumber )
 {
@@ -50,6 +51,7 @@ static int MyAllocHook( int allocType, void* userData, size_t size, int blockTyp
 
 	return 1;
 }
+#endif
 #endif
 
 static SampleContext s_context;

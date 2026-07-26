@@ -1054,7 +1054,7 @@ public:
 		b2Pos position = b2Body_GetPosition( m_moverId );
 
 		b2HexColor color = m_onGround ? b2_colorOrange : b2_colorAquamarine;
-		DrawLine( m_draw, position, position + m_velocity, b2_colorPurple );
+		DrawLine( m_draw, position, position + m_velocity, color );
 
 		DrawScreenTextLine( "position %.2f %.2f", position.x, position.y );
 		DrawScreenTextLine( "velocity %.2f %.2f", m_velocity.x, m_velocity.y );

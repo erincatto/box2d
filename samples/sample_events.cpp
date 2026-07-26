@@ -2117,7 +2117,6 @@ public:
 		b2ContactEvents events = b2World_GetContactEvents( m_worldId );
 		for ( int i = 0; i < events.beginCount && i < 1; ++i )
 		{
-			b2ContactBeginTouchEvent event = events.beginEvents[i];
 			m_contactId = events.beginEvents[i].contactId;
 		}
 

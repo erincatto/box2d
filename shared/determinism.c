@@ -115,8 +115,7 @@ bool UpdateFallingHinges( b2WorldId worldId, FallingHingeData* data )
 
 		if ( bodyEvents.moveCount == 0 )
 		{
-			int awakeCount = b2World_GetAwakeBodyCount( worldId );
-			assert( awakeCount == 0 );
+			assert( b2World_GetAwakeBodyCount( worldId ) == 0 );
 
 			data->hash = B2_HASH_INIT;
 			for ( int i = 0; i < data->bodyCount; ++i )
