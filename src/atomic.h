@@ -121,3 +121,26 @@ static inline int64_t b2AtomicLoadI64( b2AtomicI64* a )
 #error "Unsupported platform"
 #endif
 }
+
+// Denormal flushing is a per thread mode the host can turn on, usually by linking a module
+// built with fast math. This breaks determinism.
+static inline bool b2IsDenormalFlushEnabled( void )
+{
+#if defined( _M_X64 ) || defined( __x86_64__ ) || defined( _M_IX86 ) || defined( __i386__ )
+	// FTZ is bit 15, DAZ is bit 6
+	uint32_t csr = _mm_getcsr();
+	return ( csr & 0x8040 ) != 0;
+#elif defined( _M_ARM64 ) || defined( __aarch64__ )
+	// FZ is bit 24 and flushes denormal inputs and outputs together
+	uint64_t fpcr;
+#if defined( _MSC_VER )
+	fpcr = _ReadStatusReg( ARM64_FPCR );
+#else
+	__asm__ __volatile__( "mrs %0, fpcr" : "=r"( fpcr ) );
+#endif
+	return ( fpcr & ( 1ull << 24 ) ) != 0;
+#else
+	// wasm has no flush mode
+	return false;
+#endif
+}

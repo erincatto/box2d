@@ -779,7 +779,7 @@ typedef struct b2PogoJointDef
 	float dampingRatio;
 
 	/// Spring length.
-	float length;
+	float restLength;
 
 	/// Width of ground cast.
 	float width;

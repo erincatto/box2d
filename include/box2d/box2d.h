@@ -1199,10 +1199,10 @@ B2_API b2JointId b2CreatePogoJoint( b2WorldId worldId, const b2PogoJointDef* def
 /// Set the rest length of a pogo joint
 /// @param jointId The id for a pogo joint
 /// @param length The new pogo joint length
-B2_API void b2PogoJoint_SetLength( b2JointId jointId, float length );
+B2_API void b2PogoJoint_SetRestLength( b2JointId jointId, float length );
 
 /// Get the rest length of a pogo joint
-B2_API float b2PogoJoint_GetLength( b2JointId jointId );
+B2_API float b2PogoJoint_GetRestLength( b2JointId jointId );
 
 /// Set the spring stiffness in Hertz
 B2_API void b2PogoJoint_SetSpringHertz( b2JointId jointId, float hertz );

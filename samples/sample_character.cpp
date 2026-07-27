@@ -640,6 +640,7 @@ public:
 		b2BodyId groundId1;
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.name = "svg";
 			bodyDef.position = { 0.0f, 0.0f };
 			groundId1 = b2CreateBody( m_worldId, &bodyDef );
 
@@ -666,6 +667,7 @@ public:
 		}
 
 		m_capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.3f };
+		m_pogoRestLength = 3.0f * m_capsule.radius;
 
 		// This is the mover the player controls
 		{
@@ -674,7 +676,8 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { 2.0f, 8.0f };
-			bodyDef.isBullet = true;
+			// bodyDef.isBullet = true;
+			bodyDef.gravityScale = m_gravityScale;
 			bodyDef.motionLocks.angularZ = true;
 			bodyDef.enableSleep = false;
 			bodyDef.name = "mover";
@@ -688,16 +691,16 @@ public:
 
 			b2CreateCapsuleShape( m_moverId, &shapeDef, &m_capsule );
 
-			b2MoverJointDef jointDef = b2DefaultMoverJointDef();
-			jointDef.linearVelocity = m_velocity;
-			jointDef.maxVelocityForce = { 100.0f, 0.0f };
+			b2MoverJointDef moverDef = b2DefaultMoverJointDef();
+			moverDef.linearVelocity = m_velocity;
+			moverDef.maxVelocityForce = { 100.0f, 0.0f };
 
 			// The ground can be any body, but a static body is standard.
-			jointDef.base.bodyIdA = groundId1;
-			jointDef.base.bodyIdB = m_moverId;
-			jointDef.base.collideConnected = true;
+			moverDef.base.bodyIdA = groundId1;
+			moverDef.base.bodyIdB = m_moverId;
+			moverDef.base.collideConnected = true;
 
-			m_moverJointId = b2CreateMoverJoint( m_worldId, &jointDef );
+			m_moverJointId = b2CreateMoverJoint( m_worldId, &moverDef );
 		}
 
 		b2BodyId groundId2;
@@ -772,10 +775,11 @@ public:
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 
+		for ( int i = 0; i < 5; ++i )
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
-			bodyDef.position = { 7.0f, 7.0f };
+			bodyDef.position = { 7.0f, 7.0f + 0.5f * i };
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -800,9 +804,10 @@ public:
 			b2CreatePolygonShape( m_elevatorId, &shapeDef, &box );
 		}
 
-		m_pogoVelocity = 0.0f;
+		m_pogoJointId = b2_nullJointId;
 		m_onGround = false;
 		m_jumpReleased = true;
+		m_jumped = false;
 		m_lockCamera = true;
 		m_time = 0.0f;
 	}
@@ -821,12 +826,14 @@ public:
 	// https://github.com/id-Software/Quake/blob/master/QW/client/pmove.c#L390
 	void SolveMove( float timeStep, float throttle )
 	{
+		b2Vec2 moverVelocity = b2Body_GetLinearVelocity( m_moverId );
+		m_velocity.y = moverVelocity.y;
+
 		// Friction
 		float speed = b2Length( m_velocity );
 		if ( speed < m_minSpeed )
 		{
 			m_velocity.x = 0.0f;
-			m_velocity.y = 0.0f;
 		}
 		else if ( m_onGround )
 		{
@@ -848,11 +855,6 @@ public:
 			desiredSpeed = m_maxSpeed;
 		}
 
-		if ( m_onGround )
-		{
-			m_velocity.y = 0.0f;
-		}
-
 		// Accelerate
 		float currentSpeed = b2Dot( m_velocity, desiredDirection );
 		float addSpeed = desiredSpeed - currentSpeed;
@@ -868,10 +870,7 @@ public:
 			m_velocity.x += accelSpeed * desiredDirection.x;
 		}
 
-		m_velocity.y -= m_gravity * timeStep;
-
-		float pogoRestLength = 3.0f * m_capsule.radius;
-		float rayLength = m_onGround ? pogoRestLength + m_capsule.radius : pogoRestLength;
+		float rayLength = m_onGround ? m_pogoRestLength + m_capsule.radius : m_pogoRestLength;
 		b2Circle circle = { b2Vec2_zero, 0.5f * m_capsule.radius };
 		b2Vec2 segmentOffset = { 0.75f * m_capsule.radius, 0.0f };
 		b2Segment segment = {
@@ -881,7 +880,7 @@ public:
 
 		b2ShapeProxy proxy = {};
 		b2Vec2 translation;
-		b2QueryFilter pogoFilter = { MoverBit, StaticBit | DynamicBit };
+		b2QueryFilter pogoFilter = { MoverBit, StaticBit | DynamicBit | DebrisBit };
 		CastResult castResult = {};
 
 		if ( m_pogoShape == PogoPoint )
@@ -904,14 +903,15 @@ public:
 		b2Pos origin = position + m_capsule.center1;
 		b2World_CastShape( m_worldId, origin, &proxy, translation, pogoFilter, CastCallback, &castResult );
 
-		// After gravity was applied, disable pogo when still moving up.
-		// Avoids getting pulled back to the ground when jumping.
-		bool suppressPogo = m_velocity.y > 0.0f;
+		if ( b2Joint_IsValid( m_pogoJointId ) )
+		{
+			b2DestroyJoint( m_pogoJointId, false );
+			m_pogoJointId = b2_nullJointId;
+		}
 
-		if ( castResult.hit == false || suppressPogo )
+		if ( castResult.hit == false || m_jumped )
 		{
 			m_onGround = false;
-			m_pogoVelocity = 0.0f;
 
 			b2Vec2 delta = translation;
 			DrawLine( m_draw, origin, origin + delta, b2_colorGray );
@@ -933,10 +933,18 @@ public:
 		{
 			m_onGround = true;
 
-			float pogoCurrentLength = castResult.fraction * rayLength;
+			b2Pos pogoEnd = b2OffsetPos( origin, castResult.fraction * translation );
 
-			float offset = pogoCurrentLength - pogoRestLength;
-			m_pogoVelocity = b2SpringDamper( m_pogoHertz, m_pogoDampingRatio, offset, m_pogoVelocity, timeStep );
+			b2PogoJointDef pogoDef = b2DefaultPogoJointDef();
+			pogoDef.base.localFrameA.p = b2Body_GetLocalPoint( castResult.bodyId, pogoEnd );
+			pogoDef.base.localFrameB.p = m_capsule.center1;
+			pogoDef.base.bodyIdA = castResult.bodyId;
+			pogoDef.base.bodyIdB = m_moverId;
+			pogoDef.base.collideConnected = true;
+			pogoDef.restLength = m_pogoRestLength;
+			pogoDef.hertz = m_pogoHertz;
+			pogoDef.dampingRatio = m_pogoDampingRatio;
+			m_pogoJointId = b2CreatePogoJoint( m_worldId, &pogoDef );
 
 			b2Vec2 delta = castResult.fraction * translation;
 			DrawLine( m_draw, origin, origin + delta, b2_colorGray );
@@ -953,13 +961,14 @@ public:
 			{
 				DrawLine( m_draw, origin + segment.point1 + delta, origin + segment.point2 + delta, b2_colorPlum );
 			}
-
-			b2Body_ApplyForce( castResult.bodyId, { 0.0f, -50.0f }, castResult.point, true );
 		}
 
-		m_velocity.y += m_pogoVelocity;
-
 		b2MoverJoint_SetLinearVelocity( m_moverJointId, m_velocity );
+
+		if (m_velocity.y < 0.0f)
+		{
+			m_jumped = false;
+		}
 	}
 
 	bool DrawControls() override
@@ -970,7 +979,10 @@ public:
 		ImGui::SliderFloat( "Stop Speed", &m_stopSpeed, 0.0f, 10.0f, "%.1f" );
 		ImGui::SliderFloat( "Accelerate", &m_accelerate, 0.0f, 100.0f, "%.0f" );
 		ImGui::SliderFloat( "Friction", &m_friction, 0.0f, 10.0f, "%.1f" );
-		ImGui::SliderFloat( "Gravity", &m_gravity, 0.0f, 100.0f, "%.1f" );
+		if ( ImGui::SliderFloat( "Gravity Scale", &m_gravityScale, 0.0f, 4.0f, "%.1f" ) )
+		{
+			b2Body_SetGravityScale( m_moverId, m_gravityScale );
+		}
 		ImGui::SliderFloat( "Air Steer", &m_airSteer, 0.0f, 1.0f, "%.2f" );
 		ImGui::SliderFloat( "Pogo Hertz", &m_pogoHertz, 0.0f, 30.0f, "%.0f" );
 		ImGui::SliderFloat( "Pogo Damping", &m_pogoDampingRatio, 0.0f, 4.0f, "%.1f" );
@@ -1038,9 +1050,11 @@ public:
 			{
 				if ( m_onGround == true && m_jumpReleased )
 				{
-					b2Body_ApplyLinearImpulseToCenter( m_moverId, { 0.0f, 5.0f }, true );
+					float mass = b2Body_GetMass( m_moverId );
+					b2Body_ApplyLinearImpulseToCenter( m_moverId, { 0.0f, mass * m_jumpSpeed }, true );
 					m_onGround = false;
 					m_jumpReleased = false;
+					m_jumped = true;
 				}
 			}
 			else
@@ -1073,14 +1087,16 @@ public:
 	static constexpr b2Vec2 m_elevatorBase = { 112.0f, 10.0f };
 	static constexpr float m_elevatorAmplitude = 4.0f;
 
-	float m_jumpSpeed = 10.0f;
+	float m_radius = 0.3f;
+	float m_jumpSpeed = 5.0f;
 	float m_maxSpeed = 6.0f;
 	float m_minSpeed = 0.1f;
 	float m_stopSpeed = 3.0f;
 	float m_accelerate = 20.0f;
 	float m_airSteer = 0.2f;
 	float m_friction = 8.0f;
-	float m_gravity = 30.0f;
+	float m_gravityScale = 1.5f;
+	float m_pogoRestLength = 3.0f * m_radius;
 	float m_pogoHertz = 5.0f;
 	float m_pogoDampingRatio = 0.8f;
 
@@ -1088,13 +1104,14 @@ public:
 	b2Vec2 m_velocity;
 	b2BodyId m_moverId;
 	b2JointId m_moverJointId;
+	b2JointId m_pogoJointId;
 	b2BodyId m_elevatorId;
 	b2ShapeId m_ballId;
 	b2Capsule m_capsule;
-	float m_pogoVelocity;
 	float m_time;
 	bool m_onGround;
 	bool m_jumpReleased;
+	bool m_jumped;
 	bool m_lockCamera;
 };
 

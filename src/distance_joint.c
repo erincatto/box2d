@@ -219,10 +219,10 @@ b2Vec2 b2GetDistanceJointForce( b2World* world, b2JointSim* base )
 {
 	b2DistanceJoint* joint = &base->distanceJoint;
 
-	// Relative to body A so the difference stays in float precision far from the origin
-	b2WorldTransform wxfA = b2GetBodyTransform( world, base->bodyIdA );
-	b2Transform transformA = b2ToRelativeTransform( wxfA, wxfA.p );
-	b2Transform transformB = b2ToRelativeTransform( b2GetBodyTransform( world, base->bodyIdB ), wxfA.p );
+	b2WorldTransform worldTransformA = b2GetBodyTransform( world, base->bodyIdA );
+	b2Transform transformA = b2ToRelativeTransform( worldTransformA, worldTransformA.p );
+	b2WorldTransform worldTransformB = b2GetBodyTransform( world, base->bodyIdB );
+	b2Transform transformB = b2ToRelativeTransform( worldTransformB, worldTransformA.p );
 
 	b2Vec2 pA = b2TransformPoint( transformA, base->localFrameA.p );
 	b2Vec2 pB = b2TransformPoint( transformB, base->localFrameB.p );
@@ -393,13 +393,13 @@ void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBia
 		{
 			// Cdot = dot(u, v + cross(w, r))
 			b2Vec2 vr = b2Add( b2Sub( vB, vA ), b2Sub( b2CrossSV( wB, rB ), b2CrossSV( wA, rA ) ) );
-			float Cdot = b2Dot( axis, vr );
-			float C = length - joint->length;
-			float bias = joint->distanceSoftness.biasRate * C;
+			float cdot = b2Dot( axis, vr );
+			float c = length - joint->length;
+			float bias = joint->distanceSoftness.biasRate * c;
 
 			float m = joint->distanceSoftness.massScale * joint->axialMass;
 			float oldImpulse = joint->impulse;
-			float impulse = -m * ( Cdot + bias ) - joint->distanceSoftness.impulseScale * oldImpulse;
+			float impulse = -m * ( cdot + bias ) - joint->distanceSoftness.impulseScale * oldImpulse;
 
 			float h = context->h;
 			joint->impulse = b2ClampFloat( joint->impulse + impulse, joint->lowerSpringForce * h, joint->upperSpringForce * h );

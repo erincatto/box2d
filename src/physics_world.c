@@ -9,6 +9,7 @@
 
 #include "aabb.h"
 #include "arena_allocator.h"
+#include "atomic.h"
 #include "bitset.h"
 #include "body.h"
 #include "broad_phase.h"
@@ -32,6 +33,12 @@
 #include <float.h>
 #include <stdio.h>
 #include <string.h>
+
+#if defined( _M_X64 ) || defined( __x86_64__ ) || defined( _M_IX86 ) || defined( __i386__ )
+#include <xmmintrin.h>
+#elif ( defined( _M_ARM64 ) || defined( __aarch64__ ) ) && defined( _MSC_VER )
+#include <intrin.h>
+#endif
 
 _Static_assert( B2_MAX_WORLDS > 0, "must be 1 or more" );
 _Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B2_MAX_WORLDS limit exceeded" );
@@ -153,6 +160,11 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 {
 	_Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B2_MAX_WORLDS limit exceeded" );
 	B2_CHECK_DEF( def );
+
+	if ( b2IsDenormalFlushEnabled() )
+	{
+		b2Log( "Denormal flushing is enabled, determinism not supported" );
+	}
 
 	int worldId = B2_NULL_INDEX;
 	for ( int i = 0; i < B2_MAX_WORLDS; ++i )
@@ -322,8 +334,13 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	// Recording is started by the host with b2World_StartRecording, never from the world def
 	world->recording = NULL;
 
+	world->pogoJointIndex = B2_NULL_INDEX;
+
 	// add one to worldId so that 0 represents a null b2WorldId
-	return (b2WorldId){ (uint16_t)( worldId + 1 ), world->generation };
+	return (b2WorldId){
+		.index1 = (uint16_t)( worldId + 1 ),
+		.generation = world->generation,
+	};
 }
 
 void b2DestroyWorld( b2WorldId worldId )
@@ -2718,9 +2735,7 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, b2Pos origin, const b2ShapePro
 	worldContext.input.maxFraction = 1.0f;
 	worldContext.userContext = context;
 
-	// Bound the proxy in origin relative space then lift to a conservative world float box. The
-	// tree node boxes use the same directed rounding, so the swept box never clips a shape far
-	// from the origin. Per shape casts re-difference at full precision against the carried origin.
+	// Create a conservative world space box from the proxy and origin.
 	b2AABB localBox = b2MakeAABB( proxy->points, proxy->count, proxy->radius );
 	b2AABB box = b2OffsetAABB( localBox, origin );
 	b2BoxCastInput treeInput = { box, translation, 1.0f };
@@ -2748,6 +2763,40 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, b2Pos origin, const b2ShapePro
 	}
 
 	return treeStats;
+}
+
+void b2CastShapeInternal( b2World* world, b2Pos origin, const b2ShapeProxy* proxy, b2Vec2 translation,
+							   b2QueryFilter filter, b2CastResultFcn* fcn, void* context )
+{
+	B2_ASSERT( b2IsValidPosition( origin ) );
+	B2_ASSERT( b2IsValidVec2( translation ) );
+
+	WorldShapeCastContext worldContext = { 0 };
+	worldContext.world = world;
+	worldContext.fcn = fcn;
+	worldContext.filter = filter;
+	worldContext.fraction = 1.0f;
+	worldContext.origin = origin;
+	worldContext.input.proxy = *proxy;
+	worldContext.input.translation = translation;
+	worldContext.input.maxFraction = 1.0f;
+	worldContext.userContext = context;
+
+	b2AABB localBox = b2MakeAABB( proxy->points, proxy->count, proxy->radius );
+	b2AABB box = b2OffsetAABB( localBox, origin );
+	b2BoxCastInput treeInput = { box, translation, 1.0f };
+
+	for ( int i = 0; i < b2_bodyTypeCount; ++i )
+	{
+		b2DynamicTree_BoxCast( world->broadPhase.trees + i, &treeInput, filter.maskBits, ShapeCastCallback, &worldContext );
+
+		if ( worldContext.fraction == 0.0f )
+		{
+			break;
+		}
+
+		treeInput.maxFraction = worldContext.fraction;
+	}
 }
 
 typedef struct WorldMoverCastContext
