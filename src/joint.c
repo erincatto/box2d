@@ -527,6 +527,8 @@ b2JointId b2CreatePogoJoint( b2WorldId worldId, const b2PogoJointDef* def )
 	B2_ASSERT( b2IsValidFloat( def->restLength ) && def->restLength >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->hertz ) && def->hertz >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->dampingRatio ) && def->dampingRatio >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( def->maxTensionForce ) && def->maxTensionForce >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( def->maxCompressionForce ) && def->maxCompressionForce >= 0.0f );
 
 	b2World* world = b2GetWorldFromId( worldId );
 
@@ -545,6 +547,9 @@ b2JointId b2CreatePogoJoint( b2WorldId worldId, const b2PogoJointDef* def )
 	joint->pogoJoint.restLength = def->restLength;
 	joint->pogoJoint.hertz = def->hertz;
 	joint->pogoJoint.dampingRatio = def->dampingRatio;
+	joint->pogoJoint.maxTensionForce = def->maxTensionForce;
+	joint->pogoJoint.maxCompressionForce = def->maxCompressionForce;
+	joint->pogoJoint.velocity = def->velocity;
 
 	// Register special joint with world
 	B2_ASSERT( world->pogoJointIndex == B2_NULL_INDEX );
@@ -1506,7 +1511,7 @@ void b2SolveJoint( b2JointSim* joint, b2StepContext* context, bool useBias )
 			break;
 
 		case b2_pogoJoint:
-			b2SolvePogoJoint( joint, context );
+			b2SolvePogoJoint( joint, context, useBias );
 			break;
 
 		case b2_prismaticJoint:

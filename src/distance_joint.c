@@ -434,26 +434,26 @@ void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBia
 			// lower limit
 			{
 				b2Vec2 vr = b2Add( b2Sub( vB, vA ), b2Sub( b2CrossSV( wB, rB ), b2CrossSV( wA, rA ) ) );
-				float Cdot = b2Dot( axis, vr );
+				float cdot = b2Dot( axis, vr );
 
-				float C = length - joint->minLength;
+				float c = length - joint->minLength;
 
 				float bias = 0.0f;
-				float massCoeff = 1.0f;
-				float impulseCoeff = 0.0f;
-				if ( C > 0.0f )
+				float massScale = 1.0f;
+				float impulseScale = 0.0f;
+				if ( c > 0.0f )
 				{
 					// speculative
-					bias = C * context->inv_h;
+					bias = c * context->inv_h;
 				}
 				else if ( useBias )
 				{
-					bias = base->constraintSoftness.biasRate * C;
-					massCoeff = base->constraintSoftness.massScale;
-					impulseCoeff = base->constraintSoftness.impulseScale;
+					bias = base->constraintSoftness.biasRate * c;
+					massScale = base->constraintSoftness.massScale;
+					impulseScale = base->constraintSoftness.impulseScale;
 				}
 
-				float impulse = -massCoeff * joint->axialMass * ( Cdot + bias ) - impulseCoeff * joint->lowerImpulse;
+				float impulse = -massScale * joint->axialMass * ( cdot + bias ) - impulseScale * joint->lowerImpulse;
 				float newImpulse = b2MaxFloat( 0.0f, joint->lowerImpulse + impulse );
 				impulse = newImpulse - joint->lowerImpulse;
 				joint->lowerImpulse = newImpulse;

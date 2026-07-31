@@ -787,7 +787,7 @@ public:
 			shapeDef.material.restitution = 0.7f;
 			shapeDef.material.rollingResistance = 0.2f;
 
-			b2Circle circle = { b2Vec2_zero, 0.3f };
+			b2Circle circle = { b2Vec2_zero, 0.5f };
 			m_ballId = b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		}
 
@@ -905,13 +905,55 @@ public:
 
 		if ( b2Joint_IsValid( m_pogoJointId ) )
 		{
+			m_pogoVelocity = b2PogoJoint_GetVelocity( m_pogoJointId );
+
 			b2DestroyJoint( m_pogoJointId, false );
 			m_pogoJointId = b2_nullJointId;
+		}
+
+		if ( castResult.hit == true )
+		{
+			float moverMass = b2Body_GetMass( m_moverId );
+			float moverWeight = m_gravityScale * 10.0f * moverMass;
+
+			//b2Pos pogoEnd = b2OffsetPos( origin, castResult.fraction * translation );
+			b2Pos pogoEnd = castResult.point;
+
+			b2PogoJointDef pogoDef = b2DefaultPogoJointDef();
+			pogoDef.base.localFrameA.p = b2Body_GetLocalPoint( castResult.bodyId, pogoEnd );
+			pogoDef.base.localFrameB.p = m_capsule.center1;
+			pogoDef.base.bodyIdA = castResult.bodyId;
+			pogoDef.base.bodyIdB = m_moverId;
+			pogoDef.base.collideConnected = true;
+			pogoDef.restLength = m_pogoRestLength;
+			pogoDef.hertz = m_pogoHertz;
+			pogoDef.dampingRatio = m_pogoDampingRatio;
+			pogoDef.maxCompressionForce = 4.0f * moverWeight;
+			pogoDef.velocity = m_pogoVelocity;
+
+			// problem: player can achieve large upward jumps
+			// 1. pogo pops up on a step -> large velocity response
+			// 2. player presses jump -> pogo doesn't pull back down
+
+			if ( m_jumped )
+			{
+				// Don't allow the pogo to pull down
+				pogoDef.maxTensionForce = 0.0f;
+			}
+			else
+			{
+				// The pogo can pull down at a multiple of the gravity force.
+				pogoDef.maxTensionForce = 2.0f * moverWeight;
+			}
+
+			// Create the pogo constraint
+			m_pogoJointId = b2CreatePogoJoint( m_worldId, &pogoDef );
 		}
 
 		if ( castResult.hit == false || m_jumped )
 		{
 			m_onGround = false;
+			m_pogoVelocity = 0.0f;
 
 			b2Vec2 delta = translation;
 			DrawLine( m_draw, origin, origin + delta, b2_colorGray );
@@ -933,19 +975,6 @@ public:
 		{
 			m_onGround = true;
 
-			b2Pos pogoEnd = b2OffsetPos( origin, castResult.fraction * translation );
-
-			b2PogoJointDef pogoDef = b2DefaultPogoJointDef();
-			pogoDef.base.localFrameA.p = b2Body_GetLocalPoint( castResult.bodyId, pogoEnd );
-			pogoDef.base.localFrameB.p = m_capsule.center1;
-			pogoDef.base.bodyIdA = castResult.bodyId;
-			pogoDef.base.bodyIdB = m_moverId;
-			pogoDef.base.collideConnected = true;
-			pogoDef.restLength = m_pogoRestLength;
-			pogoDef.hertz = m_pogoHertz;
-			pogoDef.dampingRatio = m_pogoDampingRatio;
-			m_pogoJointId = b2CreatePogoJoint( m_worldId, &pogoDef );
-
 			b2Vec2 delta = castResult.fraction * translation;
 			DrawLine( m_draw, origin, origin + delta, b2_colorGray );
 
@@ -965,7 +994,7 @@ public:
 
 		b2MoverJoint_SetLinearVelocity( m_moverJointId, m_velocity );
 
-		if (m_velocity.y < 0.0f)
+		if ( m_velocity.y < 0.0f )
 		{
 			m_jumped = false;
 		}
@@ -1099,6 +1128,7 @@ public:
 	float m_pogoRestLength = 3.0f * m_radius;
 	float m_pogoHertz = 5.0f;
 	float m_pogoDampingRatio = 0.8f;
+	float m_pogoVelocity = 0.0f;
 
 	int m_pogoShape = PogoSegment;
 	b2Vec2 m_velocity;

@@ -1216,6 +1216,9 @@ B2_API void b2PogoJoint_SetSpringDampingRatio( b2JointId jointId, float dampingR
 /// Get the spring damping ratio
 B2_API float b2PogoJoint_GetSpringDampingRatio( b2JointId jointId );
 
+/// Get the internal pogo velocity.
+B2_API float b2PogoJoint_GetVelocity( b2JointId jointId );
+
 /** @} */
 
 /**

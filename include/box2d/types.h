@@ -781,8 +781,15 @@ typedef struct b2PogoJointDef
 	/// Spring length.
 	float restLength;
 
-	/// Width of ground cast.
-	float width;
+	/// Maximum tension force. Controls how sticky the mover is to ground.
+	float maxTensionForce;
+
+	/// Maximum compression force. How hard the pogo pushes the mover up from the ground.
+	float maxCompressionForce;
+
+	/// The initial pogo internal velocity. The pogo is typically recreated every frame. This
+	/// gives a way to move the internal state forward for smoother spring behavior.
+	float velocity;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
