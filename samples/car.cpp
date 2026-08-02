@@ -111,8 +111,8 @@ void Car::Despawn()
 {
 	assert( m_isSpawned == true );
 
-	b2DestroyJoint( m_rearAxleId, false );
-	b2DestroyJoint( m_frontAxleId, false );
+	b2DestroyJoint( m_rearAxleId );
+	b2DestroyJoint( m_frontAxleId );
 	b2DestroyBody( m_rearWheelId );
 	b2DestroyBody( m_frontWheelId );
 	b2DestroyBody( m_chassisId );
@@ -259,8 +259,8 @@ void Truck::Despawn()
 {
 	assert( m_isSpawned == true );
 
-	b2DestroyJoint( m_rearAxleId, false );
-	b2DestroyJoint( m_frontAxleId, false );
+	b2DestroyJoint( m_rearAxleId );
+	b2DestroyJoint( m_frontAxleId );
 	b2DestroyBody( m_rearWheelId );
 	b2DestroyBody( m_frontWheelId );
 	b2DestroyBody( m_chassisId );

@@ -2042,7 +2042,7 @@ public:
 			{
 				int index = (int)(intptr_t)event->userData;
 				assert( 0 <= index && index < e_count );
-				b2DestroyJoint( event->jointId, true );
+				b2DestroyJoint( event->jointId );
 				m_jointIds[index] = b2_nullJointId;
 			}
 		}

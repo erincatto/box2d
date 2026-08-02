@@ -787,6 +787,10 @@ typedef struct b2PogoJointDef
 	/// Maximum compression force. How hard the pogo pushes the mover up from the ground.
 	float maxCompressionForce;
 
+	/// The initial pogo internal impulse. The pogo is typically recreated every frame. This
+	/// gives a way to move the internal state forward for smoother spring behavior.
+	float impulse;
+
 	/// The initial pogo internal velocity. The pogo is typically recreated every frame. This
 	/// gives a way to move the internal state forward for smoother spring behavior.
 	float velocity;

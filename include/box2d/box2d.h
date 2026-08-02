@@ -905,8 +905,8 @@ B2_API bool b2Chain_IsValid( b2ChainId id );
  * @{
  */
 
-/// Destroy a joint. Optionally wake attached bodies.
-B2_API void b2DestroyJoint( b2JointId jointId, bool wakeAttached );
+/// Destroy a joint.
+B2_API void b2DestroyJoint( b2JointId jointId );
 
 /// Joint identifier validation. Provides validation for up to 64K allocations.
 B2_API bool b2Joint_IsValid( b2JointId id );
@@ -1216,8 +1216,14 @@ B2_API void b2PogoJoint_SetSpringDampingRatio( b2JointId jointId, float dampingR
 /// Get the spring damping ratio
 B2_API float b2PogoJoint_GetSpringDampingRatio( b2JointId jointId );
 
+/// Get the current length of the pogo.
+B2_API float b2PogoJoint_GetLength( b2JointId jointId );
+
 /// Get the internal pogo velocity.
 B2_API float b2PogoJoint_GetVelocity( b2JointId jointId );
+
+/// Get the internal pogo impulse.
+B2_API float b2PogoJoint_GetImpulse( b2JointId jointId );
 
 /** @} */
 

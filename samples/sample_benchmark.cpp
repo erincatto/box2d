@@ -956,7 +956,7 @@ public:
 			uint64_t ticks = b2GetTicks();
 
 			// This will wake the island
-			b2DestroyJoint( jointId, true );
+			b2DestroyJoint( jointId );
 			m_wakeTotal += b2GetMillisecondsAndReset( &ticks );
 
 			// Put the island back to sleep. It must be split because a constraint was removed.

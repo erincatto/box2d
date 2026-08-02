@@ -483,7 +483,7 @@ void Sample::MouseUp( b2Pos p, int button )
 {
 	if ( B2_IS_NON_NULL( m_mouseJointId ) && button == GLFW_MOUSE_BUTTON_1 )
 	{
-		b2DestroyJoint( m_mouseJointId, true );
+		b2DestroyJoint( m_mouseJointId );
 		m_mouseJointId = b2_nullJointId;
 
 		b2DestroyBody( m_mouseBodyId );

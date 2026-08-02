@@ -1246,7 +1246,7 @@ static void b2RecDispatch_CreateWheelJoint( const b2RecArgs_CreateWheelJoint* a,
 
 static void b2RecDispatch_DestroyJoint( const b2RecArgs_DestroyJoint* a, b2RecReader* rdr )
 {
-	b2DestroyJoint( b2RecMakeJointId( rdr, a->joint ), a->wakeAttached );
+	b2DestroyJoint( b2RecMakeJointId( rdr, a->joint ) );
 }
 
 // Generic joint mutators

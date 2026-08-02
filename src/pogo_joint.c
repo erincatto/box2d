@@ -55,6 +55,30 @@ float b2PogoJoint_GetSpringDampingRatio( b2JointId jointId )
 	return joint->pogoJoint.dampingRatio;
 }
 
+float b2PogoJoint_GetLength( b2JointId jointId )
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2JointSim* jointSim = b2GetJointSimCheckType( jointId, b2_pogoJoint );
+
+	// Relative to body A so the difference stays in float precision far from the origin
+	b2WorldTransform wxfA = b2GetBodyTransform( world, jointSim->bodyIdA );
+	b2Transform transformA = b2ToRelativeTransform( wxfA, wxfA.p );
+	b2Transform transformB = b2ToRelativeTransform( b2GetBodyTransform( world, jointSim->bodyIdB ), wxfA.p );
+
+	b2Vec2 axis = b2RotateVector( transformB.q, b2_pogoAxis );
+	b2Vec2 pA = b2TransformPoint( transformA, jointSim->localFrameA.p );
+	b2Vec2 pB = b2TransformPoint( transformB, jointSim->localFrameB.p );
+	b2Vec2 d = b2Sub( pB, pA );
+	float length = b2Dot( d, axis );
+	return length;
+}
+
+float b2PogoJoint_GetImpulse( b2JointId jointId )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_pogoJoint );
+	return joint->pogoJoint.impulse;
+}
+
 float b2PogoJoint_GetVelocity( b2JointId jointId )
 {
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_pogoJoint );
@@ -205,19 +229,19 @@ void b2SolvePogoJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 	b2Vec2 axis = b2RotateVector( joint->frameB.q, b2_pogoAxis );
 	axis = b2RotateVector( stateB->deltaRotation, axis );
 
+	float bias = 0.0f;
 	if ( useBias )
 	{
-
 		// This is a custom pogo position correction designed to avoid feeding velocity into
 		// the mover body. Otherwise the mover can make huge jumps going up stairs. This still
 		// works with continuous collision.
+		// However, this position delta is not observer contact forces and can lead to tunnelling.
 		b2Vec2 dcA = stateA->deltaPosition;
 		b2Vec2 dcB = stateB->deltaPosition;
 		b2Vec2 d = b2Add( b2Add( b2Sub( dcB, dcA ), b2Sub( rB, rA ) ), joint->deltaCenter );
 		float c = b2Dot( axis, d ) - joint->restLength;
 		joint->velocity = b2SpringDamper( joint->hertz, joint->dampingRatio, c, joint->velocity, context->h );
-		//float fraction = context->subStepCount > 0 ? 0.25f / context->subStepCount;
-		stateB->deltaPosition = b2MulAdd( stateB->deltaPosition, context->h * joint->velocity, axis );
+		bias = -joint->velocity;
 	}
 
 	b2Vec2 vr = b2Sub( b2Add( vB, b2CrossSV( wB, rB ) ), b2Add( vA, b2CrossSV( wA, rA ) ) );
@@ -226,7 +250,7 @@ void b2SolvePogoJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 	float maxTensionImpulse = context->h * joint->maxTensionForce;
 	float maxCompressionImpulse = context->h * joint->maxCompressionForce;
 	float oldImpulse = joint->impulse;
-	float impulse = -joint->linearMass * cdot;
+	float impulse = -joint->linearMass * (cdot + bias);
 	joint->impulse = b2ClampFloat( joint->impulse + impulse, -maxTensionImpulse, maxCompressionImpulse );
 	impulse = joint->impulse - oldImpulse;
 

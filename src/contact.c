@@ -369,7 +369,7 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 // - a body changes type from dynamic to kinematic or static
 // - a shape is destroyed
 // - contact filtering is modified
-void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
+void b2DestroyContact( b2World* world, b2Contact* contact )
 {
 	// Remove pair from set
 	uint64_t pairKey = B2_SHAPE_PAIR_KEY( contact->shapeIdA, contact->shapeIdB );
@@ -493,7 +493,7 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 	contact->localIndex = B2_NULL_INDEX;
 	b2FreeId( &world->contactIdPool, contactId );
 
-	if ( wakeBodies && touching )
+	if ( touching )
 	{
 		b2WakeBody( world, bodyA );
 		b2WakeBody( world, bodyB );

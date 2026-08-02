@@ -154,7 +154,7 @@ static void b2RemoveBodyFromIsland( b2World* world, b2Body* body )
 	body->islandIndex = B2_NULL_INDEX;
 }
 
-static void b2DestroyBodyContacts( b2World* world, b2Body* body, bool wakeBodies )
+static void b2DestroyBodyContacts( b2World* world, b2Body* body )
 {
 	// Destroy the attached contacts
 	int edgeKey = body->headContactKey;
@@ -165,7 +165,7 @@ static void b2DestroyBodyContacts( b2World* world, b2Body* body, bool wakeBodies
 
 		b2Contact* contact = b2Array_Get( world->contacts, contactId );
 		edgeKey = contact->edges[edgeIndex].nextKey;
-		b2DestroyContact( world, contact, wakeBodies );
+		b2DestroyContact( world, contact );
 	}
 
 	b2ValidateSolverSets( world );
@@ -354,9 +354,6 @@ void b2DestroyBody( b2BodyId bodyId )
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
-	// Wake bodies attached to this body, even if this body is static.
-	bool wakeBodies = true;
-
 	// Destroy the attached joints
 	int edgeKey = body->headJointKey;
 	while ( edgeKey != B2_NULL_INDEX )
@@ -368,11 +365,11 @@ void b2DestroyBody( b2BodyId bodyId )
 		edgeKey = joint->edges[edgeIndex].nextKey;
 
 		// Careful because this modifies the list being traversed
-		b2DestroyJointInternal( world, joint, wakeBodies );
+		b2DestroyJointInternal( world, joint );
 	}
 
 	// Destroy all contacts attached to this body.
-	b2DestroyBodyContacts( world, body, wakeBodies );
+	b2DestroyBodyContacts( world, body );
 
 	// Destroy the attached shapes and their broad-phase proxies.
 	int shapeId = body->headShapeId;
@@ -1166,9 +1163,8 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 		return;
 	}
 
-	// Stage 2: destroy all contacts but don't wake bodies (because we don't need to)
-	bool wakeBodies = false;
-	b2DestroyBodyContacts( world, body, wakeBodies );
+	// Stage 2: destroy all contacts
+	b2DestroyBodyContacts( world, body );
 
 	// Stage 3: wake this body (does nothing if body is static), otherwise it will also wake
 	// all bodies in the same sleeping solver set.
@@ -1678,8 +1674,7 @@ void b2Body_Disable( b2BodyId bodyId )
 
 	// Destroy contacts and wake bodies touching this body. This avoid floating bodies.
 	// This is necessary even for static bodies.
-	bool wakeBodies = true;
-	b2DestroyBodyContacts( world, body, wakeBodies );
+	b2DestroyBodyContacts( world, body );
 
 	// The current solver set of the body
 	b2SolverSet* set = b2Array_Get( world->solverSets, body->setIndex );

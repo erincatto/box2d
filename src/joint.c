@@ -175,9 +175,6 @@ static void b2DestroyContactsBetweenBodies( b2World* world, b2Body* bodyA, b2Bod
 		otherBodyId = bodyA->id;
 	}
 
-	// no need to wake bodies when a joint removes collision between them
-	bool wakeBodies = false;
-
 	// destroy the contacts
 	while ( contactKey != B2_NULL_INDEX )
 	{
@@ -191,7 +188,7 @@ static void b2DestroyContactsBetweenBodies( b2World* world, b2Body* bodyA, b2Bod
 		if ( contact->edges[otherEdgeIndex].bodyId == otherBodyId )
 		{
 			// Careful, this removes the contact from the current doubly linked list
-			b2DestroyContact( world, contact, wakeBodies );
+			b2DestroyContact( world, contact );
 		}
 	}
 
@@ -549,6 +546,7 @@ b2JointId b2CreatePogoJoint( b2WorldId worldId, const b2PogoJointDef* def )
 	joint->pogoJoint.dampingRatio = def->dampingRatio;
 	joint->pogoJoint.maxTensionForce = def->maxTensionForce;
 	joint->pogoJoint.maxCompressionForce = def->maxCompressionForce;
+	joint->pogoJoint.impulse = def->impulse;
 	joint->pogoJoint.velocity = def->velocity;
 
 	// Register special joint with world
@@ -723,7 +721,7 @@ b2JointId b2CreateWheelJoint( b2WorldId worldId, const b2WheelJointDef* def )
 	return jointId;
 }
 
-void b2DestroyJointInternal( b2World* world, b2Joint* joint, bool wakeBodies )
+void b2DestroyJointInternal( b2World* world, b2Joint* joint )
 {
 	int jointId = joint->jointId;
 
@@ -826,16 +824,13 @@ void b2DestroyJointInternal( b2World* world, b2Joint* joint, bool wakeBodies )
 	joint->jointId = B2_NULL_INDEX;
 	b2FreeId( &world->jointIdPool, jointId );
 
-	if ( wakeBodies )
-	{
-		b2WakeBody( world, bodyA );
-		b2WakeBody( world, bodyB );
-	}
+	b2WakeBody( world, bodyA );
+	b2WakeBody( world, bodyB );
 
 	b2ValidateSolverSets( world );
 }
 
-void b2DestroyJoint( b2JointId jointId, bool wakeAttached )
+void b2DestroyJoint( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_ASSERT( world->locked == false );
@@ -845,11 +840,11 @@ void b2DestroyJoint( b2JointId jointId, bool wakeAttached )
 		return;
 	}
 
-	B2_REC( world, DestroyJoint, jointId, wakeAttached );
+	B2_REC( world, DestroyJoint, jointId );
 
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 
-	b2DestroyJointInternal( world, joint, wakeAttached );
+	b2DestroyJointInternal( world, joint );
 }
 
 b2JointType b2Joint_GetType( b2JointId jointId )
@@ -1087,6 +1082,9 @@ static b2Vec2 b2GetJointConstraintForce( b2World* world, b2Joint* joint )
 
 		case b2_filterJoint:
 			return b2Vec2_zero;
+
+		case b2_pogoJoint:
+			return b2GetPogoJointForce( world, base );
 
 		case b2_prismaticJoint:
 			return b2GetPrismaticJointForce( world, base );

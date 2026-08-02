@@ -905,9 +905,11 @@ public:
 
 		if ( b2Joint_IsValid( m_pogoJointId ) )
 		{
+			m_pogoLength = b2PogoJoint_GetLength( m_pogoJointId );
+			m_pogoImpulse = b2PogoJoint_GetImpulse( m_pogoJointId );
 			m_pogoVelocity = b2PogoJoint_GetVelocity( m_pogoJointId );
 
-			b2DestroyJoint( m_pogoJointId, false );
+			b2DestroyJoint( m_pogoJointId );
 			m_pogoJointId = b2_nullJointId;
 		}
 
@@ -916,7 +918,7 @@ public:
 			float moverMass = b2Body_GetMass( m_moverId );
 			float moverWeight = m_gravityScale * 10.0f * moverMass;
 
-			//b2Pos pogoEnd = b2OffsetPos( origin, castResult.fraction * translation );
+			// b2Pos pogoEnd = b2OffsetPos( origin, castResult.fraction * translation );
 			b2Pos pogoEnd = castResult.point;
 
 			b2PogoJointDef pogoDef = b2DefaultPogoJointDef();
@@ -928,14 +930,15 @@ public:
 			pogoDef.restLength = m_pogoRestLength;
 			pogoDef.hertz = m_pogoHertz;
 			pogoDef.dampingRatio = m_pogoDampingRatio;
-			pogoDef.maxCompressionForce = 4.0f * moverWeight;
+			pogoDef.maxCompressionForce = 100.0f * moverWeight;
+			pogoDef.impulse = m_pogoImpulse;
 			pogoDef.velocity = m_pogoVelocity;
 
 			// problem: player can achieve large upward jumps
 			// 1. pogo pops up on a step -> large velocity response
 			// 2. player presses jump -> pogo doesn't pull back down
 
-			if ( m_jumped )
+			if ( m_jumped || m_velocity.y > 0.1f )
 			{
 				// Don't allow the pogo to pull down
 				pogoDef.maxTensionForce = 0.0f;
@@ -943,7 +946,7 @@ public:
 			else
 			{
 				// The pogo can pull down at a multiple of the gravity force.
-				pogoDef.maxTensionForce = 2.0f * moverWeight;
+				pogoDef.maxTensionForce = 100.0f * moverWeight;
 			}
 
 			// Create the pogo constraint
@@ -953,6 +956,7 @@ public:
 		if ( castResult.hit == false || m_jumped )
 		{
 			m_onGround = false;
+			m_pogoImpulse = 0.0f;
 			m_pogoVelocity = 0.0f;
 
 			b2Vec2 delta = translation;
@@ -1101,6 +1105,9 @@ public:
 
 		DrawScreenTextLine( "position %.2f %.2f", position.x, position.y );
 		DrawScreenTextLine( "velocity %.2f %.2f", m_velocity.x, m_velocity.y );
+		DrawScreenTextLine( "pogo: impulse %.3f, velocity %.3f", m_pogoImpulse, m_pogoVelocity );
+		DrawScreenTextLine( "pogo: length = %.2f/%.2f", m_pogoLength, m_pogoRestLength );
+		DrawScreenTextLine( "on ground: %d", (int)m_onGround );
 
 		if ( m_lockCamera )
 		{
@@ -1128,7 +1135,9 @@ public:
 	float m_pogoRestLength = 3.0f * m_radius;
 	float m_pogoHertz = 5.0f;
 	float m_pogoDampingRatio = 0.8f;
+	float m_pogoImpulse = 0.0f;
 	float m_pogoVelocity = 0.0f;
+	float m_pogoLength = 0.0f;
 
 	int m_pogoShape = PogoSegment;
 	b2Vec2 m_velocity;

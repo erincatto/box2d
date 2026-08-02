@@ -766,7 +766,7 @@ static void b2Collide( b2StepContext* context )
 			if ( simFlags & b2_simDisjoint )
 			{
 				// Bounding boxes no longer overlap
-				b2DestroyContact( world, contact, false );
+				b2DestroyContact( world, contact );
 				contact = NULL;
 				contactSim = NULL;
 			}

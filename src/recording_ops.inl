@@ -113,7 +113,7 @@ B2_REC_OP( 0x93, CreatePrismaticJoint, RET_JOINTID, ARG( WORLDID, world ) ARG( P
 B2_REC_OP( 0x94, CreateRevoluteJoint, RET_JOINTID, ARG( WORLDID, world ) ARG( REVOLUTEJOINTDEF, def ) )
 B2_REC_OP( 0x95, CreateWeldJoint, RET_JOINTID, ARG( WORLDID, world ) ARG( WELDJOINTDEF, def ) )
 B2_REC_OP( 0x96, CreateWheelJoint, RET_JOINTID, ARG( WORLDID, world ) ARG( WHEELJOINTDEF, def ) )
-B2_REC_OP( 0x97, DestroyJoint, RET_NONE, ARG( JOINTID, joint ) ARG( BOOL, wakeAttached ) )
+B2_REC_OP( 0x97, DestroyJoint, RET_NONE, ARG( JOINTID, joint ) )
 
 // Generic joint mutators
 B2_REC_OP( 0x98, JointSetLocalFrameA, RET_NONE, ARG( JOINTID, joint ) ARG( XF, localFrame ) )
