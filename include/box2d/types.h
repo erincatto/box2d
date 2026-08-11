@@ -772,6 +772,9 @@ typedef struct b2PogoJointDef
 	/// Base joint definition
 	b2JointDef base;
 
+	/// Normal vector at the contact
+	b2Vec2 normal;
+
 	/// The spring stiffness Hertz, cycles per second
 	float hertz;
 

@@ -327,6 +327,7 @@ static int staticVsBulletBug = RegisterSample( "Issues", "StaticVsBulletBug", St
 
 // This simulations stresses the solver by putting a light mass between two bodies on a prismatic joint with a stiff spring.
 // This can be made stable by increasing the size of the middle circle and/or increasing the number of sub-steps.
+// todo try applying the impulse at the mid point to avoid breaking Newton's 3rd law
 class UnstablePrismaticJoints : public Sample
 {
 public:

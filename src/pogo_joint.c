@@ -87,10 +87,7 @@ float b2PogoJoint_GetVelocity( b2JointId jointId )
 
 b2Vec2 b2GetPogoJointForce( b2World* world, b2JointSim* base )
 {
-	b2WorldTransform worldTransformB = b2GetBodyTransform( world, base->bodyIdB );
-	b2Rot qB = b2MulRot( worldTransformB.q, base->localFrameB.q );
-	b2Vec2 axis = b2RotateVector( qB, b2_pogoAxis );
-	b2Vec2 force = b2MulSV( world->inv_h * base->pogoJoint.impulse, axis );
+	b2Vec2 force = b2MulSV( world->inv_h, base->pogoJoint.normal );
 	return force;
 }
 
@@ -144,13 +141,9 @@ void b2PreparePogoJoint( b2JointSim* base, b2StepContext* context )
 	b2Vec2 rA = joint->frameA.p;
 	b2Vec2 rB = joint->frameB.p;
 
-	joint->spring = b2MakeSoft( joint->hertz, joint->dampingRatio, context->h );
-
-	b2Vec2 axis = b2RotateVector( joint->frameB.q, b2_pogoAxis );
-
 	// compute effective mass
-	float crA = b2Cross( rA, axis );
-	float crB = b2Cross( rB, axis );
+	float crA = b2Cross( rA, joint->normal );
+	float crB = b2Cross( rB, joint->normal );
 	float k = mA + mB + iA * crA * crA + iB * crB * crB;
 	joint->linearMass = k > 0.0f ? 1.0f / k : 0.0f;
 
@@ -179,8 +172,7 @@ void b2WarmStartPogoJoint( b2JointSim* base, b2StepContext* context )
 	b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
 	b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
 
-	b2Vec2 axis = b2RotateVector( joint->frameB.q, b2_pogoAxis );
-	b2Vec2 linearImpulse = b2MulSV( joint->impulse, axis );
+	b2Vec2 linearImpulse = b2MulSV( joint->impulse, joint->normal );
 
 	if ( stateA->flags & b2_dynamicFlag )
 	{
@@ -226,8 +218,7 @@ void b2SolvePogoJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 	b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
 	b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
 
-	b2Vec2 axis = b2RotateVector( joint->frameB.q, b2_pogoAxis );
-	axis = b2RotateVector( stateB->deltaRotation, axis );
+	b2Vec2 axis = joint->normal;
 
 	float bias = 0.0f;
 	if ( useBias )
@@ -239,7 +230,8 @@ void b2SolvePogoJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 		b2Vec2 dcA = stateA->deltaPosition;
 		b2Vec2 dcB = stateB->deltaPosition;
 		b2Vec2 d = b2Add( b2Add( b2Sub( dcB, dcA ), b2Sub( rB, rA ) ), joint->deltaCenter );
-		float c = b2Dot( axis, d ) - joint->restLength;
+		//float c = b2Dot( joint->normal, d ) - joint->restLength;
+		float c = d.y - joint->restLength;
 		joint->velocity = b2SpringDamper( joint->hertz, joint->dampingRatio, c, joint->velocity, context->h );
 		bias = -joint->velocity;
 	}

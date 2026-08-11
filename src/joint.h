@@ -65,6 +65,7 @@ typedef struct b2Joint
 typedef struct b2PogoJoint
 {
 	// Settings
+	b2Vec2 normal;
 	float restLength;
 	float hertz;
 	float dampingRatio;
@@ -73,7 +74,6 @@ typedef struct b2PogoJoint
 	
 	// Runtime
 	float impulse;
-	b2Softness spring;
 	int indexA;
 	int indexB;
 	b2Transform frameA;

@@ -955,6 +955,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		world->finishTaskFcn( world->userTreeTask, world->userTaskContext );
 		world->userTreeTask = NULL;
 		world->activeTaskCount -= 1;
+		b2ValidateNoEnlarged( &world->broadPhase );
 	}
 
 	// Update sensors

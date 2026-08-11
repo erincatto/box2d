@@ -546,6 +546,7 @@ b2JointId b2CreatePogoJoint( b2WorldId worldId, const b2PogoJointDef* def )
 	joint->pogoJoint.dampingRatio = def->dampingRatio;
 	joint->pogoJoint.maxTensionForce = def->maxTensionForce;
 	joint->pogoJoint.maxCompressionForce = def->maxCompressionForce;
+	joint->pogoJoint.normal = def->normal;
 	joint->pogoJoint.impulse = def->impulse;
 	joint->pogoJoint.velocity = def->velocity;
 

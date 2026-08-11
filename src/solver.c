@@ -1283,7 +1283,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	int awakeBodyCount = awakeSet->bodySims.count;
 	if ( awakeBodyCount == 0 )
 	{
-		b2ValidateNoEnlarged( &world->broadPhase );
 		return;
 	}
 

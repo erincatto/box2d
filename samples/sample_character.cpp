@@ -636,6 +636,7 @@ public:
 		}
 
 		context->debugDraw.drawJoints = false;
+		m_elevatorId = b2_nullBodyId;
 
 		b2BodyId groundId1;
 		{
@@ -644,12 +645,18 @@ public:
 			bodyDef.position = { 0.0f, 0.0f };
 			groundId1 = b2CreateBody( m_worldId, &bodyDef );
 
+#if 0
+			const char* path = "M -34.4,201.08 H 293.69 V 34.4 L -21.17,198.44 H -31.75 l -0,-92.6 h -2.65 l 0,95.25";
+#else
 			const char* path =
-				"M 2.6458333,201.08333 H 293.68751 v -47.625 h -2.64584 l -10.58333,7.9375 -13.22916,7.9375 -13.24648,5.29167 "
-				"-31.73269,7.9375 -21.16667,2.64583 -23.8125,10.58333 H 142.875 v -5.29167 h -5.29166 v 5.29167 H 119.0625 v "
-				"-2.64583 h -2.64583 v -2.64584 h -2.64584 v -2.64583 H 111.125 v -2.64583 H 84.666668 v -2.64583 h -5.291666 v "
-				"-2.64584 h -5.291667 v -2.64583 H 68.791668 V 174.625 h -5.291666 v -2.64584 H 52.916669 L 39.6875,177.27083 H "
-				"34.395833 L 23.8125,185.20833 H 15.875 L 5.2916669,187.85416 V 153.45833 H 2.6458333 v 47.625";
+				"M -34.395834,201.08333 H 293.68751 v -47.625 h -2.64584 l -10.58333,7.9375 -13.22916,7.9375 -13.24648,5.29167 "
+				"-31.73269,7.9375 -21.16667,2.64583 -23.8125,10.58333 -15.875,2e-5 v -3.96875 l -17.19792,2e-5 v 2.64582 l "
+				"-17.19791,0 v -1.32292 h -3.96875 v -1.32292 h -3.96875 v -1.32292 h -3.96875 v -1.32291 h -3.96875 v -1.32292 "
+				"h -3.96875 v -1.32292 h -3.96875 v -1.32291 l -3.968754,0 v -1.32292 h -3.96875 v -1.32292 h -3.968751 v "
+				"-1.32291 h -3.96875 v -1.32292 h -3.96875 v -1.32292 h -3.96875 v -1.32291 h -3.96875 v -1.32292 l -3.96875,0 v "
+				"-1.32292 h -3.968751 v -1.32291 h -3.96875 l -2e-6,-1.32294 H 52.916669 L 39.6875,177.27083 h -5.291667 l "
+				"-7.937499,5.29167 H 15.875001 l -47.625002,-50.27083 v -26.45834 h -2.645834 l 10e-7,95.25";
+#endif
 
 			b2Vec2 points[64];
 
@@ -675,7 +682,7 @@ public:
 			// Mover position is center of the capsule.
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
-			bodyDef.position = { 2.0f, 8.0f };
+			bodyDef.position = { 0.0f, 8.0f };
 			// bodyDef.isBullet = true;
 			bodyDef.gravityScale = m_gravityScale;
 			bodyDef.motionLocks.angularZ = true;
@@ -693,7 +700,7 @@ public:
 
 			b2MoverJointDef moverDef = b2DefaultMoverJointDef();
 			moverDef.linearVelocity = m_velocity;
-			moverDef.maxVelocityForce = { 100.0f, 0.0f };
+			moverDef.maxVelocityForce = { 75.0f, 0.0f };
 
 			// The ground can be any body, but a static body is standard.
 			moverDef.base.bodyIdA = groundId1;
@@ -710,13 +717,12 @@ public:
 			groundId2 = b2CreateBody( m_worldId, &bodyDef );
 
 			const char* path =
-				"M 2.6458333,201.08333 H 293.68751 l 0,-23.8125 h -23.8125 l 21.16667,21.16667 h -23.8125 l -39.68751,-13.22917 "
-				"-26.45833,7.9375 -23.8125,2.64583 h -13.22917 l -0.0575,2.64584 h -5.29166 v -2.64583 l -7.86855,-1e-5 "
-				"-0.0114,-2.64583 h -2.64583 l -2.64583,2.64584 h -7.9375 l -2.64584,2.64583 -2.58891,-2.64584 h -13.28609 v "
-				"-2.64583 h -2.64583 v -2.64584 l -5.29167,1e-5 v -2.64583 h -2.64583 v -2.64583 l -5.29167,-1e-5 v -2.64583 h "
-				"-2.64583 v -2.64584 h -5.291667 v -2.64583 H 92.60417 V 174.625 h -5.291667 v -2.64584 l -34.395835,1e-5 "
-				"-7.9375,-2.64584 -7.9375,-2.64583 -5.291667,-5.29167 H 21.166667 L 13.229167,158.75 5.2916668,153.45833 H "
-				"2.6458334 l -10e-8,47.625";
+				"M 2.6458333,201.08333 H 399.52085 v -23.8125 h -23.8125 l 21.16667,18.52084 -232.83335,-1e-5 -0.0575,2.64584 h "
+				"-5.29166 v -2.64583 l -7.86855,-1e-5 -0.0114,-2.64583 h -2.64583 l -2.64583,2.64584 h -7.9375 l "
+				"-2.64584,2.64583 -2.58891,-2.64584 h -13.28609 v -2.64583 h -2.64583 v -2.64584 l -5.29167,1e-5 v -2.64583 h "
+				"-2.64583 v -2.64583 l -5.29167,-1e-5 v -2.64583 h -2.64583 v -2.64584 h -5.291667 v -2.64583 H 92.60417 V "
+				"174.625 h -5.291667 v -2.64584 l -34.395835,1e-5 -7.9375,-2.64584 -7.9375,-2.64583 -5.291667,-5.29167 H "
+				"21.166667 L 13.229167,158.75 5.2916668,153.45833 H 2.6458334 l -10e-8,47.625";
 
 			b2Vec2 points[64];
 
@@ -733,6 +739,7 @@ public:
 			b2CreateChain( groundId2, &chainDef );
 		}
 
+#if 0
 		{
 			b2Polygon box = b2MakeBox( 0.5f, 0.125f );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -787,8 +794,8 @@ public:
 			shapeDef.material.restitution = 0.7f;
 			shapeDef.material.rollingResistance = 0.2f;
 
-			b2Circle circle = { b2Vec2_zero, 0.5f };
-			m_ballId = b2CreateCircleShape( bodyId, &shapeDef, &circle );
+			b2Circle circle = { b2Vec2_zero, 0.7f };
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		}
 
 		{
@@ -803,6 +810,47 @@ public:
 			b2Polygon box = b2MakeBox( 2.0f, 0.1f );
 			b2CreatePolygonShape( m_elevatorId, &shapeDef, &box );
 		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position.x = 140.0f;
+			float a = 0.5f;
+			b2Polygon square = b2MakeSquare( a );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.filter = { DebrisBit, AllBits, 0 };
+			for ( int i = 0; i < 10; ++i )
+			{
+				bodyDef.position.y = ( 2.0f * i + 1.0f ) * a + 1.0f;
+				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+				b2CreatePolygonShape( bodyId, &shapeDef, &square );
+			}
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 160.0f, 5.0f };
+			bodyDef.type = b2_dynamicBody;
+			b2BodyId body = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Polygon box = b2MakeBox( 0.1f, 4.0f );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.density = 1.0f;
+			b2CreatePolygonShape( body, &shapeDef, &box );
+
+			b2Pos pivot = bodyDef.position + b2Vec2{ 0.0f, 4.0f };
+			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+			jointDef.base.bodyIdA = groundId2;
+			jointDef.base.bodyIdB = body;
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+			jointDef.enableMotor = true;
+			jointDef.motorSpeed = 1.0f;
+			jointDef.maxMotorTorque = 500.0f;
+
+			b2CreateRevoluteJoint( m_worldId, &jointDef );
+		}
+#endif
 
 		m_pogoJointId = b2_nullJointId;
 		m_onGround = false;
@@ -827,23 +875,34 @@ public:
 	void SolveMove( float timeStep, float throttle )
 	{
 		b2Vec2 moverVelocity = b2Body_GetLinearVelocity( m_moverId );
+		m_velocity.x = moverVelocity.x;
 		m_velocity.y = moverVelocity.y;
 
 		// Friction
-		float speed = b2Length( m_velocity );
-		if ( speed < m_minSpeed )
+		if ( m_onGround )
 		{
-			m_velocity.x = 0.0f;
-		}
-		else if ( m_onGround )
-		{
-			// Linear damping above stopSpeed and fixed reduction below stopSpeed
-			float control = speed < m_stopSpeed ? m_stopSpeed : speed;
+			float speed = b2Length( m_velocity );
+			if ( speed < m_minSpeed )
+			{
+				m_velocity.x = 0.0f;
+			}
+			else
+			{
+				// Linear damping above stopSpeed and fixed reduction below stopSpeed
+				float control = speed < m_stopSpeed ? m_stopSpeed : speed;
 
-			// friction has units of 1/time
-			float drop = control * m_friction * timeStep;
-			float newSpeed = b2MaxFloat( 0.0f, speed - drop );
-			m_velocity.x *= newSpeed / speed;
+				// friction has units of 1/time
+				float drop = control * m_friction * timeStep;
+				float newSpeed = b2MaxFloat( 0.0f, speed - drop );
+				m_velocity.x *= newSpeed / speed;
+			}
+
+			b2MoverJoint_SetMaxVelocityForce( m_moverJointId, { 70.0f, 0.0f } );
+		}
+		else
+		{
+			// air steer
+			b2MoverJoint_SetMaxVelocityForce( m_moverJointId, { 10.0f, 0.0f } );
 		}
 
 		b2Vec2 desiredVelocity = { m_maxSpeed * throttle, 0.0f };
@@ -901,7 +960,25 @@ public:
 
 		b2Pos position = b2Body_GetPosition( m_moverId );
 		b2Pos origin = position + m_capsule.center1;
-		b2World_CastShape( m_worldId, origin, &proxy, translation, pogoFilter, CastCallback, &castResult );
+
+		if (m_pogoShape == PogoPoint)
+		{
+			b2World_CastRay( m_worldId, origin, translation, pogoFilter, CastCallback, &castResult );
+		}
+		else
+		{
+			b2World_CastShape( m_worldId, origin, &proxy, translation, pogoFilter, CastCallback, &castResult );
+		}
+
+		// Avoid snapping to ground if still going up
+		if ( m_onGround == false )
+		{
+			m_onGround = castResult.hit && m_velocity.y <= 0.01f && castResult.normal.y > 0.7f;
+		}
+		else
+		{
+			m_onGround = castResult.hit && castResult.normal.y > 0.7f;
+		}
 
 		if ( b2Joint_IsValid( m_pogoJointId ) )
 		{
@@ -924,6 +1001,7 @@ public:
 			b2PogoJointDef pogoDef = b2DefaultPogoJointDef();
 			pogoDef.base.localFrameA.p = b2Body_GetLocalPoint( castResult.bodyId, pogoEnd );
 			pogoDef.base.localFrameB.p = m_capsule.center1;
+			pogoDef.normal = castResult.normal;
 			pogoDef.base.bodyIdA = castResult.bodyId;
 			pogoDef.base.bodyIdB = m_moverId;
 			pogoDef.base.collideConnected = true;
@@ -953,9 +1031,8 @@ public:
 			m_pogoJointId = b2CreatePogoJoint( m_worldId, &pogoDef );
 		}
 
-		if ( castResult.hit == false || m_jumped )
+		if ( castResult.hit == false )
 		{
-			m_onGround = false;
 			m_pogoImpulse = 0.0f;
 			m_pogoVelocity = 0.0f;
 
@@ -977,8 +1054,6 @@ public:
 		}
 		else
 		{
-			m_onGround = true;
-
 			b2Vec2 delta = castResult.fraction * translation;
 			DrawLine( m_draw, origin, origin + delta, b2_colorGray );
 
@@ -998,9 +1073,11 @@ public:
 
 		b2MoverJoint_SetLinearVelocity( m_moverJointId, m_velocity );
 
-		if ( m_velocity.y < 0.0f )
+		m_jumped = false;
+
+		if (m_onGround == false)
 		{
-			m_jumped = false;
+			m_onGround = false;
 		}
 	}
 
@@ -1050,7 +1127,7 @@ public:
 			timeStep = 0.0f;
 		}
 
-		if ( timeStep > 0.0f )
+		if ( timeStep > 0.0f && B2_IS_NON_NULL( m_elevatorId ) )
 		{
 			b2Pos point = {
 				.x = m_elevatorBase.x,
@@ -1139,13 +1216,12 @@ public:
 	float m_pogoVelocity = 0.0f;
 	float m_pogoLength = 0.0f;
 
-	int m_pogoShape = PogoSegment;
+	int m_pogoShape = PogoPoint;
 	b2Vec2 m_velocity;
 	b2BodyId m_moverId;
 	b2JointId m_moverJointId;
 	b2JointId m_pogoJointId;
 	b2BodyId m_elevatorId;
-	b2ShapeId m_ballId;
 	b2Capsule m_capsule;
 	float m_time;
 	bool m_onGround;
