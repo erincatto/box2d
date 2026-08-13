@@ -739,7 +739,7 @@ public:
 			b2CreateChain( groundId2, &chainDef );
 		}
 
-#if 0
+#if 1
 		{
 			b2Polygon box = b2MakeBox( 0.5f, 0.125f );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -794,7 +794,7 @@ public:
 			shapeDef.material.restitution = 0.7f;
 			shapeDef.material.rollingResistance = 0.2f;
 
-			b2Circle circle = { b2Vec2_zero, 0.7f };
+			b2Circle circle = { b2Vec2_zero, 0.25f };
 			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		}
 

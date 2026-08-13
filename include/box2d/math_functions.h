@@ -525,7 +525,7 @@ B2_INLINE b2Rot b2InvMulRot( b2Rot a, b2Rot b )
 	return r;
 }
 
-/// Relative angle between a and b
+/// Relative angle between a and b.
 B2_INLINE float b2RelativeAngle( b2Rot a, b2Rot b )
 {
 	// sin(b - a) = bs * ac - bc * as
@@ -535,26 +535,37 @@ B2_INLINE float b2RelativeAngle( b2Rot a, b2Rot b )
 	return b2Atan2( s, c );
 }
 
-/// Convert any angle into the range [-pi, pi]
+/// Convert any angle into the range [-pi, pi].
 B2_INLINE float b2UnwindAngle( float radians )
 {
-	// Assuming this is deterministic
-	return remainderf( radians, 2.0f * B2_PI );
+	// This function can be implemented using remainderf.
+	// However that is a libc dependency not present in WASM.
+	// This function doesn't work well with huge angles. So unwind your angles regularly.
+	B2_VALIDATE( b2AbsFloat( radians ) < 1.0e4f );
+	float x = b2ClampFloat( radians, -1.0e6f, 1.0e6f );
+
+	// Work in doubles. Adding and removing this constant rounds to the nearest integer.
+	// https://stackoverflow.com/questions/17035464/a-fast-method-to-round-a-double-to-a-32-bit-int-explained
+	double twoPi = 2.0f * B2_PI;
+	double roundToNearest = 6755399441055744.0;
+	double a = x;
+	double k = ( a / twoPi + roundToNearest ) - roundToNearest;
+	return (float)( a - k * twoPi );
 }
 
-/// Rotate a vector
+/// Rotate a vector.
 B2_INLINE b2Vec2 b2RotateVector( b2Rot q, b2Vec2 v )
 {
 	return B2_LITERAL( b2Vec2 ){ q.c * v.x - q.s * v.y, q.s * v.x + q.c * v.y };
 }
 
-/// Inverse rotate a vector
+/// Inverse rotate a vector.
 B2_INLINE b2Vec2 b2InvRotateVector( b2Rot q, b2Vec2 v )
 {
 	return B2_LITERAL( b2Vec2 ){ q.c * v.x + q.s * v.y, -q.s * v.x + q.c * v.y };
 }
 
-/// Transform a point (e.g. local space to world space)
+/// Transform a point (e.g. local space to world space).
 B2_INLINE b2Vec2 b2TransformPoint( b2Transform t, const b2Vec2 p )
 {
 	float x = ( t.q.c * p.x - t.q.s * p.y ) + t.p.x;
@@ -563,7 +574,7 @@ B2_INLINE b2Vec2 b2TransformPoint( b2Transform t, const b2Vec2 p )
 	return B2_LITERAL( b2Vec2 ){ x, y };
 }
 
-/// Inverse transform a point (e.g. world space to local space)
+/// Inverse transform a point (e.g. world space to local space).
 B2_INLINE b2Vec2 b2InvTransformPoint( b2Transform t, const b2Vec2 p )
 {
 	float vx = p.x - t.p.x;
