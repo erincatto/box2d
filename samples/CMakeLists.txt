@@ -148,6 +148,10 @@ set(BOX2D_SAMPLE_COMMON_FILES
     donut.h
     doohickey.cpp
     doohickey.h
+    dynamic_mover.cpp
+    dynamic_mover.h
+    geometric_mover.cpp
+    geometric_mover.h
     sample_benchmark.cpp
     sample_bodies.cpp
     sample_character.cpp
