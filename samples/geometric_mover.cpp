@@ -33,7 +33,7 @@ static bool PlaneResultFcn( b2ShapeId shapeId, const b2PlaneResult* planeResult,
 {
 	assert( planeResult->hit == true );
 
-	GeometryMover* self = static_cast<GeometryMover*>( context );
+	GeometricMover* self = static_cast<GeometricMover*>( context );
 	float maxPush = FLT_MAX;
 	bool clipVelocity = true;
 	MoverShapeUserData* userData = static_cast<MoverShapeUserData*>( (void*)b2Shape_GetUserData( shapeId ) );
@@ -43,7 +43,7 @@ static bool PlaneResultFcn( b2ShapeId shapeId, const b2PlaneResult* planeResult,
 		clipVelocity = userData->clipVelocity;
 	}
 
-	if ( self->m_planeCount < GeometryMover::m_planeCapacity )
+	if ( self->m_planeCount < GeometricMover::m_planeCapacity )
 	{
 		assert( b2IsValidPlane( planeResult->plane ) );
 		self->m_planes[self->m_planeCount] = { planeResult->plane, maxPush, 0.0f, clipVelocity };
@@ -58,7 +58,7 @@ static bool PlaneResultFcn( b2ShapeId shapeId, const b2PlaneResult* planeResult,
 
 	return true;
 }
-GeometryMover::GeometryMover()
+GeometricMover::GeometricMover()
 {
 	m_jumpSpeed = 10.0f;
 	m_maxSpeed = 6.0f;
@@ -84,6 +84,7 @@ GeometryMover::GeometryMover()
 	m_position = b2Pos_zero;
 	m_velocity = b2Vec2_zero;
 	m_pogoVelocity = 0.0f;
+	m_minGroundNormalY = 0.7f;
 	m_onGround = false;
 
 	m_planeCount = 0;
@@ -95,7 +96,7 @@ GeometryMover::GeometryMover()
 	m_pogoHit = false;
 }
 
-void GeometryMover::Create( b2WorldId worldId, b2Pos position )
+void GeometricMover::Create( b2WorldId worldId, b2Pos position )
 {
 	m_worldId = worldId;
 	m_position = position;
@@ -108,7 +109,7 @@ void GeometryMover::Create( b2WorldId worldId, b2Pos position )
 	m_pogoHit = false;
 }
 
-bool GeometryMover::Jump()
+bool GeometricMover::Jump()
 {
 	if ( m_onGround == false )
 	{
@@ -123,7 +124,7 @@ bool GeometryMover::Jump()
 // Solve a normal constraint between the mover and each touched rigid body. This is the
 // same velocity constraint the solver uses for a contact, except the mover is treated as
 // having infinite mass, so all of the impulse lands on the body.
-void GeometryMover::PushBodies()
+void GeometricMover::PushBodies()
 {
 	for ( int i = 0; i < m_planeCount; ++i )
 	{
@@ -137,7 +138,6 @@ void GeometryMover::PushBodies()
 		b2Pos point = m_planeExtras[i].point;
 		b2Vec2 normal = -m_planes[i].plane.normal;
 
-		// Raise this to let the body push back on the mover
 		float invMassA = 0.0f;
 
 		float massB = b2Body_GetMass( bodyId );
@@ -168,7 +168,9 @@ void GeometryMover::PushBodies()
 	}
 }
 
-void GeometryMover::Solve( float timeStep, float throttle )
+// Movement follows the Quake ground and air model:
+// https://github.com/id-Software/Quake/blob/master/QW/client/pmove.c#L390
+void GeometricMover::Solve( float timeStep, float throttle )
 {
 	// Friction
 	float speed = b2Length( m_velocity );
@@ -197,11 +199,6 @@ void GeometryMover::Solve( float timeStep, float throttle )
 		desiredSpeed = m_maxSpeed;
 	}
 
-	if ( m_onGround )
-	{
-		m_velocity.y = 0.0f;
-	}
-
 	// Accelerate
 	float currentSpeed = b2Dot( m_velocity, desiredDirection );
 	float addSpeed = desiredSpeed - currentSpeed;
@@ -217,10 +214,8 @@ void GeometryMover::Solve( float timeStep, float throttle )
 		m_velocity += accelSpeed * desiredDirection;
 	}
 
-	m_velocity.y -= m_gravity * timeStep;
-
 	// The probe reaches past the rest length so the spring can be stretched
-	float rayLength = m_pogoRestLength + m_capsule.radius;
+	float rayLength = m_onGround ? 2.0f * m_pogoRestLength : m_pogoRestLength;
 	b2Vec2 translation = { 0.0f, -rayLength };
 	b2Pos origin = m_position + m_capsule.center1;
 
@@ -233,21 +228,26 @@ void GeometryMover::Solve( float timeStep, float throttle )
 	m_pogoHit = castResult.hit;
 
 	// Avoid snapping to ground if still going up
+	bool haveGround = castResult.hit && castResult.normal.y > m_minGroundNormalY; 
+
 	if ( m_onGround == false )
 	{
-		m_onGround = castResult.hit && m_velocity.y <= 0.01f;
+		m_onGround = haveGround && m_velocity.y <= 0.01f;
 	}
 	else
 	{
-		m_onGround = castResult.hit;
+		m_onGround = haveGround;
 	}
 
-	if ( castResult.hit == false )
+	if ( m_onGround == false )
 	{
+		m_velocity.y -= m_gravity * timeStep;
 		m_pogoVelocity = 0.0f;
 	}
 	else
 	{
+		m_velocity.y = 0.0f;
+
 		float pogoCurrentLength = castResult.fraction * rayLength;
 
 		float offset = pogoCurrentLength - m_pogoRestLength;

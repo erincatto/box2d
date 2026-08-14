@@ -157,6 +157,8 @@ bool DynamicMover::Jump()
 	return true;
 }
 
+// Movement follows the Quake ground and air model:
+// https://github.com/id-Software/Quake/blob/master/QW/client/pmove.c#L390
 void DynamicMover::Solve( float timeStep, float throttle )
 {
 	m_velocity = b2Body_GetLinearVelocity( m_moverId );
@@ -212,7 +214,7 @@ void DynamicMover::Solve( float timeStep, float throttle )
 	}
 
 	// Reach further while grounded so the spring can find the ground over a step
-	float rayLength = m_onGround ? m_pogoRestLength + m_capsule.radius : m_pogoRestLength;
+	float rayLength = m_onGround ? 2.0f * m_pogoRestLength : m_pogoRestLength;
 	b2Vec2 translation = { 0.0f, -rayLength };
 
 	b2Pos position = b2Body_GetPosition( m_moverId );

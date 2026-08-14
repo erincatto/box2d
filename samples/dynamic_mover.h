@@ -18,9 +18,6 @@ struct DynamicMoverDef
 /// collides and is pushed like everything else in the world. A mover joint drives it to
 /// the target velocity and a pogo joint holds it above the ground so it can ride over
 /// steps without touching the capsule.
-///
-/// Movement follows the Quake ground and air model:
-/// https://github.com/id-Software/Quake/blob/master/QW/client/pmove.c#L390
 class DynamicMover
 {
 public:

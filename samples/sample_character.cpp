@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2022 Erin Catto
+// SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
 #include "draw.h"
@@ -55,15 +55,18 @@ public:
 		b2BodyId groundId1;
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.name = "svg";
 			bodyDef.position = { 0.0f, 0.0f };
 			groundId1 = b2CreateBody( m_worldId, &bodyDef );
 
 			const char* path =
-				"M 2.6458333,201.08333 H 293.68751 v -47.625 h -2.64584 l -10.58333,7.9375 -13.22916,7.9375 -13.24648,5.29167 "
-				"-31.73269,7.9375 -21.16667,2.64583 -23.8125,10.58333 H 142.875 v -5.29167 h -5.29166 v 5.29167 H 119.0625 v "
-				"-2.64583 h -2.64583 v -2.64584 h -2.64584 v -2.64583 H 111.125 v -2.64583 H 84.666668 v -2.64583 h -5.291666 v "
-				"-2.64584 h -5.291667 v -2.64583 H 68.791668 V 174.625 h -5.291666 v -2.64584 H 52.916669 L 39.6875,177.27083 H "
-				"34.395833 L 23.8125,185.20833 H 15.875 L 5.2916669,187.85416 V 153.45833 H 2.6458333 v 47.625";
+				"M -34.395834,201.08333 H 293.68751 v -47.625 h -2.64584 l -10.58333,7.9375 -13.22916,7.9375 -13.24648,5.29167 "
+				"-31.73269,7.9375 -21.16667,2.64583 -23.8125,10.58333 -15.875,2e-5 v -3.96875 l -17.19792,2e-5 v 2.64582 l "
+				"-17.19791,0 v -1.32292 h -3.96875 v -1.32292 h -3.96875 v -1.32292 h -3.96875 v -1.32291 h -3.96875 v -1.32292 "
+				"h -3.96875 v -1.32292 h -3.96875 v -1.32291 l -3.968754,0 v -1.32292 h -3.96875 v -1.32292 h -3.968751 v "
+				"-1.32291 h -3.96875 v -1.32292 h -3.96875 v -1.32292 h -3.96875 v -1.32291 h -3.96875 v -1.32292 l -3.96875,0 v "
+				"-1.32292 h -3.968751 v -1.32291 h -3.96875 l -2e-6,-1.32294 H 52.916669 L 39.6875,177.27083 h -5.291667 l "
+				"-7.937499,5.29167 H 15.875001 l -47.625002,-50.27083 v -26.45834 h -2.645834 l 10e-7,95.25";
 
 			b2Vec2 points[64];
 
@@ -87,13 +90,12 @@ public:
 			groundId2 = b2CreateBody( m_worldId, &bodyDef );
 
 			const char* path =
-				"M 2.6458333,201.08333 H 293.68751 l 0,-23.8125 h -23.8125 l 21.16667,21.16667 h -23.8125 l -39.68751,-13.22917 "
-				"-26.45833,7.9375 -23.8125,2.64583 h -13.22917 l -0.0575,2.64584 h -5.29166 v -2.64583 l -7.86855,-1e-5 "
-				"-0.0114,-2.64583 h -2.64583 l -2.64583,2.64584 h -7.9375 l -2.64584,2.64583 -2.58891,-2.64584 h -13.28609 v "
-				"-2.64583 h -2.64583 v -2.64584 l -5.29167,1e-5 v -2.64583 h -2.64583 v -2.64583 l -5.29167,-1e-5 v -2.64583 h "
-				"-2.64583 v -2.64584 h -5.291667 v -2.64583 H 92.60417 V 174.625 h -5.291667 v -2.64584 l -34.395835,1e-5 "
-				"-7.9375,-2.64584 -7.9375,-2.64583 -5.291667,-5.29167 H 21.166667 L 13.229167,158.75 5.2916668,153.45833 H "
-				"2.6458334 l -10e-8,47.625";
+				"M 2.6458333,201.08333 H 399.52085 v -23.8125 h -23.8125 l 21.16667,18.52084 -232.83335,-1e-5 -0.0575,2.64584 h "
+				"-5.29166 v -2.64583 l -7.86855,-1e-5 -0.0114,-2.64583 h -2.64583 l -2.64583,2.64584 h -7.9375 l "
+				"-2.64584,2.64583 -2.58891,-2.64584 -10.64031,2e-5 v -2.64583 l -7.9375,0 v -2.64584 l -7.9375,0 v -2.64583 l "
+				"-7.9375,0 v -2.64583 l -7.9375,0 v -2.64583 l -7.937501,-1e-5 v -2.64584 l -7.9375,1e-5 v -2.64583 l "
+				"-7.937501,-2e-5 V 174.625 l -7.937501,1e-5 v -2.64584 l -5.291669,0 -7.9375,-2.64584 -7.9375,-2.64583 "
+				"-5.291667,-5.29167 H 21.166667 L 13.229167,158.75 5.2916668,153.45833 H 2.6458334 l -10e-8,47.625";
 
 			b2Vec2 points[64];
 
@@ -108,6 +110,20 @@ public:
 			chainDef.isLoop = true;
 
 			b2CreateChain( groundId2, &chainDef );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 32.0f, 4.5f };
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			m_friendlyShape.maxPush = 0.025f;
+			m_friendlyShape.clipVelocity = false;
+
+			shapeDef.filter = { MoverBit, AllBits, 0 };
+			shapeDef.userData = &m_friendlyShape;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+			b2CreateCapsuleShape( bodyId, &shapeDef, &m_mover.m_capsule );
 		}
 
 		{
@@ -153,24 +169,11 @@ public:
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 
-		{
-			b2BodyDef bodyDef = b2DefaultBodyDef();
-			bodyDef.position = { 32.0f, 4.5f };
-
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			m_friendlyShape.maxPush = 0.025f;
-			m_friendlyShape.clipVelocity = false;
-
-			shapeDef.filter = { MoverBit, AllBits, 0 };
-			shapeDef.userData = &m_friendlyShape;
-			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
-			b2CreateCapsuleShape( bodyId, &shapeDef, &m_mover.m_capsule );
-		}
-
+		for ( int i = 0; i < 5; ++i )
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
-			bodyDef.position = { 7.0f, 7.0f };
+			bodyDef.position = { 7.0f, 7.0f + 0.5f * i };
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -178,8 +181,8 @@ public:
 			shapeDef.material.restitution = 0.7f;
 			shapeDef.material.rollingResistance = 0.2f;
 
-			b2Circle circle = { b2Vec2_zero, 0.4f };
-			m_ballId = b2CreateCircleShape( bodyId, &shapeDef, &circle );
+			b2Circle circle = { b2Vec2_zero, 0.25f };
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 		}
 
 		{
@@ -188,17 +191,51 @@ public:
 			bodyDef.position = { m_elevatorBase.x, m_elevatorBase.y - m_elevatorAmplitude };
 			m_elevatorId = b2CreateBody( m_worldId, &bodyDef );
 
-			// The elevator must not push the mover through the floor
-			m_elevatorShape = {
-				.maxPush = 0.1f,
-				.clipVelocity = true,
-			};
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.filter = { DynamicBit, AllBits, 0 };
-			shapeDef.userData = &m_elevatorShape;
 
 			b2Polygon box = b2MakeBox( 2.0f, 0.1f );
 			b2CreatePolygonShape( m_elevatorId, &shapeDef, &box );
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position.x = 140.0f;
+			float a = 0.25f;
+			b2Polygon square = b2MakeSquare( a );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.filter = { DynamicBit, AllBits, 0 };
+			for ( int i = 0; i < 10; ++i )
+			{
+				bodyDef.position.y = ( 2.0f * i + 1.0f ) * a + 1.0f;
+				b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+				b2CreatePolygonShape( bodyId, &shapeDef, &square );
+			}
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 160.0f, 5.0f };
+			bodyDef.type = b2_dynamicBody;
+			b2BodyId body = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Polygon box = b2MakeBox( 0.1f, 4.0f );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.density = 1.0f;
+			b2CreatePolygonShape( body, &shapeDef, &box );
+
+			b2Pos pivot = bodyDef.position + b2Vec2{ 0.0f, 4.0f };
+			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+			jointDef.base.bodyIdA = groundId2;
+			jointDef.base.bodyIdB = body;
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, pivot );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, pivot );
+			jointDef.enableMotor = true;
+			jointDef.motorSpeed = 1.0f;
+			jointDef.maxMotorTorque = 500.0f;
+
+			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 
 		m_jumpReleased = true;
@@ -348,7 +385,7 @@ public:
 	static constexpr b2Vec2 m_elevatorBase = { 112.0f, 10.0f };
 	static constexpr float m_elevatorAmplitude = 4.0f;
 
-	GeometryMover m_mover;
+	GeometricMover m_mover;
 	b2BodyId m_elevatorId;
 	b2ShapeId m_ballId;
 	MoverShapeUserData m_friendlyShape;
@@ -430,10 +467,10 @@ public:
 			const char* path =
 				"M 2.6458333,201.08333 H 399.52085 v -23.8125 h -23.8125 l 21.16667,18.52084 -232.83335,-1e-5 -0.0575,2.64584 h "
 				"-5.29166 v -2.64583 l -7.86855,-1e-5 -0.0114,-2.64583 h -2.64583 l -2.64583,2.64584 h -7.9375 l "
-				"-2.64584,2.64583 -2.58891,-2.64584 h -13.28609 v -2.64583 h -2.64583 v -2.64584 l -5.29167,1e-5 v -2.64583 h "
-				"-2.64583 v -2.64583 l -5.29167,-1e-5 v -2.64583 h -2.64583 v -2.64584 h -5.291667 v -2.64583 H 92.60417 V "
-				"174.625 h -5.291667 v -2.64584 l -34.395835,1e-5 -7.9375,-2.64584 -7.9375,-2.64583 -5.291667,-5.29167 H "
-				"21.166667 L 13.229167,158.75 5.2916668,153.45833 H 2.6458334 l -10e-8,47.625";
+				"-2.64584,2.64583 -2.58891,-2.64584 -10.64031,2e-5 v -2.64583 l -7.9375,0 v -2.64584 l -7.9375,0 v -2.64583 l "
+				"-7.9375,0 v -2.64583 l -7.9375,0 v -2.64583 l -7.937501,-1e-5 v -2.64584 l -7.9375,1e-5 v -2.64583 l "
+				"-7.937501,-2e-5 V 174.625 l -7.937501,1e-5 v -2.64584 l -5.291669,0 -7.9375,-2.64584 -7.9375,-2.64583 "
+				"-5.291667,-5.29167 H 21.166667 L 13.229167,158.75 5.2916668,153.45833 H 2.6458334 l -10e-8,47.625";
 
 			b2Vec2 points[64];
 

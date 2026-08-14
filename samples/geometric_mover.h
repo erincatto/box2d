@@ -29,16 +29,13 @@ struct PlaneExtra
 /// Geometric character mover. The capsule is moved by casting
 /// and by solving collision planes, so the game keeps full control of the motion.
 ///
-/// Movement follows the Quake ground and air model:
-/// https://github.com/id-Software/Quake/blob/master/QW/client/pmove.c#L390
-/// 
 /// A pogo stick spring holds the capsule above the ground so it can move up steps.
 ///
 /// Usage per frame: Jump() on a fresh key press, then Solve().
-class GeometryMover
+class GeometricMover
 {
 public:
-	GeometryMover();
+	GeometricMover();
 
 	/// Place the mover. The capsule and tuning may be changed at any time.
 	void Create( b2WorldId worldId, b2Pos position );
@@ -72,6 +69,9 @@ public:
 
 	/// Downward force applied to whatever the pogo stick is resting on.
 	float m_pogoGroundForce;
+
+	/// Surfaces steeper than this are not ground.
+	float m_minGroundNormalY;
 
 	/// Push touched rigid bodies out of the way by solving a normal constraint against
 	/// each collision plane. Without this the mover slides along a crate instead of
