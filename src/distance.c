@@ -498,8 +498,10 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 		if ( simplex.count == 3 )
 		{
 			// Overlap
+			*cache = b2MakeSimplexCache( &simplex );
 			b2Vec2 localPointA, localPointB;
 			b2ComputeWitnessPoints( &simplex, &localPointA, &localPointB );
+			output.distance = 0.0f;
 			output.pointA = localPointA;
 			output.pointB = localPointB;
 			return output;
@@ -514,7 +516,7 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 #endif
 
 		// Ensure the search direction is numerically fit.
-		if ( b2Dot( d, d ) < FLT_EPSILON * FLT_EPSILON )
+		if ( b2Dot( d, d ) < 1000.0f * FLT_MIN )
 		{
 			// This is unlikely but could lead to bad cycling.
 			// The branch predictor seems to make this check have low cost.
@@ -522,9 +524,12 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 			// The origin is probably contained by a line segment
 			// or triangle. Thus the shapes are overlapped.
 
+			*cache = b2MakeSimplexCache( &simplex );
+
 			// Must return overlap due to invalid normal.
 			b2Vec2 localPointA, localPointB;
 			b2ComputeWitnessPoints( &simplex, &localPointA, &localPointB );
+			output.distance = 0.0f;
 			output.pointA = localPointA;
 			output.pointB = localPointB;
 			return output;

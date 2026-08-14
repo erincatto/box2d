@@ -337,17 +337,16 @@ B2_INLINE float b2Distance( b2Vec2 a, b2Vec2 b )
 
 /// Convert a vector into a unit vector if possible, otherwise returns the zero vector.
 /// todo MSVC is not inlining this function in several places per warning 4710
-B2_INLINE b2Vec2 b2Normalize( b2Vec2 v )
+B2_INLINE b2Vec2 b2Normalize( b2Vec2 a )
 {
-	float length = sqrtf( v.x * v.x + v.y * v.y );
-	if ( length < FLT_EPSILON )
+	float lengthSquared = a.x * a.x + a.y * a.y;
+	if ( lengthSquared > 1000.0f * FLT_MIN )
 	{
-		return B2_LITERAL( b2Vec2 ){ 0.0f, 0.0f };
+		float s = 1.0f / sqrtf( lengthSquared );
+		b2Vec2 u = { s * a.x, s * a.y };
+		return u;
 	}
-
-	float invLength = 1.0f / length;
-	b2Vec2 n = { invLength * v.x, invLength * v.y };
-	return n;
+	return B2_LITERAL( b2Vec2 ){ 0.0f, 0.0f };
 }
 
 /// Determines if the provided vector is normalized (norm(a) == 1).
@@ -359,17 +358,19 @@ B2_INLINE bool b2IsNormalized( b2Vec2 a )
 
 /// Convert a vector into a unit vector if possible, otherwise returns the zero vector. Also
 /// outputs the length.
-B2_INLINE b2Vec2 b2GetLengthAndNormalize( float* length, b2Vec2 v )
+B2_INLINE b2Vec2 b2GetLengthAndNormalize( float* length, b2Vec2 a )
 {
-	*length = sqrtf( v.x * v.x + v.y * v.y );
-	if ( *length < FLT_EPSILON )
+	float lengthSquared = a.x * a.x + a.y * a.y;
+	if ( lengthSquared > 1000.0f * FLT_MIN )
 	{
-		return B2_LITERAL( b2Vec2 ){ 0.0f, 0.0f };
+		*length = sqrtf( lengthSquared );
+		float s = 1.0f / *length;
+		b2Vec2 u = { s * a.x, s * a.y };
+		return u;
 	}
 
-	float invLength = 1.0f / *length;
-	b2Vec2 n = { invLength * v.x, invLength * v.y };
-	return n;
+	*length = 0.0f;
+	return B2_LITERAL( b2Vec2 ){ 0.0f, 0.0f };
 }
 
 /// Normalize rotation
