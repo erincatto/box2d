@@ -58,6 +58,7 @@ static bool PlaneResultFcn( b2ShapeId shapeId, const b2PlaneResult* planeResult,
 
 	return true;
 }
+
 GeometricMover::GeometricMover()
 {
 	m_jumpSpeed = 10.0f;
@@ -76,9 +77,7 @@ GeometricMover::GeometricMover()
 
 	m_capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.3f };
 
-	m_collideFilter = b2DefaultQueryFilter();
-	m_castFilter = b2DefaultQueryFilter();
-	m_pogoFilter = b2DefaultQueryFilter();
+	m_filter = b2DefaultQueryFilter();
 
 	m_worldId = b2_nullWorldId;
 	m_position = b2Pos_zero;
@@ -96,10 +95,25 @@ GeometricMover::GeometricMover()
 	m_pogoHit = false;
 }
 
-void GeometricMover::Create( b2WorldId worldId, b2Pos position )
+void GeometricMover::Create( b2WorldId worldId, const GeometricMoverDef* def )
 {
+	m_capsule = def->capsule;
+	m_filter = def->filter;
+	m_jumpSpeed = def->jumpSpeed;
+	m_maxSpeed = def->maxSpeed;
+	m_minSpeed = def->minSpeed;
+	m_stopSpeed = def->stopSpeed;
+	m_accelerate = def->accelerate;
+	m_airSteer = def->airSteer;
+	m_friction = def->friction;
+	m_gravity = def->gravity;
+	m_pogoRestLength = def->pogoRestLength;
+	m_pogoHertz = def->pogoHertz;
+	m_pogoDampingRatio = def->pogoDampingRatio;
+	m_minGroundNormalY = 0.7f;
+
 	m_worldId = worldId;
-	m_position = position;
+	m_position = def->position;
 	m_velocity = b2Vec2_zero;
 	m_pogoVelocity = 0.0f;
 	m_onGround = false;
@@ -220,7 +234,7 @@ void GeometricMover::Solve( float timeStep, float throttle )
 	b2Pos origin = m_position + m_capsule.center1;
 
 	CastResult castResult = {};
-	b2World_CastRay( m_worldId, origin, translation, m_pogoFilter, CastCallback, &castResult );
+	b2World_CastRay( m_worldId, origin, translation, m_filter, CastCallback, &castResult );
 
 	m_pogoOrigin = origin;
 	m_pogoTranslation = translation;
@@ -228,7 +242,7 @@ void GeometricMover::Solve( float timeStep, float throttle )
 	m_pogoHit = castResult.hit;
 
 	// Avoid snapping to ground if still going up
-	bool haveGround = castResult.hit && castResult.normal.y > m_minGroundNormalY; 
+	bool haveGround = castResult.hit && castResult.normal.y > m_minGroundNormalY;
 
 	if ( m_onGround == false )
 	{
@@ -261,16 +275,22 @@ void GeometricMover::Solve( float timeStep, float throttle )
 	m_totalIterations = 0;
 	float tolerance = 0.01f;
 
+	// Don't cast against other movers.
+	b2QueryFilter castFilter = {
+		.categoryBits = m_filter.categoryBits,
+		.maskBits = ( m_filter.maskBits & ~m_filter.categoryBits ),
+	};
+
 	for ( int iteration = 0; iteration < 5; ++iteration )
 	{
 		m_planeCount = 0;
 
-		b2World_CollideMover( m_worldId, m_position, &m_capsule, m_collideFilter, PlaneResultFcn, this );
+		b2World_CollideMover( m_worldId, m_position, &m_capsule, m_filter, PlaneResultFcn, this );
 		b2PlaneSolverResult result = b2SolvePlanes( target - m_position, m_planes, m_planeCount );
 
 		m_totalIterations += result.iterationCount;
 
-		float fraction = b2World_CastMover( m_worldId, m_position, &m_capsule, result.delta, m_castFilter );
+		float fraction = b2World_CastMover( m_worldId, m_position, &m_capsule, result.delta, castFilter );
 
 		b2Vec2 delta = fraction * result.delta;
 		m_position = m_position + delta;

@@ -12,12 +12,27 @@ struct DynamicMoverDef
 	b2Capsule capsule = {};
 	float density = 1.0f;
 	b2Filter filter = b2DefaultFilter();
+	float jumpSpeed = 5.0f;
+	float maxSpeed = 6.0f;
+	float minSpeed = 0.1f;
+	float stopSpeed = 3.0f;
+	float accelerate = 20.0f;
+	float airSteer = 0.2f;
+	float friction = 8.0f;
+	float gravityScale = 1.5f;
+	float maxGroundForce = 70.0f;
+	float maxAirForce = 10.0f;
+	float pogoRestLength = 0.9f;
+	float pogoHertz = 5.0f;
+	float pogoDampingRatio = 0.8f;
+	float pogoCompressionScale = 100.0f;
+	float pogoTensionScale = 100.0f;
 };
 
-/// Dynamic character mover. The capsule is a rigid body with a locked rotation, so it
-/// collides and is pushed like everything else in the world. A mover joint drives it to
-/// the target velocity and a pogo joint holds it above the ground so it can ride over
-/// steps without touching the capsule.
+// Dynamic character mover. The capsule is a rigid body with a locked rotation, so it
+// collides and is pushed like everything else in the world. A mover joint drives it to
+// the target velocity and a pogo joint holds it above the ground so it can ride over
+// steps without touching the capsule.
 class DynamicMover
 {
 public:
@@ -26,13 +41,13 @@ public:
 	void Create( b2WorldId worldId, const DynamicMoverDef* def );
 	void Destroy();
 
-	/// Advance the mover. Throttle is the horizontal input on [-1, 1].
+	// Advance the mover. Throttle is the horizontal input on [-1, 1].
 	void Solve( float timeStep, float throttle );
 
-	/// Jump if grounded. Returns false when airborne.
+	// Jump if grounded. Returns false when airborne.
 	bool Jump();
 
-	/// Gravity scale is used to size the pogo forces, so change it here.
+	// Gravity scale is used to size the pogo forces, so change it here.
 	void SetGravityScale( float gravityScale );
 
 	float m_jumpSpeed;
@@ -41,17 +56,17 @@ public:
 	float m_stopSpeed;
 	float m_accelerate;
 
-	/// Fraction of the ground acceleration available in the air.
+	// Fraction of the ground acceleration available in the air.
 	float m_airSteer;
 
-	/// Ground friction in units of 1/time.
+	// Ground friction in units of 1/time.
 	float m_friction;
 
-	/// A character usually wants to fall faster than the rest of the world.
+	// A character usually wants to fall faster than the rest of the world.
 	float m_gravityScale;
 
-	/// Force budget the mover joint has for reaching the target velocity. The air value
-	/// is small so the character keeps its momentum while jumping.
+	// Force budget the mover joint has for reaching the target velocity. The air value
+	// is small so the character keeps its momentum while jumping.
 	float m_maxGroundForce;
 	float m_maxAirForce;
 
@@ -59,18 +74,16 @@ public:
 	float m_pogoHertz;
 	float m_pogoDampingRatio;
 
-	/// Pogo force limits as a multiple of the mover weight.
+	// Pogo force limits as a multiple of the mover weight.
 	float m_pogoCompressionScale;
 	float m_pogoTensionScale;
 
-	/// Surfaces steeper than this are not ground.
+	// Surfaces steeper than this are not ground.
 	float m_minGroundNormalY;
 
 	b2Capsule m_capsule;
 	float m_density;
-
-	/// Ground probe filter.
-	b2QueryFilter m_pogoFilter;
+	b2Filter m_filter;
 
 	b2WorldId m_worldId;
 	b2BodyId m_groundId;
@@ -82,13 +95,13 @@ public:
 	bool m_onGround;
 	bool m_jumped;
 
-	/// Pogo joint state, carried across the joint being recreated each solve.
+	// Pogo joint state, carried across the joint being recreated each solve.
 	float m_pogoImpulse;
 	float m_pogoVelocity;
 	float m_pogoLength;
 
-	/// Ground probe from the last solve, kept for debug drawing. The probe ends at
-	/// the origin plus the fraction of the translation.
+	// Ground probe from the last solve, kept for debug drawing. The probe ends at
+	// the origin plus the fraction of the translation.
 	b2Pos m_pogoOrigin;
 	b2Vec2 m_pogoTranslation;
 	float m_pogoFraction;

@@ -45,12 +45,11 @@ public:
 
 		context->debugDraw.drawJoints = false;
 
-		m_mover.m_collideFilter = { MoverBit, StaticBit | DynamicBit | MoverBit };
-
-		// Movers don't sweep against other movers, allows for soft collision
-		m_mover.m_castFilter = { MoverBit, StaticBit | DynamicBit };
-		m_mover.m_pogoFilter = { MoverBit, StaticBit | DynamicBit };
-		m_mover.Create( m_worldId, { 2.0f, 8.0f } );
+		GeometricMoverDef moverDef;
+		moverDef.position = { 0.0f, 8.0f };
+		moverDef.capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.3f };
+		moverDef.filter = { MoverBit, StaticBit | DynamicBit | MoverBit };
+		m_mover.Create( m_worldId, &moverDef );
 
 		b2BodyId groundId1;
 		{
@@ -127,7 +126,7 @@ public:
 		}
 
 		{
-			b2Polygon box = b2MakeBox( 0.5f, 0.125f );
+			b2Polygon box = b2MakeBox( 0.55f, 0.125f );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 
@@ -387,9 +386,7 @@ public:
 
 	GeometricMover m_mover;
 	b2BodyId m_elevatorId;
-	b2ShapeId m_ballId;
 	MoverShapeUserData m_friendlyShape;
-	MoverShapeUserData m_elevatorShape;
 	float m_time;
 	bool m_jumpReleased;
 	bool m_lockCamera;
@@ -415,9 +412,8 @@ public:
 		{
 			DynamicMoverDef def;
 			def.position = { 0.0f, 8.0f };
-			def.filter.categoryBits = MoverBit;
 			def.capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.3f };
-			m_mover.m_pogoFilter = { MoverBit, StaticBit | DynamicBit };
+			def.filter = { MoverBit, StaticBit | DynamicBit };
 			m_mover.Create( m_worldId, &def );
 		}
 
@@ -487,9 +483,8 @@ public:
 			b2CreateChain( groundId2, &chainDef );
 		}
 
-#if 1
 		{
-			b2Polygon box = b2MakeBox( 0.5f, 0.125f );
+			b2Polygon box = b2MakeBox( 0.55f, 0.125f );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 
 			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
@@ -598,7 +593,6 @@ public:
 
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
-#endif
 
 		m_jumpReleased = true;
 		m_lockCamera = true;

@@ -47,8 +47,8 @@ DynamicMover::DynamicMover()
 
 	m_capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.3f };
 	m_density = 1.0f;
-	m_pogoFilter = b2DefaultQueryFilter();
 
+	m_filter = b2DefaultFilter();
 	m_worldId = b2_nullWorldId;
 	m_groundId = b2_nullBodyId;
 	m_moverId = b2_nullBodyId;
@@ -71,6 +71,25 @@ DynamicMover::DynamicMover()
 
 void DynamicMover::Create( b2WorldId worldId, const DynamicMoverDef* def )
 {
+	m_capsule = def->capsule;
+	m_filter = def->filter;
+	m_jumpSpeed = def->jumpSpeed;
+	m_maxSpeed = def->maxSpeed;
+	m_minSpeed = def->minSpeed;
+	m_stopSpeed = def->stopSpeed;
+	m_accelerate = def->accelerate;
+	m_airSteer = def->airSteer;
+	m_friction = def->friction;
+	m_gravityScale = def->gravityScale;
+	m_maxGroundForce = def->maxGroundForce;
+	m_maxAirForce = def->maxAirForce;
+	m_pogoRestLength = def->pogoRestLength;
+	m_pogoHertz = def->pogoHertz;
+	m_pogoDampingRatio = def->pogoDampingRatio;
+	m_pogoCompressionScale = def->pogoCompressionScale;
+	m_pogoTensionScale = def->pogoTensionScale;
+	m_minGroundNormalY = 0.7f;
+
 	m_worldId = worldId;
 	m_velocity = b2Vec2_zero;
 	m_onGround = false;
@@ -220,8 +239,12 @@ void DynamicMover::Solve( float timeStep, float throttle )
 	b2Pos position = b2Body_GetPosition( m_moverId );
 	b2Pos origin = position + m_capsule.center1;
 
+	b2QueryFilter queryFilter = {
+		.categoryBits = m_filter.categoryBits,
+		.maskBits = m_filter.maskBits,
+	};
 	CastResult castResult = {};
-	b2World_CastRay( m_worldId, origin, translation, m_pogoFilter, CastCallback, &castResult );
+	b2World_CastRay( m_worldId, origin, translation, queryFilter, CastCallback, &castResult );
 
 	m_pogoOrigin = origin;
 	m_pogoTranslation = translation;
