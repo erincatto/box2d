@@ -12,6 +12,10 @@
 #include <intrin.h>
 #endif
 
+#if defined( _M_X64 ) || defined( __x86_64__ ) || defined( _M_IX86 ) || defined( __i386__ )
+#include <immintrin.h>
+#endif
+
 static inline void b2AtomicStoreInt( b2AtomicInt* a, int value )
 {
 #if defined( _MSC_VER )
