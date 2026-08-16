@@ -573,13 +573,18 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 		b2ShapeId shapeIdA = { shapeA->id + 1, world->worldId, shapeA->generation };
 		b2ShapeId shapeIdB = { shapeB->id + 1, world->worldId, shapeB->generation };
 
-		// this call assumes thread safety
+		// This call assumes thread safety.
 		touching = world->preSolveFcn( shapeIdA, shapeIdB, &contactSim->manifold, world->preSolveContext );
 		if ( touching == false )
 		{
-			// disable contact
+			// Disable contact
 			pointCount = 0;
 			contactSim->manifold.pointCount = 0;
+		}
+		else
+		{
+			// Refresh
+			pointCount = contactSim->manifold.pointCount;
 		}
 	}
 

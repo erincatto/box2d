@@ -32,7 +32,7 @@ struct DynamicMoverDef
 
 // Dynamic character mover. The capsule is a rigid body with a locked rotation, so it
 // collides and is pushed like everything else in the world. A mover joint drives it to
-// the target velocity and a pogo joint holds it above the ground so it can ride over
+// the target velocity and a pogo joint holds it above the ground so it can climb
 // steps without touching the capsule.
 class DynamicMover
 {
@@ -83,7 +83,6 @@ public:
 	float m_minGroundNormalY;
 
 	b2Capsule m_capsule;
-	float m_density;
 	b2Filter m_filter;
 
 	b2WorldId m_worldId;

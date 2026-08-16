@@ -136,15 +136,16 @@ float b2RevoluteJoint_GetUpperLimit( b2JointId jointId )
 
 void b2RevoluteJoint_SetLimits( b2JointId jointId, float lower, float upper )
 {
-	b2World* world = b2GetWorld( jointId.world0 );
-	B2_REC( world, RevoluteJointSetLimits, jointId, lower, upper );
 	B2_ASSERT( lower <= upper );
-	B2_ASSERT( lower >= -0.99f * B2_PI );
-	B2_ASSERT( upper <= 0.99f * B2_PI );
+
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, RevoluteJointSetLimits, jointId, lower, upper );\
 
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_revoluteJoint );
-	joint->revoluteJoint.lowerAngle = b2MinFloat( lower, upper );
-	joint->revoluteJoint.upperAngle = b2MaxFloat( lower, upper );
+	float lowerAngle = b2MinFloat( lower, upper );
+	float upperAngle = b2MaxFloat( lower, upper );
+	joint->revoluteJoint.lowerAngle = b2ClampFloat( lowerAngle, -0.99f * B2_PI, 0.99f * B2_PI );
+	joint->revoluteJoint.upperAngle = b2ClampFloat( upperAngle, -0.99f * B2_PI, 0.99f * B2_PI );
 }
 
 void b2RevoluteJoint_EnableMotor( b2JointId jointId, bool enableMotor )

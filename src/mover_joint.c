@@ -13,8 +13,9 @@
 
 void b2MoverJoint_SetLinearVelocity( b2JointId jointId, b2Vec2 velocity )
 {
-	//b2World* world = b2GetWorld( jointId.world0 );
-	// B2_REC( world, MoverJointSetLinearVelocity, jointId, velocity );
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, MoverJointSetLinearVelocity, jointId, velocity );
+
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_moverJoint );
 	joint->moverJoint.linearVelocity = velocity;
 }
@@ -27,8 +28,9 @@ b2Vec2 b2MoverJoint_GetLinearVelocity( b2JointId jointId )
 
 void b2MoverJoint_SetMaxVelocityForce( b2JointId jointId, b2Vec2 maxForce )
 {
-	//b2World* world = b2GetWorld( jointId.world0 );
-	// B2_REC( world, MoverJointSetMaxVelocityForce, jointId, maxForce );
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, MoverJointSetMaxVelocityForce, jointId, maxForce );
+
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_moverJoint );
 	joint->moverJoint.maxVelocityForce = maxForce;
 }
@@ -41,7 +43,7 @@ b2Vec2 b2MoverJoint_GetMaxVelocityForce( b2JointId jointId )
 
 b2Vec2 b2GetMoverJointForce( b2World* world, b2JointSim* base )
 {
-	b2Vec2 force = b2MulSV( world->inv_h, base->moverJoint.linearVelocityImpulse);
+	b2Vec2 force = b2MulSV( world->inv_h, base->moverJoint.linearVelocityImpulse );
 	return force;
 }
 

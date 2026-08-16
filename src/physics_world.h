@@ -178,10 +178,8 @@ typedef struct b2World
 	b2Capacity maxCapacity;
 
 	b2PreSolveFcn* preSolveFcn;
-	void* preSolveContext;
-
 	b2PreContinuousFcn* preContinuousFcn;
-	void* preContinuousContext;
+	void* preSolveContext;
 
 	b2CustomFilterFcn* customFilterFcn;
 	void* customFilterContext;
@@ -217,9 +215,6 @@ typedef struct b2World
 	bool enableContinuous;
 	bool enableSpeculative;
 	bool inUse;
-
-	// todo temp
-	int pogoJointIndex;
 } b2World;
 
 b2World* b2GetWorldFromId( b2WorldId id );

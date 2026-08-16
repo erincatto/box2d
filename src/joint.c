@@ -212,6 +212,13 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 	b2Body* bodyA = b2GetBodyFullId( world, def->bodyIdA );
 	b2Body* bodyB = b2GetBodyFullId( world, def->bodyIdB );
 
+	// If the joint prevents collisions, then destroy all contacts between attached bodies.
+	// Do this first so world arrays are not disturbed in the following code.
+	if ( def->collideConnected == false )
+	{
+		b2DestroyContactsBetweenBodies( world, bodyA, bodyB );
+	}
+
 	int bodyIdA = bodyA->id;
 	int bodyIdB = bodyB->id;
 	int maxSetIndex = b2MaxInt( bodyA->setIndex, bodyB->setIndex );
@@ -235,7 +242,6 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 	joint->drawScale = def->drawScale;
 	joint->type = type;
 	joint->collideConnected = def->collideConnected;
-	// joint->isMarked = false;
 
 	// Doubly linked list on bodyA
 	joint->edges[0].bodyId = bodyIdA;
@@ -377,12 +383,6 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 	{
 		// Add edge to island graph
 		b2LinkJoint( world, joint );
-	}
-
-	// If the joint prevents collisions, then destroy all contacts between attached bodies
-	if ( def->collideConnected == false )
-	{
-		b2DestroyContactsBetweenBodies( world, bodyA, bodyB );
 	}
 
 	b2ValidateSolverSets( world );
@@ -550,17 +550,13 @@ b2JointId b2CreatePogoJoint( b2WorldId worldId, const b2PogoJointDef* def )
 	joint->pogoJoint.impulse = def->impulse;
 	joint->pogoJoint.velocity = def->velocity;
 
-	// Register special joint with world
-	B2_ASSERT( world->pogoJointIndex == B2_NULL_INDEX );
-	world->pogoJointIndex = joint->jointId;
-
 	b2JointId jointId = {
 		.index1 = joint->jointId + 1,
 		.world0 = world->worldId,
 		.generation = pair.joint->generation,
 	};
 
-	// B2_REC_CREATE( world, CreatePogoJoint, jointId, worldId, *def );
+	B2_REC_CREATE( world, CreatePogoJoint, jointId, worldId, *def );
 
 	return jointId;
 }
@@ -725,11 +721,6 @@ b2JointId b2CreateWheelJoint( b2WorldId worldId, const b2WheelJointDef* def )
 void b2DestroyJointInternal( b2World* world, b2Joint* joint )
 {
 	int jointId = joint->jointId;
-
-	if ( world->pogoJointIndex == jointId )
-	{
-		world->pogoJointIndex = B2_NULL_INDEX;
-	}
 
 	b2JointEdge* edgeA = joint->edges + 0;
 	b2JointEdge* edgeB = joint->edges + 1;

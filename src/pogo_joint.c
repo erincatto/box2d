@@ -15,8 +15,9 @@ static const b2Vec2 b2_pogoAxis = { 0.0f, 1.0f };
 
 void b2PogoJoint_SetRestLength( b2JointId jointId, float length )
 {
-	// b2World* world = b2GetWorld( jointId.world0 );
-	// B2_REC( world, PogoJointSetLinearHertz, jointId, hertz );
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, PogoJointSetRestLength, jointId, length );
+	
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_pogoJoint );
 	joint->pogoJoint.restLength = length;
 }
@@ -35,18 +36,20 @@ float b2PogoJoint_GetSpringHertz( b2JointId jointId )
 
 void b2PogoJoint_SetSpringHertz( b2JointId jointId, float hertz )
 {
-	// b2World* world = b2GetWorld( jointId.world0 );
-	// B2_REC( world, PogoJointSetLinearHertz, jointId, hertz );
+	 b2World* world = b2GetWorld( jointId.world0 );
+	 B2_REC( world, PogoJointSetSpringHertz, jointId, hertz );
+
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_pogoJoint );
 	joint->pogoJoint.hertz = hertz;
 }
 
-void b2PogoJoint_SetSpringDampingRatio( b2JointId jointId, float damping )
+void b2PogoJoint_SetSpringDampingRatio( b2JointId jointId, float dampingRatio )
 {
-	// b2World* world = b2GetWorld( jointId.world0 );
-	// B2_REC( world, PogoJointSetLinearDampingRatio, jointId, damping );
+	 b2World* world = b2GetWorld( jointId.world0 );
+	 B2_REC( world, PogoJointSetSpringDampingRatio, jointId, dampingRatio );
+
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_pogoJoint );
-	joint->pogoJoint.dampingRatio = damping;
+	joint->pogoJoint.dampingRatio = dampingRatio;
 }
 
 float b2PogoJoint_GetSpringDampingRatio( b2JointId jointId )
@@ -87,7 +90,7 @@ float b2PogoJoint_GetVelocity( b2JointId jointId )
 
 b2Vec2 b2GetPogoJointForce( b2World* world, b2JointSim* base )
 {
-	b2Vec2 force = b2MulSV( world->inv_h, base->pogoJoint.normal );
+	b2Vec2 force = b2MulSV( world->inv_h * base->pogoJoint.impulse, base->pogoJoint.normal );
 	return force;
 }
 
@@ -164,6 +167,12 @@ void b2WarmStartPogoJoint( b2JointSim* base, b2StepContext* context )
 
 	b2PogoJoint* joint = &base->pogoJoint;
 
+	if ( joint->hertz == 0.0f )
+	{
+		joint->impulse = 0.0f;
+		return;
+	}
+
 	// dummy state for static bodies
 	b2BodyState dummyState = b2_identityBodyState;
 
@@ -204,6 +213,7 @@ void b2SolvePogoJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 	b2PogoJoint* joint = &base->pogoJoint;
 	if ( joint->hertz == 0.0f )
 	{
+		joint->impulse = 0.0f;
 		return;
 	}
 
@@ -218,7 +228,6 @@ void b2SolvePogoJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 	b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
 	b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
 
-	b2Vec2 axis = joint->normal;
 
 	float bias = 0.0f;
 	if ( useBias )
@@ -230,14 +239,19 @@ void b2SolvePogoJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 		b2Vec2 dcA = stateA->deltaPosition;
 		b2Vec2 dcB = stateB->deltaPosition;
 		b2Vec2 d = b2Add( b2Add( b2Sub( dcB, dcA ), b2Sub( rB, rA ) ), joint->deltaCenter );
-		//float c = b2Dot( joint->normal, d ) - joint->restLength;
-		float c = d.y - joint->restLength;
+
+		// The pogo axis is usually fixed as the world y-axis. Different than the ground normal.
+		b2Vec2 pogoAxis = b2RotateVector( joint->frameB.q, b2_pogoAxis );
+		float c = b2Dot( pogoAxis, d ) - joint->restLength;
+
+		// This could be divided by dot(joint->normal, pogoAxis) to account for the constraint
+		// direction, but I'd rather diminish the pogo recovery rate than risk making it huge.
 		joint->velocity = b2SpringDamper( joint->hertz, joint->dampingRatio, c, joint->velocity, context->h );
 		bias = -joint->velocity;
 	}
 
 	b2Vec2 vr = b2Sub( b2Add( vB, b2CrossSV( wB, rB ) ), b2Add( vA, b2CrossSV( wA, rA ) ) );
-	float cdot = b2Dot( axis, vr );
+	float cdot = b2Dot( joint->normal, vr );
 
 	float maxTensionImpulse = context->h * joint->maxTensionForce;
 	float maxCompressionImpulse = context->h * joint->maxCompressionForce;
@@ -246,7 +260,7 @@ void b2SolvePogoJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 	joint->impulse = b2ClampFloat( joint->impulse + impulse, -maxTensionImpulse, maxCompressionImpulse );
 	impulse = joint->impulse - oldImpulse;
 
-	b2Vec2 P = b2MulSV( impulse, axis );
+	b2Vec2 P = b2MulSV( impulse, joint->normal );
 	vA = b2MulSub( vA, mA, P );
 	wA -= iA * b2Cross( rA, P );
 	vB = b2MulAdd( vB, mB, P );

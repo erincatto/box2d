@@ -143,11 +143,9 @@ B2_API float b2World_GetHitEventThreshold( b2WorldId worldId );
 /// Register the custom filter callback. This is optional.
 B2_API void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterFcn* fcn, void* context );
 
-/// Register the pre-solve callback. This is optional.
-B2_API void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* fcn, void* context );
-
-/// Register the pre-continuous callback. This is optional.
-B2_API void b2World_SetPreContinuousCallback( b2WorldId worldId, b2PreContinuousFcn* fcn, void* context );
+/// Register the pre-solve and pre-continuous callback. This is optional.
+B2_API void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* preSolveFcn, b2PreContinuousFcn* preContinuousFcn,
+										 void* context );
 
 /// Set the gravity vector for the entire world. Box2D has no concept of an up direction and this
 /// is left as a decision for the application. Usually in m/s^2.
@@ -511,6 +509,8 @@ B2_API b2Pos b2Body_GetWorldCenter( b2BodyId bodyId );
 /// Override the body's mass properties. Normally this is computed automatically using the
 /// shape geometry and density. This information is lost if a shape is added or removed or if the
 /// body type changes.
+/// If motion locks are used to fix rotation then the rotational inertia value is ignored and
+/// rotational inertia remains fixed at zero.
 B2_API void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData );
 
 /// Get the mass data for a body
@@ -575,7 +575,8 @@ B2_API void b2Body_Disable( b2BodyId bodyId );
 /// Enable a body by adding it to the simulation. This is expensive.
 B2_API void b2Body_Enable( b2BodyId bodyId );
 
-/// Set the motion locks on this body.
+/// Set the motion locks on this body. This causes mass properties to be recomputed because
+/// fixed rotation sets the rotational inertia to zero.
 B2_API void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks );
 
 /// Get the motion locks for this body.

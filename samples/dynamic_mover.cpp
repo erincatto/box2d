@@ -46,7 +46,6 @@ DynamicMover::DynamicMover()
 	m_minGroundNormalY = 0.7f;
 
 	m_capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.3f };
-	m_density = 1.0f;
 
 	m_filter = b2DefaultFilter();
 	m_worldId = b2_nullWorldId;
@@ -57,6 +56,7 @@ DynamicMover::DynamicMover()
 
 	m_velocity = b2Vec2_zero;
 	m_onGround = false;
+	m_walkable = false;
 	m_jumped = false;
 
 	m_pogoImpulse = 0.0f;
@@ -114,7 +114,7 @@ void DynamicMover::Create( b2WorldId worldId, const DynamicMoverDef* def )
 	m_moverId = b2CreateBody( worldId, &bodyDef );
 
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
-	shapeDef.density = m_density;
+	shapeDef.density = def->density;
 
 	// The mover joint and the pogo joint handle all the movement, surface friction would fight them
 	shapeDef.material.friction = 0.0f;

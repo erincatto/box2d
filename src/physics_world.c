@@ -334,8 +334,6 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	// Recording is started by the host with b2World_StartRecording, never from the world def
 	world->recording = NULL;
 
-	world->pogoJointIndex = B2_NULL_INDEX;
-
 	// add one to worldId so that 0 represents a null b2WorldId
 	return (b2WorldId){
 		.index1 = (uint16_t)( worldId + 1 ),
@@ -2975,28 +2973,19 @@ void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterFcn* fcn,
 	world->customFilterContext = context;
 }
 
-void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* fcn, void* context )
+void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* preSolveFcn, b2PreContinuousFcn* preContinuousFcn,
+								  void* context )
 {
 	b2World* world = b2GetWorldFromId( worldId );
-	if ( fcn != NULL && world->recording != NULL )
+	if ( (preSolveFcn != NULL || preContinuousFcn != NULL) && world->recording != NULL )
 	{
 		printf( "b2World_SetPreSolveCallback: preSolve not supported while recording\n" );
 		B2_ASSERT( false && "preSolve callbacks are not supported while recording" );
 	}
-	world->preSolveFcn = fcn;
-	world->preSolveContext = context;
-}
 
-void b2World_SetPreContinuousCallback(b2WorldId worldId, b2PreContinuousFcn* fcn, void* context)
-{
-	b2World* world = b2GetWorldFromId( worldId );
-	if ( fcn != NULL && world->recording != NULL )
-	{
-		printf( "b2World_SetPreContinuousCallback: preContinuous not supported while recording\n" );
-		B2_ASSERT( false && "preContinuous callbacks are not supported while recording" );
-	}
-	world->preContinuousFcn = fcn;
-	world->preContinuousContext = context;
+	world->preSolveFcn = preSolveFcn;
+	world->preContinuousFcn = preContinuousFcn;
+	world->preSolveContext = context;
 }
 
 void b2World_SetGravity( b2WorldId worldId, b2Vec2 gravity )

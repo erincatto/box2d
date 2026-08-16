@@ -364,6 +364,11 @@ void b2RecW_DISTANCEJOINTDEF( b2RecBuffer* buf, b2DistanceJointDef v )
 	b2RecW_F32( buf, v.motorSpeed );
 }
 
+void b2RecW_FILTERJOINTDEF( b2RecBuffer* buf, b2FilterJointDef v )
+{
+	b2RecW_JointBase( buf, &v.base );
+}
+
 void b2RecW_MOTORJOINTDEF( b2RecBuffer* buf, b2MotorJointDef v )
 {
 	b2RecW_JointBase( buf, &v.base );
@@ -379,9 +384,24 @@ void b2RecW_MOTORJOINTDEF( b2RecBuffer* buf, b2MotorJointDef v )
 	b2RecW_F32( buf, v.maxSpringTorque );
 }
 
-void b2RecW_FILTERJOINTDEF( b2RecBuffer* buf, b2FilterJointDef v )
+void b2RecW_MOVERJOINTDEF( b2RecBuffer* buf, b2MoverJointDef v )
 {
 	b2RecW_JointBase( buf, &v.base );
+	b2RecW_VEC2( buf, v.linearVelocity );
+	b2RecW_VEC2( buf, v.maxVelocityForce );
+}
+
+void b2RecW_POGOJOINTDEF( b2RecBuffer* buf, b2PogoJointDef v )
+{
+	b2RecW_JointBase( buf, &v.base );
+	b2RecW_VEC2( buf, v.normal );
+	b2RecW_F32( buf, v.hertz );
+	b2RecW_F32( buf, v.dampingRatio );
+	b2RecW_F32( buf, v.restLength );
+	b2RecW_F32( buf, v.maxTensionForce );
+	b2RecW_F32( buf, v.maxCompressionForce );
+	b2RecW_F32( buf, v.impulse );
+	b2RecW_F32( buf, v.velocity );
 }
 
 void b2RecW_PRISMATICJOINTDEF( b2RecBuffer* buf, b2PrismaticJointDef v )

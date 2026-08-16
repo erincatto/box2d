@@ -49,9 +49,7 @@ struct PlaneExtra
 // Geometric character mover. The capsule is moved by casting
 // and by solving collision planes, so the game keeps full control of the motion.
 //
-// A pogo stick spring holds the capsule above the ground so it can move up steps.
-//
-// Usage per frame: Jump() on a fresh key press, then Solve().
+// A pogo spring holds the capsule above the ground so it can move up steps.
 class GeometricMover
 {
 public:

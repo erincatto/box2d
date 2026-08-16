@@ -290,7 +290,7 @@ int TestWorldCoverage( void )
 	ENSURE( value == 100.0f );
 
 	b2World_SetCustomFilterCallback( worldId, CustomFilter, NULL );
-	b2World_SetPreSolveCallback( worldId, PreSolveStatic, NULL );
+	b2World_SetPreSolveCallback( worldId, PreSolveStatic, NULL, NULL );
 
 	b2Vec2 g = { 1.0f, 2.0f };
 	b2World_SetGravity( worldId, g );

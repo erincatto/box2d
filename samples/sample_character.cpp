@@ -190,8 +190,13 @@ public:
 			bodyDef.position = { m_elevatorBase.x, m_elevatorBase.y - m_elevatorAmplitude };
 			m_elevatorId = b2CreateBody( m_worldId, &bodyDef );
 
+			m_elevatorShape = {
+				.maxPush = 0.1f,
+				.clipVelocity = true,
+			};
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.filter = { DynamicBit, AllBits, 0 };
+			shapeDef.userData = &m_elevatorShape;
 
 			b2Polygon box = b2MakeBox( 2.0f, 0.1f );
 			b2CreatePolygonShape( m_elevatorId, &shapeDef, &box );
@@ -327,7 +332,7 @@ public:
 				throttle += 1.0f;
 			}
 
-			if ( glfwGetKey( m_context->window, GLFW_KEY_W ) )
+			if ( glfwGetKey( m_context->window, GLFW_KEY_SPACE ) )
 			{
 				if ( m_jumpReleased && m_mover.Jump() )
 				{
@@ -387,6 +392,7 @@ public:
 	GeometricMover m_mover;
 	b2BodyId m_elevatorId;
 	MoverShapeUserData m_friendlyShape;
+	MoverShapeUserData m_elevatorShape;
 	float m_time;
 	bool m_jumpReleased;
 	bool m_lockCamera;
@@ -595,8 +601,13 @@ public:
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 
-		b2World_SetPreSolveCallback( m_worldId, PreSolveStatic, this );
-		b2World_SetPreContinuousCallback( m_worldId, PreContinuousStatic, this );
+		m_preSolve = false;
+
+		// This is used for one-way collision on the kinematic elevator. But pre-solve doesn't work with recording.
+		if ( m_preSolve )
+		{
+			b2World_SetPreSolveCallback( m_worldId, PreSolveStatic, PreContinuousStatic, this );
+		}
 
 		m_jumpReleased = true;
 		m_lockCamera = true;
@@ -608,9 +619,9 @@ public:
 		b2BodyId idA = b2Shape_GetBody( shapeIdA );
 		b2BodyId idB = b2Shape_GetBody( shapeIdB );
 
-		if (B2_ID_EQUALS(idA, m_elevatorId) && B2_ID_EQUALS(idB, m_mover.m_moverId))
+		if ( B2_ID_EQUALS( idA, m_elevatorId ) && B2_ID_EQUALS( idB, m_mover.m_moverId ) )
 		{
-			if (manifold->normal.y < 0.0f)
+			if ( manifold->normal.y < 0.0f )
 			{
 				return false;
 			}
@@ -620,7 +631,7 @@ public:
 
 		if ( B2_ID_EQUALS( idA, m_mover.m_moverId ) && B2_ID_EQUALS( idB, m_elevatorId ) )
 		{
-			if (manifold->normal.y > 0.0f)
+			if ( manifold->normal.y > 0.0f )
 			{
 				return false;
 			}
@@ -744,7 +755,7 @@ public:
 				throttle += 1.0f;
 			}
 
-			if ( glfwGetKey( m_context->window, GLFW_KEY_W ) )
+			if ( glfwGetKey( m_context->window, GLFW_KEY_SPACE ) )
 			{
 				if ( m_jumpReleased && m_mover.Jump() )
 				{
@@ -789,6 +800,7 @@ public:
 	DynamicMover m_mover;
 	b2BodyId m_elevatorId;
 	float m_time;
+	bool m_preSolve;
 	bool m_jumpReleased;
 	bool m_lockCamera;
 };

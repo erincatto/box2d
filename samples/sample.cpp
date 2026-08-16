@@ -1708,7 +1708,7 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 	{
 		ImGui::TextColored( MakeColor( b2_colorRed ), "PAUSED" );
 		ImGui::SameLine();
-		ImGui::TextDisabled( "(space)" );
+		ImGui::TextDisabled( "(P)" );
 		ImGui::Separator();
 	}
 

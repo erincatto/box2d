@@ -1428,6 +1428,13 @@ void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData )
 		shapeId = s->nextShapeId;
 	}
 
+	// Motion locks take priority over mass data.
+	if ( body->flags & b2_fixedRotation )
+	{
+		body->inertia = 0.0f;
+		bodySim->invInertia = 0.0f;
+	}
+
 	body->flags &= ~b2_dirtyMass;
 }
 
@@ -1862,6 +1869,9 @@ void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks )
 			}
 		}
 	}
+
+	// Motion locks can affect mass properties.
+	b2UpdateBodyMassData( world, body );
 }
 
 b2MotionLocks b2Body_GetMotionLocks( b2BodyId bodyId )

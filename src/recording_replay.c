@@ -456,6 +456,13 @@ b2DistanceJointDef b2RecR_DISTANCEJOINTDEF( b2RecReader* rdr )
 	return def;
 }
 
+b2FilterJointDef b2RecR_FILTERJOINTDEF( b2RecReader* rdr )
+{
+	b2FilterJointDef def = b2DefaultFilterJointDef();
+	b2RecR_JointBase( rdr, &def.base );
+	return def;
+}
+
 b2MotorJointDef b2RecR_MOTORJOINTDEF( b2RecReader* rdr )
 {
 	b2MotorJointDef def = b2DefaultMotorJointDef();
@@ -473,10 +480,12 @@ b2MotorJointDef b2RecR_MOTORJOINTDEF( b2RecReader* rdr )
 	return def;
 }
 
-b2FilterJointDef b2RecR_FILTERJOINTDEF( b2RecReader* rdr )
+b2MoverJointDef b2RecR_MOVERJOINTDEF( b2RecReader* rdr )
 {
-	b2FilterJointDef def = b2DefaultFilterJointDef();
+	b2MoverJointDef def = b2DefaultMoverJointDef();
 	b2RecR_JointBase( rdr, &def.base );
+	def.linearVelocity = b2RecR_VEC2( rdr );
+	def.maxVelocityForce = b2RecR_VEC2( rdr );
 	return def;
 }
 
@@ -494,6 +503,21 @@ b2PrismaticJointDef b2RecR_PRISMATICJOINTDEF( b2RecReader* rdr )
 	def.enableMotor = b2RecR_BOOL( rdr );
 	def.maxMotorForce = b2RecR_F32( rdr );
 	def.motorSpeed = b2RecR_F32( rdr );
+	return def;
+}
+
+b2PogoJointDef b2RecR_POGOJOINTDEF( b2RecReader* rdr )
+{
+	b2PogoJointDef def = b2DefaultPogoJointDef();
+	b2RecR_JointBase( rdr, &def.base );
+	def.normal = b2RecR_VEC2( rdr );
+	def.hertz = b2RecR_F32( rdr );
+	def.dampingRatio = b2RecR_F32( rdr );
+	def.restLength = b2RecR_F32( rdr );
+	def.maxTensionForce = b2RecR_F32( rdr );
+	def.maxCompressionForce = b2RecR_F32( rdr );
+	def.impulse = b2RecR_F32( rdr );
+	def.velocity = b2RecR_F32( rdr );
 	return def;
 }
 
@@ -1190,15 +1214,6 @@ static void b2RecDispatch_CreateDistanceJoint( const b2RecArgs_CreateDistanceJoi
 	b2RecCheckJointId( rdr, b2CreateDistanceJoint( rdr->replayWorldId, &def ), recId );
 }
 
-static void b2RecDispatch_CreateMotorJoint( const b2RecArgs_CreateMotorJoint* a, b2RecReader* rdr )
-{
-	b2JointId recId = b2RecR_JOINTID( rdr );
-	b2MotorJointDef def = a->def;
-	def.base.bodyIdA = b2RecMakeBodyId( rdr, def.base.bodyIdA );
-	def.base.bodyIdB = b2RecMakeBodyId( rdr, def.base.bodyIdB );
-	b2RecCheckJointId( rdr, b2CreateMotorJoint( rdr->replayWorldId, &def ), recId );
-}
-
 static void b2RecDispatch_CreateFilterJoint( const b2RecArgs_CreateFilterJoint* a, b2RecReader* rdr )
 {
 	b2JointId recId = b2RecR_JOINTID( rdr );
@@ -1208,6 +1223,24 @@ static void b2RecDispatch_CreateFilterJoint( const b2RecArgs_CreateFilterJoint* 
 	b2RecCheckJointId( rdr, b2CreateFilterJoint( rdr->replayWorldId, &def ), recId );
 }
 
+static void b2RecDispatch_CreateMotorJoint( const b2RecArgs_CreateMotorJoint* a, b2RecReader* rdr )
+{
+	b2JointId recId = b2RecR_JOINTID( rdr );
+	b2MotorJointDef def = a->def;
+	def.base.bodyIdA = b2RecMakeBodyId( rdr, def.base.bodyIdA );
+	def.base.bodyIdB = b2RecMakeBodyId( rdr, def.base.bodyIdB );
+	b2RecCheckJointId( rdr, b2CreateMotorJoint( rdr->replayWorldId, &def ), recId );
+}
+
+static void b2RecDispatch_CreateMoverJoint( const b2RecArgs_CreateMoverJoint* a, b2RecReader* rdr )
+{
+	b2JointId recId = b2RecR_JOINTID( rdr );
+	b2MoverJointDef def = a->def;
+	def.base.bodyIdA = b2RecMakeBodyId( rdr, def.base.bodyIdA );
+	def.base.bodyIdB = b2RecMakeBodyId( rdr, def.base.bodyIdB );
+	b2RecCheckJointId( rdr, b2CreateMoverJoint( rdr->replayWorldId, &def ), recId );
+}
+
 static void b2RecDispatch_CreatePrismaticJoint( const b2RecArgs_CreatePrismaticJoint* a, b2RecReader* rdr )
 {
 	b2JointId recId = b2RecR_JOINTID( rdr );
@@ -1215,6 +1248,15 @@ static void b2RecDispatch_CreatePrismaticJoint( const b2RecArgs_CreatePrismaticJ
 	def.base.bodyIdA = b2RecMakeBodyId( rdr, def.base.bodyIdA );
 	def.base.bodyIdB = b2RecMakeBodyId( rdr, def.base.bodyIdB );
 	b2RecCheckJointId( rdr, b2CreatePrismaticJoint( rdr->replayWorldId, &def ), recId );
+}
+
+static void b2RecDispatch_CreatePogoJoint( const b2RecArgs_CreatePogoJoint* a, b2RecReader* rdr )
+{
+	b2JointId recId = b2RecR_JOINTID( rdr );
+	b2PogoJointDef def = a->def;
+	def.base.bodyIdA = b2RecMakeBodyId( rdr, def.base.bodyIdA );
+	def.base.bodyIdB = b2RecMakeBodyId( rdr, def.base.bodyIdB );
+	b2RecCheckJointId( rdr, b2CreatePogoJoint( rdr->replayWorldId, &def ), recId );
 }
 
 static void b2RecDispatch_CreateRevoluteJoint( const b2RecArgs_CreateRevoluteJoint* a, b2RecReader* rdr )
@@ -1391,6 +1433,34 @@ static void b2RecDispatch_MotorJointSetMaxSpringForce( const b2RecArgs_MotorJoin
 static void b2RecDispatch_MotorJointSetMaxSpringTorque( const b2RecArgs_MotorJointSetMaxSpringTorque* a, b2RecReader* rdr )
 {
 	b2MotorJoint_SetMaxSpringTorque( b2RecMakeJointId( rdr, a->joint ), a->maxTorque );
+}
+
+// Mover joint
+static void b2RecDispatch_MoverJointSetLinearVelocity( const b2RecArgs_MoverJointSetLinearVelocity* a, b2RecReader* rdr )
+{
+	b2MoverJoint_SetLinearVelocity( b2RecMakeJointId( rdr, a->joint ), a->velocity );
+}
+
+static void b2RecDispatch_MoverJointSetMaxVelocityForce( const b2RecArgs_MoverJointSetMaxVelocityForce* a, b2RecReader* rdr )
+{
+	b2MoverJoint_SetMaxVelocityForce( b2RecMakeJointId( rdr, a->joint ), a->maxForce );
+}
+
+// Pogo joint
+
+static void b2RecDispatch_PogoJointSetRestLength( const b2RecArgs_PogoJointSetRestLength* a, b2RecReader* rdr )
+{
+	b2PogoJoint_SetRestLength( b2RecMakeJointId( rdr, a->joint ), a->length );
+}
+
+static void b2RecDispatch_PogoJointSetSpringHertz( const b2RecArgs_PogoJointSetSpringHertz* a, b2RecReader* rdr )
+{
+	b2PogoJoint_SetSpringHertz( b2RecMakeJointId( rdr, a->joint ), a->hertz );
+}
+
+static void b2RecDispatch_PogoJointSetSpringDampingRatio( const b2RecArgs_PogoJointSetSpringDampingRatio* a, b2RecReader* rdr )
+{
+	b2PogoJoint_SetSpringDampingRatio( b2RecMakeJointId( rdr, a->joint ), a->dampingRatio );
 }
 
 // Prismatic joint

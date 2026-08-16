@@ -1260,16 +1260,15 @@ typedef bool b2CustomFilterFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* co
 typedef bool b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context );
 
 /// Prototype for a pre-continuous callback.
-/// This is called after a contact is updated. This allows you to inspect a
-/// contact before it goes to the solver. If you are careful, you can modify the
-/// contact manifold (e.g. modify the normal).
+/// This is called when a time of impact event is computed in continuous collision. This function
+/// can be used to skip the event. Unlike the pre-solve callback, this only supplies the point and normal.
+/// At this stage of the solver the manifold may not exist or may be stale.
 /// Notes:
 /// - this function must be thread-safe
 /// - this is only called if the shape has enabled pre-solve events
 /// - this is called only for awake dynamic bodies
 /// - this is not called for sensors
-/// - the supplied manifold has impulse values from the previous step
-/// Return false if you want to disable the contact this step
+/// Return false if you want to disable the time of impact event.
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
 typedef bool b2PreContinuousFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context );
