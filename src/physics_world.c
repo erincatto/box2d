@@ -2766,40 +2766,6 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, b2Pos origin, const b2ShapePro
 	return treeStats;
 }
 
-void b2CastShapeInternal( b2World* world, b2Pos origin, const b2ShapeProxy* proxy, b2Vec2 translation,
-							   b2QueryFilter filter, b2CastResultFcn* fcn, void* context )
-{
-	B2_ASSERT( b2IsValidPosition( origin ) );
-	B2_ASSERT( b2IsValidVec2( translation ) );
-
-	WorldShapeCastContext worldContext = { 0 };
-	worldContext.world = world;
-	worldContext.fcn = fcn;
-	worldContext.filter = filter;
-	worldContext.fraction = 1.0f;
-	worldContext.origin = origin;
-	worldContext.input.proxy = *proxy;
-	worldContext.input.translation = translation;
-	worldContext.input.maxFraction = 1.0f;
-	worldContext.userContext = context;
-
-	b2AABB localBox = b2MakeAABB( proxy->points, proxy->count, proxy->radius );
-	b2AABB box = b2OffsetAABB( localBox, origin );
-	b2BoxCastInput treeInput = { box, translation, 1.0f };
-
-	for ( int i = 0; i < b2_bodyTypeCount; ++i )
-	{
-		b2DynamicTree_BoxCast( world->broadPhase.trees + i, &treeInput, filter.maskBits, ShapeCastCallback, &worldContext );
-
-		if ( worldContext.fraction == 0.0f )
-		{
-			break;
-		}
-
-		treeInput.maxFraction = worldContext.fraction;
-	}
-}
-
 typedef struct WorldMoverCastContext
 {
 	b2World* world;
