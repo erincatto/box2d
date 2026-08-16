@@ -414,6 +414,7 @@ public:
 			def.position = { 0.0f, 8.0f };
 			def.capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.3f };
 			def.filter = { MoverBit, StaticBit | DynamicBit };
+			def.enablePreSolveEvents = true;
 			m_mover.Create( m_worldId, &def );
 		}
 
@@ -572,7 +573,7 @@ public:
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
-			bodyDef.position = { 160.0f, 5.0f };
+			bodyDef.position = { 160.0f, 4.0f };
 			bodyDef.type = b2_dynamicBody;
 			b2BodyId body = b2CreateBody( m_worldId, &bodyDef );
 
@@ -594,9 +595,82 @@ public:
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 
+		b2World_SetPreSolveCallback( m_worldId, PreSolveStatic, this );
+		b2World_SetPreContinuousCallback( m_worldId, PreContinuousStatic, this );
+
 		m_jumpReleased = true;
 		m_lockCamera = true;
 		m_time = 0.0f;
+	}
+
+	bool PreSolve( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold )
+	{
+		b2BodyId idA = b2Shape_GetBody( shapeIdA );
+		b2BodyId idB = b2Shape_GetBody( shapeIdB );
+
+		if (B2_ID_EQUALS(idA, m_elevatorId) && B2_ID_EQUALS(idB, m_mover.m_moverId))
+		{
+			if (manifold->normal.y < 0.0f)
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		if ( B2_ID_EQUALS( idA, m_mover.m_moverId ) && B2_ID_EQUALS( idB, m_elevatorId ) )
+		{
+			if (manifold->normal.y > 0.0f)
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		return true;
+	}
+
+	static bool PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context )
+	{
+		DynamicMoverSample* sample = (DynamicMoverSample*)context;
+		return sample->PreSolve( shapeIdA, shapeIdB, manifold );
+	}
+
+	bool PreContinuous( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal )
+	{
+		(void)point;
+
+		b2BodyId idA = b2Shape_GetBody( shapeIdA );
+		b2BodyId idB = b2Shape_GetBody( shapeIdB );
+
+		if ( B2_ID_EQUALS( idA, m_elevatorId ) && B2_ID_EQUALS( idB, m_mover.m_moverId ) )
+		{
+			if ( normal.y < 0.0f )
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		if ( B2_ID_EQUALS( idA, m_mover.m_moverId ) && B2_ID_EQUALS( idB, m_elevatorId ) )
+		{
+			if ( normal.y > 0.0f )
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		return true;
+	}
+
+	static bool PreContinuousStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context )
+	{
+		DynamicMoverSample* sample = (DynamicMoverSample*)context;
+		return sample->PreContinuous( shapeIdA, shapeIdB, point, normal );
 	}
 
 	bool DrawControls() override

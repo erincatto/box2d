@@ -12,21 +12,22 @@ struct DynamicMoverDef
 	b2Capsule capsule = {};
 	float density = 1.0f;
 	b2Filter filter = b2DefaultFilter();
-	float jumpSpeed = 5.0f;
+	float jumpSpeed = 7.0f;
 	float maxSpeed = 6.0f;
 	float minSpeed = 0.1f;
 	float stopSpeed = 3.0f;
 	float accelerate = 20.0f;
-	float airSteer = 0.2f;
+	float airSteer = 0.5f;
 	float friction = 8.0f;
 	float gravityScale = 1.5f;
 	float maxGroundForce = 70.0f;
-	float maxAirForce = 10.0f;
+	float maxAirForce = 20.0f;
 	float pogoRestLength = 0.9f;
 	float pogoHertz = 5.0f;
 	float pogoDampingRatio = 0.8f;
 	float pogoCompressionScale = 100.0f;
 	float pogoTensionScale = 100.0f;
+	bool enablePreSolveEvents = false;
 };
 
 // Dynamic character mover. The capsule is a rigid body with a locked rotation, so it
@@ -93,6 +94,7 @@ public:
 
 	b2Vec2 m_velocity;
 	bool m_onGround;
+	bool m_walkable;
 	bool m_jumped;
 
 	// Pogo joint state, carried across the joint being recreated each solve.

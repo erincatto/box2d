@@ -252,12 +252,11 @@ static bool CustomFilter( b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* context 
 	return true;
 }
 
-static bool PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context )
+static bool PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context )
 {
 	(void)shapeIdA;
 	(void)shapeIdB;
-	(void)point;
-	(void)normal;
+	(void)manifold;
 	ENSURE( context == NULL );
 	return false;
 }

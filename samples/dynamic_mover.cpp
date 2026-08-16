@@ -37,7 +37,7 @@ DynamicMover::DynamicMover()
 	m_friction = 8.0f;
 	m_gravityScale = 1.5f;
 	m_maxGroundForce = 70.0f;
-	m_maxAirForce = 10.0f;
+	m_maxAirForce = 20.0f;
 	m_pogoRestLength = 0.9f;
 	m_pogoHertz = 5.0f;
 	m_pogoDampingRatio = 0.8f;
@@ -93,6 +93,7 @@ void DynamicMover::Create( b2WorldId worldId, const DynamicMoverDef* def )
 	m_worldId = worldId;
 	m_velocity = b2Vec2_zero;
 	m_onGround = false;
+	m_walkable = false;
 	m_jumped = false;
 	m_pogoImpulse = 0.0f;
 	m_pogoVelocity = 0.0f;
@@ -118,6 +119,7 @@ void DynamicMover::Create( b2WorldId worldId, const DynamicMoverDef* def )
 	// The mover joint and the pogo joint handle all the movement, surface friction would fight them
 	shapeDef.material.friction = 0.0f;
 	shapeDef.filter = def->filter;
+	shapeDef.enablePreSolveEvents = def->enablePreSolveEvents;
 
 	b2CreateCapsuleShape( m_moverId, &shapeDef, &m_capsule );
 
@@ -201,7 +203,8 @@ void DynamicMover::Solve( float timeStep, float throttle )
 			m_velocity.x *= newSpeed / speed;
 		}
 
-		b2MoverJoint_SetMaxVelocityForce( m_moverJointId, { m_maxGroundForce, 0.0f } );
+		float maxForce = m_walkable ? m_maxGroundForce : 0.5f * m_maxAirForce;
+		b2MoverJoint_SetMaxVelocityForce( m_moverJointId, { maxForce, 0.0f } );
 	}
 	else
 	{
@@ -251,16 +254,23 @@ void DynamicMover::Solve( float timeStep, float throttle )
 	m_pogoFraction = castResult.hit ? castResult.fraction : 1.0f;
 	m_pogoHit = castResult.hit;
 
-	bool groundHit = castResult.hit && castResult.normal.y > m_minGroundNormalY;
-
 	// Avoid snapping to ground if still going up
 	if ( m_onGround == false )
 	{
-		m_onGround = groundHit && m_velocity.y <= 0.01f;
+		m_onGround = castResult.hit && m_velocity.y <= 0.01f;
 	}
 	else
 	{
-		m_onGround = groundHit;
+		m_onGround = castResult.hit;
+	}
+
+	if ( m_onGround )
+	{
+		m_walkable = castResult.normal.y > m_minGroundNormalY;
+	}
+	else
+	{
+		m_walkable = false;
 	}
 
 	// The pogo joint is rebuilt every solve because it may land on a different body

@@ -180,6 +180,9 @@ typedef struct b2World
 	b2PreSolveFcn* preSolveFcn;
 	void* preSolveContext;
 
+	b2PreContinuousFcn* preContinuousFcn;
+	void* preContinuousContext;
+
 	b2CustomFilterFcn* customFilterFcn;
 	void* customFilterContext;
 

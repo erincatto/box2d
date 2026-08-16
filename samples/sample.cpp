@@ -1491,7 +1491,7 @@ static void DrawMenuBar( SampleContext* context )
 				{
 					DrawRow( "Tab", "Show / hide UI" );
 					DrawRow( "M", "Show / hide diagnostics" );
-					DrawRow( "Space", "Pause / resume" );
+					DrawRow( "P", "Pause / resume" );
 					DrawRow( "O", "Single step" );
 					DrawRow( "R", "Restart sample" );
 					DrawRow( "[  ]", "Previous / next sample" );

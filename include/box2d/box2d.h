@@ -146,6 +146,9 @@ B2_API void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterFc
 /// Register the pre-solve callback. This is optional.
 B2_API void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* fcn, void* context );
 
+/// Register the pre-continuous callback. This is optional.
+B2_API void b2World_SetPreContinuousCallback( b2WorldId worldId, b2PreContinuousFcn* fcn, void* context );
+
 /// Set the gravity vector for the entire world. Box2D has no concept of an up direction and this
 /// is left as a decision for the application. Usually in m/s^2.
 /// @see b2WorldDef

@@ -3021,6 +3021,18 @@ void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* fcn, void* c
 	world->preSolveContext = context;
 }
 
+void b2World_SetPreContinuousCallback(b2WorldId worldId, b2PreContinuousFcn* fcn, void* context)
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	if ( fcn != NULL && world->recording != NULL )
+	{
+		printf( "b2World_SetPreContinuousCallback: preContinuous not supported while recording\n" );
+		B2_ASSERT( false && "preContinuous callbacks are not supported while recording" );
+	}
+	world->preContinuousFcn = fcn;
+	world->preContinuousContext = context;
+}
+
 void b2World_SetGravity( b2WorldId worldId, b2Vec2 gravity )
 {
 	b2World* world = b2GetWorldFromId( worldId );
