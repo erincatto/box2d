@@ -155,7 +155,6 @@ typedef struct b2MoverJoint
 	int indexB;
 	b2Transform frameA;
 	b2Transform frameB;
-	b2Vec2 deltaCenter;
 	float linearMass;
 } b2MoverJoint;
 
@@ -366,7 +365,6 @@ void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias );
 void b2SolveWheelJoint( b2JointSim* base, b2StepContext* context, bool useBias );
 
 void b2DrawDistanceJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform transformA, b2WorldTransform transformB );
-void b2DrawPogoJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform transformA, b2WorldTransform transformB );
 void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform transformA, b2WorldTransform transformB,
 						   float drawScale );
 void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform transformA, b2WorldTransform transformB,

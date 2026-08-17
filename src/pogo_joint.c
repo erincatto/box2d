@@ -68,7 +68,8 @@ float b2PogoJoint_GetLength( b2JointId jointId )
 	b2Transform transformA = b2ToRelativeTransform( wxfA, wxfA.p );
 	b2Transform transformB = b2ToRelativeTransform( b2GetBodyTransform( world, jointSim->bodyIdB ), wxfA.p );
 
-	b2Vec2 axis = b2RotateVector( transformB.q, b2_pogoAxis );
+	b2Vec2 axis = b2RotateVector( jointSim->localFrameB.q, b2_pogoAxis );
+	axis = b2RotateVector( transformB.q, axis );
 	b2Vec2 pA = b2TransformPoint( transformA, jointSim->localFrameA.p );
 	b2Vec2 pB = b2TransformPoint( transformB, jointSim->localFrameB.p );
 	b2Vec2 d = b2Sub( pB, pA );
@@ -277,16 +278,4 @@ void b2SolvePogoJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 		stateB->linearVelocity = vB;
 		stateB->angularVelocity = wB;
 	}
-}
-
-void b2DrawPogoJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform transformA, b2WorldTransform transformB )
-{
-	B2_ASSERT( base->type == b2_pogoJoint );
-
-	// b2PogoJoint* joint = &base->pogoJoint;
-
-	b2WorldTransform frameA = b2MulWorldTransforms( transformA, base->localFrameA );
-	b2WorldTransform frameB = b2MulWorldTransforms( transformB, base->localFrameB );
-
-	draw->DrawLineFcn( frameA.p, frameB.p, b2_colorDimGray, draw->context );
 }

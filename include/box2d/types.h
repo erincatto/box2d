@@ -452,7 +452,7 @@ typedef struct b2ShapeDef
 	bool invokeContactCreation;
 
 	/// Should the body update the mass properties when this shape is created. Default is true.
-	/// Warning: if this is false, you MUST call b2Body_ApplyMassFromShapes or b3Body_SetMassData before simulating the world.
+	/// Warning: if this is false, you MUST call b2Body_ApplyMassFromShapes or b2Body_SetMassData before simulating the world.
 	bool updateBodyMass;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
@@ -1245,19 +1245,20 @@ typedef struct b2ContactData
 typedef bool b2CustomFilterFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* context );
 
 /// Prototype for a pre-solve callback.
-/// This is called after a contact is updated. This allows you to inspect a
-/// contact before it goes to the solver. If you are careful, you can modify the
-/// contact manifold (e.g. modify the normal).
+/// This is called after a contact manifold is updated. This allows you to inspect a
+/// manifold before it goes to the solver. If you are careful, you can modify the
+/// manifold (e.g. modify the normal). You can set the manifold point count to zero disable
+/// collision.
 /// Notes:
 /// - this function must be thread-safe
 /// - this is only called if the shape has enabled pre-solve events
 /// - this is called only for awake dynamic bodies
 /// - this is not called for sensors
-/// - the supplied manifold has impulse values from the previous step
+/// - the supplied manifold impulses are not reliable
 /// Return false if you want to disable the contact this step
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
-typedef bool b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context );
+typedef void b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context );
 
 /// Prototype for a pre-continuous callback.
 /// This is called when a time of impact event is computed in continuous collision. This function

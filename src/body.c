@@ -1868,10 +1868,10 @@ void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks )
 				state->angularVelocity = 0.0f;
 			}
 		}
-	}
 
-	// Motion locks can affect mass properties.
-	b2UpdateBodyMassData( world, body );
+		// Motion locks can affect mass properties.
+		b2UpdateBodyMassData( world, body );
+	}
 }
 
 b2MotionLocks b2Body_GetMotionLocks( b2BodyId bodyId )

@@ -435,6 +435,29 @@ b2JointId b2CreateDistanceJoint( b2WorldId worldId, const b2DistanceJointDef* de
 	return jointId;
 }
 
+b2JointId b2CreateFilterJoint( b2WorldId worldId, const b2FilterJointDef* def )
+{
+	B2_CHECK_DEF( def );
+	b2World* world = b2GetWorldFromId( worldId );
+
+	B2_ASSERT( world->locked == false );
+
+	if ( world->locked )
+	{
+		return (b2JointId){ 0 };
+	}
+
+	b2JointPair pair = b2CreateJoint( world, &def->base, b2_filterJoint );
+
+	b2JointSim* joint = pair.jointSim;
+
+	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
+
+	B2_REC_CREATE( world, CreateFilterJoint, jointId, worldId, *def );
+
+	return jointId;
+}
+
 b2JointId b2CreateMotorJoint( b2WorldId worldId, const b2MotorJointDef* def )
 {
 	B2_CHECK_DEF( def );
@@ -490,30 +513,7 @@ b2JointId b2CreateMoverJoint( b2WorldId worldId, const b2MoverJointDef* def )
 
 	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
 
-	// B2_REC_CREATE( world, CreateMoverJoint, jointId, worldId, *def );
-
-	return jointId;
-}
-
-b2JointId b2CreateFilterJoint( b2WorldId worldId, const b2FilterJointDef* def )
-{
-	B2_CHECK_DEF( def );
-	b2World* world = b2GetWorldFromId( worldId );
-
-	B2_ASSERT( world->locked == false );
-
-	if ( world->locked )
-	{
-		return (b2JointId){ 0 };
-	}
-
-	b2JointPair pair = b2CreateJoint( world, &def->base, b2_filterJoint );
-
-	b2JointSim* joint = pair.jointSim;
-
-	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
-
-	B2_REC_CREATE( world, CreateFilterJoint, jointId, worldId, *def );
+	B2_REC_CREATE( world, CreateMoverJoint, jointId, worldId, *def );
 
 	return jointId;
 }
@@ -1009,6 +1009,20 @@ void b2GetJointReaction( b2JointSim* sim, float invTimeStep, float* force, float
 			b2MotorJoint* joint = &sim->motorJoint;
 			linearImpulse = b2Length( b2Add( joint->linearVelocityImpulse, joint->linearSpringImpulse ) );
 			angularImpulse = b2AbsFloat( joint->angularVelocityImpulse + joint->angularSpringImpulse );
+		}
+		break;
+
+		case b2_moverJoint:
+		{
+			b2MoverJoint* joint = &sim->moverJoint;
+			linearImpulse = b2Length( joint->linearVelocityImpulse );
+		}
+		break;
+
+		case b2_pogoJoint:
+		{
+			b2PogoJoint* joint = &sim->pogoJoint;
+			linearImpulse = b2AbsFloat( joint->impulse );
 		}
 		break;
 

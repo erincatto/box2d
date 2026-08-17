@@ -2020,6 +2020,12 @@ void b2World_StartRecording( b2WorldId worldId, b2Recording* recording )
 		return;
 	}
 
+	if ( world->preSolveFcn != NULL || world->preContinuousFcn != NULL )
+	{
+		printf( "b2World_StartRecording: preSolve not supported when recording\n" );
+		return;
+	}
+
 	b2StartRecordingIntoBuffer( world, recording );
 }
 

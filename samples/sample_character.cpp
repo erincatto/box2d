@@ -268,25 +268,6 @@ public:
 		return true;
 	}
 
-	static bool Kick( b2ShapeId shapeId, void* context )
-	{
-		GeometryMoverSample* self = (GeometryMoverSample*)context;
-		b2BodyId bodyId = b2Shape_GetBody( shapeId );
-		b2BodyType type = b2Body_GetType( bodyId );
-
-		if ( type != b2_dynamicBody )
-		{
-			return true;
-		}
-
-		b2Pos center = b2Body_GetWorldCenter( bodyId );
-		b2Vec2 direction = b2Normalize( center - self->m_mover.m_position );
-		b2Vec2 impulse = b2Vec2{ 2.0f * direction.x, 2.0f };
-		b2Body_ApplyLinearImpulseToCenter( bodyId, impulse, true );
-
-		return true;
-	}
-
 	void Step() override
 	{
 		DrawScreenTextLine( "left/right/jump = A/D/W" );
@@ -614,38 +595,31 @@ public:
 		m_time = 0.0f;
 	}
 
-	bool PreSolve( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold )
+	void PreSolve( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold )
 	{
 		b2BodyId idA = b2Shape_GetBody( shapeIdA );
 		b2BodyId idB = b2Shape_GetBody( shapeIdB );
 
 		if ( B2_ID_EQUALS( idA, m_elevatorId ) && B2_ID_EQUALS( idB, m_mover.m_moverId ) )
 		{
-			if ( manifold->normal.y < 0.0f )
+			if (manifold->normal.y < 0.0f)
 			{
-				return false;
+				manifold->pointCount = 0;
 			}
-
-			return true;
 		}
-
-		if ( B2_ID_EQUALS( idA, m_mover.m_moverId ) && B2_ID_EQUALS( idB, m_elevatorId ) )
+		else if ( B2_ID_EQUALS( idA, m_mover.m_moverId ) && B2_ID_EQUALS( idB, m_elevatorId ) )
 		{
 			if ( manifold->normal.y > 0.0f )
 			{
-				return false;
+				manifold->pointCount = 0;
 			}
-
-			return true;
 		}
-
-		return true;
 	}
 
-	static bool PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context )
+	static void PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context )
 	{
 		DynamicMoverSample* sample = (DynamicMoverSample*)context;
-		return sample->PreSolve( shapeIdA, shapeIdB, manifold );
+		sample->PreSolve( shapeIdA, shapeIdB, manifold );
 	}
 
 	bool PreContinuous( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal )

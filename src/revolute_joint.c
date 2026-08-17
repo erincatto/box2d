@@ -139,7 +139,7 @@ void b2RevoluteJoint_SetLimits( b2JointId jointId, float lower, float upper )
 	B2_ASSERT( lower <= upper );
 
 	b2World* world = b2GetWorld( jointId.world0 );
-	B2_REC( world, RevoluteJointSetLimits, jointId, lower, upper );\
+	B2_REC( world, RevoluteJointSetLimits, jointId, lower, upper );
 
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_revoluteJoint );
 	float lowerAngle = b2MinFloat( lower, upper );

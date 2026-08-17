@@ -1111,6 +1111,10 @@ uint64_t b2HashWorldStateDeep( b2World* world )
 					hash = b2FnvMixFloat( hash, sim->distanceJoint.upperImpulse );
 					hash = b2FnvMixFloat( hash, sim->distanceJoint.motorImpulse );
 					break;
+				case b2_moverJoint:
+					hash = b2FnvMixFloat( hash, sim->moverJoint.linearVelocityImpulse.x );
+					hash = b2FnvMixFloat( hash, sim->moverJoint.linearVelocityImpulse.y );
+					break;
 				case b2_motorJoint:
 					hash = b2FnvMixFloat( hash, sim->motorJoint.linearVelocityImpulse.x );
 					hash = b2FnvMixFloat( hash, sim->motorJoint.linearVelocityImpulse.y );
@@ -1118,6 +1122,10 @@ uint64_t b2HashWorldStateDeep( b2World* world )
 					hash = b2FnvMixFloat( hash, sim->motorJoint.linearSpringImpulse.x );
 					hash = b2FnvMixFloat( hash, sim->motorJoint.linearSpringImpulse.y );
 					hash = b2FnvMixFloat( hash, sim->motorJoint.angularSpringImpulse );
+					break;
+				case b2_pogoJoint:
+					hash = b2FnvMixFloat( hash, sim->pogoJoint.impulse );
+					hash = b2FnvMixFloat( hash, sim->pogoJoint.velocity );
 					break;
 				case b2_prismaticJoint:
 					hash = b2FnvMixBytes( hash, &sim->prismaticJoint.impulse, sizeof( b2Vec2 ) );

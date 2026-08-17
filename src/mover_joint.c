@@ -51,7 +51,6 @@ void b2PrepareMoverJoint( b2JointSim* base, b2StepContext* context )
 {
 	B2_ASSERT( base->type == b2_moverJoint );
 
-	// chase body id to the solver set where the body lives
 	int idA = base->bodyIdA;
 	int idB = base->bodyIdB;
 
@@ -82,15 +81,6 @@ void b2PrepareMoverJoint( b2JointSim* base, b2StepContext* context )
 	b2MoverJoint* joint = &base->moverJoint;
 	joint->indexA = bodyA->setIndex == b2_awakeSet ? localIndexA : B2_NULL_INDEX;
 	joint->indexB = bodyB->setIndex == b2_awakeSet ? localIndexB : B2_NULL_INDEX;
-
-	// Compute joint anchor frames with world space rotation, relative to center of mass
-	joint->frameA.q = b2MulRot( bodySimA->transform.q, base->localFrameA.q );
-	joint->frameA.p = b2RotateVector( bodySimA->transform.q, b2Sub( base->localFrameA.p, bodySimA->localCenter ) );
-	joint->frameB.q = b2MulRot( bodySimB->transform.q, base->localFrameB.q );
-	joint->frameB.p = b2RotateVector( bodySimB->transform.q, b2Sub( base->localFrameB.p, bodySimB->localCenter ) );
-
-	// Compute the initial center delta. Incremental position updates are relative to this.
-	joint->deltaCenter = b2SubPos( bodySimB->center, bodySimA->center );
 
 	float k = mA + mB;
 	joint->linearMass = k > 0.0f ? 1.0f / k : 0.0f;
@@ -162,6 +152,10 @@ void b2SolveMoverJoint( b2JointSim* base, b2StepContext* context )
 		impulse = b2Sub( joint->linearVelocityImpulse, oldImpulse );
 		vA = b2MulSub( vA, mA, impulse );
 		vB = b2MulAdd( vB, mB, impulse );
+	}
+	else
+	{
+		joint->linearVelocityImpulse = b2Vec2_zero;
 	}
 
 	if ( stateA->flags & b2_dynamicFlag )
