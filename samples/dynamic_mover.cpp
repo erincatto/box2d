@@ -57,7 +57,7 @@ DynamicMover::DynamicMover()
 	m_velocity = b2Vec2_zero;
 	m_onGround = false;
 	m_walkable = false;
-	m_jumped = false;
+	m_jumping = false;
 
 	m_pogoImpulse = 0.0f;
 	m_pogoVelocity = 0.0f;
@@ -94,7 +94,7 @@ void DynamicMover::Create( b2WorldId worldId, const DynamicMoverDef* def )
 	m_velocity = b2Vec2_zero;
 	m_onGround = false;
 	m_walkable = false;
-	m_jumped = false;
+	m_jumping = false;
 	m_pogoImpulse = 0.0f;
 	m_pogoVelocity = 0.0f;
 	m_pogoLength = 0.0f;
@@ -165,16 +165,19 @@ void DynamicMover::SetGravityScale( float gravityScale )
 
 bool DynamicMover::Jump()
 {
-	if ( m_onGround == false )
+	if ( m_onGround == false || m_walkable == false )
 	{
 		return false;
 	}
 
 	float mass = b2Body_GetMass( m_moverId );
-	b2Body_ApplyLinearImpulseToCenter( m_moverId, { 0.0f, mass * m_jumpSpeed }, true );
+	float vy = b2Body_GetLinearVelocity( m_moverId ).y;
+
+	float dv = b2MaxFloat( 0.0f, m_jumpSpeed - vy );
+	b2Body_ApplyLinearImpulseToCenter( m_moverId, { 0.0f, mass * dv }, true );
 
 	m_onGround = false;
-	m_jumped = true;
+	m_jumping = true;
 	return true;
 }
 
@@ -254,23 +257,31 @@ void DynamicMover::Solve( float timeStep, float throttle )
 	m_pogoFraction = castResult.hit ? castResult.fraction : 1.0f;
 	m_pogoHit = castResult.hit;
 
-	// Avoid snapping to ground if still going up
-	if ( m_onGround == false )
-	{
-		m_onGround = castResult.hit && m_velocity.y <= 0.01f;
-	}
-	else
-	{
-		m_onGround = castResult.hit;
-	}
-
-	if ( m_onGround )
+	if ( castResult.hit )
 	{
 		m_walkable = castResult.normal.y > m_minGroundNormalY;
 	}
 	else
 	{
 		m_walkable = false;
+	}
+
+	// Avoid snapping to ground if still going up
+	if ( m_onGround == false )
+	{
+		m_onGround = castResult.hit && ( m_velocity.y <= 0.01f || m_walkable == false );
+	}
+	else
+	{
+		m_onGround = castResult.hit;
+	}
+
+	if ( m_jumping  )
+	{
+		if (m_velocity.y < 0.0f && castResult.hit)
+		{
+			m_jumping = false;
+		}
 	}
 
 	// The pogo joint is rebuilt every solve because it may land on a different body
@@ -305,11 +316,7 @@ void DynamicMover::Solve( float timeStep, float throttle )
 		pogoDef.impulse = m_pogoImpulse;
 		pogoDef.velocity = m_pogoVelocity;
 
-		// problem: player can achieve large upward jumps
-		// 1. pogo pops up on a step -> large velocity response
-		// 2. player presses jump -> pogo doesn't pull back down
-
-		if ( m_jumped || m_velocity.y > 0.1f )
+		if ( m_jumping )
 		{
 			// Don't allow the pogo to pull down
 			pogoDef.maxTensionForce = 0.0f;
@@ -329,6 +336,4 @@ void DynamicMover::Solve( float timeStep, float throttle )
 	}
 
 	b2MoverJoint_SetLinearVelocity( m_moverJointId, m_velocity );
-
-	m_jumped = false;
 }

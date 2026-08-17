@@ -94,7 +94,7 @@ public:
 	b2Vec2 m_velocity;
 	bool m_onGround;
 	bool m_walkable;
-	bool m_jumped;
+	bool m_jumping;
 
 	// Pogo joint state, carried across the joint being recreated each solve.
 	float m_pogoImpulse;

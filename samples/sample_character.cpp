@@ -582,7 +582,7 @@ public:
 			b2CreateRevoluteJoint( m_worldId, &jointDef );
 		}
 
-		m_preSolve = false;
+		m_preSolve = true;
 
 		// This is used for one-way collision on the kinematic elevator. But pre-solve doesn't work with recording.
 		if ( m_preSolve )
@@ -756,6 +756,8 @@ public:
 		DrawScreenTextLine( "pogo: impulse %.3f, velocity %.3f", m_mover.m_pogoImpulse, m_mover.m_pogoVelocity );
 		DrawScreenTextLine( "pogo: length = %.2f/%.2f", m_mover.m_pogoLength, m_mover.m_pogoRestLength );
 		DrawScreenTextLine( "on ground: %d", (int)m_mover.m_onGround );
+		DrawScreenTextLine( "walkable: %d", (int)m_mover.m_walkable );
+		DrawScreenTextLine( "jumping: %d", (int)m_mover.m_jumping );
 
 		if ( m_lockCamera )
 		{
