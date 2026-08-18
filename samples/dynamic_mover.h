@@ -30,10 +30,22 @@ struct DynamicMoverDef
 	bool enablePreSolveEvents = false;
 };
 
+struct DynamicMoverCastResult
+{
+	b2Pos point;
+	b2Vec2 normal;
+	b2BodyId bodyId;
+	float fraction;
+	bool hit;
+};
+
 // Dynamic character mover. The capsule is a rigid body with a locked rotation, so it
 // collides and is pushed like everything else in the world. A mover joint drives it to
 // the target velocity and a pogo joint holds it above the ground so it can climb
 // steps without touching the capsule.
+//
+// The dynamic mover should be vendored into your project so you can alter it to meet
+// your game's specific needs.
 class DynamicMover
 {
 public:
@@ -90,6 +102,8 @@ public:
 	b2BodyId m_moverId;
 	b2JointId m_moverJointId;
 	b2JointId m_pogoJointId;
+
+	DynamicMoverCastResult m_castResult;
 
 	b2Vec2 m_velocity;
 	bool m_onGround;

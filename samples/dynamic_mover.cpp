@@ -68,6 +68,8 @@ DynamicMover::DynamicMover()
 	m_pogoTranslation = b2Vec2_zero;
 	m_pogoFraction = 1.0f;
 	m_pogoHit = false;
+
+	m_castResult = {};
 }
 
 void DynamicMover::Create( b2WorldId worldId, const DynamicMoverDef* def )
@@ -171,10 +173,18 @@ bool DynamicMover::Jump()
 		return false;
 	}
 
+	float surfaceVelocity = 0.0f;
+	if (b2Body_IsValid(m_castResult.bodyId))
+	{
+		b2Vec2 v = b2Body_GetWorldPointVelocity( m_castResult.bodyId, m_castResult.point );
+		surfaceVelocity = v.y;
+	}
+
 	float mass = b2Body_GetMass( m_moverId );
 	float vy = b2Body_GetLinearVelocity( m_moverId ).y;
 
-	float dv = b2MaxFloat( 0.0f, m_jumpSpeed - vy );
+	// Remove the pogo constraint velocity but add the surface velocity.
+	float dv = b2MaxFloat( 0.0f, m_jumpSpeed - vy ) + surfaceVelocity;
 	b2Body_ApplyLinearImpulseToCenter( m_moverId, { 0.0f, mass * dv }, true );
 
 	// This removes the pogo step down on the next update.
@@ -205,13 +215,14 @@ void DynamicMover::Update( float timeStep, float throttle )
 		.categoryBits = m_filter.categoryBits,
 		.maskBits = m_filter.maskBits,
 	};
-	CastResult castResult = {};
-	b2World_CastRay( m_worldId, origin, translation, queryFilter, CastCallback, &castResult );
+
+	m_castResult = {};
+	b2World_CastRay( m_worldId, origin, translation, queryFilter, CastCallback, &m_castResult );
 
 	m_pogoOrigin = origin;
 	m_pogoTranslation = translation;
-	m_pogoFraction = castResult.hit ? castResult.fraction : 1.0f;
-	m_pogoHit = castResult.hit;
+	m_pogoFraction = m_castResult.hit ? m_castResult.fraction : 1.0f;
+	m_pogoHit = m_castResult.hit;
 
 	// Should jumping end?
 	if ( m_jumping )
@@ -220,19 +231,19 @@ void DynamicMover::Update( float timeStep, float throttle )
 
 		// Jump ticks allow time for the jump to leave the ground. Otherwise jumping ends
 		// when the character approaches the current ground.
-		if ( m_jumpTicks > 2 && castResult.hit && b2Dot( m_velocity, castResult.normal ) <= 0.0f )
+		if ( m_jumpTicks > 2 && m_castResult.hit && b2Dot( m_velocity, m_castResult.normal ) <= 0.0f )
 		{
 			m_jumping = false;
 		}
 	}
 
-	if ( castResult.hit )
+	if ( m_castResult.hit )
 	{
 		// The cast can still hit while jumping.
 		m_onGround = m_jumping == false;
 
 		// Is the ground too steep to walk?
-		m_walkable = castResult.normal.y > m_minGroundNormalY;
+		m_walkable = m_castResult.normal.y > m_minGroundNormalY;
 	}
 	else
 	{
@@ -308,16 +319,16 @@ void DynamicMover::Update( float timeStep, float throttle )
 		m_pogoJointId = b2_nullJointId;
 	}
 
-	if ( castResult.hit == true )
+	if ( m_castResult.hit == true )
 	{
 		float moverMass = b2Body_GetMass( m_moverId );
 		float moverWeight = m_gravityScale * b2Length( b2World_GetGravity( m_worldId ) ) * moverMass;
 
 		b2PogoJointDef pogoDef = b2DefaultPogoJointDef();
-		pogoDef.base.localFrameA.p = b2Body_GetLocalPoint( castResult.bodyId, castResult.point );
+		pogoDef.base.localFrameA.p = b2Body_GetLocalPoint( m_castResult.bodyId, m_castResult.point );
 		pogoDef.base.localFrameB.p = m_capsule.center1;
-		pogoDef.normal = castResult.normal;
-		pogoDef.base.bodyIdA = castResult.bodyId;
+		pogoDef.normal = m_castResult.normal;
+		pogoDef.base.bodyIdA = m_castResult.bodyId;
 		pogoDef.base.bodyIdB = m_moverId;
 		pogoDef.base.collideConnected = true;
 		pogoDef.restLength = m_pogoRestLength;
