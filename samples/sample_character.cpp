@@ -713,8 +713,6 @@ public:
 
 		m_time += timeStep;
 
-		Sample::Step();
-
 		if ( pause == false )
 		{
 			float throttle = 0.0f;
@@ -741,8 +739,10 @@ public:
 				m_jumpReleased = true;
 			}
 
-			m_mover.Solve( timeStep, throttle );
+			m_mover.Update( timeStep, throttle );
 		}
+
+		Sample::Step();
 
 		DrawPogo( m_draw, m_mover.m_pogoOrigin, m_mover.m_pogoTranslation, m_mover.m_pogoFraction, m_mover.m_pogoHit );
 
@@ -757,7 +757,7 @@ public:
 		DrawScreenTextLine( "pogo: length = %.2f/%.2f", m_mover.m_pogoLength, m_mover.m_pogoRestLength );
 		DrawScreenTextLine( "on ground: %d", (int)m_mover.m_onGround );
 		DrawScreenTextLine( "walkable: %d", (int)m_mover.m_walkable );
-		DrawScreenTextLine( "jumping: %d", (int)m_mover.m_jumping );
+		DrawScreenTextLine( "jumping/ticks: %d/%d", (int)m_mover.m_jumping, m_mover.m_jumpTicks );
 
 		if ( m_lockCamera )
 		{

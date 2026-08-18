@@ -58,6 +58,7 @@ DynamicMover::DynamicMover()
 	m_onGround = false;
 	m_walkable = false;
 	m_jumping = false;
+	m_jumpTicks = 0;
 
 	m_pogoImpulse = 0.0f;
 	m_pogoVelocity = 0.0f;
@@ -176,14 +177,20 @@ bool DynamicMover::Jump()
 	float dv = b2MaxFloat( 0.0f, m_jumpSpeed - vy );
 	b2Body_ApplyLinearImpulseToCenter( m_moverId, { 0.0f, mass * dv }, true );
 
+	// This removes the pogo step down on the next update.
 	m_onGround = false;
 	m_jumping = true;
+	m_jumpTicks = 0;
 	return true;
 }
 
 // Movement follows the Quake ground and air model:
 // https://github.com/id-Software/Quake/blob/master/QW/client/pmove.c#L390
-void DynamicMover::Solve( float timeStep, float throttle )
+
+// onGround - controls friction, mover max force, and pogo step-down extension
+// walkable - controls air steer
+// jumping - blocks the pogo from pulling down
+void DynamicMover::Update( float timeStep, float throttle )
 {
 	m_velocity = b2Body_GetLinearVelocity( m_moverId );
 
@@ -205,8 +212,12 @@ void DynamicMover::Solve( float timeStep, float throttle )
 			float newSpeed = b2MaxFloat( 0.0f, speed - drop );
 			m_velocity.x *= newSpeed / speed;
 		}
+	}
 
-		float maxForce = m_walkable ? m_maxGroundForce : 0.5f * m_maxAirForce;
+	// Mover force
+	if ( m_onGround )
+	{
+		float maxForce = m_walkable ? m_maxGroundForce : 0.0f;
 		b2MoverJoint_SetMaxVelocityForce( m_moverJointId, { maxForce, 0.0f } );
 	}
 	else
@@ -228,7 +239,7 @@ void DynamicMover::Solve( float timeStep, float throttle )
 	float addSpeed = desiredSpeed - currentSpeed;
 	if ( addSpeed > 0.0f )
 	{
-		float steer = m_onGround ? 1.0f : m_airSteer;
+		float steer = m_walkable ? 1.0f : m_airSteer;
 		float accelSpeed = steer * m_accelerate * m_maxSpeed * timeStep;
 		if ( accelSpeed > addSpeed )
 		{
@@ -239,7 +250,8 @@ void DynamicMover::Solve( float timeStep, float throttle )
 	}
 
 	// Reach further while grounded so the spring can find the ground over a step
-	float rayLength = m_onGround ? 2.0f * m_pogoRestLength : m_pogoRestLength;
+	float stepDownLength = m_pogoRestLength;
+	float rayLength = m_onGround ? m_pogoRestLength + stepDownLength : m_pogoRestLength;
 	b2Vec2 translation = { 0.0f, -rayLength };
 
 	b2Pos position = b2Body_GetPosition( m_moverId );
@@ -259,28 +271,29 @@ void DynamicMover::Solve( float timeStep, float throttle )
 
 	if ( castResult.hit )
 	{
+		// The cast can still hit while jumping.
+		m_onGround = m_jumping == false;
+
+		// Is the ground too steep to walk?
 		m_walkable = castResult.normal.y > m_minGroundNormalY;
 	}
 	else
 	{
+		m_onGround = false;
 		m_walkable = false;
 	}
 
-	// Avoid snapping to ground if still going up
-	if ( m_onGround == false )
+	// Should jumping end?
+	if ( m_jumping )
 	{
-		m_onGround = castResult.hit && ( m_velocity.y <= 0.01f || m_walkable == false );
-	}
-	else
-	{
-		m_onGround = castResult.hit;
-	}
-
-	if ( m_jumping  )
-	{
-		if (m_velocity.y < 0.0f && castResult.hit)
+		// Jump ticks allow time for the jump to leave the ground.
+		if ( m_jumpTicks > 2 && castResult.hit )
 		{
 			m_jumping = false;
+		}
+		else
+		{
+			m_jumpTicks += 1;
 		}
 	}
 

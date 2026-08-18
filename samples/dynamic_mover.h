@@ -43,7 +43,7 @@ public:
 	void Destroy();
 
 	// Advance the mover. Throttle is the horizontal input on [-1, 1].
-	void Solve( float timeStep, float throttle );
+	void Update( float timeStep, float throttle );
 
 	// Jump if grounded. Returns false when airborne.
 	bool Jump();
@@ -95,6 +95,7 @@ public:
 	bool m_onGround;
 	bool m_walkable;
 	bool m_jumping;
+	int m_jumpTicks;
 
 	// Pogo joint state, carried across the joint being recreated each solve.
 	float m_pogoImpulse;
