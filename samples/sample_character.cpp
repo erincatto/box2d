@@ -270,7 +270,7 @@ public:
 
 	void Step() override
 	{
-		DrawScreenTextLine( "left/right/jump = A/D/W" );
+		DrawScreenTextLine( "left/right/jump = A/D/Space" );
 
 		bool pause = false;
 		if ( m_context->pause )
@@ -325,7 +325,7 @@ public:
 				m_jumpReleased = true;
 			}
 
-			m_mover.Solve( timeStep, throttle );
+			m_mover.Update( timeStep, throttle );
 		}
 
 		DrawPogo( m_draw, m_mover.m_pogoOrigin, m_mover.m_pogoTranslation, m_mover.m_pogoFraction, m_mover.m_pogoHit );
@@ -686,7 +686,7 @@ public:
 
 	void Step() override
 	{
-		DrawScreenTextLine( "left/right/jump = A/D/W" );
+		DrawScreenTextLine( "left/right/jump = A/D/Space" );
 
 		bool pause = false;
 		if ( m_context->pause )
