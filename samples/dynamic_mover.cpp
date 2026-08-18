@@ -286,14 +286,13 @@ void DynamicMover::Update( float timeStep, float throttle )
 	// Should jumping end?
 	if ( m_jumping )
 	{
-		// Jump ticks allow time for the jump to leave the ground.
-		if ( m_jumpTicks > 2 && castResult.hit )
+		m_jumpTicks += 1;
+
+		// Jump ticks allow time for the jump to leave the ground. Otherwise jumping ends
+		// when the character approaches the current ground.
+		if ( m_jumpTicks > 2 && castResult.hit && b2Dot( m_velocity, castResult.normal ) <= 0.0f )
 		{
 			m_jumping = false;
-		}
-		else
-		{
-			m_jumpTicks += 1;
 		}
 	}
 
