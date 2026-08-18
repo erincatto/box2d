@@ -179,6 +179,7 @@ bool DynamicMover::Jump()
 
 	// This removes the pogo step down on the next update.
 	m_onGround = false;
+	m_walkable = false;
 	m_jumping = true;
 	m_jumpTicks = 0;
 	return true;
