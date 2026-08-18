@@ -59,7 +59,7 @@ public:
 	void Create( b2WorldId worldId, const GeometricMoverDef* def );
 
 	// Advance the mover. Throttle is the horizontal input on [-1, 1].
-	void Solve( float timeStep, float throttle );
+	void Update( float timeStep, float throttle );
 
 	// Jump if grounded. Returns false when airborne.
 	bool Jump();

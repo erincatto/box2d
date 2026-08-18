@@ -184,7 +184,7 @@ void GeometricMover::PushBodies()
 
 // Movement follows the Quake ground and air model:
 // https://github.com/id-Software/Quake/blob/master/QW/client/pmove.c#L390
-void GeometricMover::Solve( float timeStep, float throttle )
+void GeometricMover::Update( float timeStep, float throttle )
 {
 	// Friction
 	float speed = b2Length( m_velocity );

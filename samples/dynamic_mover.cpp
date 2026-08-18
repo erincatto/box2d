@@ -192,7 +192,54 @@ bool DynamicMover::Jump()
 // jumping - blocks the pogo from pulling down
 void DynamicMover::Update( float timeStep, float throttle )
 {
-	m_velocity = b2Body_GetLinearVelocity( m_moverId );
+	// Reach further while grounded so the spring can find the ground over a step
+	float stepDownLength = m_pogoRestLength;
+	float rayLength = m_onGround ? m_pogoRestLength + stepDownLength : m_pogoRestLength;
+	b2Vec2 translation = { 0.0f, -rayLength };
+
+	b2Pos position = b2Body_GetPosition( m_moverId );
+	b2Pos origin = position + m_capsule.center1;
+
+	b2QueryFilter queryFilter = {
+		.categoryBits = m_filter.categoryBits,
+		.maskBits = m_filter.maskBits,
+	};
+	CastResult castResult = {};
+	b2World_CastRay( m_worldId, origin, translation, queryFilter, CastCallback, &castResult );
+
+	m_pogoOrigin = origin;
+	m_pogoTranslation = translation;
+	m_pogoFraction = castResult.hit ? castResult.fraction : 1.0f;
+	m_pogoHit = castResult.hit;
+
+	// Should jumping end?
+	if ( m_jumping )
+	{
+		m_jumpTicks += 1;
+
+		// Jump ticks allow time for the jump to leave the ground. Otherwise jumping ends
+		// when the character approaches the current ground.
+		if ( m_jumpTicks > 2 && castResult.hit && b2Dot( m_velocity, castResult.normal ) <= 0.0f )
+		{
+			m_jumping = false;
+		}
+	}
+
+	if ( castResult.hit )
+	{
+		// The cast can still hit while jumping.
+		m_onGround = m_jumping == false;
+
+		// Is the ground too steep to walk?
+		m_walkable = castResult.normal.y > m_minGroundNormalY;
+	}
+	else
+	{
+		m_onGround = false;
+		m_walkable = false;
+	}
+
+		m_velocity = b2Body_GetLinearVelocity( m_moverId );
 
 	// Friction
 	if ( m_onGround )
@@ -247,53 +294,6 @@ void DynamicMover::Update( float timeStep, float throttle )
 		}
 
 		m_velocity.x += accelSpeed * desiredDirection.x;
-	}
-
-	// Reach further while grounded so the spring can find the ground over a step
-	float stepDownLength = m_pogoRestLength;
-	float rayLength = m_onGround ? m_pogoRestLength + stepDownLength : m_pogoRestLength;
-	b2Vec2 translation = { 0.0f, -rayLength };
-
-	b2Pos position = b2Body_GetPosition( m_moverId );
-	b2Pos origin = position + m_capsule.center1;
-
-	b2QueryFilter queryFilter = {
-		.categoryBits = m_filter.categoryBits,
-		.maskBits = m_filter.maskBits,
-	};
-	CastResult castResult = {};
-	b2World_CastRay( m_worldId, origin, translation, queryFilter, CastCallback, &castResult );
-
-	m_pogoOrigin = origin;
-	m_pogoTranslation = translation;
-	m_pogoFraction = castResult.hit ? castResult.fraction : 1.0f;
-	m_pogoHit = castResult.hit;
-
-	if ( castResult.hit )
-	{
-		// The cast can still hit while jumping.
-		m_onGround = m_jumping == false;
-
-		// Is the ground too steep to walk?
-		m_walkable = castResult.normal.y > m_minGroundNormalY;
-	}
-	else
-	{
-		m_onGround = false;
-		m_walkable = false;
-	}
-
-	// Should jumping end?
-	if ( m_jumping )
-	{
-		m_jumpTicks += 1;
-
-		// Jump ticks allow time for the jump to leave the ground. Otherwise jumping ends
-		// when the character approaches the current ground.
-		if ( m_jumpTicks > 2 && castResult.hit && b2Dot( m_velocity, castResult.normal ) <= 0.0f )
-		{
-			m_jumping = false;
-		}
 	}
 
 	// The pogo joint is rebuilt every solve because it may land on a different body
