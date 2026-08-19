@@ -548,6 +548,64 @@ int SnapshotTest( void )
 		b2DestroyRecording( rec );
 	}
 
+	// Phase 11: restore clears the event buffers. End events queued by a between-step mutator
+	// must not survive a rollback and surface after the first resimmed step.
+	{
+		b2WorldDef wd = b2DefaultWorldDef();
+		wd.workerCount = 1;
+		b2WorldId wId = b2CreateWorld( &wd );
+		b2World* w = b2GetWorldFromId( wId );
+
+		b2BodyDef gbd = b2DefaultBodyDef();
+		gbd.position = (b2Pos){ 0.0f, -1.0f };
+		b2BodyId ground = b2CreateBody( wId, &gbd );
+		b2Polygon groundBox = b2MakeBox( 10.0f, 1.0f );
+		b2ShapeDef gsd = b2DefaultShapeDef();
+		gsd.enableContactEvents = true;
+		b2CreatePolygonShape( ground, &gsd, &groundBox );
+
+		b2BodyDef bd = b2DefaultBodyDef();
+		bd.type = b2_dynamicBody;
+		bd.position = (b2Pos){ 0.0f, 0.5f };
+		b2BodyId box = b2CreateBody( wId, &bd );
+		b2Polygon boxPoly = b2MakeBox( 0.5f, 0.5f );
+		b2ShapeDef bsd = b2DefaultShapeDef();
+		bsd.enableContactEvents = true;
+		b2CreatePolygonShape( box, &bsd, &boxPoly );
+
+		// Settle so the box rests on the ground with a live touching contact
+		for ( int step = 0; step < 60; ++step )
+		{
+			b2World_Step( wId, dt, subSteps );
+		}
+
+		// The public state hash accessor must match the internal deep hash
+		ENSURE( b2World_GetStateHash( wId ) == b2HashWorldStateDeep( w ) );
+
+		int snapSize = b2World_Snapshot( wId, NULL, 0 );
+		uint8_t* snap = b2Alloc( snapSize );
+		b2World_Snapshot( wId, snap, snapSize );
+
+		// Disabling the resting box destroys its touching contact and queues an end event,
+		// exactly the between-step mutation a rollback would discard
+		b2Body_Disable( box );
+		ENSURE( w->contactEndEvents[w->endEventArrayIndex].count >= 1 );
+
+		ENSURE( b2World_Restore( wId, snap, snapSize ) );
+
+		// Restore must leave no queued end events in either half of the double buffer
+		ENSURE( w->contactEndEvents[0].count == 0 );
+		ENSURE( w->contactEndEvents[1].count == 0 );
+
+		// The resimmed step keeps the box resting, so no end event should reach the user
+		b2World_Step( wId, dt, subSteps );
+		b2ContactEvents events = b2World_GetContactEvents( wId );
+		ENSURE( events.endCount == 0 );
+
+		b2Free( snap, snapSize );
+		b2DestroyWorld( wId );
+	}
+
 	remove( s_snapPath );
 
 	// Clean up

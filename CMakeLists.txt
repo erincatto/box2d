@@ -30,8 +30,13 @@ if (MSVC OR APPLE OR (UNIX AND NOT APPLE))
 			add_compile_options("$<$<CONFIG:Debug>:/fsanitize=address>")
 			add_link_options("$<$<CONFIG:Debug>:/INCREMENTAL:NO>")
 		elseif(APPLE)
-			add_compile_options(-fsanitize=address -fsanitize-address-use-after-scope -fsanitize=undefined)
+			# UBSan recovers by default, no-recover makes the first report fatal so CI fails
+			add_compile_options(-fsanitize=address -fsanitize-address-use-after-scope -fsanitize=undefined -fno-sanitize-recover=all)
 			add_link_options(-fsanitize=address -fsanitize-address-use-after-scope -fsanitize=undefined)
+		elseif(UNIX)
+			# use-after-scope is clang only, leave it off so gcc builds work
+			add_compile_options(-fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fno-omit-frame-pointer)
+			add_link_options(-fsanitize=address -fsanitize=undefined)
 		endif()
 	else()
 		if(MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" AND PROJECT_IS_TOP_LEVEL)
@@ -44,12 +49,17 @@ endif()
 
 # Deterministic math
 # https://box2d.org/posts/2024/08/determinism/
-if (MINGW OR UNIX)
-	add_compile_options(-ffp-contract=off)
-elseif (MSVC AND CMAKE_C_COMPILER_ID STREQUAL "Clang")
-	# clang-cl contracts multiply add into FMA under AVX2, diverging from non FMA builds.
-	# The plain driver flag is dropped, so force it through to the frontend.
-	add_compile_options(/clang:-ffp-contract=off)
+# Contraction into FMA is the one value changing transform enabled by default, and whether
+# it fires depends on the target. Test the compiler, not the platform, so every gcc and
+# clang gets the flag including a clang that is neither MinGW nor clang-cl.
+if (CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+	if (CMAKE_C_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+		# clang-cl contracts multiply add into FMA under AVX2, diverging from non FMA builds.
+		# The plain driver flag is dropped, so force it through to the frontend.
+		add_compile_options(/clang:-ffp-contract=off)
+	else()
+		add_compile_options(-ffp-contract=off)
+	endif()
 endif()
 
 option(BOX2D_DISABLE_SIMD "Disable SIMD math (slower)" OFF)
@@ -60,11 +70,31 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
 	cmake_dependent_option(BOX2D_AVX2 "Enable AVX2" OFF "NOT BOX2D_DISABLE_SIMD" OFF)
 endif()
 
+# These are read by the library build, so they must precede add_subdirectory(src),
+# otherwise the first configure and a re-configure produce different libraries.
+# Top level only, so they stay hidden from FetchContent consumers.
+if(PROJECT_IS_TOP_LEVEL)
+	option(BOX2D_PROFILE "Enable profiling with Tracy" OFF)
+	option(BOX2D_VALIDATE "Enable heavy validation" ON)
+endif()
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Leaving this here for testing
 # set(CMAKE_VERBOSE_MAKEFILE ON)
+
+# Emscripten pthread support. Must precede add_subdirectory(src) so the box2d library
+# objects are built with the same atomics/bulk-memory features as the executables that
+# link them, otherwise wasm-ld rejects --shared-memory. Top level only, so a FetchContent
+# consumer keeps control of its own threading model.
+if (EMSCRIPTEN AND PROJECT_IS_TOP_LEVEL)
+	set(EMSCRIPTEN_PTHREADS_COMPILER_FLAGS "-pthread -s USE_PTHREADS=1")
+	set(EMSCRIPTEN_PTHREADS_LINKER_FLAGS "${EMSCRIPTEN_PTHREADS_COMPILER_FLAGS} -s ALLOW_MEMORY_GROWTH")
+	string(APPEND CMAKE_C_FLAGS " ${EMSCRIPTEN_PTHREADS_COMPILER_FLAGS}")
+	string(APPEND CMAKE_CXX_FLAGS " ${EMSCRIPTEN_PTHREADS_COMPILER_FLAGS}")
+	string(APPEND CMAKE_EXE_LINKER_FLAGS " ${EMSCRIPTEN_PTHREADS_LINKER_FLAGS}")
+endif()
 
 add_subdirectory(src)
 
@@ -73,8 +103,6 @@ if(PROJECT_IS_TOP_LEVEL)
 	option(BOX2D_SAMPLES "Build the Box2D samples" ON)
 	option(BOX2D_BENCHMARKS "Build the Box2D benchmarks" OFF)
 	option(BOX2D_DOCS "Build the Box2D documentation" OFF)
-	option(BOX2D_PROFILE "Enable profiling with Tracy" OFF)
-	option(BOX2D_VALIDATE "Enable heavy validation" ON)
 	option(BOX2D_UNIT_TESTS "Build the Box2D unit tests" ON)
 	
 	# Needed for samples.exe to find box2d.dll
@@ -82,15 +110,6 @@ if(PROJECT_IS_TOP_LEVEL)
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
 
 	if(BOX2D_UNIT_TESTS OR BOX2D_SAMPLES OR BOX2D_BENCHMARKS)
-		# Emscripten pthread support
-		if(EMSCRIPTEN)
-			set(EMSCRIPTEN_PTHREADS_COMPILER_FLAGS "-pthread -s USE_PTHREADS=1")
-			set(EMSCRIPTEN_PTHREADS_LINKER_FLAGS "${EMSCRIPTEN_PTHREADS_COMPILER_FLAGS} -s ALLOW_MEMORY_GROWTH")
-			string(APPEND CMAKE_C_FLAGS " ${EMSCRIPTEN_PTHREADS_COMPILER_FLAGS}")
-			string(APPEND CMAKE_CXX_FLAGS " ${EMSCRIPTEN_PTHREADS_COMPILER_FLAGS}")
-			string(APPEND CMAKE_EXE_LINKER_FLAGS " ${EMSCRIPTEN_PTHREADS_LINKER_FLAGS}")
-		endif()
-
 		add_subdirectory(shared)
 	endif()
 

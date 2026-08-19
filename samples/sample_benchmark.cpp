@@ -956,7 +956,7 @@ public:
 			uint64_t ticks = b2GetTicks();
 
 			// This will wake the island
-			b2DestroyJoint( jointId, true );
+			b2DestroyJoint( jointId );
 			m_wakeTotal += b2GetMillisecondsAndReset( &ticks );
 
 			// Put the island back to sleep. It must be split because a constraint was removed.
@@ -1837,7 +1837,7 @@ public:
 			float x = -40.0f * gridSize;
 			for ( int i = 0; i < 81; ++i )
 			{
-				b2Polygon box = b2MakeOffsetBox( 0.5f * gridSize, 0.5f * gridSize, { x, y }, b2Rot_identity );
+				b2Polygon box = b2MakeOffsetBox( 0.45f * gridSize, 0.45f * gridSize, { x, y }, b2Rot_identity );
 				b2CreatePolygonShape( groundId, &shapeDef, &box );
 				x += gridSize;
 			}

@@ -721,7 +721,7 @@ destroyed when the parent body is destroyed. However, you may wish to store the 
 to change properties on it later.
 
 You can create multiple shapes on a single body. They all can contribute
-to the mass of the body. These shapes never collide with each other and may overlap.
+to the mass properties of the body. These shapes never collide with each other and may overlap.
 
 You can destroy a shape on the parent body. You may do this to model a
 breakable object. Otherwise you can just leave the shape alone and let

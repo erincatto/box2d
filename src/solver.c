@@ -359,14 +359,14 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 			}
 		}
 
-		if ( didHit && ( shape->enablePreSolveEvents || fastShape->enablePreSolveEvents ) && world->preSolveFcn != NULL )
+		if ( didHit && ( shape->enablePreSolveEvents || fastShape->enablePreSolveEvents ) && world->preContinuousFcn != NULL )
 		{
 			b2ShapeId shapeIdA = { shape->id + 1, world->worldId, shape->generation };
 			b2ShapeId shapeIdB = { fastShape->id + 1, world->worldId, fastShape->generation };
 
 			// TOI runs in the base frame, lift the hit point back to world for the callback
 			b2Pos worldPoint = b2OffsetPos( continuousContext->base, output.point );
-			didHit = world->preSolveFcn( shapeIdA, shapeIdB, worldPoint, output.normal, world->preSolveContext );
+			didHit = world->preContinuousFcn( shapeIdA, shapeIdB, worldPoint, output.normal, world->preSolveContext );
 		}
 
 		if ( didHit )
@@ -518,6 +518,10 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 			if ( b2AABB_Contains( shape->fatAABB, shape->aabb ) == false )
 			{
 				float margin = shape->aabbMargin;
+
+				// Note: far from the origin the margin can be snapped to the nearest ULP.
+				// This relevant for DP mode. So we lose the broad-phase hysteresis.
+				// todo consider using b2Expand to ensure at least one ULP of margin.
 				b2AABB fatAABB;
 				fatAABB.lowerBound.x = shape->aabb.lowerBound.x - margin;
 				fatAABB.lowerBound.y = shape->aabb.lowerBound.y - margin;
@@ -1279,7 +1283,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	int awakeBodyCount = awakeSet->bodySims.count;
 	if ( awakeBodyCount == 0 )
 	{
-		b2ValidateNoEnlarged( &world->broadPhase );
 		return;
 	}
 

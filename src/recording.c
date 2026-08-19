@@ -364,6 +364,11 @@ void b2RecW_DISTANCEJOINTDEF( b2RecBuffer* buf, b2DistanceJointDef v )
 	b2RecW_F32( buf, v.motorSpeed );
 }
 
+void b2RecW_FILTERJOINTDEF( b2RecBuffer* buf, b2FilterJointDef v )
+{
+	b2RecW_JointBase( buf, &v.base );
+}
+
 void b2RecW_MOTORJOINTDEF( b2RecBuffer* buf, b2MotorJointDef v )
 {
 	b2RecW_JointBase( buf, &v.base );
@@ -379,9 +384,24 @@ void b2RecW_MOTORJOINTDEF( b2RecBuffer* buf, b2MotorJointDef v )
 	b2RecW_F32( buf, v.maxSpringTorque );
 }
 
-void b2RecW_FILTERJOINTDEF( b2RecBuffer* buf, b2FilterJointDef v )
+void b2RecW_MOVERJOINTDEF( b2RecBuffer* buf, b2MoverJointDef v )
 {
 	b2RecW_JointBase( buf, &v.base );
+	b2RecW_VEC2( buf, v.linearVelocity );
+	b2RecW_VEC2( buf, v.maxVelocityForce );
+}
+
+void b2RecW_POGOJOINTDEF( b2RecBuffer* buf, b2PogoJointDef v )
+{
+	b2RecW_JointBase( buf, &v.base );
+	b2RecW_VEC2( buf, v.normal );
+	b2RecW_F32( buf, v.hertz );
+	b2RecW_F32( buf, v.dampingRatio );
+	b2RecW_F32( buf, v.restLength );
+	b2RecW_F32( buf, v.maxTensionForce );
+	b2RecW_F32( buf, v.maxCompressionForce );
+	b2RecW_F32( buf, v.impulse );
+	b2RecW_F32( buf, v.velocity );
 }
 
 void b2RecW_PRISMATICJOINTDEF( b2RecBuffer* buf, b2PrismaticJointDef v )
@@ -622,21 +642,28 @@ void b2RecEndRecord( b2Recording* rec )
 #undef ARG
 
 // Codegen: full writers wrapping begin, arg writer, end
+// Setters and creates may run on threads that each own a distinct object, so hold the lock across
+// the whole record. Without it a concurrent writer splices its bytes between our begin and end and
+// the record desyncs replay. Same lock the query commit path takes.
 // Example:
 // B2_REC_OP( 0x80, Step, RET_NONE, ARG( WORLDID, world ) ARG( F32, dt ) ARG( I32, subStepCount ) )
 // Becomes:
 // void b2RecWrite_Step( b2Recording* rec, const b2RecArgs_Step* a)
 // {
+//   b2LockMutex( rec->lock );
 //   b2RecBeginRecord( rec, (uint8_t)( 0x80 ) );
 //   b2RecWriteArgs_Step( rec, a );
 //   b2RecEndRecord( rec );
+//   b2UnlockMutex( rec->lock );
 // }
 #define B2_REC_OP( op, Name, RET, ... )                                                                                          \
 	void b2RecWrite_##Name( b2Recording* rec, const b2RecArgs_##Name* a )                                                        \
 	{                                                                                                                            \
+		b2LockMutex( rec->lock );                                                                                                \
 		b2RecBeginRecord( rec, (uint8_t)( op ) );                                                                                \
 		b2RecWriteArgs_##Name( rec, a );                                                                                         \
 		b2RecEndRecord( rec );                                                                                                   \
+		b2UnlockMutex( rec->lock );                                                                                              \
 	}
 #include "recording_ops.inl"
 #undef B2_REC_OP
@@ -648,19 +675,23 @@ void b2RecEndRecord( b2Recording* rec )
 // Becomes:
 // 	void b2RecWriteRet_CreateCircleShape( b2Recording* rec, const b2RecArgs_CreateCircleShape* a, idType id )
 //	{
+//		b2LockMutex( rec->lock );
 //		b2RecBeginRecord( rec, (uint8_t)( 0x40 ) );
 //		b2RecWriteArgs_CreateCircleShape( rec, a );
 //		b2RecW_SHAPEID( &rec->buffer, id );
 //		b2RecEndRecord( rec );
+//		b2UnlockMutex( rec->lock );
 //	}
 
 #define B2_REC_RETWRITE( op, Name, idType, idW )                                                                                 \
 	void b2RecWriteRet_##Name( b2Recording* rec, const b2RecArgs_##Name* a, idType id )                                          \
 	{                                                                                                                            \
+		b2LockMutex( rec->lock );                                                                                                \
 		b2RecBeginRecord( rec, (uint8_t)( op ) );                                                                                \
 		b2RecWriteArgs_##Name( rec, a );                                                                                         \
 		idW( &rec->buffer, id );                                                                                                 \
 		b2RecEndRecord( rec );                                                                                                   \
+		b2UnlockMutex( rec->lock );                                                                                              \
 	}
 #define B2_REC_RETWRITE_RET_NONE( op, Name )
 #define B2_REC_RETWRITE_RET_BODYID( op, Name ) B2_REC_RETWRITE( op, Name, b2BodyId, b2RecW_BODYID )

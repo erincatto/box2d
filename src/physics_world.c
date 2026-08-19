@@ -9,6 +9,7 @@
 
 #include "aabb.h"
 #include "arena_allocator.h"
+#include "atomic.h"
 #include "bitset.h"
 #include "body.h"
 #include "broad_phase.h"
@@ -32,6 +33,12 @@
 #include <float.h>
 #include <stdio.h>
 #include <string.h>
+
+#if defined( _M_X64 ) || defined( __x86_64__ ) || defined( _M_IX86 ) || defined( __i386__ )
+#include <xmmintrin.h>
+#elif ( defined( _M_ARM64 ) || defined( __aarch64__ ) ) && defined( _MSC_VER )
+#include <intrin.h>
+#endif
 
 _Static_assert( B2_MAX_WORLDS > 0, "must be 1 or more" );
 _Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B2_MAX_WORLDS limit exceeded" );
@@ -153,6 +160,11 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 {
 	_Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B2_MAX_WORLDS limit exceeded" );
 	B2_CHECK_DEF( def );
+
+	if ( b2IsDenormalFlushEnabled() )
+	{
+		b2Log( "Denormal flushing is enabled, determinism not supported" );
+	}
 
 	int worldId = B2_NULL_INDEX;
 	for ( int i = 0; i < B2_MAX_WORLDS; ++i )
@@ -323,14 +335,17 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->recording = NULL;
 
 	// add one to worldId so that 0 represents a null b2WorldId
-	return (b2WorldId){ (uint16_t)( worldId + 1 ), world->generation };
+	return (b2WorldId){
+		.index1 = (uint16_t)( worldId + 1 ),
+		.generation = world->generation,
+	};
 }
 
 void b2DestroyWorld( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 
-	// Detach any recording before teardown; the host owns and frees the recording buffer
+	// Detach any recording before teardown. The user owns and frees the recording buffer.
 	b2StopRecordingInternal( world );
 
 	if ( world->scheduler != NULL )
@@ -749,7 +764,7 @@ static void b2Collide( b2StepContext* context )
 			if ( simFlags & b2_simDisjoint )
 			{
 				// Bounding boxes no longer overlap
-				b2DestroyContact( world, contact, false );
+				b2DestroyContact( world, contact );
 				contact = NULL;
 				contactSim = NULL;
 			}
@@ -938,6 +953,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		world->finishTaskFcn( world->userTreeTask, world->userTaskContext );
 		world->userTreeTask = NULL;
 		world->activeTaskCount -= 1;
+		b2ValidateNoEnlarged( &world->broadPhase );
 	}
 
 	// Update sensors
@@ -2004,6 +2020,12 @@ void b2World_StartRecording( b2WorldId worldId, b2Recording* recording )
 		return;
 	}
 
+	if ( world->preSolveFcn != NULL || world->preContinuousFcn != NULL )
+	{
+		printf( "b2World_StartRecording: preSolve not supported when recording\n" );
+		return;
+	}
+
 	b2StartRecordingIntoBuffer( world, recording );
 }
 
@@ -2468,21 +2490,17 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, uint64_t
 	}
 
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2WorldTransform xf = b2GetBodyTransformQuick( world, body );
+	b2WorldTransform bodyTransform = b2GetBodyTransformQuick( world, body );
+	b2Transform transform = b2ToRelativeTransform( bodyTransform, worldContext->origin );
 
-	// Re-center on the body so the per-shape cast stays in float precision far from the origin.
-	// The tree traversal already used the truncated origin in input. Here we re-difference in full
-	// precision against the body position.
-	b2Pos base = xf.p;
-	b2Transform transform = b2ToRelativeTransform( xf, base );
 	b2RayCastInput localInput = *input;
-	localInput.origin = b2SubPos( worldContext->origin, base );
+	localInput.origin = b2Vec2_zero;
 	b2CastOutput output = b2RayCastShape( &localInput, shape, transform );
 
 	if ( output.hit )
 	{
 		b2ShapeId id = { shapeId + 1, world->worldId, shape->generation };
-		b2Pos point = b2OffsetPos( base, output.point );
+		b2Pos point = b2OffsetPos( worldContext->origin, output.point );
 		float fraction = worldContext->fcn( id, point, output.normal, output.fraction, worldContext->userContext );
 
 		// The user may return -1 to skip this shape
@@ -2722,9 +2740,7 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, b2Pos origin, const b2ShapePro
 	worldContext.input.maxFraction = 1.0f;
 	worldContext.userContext = context;
 
-	// Bound the proxy in origin relative space then lift to a conservative world float box. The
-	// tree node boxes use the same directed rounding, so the swept box never clips a shape far
-	// from the origin. Per shape casts re-difference at full precision against the carried origin.
+	// Create a conservative world space box from the proxy and origin.
 	b2AABB localBox = b2MakeAABB( proxy->points, proxy->count, proxy->radius );
 	b2AABB box = b2OffsetAABB( localBox, origin );
 	b2BoxCastInput treeInput = { box, translation, 1.0f };
@@ -2784,7 +2800,8 @@ static float MoverCastCallback( const b2BoxCastInput* input, int proxyId, uint64
 	localInput.maxFraction = input->maxFraction;
 
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2Transform transform = b2ToRelativeTransform( b2GetBodyTransformQuick( world, body ), worldContext->origin );
+	b2WorldTransform bodyTransform = b2GetBodyTransformQuick( world, body );
+	b2Transform transform = b2ToRelativeTransform( bodyTransform, worldContext->origin );
 
 	b2CastOutput output = b2ShapeCastShape( &localInput, shape, transform );
 	if ( output.fraction == 0.0f )
@@ -2899,8 +2916,8 @@ static bool TreeCollideCallback( int proxyId, uint64_t userData, void* context )
 
 // It is tempting to use a shape proxy for the mover, but this makes handling deep overlap difficult and the generality may
 // not be worth it.
-void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2QueryFilter filter,
-						   b2PlaneResultFcn* fcn, void* context )
+void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2QueryFilter filter, b2PlaneResultFcn* fcn,
+						   void* context )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
@@ -2962,15 +2979,18 @@ void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterFcn* fcn,
 	world->customFilterContext = context;
 }
 
-void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* fcn, void* context )
+void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* preSolveFcn, b2PreContinuousFcn* preContinuousFcn,
+								  void* context )
 {
 	b2World* world = b2GetWorldFromId( worldId );
-	if ( fcn != NULL && world->recording != NULL )
+	if ( (preSolveFcn != NULL || preContinuousFcn != NULL) && world->recording != NULL )
 	{
 		printf( "b2World_SetPreSolveCallback: preSolve not supported while recording\n" );
 		B2_ASSERT( false && "preSolve callbacks are not supported while recording" );
 	}
-	world->preSolveFcn = fcn;
+
+	world->preSolveFcn = preSolveFcn;
+	world->preContinuousFcn = preContinuousFcn;
 	world->preSolveContext = context;
 }
 

@@ -319,7 +319,7 @@ b2ShapeId b2CreateChainSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, con
 }
 
 // Destroy a shape on a body. This doesn't need to be called when destroying a body.
-static void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body, bool wakeBodies )
+static void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body )
 {
 	int shapeId = shape->id;
 
@@ -358,7 +358,7 @@ static void b2DestroyShapeInternal( b2World* world, b2Shape* shape, b2Body* body
 
 		if ( contact->shapeIdA == shapeId || contact->shapeIdB == shapeId )
 		{
-			b2DestroyContact( world, contact, wakeBodies );
+			b2DestroyContact( world, contact );
 		}
 	}
 
@@ -427,10 +427,8 @@ void b2DestroyShape( b2ShapeId shapeId, bool updateBodyMass )
 
 	B2_REC( world, DestroyShape, shapeId, updateBodyMass );
 
-	// need to wake bodies because this might be a static body
-	bool wakeBodies = true;
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
-	b2DestroyShapeInternal( world, shape, body, wakeBodies );
+	b2DestroyShapeInternal( world, shape, body );
 
 	if ( updateBodyMass == true )
 	{
@@ -630,8 +628,7 @@ void b2DestroyChain( b2ChainId chainId )
 	{
 		int shapeId = chain->shapeIndices[i];
 		b2Shape* shape = b2Array_Get( world->shapes, shapeId );
-		bool wakeBodies = true;
-		b2DestroyShapeInternal( world, shape, body, wakeBodies );
+		b2DestroyShapeInternal( world, shape, body );
 	}
 
 	b2FreeChainData( chain );
@@ -1317,7 +1314,7 @@ b2Filter b2Shape_GetFilter( b2ShapeId shapeId )
 	return shape->filter;
 }
 
-static void b2ResetProxy( b2World* world, b2Shape* shape, bool wakeBodies, bool destroyProxy )
+static void b2ResetProxy( b2World* world, b2Shape* shape, bool destroyProxy )
 {
 	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
 
@@ -1335,7 +1332,7 @@ static void b2ResetProxy( b2World* world, b2Shape* shape, bool wakeBodies, bool 
 
 		if ( contact->shapeIdA == shapeId || contact->shapeIdB == shapeId )
 		{
-			b2DestroyContact( world, contact, wakeBodies );
+			b2DestroyContact( world, contact );
 		}
 	}
 
@@ -1389,9 +1386,7 @@ void b2Shape_SetFilter( b2ShapeId shapeId, b2Filter filter )
 
 	shape->filter = filter;
 
-	// need to wake bodies because a filter change may destroy contacts
-	bool wakeBodies = true;
-	b2ResetProxy( world, shape, wakeBodies, destroyProxy );
+	b2ResetProxy( world, shape, destroyProxy );
 
 	// note: this does not immediately update sensor overlaps. Instead sensor
 	// overlaps are updated the next time step
@@ -1543,10 +1538,8 @@ void b2Shape_SetCircle( b2ShapeId shapeId, const b2Circle* circle )
 	shape->type = b2_circleShape;
 	shape->aabbMargin = b2ComputeShapeMargin( shape );
 
-	// need to wake bodies so they can react to the shape change
-	bool wakeBodies = true;
 	bool destroyProxy = true;
-	b2ResetProxy( world, shape, wakeBodies, destroyProxy );
+	b2ResetProxy( world, shape, destroyProxy );
 }
 
 void b2Shape_SetCapsule( b2ShapeId shapeId, const b2Capsule* capsule )
@@ -1570,10 +1563,8 @@ void b2Shape_SetCapsule( b2ShapeId shapeId, const b2Capsule* capsule )
 	shape->type = b2_capsuleShape;
 	shape->aabbMargin = b2ComputeShapeMargin( shape );
 
-	// need to wake bodies so they can react to the shape change
-	bool wakeBodies = true;
 	bool destroyProxy = true;
-	b2ResetProxy( world, shape, wakeBodies, destroyProxy );
+	b2ResetProxy( world, shape, destroyProxy );
 }
 
 void b2Shape_SetSegment( b2ShapeId shapeId, const b2Segment* segment )
@@ -1591,10 +1582,8 @@ void b2Shape_SetSegment( b2ShapeId shapeId, const b2Segment* segment )
 	shape->type = b2_segmentShape;
 	shape->aabbMargin = b2ComputeShapeMargin( shape );
 
-	// need to wake bodies so they can react to the shape change
-	bool wakeBodies = true;
 	bool destroyProxy = true;
-	b2ResetProxy( world, shape, wakeBodies, destroyProxy );
+	b2ResetProxy( world, shape, destroyProxy );
 }
 
 void b2Shape_SetPolygon( b2ShapeId shapeId, const b2Polygon* polygon )
@@ -1612,10 +1601,8 @@ void b2Shape_SetPolygon( b2ShapeId shapeId, const b2Polygon* polygon )
 	shape->type = b2_polygonShape;
 	shape->aabbMargin = b2ComputeShapeMargin( shape );
 
-	// need to wake bodies so they can react to the shape change
-	bool wakeBodies = true;
 	bool destroyProxy = true;
-	b2ResetProxy( world, shape, wakeBodies, destroyProxy );
+	b2ResetProxy( world, shape, destroyProxy );
 }
 
 void b2Shape_SetChainSegment( b2ShapeId shapeId, const b2ChainSegment* chainSegment )
@@ -1648,9 +1635,8 @@ void b2Shape_SetChainSegment( b2ShapeId shapeId, const b2ChainSegment* chainSegm
 	shape->type = b2_chainSegmentShape;
 	shape->aabbMargin = b2ComputeShapeMargin( shape );
 
-	bool wakeBodies = true;
 	bool destroyProxy = true;
-	b2ResetProxy( world, shape, wakeBodies, destroyProxy );
+	b2ResetProxy( world, shape, destroyProxy );
 }
 
 b2ChainId b2Shape_GetParentChain( b2ShapeId shapeId )

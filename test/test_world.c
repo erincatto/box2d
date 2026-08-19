@@ -252,14 +252,12 @@ static bool CustomFilter( b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* context 
 	return true;
 }
 
-static bool PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context )
+static void PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context )
 {
 	(void)shapeIdA;
 	(void)shapeIdB;
-	(void)point;
-	(void)normal;
-	ENSURE( context == NULL );
-	return false;
+	(void)manifold;
+	(void)context;
 }
 
 // This test is here to ensure all API functions link correctly.
@@ -291,7 +289,7 @@ int TestWorldCoverage( void )
 	ENSURE( value == 100.0f );
 
 	b2World_SetCustomFilterCallback( worldId, CustomFilter, NULL );
-	b2World_SetPreSolveCallback( worldId, PreSolveStatic, NULL );
+	b2World_SetPreSolveCallback( worldId, PreSolveStatic, NULL, NULL );
 
 	b2Vec2 g = { 1.0f, 2.0f };
 	b2World_SetGravity( worldId, g );

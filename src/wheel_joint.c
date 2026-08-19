@@ -99,13 +99,8 @@ void b2WheelJoint_SetLimits( b2JointId jointId, float lower, float upper )
 	B2_ASSERT( lower <= upper );
 
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
-	if ( lower != joint->wheelJoint.lowerTranslation || upper != joint->wheelJoint.upperTranslation )
-	{
-		joint->wheelJoint.lowerTranslation = b2MinFloat( lower, upper );
-		joint->wheelJoint.upperTranslation = b2MaxFloat( lower, upper );
-		joint->wheelJoint.lowerImpulse = 0.0f;
-		joint->wheelJoint.upperImpulse = 0.0f;
-	}
+	joint->wheelJoint.lowerTranslation = b2MinFloat( lower, upper );
+	joint->wheelJoint.upperTranslation = b2MaxFloat( lower, upper );
 }
 
 void b2WheelJoint_EnableMotor( b2JointId jointId, bool enableMotor )
@@ -557,8 +552,8 @@ void b2DrawWheelJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform tra
 
 	b2WheelJoint* joint = &base->wheelJoint;
 
-	b2WorldTransform frameA = b2OffsetWorldTransform( transformA, base->localFrameA );
-	b2WorldTransform frameB = b2OffsetWorldTransform( transformB, base->localFrameB );
+	b2WorldTransform frameA = b2MulWorldTransforms( transformA, base->localFrameA );
+	b2WorldTransform frameB = b2MulWorldTransforms( transformB, base->localFrameB );
 	b2Vec2 axisA = b2RotateVector( frameA.q, (b2Vec2){ 1.0f, 0.0f } );
 
 	b2HexColor c1 = b2_colorGray;

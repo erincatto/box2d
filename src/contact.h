@@ -145,7 +145,7 @@ void b2InitializeContactRegisters( void );
 bool b2CanCollide( b2ShapeType typeA, b2ShapeType typeB );
 
 void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB );
-void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies );
+void b2DestroyContact( b2World* world, b2Contact* contact );
 
 b2ContactSim* b2GetContactSim( b2World* world, b2Contact* contact );
 

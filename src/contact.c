@@ -369,7 +369,7 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 // - a body changes type from dynamic to kinematic or static
 // - a shape is destroyed
 // - contact filtering is modified
-void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
+void b2DestroyContact( b2World* world, b2Contact* contact )
 {
 	// Remove pair from set
 	uint64_t pairKey = B2_SHAPE_PAIR_KEY( contact->shapeIdA, contact->shapeIdB );
@@ -493,7 +493,7 @@ void b2DestroyContact( b2World* world, b2Contact* contact, bool wakeBodies )
 	contact->localIndex = B2_NULL_INDEX;
 	b2FreeId( &world->contactIdPool, contactId );
 
-	if ( wakeBodies && touching )
+	if ( touching )
 	{
 		b2WakeBody( world, bodyA );
 		b2WakeBody( world, bodyB );
@@ -573,29 +573,12 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 		b2ShapeId shapeIdA = { shapeA->id + 1, world->worldId, shapeA->generation };
 		b2ShapeId shapeIdB = { shapeB->id + 1, world->worldId, shapeB->generation };
 
-		b2Manifold* manifold = &contactSim->manifold;
-		float bestSeparation = manifold->points[0].separation;
-		b2Pos bestPoint = b2OffsetPos( transformA.p, manifold->points[0].anchorA );
+		// This call assumes thread safety.
+		world->preSolveFcn( shapeIdA, shapeIdB, &contactSim->manifold, world->preSolveContext );
 
-		// Get deepest point
-		for ( int i = 1; i < manifold->pointCount; ++i )
-		{
-			float separation = manifold->points[i].separation;
-			if ( separation < bestSeparation )
-			{
-				bestSeparation = separation;
-				bestPoint = b2OffsetPos( transformA.p, manifold->points[i].anchorA );
-			}
-		}
-
-		// this call assumes thread safety
-		touching = world->preSolveFcn( shapeIdA, shapeIdB, bestPoint, manifold->normal, world->preSolveContext );
-		if ( touching == false )
-		{
-			// disable contact
-			pointCount = 0;
-			manifold->pointCount = 0;
-		}
+		// Keep these current.
+		pointCount = contactSim->manifold.pointCount;
+		touching = pointCount > 0;
 	}
 
 	// This flag is for testing

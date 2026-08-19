@@ -37,11 +37,13 @@ set(BOX2D_SOURCE_FILES
 	manifold.c
 	math_functions.c
 	motor_joint.c
+	mover_joint.c
 	mover.c
 	parallel_for.c
 	parallel_for.h
 	physics_world.c
 	physics_world.h
+	pogo_joint.c
 	prismatic_joint.c
 	recording.c
 	recording.h
@@ -73,6 +75,7 @@ set(BOX2D_API_FILES
 	../include/box2d/base.h
 	../include/box2d/box2d.h
 	../include/box2d/collision.h
+	../include/box2d/config.h
 	../include/box2d/constants.h
 	../include/box2d/id.h
 	../include/box2d/math_functions.h
@@ -129,7 +132,8 @@ if (BOX2D_PROFILE)
 endif()
 
 if (BOX2D_VALIDATE)
-	message(STATUS "Box2D validation ON")	
+	# Only effective when NDEBUG is undefined, see base.h
+	message(STATUS "Box2D validation ON (debug builds)")
 	target_compile_definitions(box2d PRIVATE BOX2D_VALIDATE)
 endif()
 
@@ -144,6 +148,10 @@ if (BOX2D_DOUBLE_PRECISION)
 	target_compile_definitions(box2d PUBLIC BOX2D_DOUBLE_PRECISION)
 endif()
 
+# Enable asserts in release with debug info. RelWithDebInfo defines NDEBUG, so the
+# optimized test runs would otherwise lose assertions.
+target_compile_definitions(box2d PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:B2_ENABLE_ASSERT>")
+
 if (MSVC)
 	message(STATUS "Box2D on MSVC")	
 	if (BUILD_SHARED_LIBS)
@@ -153,9 +161,6 @@ if (MSVC)
 
 	# Visual Studio won't load the natvis unless it is in the project
 	target_sources(box2d PRIVATE box2d.natvis)
-
-	# Enable asserts in release with debug info
-	target_compile_definitions(box2d PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:B2_ENABLE_ASSERT>")
 
 	if (CMAKE_C_COMPILER_ID STREQUAL "Clang")
 		# clang-cl: /Wall maps to -Weverything which is far too aggressive

@@ -143,8 +143,9 @@ B2_API float b2World_GetHitEventThreshold( b2WorldId worldId );
 /// Register the custom filter callback. This is optional.
 B2_API void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterFcn* fcn, void* context );
 
-/// Register the pre-solve callback. This is optional.
-B2_API void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* fcn, void* context );
+/// Register the pre-solve and pre-continuous callback. This is optional.
+B2_API void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* preSolveFcn, b2PreContinuousFcn* preContinuousFcn,
+										 void* context );
 
 /// Set the gravity vector for the entire world. Box2D has no concept of an up direction and this
 /// is left as a decision for the application. Usually in m/s^2.
@@ -225,6 +226,13 @@ B2_API void b2World_RebuildStaticTree( b2WorldId worldId );
 
 /// This is for internal testing
 B2_API void b2World_EnableSpeculative( b2WorldId worldId, bool flag );
+
+/// Compute a deterministic hash of the simulation state: body transforms and velocities, contact and
+/// joint impulses, and the index bookkeeping that drives the solve. Reproduces exactly across worker
+/// counts and ignores struct padding and free slots, so two worlds that simulate identically always
+/// agree. Use this to detect desyncs (for example rollback resimulation) instead of comparing
+/// serialized world bytes, which carry non-canonical padding.
+B2_API uint64_t b2World_GetStateHash( b2WorldId worldId );
 
 /** @} */
 
@@ -501,6 +509,8 @@ B2_API b2Pos b2Body_GetWorldCenter( b2BodyId bodyId );
 /// Override the body's mass properties. Normally this is computed automatically using the
 /// shape geometry and density. This information is lost if a shape is added or removed or if the
 /// body type changes.
+/// If motion locks are used to fix rotation then the rotational inertia value is ignored and
+/// rotational inertia remains fixed at zero.
 B2_API void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData );
 
 /// Get the mass data for a body
@@ -565,7 +575,8 @@ B2_API void b2Body_Disable( b2BodyId bodyId );
 /// Enable a body by adding it to the simulation. This is expensive.
 B2_API void b2Body_Enable( b2BodyId bodyId );
 
-/// Set the motion locks on this body.
+/// Set the motion locks on this body. This causes mass properties to be recomputed because
+/// fixed rotation sets the rotational inertia to zero.
 B2_API void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks );
 
 /// Get the motion locks for this body.
@@ -898,8 +909,8 @@ B2_API bool b2Chain_IsValid( b2ChainId id );
  * @{
  */
 
-/// Destroy a joint. Optionally wake attached bodies.
-B2_API void b2DestroyJoint( b2JointId jointId, bool wakeAttached );
+/// Destroy a joint.
+B2_API void b2DestroyJoint( b2JointId jointId );
 
 /// Joint identifier validation. Provides validation for up to 64K allocations.
 B2_API bool b2Joint_IsValid( b2JointId id );
@@ -1061,6 +1072,21 @@ B2_API float b2DistanceJoint_GetMotorForce( b2JointId jointId );
 /** @} */
 
 /**
+ * @defgroup filter_joint Filter Joint
+ * @brief Functions for the filter joint.
+ *
+ * The filter joint is used to disable collision between two bodies. As a side effect of being a joint, it also
+ * keeps the two bodies in the same simulation island.
+ * @{
+ */
+
+/// Create a filter joint.
+/// @see b2FilterJointDef for details
+B2_API b2JointId b2CreateFilterJoint( b2WorldId worldId, const b2FilterJointDef* def );
+
+/**@}*/
+
+/**
  * @defgroup motor_joint Motor Joint
  * @brief Functions for the motor joint.
  *
@@ -1139,19 +1165,71 @@ B2_API float b2MotorJoint_GetMaxSpringTorque( b2JointId jointId );
 /**@}*/
 
 /**
- * @defgroup filter_joint Filter Joint
- * @brief Functions for the filter joint.
+ * @defgroup mover_joint Mover Joint
+ * @brief Functions for the mover joint.
  *
- * The filter joint is used to disable collision between two bodies. As a side effect of being a joint, it also
- * keeps the two bodies in the same simulation island.
+ * The mover joint is designed for a dynamic character mover.
  * @{
  */
 
-/// Create a filter joint.
-/// @see b2FilterJointDef for details
-B2_API b2JointId b2CreateFilterJoint( b2WorldId worldId, const b2FilterJointDef* def );
+/// Create a mover joint
+/// @see b2MoverJointDef for details
+B2_API b2JointId b2CreateMoverJoint( b2WorldId worldId, const b2MoverJointDef* def );
+
+/// Set the desired relative linear velocity in meters per second
+B2_API void b2MoverJoint_SetLinearVelocity( b2JointId jointId, b2Vec2 velocity );
+
+/// Get the desired relative linear velocity in meters per second
+B2_API b2Vec2 b2MoverJoint_GetLinearVelocity( b2JointId jointId );
+
+/// Set the motor joint maximum force, usually in newtons
+B2_API void b2MoverJoint_SetMaxVelocityForce( b2JointId jointId, b2Vec2 maxForce );
+
+/// Get the motor joint maximum force, usually in newtons
+B2_API b2Vec2 b2MoverJoint_GetMaxVelocityForce( b2JointId jointId );
 
 /**@}*/
+
+/**
+ * @defgroup pogo_joint Pogo Joint
+ * @brief Functions for the pogo joint. Used for dynamic character movers.
+ * @{
+ */
+
+/// Create a pog joint
+/// @see b2PogoJointDef for details
+B2_API b2JointId b2CreatePogoJoint( b2WorldId worldId, const b2PogoJointDef* def );
+
+/// Set the rest length of a pogo joint
+/// @param jointId The id for a pogo joint
+/// @param length The new pogo joint length
+B2_API void b2PogoJoint_SetRestLength( b2JointId jointId, float length );
+
+/// Get the rest length of a pogo joint
+B2_API float b2PogoJoint_GetRestLength( b2JointId jointId );
+
+/// Set the spring stiffness in Hertz
+B2_API void b2PogoJoint_SetSpringHertz( b2JointId jointId, float hertz );
+
+/// Get the spring Hertz
+B2_API float b2PogoJoint_GetSpringHertz( b2JointId jointId );
+
+/// Set the spring damping ratio, non-dimensional
+B2_API void b2PogoJoint_SetSpringDampingRatio( b2JointId jointId, float dampingRatio );
+
+/// Get the spring damping ratio
+B2_API float b2PogoJoint_GetSpringDampingRatio( b2JointId jointId );
+
+/// Get the current length of the pogo.
+B2_API float b2PogoJoint_GetLength( b2JointId jointId );
+
+/// Get the internal pogo velocity.
+B2_API float b2PogoJoint_GetVelocity( b2JointId jointId );
+
+/// Get the internal pogo impulse.
+B2_API float b2PogoJoint_GetImpulse( b2JointId jointId );
+
+/** @} */
 
 /**
  * @defgroup prismatic_joint Prismatic Joint
@@ -1240,7 +1318,6 @@ B2_API float b2PrismaticJoint_GetSpeed( b2JointId jointId );
  * @defgroup revolute_joint Revolute Joint
  * @brief A revolute joint allows for relative rotation in the 2D plane with no relative translation.
  *
- * The revolute joint is probably the most common joint. It can be used for ragdolls and chains.
  * Also called a *hinge* or *pin* joint.
  * @{
  */

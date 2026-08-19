@@ -65,7 +65,6 @@ void Car::Spawn( b2WorldId worldId, b2Pos position, float scale, float hertz, fl
 	m_frontWheelId = b2CreateBody( worldId, &bodyDef );
 	b2CreateCircleShape( m_frontWheelId, &shapeDef, &circle );
 
-	b2Vec2 axis = { 0.0f, 1.0f };
 	b2Pos pivot = b2Body_GetPosition( m_rearWheelId );
 
 	// float throttle = 0.0f;
@@ -112,8 +111,8 @@ void Car::Despawn()
 {
 	assert( m_isSpawned == true );
 
-	b2DestroyJoint( m_rearAxleId, false );
-	b2DestroyJoint( m_frontAxleId, false );
+	b2DestroyJoint( m_rearAxleId );
+	b2DestroyJoint( m_frontAxleId );
 	b2DestroyBody( m_rearWheelId );
 	b2DestroyBody( m_frontWheelId );
 	b2DestroyBody( m_chassisId );
@@ -214,7 +213,6 @@ void Truck::Spawn( b2WorldId worldId, b2Pos position, float scale, float hertz, 
 	m_frontWheelId = b2CreateBody( worldId, &bodyDef );
 	b2CreateCircleShape( m_frontWheelId, &shapeDef, &circle );
 
-	b2Vec2 axis = { 0.0f, 1.0f };
 	b2Pos pivot = b2Body_GetPosition( m_rearWheelId );
 
 	// float throttle = 0.0f;
@@ -261,8 +259,8 @@ void Truck::Despawn()
 {
 	assert( m_isSpawned == true );
 
-	b2DestroyJoint( m_rearAxleId, false );
-	b2DestroyJoint( m_frontAxleId, false );
+	b2DestroyJoint( m_rearAxleId );
+	b2DestroyJoint( m_frontAxleId );
 	b2DestroyBody( m_rearWheelId );
 	b2DestroyBody( m_frontWheelId );
 	b2DestroyBody( m_chassisId );

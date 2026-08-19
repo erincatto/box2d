@@ -43,24 +43,24 @@ typedef struct b2World b2World;
 #define B2_REC_MAGIC 0x43523242u
 
 // Recording format version. Any mismatch refuses to load. The minor tracks op stream layout
-// changes that keep the 32 byte header shape, such as the query origin args.
+// changes that keep the 32 byte header shape.
 #define B2_REC_VERSION_MAJOR 3
-#define B2_REC_VERSION_MINOR 2
+#define B2_REC_VERSION_MINOR 3 // added mover and pogo joints and rearranged opcodes
 
 // File header, fixed 32 bytes, little-endian
 typedef struct b2RecHeader
 {
-	uint32_t magic;			 // 'B2RC' = 0x43523242
-	uint16_t versionMajor;	 // B2_REC_VERSION_MAJOR
-	uint16_t versionMinor;	 // B2_REC_VERSION_MINOR
+	uint32_t magic;		   // 'B2RC' = 0x43523242
+	uint16_t versionMajor; // B2_REC_VERSION_MAJOR
+	uint16_t versionMinor; // B2_REC_VERSION_MINOR
 	uint32_t reserved2;
-	float lengthScale;		 // The world length scale
+	float lengthScale; // The world length scale
 	uint8_t reserved3;
-	uint8_t pointerWidth;	 // sizeof(void*), gates POD-def memcpy
-	uint8_t bigEndian;		 // 0 on all supported targets
+	uint8_t pointerWidth;	   // sizeof(void*), gates POD-def memcpy
+	uint8_t bigEndian;		   // 0 on all supported targets
 	uint8_t validationEnabled; // 1 if built with validation, only for diagnostics on a layout mismatch
 	uint32_t reserved1;
-	uint64_t snapshotSize;	 // bytes of snapshot blob after the header
+	uint64_t snapshotSize; // bytes of snapshot blob after the header
 } b2RecHeader;
 
 _Static_assert( sizeof( b2RecHeader ) == 32, "recording header must be 32 bytes" );
@@ -120,8 +120,10 @@ typedef b2BodyDef b2RecCType_BODYDEF;
 typedef b2ShapeDef b2RecCType_SHAPEDEF;
 typedef b2ChainDef b2RecCType_CHAINDEF;
 typedef b2DistanceJointDef b2RecCType_DISTANCEJOINTDEF;
-typedef b2MotorJointDef b2RecCType_MOTORJOINTDEF;
 typedef b2FilterJointDef b2RecCType_FILTERJOINTDEF;
+typedef b2MotorJointDef b2RecCType_MOTORJOINTDEF;
+typedef b2MoverJointDef b2RecCType_MOVERJOINTDEF;
+typedef b2PogoJointDef b2RecCType_POGOJOINTDEF;
 typedef b2PrismaticJointDef b2RecCType_PRISMATICJOINTDEF;
 typedef b2RevoluteJointDef b2RecCType_REVOLUTEJOINTDEF;
 typedef b2WeldJointDef b2RecCType_WELDJOINTDEF;
@@ -195,8 +197,10 @@ void b2RecW_BODYDEF( b2RecBuffer* buf, b2BodyDef v );
 void b2RecW_SHAPEDEF( b2RecBuffer* buf, b2ShapeDef v );
 void b2RecW_CHAINDEF( b2RecBuffer* buf, b2ChainDef v );
 void b2RecW_DISTANCEJOINTDEF( b2RecBuffer* buf, b2DistanceJointDef v );
-void b2RecW_MOTORJOINTDEF( b2RecBuffer* buf, b2MotorJointDef v );
 void b2RecW_FILTERJOINTDEF( b2RecBuffer* buf, b2FilterJointDef v );
+void b2RecW_MOTORJOINTDEF( b2RecBuffer* buf, b2MotorJointDef v );
+void b2RecW_MOVERJOINTDEF( b2RecBuffer* buf, b2MoverJointDef v );
+void b2RecW_POGOJOINTDEF( b2RecBuffer* buf, b2PogoJointDef v );
 void b2RecW_PRISMATICJOINTDEF( b2RecBuffer* buf, b2PrismaticJointDef v );
 void b2RecW_REVOLUTEJOINTDEF( b2RecBuffer* buf, b2RevoluteJointDef v );
 void b2RecW_WELDJOINTDEF( b2RecBuffer* buf, b2WeldJointDef v );

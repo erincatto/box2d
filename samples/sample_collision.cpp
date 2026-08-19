@@ -3117,7 +3117,7 @@ public:
 		if ( m_shapeType == e_circleShape )
 		{
 			float radius = 0.5f;
-			b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+			b2Circle circle = { { 0.0f, 0.0f }, radius };
 			DrawSolidCircle( m_draw, transform2, circle.center, circle.radius, color2 );
 
 			for ( int i = 0; i < m_count; ++i )

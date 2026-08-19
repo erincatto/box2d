@@ -3,8 +3,6 @@
 
 #include "body.h"
 
-#include "recording.h"
-
 #include "aabb.h"
 #include "contact.h"
 #include "core.h"
@@ -12,6 +10,7 @@
 #include "island.h"
 #include "joint.h"
 #include "physics_world.h"
+#include "recording.h"
 #include "sensor.h"
 #include "shape.h"
 #include "solver_set.h"
@@ -155,7 +154,7 @@ static void b2RemoveBodyFromIsland( b2World* world, b2Body* body )
 	body->islandIndex = B2_NULL_INDEX;
 }
 
-static void b2DestroyBodyContacts( b2World* world, b2Body* body, bool wakeBodies )
+static void b2DestroyBodyContacts( b2World* world, b2Body* body )
 {
 	// Destroy the attached contacts
 	int edgeKey = body->headContactKey;
@@ -166,7 +165,7 @@ static void b2DestroyBodyContacts( b2World* world, b2Body* body, bool wakeBodies
 
 		b2Contact* contact = b2Array_Get( world->contacts, contactId );
 		edgeKey = contact->edges[edgeIndex].nextKey;
-		b2DestroyContact( world, contact, wakeBodies );
+		b2DestroyContact( world, contact );
 	}
 
 	b2ValidateSolverSets( world );
@@ -355,9 +354,6 @@ void b2DestroyBody( b2BodyId bodyId )
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
-	// Wake bodies attached to this body, even if this body is static.
-	bool wakeBodies = true;
-
 	// Destroy the attached joints
 	int edgeKey = body->headJointKey;
 	while ( edgeKey != B2_NULL_INDEX )
@@ -369,11 +365,11 @@ void b2DestroyBody( b2BodyId bodyId )
 		edgeKey = joint->edges[edgeIndex].nextKey;
 
 		// Careful because this modifies the list being traversed
-		b2DestroyJointInternal( world, joint, wakeBodies );
+		b2DestroyJointInternal( world, joint );
 	}
 
 	// Destroy all contacts attached to this body.
-	b2DestroyBodyContacts( world, body, wakeBodies );
+	b2DestroyBodyContacts( world, body );
 
 	// Destroy the attached shapes and their broad-phase proxies.
 	int shapeId = body->headShapeId;
@@ -619,7 +615,7 @@ void b2UpdateBodyMassData( b2World* world, b2Body* body )
 
 	B2_ASSERT( body->inertia >= 0.0f );
 
-	if ( body->inertia > 0.0f )
+	if ( body->inertia > 0.0f && ( body->flags & b2_fixedRotation ) == 0 )
 	{
 		bodySim->invInertia = 1.0f / body->inertia;
 	}
@@ -1167,9 +1163,8 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 		return;
 	}
 
-	// Stage 2: destroy all contacts but don't wake bodies (because we don't need to)
-	bool wakeBodies = false;
-	b2DestroyBodyContacts( world, body, wakeBodies );
+	// Stage 2: destroy all contacts
+	b2DestroyBodyContacts( world, body );
 
 	// Stage 3: wake this body (does nothing if body is static), otherwise it will also wake
 	// all bodies in the same sleeping solver set.
@@ -1419,6 +1414,28 @@ void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData )
 
 	bodySim->invMass = body->mass > 0.0f ? 1.0f / body->mass : 0.0f;
 	bodySim->invInertia = body->inertia > 0.0f ? 1.0f / body->inertia : 0.0f;
+
+	// Update extents using supplied mass center.
+	bodySim->minExtent = B2_HUGE;
+	bodySim->maxExtent = 0.0f;
+	int shapeId = body->headShapeId;
+	while ( shapeId != B2_NULL_INDEX )
+	{
+		const b2Shape* s = b2Array_Get( world->shapes, shapeId );
+		b2ShapeExtent extent = b2ComputeShapeExtent( s, massData.center );
+		bodySim->minExtent = b2MinFloat( bodySim->minExtent, extent.minExtent );
+		bodySim->maxExtent = b2MaxFloat( bodySim->maxExtent, extent.maxExtent );
+		shapeId = s->nextShapeId;
+	}
+
+	// Motion locks take priority over mass data.
+	if ( body->flags & b2_fixedRotation )
+	{
+		body->inertia = 0.0f;
+		bodySim->invInertia = 0.0f;
+	}
+
+	body->flags &= ~b2_dirtyMass;
 }
 
 b2MassData b2Body_GetMassData( b2BodyId bodyId )
@@ -1664,8 +1681,7 @@ void b2Body_Disable( b2BodyId bodyId )
 
 	// Destroy contacts and wake bodies touching this body. This avoid floating bodies.
 	// This is necessary even for static bodies.
-	bool wakeBodies = true;
-	b2DestroyBodyContacts( world, body, wakeBodies );
+	b2DestroyBodyContacts( world, body );
 
 	// The current solver set of the body
 	b2SolverSet* set = b2Array_Get( world->solverSets, body->setIndex );
@@ -1852,6 +1868,9 @@ void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks )
 				state->angularVelocity = 0.0f;
 			}
 		}
+
+		// Motion locks can affect mass properties.
+		b2UpdateBodyMassData( world, body );
 	}
 }
 
@@ -1880,7 +1899,7 @@ void b2Body_SetBullet( b2BodyId bodyId, bool flag )
 	uint32_t newFlag = flag ? b2_isBullet : 0;
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
-	if ((body->flags & b2_isBullet) == newFlag)
+	if ( ( body->flags & b2_isBullet ) == newFlag )
 	{
 		return;
 	}

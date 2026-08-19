@@ -483,7 +483,7 @@ void Sample::MouseUp( b2Pos p, int button )
 {
 	if ( B2_IS_NON_NULL( m_mouseJointId ) && button == GLFW_MOUSE_BUTTON_1 )
 	{
-		b2DestroyJoint( m_mouseJointId, true );
+		b2DestroyJoint( m_mouseJointId );
 		m_mouseJointId = b2_nullJointId;
 
 		b2DestroyBody( m_mouseBodyId );
@@ -1491,7 +1491,7 @@ static void DrawMenuBar( SampleContext* context )
 				{
 					DrawRow( "Tab", "Show / hide UI" );
 					DrawRow( "M", "Show / hide diagnostics" );
-					DrawRow( "Space", "Pause / resume" );
+					DrawRow( "P", "Pause / resume" );
 					DrawRow( "O", "Single step" );
 					DrawRow( "R", "Restart sample" );
 					DrawRow( "[  ]", "Previous / next sample" );
@@ -1708,7 +1708,7 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 	{
 		ImGui::TextColored( MakeColor( b2_colorRed ), "PAUSED" );
 		ImGui::SameLine();
-		ImGui::TextDisabled( "(space)" );
+		ImGui::TextDisabled( "(P)" );
 		ImGui::Separator();
 	}
 

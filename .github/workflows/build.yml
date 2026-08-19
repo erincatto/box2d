@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 env:
   BUILD_TYPE: Debug
@@ -14,7 +15,7 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ matrix.timeout || 4 }}
-    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     strategy:
       fail-fast: false
       matrix:
@@ -50,6 +51,17 @@ jobs:
             os: windows-11-arm
             args: -A arm64 -DBOX2D_DISABLE_SIMD=TRUE -DBOX2D_SANITIZE=ON
             test: ./bin/Debug/test
+          # Optimized runs. The determinism golden hash is otherwise only checked at -O0,
+          # and -O2 is where a value changing float transform would first show up.
+          - name: windows-relwithdebinfo
+            os: windows-latest
+            msvc: true
+            config: RelWithDebInfo
+            test: ./bin/RelWithDebInfo/test
+          - name: macos-relwithdebinfo
+            os: macos-latest
+            config: RelWithDebInfo
+            test: ./bin/test
           - name: ubuntu-gcc-double
             os: ubuntu-latest
             args: -DBOX2D_DOUBLE_PRECISION=ON
@@ -69,23 +81,27 @@ jobs:
         arch: x64
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON ${{ matrix.args }}
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.config || env.BUILD_TYPE }} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON ${{ matrix.args }}
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/build --config ${{ matrix.config || env.BUILD_TYPE }}
 
     - name: Test
       working-directory: ${{github.workspace}}/build
       env:
         MSAN_OPTIONS: ${{ matrix['msan-options'] || '' }}
+        UBSAN_OPTIONS: print_stacktrace=1
       run: ${{ matrix.test }}
 
   # mingw needs some extra setup so keeping it separate from the matrix.
+  # Debug -O0 copies whole structs and can hide padding bugs. RelWithDebInfo tests
+  # -O2 codegen while B2_ENABLE_ASSERT keeps asserts alive, heavy validation stays
+  # Debug only.
   build-windows-mingw:
     name: windows-mingw
     runs-on: windows-latest
     timeout-minutes: 4
-    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     defaults:
       run:
         shell: msys2 {0}
@@ -103,20 +119,38 @@ jobs:
           mingw-w64-ucrt-x86_64-ninja
 
     - name: Configure CMake
-      run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+      run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
 
     - name: Build
-      run: cmake --build build --config ${{env.BUILD_TYPE}}
+      run: cmake --build build --config RelWithDebInfo
 
     - name: Test
       working-directory: build
       run: ./bin/test
 
+  # Build-only: running the wasm test needs a node + pthread/SharedArrayBuffer harness.
+  # This still catches compile breaks in the box2d library and the test target.
+  emscripten:
+    name: emscripten
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: mymindstorm/setup-emsdk@v14
+
+    - name: Configure CMake
+      run: emcmake cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON
+
+    - name: Build
+      run: cmake --build build --config ${{env.BUILD_TYPE}}
+
   samples:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 8
-    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     strategy:
       fail-fast: false
       matrix:

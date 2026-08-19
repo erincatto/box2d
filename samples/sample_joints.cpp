@@ -62,7 +62,7 @@ public:
 	{
 		for ( int i = 0; i < m_count; ++i )
 		{
-			b2DestroyJoint( m_jointIds[i], false );
+			b2DestroyJoint( m_jointIds[i] );
 			m_jointIds[i] = b2_nullJointId;
 		}
 
@@ -1942,7 +1942,7 @@ public:
 			b2Vec2 force = b2Joint_GetConstraintForce( m_jointIds[i] );
 			if ( b2LengthSquared( force ) > m_breakForce * m_breakForce )
 			{
-				b2DestroyJoint( m_jointIds[i], true );
+				b2DestroyJoint( m_jointIds[i] );
 				m_jointIds[i] = b2_nullJointId;
 			}
 			else

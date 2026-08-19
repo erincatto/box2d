@@ -39,6 +39,7 @@
 
 #if defined( _MSC_VER )
 #include <crtdbg.h>
+#if 0
 static int MyAllocHook( int allocType, void* userData, size_t size, int blockType, long requestNumber,
 						const unsigned char* filename, int lineNumber )
 {
@@ -50,6 +51,7 @@ static int MyAllocHook( int allocType, void* userData, size_t size, int blockTyp
 
 	return 1;
 }
+#endif
 #endif
 
 static SampleContext s_context;
@@ -325,7 +327,7 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				}
 				break;
 
-			case GLFW_KEY_SPACE:
+			case GLFW_KEY_P:
 				s_context.pause = !s_context.pause;
 				break;
 
@@ -614,7 +616,7 @@ int main( int argc, char** argv )
 
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-		// s_context.draw.DrawBackground();
+		// DrawBackground( s_context.draw, &s_context.camera );
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();

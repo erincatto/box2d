@@ -136,20 +136,16 @@ float b2RevoluteJoint_GetUpperLimit( b2JointId jointId )
 
 void b2RevoluteJoint_SetLimits( b2JointId jointId, float lower, float upper )
 {
+	B2_ASSERT( lower <= upper );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, RevoluteJointSetLimits, jointId, lower, upper );
-	B2_ASSERT( lower <= upper );
-	B2_ASSERT( lower >= -0.99f * B2_PI );
-	B2_ASSERT( upper <= 0.99f * B2_PI );
 
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_revoluteJoint );
-	if ( lower != joint->revoluteJoint.lowerAngle || upper != joint->revoluteJoint.upperAngle )
-	{
-		joint->revoluteJoint.lowerAngle = b2MinFloat( lower, upper );
-		joint->revoluteJoint.upperAngle = b2MaxFloat( lower, upper );
-		joint->revoluteJoint.lowerImpulse = 0.0f;
-		joint->revoluteJoint.upperImpulse = 0.0f;
-	}
+	float lowerAngle = b2MinFloat( lower, upper );
+	float upperAngle = b2MaxFloat( lower, upper );
+	joint->revoluteJoint.lowerAngle = b2ClampFloat( lowerAngle, -0.99f * B2_PI, 0.99f * B2_PI );
+	joint->revoluteJoint.upperAngle = b2ClampFloat( upperAngle, -0.99f * B2_PI, 0.99f * B2_PI );
 }
 
 void b2RevoluteJoint_EnableMotor( b2JointId jointId, bool enableMotor )
@@ -510,8 +506,8 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform 
 
 	b2RevoluteJoint* joint = &base->revoluteJoint;
 
-	b2WorldTransform frameA = b2OffsetWorldTransform( transformA, base->localFrameA );
-	b2WorldTransform frameB = b2OffsetWorldTransform( transformB, base->localFrameB );
+	b2WorldTransform frameA = b2MulWorldTransforms( transformA, base->localFrameA );
+	b2WorldTransform frameB = b2MulWorldTransforms( transformB, base->localFrameB );
 
 	const float radius = 0.25f * drawScale;
 	draw->DrawCircleFcn( frameB.p, radius, b2_colorGray, draw->context );

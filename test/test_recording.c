@@ -428,7 +428,7 @@ int RecordingTest( void )
 	tmpJointDef.base.bodyIdB = jb[7];
 	tmpJointDef.length = 5.0f;
 	b2JointId tmpJointId = b2CreateDistanceJoint( worldId, &tmpJointDef );
-	b2DestroyJoint( tmpJointId, true );
+	b2DestroyJoint( tmpJointId );
 
 	// Exercise world config mutators
 	b2World_SetGravity( worldId, (b2Vec2){ 0.0f, -9.8f } );

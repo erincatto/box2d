@@ -56,18 +56,24 @@ public:
 		{
 			m_done = UpdateFallingHinges( m_worldId, &m_data );
 
-			// Issue a few queries each step so the Replay viewer has something to draw
 			b2QueryFilter filter = b2DefaultQueryFilter();
 			b2AABB scanBox = { { 5.0f, 1.0f }, { 7.0f, 2.5f } };
 			b2World_OverlapAABB( m_worldId, b2Pos_zero, scanBox, filter, OverlapFcn, nullptr );
 
 			b2Pos origin = { 0.0f, 12.0f };
 			b2Vec2 translation = { 0.0f, -14.0f };
-			b2World_CastRayClosest( m_worldId, origin, translation, filter );
 
-			origin = { -10.0f, 2.0f };
-			translation = { 20.0f, 0.0f };
-			b2World_CastRay( m_worldId, origin, translation, filter, CastFcn, nullptr );
+			if ( m_stepCount == 30 )
+			{
+				b2World_CastRayClosest( m_worldId, origin, translation, filter );
+			}
+
+			if ( m_stepCount < 5 || 100 < m_stepCount )
+			{
+				origin = { -10.0f, 2.0f };
+				translation = { 20.0f, 0.0f };
+				b2World_CastRay( m_worldId, origin, translation, filter, CastFcn, nullptr );
+			}
 
 			if ( m_done )
 			{
@@ -113,7 +119,7 @@ public:
 
 	~SnapShot() override
 	{
-		if (m_image != nullptr)
+		if ( m_image != nullptr )
 		{
 			free( m_image );
 		}
