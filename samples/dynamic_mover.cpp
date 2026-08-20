@@ -174,7 +174,7 @@ bool DynamicMover::Jump()
 	}
 
 	float surfaceVelocity = 0.0f;
-	if (b2Body_IsValid(m_castResult.bodyId))
+	if ( b2Body_IsValid( m_castResult.bodyId ) )
 	{
 		b2Vec2 v = b2Body_GetWorldPointVelocity( m_castResult.bodyId, m_castResult.point );
 		surfaceVelocity = v.y;
@@ -251,7 +251,7 @@ void DynamicMover::Update( float timeStep, float throttle )
 		m_walkable = false;
 	}
 
-		m_velocity = b2Body_GetLinearVelocity( m_moverId );
+	m_velocity = b2Body_GetLinearVelocity( m_moverId );
 
 	// Friction
 	if ( m_onGround )
