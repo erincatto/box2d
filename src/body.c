@@ -1578,7 +1578,12 @@ void b2Body_SetAwake( b2BodyId bodyId, bool awake )
 
 void b2Body_WakeTouching( b2BodyId bodyId )
 {
-	b2World* world = b2GetWorld( bodyId.world0 );
+	b2World* world = b2GetWorldLocked( bodyId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
+
 	B2_REC( world, BodyWakeTouching, bodyId );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
@@ -1623,7 +1628,12 @@ bool b2Body_IsSleepEnabled( b2BodyId bodyId )
 
 void b2Body_SetSleepThreshold( b2BodyId bodyId, float sleepThreshold )
 {
-	b2World* world = b2GetWorld( bodyId.world0 );
+	b2World* world = b2GetWorldLocked( bodyId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
+
 	B2_REC( world, BodySetSleepThreshold, bodyId, sleepThreshold );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	body->sleepThreshold = sleepThreshold;
@@ -1639,7 +1649,12 @@ float b2Body_GetSleepThreshold( b2BodyId bodyId )
 void b2Body_SetSafetyFactor( b2BodyId bodyId, float safetyFactor )
 {
 	B2_ASSERT( b2IsValidFloat( safetyFactor ) && safetyFactor >= 0.0f );
-	b2World* world = b2GetWorld( bodyId.world0 );
+	b2World* world = b2GetWorldLocked( bodyId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
+
 	B2_REC( world, BodySetSafetyFactor, bodyId, safetyFactor );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	body->safetyFactor = safetyFactor;
