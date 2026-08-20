@@ -1756,3 +1756,122 @@ public:
 };
 
 static int sampleWedge = RegisterSample( "Continuous", "Wedge", Wedge::Create );
+
+// This shows how adjusting the CCD safety factor can engage continuous collision at
+// lower speeds to avoid the slight overlap that happens with discrete collision detection.
+// The best way to run this sample is:
+// 1. press pause (P)
+// 2. restart (R) or press the Drop button
+// 3. then single step (O)
+// Then look at the metrics and overlap. The color of the shape gets darker when it is using
+// continuous collision detection.
+class SafetyFactor : public Sample
+{
+public:
+	explicit SafetyFactor( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 3.0f };
+			m_context->camera.zoom = 6.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position = { 0.0f, -1.0f };
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Polygon box = b2MakeBox( 20.0f, 1.0f );
+			b2CreatePolygonShape( groundId, &shapeDef, &box );
+		}
+
+		m_bodyId = b2_nullBodyId;
+		m_extent = 0.5f;
+		m_height = 0.3f;
+		m_safetyFactor = 0.1f;
+		m_overlap = 0.0f;
+
+		Launch();
+	}
+
+	void Launch()
+	{
+		if ( B2_IS_NON_NULL( m_bodyId ) )
+		{
+			b2DestroyBody( m_bodyId );
+		}
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.position = { 0.0f, m_height + m_extent };
+		bodyDef.safetyFactor = m_safetyFactor;
+		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2Polygon box = b2MakeSquare( m_extent );
+		b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
+
+		m_overlap = 0.0f;
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		if ( m_didStep )
+		{
+			// Contacts are computed at the beginning of the step, so the manifold holds the initial separation.
+			b2ContactData data;
+			int count = b2Body_GetContactData( m_bodyId, &data, 1 );
+			if (count == 1)
+			{
+				for ( int j = 0; j < data.manifold.pointCount; ++j )
+				{
+					m_overlap = b2MaxFloat( m_overlap, -data.manifold.points[j].separation );
+				}
+			}
+		}
+
+		DrawLine( m_draw, b2ToPos( b2Vec2{ -3.0f, -m_overlap } ), b2ToPos( b2Vec2{ 3.0f, -m_overlap } ),
+				  b2_colorRed );
+
+		float timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
+		float motion = timeStep * b2Length( b2Body_GetLinearVelocity( m_bodyId ) );
+
+		DrawScreenTextLine( "actual movement = %.3f m", motion );
+		DrawScreenTextLine( "fast movement = %.3f m", m_safetyFactor * m_extent );
+		DrawScreenTextLine( "overlap = %.4f m", m_overlap );
+	}
+
+	bool DrawControls() override
+	{
+		bool changed = false;
+
+		ImGui::PushItemWidth( 10.0f * ImGui::GetFontSize() );
+		changed |= ImGui::SliderFloat( "Height", &m_height, 0.0f, 2.0f, "%.2f" );
+		changed |= ImGui::SliderFloat( "Safety", &m_safetyFactor, 0.0f, 1.0f, "%.2f" );
+		ImGui::PopItemWidth();
+
+		if ( ImGui::Button( "Drop" ) || changed )
+		{
+			Launch();
+		}
+
+		return true;
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new SafetyFactor( context );
+	}
+
+	b2BodyId m_bodyId;
+	float m_extent;
+	float m_height;
+	float m_safetyFactor;
+	float m_overlap;
+};
+
+static int sampleSafetyFactor = RegisterSample( "Continuous", "Safety Factor", SafetyFactor::Create );

@@ -181,6 +181,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	B2_ASSERT( b2IsValidFloat( def->linearDamping ) && def->linearDamping >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->angularDamping ) && def->angularDamping >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->sleepThreshold ) && def->sleepThreshold >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( def->safetyFactor ) && def->safetyFactor >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->gravityScale ) );
 
 	b2World* world = b2GetWorldFromId( worldId );
@@ -311,6 +312,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	body->inertia = 0.0f;
 	body->sleepThreshold = def->sleepThreshold;
 	body->sleepTime = 0.0f;
+	body->safetyFactor = def->safetyFactor;
 	body->type = def->type;
 	body->flags = bodySim->flags;
 
@@ -1636,6 +1638,7 @@ float b2Body_GetSleepThreshold( b2BodyId bodyId )
 
 void b2Body_SetSafetyFactor( b2BodyId bodyId, float safetyFactor )
 {
+	B2_ASSERT( b2IsValidFloat( safetyFactor ) && safetyFactor >= 0.0f );
 	b2World* world = b2GetWorld( bodyId.world0 );
 	B2_REC( world, BodySetSafetyFactor, bodyId, safetyFactor );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
