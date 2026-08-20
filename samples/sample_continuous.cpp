@@ -1825,7 +1825,7 @@ public:
 			// Contacts are computed at the beginning of the step, so the manifold holds the initial separation.
 			b2ContactData data;
 			int count = b2Body_GetContactData( m_bodyId, &data, 1 );
-			if (count == 1)
+			if ( count == 1 )
 			{
 				for ( int j = 0; j < data.manifold.pointCount; ++j )
 				{
@@ -1834,8 +1834,7 @@ public:
 			}
 		}
 
-		DrawLine( m_draw, b2ToPos( b2Vec2{ -3.0f, -m_overlap } ), b2ToPos( b2Vec2{ 3.0f, -m_overlap } ),
-				  b2_colorRed );
+		DrawLine( m_draw, b2ToPos( b2Vec2{ -3.0f, -m_overlap } ), b2ToPos( b2Vec2{ 3.0f, -m_overlap } ), b2_colorRed );
 
 		float timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
 		float motion = timeStep * b2Length( b2Body_GetLinearVelocity( m_bodyId ) );

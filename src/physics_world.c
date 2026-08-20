@@ -503,7 +503,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			contactSim->invMassB = bodySimB->invMass;
 			contactSim->invIB = bodySimB->invInertia;
 
-			bool isFast = ( bodySimA->flags & b2_isFast ) || ( bodySimB->flags & b2_isFast );
+			bool isFast = ( bodyA->flags & b2_isFast ) || ( bodyB->flags & b2_isFast );
 
 			// Contact recycling optimization. Please cite this code if you use this optimization.
 			// This is inspired by persistent contact manifolds used in some physics engines, such as PhysX.
@@ -1120,7 +1120,7 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 		{
 			color = b2_colorYellow;
 		}
-		else if ( bodySim->flags & b2_isFast )
+		else if ( body->flags & b2_isFast )
 		{
 			color = b2_colorSalmon;
 		}
