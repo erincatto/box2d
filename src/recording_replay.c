@@ -327,8 +327,8 @@ b2BodyDef b2RecR_BODYDEF( b2RecReader* rdr )
 	def.linearDamping = b2RecR_F32( rdr );
 	def.angularDamping = b2RecR_F32( rdr );
 	def.gravityScale = b2RecR_F32( rdr );
-	def.safetyFactor = b2RecR_F32( rdr );
 	def.sleepThreshold = b2RecR_F32( rdr );
+	def.safetyFactor = b2RecR_F32( rdr );
 
 	// b2RecR_STR handles the over-length clamp and skips the full recorded length, so the
 	// cursor stays aligned even for names longer than B2_NAME_LENGTH. Valid until the create call.
