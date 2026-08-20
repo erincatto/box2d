@@ -239,9 +239,9 @@ typedef struct b2BodyDef
 
 	/// Continuous collision safety factor. The solver only uses continuous collision if there is a
 	/// risk of tunneling. If the body is moving fast enough to risk tunneling then it is considered a "fast body".
-	/// This improves performance and prevents movment hitches. If a body moving 1 meter risks tunneling, then the
+	/// This improves performance and prevents movement hitches. If a body moving 1 meter risks tunneling, then the
 	/// body will be considered fast if it moves more than a safetyFactor meters over one full time step.
-	/// Non-dimensional. Recommended range [0.01, 0.5].
+	/// Non-dimensional. Recommended range [0.01, 0.5]. Default is 0.5 for high performance with low tunneling risk.
 	float safetyFactor;
 
 	/// Optional body name for debugging. Up to B2_NAME_LENGTH characters

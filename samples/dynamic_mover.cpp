@@ -243,7 +243,7 @@ void DynamicMover::Update( float timeStep, float throttle )
 		m_onGround = m_jumping == false;
 
 		// Is the ground too steep to walk?
-		m_walkable = m_castResult.normal.y > m_minGroundNormalY;
+		m_walkable = m_castResult.normal.y >= m_minGroundNormalY;
 	}
 	else
 	{

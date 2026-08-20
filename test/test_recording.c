@@ -137,6 +137,22 @@ static void IssueAllQueries( b2WorldId worldId, b2ShapeId groundShapeId )
 	b2Shape_RayCast( groundShapeId, rayStart, (b2Vec2){ 0.0f, -20.0f } );
 }
 
+// Safety factor of the named body in a replay world, or -1 if the body is not in the list
+static float ReplaySafetyFactor( b2RecPlayer* player, const char* name )
+{
+	int count = b2RecPlayer_GetBodyCount( player );
+	for ( int i = 0; i < count; ++i )
+	{
+		b2BodyId bodyId = b2RecPlayer_GetBodyId( player, i );
+		if ( b2Body_IsValid( bodyId ) && strcmp( b2Body_GetName( bodyId ), name ) == 0 )
+		{
+			return b2Body_GetSafetyFactor( bodyId );
+		}
+	}
+
+	return -1.0f;
+}
+
 int RecordingTest( void )
 {
 	// Record a session
@@ -247,9 +263,24 @@ int RecordingTest( void )
 	b2BodyDef disableDef = b2DefaultBodyDef();
 	disableDef.type = b2_dynamicBody;
 	disableDef.position = (b2Pos){ 5.0f, 5.0f };
+	disableDef.name = "dropBody";
 	b2BodyId disableId = b2CreateBody( worldId, &disableDef );
 	b2Circle disableCircle = { { 0.0f, 0.0f }, 0.3f };
 	b2CreateCircleShape( disableId, &shapeDef, &disableCircle );
+
+	// A body that falls fast enough to stay on the continuous path for the whole session. The
+	// non-default factor is what proves the widened body def payload round-trips, since every
+	// other body records the default. Named so the replay check can find it.
+	b2BodyDef fastDef = b2DefaultBodyDef();
+	fastDef.type = b2_dynamicBody;
+	fastDef.position = (b2Pos){ -14.0f, 30.0f };
+	fastDef.linearVelocity = (b2Vec2){ 0.0f, -8.0f };
+	fastDef.safetyFactor = 0.1f;
+	fastDef.name = "fastBody";
+	b2BodyId fastId = b2CreateBody( worldId, &fastDef );
+	ENSURE( b2Body_GetSafetyFactor( fastId ) == 0.1f );
+	b2Polygon fastBox = b2MakeSquare( 0.5f );
+	b2CreatePolygonShape( fastId, &shapeDef, &fastBox );
 
 	// Exercise the recorded body mutators
 	b2Body_SetTransform( bodyId, (b2Pos){ 1.0f, 5.0f }, b2Rot_identity );
@@ -260,6 +291,7 @@ int RecordingTest( void )
 	b2Body_SetAngularDamping( bodyId, 0.05f );
 	b2Body_SetGravityScale( bodyId, 0.9f );
 	b2Body_SetSleepThreshold( bodyId, 0.02f );
+	b2Body_SetSafetyFactor( disableId, 0.25f );
 	b2Body_EnableSleep( bodyId, false );
 	b2Body_SetBullet( bodyId, true );
 	b2Body_EnableContactRecycling( bodyId, false );
@@ -462,6 +494,7 @@ int RecordingTest( void )
 			b2Body_ApplyLinearImpulseToCenter( capsuleBodyId, (b2Vec2){ 2.0f, 0.0f }, true );
 			b2Body_ClearForces( bodyId );
 			b2Body_SetGravityScale( bodyId, 1.0f );
+			b2Body_SetSafetyFactor( fastId, 0.4f );
 		}
 
 		// Also issue queries mid-loop to exercise recording across steps
@@ -562,6 +595,26 @@ int RecordingTest( void )
 		}
 		ENSURE( frames2 == 60 );
 		ENSURE( b2RecPlayer_HasDiverged( player ) == false );
+
+		b2RecPlayer_Destroy( player );
+	}
+
+	// The state hash only proves the op stream stayed aligned. Read the safety factor back out of
+	// the replay world so a value that is written but never restored is caught too.
+	{
+		b2RecPlayer* player = b2RecPlayer_Create( recData, recSize, 0 );
+		ENSURE( player != NULL );
+
+		// Frame 0 replays the pre-step creates, so the def value is in place
+		ENSURE( b2RecPlayer_StepFrame( player ) );
+		ENSURE( ReplaySafetyFactor( player, "fastBody" ) == 0.1f );
+		ENSURE( ReplaySafetyFactor( player, "dropBody" ) == 0.25f );
+
+		// The setter is injected at frame 30
+		while ( b2RecPlayer_StepFrame( player ) )
+		{
+		}
+		ENSURE( ReplaySafetyFactor( player, "fastBody" ) == 0.4f );
 
 		b2RecPlayer_Destroy( player );
 	}

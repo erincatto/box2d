@@ -756,7 +756,8 @@ public:
 		DrawScreenTextLine( "pogo: impulse %.3f, velocity %.3f", m_mover.m_pogoImpulse, m_mover.m_pogoVelocity );
 		DrawScreenTextLine( "pogo: length = %.2f/%.2f", m_mover.m_pogoLength, m_mover.m_pogoRestLength );
 		DrawScreenTextLine( "on ground: %d", (int)m_mover.m_onGround );
-		DrawScreenTextLine( "walkable: %d", (int)m_mover.m_walkable );
+		float normalY = m_mover.m_castResult.hit ? m_mover.m_castResult.normal.y : 0.0f;
+		DrawScreenTextLine( "walkable: %d, normal y: %.3f/%.3f", (int)m_mover.m_walkable, normalY, m_mover.m_minGroundNormalY );
 		DrawScreenTextLine( "jumping/ticks: %d/%d", (int)m_mover.m_jumping, m_mover.m_jumpTicks );
 
 		if ( m_lockCamera )

@@ -523,7 +523,8 @@ void b2TransferBody( b2World* world, b2SolverSet* targetSet, b2SolverSet* source
 	memcpy( targetSim, sourceSim, sizeof( b2BodySim ) );
 
 	// Clear transient body flags
-	targetSim->flags &= ~(b2_isFast | b2_isSpeedCapped | b2_hadTimeOfImpact);
+	body->flags &= ~b2_bodyTransientFlags;
+	targetSim->flags &= ~b2_bodyTransientFlags;
 
 	// Remove body sim from solver set that owns it
 	b2RemoveBodySim( &sourceSet->bodySims, &world->bodies, sourceIndex );
