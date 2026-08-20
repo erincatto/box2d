@@ -237,6 +237,13 @@ typedef struct b2BodyDef
 	/// Sleep speed threshold, default is 0.05 meters per second
 	float sleepThreshold;
 
+	/// Continuous collision safety factor. The solver only uses continuous collision if there is a
+	/// risk of tunneling. If the body is moving fast enough to risk tunneling then it is considered a "fast body".
+	/// This improves performance and prevents movment hitches. If a move of 1 meter risks tunneling, then the
+	/// body will be considered fast is more than a safetyFactor meters over one full time step.
+	/// Non-dimensional. Recommended range [0.1, 0.5].
+	float safetyFactor;
+
 	/// Optional body name for debugging. Up to B2_NAME_LENGTH characters
 	const char* name;
 

@@ -72,6 +72,7 @@ B2_REC_OP( 0x39, BodySetBullet, RET_NONE, ARG( BODYID, body ) ARG( BOOL, flag ) 
 B2_REC_OP( 0x3A, BodyEnableContactRecycling, RET_NONE, ARG( BODYID, body ) ARG( BOOL, flag ) )
 B2_REC_OP( 0x3B, BodyEnableContactEvents, RET_NONE, ARG( BODYID, body ) ARG( BOOL, flag ) )
 B2_REC_OP( 0x3C, BodyEnableHitEvents, RET_NONE, ARG( BODYID, body ) ARG( BOOL, flag ) )
+B2_REC_OP( 0x3D, BodySetSafetyFactor, RET_NONE, ARG( BODYID, body ) ARG( F32, value ) )
 
 // Shape create/destroy
 B2_REC_OP( 0x40, CreateCircleShape, RET_SHAPEID, ARG( BODYID, body ) ARG( SHAPEDEF, def ) ARG( CIRCLE, circle ) )

@@ -640,7 +640,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 			// Body is not sleepy
 			body->sleepTime = 0.0f;
 
-			const float safetyFactor = 0.5f;
+			float safetyFactor = body->safetyFactor;
 			float maxMotion = b2MaxFloat( maxDeltaPosition, maxVelocity * timeStep );
 			if ( body->type == b2_dynamicBody && enableContinuous && maxMotion > safetyFactor * sim->minExtent )
 			{

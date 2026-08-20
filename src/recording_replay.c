@@ -327,6 +327,7 @@ b2BodyDef b2RecR_BODYDEF( b2RecReader* rdr )
 	def.linearDamping = b2RecR_F32( rdr );
 	def.angularDamping = b2RecR_F32( rdr );
 	def.gravityScale = b2RecR_F32( rdr );
+	def.safetyFactor = b2RecR_F32( rdr );
 	def.sleepThreshold = b2RecR_F32( rdr );
 
 	// b2RecR_STR handles the over-length clamp and skips the full recorded length, so the
@@ -1018,6 +1019,11 @@ static void b2RecDispatch_BodyEnableSleep( const b2RecArgs_BodyEnableSleep* a, b
 static void b2RecDispatch_BodySetSleepThreshold( const b2RecArgs_BodySetSleepThreshold* a, b2RecReader* rdr )
 {
 	b2Body_SetSleepThreshold( b2RecMakeBodyId( rdr, a->body ), a->threshold );
+}
+
+static void b2RecDispatch_BodySetSafetyFactor( const b2RecArgs_BodySetSafetyFactor* a, b2RecReader* rdr )
+{
+	b2Body_SetSafetyFactor( b2RecMakeBodyId( rdr, a->body ), a->value );
 }
 
 static void b2RecDispatch_BodyDisable( const b2RecArgs_BodyDisable* a, b2RecReader* rdr )

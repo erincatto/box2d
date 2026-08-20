@@ -5,8 +5,6 @@
 
 #include "core.h"
 
-#include "box2d/constants.h"
-
 b2WorldDef b2DefaultWorldDef( void )
 {
 	float lengthUnits = b2GetLengthUnitsPerMeter();
@@ -32,6 +30,7 @@ b2BodyDef b2DefaultBodyDef( void )
 	b2BodyDef def = { 0 };
 	def.type = b2_staticBody;
 	def.rotation = b2Rot_identity;
+	def.safetyFactor = 0.5f;
 	def.sleepThreshold = 0.05f * b2GetLengthUnitsPerMeter();
 	def.gravityScale = 1.0f;
 	def.enableSleep = true;

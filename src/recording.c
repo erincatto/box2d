@@ -268,6 +268,7 @@ void b2RecW_BODYDEF( b2RecBuffer* buf, b2BodyDef v )
 	b2RecW_F32( buf, v.angularDamping );
 	b2RecW_F32( buf, v.gravityScale );
 	b2RecW_F32( buf, v.sleepThreshold );
+	b2RecW_F32( buf, v.safetyFactor );
 	b2RecW_STR( buf, v.name );
 	// userData: not preserved
 	b2RecW_U64( buf, 0u );

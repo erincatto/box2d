@@ -1634,6 +1634,21 @@ float b2Body_GetSleepThreshold( b2BodyId bodyId )
 	return body->sleepThreshold;
 }
 
+void b2Body_SetSafetyFactor( b2BodyId bodyId, float safetyFactor )
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	B2_REC( world, BodySetSafetyFactor, bodyId, safetyFactor );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	body->safetyFactor = safetyFactor;
+}
+
+float b2Body_GetSafetyFactor( b2BodyId bodyId )
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	return body->safetyFactor;
+}
+
 void b2Body_EnableSleep( b2BodyId bodyId, bool enableSleep )
 {
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
