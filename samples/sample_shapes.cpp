@@ -972,6 +972,7 @@ public:
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
 		shapeDef.material.restitution = 0.0f;
+		shapeDef.material.friction = 0.0f;
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
@@ -2009,6 +2010,7 @@ public:
 			float h = 2.0f * m_count;
 			b2Segment segment = { { -h, 0.0f }, { h, 0.0f } };
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.material.friction = 0.0f;
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
@@ -2017,6 +2019,7 @@ public:
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
 		shapeDef.material.restitution = 0.0f;
+		shapeDef.material.friction = 0.0f;
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
@@ -2055,6 +2058,73 @@ public:
 };
 
 static int sampleBoxRestitution = RegisterSample( "Shapes", "Box Restitution", BoxRestitution::Create );
+
+class CircleRestitution : public Sample
+{
+public:
+	explicit CircleRestitution( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 10.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			float h = 2.0f * m_count;
+			b2Segment segment = { { -h, 0.0f }, { h, 0.0f } };
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		b2Circle circle = { b2Vec2_zero, 0.5f };
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.density = 1.0f;
+		shapeDef.material.restitution = 0.0f;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+
+		float dr = 1.0f / ( m_count > 1 ? m_count - 1 : 1 );
+		float x = -1.0f * ( m_count - 1 );
+		float dx = 2.0f;
+
+		for ( int i = 0; i < m_count; ++i )
+		{
+			char buffer[32];
+			snprintf( buffer, 32, "%.2f", shapeDef.material.restitution );
+
+			bodyDef.position = { x, 1.0f };
+			bodyDef.name = buffer;
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
+
+			bodyDef.position = { x, 4.0f };
+			bodyDef.name = buffer;
+			bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
+
+			shapeDef.material.restitution += dr;
+			x += dx;
+		}
+	}
+	static Sample* Create( SampleContext* context )
+	{
+		return new CircleRestitution( context );
+	}
+
+	static constexpr int m_count = 10;
+};
+
+static int sampleCircleRestitution = RegisterSample( "Shapes", "Circle Restitution", CircleRestitution::Create );
 
 class Wind : public Sample
 {
