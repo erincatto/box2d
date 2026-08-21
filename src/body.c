@@ -181,6 +181,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	B2_ASSERT( b2IsValidFloat( def->linearDamping ) && def->linearDamping >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->angularDamping ) && def->angularDamping >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->sleepThreshold ) && def->sleepThreshold >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( def->safetyFactor ) && def->safetyFactor >= 0.0f );
 	B2_ASSERT( b2IsValidFloat( def->gravityScale ) );
 
 	b2World* world = b2GetWorldFromId( worldId );
@@ -311,6 +312,7 @@ b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 	body->inertia = 0.0f;
 	body->sleepThreshold = def->sleepThreshold;
 	body->sleepTime = 0.0f;
+	body->safetyFactor = def->safetyFactor;
 	body->type = def->type;
 	body->flags = bodySim->flags;
 
@@ -1576,7 +1578,12 @@ void b2Body_SetAwake( b2BodyId bodyId, bool awake )
 
 void b2Body_WakeTouching( b2BodyId bodyId )
 {
-	b2World* world = b2GetWorld( bodyId.world0 );
+	b2World* world = b2GetWorldLocked( bodyId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
+
 	B2_REC( world, BodyWakeTouching, bodyId );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 
@@ -1621,7 +1628,12 @@ bool b2Body_IsSleepEnabled( b2BodyId bodyId )
 
 void b2Body_SetSleepThreshold( b2BodyId bodyId, float sleepThreshold )
 {
-	b2World* world = b2GetWorld( bodyId.world0 );
+	b2World* world = b2GetWorldLocked( bodyId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
+
 	B2_REC( world, BodySetSleepThreshold, bodyId, sleepThreshold );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	body->sleepThreshold = sleepThreshold;
@@ -1632,6 +1644,27 @@ float b2Body_GetSleepThreshold( b2BodyId bodyId )
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	return body->sleepThreshold;
+}
+
+void b2Body_SetSafetyFactor( b2BodyId bodyId, float safetyFactor )
+{
+	B2_ASSERT( b2IsValidFloat( safetyFactor ) && safetyFactor >= 0.0f );
+	b2World* world = b2GetWorldLocked( bodyId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
+
+	B2_REC( world, BodySetSafetyFactor, bodyId, safetyFactor );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	body->safetyFactor = safetyFactor;
+}
+
+float b2Body_GetSafetyFactor( b2BodyId bodyId )
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	return body->safetyFactor;
 }
 
 void b2Body_EnableSleep( b2BodyId bodyId, bool enableSleep )

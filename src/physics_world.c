@@ -503,10 +503,12 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			contactSim->invMassB = bodySimB->invMass;
 			contactSim->invIB = bodySimB->invInertia;
 
+			bool isFast = ( bodyA->flags & b2_isFast ) || ( bodyB->flags & b2_isFast );
+
 			// Contact recycling optimization. Please cite this code if you use this optimization.
 			// This is inspired by persistent contact manifolds used in some physics engines, such as PhysX.
 			// However, this allows larger relative motion and has fewer tuning parameters (just one).
-			if ( recycleDistance > 0.0f && ( contactSim->simFlags & b2_simRelativeTransformValid ) &&
+			if ( isFast == false && recycleDistance > 0.0f && ( contactSim->simFlags & b2_simRelativeTransformValid ) &&
 				 ( contactSim->simFlags & b2_contactRecycleFlag ) )
 			{
 				b2Rot cachedQA = contactSim->cachedRotationA;
@@ -1118,7 +1120,7 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 		{
 			color = b2_colorYellow;
 		}
-		else if ( bodySim->flags & b2_isFast )
+		else if ( body->flags & b2_isFast )
 		{
 			color = b2_colorSalmon;
 		}

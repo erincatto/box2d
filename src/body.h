@@ -104,6 +104,7 @@ typedef struct b2Body
 
 	float sleepThreshold;
 	float sleepTime;
+	float safetyFactor;
 
 	// this is used to adjust the fellAsleep flag in the body move array
 	int bodyMoveIndex;

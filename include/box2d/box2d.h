@@ -566,6 +566,12 @@ B2_API void b2Body_SetSleepThreshold( b2BodyId bodyId, float sleepThreshold );
 /// Get the sleep threshold, usually in meters per second.
 B2_API float b2Body_GetSleepThreshold( b2BodyId bodyId );
 
+/// Set the continuous collision safety factor. Smaller is safer but can lead to hitching. Recommended range [0.01, 0.5]. Non-dimensional.
+B2_API void b2Body_SetSafetyFactor( b2BodyId bodyId, float safetyFactor );
+
+/// Get the continuous collision safety factor. Non-dimensional.
+B2_API float b2Body_GetSafetyFactor( b2BodyId bodyId );
+
 /// Returns true if this body is enabled
 B2_API bool b2Body_IsEnabled( b2BodyId bodyId );
 

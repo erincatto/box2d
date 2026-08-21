@@ -387,7 +387,6 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 	b2SolverSet* awakeSet = b2Array_Get( world->solverSets, b2_awakeSet );
 	b2BodySim* fastBodySim = b2Array_Get( awakeSet->bodySims, bodySimIndex );
-	B2_ASSERT( fastBodySim->flags & b2_isFast );
 
 	// Re-center the sweep on the fast body so the TOI and the swept query stay in float precision
 	b2Pos base = fastBodySim->center0;
@@ -640,12 +639,12 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 			// Body is not sleepy
 			body->sleepTime = 0.0f;
 
-			const float safetyFactor = 0.5f;
+			float safetyFactor = body->safetyFactor;
 			float maxMotion = b2MaxFloat( maxDeltaPosition, maxVelocity * timeStep );
 			if ( body->type == b2_dynamicBody && enableContinuous && maxMotion > safetyFactor * sim->minExtent )
 			{
-				// This flag is only retained for debug draw
-				sim->flags |= b2_isFast;
+				// This flag is used for debug draw and contact recycling.
+				body->flags |= b2_isFast;
 
 				// Store in fast array for the continuous collision stage
 				// This is deterministic because the order of TOI sweeps doesn't matter
@@ -697,7 +696,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 
 		// Update shapes AABBs
 		b2WorldTransform transform = sim->transform;
-		bool isFast = ( sim->flags & b2_isFast ) != 0;
+		bool isFast = ( body->flags & b2_isFast ) != 0;
 		int shapeId = body->headShapeId;
 		while ( shapeId != B2_NULL_INDEX )
 		{
@@ -1869,7 +1868,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					b2Body* body = bodyArray + bodySim->bodyId;
 
 					int shapeId = body->headShapeId;
-					if ( ( bodySim->flags & ( b2_isBullet | b2_isFast ) ) == ( b2_isBullet | b2_isFast ) )
+					if ( ( body->flags & ( b2_isBullet | b2_isFast ) ) == ( b2_isBullet | b2_isFast ) )
 					{
 						// Fast bullet bodies don't have their final AABB yet
 						while ( shapeId != B2_NULL_INDEX )
