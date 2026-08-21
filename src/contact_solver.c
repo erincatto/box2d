@@ -341,7 +341,7 @@ void b2SolveContacts_Overflow( b2StepContext* context, bool useBias )
 			wB += iB * b2Cross( rB, P );
 		}
 
-		if (useBias == false)
+		if ( useBias == false )
 		{
 			// Friction
 			for ( int j = 0; j < pointCount; ++j )
@@ -453,48 +453,42 @@ void b2ApplyRestitution_Overflow( b2StepContext* context )
 		b2Vec2 normal = constraint->normal;
 		int pointCount = constraint->pointCount;
 
-		// it is possible to get more accurate restitution by iterating
-		// this only makes a difference if there are two contact points
-		// for (int iter = 0; iter < 10; ++iter)
+		for ( int j = 0; j < pointCount; ++j )
 		{
-			for ( int j = 0; j < pointCount; ++j )
+			b2ContactConstraintPoint* cp = constraint->points + j;
+
+			// if the normal impulse is zero then there was no collision
+			// this skips speculative contact points that didn't generate an impulse
+			// The max normal impulse is used in case there was a collision that moved away within the sub-step process
+			if ( cp->relativeVelocity > -threshold || cp->totalNormalImpulse == 0.0f )
 			{
-				b2ContactConstraintPoint* cp = constraint->points + j;
-
-				// if the normal impulse is zero then there was no collision
-				// this skips speculative contact points that didn't generate an impulse
-				// The max normal impulse is used in case there was a collision that moved away within the sub-step process
-				if ( cp->relativeVelocity > -threshold || cp->totalNormalImpulse == 0.0f )
-				{
-					continue;
-				}
-
-				// fixed anchor points
-				b2Vec2 rA = cp->anchorA;
-				b2Vec2 rB = cp->anchorB;
-
-				// relative normal velocity at contact
-				b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
-				b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
-				float vn = b2Dot( b2Sub( vrB, vrA ), normal );
-
-				// compute normal impulse
-				float impulse = -cp->normalMass * ( vn + restitution * cp->relativeVelocity );
-
-				// clamp the accumulated impulse
-				// todo should this be stored?
-				float newImpulse = b2MaxFloat( cp->normalImpulse + impulse, 0.0f );
-				impulse = newImpulse - cp->normalImpulse;
-				cp->normalImpulse = newImpulse;
-				cp->totalNormalImpulse += impulse;
-
-				// apply contact impulse
-				b2Vec2 P = b2MulSV( impulse, normal );
-				vA = b2MulSub( vA, mA, P );
-				wA -= iA * b2Cross( rA, P );
-				vB = b2MulAdd( vB, mB, P );
-				wB += iB * b2Cross( rB, P );
+				continue;
 			}
+
+			// fixed anchor points
+			b2Vec2 rA = cp->anchorA;
+			b2Vec2 rB = cp->anchorB;
+
+			// relative normal velocity at contact
+			b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
+			b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
+			float vn = b2Dot( b2Sub( vrB, vrA ), normal );
+
+			// compute normal impulse
+			float impulse = -cp->normalMass * ( vn + restitution * cp->relativeVelocity );
+
+			// clamp the accumulated impulse
+			float newImpulse = b2MaxFloat( cp->normalImpulse + impulse, 0.0f );
+			impulse = newImpulse - cp->normalImpulse;
+			cp->normalImpulse = newImpulse;
+			cp->totalNormalImpulse += impulse;
+
+			// apply contact impulse
+			b2Vec2 P = b2MulSV( impulse, normal );
+			vA = b2MulSub( vA, mA, P );
+			wA -= iA * b2Cross( rA, P );
+			vB = b2MulAdd( vB, mB, P );
+			wB += iB * b2Cross( rB, P );
 		}
 
 		if ( stateA->flags & b2_dynamicFlag )
@@ -2015,7 +2009,7 @@ void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context, bool useB
 			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
 		}
 
-		if (useBias == false)
+		if ( useBias == false )
 		{
 			// Rolling resistance
 			if ( b2AllZeroW( c->rollingResistance ) == false )
@@ -2204,7 +2198,6 @@ void b2ApplyRestitutionTask( b2SolverBlock block, b2StepContext* context )
 			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse2, negImpulse ), b2ZeroW() );
 			b2FloatW deltaImpulse = b2SubW( newImpulse, c->normalImpulse2 );
 			c->normalImpulse2 = newImpulse;
-
 			c->totalNormalImpulse2 = b2AddW( c->totalNormalImpulse2, deltaImpulse );
 
 			// Apply contact impulse
@@ -2305,7 +2298,7 @@ void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context, int worke
 				// Check for hit events to speed up serial processing later in the step
 				if ( ( contactSim->simFlags & b2_simEnableHitEvent ) != 0 )
 				{
-					for (int k = 0; k < contactSim->manifold.pointCount; ++k)
+					for ( int k = 0; k < contactSim->manifold.pointCount; ++k )
 					{
 						b2ManifoldPoint* mp = m->points + k;
 

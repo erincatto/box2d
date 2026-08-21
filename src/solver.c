@@ -1164,20 +1164,23 @@ static void b2SolverTask( void* taskContext )
 		stageIndex += 1 + activeColorCount + ITERATIONS * activeColorCount + 1 + RELAX_ITERATIONS * activeColorCount;
 
 		// Restitution
+		for ( int iter = 0; iter < B2_RESTITUTION_ITERATIONS; ++iter )
 		{
 			b2ApplyRestitution_Overflow( context );
 
-			int iterStageIndex = stageIndex;
+			int iterationStageIndex = stageIndex;
 			for ( int colorIndex = 0; colorIndex < activeColorCount; ++colorIndex )
 			{
-				syncBits = ( graphSyncIndex << 16 ) | iterStageIndex;
-				B2_ASSERT( stages[iterStageIndex].type == b2_stageRestitution );
-				b2ExecuteMainStage( stages + iterStageIndex, context, syncBits );
-				iterStageIndex += 1;
+				syncBits = ( graphSyncIndex << 16 ) | iterationStageIndex;
+				B2_ASSERT( stages[iterationStageIndex].type == b2_stageRestitution );
+				b2ExecuteMainStage( stages + iterationStageIndex, context, syncBits );
+				iterationStageIndex += 1;
 			}
-			// graphSyncIndex += 1;
-			stageIndex += activeColorCount;
+
+			graphSyncIndex += 1;
 		}
+		
+		stageIndex += B2_RESTITUTION_ITERATIONS * activeColorCount;
 
 		profile->applyRestitution += b2GetMillisecondsAndReset( &ticks );
 
@@ -1462,7 +1465,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// b2_stageRelax
 		stageCount += RELAX_ITERATIONS * activeColorCount;
 		// b2_stageRestitution
-		stageCount += activeColorCount;
+		stageCount += B2_RESTITUTION_ITERATIONS * activeColorCount;
 		// b2_stageStoreImpulses
 		stageCount += 1;
 
@@ -1533,7 +1536,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stage = b2InitStage( stage, b2_stageIntegratePositions, bodyBlocks, bodyDim.count, UINT8_MAX );
 		stage = b2InitColorStages( stage, b2_stageRelax, RELAX_ITERATIONS, activeColorCount, graphColorBlocks, graphBlockCounts,
 								   activeColorIndices );
-		stage = b2InitColorStages( stage, b2_stageRestitution, 1, activeColorCount, graphColorBlocks, graphBlockCounts,
+		stage = b2InitColorStages( stage, b2_stageRestitution, B2_RESTITUTION_ITERATIONS, activeColorCount, graphColorBlocks, graphBlockCounts,
 								   activeColorIndices );
 		stage = b2InitStage( stage, b2_stageStoreImpulses, contactBlocks, contactPrepareDim.count, UINT8_MAX );
 
