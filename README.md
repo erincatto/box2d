@@ -153,4 +153,5 @@ Elsewhere all code is developed and written by me. I take responsibility for eve
 
 - Beef bindings - https://github.com/EnokViking/Box2DBeef
 - C++ bindings - https://github.com/HolyBlackCat/box2cpp
+- Java Box2d-JNI - https://github.com/JNightRider/box2d-jni
 - WASM - https://github.com/Birch-san/box2d3-wasm
