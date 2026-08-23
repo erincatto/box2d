@@ -644,6 +644,15 @@ B2_API int b2Body_GetContactData( b2BodyId bodyId, b2ContactData* contactData, i
 /// If there are no shapes attached then the returned AABB is empty and centered on the body origin.
 B2_API b2AABB b2Body_ComputeAABB( b2BodyId bodyId );
 
+/// The minimum distance from any point on the body shapes to the center of mass.
+B2_API float b2Body_GetMinExtent( b2BodyId bodyId );
+
+/// The maximum distance from any point on the body shapes to the center of mass.
+B2_API float b2Body_GetMaxExtent( b2BodyId bodyId );
+
+/// The maximum distance from any point on the body shapes to the body origin. Conservative.
+B2_API float b2Body_GetMaxExtentOrigin( b2BodyId bodyId );
+
 /** @} */
 
 /**

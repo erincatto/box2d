@@ -13,6 +13,7 @@ set(BOX2D_TEST_FILES
     test_macros.h
     test_math.c
     test_recording.c
+    test_restitution.c
     test_shape.c
     test_snapshot.c
     test_table.c

@@ -560,6 +560,9 @@ typedef struct b2ManifoldPoint
 	/// zero then there was no hit. Negative means shapes are approaching.
 	float normalVelocity;
 
+	/// Velocity for restitution. From the last time step.
+	float restitutionVelocity;
+
 	/// Uniquely identifies a contact point between two shapes
 	uint16_t id;
 

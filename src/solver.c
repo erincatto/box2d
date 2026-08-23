@@ -381,7 +381,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 }
 
 // Continuous collision of dynamic versus static
-static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* taskContext )
+static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* taskContext, float dt )
 {
 	b2TracyCZoneNC( ccd, "CCD", b2_colorDarkGoldenRod, true );
 
@@ -464,6 +464,13 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 		fastBodySim->center = b2OffsetPos( base, c );
 		fastBodySim->rotation0 = q;
 		fastBodySim->center0 = fastBodySim->center;
+
+		// Timeloss means there is a lost gravity contribution.
+		// Other forces and torques are ignored for now.
+		b2BodyState* fastBodyState = b2Array_Get( awakeSet->bodyStates, bodySimIndex );
+		b2Vec2 v = fastBodyState->linearVelocity;
+		float timeLoss = ( 1.0f - context.fraction ) * dt;
+		fastBodyState->linearVelocity = b2MulSub( v, timeLoss * fastBodySim->gravityScale, world->gravity );
 
 		// Update body move event
 		b2BodyMoveEvent* event = b2Array_Get( world->bodyMoveEvents, bodySimIndex );
@@ -655,7 +662,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 				}
 				else
 				{
-					b2SolveContinuous( world, simIndex, taskContext );
+					b2SolveContinuous( world, simIndex, taskContext, stepContext->dt );
 				}
 			}
 			else
@@ -1179,7 +1186,7 @@ static void b2SolverTask( void* taskContext )
 
 			graphSyncIndex += 1;
 		}
-		
+
 		stageIndex += B2_RESTITUTION_ITERATIONS * activeColorCount;
 
 		profile->applyRestitution += b2GetMillisecondsAndReset( &ticks );
@@ -1268,7 +1275,7 @@ static void b2BulletBodyTask( int startIndex, int endIndex, int workerIndex, voi
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
 		int simIndex = stepContext->bulletBodies[i];
-		b2SolveContinuous( stepContext->world, simIndex, taskContext );
+		b2SolveContinuous( stepContext->world, simIndex, taskContext, stepContext->dt );
 	}
 
 	b2TracyCZoneEnd( bullet_body_task );
@@ -1536,8 +1543,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stage = b2InitStage( stage, b2_stageIntegratePositions, bodyBlocks, bodyDim.count, UINT8_MAX );
 		stage = b2InitColorStages( stage, b2_stageRelax, RELAX_ITERATIONS, activeColorCount, graphColorBlocks, graphBlockCounts,
 								   activeColorIndices );
-		stage = b2InitColorStages( stage, b2_stageRestitution, B2_RESTITUTION_ITERATIONS, activeColorCount, graphColorBlocks, graphBlockCounts,
-								   activeColorIndices );
+		stage = b2InitColorStages( stage, b2_stageRestitution, B2_RESTITUTION_ITERATIONS, activeColorCount, graphColorBlocks,
+								   graphBlockCounts, activeColorIndices );
 		stage = b2InitStage( stage, b2_stageStoreImpulses, contactBlocks, contactPrepareDim.count, UINT8_MAX );
 
 		B2_ASSERT( (int)( stage - stages ) == stageCount );

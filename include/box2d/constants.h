@@ -74,5 +74,5 @@
 
 /// The number of restitution iterations.
 #ifndef B2_RESTITUTION_ITERATIONS
-#define B2_RESTITUTION_ITERATIONS 1
+#define B2_RESTITUTION_ITERATIONS 3
 #endif

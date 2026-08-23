@@ -40,6 +40,7 @@ extern int RecordingKeyframeTest( void );
 extern int RecordingScrubTest( void );
 extern int RecordingQueryScrubTest( void );
 extern int ReStepRaceTest( void );
+extern int RestitutionTest( void );
 extern int ShapeTest( void );
 extern int SnapshotTest( void );
 extern int TableTest( void );
@@ -98,6 +99,7 @@ int main( int argc, char** argv )
 	MAYBE_RUN_TEST( RecordingScrubTest );
 	MAYBE_RUN_TEST( RecordingQueryScrubTest );
 	MAYBE_RUN_TEST( ReStepRaceTest );
+	MAYBE_RUN_TEST( RestitutionTest );
 	MAYBE_RUN_TEST( ShapeTest );
 	MAYBE_RUN_TEST( SnapshotTest );
 	MAYBE_RUN_TEST( ThreadTest );

@@ -12,6 +12,7 @@ typedef struct b2ContactConstraintPoint
 	b2Vec2 anchorA, anchorB;
 	float baseSeparation;
 	float relativeVelocity;
+	float restitutionVelocity;
 	float normalImpulse;
 	float tangentImpulse;
 	float totalNormalImpulse;

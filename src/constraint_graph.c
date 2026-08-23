@@ -23,7 +23,7 @@
 // todo should be possible to branch on the scatters to avoid writing to kinematic bodies
 
 // This is used for debugging by making all constraints be assigned to overflow.
-#define B2_FORCE_OVERFLOW 0
+#define B2_FORCE_OVERFLOW 1
 
 void b2CreateGraph( b2ConstraintGraph* graph, const b2Capacity* capacity )
 {

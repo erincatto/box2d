@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 Erin Catto
+// SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
 #include "contact_solver.h"
@@ -131,6 +131,7 @@ void b2PrepareContacts_Overflow( b2StepContext* context )
 			cp->normalImpulse = warmStartScale * mp->normalImpulse;
 			cp->tangentImpulse = warmStartScale * mp->tangentImpulse;
 			cp->totalNormalImpulse = 0.0f;
+			cp->restitutionVelocity = mp->restitutionVelocity;
 
 			b2Vec2 rA = mp->anchorA;
 			b2Vec2 rB = mp->anchorB;
@@ -149,7 +150,24 @@ void b2PrepareContacts_Overflow( b2StepContext* context )
 			float kTangent = mA + mB + iA * rtA * rtA + iB * rtB * rtB;
 			cp->tangentMass = kTangent > 0.0f ? 1.0f / kTangent : 0.0f;
 
-			// Save relative velocity for restitution
+			// Save relative velocity for restitution. At this point, no gravity
+			// has been applied and the shapes have whatever overlap was left from the
+			// previous time step.
+			//
+			// Suppose we drop a circle on a plane. If gravity is cancelled out by the constraint
+			// solver and there is no penetration recovery, then a coefficient of restitution
+			// of 1.0 will return a bouncing circle to the exact height is was dropped from.
+			// Penetration recovery will push the circle higher, but the relax stage will leave
+			// the vertical velocity at zero. So the rebound height will be the original height
+			// plus the recoverred overlap. The exact behavior is sensitive to the sub-step count.
+			//
+			// The influence of penetration recovery can be accounted for by discounting
+			// the resitution velocity by the energy gain from overlap recovery. This becomes
+			// more complex and expensive. I suspect it is not useful for most games. I almost
+			// never use restitution in the games I work on.
+			//
+			// If CCD engages then there is no overlap recovery, however the incoming velocity
+			// must be discounted by the TOI fraction. That is done in the solver.
 			b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
 			b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
 			cp->relativeVelocity = b2Dot( normal, b2Sub( vrB, vrA ) );
@@ -284,8 +302,8 @@ void b2SolveContacts_Overflow( b2StepContext* context, bool useBias )
 
 		int pointCount = constraint->pointCount;
 		float totalNormalImpulse = 0.0f;
+		bool allSeparated = true;
 
-		// Non-penetration
 		for ( int j = 0; j < pointCount; ++j )
 		{
 			b2ContactConstraintPoint* cp = constraint->points + j;
@@ -319,6 +337,13 @@ void b2SolveContacts_Overflow( b2StepContext* context, bool useBias )
 			b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
 			float vn = b2Dot( b2Sub( vrB, vrA ), normal );
 
+			// Apply restitution in the relax phase.
+			if ( useBias == false && cp->restitutionVelocity > 0.0f )
+			{
+				velocityBias = b2MinFloat( velocityBias, -cp->restitutionVelocity );
+				allSeparated = allSeparated && s > 0.0f;
+			}
+
 			// incremental normal impulse
 			float impulse = -cp->normalMass * ( massScale * vn + velocityBias ) - impulseScale * cp->normalImpulse;
 
@@ -330,6 +355,7 @@ void b2SolveContacts_Overflow( b2StepContext* context, bool useBias )
 
 			// b2Log( "vn %g impulse %g bias %g", vn, newImpulse, velocityBias );
 
+			// This is used for rolling resistance
 			totalNormalImpulse += newImpulse;
 
 			// apply normal impulse
@@ -339,6 +365,15 @@ void b2SolveContacts_Overflow( b2StepContext* context, bool useBias )
 
 			vB = b2MulAdd( vB, mB, P );
 			wB += iB * b2Cross( rB, P );
+		}
+
+		if ( useBias == false && allSeparated )
+		{
+			// All points separated on this manifold. Turn off restitution.
+			for ( int j = 0; j < pointCount; ++j )
+			{
+				constraint->points[j].restitutionVelocity = 0.0f;
+			}
 		}
 
 		if ( useBias == false )
@@ -420,6 +455,12 @@ void b2ApplyRestitution_Overflow( b2StepContext* context )
 	b2BodyState* states = awakeSet->bodyStates.data;
 
 	float threshold = context->world->restitutionThreshold;
+
+	// todo_erin temp
+	 if ( threshold != 4200000.0f )
+	{
+		return;
+	}
 
 	// dummy state to represent a static body
 	b2BodyState dummyState = b2_identityBodyState;
@@ -511,29 +552,53 @@ void b2StoreImpulses_Overflow( b2StepContext* context )
 {
 	b2TracyCZoneNC( store_impulses, "Store", b2_colorFireBrick, true );
 
+	b2World* world = context->world;
 	b2ConstraintGraph* graph = context->graph;
 	b2GraphColor* color = graph->colors + B2_OVERFLOW_INDEX;
 	b2ContactConstraint* constraints = color->overflowConstraints;
-	b2ContactSim* contacts = color->contactSims.data;
+	b2ContactSim* contactSims = color->contactSims.data;
+	b2TaskContext* taskContext = world->taskContexts.data + 0;
+	b2BitSet* hitEventBitSet = &taskContext->hitEventBitSet;
 	int contactCount = color->contactSims.count;
+	float negHitThreshold = -world->hitEventThreshold;
+	bool hasHitEvents = taskContext->hasHitEvents;
 
 	for ( int i = 0; i < contactCount; ++i )
 	{
 		const b2ContactConstraint* constraint = constraints + i;
-		b2ContactSim* contact = contacts + i;
-		b2Manifold* manifold = &contact->manifold;
+		b2ContactSim* contactSim = contactSims + i;
+		b2Manifold* manifold = &contactSim->manifold;
 		int pointCount = manifold->pointCount;
 
 		for ( int j = 0; j < pointCount; ++j )
 		{
-			manifold->points[j].normalImpulse = constraint->points[j].normalImpulse;
-			manifold->points[j].tangentImpulse = constraint->points[j].tangentImpulse;
-			manifold->points[j].totalNormalImpulse = constraint->points[j].totalNormalImpulse;
-			manifold->points[j].normalVelocity = constraint->points[j].relativeVelocity;
+			b2ManifoldPoint* mp = manifold->points + j;
+			mp->normalImpulse = constraint->points[j].normalImpulse;
+			mp->tangentImpulse = constraint->points[j].tangentImpulse;
+			mp->totalNormalImpulse = constraint->points[j].totalNormalImpulse;
+			mp->normalVelocity = constraint->points[j].relativeVelocity;
+		}
+
+		if ( ( contactSim->simFlags & b2_simEnableHitEvent ) != 0 )
+		{
+			for ( int k = 0; k < contactSim->manifold.pointCount; ++k )
+			{
+				b2ManifoldPoint* mp = manifold->points + k;
+
+				// Need to check total impulse because the point may be speculative and not colliding
+				if ( mp->normalVelocity < negHitThreshold && mp->totalNormalImpulse > 0.0f )
+				{
+					b2SetBit( hitEventBitSet, contactSim->contactId );
+					hasHitEvents = true;
+					break;
+				}
+			}
 		}
 
 		manifold->rollingImpulse = constraint->rollingImpulse;
 	}
+
+	taskContext->hasHitEvents = hasHitEvents;
 
 	b2TracyCZoneEnd( store_impulses );
 }

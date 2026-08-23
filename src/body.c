@@ -2110,3 +2110,27 @@ bool b2ShouldBodiesCollide( b2World* world, b2Body* bodyA, b2Body* bodyB )
 
 	return true;
 }
+
+float b2Body_GetMinExtent( b2BodyId bodyId )
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	b2BodySim* bodySim = b2GetBodySim( world, body );
+	return bodySim->minExtent;
+}
+
+float b2Body_GetMaxExtent( b2BodyId bodyId )
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	b2BodySim* bodySim = b2GetBodySim( world, body );
+	return bodySim->maxExtent;
+}
+
+float b2Body_GetMaxExtentOrigin( b2BodyId bodyId )
+{
+	b2World* world = b2GetWorld( bodyId.world0 );
+	b2Body* body = b2GetBodyFullId( world, bodyId );
+	b2BodySim* bodySim = b2GetBodySim( world, body );
+	return bodySim->maxExtent + b2Length( bodySim->localCenter );
+}

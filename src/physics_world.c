@@ -548,6 +548,16 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 						b2Vec2 rB = b2RotateVector( dqB, mp->anchorB );
 						b2Vec2 dp = b2Add( dc, b2Sub( rB, rA ) );
 						mp->separation = mp->baseSeparation + b2Dot( dp, normal );
+
+						if ( mp->totalNormalImpulse > 0.0f && mp->normalVelocity < -world->restitutionThreshold )
+						{
+							mp->restitutionVelocity = -contactSim->restitution * mp->normalVelocity;
+						}
+						else
+						{
+							mp->restitutionVelocity = 0.0f;
+						}
+
 						mp->persisted = true;
 					}
 
@@ -1211,7 +1221,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 				b2WorldTransform transform = { bodySim->center, bodySim->transform.q };
 				b2Pos p = b2TransformWorldPoint( transform, offset );
-				draw->DrawStringFcn( p, body->name, b2_colorBlueViolet, draw->context );
+				draw->DrawStringFcn( p, body->name, b2_colorWhiteSmoke, draw->context );
 			}
 
 			if ( draw->drawMass && body->type == b2_dynamicBody )
