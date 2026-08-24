@@ -537,7 +537,6 @@ typedef struct b2Profile
 	float solveImpulses;
 	float integratePositions;
 	float relaxImpulses;
-	float applyRestitution;
 	float storeImpulses;
 	float splitIslands;
 	float transforms;

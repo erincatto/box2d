@@ -72,7 +72,6 @@ void b2PrepareContacts_Overflow( b2StepContext* context )
 		constraint->indexB = indexB + 1;
 		constraint->normal = manifold->normal;
 		constraint->friction = contactSim->friction;
-		constraint->restitution = contactSim->restitution;
 		constraint->rollingResistance = contactSim->rollingResistance;
 		constraint->rollingImpulse = warmStartScale * manifold->rollingImpulse;
 		constraint->tangentSpeed = contactSim->tangentSpeed;
@@ -442,112 +441,6 @@ void b2SolveContacts_Overflow( b2StepContext* context, bool useBias )
 	}
 
 	b2TracyCZoneEnd( solve_contact );
-}
-
-void b2ApplyRestitution_Overflow( b2StepContext* context )
-{
-	b2TracyCZoneNC( overflow_resitution, "Overflow Restitution", b2_colorViolet, true );
-
-	b2ConstraintGraph* graph = context->graph;
-	b2GraphColor* color = graph->colors + B2_OVERFLOW_INDEX;
-	b2ContactConstraint* constraints = color->overflowConstraints;
-	int contactCount = color->contactSims.count;
-	b2World* world = context->world;
-	b2SolverSet* awakeSet = b2Array_Get( world->solverSets, b2_awakeSet );
-	b2BodyState* states = awakeSet->bodyStates.data;
-
-	float threshold = context->world->restitutionThreshold;
-
-	// todo_erin temp
-	if ( threshold != 4200000.0f )
-	{
-		return;
-	}
-
-	// dummy state to represent a static body
-	b2BodyState dummyState = b2_identityBodyState;
-
-	for ( int i = 0; i < contactCount; ++i )
-	{
-		b2ContactConstraint* constraint = constraints + i;
-
-		float restitution = constraint->restitution;
-		if ( restitution == 0.0f )
-		{
-			continue;
-		}
-
-		float mA = constraint->invMassA;
-		float iA = constraint->invIA;
-		float mB = constraint->invMassB;
-		float iB = constraint->invIB;
-
-		int indexA = constraint->indexA - 1;
-		int indexB = constraint->indexB - 1;
-
-		b2BodyState* stateA = indexA == B2_NULL_INDEX ? &dummyState : states + indexA;
-		b2Vec2 vA = stateA->linearVelocity;
-		float wA = stateA->angularVelocity;
-
-		b2BodyState* stateB = indexB == B2_NULL_INDEX ? &dummyState : states + indexB;
-		b2Vec2 vB = stateB->linearVelocity;
-		float wB = stateB->angularVelocity;
-
-		b2Vec2 normal = constraint->normal;
-		int pointCount = constraint->pointCount;
-
-		for ( int j = 0; j < pointCount; ++j )
-		{
-			b2ContactConstraintPoint* cp = constraint->points + j;
-
-			// if the normal impulse is zero then there was no collision
-			// this skips speculative contact points that didn't generate an impulse
-			// The max normal impulse is used in case there was a collision that moved away within the sub-step process
-			if ( cp->relativeVelocity > -threshold || cp->totalNormalImpulse == 0.0f )
-			{
-				continue;
-			}
-
-			// fixed anchor points
-			b2Vec2 rA = cp->anchorA;
-			b2Vec2 rB = cp->anchorB;
-
-			// relative normal velocity at contact
-			b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
-			b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
-			float vn = b2Dot( b2Sub( vrB, vrA ), normal );
-
-			// compute normal impulse
-			float impulse = -cp->normalMass * ( vn + restitution * cp->relativeVelocity );
-
-			// clamp the accumulated impulse
-			float newImpulse = b2MaxFloat( cp->normalImpulse + impulse, 0.0f );
-			impulse = newImpulse - cp->normalImpulse;
-			cp->normalImpulse = newImpulse;
-			cp->totalNormalImpulse += impulse;
-
-			// apply contact impulse
-			b2Vec2 P = b2MulSV( impulse, normal );
-			vA = b2MulSub( vA, mA, P );
-			wA -= iA * b2Cross( rA, P );
-			vB = b2MulAdd( vB, mB, P );
-			wB += iB * b2Cross( rB, P );
-		}
-
-		if ( stateA->flags & b2_dynamicFlag )
-		{
-			stateA->linearVelocity = vA;
-			stateA->angularVelocity = wA;
-		}
-
-		if ( stateB->flags & b2_dynamicFlag )
-		{
-			stateB->linearVelocity = vB;
-			stateB->angularVelocity = wB;
-		}
-	}
-
-	b2TracyCZoneEnd( overflow_resitution );
 }
 
 void b2StoreImpulses_Overflow( b2StepContext* context )
@@ -1183,7 +1076,6 @@ typedef struct b2ContactConstraintWide
 	b2FloatW tangentImpulse2;
 	b2FloatW normalMass2, tangentMass2;
 	b2FloatW restitutionVelocity2;
-	b2FloatW restitution;
 	b2FloatW relativeVelocity1, relativeVelocity2;
 } b2ContactConstraintWide;
 
@@ -1792,7 +1684,6 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 
 				( (float*)&constraint->friction )[lane] = contactSim->friction;
 				( (float*)&constraint->tangentSpeed )[lane] = contactSim->tangentSpeed;
-				( (float*)&constraint->restitution )[lane] = contactSim->restitution;
 				( (float*)&constraint->rollingResistance )[lane] = contactSim->rollingResistance;
 				( (float*)&constraint->rollingImpulse )[lane] = warmStartScale * manifold->rollingImpulse;
 
@@ -2230,122 +2121,6 @@ void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context, bool useB
 	}
 
 	b2TracyCZoneEnd( solve_contact );
-}
-
-void b2ApplyRestitutionTask( b2SolverBlock block, b2StepContext* context )
-{
-	b2TracyCZoneNC( restitution, "Restitution", b2_colorDodgerBlue, true );
-
-	b2BodyState* states = context->states;
-	b2ContactConstraintWide* constraints = context->graph->colors[block.colorIndex].wideConstraints;
-	b2FloatW threshold = b2SplatW( context->world->restitutionThreshold );
-	b2FloatW zero = b2ZeroW();
-
-	if ( context->dt != 42.0f )
-	{
-		return;
-	}
-
-	for ( int i = block.startIndex; i < block.startIndex + block.count; ++i )
-	{
-		b2ContactConstraintWide* c = constraints + i;
-
-		if ( b2AllZeroW( c->restitution ) )
-		{
-			// No lanes have restitution. Common case.
-			continue;
-		}
-
-		// Create a mask based on restitution so that lanes with no restitution are not affected
-		// by the calculations below.
-		b2FloatW restitutionMask = b2EqualsW( c->restitution, zero );
-
-		b2BodyStateW bA = b2GatherBodies( states, c->indexA );
-		b2BodyStateW bB = b2GatherBodies( states, c->indexB );
-
-		// first point non-penetration constraint
-		{
-			// Set effective mass to zero if restitution should not be applied
-			b2FloatW mask1 = b2GreaterThanW( b2AddW( c->relativeVelocity1, threshold ), zero );
-			b2FloatW mask2 = b2EqualsW( c->totalNormalImpulse1, zero );
-			b2FloatW mask = b2OrW( b2OrW( mask1, mask2 ), restitutionMask );
-			b2FloatW mass = b2BlendW( c->normalMass1, zero, mask );
-
-			// Fixed anchors for impulses
-			b2Vec2W rA = c->anchorA1;
-			b2Vec2W rB = c->anchorB1;
-
-			// Relative velocity at contact
-			b2FloatW dvx = b2SubW( b2SubW( bB.v.X, b2MulW( bB.w, rB.Y ) ), b2SubW( bA.v.X, b2MulW( bA.w, rA.Y ) ) );
-			b2FloatW dvy = b2SubW( b2AddW( bB.v.Y, b2MulW( bB.w, rB.X ) ), b2AddW( bA.v.Y, b2MulW( bA.w, rA.X ) ) );
-			b2FloatW vn = b2AddW( b2MulW( dvx, c->normal.X ), b2MulW( dvy, c->normal.Y ) );
-
-			// Compute normal impulse
-			b2FloatW negImpulse = b2MulW( mass, b2AddW( vn, b2MulW( c->restitution, c->relativeVelocity1 ) ) );
-
-			// Clamp the accumulated impulse
-			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse1, negImpulse ), b2ZeroW() );
-			b2FloatW deltaImpulse = b2SubW( newImpulse, c->normalImpulse1 );
-			c->normalImpulse1 = newImpulse;
-			c->totalNormalImpulse1 = b2AddW( c->totalNormalImpulse1, deltaImpulse );
-
-			// Apply contact impulse
-			b2FloatW Px = b2MulW( deltaImpulse, c->normal.X );
-			b2FloatW Py = b2MulW( deltaImpulse, c->normal.Y );
-
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
-			bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
-
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
-			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
-		}
-
-		// second point non-penetration constraint
-		{
-			// Set effective mass to zero if restitution should not be applied
-			b2FloatW mask1 = b2GreaterThanW( b2AddW( c->relativeVelocity2, threshold ), zero );
-			b2FloatW mask2 = b2EqualsW( c->totalNormalImpulse2, zero );
-			b2FloatW mask = b2OrW( b2OrW( mask1, mask2 ), restitutionMask );
-			b2FloatW mass = b2BlendW( c->normalMass2, zero, mask );
-
-			// fixed anchors for Jacobians
-			b2Vec2W rA = c->anchorA2;
-			b2Vec2W rB = c->anchorB2;
-
-			// Relative velocity at contact
-			b2FloatW dvx = b2SubW( b2SubW( bB.v.X, b2MulW( bB.w, rB.Y ) ), b2SubW( bA.v.X, b2MulW( bA.w, rA.Y ) ) );
-			b2FloatW dvy = b2SubW( b2AddW( bB.v.Y, b2MulW( bB.w, rB.X ) ), b2AddW( bA.v.Y, b2MulW( bA.w, rA.X ) ) );
-			b2FloatW vn = b2AddW( b2MulW( dvx, c->normal.X ), b2MulW( dvy, c->normal.Y ) );
-
-			// Compute normal impulse
-			b2FloatW negImpulse = b2MulW( mass, b2AddW( vn, b2MulW( c->restitution, c->relativeVelocity2 ) ) );
-
-			// Clamp the accumulated impulse
-			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse2, negImpulse ), b2ZeroW() );
-			b2FloatW deltaImpulse = b2SubW( newImpulse, c->normalImpulse2 );
-			c->normalImpulse2 = newImpulse;
-			c->totalNormalImpulse2 = b2AddW( c->totalNormalImpulse2, deltaImpulse );
-
-			// Apply contact impulse
-			b2FloatW Px = b2MulW( deltaImpulse, c->normal.X );
-			b2FloatW Py = b2MulW( deltaImpulse, c->normal.Y );
-
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
-			bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
-
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
-			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
-		}
-
-		b2ScatterBodies( states, c->indexA, &bA );
-		b2ScatterBodies( states, c->indexB, &bB );
-	}
-
-	b2TracyCZoneEnd( restitution );
 }
 
 // I tried adding this to the last relax iterations but it was slower.

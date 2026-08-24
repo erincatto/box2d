@@ -71,8 +71,3 @@
 
 /// The time that a body must be still before it will go to sleep. In seconds.
 #define B2_TIME_TO_SLEEP 0.5f
-
-/// The number of restitution iterations.
-#ifndef B2_RESTITUTION_ITERATIONS
-#define B2_RESTITUTION_ITERATIONS 3
-#endif
