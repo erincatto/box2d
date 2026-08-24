@@ -23,7 +23,8 @@
 // todo should be possible to branch on the scatters to avoid writing to kinematic bodies
 
 // This is used for debugging by making all constraints be assigned to overflow.
-#define B2_FORCE_OVERFLOW 1
+// Don't expect the same result for overflow and graph colored. They have a different solve order.
+#define B2_FORCE_OVERFLOW 0
 
 void b2CreateGraph( b2ConstraintGraph* graph, const b2Capacity* capacity )
 {

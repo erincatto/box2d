@@ -2173,12 +2173,12 @@ public:
 		bodyDef.type = b2_dynamicBody;
 
 		bodyDef.position.y = 0.5f;
-		b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
-		b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		b2BodyId bodyId1 = b2CreateBody( m_worldId, &bodyDef );
+		b2CreatePolygonShape( bodyId1, &shapeDef, &box );
 
 		bodyDef.position.y = 4.0f;
-		bodyId = b2CreateBody( m_worldId, &bodyDef );
-		b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		b2BodyId bodyId2 = b2CreateBody( m_worldId, &bodyDef );
+		b2CreatePolygonShape( bodyId2, &shapeDef, &box );
 	}
 
 	static Sample* Create( SampleContext* context )
