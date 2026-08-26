@@ -458,6 +458,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 	b2ContactSim** contactSims = stepContext->contactSims;
 	b2Shape* shapes = world->shapes.data;
 	b2Body* bodies = world->bodies.data;
+	b2BodyState* states = world->solverSets.data[b2_awakeSet].bodyStates.data;
 
 	B2_ASSERT( startIndex < endIndex );
 
@@ -558,6 +559,24 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 							mp->restitutionVelocity = 0.0f;
 						}
 
+						int indexA = contactSim->bodySimIndexA;
+						b2Vec2 vrA = b2Vec2_zero;
+						if ( indexA != B2_NULL_INDEX )
+						{
+							b2BodyState* stateA = states + indexA;
+							vrA = b2Add( stateA->linearVelocity, b2CrossSV( stateA->angularVelocity, mp->anchorA ) );
+						}
+
+						int indexB = contactSim->bodySimIndexB;
+						b2Vec2 vrB = b2Vec2_zero;
+						if ( indexB != B2_NULL_INDEX )
+						{
+							b2BodyState* stateB = states + indexB;
+							vrB = b2Add( stateB->linearVelocity, b2CrossSV( stateB->angularVelocity, mp->anchorB ) );
+						}
+
+						mp->normalVelocity = b2Dot( contactSim->manifold.normal, b2Sub( vrB, vrA ) );
+
 						mp->persisted = true;
 					}
 
@@ -594,10 +613,49 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 				b2SetBit( &taskContext->contactStateBitSet, contactId );
 			}
 
-			for ( int i = 0; i < contactSim->manifold.pointCount; ++i )
+			if (touching)
 			{
-				b2ManifoldPoint* mp = contactSim->manifold.points + i;
-				mp->baseSeparation = mp->separation;
+				for ( int i = 0; i < contactSim->manifold.pointCount; ++i )
+				{
+					b2ManifoldPoint* mp = contactSim->manifold.points + i;
+					mp->baseSeparation = mp->separation;
+
+					// Save relative velocity for restitution. At this point, no gravity
+					// has been applied and the shapes have whatever overlap was left from the
+					// previous time step.
+					//
+					// Suppose we drop a circle on a plane. If gravity is cancelled out by the constraint
+					// solver and there is no penetration recovery, then a coefficient of restitution
+					// of 1.0 will return a bouncing circle to the exact height is was dropped from.
+					// Penetration recovery will push the circle higher, but the relax stage will leave
+					// the vertical velocity at zero. So the rebound height will be the original height
+					// plus the recoverred overlap. The exact behavior is sensitive to the sub-step count.
+					//
+					// The influence of penetration recovery can be accounted for by discounting
+					// the resitution velocity by the energy gain from overlap recovery. This becomes
+					// more complex and expensive. I suspect it is not useful for most games. I almost
+					// never use restitution in the games I work on.
+					//
+					// If CCD engages then there is no overlap recovery, however the incoming velocity
+					// must be discounted by the TOI fraction. That is done in the solver.
+					int indexA = contactSim->bodySimIndexA;
+					b2Vec2 vrA = b2Vec2_zero;
+					if ( indexA != B2_NULL_INDEX )
+					{
+						b2BodyState* stateA = states + indexA;
+						vrA = b2Add(stateA->linearVelocity , b2CrossSV( stateA->angularVelocity, mp->anchorA ) );
+					}
+
+					int indexB = contactSim->bodySimIndexB;
+					b2Vec2 vrB = b2Vec2_zero;
+					if ( indexB != B2_NULL_INDEX )
+					{
+						b2BodyState* stateB = states + indexB;
+						vrB = b2Add(stateB->linearVelocity , b2CrossSV( stateB->angularVelocity, mp->anchorB ) );
+					}
+
+					mp->normalVelocity = b2Dot( contactSim->manifold.normal, b2Sub( vrB, vrA ) );
+				}
 			}
 
 			// To make this work, the time of impact code needs to adjust the target

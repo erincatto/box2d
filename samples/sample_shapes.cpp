@@ -1128,6 +1128,8 @@ public:
 			m_context->camera.zoom = 8.0f;
 		}
 
+		// b2World_SetContactTuning( m_worldId, 30.0f, 0.0f, 0.0f );
+
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );

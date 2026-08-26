@@ -885,8 +885,7 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 		case b2_stageSolve:
 			if ( blockType == b2_graphContactBlock )
 			{
-				bool useBias = true;
-				b2SolveContactsTask( block, context, useBias );
+				b2PushContactsTask( block, context );
 			}
 			else if ( blockType == b2_graphJointBlock )
 			{
@@ -902,8 +901,7 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 		case b2_stageRelax:
 			if ( blockType == b2_graphContactBlock )
 			{
-				bool useBias = false;
-				b2SolveContactsTask( block, context, useBias );
+				b2SolveContactsTask( block, context );
 			}
 			else if ( blockType == b2_graphJointBlock )
 			{
