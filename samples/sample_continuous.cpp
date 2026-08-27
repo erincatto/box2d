@@ -1456,12 +1456,6 @@ public:
 				m_continuous = !m_continuous;
 				break;
 
-			case GLFW_KEY_V:
-				Clear();
-				m_speculative = !m_speculative;
-				b2World_EnableSpeculative( m_worldId, m_speculative );
-				break;
-
 			case GLFW_KEY_S:
 				m_frameSkip = m_frameSkip > 0 ? 0 : 60;
 				break;

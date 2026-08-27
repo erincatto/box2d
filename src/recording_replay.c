@@ -843,11 +843,6 @@ static void b2RecDispatch_WorldRebuildStaticTree( const b2RecArgs_WorldRebuildSt
 	b2World_RebuildStaticTree( rdr->replayWorldId );
 }
 
-static void b2RecDispatch_WorldEnableSpeculative( const b2RecArgs_WorldEnableSpeculative* a, b2RecReader* rdr )
-{
-	b2World_EnableSpeculative( rdr->replayWorldId, a->flag );
-}
-
 // Append a created body to the outliner tracking list. Ordinals are creation order and never reused.
 static void b2RecTrackBodyCreate( b2RecPlayer* player, b2BodyId id )
 {

@@ -587,22 +587,6 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 		touching = pointCount > 0;
 	}
 
-	// This flag is for testing
-	if ( world->enableSpeculative == false && pointCount == 2 )
-	{
-		if ( contactSim->manifold.points[0].separation > 1.5f * B2_LINEAR_SLOP )
-		{
-			contactSim->manifold.points[0] = contactSim->manifold.points[1];
-			contactSim->manifold.pointCount = 1;
-		}
-		else if ( contactSim->manifold.points[1].separation > 1.5f * B2_LINEAR_SLOP )
-		{
-			contactSim->manifold.pointCount = 1;
-		}
-
-		pointCount = contactSim->manifold.pointCount;
-	}
-
 	if ( touching && ( shapeA->enableHitEvents || shapeB->enableHitEvents ) )
 	{
 		contactSim->simFlags |= b2_simEnableHitEvent;

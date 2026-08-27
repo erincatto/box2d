@@ -213,7 +213,6 @@ typedef struct b2World
 	bool enableWarmStarting;
 	bool enableContactSoftening;
 	bool enableContinuous;
-	bool enableSpeculative;
 	bool inUse;
 } b2World;
 
