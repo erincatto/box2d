@@ -659,11 +659,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 					}
 
 					mp2->persisted = true;
-
-					// clear old impulse
-					mp1->normalImpulse = 0.0f;
-					mp1->tangentImpulse = 0.0f;
-					mp1->restitutionVelocity = 0.0f;
+					
 					break;
 				}
 			}
