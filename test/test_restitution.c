@@ -56,7 +56,7 @@ static void MakeGround( b2WorldId worldId, float restitution )
 	b2CreatePolygonShape( groundId, &shapeDef, &box );
 }
 
-static b2BodyId MakeBall( b2WorldId worldId, float x, float y, float velocityY, float density, float restitution )
+static b2BodyId MakeBall( b2WorldId worldId, float x, float y, float velocityY, float restitution )
 {
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_dynamicBody;
@@ -65,7 +65,6 @@ static b2BodyId MakeBall( b2WorldId worldId, float x, float y, float velocityY, 
 	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
-	shapeDef.density = density;
 	shapeDef.material.friction = 0.0f;
 	shapeDef.material.restitution = restitution;
 	b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
@@ -124,7 +123,7 @@ static float MeasureGroundBounce( float restitution, float gap )
 	b2WorldId worldId = MakeWorld( 0.0f );
 	MakeGround( worldId, 0.0f );
 
-	b2BodyId ballId = MakeBall( worldId, 0.0f, 0.5f + gap, -IMPACT_SPEED, 1.0f, restitution );
+	b2BodyId ballId = MakeBall( worldId, 0.0f, 0.5f + gap, -IMPACT_SPEED, restitution );
 
 	for ( int i = 0; i < 60; ++i )
 	{
@@ -146,11 +145,11 @@ static float MeasureSupportedBounce( float restitution, int supportCount )
 
 	for ( int i = 0; i < supportCount; ++i )
 	{
-		MakeBall( worldId, 0.0f, 0.5f + 1.0f * i, 0.0f, 1.0f, 0.0f );
+		MakeBall( worldId, 0.0f, 0.5f + 1.0f * i, 0.0f, 0.0f );
 	}
 
 	float y = 0.5f + 1.0f * supportCount + 0.5f * IMPACT_SPEED * TIME_STEP;
-	b2BodyId ballId = MakeBall( worldId, 0.0f, y, -IMPACT_SPEED, 1.0f, restitution );
+	b2BodyId ballId = MakeBall( worldId, 0.0f, y, -IMPACT_SPEED, restitution );
 
 	for ( int i = 0; i < 60; ++i )
 	{
@@ -203,7 +202,7 @@ static int MeasureDrop( float dropHeight, float* apexes, int capacity )
 	b2Segment segment = { { -60.0f, 0.0f }, { 60.0f, 0.0f } };
 	b2CreateSegmentShape( groundId, &groundShape, &segment );
 
-	b2BodyId ballId = MakeBall( worldId, 0.0f, dropHeight, 0.0f, 1.0f, 1.0f );
+	b2BodyId ballId = MakeBall( worldId, 0.0f, dropHeight, 0.0f, 1.0f );
 
 	int apexCount = 0;
 	float previousSpeed = 0.0f;
@@ -566,7 +565,7 @@ static int ThresholdTest( void )
 
 		b2WorldId worldId = MakeWorld( 0.0f );
 		MakeGround( worldId, 0.0f );
-		b2BodyId ballId = MakeBall( worldId, 0.0f, 0.5f + 0.5f * speed * TIME_STEP, -speed, 1.0f, 1.0f );
+		b2BodyId ballId = MakeBall( worldId, 0.0f, 0.5f + 0.5f * speed * TIME_STEP, -speed, 1.0f );
 
 		for ( int i = 0; i < 60; ++i )
 		{
@@ -659,7 +658,7 @@ static uint64_t RunWorkerScene( int workerCount )
 
 	for ( int i = 0; i < 20; ++i )
 	{
-		MakeBall( worldId, -10.0f + 1.05f * i, 3.0f + 0.13f * i, 0.0f, 1.0f, 0.6f );
+		MakeBall( worldId, -10.0f + 1.05f * i, 3.0f + 0.13f * i, 0.0f, 0.6f );
 	}
 
 	for ( int i = 0; i < 200; ++i )

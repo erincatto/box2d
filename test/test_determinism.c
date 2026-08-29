@@ -16,11 +16,11 @@
 #endif
 
 #if defined( BOX2D_DOUBLE_PRECISION )
-#define EXPECTED_SLEEP_STEP 272
-#define EXPECTED_HASH 0x0568FC97
+#define EXPECTED_SLEEP_STEP 356
+#define EXPECTED_HASH 0x448C8E48
 #else
-#define EXPECTED_SLEEP_STEP 249
-#define EXPECTED_HASH 0xD3DBE65B
+#define EXPECTED_SLEEP_STEP 245
+#define EXPECTED_HASH 0x9F027FDF
 #endif
 
 static int SingleMultithreadingTest( int workerCount )

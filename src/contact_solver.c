@@ -510,6 +510,15 @@ static inline b2FloatW b2SplatW( float scalar )
 	return _mm256_set1_ps( scalar );
 }
 
+static inline b2FloatW b2NegW( b2FloatW a )
+{
+	// Create a mask with the sign bit set for each element
+	__m256 mask = _mm256_set1_ps( -0.0f );
+
+	// XOR the input with the mask to negate each element
+	return _mm256_xor_ps( a, mask );
+}
+
 static inline b2FloatW b2AddW( b2FloatW a, b2FloatW b )
 {
 	return _mm256_add_ps( a, b );
@@ -597,6 +606,12 @@ static inline bool b2AllZeroW( b2FloatW a )
 static inline b2FloatW b2BlendW( b2FloatW a, b2FloatW b, b2FloatW mask )
 {
 	return _mm256_blendv_ps( a, b, mask );
+}
+
+// data must be 32-byte aligned
+static inline b2FloatW b2LoadW( const float* data )
+{
+	return _mm256_load_ps( data );
 }
 
 static inline b2FloatW b2SoftMaskW( const int* indexA, const int* indexB )
@@ -1054,6 +1069,11 @@ static inline b2FloatW b2SoftMaskW( const int* indexA, const int* indexB )
 	return r;
 }
 
+static inline b2FloatW b2LoadW( const float* data )
+{
+	return (b2FloatW){ data[0], data[1], data[2], data[3] };
+}
+
 #endif
 
 // a - b
@@ -1118,7 +1138,7 @@ typedef struct b2ContactConstraintWide
 	b2FloatW tangentSpeed;
 	b2FloatW rollingResistance;
 	b2FloatW tangentMass1, tangentMass2;
-	b2FloatW restitutionVelocity1, restitutionVelocity2;
+	b2FloatW negRestitutionVelocity1, negRestitutionVelocity2;
 
 } b2ContactConstraintWide;
 
@@ -1773,8 +1793,9 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 					cw->tangentMass1 = b2BlendW( b2ZeroW(), b2DivW( oneW, k ), test );
 				}
 
-				cw->restitutionVelocity1 = b2SetW( mp1->restitutionVelocity, mp2->restitutionVelocity, mp3->restitutionVelocity,
-												   mp4->restitutionVelocity );
+				cw->negRestitutionVelocity1 = b2SetW( mp1->restitutionVelocity, mp2->restitutionVelocity,
+													  mp3->restitutionVelocity, mp4->restitutionVelocity );
+				cw->negRestitutionVelocity1 = b2NegW( cw->negRestitutionVelocity1 );
 			}
 
 			{
@@ -1827,8 +1848,9 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 					cw->tangentMass2 = b2BlendW( b2ZeroW(), b2DivW( oneW, k ), test );
 				}
 
-				cw->restitutionVelocity2 = b2SetW( mp1->restitutionVelocity, mp2->restitutionVelocity, mp3->restitutionVelocity,
-												   mp4->restitutionVelocity );
+				cw->negRestitutionVelocity2 = b2SetW( mp1->restitutionVelocity, mp2->restitutionVelocity,
+													  mp3->restitutionVelocity, mp4->restitutionVelocity );
+				cw->negRestitutionVelocity2 = b2NegW( cw->negRestitutionVelocity2 );
 			}
 		}
 
@@ -2068,8 +2090,8 @@ void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context )
 		b2BodyStateW bA = b2GatherBodies( states, c->indexA );
 		b2BodyStateW bB = b2GatherBodies( states, c->indexB );
 
-		b2FloatW restitutionMask1 = b2GreaterThanW( c->restitutionVelocity1, b2ZeroW() );
-		b2FloatW restitutionMask2 = b2GreaterThanW( c->restitutionVelocity2, b2ZeroW() );
+		b2FloatW restitutionMask1 = b2GreaterThanW( b2ZeroW(), c->negRestitutionVelocity1 );
+		b2FloatW restitutionMask2 = b2GreaterThanW( b2ZeroW(), c->negRestitutionVelocity2 );
 		bool haveRestitution = b2AllZeroW( b2OrW( restitutionMask1, restitutionMask2 ) ) == false;
 
 		b2FloatW stopRestitution = trueW;
@@ -2102,8 +2124,9 @@ void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context )
 			{
 				b2FloatW separated = b2GreaterThanW( s, b2ZeroW() );
 
-				// Restitution. Don't apply if separated.
-				velocityBias = b2MinW( velocityBias, b2SubW( b2ZeroW(), c->restitutionVelocity1 ) );
+				// Restitution. Don't apply if separated. Lanes with no armed restitution keep the speculative bias.
+				b2FloatW negRest = b2BlendW( velocityBias, c->negRestitutionVelocity1, restitutionMask1 );
+				velocityBias = b2MinW( velocityBias, negRest );
 				stopRestitution = b2AndW( stopRestitution, b2BlendW( trueW, separated, restitutionMask1 ) );
 			}
 
@@ -2156,8 +2179,9 @@ void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context )
 			{
 				b2FloatW separated = b2GreaterThanW( s, b2ZeroW() );
 
-				// Restitution. Don't apply if separated.
-				velocityBias = b2MinW( velocityBias, b2SubW( b2ZeroW(), c->restitutionVelocity2 ) );
+				// Restitution. Don't apply if separated. Lanes with no armed restitution keep the speculative bias.
+				b2FloatW negRest = b2BlendW( velocityBias, c->negRestitutionVelocity2, restitutionMask2 );
+				velocityBias = b2MinW( velocityBias, negRest );
 				stopRestitution = b2AndW( stopRestitution, b2BlendW( trueW, separated, restitutionMask2 ) );
 			}
 
@@ -2197,8 +2221,8 @@ void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context )
 		// Per lane, all points separated on manifold. Turn off restitution.
 		if ( haveRestitution )
 		{
-			c->restitutionVelocity1 = b2BlendW( c->restitutionVelocity1, b2ZeroW(), stopRestitution );
-			c->restitutionVelocity2 = b2BlendW( c->restitutionVelocity2, b2ZeroW(), stopRestitution );
+			c->negRestitutionVelocity1 = b2BlendW( c->negRestitutionVelocity1, b2ZeroW(), stopRestitution );
+			c->negRestitutionVelocity2 = b2BlendW( c->negRestitutionVelocity2, b2ZeroW(), stopRestitution );
 		}
 
 		// Rolling resistance
