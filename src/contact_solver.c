@@ -1609,6 +1609,18 @@ static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT i
 
 static b2ContactSim b2_zeroContactSim = { 0 };
 
+// Macro to build wide floats accounting for the SIMD lane count.
+#define B2_GATHER( wide, scalar )                                                                                                \
+	do                                                                                                                           \
+	{                                                                                                                            \
+		for ( int lane = 0; lane < B2_SIMD_WIDTH; ++lane )                                                                       \
+		{                                                                                                                        \
+			buffer[lane] = contactLanes[lane]->scalar;                                                                           \
+		}                                                                                                                        \
+		wide = b2LoadW( buffer );                                                                                                \
+	}                                                                                                                            \
+	while ( 0 )
+
 // Prepare wide contact constraints.
 void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 {
@@ -1653,122 +1665,65 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 			b2ContactConstraintWide* cw = wideBase + wideIndex;
 			int localWideIndex = wideIndex - colorWideStart;
 
-			b2ContactSim* c1 = &b2_zeroContactSim;
-			B2_VALIDATE( B2_SIMD_WIDTH * localWideIndex + 0 < colorContactCount );
+			b2ContactSim* contactLanes[B2_SIMD_WIDTH];
 
+			for ( int laneIndex = 0; laneIndex < B2_SIMD_WIDTH; ++laneIndex )
 			{
-				c1 = contactSims + B2_SIMD_WIDTH * localWideIndex + 0;
-				cw->indexA[0] = c1->bodySimIndexA + 1;
-				cw->indexB[0] = c1->bodySimIndexB + 1;
+				int contactIndex = B2_SIMD_WIDTH * localWideIndex + laneIndex;
+				if ( contactIndex < colorContactCount )
+				{
+					b2ContactSim* c = contactSims + contactIndex;
+					contactLanes[laneIndex] = c;
+
+					// index base-1
+					cw->indexA[laneIndex] = c->bodySimIndexA + 1;
+					cw->indexB[laneIndex] = c->bodySimIndexB + 1;
 
 #if B2_ENABLE_VALIDATION
-				b2Body* bodyA = bodies + c1->bodyIdA;
-				int validIndexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
-				b2Body* bodyB = bodies + c1->bodyIdB;
-				int validIndexB = bodyB->setIndex == b2_awakeSet ? bodyB->localIndex : B2_NULL_INDEX;
-				B2_ASSERT( c1->bodySimIndexA == validIndexA );
-				B2_ASSERT( c1->bodySimIndexB == validIndexB );
+					b2Body* bodyA = bodies + c->bodyIdA;
+					int validIndexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
+					b2Body* bodyB = bodies + c->bodyIdB;
+					int validIndexB = bodyB->setIndex == b2_awakeSet ? bodyB->localIndex : B2_NULL_INDEX;
+					B2_ASSERT( c->bodySimIndexA == validIndexA );
+					B2_ASSERT( c->bodySimIndexB == validIndexB );
 #endif
+				}
+				else
+				{
+					contactLanes[laneIndex] = &b2_zeroContactSim;
+				}
 			}
 
-			b2ContactSim* c2 = &b2_zeroContactSim;
-			if ( B2_SIMD_WIDTH * localWideIndex + 1 < colorContactCount )
-			{
-				c2 = contactSims + B2_SIMD_WIDTH * localWideIndex + 1;
-				cw->indexA[1] = c2->bodySimIndexA + 1;
-				cw->indexB[1] = c2->bodySimIndexB + 1;
-
-#if B2_ENABLE_VALIDATION
-				b2Body* bodyA = bodies + c2->bodyIdA;
-				int validIndexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
-				b2Body* bodyB = bodies + c2->bodyIdB;
-				int validIndexB = bodyB->setIndex == b2_awakeSet ? bodyB->localIndex : B2_NULL_INDEX;
-				B2_ASSERT( c2->bodySimIndexA == validIndexA );
-				B2_ASSERT( c2->bodySimIndexB == validIndexB );
-#endif
-			}
-
-			b2ContactSim* c3 = &b2_zeroContactSim;
-			if ( B2_SIMD_WIDTH * localWideIndex + 2 < colorContactCount )
-			{
-				c3 = contactSims + B2_SIMD_WIDTH * localWideIndex + 2;
-				cw->indexA[2] = c3->bodySimIndexA + 1;
-				cw->indexB[2] = c3->bodySimIndexB + 1;
-
-#if B2_ENABLE_VALIDATION
-				b2Body* bodyA = bodies + c3->bodyIdA;
-				int validIndexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
-				b2Body* bodyB = bodies + c3->bodyIdB;
-				int validIndexB = bodyB->setIndex == b2_awakeSet ? bodyB->localIndex : B2_NULL_INDEX;
-				B2_ASSERT( c3->bodySimIndexA == validIndexA );
-				B2_ASSERT( c3->bodySimIndexB == validIndexB );
-#endif
-			}
-
-			b2ContactSim* c4 = &b2_zeroContactSim;
-			if ( B2_SIMD_WIDTH * localWideIndex + 3 < colorContactCount )
-			{
-				c4 = contactSims + B2_SIMD_WIDTH * localWideIndex + 3;
-				cw->indexA[3] = c4->bodySimIndexA + 1;
-				cw->indexB[3] = c4->bodySimIndexB + 1;
-
-#if B2_ENABLE_VALIDATION
-				b2Body* bodyA = bodies + c4->bodyIdA;
-				int validIndexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
-				b2Body* bodyB = bodies + c4->bodyIdB;
-				int validIndexB = bodyB->setIndex == b2_awakeSet ? bodyB->localIndex : B2_NULL_INDEX;
-				B2_ASSERT( c4->bodySimIndexA == validIndexA );
-				B2_ASSERT( c4->bodySimIndexB == validIndexB );
-#endif
-			}
-
-			cw->invMassA = b2SetW( c1->invMassA, c2->invMassA, c3->invMassA, c4->invMassA );
-			cw->invMassB = b2SetW( c1->invMassB, c2->invMassB, c3->invMassB, c4->invMassB );
-			cw->invIA = b2SetW( c1->invIA, c2->invIA, c3->invIA, c4->invIA );
-			cw->invIB = b2SetW( c1->invIB, c2->invIB, c3->invIB, c4->invIB );
-
-			b2Manifold* m1 = &c1->manifold;
-			b2Manifold* m2 = &c2->manifold;
-			b2Manifold* m3 = &c3->manifold;
-			b2Manifold* m4 = &c4->manifold;
-
-			cw->normal.X = b2SetW( m1->normal.x, m2->normal.x, m3->normal.x, m4->normal.x );
-			cw->normal.Y = b2SetW( m1->normal.y, m2->normal.y, m3->normal.y, m4->normal.y );
-			cw->friction = b2SetW( c1->friction, c2->friction, c3->friction, c4->friction );
-			cw->tangentSpeed = b2SetW( c1->tangentSpeed, c2->tangentSpeed, c3->tangentSpeed, c4->tangentSpeed );
-			cw->rollingResistance =
-				b2SetW( c1->rollingResistance, c2->rollingResistance, c3->rollingResistance, c4->rollingResistance );
-			cw->rollingImpulse = b2SetW( m1->rollingImpulse, m2->rollingImpulse, m3->rollingImpulse, m4->rollingImpulse );
+			_Alignas( 32 ) float buffer[B2_SIMD_WIDTH];
+			B2_GATHER( cw->invMassA, invMassA );
+			B2_GATHER( cw->invMassB, invMassB );
+			B2_GATHER( cw->invIA, invIA );
+			B2_GATHER( cw->invIB, invIB );
+			B2_GATHER( cw->normal.X, manifold.normal.x );
+			B2_GATHER( cw->normal.Y, manifold.normal.y );
+			B2_GATHER( cw->friction, friction );
+			B2_GATHER( cw->tangentSpeed, tangentSpeed );
+			B2_GATHER( cw->rollingResistance, rollingResistance );
+			B2_GATHER( cw->rollingImpulse, manifold.rollingImpulse );
 			cw->rollingImpulse = b2MulW( warmStartScale, cw->rollingImpulse );
 
 			b2Vec2W tangent = b2RightPerpW( cw->normal );
 
 			{
-				const b2ManifoldPoint* mp1 = m1->points + 0;
-				const b2ManifoldPoint* mp2 = m2->points + 0;
-				const b2ManifoldPoint* mp3 = m3->points + 0;
-				const b2ManifoldPoint* mp4 = m4->points + 0;
+				B2_GATHER( cw->anchorA1.X, manifold.points[0].anchorA.x );
+				B2_GATHER( cw->anchorA1.Y, manifold.points[0].anchorA.y );
+				B2_GATHER( cw->anchorB1.X, manifold.points[0].anchorB.x );
+				B2_GATHER( cw->anchorB1.Y, manifold.points[0].anchorB.y );
 
-				b2Vec2 rA1 = mp1->anchorA, rB1 = mp1->anchorB;
-				b2Vec2 rA2 = mp2->anchorA, rB2 = mp2->anchorB;
-				b2Vec2 rA3 = mp3->anchorA, rB3 = mp3->anchorB;
-				b2Vec2 rA4 = mp4->anchorA, rB4 = mp4->anchorB;
-
-				cw->anchorA1.X = b2SetW( rA1.x, rA2.x, rA3.x, rA4.x );
-				cw->anchorA1.Y = b2SetW( rA1.y, rA2.y, rA3.y, rA4.y );
-				cw->anchorB1.X = b2SetW( rB1.x, rB2.x, rB3.x, rB4.x );
-				cw->anchorB1.Y = b2SetW( rB1.y, rB2.y, rB3.y, rB4.y );
-
-				b2FloatW s = b2SetW( mp1->separation, mp2->separation, mp3->separation, mp4->separation );
+				b2FloatW s;
+				B2_GATHER( s, manifold.points[0].separation );
 				cw->baseSeparation1 = b2SubW( s, b2DotW( b2SubVW( cw->anchorB1, cw->anchorA1 ), cw->normal ) );
 
-				cw->normalImpulse1 = b2SetW( mp1->normalImpulse, mp2->normalImpulse, mp3->normalImpulse, mp4->normalImpulse );
-				cw->tangentImpulse1 =
-					b2SetW( mp1->tangentImpulse, mp2->tangentImpulse, mp3->tangentImpulse, mp4->tangentImpulse );
+				B2_GATHER( cw->normalImpulse1, manifold.points[0].normalImpulse );
+				B2_GATHER( cw->tangentImpulse1, manifold.points[0].tangentImpulse );
 
 				cw->normalImpulse1 = b2MulW( warmStartScale, cw->normalImpulse1 );
 				cw->tangentImpulse1 = b2MulW( warmStartScale, cw->tangentImpulse1 );
-
 				cw->totalNormalImpulse1 = b2ZeroW();
 
 				// Effective mass along normal.
@@ -1793,37 +1748,26 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 					cw->tangentMass1 = b2BlendW( b2ZeroW(), b2DivW( oneW, k ), test );
 				}
 
-				cw->negRestitutionVelocity1 = b2SetW( mp1->restitutionVelocity, mp2->restitutionVelocity,
-													  mp3->restitutionVelocity, mp4->restitutionVelocity );
-				cw->negRestitutionVelocity1 = b2NegW( cw->negRestitutionVelocity1 );
+				b2FloatW restVel;
+				B2_GATHER( restVel, manifold.points[0].restitutionVelocity );
+				cw->negRestitutionVelocity1 = b2NegW( restVel );
 			}
 
 			{
-				const b2ManifoldPoint* mp1 = m1->points + 1;
-				const b2ManifoldPoint* mp2 = m2->points + 1;
-				const b2ManifoldPoint* mp3 = m3->points + 1;
-				const b2ManifoldPoint* mp4 = m4->points + 1;
+				B2_GATHER( cw->anchorA2.X, manifold.points[1].anchorA.x );
+				B2_GATHER( cw->anchorA2.Y, manifold.points[1].anchorA.y );
+				B2_GATHER( cw->anchorB2.X, manifold.points[1].anchorB.x );
+				B2_GATHER( cw->anchorB2.Y, manifold.points[1].anchorB.y );
 
-				b2Vec2 rA1 = mp1->anchorA, rB1 = mp1->anchorB;
-				b2Vec2 rA2 = mp2->anchorA, rB2 = mp2->anchorB;
-				b2Vec2 rA3 = mp3->anchorA, rB3 = mp3->anchorB;
-				b2Vec2 rA4 = mp4->anchorA, rB4 = mp4->anchorB;
-
-				cw->anchorA2.X = b2SetW( rA1.x, rA2.x, rA3.x, rA4.x );
-				cw->anchorA2.Y = b2SetW( rA1.y, rA2.y, rA3.y, rA4.y );
-				cw->anchorB2.X = b2SetW( rB1.x, rB2.x, rB3.x, rB4.x );
-				cw->anchorB2.Y = b2SetW( rB1.y, rB2.y, rB3.y, rB4.y );
-
-				b2FloatW s = b2SetW( mp1->separation, mp2->separation, mp3->separation, mp4->separation );
+				b2FloatW s;
+				B2_GATHER( s, manifold.points[1].separation );
 				cw->baseSeparation2 = b2SubW( s, b2DotW( b2SubVW( cw->anchorB2, cw->anchorA2 ), cw->normal ) );
 
-				cw->normalImpulse2 = b2SetW( mp1->normalImpulse, mp2->normalImpulse, mp3->normalImpulse, mp4->normalImpulse );
-				cw->tangentImpulse2 =
-					b2SetW( mp1->tangentImpulse, mp2->tangentImpulse, mp3->tangentImpulse, mp4->tangentImpulse );
+				B2_GATHER( cw->normalImpulse2, manifold.points[1].normalImpulse );
+				B2_GATHER( cw->tangentImpulse2, manifold.points[1].tangentImpulse );
 
 				cw->normalImpulse2 = b2MulW( warmStartScale, cw->normalImpulse2 );
 				cw->tangentImpulse2 = b2MulW( warmStartScale, cw->tangentImpulse2 );
-
 				cw->totalNormalImpulse2 = b2ZeroW();
 
 				// Effective mass along normal.
@@ -1848,9 +1792,19 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 					cw->tangentMass2 = b2BlendW( b2ZeroW(), b2DivW( oneW, k ), test );
 				}
 
-				cw->negRestitutionVelocity2 = b2SetW( mp1->restitutionVelocity, mp2->restitutionVelocity,
-													  mp3->restitutionVelocity, mp4->restitutionVelocity );
-				cw->negRestitutionVelocity2 = b2NegW( cw->negRestitutionVelocity2 );
+				// Zero effective mass on lanes that only have one point.
+				for (int lane = 0; lane < B2_SIMD_WIDTH; ++lane)
+				{
+					buffer[lane] = contactLanes[lane]->manifold.pointCount > 1 ? 1.0f : 0.0f;
+				}
+
+				b2FloatW massScale = b2LoadW( buffer );
+				cw->normalMass2 = b2MulW( massScale, cw->normalMass2 );
+				cw->tangentMass2 = b2MulW( massScale, cw->tangentMass2 );
+
+				b2FloatW restVel;
+				B2_GATHER( restVel, manifold.points[1].restitutionVelocity );
+				cw->negRestitutionVelocity2 = b2NegW( restVel );
 			}
 		}
 
