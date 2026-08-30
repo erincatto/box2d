@@ -510,6 +510,11 @@ static inline b2FloatW b2SplatW( float scalar )
 	return _mm256_set1_ps( scalar );
 }
 
+static inline b2FloatW b2SetW( float a, float b, float c, float d, float e, float f, float g, float h )
+{
+	return _mm256_setr_ps( a, b, c, d, e, f, g, h );
+}
+
 static inline b2FloatW b2NegW( b2FloatW a )
 {
 	// Create a mask with the sign bit set for each element
@@ -936,6 +941,11 @@ static inline b2FloatW b2SplatW( float scalar )
 	return (b2FloatW){ scalar, scalar, scalar, scalar };
 }
 
+static inline b2FloatW b2SetW( float a, float b, float c, float d )
+{
+	return (b2FloatW){ a, b, c, d };
+}
+
 static inline b2FloatW b2NegW( b2FloatW a )
 {
 	return (b2FloatW){ -a.x, -a.y, -a.z, -a.w };
@@ -1161,7 +1171,7 @@ typedef struct b2BodyStateW
 #if defined( B2_SIMD_AVX2 )
 
 // This is a load and 8x8 transpose
-static b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT states, int* B2_RESTRICT indices )
+B2_FORCE_INLINE b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT states, int* B2_RESTRICT indices )
 {
 	_Static_assert( sizeof( b2BodyState ) == 32, "b2BodyState not 32 bytes" );
 	B2_ASSERT( ( (uintptr_t)states & 0x1F ) == 0 );
@@ -1217,7 +1227,8 @@ static b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT states, int* 
 }
 
 // This writes everything back to the solver bodies but only the velocities change
-static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT indices, const b2BodyStateW* B2_RESTRICT simdBody )
+B2_FORCE_INLINE void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT indices,
+									  const b2BodyStateW* B2_RESTRICT simdBody )
 {
 	_Static_assert( sizeof( b2BodyState ) == 32, "b2BodyState not 32 bytes" );
 	B2_ASSERT( ( (uintptr_t)states & 0x1F ) == 0 );
@@ -1272,7 +1283,7 @@ static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT i
 #elif defined( B2_SIMD_NEON )
 
 // This is a load and transpose
-static b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT states, int* B2_RESTRICT indices )
+B2_FORCE_INLINE b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT states, int* B2_RESTRICT indices )
 {
 	_Static_assert( sizeof( b2BodyState ) == 32, "b2BodyState not 32 bytes" );
 	B2_ASSERT( ( (uintptr_t)states & 0x1F ) == 0 );
@@ -1332,7 +1343,8 @@ static b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT states, int* 
 
 // This writes only the velocities back to the solver bodies
 // https://developer.arm.com/documentation/102107a/0100/Floating-point-4x4-matrix-transposition
-static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT indices, const b2BodyStateW* B2_RESTRICT simdBody )
+B2_FORCE_INLINE void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT indices,
+									  const b2BodyStateW* B2_RESTRICT simdBody )
 {
 	_Static_assert( sizeof( b2BodyState ) == 32, "b2BodyState not 32 bytes" );
 	B2_ASSERT( ( (uintptr_t)states & 0x1F ) == 0 );
@@ -1531,7 +1543,7 @@ B2_FORCE_INLINE void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_R
 #else
 
 // This is a load and transpose
-static b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT states, int* B2_RESTRICT indices )
+B2_FORCE_INLINE b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT states, int* B2_RESTRICT indices )
 {
 	B2_VALIDATE( indices[0] >= 0 && indices[1] >= 0 && indices[2] >= 0 && indices[3] >= 0 );
 
@@ -1562,7 +1574,8 @@ static b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT states, int* 
 }
 
 // This writes only the velocities back to the solver bodies
-static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT indices, const b2BodyStateW* B2_RESTRICT simdBody )
+B2_FORCE_INLINE void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT indices,
+									  const b2BodyStateW* B2_RESTRICT simdBody )
 {
 	B2_VALIDATE( indices[0] >= 0 && indices[1] >= 0 && indices[2] >= 0 && indices[3] >= 0 );
 
@@ -1609,17 +1622,16 @@ static void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_RESTRICT i
 
 static b2ContactSim b2_zeroContactSim = { 0 };
 
-// Macro to build wide floats accounting for the SIMD lane count.
-#define B2_GATHER( wide, scalar )                                                                                                \
-	do                                                                                                                           \
-	{                                                                                                                            \
-		for ( int lane = 0; lane < B2_SIMD_WIDTH; ++lane )                                                                       \
-		{                                                                                                                        \
-			buffer[lane] = contactLanes[lane]->scalar;                                                                           \
-		}                                                                                                                        \
-		wide = b2LoadW( buffer );                                                                                                \
-	}                                                                                                                            \
-	while ( 0 )
+#if B2_SIMD_WIDTH == 4
+#define B2_GATHER_LANES( wide, scalar )                                                                                          \
+	wide = b2SetW( contactLanes[0]->scalar, contactLanes[1]->scalar, contactLanes[2]->scalar, contactLanes[3]->scalar );
+#elif B2_SIMD_WIDTH == 8
+#define B2_GATHER_LANES( wide, scalar )                                                                                          \
+	wide = b2SetW( contactLanes[0]->scalar, contactLanes[1]->scalar, contactLanes[2]->scalar, contactLanes[3]->scalar,           \
+				   contactLanes[4]->scalar, contactLanes[5]->scalar, contactLanes[6]->scalar, contactLanes[7]->scalar );
+#else
+#error "Unsupported B2_SIMD_WIDTH
+#endif
 
 // Prepare wide contact constraints.
 void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context )
@@ -1694,33 +1706,32 @@ void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context )
 				}
 			}
 
-			_Alignas( 32 ) float buffer[B2_SIMD_WIDTH];
-			B2_GATHER( cw->invMassA, invMassA );
-			B2_GATHER( cw->invMassB, invMassB );
-			B2_GATHER( cw->invIA, invIA );
-			B2_GATHER( cw->invIB, invIB );
-			B2_GATHER( cw->normal.X, manifold.normal.x );
-			B2_GATHER( cw->normal.Y, manifold.normal.y );
-			B2_GATHER( cw->friction, friction );
-			B2_GATHER( cw->tangentSpeed, tangentSpeed );
-			B2_GATHER( cw->rollingResistance, rollingResistance );
-			B2_GATHER( cw->rollingImpulse, manifold.rollingImpulse );
+			B2_GATHER_LANES( cw->invMassA, invMassA );
+			B2_GATHER_LANES( cw->invMassB, invMassB );
+			B2_GATHER_LANES( cw->invIA, invIA );
+			B2_GATHER_LANES( cw->invIB, invIB );
+			B2_GATHER_LANES( cw->normal.X, manifold.normal.x );
+			B2_GATHER_LANES( cw->normal.Y, manifold.normal.y );
+			B2_GATHER_LANES( cw->friction, friction );
+			B2_GATHER_LANES( cw->tangentSpeed, tangentSpeed );
+			B2_GATHER_LANES( cw->rollingResistance, rollingResistance );
+			B2_GATHER_LANES( cw->rollingImpulse, manifold.rollingImpulse );
 			cw->rollingImpulse = b2MulW( warmStartScale, cw->rollingImpulse );
 
 			b2Vec2W tangent = b2RightPerpW( cw->normal );
 
 			{
-				B2_GATHER( cw->anchorA1.X, manifold.points[0].anchorA.x );
-				B2_GATHER( cw->anchorA1.Y, manifold.points[0].anchorA.y );
-				B2_GATHER( cw->anchorB1.X, manifold.points[0].anchorB.x );
-				B2_GATHER( cw->anchorB1.Y, manifold.points[0].anchorB.y );
+				B2_GATHER_LANES( cw->anchorA1.X, manifold.points[0].anchorA.x );
+				B2_GATHER_LANES( cw->anchorA1.Y, manifold.points[0].anchorA.y );
+				B2_GATHER_LANES( cw->anchorB1.X, manifold.points[0].anchorB.x );
+				B2_GATHER_LANES( cw->anchorB1.Y, manifold.points[0].anchorB.y );
 
 				b2FloatW s;
-				B2_GATHER( s, manifold.points[0].separation );
+				B2_GATHER_LANES( s, manifold.points[0].separation );
 				cw->baseSeparation1 = b2SubW( s, b2DotW( b2SubVW( cw->anchorB1, cw->anchorA1 ), cw->normal ) );
 
-				B2_GATHER( cw->normalImpulse1, manifold.points[0].normalImpulse );
-				B2_GATHER( cw->tangentImpulse1, manifold.points[0].tangentImpulse );
+				B2_GATHER_LANES( cw->normalImpulse1, manifold.points[0].normalImpulse );
+				B2_GATHER_LANES( cw->tangentImpulse1, manifold.points[0].tangentImpulse );
 
 				cw->normalImpulse1 = b2MulW( warmStartScale, cw->normalImpulse1 );
 				cw->tangentImpulse1 = b2MulW( warmStartScale, cw->tangentImpulse1 );
@@ -1749,22 +1760,22 @@ void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context )
 				}
 
 				b2FloatW restVel;
-				B2_GATHER( restVel, manifold.points[0].restitutionVelocity );
+				B2_GATHER_LANES( restVel, manifold.points[0].restitutionVelocity );
 				cw->negRestitutionVelocity1 = b2NegW( restVel );
 			}
 
 			{
-				B2_GATHER( cw->anchorA2.X, manifold.points[1].anchorA.x );
-				B2_GATHER( cw->anchorA2.Y, manifold.points[1].anchorA.y );
-				B2_GATHER( cw->anchorB2.X, manifold.points[1].anchorB.x );
-				B2_GATHER( cw->anchorB2.Y, manifold.points[1].anchorB.y );
+				B2_GATHER_LANES( cw->anchorA2.X, manifold.points[1].anchorA.x );
+				B2_GATHER_LANES( cw->anchorA2.Y, manifold.points[1].anchorA.y );
+				B2_GATHER_LANES( cw->anchorB2.X, manifold.points[1].anchorB.x );
+				B2_GATHER_LANES( cw->anchorB2.Y, manifold.points[1].anchorB.y );
 
 				b2FloatW s;
-				B2_GATHER( s, manifold.points[1].separation );
+				B2_GATHER_LANES( s, manifold.points[1].separation );
 				cw->baseSeparation2 = b2SubW( s, b2DotW( b2SubVW( cw->anchorB2, cw->anchorA2 ), cw->normal ) );
 
-				B2_GATHER( cw->normalImpulse2, manifold.points[1].normalImpulse );
-				B2_GATHER( cw->tangentImpulse2, manifold.points[1].tangentImpulse );
+				B2_GATHER_LANES( cw->normalImpulse2, manifold.points[1].normalImpulse );
+				B2_GATHER_LANES( cw->tangentImpulse2, manifold.points[1].tangentImpulse );
 
 				cw->normalImpulse2 = b2MulW( warmStartScale, cw->normalImpulse2 );
 				cw->tangentImpulse2 = b2MulW( warmStartScale, cw->tangentImpulse2 );
@@ -1793,7 +1804,8 @@ void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context )
 				}
 
 				// Zero effective mass on lanes that only have one point.
-				for (int lane = 0; lane < B2_SIMD_WIDTH; ++lane)
+				_Alignas( 32 ) float buffer[B2_SIMD_WIDTH];
+				for ( int lane = 0; lane < B2_SIMD_WIDTH; ++lane )
 				{
 					buffer[lane] = contactLanes[lane]->manifold.pointCount > 1 ? 1.0f : 0.0f;
 				}
@@ -1803,7 +1815,7 @@ void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context )
 				cw->tangentMass2 = b2MulW( massScale, cw->tangentMass2 );
 
 				b2FloatW restVel;
-				B2_GATHER( restVel, manifold.points[1].restitutionVelocity );
+				B2_GATHER_LANES( restVel, manifold.points[1].restitutionVelocity );
 				cw->negRestitutionVelocity2 = b2NegW( restVel );
 			}
 		}
