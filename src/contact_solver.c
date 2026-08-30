@@ -569,14 +569,16 @@ static inline b2FloatW b2SymClampW( b2FloatW a, b2FloatW b )
 	return _mm256_max_ps( nb, _mm256_min_ps( a, b ) );
 }
 
-static inline b2FloatW b2AndW( b2FloatW a, b2FloatW b )
-{
-	return _mm256_and_ps( a, b );
-}
-
 static inline b2FloatW b2OrW( b2FloatW a, b2FloatW b )
 {
 	return _mm256_or_ps( a, b );
+}
+
+// a & ~b
+static inline b2FloatW b2AndNotW( b2FloatW a, b2FloatW b )
+{
+	// Arguments reversed.
+	return _mm256_andnot_ps( b, a );
 }
 
 static inline b2FloatW b2GreaterThanW( b2FloatW a, b2FloatW b )
@@ -692,14 +694,14 @@ static inline b2FloatW b2SymClampW( b2FloatW a, b2FloatW b )
 	return vmaxq_f32( nb, vminq_f32( a, b ) );
 }
 
-static inline b2FloatW b2AndW( b2FloatW a, b2FloatW b )
-{
-	return vreinterpretq_f32_u32( vandq_u32( vreinterpretq_u32_f32( a ), vreinterpretq_u32_f32( b ) ) );
-}
-
 static inline b2FloatW b2OrW( b2FloatW a, b2FloatW b )
 {
 	return vreinterpretq_f32_u32( vorrq_u32( vreinterpretq_u32_f32( a ), vreinterpretq_u32_f32( b ) ) );
+}
+
+static inline b2FloatW b2AndNotW( b2FloatW a, b2FloatW b )
+{
+	return vreinterpretq_f32_u32( vbicq_u32( vreinterpretq_u32_f32( a ), vreinterpretq_u32_f32( b ) ) );
 }
 
 static inline b2FloatW b2GreaterThanW( b2FloatW a, b2FloatW b )
@@ -858,24 +860,21 @@ static inline b2FloatW b2SymClampW( b2FloatW a, b2FloatW b )
 	return _mm_max_ps( nb, _mm_min_ps( a, b ) );
 }
 
-static inline b2FloatW b2AndW( b2FloatW a, b2FloatW b )
-{
-	return _mm_and_ps( a, b );
-}
-
 static inline b2FloatW b2OrW( b2FloatW a, b2FloatW b )
 {
 	return _mm_or_ps( a, b );
 }
 
+// a & ~b
+static inline b2FloatW b2AndNotW( b2FloatW a, b2FloatW b )
+{
+	// Must reverse arguments.
+	return _mm_andnot_ps( b, a );
+}
+
 static inline b2FloatW b2GreaterThanW( b2FloatW a, b2FloatW b )
 {
 	return _mm_cmpgt_ps( a, b );
-}
-
-static inline b2FloatW b2EqualsW( b2FloatW a, b2FloatW b )
-{
-	return _mm_cmpeq_ps( a, b );
 }
 
 static inline bool b2AllZeroW( b2FloatW a )
@@ -1003,16 +1002,6 @@ static inline b2FloatW b2SymClampW( b2FloatW a, b2FloatW b )
 	return r;
 }
 
-static inline b2FloatW b2AndW( b2FloatW a, b2FloatW b )
-{
-	b2FloatW r;
-	r.x = a.x != 0.0f && b.x != 0.0f ? 1.0f : 0.0f;
-	r.y = a.y != 0.0f && b.y != 0.0f ? 1.0f : 0.0f;
-	r.z = a.z != 0.0f && b.z != 0.0f ? 1.0f : 0.0f;
-	r.w = a.w != 0.0f && b.w != 0.0f ? 1.0f : 0.0f;
-	return r;
-}
-
 static inline b2FloatW b2OrW( b2FloatW a, b2FloatW b )
 {
 	b2FloatW r;
@@ -1020,6 +1009,17 @@ static inline b2FloatW b2OrW( b2FloatW a, b2FloatW b )
 	r.y = a.y != 0.0f || b.y != 0.0f ? 1.0f : 0.0f;
 	r.z = a.z != 0.0f || b.z != 0.0f ? 1.0f : 0.0f;
 	r.w = a.w != 0.0f || b.w != 0.0f ? 1.0f : 0.0f;
+	return r;
+}
+
+// a & ~b
+static inline b2FloatW b2AndNotW( b2FloatW a, b2FloatW b )
+{
+	b2FloatW r;
+	r.x = a.x != 0.0f && b.x == 0.0f ? 1.0f : 0.0f;
+	r.y = a.y != 0.0f && b.y == 0.0f ? 1.0f : 0.0f;
+	r.z = a.z != 0.0f && b.z == 0.0f ? 1.0f : 0.0f;
+	r.w = a.w != 0.0f && b.w == 0.0f ? 1.0f : 0.0f;
 	return r;
 }
 
@@ -2034,8 +2034,6 @@ void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context )
 	b2GraphColor* color = context->graph->colors + block.colorIndex;
 	b2ContactConstraintWide* constraints = color->wideConstraints;
 	b2FloatW inv_h = b2SplatW( context->inv_h );
-	b2FloatW oneW = b2SplatW( 1.0f );
-	b2FloatW trueW = b2GreaterThanW( oneW, b2ZeroW() );
 
 	for ( int wideIndex = block.startIndex; wideIndex < block.startIndex + block.count; ++wideIndex )
 	{
@@ -2048,7 +2046,7 @@ void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context )
 		b2FloatW restitutionMask2 = b2GreaterThanW( b2ZeroW(), c->negRestitutionVelocity2 );
 		bool haveRestitution = b2AllZeroW( b2OrW( restitutionMask1, restitutionMask2 ) ) == false;
 
-		b2FloatW stopRestitution = trueW;
+		b2FloatW keepRestitution = b2ZeroW();
 		b2FloatW totalNormalImpulse = b2ZeroW();
 
 		b2Vec2W dp = { b2SubW( bB.dp.X, bA.dp.X ), b2SubW( bB.dp.Y, bA.dp.Y ) };
@@ -2079,9 +2077,8 @@ void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context )
 				b2FloatW separated = b2GreaterThanW( s, b2ZeroW() );
 
 				// Restitution. Don't apply if separated. Lanes with no restitution keep the speculative bias.
-				b2FloatW negVel = b2BlendW( velocityBias, c->negRestitutionVelocity1, restitutionMask1 );
-				velocityBias = b2MinW( velocityBias, negVel );
-				stopRestitution = b2AndW( stopRestitution, b2BlendW( trueW, separated, restitutionMask1 ) );
+				velocityBias = b2BlendW( velocityBias, c->negRestitutionVelocity1, restitutionMask1 );
+				keepRestitution = b2OrW( keepRestitution, b2AndNotW( restitutionMask1, separated ) );
 			}
 
 			// Relative velocity at contact
@@ -2133,10 +2130,9 @@ void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context )
 			{
 				b2FloatW separated = b2GreaterThanW( s, b2ZeroW() );
 
-				// Restitution. Lanes with no restitution keep the speculative bias.
-				b2FloatW negVel = b2BlendW( velocityBias, c->negRestitutionVelocity2, restitutionMask2 );
-				velocityBias = b2MinW( velocityBias, negVel );
-				stopRestitution = b2AndW( stopRestitution, b2BlendW( trueW, separated, restitutionMask2 ) );
+				// Restitution. Don't apply if separated. Lanes with no restitution keep the speculative bias.
+				velocityBias = b2BlendW( velocityBias, c->negRestitutionVelocity2, restitutionMask2 );
+				keepRestitution = b2OrW( keepRestitution, b2AndNotW( restitutionMask2, separated ) );
 			}
 
 			// fixed anchors for Jacobians
@@ -2173,11 +2169,8 @@ void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context )
 		}
 
 		// Per lane, all points separated on manifold. Turn off restitution.
-		if ( haveRestitution )
-		{
-			c->negRestitutionVelocity1 = b2BlendW( c->negRestitutionVelocity1, b2ZeroW(), stopRestitution );
-			c->negRestitutionVelocity2 = b2BlendW( c->negRestitutionVelocity2, b2ZeroW(), stopRestitution );
-		}
+		c->negRestitutionVelocity1 = b2BlendW( b2ZeroW(), c->negRestitutionVelocity1, keepRestitution );
+		c->negRestitutionVelocity2 = b2BlendW( b2ZeroW(), c->negRestitutionVelocity2, keepRestitution );
 
 		// Rolling resistance
 		if ( b2AllZeroW( c->rollingResistance ) == false )
