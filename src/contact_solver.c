@@ -591,11 +591,6 @@ static inline b2FloatW b2GreaterThanW( b2FloatW a, b2FloatW b )
 	return _mm256_cmp_ps( a, b, _CMP_GT_OQ );
 }
 
-static inline b2FloatW b2EqualsW( b2FloatW a, b2FloatW b )
-{
-	return _mm256_cmp_ps( a, b, _CMP_EQ_OQ );
-}
-
 static inline bool b2AllZeroW( b2FloatW a )
 {
 	// Compare each element with zero
@@ -712,11 +707,6 @@ static inline b2FloatW b2AndNotW( b2FloatW a, b2FloatW b )
 static inline b2FloatW b2GreaterThanW( b2FloatW a, b2FloatW b )
 {
 	return vreinterpretq_f32_u32( vcgtq_f32( a, b ) );
-}
-
-static inline b2FloatW b2EqualsW( b2FloatW a, b2FloatW b )
-{
-	return vreinterpretq_f32_u32( vceqq_f32( a, b ) );
 }
 
 static inline bool b2AllZeroW( b2FloatW a )
@@ -1040,16 +1030,6 @@ static inline b2FloatW b2GreaterThanW( b2FloatW a, b2FloatW b )
 	r.y = a.y > b.y ? 1.0f : 0.0f;
 	r.z = a.z > b.z ? 1.0f : 0.0f;
 	r.w = a.w > b.w ? 1.0f : 0.0f;
-	return r;
-}
-
-static inline b2FloatW b2EqualsW( b2FloatW a, b2FloatW b )
-{
-	b2FloatW r;
-	r.x = a.x == b.x ? 1.0f : 0.0f;
-	r.y = a.y == b.y ? 1.0f : 0.0f;
-	r.z = a.z == b.z ? 1.0f : 0.0f;
-	r.w = a.w == b.w ? 1.0f : 0.0f;
 	return r;
 }
 
@@ -1635,6 +1615,8 @@ static b2ContactSim b2_zeroContactSim = { 0 };
 #endif
 
 // Prepare wide contact constraints.
+// Potential optimization: for SSE2 load 4 manifold points and transpose, like the body gather/scatter.
+// I would need to reorder the manifold point so that constraint data comes first.
 void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context )
 {
 	b2TracyCZoneNC( prepare_contact, "Prepare Contact", b2_colorYellow, true );

@@ -541,14 +541,14 @@ typedef struct b2ManifoldPoint
 	/// The separation of the contact point, negative if penetrating
 	float separation;
 
-	/// Cached separation used for contact recycling
-	float baseSeparation;
-
 	/// The impulse along the manifold normal vector.
 	float normalImpulse;
 
 	/// The friction impulse
 	float tangentImpulse;
+
+	/// Velocity for restitution. From the last time step.
+	float restitutionVelocity;
 
 	/// The total normal impulse applied across sub-stepping and restitution. This is important
 	/// to identify speculative contact points that had an interaction in the time step.
@@ -560,8 +560,8 @@ typedef struct b2ManifoldPoint
 	/// zero then there was no hit. Negative means shapes are approaching.
 	float normalVelocity;
 
-	/// Velocity for restitution. From the last time step.
-	float restitutionVelocity;
+	/// Cached separation used for contact recycling
+	float baseSeparation;
 
 	/// Uniquely identifies a contact point between two shapes
 	uint16_t id;
