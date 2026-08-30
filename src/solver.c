@@ -864,7 +864,7 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 			break;
 
 		case b2_stagePrepareContacts:
-			b2PrepareContactsTask( block, context );
+			b2PrepareContacts_Wide( block, context );
 			break;
 
 		case b2_stageIntegrateVelocities:
@@ -874,7 +874,7 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 		case b2_stageWarmStart:
 			if ( blockType == b2_graphContactBlock )
 			{
-				b2WarmStartContactsTask( block, context );
+				b2WarmStartContacts_Wide( block, context );
 			}
 			else if ( blockType == b2_graphJointBlock )
 			{
@@ -885,7 +885,7 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 		case b2_stageSolve:
 			if ( blockType == b2_graphContactBlock )
 			{
-				b2PushContactsTask( block, context );
+				b2PushContacts_Wide( block, context );
 			}
 			else if ( blockType == b2_graphJointBlock )
 			{
@@ -901,7 +901,7 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 		case b2_stageRelax:
 			if ( blockType == b2_graphContactBlock )
 			{
-				b2SolveContactsTask( block, context );
+				b2SolveContacts_Wide( block, context );
 			}
 			else if ( blockType == b2_graphJointBlock )
 			{
@@ -911,7 +911,7 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 			break;
 
 		case b2_stageStoreImpulses:
-			b2StoreImpulsesTask( block, context, workerIndex );
+			b2StoreImpulses_Wide( block, context, workerIndex );
 			break;
 	}
 }

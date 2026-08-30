@@ -1622,7 +1622,7 @@ static b2ContactSim b2_zeroContactSim = { 0 };
 	while ( 0 )
 
 // Prepare wide contact constraints.
-void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
+void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context )
 {
 	b2TracyCZoneNC( prepare_contact, "Prepare Contact", b2_colorYellow, true );
 	b2World* world = context->world;
@@ -1815,7 +1815,7 @@ void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context )
 	b2TracyCZoneEnd( prepare_contact );
 }
 
-void b2WarmStartContactsTask( b2SolverBlock block, b2StepContext* context )
+void b2WarmStartContacts_Wide( b2SolverBlock block, b2StepContext* context )
 {
 	b2TracyCZoneNC( warm_start_contact, "Warm Start", b2_colorGreen, true );
 
@@ -1877,7 +1877,7 @@ void b2WarmStartContactsTask( b2SolverBlock block, b2StepContext* context )
 	b2TracyCZoneEnd( warm_start_contact );
 }
 
-void b2PushContactsTask( b2SolverBlock block, b2StepContext* context )
+void b2PushContacts_Wide( b2SolverBlock block, b2StepContext* context )
 {
 	b2TracyCZoneNC( solve_contact, "Solve Contact", b2_colorAliceBlue, true );
 
@@ -2026,7 +2026,7 @@ void b2PushContactsTask( b2SolverBlock block, b2StepContext* context )
 	b2TracyCZoneEnd( solve_contact );
 }
 
-void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context )
+void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context )
 {
 	b2TracyCZoneNC( solve_contact, "Solve Contact", b2_colorAliceBlue, true );
 
@@ -2078,9 +2078,9 @@ void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context )
 			{
 				b2FloatW separated = b2GreaterThanW( s, b2ZeroW() );
 
-				// Restitution. Don't apply if separated. Lanes with no armed restitution keep the speculative bias.
-				b2FloatW negRest = b2BlendW( velocityBias, c->negRestitutionVelocity1, restitutionMask1 );
-				velocityBias = b2MinW( velocityBias, negRest );
+				// Restitution. Don't apply if separated. Lanes with no restitution keep the speculative bias.
+				b2FloatW negVel = b2BlendW( velocityBias, c->negRestitutionVelocity1, restitutionMask1 );
+				velocityBias = b2MinW( velocityBias, negVel );
 				stopRestitution = b2AndW( stopRestitution, b2BlendW( trueW, separated, restitutionMask1 ) );
 			}
 
@@ -2133,9 +2133,9 @@ void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context )
 			{
 				b2FloatW separated = b2GreaterThanW( s, b2ZeroW() );
 
-				// Restitution. Don't apply if separated. Lanes with no armed restitution keep the speculative bias.
-				b2FloatW negRest = b2BlendW( velocityBias, c->negRestitutionVelocity2, restitutionMask2 );
-				velocityBias = b2MinW( velocityBias, negRest );
+				// Restitution. Lanes with no restitution keep the speculative bias.
+				b2FloatW negVel = b2BlendW( velocityBias, c->negRestitutionVelocity2, restitutionMask2 );
+				velocityBias = b2MinW( velocityBias, negVel );
 				stopRestitution = b2AndW( stopRestitution, b2BlendW( trueW, separated, restitutionMask2 ) );
 			}
 
@@ -2284,9 +2284,9 @@ void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context )
 // contact sims are looked up through the prepareSpans cursor rather than the
 // block's colorIndex, matching the layout of b2PrepareContactsTask.
 //
-// Note: I could store the manifold pointer in the b2ContactConstraintWide to simplify
-// this.
-void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context, int workerIndex )
+// I could store the manifold pointer in the b2ContactConstraintWide to simplify
+// this. But it is important to keep the constraint small.
+void b2StoreImpulses_Wide( b2SolverBlock block, b2StepContext* context, int workerIndex )
 {
 	b2TracyCZoneNC( store_impulses, "Store", b2_colorFireBrick, true );
 

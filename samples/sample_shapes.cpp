@@ -1881,7 +1881,7 @@ public:
 			{ 0.0f, -0.25f }, { 0.0f, 0.25f }, { 0.05f, 0.075f }, { -0.05f, 0.075f }, { 0.05f, -0.075f }, { -0.05f, -0.075f },
 		};
 		b2Hull diamondHull = b2ComputeHull( points, 6 );
-		b2Polygon poly = b2MakePolygon( &diamondHull, 0.0f );
+		b2Polygon poly = b2MakePolygon( &diamondHull, 0.2f );
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;

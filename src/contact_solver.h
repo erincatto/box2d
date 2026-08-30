@@ -47,8 +47,8 @@ void b2SolveContacts_Overflow( b2StepContext* context, bool useBias );
 void b2StoreImpulses_Overflow( b2StepContext* context );
 
 // Contacts that live within the constraint graph coloring
-void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context );
-void b2WarmStartContactsTask( b2SolverBlock block, b2StepContext* context );
-void b2PushContactsTask( b2SolverBlock block, b2StepContext* context );
-void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context );
-void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context, int workerIndex );
+void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context );
+void b2WarmStartContacts_Wide( b2SolverBlock block, b2StepContext* context );
+void b2PushContacts_Wide( b2SolverBlock block, b2StepContext* context );
+void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context );
+void b2StoreImpulses_Wide( b2SolverBlock block, b2StepContext* context, int workerIndex );
