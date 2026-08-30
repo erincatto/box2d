@@ -1622,6 +1622,7 @@ B2_FORCE_INLINE void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_R
 
 static b2ContactSim b2_zeroContactSim = { 0 };
 
+// Macro for gathering contact data across lanes.
 #if B2_SIMD_WIDTH == 4
 #define B2_GATHER_LANES( wide, scalar )                                                                                          \
 	wide = b2SetW( contactLanes[0]->scalar, contactLanes[1]->scalar, contactLanes[2]->scalar, contactLanes[3]->scalar );
@@ -1630,7 +1631,7 @@ static b2ContactSim b2_zeroContactSim = { 0 };
 	wide = b2SetW( contactLanes[0]->scalar, contactLanes[1]->scalar, contactLanes[2]->scalar, contactLanes[3]->scalar,           \
 				   contactLanes[4]->scalar, contactLanes[5]->scalar, contactLanes[6]->scalar, contactLanes[7]->scalar );
 #else
-#error "Unsupported B2_SIMD_WIDTH
+#error "Unsupported B2_SIMD_WIDTH"
 #endif
 
 // Prepare wide contact constraints.
