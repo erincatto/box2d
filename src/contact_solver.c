@@ -2207,8 +2207,6 @@ void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context )
 			if ( haveRestitution )
 			{
 				b2FloatW separated = b2GreaterThanW( s, b2ZeroW() );
-
-				// Restitution. Don't apply if separated. Lanes with no restitution keep the speculative bias.
 				velocityBias = b2BlendW( velocityBias, c->negRestitutionVelocity1, restitutionMask1 );
 				keepRestitution = b2OrW( keepRestitution, b2AndNotW( restitutionMask1, separated ) );
 			}
@@ -2261,8 +2259,6 @@ void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context )
 			if ( haveRestitution )
 			{
 				b2FloatW separated = b2GreaterThanW( s, b2ZeroW() );
-
-				// Restitution. Don't apply if separated. Lanes with no restitution keep the speculative bias.
 				velocityBias = b2BlendW( velocityBias, c->negRestitutionVelocity2, restitutionMask2 );
 				keepRestitution = b2OrW( keepRestitution, b2AndNotW( restitutionMask2, separated ) );
 			}
@@ -2300,7 +2296,7 @@ void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context )
 			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
 		}
 
-		// Per lane, all points separated on manifold. Turn off restitution.
+		// Turn off restitution when all points become separated on a lane.
 		c->negRestitutionVelocity1 = b2BlendW( b2ZeroW(), c->negRestitutionVelocity1, keepRestitution );
 		c->negRestitutionVelocity2 = b2BlendW( b2ZeroW(), c->negRestitutionVelocity2, keepRestitution );
 
