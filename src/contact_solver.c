@@ -1054,6 +1054,16 @@ static inline bool b2AllZeroW( b2FloatW a )
 	return a.x == 0.0f && a.y == 0.0f && a.z == 0.0f && a.w == 0.0f;
 }
 
+static inline b2FloatW b2LoadW( const float* data )
+{
+	return (b2FloatW){ data[0], data[1], data[2], data[3] };
+}
+
+static inline b2FloatW b2LoadU( const float* data )
+{
+	return (b2FloatW){ data[0], data[1], data[2], data[3] };
+}
+
 // component-wise returns mask ? b : a
 static inline b2FloatW b2BlendW( b2FloatW a, b2FloatW b, b2FloatW mask )
 {
@@ -1065,6 +1075,16 @@ static inline b2FloatW b2BlendW( b2FloatW a, b2FloatW b, b2FloatW mask )
 	return r;
 }
 
+static inline b2FloatW b2UnpackLoW( b2FloatW a, b2FloatW b )
+{
+	return (b2FloatW){ a.x, b.x, a.y, b.y };
+}
+
+static inline b2FloatW b2UnpackHiW( b2FloatW a, b2FloatW b )
+{
+	return (b2FloatW){ a.z, b.z, a.w, b.w };
+}
+
 static inline b2FloatW b2SoftMaskW( const int* indexA, const int* indexB )
 {
 	b2FloatW r;
@@ -1074,17 +1094,6 @@ static inline b2FloatW b2SoftMaskW( const int* indexA, const int* indexB )
 	r.w = indexA[3] == 0 || indexB[3] == 0 ? 1.0f : 0.0f;
 	return r;
 }
-
-static inline b2FloatW b2LoadW( const float* data )
-{
-	return (b2FloatW){ data[0], data[1], data[2], data[3] };
-}
-
-static inline b2FloatW b2LoadU( const float* data )
-{
-	return (b2FloatW){ data[0], data[1], data[2], data[3] };
-}
-
 #endif
 
 // a - b
