@@ -783,9 +783,9 @@ static inline b2FloatW b2UnpackHiW( b2FloatW a, b2FloatW b )
 static inline b2FloatW b2SoftMaskW( const int* indexA, const int* indexB )
 {
 	int32x4_t zero = vdupq_n_s32( 0 );
-	int32x4_t a = vceqq_s32( vld1q_s32( indexA ), zero );
-	int32x4_t b = vceqq_s32( vld1q_s32( indexB ), zero );
-	return vreinterpretq_f32_s32( vorrq_s32( a, b ) );
+	uint32x4_t a = vceqq_s32( vld1q_s32( indexA ), zero );
+	uint32x4_t b = vceqq_s32( vld1q_s32( indexB ), zero );
+	return vreinterpretq_f32_u32( vorrq_u32( a, b ) );
 }
 
 #elif defined( B2_SIMD_SSE2 )
