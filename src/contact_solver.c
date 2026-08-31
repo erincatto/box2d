@@ -616,6 +616,12 @@ static inline b2FloatW b2LoadW( const float* data )
 	return _mm256_load_ps( data );
 }
 
+// Unaligned load.
+static inline b2FloatW b2LoadU( const float* data )
+{
+	return _mm256_loadu_ps( data );
+}
+
 static inline b2FloatW b2SoftMaskW( const int* indexA, const int* indexB )
 {
 	__m256i zero = _mm256_setzero_si256();
@@ -736,6 +742,11 @@ static inline b2FloatW b2BlendW( b2FloatW a, b2FloatW b, b2FloatW mask )
 }
 
 static inline b2FloatW b2LoadW( const float32_t* data )
+{
+	return vld1q_f32( data );
+}
+
+static inline b2FloatW b2LoadU( const float32_t* data )
 {
 	return vld1q_f32( data );
 }
@@ -894,6 +905,11 @@ static inline b2FloatW b2BlendW( b2FloatW a, b2FloatW b, b2FloatW mask )
 static inline b2FloatW b2LoadW( const float* data )
 {
 	return _mm_load_ps( data );
+}
+
+static inline b2FloatW b2LoadU( const float* data )
+{
+	return _mm_loadu_ps( data );
 }
 
 static inline void b2StoreW( float* data, b2FloatW a )
@@ -1060,6 +1076,11 @@ static inline b2FloatW b2SoftMaskW( const int* indexA, const int* indexB )
 }
 
 static inline b2FloatW b2LoadW( const float* data )
+{
+	return (b2FloatW){ data[0], data[1], data[2], data[3] };
+}
+
+static inline b2FloatW b2LoadU( const float* data )
 {
 	return (b2FloatW){ data[0], data[1], data[2], data[3] };
 }
@@ -1605,14 +1626,18 @@ static b2ContactSim b2_zeroContactSim = { 0 };
 // Macro for gathering contact data across lanes.
 #if B2_SIMD_WIDTH == 4
 #define B2_GATHER_LANES( wide, scalar )                                                                                          \
-	wide = b2SetW( contactLanes[0]->scalar, contactLanes[1]->scalar, contactLanes[2]->scalar, contactLanes[3]->scalar );
+	wide = b2SetW( contactLanes[0]->scalar, contactLanes[1]->scalar, contactLanes[2]->scalar, contactLanes[3]->scalar )
 #elif B2_SIMD_WIDTH == 8
 #define B2_GATHER_LANES( wide, scalar )                                                                                          \
 	wide = b2SetW( contactLanes[0]->scalar, contactLanes[1]->scalar, contactLanes[2]->scalar, contactLanes[3]->scalar,           \
-				   contactLanes[4]->scalar, contactLanes[5]->scalar, contactLanes[6]->scalar, contactLanes[7]->scalar );
+				   contactLanes[4]->scalar, contactLanes[5]->scalar, contactLanes[6]->scalar, contactLanes[7]->scalar )
 #else
 #error "Unsupported B2_SIMD_WIDTH"
 #endif
+
+// Layout needed for transpose gathers
+_Static_assert( offsetof( b2ManifoldPoint, anchorA ) == 0, "manifold point layout" );
+_Static_assert( offsetof( b2ManifoldPoint, restitutionVelocity ) == 28, "manifold point layout" );
 
 // Prepare wide contact constraints.
 // Potential optimization: for SSE2 load 4 manifold points and transpose, like the body gather/scatter.
@@ -1704,18 +1729,74 @@ void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context )
 			b2Vec2W tangent = b2RightPerpW( cw->normal );
 
 			{
-				B2_GATHER_LANES( cw->anchorA1.X, manifold.points[0].anchorA.x );
-				B2_GATHER_LANES( cw->anchorA1.Y, manifold.points[0].anchorA.y );
-				B2_GATHER_LANES( cw->anchorB1.X, manifold.points[0].anchorB.x );
-				B2_GATHER_LANES( cw->anchorB1.Y, manifold.points[0].anchorB.y );
+				// Optimized transpose gather. Similar to b2GatherBodies.
+#if B2_SIMD_WIDTH == 4
+				b2FloatW m1a = b2LoadU( (float*)( contactLanes[0]->manifold.points + 0 ) + 0 );
+				b2FloatW m1b = b2LoadU( (float*)( contactLanes[0]->manifold.points + 0 ) + 4 );
+				b2FloatW m2a = b2LoadU( (float*)( contactLanes[1]->manifold.points + 0 ) + 0 );
+				b2FloatW m2b = b2LoadU( (float*)( contactLanes[1]->manifold.points + 0 ) + 4 );
+				b2FloatW m3a = b2LoadU( (float*)( contactLanes[2]->manifold.points + 0 ) + 0 );
+				b2FloatW m3b = b2LoadU( (float*)( contactLanes[2]->manifold.points + 0 ) + 4 );
+				b2FloatW m4a = b2LoadU( (float*)( contactLanes[3]->manifold.points + 0 ) + 0 );
+				b2FloatW m4b = b2LoadU( (float*)( contactLanes[3]->manifold.points + 0 ) + 4 );
 
-				b2FloatW s;
-				B2_GATHER_LANES( s, manifold.points[0].separation );
-				cw->baseSeparation1 = b2SubW( s, b2DotW( b2SubVW( cw->anchorB1, cw->anchorA1 ), cw->normal ) );
+				b2FloatW t1a = b2UnpackLoW( m1a, m3a );
+				b2FloatW t2a = b2UnpackLoW( m2a, m4a );
+				b2FloatW t3a = b2UnpackHiW( m1a, m3a );
+				b2FloatW t4a = b2UnpackHiW( m2a, m4a );
+				b2FloatW t1b = b2UnpackLoW( m1b, m3b );
+				b2FloatW t2b = b2UnpackLoW( m2b, m4b );
+				b2FloatW t3b = b2UnpackHiW( m1b, m3b );
+				b2FloatW t4b = b2UnpackHiW( m2b, m4b );
 
-				B2_GATHER_LANES( cw->normalImpulse1, manifold.points[0].normalImpulse );
-				B2_GATHER_LANES( cw->tangentImpulse1, manifold.points[0].tangentImpulse );
+				cw->anchorA1.X = b2UnpackLoW( t1a, t2a );
+				cw->anchorA1.Y = b2UnpackHiW( t1a, t2a );
+				cw->anchorB1.X = b2UnpackLoW( t3a, t4a );
+				cw->anchorB1.Y = b2UnpackHiW( t3a, t4a );
+				cw->baseSeparation1 = b2UnpackLoW( t1b, t2b );
+				cw->normalImpulse1 = b2UnpackHiW( t1b, t2b );
+				cw->tangentImpulse1 = b2UnpackLoW( t3b, t4b );
+				cw->negRestitutionVelocity1 = b2UnpackHiW( t3b, t4b );
+#elif B2_SIMD_WIDTH == 8
+				b2FloatW m1 = b2LoadU( (float*)( contactLanes[0]->manifold.points + 0 ) );
+				b2FloatW m2 = b2LoadU( (float*)( contactLanes[1]->manifold.points + 0 ) );
+				b2FloatW m3 = b2LoadU( (float*)( contactLanes[2]->manifold.points + 0 ) );
+				b2FloatW m4 = b2LoadU( (float*)( contactLanes[3]->manifold.points + 0 ) );
+				b2FloatW m5 = b2LoadU( (float*)( contactLanes[4]->manifold.points + 0 ) );
+				b2FloatW m6 = b2LoadU( (float*)( contactLanes[5]->manifold.points + 0 ) );
+				b2FloatW m7 = b2LoadU( (float*)( contactLanes[6]->manifold.points + 0 ) );
+				b2FloatW m8 = b2LoadU( (float*)( contactLanes[7]->manifold.points + 0 ) );
 
+				b2FloatW t1 = _mm256_unpacklo_ps( m1, m2 );
+				b2FloatW t2 = _mm256_unpackhi_ps( m1, m2 );
+				b2FloatW t3 = _mm256_unpacklo_ps( m3, m4 );
+				b2FloatW t4 = _mm256_unpackhi_ps( m3, m4 );
+				b2FloatW t5 = _mm256_unpacklo_ps( m5, m6 );
+				b2FloatW t6 = _mm256_unpackhi_ps( m5, m6 );
+				b2FloatW t7 = _mm256_unpacklo_ps( m7, m8 );
+				b2FloatW t8 = _mm256_unpackhi_ps( m7, m8 );
+				b2FloatW tt1 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+				b2FloatW tt2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+				b2FloatW tt3 = _mm256_shuffle_ps( t2, t4, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+				b2FloatW tt4 = _mm256_shuffle_ps( t2, t4, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+				b2FloatW tt5 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+				b2FloatW tt6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+				b2FloatW tt7 = _mm256_shuffle_ps( t6, t8, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+				b2FloatW tt8 = _mm256_shuffle_ps( t6, t8, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+				cw->anchorA1.X = _mm256_permute2f128_ps( tt1, tt5, 0x20 );
+				cw->anchorA1.Y = _mm256_permute2f128_ps( tt2, tt6, 0x20 );
+				cw->anchorB1.X = _mm256_permute2f128_ps( tt3, tt7, 0x20 );
+				cw->anchorB1.Y = _mm256_permute2f128_ps( tt4, tt8, 0x20 );
+				cw->baseSeparation1 = _mm256_permute2f128_ps( tt1, tt5, 0x31 );
+				cw->normalImpulse1 = _mm256_permute2f128_ps( tt2, tt6, 0x31 );
+				cw->tangentImpulse1 = _mm256_permute2f128_ps( tt3, tt7, 0x31 );
+				cw->negRestitutionVelocity1 = _mm256_permute2f128_ps( tt4, tt8, 0x31 );
+#endif
+
+				b2FloatW offset = b2DotW( b2SubVW( cw->anchorB1, cw->anchorA1 ), cw->normal );
+				cw->baseSeparation1 = b2SubW( cw->baseSeparation1, offset );
+				cw->negRestitutionVelocity1 = b2NegW( cw->negRestitutionVelocity1 );
 				cw->normalImpulse1 = b2MulW( warmStartScale, cw->normalImpulse1 );
 				cw->tangentImpulse1 = b2MulW( warmStartScale, cw->tangentImpulse1 );
 				cw->totalNormalImpulse1 = b2ZeroW();
@@ -1741,25 +1822,76 @@ void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context )
 					b2FloatW test = b2GreaterThanW( k, b2ZeroW() );
 					cw->tangentMass1 = b2BlendW( b2ZeroW(), b2DivW( oneW, k ), test );
 				}
-
-				b2FloatW restVel;
-				B2_GATHER_LANES( restVel, manifold.points[0].restitutionVelocity );
-				cw->negRestitutionVelocity1 = b2NegW( restVel );
 			}
 
 			{
-				B2_GATHER_LANES( cw->anchorA2.X, manifold.points[1].anchorA.x );
-				B2_GATHER_LANES( cw->anchorA2.Y, manifold.points[1].anchorA.y );
-				B2_GATHER_LANES( cw->anchorB2.X, manifold.points[1].anchorB.x );
-				B2_GATHER_LANES( cw->anchorB2.Y, manifold.points[1].anchorB.y );
+#if B2_SIMD_WIDTH == 4
+				b2FloatW m1a = b2LoadU( (float*)( contactLanes[0]->manifold.points + 1 ) + 0 );
+				b2FloatW m1b = b2LoadU( (float*)( contactLanes[0]->manifold.points + 1 ) + 4 );
+				b2FloatW m2a = b2LoadU( (float*)( contactLanes[1]->manifold.points + 1 ) + 0 );
+				b2FloatW m2b = b2LoadU( (float*)( contactLanes[1]->manifold.points + 1 ) + 4 );
+				b2FloatW m3a = b2LoadU( (float*)( contactLanes[2]->manifold.points + 1 ) + 0 );
+				b2FloatW m3b = b2LoadU( (float*)( contactLanes[2]->manifold.points + 1 ) + 4 );
+				b2FloatW m4a = b2LoadU( (float*)( contactLanes[3]->manifold.points + 1 ) + 0 );
+				b2FloatW m4b = b2LoadU( (float*)( contactLanes[3]->manifold.points + 1 ) + 4 );
 
-				b2FloatW s;
-				B2_GATHER_LANES( s, manifold.points[1].separation );
-				cw->baseSeparation2 = b2SubW( s, b2DotW( b2SubVW( cw->anchorB2, cw->anchorA2 ), cw->normal ) );
+				b2FloatW t1a = b2UnpackLoW( m1a, m3a );
+				b2FloatW t2a = b2UnpackLoW( m2a, m4a );
+				b2FloatW t3a = b2UnpackHiW( m1a, m3a );
+				b2FloatW t4a = b2UnpackHiW( m2a, m4a );
+				b2FloatW t1b = b2UnpackLoW( m1b, m3b );
+				b2FloatW t2b = b2UnpackLoW( m2b, m4b );
+				b2FloatW t3b = b2UnpackHiW( m1b, m3b );
+				b2FloatW t4b = b2UnpackHiW( m2b, m4b );
 
-				B2_GATHER_LANES( cw->normalImpulse2, manifold.points[1].normalImpulse );
-				B2_GATHER_LANES( cw->tangentImpulse2, manifold.points[1].tangentImpulse );
+				cw->anchorA2.X = b2UnpackLoW( t1a, t2a );
+				cw->anchorA2.Y = b2UnpackHiW( t1a, t2a );
+				cw->anchorB2.X = b2UnpackLoW( t3a, t4a );
+				cw->anchorB2.Y = b2UnpackHiW( t3a, t4a );
+				cw->baseSeparation2 = b2UnpackLoW( t1b, t2b );
+				cw->normalImpulse2 = b2UnpackHiW( t1b, t2b );
+				cw->tangentImpulse2 = b2UnpackLoW( t3b, t4b );
+				cw->negRestitutionVelocity2 = b2UnpackHiW( t3b, t4b );
+#elif B2_SIMD_WIDTH == 8
+				b2FloatW m1 = b2LoadU( (float*)( contactLanes[0]->manifold.points + 1 ) );
+				b2FloatW m2 = b2LoadU( (float*)( contactLanes[1]->manifold.points + 1 ) );
+				b2FloatW m3 = b2LoadU( (float*)( contactLanes[2]->manifold.points + 1 ) );
+				b2FloatW m4 = b2LoadU( (float*)( contactLanes[3]->manifold.points + 1 ) );
+				b2FloatW m5 = b2LoadU( (float*)( contactLanes[4]->manifold.points + 1 ) );
+				b2FloatW m6 = b2LoadU( (float*)( contactLanes[5]->manifold.points + 1 ) );
+				b2FloatW m7 = b2LoadU( (float*)( contactLanes[6]->manifold.points + 1 ) );
+				b2FloatW m8 = b2LoadU( (float*)( contactLanes[7]->manifold.points + 1 ) );
 
+				b2FloatW t1 = _mm256_unpacklo_ps( m1, m2 );
+				b2FloatW t2 = _mm256_unpackhi_ps( m1, m2 );
+				b2FloatW t3 = _mm256_unpacklo_ps( m3, m4 );
+				b2FloatW t4 = _mm256_unpackhi_ps( m3, m4 );
+				b2FloatW t5 = _mm256_unpacklo_ps( m5, m6 );
+				b2FloatW t6 = _mm256_unpackhi_ps( m5, m6 );
+				b2FloatW t7 = _mm256_unpacklo_ps( m7, m8 );
+				b2FloatW t8 = _mm256_unpackhi_ps( m7, m8 );
+				b2FloatW tt1 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+				b2FloatW tt2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+				b2FloatW tt3 = _mm256_shuffle_ps( t2, t4, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+				b2FloatW tt4 = _mm256_shuffle_ps( t2, t4, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+				b2FloatW tt5 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+				b2FloatW tt6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+				b2FloatW tt7 = _mm256_shuffle_ps( t6, t8, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+				b2FloatW tt8 = _mm256_shuffle_ps( t6, t8, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+				cw->anchorA2.X = _mm256_permute2f128_ps( tt1, tt5, 0x20 );
+				cw->anchorA2.Y = _mm256_permute2f128_ps( tt2, tt6, 0x20 );
+				cw->anchorB2.X = _mm256_permute2f128_ps( tt3, tt7, 0x20 );
+				cw->anchorB2.Y = _mm256_permute2f128_ps( tt4, tt8, 0x20 );
+				cw->baseSeparation2 = _mm256_permute2f128_ps( tt1, tt5, 0x31 );
+				cw->normalImpulse2 = _mm256_permute2f128_ps( tt2, tt6, 0x31 );
+				cw->tangentImpulse2 = _mm256_permute2f128_ps( tt3, tt7, 0x31 );
+				cw->negRestitutionVelocity2 = _mm256_permute2f128_ps( tt4, tt8, 0x31 );
+#endif
+
+				b2FloatW offset = b2DotW( b2SubVW( cw->anchorB2, cw->anchorA2 ), cw->normal );
+				cw->baseSeparation2 = b2SubW( cw->baseSeparation2, offset );
+				cw->negRestitutionVelocity2 = b2NegW( cw->negRestitutionVelocity2 );
 				cw->normalImpulse2 = b2MulW( warmStartScale, cw->normalImpulse2 );
 				cw->tangentImpulse2 = b2MulW( warmStartScale, cw->tangentImpulse2 );
 				cw->totalNormalImpulse2 = b2ZeroW();
@@ -1796,10 +1928,6 @@ void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context )
 				b2FloatW massScale = b2LoadW( buffer );
 				cw->normalMass2 = b2MulW( massScale, cw->normalMass2 );
 				cw->tangentMass2 = b2MulW( massScale, cw->tangentMass2 );
-
-				b2FloatW restVel;
-				B2_GATHER_LANES( restVel, manifold.points[1].restitutionVelocity );
-				cw->negRestitutionVelocity2 = b2NegW( restVel );
 			}
 		}
 
