@@ -139,7 +139,7 @@ public:
 		b2WeldJointDef wjdef = b2DefaultWeldJointDef();
 
 		// This simulation can be stabilized by using a lower constraint stiffness
-		wjdef.base.constraintHertz = 30.0f;
+		//wjdef.base.constraintHertz = 30.0f;
 		wjdef.base.bodyIdA = center;
 
 		b2Polygon polygon;

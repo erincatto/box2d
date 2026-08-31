@@ -101,9 +101,9 @@ void b2Log( const char* format, ... )
 b2Version b2GetVersion( void )
 {
 	return (b2Version){
-		.major = 3,
-		.minor = 2,
-		.revision = 0,
+		.major = B2_VERSION_MAJOR,
+		.minor = B2_VERSION_MINOR,
+		.revision = B2_VERSION_REVISION,
 	};
 }
 
