@@ -199,7 +199,7 @@ typedef struct b2StepContext
 	b2ContactConstraintWide* wideContactConstraints;
 	b2ContactPrepareSpan* contactPrepareSpans;
 	int wideContactCount;
-	
+
 	b2JointPrepareSpan* jointPrepareSpans;
 	int jointCount;
 

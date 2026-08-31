@@ -643,7 +643,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 					}
 
 					mp2->persisted = true;
-					
+
 					break;
 				}
 			}
@@ -651,9 +651,8 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 			unmatchedCount += mp2->persisted ? 0 : 1;
 		}
 
-		B2_UNUSED( unmatchedCount );	}
-
-
+		B2_UNUSED( unmatchedCount );
+	}
 
 #if 0
 		// todo I haven't found an improvement from this yet

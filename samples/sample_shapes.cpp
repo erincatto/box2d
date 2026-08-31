@@ -983,12 +983,9 @@ public:
 
 		for ( int i = 0; i < m_count; ++i )
 		{
-			bodyDef.position = { x, 1.0f };
-
 			char buffer[32];
 			snprintf( buffer, 32, "%.2f", shapeDef.material.restitution );
 			bodyDef.name = buffer;
-
 			bodyDef.position = { x, 40.0f };
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 

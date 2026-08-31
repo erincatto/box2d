@@ -611,7 +611,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 				b2SetBit( &taskContext->contactStateBitSet, contactId );
 			}
 
-			if (touching)
+			if ( touching )
 			{
 				for ( int i = 0; i < contactSim->manifold.pointCount; ++i )
 				{
@@ -641,7 +641,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 					if ( indexA != B2_NULL_INDEX )
 					{
 						b2BodyState* stateA = states + indexA;
-						vrA = b2Add(stateA->linearVelocity , b2CrossSV( stateA->angularVelocity, mp->anchorA ) );
+						vrA = b2Add( stateA->linearVelocity, b2CrossSV( stateA->angularVelocity, mp->anchorA ) );
 					}
 
 					int indexB = contactSim->bodySimIndexB;
@@ -649,7 +649,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 					if ( indexB != B2_NULL_INDEX )
 					{
 						b2BodyState* stateB = states + indexB;
-						vrB = b2Add(stateB->linearVelocity , b2CrossSV( stateB->angularVelocity, mp->anchorB ) );
+						vrB = b2Add( stateB->linearVelocity, b2CrossSV( stateB->angularVelocity, mp->anchorB ) );
 					}
 
 					mp->normalVelocity = b2Dot( contactSim->manifold.normal, b2Sub( vrB, vrA ) );
@@ -3051,7 +3051,7 @@ void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* preSolveFcn,
 								  void* context )
 {
 	b2World* world = b2GetWorldFromId( worldId );
-	if ( (preSolveFcn != NULL || preContinuousFcn != NULL) && world->recording != NULL )
+	if ( ( preSolveFcn != NULL || preContinuousFcn != NULL ) && world->recording != NULL )
 	{
 		printf( "b2World_SetPreSolveCallback: preSolve not supported while recording\n" );
 		B2_ASSERT( false && "preSolve callbacks are not supported while recording" );
