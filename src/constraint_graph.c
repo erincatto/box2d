@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 Erin Catto
+// SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
 #include "constraint_graph.h"
@@ -23,6 +23,7 @@
 // todo should be possible to branch on the scatters to avoid writing to kinematic bodies
 
 // This is used for debugging by making all constraints be assigned to overflow.
+// Don't expect the same result for overflow and graph colored. They have a different solve order.
 #define B2_FORCE_OVERFLOW 0
 
 void b2CreateGraph( b2ConstraintGraph* graph, const b2Capacity* capacity )

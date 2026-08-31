@@ -11,7 +11,7 @@ typedef struct b2ContactConstraintPoint
 {
 	b2Vec2 anchorA, anchorB;
 	float baseSeparation;
-	float relativeVelocity;
+	float restitutionVelocity;
 	float normalImpulse;
 	float tangentImpulse;
 	float totalNormalImpulse;
@@ -29,7 +29,6 @@ typedef struct b2ContactConstraint
 	float invMassA, invMassB;
 	float invIA, invIB;
 	float friction;
-	float restitution;
 	float tangentSpeed;
 	float rollingResistance;
 	float rollingMass;
@@ -45,12 +44,11 @@ int b2GetWideContactConstraintByteCount( void );
 void b2PrepareContacts_Overflow( b2StepContext* context );
 void b2WarmStartContacts_Overflow( b2StepContext* context );
 void b2SolveContacts_Overflow( b2StepContext* context, bool useBias );
-void b2ApplyRestitution_Overflow( b2StepContext* context );
 void b2StoreImpulses_Overflow( b2StepContext* context );
 
 // Contacts that live within the constraint graph coloring
-void b2PrepareContactsTask( b2SolverBlock block, b2StepContext* context );
-void b2WarmStartContactsTask( b2SolverBlock block, b2StepContext* context );
-void b2SolveContactsTask( b2SolverBlock block, b2StepContext* context, bool useBias );
-void b2ApplyRestitutionTask( b2SolverBlock block, b2StepContext* context );
-void b2StoreImpulsesTask( b2SolverBlock block, b2StepContext* context, int workerIndex );
+void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context );
+void b2WarmStartContacts_Wide( b2SolverBlock block, b2StepContext* context );
+void b2PushContacts_Wide( b2SolverBlock block, b2StepContext* context );
+void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context );
+void b2StoreImpulses_Wide( b2SolverBlock block, b2StepContext* context, int workerIndex );

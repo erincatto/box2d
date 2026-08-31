@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 Erin Catto
+// SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
 #if defined( _MSC_VER ) && !defined( _CRT_SECURE_NO_WARNINGS )
@@ -290,9 +290,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->enableSleep = def->enableSleep;
 	world->locked = false;
 	world->enableWarmStarting = true;
-	world->enableContactSoftening = def->enableContactSoftening;
 	world->enableContinuous = def->enableContinuous;
-	world->enableSpeculative = true;
 	world->userTreeTask = NULL;
 	world->userData = def->userData;
 
@@ -458,6 +456,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 	b2ContactSim** contactSims = stepContext->contactSims;
 	b2Shape* shapes = world->shapes.data;
 	b2Body* bodies = world->bodies.data;
+	b2BodyState* states = world->solverSets.data[b2_awakeSet].bodyStates.data;
 
 	B2_ASSERT( startIndex < endIndex );
 
@@ -548,6 +547,34 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 						b2Vec2 rB = b2RotateVector( dqB, mp->anchorB );
 						b2Vec2 dp = b2Add( dc, b2Sub( rB, rA ) );
 						mp->separation = mp->baseSeparation + b2Dot( dp, normal );
+
+						if ( mp->totalNormalImpulse > 0.0f && mp->normalVelocity < -world->restitutionThreshold )
+						{
+							mp->restitutionVelocity = -contactSim->restitution * mp->normalVelocity;
+						}
+						else
+						{
+							mp->restitutionVelocity = 0.0f;
+						}
+
+						int indexA = contactSim->bodySimIndexA;
+						b2Vec2 vrA = b2Vec2_zero;
+						if ( indexA != B2_NULL_INDEX )
+						{
+							b2BodyState* stateA = states + indexA;
+							vrA = b2Add( stateA->linearVelocity, b2CrossSV( stateA->angularVelocity, mp->anchorA ) );
+						}
+
+						int indexB = contactSim->bodySimIndexB;
+						b2Vec2 vrB = b2Vec2_zero;
+						if ( indexB != B2_NULL_INDEX )
+						{
+							b2BodyState* stateB = states + indexB;
+							vrB = b2Add( stateB->linearVelocity, b2CrossSV( stateB->angularVelocity, mp->anchorB ) );
+						}
+
+						mp->normalVelocity = b2Dot( contactSim->manifold.normal, b2Sub( vrB, vrA ) );
+
 						mp->persisted = true;
 					}
 
@@ -584,10 +611,49 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 				b2SetBit( &taskContext->contactStateBitSet, contactId );
 			}
 
-			for ( int i = 0; i < contactSim->manifold.pointCount; ++i )
+			if ( touching )
 			{
-				b2ManifoldPoint* mp = contactSim->manifold.points + i;
-				mp->baseSeparation = mp->separation;
+				for ( int i = 0; i < contactSim->manifold.pointCount; ++i )
+				{
+					b2ManifoldPoint* mp = contactSim->manifold.points + i;
+					mp->baseSeparation = mp->separation;
+
+					// Save relative velocity for restitution. At this point, no gravity
+					// has been applied and the shapes have whatever overlap was left from the
+					// previous time step.
+					//
+					// Suppose we drop a circle on a plane. If gravity is cancelled out by the constraint
+					// solver and there is no penetration recovery, then a coefficient of restitution
+					// of 1.0 will return a bouncing circle to the exact height is was dropped from.
+					// Penetration recovery will push the circle higher, but the relax stage will leave
+					// the vertical velocity at zero. So the rebound height will be the original height
+					// plus the recoverred overlap. The exact behavior is sensitive to the sub-step count.
+					//
+					// The influence of penetration recovery can be accounted for by discounting
+					// the resitution velocity by the energy gain from overlap recovery. This becomes
+					// more complex and expensive. I suspect it is not useful for most games. I almost
+					// never use restitution in the games I work on.
+					//
+					// If CCD engages then there is no overlap recovery, however the incoming velocity
+					// must be discounted by the TOI fraction. That is done in the solver.
+					int indexA = contactSim->bodySimIndexA;
+					b2Vec2 vrA = b2Vec2_zero;
+					if ( indexA != B2_NULL_INDEX )
+					{
+						b2BodyState* stateA = states + indexA;
+						vrA = b2Add( stateA->linearVelocity, b2CrossSV( stateA->angularVelocity, mp->anchorA ) );
+					}
+
+					int indexB = contactSim->bodySimIndexB;
+					b2Vec2 vrB = b2Vec2_zero;
+					if ( indexB != B2_NULL_INDEX )
+					{
+						b2BodyState* stateB = states + indexB;
+						vrB = b2Add( stateB->linearVelocity, b2CrossSV( stateB->angularVelocity, mp->anchorB ) );
+					}
+
+					mp->normalVelocity = b2Dot( contactSim->manifold.normal, b2Sub( vrB, vrA ) );
+				}
 			}
 
 			// To make this work, the time of impact code needs to adjust the target
@@ -1211,7 +1277,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 				b2WorldTransform transform = { bodySim->center, bodySim->transform.q };
 				b2Pos p = b2TransformWorldPoint( transform, offset );
-				draw->DrawStringFcn( p, body->name, b2_colorBlueViolet, draw->context );
+				draw->DrawStringFcn( p, body->name, b2_colorWhiteSmoke, draw->context );
 			}
 
 			if ( draw->drawMass && body->type == b2_dynamicBody )
@@ -2985,7 +3051,7 @@ void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* preSolveFcn,
 								  void* context )
 {
 	b2World* world = b2GetWorldFromId( worldId );
-	if ( (preSolveFcn != NULL || preContinuousFcn != NULL) && world->recording != NULL )
+	if ( ( preSolveFcn != NULL || preContinuousFcn != NULL ) && world->recording != NULL )
 	{
 		printf( "b2World_SetPreSolveCallback: preSolve not supported while recording\n" );
 		B2_ASSERT( false && "preSolve callbacks are not supported while recording" );
@@ -3145,13 +3211,6 @@ void b2World_RebuildStaticTree( b2WorldId worldId )
 
 	b2DynamicTree* staticTree = world->broadPhase.trees + b2_staticBody;
 	b2DynamicTree_Rebuild( staticTree, true );
-}
-
-void b2World_EnableSpeculative( b2WorldId worldId, bool flag )
-{
-	b2World* world = b2GetWorldFromId( worldId );
-	B2_REC( world, WorldEnableSpeculative, worldId, flag );
-	world->enableSpeculative = flag;
 }
 
 #if B2_ENABLE_VALIDATION

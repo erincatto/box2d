@@ -180,7 +180,6 @@ int main( int argc, char** argv )
 		.solveImpulses = FLT_MAX,
 		.integratePositions = FLT_MAX,
 		.relaxImpulses = FLT_MAX,
-		.applyRestitution = FLT_MAX,
 		.storeImpulses = FLT_MAX,
 		.splitIslands = FLT_MAX,
 		.transforms = FLT_MAX,

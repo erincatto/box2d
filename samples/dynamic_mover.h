@@ -46,6 +46,9 @@ struct DynamicMoverCastResult
 //
 // The dynamic mover should be vendored into your project so you can alter it to meet
 // your game's specific needs.
+//
+// This system is inspired by Tom Waterson's presentation:
+// https://www.youtube.com/watch?v=_jRLlTDqoGI
 class DynamicMover
 {
 public:

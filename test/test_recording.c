@@ -467,7 +467,6 @@ int RecordingTest( void )
 	b2World_EnableSleeping( worldId, true );
 	b2World_EnableContinuous( worldId, true );
 	b2World_EnableWarmStarting( worldId, true );
-	b2World_EnableSpeculative( worldId, true );
 	b2World_SetRestitutionThreshold( worldId, 1.5f );
 	b2World_SetHitEventThreshold( worldId, 2.0f );
 	b2World_SetContactTuning( worldId, 30.0f, 10.0f, 3.0f );

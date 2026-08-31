@@ -972,6 +972,7 @@ public:
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
 		shapeDef.material.restitution = 0.0f;
+		shapeDef.material.friction = 0.0f;
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
@@ -982,6 +983,9 @@ public:
 
 		for ( int i = 0; i < m_count; ++i )
 		{
+			char buffer[32];
+			snprintf( buffer, 32, "%.2f", shapeDef.material.restitution );
+			bodyDef.name = buffer;
 			bodyDef.position = { x, 40.0f };
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
@@ -1024,6 +1028,16 @@ public:
 		return true;
 	}
 
+	void Step() override
+	{
+		Sample::Step();
+
+		float h = 1.0f * m_count;
+		DrawLine( m_draw, { -h, 40.5f }, { h, 40.5f }, b2_colorRed );
+
+		// DrawTextLine( "toi calls, hits = %d, %d", b2_toiCalls, b2_toiHitCount );
+	}
+
 	static Sample* Create( SampleContext* context )
 	{
 		return new Restitution( context );
@@ -1036,6 +1050,142 @@ public:
 };
 
 static int sampleIndex = RegisterSample( "Shapes", "Restitution", Restitution::Create );
+
+// A single box with a restitution of 1.
+// The box starts to spin because restitution doesn't get many iterations. Box2D v2.4 had a block solver
+// that would cancel out the rotation in cases like this. The block solver was developed for more stable
+// vertical stacking, not to simulate bouncing boxes. Box2D v3.2 has contact recycling that makes vertical
+// stacks stable, so the need for a block solver is greatly diminished.
+// Perfectly bouncing boxes is a niche use case and it is not worth the code complexity and performance hit
+// to make them bounce perfectly.
+class SingleBoxRestitution : public Sample
+{
+public:
+	explicit SingleBoxRestitution( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 8.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Segment segment = { { -4.0f, 0.0f }, { 4.0f, 0.0f } };
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		m_height = 5.0f;
+
+		b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.density = 1.0f;
+		shapeDef.material.restitution = 1.0f;
+		shapeDef.material.friction = 0.0f;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.position = { 0.0f, m_height };
+		bodyDef.safetyFactor = 0.01f;
+		b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+		b2CreatePolygonShape( bodyId, &shapeDef, &box );
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		DrawLine( m_draw, { -4.0f, m_height + 0.5f }, { 4.0f, m_height + 0.5f }, b2_colorRed );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new SingleBoxRestitution( context );
+	}
+
+	float m_height;
+};
+
+static int sampleSingleBoxRestitution = RegisterSample( "Shapes", "Single Box Restitution", SingleBoxRestitution::Create );
+
+class SingleCircleRestitution : public Sample
+{
+public:
+	explicit SingleCircleRestitution( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 8.0f;
+		}
+
+		// b2World_SetContactTuning( m_worldId, 30.0f, 0.0f, 0.0f );
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Segment segment = { { -4.0f, 0.0f }, { 4.0f, 0.0f } };
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		b2Circle circle = { b2Vec2_zero, 0.5f };
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.density = 1.0f;
+		shapeDef.material.restitution = 1.0f;
+		shapeDef.material.friction = 0.0f;
+		shapeDef.enableHitEvents = true;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.position = { 0.0f, 10.0f };
+		bodyDef.safetyFactor = 0.01f;
+		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
+		b2CreateCircleShape( m_bodyId, &shapeDef, &circle );
+
+		m_maxY = bodyDef.position.y;
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		b2ContactEvents events = b2World_GetContactEvents( m_worldId );
+
+		b2Pos p = b2Body_GetPosition( m_bodyId );
+		if ( events.hitCount == 1 )
+		{
+			m_maxY = (float)p.y;
+		}
+		else
+		{
+			m_maxY = b2MaxFloat( m_maxY, (float)p.y );
+		}
+
+		DrawLine( m_draw, { -4.0f, 10.5f }, { 4.0f, 10.5f }, b2_colorRed );
+
+		DrawScreenTextLine( "maxY = %.2f", m_maxY );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new SingleCircleRestitution( context );
+	}
+
+	b2BodyId m_bodyId;
+	float m_maxY;
+};
+
+static int sampleSingleCircleRestitution =
+	RegisterSample( "Shapes", "Single Circle Restitution", SingleCircleRestitution::Create );
 
 class Friction : public Sample
 {
@@ -1990,10 +2140,58 @@ public:
 
 static int sampleSingleBox = RegisterSample( "Shapes", "Recreate Static", RecreateStatic::Create );
 
-class BoxRestitution : public Sample
+// Based on https://github.com/erincatto/box2d/discussions/957
+// Used for testing deferred restitution.
+class TwoBoxRestitution : public Sample
 {
 public:
-	explicit BoxRestitution( SampleContext* context )
+	explicit TwoBoxRestitution( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 2.0f };
+			m_context->camera.zoom = 4.0f;
+		}
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Segment segment = { { -10.0f, 0.0f }, { 10.0f, 0.0f } };
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		b2Polygon box = b2MakeSquare( 0.5f );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.material.restitution = 0.9f;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+
+		bodyDef.position.y = 0.5f;
+		b2BodyId bodyId1 = b2CreateBody( m_worldId, &bodyDef );
+		b2CreatePolygonShape( bodyId1, &shapeDef, &box );
+
+		bodyDef.position.y = 4.0f;
+		b2BodyId bodyId2 = b2CreateBody( m_worldId, &bodyDef );
+		b2CreatePolygonShape( bodyId2, &shapeDef, &box );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new TwoBoxRestitution( context );
+	}
+};
+
+static int sampleTwoBoxRestitution = RegisterSample( "Shapes", "Two Box Restitution", TwoBoxRestitution::Create );
+
+class CircleRestitution : public Sample
+{
+public:
+	explicit CircleRestitution( SampleContext* context )
 		: Sample( context )
 	{
 		if ( m_context->restart == false )
@@ -2009,10 +2207,11 @@ public:
 			float h = 2.0f * m_count;
 			b2Segment segment = { { -h, 0.0f }, { h, 0.0f } };
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
+
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 
-		b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+		b2Circle circle = { b2Vec2_zero, 0.5f };
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		shapeDef.density = 1.0f;
@@ -2034,13 +2233,13 @@ public:
 			bodyDef.name = buffer;
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 
 			bodyDef.position = { x, 4.0f };
 			bodyDef.name = buffer;
 			bodyId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
 
 			shapeDef.material.restitution += dr;
 			x += dx;
@@ -2048,13 +2247,13 @@ public:
 	}
 	static Sample* Create( SampleContext* context )
 	{
-		return new BoxRestitution( context );
+		return new CircleRestitution( context );
 	}
 
 	static constexpr int m_count = 10;
 };
 
-static int sampleBoxRestitution = RegisterSample( "Shapes", "Box Restitution", BoxRestitution::Create );
+static int sampleCircleRestitution = RegisterSample( "Shapes", "Circle Restitution", CircleRestitution::Create );
 
 class Wind : public Sample
 {

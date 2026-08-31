@@ -12,3 +12,4 @@ CMakeUserPresets.json
 .claude/
 .tmp/
 *.b2rec
+AGENTS.md

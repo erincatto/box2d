@@ -224,9 +224,6 @@ B2_API void b2World_DumpMemoryStats( b2WorldId worldId );
 /// This is for internal testing
 B2_API void b2World_RebuildStaticTree( b2WorldId worldId );
 
-/// This is for internal testing
-B2_API void b2World_EnableSpeculative( b2WorldId worldId, bool flag );
-
 /// Compute a deterministic hash of the simulation state: body transforms and velocities, contact and
 /// joint impulses, and the index bookkeeping that drives the solve. Reproduces exactly across worker
 /// counts and ignores struct padding and free slots, so two worlds that simulate identically always
@@ -643,6 +640,15 @@ B2_API int b2Body_GetContactData( b2BodyId bodyId, b2ContactData* contactData, i
 /// Get the current world AABB that contains all the attached shapes. Note that this may not encompass the body origin.
 /// If there are no shapes attached then the returned AABB is empty and centered on the body origin.
 B2_API b2AABB b2Body_ComputeAABB( b2BodyId bodyId );
+
+/// The minimum distance from any point on the body shapes to the center of mass.
+B2_API float b2Body_GetMinExtent( b2BodyId bodyId );
+
+/// The maximum distance from any point on the body shapes to the center of mass.
+B2_API float b2Body_GetMaxExtent( b2BodyId bodyId );
+
+/// The maximum distance from any point on the body shapes to the body origin. Conservative.
+B2_API float b2Body_GetMaxExtentOrigin( b2BodyId bodyId );
 
 /** @} */
 

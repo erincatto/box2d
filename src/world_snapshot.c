@@ -443,9 +443,7 @@ static void b2SerWorldConfig( b2RecBuffer* buf, const b2World* world )
 	uint8_t flags = 0;
 	flags |= world->enableSleep ? 0x01u : 0u;
 	flags |= world->enableWarmStarting ? 0x02u : 0u;
-	flags |= world->enableContactSoftening ? 0x04u : 0u;
 	flags |= world->enableContinuous ? 0x08u : 0u;
-	flags |= world->enableSpeculative ? 0x10u : 0u;
 	b2RecBufAppend( buf, &flags, 1 );
 }
 
@@ -469,9 +467,7 @@ static void b2DesWorldConfig( b2SnapReader* r, b2World* world )
 	b2SnapR_Bytes( r, &flags, 1 );
 	world->enableSleep = ( flags & 0x01u ) != 0;
 	world->enableWarmStarting = ( flags & 0x02u ) != 0;
-	world->enableContactSoftening = ( flags & 0x04u ) != 0;
 	world->enableContinuous = ( flags & 0x08u ) != 0;
-	world->enableSpeculative = ( flags & 0x10u ) != 0;
 }
 
 void b2SerializeWorld( b2World* world, b2RecBuffer* buf )

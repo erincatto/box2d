@@ -128,9 +128,6 @@ typedef struct b2WorldDef
 	/// Enable continuous collision
 	bool enableContinuous;
 
-	/// Contact softening when mass ratios are large. Experimental.
-	bool enableContactSoftening;
-
 	/// Number of workers for multithreading. Box2D performs best when using performance cores and
 	/// accessing a single L3 cache (uniform memory). Efficiency cores and SMT provide
 	/// little benefit and may even harm performance.
@@ -537,7 +534,6 @@ typedef struct b2Profile
 	float solveImpulses;
 	float integratePositions;
 	float relaxImpulses;
-	float applyRestitution;
 	float storeImpulses;
 	float splitIslands;
 	float transforms;
