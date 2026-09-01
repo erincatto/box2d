@@ -5,6 +5,7 @@
 
 #include "base.h"
 #include "collision.h"
+#include "constants.h"
 #include "id.h"
 #include "types.h"
 

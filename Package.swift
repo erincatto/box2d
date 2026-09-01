@@ -3,6 +3,13 @@ import PackageDescription
 
 let package = Package(
     name: "Box2D",
+    platforms: [
+        // aligned_alloc requires these floors
+        .macOS(.v10_15),
+        .iOS(.v13),
+        .tvOS(.v13),
+        .watchOS(.v6)
+    ],
     products: [
         .library(
             name: "Box2D",
