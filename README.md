@@ -110,7 +110,7 @@ const box2d = @cImport(@cInclude("box2d/box2d.h"));
 
 ## Building with Swift Package Manager
 
-Add Box2D as a dependency in your `Package.swift`:
+Add box2d as a dependency in your `Package.swift`:
 
 ```swift
 .package(url: "https://github.com/erincatto/box2d.git", from: "main")
@@ -121,14 +121,14 @@ And add the product to your target:
 ```swift
 .target(
     name: "MyGame",
-    dependencies: [.product(name: "Box2D", package: "box2d")]
+    dependencies: [.product(name: "box2d", package: "box2d")]
 ),
 ```
 
 In Swift code, the C API is imported directly:
 
 ```swift
-import Box2D
+import box2d
 
 var worldDef = b2DefaultWorldDef()
 let worldId = b2CreateWorld(&worldDef)
@@ -169,7 +169,7 @@ Box2D uses SSE2 and Neon SIMD math to improve performance. This can be disabled 
 
 Please do not submit pull requests. Instead, please file an issue for bugs or feature requests. For support, please visit the Discord server.
 
-# Giving Feedback
+## Giving feedback
 
 Please file an issue or start a chat on discord. You can also use [GitHub Discussions](https://github.com/erincatto/box2d/discussions).
 

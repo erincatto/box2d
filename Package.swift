@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "Box2D",
+    name: "box2d",
     platforms: [
         // aligned_alloc requires these floors
         .macOS(.v10_15),
@@ -12,13 +12,13 @@ let package = Package(
     ],
     products: [
         .library(
-            name: "Box2D",
-            targets: ["Box2D"]
+            name: "box2d",
+            targets: ["box2d"]
         ),
     ],
     targets: [
         .target(
-            name: "Box2D",
+            name: "box2d",
             path: ".",
             exclude: [
                 "src/box2d.natvis",
@@ -36,7 +36,7 @@ let package = Package(
         ),
         .testTarget(
             name: "test_world",
-            dependencies: ["Box2D"],
+            dependencies: ["box2d"],
             path: "test/swift"
         ),
     ],

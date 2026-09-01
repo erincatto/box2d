@@ -1,5 +1,5 @@
 import XCTest
-import Box2D
+import box2d
 
 final class Box2DTests: XCTestCase {
     func testVersion() {
@@ -20,7 +20,7 @@ final class Box2DTests: XCTestCase {
         _ = b2CreatePolygonShape(groundId, &shapeDef, &groundBox)
 
         var bodyDef = b2DefaultBodyDef()
-        bodyDef.type = b2_dynamicBody;
+        bodyDef.type = b2_dynamicBody
         bodyDef.position = b2Pos(x: 0.0, y: 10.0)
         let bodyId = b2CreateBody(worldId, &bodyDef)
         var bodyBox = b2MakeBox(0.5, 0.5)
