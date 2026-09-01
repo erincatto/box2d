@@ -129,6 +129,10 @@ typedef struct b2Version
 	int revision;
 } b2Version;
 
+#define B2_VERSION_MAJOR 3
+#define B2_VERSION_MINOR 2
+#define B2_VERSION_REVISION 0
+
 /// Get the current version of Box2D
 B2_API b2Version b2GetVersion( void );
 

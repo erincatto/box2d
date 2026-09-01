@@ -783,9 +783,9 @@ static inline b2FloatW b2UnpackHiW( b2FloatW a, b2FloatW b )
 static inline b2FloatW b2SoftMaskW( const int* indexA, const int* indexB )
 {
 	int32x4_t zero = vdupq_n_s32( 0 );
-	int32x4_t a = vceqq_s32( vld1q_s32( indexA ), zero );
-	int32x4_t b = vceqq_s32( vld1q_s32( indexB ), zero );
-	return vreinterpretq_f32_s32( vorrq_s32( a, b ) );
+	uint32x4_t a = vceqq_s32( vld1q_s32( indexA ), zero );
+	uint32x4_t b = vceqq_s32( vld1q_s32( indexB ), zero );
+	return vreinterpretq_f32_u32( vorrq_u32( a, b ) );
 }
 
 #elif defined( B2_SIMD_SSE2 )
@@ -2207,8 +2207,6 @@ void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context )
 			if ( haveRestitution )
 			{
 				b2FloatW separated = b2GreaterThanW( s, b2ZeroW() );
-
-				// Restitution. Don't apply if separated. Lanes with no restitution keep the speculative bias.
 				velocityBias = b2BlendW( velocityBias, c->negRestitutionVelocity1, restitutionMask1 );
 				keepRestitution = b2OrW( keepRestitution, b2AndNotW( restitutionMask1, separated ) );
 			}
@@ -2261,8 +2259,6 @@ void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context )
 			if ( haveRestitution )
 			{
 				b2FloatW separated = b2GreaterThanW( s, b2ZeroW() );
-
-				// Restitution. Don't apply if separated. Lanes with no restitution keep the speculative bias.
 				velocityBias = b2BlendW( velocityBias, c->negRestitutionVelocity2, restitutionMask2 );
 				keepRestitution = b2OrW( keepRestitution, b2AndNotW( restitutionMask2, separated ) );
 			}
@@ -2300,7 +2296,7 @@ void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context )
 			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
 		}
 
-		// Per lane, all points separated on manifold. Turn off restitution.
+		// Turn off restitution when all points become separated on a lane.
 		c->negRestitutionVelocity1 = b2BlendW( b2ZeroW(), c->negRestitutionVelocity1, keepRestitution );
 		c->negRestitutionVelocity2 = b2BlendW( b2ZeroW(), c->negRestitutionVelocity2, keepRestitution );
 

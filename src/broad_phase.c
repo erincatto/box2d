@@ -409,6 +409,23 @@ static void b2UpdateTreesTask( void* context )
 	b2TracyCZoneEnd( tree_task );
 }
 
+// Task that can be done in parallel with the narrow-phase
+// - rebuild the collision tree for dynamic and kinematic bodies to keep their query performance good
+static void b2EnqueueTreeUpdate(b2World* world)
+{
+	if ( world->taskCount < B2_MAX_TASKS )
+	{
+		world->userTreeTask = world->enqueueTaskFcn( &b2UpdateTreesTask, world, world->userTaskContext );
+		world->taskCount += 1;
+		world->activeTaskCount += world->userTreeTask == NULL ? 0 : 1;
+	}
+	else
+	{
+		world->userTreeTask = NULL;
+		b2UpdateTreesTask( world );
+	}
+}
+
 void b2UpdateBroadPhasePairs( b2World* world )
 {
 	b2BroadPhase* bp = &world->broadPhase;
@@ -419,6 +436,8 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	if ( moveCount == 0 )
 	{
+		// A destroyed shape may lead to no moves, but the tree could still be enlarged.
+		b2EnqueueTreeUpdate( world );
 		return;
 	}
 
@@ -444,19 +463,8 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	b2TracyCZoneNC( create_contacts, "Create Contacts", b2_colorCoral, true );
 
-	// Task that can be done in parallel with the narrow-phase
-	// - rebuild the collision tree for dynamic and kinematic bodies to keep their query performance good
-	if (world->taskCount < B2_MAX_TASKS)
-	{
-		world->userTreeTask = world->enqueueTaskFcn( &b2UpdateTreesTask, world, world->userTaskContext );
-		world->taskCount += 1;
-		world->activeTaskCount += world->userTreeTask == NULL ? 0 : 1;
-	}
-	else
-	{
-		world->userTreeTask = NULL;
-		b2UpdateTreesTask( world );
-	}
+	// Update stale trees.
+	b2EnqueueTreeUpdate( world );
 
 	// Single-threaded work
 	// - Clear move flags

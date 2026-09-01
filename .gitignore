@@ -13,3 +13,5 @@ CMakeUserPresets.json
 .tmp/
 *.b2rec
 AGENTS.md
+zig-out/
+.zig-cache/

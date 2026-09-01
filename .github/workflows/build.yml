@@ -146,6 +146,25 @@ jobs:
     - name: Build
       run: cmake --build build --config ${{env.BUILD_TYPE}}
 
+  # Cross compile to catch NEON breaks, the SIMD code paths only compile on ARM.
+  # Build-only: the x64 runner cannot execute aarch64 binaries.
+  linux-aarch64:
+    name: linux-aarch64
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Install aarch64 cross toolchain
+      run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
+
+    - name: Build
+      run: cmake --build build --config Release
+
   samples:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -195,3 +214,30 @@ jobs:
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release
+
+  # zig cc is a third codegen path (clang, zig bundled libc). Release keeps the
+  # determinism golden hash checked at -O2 for this toolchain.
+  zig:
+    name: zig-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 8
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: windows-latest
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Setup zig
+      uses: mlugg/setup-zig@v2
+      with:
+        version: 0.15.1
+
+    - name: Build
+      run: zig build -Dunit_tests=true -Doptimize=ReleaseFast
+
+    - name: Test
+      run: ${{github.workspace}}/zig-out/bin/test
