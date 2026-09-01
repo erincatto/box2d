@@ -241,3 +241,17 @@ jobs:
 
     - name: Test
       run: ${{github.workspace}}/zig-out/bin/test
+
+  swift-package-manager:
+    name: swift-spm
+    runs-on: macos-latest
+    timeout-minutes: 10
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Swift Package - Build
+      run: swift build -c release
+
+    - name: Swift Package - Test
+      run: swift test

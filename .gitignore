@@ -6,6 +6,7 @@ settings.ini
 .vs/
 .cap
 .DS_Store
+.build/
 CMakeUserPresets.json
 .cache/
 .idea/

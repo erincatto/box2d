@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "box2d/math_functions.h"
+#include "math_functions.h"
 
 /// Used to detect bad values. Positions greater than about 16km will have precision
 /// problems in single precision, so 100km as a limit should be fine in all cases.
