@@ -3,6 +3,7 @@
 
 #include "test_macros.h"
 #include "benchmarks.h"
+#include "physics_world.h"
 
 #include "box2d/box2d.h"
 #include "box2d/collision.h"
@@ -651,6 +652,80 @@ static int SetBulletDriftTest( void )
 	return 0;
 }
 
+static int CountEnlargedNodes( const b2DynamicTree* tree )
+{
+	int count = 0;
+	for ( int i = 0; i < tree->nodeCapacity; ++i )
+	{
+		const b2TreeNode* node = tree->nodes + i;
+		if ( ( node->flags & b2_allocatedNode ) != 0 && ( node->flags & b2_enlargedNode ) != 0 )
+		{
+			count += 1;
+		}
+	}
+
+	return count;
+}
+
+// A proxy can be enlarged in one step and destroyed before the next, which empties the move buffer.
+// The trees still need a rebuild or the enlarged nodes survive into the next step.
+static int EnlargedProxyDestroyed( int workerCount )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.gravity = b2Vec2_zero;
+	worldDef.workerCount = workerCount;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2World* world = b2GetWorldFromId( worldId );
+	const b2DynamicTree* tree = world->broadPhase.trees + b2_dynamicBody;
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2Circle circle = { b2Vec2_zero, 0.25f };
+
+	// Resting bodies keep the tree deep enough that the mover has an ancestor that outlives it
+	for ( int i = 0; i < 8; ++i )
+	{
+		bodyDef.position = (b2Vec2){ 2.0f * i, 0.0f };
+		b2BodyId restingId = b2CreateBody( worldId, &bodyDef );
+		b2CreateCircleShape( restingId, &shapeDef, &circle );
+	}
+
+	// This body outruns its AABB margin every step
+	bodyDef.position = (b2Vec2){ 7.0f, 1.0f };
+	bodyDef.linearVelocity = (b2Vec2){ 6.0f, 0.0f };
+	b2BodyId moverId = b2CreateBody( worldId, &bodyDef );
+	b2CreateCircleShape( moverId, &shapeDef, &circle );
+
+	float timeStep = 1.0f / 60.0f;
+	b2World_Step( worldId, timeStep, 4 );
+
+	ENSURE( CountEnlargedNodes( tree ) > 0 );
+
+	b2DestroyBody( moverId );
+
+	// The mover was the only proxy in the move buffer
+	ENSURE( world->broadPhase.moveArray.count == 0 );
+	ENSURE( CountEnlargedNodes( tree ) > 0 );
+
+	b2World_Step( worldId, timeStep, 4 );
+
+	ENSURE( CountEnlargedNodes( tree ) == 0 );
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+static int EnlargedProxyDestroyedTest( void )
+{
+	ENSURE( EnlargedProxyDestroyed( 1 ) == 0 );
+	ENSURE( EnlargedProxyDestroyed( 4 ) == 0 );
+
+	return 0;
+}
+
 int WorldTest( void )
 {
 	RUN_SUBTEST( HelloWorld );
@@ -666,6 +741,7 @@ int WorldTest( void )
 	RUN_SUBTEST( DeferredMassFlagSyncTest );
 	RUN_SUBTEST( EnableSleepFlagSyncTest );
 	RUN_SUBTEST( EnableContactRecyclingTest );
+	RUN_SUBTEST( EnlargedProxyDestroyedTest );
 
 	return 0;
 }
