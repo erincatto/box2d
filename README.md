@@ -89,6 +89,25 @@ Use the `*-debug` build presets for a debug build (not recommended for the repla
 - cmake --build . --config Release
 - cmake --install . (might need sudo)
 
+## Building with zig
+
+Fetch and link Box2D from a Zig project:
+
+- `zig fetch --save git+https://github.com/erincatto/box2d`
+
+In `build.zig`:
+
+```zig
+const box2d = b.dependency("box2d", .{});
+exe.linkLibrary(box2d.artifact("box2d"));
+```
+
+In Zig code, import the C headers:
+
+```zig
+const box2d = @cImport(@cInclude("box2d/box2d.h"));
+```
+
 ## Replay viewer
 
 The samples app doubles as a viewer for Box2D recordings (`.b2rec` files). Any preset above builds it. Pass a recording on the command line to open it directly:
