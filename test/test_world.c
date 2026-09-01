@@ -688,13 +688,13 @@ static int EnlargedProxyDestroyed( int workerCount )
 	// Resting bodies keep the tree deep enough that the mover has an ancestor that outlives it
 	for ( int i = 0; i < 8; ++i )
 	{
-		bodyDef.position = (b2Vec2){ 2.0f * i, 0.0f };
+		bodyDef.position = (b2Pos){ 2.0f * i, 0.0f };
 		b2BodyId restingId = b2CreateBody( worldId, &bodyDef );
 		b2CreateCircleShape( restingId, &shapeDef, &circle );
 	}
 
 	// This body outruns its AABB margin every step
-	bodyDef.position = (b2Vec2){ 7.0f, 1.0f };
+	bodyDef.position = (b2Pos){ 7.0f, 1.0f };
 	bodyDef.linearVelocity = (b2Vec2){ 6.0f, 0.0f };
 	b2BodyId moverId = b2CreateBody( worldId, &bodyDef );
 	b2CreateCircleShape( moverId, &shapeDef, &circle );
