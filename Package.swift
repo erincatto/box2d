@@ -15,7 +15,8 @@ let package = Package(
             path: ".",
             exclude: [
                 "src/box2d.natvis",
-                "src/CMakeLists.txt"
+                "src/CMakeLists.txt",
+                "src/recording_ops.inl"
             ],
             sources: [
                 "src"
