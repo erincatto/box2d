@@ -108,6 +108,34 @@ In Zig code, import the C headers:
 const box2d = @cImport(@cInclude("box2d/box2d.h"));
 ```
 
+## Building with Swift Package Manager
+
+Add Box2D as a dependency in your `Package.swift`:
+
+```swift
+.package(url: "https://github.com/erincatto/box2d.git", from: "main")
+```
+
+And add the product to your target:
+
+```swift
+.target(
+    name: "MyGame",
+    dependencies: [.product(name: "Box2D", package: "box2d")]
+),
+```
+
+In Swift code, the C API is imported directly:
+
+```swift
+import Box2D
+
+var worldDef = b2DefaultWorldDef()
+let worldId = b2CreateWorld(&worldDef)
+```
+
+C structs are passed as `inout` arguments using `&`.
+
 ## Replay viewer
 
 The samples app doubles as a viewer for Box2D recordings (`.b2rec` files). Any preset above builds it. Pass a recording on the command line to open it directly:
