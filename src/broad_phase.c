@@ -463,8 +463,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	b2TracyCZoneNC( create_contacts, "Create Contacts", b2_colorCoral, true );
 
-	// Task that can be done in parallel with the narrow-phase
-	// - rebuild the collision tree for dynamic and kinematic bodies to keep their query performance good
+	// Update stale trees.
 	b2EnqueueTreeUpdate( world );
 
 	// Single-threaded work
