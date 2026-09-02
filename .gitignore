@@ -16,3 +16,4 @@ CMakeUserPresets.json
 AGENTS.md
 zig-out/
 .zig-cache/
+zig-pkg
