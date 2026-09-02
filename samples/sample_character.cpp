@@ -10,6 +10,7 @@
 #include "box2d/math_functions.h"
 
 #include <GLFW/glfw3.h>
+#include <atomic>
 #include <imgui.h>
 
 enum CollisionBits : uint64_t
@@ -783,3 +784,160 @@ public:
 };
 
 static int sampleDynamicMover = RegisterSample( "Character", "Dynamic Mover", DynamicMoverSample::Create );
+
+// This shows how to mitigate ghost collisions using the presolve callback.
+// Based on: https://briansemrau.github.io/dealing-with-ghost-collisions/
+class GhostCollisionSample : public Sample
+{
+public:
+	explicit GhostCollisionSample( SampleContext* context )
+		: Sample( context )
+	{
+		if ( context->restart == false )
+		{
+			m_camera->center = { 0.0f, 1.5f };
+			m_camera->zoom = 12.0f;
+		}
+
+		b2BodyDef groundBodyDef = b2DefaultBodyDef();
+		b2BodyId groundId = b2CreateBody( m_worldId, &groundBodyDef );
+
+		float surfaceHeights[2] = { 3.0f, 0.0f };
+		for ( float surfaceHeight : surfaceHeights )
+		{
+			for ( int i = 0; i < 10; ++i )
+			{
+				float x = -9.0f + 2.0f * i;
+				b2Polygon tile = b2MakeOffsetBox( 1.0f, 0.25f, { x, surfaceHeight - 0.25f }, b2Rot_identity );
+
+				b2ShapeDef shapeDef = b2DefaultShapeDef();
+				shapeDef.material.friction = 0.0f;
+				shapeDef.material.customColor = i % 2 == 0 ? b2_colorGray : b2_colorDarkGray;
+				b2CreatePolygonShape( groundId, &shapeDef, &tile );
+			}
+
+			b2Polygon wall = b2MakeOffsetBox( 0.25f, 1.25f, { 10.25f, surfaceHeight + 1.25f }, b2Rot_identity );
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.material.friction = 0.0f;
+			shapeDef.material.customColor = b2_colorDarkGray;
+			b2CreatePolygonShape( groundId, &shapeDef, &wall );
+		}
+
+		m_speed = 10.0f;
+		m_playerIds[0] = b2_nullBodyId;
+		m_playerIds[1] = b2_nullBodyId;
+		m_rejectedCount.store( 0, std::memory_order_relaxed );
+
+		b2World_SetPreSolveCallback( m_worldId, PreSolveStatic, nullptr, this );
+		Launch();
+	}
+
+	void Launch()
+	{
+		m_rejectedCount.store( 0, std::memory_order_relaxed );
+
+		const float surfaceHeights[2] = { 3.0f, 0.0f };
+		const b2HexColor colors[2] = { b2_colorBox2DRed, b2_colorBox2DGreen };
+		for ( int i = 0; i < 2; ++i )
+		{
+			if ( B2_IS_NON_NULL( m_playerIds[i] ) )
+			{
+				b2DestroyBody( m_playerIds[i] );
+			}
+
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { -9.0f, surfaceHeights[i] + 0.5f };
+			bodyDef.linearVelocity = { m_speed, 0.0f };
+			bodyDef.motionLocks.angularZ = true;
+
+			// Pre-solve must see a fresh manifold at every tile boundary.
+			bodyDef.enableContactRecycling = false;
+			m_playerIds[i] = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.density = 1.0f;
+			shapeDef.material.friction = 0.0f;
+			shapeDef.material.customColor = colors[i];
+			shapeDef.enablePreSolveEvents = i == 1;
+
+			b2Polygon player = b2MakeBox( 0.5f, 0.5f );
+			b2CreatePolygonShape( m_playerIds[i], &shapeDef, &player );
+		}
+	}
+
+	void PreSolve( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold )
+	{
+		if ( manifold->pointCount != 2 )
+		{
+			return;
+		}
+
+		b2Vec2 normal = manifold->normal;
+		b2BodyId bodyIdA = b2Shape_GetBody( shapeIdA );
+		if ( B2_ID_EQUALS( bodyIdA, m_playerIds[1] ) == false )
+		{
+			b2BodyId bodyIdB = b2Shape_GetBody( shapeIdB );
+			if ( B2_ID_EQUALS( bodyIdB, m_playerIds[1] ) == false )
+			{
+				return;
+			}
+
+			normal = b2Neg( normal );
+		}
+
+		b2Vec2 velocity = b2Body_GetLinearVelocity( m_playerIds[1] );
+		if ( b2Dot( normal, velocity ) < 0.0f )
+		{
+			return;
+		}
+
+		// A short face contact is overlap slop at a tile seam, not a wall.
+		float contactArea = b2Distance( manifold->points[0].anchorA, manifold->points[1].anchorA );
+		if ( contactArea < 4.0f * B2_LINEAR_SLOP )
+		{
+			manifold->pointCount = 0;
+			m_rejectedCount.fetch_add( 1, std::memory_order_relaxed );
+		}
+	}
+
+	static void PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context )
+	{
+		GhostCollisionSample* sample = static_cast<GhostCollisionSample*>( context );
+		sample->PreSolve( shapeIdA, shapeIdB, manifold );
+	}
+
+	bool DrawControls() override
+	{
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
+		ImGui::SliderFloat( "Speed", &m_speed, 1.0f, 20.0f, "%.1f" );
+		ImGui::PopItemWidth();
+
+		if ( ImGui::Button( "Launch" ) )
+		{
+			Launch();
+		}
+
+		return true;
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		DrawString( m_draw, m_camera, { -9.8f, 4.2f }, b2_colorWhite, "unfiltered" );
+		DrawString( m_draw, m_camera, { -9.8f, 1.2f }, b2_colorWhite, "shallow contacts rejected" );
+		DrawScreenTextLine( "Rejected contacts: %d", m_rejectedCount.load( std::memory_order_relaxed ) );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new GhostCollisionSample( context );
+	}
+
+	b2BodyId m_playerIds[2];
+	std::atomic<int> m_rejectedCount;
+	float m_speed;
+};
+
+static int sampleGhostCollision = RegisterSample( "Character", "Ghost Collision", GhostCollisionSample::Create );
