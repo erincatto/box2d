@@ -53,6 +53,16 @@ pub fn build(b: *Build) !void {
     const options = Options.getOptions(b, target);
     const lib = try compileBox2d(b, target, optimize, options);
 
+    // Translate the box2d headers and export them as a module
+    const translate_c = b.addTranslateC(.{
+        .root_source_file = b.path("include/box2d/box2d.h"),
+        .target = target,
+        .optimize = optimize,
+    });
+    translate_c.addIncludePath(b.path("include"));
+    const translate_module = translate_c.addModule("box2d");
+    translate_module.linkLibrary(lib);
+
     b.installArtifact(lib);
 
     if (options.unit_tests) {
@@ -61,7 +71,7 @@ pub fn build(b: *Build) !void {
 }
 
 fn compileBox2d(b: *Build, target: ResolvedTarget, optimize: OptimizeMode, options: Options) !*Compile {
-    const module = b.addModule("box2d", .{
+    const module = b.addModule("box2dc", .{
         .target = target,
         .optimize = optimize,
         .link_libc = true,

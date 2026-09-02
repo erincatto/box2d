@@ -98,14 +98,20 @@ Fetch and link Box2D from a Zig project:
 In `build.zig`:
 
 ```zig
-const box2d = b.dependency("box2d", .{});
-exe.linkLibrary(box2d.artifact("box2d"));
+const box2d_dep = b.dependency("box2d", .{});
+exe.root_module.addImport("box2d", box2d_dep.module("box2d"));
 ```
 
-In Zig code, import the C headers:
+In Zig code, start using box2d
 
 ```zig
-const box2d = @cImport(@cInclude("box2d/box2d.h"));
+const box2d = @import("box2d");
+
+pub fn main(init: std.process.Init) !void {
+    var world_def = box2d.b2DefaultWorldDef();
+    world_def.gravity.y = 9.8;
+    const world_id = box2d.b2CreateWorld(&world_def);
+}
 ```
 
 ## Building with Swift Package Manager
