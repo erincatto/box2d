@@ -1695,8 +1695,6 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 	b2Pos pA = b2TransformWorldPoint( xfA, jointSim->localFrameA.p );
 	b2Pos pB = b2TransformWorldPoint( xfB, jointSim->localFrameB.p );
 
-	b2HexColor color = b2_colorDarkSeaGreen;
-
 	float scale = b2MaxFloat( 0.0001f, draw->jointScale * joint->drawScale );
 
 	switch ( joint->type )
@@ -1706,13 +1704,21 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 			break;
 
 		case b2_filterJoint:
-			draw->DrawLineFcn( pA, pB, b2_colorGold, draw->context );
+			draw->DrawPointFcn( pA, 8.0f, b2_colorLightSkyBlue, draw->context );
+			draw->DrawPointFcn( pB, 8.0f, b2_colorLightSkyBlue, draw->context );
+			if (draw->drawJointExtras)
+			{
+				draw->DrawLineFcn( pA, pB, b2_colorGold, draw->context );
+			}
 			break;
 
 		case b2_motorJoint:
 			draw->DrawPointFcn( pA, 8.0f, b2_colorYellowGreen, draw->context );
 			draw->DrawPointFcn( pB, 8.0f, b2_colorPlum, draw->context );
-			draw->DrawLineFcn( pA, pB, b2_colorLightGray, draw->context );
+			if (draw->drawJointExtras)
+			{
+				draw->DrawLineFcn( pA, pB, b2_colorLightGray, draw->context );
+			}
 			break;
 
 		case b2_moverJoint:
@@ -1740,9 +1746,6 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 			break;
 
 		default:
-			draw->DrawLineFcn( xfA.p, pA, color, draw->context );
-			draw->DrawLineFcn( pA, pB, color, draw->context );
-			draw->DrawLineFcn( xfB.p, pB, color, draw->context );
 			break;
 	}
 
