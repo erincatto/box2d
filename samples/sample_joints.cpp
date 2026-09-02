@@ -420,8 +420,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.center = { 0.0f, 7.0f };
-			m_context->camera.zoom = 25.0f * 0.4f;
+			m_context->camera.center = { 0.0f, 10.0f };
+			m_context->camera.zoom = 12.0f;
 		}
 
 		b2BodyId groundId;

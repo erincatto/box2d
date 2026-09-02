@@ -550,9 +550,13 @@ void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform 
 	}
 
 	b2HexColor color = b2_colorGold;
-	draw->DrawLineFcn( transformA.p, frameA.p, color, draw->context );
 	draw->DrawLineFcn( frameA.p, frameB.p, color, draw->context );
-	draw->DrawLineFcn( transformB.p, frameB.p, color, draw->context );
+
+	if ( draw->drawJointExtras )
+	{
+		draw->DrawLineFcn( transformA.p, frameA.p, color, draw->context );
+		draw->DrawLineFcn( transformB.p, frameB.p, color, draw->context );
+	}
 
 	// char buffer[32];
 	// sprintf(buffer, "%.1f", b2Length(joint->impulse));
