@@ -260,3 +260,25 @@ install(
   FILES "${PROJECT_BINARY_DIR}/box2dConfigVersion.cmake"
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/box2d"
 )
+
+# Keep paths relative to the prefix so the file stays relocatable
+set(PKGCONFIG_LIBDIR "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
+set(PKGCONFIG_INCLUDEDIR "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
+if(IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
+	set(PKGCONFIG_LIBDIR "${CMAKE_INSTALL_LIBDIR}")
+endif()
+if(IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}")
+	set(PKGCONFIG_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}")
+endif()
+
+# Static consumers need libm, mirrors the link above
+if(UNIX AND NOT APPLE AND NOT EMSCRIPTEN)
+	set(PKGCONFIG_LIBS_PRIVATE "-lm")
+endif()
+
+configure_file(box2d.pc.in box2d.pc @ONLY)
+
+install(
+  FILES "${CMAKE_CURRENT_BINARY_DIR}/box2d.pc"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig"
+)

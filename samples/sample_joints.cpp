@@ -3459,3 +3459,268 @@ public:
 };
 
 static int sampleScaleRagdoll = RegisterSample( "Joints", "Scale Ragdoll", ScaleRagdoll::Create );
+
+// Theo Jansen's walking machine, inspired by a contribution from roman_m
+// Dimensions scooped from APE (http://www.cove.org/ape/index.htm)
+class TheoJansen : public Sample
+{
+public:
+	explicit TheoJansen( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 6.0f };
+			m_context->camera.zoom = 25.0f * 0.5f;
+		}
+
+		m_offset = { 0.0f, 8.0f };
+		m_motorSpeed = 2.0f;
+		m_enableMotor = true;
+		b2Vec2 pivot = { 0.0f, 0.8f };
+
+		// Ground
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+			b2Segment segment = { { -50.0f, 0.0f }, { 50.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
+			segment = { { -50.0f, 0.0f }, { -50.0f, 10.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+
+			segment = { { 50.0f, 0.0f }, { 50.0f, 10.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		// Balls
+		for ( int i = 0; i < 40; ++i )
+		{
+			b2Circle circle = { { 0.0f, 0.0f }, 0.25f };
+
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { -40.0f + 2.0f * i, 0.5f };
+
+			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.density = 1.0f;
+			b2CreateCircleShape( bodyId, &shapeDef, &circle );
+		}
+
+		// Chassis
+		{
+			b2Polygon box = b2MakeBox( 2.5f, 1.0f );
+
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = b2ToPos( pivot ) + m_offset;
+			m_chassisId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.density = 1.0f;
+			shapeDef.filter.groupIndex = -1;
+			b2CreatePolygonShape( m_chassisId, &shapeDef, &box );
+		}
+
+		// Wheel
+		{
+			b2Circle circle = { { 0.0f, 0.0f }, 1.6f };
+
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = b2ToPos( pivot ) + m_offset;
+			m_wheelId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.density = 1.0f;
+			shapeDef.filter.groupIndex = -1;
+			b2CreateCircleShape( m_wheelId, &shapeDef, &circle );
+		}
+
+		{
+			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+			jointDef.base.bodyIdA = m_wheelId;
+			jointDef.base.bodyIdB = m_chassisId;
+
+			b2Pos motorPivot = b2ToPos( pivot ) + m_offset;
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( jointDef.base.bodyIdA, motorPivot );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( jointDef.base.bodyIdB, motorPivot );
+
+			jointDef.enableMotor = m_enableMotor;
+			jointDef.motorSpeed = m_motorSpeed;
+			jointDef.maxMotorTorque = 400.0f;
+			m_motorJointId = b2CreateRevoluteJoint( m_worldId, &jointDef );
+		}
+
+		b2Vec2 wheelAnchor = pivot + b2Vec2{ 0.0f, -0.8f };
+
+		CreateLeg( -1.0f, wheelAnchor );
+		CreateLeg( 1.0f, wheelAnchor );
+
+		// Stagger three leg pairs around the wheel so some feet always touch the ground
+		b2Body_SetTransform( m_wheelId, b2Body_GetPosition( m_wheelId ), b2MakeRot( 120.0f * B2_PI / 180.0f ) );
+		CreateLeg( -1.0f, wheelAnchor );
+		CreateLeg( 1.0f, wheelAnchor );
+
+		b2Body_SetTransform( m_wheelId, b2Body_GetPosition( m_wheelId ), b2MakeRot( -120.0f * B2_PI / 180.0f ) );
+		CreateLeg( -1.0f, wheelAnchor );
+		CreateLeg( 1.0f, wheelAnchor );
+	}
+
+	void CreateLeg( float s, b2Vec2 wheelAnchor )
+	{
+		b2Vec2 p1 = { 5.4f * s, -6.1f };
+		b2Vec2 p2 = { 7.2f * s, -1.2f };
+		b2Vec2 p3 = { 4.3f * s, -1.9f };
+		b2Vec2 p4 = { 3.1f * s, 0.8f };
+		b2Vec2 p5 = { 6.0f * s, 1.5f };
+		b2Vec2 p6 = { 2.5f * s, 3.7f };
+
+		// The hull computation handles the mirrored winding for s < 0
+		b2Vec2 vertices1[3] = { p1, p2, p3 };
+		b2Vec2 vertices2[3] = { b2Vec2_zero, p5 - p4, p6 - p4 };
+
+		b2Hull hull1 = b2ComputeHull( vertices1, 3 );
+		b2Hull hull2 = b2ComputeHull( vertices2, 3 );
+		b2Polygon poly1 = b2MakePolygon( &hull1, 0.0f );
+		b2Polygon poly2 = b2MakePolygon( &hull2, 0.0f );
+
+		b2BodyDef bodyDef1 = b2DefaultBodyDef();
+		bodyDef1.type = b2_dynamicBody;
+		bodyDef1.position = b2ToPos( m_offset );
+		bodyDef1.angularDamping = 10.0f;
+		b2BodyId body1 = b2CreateBody( m_worldId, &bodyDef1 );
+
+		b2BodyDef bodyDef2 = b2DefaultBodyDef();
+		bodyDef2.type = b2_dynamicBody;
+		bodyDef2.position = b2ToPos( p4 ) + m_offset;
+		bodyDef2.angularDamping = 10.0f;
+		b2BodyId body2 = b2CreateBody( m_worldId, &bodyDef2 );
+
+		// Negative group index keeps the legs from colliding with the chassis and wheel
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.density = 1.0f;
+		shapeDef.filter.groupIndex = -1;
+		b2CreatePolygonShape( body1, &shapeDef, &poly1 );
+		b2CreatePolygonShape( body2, &shapeDef, &poly2 );
+
+		{
+			// Soft distance constraints reduce jitter and act like a suspension system
+			b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
+			jointDef.enableSpring = true;
+			jointDef.hertz = 10.0f;
+			jointDef.dampingRatio = 0.5f;
+
+			jointDef.base.bodyIdA = body1;
+			jointDef.base.bodyIdB = body2;
+
+			b2Pos anchorA = b2ToPos( p2 ) + m_offset;
+			b2Pos anchorB = b2ToPos( p5 ) + m_offset;
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( body1, anchorA );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( body2, anchorB );
+			jointDef.length = b2Length( anchorA - anchorB );
+			b2CreateDistanceJoint( m_worldId, &jointDef );
+
+			anchorA = b2ToPos( p3 ) + m_offset;
+			anchorB = b2ToPos( p4 ) + m_offset;
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( body1, anchorA );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( body2, anchorB );
+			jointDef.length = b2Length( anchorA - anchorB );
+			b2CreateDistanceJoint( m_worldId, &jointDef );
+
+			jointDef.base.bodyIdB = m_wheelId;
+			anchorB = b2ToPos( wheelAnchor ) + m_offset;
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( m_wheelId, anchorB );
+			jointDef.length = b2Length( anchorA - anchorB );
+			b2CreateDistanceJoint( m_worldId, &jointDef );
+
+			jointDef.base.bodyIdA = body2;
+			anchorA = b2ToPos( p6 ) + m_offset;
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( body2, anchorA );
+			jointDef.length = b2Length( anchorA - anchorB );
+			b2CreateDistanceJoint( m_worldId, &jointDef );
+		}
+
+		{
+			b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+			jointDef.base.bodyIdA = body2;
+			jointDef.base.bodyIdB = m_chassisId;
+
+			b2Pos legPivot = b2ToPos( p4 ) + m_offset;
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( body2, legPivot );
+			jointDef.base.localFrameB.p = b2Body_GetLocalPoint( m_chassisId, legPivot );
+			b2CreateRevoluteJoint( m_worldId, &jointDef );
+		}
+	}
+
+	bool DrawControls() override
+	{
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
+
+		if ( ImGui::Checkbox( "Motor", &m_enableMotor ) )
+		{
+			b2RevoluteJoint_EnableMotor( m_motorJointId, m_enableMotor );
+		}
+
+		if ( ImGui::SliderFloat( "Speed", &m_motorSpeed, -5.0f, 5.0f, "%.1f" ) )
+		{
+			b2RevoluteJoint_SetMotorSpeed( m_motorJointId, m_motorSpeed );
+		}
+
+		ImGui::PopItemWidth();
+
+		return true;
+	}
+
+	void Step() override
+	{
+		DrawScreenTextLine( "Keys: left = a, brake = s, right = d, toggle motor = f" );
+
+		Sample::Step();
+	}
+
+	void Keyboard( int key ) override
+	{
+		switch ( key )
+		{
+			case GLFW_KEY_A:
+				b2RevoluteJoint_SetMotorSpeed( m_motorJointId, -m_motorSpeed );
+				break;
+
+			case GLFW_KEY_S:
+				b2RevoluteJoint_SetMotorSpeed( m_motorJointId, 0.0f );
+				break;
+
+			case GLFW_KEY_D:
+				b2RevoluteJoint_SetMotorSpeed( m_motorJointId, m_motorSpeed );
+				break;
+
+			case GLFW_KEY_F:
+				m_enableMotor = !b2RevoluteJoint_IsMotorEnabled( m_motorJointId );
+				b2RevoluteJoint_EnableMotor( m_motorJointId, m_enableMotor );
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new TheoJansen( context );
+	}
+
+	b2Vec2 m_offset;
+	b2BodyId m_chassisId;
+	b2BodyId m_wheelId;
+	b2JointId m_motorJointId;
+	float m_motorSpeed;
+	bool m_enableMotor;
+};
+
+static int sampleTheoJansen = RegisterSample( "Joints", "Theo Jansen", TheoJansen::Create );
