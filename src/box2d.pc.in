@@ -1,11 +1,11 @@
-prefix=@CMAKE_INSTALL_PREFIX@
+prefix=${pcfiledir}/@PKGCONFIG_PREFIX_REL@
 exec_prefix=${prefix}
-libdir=@PKGCONFIG_LIBDIR@
-includedir=@PKGCONFIG_INCLUDEDIR@
+libdir=${prefix}/@PKGCONFIG_LIBDIR_REL@
+includedir=${prefix}/@PKGCONFIG_INCLUDEDIR_REL@
 
 Name: @PROJECT_NAME@
 Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
-Libs: -L${libdir} -lbox2d
+Libs: -L${libdir} -l@PKGCONFIG_LIBNAME@@PKGCONFIG_LIBS@
 Libs.private: @PKGCONFIG_LIBS_PRIVATE@
-Cflags: -I${includedir}
+Cflags: -I${includedir}@PKGCONFIG_CFLAGS@

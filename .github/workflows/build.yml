@@ -255,3 +255,93 @@ jobs:
 
     - name: Swift Package - Test
       run: swift test
+
+  # The only job that installs Box2D, so the only one that exercises the pkg-config
+  # file. Consuming it for real is the point: a missing PUBLIC define or a wrong
+  # library name surfaces as a compile or link failure, not as a .pc that still parses.
+  pkgconfig:
+    name: pkgconfig-${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: release
+            config: Release
+          - name: debug
+            config: Debug
+          - name: double
+            config: Release
+            args: -DBOX2D_DOUBLE_PRECISION=ON
+          - name: shared
+            config: Release
+            args: -DBUILD_SHARED_LIBS=ON
+    steps:
+    - uses: actions/checkout@v6
+
+    # The prefix is overridden at install time, never seen by configure, so a file
+    # that baked in CMAKE_INSTALL_PREFIX points at the wrong tree here
+    - name: Build and install
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DBOX2D_SAMPLES=OFF -DBOX2D_UNIT_TESTS=OFF ${{ matrix.args }}
+        cmake --build build --config ${{ matrix.config }}
+        cmake --install build --config ${{ matrix.config }} --prefix "$PWD/stage"
+
+    - name: Consume through pkg-config
+      run: |
+        set -eux
+        cat > consumer.c <<'EOF'
+        #include <box2d/box2d.h>
+        #include <stdio.h>
+
+        int main( void )
+        {
+        	b2WorldDef worldDef = b2DefaultWorldDef();
+        	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+        	b2BodyDef bodyDef = b2DefaultBodyDef();
+        	bodyDef.type = b2_dynamicBody;
+        	bodyDef.position = b2ToPos( ( b2Vec2 ){ 0.0f, 10.0f } );
+        	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+        	b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+        	b2ShapeDef shapeDef = b2DefaultShapeDef();
+        	b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+        	for ( int i = 0; i < 60; ++i )
+        	{
+        		b2World_Step( worldId, 1.0f / 60.0f, 4 );
+        	}
+
+        	b2Pos p = b2Body_GetPosition( bodyId );
+        	b2DestroyWorld( worldId );
+
+        	printf( "y = %g\n", (double)p.y );
+        	return p.y < 9.0 ? 0 : 1;
+        }
+        EOF
+
+        export PKG_CONFIG_PATH="$PWD/stage/lib/pkgconfig"
+        pkg-config --validate box2d
+        pkg-config --modversion box2d
+        pkg-config --cflags --libs box2d
+
+        # The command the README advertises has to be enough on its own
+        cc consumer.c -o consumer $(pkg-config --cflags --libs box2d)
+        LD_LIBRARY_PATH="$PWD/stage/lib" ./consumer
+
+        # Paths are anchored to the .pc file, so the tree survives being moved
+        mv stage relocated
+        export PKG_CONFIG_PATH="$PWD/relocated/lib/pkgconfig"
+        cc consumer.c -o consumer-moved $(pkg-config --cflags --libs box2d)
+        LD_LIBRARY_PATH="$PWD/relocated/lib" ./consumer-moved
+
+    - name: Check the debug postfix reaches consumers
+      if: matrix.name == 'debug'
+      run: PKG_CONFIG_PATH="$PWD/relocated/lib/pkgconfig" pkg-config --libs box2d | grep -e '-lbox2dd'
+
+    - name: Check the precision mode reaches consumers
+      if: matrix.name == 'double'
+      run: PKG_CONFIG_PATH="$PWD/relocated/lib/pkgconfig" pkg-config --cflags box2d | grep -e '-DBOX2D_DOUBLE_PRECISION'
