@@ -2041,7 +2041,7 @@ void b2DynamicTree_RefitEnlarged( b2DynamicTree* tree, int proxyId )
 		int child2 = parentNode->children.child2;
 		int siblingIndex = child1 == childIndex ? child2 : child1;
 
-		if ( nodes[siblingIndex].flags & b2_enlargedNode )
+		if ( b2AtomicLoadU16( &nodes[siblingIndex].flags ) & b2_enlargedNode )
 		{
 			uint16_t previousFlags = b2AtomicFetchOrU16( &parentNode->flags, b2_refitNode );
 			if ( ( previousFlags & b2_refitNode ) == 0 )
