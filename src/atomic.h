@@ -89,6 +89,17 @@ static inline void b2AtomicStoreU32( b2AtomicU32* a, uint32_t value )
 #endif
 }
 
+static inline uint16_t b2AtomicLoadU16( const uint16_t* a )
+{
+#if defined( _MSC_VER ) && !defined( __clang__ )
+	return (uint16_t)__iso_volatile_load16( (const volatile __int16*)a );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_load_n( a, __ATOMIC_RELAXED );
+#else
+#error "Unsupported platform"
+#endif
+}
+
 static inline uint32_t b2AtomicLoadU32( b2AtomicU32* a )
 {
 #if defined( _MSC_VER ) && !defined( __clang__ )

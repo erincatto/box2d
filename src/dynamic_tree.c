@@ -1943,6 +1943,8 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 
 			// Detach
 			node->parent = B2_NULL_INDEX;
+
+			node->flags &= ~b2_enlargedNode;
 		}
 		else
 		{
@@ -2000,10 +2002,12 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 void b2DynamicTree_MarkEnlarged( b2DynamicTree* tree, int proxyId, b2AABB aabb )
 {
 	b2TreeNode* nodes = tree->nodes;
-	B2_ASSERT( b2IsLeaf( nodes ) );
+	B2_ASSERT( b2IsLeaf( nodes + proxyId ) );
 	B2_VALIDATE( b2AABB_Contains( nodes[proxyId].aabb, aabb ) == false );
 
 	nodes[proxyId].aabb = aabb;
+
+	// This is not raced since it is the leaf.
 	nodes[proxyId].flags |= b2_enlargedNode;
 
 	int index = nodes[proxyId].parent;
@@ -2023,14 +2027,14 @@ void b2DynamicTree_RefitEnlarged( b2DynamicTree* tree, int proxyId )
 {
 	b2TreeNode* nodes = tree->nodes;
 	B2_ASSERT( b2IsLeaf( nodes + proxyId ) );
-	B2_ASSERT( nodes[proxyId].flags & b2_enlargedNode );
+	B2_ASSERT( b2AtomicLoadU16( &nodes[proxyId].flags ) & b2_enlargedNode );
 
 	int childIndex = proxyId;
 	int parentIndex = nodes[proxyId].parent;
 	while ( parentIndex != B2_NULL_INDEX )
 	{
 		b2TreeNode* parentNode = nodes + parentIndex;
-		B2_ASSERT( parentNode->flags & b2_enlargedNode );
+		B2_ASSERT( b2AtomicLoadU16( &parentNode->flags ) & b2_enlargedNode );
 
 		int child1 = parentNode->children.child1;
 		int child2 = parentNode->children.child2;

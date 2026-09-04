@@ -1247,6 +1247,8 @@ static void b2SolverTask( void* taskContext )
 
 static void b2RefitTreeTask( int startIndex, int endIndex, int workerIndex, void* context )
 {
+	b2TracyCZoneNC( refit_tree_task, "Refit", b2_colorFireBrick, true );
+
 	B2_UNUSED( workerIndex );
 
 	b2StepContext* stepContext = context;
@@ -1291,6 +1293,8 @@ static void b2RefitTreeTask( int startIndex, int endIndex, int workerIndex, void
 			word = word & ( word - 1 );
 		}
 	}
+
+	b2TracyCZoneEnd( refit_tree_task );
 }
 
 static void b2BulletBodyTask( int startIndex, int endIndex, int workerIndex, void* context )
