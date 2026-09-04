@@ -55,6 +55,17 @@ static inline int b2AtomicFetchAddInt( b2AtomicInt* a, int increment )
 #endif
 }
 
+static inline uint16_t b2AtomicFetchOrU16( uint16_t* a, uint16_t mask )
+{
+#if defined( _MSC_VER )
+	return (uint16_t)_InterlockedOr16( (short*)a, (short)mask );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_fetch_or( a, mask, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
 static inline bool b2AtomicCompareExchangeInt( b2AtomicInt* a, int expected, int desired )
 {
 #if defined( _MSC_VER )

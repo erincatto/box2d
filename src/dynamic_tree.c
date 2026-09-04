@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "aabb.h"
+#include "atomic.h"
 #include "core.h"
 
 #include "box2d/collision.h"
@@ -1055,6 +1056,7 @@ void b2DynamicTree_ValidateNoEnlarged( const b2DynamicTree* tree )
 		if ( node->flags & b2_allocatedNode )
 		{
 			B2_ASSERT( ( node->flags & b2_enlargedNode ) == 0 );
+			B2_ASSERT( ( node->flags & b2_refitNode ) == 0 );
 		}
 	}
 #else
@@ -1306,7 +1308,7 @@ b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInp
 }
 
 b2TreeStats b2DynamicTree_BoxCast( const b2DynamicTree* tree, const b2BoxCastInput* input, uint64_t maskBits,
-									b2TreeBoxCastCallbackFcn* callback, void* context )
+								   b2TreeBoxCastCallbackFcn* callback, void* context )
 {
 	b2TreeStats stats = { 0 };
 
@@ -1993,4 +1995,63 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 	b2DynamicTree_Validate( tree );
 
 	return leafCount;
+}
+
+void b2DynamicTree_MarkEnlarged( b2DynamicTree* tree, int proxyId, b2AABB aabb )
+{
+	b2TreeNode* nodes = tree->nodes;
+	B2_ASSERT( b2IsLeaf( nodes ) );
+	B2_VALIDATE( b2AABB_Contains( nodes[proxyId].aabb, aabb ) == false );
+
+	nodes[proxyId].aabb = aabb;
+	nodes[proxyId].flags |= b2_enlargedNode;
+
+	int index = nodes[proxyId].parent;
+	while ( index != B2_NULL_INDEX )
+	{
+		uint16_t previousFlags = b2AtomicFetchOrU16( &nodes[index].flags, b2_enlargedNode );
+		if ( previousFlags & b2_enlargedNode )
+		{
+			// Ancestor already visited.
+			break;
+		}
+		index = nodes[index].parent;
+	}
+}
+
+void b2DynamicTree_RefitEnlarged( b2DynamicTree* tree, int proxyId )
+{
+	b2TreeNode* nodes = tree->nodes;
+	B2_ASSERT( b2IsLeaf( nodes + proxyId ) );
+	B2_ASSERT( nodes[proxyId].flags & b2_enlargedNode );
+
+	int childIndex = proxyId;
+	int parentIndex = nodes[proxyId].parent;
+	while ( parentIndex != B2_NULL_INDEX )
+	{
+		b2TreeNode* parentNode = nodes + parentIndex;
+		B2_ASSERT( parentNode->flags & b2_enlargedNode );
+
+		int child1 = parentNode->children.child1;
+		int child2 = parentNode->children.child2;
+		int siblingIndex = child1 == childIndex ? child2 : child1;
+
+		if ( nodes[siblingIndex].flags & b2_enlargedNode )
+		{
+			uint16_t previousFlags = b2AtomicFetchOrU16( &parentNode->flags, b2_refitNode );
+			if ( ( previousFlags & b2_refitNode ) == 0 )
+			{
+				// Sibling will handle it once he arrives. You got me bro!
+				return;
+			}
+		}
+
+		// Reaching this line means either:
+		// 1. Only one child got enlarged
+		// 2. The second child has arrived and both siblings have up to date bounds.
+		parentNode->aabb = b2AABB_Union( nodes[child1].aabb, nodes[child2].aabb );
+
+		childIndex = parentIndex;
+		parentIndex = parentNode->parent;
+	}
 }
