@@ -26,6 +26,7 @@ set(BOX2D_SOURCE_FILES
 	distance.c
 	distance_joint.c
 	dynamic_tree.c
+	dynamic_tree.h
 	geometry.c
 	hull.c
 	id_pool.c
