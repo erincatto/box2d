@@ -7,6 +7,7 @@
 #include "dynamic_tree.h"
 
 #include "box2d/collision.h"
+#include "box2d/constants.h"
 #include "box2d/math_functions.h"
 
 #include <float.h>
