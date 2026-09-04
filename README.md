@@ -89,6 +89,8 @@ Use the `*-debug` build presets for a debug build (not recommended for the repla
 - cmake --build . --config Release
 - cmake --install . (might need sudo)
 
+Installing also provides a pkg-config file, so `pkg-config --modversion box2d` reports the installed version and `pkg-config --cflags --libs box2d` gives the build flags.
+
 ## Building with zig
 
 Fetch and link Box2D from a Zig project:
