@@ -1879,7 +1879,7 @@ static int b2BuildTree( b2DynamicTree* tree, int leafCount )
 	return stack[0].nodeIndex;
 }
 
-// Not safe to access tree during this operation because it may grow
+// Not safe to access tree during this operation because it may grow.
 int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 {
 	int proxyCount = tree->proxyCount;
@@ -1966,7 +1966,7 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 
 			node = nodes + nodeIndex;
 
-			// Remove doomed node
+			// Remove doomed internal node.
 			b2FreeNode( tree, doomedNodeIndex );
 
 			continue;
@@ -2048,12 +2048,18 @@ void b2DynamicTree_RefitEnlarged( b2DynamicTree* tree, int proxyId )
 		int child2 = parentNode->children.child2;
 		int siblingIndex = child1 == childIndex ? child2 : child1;
 
+		// Is the sibling also enlarged?
 		if ( b2AtomicLoadU16( &nodes[siblingIndex].flags ) & b2_enlargedNode )
 		{
+			// Leave a tag for the sibling or maybe the sibling already tagged (since they know
+			// this node is enlarged).
+			// Internal nodes will be freed in the rebuild so this flag never needs to be cleared.
 			uint16_t previousFlags = b2AtomicFetchOrU16( &parentNode->flags, b2_refitNode );
+
+			// If the sibling didn't arrive here yet, then bail to avoid a race on the bounds.
 			if ( ( previousFlags & b2_refitNode ) == 0 )
 			{
-				// Sibling will handle it once he arrives. You got me bro!
+				// Sibling will handle it once they arrive. You got me bro!
 				return;
 			}
 		}

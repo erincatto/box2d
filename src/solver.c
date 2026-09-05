@@ -501,6 +501,8 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 				shape->enlargedAABB = true;
 				fastBodySim->flags |= b2_enlargeBounds;
 
+				// Regular bodies mark the hierarchy as enlarged using atomic operations.
+				// Bullets are handled seperately at a later stage.
 				if ( isBullet == false )
 				{
 					b2BroadPhase_MarkEnlarged( &world->broadPhase, shape->proxyKey, fatAABB );
@@ -747,6 +749,8 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 					fatAABB.upperBound.y = aabb.upperBound.y + margin;
 					shape->fatAABB = fatAABB;
 					shape->enlargedAABB = true;
+
+					// Mark the hierarchy as enlarged using atomic operations.
 					b2BroadPhase_MarkEnlarged( &world->broadPhase, shape->proxyKey, fatAABB );
 
 					// Bit-set to keep the move array sorted
@@ -1245,6 +1249,8 @@ static void b2SolverTask( void* taskContext )
 	}
 }
 
+// Refit bounding boxes in parallel. Makes use previous atomic node tagging
+// to avoid racing.
 static void b2RefitTreeTask( int startIndex, int endIndex, int workerIndex, void* context )
 {
 	b2TracyCZoneNC( refit_tree_task, "Refit", b2_colorFireBrick, true );
