@@ -1881,12 +1881,11 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			b2InPlaceUnion( enlargedBodyBitSet, &world->taskContexts.data[i].enlargedSimBitSet );
 		}
 
+		// Enlarge broad-phase proxies. Apply shape AABB changes to broad-phase. 
 		b2ParallelFor( world, b2RefitTreeTask, (int)enlargedBodyBitSet->blockCount, 4, stepContext );
 
-		// Enlarge broad-phase proxies and build move array
-		// Apply shape AABB changes to broad-phase. This also create the move array which must be
-		// in deterministic order. I'm tracking sim bodies because the number of shape ids can be huge.
-		// This has to happen before bullets are processed.
+		// Create the move array which must be in deterministic order. I'm tracking sim bodies because
+		// the number of shape ids can be huge. This has to happen before bullets are processed.
 		{
 			b2BroadPhase* broadPhase = &world->broadPhase;
 			uint32_t wordCount = enlargedBodyBitSet->blockCount;
@@ -1930,8 +1929,16 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 						while ( shapeId != B2_NULL_INDEX )
 						{
 							b2Shape* shape = shapeArray + shapeId;
-							b2BufferMove( broadPhase, shape->proxyKey );
-							shape->enlargedAABB = false;
+
+							// The AABB may not have been enlarged, despite the body being flagged as enlarged.
+							// For example, a body with multiple shapes may have not have all shapes enlarged.
+							// A fast body may have been flagged as enlarged despite having no shapes enlarged.
+							if ( shape->enlargedAABB )
+							{
+								b2BufferMove( broadPhase, shape->proxyKey );
+								shape->enlargedAABB = false;
+							}
+
 							shapeId = shape->nextShapeId;
 						}
 					}

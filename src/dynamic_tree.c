@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#include "dynamic_tree.h"
+
 #include "aabb.h"
 #include "atomic.h"
 #include "core.h"
-#include "dynamic_tree.h"
 
 #include "box2d/collision.h"
 #include "box2d/constants.h"
@@ -2014,6 +2015,12 @@ void b2DynamicTree_MarkEnlarged( b2DynamicTree* tree, int proxyId, b2AABB aabb )
 	int index = nodes[proxyId].parent;
 	while ( index != B2_NULL_INDEX )
 	{
+		// Read first to avoid the FetchOr if possible.
+		if ( b2AtomicLoadU16( &nodes[index].flags ) & b2_enlargedNode )
+		{
+			break;
+		}
+
 		uint16_t previousFlags = b2AtomicFetchOrU16( &nodes[index].flags, b2_enlargedNode );
 		if ( previousFlags & b2_enlargedNode )
 		{
