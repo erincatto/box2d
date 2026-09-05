@@ -653,6 +653,21 @@ void b2UpdateBodyMassData( b2World* world, b2Body* body )
 
 		shapeId = s->nextShapeId;
 	}
+
+	// When the center of mass changes, any cached contact manifold becomes invalid.
+	int edgeKey = body->headContactKey;
+	while ( edgeKey != B2_NULL_INDEX )
+	{
+		int contactId = edgeKey >> 1;
+		int edgeIndex = edgeKey & 1;
+
+		b2Contact* contact = b2Array_Get( world->contacts, contactId );
+		b2ContactSim* contactSim = b2GetContactSim( world, contact );
+		contactSim->simFlags &= ~b2_simRelativeTransformValid;
+
+		edgeKey = contact->edges[edgeIndex].nextKey;
+		b2DestroyContact( world, contact );
+	}
 }
 
 b2Pos b2Body_GetPosition( b2BodyId bodyId )
@@ -1410,9 +1425,18 @@ void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData )
 	body->inertia = massData.rotationalInertia;
 	bodySim->localCenter = massData.center;
 
+	b2Pos oldCenter = bodySim->center;
 	b2Pos center = b2TransformWorldPoint( bodySim->transform, massData.center );
 	bodySim->center = center;
 	bodySim->center0 = center;
+
+	// Update center of mass velocity
+	b2BodyState* state = b2GetBodyState( world, body );
+	if ( state != NULL )
+	{
+		b2Vec2 deltaLinear = b2CrossSV( state->angularVelocity, b2SubPos( bodySim->center, oldCenter ) );
+		state->linearVelocity = b2Add( state->linearVelocity, deltaLinear );
+	}
 
 	bodySim->invMass = body->mass > 0.0f ? 1.0f / body->mass : 0.0f;
 	bodySim->invInertia = body->inertia > 0.0f ? 1.0f / body->inertia : 0.0f;
@@ -1428,6 +1452,21 @@ void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData )
 		bodySim->minExtent = b2MinFloat( bodySim->minExtent, extent.minExtent );
 		bodySim->maxExtent = b2MaxFloat( bodySim->maxExtent, extent.maxExtent );
 		shapeId = s->nextShapeId;
+	}
+
+	// When the center of mass changes, any cached contact manifold becomes invalid.
+	int edgeKey = body->headContactKey;
+	while ( edgeKey != B2_NULL_INDEX )
+	{
+		int contactId = edgeKey >> 1;
+		int edgeIndex = edgeKey & 1;
+
+		b2Contact* contact = b2Array_Get( world->contacts, contactId );
+		b2ContactSim* contactSim = b2GetContactSim( world, contact );
+		contactSim->simFlags &= ~b2_simRelativeTransformValid;
+
+		edgeKey = contact->edges[edgeIndex].nextKey;
+		b2DestroyContact( world, contact );
 	}
 
 	// Motion locks take priority over mass data.

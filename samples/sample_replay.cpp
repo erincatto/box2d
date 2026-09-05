@@ -668,14 +668,17 @@ public:
 			}
 			b2BodyId a = b2Joint_GetBodyA( joint );
 			b2BodyId b = b2Joint_GetBodyB( joint );
-			if ( b2Body_IsValid( a ) )
+			if ( b2Body_IsValid( a ) == false || b2Body_IsValid( b ) == false )
 			{
-				DrawPoint( draw, b2Body_GetWorldCenter( a ), 8.0f, b2_colorMagenta );
+				return;
 			}
-			if ( b2Body_IsValid( b ) )
-			{
-				DrawPoint( draw, b2Body_GetWorldCenter( b ), 8.0f, b2_colorMagenta );
-			}
+
+			// Anchor points in world space, a line joins them for joints with separated frames
+			b2Pos pA = b2TransformWorldPoint( b2Body_GetTransform( a ), b2Joint_GetLocalFrameA( joint ).p );
+			b2Pos pB = b2TransformWorldPoint( b2Body_GetTransform( b ), b2Joint_GetLocalFrameB( joint ).p );
+			DrawLine( draw, pA, pB, b2_colorMagenta );
+			DrawPoint( draw, pA, 8.0f, b2_colorMagenta );
+			DrawPoint( draw, pB, 8.0f, b2_colorMagenta );
 		}
 	}
 

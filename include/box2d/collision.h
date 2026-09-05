@@ -679,6 +679,7 @@ enum b2TreeNodeFlags
 	b2_allocatedNode = 0x0001,
 	b2_enlargedNode = 0x0002,
 	b2_leafNode = 0x0004,
+	b2_refitNode = 0x0008,
 };
 
 /// Tree node child indices. Internal usage.

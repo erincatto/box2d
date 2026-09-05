@@ -55,6 +55,17 @@ static inline int b2AtomicFetchAddInt( b2AtomicInt* a, int increment )
 #endif
 }
 
+static inline uint16_t b2AtomicFetchOrU16( uint16_t* a, uint16_t mask )
+{
+#if defined( _MSC_VER )
+	return (uint16_t)_InterlockedOr16( (short*)a, (short)mask );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_fetch_or( a, mask, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
 static inline bool b2AtomicCompareExchangeInt( b2AtomicInt* a, int expected, int desired )
 {
 #if defined( _MSC_VER )
@@ -73,6 +84,17 @@ static inline void b2AtomicStoreU32( b2AtomicU32* a, uint32_t value )
 	(void)_InterlockedExchange( (long*)&a->value, value );
 #elif defined( __GNUC__ ) || defined( __clang__ )
 	__atomic_store_n( &a->value, value, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
+static inline uint16_t b2AtomicLoadU16( const uint16_t* a )
+{
+#if defined( _MSC_VER ) && !defined( __clang__ )
+	return (uint16_t)__iso_volatile_load16( (const volatile __int16*)a );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_load_n( a, __ATOMIC_RELAXED );
 #else
 #error "Unsupported platform"
 #endif

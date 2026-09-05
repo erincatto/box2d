@@ -799,6 +799,10 @@ public:
 			m_camera->zoom = 12.0f;
 		}
 
+		std::atomic<uint16_t> foo( 7 );
+
+		foo.fetch_or( 0x11 );
+
 		b2BodyDef groundBodyDef = b2DefaultBodyDef();
 		b2BodyId groundId = b2CreateBody( m_worldId, &groundBodyDef );
 
